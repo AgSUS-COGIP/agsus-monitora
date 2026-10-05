@@ -1785,7 +1785,7 @@ export const VERBETES_AYA = Object.freeze([
       "administracao",
     ],
     resposta:
-      "Configurações fica em Administração, no menu, com uma seção por item: Marca, Página inicial, Tela de acesso, Aparência, Painéis externos, Operação, Acessos, Módulos e abas e Status das atualizações. As seis primeiras abrem para quem tem Editor em Configurações; Acessos, para quem gerencia acessos; Módulos e abas e Status das atualizações, só para o administrador global. Cada pessoa vê só as seções que pode abrir.",
+      "Configurações fica em Administração, no menu, com uma seção por item: Marca, Página inicial, Tela de acesso, Aparência, Painéis externos, Operação, Acessos, Módulos e abas, Status das atualizações e Mensagens (chat). As seis primeiras abrem para quem tem Editor em Configurações; Acessos, para quem gerencia acessos; Módulos e abas, Status das atualizações e Mensagens (chat), só para o administrador global. Cada pessoa vê só as seções que pode abrir.",
     fato: "",
     fonte: "src/lib/access-roles.js; src/modulos/configuracoes/secoes.js",
   },
@@ -2434,6 +2434,75 @@ export const VERBETES_AYA = Object.freeze([
     fato: "",
     fonte:
       "src/lib/permissoes-recursos.js; src/lib/access-roles.js; supabase/migrations/20261002210000_chat.sql",
+  },
+  {
+    arquivo: "regras-do-chat.md",
+    titulo: "Seção Mensagens (chat) das Configurações",
+    perguntas: [
+      "para que serve mensagens (chat)",
+      "para que serve a secao mensagens (chat)",
+      "configuracoes mensagens chat",
+      "retencao do chat",
+      "quem configura o chat",
+      "secao mensagens das configuracoes",
+    ],
+    resposta:
+      "Em Configurações › Mensagens (chat), só o administrador global define por quanto tempo o chat guarda as mensagens, zera as mensagens e vê o histórico das limpezas. No topo aparecem quantas mensagens, reações e conversas existem e a data da mensagem mais antiga.",
+    fato: "",
+    fonte:
+      "src/modulos/configuracoes/mensagens-do-chat.jsx; supabase/migrations/20261005190000_chat_retencao_das_mensagens.sql",
+    abrir: "config:mensagens",
+  },
+  {
+    arquivo: "regras-do-chat.md",
+    titulo: "Prazo de retenção das mensagens",
+    perguntas: [
+      "prazo de retencao das mensagens",
+      "como funciona o prazo de retencao das mensagens",
+      "por quanto tempo o chat guarda as mensagens",
+      "mensagens antigas somem",
+      "apagar mensagens antigas do chat",
+      "lgpd chat",
+      "guardar para sempre",
+    ],
+    resposta:
+      'O padrão é "Guardar para sempre". O administrador global pode escolher 30, 90, 180 ou 365 dias, ou outro prazo de 7 a 3.650 dias, e informa o motivo. A tela mostra quantas mensagens o prazo escolhido apagaria; se apagar alguma, pede confirmação ("Isto apaga X mensagens com mais de N dias; não dá para desfazer"). Ao salvar, as mensagens mais antigas que o prazo e as reações delas são apagadas de fato, na hora (dado que passou do prazo deixa de existir, como pede a LGPD); as conversas continuam, sem essas mensagens. Depois, uma limpeza automática roda todo dia às 3h15 de Brasília e aparece em Status das atualizações como "Retenção das mensagens do chat". Quem está com o chat aberto vê as mensagens sumirem sozinhas.',
+    fato: "",
+    fonte:
+      "src/lib/retencao-do-chat.js; supabase/migrations/20261005190000_chat_retencao_das_mensagens.sql",
+    abrir: "config:mensagens",
+  },
+  {
+    arquivo: "regras-do-chat.md",
+    titulo: "Zerar mensagens",
+    perguntas: [
+      "o que o zerar mensagens apaga",
+      "zerar mensagens",
+      "apagar todas as mensagens do chat",
+      "limpar o chat de todo mundo",
+      "apagar conversas sem participante",
+    ],
+    resposta:
+      '"Zerar mensagens" apaga TODAS as mensagens e reações do chat, de todas as pessoas, sem volta. Antes, a tela mostra quanto vai ser apagado. Marcando "Apagar também as conversas sem participante ativo", saem ainda os grupos e as conversas de edital que todos deixaram; conversas diretas e as que ainda têm alguém continuam, vazias. Para confirmar, é preciso digitar ZERAR (em maiúsculas) e informar o motivo (de 3 a 500 caracteres). É diferente de "Limpar conversa", que só esconde o histórico para você.',
+    fato: "",
+    fonte:
+      "src/modulos/configuracoes/mensagens-do-chat.jsx; supabase/migrations/20261005190000_chat_retencao_das_mensagens.sql",
+    abrir: "config:mensagens",
+  },
+  {
+    arquivo: "regras-do-chat.md",
+    titulo: "Histórico das limpezas do chat",
+    perguntas: [
+      "historico das limpezas",
+      "quem apagou as mensagens do chat",
+      "quando as mensagens foram apagadas",
+      "auditoria do chat",
+    ],
+    resposta:
+      'Em Configurações › Mensagens (chat), o histórico mostra cada limpeza: o tipo (prazo salvo, limpeza diária ou zerar), quando, quem pediu (ou "Tarefa diária"), quantas mensagens, reações e conversas saíram e o motivo. O histórico nunca guarda o conteúdo das mensagens apagadas.',
+    fato: "",
+    fonte: "supabase/migrations/20261005190000_chat_retencao_das_mensagens.sql",
+    abrir: "config:mensagens",
   },
   {
     arquivo: "regras-do-cronograma.md",
