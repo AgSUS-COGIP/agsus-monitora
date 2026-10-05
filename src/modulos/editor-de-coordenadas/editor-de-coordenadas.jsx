@@ -7,7 +7,7 @@ import {
   validarCorrecaoDoMapa,
 } from "../../lib/editor-de-coordenadas.js";
 import { CORES_DO_MAPA } from "../../lib/mapa-saude-indigena/formas.js";
-import { Aviso, Campo, Selo } from "../../ui/index.js";
+import { Aviso, Campo, Selo, classes } from "../../ui/index.js";
 import { usarUltimo } from "../mapa-saude-indigena/usar-ultimo.js";
 import { FilaDeCoordenadas } from "./fila-de-coordenadas.jsx";
 import { HistoricoDoPonto } from "./historico-do-ponto.jsx";
@@ -82,7 +82,15 @@ function usarLista(ultimos, ativo, nome, argumentos, chave, erroPadrao) {
   - `argumentosDoSalvar({ ponto, latitude, longitude, motivo, conferir })` e
     `argumentosDoHistorico(ponto, limite)`;
   - `textos`: { busca, lista } e `detalheDoItem(item)` para a fila.
+
+  No modo de edição (modo-de-edicao.jsx) o editor flutua sobre o mapa:
+  `areaLivre()` devolve os paddings do Leaflet que descontam o painel (o
+  enquadramento do ponto e da sugestão cai na parte visível), `versaoDaArea`
+  muda quando o painel recolhe ou abre (o pin volta para a área livre) e
+  `botaoDeRecolher` vai no topo, ao lado de "Voltar à lista".
 */
+const FOLGA_PADRAO = Object.freeze({ padding: [48, 48] });
+
 export function EditorDeCoordenadas({
   L,
   mapa,
@@ -92,9 +100,19 @@ export function EditorDeCoordenadas({
   supabase,
   aoAtualizarMapa,
   aoFechar,
+  areaLivre,
+  versaoDaArea = 0,
+  botaoDeRecolher = null,
 }) {
   const permitido = podeEditarCoordenadas(perfil);
-  const ultimos = usarUltimo({ permitido, supabase, aoAtualizarMapa, fonte });
+  const ultimos = usarUltimo({
+    permitido,
+    supabase,
+    aoAtualizarMapa,
+    fonte,
+    areaLivre,
+  });
+  const folga = () => ultimos.current.areaLivre?.() || FOLGA_PADRAO;
   const [pendencias, definirPendencias] = usarLista(
     ultimos,
     permitido,
@@ -216,7 +234,8 @@ export function EditorDeCoordenadas({
     em laranja, CNES em azul; a mais provável maior), com a dica da fonte e
     da distância; clicar usa a posição na prévia. A mais provável liga-se à
     posição atual por uma linha tracejada e o mapa enquadra as duas — senão,
-    vai até o ponto.
+    vai até o ponto. O enquadramento desconta o painel do editor (`folga`):
+    o ponto sozinho também vai por `flyToBounds`, que centra na área livre.
   */
   useEffect(() => {
     if (!permitido || !mapa || !L || !ponto) return undefined;
@@ -266,16 +285,30 @@ export function EditorDeCoordenadas({
         }),
       );
       mapa.flyToBounds(L.latLngBounds([atual, destino]), {
-        padding: [48, 48],
+        ...folga(),
         maxZoom: 13,
       });
     } else {
-      mapa.flyTo(atual || mapa.getCenter(), Math.max(mapa.getZoom(), 11));
+      const centro = atual || mapa.getCenter();
+      mapa.flyToBounds(L.latLngBounds([centro, centro]), {
+        ...folga(),
+        maxZoom: Math.max(mapa.getZoom(), 11),
+      });
     }
     return () => {
       mapa.removeLayer(camada);
     };
+    // `folga` lê o último `areaLivre` (ref): não redesenha a cada renderização.
   }, [permitido, mapa, L, ponto, sugestoes, idDaMelhor]);
+
+  // O painel recolheu ou abriu: o pin volta para dentro da área livre.
+  const versaoVista = useRef(versaoDaArea);
+  useEffect(() => {
+    if (versaoVista.current === versaoDaArea) return;
+    versaoVista.current = versaoDaArea;
+    const posicao = marcador.current?.getLatLng?.();
+    if (posicao) mapa?.panInside?.(posicao, folga());
+  }, [versaoDaArea, mapa]);
 
   useEffect(() => {
     if (Number.isFinite(latitudeNumero) && Number.isFinite(longitudeNumero))
@@ -394,7 +427,10 @@ export function EditorDeCoordenadas({
 
   return (
     <form
-      className="mapa-si-coordenadas"
+      className={classes(
+        "mapa-si-coordenadas",
+        ponto && "mapa-si-coordenadas--com-ponto",
+      )}
       onSubmit={(evento) => {
         evento.preventDefault();
         enviar("corrigir");
@@ -403,16 +439,19 @@ export function EditorDeCoordenadas({
     >
       <div className="mapa-si-coordenadas__topo">
         <h3 className="ui-titulo">Corrigir coordenadas</h3>
-        {aoFechar ? (
-          <button
-            type="button"
-            className="btn small"
-            disabled={salvando}
-            onClick={aoFechar}
-          >
-            Voltar à lista
-          </button>
-        ) : null}
+        <div className="mapa-si-coordenadas__topo-acoes">
+          {botaoDeRecolher}
+          {aoFechar ? (
+            <button
+              type="button"
+              className="btn small"
+              disabled={salvando}
+              onClick={aoFechar}
+            >
+              Voltar à lista
+            </button>
+          ) : null}
+        </div>
       </div>
       <FilaDeCoordenadas
         placeholder={fonte.textos.busca}
@@ -446,34 +485,6 @@ export function EditorDeCoordenadas({
               <Selo tom="aprovado">Conferido</Selo>
             ) : null}
           </div>
-          <Campo rotulo="Latitude" obrigatorio>
-            <input
-              inputMode="decimal"
-              value={latitude}
-              disabled={salvando}
-              onChange={(e) => editar(definirLatitude, e.target.value)}
-            />
-          </Campo>
-          <Campo rotulo="Longitude" obrigatorio>
-            <input
-              inputMode="decimal"
-              value={longitude}
-              disabled={salvando}
-              onChange={(e) => editar(definirLongitude, e.target.value)}
-            />
-          </Campo>
-          <dl>
-            <dt>Atual</dt>
-            <dd>
-              {formatarCoordenada(ponto.latitude)},{" "}
-              {formatarCoordenada(ponto.longitude)}
-            </dd>
-            <dt>Prévia</dt>
-            <dd>
-              {formatarCoordenada(latitudeNumero)},{" "}
-              {formatarCoordenada(longitudeNumero)}
-            </dd>
-          </dl>
           {pendente ? (
             <SugestoesDoPonto
               sugestoes={sugestoes}
@@ -483,63 +494,106 @@ export function EditorDeCoordenadas({
               aoUsar={usarSugestao}
             />
           ) : null}
-          <Campo rotulo="Motivo e fonte da correção" obrigatorio>
-            <textarea
-              value={motivo}
-              disabled={salvando}
-              maxLength={1000}
-              onChange={(e) => editar(definirMotivo, e.target.value)}
-            />
-          </Campo>
-          {erro ? (
-            <Aviso tom="danger" papel="alert">
-              {erro}
-            </Aviso>
-          ) : null}
-          {mensagem ? <Aviso papel="status">{mensagem}</Aviso> : null}
-          {confirmando === "corrigir" ? (
-            <Aviso tom="warning">
-              Confirme a nova posição para {ponto.nome}.
-            </Aviso>
-          ) : null}
-          {confirmando === "conferir" ? (
-            <Aviso tom="warning">
-              {mudou
-                ? `Confirme a nova posição e a conferência de ${ponto.nome}.`
-                : `Confirme que a posição atual de ${ponto.nome} está certa.`}
-            </Aviso>
-          ) : null}
-          <div className="mapa-si-coordenadas__acoes">
-            <button
-              className="btn"
-              type="button"
-              disabled={salvando || !mudou}
-              onClick={desfazerPrevia}
-            >
-              Desfazer prévia
-            </button>
-            <button
-              className={conferivel ? "btn" : "btn primary"}
-              type="submit"
-              disabled={salvando || !mudou}
-            >
-              {textoDoBotao(
-                "corrigir",
-                "Salvar coordenada",
-                "Confirmar correção",
-              )}
-            </button>
-            {conferivel ? (
-              <button
-                className="btn primary"
-                type="button"
+          <details
+            className="mapa-si-coordenadas__bloco mapa-si-coordenadas__secao"
+            aria-label="Correção"
+            open
+          >
+            <summary className="mapa-si-coordenadas__subtitulo">
+              Correção
+            </summary>
+            <div className="mapa-si-coordenadas__par">
+              <Campo rotulo="Latitude" obrigatorio>
+                <input
+                  inputMode="decimal"
+                  value={latitude}
+                  disabled={salvando}
+                  onChange={(e) => editar(definirLatitude, e.target.value)}
+                />
+              </Campo>
+              <Campo rotulo="Longitude" obrigatorio>
+                <input
+                  inputMode="decimal"
+                  value={longitude}
+                  disabled={salvando}
+                  onChange={(e) => editar(definirLongitude, e.target.value)}
+                />
+              </Campo>
+            </div>
+            <dl>
+              <dt>Atual</dt>
+              <dd>
+                {formatarCoordenada(ponto.latitude)},{" "}
+                {formatarCoordenada(ponto.longitude)}
+              </dd>
+              <dt>Prévia</dt>
+              <dd>
+                {formatarCoordenada(latitudeNumero)},{" "}
+                {formatarCoordenada(longitudeNumero)}
+              </dd>
+            </dl>
+            <Campo rotulo="Motivo e fonte da correção" obrigatorio>
+              <textarea
+                value={motivo}
                 disabled={salvando}
-                onClick={() => enviar("conferir")}
-              >
-                {textoDoBotao("conferir", "Conferido", "Confirmar conferência")}
-              </button>
+                maxLength={1000}
+                onChange={(e) => editar(definirMotivo, e.target.value)}
+              />
+            </Campo>
+            {erro ? (
+              <Aviso tom="danger" papel="alert">
+                {erro}
+              </Aviso>
             ) : null}
-          </div>
+            {mensagem ? <Aviso papel="status">{mensagem}</Aviso> : null}
+            {confirmando === "corrigir" ? (
+              <Aviso tom="warning">
+                Confirme a nova posição para {ponto.nome}.
+              </Aviso>
+            ) : null}
+            {confirmando === "conferir" ? (
+              <Aviso tom="warning">
+                {mudou
+                  ? `Confirme a nova posição e a conferência de ${ponto.nome}.`
+                  : `Confirme que a posição atual de ${ponto.nome} está certa.`}
+              </Aviso>
+            ) : null}
+            <div className="mapa-si-coordenadas__acoes">
+              <button
+                className="btn"
+                type="button"
+                disabled={salvando || !mudou}
+                onClick={desfazerPrevia}
+              >
+                Desfazer prévia
+              </button>
+              <button
+                className={conferivel ? "btn" : "btn primary"}
+                type="submit"
+                disabled={salvando || !mudou}
+              >
+                {textoDoBotao(
+                  "corrigir",
+                  "Salvar coordenada",
+                  "Confirmar correção",
+                )}
+              </button>
+              {conferivel ? (
+                <button
+                  className="btn primary"
+                  type="button"
+                  disabled={salvando}
+                  onClick={() => enviar("conferir")}
+                >
+                  {textoDoBotao(
+                    "conferir",
+                    "Conferido",
+                    "Confirmar conferência",
+                  )}
+                </button>
+              ) : null}
+            </div>
+          </details>
           <HistoricoDoPonto
             historico={historico.lista}
             carregando={historico.carregando}

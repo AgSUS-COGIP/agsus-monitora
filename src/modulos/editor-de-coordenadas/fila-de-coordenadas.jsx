@@ -2,7 +2,7 @@ import {
   GRAVIDADES,
   textoDePendentes,
 } from "../../lib/editor-de-coordenadas.js";
-import { Aviso, Campo, Carregando, EstadoVazio, Selo } from "../../ui/index.js";
+import { Aviso, Carregando, EstadoVazio, Selo } from "../../ui/index.js";
 
 /* Quantos itens a lista desenha de uma vez (a visão nacional tem milhares). */
 export const LIMITE_DA_FILA = 200;
@@ -14,7 +14,9 @@ export const LIMITE_DA_FILA = 200;
   erro primeiro, cada pendente com o selo da gravidade e o resumo (motivo e
   sugestão que serve de régua). Escolher um item é com o pai (centraliza o
   mapa e abre o formulário). Serve aos dois mapas: o texto da busca, o rótulo
-  da lista e a linha de detalhe de cada item vêm de quem usa.
+  da lista e a linha de detalhe de cada item vêm de quem usa. Compacta para o
+  painel do modo de edição: busca e "Só pendentes" numa linha, a contagem e
+  os níveis na seguinte, e a lista enche o que sobra do painel.
 */
 export function FilaDeCoordenadas({
   itens,
@@ -38,16 +40,16 @@ export function FilaDeCoordenadas({
   const mostrados = itens.slice(0, LIMITE_DA_FILA);
   return (
     <div className="mapa-si-coordenadas__fila">
-      <Campo rotulo="Buscar ponto">
+      <div className="mapa-si-coordenadas__filtro">
         <input
           type="search"
+          className="mapa-si-coordenadas__busca"
+          aria-label="Buscar ponto"
           value={busca}
           placeholder={placeholder}
           disabled={desabilitado}
           onChange={(e) => aoBuscar(e.target.value)}
         />
-      </Campo>
-      <div className="mapa-si-coordenadas__filtro">
         <label className="mapa-si-coordenadas__caixa">
           <input
             type="checkbox"
@@ -57,33 +59,35 @@ export function FilaDeCoordenadas({
           />
           Só pendentes
         </label>
+      </div>
+      <div className="mapa-si-coordenadas__niveis">
         <b className="mapa-si-coordenadas__contagem" aria-live="polite">
           {carregando ? "…" : textoDePendentes(pendentes)}
         </b>
+        {soPendentes && pendentes ? (
+          <div
+            className="mapa-si-coordenadas__grupo"
+            role="group"
+            aria-label="Filtrar por gravidade"
+          >
+            {Object.entries(GRAVIDADES).map(([nivel, info]) => (
+              <button
+                key={nivel}
+                type="button"
+                className="mapa-si-coordenadas__nivel"
+                data-nivel={nivel}
+                aria-pressed={gravidade === nivel}
+                disabled={desabilitado || !porGravidade[nivel]}
+                onClick={() =>
+                  aoFiltrarGravidade?.(gravidade === nivel ? "" : nivel)
+                }
+              >
+                {info.rotulo} <b>{porGravidade[nivel] || 0}</b>
+              </button>
+            ))}
+          </div>
+        ) : null}
       </div>
-      {soPendentes && pendentes ? (
-        <div
-          className="mapa-si-coordenadas__niveis"
-          role="group"
-          aria-label="Filtrar por gravidade"
-        >
-          {Object.entries(GRAVIDADES).map(([nivel, info]) => (
-            <button
-              key={nivel}
-              type="button"
-              className="mapa-si-coordenadas__nivel"
-              data-nivel={nivel}
-              aria-pressed={gravidade === nivel}
-              disabled={desabilitado || !porGravidade[nivel]}
-              onClick={() =>
-                aoFiltrarGravidade?.(gravidade === nivel ? "" : nivel)
-              }
-            >
-              {info.rotulo} <b>{porGravidade[nivel] || 0}</b>
-            </button>
-          ))}
-        </div>
-      ) : null}
       {erro ? (
         <Aviso tom="danger" papel="alert">
           {erro}

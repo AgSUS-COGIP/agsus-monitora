@@ -20,6 +20,7 @@ const posicao = (latitude, longitude) =>
 /*
   As últimas alterações do ponto (quem, quando, de → para, motivo) e o
   "Desfazer" da mais recente, que pede motivo e vira uma alteração nova.
+  Seção recolhível, fechada de início (a contagem fica no título).
 */
 export function HistoricoDoPonto({
   historico,
@@ -48,11 +49,13 @@ export function HistoricoDoPonto({
     await aoDesfazer(desfazivel, motivo.trim());
   };
   return (
-    <section
-      className="mapa-si-coordenadas__bloco"
+    <details
+      className="mapa-si-coordenadas__bloco mapa-si-coordenadas__secao"
       aria-label="Histórico do ponto"
     >
-      <h4 className="mapa-si-coordenadas__subtitulo">Histórico</h4>
+      <summary className="mapa-si-coordenadas__subtitulo">
+        Histórico {carregando ? null : <b>{historico.length}</b>}
+      </summary>
       {carregando ? (
         <Carregando />
       ) : erro ? (
@@ -128,6 +131,6 @@ export function HistoricoDoPonto({
           </button>
         )
       ) : null}
-    </section>
+    </details>
   );
 }
