@@ -36,6 +36,7 @@ const RPC_PORTEIRO = "usuario_pode_ler_analises";
 const RPC_LISTA = "get_analises_dashboard_payload_v2";
 const RPC_DETALHE = "get_analise_detalhe_do_painel";
 const RPC_TEXTOS = "get_analises_texto_do_painel";
+const RPC_CONFERENCIA = "obter_ultima_conferencia";
 
 /* A cópia vale só para a mesma publicação do front (o endereço do módulo muda a cada build). */
 const VERSAO_DA_COPIA = `1:${import.meta.url}`;
@@ -199,8 +200,27 @@ export function criarConsultasDasAnalises({
     textosGuardados.clear();
   }
 
+  /** Quando a última carga das análises da área terminou bem (mesmo sem mudanças); null se não der. */
+  async function ultimaConferencia(area) {
+    try {
+      return (
+        (await chamar(RPC_CONFERENCIA, {
+          p_fonte: "analises",
+          p_area: area || null,
+        })) ?? null
+      );
+    } catch (erro) {
+      console.warn(
+        "Não foi possível ler a última conferência das análises:",
+        erro,
+      );
+      return null;
+    }
+  }
+
   return {
     podeLer,
+    ultimaConferencia,
     carregarEscopo,
     detalhe,
     textos,

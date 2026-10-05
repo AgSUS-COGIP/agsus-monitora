@@ -211,7 +211,7 @@ describe("Resultados", () => {
     expect(kpi("media")).toBe("6,00");
     expect(kpi("sem-entrevista")).toBe("1");
     // A última carga aparece uma vez só, discreta, no topo.
-    expect(status().textContent).toBe("Carga 29/09/2026 10:30");
+    expect(status().textContent).toBe("Conferido em 29/09, 10:30");
     expect(document.querySelectorAll(".status-discreto")).toHaveLength(1);
     expect(linhasDaTabela()).toHaveLength(2);
     expect(document.querySelector(".ui-tabela tbody img")).toBeNull();
