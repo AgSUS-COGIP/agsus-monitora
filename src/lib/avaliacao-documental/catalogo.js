@@ -115,6 +115,36 @@ export const TIPOS_DA_NOTA_DECLARADA = Object.freeze([
   ["FAIXA_EM_MESES", "Faixa de meses × pontos por mês"],
 ]);
 
+/*
+  Desempate da Provisória depois da ART (decrescente), na ordem da regra.
+  Por último vale sempre o código do candidato (para a ordem não variar).
+*/
+export const DESEMPATES_DA_PROVISORIA = Object.freeze([
+  ["IDOSO", "Idoso (60 anos ou mais), o mais velho primeiro"],
+  ["MAIS_VELHO", "O mais velho primeiro"],
+  ["CANDIDATURA", "A candidatura mais antiga primeiro"],
+]);
+
+export const DESEMPATE_PADRAO_DA_PROVISORIA = Object.freeze([
+  "IDOSO",
+  "CANDIDATURA",
+]);
+
+/* Situações de um inscrito na pré-classificação (TB_PRE_CLASSIFICACAO). */
+export const SITUACOES_DA_PRE_CLASSIFICACAO = Object.freeze([
+  ["ELIMINADO", "Eliminado"],
+  ["RANQUEADO", "Ranqueado"],
+  ["NO_LOTE", "No lote"],
+  ["ANALISADO", "Analisado"],
+]);
+
+/* Como alguém entrou no lote (TB_PRE_CLASSIFICACAO.TP_ENTRADA_LOTE). */
+export const ENTRADAS_NO_LOTE = Object.freeze([
+  ["INICIAL", "Lote inicial"],
+  ["REPOSICAO", "Reposição"],
+  ["AMPLIACAO", "Lote ampliado"],
+]);
+
 export const BASES_DO_LOTE = Object.freeze([
   ["MULTIPLO_VAGAS", "Múltiplo das vagas imediatas"],
   ["FIXO", "Número fixo por vaga"],
