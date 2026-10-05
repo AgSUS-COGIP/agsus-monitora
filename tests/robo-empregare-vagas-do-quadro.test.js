@@ -29,7 +29,8 @@ const LISTAR =
   "create or replace function public.listar_vagas_empregare(p_editais text[] default null, p_vagas text[] default null, p_limite integer default 60)";
 const ABRIR =
   'create or replace function private."FC_EMPREGARE_ABRIR_VAGA"(p_sync text, p_vaga text, p_total integer)';
-const DO_QUADRO = 'create function private."FC_EMPREGARE_VAGAS_DO_QUADRO"(p_vaga text default null)';
+const DO_QUADRO =
+  'create function private."FC_EMPREGARE_VAGAS_DO_QUADRO"(p_vaga text default null)';
 
 describe("robô da Empregare: vagas do quadro do edital", () => {
   it("a lista mantém a assinatura, os filtros e as chaves de antes e ganha a origem", () => {
@@ -71,7 +72,7 @@ describe("robô da Empregare: vagas do quadro do edital", () => {
   it("as vagas do quadro vêm do quadro vigente e do vínculo das análises do edital", () => {
     const corpo = corpoDaFuncao(MIGRATION, DO_QUADRO);
     expect(corpo).toContain('public."TB_QUADRO_VAGA_EDITAL"');
-    expect(corpo).toContain('q."ST_REGISTRO_ATIVO" = \'S\'');
+    expect(corpo).toContain("q.\"ST_REGISTRO_ATIVO\" = 'S'");
     expect(corpo).toContain('public."TB_ANALISE_CURRICULAR"');
     expect(corpo).toContain('private."FC_QUADRO_DA_VAGA"(m.id, n.nome_vaga)');
     expect(corpo).toContain('m."CO_AREA" = n.area');
@@ -87,7 +88,9 @@ describe("robô da Empregare: vagas do quadro do edital", () => {
 
   it("a gravação liga a vaga ao edital pelo quadro e, sem ele, pela Seleção", () => {
     const corpo = corpoDaFuncao(MIGRATION, ABRIR);
-    const quadro = corpo.indexOf('private."FC_EMPREGARE_VAGAS_DO_QUADRO"(p_vaga)');
+    const quadro = corpo.indexOf(
+      'private."FC_EMPREGARE_VAGAS_DO_QUADRO"(p_vaga)',
+    );
     const selecao = corpo.indexOf('public."TB_SELECAO_VAGA"');
     expect(quadro).toBeGreaterThan(-1);
     expect(selecao).toBeGreaterThan(quadro);
@@ -148,7 +151,9 @@ describe("robô da Empregare: vagas do quadro do edital", () => {
     const volta = ENSAIO.lastIndexOf("reset role;");
     const e5 = ENSAIO.indexOf("-- E5.");
     const resumo = ENSAIO.indexOf("'ENSAIO OK' as resultado");
-    expect(volta).toBeGreaterThan(ENSAIO.indexOf("set local role authenticated;"));
+    expect(volta).toBeGreaterThan(
+      ENSAIO.indexOf("set local role authenticated;"),
+    );
     expect(e5).toBeGreaterThan(volta);
     expect(resumo).toBeGreaterThan(e5);
   });
