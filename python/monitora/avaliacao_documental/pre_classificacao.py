@@ -76,7 +76,7 @@ def normalizar_regra(entrada):
 
 
 def numero_no_texto(n):
-    """"24" ou "24,5": o número como a lista publica (String(n) do JS)."""
+    """ "24" ou "24,5": o número como a lista publica (String(n) do JS)."""
     if n is None:
         return ""
     if float(n).is_integer():
@@ -198,7 +198,12 @@ def tamanho_do_lote(lote, vaga):
         }
     if lote.get("base") == "FIXO":
         fixo = lote.get("fixo")
-        return {"tamanho": fixo, "descricao": f"{numero_no_texto(fixo)} (número fixo)", "por_modalidade": None, "aviso": None}
+        return {
+            "tamanho": fixo,
+            "descricao": f"{numero_no_texto(fixo)} (número fixo)",
+            "por_modalidade": None,
+            "aviso": None,
+        }
     imediatas = vaga.get("vagas_imediatas")
     if imediatas is None:
         return {"tamanho": None, "descricao": "", "por_modalidade": None, "aviso": "SEM_QUADRO"}

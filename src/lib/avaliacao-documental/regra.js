@@ -622,7 +622,9 @@ export function validarRegraAnalise(regra) {
       if (lote[chave] !== undefined && typeof lote[chave] !== "boolean")
         erros.push(`Lote: ${chave} deve ser sim ou não.`);
     if (lote.por_vaga !== undefined && lote.por_vaga !== null) {
-      const porVaga = ehObjeto(lote.por_vaga) ? Object.entries(lote.por_vaga) : null;
+      const porVaga = ehObjeto(lote.por_vaga)
+        ? Object.entries(lote.por_vaga)
+        : null;
       if (
         !porVaga ||
         porVaga.length > 500 ||

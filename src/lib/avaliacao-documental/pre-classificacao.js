@@ -168,11 +168,21 @@ export function tamanhoDoLote(lote, vaga) {
     };
   const imediatas = vaga?.vagas_imediatas;
   if (imediatas === null || imediatas === undefined)
-    return { tamanho: null, descricao: "", por_modalidade: null, aviso: "SEM_QUADRO" };
+    return {
+      tamanho: null,
+      descricao: "",
+      por_modalidade: null,
+      aviso: "SEM_QUADRO",
+    };
   const cr = lote?.inclui_cr && vaga?.cadastro_reserva ? 1 : 0;
   const base = imediatas + cr;
   if (base <= 0)
-    return { tamanho: null, descricao: "", por_modalidade: null, aviso: "SEM_VAGAS" };
+    return {
+      tamanho: null,
+      descricao: "",
+      por_modalidade: null,
+      aviso: "SEM_VAGAS",
+    };
   const multiplo = lote?.multiplo ?? 1;
   const tamanho = vezes(multiplo, base);
   const descricao = cr
@@ -182,7 +192,12 @@ export function tamanhoDoLote(lote, vaga) {
     return { tamanho, descricao, por_modalidade: null, aviso: null };
   const porModalidade = vagasPorModalidade(vaga?.modalidades);
   if (!porModalidade)
-    return { tamanho, descricao, por_modalidade: null, aviso: "QUADRO_SEM_MODALIDADES" };
+    return {
+      tamanho,
+      descricao,
+      por_modalidade: null,
+      aviso: "QUADRO_SEM_MODALIDADES",
+    };
   const tamanhos = { AC: vezes(multiplo, (porModalidade.AC ?? 0) + cr) };
   for (const [codigo, n] of Object.entries(porModalidade))
     if (codigo !== "AC" && n > 0) tamanhos[codigo] = vezes(multiplo, n);
@@ -284,7 +299,9 @@ export function preClassificarVaga({
       }
     }
     const art = artDasColunas(colunas);
-    const declarada = temDeclarada ? calcularNotaDeclarada(regra, colunas) : null;
+    const declarada = temDeclarada
+      ? calcularNotaDeclarada(regra, colunas)
+      : null;
     const nota = art ?? declarada?.total ?? null;
     linhas.push({
       id: c.id,
@@ -300,7 +317,9 @@ export function preClassificarVaga({
       declarada: declarada ? declarada.total : null,
       declarada_parciais: declarada ? declarada.parciais : null,
       sem_mapa: declarada ? declarada.sem_mapa : 0,
-      divergente: declarada ? divergeDaArt(art, declarada.total, tolerancia) : false,
+      divergente: declarada
+        ? divergeDaArt(art, declarada.total, tolerancia)
+        : false,
       modalidade: modalidadeDoCandidato(regra, colunas),
       posicao: null,
       posicao_modalidade: null,
@@ -331,7 +350,8 @@ export function preClassificarVaga({
     : ["GERAL"];
   const tamanhoDaLista = (b) =>
     t.por_modalidade ? t.por_modalidade[b] : t.tamanho;
-  const cabeNaLista = (l, b) => b === "GERAL" || b === "AC" || l.modalidade === b;
+  const cabeNaLista = (l, b) =>
+    b === "GERAL" || b === "AC" || l.modalidade === b;
   const listaDoMembro = (l) =>
     ordemDasListas.includes(l.lista_lote) ? l.lista_lote : ordemDasListas[0];
 
@@ -446,7 +466,10 @@ export function preClassificarVaga({
   // A regra diminuiu o lote: quem já estava fica (só sai eliminado).
   if (t.tamanho !== null)
     for (const b of ordemDasListas)
-      if (herdados.filter((m) => listaDoMembro(m) === b).length > tamanhoDaLista(b))
+      if (
+        herdados.filter((m) => listaDoMembro(m) === b).length >
+        tamanhoDaLista(b)
+      )
         avisos.add("LOTE_ACIMA_DO_TAMANHO");
 
   const notasDoLote = membros.map((m) => m.nota).filter((n) => n !== null);

@@ -149,14 +149,22 @@ describe("peças da conta", () => {
     expect(
       tamanhoDoLote(
         { ...lote, por_modalidade: true },
-        { vagas_imediatas: 2, cadastro_reserva: false, modalidades: { AC: null } },
+        {
+          vagas_imediatas: 2,
+          cadastro_reserva: false,
+          modalidades: { AC: null },
+        },
       ).aviso,
     ).toBe("QUADRO_SEM_MODALIDADES");
   });
 
   it("vagas por modalidade do quadro", () => {
     expect(
-      vagasPorModalidade({ "Ampla Concorrência": "2", PcD: null, Indígenas: 1 }),
+      vagasPorModalidade({
+        "Ampla Concorrência": "2",
+        PcD: null,
+        Indígenas: 1,
+      }),
     ).toEqual({ AC: 2, PCD: 0, PI: 1 });
     expect(vagasPorModalidade({ "Ampla Concorrência": null })).toBeNull();
   });

@@ -31,6 +31,7 @@ function respostaFalsa(status, corpo) {
 function montarBuscar({
   usuario = 200,
   admin = true,
+  coordena = false,
   emCurso = {},
   despacho = 204,
   listagem = 200,
@@ -42,6 +43,8 @@ function montarBuscar({
       return respostaFalsa(usuario, { id: USUARIO });
     if (url.endsWith("/rest/v1/rpc/pode_disparar_carga"))
       return respostaFalsa(200, admin);
+    if (url.endsWith("/rest/v1/rpc/pode_recalcular_pre_classificacao"))
+      return respostaFalsa(200, coordena);
     const runs = url.match(/workflows\/([^/]+)\/runs/);
     if (runs) {
       const robo = ROBOS_DE_CARGA.find((r) => r.workflow === runs[1]);
@@ -186,6 +189,68 @@ describe("/api/rodar-carga", () => {
     expect(res.corpo.erro).toMatch(/GITHUB_DISPATCH_TOKEN/);
     const fora = await chamar({ despacho: 500 });
     expect(fora.res.corpo.erro).toMatch(/não respondeu/);
+  });
+
+  it("Recalcular: a coordenação do edital dispara a pré-classificação só daquele edital", async () => {
+    const edital = "11111111-1111-4111-a111-111111111193";
+    const { res, chamadas } = await chamar({
+      admin: false,
+      coordena: true,
+      corpo: { robo: "pre_classificacao", edital },
+    });
+    expect(res.statusCode).toBe(202);
+    const permissao = chamadas.find((c) =>
+      c.url.includes("pode_recalcular_pre_classificacao"),
+    );
+    expect(JSON.parse(permissao.opcoes.body)).toEqual({ p_edital: edital });
+    expect(permissao.opcoes.headers.Authorization).toBe(
+      "Bearer token-do-usuario",
+    );
+    const despacho = chamadas.find((c) => c.url.endsWith("/dispatches"));
+    expect(despacho.url).toContain("/workflows/pre-classificacao.yml/");
+    expect(JSON.parse(despacho.opcoes.body).inputs).toEqual({
+      modo: "normal",
+      disparado_por: USUARIO,
+      editais: edital,
+    });
+  });
+
+  it("Recalcular: quem não coordena o edital, edital inválido e robô que não é por edital são recusados", async () => {
+    const edital = "11111111-1111-4111-a111-111111111193";
+    const semCoordenar = await chamar({
+      admin: false,
+      corpo: { robo: "pre_classificacao", edital },
+    });
+    expect(semCoordenar.res.statusCode).toBe(403);
+    expect(semCoordenar.res.corpo.erro).toMatch(/coordenação da avaliação/);
+    expect(semCoordenar.chamadas.some((c) => c.url.includes("github"))).toBe(
+      false,
+    );
+    const invalido = await chamar({
+      corpo: { robo: "pre_classificacao", edital: "93/2026" },
+    });
+    expect(invalido.res.statusCode).toBe(400);
+    // O edital não abre os outros robôs para quem não é administrador global.
+    const outroRobo = await chamar({
+      admin: false,
+      coordena: true,
+      corpo: { robo: "empregare", edital },
+    });
+    expect(outroRobo.res.statusCode).toBe(403);
+    expect(
+      outroRobo.chamadas.some((c) =>
+        c.url.includes("pode_recalcular_pre_classificacao"),
+      ),
+    ).toBe(false);
+  });
+
+  it("Rodar agora da pré-classificação pelo administrador: todos os editais", async () => {
+    const { res, chamadas } = await chamar({
+      corpo: { robo: "pre_classificacao" },
+    });
+    expect(res.statusCode).toBe(202);
+    const despacho = chamadas.find((c) => c.url.endsWith("/dispatches"));
+    expect(JSON.parse(despacho.opcoes.body).inputs.editais).toBe("");
   });
 
   it("só GET e POST", async () => {
