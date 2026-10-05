@@ -18,6 +18,8 @@ tabela.jsx              tabela de resultados (TabelaInfinita) e o selo do parece
 gaveta.jsx              detalhe da entrevista (caminho do candidato, critérios) e aprovados sem entrevista
 conducao.jsx            "Conduzir entrevistas": edital, liberação (admin global), os três passos
 ficha.jsx               ficha de notas por avaliador (Enter avança, Ctrl+Enter salva)
+agenda-do-dia.jsx       "Agenda do dia" (só leitura): a agenda salva na Classificação › Agenda,
+                        por dia e banca; a linha do convocado abre a ficha
 roteiros.jsx            cartões dos roteiros e o editor (gaveta), com versões
 partes.jsx              regra de convocação, composição da banca, botão de linha
 marcos.js               marco "vaga pronta" (comemoração)

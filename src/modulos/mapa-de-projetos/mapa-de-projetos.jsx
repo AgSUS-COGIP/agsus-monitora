@@ -24,6 +24,11 @@ import { usarUltimo } from "../mapa-saude-indigena/usar-ultimo.js";
 import { balaoDoLugar } from "./balao.js";
 import { ESCOLHA_INICIAL } from "./carregador.js";
 import { EditorDeCoordenadasDosProjetos } from "./editor-de-coordenadas.jsx";
+import {
+  BotaoDeRecolher,
+  PainelDoEditor,
+  usarModoDeEdicao,
+} from "../editor-de-coordenadas/modo-de-edicao.jsx";
 import { CorDoProjeto, ListaDeMunicipios } from "./lista.jsx";
 
 /*
@@ -92,7 +97,6 @@ export function MapaDeProjetos({
   const resultado = usarLugares(carregador, area, carregadoEm);
   const carregando = !resultado;
   const podeEditar = podeEditarCoordenadas(perfil);
-  const [editandoCoordenadas, definirEditandoCoordenadas] = useState(false);
   // O que o editor gravou nesta montagem, por cima do que o carregador leu.
   const [corrigidas, definirCorrigidas] = useState([]);
   const lidos = resultado?.municipios;
@@ -139,6 +143,12 @@ export function MapaDeProjetos({
   const controle = useRef({ pegar() {}, soltar() {} });
   // Quantas vezes o enquadramento teve de ser refeito (apareceu, mudou de tamanho).
   const [aparecimentos, aparecer] = useReducer((n) => n + 1, 0);
+  const modo = usarModoDeEdicao({
+    mapa,
+    permitido: podeEditar,
+    pegar: () => controle.current.pegar(),
+  });
+  const idDoPainel = `${idDoMapa}-coordenadas`;
 
   // Cria o mapa uma vez; o StrictMode desfaz e refaz, e o `remove` limpa tudo.
   useEffect(() => {
@@ -270,7 +280,10 @@ export function MapaDeProjetos({
       role="region"
     >
       <section
-        className="ui-card mapa-si-painel mapa-si-painel--nacional"
+        className={classes(
+          "ui-card mapa-si-painel mapa-si-painel--nacional",
+          modo.editando && "mapa-si-painel--editando",
+        )}
         aria-labelledby={`${idDoMapa}-titulo`}
       >
         <header className="mapa-si-painel__topo">
@@ -287,10 +300,11 @@ export function MapaDeProjetos({
               <button
                 type="button"
                 className="btn small"
-                aria-pressed={editandoCoordenadas}
-                aria-expanded={editandoCoordenadas}
-                aria-controls={`${idDoMapa}-coordenadas`}
-                onClick={() => definirEditandoCoordenadas((atual) => !atual)}
+                aria-pressed={modo.editando}
+                aria-expanded={modo.editando}
+                aria-controls={idDoPainel}
+                title={modo.editando ? "Sair da edição (Esc)" : undefined}
+                onClick={modo.alternar}
               >
                 Coordenadas
               </button>
@@ -307,7 +321,7 @@ export function MapaDeProjetos({
             >
               Brasil
             </button>
-            {botaoDeTelaCheia}
+            {modo.editando ? null : botaoDeTelaCheia}
           </div>
         </header>
         <div className="mapa-si-painel__corpo">
@@ -347,11 +361,11 @@ export function MapaDeProjetos({
               </LegendaFlutuante>
             ) : null}
           </div>
-          {podeEditar && editandoCoordenadas ? (
-            <aside
-              className="mapa-si-lista"
-              id={`${idDoMapa}-coordenadas`}
-              aria-label="Coordenadas do mapa"
+          {modo.editando ? (
+            <PainelDoEditor
+              id={idDoPainel}
+              rotulo="Coordenadas do mapa"
+              modo={modo}
             >
               <EditorDeCoordenadasDosProjetos
                 L={L}
@@ -362,9 +376,17 @@ export function MapaDeProjetos({
                 aoAtualizarMapa={(data, ponto) =>
                   chamadas.current.aoAtualizarCoordenada(data, ponto)
                 }
-                aoFechar={() => definirEditandoCoordenadas(false)}
+                aoFechar={modo.fechar}
+                areaLivre={modo.areaLivre}
+                versaoDaArea={modo.versaoDaArea}
+                botaoDeRecolher={
+                  <BotaoDeRecolher
+                    modo={modo}
+                    idDoConteudo={`${idDoPainel}-conteudo`}
+                  />
+                }
               />
-            </aside>
+            </PainelDoEditor>
           ) : (
             <ListaDeMunicipios
               id={`${idDoMapa}-lista`}

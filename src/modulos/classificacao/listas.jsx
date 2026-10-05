@@ -7,6 +7,7 @@ import {
   avisosAgrupados,
   filtrosAtivosDoRecorte,
   listaDaFase,
+  listaDesatualizada,
   recortarResultado,
   RECORTE_VAZIO,
 } from "../../lib/classificacao/dados.js";
@@ -39,7 +40,25 @@ import {
   avisos no topo. "Gerar" registra a lista (versão da regra, quem, quando,
   hash); "Exportar" sai de uma lista registrada (PDF pela impressão, DOCX,
   XLSX). O empate que espera sorteio ou decisão abre o registro aqui.
+  Nota alterada por ajuste aprovado em recurso: selo "Recurso nº X" na linha
+  e a frase na explicação; lista gerada antes de um ajuste aprovado (ou do
+  cancelamento de um aprovado): aviso para gerar de novo.
 */
+
+/* "Recurso nº 12" ao lado do nome: a nota veio de um ajuste aprovado em recurso. */
+export function MarcaDoRecurso({ recursos }) {
+  if (!recursos?.length) return null;
+  const numeros = recursos.map((n) => `nº ${n}`).join(", ");
+  return (
+    <Selo
+      tom="revisar"
+      className="classificacao-marca-recurso"
+      titulo={`Nota alterada pelo recurso ${numeros}`}
+    >
+      Recurso {numeros}
+    </Selo>
+  );
+}
 
 const SITUACOES = {
   VAGA: ["aprovado", "Vaga"],
@@ -269,7 +288,8 @@ function TabelaDaVaga({ vaga, casas, rotulosDasModalidades, aoAbrir }) {
                       onClick={() => aoAbrir(l.analiseId)}
                     >
                       {l.nome}
-                    </button>
+                    </button>{" "}
+                    <MarcaDoRecurso recursos={l.recursos} />
                   </td>
                   <td>{formatarNota(l.nota, casas)}</td>
                   <td>
@@ -321,7 +341,8 @@ function TabelaDaVaga({ vaga, casas, rotulosDasModalidades, aoAbrir }) {
                         onClick={() => aoAbrir(e.analiseId)}
                       >
                         {e.nome}
-                      </button>
+                      </button>{" "}
+                      <MarcaDoRecurso recursos={e.recursos} />
                     </td>
                     <td>{MOTIVOS_DE_ELIMINACAO[e.motivo] || e.motivo}</td>
                     <td>{e.detalhe || "—"}</td>
@@ -350,6 +371,11 @@ function GavetaDoCandidato({
       tituloId="classificacaoCandidatoTitulo"
       sobretitulo={vaga?.cabecalho || ""}
       titulo={explicacao.nome}
+      resumo={
+        explicacao.recursos?.length ? (
+          <MarcaDoRecurso recursos={explicacao.recursos} />
+        ) : undefined
+      }
       rotuloDoFechar="Fechar a explicação"
       aoFechar={aoFechar}
     >
@@ -604,6 +630,7 @@ function Acoes({
   estado,
   aoGerado,
   aoCarregarRegistro,
+  aoAbrirAgenda,
 }) {
   const [lista, setLista] = useState("todas");
   const [fase, setFase] = useState("");
@@ -612,6 +639,7 @@ function Acoes({
   const dados = e.dados;
   const geracoes = (dados?.listas || []).filter((l) => l.tipo === tipo);
   const ultima = registro || geracoes[0] || null;
+  const desatualizada = listaDesatualizada(ultima, dados?.ajustes_mudaram_em);
   const modalidades = normalizarRegra(
     dados?.regra?.configuracao,
   ).modalidades.filter((m) => m.lista_propria);
@@ -733,6 +761,17 @@ function Acoes({
             {rotulo}
           </button>
         ))}
+        {tipo === "CONVOCACAO" && aoAbrirAgenda ? (
+          <button
+            type="button"
+            className="btn secondary"
+            data-acao="abrir-agenda"
+            onClick={aoAbrirAgenda}
+          >
+            <i className="fa-solid fa-calendar-days" aria-hidden="true" />{" "}
+            Agenda das entrevistas
+          </button>
+        ) : null}
         {e.podeEditar && ultima && !ultima.publicada ? (
           <button
             type="button"
@@ -757,6 +796,15 @@ function Acoes({
           {ultima.publicada ? " · publicada" : ""}
         </p>
       ) : null}
+      {desatualizada ? (
+        <Aviso
+          tom="warning"
+          papel="status"
+          className="classificacao-desatualizada"
+        >
+          Há recursos aprovados depois desta lista — gere de novo.
+        </Aviso>
+      ) : null}
       {documento ? (
         <DocumentoDoSei
           estado={estado}
@@ -773,7 +821,7 @@ function Acoes({
   );
 }
 
-export function Listas({ estado, e, calcular }) {
+export function Listas({ estado, e, calcular, aoAbrirAgenda }) {
   // Até a pessoa escolher, a lista acompanha a fase do edital.
   const [escolhido, setEscolhido] = useState(null);
   const [recorte, setRecorte] = useState(RECORTE_VAZIO);
@@ -851,6 +899,7 @@ export function Listas({ estado, e, calcular }) {
             aoCarregarRegistro={(novo) =>
               setRegistros((r) => ({ ...r, [tipo]: { ...r[tipo], ...novo } }))
             }
+            aoAbrirAgenda={aoAbrirAgenda}
           />
           <Filtros
             resultado={resultado}

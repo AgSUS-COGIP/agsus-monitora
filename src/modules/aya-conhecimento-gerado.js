@@ -746,7 +746,7 @@ export const VERBETES_AYA = Object.freeze([
       "padrao das publicacoes da agsus",
     ],
     resposta:
-      'O documento segue o Comunicado Externo que a AgSUS publica no SEI (editais 83/2026 e 100/2026): "Brasília, na data da assinatura digital." à direita; o título em caixa alta (ex.: RESULTADO PRELIMINAR - ETAPA DE ANÁLISE CURRICULAR, CONVOCAÇÃO PARA ENTREVISTA, RESULTADO FINAL - ETAPA DE ENTREVISTA, RESULTADO FINAL - PROCESSO SELETIVO); "1. DISPOSIÇÕES PRELIMINARES" com os itens 1.1, 1.2…; uma tabela por vaga, com o cabeçalho "VAGA código - cargo - lotação - unidade - N vagas (x AC + y Pretos e Pardos + CR)" ou "- Cadastro Reserva", todas as vagas, inclusive as vazias ("Não houve candidatos aptos."); e "2. DISPOSIÇÕES FINAIS". Colunas como nas publicações: avaliação documental — Classificação, Nome, (Modalidade), Nota Final e as parciais da regra; eliminados — Nome, Nota, parciais e Justificativa; convocação — uma tabela Nº, NOME, Vaga, (Modalidade), DATA e HORA, com data e hora em branco para preencher no SEI; entrevista — Classificação, NOME, NOTA (empate na mesma posição); resultado final — CLASSIFICAÇÃO, NOME, NOTA FINAL, e no fim o rodapé da regra. O timbrado, a assinatura eletrônica e o rodapé "título (nº SEI) SEI processo / pg. N" quem põe é o SEI.',
+      'O documento segue o Comunicado Externo que a AgSUS publica no SEI (editais 83/2026 e 100/2026): "Brasília, na data da assinatura digital." à direita; o título em caixa alta (ex.: RESULTADO PRELIMINAR - ETAPA DE ANÁLISE CURRICULAR, CONVOCAÇÃO PARA ENTREVISTA, RESULTADO FINAL - ETAPA DE ENTREVISTA, RESULTADO FINAL - PROCESSO SELETIVO); "1. DISPOSIÇÕES PRELIMINARES" com os itens 1.1, 1.2…; uma tabela por vaga, com o cabeçalho "VAGA código - cargo - lotação - unidade - N vagas (x AC + y Pretos e Pardos + CR)" ou "- Cadastro Reserva", todas as vagas, inclusive as vazias ("Não houve candidatos aptos."); e "2. DISPOSIÇÕES FINAIS". Colunas como nas publicações: avaliação documental — Classificação, Nome, (Modalidade), Nota Final e as parciais da regra; eliminados — Nome, Nota, parciais e Justificativa; convocação — uma tabela Nº, NOME, Vaga, (Modalidade), DATA e HORA, com data e hora da agenda das entrevistas salva (sem agenda, em branco para preencher no SEI); entrevista — Classificação, NOME, NOTA (empate na mesma posição); resultado final — CLASSIFICAÇÃO, NOME, NOTA FINAL, e no fim o rodapé da regra. O timbrado, a assinatura eletrônica e o rodapé "título (nº SEI) SEI processo / pg. N" quem põe é o SEI.',
     fato: "No MONITORA, o documento da lista de classificação segue o Comunicado Externo publicado no SEI; timbrado, assinatura e rodapé ficam com o SEI.",
     fonte: "src/lib/classificacao/documento-sei.js",
     abrir: "classificacao",
@@ -762,7 +762,7 @@ export const VERBETES_AYA = Object.freeze([
       "numeracao sumiu no sei",
     ],
     resposta:
-      'Gere a lista, escolha o recorte e a publicação e clique em "Copiar para o SEI". No SEI, crie o documento (Comunicado Externo), abra o editor, clique no corpo e cole (Ctrl+V); depois confira, preencha data e hora na convocação, se for o caso, e assine. O que é copiado: o HTML com as classes de estilo do próprio SEI (Item_Nivel1 e Item_Nivel2 numeram sozinhos "1." e "1.1.", Texto_Centralizado_Maiusculas, Tabela_Texto_Centralizado…) e tabelas com borda e largura em porcentagem, além do texto puro numerado para quem cola fora do SEI. Se o navegador não liberar o formato com tabelas, a cópia vai só como texto e a tela avisa — aí use o DOCX. Se a numeração dos itens não aparecer no SEI, o editor removeu as classes ao colar: aplique o estilo "Item_Nivel1/Item_Nivel2" pelo menu de estilos ou use o DOCX.',
+      'Gere a lista, escolha o recorte e a publicação e clique em "Copiar para o SEI". No SEI, crie o documento (Comunicado Externo), abra o editor, clique no corpo e cole (Ctrl+V); depois confira, preencha data e hora na convocação se não houver agenda salva, e assine. O que é copiado: o HTML com as classes de estilo do próprio SEI (Item_Nivel1 e Item_Nivel2 numeram sozinhos "1." e "1.1.", Texto_Centralizado_Maiusculas, Tabela_Texto_Centralizado…) e tabelas com borda e largura em porcentagem, além do texto puro numerado para quem cola fora do SEI. Se o navegador não liberar o formato com tabelas, a cópia vai só como texto e a tela avisa — aí use o DOCX. Se a numeração dos itens não aparecer no SEI, o editor removeu as classes ao colar: aplique o estilo "Item_Nivel1/Item_Nivel2" pelo menu de estilos ou use o DOCX.',
     fato: "",
     fonte:
       "src/lib/classificacao/documento-sei.js; src/modulos/classificacao/documento-no-navegador.js",
@@ -878,6 +878,24 @@ export const VERBETES_AYA = Object.freeze([
     fonte:
       "supabase/migrations/20261002150000_classificacao.sql; src/lib/access-roles.js",
     abrir: "config:acessos",
+  },
+  {
+    arquivo: "regras-da-classificacao.md",
+    titulo: "Nota alterada pelo recurso",
+    perguntas: [
+      "nota alterada pelo recurso",
+      "recurso mudou a nota na classificacao",
+      "ajuste aprovado na classificacao",
+      "ha recursos aprovados depois desta lista",
+      "gere de novo a lista",
+      "lista desatualizada",
+    ],
+    resposta:
+      'No MONITORA, a Classificação aplica os ajustes da pontuação aprovados em recurso por cima da nota da análise (a planilha não muda): o valor novo de cada componente substitui o da análise e o candidato aparece com o selo "Recurso nº X" na tabela; a explicação da posição diz o que mudou ("Nota alterada pelo recurso nº X: …") e o retrato da lista gerada guarda o número do recurso. Se a análise mudar depois do ajuste, a tela avisa e vale o ajuste. Quando há ajuste aprovado (ou cancelado depois de aprovado) depois da última lista gerada, a tela avisa "Há recursos aprovados depois desta lista — gere de novo". O documento do SEI segue o modelo das publicações, sem marca.',
+    fato: "",
+    fonte:
+      "src/lib/classificacao/motor.js (aplicarAjustes); src/lib/classificacao/ajustes.js; src/modulos/classificacao/listas.jsx; supabase/migrations/20261005130000_recurso_ajusta_pontuacao.sql",
+    abrir: "classificacao",
   },
   {
     arquivo: "regras-da-lista-de-aprovados.md",
@@ -1825,6 +1843,108 @@ export const VERBETES_AYA = Object.freeze([
       ".github/workflows/sincronizar-entrevistas.yml; docs/sincronizacao-das-planilhas.md; supabase/migrations/20260929235000_entrevistas.sql",
   },
   {
+    arquivo: "regras-das-entrevistas.md",
+    titulo: "Agenda das entrevistas",
+    perguntas: [
+      "agenda das entrevistas",
+      "como funciona a agenda das entrevistas",
+      "onde fica a agenda das entrevistas",
+      "gerar os horarios das entrevistas",
+      "marcar horario da entrevista",
+    ],
+    resposta:
+      'A agenda das entrevistas fica na Classificação, na visão Agenda (ou pelo botão "Agenda das entrevistas" da lista Convocação para entrevista), porque os convocados saem dessa lista e a agenda preenche o documento dela. Cada edital tem a sua regra da agenda, com versões, e uma agenda salva: um horário por convocado, com dia, hora de Brasília e banca. Os convocados vêm da última lista de convocação gerada; sem lista gerada, do cálculo atual, com um aviso. Quem conduz vê a agenda do dia em Entrevistas › Conduzir entrevistas. Salvar a regra e a agenda exige Editor em Entrevistas ou em Classificação; ler, Leitor em uma delas; sempre com acesso à área e ao edital.',
+    fato: "",
+    fonte:
+      "src/modulos/classificacao/agenda.jsx; supabase/migrations/20261005120000_agenda_das_entrevistas.sql",
+    abrir: "classificacao",
+  },
+  {
+    arquivo: "regras-das-entrevistas.md",
+    titulo: "Regra da agenda das entrevistas",
+    perguntas: [
+      "regra da agenda",
+      "como configurar a regra da agenda",
+      "bancas simultaneas",
+      "duracao de cada entrevista",
+      "intervalo entre entrevistas",
+      "pausa na agenda",
+      "reservar o primeiro horario",
+      "agrupar por cargo",
+      "ordem dos candidatos na agenda",
+    ],
+    resposta:
+      'A regra da agenda tem: os dias (um intervalo, com a opção "Só dias úteis", ou uma lista de dias, em dd/mm/aaaa) e os dias sem entrevista (feriados); de 1 a 6 períodos por dia (ex.: 08:00–12:00 e 14:00–18:00), no horário de Brasília; a duração de cada entrevista (5 a 240 minutos) e o intervalo entre elas (0 a 120); uma pausa opcional (ex.: almoço), em que nenhuma entrevista acontece; de 1 a 20 bancas simultâneas, com nome (os membros cadastrados na banca de Entrevistas aparecem junto); a ordem dos candidatos (classificação na convocação, vaga/cargo, alfabética ou modalidade, com a ampla primeiro); "Agrupar por cargo" (todos de um cargo antes do próximo, e cada cargo começa num horário novo); e "Reservar o primeiro horário de cada período" (fica livre para encaixe). Até 60 dias. Salvar cria uma versão nova; da segunda em diante, com motivo.',
+    fato: "",
+    fonte:
+      "src/lib/agenda-das-entrevistas.js; supabase/migrations/20261005120000_agenda_das_entrevistas.sql",
+    abrir: "classificacao",
+  },
+  {
+    arquivo: "regras-das-entrevistas.md",
+    titulo: "Como a agenda é gerada",
+    perguntas: [
+      "como a agenda e gerada",
+      "convocado sem horario",
+      "a agenda nao cabe",
+      "sobram horarios na agenda",
+      "distribuicao pelas bancas",
+    ],
+    resposta:
+      '"Gerar agenda" monta os horários de cada dia a partir de cada período: começa no início, avança de duração mais intervalo e pula a pausa. Em cada horário cabe uma entrevista por banca. Os convocados, na ordem da regra, ocupam os horários em ordem: banca 1, banca 2… no mesmo horário, depois o próximo horário e o próximo dia. Se não couber, a tela diz quantos ficaram sem horário e quanto tempo de entrevista falta; se sobrar muito (30% dos lugares ou mais), diz quantos horários sobram e quantos dias bastam. O resultado é um rascunho: só vale depois de "Salvar agenda".',
+    fato: "",
+    fonte: "src/lib/agenda-das-entrevistas.js",
+    abrir: "classificacao",
+  },
+  {
+    arquivo: "regras-das-entrevistas.md",
+    titulo: "Ajuste manual da agenda",
+    perguntas: [
+      "ajustar a agenda",
+      "trocar o horario de um candidato",
+      "trocar dois candidatos de horario",
+      "conflito na agenda",
+      "gerar a agenda de novo",
+    ],
+    resposta:
+      'Na agenda, "Mudar" abre o ajuste de um convocado: escolher um horário livre (de qualquer banca, inclusive os reservados) ou "Sem horário", ou trocar de lugar com outro convocado (os dois trocam dia, hora e banca). O ajuste fica marcado como "Ajuste manual". Conflito é a mesma banca com horários que se sobrepõem no mesmo dia ou o mesmo candidato duas vezes: a tela lista os conflitos e não deixa salvar até resolver; o banco também recusa. "Gerar de novo" sobre uma agenda com ajustes manuais pergunta antes, porque a distribuição da regra substitui os ajustes. Cada gravação fica no histórico (Gravações), com quem, quando e o que mudou.',
+    fato: "",
+    fonte:
+      "src/modulos/classificacao/agenda.jsx; src/lib/agenda-das-entrevistas.js; supabase/migrations/20261005120000_agenda_das_entrevistas.sql",
+    abrir: "classificacao",
+  },
+  {
+    arquivo: "regras-das-entrevistas.md",
+    titulo: "Data e hora no documento da convocação",
+    perguntas: [
+      "data e hora na convocacao",
+      "preencher data e hora da convocacao",
+      "agenda no documento do sei",
+      "exportar a agenda",
+    ],
+    resposta:
+      "Com a agenda salva, o documento da Convocação para entrevista (Copiar para o SEI, Baixar DOCX, PDF e Como fica no SEI) sai com as colunas DATA e HORA preenchidas com o dia e a hora de início de cada convocado; quem não tem horário fica em branco, para preencher no SEI. O modelo publicado não ganha coluna de banca. O XLSX da agenda (botão XLSX na visão Agenda) traz dia, hora de início e fim, banca, nome, vaga, cargo, modalidade e se o horário foi ajustado à mão.",
+    fato: "",
+    fonte:
+      "src/lib/classificacao/documento-sei.js; src/lib/agenda-das-entrevistas.js",
+    abrir: "classificacao",
+  },
+  {
+    arquivo: "regras-das-entrevistas.md",
+    titulo: "Agenda do dia em Conduzir entrevistas",
+    perguntas: [
+      "agenda do dia",
+      "agenda da banca",
+      "quem entrevisto hoje",
+      "horarios de hoje da entrevista",
+    ],
+    resposta:
+      'Em Conduzir entrevistas, ao abrir o edital, o cartão "Agenda do dia" mostra a agenda salva por horário: escolha o dia (abre em hoje, no horário de Brasília, ou no próximo dia com entrevista) e, havendo mais de uma, a banca. A linha de quem já está convocado no sistema abre a ficha de notas. A agenda é só de consulta ali; ela é montada e ajustada na Classificação, visão Agenda. Sem agenda salva, o cartão não aparece.',
+    fato: "",
+    fonte: "src/modulos/entrevistas/agenda-do-dia.jsx",
+    abrir: "entrevistas",
+  },
+  {
     arquivo: "regras-do-chat.md",
     titulo: "O que é o chat",
     perguntas: [
@@ -2295,10 +2415,28 @@ export const VERBETES_AYA = Object.freeze([
       "como usar o editor de coordenadas",
     ],
     resposta:
-      'O administrador global e o Gestor podem usar "Coordenadas" no mapa da Saúde Indígena, no Brasil ou dentro de um DSEI. A lista do editor substitui a lista lateral: busque pelo nome, CNES, município ou DSEI e clique no ponto — o mapa centraliza nele e aparece um pin de prévia. Para ajustar a posição, digite latitude e longitude ou arraste o pin de prévia; a posição atual só muda depois de confirmar. Confira a posição atual e a prévia, informe o motivo e a fonte da correção, clique em "Salvar coordenada" e depois em "Confirmar correção". "Desfazer prévia" volta à posição atual sem salvar. Se outra pessoa já mudou o ponto, atualize o mapa antes de tentar novamente. Essa opção não aparece para os demais perfis.',
+      'O administrador global e o Gestor podem usar "Coordenadas" no mapa da Saúde Indígena, no Brasil ou dentro de um DSEI. O mapa entra no modo de edição (veja "Modo de edição das coordenadas"): busque pelo nome, CNES, município ou DSEI e clique no ponto — o mapa enquadra o ponto e a sugestão mais provável na parte que o editor não cobre e aparece um pin de prévia. Para ajustar a posição, digite latitude e longitude ou arraste o pin de prévia; a posição atual só muda depois de confirmar. Confira a posição atual e a prévia, informe o motivo e a fonte da correção, clique em "Salvar coordenada" e depois em "Confirmar correção". "Desfazer prévia" volta à posição atual sem salvar. Se outra pessoa já mudou o ponto, atualize o mapa antes de tentar novamente. Essa opção não aparece para os demais perfis.',
     fato: "",
     fonte:
       "src/modulos/mapa-saude-indigena/editor-de-coordenadas.jsx; supabase/migrations/20261002160000_conferir_coordenadas_mapa.sql",
+  },
+  {
+    arquivo: "regras-do-mapa-saude-indigena.md",
+    titulo: "Modo de edição das coordenadas",
+    perguntas: [
+      "modo de edicao das coordenadas",
+      "mapa pequeno no editor",
+      "recolher editor",
+      "abrir editor",
+      "sair do editor de coordenadas",
+      "editor de coordenadas no celular",
+      "painel do editor cobre o mapa",
+    ],
+    resposta:
+      'No MONITORA, "Coordenadas" (nos mapas da Saúde Indígena e de Projetos) leva o mapa para a tela inteira, como a tela cheia: o mapa ocupa quase tudo e o editor fica num painel à direita, com rolagem própria; no celular, o mapa fica em cima e o editor numa folha embaixo. "Recolher editor" deixa só uma faixa estreita para ver e arrastar o pin com o mapa inteiro — o ponto escolhido, a prévia e o motivo continuam lá — e "Abrir editor" volta. Ao escolher um ponto, o mapa enquadra o ponto e a sugestão na parte visível, sem escondê-los atrás do painel. No painel, a busca e "Só pendentes" ficam numa linha, a contagem e os níveis de gravidade na seguinte, e a lista ocupa o resto; com um ponto escolhido, Sugestões, Correção e Histórico são seções que abrem e fecham pelo título (o Histórico começa fechado, com a contagem). Para sair, use "Voltar à lista", o botão "Coordenadas" ou Esc (num campo, o Esc fica com o campo); o mapa volta ao tamanho de sempre da Visão geral. Se o mapa estava em tela cheia, ele continua em tela cheia depois de sair do editor.',
+    fato: "",
+    fonte:
+      "src/modulos/editor-de-coordenadas/modo-de-edicao.jsx; src/modulos/editor-de-coordenadas/editor-de-coordenadas.jsx",
   },
   {
     arquivo: "regras-do-mapa-saude-indigena.md",
@@ -2353,7 +2491,7 @@ export const VERBETES_AYA = Object.freeze([
       "voltar posicao anterior",
     ],
     resposta:
-      'Abaixo do formulário, o editor mostra as últimas alterações do ponto: o tipo (Correção, Conferido ou Desfeito), quem fez, quando, a posição de antes e a de depois e o motivo. "Desfazer última alteração" volta a mais recente — a posição e, se for o caso, a conferência —, pede um motivo e grava isso como uma alteração nova: o histórico nunca é apagado. Só a última alteração de cada ponto pode ser desfeita, uma vez só; um desfazer não se desfaz (corrija a posição de novo).',
+      'Na seção Histórico, abaixo da Correção (fechada de início; clique no título para abrir), o editor mostra as últimas alterações do ponto: o tipo (Correção, Conferido ou Desfeito), quem fez, quando, a posição de antes e a de depois e o motivo. "Desfazer última alteração" volta a mais recente — a posição e, se for o caso, a conferência —, pede um motivo e grava isso como uma alteração nova: o histórico nunca é apagado. Só a última alteração de cada ponto pode ser desfeita, uma vez só; um desfazer não se desfaz (corrija a posição de novo).',
     fato: "",
     fonte:
       "src/modulos/editor-de-coordenadas/historico-do-ponto.jsx; supabase/migrations/20261002160000_conferir_coordenadas_mapa.sql",
@@ -2804,7 +2942,7 @@ export const VERBETES_AYA = Object.freeze([
       "conferir lugar de projetos",
     ],
     resposta:
-      'No mapa de Projetos, o administrador global e o Gestor veem o botão "Coordenadas", que troca a lista "Municípios por vagas" pelo editor; "Voltar à lista" fecha. Busque pelo lugar, município, UF, projeto, edital ou lotação e escolha um item: o mapa vai até ele e aparece um pin de prévia. Para mudar a posição, digite latitude e longitude, arraste o pin ou use uma sugestão ("Usar esta" ou um clique no círculo dela no mapa). Depois informe o motivo e a fonte e clique em "Salvar coordenada" e em "Confirmar correção". Se a posição já estiver certa, "Conferido" (com confirmação) tira o lugar da fila sem mudar a posição. O histórico abaixo mostra quem mudou, quando e de onde para onde, e "Desfazer última alteração" volta a mais recente, com motivo. Se outra pessoa mudou o lugar antes, atualize a página e tente de novo. O mapa já mostra a posição nova assim que ela é gravada.',
+      'No mapa de Projetos, o administrador global e o Gestor veem o botão "Coordenadas", que leva o mapa para a tela inteira com o editor num painel à direita (no celular, embaixo), como no mapa da Saúde Indígena: "Recolher editor" deixa só uma faixa, e "Voltar à lista", o próprio "Coordenadas" ou Esc saem e devolvem a lista "Municípios por vagas". Busque pelo lugar, município, UF, projeto, edital ou lotação e escolha um item: o mapa enquadra o lugar e a sugestão na parte que o painel não cobre e aparece um pin de prévia. Para mudar a posição, digite latitude e longitude, arraste o pin ou use uma sugestão ("Usar esta" ou um clique no círculo dela no mapa). Depois informe o motivo e a fonte e clique em "Salvar coordenada" e em "Confirmar correção". Se a posição já estiver certa, "Conferido" (com confirmação) tira o lugar da fila sem mudar a posição. A seção Histórico (fechada de início; abre pelo título) mostra quem mudou, quando e de onde para onde, e "Desfazer última alteração" volta a mais recente, com motivo. Se outra pessoa mudou o lugar antes, atualize a página e tente de novo. O mapa já mostra a posição nova assim que ela é gravada.',
     fato: "",
     fonte:
       "src/modulos/mapa-de-projetos/editor-de-coordenadas.jsx; src/modulos/editor-de-coordenadas/editor-de-coordenadas.jsx; supabase/migrations/20261002190000_coordenadas_mapa_projetos.sql",
@@ -3095,7 +3233,7 @@ export const VERBETES_AYA = Object.freeze([
       "nota mudou",
     ],
     resposta:
-      'No MONITORA, "Prazo não encontrado no cronograma" quer dizer que o cronograma do edital não traz o prazo de recurso daquela origem; "Candidato fora das análises" é o recurso cadastrado com os dados digitados, que vale conferir; "Mudança de nota ou classificação" junta a nota mudou (a nota atual da análise difere da guardada no cadastro do recurso) e a classificação marcada, para conferir no resultado final; "Prazo vence em até 2 dias" é o recurso sem resposta cujo prazo vence hoje ou nos próximos dois dias; "Devolvidos pelo jurídico" são os que voltaram para ajuste.',
+      'No MONITORA, "Prazo não encontrado no cronograma" quer dizer que o cronograma do edital não traz o prazo de recurso daquela origem; "Candidato fora das análises" é o recurso cadastrado com os dados digitados, que vale conferir; "Mudança de nota ou classificação" junta a nota mudou (a nota atual da análise difere da guardada no cadastro do recurso) e a classificação mudada pelo ajuste da pontuação aprovado, para conferir no resultado final; "Prazo vence em até 2 dias" é o recurso sem resposta cujo prazo vence hoje ou nos próximos dois dias; "Devolvidos pelo jurídico" são os que voltaram para ajuste.',
     fato: "",
     fonte:
       "src/lib/recursos-dos-candidatos.js; supabase/migrations/20260929120000_recursos.sql",
@@ -3115,5 +3253,59 @@ export const VERBETES_AYA = Object.freeze([
     fato: "",
     fonte:
       "supabase/migrations/20260929230000_recursos_modelos_anexos_respostas.sql",
+  },
+  {
+    arquivo: "regras-dos-recursos.md",
+    titulo: "Ajuste da pontuação no recurso",
+    perguntas: [
+      "ajuste da pontuacao",
+      "ajustar a pontuacao do candidato",
+      "mudar a pontuacao no recurso",
+      "mudar a nota no recurso",
+      "em recurso posso mudar a classificacao",
+      "como mudar a classificacao pelo recurso",
+      "alterar a nota do candidato no recurso",
+      "corrigir a nota do candidato",
+    ],
+    resposta:
+      'Sim. No recurso deferido (total ou parcialmente), a seção "Ajuste da pontuação" da gaveta mostra os componentes da nota que a regra de classificação do edital tem — pertencimento étnico, formação, cursos, experiência, nota documental, entrevista ou cada competência, ART — com o valor atual (da análise ou da entrevista) e um campo para o novo valor e a justificativa; a nota documental (e a da entrevista, quando há competências) é a soma das diferenças. Escreva a justificativa geral ou a de cada componente alterado. Antes de confirmar, a prévia mostra a nova nota, a nova posição do candidato e quem muda de lugar por causa dele, calculadas pelo motor da Classificação na lista da etapa do recurso (documental, entrevista ou resultado final). Propor é de quem decide o recurso (Parecer jurídico); pode-se propor já em análise jurídica. A nota da planilha nunca é sobrescrita: cada proposta é uma versão guardada com quem propôs, quando e os valores antes e depois.',
+    fato: "No MONITORA, o ajuste da pontuação do recurso deferido fica em tabela própria, em versões (proposto, aprovado, cancelado); a nota da análise curricular nunca é sobrescrita e só o ajuste aprovado vale na Classificação.",
+    fonte:
+      "src/modulos/recursos/ajuste.jsx; src/lib/classificacao/ajustes.js; supabase/migrations/20261005130000_recurso_ajusta_pontuacao.sql",
+    abrir: "recursos",
+  },
+  {
+    arquivo: "regras-dos-recursos.md",
+    titulo: "Aprovar ou cancelar o ajuste da pontuação",
+    perguntas: [
+      "aprovar o ajuste da pontuacao",
+      "quem aprova o ajuste",
+      "ajuste proposto",
+      "ajuste aprovado",
+      "cancelar o ajuste da pontuacao",
+      "previa do ajuste",
+      "reabrir cancela o ajuste",
+    ],
+    resposta:
+      "No MONITORA, o ajuste proposto ainda não vale. Aprova quem aprova a resposta hoje (Parecer jurídico) e só com o recurso deferido, total ou parcialmente: ao aprovar, a prévia é recalculada com os dados de agora e gravada junto, e o ajuste passa a valer na Classificação (o aprovado anterior do mesmo recurso, se houver, fica como versão cancelada). Cancelar pede motivo. Reabrir a decisão, indeferir, devolver para ajuste ou excluir o recurso cancela o ajuste proposto e o aprovado automaticamente, e tudo fica no histórico do recurso.",
+    fato: "",
+    fonte: "supabase/migrations/20261005130000_recurso_ajusta_pontuacao.sql",
+    abrir: "recursos",
+  },
+  {
+    arquivo: "regras-dos-recursos.md",
+    titulo: "O recurso mudou a classificação",
+    perguntas: [
+      "o recurso mudou a classificacao",
+      "caixa mudou a classificacao",
+      "classificacao mudou",
+      "marcar que mudou a classificacao",
+    ],
+    resposta:
+      'No MONITORA, "O recurso mudou a classificação" deixou de ser uma caixa marcada à mão: é marcada automaticamente quando o ajuste da pontuação aprovado muda a posição ou a situação do candidato (pela prévia calculada na aprovação) e desmarcada quando esse ajuste é cancelado. Os recursos marcados à mão antes dessa mudança continuam como estavam. A marca alimenta a pendência "Mudança de nota ou classificação", o filtro e o CSV.',
+    fato: "",
+    fonte:
+      "supabase/migrations/20261005130000_recurso_ajusta_pontuacao.sql; src/lib/recursos-dos-candidatos.js",
+    abrir: "recursos",
   },
 ]);

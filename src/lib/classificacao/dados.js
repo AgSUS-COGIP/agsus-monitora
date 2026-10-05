@@ -49,7 +49,20 @@ export const ROTULOS_DOS_AVISOS = Object.freeze({
   DESEMPATE_OBSOLETO: "Desempate registrado que não vale mais",
   COTAS_DIFERENTES_DA_CONVOCACAO: "Cotas diferentes da convocação do edital",
   VAGAS_DIFERENTES_DA_CONVOCACAO: "Vagas diferentes da convocação do edital",
+  AJUSTE_DIVERGENTE: "Nota da análise mudou depois do ajuste do recurso",
+  AJUSTE_SEM_ENTREVISTA: "Ajuste de entrevista sem entrevista lançada",
 });
+
+/*
+  A lista gerada é anterior a um ajuste da pontuação aprovado (ou ao
+  cancelamento de um aprovado) em recurso: a tela avisa "gere de novo".
+  `ajustesMudaramEm` vem do banco (obter_classificacao_do_edital).
+*/
+export function listaDesatualizada(lista, ajustesMudaramEm) {
+  const gerada = Date.parse(lista?.gerada_em ?? "");
+  const mudou = Date.parse(ajustesMudaramEm ?? "");
+  return Number.isFinite(gerada) && Number.isFinite(mudou) && mudou > gerada;
+}
 
 const PESO_DO_TOM = { danger: 0, warning: 1, info: 2 };
 

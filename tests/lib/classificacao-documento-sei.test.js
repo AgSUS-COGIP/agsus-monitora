@@ -410,6 +410,27 @@ describe("convocação para entrevista (83/2026, SEI 0663011)", () => {
       t.linhas.map((_, i) => String(i + 1)),
     );
   });
+
+  it("com a agenda das entrevistas salva, DATA e HORA saem preenchidas (e no DOCX); sem horário, em branco", () => {
+    const agenda = new Map([
+      [krumare.analise_id, { data: "2026-10-06", inicio: "08:30", banca: 2 }],
+    ]);
+    const comAgenda = documentoOficial(retratoDe("CONVOCACAO"), {
+      lista: "geral",
+      regra: REGRA_83,
+      agenda,
+    });
+    const [t] = comAgenda.blocos[0].tabelas;
+    // O modelo publicado não tem coluna de banca: as colunas não mudam.
+    expect(rotulos(t)).toEqual(["Nº", "NOME", "Vaga", "DATA", "HORA"]);
+    expect(t.linhas[0].slice(-2)).toEqual(["06/10/2026", "08:30"]);
+    expect(t.linhas[1].slice(-2)).toEqual(["", ""]);
+    expect(htmlParaSei(comAgenda)).toContain("06/10/2026");
+    const docx = new TextDecoder().decode(
+      gerarDocxOficial(comAgenda, { cabecalho: "AGÊNCIA" }),
+    );
+    expect(docx).toContain("06/10/2026");
+  });
 });
 
 describe("resultado da entrevista e resultado final (83/2026)", () => {

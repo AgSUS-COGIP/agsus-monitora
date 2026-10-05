@@ -13,7 +13,9 @@
   do download) e os modelos de resposta são de
   20260929230000_recursos_modelos_anexos_respostas.sql; o fluxo do parecer
   jurídico (`transicionar_recurso_candidato`, `pode_decidir`), de
-  20261001170000_recursos_parecer_juridico.sql.
+  20261001170000_recursos_parecer_juridico.sql. O ajuste da pontuação no
+  recurso deferido (versões, prévia com os dados da Classificação, propor,
+  aprovar e cancelar), de 20261005130000_recurso_ajusta_pontuacao.sql.
 
   Sem tela de carregamento: antes da primeira carga o painel é o skeleton
   (`carregado` falso); uma falha nela vira `erroAoCarregar`, com "Tentar
@@ -55,6 +57,10 @@ const ESTADO_INICIAL = Object.freeze({
   gaveta: null,
   /** id → detalhe (`get_recurso_candidato_detalhe`) ou `{ erro }`. */
   detalhes: new Map(),
+  /** id → `obter_ajustes_pontuacao_recurso` ou `{ erro }`. */
+  ajustes: new Map(),
+  /** id → dados da Classificação para a prévia (`obter_dados_previa_ajuste`) ou `{ erro }`. */
+  previas: new Map(),
   /** `{ modo: "novo" | "edicao", id, abertura }` ou `null`. */
   formulario: null,
   /** Gaveta "Modelos de resposta" (administração) aberta. */
@@ -177,7 +183,12 @@ export function criarEstadoDosRecursos({
   */
   function reiniciar() {
     pedido += 1;
-    publicar({ ...ESTADO_INICIAL, detalhes: new Map() });
+    publicar({
+      ...ESTADO_INICIAL,
+      detalhes: new Map(),
+      ajustes: new Map(),
+      previas: new Map(),
+    });
   }
   let identidade;
   supabase?.auth?.onAuthStateChange?.((_evento, sessao) => {
@@ -203,6 +214,8 @@ export function criarEstadoDosRecursos({
         ...ESTADO_INICIAL,
         area,
         detalhes: new Map(),
+        ajustes: new Map(),
+        previas: new Map(),
         comemoracoes: estado.comemoracoes,
       });
     } else {
@@ -252,6 +265,8 @@ export function criarEstadoDosRecursos({
       atualizando: false,
       carregadoEm: agora(),
       detalhes: new Map(),
+      ajustes: new Map(),
+      previas: new Map(),
     });
     if (estado.gaveta) void carregarDetalhe(estado.gaveta);
     return true;
@@ -416,6 +431,102 @@ export function criarEstadoDosRecursos({
       return true;
     });
   }
+
+  // ── Ajuste da pontuação (20261005130000) ──────────────────────────────
+
+  function guardarAjustes(id, valor) {
+    const ajustes = new Map(estado.ajustes);
+    ajustes.set(id, valor);
+    publicar({ ajustes });
+  }
+
+  /* As versões do ajuste do recurso (e quem pode propor/aprovar); um pedido por vez. */
+  const ajustesPedidos = new Set();
+  async function carregarAjustes(id) {
+    if (ajustesPedidos.has(id)) return;
+    ajustesPedidos.add(id);
+    try {
+      const { data, error } = await supabase.rpc(
+        "obter_ajustes_pontuacao_recurso",
+        { p_recurso: id },
+      );
+      guardarAjustes(id, error ? { erro: mensagemDe(error) } : data || {});
+    } finally {
+      ajustesPedidos.delete(id);
+    }
+  }
+
+  /*
+    O que o motor da Classificação precisa para a prévia (só o parecer
+    jurídico lê). Guardado por recurso até a próxima carga da aba; `forcar`
+    relê (a aprovação recalcula com os dados de agora).
+  */
+  async function carregarDadosDaPrevia(id, { forcar = false } = {}) {
+    const guardado = estado.previas.get(id);
+    if (guardado && !guardado.erro && !forcar) return guardado;
+    if (guardado) {
+      // A prévia antiga sai da tela enquanto a nova não chega.
+      const limpas = new Map(estado.previas);
+      limpas.delete(id);
+      publicar({ previas: limpas });
+    }
+    const { data, error } = await supabase.rpc("obter_dados_previa_ajuste", {
+      p_recurso: id,
+    });
+    const previas = new Map(estado.previas);
+    previas.set(id, error ? { erro: mensagemDe(error) } : data || {});
+    publicar({ previas });
+    return error ? null : data || {};
+  }
+
+  const AVISO_DO_AJUSTE = {
+    propor: "Ajuste da pontuação proposto.",
+    aprovar: "Ajuste da pontuação aprovado: já vale na Classificação.",
+    cancelar: "Ajuste da pontuação cancelado.",
+  };
+
+  /*
+    Propor, aprovar ou cancelar. O banco confere quem pode (recursos_parecer)
+    e a situação do recurso. Aprovar e cancelar mudam o recurso (a marca
+    "mudou a classificação" e a revisão): a aba é relida inteira.
+  */
+  function escreverAjuste(recurso, acao, chamar) {
+    return executar(`ajuste:${acao}`, "Salvando…", async () => {
+      const { data, error } = await chamar();
+      if (error) {
+        toast(`Não foi possível concluir: ${mensagemDe(error)}`, "error");
+        return false;
+      }
+      toast(AVISO_DO_AJUSTE[acao], "ok");
+      if (acao === "propor") {
+        guardarAjustes(recurso.id, data || {});
+        await carregarDetalhe(recurso.id);
+      } else await carregar();
+      return true;
+    });
+  }
+
+  const proporAjuste = (recurso, dados) =>
+    escreverAjuste(recurso, "propor", () =>
+      supabase.rpc("propor_ajuste_pontuacao", {
+        p_recurso: recurso.id,
+        p_dados: dados,
+      }),
+    );
+  const aprovarAjuste = (recurso, ajusteId, previa) =>
+    escreverAjuste(recurso, "aprovar", () =>
+      supabase.rpc("aprovar_ajuste_pontuacao", {
+        p_ajuste: ajusteId,
+        p_previa: previa,
+      }),
+    );
+  const cancelarAjuste = (recurso, ajusteId, motivo) =>
+    escreverAjuste(recurso, "cancelar", () =>
+      supabase.rpc("cancelar_ajuste_pontuacao", {
+        p_ajuste: ajusteId,
+        p_motivo: String(motivo || "").trim(),
+      }),
+    );
 
   function exportarCsv(recursos, origens) {
     const dia = hojeEmBrasilia(new Date(agora()));
@@ -723,6 +834,11 @@ export function criarEstadoDosRecursos({
 
   return {
     transicionarRecurso,
+    carregarAjustes,
+    carregarDadosDaPrevia,
+    proporAjuste,
+    aprovarAjuste,
+    cancelarAjuste,
     salvarResposta,
     transicionarResposta,
     enviarAnexo,

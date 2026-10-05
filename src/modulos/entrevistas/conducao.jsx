@@ -35,6 +35,7 @@ import {
   Segmentado,
   Selo,
 } from "../../ui/index.js";
+import { AgendaDoDia } from "./agenda-do-dia.jsx";
 import { FichaDoCandidato } from "./ficha.jsx";
 import {
   BotaoDeLinha,
@@ -57,6 +58,10 @@ import { SeloDoParecer } from "./tabela.jsx";
      sugestão da regra marcada; "Convocar selecionados" e "Desconvocar" (com
      motivo, só sem notas).
   3. Ficha de notas: os convocados; cada um abre a ficha (ficha.jsx).
+
+  Entre a convocação e a ficha, a "Agenda do dia" (agenda-do-dia.jsx), quando
+  o edital tem agenda salva (Classificação › Agenda): por horário e banca; a
+  linha do convocado abre a mesma ficha.
 
   Quem não edita as entrevistas (`pode_editar` falso) vê tudo sem os botões
   (sem selo "Somente consulta"). O administrador global vê "Mostrar todos os
@@ -1118,6 +1123,12 @@ export function VisaoDeConducao({ conducao, area, entrevistasDoPainel }) {
             salvando={acao === "convocar" || acao === "desconvocar"}
             aoConvocar={conducao.convocar}
             aoDesconvocar={conducao.desconvocar}
+          />
+          <AgendaDoDia
+            key={`agenda-${dados.edital?.id}`}
+            dados={dados}
+            agenda={e.agenda}
+            aoAbrir={setAberta}
           />
           <PassoDaFicha
             key={`ficha-${dados.edital?.id}`}

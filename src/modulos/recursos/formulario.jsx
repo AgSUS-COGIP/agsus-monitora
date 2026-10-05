@@ -547,17 +547,6 @@ export function FormularioDoRecurso({
                   }
                 />
               </Campo>
-              <label className="recursos-check recursos-check--campo">
-                <input
-                  type="checkbox"
-                  name="mudou_classificacao"
-                  checked={rascunho.mudou_classificacao}
-                  onChange={(evento) =>
-                    mudar("mudou_classificacao", evento.target.checked)
-                  }
-                />
-                <span>O recurso mudou a classificação</span>
-              </label>
               <Campo rotulo="Observação" erro={erro("observacao")} largo>
                 <textarea
                   name="observacao"

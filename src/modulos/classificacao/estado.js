@@ -99,7 +99,7 @@ function mensagemDoBanco(erro) {
   return erro?.message || mensagemDeFalha(erro);
 }
 
-function baixarNoNavegador(bytes, nome, tipo) {
+export function baixarNoNavegador(bytes, nome, tipo) {
   const arquivo = new Blob([bytes], { type: tipo });
   const url = URL.createObjectURL(arquivo);
   const ancora = document.createElement("a");
@@ -119,6 +119,7 @@ export function criarEstadoDaClassificacao({
   cabecalho = () => CABECALHO_PADRAO,
   enderecoDoLogo = LOGO_PADRAO_DA_BARRA,
   tempoLimiteMs = TEMPO_LIMITE_MS,
+  agendaDoEdital = () => null,
 } = {}) {
   let estado = ESTADO_INICIAL;
   let pedidoDosEditais = 0;
@@ -387,7 +388,8 @@ export function criarEstadoDaClassificacao({
   /*
     O documento oficial de uma lista registrada (documento-sei.js), com os
     textos do edital — os salvos na regra ou, se vier `documento`, o rascunho
-    que o gestor está editando.
+    que o gestor está editando. Na convocação, DATA e HORA saem da agenda das
+    entrevistas salva do edital (`agendaDoEdital`, estado-da-agenda.js).
   */
   function documentoDaLista(
     registrado,
@@ -395,10 +397,19 @@ export function criarEstadoDaClassificacao({
   ) {
     if (!registrado?.retrato) return null;
     const configuracao = estado.dados?.regra?.configuracao || {};
+    let agenda = null;
+    if (registrado.retrato.tipo === "CONVOCACAO") {
+      try {
+        agenda = agendaDoEdital(estado.editalId);
+      } catch {
+        agenda = null;
+      }
+    }
     return documentoOficial(registrado.retrato, {
       lista,
       fase,
       regra: documento ? { ...configuracao, documento } : configuracao,
+      agenda,
     });
   }
 
