@@ -65,6 +65,12 @@ O chat do MONITORA: o ícone Mensagens no cabeçalho e o painel lateral. Fontes:
 **resposta:** O número no ícone Mensagens e na frente do nome da aba, como "(3) MONITORA", soma as mensagens não lidas de todas as conversas, menos as silenciadas. Abrir a conversa marca como lida. No fim da lista, em Avisos, você liga o Som e as Notificações do navegador; os dois começam desligados, e a notificação pede a permissão do navegador. "Silenciar", no menu da conversa, tira a conversa do contador e dos avisos.
 **fonte:** src/modulos/chat/estado.js; src/modulos/chat/painel.jsx; src/lib/identidade-da-aba.js
 
+## Aviso de mensagem nova
+
+**perguntas:** aviso de mensagem nova | popup do chat | notificacao quando chega mensagem | nao aparece aviso de mensagem | aviso no canto da tela | ativar notificacao do navegador | aviso some sozinho
+**resposta:** Quando chega mensagem de outra pessoa e você não está com aquela conversa aberta na tela, aparece um aviso no canto inferior direito com quem mandou e o começo do texto; clique nele para abrir a conversa, ou no X para dispensar. Ele some sozinho em alguns segundos (fica enquanto o mouse está em cima) e aparecem no máximo três, um por conversa. Com o MONITORA em outra aba ou minimizado, o aviso vem como notificação do navegador, se você ligou "Notificações do navegador" em Avisos, no fim da lista de conversas: o navegador pede a permissão nesse clique. Suas mensagens, as apagadas e as de conversas silenciadas não geram aviso.
+**fonte:** src/modulos/chat/avisos.jsx; src/modulos/chat/estado.js; src/lib/avisos-do-chat.js
+
 ## Tempo real e online
 
 **perguntas:** chat em tempo real | mensagem demora a chegar | digitando no chat | ponto verde no chat | quem esta online no chat | reconectando | novas mensagens | botao seta para baixo no chat

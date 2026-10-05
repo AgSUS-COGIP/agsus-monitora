@@ -363,6 +363,8 @@ describe("o mapa", () => {
     const { carregador } = await carregadorCom(SIMPLES);
     await montar({ carregador });
     const mapa = mapaVivo();
+    // O remedir da montagem vem no quadro seguinte; espera para não contá-lo.
+    await act(() => new Promise((pronto) => requestAnimationFrame(pronto)));
     mapa.chamadas.length = 0;
     await clicar(botao("Brasil"));
     expect(mapa.chamadas.map(([nome]) => nome)).toEqual(["stop", "fitBounds"]);
@@ -724,6 +726,35 @@ describe("tamanho do contêiner", () => {
     expect(enquadramentos(mapa)).toBe(0);
   });
 
+  /*
+    O "saltitar" de produção: com um popup aberto, nada do app pode mover o
+    mapa de novo — nem o observador avisando a mesma medida várias vezes, nem
+    o popup abrindo e fechando. O popup não liga o `keepInView` (o autoPan a
+    cada `moveend`, que brigava com o `maxBounds`; ver
+    tests/dica-dentro-do-mapa.test.js).
+  */
+  it("popup aberto e o observador repetindo a mesma medida não movem o mapa", async () => {
+    const { carregador } = await carregadorCom(PROJETOS);
+    await montar({ carregador });
+    const mapa = mapaVivo();
+    const [ponto] = pontos();
+    expect(ponto.opcoesDoPopup.keepInView).not.toBe(true);
+    mapa.chamadas.length = 0;
+    const movimentos = () =>
+      mapa.chamadas.filter(([nome]) =>
+        ["fitBounds", "setView", "flyTo", "flyToBounds"].includes(nome),
+      ).length;
+    await act(async () => {
+      ponto.openPopup();
+      mapa.fire("popupopen", { popup: { options: {}, update() {} } });
+    });
+    for (let vez = 0; vez < 20; vez += 1) await redimensionar(800, 500);
+    expect(movimentos()).toBe(0);
+    await act(async () => mapa.fire("popupclose"));
+    await redimensionar(800, 500);
+    expect(movimentos()).toBe(0);
+  });
+
   it("desmontar desliga o observador", async () => {
     const { carregador } = await carregadorCom(SIMPLES);
     await montar({ carregador });
@@ -774,6 +805,45 @@ describe("fonte", () => {
       expect(fonte).not.toMatch(/innerHTML|dangerouslySetInnerHTML/);
       expect(fonte).not.toContain("MutationObserver");
     }
+  });
+
+  /*
+    O popup de Pacaraima/RR mostrava "Saúde nas Fronteiras" letra a letra: a
+    linha do edital era flex (o texto solto virava item ao lado do nome) e o
+    balão tinha `overflow-wrap: anywhere` + `white-space: normal`, que levam a
+    menor largura do conteúdo a uma letra — e é essa a medida que o Leaflet
+    usa para escolher a largura do popup. O jsdom não tem layout: a regra fica
+    no CSS e na estrutura.
+  */
+  it("o nome do projeto no balão é texto corrido, não uma coluna estreita", async () => {
+    const css = readFileSync(pasta + "mapa-de-projetos.css", "utf8")
+      .replace(/\r\n/g, "\n")
+      .replace(/\/\*[\s\S]*?\*\//g, "");
+    const regras = (seletor) =>
+      [...css.matchAll(/([^{}]+)\{([^}]*)\}/g)]
+        .filter(([, seletores]) =>
+          seletores.split(",").some((s) => s.trim() === seletor),
+        )
+        .map(([, , corpo]) => corpo)
+        .join("\n");
+    const linha = regras(".mapa-projetos__balao-edital");
+    expect(linha).toMatch(/display:\s*block/);
+    expect(linha).not.toMatch(/display:\s*(inline-)?(flex|grid)/);
+    expect(css).not.toMatch(/overflow-wrap:\s*anywhere/);
+    expect(regras(".mapa-projetos__balao")).not.toMatch(/white-space/);
+
+    const { carregador } = await carregadorCom(PROJETOS);
+    await montar({ carregador });
+    const edital = pontos()[0].popup.querySelector(
+      ".mapa-projetos__balao-edital",
+    );
+    // Bolinha, nome e o resto na mesma linha de texto, nesta ordem.
+    expect([...edital.childNodes].map((no) => no.nodeName)).toEqual([
+      "SPAN",
+      "B",
+      "#text",
+    ]);
+    expect(edital.querySelector("b").textContent).toBe("Saúde nas Fronteiras");
   });
 
   it("as cores são as séries do design system", () => {

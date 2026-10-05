@@ -185,10 +185,16 @@ describe("largura da dica e do popup relativa ao mapa", () => {
     expect(opcoes.minWidth).toBeLessThanOrEqual(opcoes.maxWidth);
     expect(opcoes.maxHeight).toBe(320 - 24 - 24 - 40);
     expect(opcoes.autoPan).toBe(true);
-    expect(opcoes.keepInView).toBe(true);
+    expect(opcoes.keepInView).toBe(false);
     expect(opcoes.autoPanPaddingTopLeft).toEqual([52, 24]);
     expect(opcoes.autoPanPaddingBottomRight).toEqual([24, 24]);
     expect(opcoes.className).toBe(CLASSE_DO_POPUP);
+  });
+
+  it("popup com largura mínima legível no computador", () => {
+    const opcoes = opcoesDoPopup({ largura: 1344, altura: 778 });
+    expect(opcoes.minWidth).toBeGreaterThanOrEqual(160);
+    expect(opcoes.maxWidth).toBeGreaterThanOrEqual(opcoes.minWidth);
   });
 
   it("no computador o popup fica nos 320 px de sempre", () => {
@@ -373,5 +379,76 @@ describe("o ouvinte do mapa", () => {
 
   it("sem mapa não liga nada", () => {
     expect(manterDicasDentroDoMapa(null)).toBeTypeOf("function");
+  });
+});
+
+/*
+  "O mapa de projetos fica saltitando": popup aberto em Pacaraima/RR, perto do
+  norte dos limites de navegação. O que o Leaflet 1.9 faz a cada `moveend`,
+  em uma dimensão (o topo do mapa, em px do mundo):
+
+  - o `maxBounds` (do `map-guard`) puxa o mapa de volta se o topo passou do
+    limite (`_panInsideMaxBounds`);
+  - com `keepInView`, o popup refaz o autoPan se saiu da vista (`_adjustPan`;
+    a bandeira `_autopanning` só pula o `moveend` do próprio autoPan).
+
+  Medido no navegador (Leaflet 1.9.4, mapa de 777×390): com `keepInView`, 196
+  autoPans em 3 s; sem ele, 2. O modelo abaixo repete essas regras e conta os
+  movimentos com as opções que o app usa.
+*/
+function movimentosComPopupNaBorda(opcoes, { limite = 100, teto = 200 } = {}) {
+  const folga = opcoes.autoPanPaddingTopLeft[1];
+  const topoDoPopup = 120; // acima do topo permitido: o popup não cabe inteiro
+  const mapa = { topo: limite, fila: [], movimentos: 0 };
+  let autopanEmCurso = false;
+  const mover = (novoTopo) => {
+    mapa.topo = novoTopo;
+    mapa.movimentos += 1;
+    mapa.fila.push("moveend");
+  };
+  const ajustarPan = () => {
+    if (!opcoes.autoPan) return;
+    if (autopanEmCurso) {
+      autopanEmCurso = false;
+      return;
+    }
+    const sobra = topoDoPopup - mapa.topo - folga;
+    if (sobra < 0) {
+      if (opcoes.keepInView) autopanEmCurso = true;
+      mover(mapa.topo + sobra);
+    }
+  };
+  // Abertura: o autoPan da abertura sempre acontece.
+  ajustarPan();
+  while (mapa.fila.length && mapa.movimentos < teto) {
+    mapa.fila.shift();
+    if (mapa.topo < limite) mover(limite); // maxBounds
+    if (opcoes.keepInView) ajustarPan();
+  }
+  return mapa.movimentos;
+}
+
+describe("popup perto do limite do mapa", () => {
+  it("o modelo reproduz o laço do keepInView com o maxBounds", () => {
+    const comKeepInView = { ...opcoesDoPopup(), keepInView: true };
+    expect(movimentosComPopupNaBorda(comKeepInView)).toBeGreaterThanOrEqual(
+      200,
+    );
+  });
+
+  it("com as opções do app, o mapa mexe no máximo duas vezes e para", () => {
+    expect(
+      movimentosComPopupNaBorda(opcoesDoPopup({ largura: 777, altura: 390 })),
+    ).toBeLessThanOrEqual(2);
+    expect(movimentosComPopupNaBorda(opcoesDoPopup())).toBeLessThanOrEqual(2);
+  });
+
+  it("ajustar o popup aberto não religa o keepInView", () => {
+    const popup = { options: { keepInView: true }, update: vi.fn() };
+    const mapa = {
+      getContainer: () => ({ clientWidth: 800, clientHeight: 500 }),
+    };
+    ajustarPopup(mapa, popup);
+    expect(popup.options.keepInView).toBe(false);
   });
 });

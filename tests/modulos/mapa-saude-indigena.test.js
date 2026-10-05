@@ -763,7 +763,7 @@ describe("dicas e popups dentro do mapa", () => {
     const [unidade] = leaflet.desenhadas(mapa, "marker");
     expect(unidade.opcoesDoPopup).toMatchObject({
       autoPan: true,
-      keepInView: true,
+      keepInView: false,
       className: "popup-no-mapa",
     });
     // Aberto num mapa estreito (celular), o popup encolhe e refaz o autoPan.
