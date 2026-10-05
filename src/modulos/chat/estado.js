@@ -22,14 +22,16 @@
     - Caiu e voltou (SUBSCRIBED depois de erro) ou a aba voltou a ficar visível:
       relê a lista e a conversa aberta.
 
-  Avisos: não lidas no ícone e no título da aba; som (desligado por padrão) e
-  notificação do navegador (só se a pessoa ativar), guardados no navegador.
+  Avisos (src/lib/avisos-do-chat.js): não lidas no ícone e no título da aba;
+  mensagem nova de outra pessoa fora da conversa à vista vira aviso na tela
+  (`avisos`, até 3, desenhados por avisos.jsx) ou, com a aba em segundo plano,
+  notificação do navegador (só se a pessoa ativar); som desligado por padrão.
+  Preferências guardadas no navegador. Nada durante o carregamento inicial.
 */
 
 import {
   aplicarReacaoDaLinha,
   depoisDaLimpeza,
-  deveAvisar,
   LIMITE_DO_TEXTO,
   linkDaTela,
   MENSAGENS_POR_PAGINA,
@@ -39,10 +41,15 @@ import {
   ordenarConversas,
   REACOES_RAPIDAS,
   reacoesComAlternancia,
-  tituloDaConversa,
   totalDeNaoLidas,
   validarTexto,
 } from "../../lib/chat.js";
+import {
+  comoAvisar,
+  empilharAvisos,
+  montarAviso,
+  textoDaNotificacao,
+} from "../../lib/avisos-do-chat.js";
 import {
   comTempoLimite,
   ehFalhaDeConexao,
@@ -92,6 +99,7 @@ const ESTADO_INICIAL = Object.freeze({
   acao: null,
   reconectando: false,
   preferencias: { som: false, notificacoes: false },
+  avisos: [],
 });
 
 export function mensagemDoBanco(erro) {
@@ -172,7 +180,9 @@ export function criarEstadoDoChat({
   tocarSom = () => tocarPlim(janela),
   notificar = (titulo, opcoes) => {
     const Notificacao = janela?.Notification;
-    if (Notificacao?.permission === "granted") new Notificacao(titulo, opcoes);
+    if (Notificacao?.permission === "granted")
+      return new Notificacao(titulo, opcoes);
+    return null;
   },
   definirTitulo = (total) => definirNaoLidasDaAba(total, documento),
   tempoLimiteMs = TEMPO_LIMITE_MS,
@@ -270,7 +280,13 @@ export function criarEstadoDoChat({
     if (!mensagem) return;
     const daAberta = mensagem.conversa === estado.conversaId;
     const conversa = estado.conversas.find((c) => c.id === mensagem.conversa);
-    if (!daAberta && !conversa) return; // conversa do edital que a pessoa não acompanha
+    if (mensagem.apagada) tirarAvisoDaMensagem(mensagem.id);
+    if (!daAberta && !conversa) {
+      // Conversa nova (alguém começou com a pessoa) ou do edital que ela não
+      // acompanha: a lista relida diz qual é.
+      if (payload.eventType === "INSERT") void avisarDepoisDeReler(mensagem);
+      return;
+    }
     const limpaEm =
       (daAberta ? estado.conversa?.limpa_em : null) ?? conversa?.limpa_em;
     if (!depoisDaLimpeza(mensagem, limpaEm)) return; // a pessoa limpou
@@ -298,37 +314,64 @@ export function criarEstadoDoChat({
               : (conversa.nao_lidas || 0) + 1,
         });
       }
-      if (
-        deveAvisar({
-          mensagem,
-          eu: estado.eu,
-          conversa: conversa || estado.conversa,
-          abertaAVista: aVista,
-        })
-      )
-        avisarChegada(mensagem, conversa || estado.conversa);
+      avisarChegada(mensagem, conversa || estado.conversa, aVista);
     }
     agendarReleitura();
   }
 
-  function avisarChegada(mensagem, conversa) {
-    if (estado.preferencias.som) tocarSom();
-    if (estado.preferencias.notificacoes && (!visivel() || !estado.aberto)) {
-      const autor = (conversa?.participantes || []).find(
-        (p) => String(p.id) === String(mensagem.autor),
-      );
+  async function avisarDepoisDeReler(mensagem) {
+    if (!estado.carregado || mensagem.apagada) return;
+    if (String(mensagem.autor) === String(estado.eu)) return;
+    await carregarConversas({ silencioso: true });
+    const conversa = estado.conversas.find((c) => c.id === mensagem.conversa);
+    if (!conversa || !depoisDaLimpeza(mensagem, conversa.limpa_em)) return;
+    avisarChegada(mensagem, conversa, conversaAVista(mensagem.conversa));
+  }
+
+  function avisarChegada(mensagem, conversa, abertaAVista) {
+    const como = comoAvisar({
+      mensagem,
+      eu: estado.eu,
+      conversa,
+      abertaAVista,
+      carregado: estado.carregado,
+      abaVisivel: visivel(),
+      preferencias: estado.preferencias,
+    });
+    const aviso =
+      como.tela || como.navegador
+        ? montarAviso({ mensagem, conversa, eu: estado.eu })
+        : null;
+    if (como.som) tocarSom();
+    if (como.tela) publicar({ avisos: empilharAvisos(estado.avisos, aviso) });
+    if (como.navegador) {
+      const { titulo, corpo } = textoDaNotificacao(aviso);
       try {
-        notificar(tituloDaConversa(conversa, estado.eu) || "Mensagens", {
-          body: `${autor?.nome ? `${autor.nome}: ` : ""}${mensagem.texto}`.slice(
-            0,
-            140,
-          ),
-          tag: `monitora-chat-${mensagem.conversa}`,
+        const notificacao = notificar(titulo, {
+          body: corpo,
+          tag: `monitora-chat-${aviso.conversa}`,
         });
+        if (notificacao)
+          notificacao.onclick = () => {
+            janela?.focus?.();
+            notificacao.close?.();
+            void abrirConversa(aviso.conversa);
+          };
       } catch {
         /* navegador recusou */
       }
     }
+  }
+
+  function tirarAvisoDaMensagem(id) {
+    if (estado.avisos.some((a) => a.id === id))
+      publicar({ avisos: estado.avisos.filter((a) => a.id !== id) });
+  }
+
+  function abrirDoAviso(id) {
+    const aviso = estado.avisos.find((a) => a.id === id);
+    if (!aviso) return Promise.resolve(false);
+    return abrirConversa(aviso.conversa);
   }
 
   function aoMudarReacao(payload) {
@@ -552,7 +595,11 @@ export function criarEstadoDoChat({
       });
       assinarCanalDaConversa(id);
     }
-    publicar({ aberto: true, visao: "conversa" });
+    publicar({
+      aberto: true,
+      visao: "conversa",
+      avisos: estado.avisos.filter((a) => a.conversa !== id),
+    });
     return carregarMensagens(id);
   }
 
@@ -926,6 +973,8 @@ export function criarEstadoDoChat({
     limparConversa,
     alternarReacao,
     definirPreferencia,
+    dispensarAviso: tirarAvisoDaMensagem,
+    abrirDoAviso,
     recarregarTudo,
     avisar: (mensagem) => toast(mensagem, "warn"),
     informar: (mensagem) => toast(mensagem, "success"),

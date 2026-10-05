@@ -2112,6 +2112,24 @@ export const VERBETES_AYA = Object.freeze([
   },
   {
     arquivo: "regras-do-chat.md",
+    titulo: "Aviso de mensagem nova",
+    perguntas: [
+      "aviso de mensagem nova",
+      "popup do chat",
+      "notificacao quando chega mensagem",
+      "nao aparece aviso de mensagem",
+      "aviso no canto da tela",
+      "ativar notificacao do navegador",
+      "aviso some sozinho",
+    ],
+    resposta:
+      'Quando chega mensagem de outra pessoa e você não está com aquela conversa aberta na tela, aparece um aviso no canto inferior direito com quem mandou e o começo do texto; clique nele para abrir a conversa, ou no X para dispensar. Ele some sozinho em alguns segundos (fica enquanto o mouse está em cima) e aparecem no máximo três, um por conversa. Com o MONITORA em outra aba ou minimizado, o aviso vem como notificação do navegador, se você ligou "Notificações do navegador" em Avisos, no fim da lista de conversas: o navegador pede a permissão nesse clique. Suas mensagens, as apagadas e as de conversas silenciadas não geram aviso.',
+    fato: "",
+    fonte:
+      "src/modulos/chat/avisos.jsx; src/modulos/chat/estado.js; src/lib/avisos-do-chat.js",
+  },
+  {
+    arquivo: "regras-do-chat.md",
     titulo: "Tempo real e online",
     perguntas: [
       "chat em tempo real",

@@ -12,8 +12,8 @@ import {
   temAlguemOnline,
   tituloDaConversa,
 } from "../../lib/chat.js";
-import { safeHttpUrl } from "../../lib/sanitize.js";
 import { EstadoVazio, Segmentado } from "../../ui/index.js";
+import { Avatar } from "./avatar.jsx";
 import { Conversa } from "./conversa.jsx";
 
 /*
@@ -22,30 +22,6 @@ import { Conversa } from "./conversa.jsx";
   (conversa.jsx) e a escolha de pessoas (nova conversa direta ou grupo e
   incluir no grupo). Não é modal: dá para seguir usando a tela ao lado.
 */
-
-const iniciais = (nome) =>
-  String(nome || "")
-    .trim()
-    .split(/\s+/)
-    .slice(0, 2)
-    .map((parte) => parte[0]?.toUpperCase() || "")
-    .join("") || "?";
-
-export function Avatar({ pessoa, online = false, grupo = false }) {
-  const foto = pessoa?.avatar ? safeHttpUrl(pessoa.avatar) : "";
-  return (
-    <span className="chat-avatar" aria-hidden="true">
-      {grupo ? (
-        <i className="fa-solid fa-users" />
-      ) : foto ? (
-        <img src={foto} alt="" loading="lazy" referrerPolicy="no-referrer" />
-      ) : (
-        <span>{iniciais(pessoa?.nome)}</span>
-      )}
-      {online ? <i className="chat-avatar__online" /> : null}
-    </span>
-  );
-}
 
 function avatarDaConversa(conversa, eu) {
   if (conversa.tipo === "DIRETA") {
