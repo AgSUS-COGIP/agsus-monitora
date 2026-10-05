@@ -33,21 +33,21 @@ const RECUO_DO_NUMERO = 1418; // 25 mm, o recuo do número dos itens no SEI
 
 const FONTE = '<w:rFonts w:ascii="Calibri" w:hAnsi="Calibri" w:cs="Calibri"/>';
 
-function corrida(
+export function corrida(
   texto,
   { negrito = false, tamanho = 24, cor = "", caixaAlta = false } = {},
 ) {
   return `<w:r><w:rPr>${FONTE}${negrito ? "<w:b/>" : ""}${caixaAlta ? "<w:caps/>" : ""}${cor ? `<w:color w:val="${cor}"/>` : ""}<w:sz w:val="${tamanho}"/></w:rPr><w:t xml:space="preserve">${escaparXml(texto)}</w:t></w:r>`;
 }
 
-const corridas = (texto, opcoes = {}) =>
+export const corridas = (texto, opcoes = {}) =>
   trechos(texto)
     .map((t) =>
       corrida(t.texto, { ...opcoes, negrito: opcoes.negrito || t.negrito }),
     )
     .join("");
 
-function paragrafo(
+export function paragrafo(
   conteudo,
   {
     alinhamento = "both",
@@ -185,6 +185,17 @@ export function corpoXml(doc) {
       antes: 360,
     }),
   );
+  return documentoComPartes(partes);
+}
+
+/** Quebra de página (entre as cartas de um documento com várias). */
+export const QUEBRA_DE_PAGINA = '<w:p><w:r><w:br w:type="page"/></w:r></w:p>';
+
+/**
+ * O word/document.xml com os parágrafos já montados: A4, margens das
+ * publicações, cabeçalho e rodapé (rIdCabecalho, rIdRodape).
+ */
+export function documentoComPartes(partes) {
   return (
     '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
     `<w:document xmlns:w="${W}" xmlns:r="${R}">` +
@@ -275,10 +286,23 @@ const relacao = (id, tipo, alvo) =>
  *   cabecalho  o texto do cabeçalho da agência (linhas)
  *   logo       { bytes: Uint8Array PNG, largura, altura } ou null
  */
-export function gerarDocxOficial(
-  doc,
+export function gerarDocxOficial(doc, opcoes = {}) {
+  return pacoteDocx(
+    { nome: doc.nome, processo: doc.processo, documento: corpoXml(doc) },
+    opcoes,
+  );
+}
+
+/**
+ * Os arquivos do .docx (para zipar), com o word/document.xml já pronto
+ * (`documento`, de documentoComPartes), o timbrado e o rodapé
+ * "<nome> · SEI <processo> / pg. N". A carta de convocação também o usa.
+ */
+export function arquivosDoDocx(
+  { nome, processo = "", documento },
   { cabecalho = CABECALHO_PADRAO, logo = null, quando = new Date() } = {},
 ) {
+  const doc = { nome, processo };
   const comLogo = Boolean(logo?.bytes?.length);
   const arquivos = [
     {
@@ -324,7 +348,7 @@ export function gerarDocxOficial(
         relacao("rIdRodape", "footer", "footer1.xml") +
         "</Relationships>",
     },
-    { nome: "word/document.xml", conteudo: corpoXml(doc) },
+    { nome: "word/document.xml", conteudo: documento },
     {
       nome: "word/header1.xml",
       conteudo: cabecalhoXml(cabecalho, comLogo ? logo : null),
@@ -343,5 +367,11 @@ export function gerarDocxOficial(
       },
       { nome: "word/media/logo.png", conteudo: logo.bytes },
     );
-  return zipSemCompressao(arquivos, quando);
+  return arquivos;
+}
+
+/** Os bytes do .docx (arquivosDoDocx zipado). */
+export function pacoteDocx(partes, opcoes = {}) {
+  const quando = opcoes.quando || new Date();
+  return zipSemCompressao(arquivosDoDocx(partes, { ...opcoes, quando }), quando);
 }
