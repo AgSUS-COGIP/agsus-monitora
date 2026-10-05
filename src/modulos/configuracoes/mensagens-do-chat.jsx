@@ -72,7 +72,7 @@ function Numeros({ dados }) {
       <Kpi
         chave="mensagens"
         tom="info"
-        icone="fa-message"
+        icone="fa-comments"
         rotulo="Mensagens"
         valor={formatNumberBR(dados.mensagens)}
       />
@@ -86,7 +86,7 @@ function Numeros({ dados }) {
       <Kpi
         chave="conversas"
         tom="neutro"
-        icone="fa-comments"
+        icone="fa-users"
         rotulo="Conversas"
         valor={formatNumberBR(dados.conversas)}
       />
