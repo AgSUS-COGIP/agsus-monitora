@@ -55,7 +55,8 @@ $$;
 
 -- 1. Status: entra Convocado (com a data), sai Fim de Fila ----------------------------------------
 alter table public."TB_CANDIDATO_APROVADO"
-  drop constraint "CK_CANDIDATO_APROVADO_STATUS";
+  drop constraint if exists lista_aprovados_status_check,
+  drop constraint if exists "CK_CANDIDATO_APROVADO_STATUS";
 alter table public."TB_CANDIDATO_APROVADO"
   add column "DT_CONVOCACAO" date,
   add constraint "CK_CANDIDATO_APROVADO_STATUS" check (
@@ -1016,6 +1017,9 @@ comment on function public.listar_convocacoes_aprovados(text) is
   'Os candidatos das listas vigentes da área com data da convocação ou carta emitida (também nas listas anteriores): candidato_id, data_convocacao, quantas cartas e a última emissão. Aprovados >= leitor, a área do usuário e o recorte da coordenação.';
 revoke all on function public.listar_convocacoes_aprovados(text) from public, anon;
 grant execute on function public.listar_convocacoes_aprovados(text) to authenticated;
+
+-- O PostgREST passa a ver as RPCs novas (e a alterar_status de 5 argumentos).
+notify pgrst, 'reload schema';
 -- ═══ CORPO DA MIGRATION (fim) ═══
 
 -- ═══════════════════════════════════════════════════════════════════════════
