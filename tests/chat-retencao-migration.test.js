@@ -254,7 +254,9 @@ describe("rollback e ensaio", () => {
       expect(ROLLBACK).toContain(
         `drop function if exists public.${nome}(${tipos});`,
       );
-    expect(ROLLBACK).toContain('drop table if exists public."TH_LIMPEZA_CHAT";');
+    expect(ROLLBACK).toContain(
+      'drop table if exists public."TH_LIMPEZA_CHAT";',
+    );
     expect(ROLLBACK).toContain(
       'drop table if exists public."TB_RETENCAO_CHAT";',
     );

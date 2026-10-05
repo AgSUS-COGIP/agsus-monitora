@@ -114,11 +114,15 @@ describe("tirarMensagens e reconciliarPagina (regra pura)", () => {
     };
     const chegou = { ...M1, id: "n1", criada_em: "2026-10-05T12:00:00Z" };
     const atuais = [antiga, M1, sumiu, pendente, chegou];
-    expect(
-      reconciliarPagina(atuais, [M1, M2], true).map((m) => m.id),
-    ).toEqual(["a0", "p1", "m1", "m2", "n1"]);
-    expect(
-      reconciliarPagina(atuais, [M1, M2], false).map((m) => m.id),
-    ).toEqual(["p1", "m1", "m2", "n1"]);
+    expect(reconciliarPagina(atuais, [M1, M2], true).map((m) => m.id)).toEqual([
+      "a0",
+      "p1",
+      "m1",
+      "m2",
+      "n1",
+    ]);
+    expect(reconciliarPagina(atuais, [M1, M2], false).map((m) => m.id)).toEqual(
+      ["p1", "m1", "m2", "n1"],
+    );
   });
 });

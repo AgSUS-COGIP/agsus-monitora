@@ -197,7 +197,10 @@ export function normalizarRetencao(bruto) {
     conversasSemParticipante: quantidade(dados.conversas_sem_participante),
     maisAntiga: dataOuNulo(dados.mais_antiga),
     idades: (Array.isArray(dados.idades) ? dados.idades : [])
-      .map((i) => ({ dias: inteiro(i?.dias), mensagens: quantidade(i?.mensagens) }))
+      .map((i) => ({
+        dias: inteiro(i?.dias),
+        mensagens: quantidade(i?.mensagens),
+      }))
       .filter((i) => i.mensagens > 0),
     historico: (Array.isArray(dados.historico) ? dados.historico : []).map(
       normalizarLimpeza,

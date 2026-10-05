@@ -88,7 +88,9 @@ describe("prazo de retenção", () => {
 
 describe("zerar mensagens", () => {
   it("CR-2.2: exige exatamente ZERAR e o motivo", () => {
-    expect(validarZerar({ confirmacao: "ZERAR", motivo: "Fim do teste" })).toEqual({
+    expect(
+      validarZerar({ confirmacao: "ZERAR", motivo: "Fim do teste" }),
+    ).toEqual({
       ok: true,
       motivo: "Fim do teste",
       erros: {},
@@ -98,9 +100,9 @@ describe("zerar mensagens", () => {
         validarZerar({ confirmacao: palavra, motivo: "Fim do teste" }).erros
           .confirmacao,
       ).toBe("Digite ZERAR para confirmar.");
-    expect(validarZerar({ confirmacao: "ZERAR", motivo: "a" }).erros.motivo).toBe(
-      "Informe o motivo.",
-    );
+    expect(
+      validarZerar({ confirmacao: "ZERAR", motivo: "a" }).erros.motivo,
+    ).toBe("Informe o motivo.");
   });
 
   it("CR-2.1: mostra antes o que vai ser apagado", () => {
@@ -187,8 +189,8 @@ describe("leitura do banco e histórico", () => {
     expect(mensagemDeErroDaRetencao({ code: "PGRST202" })).toContain(
       "20261005190000",
     );
-    expect(mensagemDeErroDaRetencao({ message: "Digite ZERAR para confirmar" })).toBe(
-      "Digite ZERAR para confirmar",
-    );
+    expect(
+      mensagemDeErroDaRetencao({ message: "Digite ZERAR para confirmar" }),
+    ).toBe("Digite ZERAR para confirmar");
   });
 });
