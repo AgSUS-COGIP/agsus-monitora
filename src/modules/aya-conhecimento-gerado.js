@@ -1898,7 +1898,7 @@ export const VERBETES_AYA = Object.freeze([
       "desligar o chat de um grupo",
     ],
     resposta:
-      'Mensagens é um recurso da matriz de acessos (Configurações › Acessos), com dois níveis: Sem acesso ou Usar. Todos os grupos começam com Usar; o administrador pode desligar por grupo ou por pessoa. Sem o recurso, o ícone não aparece e o botão "Conversa" some de Editais e da Classificação. Em Pessoas online, cada pessoa tem o botão "Mensagem", que abre a conversa direta com ela.',
+      'Mensagens é um recurso da matriz de acessos (Configurações › Acessos), com dois níveis: Sem acesso ou Usar. Em teste, só os grupos Administrador global e Gestor estão com Usar (05/10/2026); o administrador liga ou desliga por grupo ou por pessoa. Pessoas online, de onde sai o botão Mensagem, também é só do administrador global e do Gestor. Sem o recurso, o ícone não aparece e o botão "Conversa" some de Editais e da Classificação. Em Pessoas online, cada pessoa tem o botão "Mensagem", que abre a conversa direta com ela.',
     fato: "",
     fonte:
       "src/lib/permissoes-recursos.js; src/lib/access-roles.js; supabase/migrations/20261002210000_chat.sql",
@@ -2229,7 +2229,7 @@ export const VERBETES_AYA = Object.freeze([
       "presenca online",
     ],
     resposta:
-      'Pessoas online fica no cabeçalho e só o administrador global vê. Mostra quem está com o MONITORA aberto: nome, foto ou iniciais, grupo e onde a pessoa está, como "Análises curriculares · Saúde Indígena" ou "Configurações › Acessos" (painel externo aparece como "Painel externo"). Atualiza a cada 45 segundos com a aba visível, e trocar de página, área ou seção avisa na hora.',
+      'Pessoas online fica no cabeçalho e só o administrador global e o Gestor veem (o chat está em teste com os dois). Mostra quem está com o MONITORA aberto: nome, foto ou iniciais, grupo e onde a pessoa está, como "Análises curriculares · Saúde Indígena" ou "Configurações › Acessos" (painel externo aparece como "Painel externo"). Atualiza a cada 45 segundos com a aba visível, e trocar de página, área ou seção avisa na hora.',
     fato: "",
     fonte: "src/lib/online-presence.js; src/modules/legacy-app.js",
   },

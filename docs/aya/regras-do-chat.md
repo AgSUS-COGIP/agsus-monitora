@@ -55,5 +55,5 @@ O chat do MONITORA: o ícone Mensagens no cabeçalho e o painel lateral. Fontes:
 ## Quem pode usar as Mensagens
 
 **perguntas:** quem pode usar o chat | nao vejo o icone de mensagens | permissao do chat | desligar o chat de um grupo
-**resposta:** Mensagens é um recurso da matriz de acessos (Configurações › Acessos), com dois níveis: Sem acesso ou Usar. Todos os grupos começam com Usar; o administrador pode desligar por grupo ou por pessoa. Sem o recurso, o ícone não aparece e o botão "Conversa" some de Editais e da Classificação. Em Pessoas online, cada pessoa tem o botão "Mensagem", que abre a conversa direta com ela.
+**resposta:** Mensagens é um recurso da matriz de acessos (Configurações › Acessos), com dois níveis: Sem acesso ou Usar. Em teste, só os grupos Administrador global e Gestor estão com Usar (05/10/2026); o administrador liga ou desliga por grupo ou por pessoa. Pessoas online, de onde sai o botão Mensagem, também é só do administrador global e do Gestor. Sem o recurso, o ícone não aparece e o botão "Conversa" some de Editais e da Classificação. Em Pessoas online, cada pessoa tem o botão "Mensagem", que abre a conversa direta com ela.
 **fonte:** src/lib/permissoes-recursos.js; src/lib/access-roles.js; supabase/migrations/20261002210000_chat.sql

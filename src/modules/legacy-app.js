@@ -65,6 +65,7 @@ import {
   podeUsarChat,
   canImportApprovedList,
   isAdminGlobal,
+  podeVerPessoasOnline,
   paginasPermitidas,
   permissaoLegada,
   podeAbrirConfiguracoes,
@@ -361,9 +362,9 @@ function stopAccessHeartbeat() {
   }
 }
 
-/* "Pessoas online" é só do administrador global (decisão de 30/09/2026). */
+/* "Pessoas online": administrador global e Gestor (o chat está em teste com os dois; 05/10/2026). */
 function canViewOnlinePresence() {
-  return isMasterProfile();
+  return podeVerPessoasOnline(profile);
 }
 
 function onlinePresenceAvatar(person) {
