@@ -243,6 +243,11 @@ beforeEach(() => {
   redefinirDadosDoMonitoramento();
   definirAreaAtual("projetos");
   try {
+    globalThis.sessionStorage?.clear();
+  } catch {
+    /* sem sessão */
+  }
+  try {
     globalThis.localStorage?.clear();
   } catch {
     /* sem armazenamento */
@@ -428,6 +433,245 @@ describe("Fila (AM-6)", () => {
       secao.querySelector("[data-tour='avd-fila-distribuir-livres']"),
     ).toBeNull();
     expect(secao.querySelector("[data-tour='avd-fila-pegar']")).not.toBeNull();
+  });
+});
+
+describe("listas da fila: colunas por aba, ordem, N de M e CSV", () => {
+  const cabecalhos = () =>
+    [...secao.querySelectorAll("[data-tour='avd-fila-tabela'] thead th")].map(
+      (th) => th.textContent.trim(),
+    );
+
+  it("Eliminados mostra o motivo e a ART, sem posição, responsável nem reserva", async () => {
+    await montar(supabaseFalso());
+    await clicar(
+      secao.querySelector(
+        "[data-tour='avd-fila-etapas'] [data-valor='eliminados']",
+      ),
+    );
+    expect(cabecalhos()).toEqual([
+      "Código",
+      "Nome",
+      "Vaga",
+      "Motivo da eliminação",
+      "Nota declarada",
+    ]);
+    const art = secao.querySelector(
+      "[data-tour='avd-fila-tabela'] thead th:last-child",
+    );
+    expect(art.title).toMatch(/^ART: Autodeclaração de Requisitos e Títulos/);
+    const linha = secao.querySelector("[data-candidato='7009']");
+    expect(linha.textContent).toContain("Cancelou");
+    expect(linha.textContent).toContain("20");
+  });
+
+  it("a tabela não fica dentro de um card com padding (cabeçalho fixo no topo da rolagem)", async () => {
+    await montar(supabaseFalso());
+    const rolagem = secao.querySelector(
+      "[data-tour='avd-fila-tabela'] .ui-tabela-rolagem",
+    );
+    expect(rolagem.classList.contains("ui-card")).toBe(false);
+    expect(
+      rolagem.querySelector("thead input[type='checkbox']"),
+    ).not.toBeNull();
+  });
+
+  it("ordena pela coluna, mostra N de M e exporta o CSV da aba na ordem da tela", async () => {
+    const supabase = supabaseFalso();
+    await montar(supabase);
+    const ordenar = (nome) =>
+      [
+        ...secao.querySelectorAll("[data-tour='avd-fila-tabela'] th button"),
+      ].find((b) => b.textContent.trim() === nome);
+    await clicar(ordenar("Código"));
+    await clicar(ordenar("Código"));
+    expect(linhas()).toEqual(["7004", "7003", "7002", "7001"]);
+    expect(
+      secao.querySelector(
+        "[data-tour='avd-fila-tabela'] th[aria-sort='descending']",
+      ).textContent,
+    ).toContain("Código");
+    await digitar(secao.querySelector("[data-tour='avd-fila-busca']"), "7002");
+    expect(
+      secao.querySelector(
+        "[data-tour='avd-fila-tabela'] [data-tabela-contagem]",
+      ).textContent,
+    ).toBe("1 de 4");
+    await digitar(secao.querySelector("[data-tour='avd-fila-busca']"), "");
+    const blobs = [];
+    const original = {
+      criar: URL.createObjectURL,
+      soltar: URL.revokeObjectURL,
+    };
+    URL.createObjectURL = (blob) => {
+      blobs.push(blob);
+      return "blob:falso";
+    };
+    URL.revokeObjectURL = () => {};
+    const clique = vi
+      .spyOn(HTMLAnchorElement.prototype, "click")
+      .mockImplementation(() => {});
+    try {
+      await clicar(secao.querySelector("[data-acao='exportar-csv']"));
+      expect(blobs).toHaveLength(1);
+      const texto = await blobs[0].text();
+      const [cabeca, primeira] = texto.replace(/^\uFEFF/, "").split("\r\n");
+      expect(cabeca).toBe(
+        "Vaga;Posição;Código;Nome;Nota declarada (ART);Situação;Responsável;Reserva",
+      );
+      expect(primeira.split(";")[2]).toBe("7004");
+    } finally {
+      clique.mockRestore();
+      URL.createObjectURL = original.criar;
+      URL.revokeObjectURL = original.soltar;
+    }
+  });
+});
+
+describe("modo de análise: a ficha ocupa a tela", () => {
+  /* Cada ficha reservada para mim, com o cabeçalho do inscrito. */
+  const reservarMinha = ({ p_ficha }) => {
+    const c = fila().candidatos.find((x) => x.ficha?.id === p_ficha);
+    return {
+      ficha: {
+        ...c.ficha,
+        id: p_ficha,
+        vaga: c.vaga,
+        codigo: c.codigo,
+        nome: c.nome,
+        posicao: c.posicao,
+        art: c.art,
+        modalidade: c.modalidade,
+        reserva: {
+          usuario: EU,
+          nome: "Ana",
+          desde: new Date().toISOString(),
+          expira: AGORA_MAIS,
+        },
+      },
+      reservada: true,
+      somente_leitura: false,
+    };
+  };
+  const abrirPelaLista = async (codigo) => {
+    await clicar(
+      botao("Abrir", secao.querySelector(`[data-candidato='${codigo}']`)),
+    );
+    await esperar();
+  };
+
+  it("abrir esconde a lista, o topo da tela e o edital; Voltar à fila (ou Esc) volta e solta a reserva", async () => {
+    const supabase = supabaseFalso(fila(), { reservar_ficha: reservarMinha });
+    await montar(supabase);
+    await abrirPelaLista("7002");
+    const analise = secao.querySelector("[data-tour='avd-ficha']");
+    expect(analise.tagName).toBe("SECTION");
+    expect(analise.querySelector("h2").textContent).toBe(
+      "Candidato 7002 · Pessoa 7002",
+    );
+    expect(analise.querySelector(".avd-analise-dados").textContent).toContain(
+      "Nota declarada (ART)20",
+    );
+    expect(
+      analise.querySelector(
+        ".avd-analise-dados dt[title^='ART: Autodeclaração']",
+      ),
+    ).not.toBeNull();
+    expect(secao.querySelector("[data-tour='avd-fila-tabela']")).toBeNull();
+    expect(secao.querySelector("[data-tour='avd-visoes']")).toBeNull();
+    expect(secao.querySelector(".avd-edital")).toBeNull();
+    expect(secao.querySelector(".avd-tela").dataset.modo).toBe("analise");
+    expect(document.querySelector(".modal.show")).toBeNull();
+    expect(
+      JSON.parse(
+        sessionStorage.getItem("monitora.avaliacao-documental.ficha-aberta"),
+      ),
+    ).toEqual({
+      edital: "e93",
+      ficha: "f2",
+    });
+
+    await clicar(secao.querySelector("[data-acao='voltar-a-fila']"));
+    await esperar();
+    expect(secao.querySelector("[data-tour='avd-ficha']")).toBeNull();
+    expect(secao.querySelector("[data-tour='avd-fila-tabela']")).not.toBeNull();
+    expect(supabase.rpc).toHaveBeenCalledWith("liberar_reserva", {
+      p_edital: "e93",
+      p_fichas: ["f2"],
+      p_motivo: null,
+    });
+    expect(
+      sessionStorage.getItem("monitora.avaliacao-documental.ficha-aberta"),
+    ).toBeNull();
+
+    await abrirPelaLista("7003");
+    await teclar(document.body, "Escape");
+    await esperar();
+    expect(secao.querySelector("[data-tour='avd-ficha']")).toBeNull();
+  });
+
+  it("Anterior / Próxima andam pela lista filtrada, na ordem da tabela", async () => {
+    const supabase = supabaseFalso(fila(), { reservar_ficha: reservarMinha });
+    await montar(supabase);
+    const ordenar = [
+      ...secao.querySelectorAll("[data-tour='avd-fila-tabela'] th button"),
+    ].find((b) => b.textContent.trim() === "Código");
+    await clicar(ordenar);
+    await clicar(ordenar);
+    await abrirPelaLista("7003");
+    const navegacao = () => secao.querySelector(".avd-analise-navegacao");
+    expect(navegacao().textContent).toContain("1 de 3");
+    expect(secao.querySelector("[data-acao='ficha-anterior']").disabled).toBe(
+      true,
+    );
+    await clicar(secao.querySelector("[data-acao='ficha-proxima']"));
+    await esperar();
+    expect(
+      secao.querySelector("[data-tour='avd-ficha'] h2").textContent,
+    ).toContain("Candidato 7002");
+    expect(navegacao().textContent).toContain("2 de 3");
+    await clicar(secao.querySelector("[data-acao='ficha-proxima']"));
+    await esperar();
+    expect(
+      secao.querySelector("[data-tour='avd-ficha'] h2").textContent,
+    ).toContain("Candidato 7001");
+    expect(secao.querySelector("[data-acao='ficha-proxima']").disabled).toBe(
+      true,
+    );
+    await clicar(secao.querySelector("[data-acao='ficha-anterior']"));
+    await esperar();
+    expect(
+      secao.querySelector("[data-tour='avd-ficha'] h2").textContent,
+    ).toContain("Candidato 7002");
+    const reservas = supabase.rpc.mock.calls
+      .filter(([n]) => n === "reservar_ficha")
+      .map(([, a]) => a.p_ficha);
+    expect(reservas).toEqual(["f3", "f2", "f1", "f2"]);
+  });
+
+  it("recarregar a página volta ao edital, à Fila e à ficha que estava aberta", async () => {
+    sessionStorage.setItem(
+      "monitora.avaliacao-documental.ficha-aberta",
+      JSON.stringify({ edital: "e93", ficha: "f3" }),
+    );
+    const supabase = supabaseFalso(fila(), { reservar_ficha: reservarMinha });
+    secao = document.createElement("section");
+    secao.id = "page-avaliacao-documental";
+    secao.className = "page active";
+    document.body.append(secao);
+    await act(async () => {
+      painel = montarAvaliacaoDocumental({ supabase, toast });
+    });
+    await act(async () => void painel.render());
+    await esperar();
+    await esperar();
+    await esperar();
+    expect(supabase.rpc).toHaveBeenCalledWith("reservar_ficha", {
+      p_ficha: "f3",
+    });
+    expect(
+      secao.querySelector("[data-tour='avd-ficha'] h2").textContent,
+    ).toContain("Candidato 7003");
   });
 });
 

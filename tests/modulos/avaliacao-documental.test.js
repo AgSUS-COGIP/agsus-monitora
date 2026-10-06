@@ -331,7 +331,7 @@ describe("regra da avaliação (AM-2)", () => {
     const supabase = supabaseFalso();
     await montar(supabase);
     const grupo = [...secao.querySelectorAll(".avd-subgrupo")].find((g) =>
-      g.querySelector("h3")?.textContent.startsWith("Nota declarada"),
+      g.querySelector("h3")?.textContent.startsWith("Nota recalculada"),
     );
     await clicar(botao("Pergunta pontuada", grupo));
     const item = [...grupo.querySelectorAll(".avd-declarada")].at(-1);

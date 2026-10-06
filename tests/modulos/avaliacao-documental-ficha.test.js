@@ -311,6 +311,11 @@ async function abrirFicha(supabase) {
 beforeEach(() => {
   redefinirDadosDoMonitoramento();
   definirAreaAtual("projetos");
+  try {
+    globalThis.sessionStorage?.clear();
+  } catch {
+    /* sem sessão */
+  }
 });
 afterEach(async () => {
   await act(async () => painel?.raiz?.unmount());
@@ -321,14 +326,29 @@ afterEach(async () => {
 });
 
 describe("ficha: blocos e declarado (AM-7)", () => {
-  it("um cartão por bloco na ordem da regra, com a resposta da Empregare", async () => {
+  it("um cartão por bloco na ordem da regra, com a resposta da Empregare; os que não se aplicam numa linha no fim", async () => {
     await abrirFicha(supabaseFalso());
+    const naoSeAplicam = ["COTA_PP", "COTA_PCD", "COTA_PI", "COTA_PQ"];
     const codigos = [...document.querySelectorAll("[data-bloco]")].map(
       (s) => s.dataset.bloco,
     );
-    expect(codigos).toEqual(REGRA.blocos.map((b) => b.codigo));
+    expect(codigos).toEqual([
+      ...REGRA.blocos
+        .map((b) => b.codigo)
+        .filter((c) => !naoSeAplicam.includes(c)),
+      ...naoSeAplicam,
+    ]);
     expect(cartao("EXPERIENCIA").textContent).toContain("4 anos ou mais");
     expect(cartao("FORMACAO").textContent).toContain("Especialização");
+    const grupo = document.querySelector(
+      "[data-tour='avd-ficha-nao-se-aplicam']",
+    );
+    expect(grupo.tagName).toBe("DETAILS");
+    expect(grupo.open).toBe(false);
+    expect(grupo.querySelector("summary").textContent).toBe(
+      "Não se aplicam: Pretos e pardos, Pessoa com deficiência, Indígenas, Quilombolas",
+    );
+    expect(grupo.contains(cartao("COTA_PP"))).toBe(true);
     expect(cartao("COTA_PP").textContent).toContain("Não se aplica");
     expect(cartao("COTA_PP").querySelector(".avd-ficha-situacoes")).toBeNull();
     expect(
@@ -358,9 +378,83 @@ describe("ficha: blocos e declarado (AM-7)", () => {
   });
 });
 
+describe("ficha: em análise até conferir (sem Inapto nem diferença antes da hora)", () => {
+  it("ao abrir: Em análise, nota parcial, apurado — e Concluir travado com o que falta", async () => {
+    await abrirFicha(supabaseFalso());
+    const total = document.querySelector(".avd-ficha-total");
+    expect(total.textContent).toContain(
+      "Em análise · 0 de 4 requisitos conferidos",
+    );
+    expect(total.textContent).not.toContain("Inapto");
+    expect(total.querySelector(".ui-selo").dataset.tom).toBe("neutro");
+    const linhas = [
+      ...document.querySelectorAll(
+        "[data-tour='avd-ficha-comparacao'] .avd-ficha-linha[role='row']:not(.avd-ficha-linha-topo)",
+      ),
+    ];
+    expect(linhas.map((l) => l.lastElementChild.textContent)).toEqual([
+      "—",
+      "—",
+      "—",
+    ]);
+    expect(
+      document.querySelectorAll(".avd-ficha-linha[data-divergente='sim']"),
+    ).toHaveLength(0);
+    expect(
+      cartao("FORMACAO").querySelector("input[data-divergente]"),
+    ).toBeNull();
+    const barra = document.querySelector("[data-tour='avd-ficha-barra']");
+    expect(
+      barra.querySelector("[role='progressbar']").getAttribute("aria-valuenow"),
+    ).toBe("0");
+    expect(barra.textContent).toContain("0 de 6 itens conferidos");
+    expect(barra.querySelector(".avd-ficha-falta").textContent).toMatch(
+      /^Falta: Documento de identificação oficial com foto, .* e mais 3$/,
+    );
+    expect(botao("Concluir e próxima").disabled).toBe(true);
+  });
+
+  it("marcado, o cartão muda de estado e ganha o selo; a diferença aparece só depois de conferir", async () => {
+    await abrirFicha(supabaseFalso());
+    await clicar(cartao("IDENTIDADE").querySelector("[data-valor='CONFORME']"));
+    expect(cartao("IDENTIDADE").dataset.situacao).toBe("CONFORME");
+    expect(
+      cartao("IDENTIDADE").querySelector(".avd-ficha-selo-situacao")
+        .textContent,
+    ).toContain("Conforme");
+    const escolhido = cartao("IDENTIDADE").querySelector(
+      "[aria-pressed='true']",
+    );
+    expect(escolhido.dataset.valor).toBe("CONFORME");
+    expect(escolhido.querySelector(".fa-check")).not.toBeNull();
+    await clicar(cartao("FORMACAO").querySelector("[data-valor='CONFORME']"));
+    const formacao = [
+      ...document.querySelectorAll(".avd-ficha-linha[role='row']"),
+    ].find((l) => l.textContent.includes("Formação Acadêmica"));
+    expect(formacao.dataset.divergente).toBe("sim");
+    expect(formacao.lastElementChild.textContent).toBe("0");
+    expect(
+      document.querySelector("[data-tour='avd-ficha-barra']").textContent,
+    ).toContain("2 de 6 itens conferidos");
+    // Não enviado com motivo eliminatório: Inapto, sem esperar o resto.
+    await clicar(
+      cartao("REGISTRO_CONSELHO").querySelector("[data-valor='NAO_ENVIADO']"),
+    );
+    expect(cartao("REGISTRO_CONSELHO").dataset.situacao).toBe("NAO_ENVIADO");
+    expect(
+      cartao("REGISTRO_CONSELHO").querySelector(".avd-ficha-selo-situacao")
+        .textContent,
+    ).toContain("Não enviado");
+    expect(document.querySelector(".avd-ficha-total").textContent).toContain(
+      "Inapto (requisito)",
+    );
+  });
+});
+
 describe("ficha: itens, nota e justificativa (AM-9, AM-10, AM-11)", () => {
   it("curso lançado pontua na hora; nota diferente da declarada pede justificativa, que vai ao parecer", async () => {
     await abrirFicha(supabaseFalso());
+    await clicar(cartao("CURSOS").querySelector("[data-valor='CONFORME']"));
     await clicar(botao("Curso", cartao("CURSOS")));
     await digitar(
       cartao("CURSOS").querySelector("input[aria-label='Carga horária']"),
@@ -468,12 +562,13 @@ describe("ficha: rascunho, concluir e próxima, fechar (AM-12)", () => {
   it("concluir com pendência não chama o banco; completa, conclui e pega a próxima", async () => {
     const supabase = supabaseFalso();
     await abrirFicha(supabase);
-    await clicar(botao("Concluir e próxima"));
+    expect(botao("Concluir e próxima").disabled).toBe(true);
+    // Ctrl+Enter com pendência também não vai ao banco.
+    await teclar(document.querySelector(".avd-ficha"), "Enter", {
+      ctrlKey: true,
+    });
     await esperar();
     expect(chamadas(supabase, "concluir_ficha")).toHaveLength(0);
-    expect(document.querySelector(".avd-ficha-erro").textContent).toMatch(
-      /^Falta: \d+ item/,
-    );
     const raiz = document.querySelector(".avd-ficha");
     for (let i = 0; i < 6; i++) await teclar(raiz, "1");
     // Títulos e cursos como declarados; experiência de 3 anos.
@@ -493,6 +588,11 @@ describe("ficha: rascunho, concluir e próxima, fechar (AM-12)", () => {
       "2022-12-31",
     );
     expect(document.querySelector(".avd-ficha-pendencias")).toBeNull();
+    expect(document.querySelector(".avd-ficha-falta")).toBeNull();
+    expect(
+      document.querySelector("[data-tour='avd-ficha-barra']").textContent,
+    ).toContain("6 de 6 itens conferidos");
+    expect(botao("Concluir e próxima").disabled).toBe(false);
     await clicar(botao("Concluir e próxima"));
     await esperar();
     await esperar();

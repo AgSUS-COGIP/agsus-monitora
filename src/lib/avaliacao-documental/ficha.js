@@ -25,7 +25,12 @@
   e o Python reconfere a conta (python/monitora/avaliacao_documental/pontuacao.py).
 */
 import { nivelDaVaga } from "../classificacao/vagas.js";
-import { PARCIAL_DO_TIPO, TITULOS_ACADEMICOS } from "./catalogo.js";
+import {
+  PARCIAIS,
+  PARCIAL_DO_TIPO,
+  rotuloDe,
+  TITULOS_ACADEMICOS,
+} from "./catalogo.js";
 import {
   calcularNotaDeclarada,
   chaveDaOpcao,
@@ -245,9 +250,16 @@ const datasValidas = (v) =>
   /^\d{4}-\d{2}-\d{2}$/.test(String(v?.fim ?? "")) &&
   v.fim >= v.inicio;
 
+/** O analista já marcou a situação do bloco (Conforme, Não conforme, Não enviado)? */
+export const blocoConferido = (lancamento, bloco) =>
+  Boolean(objeto(objeto(lancamento?.blocos)[bloco?.codigo]).situacao);
+
 /**
- * O que falta para concluir, bloco a bloco: [{ bloco, texto }]. Vazio =
- * pode concluir. O banco confere o mesmo em concluir_ficha.
+ * O que falta para concluir, bloco a bloco: [{ bloco, tipo, texto }]. Vazio =
+ * pode concluir. O banco confere o mesmo em concluir_ficha. `tipo`: situacao,
+ * motivo, item, datas, horas, justificativa ou nota. A nota diferente da
+ * declarada só pede justificativa depois que o bloco foi conferido (antes, a
+ * falta é a própria situação).
  */
 export function pendenciasDaFicha(
   regraEntrada,
@@ -261,14 +273,17 @@ export function pendenciasDaFicha(
   for (const bloco of regra.blocos) {
     if (!pedeSituacao(bloco) || !blocoSeAplica(bloco, lancamento)) continue;
     const l = objeto(blocos[bloco.codigo]);
-    const falta = (texto) => pendencias.push({ bloco: bloco.codigo, texto });
-    if (!l.situacao) falta("Marque Conforme, Não conforme ou Não enviado.");
+    const falta = (tipo, texto) =>
+      pendencias.push({ bloco: bloco.codigo, tipo, texto });
+    if (!l.situacao)
+      falta("situacao", "Marque Conforme, Não conforme ou Não enviado.");
     if (
       ["NAO_CONFORME", "NAO_ENVIADO"].includes(l.situacao) &&
       !lista(l.motivos).length &&
       !(lista(bloco.motivos).length === 0 && temTexto(l.motivo_livre, 10))
     )
       falta(
+        "motivo",
         lista(bloco.motivos).length
           ? "Escolha o motivo."
           : "Escreva o motivo (10 caracteres ou mais).",
@@ -277,28 +292,152 @@ export function pendenciasDaFicha(
     if (chave) {
       const itens = lista(lancamento?.[chave]);
       if (itens.some((i) => i && i.aceito === false && !i.motivo))
-        falta("Item recusado sem motivo.");
+        falta("item", "Item recusado sem motivo.");
       if (chave === "vinculos" && itens.some((v) => v && !datasValidas(v)))
-        falta("Vínculo com data de início ou fim inválida.");
+        falta("datas", "Vínculo com data de início ou fim inválida.");
       if (chave === "cursos" && itens.some((c) => c && !(Number(c.horas) > 0)))
-        falta("Curso sem carga horária.");
+        falta("horas", "Curso sem carga horária.");
     }
     if (
+      l.situacao &&
       avaliacao?.resultado !== "INAPTO_REQUISITO" &&
       divergenciaDoBloco(bloco, avaliacao, declarada) &&
       !blocoJustificado(regra, bloco, l)
     )
-      falta("Nota diferente da declarada: escolha a justificativa.");
+      falta(
+        "justificativa",
+        "Nota diferente da declarada: escolha a justificativa.",
+      );
     const ajuste = l.nota_ajustada;
     const teto = tetoDoBloco(bloco, lancamento?.nivel);
     if (
       typeof ajuste === "number" &&
       (ajuste < 0 || (teto !== null && ajuste > teto))
     )
-      falta(`Nota ajustada de 0 a ${teto}.`);
+      falta("nota", `Nota ajustada de 0 a ${teto}.`);
   }
   return pendencias;
 }
+
+/** O bloco pode eliminar (situação, motivo ou experiência mínima com efeito ELIMINA)? */
+function blocoEhRequisito(bloco) {
+  if (Object.values(objeto(bloco.efeitos)).includes("ELIMINA")) return true;
+  if (lista(bloco.motivos).some((m) => m?.efeito === "ELIMINA")) return true;
+  return (
+    bloco.tipo === "VINCULOS" &&
+    Number(bloco.minimo_meses) > 0 &&
+    (bloco.efeito_minimo ?? "ELIMINA") === "ELIMINA"
+  );
+}
+
+/** Nome curto do bloco nas faltas: a parcial ("Formação Acadêmica") ou o título até o parêntese ou a vírgula. */
+export function nomeCurtoDoBloco(bloco) {
+  const parcial = PARCIAL_DO_TIPO[bloco?.tipo];
+  if (parcial) return rotuloDe(PARCIAIS, parcial);
+  return String(bloco?.titulo ?? bloco?.codigo ?? "")
+    .split(/ \(|,/)[0]
+    .trim();
+}
+
+/* Quantos blocos o "Falta: …" nomeia antes do "e mais N". */
+const MAXIMO_NA_FALTA = 3;
+
+const COMPLEMENTO_DA_FALTA = {
+  motivo: "motivo",
+  item: "motivo do item",
+  datas: "datas",
+  horas: "carga horária",
+  justificativa: "justificativa",
+  nota: "nota",
+};
+
+/**
+ * Onde a conferência está (a barra de progresso, o resultado provisório e o
+ * "Concluir e próxima"), sem mudar a conta: os blocos que pedem situação e se
+ * aplicam ao candidato são os itens; os que podem eliminar são os requisitos.
+ *
+ * situacao: "EM_ANALISE" enquanto falta conferir algum item e nenhum item
+ * conferido eliminou; "INAPTO_REQUISITO" assim que um item conferido elimina;
+ * com tudo conferido, o resultado da conta.
+ * faltam: [{ bloco, nome, complementos[] }]; texto_da_falta: "Falta: Formação
+ * Acadêmica, Experiência Profissional (justificativa)".
+ */
+export function conferenciaDaFicha(
+  regraEntrada,
+  lancamento,
+  avaliacao,
+  pendencias = [],
+) {
+  const regra = normalizarRegraAnalise(regraEntrada);
+  const itens = regra.blocos.filter(
+    (b) => pedeSituacao(b) && blocoSeAplica(b, lancamento),
+  );
+  const conferido = (b) => blocoConferido(lancamento, b);
+  const requisitos = itens.filter(blocoEhRequisito);
+  const efeitos = Object.fromEntries(
+    lista(avaliacao?.blocos).map((b) => [b.codigo, b.efeito]),
+  );
+  const eliminou = itens.some(
+    (b) =>
+      conferido(b) &&
+      (efeitos[b.codigo] === "ELIMINA" ||
+        (b.tipo === "VINCULOS" &&
+          blocoEhRequisito(b) &&
+          Boolean(avaliacao?.experiencia?.abaixo_do_minimo))),
+  );
+  const conferidos = itens.filter(conferido).length;
+  const situacao = eliminou
+    ? "INAPTO_REQUISITO"
+    : conferidos < itens.length
+      ? "EM_ANALISE"
+      : (avaliacao?.resultado ?? "EM_ANALISE");
+
+  const faltam = [];
+  for (const b of regra.blocos) {
+    const doBloco = lista(pendencias).filter((p) => p.bloco === b.codigo);
+    if (!doBloco.length) continue;
+    const complementos = [
+      ...new Set(
+        doBloco.map((p) => COMPLEMENTO_DA_FALTA[p.tipo]).filter(Boolean),
+      ),
+    ];
+    faltam.push({ bloco: b.codigo, nome: nomeCurtoDoBloco(b), complementos });
+  }
+  const nomes = faltam.map((f) =>
+    f.complementos.length ? `${f.nome} (${f.complementos.join(", ")})` : f.nome,
+  );
+  const texto_da_falta = !nomes.length
+    ? ""
+    : nomes.length > MAXIMO_NA_FALTA + 1
+      ? `Falta: ${nomes.slice(0, MAXIMO_NA_FALTA).join(", ")} e mais ${nomes.length - MAXIMO_NA_FALTA}`
+      : `Falta: ${nomes.join(", ")}`;
+  return {
+    total: itens.length,
+    conferidos,
+    requisitos: {
+      total: requisitos.length,
+      conferidos: requisitos.filter(conferido).length,
+    },
+    situacao,
+    faltam,
+    texto_da_falta,
+    pode_concluir: !lista(pendencias).length,
+  };
+}
+
+/** "Em análise · 2 de 4 requisitos conferidos"; fora da análise, o resultado. */
+export function textoDaSituacaoDaConferencia(conferencia) {
+  if (conferencia.situacao !== "EM_ANALISE")
+    return textoDoResultado(conferencia.situacao);
+  const r = conferencia.requisitos;
+  return r.total
+    ? `Em análise · ${r.conferidos} de ${r.total} requisitos conferidos`
+    : `Em análise · ${textoDoProgresso(conferencia)}`;
+}
+
+/** "4 de 7 itens conferidos". */
+export const textoDoProgresso = ({ conferidos, total }) =>
+  `${conferidos} de ${total} ${total === 1 ? "item conferido" : "itens conferidos"}`;
 
 /** O resumo da conta que vai para o banco (TB_FICHA_ANALISE."DS_RESULTADO"). */
 export function resumoParaGravar(avaliacao, declarada) {

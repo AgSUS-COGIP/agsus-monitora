@@ -278,7 +278,7 @@ function NotaDeclarada({ regra, aoMudar }) {
     aoMudar(comValor(regra, ["provisoria", "nota_declarada", i], item));
   return (
     <div className="avd-subgrupo">
-      <h3>Nota declarada (confere a ART)</h3>
+      <h3>Nota recalculada (confere a nota declarada, ART)</h3>
       {itens.map((item, i) => {
         const chave = item.tipo === "FAIXA_EM_MESES" ? "meses" : "pontos";
         const mapa = item[chave] ?? {};
@@ -930,7 +930,7 @@ export function Regra({ e, estado }) {
             ) : rascunho.lote.base === "NOTA_MINIMA" ? (
               <>
                 <CampoNumero
-                  rotulo="Nota mínima (ART)"
+                  rotulo="Nota mínima (nota declarada, ART)"
                   valor={rascunho.lote.nota_minima}
                   aoMudar={(v) => mudar(["lote", "nota_minima"], v)}
                 />

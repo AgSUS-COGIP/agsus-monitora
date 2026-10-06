@@ -39,8 +39,10 @@ continua sendo a leitura. Desenho e fases: `docs/analises-no-monitora/`; histór
 - **ações em lote** da coordenação, com prévia, confirmação e motivo: distribuir (entre a equipe,
   para uma pessoa ou de volta à fila), liberar reservas, mandar para revisão; "Distribuir as
   livres" e "Abrir fichas do lote";
-- a **ficha aberta** (gaveta) com o cabeçalho (candidato pelo código e nome, vaga, posição, ART,
-  situação, responsável, reserva) e a **reserva** de 15 minutos, renovada a cada 5 minutos e
+- a **ficha aberta** no modo de análise (ocupa a área de conteúdo; a lista some): topo fixo com
+  "Voltar à fila", candidato pelo código e nome, vaga, posição, nota declarada (ART), situação,
+  responsável, reserva e Anterior / Próxima pela lista filtrada; Esc volta; a ficha aberta fica na
+  sessão da aba (recarregar volta a ela) e a **reserva** de 15 minutos, renovada a cada 5 minutos e
   liberada ao fechar; "Em uso por … desde HH:MM" só para leitura; a coordenação libera reserva
   presa com motivo. O conteúdo da análise é da F4;
 - o seletor de editais mostra só os vigentes (`src/lib/avaliacao-documental/editais.js`), com
@@ -53,19 +55,25 @@ até a 10ª posição do cadastro reserva) é regra da lista CONVOCACAO da Class
 
 ## Fase F4
 
-- **Conteúdo da ficha** (`ficha/`), dentro da gaveta da Fila: um cartão por bloco da regra, na
-  ordem da regra, com o que o candidato declarou na Empregare (as respostas das perguntas ligadas,
+- **Conteúdo da ficha** (`ficha/`), no modo de análise da Fila: um cartão por bloco da regra, na
+  ordem da regra (os que não se aplicam numa linha expansível no fim), com a cor e o selo da
+  situação depois de conferido, com o que o candidato declarou na Empregare (as respostas das perguntas ligadas,
   lidas como a nota declarada lê: aspas, múltipla escolha, "--", &nbsp;); Conforme / Não conforme
   / Não enviado (teclas 1, 2, 3; J/K; Ctrl+S; Ctrl+Enter), motivo em lista; títulos, cursos e
   vínculos que pontuam na hora; nota apurada ajustável até o teto, com justificativa obrigatória
   quando difere da declarada;
-- lateral: resultado e nota ao vivo, declarado × apurado (diferença destacada, com a justificativa),
+- lateral: resultado e nota ao vivo ("Em análise · X de N requisitos conferidos" enquanto falta
+  conferir; Inapto só quando um bloco conferido elimina), declarado × apurado (apurado "—" e sem
+  destaque antes de conferir; depois, a diferença destacada, com a justificativa),
   nível da vaga, "Copiar código", "Abrir candidato na Empregare" (o link capturado pelo robô; sem ele, a vaga ou a lista de vagas com o código copiado para a busca; o acesso fica registrado), observações
   prontas, observação livre e o parecer gerado;
-- barra: "Salvo às HH:MM" (rascunho automático), "Salvar rascunho", "Concluir e próxima", "Fechar e
+- barra: "Salvo às HH:MM" (rascunho automático), "N de M itens conferidos" e "Falta: …",
+  "Salvar rascunho", "Concluir e próxima" (travado até não faltar nada), "Fechar e
   liberar" (salva antes de soltar a reserva; aviso ao sair com alteração não salva);
 - concluída: só leitura, com o parecer gravado e o histórico; a coordenação reabre com motivo;
-- na Fila, as concluídas mostram nota e resultado; o analista vê só as vagas que analisa.
+- na Fila, as concluídas mostram nota e resultado; o analista vê só as vagas que analisa;
+- as listas da Fila são a TabelaInfinita (`src/ui/`): colunas por etapa, ordem por coluna, busca,
+  "N de M", carregamento contínuo e Exportar CSV (`csvDaFila`, csv-security).
 
 A próxima fase traz a revisão (F5).
 

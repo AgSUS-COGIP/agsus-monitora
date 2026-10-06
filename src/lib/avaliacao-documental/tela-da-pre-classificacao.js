@@ -25,7 +25,8 @@ export const AVISOS_DA_VAGA = Object.freeze({
   SEM_VAGAS: "Vaga sem vagas imediatas nem cadastro reserva.",
   SEM_NOTA_MINIMA: "Lote pela nota mínima sem a nota: informe-a na regra.",
   QUADRO_SEM_MODALIDADES: "Quadro sem vagas por modalidade: o lote saiu geral.",
-  ART_AUSENTE: "Inscrito sem ART no arquivo: vale a nota declarada.",
+  ART_AUSENTE:
+    "Inscrito sem ART no arquivo: vale a nota recalculada pela regra.",
   LINHA_PARADA: "Lugar aberto no lote: a regra não repõe.",
   FORA_DO_LOTE_ACIMA_DO_CORTE: "Fora do lote com nota acima da linha de corte.",
   LOTE_ACIMA_DO_TAMANHO: "Lote maior que o tamanho de agora.",
@@ -178,6 +179,19 @@ export function lotesAPublicar(dados) {
     .sort(([a], [b]) => a - b)
     .map(([lote, quantidade]) => ({ lote, quantidade }));
 }
+
+/*
+  A ART na tela: "Nota declarada (ART)" (ou só "Nota declarada" em coluna
+  estreita), sempre com a dica. Nome interno e coluna do banco continuam "art".
+  Na ficha, o "Declarado" de cada bloco é a parte da ART daquele bloco.
+*/
+export const ROTULO_DA_ART = "Nota declarada (ART)";
+export const ROTULO_CURTO_DA_ART = "Nota declarada";
+export const DICA_DA_ART =
+  "ART: Autodeclaração de Requisitos e Títulos — nota calculada pela Empregare a partir das respostas do questionário, antes da conferência dos documentos";
+/* A "nota declarada" da regra (regra.provisoria.nota_declarada) recalcula a ART pelas respostas. */
+export const DICA_DA_RECALCULADA =
+  "A mesma nota recalculada pela regra a partir das respostas do questionário, para conferir a ART";
 
 /** "24,5" (ou "—"). */
 export function nota(valor) {

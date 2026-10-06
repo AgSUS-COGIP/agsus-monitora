@@ -3,12 +3,14 @@ import { describe, expect, it } from "vitest";
 import {
   blocoSeAplica,
   calcularFicha,
+  conferenciaDaFicha,
   declaradaDaFicha,
   divergenciaDoBloco,
   enderecoDaVagaNaEmpregare,
   enderecoDoCandidatoNaEmpregare,
   lancamentoInicial,
   nivelDaFicha,
+  nomeCurtoDoBloco,
   opcoesDeJustificativa,
   pendenciasDaFicha,
   respostasDoBloco,
@@ -16,6 +18,8 @@ import {
   situacaoDaTecla,
   sugereNaoEnviado,
   textoDaAlteracao,
+  textoDaSituacaoDaConferencia,
+  textoDoProgresso,
   titulosDoNivel,
 } from "../../src/lib/avaliacao-documental/ficha.js";
 
@@ -240,10 +244,12 @@ describe("o que falta para concluir", () => {
     const p = pendenciasDaFicha(REGRA, lanc, av, declarada);
     expect(p).toContainEqual({
       bloco: "IDENTIDADE",
+      tipo: "situacao",
       texto: "Marque Conforme, Não conforme ou Não enviado.",
     });
     expect(p).toContainEqual({
       bloco: "ESCOLARIDADE",
+      tipo: "motivo",
       texto: "Escolha o motivo.",
     });
   });
@@ -269,6 +275,7 @@ describe("o que falta para concluir", () => {
     expect(pendenciasDaFicha(REGRA, lanc, av, declarada)).toEqual([
       {
         bloco: "CURSOS",
+        tipo: "justificativa",
         texto: "Nota diferente da declarada: escolha a justificativa.",
       },
     ]);
@@ -302,7 +309,11 @@ describe("o que falta para concluir", () => {
         calcularFicha(REGRA, lanc, DOCUMENTAL),
         declarada,
       ),
-    ).toContainEqual({ bloco: "FORMACAO", texto: "Nota ajustada de 0 a 10." });
+    ).toContainEqual({
+      bloco: "FORMACAO",
+      tipo: "nota",
+      texto: "Nota ajustada de 0 a 10.",
+    });
   });
 
   it("inapto por requisito não pede justificativa de nota", () => {
@@ -433,6 +444,107 @@ describe("apoio da tela", () => {
   });
 });
 
+describe("conferência: em análise, progresso e o que falta", () => {
+  const declarada = declaradaDaFicha(REGRA, RESPOSTAS);
+  const conferir = (lanc) => {
+    const av = calcularFicha(REGRA, lanc, DOCUMENTAL);
+    const pendencias = pendenciasDaFicha(REGRA, lanc, av, declarada);
+    return {
+      av,
+      pendencias,
+      c: conferenciaDaFicha(REGRA, lanc, av, pendencias),
+    };
+  };
+  const nova = () =>
+    lancamentoInicial({
+      regra: REGRA,
+      respostas: RESPOSTAS,
+      modalidade: "AC",
+      cargo: "Engenheiro de Segurança do Trabalho",
+      documental: DOCUMENTAL,
+    });
+
+  it("ficha recém-aberta: em análise (neutro), não Inapto, mesmo com a conta dando Inapto", () => {
+    const { av, c } = conferir(nova());
+    // A conta conta o bloco não marcado como Conforme e a experiência sem vínculo elimina.
+    expect(av.resultado).toBe("INAPTO_REQUISITO");
+    expect(c.situacao).toBe("EM_ANALISE");
+    expect(c).toMatchObject({
+      total: 6,
+      conferidos: 0,
+      requisitos: { total: 4, conferidos: 0 },
+      pode_concluir: false,
+    });
+    expect(textoDaSituacaoDaConferencia(c)).toBe(
+      "Em análise · 0 de 4 requisitos conferidos",
+    );
+    expect(textoDoProgresso(c)).toBe("0 de 6 itens conferidos");
+  });
+
+  it("antes de conferir, a nota diferente da declarada não pede justificativa", () => {
+    const lanc = nova();
+    lanc.cursos = [{ nome: "Curso A", horas: 120, aceito: true }];
+    const { av, pendencias } = conferir(lanc);
+    expect(divergenciaDoBloco(bloco("CURSOS"), av, declarada)).not.toBeNull();
+    expect(
+      pendencias.filter((p) => p.bloco === "CURSOS").map((p) => p.tipo),
+    ).toEqual(["situacao"]);
+    lanc.blocos.CURSOS = { situacao: "CONFORME" };
+    lanc.vinculos = lancamentoCompleto().vinculos;
+    expect(
+      conferir(lanc)
+        .pendencias.filter((p) => p.bloco === "CURSOS")
+        .map((p) => p.tipo),
+    ).toEqual(["justificativa"]);
+  });
+
+  it("Inapto só quando um requisito conferido elimina", () => {
+    const lanc = nova();
+    lanc.blocos.IDENTIDADE = { situacao: "CONFORME" };
+    expect(conferir(lanc).c.situacao).toBe("EM_ANALISE");
+    lanc.blocos.REGISTRO_CONSELHO = {
+      situacao: "NAO_ENVIADO",
+      motivos: ["SEM_REGISTRO"],
+    };
+    const { c } = conferir(lanc);
+    expect(c.situacao).toBe("INAPTO_REQUISITO");
+    expect(textoDaSituacaoDaConferencia(c)).toBe("Inapto (requisito)");
+    expect(c.requisitos).toEqual({ total: 4, conferidos: 2 });
+  });
+
+  it("experiência conferida abaixo do mínimo elimina; tudo conferido mostra o resultado da conta", () => {
+    const lanc = nova();
+    lanc.blocos.EXPERIENCIA = { situacao: "CONFORME" };
+    expect(conferir(lanc).c.situacao).toBe("INAPTO_REQUISITO");
+    const completo = lancamentoCompleto();
+    const { c } = conferir(completo);
+    expect(c).toMatchObject({
+      situacao: "APTO",
+      conferidos: 6,
+      total: 6,
+      texto_da_falta: "",
+      pode_concluir: true,
+    });
+  });
+
+  it("o que falta, com o tipo da falta entre parênteses", () => {
+    const lanc = lancamentoCompleto({
+      cursos: [{ nome: "Curso A", horas: 120, aceito: true }],
+    });
+    delete lanc.blocos.FORMACAO;
+    const { c } = conferir(lanc);
+    expect(c.texto_da_falta).toBe(
+      "Falta: Formação Acadêmica, Cursos de Aperfeiçoamento (justificativa)",
+    );
+    expect(c.pode_concluir).toBe(false);
+    const { c: tudo } = conferir(nova());
+    expect(tudo.texto_da_falta).toBe(
+      "Falta: Documento de identificação oficial com foto, Formação exigida pela vaga, Registro ativo no conselho de classe e mais 3",
+    );
+    expect(nomeCurtoDoBloco(bloco("COTA_PCD"))).toBe("Pessoa com deficiência");
+  });
+});
+
 describe("experiência declarada por nível (93/2026)", () => {
   const COM_EXP = structuredClone(REGRA);
   COM_EXP.provisoria.nota_declarada.push({
@@ -472,6 +584,7 @@ describe("experiência declarada por nível (93/2026)", () => {
     const declarada = declaradaDaFicha(COM_EXP, RESP, lanc.nivel);
     expect(pendenciasDaFicha(COM_EXP, lanc, av, declarada)).toContainEqual({
       bloco: "EXPERIENCIA",
+      tipo: "justificativa",
       texto: "Nota diferente da declarada: escolha a justificativa.",
     });
     expect(resumoParaGravar(av, declarada).declarada.EXPERIENCIA).toBe(15);
