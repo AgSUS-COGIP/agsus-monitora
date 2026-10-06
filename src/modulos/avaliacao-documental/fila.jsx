@@ -28,14 +28,16 @@ import {
   textoDaSituacaoNaFila,
 } from "../../lib/avaliacao-documental/fila.js";
 import { tomDoResultado } from "../../lib/avaliacao-documental/ficha.js";
-import { nota } from "../../lib/avaliacao-documental/tela-da-pre-classificacao.js";
+import {
+  DICA_DA_ART,
+  nota,
+  ROTULO_DA_ART,
+} from "../../lib/avaliacao-documental/tela-da-pre-classificacao.js";
 import {
   Abas,
   Aviso,
   Campo,
   Gaveta,
-  GradeDeKv,
-  Kv,
   Selo,
   TabelaInfinita,
 } from "../../ui/index.js";
@@ -308,98 +310,253 @@ function AcaoEmLote({ fila, acao, dados, aoFechar }) {
   );
 }
 
-function FichaAberta({ fila, aberta, dados, filtroVaga }) {
-  const f = aberta.ficha;
-  // O conteúdo da ficha salva o que falta (e confirma) antes de a gaveta fechar.
-  const antesDeFechar = useRef(null);
+/*
+  O modo de análise: a ficha aberta ocupa a área de conteúdo (a lista some;
+  fica só o menu lateral). Topo fixo e compacto (Voltar à fila, vaga,
+  candidato, posição, nota declarada, modalidade, reserva e Anterior /
+  Próxima entre as fichas da lista filtrada, salvando antes), e o conteúdo
+  da ficha em duas colunas (ficha/ficha.jsx). Esc também volta à fila.
+*/
+function ModoDeAnalise({
+  fila,
+  aberta,
+  abrindo,
+  dados,
+  filtroVaga,
+  navegaveis,
+}) {
+  const f = aberta?.ficha;
+  const raiz = useRef(null);
+  // O conteúdo da ficha salva o que falta (e confirma) antes de sair dela.
+  const antesDeSair = useRef(null);
   const registrarAntesDeFechar = useCallback((fn) => {
-    antesDeFechar.current = fn;
+    antesDeSair.current = fn;
   }, []);
-  const fechar = async () => {
-    if (antesDeFechar.current && !(await antesDeFechar.current())) return;
-    await fila.fechar();
+  const podeSair = async () =>
+    !antesDeSair.current || (await antesDeSair.current());
+  const voltar = async () => {
+    if (!(await podeSair())) return;
+    await fila.fechar({ esquecer: true });
   };
+  const ir = async (fichaId) => {
+    if (!fichaId || !(await podeSair())) return;
+    await fila.abrir(fichaId);
+  };
+  const voltarRef = useRef(voltar);
+  voltarRef.current = voltar;
+
+  useEffect(() => {
+    // Abre no alto da tela (vinha rolada na lista).
+    globalThis.scrollTo?.({ top: 0 });
+  }, [f?.id]);
+  useEffect(() => {
+    const aoTeclar = (ev) => {
+      if (ev.key !== "Escape" || ev.defaultPrevented) return;
+      if (document.querySelector(".modal.show")) return;
+      ev.preventDefault();
+      void voltarRef.current();
+    };
+    document.addEventListener("keydown", aoTeclar);
+    return () => document.removeEventListener("keydown", aoTeclar);
+  }, []);
+  /*
+    Recuos das partes fixas: o topo da ficha fica logo abaixo do cabeçalho do
+    app (também fixo, de altura variável; só se lê a altura dele) e a lateral,
+    abaixo dos dois.
+  */
+  useEffect(() => {
+    const topo = raiz.current?.querySelector(".avd-analise-topo");
+    if (!topo || typeof ResizeObserver !== "function") return undefined;
+    const cabecalho = document.querySelector("#conteudoPrincipal > .top");
+    // Só recua se o cabeçalho do app ficar preso no alto (sticky ou fixed).
+    const preso = (el) =>
+      el && ["sticky", "fixed"].includes(getComputedStyle(el).position);
+    const medir = () => {
+      const altura = (el) =>
+        el ? `${Math.ceil(el.getBoundingClientRect().height)}px` : "0px";
+      raiz.current?.style.setProperty(
+        "--avd-recuo-do-cabecalho",
+        altura(preso(cabecalho) ? cabecalho : null),
+      );
+      raiz.current?.style.setProperty("--avd-altura-do-topo", altura(topo));
+    };
+    const observador = new ResizeObserver(medir);
+    observador.observe(topo);
+    if (cabecalho) observador.observe(cabecalho);
+    medir();
+    return () => observador.disconnect();
+  }, [f?.id]);
+
   const [liberando, setLiberando] = useState(false);
   const [motivo, setMotivo] = useState("");
   const [erro, setErro] = useState("");
+
+  if (!f)
+    return (
+      <div className="avd-analise" aria-busy={abrindo ? "true" : undefined}>
+        <div className="ui-card">
+          <div className="ui-esqueleto-linha" />
+          <div className="ui-esqueleto-linha" />
+        </div>
+      </div>
+    );
+
   const situacao = SITUACOES_DA_FICHA[f.situacao] || {};
   const reservaDeOutro =
     reservaVigente(f.reserva) && f.reserva.usuario !== dados.eu;
+  const posicao = navegaveis.findIndex((c) => c.ficha.id === f.id);
+  const anterior = posicao > 0 ? navegaveis[posicao - 1] : null;
+  const proxima =
+    posicao >= 0 && posicao < navegaveis.length - 1
+      ? navegaveis[posicao + 1]
+      : null;
   return (
-    <Gaveta
-      tituloId="avdFichaTitulo"
-      sobretitulo={[`Vaga ${f.vaga}`, f.cargo].filter(Boolean).join(" · ")}
-      titulo={`Candidato ${f.codigo}`}
-      resumo={<Selo tom={situacao.tom}>{situacao.rotulo || f.situacao}</Selo>}
-      aoFechar={() => void fechar()}
-      cartaoClassName="avd-ficha-cartao"
-      tour="avd-ficha"
+    <section
+      className="avd-analise"
+      ref={raiz}
+      aria-labelledby="avdFichaTitulo"
+      data-tour="avd-ficha"
     >
-      <div className="avd-gaveta-corpo">
-        <GradeDeKv rotulo="Cabeçalho da ficha">
-          <Kv rotulo="Nome">{f.nome}</Kv>
-          <Kv rotulo="Posição">{f.posicao ? ordinal(f.posicao) : ""}</Kv>
-          <Kv rotulo="Lote">{f.lote}</Kv>
-          <Kv rotulo="ART">{nota(f.art)}</Kv>
-          <Kv rotulo="Modalidade">{f.modalidade}</Kv>
-          <Kv rotulo="Responsável">{f.responsavel_nome}</Kv>
-          <Kv rotulo="Reserva">{textoDaReserva(f.reserva, dados.eu)}</Kv>
-          <Kv rotulo="Regra">{f.versao_regra ? `v${f.versao_regra}` : ""}</Kv>
-          {f.motivo_saida ? (
-            <Kv rotulo="Saiu do lote">{f.motivo_saida}</Kv>
-          ) : null}
-        </GradeDeKv>
-        {aberta.somente_leitura && aberta.motivo ? (
-          <Aviso tom="warning">Só leitura: {aberta.motivo}</Aviso>
-        ) : null}
-        <ConteudoDaFicha
-          fila={fila}
-          aberta={aberta}
-          filtroVaga={filtroVaga}
-          aoFechar={fechar}
-          registrarAntesDeFechar={registrarAntesDeFechar}
-        />
-        {dados.pode_coordenar && reservaDeOutro ? (
-          liberando ? (
-            <div className="avd-inline">
-              <Campo rotulo="Motivo para liberar a reserva" obrigatorio>
-                <input
-                  value={motivo}
-                  maxLength={2000}
-                  onChange={(ev) => setMotivo(ev.target.value)}
-                />
-              </Campo>
-              <button
-                type="button"
-                className="btn small"
-                disabled={motivo.trim().length < 10}
-                onClick={async () => {
-                  const r = await fila.liberarReservas([f.id], motivo.trim());
-                  if (r.ok) await fila.abrir(f.id);
-                  else setErro(r.erro);
-                }}
-              >
-                Liberar
-              </button>
+      <header className="avd-analise-topo" data-tour="avd-ficha-topo">
+        <button
+          type="button"
+          className="btn secondary small"
+          data-acao="voltar-a-fila"
+          onClick={() => void voltar()}
+        >
+          <i className="fa-solid fa-arrow-left" aria-hidden="true" /> Voltar à
+          fila
+        </button>
+        <div className="avd-analise-identidade">
+          <span className="ui-texto-secundario">
+            {[`Vaga ${f.vaga}`, f.cargo].filter(Boolean).join(" · ")}
+          </span>
+          <h2 id="avdFichaTitulo">
+            Candidato {f.codigo}
+            {f.nome ? <span> · {f.nome}</span> : null}
+          </h2>
+        </div>
+        <dl className="avd-analise-dados" aria-label="Cabeçalho da ficha">
+          <div>
+            <dt>Posição</dt>
+            <dd>{f.posicao ? ordinal(f.posicao) : "—"}</dd>
+          </div>
+          <div>
+            <dt title={DICA_DA_ART}>{ROTULO_DA_ART}</dt>
+            <dd>{nota(f.art)}</dd>
+          </div>
+          <div>
+            <dt>Modalidade</dt>
+            <dd>{f.modalidade || "—"}</dd>
+          </div>
+          <div>
+            <dt>Situação</dt>
+            <dd>
+              <Selo tom={situacao.tom}>{situacao.rotulo || f.situacao}</Selo>
+            </dd>
+          </div>
+          <div>
+            <dt>Responsável</dt>
+            <dd>{f.responsavel_nome || "—"}</dd>
+          </div>
+          <div>
+            <dt>Reserva</dt>
+            <dd>{textoDaReserva(f.reserva, dados.eu) || "—"}</dd>
+          </div>
+          {f.versao_regra ? (
+            <div>
+              <dt>Regra</dt>
+              <dd>v{f.versao_regra}</dd>
             </div>
-          ) : (
+          ) : null}
+          {f.motivo_saida ? (
+            <div>
+              <dt>Saiu do lote</dt>
+              <dd>{f.motivo_saida}</dd>
+            </div>
+          ) : null}
+        </dl>
+        <nav className="avd-analise-navegacao" aria-label="Fichas da lista">
+          <button
+            type="button"
+            className="btn secondary small"
+            data-acao="ficha-anterior"
+            disabled={!anterior || abrindo}
+            title={anterior ? `Candidato ${anterior.codigo}` : undefined}
+            onClick={() => void ir(anterior?.ficha.id)}
+          >
+            <i className="fa-solid fa-chevron-left" aria-hidden="true" />{" "}
+            Anterior
+          </button>
+          {posicao >= 0 ? (
+            <span className="ui-texto-secundario">
+              {posicao + 1} de {navegaveis.length}
+            </span>
+          ) : null}
+          <button
+            type="button"
+            className="btn secondary small"
+            data-acao="ficha-proxima"
+            disabled={!proxima || abrindo}
+            title={proxima ? `Candidato ${proxima.codigo}` : undefined}
+            onClick={() => void ir(proxima?.ficha.id)}
+          >
+            Próxima{" "}
+            <i className="fa-solid fa-chevron-right" aria-hidden="true" />
+          </button>
+        </nav>
+      </header>
+      {aberta.somente_leitura && aberta.motivo ? (
+        <Aviso tom="warning">Só leitura: {aberta.motivo}</Aviso>
+      ) : null}
+      {dados.pode_coordenar && reservaDeOutro ? (
+        liberando ? (
+          <div className="avd-inline">
+            <Campo rotulo="Motivo para liberar a reserva" obrigatorio>
+              <input
+                value={motivo}
+                maxLength={2000}
+                onChange={(ev) => setMotivo(ev.target.value)}
+              />
+            </Campo>
             <button
               type="button"
-              className="btn secondary"
-              data-tour="avd-ficha-liberar"
-              onClick={() => setLiberando(true)}
+              className="btn small"
+              disabled={motivo.trim().length < 10}
+              onClick={async () => {
+                const r = await fila.liberarReservas([f.id], motivo.trim());
+                if (r.ok) await fila.abrir(f.id);
+                else setErro(r.erro);
+              }}
             >
-              Liberar a reserva
+              Liberar
             </button>
-          )
-        ) : null}
-        {erro ? (
-          <Aviso tom="danger" papel="alert">
-            {erro}
-          </Aviso>
-        ) : null}
-      </div>
-    </Gaveta>
+          </div>
+        ) : (
+          <button
+            type="button"
+            className="btn secondary avd-analise-liberar"
+            data-tour="avd-ficha-liberar"
+            onClick={() => setLiberando(true)}
+          >
+            Liberar a reserva
+          </button>
+        )
+      ) : null}
+      {erro ? (
+        <Aviso tom="danger" papel="alert">
+          {erro}
+        </Aviso>
+      ) : null}
+      <ConteudoDaFicha
+        key={f.id}
+        fila={fila}
+        aberta={aberta}
+        filtroVaga={filtroVaga}
+        aoFechar={voltar}
+        registrarAntesDeFechar={registrarAntesDeFechar}
+      />
+    </section>
   );
 }
 
@@ -427,6 +584,9 @@ function TabelaDaFila({
   fila,
   dados,
   linhas,
+  ordenadas,
+  ordem,
+  setOrdem,
   total,
   semPreClassificacao,
   coordena,
@@ -437,9 +597,6 @@ function TabelaDaFila({
   aoTeclarNaBusca,
 }) {
   const etapa = st.filtro.etapa;
-  const [ordem, setOrdem] = useState({ chave: "", sentido: "" });
-  useEffect(() => setOrdem({ chave: "", sentido: "" }), [etapa]);
-  const ordenadas = useMemo(() => ordenarFila(linhas, ordem), [linhas, ordem]);
   const chaves = colunasDaEtapa(etapa);
   const comFicha = linhas.filter((c) => c.ficha);
   const comCaixa = coordena && comFicha.length > 0;
@@ -471,7 +628,9 @@ function TabelaDaFila({
       : []),
     ...chaves.map((chave) => ({
       chave,
-      rotulo: COLUNAS_DA_FILA[chave].rotulo,
+      rotulo:
+        COLUNAS_DA_FILA[chave].rotuloCurto ?? COLUNAS_DA_FILA[chave].rotulo,
+      dica: COLUNAS_DA_FILA[chave].dica,
       numero: COLUNAS_DA_FILA[chave].numero,
       ordem: ordem.chave === chave ? ordem.sentido : "",
       aoOrdenar: () => setOrdem((atual) => proximaOrdem(atual, chave)),
@@ -527,7 +686,7 @@ function TabelaDaFila({
           disabled={!ordenadas.length}
           onClick={() => fila.exportarCsv(ordenadas, etapa)}
         >
-          <i className="fa-solid fa-file-csv" aria-hidden="true" /> Exportar CSV
+          <i className="fa-solid fa-download" aria-hidden="true" /> Exportar CSV
         </button>
       }
       linha={(c) => (
@@ -578,16 +737,21 @@ export function Fila({ e, fila }) {
   const [selecao, setSelecao] = useState(() => new Set());
   const [acao, setAcao] = useState(null);
   const [busca, setBusca] = useState(st.filtro.busca);
+  // A ordem da tabela fica aqui: Anterior / Próxima da ficha seguem a mesma.
+  const [ordem, setOrdem] = useState({ chave: "", sentido: "" });
+  const etapa = st.filtro.etapa;
+  useEffect(() => setOrdem({ chave: "", sentido: "" }), [etapa]);
 
   useEffect(() => {
     if (fila.obter().editalId !== e.editalId) void fila.carregar(e.editalId);
   }, [fila, e.editalId]);
   useEffect(() => {
-    const sair = () => void fila.fechar();
-    globalThis.addEventListener?.("pagehide", sair);
+    // Ao sair da página, a reserva é liberada mas a ficha fica lembrada (recarregar volta a ela).
+    const aoSairDaPagina = () => void fila.fechar();
+    globalThis.addEventListener?.("pagehide", aoSairDaPagina);
     return () => {
-      globalThis.removeEventListener?.("pagehide", sair);
-      sair();
+      globalThis.removeEventListener?.("pagehide", aoSairDaPagina);
+      void fila.fechar();
     };
   }, [fila]);
 
@@ -597,6 +761,11 @@ export function Fila({ e, fila }) {
   const linhas = useMemo(
     () => filtrarFila(candidatos, st.filtro, dados?.eu),
     [candidatos, st.filtro, dados?.eu],
+  );
+  const ordenadas = useMemo(() => ordenarFila(linhas, ordem), [linhas, ordem]);
+  const navegaveis = useMemo(
+    () => ordenadas.filter((c) => c.ficha?.id),
+    [ordenadas],
   );
   const modalidades = useMemo(
     () =>
@@ -639,6 +808,19 @@ export function Fila({ e, fila }) {
       return nova;
     });
   const minhas = st.filtro.responsavel === "eu";
+
+  if (st.aberta?.ficha || st.abrindo)
+    return (
+      <ModoDeAnalise
+        key={st.aberta?.ficha?.id || "abrindo"}
+        fila={fila}
+        aberta={st.aberta}
+        abrindo={st.abrindo}
+        dados={dados}
+        filtroVaga={st.filtro.vaga}
+        navegaveis={navegaveis}
+      />
+    );
 
   return (
     <div className="avd-fila" data-tour="avd-fila">
@@ -804,6 +986,9 @@ export function Fila({ e, fila }) {
         fila={fila}
         dados={dados}
         linhas={linhas}
+        ordenadas={ordenadas}
+        ordem={ordem}
+        setOrdem={setOrdem}
         total={contadores[st.filtro.etapa] ?? 0}
         semPreClassificacao={!candidatos.length}
         coordena={coordena}
@@ -831,15 +1016,6 @@ export function Fila({ e, fila }) {
             setAcao(null);
             if (feito) setSelecao(new Set());
           }}
-        />
-      ) : null}
-      {st.aberta?.ficha ? (
-        <FichaAberta
-          key={st.aberta.ficha.id}
-          fila={fila}
-          aberta={st.aberta}
-          dados={dados}
-          filtroVaga={st.filtro.vaga}
         />
       ) : null}
     </div>

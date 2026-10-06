@@ -34,6 +34,10 @@ import {
   rotuloDe,
 } from "../../../lib/avaliacao-documental/catalogo.js";
 import { tetoDoBloco } from "../../../lib/avaliacao-documental/pontuacao.js";
+import {
+  DICA_DA_ART,
+  ROTULO_DA_ART,
+} from "../../../lib/avaliacao-documental/tela-da-pre-classificacao.js";
 import { Aviso, Campo, Selo } from "../../../ui/index.js";
 import { criarEstadoDaFicha } from "./estado-da-ficha.js";
 
@@ -484,7 +488,7 @@ function Etnico({ lancamento, mudar, desabilitado }) {
 const SELO_DA_SITUACAO = {
   CONFORME: ["aprovado", "Conforme", "fa-check"],
   NAO_CONFORME: ["reprovado", "Não conforme", "fa-xmark"],
-  NAO_ENVIADO: ["neutro", "Não enviado", "fa-minus"],
+  NAO_ENVIADO: ["neutro", "Não enviado", "fa-ban"],
 };
 
 function CartaoDoBloco({
@@ -680,9 +684,11 @@ function Lateral({ st, loja, ficha, mudar, desabilitado }) {
           {avaliacao.nota_minima !== null
             ? `mínima ${textoDaNota(avaliacao.nota_minima)}`
             : ""}
-          {art !== null && art !== undefined
-            ? ` · ART ${textoDaNota(art)}`
-            : ""}
+          {art !== null && art !== undefined ? (
+            <span title={DICA_DA_ART}>
+              {` · ${ROTULO_DA_ART} ${textoDaNota(art)}`}
+            </span>
+          ) : null}
         </span>
       </div>
       <div

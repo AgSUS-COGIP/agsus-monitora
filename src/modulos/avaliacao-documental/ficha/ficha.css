@@ -1,8 +1,89 @@
 /* Conteúdo da ficha da Avaliação documental (ficha/ficha.jsx). Só tokens. */
 
-/* A gaveta da ficha é larga: blocos à esquerda, nota e parecer à direita. */
-.modal-card.ui-gaveta.avd-ficha-cartao {
-  width: min(1240px, 100vw);
+/*
+  Modo de análise (fila.jsx, ModoDeAnalise): a ficha ocupa a área de conteúdo.
+  Topo fixo logo abaixo do cabeçalho do app; lateral fixa abaixo dos dois;
+  barra de ações presa ao pé, acima do menu inferior do celular. Os recuos
+  (--avd-recuo-do-cabecalho, --avd-altura-do-topo) são medidos pela tela.
+*/
+.avd-analise {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-3);
+  min-width: 0;
+}
+.avd-analise-topo {
+  position: sticky;
+  top: var(--avd-recuo-do-cabecalho, 0px);
+  z-index: 3;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-4);
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  background: var(--surface-card);
+  box-shadow: var(--shadow-card);
+}
+.avd-analise-identidade {
+  display: grid;
+  min-width: 0;
+}
+.avd-analise-identidade h2 {
+  margin: 0;
+  overflow: hidden;
+  color: var(--text-primary);
+  font-size: var(--text-body);
+  font-weight: var(--font-weight-semibold);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.avd-analise-identidade h2 span {
+  font-weight: var(--font-weight-regular);
+}
+.avd-analise-dados {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1) var(--space-4);
+  margin: 0;
+  font-size: var(--text-caption);
+}
+.avd-analise-dados dt {
+  color: var(--text-secondary);
+}
+.avd-analise-dados dd {
+  margin: 0;
+  color: var(--text-primary);
+  font-weight: var(--font-weight-semibold);
+}
+.avd-analise-navegacao {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-left: auto;
+}
+.avd-analise-liberar {
+  justify-self: start;
+}
+.avd-analise .avd-ficha-lateral {
+  top: calc(
+    var(--avd-recuo-do-cabecalho, 0px) + var(--avd-altura-do-topo, 0px) +
+      var(--space-3)
+  );
+  max-height: calc(
+    100dvh - var(--avd-recuo-do-cabecalho, 0px) -
+      var(--avd-altura-do-topo, 0px) - 96px
+  );
+  overflow: auto;
+}
+.avd-analise .avd-ficha-barra {
+  bottom: var(--recuo-da-navegacao-inferior, 0px);
+  padding-inline: var(--space-4);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
 }
 .avd-ficha {
   display: grid;
@@ -10,7 +91,7 @@
 }
 .avd-ficha-grade {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(280px, 340px);
+  grid-template-columns: minmax(0, 1fr) minmax(300px, 380px);
   align-items: start;
   gap: var(--space-4);
 }
@@ -386,8 +467,32 @@
   .avd-ficha-grade {
     grid-template-columns: minmax(0, 1fr);
   }
-  .avd-ficha-lateral {
+  .avd-ficha-lateral,
+  .avd-analise .avd-ficha-lateral {
     position: static;
+    max-height: none;
+    overflow: visible;
+  }
+  /* Celular: o topo numa faixa curta; os dados rolam de lado. */
+  .avd-analise-topo {
+    gap: var(--space-1) var(--space-2);
+    padding: var(--space-2);
+  }
+  .avd-analise-identidade {
+    flex: 1 1 60%;
+  }
+  .avd-analise-dados {
+    flex: 1 1 100%;
+    min-width: 0;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    order: 3;
+  }
+  .avd-analise-dados > div {
+    flex: 0 0 auto;
+  }
+  .avd-analise-navegacao {
+    margin-left: 0;
   }
   .avd-ficha-situacao kbd {
     display: none;

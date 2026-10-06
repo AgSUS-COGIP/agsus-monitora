@@ -16,7 +16,9 @@
     salvar_filtro_fila(p_nome, p_filtro) / excluir_filtro_fila(p_filtro)
   "Exportar CSV" baixa a aba aberta (csvDaFila), sem ir ao banco.
   O último filtro usado fica no navegador só por conveniência (try/catch);
-  os filtros salvos com nome ficam no banco, por pessoa.
+  os filtros salvos com nome ficam no banco, por pessoa. A ficha aberta
+  (edital e ficha) fica na sessão da aba (sessionStorage), para recarregar a
+  página voltar ao modo de análise; fechar a ficha esquece.
 */
 import { comTempoLimite } from "../../lib/falha-de-rede.js";
 import {
@@ -42,6 +44,7 @@ const TEMPO_LIMITE_MS = 45000;
 /* A reserva dura 15 minutos; a tela renova bem antes. */
 export const RENOVAR_A_CADA_MS = 5 * 60 * 1000;
 const CHAVE_DO_FILTRO = "monitora.avaliacao-documental.fila.filtro";
+const CHAVE_DA_FICHA_ABERTA = "monitora.avaliacao-documental.ficha-aberta";
 
 const INICIAL = Object.freeze({
   editalId: "",
@@ -59,6 +62,35 @@ function armazenamentoPadrao() {
     return globalThis.localStorage ?? null;
   } catch {
     return null;
+  }
+}
+
+function sessaoPadrao() {
+  try {
+    return globalThis.sessionStorage ?? null;
+  } catch {
+    return null;
+  }
+}
+
+/** A ficha aberta lembrada na sessão da aba: { edital, ficha } ou null. */
+export function lerFichaLembrada(sessao = sessaoPadrao()) {
+  try {
+    const v = JSON.parse(sessao?.getItem(CHAVE_DA_FICHA_ABERTA) || "null");
+    return v && typeof v.edital === "string" && typeof v.ficha === "string"
+      ? { edital: v.edital, ficha: v.ficha }
+      : null;
+  } catch {
+    return null;
+  }
+}
+
+function lembrarFicha(sessao, valor) {
+  try {
+    if (valor) sessao?.setItem(CHAVE_DA_FICHA_ABERTA, JSON.stringify(valor));
+    else sessao?.removeItem(CHAVE_DA_FICHA_ABERTA);
+  } catch {
+    /* Sem sessão no navegador: recarregar volta à lista. */
   }
 }
 
@@ -95,6 +127,7 @@ export function criarEstadoDaFila({
   supabase = null,
   toast = (mensagem) => console.info(mensagem),
   armazenamento = armazenamentoPadrao(),
+  sessao = sessaoPadrao(),
   agendar = (fn, ms) => setInterval(fn, ms),
   cancelar = (id) => clearInterval(id),
   tempoLimiteMs = TEMPO_LIMITE_MS,
@@ -103,6 +136,7 @@ export function criarEstadoDaFila({
   let estado = { ...INICIAL, filtro: lerFiltro(armazenamento) };
   let pedido = 0;
   let renovacao = null;
+  let restaurou = false;
   const ouvintes = new Set();
   const publicar = (mudancas) => {
     estado = { ...estado, ...mudancas };
@@ -140,6 +174,17 @@ export function criarEstadoDaFila({
       const dados = await rpc(RPC_OBTER_FILA, { p_edital: editalId });
       if (meu !== pedido) return false;
       publicar({ dados, carregando: false, erro: "" });
+      // Página recarregada com a ficha aberta: volta a ela (uma vez).
+      const lembrada = lerFichaLembrada(sessao);
+      if (
+        lembrada?.edital === editalId &&
+        !estado.aberta &&
+        !estado.abrindo &&
+        !restaurou
+      ) {
+        restaurou = true;
+        void abrir(lembrada.ficha);
+      }
       return true;
     } catch (erro) {
       if (meu !== pedido) return false;
@@ -157,6 +202,10 @@ export function criarEstadoDaFila({
   function mostrarFicha(r) {
     pararRenovacao();
     publicar({ aberta: r, abrindo: false });
+    lembrarFicha(
+      sessao,
+      r?.ficha?.id ? { edital: estado.editalId, ficha: r.ficha.id } : null,
+    );
     if (r?.reservada && r.ficha?.id) {
       const id = r.ficha.id;
       renovacao = agendar(() => renovar(id), RENOVAR_A_CADA_MS);
@@ -172,6 +221,7 @@ export function criarEstadoDaFila({
       return true;
     } catch (erro) {
       publicar({ abrindo: false });
+      lembrarFicha(sessao, null);
       toast(
         `Não foi possível abrir a ficha: ${mensagemDoBanco(erro)}`,
         "error",
@@ -181,7 +231,7 @@ export function criarEstadoDaFila({
   }
 
   async function pegarProxima(vaga = "") {
-    await fechar();
+    await fechar({ esquecer: true });
     publicar({ abrindo: true });
     try {
       const r = await rpc(RPC_PEGAR_PROXIMA, {
@@ -228,10 +278,15 @@ export function criarEstadoDaFila({
     }
   }
 
-  /* Fecha a ficha aberta e libera a reserva dela (se era sua). */
-  async function fechar() {
+  /*
+    Fecha a ficha aberta e libera a reserva dela (se era sua). Só "Voltar à
+    fila" (e Pegar próximo) esquece a ficha lembrada ({ esquecer: true }); ao
+    sair da página ou da aba ela continua lembrada para recarregar voltar a ela.
+  */
+  async function fechar({ esquecer = false } = {}) {
     const aberta = estado.aberta;
     pararRenovacao();
+    if (esquecer) lembrarFicha(sessao, null);
     if (!aberta) return true;
     publicar({ aberta: null });
     if (aberta.reservada && aberta.ficha?.id) {

@@ -311,6 +311,11 @@ async function abrirFicha(supabase) {
 beforeEach(() => {
   redefinirDadosDoMonitoramento();
   definirAreaAtual("projetos");
+  try {
+    globalThis.sessionStorage?.clear();
+  } catch {
+    /* sem sessão */
+  }
 });
 afterEach(async () => {
   await act(async () => painel?.raiz?.unmount());

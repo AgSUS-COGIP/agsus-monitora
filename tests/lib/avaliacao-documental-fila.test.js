@@ -333,7 +333,9 @@ describe("colunas de cada aba, ordem e CSV", () => {
   it("CSV da aba: colunas da aba, ';', BOM e célula protegida contra fórmula", () => {
     const csv = csvDaFila([eliminado], "eliminados");
     expect(
-      csv.startsWith("\uFEFFCódigo;Nome;Vaga;Motivo da eliminação;ART\r\n"),
+      csv.startsWith(
+        "\uFEFFCódigo;Nome;Vaga;Motivo da eliminação;Nota declarada (ART)\r\n",
+      ),
     ).toBe(true);
     expect(csv).toContain(
       "7009;'=Cmd|' /C calc'!A0;11;Cancelou a inscrição;12,5",

@@ -2,9 +2,12 @@ import { useEffect, useState, useSyncExternalStore } from "react";
 import { ordinal } from "../../lib/classificacao/numeros.js";
 import {
   contadoresDaPreClassificacao,
+  DICA_DA_ART,
+  DICA_DA_RECALCULADA,
   lotesAPublicar,
   nota,
   regraComTamanhos,
+  ROTULO_DA_ART,
   ROTULOS_DA_SITUACAO,
   SITUACOES_DO_EDITAL,
   tamanhoDefinido,
@@ -64,14 +67,14 @@ function LinhaDoInscrito({ c }) {
       <td>{c.modalidade}</td>
       <td>
         {nota(c.art)}
-        {c.origem_nota === "DECLARADA" ? " (declarada)" : ""}
+        {c.origem_nota === "DECLARADA" ? " (recalculada)" : ""}
       </td>
       <td>
         {nota(c.declarada)}
         {c.divergente ? (
           <span
             className="avd-diverge"
-            title="Diferente da ART além da tolerância da regra"
+            title="Diferente da nota declarada (ART) além da tolerância da regra"
           >
             {" "}
             <i
@@ -162,8 +165,12 @@ function VagaDaPre({
                 <th scope="col">Código</th>
                 <th scope="col">Nome</th>
                 <th scope="col">Modalidade</th>
-                <th scope="col">ART</th>
-                <th scope="col">Declarada</th>
+                <th scope="col" title={DICA_DA_ART}>
+                  {ROTULO_DA_ART}
+                </th>
+                <th scope="col" title={DICA_DA_RECALCULADA}>
+                  Recalculada
+                </th>
                 <th scope="col">Situação</th>
               </tr>
             </thead>
@@ -452,7 +459,7 @@ export function PreClassificacao({ e, estado, pre }) {
         <Kpi
           tom="alerta"
           icone="fa-scale-balanced"
-          rotulo="ART × declarada"
+          rotulo="ART × recalculada"
           valor={cont.divergencias}
         />
       </GradeDeKpis>

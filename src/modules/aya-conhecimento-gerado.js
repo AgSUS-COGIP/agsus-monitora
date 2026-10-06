@@ -878,6 +878,25 @@ export const VERBETES_AYA = Object.freeze([
   },
   {
     arquivo: "regras-da-avaliacao-documental.md",
+    titulo: "O que é a ART (nota declarada)",
+    perguntas: [
+      "sigla art",
+      "art na avaliacao documental",
+      "nota declarada art",
+      "nota declarada (art)",
+      "sigla art na fila",
+      "declarado na ficha",
+      "art e declarado",
+    ],
+    resposta:
+      'ART é a Autodeclaração de Requisitos e Títulos: a nota que a Empregare calcula a partir das respostas do questionário de inscrição, antes de alguém conferir os documentos. Nas telas da Avaliação documental ela aparece como "Nota declarada (ART)" (ou "Nota declarada", com a sigla na dica, nas colunas estreitas): na Fila, no topo da ficha, na lateral da ficha ("mínima 15 · Nota declarada (ART) 13") e na Pré-classificação. É por ela que sai a Provisória. Na ficha, a coluna "Declarado" de cada bloco é a parte da ART daquele bloco (o que a resposta vale pela regra); somadas, dão a nota declarada. O Apurado é o que vale depois da conferência dos documentos.',
+    fato: 'No MONITORA, ART (Autodeclaração de Requisitos e Títulos) é a nota que a Empregare calcula pelo questionário, antes da conferência; a tela a chama de "Nota declarada (ART)".',
+    fonte:
+      "src/lib/avaliacao-documental/tela-da-pre-classificacao.js (ROTULO_DA_ART, DICA_DA_ART)",
+    abrir: "avaliacao-documental",
+  },
+  {
+    arquivo: "regras-da-avaliacao-documental.md",
     titulo: "Divergência entre a ART e a nota declarada",
     perguntas: [
       "art diferente da nota declarada",
@@ -887,7 +906,7 @@ export const VERBETES_AYA = Object.freeze([
       "por que diverge",
     ],
     resposta:
-      'A ART (Nota da Autodeclaração de Requisitos e Títulos) é a nota que a Empregare calcula com as respostas do questionário. Se a regra tiver a nota declarada configurada (aba Regra), o sistema recalcula a nota pelas mesmas respostas e compara: diferença acima da tolerância da regra aparece como "diverge" na linha do candidato e no contador "ART × declarada". É só um aviso para a coordenação conferir o questionário ou a regra; a ordem da Provisória continua pela ART.',
+      'A ART (Nota da Autodeclaração de Requisitos e Títulos) é a nota que a Empregare calcula com as respostas do questionário. Se a regra tiver a nota declarada configurada (aba Regra), o sistema recalcula a nota pelas mesmas respostas e compara: diferença acima da tolerância da regra aparece como "diverge" na linha do candidato e no contador "ART × recalculada" (na tabela da vaga, a coluna "Recalculada" ao lado da "Nota declarada (ART)"). É só um aviso para a coordenação conferir o questionário ou a regra; a ordem da Provisória continua pela ART.',
     fato: "",
     fonte:
       "src/lib/avaliacao-documental/nota-declarada.js; python/monitora/avaliacao_documental/nota_declarada.py",
@@ -1038,9 +1057,13 @@ export const VERBETES_AYA = Object.freeze([
       "inscritos no lote pendentes",
       "o que e pendente na fila",
       "em revisao na fila",
+      "motivo da eliminacao na fila",
+      "exportar csv da fila",
+      "ordenar a fila",
+      "colunas da fila",
     ],
     resposta:
-      'A aba Fila mostra, no topo, as etapas com contadores — Inscritos, No lote, Pendentes, Em análise, Em revisão, Concluídas e Eliminados — e cada etapa clicada vira filtro da lista. Cada inscrito do lote tem uma ficha: Pendente (na fila, livre ou já com um analista), Em análise (o responsável abriu), Em revisão (a coordenação mandou revisar), Concluída ou Fora do lote (saiu eliminado; a ficha fica, com o motivo). As fichas são abertas sozinhas no fim de cada pré-classificação; a coordenação também tem "Abrir fichas do lote". A lista mostra o nome do candidato a quem tem acesso de leitura à Avaliação documental, nunca o CPF.',
+      'A aba Fila mostra, no topo, as etapas com contadores — Inscritos, No lote, Pendentes, Em análise, Em revisão, Concluídas e Eliminados — e cada etapa clicada vira filtro da lista. Cada etapa mostra as colunas que fazem sentido nela: em Eliminados, o código, o nome, a vaga, o motivo da eliminação (ex.: "Cancelou a inscrição") e a nota declarada (ART), quando houver; em Concluídas, a nota, o resultado (Apto ou Inapto), o responsável e a data; em Pendentes e Em análise, a posição, a nota declarada (ART), o responsável e a reserva. A lista é a tabela padrão do sistema: o cabeçalho fica preso no alto ao rolar, clicar no nome da coluna ordena (de novo inverte; a terceira vez volta à ordem da Provisória), a busca por código ou nome fica no alto da tabela, "N de M" diz quantos aparecem do total da etapa, as linhas vêm de 50 em 50 ao rolar e "Exportar CSV" baixa a etapa aberta com as colunas e a ordem da tela. Cada inscrito do lote tem uma ficha: Pendente (na fila, livre ou já com um analista), Em análise (o responsável abriu), Em revisão (a coordenação mandou revisar), Concluída ou Fora do lote (saiu eliminado; a ficha fica, com o motivo). As fichas são abertas sozinhas no fim de cada pré-classificação; a coordenação também tem "Abrir fichas do lote". A lista mostra o nome do candidato a quem tem acesso de leitura à Avaliação documental, nunca o CPF.',
     fato: "",
     fonte:
       "src/modulos/avaliacao-documental/fila.jsx; supabase/migrations/20261006120000_fichas_fila_e_reserva.sql",
@@ -1136,6 +1159,27 @@ export const VERBETES_AYA = Object.freeze([
   },
   {
     arquivo: "regras-da-avaliacao-documental.md",
+    titulo: "Modo de análise: a ficha em tela cheia",
+    perguntas: [
+      "modo de analise",
+      "ficha em tela cheia",
+      "voltar a fila",
+      "ficha anterior",
+      "proxima ficha da lista",
+      "anterior e proxima",
+      "esc fecha a ficha",
+      "recarreguei a pagina e a ficha",
+      "atualizar perde a ficha",
+    ],
+    resposta:
+      'Ao abrir uma ficha (Abrir, Pegar próximo ou o código na busca + Enter), ela ocupa toda a área de conteúdo — fica só o menu lateral — e a lista some até você voltar. O topo fica preso no alto: "← Voltar à fila", a vaga, o candidato (código e nome), a posição, a nota declarada (ART), a modalidade, a situação, o responsável, a reserva e "Anterior / Próxima", que andam pelas fichas da lista como ela estava filtrada e ordenada na Fila ("2 de 87"). Trocar de ficha ou voltar salva antes o que falta; se não der para salvar, a tela pergunta. Esc também volta à fila. Blocos à esquerda e a lateral com o resultado presa ao lado; no celular, tudo empilha e a barra de ações fica acima do menu inferior. Recarregar a página (ou "Atualizar") volta para a mesma ficha; só "Voltar à fila" esquece.',
+    fato: "",
+    fonte:
+      "src/modulos/avaliacao-documental/fila.jsx (ModoDeAnalise); src/modulos/avaliacao-documental/estado-da-fila.js",
+    abrir: "avaliacao-documental",
+  },
+  {
+    arquivo: "regras-da-avaliacao-documental.md",
     titulo: "Como analisar uma ficha",
     perguntas: [
       "como analisar a ficha",
@@ -1144,9 +1188,13 @@ export const VERBETES_AYA = Object.freeze([
       "conteudo da ficha",
       "sair das planilhas",
       "como conferir os documentos",
+      "ficha mostra inapto ao abrir",
+      "em analise requisitos conferidos",
+      "nao se aplicam",
+      "apurado com traco",
     ],
     resposta:
-      'A ficha abre na aba Fila (Pegar próximo ou Abrir). Cada bloco da regra vira um cartão, na ordem da regra: o título, o item do edital e o que o candidato DECLAROU na Empregare (a resposta das perguntas ligadas ao bloco: "Anexo", "4 anos ou mais", "Especialização"…). Os documentos ficam na Empregare: use "Copiar código" e "Abrir vagas na Empregare" (copia o código da vaga: cole na busca de Vagas Anunciadas, abra a vaga e procure o candidato pelo código) para conferir o arquivo. Em cada bloco marque Conforme, Não conforme ou Não enviado; no Não conforme e no Não enviado escolha o motivo na lista. Nos blocos que pontuam, lance os títulos, os cursos (com a carga horária) e os vínculos (com início e fim): os pontos saem na hora pela regra. A lateral mostra a nota ao vivo, o resultado (Apto, Inapto por requisito ou por nota mínima) e o parecer. Cota de outra modalidade aparece como "Não se aplica". Sem resposta na Empregare, o bloco sugere "Não enviado".',
+      'A ficha abre na aba Fila (Pegar próximo ou Abrir). Cada bloco da regra vira um cartão, na ordem da regra: o título, o item do edital e o que o candidato DECLAROU na Empregare (a resposta das perguntas ligadas ao bloco: "Anexo", "4 anos ou mais", "Especialização"…). Os documentos ficam na Empregare: use "Copiar código" e "Abrir vagas na Empregare" (copia o código da vaga: cole na busca de Vagas Anunciadas, abra a vaga e procure o candidato pelo código) para conferir o arquivo. Em cada bloco marque Conforme, Não conforme ou Não enviado; no Não conforme e no Não enviado escolha o motivo na lista. Nos blocos que pontuam, lance os títulos, os cursos (com a carga horária) e os vínculos (com início e fim): os pontos saem na hora pela regra. A lateral mostra a nota ao vivo, o resultado e o parecer. Enquanto falta conferir algum bloco, o resultado fica neutro — "Em análise · 2 de 4 requisitos conferidos" (os requisitos são os blocos que podem eliminar), com a nota parcial — e a coluna Apurado mostra "—" nos blocos ainda não conferidos, sem destacar diferença: a conta trata o bloco não marcado como Conforme e a experiência sem vínculo como abaixo do mínimo, por isso o Inapto só aparece quando um bloco conferido elimina (Não conforme ou Não enviado com efeito eliminatório, ou a experiência conferida abaixo do mínimo). Apto ou Inapto pela nota mínima só com tudo conferido. Marcado, o cartão muda de cor (verde Conforme, vermelho Não conforme, cinza Não enviado), ganha o selo da situação e o botão escolhido fica com o ✓. Cotas e blocos que não valem para o candidato ficam numa linha no fim ("Não se aplicam: …"), que abre ao clicar. Sem resposta na Empregare, o bloco sugere "Não enviado".',
     fato: "No MONITORA, a ficha mostra o que o candidato declarou na Empregare e calcula a nota pela regra do edital enquanto o analista confere.",
     fonte:
       "src/modulos/avaliacao-documental/ficha/ficha.jsx; src/lib/avaliacao-documental/ficha.js; src/lib/avaliacao-documental/pontuacao.js",
@@ -1222,9 +1270,12 @@ export const VERBETES_AYA = Object.freeze([
       "fechar e liberar",
       "o que falta para concluir",
       "perdi o que fiz",
+      "concluir desabilitado",
+      "itens conferidos",
+      "barra de progresso da ficha",
     ],
     resposta:
-      'Cada mudança na ficha é salva sozinha em um ou dois segundos; "Salvo às HH:MM" aparece só depois de o banco confirmar, e "Alteração não salva" enquanto falta. "Salvar rascunho" (ou Ctrl+S) salva na hora. "Concluir e próxima" confere o que falta — situação de cada bloco, motivo do Não conforme e do Não enviado, motivo do item recusado, datas dos vínculos e justificativa de nota diferente da declarada —, conclui e já abre a próxima ficha da sua fila. "Fechar e liberar" salva o que falta e solta a reserva; fechar a aba do navegador com alteração não salva pede confirmação. Se outra pessoa ou outra aba mexeu na ficha, o salvamento para com o aviso e nada é sobrescrito. A conclusão grava quem concluiu (o login) e a hora; não há campo para digitar.',
+      'Cada mudança na ficha é salva sozinha em um ou dois segundos; "Salvo às HH:MM" aparece só depois de o banco confirmar, e "Alteração não salva" enquanto falta. "Salvar rascunho" (ou Ctrl+S) salva na hora. A barra mostra "4 de 7 itens conferidos" e, enquanto falta algo, "Falta: Formação Acadêmica, Experiência Profissional (justificativa)…"; "Concluir e próxima" fica travado até não faltar nada — situação de cada bloco, motivo do Não conforme e do Não enviado, motivo do item recusado, datas dos vínculos e justificativa de nota diferente da declarada (pedida só depois de o bloco ser conferido) — e então conclui e já abre a próxima ficha da sua fila. "Fechar e liberar" salva o que falta e solta a reserva; fechar a aba do navegador com alteração não salva pede confirmação. Se outra pessoa ou outra aba mexeu na ficha, o salvamento para com o aviso e nada é sobrescrito. A conclusão grava quem concluiu (o login) e a hora; não há campo para digitar.',
     fato: "",
     fonte:
       "src/modulos/avaliacao-documental/ficha/estado-da-ficha.js; supabase/migrations/20261007130000_conteudo_da_ficha.sql (salvar_rascunho_ficha, concluir_ficha)",

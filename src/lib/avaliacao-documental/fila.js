@@ -8,6 +8,11 @@
 */
 import { sanitizeCsvCell } from "../csv-security.js";
 import { distribuirFichas } from "./distribuicao.js";
+import {
+  DICA_DA_ART,
+  ROTULO_CURTO_DA_ART,
+  ROTULO_DA_ART,
+} from "./tela-da-pre-classificacao.js";
 
 /** As abas de etapa, na ordem do funil; cada uma é também um filtro. */
 export const ETAPAS_DA_FILA = Object.freeze([
@@ -291,7 +296,8 @@ export function textoDaSituacaoNaFila(c) {
 }
 
 /*
-  As colunas: chave, rótulo, o valor para ordenar e o texto (tela e CSV).
+  As colunas: chave, rótulo (o do CSV; rotuloCurto na tela, com a dica), o
+  valor para ordenar e o texto (tela e CSV).
   `numero`: alinha à direita e ordena como número.
 */
 export const COLUNAS_DA_FILA = Object.freeze({
@@ -305,7 +311,9 @@ export const COLUNAS_DA_FILA = Object.freeze({
   codigo: { rotulo: "Código", valor: (c) => String(c.codigo ?? "") },
   nome: { rotulo: "Nome", valor: (c) => String(c.nome ?? "") },
   art: {
-    rotulo: "ART",
+    rotulo: ROTULO_DA_ART,
+    rotuloCurto: ROTULO_CURTO_DA_ART,
+    dica: DICA_DA_ART,
     numero: true,
     valor: (c) =>
       c.art === null || c.art === undefined || c.art === ""

@@ -758,7 +758,7 @@ const TOURS = Object.freeze({
       passo(
         t("avd-fila-filtros"),
         "Filtros",
-        "Vaga, responsável, modalidade e a busca por código ou nome; Enter com o código abre a ficha.",
+        "Vaga, responsável e modalidade; a busca por código ou nome fica na tabela (Enter com o código abre a ficha).",
       ),
       passo(
         t("avd-fila-filtros-salvos"),
@@ -791,7 +791,7 @@ const TOURS = Object.freeze({
       passo(
         t("avd-fila-tabela"),
         "As fichas",
-        "Situação, responsável e quem está com a ficha aberta agora; nas concluídas, a nota e o resultado. Abrir mostra a ficha.",
+        "As colunas de cada etapa; o cabeçalho ordena e Exportar CSV baixa a etapa. Abrir mostra a ficha em tela cheia.",
       ),
       passo(
         t("avd-ficha-blocos"),

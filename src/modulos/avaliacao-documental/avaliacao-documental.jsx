@@ -14,7 +14,7 @@ import { CHAVE_DO_CABECALHO } from "../../lib/cabecalho-dos-documentos.js";
 import { estadoDasConfiguracoes } from "../configuracoes/estado.js";
 import { Equipe } from "./equipe.jsx";
 import { criarEstadoDaAvaliacao, MENSAGEM_SEM_ACESSO } from "./estado.js";
-import { criarEstadoDaFila } from "./estado-da-fila.js";
+import { criarEstadoDaFila, lerFichaLembrada } from "./estado-da-fila.js";
 import { criarEstadoDaPreClassificacao } from "./estado-da-pre-classificacao.js";
 import { Fila } from "./fila.jsx";
 import { PreClassificacao } from "./pre-classificacao.jsx";
@@ -66,24 +66,32 @@ function TelaDaArea({ estado, pre, fila, atualizar, e }) {
   });
   const recarregar = () => void estado.carregar(e.area);
   const papel = e.dados?.papel;
+  // Modo de análise: a ficha aberta ocupa a tela; só a Fila (que a desenha) fica montada.
+  const sf = useSyncExternalStore(fila.assinar, fila.obter);
+  const emAnalise = visao === "fila" && Boolean(sf.aberta?.ficha || sf.abrindo);
   return (
-    <div className="ui-tela avd-tela">
-      <TopoDoPainel
-        visoes={
-          <Segmentado
-            rotulo="Visão"
-            opcoes={VISOES}
-            valor={visao}
-            aoMudar={estado.mudarVisao}
-            tour="avd-visoes"
-          />
-        }
-        status={textoDoStatus(e)}
-        aoAtualizar={() => void atualizar()}
-        atualizarDesativado={
-          !e.area || e.carregandoEditais || e.carregandoEdital
-        }
-      />
+    <div
+      className="ui-tela avd-tela"
+      data-modo={emAnalise ? "analise" : undefined}
+    >
+      {emAnalise ? null : (
+        <TopoDoPainel
+          visoes={
+            <Segmentado
+              rotulo="Visão"
+              opcoes={VISOES}
+              valor={visao}
+              aoMudar={estado.mudarVisao}
+              tour="avd-visoes"
+            />
+          }
+          status={textoDoStatus(e)}
+          aoAtualizar={() => void atualizar()}
+          atualizarDesativado={
+            !e.area || e.carregandoEditais || e.carregandoEdital
+          }
+        />
+      )}
 
       {e.semAcesso ? (
         <Aviso tom="warning" papel="alert">
@@ -105,51 +113,53 @@ function TelaDaArea({ estado, pre, fila, atualizar, e }) {
 
       {e.semAcesso ? null : (
         <>
-          <section className="ui-card avd-edital" aria-label="Edital">
-            <Campo rotulo="Edital">
-              <select
-                value={e.editalId}
-                data-tour="avd-seletor-edital"
-                disabled={!e.carregado}
-                onChange={(ev) => void estado.escolherEdital(ev.target.value)}
-              >
-                <option value="">
-                  {e.carregado
-                    ? editais.length
-                      ? "Escolha o edital"
-                      : e.editais.length
-                        ? "Nenhum edital vigente nesta área"
-                        : "Nenhum edital nesta área"
-                    : "Carregando…"}
-                </option>
-                {editais.map((ed) => (
-                  <option key={ed.id} value={ed.id}>
-                    {[ed.edital, ed.unidade].filter(Boolean).join(" - ")}
-                    {ed.versao_regra ? ` · regra v${ed.versao_regra}` : ""}
+          {emAnalise ? null : (
+            <section className="ui-card avd-edital" aria-label="Edital">
+              <Campo rotulo="Edital">
+                <select
+                  value={e.editalId}
+                  data-tour="avd-seletor-edital"
+                  disabled={!e.carregado}
+                  onChange={(ev) => void estado.escolherEdital(ev.target.value)}
+                >
+                  <option value="">
+                    {e.carregado
+                      ? editais.length
+                        ? "Escolha o edital"
+                        : e.editais.length
+                          ? "Nenhum edital vigente nesta área"
+                          : "Nenhum edital nesta área"
+                      : "Carregando…"}
                   </option>
-                ))}
-              </select>
-            </Campo>
-            {ocultos || todos ? (
-              <label className="avd-caixa" data-tour="avd-todos-editais">
-                <input
-                  type="checkbox"
-                  checked={todos}
-                  onChange={(ev) => setTodos(ev.target.checked)}
-                />
-                Mostrar todos os editais da área
-              </label>
-            ) : null}
-            {e.dados ? (
-              <span
-                className="ui-texto-secundario"
-                data-origem={e.dados.origem}
-              >
-                Avaliação: {ORIGENS[e.dados.origem] ?? e.dados.origem}
-                {papel ? ` · ${rotuloDe(PAPEIS_DA_EQUIPE, papel)}` : ""}
-              </span>
-            ) : null}
-          </section>
+                  {editais.map((ed) => (
+                    <option key={ed.id} value={ed.id}>
+                      {[ed.edital, ed.unidade].filter(Boolean).join(" - ")}
+                      {ed.versao_regra ? ` · regra v${ed.versao_regra}` : ""}
+                    </option>
+                  ))}
+                </select>
+              </Campo>
+              {ocultos || todos ? (
+                <label className="avd-caixa" data-tour="avd-todos-editais">
+                  <input
+                    type="checkbox"
+                    checked={todos}
+                    onChange={(ev) => setTodos(ev.target.checked)}
+                  />
+                  Mostrar todos os editais da área
+                </label>
+              ) : null}
+              {e.dados ? (
+                <span
+                  className="ui-texto-secundario"
+                  data-origem={e.dados.origem}
+                >
+                  Avaliação: {ORIGENS[e.dados.origem] ?? e.dados.origem}
+                  {papel ? ` · ${rotuloDe(PAPEIS_DA_EQUIPE, papel)}` : ""}
+                </span>
+              ) : null}
+            </section>
+          )}
 
           {e.erroDoEdital ? (
             <Aviso tom="danger" papel="alert">
@@ -225,7 +235,12 @@ export function TelaDaAvaliacaoDocumental({ estado, pre, fila, atualizar }) {
  * "Atualizar" e reabertura da tela: os editais da área e o edital aberto
  * (regra e equipe) e, na Pré-classificação ou na Fila, a aba aberta.
  */
-export function criarAtualizacao({ estado, pre, fila }) {
+export function criarAtualizacao({
+  estado,
+  pre,
+  fila,
+  fichaLembrada = lerFichaLembrada,
+}) {
   return async function atualizar(area = estado.obter().area) {
     const { area: antes, editalId, visao } = estado.obter();
     const pedidos = [estado.carregar(area)];
@@ -234,6 +249,17 @@ export function criarAtualizacao({ estado, pre, fila }) {
       if (visao === "fila") pedidos.push(fila.carregar(editalId));
     }
     const [editais] = await Promise.all(pedidos);
+    // Página recarregada no modo de análise: volta ao edital e à Fila (a fila reabre a ficha).
+    const lembrada = fichaLembrada();
+    const agora = estado.obter();
+    if (
+      lembrada &&
+      !agora.editalId &&
+      agora.editais.some((ed) => ed.id === lembrada.edital)
+    ) {
+      estado.mudarVisao("fila");
+      await estado.escolherEdital(lembrada.edital);
+    }
     return editais;
   };
 }
