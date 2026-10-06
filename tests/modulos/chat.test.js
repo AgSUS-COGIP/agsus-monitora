@@ -842,6 +842,64 @@ describe("rolagem", () => {
   });
 });
 
+describe("rolagem ao carregar anteriores", () => {
+  it("Carregar anteriores mantém na tela a mensagem que a pessoa via", async () => {
+    const topo = new WeakMap();
+    const ehLista = (el) => el.classList?.contains("chat-conversa__mensagens");
+    const definir = (nome, descritor) =>
+      Object.defineProperty(HTMLElement.prototype, nome, {
+        configurable: true,
+        ...descritor,
+      });
+    // 100 px por mensagem.
+    definir("scrollHeight", {
+      get() {
+        return ehLista(this)
+          ? this.querySelectorAll("[data-mensagem]").length * 100
+          : 0;
+      },
+    });
+    definir("clientHeight", {
+      get() {
+        return ehLista(this) ? 100 : 0;
+      },
+    });
+    definir("scrollTop", {
+      get() {
+        return topo.get(this) ?? 0;
+      },
+      set(valor) {
+        topo.set(this, valor);
+      },
+    });
+    const ANTIGAS = [
+      { ...MENSAGENS[0], id: "m-2", texto: "Antiga 1", criada_em: hoje(30) },
+      { ...MENSAGENS[0], id: "m-1", texto: "Antiga 2", criada_em: hoje(20) },
+    ];
+    const supabase = supabaseFalso({
+      listar_mensagens_chat: ({ p_antes }) =>
+        p_antes
+          ? { conversa: DIRETA, mensagens: ANTIGAS, tem_mais: false }
+          : { conversa: DIRETA, mensagens: MENSAGENS, tem_mais: true },
+    });
+    try {
+      await montar({ supabase });
+      await abrirConversaDireta();
+      const lista = painel().querySelector(".chat-conversa__mensagens");
+      // Leu até o topo: a primeira mensagem (m1) está na tela.
+      lista.scrollTop = 0;
+      await act(async () => lista.dispatchEvent(new Event("scroll")));
+      await clicar(botao("Carregar anteriores"));
+      await aguardar(() => document.querySelector('[data-mensagem="m-2"]'));
+      // Entraram 200 px acima: m1 continua no mesmo lugar da tela.
+      expect(lista.scrollTop).toBe(200);
+    } finally {
+      for (const nome of ["scrollHeight", "clientHeight", "scrollTop"])
+        delete HTMLElement.prototype[nome];
+    }
+  });
+});
+
 describe("avisos de mensagem nova", () => {
   const linha = (extra = {}) => ({
     CO_MENSAGEM: "m9",
