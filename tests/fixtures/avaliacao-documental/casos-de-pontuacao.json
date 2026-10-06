@@ -29,17 +29,21 @@
           }
         ],
         "nota_declarada": [],
-        "divergencia_tolerancia": 0
+        "divergencia_tolerancia": 0,
+        "desempate": ["IDOSO", "EXPERIENCIA_DECLARADA", "MAIOR_IDADE"],
+        "pergunta_experiencia": "Pergunta 17 -"
       },
       "lote": {
-        "base": "MULTIPLO_VAGAS",
+        "base": "NOTA_MINIMA",
         "multiplo": 3,
         "fixo": null,
         "inclui_cr": true,
         "por_modalidade": false,
         "inclui_empatados": true,
         "linha_anda": true,
-        "publica_reposicao": false
+        "publica_reposicao": false,
+        "nota_minima": 15,
+        "item_edital": "8.2.6"
       },
       "distribuicao": {
         "modo": "PEGAR_PROXIMO",
@@ -162,6 +166,60 @@
             "NAO_ENVIADO": "SEGUE_AMPLA"
           },
           "motivos": []
+        },
+        {
+          "codigo": "COTA_PI",
+          "titulo": "Indígenas (documento de pertencimento étnico, Anexo VI)",
+          "item_edital": "5.7.5",
+          "tipo": "COTA",
+          "condicao": "MODALIDADE=PI",
+          "perguntas": [],
+          "efeitos": {
+            "CONFORME": "SO_REGISTRO",
+            "NAO_CONFORME": "SEGUE_AMPLA",
+            "NAO_ENVIADO": "SEGUE_AMPLA"
+          },
+          "motivos": [
+            {
+              "codigo": "SEM_LIDERANCA",
+              "texto": "Documento de pertencimento étnico sem a assinatura da liderança local (Anexo VI).",
+              "item_edital": "5.7.5",
+              "efeito": "SEGUE_AMPLA"
+            },
+            {
+              "codigo": "FORA_DO_MODELO",
+              "texto": "Documento de pertencimento étnico fora do modelo do Anexo VI.",
+              "item_edital": "5.7.5",
+              "efeito": "SEGUE_AMPLA"
+            }
+          ]
+        },
+        {
+          "codigo": "COTA_PQ",
+          "titulo": "Quilombolas (declaração de pertencimento, Anexo VII, ou certificado da FCP)",
+          "item_edital": "5.7.6",
+          "tipo": "COTA",
+          "condicao": "MODALIDADE=PQ",
+          "perguntas": [],
+          "efeitos": {
+            "CONFORME": "SO_REGISTRO",
+            "NAO_CONFORME": "SEGUE_AMPLA",
+            "NAO_ENVIADO": "SEGUE_AMPLA"
+          },
+          "motivos": [
+            {
+              "codigo": "SEM_LIDERANCA",
+              "texto": "Declaração de pertencimento sem a assinatura da liderança ou associação local (Anexo VII).",
+              "item_edital": "5.7.6",
+              "efeito": "SEGUE_AMPLA"
+            },
+            {
+              "codigo": "FORA_DO_MODELO",
+              "texto": "Declaração fora do modelo do Anexo VII e sem certificado da Fundação Cultural Palmares.",
+              "item_edital": "5.7.6",
+              "efeito": "SEGUE_AMPLA"
+            }
+          ]
         },
         {
           "codigo": "FORMACAO",

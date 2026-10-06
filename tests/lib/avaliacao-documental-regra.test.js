@@ -167,8 +167,31 @@ describe("validarRegraAnalise", () => {
     ],
     [
       "lote sem múltiplo",
-      () => ({ ...boa(), lote: { ...boa().lote, multiplo: 0 } }),
+      () => ({
+        ...boa(),
+        lote: { ...boa().lote, base: "MULTIPLO_VAGAS", multiplo: 0 },
+      }),
       "múltiplo",
+    ],
+    [
+      "lote pela nota mínima sem a nota",
+      () => ({
+        ...boa(),
+        lote: { ...boa().lote, base: "NOTA_MINIMA", nota_minima: null },
+      }),
+      "nota mínima",
+    ],
+    [
+      "desempate pela experiência sem a pergunta",
+      () => ({
+        ...boa(),
+        provisoria: {
+          ...boa().provisoria,
+          desempate: ["EXPERIENCIA_DECLARADA"],
+          pergunta_experiencia: null,
+        },
+      }),
+      "pergunta da experiência",
     ],
     [
       "lote fixo sem número",

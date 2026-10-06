@@ -601,7 +601,7 @@ export function validarRegraAnalise(regra) {
       desempate.some((d) => !valores(DESEMPATES_DA_PROVISORIA).has(d)))
   )
     erros.push(
-      "Desempate da Provisória: IDOSO, EXPERIENCIA_DECLARADA, MAIS_VELHO ou CANDIDATURA, sem repetir.",
+      "Desempate da Provisória: IDOSO, EXPERIENCIA_DECLARADA, MAIOR_IDADE, MAIS_VELHO ou CANDIDATURA, sem repetir.",
     );
   if (
     provisoria.pergunta_experiencia !== undefined &&

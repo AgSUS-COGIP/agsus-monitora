@@ -128,7 +128,8 @@ export const DESEMPATES_DA_PROVISORIA = Object.freeze([
     "EXPERIENCIA_DECLARADA",
     "Maior experiência declarada no questionário (a pergunta da experiência)",
   ],
-  ["MAIS_VELHO", "Maior idade (o mais velho primeiro)"],
+  ["MAIOR_IDADE", "Maior idade (o mais velho primeiro)"],
+  ["MAIS_VELHO", "O mais velho primeiro (o mesmo que Maior idade)"],
   ["CANDIDATURA", "A candidatura mais antiga primeiro"],
 ]);
 

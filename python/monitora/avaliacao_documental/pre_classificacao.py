@@ -315,7 +315,7 @@ def _chave_de_ordem(desempate, hoje):
                     r = _compara(a["_nascimento"], b["_nascimento"])
             elif d == "EXPERIENCIA_DECLARADA":
                 r = _nulos_por_ultimo(a["_experiencia"], b["_experiencia"], lambda x, y: _compara(y, x))
-            elif d == "MAIS_VELHO":
+            elif d in ("MAIS_VELHO", "MAIOR_IDADE"):
                 r = _nulos_por_ultimo(a["_nascimento"], b["_nascimento"], _compara)
             elif d == "CANDIDATURA":
                 r = _nulos_por_ultimo(a["_candidatura"], b["_candidatura"], _compara)

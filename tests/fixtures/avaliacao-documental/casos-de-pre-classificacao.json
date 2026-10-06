@@ -3924,7 +3924,7 @@
           ],
           "nota_declarada": [],
           "divergencia_tolerancia": 0,
-          "desempate": ["IDOSO", "EXPERIENCIA_DECLARADA", "MAIS_VELHO"],
+          "desempate": ["IDOSO", "EXPERIENCIA_DECLARADA", "MAIOR_IDADE"],
           "pergunta_experiencia": "Pergunta 17 -"
         },
         "lote": {

@@ -232,7 +232,8 @@ describe("regra da avaliação (AM-2)", () => {
       "Avaliação Documental e de Títulos — 93/2026",
     );
     expect(secao.textContent).toContain("Regra v2");
-  });
+    // O formulário do PROJ26 inteiro (com as cotas PI e PQ) passa dos 5 s sob carga.
+  }, 20000);
 
   it("marca como conferida", async () => {
     const supabase = supabaseFalso();

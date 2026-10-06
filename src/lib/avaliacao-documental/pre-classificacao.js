@@ -19,7 +19,7 @@
     sem ART, a nota declarada recalculada pela regra, com aviso; depois o
     desempate da regra (provisoria.desempate: IDOSO, EXPERIENCIA_DECLARADA —
     a faixa respondida em provisoria.pergunta_experiencia, em meses —,
-    MAIS_VELHO, CANDIDATURA) e o código do candidato;
+    MAIOR_IDADE ou MAIS_VELHO, CANDIDATURA) e o código do candidato;
   - a nota declarada só confere a ART: divergência além da tolerância é aviso;
   - lote: o tamanho da vaga (lote.por_vaga), o número fixo, a nota mínima
     (NOTA_MINIMA: entram todos os não eliminados com a nota ≥
@@ -294,7 +294,7 @@ function comparador(desempate, hoje) {
           b.experiencia,
           (x, y) => y - x,
         );
-      else if (d === "MAIS_VELHO")
+      else if (d === "MAIS_VELHO" || d === "MAIOR_IDADE")
         r = comparaNulosPorUltimo(a.nascimento, b.nascimento, comparaTexto);
       else if (d === "CANDIDATURA")
         r = comparaNulosPorUltimo(a.candidatura, b.candidatura, comparaTexto);
