@@ -5,7 +5,9 @@ títulos passa a ser feita dentro do MONITORA, no lugar das planilhas de vaga e 
 mostra só rótulos, números e botões; o porquê fica aqui. Fontes: `src/modulos/avaliacao-documental/`,
 `src/lib/avaliacao-documental/` (regra, conta, nota declarada e equipe), as migrations
 `20261006090000_avaliacao_documental_permissao_e_menu.sql`, `20261006100000_regra_da_analise.sql` e
-`20261006110000_pre_classificacao_e_lote.sql` (pré-classificação), o job Python
+`20261006110000_pre_classificacao_e_lote.sql` (pré-classificação),
+`20261006120000_fichas_fila_e_reserva.sql` (fila, distribuição e reserva),
+`20261006120500_lote_por_nota_minima.sql` (lote pela nota mínima e desempates), o job Python
 `scripts/pre_classificacao/` com a conta em `python/monitora/avaliacao_documental/`,
 os modelos em `supabase/correcoes/20261006-modelos-da-regra-da-analise.sql` e o desenho em
 `docs/analises-no-monitora/`.
@@ -13,7 +15,7 @@ os modelos em `supabase/correcoes/20261006-modelos-da-regra-da-analise.sql` e o 
 ## Tela de Avaliação documental
 
 **perguntas:** avaliacao documental | tela de avaliacao documental | para que serve avaliacao documental | para que serve a avaliacao documental | modulo avaliacao documental | avaliacao documental e de titulos
-**resposta:** A Avaliação documental é o módulo de trabalho da etapa "Avaliação Documental e de Títulos": escolhido o edital, a coordenação cadastra a regra da avaliação daquele edital (blocos por documento ou pergunta da Empregare, eliminatórios com o item do edital, critério étnico com aldeias, escolaridade por nível, cursos, experiência, nota declarada, lote, distribuição, revisão e os textos do parecer) e diz quem analisa, quem revisa e quem coordena (aba Equipe). Há a regra, a equipe e a Pré-classificação (a Lista Provisória por ART e o lote de convocação de cada vaga, com as listas oficiais PROVISORIA e LOTE); a fila e a ficha do candidato chegam nas fases seguintes. O resultado continua aparecendo no Painel das análises.
+**resposta:** A Avaliação documental é o módulo de trabalho da etapa "Avaliação Documental e de Títulos": escolhido o edital, a coordenação cadastra a regra da avaliação daquele edital (blocos por documento ou pergunta da Empregare, eliminatórios com o item do edital, critério étnico com aldeias, escolaridade por nível, cursos, experiência, nota declarada, lote, distribuição, revisão e os textos do parecer) e diz quem analisa, quem revisa e quem coordena (aba Equipe). Há a regra, a equipe, a Pré-classificação (a Lista Provisória por ART e o lote de convocação de cada vaga, com as listas oficiais PROVISORIA e LOTE) e a Fila (as fichas de quem está no lote, a distribuição entre os analistas e a reserva da ficha aberta); o conteúdo da ficha (documentos, títulos, vínculos e nota) chega na fase seguinte. O resultado continua aparecendo no Painel das análises.
 **fonte:** src/modulos/avaliacao-documental/; docs/analises-no-monitora/plano-de-construcao.md
 **abrir:** avaliacao-documental
 
@@ -123,7 +125,7 @@ os modelos em `supabase/correcoes/20261006-modelos-da-regra-da-analise.sql` e o 
 ## A linha anda: reposição do lote
 
 **perguntas:** a linha anda | reposicao do lote | quem sai do lote | entrou no lote | lote 2 | novo lote | por que o candidato entrou no lote | inscrito novo acima do corte
-**resposta:** Quem entrou no lote só sai eliminado (por exemplo, cancelou a inscrição depois). Quando alguém sai e a regra manda repor ("a linha anda"), o próximo da Provisória entra num lote novo (2, 3…), com o motivo gravado: "Entrou no lugar de 7000654 (Cancelou a inscrição)". Sem reposição na regra, o lugar fica aberto e a vaga avisa. Um inscrito que chega depois com a ART maior não tira ninguém do lote: ele fica fora, e a vaga mostra o aviso "Fora do lote com nota acima da linha de corte". Quem já tem ficha não muda por recálculo. Antes das fichas, dá para refazer o lote do zero (modo refazer_lote do job, no GitHub). Toda entrada e saída fica no histórico.
+**resposta:** Quem entrou no lote só sai eliminado (por exemplo, cancelou a inscrição depois). Quando alguém sai e a regra manda repor ("a linha anda"), o próximo da Provisória entra num lote novo (2, 3…), com o motivo gravado: "Entrou no lugar de 7000654 (Cancelou a inscrição)". Sem reposição na regra, o lugar fica aberto e a vaga avisa. Um inscrito que chega depois com a ART maior não tira ninguém do lote: ele fica fora, e a vaga mostra o aviso "Fora do lote com nota acima da linha de corte". Quem já tem ficha não muda por recálculo: a ficha de quem sai eliminado fica na fila como "Fora do lote", com o motivo, e quem entra ganha ficha nova. Antes das fichas, dá para refazer o lote do zero (modo refazer_lote do job, no GitHub); com ficha aberta, o banco recusa tirar a pessoa do lote. Toda entrada e saída fica no histórico.
 **fonte:** python/monitora/avaliacao_documental/pre_classificacao.py; supabase/migrations/20261006110000_pre_classificacao_e_lote.sql
 **abrir:** avaliacao-documental
 
@@ -139,4 +141,69 @@ os modelos em `supabase/correcoes/20261006-modelos-da-regra-da-analise.sql` e o 
 **perguntas:** lista provisoria oficial | lote de convocacao oficial | registrar a lista provisoria | publicar o lote | copiar para o sei a provisoria | baixar docx da provisoria | publicar cada reposicao | lista lote
 **resposta:** Na aba Pré-classificação, quem coordena o edital (ou quem tem Editor na Classificação) registra a "Lista Geral de Classificação Provisória (ART)" e o "Lote de convocação". Registrar grava um retrato com hash na Classificação (tipos PROVISORIA e LOTE), montado no banco a partir da pré-classificação gravada; depois saem "Copiar para o SEI" e "Baixar DOCX", no mesmo modelo das outras listas (por vaga: classificação, nome e a nota da ART; a Provisória também tem a lista dos eliminados com o motivo). Os textos-padrão citam os itens 8.3.1 e 8.4 e podem ser trocados por edital na regra de classificação. Com "publica cada reposição" na regra, cada lote novo aparece para registrar como um novo Lote de Convocação; sem, aparece só o lote inicial e as reposições ficam registradas no histórico. Registrar exige a regra de classificação do edital; marcar como publicada exige Editor na Classificação.
 **fonte:** supabase/migrations/20261006110000_pre_classificacao_e_lote.sql; src/lib/classificacao/documento-sei.js
+**abrir:** avaliacao-documental
+
+## Seletor de editais da Avaliação documental
+
+**perguntas:** por que o edital nao aparece na avaliacao documental | editais vigentes | ver os editais concluidos na avaliacao documental | edital concluido nao aparece | seletor de edital da avaliacao
+**resposta:** O seletor "Edital" da Avaliação documental mostra só os editais vigentes da área: ativos e que não estão concluídos nem cancelados (a mesma regra dos indicadores do monitoramento). Para ver os outros, marque "Mostrar todos os editais da área". O edital já escolhido continua na lista mesmo que deixe de ser vigente.
+**fonte:** src/lib/avaliacao-documental/editais.js; supabase/migrations/20261006120500_lote_por_nota_minima.sql
+**abrir:** avaliacao-documental
+
+## Lote pela nota mínima
+
+**perguntas:** lote pela nota minima | nota minima do lote | item 8.2.6 | minimo de 15 pontos | so quem tem 15 pontos | nota minima para a analise curricular
+**resposta:** Alguns editais não recortam o lote por "N vezes as vagas": avaliam todos os que alcançam uma nota mínima (o 93/2026, item 8.2.6, avalia quem tem pelo menos 15 pontos). Na aba Regra, o tamanho do lote "Todos com a nota mínima" leva a nota (ao escolher, vem a nota mínima da regra de classificação) e o item do edital. Entram no lote todos os não eliminados com a nota da Provisória (a ART) maior ou igual à mínima; quem chega depois com a nota mínima também entra; quem tem menos não entra no lugar de quem sai. Sem a nota na regra, ninguém entra e a vaga avisa.
+**fato:** No MONITORA, o lote pela nota mínima põe na avaliação todos os inscritos não eliminados com a ART a partir da nota mínima da regra.
+**fonte:** src/lib/avaliacao-documental/pre-classificacao.js; python/monitora/avaliacao_documental/pre_classificacao.py
+**abrir:** avaliacao-documental
+
+## Desempate da Provisória
+
+**perguntas:** desempate da provisoria | criterios de desempate da art | empate na art | item 10.1 | maior experiencia declarada | idade igual ou superior a 60 | maior idade no desempate
+**resposta:** Com a mesma ART, a Provisória segue os desempates da regra, na ordem escolhida na aba Regra: 60 anos ou mais (o mais velho primeiro), a maior experiência declarada (a faixa respondida na pergunta da experiência do questionário, lida em meses pelo limite de baixo — "De 1 a 2 anos" vale 12; resposta que não dá para ler fica por último), a maior idade e a candidatura mais antiga. Por último vale sempre o código do candidato. O 93/2026 (item 10.1) usa 60 anos ou mais, a experiência declarada e a maior idade; a experiência comprovada entra quando houver a ficha.
+**fonte:** src/lib/avaliacao-documental/pre-classificacao.js; python/monitora/avaliacao_documental/pre_classificacao.py
+**abrir:** avaliacao-documental
+
+## Fila da avaliação documental
+
+**perguntas:** fila da avaliacao documental | aba fila | etapas da fila | contadores da fila | inscritos no lote pendentes | o que e pendente na fila | em revisao na fila
+**resposta:** A aba Fila mostra, no topo, as etapas com contadores — Inscritos, No lote, Pendentes, Em análise, Em revisão, Concluídas e Eliminados — e cada etapa clicada vira filtro da lista. Cada inscrito do lote tem uma ficha: Pendente (na fila, livre ou já com um analista), Em análise (o responsável abriu), Em revisão (a coordenação mandou revisar), Concluída ou Fora do lote (saiu eliminado; a ficha fica, com o motivo). As fichas são abertas sozinhas no fim de cada pré-classificação; a coordenação também tem "Abrir fichas do lote". A lista mostra o nome do candidato a quem tem acesso de leitura à Avaliação documental, nunca o CPF.
+**fonte:** src/modulos/avaliacao-documental/fila.jsx; supabase/migrations/20261006120000_fichas_fila_e_reserva.sql
+**abrir:** avaliacao-documental
+
+## Pegar próximo e Minhas fichas
+
+**perguntas:** pegar proximo | como pego uma ficha | proxima ficha | minhas fichas | busca por codigo na fila | abrir a ficha pelo codigo
+**resposta:** O analista do edital (Editor na Avaliação documental e na equipe como Analista) clica em "Pegar próximo" e recebe a próxima ficha na ordem da Provisória: primeiro as suas (a que já está em análise e as que a coordenação distribuiu), depois a primeira livre das vagas que ele analisa. Duas pessoas nunca recebem a mesma ficha. Quando a regra usa a distribuição inicial, as fichas livres não se pegam (a coordenação distribui), a não ser que a regra deixe livres os que entram depois. "Minhas fichas" filtra as que estão com você; digitar o código do candidato na busca e apertar Enter abre a ficha direto.
+**fonte:** supabase/migrations/20261006120000_fichas_fila_e_reserva.sql (pegar_proxima_ficha)
+**abrir:** avaliacao-documental
+
+## Distribuição das fichas
+
+**perguntas:** distribuir fichas | distribuicao inicial | redistribuir ficha | devolver a fila | ficha para quem tem menos fichas pendentes | partes iguais entre analistas | limite por analista
+**resposta:** A coordenação do edital escolhe fichas na Fila (ou usa "Distribuir as livres") e vê a prévia: quantas cada analista recebe e com quantas fica, antes de gravar. A conta segue a regra do edital: cada ficha, na ordem da Provisória, vai para quem analisa a vaga e tem menos fichas pendentes, respeitando o limite da equipe e, no critério "Até um limite", o limite da regra; o que não cabe fica livre na fila. Dá para mandar tudo para uma pessoa ou devolver à fila. Redistribuir e devolver pedem motivo (10 a 2.000 caracteres), ficam no histórico e a reserva cai; ficha concluída ou fora do lote não é mexida. Se alguém mexeu na ficha depois que a tela leu, nada grava e a tela pede para atualizar. Na distribuição inicial, quem entra no lote depois vai sozinho para quem tem menos pendentes.
+**fato:** No MONITORA, a distribuição das fichas dá cada ficha, na ordem da Provisória, ao analista da vaga com menos pendentes, dentro do limite.
+**fonte:** src/lib/avaliacao-documental/distribuicao.js; python/monitora/avaliacao_documental/distribuicao.py
+**abrir:** avaliacao-documental
+
+## Reserva da ficha
+
+**perguntas:** reserva da ficha | em uso por | ficha em uso | liberar a reserva | ficha presa | so leitura na ficha | quanto tempo dura a reserva
+**resposta:** Quem abre a própria ficha fica com a reserva por 15 minutos, renovada sozinha enquanto a ficha está aberta e liberada ao fechar; só quem tem a reserva grava. Quem abre uma ficha em uso vê "Em uso por <nome> desde HH:MM", só para leitura. Se a pessoa saiu sem fechar, a reserva vence sozinha; a coordenação pode liberar antes (na ficha ou em lote, em "Liberar reservas"), com motivo, e isso fica no histórico. Mudar a ficha com uma versão velha é recusado ("mudou desde que você abriu"). O conteúdo da análise entra na fase F4.
+**fonte:** supabase/migrations/20261006120000_fichas_fila_e_reserva.sql (reservar_ficha, renovar_reserva, liberar_reserva)
+**abrir:** avaliacao-documental
+
+## Filtros salvos da fila
+
+**perguntas:** filtros salvos | salvar filtro da fila | guardar combinacao de filtros | excluir filtro salvo
+**resposta:** Na Fila, depois de combinar etapa, vaga, responsável, modalidade e busca, "Salvar filtro" guarda a combinação com um nome (até 30 por pessoa; o mesmo nome troca a anterior). Os filtros salvos são só seus e valem em qualquer edital; o último filtro usado também é lembrado neste navegador.
+**fonte:** supabase/migrations/20261006120000_fichas_fila_e_reserva.sql (salvar_filtro_fila)
+**abrir:** avaliacao-documental
+
+## Ações em lote da coordenação na fila
+
+**perguntas:** acoes em lote da fila | mandar para revisao | selecionar varias fichas | liberar reservas em lote | analista saiu da equipe com fichas
+**resposta:** A coordenação marca fichas na lista e escolhe: Distribuir (com a prévia), Liberar reservas ou Mandar para revisão (fichas pendentes ou em análise; motivo obrigatório). Toda ação pede confirmação e fica no histórico da ficha. Um analista com fichas pendentes ou em análise só sai da equipe depois que elas forem redistribuídas ou devolvidas à fila.
+**fonte:** supabase/migrations/20261006120000_fichas_fila_e_reserva.sql
 **abrir:** avaliacao-documental

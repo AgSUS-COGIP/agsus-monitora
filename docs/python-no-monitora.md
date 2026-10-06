@@ -44,10 +44,11 @@ Quem usa hoje: o robô da Empregare (`scripts/robo-empregare/`), as conferência
 (`scripts/conferencias/`) e a pré-classificação da Avaliação documental (`scripts/pre_classificacao/`,
 com a conta em `monitora.avaliacao_documental`).
 
-| Módulo de domínio                                 | O que faz                                                                                                          |
-| ------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
-| `monitora.avaliacao_documental.nota_declarada`    | a ART lida da Empregare e a nota declarada pela regra (cópia fiel de `nota-declarada.js`)                          |
-| `monitora.avaliacao_documental.pre_classificacao` | eliminação automática, Provisória por ART, tamanho do lote e "a linha anda" (cópia fiel de `pre-classificacao.js`) |
+| Módulo de domínio                                 | O que faz                                                                                                                  |
+| ------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| `monitora.avaliacao_documental.nota_declarada`    | a ART lida da Empregare e a nota declarada pela regra (cópia fiel de `nota-declarada.js`)                                  |
+| `monitora.avaliacao_documental.pre_classificacao` | eliminação automática, Provisória por ART, tamanho do lote e "a linha anda" (cópia fiel de `pre-classificacao.js`)         |
+| `monitora.avaliacao_documental.distribuicao`      | distribuição das fichas (menor carga, limites) e as fichas novas da distribuição inicial (cópia fiel de `distribuicao.js`) |
 
 ### Importar a base
 
@@ -148,7 +149,12 @@ Job `scripts/pre_classificacao/pre_classificacao.py`, workflow `pre-classificaca
 robô ou os ativos com vagas da Empregare), lê a regra da avaliação e os inscritos de cada vaga **sem
 o cadastro** (nome, e-mail, CPF, telefone e endereço não saem do banco), calcula a Provisória por
 ART e o lote e grava o resultado pronto por vaga; o banco confere a forma e as travas e conta de
-novo o resumo.
+novo o resumo. No fim de cada edital gravado, lê a distribuição
+(`pre_classificacao_ler_distribuicao`, sem nomes) e abre as fichas do lote
+(`abrir_fichas_pre_classificacao`, migration `20261006120000_fichas_fila_e_reserva.sql`): na
+distribuição inicial, depois que a coordenação distribuiu, as fichas novas já vão para quem tem
+menos pendentes (`distribuicao.atribuicoes_dos_novos`); o banco valida cada atribuição, marca
+"Fora do lote" quem saiu eliminado e o resumo mostra quantas fichas abriu, atribuiu e tirou do lote.
 
 - **Quando roda:** no fim de cada carga normal ou forçada do robô da Empregare (passo
   "Pré-classificar" em `robo-empregare.yml`, `DISPARADO_POR=robo`, `--apos-robo`; uma falha ali não
@@ -158,12 +164,15 @@ novo o resumo.
   "Run workflow".
 - **Modos:** `normal`, `seco` (calcula e mostra o resumo; um edital com a regra ainda "Conferir"
   sai como prévia; sem regra, o resumo diz "edital sem regra conferida" e quantos inscritos
-  aguardam) e `refazer_lote` (recorta o lote do zero; recusado por edital que já tem ficha).
+  aguardam) e `refazer_lote` (recorta o lote do zero; recusado por edital que já tem ficha, e o
+  banco recusa tirar do lote quem tem ficha aberta).
 - **Edital sem regra conferida:** não é gravado e não quebra a execução; aparece no resumo do
   Actions e na aba (`ultima_execucao.edital.situacao` = `SEM_REGRA` ou `REGRA_NAO_CONFERIDA`).
-- **Casos dourados:** `tests/fixtures/avaliacao-documental/casos-de-pre-classificacao.json` (16
-  casos) e a nota declarada de `casos-de-pontuacao.json`, conferidos por
-  `tests/lib/avaliacao-documental-pre-classificacao.test.js` e `tests/python/test_pre_classificacao.py`.
+- **Casos dourados:** `tests/fixtures/avaliacao-documental/casos-de-pre-classificacao.json` (19
+  casos, com o lote pela nota mínima e o desempate do 93/2026), a nota declarada de
+  `casos-de-pontuacao.json` e a distribuição de `casos-de-distribuicao.json`, conferidos por
+  `tests/lib/avaliacao-documental-pre-classificacao.test.js`, `…-distribuicao.test.js`,
+  `tests/python/test_pre_classificacao.py` e `tests/python/test_distribuicao.py`.
 - **Log público:** contagens, códigos de vaga e de aviso e números de edital. O resultado por edital
   que vai ao banco é recusado se tiver `@` ou 11 dígitos seguidos.
 

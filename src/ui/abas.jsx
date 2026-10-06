@@ -11,10 +11,12 @@ import { classes } from "./classes.js";
   (some quando é 0 ou vazio); `idDaAba`/`idDoPainel` ligam a aba ao painel
   (`aria-controls`); `dados` são atributos `data-*` extras (contrato de
   teste/DOM). Cada botão leva `data-aba`. `compactas`: dentro de um modal
-  (sem recuo lateral). Quem usa desenha os painéis.
+  (sem recuo lateral). `tour` vira o `data-tour` da lista (passos da Aya).
+  Quem usa desenha os painéis.
 
-  Usado por Acessos (Usuários · Grupos · Coordenações) e pelos modais da
-  Lista de aprovados (listas do edital e sub judice).
+  Usado por Acessos (Usuários · Grupos · Coordenações), pelos modais da
+  Lista de aprovados (listas do edital e sub judice) e pelas etapas da fila
+  da Avaliação documental.
 */
 export function Abas({
   rotulo,
@@ -23,6 +25,7 @@ export function Abas({
   aoEscolher,
   compactas = false,
   className,
+  tour,
 }) {
   const botoes = useRef([]);
 
@@ -44,6 +47,7 @@ export function Abas({
       )}
       role="tablist"
       aria-label={rotulo}
+      data-tour={tour}
     >
       {abas.map((aba, indice) => {
         const escolhida = ativa === aba.id;

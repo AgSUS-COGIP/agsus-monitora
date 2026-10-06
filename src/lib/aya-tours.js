@@ -52,6 +52,8 @@ export const t = (nome) => `[data-tour='${nome}']`;
 const editaEntrevistas = (p) => hasResource(p, "entrevistas", 2);
 const decideRecursos = (p) => hasResource(p, "recursos_parecer", 2);
 const administraRecursos = (p) => hasResource(p, "recursos", 3);
+const analisaDocumentos = (p) => hasResource(p, "avaliacao_documental", 2);
+const coordenaAvaliacao = (p) => hasResource(p, "avaliacao_documental", 3);
 
 /* ---------- Pedaços repetidos ---------- */
 
@@ -723,6 +725,77 @@ const TOURS = Object.freeze({
       PASSO_DA_AYA,
     ]),
   }),
+  "avaliacao-documental": Object.freeze({
+    titulo: "Avaliação documental",
+    passos: Object.freeze([
+      passo(
+        t("avd-seletor-edital"),
+        "Edital",
+        "Aparecem os editais vigentes da área; a regra, a equipe e a fila são de cada edital.",
+      ),
+      passo(
+        t("avd-todos-editais"),
+        "Todos os editais",
+        "Marque para ver também os concluídos e os cancelados.",
+      ),
+      passo(
+        t("avd-visoes"),
+        "Regra, Equipe, Pré-classificação e Fila",
+        "Regra e Equipe preparam o edital; a Pré-classificação ordena pela ART e recorta o lote; a Fila distribui as fichas.",
+      ),
+      PASSO_DA_AYA,
+    ]),
+  }),
+  "avaliacao-documental:fila": Object.freeze({
+    titulo: "Avaliação documental · Fila",
+    passos: Object.freeze([
+      passo(
+        t("avd-fila-etapas"),
+        "Etapas com contadores",
+        "Inscritos, no lote, pendentes, em análise, em revisão, concluídas e eliminados; clique numa etapa para filtrar.",
+        { antes: `${t("avd-visoes")} [data-valor='fila']` },
+      ),
+      passo(
+        t("avd-fila-filtros"),
+        "Filtros",
+        "Vaga, responsável, modalidade e a busca por código ou nome; Enter com o código abre a ficha.",
+      ),
+      passo(
+        t("avd-fila-filtros-salvos"),
+        "Filtros salvos",
+        "Guarde uma combinação com um nome; os filtros salvos são só seus.",
+      ),
+      passo(
+        t("avd-fila-minhas"),
+        "Minhas fichas",
+        "Mostra só as fichas que estão com você.",
+      ),
+      passo(
+        t("avd-fila-pegar"),
+        "Pegar próximo",
+        "Dá a próxima ficha na ordem da Provisória e a reserva para você por 15 minutos.",
+        { exige: analisaDocumentos },
+      ),
+      passo(
+        t("avd-fila-distribuir-livres"),
+        "Distribuir",
+        "A coordenação divide as fichas livres entre a equipe, com a prévia antes de gravar.",
+        { exige: coordenaAvaliacao },
+      ),
+      passo(
+        t("avd-fila-abrir-fichas"),
+        "Abrir fichas do lote",
+        "Abre as fichas de quem entrou no lote e ainda não tem.",
+        { exige: coordenaAvaliacao },
+      ),
+      passo(
+        t("avd-fila-tabela"),
+        "As fichas",
+        "Situação, responsável e quem está com a ficha aberta agora; Abrir mostra o cabeçalho da ficha.",
+      ),
+      PASSO_DA_AYA,
+    ]),
+  }),
   "config:marca": Object.freeze({
     titulo: "Configurações › Marca",
     passos: Object.freeze([
@@ -1251,6 +1324,7 @@ const ABAS_COM_TOUR = Object.freeze({
   entrevistas: ["conduzir", "roteiros"],
   classificacao: ["agenda", "regra"],
   approved: ["convocacao"],
+  "avaliacao-documental": ["fila"],
 });
 
 function normalizarAba(aba) {

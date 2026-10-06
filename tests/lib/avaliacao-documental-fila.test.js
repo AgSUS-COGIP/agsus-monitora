@@ -1,0 +1,242 @@
+import { describe, expect, it } from "vitest";
+import {
+  acoesDaSelecao,
+  contadoresDaFila,
+  fichaPeloCodigo,
+  filtrarFila,
+  filtroEhInicial,
+  FILTRO_INICIAL,
+  naEtapa,
+  normalizarFiltro,
+  planoDeDistribuicao,
+  reservaVigente,
+  textoDaReserva,
+} from "../../src/lib/avaliacao-documental/fila.js";
+import {
+  editaisDaEscolha,
+  editalVigente,
+} from "../../src/lib/avaliacao-documental/editais.js";
+
+const AGORA = new Date("2026-10-06T15:00:00Z");
+const EM_10_MIN = "2026-10-06T15:10:00Z";
+const HA_5_MIN = "2026-10-06T14:55:00Z";
+
+const ficha = (id, situacao, extra = {}) => ({
+  id,
+  versao: 2,
+  situacao,
+  responsavel: null,
+  reserva: null,
+  ...extra,
+});
+const FILA = [
+  {
+    id: "c1",
+    vaga: "10",
+    codigo: "7001",
+    nome: "Ana Lúcia",
+    situacao_pre: "NO_LOTE",
+    posicao: 1,
+    modalidade: "AC",
+    ficha: ficha("f1", "EM_ANALISE", {
+      responsavel: "u-a",
+      reserva: {
+        usuario: "u-a",
+        nome: "Ana",
+        desde: HA_5_MIN,
+        expira: EM_10_MIN,
+      },
+    }),
+  },
+  {
+    id: "c2",
+    vaga: "10",
+    codigo: "7002",
+    nome: "Bruno",
+    situacao_pre: "NO_LOTE",
+    posicao: 2,
+    modalidade: "PP",
+    ficha: ficha("f2", "PENDENTE", { responsavel: "u-b" }),
+  },
+  {
+    id: "c3",
+    vaga: "20",
+    codigo: "7003",
+    nome: "Carla",
+    situacao_pre: "NO_LOTE",
+    posicao: 1,
+    modalidade: "AC",
+    ficha: ficha("f3", "PENDENTE"),
+  },
+  {
+    id: "c4",
+    vaga: "20",
+    codigo: "7004",
+    nome: "Davi",
+    situacao_pre: "ANALISADO",
+    posicao: 2,
+    modalidade: "AC",
+    ficha: ficha("f4", "CONCLUIDA", { responsavel: "u-a" }),
+  },
+  {
+    id: "c5",
+    vaga: "10",
+    codigo: "7005",
+    nome: "Eva",
+    situacao_pre: "ELIMINADO",
+    posicao: null,
+    modalidade: "AC",
+    ficha: ficha("f5", "FORA_LOTE", { responsavel: "u-b" }),
+  },
+  {
+    id: "c6",
+    vaga: "10",
+    codigo: "7006",
+    nome: "Fábio",
+    situacao_pre: "RANQUEADO",
+    posicao: 3,
+    modalidade: "AC",
+    ficha: null,
+  },
+  {
+    id: "c7",
+    vaga: "20",
+    codigo: "7007",
+    nome: "Gil",
+    situacao_pre: "NO_LOTE",
+    posicao: 3,
+    modalidade: "AC",
+    ficha: ficha("f7", "REVISAR", { responsavel: "u-b" }),
+  },
+];
+const EQUIPE = [
+  { usuario: "u-a", nome: "Ana", vagas: null, limite: null, pendentes: 1 },
+  { usuario: "u-b", nome: "Beto", vagas: ["10"], limite: null, pendentes: 1 },
+];
+
+describe("etapas e contadores (abas com contadores)", () => {
+  it("conta cada etapa do funil", () => {
+    expect(contadoresDaFila(FILA)).toEqual({
+      inscritos: 7,
+      lote: 5,
+      pendentes: 2,
+      em_analise: 1,
+      revisao: 1,
+      concluidas: 1,
+      eliminados: 1,
+    });
+    expect(contadoresDaFila(null).inscritos).toBe(0);
+  });
+  it("sem ficha não é pendente; fora do lote não é do lote", () => {
+    expect(naEtapa(FILA[5], "pendentes")).toBe(false);
+    expect(naEtapa(FILA[4], "lote")).toBe(false);
+    expect(naEtapa(FILA[4], "eliminados")).toBe(true);
+  });
+});
+
+describe("filtros", () => {
+  it("normaliza o filtro salvo (só chaves conhecidas, etapa válida)", () => {
+    expect(normalizarFiltro({ etapa: "x", vaga: " 10 ", outra: 1 })).toEqual({
+      ...FILTRO_INICIAL,
+      vaga: "10",
+    });
+    expect(normalizarFiltro(null)).toEqual(FILTRO_INICIAL);
+    expect(filtroEhInicial({})).toBe(true);
+    expect(filtroEhInicial({ etapa: "pendentes" })).toBe(false);
+  });
+  it("Minhas fichas, sem responsável, vaga, modalidade e busca sem acento", () => {
+    const ids = (f, eu) => filtrarFila(FILA, f, eu).map((c) => c.id);
+    expect(ids({ etapa: "inscritos", responsavel: "eu" }, "u-a")).toEqual([
+      "c1",
+      "c4",
+    ]);
+    expect(ids({ etapa: "inscritos", responsavel: "eu" }, "")).toEqual([]);
+    expect(ids({ etapa: "lote", responsavel: "ninguem" })).toEqual(["c3"]);
+    expect(ids({ etapa: "lote", responsavel: "u-b" })).toEqual(["c2", "c7"]);
+    expect(ids({ etapa: "lote", vaga: "20" })).toEqual(["c3", "c4", "c7"]);
+    expect(ids({ etapa: "inscritos", modalidade: "PP" })).toEqual(["c2"]);
+    expect(ids({ etapa: "inscritos", busca: "lucia" })).toEqual(["c1"]);
+    expect(ids({ etapa: "inscritos", busca: "7006" })).toEqual(["c6"]);
+  });
+  it("AM-6.4: o código abre direto só com uma ficha que casa", () => {
+    expect(fichaPeloCodigo(FILA, " 7002 ")?.id).toBe("c2");
+    expect(fichaPeloCodigo(FILA, "7006")).toBeNull();
+    expect(fichaPeloCodigo(FILA, "")).toBeNull();
+  });
+});
+
+describe("AM-12.2: reserva", () => {
+  const reserva = FILA[0].ficha.reserva;
+  it("vale até expirar", () => {
+    expect(reservaVigente(reserva, AGORA)).toBe(true);
+    expect(reservaVigente(reserva, new Date("2026-10-06T15:11:00Z"))).toBe(
+      false,
+    );
+    expect(reservaVigente(null, AGORA)).toBe(false);
+  });
+  it("mostra quem está e desde quando", () => {
+    expect(textoDaReserva(reserva, "u-b", AGORA)).toMatch(
+      /^Em uso por Ana desde \d{2}:\d{2}$/,
+    );
+    expect(textoDaReserva(reserva, "u-a", AGORA)).toMatch(
+      /^Com você até \d{2}:\d{2}$/,
+    );
+    expect(
+      textoDaReserva(reserva, "u-a", new Date("2026-10-07T00:00:00Z")),
+    ).toBe("");
+  });
+});
+
+describe("ações em lote e o plano da distribuição", () => {
+  it("cada ação pega só o que cabe nela", () => {
+    const a = acoesDaSelecao(FILA, AGORA);
+    expect(a.distribuir.map((c) => c.id)).toEqual(["c1", "c2", "c3", "c7"]);
+    expect(a.liberar.map((c) => c.id)).toEqual(["c1"]);
+    expect(a.revisao.map((c) => c.id)).toEqual(["c1", "c2", "c3"]);
+  });
+  it("AM-6.2: a prévia distribui na ordem da Provisória, tirando da carga o que é redistribuído", () => {
+    const p = planoDeDistribuicao([FILA[2], FILA[1]], EQUIPE, {
+      criterio: "PARTES_IGUAIS",
+    });
+    // c2 (vaga 10, pos 2) e c3 (vaga 20, pos 1): c3 primeiro; Beto só analisa a vaga 10.
+    expect(p.atribuicoes).toEqual([
+      { ficha: "f3", usuario: "u-a", versao: 2 },
+      { ficha: "f2", usuario: "u-b", versao: 2 },
+    ]);
+    expect(p.redistribui).toBe(true);
+    expect(p.resumo).toEqual([
+      { usuario: "u-a", nome: "Ana", novas: 1, total: 2 },
+      { usuario: "u-b", nome: "Beto", novas: 1, total: 1 },
+    ]);
+  });
+  it("para uma pessoa ou de volta à fila", () => {
+    const p = planoDeDistribuicao([FILA[2], FILA[1]], EQUIPE, {}, "u-b");
+    expect(p.atribuicoes).toEqual([{ ficha: "f2", usuario: "u-b", versao: 2 }]);
+    expect(p.sobra).toEqual(["f3"]);
+    const f = planoDeDistribuicao([FILA[1]], EQUIPE, {}, "fila");
+    expect(f.atribuicoes).toEqual([{ ficha: "f2", usuario: null, versao: 2 }]);
+    expect(f.resumo).toEqual([]);
+  });
+});
+
+describe("editais vigentes no seletor", () => {
+  const EDITAIS = [
+    { id: "a", edital: "93/2026", ativo: true, status: "Em andamento" },
+    { id: "b", edital: "23/2025", ativo: true, status: "Concluído" },
+    { id: "c", edital: "FCC", ativo: true, status: "Cancelado" },
+    { id: "d", edital: "10/2026", ativo: false, status: "Em andamento" },
+    { id: "e", edital: "11/2026", ativo: true },
+  ];
+  it("só os vigentes, com o escolhido mantido e o total dos ocultos", () => {
+    expect(editaisDaEscolha(EDITAIS).lista.map((e) => e.id)).toEqual([
+      "a",
+      "e",
+    ]);
+    expect(editaisDaEscolha(EDITAIS).ocultos).toBe(3);
+    expect(
+      editaisDaEscolha(EDITAIS, { escolhido: "b" }).lista.map((e) => e.id),
+    ).toEqual(["a", "b", "e"]);
+    expect(editaisDaEscolha(EDITAIS, { todos: true }).lista).toHaveLength(5);
+    expect(editalVigente(null)).toBe(false);
+  });
+});

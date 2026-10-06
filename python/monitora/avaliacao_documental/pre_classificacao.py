@@ -69,6 +69,9 @@ def normalizar_regra(entrada):
             "desempate": provisoria["desempate"]
             if isinstance(provisoria.get("desempate"), list)
             else list(DESEMPATE_PADRAO),
+            "pergunta_experiencia": provisoria.get("pergunta_experiencia").strip() or None
+            if isinstance(provisoria.get("pergunta_experiencia"), str)
+            else None,
         },
         "lote": {**LOTE_PADRAO, **_objeto(r.get("lote"))},
         "blocos": _lista(r.get("blocos")),
@@ -184,6 +187,29 @@ def _vezes(multiplo, n):
     return math.ceil(multiplo * n - 1e-9)
 
 
+def meses_declarados(valor):
+    """
+    Os meses de experiência de uma resposta da Empregare ("De 1 a 2 anos" → 12,
+    "Mais de 5 anos" → 60, "6 meses" → 6, "Sem experiência" → 0): o limite de
+    baixo da faixa; None quando não dá para ler (mesmo que mesesDeclarados do JS).
+    """
+    if isinstance(valor, bool):
+        return None
+    if isinstance(valor, (int, float)):
+        return valor if math.isfinite(valor) else None
+    texto = normalizar_texto(valor)
+    if not texto:
+        return None
+    numero = re.search(r"(\d+(?:[.,]\d+)?)", texto)
+    if not numero:
+        return 0 if re.search(r"\b(sem|nenhum|nenhuma|nao possuo|nao tenho)\b", texto) else None
+    n = float(numero.group(1).replace(",", "."))
+    if n.is_integer():
+        n = int(n)
+    unidade = re.search(r"(ano|mes)", texto[numero.end() :])
+    return n * 12 if unidade and unidade.group(1) == "ano" else n
+
+
 def tamanho_do_lote(lote, vaga):
     """{tamanho (None = sem como calcular), descricao, por_modalidade, aviso}."""
     lote = lote or {}
@@ -203,6 +229,19 @@ def tamanho_do_lote(lote, vaga):
             "descricao": f"{numero_no_texto(fixo)} (número fixo)",
             "por_modalidade": None,
             "aviso": None,
+        }
+    if lote.get("base") == "NOTA_MINIMA":
+        minimo = lote.get("nota_minima")
+        if not _numero_js(minimo):
+            return {"tamanho": None, "descricao": "", "por_modalidade": None, "aviso": "SEM_NOTA_MINIMA"}
+        item = lote.get("item_edital")
+        # O tamanho depende das notas: pre_classificar_vaga conta quem tem a nota mínima.
+        return {
+            "tamanho": None,
+            "descricao": f"nota ≥ {numero_no_texto(minimo)}" + (f" (item {item})" if item else ""),
+            "por_modalidade": None,
+            "aviso": None,
+            "nota_minima": minimo,
         }
     imediatas = vaga.get("vagas_imediatas")
     if imediatas is None:
@@ -274,7 +313,9 @@ def _chave_de_ordem(desempate, hoje):
                     return -1 if ia else 1
                 if ia:
                     r = _compara(a["_nascimento"], b["_nascimento"])
-            elif d == "MAIS_VELHO":
+            elif d == "EXPERIENCIA_DECLARADA":
+                r = _nulos_por_ultimo(a["_experiencia"], b["_experiencia"], lambda x, y: _compara(y, x))
+            elif d in ("MAIS_VELHO", "MAIOR_IDADE"):
                 r = _nulos_por_ultimo(a["_nascimento"], b["_nascimento"], _compara)
             elif d == "CANDIDATURA":
                 r = _nulos_por_ultimo(a["_candidatura"], b["_candidatura"], _compara)
@@ -301,6 +342,7 @@ def pre_classificar_vaga(regra, vaga, candidatos, anterior=None, ultimo_lote=0, 
     tolerancia = provisoria.get("divergencia_tolerancia") or 0
     desempate = provisoria["desempate"] if isinstance(provisoria.get("desempate"), list) else DESEMPATE_PADRAO
     avisos = set()
+    pergunta_da_experiencia = provisoria.get("pergunta_experiencia") if "EXPERIENCIA_DECLARADA" in desempate else None
 
     linhas = []
     for c in _lista(candidatos):
@@ -318,12 +360,16 @@ def pre_classificar_vaga(regra, vaga, candidatos, anterior=None, ultimo_lote=0, 
         art = art_das_colunas(colunas)
         declarada = calcular_nota_declarada(regra, colunas) if tem_declarada else None
         nota = art if art is not None else (declarada["total"] if declarada else None)
+        coluna_da_experiencia = (
+            coluna_da_pergunta(colunas, pergunta_da_experiencia) if pergunta_da_experiencia else None
+        )
         linhas.append(
             {
                 "id": c.get("id"),
                 "codigo": str(c.get("codigo") if c.get("codigo") is not None else ""),
                 "_nascimento": c.get("nascimento"),
                 "_candidatura": c.get("candidatura"),
+                "_experiencia": meses_declarados(colunas[coluna_da_experiencia]) if coluna_da_experiencia else None,
                 "situacao": "ELIMINADO" if eliminacao else "RANQUEADO",
                 "motivo_codigo": eliminacao["codigo"] if eliminacao else None,
                 "motivo": eliminacao["motivo"] if eliminacao else None,
@@ -394,6 +440,17 @@ def pre_classificar_vaga(regra, vaga, candidatos, anterior=None, ultimo_lote=0, 
             herdar(linha, ant, "NO_LOTE")
             membros.append(linha)
     herdados = list(membros)
+    # Lote pela nota mínima: entram todos com a nota mínima (quem já estava fica).
+    nota_minima = t.get("nota_minima")
+
+    def tem_nota_minima(linha):
+        return linha["nota"] is not None and linha["nota"] >= nota_minima
+
+    if nota_minima is not None:
+        t["tamanho"] = sum(1 for l in ranqueados if tem_nota_minima(l)) + sum(
+            1 for m in membros if not tem_nota_minima(m)
+        )
+        t["descricao"] = f"{t['descricao']} = {t['tamanho']}"
     inicial = refazer or not any(l["_anterior"] and l["_anterior"].get("situacao") in _NO_LOTE for l in linhas)
     saidas.sort(
         key=lambda s: (
@@ -441,6 +498,8 @@ def pre_classificar_vaga(regra, vaga, candidatos, anterior=None, ultimo_lote=0, 
                 if ocupados >= tamanho:
                     break
                 if linha["situacao"] != "RANQUEADO" or not cabe_na_lista(linha, b):
+                    continue
+                if nota_minima is not None and not tem_nota_minima(linha):
                     continue
                 entrar(linha, False)
                 ocupados += 1

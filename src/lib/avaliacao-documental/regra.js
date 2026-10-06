@@ -146,6 +146,8 @@ export function normalizarRegraAnalise(entrada) {
       desempate: Array.isArray(provisoria.desempate)
         ? provisoria.desempate
         : [...DESEMPATE_PADRAO_DA_PROVISORIA],
+      pergunta_experiencia:
+        texto(provisoria.pergunta_experiencia).trim() || null,
     },
     lote: { ...LOTE_PADRAO, ...(ehObjeto(r.lote) ? r.lote : {}) },
     distribuicao: {
@@ -599,7 +601,24 @@ export function validarRegraAnalise(regra) {
       desempate.some((d) => !valores(DESEMPATES_DA_PROVISORIA).has(d)))
   )
     erros.push(
-      "Desempate da Provisória: IDOSO, MAIS_VELHO ou CANDIDATURA, sem repetir.",
+      "Desempate da Provisória: IDOSO, EXPERIENCIA_DECLARADA, MAIOR_IDADE, MAIS_VELHO ou CANDIDATURA, sem repetir.",
+    );
+  if (
+    provisoria.pergunta_experiencia !== undefined &&
+    provisoria.pergunta_experiencia !== null &&
+    (typeof provisoria.pergunta_experiencia !== "string" ||
+      provisoria.pergunta_experiencia.length > 200)
+  )
+    erros.push(
+      "Pergunta da experiência declarada: texto de até 200 caracteres.",
+    );
+  if (
+    Array.isArray(desempate) &&
+    desempate.includes("EXPERIENCIA_DECLARADA") &&
+    !String(provisoria.pergunta_experiencia ?? "").trim()
+  )
+    erros.push(
+      "Desempate pela experiência declarada: informe a pergunta da experiência.",
     );
 
   // Lote.
@@ -607,11 +626,19 @@ export function validarRegraAnalise(regra) {
   if (!ehObjeto(lote)) erros.push("Lote inválido.");
   else {
     if (!valores(BASES_DO_LOTE).has(lote.base))
-      erros.push("Lote: múltiplo das vagas ou número fixo.");
+      erros.push("Lote: múltiplo das vagas, número fixo ou nota mínima.");
     if (lote.base === "MULTIPLO_VAGAS" && !entre(lote.multiplo, 1, 100))
       erros.push("Lote: múltiplo de 1 a 100.");
     if (lote.base === "FIXO" && !entre(lote.fixo, 1, 100000))
       erros.push("Lote: número fixo de 1 a 100.000.");
+    if (lote.base === "NOTA_MINIMA" && !entre(lote.nota_minima, 0, 1000))
+      erros.push("Lote: nota mínima de 0 a 1.000.");
+    if (
+      lote.item_edital !== undefined &&
+      lote.item_edital !== null &&
+      (typeof lote.item_edital !== "string" || lote.item_edital.length > 40)
+    )
+      erros.push("Lote: item do edital com até 40 caracteres.");
     for (const chave of [
       "inclui_cr",
       "por_modalidade",

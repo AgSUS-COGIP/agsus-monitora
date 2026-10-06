@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import {
   BASES_DO_LOTE,
   CRITERIOS_DA_DISTRIBUICAO,
+  DESEMPATES_DA_PROVISORIA,
   DESTINO_DOS_NOVOS,
   MODOS_DE_DISTRIBUICAO,
   PARCIAIS,
@@ -762,6 +763,39 @@ export function Regra({ e, estado }) {
               }
             />
           </div>
+          <div className="ui-grade-de-campos" data-tour="avd-regra-desempate">
+            {DESEMPATES_DA_PROVISORIA.map((_d, i) => {
+              const desempate = rascunho.provisoria.desempate ?? [];
+              return (
+                <Escolha
+                  key={i}
+                  rotulo={`${i + 1}º desempate`}
+                  valor={desempate[i] ?? null}
+                  vazio="—"
+                  opcoes={DESEMPATES_DA_PROVISORIA.filter(
+                    ([v]) => v === desempate[i] || !desempate.includes(v),
+                  )}
+                  aoMudar={(v) => {
+                    const novo = [...desempate];
+                    if (v) novo[i] = v;
+                    else novo.splice(i);
+                    mudar(["provisoria", "desempate"], novo.filter(Boolean));
+                  }}
+                />
+              );
+            })}
+            {(rascunho.provisoria.desempate ?? []).includes(
+              "EXPERIENCIA_DECLARADA",
+            ) ? (
+              <CampoTexto
+                rotulo="Pergunta da experiência (início do enunciado)"
+                valor={rascunho.provisoria.pergunta_experiencia}
+                aoMudar={(v) =>
+                  mudar(["provisoria", "pergunta_experiencia"], v || null)
+                }
+              />
+            ) : null}
+          </div>
         </section>
 
         <section className="ui-card" aria-labelledby="avdLote">
@@ -773,7 +807,17 @@ export function Regra({ e, estado }) {
               rotulo="Tamanho do lote"
               valor={rascunho.lote.base}
               opcoes={BASES_DO_LOTE}
-              aoMudar={(v) => mudar(["lote", "base"], v)}
+              aoMudar={(v) => {
+                const minima = dados.nota_minima?.nota_minima;
+                const comBase = comValor(rascunho, ["lote", "base"], v);
+                setRascunho(
+                  v === "NOTA_MINIMA" &&
+                    rascunho.lote.nota_minima == null &&
+                    typeof minima === "number"
+                    ? comValor(comBase, ["lote", "nota_minima"], minima)
+                    : comBase,
+                );
+              }}
             />
             {rascunho.lote.base === "FIXO" ? (
               <CampoNumero
@@ -781,6 +825,20 @@ export function Regra({ e, estado }) {
                 valor={rascunho.lote.fixo}
                 aoMudar={(v) => mudar(["lote", "fixo"], v)}
               />
+            ) : rascunho.lote.base === "NOTA_MINIMA" ? (
+              <>
+                <CampoNumero
+                  rotulo="Nota mínima (ART)"
+                  valor={rascunho.lote.nota_minima}
+                  aoMudar={(v) => mudar(["lote", "nota_minima"], v)}
+                />
+                <CampoTexto
+                  rotulo="Item do edital"
+                  maximo={40}
+                  valor={rascunho.lote.item_edital}
+                  aoMudar={(v) => mudar(["lote", "item_edital"], v || null)}
+                />
+              </>
             ) : (
               <CampoNumero
                 rotulo="Vezes as vagas imediatas"

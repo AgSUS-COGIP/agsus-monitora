@@ -4,6 +4,7 @@ import {
   artDasColunas,
   eliminacaoDoCandidato,
   idadeEm,
+  mesesDeclarados,
   modalidadeDoCandidato,
   numeroNoTexto,
   preClassificarVaga,
@@ -156,6 +157,35 @@ describe("peças da conta", () => {
         },
       ).aviso,
     ).toBe("QUADRO_SEM_MODALIDADES");
+  });
+
+  it("lote pela nota mínima: a descrição sai com o item; sem nota, aviso", () => {
+    expect(
+      tamanhoDoLote(
+        { base: "NOTA_MINIMA", nota_minima: 15, item_edital: "8.2.6" },
+        { vagas_imediatas: null },
+      ),
+    ).toEqual({
+      tamanho: null,
+      descricao: "nota ≥ 15 (item 8.2.6)",
+      por_modalidade: null,
+      aviso: null,
+      nota_minima: 15,
+    });
+    expect(
+      tamanhoDoLote({ base: "NOTA_MINIMA", nota_minima: null }, {}).aviso,
+    ).toBe("SEM_NOTA_MINIMA");
+  });
+
+  it("meses de experiência declarados pela faixa", () => {
+    expect(mesesDeclarados("De 1 a 2 anos")).toBe(12);
+    expect(mesesDeclarados("Mais de 5 anos")).toBe(60);
+    expect(mesesDeclarados("De 6 meses a 1 ano")).toBe(6);
+    expect(mesesDeclarados("Sem experiência")).toBe(0);
+    expect(mesesDeclarados("1,5 ano")).toBe(18);
+    expect(mesesDeclarados(24)).toBe(24);
+    expect(mesesDeclarados("texto livre")).toBeNull();
+    expect(mesesDeclarados("")).toBeNull();
   });
 
   it("vagas por modalidade do quadro", () => {

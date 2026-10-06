@@ -72,20 +72,15 @@ describe("os modelos passam na validação da regra", () => {
     expect(validarRegraAnalise(modelo(codigo))).toEqual([]);
   });
 
-  it("o PROJ26-RIO-DOCE só depende do que a F3 acrescenta (lote por nota mínima e desempates)", () => {
+  it("o PROJ26-RIO-DOCE usa o lote por nota mínima 10 (8.2.6) e desempata por idoso e maior idade", () => {
     const m = modelo("PROJ26-RIO-DOCE");
-    expect(m.lote.base).toBe("NOTA_MINIMA");
-    expect(m.provisoria.desempate).toEqual([
-      "IDOSO",
-      "EXPERIENCIA_DECLARADA",
-      "MAIOR_IDADE",
-    ]);
-    const semF3 = {
-      ...m,
-      lote: { ...m.lote, base: "MULTIPLO_VAGAS", multiplo: 3 },
-      provisoria: { ...m.provisoria, desempate: ["IDOSO"] },
-    };
-    expect(validarRegraAnalise(semF3)).toEqual([]);
+    expect(m.lote).toMatchObject({
+      base: "NOTA_MINIMA",
+      nota_minima: 10,
+      item_edital: "8.2.6",
+    });
+    expect(m.provisoria.desempate).toEqual(["IDOSO", "MAIOR_IDADE"]);
+    expect(validarRegraAnalise(m)).toEqual([]);
   });
 });
 

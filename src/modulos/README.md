@@ -7,7 +7,7 @@ Cada tela do MONITORA, quando migra, mora aqui: `<nome>/<nome>.jsx` (componente 
 
 Já aqui: `recursos/` (Recursos dos candidatos, o modelo de tela de página inteira),
 `entrevistas/` (Entrevistas: resultados, condução e roteiros, com as visões no topo),
-`avaliacao-documental/` (Avaliação documental: regra da avaliação por edital e equipe), `analises/`
+`avaliacao-documental/` (Avaliação documental: regra, equipe, pré-classificação e fila), `analises/`
 (Análises curriculares), `selecao/` (Seleção: funil por vaga, só leitura), `classificacao/`
 (Classificação: regra por edital, listas, sorteio e exportação), `aprovados/` (Lista de
 aprovados: aprovados, convocação e carta de convocação) e `aya/` (o painel da
