@@ -341,9 +341,10 @@ describe("Fila (AM-6)", () => {
     expect(gaveta.textContent).toContain(
       "Só leitura: Em uso por outra pessoa.",
     );
-    expect(gaveta.textContent).toContain(
-      "O conteúdo da análise chega na fase F4.",
-    );
+    // O conteúdo da ficha (F4) é lido à parte: tests/modulos/avaliacao-documental-ficha.test.js.
+    expect(supabase.rpc).toHaveBeenCalledWith("obter_ficha_analise", {
+      p_ficha: "f1",
+    });
     expect(gaveta.textContent).not.toMatch(/\d{3}\.\d{3}\.\d{3}-\d{2}/);
     // A coordenação libera a reserva presa, com motivo.
     await clicar(botao("Liberar a reserva"));

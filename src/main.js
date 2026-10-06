@@ -42,6 +42,7 @@ import "./modulos/entrevistas/entrevistas.css";
 import "./modulos/selecao/selecao.css";
 import "./modulos/classificacao/classificacao.css";
 import "./modulos/avaliacao-documental/avaliacao-documental.css";
+import "./modulos/avaliacao-documental/ficha/ficha.css";
 import "./modulos/conferencias/conferencias.css";
 import "./modulos/visao-geral/visao-geral.css";
 import "./modulos/aya/aya.css";

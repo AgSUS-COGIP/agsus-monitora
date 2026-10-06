@@ -322,6 +322,27 @@ export function resumoParaGravar(avaliacao, declarada) {
   };
 }
 
+/** Nota como a tela mostra: vírgula decimal, até 2 casas ("12,5"). */
+export function textoDaNota(valor) {
+  const n = Number(valor);
+  if (valor === null || valor === undefined || !Number.isFinite(n)) return "—";
+  return n.toLocaleString("pt-BR", { maximumFractionDigits: 2 });
+}
+
+const RESULTADOS_DA_FICHA = {
+  APTO: ["Apto", "aprovado"],
+  INAPTO_REQUISITO: ["Inapto (requisito)", "reprovado"],
+  INAPTO_NOTA: ["Inapto (nota mínima)", "reprovado"],
+};
+
+/** "Apto", "Inapto (requisito)", "Inapto (nota mínima)". */
+export const textoDoResultado = (resultado) =>
+  RESULTADOS_DA_FICHA[resultado]?.[0] ?? "";
+
+/** O tom do selo do resultado (src/ui/selo.jsx). */
+export const tomDoResultado = (resultado) =>
+  RESULTADOS_DA_FICHA[resultado]?.[1] ?? "neutro";
+
 /** Rótulo de um título acadêmico. */
 export function rotuloDoTitulo(codigo) {
   return (

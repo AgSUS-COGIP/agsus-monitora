@@ -342,5 +342,8 @@ export function criarEstadoDaFila({
     abrirFichasDoLote,
     salvarFiltro,
     excluirFiltro,
+    /* Para o conteúdo da ficha aberta (ficha/estado-da-ficha.js). */
+    rpc,
+    toast,
   };
 }
