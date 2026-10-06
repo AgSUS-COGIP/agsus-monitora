@@ -1,0 +1,82 @@
+name: Conferências de consistência
+
+# Job Python (scripts/conferencias/conferencias.py) que lê o banco pelas RPCs
+# de leitura (conferencia_ler_*, só service_role), confere regras que
+# atravessam Análises, Entrevistas, Classificação, Lista de aprovados e as
+# cargas da Empregare e grava AVISOS (TB_AVISO_CONFERENCIA). Só leitura dos
+# dados de negócio: não muda análise, entrevista, lista nem aprovado.
+#
+# Quando roda:
+#   - todo dia às 6h de Brasília (9h UTC; o GitHub pode atrasar alguns minutos);
+#   - pelo "Rodar agora" das Configurações › Status das atualizações
+#     (api/rodar-carga.js, só administrador global; disparado_por = id do usuário);
+#   - pelo botão "Run workflow" desta aba Actions.
+# Guia: docs/python-no-monitora.md. Migration: 20261005210000_conferencias_de_consistencia.sql.
+#
+# O REPOSITÓRIO É PÚBLICO e este log também: o job só imprime contagens,
+# códigos de conferência e números de edital (python/monitora/mascaramento.py).
+#
+# Secrets do repositório (os mesmos das sincronizações e do robô):
+#   SUPABASE_URL                 https://<projeto>.supabase.co
+#   SUPABASE_SERVICE_ROLE_KEY    chave service_role do Supabase
+# Variável opcional do repositório (Settings → Variables):
+#   CONFERENCIA_DIAS_CONVOCADO   dias de "Convocado" sem desfecho até avisar (padrão 15)
+
+on:
+  schedule:
+    - cron: "0 9 * * *"
+  workflow_dispatch:
+    inputs:
+      modo:
+        description: "normal = confere e grava os avisos; seco = só confere e mostra o resumo"
+        type: choice
+        options:
+          - normal
+          - seco
+        default: normal
+      disparado_por:
+        description: "Preenchido pelo MONITORA (Rodar agora, id do usuário); em branco = GitHub"
+        type: string
+        required: false
+        default: ""
+
+permissions:
+  contents: read
+
+concurrency:
+  group: conferencias
+  cancel-in-progress: false
+
+jobs:
+  conferir:
+    name: Banco → avisos
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Baixar código
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 1
+          show-progress: false
+
+      # Só biblioteca padrão (python/monitora/ e scripts/conferencias/): sem pip install.
+      - name: Configurar Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      # Os inputs vão por variável de ambiente (nunca interpolados no shell).
+      - name: Conferir
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          CONFERENCIA_DIAS_CONVOCADO: ${{ vars.CONFERENCIA_DIAS_CONVOCADO }}
+          MODO: ${{ inputs.modo || 'normal' }}
+          DISPARADO_POR: ${{ github.event_name == 'schedule' && 'agenda' || inputs.disparado_por }}
+        run: |
+          if [ "$MODO" = "seco" ]; then
+            python scripts/conferencias/conferencias.py --seco
+          else
+            python scripts/conferencias/conferencias.py
+          fi

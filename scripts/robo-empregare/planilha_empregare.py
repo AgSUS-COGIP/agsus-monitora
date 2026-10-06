@@ -163,7 +163,7 @@ def normalizar_codigo(valor):
 
 
 def _hash(prefixo, valor):
-    return hashlib.sha256(f"empregare:{prefixo}:{valor}".encode("utf-8")).hexdigest()
+    return hashlib.sha256(f"empregare:{prefixo}:{valor}".encode()).hexdigest()
 
 
 def chave_natural(codigo=None, cpf=None, email=None):
@@ -243,7 +243,7 @@ def _tabela(linhas):
     if not linhas:
         return [], []
     nomes = nomes_unicos(linhas[inicio])
-    dados = [l for l in linhas[inicio + 1:] if any(not vazio(c) for c in l)]
+    dados = [l for l in linhas[inicio + 1 :] if any(not vazio(c) for c in l)]
     return nomes, dados
 
 
@@ -389,4 +389,4 @@ def _momento_iso(valor):
 
 
 def em_lotes(linhas, tamanho=500):
-    return [linhas[i:i + tamanho] for i in range(0, len(linhas), tamanho)]
+    return [linhas[i : i + tamanho] for i in range(0, len(linhas), tamanho)]

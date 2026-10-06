@@ -24,7 +24,7 @@ Uso
 
 Variáveis: EMPREGARE_EMAIL, EMPREGARE_SENHA, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY.
 O log é público (repositório público): só contagens, códigos de vaga e números
-de edital; toda mensagem passa por mascaramento.py.
+de edital; toda mensagem passa por python/monitora/mascaramento.py.
 
 Saída: 0 concluída; 1 erro (nada ou quase nada gravado); 2 parcial (alguma
 vaga falhou ou foi recusada pela trava).
@@ -32,24 +32,27 @@ vaga falhou ou foi recusada pela trava).
 
 import argparse
 import os
+import pathlib
 import re
 import sys
 import tempfile
 import time
-import uuid
 from datetime import datetime
-from zoneinfo import ZoneInfo
 
-import navegador_empregare as nav
-import supabase_rpc
-from mascaramento import mascarar, resumo_do_erro
-from planilha_empregare import em_lotes, ler_planilha
+# A base comum (python/monitora/) vem do próprio repositório, sem instalar nada.
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[2] / "python"))
 
-FUSO = ZoneInfo("America/Sao_Paulo")
+import navegador_empregare as nav  # noqa: E402
+from planilha_empregare import em_lotes, ler_planilha  # noqa: E402
+
+from monitora import execucao, supabase_rpc  # noqa: E402
+from monitora.execucao import FUSO, disparo, url_da_execucao  # noqa: E402
+from monitora.mascaramento import mascarar, resumo_do_erro  # noqa: E402
+
+GUIA = "docs/robo-empregare.md"
 LIMITE_PADRAO = 60
 TAMANHO_DO_LOTE = 500
 TITULO = "Robô da Empregare → MONITORA"
-_UUID = re.compile(r"^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$")
 
 
 # ── Entrada ─────────────────────────────────────────────────────────────────
@@ -83,27 +86,8 @@ def argumentos(lista=None):
     return args
 
 
-def disparo(valor):
-    """('AGENDA'|'MONITORA'|'GITHUB', uuid do usuário ou None)."""
-    v = str(valor or "").strip()
-    if v.lower() == "agenda":
-        return "AGENDA", None
-    if _UUID.fullmatch(v):
-        return "MONITORA", v.lower()
-    return "GITHUB", None
-
-
 def identificador(agora=None, sufixo=None):
-    agora = agora or datetime.now(FUSO)
-    return f"gh-{agora:%Y%m%dT%H%M%S}-{(sufixo or uuid.uuid4().hex)[:8]}"
-
-
-def url_da_execucao(ambiente=None):
-    a = os.environ if ambiente is None else ambiente
-    servidor, repositorio, execucao = (a.get(n, "") for n in ("GITHUB_SERVER_URL", "GITHUB_REPOSITORY", "GITHUB_RUN_ID"))
-    if servidor == "https://github.com" and repositorio and execucao.isdigit():
-        return f"{servidor}/{repositorio}/actions/runs/{execucao}"
-    return None
+    return execucao.identificador(agora, sufixo, prefixo="gh")
 
 
 # ── Saída (log público) ─────────────────────────────────────────────────────
@@ -114,11 +98,7 @@ def registrar(texto):
 
 
 def resumir(linhas):
-    texto = "\n".join([f"## {TITULO}", ""] + [f"- {mascarar(l)}" for l in linhas])
-    print(texto, flush=True)
-    if os.environ.get("GITHUB_STEP_SUMMARY"):
-        with open(os.environ["GITHUB_STEP_SUMMARY"], "a", encoding="utf-8") as saida:
-            saida.write(texto + "\n")
+    execucao.resumir(TITULO, linhas)
 
 
 def lista_de_codigos(vagas, maximo=80):
@@ -176,7 +156,9 @@ def gravar_vaga(config, sync, codigo, caminho, chamar=supabase_rpc.chamar):
     if lido["repetidas"]:
         detalhes += f", {lido['repetidas']} repetidos"
     if situacao == "GRAVADA":
-        registrar(f"Vaga {codigo}: gravada · {detalhes} · {fim.get('ativos')} ativos · {fim.get('desativadas')} saíram.")
+        registrar(
+            f"Vaga {codigo}: gravada · {detalhes} · {fim.get('ativos')} ativos · {fim.get('desativadas')} saíram."
+        )
     elif situacao == "RECUSADA":
         registrar(f"Vaga {codigo}: RECUSADA pela trava · {detalhes} (menos da metade dos ativos; nada mudou).")
     return situacao
@@ -189,7 +171,9 @@ def baixar_e_gravar(portal, config, sync, pedidas, pasta, desde, dormir=time.sle
     for tentativa in range(1, nav.TENTATIVAS_CENTRAL + 1):
         if not pendentes:
             break
-        registrar(f"Central de Exportações: tentativa {tentativa}/{nav.TENTATIVAS_CENTRAL} ({len(pendentes)} vaga(s) pendente(s)).")
+        registrar(
+            f"Central de Exportações: tentativa {tentativa}/{nav.TENTATIVAS_CENTRAL} ({len(pendentes)} vaga(s) pendente(s))."
+        )
         portal.abrir_central()
         linhas = portal.ler_central()
         ainda = []
@@ -225,8 +209,12 @@ def fumaca():
         portal.abrir_vagas_anunciadas()
         portal.abrir_central()
         linhas = portal.ler_central()
-    resumir(["Teste de fumaça: login aceito, Vagas Anunciadas e Central de Exportações abriram.",
-             f"Exportações listadas na Central: {len(linhas)}. Nada foi exportado nem gravado."])
+    resumir(
+        [
+            "Teste de fumaça: login aceito, Vagas Anunciadas e Central de Exportações abriram.",
+            f"Exportações listadas na Central: {len(linhas)}. Nada foi exportado nem gravado.",
+        ]
+    )
     return 0
 
 
@@ -234,7 +222,7 @@ def principal(args):
     if args.fumaca:
         return fumaca()
 
-    config = supabase_rpc.configuracao()
+    config = supabase_rpc.configuracao(GUIA)
     lista = supabase_rpc.chamar(
         config,
         "listar_vagas_empregare",
@@ -245,13 +233,15 @@ def principal(args):
     escolha = {"PADRAO": "vagas dos editais em curso", "EDITAIS": "editais pedidos", "VAGAS": "vagas pedidas"}
 
     if args.seco:
-        resumir([
-            "Modo seco: não entrou na Empregare e nada foi gravado.",
-            f"Escolha: {escolha.get(lista.get('modo'), lista.get('modo'))} · limite {lista.get('limite')}.",
-            f"Vagas que seriam exportadas: {len(vagas)} (de {len(editais)} edital(is)).",
-            f"Origem das vagas: {contagem_por_origem(vagas)}.",
-            f"Códigos: {lista_de_codigos(vagas) or '—'}",
-        ])
+        resumir(
+            [
+                "Modo seco: não entrou na Empregare e nada foi gravado.",
+                f"Escolha: {escolha.get(lista.get('modo'), lista.get('modo'))} · limite {lista.get('limite')}.",
+                f"Vagas que seriam exportadas: {len(vagas)} (de {len(editais)} edital(is)).",
+                f"Origem das vagas: {contagem_por_origem(vagas)}.",
+                f"Códigos: {lista_de_codigos(vagas) or '—'}",
+            ]
+        )
         return 0
 
     email, senha = nav.credenciais()
@@ -307,18 +297,23 @@ def principal(args):
         resumir([f"Execução {sync} FALHOU: {mensagem}", f"Vagas baixadas antes da falha: {baixadas}."])
         return 1
 
-    fim = supabase_rpc.chamar(
-        config,
-        "finalizar_sync_empregare",
-        {"p_sync": sync, "p_vagas_baixadas": baixadas, "p_vagas_falha": falhas, "p_erro": None},
-    ) or {}
+    fim = (
+        supabase_rpc.chamar(
+            config,
+            "finalizar_sync_empregare",
+            {"p_sync": sync, "p_vagas_baixadas": baixadas, "p_vagas_falha": falhas, "p_erro": None},
+        )
+        or {}
+    )
     situacao = fim.get("situacao", "FALHOU")
-    resumir([
-        f"Execução {sync}: {situacao}.",
-        f"Vagas pedidas: {len(vagas)} · baixadas: {baixadas} · com falha: {falhas} · recusadas pela trava: {fim.get('recusadas', 0)}.",
-        f"Candidatos gravados: {fim.get('linhas', 0)} · saíram (inativos): {fim.get('desativadas', 0)}.",
-        f"Códigos: {lista_de_codigos(vagas) or '—'}",
-    ])
+    resumir(
+        [
+            f"Execução {sync}: {situacao}.",
+            f"Vagas pedidas: {len(vagas)} · baixadas: {baixadas} · com falha: {falhas} · recusadas pela trava: {fim.get('recusadas', 0)}.",
+            f"Candidatos gravados: {fim.get('linhas', 0)} · saíram (inativos): {fim.get('desativadas', 0)}.",
+            f"Códigos: {lista_de_codigos(vagas) or '—'}",
+        ]
+    )
     return {"CONCLUIDA": 0, "PARCIAL": 2}.get(situacao, 1)
 
 

@@ -20,6 +20,7 @@
                             atrasada depois de 4 h das 9h às 20h; fora disso,
                             depois de 14 h (a noite sem carga não conta)
     Robô da Empregare       sem prazo: só roda pelo "Rodar agora" (decisão de 05/10/2026)
+    Conferências            todo dia às 6h (Brasília) · atrasada depois de 26 h
     Tarefas a cada 2 min    atrasada depois de 15 min
     Tarefas diárias         atrasada depois de 26 h; mensais, depois de 32 dias
 */
@@ -73,6 +74,7 @@ const ESTADOS = Object.freeze({
   analise: { ok: ["processado"], falha: ["erro"] },
   planilha: { ok: ["CONCLUIDA"], falha: ["RECUSADA"] },
   robo: { ok: ["CONCLUIDA"], falha: ["FALHOU", "PARCIAL"] },
+  conferencia: { ok: ["CONCLUIDA"], falha: ["FALHOU", "PARCIAL"] },
   tarefa: { ok: ["succeeded"], falha: ["failed"] },
 });
 
@@ -153,6 +155,25 @@ function execucaoDoRobo(bruta) {
     `${n("vagas_falha")} com falha`,
     `${n("vagas_recusadas")} recusadas`,
   ];
+  const quem = QUEM_DISPAROU[texto(bruta?.disparo)];
+  if (quem) partes.push(`disparo: ${quem}`);
+  const mensagem = texto(bruta?.mensagem);
+  return {
+    ...bruta,
+    mensagem: `${partes.join(" · ")}${mensagem ? `. ${mensagem}` : ""}`,
+  };
+}
+
+/* Execução das conferências: os avisos entram na mensagem. */
+function execucaoDaConferencia(bruta) {
+  const n = (campo) => inteiro(bruta?.[campo]) ?? 0;
+  const partes = [
+    `${n("novos")} avisos novos`,
+    `${n("abertos")} abertos`,
+    `${n("resolvidos")} resolvidos`,
+  ];
+  const falhas = Array.isArray(bruta?.falhas) ? bruta.falhas.length : 0;
+  if (falhas) partes.push(`${falhas} conferências falharam`);
   const quem = QUEM_DISPAROU[texto(bruta?.disparo)];
   if (quem) partes.push(`disparo: ${quem}`);
   const mensagem = texto(bruta?.mensagem);
@@ -257,6 +278,23 @@ export function normalizarSaude(dados, agora = new Date()) {
       ]
     : [];
 
+  // As conferências só aparecem depois da migration 20261005210000 (a chave vem no payload).
+  if (Array.isArray(dados?.conferencias))
+    robos.push(
+      montarCarga(
+        {
+          id: "conferencias",
+          nome: "Conferências de consistência",
+          onde: "GitHub Actions · Conferências de consistência",
+          esperado: "todo dia às 6h",
+          prazoMin: PRAZO_DIARIO_MIN,
+          tipo: "conferencia",
+          execucoes: dados.conferencias.map(execucaoDaConferencia),
+        },
+        agora,
+      ),
+    );
+
   const tarefasDisponiveis = Array.isArray(dados?.tarefas);
   const tarefas = (tarefasDisponiveis ? dados.tarefas : []).map((t) => {
     const nome = texto(t?.nome);
@@ -295,9 +333,9 @@ export function normalizarSaude(dados, agora = new Date()) {
     },
     {
       id: "robos",
-      titulo: "Robô da Empregare",
+      titulo: "Robô da Empregare e conferências",
       descricao:
-        "Candidatos de cada vaga, do Excel exportado da Empregare, quando um administrador pede (Rodar agora).",
+        "Candidatos de cada vaga, do Excel exportado da Empregare, quando um administrador pede (Rodar agora); conferências de consistência todo dia às 6h.",
       cargas: robos,
     },
     {
@@ -429,12 +467,16 @@ export function visaoSimples(saude) {
   }
 
   for (const carga of porId.robos?.cargas || []) {
+    const conferencias = carga.id === "conferencias";
     linhas.push(
       juntar({
         id: carga.id,
-        titulo: "Robô da Empregare",
-        explicacao:
-          "Traz os candidatos de cada vaga dos editais em curso a partir da Empregare, quando um administrador clica em Rodar agora.",
+        titulo: conferencias
+          ? "Conferências de consistência"
+          : "Robô da Empregare",
+        explicacao: conferencias
+          ? "Confere análises, entrevistas, classificação, aprovados e cargas e lista os avisos abaixo, todo dia às 6h."
+          : "Traz os candidatos de cada vaga dos editais em curso a partir da Empregare, quando um administrador clica em Rodar agora.",
         partes: [carga],
         situacoesQueContam: [carga.situacao],
       }),

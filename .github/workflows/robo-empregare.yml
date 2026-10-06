@@ -14,7 +14,7 @@ name: Robô da Empregare
 # Como operar e o que fazer quando falha: docs/robo-empregare.md.
 #
 # O REPOSITÓRIO É PÚBLICO e este log também: o robô só imprime contagens,
-# códigos de vaga e números de edital (scripts/robo-empregare/mascaramento.py).
+# códigos de vaga e números de edital (python/monitora/mascaramento.py).
 #
 # Secrets do repositório (Settings → Secrets and variables → Actions):
 #   EMPREGARE_EMAIL              e-mail do usuário do robô no portal da Empregare
