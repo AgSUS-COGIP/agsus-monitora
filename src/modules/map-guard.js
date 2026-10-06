@@ -280,6 +280,7 @@ function hardenMapInstance(L, map) {
   enhanceMapAccessibility(L, map);
 
   const fitBrazilOverview = () => {
+    if (map.__agsusRemovido) return;
     try {
       map.invalidateSize({ animate: false, pan: false });
       liberarZoomParaCaber(viewBounds, folgaDoBrasil);
@@ -339,6 +340,15 @@ function hardenMapInstance(L, map) {
   map.on("drag move zoomend moveend layeradd", () =>
     stabilizeMap(map, maxBounds),
   );
+  /*
+    O `remove()` do Leaflet apaga os panes. Um estabilizar ou reenquadrar que
+    chegasse depois (o StrictMode desmonta logo após montar; trocar de área
+    também) lia `_leaflet_pos` de um pane que já não existe.
+  */
+  map.on("unload", () => {
+    map.__agsusRemovido = true;
+    window.clearTimeout(map.__agsusStabilizeTimer);
+  });
 }
 
 /*
@@ -460,7 +470,9 @@ function addScaleControl(L, map) {
 
 function stabilizeMap(map, maxBounds) {
   window.clearTimeout(map.__agsusStabilizeTimer);
+  if (map.__agsusRemovido) return;
   map.__agsusStabilizeTimer = window.setTimeout(() => {
+    if (map.__agsusRemovido) return;
     try {
       map.invalidateSize({ animate: false, pan: false });
       map.panInsideBounds(maxBounds, { animate: false });
