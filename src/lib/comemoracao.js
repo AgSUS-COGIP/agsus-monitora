@@ -1,7 +1,11 @@
 /*
   Comemorações do MONITORA, sem DOM: a regra de QUANDO comemorar e O QUE dizer.
-  O desenho (fogos de artifício em <canvas> e o aviso) é de
-  src/modules/comemoracao.js; o roteiro e a física dos fogos, de src/lib/fogos.js.
+  O desenho (fogos de artifício em <canvas>, a Aya voando e o aviso) é de
+  src/modules/comemoracao.js; o roteiro e a física dos fogos, de src/lib/fogos.js
+  (com a cena em fogos-cena.js e o marco desenhado no céu em fogos-formas.js).
+  Cada comemoração diz que FORMA o estouro do marco desenha: coração (edital
+  100% analisado), estrela (fila zerada), o número (marco do ano), visto
+  (acesso liberado).
 
   Comemora-se o PROCESSO e a EQUIPE, nunca uma pessoa (nada de ranking):
     - edital 100% analisado e fila de análises zerada (painel de análises);
@@ -25,8 +29,8 @@
   há linha de base e, portanto, nenhuma comemoração de marco.
 */
 
-/* A duração dos fogos padrão ("cheio"); "festa" vai até 4,5 s (src/lib/fogos.js). */
-export const DURACAO_DOS_FOGOS_MS = 4000;
+/* A duração dos fogos padrão ("cheio"); de 5 s ("pequeno") a 6 s ("festa"), em src/lib/fogos.js. */
+export const DURACAO_DOS_FOGOS_MS = 5500;
 export const PREFIXO_DO_MARCO = "agsus_monitora_marco:";
 /* Os marcos do ano; depois do último, a cada PASSO_DOS_MARCOS. */
 export const MARCOS_DO_ANO = Object.freeze([1000, 2500, 5000, 7500, 10000]);
@@ -163,9 +167,18 @@ export function mensagemDoEditalConcluido({ edital, unidade }) {
   return `Edital ${nome} concluído! 🎉 Todas as análises foram feitas.`;
 }
 
+/*
+  "equipe da Saúde Indígena", "equipe da SEDE", "equipe de Projetos" — o
+  agradecimento é sempre à equipe da área, nunca a uma pessoa.
+*/
+export function equipeDaArea(nomeDaArea) {
+  const nome = texto(nomeDaArea);
+  if (!nome) return "equipe";
+  return `equipe ${/^projetos$/i.test(nome) ? "de" : "da"} ${nome}`;
+}
+
 export function mensagemDaFilaZerada(nomeDaArea) {
-  const onde = texto(nomeDaArea) ? ` na ${texto(nomeDaArea)}` : "";
-  return `Fila de análises zerada${onde}! Parabéns, equipe. 🎉`;
+  return `Fila de análises zerada! Obrigado, ${equipeDaArea(nomeDaArea)}. 🎉`;
 }
 
 /**
@@ -188,7 +201,11 @@ export function comemoracaoDasAnalises({
   ];
   if (!mensagens.length) return null;
   const [primeira, ...demais] = mensagens;
-  return { texto: primeira, itens: demais };
+  return {
+    texto: primeira,
+    itens: demais,
+    forma: concluidos.length ? "coracao" : "estrela",
+  };
 }
 
 // ── Painel de entrevistas: vaga pronta ──────────────────────────────────────
@@ -311,8 +328,16 @@ export const formatarMarco = (numero) =>
   Math.floor(Number(numero) || 0).toLocaleString("pt-BR");
 
 export function mensagemDoMarcoDoAno({ nomeDaArea, marco, ano }) {
-  const equipe = texto(nomeDaArea)
-    ? `A equipe da ${texto(nomeDaArea)}`
-    : "A equipe";
-  return `🎉 ${equipe} passou de ${formatarMarco(marco)} análises concluídas em ${ano}!`;
+  return `🎉 A ${equipeDaArea(nomeDaArea)} passou de ${formatarMarco(marco)} análises concluídas em ${ano}!`;
 }
+
+/** O agradecimento dos fogos do marco do ano: "1.000 análises concluídas em 2026. Obrigado, equipe de Projetos!" */
+export function agradecimentoDoMarco({ nomeDaArea, marco, ano }) {
+  return `${formatarMarco(marco)} análises concluídas em ${ano}. Obrigado, ${equipeDaArea(nomeDaArea)}!`;
+}
+
+/** A forma do marco do ano no céu: o número ("1.000", "2.500"). */
+export const formaDoMarco = (marco) => ({
+  tipo: "numero",
+  texto: formatarMarco(marco),
+});

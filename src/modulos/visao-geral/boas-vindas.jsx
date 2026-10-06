@@ -11,13 +11,16 @@ import {
   saudacao,
 } from "../../lib/boas-vindas.js";
 import {
+  agradecimentoDoMarco,
   chaveDoMarco,
+  formaDoMarco,
   gravarArmazenamento,
   lerArmazenamento,
   mensagemDoMarcoDoAno,
   proximoEstadoDoMarco,
 } from "../../lib/comemoracao.js";
 import { nomeDaArea } from "../../lib/menu-lateral.js";
+import { comemorar } from "../../modules/comemoracao.js";
 import { lerMarcosDaArea } from "./marcos.js";
 
 /*
@@ -28,7 +31,9 @@ import { lerMarcosDaArea } from "./marcos.js";
     semana (o bloco "Próximos 7 dias" saiu por isso); "Ver cronograma" abre o
     Cronograma da área pelo item do menu.
   - Marcos do ano: "🎉 A equipe da Saúde Indígena passou de 7.500 análises
-    concluídas em 2026!", num card igual, com ×. Números só da equipe
+    concluídas em 2026!", num card igual, com ×, e os fogos do marco (o
+    número desenhado no céu e "7.500 análises concluídas em 2026. Obrigado,
+    equipe da Saúde Indígena!"). Números só da equipe
     (obter_marcos_da_area), nunca de uma pessoa; uma leitura por área e por
     pessoa em cada entrada, só com as comemorações ligadas. A regra (linha de
     base na primeira vez, marco novo contra o guardado, uma vez por marco) é
@@ -134,13 +139,17 @@ export function MarcosDoAno({
         JSON.stringify(estado),
       );
       if (!gravou || !novo || !montado.current) return;
-      setMensagem({
-        area,
-        texto: mensagemDoMarcoDoAno({
-          nomeDaArea: nomeDaArea(area),
-          marco: novo,
-          ano: estado.ano,
-        }),
+      const marco = {
+        nomeDaArea: nomeDaArea(area),
+        marco: novo,
+        ano: estado.ano,
+      };
+      setMensagem({ area, texto: mensagemDoMarcoDoAno(marco) });
+      // Os fogos do marco: o número desenhado no céu e o agradecimento à equipe.
+      comemorar({
+        texto: agradecimentoDoMarco(marco),
+        confete: "festa",
+        forma: formaDoMarco(novo),
       });
     })().catch((erro) => console.warn("Marcos do ano indisponíveis:", erro));
   }, [pode, usuarioId, areaAtual, supabase, armazenamento]);

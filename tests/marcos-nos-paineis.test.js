@@ -38,7 +38,7 @@ describe("marcos de Análises curriculares", () => {
       "Edital 05/2026 · SEDE concluído! 🎉 Todas as análises foram feitas.",
     );
     expect(comemoracao.itens).toEqual([
-      "Fila de análises zerada na SEDE! Parabéns, equipe. 🎉",
+      "Fila de análises zerada! Obrigado, equipe da SEDE. 🎉",
     ]);
     expect(document.querySelector(".comemoracao")).not.toBeNull();
   });
