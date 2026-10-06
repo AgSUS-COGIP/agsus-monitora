@@ -518,7 +518,7 @@ describe("ficha: rascunho, concluir e próxima, fechar (AM-12)", () => {
       document
         .querySelector("[data-tour='avd-ficha-empregare'] a")
         .getAttribute("href"),
-    ).toBe("https://corporate.empregare.com/empresa/vagas/candidaturas/179698");
+    ).toBe("https://corporate.empregare.com/empresa/vagas");
     await teclar(document.querySelector(".avd-ficha"), "1");
     await clicar(botao("Fechar e liberar"));
     await esperar();

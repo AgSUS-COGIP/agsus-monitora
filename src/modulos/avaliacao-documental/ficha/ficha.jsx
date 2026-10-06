@@ -725,8 +725,13 @@ function Lateral({ st, loja, ficha, mudar, desabilitado }) {
             href={urlDaVaga}
             target="_blank"
             rel="noopener noreferrer"
-            onClick={() => {
-              void copiar(String(ficha.codigo ?? ""));
+            onClick={async () => {
+              const ok = await copiar(String(ficha.vaga ?? ""));
+              setCopiado(
+                ok
+                  ? `Código da vaga ${ficha.vaga} copiado: cole na busca de Vagas Anunciadas`
+                  : "Não foi possível copiar",
+              );
               void loja.registrarAcesso("ABRIR_EMPREGARE");
             }}
           >
@@ -734,7 +739,7 @@ function Lateral({ st, loja, ficha, mudar, desabilitado }) {
               className="fa-solid fa-arrow-up-right-from-square"
               aria-hidden="true"
             />{" "}
-            Abrir vaga na Empregare
+            Abrir vagas na Empregare
           </a>
         ) : null}
         {copiado ? <small role="status">{copiado}</small> : null}

@@ -379,7 +379,7 @@ describe("apoio da tela", () => {
 
   it("endereço da vaga na Empregare só com código numérico", () => {
     expect(enderecoDaVagaNaEmpregare("177979")).toBe(
-      "https://corporate.empregare.com/empresa/vagas/candidaturas/177979",
+      "https://corporate.empregare.com/empresa/vagas",
     );
     expect(enderecoDaVagaNaEmpregare("abc")).toBeNull();
   });

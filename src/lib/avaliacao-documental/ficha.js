@@ -366,11 +366,17 @@ export function titulosDoNivel(bloco, nivel) {
       }));
 }
 
-/** Endereço das candidaturas da vaga na Empregare (o currículo direto é da F7). */
+/*
+  Vagas Anunciadas da Empregare. As candidaturas da vaga só abrem pelo
+  identificador interno dela (".../candidaturas/<id>|"), que o robô ainda não
+  guarda (F7); a URL com o código numérico dá "Sem permissão" e a busca na URL
+  é descartada pelo redirecionamento da Empregare. Por isso a ficha abre a
+  lista de vagas e copia o código da vaga para colar na busca.
+*/
 export function enderecoDaVagaNaEmpregare(codigoDaVaga) {
   const codigo = String(codigoDaVaga ?? "").trim();
   return /^\d{1,20}$/.test(codigo)
-    ? `https://corporate.empregare.com/empresa/vagas/candidaturas/${codigo}`
+    ? "https://corporate.empregare.com/empresa/vagas"
     : null;
 }
 
