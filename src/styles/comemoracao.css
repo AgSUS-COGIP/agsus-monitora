@@ -1,6 +1,6 @@
 /*
   Comemorações (src/modules/comemoracao.js): o aviso no topo, por cima de
-  tudo, e o confete num canvas que não recebe clique. Vale no MONITORA e nos
+  tudo, e os fogos de artifício num canvas que não recebe clique. Vale no MONITORA e nos
   painéis (análises, entrevistas), que importam tokens.css.
 */
 .comemoracao {
@@ -46,10 +46,12 @@
   outline: 2px solid var(--brand-primary);
   outline-offset: 2px;
 }
-.comemoracao__confete {
+.comemoracao__fogos {
   position: fixed;
   inset: 0;
   z-index: 10044;
+  width: 100%;
+  height: 100%;
   pointer-events: none;
 }
 @keyframes comemoracao-entra {

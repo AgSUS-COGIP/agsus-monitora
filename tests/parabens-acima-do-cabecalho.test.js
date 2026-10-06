@@ -45,11 +45,11 @@ describe("o aviso de parabéns fica visível", () => {
     expect(zDoAviso).toBeGreaterThan(pessoasOnline);
   });
 
-  it("o confete fica logo abaixo do aviso", () => {
-    const confete = Number(
+  it("os fogos ficam logo abaixo do aviso", () => {
+    const fogos = Number(
       /position: fixed;\s*inset: 0;\s*z-index:\s*(\d+)/.exec(comemoracao)?.[1],
     );
-    expect(confete).toBeLessThan(zDoAviso);
-    expect(confete).toBeGreaterThan(10036);
+    expect(fogos).toBeLessThan(zDoAviso);
+    expect(fogos).toBeGreaterThan(10036);
   });
 });

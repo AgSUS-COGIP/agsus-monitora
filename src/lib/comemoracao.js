@@ -1,6 +1,7 @@
 /*
   Comemorações do MONITORA, sem DOM: a regra de QUANDO comemorar e O QUE dizer.
-  O desenho (confete em <canvas> e o aviso) é de src/modules/comemoracao.js.
+  O desenho (fogos de artifício em <canvas> e o aviso) é de
+  src/modules/comemoracao.js; o roteiro e a física dos fogos, de src/lib/fogos.js.
 
   Comemora-se o PROCESSO e a EQUIPE, nunca uma pessoa (nada de ranking):
     - edital 100% analisado e fila de análises zerada (painel de análises);
@@ -17,14 +18,15 @@
   Na primeira vez que um tipo de marco é avaliado para o usuário e a área, o
   estado atual é guardado em silêncio (localStorage); a comemoração vem quando
   uma leitura seguinte mostra a mudança. Assim, publicar a novidade não solta
-  dezenas de confetes pelo que já estava concluído. Guardar o estado novo
+  dezenas de fogos pelo que já estava concluído. Guardar o estado novo
   depois de comemorar faz cada marco aparecer uma vez por pessoa.
 
   Armazenamento sempre em try/catch (janela privada, bloqueado): sem ele, não
   há linha de base e, portanto, nenhuma comemoração de marco.
 */
 
-export const DURACAO_DOS_FOGOS_MS = 3000;
+/* A duração dos fogos padrão ("cheio"); "festa" vai até 4,5 s (src/lib/fogos.js). */
+export const DURACAO_DOS_FOGOS_MS = 4000;
 export const PREFIXO_DO_MARCO = "agsus_monitora_marco:";
 /* Os marcos do ano; depois do último, a cada PASSO_DOS_MARCOS. */
 export const MARCOS_DO_ANO = Object.freeze([1000, 2500, 5000, 7500, 10000]);

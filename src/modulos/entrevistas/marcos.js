@@ -6,7 +6,7 @@
   `ligadas` é o liga/desliga das comemorações do app (a situação do sistema
   que o app leu na entrada; o controlador relê a cada abertura da tela). A
   regra (linha de base, transição, frase) é de src/lib/comemoracao.js; o
-  aviso e um confete pequeno, de src/modules/comemoracao.js. Este arquivo não
+  aviso e fogos pequenos, de src/modules/comemoracao.js. Este arquivo não
   importa React.
 */
 import {
