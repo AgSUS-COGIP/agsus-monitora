@@ -64,7 +64,7 @@ app em React (Etapa 5, parte 1) e ficam aqui, com a Aya.
 ## Números da Visão geral que não batem
 
 **perguntas:** por que o numero da visao geral nao bate | kpi da visao geral diferente | contratados diferente da lista de aprovados | numero da visao geral desatualizado | vagas nao batem
-**resposta:** Os números de cada edital são recalculados pelo banco no fim de cada carga da Seleção (de hora em hora, das 7h às 19h de Brasília) e, de novo, às 10h; entre uma carga e outra, a lista de aprovados pode já ter mudado. Contratadas ficam limitadas às vagas imediatas de cada edital (o excedente vai para Cadastro reserva), editais cancelados não entram em nenhum indicador e as Vagas vêm do cadastro do edital, em Editais. Confira também a área atual, os filtros (guardados no navegador) e a busca, que valem para a página toda.
+**resposta:** Os números de cada edital são recalculados pelo banco no fim de cada carga da Seleção (de hora em hora, o dia todo) e, de novo, às 10h; entre uma carga e outra, a lista de aprovados pode já ter mudado. Contratadas ficam limitadas às vagas imediatas de cada edital (o excedente vai para Cadastro reserva), editais cancelados não entram em nenhum indicador e as Vagas vêm do cadastro do edital, em Editais. Confira também a área atual, os filtros (guardados no navegador) e a busca, que valem para a página toda.
 **fonte:** src/lib/indicadores-do-monitoramento.js; supabase/migrations/20261002130000_kpis_de_todo_edital_com_fonte.sql; supabase/migrations/20261002090000_kpis_depois_da_carga_da_selecao.sql
 **abrir:** dashboard
 

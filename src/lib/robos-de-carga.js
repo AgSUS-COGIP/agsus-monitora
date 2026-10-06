@@ -16,8 +16,6 @@
   leva alguns segundos para mostrar a execução na fila).
 */
 
-export const RPC_PODE_ATUALIZAR_DASHBOARD = "pode_atualizar_dashboard";
-
 export const ENDERECO_RODAR_CARGA = "/api/rodar-carga";
 export const REPOSITORIO_DAS_CARGAS = "AgSUS-COGIP/agsus-monitora";
 export const RAMO_DAS_CARGAS = "main";

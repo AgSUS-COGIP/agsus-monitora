@@ -2,8 +2,7 @@ name: Sincronizar entrevistas
 
 # Lê a aba Entrevistados da planilha "[dash] entrevistados" com a conta de
 # serviço do Google e grava no Supabase (scripts/sincronizar-entrevistas.mjs).
-# De hora em hora, das 7h às 19h de Brasília (10h–22h UTC; o Brasil não tem
-# horário de verão; o GitHub pode atrasar alguns minutos) e, quando precisar,
+# De hora em hora, o dia todo (o GitHub pode atrasar alguns minutos) e, quando precisar,
 # pelo botão "Run workflow" na aba Actions ou pelo "Rodar agora" das
 # Configurações › Status das atualizações (api/rodar-carga.js).
 # Como operar e o que fazer quando falha: docs/sincronizacao-das-planilhas.md.
@@ -15,7 +14,7 @@ name: Sincronizar entrevistas
 
 on:
   schedule:
-    - cron: "0 10-22 * * *"
+    - cron: "0 * * * *"
   workflow_dispatch:
     inputs:
       modo:

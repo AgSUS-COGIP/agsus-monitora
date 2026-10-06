@@ -17,7 +17,7 @@ ficam aqui, com a Aya. Fontes: `src/modulos/selecao/`, `src/lib/selecao-do-paine
 ## Atualização da Seleção
 
 **perguntas:** quando a selecao e atualizada | carga da selecao | planilha auditoria | atualizacao da selecao
-**resposta:** A Seleção é carregada de hora em hora, das 7h às 19h de Brasília, pelo GitHub Actions, a partir da aba Resultado da planilha Auditoria (também pode ser disparada à mão). Uma carga com menos da metade das vagas ativas é recusada e nada é desativado. A vaga que sai da planilha fica inativa, guardada para histórico. Na Saúde Indígena só entram as vagas de DSEI e CASAI; as de outras unidades vão para SEDE ou Projetos pelo edital achado.
+**resposta:** A Seleção é carregada de hora em hora, o dia todo, pelo GitHub Actions, a partir da aba Resultado da planilha Auditoria (também pode ser disparada à mão). Uma carga com menos da metade das vagas ativas é recusada e nada é desativado. A vaga que sai da planilha fica inativa, guardada para histórico. Na Saúde Indígena só entram as vagas de DSEI e CASAI; as de outras unidades vão para SEDE ou Projetos pelo edital achado.
 **fonte:** .github/workflows/sincronizar-selecao.yml; supabase/migrations/20261001090000_selecao.sql; supabase/migrations/20261001100000_selecao_area_pelos_editais.sql
 
 ## Convocados para entrevista
@@ -60,6 +60,6 @@ ficam aqui, com a Aya. Fontes: `src/modulos/selecao/`, `src/lib/selecao-do-paine
 ## Vaga ou número que não bate na Seleção
 
 **perguntas:** por que a vaga nao aparece na selecao | numero da selecao nao bate | vaga sumiu da selecao | contratados da selecao diferente | selecao desatualizada
-**resposta:** A vaga que saiu da planilha Auditoria fica inativa e some da tela; na Saúde Indígena só entram as vagas de DSEI e CASAI (as outras vão para SEDE ou Projetos pelo edital). Aprovados e contratados vêm da lista de aprovados vigente — contratado é Contratado ou Migração, e Convocado não conta —, e sem lista a vaga não soma nenhum dos dois. A carga roda de hora em hora, das 7h às 19h de Brasília, e o topo mostra "Conferido às …". Confira também os quatro filtros e a barra do ranking de unidades que estiver clicada.
+**resposta:** A vaga que saiu da planilha Auditoria fica inativa e some da tela; na Saúde Indígena só entram as vagas de DSEI e CASAI (as outras vão para SEDE ou Projetos pelo edital). Aprovados e contratados vêm da lista de aprovados vigente — contratado é Contratado ou Migração, e Convocado não conta —, e sem lista a vaga não soma nenhum dos dois. A carga roda de hora em hora, o dia todo, e o topo mostra "Conferido às …". Confira também os quatro filtros e a barra do ranking de unidades que estiver clicada.
 **fonte:** supabase/migrations/20261001090000_selecao.sql; supabase/migrations/20261001100000_selecao_area_pelos_editais.sql; src/lib/selecao-do-painel.js; .github/workflows/sincronizar-selecao.yml
 **abrir:** selecao

@@ -35,12 +35,6 @@
 
 /** @type {Record<string, ContratoRpc>} */
 export const CONTRATO_RPC = {
-  pode_atualizar_dashboard: {
-    argumentos: ["p_modulo"],
-    critica: true,
-    resumo:
-      "Permissão de editor/admin para sincronizar Seleção ou Entrevistas pelo servidor.",
-  },
   salvar_coordenada_mapa_saude_indigena: {
     argumentos: [
       "p_alvo",
