@@ -52,8 +52,9 @@ def candidato(i, art, situacao="Ativo"):
 
 
 class BancoFalso:
-    def __init__(self, editais, candidatos=None, falhar_vaga=None, em_andamento=False):
+    def __init__(self, editais, candidatos=None, falhar_vaga=None, em_andamento=False, distribuicao=None):
         self.editais = editais
+        self.distribuicao = distribuicao or {"modo": "PEGAR_PROXIMO", "novos": "MENOS_PENDENTES", "a_abrir": []}
         self.candidatos = candidatos or {}
         self.falhar_vaga = falhar_vaga
         self.em_andamento = em_andamento
@@ -73,6 +74,11 @@ class BancoFalso:
             if corpo["p_vaga"] == self.falhar_vaga:
                 raise supabase_rpc.ErroDoSupabase(funcao, 400, '{"code":"22023","message":"posição inválida"}')
             return {"inscritos": len(corpo["p_linhas"]), "mudancas": 0}
+        if funcao == "pre_classificacao_ler_distribuicao":
+            return self.distribuicao
+        if funcao == "abrir_fichas_pre_classificacao":
+            n = len(self.distribuicao.get("a_abrir") or [])
+            return {"criadas": n, "atribuidas": len(corpo["p_atribuicoes"]), "fora_do_lote": 1, "voltaram": 0}
         if funcao == "finalizar_pre_classificacao":
             falhou = any(e["situacao"] == "FALHOU" for e in corpo["p_editais"]) or corpo["p_erro"]
             return {"situacao": "PARCIAL" if falhou else "CONCLUIDA", "vagas": 1, "lote": 2}
@@ -188,6 +194,36 @@ class Fluxo(unittest.TestCase):
         fim = banco.de("finalizar_pre_classificacao")[0]["p_editais"][0]
         self.assertIn("REFAZER_RECUSADO", fim["avisos"])
         self.assertTrue(banco.de("iniciar_pre_classificacao")[0]["p_refazer"])
+
+    def test_abre_as_fichas_do_lote_no_fim_do_edital(self):
+        distribuicao = {
+            "modo": "DISTRIBUICAO_INICIAL",
+            "novos": "MENOS_PENDENTES",
+            "criterio": "PARTES_IGUAIS",
+            "distribuicao_iniciada": True,
+            "analistas": [
+                {"usuario": "u-a", "vagas": None, "limite": None, "pendentes": 3},
+                {"usuario": "u-b", "vagas": ["179698"], "limite": None, "pendentes": 0},
+            ],
+            "a_abrir": [{"candidato": "c1", "vaga": "179698"}, {"candidato": "c2", "vaga": "179698"}],
+        }
+        banco = BancoFalso([edital_93()], CANDIDATOS, distribuicao=distribuicao)
+        codigo, saida = rodar(banco, [])
+        self.assertEqual(codigo, 0)
+        abrir = banco.de("abrir_fichas_pre_classificacao")[0]
+        self.assertEqual(abrir["p_edital"], E93)
+        self.assertEqual(
+            abrir["p_atribuicoes"], [{"candidato": "c1", "usuario": "u-b"}, {"candidato": "c2", "usuario": "u-b"}]
+        )
+        fim = banco.de("finalizar_pre_classificacao")[0]["p_editais"][0]
+        self.assertEqual((fim["fichas_criadas"], fim["fichas_atribuidas"], fim["fichas_fora_do_lote"]), (2, 2, 1))
+        self.assertIn("fichas: 2 aberta(s), 2 atribuída(s), 1 fora do lote", saida)
+        self.assertNotIn("u-b", saida)
+
+    def test_nao_abre_fichas_sem_regra_conferida(self):
+        banco = BancoFalso([edital_93("CONFERIR")], CANDIDATOS)
+        rodar(banco, [])
+        self.assertEqual(banco.de("abrir_fichas_pre_classificacao"), [])
 
     def test_o_resumo_nao_tem_dado_pessoal(self):
         banco = BancoFalso([edital_93()], CANDIDATOS)
