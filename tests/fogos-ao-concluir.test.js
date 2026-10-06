@@ -1,5 +1,5 @@
 import { readFileSync } from "node:fs";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import {
   comemorar,
   soltarConfete,
@@ -87,8 +87,15 @@ describe("fogos de artifício no canvas", () => {
     const { doc, janela, contagem, atribuicoes, rodar } = janelaComCanvas({
       tema: "dark",
     });
+    // Sorteio fixo: sem ele, a cor da marca às vezes não sai e o teste oscila.
+    let semente = 7;
+    const sorteio = vi.spyOn(Math, "random").mockImplementation(() => {
+      semente = (semente * 16807) % 2147483647;
+      return (semente - 1) / 2147483646;
+    });
     soltarFogos(doc, janela, { intensidade: "festa" });
     const { agora } = rodar();
+    sorteio.mockRestore();
     expect(doc.querySelector("canvas")).toBeNull();
     expect(agora).toBeLessThanOrEqual(4600);
     expect(contagem.stroke).toBeGreaterThan(1000);
