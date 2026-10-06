@@ -20,7 +20,7 @@
     titulos[] = { titulo, nome, aceito, motivo }
     cursos[]  = { nome, horas, aceito, motivo }
     vinculos[]= { empregador, categoria, inicio, fim, aceito, motivo }
-  O banco revalida a estrutura (supabase/migrations/20261007110000_conteudo_da_ficha.sql)
+  O banco revalida a estrutura (supabase/migrations/20261007130000_conteudo_da_ficha.sql)
   e o Python reconfere a conta (python/monitora/avaliacao_documental/pontuacao.py).
 */
 import { nivelDaVaga } from "../classificacao/vagas.js";

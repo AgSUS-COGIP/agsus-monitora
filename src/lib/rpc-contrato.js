@@ -1091,7 +1091,7 @@ export const CONTRATO_RPC = {
     resumo:
       "Exclui (desativa) um filtro salvo de quem chama. Devolve os filtros salvos.",
   },
-  // ── Avaliação documental: conteúdo da ficha (20261007110000_conteudo_da_ficha.sql)
+  // ── Avaliação documental: conteúdo da ficha (20261007130000_conteudo_da_ficha.sql)
   obter_ficha_analise: {
     argumentos: ["p_ficha"],
     critica: false,

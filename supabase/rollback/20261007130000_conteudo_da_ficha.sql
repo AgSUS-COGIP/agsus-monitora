@@ -1,4 +1,4 @@
--- Desfaz 20261007110000_conteudo_da_ficha: tira as RPCs da ficha (obter_ficha_analise,
+-- Desfaz 20261007130000_conteudo_da_ficha: tira as RPCs da ficha (obter_ficha_analise,
 -- salvar_rascunho_ficha, concluir_ficha, reabrir_ficha, registrar_acesso_ficha) e as funções de
 -- apoio, volta obter_fila_avaliacao (F3) e salvar_regra_analise (F1) ao que eram e tira as colunas
 -- do conteúdo de TB_FICHA_ANALISE e TH_FICHA_ANALISE.

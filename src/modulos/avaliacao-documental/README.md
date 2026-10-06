@@ -114,7 +114,7 @@ avaliacao-documental.css  só tokens
   O banco valida e grava (`supabase/migrations/20261006120000_fichas_fila_e_reserva.sql`).
 - A ficha: a tela calcula com `pontuacao.js` (e `src/lib/avaliacao-documental/ficha.js`:
   declarado, pendências, resumo); o banco revalida e grava
-  (`supabase/migrations/20261007110000_conteudo_da_ficha.sql`); o Python
+  (`supabase/migrations/20261007130000_conteudo_da_ficha.sql`); o Python
   (`python/monitora/avaliacao_documental/pontuacao.py`) reconfere em lote pelos casos dourados.
 - Testes: `tests/modulos/avaliacao-documental.test.js`, `tests/modulos/avaliacao-documental-fila.test.js`,
   `tests/modulos/avaliacao-documental-ficha.test.js`, `tests/lib/avaliacao-documental-ficha.test.js`,

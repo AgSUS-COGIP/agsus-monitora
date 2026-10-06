@@ -4,7 +4,7 @@
   src/lib/avaliacao-documental/ficha.js e pontuacao.js; aqui, a leitura, o
   lançamento em edição, o salvamento automático, a conclusão e a reabertura.
 
-  RPCs (supabase/migrations/20261007110000_conteudo_da_ficha.sql; contrato em
+  RPCs (supabase/migrations/20261007130000_conteudo_da_ficha.sql; contrato em
   src/lib/rpc-contrato.js):
     obter_ficha_analise(p_ficha)
     salvar_rascunho_ficha(p_ficha, p_versao, p_lancamento, p_resultado, p_parecer)

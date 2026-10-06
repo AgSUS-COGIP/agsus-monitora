@@ -30,7 +30,7 @@
   ficha mostra a resposta ("4 anos ou mais") e a ART total segue como a
   conferência; a coordenação pode mapear a experiência na aba Regra se quiser.
 
-  Rode DEPOIS de 20261007110000_conteudo_da_ficha.sql, no SQL Editor (papel
+  Rode DEPOIS de 20261007130000_conteudo_da_ficha.sql, no SQL Editor (papel
   postgres). É idempotente. Muda só o MODELO: a regra do 93/2026 não muda
   sozinha — a coordenação carrega o modelo no formulário da aba Regra (ou liga
   as perguntas bloco a bloco), salva uma versão nova com o motivo e confere.

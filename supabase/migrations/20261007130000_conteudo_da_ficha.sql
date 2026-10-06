@@ -1,42 +1,63 @@
 /*
-  ENSAIO de 20261007110000_conteudo_da_ficha.sql — begin … rollback.
+  AVALIAÇÃO DOCUMENTAL (FASE F4): O CONTEÚDO DA FICHA
 
-  PRÉ-REQUISITO: as migrations até 20261007100000 aplicadas (as fichas da F3 e
-  a pergunta com alternativas); o corpo para se faltar. Precisa da regra do
-  edital 93/2026 (Projetos) com os blocos do modelo PROJ26-CURRICULAR.
+  Desenho: docs/analises-no-monitora/ (README, modelo-de-dados.md seções 6 a
+  10 e plano-de-construcao.md, fase F4); histórias AM-2.3, AM-7 a AM-12 e
+  AM-14.
 
-  Como rodar: cole o arquivo inteiro no SQL Editor do Supabase (papel postgres)
-  e execute. Ele abre uma transação, aplica o corpo da migration (copiado sem
-  mudança, sem o begin/commit dela) e:
-    E1  confere a RLS, a falta de acesso direto e as permissões das RPCs novas;
-    E2  cria, no 93/2026, uma vaga sintética com 3 inscritos fictícios (com a
-        pergunta do CPF, para ver que não sai), 5 atores (gestor, Ana — analista
-        do edital todo —, Beto — analista só de outra vaga —, leitor e sem
-        acesso), uma versão conferida da regra copiada da vigente com as
-        perguntas ligadas aos blocos e a nota declarada de titulação e cursos
-        (como supabase/correcoes/20261007-perguntas-da-ficha-proj26.sql faz no
-        modelo) e o lote com as fichas (pelo job);
-    E3  percorre a ficha como cada pessoa (papel authenticated): quem vê e quem
-        não vê, as respostas só das perguntas da regra (sem CPF), rascunho com
-        versão velha (40001), estrutura e limites recusados (bloco, motivo,
-        nota acima do teto, soma, bloco eliminatório), histórico com de quanto
-        para quanto, concluir sem justificativa (recusado), com a regra velha
-        (40001) e certo; a fila com o resultado; versão nova da regra lista a
-        ficha concluída (AM-2.3); reabrir só a coordenação e com motivo; o
-        registro de acesso;
-    E4  depois de "reset role": histórico imutável, ficha não se apaga,
-        concluída exige parecer, acesso registrado.
-  Termina em ROLLBACK: nada fica gravado.
+  O QUE ENTRA
+    public."TB_FICHA_ANALISE"   colunas do conteúdo: o lançamento do analista
+                                (situação, motivo, nota ajustada e
+                                justificativas de cada bloco; títulos, cursos e
+                                vínculos; observações), o resultado da conta,
+                                o parecer, o rascunho e a conclusão
+    public."TH_FICHA_ANALISE"   ações SALVAR, CONCLUIR e REABRIR, com o retrato
+                                do lançamento e as alterações (de quanto para
+                                quanto, com a justificativa)
+    RPCs                        obter_ficha_analise, salvar_rascunho_ficha,
+                                concluir_ficha, reabrir_ficha,
+                                registrar_acesso_ficha; obter_fila_avaliacao
+                                passa a trazer o resultado e a nota e mostra ao
+                                analista só as vagas dele; salvar_regra_analise
+                                devolve as fichas concluídas com versão
+                                anterior (AM-2.3)
 
-  Resultado esperado: os "ok E1" … "ok E4" e a linha "ENSAIO OK". Qualquer
-  "FALHOU …" interrompe e desfaz tudo; copie a mensagem.
+  A CONTA
+    A tela calcula com src/lib/avaliacao-documental/pontuacao.js (a mesma da
+    prévia) e manda o lançamento e o resultado prontos. O banco NÃO refaz a
+    conta: revalida a estrutura e os limites (blocos e motivos da regra, datas,
+    nota ajustada até o teto do bloco, soma das parciais, nota final, resultado
+    coerente com a nota mínima e com os blocos eliminatórios) e, ao concluir,
+    o que falta (situação, motivo, justificativa de nota diferente da
+    declarada). O Python (python/monitora/avaliacao_documental/pontuacao.py)
+    recalcula em lote para conferir (conferir_ficha), com os casos dourados de
+    tests/fixtures/avaliacao-documental/casos-de-pontuacao.json.
 
-  Mantenha em sincronia: tests/conteudo-da-ficha-migration.test.js confere que
-  o corpo da migration aqui é idêntico ao do arquivo da migration.
+  A VERSÃO DA REGRA (AM-2.3)
+    Ficha pendente ou em análise segue a versão VIGENTE da regra; concluir
+    grava em NU_VERSAO_REGRA a versão usada (tem de ser a vigente e conferida;
+    senão 40001 ou 22023) e a ficha concluída não muda com versão nova.
+
+  QUEM PODE
+    ver a ficha        coordenação e revisão do edital; o analista, só nas
+                       vagas que analisa; o leitor, só a concluída
+    salvar e concluir  quem está com a reserva vigente (o responsável que
+                       abriu), em análise
+    reabrir            a coordenação do edital, com motivo (10 a 2.000)
+  Tabelas com RLS e sem grant: só as funções abaixo.
+
+  DADO PESSOAL
+    As respostas da Empregare que a ficha recebe são só as das perguntas
+    ligadas à regra (blocos, nota declarada e pergunta da experiência); nunca
+    CPF, e-mail, telefone ou a resposta de pergunta que a regra não usa.
+
+  PRÉ-REQUISITO: 20261006120000 (fichas, fila e reserva) e 20261007100000
+  (pergunta com alternativas) aplicadas.
+
+  Ensaio: supabase/ensaios/20261007130000_conteudo_da_ficha.sql
+  Rollback: supabase/rollback/20261007130000_conteudo_da_ficha.sql
 */
 begin;
-
--- ═══ CORPO DA MIGRATION (início) ═══
 
 -- 0. Pré-requisitos ---------------------------------------------------------------------
 do $$
@@ -1078,371 +1099,4 @@ $function$;
 comment on function public.salvar_regra_analise(uuid, jsonb, integer, text) is
   'Salva a regra da avaliação documental do edital como versão nova (a anterior fica no histórico, imutável) e volta a situação para Conferir. p_versao_atual = a versão que a tela abriu (0 sem regra; outra = 40001). Motivo obrigatório da versão 2 em diante (10 a 2.000). fichas_afetadas: as fichas concluídas com versão anterior (código, vaga, versão, resultado e nota) — nenhuma nota muda (AM-2.3); as pendentes e em análise passam a seguir a versão nova. Só a coordenação do edital.';
 
--- ═══ CORPO DA MIGRATION (fim) ═══
-
--- E1. RLS, sem acesso direto, permissões das RPCs.
-do $$
-begin
-  if has_table_privilege('authenticated', 'public."TB_FICHA_ANALISE"', 'select')
-     or has_table_privilege('authenticated', 'public."TH_FICHA_ANALISE"', 'select') then
-    raise exception 'FALHOU E1: tabela com acesso direto';
-  end if;
-  if not (select c.relrowsecurity from pg_class c where c.oid = 'public."TB_FICHA_ANALISE"'::regclass) then
-    raise exception 'FALHOU E1: ficha sem RLS';
-  end if;
-  if not has_function_privilege('authenticated', 'public.obter_ficha_analise(uuid)', 'execute')
-     or not has_function_privilege('authenticated', 'public.salvar_rascunho_ficha(uuid, integer, jsonb, jsonb, text)', 'execute')
-     or not has_function_privilege('authenticated', 'public.concluir_ficha(uuid, integer, integer, jsonb, jsonb, text)', 'execute')
-     or not has_function_privilege('authenticated', 'public.reabrir_ficha(uuid, integer, text)', 'execute')
-     or not has_function_privilege('authenticated', 'public.registrar_acesso_ficha(uuid, text)', 'execute')
-     or has_function_privilege('anon', 'public.obter_ficha_analise(uuid)', 'execute')
-     or has_function_privilege('anon', 'public.concluir_ficha(uuid, integer, integer, jsonb, jsonb, text)', 'execute')
-     or has_function_privilege('authenticated', 'private."FC_VALIDAR_RESULTADO_FICHA"(jsonb, jsonb, jsonb, jsonb)', 'execute') then
-    raise exception 'FALHOU E1: permissões das funções';
-  end if;
-  raise notice 'ok E1: RLS, sem acesso direto, RPCs só para authenticated, funções privadas fechadas';
-end;
-$$;
-
--- E2. Dados sintéticos (somem no rollback) no 93/2026.
-do $$
-declare
-  v_edital uuid;
-  v_area text;
-  v_regra uuid;
-  v_versao integer;
-  v_config jsonb;
-  c_cols jsonb := $c${"Pergunta 2 - Para fins de identificação de seu cadastro, favor nos informe seu CPF:Ex: 000.000.000-00": "\"000.000.000-00\"",
-    "Pergunta 4 - Anexe o documento de identificação com foto, frente e verso, conforme instruções": "Anexo",
-    "Pergunta 5 - Você possui Graduação na área da vaga? (Será necessário comprovar)": "\"Sim\"",
-    "Pergunta 11 - Experiência Profissional em atividades compatíveis com o cargo: (contabilizada a partir de 06 meses)": "\"4 anos ou mais\"",
-    "Pergunta 12 - Anexe o comprovante de Experiência Profissional em atividades compatíveis com o cargo.": "Anexo",
-    "Pergunta 13 - Qual seu Nível de Titulação Acadêmica?(será necessária a comprovação)": "\"Especialização\"",
-    "Pergunta 14 - Selecione a pontuação relativa à carga horária de Cursos de Aperfeiçoamento na área": "\"5 pontos\"",
-    "Pergunta 25 - Você está com contrato de trabalho ativo na AgSUS ou foi desligado nos últimos 6 meses?": "\"Não\""}$c$;
-begin
-  select m.id, m."CO_AREA" into v_edital, v_area
-    from public."TB_MONITORAMENTO_INDIGENA" m
-    join public."TB_REGRA_ANALISE" r on r."CO_MONITORAMENTO" = m.id
-   where private."FC_NUMERO_EDITAL"(m.edital) = '93/2026' and m."CO_AREA" = 'projetos'
-   limit 1;
-  if v_edital is null then raise exception 'ENSAIO: o 93/2026 (Projetos) com regra não foi achado'; end if;
-  perform set_config('ensaio.edital', v_edital::text, true);
-
-  insert into public."TB_EMPREGARE_VAGA" ("CO_VAGA", "CO_MONITORAMENTO", "TP_SITUACAO", "QT_CANDIDATO_ATIVO")
-  values ('99999401', v_edital, 'GRAVADA', 3), ('99999402', v_edital, 'GRAVADA', 0);
-  insert into public."TB_EMPREGARE_CANDIDATO"
-    ("CO_EMPREGARE_CANDIDATO", "CO_VAGA", "DS_CHAVE_CANDIDATO", "TP_CHAVE", "CO_CANDIDATO_EMPREGARE", "NO_CANDIDATO",
-     "NU_CPF", "DT_NASCIMENTO", "DT_CANDIDATURA", "DS_COLUNA_ORIGINAL", "DS_HASH_LINHA")
-  select ('00000000-0000-4000-a000-0000000f400' || x.n)::uuid, '99999401', 'cod:F4E000' || x.n, 'CODIGO', 'F4E000' || x.n,
-         'Ensaio F4 ' || x.n, '00000000000', date '1990-01-01', timestamptz '2026-09-20 12:00:00+00', c_cols, repeat('b', 64)
-    from generate_series(1, 3) x(n);
-
-  insert into auth.users (id, instance_id, aud, role, email) values
-    ('00000000-0000-4000-a000-0000000f4a02', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'ensaio.f4.gestor@ensaio.invalid'),
-    ('00000000-0000-4000-a000-0000000f4a03', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'ensaio.f4.ana@ensaio.invalid'),
-    ('00000000-0000-4000-a000-0000000f4a04', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'ensaio.f4.beto@ensaio.invalid'),
-    ('00000000-0000-4000-a000-0000000f4a05', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'ensaio.f4.leitor@ensaio.invalid'),
-    ('00000000-0000-4000-a000-0000000f4a06', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'ensaio.f4.sem@ensaio.invalid');
-  insert into public."TB_PERFIL_USUARIO" (user_id, email, nome, perfil, ativo) values
-    ('00000000-0000-4000-a000-0000000f4a02', 'ensaio.f4.gestor@ensaio.invalid', 'Ensaio F4 Gestor', 'edital_gestor', true),
-    ('00000000-0000-4000-a000-0000000f4a03', 'ensaio.f4.ana@ensaio.invalid', 'Ensaio F4 Ana', 'usuario', true),
-    ('00000000-0000-4000-a000-0000000f4a04', 'ensaio.f4.beto@ensaio.invalid', 'Ensaio F4 Beto', 'usuario', true),
-    ('00000000-0000-4000-a000-0000000f4a05', 'ensaio.f4.leitor@ensaio.invalid', 'Ensaio F4 Leitor', 'usuario', true),
-    ('00000000-0000-4000-a000-0000000f4a06', 'ensaio.f4.sem@ensaio.invalid', 'Ensaio F4 Sem Acesso', 'usuario', true);
-  insert into public."RL_PERFIL_USUARIO_AREA" ("CO_PERFIL_USUARIO", "CO_AREA")
-  select u.id, v_area from public."TB_PERFIL_USUARIO" u where u.email like 'ensaio.f4.%@ensaio.invalid';
-  insert into public."TB_PERMISSAO_RECURSO" (perfil_usuario_id, recurso, nivel, updated_by)
-  select u.id, 'avaliacao_documental', x.nivel, '00000000-0000-4000-a000-0000000f4a02'
-    from (values ('ensaio.f4.ana@ensaio.invalid', 'editor'), ('ensaio.f4.beto@ensaio.invalid', 'editor'),
-                 ('ensaio.f4.leitor@ensaio.invalid', 'leitor')) x(email, nivel)
-    join public."TB_PERFIL_USUARIO" u on u.email = x.email;
-  insert into public."RL_ANALISTA_EDITAL" ("CO_MONITORAMENTO", "CO_USUARIO", "TP_PAPEL", "CO_VAGA", "CO_USUARIO_ATUALIZACAO") values
-    (v_edital, '00000000-0000-4000-a000-0000000f4a03', 'ANALISTA', null, '00000000-0000-4000-a000-0000000f4a02'),
-    (v_edital, '00000000-0000-4000-a000-0000000f4a04', 'ANALISTA', '99999402', '00000000-0000-4000-a000-0000000f4a02');
-
-  -- Regra: a vigente com as perguntas ligadas e a nota declarada de titulação e cursos.
-  select r."CO_REGRA_ANALISE", r."NU_VERSAO_VIGENTE", h."DS_CONFIGURACAO" into v_regra, v_versao, v_config
-    from public."TB_REGRA_ANALISE" r
-    join public."TH_REGRA_ANALISE" h on h."CO_REGRA_ANALISE" = r."CO_REGRA_ANALISE" and h."NU_VERSAO" = r."NU_VERSAO_VIGENTE"
-   where r."CO_MONITORAMENTO" = v_edital;
-  if not exists (select 1 from jsonb_array_elements(v_config -> 'blocos') b where b ->> 'codigo' = 'EXPERIENCIA')
-     or not exists (select 1 from jsonb_array_elements(v_config -> 'observacoes_prontas') o where o ->> 'codigo' = 'CURSOS_DIMINUIDA') then
-    raise exception 'ENSAIO: a regra vigente do 93/2026 não tem os blocos do modelo PROJ26-CURRICULAR';
-  end if;
-  v_config := jsonb_set(jsonb_set(v_config, '{blocos}', (
-      select jsonb_agg(case b ->> 'codigo'
-               when 'IDENTIDADE' then jsonb_set(b, '{perguntas}', '["Anexe o documento de identificação", "Anexe um documento de identificação"]')
-               when 'ESCOLARIDADE' then jsonb_set(b, '{perguntas}', '["Você possui Graduação na área da vaga", "Você possui Ensino Médio completo e Curso Técnico"]')
-               when 'FORMACAO' then jsonb_set(b, '{perguntas}', '["Qual seu Nível de Titulação Acadêmica", "Anexe seu comprovante de Titulação Acadêmica"]')
-               when 'CURSOS' then jsonb_set(b, '{perguntas}', '["Selecione a pontuação relativa à carga horária de Cursos", "Anexe os seus Certificados de Conclusão dos Cursos"]')
-               when 'EXPERIENCIA' then jsonb_set(b, '{perguntas}', '["Experiência Profissional em atividades", "Anexe o comprovante de Experiência Profissional"]')
-               else b end order by o)
-        from jsonb_array_elements(v_config -> 'blocos') with ordinality t(b, o))),
-    '{provisoria,nota_declarada}', $n$[
-      {"parcial": "FORMACAO", "pergunta": "Qual seu Nível de Titulação Acadêmica", "tipo": "OPCAO",
-       "pontos": {"Especialização": 5, "Mestrado": 8, "Doutorado": 10, "Não possuo": 0}},
-      {"parcial": "CURSOS", "pergunta": "Selecione a pontuação relativa à carga horária de Cursos", "tipo": "OPCAO",
-       "pontos": {"Não possuo": 0, "1 ponto": 1, "2 pontos": 2, "3 pontos": 3, "4 pontos": 4, "5 pontos": 5}}]$n$);
-  perform private."FC_VALIDAR_REGRA_ANALISE"(v_config);
-  v_versao := v_versao + 1;
-  insert into public."TH_REGRA_ANALISE" ("CO_REGRA_ANALISE", "NU_VERSAO", "DS_CONFIGURACAO", "DS_HASH", "DS_MOTIVO", "CO_USUARIO")
-  values (v_regra, v_versao, v_config, encode(sha256(convert_to(v_config::text, 'UTF8')), 'hex'),
-          'Versão do ensaio da fase F4', '00000000-0000-4000-a000-0000000f4a02');
-  update public."TB_REGRA_ANALISE" set "NU_VERSAO_VIGENTE" = v_versao, "TP_SITUACAO" = 'CONFERIDA',
-         "CO_USUARIO_CONFERENCIA" = '00000000-0000-4000-a000-0000000f4a02', "DT_CONFERENCIA" = now()
-   where "CO_REGRA_ANALISE" = v_regra;
-  perform set_config('ensaio.versao', v_versao::text, true);
-  perform set_config('ensaio.config', v_config::text, true);
-  perform set_config('ensaio.minima', coalesce((
-    select case when jsonb_typeof(d #> '{nota_minima_por_nivel,superior}') = 'number' then d #>> '{nota_minima_por_nivel,superior}'
-                when jsonb_typeof(d -> 'nota_minima') = 'number' then d ->> 'nota_minima' end
-      from (select private."FC_DOCUMENTAL_DO_EDITAL"(v_edital) as d) x), ''), true);
-
-  -- O job grava o lote (3) e abre as fichas.
-  perform public.iniciar_pre_classificacao('ensaio-precl-f4-0001', 'GITHUB');
-  perform public.gravar_pre_classificacao_vaga('ensaio-precl-f4-0001', v_edital, '99999401', v_versao,
-    '{"tamanho":3,"descricao":"3 (número fixo)","avisos":[]}'::jsonb,
-    (select jsonb_agg(jsonb_build_object('id', '00000000-0000-4000-a000-0000000f400' || x.n, 'situacao', 'NO_LOTE', 'posicao', x.n,
-                                         'posicao_modalidade', x.n, 'lote', 1, 'lista_lote', 'GERAL', 'entrada', 'INICIAL',
-                                         'motivo_entrada', 'Lote inicial', 'art', 30 - x.n, 'nota', 30 - x.n, 'origem_nota', 'ART',
-                                         'modalidade', 'AC', 'motivo_codigo', null, 'motivo', null))
-       from generate_series(1, 3) x(n)));
-  perform public.abrir_fichas_pre_classificacao('ensaio-precl-f4-0001', v_edital, '[]'::jsonb);
-  perform public.finalizar_pre_classificacao('ensaio-precl-f4-0001', '[]'::jsonb, null);
-  if (select count(*) from public."TB_FICHA_ANALISE" f where f."CO_VAGA" = '99999401') <> 3 then
-    raise exception 'FALHOU E2: fichas do lote sintético';
-  end if;
-  perform set_config('ensaio.ficha', (select f."CO_FICHA_ANALISE"::text from public."TB_FICHA_ANALISE" f
-                                       where f."CO_EMPREGARE_CANDIDATO" = '00000000-0000-4000-a000-0000000f4001'), true);
-  raise notice 'ok E2: 93/2026, vaga sintética com 3 fichas, regra v% conferida com as perguntas ligadas', v_versao;
-end;
-$$;
-
--- E3. A ficha, como cada pessoa (papel authenticated).
-set local role authenticated;
-do $$
-declare
-  c_gestor constant text := '{"sub":"00000000-0000-4000-a000-0000000f4a02","role":"authenticated","email":"ensaio.f4.gestor@ensaio.invalid"}';
-  c_ana constant text := '{"sub":"00000000-0000-4000-a000-0000000f4a03","role":"authenticated","email":"ensaio.f4.ana@ensaio.invalid"}';
-  c_beto constant text := '{"sub":"00000000-0000-4000-a000-0000000f4a04","role":"authenticated","email":"ensaio.f4.beto@ensaio.invalid"}';
-  c_leitor constant text := '{"sub":"00000000-0000-4000-a000-0000000f4a05","role":"authenticated","email":"ensaio.f4.leitor@ensaio.invalid"}';
-  c_sem constant text := '{"sub":"00000000-0000-4000-a000-0000000f4a06","role":"authenticated","email":"ensaio.f4.sem@ensaio.invalid"}';
-  v_edital uuid := current_setting('ensaio.edital')::uuid;
-  v_versao_regra integer := current_setting('ensaio.versao')::integer;
-  v_config jsonb := current_setting('ensaio.config')::jsonb;
-  v json;
-  v_ficha uuid;
-  v_versao integer;
-  v_min numeric;
-  v_resultado text;
-  v_msg text;
-  v_lanc jsonb := $l${"nivel": "superior", "modalidade": "AC",
-    "blocos": {"IDENTIDADE": {"situacao": "CONFORME"}, "ESCOLARIDADE": {"situacao": "CONFORME"},
-               "REGISTRO_CONSELHO": {"situacao": "CONFORME"}, "FORMACAO": {"situacao": "CONFORME"},
-               "CURSOS": {"situacao": "CONFORME"},
-               "EXPERIENCIA": {"situacao": "CONFORME", "nota_ajustada": 20, "justificativas": ["EXPERIENCIA_DIMINUIDA"]}},
-    "titulos": [{"titulo": "ESPECIALIZACAO", "nome": "Especialização fictícia", "aceito": true}],
-    "cursos": [{"nome": "Curso A", "horas": 120, "aceito": true}, {"nome": "Curso B", "horas": 40, "aceito": true}],
-    "vinculos": [{"empregador": "Empresa fictícia", "categoria": "AREA_OU_SUS", "inicio": "2020-01-01", "fim": "2022-12-31", "aceito": true}],
-    "observacoes": "", "observacoes_prontas": []}$l$;
-  v_res jsonb;
-  v_ok boolean;
-begin
-  -- A nota mínima do edital decide se a ficha de 29 pontos é Apta ou Inapta por nota.
-  v_min := nullif(current_setting('ensaio.minima'), '')::numeric;
-  v_resultado := case when v_min is not null and 29 < v_min then 'INAPTO_NOTA' else 'APTO' end;
-  v_res := jsonb_build_object('resultado', v_resultado, 'nota_apurada', 29, 'nota_final', 29,
-                              'parciais', '{"FORMACAO": 5, "CURSOS": 4, "EXPERIENCIA": 20}'::jsonb,
-                              'declarada', '{"FORMACAO": 5, "CURSOS": 5}'::jsonb, 'eliminatorios', '[]'::jsonb);
-
-  v_ficha := current_setting('ensaio.ficha')::uuid;
-
-  perform set_config('request.jwt.claims', c_sem, true);
-  begin
-    perform public.obter_ficha_analise(v_ficha);
-    raise exception 'FALHOU E3: sem acesso viu a ficha';
-  exception when sqlstate '42501' then null;
-  end;
-  perform set_config('request.jwt.claims', c_beto, true);
-  begin
-    perform public.obter_ficha_analise(v_ficha);
-    raise exception 'FALHOU E3: analista de outra vaga viu a ficha';
-  exception when sqlstate '42501' then null;
-  end;
-  v := public.obter_fila_avaliacao(v_edital);
-  if exists (select 1 from json_array_elements(v -> 'candidatos') c where c ->> 'vaga' = '99999401') then
-    raise exception 'FALHOU E3: analista de outra vaga vê a vaga na fila';
-  end if;
-  perform set_config('request.jwt.claims', c_leitor, true);
-  begin
-    perform public.obter_ficha_analise(v_ficha);
-    raise exception 'FALHOU E3: leitor viu ficha não concluída';
-  exception when sqlstate '42501' then null;
-  end;
-  raise notice 'ok E3.1: sem acesso, analista de outra vaga (nem na fila) e leitor (ficha não concluída) não veem';
-
-  perform set_config('request.jwt.claims', c_ana, true);
-  v := public.reservar_ficha(v_ficha);
-  if not (v ->> 'reservada')::boolean then raise exception 'FALHOU E3: Ana não reservou %', v; end if;
-  v := public.obter_ficha_analise(v_ficha);
-  if not (v ->> 'pode_editar')::boolean or (v ->> 'pode_reabrir')::boolean
-     or (v -> 'regra' ->> 'versao')::int <> v_versao_regra then
-    raise exception 'FALHOU E3: ficha da Ana (regra v%)', v -> 'regra' ->> 'versao';
-  end if;
-  if (select count(*) from json_object_keys(v -> 'respostas')) <> 6
-     or (v -> 'respostas')::text ~* 'cpf' or (v -> 'respostas')::text ~ '000\.000' or (v -> 'respostas')::text ~ 'contrato de trabalho ativo' then
-    raise exception 'FALHOU E3: respostas fora das perguntas da regra (% colunas)', (select count(*) from json_object_keys(v -> 'respostas'));
-  end if;
-  v_versao := (v -> 'ficha' ->> 'versao')::int;
-  raise notice 'ok E3.2: Ana abre e pode editar; regra v%; 6 respostas, só das perguntas da regra (sem CPF nem outras)', v_versao_regra;
-
-  begin
-    perform public.salvar_rascunho_ficha(v_ficha, v_versao - 1, v_lanc, v_res, 'Parecer');
-    raise exception 'FALHOU E3: salvou com versão velha';
-  exception when sqlstate '40001' then null;
-  end;
-  begin
-    perform public.salvar_rascunho_ficha(v_ficha, v_versao, jsonb_set(v_lanc, '{blocos,NAO_EXISTE}', '{"situacao": "CONFORME"}'), v_res, 'Parecer');
-    raise exception 'FALHOU E3: aceitou bloco fora da regra';
-  exception when sqlstate '22023' then null;
-  end;
-  begin
-    perform public.salvar_rascunho_ficha(v_ficha, v_versao, jsonb_set(v_lanc, '{blocos,IDENTIDADE}', '{"situacao": "NAO_CONFORME", "motivos": ["INVENTADO"]}'), v_res, 'Parecer');
-    raise exception 'FALHOU E3: aceitou motivo fora da regra';
-  exception when sqlstate '22023' then null;
-  end;
-  begin
-    perform public.salvar_rascunho_ficha(v_ficha, v_versao, jsonb_set(v_lanc, '{blocos,EXPERIENCIA,nota_ajustada}', '40'), v_res, 'Parecer');
-    raise exception 'FALHOU E3: aceitou nota acima do teto';
-  exception when sqlstate '22023' then null;
-  end;
-  begin
-    perform public.salvar_rascunho_ficha(v_ficha, v_versao, v_lanc, jsonb_set(v_res, '{nota_apurada}', '31'), 'Parecer');
-    raise exception 'FALHOU E3: aceitou soma errada';
-  exception when sqlstate '22023' then null;
-  end;
-  begin
-    perform public.salvar_rascunho_ficha(v_ficha, v_versao, jsonb_set(v_lanc, '{blocos,IDENTIDADE}', '{"situacao": "NAO_ENVIADO", "motivos": ["ILEGIVEL"]}'), v_res, 'Parecer');
-    raise exception 'FALHOU E3: aceitou apto com bloco eliminatório';
-  exception when sqlstate '22023' then null;
-  end;
-  v := public.salvar_rascunho_ficha(v_ficha, v_versao, v_lanc, v_res, 'Parecer do rascunho');
-  if (v ->> 'versao')::int <> v_versao + 1 or (v ->> 'alteracoes')::int < 1 then raise exception 'FALHOU E3: rascunho %', v; end if;
-  v_versao := v_versao + 1;
-  -- O mesmo de novo: sobe a versão, mas não vai ao histórico (nada mudou).
-  v := public.salvar_rascunho_ficha(v_ficha, v_versao, v_lanc, v_res, 'Parecer do rascunho');
-  if (v ->> 'alteracoes')::int <> 0 then raise exception 'FALHOU E3: rascunho igual gerou alteração %', v; end if;
-  v_versao := v_versao + 1;
-  raise notice 'ok E3.3: versão velha (40001), bloco, motivo, teto, soma e eliminatório recusados (22023); rascunho salvo; sem mudança não vai ao histórico';
-
-  begin
-    perform public.concluir_ficha(v_ficha, v_versao, v_versao_regra, v_lanc, v_res, 'Parecer final');
-    raise exception 'FALHOU E3: concluiu com nota de cursos diferente da declarada sem justificativa';
-  exception when sqlstate '22023' then
-    get stacked diagnostics v_msg = message_text;
-    if v_msg !~ 'sem justificativa' then raise exception 'FALHOU E3: mensagem da pendência: %', v_msg; end if;
-  end;
-  v_lanc := jsonb_set(v_lanc, '{blocos,CURSOS}', '{"situacao": "CONFORME", "justificativas": ["CURSOS_DIMINUIDA"]}');
-  begin
-    perform public.concluir_ficha(v_ficha, v_versao, v_versao_regra - 1, v_lanc, v_res, 'Parecer final');
-    raise exception 'FALHOU E3: concluiu com a versão velha da regra';
-  exception when sqlstate '40001' then null;
-  end;
-  v := public.concluir_ficha(v_ficha, v_versao, v_versao_regra, v_lanc, v_res, 'Parecer final');
-  if v ->> 'resultado' <> v_res ->> 'resultado' or (v ->> 'versao_regra')::int <> v_versao_regra then
-    raise exception 'FALHOU E3: conclusão %', v;
-  end if;
-  v_versao := (v ->> 'versao')::int;
-  begin
-    perform public.salvar_rascunho_ficha(v_ficha, v_versao, v_lanc, v_res, 'Depois');
-    raise exception 'FALHOU E3: salvou ficha concluída';
-  exception when sqlstate '22023' or sqlstate '55P03' then null;
-  end;
-  v := public.obter_fila_avaliacao(v_edital);
-  select (c -> 'ficha' ->> 'situacao') = 'CONCLUIDA' and (c -> 'ficha' ->> 'nota_final')::numeric = 29
-         and c -> 'ficha' ->> 'resultado' = v_res ->> 'resultado' and (c -> 'ficha' -> 'reserva')::text = 'null'
-    into v_ok
-    from json_array_elements(v -> 'candidatos') c where c ->> 'codigo' = 'F4E0001';
-  if not coalesce(v_ok, false) then raise exception 'FALHOU E3: fila depois de concluir'; end if;
-  v := public.registrar_acesso_ficha(v_ficha, 'COPIAR_CODIGO');
-  begin
-    perform public.registrar_acesso_ficha(v_ficha, 'REVELAR_CPF');
-    raise exception 'FALHOU E3: registrou acesso de tipo não permitido';
-  exception when sqlstate '22023' then null;
-  end;
-  raise notice 'ok E3.4: sem justificativa recusa; regra velha 40001; conclui (%) com a versão da regra; só leitura; a fila mostra nota e resultado; acesso registrado', v_res ->> 'resultado';
-
-  perform set_config('request.jwt.claims', c_leitor, true);
-  v := public.obter_ficha_analise(v_ficha);
-  if (v ->> 'pode_editar')::boolean or v -> 'ficha' ->> 'parecer' <> 'Parecer final' then raise exception 'FALHOU E3: leitor na concluída'; end if;
-
-  -- AM-2.3: versão nova da regra lista a concluída; a nota não muda.
-  perform set_config('request.jwt.claims', c_gestor, true);
-  v := public.salvar_regra_analise(v_edital, v_config, v_versao_regra, 'Versão nova do ensaio da fase F4');
-  if not exists (select 1 from json_array_elements(v -> 'fichas_afetadas') a
-                  where (a ->> 'ficha')::uuid = v_ficha and (a ->> 'versao_regra')::int = v_versao_regra) then
-    raise exception 'FALHOU E3: fichas afetadas %', v -> 'fichas_afetadas';
-  end if;
-  v := public.obter_ficha_analise(v_ficha);
-  if (v -> 'regra' ->> 'versao')::int <> v_versao_regra or (v -> 'regra' ->> 'vigente')::int <> v_versao_regra + 1 then
-    raise exception 'FALHOU E3: a concluída devia seguir a versão da conclusão';
-  end if;
-
-  perform set_config('request.jwt.claims', c_ana, true);
-  begin
-    perform public.reabrir_ficha(v_ficha, v_versao, 'Analista tentando reabrir');
-    raise exception 'FALHOU E3: analista reabriu';
-  exception when sqlstate '42501' then null;
-  end;
-  perform set_config('request.jwt.claims', c_gestor, true);
-  begin
-    perform public.reabrir_ficha(v_ficha, v_versao, 'curto');
-    raise exception 'FALHOU E3: reabriu sem motivo';
-  exception when sqlstate '22023' then null;
-  end;
-  v := public.reabrir_ficha(v_ficha, v_versao, 'Conferir de novo os cursos no ensaio');
-  perform set_config('request.jwt.claims', c_ana, true);
-  v := public.obter_ficha_analise(v_ficha);
-  if v -> 'ficha' ->> 'situacao' <> 'EM_ANALISE' or (v -> 'regra' ->> 'versao')::int <> v_versao_regra + 1
-     or (select count(*) from json_array_elements(v -> 'historico') h where h ->> 'acao' in ('SALVAR', 'CONCLUIR', 'REABRIR')) <> 3
-     or not exists (select 1 from json_array_elements(v -> 'historico') h, json_array_elements(h -> 'alteracao') a
-                     where h ->> 'acao' = 'SALVAR' and a ->> 'parcial' = 'EXPERIENCIA' and (a ->> 'para')::numeric = 20) then
-    raise exception 'FALHOU E3: depois de reabrir %', v -> 'historico';
-  end if;
-  raise notice 'ok E3.5: leitor vê a concluída; versão nova da regra lista a ficha (AM-2.3) sem mudar a nota; só a coordenação reabre, com motivo; reaberta segue a vigente; histórico SALVAR/CONCLUIR/REABRIR com de quanto para quanto';
-end;
-$$;
-reset role;
-
--- E4. Imutáveis.
-do $$
-declare
-  v_ficha uuid := (select f."CO_FICHA_ANALISE" from public."TB_FICHA_ANALISE" f
-                    where f."CO_EMPREGARE_CANDIDATO" = '00000000-0000-4000-a000-0000000f4001');
-begin
-  begin
-    update public."TH_FICHA_ANALISE" set "DS_MOTIVO" = 'mudado' where "CO_FICHA_ANALISE" = v_ficha;
-    raise exception 'FALHOU E4: histórico mudou';
-  exception when sqlstate '42501' then null;
-  end;
-  begin
-    delete from public."TB_FICHA_ANALISE" where "CO_FICHA_ANALISE" = v_ficha;
-    raise exception 'FALHOU E4: ficha apagada';
-  exception when sqlstate '42501' then null;
-  end;
-  begin
-    update public."TB_FICHA_ANALISE" set "TP_SITUACAO" = 'CONCLUIDA', "DS_PARECER" = null where "CO_FICHA_ANALISE" = v_ficha;
-    raise exception 'FALHOU E4: concluída sem parecer';
-  exception when check_violation then null;
-  end;
-  if not exists (select 1 from public."TL_ACESSO_FICHA_ANALISE" a where a."CO_FICHA_ANALISE" = v_ficha and a."TP_ACESSO" = 'COPIAR_CODIGO') then
-    raise exception 'FALHOU E4: acesso não registrado';
-  end if;
-  raise notice 'ok E4: histórico imutável, ficha não se apaga, concluída exige parecer, acesso registrado';
-end;
-$$;
-
-select 'ENSAIO OK' as resultado;
-
-rollback;
+commit;

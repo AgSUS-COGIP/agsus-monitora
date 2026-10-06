@@ -12,7 +12,7 @@ import { CONTRATO_RPC } from "../src/lib/rpc-contrato.js";
   completo.
 */
 const ler = (arquivo) => readFileSync(arquivo, "utf8").replace(/\r\n/g, "\n");
-const NOME = "20261007110000_conteudo_da_ficha.sql";
+const NOME = "20261007130000_conteudo_da_ficha.sql";
 const MIGRATION = ler(`supabase/migrations/${NOME}`);
 const ENSAIO = ler(`supabase/ensaios/${NOME}`);
 const ROLLBACK = ler(`supabase/rollback/${NOME}`);

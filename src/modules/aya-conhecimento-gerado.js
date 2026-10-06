@@ -1188,7 +1188,7 @@ export const VERBETES_AYA = Object.freeze([
       'Em cada bloco que pontua aparecem três números: Declarado (o que a resposta da Empregare vale pela nota declarada da regra), Calculado (o que os itens lançados dão) e Apurado (a nota que vale). O analista pode ajustar o Apurado para menos ou para mais, até o teto do bloco no nível da vaga; "Usar o calculado" volta à conta. Toda nota apurada diferente da declarada pede justificativa: um motivo do bloco ou uma observação pronta da regra (ex.: "Nota de experiência diminuída", "Nota de cursos diminuída", "Experiência anterior à diplomação não é computada") e, se quiser, um complemento. Sem justificativa, o bloco avisa e a ficha não conclui. A lateral destaca a diferença com a justificativa ao lado, e ela entra no parecer. Quem é inapto por requisito não precisa justificar as notas. Bloco sem pergunta mapeada na nota declarada mostra "—" e não pede justificativa.',
     fato: "No MONITORA, nota apurada diferente da declarada na ficha exige justificativa padronizada, que vai para o parecer e para o histórico.",
     fonte:
-      "src/lib/avaliacao-documental/ficha.js (pendenciasDaFicha, divergenciaDoBloco); supabase/migrations/20261007110000_conteudo_da_ficha.sql (FC_PENDENCIAS_FICHA)",
+      "src/lib/avaliacao-documental/ficha.js (pendenciasDaFicha, divergenciaDoBloco); supabase/migrations/20261007130000_conteudo_da_ficha.sql (FC_PENDENCIAS_FICHA)",
     abrir: "avaliacao-documental",
   },
   {
@@ -1227,7 +1227,7 @@ export const VERBETES_AYA = Object.freeze([
       'Cada mudança na ficha é salva sozinha em um ou dois segundos; "Salvo às HH:MM" aparece só depois de o banco confirmar, e "Alteração não salva" enquanto falta. "Salvar rascunho" (ou Ctrl+S) salva na hora. "Concluir e próxima" confere o que falta — situação de cada bloco, motivo do Não conforme e do Não enviado, motivo do item recusado, datas dos vínculos e justificativa de nota diferente da declarada —, conclui e já abre a próxima ficha da sua fila. "Fechar e liberar" salva o que falta e solta a reserva; fechar a aba do navegador com alteração não salva pede confirmação. Se outra pessoa ou outra aba mexeu na ficha, o salvamento para com o aviso e nada é sobrescrito. A conclusão grava quem concluiu (o login) e a hora; não há campo para digitar.',
     fato: "",
     fonte:
-      "src/modulos/avaliacao-documental/ficha/estado-da-ficha.js; supabase/migrations/20261007110000_conteudo_da_ficha.sql (salvar_rascunho_ficha, concluir_ficha)",
+      "src/modulos/avaliacao-documental/ficha/estado-da-ficha.js; supabase/migrations/20261007130000_conteudo_da_ficha.sql (salvar_rascunho_ficha, concluir_ficha)",
     abrir: "avaliacao-documental",
   },
   {
@@ -1247,7 +1247,7 @@ export const VERBETES_AYA = Object.freeze([
       "A ficha concluída fica só para leitura, com o resultado, a nota, o parecer gravado e o histórico: cada rascunho com mudança, a conclusão e a reabertura, com quem, quando e o que mudou (situação, motivo, a nota de cada bloco de quanto para quanto e a justificativa). Só a coordenação do edital reabre, com motivo; a ficha volta a Em análise com o mesmo responsável. A ficha é analisada pela versão vigente da regra; ao concluir, guarda a versão usada, e uma versão nova da regra não muda a nota de quem já foi concluído (o banco lista as fichas afetadas ao salvar a regra). Pendentes e em análise passam a seguir a versão nova; concluir exige a versão vigente conferida.",
     fato: "",
     fonte:
-      "supabase/migrations/20261007110000_conteudo_da_ficha.sql (reabrir_ficha, FC_REGRA_VIGENTE_FICHA, salvar_regra_analise)",
+      "supabase/migrations/20261007130000_conteudo_da_ficha.sql (reabrir_ficha, FC_REGRA_VIGENTE_FICHA, salvar_regra_analise)",
     abrir: "avaliacao-documental",
   },
   {
@@ -1265,7 +1265,7 @@ export const VERBETES_AYA = Object.freeze([
       "O analista vê, na Fila e na ficha, só as vagas que analisa na equipe do edital; a coordenação e a revisão veem todas; quem só lê a Avaliação documental vê a ficha concluída. Grava só quem está com a reserva da ficha em análise. A ficha recebe da Empregare apenas as respostas das perguntas que a regra liga aos blocos e à nota declarada — nunca CPF, e-mail, telefone ou outra resposta —, e copiar o código ou abrir a Empregare fica registrado.",
     fato: "",
     fonte:
-      "supabase/migrations/20261007110000_conteudo_da_ficha.sql (FC_EXIGIR_VER_FICHA, FC_RESPOSTAS_DA_FICHA, registrar_acesso_ficha)",
+      "supabase/migrations/20261007130000_conteudo_da_ficha.sql (FC_EXIGIR_VER_FICHA, FC_RESPOSTAS_DA_FICHA, registrar_acesso_ficha)",
     abrir: "avaliacao-documental",
   },
   {

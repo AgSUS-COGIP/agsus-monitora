@@ -243,7 +243,7 @@ ensaio.
 aplicar; ensaio no banco real OK, desfeito). Pedido do usuário: "algo tranquilo para o analista
 analisar… para sair das planilhas". O que entrou:
 
-- `20261007110000_conteudo_da_ficha.sql`: no lugar de `TB_ITEM_FICHA_ANALISE`,
+- `20261007130000_conteudo_da_ficha.sql`: no lugar de `TB_ITEM_FICHA_ANALISE`,
   `TB_TITULO_FICHA_ANALISE` e `TB_VINCULO_EXPERIENCIA`, o lançamento do analista fica em
   `TB_FICHA_ANALISE."DS_LANCAMENTO"` (jsonb no formato do candidato de `pontuacao.js`: situação,
   motivos, nota ajustada e justificativas de cada bloco; títulos, cursos e vínculos; observações),
