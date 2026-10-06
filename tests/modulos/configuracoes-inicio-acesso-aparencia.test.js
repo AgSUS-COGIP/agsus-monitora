@@ -540,6 +540,12 @@ describe("Aparência", () => {
     expect(
       secao("aparencia").querySelector(".config-imagem__previa--logo").src,
     ).toMatch(/\/assets\/agsus-logo\.webp$/);
+    // A publicada segue na barra de todo mundo até salvar: não se apaga.
+    expect(
+      secao("aparencia").querySelector(
+        '[data-formato="quadrado"] .config-galeria__apagar',
+      ),
+    ).toBeNull();
   });
 });
 

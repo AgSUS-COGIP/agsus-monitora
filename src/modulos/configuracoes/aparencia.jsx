@@ -76,7 +76,16 @@ function BotaoDeEnviar({ id, ocupado, aoEscolher }) {
   As imagens já enviadas: usar (a que está em uso não tem botão) e apagar
   (a que está em uso não pode ser apagada).
 */
-function Galeria({ titulo, itens, emUso, ocupado, aoUsar, aoApagar, formato }) {
+function Galeria({
+  titulo,
+  itens,
+  emUso,
+  protegida = emUso,
+  ocupado,
+  aoUsar,
+  aoApagar,
+  formato,
+}) {
   if (!itens.length) return null;
   return (
     <div className="config-galeria">
@@ -84,6 +93,7 @@ function Galeria({ titulo, itens, emUso, ocupado, aoUsar, aoApagar, formato }) {
       <ul className="config-galeria__grade" data-formato={formato}>
         {itens.map((item) => {
           const ativa = emUso(item);
+          const semApagar = ativa || protegida(item);
           return (
             <li
               key={item.caminho}
@@ -105,7 +115,7 @@ function Galeria({ titulo, itens, emUso, ocupado, aoUsar, aoApagar, formato }) {
                 />
                 {ativa ? null : <small>Usar</small>}
               </button>
-              {ativa ? (
+              {semApagar ? (
                 <Selo tom="aprovado">Em uso</Selo>
               ) : (
                 <button
@@ -226,6 +236,7 @@ function LogoDaBarra({ estado, imagens }) {
         formato="quadrado"
         itens={atual.logos.itens}
         emUso={(item) => logoDaBarraSegura(item.url) === escolhida}
+        protegida={(item) => imagens.logoProtegida(item.url)}
         ocupado={ocupado}
         aoUsar={imagens.usarLogo}
         aoApagar={imagens.apagarLogo}
