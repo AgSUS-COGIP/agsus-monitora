@@ -6,6 +6,7 @@ import {
   declaradaDaFicha,
   divergenciaDoBloco,
   enderecoDaVagaNaEmpregare,
+  enderecoDoCandidatoNaEmpregare,
   lancamentoInicial,
   nivelDaFicha,
   opcoesDeJustificativa,
@@ -394,6 +395,32 @@ describe("apoio da tela", () => {
       "https://corporate.empregare.com/empresa/vagas",
     );
     expect(enderecoDaVagaNaEmpregare("abc")).toBeNull();
+  });
+
+  it("com o identificador interno, a vaga abre direto nas candidaturas", () => {
+    expect(enderecoDaVagaNaEmpregare("177979", "Ab1cD2eF3g|")).toBe(
+      "https://corporate.empregare.com/empresa/vagas/candidaturas/Ab1cD2eF3g|",
+    );
+    // O código numérico não abre (Sem permissão) e lixo não vira endereço: lista de vagas.
+    for (const ruim of ["177979|", "177979", "a b", "x/../y", "", null])
+      expect(enderecoDaVagaNaEmpregare("177979", ruim)).toBe(
+        "https://corporate.empregare.com/empresa/vagas",
+      );
+  });
+
+  it("link do candidato só se for a página de detalhes da Empregare", () => {
+    const link =
+      "https://corporate.empregare.com/empresa/curriculo/detalhes?tokenCandidato=TKfict&id=IDfict|&candidatura=CDfict||";
+    expect(enderecoDoCandidatoNaEmpregare(link)).toBe(link);
+    for (const ruim of [
+      null,
+      "",
+      "javascript:alert(1)",
+      "https://exemplo.invalid/empresa/curriculo/detalhes?x=1",
+      "http://corporate.empregare.com/empresa/curriculo/detalhes?x=1",
+      `${link}"><script>`,
+    ])
+      expect(enderecoDoCandidatoNaEmpregare(ruim)).toBeNull();
   });
 
   it("alteração do histórico em texto", () => {

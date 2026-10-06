@@ -692,3 +692,82 @@ describe("estado da ficha: salvamento automático", () => {
     expect(estado.obter().sujo).toBe(false);
   });
 });
+
+describe("ficha: abrir o candidato na Empregare (F7)", () => {
+  const LINK =
+    "https://corporate.empregare.com/empresa/curriculo/detalhes?tokenCandidato=TKfict&id=IDfict|&candidatura=CDfict||";
+  const linkDaEmpregare = () =>
+    document.querySelector("[data-tour='avd-ficha-empregare'] a");
+  // O jsdom não navega: o clique no link segue para o React, sem abrir a aba.
+  const semNavegar = (ev) => {
+    if (ev.target.closest?.("a[target='_blank']")) ev.preventDefault();
+  };
+  beforeEach(() => {
+    // A etapa da fila fica guardada no navegador (outro teste deixa em Concluídas).
+    globalThis.localStorage?.clear();
+    document.addEventListener("click", semNavegar);
+  });
+  afterEach(() => document.removeEventListener("click", semNavegar));
+
+  it("com o link capturado, abre o candidato em nova aba e registra o acesso", async () => {
+    const supabase = supabaseFalso({
+      ...fichaDoBanco(),
+      empregare: {
+        link_candidato: LINK,
+        vaga_interno: "Ab1cD2eF3g|",
+        link_vaga:
+          "https://corporate.empregare.com/empresa/vagas/candidaturas/Ab1cD2eF3g|",
+      },
+    });
+    await abrirFicha(supabase);
+    const a = linkDaEmpregare();
+    expect(a.textContent).toContain("Abrir candidato na Empregare");
+    expect(a.getAttribute("href")).toBe(LINK);
+    expect(a.getAttribute("target")).toBe("_blank");
+    expect(a.getAttribute("rel")).toContain("noopener");
+    await clicar(a);
+    await esperar();
+    expect(chamadas(supabase, "registrar_acesso_ficha")).toEqual([
+      { p_ficha: "f1", p_tipo: "ABRIR_EMPREGARE" },
+    ]);
+    expect(botao("Copiar código")).toBeTruthy();
+  });
+
+  it("link fora da Empregare não vira botão; com o identificador, abre a vaga e copia o código do candidato", async () => {
+    const escrever = vi.fn(async () => {});
+    vi.stubGlobal("navigator", { clipboard: { writeText: escrever } });
+    try {
+      const supabase = supabaseFalso({
+        ...fichaDoBanco(),
+        empregare: {
+          link_candidato: "javascript:alert(1)",
+          vaga_interno: "Ab1cD2eF3g|",
+        },
+      });
+      await abrirFicha(supabase);
+      const a = linkDaEmpregare();
+      expect(a.textContent).toContain("Abrir vaga na Empregare");
+      expect(a.getAttribute("href")).toBe(
+        "https://corporate.empregare.com/empresa/vagas/candidaturas/Ab1cD2eF3g|",
+      );
+      await clicar(a);
+      await esperar();
+      expect(escrever).toHaveBeenCalledWith("7001");
+      expect(chamadas(supabase, "registrar_acesso_ficha")).toEqual([
+        { p_ficha: "f1", p_tipo: "ABRIR_EMPREGARE" },
+      ]);
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+
+  it("sem links, cai na lista de vagas e copia o código da vaga", async () => {
+    const supabase = supabaseFalso({ ...fichaDoBanco(), empregare: null });
+    await abrirFicha(supabase);
+    const a = linkDaEmpregare();
+    expect(a.textContent).toContain("Abrir vagas na Empregare");
+    expect(a.getAttribute("href")).toBe(
+      "https://corporate.empregare.com/empresa/vagas",
+    );
+  });
+});
