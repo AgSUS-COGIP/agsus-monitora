@@ -930,7 +930,7 @@ const TOURS = Object.freeze({
       passo(
         "[data-carga='selecao'] .saude-rodar, [data-carga='entrevistas'] .saude-rodar",
         "Rodar agora",
-        "Dispara a carga fora do horário; a Seleção roda de hora em hora e as Entrevistas, de hora em hora das 7h às 19h.",
+        "Dispara a carga fora do horário; Seleção e Entrevistas rodam de hora em hora.",
       ),
       passo(
         [t("cargas-rodar-empregare"), t("cargas-empregare")],
