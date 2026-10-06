@@ -421,6 +421,127 @@ class LinksDaEmpregare(unittest.TestCase):
         self.assertEqual(mascaramento.mascarar("p_vaga_id=177979"), "p_vaga_id=177979")
 
 
+def _item_real(codigo, n):
+    """Um candidato no formato real da página de candidaturas (valores fictícios)."""
+    href = f"/empresa/curriculo/detalhes?tokenCandidato=TKfict{n}&amp;id=IDfict{n}|&amp;candidatura=CDfict{n}||"
+    return f"""
+    <div class="curriculo-list-item">
+      <div class="list-group-item" data-tokencandidato="TKfict{n}" data-id="IDfict{n}|" data-candidatura="CDfict{n}||">
+        <a class="link-curriculo link-absolute" href="{href}" data-tokencandidato="TKfict{n}"
+           data-id="IDfict{n}|" data-candidatura="CDfict{n}||"></a>
+        <div class="row"><div class="col-md-8">
+          <h4 class="nome">Pessoa Fictícia {n}</h4>
+          <a href="#" data-pessoaid="{codigo}" class="btn-favoritar"><i class="fa fa-star"></i></a>
+        </div><div class="col-md-4">
+          <ul class="acoes">
+            <li data-pessoa-id="{codigo}" data-candidatura-id="CDfict{n}||"><a href="#">Mover</a></li>
+          </ul>
+        </div></div>
+      </div>
+    </div>"""
+
+
+def _pagina_real(codigos):
+    """A lista como o portal monta: páginas de 15 em #curriculo-pagina-N dentro de .curriculo-append."""
+    paginas = [codigos[i : i + 15] for i in range(0, len(codigos), 15)]
+    corpo = "".join(
+        f'<div class="list-group candidatura-group" id="curriculo-pagina-{p + 1}">'
+        + "".join(_item_real(c, i + 15 * p) for i, c in enumerate(pagina))
+        + "</div>"
+        for p, pagina in enumerate(paginas)
+    )
+    return f'<html><body><nav class="nav"><a href="/empresa/vagas">Vagas</a></nav><div class="curriculo-append">{corpo}</div></body></html>'
+
+
+class ListaRealDaEmpregare(unittest.TestCase):
+    def test_le_pares_do_formato_real(self):
+        codigos = [str(3700000 + i) for i in range(20)]
+        candidatos, descartados = nav.ler_lista_de_candidatos(_pagina_real(codigos))
+        self.assertEqual(descartados, 0)
+        self.assertEqual([c["codigo"] for c in candidatos], codigos)
+        self.assertEqual(
+            candidatos[0]["link"],
+            nav.URL_BASE + "/empresa/curriculo/detalhes?tokenCandidato=TKfict0&id=IDfict0|&candidatura=CDfict0||",
+        )
+
+    def test_link_fora_do_formato_e_contado_e_item_sem_codigo_fica_de_fora(self):
+        html = _pagina_real(["3700001"]).replace("tokenCandidato=TKfict0", "tokenCandidato=TK fict<0>")
+        html = html.replace(
+            "</div></body>",
+            '<div class="curriculo-list-item"><a class="link-curriculo" href="' + LINK_1 + '"></a></div></div></body>',
+        )
+        candidatos, descartados = nav.ler_lista_de_candidatos(html)
+        self.assertEqual((candidatos, descartados), ([], 1))
+
+    def test_rolagem_infinita_ate_parar_de_crescer(self):
+        relogio = {"t": 0.0}
+        carregados = {"n": 15}
+        rolagens = []
+
+        def rolar():
+            rolagens.append(1)
+            carregados["n"] = min(carregados["n"] + 15, 86)
+
+        def dormir(s):
+            relogio["t"] += s
+
+        final = nav.carregar_lista_inteira(
+            lambda: carregados["n"], rolar, espera=6, intervalo=0.5, dormir=dormir, agora=lambda: relogio["t"]
+        )
+        self.assertEqual(final, 86)
+        # 5 rolagens que trouxeram mais (30…86) e 2 sem novidade.
+        self.assertEqual(len(rolagens), 7)
+
+    def test_para_no_total_esperado_e_no_prazo(self):
+        relogio = {"t": 0.0}
+        carregados = {"n": 15}
+
+        def rolar():
+            carregados["n"] += 15
+
+        def dormir(s):
+            relogio["t"] += s
+
+        agora = lambda: relogio["t"]  # noqa: E731
+        self.assertEqual(
+            nav.carregar_lista_inteira(lambda: carregados["n"], rolar, total=40, dormir=dormir, agora=agora), 45
+        )
+        carregados["n"] = 15
+        relogio["t"] = 0.0
+        self.assertLess(
+            nav.carregar_lista_inteira(lambda: carregados["n"], rolar, prazo=1.2, dormir=dormir, agora=agora), 90
+        )
+
+    def test_portal_espera_rola_e_le_a_lista_inteira(self):
+        codigos = [str(3787200 + i) for i in range(86)]
+
+        class DriverFalso:
+            def __init__(self):
+                self.carregados = 15
+
+            @property
+            def page_source(self):
+                return _pagina_real(codigos[: self.carregados])
+
+            def execute_script(self, js, *args):
+                if js == nav.JS_CONTAR_LINKS:
+                    return self.carregados
+                if js == nav.JS_ROLAR_LISTA:
+                    self.carregados = min(self.carregados + 15, len(codigos))
+                return None
+
+        antigos = (nav.ESPERA_POR_MAIS, nav.INTERVALO_DA_LISTA)
+        nav.ESPERA_POR_MAIS, nav.INTERVALO_DA_LISTA = 0.05, 0.01
+        try:
+            portal = nav.PortalEmpregare("pasta-falsa", lambda _m: None)
+            portal.driver = DriverFalso()
+            candidatos = portal._carregar_e_ler_pagina(prazo=10**12)
+        finally:
+            nav.ESPERA_POR_MAIS, nav.INTERVALO_DA_LISTA = antigos
+        self.assertEqual(len(candidatos), 86)
+        self.assertEqual(portal.descartados, 0)
+
+
 class PortalFalso(nav.PortalEmpregare):
     """O portal sem Chrome: páginas de HTML fictício e contagem do que aconteceria."""
 
@@ -435,7 +556,7 @@ class PortalFalso(nav.PortalEmpregare):
     def _abrir_candidaturas(self, ident):
         self.abertas.append(ident)
 
-    def _carregar_e_ler_pagina(self, prazo):
+    def _carregar_e_ler_pagina(self, prazo, total=None):
         if self.falha:
             raise self.falha
         return nav.ler_candidatos_do_html(self.paginas[0] if self.paginas else "")
