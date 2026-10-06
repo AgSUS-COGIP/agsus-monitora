@@ -1,0 +1,454 @@
+{
+  "schema": 1,
+  "modelo": "SI26-PARINTINS",
+  "titulo_etapa": "Avaliação Documental e de Títulos",
+  "edital_rotulo": "",
+  "casas_parecer": 1,
+  "provisoria": {
+    "eliminacao_automatica": [
+      {
+        "codigo": "CANCELADO",
+        "coluna": "SITUAÇÃO",
+        "quando": ["CANCELADO"],
+        "motivo": "Cancelou a inscrição"
+      },
+      {
+        "codigo": "QUESTIONARIO",
+        "coluna_prefixo": "SITUAÇÃO - ",
+        "exceto": ["FINALIZADO"],
+        "motivo": "Não finalizou o questionário"
+      },
+      {
+        "codigo": "REPROVADO_EMPREGARE",
+        "coluna": "REPROVADO",
+        "quando": ["SIM"],
+        "motivo": "Reprovado na Empregare"
+      }
+    ],
+    "nota_declarada": [],
+    "divergencia_tolerancia": 0,
+    "desempate": ["MAIS_VELHO"]
+  },
+  "lote": {
+    "base": "MULTIPLO_VAGAS",
+    "multiplo": 5,
+    "fixo": null,
+    "inclui_cr": true,
+    "por_modalidade": false,
+    "inclui_empatados": true,
+    "linha_anda": true,
+    "publica_reposicao": true
+  },
+  "distribuicao": {
+    "modo": "PEGAR_PROXIMO",
+    "criterio": "PARTES_IGUAIS",
+    "limite_por_analista": null,
+    "novos": "MENOS_PENDENTES",
+    "dias_parada": 3
+  },
+  "revisao": {
+    "amostra_percentual": 10,
+    "minimo_por_analista": 0,
+    "todas": false,
+    "inaptos_requisito": true,
+    "inaptos_nota": false,
+    "divergencia_pontos": null,
+    "sinais": [],
+    "entrou_pela_linha": false,
+    "duplo_cego": false
+  },
+  "blocos": [
+    {
+      "codigo": "IDENTIDADE",
+      "titulo": "Documento de identidade oficial com foto (frente e verso, dentro da validade)",
+      "item_edital": "6.4 c",
+      "tipo": "DOCUMENTO",
+      "perguntas": [],
+      "efeitos": {
+        "NAO_CONFORME": "ELIMINA",
+        "NAO_ENVIADO": "ELIMINA"
+      },
+      "motivos": [
+        {
+          "codigo": "ILEGIVEL",
+          "texto": "Documento de identidade ilegível.",
+          "item_edital": "6.4 c",
+          "efeito": "ELIMINA"
+        },
+        {
+          "codigo": "SEM_VERSO",
+          "texto": "Documento de identidade sem o verso.",
+          "item_edital": "6.4 c",
+          "efeito": "ELIMINA"
+        },
+        {
+          "codigo": "VENCIDO",
+          "texto": "Documento de identidade fora do prazo de validade.",
+          "item_edital": "6.4 c",
+          "efeito": "ELIMINA"
+        },
+        {
+          "codigo": "NOME_DIVERGENTE",
+          "texto": "Nome cadastrado diferente do documento oficial com foto, sem a certidão ou o documento da alteração do nome.",
+          "item_edital": "6.3.4",
+          "efeito": "ELIMINA"
+        }
+      ]
+    },
+    {
+      "codigo": "MODALIDADE",
+      "titulo": "Sistema de concorrência",
+      "item_edital": "6.4 b",
+      "tipo": "REGISTRO",
+      "perguntas": [],
+      "efeitos": {},
+      "motivos": []
+    },
+    {
+      "codigo": "ESCOLARIDADE",
+      "titulo": "Escolaridade exigida para a vaga (diploma ou certificado, frente e verso)",
+      "item_edital": "8.12 b",
+      "tipo": "DOCUMENTO",
+      "perguntas": [],
+      "efeitos": {
+        "NAO_CONFORME": "ELIMINA",
+        "NAO_ENVIADO": "ELIMINA"
+      },
+      "motivos": [
+        {
+          "codigo": "NAO_COMPROVADA",
+          "texto": "Não comprovou a escolaridade exigida para a vaga.",
+          "item_edital": "8.12 b",
+          "efeito": "ELIMINA"
+        },
+        {
+          "codigo": "SEM_VERSO",
+          "texto": "Diploma ou certificado sem frente e verso (o verso é exigido mesmo em branco).",
+          "item_edital": "8.12.2",
+          "efeito": "ELIMINA"
+        },
+        {
+          "codigo": "SEM_AUTENTICACAO",
+          "texto": "Documento nato-digital sem as páginas com o código de verificação ou o QR Code.",
+          "item_edital": "8.12.2.1",
+          "efeito": "ELIMINA"
+        },
+        {
+          "codigo": "PROVAVEL_FORMANDO",
+          "texto": "Declaração de provável formando não comprova o requisito.",
+          "item_edital": "8.12.2.2",
+          "efeito": "ELIMINA"
+        },
+        {
+          "codigo": "CURSO_DIVERSO",
+          "texto": "Curso diverso do exigido para a vaga.",
+          "item_edital": "8.12 b",
+          "efeito": "ELIMINA"
+        }
+      ]
+    },
+    {
+      "codigo": "ETNICO",
+      "titulo": "Critério étnico (pertencimento étnico e residência em aldeia, Anexo VI)",
+      "item_edital": "8.13",
+      "tipo": "PONTUACAO",
+      "parcial": "ETNICO",
+      "condicao": "INDIGENA",
+      "perguntas": [],
+      "indigena": 8,
+      "aldeia": 6,
+      "teto": 14,
+      "lista_aldeias": null,
+      "efeitos": {
+        "NAO_CONFORME": "ZERA_PONTOS",
+        "NAO_ENVIADO": "ZERA_PONTOS"
+      },
+      "motivos": [
+        {
+          "codigo": "DOCUMENTO_IRREGULAR",
+          "texto": "Documento de pertencimento étnico ausente, ilegível ou fora do que o edital aceita; pontuação étnica zerada.",
+          "item_edital": "8.13.2",
+          "efeito": "ZERA_PONTOS"
+        },
+        {
+          "codigo": "SEM_ASSINATURAS",
+          "texto": "Declaração de Pertencimento Étnico (Anexo VI) sem as duas assinaturas exigidas: a do conselheiro de saúde e a do cacique ou tuxaua.",
+          "item_edital": "6.4 h",
+          "efeito": "ZERA_PONTOS"
+        },
+        {
+          "codigo": "SEM_RESIDENCIA_ALDEIA",
+          "texto": "Sem a Declaração de Pertencimento Étnico (Anexo VI) com a indicação de residência em aldeia; os pontos de aldeia não foram atribuídos.",
+          "item_edital": "8.13.1",
+          "efeito": "SEM_PONTOS_ALDEIA"
+        },
+        {
+          "codigo": "CONTESTACAO_CONDISI",
+          "texto": "Contestação do CONDISI validada sobre o vínculo comunitário; pontuação étnica zerada e candidato(a) remanejado(a) para a ampla concorrência.",
+          "item_edital": "5.6.2.2",
+          "efeito": "ZERA_PONTOS"
+        }
+      ]
+    },
+    {
+      "codigo": "COTA_PP",
+      "titulo": "Pretos e pardos (autodeclaração, foto e vídeo)",
+      "item_edital": "5.5.1",
+      "tipo": "COTA",
+      "condicao": "MODALIDADE=PP",
+      "perguntas": [],
+      "efeitos": {
+        "CONFORME": "ENCAMINHA_HETEROIDENTIFICACAO",
+        "NAO_CONFORME": "SEGUE_AMPLA",
+        "NAO_ENVIADO": "SEGUE_AMPLA"
+      },
+      "motivos": []
+    },
+    {
+      "codigo": "COTA_PI",
+      "titulo": "Indígena (pertencimento étnico)",
+      "item_edital": "5.5.2",
+      "tipo": "COTA",
+      "condicao": "MODALIDADE=PI",
+      "perguntas": [],
+      "efeitos": {
+        "NAO_CONFORME": "SEGUE_AMPLA",
+        "NAO_ENVIADO": "SEGUE_AMPLA"
+      },
+      "motivos": []
+    },
+    {
+      "codigo": "COTA_PQ",
+      "titulo": "Quilombola (declaração da liderança ou certificado da FCP, Anexo XI)",
+      "item_edital": "5.5.3",
+      "tipo": "COTA",
+      "condicao": "MODALIDADE=PQ",
+      "perguntas": [],
+      "efeitos": {
+        "NAO_CONFORME": "SEGUE_AMPLA",
+        "NAO_ENVIADO": "SEGUE_AMPLA"
+      },
+      "motivos": []
+    },
+    {
+      "codigo": "COTA_PCD",
+      "titulo": "Pessoa com deficiência (laudo com CID, Anexo VIII)",
+      "item_edital": "4.4",
+      "tipo": "COTA",
+      "condicao": "MODALIDADE=PCD",
+      "perguntas": [],
+      "efeitos": {
+        "CONFORME": "ENCAMINHA_PERICIA",
+        "NAO_CONFORME": "SEGUE_AMPLA",
+        "NAO_ENVIADO": "SEGUE_AMPLA"
+      },
+      "motivos": []
+    },
+    {
+      "codigo": "FORMACAO",
+      "titulo": "Formação acadêmica na área (títulos cumulativos, um por nível)",
+      "item_edital": "8.14",
+      "tipo": "TITULOS",
+      "parcial": "FORMACAO",
+      "perguntas": [],
+      "cumulativa": true,
+      "teto": 6,
+      "pontos_por_nivel": {
+        "superior": [
+          {
+            "titulo": "ESPECIALIZACAO",
+            "pontos": 1
+          },
+          {
+            "titulo": "RESIDENCIA",
+            "pontos": 2
+          },
+          {
+            "titulo": "MESTRADO",
+            "pontos": 2
+          },
+          {
+            "titulo": "DOUTORADO",
+            "pontos": 3
+          }
+        ],
+        "tecnico": [
+          {
+            "titulo": "ESPECIALIZACAO",
+            "pontos": 2
+          },
+          {
+            "titulo": "GRADUACAO",
+            "pontos": 4
+          }
+        ],
+        "medio": [
+          {
+            "titulo": "TECNICO",
+            "pontos": 1
+          },
+          {
+            "titulo": "GRADUACAO",
+            "pontos": 2
+          },
+          {
+            "titulo": "ESPECIALIZACAO",
+            "pontos": 3
+          }
+        ],
+        "fundamental": [
+          {
+            "titulo": "ENSINO_MEDIO",
+            "pontos": 6
+          }
+        ]
+      },
+      "efeitos": {},
+      "motivos": [
+        {
+          "codigo": "MESMO_NIVEL",
+          "texto": "Mais de um título do mesmo nível: só um foi pontuado.",
+          "item_edital": "8.14.5.1.1"
+        },
+        {
+          "codigo": "MESTRADO_OU_RESIDENCIA",
+          "texto": "Mestrado e Residência em Saúde estão na mesma linha do quadro (2,0 pontos): só um foi pontuado.",
+          "item_edital": "8.8"
+        },
+        {
+          "codigo": "ESPECIALIZACAO_SEM_360H",
+          "texto": "Especialização sem a carga horária mínima de 360 horas não foi pontuada.",
+          "item_edital": "8.14.1 a"
+        },
+        {
+          "codigo": "ATA_OU_FORMANDO",
+          "texto": "Ata de defesa e declaração de provável formando não pontuam.",
+          "item_edital": "8.14.5.2"
+        }
+      ]
+    },
+    {
+      "codigo": "EXPERIENCIA",
+      "titulo": "Experiência profissional na vaga ou área",
+      "item_edital": "8.15",
+      "tipo": "VINCULOS",
+      "parcial": "EXPERIENCIA",
+      "perguntas": [],
+      "categorias": [
+        {
+          "codigo": "SAUDE_INDIGENA",
+          "rotulo": "Saúde Indígena",
+          "desempate": 1,
+          "pontua": true
+        },
+        {
+          "codigo": "ATENCAO_BASICA",
+          "rotulo": "Atenção Básica",
+          "desempate": 2,
+          "pontua": true
+        },
+        {
+          "codigo": "AREA",
+          "rotulo": "Na vaga ou área",
+          "desempate": null,
+          "pontua": true
+        }
+      ],
+      "minimo_meses": 3,
+      "efeito_minimo": "ELIMINA",
+      "item_minimo": "8.12 c",
+      "pontuacao": "POR_MES",
+      "pontos_por_mes": 0.2,
+      "periodo_meses": 6,
+      "pontos_por_periodo": 0,
+      "desconta_minimo": false,
+      "teto": 10,
+      "dias_por_mes": 30,
+      "unir_sobreposicao": true,
+      "data_limite": null,
+      "max_vinculos": 20,
+      "minimo_conta_estagio": true,
+      "estagio_indigena": {
+        "ativo": true,
+        "horas_por_dia": 4,
+        "dias_por_mes": 22,
+        "so_sem_experiencia": false
+      },
+      "efeitos": {},
+      "motivos": [
+        {
+          "codigo": "ANTES_DA_CONCLUSAO",
+          "texto": "Experiência anterior à conclusão da escolaridade exigida não é pontuada.",
+          "item_edital": "8.15.1"
+        },
+        {
+          "codigo": "ESTAGIO",
+          "texto": "Estágio, extensão ou formação acadêmica não comprovam experiência (exceto candidato indígena, residência em saúde e egressos de programas do MS/AgSUS).",
+          "item_edital": "8.15.2"
+        },
+        {
+          "codigo": "DOCENCIA_ASSISTENCIAL",
+          "texto": "Docência não conta como experiência para vaga assistencial.",
+          "item_edital": "8.15.5.1"
+        },
+        {
+          "codigo": "CONCOMITANTE",
+          "texto": "Períodos concomitantes contam uma vez só.",
+          "item_edital": "8.15.6"
+        },
+        {
+          "codigo": "SEM_DATA_TERMINO",
+          "texto": "Vínculo celetista ativo (sem data de desligamento) sem a declaração complementar da empresa, em papel timbrado, datada e assinada, que ateste a continuidade do contrato.",
+          "item_edital": "8.15 a"
+        },
+        {
+          "codigo": "SEM_DETALHAMENTO",
+          "texto": "Declaração de órgão público sem cargo/função ou sem o período de exercício.",
+          "item_edital": "8.15 b"
+        }
+      ]
+    }
+  ],
+  "corte": {
+    "fonte": "REGRA_CLASSIFICACAO",
+    "item_edital": "8.5 b"
+  },
+  "parecer": {
+    "APTO": "{edital}\nCandidato(a) HABILITADO(A) na {titulo_etapa} com a pontuação total de {nota} pontos, distribuídos da seguinte forma:\n\n{distribuicao}",
+    "INAPTO_REQUISITO": "{edital}\nCandidato(a) INABILITADO(A) na {titulo_etapa}, pelo(s) seguinte(s) motivo(s):\n\n{motivos}",
+    "INAPTO_NOTA": "{edital}\nCandidato(a) NÃO HABILITADO(A) por não atingir a nota mínima de {corte} pontos (item {item_corte}). Nota obtida: {nota} pontos, distribuídos da seguinte forma:\n\n{distribuicao}",
+    "observacoes": "\n\nObservações da análise:\n{observacoes}"
+  },
+  "observacoes_prontas": [
+    {
+      "codigo": "ARQUIVO_POR_CRITERIO",
+      "rotulo": "Documentos do critério em arquivos separados",
+      "item_edital": "8.16",
+      "texto": "Os documentos de um mesmo critério devem vir reunidos em um único arquivo PDF (subitem 8.16); arquivos separados ou complementares foram desconsiderados."
+    },
+    {
+      "codigo": "PROPRIO_CANDIDATO",
+      "rotulo": "Documento emitido pelo próprio candidato",
+      "item_edital": "8.17",
+      "texto": "Documentos de formação ou experiência emitidos, declarados ou assinados pelo(a) próprio(a) candidato(a) foram desconsiderados (subitem 8.17)."
+    },
+    {
+      "codigo": "SEM_DADOS_DO_DOCUMENTO",
+      "rotulo": "Documento sem as informações necessárias",
+      "item_edital": "8.21",
+      "texto": "Documentos sem identificação do(a) candidato(a), carga horária, período, assinatura ou validação institucional foram desconsiderados (subitem 8.21)."
+    },
+    {
+      "codigo": "EXP_DIMINUIDA",
+      "rotulo": "Nota de experiência diminuída",
+      "item_edital": "8.15",
+      "texto": "Nota de experiência profissional diminuída em decorrência do tempo de serviço comprovado pelo(a) candidato(a)."
+    },
+    {
+      "codigo": "ETNICO_NO_RECURSO",
+      "rotulo": "Pertencimento étnico pode ir no recurso",
+      "item_edital": "6.5.1",
+      "texto": "Os documentos de pertencimento étnico indígena pendentes ou incompletos podem ser entregues na fase de recurso (subitem 6.5.1)."
+    }
+  ]
+}
