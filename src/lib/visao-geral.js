@@ -588,7 +588,15 @@ export function diasAte(data, hoje = new Date()) {
     alvo = new Date(tempo);
     alvo = new Date(alvo.getFullYear(), alvo.getMonth(), alvo.getDate());
   }
-  const dia = new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate());
+  // "Hoje" pode vir como "AAAA-MM-DD" (o dia de Brasília, o mesmo dos críticos).
+  const diaDeHoje = String(hoje).match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  const dia = diaDeHoje
+    ? new Date(
+        Number(diaDeHoje[1]),
+        Number(diaDeHoje[2]) - 1,
+        Number(diaDeHoje[3]),
+      )
+    : new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate());
   return Math.round((alvo - dia) / 86400000);
 }
 
