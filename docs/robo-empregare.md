@@ -118,7 +118,7 @@ e não dispara o que já está rodando. O botão volta a ficar livre quando a ex
   ```
 
 **O log do Actions é público** (o repositório é público): o robô imprime só contagens, códigos de
-vaga e números de edital, e toda mensagem passa pelo mascaramento (`mascaramento.py`). Nunca cole
+vaga e números de edital, e toda mensagem passa pelo mascaramento (`python/monitora/mascaramento.py`). Nunca cole
 dado de candidato em issue, PR ou log.
 
 ## Quando falha
@@ -156,8 +156,9 @@ computador: rode-os pelo GitHub.
 
 - `.github/workflows/robo-empregare.yml`: disparo manual, botão e segredos.
 - `scripts/robo-empregare/robo_empregare.py` (entrada), `navegador_empregare.py` (Selenium),
-  `planilha_empregare.py` (leitura do Excel e chave), `supabase_rpc.py`, `mascaramento.py`,
-  `requirements.txt` (separado do da raiz, para não pesar as funções da Vercel).
+  `planilha_empregare.py` (leitura do Excel e chave), `requirements.txt` (separado do da raiz,
+  para não pesar as funções da Vercel). RPC e mascaramento vêm da base comum `python/monitora/`
+  (`supabase_rpc.py`, `mascaramento.py`; guia em `docs/python-no-monitora.md`).
 - `api/rodar-carga.js` e `src/lib/robos-de-carga.js`: o **Rodar agora** (lista fixa robô →
   workflow, regras do botão).
 - `src/componentes/saude-das-cargas/` e `src/lib/saude-das-cargas.js`: a tela de status.

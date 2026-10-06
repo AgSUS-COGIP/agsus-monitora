@@ -17,14 +17,17 @@ import pathlib
 import sys
 import tempfile
 import unittest
-from datetime import datetime, timedelta
+from datetime import datetime
 
-_PASTA = pathlib.Path(__file__).resolve().parents[2] / "scripts" / "robo-empregare"
+_RAIZ = pathlib.Path(__file__).resolve().parents[2]
+_PASTA = _RAIZ / "scripts" / "robo-empregare"
 sys.path.insert(0, str(_PASTA))
+sys.path.insert(0, str(_RAIZ / "python"))
 
-import mascaramento  # noqa: E402
 import navegador_empregare as nav  # noqa: E402
 import planilha_empregare as pl  # noqa: E402
+
+from monitora import mascaramento  # noqa: E402
 
 TEM_PANDAS = all(importlib.util.find_spec(m) for m in ("pandas", "openpyxl"))
 CPF_FICTICIO = "00000000191"  # CPF de teste conhecido, não pertence a ninguém
@@ -111,17 +114,35 @@ class LeituraDoExcel(unittest.TestCase):
         return caminho
 
     def test_planilha_falsa_com_titulo_questionario_e_repetido(self):
-        caminho = self._excel({
-            "Candidatos": [
-                ["Relatório de candidatos da vaga 177979", None, None, None, None, None, None],
-                [None, None, None, None, None, None, None],
-                ["Nome", "E-mail", "CPF", "Data de Nascimento", "Etapa", "Você tem CNH?", "Você tem CNH?"],
-                ["Pessoa Fictícia Um", "um@exemplo.invalid", CPF_FICTICIO, datetime(1990, 1, 2), "Triagem", "Sim", "B"],
-                ["Pessoa Fictícia Dois", "dois@exemplo.invalid", None, "03/04/1991", "Inscrito", "Não", None],
-                ["Pessoa Sem Chave", None, None, None, "Inscrito", "Sim", None],
-                ["Pessoa Fictícia Um", "um@exemplo.invalid", CPF_FICTICIO, datetime(1990, 1, 2), "Entrevista", "Sim", "B"],
-            ]
-        })
+        caminho = self._excel(
+            {
+                "Candidatos": [
+                    ["Relatório de candidatos da vaga 177979", None, None, None, None, None, None],
+                    [None, None, None, None, None, None, None],
+                    ["Nome", "E-mail", "CPF", "Data de Nascimento", "Etapa", "Você tem CNH?", "Você tem CNH?"],
+                    [
+                        "Pessoa Fictícia Um",
+                        "um@exemplo.invalid",
+                        CPF_FICTICIO,
+                        datetime(1990, 1, 2),
+                        "Triagem",
+                        "Sim",
+                        "B",
+                    ],
+                    ["Pessoa Fictícia Dois", "dois@exemplo.invalid", None, "03/04/1991", "Inscrito", "Não", None],
+                    ["Pessoa Sem Chave", None, None, None, "Inscrito", "Sim", None],
+                    [
+                        "Pessoa Fictícia Um",
+                        "um@exemplo.invalid",
+                        CPF_FICTICIO,
+                        datetime(1990, 1, 2),
+                        "Entrevista",
+                        "Sim",
+                        "B",
+                    ],
+                ]
+            }
+        )
         lido = pl.ler_planilha(caminho, "177979")
         self.assertEqual(lido["colunas"][:5], ["Nome", "E-mail", "CPF", "Data de Nascimento", "Etapa"])
         self.assertEqual(lido["colunas"][5:], ["Você tem CNH?", "Você tem CNH? (2)"])
@@ -139,18 +160,20 @@ class LeituraDoExcel(unittest.TestCase):
         self.assertNotIn("Você tem CNH? (2)", dois["colunas"])  # vazio não entra
 
     def test_outra_aba_com_a_mesma_chave_entra_no_candidato(self):
-        caminho = self._excel({
-            "Candidatos": [
-                ["Código do Candidato", "Nome", "E-mail"],
-                [901, "Pessoa Fictícia Um", "um@exemplo.invalid"],
-                [902, "Pessoa Fictícia Dois", "dois@exemplo.invalid"],
-            ],
-            "Competências": [
-                ["Código do Candidato", "Competência", "Nota"],
-                [901, "Comunicação", 4],
-                [901, "Trabalho em equipe", 5],
-            ],
-        })
+        caminho = self._excel(
+            {
+                "Candidatos": [
+                    ["Código do Candidato", "Nome", "E-mail"],
+                    [901, "Pessoa Fictícia Um", "um@exemplo.invalid"],
+                    [902, "Pessoa Fictícia Dois", "dois@exemplo.invalid"],
+                ],
+                "Competências": [
+                    ["Código do Candidato", "Competência", "Nota"],
+                    [901, "Comunicação", 4],
+                    [901, "Trabalho em equipe", 5],
+                ],
+            }
+        )
         lido = pl.ler_planilha(caminho, "177979")
         self.assertEqual(lido["abas"], 2)
         self.assertIn("Competências ›", lido["colunas"])
@@ -217,10 +240,38 @@ class CentralDeExportacoes(unittest.TestCase):
     def test_escolhe_a_mais_recente_disponivel_desta_execucao(self):
         desde = datetime(2026, 10, 5, 8, 0)
         linhas = [
-            {"id": "1", "vaga": "177979", "origem": nav.ORIGEM_EXPORTACAO, "data": "04/10/2026 08:00", "situacao": "Disponível", "href": "/Exports/Download/1"},
-            {"id": "2", "vaga": "177979", "origem": nav.ORIGEM_EXPORTACAO, "data": "05/10/2026 08:05", "situacao": "Disponível", "href": "/Exports/Download/2"},
-            {"id": "3", "vaga": "177979", "origem": nav.ORIGEM_EXPORTACAO, "data": "05/10/2026 08:20", "situacao": "Disponível", "href": "/Exports/Download/3"},
-            {"id": "4", "vaga": "177980", "origem": nav.ORIGEM_EXPORTACAO, "data": "05/10/2026 08:06", "situacao": "Processando", "href": ""},
+            {
+                "id": "1",
+                "vaga": "177979",
+                "origem": nav.ORIGEM_EXPORTACAO,
+                "data": "04/10/2026 08:00",
+                "situacao": "Disponível",
+                "href": "/Exports/Download/1",
+            },
+            {
+                "id": "2",
+                "vaga": "177979",
+                "origem": nav.ORIGEM_EXPORTACAO,
+                "data": "05/10/2026 08:05",
+                "situacao": "Disponível",
+                "href": "/Exports/Download/2",
+            },
+            {
+                "id": "3",
+                "vaga": "177979",
+                "origem": nav.ORIGEM_EXPORTACAO,
+                "data": "05/10/2026 08:20",
+                "situacao": "Disponível",
+                "href": "/Exports/Download/3",
+            },
+            {
+                "id": "4",
+                "vaga": "177980",
+                "origem": nav.ORIGEM_EXPORTACAO,
+                "data": "05/10/2026 08:06",
+                "situacao": "Processando",
+                "href": "",
+            },
         ]
         escolhida, motivo = nav.escolher_exportacao(linhas, "177979", desde)
         self.assertEqual((escolhida["id"], motivo), ("3", "ok"))
@@ -267,12 +318,15 @@ class FluxoDeUmaVaga(unittest.TestCase):
         import robo_empregare
 
         self.robo = robo_empregare
-        self.caminho = LeituraDoExcel._excel(self, {
-            "Candidatos": [
-                ["Nome", "E-mail"],
-                *[[f"Pessoa Fictícia {i}", f"p{i}@exemplo.invalid"] for i in range(1, 1203)],
-            ]
-        })
+        self.caminho = LeituraDoExcel._excel(
+            self,
+            {
+                "Candidatos": [
+                    ["Nome", "E-mail"],
+                    *[[f"Pessoa Fictícia {i}", f"p{i}@exemplo.invalid"] for i in range(1, 1203)],
+                ]
+            },
+        )
 
     def test_grava_em_lotes_e_fecha(self):
         chamadas = []
@@ -305,10 +359,20 @@ class FluxoDeUmaVaga(unittest.TestCase):
         self.assertEqual(self.robo.disparo(uid.upper()), ("MONITORA", uid))
         self.assertEqual(self.robo.disparo(""), ("GITHUB", None))
         self.assertEqual(
-            self.robo.url_da_execucao({"GITHUB_SERVER_URL": "https://github.com", "GITHUB_REPOSITORY": "AgSUS-COGIP/agsus-monitora", "GITHUB_RUN_ID": "42"}),
+            self.robo.url_da_execucao(
+                {
+                    "GITHUB_SERVER_URL": "https://github.com",
+                    "GITHUB_REPOSITORY": "AgSUS-COGIP/agsus-monitora",
+                    "GITHUB_RUN_ID": "42",
+                }
+            ),
             "https://github.com/AgSUS-COGIP/agsus-monitora/actions/runs/42",
         )
-        self.assertIsNone(self.robo.url_da_execucao({"GITHUB_SERVER_URL": "https://exemplo.invalid", "GITHUB_REPOSITORY": "x", "GITHUB_RUN_ID": "1"}))
+        self.assertIsNone(
+            self.robo.url_da_execucao(
+                {"GITHUB_SERVER_URL": "https://exemplo.invalid", "GITHUB_REPOSITORY": "x", "GITHUB_RUN_ID": "1"}
+            )
+        )
 
     def test_argumentos_validam_editais_e_vagas(self):
         args = self.robo.argumentos(["--editais", "80/2026, 81/2026", "--vagas", "177979;177980", "--limite", "5"])

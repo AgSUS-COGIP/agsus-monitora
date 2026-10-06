@@ -1,0 +1,198 @@
+/*
+  Avisos de conferência (src/modulos/conferencias/): o cartão de
+  Configurações › Status das atualizações, o selo no topo de cada tela e a
+  gaveta com a lista. Só tokens (src/styles/tokens.css), que o tema escuro já troca.
+*/
+
+/* ── Cartão (Status das atualizações) ────────────────────────────────── */
+.conf-cartao {
+  display: grid;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  background: var(--surface-card);
+  box-shadow: var(--shadow-sm);
+}
+.conf-cartao__topo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+.conf-cartao__topo h3 {
+  margin: 0;
+  font-size: var(--text-body);
+  font-weight: 700;
+}
+.conf-filtro {
+  flex-wrap: wrap;
+}
+
+/* ── Lista ───────────────────────────────────────────────────────────── */
+.conf-lista {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.conf-aviso {
+  display: grid;
+  gap: var(--space-1);
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--border-subtle);
+  border-left-width: 3px;
+  border-radius: var(--radius-md);
+  background: var(--surface-card);
+}
+.conf-aviso--perigo {
+  border-left-color: var(--state-danger);
+}
+.conf-aviso--aviso {
+  border-left-color: var(--state-warning);
+}
+.conf-aviso--info {
+  border-left-color: var(--state-info);
+}
+.conf-aviso__topo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+}
+.conf-aviso__topo strong {
+  font-size: var(--text-body-sm);
+  font-weight: 700;
+}
+.conf-aviso__onde {
+  color: var(--text-secondary);
+  font-size: var(--text-caption);
+}
+.conf-aviso__resumo {
+  margin: 0;
+  color: var(--text-primary);
+  font-size: var(--text-body-sm);
+  overflow-wrap: anywhere;
+}
+.conf-aviso__rodape {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+.conf-aviso__rodape small {
+  flex: 1 1 200px;
+  color: var(--text-secondary);
+  font-size: var(--text-caption);
+  overflow-wrap: anywhere;
+}
+.conf-botao {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  min-height: 28px;
+  padding: 0 var(--space-2);
+  font-size: var(--text-caption);
+}
+.conf-aviso__exemplos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.conf-aviso__exemplos code {
+  padding: 0 var(--space-1);
+  border-radius: var(--radius-sm);
+  background: var(--surface-hover);
+  font-size: var(--text-caption);
+}
+.conf-vazio {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--text-body-sm);
+}
+.conf-ignorados {
+  display: grid;
+  gap: var(--space-2);
+  justify-items: start;
+}
+.conf-ignorados .conf-lista {
+  justify-self: stretch;
+}
+
+/* ── Selos de gravidade ──────────────────────────────────────────────── */
+.conf-selo {
+  display: inline-flex;
+  align-items: center;
+  padding: 0 var(--space-2);
+  border-radius: var(--radius-pill);
+  font-size: var(--text-caption);
+  font-weight: 600;
+  line-height: 1.7;
+  white-space: nowrap;
+}
+.conf-selo--perigo {
+  background: var(--state-danger-soft);
+  color: var(--state-danger);
+}
+.conf-selo--aviso {
+  background: var(--state-warning-soft);
+  color: var(--state-warning);
+}
+.conf-selo--info {
+  background: var(--state-info-soft);
+  color: var(--state-info);
+}
+
+/* ── Ignorar com motivo ──────────────────────────────────────────────── */
+.conf-ignorar {
+  display: grid;
+  gap: var(--space-1);
+}
+.conf-ignorar label {
+  font-size: var(--text-caption);
+  font-weight: 600;
+}
+.conf-ignorar textarea {
+  width: 100%;
+  resize: vertical;
+}
+.conf-ignorar__erro {
+  color: var(--state-danger);
+  font-size: var(--text-caption);
+}
+.conf-ignorar__acoes {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-2);
+}
+
+/* ── Selo no topo da tela e gaveta ───────────────────────────────────── */
+.conf-selo-do-modulo {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+.conf-selo-do-modulo--perigo {
+  color: var(--state-danger);
+}
+.conf-selo-do-modulo--aviso {
+  color: var(--state-warning);
+}
+.conf-selo-do-modulo--info {
+  color: var(--state-info);
+}
+.conf-gaveta__corpo {
+  display: grid;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  overflow-y: auto;
+}
