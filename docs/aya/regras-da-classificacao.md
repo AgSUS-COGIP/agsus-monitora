@@ -176,7 +176,7 @@ dos PDFs oficiais).
 
 ## Nota da ART e lote de convocação
 
-**perguntas:** o que e art | nota da art | autodeclaracao de requisitos e titulos | ranqueamento eletronico | lote | lote de convocacao | linha de corte | triado
+**perguntas:** o que e art | nota da art | autodeclaracao de requisitos e titulos | lote | triado
 **resposta:** ART é a nota da Autodeclaração de Requisitos e Títulos, a nota do questionário da Empregare. Na Classificação ela pode entrar como componente da nota final ("Nota da autodeclaração (ART)") quando a regra do edital usar, e o recurso deferido pode ajustá-la. A lista provisória do ranqueamento pela ART e a linha de corte (o lote de convocação para a avaliação documental) ainda não são geradas pelo MONITORA: a classificação começa na avaliação documental dos candidatos do lote (situação Triado ou Aprovado na análise).
 **fonte:** src/lib/classificacao/catalogo.js (COMPONENTES_DA_NOTA); supabase/correcoes/20261002-regras-de-classificacao-todos-os-editais.sql (importacao.em_aberto)
 **abrir:** classificacao

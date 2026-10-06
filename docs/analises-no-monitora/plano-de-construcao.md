@@ -124,7 +124,38 @@ analisa e quem revisa.
 
 ## F2 — Provisória por ART, lote personalizável e as listas PROVISORIA e LOTE
 
-**Entrega:**
+**Situação: feita em 06/10/2026** (branch `feat/avaliacao-documental-f2`; migration ainda por
+aplicar). Pela decisão de 06/10/2026, a conta pesada é do **Python**, não de função SQL:
+
+- `20261006110000_pre_classificacao_e_lote.sql` (uma migration só, no lugar das duas previstas):
+  `TB_PRE_CLASSIFICACAO`, `TB_PRE_CLASSIF_VAGA` (resumo por vaga), `TH_PRE_CLASSIFICACAO`
+  (histórico de cada entrada e saída do lote, com o motivo) e o log `TL_PRE_CLASSIFICACAO`; as RPCs
+  do job (só `service_role`: `pre_classificacao_ler_editais`, `pre_classificacao_ler_candidatos` —
+  sem o cadastro —, `iniciar/gravar_pre_classificacao_vaga/finalizar`), que **validam** o resultado
+  (forma, regra vigente e conferida, quem tem ficha não muda, quem está no lote só sai eliminado);
+  `obter_pre_classificacao` e `registrar_lista_pre_classificacao` para a tela;
+  `pode_recalcular_pre_classificacao` para o "Recalcular"; `PROVISORIA` e `LOTE` em
+  `CK_LISTACLASSIF_TPLISTA`; um gatilho em `TH_REGRA_ANALISE` que confere os campos novos da regra
+  (`provisoria.desempate` e `lote.por_vaga`); a linha nova no Status das atualizações. No lugar de
+  `FC_PRE_CLASSIFICAR_VAGA`, `FC_TAMANHO_LOTE` e `FC_NOTA_DECLARADA`, a conta está em
+  `python/monitora/avaliacao_documental/` (oficial) e `src/lib/avaliacao-documental/pre-classificacao.js`
+  (prévia), conferidas pelos mesmos casos dourados
+  (`tests/fixtures/avaliacao-documental/casos-de-pre-classificacao.json` e a nota declarada de
+  `casos-de-pontuacao.json`, no vitest e no pytest).
+- Job `scripts/pre_classificacao/` e workflow `pre-classificacao.yml` (editais, modo
+  `normal`/`seco`/`refazer_lote`, `disparado_por`); roda sozinho no fim do robô da Empregare (passo
+  novo em `robo-empregare.yml`, `--apos-robo`), pelo "Recalcular" da coordenação e pelo "Rodar
+  agora" (`api/rodar-carga.js` aceita o robô por edital).
+- Aba **Pré-classificação** (`src/modulos/avaliacao-documental/pre-classificacao.jsx`): contadores,
+  tabela por vaga com a linha de corte, divergência ART × declarada, eliminados à parte, tamanho do
+  lote por vaga (versão nova da regra) e o registro/exportação das listas PROVISORIA e LOTE com o
+  gerador da Classificação (`documento-sei.js` ganhou os modelos dos itens 8.3.1 e 8.4). As abas
+  Provisória, Eliminados e Lote do desenho viraram uma aba só, por vaga.
+- "A linha anda", nesta fase, só pelo recálculo (quem sai eliminado do lote é reposto pelo próximo,
+  num lote novo, com o motivo). A comparação com a aba APTOS PARA ANÁLISE da planilha fica para a
+  F8 (precisa da leitura da planilha pelo job).
+
+**Entrega (planejada):**
 
 - `TB_PRE_CLASSIFICACAO`, recalculada no fim de cada carga do robô: eliminados automáticos com
   motivo, ordem pela ART e aviso de divergência com a nota declarada;

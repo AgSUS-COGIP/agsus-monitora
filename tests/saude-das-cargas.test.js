@@ -399,3 +399,39 @@ describe("conferências de consistência (20261005210000)", () => {
     expect(linha.erro.mensagem).toContain("1 conferências falharam");
   });
 });
+
+describe("pré-classificação da Avaliação documental (20261006110000)", () => {
+  it("sem a chave no payload, a linha não aparece; com ela, vem depois das conferências", () => {
+    expect(
+      visaoSimples(
+        normalizarSaude({ ...PAYLOAD, empregare: [], conferencias: [] }, AGORA),
+      ).linhas.map((l) => l.id),
+    ).not.toContain("pre_classificacao");
+    const s = normalizarSaude(
+      {
+        ...PAYLOAD,
+        empregare: [],
+        conferencias: [],
+        pre_classificacao: [
+          execucao("CONCLUIDA", 30, {
+            editais: 1,
+            vagas: 5,
+            lote: 36,
+            disparo: "ROBO",
+          }),
+        ],
+      },
+      AGORA,
+    );
+    const { linhas } = visaoSimples(s);
+    expect(linhas.map((l) => l.titulo).slice(-2)).toEqual([
+      "Pré-classificação (Avaliação documental)",
+      "Atualização automática do banco",
+    ]);
+    const linha = linhas.find((l) => l.id === "pre_classificacao");
+    expect(linha.situacao).toBe("em_dia");
+    expect(linha.partes[0].historico[0].mensagem).toBe(
+      "1 editais · 5 vagas · 36 no lote · disparo: fim do robô da Empregare",
+    );
+  });
+});

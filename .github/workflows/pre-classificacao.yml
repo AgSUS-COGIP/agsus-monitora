@@ -1,0 +1,84 @@
+name: Pré-classificação da Avaliação documental
+
+# Job Python (scripts/pre_classificacao/pre_classificacao.py) que lê do banco a
+# regra da avaliação e os inscritos que o robô da Empregare trouxe (sem nome,
+# e-mail, CPF nem telefone), calcula a Lista Provisória por ART e o lote de
+# convocação de cada vaga (python/monitora/avaliacao_documental/) e grava o
+# resultado pronto pelas RPCs do service_role (TB_PRE_CLASSIFICACAO).
+#
+# Quando roda:
+#   - pelo "Recalcular" da aba Avaliação documental › Pré-classificação (só a
+#     coordenação do edital; editais = o id do edital) e pelo "Rodar agora" das
+#     Configurações › Status das atualizações (administrador global; todos os
+#     editais ativos com vagas da Empregare) — os dois por api/rodar-carga.js,
+#     com disparado_por = id do usuário;
+#   - sozinho, no fim do robô da Empregare (passo "Pré-classificar" de
+#     robo-empregare.yml, para os editais das vagas carregadas);
+#   - pelo botão "Run workflow" desta aba Actions.
+# Guia: docs/python-no-monitora.md. Migration: 20261006110000_pre_classificacao_e_lote.sql.
+#
+# O REPOSITÓRIO É PÚBLICO e este log também: o job só imprime contagens,
+# códigos de vaga e de aviso e números de edital (python/monitora/mascaramento.py).
+#
+# Secrets do repositório (os mesmos das sincronizações e do robô):
+#   SUPABASE_URL                 https://<projeto>.supabase.co
+#   SUPABASE_SERVICE_ROLE_KEY    chave service_role do Supabase
+
+on:
+  workflow_dispatch:
+    inputs:
+      editais:
+        description: "Opcional: editais separados por vírgula (93/2026, o id do edital ou, sem número, o nome); vazio = os ativos com vagas da Empregare"
+        type: string
+        required: false
+        default: ""
+      modo:
+        description: "normal = calcula e grava; seco = só calcula e mostra o resumo; refazer_lote = recorta o lote do zero (só antes das fichas)"
+        type: choice
+        options:
+          - normal
+          - seco
+          - refazer_lote
+        default: normal
+      disparado_por:
+        description: "Preenchido pelo MONITORA (Recalcular ou Rodar agora, id do usuário); em branco = GitHub"
+        type: string
+        required: false
+        default: ""
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pre-classificacao
+  cancel-in-progress: false
+
+jobs:
+  pre_classificar:
+    name: Empregare → Provisória e lote
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Baixar código
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 1
+          show-progress: false
+
+      # Só biblioteca padrão (python/monitora/ e scripts/pre_classificacao/): sem pip install.
+      - name: Configurar Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      # Os inputs vão por variável de ambiente (nunca interpolados no shell); o
+      # script valida o formato de cada um.
+      - name: Pré-classificar
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          EDITAIS: ${{ inputs.editais }}
+          MODO: ${{ inputs.modo || 'normal' }}
+          DISPARADO_POR: ${{ inputs.disparado_por }}
+        run: python scripts/pre_classificacao/pre_classificacao.py

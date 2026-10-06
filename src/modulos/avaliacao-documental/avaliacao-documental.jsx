@@ -9,8 +9,12 @@ import {
 } from "../../lib/avaliacao-documental/catalogo.js";
 import { getSupabaseClient } from "../../lib/supabaseClient.js";
 import { Aviso, Campo, Segmentado, TopoDoPainel } from "../../ui/index.js";
+import { CHAVE_DO_CABECALHO } from "../../lib/cabecalho-dos-documentos.js";
+import { estadoDasConfiguracoes } from "../configuracoes/estado.js";
 import { Equipe } from "./equipe.jsx";
 import { criarEstadoDaAvaliacao, MENSAGEM_SEM_ACESSO } from "./estado.js";
+import { criarEstadoDaPreClassificacao } from "./estado-da-pre-classificacao.js";
+import { PreClassificacao } from "./pre-classificacao.jsx";
 import { Regra } from "./regra.jsx";
 
 /*
@@ -19,16 +23,18 @@ import { Regra } from "./regra.jsx";
   navegação é dona da classe `.active` e chama `render()` ao navegar (tabela
   `TELAS_REACT` de src/app/navegacao.js).
 
-  Fase F1 (docs/analises-no-monitora/plano-de-construcao.md): escolha do
-  edital, a regra da avaliação (modelo, versões com motivo, perguntas da
-  Empregare, prévia com candidato fictício) e a equipe. A Provisória, o lote, a
-  fila e a ficha entram nas fases seguintes. O Painel das análises (view
-  `analises`) continua sendo a leitura.
+  Fases F1 e F2 (docs/analises-no-monitora/plano-de-construcao.md): escolha
+  do edital, a regra da avaliação (modelo, versões com motivo, perguntas da
+  Empregare, prévia com candidato fictício), a equipe e a pré-classificação
+  (Provisória por ART e lote, gravados pelo job Python; listas PROVISORIA e
+  LOTE). A fila e a ficha entram nas fases seguintes. O Painel das análises
+  (view `analises`) continua sendo a leitura.
 */
 
 const VISOES = [
   { valor: "regra", rotulo: "Regra", icone: "fa-sliders" },
   { valor: "equipe", rotulo: "Equipe", icone: "fa-users" },
+  { valor: "pre", rotulo: "Pré-classificação", icone: "fa-ranking-star" },
 ];
 const ORIGENS = {
   PLANILHA: "Planilha",
@@ -46,7 +52,7 @@ function textoDoStatus(e) {
   return e.dados ? "Sem regra" : "";
 }
 
-function TelaDaArea({ estado, e }) {
+function TelaDaArea({ estado, pre, e }) {
   const [visao, setVisao] = useState("regra");
   const recarregar = () => void estado.carregar(e.area);
   const papel = e.dados?.papel;
@@ -65,6 +71,7 @@ function TelaDaArea({ estado, e }) {
         aoAtualizar={() => {
           recarregar();
           if (e.editalId) void estado.escolherEdital(e.editalId);
+          if (visao === "pre") void pre.carregar(e.editalId);
         }}
         atualizarDesativado={
           !e.area || e.carregandoEditais || e.carregandoEdital
@@ -145,6 +152,13 @@ function TelaDaArea({ estado, e }) {
                   e={e}
                   estado={estado}
                 />
+              ) : visao === "pre" ? (
+                <PreClassificacao
+                  key={`${e.editalId}:${e.dados.regra?.versao ?? 0}`}
+                  e={e}
+                  estado={estado}
+                  pre={pre}
+                />
               ) : (
                 <Equipe
                   key={`${e.editalId}:${JSON.stringify(e.equipe?.equipe ?? [])}`}
@@ -165,7 +179,7 @@ function TelaDaArea({ estado, e }) {
   );
 }
 
-export function TelaDaAvaliacaoDocumental({ estado }) {
+export function TelaDaAvaliacaoDocumental({ estado, pre }) {
   const e = useSyncExternalStore(estado.assinar, estado.obter);
   const { area: areaDoApp } = usarAreaAtual();
   useEffect(() => {
@@ -173,7 +187,9 @@ export function TelaDaAvaliacaoDocumental({ estado }) {
     if (area && areaDoApp && area !== areaDoApp)
       void estado.carregar(areaDoApp);
   }, [estado, areaDoApp]);
-  return <TelaDaArea key={e.area || "sem-area"} estado={estado} e={e} />;
+  return (
+    <TelaDaArea key={e.area || "sem-area"} estado={estado} pre={pre} e={e} />
+  );
 }
 
 /**
@@ -185,15 +201,29 @@ export function montarAvaliacaoDocumental({
   supabase = getSupabaseClient(),
   toast,
   areaAtual = () => obterDadosDoMonitoramento().areaAtual,
+  buscar,
+  obterToken,
+  cabecalho = () =>
+    estadoDasConfiguracoes.obter().valores?.get?.(CHAVE_DO_CABECALHO) || "",
 } = {}) {
   const estado = criarEstadoDaAvaliacao({ supabase, toast });
+  const pre = criarEstadoDaPreClassificacao({
+    supabase,
+    toast,
+    cabecalho,
+    ...(buscar ? { buscar } : {}),
+    ...(obterToken ? { obterToken } : {}),
+  });
   const raiz = secao
-    ? montarModulo(secao, <TelaDaAvaliacaoDocumental estado={estado} />, {
-        nome: "a tela de avaliação documental",
-      }).raiz
+    ? montarModulo(
+        secao,
+        <TelaDaAvaliacaoDocumental estado={estado} pre={pre} />,
+        { nome: "a tela de avaliação documental" },
+      ).raiz
     : null;
   return {
     estado,
+    pre,
     raiz,
     render() {
       return estado.carregar(String(areaAtual() ?? "").trim());

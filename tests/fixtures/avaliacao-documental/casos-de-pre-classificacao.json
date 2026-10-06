@@ -1,0 +1,3458 @@
+{
+  "sobre": "Casos dourados da pré-classificação (Provisória por ART e lote de convocação, fase F2): a mesma regra, a mesma vaga e os mesmos inscritos têm de dar o mesmo resultado em src/lib/avaliacao-documental/pre-classificacao.js (prévia da tela; tests/lib/avaliacao-documental-pre-classificacao.test.js) e em python/monitora/avaliacao_documental/pre_classificacao.py (a conta oficial do job; tests/python/test_pre_classificacao.py). Dados fictícios. 'esperado.linhas' traz, por candidato, só os campos conferidos; 'esperado.resumo', o resumo inteiro.",
+  "casos": [
+    {
+      "nome": "elimina cancelado, questionário incompleto, reprovado e termo; ordena pela ART; lote 2 × (1 + CR)",
+      "historia": "AM-4.1, AM-4.2, AM-5.1",
+      "regra": {
+        "schema": 1,
+        "titulo_etapa": "Avaliação Documental e de Títulos",
+        "provisoria": {
+          "eliminacao_automatica": [
+            {
+              "codigo": "CANCELADO",
+              "coluna": "SITUAÇÃO",
+              "quando": ["CANCELADO"],
+              "motivo": "Cancelou a inscrição"
+            },
+            {
+              "codigo": "QUESTIONARIO",
+              "coluna_prefixo": "SITUAÇÃO - ",
+              "exceto": ["FINALIZADO"],
+              "motivo": "Não finalizou o questionário"
+            },
+            {
+              "codigo": "REPROVADO_EMPREGARE",
+              "coluna": "REPROVADO",
+              "quando": ["SIM"],
+              "motivo": "Reprovado na Empregare"
+            },
+            {
+              "codigo": "TERMO",
+              "pergunta": "Pergunta 23 -",
+              "quando": ["Não estou de acordo"],
+              "motivo": "Recusou o termo de responsabilidade"
+            }
+          ],
+          "nota_declarada": [],
+          "divergencia_tolerancia": 0
+        },
+        "lote": {
+          "base": "MULTIPLO_VAGAS",
+          "multiplo": 2,
+          "fixo": null,
+          "inclui_cr": true,
+          "por_modalidade": false,
+          "inclui_empatados": true,
+          "linha_anda": true,
+          "publica_reposicao": false
+        },
+        "blocos": [
+          {
+            "codigo": "MODALIDADE",
+            "titulo": "Sistema de concorrência",
+            "tipo": "REGISTRO",
+            "perguntas": ["Pergunta 5 -"]
+          }
+        ]
+      },
+      "vaga": {
+        "codigo": "900001",
+        "vagas_imediatas": 1,
+        "cadastro_reserva": true,
+        "modalidades": {
+          "Ampla Concorrência": 1
+        }
+      },
+      "candidatos": [
+        {
+          "id": "c01",
+          "codigo": "7000001",
+          "ativo": true,
+          "nascimento": "1990-01-01",
+          "candidatura": "2026-09-11T12:00:00+00:00",
+          "colunas": {
+            "SITUAÇÃO": "Ativo",
+            "SITUAÇÃO - Questionário de seleção": "FINALIZADO",
+            "NOTA - Questionário de seleção": "24,0/30,0",
+            "REPROVADO": "NÃO",
+            "Pergunta 5 - Sistema de concorrência": "Ampla concorrência",
+            "Pergunta 23 - Termo de responsabilidade": "Estou de acordo"
+          }
+        },
+        {
+          "id": "c02",
+          "codigo": "7000002",
+          "ativo": true,
+          "nascimento": "1990-01-01",
+          "candidatura": "2026-09-12T12:00:00+00:00",
+          "colunas": {
+            "SITUAÇÃO": "Cancelado",
+            "SITUAÇÃO - Questionário de seleção": "FINALIZADO",
+            "NOTA - Questionário de seleção": "29,0/30,0",
+            "REPROVADO": "NÃO",
+            "Pergunta 5 - Sistema de concorrência": "Ampla concorrência",
+            "Pergunta 23 - Termo de responsabilidade": "Estou de acordo"
+          }
+        },
+        {
+          "id": "c03",
+          "codigo": "7000003",
+          "ativo": true,
+          "nascimento": "1990-01-01",
+          "candidatura": "2026-09-13T12:00:00+00:00",
+          "colunas": {
+            "SITUAÇÃO": "Ativo",
+            "SITUAÇÃO - Questionário de seleção": "EM ANDAMENTO",
+            "NOTA - Questionário de seleção": "28,0/30,0",
+            "REPROVADO": "NÃO",
+            "Pergunta 5 - Sistema de concorrência": "Ampla concorrência",
+            "Pergunta 23 - Termo de responsabilidade": "Estou de acordo"
+          }
+        },
+        {
+          "id": "c04",
+          "codigo": "7000004",
+          "ativo": true,
+          "nascimento": "1990-01-01",
+          "candidatura": "2026-09-14T12:00:00+00:00",
+          "colunas": {
+            "SITUAÇÃO": "Ativo",
+            "SITUAÇÃO - Questionário de seleção": "FINALIZADO",
+            "NOTA - Questionário de seleção": "27,0/30,0",
+            "REPROVADO": "SIM",
+            "Pergunta 5 - Sistema de concorrência": "Ampla concorrência",
+            "Pergunta 23 - Termo de responsabilidade": "Estou de acordo"
+          }
+        },
+        {
+          "id": "c05",
+          "codigo": "7000005",
+          "ativo": true,
+          "nascimento": "1990-01-01",
+          "candidatura": "2026-09-15T12:00:00+00:00",
+          "colunas": {
+            "SITUAÇÃO": "Ativo",
+            "SITUAÇÃO - Questionário de seleção": "FINALIZADO",
+            "NOTA - Questionário de seleção": "20,0/30,0",
+            "REPROVADO": "NÃO",
+            "Pergunta 5 - Sistema de concorrência": "Ampla concorrência",
+            "Pergunta 23 - Termo de responsabilidade": "Estou de acordo"
+          }
+        },
+        {
+          "id": "c06",
+          "codigo": "7000006",
+          "ativo": true,
+          "nascimento": "1990-01-01",
+          "candidatura": "2026-09-16T12:00:00+00:00",
+          "colunas": {
+            "SITUAÇÃO": "Ativo",
+            "SITUAÇÃO - Questionário de seleção": "FINALIZADO",
+            "NOTA - Questionário de seleção": "26,0/30,0",
+            "REPROVADO": "NÃO",
+            "Pergunta 5 - Sistema de concorrência": "Ampla concorrência",
+            "Pergunta 23 - Termo de responsabilidade": "Estou de acordo"
+          }
+        },
+        {
+          "id": "c07",
+          "codigo": "7000007",
+          "ativo": true,
+          "nascimento": "1990-01-01",
+          "candidatura": "2026-09-17T12:00:00+00:00",
+          "colunas": {
+            "SITUAÇÃO": "Ativo",
+            "SITUAÇÃO - Questionário de seleção": "FINALIZADO",
+            "NOTA - Questionário de seleção": "18,5/30,0",
+            "REPROVADO": "NÃO",
+            "Pergunta 5 - Sistema de concorrência": "Ampla concorrência",
+            "Pergunta 23 - Termo de responsabilidade": "Estou de acordo"
+          }
+        },
+        {
+          "id": "c08",
+          "codigo": "7000008",
+          "ativo": true,
+          "nascimento": "1990-01-01",
+          "candidatura": "2026-09-18T12:00:00+00:00",
+          "colunas": {
+            "SITUAÇÃO": "Ativo",
+            "SITUAÇÃO - Questionário de seleção": "FINALIZADO",
+            "NOTA - Questionário de seleção": "15,0/30,0",
+            "REPROVADO": "NÃO",
+            "Pergunta 5 - Sistema de concorrência": "Ampla concorrência",
+            "Pergunta 23 - Termo de responsabilidade": "Estou de acordo"
+          }
+        },
+        {
+          "id": "c09",
+          "codigo": "7000009",
+          "ativo": true,
+          "nascimento": "1990-01-01",
+          "candidatura": "2026-09-19T12:00:00+00:00",
+          "colunas": {
+            "SITUAÇÃO": "Ativo",
+            "SITUAÇÃO - Questionário de seleção": "FINALIZADO",
+            "NOTA - Questionário de seleção": "25,0/30,0",
+            "REPROVADO": "NÃO",
+            "Pergunta 5 - Sistema de concorrência": "Ampla concorrência",
+            "Pergunta 23 - Termo de responsabilidade": "Não estou de acordo"
+          }
+        }
+      ],
+      "anterior": {},
+      "ultimo_lote": 0,
+      "refazer": false,
+      "hoje": "2026-10-06",
+      "esperado": {
+        "linhas": {
+          "c01": {
+            "situacao": "NO_LOTE",
+            "motivo_codigo": null,
+            "posicao": 2,
+            "posicao_modalidade": 2,
+            "lote": 1,
+            "lista_lote": "GERAL",
+            "entrada": "INICIAL",
+            "motivo_entrada": "Lote inicial: 2 × (1 + CR) = 4",
+            "nota": 24,
+            "origem_nota": "ART",
+            "divergente": false,
+            "modalidade": "AC"
+          },
+          "c02": {
+            "situacao": "ELIMINADO",
+            "motivo_codigo": "CANCELADO",
+            "posicao": null,
+            "posicao_modalidade": null,
+            "lote": null,
+            "lista_lote": null,
+            "entrada": null,
+            "motivo_entrada": null,
+            "nota": 29,
+            "origem_nota": "ART",
+            "divergente": false,
+            "modalidade": "AC"
+          },
+          "c03": {
+            "situacao": "ELIMINADO",
+            "motivo_codigo": "QUESTIONARIO",
+            "posicao": null,
+            "posicao_modalidade": null,
+            "lote": null,
+            "lista_lote": null,
+            "entrada": null,
+            "motivo_entrada": null,
+            "nota": 28,
+            "origem_nota": "ART",
+            "divergente": false,
+            "modalidade": "AC"
+          },
+          "c04": {
+            "situacao": "ELIMINADO",
+            "motivo_codigo": "REPROVADO_EMPREGARE",
+            "posicao": null,
+            "posicao_modalidade": null,
+            "lote": null,
+            "lista_lote": null,
+            "entrada": null,
+            "motivo_entrada": null,
+            "nota": 27,
+            "origem_nota": "ART",
+            "divergente": false,
+            "modalidade": "AC"
+          },
+          "c05": {
+            "situacao": "NO_LOTE",
+            "motivo_codigo": null,
+            "posicao": 3,
+            "posicao_modalidade": 3,
+            "lote": 1,
+            "lista_lote": "GERAL",
+            "entrada": "INICIAL",
+            "motivo_entrada": "Lote inicial: 2 × (1 + CR) = 4",
+            "nota": 20,
+            "origem_nota": "ART",
+            "divergente": false,
+            "modalidade": "AC"
+          },
+          "c06": {
+            "situacao": "NO_LOTE",
+            "motivo_codigo": null,
+            "posicao": 1,
+            "posicao_modalidade": 1,
+            "lote": 1,
+            "lista_lote": "GERAL",
+            "entrada": "INICIAL",
+            "motivo_entrada": "Lote inicial: 2 × (1 + CR) = 4",
+            "nota": 26,
+            "origem_nota": "ART",
+            "divergente": false,
+            "modalidade": "AC"
+          },
+          "c07": {
+            "situacao": "NO_LOTE",
+            "motivo_codigo": null,
+            "posicao": 4,
+            "posicao_modalidade": 4,
+            "lote": 1,
+            "lista_lote": "GERAL",
+            "entrada": "INICIAL",
+            "motivo_entrada": "Lote inicial: 2 × (1 + CR) = 4",
+            "nota": 18.5,
+            "origem_nota": "ART",
+            "divergente": false,
+            "modalidade": "AC"
+          },
+          "c08": {
+            "situacao": "RANQUEADO",
+            "motivo_codigo": null,
+            "posicao": 5,
+            "posicao_modalidade": 5,
+            "lote": null,
+            "lista_lote": null,
+            "entrada": null,
+            "motivo_entrada": null,
+            "nota": 15,
+            "origem_nota": "ART",
+            "divergente": false,
+            "modalidade": "AC"
+          },
+          "c09": {
+            "situacao": "ELIMINADO",
+            "motivo_codigo": "TERMO",
+            "posicao": null,
+            "posicao_modalidade": null,
+            "lote": null,
+            "lista_lote": null,
+            "entrada": null,
+            "motivo_entrada": null,
+            "nota": 25,
+            "origem_nota": "ART",
+            "divergente": false,
+            "modalidade": "AC"
+          }
+        },
+        "resumo": {
+          "inscritos": 9,
+          "eliminados": 4,
+          "ranqueados": 5,
+          "no_lote": 4,
+          "tamanho": 4,
+          "descricao": "2 × (1 + CR) = 4",
+          "por_modalidade": null,
+          "art_corte": 18.5,
+          "divergencias": 0,
+          "sem_art": 0,
+          "acima_do_corte": 0,
+          "entraram": 4,
+          "lote_novo": 1,
+          "saidas": [],
+          "avisos": []
+        }
+      }
+    },
+    {
+      "nome": "empatados na linha de corte entram no lote; a candidatura mais antiga desempata a posição",
+      "historia": "AM-4.2, AM-5.1",
+      "regra": {
+        "schema": 1,
+        "titulo_etapa": "Avaliação Documental e de Títulos",
+        "provisoria": {
+          "eliminacao_automatica": [
+            {
+              "codigo": "CANCELADO",
+              "coluna": "SITUAÇÃO",
+              "quando": ["CANCELADO"],
+              "motivo": "Cancelou a inscrição"
+            },
+            {
+              "codigo": "QUESTIONARIO",
+              "coluna_prefixo": "SITUAÇÃO - ",
+              "exceto": ["FINALIZADO"],
+              "motivo": "Não finalizou o questionário"
+            },
+            {
+              "codigo": "REPROVADO_EMPREGARE",
+              "coluna": "REPROVADO",
+              "quando": ["SIM"],
+              "motivo": "Reprovado na Empregare"
+            },
+            {
+              "codigo": "TERMO",
+              "pergunta": "Pergunta 23 -",
+              "quando": ["Não estou de acordo"],
+              "motivo": "Recusou o termo de responsabilidade"
+            }
+          ],
+          "nota_declarada": [],
+          "divergencia_tolerancia": 0
+        },
+        "lote": {
+          "base": "MULTIPLO_VAGAS",
+          "multiplo": 1,
+          "fixo": null,
+          "inclui_cr": true,
+          "por_modalidade": false,
+          "inclui_empatados": true,
+          "linha_anda": true,
+          "publica_reposicao": false
+        },
+        "blocos": [
+          {
+            "codigo": "MODALIDADE",
+            "titulo": "Sistema de concorrência",
+            "tipo": "REGISTRO",
+            "perguntas": ["Pergunta 5 -"]
+          }
+        ]
+      },
+      "vaga": {
+        "codigo": "900001",
+        "vagas_imediatas": 1,
+        "cadastro_reserva": true,
+        "modalidades": {
+          "Ampla Concorrência": 1
+        }
+      },
+      "candidatos": [
+        {
+          "id": "c01",
+          "codigo": "7000001",
+          "ativo": true,
+          "nascimento": "1990-01-01",
+          "candidatura": "2026-09-11T12:00:00+00:00",
+          "colunas": {
+            "SITUAÇÃO": "Ativo",
+            "SITUAÇÃO - Questionário de seleção": "FINALIZADO",
+            "NOTA - Questionário de seleção": "25,0/30,0",
+            "REPROVADO": "NÃO",
+            "Pergunta 5 - Sistema de concorrência": "Ampla concorrência",
+            "Pergunta 23 - Termo de responsabilidade": "Estou de acordo"
+          }
+        },
+        {
+          "id": "c02",
+          "codigo": "7000002",
+          "ativo": true,
+          "nascimento": "1990-01-01",
+          "candidatura": "2026-09-20T12:00:00+00:00",
+          "colunas": {
+            "SITUAÇÃO": "Ativo",
+            "SITUAÇÃO - Questionário de seleção": "FINALIZADO",
+            "NOTA - Questionário de seleção": "22,0/30,0",
+            "REPROVADO": "NÃO",
+            "Pergunta 5 - Sistema de concorrência": "Ampla concorrência",
+            "Pergunta 23 - Termo de responsabilidade": "Estou de acordo"
+          }
+        },
+        {
+          "id": "c03",
+          "codigo": "7000003",
+          "ativo": true,
+          "nascimento": "1990-01-01",
+          "candidatura": "2026-09-15T12:00:00+00:00",
+          "colunas": {
+            "SITUAÇÃO": "Ativo",
+            "SITUAÇÃO - Questionário de seleção": "FINALIZADO",
+            "NOTA - Questionário de seleção": "22,0/30,0",
+            "REPROVADO": "NÃO",
+            "Pergunta 5 - Sistema de concorrência": "Ampla concorrência",
+            "Pergunta 23 - Termo de responsabilidade": "Estou de acordo"
+          }
+        },
+        {
+          "id": "c04",
+          "codigo": "7000004",
+          "ativo": true,
+          "nascimento": "1990-01-01",
+          "candidatura": "2026-09-18T12:00:00+00:00",
+          "colunas": {
+            "SITUAÇÃO": "Ativo",
+            "SITUAÇÃO - Questionário de seleção": "FINALIZADO",
+            "NOTA - Questionário de seleção": "22,0/30,0",
+            "REPROVADO": "NÃO",
+            "Pergunta 5 - Sistema de concorrência": "Ampla concorrência",
+            "Pergunta 23 - Termo de responsabilidade": "Estou de acordo"
+          }
+        },
+        {
+          "id": "c05",
+          "codigo": "7000005",
+          "ativo": true,
+          "nascimento": "1990-01-01",
+          "candidatura": "2026-09-15T12:00:00+00:00",
+          "colunas": {
+            "SITUAÇÃO": "Ativo",
+            "SITUAÇÃO - Questionário de seleção": "FINALIZADO",
+            "NOTA - Questionário de seleção": "10,0/30,0",
+            "REPROVADO": "NÃO",
+            "Pergunta 5 - Sistema de concorrência": "Ampla concorrência",
+            "Pergunta 23 - Termo de responsabilidade": "Estou de acordo"
+          }
+        }
+      ],
+      "anterior": {},
+      "ultimo_lote": 0,
+      "refazer": false,
+      "hoje": "2026-10-06",
+      "esperado": {
+        "linhas": {
+          "c01": {
+            "situacao": "NO_LOTE",
+            "motivo_codigo": null,
+            "posicao": 1,
+            "posicao_modalidade": 1,
+            "lote": 1,
+            "lista_lote": "GERAL",
+            "entrada": "INICIAL",
+            "motivo_entrada": "Lote inicial: 1 × (1 + CR) = 2",
+            "nota": 25,
+            "origem_nota": "ART",
+            "divergente": false,
+            "modalidade": "AC"
+          },
+          "c02": {
+            "situacao": "NO_LOTE",
+            "motivo_codigo": null,
+            "posicao": 4,
+            "posicao_modalidade": 4,
+            "lote": 1,
+            "lista_lote": "GERAL",
+            "entrada": "INICIAL",
+            "motivo_entrada": "Empatado na linha de corte (nota 22)",
+            "nota": 22,
+            "origem_nota": "ART",
+            "divergente": false,
+            "modalidade": "AC"
+          },
+          "c03": {
+            "situacao": "NO_LOTE",
+            "motivo_codigo": null,
+            "posicao": 2,
+            "posicao_modalidade": 2,
+            "lote": 1,
+            "lista_lote": "GERAL",
+            "entrada": "INICIAL",
+            "motivo_entrada": "Lote inicial: 1 × (1 + CR) = 2",
+            "nota": 22,
+            "origem_nota": "ART",
+            "divergente": false,
+            "modalidade": "AC"
+          },
+          "c04": {
+            "situacao": "NO_LOTE",
+            "motivo_codigo": null,
+            "posicao": 3,
+            "posicao_modalidade": 3,
+            "lote": 1,
+            "lista_lote": "GERAL",
+            "entrada": "INICIAL",
+            "motivo_entrada": "Empatado na linha de corte (nota 22)",
+            "nota": 22,
+            "origem_nota": "ART",
+            "divergente": false,
+            "modalidade": "AC"
+          },
+          "c05": {
+            "situacao": "RANQUEADO",
+            "motivo_codigo": null,
+            "posicao": 5,
+            "posicao_modalidade": 5,
+            "lote": null,
+            "lista_lote": null,
+            "entrada": null,
+            "motivo_entrada": null,
+            "nota": 10,
+            "origem_nota": "ART",
+            "divergente": false,
+            "modalidade": "AC"
+          }
+        },
+        "resumo": {
+          "inscritos": 5,
+          "eliminados": 0,
+          "ranqueados": 5,
+          "no_lote": 4,
+          "tamanho": 2,
+          "descricao": "1 × (1 + CR) = 2",
+          "por_modalidade": null,
+          "art_corte": 22,
+          "divergencias": 0,
+          "sem_art": 0,
+          "acima_do_corte": 0,
+          "entraram": 4,
+          "lote_novo": 1,
+          "saidas": [],
+          "avisos": []
+        }
+      }
+    },
+    {
+      "nome": "sem os empatados: o lote para no tamanho",
+      "historia": "AM-5.1",
+      "regra": {
+        "schema": 1,
+        "titulo_etapa": "Avaliação Documental e de Títulos",
+        "provisoria": {
+          "eliminacao_automatica": [
+            {
+              "codigo": "CANCELADO",
+              "coluna": "SITUAÇÃO",
+              "quando": ["CANCELADO"],
+              "motivo": "Cancelou a inscrição"
+            },
+            {
+              "codigo": "QUESTIONARIO",
+              "coluna_prefixo": "SITUAÇÃO - ",
+              "exceto": ["FINALIZADO"],
+              "motivo": "Não finalizou o questionário"
+            },
+            {
+              "codigo": "REPROVADO_EMPREGARE",
+              "coluna": "REPROVADO",
+              "quando": ["SIM"],
+              "motivo": "Reprovado na Empregare"
+            },
+            {
+              "codigo": "TERMO",
+              "pergunta": "Pergunta 23 -",
+              "quando": ["Não estou de acordo"],
+              "motivo": "Recusou o termo de responsabilidade"
+            }
+          ],
+          "nota_declarada": [],
+          "divergencia_tolerancia": 0
+        },
+        "lote": {
+          "base": "MULTIPLO_VAGAS",
+          "multiplo": 1,
+          "fixo": null,
+          "inclui_cr": true,
+          "por_modalidade": false,
+          "inclui_empatados": false,
+          "linha_anda": true,
+          "publica_reposicao": false
+        },
+        "blocos": [
+          {
+            "codigo": "MODALIDADE",
+            "titulo": "Sistema de concorrência",
+            "tipo": "REGISTRO",
+            "perguntas": ["Pergunta 5 -"]
+          }
+        ]
+      },
+      "vaga": {
+        "codigo": "900001",
+        "vagas_imediatas": 1,
+        "cadastro_reserva": true,
+        "modalidades": {
+          "Ampla Concorrência": 1
+        }
+      },
+      "candidatos": [
+        {
+          "id": "c01",
+          "codigo": "7000001",
+          "ativo": true,
+          "nascimento": "1990-01-01",
+          "candidatura": "2026-09-11T12:00:00+00:00",
+          "colunas": {
+            "SITUAÇÃO": "Ativo",
+            "SITUAÇÃO - Questionário de seleção": "FINALIZADO",
+            "NOTA - Questionário de seleção": "25,0/30,0",
+            "REPROVADO": "NÃO",
+            "Pergunta 5 - Sistema de concorrência": "Ampla concorrência",
+            "Pergunta 23 - Termo de responsabilidade": "Estou de acordo"
+          }
+        },
+        {
+          "id": "c02",
+          "codigo": "7000002",
+          "ativo": true,
+          "nascimento": "1990-01-01",
+          "candidatura": "2026-09-20T12:00:00+00:00",
+          "colunas": {
+            "SITUAÇÃO": "Ativo",
+            "SITUAÇÃO - Questionário de seleção": "FINALIZADO",
+            "NOTA - Questionário de seleção": "22,0/30,0",
+            "REPROVADO": "NÃO",
+            "Pergunta 5 - Sistema de concorrência": "Ampla concorrência",
+            "Pergunta 23 - Termo de responsabilidade": "Estou de acordo"
+          }
+        },
+        {
+          "id": "c03",
+          "codigo": "7000003",
+          "ativo": true,
+          "nascimento": "1990-01-01",
+          "candidatura": "2026-09-15T12:00:00+00:00",
+          "colunas": {
+            "SITUAÇÃO": "Ativo",
+            "SITUAÇÃO - Questionário de seleção": "FINALIZADO",
+            "NOTA - Questionário de seleção": "22,0/30,0",
+            "REPROVADO": "NÃO",
+            "Pergunta 5 - Sistema de concorrência": "Ampla concorrência",
+            "Pergunta 23 - Termo de responsabilidade": "Estou de acordo"
+          }
+        },
+        {
+          "id": "c04",
+          "codigo": "7000004",
+          "ativo": true,
+          "nascimento": "1990-01-01",
+          "candidatura": "2026-09-18T12:00:00+00:00",
+          "colunas": {
+            "SITUAÇÃO": "Ativo",
+            "SITUAÇÃO - Questionário de seleção": "FINALIZADO",
+            "NOTA - Questionário de seleção": "22,0/30,0",
+            "REPROVADO": "NÃO",
+            "Pergunta 5 - Sistema de concorrência": "Ampla concorrência",
+            "Pergunta 23 - Termo de responsabilidade": "Estou de acordo"
+          }
+        }
+      ],
+      "anterior": {},
+      "ultimo_lote": 0,
+      "refazer": false,
+      "hoje": "2026-10-06",
+      "esperado": {
+        "linhas": {
+          "c01": {
+            "situacao": "NO_LOTE",
+            "motivo_codigo": null,
+            "posicao": 1,
+            "posicao_modalidade": 1,
+            "lote": 1,
+            "lista_lote": "GERAL",
+            "entrada": "INICIAL",
+            "motivo_entrada": "Lote inicial: 1 × (1 + CR) = 2",
+            "nota": 25,
+            "origem_nota": "ART",
+            "divergente": false,
+            "modalidade": "AC"
+          },
+          "c02": {
+            "situacao": "RANQUEADO",
+            "motivo_codigo": null,
+            "posicao": 4,
+            "posicao_modalidade": 4,
+            "lote": null,
+            "lista_lote": null,
+            "entrada": null,
+            "motivo_entrada": null,
+            "nota": 22,
+            "origem_nota": "ART",
+            "divergente": false,
+            "modalidade": "AC"
+          },
+          "c03": {
+            "situacao": "NO_LOTE",
+            "motivo_codigo": null,
+            "posicao": 2,
+            "posicao_modalidade": 2,
+            "lote": 1,
+            "lista_lote": "GERAL",
+            "entrada": "INICIAL",
+            "motivo_entrada": "Lote inicial: 1 × (1 + CR) = 2",
+            "nota": 22,
+            "origem_nota": "ART",
+            "divergente": false,
+            "modalidade": "AC"
+          },
+          "c04": {
+            "situacao": "RANQUEADO",
+            "motivo_codigo": null,
+            "posicao": 3,
+            "posicao_modalidade": 3,
+            "lote": null,
+            "lista_lote": null,
+            "entrada": null,
+            "motivo_entrada": null,
+            "nota": 22,
+            "origem_nota": "ART",
+            "divergente": false,
+            "modalidade": "AC"
+          }
+        },
+        "resumo": {
+          "inscritos": 4,
+          "eliminados": 0,
+          "ranqueados": 4,
+          "no_lote": 2,
+          "tamanho": 2,
+          "descricao": "1 × (1 + CR) = 2",
+          "por_modalidade": null,
+          "art_corte": 22,
+          "divergencias": 0,
+          "sem_art": 0,
+          "acima_do_corte": 0,
+          "entraram": 2,
+          "lote_novo": 1,
+          "saidas": [],
+          "avisos": []
+        }
+      }
+    },
+    {
+      "nome": "desempate: idoso mais velho primeiro, depois a candidatura",
+      "historia": "AM-4.2",
+      "regra": {
+        "schema": 1,
+        "titulo_etapa": "Avaliação Documental e de Títulos",
+        "provisoria": {
+          "eliminacao_automatica": [
+            {
+              "codigo": "CANCELADO",
+              "coluna": "SITUAÇÃO",
+              "quando": ["CANCELADO"],
+              "motivo": "Cancelou a inscrição"
+            },
+            {
+              "codigo": "QUESTIONARIO",
+              "coluna_prefixo": "SITUAÇÃO - ",
+              "exceto": ["FINALIZADO"],
+              "motivo": "Não finalizou o questionário"
+            },
+            {
+              "codigo": "REPROVADO_EMPREGARE",
+              "coluna": "REPROVADO",
+              "quando": ["SIM"],
+              "motivo": "Reprovado na Empregare"
+            },
+            {
+              "codigo": "TERMO",
+              "pergunta": "Pergunta 23 -",
+              "quando": ["Não estou de acordo"],
+              "motivo": "Recusou o termo de responsabilidade"
+            }
+          ],
+          "nota_declarada": [],
+          "divergencia_tolerancia": 0
+        },
+        "lote": {
+          "base": "MULTIPLO_VAGAS",
+          "multiplo": 2,
+          "fixo": null,
+          "inclui_cr": true,
+          "por_modalidade": false,
+          "inclui_empatados": false,
+          "linha_anda": true,
+          "publica_reposicao": false
+        },
+        "blocos": [
+          {
+            "codigo": "MODALIDADE",
+            "titulo": "Sistema de concorrência",
+            "tipo": "REGISTRO",
+            "perguntas": ["Pergunta 5 -"]
+          }
+        ]
+      },
+      "vaga": {
+        "codigo": "900001",
+        "vagas_imediatas": 1,
+        "cadastro_reserva": true,
+        "modalidades": {
+          "Ampla Concorrência": 1
+        }
+      },
+      "candidatos": [
+        {
+          "id": "c01",
+          "codigo": "7000001",
+          "ativo": true,
+          "nascimento": "1995-05-05",
+          "candidatura": "2026-09-01T08:00:00+00:00",
+          "colunas": {
+            "SITUAÇÃO": "Ativo",
+            "SITUAÇÃO - Questionário de seleção": "FINALIZADO",
+            "NOTA - Questionário de seleção": "20,0/30,0",
+            "REPROVADO": "NÃO",
+            "Pergunta 5 - Sistema de concorrência": "Ampla concorrência",
+            "Pergunta 23 - Termo de responsabilidade": "Estou de acordo"
+          }
+        },
+        {
+          "id": "c02",
+          "codigo": "7000002",
+          "ativo": true,
+          "nascimento": "1965-10-06",
+          "candidatura": "2026-09-30T08:00:00+00:00",
+          "colunas": {
+            "SITUAÇÃO": "Ativo",
+            "SITUAÇÃO - Questionário de seleção": "FINALIZADO",
+            "NOTA - Questionário de seleção": "20,0/30,0",
+            "REPROVADO": "NÃO",
+            "Pergunta 5 - Sistema de concorrência": "Ampla concorrência",
+            "Pergunta 23 - Termo de responsabilidade": "Estou de acordo"
+          }
+        },
+        {
+          "id": "c03",
+          "codigo": "7000003",
+          "ativo": true,
+          "nascimento": "1956-02-01",
+          "candidatura": "2026-09-29T08:00:00+00:00",
+          "colunas": {
+            "SITUAÇÃO": "Ativo",
+            "SITUAÇÃO - Questionário de seleção": "FINALIZADO",
+            "NOTA - Questionário de seleção": "20,0/30,0",
+            "REPROVADO": "NÃO",
+            "Pergunta 5 - Sistema de concorrência": "Ampla concorrência",
+            "Pergunta 23 - Termo de responsabilidade": "Estou de acordo"
+          }
+        },
+        {
+          "id": "c04",
+          "codigo": "7000004",
+          "ativo": true,
+          "nascimento": "1966-10-07",
+          "candidatura": "2026-09-02T08:00:00+00:00",
+          "colunas": {
+            "SITUAÇÃO": "Ativo",
+            "SITUAÇÃO - Questionário de seleção": "FINALIZADO",
+            "NOTA - Questionário de seleção": "20,0/30,0",
+            "REPROVADO": "NÃO",
+            "Pergunta 5 - Sistema de concorrência": "Ampla concorrência",
+            "Pergunta 23 - Termo de responsabilidade": "Estou de acordo"
+          }
+        }
+      ],
+      "anterior": {},
+      "ultimo_lote": 0,
+      "refazer": false,
+      "hoje": "2026-10-06",
+      "esperado": {
+        "linhas": {
+          "c01": {
+            "situacao": "NO_LOTE",
+            "motivo_codigo": null,
+            "posicao": 3,
+            "posicao_modalidade": 3,
+            "lote": 1,
+            "lista_lote": "GERAL",
+            "entrada": "INICIAL",
+            "motivo_entrada": "Lote inicial: 2 × (1 + CR) = 4",
+            "nota": 20,
+            "origem_nota": "ART",
+            "divergente": false,
+            "modalidade": "AC"
+          },
+          "c02": {
+            "situacao": "NO_LOTE",
+            "motivo_codigo": null,
+            "posicao": 2,
+            "posicao_modalidade": 2,
+            "lote": 1,
+            "lista_lote": "GERAL",
+            "entrada": "INICIAL",
+            "motivo_entrada": "Lote inicial: 2 × (1 + CR) = 4",
+            "nota": 20,
+            "origem_nota": "ART",
+            "divergente": false,
+            "modalidade": "AC"
+          },
+          "c03": {
+            "situacao": "NO_LOTE",
+            "motivo_codigo": null,
+            "posicao": 1,
+            "posicao_modalidade": 1,
+            "lote": 1,
+            "lista_lote": "GERAL",
+            "entrada": "INICIAL",
+            "motivo_entrada": "Lote inicial: 2 × (1 + CR) = 4",
+            "nota": 20,
+            "origem_nota": "ART",
+            "divergente": false,
+            "modalidade": "AC"
+          },
+          "c04": {
+            "situacao": "NO_LOTE",
+            "motivo_codigo": null,
+            "posicao": 4,
+            "posicao_modalidade": 4,
+            "lote": 1,
+            "lista_lote": "GERAL",
+            "entrada": "INICIAL",
+            "motivo_entrada": "Lote inicial: 2 × (1 + CR) = 4",
+            "nota": 20,
+            "origem_nota": "ART",
+            "divergente": false,
+            "modalidade": "AC"
+          }
+        },
+        "resumo": {
+          "inscritos": 4,
+          "eliminados": 0,
+          "ranqueados": 4,
+          "no_lote": 4,
+          "tamanho": 4,
+          "descricao": "2 × (1 + CR) = 4",
+          "por_modalidade": null,
+          "art_corte": 20,
+          "divergencias": 0,
+          "sem_art": 0,
+          "acima_do_corte": 0,
+          "entraram": 4,
+          "lote_novo": 1,
+          "saidas": [],
+          "avisos": []
+        }
+      }
+    },
+    {
+      "nome": "sem ART vale a nota declarada (aviso); a declarada diferente da ART é divergência",
+      "historia": "AM-4.3",
+      "regra": {
+        "schema": 1,
+        "titulo_etapa": "Avaliação Documental e de Títulos",
+        "provisoria": {
+          "eliminacao_automatica": [
+            {
+              "codigo": "CANCELADO",
+              "coluna": "SITUAÇÃO",
+              "quando": ["CANCELADO"],
+              "motivo": "Cancelou a inscrição"
+            },
+            {
+              "codigo": "QUESTIONARIO",
+              "coluna_prefixo": "SITUAÇÃO - ",
+              "exceto": ["FINALIZADO"],
+              "motivo": "Não finalizou o questionário"
+            },
+            {
+              "codigo": "REPROVADO_EMPREGARE",
+              "coluna": "REPROVADO",
+              "quando": ["SIM"],
+              "motivo": "Reprovado na Empregare"
+            },
+            {
+              "codigo": "TERMO",
+              "pergunta": "Pergunta 23 -",
+              "quando": ["Não estou de acordo"],
+              "motivo": "Recusou o termo de responsabilidade"
+            }
+          ],
+          "nota_declarada": [
+            {
+              "parcial": "FORMACAO",
+              "pergunta": "Pergunta 15 -",
+              "tipo": "OPCAO",
+              "pontos": {
+                "Especialização": 1,
+                "Não possuo": 0
+              },
+              "teto": null
+            }
+          ],
+          "divergencia_tolerancia": 1
+        },
+        "lote": {
+          "base": "MULTIPLO_VAGAS",
+          "multiplo": 2,
+          "fixo": null,
+          "inclui_cr": true,
+          "por_modalidade": false,
+          "inclui_empatados": true,
+          "linha_anda": true,
+          "publica_reposicao": false
+        },
+        "blocos": [
+          {
+            "codigo": "MODALIDADE",
+            "titulo": "Sistema de concorrência",
+            "tipo": "REGISTRO",
+            "perguntas": ["Pergunta 5 -"]
+          }
+        ]
+      },
+      "vaga": {
+        "codigo": "900001",
+        "vagas_imediatas": 1,
+        "cadastro_reserva": true,
+        "modalidades": {
+          "Ampla Concorrência": 1
+        }
+      },
+      "candidatos": [
+        {
+          "id": "c01",
+          "codigo": "7000001",
+          "ativo": true,
+          "nascimento": "1990-01-01",
+          "candidatura": "2026-09-11T12:00:00+00:00",
+          "colunas": {
+            "SITUAÇÃO": "Ativo",
+            "SITUAÇÃO - Questionário de seleção": "FINALIZADO",
+            "NOTA - Questionário de seleção": "x/30",
+            "REPROVADO": "NÃO",
+            "Pergunta 5 - Sistema de concorrência": "Ampla concorrência",
+            "Pergunta 23 - Termo de responsabilidade": "Estou de acordo",
+            "Pergunta 15 - Outras formações": "Especialização"
+          }
+        },
+        {
+          "id": "c02",
+          "codigo": "7000002",
+          "ativo": true,
+          "nascimento": "1990-01-01",
+          "candidatura": "2026-09-12T12:00:00+00:00",
+          "colunas": {
+            "SITUAÇÃO": "Ativo",
+            "SITUAÇÃO - Questionário de seleção": "FINALIZADO",
+            "NOTA - Questionário de seleção": "5,0/30,0",
+            "REPROVADO": "NÃO",
+            "Pergunta 5 - Sistema de concorrência": "Ampla concorrência",
+            "Pergunta 23 - Termo de responsabilidade": "Estou de acordo",
+            "Pergunta 15 - Outras formações": "Especialização"
+          }
+        },
+        {
+          "id": "c03",
+          "codigo": "7000003",
+          "ativo": true,
+          "nascimento": "1990-01-01",
+          "candidatura": "2026-09-13T12:00:00+00:00",
+          "colunas": {
+            "SITUAÇÃO": "Ativo",
+            "SITUAÇÃO - Questionário de seleção": "FINALIZADO",
+            "NOTA - Questionário de seleção": "1,0/30,0",
+            "REPROVADO": "NÃO",
+            "Pergunta 5 - Sistema de concorrência": "Ampla concorrência",
+            "Pergunta 23 - Termo de responsabilidade": "Estou de acordo",
+            "Pergunta 15 - Outras formações": "Especialização"
+          }
+        },
+        {
+          "id": "c04",
+          "codigo": "7000004",
+          "ativo": true,
+          "nascimento": "1990-01-01",
+          "candidatura": "2026-09-14T12:00:00+00:00",
+          "colunas": {
+            "SITUAÇÃO": "Ativo",
+            "SITUAÇÃO - Questionário de seleção": "FINALIZADO",
+            "NOTA - Questionário de seleção": "2,0/30,0",
+            "REPROVADO": "NÃO",
+            "Pergunta 5 - Sistema de concorrência": "Ampla concorrência",
+            "Pergunta 23 - Termo de responsabilidade": "Estou de acordo",
+            "Pergunta 15 - Outras formações": "Não possuo"
+          }
+        }
+      ],
+      "anterior": {},
+      "ultimo_lote": 0,
+      "refazer": false,
+      "hoje": "2026-10-06",
+      "esperado": {
+        "linhas": {
+          "c01": {
+            "situacao": "NO_LOTE",
+            "motivo_codigo": null,
+            "posicao": 3,
+            "posicao_modalidade": 3,
+            "lote": 1,
+            "lista_lote": "GERAL",
+            "entrada": "INICIAL",
+            "motivo_entrada": "Lote inicial: 2 × (1 + CR) = 4",
+            "nota": 1,
+            "origem_nota": "DECLARADA",
+            "divergente": false,
+            "modalidade": "AC"
+          },
+          "c02": {
+            "situacao": "NO_LOTE",
+            "motivo_codigo": null,
+            "posicao": 1,
+            "posicao_modalidade": 1,
+            "lote": 1,
+            "lista_lote": "GERAL",
+            "entrada": "INICIAL",
+            "motivo_entrada": "Lote inicial: 2 × (1 + CR) = 4",
+            "nota": 5,
+            "origem_nota": "ART",
+            "divergente": true,
+            "modalidade": "AC"
+          },
+          "c03": {
+            "situacao": "NO_LOTE",
+            "motivo_codigo": null,
+            "posicao": 4,
+            "posicao_modalidade": 4,
+            "lote": 1,
+            "lista_lote": "GERAL",
+            "entrada": "INICIAL",
+            "motivo_entrada": "Lote inicial: 2 × (1 + CR) = 4",
+            "nota": 1,
+            "origem_nota": "ART",
+            "divergente": false,
+            "modalidade": "AC"
+          },
+          "c04": {
+            "situacao": "NO_LOTE",
+            "motivo_codigo": null,
+            "posicao": 2,
+            "posicao_modalidade": 2,
+            "lote": 1,
+            "lista_lote": "GERAL",
+            "entrada": "INICIAL",
+            "motivo_entrada": "Lote inicial: 2 × (1 + CR) = 4",
+            "nota": 2,
+            "origem_nota": "ART",
+            "divergente": true,
+            "modalidade": "AC"
+          }
+        },
+        "resumo": {
+          "inscritos": 4,
+          "eliminados": 0,
+          "ranqueados": 4,
+          "no_lote": 4,
+          "tamanho": 4,
+          "descricao": "2 × (1 + CR) = 4",
+          "por_modalidade": null,
+          "art_corte": 1,
+          "divergencias": 2,
+          "sem_art": 1,
+          "acima_do_corte": 0,
+          "entraram": 4,
+          "lote_novo": 1,
+          "saidas": [],
+          "avisos": ["ART_AUSENTE"]
+        }
+      }
+    },
+    {
+      "nome": "a linha anda: quem cancelou sai do lote e o próximo entra num lote novo, com o motivo",
+      "historia": "AM-5.3, AM-5.5",
+      "regra": {
+        "schema": 1,
+        "titulo_etapa": "Avaliação Documental e de Títulos",
+        "provisoria": {
+          "eliminacao_automatica": [
+            {
+              "codigo": "CANCELADO",
+              "coluna": "SITUAÇÃO",
+              "quando": ["CANCELADO"],
+              "motivo": "Cancelou a inscrição"
+            },
+            {
+              "codigo": "QUESTIONARIO",
+              "coluna_prefixo": "SITUAÇÃO - ",
+              "exceto": ["FINALIZADO"],
+              "motivo": "Não finalizou o questionário"
+            },
+            {
+              "codigo": "REPROVADO_EMPREGARE",
+              "coluna": "REPROVADO",
+              "quando": ["SIM"],
+              "motivo": "Reprovado na Empregare"
+            },
+            {
+              "codigo": "TERMO",
+              "pergunta": "Pergunta 23 -",
+              "quando": ["Não estou de acordo"],
+              "motivo": "Recusou o termo de responsabilidade"
+            }
+          ],
+          "nota_declarada": [],
+          "divergencia_tolerancia": 0
+        },
+        "lote": {
+          "base": "MULTIPLO_VAGAS",
+          "multiplo": 1,
+          "fixo": null,
+          "inclui_cr": true,
+          "por_modalidade": false,
+          "inclui_empatados": true,
+          "linha_anda": true,
+          "publica_reposicao": false
+        },
+        "blocos": [
+          {
+            "codigo": "MODALIDADE",
+            "titulo": "Sistema de concorrência",
+            "tipo": "REGISTRO",
+            "perguntas": ["Pergunta 5 -"]
+          }
+        ]
+      },
+      "vaga": {
+        "codigo": "900001",
+        "vagas_imediatas": 1,
+        "cadastro_reserva": true,
+        "modalidades": {
+          "Ampla Concorrência": 1
+        }
+      },
+      "candidatos": [
+        {
+          "id": "c01",
+          "codigo": "7000001",
+          "ativo": true,
+          "nascimento": "1990-01-01",
+          "candidatura": "2026-09-11T12:00:00+00:00",
+          "colunas": {
+            "SITUAÇÃO": "Cancelado",
+            "SITUAÇÃO - Questionário de seleção": "FINALIZADO",
+            "NOTA - Questionário de seleção": "28,0/30,0",
+            "REPROVADO": "NÃO",
+            "Pergunta 5 - Sistema de concorrência": "Ampla concorrência",
+            "Pergunta 23 - Termo de responsabilidade": "Estou de acordo"
+          }
+        },
+        {
+          "id": "c02",
+          "codigo": "7000002",
+          "ativo": true,
+          "nascimento": "1990-01-01",
+          "candidatura": "2026-09-12T12:00:00+00:00",
+          "colunas": {
+            "SITUAÇÃO": "Ativo",
+            "SITUAÇÃO - Questionário de seleção": "FINALIZADO",
+            "NOTA - Questionário de seleção": "25,0/30,0",
+            "REPROVADO": "NÃO",
+            "Pergunta 5 - Sistema de concorrência": "Ampla concorrência",
+            "Pergunta 23 - Termo de responsabilidade": "Estou de acordo"
+          }
+        },
+        {
+          "id": "c03",
+          "codigo": "7000003",
+          "ativo": true,
+          "nascimento": "1990-01-01",
+          "candidatura": "2026-09-13T12:00:00+00:00",
+          "colunas": {
+            "SITUAÇÃO": "Ativo",
+            "SITUAÇÃO - Questionário de seleção": "FINALIZADO",
+            "NOTA - Questionário de seleção": "20,0/30,0",
+            "REPROVADO": "NÃO",
+            "Pergunta 5 - Sistema de concorrência": "Ampla concorrência",
+            "Pergunta 23 - Termo de responsabilidade": "Estou de acordo"
+          }
+        },
+        {
+          "id": "c04",
+          "codigo": "7000004",
+          "ativo": true,
+          "nascimento": "1990-01-01",
+          "candidatura": "2026-09-14T12:00:00+00:00",
+          "colunas": {
+            "SITUAÇÃO": "Ativo",
+            "SITUAÇÃO - Questionário de seleção": "FINALIZADO",
+            "NOTA - Questionário de seleção": "18,0/30,0",
+            "REPROVADO": "NÃO",
+            "Pergunta 5 - Sistema de concorrência": "Ampla concorrência",
+            "Pergunta 23 - Termo de responsabilidade": "Estou de acordo"
+          }
+        }
+      ],
+      "anterior": {
+        "c01": {
+          "situacao": "NO_LOTE",
+          "posicao": 1,
+          "lote": 1,
+          "lista_lote": "GERAL",
+          "entrada": "INICIAL",
+          "motivo_entrada": "Lote inicial: 1 × (1 + CR) = 2"
+        },
+        "c02": {
+          "situacao": "NO_LOTE",
+          "posicao": 2,
+          "lote": 1,
+          "lista_lote": "GERAL",
+          "entrada": "INICIAL",
+          "motivo_entrada": "Lote inicial: 1 × (1 + CR) = 2"
+        },
+        "c03": {
+          "situacao": "RANQUEADO",
+          "posicao": 3
+        },
+        "c04": {
+          "situacao": "RANQUEADO",
+          "posicao": 4
+        }
+      },
+      "ultimo_lote": 1,
+      "refazer": false,
+      "hoje": "2026-10-06",
+      "esperado": {
+        "linhas": {
+          "c01": {
+            "situacao": "ELIMINADO",
+            "motivo_codigo": "CANCELADO",
+            "posicao": null,
+            "posicao_modalidade": null,
+            "lote": null,
+            "lista_lote": null,
+            "entrada": null,
+            "motivo_entrada": null,
+            "nota": 28,
+            "origem_nota": "ART",
+            "divergente": false,
+            "modalidade": "AC"
+          },
+          "c02": {
+            "situacao": "NO_LOTE",
+            "motivo_codigo": null,
+            "posicao": 1,
+            "posicao_modalidade": 1,
+            "lote": 1,
+            "lista_lote": "GERAL",
+            "entrada": "INICIAL",
+            "motivo_entrada": "Lote inicial: 1 × (1 + CR) = 2",
+            "nota": 25,
+            "origem_nota": "ART",
+            "divergente": false,
+            "modalidade": "AC"
+          },
+          "c03": {
+            "situacao": "NO_LOTE",
+            "motivo_codigo": null,
+            "posicao": 2,
+            "posicao_modalidade": 2,
+            "lote": 2,
+            "lista_lote": "GERAL",
+            "entrada": "REPOSICAO",
+            "motivo_entrada": "Entrou no lugar de 7000001 (Cancelou a inscrição)",
+            "nota": 20,
+            "origem_nota": "ART",
+            "divergente": false,
+            "modalidade": "AC"
+          },
+          "c04": {
+            "situacao": "RANQUEADO",
+            "motivo_codigo": null,
+            "posicao": 3,
+            "posicao_modalidade": 3,
+            "lote": null,
+            "lista_lote": null,
+            "entrada": null,
+            "motivo_entrada": null,
+            "nota": 18,
+            "origem_nota": "ART",
+            "divergente": false,
+            "modalidade": "AC"
+          }
+        },
+        "resumo": {
+          "inscritos": 4,
+          "eliminados": 1,
+          "ranqueados": 3,
+          "no_lote": 2,
+          "tamanho": 2,
+          "descricao": "1 × (1 + CR) = 2",
+          "por_modalidade": null,
+          "art_corte": 20,
+          "divergencias": 0,
+          "sem_art": 0,
+          "acima_do_corte": 0,
+          "entraram": 1,
+          "lote_novo": 2,
+          "saidas": [
+            {
+              "id": "c01",
+              "codigo": "7000001",
+              "motivo": "Cancelou a inscrição"
+            }
+          ],
+          "avisos": []
+        }
+      }
+    },
+    {
+      "nome": "um inscrito novo com ART maior não tira ninguém do lote (aviso de acima do corte)",
+      "historia": "AM-5.5",
+      "regra": {
+        "schema": 1,
+        "titulo_etapa": "Avaliação Documental e de Títulos",
+        "provisoria": {
+          "eliminacao_automatica": [
+            {
+              "codigo": "CANCELADO",
+              "coluna": "SITUAÇÃO",
+              "quando": ["CANCELADO"],
+              "motivo": "Cancelou a inscrição"
+            },
+            {
+              "codigo": "QUESTIONARIO",
+              "coluna_prefixo": "SITUAÇÃO - ",
+              "exceto": ["FINALIZADO"],
+              "motivo": "Não finalizou o questionário"
+            },
+            {
+              "codigo": "REPROVADO_EMPREGARE",
+              "coluna": "REPROVADO",
+              "quando": ["SIM"],
+              "motivo": "Reprovado na Empregare"
+            },
+            {
+              "codigo": "TERMO",
+              "pergunta": "Pergunta 23 -",
+              "quando": ["Não estou de acordo"],
+              "motivo": "Recusou o termo de responsabilidade"
+            }
+          ],
+          "nota_declarada": [],
+          "divergencia_tolerancia": 0
+        },
+        "lote": {
+          "base": "MULTIPLO_VAGAS",
+          "multiplo": 1,
+          "fixo": null,
+          "inclui_cr": true,
+          "por_modalidade": false,
+          "inclui_empatados": true,
+          "linha_anda": true,
+          "publica_reposicao": false
+        },
+        "blocos": [
+          {
+            "codigo": "MODALIDADE",
+            "titulo": "Sistema de concorrência",
+            "tipo": "REGISTRO",
+            "perguntas": ["Pergunta 5 -"]
+          }
+        ]
+      },
+      "vaga": {
+        "codigo": "900001",
+        "vagas_imediatas": 1,
+        "cadastro_reserva": true,
+        "modalidades": {
+          "Ampla Concorrência": 1
+        }
+      },
+      "candidatos": [
+        {
+          "id": "c01",
+          "codigo": "7000001",
+          "ativo": true,
+          "nascimento": "1990-01-01",
+          "candidatura": "2026-09-11T12:00:00+00:00",
+          "colunas": {
+            "SITUAÇÃO": "Ativo",
+            "SITUAÇÃO - Questionário de seleção": "FINALIZADO",
+            "NOTA - Questionário de seleção": "24,0/30,0",
+            "REPROVADO": "NÃO",
+            "Pergunta 5 - Sistema de concorrência": "Ampla concorrência",
+            "Pergunta 23 - Termo de responsabilidade": "Estou de acordo"
+          }
+        },
+        {
+          "id": "c02",
+          "codigo": "7000002",
+          "ativo": true,
+          "nascimento": "1990-01-01",
+          "candidatura": "2026-09-12T12:00:00+00:00",
+          "colunas": {
+            "SITUAÇÃO": "Ativo",
+            "SITUAÇÃO - Questionário de seleção": "FINALIZADO",
+            "NOTA - Questionário de seleção": "22,0/30,0",
+            "REPROVADO": "NÃO",
+            "Pergunta 5 - Sistema de concorrência": "Ampla concorrência",
+            "Pergunta 23 - Termo de responsabilidade": "Estou de acordo"
+          }
+        },
+        {
+          "id": "c03",
+          "codigo": "7000003",
+          "ativo": true,
+          "nascimento": "1990-01-01",
+          "candidatura": "2026-09-13T12:00:00+00:00",
+          "colunas": {
+            "SITUAÇÃO": "Ativo",
+            "SITUAÇÃO - Questionário de seleção": "FINALIZADO",
+            "NOTA - Questionário de seleção": "20,0/30,0",
+            "REPROVADO": "NÃO",
+            "Pergunta 5 - Sistema de concorrência": "Ampla concorrência",
+            "Pergunta 23 - Termo de responsabilidade": "Estou de acordo"
+          }
+        },
+        {
+          "id": "c09",
+          "codigo": "7000009",
+          "ativo": true,
+          "nascimento": "1990-01-01",
+          "candidatura": "2026-09-19T12:00:00+00:00",
+          "colunas": {
+            "SITUAÇÃO": "Ativo",
+            "SITUAÇÃO - Questionário de seleção": "FINALIZADO",
+            "NOTA - Questionário de seleção": "29,0/30,0",
+            "REPROVADO": "NÃO",
+            "Pergunta 5 - Sistema de concorrência": "Ampla concorrência",
+            "Pergunta 23 - Termo de responsabilidade": "Estou de acordo"
+          }
+        }
+      ],
+      "anterior": {
+        "c01": {
+          "situacao": "NO_LOTE",
+          "posicao": 1,
+          "lote": 1,
+          "lista_lote": "GERAL",
+          "entrada": "INICIAL",
+          "motivo_entrada": "Lote inicial: 1 × (1 + CR) = 2"
+        },
+        "c02": {
+          "situacao": "NO_LOTE",
+          "posicao": 2,
+          "lote": 1,
+          "lista_lote": "GERAL",
+          "entrada": "INICIAL",
+          "motivo_entrada": "Lote inicial: 1 × (1 + CR) = 2"
+        },
+        "c03": {
+          "situacao": "RANQUEADO",
+          "posicao": 3
+        }
+      },
+      "ultimo_lote": 1,
+      "refazer": false,
+      "hoje": "2026-10-06",
+      "esperado": {
+        "linhas": {
+          "c01": {
+            "situacao": "NO_LOTE",
+            "motivo_codigo": null,
+            "posicao": 2,
+            "posicao_modalidade": 2,
+            "lote": 1,
+            "lista_lote": "GERAL",
+            "entrada": "INICIAL",
+            "motivo_entrada": "Lote inicial: 1 × (1 + CR) = 2",
+            "nota": 24,
+            "origem_nota": "ART",
+            "divergente": false,
+            "modalidade": "AC"
+          },
+          "c02": {
+            "situacao": "NO_LOTE",
+            "motivo_codigo": null,
+            "posicao": 3,
+            "posicao_modalidade": 3,
+            "lote": 1,
+            "lista_lote": "GERAL",
+            "entrada": "INICIAL",
+            "motivo_entrada": "Lote inicial: 1 × (1 + CR) = 2",
+            "nota": 22,
+            "origem_nota": "ART",
+            "divergente": false,
+            "modalidade": "AC"
+          },
+          "c03": {
+            "situacao": "RANQUEADO",
+            "motivo_codigo": null,
+            "posicao": 4,
+            "posicao_modalidade": 4,
+            "lote": null,
+            "lista_lote": null,
+            "entrada": null,
+            "motivo_entrada": null,
+            "nota": 20,
+            "origem_nota": "ART",
+            "divergente": false,
+            "modalidade": "AC"
+          },
+          "c09": {
+            "situacao": "RANQUEADO",
+            "motivo_codigo": null,
+            "posicao": 1,
+            "posicao_modalidade": 1,
+            "lote": null,
+            "lista_lote": null,
+            "entrada": null,
+            "motivo_entrada": null,
+            "nota": 29,
+            "origem_nota": "ART",
+            "divergente": false,
+            "modalidade": "AC"
+          }
+        },
+        "resumo": {
+          "inscritos": 4,
+          "eliminados": 0,
+          "ranqueados": 4,
+          "no_lote": 2,
+          "tamanho": 2,
+          "descricao": "1 × (1 + CR) = 2",
+          "por_modalidade": null,
+          "art_corte": 22,
+          "divergencias": 0,
+          "sem_art": 0,
+          "acima_do_corte": 1,
+          "entraram": 0,
+          "lote_novo": null,
+          "saidas": [],
+          "avisos": ["FORA_DO_LOTE_ACIMA_DO_CORTE"]
+        }
+      }
+    },
+    {
+      "nome": "sem 'a linha anda' o lugar fica aberto (aviso)",
+      "historia": "AM-5.3",
+      "regra": {
+        "schema": 1,
+        "titulo_etapa": "Avaliação Documental e de Títulos",
+        "provisoria": {
+          "eliminacao_automatica": [
+            {
+              "codigo": "CANCELADO",
+              "coluna": "SITUAÇÃO",
+              "quando": ["CANCELADO"],
+              "motivo": "Cancelou a inscrição"
+            },
+            {
+              "codigo": "QUESTIONARIO",
+              "coluna_prefixo": "SITUAÇÃO - ",
+              "exceto": ["FINALIZADO"],
+              "motivo": "Não finalizou o questionário"
+            },
+            {
+              "codigo": "REPROVADO_EMPREGARE",
+              "coluna": "REPROVADO",
+              "quando": ["SIM"],
+              "motivo": "Reprovado na Empregare"
+            },
+            {
+              "codigo": "TERMO",
+              "pergunta": "Pergunta 23 -",
+              "quando": ["Não estou de acordo"],
+              "motivo": "Recusou o termo de responsabilidade"
+            }
+          ],
+          "nota_declarada": [],
+          "divergencia_tolerancia": 0
+        },
+        "lote": {
+          "base": "MULTIPLO_VAGAS",
+          "multiplo": 1,
+          "fixo": null,
+          "inclui_cr": true,
+          "por_modalidade": false,
+          "inclui_empatados": true,
+          "linha_anda": false,
+          "publica_reposicao": false
+        },
+        "blocos": [
+          {
+            "codigo": "MODALIDADE",
+            "titulo": "Sistema de concorrência",
+            "tipo": "REGISTRO",
+            "perguntas": ["Pergunta 5 -"]
+          }
+        ]
+      },
+      "vaga": {
+        "codigo": "900001",
+        "vagas_imediatas": 1,
+        "cadastro_reserva": true,
+        "modalidades": {
+          "Ampla Concorrência": 1
+        }
+      },
+      "candidatos": [
+        {
+          "id": "c01",
+          "codigo": "7000001",
+          "ativo": true,
+          "nascimento": "1990-01-01",
+          "candidatura": "2026-09-11T12:00:00+00:00",
+          "colunas": {
+            "SITUAÇÃO": "Cancelado",
+            "SITUAÇÃO - Questionário de seleção": "FINALIZADO",
+            "NOTA - Questionário de seleção": "28,0/30,0",
+            "REPROVADO": "NÃO",
+            "Pergunta 5 - Sistema de concorrência": "Ampla concorrência",
+            "Pergunta 23 - Termo de responsabilidade": "Estou de acordo"
+          }
+        },
+        {
+          "id": "c02",
+          "codigo": "7000002",
+          "ativo": true,
+          "nascimento": "1990-01-01",
+          "candidatura": "2026-09-12T12:00:00+00:00",
+          "colunas": {
+            "SITUAÇÃO": "Ativo",
+            "SITUAÇÃO - Questionário de seleção": "FINALIZADO",
+            "NOTA - Questionário de seleção": "25,0/30,0",
+            "REPROVADO": "NÃO",
+            "Pergunta 5 - Sistema de concorrência": "Ampla concorrência",
+            "Pergunta 23 - Termo de responsabilidade": "Estou de acordo"
+          }
+        },
+        {
+          "id": "c03",
+          "codigo": "7000003",
+          "ativo": true,
+          "nascimento": "1990-01-01",
+          "candidatura": "2026-09-13T12:00:00+00:00",
+          "colunas": {
+            "SITUAÇÃO": "Ativo",
+            "SITUAÇÃO - Questionário de seleção": "FINALIZADO",
+            "NOTA - Questionário de seleção": "20,0/30,0",
+            "REPROVADO": "NÃO",
+            "Pergunta 5 - Sistema de concorrência": "Ampla concorrência",
+            "Pergunta 23 - Termo de responsabilidade": "Estou de acordo"
+          }
+        }
+      ],
+      "anterior": {
+        "c01": {
+          "situacao": "NO_LOTE",
+          "posicao": 1,
+          "lote": 1,
+          "lista_lote": "GERAL",
+          "entrada": "INICIAL",
+          "motivo_entrada": "Lote inicial: 2 × (1 + CR) = 4"
+        },
+        "c02": {
+          "situacao": "NO_LOTE",
+          "posicao": 2,
+          "lote": 1,
+          "lista_lote": "GERAL",
+          "entrada": "INICIAL",
+          "motivo_entrada": "Lote inicial: 2 × (1 + CR) = 4"
+        },
+        "c03": {
+          "situacao": "RANQUEADO",
+          "posicao": 3
+        }
+      },
+      "ultimo_lote": 1,
+      "refazer": false,
+      "hoje": "2026-10-06",
+      "esperado": {
+        "linhas": {
+          "c01": {
+            "situacao": "ELIMINADO",
+            "motivo_codigo": "CANCELADO",
+            "posicao": null,
+            "posicao_modalidade": null,
+            "lote": null,
+            "lista_lote": null,
+            "entrada": null,
+            "motivo_entrada": null,
+            "nota": 28,
+            "origem_nota": "ART",
+            "divergente": false,
+            "modalidade": "AC"
+          },
+          "c02": {
+            "situacao": "NO_LOTE",
+            "motivo_codigo": null,
+            "posicao": 1,
+            "posicao_modalidade": 1,
+            "lote": 1,
+            "lista_lote": "GERAL",
+            "entrada": "INICIAL",
+            "motivo_entrada": "Lote inicial: 2 × (1 + CR) = 4",
+            "nota": 25,
+            "origem_nota": "ART",
+            "divergente": false,
+            "modalidade": "AC"
+          },
+          "c03": {
+            "situacao": "RANQUEADO",
+            "motivo_codigo": null,
+            "posicao": 2,
+            "posicao_modalidade": 2,
+            "lote": null,
+            "lista_lote": null,
+            "entrada": null,
+            "motivo_entrada": null,
+            "nota": 20,
+            "origem_nota": "ART",
+            "divergente": false,
+            "modalidade": "AC"
+          }
+        },
+        "resumo": {
+          "inscritos": 3,
+          "eliminados": 1,
+          "ranqueados": 2,
+          "no_lote": 1,
+          "tamanho": 2,
+          "descricao": "1 × (1 + CR) = 2",
+          "por_modalidade": null,
+          "art_corte": 25,
+          "divergencias": 0,
+          "sem_art": 0,
+          "acima_do_corte": 0,
+          "entraram": 0,
+          "lote_novo": null,
+          "saidas": [
+            {
+              "id": "c01",
+              "codigo": "7000001",
+              "motivo": "Cancelou a inscrição"
+            }
+          ],
+          "avisos": ["LINHA_PARADA"]
+        }
+      }
+    },
+    {
+      "nome": "refazer recorta o lote do zero pela Provisória de agora",
+      "historia": "AM-5.0",
+      "regra": {
+        "schema": 1,
+        "titulo_etapa": "Avaliação Documental e de Títulos",
+        "provisoria": {
+          "eliminacao_automatica": [
+            {
+              "codigo": "CANCELADO",
+              "coluna": "SITUAÇÃO",
+              "quando": ["CANCELADO"],
+              "motivo": "Cancelou a inscrição"
+            },
+            {
+              "codigo": "QUESTIONARIO",
+              "coluna_prefixo": "SITUAÇÃO - ",
+              "exceto": ["FINALIZADO"],
+              "motivo": "Não finalizou o questionário"
+            },
+            {
+              "codigo": "REPROVADO_EMPREGARE",
+              "coluna": "REPROVADO",
+              "quando": ["SIM"],
+              "motivo": "Reprovado na Empregare"
+            },
+            {
+              "codigo": "TERMO",
+              "pergunta": "Pergunta 23 -",
+              "quando": ["Não estou de acordo"],
+              "motivo": "Recusou o termo de responsabilidade"
+            }
+          ],
+          "nota_declarada": [],
+          "divergencia_tolerancia": 0
+        },
+        "lote": {
+          "base": "MULTIPLO_VAGAS",
+          "multiplo": 1,
+          "fixo": null,
+          "inclui_cr": false,
+          "por_modalidade": false,
+          "inclui_empatados": true,
+          "linha_anda": true,
+          "publica_reposicao": false
+        },
+        "blocos": [
+          {
+            "codigo": "MODALIDADE",
+            "titulo": "Sistema de concorrência",
+            "tipo": "REGISTRO",
+            "perguntas": ["Pergunta 5 -"]
+          }
+        ]
+      },
+      "vaga": {
+        "codigo": "900001",
+        "vagas_imediatas": 1,
+        "cadastro_reserva": true,
+        "modalidades": {
+          "Ampla Concorrência": 1
+        }
+      },
+      "candidatos": [
+        {
+          "id": "c01",
+          "codigo": "7000001",
+          "ativo": true,
+          "nascimento": "1990-01-01",
+          "candidatura": "2026-09-11T12:00:00+00:00",
+          "colunas": {
+            "SITUAÇÃO": "Ativo",
+            "SITUAÇÃO - Questionário de seleção": "FINALIZADO",
+            "NOTA - Questionário de seleção": "24,0/30,0",
+            "REPROVADO": "NÃO",
+            "Pergunta 5 - Sistema de concorrência": "Ampla concorrência",
+            "Pergunta 23 - Termo de responsabilidade": "Estou de acordo"
+          }
+        },
+        {
+          "id": "c02",
+          "codigo": "7000002",
+          "ativo": true,
+          "nascimento": "1990-01-01",
+          "candidatura": "2026-09-12T12:00:00+00:00",
+          "colunas": {
+            "SITUAÇÃO": "Ativo",
+            "SITUAÇÃO - Questionário de seleção": "FINALIZADO",
+            "NOTA - Questionário de seleção": "22,0/30,0",
+            "REPROVADO": "NÃO",
+            "Pergunta 5 - Sistema de concorrência": "Ampla concorrência",
+            "Pergunta 23 - Termo de responsabilidade": "Estou de acordo"
+          }
+        },
+        {
+          "id": "c09",
+          "codigo": "7000009",
+          "ativo": true,
+          "nascimento": "1990-01-01",
+          "candidatura": "2026-09-19T12:00:00+00:00",
+          "colunas": {
+            "SITUAÇÃO": "Ativo",
+            "SITUAÇÃO - Questionário de seleção": "FINALIZADO",
+            "NOTA - Questionário de seleção": "29,0/30,0",
+            "REPROVADO": "NÃO",
+            "Pergunta 5 - Sistema de concorrência": "Ampla concorrência",
+            "Pergunta 23 - Termo de responsabilidade": "Estou de acordo"
+          }
+        }
+      ],
+      "anterior": {
+        "c01": {
+          "situacao": "NO_LOTE",
+          "posicao": 1,
+          "lote": 1,
+          "lista_lote": "GERAL",
+          "entrada": "INICIAL",
+          "motivo_entrada": "Lote inicial: 2 × (1 + CR) = 4"
+        },
+        "c02": {
+          "situacao": "NO_LOTE",
+          "posicao": 2,
+          "lote": 2,
+          "lista_lote": "GERAL",
+          "entrada": "REPOSICAO",
+          "motivo_entrada": "Entrou no lugar de 7000099 (Cancelou a inscrição)"
+        }
+      },
+      "ultimo_lote": 2,
+      "refazer": true,
+      "hoje": "2026-10-06",
+      "esperado": {
+        "linhas": {
+          "c01": {
+            "situacao": "RANQUEADO",
+            "motivo_codigo": null,
+            "posicao": 2,
+            "posicao_modalidade": 2,
+            "lote": null,
+            "lista_lote": null,
+            "entrada": null,
+            "motivo_entrada": null,
+            "nota": 24,
+            "origem_nota": "ART",
+            "divergente": false,
+            "modalidade": "AC"
+          },
+          "c02": {
+            "situacao": "RANQUEADO",
+            "motivo_codigo": null,
+            "posicao": 3,
+            "posicao_modalidade": 3,
+            "lote": null,
+            "lista_lote": null,
+            "entrada": null,
+            "motivo_entrada": null,
+            "nota": 22,
+            "origem_nota": "ART",
+            "divergente": false,
+            "modalidade": "AC"
+          },
+          "c09": {
+            "situacao": "NO_LOTE",
+            "motivo_codigo": null,
+            "posicao": 1,
+            "posicao_modalidade": 1,
+            "lote": 1,
+            "lista_lote": "GERAL",
+            "entrada": "INICIAL",
+            "motivo_entrada": "Lote inicial: 1 × 1 = 1",
+            "nota": 29,
+            "origem_nota": "ART",
+            "divergente": false,
+            "modalidade": "AC"
+          }
+        },
+        "resumo": {
+          "inscritos": 3,
+          "eliminados": 0,
+          "ranqueados": 3,
+          "no_lote": 1,
+          "tamanho": 1,
+          "descricao": "1 × 1 = 1",
+          "por_modalidade": null,
+          "art_corte": 29,
+          "divergencias": 0,
+          "sem_art": 0,
+          "acima_do_corte": 0,
+          "entraram": 1,
+          "lote_novo": 1,
+          "saidas": [],
+          "avisos": []
+        }
+      }
+    },
+    {
+      "nome": "quem saiu do arquivo da Empregare sai do lote; quem nunca esteve na lista é ignorado",
+      "historia": "AM-5.3",
+      "regra": {
+        "schema": 1,
+        "titulo_etapa": "Avaliação Documental e de Títulos",
+        "provisoria": {
+          "eliminacao_automatica": [
+            {
+              "codigo": "CANCELADO",
+              "coluna": "SITUAÇÃO",
+              "quando": ["CANCELADO"],
+              "motivo": "Cancelou a inscrição"
+            },
+            {
+              "codigo": "QUESTIONARIO",
+              "coluna_prefixo": "SITUAÇÃO - ",
+              "exceto": ["FINALIZADO"],
+              "motivo": "Não finalizou o questionário"
+            },
+            {
+              "codigo": "REPROVADO_EMPREGARE",
+              "coluna": "REPROVADO",
+              "quando": ["SIM"],
+              "motivo": "Reprovado na Empregare"
+            },
+            {
+              "codigo": "TERMO",
+              "pergunta": "Pergunta 23 -",
+              "quando": ["Não estou de acordo"],
+              "motivo": "Recusou o termo de responsabilidade"
+            }
+          ],
+          "nota_declarada": [],
+          "divergencia_tolerancia": 0
+        },
+        "lote": {
+          "base": "MULTIPLO_VAGAS",
+          "multiplo": 1,
+          "fixo": null,
+          "inclui_cr": true,
+          "por_modalidade": false,
+          "inclui_empatados": true,
+          "linha_anda": true,
+          "publica_reposicao": false
+        },
+        "blocos": [
+          {
+            "codigo": "MODALIDADE",
+            "titulo": "Sistema de concorrência",
+            "tipo": "REGISTRO",
+            "perguntas": ["Pergunta 5 -"]
+          }
+        ]
+      },
+      "vaga": {
+        "codigo": "900001",
+        "vagas_imediatas": 1,
+        "cadastro_reserva": true,
+        "modalidades": {
+          "Ampla Concorrência": 1
+        }
+      },
+      "candidatos": [
+        {
+          "id": "c01",
+          "codigo": "7000001",
+          "ativo": false,
+          "nascimento": "1990-01-01",
+          "candidatura": "2026-09-11T12:00:00+00:00",
+          "colunas": {
+            "SITUAÇÃO": "Ativo",
+            "SITUAÇÃO - Questionário de seleção": "FINALIZADO",
+            "NOTA - Questionário de seleção": "28,0/30,0",
+            "REPROVADO": "NÃO",
+            "Pergunta 5 - Sistema de concorrência": "Ampla concorrência",
+            "Pergunta 23 - Termo de responsabilidade": "Estou de acordo"
+          }
+        },
+        {
+          "id": "c02",
+          "codigo": "7000002",
+          "ativo": true,
+          "nascimento": "1990-01-01",
+          "candidatura": "2026-09-12T12:00:00+00:00",
+          "colunas": {
+            "SITUAÇÃO": "Ativo",
+            "SITUAÇÃO - Questionário de seleção": "FINALIZADO",
+            "NOTA - Questionário de seleção": "25,0/30,0",
+            "REPROVADO": "NÃO",
+            "Pergunta 5 - Sistema de concorrência": "Ampla concorrência",
+            "Pergunta 23 - Termo de responsabilidade": "Estou de acordo"
+          }
+        },
+        {
+          "id": "c03",
+          "codigo": "7000003",
+          "ativo": true,
+          "nascimento": "1990-01-01",
+          "candidatura": "2026-09-13T12:00:00+00:00",
+          "colunas": {
+            "SITUAÇÃO": "Ativo",
+            "SITUAÇÃO - Questionário de seleção": "FINALIZADO",
+            "NOTA - Questionário de seleção": "20,0/30,0",
+            "REPROVADO": "NÃO",
+            "Pergunta 5 - Sistema de concorrência": "Ampla concorrência",
+            "Pergunta 23 - Termo de responsabilidade": "Estou de acordo"
+          }
+        },
+        {
+          "id": "c04",
+          "codigo": "7000004",
+          "ativo": false,
+          "nascimento": "1990-01-01",
+          "candidatura": "2026-09-14T12:00:00+00:00",
+          "colunas": {
+            "SITUAÇÃO": "Ativo",
+            "SITUAÇÃO - Questionário de seleção": "FINALIZADO",
+            "NOTA - Questionário de seleção": "27,0/30,0",
+            "REPROVADO": "NÃO",
+            "Pergunta 5 - Sistema de concorrência": "Ampla concorrência",
+            "Pergunta 23 - Termo de responsabilidade": "Estou de acordo"
+          }
+        }
+      ],
+      "anterior": {
+        "c01": {
+          "situacao": "NO_LOTE",
+          "posicao": 1,
+          "lote": 1,
+          "lista_lote": "GERAL",
+          "entrada": "INICIAL",
+          "motivo_entrada": "Lote inicial: 2 × (1 + CR) = 4"
+        },
+        "c02": {
+          "situacao": "NO_LOTE",
+          "posicao": 2,
+          "lote": 1,
+          "lista_lote": "GERAL",
+          "entrada": "INICIAL",
+          "motivo_entrada": "Lote inicial: 2 × (1 + CR) = 4"
+        },
+        "c03": {
+          "situacao": "RANQUEADO",
+          "posicao": 3
+        }
+      },
+      "ultimo_lote": 1,
+      "refazer": false,
+      "hoje": "2026-10-06",
+      "esperado": {
+        "linhas": {
+          "c01": {
+            "situacao": "ELIMINADO",
+            "motivo_codigo": "SAIU_DA_EMPREGARE",
+            "posicao": null,
+            "posicao_modalidade": null,
+            "lote": null,
+            "lista_lote": null,
+            "entrada": null,
+            "motivo_entrada": null,
+            "nota": 28,
+            "origem_nota": "ART",
+            "divergente": false,
+            "modalidade": "AC"
+          },
+          "c02": {
+            "situacao": "NO_LOTE",
+            "motivo_codigo": null,
+            "posicao": 1,
+            "posicao_modalidade": 1,
+            "lote": 1,
+            "lista_lote": "GERAL",
+            "entrada": "INICIAL",
+            "motivo_entrada": "Lote inicial: 2 × (1 + CR) = 4",
+            "nota": 25,
+            "origem_nota": "ART",
+            "divergente": false,
+            "modalidade": "AC"
+          },
+          "c03": {
+            "situacao": "NO_LOTE",
+            "motivo_codigo": null,
+            "posicao": 2,
+            "posicao_modalidade": 2,
+            "lote": 2,
+            "lista_lote": "GERAL",
+            "entrada": "REPOSICAO",
+            "motivo_entrada": "Entrou no lugar de 7000001 (Saiu do arquivo da Empregare)",
+            "nota": 20,
+            "origem_nota": "ART",
+            "divergente": false,
+            "modalidade": "AC"
+          }
+        },
+        "resumo": {
+          "inscritos": 3,
+          "eliminados": 1,
+          "ranqueados": 2,
+          "no_lote": 2,
+          "tamanho": 2,
+          "descricao": "1 × (1 + CR) = 2",
+          "por_modalidade": null,
+          "art_corte": 20,
+          "divergencias": 0,
+          "sem_art": 0,
+          "acima_do_corte": 0,
+          "entraram": 1,
+          "lote_novo": 2,
+          "saidas": [
+            {
+              "id": "c01",
+              "codigo": "7000001",
+              "motivo": "Saiu do arquivo da Empregare"
+            }
+          ],
+          "avisos": []
+        }
+      }
+    },
+    {
+      "nome": "lote por modalidade: a ampla com todos, depois a cota entre os da cota",
+      "historia": "AM-5.2",
+      "regra": {
+        "schema": 1,
+        "titulo_etapa": "Avaliação Documental e de Títulos",
+        "provisoria": {
+          "eliminacao_automatica": [
+            {
+              "codigo": "CANCELADO",
+              "coluna": "SITUAÇÃO",
+              "quando": ["CANCELADO"],
+              "motivo": "Cancelou a inscrição"
+            },
+            {
+              "codigo": "QUESTIONARIO",
+              "coluna_prefixo": "SITUAÇÃO - ",
+              "exceto": ["FINALIZADO"],
+              "motivo": "Não finalizou o questionário"
+            },
+            {
+              "codigo": "REPROVADO_EMPREGARE",
+              "coluna": "REPROVADO",
+              "quando": ["SIM"],
+              "motivo": "Reprovado na Empregare"
+            },
+            {
+              "codigo": "TERMO",
+              "pergunta": "Pergunta 23 -",
+              "quando": ["Não estou de acordo"],
+              "motivo": "Recusou o termo de responsabilidade"
+            }
+          ],
+          "nota_declarada": [],
+          "divergencia_tolerancia": 0
+        },
+        "lote": {
+          "base": "MULTIPLO_VAGAS",
+          "multiplo": 1,
+          "fixo": null,
+          "inclui_cr": true,
+          "por_modalidade": true,
+          "inclui_empatados": true,
+          "linha_anda": true,
+          "publica_reposicao": false
+        },
+        "blocos": [
+          {
+            "codigo": "MODALIDADE",
+            "titulo": "Sistema de concorrência",
+            "tipo": "REGISTRO",
+            "perguntas": ["Pergunta 5 -"]
+          }
+        ]
+      },
+      "vaga": {
+        "codigo": "900002",
+        "vagas_imediatas": 3,
+        "cadastro_reserva": true,
+        "modalidades": {
+          "Ampla Concorrência": 2,
+          "Pretos e Pardos": 1,
+          "PcD": null
+        }
+      },
+      "candidatos": [
+        {
+          "id": "c01",
+          "codigo": "7000001",
+          "ativo": true,
+          "nascimento": "1990-01-01",
+          "candidatura": "2026-09-11T12:00:00+00:00",
+          "colunas": {
+            "SITUAÇÃO": "Ativo",
+            "SITUAÇÃO - Questionário de seleção": "FINALIZADO",
+            "NOTA - Questionário de seleção": "30,0/30,0",
+            "REPROVADO": "NÃO",
+            "Pergunta 5 - Sistema de concorrência": "Ampla concorrência",
+            "Pergunta 23 - Termo de responsabilidade": "Estou de acordo"
+          }
+        },
+        {
+          "id": "c02",
+          "codigo": "7000002",
+          "ativo": true,
+          "nascimento": "1990-01-01",
+          "candidatura": "2026-09-12T12:00:00+00:00",
+          "colunas": {
+            "SITUAÇÃO": "Ativo",
+            "SITUAÇÃO - Questionário de seleção": "FINALIZADO",
+            "NOTA - Questionário de seleção": "28,0/30,0",
+            "REPROVADO": "NÃO",
+            "Pergunta 5 - Sistema de concorrência": "Pretos e pardos",
+            "Pergunta 23 - Termo de responsabilidade": "Estou de acordo"
+          }
+        },
+        {
+          "id": "c03",
+          "codigo": "7000003",
+          "ativo": true,
+          "nascimento": "1990-01-01",
+          "candidatura": "2026-09-13T12:00:00+00:00",
+          "colunas": {
+            "SITUAÇÃO": "Ativo",
+            "SITUAÇÃO - Questionário de seleção": "FINALIZADO",
+            "NOTA - Questionário de seleção": "25,0/30,0",
+            "REPROVADO": "NÃO",
+            "Pergunta 5 - Sistema de concorrência": "Ampla concorrência",
+            "Pergunta 23 - Termo de responsabilidade": "Estou de acordo"
+          }
+        },
+        {
+          "id": "c04",
+          "codigo": "7000004",
+          "ativo": true,
+          "nascimento": "1990-01-01",
+          "candidatura": "2026-09-14T12:00:00+00:00",
+          "colunas": {
+            "SITUAÇÃO": "Ativo",
+            "SITUAÇÃO - Questionário de seleção": "FINALIZADO",
+            "NOTA - Questionário de seleção": "20,0/30,0",
+            "REPROVADO": "NÃO",
+            "Pergunta 5 - Sistema de concorrência": "Ampla concorrência",
+            "Pergunta 23 - Termo de responsabilidade": "Estou de acordo"
+          }
+        },
+        {
+          "id": "c05",
+          "codigo": "7000005",
+          "ativo": true,
+          "nascimento": "1990-01-01",
+          "candidatura": "2026-09-15T12:00:00+00:00",
+          "colunas": {
+            "SITUAÇÃO": "Ativo",
+            "SITUAÇÃO - Questionário de seleção": "FINALIZADO",
+            "NOTA - Questionário de seleção": "18,0/30,0",
+            "REPROVADO": "NÃO",
+            "Pergunta 5 - Sistema de concorrência": "Pretos e pardos",
+            "Pergunta 23 - Termo de responsabilidade": "Estou de acordo"
+          }
+        },
+        {
+          "id": "c06",
+          "codigo": "7000006",
+          "ativo": true,
+          "nascimento": "1990-01-01",
+          "candidatura": "2026-09-16T12:00:00+00:00",
+          "colunas": {
+            "SITUAÇÃO": "Ativo",
+            "SITUAÇÃO - Questionário de seleção": "FINALIZADO",
+            "NOTA - Questionário de seleção": "10,0/30,0",
+            "REPROVADO": "NÃO",
+            "Pergunta 5 - Sistema de concorrência": "Pretos e pardos",
+            "Pergunta 23 - Termo de responsabilidade": "Estou de acordo"
+          }
+        }
+      ],
+      "anterior": {},
+      "ultimo_lote": 0,
+      "refazer": false,
+      "hoje": "2026-10-06",
+      "esperado": {
+        "linhas": {
+          "c01": {
+            "situacao": "NO_LOTE",
+            "motivo_codigo": null,
+            "posicao": 1,
+            "posicao_modalidade": 1,
+            "lote": 1,
+            "lista_lote": "AC",
+            "entrada": "INICIAL",
+            "motivo_entrada": "Lote inicial: 1 × (3 + CR) por modalidade = 4",
+            "nota": 30,
+            "origem_nota": "ART",
+            "divergente": false,
+            "modalidade": "AC"
+          },
+          "c02": {
+            "situacao": "NO_LOTE",
+            "motivo_codigo": null,
+            "posicao": 2,
+            "posicao_modalidade": 1,
+            "lote": 1,
+            "lista_lote": "AC",
+            "entrada": "INICIAL",
+            "motivo_entrada": "Lote inicial: 1 × (3 + CR) por modalidade = 4",
+            "nota": 28,
+            "origem_nota": "ART",
+            "divergente": false,
+            "modalidade": "PP"
+          },
+          "c03": {
+            "situacao": "NO_LOTE",
+            "motivo_codigo": null,
+            "posicao": 3,
+            "posicao_modalidade": 2,
+            "lote": 1,
+            "lista_lote": "AC",
+            "entrada": "INICIAL",
+            "motivo_entrada": "Lote inicial: 1 × (3 + CR) por modalidade = 4",
+            "nota": 25,
+            "origem_nota": "ART",
+            "divergente": false,
+            "modalidade": "AC"
+          },
+          "c04": {
+            "situacao": "RANQUEADO",
+            "motivo_codigo": null,
+            "posicao": 4,
+            "posicao_modalidade": 3,
+            "lote": null,
+            "lista_lote": null,
+            "entrada": null,
+            "motivo_entrada": null,
+            "nota": 20,
+            "origem_nota": "ART",
+            "divergente": false,
+            "modalidade": "AC"
+          },
+          "c05": {
+            "situacao": "NO_LOTE",
+            "motivo_codigo": null,
+            "posicao": 5,
+            "posicao_modalidade": 2,
+            "lote": 1,
+            "lista_lote": "PP",
+            "entrada": "INICIAL",
+            "motivo_entrada": "Lote inicial: 1 × (3 + CR) por modalidade = 4",
+            "nota": 18,
+            "origem_nota": "ART",
+            "divergente": false,
+            "modalidade": "PP"
+          },
+          "c06": {
+            "situacao": "RANQUEADO",
+            "motivo_codigo": null,
+            "posicao": 6,
+            "posicao_modalidade": 3,
+            "lote": null,
+            "lista_lote": null,
+            "entrada": null,
+            "motivo_entrada": null,
+            "nota": 10,
+            "origem_nota": "ART",
+            "divergente": false,
+            "modalidade": "PP"
+          }
+        },
+        "resumo": {
+          "inscritos": 6,
+          "eliminados": 0,
+          "ranqueados": 6,
+          "no_lote": 4,
+          "tamanho": 4,
+          "descricao": "1 × (3 + CR) por modalidade = 4",
+          "por_modalidade": {
+            "AC": 3,
+            "PP": 1
+          },
+          "art_corte": 18,
+          "divergencias": 0,
+          "sem_art": 0,
+          "acima_do_corte": 0,
+          "entraram": 4,
+          "lote_novo": 1,
+          "saidas": [],
+          "avisos": []
+        }
+      }
+    },
+    {
+      "nome": "sem quadro de vagas não há tamanho: ninguém entra e a tela pede o número",
+      "historia": "AM-5.0",
+      "regra": {
+        "schema": 1,
+        "titulo_etapa": "Avaliação Documental e de Títulos",
+        "provisoria": {
+          "eliminacao_automatica": [
+            {
+              "codigo": "CANCELADO",
+              "coluna": "SITUAÇÃO",
+              "quando": ["CANCELADO"],
+              "motivo": "Cancelou a inscrição"
+            },
+            {
+              "codigo": "QUESTIONARIO",
+              "coluna_prefixo": "SITUAÇÃO - ",
+              "exceto": ["FINALIZADO"],
+              "motivo": "Não finalizou o questionário"
+            },
+            {
+              "codigo": "REPROVADO_EMPREGARE",
+              "coluna": "REPROVADO",
+              "quando": ["SIM"],
+              "motivo": "Reprovado na Empregare"
+            },
+            {
+              "codigo": "TERMO",
+              "pergunta": "Pergunta 23 -",
+              "quando": ["Não estou de acordo"],
+              "motivo": "Recusou o termo de responsabilidade"
+            }
+          ],
+          "nota_declarada": [],
+          "divergencia_tolerancia": 0
+        },
+        "lote": {
+          "base": "MULTIPLO_VAGAS",
+          "multiplo": 2,
+          "fixo": null,
+          "inclui_cr": true,
+          "por_modalidade": false,
+          "inclui_empatados": true,
+          "linha_anda": true,
+          "publica_reposicao": false
+        },
+        "blocos": [
+          {
+            "codigo": "MODALIDADE",
+            "titulo": "Sistema de concorrência",
+            "tipo": "REGISTRO",
+            "perguntas": ["Pergunta 5 -"]
+          }
+        ]
+      },
+      "vaga": {
+        "codigo": "900003",
+        "vagas_imediatas": null,
+        "cadastro_reserva": false,
+        "modalidades": null
+      },
+      "candidatos": [
+        {
+          "id": "c01",
+          "codigo": "7000001",
+          "ativo": true,
+          "nascimento": "1990-01-01",
+          "candidatura": "2026-09-11T12:00:00+00:00",
+          "colunas": {
+            "SITUAÇÃO": "Ativo",
+            "SITUAÇÃO - Questionário de seleção": "FINALIZADO",
+            "NOTA - Questionário de seleção": "24,0/30,0",
+            "REPROVADO": "NÃO",
+            "Pergunta 5 - Sistema de concorrência": "Ampla concorrência",
+            "Pergunta 23 - Termo de responsabilidade": "Estou de acordo"
+          }
+        },
+        {
+          "id": "c02",
+          "codigo": "7000002",
+          "ativo": true,
+          "nascimento": "1990-01-01",
+          "candidatura": "2026-09-12T12:00:00+00:00",
+          "colunas": {
+            "SITUAÇÃO": "Ativo",
+            "SITUAÇÃO - Questionário de seleção": "FINALIZADO",
+            "NOTA - Questionário de seleção": "22,0/30,0",
+            "REPROVADO": "NÃO",
+            "Pergunta 5 - Sistema de concorrência": "Ampla concorrência",
+            "Pergunta 23 - Termo de responsabilidade": "Estou de acordo"
+          }
+        }
+      ],
+      "anterior": {},
+      "ultimo_lote": 0,
+      "refazer": false,
+      "hoje": "2026-10-06",
+      "esperado": {
+        "linhas": {
+          "c01": {
+            "situacao": "RANQUEADO",
+            "motivo_codigo": null,
+            "posicao": 1,
+            "posicao_modalidade": 1,
+            "lote": null,
+            "lista_lote": null,
+            "entrada": null,
+            "motivo_entrada": null,
+            "nota": 24,
+            "origem_nota": "ART",
+            "divergente": false,
+            "modalidade": "AC"
+          },
+          "c02": {
+            "situacao": "RANQUEADO",
+            "motivo_codigo": null,
+            "posicao": 2,
+            "posicao_modalidade": 2,
+            "lote": null,
+            "lista_lote": null,
+            "entrada": null,
+            "motivo_entrada": null,
+            "nota": 22,
+            "origem_nota": "ART",
+            "divergente": false,
+            "modalidade": "AC"
+          }
+        },
+        "resumo": {
+          "inscritos": 2,
+          "eliminados": 0,
+          "ranqueados": 2,
+          "no_lote": 0,
+          "tamanho": null,
+          "descricao": "",
+          "por_modalidade": null,
+          "art_corte": null,
+          "divergencias": 0,
+          "sem_art": 0,
+          "acima_do_corte": 0,
+          "entraram": 0,
+          "lote_novo": null,
+          "saidas": [],
+          "avisos": ["SEM_QUADRO"]
+        }
+      }
+    },
+    {
+      "nome": "o tamanho definido para a vaga vale antes do múltiplo",
+      "historia": "AM-5.0",
+      "regra": {
+        "schema": 1,
+        "titulo_etapa": "Avaliação Documental e de Títulos",
+        "provisoria": {
+          "eliminacao_automatica": [
+            {
+              "codigo": "CANCELADO",
+              "coluna": "SITUAÇÃO",
+              "quando": ["CANCELADO"],
+              "motivo": "Cancelou a inscrição"
+            },
+            {
+              "codigo": "QUESTIONARIO",
+              "coluna_prefixo": "SITUAÇÃO - ",
+              "exceto": ["FINALIZADO"],
+              "motivo": "Não finalizou o questionário"
+            },
+            {
+              "codigo": "REPROVADO_EMPREGARE",
+              "coluna": "REPROVADO",
+              "quando": ["SIM"],
+              "motivo": "Reprovado na Empregare"
+            },
+            {
+              "codigo": "TERMO",
+              "pergunta": "Pergunta 23 -",
+              "quando": ["Não estou de acordo"],
+              "motivo": "Recusou o termo de responsabilidade"
+            }
+          ],
+          "nota_declarada": [],
+          "divergencia_tolerancia": 0
+        },
+        "lote": {
+          "base": "MULTIPLO_VAGAS",
+          "multiplo": 2,
+          "fixo": null,
+          "inclui_cr": true,
+          "por_modalidade": false,
+          "inclui_empatados": true,
+          "linha_anda": true,
+          "publica_reposicao": false,
+          "por_vaga": {
+            "900001": 1
+          }
+        },
+        "blocos": [
+          {
+            "codigo": "MODALIDADE",
+            "titulo": "Sistema de concorrência",
+            "tipo": "REGISTRO",
+            "perguntas": ["Pergunta 5 -"]
+          }
+        ]
+      },
+      "vaga": {
+        "codigo": "900001",
+        "vagas_imediatas": 1,
+        "cadastro_reserva": true,
+        "modalidades": {
+          "Ampla Concorrência": 1
+        }
+      },
+      "candidatos": [
+        {
+          "id": "c01",
+          "codigo": "7000001",
+          "ativo": true,
+          "nascimento": "1990-01-01",
+          "candidatura": "2026-09-11T12:00:00+00:00",
+          "colunas": {
+            "SITUAÇÃO": "Ativo",
+            "SITUAÇÃO - Questionário de seleção": "FINALIZADO",
+            "NOTA - Questionário de seleção": "24,0/30,0",
+            "REPROVADO": "NÃO",
+            "Pergunta 5 - Sistema de concorrência": "Ampla concorrência",
+            "Pergunta 23 - Termo de responsabilidade": "Estou de acordo"
+          }
+        },
+        {
+          "id": "c02",
+          "codigo": "7000002",
+          "ativo": true,
+          "nascimento": "1990-01-01",
+          "candidatura": "2026-09-12T12:00:00+00:00",
+          "colunas": {
+            "SITUAÇÃO": "Ativo",
+            "SITUAÇÃO - Questionário de seleção": "FINALIZADO",
+            "NOTA - Questionário de seleção": "22,0/30,0",
+            "REPROVADO": "NÃO",
+            "Pergunta 5 - Sistema de concorrência": "Ampla concorrência",
+            "Pergunta 23 - Termo de responsabilidade": "Estou de acordo"
+          }
+        },
+        {
+          "id": "c03",
+          "codigo": "7000003",
+          "ativo": true,
+          "nascimento": "1990-01-01",
+          "candidatura": "2026-09-13T12:00:00+00:00",
+          "colunas": {
+            "SITUAÇÃO": "Ativo",
+            "SITUAÇÃO - Questionário de seleção": "FINALIZADO",
+            "NOTA - Questionário de seleção": "21,0/30,0",
+            "REPROVADO": "NÃO",
+            "Pergunta 5 - Sistema de concorrência": "Ampla concorrência",
+            "Pergunta 23 - Termo de responsabilidade": "Estou de acordo"
+          }
+        }
+      ],
+      "anterior": {},
+      "ultimo_lote": 0,
+      "refazer": false,
+      "hoje": "2026-10-06",
+      "esperado": {
+        "linhas": {
+          "c01": {
+            "situacao": "NO_LOTE",
+            "motivo_codigo": null,
+            "posicao": 1,
+            "posicao_modalidade": 1,
+            "lote": 1,
+            "lista_lote": "GERAL",
+            "entrada": "INICIAL",
+            "motivo_entrada": "Lote inicial: 1 (definido para a vaga)",
+            "nota": 24,
+            "origem_nota": "ART",
+            "divergente": false,
+            "modalidade": "AC"
+          },
+          "c02": {
+            "situacao": "RANQUEADO",
+            "motivo_codigo": null,
+            "posicao": 2,
+            "posicao_modalidade": 2,
+            "lote": null,
+            "lista_lote": null,
+            "entrada": null,
+            "motivo_entrada": null,
+            "nota": 22,
+            "origem_nota": "ART",
+            "divergente": false,
+            "modalidade": "AC"
+          },
+          "c03": {
+            "situacao": "RANQUEADO",
+            "motivo_codigo": null,
+            "posicao": 3,
+            "posicao_modalidade": 3,
+            "lote": null,
+            "lista_lote": null,
+            "entrada": null,
+            "motivo_entrada": null,
+            "nota": 21,
+            "origem_nota": "ART",
+            "divergente": false,
+            "modalidade": "AC"
+          }
+        },
+        "resumo": {
+          "inscritos": 3,
+          "eliminados": 0,
+          "ranqueados": 3,
+          "no_lote": 1,
+          "tamanho": 1,
+          "descricao": "1 (definido para a vaga)",
+          "por_modalidade": null,
+          "art_corte": 24,
+          "divergencias": 0,
+          "sem_art": 0,
+          "acima_do_corte": 0,
+          "entraram": 1,
+          "lote_novo": 1,
+          "saidas": [],
+          "avisos": []
+        }
+      }
+    },
+    {
+      "nome": "número fixo por vaga",
+      "historia": "AM-5.0",
+      "regra": {
+        "schema": 1,
+        "titulo_etapa": "Avaliação Documental e de Títulos",
+        "provisoria": {
+          "eliminacao_automatica": [
+            {
+              "codigo": "CANCELADO",
+              "coluna": "SITUAÇÃO",
+              "quando": ["CANCELADO"],
+              "motivo": "Cancelou a inscrição"
+            },
+            {
+              "codigo": "QUESTIONARIO",
+              "coluna_prefixo": "SITUAÇÃO - ",
+              "exceto": ["FINALIZADO"],
+              "motivo": "Não finalizou o questionário"
+            },
+            {
+              "codigo": "REPROVADO_EMPREGARE",
+              "coluna": "REPROVADO",
+              "quando": ["SIM"],
+              "motivo": "Reprovado na Empregare"
+            },
+            {
+              "codigo": "TERMO",
+              "pergunta": "Pergunta 23 -",
+              "quando": ["Não estou de acordo"],
+              "motivo": "Recusou o termo de responsabilidade"
+            }
+          ],
+          "nota_declarada": [],
+          "divergencia_tolerancia": 0
+        },
+        "lote": {
+          "base": "FIXO",
+          "multiplo": 2,
+          "fixo": 3,
+          "inclui_cr": true,
+          "por_modalidade": false,
+          "inclui_empatados": false,
+          "linha_anda": true,
+          "publica_reposicao": false
+        },
+        "blocos": [
+          {
+            "codigo": "MODALIDADE",
+            "titulo": "Sistema de concorrência",
+            "tipo": "REGISTRO",
+            "perguntas": ["Pergunta 5 -"]
+          }
+        ]
+      },
+      "vaga": {
+        "codigo": "900001",
+        "vagas_imediatas": 1,
+        "cadastro_reserva": true,
+        "modalidades": {
+          "Ampla Concorrência": 1
+        }
+      },
+      "candidatos": [
+        {
+          "id": "c01",
+          "codigo": "7000001",
+          "ativo": true,
+          "nascimento": "1990-01-01",
+          "candidatura": "2026-09-11T12:00:00+00:00",
+          "colunas": {
+            "SITUAÇÃO": "Ativo",
+            "SITUAÇÃO - Questionário de seleção": "FINALIZADO",
+            "NOTA - Questionário de seleção": "24,0/30,0",
+            "REPROVADO": "NÃO",
+            "Pergunta 5 - Sistema de concorrência": "Ampla concorrência",
+            "Pergunta 23 - Termo de responsabilidade": "Estou de acordo"
+          }
+        },
+        {
+          "id": "c02",
+          "codigo": "7000002",
+          "ativo": true,
+          "nascimento": "1990-01-01",
+          "candidatura": "2026-09-12T12:00:00+00:00",
+          "colunas": {
+            "SITUAÇÃO": "Ativo",
+            "SITUAÇÃO - Questionário de seleção": "FINALIZADO",
+            "NOTA - Questionário de seleção": "22,0/30,0",
+            "REPROVADO": "NÃO",
+            "Pergunta 5 - Sistema de concorrência": "Ampla concorrência",
+            "Pergunta 23 - Termo de responsabilidade": "Estou de acordo"
+          }
+        },
+        {
+          "id": "c03",
+          "codigo": "7000003",
+          "ativo": true,
+          "nascimento": "1990-01-01",
+          "candidatura": "2026-09-13T12:00:00+00:00",
+          "colunas": {
+            "SITUAÇÃO": "Ativo",
+            "SITUAÇÃO - Questionário de seleção": "FINALIZADO",
+            "NOTA - Questionário de seleção": "21,0/30,0",
+            "REPROVADO": "NÃO",
+            "Pergunta 5 - Sistema de concorrência": "Ampla concorrência",
+            "Pergunta 23 - Termo de responsabilidade": "Estou de acordo"
+          }
+        },
+        {
+          "id": "c04",
+          "codigo": "7000004",
+          "ativo": true,
+          "nascimento": "1990-01-01",
+          "candidatura": "2026-09-14T12:00:00+00:00",
+          "colunas": {
+            "SITUAÇÃO": "Ativo",
+            "SITUAÇÃO - Questionário de seleção": "FINALIZADO",
+            "NOTA - Questionário de seleção": "20,0/30,0",
+            "REPROVADO": "NÃO",
+            "Pergunta 5 - Sistema de concorrência": "Ampla concorrência",
+            "Pergunta 23 - Termo de responsabilidade": "Estou de acordo"
+          }
+        }
+      ],
+      "anterior": {},
+      "ultimo_lote": 0,
+      "refazer": false,
+      "hoje": "2026-10-06",
+      "esperado": {
+        "linhas": {
+          "c01": {
+            "situacao": "NO_LOTE",
+            "motivo_codigo": null,
+            "posicao": 1,
+            "posicao_modalidade": 1,
+            "lote": 1,
+            "lista_lote": "GERAL",
+            "entrada": "INICIAL",
+            "motivo_entrada": "Lote inicial: 3 (número fixo)",
+            "nota": 24,
+            "origem_nota": "ART",
+            "divergente": false,
+            "modalidade": "AC"
+          },
+          "c02": {
+            "situacao": "NO_LOTE",
+            "motivo_codigo": null,
+            "posicao": 2,
+            "posicao_modalidade": 2,
+            "lote": 1,
+            "lista_lote": "GERAL",
+            "entrada": "INICIAL",
+            "motivo_entrada": "Lote inicial: 3 (número fixo)",
+            "nota": 22,
+            "origem_nota": "ART",
+            "divergente": false,
+            "modalidade": "AC"
+          },
+          "c03": {
+            "situacao": "NO_LOTE",
+            "motivo_codigo": null,
+            "posicao": 3,
+            "posicao_modalidade": 3,
+            "lote": 1,
+            "lista_lote": "GERAL",
+            "entrada": "INICIAL",
+            "motivo_entrada": "Lote inicial: 3 (número fixo)",
+            "nota": 21,
+            "origem_nota": "ART",
+            "divergente": false,
+            "modalidade": "AC"
+          },
+          "c04": {
+            "situacao": "RANQUEADO",
+            "motivo_codigo": null,
+            "posicao": 4,
+            "posicao_modalidade": 4,
+            "lote": null,
+            "lista_lote": null,
+            "entrada": null,
+            "motivo_entrada": null,
+            "nota": 20,
+            "origem_nota": "ART",
+            "divergente": false,
+            "modalidade": "AC"
+          }
+        },
+        "resumo": {
+          "inscritos": 4,
+          "eliminados": 0,
+          "ranqueados": 4,
+          "no_lote": 3,
+          "tamanho": 3,
+          "descricao": "3 (número fixo)",
+          "por_modalidade": null,
+          "art_corte": 21,
+          "divergencias": 0,
+          "sem_art": 0,
+          "acima_do_corte": 0,
+          "entraram": 3,
+          "lote_novo": 1,
+          "saidas": [],
+          "avisos": []
+        }
+      }
+    },
+    {
+      "nome": "quem já foi analisado não muda, mesmo cancelando depois",
+      "historia": "AM-5.5",
+      "regra": {
+        "schema": 1,
+        "titulo_etapa": "Avaliação Documental e de Títulos",
+        "provisoria": {
+          "eliminacao_automatica": [
+            {
+              "codigo": "CANCELADO",
+              "coluna": "SITUAÇÃO",
+              "quando": ["CANCELADO"],
+              "motivo": "Cancelou a inscrição"
+            },
+            {
+              "codigo": "QUESTIONARIO",
+              "coluna_prefixo": "SITUAÇÃO - ",
+              "exceto": ["FINALIZADO"],
+              "motivo": "Não finalizou o questionário"
+            },
+            {
+              "codigo": "REPROVADO_EMPREGARE",
+              "coluna": "REPROVADO",
+              "quando": ["SIM"],
+              "motivo": "Reprovado na Empregare"
+            },
+            {
+              "codigo": "TERMO",
+              "pergunta": "Pergunta 23 -",
+              "quando": ["Não estou de acordo"],
+              "motivo": "Recusou o termo de responsabilidade"
+            }
+          ],
+          "nota_declarada": [],
+          "divergencia_tolerancia": 0
+        },
+        "lote": {
+          "base": "MULTIPLO_VAGAS",
+          "multiplo": 1,
+          "fixo": null,
+          "inclui_cr": false,
+          "por_modalidade": false,
+          "inclui_empatados": true,
+          "linha_anda": true,
+          "publica_reposicao": false
+        },
+        "blocos": [
+          {
+            "codigo": "MODALIDADE",
+            "titulo": "Sistema de concorrência",
+            "tipo": "REGISTRO",
+            "perguntas": ["Pergunta 5 -"]
+          }
+        ]
+      },
+      "vaga": {
+        "codigo": "900001",
+        "vagas_imediatas": 1,
+        "cadastro_reserva": true,
+        "modalidades": {
+          "Ampla Concorrência": 1
+        }
+      },
+      "candidatos": [
+        {
+          "id": "c01",
+          "codigo": "7000001",
+          "ativo": true,
+          "nascimento": "1990-01-01",
+          "candidatura": "2026-09-11T12:00:00+00:00",
+          "colunas": {
+            "SITUAÇÃO": "Cancelado",
+            "SITUAÇÃO - Questionário de seleção": "FINALIZADO",
+            "NOTA - Questionário de seleção": "28,0/30,0",
+            "REPROVADO": "NÃO",
+            "Pergunta 5 - Sistema de concorrência": "Ampla concorrência",
+            "Pergunta 23 - Termo de responsabilidade": "Estou de acordo"
+          }
+        },
+        {
+          "id": "c02",
+          "codigo": "7000002",
+          "ativo": true,
+          "nascimento": "1990-01-01",
+          "candidatura": "2026-09-12T12:00:00+00:00",
+          "colunas": {
+            "SITUAÇÃO": "Ativo",
+            "SITUAÇÃO - Questionário de seleção": "FINALIZADO",
+            "NOTA - Questionário de seleção": "25,0/30,0",
+            "REPROVADO": "NÃO",
+            "Pergunta 5 - Sistema de concorrência": "Ampla concorrência",
+            "Pergunta 23 - Termo de responsabilidade": "Estou de acordo"
+          }
+        },
+        {
+          "id": "c03",
+          "codigo": "7000003",
+          "ativo": true,
+          "nascimento": "1990-01-01",
+          "candidatura": "2026-09-13T12:00:00+00:00",
+          "colunas": {
+            "SITUAÇÃO": "Ativo",
+            "SITUAÇÃO - Questionário de seleção": "FINALIZADO",
+            "NOTA - Questionário de seleção": "20,0/30,0",
+            "REPROVADO": "NÃO",
+            "Pergunta 5 - Sistema de concorrência": "Ampla concorrência",
+            "Pergunta 23 - Termo de responsabilidade": "Estou de acordo"
+          }
+        }
+      ],
+      "anterior": {
+        "c01": {
+          "situacao": "ANALISADO",
+          "posicao": 1,
+          "lote": 1,
+          "lista_lote": "GERAL",
+          "entrada": "INICIAL",
+          "motivo_entrada": "Lote inicial: 2 × (1 + CR) = 4"
+        },
+        "c02": {
+          "situacao": "RANQUEADO",
+          "posicao": 2
+        }
+      },
+      "ultimo_lote": 1,
+      "refazer": false,
+      "hoje": "2026-10-06",
+      "esperado": {
+        "linhas": {
+          "c01": {
+            "situacao": "ANALISADO",
+            "motivo_codigo": null,
+            "posicao": 1,
+            "posicao_modalidade": 1,
+            "lote": 1,
+            "lista_lote": "GERAL",
+            "entrada": "INICIAL",
+            "motivo_entrada": "Lote inicial: 2 × (1 + CR) = 4",
+            "nota": 28,
+            "origem_nota": "ART",
+            "divergente": false,
+            "modalidade": "AC"
+          },
+          "c02": {
+            "situacao": "RANQUEADO",
+            "motivo_codigo": null,
+            "posicao": 2,
+            "posicao_modalidade": 2,
+            "lote": null,
+            "lista_lote": null,
+            "entrada": null,
+            "motivo_entrada": null,
+            "nota": 25,
+            "origem_nota": "ART",
+            "divergente": false,
+            "modalidade": "AC"
+          },
+          "c03": {
+            "situacao": "RANQUEADO",
+            "motivo_codigo": null,
+            "posicao": 3,
+            "posicao_modalidade": 3,
+            "lote": null,
+            "lista_lote": null,
+            "entrada": null,
+            "motivo_entrada": null,
+            "nota": 20,
+            "origem_nota": "ART",
+            "divergente": false,
+            "modalidade": "AC"
+          }
+        },
+        "resumo": {
+          "inscritos": 3,
+          "eliminados": 0,
+          "ranqueados": 3,
+          "no_lote": 1,
+          "tamanho": 1,
+          "descricao": "1 × 1 = 1",
+          "por_modalidade": null,
+          "art_corte": 28,
+          "divergencias": 0,
+          "sem_art": 0,
+          "acima_do_corte": 0,
+          "entraram": 0,
+          "lote_novo": null,
+          "saidas": [],
+          "avisos": []
+        }
+      }
+    },
+    {
+      "nome": "coluna da regra ausente no arquivo vira aviso e não elimina",
+      "historia": "AM-4.1",
+      "regra": {
+        "schema": 1,
+        "titulo_etapa": "Avaliação Documental e de Títulos",
+        "provisoria": {
+          "eliminacao_automatica": [
+            {
+              "codigo": "CANCELADO",
+              "coluna": "SITUAÇÃO",
+              "quando": ["CANCELADO"],
+              "motivo": "Cancelou a inscrição"
+            },
+            {
+              "codigo": "QUESTIONARIO",
+              "coluna_prefixo": "SITUAÇÃO - ",
+              "exceto": ["FINALIZADO"],
+              "motivo": "Não finalizou o questionário"
+            },
+            {
+              "codigo": "REPROVADO_EMPREGARE",
+              "coluna": "REPROVADO",
+              "quando": ["SIM"],
+              "motivo": "Reprovado na Empregare"
+            },
+            {
+              "codigo": "TERMO",
+              "pergunta": "Pergunta 23 -",
+              "quando": ["Não estou de acordo"],
+              "motivo": "Recusou o termo de responsabilidade"
+            }
+          ],
+          "nota_declarada": [],
+          "divergencia_tolerancia": 0
+        },
+        "lote": {
+          "base": "MULTIPLO_VAGAS",
+          "multiplo": 2,
+          "fixo": null,
+          "inclui_cr": true,
+          "por_modalidade": false,
+          "inclui_empatados": true,
+          "linha_anda": true,
+          "publica_reposicao": false
+        },
+        "blocos": [
+          {
+            "codigo": "MODALIDADE",
+            "titulo": "Sistema de concorrência",
+            "tipo": "REGISTRO",
+            "perguntas": ["Pergunta 5 -"]
+          }
+        ]
+      },
+      "vaga": {
+        "codigo": "900001",
+        "vagas_imediatas": 1,
+        "cadastro_reserva": true,
+        "modalidades": {
+          "Ampla Concorrência": 1
+        }
+      },
+      "candidatos": [
+        {
+          "id": "c01",
+          "codigo": "7000001",
+          "ativo": true,
+          "nascimento": "1990-01-01",
+          "candidatura": "2026-09-11T12:00:00+00:00",
+          "colunas": {
+            "SITUAÇÃO": "Ativo",
+            "SITUAÇÃO - Questionário de seleção": "FINALIZADO",
+            "NOTA - Questionário de seleção": "24,0/30,0",
+            "Pergunta 5 - Sistema de concorrência": "Ampla concorrência",
+            "Pergunta 23 - Termo de responsabilidade": "Estou de acordo"
+          }
+        },
+        {
+          "id": "c02",
+          "codigo": "7000002",
+          "ativo": true,
+          "nascimento": "1990-01-01",
+          "candidatura": "2026-09-12T12:00:00+00:00",
+          "colunas": {
+            "SITUAÇÃO": "Ativo",
+            "SITUAÇÃO - Questionário de seleção": "FINALIZADO",
+            "NOTA - Questionário de seleção": "22,0/30,0",
+            "Pergunta 5 - Sistema de concorrência": "Ampla concorrência",
+            "Pergunta 23 - Termo de responsabilidade": "Estou de acordo"
+          }
+        }
+      ],
+      "anterior": {},
+      "ultimo_lote": 0,
+      "refazer": false,
+      "hoje": "2026-10-06",
+      "esperado": {
+        "linhas": {
+          "c01": {
+            "situacao": "NO_LOTE",
+            "motivo_codigo": null,
+            "posicao": 1,
+            "posicao_modalidade": 1,
+            "lote": 1,
+            "lista_lote": "GERAL",
+            "entrada": "INICIAL",
+            "motivo_entrada": "Lote inicial: 2 × (1 + CR) = 4",
+            "nota": 24,
+            "origem_nota": "ART",
+            "divergente": false,
+            "modalidade": "AC"
+          },
+          "c02": {
+            "situacao": "NO_LOTE",
+            "motivo_codigo": null,
+            "posicao": 2,
+            "posicao_modalidade": 2,
+            "lote": 1,
+            "lista_lote": "GERAL",
+            "entrada": "INICIAL",
+            "motivo_entrada": "Lote inicial: 2 × (1 + CR) = 4",
+            "nota": 22,
+            "origem_nota": "ART",
+            "divergente": false,
+            "modalidade": "AC"
+          }
+        },
+        "resumo": {
+          "inscritos": 2,
+          "eliminados": 0,
+          "ranqueados": 2,
+          "no_lote": 2,
+          "tamanho": 4,
+          "descricao": "2 × (1 + CR) = 4",
+          "por_modalidade": null,
+          "art_corte": 22,
+          "divergencias": 0,
+          "sem_art": 0,
+          "acima_do_corte": 0,
+          "entraram": 2,
+          "lote_novo": 1,
+          "saidas": [],
+          "avisos": ["COLUNA_AUSENTE:REPROVADO_EMPREGARE"]
+        }
+      }
+    }
+  ]
+}

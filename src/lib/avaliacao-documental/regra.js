@@ -12,9 +12,10 @@
   Formato (schema 1):
   {
     schema, modelo, titulo_etapa, edital_rotulo, casas_parecer,
-    provisoria: { eliminacao_automatica[], nota_declarada[], divergencia_tolerancia },
+    provisoria: { eliminacao_automatica[], nota_declarada[], divergencia_tolerancia,
+                  desempate[] },
     lote: { base, multiplo, fixo, inclui_cr, por_modalidade, inclui_empatados,
-            linha_anda, publica_reposicao },
+            linha_anda, publica_reposicao, por_vaga{ codigo: tamanho } },
     distribuicao: { modo, criterio, limite_por_analista, novos, dias_parada },
     revisao: { amostra_percentual, minimo_por_analista, todas, inaptos_requisito,
                inaptos_nota, divergencia_pontos, sinais[], entrou_pela_linha, duplo_cego },
@@ -29,6 +30,8 @@
 import {
   BASES_DO_LOTE,
   CRITERIOS_DA_DISTRIBUICAO,
+  DESEMPATE_PADRAO_DA_PROVISORIA,
+  DESEMPATES_DA_PROVISORIA,
   DESTINO_DOS_NOVOS,
   EFEITOS,
   EFEITOS_DE_ENCAMINHAMENTO,
@@ -140,6 +143,9 @@ export function normalizarRegraAnalise(entrada) {
       divergencia_tolerancia: entre(provisoria.divergencia_tolerancia, 0, 30)
         ? provisoria.divergencia_tolerancia
         : 0,
+      desempate: Array.isArray(provisoria.desempate)
+        ? provisoria.desempate
+        : [...DESEMPATE_PADRAO_DA_PROVISORIA],
     },
     lote: { ...LOTE_PADRAO, ...(ehObjeto(r.lote) ? r.lote : {}) },
     distribuicao: {
@@ -584,6 +590,17 @@ export function validarRegraAnalise(regra) {
     });
   if (!nuloOuEntre(provisoria.divergencia_tolerancia, 0, 30))
     erros.push("Tolerância da divergência entre 0 e 30 pontos.");
+  const desempate = provisoria.desempate;
+  if (
+    desempate !== undefined &&
+    (!Array.isArray(desempate) ||
+      desempate.length > DESEMPATES_DA_PROVISORIA.length ||
+      new Set(desempate).size !== desempate.length ||
+      desempate.some((d) => !valores(DESEMPATES_DA_PROVISORIA).has(d)))
+  )
+    erros.push(
+      "Desempate da Provisória: IDOSO, MAIS_VELHO ou CANDIDATURA, sem repetir.",
+    );
 
   // Lote.
   const lote = regra.lote ?? {};
@@ -604,6 +621,25 @@ export function validarRegraAnalise(regra) {
     ])
       if (lote[chave] !== undefined && typeof lote[chave] !== "boolean")
         erros.push(`Lote: ${chave} deve ser sim ou não.`);
+    if (lote.por_vaga !== undefined && lote.por_vaga !== null) {
+      const porVaga = ehObjeto(lote.por_vaga)
+        ? Object.entries(lote.por_vaga)
+        : null;
+      if (
+        !porVaga ||
+        porVaga.length > 500 ||
+        porVaga.some(
+          ([vaga, n]) =>
+            !/^[0-9]{1,20}$/.test(vaga) ||
+            !Number.isInteger(n) ||
+            n < 1 ||
+            n > 100000,
+        )
+      )
+        erros.push(
+          "Lote por vaga: código da vaga (só dígitos) e tamanho inteiro de 1 a 100.000.",
+        );
+    }
   }
 
   // Distribuição e revisão.

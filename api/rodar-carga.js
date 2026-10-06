@@ -4,12 +4,18 @@
 
     GET   → { configurado: true, robos: { empregare: { rodando, execucao }, … } }
             (se cada workflow tem execução na fila ou rodando no GitHub)
-    POST  { robo: "empregare" | "selecao" | "entrevistas" }
+    POST  { robo: "empregare" | "selecao" | "entrevistas" | "conferencias"
+                  | "pre_classificacao", edital?: <uuid> }
           → 202 { ok: true } depois de pedir o workflow_dispatch
 
   Quem pode: o Bearer do Supabase de quem clicou é conferido em /auth/v1/user e
   na RPC pode_disparar_carga (administrador global, migration 20261005170000),
-  chamada com o próprio token — o banco decide, não o front.
+  chamada com o próprio token — o banco decide, não o front. Robô por edital
+  (a pré-classificação) com um edital no pedido: quem não é administrador
+  global passa se pode_recalcular_pre_classificacao(p_edital) disser que
+  coordena a avaliação daquele edital (migration 20261006110000); o workflow
+  recebe editais = o id do edital. O GET (o que roda no GitHub) continua só do
+  administrador global.
 
   Só robôs da lista fixa (ROBOS_DE_CARGA em src/lib/robos-de-carga.js: robô →
   arquivo do workflow); o workflow recebe modo "normal" e disparado_por = id do
@@ -25,7 +31,9 @@
 */
 import { origemDeTerceiro } from "../src/lib/origem-da-requisicao.js";
 import {
+  editalDoPedido,
   execucaoEmCurso,
+  inputsDoDisparo,
   MENSAGENS_DO_DISPARO,
   RAMO_DAS_CARGAS,
   REPOSITORIO_DAS_CARGAS,
@@ -55,12 +63,14 @@ function configuracaoDoSupabase(ambiente) {
 }
 
 /**
- * Confere o Bearer e a permissão no Supabase. Devolve { id } do administrador
- * global, { erro: "sem_sessao" } ou { erro: "sem_permissao" }.
+ * Confere o Bearer e a permissão no Supabase. Devolve { id, admin } de quem
+ * pode, { erro: "sem_sessao" }, { erro: "sem_permissao" } ou, com `edital`
+ * (robô por edital), { erro: "sem_permissao_edital" } — quem não é
+ * administrador global passa se coordena a avaliação do edital.
  */
 export async function administradorDaRequisicao(
   autorizacao,
-  { ambiente = process.env, buscar = fetch } = {},
+  { ambiente = process.env, buscar = fetch, edital = "" } = {},
 ) {
   const texto = String(autorizacao || "");
   const token = /^bearer\s+/i.test(texto)
@@ -84,9 +94,21 @@ export async function administradorDaRequisicao(
       body: "{}",
       signal: AbortSignal.timeout(TEMPO_LIMITE_MS),
     });
-    if (!permissao.ok || (await permissao.json()) !== true)
-      return { erro: "sem_permissao" };
-    return { id: String(id) };
+    if (permissao.ok && (await permissao.json()) === true)
+      return { id: String(id), admin: true };
+    if (!edital) return { erro: "sem_permissao" };
+    const doEdital = await buscar(
+      `${url}/rest/v1/rpc/pode_recalcular_pre_classificacao`,
+      {
+        method: "POST",
+        headers: { ...cabecalhos, "Content-Type": "application/json" },
+        body: JSON.stringify({ p_edital: edital }),
+        signal: AbortSignal.timeout(TEMPO_LIMITE_MS),
+      },
+    );
+    if (!doEdital.ok || (await doEdital.json()) !== true)
+      return { erro: "sem_permissao_edital" };
+    return { id: String(id), admin: false };
   } catch {
     return { erro: "sem_sessao" };
   }
@@ -148,14 +170,26 @@ export default async function handler(req, res, opcoes = {}) {
   if (origemDeTerceiro(req))
     return responder(res, 403, { erro: "Origem não permitida." });
 
+  // O pedido por edital (Recalcular da coordenação) só vale no POST de um robô por edital.
+  const corpo = req.method === "POST" ? lerCorpo(req) : {};
+  const roboPedido = req.method === "POST" ? roboDeCarga(corpo.robo) : null;
+  const textoDoEdital = String(corpo.edital ?? "").trim();
+  const edital = roboPedido?.porEdital ? editalDoPedido(textoDoEdital) : "";
+  if (roboPedido?.porEdital && textoDoEdital && !edital)
+    return responder(res, 400, { erro: MENSAGENS_DO_DISPARO.edital_invalido });
+
   const quem = await administradorDaRequisicao(req.headers?.authorization, {
     ambiente,
     buscar,
+    edital,
   });
   if (quem.erro === "sem_sessao")
     return responder(res, 401, { erro: MENSAGENS_DO_DISPARO.sem_sessao });
   if (quem.erro)
-    return responder(res, 403, { erro: MENSAGENS_DO_DISPARO.sem_permissao });
+    return responder(res, 403, {
+      erro:
+        MENSAGENS_DO_DISPARO[quem.erro] || MENSAGENS_DO_DISPARO.sem_permissao,
+    });
 
   const token = String(ambiente.GITHUB_DISPATCH_TOKEN || "").trim();
   if (!token)
@@ -176,7 +210,7 @@ export default async function handler(req, res, opcoes = {}) {
   if (req.method === "GET")
     return responder(res, 200, { configurado: true, robos });
 
-  const robo = roboDeCarga(lerCorpo(req).robo);
+  const robo = roboPedido;
   if (!robo)
     return responder(res, 400, { erro: MENSAGENS_DO_DISPARO.robo_invalido });
   if (robos[robo.id]?.rodando)
@@ -197,7 +231,7 @@ export default async function handler(req, res, opcoes = {}) {
         },
         body: JSON.stringify({
           ref: RAMO_DAS_CARGAS,
-          inputs: { modo: "normal", disparado_por: quem.id },
+          inputs: inputsDoDisparo(robo, quem.id, edital),
         }),
         signal: AbortSignal.timeout(TEMPO_LIMITE_MS),
       },

@@ -144,6 +144,7 @@ const QUEM_DISPAROU = Object.freeze({
   AGENDA: "agenda",
   MONITORA: "Rodar agora",
   GITHUB: "GitHub",
+  ROBO: "fim do robô da Empregare",
 });
 
 /* Execução do robô da Empregare: as contagens de vagas entram na mensagem. */
@@ -174,6 +175,24 @@ function execucaoDaConferencia(bruta) {
   ];
   const falhas = Array.isArray(bruta?.falhas) ? bruta.falhas.length : 0;
   if (falhas) partes.push(`${falhas} conferências falharam`);
+  const quem = QUEM_DISPAROU[texto(bruta?.disparo)];
+  if (quem) partes.push(`disparo: ${quem}`);
+  const mensagem = texto(bruta?.mensagem);
+  return {
+    ...bruta,
+    mensagem: `${partes.join(" · ")}${mensagem ? `. ${mensagem}` : ""}`,
+  };
+}
+
+/* Execução da pré-classificação: editais, vagas e o lote entram na mensagem. */
+function execucaoDaPreClassificacao(bruta) {
+  const n = (campo) => inteiro(bruta?.[campo]) ?? 0;
+  const partes = [
+    `${n("editais")} editais`,
+    `${n("vagas")} vagas`,
+    `${n("lote")} no lote`,
+  ];
+  if (bruta?.refazer) partes.push("lote refeito");
   const quem = QUEM_DISPAROU[texto(bruta?.disparo)];
   if (quem) partes.push(`disparo: ${quem}`);
   const mensagem = texto(bruta?.mensagem);
@@ -290,6 +309,23 @@ export function normalizarSaude(dados, agora = new Date()) {
           prazoMin: PRAZO_DIARIO_MIN,
           tipo: "conferencia",
           execucoes: dados.conferencias.map(execucaoDaConferencia),
+        },
+        agora,
+      ),
+    );
+
+  // A pré-classificação só aparece depois da migration 20261006110000 (a chave vem no payload).
+  if (Array.isArray(dados?.pre_classificacao))
+    robos.push(
+      montarCarga(
+        {
+          id: "pre_classificacao",
+          nome: "Pré-classificação (Avaliação documental)",
+          onde: "GitHub Actions · Pré-classificação da Avaliação documental",
+          esperado: "no fim do robô da Empregare e no Recalcular",
+          prazoMin: null,
+          tipo: "conferencia",
+          execucoes: dados.pre_classificacao.map(execucaoDaPreClassificacao),
         },
         agora,
       ),
@@ -466,17 +502,28 @@ export function visaoSimples(saude) {
     );
   }
 
+  const TEXTOS_DOS_ROBOS = {
+    empregare: [
+      "Robô da Empregare",
+      "Traz os candidatos de cada vaga dos editais em curso a partir da Empregare, quando um administrador clica em Rodar agora.",
+    ],
+    conferencias: [
+      "Conferências de consistência",
+      "Confere análises, entrevistas, classificação, aprovados e cargas e lista os avisos abaixo, todo dia às 6h.",
+    ],
+    pre_classificacao: [
+      "Pré-classificação (Avaliação documental)",
+      "Monta a Provisória por ART e o lote de convocação de cada vaga no fim do robô da Empregare e quando a coordenação clica em Recalcular.",
+    ],
+  };
   for (const carga of porId.robos?.cargas || []) {
-    const conferencias = carga.id === "conferencias";
+    const [titulo, explicacao] =
+      TEXTOS_DOS_ROBOS[carga.id] || TEXTOS_DOS_ROBOS.empregare;
     linhas.push(
       juntar({
         id: carga.id,
-        titulo: conferencias
-          ? "Conferências de consistência"
-          : "Robô da Empregare",
-        explicacao: conferencias
-          ? "Confere análises, entrevistas, classificação, aprovados e cargas e lista os avisos abaixo, todo dia às 6h."
-          : "Traz os candidatos de cada vaga dos editais em curso a partir da Empregare, quando um administrador clica em Rodar agora.",
+        titulo,
+        explicacao,
         partes: [carga],
         situacoesQueContam: [carga.situacao],
       }),
