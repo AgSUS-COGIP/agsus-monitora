@@ -47,10 +47,8 @@ describe("a lista de painéis", () => {
     ]);
   });
 
-  it("o recurso analises se chama Análises curriculares na matriz", () => {
-    expect(Object.fromEntries(RESOURCES).analises).toBe(
-      "Análises curriculares",
-    );
+  it("o recurso analises se chama Painel das análises na matriz", () => {
+    expect(Object.fromEntries(RESOURCES).analises).toBe("Painel das análises");
   });
 });
 
@@ -68,7 +66,7 @@ describe("o legado trata Análises como página", () => {
     // A navegação (src/lib/navegacao.js) usa as mesmas regras de access-roles.js.
     expect(telaPermitida("analises", perfil("leitor"))).toBe(true);
     expect(bloqueioDaTela("analises", perfil("sem_acesso"))).toBe(
-      "Sem permissão para Análises curriculares.",
+      "Sem permissão para o Painel das análises.",
     );
   });
 
@@ -76,7 +74,7 @@ describe("o legado trata Análises como página", () => {
     const controlador = { render() {} };
     expect(
       TELAS_REACT.analises(() => "", { analisesController: controlador }),
-    ).toEqual(["Análises curriculares", "", controlador]);
+    ).toEqual(["Painel das análises", "", controlador]);
     expect(ler("src/app/navegacao.js")).not.toContain("abrirPaginaDoPainel");
     expect(ler("src/main.js")).toContain(
       "window.analisesController = montarAnalises({",

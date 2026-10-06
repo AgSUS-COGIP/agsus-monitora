@@ -111,7 +111,7 @@ describe("a árvore do menu segue o perfil e as áreas", () => {
       "Visão geral",
       "Editais",
       "Cronograma",
-      "Análises curriculares",
+      "Painel das análises",
       "Lista de aprovados",
     ]);
     expect(grupos["saude-indigena"].at(-1)).toEqual({

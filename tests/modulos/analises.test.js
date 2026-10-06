@@ -1024,7 +1024,7 @@ describe("sessão, permissão, erro e demora", () => {
     });
     await montar(supabase);
     expect(secao.querySelector(".ui-aviso").textContent).toBe(
-      "Sem acesso às Análises curriculares.",
+      "Sem acesso ao Painel das análises.",
     );
     expect(
       chamadas(supabase, "get_analises_dashboard_payload_v2"),
@@ -1044,7 +1044,7 @@ describe("sessão, permissão, erro e demora", () => {
       }),
     );
     expect(secao.querySelector(".ui-aviso").textContent).toBe(
-      "Sem acesso às Análises curriculares.",
+      "Sem acesso ao Painel das análises.",
     );
   });
 

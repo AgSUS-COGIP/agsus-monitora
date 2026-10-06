@@ -91,13 +91,32 @@ const PAGINAS = Object.freeze({
     ],
   },
   analises: {
-    nome: "Análises curriculares",
+    nome: "Painel das análises",
     intro: () =>
       "Posso explicar o escopo, as pendências e como as análises chegam das planilhas.",
     sugestoes: () => [
       sug("Escopo", "O que é o escopo Ativo, Inativo e Todos?"),
       sug("Pendências", "Quais são as pendências das análises curriculares?"),
       sug("Atualização", "Como as análises curriculares são atualizadas?"),
+      sug(
+        "Painel × Avaliação",
+        "Qual a diferença entre o Painel das análises e a Avaliação documental?",
+      ),
+    ],
+  },
+  "avaliacao-documental": {
+    nome: "Avaliação documental",
+    intro: () =>
+      "Posso explicar a regra da avaliação do edital, as versões, os modelos, a prévia e a equipe.",
+    sugestoes: () => [
+      sug("Regra", "Como funciona a regra da avaliação documental?"),
+      sug("Modelos", "Quais são os modelos da regra da avaliação?"),
+      sug("Equipe", "Quem pode entrar na equipe da avaliação documental?"),
+      sug("Prévia", "Como testar a regra com um candidato fictício?"),
+      sug(
+        "Painel × Avaliação",
+        "Qual a diferença entre o Painel das análises e a Avaliação documental?",
+      ),
     ],
   },
   recursos: {
@@ -285,8 +304,12 @@ export const ACOES_DA_AYA = Object.freeze({
   nucleo: Object.freeze({ rotulo: "Abrir Editais", view: "nucleo" }),
   calendario: Object.freeze({ rotulo: "Abrir Cronograma", view: "calendario" }),
   analises: Object.freeze({
-    rotulo: "Abrir Análises curriculares",
+    rotulo: "Abrir Painel das análises",
     view: "analises",
+  }),
+  "avaliacao-documental": Object.freeze({
+    rotulo: "Abrir Avaliação documental",
+    view: "avaliacao-documental",
   }),
   recursos: Object.freeze({ rotulo: "Abrir Recursos", view: "recursos" }),
   entrevistas: Object.freeze({

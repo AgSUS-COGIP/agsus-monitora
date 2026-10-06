@@ -1,34 +1,34 @@
 {
   "admin × todas": [
-    "saude-indigena: dashboard|Visão geral|map|saude-indigena · nucleo|Editais|file-text|saude-indigena · calendario|Cronograma|calendar-days|saude-indigena · analises|Análises curriculares|file-search|saude-indigena · approved|Lista de aprovados|user-round-check|saude-indigena",
-    "sede: dashboard|Visão geral|map|sede · nucleo|Editais|file-text|sede · calendario|Cronograma|calendar-days|sede · analises|Análises curriculares|file-search|sede · approved|Lista de aprovados|user-round-check|sede",
-    "projetos: dashboard|Visão geral|map|projetos · nucleo|Editais|file-text|projetos · calendario|Cronograma|calendar-days|projetos · analises|Análises curriculares|file-search|projetos · approved|Lista de aprovados|user-round-check|projetos",
+    "saude-indigena: dashboard|Visão geral|map|saude-indigena · nucleo|Editais|file-text|saude-indigena · calendario|Cronograma|calendar-days|saude-indigena · analises|Painel das análises|file-search|saude-indigena · approved|Lista de aprovados|user-round-check|saude-indigena",
+    "sede: dashboard|Visão geral|map|sede · nucleo|Editais|file-text|sede · calendario|Cronograma|calendar-days|sede · analises|Painel das análises|file-search|sede · approved|Lista de aprovados|user-round-check|sede",
+    "projetos: dashboard|Visão geral|map|projetos · nucleo|Editais|file-text|projetos · calendario|Cronograma|calendar-days|projetos · analises|Painel das análises|file-search|projetos · approved|Lista de aprovados|user-round-check|projetos",
     "paineis: panel:recursos|Recursos|square-arrow-out-up-right|",
     "administracao: config|Acessos|settings|acessos"
   ],
   "admin × si": [
-    "saude-indigena: dashboard|Visão geral|map|saude-indigena · nucleo|Editais|file-text|saude-indigena · calendario|Cronograma|calendar-days|saude-indigena · analises|Análises curriculares|file-search|saude-indigena · approved|Lista de aprovados|user-round-check|saude-indigena",
+    "saude-indigena: dashboard|Visão geral|map|saude-indigena · nucleo|Editais|file-text|saude-indigena · calendario|Cronograma|calendar-days|saude-indigena · analises|Painel das análises|file-search|saude-indigena · approved|Lista de aprovados|user-round-check|saude-indigena",
     "paineis: panel:recursos|Recursos|square-arrow-out-up-right|",
     "administracao: config|Acessos|settings|acessos"
   ],
   "admin × sede": [
-    "sede: dashboard|Visão geral|map|sede · nucleo|Editais|file-text|sede · calendario|Cronograma|calendar-days|sede · analises|Análises curriculares|file-search|sede · approved|Lista de aprovados|user-round-check|sede",
+    "sede: dashboard|Visão geral|map|sede · nucleo|Editais|file-text|sede · calendario|Cronograma|calendar-days|sede · analises|Painel das análises|file-search|sede · approved|Lista de aprovados|user-round-check|sede",
     "paineis: panel:recursos|Recursos|square-arrow-out-up-right|",
     "administracao: config|Acessos|settings|acessos"
   ],
   "admin × projetos": [
-    "projetos: dashboard|Visão geral|map|projetos · nucleo|Editais|file-text|projetos · calendario|Cronograma|calendar-days|projetos · analises|Análises curriculares|file-search|projetos · approved|Lista de aprovados|user-round-check|projetos",
+    "projetos: dashboard|Visão geral|map|projetos · nucleo|Editais|file-text|projetos · calendario|Cronograma|calendar-days|projetos · analises|Painel das análises|file-search|projetos · approved|Lista de aprovados|user-round-check|projetos",
     "paineis: panel:recursos|Recursos|square-arrow-out-up-right|",
     "administracao: config|Acessos|settings|acessos"
   ],
   "admin × sede-e-projetos": [
-    "sede: dashboard|Visão geral|map|sede · nucleo|Editais|file-text|sede · calendario|Cronograma|calendar-days|sede · analises|Análises curriculares|file-search|sede · approved|Lista de aprovados|user-round-check|sede",
-    "projetos: dashboard|Visão geral|map|projetos · nucleo|Editais|file-text|projetos · calendario|Cronograma|calendar-days|projetos · analises|Análises curriculares|file-search|projetos · approved|Lista de aprovados|user-round-check|projetos",
+    "sede: dashboard|Visão geral|map|sede · nucleo|Editais|file-text|sede · calendario|Cronograma|calendar-days|sede · analises|Painel das análises|file-search|sede · approved|Lista de aprovados|user-round-check|sede",
+    "projetos: dashboard|Visão geral|map|projetos · nucleo|Editais|file-text|projetos · calendario|Cronograma|calendar-days|projetos · analises|Painel das análises|file-search|projetos · approved|Lista de aprovados|user-round-check|projetos",
     "paineis: panel:recursos|Recursos|square-arrow-out-up-right|",
     "administracao: config|Acessos|settings|acessos"
   ],
   "admin × contexto-antigo": [
-    "saude-indigena: dashboard|Visão geral|map|saude-indigena · nucleo|Editais|file-text|saude-indigena · calendario|Cronograma|calendar-days|saude-indigena · analises|Análises curriculares|file-search|saude-indigena · approved|Lista de aprovados|user-round-check|saude-indigena",
+    "saude-indigena: dashboard|Visão geral|map|saude-indigena · nucleo|Editais|file-text|saude-indigena · calendario|Cronograma|calendar-days|saude-indigena · analises|Painel das análises|file-search|saude-indigena · approved|Lista de aprovados|user-round-check|saude-indigena",
     "paineis: panel:recursos|Recursos|square-arrow-out-up-right|",
     "administracao: config|Acessos|settings|acessos"
   ],

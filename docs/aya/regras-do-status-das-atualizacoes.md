@@ -33,9 +33,16 @@ falhou. Fontes: `src/componentes/saude-das-cargas/`, `src/lib/saude-das-cargas.j
 
 ## Robô da Empregare
 
-**perguntas:** robo da empregare | o que e o robo da empregare | candidatos da empregare | carga da empregare | exportacao da empregare | excel da empregare | robo empregare falhou | robo da empregare parcial | quais vagas o robo da empregare baixa | por que o robo nao rodou | robo nao roda sozinho | agenda do robo da empregare
-**resposta:** A Empregare não tem API, então um robô entra no portal da empresa, pede a exportação "Candidatos da vaga (Excel)" de cada vaga, baixa os arquivos e grava os candidatos no MONITORA, com todas as colunas e respostas do questionário. Ele não tem agenda automática: roda só quando o administrador global clica em "Rodar agora". Sem filtro, pega as vagas ativas com código da Seleção cujo edital está ativo e em curso (sem cronograma ou com alguma etapa terminando há no máximo 30 dias), até 60 por execução, começando pelas nunca carregadas ou carregadas há mais tempo. Uma vaga cujo arquivo traz menos da metade dos candidatos que já tinha é recusada (nada muda nela) e quem sai do arquivo fica inativo, sem ser apagado. "Falhou" na linha do robô pode ser falha geral (por exemplo, login recusado) ou execução parcial (alguma vaga não baixou ou foi recusada); a mensagem traz as contagens de vagas pedidas, baixadas, com falha e recusadas.
-**fonte:** docs/robo-empregare.md; supabase/migrations/20261005170000_robo_empregare.sql
+**perguntas:** robo da empregare | o que e o robo da empregare | candidatos da empregare | carga da empregare | exportacao da empregare | excel da empregare | robo empregare falhou | robo da empregare parcial
+**resposta:** A Empregare não tem API, então um robô entra no portal da empresa, pede a exportação "Candidatos da vaga (Excel)" de cada vaga dos editais ativos em curso (as vagas vêm do quadro de vagas do edital e, nos editais antigos, da Seleção), baixa os arquivos e grava os candidatos no MONITORA, com todas as colunas e respostas do questionário. Uma vaga cujo arquivo traz menos da metade dos candidatos que já tinha é recusada (nada muda nela) e quem sai do arquivo fica inativo, sem ser apagado. "Falhou" na linha do robô pode ser falha geral (por exemplo, login recusado) ou execução parcial (alguma vaga não baixou ou foi recusada); a mensagem traz as contagens de vagas pedidas, baixadas, com falha e recusadas. Ele não tem agenda automática: roda só quando o administrador global clica em "Rodar agora".
+**fonte:** docs/robo-empregare.md; supabase/migrations/20261005170000_robo_empregare.sql; supabase/migrations/20261006080000_robo_empregare_vagas_do_quadro.sql
+**abrir:** config:cargas
+
+## Vagas do robô da Empregare
+
+**perguntas:** de onde vem as vagas do robo da empregare | quais vagas o robo da empregare exporta | robo da empregare nao trouxe o edital | edital sem candidatos da empregare | vaga fora da selecao no robo | quadro de vagas no robo da empregare
+**resposta:** O robô escolhe as vagas no próprio MONITORA, sem depender da planilha Auditoria. A fonte principal é o quadro de vagas do edital: em todo edital com quadro salvo, entram os códigos de vaga da Empregare das análises daquele edital (o mesmo vínculo vaga → linha do quadro da Classificação). A Seleção (planilha Auditoria) continua como segunda fonte, para os editais antigos; um código que está nas duas entra uma vez só, ligado ao edital do quadro. Sem filtro, entram as vagas dos editais ativos e em curso; pelo GitHub dá para pedir editais ou códigos. Edital sem quadro e fora da Seleção não entra: salve o quadro de vagas do edital ou rode pelo GitHub com os códigos.
+**fonte:** docs/robo-empregare.md; supabase/migrations/20261006080000_robo_empregare_vagas_do_quadro.sql
 **abrir:** config:cargas
 
 ## Carga com falha ou atrasada

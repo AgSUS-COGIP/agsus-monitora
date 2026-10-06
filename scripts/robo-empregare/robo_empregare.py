@@ -5,7 +5,9 @@ A Empregare não tem API. Este robô (Selenium, Chrome headless) entra no portal
 da empresa, pede a exportação "Candidatos da vaga (Excel)" de cada vaga, baixa
 os arquivos na Central de Exportações, lê cada Excel e grava os candidatos no
 Supabase pelas RPCs de carga (supabase/migrations/20261005170000_robo_empregare.sql).
-A lista de vagas vem do próprio MONITORA (listar_vagas_empregare), não de planilha.
+A lista de vagas vem do próprio MONITORA (listar_vagas_empregare): do quadro de
+vagas do edital (fonte principal) e, para editais antigos, da Seleção
+(supabase/migrations/20261006080000_robo_empregare_vagas_do_quadro.sql).
 
 Roda pelo GitHub Actions (.github/workflows/robo-empregare.yml): no horário de
 reserva, pelo botão "Run workflow" ou pelo "Rodar agora" das Configurações
@@ -103,6 +105,20 @@ def lista_de_codigos(vagas, maximo=80):
     codigos = [v["vaga"] for v in vagas]
     texto = ", ".join(codigos[:maximo])
     return texto + (f" … (+{len(codigos) - maximo})" if len(codigos) > maximo else "")
+
+
+ORIGENS = (("quadro", "quadro do edital"), ("selecao", "Seleção"), ("pedida", "pedidas fora das duas"))
+
+
+def contagem_por_origem(vagas):
+    """De onde vieram as vagas (campo 'origem' da lista): 'quadro do edital 5 · Seleção 2'. Só contagens."""
+    contagem = {}
+    for v in vagas:
+        origem = v.get("origem") or "selecao"
+        contagem[origem] = contagem.get(origem, 0) + 1
+    partes = [f"{nome} {contagem.pop(chave)}" for chave, nome in ORIGENS if chave in contagem]
+    partes += [f"{chave} {n}" for chave, n in sorted(contagem.items())]
+    return " · ".join(partes) or "—"
 
 
 # ── Carga de uma vaga ───────────────────────────────────────────────────────
@@ -222,6 +238,7 @@ def principal(args):
                 "Modo seco: não entrou na Empregare e nada foi gravado.",
                 f"Escolha: {escolha.get(lista.get('modo'), lista.get('modo'))} · limite {lista.get('limite')}.",
                 f"Vagas que seriam exportadas: {len(vagas)} (de {len(editais)} edital(is)).",
+                f"Origem das vagas: {contagem_por_origem(vagas)}.",
                 f"Códigos: {lista_de_codigos(vagas) or '—'}",
             ]
         )
@@ -245,6 +262,7 @@ def principal(args):
         },
     )
     registrar(f"Execução {sync}: {len(vagas)} vaga(s) ({escolha.get(lista.get('modo'))}); disparo {tipo.lower()}.")
+    registrar(f"Origem das vagas: {contagem_por_origem(vagas)}.")
 
     baixadas = falhas = 0
     try:

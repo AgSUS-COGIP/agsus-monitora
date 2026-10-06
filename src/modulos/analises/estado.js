@@ -43,7 +43,7 @@ import { avaliarMarcosDasAnalises } from "./marcos.js";
 
 export const MENSAGEM_SEM_SESSAO =
   "Sessão não localizada. Entre de novo no MONITORA.";
-export const MENSAGEM_SEM_ACESSO = "Sem acesso às Análises curriculares.";
+export const MENSAGEM_SEM_ACESSO = "Sem acesso ao Painel das análises.";
 
 /* Reabrir a tela na mesma área depois disto relê por trás. */
 export const VALIDADE_DA_CARGA_MS = 5 * 60 * 1000;

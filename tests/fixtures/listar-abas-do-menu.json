@@ -88,7 +88,7 @@
   },
   {
     "co_aba": "analises",
-    "no_aba": "Análises curriculares",
+    "no_aba": "Painel das análises",
     "ds_icone": "file-search",
     "nu_ordem": 4,
     "co_view": "analises",
@@ -116,29 +116,58 @@
     ]
   },
   {
+    "co_aba": "avaliacao-documental",
+    "no_aba": "Avaliação documental",
+    "ds_icone": "graduation-cap",
+    "nu_ordem": 5,
+    "co_view": "avaliacao-documental",
+    "co_recurso": "avaliacao_documental",
+    "tp_aba": "nativa",
+    "areas": [
+      {
+        "co_area": "saude-indigena",
+        "nu_ordem": 5,
+        "co_view": "avaliacao-documental",
+        "ds_icone": "graduation-cap"
+      },
+      {
+        "co_area": "sede",
+        "nu_ordem": 5,
+        "co_view": "avaliacao-documental",
+        "ds_icone": "graduation-cap"
+      },
+      {
+        "co_area": "projetos",
+        "nu_ordem": 5,
+        "co_view": "avaliacao-documental",
+        "ds_icone": "graduation-cap"
+      }
+    ]
+  },
+  {
     "co_aba": "recursos",
     "no_aba": "Recursos",
     "ds_icone": "scale",
-    "nu_ordem": 5,
+    "nu_ordem": 6,
     "co_view": "recursos",
     "co_recurso": "recursos",
     "tp_aba": "nativa",
     "areas": [
       {
         "co_area": "saude-indigena",
-        "nu_ordem": 5,
+        "nu_ordem": 6,
         "co_view": "recursos",
         "ds_icone": "scale"
       },
       {
         "co_area": "sede",
-        "nu_ordem": 5,
+        "nu_ordem": 6,
         "co_view": "recursos",
         "ds_icone": "scale"
       },
       {
         "co_area": "projetos",
-        "nu_ordem": 5,
+        "nu_ordem": 6,
         "co_view": "recursos",
         "ds_icone": "scale"
       }
@@ -148,26 +177,26 @@
     "co_aba": "entrevistas",
     "no_aba": "Entrevistas",
     "ds_icone": "messages-square",
-    "nu_ordem": 6,
+    "nu_ordem": 7,
     "co_view": "entrevistas",
     "co_recurso": "entrevistas",
     "tp_aba": "nativa",
     "areas": [
       {
         "co_area": "saude-indigena",
-        "nu_ordem": 6,
+        "nu_ordem": 7,
         "co_view": "entrevistas",
         "ds_icone": "messages-square"
       },
       {
         "co_area": "sede",
-        "nu_ordem": 6,
+        "nu_ordem": 7,
         "co_view": "entrevistas",
         "ds_icone": "messages-square"
       },
       {
         "co_area": "projetos",
-        "nu_ordem": 6,
+        "nu_ordem": 7,
         "co_view": "entrevistas",
         "ds_icone": "messages-square"
       }
@@ -177,26 +206,26 @@
     "co_aba": "classificacao",
     "no_aba": "Classificação",
     "ds_icone": "list-ordered",
-    "nu_ordem": 7,
+    "nu_ordem": 8,
     "co_view": "classificacao",
     "co_recurso": "classificacao",
     "tp_aba": "nativa",
     "areas": [
       {
         "co_area": "saude-indigena",
-        "nu_ordem": 7,
+        "nu_ordem": 8,
         "co_view": "classificacao",
         "ds_icone": "list-ordered"
       },
       {
         "co_area": "sede",
-        "nu_ordem": 7,
+        "nu_ordem": 8,
         "co_view": "classificacao",
         "ds_icone": "list-ordered"
       },
       {
         "co_area": "projetos",
-        "nu_ordem": 7,
+        "nu_ordem": 8,
         "co_view": "classificacao",
         "ds_icone": "list-ordered"
       }
@@ -206,26 +235,26 @@
     "co_aba": "aprovados",
     "no_aba": "Lista de aprovados",
     "ds_icone": "user-round-check",
-    "nu_ordem": 8,
+    "nu_ordem": 9,
     "co_view": "approved",
     "co_recurso": "aprovados",
     "tp_aba": "nativa",
     "areas": [
       {
         "co_area": "saude-indigena",
-        "nu_ordem": 8,
+        "nu_ordem": 9,
         "co_view": "approved",
         "ds_icone": "user-round-check"
       },
       {
         "co_area": "sede",
-        "nu_ordem": 8,
+        "nu_ordem": 9,
         "co_view": "approved",
         "ds_icone": "user-round-check"
       },
       {
         "co_area": "projetos",
-        "nu_ordem": 8,
+        "nu_ordem": 9,
         "co_view": "approved",
         "ds_icone": "user-round-check"
       }
@@ -235,26 +264,26 @@
     "co_aba": "selecao",
     "no_aba": "Seleção",
     "ds_icone": "funnel",
-    "nu_ordem": 9,
+    "nu_ordem": 10,
     "co_view": "selecao",
     "co_recurso": "selecao",
     "tp_aba": "nativa",
     "areas": [
       {
         "co_area": "saude-indigena",
-        "nu_ordem": 9,
+        "nu_ordem": 10,
         "co_view": "selecao",
         "ds_icone": "funnel"
       },
       {
         "co_area": "sede",
-        "nu_ordem": 9,
+        "nu_ordem": 10,
         "co_view": "selecao",
         "ds_icone": "funnel"
       },
       {
         "co_area": "projetos",
-        "nu_ordem": 9,
+        "nu_ordem": 10,
         "co_view": "selecao",
         "ds_icone": "funnel"
       }

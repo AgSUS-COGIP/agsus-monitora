@@ -127,6 +127,7 @@ const GRUPOS = [
     niveis: {
       dashboard: "leitor",
       analises: "leitor",
+      avaliacao_documental: "leitor",
       nucleo: "leitor",
       calendario: "leitor",
       aprovados: "leitor",

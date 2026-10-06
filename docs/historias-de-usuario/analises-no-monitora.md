@@ -7,8 +7,9 @@ análises**, só de leitura.
 - Desenho: [`docs/analises-no-monitora/README.md`](../analises-no-monitora/README.md).
 - Dados: [`modelo-de-dados.md`](../analises-no-monitora/modelo-de-dados.md).
 
-**Nada foi implementado ainda.** Quando cada história for feita, os testes recebem o mesmo código
-(`AM-n.m`).
+**Implementadas (fase F1, 06/10/2026):** AM-1.1, AM-1.2, AM-2.1, AM-2.2, AM-2.4 a AM-2.7, AM-3.1 e
+AM-3.2 (`src/modulos/avaliacao-documental/`, `supabase/migrations/20261006090000…` e `…100000…`).
+AM-2.3 e AM-3.3 dependem das fichas (F3). Os testes levam o mesmo código (`AM-n.m`).
 
 Papéis:
 

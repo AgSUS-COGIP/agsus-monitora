@@ -1,15 +1,15 @@
-# Regras das Análises curriculares
+# Regras do Painel das análises
 
-A tela Análises curriculares (view `analises`) e a sincronização das planilhas de análise. Fontes:
+A tela Painel das análises (view `analises`, antes chamada Análises curriculares) e a sincronização das planilhas de análise. Fontes:
 `src/modulos/analises/`, `src/lib/analises-curriculares.js`, `src/lib/data-de-analise.js`,
 `apps-script/LEIA-ME.md` e as migrations `20260929150000_analises_lista_enxuta.sql`,
 `20260930100000_analises_sem_registro_fantasma.sql`, `20261001140000_incremental_remove_ausentes.sql`
 e `20260930234000_cache_sem_atropelo.sql`.
 
-## Tela de Análises curriculares
+## Painel das análises
 
-**perguntas:** analises curriculares | analise curricular | tela de analises curriculares | tela de analises | aba analises curriculares | para que serve analises curriculares | para que serve a tela de analises | painel de analises curriculares
-**resposta:** Análises curriculares mostra a análise curricular dos candidatos da área atual, vinda das planilhas de análise: indicadores (Total de aptos p/ análise, Análises realizadas, Pendentes, Em revisão, Aprovados e Reprovados), pendências prioritárias, carga por responsável, evolução diária e a lista. Os filtros são Unidade, Município/UF (só em SEDE e Projetos), Edital, Código da vaga, Status e Responsável, e em "Mais opções" Categoria, Modalidade e Validação da janela; as opções de cada filtro seguem os outros. A taxa de conclusão é aprovados mais reprovados sobre o total.
+**perguntas:** painel das analises | para que serve o painel das analises | analises curriculares | analise curricular | tela de analises curriculares | tela de analises | aba analises curriculares | para que serve analises curriculares | para que serve a tela de analises | painel de analises curriculares
+**resposta:** O Painel das análises (antes chamado Análises curriculares) é a tela de leitura da avaliação documental: mostra a análise curricular dos candidatos da área atual, vinda das planilhas de análise: indicadores (Total de aptos p/ análise, Análises realizadas, Pendentes, Em revisão, Aprovados e Reprovados), pendências prioritárias, carga por responsável, evolução diária e a lista. Os filtros são Unidade, Município/UF (só em SEDE e Projetos), Edital, Código da vaga, Status e Responsável, e em "Mais opções" Categoria, Modalidade e Validação da janela; as opções de cada filtro seguem os outros. A taxa de conclusão é aprovados mais reprovados sobre o total.
 **fonte:** src/lib/analises-curriculares.js; src/modulos/analises/
 **abrir:** analises
 
