@@ -403,10 +403,16 @@ function enhanceMapAccessibility(L, map) {
 
   container.tabIndex = 0;
   container.setAttribute("role", "application");
-  container.setAttribute(
-    "aria-label",
-    "Mapa da Saúde Indígena com foco inicial no Brasil e navegação permitida pela América do Sul. Use os botões mais e menos, a roda do mouse, duplo clique, gesto de pinça ou as teclas mais e menos para controlar o zoom.",
-  );
+  // O mapa que já tem nome (Projetos, DSEI) fica com o dele.
+  if (
+    !container.hasAttribute("aria-label") &&
+    !container.hasAttribute("aria-labelledby")
+  ) {
+    container.setAttribute(
+      "aria-label",
+      "Mapa da Saúde Indígena com foco inicial no Brasil e navegação permitida pela América do Sul. Use os botões mais e menos, a roda do mouse, duplo clique, gesto de pinça ou as teclas mais e menos para controlar o zoom.",
+    );
+  }
 
   map.scrollWheelZoom?.enable?.();
   map.doubleClickZoom?.enable?.();
@@ -505,7 +511,12 @@ function limitBounds(L, bounds, maxBounds) {
   const north = Math.min(incoming.getNorth(), maxBounds.getNorth());
   const east = Math.min(incoming.getEast(), maxBounds.getEast());
 
-  if (south >= north || west >= east) return maxBounds;
+  /*
+    Fora dos limites é a caixa vazia (sul acima do norte). Um ponto só é uma
+    caixa de lado zero e vale: antes virava o continente inteiro, e o "ir até o
+    ponto" do editor e do DSEI só com a sede afastava o mapa para zoom 4,5.
+  */
+  if (south > north || west > east) return maxBounds;
   return L.latLngBounds([south, west], [north, east]);
 }
 
