@@ -105,11 +105,14 @@ function baixarBlobNoNavegador(arquivo, nome) {
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
-/* A URL assinada abre numa aba nova, sem dar acesso a esta (noopener). */
-function abrirNoNavegador(url) {
+/*
+  A URL assinada é pedida com `download` (o Storage responde como anexo): o
+  navegador baixa sem sair da tela. Sem aba nova: depois das esperas do banco
+  o clique já não conta como da pessoa, e o bloqueador de pop-up barraria.
+*/
+function baixarPeloEndereco(url) {
   const ancora = document.createElement("a");
   ancora.href = url;
-  ancora.target = "_blank";
   ancora.rel = "noopener noreferrer";
   ancora.click();
 }
@@ -152,7 +155,7 @@ export function criarEstadoDosRecursos({
   toast = (mensagem) => console.info(mensagem),
   baixar = baixarNoNavegador,
   baixarArquivo = baixarBlobNoNavegador,
-  abrirUrl = abrirNoNavegador,
+  abrirUrl = baixarPeloEndereco,
   imprimir = imprimirNoNavegador,
   novoId = novoUuid,
   agora = () => Date.now(),
@@ -204,7 +207,9 @@ export function criarEstadoDosRecursos({
   /*
     Troca de área descarta o que era da outra (skeleton de novo); na mesma
     área, a tela fica e a releitura corre por trás. Resposta de um pedido
-    antigo (a área mudou no meio) é ignorada.
+    antigo (a área mudou no meio) é ignorada. O recurso aberto (na gaveta ou
+    na edição) guarda o detalhe, o ajuste e a prévia até a releitura deles
+    chegar: o que a pessoa está digitando não some.
   */
   async function carregar(area = estado.area) {
     if (!area) return false;
@@ -253,6 +258,9 @@ export function criarEstadoDosRecursos({
       } else publicar({ erroAoCarregar: mensagem, atualizando: false });
       return false;
     }
+    const abertos = [estado.gaveta, estado.formulario?.id].filter(Boolean);
+    const soDosAbertos = (mapa) =>
+      new Map([...mapa].filter(([id]) => abertos.includes(id)));
     publicar({
       dados: data || {
         recursos: [],
@@ -264,11 +272,15 @@ export function criarEstadoDosRecursos({
       erroAoCarregar: "",
       atualizando: false,
       carregadoEm: agora(),
-      detalhes: new Map(),
-      ajustes: new Map(),
-      previas: new Map(),
+      detalhes: soDosAbertos(estado.detalhes),
+      ajustes: soDosAbertos(estado.ajustes),
+      previas: soDosAbertos(estado.previas),
     });
-    if (estado.gaveta) void carregarDetalhe(estado.gaveta);
+    for (const id of new Set(abertos)) {
+      void carregarDetalhe(id);
+      if (estado.ajustes.has(id)) void carregarAjustes(id);
+      if (estado.previas.has(id)) void lerDadosDaPrevia(id, { manter: true });
+    }
     return true;
   }
 
@@ -282,9 +294,15 @@ export function criarEstadoDosRecursos({
     publicar({ detalhes });
   }
 
+  /* Sem o detalhe, ou com a leitura anterior em erro, pede de novo. */
+  function garantirDetalhe(id) {
+    const detalhe = estado.detalhes.get(id);
+    if (!detalhe || detalhe.erro) void carregarDetalhe(id);
+  }
+
   function abrirGaveta(id) {
     publicar({ gaveta: id });
-    if (!estado.detalhes.has(id)) void carregarDetalhe(id);
+    garantirDetalhe(id);
   }
 
   const fecharGaveta = () => publicar({ gaveta: null });
@@ -297,7 +315,7 @@ export function criarEstadoDosRecursos({
   function abrirEdicao(id) {
     aberturas += 1;
     publicar({ formulario: { modo: "edicao", id, abertura: aberturas } });
-    if (!estado.detalhes.has(id)) void carregarDetalhe(id);
+    garantirDetalhe(id);
   }
 
   const fecharFormulario = () => publicar({ formulario: null });
@@ -457,9 +475,25 @@ export function criarEstadoDosRecursos({
   }
 
   /*
+    Lê os dados da prévia. `manter` (a releitura da aba): uma falha deixa os
+    dados que já estavam na tela.
+  */
+  async function lerDadosDaPrevia(id, { manter = false } = {}) {
+    const { data, error } = await supabase.rpc("obter_dados_previa_ajuste", {
+      p_recurso: id,
+    });
+    const guardado = estado.previas.get(id);
+    if (error && manter && guardado && !guardado.erro) return null;
+    const previas = new Map(estado.previas);
+    previas.set(id, error ? { erro: mensagemDe(error) } : data || {});
+    publicar({ previas });
+    return error ? null : data || {};
+  }
+
+  /*
     O que o motor da Classificação precisa para a prévia (só o parecer
-    jurídico lê). Guardado por recurso até a próxima carga da aba; `forcar`
-    relê (a aprovação recalcula com os dados de agora).
+    jurídico lê). Guardado por recurso (o aberto é relido a cada carga da
+    aba); `forcar` relê (a aprovação recalcula com os dados de agora).
   */
   async function carregarDadosDaPrevia(id, { forcar = false } = {}) {
     const guardado = estado.previas.get(id);
@@ -470,13 +504,7 @@ export function criarEstadoDosRecursos({
       limpas.delete(id);
       publicar({ previas: limpas });
     }
-    const { data, error } = await supabase.rpc("obter_dados_previa_ajuste", {
-      p_recurso: id,
-    });
-    const previas = new Map(estado.previas);
-    previas.set(id, error ? { erro: mensagemDe(error) } : data || {});
-    publicar({ previas });
-    return error ? null : data || {};
+    return lerDadosDaPrevia(id);
   }
 
   const AVISO_DO_AJUSTE = {

@@ -323,6 +323,31 @@ describe("seção de ajuste da pontuação", () => {
     );
   });
 
+  it("a releitura da aba com o formulário aberto não o troca por “Carregando…” nem perde o digitado", async () => {
+    const supabase = supabaseFalso();
+    await montar(supabase);
+    await clicar(botao("propor"));
+    await esperar();
+    await digitar(
+      secaoDoAjuste().querySelector('[name="novo-FORMACAO"]'),
+      "11",
+    );
+    await act(async () => void painel.render());
+    expect(secaoDoAjuste().textContent).not.toContain(
+      "Carregando os dados da classificação",
+    );
+    await esperar();
+    await esperar();
+    // Os dados da prévia do recurso aberto são relidos por trás.
+    expect(chamadas(supabase, "obter_dados_previa_ajuste")).toHaveLength(2);
+    expect(secaoDoAjuste().querySelector('[name="novo-FORMACAO"]').value).toBe(
+      "11",
+    );
+    expect(
+      secaoDoAjuste().querySelector("[data-previa]").textContent,
+    ).toContain("posição 3º → 1º");
+  });
+
   it("cancelar o ajuste aprovado pede motivo e o tira", async () => {
     const supabase = supabaseFalso();
     supabase.banco.versoes.push({

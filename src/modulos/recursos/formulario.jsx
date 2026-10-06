@@ -198,19 +198,26 @@ export function FormularioDoRecurso({
   const [duplicadoDoBanco, setDuplicadoDoBanco] = useState(null);
   const analistaAutomatico = useRef("");
 
-  // A observação e os dados digitados chegam com o detalhe; sem ele, o rascunho começa sem eles.
+  /*
+    A observação e os dados digitados chegam com o detalhe, uma vez só (uma
+    releitura não desfaz o que a pessoa mudou). Sem ele, a edição não salva:
+    mandaria esses campos vazios e o banco apagaria o que estava gravado.
+  */
   const detalheChegou = Boolean(detalhe && !detalhe.erro);
+  const semDetalhe = edicao && !detalheChegou;
+  const preenchido = useRef(edicao && detalheChegou);
   useEffect(() => {
-    if (edicao && detalheChegou)
-      setRascunho((atual) => ({
-        ...atual,
-        observacao: atual.observacao || detalhe.observacao || "",
-        nome_informado: detalhe.nome_informado ?? atual.nome_informado,
-        codigo_informado: detalhe.codigo_informado ?? atual.codigo_informado,
-        cargo_informado: detalhe.cargo_informado ?? atual.cargo_informado,
-        vaga_informada: detalhe.vaga_informada ?? atual.vaga_informada,
-      }));
-  }, [edicao, detalheChegou]);
+    if (!edicao || !detalheChegou || preenchido.current) return;
+    preenchido.current = true;
+    setRascunho((atual) => ({
+      ...atual,
+      observacao: atual.observacao || detalhe.observacao || "",
+      nome_informado: detalhe.nome_informado ?? atual.nome_informado,
+      codigo_informado: detalhe.codigo_informado ?? atual.codigo_informado,
+      cargo_informado: detalhe.cargo_informado ?? atual.cargo_informado,
+      vaga_informada: detalhe.vaga_informada ?? atual.vaga_informada,
+    }));
+  }, [edicao, detalheChegou, detalhe]);
 
   const editaisOrdenados = useMemo(
     () => [...editais].sort((a, b) => compararEditais(a.edital, b.edital)),
@@ -271,7 +278,7 @@ export function FormularioDoRecurso({
   async function enviar(evento) {
     evento.preventDefault();
     setTentou(true);
-    if (Object.keys(erros).length) return;
+    if (semDetalhe || Object.keys(erros).length) return;
     if (numeroDuplicado && !confirmaDuplicado) return;
     const resposta = await estado.salvar(
       dadosParaSalvar(rascunho, {
@@ -339,6 +346,23 @@ export function FormularioDoRecurso({
         ) : null}
         <div className="ui-gaveta-corpo">
           <div className="recursos-corpo recursos-formulario">
+            {semDetalhe && detalhe?.erro ? (
+              <Aviso como="p" className="recursos-aviso" tom="danger">
+                Não foi possível carregar a observação e os dados deste recurso;
+                sem eles, a edição não salva. <small>{detalhe.erro}</small>{" "}
+                <button
+                  type="button"
+                  className="recursos-link"
+                  onClick={() => void estado.carregarDetalhe(recurso.id)}
+                >
+                  Tentar novamente
+                </button>
+              </Aviso>
+            ) : semDetalhe ? (
+              <p className="recursos-busca-status" data-sem-detalhe="">
+                Carregando a observação e os dados deste recurso…
+              </p>
+            ) : null}
             {edicao ? null : (
               <div className="recursos-formulario-grade">
                 <Campo rotulo="Edital" obrigatorio erro={erro("edital_id")}>
@@ -573,7 +597,9 @@ export function FormularioDoRecurso({
             type="submit"
             className="btn"
             disabled={
-              Boolean(acao) || (Boolean(numeroDuplicado) && !confirmaDuplicado)
+              Boolean(acao) ||
+              semDetalhe ||
+              (Boolean(numeroDuplicado) && !confirmaDuplicado)
             }
             aria-busy={salvando || undefined}
           >
