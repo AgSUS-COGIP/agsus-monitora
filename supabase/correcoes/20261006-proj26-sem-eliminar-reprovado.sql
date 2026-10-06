@@ -1,16 +1,15 @@
 /*
   CORREÇÃO DE DADOS — modelos de Projetos sem a eliminação automática por
-  questionário não finalizado.
+  "Reprovado na Empregare".
 
-  Os editais 93/2026 e 114/2026 não eliminam quem deixou o questionário da
-  Empregare "Em andamento" ou "Pendente": encerrado o período, as inscrições
-  "serão automaticamente efetivadas" (item 6.11.4), e só é eliminado quem não
-  comprovar os requisitos da vaga, na análise curricular (item 8.2.1). Fica a
-  eliminação automática de quem cancelou a inscrição (a de "Reprovado na
-  Empregare" sai em 20261006-proj26-sem-eliminar-reprovado.sql).
+  A reprovação marcada pela equipe na Empregare é o RESULTADO da análise
+  curricular (item 8.2.1 dos editais 93/2026 e 114/2026), não motivo para a
+  pessoa ficar fora do lote: quem tem a nota mínima (8.2.6) segue no lote e a
+  reprovação aparece como resultado da análise dela. Fica só a eliminação
+  automática de quem cancelou a inscrição.
 
-  Rode DEPOIS de 20261006-modelos-da-regra-da-analise.sql e de
-  20261006-modelo-proj26-rio-doce.sql, no SQL Editor (papel postgres).
+  Rode DEPOIS de 20261006-proj26-sem-eliminar-questionario.sql, no SQL Editor
+  (papel postgres).
   Idempotente. Não muda a regra já copiada para um edital: a coordenação
   recarrega o modelo na aba Regra e salva uma versão nova, com motivo.
 */
@@ -23,14 +22,14 @@ update public."TB_REGRA_ANALISE_MODELO" m
          coalesce((
            select jsonb_agg(e order by o)
              from jsonb_array_elements(m."DS_CONFIGURACAO" -> 'provisoria' -> 'eliminacao_automatica') with ordinality as x(e, o)
-            where e ->> 'codigo' <> 'QUESTIONARIO'
+            where e ->> 'codigo' <> 'REPROVADO_EMPREGARE'
          ), '[]'::jsonb)),
        "DT_ATUALIZACAO" = now()
  where m."CO_MODELO" in ('PROJ26-CURRICULAR', 'PROJ26-RIO-DOCE')
    and exists (
          select 1
            from jsonb_array_elements(m."DS_CONFIGURACAO" -> 'provisoria' -> 'eliminacao_automatica') e
-          where e ->> 'codigo' = 'QUESTIONARIO');
+          where e ->> 'codigo' = 'REPROVADO_EMPREGARE');
 
 do $$
 declare
