@@ -50,6 +50,7 @@ function CelulaDaNota({
   avaliador,
   valor,
   editavel,
+  desabilitado,
   indice,
   aoMudar,
   aoTeclar,
@@ -88,6 +89,7 @@ function CelulaDaNota({
         aria-label={rotulo}
         aria-invalid={invalida || undefined}
         data-celula={indice}
+        disabled={desabilitado}
         onChange={(e) => aoMudar(e.target.value)}
         onKeyDown={aoTeclar}
       />
@@ -99,6 +101,7 @@ function CelulaDaNota({
       aria-label={rotulo}
       title={escolhida?.descricao || undefined}
       data-celula={indice}
+      disabled={desabilitado}
       onChange={(e) => aoMudar(e.target.value)}
       onKeyDown={aoTeclar}
     >
@@ -305,7 +308,7 @@ export function FichaDoCandidato({
                 rotulo="Comparecimento"
                 opcoes={COMPARECIMENTO}
                 valor={f.compareceu}
-                desabilitado={!dados.pode_editar}
+                desabilitado={!dados.pode_editar || salvando}
                 aoMudar={(compareceu) =>
                   setF((atual) => ({ ...atual, compareceu }))
                 }
@@ -320,7 +323,7 @@ export function FichaDoCandidato({
                 <select
                   id="entrevistasFichaBanca"
                   value={f.banca ?? ""}
-                  disabled={!dados.pode_editar}
+                  disabled={!dados.pode_editar || salvando}
                   onChange={(e) =>
                     setF((atual) => ({
                       ...atual,
@@ -407,6 +410,7 @@ export function FichaDoCandidato({
                                 avaliador={a}
                                 valor={f.mapa[chaveDaNota(c.id, a.id)] ?? ""}
                                 editavel={editavel}
+                                desabilitado={salvando}
                                 indice={indice}
                                 aoMudar={(valor) =>
                                   mudarNota(c.id, a.id, valor)

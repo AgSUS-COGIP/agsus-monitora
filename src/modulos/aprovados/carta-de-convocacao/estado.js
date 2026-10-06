@@ -69,6 +69,8 @@ export function criarEstadoDaCarta({
   const ouvintes = new Set();
   /* Emissões já registradas nesta sessão: assinatura → carta_id. */
   const registradas = new Map();
+  /* Só a leitura de modelos mais recente mexe em `carregando`. */
+  let pedidoDosModelos = 0;
 
   function publicar(mudancas) {
     estado = { ...estado, ...mudancas };
@@ -103,12 +105,18 @@ export function criarEstadoDaCarta({
     const area = texto(areaAtual());
     if (!supabase || !area) return false;
     if (!forcar && estado.carregado && estado.area === area) return true;
+    const meu = ++pedidoDosModelos;
     publicar({ carregando: true, erro: "" });
     const { data, error } = await supabase.rpc(
       "listar_modelos_carta_convocacao",
       { p_area: area },
     );
-    if (texto(areaAtual()) !== area) return false;
+    if (meu !== pedidoDosModelos) return false;
+    // A área mudou durante a leitura: descarta a resposta sem travar a carga.
+    if (texto(areaAtual()) !== area) {
+      publicar({ carregando: false });
+      return false;
+    }
     if (error) {
       publicar({ carregando: false, erro: String(mensagemDe(error)) });
       return false;

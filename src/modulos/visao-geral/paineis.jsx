@@ -57,7 +57,7 @@ export function Topo({ e, aoExportar }) {
       status={status}
       aoAtualizar={() => void window.refreshData?.()}
       aoExportar={aoExportar}
-      exportarDesativado={!e.carregado || !e.linhasDaArea.length}
+      exportarDesativado={!e.carregado || !e.filtradas.length}
     />
   );
 }

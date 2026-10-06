@@ -89,9 +89,8 @@ export function dadosDasRespostas(respostas) {
     dados.monitoramento = null;
     return dados;
   }
-  const [payload, tabela] = monitoramento;
-  if (!tabela || tabela.error) return null;
-  dados.monitoramento = { payload: payload ?? null, linhas: tabela.data ?? [] };
+  if (monitoramento.error) return null;
+  dados.monitoramento = { linhas: monitoramento.data ?? [] };
   return dados;
 }
 
@@ -105,10 +104,7 @@ export function consultasDosDados(dados) {
     unidades: resposta(dados.unidades),
     abas: resposta(dados.abas ?? null),
     monitoramento: dados.monitoramento
-      ? Promise.resolve([
-          dados.monitoramento.payload,
-          { data: dados.monitoramento.linhas, error: null },
-        ])
+      ? resposta(dados.monitoramento.linhas)
       : null,
   };
 }

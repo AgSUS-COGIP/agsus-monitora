@@ -819,4 +819,64 @@ describe("gaveta", () => {
     await teclar(document, "Escape");
     expect(document.getElementById("recursosGaveta")).toBeNull();
   });
+
+  it("editar sem o detalhe não salva (apagaria a observação); a edição relê o detalhe em erro e a releitura da aba não desfaz o digitado", async () => {
+    let falhar = true;
+    const supabase = supabaseFalso({
+      respostas: {
+        get_recurso_candidato_detalhe: ({ p_id }) =>
+          falhar
+            ? { data: null, error: { message: "tempo esgotado" } }
+            : {
+                data: {
+                  id: p_id,
+                  observacao: "Gravada antes",
+                  etapas: {},
+                  historico: [],
+                },
+                error: null,
+              },
+      },
+    });
+    const leituras = () =>
+      supabase.rpc.mock.calls.filter(
+        ([nome]) => nome === "get_recurso_candidato_detalhe",
+      ).length;
+    await montar(supabase);
+    await clicar(document.querySelector(".recursos-linha"));
+    await esperar();
+    expect(leituras()).toBe(1);
+    await clicar(botao("Editar"));
+    await esperar();
+    // O detalhe estava em erro: a edição pede de novo.
+    expect(leituras()).toBe(2);
+    const formulario = () => document.getElementById("recursosFormulario");
+    const salvar = () => botao("Salvar alterações");
+    expect(formulario().textContent).toContain("tempo esgotado");
+    expect(salvar().disabled).toBe(true);
+    await clicar(salvar());
+    expect(
+      supabase.rpc.mock.calls.some(([n]) => n === "salvar_recurso_candidato"),
+    ).toBe(false);
+
+    falhar = false;
+    await clicar(botao("Tentar novamente"));
+    await esperar();
+    const observacao = () =>
+      formulario().querySelector('textarea[name="observacao"]');
+    expect(observacao().value).toBe("Gravada antes");
+    expect(salvar().disabled).toBe(false);
+
+    // A pessoa apaga a observação; a releitura da aba não a devolve.
+    await digitar(observacao(), "");
+    await abrirATela();
+    await esperar();
+    expect(observacao().value).toBe("");
+    await clicar(salvar());
+    await esperar();
+    const [, salvo] = supabase.rpc.mock.calls.find(
+      ([n]) => n === "salvar_recurso_candidato",
+    );
+    expect(salvo.p_dados).toMatchObject({ id: "r1", observacao: "" });
+  });
 });

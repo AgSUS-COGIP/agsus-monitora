@@ -120,7 +120,11 @@ function cronogramaDoBanco(dados) {
   };
 }
 
-export function ModalDoEdital({ estado, id, agora = () => new Date() }) {
+/* Relógio padrão estável: uma função nova a cada render regravaria o rascunho
+   (o efeito abaixo depende de `agora`) sem que nada fosse editado. */
+const relogioDoNavegador = () => new Date();
+
+export function ModalDoEdital({ estado, id, agora = relogioDoNavegador }) {
   const { linhas, unidades, areaAtual } = useSyncExternalStore(
     assinarDadosDoMonitoramento,
     obterDadosDoMonitoramento,

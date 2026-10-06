@@ -77,6 +77,15 @@ export function publicarLinhasDoMonitoramento(linhas) {
   publicar({ linhas: Array.isArray(linhas) ? linhas : [], carregado: true });
 }
 
+/*
+  A pessoa saiu (ou ficou sem acesso): as linhas dela saem da memória e o
+  store volta a "ainda não carregou". A área fica: é da aba, e quem entrar a
+  corrige pelas áreas dele (`definirAreasDoUsuario`).
+*/
+export function esquecerLinhasDoMonitoramento() {
+  publicar({ linhas: ESTADO_INICIAL.linhas, carregado: false });
+}
+
 export function publicarUnidadesDoCatalogo(unidades) {
   publicar({ unidades: Array.isArray(unidades) ? unidades : [] });
 }

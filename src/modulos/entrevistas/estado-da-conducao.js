@@ -192,10 +192,13 @@ export function criarEstadoDaConducao({
       return true;
     } catch (erro) {
       if (meu !== pedidoDosRoteiros) return false;
+      /* Carregado com o erro (como os editais): a tela mostra o aviso e não
+         relê sozinha a cada desenho; Recarregar e Atualizar tentam de novo. */
       publicar({
         roteiros: {
           ...estado.roteiros,
           carregando: false,
+          carregado: true,
           erro: mensagemDe(erro),
         },
       });
@@ -355,9 +358,14 @@ export function criarEstadoDaConducao({
     }
   }
 
-  /* Resposta de escrita: o payload novo entra na tela (se o edital é o mesmo). */
+  /*
+    Resposta de escrita: o payload novo entra na tela (se o edital é o mesmo)
+    e vence a leitura que ainda estiver em curso, feita antes da gravação.
+  */
   function aplicar(dados, editalId) {
-    if (editalId === estado.editalId) mostrarEdital(dados);
+    if (editalId !== estado.editalId) return;
+    pedidoDoEdital += 1;
+    mostrarEdital(dados);
   }
 
   function configurar(dados) {

@@ -25,6 +25,7 @@ import {
 } from "../lib/navegacao.js";
 import { definirPaginaDaAba } from "../lib/identidade-da-aba.js";
 import { cabecalhoDaVisaoGeral } from "../lib/visao-geral-da-area.js";
+import { erroAmigavel } from "../lib/erro-amigavel.js";
 import {
   assinarDadosDoMonitoramento,
   definirAreasDoUsuario,
@@ -356,7 +357,14 @@ export function criarNavegacao({
       );
       $("page-" + tela)?.classList.add("active");
       definirTitulo(titulo, subtituloDaArea(subtitulo));
-      void controlador?.render();
+      // O render das telas React costuma carregar dados: a falha vira aviso.
+      Promise.resolve(controlador?.render()).catch((erro) => {
+        console.error(`Falha ao abrir ${titulo}:`, erro);
+        avisar(
+          `Não foi possível abrir ${titulo}: ${erroAmigavel(erro)}`,
+          "error",
+        );
+      });
       abriu(tela, anterior);
       return;
     }

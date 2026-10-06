@@ -92,7 +92,11 @@ export function criarEstadoDaAgenda({
     return data;
   }
 
-  /* A agenda do edital (troca de edital começa do zero). */
+  /*
+    A agenda do edital (troca de edital começa do zero). Falha ao recarregar
+    o mesmo edital ("Atualizar") mantém a agenda que já estava na tela — e o
+    rascunho em cima dela; só o aviso do erro aparece.
+  */
   async function carregar(editalId) {
     const meu = ++pedido;
     if (!editalId) {
@@ -114,7 +118,6 @@ export function criarEstadoDaAgenda({
       if (meu !== pedido) return false;
       publicar({
         carregando: false,
-        dados: null,
         indisponivel: erro?.code === "PGRST202",
         erro: mensagemDaAgenda(erro),
       });
@@ -122,21 +125,30 @@ export function criarEstadoDaAgenda({
     }
   }
 
+  /*
+    Aplica a resposta de uma gravação só se o edital ainda é o mesmo: trocar de
+    edital enquanto a RPC corre não pode pôr a regra ou a agenda de um edital
+    nos dados do outro.
+  */
+  const mudarDados = (edital, mudar) => {
+    if (estado.editalId !== edital) return;
+    publicar({ dados: mudar(estado.dados) });
+  };
+
   /* Salva a regra como versão nova. Devolve true/false; erro vira aviso. */
   async function salvarRegra(configuracao, motivo = "") {
     if (!estado.editalId || estado.salvando) return false;
+    const edital = estado.editalId;
     publicar({ salvando: true });
     try {
       const regra = await rpc(RPC_SALVAR_REGRA_AGENDA, {
-        p_edital: estado.editalId,
+        p_edital: edital,
         p_configuracao: normalizarRegraDaAgenda(configuracao),
         p_versao_atual: estado.dados?.regra?.versao ?? 0,
         p_motivo: motivo || null,
       });
-      publicar({
-        salvando: false,
-        dados: { ...(estado.dados || {}), regra },
-      });
+      mudarDados(edital, (d) => ({ ...(d || {}), regra }));
+      publicar({ salvando: false });
       toast(
         `Regra da agenda salva (versão ${regra?.versao ?? "—"}).`,
         "success",
@@ -158,10 +170,11 @@ export function criarEstadoDaAgenda({
   */
   async function salvarAgenda({ acao, itens, lista = null, motivo = "" }) {
     if (!estado.editalId || estado.salvando) return false;
+    const edital = estado.editalId;
     publicar({ salvando: true });
     try {
       const dados = await rpc(RPC_SALVAR_AGENDA, {
-        p_edital: estado.editalId,
+        p_edital: edital,
         p_dados: {
           acao,
           itens,
@@ -171,7 +184,8 @@ export function criarEstadoDaAgenda({
           ...(motivo ? { motivo } : {}),
         },
       });
-      publicar({ salvando: false, dados });
+      mudarDados(edital, () => dados);
+      publicar({ salvando: false });
       toast("Agenda salva.", "success");
       return true;
     } catch (erro) {

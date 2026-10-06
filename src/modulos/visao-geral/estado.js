@@ -419,11 +419,10 @@ export function criarEstadoDaVisaoGeral({
       publicar({ colunas });
     },
     exportarCsv() {
-      const { filtradas, linhasDaArea: daArea, area } = instantaneo;
-      baixar(
-        csvDaVisaoGeral(filtradas.length ? filtradas : daArea),
-        nomeDoCsv(area, new Date(agora())),
-      );
+      // O recorte da tela; sem recorte, ele já é a área inteira.
+      const { filtradas, area } = instantaneo;
+      if (!filtradas.length) return;
+      baixar(csvDaVisaoGeral(filtradas), nomeDoCsv(area, new Date(agora())));
     },
   };
 }

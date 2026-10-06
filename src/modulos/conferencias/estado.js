@@ -29,8 +29,14 @@ export function criarEstadoDosAvisos({ supabase }) {
   };
 
   async function carregar({ area = null, modulo = null } = {}) {
+    const anterior = filtro;
     filtro = { area: area || null, modulo: modulo || null };
     const meu = ++pedido;
+    /* Outra área ou outro módulo: a lista anterior não vale para este
+       recorte (o selo mostraria a contagem da área de antes se a leitura falhar). */
+    const outroRecorte =
+      anterior.area !== filtro.area || anterior.modulo !== filtro.modulo;
+    if (outroRecorte) publicar({ lista: null });
     if (!supabase) {
       publicar({ status: "error", erro: "Sem conexão com o banco." });
       return;

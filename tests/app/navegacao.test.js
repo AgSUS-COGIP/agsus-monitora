@@ -90,6 +90,22 @@ afterEach(() => {
 });
 
 describe("troca de tela", () => {
+  it("render que falha vira aviso amigável, sem rejeição solta", async () => {
+    const { navegacao, janela, avisar } = criar();
+    const erro = vi.spyOn(console, "error").mockImplementation(() => {});
+    janela.recursosController.render.mockRejectedValue(
+      new Error("tabela fora do ar"),
+    );
+    navegacao.irPara("recursos");
+    await new Promise((resolver) => setTimeout(resolver, 0));
+    expect(avisar).toHaveBeenCalledWith(
+      "Não foi possível abrir Recursos: tabela fora do ar",
+      "error",
+    );
+    expect(navegacao.obter().view).toBe("recursos");
+    erro.mockRestore();
+  });
+
   it("deixa só a página pedida ativa, com título, menu e render do controlador", () => {
     const { navegacao, janela } = criar();
     navegacao.irPara("recursos");

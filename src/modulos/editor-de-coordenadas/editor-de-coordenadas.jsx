@@ -256,16 +256,17 @@ export function EditorDeCoordenadas({
           : CORES_DO_MAPA.sugestaoDeAldeia,
         fillOpacity: 0.3,
       });
-      circulo.bindTooltip(
-        [
-          destaque ? "Mais provável" : "",
-          s.rotulo,
-          s.nome,
-          formatarDistancia(s.distanciaKm),
-        ]
-          .filter(Boolean)
-          .join(" · "),
-      );
+      // Texto, não HTML: o nome vem de bases externas (OSM é editável).
+      const dicaDaSugestao = document.createElement("span");
+      dicaDaSugestao.textContent = [
+        destaque ? "Mais provável" : "",
+        s.rotulo,
+        s.nome,
+        formatarDistancia(s.distanciaKm),
+      ]
+        .filter(Boolean)
+        .join(" · ");
+      circulo.bindTooltip(dicaDaSugestao);
       circulo.on("click", () => {
         definirLatitude(s.latitude.toFixed(6));
         definirLongitude(s.longitude.toFixed(6));

@@ -53,6 +53,8 @@ const SEM_AREA = "23514";
   rede, o `executar` devolve o botão e o aviso diz o que fazer.
 */
 const TEMPO_LIMITE_MS = 30000;
+/* Linhas por página de obter_matriz_acessos (o `limit 30` da função no banco). */
+export const POR_PAGINA = 30;
 
 const ESTADO_INICIAL = Object.freeze({
   perfil: null,
@@ -187,6 +189,13 @@ export function criarEstadoDosAcessos({
         p_grupo: alvo.filtroGrupo,
       });
       if (antigo()) return null;
+      /* A página ficou vazia (desativou ou moveu a única pessoa da última
+         página): volta para a última página que ainda tem gente. */
+      const total = Number(matriz?.total) || 0;
+      if (alvo.offset > 0 && total > 0 && !matriz?.usuarios?.length) {
+        const ultima = Math.floor((total - 1) / POR_PAGINA) * POR_PAGINA;
+        return carregarMatriz({ offset: ultima });
+      }
       publicar({ matriz, status: "ready" });
       return matriz;
     } catch (erro) {
@@ -385,7 +394,11 @@ export function criarEstadoDosAcessos({
           "success",
         );
         // O modal continua aberto, no passo "Convite pronto".
-        await carregarMatriz();
+        // Reativada: a conta também sai de Desativadas.
+        await Promise.all([
+          carregarMatriz(),
+          resposta?.reativada ? recarregarDesativadas() : Promise.resolve(null),
+        ]);
         return { nome, email, reativada: Boolean(resposta?.reativada) };
       } catch (erro) {
         toast(`Não foi possível adicionar: ${mensagemDoErro(erro)}`, "error");
@@ -418,7 +431,8 @@ export function criarEstadoDosAcessos({
           "success",
         );
         publicar({ gaveta: null });
-        await carregarMatriz();
+        // A conta desativada entra em Desativadas.
+        await Promise.all([carregarMatriz(), recarregarDesativadas()]);
         return true;
       } catch (erro) {
         toast(`Não foi possível mover: ${mensagemDoErro(erro)}`, "error");

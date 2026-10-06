@@ -172,7 +172,7 @@ export function VisaoDeRoteiros({ conducao, area }) {
               aoAbrir={(roteiro, modo) => setAberto({ roteiro, modo })}
             />
           ))
-        ) : roteiros.carregado ? (
+        ) : roteiros.carregado && !roteiros.erro ? (
           <EstadoVazio>Nenhum roteiro ativo para esta área.</EstadoVazio>
         ) : null}
       </div>

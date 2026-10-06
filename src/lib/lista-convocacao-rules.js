@@ -180,17 +180,23 @@ export function derivarQuadro(totalImediatas, modelo) {
   embaralharia a lista; ordenar por nota reconstrói a classificação geral e
   continua correta quando a planilha já trazia a classificação única.
 */
+// Vazio é "sem valor", não zero: Number(null) e Number("") dão 0.
+const numeroOuNada = (valor) =>
+  valor === null || valor === undefined || String(valor).trim() === ""
+    ? Number.NaN
+    : Number(valor);
+
 export function ordenarPorClassificacao(candidatos) {
   return [...(candidatos || [])].sort((a, b) => {
-    const notaA = Number(a?.nota);
-    const notaB = Number(b?.nota);
+    const notaA = numeroOuNada(a?.nota);
+    const notaB = numeroOuNada(b?.nota);
     const temA = Number.isFinite(notaA);
     const temB = Number.isFinite(notaB);
     if (temA && temB && notaA !== notaB) return notaB - notaA;
     if (temA !== temB) return temA ? -1 : 1;
 
-    const classA = Number(a?.classificacao);
-    const classB = Number(b?.classificacao);
+    const classA = numeroOuNada(a?.classificacao);
+    const classB = numeroOuNada(b?.classificacao);
     const temClassA = Number.isFinite(classA);
     const temClassB = Number.isFinite(classB);
     if (temClassA && temClassB && classA !== classB) return classA - classB;

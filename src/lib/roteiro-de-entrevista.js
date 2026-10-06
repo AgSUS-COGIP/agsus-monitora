@@ -91,13 +91,20 @@ export function maximoDaCompetencia(competencia) {
   return arredondar(maxima * peso);
 }
 
-/** O mínimo da competência em pontos (o percentual é da nota máxima × peso). */
+/**
+ * O mínimo da competência em pontos (o percentual é da nota máxima × peso).
+ * Sem arredondar, como `FC_CALCULAR_ENTREVISTA` compara (10,84% de 10 é
+ * 1,084: a nota 1,08 fica abaixo); as 2 casas são só da exibição. O
+ * arredondamento a 10 casas tira apenas o ruído do ponto flutuante.
+ */
 export function minimoEmPontos(competencia) {
   const minimo = lerNumero(competencia?.minimo);
   if (minimo === null || Number.isNaN(minimo)) return null;
   if (competencia?.tipo_minimo === "PERCENTUAL") {
-    const maximo = maximoDaCompetencia(competencia);
-    return maximo === null ? null : arredondar((maximo * minimo) / 100);
+    const maxima = lerNumero(competencia?.nota_maxima);
+    const peso = lerNumero(competencia?.peso) ?? 1;
+    if (!Number.isFinite(maxima) || !Number.isFinite(peso)) return null;
+    return arredondar((maxima * peso * minimo) / 100, 10);
   }
   return minimo;
 }

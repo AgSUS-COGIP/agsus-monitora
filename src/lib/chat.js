@@ -430,8 +430,15 @@ export function extrairMencoes(valor, pessoas) {
  * Só vira menção o "@Nome" de quem a mensagem menciona de fato.
  */
 export function partesDoTexto(valor, pessoasMencionadas) {
-  const bruto = texto(valor);
+  /*
+    As posições são achadas no texto sem acento e recortadas no original: só
+    batem se os dois têm o mesmo tamanho. Texto colado em NFD (PDF, macOS)
+    encolhe ao perder as marcas — daí o NFC; se ainda assim divergir, sem realce.
+  */
+  const bruto = texto(valor).normalize("NFC");
   const alvo = semAcento(bruto);
+  if (alvo.length !== bruto.length)
+    return bruto ? [{ tipo: "texto", texto: bruto }] : [];
   const trechos = [];
   const pessoas = (
     Array.isArray(pessoasMencionadas) ? pessoasMencionadas : []

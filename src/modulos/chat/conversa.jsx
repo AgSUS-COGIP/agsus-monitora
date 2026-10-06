@@ -662,6 +662,8 @@ export function Conversa({ estado, e }) {
   const lista = useRef(null);
   const noFim = useRef(true);
   const ultimaVista = useRef(null);
+  /* Altura, rolagem e quantidade ao pedir as anteriores: { altura, topo, quantas }. */
+  const antesDasAnteriores = useRef(null);
   const [novas, setNovas] = useState(0);
   const grupos = agruparPorDia(e.mensagens);
   const mostrarAutor = e.conversa?.tipo !== "DIRETA";
@@ -680,13 +682,15 @@ export function Conversa({ estado, e }) {
   useLayoutEffect(() => {
     noFim.current = true;
     ultimaVista.current = null;
+    antesDasAnteriores.current = null;
     setNovas(0);
   }, [e.conversaId]);
 
   /*
     Ao abrir, rola para a última. Mensagem nova: rola se a pessoa já estava no
     fim (ou se foi ela quem enviou); lendo acima, conta em "↓ Novas mensagens".
-    Carregar anteriores (a última não muda) não mexe na rolagem.
+    Carregar anteriores (a última não muda) mantém na tela a mensagem que a
+    pessoa via: soma à rolagem a altura que entrou acima.
   */
   useLayoutEffect(() => {
     const el = lista.current;
@@ -694,7 +698,11 @@ export function Conversa({ estado, e }) {
     ultimaVista.current = ultimaId ?? null;
     if (!el) return;
     if (ultimaId === antes || ultimaId == null) {
-      if (noFim.current) el.scrollTop = el.scrollHeight;
+      const anteriores = antesDasAnteriores.current;
+      if (anteriores && quantas > anteriores.quantas) {
+        antesDasAnteriores.current = null;
+        el.scrollTop = anteriores.topo + (el.scrollHeight - anteriores.altura);
+      } else if (noFim.current) el.scrollTop = el.scrollHeight;
       return;
     }
     const minha = String(ultima?.autor) === String(e.eu);
@@ -737,6 +745,13 @@ export function Conversa({ estado, e }) {
               disabled={e.carregandoMensagens}
               onClick={() => {
                 noFim.current = false;
+                const el = lista.current;
+                if (el)
+                  antesDasAnteriores.current = {
+                    altura: el.scrollHeight,
+                    topo: el.scrollTop,
+                    quantas,
+                  };
                 void estado.carregarAnteriores();
               }}
             >

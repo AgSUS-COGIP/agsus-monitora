@@ -260,6 +260,15 @@ describe("menções", () => {
     ]);
   });
 
+  it("acento decomposto (NFD, colado de PDF) não desloca a menção", () => {
+    const nfd = "Café é bom @Ana Paula ok".normalize("NFD");
+    expect(partesDoTexto(nfd, [pessoas[1]])).toEqual([
+      { tipo: "texto", texto: "Café é bom " },
+      { tipo: "mencao", texto: "@Ana Paula" },
+      { tipo: "texto", texto: " ok" },
+    ]);
+  });
+
   it("acha a menção em digitação e troca pelo nome escolhido", () => {
     expect(mencaoEmDigitacao("Oi @an", 6)).toEqual({ inicio: 3, termo: "an" });
     expect(mencaoEmDigitacao("e-mail@an", 9)).toBeNull();

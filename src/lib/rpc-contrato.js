@@ -353,12 +353,6 @@ export const CONTRATO_RPC = {
     resumo:
       "Visão geral de uma área: etapas do cronograma e, por edital com lista vigente, aprovados, com status, contratados e desistentes (crítico parado, Próximos 7 dias e Pós-resultado; migration 20261002131000). Sem ela, a tela usa só as linhas.",
   },
-  get_monitoramento_dashboard_payload: {
-    argumentos: [],
-    critica: false,
-    resumo:
-      "Payload consolidado da Saúde Indígena; sem ele a tela volta ao carregamento legado.",
-  },
   get_nucleo_cronograma_resumo: {
     argumentos: [],
     critica: false,

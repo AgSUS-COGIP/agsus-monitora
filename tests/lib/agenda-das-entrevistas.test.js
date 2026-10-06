@@ -375,6 +375,27 @@ describe("ajuste manual e conflitos", () => {
     );
   });
 
+  it("acusa a entrevista longa que cobre outras além da vizinha", () => {
+    const item = (n, inicio, fim) => ({
+      analiseId: `a${n}`,
+      nome: `Candidato ${n}`,
+      data: "2026-10-09",
+      inicio,
+      fim,
+      banca: 1,
+    });
+    const conflitos = conflitosDaAgenda([
+      item(1, "08:00", "10:00"),
+      item(2, "08:30", "08:45"),
+      item(3, "09:00", "09:30"),
+      item(4, "10:00", "10:30"),
+    ]);
+    expect(conflitos.map((x) => x.ids)).toEqual([
+      ["a1", "a2"],
+      ["a1", "a3"],
+    ]);
+  });
+
   it("o mapa do documento traz data, hora e banca por análise", () => {
     expect(agendaPorCandidato(base()).get("a2")).toEqual({
       data: "2026-10-09",

@@ -228,6 +228,18 @@ export function criarImagensDaAparencia({
 
   const logoEscolhida = () =>
     logoDaBarraSegura(configuracoes.valor(CHAVE_DO_LOGO_DA_BARRA));
+  const logoPublicada = () =>
+    logoDaBarraSegura(
+      configuracoes.obter().valores.get(CHAVE_DO_LOGO_DA_BARRA),
+    );
+  /*
+    Não se apaga a logo do rascunho nem a publicada: com outra escolhida e
+    ainda sem salvar, a publicada segue na barra de todo mundo.
+  */
+  const logoProtegida = (url) => {
+    const segura = logoDaBarraSegura(url);
+    return segura === logoEscolhida() || segura === logoPublicada();
+  };
 
   function escolherLogo(url, texto) {
     configuracoes.mudarCampo(CHAVE_DO_LOGO_DA_BARRA, logoDaBarraSegura(url));
@@ -299,11 +311,11 @@ export function criarImagensDaAparencia({
   }
 
   async function apagarLogo({ caminho, nome, url }) {
-    if (logoDaBarraSegura(url) === logoEscolhida()) {
+    if (logoProtegida(url)) {
       publicar({
         avisoDoLogo: {
           texto:
-            "Esta logo está selecionada. Escolha outra ou restaure o padrão antes de apagar.",
+            "Esta logo está em uso ou selecionada. Escolha outra, salve e só então apague.",
           tom: "erro",
         },
       });
@@ -338,5 +350,6 @@ export function criarImagensDaAparencia({
     usarLogo,
     restaurarLogo,
     apagarLogo,
+    logoProtegida,
   };
 }

@@ -230,6 +230,9 @@ const escaparHtml = (valor) =>
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;");
 
+/** A dica do contorno do DSEI: o nome vem do GeoJSON da Funai, escapado. */
+export const tooltipDoDsei = (nome) => `DSEI ${escaparHtml(nome)}`;
+
 /*
   O povo vem primeiro e em destaque; a Terra Indígena, que é o recorte
   fundiário, vem abaixo. Sem `etnia_nome` o polígono continua identificado pelo
@@ -1051,7 +1054,7 @@ function enhanceMap(L, map) {
       if (!supportsHover()) return;
       const nome = dseiFeatureName(feature?.properties);
       if (!nome) return;
-      layer.bindTooltip(`DSEI ${nome}`, {
+      layer.bindTooltip(tooltipDoDsei(nome), {
         sticky: true,
         direction: "top",
         className: "agsus-dsei-tooltip",

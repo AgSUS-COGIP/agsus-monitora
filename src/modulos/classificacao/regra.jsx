@@ -45,8 +45,40 @@ const lista = (texto) =>
     .split(/[,;\n]/)
     .map((t) => t.trim())
     .filter(Boolean);
+const textoDaLista = (valores) => (valores || []).join(", ");
+const listaEmMaiusculas = (texto) => lista(String(texto ?? "").toUpperCase());
 const textoDoNumero = (valor) =>
   valor === null || valor === undefined ? "" : String(valor).replace(".", ",");
+const niveisPorCargo = (texto) =>
+  String(texto ?? "")
+    .split(";")
+    .map((par) => par.split("=").map((t) => t.trim()))
+    .filter(([termo, nivel]) => termo && nivel)
+    .map(([termo, nivel]) => ({ termo, nivel }));
+const textoDosNiveisPorCargo = (niveis) =>
+  niveis.map((n) => `${n.termo}=${n.nivel}`).join("; ");
+
+/*
+  Entrada de um valor convertido (número, lista): enquanto a pessoa digita,
+  o campo mostra o texto como ela escreveu ("7," ou "PP, ") e a regra
+  recebe o valor convertido a cada tecla (Enter já salva o que está escrito);
+  ao sair do campo, volta a mostrar o valor formatado. Converter e formatar
+  a cada tecla comia a vírgula e o espaço do que estava a meio caminho.
+*/
+function EntradaConvertida({ valor, formatar, converter, aoMudar, ...props }) {
+  const [digitado, setDigitado] = useState(null);
+  return (
+    <input
+      {...props}
+      value={digitado ?? formatar(valor)}
+      onChange={(e) => {
+        setDigitado(e.target.value);
+        aoMudar(converter(e.target.value));
+      }}
+      onBlur={() => setDigitado(null)}
+    />
+  );
+}
 
 function CampoNumero({
   rotulo,
@@ -58,14 +90,32 @@ function CampoNumero({
 }) {
   const id = useId();
   return (
-    <Campo rotulo={rotulo} dica={dica}>
-      <input
+    <Campo rotulo={rotulo} dica={dica} idDoControle={id}>
+      <EntradaConvertida
         id={id}
         inputMode="decimal"
-        value={textoDoNumero(valor)}
+        valor={valor}
+        formatar={textoDoNumero}
+        converter={numeroOuNulo}
+        aoMudar={aoMudar}
         disabled={desabilitado}
         data-passo={passo}
-        onChange={(e) => aoMudar(numeroOuNulo(e.target.value))}
+      />
+    </Campo>
+  );
+}
+
+function CampoLista({ rotulo, valor, aoMudar, desabilitado }) {
+  const id = useId();
+  return (
+    <Campo rotulo={rotulo} idDoControle={id}>
+      <EntradaConvertida
+        id={id}
+        valor={valor}
+        formatar={textoDaLista}
+        converter={lista}
+        aoMudar={aoMudar}
+        disabled={desabilitado}
       />
     </Campo>
   );
@@ -289,15 +339,15 @@ function Modalidades({ modalidades, aoMudar, desabilitado }) {
                 />
               </td>
               <td>
-                <input
+                <EntradaConvertida
                   aria-label="Percentual"
                   inputMode="decimal"
                   size={4}
-                  value={textoDoNumero(m.percentual)}
+                  valor={m.percentual}
+                  formatar={textoDoNumero}
+                  converter={numeroOuNulo}
                   disabled={desabilitado || m.codigo === "AC"}
-                  onChange={(e) =>
-                    mudar(i, { percentual: numeroOuNulo(e.target.value) })
-                  }
+                  aoMudar={(percentual) => mudar(i, { percentual })}
                 />
               </td>
               <td>
@@ -348,27 +398,25 @@ function Modalidades({ modalidades, aoMudar, desabilitado }) {
                 />
               </td>
               <td>
-                <input
+                <EntradaConvertida
                   aria-label="Remanejar para"
-                  value={m.remanejar_para.join(", ")}
+                  valor={m.remanejar_para}
+                  formatar={textoDaLista}
+                  converter={listaEmMaiusculas}
                   disabled={desabilitado || m.codigo === "AC"}
                   placeholder="AC"
-                  onChange={(e) =>
-                    mudar(i, {
-                      remanejar_para: lista(e.target.value.toUpperCase()),
-                    })
-                  }
+                  aoMudar={(remanejar_para) => mudar(i, { remanejar_para })}
                 />
               </td>
               <td>
-                <input
+                <EntradaConvertida
                   aria-label="Reúne as modalidades"
-                  value={(m.agrupa || []).join(", ")}
+                  valor={m.agrupa}
+                  formatar={textoDaLista}
+                  converter={listaEmMaiusculas}
                   disabled={desabilitado || m.codigo === "AC"}
                   placeholder="PP, PI, PQ"
-                  onChange={(e) =>
-                    mudar(i, { agrupa: lista(e.target.value.toUpperCase()) })
-                  }
+                  aoMudar={(agrupa) => mudar(i, { agrupa })}
                 />
               </td>
               {desabilitado ? null : (
@@ -471,7 +519,6 @@ export function Regra({ estado, e, dataDeCorte }) {
   const ids = {
     motivo: useId(),
     rodape: useId(),
-    situacoes: useId(),
     corte: useId(),
     termos: useId(),
   };
@@ -616,16 +663,12 @@ export function Regra({ estado, e, dataDeCorte }) {
           Notas mínimas e eliminatórias
         </h2>
         <div className="ui-grade-de-campos">
-          <Campo rotulo="Situações aptas na análise">
-            <input
-              id={ids.situacoes}
-              value={r.documental.situacoes_aptas.join(", ")}
-              disabled={leitura}
-              onChange={(ev) =>
-                mudar(["documental", "situacoes_aptas"], lista(ev.target.value))
-              }
-            />
-          </Campo>
+          <CampoLista
+            rotulo="Situações aptas na análise"
+            valor={r.documental.situacoes_aptas}
+            desabilitado={leitura}
+            aoMudar={(v) => mudar(["documental", "situacoes_aptas"], v)}
+          />
           <CampoNumero
             rotulo="Mínimo documental"
             valor={r.documental.nota_minima}
@@ -653,24 +696,19 @@ export function Regra({ estado, e, dataDeCorte }) {
             desabilitado={leitura}
             aoMudar={(v) => mudar(["documental", "nivel_padrao"], v || null)}
           />
-          <Campo rotulo="Nível pelo início do cargo" largo>
-            <input
+          <Campo
+            rotulo="Nível pelo início do cargo"
+            largo
+            idDoControle={ids.termos}
+          >
+            <EntradaConvertida
               id={ids.termos}
-              value={r.documental.niveis_por_cargo
-                .map((n) => `${n.termo}=${n.nivel}`)
-                .join("; ")}
+              valor={r.documental.niveis_por_cargo}
+              formatar={textoDosNiveisPorCargo}
+              converter={niveisPorCargo}
               disabled={leitura}
               placeholder="Técnico=tecnico; Agente=fundamental"
-              onChange={(ev) =>
-                mudar(
-                  ["documental", "niveis_por_cargo"],
-                  ev.target.value
-                    .split(";")
-                    .map((par) => par.split("=").map((t) => t.trim()))
-                    .filter(([termo, nivel]) => termo && nivel)
-                    .map(([termo, nivel]) => ({ termo, nivel })),
-                )
-              }
+              aoMudar={(v) => mudar(["documental", "niveis_por_cargo"], v)}
             />
           </Campo>
           <fieldset className="classificacao-parciais" data-campo="parciais">
@@ -881,20 +919,20 @@ export function Regra({ estado, e, dataDeCorte }) {
         </div>
         {r.convocacao.excecoes.map((x, i) => (
           <div key={i} className="ui-grade-de-campos classificacao-excecao">
-            <Campo rotulo="Cargos (exceção)">
-              <input
-                value={x.termos.join(", ")}
-                disabled={leitura}
-                onChange={(ev) =>
-                  mudar(
-                    ["convocacao", "excecoes"],
-                    r.convocacao.excecoes.map((y, j) =>
-                      j === i ? { ...y, termos: lista(ev.target.value) } : y,
-                    ),
-                  )
-                }
-              />
-            </Campo>
+            <CampoLista
+              rotulo="Cargos (exceção)"
+              valor={x.termos}
+              desabilitado={leitura}
+              aoMudar={(termos) =>
+                mudar(
+                  ["convocacao", "excecoes"],
+                  r.convocacao.excecoes.map((y, j) =>
+                    j === i ? { ...y, termos } : y,
+                  ),
+                )
+              }
+            />
+
             <CampoNumero
               rotulo="Vezes as vagas"
               valor={x.multiplo_vagas}

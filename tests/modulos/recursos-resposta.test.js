@@ -31,6 +31,8 @@ vi.mock("../../src/lib/chartjs-global.js", () => ({
 
 const { montarRecursos } =
   await import("../../src/modulos/recursos/recursos.jsx");
+const { criarEstadoDosRecursos } =
+  await import("../../src/modulos/recursos/estado.js");
 
 const RECURSO_ID = "527c2b8c-7744-4a4b-bc06-108f6683297b";
 const AUTORA = "00000000-0000-4000-8000-0000000000a2";
@@ -537,6 +539,21 @@ describe("resposta ao candidato", () => {
       secao("resposta").querySelector('textarea[name="fundamentacao"]'),
     ).not.toBeNull();
   });
+  it("a releitura da aba não remonta a resposta nem perde o rascunho digitado", async () => {
+    const servidor = criarServidor();
+    await montar(servidor);
+    await abrirGaveta();
+    await digitar(
+      secao("resposta").querySelector('textarea[name="fundamentacao"]'),
+      "Ainda não salvo.",
+    );
+    await act(async () => void painel.render());
+    await esperar();
+    await esperar();
+    expect(
+      secao("resposta").querySelector('textarea[name="fundamentacao"]').value,
+    ).toBe("Ainda não salvo.");
+  });
 });
 
 describe("anexos", () => {
@@ -673,6 +690,37 @@ describe("anexos", () => {
     expect(abrirUrl).toHaveBeenCalledWith(
       `https://storage.exemplo/assinada/saude-indigena/${RECURSO_ID}/x-recurso.pdf?token=t`,
     );
+  });
+
+  it("o download vem da URL assinada sem abrir aba nova (o bloqueador de pop-up barraria depois das esperas)", async () => {
+    const servidor = criarServidor();
+    const clicadas = [];
+    const clique = vi
+      .spyOn(HTMLAnchorElement.prototype, "click")
+      .mockImplementation(function () {
+        clicadas.push(this);
+      });
+    try {
+      const estado = criarEstadoDosRecursos({
+        supabase: servidor.supabase,
+        toast,
+      });
+      servidor.supabase.rpc.mockImplementationOnce(async () => ({
+        data: {
+          caminho: "saude-indigena/r/x-recurso.pdf",
+          nome: "recurso.pdf",
+        },
+        error: null,
+      }));
+      expect(await estado.baixarAnexo({ id: "an1" })).toBe(true);
+      expect(clicadas).toHaveLength(1);
+      expect(clicadas[0].href).toBe(
+        "https://storage.exemplo/assinada/saude-indigena/r/x-recurso.pdf?token=t",
+      );
+      expect(clicadas[0].target).toBe("");
+    } finally {
+      clique.mockRestore();
+    }
   });
 });
 

@@ -943,6 +943,7 @@ export function Listas({ estado, e, calcular, aoAbrirAgenda }) {
             </p>
           ) : null}
           <Acoes
+            key={tipo}
             tipo={tipo}
             e={e}
             resultado={resultado}

@@ -17,7 +17,6 @@ let activeUserId = "";
 let lastActivityAt = 0;
 let lastPersistedActivityAt = 0;
 let tickHandle = null;
-let authSubscription = null;
 let broadcastChannel = null;
 let expirationInProgress = false;
 let warnedTenMinutes = false;
@@ -517,7 +516,7 @@ export function installSessionLifecycle({
   const client = getSupabaseClient();
   if (!client) return;
 
-  const { data } = client.auth.onAuthStateChange((event, session) => {
+  client.auth.onAuthStateChange((event, session) => {
     if (event === "SIGNED_OUT") {
       stopActiveSession({ clearActivity: true });
       return;
@@ -526,8 +525,6 @@ export function installSessionLifecycle({
       startActiveSession(session);
     }
   });
-  authSubscription = data?.subscription || null;
-
   void client.auth.getSession().then(({ data: sessionData }) => {
     if (sessionData?.session?.user) startActiveSession(sessionData.session);
   });

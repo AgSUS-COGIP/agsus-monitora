@@ -3,7 +3,9 @@ import {
   EVENTO_BARRA_ALTERNADA,
   EVENTO_TEMA_ALTERADO,
 } from "../lib/eventos-da-barra-lateral.js";
+import { nomeDaArea } from "../lib/menu-lateral.js";
 import { resumoDoRelatorio } from "../lib/visao-geral.js";
+import { obterDadosDoMonitoramento } from "../componentes/dados-do-monitoramento.js";
 import { estadoDaVisaoGeral } from "../modulos/visao-geral/estado.js";
 import { avisar as avisarPadrao } from "./avisos.js";
 
@@ -31,6 +33,7 @@ export function criarMoldura({
   avisar = avisarPadrao,
   alvoDaTelaCheia = () => null,
   relatorio = () => estadoDaVisaoGeral.obter(),
+  areaAtual = () => obterDadosDoMonitoramento().areaAtual,
 } = {}) {
   const corpo = () => documento.body;
   const $ = (id) => documento.getElementById(id);
@@ -279,7 +282,8 @@ export function criarMoldura({
       elemento(
         "div",
         "font-size:20px;font-weight:700;color:#003b70;",
-        "AgSUS Monitora — Saúde Indígena",
+        // O recorte é o da área aberta (Saúde Indígena, SEDE ou Projetos).
+        ["AgSUS Monitora", nomeDaArea(areaAtual())].filter(Boolean).join(" — "),
       ),
       elemento(
         "div",

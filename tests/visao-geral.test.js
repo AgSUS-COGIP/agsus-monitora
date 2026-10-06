@@ -405,6 +405,13 @@ describe("blocos", () => {
 describe("tabela", () => {
   const hoje = new Date(2026, 9, 1);
 
+  it("'hoje' como dia de Brasília (AAAA-MM-DD), o mesmo dos críticos", () => {
+    expect(diasAte("2026-10-04", "2026-10-01")).toBe(3);
+    expect(
+      urgenciaDoCronograma({ data_fim: "2026-09-30" }, "2026-10-01"),
+    ).toMatchObject({ tom: "danger", rotulo: "Etapa atrasada há 1 dia(s)" });
+  });
+
   it("prazo do edital: encerrado, perto do fim, concluído e cancelado", () => {
     expect(diasAte("2026-10-04", hoje)).toBe(3);
     expect(prazoDoEdital({ data_fim: "2026-10-04" }, hoje)).toMatchObject({

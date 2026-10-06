@@ -45,8 +45,7 @@ import { Solicitacoes } from "./solicitacoes.jsx";
 import { Desativadas } from "./contas-desativadas.jsx";
 import { resumoDeContas } from "../../lib/contas-desativadas.js";
 import { ModalAdicionarPessoa } from "./modal-adicionar-pessoa.jsx";
-
-const POR_PAGINA = 30;
+import { POR_PAGINA } from "./estado.js";
 
 /*
   Usuários. Por padrão, a visão SIMPLES: uma linha por pessoa com grupo (e o

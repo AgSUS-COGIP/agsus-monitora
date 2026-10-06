@@ -256,23 +256,29 @@ export function criarEstadoDaClassificacao({
     }
   }
 
-  const mudarDados = (mudar) => {
-    if (!estado.dados) return;
+  /*
+    Aplica a resposta de uma gravação só se o edital ainda é o mesmo: trocar de
+    edital enquanto a RPC corre não pode pôr a regra, a lista ou o desempate de
+    um edital nos dados do outro.
+  */
+  const mudarDados = (edital, mudar) => {
+    if (!estado.dados || estado.editalId !== edital) return;
     publicar({ dados: mudar(estado.dados) });
   };
 
   /* Salva a regra (nova versão). Devolve true/false; erro vira aviso. */
   async function salvarRegra(configuracao, motivo = "") {
     if (!estado.editalId || estado.salvando) return false;
+    const edital = estado.editalId;
     publicar({ salvando: true });
     try {
       const regra = await rpc(RPC_SALVAR_REGRA, {
-        p_edital: estado.editalId,
+        p_edital: edital,
         p_configuracao: normalizarRegra(configuracao),
         p_versao_atual: estado.dados?.regra?.versao ?? 0,
         p_motivo: motivo || null,
       });
-      mudarDados((d) => ({ ...d, regra }));
+      mudarDados(edital, (d) => ({ ...d, regra }));
       publicar({ salvando: false });
       toast(`Regra salva (versão ${regra?.versao ?? "—"}).`, "success");
       return true;
@@ -290,6 +296,7 @@ export function criarEstadoDaClassificacao({
   async function gerarLista(resultado) {
     const d = estado.dados;
     if (!d?.regra || estado.gerando) return null;
+    const edital = estado.editalId;
     publicar({ gerando: true });
     try {
       const retrato = instantaneoDaLista(resultado, {
@@ -298,13 +305,13 @@ export function criarEstadoDaClassificacao({
         versao: d.regra.versao,
       });
       const registro = await rpc(RPC_REGISTRAR_LISTA, {
-        p_edital: estado.editalId,
+        p_edital: edital,
         p_tipo: resultado.tipo,
         p_versao: d.regra.versao,
         p_resultado: retrato,
       });
       const registrado = { ...registro, retrato };
-      mudarDados((atual) => ({
+      mudarDados(edital, (atual) => ({
         ...atual,
         listas: [registro, ...(atual.listas || [])],
       }));
@@ -322,11 +329,12 @@ export function criarEstadoDaClassificacao({
   }
 
   async function publicarLista(id) {
+    const edital = estado.editalId;
     try {
       const registro = await rpc(RPC_PUBLICAR_LISTA, {
         p_lista: id,
       });
-      mudarDados((d) => ({
+      mudarDados(edital, (d) => ({
         ...d,
         listas: (d.listas || []).map((l) => (l.id === id ? registro : l)),
       }));
@@ -408,12 +416,13 @@ export function criarEstadoDaClassificacao({
 
   /* Sorteio (semente vazia = do servidor) ou decisão manual. */
   async function registrarDesempate(dados) {
+    const edital = estado.editalId;
     try {
       const registro = await rpc(RPC_REGISTRAR_DESEMPATE, {
-        p_edital: estado.editalId,
+        p_edital: edital,
         p_dados: dados,
       });
-      mudarDados((d) => ({
+      mudarDados(edital, (d) => ({
         ...d,
         desempates: [
           ...(d.desempates || []).filter((x) => x.chave !== registro.chave),
@@ -487,11 +496,17 @@ export function criarEstadoDaClassificacao({
   ) {
     if (!registrado?.retrato) return false;
     const { retrato } = registrado;
-    const nome = nomeDoArquivo(retrato, lista);
+    /*
+      O XLSX é a planilha inteira do retrato (classificação e eliminados), para
+      conferência: o recorte da lista vale para o documento, e o nome do
+      arquivo não pode dizer um recorte que o conteúdo não tem.
+    */
     if (formato === "xlsx") {
+      const nome = nomeDoArquivo(retrato);
       baixar(gerarXlsxDaLista(retrato), `${nome}.xlsx`, MIME_XLSX);
       return true;
     }
+    const nome = nomeDoArquivo(retrato, lista);
     const doc = documentoDaLista(registrado, { lista, fase, documento });
     const marca = marcaDoDocumento();
     if (formato === "docx") {

@@ -280,6 +280,7 @@ function hardenMapInstance(L, map) {
   enhanceMapAccessibility(L, map);
 
   const fitBrazilOverview = () => {
+    if (map.__agsusRemovido) return;
     try {
       map.invalidateSize({ animate: false, pan: false });
       liberarZoomParaCaber(viewBounds, folgaDoBrasil);
@@ -339,6 +340,15 @@ function hardenMapInstance(L, map) {
   map.on("drag move zoomend moveend layeradd", () =>
     stabilizeMap(map, maxBounds),
   );
+  /*
+    O `remove()` do Leaflet apaga os panes. Um estabilizar ou reenquadrar que
+    chegasse depois (o StrictMode desmonta logo após montar; trocar de área
+    também) lia `_leaflet_pos` de um pane que já não existe.
+  */
+  map.on("unload", () => {
+    map.__agsusRemovido = true;
+    window.clearTimeout(map.__agsusStabilizeTimer);
+  });
 }
 
 /*
@@ -393,10 +403,16 @@ function enhanceMapAccessibility(L, map) {
 
   container.tabIndex = 0;
   container.setAttribute("role", "application");
-  container.setAttribute(
-    "aria-label",
-    "Mapa da Saúde Indígena com foco inicial no Brasil e navegação permitida pela América do Sul. Use os botões mais e menos, a roda do mouse, duplo clique, gesto de pinça ou as teclas mais e menos para controlar o zoom.",
-  );
+  // O mapa que já tem nome (Projetos, DSEI) fica com o dele.
+  if (
+    !container.hasAttribute("aria-label") &&
+    !container.hasAttribute("aria-labelledby")
+  ) {
+    container.setAttribute(
+      "aria-label",
+      "Mapa da Saúde Indígena com foco inicial no Brasil e navegação permitida pela América do Sul. Use os botões mais e menos, a roda do mouse, duplo clique, gesto de pinça ou as teclas mais e menos para controlar o zoom.",
+    );
+  }
 
   map.scrollWheelZoom?.enable?.();
   map.doubleClickZoom?.enable?.();
@@ -460,7 +476,9 @@ function addScaleControl(L, map) {
 
 function stabilizeMap(map, maxBounds) {
   window.clearTimeout(map.__agsusStabilizeTimer);
+  if (map.__agsusRemovido) return;
   map.__agsusStabilizeTimer = window.setTimeout(() => {
+    if (map.__agsusRemovido) return;
     try {
       map.invalidateSize({ animate: false, pan: false });
       map.panInsideBounds(maxBounds, { animate: false });
@@ -493,7 +511,12 @@ function limitBounds(L, bounds, maxBounds) {
   const north = Math.min(incoming.getNorth(), maxBounds.getNorth());
   const east = Math.min(incoming.getEast(), maxBounds.getEast());
 
-  if (south >= north || west >= east) return maxBounds;
+  /*
+    Fora dos limites é a caixa vazia (sul acima do norte). Um ponto só é uma
+    caixa de lado zero e vale: antes virava o continente inteiro, e o "ir até o
+    ponto" do editor e do DSEI só com a sede afastava o mapa para zoom 4,5.
+  */
+  if (south > north || west > east) return maxBounds;
   return L.latLngBounds([south, west], [north, east]);
 }
 

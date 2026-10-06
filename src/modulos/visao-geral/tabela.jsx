@@ -230,7 +230,8 @@ export function TabelaDeProcessos({ e, estado, textos, aoAbrir, agora }) {
   const [rascunho, setRascunho] = useState(null);
   const [destacada, setDestacada] = useState("");
   const caixa = useRef(null);
-  const hoje = new Date(agora());
+  // O dia de Brasília, o mesmo dos motivos do crítico (não o do navegador).
+  const hoje = e.hoje || new Date(agora());
 
   // A busca digitada vai ao estado depois de uma pausa (o mapa redesenha).
   useEffect(() => {

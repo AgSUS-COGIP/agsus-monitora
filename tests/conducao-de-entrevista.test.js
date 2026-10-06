@@ -194,6 +194,58 @@ describe("cálculo do resultado (espelho de FC_CALCULAR_ENTREVISTA)", () => {
       }).parecer,
     ).toBe("SEM_PARECER");
   });
+
+  it("total no mínimo exato é APTO (3,3 + 4,85 + 3,85 = 12, sem o 11,999… do ponto flutuante)", () => {
+    const competencia = (id, ordem) => ({
+      id,
+      ordem,
+      nome: id,
+      nota_maxima: 5,
+      peso: 1,
+    });
+    const r = calcularEntrevista({
+      roteiro: {
+        escala: "FAIXA",
+        nota_minima_total: 12,
+        notas_eliminatorias: [],
+        competencias: [
+          competencia("t1", 1),
+          competencia("t2", 2),
+          competencia("t3", 3),
+        ],
+      },
+      compareceu: "S",
+      avaliacoes: notas({ t1: [3.3], t2: [4.85], t3: [3.85] }),
+    });
+    expect(r.total).toBe(12);
+    expect(r.abaixoDoMinimoTotal).toBe(false);
+    expect(r.parecer).toBe("APTO");
+  });
+
+  it("mínimo percentual sem arredondar, como o banco: 10,84% de 10 = 1,084 e a nota 1,08 fica abaixo", () => {
+    const r = calcularEntrevista({
+      roteiro: {
+        escala: "FAIXA",
+        notas_eliminatorias: [],
+        competencias: [
+          {
+            id: "m1",
+            ordem: 1,
+            nome: "Técnica",
+            nota_maxima: 10,
+            peso: 1,
+            minimo: 10.84,
+            tipo_minimo: "PERCENTUAL",
+          },
+        ],
+      },
+      compareceu: "S",
+      avaliacoes: notas({ m1: [1.08] }),
+    });
+    expect(r.competencias[0].minimo).toBe(1.084);
+    expect(r.competencias[0].abaixoDoMinimo).toBe(true);
+    expect(r.parecer).toBe("INAPTO");
+  });
 });
 
 describe("ficha de notas", () => {
