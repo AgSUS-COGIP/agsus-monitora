@@ -1,13 +1,16 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
+  agradecimentoDoMarco,
   chaveDoMarco,
   comemoracaoDasAnalises,
   comemoracaoDasEntrevistas,
   comemoracoesLigadasNaResposta,
   editaisConcluidos,
+  equipeDaArea,
   estadoGuardadoDasVagas,
   estadoGuardadoDosEditais,
   filaZerou,
+  formaDoMarco,
   marcoAlcancado,
   marcoNovo,
   mensagemDaFilaZerada,
@@ -163,11 +166,33 @@ describe("edital concluído e fila zerada", () => {
       "Edital 01/2026 · DSEI Xingu concluído! 🎉 Todas as análises foram feitas.",
     );
     expect(comemoracao.itens).toEqual([
-      "Fila de análises zerada na SEDE! Parabéns, equipe. 🎉",
+      "Fila de análises zerada! Obrigado, equipe da SEDE. 🎉",
     ]);
+    // Edital concluído desenha um coração no céu.
+    expect(comemoracao.forma).toBe("coracao");
     expect(mensagemDaFilaZerada("")).toBe(
-      "Fila de análises zerada! Parabéns, equipe. 🎉",
+      "Fila de análises zerada! Obrigado, equipe. 🎉",
     );
+    expect(mensagemDaFilaZerada("Projetos")).toBe(
+      "Fila de análises zerada! Obrigado, equipe de Projetos. 🎉",
+    );
+  });
+
+  it("só a fila zerada desenha uma estrela", () => {
+    const situacao = situacaoDosEditais([linha("01/2026", "X", "Apto")]);
+    expect(
+      comemoracaoDasAnalises({
+        anteriorEditais: { "01/2026|X": 0 },
+        anteriorFila: 3,
+        situacao,
+        pendentes: 0,
+        nomeDaArea: "Saúde Indígena",
+      }),
+    ).toEqual({
+      texto: "Fila de análises zerada! Obrigado, equipe da Saúde Indígena. 🎉",
+      itens: [],
+      forma: "estrela",
+    });
   });
 });
 
@@ -253,6 +278,22 @@ describe("marcos do ano", () => {
     ).toBe(
       "🎉 A equipe da Saúde Indígena passou de 7.500 análises concluídas em 2026!",
     );
+    expect(
+      mensagemDoMarcoDoAno({ nomeDaArea: "Projetos", marco: 1000, ano: 2026 }),
+    ).toBe(
+      "🎉 A equipe de Projetos passou de 1.000 análises concluídas em 2026!",
+    );
+  });
+
+  it("o agradecimento dos fogos é à equipe da área, com o número no céu", () => {
+    expect(
+      agradecimentoDoMarco({ nomeDaArea: "Projetos", marco: 1000, ano: 2026 }),
+    ).toBe("1.000 análises concluídas em 2026. Obrigado, equipe de Projetos!");
+    expect(
+      agradecimentoDoMarco({ nomeDaArea: "SEDE", marco: 2500, ano: 2026 }),
+    ).toBe("2.500 análises concluídas em 2026. Obrigado, equipe da SEDE!");
+    expect(equipeDaArea("")).toBe("equipe");
+    expect(formaDoMarco(10000)).toEqual({ tipo: "numero", texto: "10.000" });
   });
 });
 

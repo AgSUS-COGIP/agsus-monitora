@@ -674,6 +674,8 @@ export function Aya({
         ? `Parabéns! Você concluiu a trilha "${nome}".`
         : `Parabéns! Você conheceu a tela ${nome}.`,
       confete: concluido.trilha ? "festa" : "fogos",
+      // A trilha inteira ganha uma estrela no céu.
+      forma: concluido.trilha ? "estrela" : null,
     });
   }
 

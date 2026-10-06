@@ -66,6 +66,8 @@ import {
   UserRoundCheck,
   Users,
   UserX,
+  Volume2,
+  VolumeX,
   Wrench,
   X,
 } from "lucide";
@@ -168,6 +170,8 @@ export const ICONES = Object.freeze({
   "user-round-check": UserRoundCheck,
   "user-x": UserX,
   users: Users,
+  "volume-2": Volume2,
+  "volume-x": VolumeX,
   wrench: Wrench,
   x: X,
 });
