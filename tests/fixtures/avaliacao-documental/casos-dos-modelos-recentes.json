@@ -12,9 +12,18 @@
         "mora_aldeia": true,
         "aldeia_na_lista": false,
         "titulos": [
-          { "titulo": "ESPECIALIZACAO", "aceito": true },
-          { "titulo": "MESTRADO", "aceito": true },
-          { "titulo": "DOUTORADO", "aceito": true }
+          {
+            "titulo": "ESPECIALIZACAO",
+            "aceito": true
+          },
+          {
+            "titulo": "MESTRADO",
+            "aceito": true
+          },
+          {
+            "titulo": "DOUTORADO",
+            "aceito": true
+          }
         ],
         "vinculos": [
           {
@@ -30,7 +39,11 @@
         "resultado": "APTO",
         "nota_apurada": 24.8,
         "nota_final": 24.8,
-        "parciais": { "ETNICO": 14, "FORMACAO": 6, "EXPERIENCIA": 4.8 },
+        "parciais": {
+          "ETNICO": 14,
+          "FORMACAO": 6,
+          "EXPERIENCIA": 4.8
+        },
         "eliminatorios": [],
         "encaminhamentos": [],
         "experiencia": {
@@ -50,7 +63,12 @@
         "nivel": "fundamental",
         "modalidade": "AC",
         "indigena": false,
-        "titulos": [{ "titulo": "ENSINO_MEDIO", "aceito": true }],
+        "titulos": [
+          {
+            "titulo": "ENSINO_MEDIO",
+            "aceito": true
+          }
+        ],
         "vinculos": [
           {
             "categoria": "AREA",
@@ -65,7 +83,11 @@
         "resultado": "INAPTO_REQUISITO",
         "nota_apurada": 6.2,
         "nota_final": 0,
-        "parciais": { "ETNICO": 0, "FORMACAO": 6, "EXPERIENCIA": 0.2 },
+        "parciais": {
+          "ETNICO": 0,
+          "FORMACAO": 6,
+          "EXPERIENCIA": 0.2
+        },
         "eliminatorios": [
           "Item 8.12 c: não comprovou a experiência profissional mínima de 3 meses."
         ],
@@ -95,8 +117,14 @@
           }
         },
         "titulos": [
-          { "titulo": "TECNICO", "aceito": true },
-          { "titulo": "GRADUACAO", "aceito": true }
+          {
+            "titulo": "TECNICO",
+            "aceito": true
+          },
+          {
+            "titulo": "GRADUACAO",
+            "aceito": true
+          }
         ],
         "vinculos": [],
         "estagio_horas": 1000
@@ -106,7 +134,11 @@
         "resultado": "APTO",
         "nota_apurada": 12,
         "nota_final": 12,
-        "parciais": { "ETNICO": 8, "FORMACAO": 3, "EXPERIENCIA": 1 },
+        "parciais": {
+          "ETNICO": 8,
+          "FORMACAO": 3,
+          "EXPERIENCIA": 1
+        },
         "eliminatorios": [],
         "encaminhamentos": [],
         "experiencia": {
@@ -128,8 +160,14 @@
         "indigena": true,
         "mora_aldeia": true,
         "titulos": [
-          { "titulo": "ESPECIALIZACAO", "aceito": true },
-          { "titulo": "GRADUACAO", "aceito": true }
+          {
+            "titulo": "ESPECIALIZACAO",
+            "aceito": true
+          },
+          {
+            "titulo": "GRADUACAO",
+            "aceito": true
+          }
         ],
         "vinculos": [
           {
@@ -146,7 +184,11 @@
         "resultado": "APTO",
         "nota_apurada": 22.8,
         "nota_final": 22.8,
-        "parciais": { "ETNICO": 14, "FORMACAO": 6, "EXPERIENCIA": 2.8 },
+        "parciais": {
+          "ETNICO": 14,
+          "FORMACAO": 6,
+          "EXPERIENCIA": 2.8
+        },
         "eliminatorios": [],
         "encaminhamentos": [],
         "experiencia": {
@@ -167,9 +209,17 @@
         "modalidade": "PP",
         "indigena": false,
         "blocos": {
-          "IDENTIDADE": { "situacao": "NAO_CONFORME", "motivos": ["VENCIDO"] }
+          "IDENTIDADE": {
+            "situacao": "NAO_CONFORME",
+            "motivos": ["VENCIDO"]
+          }
         },
-        "titulos": [{ "titulo": "MESTRADO", "aceito": true }],
+        "titulos": [
+          {
+            "titulo": "MESTRADO",
+            "aceito": true
+          }
+        ],
         "vinculos": [
           {
             "categoria": "AREA",
@@ -184,7 +234,11 @@
         "resultado": "INAPTO_REQUISITO",
         "nota_apurada": 4.4,
         "nota_final": 0,
-        "parciais": { "ETNICO": 0, "FORMACAO": 2, "EXPERIENCIA": 2.4 },
+        "parciais": {
+          "ETNICO": 0,
+          "FORMACAO": 2,
+          "EXPERIENCIA": 2.4
+        },
         "eliminatorios": [
           "Item 6.4 c: Documento de identidade fora do prazo de validade."
         ],
@@ -221,7 +275,11 @@
         "resultado": "INAPTO_REQUISITO",
         "nota_apurada": 1,
         "nota_final": 0,
-        "parciais": { "ETNICO": 0, "FORMACAO": 0, "EXPERIENCIA": 1 },
+        "parciais": {
+          "ETNICO": 0,
+          "FORMACAO": 0,
+          "EXPERIENCIA": 1
+        },
         "eliminatorios": [
           "Item 8.12 c: não comprovou a experiência profissional mínima de 6 meses."
         ],
@@ -251,8 +309,14 @@
           }
         },
         "titulos": [
-          { "titulo": "ESPECIALIZACAO", "aceito": true },
-          { "titulo": "DOUTORADO", "aceito": true }
+          {
+            "titulo": "ESPECIALIZACAO",
+            "aceito": true
+          },
+          {
+            "titulo": "DOUTORADO",
+            "aceito": true
+          }
         ],
         "vinculos": [
           {
@@ -268,7 +332,11 @@
         "resultado": "APTO",
         "nota_apurada": 14,
         "nota_final": 14,
-        "parciais": { "ETNICO": 0, "FORMACAO": 4, "EXPERIENCIA": 10 },
+        "parciais": {
+          "ETNICO": 0,
+          "FORMACAO": 4,
+          "EXPERIENCIA": 10
+        },
         "eliminatorios": [],
         "encaminhamentos": [],
         "experiencia": {
@@ -290,8 +358,14 @@
         "indigena": true,
         "mora_aldeia": true,
         "titulos": [
-          { "titulo": "ESPECIALIZACAO", "aceito": true },
-          { "titulo": "MESTRADO", "aceito": true }
+          {
+            "titulo": "ESPECIALIZACAO",
+            "aceito": true
+          },
+          {
+            "titulo": "MESTRADO",
+            "aceito": true
+          }
         ],
         "vinculos": [
           {
@@ -307,7 +381,11 @@
         "resultado": "APTO",
         "nota_apurada": 19.4,
         "nota_final": 19.4,
-        "parciais": { "ETNICO": 14, "FORMACAO": 3, "EXPERIENCIA": 2.4 },
+        "parciais": {
+          "ETNICO": 14,
+          "FORMACAO": 3,
+          "EXPERIENCIA": 2.4
+        },
         "eliminatorios": [],
         "encaminhamentos": [],
         "experiencia": {
@@ -328,8 +406,14 @@
         "modalidade": "PCD",
         "indigena": false,
         "titulos": [
-          { "titulo": "TECNICO", "aceito": true },
-          { "titulo": "ESPECIALIZACAO", "aceito": true }
+          {
+            "titulo": "TECNICO",
+            "aceito": true
+          },
+          {
+            "titulo": "ESPECIALIZACAO",
+            "aceito": true
+          }
         ],
         "vinculos": [
           {
@@ -345,7 +429,11 @@
         "resultado": "APTO",
         "nota_apurada": 5.2,
         "nota_final": 5.2,
-        "parciais": { "ETNICO": 0, "FORMACAO": 4, "EXPERIENCIA": 1.2 },
+        "parciais": {
+          "ETNICO": 0,
+          "FORMACAO": 4,
+          "EXPERIENCIA": 1.2
+        },
         "eliminatorios": [],
         "encaminhamentos": ["ENCAMINHA_PERICIA"],
         "experiencia": {
@@ -364,11 +452,25 @@
       "candidato": {
         "nivel": "superior",
         "modalidade": "AC",
-        "titulos": [{ "titulo": "MESTRADO", "aceito": true }],
+        "titulos": [
+          {
+            "titulo": "MESTRADO",
+            "aceito": true
+          }
+        ],
         "cursos": [
-          { "horas": 50, "aceito": true },
-          { "horas": 100, "aceito": true },
-          { "horas": 200, "aceito": true }
+          {
+            "horas": 50,
+            "aceito": true
+          },
+          {
+            "horas": 100,
+            "aceito": true
+          },
+          {
+            "horas": 200,
+            "aceito": true
+          }
         ],
         "vinculos": [
           {
@@ -379,12 +481,18 @@
           }
         ]
       },
-      "opcoes": { "notaMinima": 10 },
+      "opcoes": {
+        "notaMinima": 10
+      },
       "esperado": {
         "resultado": "APTO",
         "nota_apurada": 33,
         "nota_final": 33,
-        "parciais": { "FORMACAO": 8, "CURSOS": 5, "EXPERIENCIA": 20 },
+        "parciais": {
+          "FORMACAO": 8,
+          "CURSOS": 5,
+          "EXPERIENCIA": 20
+        },
         "eliminatorios": [],
         "encaminhamentos": [],
         "experiencia": {
@@ -405,9 +513,18 @@
         "modalidade": "AC",
         "titulos": [],
         "cursos": [
-          { "horas": 120, "aceito": true },
-          { "horas": 150, "aceito": true },
-          { "horas": 200, "aceito": true }
+          {
+            "horas": 120,
+            "aceito": true
+          },
+          {
+            "horas": 150,
+            "aceito": true
+          },
+          {
+            "horas": 200,
+            "aceito": true
+          }
         ],
         "vinculos": [
           {
@@ -418,12 +535,18 @@
           }
         ]
       },
-      "opcoes": { "notaMinima": 10 },
+      "opcoes": {
+        "notaMinima": 10
+      },
       "esperado": {
         "resultado": "APTO",
         "nota_apurada": 15,
         "nota_final": 15,
-        "parciais": { "FORMACAO": 0, "CURSOS": 10, "EXPERIENCIA": 5 },
+        "parciais": {
+          "FORMACAO": 0,
+          "CURSOS": 10,
+          "EXPERIENCIA": 5
+        },
         "eliminatorios": [],
         "encaminhamentos": [],
         "experiencia": {
@@ -443,7 +566,12 @@
         "nivel": "tecnico",
         "modalidade": "AC",
         "titulos": [],
-        "cursos": [{ "horas": 40, "aceito": true }],
+        "cursos": [
+          {
+            "horas": 40,
+            "aceito": true
+          }
+        ],
         "vinculos": [
           {
             "categoria": "AREA",
@@ -453,12 +581,18 @@
           }
         ]
       },
-      "opcoes": { "notaMinima": 10 },
+      "opcoes": {
+        "notaMinima": 10
+      },
       "esperado": {
         "resultado": "INAPTO_REQUISITO",
         "nota_apurada": 2,
         "nota_final": 0,
-        "parciais": { "FORMACAO": 0, "CURSOS": 2, "EXPERIENCIA": 0 },
+        "parciais": {
+          "FORMACAO": 0,
+          "CURSOS": 2,
+          "EXPERIENCIA": 0
+        },
         "eliminatorios": [
           "Item 1.1.1 c: não comprovou a experiência profissional mínima de 6 meses."
         ],
@@ -507,7 +641,11 @@
         "vagas_imediatas": 2,
         "cadastro_reserva": false
       },
-      "esperado": { "tamanho": 10, "descricao": "5 × 2 = 10", "aviso": null }
+      "esperado": {
+        "tamanho": 10,
+        "descricao": "5 × 2 = 10",
+        "aviso": null
+      }
     },
     {
       "modelo": "SI26-100",
@@ -516,7 +654,11 @@
         "vagas_imediatas": 1,
         "cadastro_reserva": true
       },
-      "esperado": { "tamanho": 6, "descricao": "6 × 1 = 6", "aviso": null }
+      "esperado": {
+        "tamanho": 6,
+        "descricao": "6 × 1 = 6",
+        "aviso": null
+      }
     },
     {
       "modelo": "SI26-100",
@@ -525,26 +667,40 @@
         "vagas_imediatas": 0,
         "cadastro_reserva": true
       },
-      "esperado": { "tamanho": null, "descricao": "", "aviso": "SEM_VAGAS" }
+      "esperado": {
+        "tamanho": null,
+        "descricao": "",
+        "aviso": "SEM_VAGAS"
+      }
     }
   ],
   "provisoria": [
     {
       "nome": "Parintins: empate na ART vai pela maior idade (8.4.4.1)",
       "modelo": "SI26-PARINTINS",
-      "esperado": { "c01": 3, "c02": 1, "c03": 2 }
+      "esperado": {
+        "c01": 3,
+        "c02": 1,
+        "c03": 2
+      }
     },
     {
       "nome": "Alagoas e Sergipe: sem regra no edital, vale o desempate padrão (idoso, depois a candidatura mais antiga)",
       "modelo": "SI26-ALSE",
-      "esperado": { "c01": 1, "c02": 3, "c03": 2 }
+      "esperado": {
+        "c01": 1,
+        "c02": 3,
+        "c03": 2
+      }
     }
   ],
   "provisoria_vaga": {
     "codigo": "900010",
     "vagas_imediatas": 0,
     "cadastro_reserva": true,
-    "modalidades": { "Ampla Concorrência": 1 }
+    "modalidades": {
+      "Ampla Concorrência": 1
+    }
   },
   "provisoria_candidatos": [
     {
@@ -725,14 +881,13 @@
           "d03": 5,
           "d04": 3,
           "d05": 1,
-          "d06": null,
+          "d06": 6,
           "d07": null
         },
         "eliminados": {
-          "d06": "QUESTIONARIO",
           "d07": "CANCELADO"
         },
-        "avisos": []
+        "avisos": ["ART_AUSENTE"]
       }
     },
     {

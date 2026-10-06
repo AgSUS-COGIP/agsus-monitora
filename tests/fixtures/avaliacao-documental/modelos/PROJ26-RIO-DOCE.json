@@ -13,12 +13,6 @@
         "motivo": "Cancelou a inscrição"
       },
       {
-        "codigo": "QUESTIONARIO",
-        "coluna_prefixo": "SITUAÇÃO - ",
-        "exceto": ["FINALIZADO"],
-        "motivo": "Não finalizou o questionário"
-      },
-      {
         "codigo": "REPROVADO_EMPREGARE",
         "coluna": "REPROVADO",
         "quando": ["SIM"],

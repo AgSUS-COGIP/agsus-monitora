@@ -374,12 +374,6 @@
         "quando": ["CANCELADO"]
       },
       {
-        "codigo": "QUESTIONARIO",
-        "exceto": ["FINALIZADO"],
-        "motivo": "Não finalizou o questionário",
-        "coluna_prefixo": "SITUAÇÃO - "
-      },
-      {
         "codigo": "REPROVADO_EMPREGARE",
         "coluna": "REPROVADO",
         "motivo": "Reprovado na Empregare",
