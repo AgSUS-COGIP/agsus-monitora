@@ -7,7 +7,7 @@ import { obterDadosDoMonitoramento } from "../../componentes/dados-do-monitorame
 import { usarAreaAtual } from "../../componentes/usar-area-atual.js";
 import {
   calcularIndicadores,
-  diaLocal,
+  diaEmBrasilia,
   enriquecerRecursos,
   FILTROS_VAZIOS,
   filtrarRecursos,
@@ -86,7 +86,7 @@ function TelaDaArea({ estado, e }) {
   const podeAdministrarModelos = Boolean(
     carregado && dados?.pode_administrar_modelos,
   );
-  const hoje = diaLocal();
+  const hoje = diaEmBrasilia();
   const recursos = useMemo(
     () => (dados ? enriquecerRecursos(dados, hoje) : []),
     [dados, hoje],

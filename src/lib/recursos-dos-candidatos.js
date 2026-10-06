@@ -13,6 +13,7 @@
   mesmos indicadores e pendências — agora com prazo, dias em aberto e "a nota
   mudou" calculados, sem digitar.
 */
+import { hojeEmBrasilia } from "./cronograma-do-edital.js";
 import { sanitizeCsvCell } from "./csv-security.js";
 import {
   cronogramasPorEdital,
@@ -126,13 +127,13 @@ export const tomDaSituacao = (id) =>
 export const rotuloDaOrigem = (id, origens = ORIGENS_PADRAO) =>
   origens.find((o) => o.id === id)?.rotulo || texto(id) || "Sem origem";
 
-/* Data do dia (AAAA-MM-DD) no fuso de quem usa: prazo é data, não instante. */
-export function diaLocal(data = new Date()) {
+/*
+  Data do dia (AAAA-MM-DD) em Brasília, como no resto do sistema: prazo é
+  data, não instante, e não muda com o fuso do computador de quem usa.
+*/
+export function diaEmBrasilia(data = new Date()) {
   const d = data instanceof Date ? data : new Date(data);
-  if (Number.isNaN(d.getTime())) return "";
-  const mes = String(d.getMonth() + 1).padStart(2, "0");
-  const dia = String(d.getDate()).padStart(2, "0");
-  return `${d.getFullYear()}-${mes}-${dia}`;
+  return Number.isNaN(d.getTime()) ? "" : hojeEmBrasilia(d);
 }
 
 /* Dias inteiros entre duas datas AAAA-MM-DD (b − a). */
@@ -180,9 +181,9 @@ export function enriquecerRecurso(recurso, { cronogramas, hoje }) {
     cronogramas?.get(String(recurso.edital_id)) || [],
     recurso.origem,
   );
-  const inicio = diaLocal(recurso.criado_em);
+  const inicio = diaEmBrasilia(recurso.criado_em);
   const fim =
-    decidido && recurso.decisao_em ? diaLocal(recurso.decisao_em) : hoje;
+    decidido && recurso.decisao_em ? diaEmBrasilia(recurso.decisao_em) : hoje;
   const diasEmAberto = inicio ? Math.max(0, diasEntre(inicio, fim) ?? 0) : null;
   const diasParaPrazo = prazo.data ? diasEntre(hoje, prazo.data) : null;
   const semResposta = !etapas.resposta_candidato;
@@ -212,7 +213,7 @@ export function enriquecerRecurso(recurso, { cronogramas, hoje }) {
     // Decidido dentro do prazo do cronograma (true/false); null sem decisão ou prazo.
     noPrazo:
       decidido && recurso.decisao_em
-        ? decididoNoPrazo(diaLocal(recurso.decisao_em), prazo.data)
+        ? decididoNoPrazo(diaEmBrasilia(recurso.decisao_em), prazo.data)
         : null,
     etapasFeitas: ETAPAS.filter((etapa) => etapas[etapa.id]).length,
     // A resposta escrita no sistema (resposta-do-recurso.js) e os anexos ativos.
@@ -221,7 +222,7 @@ export function enriquecerRecurso(recurso, { cronogramas, hoje }) {
   };
 }
 
-export function enriquecerRecursos(dados, hoje = diaLocal()) {
+export function enriquecerRecursos(dados, hoje = diaEmBrasilia()) {
   const cronogramas = cronogramasPorEdital(dados?.cronogramas);
   return (Array.isArray(dados?.recursos) ? dados.recursos : []).map((r) =>
     enriquecerRecurso(r, { cronogramas, hoje }),
@@ -623,13 +624,13 @@ export function dadosParaSalvar(
 /* ── CSV ──────────────────────────────────────────────────────────────── */
 
 const simNao = (valor) => (valor ? "Sim" : "Não");
-/* Data pura (AAAA-MM-DD, do cronograma) fica como está; instante vira o dia local. */
+/* Data pura (AAAA-MM-DD, do cronograma) fica como está; instante vira o dia em Brasília. */
 const dataBR = (valor) => {
   const texto = String(valor ?? "");
   const dia = /^\d{4}-\d{2}-\d{2}$/.test(texto)
     ? texto
     : valor
-      ? diaLocal(valor)
+      ? diaEmBrasilia(valor)
       : "";
   return dia ? dia.split("-").reverse().join("/") : "";
 };

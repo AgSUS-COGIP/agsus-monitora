@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   calcularIndicadores,
   compararEditais,
@@ -149,6 +149,32 @@ describe("o que se calcula de cada recurso", () => {
     expect(r4.atrasado).toBe(false);
     expect(r4.etapasFeitas).toBe(4);
     expect(r5.prazo.data).toBeNull();
+  });
+
+  describe("o dia é o de Brasília, não o do fuso do computador", () => {
+    afterEach(() => vi.useRealTimers());
+
+    it("cadastro às 22h de Brasília (01h UTC do dia seguinte) conta do dia de Brasília", () => {
+      const [r] = enriquecerRecursos(
+        {
+          recursos: [recurso({ nu: 1, criado_em: "2026-05-10T01:00:00Z" })],
+          cronogramas: CRONOGRAMAS,
+        },
+        "2026-05-10",
+      );
+      expect(r.diasEmAberto).toBe(1);
+    });
+
+    it("sem hoje informado, hoje é o de Brasília: 01h UTC de 21/05 ainda é 20/05", () => {
+      vi.useFakeTimers({ now: new Date("2026-05-21T01:00:00Z") });
+      const [r1, , r3] = enriquecerRecursos({
+        recursos: RECURSOS(),
+        cronogramas: CRONOGRAMAS,
+      });
+      expect(r1.diasParaPrazo).toBe(-14);
+      expect(r3.diasParaPrazo).toBe(2);
+      expect(r3.vencendo).toBe(true);
+    });
   });
 
   it("dias entre datas atravessam o mês", () => {
