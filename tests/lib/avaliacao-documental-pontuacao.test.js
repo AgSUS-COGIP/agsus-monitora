@@ -43,6 +43,9 @@ describe("casos dourados", () => {
     expect(r.parecer).toBe(caso.esperado.parecer);
     if (caso.esperado.experiencia)
       expect(r.experiencia).toMatchObject(caso.esperado.experiencia);
+    if (caso.esperado.calculados)
+      expect(r.calculados).toEqual(caso.esperado.calculados);
+    if (caso.esperado.ajustes) expect(r.ajustes).toEqual(caso.esperado.ajustes);
   });
 
   it.each(CASOS.nota_declarada.map((c) => [c.nome, c]))(

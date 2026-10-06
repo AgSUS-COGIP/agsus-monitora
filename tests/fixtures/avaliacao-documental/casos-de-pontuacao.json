@@ -2303,6 +2303,210 @@
         },
         "parecer": "Edital 100/2026\nCandidato(a) HABILITADO(A) na Avaliação Documental e de Títulos com a pontuação total de 21,2 pontos, distribuídos da seguinte forma:\n\n- Critério Étnico: 14,0 pontos.\n- Formação Acadêmica: 0,0 pontos.\n- Experiência Profissional: 7,2 pontos."
       }
+    },
+    {
+      "nome": "ficha: experiência ajustada para menos com justificativa pronta e complemento",
+      "regra": "PROJ26-CURRICULAR",
+      "candidato": {
+        "nivel": "superior",
+        "modalidade": "AC",
+        "blocos": {
+          "IDENTIDADE": {
+            "situacao": "CONFORME"
+          },
+          "ESCOLARIDADE": {
+            "situacao": "CONFORME"
+          },
+          "REGISTRO_CONSELHO": {
+            "situacao": "CONFORME"
+          },
+          "EXPERIENCIA": {
+            "situacao": "CONFORME",
+            "nota_ajustada": 20,
+            "justificativas": ["EXPERIENCIA_DIMINUIDA"],
+            "justificativa_livre": "Um vínculo sem a data de término no comprovante."
+          }
+        },
+        "titulos": [
+          {
+            "titulo": "ESPECIALIZACAO",
+            "nome": "Especialização fictícia",
+            "aceito": true
+          }
+        ],
+        "cursos": [
+          {
+            "nome": "Curso A",
+            "horas": 40,
+            "aceito": true
+          },
+          {
+            "nome": "Curso B",
+            "horas": 120,
+            "aceito": true
+          }
+        ],
+        "vinculos": [
+          {
+            "empregador": "Empresa fictícia",
+            "categoria": "AREA_OU_SUS",
+            "inicio": "2020-01-01",
+            "fim": "2022-12-31",
+            "aceito": true
+          }
+        ]
+      },
+      "opcoes": {
+        "notaMinima": 20
+      },
+      "esperado": {
+        "resultado": "APTO",
+        "nota_apurada": 29,
+        "nota_final": 29,
+        "parciais": {
+          "FORMACAO": 5,
+          "CURSOS": 4,
+          "EXPERIENCIA": 20
+        },
+        "calculados": {
+          "FORMACAO": 5,
+          "CURSOS": 4,
+          "EXPERIENCIA": 25
+        },
+        "ajustes": {
+          "EXPERIENCIA": {
+            "calculado": 25,
+            "ajustado": 20
+          }
+        },
+        "eliminatorios": [],
+        "encaminhamentos": [],
+        "parecer": "Candidato(a) HABILITADO(A) na Avaliação Documental e de Títulos com a pontuação total de 29,0 pontos, distribuídos da seguinte forma:\n\n- Formação Acadêmica: 5,0 pontos.\n- Cursos de Aperfeiçoamento: 4,0 pontos.\n- Experiência Profissional: 20,0 pontos.\n\nObservações da análise:\n- Nota de experiência profissional diminuída em decorrência do tempo de serviço comprovado: só contam blocos completos de 6 meses além do mínimo exigido (subitens 8.2.2 a 8.2.4).\n- Item 8.2.6: Um vínculo sem a data de término no comprovante."
+      }
+    },
+    {
+      "nome": "ficha: ajuste acima do teto fica no teto e o motivo do bloco justifica",
+      "regra": "PROJ26-CURRICULAR",
+      "candidato": {
+        "nivel": "superior",
+        "blocos": {
+          "CURSOS": {
+            "situacao": "CONFORME",
+            "nota_ajustada": 9,
+            "justificativas": ["EVENTO"]
+          },
+          "FORMACAO": {
+            "situacao": "CONFORME",
+            "nota_ajustada": 0,
+            "justificativas": ["LATO_SENSU_SEM_CH"]
+          }
+        },
+        "titulos": [
+          {
+            "titulo": "ESPECIALIZACAO",
+            "aceito": true
+          }
+        ],
+        "cursos": [
+          {
+            "horas": 61,
+            "aceito": true
+          }
+        ],
+        "vinculos": [
+          {
+            "categoria": "AREA_OU_SUS",
+            "inicio": "2021-01-01",
+            "fim": "2021-12-31",
+            "aceito": true
+          }
+        ]
+      },
+      "opcoes": {
+        "notaMinima": 1
+      },
+      "esperado": {
+        "resultado": "APTO",
+        "nota_apurada": 10,
+        "nota_final": 10,
+        "parciais": {
+          "FORMACAO": 0,
+          "CURSOS": 5,
+          "EXPERIENCIA": 5
+        },
+        "calculados": {
+          "FORMACAO": 5,
+          "CURSOS": 2,
+          "EXPERIENCIA": 5
+        },
+        "ajustes": {
+          "FORMACAO": {
+            "calculado": 5,
+            "ajustado": 0
+          },
+          "CURSOS": {
+            "calculado": 2,
+            "ajustado": 5
+          }
+        },
+        "eliminatorios": [],
+        "encaminhamentos": [],
+        "parecer": "Candidato(a) HABILITADO(A) na Avaliação Documental e de Títulos com a pontuação total de 10,0 pontos, distribuídos da seguinte forma:\n\n- Formação Acadêmica: 0,0 pontos.\n- Cursos de Aperfeiçoamento: 5,0 pontos.\n- Experiência Profissional: 5,0 pontos.\n\nObservações da análise:\n- Item 8.2.10.4: Certificado de pós-graduação lato sensu sem a carga horária mínima de 360h não foi pontuado.\n- Item 6.4: Eventos acadêmicos, palestras, workshops, simpósios, seminários, congressos e afins não são pontuados."
+      }
+    },
+    {
+      "nome": "ficha: documento não enviado elimina mesmo com nota ajustada",
+      "regra": "PROJ26-CURRICULAR",
+      "candidato": {
+        "nivel": "tecnico",
+        "blocos": {
+          "IDENTIDADE": {
+            "situacao": "NAO_ENVIADO",
+            "motivos": ["ILEGIVEL"]
+          },
+          "EXPERIENCIA": {
+            "nota_ajustada": 12,
+            "justificativas": ["ANTES_DO_DIPLOMA"]
+          }
+        },
+        "vinculos": [
+          {
+            "categoria": "AREA_OU_SUS",
+            "inicio": "2019-01-01",
+            "fim": "2021-12-31",
+            "aceito": true
+          }
+        ]
+      },
+      "opcoes": {
+        "notaMinima": 10
+      },
+      "esperado": {
+        "resultado": "INAPTO_REQUISITO",
+        "nota_apurada": 12,
+        "nota_final": 0,
+        "parciais": {
+          "FORMACAO": 0,
+          "CURSOS": 0,
+          "EXPERIENCIA": 12
+        },
+        "calculados": {
+          "FORMACAO": 0,
+          "CURSOS": 0,
+          "EXPERIENCIA": 20
+        },
+        "ajustes": {
+          "EXPERIENCIA": {
+            "calculado": 20,
+            "ajustado": 12
+          }
+        },
+        "eliminatorios": [
+          "Item 6.5.1: Documento de identificação ilegível, não identificável ou danificado."
+        ],
+        "encaminhamentos": [],
+        "parecer": "Candidato(a) INABILITADO(A) na Avaliação Documental e de Títulos, pelo(s) seguinte(s) motivo(s):\n\n- Item 6.5.1: Documento de identificação ilegível, não identificável ou danificado.\n\nObservações da análise:\n- Item 8.2.9: Experiência anterior à data de diplomação não é computada."
+      }
     }
   ],
   "nota_declarada": [
