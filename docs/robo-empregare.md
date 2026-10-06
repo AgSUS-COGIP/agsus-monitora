@@ -84,6 +84,14 @@ ficha) os devolve; nunca vão para lista, CSV ou log (o log mostra só `N link(s
 disser `(N com link fora do formato)`, o link traz caractere que a CK `CK_EMPREGCAND_DSLINKDETALHE`
 não aceita: ajuste a CK (migration) e `_LINK_DETALHE` em `navegador_empregare.py` juntos.
 
+Cada vaga ganha uma linha `diagnóstico da lista` (sem token, nome ou CPF): o caminho da página
+com o identificador mascarado (ex.: `/empresa/vagas/candidaturas/<id>` ou uma página de "Sem
+permissão"), o título, se a espera pela lista estourou, quantas janelas o Chrome tem, se clicou
+em "Todos", as contagens de `.curriculo-list-item`, `a.link-curriculo`, `li[data-pessoa-id]`,
+links de detalhe, `#curriculo-pagina-1` e iframes, e as abas de etapa (só nomes conhecidos, com
+a ativa). Sem nenhum link lido, mostra ainda o tamanho do `page_source` e se ele contém
+`curriculo-list-item` e `link-curriculo`.
+
 ## Segredos a cadastrar (uma vez)
 
 **GitHub** — repositório → Settings → Secrets and variables → **Actions** → New repository secret:

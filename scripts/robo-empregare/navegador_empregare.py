@@ -40,7 +40,7 @@ from datetime import datetime, timedelta
 from html.parser import HTMLParser
 from urllib.parse import unquote
 
-from monitora.mascaramento import resumo_do_erro
+from monitora.mascaramento import mascarar, resumo_do_erro
 
 URL_BASE = "https://corporate.empregare.com"
 URL_LOGIN = URL_BASE + "/empresa/login"
@@ -114,21 +114,62 @@ const a = document.querySelector('{SELETOR_LINK_DETALHE}');
 return a ? a.getAttribute('href') : '';
 """
 
-JS_ABA_TODOS = """
-const abas = document.querySelectorAll(
-  '.nav a, .nav button, [role="tablist"] a, [role="tablist"] button, [role="tab"], .nav-tabs a, .tabs a'
-);
+# Abas de etapa da lista (Todos, Interessados, Triados…). Antes, ".nav a" com texto
+# começando por "Todos" pegava também links do menu ("Todos os …") e o clique tirava o
+# robô da página de candidaturas: a lista ficava vazia. Agora só aba com o texto exato
+# "Todos" (com ou sem contagem) e sem levar para outro caminho.
+SELETOR_ABAS_DE_ETAPA = (
+    '[role="tab"], .nav-tabs a, .nav-tabs button, .nav-pills a, .nav-pills button, .tabs a, .etapas a'
+)
+JS_ABAS_DE_ETAPA = f"""
+const ehAtiva = function (aba) {{
+  const item = aba.closest('li');
+  return aba.classList.contains('active') || aba.getAttribute('aria-selected') === 'true'
+    || (item !== null && item.classList.contains('active'));
+}};
+const mesmaPagina = function (aba) {{
+  const href = aba.getAttribute('href') || '';
+  if (!href || href.charAt(0) === '#' || /^javascript:/i.test(href)) {{ return true; }}
+  try {{ return new URL(href, location.href).pathname === location.pathname; }} catch (e) {{ return false; }}
+}};
+const abas = Array.from(document.querySelectorAll('{SELETOR_ABAS_DE_ETAPA}'));
+"""
+JS_ABA_TODOS = (
+    JS_ABAS_DE_ETAPA
+    + """
 for (const aba of abas) {
   const texto = (aba.textContent || '').replace(/\\s+/g, ' ').trim();
-  if (!/^todos\\b/i.test(texto)) { continue; }
-  const item = aba.closest('li');
-  const ativa = aba.classList.contains('active') || aba.getAttribute('aria-selected') === 'true'
-    || (item && item.classList.contains('active'));
-  if (!ativa) { aba.click(); return true; }
+  if (!/^todos\\s*\\(?\\d*\\)?$/i.test(texto) || !mesmaPagina(aba)) { continue; }
+  if (!ehAtiva(aba)) { aba.click(); return true; }
   return false;
 }
 return false;
 """
+)
+
+# Diagnóstico da página de candidaturas para o log: só caminho, título, contagens e o
+# rótulo das abas de etapa (o Python mascara e reduz a nomes conhecidos). Nada de token,
+# nome ou CPF.
+JS_DIAGNOSTICO_DA_LISTA = (
+    JS_ABAS_DE_ETAPA
+    + f"""
+const q = function (s) {{ return document.querySelectorAll(s).length; }};
+const rotulo = function (aba) {{ return (aba.textContent || '').replace(/\\s+/g, ' ').trim().slice(0, 40); }};
+const ativa = abas.find(ehAtiva);
+return {{
+  caminho: location.pathname,
+  titulo: (document.title || '').slice(0, 120),
+  itens: q('{SELETOR_ITEM_DA_LISTA}'),
+  links_curriculo: q('a.link-curriculo'),
+  pessoas: q('li[data-pessoa-id]'),
+  detalhes: q('{SELETOR_LINK_DETALHE}'),
+  pagina1: q('#curriculo-pagina-1'),
+  iframes: q('iframe'),
+  abas: abas.map(rotulo),
+  aba_ativa: ativa ? rotulo(ativa) : ''
+}};
+"""
+)
 
 JS_ROLAR_LISTA = f"""
 const itens = document.querySelectorAll('{SELETOR_ITEM_DA_LISTA}');
@@ -393,6 +434,70 @@ def _ler_generico(arvore):
     return candidatos
 
 
+ETAPAS_CONHECIDAS = (
+    "todos",
+    "interessados",
+    "triados",
+    "agendados",
+    "entrevistados",
+    "aprovados",
+    "reprovados",
+    "contratados",
+    "selecionados",
+    "finalistas",
+    "desclassificados",
+    "desistentes",
+)
+
+
+def _nome_da_aba(rotulo):
+    """'Todos (86)' → 'Todos (86)'; rótulo fora das etapas conhecidas → 'outra' (o log não leva texto livre)."""
+    texto = re.sub(r"\s+", " ", str(rotulo or "")).strip()
+    m = re.match(r"^([A-Za-zÀ-ÿ]+)\s*\(?(\d{0,6})\)?$", texto)
+    if not m or m.group(1).lower() not in ETAPAS_CONHECIDAS:
+        return "outra"
+    return m.group(1).capitalize() + (f" ({m.group(2)})" if m.group(2) else "")
+
+
+def caminho_mascarado(caminho):
+    """Só o caminho, sem consulta, com o identificador da vaga mascarado."""
+    texto = str(caminho or "").split("?")[0].split("#")[0]
+    texto = re.sub(r"(/empresa/vagas/candidaturas/)[^/]+", r"\1<id>", texto)
+    return mascarar(texto)[:120] or "?"
+
+
+def texto_do_diagnostico(d, fonte=None):
+    """
+    Uma linha segura para o log público: caminho mascarado, título, se a espera
+    estourou, janelas, contagens dos seletores da lista e abas de etapa (só nomes
+    conhecidos). Com `fonte` (page_source, quando nada foi lido): tamanho e se
+    contém as classes da lista.
+    """
+    if d.get("erro"):
+        return f"sem diagnóstico ({d['erro']})"
+    abas = [_nome_da_aba(a) for a in d.get("abas") or []]
+    partes = [
+        f"página {caminho_mascarado(d.get('caminho'))}",
+        f"título «{mascarar(str(d.get('titulo') or ''))[:80]}»",
+        f"espera {d.get('espera', '?')}",
+        f"janelas {d.get('janelas', '?')}",
+        "clicou em Todos" if d.get("clicou_todos") else "não clicou em Todos",
+        (
+            f"itens {d.get('itens', '?')} · a.link-curriculo {d.get('links_curriculo', '?')} · "
+            f"li[data-pessoa-id] {d.get('pessoas', '?')} · links de detalhe {d.get('detalhes', '?')} · "
+            f"#curriculo-pagina-1 {d.get('pagina1', '?')} · iframes {d.get('iframes', '?')}"
+        ),
+        f"abas {len(abas)} (ativa: {_nome_da_aba(d.get('aba_ativa')) if d.get('aba_ativa') else '—'})"
+        + (f" [{', '.join(abas[:12])}]" if abas else ""),
+    ]
+    if fonte is not None:
+        partes.append(
+            f"page_source {len(fonte)} caracteres, curriculo-list-item: {'sim' if 'curriculo-list-item' in fonte else 'não'}, "
+            f"link-curriculo: {'sim' if 'link-curriculo' in fonte else 'não'}"
+        )
+    return "; ".join(partes)
+
+
 def juntar_candidatos(acumulado, novos):
     """Acrescenta em `acumulado` ({código: link}) os novos; vale o primeiro link de cada código. Devolve quantos entraram."""
     entraram = 0
@@ -469,6 +574,8 @@ class PortalEmpregare:
         self.ids_das_vagas = {}  # código da vaga → identificador interno (do link de candidaturas)
         self.tempo_em_links = 0.0  # segundos gastos lendo listas de candidatos (ORCAMENTO_DOS_LINKS)
         self.descartados = 0  # links fora do formato na última lista lida (só contagem)
+        self.janela = None  # janela do login (pedir a exportação pode abrir outra)
+        self.diagnostico = {}  # da última página de candidaturas aberta (só contagens)
 
     def __enter__(self):
         self.driver = self._iniciar()
@@ -536,6 +643,7 @@ class PortalEmpregare:
 
         d = self.driver
         d.get(URL_LOGIN)
+        self.janela = d.current_window_handle
         self._esperar(20).until(EC.presence_of_element_located((By.ID, "loginEmail"))).send_keys(email)
         self._esperar(20).until(EC.element_to_be_clickable((By.ID, "btn-login-avancar"))).click()
         time.sleep(1)
@@ -714,11 +822,13 @@ class PortalEmpregare:
                 )
             fora = f" ({self.descartados} com link fora do formato)" if self.descartados else ""
             self.registrar(f"Vaga {codigo}: {len(candidatos)} link(s) de candidato capturado(s){fora}.")
+            self.registrar(f"Vaga {codigo}: diagnóstico da lista: {self._diagnosticar_lista(len(candidatos))}.")
         except Exception as erro:
             self.registrar(
                 f"Vaga {codigo}: não consegui ler a lista de candidatos ({resumo_do_erro(erro)}); "
                 f"segue com {len(candidatos)} link(s)."
             )
+            self.registrar(f"Vaga {codigo}: diagnóstico da lista: {self._diagnosticar_lista(len(candidatos))}.")
         finally:
             self.tempo_em_links += time.monotonic() - inicio
             try:
@@ -741,15 +851,52 @@ class PortalEmpregare:
         except TimeoutException:
             return False
 
+    def _voltar_para_a_janela(self):
+        """
+        A janela do login, sem alerta aberto: pedir a exportação pode abrir aba ou
+        alerta e mudar o foco. Devolve quantas janelas o Chrome tem (diagnóstico).
+        """
+        d = self.driver
+        try:
+            d.switch_to.alert.dismiss()
+        except Exception:
+            pass
+        janelas = list(d.window_handles)
+        try:
+            atual = d.current_window_handle
+        except Exception:
+            atual = None
+        alvo = self.janela if self.janela in janelas else (janelas[0] if janelas else None)
+        if alvo and atual != alvo:
+            d.switch_to.window(alvo)
+        return len(janelas)
+
     def _abrir_candidaturas(self, ident):
         """Candidaturas da vaga, na aba Todos quando ela existe; espera o AJAX da lista."""
+        self.diagnostico = {"janelas": self._voltar_para_a_janela()}
         self.driver.get(URL_CANDIDATURAS + ident)
         veio = self._esperar_a_lista()
         if self.driver.execute_script(JS_ABA_TODOS):
+            self.diagnostico["clicou_todos"] = True
             time.sleep(3)  # a aba pode recarregar a página
             veio = self._esperar_a_lista()
+        self.diagnostico["espera"] = "ok" if veio else "estourou"
         if not veio:
             time.sleep(ESPERA_DA_LISTA)  # vaga sem candidato ou tela diferente: a leitura genérica ainda tenta
+
+    def _diagnosticar_lista(self, capturados):
+        """Linha de diagnóstico da lista (só caminho, título, contagens e abas); nunca levanta."""
+        try:
+            pagina = self.driver.execute_script(JS_DIAGNOSTICO_DA_LISTA) or {}
+        except Exception as erro:
+            pagina = {"erro": resumo_do_erro(erro)}
+        fonte = None
+        if not capturados:
+            try:
+                fonte = self.driver.page_source or ""
+            except Exception:
+                fonte = ""
+        return texto_do_diagnostico(dict(self.diagnostico, **pagina), fonte)
 
     def _carregar_e_ler_pagina(self, prazo, total=None):
         """Rola até a lista parar de crescer (rolagem infinita) e lê os candidatos carregados."""
