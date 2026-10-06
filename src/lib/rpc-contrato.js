@@ -603,7 +603,20 @@ export const CONTRATO_RPC = {
     argumentos: [],
     critica: false,
     resumo:
-      "Últimas 10 execuções de cada carga (análises por origem, entrevistas, seleção, robô da Empregare com vagas pedidas/baixadas/falhas/recusadas e quem disparou — 20261005170000) e das tarefas agsus_* do pg_cron, para a seção Status das atualizações (só administrador global).",
+      "Últimas 10 execuções de cada carga (análises por origem, entrevistas, seleção, robô da Empregare com vagas pedidas/baixadas/falhas/recusadas e quem disparou — 20261005170000 —, conferências de consistência com avisos novos/abertos/resolvidos — 20261005210000) e das tarefas agsus_* do pg_cron, para a seção Status das atualizações (só administrador global).",
+  },
+  // ── Conferências de consistência (20261005210000_conferencias_de_consistencia.sql) ──
+  listar_avisos_conferencia: {
+    argumentos: ["p_area", "p_modulo"],
+    critica: false,
+    resumo:
+      "Avisos abertos e ignorados das conferências (job Python scripts/conferencias/) que a pessoa pode ver: módulo (leitor), área e recorte do edital; cargas e avisos sem área, só o administrador global. Área e módulo opcionais; pode_ignorar por aviso. Cartão do Status das atualizações e selo de cada tela.",
+  },
+  ignorar_aviso_conferencia: {
+    argumentos: ["p_id", "p_motivo"],
+    critica: false,
+    resumo:
+      "Ignora um aviso de conferência aberto com motivo (10 a 500 caracteres): administrador global ou quem administra o módulo (classificação: editor). Volta a aberto se a quantidade crescer.",
   },
   get_selecao_da_area: {
     argumentos: ["p_area"],

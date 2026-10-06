@@ -38,6 +38,12 @@ export const ROBOS_DE_CARGA = Object.freeze([
     workflow: "sincronizar-entrevistas.yml",
     limiteMin: 10,
   }),
+  Object.freeze({
+    id: "conferencias",
+    nome: "Conferências de consistência",
+    workflow: "conferencias.yml",
+    limiteMin: 20,
+  }),
 ]);
 
 export const roboDeCarga = (id) =>

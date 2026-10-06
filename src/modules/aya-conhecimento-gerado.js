@@ -1807,6 +1807,72 @@ export const VERBETES_AYA = Object.freeze([
       "supabase/migrations/20260925181000_recorta_dados_por_area.sql; supabase/migrations/20260925190000_gravacao_e_matriz_por_area.sql",
   },
   {
+    arquivo: "regras-das-conferencias.md",
+    titulo: "Avisos de conferência",
+    perguntas: [
+      "o que sao os avisos de conferencia",
+      "avisos de conferencia",
+      "conferencias de consistencia",
+      "o que e uma conferencia de consistencia",
+      "selo de avisos",
+      "para que serve o selo de avisos",
+    ],
+    resposta:
+      "Todo dia às 6h de Brasília um job em Python lê o banco e confere regras que atravessam os módulos — análises, entrevistas, classificação, lista de aprovados e as cargas da Empregare. Cada problema achado vira um aviso por edital (ou por área, ou por vaga da Empregare), com a gravidade (Crítico, Atenção ou Informativo), a quantidade de casos e até 20 exemplos só com códigos e ids, nunca nome ou CPF. Os avisos aparecem no selo do topo de Análises, Entrevistas, Classificação e Lista de aprovados (só os do módulo, na área atual; o selo some quando não há aviso) e, todos juntos, em Configurações › Status das atualizações. A conferência só avisa: não muda análise, entrevista, lista nem aprovado. Quando a conferência deixa de achar o problema, o aviso some sozinho na execução seguinte.",
+    fato: "",
+    fonte:
+      "scripts/conferencias/; supabase/migrations/20261005210000_conferencias_de_consistencia.sql",
+    abrir: "config:cargas",
+  },
+  {
+    arquivo: "regras-das-conferencias.md",
+    titulo: "O que cada conferência confere",
+    perguntas: [
+      "o que as conferencias conferem",
+      "quais conferencias existem",
+      "lista das conferencias",
+      "conferencias das analises",
+      "conferencias das entrevistas",
+      "conferencias da classificacao",
+      "conferencias dos aprovados",
+    ],
+    resposta:
+      "Análises: aprovada com nota abaixo da mínima da regra de classificação; nota final diferente da soma das parciais (formação, cursos, experiência e critério étnico); experiência acima do teto, quando a regra tiver teto; data da análise no futuro ou antes da inscrição na Empregare; e, só como informação, o mesmo candidato com análise em dois editais ativos. Entrevistas: convocado sem nota depois da data marcada na agenda; nota de avaliador fora da escala do roteiro; convocado que não está na lista de convocação vigente da Classificação; e dois horários para o mesmo candidato. Classificação: lista final gerada antes da última mudança nas análises; empate sem desempate registrado; vaga das análises sem linha no quadro de vagas do edital; ajuste de recurso aprovado depois da última lista. Lista de aprovados: a mesma pessoa contratada em duas vagas; convocado há mais de 15 dias sem desfecho; pessoas da publicação vinda da Classificação ainda para revisão. Cargas: vaga da Empregare cujo número de candidatos variou 50% ou mais na última carga.",
+    fato: "",
+    fonte: "scripts/conferencias/regras.py; scripts/conferencias/catalogo.py",
+  },
+  {
+    arquivo: "regras-das-conferencias.md",
+    titulo: "Ignorar um aviso",
+    perguntas: [
+      "como ignorar um aviso",
+      "ignorar aviso de conferencia",
+      "quem pode ignorar um aviso",
+      "aviso ignorado voltou",
+      "motivo para ignorar",
+    ],
+    resposta:
+      'Quem administra o módulo do aviso (na Classificação, quem edita) ou o administrador global vê o botão "Ignorar" no aviso aberto e precisa escrever o motivo, de 10 a 500 caracteres. O aviso vai para "Ignorados", com a data e o motivo. Se numa próxima conferência a quantidade de casos crescer, ele volta a aberto sozinho; se o problema sumir, ele sai da lista. Quem só lê o módulo vê os avisos, mas não ignora.',
+    fato: "",
+    fonte:
+      "supabase/migrations/20261005210000_conferencias_de_consistencia.sql",
+  },
+  {
+    arquivo: "regras-das-conferencias.md",
+    titulo: "Quem vê os avisos",
+    perguntas: [
+      "quem ve os avisos de conferencia",
+      "por que nao vejo avisos",
+      "avisos da minha area",
+      "avisos das cargas",
+    ],
+    resposta:
+      "Cada pessoa vê os avisos dos módulos que tem (pelo menos leitura), só da sua área e dos editais do seu recorte de coordenação. Avisos das cargas da Empregare e avisos sem área ficam só para o administrador global, que vê todos em Configurações › Status das atualizações, com o filtro por módulo.",
+    fato: "",
+    fonte:
+      "supabase/migrations/20261005210000_conferencias_de_consistencia.sql",
+  },
+  {
     arquivo: "regras-das-configuracoes.md",
     titulo: "Página inicial nas Configurações",
     perguntas: [
@@ -3107,7 +3173,7 @@ export const VERBETES_AYA = Object.freeze([
       "cargas de dados",
     ],
     resposta:
-      'As análises curriculares chegam pelo Apps Script das planilhas (o envio incremental é esperado a cada 20 minutos e fica "Atrasada" depois de 1 hora; a carga completa não tem prazo). Entrevistas e Seleção carregam pelo GitHub Actions de hora em hora, das 7h às 19h de Brasília, e ficam atrasadas depois de 4 horas durante o dia (à noite, sem carga, só depois de 14 horas). O robô da Empregare não tem agenda: roda só quando um administrador clica em "Rodar agora", por isso nunca fica "Atrasado". As tarefas do banco que rodam a cada 2 minutos (como o pacote do painel de análises e o das entrevistas) atrasam depois de 15 minutos; as diárias, depois de 26 horas; as mensais, depois de 32 dias. Os KPIs dos editais são recalculados às 10h de Brasília, depois da carga da Seleção.',
+      'As análises curriculares chegam pelo Apps Script das planilhas (o envio incremental é esperado a cada 20 minutos e fica "Atrasada" depois de 1 hora; a carga completa não tem prazo). Entrevistas e Seleção carregam pelo GitHub Actions de hora em hora, das 7h às 19h de Brasília, e ficam atrasadas depois de 4 horas durante o dia (à noite, sem carga, só depois de 14 horas). O robô da Empregare não tem agenda: roda só quando um administrador clica em "Rodar agora", por isso nunca fica "Atrasado". As conferências de consistência rodam todo dia às 6h de Brasília e ficam atrasadas depois de 26 horas. As tarefas do banco que rodam a cada 2 minutos (como o pacote do painel de análises e o das entrevistas) atrasam depois de 15 minutos; as diárias, depois de 26 horas; as mensais, depois de 32 dias. Os KPIs dos editais são recalculados às 10h de Brasília, depois da carga da Seleção.',
     fato: "",
     fonte:
       "src/lib/saude-das-cargas.js; supabase/migrations/20261001120000_saude_das_cargas.sql; supabase/migrations/20260930235900_kpis_uma_vez_por_dia.sql",
@@ -3123,10 +3189,11 @@ export const VERBETES_AYA = Object.freeze([
       "rodar a selecao agora",
       "rodar as entrevistas agora",
       "rodar o robo da empregare agora",
+      "rodar as conferencias agora",
       "atualizar agora sem esperar",
     ],
     resposta:
-      'Em Configurações › Status das atualizações, o administrador global vê o botão "Rodar agora" nas linhas Robô da Empregare, Seleção e Entrevistas. O clique pede ao GitHub Actions a execução do workflow daquela carga, em modo normal, e registra quem pediu. O botão fica desabilitado enquanto a carga roda (no GitHub ou no registro do banco) e por 3 minutos depois do pedido, até a execução aparecer. A nova execução entra na lista em alguns minutos; o robô da Empregare pode levar mais de meia hora.',
+      'Em Configurações › Status das atualizações, o administrador global vê o botão "Rodar agora" nas linhas Robô da Empregare, Conferências de consistência, Seleção e Entrevistas. O clique pede ao GitHub Actions a execução do workflow daquela carga, em modo normal, e registra quem pediu. O botão fica desabilitado enquanto a carga roda (no GitHub ou no registro do banco) e por 3 minutos depois do pedido, até a execução aparecer. A nova execução entra na lista em alguns minutos; o robô da Empregare pode levar mais de meia hora.',
     fato: "",
     fonte:
       "src/lib/robos-de-carga.js; api/rodar-carga.js; docs/robo-empregare.md",

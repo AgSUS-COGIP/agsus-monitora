@@ -95,6 +95,41 @@ jobs:
         if: always()
         run: docker rm -f monitora-ci || true
 
+  python:
+    name: Python (ruff e pytest)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Baixar código
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 1
+          show-progress: false
+
+      - name: Configurar Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: |
+            python/requirements-dev.txt
+            scripts/robo-empregare/requirements.txt
+
+      # Ferramentas (ruff, pytest) e as bibliotecas que os testes do robô leem
+      # (pandas/openpyxl). Nada disso vai para a Vercel. Guia: docs/python-no-monitora.md.
+      - name: Instalar dependências
+        run: pip install --disable-pip-version-check -r python/requirements-dev.txt -r scripts/robo-empregare/requirements.txt
+
+      - name: Lint (ruff check)
+        run: ruff check --output-format=github .
+
+      - name: Formatação (ruff format)
+        run: ruff format --check .
+
+      - name: Testes (pytest)
+        run: python -m pytest
+
   contrato-rpc-banco:
     name: Contrato de RPC contra o banco de desenvolvimento
     runs-on: ubuntu-latest
