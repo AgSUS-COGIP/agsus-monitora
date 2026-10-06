@@ -71,7 +71,7 @@ O endereço da vaga com o código numérico dá "Sem permissão" na Empregare. P
 - o **identificador interno da vaga** (o trecho de `/empresa/vagas/candidaturas/<id>|`, lido do
   link "Processo Seletivo" da busca), em `TB_EMPREGARE_VAGA.CO_VAGA_INTERNO`;
 - o **link de detalhes de cada candidato** (`/empresa/curriculo/detalhes?tokenCandidato=…`), em
-  `TB_EMPREGARE_CANDIDATO.DS_LINK_DETALHE`. Ele abre as candidaturas da vaga na aba Todos, carrega
+  `TB_EMPREGARE_CANDIDATO.DS_LINK_DETALHE`. Ele abre as candidaturas da vaga direto na aba Todos (`…/candidaturas/<id>|?m=0`; sem o `m`, a página abre numa etapa padrão e quem foi movido de etapa some), carrega
   a lista inteira (espera até 20 s o AJAX da 1ª página, de 15; rola até o fim enquanto vierem
   mais, parando após 2 rolagens sem novidade; até 120 s por vaga e 25 min por
   execução) e casa o `data-pessoa-id` de cada candidato com o código do Excel.
@@ -86,8 +86,8 @@ não aceita: ajuste a CK (migration) e `_LINK_DETALHE` em `navegador_empregare.p
 
 Cada vaga ganha uma linha `diagnóstico da lista` (sem token, nome ou CPF): o caminho da página
 com o identificador mascarado (ex.: `/empresa/vagas/candidaturas/<id>` ou uma página de "Sem
-permissão"), o título, se a espera pela lista estourou, quantas janelas o Chrome tem, se clicou
-em "Todos", as contagens de `.curriculo-list-item`, `a.link-curriculo`, `li[data-pessoa-id]`,
+permissão"), o título, se a espera pela lista estourou, quantas janelas o Chrome tem, a
+etapa da URL (`m=0` é Todos), as contagens de `.curriculo-list-item`, `a.link-curriculo`, `li[data-pessoa-id]`,
 links de detalhe, `#curriculo-pagina-1` e iframes, e as abas de etapa (só nomes conhecidos, com
 a ativa). Sem nenhum link lido, mostra ainda o tamanho do `page_source` e se ele contém
 `curriculo-list-item` e `link-curriculo`.
