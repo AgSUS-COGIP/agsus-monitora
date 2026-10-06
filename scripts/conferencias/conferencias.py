@@ -66,9 +66,11 @@ def paginas_de_analises(chamar):
     while True:
         pagina = chamar("conferencia_ler_analises", {"p_apos": apos, "p_limite": TAMANHO_DA_PAGINA}) or {}
         yield pagina.get("linhas") or []
-        apos = pagina.get("proximo")
-        if not apos:
+        proximo = pagina.get("proximo")
+        # Cursor que não anda (ou volta igual) encerraria o job só no tempo limite.
+        if not proximo or proximo == apos:
             return
+        apos = proximo
 
 
 def conferir(chamar, dias_convocado):
@@ -124,8 +126,8 @@ def principal(args, configuracao=None, chamar_rpc=None):
     cfg = configuracao or supabase_rpc.configuracao("docs/python-no-monitora.md")
     chamar_rpc = chamar_rpc or supabase_rpc.chamar
 
-    def chamar(funcao, corpo):
-        return chamar_rpc(cfg, funcao, corpo)
+    def chamar(funcao, corpo, **opcoes):
+        return chamar_rpc(cfg, funcao, corpo, **opcoes)
 
     if args.seco:
         avisos, rodadas, falhas = conferir(chamar, args.dias_convocado)
@@ -137,6 +139,8 @@ def principal(args, configuracao=None, chamar_rpc=None):
     chamar(
         "iniciar_conferencia",
         {"p_execucao": id_execucao, "p_disparo": tipo, "p_usuario": usuario, "p_url": execucao.url_da_execucao()},
+        # Sem repetir: se a resposta se perdeu, a 2ª tentativa esbarraria na execução que a 1ª abriu.
+        tentativas=1,
     )
     log.info("Execução %s (disparo %s).", id_execucao, tipo.lower())
     try:

@@ -353,6 +353,12 @@ class FluxoDeUmaVaga(unittest.TestCase):
         self.assertEqual(self.robo.gravar_vaga({}, "gh-x", "177979", self.caminho, chamar), "RECUSADA")
         self.assertEqual(chamadas, ["gravar_lote_empregare", "fechar_vaga_empregare"])
 
+    def test_erro_inesperado_perde_so_a_vaga(self):
+        def chamar(_config, funcao, corpo):
+            raise ValueError("resposta truncada")
+
+        self.assertEqual(self.robo.gravar_vaga({}, "gh-x", "177979", self.caminho, chamar), "FALHA")
+
     def test_disparo_e_endereco_da_execucao(self):
         self.assertEqual(self.robo.disparo("agenda"), ("AGENDA", None))
         uid = "0b8f2a8e-1111-4c2d-9e3f-123456789abc"

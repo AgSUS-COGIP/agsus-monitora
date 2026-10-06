@@ -149,6 +149,10 @@ def gravar_vaga(config, sync, codigo, caminho, chamar=supabase_rpc.chamar):
     except supabase_rpc.ErroDoSupabase as erro:
         registrar(f"Vaga {codigo}: o banco recusou a gravação ({erro}).")
         return "FALHA"
+    except Exception as erro:
+        # Resposta truncada, conexão derrubada, JSON inválido: perde esta vaga, não a execução.
+        registrar(f"Vaga {codigo}: a gravação falhou ({resumo_do_erro(erro)}).")
+        return "FALHA"
     situacao = (fim or {}).get("situacao", "FALHA")
     detalhes = f"{len(linhas)} candidatos no arquivo"
     if lido["sem_chave"]:
@@ -260,6 +264,8 @@ def principal(args):
             "p_url": url_da_execucao(),
             "p_forcar": bool(args.forcar),
         },
+        # Sem repetir: se a resposta se perdeu, a 2ª tentativa esbarraria na execução que a 1ª abriu.
+        tentativas=1,
     )
     registrar(f"Execução {sync}: {len(vagas)} vaga(s) ({escolha.get(lista.get('modo'))}); disparo {tipo.lower()}.")
     registrar(f"Origem das vagas: {contagem_por_origem(vagas)}.")

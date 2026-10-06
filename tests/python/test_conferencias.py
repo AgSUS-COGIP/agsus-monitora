@@ -223,8 +223,10 @@ class _BancoFalso:
         self.chamadas = []
         self.falhar = falhar or set()
 
-    def __call__(self, _cfg, funcao, corpo):
+    def __call__(self, _cfg, funcao, corpo, **opcoes):
         self.chamadas.append((funcao, corpo))
+        self.opcoes = getattr(self, "opcoes", {})
+        self.opcoes[funcao] = opcoes
         if funcao in self.falhar:
             raise RuntimeError(f"{funcao} caiu para pessoa@exemplo.invalid")
         if funcao == "conferencia_ler_contexto":
@@ -254,6 +256,17 @@ class Fluxo(unittest.TestCase):
     def _rodar(self, banco, lista=None):
         args = conferencias.argumentos(lista or ["--disparado-por", "agenda", "--dias-convocado", "15"])
         return conferencias.principal(args, configuracao={"url": "https://x", "chave": "k"}, chamar_rpc=banco)
+
+    def test_iniciar_nao_repete(self):
+        banco = _BancoFalso()
+        self._rodar(banco)
+        self.assertEqual(banco.opcoes["iniciar_conferencia"], {"tentativas": 1})
+
+    def test_cursor_parado_encerra(self):
+        def chamar(funcao, corpo):
+            return {"linhas": [{"id": "a"}], "proximo": "a"}
+
+        self.assertEqual(len(list(conferencias.paginas_de_analises(chamar))), 2)
 
     def test_execucao_completa(self):
         banco = _BancoFalso()

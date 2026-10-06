@@ -125,6 +125,38 @@ class ChamadaDeRpc(unittest.TestCase):
         self.assertEqual(len(chamadas), 1)
         self.assertNotIn(CPF_FICTICIO, str(falha.exception))
 
+    def test_erro_do_postgrest_nao_traz_a_linha_recusada(self):
+        corpo = json.dumps(
+            {
+                "code": "23502",
+                "message": 'null value in column "NO_CANDIDATO" violates not-null constraint',
+                "details": "Failing row contains (Maria Fictícia da Silva, 1990-01-01).",
+                "hint": None,
+            }
+        ).encode()
+
+        def abrir(pedido, timeout):
+            raise urllib.error.HTTPError(pedido.full_url, 400, "x", {}, io.BytesIO(corpo))
+
+        with self.assertRaises(supabase_rpc.ErroDoSupabase) as falha:
+            supabase_rpc.chamar(self.CFG, "f", {}, abrir=abrir, esperar=lambda s: None)
+        self.assertIn("23502", str(falha.exception))
+        self.assertNotIn("Maria", str(falha.exception))
+        self.assertNotIn("1990", str(falha.exception))
+
+    def test_conexao_derrubada_repete(self):
+        import http.client
+
+        chamadas = []
+
+        def abrir(pedido, timeout):
+            chamadas.append(1)
+            raise http.client.RemoteDisconnected("caiu")
+
+        with self.assertRaises(supabase_rpc.ErroDoSupabase):
+            supabase_rpc.chamar(self.CFG, "f", {}, abrir=abrir, esperar=lambda s: None)
+        self.assertEqual(len(chamadas), 3)
+
     def test_5xx_repete(self):
         chamadas = []
 
