@@ -114,38 +114,31 @@ const a = document.querySelector('{SELETOR_LINK_DETALHE}');
 return a ? a.getAttribute('href') : '';
 """
 
-# Abas de etapa da lista (Todos, Interessados, Triados…). Antes, ".nav a" com texto
-# começando por "Todos" pegava também links do menu ("Todos os …") e o clique tirava o
-# robô da página de candidaturas: a lista ficava vazia. Agora só aba com o texto exato
-# "Todos" (com ou sem contagem) e sem levar para outro caminho.
-SELETOR_ABAS_DE_ETAPA = (
-    '[role="tab"], .nav-tabs a, .nav-tabs button, .nav-pills a, .nav-pills button, .tabs a, .etapas a'
-)
-JS_ABAS_DE_ETAPA = f"""
-const ehAtiva = function (aba) {{
+# Abas de etapa da lista: links das próprias candidaturas com ?m=N e a contagem antes do
+# texto ("37 Todos", "32 Interessados", "0 Triados"…): m=0 Todos, 1 Interessados,
+# 2 Triados, 3 Agendados, 4 Entrevistados, 7 Contratados. A página abre numa etapa
+# padrão; o robô abre direto a aba Todos (?m=0) para cobrir quem a equipe moveu de etapa.
+ETAPA_TODOS = 0
+JS_ABAS_DE_ETAPA = """
+const etapaDe = function (href) {
+  try {
+    const u = new URL(href, location.href);
+    if (u.pathname.indexOf('/empresa/vagas/candidaturas/') !== 0) { return null; }
+    const m = u.searchParams.get('m');
+    return m !== null && /^\\d+$/.test(m) ? m : null;
+  } catch (e) { return null; }
+};
+const etapaAtual = new URLSearchParams(location.search).get('m');
+const abas = Array.from(document.querySelectorAll('a[href*="/empresa/vagas/candidaturas/"]')).filter(function (a) {
+  return etapaDe(a.getAttribute('href') || '') !== null;
+});
+const ehAtiva = function (aba) {
   const item = aba.closest('li');
   return aba.classList.contains('active') || aba.getAttribute('aria-selected') === 'true'
-    || (item !== null && item.classList.contains('active'));
-}};
-const mesmaPagina = function (aba) {{
-  const href = aba.getAttribute('href') || '';
-  if (!href || href.charAt(0) === '#' || /^javascript:/i.test(href)) {{ return true; }}
-  try {{ return new URL(href, location.href).pathname === location.pathname; }} catch (e) {{ return false; }}
-}};
-const abas = Array.from(document.querySelectorAll('{SELETOR_ABAS_DE_ETAPA}'));
+    || (item !== null && item.classList.contains('active'))
+    || (etapaAtual !== null && etapaDe(aba.getAttribute('href') || '') === etapaAtual);
+};
 """
-JS_ABA_TODOS = (
-    JS_ABAS_DE_ETAPA
-    + """
-for (const aba of abas) {
-  const texto = (aba.textContent || '').replace(/\\s+/g, ' ').trim();
-  if (!/^todos\\s*\\(?\\d*\\)?$/i.test(texto) || !mesmaPagina(aba)) { continue; }
-  if (!ehAtiva(aba)) { aba.click(); return true; }
-  return false;
-}
-return false;
-"""
-)
 
 # Diagnóstico da página de candidaturas para o log: só caminho, título, contagens e o
 # rótulo das abas de etapa (o Python mascara e reduz a nomes conhecidos). Nada de token,
@@ -158,6 +151,7 @@ const rotulo = function (aba) {{ return (aba.textContent || '').replace(/\\s+/g,
 const ativa = abas.find(ehAtiva);
 return {{
   caminho: location.pathname,
+  etapa: etapaAtual,
   titulo: (document.title || '').slice(0, 120),
   itens: q('{SELETOR_ITEM_DA_LISTA}'),
   links_curriculo: q('a.link-curriculo'),
@@ -283,6 +277,11 @@ _SO_CODIGO = re.compile(r"^[0-9]+\|*$")
 _LINK_DETALHE = re.compile(r"^https://corporate\.empregare\.com/empresa/curriculo/detalhes\?[A-Za-z0-9_.~=&%|+/:-]+$")
 _CODIGO_DO_CANDIDATO = re.compile(r"^[A-Za-z0-9._-]{1,60}$")
 _TAGS_SEM_FIM = {"area", "base", "br", "col", "embed", "hr", "img", "input", "link", "meta", "source", "track", "wbr"}
+
+
+def endereco_das_candidaturas(ident, etapa=ETAPA_TODOS):
+    """Candidaturas da vaga na etapa pedida (?m=0: Todos), com o "|" do identificador como está."""
+    return f"{URL_CANDIDATURAS}{ident}?m={int(etapa)}"
 
 
 def id_interno_da_vaga(endereco):
@@ -451,12 +450,16 @@ ETAPAS_CONHECIDAS = (
 
 
 def _nome_da_aba(rotulo):
-    """'Todos (86)' → 'Todos (86)'; rótulo fora das etapas conhecidas → 'outra' (o log não leva texto livre)."""
+    """
+    '86 Todos' ou 'Todos (86)' → 'Todos (86)'; rótulo fora das etapas conhecidas →
+    'outra' (o log não leva texto livre).
+    """
     texto = re.sub(r"\s+", " ", str(rotulo or "")).strip()
-    m = re.match(r"^([A-Za-zÀ-ÿ]+)\s*\(?(\d{0,6})\)?$", texto)
-    if not m or m.group(1).lower() not in ETAPAS_CONHECIDAS:
+    m = re.match(r"^(\d{1,6})?\s*([A-Za-zÀ-ÿ]+)\s*\(?(\d{0,6})\)?$", texto)
+    if not m or m.group(2).lower() not in ETAPAS_CONHECIDAS:
         return "outra"
-    return m.group(1).capitalize() + (f" ({m.group(2)})" if m.group(2) else "")
+    contagem = m.group(1) or m.group(3)
+    return m.group(2).capitalize() + (f" ({contagem})" if contagem else "")
 
 
 def caminho_mascarado(caminho):
@@ -481,7 +484,7 @@ def texto_do_diagnostico(d, fonte=None):
         f"título «{mascarar(str(d.get('titulo') or ''))[:80]}»",
         f"espera {d.get('espera', '?')}",
         f"janelas {d.get('janelas', '?')}",
-        "clicou em Todos" if d.get("clicou_todos") else "não clicou em Todos",
+        f"etapa m={d['etapa']}" if d.get("etapa") not in (None, "") else "etapa sem m",
         (
             f"itens {d.get('itens', '?')} · a.link-curriculo {d.get('links_curriculo', '?')} · "
             f"li[data-pessoa-id] {d.get('pessoas', '?')} · links de detalhe {d.get('detalhes', '?')} · "
@@ -872,14 +875,10 @@ class PortalEmpregare:
         return len(janelas)
 
     def _abrir_candidaturas(self, ident):
-        """Candidaturas da vaga, na aba Todos quando ela existe; espera o AJAX da lista."""
+        """Candidaturas da vaga direto na aba Todos (?m=0); espera o AJAX da lista."""
         self.diagnostico = {"janelas": self._voltar_para_a_janela()}
-        self.driver.get(URL_CANDIDATURAS + ident)
+        self.driver.get(endereco_das_candidaturas(ident))
         veio = self._esperar_a_lista()
-        if self.driver.execute_script(JS_ABA_TODOS):
-            self.diagnostico["clicou_todos"] = True
-            time.sleep(3)  # a aba pode recarregar a página
-            veio = self._esperar_a_lista()
         self.diagnostico["espera"] = "ok" if veio else "estourou"
         if not veio:
             time.sleep(ESPERA_DA_LISTA)  # vaga sem candidato ou tela diferente: a leitura genérica ainda tenta

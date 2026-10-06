@@ -579,8 +579,10 @@ class DiagnosticoDaLista(unittest.TestCase):
         "detalhes": 0,
         "pagina1": 0,
         "iframes": 1,
-        "abas": ["Todos (86)", "Interessados (10)", "Pessoa Fictícia 3787275", "Triados"],
-        "aba_ativa": "Todos (86)",
+        # Como o portal mostra: contagem antes do texto.
+        "abas": ["37 Todos", "32 Interessados", "Pessoa Fictícia 3787275", "0 Triados", "Agendados (2)"],
+        "aba_ativa": "37 Todos",
+        "etapa": "0",
     }
 
     def test_linha_segura_com_contagens_e_abas(self):
@@ -590,10 +592,10 @@ class DiagnosticoDaLista(unittest.TestCase):
             "página /empresa/vagas/candidaturas/<id>",
             "espera estourou",
             "janelas 2",
-            "não clicou em Todos",
+            "etapa m=0",
             "itens 0 · a.link-curriculo 0 · li[data-pessoa-id] 0 · links de detalhe 0 · #curriculo-pagina-1 0",
             "iframes 1",
-            "abas 4 (ativa: Todos (86)) [Todos (86), Interessados (10), outra, Triados]",
+            "abas 5 (ativa: Todos (37)) [Todos (37), Interessados (32), outra, Triados (0), Agendados (2)]",
             "page_source 107 caracteres, curriculo-list-item: não, link-curriculo: não",
         ):
             self.assertIn(esperado, texto)
@@ -625,18 +627,42 @@ class DiagnosticoDaLista(unittest.TestCase):
 
         portal = nav.PortalEmpregare("pasta-falsa", lambda _m: None)
         portal.driver = DriverFalso()
-        portal.diagnostico = {"espera": "estourou", "janelas": 1, "clicou_todos": True}
+        portal.diagnostico = {"espera": "estourou", "janelas": 1}
         texto = portal._diagnosticar_lista(0)
-        self.assertIn("clicou em Todos", texto)
+        self.assertIn("espera estourou; janelas 1; etapa m=0", texto)
         self.assertIn("page_source 36 caracteres", texto)
         portal._diagnosticar_lista(3)
         self.assertEqual(DriverFalso.lido, 1)
 
-    def test_aba_todos_so_texto_exato_e_mesma_pagina(self):
-        js = nav.JS_ABA_TODOS
-        self.assertIn("^todos\\s*\\(?\\d*\\)?$", js)
-        self.assertIn("mesmaPagina(aba)", js)
-        self.assertNotIn("'.nav a", js)
+    def test_sem_m_na_url_e_rotulos_fora_das_etapas(self):
+        texto = nav.texto_do_diagnostico({"caminho": "/empresa/vagas/candidaturas/X|", "abas": ["Sair", "12"]})
+        self.assertIn("etapa sem m", texto)
+        self.assertIn("[outra, outra]", texto)
+
+    def test_endereco_abre_direto_a_aba_todos(self):
+        self.assertEqual(
+            nav.endereco_das_candidaturas("Mc5fictPML0|"),
+            "https://corporate.empregare.com/empresa/vagas/candidaturas/Mc5fictPML0|?m=0",
+        )
+        self.assertTrue(nav.endereco_das_candidaturas("Mc5fictPML0|", 2).endswith("|?m=2"))
+
+    def test_portal_abre_na_aba_todos_sem_procurar_aba(self):
+        abertos = []
+
+        class DriverFalso:
+            def get(self, url):
+                abertos.append(url)
+
+            def execute_script(self, js, *args):
+                raise AssertionError("não deve procurar nem clicar em aba")
+
+        portal = nav.PortalEmpregare("pasta-falsa", lambda _m: None)
+        portal.driver = DriverFalso()
+        portal._voltar_para_a_janela = lambda: 1
+        portal._esperar_a_lista = lambda: True
+        portal._abrir_candidaturas("Mc5fictPML0|")
+        self.assertEqual(abertos, [nav.URL_CANDIDATURAS + "Mc5fictPML0|?m=0"])
+        self.assertEqual(portal.diagnostico, {"janelas": 1, "espera": "ok"})
 
     def test_volta_para_a_janela_do_login(self):
         class Troca:
