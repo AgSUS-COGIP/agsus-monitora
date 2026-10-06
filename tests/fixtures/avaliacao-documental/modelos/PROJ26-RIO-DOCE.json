@@ -27,10 +27,12 @@
     ],
     "nota_declarada": [],
     "divergencia_tolerancia": 0,
-    "desempate": ["IDOSO", "EXPERIENCIA_DECLARADA", "MAIOR_IDADE"]
+    "desempate": ["IDOSO", "MAIOR_IDADE"]
   },
   "lote": {
     "base": "NOTA_MINIMA",
+    "nota_minima": 10,
+    "item_edital": "8.2.6",
     "multiplo": null,
     "fixo": null,
     "inclui_cr": true,
