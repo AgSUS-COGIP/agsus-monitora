@@ -341,8 +341,13 @@ export function EditorDeCronograma({
       etapas: atual.etapas.map((etapa, i) => {
         if (i !== indice) return etapa;
         const proxima = { ...etapa, [campo]: valor };
-        // Etapa de um dia: o fim acompanha o início até ser informado.
-        if (campo === "data_inicio" && !etapa.data_fim)
+        /* Etapa de um dia: o fim acompanha o início enquanto estiver vazio
+           ou igual a ele (digitar pelo teclado passa por anos parciais,
+           como 0002-06-17, antes da data completa). */
+        if (
+          campo === "data_inicio" &&
+          (!etapa.data_fim || etapa.data_fim === etapa.data_inicio)
+        )
           proxima.data_fim = valor;
         return proxima;
       }),

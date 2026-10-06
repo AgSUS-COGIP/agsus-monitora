@@ -235,6 +235,7 @@ async function montar({
   linhas = LINHAS(),
   publicar = true,
   abrir = true,
+  relogio = true,
 } = {}) {
   document.body.innerHTML = `<section id="page-nucleo" class="page active"></section>`;
   perfilAtual = perfil;
@@ -247,7 +248,8 @@ async function montar({
       getProfile: () => perfilAtual,
       confirmar,
       aoSalvar,
-      agora: () => new Date(HOJE),
+      // relogio: false monta como em produção, sem relógio injetado.
+      agora: relogio ? () => new Date(HOJE) : undefined,
     });
   });
   if (publicar)
@@ -1268,5 +1270,41 @@ describe("padrão das telas (topo, tabela contínua, skeleton e erro)", () => {
     await esperar();
     expect(conteudo().querySelector('[role="alert"]')).toBeNull();
     expect(conteudo().textContent).toContain("Cadastro inicial");
+  });
+});
+
+describe("cronograma e rascunho sem efeitos colaterais", () => {
+  it("digitar a data de início pelo teclado: o fim acompanha até a data completa", async () => {
+    await montar();
+    await clicar($("newEditalBtn"));
+    await clicar($("cronogramaAddRow"));
+    const inicio = () => document.querySelector('[data-field="data_inicio"]');
+    const fim = () => document.querySelector('[data-field="data_fim"]');
+    // O campo de data emite o ano parcial a cada tecla.
+    await digitar(inicio(), "0002-06-17");
+    await digitar(inicio(), "0020-06-17");
+    await digitar(inicio(), "2026-06-17");
+    expect(fim().value).toBe("2026-06-17");
+
+    // Fim informado diferente do início: não acompanha mais.
+    await digitar(fim(), "2026-06-20");
+    await digitar(inicio(), "2026-06-18");
+    expect(fim().value).toBe("2026-06-20");
+  });
+
+  it("sem relógio injetado, renderizar de novo não regrava o rascunho", async () => {
+    await montar({ relogio: false });
+    await clicar($("newEditalBtn"));
+    await digitar($("mEdital"), "20/2026");
+    const gravar = vi.spyOn(Storage.prototype, "setItem");
+    const gravacoesDoRascunho = () =>
+      gravar.mock.calls.filter(([chave]) =>
+        chave.startsWith("agsus_monitora_rascunho_edital_v1:"),
+      ).length;
+
+    await act(async () => publicarLinhasDoMonitoramento(LINHAS()));
+    await act(async () => publicarLinhasDoMonitoramento(LINHAS()));
+
+    expect(gravacoesDoRascunho()).toBe(0);
   });
 });
