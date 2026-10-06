@@ -34,7 +34,7 @@
     "nota_declarada": [
       {
         "parcial": "FORMACAO",
-        "pergunta": "Pergunta 15 -",
+        "pergunta": "Você possui outras formações",
         "tipo": "OPCAO",
         "pontos": {
           "Especialização na área à qual concorre": 1,
@@ -44,7 +44,7 @@
       },
       {
         "parcial": "ETNICO",
-        "pergunta": "Pergunta 6 -",
+        "pergunta": "Você é indígena e mora em aldeia",
         "tipo": "OPCOES_SOMADAS",
         "pontos": {
           "Sou indígena": 8,

@@ -1,0 +1,421 @@
+{
+  "lote": {
+    "base": "NOTA_MINIMA",
+    "fixo": null,
+    "multiplo": 3,
+    "inclui_cr": true,
+    "linha_anda": true,
+    "item_edital": "8.2.6",
+    "nota_minima": 15,
+    "por_modalidade": false,
+    "inclui_empatados": true,
+    "publica_reposicao": false
+  },
+  "corte": {
+    "fonte": "REGRA_CLASSIFICACAO",
+    "item_edital": "8.2.6"
+  },
+  "blocos": [
+    {
+      "tipo": "DOCUMENTO",
+      "codigo": "IDENTIDADE",
+      "titulo": "Documento de identificação oficial com foto",
+      "efeitos": {
+        "NAO_ENVIADO": "ELIMINA",
+        "NAO_CONFORME": "ELIMINA"
+      },
+      "motivos": [
+        {
+          "texto": "Documento de identificação fora da lista do subitem 6.5 (ex.: certidão, CPF, título de eleitor, carteira de estudante).",
+          "codigo": "NAO_ACEITO",
+          "efeito": "ELIMINA",
+          "item_edital": "6.5.1"
+        },
+        {
+          "texto": "Documento de identificação ilegível, não identificável ou danificado.",
+          "codigo": "ILEGIVEL",
+          "efeito": "ELIMINA",
+          "item_edital": "6.5.1"
+        }
+      ],
+      "perguntas": [],
+      "item_edital": "6.5"
+    },
+    {
+      "tipo": "DOCUMENTO",
+      "codigo": "ESCOLARIDADE",
+      "titulo": "Formação exigida pela vaga (diploma ou certificado, frente e verso)",
+      "efeitos": {
+        "NAO_ENVIADO": "ELIMINA",
+        "NAO_CONFORME": "ELIMINA"
+      },
+      "motivos": [
+        {
+          "texto": "Não comprovou a formação acadêmica exigida para a vaga.",
+          "codigo": "NAO_COMPROVADA",
+          "efeito": "ELIMINA",
+          "item_edital": "8.2.1"
+        },
+        {
+          "texto": "Diploma ou certificado sem frente ou verso.",
+          "codigo": "SEM_FRENTE_VERSO",
+          "efeito": "ELIMINA",
+          "item_edital": "6.6.1"
+        },
+        {
+          "texto": "Curso diverso do exigido para a vaga.",
+          "codigo": "CURSO_DIVERSO",
+          "efeito": "ELIMINA",
+          "item_edital": "8.2.1"
+        }
+      ],
+      "perguntas": [],
+      "item_edital": "8.2.1"
+    },
+    {
+      "tipo": "DOCUMENTO",
+      "codigo": "REGISTRO_CONSELHO",
+      "titulo": "Registro ativo no conselho de classe, quando exigido",
+      "efeitos": {
+        "NAO_ENVIADO": "ELIMINA",
+        "NAO_CONFORME": "ELIMINA"
+      },
+      "motivos": [
+        {
+          "texto": "Não apresentou registro ativo no conselho de classe exigido para a vaga.",
+          "codigo": "SEM_REGISTRO",
+          "efeito": "ELIMINA",
+          "item_edital": "6.4"
+        }
+      ],
+      "perguntas": [],
+      "item_edital": "6.4"
+    },
+    {
+      "tipo": "COTA",
+      "codigo": "COTA_PP",
+      "titulo": "Pretos e pardos (autodeclaração)",
+      "efeitos": {
+        "CONFORME": "ENCAMINHA_HETEROIDENTIFICACAO",
+        "NAO_ENVIADO": "SEGUE_AMPLA",
+        "NAO_CONFORME": "SEGUE_AMPLA"
+      },
+      "motivos": [],
+      "condicao": "MODALIDADE=PP",
+      "perguntas": [],
+      "item_edital": ""
+    },
+    {
+      "tipo": "COTA",
+      "codigo": "COTA_PCD",
+      "titulo": "Pessoa com deficiência (laudo)",
+      "efeitos": {
+        "CONFORME": "ENCAMINHA_PERICIA",
+        "NAO_ENVIADO": "SEGUE_AMPLA",
+        "NAO_CONFORME": "SEGUE_AMPLA"
+      },
+      "motivos": [],
+      "condicao": "MODALIDADE=PCD",
+      "perguntas": [],
+      "item_edital": ""
+    },
+    {
+      "tipo": "COTA",
+      "codigo": "COTA_PI",
+      "titulo": "Indígenas (documento de pertencimento étnico, Anexo VI)",
+      "efeitos": {
+        "CONFORME": "SO_REGISTRO",
+        "NAO_ENVIADO": "SEGUE_AMPLA",
+        "NAO_CONFORME": "SEGUE_AMPLA"
+      },
+      "motivos": [
+        {
+          "texto": "Documento de pertencimento étnico sem a assinatura da liderança local (Anexo VI).",
+          "codigo": "SEM_LIDERANCA",
+          "efeito": "SEGUE_AMPLA",
+          "item_edital": "5.7.5"
+        },
+        {
+          "texto": "Documento de pertencimento étnico fora do modelo do Anexo VI.",
+          "codigo": "FORA_DO_MODELO",
+          "efeito": "SEGUE_AMPLA",
+          "item_edital": "5.7.5"
+        }
+      ],
+      "condicao": "MODALIDADE=PI",
+      "perguntas": [],
+      "item_edital": "5.7.5"
+    },
+    {
+      "tipo": "COTA",
+      "codigo": "COTA_PQ",
+      "titulo": "Quilombolas (declaração de pertencimento, Anexo VII, ou certificado da FCP)",
+      "efeitos": {
+        "CONFORME": "SO_REGISTRO",
+        "NAO_ENVIADO": "SEGUE_AMPLA",
+        "NAO_CONFORME": "SEGUE_AMPLA"
+      },
+      "motivos": [
+        {
+          "texto": "Declaração de pertencimento sem a assinatura da liderança ou associação local (Anexo VII).",
+          "codigo": "SEM_LIDERANCA",
+          "efeito": "SEGUE_AMPLA",
+          "item_edital": "5.7.6"
+        },
+        {
+          "texto": "Declaração fora do modelo do Anexo VII e sem certificado da Fundação Cultural Palmares.",
+          "codigo": "FORA_DO_MODELO",
+          "efeito": "SEGUE_AMPLA",
+          "item_edital": "5.7.6"
+        }
+      ],
+      "condicao": "MODALIDADE=PQ",
+      "perguntas": [],
+      "item_edital": "5.7.6"
+    },
+    {
+      "teto": 10,
+      "tipo": "TITULOS",
+      "codigo": "FORMACAO",
+      "titulo": "Titulação acadêmica (a maior)",
+      "efeitos": {},
+      "motivos": [
+        {
+          "texto": "Certificado de pós-graduação lato sensu sem a carga horária mínima de 360h não foi pontuado.",
+          "codigo": "LATO_SENSU_SEM_CH",
+          "item_edital": "8.2.10.4"
+        }
+      ],
+      "parcial": "FORMACAO",
+      "perguntas": [],
+      "cumulativa": false,
+      "item_edital": "8.2.6",
+      "pontos_por_nivel": {
+        "superior": [
+          {
+            "pontos": 5,
+            "titulo": "ESPECIALIZACAO"
+          },
+          {
+            "pontos": 8,
+            "titulo": "MESTRADO"
+          },
+          {
+            "pontos": 10,
+            "titulo": "DOUTORADO"
+          }
+        ]
+      }
+    },
+    {
+      "teto": 5,
+      "tipo": "CURSOS",
+      "codigo": "CURSOS",
+      "faixas": [
+        {
+          "pontos": 1,
+          "max_horas": 60,
+          "min_horas": 40
+        },
+        {
+          "pontos": 2,
+          "max_horas": 119,
+          "min_horas": 61
+        },
+        {
+          "pontos": 3,
+          "max_horas": null,
+          "min_horas": 120
+        }
+      ],
+      "titulo": "Cursos de aperfeiçoamento na área da vaga (mínimo 40h)",
+      "efeitos": {},
+      "motivos": [
+        {
+          "texto": "Eventos acadêmicos, palestras, workshops, simpósios, seminários, congressos e afins não são pontuados.",
+          "codigo": "EVENTO",
+          "item_edital": "6.4"
+        }
+      ],
+      "parcial": "CURSOS",
+      "perguntas": [],
+      "por_nivel": {
+        "medio": {
+          "teto": 10,
+          "faixas": [
+            {
+              "pontos": 2,
+              "max_horas": 60,
+              "min_horas": 40
+            },
+            {
+              "pontos": 4,
+              "max_horas": 119,
+              "min_horas": 61
+            },
+            {
+              "pontos": 6,
+              "max_horas": null,
+              "min_horas": 120
+            }
+          ]
+        },
+        "tecnico": {
+          "teto": 10,
+          "faixas": [
+            {
+              "pontos": 2,
+              "max_horas": 60,
+              "min_horas": 40
+            },
+            {
+              "pontos": 4,
+              "max_horas": 119,
+              "min_horas": 61
+            },
+            {
+              "pontos": 6,
+              "max_horas": null,
+              "min_horas": 120
+            }
+          ]
+        }
+      },
+      "item_edital": "8.2.6"
+    },
+    {
+      "teto": 35,
+      "tipo": "VINCULOS",
+      "codigo": "EXPERIENCIA",
+      "titulo": "Experiência na área ou no SUS",
+      "efeitos": {},
+      "motivos": [
+        {
+          "texto": "Experiência anterior à data de diplomação não é computada.",
+          "codigo": "ANTES_DO_DIPLOMA",
+          "item_edital": "8.2.9"
+        },
+        {
+          "texto": "Estágio curricular, monitoria, tutoria, docência, bolsa ou voluntariado não comprovam experiência profissional.",
+          "codigo": "ESTAGIO_OU_SIMILAR",
+          "item_edital": "8.2.5"
+        }
+      ],
+      "parcial": "EXPERIENCIA",
+      "perguntas": [],
+      "pontuacao": "POR_PERIODO",
+      "por_nivel": {
+        "medio": {
+          "teto": 40,
+          "pontos_por_periodo": 4
+        },
+        "tecnico": {
+          "teto": 40,
+          "pontos_por_periodo": 4
+        }
+      },
+      "categorias": [
+        {
+          "codigo": "AREA_OU_SUS",
+          "pontua": true,
+          "rotulo": "Na área ou no SUS",
+          "desempate": null
+        }
+      ],
+      "data_limite": null,
+      "item_edital": "8.2.6",
+      "item_minimo": "1.1.1 c",
+      "dias_por_mes": 30,
+      "max_vinculos": 20,
+      "minimo_meses": 6,
+      "efeito_minimo": "ELIMINA",
+      "periodo_meses": 6,
+      "pontos_por_mes": 0,
+      "desconta_minimo": true,
+      "estagio_indigena": {
+        "ativo": false,
+        "dias_por_mes": 22,
+        "horas_por_dia": 8,
+        "so_sem_experiencia": true
+      },
+      "unir_sobreposicao": true,
+      "pontos_por_periodo": 5,
+      "minimo_conta_estagio": false
+    }
+  ],
+  "modelo": "PROJ26-CURRICULAR",
+  "schema": 1,
+  "parecer": {
+    "APTO": "{edital}\nCandidato(a) HABILITADO(A) na {titulo_etapa} com a pontuação total de {nota} pontos, distribuídos da seguinte forma:\n\n{distribuicao}",
+    "INAPTO_NOTA": "{edital}\nCandidato(a) NÃO HABILITADO(A) por não atingir a nota mínima de {corte} pontos (item {item_corte}). Nota obtida: {nota} pontos, distribuídos da seguinte forma:\n\n{distribuicao}",
+    "observacoes": "\n\nObservações da análise:\n{observacoes}",
+    "INAPTO_REQUISITO": "{edital}\nCandidato(a) INABILITADO(A) na {titulo_etapa}, pelo(s) seguinte(s) motivo(s):\n\n{motivos}"
+  },
+  "revisao": {
+    "todas": false,
+    "sinais": [],
+    "duplo_cego": false,
+    "inaptos_nota": false,
+    "entrou_pela_linha": false,
+    "inaptos_requisito": true,
+    "amostra_percentual": 10,
+    "divergencia_pontos": null,
+    "minimo_por_analista": 0
+  },
+  "provisoria": {
+    "desempate": ["IDOSO", "EXPERIENCIA_DECLARADA", "MAIOR_IDADE"],
+    "nota_declarada": [],
+    "pergunta_experiencia": "Experiência Profissional",
+    "eliminacao_automatica": [
+      {
+        "codigo": "CANCELADO",
+        "coluna": "SITUAÇÃO",
+        "motivo": "Cancelou a inscrição",
+        "quando": ["CANCELADO"]
+      },
+      {
+        "codigo": "QUESTIONARIO",
+        "exceto": ["FINALIZADO"],
+        "motivo": "Não finalizou o questionário",
+        "coluna_prefixo": "SITUAÇÃO - "
+      },
+      {
+        "codigo": "REPROVADO_EMPREGARE",
+        "coluna": "REPROVADO",
+        "motivo": "Reprovado na Empregare",
+        "quando": ["SIM"]
+      }
+    ],
+    "divergencia_tolerancia": 0
+  },
+  "distribuicao": {
+    "modo": "PEGAR_PROXIMO",
+    "novos": "MENOS_PENDENTES",
+    "criterio": "PARTES_IGUAIS",
+    "dias_parada": 3,
+    "limite_por_analista": null
+  },
+  "titulo_etapa": "Avaliação Documental e de Títulos",
+  "casas_parecer": 1,
+  "edital_rotulo": "",
+  "observacoes_prontas": [
+    {
+      "texto": "O candidato(a) não anexou o documento da alteração de nome; títulos e experiências em outro nome foram desconsiderados (subitem 8.2.10.7).",
+      "codigo": "ALTERACAO_DE_NOME",
+      "rotulo": "Alteração de nome sem documento",
+      "item_edital": "8.2.10.7"
+    },
+    {
+      "texto": "Nota de experiência profissional diminuída em decorrência do tempo de serviço comprovado: só contam blocos completos de 6 meses além do mínimo exigido (subitens 8.2.2 a 8.2.4).",
+      "codigo": "EXPERIENCIA_DIMINUIDA",
+      "rotulo": "Nota de experiência diminuída",
+      "item_edital": "8.2.3"
+    },
+    {
+      "texto": "Nota de cursos de aperfeiçoamento diminuída: certificados sem relação direta com a área da vaga, abaixo de 40h ou de eventos não foram contabilizados.",
+      "codigo": "CURSOS_DIMINUIDA",
+      "rotulo": "Nota de cursos diminuída",
+      "item_edital": "6.4"
+    }
+  ]
+}
