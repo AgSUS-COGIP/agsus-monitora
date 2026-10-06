@@ -10,7 +10,7 @@ import { LEVELS, RESOURCES } from "./permissoes-recursos.js";
 /*
   Comemoração de quem acabou de ganhar (ou recuperar) acesso, com a lista do
   que a pessoa pode usar agora. Sem DOM; quem mostra é
-  src/modules/comemoracao-do-acesso.js, com o confete e o aviso comuns a todas
+  src/modules/comemoracao-do-acesso.js, com os fogos e o aviso comuns a todas
   as comemorações (src/modules/comemoracao.js, regra em src/lib/comemoracao.js).
   As marcas do fim do arquivo também são gravadas pela tela de pedido de
   acesso (src/app/entrada/pedido-de-acesso.js).

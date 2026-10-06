@@ -315,7 +315,7 @@ describe("avaliar um marco na tela", () => {
     requestAnimationFrame: vi.fn(),
   };
 
-  it("primeira vez em silêncio; na transição, o aviso (sem confete com menos movimento), uma vez", () => {
+  it("primeira vez em silêncio; na transição, o aviso (sem fogos com menos movimento), uma vez", () => {
     const armazenamento = armazenamentoFalso();
     const decidir = (anterior) =>
       anterior > 0 ? { texto: "Fila zerada!", itens: [] } : null;
@@ -334,7 +334,7 @@ describe("avaliar um marco na tela", () => {
     expect(document.querySelector(".comemoracao").textContent).toContain(
       "Fila zerada!",
     );
-    expect(document.querySelector(".comemoracao__confete")).toBeNull();
+    expect(document.querySelector(".comemoracao__fogos")).toBeNull();
     expect(janelaSemMovimento.requestAnimationFrame).not.toHaveBeenCalled();
     // Recarregou: o estado já é 0, nada de novo.
     document.body.innerHTML = "";
