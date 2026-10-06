@@ -28,7 +28,29 @@ continua sendo a leitura. Desenho e fases: `docs/analises-no-monitora/`; histór
 - listas oficiais PROVISORIA e LOTE (cada reposição, se a regra publica): registradas no banco
   (`registrar_lista_pre_classificacao`) e exportadas pelo gerador da Classificação.
 
-As próximas fases trazem a fila (F3) e a ficha (F4).
+## Fase F3
+
+- **Fila**: abas de etapa com contadores (Inscritos, No lote, Pendentes, Em análise, Em revisão,
+  Concluídas, Eliminados), clicáveis como filtro; filtros (vaga, responsável, modalidade, código ou
+  nome — Enter com o código abre a ficha) e **filtros salvos** por pessoa
+  (`TB_FILTRO_FILA_ANALISE`; o último filtro também fica no navegador, só por conveniência);
+- **Pegar próximo** e **Minhas fichas** para o analista;
+- **ações em lote** da coordenação, com prévia, confirmação e motivo: distribuir (entre a equipe,
+  para uma pessoa ou de volta à fila), liberar reservas, mandar para revisão; "Distribuir as
+  livres" e "Abrir fichas do lote";
+- a **ficha aberta** (gaveta) com o cabeçalho (candidato pelo código e nome, vaga, posição, ART,
+  situação, responsável, reserva) e a **reserva** de 15 minutos, renovada a cada 5 minutos e
+  liberada ao fechar; "Em uso por … desde HH:MM" só para leitura; a coordenação libera reserva
+  presa com motivo. O conteúdo da análise é da F4;
+- o seletor de editais mostra só os vigentes (`src/lib/avaliacao-documental/editais.js`), com
+  "Mostrar todos os editais da área";
+- na aba Regra: o lote "Todos com a nota mínima" (item 8.2.6 do 93/2026) e os desempates da
+  Provisória (60 anos ou mais, experiência declarada com a pergunta, maior idade, candidatura).
+
+A convocação para a Análise Comportamental (93/2026, item 8.2.10.11: até 5× as vagas imediatas e
+até a 10ª posição do cadastro reserva) é regra da lista CONVOCACAO da Classificação, não do lote.
+
+A próxima fase traz o conteúdo da ficha (F4).
 
 ## Arquivos
 
@@ -40,6 +62,9 @@ blocos.jsx                os blocos da ficha na regra
 previa.jsx                "Testar com um candidato fictício"
 equipe.jsx                aba Equipe
 pre-classificacao.jsx     aba Pré-classificação (contadores, vagas, listas oficiais)
+fila.jsx                  aba Fila (etapas, filtros, ações em lote, ficha aberta)
+estado-da-fila.js         store da aba: obter_fila_avaliacao, Pegar próximo, reserva
+                          (renovação e liberação), distribuição, revisão, filtros salvos
 estado-da-pre-classificacao.js  store da aba: obter_pre_classificacao, Recalcular,
                           registrar/publicar as listas, Copiar para o SEI e DOCX
 campos.jsx                peças de formulário da regra
@@ -63,7 +88,12 @@ avaliacao-documental.css  só tokens
 - Quem coordena cada edital, o banco decide (`FC_PAPEL_AVALIACAO`); a tela só esconde os
   controles de quem não pode (`pode_coordenar`).
 - Explicações vão para `docs/aya/regras-da-avaliacao-documental.md`, não para a tela.
-- Testes: `tests/modulos/avaliacao-documental.test.js`,
+- A distribuição das fichas é a mesma conta em `src/lib/avaliacao-documental/distribuicao.js` (a
+  prévia) e em `python/monitora/avaliacao_documental/distribuicao.py` (o job, para as fichas que
+  entram depois), conferida por `tests/fixtures/avaliacao-documental/casos-de-distribuicao.json`.
+  O banco valida e grava (`supabase/migrations/20261006120000_fichas_fila_e_reserva.sql`).
+- Testes: `tests/modulos/avaliacao-documental.test.js`, `tests/modulos/avaliacao-documental-fila.test.js`,
+  `tests/fichas-fila-reserva-migration.test.js`, `tests/python/test_distribuicao.py`,
   `tests/modulos/avaliacao-documental-pre-classificacao.test.js`,
   `tests/lib/avaliacao-documental-*.test.js`, `tests/avaliacao-documental-migration.test.js`,
   `tests/pre-classificacao-migration.test.js`, `tests/python/test_pre_classificacao.py` e
