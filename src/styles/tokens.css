@@ -195,6 +195,10 @@
   --content-max-width: 90rem; /* 1440px */
   --form-max-width: 40rem; /* 640px  */
   --prose-max-width: 45rem; /* 720px  */
+  /* Quanto o menu inferior do celular ocupa do pé da tela (altura, margem e
+     safe-area). 0 sem o menu; src/styles/mobile-bottom-navigation.css o
+     define quando ele aparece. Barra fixa ou presa ao pé soma este recuo. */
+  --recuo-da-navegacao-inferior: 0px;
 
   /* ---------- Raio ---------- */
   --radius-sm: 0.25rem; /* 4px  */

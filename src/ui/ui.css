@@ -737,7 +737,8 @@ th[aria-sort="descending"] .ui-ordenar i {
 */
 .ui-barra-de-salvar {
   position: sticky;
-  bottom: 0;
+  /* No celular, acima do menu inferior (o recuo é 0 sem ele). */
+  bottom: var(--recuo-da-navegacao-inferior, 0px);
   z-index: var(--z-sticky, 100);
   display: flex;
   flex-wrap: wrap;
