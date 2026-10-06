@@ -218,3 +218,23 @@
   cursor: pointer;
   color: var(--text-secondary);
 }
+
+/* Aba Fila (fase F3). */
+.avd-fila,
+.avd-gaveta-corpo {
+  display: grid;
+  gap: var(--space-4);
+}
+.avd-gaveta-corpo {
+  padding: var(--space-4);
+}
+.avd-fila-barra {
+  display: grid;
+  gap: var(--space-3);
+}
+.avd-fila-acoes {
+  justify-content: space-between;
+}
+.avd-fila .avd-tabela td {
+  vertical-align: middle;
+}
