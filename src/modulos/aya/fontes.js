@@ -41,6 +41,23 @@ export function criarFontesDaAya({
 } = {}) {
   const guardado = new Map();
   const cliente = () => supabase || getSupabaseClient();
+  /*
+    O guardado foi lido com a permissão de quem estava na sessão: trocar de
+    conta na mesma aba esquece tudo, inclusive a leitura que ainda está a
+    caminho (a geração muda), como o módulo Editais faz no reiniciarSessao.
+  */
+  let usuario;
+  let geracao = 0;
+  function esquecer() {
+    guardado.clear();
+    geracao += 1;
+  }
+  cliente()?.auth?.onAuthStateChange?.((_evento, sessao) => {
+    const atual = sessao?.user?.id || null;
+    if (atual === usuario) return;
+    if (usuario !== undefined) esquecer();
+    usuario = atual;
+  });
 
   async function chamar(nome, argumentos) {
     const { data, error } = await cliente().rpc(nome, argumentos);
@@ -115,10 +132,11 @@ export function criarFontesDaAya({
     const chave = `${fonte}|${area}|${opcoes.cargaDe || ""}`;
     const antes = guardado.get(chave);
     if (antes && agora() - antes.em < VALIDADE_MS) return antes.dados;
+    const daGeracao = geracao;
     const dados = await ler({ ...opcoes, area });
-    guardado.set(chave, { em: agora(), dados });
+    if (daGeracao === geracao) guardado.set(chave, { em: agora(), dados });
     return dados;
   }
 
-  return { buscar, esquecer: () => guardado.clear() };
+  return { buscar, esquecer };
 }
