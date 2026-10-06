@@ -20,7 +20,12 @@
     desempate da regra (provisoria.desempate: IDOSO, EXPERIENCIA_DECLARADA —
     a faixa respondida em provisoria.pergunta_experiencia, em meses —,
     MAIOR_IDADE ou MAIS_VELHO, CANDIDATURA) e o código do candidato;
-  - a nota declarada só confere a ART: divergência além da tolerância é aviso;
+  - a nota declarada só confere a ART: divergência além da tolerância é aviso,
+    e só conta quando a declarada do candidato está completa (todo item
+    resolvido; ver nota-declarada.js). O item com pontos por nível usa o nível
+    da vaga (vaga.nivel, que o job tira do nome do cargo e da regra de
+    classificação: nivelDaVaga); sem nível, não soma e vira o aviso
+    SEM_NIVEL:NOTA_<parcial>;
   - as perguntas da regra são achadas pelo começo do enunciado (ou do nome da
     coluna; ver nota-declarada.js): a que casa com mais de uma coluna não vale
     e vira o aviso PERGUNTA_AMBIGUA:<de onde>;
@@ -50,6 +55,8 @@ import {
 
 export const PREFIXO_DA_ART = "NOTA - ";
 export const PREFIXO_DO_AVISO_DE_PERGUNTA_AMBIGUA = "PERGUNTA_AMBIGUA:";
+export const PREFIXO_DO_AVISO_DE_SEM_NIVEL = "SEM_NIVEL:";
+const NIVEIS_DA_VAGA = new Set(["superior", "tecnico", "medio", "fundamental"]);
 export const SAIU_DA_EMPREGARE = Object.freeze({
   codigo: "SAIU_DA_EMPREGARE",
   motivo: "Saiu do arquivo da Empregare",
@@ -347,7 +354,8 @@ const NO_LOTE = new Set(["NO_LOTE", "ANALISADO"]);
 /**
  * Pré-classifica os inscritos de uma vaga.
  *   regra        a regra do edital, já normalizada (normalizarRegraAnalise)
- *   vaga         { codigo, vagas_imediatas, cadastro_reserva, modalidades }
+ *   vaga         { codigo, vagas_imediatas, cadastro_reserva, modalidades, nivel }
+ *                (nivel: o da vaga, para a nota declarada por nível; null = desconhecido)
  *   candidatos   [{ id, codigo, ativo, colunas, nascimento, candidatura }]
  *   anterior     { [id]: { situacao, lote, lista_lote, entrada, motivo_entrada, posicao } }
  *   ultimo_lote  o maior número de lote já usado na vaga
@@ -375,6 +383,7 @@ export function preClassificarVaga({
   const perguntaDaExperiencia = desempate.includes("EXPERIENCIA_DECLARADA")
     ? provisoria.pergunta_experiencia
     : null;
+  const nivel = NIVEIS_DA_VAGA.has(vaga?.nivel) ? vaga.nivel : null;
 
   const linhas = [];
   for (const c of lista(candidatos)) {
@@ -399,8 +408,13 @@ export function preClassificarVaga({
       avisos.add(aviso);
     const art = artDasColunas(colunas);
     const declarada = temDeclarada
-      ? calcularNotaDeclarada(regra, colunas)
+      ? calcularNotaDeclarada(regra, colunas, nivel)
       : null;
+    for (const item of declarada?.itens ?? [])
+      if (item.nivel_desconhecido)
+        avisos.add(
+          `${PREFIXO_DO_AVISO_DE_SEM_NIVEL}NOTA_${item.parcial ?? ""}`,
+        );
     const nota = art ?? declarada?.total ?? null;
     const colunaDaExperiencia = perguntaDaExperiencia
       ? colunaDaPergunta(colunas, perguntaDaExperiencia)
@@ -422,7 +436,8 @@ export function preClassificarVaga({
       declarada: declarada ? declarada.total : null,
       declarada_parciais: declarada ? declarada.parciais : null,
       sem_mapa: declarada ? declarada.sem_mapa : 0,
-      divergente: declarada
+      // Só a declarada completa confere a ART (a incompleta não diverge).
+      divergente: declarada?.completa
         ? divergeDaArt(art, declarada.total, tolerancia)
         : false,
       modalidade: modalidadeDoCandidato(regra, colunas),

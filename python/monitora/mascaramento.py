@@ -5,8 +5,9 @@ O repositório do MONITORA é público e os logs do GitHub Actions também: os
 jobs só imprimem contagens, códigos (vaga, edital, ids) e números de edital.
 Toda mensagem passa por `mascarar` antes de sair (inclusive as de erro do
 Selenium e do Supabase, que podem trazer trecho de página ou de resposta):
-e-mails, CPFs, telefones, tokens JWT e os valores das variáveis secretas viram
-marcadores. O logging de `monitora.registro` aplica isto em todo registro.
+e-mails, CPFs, telefones, tokens JWT, tokens dos links da Empregare
+(tokenCandidato, candidatura, id e o identificador interno da vaga) e os
+valores das variáveis secretas viram marcadores. O logging de `monitora.registro` aplica isto em todo registro.
 
 Testes: tests/python/test_monitora.py e tests/python/test_robo_empregare.py.
 """
@@ -22,6 +23,9 @@ _JWT = re.compile(r"eyJ[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}")
 # Qualquer sequência longa de dígitos (documento, telefone sem máscara…). Códigos de
 # vaga da Empregare têm até 7 dígitos e passam.
 _DIGITOS_LONGOS = re.compile(r"(?<!\d)\d{10,}(?!\d)")
+# Links da área logada da Empregare: tokens do candidato e identificadores internos.
+_TOKEN_EMPREGARE = re.compile(r"(?i)\b(tokenCandidato|candidatura|id)=[^&\s\"'<>]+")
+_VAGA_EMPREGARE = re.compile(r"(/empresa/vagas/candidaturas/)[^/?#\s\"'<>]+")
 _LIMITE = 600
 
 # Variáveis cujo VALOR nunca pode aparecer no log, mesmo que um erro o repita.
@@ -45,6 +49,8 @@ def mascarar(texto, credenciais=None):
     for valor in credenciais if credenciais is not None else _credenciais():
         t = t.replace(valor, "<credencial>")
     t = _JWT.sub("<token>", t)
+    t = _TOKEN_EMPREGARE.sub(r"\1=<token>", t)
+    t = _VAGA_EMPREGARE.sub(r"\1<id>", t)
     t = _EMAIL.sub("<e-mail>", t)
     t = _CPF.sub("<cpf>", t)
     t = _TELEFONE.sub("<telefone>", t)

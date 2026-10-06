@@ -124,14 +124,48 @@ def contagem_por_origem(vagas):
 # ── Carga de uma vaga ───────────────────────────────────────────────────────
 
 
-def gravar_vaga(config, sync, codigo, caminho, chamar=supabase_rpc.chamar):
-    """Lê o Excel e grava. Devolve 'GRAVADA', 'RECUSADA' ou 'FALHA'."""
+def com_links(linhas, enderecos):
+    """
+    Põe em cada linha do Excel o link de detalhes do candidato (campo "link"),
+    casando o código da linha com o data-pessoa-id da lista de candidaturas.
+    Devolve (linhas, quantas com link).
+    """
+    links = (enderecos or {}).get("candidatos") or {}
+    if not links:
+        return linhas, 0
+    saida = [dict(l, link=links[l["codigo"]]) if l.get("codigo") in links else l for l in linhas]
+    return saida, sum(1 for l in saida if l.get("link"))
+
+
+def fechar_vaga(config, corpo, vaga_interno, chamar):
+    """
+    fechar_vaga_empregare com o identificador interno da vaga. Banco sem a
+    migration 20261007160000 (função sem p_vaga_interno: 404 do PostgREST)
+    fecha como antes, sem o identificador.
+    """
+    if not vaga_interno:
+        return chamar(config, "fechar_vaga_empregare", corpo)
+    try:
+        return chamar(config, "fechar_vaga_empregare", dict(corpo, p_vaga_interno=vaga_interno))
+    except supabase_rpc.ErroDoSupabase as erro:
+        if getattr(erro, "status", None) != 404:
+            raise
+        registrar("O banco ainda não guarda o identificador interno da vaga (falta a migration 20261007160000).")
+        return chamar(config, "fechar_vaga_empregare", corpo)
+
+
+def gravar_vaga(config, sync, codigo, caminho, chamar=supabase_rpc.chamar, enderecos=None):
+    """
+    Lê o Excel e grava. Devolve 'GRAVADA', 'RECUSADA' ou 'FALHA'. `enderecos`
+    (de PortalEmpregare.capturar_candidatos) leva o identificador interno da vaga
+    e os links de detalhes dos candidatos; sem ele, grava como antes.
+    """
     try:
         lido = ler_planilha(caminho, codigo)
     except Exception as erro:
         registrar(f"Vaga {codigo}: não consegui ler o Excel ({resumo_do_erro(erro)}).")
         return "FALHA"
-    linhas = lido["linhas"]
+    linhas, ligados = com_links(lido["linhas"], enderecos)
     try:
         for lote in em_lotes(linhas, TAMANHO_DO_LOTE):
             r = chamar(
@@ -141,10 +175,11 @@ def gravar_vaga(config, sync, codigo, caminho, chamar=supabase_rpc.chamar):
             )
             if (r or {}).get("situacao") == "RECUSADA":
                 break
-        fim = chamar(
+        fim = fechar_vaga(
             config,
-            "fechar_vaga_empregare",
             {"p_sync": sync, "p_vaga": codigo, "p_colunas": lido["colunas"], "p_arquivo": os.path.basename(caminho)},
+            (enderecos or {}).get("vaga_interno"),
+            chamar,
         )
     except supabase_rpc.ErroDoSupabase as erro:
         registrar(f"Vaga {codigo}: o banco recusou a gravação ({erro}).")
@@ -159,6 +194,8 @@ def gravar_vaga(config, sync, codigo, caminho, chamar=supabase_rpc.chamar):
         detalhes += f", {lido['sem_chave']} sem código/CPF/e-mail (fora)"
     if lido["repetidas"]:
         detalhes += f", {lido['repetidas']} repetidos"
+    if enderecos:
+        detalhes += f", {ligados} com link da Empregare"
     if situacao == "GRAVADA":
         registrar(
             f"Vaga {codigo}: gravada · {detalhes} · {fim.get('ativos')} ativos · {fim.get('desativadas')} saíram."
@@ -168,8 +205,12 @@ def gravar_vaga(config, sync, codigo, caminho, chamar=supabase_rpc.chamar):
     return situacao
 
 
-def baixar_e_gravar(portal, config, sync, pedidas, pasta, desde, dormir=time.sleep):
-    """Percorre a Central até baixar cada vaga pedida. Devolve (baixadas, falhas)."""
+def baixar_e_gravar(portal, config, sync, pedidas, pasta, desde, dormir=time.sleep, enderecos=None):
+    """
+    Percorre a Central até baixar cada vaga pedida. Devolve (baixadas, falhas).
+    `enderecos`: {código da vaga: links capturados} (capturar_candidatos).
+    """
+    enderecos = enderecos or {}
     pendentes = list(pedidas)
     baixadas = falhas = 0
     for tentativa in range(1, nav.TENTATIVAS_CENTRAL + 1):
@@ -193,7 +234,7 @@ def baixar_e_gravar(portal, config, sync, pedidas, pasta, desde, dormir=time.sle
                 ainda.append(codigo)
                 continue
             baixadas += 1
-            if gravar_vaga(config, sync, codigo, caminho) == "FALHA":
+            if gravar_vaga(config, sync, codigo, caminho, enderecos=enderecos.get(codigo)) == "FALHA":
                 falhas += 1
         pendentes = ainda
         if pendentes and tentativa < nav.TENTATIVAS_CENTRAL:
@@ -278,16 +319,19 @@ def principal(args):
                 portal.abrir_vagas_anunciadas()
                 desde = datetime.now(FUSO).replace(tzinfo=None)
                 pedidas = []
+                enderecos = {}
                 for v in vagas:
                     registrar(f"Vaga {v['vaga']} (edital {v.get('edital') or '—'}): pedindo a exportação.")
                     if portal.exportar_vaga(v["vaga"]):
                         pedidas.append(v["vaga"])
+                        # Enquanto a Empregare gera o arquivo: os links da vaga e dos candidatos.
+                        enderecos[v["vaga"]] = portal.capturar_candidatos(v["vaga"])
                     else:
                         falhas += 1
                 if pedidas:
                     registrar(f"Aguardando a Empregare gerar os arquivos ({nav.ESPERA_APOS_EXPORTAR}s).")
                     time.sleep(nav.ESPERA_APOS_EXPORTAR)
-                    b, f = baixar_e_gravar(portal, config, sync, pedidas, pasta, desde)
+                    b, f = baixar_e_gravar(portal, config, sync, pedidas, pasta, desde, enderecos=enderecos)
                     baixadas += b
                     falhas += f
     except Exception as erro:

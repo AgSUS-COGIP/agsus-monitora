@@ -46,6 +46,7 @@ sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[2] / "python"))
 from monitora import execucao, supabase_rpc  # noqa: E402
 from monitora.avaliacao_documental.distribuicao import atribuicoes_dos_novos  # noqa: E402
 from monitora.avaliacao_documental.pre_classificacao import (  # noqa: E402
+    nivel_da_vaga,
     normalizar_regra,
     pre_classificar_vaga,
 )
@@ -119,13 +120,19 @@ def tipo_do_disparo(valor):
     return ("GITHUB", None) if tipo == "AGENDA" else (tipo, usuario)
 
 
-def dados_da_vaga(vaga):
+def dados_da_vaga(vaga, documental=None):
+    """
+    A vaga para a conta: o quadro e o nível (do nome do cargo e da regra de
+    classificação do edital — a mesma conta da ficha), para a nota declarada
+    que pontua por nível. Sem cargo nem nível padrão, o nível fica None.
+    """
     quadro = vaga.get("quadro") or None
     return {
         "codigo": vaga.get("codigo"),
         "vagas_imediatas": quadro.get("vagas_imediatas") if quadro else None,
         "cadastro_reserva": bool(quadro and quadro.get("cadastro_reserva")),
         "modalidades": quadro.get("modalidades") if quadro else None,
+        "nivel": nivel_da_vaga(vaga.get("cargo"), documental),
     }
 
 
@@ -176,7 +183,7 @@ def processar_edital(chamar, edital, hoje, refazer, gravar):
         lidos = chamar("pre_classificacao_ler_candidatos", {"p_edital": edital["id"], "p_vaga": vaga["codigo"]}) or {}
         r = pre_classificar_vaga(
             regra,
-            dados_da_vaga(vaga),
+            dados_da_vaga(vaga, edital.get("documental")),
             lidos.get("candidatos") or [],
             anterior=lidos.get("anterior") or {},
             ultimo_lote=vaga.get("ultimo_lote") or 0,

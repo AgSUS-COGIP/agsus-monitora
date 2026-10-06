@@ -231,7 +231,23 @@ export function montarVagas({
   }));
 }
 
-/** O nível da vaga (superior, técnico…) pela regra e, sem ela, pela categoria. */
+/**
+ * O nível escrito no nome do cargo: "(Nível Superior)", "Nível Médio"… e,
+ * sem isso, o cargo que COMEÇA com "Técnico" ("Técnico de Enfermagem do
+ * Trabalho"; "Analista Técnico" não é técnico). Null quando o nome não diz.
+ */
+export function nivelNoNomeDoCargo(cargo) {
+  const c = semAcento(cargo).replace(/\s+/g, " ").trim();
+  const escrito = /\bnivel (superior|tecnico|medio|fundamental)\b/.exec(c);
+  if (escrito) return escrito[1];
+  return /^tecnic[oa]\b/.test(c) ? "tecnico" : null;
+}
+
+/**
+ * O nível da vaga (superior, técnico…): pela regra (niveis_por_cargo), pelo
+ * nome do cargo ("(Nível Superior)", "Técnico de…"), pela categoria e, por
+ * fim, o nível padrão da regra.
+ */
 export function nivelDaVaga({ cargo = "", categoria = "" }, regra) {
   const r = normalizarRegra(regra);
   const c = semAcento(cargo);
@@ -240,6 +256,8 @@ export function nivelDaVaga({ cargo = "", categoria = "" }, regra) {
     (n) => n.termo && c.trim().startsWith(semAcento(n.termo).trim()),
   );
   if (achado) return achado.nivel;
+  const doNome = nivelNoNomeDoCargo(cargo);
+  if (doNome) return doNome;
   const cat = semAcento(categoria);
   if (/superior/.test(cat)) return "superior";
   if (/tecnic/.test(cat)) return "tecnico";

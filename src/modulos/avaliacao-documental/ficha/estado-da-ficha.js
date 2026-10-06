@@ -70,16 +70,19 @@ export function criarEstadoDaFicha({
     for (const ouvinte of ouvintes) ouvinte();
   };
 
-  function calcular(
-    lancamento,
-    dados = estado.dados,
-    declarada = estado.declarada,
-  ) {
+  /* A declarada segue o nível do lançamento (pontos por nível da regra). */
+  function calcular(lancamento, dados = estado.dados) {
     const regra = dados.regra.configuracao;
+    const declarada = declaradaDaFicha(
+      regra,
+      dados.respostas,
+      lancamento?.nivel,
+    );
     const avaliacao = calcularFicha(regra, lancamento, dados.documental);
     return {
       lancamento,
       avaliacao,
+      declarada,
       pendencias: pendenciasDaFicha(regra, lancamento, avaliacao, declarada),
     };
   }
@@ -98,7 +101,6 @@ export function criarEstadoDaFicha({
       const dados = await rpc(RPC_OBTER, { p_ficha: fichaId });
       if (meu !== pedido) return false;
       const regra = dados.regra.configuracao;
-      const declarada = declaradaDaFicha(regra, dados.respostas);
       const lancamento = lancamentoInicial({
         regra,
         respostas: dados.respostas,
@@ -110,11 +112,10 @@ export function criarEstadoDaFicha({
       publicar({
         carregando: false,
         dados,
-        declarada,
         versao: dados.ficha.versao,
         podeEditar: Boolean(dados.pode_editar),
         salvoEm: dados.ficha.rascunho_em || null,
-        ...calcular(lancamento, dados, declarada),
+        ...calcular(lancamento, dados),
       });
       return true;
     } catch (erro) {

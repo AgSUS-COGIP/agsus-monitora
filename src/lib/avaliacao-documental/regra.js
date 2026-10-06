@@ -16,7 +16,10 @@
                   desempate[], pergunta_experiencia },
     (pergunta_experiencia e nota_declarada[].pergunta: o começo do enunciado
     — ou uma lista de alternativas, quando o enunciado muda de questionário
-    para questionário; casa com qualquer uma, ver nota-declarada.js)
+    para questionário; casa com qualquer uma, ver nota-declarada.js;
+    nota_declarada[] = { parcial, pergunta, tipo, pontos | pontos_por_nivel
+    { superior: {resposta: pontos}, tecnico, medio, fundamental } (só OPCAO e
+    OPCOES_SOMADAS) | meses + pontos_por_mes (FAIXA_EM_MESES), teto })
     lote: { base, multiplo, fixo, inclui_cr, por_modalidade, inclui_empatados,
             linha_anda, publica_reposicao, por_vaga{ codigo: tamanho } },
     distribuicao: { modo, criterio, limite_por_analista, novos, dias_parada },
@@ -621,15 +624,38 @@ export function validarRegraAnalise(regra) {
         erros.push(`${onde}: tipo OPCAO, OPCOES_SOMADAS ou FAIXA_EM_MESES.`);
         return;
       }
-      const mapa = d.tipo === "FAIXA_EM_MESES" ? d.meses : d.pontos;
-      if (
-        !ehObjeto(mapa) ||
-        Object.keys(mapa).length > 50 ||
-        Object.entries(mapa).some(
+      const mapaOk = (mapa, max) =>
+        ehObjeto(mapa) &&
+        Object.keys(mapa).length <= 50 &&
+        !Object.entries(mapa).some(
           ([resposta, valor]) =>
             !resposta.trim() ||
             resposta.length > LIMITES.texto ||
-            !entre(valor, 0, d.tipo === "FAIXA_EM_MESES" ? 1200 : 100),
+            !entre(valor, 0, max),
+        );
+      const porNivel = d.pontos_por_nivel;
+      if (porNivel !== undefined && porNivel !== null) {
+        // Pontos por nível da vaga: { superior: {resposta: pontos}, tecnico: {…} }.
+        if (d.tipo === "FAIXA_EM_MESES")
+          erros.push(
+            `${onde}: pontos por nível só em OPCAO ou OPCOES_SOMADAS.`,
+          );
+        else if (d.pontos !== undefined && d.pontos !== null)
+          erros.push(`${onde}: pontos ou pontos por nível, não os dois.`);
+        else if (
+          !ehObjeto(porNivel) ||
+          !Object.keys(porNivel).length ||
+          Object.entries(porNivel).some(
+            ([nivel, mapa]) => !NIVEL.has(nivel) || !mapaOk(mapa, 100),
+          )
+        )
+          erros.push(
+            `${onde}: pontos por nível (superior, tecnico, medio, fundamental), de 0 a 100 em cada resposta (até 50 respostas).`,
+          );
+      } else if (
+        !mapaOk(
+          d.tipo === "FAIXA_EM_MESES" ? d.meses : d.pontos,
+          d.tipo === "FAIXA_EM_MESES" ? 1200 : 100,
         )
       )
         erros.push(

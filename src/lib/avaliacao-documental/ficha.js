@@ -6,7 +6,8 @@
     perguntas ligadas ao bloco na regra (o formato real: aspas, múltipla
     escolha, "--", &nbsp;), pela mesma leitura da nota declarada
     (nota-declarada.js);
-  - os pontos declarados por parcial (calcularNotaDeclarada com a regra);
+  - os pontos declarados por parcial (calcularNotaDeclarada com a regra, no
+    nível da vaga do lançamento — itens com pontos_por_nivel);
   - o lançamento inicial (nível da vaga, modalidade, indígena e aldeia pelas
     respostas) e o que falta para concluir (pendências): situação de cada
     bloco, motivo do Não conforme/Não enviado, motivo do item recusado e
@@ -109,13 +110,16 @@ export function sugereNaoEnviado(linhas) {
 
 /**
  * Os pontos declarados por parcial: a nota declarada da regra a partir das
- * respostas. Só entra a parcial cuja pergunta foi achada nas respostas.
+ * respostas, no nível da vaga do lançamento (a experiência do 93/2026 vale
+ * 5 a cada 6 meses no nível superior e 4 no técnico). Só entra a parcial cuja
+ * pergunta foi achada nas respostas e, no item por nível, com pontos para o
+ * nível.
  */
-export function declaradaDaFicha(regra, respostas) {
-  const calc = calcularNotaDeclarada(regra, respostas ?? {});
+export function declaradaDaFicha(regra, respostas, nivel = null) {
+  const calc = calcularNotaDeclarada(regra, respostas ?? {}, nivel);
   const parciais = {};
   for (const item of calc.itens)
-    if (item.coluna)
+    if (item.coluna && !item.nivel_desconhecido)
       parciais[item.parcial] =
         Math.round(((parciais[item.parcial] ?? 0) + item.pontos) * 1e4) / 1e4;
   return {
@@ -367,17 +371,32 @@ export function titulosDoNivel(bloco, nivel) {
 }
 
 /*
-  Vagas Anunciadas da Empregare. As candidaturas da vaga só abrem pelo
-  identificador interno dela (".../candidaturas/<id>|"), que o robô ainda não
-  guarda (F7); a URL com o código numérico dá "Sem permissão" e a busca na URL
-  é descartada pelo redirecionamento da Empregare. Por isso a ficha abre a
-  lista de vagas e copia o código da vaga para colar na busca.
+  Endereços da Empregare para a ficha. O robô captura (F7, migration
+  20261007160000) o identificador interno da vaga e o link de detalhes de
+  cada candidato; obter_ficha_analise devolve os dois em `empregare`.
+  - Com o identificador interno, a vaga abre direto nas candidaturas
+    (".../candidaturas/<id>|"). Sem ele, Vagas Anunciadas: a URL com o código
+    numérico dá "Sem permissão" e a busca na URL é descartada pelo
+    redirecionamento, então a ficha copia o código para colar na busca.
+  - O link do candidato só vale se for a página de detalhes da Empregare
+    (o mesmo formato que o banco aceita); qualquer outro vira null.
 */
-export function enderecoDaVagaNaEmpregare(codigoDaVaga) {
+const EMPREGARE = "https://corporate.empregare.com";
+const ID_INTERNO_DA_VAGA = /^(?![0-9]+\|*$)[A-Za-z0-9_.~=-]{1,96}\|{0,3}$/;
+const LINK_DO_CANDIDATO =
+  /^https:\/\/corporate\.empregare\.com\/empresa\/curriculo\/detalhes\?[A-Za-z0-9_.~=&%|+/:-]+$/;
+
+export function enderecoDaVagaNaEmpregare(codigoDaVaga, idInterno) {
+  const interno = String(idInterno ?? "").trim();
+  if (ID_INTERNO_DA_VAGA.test(interno))
+    return `${EMPREGARE}/empresa/vagas/candidaturas/${interno}`;
   const codigo = String(codigoDaVaga ?? "").trim();
-  return /^\d{1,20}$/.test(codigo)
-    ? "https://corporate.empregare.com/empresa/vagas"
-    : null;
+  return /^\d{1,20}$/.test(codigo) ? `${EMPREGARE}/empresa/vagas` : null;
+}
+
+export function enderecoDoCandidatoNaEmpregare(link) {
+  const texto = String(link ?? "").trim();
+  return texto.length <= 600 && LINK_DO_CANDIDATO.test(texto) ? texto : null;
 }
 
 /** "Salvo às HH:MM" no fuso de Brasília. */

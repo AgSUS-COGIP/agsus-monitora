@@ -121,19 +121,36 @@ def _com_teto(valor, teto):
     return valor if teto is None else min(valor, numero(teto))
 
 
-def calcular_nota_declarada(regra, respostas):
-    """{total, parciais, itens, sem_mapa} — a nota declarada de um candidato."""
+def item_por_nivel(item):
+    """O item da nota declarada tem pontos por nível (pontos_por_nivel)?"""
+    return isinstance((item or {}).get("pontos_por_nivel"), dict)
+
+
+def pontos_do_item(item, nivel):
+    """O mapa resposta → pontos no nível da vaga (None sem nível ou sem mapa para ele); fora disso, pontos."""
+    if not item_por_nivel(item):
+        return item.get("pontos")
+    mapa = item["pontos_por_nivel"].get(nivel) if nivel else None
+    return mapa if isinstance(mapa, dict) else None
+
+
+def calcular_nota_declarada(regra, respostas, nivel=None):
+    """{total, parciais, itens, sem_mapa, completa} — a nota declarada de um candidato no nível da vaga."""
     respostas = respostas or {}
     itens = []
     for item in ((regra or {}).get("provisoria") or {}).get("nota_declarada") or []:
-        coluna = coluna_da_pergunta(respostas, item.get("pergunta"))
+        colunas = colunas_da_pergunta(respostas, item.get("pergunta"))
+        coluna = colunas[0] if len(colunas) == 1 else None
         resposta = "" if coluna is None or respostas.get(coluna) is None else str(respostas[coluna])
+        respondida = bool(coluna and texto_da_resposta(resposta))
+        mapa_do_nivel = pontos_do_item(item, nivel)
+        nivel_desconhecido = respondida and item_por_nivel(item) and mapa_do_nivel is None
         pontos = 0.0
         mapeada = False
-        if coluna and texto_da_resposta(resposta):
+        if respondida and not nivel_desconhecido:
             tipo = item.get("tipo")
             if tipo == "OPCAO":
-                v = _valor_do_mapa(item.get("pontos"), resposta)
+                v = _valor_do_mapa(mapa_do_nivel, resposta)
                 mapeada = v is not None
                 pontos = v or 0.0
             elif tipo == "FAIXA_EM_MESES":
@@ -142,7 +159,7 @@ def calcular_nota_declarada(regra, respostas):
                 pontos = (meses or 0.0) * numero(item.get("pontos_por_mes"))
             elif tipo == "OPCOES_SOMADAS":
                 marcadas = {chave_da_opcao(o) for o in opcoes_da_resposta(resposta)}
-                mapa = item.get("pontos") or {}
+                mapa = mapa_do_nivel or {}
                 casadas = [opcao for opcao in mapa if chave_da_opcao(opcao) in marcadas]
                 mapeada = len(casadas) > 0
                 pontos = sum(numero(mapa[o]) for o in casadas)
@@ -153,17 +170,27 @@ def calcular_nota_declarada(regra, respostas):
                 "coluna": coluna,
                 "resposta": resposta,
                 "mapeada": mapeada,
+                "ambigua": len(colunas) > 1,
+                "nivel_desconhecido": nivel_desconhecido,
                 "pontos": arredondar(_com_teto(pontos, item.get("teto"))),
             }
         )
     parciais = {}
     for item in itens:
-        parciais[item["parcial"]] = arredondar(parciais.get(item["parcial"], 0.0) + item["pontos"])
+        if not item["nivel_desconhecido"]:
+            parciais[item["parcial"]] = arredondar(parciais.get(item["parcial"], 0.0) + item["pontos"])
+
+    def _respondida(i):
+        return bool(i["coluna"] and texto_da_resposta(i["resposta"]))
+
     return {
         "total": arredondar(sum(parciais.values())),
         "parciais": parciais,
         "itens": itens,
-        "sem_mapa": sum(1 for i in itens if i["coluna"] and texto_da_resposta(i["resposta"]) and not i["mapeada"]),
+        "sem_mapa": sum(1 for i in itens if _respondida(i) and not i["nivel_desconhecido"] and not i["mapeada"]),
+        "completa": all(
+            not i["ambigua"] and not i["nivel_desconhecido"] and (i["mapeada"] or not _respondida(i)) for i in itens
+        ),
     }
 
 
