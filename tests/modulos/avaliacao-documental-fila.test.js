@@ -431,6 +431,94 @@ describe("Fila (AM-6)", () => {
   });
 });
 
+describe("listas da fila: colunas por aba, ordem, N de M e CSV", () => {
+  const cabecalhos = () =>
+    [...secao.querySelectorAll("[data-tour='avd-fila-tabela'] thead th")].map(
+      (th) => th.textContent.trim(),
+    );
+
+  it("Eliminados mostra o motivo e a ART, sem posição, responsável nem reserva", async () => {
+    await montar(supabaseFalso());
+    await clicar(
+      secao.querySelector(
+        "[data-tour='avd-fila-etapas'] [data-valor='eliminados']",
+      ),
+    );
+    expect(cabecalhos()).toEqual([
+      "Código",
+      "Nome",
+      "Vaga",
+      "Motivo da eliminação",
+      "ART",
+    ]);
+    const linha = secao.querySelector("[data-candidato='7009']");
+    expect(linha.textContent).toContain("Cancelou");
+    expect(linha.textContent).toContain("20");
+  });
+
+  it("a tabela não fica dentro de um card com padding (cabeçalho fixo no topo da rolagem)", async () => {
+    await montar(supabaseFalso());
+    const rolagem = secao.querySelector(
+      "[data-tour='avd-fila-tabela'] .ui-tabela-rolagem",
+    );
+    expect(rolagem.classList.contains("ui-card")).toBe(false);
+    expect(
+      rolagem.querySelector("thead input[type='checkbox']"),
+    ).not.toBeNull();
+  });
+
+  it("ordena pela coluna, mostra N de M e exporta o CSV da aba na ordem da tela", async () => {
+    const supabase = supabaseFalso();
+    await montar(supabase);
+    const ordenar = (nome) =>
+      [
+        ...secao.querySelectorAll("[data-tour='avd-fila-tabela'] th button"),
+      ].find((b) => b.textContent.trim() === nome);
+    await clicar(ordenar("Código"));
+    await clicar(ordenar("Código"));
+    expect(linhas()).toEqual(["7004", "7003", "7002", "7001"]);
+    expect(
+      secao.querySelector(
+        "[data-tour='avd-fila-tabela'] th[aria-sort='descending']",
+      ).textContent,
+    ).toContain("Código");
+    await digitar(secao.querySelector("[data-tour='avd-fila-busca']"), "7002");
+    expect(
+      secao.querySelector(
+        "[data-tour='avd-fila-tabela'] [data-tabela-contagem]",
+      ).textContent,
+    ).toBe("1 de 4");
+    await digitar(secao.querySelector("[data-tour='avd-fila-busca']"), "");
+    const blobs = [];
+    const original = {
+      criar: URL.createObjectURL,
+      soltar: URL.revokeObjectURL,
+    };
+    URL.createObjectURL = (blob) => {
+      blobs.push(blob);
+      return "blob:falso";
+    };
+    URL.revokeObjectURL = () => {};
+    const clique = vi
+      .spyOn(HTMLAnchorElement.prototype, "click")
+      .mockImplementation(() => {});
+    try {
+      await clicar(secao.querySelector("[data-acao='exportar-csv']"));
+      expect(blobs).toHaveLength(1);
+      const texto = await blobs[0].text();
+      const [cabeca, primeira] = texto.replace(/^\uFEFF/, "").split("\r\n");
+      expect(cabeca).toBe(
+        "Vaga;Posição;Código;Nome;ART;Situação;Responsável;Reserva",
+      );
+      expect(primeira.split(";")[2]).toBe("7004");
+    } finally {
+      clique.mockRestore();
+      URL.createObjectURL = original.criar;
+      URL.revokeObjectURL = original.soltar;
+    }
+  });
+});
+
 describe("estado da fila: reserva", () => {
   it("renova enquanto a ficha está aberta e libera ao fechar", async () => {
     const agendados = [];

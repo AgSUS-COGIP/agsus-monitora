@@ -28,10 +28,13 @@ const ICONE_DA_ORDEM = { asc: "fa-arrow-up", desc: "fa-arrow-down" };
  * @param {object} p
  * @param {string} p.idDoTitulo
  * @param {string} p.titulo
- * @param {{ placeholder: string, rotulo: string, valor?: string, aoMudar?: (busca: string) => void, id?: string }} p.busca
- * @param {Array<{ rotulo: string, largura?: string, numero?: boolean, ordem?: string, aoOrdenar?: () => void }>} p.colunas
+ * @param {{ placeholder: string, rotulo: string, valor?: string, aoMudar?: (busca: string) => void, aoTeclar?: (evento: KeyboardEvent) => void, id?: string, tour?: string }} p.busca
+ *   `aoTeclar`: o onKeyDown do campo (ex.: Enter abre o achado); `tour`: o
+ *   `data-tour` do campo
+ * @param {Array<{ rotulo: string, chave?: string, cabecalho?: import("react").ReactNode, largura?: string, numero?: boolean, ordem?: string, aoOrdenar?: () => void }>} p.colunas
  *   com `aoOrdenar`, o cabeçalho vira botão de ordenar (`ordem`: "asc",
- *   "desc" ou "", liga o `aria-sort`)
+ *   "desc" ou "", liga o `aria-sort`); `cabecalho` troca o texto do th
+ *   (ex.: a caixa "selecionar todos"), e `chave` vale quando o rótulo se repete
  * @param {(quantos: number | null) => import("react").ReactNode} p.informacao
  *   a contagem do recorte: recebe quantos estão na tabela, ou `null`
  *   enquanto carrega
@@ -43,7 +46,15 @@ const ICONE_DA_ORDEM = { asc: "fa-arrow-up", desc: "fa-arrow-down" };
 export function TabelaInfinita({
   idDoTitulo,
   titulo,
-  busca: { placeholder, rotulo, valor, aoMudar, id: idDaBusca },
+  busca: {
+    placeholder,
+    rotulo,
+    valor,
+    aoMudar,
+    aoTeclar,
+    id: idDaBusca,
+    tour: tourDaBusca,
+  },
   carregado,
   itens,
   filtrarPelaBusca,
@@ -111,7 +122,9 @@ export function TabelaInfinita({
             disabled={!carregado}
             placeholder={placeholder}
             aria-label={rotulo}
+            data-tour={tourDaBusca}
             onChange={(evento) => setBusca(evento.target.value)}
+            onKeyDown={aoTeclar}
           />
           {ferramentas}
         </div>
@@ -131,9 +144,17 @@ export function TabelaInfinita({
           <thead>
             <tr>
               {colunas.map(
-                ({ rotulo: nome, largura, numero, ordem, aoOrdenar }) => (
+                ({
+                  rotulo: nome,
+                  chave,
+                  cabecalho,
+                  largura,
+                  numero,
+                  ordem,
+                  aoOrdenar,
+                }) => (
                   <th
-                    key={nome}
+                    key={chave ?? nome}
                     scope="col"
                     style={{ width: largura }}
                     className={numero ? "num" : undefined}
@@ -155,7 +176,7 @@ export function TabelaInfinita({
                         />
                       </button>
                     ) : (
-                      nome
+                      (cabecalho ?? nome)
                     )}
                   </th>
                 ),

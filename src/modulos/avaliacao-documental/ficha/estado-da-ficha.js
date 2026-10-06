@@ -19,6 +19,7 @@
 */
 import {
   calcularFicha,
+  conferenciaDaFicha,
   declaradaDaFicha,
   lancamentoInicial,
   pendenciasDaFicha,
@@ -43,6 +44,7 @@ const INICIAL = Object.freeze({
   avaliacao: null,
   declarada: null,
   pendencias: [],
+  conferencia: null,
   versao: 0,
   podeEditar: false,
   salvando: false,
@@ -77,10 +79,17 @@ export function criarEstadoDaFicha({
   ) {
     const regra = dados.regra.configuracao;
     const avaliacao = calcularFicha(regra, lancamento, dados.documental);
+    const pendencias = pendenciasDaFicha(
+      regra,
+      lancamento,
+      avaliacao,
+      declarada,
+    );
     return {
       lancamento,
       avaliacao,
-      pendencias: pendenciasDaFicha(regra, lancamento, avaliacao, declarada),
+      pendencias,
+      conferencia: conferenciaDaFicha(regra, lancamento, avaliacao, pendencias),
     };
   }
 

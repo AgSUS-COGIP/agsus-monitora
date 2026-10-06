@@ -2,10 +2,11 @@
   A fila da avaliação documental (aba Fila, fase F3), sem DOM e sem estado:
   as etapas com contadores, os filtros (e o formato dos filtros salvos), a
   reserva ("Em uso por … desde HH:MM"), o que cada ação em lote pode pegar da
-  seleção e o plano da distribuição (a conta é de distribuicao.js, a mesma do
-  job Python). Os dados vêm de obter_fila_avaliacao
-  (supabase/migrations/20261006120000_fichas_fila_e_reserva.sql).
+  seleção, o plano da distribuição (a conta é de distribuicao.js, a mesma do
+  job Python) e, por aba, as colunas, a ordem por coluna e o CSV. Os dados
+  vêm de obter_fila_avaliacao (supabase/migrations/20261006120000_fichas_fila_e_reserva.sql).
 */
+import { sanitizeCsvCell } from "../csv-security.js";
 import { distribuirFichas } from "./distribuicao.js";
 
 /** As abas de etapa, na ordem do funil; cada uma é também um filtro. */
@@ -87,7 +88,7 @@ export function normalizarFiltro(filtro) {
 const semAcento = (texto) =>
   String(texto ?? "")
     .normalize("NFD")
-    .replace(/[̀-ͯ]/g, "")
+    .replace(/[\u0300-\u036F]/g, "")
     .toLowerCase()
     .trim();
 
@@ -245,4 +246,234 @@ export function planoDeDistribuicao(
     resumo,
     redistribui,
   };
+}
+
+/* ── Colunas de cada aba, ordenação e CSV ─────────────────────────────── */
+
+const ROTULO_DA_PRE = {
+  ELIMINADO: "Eliminado",
+  RANQUEADO: "Fora do lote",
+  NO_LOTE: "No lote",
+  ANALISADO: "No lote",
+};
+const RESULTADO_DA_FICHA = {
+  APTO: "Apto",
+  INAPTO_REQUISITO: "Inapto (requisito)",
+  INAPTO_NOTA: "Inapto (nota mínima)",
+};
+
+const numeroBR = (valor) => {
+  if (valor === null || valor === undefined || valor === "") return "";
+  const n = Number(valor);
+  return Number.isFinite(n)
+    ? n.toLocaleString("pt-BR", { maximumFractionDigits: 2 })
+    : "";
+};
+const dataHoraBR = (iso) => {
+  const d = new Date(iso ?? "");
+  return iso && !Number.isNaN(d.getTime())
+    ? d.toLocaleString("pt-BR", {
+        timeZone: "America/Sao_Paulo",
+        dateStyle: "short",
+        timeStyle: "short",
+      })
+    : "";
+};
+
+/** A situação da linha em texto ("Pendente", "Apto", "Fora do lote · sem ficha"). */
+export function textoDaSituacaoNaFila(c) {
+  if (c?.ficha?.situacao === "CONCLUIDA" && c.ficha.resultado)
+    return RESULTADO_DA_FICHA[c.ficha.resultado] || c.ficha.resultado;
+  if (c?.ficha)
+    return SITUACOES_DA_FICHA[c.ficha.situacao]?.rotulo || c.ficha.situacao;
+  const rotulo = ROTULO_DA_PRE[c?.situacao_pre] || c?.situacao_pre || "";
+  return c?.situacao_pre === "NO_LOTE" ? `${rotulo} · sem ficha` : rotulo;
+}
+
+/*
+  As colunas: chave, rótulo, o valor para ordenar e o texto (tela e CSV).
+  `numero`: alinha à direita e ordena como número.
+*/
+export const COLUNAS_DA_FILA = Object.freeze({
+  vaga: { rotulo: "Vaga", valor: (c) => String(c.vaga ?? "") },
+  posicao: {
+    rotulo: "Posição",
+    numero: true,
+    valor: (c) => (Number.isFinite(c.posicao) ? c.posicao : null),
+    texto: (c) => (Number.isFinite(c.posicao) ? `${c.posicao}º` : ""),
+  },
+  codigo: { rotulo: "Código", valor: (c) => String(c.codigo ?? "") },
+  nome: { rotulo: "Nome", valor: (c) => String(c.nome ?? "") },
+  art: {
+    rotulo: "ART",
+    numero: true,
+    valor: (c) =>
+      c.art === null || c.art === undefined || c.art === ""
+        ? null
+        : Number(c.art),
+    texto: (c) => numeroBR(c.art),
+  },
+  nota: {
+    rotulo: "Nota",
+    numero: true,
+    valor: (c) =>
+      c.ficha?.nota_final === null || c.ficha?.nota_final === undefined
+        ? null
+        : Number(c.ficha.nota_final),
+    texto: (c) => numeroBR(c.ficha?.nota_final),
+  },
+  situacao: { rotulo: "Situação", valor: textoDaSituacaoNaFila },
+  resultado: { rotulo: "Resultado", valor: textoDaSituacaoNaFila },
+  motivo: {
+    rotulo: "Motivo da eliminação",
+    valor: (c) => String(c.motivo_eliminacao ?? "").trim(),
+  },
+  responsavel: {
+    rotulo: "Responsável",
+    valor: (c) => String(c.ficha?.responsavel_nome ?? ""),
+  },
+  reserva: {
+    rotulo: "Reserva",
+    valor: (c) => String(c.ficha?.reserva?.expira ?? ""),
+  },
+  concluida_em: {
+    rotulo: "Concluída em",
+    valor: (c) => String(c.ficha?.concluida_em ?? ""),
+    texto: (c) => dataHoraBR(c.ficha?.concluida_em),
+  },
+});
+
+const COLUNAS_DA_ETAPA = Object.freeze({
+  inscritos: [
+    "vaga",
+    "posicao",
+    "codigo",
+    "nome",
+    "art",
+    "situacao",
+    "responsavel",
+    "reserva",
+  ],
+  lote: [
+    "vaga",
+    "posicao",
+    "codigo",
+    "nome",
+    "art",
+    "situacao",
+    "responsavel",
+    "reserva",
+  ],
+  pendentes: [
+    "vaga",
+    "posicao",
+    "codigo",
+    "nome",
+    "art",
+    "responsavel",
+    "reserva",
+  ],
+  em_analise: [
+    "vaga",
+    "posicao",
+    "codigo",
+    "nome",
+    "art",
+    "responsavel",
+    "reserva",
+  ],
+  revisao: [
+    "vaga",
+    "posicao",
+    "codigo",
+    "nome",
+    "art",
+    "responsavel",
+    "reserva",
+  ],
+  concluidas: [
+    "vaga",
+    "codigo",
+    "nome",
+    "nota",
+    "resultado",
+    "responsavel",
+    "concluida_em",
+  ],
+  eliminados: ["codigo", "nome", "vaga", "motivo", "art"],
+});
+
+/** As chaves das colunas da aba (Eliminados: código, nome, vaga, motivo e ART; …). */
+export function colunasDaEtapa(etapa) {
+  return COLUNAS_DA_ETAPA[etapa] || COLUNAS_DA_ETAPA.inscritos;
+}
+
+/** O texto da célula (o mesmo da tela e do CSV); "" quando não há valor. */
+export function textoDaColuna(c, chave, eu = "", agora = new Date()) {
+  if (chave === "reserva") return textoDaReserva(c?.ficha?.reserva, eu, agora);
+  const coluna = COLUNAS_DA_FILA[chave];
+  if (!coluna) return "";
+  return String((coluna.texto ?? coluna.valor)(c) ?? "");
+}
+
+const comparador = new Intl.Collator("pt-BR", {
+  numeric: true,
+  sensitivity: "base",
+});
+
+/**
+ * A lista na ordem da coluna: ordem = { chave, sentido: "asc" | "desc" };
+ * sem chave, a ordem do banco (vaga, posição). Vazio vai sempre para o fim.
+ */
+export function ordenarFila(linhas, ordem) {
+  const lista = Array.isArray(linhas) ? linhas : [];
+  const coluna = COLUNAS_DA_FILA[ordem?.chave];
+  if (!coluna || !["asc", "desc"].includes(ordem?.sentido)) return lista;
+  const sinal = ordem.sentido === "desc" ? -1 : 1;
+  const vazio = (v) => v === null || v === undefined || v === "";
+  return lista
+    .map((c, i) => [c, coluna.valor(c), i])
+    .sort(([, a, i], [, b, j]) => {
+      if (vazio(a) || vazio(b))
+        return vazio(a) === vazio(b) ? i - j : vazio(a) ? 1 : -1;
+      const r = coluna.numero ? a - b : comparador.compare(a, b);
+      return r ? r * sinal : i - j;
+    })
+    .map(([c]) => c);
+}
+
+/** O próximo sentido ao clicar no cabeçalho: asc → desc → sem ordem. */
+export function proximaOrdem(ordem, chave) {
+  if (ordem?.chave !== chave) return { chave, sentido: "asc" };
+  if (ordem.sentido === "asc") return { chave, sentido: "desc" };
+  return { chave: "", sentido: "" };
+}
+
+/** CSV (";", BOM, CRLF) da aba, nas colunas da aba e com cada célula protegida contra fórmula. */
+export function csvDaFila(linhas, etapa, eu = "", agora = new Date()) {
+  const chaves = colunasDaEtapa(etapa);
+  const celula = (valor) => {
+    const seguro = sanitizeCsvCell(valor ?? "");
+    return /[";\n\r]/.test(seguro) ? `"${seguro.replace(/"/g, '""')}"` : seguro;
+  };
+  const conteudo = [
+    chaves.map((k) => celula(COLUNAS_DA_FILA[k].rotulo)).join(";"),
+    ...(Array.isArray(linhas) ? linhas : []).map((c) =>
+      chaves.map((k) => celula(textoDaColuna(c, k, eu, agora))).join(";"),
+    ),
+  ];
+  return `\uFEFF${conteudo.join("\r\n")}\r\n`;
+}
+
+/** "fila-93-2026-eliminados-2026-10-06.csv". */
+export function nomeDoCsvDaFila(edital, etapa, agora = new Date()) {
+  const base =
+    String(edital ?? "")
+      .normalize("NFD")
+      .replace(/[\u0300-\u036F]/g, "")
+      .replace(/[^0-9A-Za-z]+/g, "-")
+      .replace(/^-|-$/g, "")
+      .toLowerCase() || "edital";
+  const dois = (n) => String(n).padStart(2, "0");
+  return `fila-${base}-${etapa || "inscritos"}-${agora.getFullYear()}-${dois(agora.getMonth() + 1)}-${dois(agora.getDate())}.csv`;
 }

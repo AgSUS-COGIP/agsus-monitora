@@ -7,34 +7,37 @@ import {
   useSyncExternalStore,
 } from "react";
 import { ordinal } from "../../lib/classificacao/numeros.js";
+import { formatNumberBR } from "../../lib/formatters.js";
 import {
   acoesDaSelecao,
+  COLUNAS_DA_FILA,
+  colunasDaEtapa,
   contadoresDaFila,
   ETAPAS_DA_FILA,
   fichaPeloCodigo,
   filtrarFila,
   filtroEhInicial,
   FILTRO_INICIAL,
+  ordenarFila,
   planoDeDistribuicao,
+  proximaOrdem,
   reservaVigente,
   SITUACOES_DA_FICHA,
+  textoDaColuna,
   textoDaReserva,
+  textoDaSituacaoNaFila,
 } from "../../lib/avaliacao-documental/fila.js";
-import {
-  textoDaNota,
-  textoDoResultado,
-  tomDoResultado,
-} from "../../lib/avaliacao-documental/ficha.js";
+import { tomDoResultado } from "../../lib/avaliacao-documental/ficha.js";
 import { nota } from "../../lib/avaliacao-documental/tela-da-pre-classificacao.js";
 import {
   Abas,
   Aviso,
   Campo,
-  EstadoVazio,
   Gaveta,
   GradeDeKv,
   Kv,
   Selo,
+  TabelaInfinita,
 } from "../../ui/index.js";
 import { ConteudoDaFicha } from "./ficha/ficha.jsx";
 
@@ -47,35 +50,25 @@ import { ConteudoDaFicha } from "./ficha/ficha.jsx";
   docs/aya/regras-da-avaliacao-documental.md.
 */
 
-const ROTULO_DA_PRE = {
-  ELIMINADO: "Eliminado",
-  RANQUEADO: "Fora do lote",
-  NO_LOTE: "No lote",
-  ANALISADO: "No lote",
-};
-
 function SituacaoDaLinha({ c }) {
+  const texto = textoDaSituacaoNaFila(c);
   if (c.ficha?.situacao === "CONCLUIDA" && c.ficha.resultado)
+    return <Selo tom={tomDoResultado(c.ficha.resultado)}>{texto}</Selo>;
+  if (c.ficha)
     return (
-      <Selo tom={tomDoResultado(c.ficha.resultado)}>
-        {textoDoResultado(c.ficha.resultado)}
+      <Selo
+        tom={SITUACOES_DA_FICHA[c.ficha.situacao]?.tom}
+        titulo={c.ficha.motivo_saida || undefined}
+      >
+        {texto}
       </Selo>
     );
-  if (c.ficha) {
-    const s = SITUACOES_DA_FICHA[c.ficha.situacao] || {};
-    return (
-      <Selo tom={s.tom} titulo={c.ficha.motivo_saida || undefined}>
-        {s.rotulo || c.ficha.situacao}
-      </Selo>
-    );
-  }
   return (
     <Selo
       tom={c.situacao_pre === "ELIMINADO" ? "reprovado" : "neutro"}
       titulo={c.motivo_eliminacao || undefined}
     >
-      {ROTULO_DA_PRE[c.situacao_pre] || c.situacao_pre}
-      {c.situacao_pre === "NO_LOTE" ? " · sem ficha" : ""}
+      {texto}
     </Selo>
   );
 }
@@ -410,6 +403,176 @@ function FichaAberta({ fila, aberta, dados, filtroVaga }) {
   );
 }
 
+/* A busca já vem aplicada por filtrarFila (o filtro "busca" é salvo com os outros). */
+const jaFiltrado = (itens) => itens;
+
+/* O conteúdo de cada coluna; o resto é o texto de textoDaColuna ("—" sem valor). */
+function Celula({ c, chave, eu }) {
+  if (chave === "situacao" || chave === "resultado")
+    return <SituacaoDaLinha c={c} />;
+  if (chave === "posicao") return c.posicao ? ordinal(c.posicao) : "—";
+  if (chave === "art") return nota(c.art);
+  return textoDaColuna(c, chave, eu) || "—";
+}
+
+/*
+  A tabela da aba (TabelaInfinita, src/ui/): as colunas que fazem sentido na
+  etapa (Eliminados: motivo e ART; Concluídas: nota, resultado, responsável e
+  data; Pendentes e Em análise: posição, ART, responsável e reserva), ordem
+  por coluna, a busca por código ou nome (Enter com o código abre a ficha),
+  "N de M", carregamento contínuo e "Exportar CSV" da aba, na ordem da tela.
+*/
+function TabelaDaFila({
+  st,
+  fila,
+  dados,
+  linhas,
+  total,
+  semPreClassificacao,
+  coordena,
+  selecao,
+  marcar,
+  busca,
+  aoBuscar,
+  aoTeclarNaBusca,
+}) {
+  const etapa = st.filtro.etapa;
+  const [ordem, setOrdem] = useState({ chave: "", sentido: "" });
+  useEffect(() => setOrdem({ chave: "", sentido: "" }), [etapa]);
+  const ordenadas = useMemo(() => ordenarFila(linhas, ordem), [linhas, ordem]);
+  const chaves = colunasDaEtapa(etapa);
+  const comFicha = linhas.filter((c) => c.ficha);
+  const comCaixa = coordena && comFicha.length > 0;
+  const comAbrir = comFicha.length > 0;
+  const todasMarcadas =
+    comFicha.length > 0 && comFicha.every((c) => selecao.has(c.id));
+  const rotuloDaEtapa =
+    ETAPAS_DA_FILA.find((e) => e.valor === etapa)?.rotulo || "Inscritos";
+
+  const colunas = [
+    ...(comCaixa
+      ? [
+          {
+            chave: "selecionar",
+            rotulo: "Selecionar",
+            largura: "2.75rem",
+            cabecalho: (
+              <input
+                type="checkbox"
+                aria-label="Selecionar as fichas da lista"
+                checked={todasMarcadas}
+                onChange={(ev) => {
+                  for (const c of comFicha) marcar(c.id, ev.target.checked);
+                }}
+              />
+            ),
+          },
+        ]
+      : []),
+    ...chaves.map((chave) => ({
+      chave,
+      rotulo: COLUNAS_DA_FILA[chave].rotulo,
+      numero: COLUNAS_DA_FILA[chave].numero,
+      ordem: ordem.chave === chave ? ordem.sentido : "",
+      aoOrdenar: () => setOrdem((atual) => proximaOrdem(atual, chave)),
+    })),
+    ...(comAbrir
+      ? [
+          {
+            chave: "abrir",
+            rotulo: "Ficha",
+            cabecalho: <span className="sr-only">Ficha</span>,
+          },
+        ]
+      : []),
+  ];
+
+  return (
+    <TabelaInfinita
+      tour="avd-fila-tabela"
+      className="avd-fila-tabela"
+      idDoTitulo="avdFilaTitulo"
+      titulo={rotuloDaEtapa}
+      busca={{
+        placeholder: "Código ou nome",
+        rotulo: "Buscar por código ou nome",
+        valor: busca,
+        aoMudar: aoBuscar,
+        aoTeclar: aoTeclarNaBusca,
+        tour: "avd-fila-busca",
+      }}
+      carregado
+      itens={ordenadas}
+      filtrarPelaBusca={jaFiltrado}
+      colunas={colunas}
+      classeDaTabela="avd-fila-lista"
+      total={total}
+      vazio={
+        semPreClassificacao
+          ? "O edital ainda não tem pré-classificação."
+          : "Nenhum inscrito nesta etapa."
+      }
+      informacao={(quantos) =>
+        quantos === null
+          ? ""
+          : quantos === total
+            ? `${formatNumberBR(total)} ${total === 1 ? "inscrito" : "inscritos"}`
+            : `${formatNumberBR(quantos)} de ${formatNumberBR(total)}`
+      }
+      ferramentas={
+        <button
+          type="button"
+          className="btn secondary small"
+          data-acao="exportar-csv"
+          disabled={!ordenadas.length}
+          onClick={() => fila.exportarCsv(ordenadas, etapa)}
+        >
+          <i className="fa-solid fa-file-csv" aria-hidden="true" /> Exportar CSV
+        </button>
+      }
+      linha={(c) => (
+        <tr key={c.id} data-candidato={c.codigo}>
+          {comCaixa ? (
+            <td>
+              {c.ficha ? (
+                <input
+                  type="checkbox"
+                  aria-label={`Selecionar ${c.codigo}`}
+                  checked={selecao.has(c.id)}
+                  onChange={(ev) => marcar(c.id, ev.target.checked)}
+                />
+              ) : null}
+            </td>
+          ) : null}
+          {chaves.map((chave) => (
+            <td
+              key={chave}
+              className={COLUNAS_DA_FILA[chave].numero ? "num" : undefined}
+              data-coluna={chave}
+            >
+              <Celula c={c} chave={chave} eu={dados.eu} />
+            </td>
+          ))}
+          {comAbrir ? (
+            <td>
+              {c.ficha ? (
+                <button
+                  type="button"
+                  className="btn secondary small"
+                  disabled={st.abrindo}
+                  onClick={() => void fila.abrir(c.ficha.id)}
+                >
+                  Abrir
+                </button>
+              ) : null}
+            </td>
+          ) : null}
+        </tr>
+      )}
+    />
+  );
+}
+
 export function Fila({ e, fila }) {
   const st = useSyncExternalStore(fila.assinar, fila.obter);
   const [selecao, setSelecao] = useState(() => new Set());
@@ -475,11 +638,7 @@ export function Fila({ e, fila }) {
       else nova.delete(id);
       return nova;
     });
-  const comFicha = linhas.filter((c) => c.ficha);
-  const todasMarcadas =
-    comFicha.length > 0 && comFicha.every((c) => selecao.has(c.id));
   const minhas = st.filtro.responsavel === "eu";
-  const concluidas = st.filtro.etapa === "concluidas";
 
   return (
     <div className="avd-fila" data-tour="avd-fila">
@@ -542,22 +701,6 @@ export function Fila({ e, fila }) {
                 </option>
               ))}
             </select>
-          </Campo>
-          <Campo rotulo="Código ou nome">
-            <input
-              type="search"
-              value={busca}
-              data-tour="avd-fila-busca"
-              onChange={(ev) => {
-                setBusca(ev.target.value);
-                fila.mudarFiltro({ busca: ev.target.value });
-              }}
-              onKeyDown={(ev) => {
-                if (ev.key !== "Enter") return;
-                const achado = fichaPeloCodigo(candidatos, busca);
-                if (achado) void fila.abrir(achado.ficha.id);
-              }}
-            />
           </Campo>
         </div>
         <div className="avd-inline avd-fila-acoes">
@@ -656,90 +799,27 @@ export function Fila({ e, fila }) {
         </div>
       ) : null}
 
-      {linhas.length ? (
-        <div className="ui-card ui-tabela-rolagem" data-tour="avd-fila-tabela">
-          <table className="avd-tabela">
-            <thead>
-              <tr>
-                {coordena ? (
-                  <th scope="col">
-                    <input
-                      type="checkbox"
-                      aria-label="Selecionar as fichas da lista"
-                      checked={todasMarcadas}
-                      onChange={(ev) => {
-                        for (const c of comFicha)
-                          marcar(c.id, ev.target.checked);
-                      }}
-                    />
-                  </th>
-                ) : null}
-                <th scope="col">Vaga</th>
-                <th scope="col">Posição</th>
-                <th scope="col">Código</th>
-                <th scope="col">Nome</th>
-                <th scope="col">ART</th>
-                {concluidas ? <th scope="col">Nota</th> : null}
-                <th scope="col">Situação</th>
-                <th scope="col">Responsável</th>
-                <th scope="col">Reserva</th>
-                <th scope="col">
-                  <span className="sr-only">Ficha</span>
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {linhas.map((c) => (
-                <tr key={c.id} data-candidato={c.codigo}>
-                  {coordena ? (
-                    <td>
-                      {c.ficha ? (
-                        <input
-                          type="checkbox"
-                          aria-label={`Selecionar ${c.codigo}`}
-                          checked={selecao.has(c.id)}
-                          onChange={(ev) => marcar(c.id, ev.target.checked)}
-                        />
-                      ) : null}
-                    </td>
-                  ) : null}
-                  <td>{c.vaga}</td>
-                  <td>{c.posicao ? ordinal(c.posicao) : "—"}</td>
-                  <td>{c.codigo}</td>
-                  <td>{c.nome}</td>
-                  <td>{nota(c.art)}</td>
-                  {concluidas ? (
-                    <td>{textoDaNota(c.ficha?.nota_final)}</td>
-                  ) : null}
-                  <td>
-                    <SituacaoDaLinha c={c} />
-                  </td>
-                  <td>{c.ficha?.responsavel_nome || "—"}</td>
-                  <td>{textoDaReserva(c.ficha?.reserva, dados.eu)}</td>
-                  <td>
-                    {c.ficha ? (
-                      <button
-                        type="button"
-                        className="btn secondary small"
-                        disabled={st.abrindo}
-                        onClick={() => void fila.abrir(c.ficha.id)}
-                      >
-                        Abrir
-                      </button>
-                    ) : null}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      ) : (
-        <EstadoVazio>
-          {candidatos.length
-            ? "Nenhum inscrito neste filtro."
-            : "O edital ainda não tem pré-classificação."}
-        </EstadoVazio>
-      )}
+      <TabelaDaFila
+        st={st}
+        fila={fila}
+        dados={dados}
+        linhas={linhas}
+        total={contadores[st.filtro.etapa] ?? 0}
+        semPreClassificacao={!candidatos.length}
+        coordena={coordena}
+        selecao={selecao}
+        marcar={marcar}
+        busca={busca}
+        aoBuscar={(texto) => {
+          setBusca(texto);
+          fila.mudarFiltro({ busca: texto });
+        }}
+        aoTeclarNaBusca={(ev) => {
+          if (ev.key !== "Enter") return;
+          const achado = fichaPeloCodigo(candidatos, busca);
+          if (achado) void fila.abrir(achado.ficha.id);
+        }}
+      />
 
       {acao ? (
         <AcaoEmLote

@@ -8,9 +8,11 @@ import {
 import {
   ACOES_DO_HISTORICO,
   BLOCOS_COM_ITENS,
+  blocoConferido,
   blocoSeAplica,
   divergenciaDoBloco,
   enderecoDaVagaNaEmpregare,
+  nomeCurtoDoBloco,
   opcoesDeJustificativa,
   respostasDoBloco,
   situacaoDaTecla,
@@ -18,6 +20,8 @@ import {
   sugereNaoEnviado,
   textoDaAlteracao,
   textoDaNota,
+  textoDaSituacaoDaConferencia,
+  textoDoProgresso,
   textoDoResultado,
   textoDoSalvo,
   titulosDoNivel,
@@ -91,7 +95,12 @@ function BotoesDeSituacao({ valor, aoMudar, desabilitado }) {
           disabled={desabilitado}
           onClick={() => aoMudar(valor === codigo ? null : codigo)}
         >
-          <kbd aria-hidden="true">{tecla}</kbd> {rotulo}
+          {valor === codigo ? (
+            <i className="fa-solid fa-check" aria-hidden="true" />
+          ) : (
+            <kbd aria-hidden="true">{tecla}</kbd>
+          )}{" "}
+          {rotulo}
         </button>
       ))}
     </div>
@@ -332,6 +341,7 @@ function NotaDoBloco({
   declarada,
   mudar,
   desabilitado,
+  conferido,
 }) {
   const parcial = PARCIAL_DO_TIPO[bloco.tipo];
   const calculado = avaliacao.calculados?.[parcial] ?? 0;
@@ -340,7 +350,10 @@ function NotaDoBloco({
   const teto = tetoDoBloco(bloco, lancamento.nivel);
   const ajuste =
     typeof lancado.nota_ajustada === "number" ? lancado.nota_ajustada : null;
-  const divergencia = divergenciaDoBloco(bloco, avaliacao, declarada);
+  // A diferença para a declarada só conta depois de o bloco ser conferido.
+  const divergencia = conferido
+    ? divergenciaDoBloco(bloco, avaliacao, declarada)
+    : null;
   const opcoes = opcoesDeJustificativa(regra, bloco);
   const mostrarJustificativa =
     Boolean(divergencia) ||
@@ -467,6 +480,13 @@ function Etnico({ lancamento, mudar, desabilitado }) {
   );
 }
 
+/* O selo do bloco conferido: [tom, rótulo, ícone]. */
+const SELO_DA_SITUACAO = {
+  CONFORME: ["aprovado", "Conforme", "fa-check"],
+  NAO_CONFORME: ["reprovado", "Não conforme", "fa-xmark"],
+  NAO_ENVIADO: ["neutro", "Não enviado", "fa-minus"],
+};
+
 function CartaoDoBloco({
   st,
   bloco,
@@ -497,6 +517,8 @@ function CartaoDoBloco({
       return l;
     });
   const pedeSituacao = bloco.tipo !== "REGISTRO" && aplica;
+  const conferido = pedeSituacao && blocoConferido(lancamento, bloco);
+  const situacao = SELO_DA_SITUACAO[lancado.situacao];
   return (
     <section
       className="ui-card avd-ficha-bloco"
@@ -512,7 +534,13 @@ function CartaoDoBloco({
         <h3 id={`avdBloco-${bloco.codigo}`}>{bloco.titulo}</h3>
         {bloco.item_edital ? <Selo>Item {bloco.item_edital}</Selo> : null}
         {!aplica ? <Selo>Não se aplica</Selo> : null}
-        {avaliado?.efeito && avaliado.efeito !== "SO_REGISTRO" && aplica ? (
+        {conferido && situacao ? (
+          <Selo tom={situacao[0]} className="avd-ficha-selo-situacao">
+            <i className={`fa-solid ${situacao[2]}`} aria-hidden="true" />{" "}
+            {situacao[1]}
+          </Selo>
+        ) : null}
+        {conferido && avaliado?.efeito && avaliado.efeito !== "SO_REGISTRO" ? (
           <Selo tom={avaliado.efeito === "ELIMINA" ? "reprovado" : "revisar"}>
             {avaliado.efeito === "ELIMINA"
               ? "Elimina"
@@ -590,6 +618,7 @@ function CartaoDoBloco({
           declarada={declarada}
           mudar={mudar}
           desabilitado={desabilitado}
+          conferido={conferido}
         />
       ) : null}
       {doBloco.length && !desabilitado ? (
@@ -621,18 +650,31 @@ function Lateral({ st, loja, ficha, mudar, desabilitado }) {
       }
     : avaliacao;
   const [copiado, setCopiado] = useState("");
+  // Em análise (falta conferir e nada conferido eliminou): estado neutro, nota parcial.
+  const emAnalise = !concluida && st.conferencia?.situacao === "EM_ANALISE";
+  const resultado = concluida
+    ? gravado.resultado
+    : (st.conferencia?.situacao ?? avaliacao.resultado);
   return (
     <aside
       className="avd-ficha-lateral"
       aria-label="Nota e parecer"
       data-tour="avd-ficha-lateral"
     >
-      <div className="ui-card avd-ficha-total">
-        <Selo tom={tomDoResultado(gravado.resultado)}>
-          {textoDoResultado(gravado.resultado)}
+      <div
+        className="ui-card avd-ficha-total"
+        data-resultado={resultado || undefined}
+      >
+        <Selo tom={emAnalise ? "neutro" : tomDoResultado(resultado)}>
+          {concluida || !st.conferencia
+            ? textoDoResultado(resultado)
+            : textoDaSituacaoDaConferencia(st.conferencia)}
         </Selo>
         <strong className="avd-ficha-nota-total">
-          {textoDaNota(gravado.nota_final)}
+          {textoDaNota(emAnalise ? avaliacao.nota_apurada : gravado.nota_final)}
+          {emAnalise ? (
+            <small className="avd-ficha-parcial"> parcial</small>
+          ) : null}
         </strong>
         <span>
           {avaliacao.nota_minima !== null
@@ -656,7 +698,11 @@ function Lateral({ st, loja, ficha, mudar, desabilitado }) {
         </div>
         {pontuam.map((b) => {
           const p = PARCIAL_DO_TIPO[b.tipo];
-          const div = divergenciaDoBloco(b, avaliacao, declarada);
+          // Antes de conferir o bloco: apurado "—", sem destacar diferença.
+          const conferido = blocoConferido(lancamento, b);
+          const div = conferido
+            ? divergenciaDoBloco(b, avaliacao, declarada)
+            : null;
           const l = lancamento.blocos?.[b.codigo] || {};
           const justificativas = opcoesDeJustificativa(regra, b)
             .filter((o) => (l.justificativas || []).includes(o.codigo))
@@ -669,6 +715,7 @@ function Lateral({ st, loja, ficha, mudar, desabilitado }) {
               className="avd-ficha-linha"
               role="row"
               data-divergente={div ? "sim" : undefined}
+              data-conferido={conferido ? "sim" : "nao"}
             >
               <span role="rowheader">
                 {rotuloDe(PARCIAIS, p)}
@@ -681,8 +728,11 @@ function Lateral({ st, loja, ficha, mudar, desabilitado }) {
                   ? "—"
                   : textoDaNota(declarada.parciais[p])}
               </span>
-              <span role="cell">
-                {textoDaNota(avaliacao.parciais?.[p] ?? 0)}
+              <span
+                role="cell"
+                title={conferido ? undefined : "Bloco ainda não conferido"}
+              >
+                {conferido ? textoDaNota(avaliacao.parciais?.[p] ?? 0) : "—"}
               </span>
             </div>
           );
@@ -777,7 +827,12 @@ function Lateral({ st, loja, ficha, mudar, desabilitado }) {
       </Campo>
       <div className="avd-ficha-parecer" data-tour="avd-ficha-parecer">
         <div className="avd-inline">
-          <strong>Parecer</strong>
+          <strong>
+            Parecer
+            {emAnalise ? (
+              <small className="avd-ficha-parcial"> (prévia)</small>
+            ) : null}
+          </strong>
           <button
             type="button"
             className="btn secondary small"
@@ -872,6 +927,28 @@ function Reabrir({ loja }) {
   );
 }
 
+/* "4 de 7 itens conferidos" com a barra; verde quando tudo foi conferido. */
+function Progresso({ conferencia }) {
+  const { conferidos, total } = conferencia;
+  return (
+    <span className="avd-ficha-progresso" data-tour="avd-ficha-progresso">
+      <span
+        className="avd-ficha-progresso-barra"
+        role="progressbar"
+        aria-label="Itens conferidos"
+        aria-valuemin={0}
+        aria-valuemax={total}
+        aria-valuenow={conferidos}
+        aria-valuetext={textoDoProgresso(conferencia)}
+        data-completo={conferidos === total ? "sim" : undefined}
+      >
+        <span style={{ width: `${Math.round((conferidos / total) * 100)}%` }} />
+      </span>
+      <span>{textoDoProgresso(conferencia)}</span>
+    </span>
+  );
+}
+
 function textoDoEstado(st) {
   if (st.salvando) return "Salvando…";
   if (st.sujo) return "Alteração não salva";
@@ -960,6 +1037,12 @@ export function ConteudoDaFicha({
   const ficha = { ...aberta.ficha, ...st.dados.ficha };
   const desabilitado = !st.podeEditar;
   const concluida = st.dados.ficha.situacao === "CONCLUIDA";
+  const conferencia = st.conferencia;
+  /* Os blocos que não valem para o candidato vão para uma linha no fim. O
+     critério étnico fica: é nele que se marca "Indígena", que o faz valer. */
+  const agrupado = (b) =>
+    b.tipo !== "PONTUACAO" && !blocoSeAplica(b, st.lancamento);
+  const naoSeAplicam = blocos.filter(agrupado);
   const mudar = loja.mudar;
 
   /* Vai ao bloco (teclas J/K e depois do Conforme): foco e rolagem acompanham. */
@@ -981,9 +1064,7 @@ export function ConteudoDaFicha({
       return;
     }
     if (r.pendencias?.length) {
-      setErroDeConclusao(
-        `Falta: ${r.pendencias.length} item(ns) marcado(s) nos blocos.`,
-      );
+      // O que falta já está na barra ("Falta: …"); aqui, só vai ao primeiro bloco.
       const primeiro = blocos.findIndex(
         (b) => b.codigo === r.pendencias[0].bloco,
       );
@@ -1073,18 +1154,43 @@ export function ConteudoDaFicha({
       ) : null}
       <div className="avd-ficha-grade">
         <div className="avd-ficha-blocos" data-tour="avd-ficha-blocos">
-          {blocos.map((b, i) => (
-            <CartaoDoBloco
-              key={b.codigo}
-              st={st}
-              bloco={b}
-              ativo={i === ativo && !desabilitado}
-              aoFocar={() => setAtivo(i)}
-              mudar={mudar}
-              desabilitado={desabilitado}
-              mostrarTodas={tentouConcluir}
-            />
-          ))}
+          {blocos.map((b, i) =>
+            agrupado(b) ? null : (
+              <CartaoDoBloco
+                key={b.codigo}
+                st={st}
+                bloco={b}
+                ativo={i === ativo && !desabilitado}
+                aoFocar={() => setAtivo(i)}
+                mudar={mudar}
+                desabilitado={desabilitado}
+                mostrarTodas={tentouConcluir}
+              />
+            ),
+          )}
+          {naoSeAplicam.length ? (
+            <details
+              className="ui-card avd-ficha-nao-se-aplicam"
+              data-tour="avd-ficha-nao-se-aplicam"
+            >
+              <summary>
+                Não se aplicam:{" "}
+                {naoSeAplicam.map((b) => nomeCurtoDoBloco(b)).join(", ")}
+              </summary>
+              {naoSeAplicam.map((b) => (
+                <CartaoDoBloco
+                  key={b.codigo}
+                  st={st}
+                  bloco={b}
+                  ativo={false}
+                  aoFocar={() => {}}
+                  mudar={mudar}
+                  desabilitado={desabilitado}
+                  mostrarTodas={tentouConcluir}
+                />
+              ))}
+            </details>
+          ) : null}
           <Historico itens={st.dados.historico} />
         </div>
         <Lateral
@@ -1099,11 +1205,21 @@ export function ConteudoDaFicha({
         className="ui-gaveta-rodape avd-ficha-barra"
         data-tour="avd-ficha-barra"
       >
-        <span className="avd-ficha-salvo" role="status">
-          {concluida
-            ? `Concluída${st.dados.ficha.concluida_por ? ` por ${st.dados.ficha.concluida_por}` : ""}`
-            : textoDoEstado(st)}
-        </span>
+        <div className="avd-ficha-andamento">
+          <span className="avd-ficha-salvo" role="status">
+            {concluida
+              ? `Concluída${st.dados.ficha.concluida_por ? ` por ${st.dados.ficha.concluida_por}` : ""}`
+              : textoDoEstado(st)}
+          </span>
+          {st.podeEditar && conferencia?.total ? (
+            <Progresso conferencia={conferencia} />
+          ) : null}
+          {st.podeEditar && conferencia?.texto_da_falta ? (
+            <span className="avd-ficha-falta" id="avdFichaFalta">
+              {conferencia.texto_da_falta}
+            </span>
+          ) : null}
+        </div>
         {erroDeConclusao ? (
           <span className="avd-ficha-erro" role="alert">
             {erroDeConclusao}
@@ -1124,12 +1240,11 @@ export function ConteudoDaFicha({
               type="button"
               className="btn"
               data-acao="concluir-e-proxima"
-              disabled={st.concluindo}
-              title={
-                st.pendencias.length
-                  ? `Falta: ${st.pendencias.length}`
-                  : undefined
+              disabled={st.concluindo || !conferencia?.pode_concluir}
+              aria-describedby={
+                conferencia?.texto_da_falta ? "avdFichaFalta" : undefined
               }
+              title={conferencia?.texto_da_falta || undefined}
               onClick={() => void concluirEProxima()}
             >
               Concluir e próxima

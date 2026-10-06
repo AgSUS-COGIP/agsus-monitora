@@ -99,7 +99,8 @@
   border-bottom: 1px solid var(--border-subtle);
   text-align: left;
 }
-.avd-tabela input {
+/* Campos de número da regra; a caixa de seleção fica no tamanho dela. */
+.avd-tabela input:not([type="checkbox"]) {
   width: 5rem;
 }
 .avd-perguntas,
@@ -235,6 +236,13 @@
 .avd-fila-acoes {
   justify-content: space-between;
 }
-.avd-fila .avd-tabela td {
+/* A tabela da fila (TabelaInfinita): menos larga que o padrão, células ao meio. */
+.ui-tabela-rolagem table.avd-fila-lista {
+  min-width: 760px;
+}
+.avd-fila-lista td {
   vertical-align: middle;
+}
+.avd-fila-lista td[data-coluna="motivo"] {
+  min-width: 14rem;
 }

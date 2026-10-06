@@ -30,15 +30,43 @@
 .avd-ficha-bloco[data-ativo="sim"] {
   box-shadow: 0 0 0 2px var(--focus-ring);
 }
+/* Conferido: borda e fundo na cor da situação (verde, vermelho, cinza). */
 .avd-ficha-bloco[data-situacao="CONFORME"] {
-  border-left-color: var(--state-success);
+  border-color: var(--state-success);
+  background: var(--state-success-soft);
 }
-.avd-ficha-bloco[data-situacao="NAO_CONFORME"],
+.avd-ficha-bloco[data-situacao="NAO_CONFORME"] {
+  border-color: var(--state-danger);
+  background: var(--state-danger-soft);
+}
 .avd-ficha-bloco[data-situacao="NAO_ENVIADO"] {
-  border-left-color: var(--state-danger);
+  border-color: var(--state-neutral);
+  background: var(--state-neutral-soft);
 }
 .avd-ficha-bloco[data-situacao="NAO_SE_APLICA"] {
   opacity: 0.7;
+}
+.avd-ficha-selo-situacao {
+  font-weight: var(--font-weight-semibold);
+}
+.ui-selo[data-tom="neutro"].avd-ficha-selo-situacao {
+  background: var(--state-neutral-soft);
+  color: var(--text-primary);
+}
+/* Os blocos que não valem para o candidato: uma linha, expansível. */
+.avd-ficha-nao-se-aplicam {
+  display: grid;
+  gap: var(--space-2);
+  padding-block: var(--space-2);
+  color: var(--text-secondary);
+  font-size: var(--text-body-sm);
+}
+.avd-ficha-nao-se-aplicam summary {
+  cursor: pointer;
+}
+.avd-ficha-nao-se-aplicam .avd-ficha-bloco {
+  padding-block: var(--space-2);
+  box-shadow: none;
 }
 .avd-ficha-bloco-topo {
   display: flex;
@@ -100,14 +128,29 @@
   color: var(--text-secondary);
   font-size: var(--text-caption);
 }
+/* O escolhido: borda dupla, fundo e texto na cor da situação, com o ✓. */
+.avd-ficha-situacao[aria-pressed="true"] {
+  border-width: 2px;
+  font-weight: var(--font-weight-semibold);
+}
 .avd-ficha-situacao[aria-pressed="true"][data-valor="CONFORME"] {
   border-color: var(--state-success);
   background: var(--state-success-soft);
+  color: var(--state-success);
 }
-.avd-ficha-situacao[aria-pressed="true"][data-valor="NAO_CONFORME"],
-.avd-ficha-situacao[aria-pressed="true"][data-valor="NAO_ENVIADO"] {
+.avd-ficha-situacao[aria-pressed="true"][data-valor="NAO_CONFORME"] {
   border-color: var(--state-danger);
   background: var(--state-danger-soft);
+  color: var(--state-danger);
+}
+.avd-ficha-situacao[aria-pressed="true"][data-valor="NAO_ENVIADO"] {
+  border-color: var(--state-neutral);
+  background: var(--state-neutral-soft);
+  color: var(--text-primary);
+}
+.avd-ficha-situacoes:has([aria-pressed="true"])
+  .avd-ficha-situacao[aria-pressed="false"] {
+  color: var(--text-secondary);
 }
 .avd-ficha-situacao:disabled {
   cursor: default;
@@ -242,6 +285,14 @@
   color: var(--state-warning);
   font-weight: var(--font-weight-semibold);
 }
+.avd-ficha-linha[data-conferido="nao"] > span:last-child {
+  color: var(--text-secondary);
+}
+.avd-ficha-parcial {
+  color: var(--text-secondary);
+  font-size: var(--text-caption);
+  font-weight: var(--font-weight-regular);
+}
 .avd-ficha-empregare {
   display: flex;
   flex-wrap: wrap;
@@ -281,13 +332,53 @@
   align-items: center;
   padding-bottom: calc(var(--space-3) + var(--mobile-safe-bottom, 0px));
 }
-.avd-ficha-salvo {
+/* À esquerda da barra: "Salvo às", o progresso e o que falta; os botões à direita. */
+.avd-ficha-andamento {
+  display: flex;
+  flex: 1 1 260px;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1) var(--space-3);
+  min-width: 0;
   margin-right: auto;
+}
+.avd-ficha-salvo {
   color: var(--text-secondary);
   font-size: var(--text-caption);
 }
 .avd-ficha-erro {
   color: var(--state-danger);
+  font-size: var(--text-caption);
+}
+/* Progresso da conferência e o que falta para concluir. */
+.avd-ficha-progresso {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--text-secondary);
+  font-size: var(--text-caption);
+  white-space: nowrap;
+}
+.avd-ficha-progresso-barra {
+  display: inline-block;
+  width: 96px;
+  height: 6px;
+  overflow: hidden;
+  border-radius: var(--radius-pill, 999px);
+  background: var(--border-subtle);
+}
+.avd-ficha-progresso-barra > span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--state-info);
+}
+.avd-ficha-progresso-barra[data-completo="sim"] > span {
+  background: var(--state-success);
+}
+.avd-ficha-falta {
+  min-width: 0;
+  color: var(--text-secondary);
   font-size: var(--text-caption);
 }
 
@@ -312,7 +403,7 @@
     padding-inline: var(--space-2);
     white-space: normal;
   }
-  .avd-ficha-salvo,
+  .avd-ficha-andamento,
   .avd-ficha-erro,
   .avd-ficha-barra > .avd-inline {
     grid-column: 1 / -1;

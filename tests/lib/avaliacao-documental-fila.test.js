@@ -1,16 +1,23 @@
 import { describe, expect, it } from "vitest";
 import {
   acoesDaSelecao,
+  colunasDaEtapa,
   contadoresDaFila,
+  csvDaFila,
   fichaPeloCodigo,
   filtrarFila,
   filtroEhInicial,
   FILTRO_INICIAL,
   naEtapa,
+  nomeDoCsvDaFila,
   normalizarFiltro,
+  ordenarFila,
   planoDeDistribuicao,
+  proximaOrdem,
   reservaVigente,
+  textoDaColuna,
   textoDaReserva,
+  textoDaSituacaoNaFila,
 } from "../../src/lib/avaliacao-documental/fila.js";
 import {
   editaisDaEscolha,
@@ -238,5 +245,101 @@ describe("editais vigentes no seletor", () => {
     ).toEqual(["a", "b", "e"]);
     expect(editaisDaEscolha(EDITAIS, { todos: true }).lista).toHaveLength(5);
     expect(editalVigente(null)).toBe(false);
+  });
+});
+
+describe("colunas de cada aba, ordem e CSV", () => {
+  const eliminado = {
+    id: "c9",
+    vaga: "11",
+    codigo: "7009",
+    nome: "=Cmd|' /C calc'!A0",
+    situacao_pre: "ELIMINADO",
+    posicao: null,
+    art: 12.5,
+    motivo_eliminacao: "Cancelou a inscrição",
+    ficha: null,
+  };
+  const concluida = {
+    id: "c3",
+    vaga: "10",
+    codigo: "7003",
+    nome: "Carla",
+    situacao_pre: "NO_LOTE",
+    posicao: 3,
+    art: 20,
+    ficha: ficha("f3", "CONCLUIDA", {
+      resultado: "INAPTO_NOTA",
+      nota_final: 12.25,
+      responsavel_nome: "Ana",
+      concluida_em: "2026-10-06T17:30:00Z",
+    }),
+  };
+
+  it("Eliminados mostra código, nome, vaga, motivo e ART (sem posição, reserva nem responsável)", () => {
+    expect(colunasDaEtapa("eliminados")).toEqual([
+      "codigo",
+      "nome",
+      "vaga",
+      "motivo",
+      "art",
+    ]);
+    expect(textoDaColuna(eliminado, "motivo")).toBe("Cancelou a inscrição");
+    expect(textoDaColuna(eliminado, "art")).toBe("12,5");
+    expect(textoDaSituacaoNaFila(eliminado)).toBe("Eliminado");
+  });
+
+  it("Concluídas: nota, resultado, responsável e data; Pendentes: posição, ART, responsável e reserva", () => {
+    expect(colunasDaEtapa("concluidas")).toEqual(
+      expect.arrayContaining([
+        "nota",
+        "resultado",
+        "responsavel",
+        "concluida_em",
+      ]),
+    );
+    expect(colunasDaEtapa("concluidas")).not.toContain("reserva");
+    expect(textoDaColuna(concluida, "resultado")).toBe("Inapto (nota mínima)");
+    expect(textoDaColuna(concluida, "nota")).toBe("12,25");
+    expect(textoDaColuna(concluida, "concluida_em")).toBe("06/10/2026, 14:30");
+    expect(colunasDaEtapa("pendentes")).toEqual(
+      expect.arrayContaining(["posicao", "art", "responsavel", "reserva"]),
+    );
+  });
+
+  it("ordena por coluna (números como número, vazio no fim) e volta à ordem do banco", () => {
+    const lista = [concluida, eliminado, FILA[0], FILA[1]];
+    expect(
+      ordenarFila(lista, { chave: "posicao", sentido: "asc" }).map(
+        (c) => c.codigo,
+      ),
+    ).toEqual(["7001", "7002", "7003", "7009"]);
+    expect(
+      ordenarFila(lista, { chave: "posicao", sentido: "desc" }).map(
+        (c) => c.codigo,
+      ),
+    ).toEqual(["7003", "7002", "7001", "7009"]);
+    expect(
+      ordenarFila(lista, { chave: "nome", sentido: "asc" })[0].codigo,
+    ).toBe("7009");
+    expect(ordenarFila(lista, { chave: "", sentido: "" })).toBe(lista);
+    let ordem = proximaOrdem({ chave: "", sentido: "" }, "art");
+    expect(ordem).toEqual({ chave: "art", sentido: "asc" });
+    ordem = proximaOrdem(ordem, "art");
+    expect(ordem).toEqual({ chave: "art", sentido: "desc" });
+    expect(proximaOrdem(ordem, "art")).toEqual({ chave: "", sentido: "" });
+  });
+
+  it("CSV da aba: colunas da aba, ';', BOM e célula protegida contra fórmula", () => {
+    const csv = csvDaFila([eliminado], "eliminados");
+    expect(
+      csv.startsWith("\uFEFFCódigo;Nome;Vaga;Motivo da eliminação;ART\r\n"),
+    ).toBe(true);
+    expect(csv).toContain(
+      "7009;'=Cmd|' /C calc'!A0;11;Cancelou a inscrição;12,5",
+    );
+    expect(nomeDoCsvDaFila("93/2026", "eliminados", new Date(2026, 9, 6))).toBe(
+      "fila-93-2026-eliminados-2026-10-06.csv",
+    );
   });
 });

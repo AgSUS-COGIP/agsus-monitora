@@ -14,12 +14,15 @@
     mandar_fichas_revisao(p_edital, p_fichas, p_motivo)
     abrir_fichas_do_edital(p_edital)
     salvar_filtro_fila(p_nome, p_filtro) / excluir_filtro_fila(p_filtro)
+  "Exportar CSV" baixa a aba aberta (csvDaFila), sem ir ao banco.
   O último filtro usado fica no navegador só por conveniência (try/catch);
   os filtros salvos com nome ficam no banco, por pessoa.
 */
 import { comTempoLimite } from "../../lib/falha-de-rede.js";
 import {
+  csvDaFila,
   FILTRO_INICIAL,
+  nomeDoCsvDaFila,
   normalizarFiltro,
 } from "../../lib/avaliacao-documental/fila.js";
 import { mensagemDoBanco } from "./estado.js";
@@ -76,6 +79,18 @@ function guardarFiltro(armazenamento, filtro) {
   }
 }
 
+/* O CSV já vem com o BOM (o Excel abre em UTF-8); o Blob "text/csv" passa pela guarda de csv-security. */
+function baixarNoNavegador(conteudo, nome) {
+  const url = URL.createObjectURL(
+    new Blob([conteudo], { type: "text/csv;charset=utf-8;" }),
+  );
+  const ancora = document.createElement("a");
+  ancora.href = url;
+  ancora.download = nome;
+  ancora.click();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
 export function criarEstadoDaFila({
   supabase = null,
   toast = (mensagem) => console.info(mensagem),
@@ -83,6 +98,7 @@ export function criarEstadoDaFila({
   agendar = (fn, ms) => setInterval(fn, ms),
   cancelar = (id) => clearInterval(id),
   tempoLimiteMs = TEMPO_LIMITE_MS,
+  baixar = baixarNoNavegador,
 } = {}) {
   let estado = { ...INICIAL, filtro: lerFiltro(armazenamento) };
   let pedido = 0;
@@ -324,6 +340,14 @@ export function criarEstadoDaFila({
     }
   }
 
+  /* "Exportar CSV": as linhas da aba, na ordem e nas colunas da tela. */
+  function exportarCsv(linhas, etapa) {
+    baixar(
+      csvDaFila(linhas, etapa, estado.dados?.eu),
+      nomeDoCsvDaFila(estado.dados?.edital?.rotulo, etapa),
+    );
+  }
+
   return {
     obter: () => estado,
     assinar(ouvinte) {
@@ -342,6 +366,7 @@ export function criarEstadoDaFila({
     abrirFichasDoLote,
     salvarFiltro,
     excluirFiltro,
+    exportarCsv,
     /* Para o conteúdo da ficha aberta (ficha/estado-da-ficha.js). */
     rpc,
     toast,
