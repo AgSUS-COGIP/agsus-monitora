@@ -11,6 +11,7 @@ import {
   blocoSeAplica,
   divergenciaDoBloco,
   enderecoDaVagaNaEmpregare,
+  enderecoDoCandidatoNaEmpregare,
   opcoesDeJustificativa,
   respostasDoBloco,
   situacaoDaTecla,
@@ -610,7 +611,16 @@ function Lateral({ st, loja, ficha, mudar, desabilitado }) {
     (b) => PARCIAL_DO_TIPO[b.tipo] && blocoSeAplica(b, lancamento),
   );
   const art = dados.declarada_gravada?.art;
-  const urlDaVaga = enderecoDaVagaNaEmpregare(ficha.vaga);
+  // Links capturados pelo robô (obter_ficha_analise → empregare); sem eles, a lista de vagas.
+  const empregare = dados.empregare || {};
+  const urlDoCandidato = enderecoDoCandidatoNaEmpregare(
+    empregare.link_candidato,
+  );
+  const urlDaVaga = enderecoDaVagaNaEmpregare(
+    ficha.vaga,
+    empregare.vaga_interno,
+  );
+  const vagaDireta = Boolean(urlDaVaga?.includes("/candidaturas/"));
   // Concluída: o que foi gravado (resultado, nota e parecer); em análise, a conta ao vivo.
   const concluida = ficha.situacao === "CONCLUIDA" && ficha.parecer;
   const gravado = concluida
@@ -719,18 +729,38 @@ function Lateral({ st, loja, ficha, mudar, desabilitado }) {
           <i className="fa-regular fa-copy" aria-hidden="true" /> Copiar código{" "}
           {ficha.codigo}
         </button>
-        {urlDaVaga ? (
+        {urlDoCandidato ? (
+          <a
+            className="btn secondary small"
+            href={urlDoCandidato}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={() => void loja.registrarAcesso("ABRIR_EMPREGARE")}
+          >
+            <i
+              className="fa-solid fa-arrow-up-right-from-square"
+              aria-hidden="true"
+            />{" "}
+            Abrir candidato na Empregare
+          </a>
+        ) : urlDaVaga ? (
           <a
             className="btn secondary small"
             href={urlDaVaga}
             target="_blank"
             rel="noopener noreferrer"
             onClick={async () => {
-              const ok = await copiar(String(ficha.vaga ?? ""));
+              // Nas candidaturas da vaga, busca-se o candidato; na lista de vagas, a vaga.
+              const texto = String(
+                (vagaDireta ? ficha.codigo : ficha.vaga) ?? "",
+              );
+              const ok = await copiar(texto);
               setCopiado(
-                ok
-                  ? `Código da vaga ${ficha.vaga} copiado: cole na busca de Vagas Anunciadas`
-                  : "Não foi possível copiar",
+                !ok
+                  ? "Não foi possível copiar"
+                  : vagaDireta
+                    ? `Código ${texto} copiado: cole na busca das candidaturas`
+                    : `Código da vaga ${texto} copiado: cole na busca de Vagas Anunciadas`,
               );
               void loja.registrarAcesso("ABRIR_EMPREGARE");
             }}
@@ -739,7 +769,9 @@ function Lateral({ st, loja, ficha, mudar, desabilitado }) {
               className="fa-solid fa-arrow-up-right-from-square"
               aria-hidden="true"
             />{" "}
-            Abrir vagas na Empregare
+            {vagaDireta
+              ? "Abrir vaga na Empregare"
+              : "Abrir vagas na Empregare"}
           </a>
         ) : null}
         {copiado ? <small role="status">{copiado}</small> : null}

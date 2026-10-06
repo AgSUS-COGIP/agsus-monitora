@@ -821,7 +821,7 @@ const TOURS = Object.freeze({
       passo(
         t("avd-ficha-empregare"),
         "Empregare",
-        "Copie o código e abra a vaga na Empregare para conferir os documentos.",
+        "Abra o candidato na Empregare para conferir os documentos; sem o link, copie o código e abra a vaga.",
       ),
       passo(
         t("avd-ficha-parecer"),

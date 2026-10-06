@@ -60,7 +60,7 @@ até a 10ª posição do cadastro reserva) é regra da lista CONVOCACAO da Class
   vínculos que pontuam na hora; nota apurada ajustável até o teto, com justificativa obrigatória
   quando difere da declarada;
 - lateral: resultado e nota ao vivo, declarado × apurado (diferença destacada, com a justificativa),
-  nível da vaga, "Copiar código", "Abrir vagas na Empregare" (copia o código da vaga para a busca; o acesso fica registrado), observações
+  nível da vaga, "Copiar código", "Abrir candidato na Empregare" (o link capturado pelo robô; sem ele, a vaga ou a lista de vagas com o código copiado para a busca; o acesso fica registrado), observações
   prontas, observação livre e o parecer gerado;
 - barra: "Salvo às HH:MM" (rascunho automático), "Salvar rascunho", "Concluir e próxima", "Fechar e
   liberar" (salva antes de soltar a reserva; aviso ao sair com alteração não salva);
