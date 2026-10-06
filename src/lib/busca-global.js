@@ -29,7 +29,13 @@ export const CAMPOS_DA_BUSCA = Object.freeze([
 export const EVENTO_ESCOLHA_DA_BUSCA = "agsus:busca-global-escolhida";
 
 const texto = (valor) => String(valor ?? "").trim();
-const minusculo = (valor) => texto(valor).toLowerCase();
+/* Sem diferenciar maiúsculas nem acentos: "saude" acha "Saúde". */
+const semAcento = (valor) =>
+  String(valor ?? "")
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .toLowerCase();
+const minusculo = (valor) => semAcento(texto(valor));
 
 export function textoDaBusca(linha) {
   return CAMPOS_DA_BUSCA.map((campo) => minusculo(linha?.[campo])).join(" ");
@@ -67,14 +73,14 @@ export function seloDoRisco(risco) {
 
 /*
   Divide `valor` em pedaços, marcando as ocorrências do termo (sem
-  diferenciar maiúsculas). O componente desenha os marcados em `<mark>`.
+  diferenciar maiúsculas nem acentos). O componente desenha os marcados em `<mark>`.
 */
 export function partesRealcadas(valor, termo) {
-  const original = String(valor ?? "");
+  const original = String(valor ?? "").normalize("NFC");
   const procurado = minusculo(termo);
   if (!original) return [];
-  const comparavel = original.toLowerCase();
-  // Letra que muda de tamanho ao virar minúscula desalinharia os índices.
+  const comparavel = semAcento(original);
+  // Letra que muda de tamanho (minúscula ou sem acento) desalinharia os índices.
   if (!procurado || comparavel.length !== original.length)
     return [{ texto: original, realce: false }];
   const partes = [];
@@ -104,5 +110,8 @@ export function proximoIndice(atual, tecla, total) {
 }
 
 export function ehAtalhoDaBusca(evento) {
-  return Boolean((evento?.ctrlKey || evento?.metaKey) && evento?.key === "k");
+  return Boolean(
+    (evento?.ctrlKey || evento?.metaKey) &&
+    String(evento?.key).toLowerCase() === "k",
+  );
 }

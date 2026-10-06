@@ -126,3 +126,19 @@ describe("ehAtalhoDaBusca", () => {
     expect(ehAtalhoDaBusca({ ctrlKey: true, key: "j" })).toBe(false);
   });
 });
+
+describe("busca sem acento e atalho com Caps Lock", () => {
+  it("'saude indigena' acha 'Saúde Indígena' e o realce cai no lugar certo", () => {
+    const l = linha({ unidade: "Saúde Indígena", etapa: "Convocação" });
+    expect(buscarLinhas([l], "saude indigena")).toHaveLength(1);
+    expect(buscarLinhas([l], "convocacao")).toHaveLength(1);
+    expect(partesRealcadas("Saúde Indígena", "indigena")).toEqual([
+      { texto: "Saúde ", realce: false },
+      { texto: "Indígena", realce: true },
+    ]);
+  });
+
+  it("Ctrl+K com Caps Lock ou Shift também abre", () => {
+    expect(ehAtalhoDaBusca({ ctrlKey: true, key: "K" })).toBe(true);
+  });
+});
