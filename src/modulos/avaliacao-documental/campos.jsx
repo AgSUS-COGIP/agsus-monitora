@@ -1,4 +1,8 @@
-import { useId } from "react";
+import { useId, useState } from "react";
+import {
+  perguntaDoTexto,
+  textoDaPergunta,
+} from "../../lib/avaliacao-documental/regra.js";
 import { Campo } from "../../ui/index.js";
 
 /*
@@ -56,6 +60,28 @@ export function CampoTexto({ rotulo, valor, aoMudar, maximo = 200, largo }) {
         value={valor ?? ""}
         maxLength={maximo}
         onChange={(ev) => aoMudar(ev.target.value)}
+      />
+    </Campo>
+  );
+}
+
+/**
+ * A pergunta da regra: o começo do enunciado ou alternativas separadas por
+ * ";" (vira lista). Guarda o que foi digitado para não comer os espaços.
+ */
+export function CampoPergunta({ rotulo, valor, aoMudar, largo }) {
+  const [digitado, setDigitado] = useState(() => textoDaPergunta(valor));
+  const mesmo =
+    JSON.stringify(perguntaDoTexto(digitado)) ===
+    JSON.stringify(perguntaDoTexto(textoDaPergunta(valor)));
+  return (
+    <Campo rotulo={rotulo} largo={largo}>
+      <input
+        value={mesmo ? digitado : textoDaPergunta(valor)}
+        onChange={(ev) => {
+          setDigitado(ev.target.value);
+          aoMudar(perguntaDoTexto(ev.target.value));
+        }}
       />
     </Campo>
   );

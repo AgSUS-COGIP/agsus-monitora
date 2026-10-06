@@ -147,6 +147,18 @@ describe("tela da pré-classificação", () => {
     expect(textoDoAviso("COLUNA_AUSENTE:TERMO")).toBe(
       "A coluna da regra TERMO não veio no arquivo.",
     );
+    expect(textoDoAviso("PERGUNTA_AMBIGUA:EXPERIENCIA_DECLARADA")).toBe(
+      "A pergunta de experiência do desempate casa com mais de uma coluna do arquivo: na regra, use um começo de enunciado que só ela tenha.",
+    );
+    expect(textoDoAviso("PERGUNTA_AMBIGUA:NOTA_ETNICO")).toMatch(
+      /^A pergunta da nota declarada ETNICO casa/,
+    );
+    expect(textoDoAviso("PERGUNTA_AMBIGUA:MODALIDADE")).toMatch(
+      /^A pergunta do sistema de concorrência casa/,
+    );
+    expect(textoDoAviso("PERGUNTA_AMBIGUA:TERMO")).toMatch(
+      /^A pergunta da eliminação TERMO casa/,
+    );
     expect(nota(24.5)).toBe("24,5");
     expect(nota(null)).toBe("—");
   });
