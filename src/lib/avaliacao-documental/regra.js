@@ -13,7 +13,10 @@
   {
     schema, modelo, titulo_etapa, edital_rotulo, casas_parecer,
     provisoria: { eliminacao_automatica[], nota_declarada[], divergencia_tolerancia,
-                  desempate[] },
+                  desempate[], pergunta_experiencia },
+    (pergunta_experiencia e nota_declarada[].pergunta: o começo do enunciado
+    — ou uma lista de alternativas, quando o enunciado muda de questionário
+    para questionário; casa com qualquer uma, ver nota-declarada.js)
     lote: { base, multiplo, fixo, inclui_cr, por_modalidade, inclui_empatados,
             linha_anda, publica_reposicao, por_vaga{ codigo: tamanho } },
     distribuicao: { modo, criterio, limite_por_analista, novos, dias_parada },
@@ -127,6 +130,36 @@ const lista = (v) => (Array.isArray(v) ? v : []);
 const bool = (v, padrao) => (typeof v === "boolean" ? v : padrao);
 const copia = (v) => (v === undefined ? undefined : structuredClone(v));
 
+/**
+ * A pergunta da regra: o começo do enunciado (texto) ou alternativas (lista;
+ * casa com qualquer uma). Sem texto, null.
+ */
+export function normalizarPergunta(valor) {
+  if (Array.isArray(valor)) {
+    const textos = valor
+      .filter((t) => typeof t === "string")
+      .map((t) => t.trim())
+      .filter(Boolean);
+    return textos.length ? textos : null;
+  }
+  return texto(valor).trim() || null;
+}
+
+/** A pergunta como a tela mostra: as alternativas separadas por "; ". */
+export function textoDaPergunta(valor) {
+  return Array.isArray(valor) ? valor.join("; ") : texto(valor);
+}
+
+/** O que a tela digitou: um texto, ou a lista quando há mais de um (";"). */
+export function perguntaDoTexto(digitado) {
+  const partes = String(digitado ?? "")
+    .split(/[;\n]/)
+    .map((t) => t.trim())
+    .filter(Boolean);
+  if (partes.length > 1) return partes;
+  return partes[0] ?? "";
+}
+
 /** A regra com os valores padrão onde faltam (não muda a entrada). */
 export function normalizarRegraAnalise(entrada) {
   const r = ehObjeto(entrada) ? structuredClone(entrada) : {};
@@ -146,8 +179,7 @@ export function normalizarRegraAnalise(entrada) {
       desempate: Array.isArray(provisoria.desempate)
         ? provisoria.desempate
         : [...DESEMPATE_PADRAO_DA_PROVISORIA],
-      pergunta_experiencia:
-        texto(provisoria.pergunta_experiencia).trim() || null,
+      pergunta_experiencia: normalizarPergunta(provisoria.pergunta_experiencia),
     },
     lote: { ...LOTE_PADRAO, ...(ehObjeto(r.lote) ? r.lote : {}) },
     distribuicao: {
@@ -180,6 +212,29 @@ function conferirTexto(erros, valor, rotulo, { obrigatorio, max }) {
   if (typeof valor !== "string") erros.push(`${rotulo}: deve ser texto.`);
   else if (valor.length > max) erros.push(`${rotulo}: até ${max} caracteres.`);
 }
+
+/** Pergunta da regra: um texto ou uma lista de 1 a 10 alternativas. */
+function conferirPergunta(erros, valor, rotulo, obrigatorio) {
+  if (!Array.isArray(valor)) {
+    conferirTexto(erros, valor, rotulo, { obrigatorio, max: LIMITES.texto });
+    return;
+  }
+  if (
+    !valor.length ||
+    valor.length > LIMITES.perguntas ||
+    valor.some(
+      (t) => typeof t !== "string" || !t.trim() || t.length > LIMITES.texto,
+    )
+  )
+    erros.push(
+      `${rotulo}: texto ou lista de 1 a ${LIMITES.perguntas} textos de até ${LIMITES.texto} caracteres.`,
+    );
+}
+
+const temPergunta = (valor) =>
+  Array.isArray(valor)
+    ? valor.some((t) => typeof t === "string" && t.trim())
+    : typeof valor === "string" && Boolean(valor.trim());
 
 function conferirListaDeTextos(erros, valor, rotulo, max) {
   if (valor === undefined || valor === null) return;
@@ -561,10 +616,7 @@ export function validarRegraAnalise(regra) {
       }
       if (!PARCIAIS_VALIDAS.has(d.parcial))
         erros.push(`${onde}: parcial ETNICO, FORMACAO, CURSOS ou EXPERIENCIA.`);
-      conferirTexto(erros, d.pergunta, `${onde} (pergunta)`, {
-        obrigatorio: true,
-        max: LIMITES.texto,
-      });
+      conferirPergunta(erros, d.pergunta, `${onde} (pergunta)`, true);
       if (!TIPO_DECLARADA.has(d.tipo)) {
         erros.push(`${onde}: tipo OPCAO, OPCOES_SOMADAS ou FAIXA_EM_MESES.`);
         return;
@@ -603,19 +655,16 @@ export function validarRegraAnalise(regra) {
     erros.push(
       "Desempate da Provisória: IDOSO, EXPERIENCIA_DECLARADA, MAIOR_IDADE, MAIS_VELHO ou CANDIDATURA, sem repetir.",
     );
-  if (
-    provisoria.pergunta_experiencia !== undefined &&
-    provisoria.pergunta_experiencia !== null &&
-    (typeof provisoria.pergunta_experiencia !== "string" ||
-      provisoria.pergunta_experiencia.length > 200)
-  )
-    erros.push(
-      "Pergunta da experiência declarada: texto de até 200 caracteres.",
-    );
+  conferirPergunta(
+    erros,
+    provisoria.pergunta_experiencia,
+    "Pergunta da experiência declarada",
+    false,
+  );
   if (
     Array.isArray(desempate) &&
     desempate.includes("EXPERIENCIA_DECLARADA") &&
-    !String(provisoria.pergunta_experiencia ?? "").trim()
+    !temPergunta(provisoria.pergunta_experiencia)
   )
     erros.push(
       "Desempate pela experiência declarada: informe a pergunta da experiência.",

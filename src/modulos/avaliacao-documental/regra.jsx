@@ -17,6 +17,7 @@ import {
   regrasIguais,
   validarRegraAnalise,
 } from "../../lib/avaliacao-documental/regra.js";
+import { comecoDoEnunciado } from "../../lib/avaliacao-documental/nota-declarada.js";
 import { Aviso, Campo, EstadoVazio, Modal, Selo } from "../../ui/index.js";
 import { Blocos } from "./blocos.jsx";
 import {
@@ -25,6 +26,7 @@ import {
   Caixa,
   CampoLista,
   CampoNumero,
+  CampoPergunta,
   CampoTexto,
   comValor,
   Escolha,
@@ -45,12 +47,6 @@ const dataHora = (iso) =>
         timeStyle: "short",
       })
     : "";
-
-/* "Pergunta 15 - Outras formações" → "Pergunta 15 -" (o começo que liga ao bloco). */
-export function prefixoDaPergunta(coluna) {
-  const m = String(coluna ?? "").match(/^(Pergunta\s+\d+\s*-)/i);
-  return m ? m[1].replace(/\s+/g, " ") : String(coluna ?? "").slice(0, 200);
-}
 
 function SemRegra({ e, estado }) {
   const modelos = e.dados?.modelos ?? [];
@@ -101,7 +97,7 @@ function Perguntas({ perguntas, regra, aoMudar }) {
   const [blocoAlvo, setBlocoAlvo] = useState("");
   if (!perguntas?.length) return null;
   const ligar = (coluna) => {
-    const prefixo = prefixoDaPergunta(coluna);
+    const prefixo = comecoDoEnunciado(coluna);
     aoMudar(
       comValor(
         regra,
@@ -123,7 +119,7 @@ function Perguntas({ perguntas, regra, aoMudar }) {
           ...regra.provisoria.nota_declarada,
           {
             parcial: "FORMACAO",
-            pergunta: prefixoDaPergunta(p.coluna),
+            pergunta: comecoDoEnunciado(p.coluna),
             tipo: "OPCAO",
             pontos: Object.fromEntries(p.respostas.map((r) => [r.valor, 0])),
             teto: null,
@@ -156,7 +152,7 @@ function Perguntas({ perguntas, regra, aoMudar }) {
           <li key={p.coluna} data-pergunta={p.coluna}>
             <div className="avd-pergunta-topo">
               <strong>{p.coluna}</strong>
-              {usadas.has(prefixoDaPergunta(p.coluna)) ? (
+              {usadas.has(comecoDoEnunciado(p.coluna)) ? (
                 <Selo tom="aprovado">Ligada</Selo>
               ) : null}
               <button
@@ -210,7 +206,7 @@ function NotaDeclarada({ regra, aoMudar }) {
                 opcoes={PARCIAIS}
                 aoMudar={(v) => mudar(i, { ...item, parcial: v })}
               />
-              <CampoTexto
+              <CampoPergunta
                 rotulo="Pergunta (começo do enunciado)"
                 valor={item.pergunta}
                 aoMudar={(v) => mudar(i, { ...item, pergunta: v })}
@@ -787,7 +783,7 @@ export function Regra({ e, estado }) {
             {(rascunho.provisoria.desempate ?? []).includes(
               "EXPERIENCIA_DECLARADA",
             ) ? (
-              <CampoTexto
+              <CampoPergunta
                 rotulo="Pergunta da experiência (início do enunciado)"
                 valor={rascunho.provisoria.pergunta_experiencia}
                 aoMudar={(v) =>

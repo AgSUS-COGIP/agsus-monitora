@@ -20,13 +20,17 @@ from functools import cmp_to_key
 
 from monitora.avaliacao_documental.nota_declarada import (
     calcular_nota_declarada,
+    chave_da_opcao,
     coluna_da_pergunta,
     diverge_da_art,
     ler_art,
     normalizar_texto,
+    pergunta_ambigua,
+    texto_da_resposta,
 )
 
 PREFIXO_DA_ART = "NOTA - "
+PREFIXO_DO_AVISO_DE_PERGUNTA_AMBIGUA = "PERGUNTA_AMBIGUA:"
 SAIU_DA_EMPREGARE = {"codigo": "SAIU_DA_EMPREGARE", "motivo": "Saiu do arquivo da Empregare"}
 DESEMPATE_PADRAO = ["IDOSO", "CANDIDATURA"]
 LOTE_PADRAO = {
@@ -42,6 +46,7 @@ LOTE_PADRAO = {
 _DATA = re.compile(r"^(\d{4})-(\d{2})-(\d{2})")
 _NUMERO_DO_QUADRO = re.compile(r"^\d+(\.\d+)?$")
 _NO_LOTE = {"NO_LOTE", "ANALISADO"}
+_ANOS_E_MESES = re.compile(r"([0-9]+) anos? e ([0-9]+) mes(es)?\b")
 
 
 def _objeto(v):
@@ -54,6 +59,14 @@ def _lista(v):
 
 def _numero_js(v):
     return isinstance(v, (int, float)) and not isinstance(v, bool) and math.isfinite(v)
+
+
+def normalizar_pergunta(valor):
+    """A pergunta da regra: texto ou lista de alternativas (normalizarPergunta do JS). Sem texto, None."""
+    if isinstance(valor, list):
+        textos = [t.strip() for t in valor if isinstance(t, str) and t.strip()]
+        return textos or None
+    return valor.strip() or None if isinstance(valor, str) else None
 
 
 def normalizar_regra(entrada):
@@ -69,9 +82,7 @@ def normalizar_regra(entrada):
             "desempate": provisoria["desempate"]
             if isinstance(provisoria.get("desempate"), list)
             else list(DESEMPATE_PADRAO),
-            "pergunta_experiencia": provisoria.get("pergunta_experiencia").strip() or None
-            if isinstance(provisoria.get("pergunta_experiencia"), str)
-            else None,
+            "pergunta_experiencia": normalizar_pergunta(provisoria.get("pergunta_experiencia")),
         },
         "lote": {**LOTE_PADRAO, **_objeto(r.get("lote"))},
         "blocos": _lista(r.get("blocos")),
@@ -128,8 +139,39 @@ def _colunas_da_fonte(regra_de_eliminacao, colunas):
     if regra_de_eliminacao.get("coluna_prefixo"):
         alvo = normalizar_texto(regra_de_eliminacao["coluna_prefixo"])
         return [n for n in nomes if normalizar_texto(n).startswith(alvo)]
+    # Pergunta ambígua: None (nem ausente nem lida; o aviso é PERGUNTA_AMBIGUA).
+    if pergunta_ambigua(colunas, regra_de_eliminacao.get("pergunta")):
+        return None
     coluna = coluna_da_pergunta(colunas, regra_de_eliminacao.get("pergunta"))
     return [coluna] if coluna else []
+
+
+def perguntas_ambiguas(regra, colunas, pergunta_da_experiencia=None):
+    """
+    As perguntas da regra que casam com mais de uma coluna do candidato, como
+    os códigos dos avisos da vaga (perguntasAmbiguas do JS):
+    PERGUNTA_AMBIGUA:<código da eliminação>, PERGUNTA_AMBIGUA:NOTA_<parcial>,
+    PERGUNTA_AMBIGUA:MODALIDADE e PERGUNTA_AMBIGUA:EXPERIENCIA_DECLARADA.
+    """
+    provisoria = (regra or {}).get("provisoria") or {}
+    bloco = next((b for b in _lista((regra or {}).get("blocos")) if _objeto(b).get("codigo") == "MODALIDADE"), None)
+    perguntas_do_bloco = _lista(_objeto(bloco).get("perguntas"))
+    fontes = [
+        (_objeto(e).get("codigo"), _objeto(e).get("pergunta"))
+        for e in _lista(provisoria.get("eliminacao_automatica"))
+        if not _objeto(e).get("coluna") and not _objeto(e).get("coluna_prefixo")
+    ]
+    fontes += [
+        (f"NOTA_{_objeto(i).get('parcial') or ''}", _objeto(i).get("pergunta"))
+        for i in _lista(provisoria.get("nota_declarada"))
+    ]
+    fontes.append(("MODALIDADE", perguntas_do_bloco[0] if perguntas_do_bloco else None))
+    fontes.append(("EXPERIENCIA_DECLARADA", pergunta_da_experiencia))
+    return [
+        f"{PREFIXO_DO_AVISO_DE_PERGUNTA_AMBIGUA}{codigo}"
+        for codigo, pergunta in fontes
+        if pergunta and pergunta_ambigua(colunas, pergunta)
+    ]
 
 
 def eliminacao_do_candidato(regra, colunas):
@@ -137,13 +179,15 @@ def eliminacao_do_candidato(regra, colunas):
     ausentes = []
     for e in _lista(((regra or {}).get("provisoria") or {}).get("eliminacao_automatica")):
         nomes = _colunas_da_fonte(e, colunas)
+        if nomes is None:
+            continue
         if not nomes:
             ausentes.append(e.get("codigo"))
             continue
-        quando = [normalizar_texto(v) for v in _lista(e.get("quando"))]
-        exceto = [normalizar_texto(v) for v in _lista(e.get("exceto"))]
+        quando = [chave_da_opcao(v) for v in _lista(e.get("quando"))]
+        exceto = [chave_da_opcao(v) for v in _lista(e.get("exceto"))]
         for nome in nomes:
-            valor = normalizar_texto(colunas.get(nome))
+            valor = chave_da_opcao(colunas.get(nome))
             if (quando and valor in quando) or (exceto and valor not in exceto):
                 return {"codigo": e.get("codigo"), "motivo": e.get("motivo")}, ausentes
     return None, ausentes
@@ -190,16 +234,20 @@ def _vezes(multiplo, n):
 def meses_declarados(valor):
     """
     Os meses de experiência de uma resposta da Empregare ("De 1 a 2 anos" → 12,
-    "Mais de 5 anos" → 60, "6 meses" → 6, "Sem experiência" → 0): o limite de
-    baixo da faixa; None quando não dá para ler (mesmo que mesesDeclarados do JS).
+    "Mais de 5 anos" → 60, "6 meses obrigatórios" → 6, '"1 ano e 6 meses"' → 18,
+    "4 anos e 2 meses" → 50, "Não possuo" → 0): o limite de baixo da faixa; None
+    quando não dá para ler ("--"; mesmo que mesesDeclarados do JS).
     """
     if isinstance(valor, bool):
         return None
     if isinstance(valor, (int, float)):
         return valor if math.isfinite(valor) else None
-    texto = normalizar_texto(valor)
+    texto = normalizar_texto(texto_da_resposta(valor))
     if not texto:
         return None
+    anos_e_meses = _ANOS_E_MESES.search(texto)
+    if anos_e_meses:
+        return int(anos_e_meses.group(1)) * 12 + int(anos_e_meses.group(2))
     numero = re.search(r"(\d+(?:[.,]\d+)?)", texto)
     if not numero:
         return 0 if re.search(r"\b(sem|nenhum|nenhuma|nao possuo|nao tenho)\b", texto) else None
@@ -357,6 +405,7 @@ def pre_classificar_vaga(regra, vaga, candidatos, anterior=None, ultimo_lote=0, 
             else:
                 eliminacao, ausentes = eliminacao_do_candidato(regra, colunas)
                 avisos.update(f"COLUNA_AUSENTE:{codigo}" for codigo in ausentes)
+        avisos.update(perguntas_ambiguas(regra, colunas, pergunta_da_experiencia))
         art = art_das_colunas(colunas)
         declarada = calcular_nota_declarada(regra, colunas) if tem_declarada else None
         nota = art if art is not None else (declarada["total"] if declarada else None)

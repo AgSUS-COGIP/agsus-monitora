@@ -33,24 +33,84 @@ const modelosDaCorrecao = (arquivo) =>
       ),
     ].map((m) => [m[1], JSON.parse(m[2])]),
   );
+// 20261007-perguntas-pelo-texto.sql: o que muda na provisória de cada modelo.
+const PERGUNTAS_PELO_TEXTO = Object.fromEntries(
+  [
+    ...ler("supabase/correcoes/20261007-perguntas-pelo-texto.sql").matchAll(
+      /\('([A-Z0-9-]+)', \$provisoria\$(.*?)\$provisoria\$::jsonb\)/g,
+    ),
+  ].map((m) => [m[1], JSON.parse(m[2])]),
+);
+const comAsPerguntasPeloTexto = (codigo, m) =>
+  PERGUNTAS_PELO_TEXTO[codigo]
+    ? {
+        ...m,
+        provisoria: { ...m.provisoria, ...PERGUNTAS_PELO_TEXTO[codigo] },
+      }
+    : m;
 const SI = modelosDaCorrecao("20261006-modelos-dos-editais-recentes.sql");
 const RIO_DOCE = modelosDaCorrecao("20261006-modelo-proj26-rio-doce.sql");
+const PERGUNTA_PELO_NUMERO = /^pergunta \d+ ?-/i;
+const textosDe = (valor) =>
+  Array.isArray(valor)
+    ? valor.flatMap(textosDe)
+    : valor && typeof valor === "object"
+      ? Object.values(valor).flatMap(textosDe)
+      : typeof valor === "string"
+        ? [valor]
+        : [];
 
 describe("correções dos modelos dos editais recentes", () => {
-  it("a da Saúde Indígena traz os quatro modelos, iguais aos JSON", () => {
+  it("a da Saúde Indígena traz os quatro modelos, iguais aos JSON (com as perguntas pelo texto)", () => {
     expect(Object.keys(SI).sort()).toEqual(MODELOS_SI);
     for (const codigo of MODELOS_SI) {
-      expect(SI[codigo]).toEqual(modelo(codigo));
+      expect(comAsPerguntasPeloTexto(codigo, SI[codigo])).toEqual(
+        modelo(codigo),
+      );
       expect(SI[codigo].modelo).toBe(codigo);
     }
   });
 
   it("a do Rio Doce traz o PROJ26-RIO-DOCE e avisa que é depois da F3", () => {
     expect(Object.keys(RIO_DOCE)).toEqual(DEPOIS_DA_F3);
-    expect(RIO_DOCE["PROJ26-RIO-DOCE"]).toEqual(modelo("PROJ26-RIO-DOCE"));
+    expect(
+      comAsPerguntasPeloTexto("PROJ26-RIO-DOCE", RIO_DOCE["PROJ26-RIO-DOCE"]),
+    ).toEqual(modelo("PROJ26-RIO-DOCE"));
     expect(
       ler("supabase/correcoes/20261006-modelo-proj26-rio-doce.sql"),
     ).toMatch(/^\/\*\s+APLICAR DEPOIS DA F3\./);
+  });
+
+  it("a das perguntas pelo texto muda o PROJ26-CURRICULAR, o PROJ26-RIO-DOCE e o SI26-100, idempotente e validada", () => {
+    expect(Object.keys(PERGUNTAS_PELO_TEXTO).sort()).toEqual([
+      "PROJ26-CURRICULAR",
+      "PROJ26-RIO-DOCE",
+      "SI26-100",
+    ]);
+    for (const [codigo, provisoria] of Object.entries(PERGUNTAS_PELO_TEXTO))
+      expect(modelo(codigo).provisoria).toMatchObject(provisoria);
+    const sql = ler("supabase/correcoes/20261007-perguntas-pelo-texto.sql");
+    expect(sql).toContain("is distinct from");
+    expect(sql).toContain(
+      'perform private."FC_VALIDAR_REGRA_ANALISE"(v_modelo."DS_CONFIGURACAO");',
+    );
+    expect(sql).toMatch(/^begin;$/m);
+    expect(sql).toMatch(/^commit;$/m);
+  });
+
+  it("nenhuma pergunta da Provisória pelo número nos modelos de Projetos e na nota declarada", () => {
+    for (const codigo of ["PROJ26-CURRICULAR", "PROJ26-RIO-DOCE"])
+      expect(
+        textosDe(modelo(codigo).provisoria).filter((t) =>
+          PERGUNTA_PELO_NUMERO.test(t),
+        ),
+      ).toEqual([]);
+    for (const codigo of [...MODELOS_SI, ...DEPOIS_DA_F3, "PROJ26-CURRICULAR"])
+      expect(
+        textosDe(
+          modelo(codigo).provisoria.nota_declarada.map((i) => i.pergunta),
+        ).filter((t) => PERGUNTA_PELO_NUMERO.test(t)),
+      ).toEqual([]);
   });
 
   it.each([
@@ -72,14 +132,31 @@ describe("os modelos passam na validação da regra", () => {
     expect(validarRegraAnalise(modelo(codigo))).toEqual([]);
   });
 
-  it("o PROJ26-RIO-DOCE usa o lote por nota mínima 10 (8.2.6) e desempata por idoso e maior idade", () => {
+  it("o PROJ26-RIO-DOCE usa o lote por nota mínima 10 (8.2.6) e desempata pelo item 10.1: idoso, experiência declarada, maior idade", () => {
     const m = modelo("PROJ26-RIO-DOCE");
     expect(m.lote).toMatchObject({
       base: "NOTA_MINIMA",
       nota_minima: 10,
       item_edital: "8.2.6",
     });
-    expect(m.provisoria.desempate).toEqual(["IDOSO", "MAIOR_IDADE"]);
+    expect(m.provisoria.desempate).toEqual([
+      "IDOSO",
+      "EXPERIENCIA_DECLARADA",
+      "MAIOR_IDADE",
+    ]);
+    expect(m.provisoria.pergunta_experiencia).toBe("Experiência Profissional");
+    expect(validarRegraAnalise(m)).toEqual([]);
+  });
+
+  it("o PROJ26-CURRICULAR (93/2026) acha a experiência pelo enunciado, não pela Pergunta 17", () => {
+    const m = modelo("PROJ26-CURRICULAR");
+    expect(m.lote).toMatchObject({ base: "NOTA_MINIMA", nota_minima: 15 });
+    expect(m.provisoria.desempate).toEqual([
+      "IDOSO",
+      "EXPERIENCIA_DECLARADA",
+      "MAIOR_IDADE",
+    ]);
+    expect(m.provisoria.pergunta_experiencia).toBe("Experiência Profissional");
     expect(validarRegraAnalise(m)).toEqual([]);
   });
 });
@@ -210,4 +287,28 @@ describe("lote e Provisória (os mesmos casos no pytest)", () => {
       caso.esperado,
     );
   });
+
+  it.each(CASOS.provisoria_pelo_enunciado.map((c) => [c.nome, c]))(
+    "pelo enunciado — %s",
+    (_nome, caso) => {
+      const r = preClassificarVaga({
+        regra: normalizarRegraAnalise(modelo(caso.modelo)),
+        vaga: caso.vaga,
+        candidatos: caso.candidatos,
+        anterior: {},
+        ultimo_lote: 0,
+        refazer: false,
+        hoje: CASOS.hoje_pelo_enunciado,
+      });
+      expect({
+        posicoes: Object.fromEntries(r.linhas.map((l) => [l.id, l.posicao])),
+        eliminados: Object.fromEntries(
+          r.linhas
+            .filter((l) => l.motivo_codigo)
+            .map((l) => [l.id, l.motivo_codigo]),
+        ),
+        avisos: r.resumo.avisos,
+      }).toEqual(caso.esperado);
+    },
+  );
 });

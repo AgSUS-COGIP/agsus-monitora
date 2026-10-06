@@ -6,7 +6,7 @@ import {
   redefinirDadosDoMonitoramento,
 } from "../../src/componentes/dados-do-monitoramento.js";
 import { montarAvaliacaoDocumental } from "../../src/modulos/avaliacao-documental/avaliacao-documental.jsx";
-import { prefixoDaPergunta } from "../../src/modulos/avaliacao-documental/regra.jsx";
+import { comecoDoEnunciado } from "../../src/lib/avaliacao-documental/nota-declarada.js";
 import {
   clicar,
   digitar,
@@ -255,9 +255,23 @@ describe("regra da avaliação (AM-2)", () => {
     await escolher(perguntas.querySelector("select"), "COTA_PP");
     await clicar(botao("Ligar", perguntas));
     expect(perguntas.textContent).toContain("Ligada");
-    expect(prefixoDaPergunta("Pergunta 15 - Outras formações")).toBe(
-      "Pergunta 15 -",
+    // Liga pelo começo do enunciado, não pelo número (que muda de vaga para vaga).
+    expect(comecoDoEnunciado("Pergunta 15 - Outras formações")).toBe(
+      "Outras formações",
     );
+    expect(
+      comecoDoEnunciado(
+        "Pergunta 11 - Experiência Profissional em atividades compatíveis com o cargo: (contabilizada a partir de 06 meses",
+      ),
+    ).toBe("Experiência Profissional em atividades compatíveis com o cargo");
+    expect(
+      comecoDoEnunciado(
+        "Pergunta 19 - Candidatos&nbsp;concorrendo às vagas destinadas a Pretos ou Pardos, grave um vídeo",
+      ),
+    ).toBe(
+      "Candidatos concorrendo às vagas destinadas a Pretos ou Pardos, grave um vídeo",
+    );
+    expect(comecoDoEnunciado("SITUAÇÃO")).toBe("SITUAÇÃO");
   });
 
   it("AM-2.7: a prévia calcula a nota, a situação e o parecer sem gravar", async () => {

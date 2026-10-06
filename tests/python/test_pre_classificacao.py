@@ -76,6 +76,65 @@ class CasosDouradosDaPreClassificacao(unittest.TestCase):
                 self.assertEqual(segunda["resumo"]["entraram"], 0)
 
 
+class PerguntaPeloEnunciado(unittest.TestCase):
+    def test_casos_dourados_das_perguntas(self):
+        for caso in PRE["perguntas"]:
+            with self.subTest(caso["nome"]):
+                colunas = {nome: "x" for nome in caso["colunas"]}
+                self.assertEqual(
+                    {
+                        "coluna": nd.coluna_da_pergunta(colunas, caso["pergunta"]),
+                        "ambigua": nd.pergunta_ambigua(colunas, caso["pergunta"]),
+                    },
+                    caso["esperado"],
+                )
+
+    def test_perguntas_ambiguas_viram_os_codigos_dos_avisos(self):
+        caso = PRE["casos"][-1]
+        regra = pc.normalizar_regra(caso["regra"])
+        colunas = caso["candidatos"][-1]["colunas"]
+        self.assertEqual(
+            sorted(pc.perguntas_ambiguas(regra, colunas, regra["provisoria"]["pergunta_experiencia"])),
+            caso["esperado"]["resumo"]["avisos"],
+        )
+        self.assertEqual(pc.perguntas_ambiguas(regra, {}, "x"), [])
+
+    def test_pergunta_da_experiencia_em_lista(self):
+        self.assertEqual(pc.normalizar_pergunta([" a ", "", 3, "b"]), ["a", "b"])
+        self.assertIsNone(pc.normalizar_pergunta([" "]))
+        self.assertEqual(pc.normalizar_pergunta("  Experiência  "), "Experiência")
+        self.assertIsNone(pc.normalizar_pergunta(None))
+
+
+class RespostasDaEmpregare(unittest.TestCase):
+    R = PRE["respostas"]
+
+    def test_texto(self):
+        for valor, esperado in self.R["texto"]:
+            with self.subTest(valor):
+                self.assertEqual(nd.texto_da_resposta(valor), esperado)
+
+    def test_opcoes(self):
+        for valor, esperado in self.R["opcoes"]:
+            with self.subTest(valor):
+                self.assertEqual(nd.opcoes_da_resposta(valor), esperado)
+
+    def test_mesma_opcao(self):
+        for a, b, igual in self.R["mesma_opcao"]:
+            with self.subTest(a):
+                self.assertEqual(nd.chave_da_opcao(a) == nd.chave_da_opcao(b), igual)
+
+    def test_meses(self):
+        for valor, esperado in self.R["meses"]:
+            with self.subTest(valor):
+                self.assertEqual(pc.meses_declarados(valor), esperado)
+
+    def test_art(self):
+        for valor, esperado in self.R["art"]:
+            with self.subTest(valor):
+                self.assertEqual(nd.ler_art(valor), esperado)
+
+
 class NotaDeclarada(unittest.TestCase):
     def test_casos_dourados_da_nota_declarada(self):
         for caso in PONTUACAO["nota_declarada"]:

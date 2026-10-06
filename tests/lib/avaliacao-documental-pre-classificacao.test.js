@@ -7,10 +7,19 @@ import {
   mesesDeclarados,
   modalidadeDoCandidato,
   numeroNoTexto,
+  perguntasAmbiguas,
   preClassificarVaga,
   tamanhoDoLote,
   vagasPorModalidade,
 } from "../../src/lib/avaliacao-documental/pre-classificacao.js";
+import {
+  chaveDaOpcao,
+  colunaDaPergunta,
+  lerArt,
+  opcoesDaResposta,
+  perguntaAmbigua,
+  textoDaResposta,
+} from "../../src/lib/avaliacao-documental/nota-declarada.js";
 import {
   normalizarRegraAnalise,
   validarRegraAnalise,
@@ -94,6 +103,48 @@ describe("casos dourados da pré-classificação", () => {
       expect(segunda.resumo.entraram).toBe(0);
     }
   });
+});
+
+describe("a pergunta pelo começo do enunciado (os mesmos casos no pytest)", () => {
+  it.each(CASOS.perguntas.map((c) => [c.nome, c]))("%s", (_nome, c) => {
+    const colunas = Object.fromEntries(c.colunas.map((n) => [n, "x"]));
+    expect({
+      coluna: colunaDaPergunta(colunas, c.pergunta),
+      ambigua: perguntaAmbigua(colunas, c.pergunta),
+    }).toEqual(c.esperado);
+  });
+
+  it("as perguntas ambíguas da regra viram os códigos dos avisos", () => {
+    const regra = normalizarRegraAnalise(CASOS.casos.at(-1).regra);
+    const candidato = CASOS.casos.at(-1).candidatos.at(-1);
+    expect(
+      perguntasAmbiguas(
+        regra,
+        candidato.colunas,
+        regra.provisoria.pergunta_experiencia,
+      ).sort(),
+    ).toEqual(CASOS.casos.at(-1).esperado.resumo.avisos);
+    expect(perguntasAmbiguas(regra, {}, "x")).toEqual([]);
+  });
+});
+
+describe("as respostas no formato da Empregare (os mesmos casos no pytest)", () => {
+  const R = CASOS.respostas;
+  it.each(R.texto)("texto de %j", (valor, esperado) =>
+    expect(textoDaResposta(valor)).toBe(esperado),
+  );
+  it.each(R.opcoes)("opções de %j", (valor, esperado) =>
+    expect(opcoesDaResposta(valor)).toEqual(esperado),
+  );
+  it.each(R.mesma_opcao)("%j e %j são a mesma opção? %j", (a, b, igual) =>
+    expect(chaveDaOpcao(a) === chaveDaOpcao(b)).toBe(igual),
+  );
+  it.each(R.meses)("meses de %j", (valor, esperado) =>
+    expect(mesesDeclarados(valor)).toBe(esperado),
+  );
+  it.each(R.art)("ART de %j", (valor, esperado) =>
+    expect(lerArt(valor)).toBe(esperado),
+  );
 });
 
 describe("peças da conta", () => {

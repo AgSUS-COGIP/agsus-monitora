@@ -62,16 +62,40 @@ class ProvisoriaDosModelos(unittest.TestCase):
                 )
                 self.assertEqual({l["id"]: l["posicao"] for l in r["linhas"]}, caso["esperado"])
 
+    def test_pergunta_pelo_enunciado_igual_ao_javascript(self):
+        for caso in CASOS["provisoria_pelo_enunciado"]:
+            with self.subTest(caso["nome"]):
+                r = pc.pre_classificar_vaga(
+                    pc.normalizar_regra(modelo(caso["modelo"])),
+                    caso["vaga"],
+                    caso["candidatos"],
+                    anterior={},
+                    ultimo_lote=0,
+                    refazer=False,
+                    hoje=CASOS["hoje_pelo_enunciado"],
+                )
+                self.assertEqual(
+                    {
+                        "posicoes": {l["id"]: l["posicao"] for l in r["linhas"]},
+                        "eliminados": {l["id"]: l["motivo_codigo"] for l in r["linhas"] if l["motivo_codigo"]},
+                        "avisos": r["resumo"]["avisos"],
+                    },
+                    caso["esperado"],
+                )
+
 
 class NotaDeclaradaDoSi26100(unittest.TestCase):
-    def test_o_si26_100_corrigido_le_o_questionario_como_antes(self):
-        respostas = {
-            "Pergunta 15 - Outras formações (especialização, mestrado, doutorado)": "Especialização na área à qual concorre",
-            "Pergunta 6 - Você é indígena e mora em aldeia?": "Sou indígena; Moro em aldeia",
-        }
-        r = nd.calcular_nota_declarada(modelo("SI26-100"), respostas)
-        self.assertEqual(r["total"], 15)
-        self.assertEqual(r["parciais"], {"FORMACAO": 1, "ETNICO": 14})
+    def test_o_si26_100_le_o_questionario_pelo_enunciado(self):
+        # Numa vaga a formação é a Pergunta 15; noutro questionário poderia ser outra.
+        for formacao, etnico in ((15, 6), (14, 5)):
+            with self.subTest(formacao):
+                respostas = {
+                    f"Pergunta {formacao} - Você possui outras formações acadêmicas relacionadas à área": '"Especialização na área à qual concorre"',
+                    f"Pergunta {etnico} - Você é indígena e mora em aldeia?(será necessária a comprovação)": '"Sou indígena", "Moro em aldeia"',
+                }
+                r = nd.calcular_nota_declarada(modelo("SI26-100"), respostas)
+                self.assertEqual(r["total"], 15)
+                self.assertEqual(r["parciais"], {"FORMACAO": 1, "ETNICO": 14})
 
     def test_os_modelos_novos_nao_tem_nota_declarada_ainda(self):
         for codigo in ("SI26-ALSE", "SI26-MRSA", "SI26-PARINTINS", "PROJ26-RIO-DOCE"):

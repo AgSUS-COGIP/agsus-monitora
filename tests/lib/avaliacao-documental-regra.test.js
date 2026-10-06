@@ -4,8 +4,11 @@ import { TIPOS_DE_BLOCO } from "../../src/lib/avaliacao-documental/catalogo.js";
 import {
   blocoNovo,
   codigoLivre,
+  normalizarPergunta,
   normalizarRegraAnalise,
+  perguntaDoTexto,
   regrasIguais,
+  textoDaPergunta,
   validarRegraAnalise,
 } from "../../src/lib/avaliacao-documental/regra.js";
 import {
@@ -251,6 +254,32 @@ describe("validarRegraAnalise", () => {
       "pontos de cada resposta",
     ],
     [
+      "pergunta da experiência em lista vazia",
+      () => ({
+        ...boa(),
+        provisoria: { ...boa().provisoria, pergunta_experiencia: [] },
+      }),
+      "lista de 1 a 10 textos",
+    ],
+    [
+      "pergunta da nota declarada em lista com texto vazio",
+      () => ({
+        ...boa(),
+        provisoria: {
+          ...boa().provisoria,
+          nota_declarada: [
+            {
+              parcial: "ETNICO",
+              pergunta: ["Você é indígena", " "],
+              tipo: "OPCAO",
+              pontos: { Sim: 1 },
+            },
+          ],
+        },
+      }),
+      "lista de 1 a 10 textos",
+    ],
+    [
       "observação pronta repetida",
       () => ({
         ...boa(),
@@ -264,6 +293,53 @@ describe("validarRegraAnalise", () => {
   ])("recusa %s", (_nome, montar, trecho) => {
     const erros = validarRegraAnalise(montar());
     expect(erros.join(" | ")).toContain(trecho);
+  });
+});
+
+describe("a pergunta da regra: texto ou lista de alternativas", () => {
+  const alternativas = [
+    "Selecione sua Experiência Profissional",
+    "Marque a pontuação referente a sua experiência profissional",
+  ];
+
+  it("aceita lista na experiência do desempate e na nota declarada", () => {
+    const r = boa();
+    r.provisoria.desempate = ["IDOSO", "EXPERIENCIA_DECLARADA"];
+    r.provisoria.pergunta_experiencia = alternativas;
+    r.provisoria.nota_declarada = [
+      {
+        parcial: "ETNICO",
+        pergunta: ["Você é indígena e mora em aldeia", "Você é indígena"],
+        tipo: "OPCOES_SOMADAS",
+        pontos: { "Sou indígena": 8 },
+        teto: 14,
+      },
+    ];
+    expect(validarRegraAnalise(r)).toEqual([]);
+  });
+
+  it("normaliza: tira espaços e textos vazios; sem texto, null", () => {
+    expect(normalizarPergunta([" a ", "", 3, "b"])).toEqual(["a", "b"]);
+    expect(normalizarPergunta([" "])).toBeNull();
+    expect(normalizarPergunta("  Experiência  ")).toBe("Experiência");
+    expect(normalizarPergunta(undefined)).toBeNull();
+    expect(
+      normalizarRegraAnalise({ provisoria: { pergunta_experiencia: [" x "] } })
+        .provisoria.pergunta_experiencia,
+    ).toEqual(["x"]);
+  });
+
+  it("a tela mostra as alternativas separadas por ';' e lê de volta", () => {
+    expect(textoDaPergunta(alternativas)).toBe(
+      "Selecione sua Experiência Profissional; Marque a pontuação referente a sua experiência profissional",
+    );
+    expect(perguntaDoTexto(textoDaPergunta(alternativas))).toEqual(
+      alternativas,
+    );
+    expect(perguntaDoTexto("Experiência Profissional ")).toBe(
+      "Experiência Profissional",
+    );
+    expect(perguntaDoTexto(" ; ")).toBe("");
   });
 });
 

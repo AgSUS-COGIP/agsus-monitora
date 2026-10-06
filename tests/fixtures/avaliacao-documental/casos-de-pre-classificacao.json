@@ -4160,6 +4160,682 @@
           "avisos": []
         }
       }
+    },
+    {
+      "nome": "perguntas pelo enunciado: a experiência da Saúde Indígena pela lista de alternativas, respostas entre aspas e o termo recusado elimina",
+      "historia": "AM-4.2",
+      "regra": {
+        "schema": 1,
+        "provisoria": {
+          "eliminacao_automatica": [
+            {
+              "codigo": "CANCELADO",
+              "coluna": "SITUAÇÃO",
+              "quando": ["CANCELADO"],
+              "motivo": "Cancelou a inscrição"
+            },
+            {
+              "codigo": "TERMO",
+              "pergunta": "Termo de responsabilidade",
+              "quando": ["Não estou de acordo"],
+              "motivo": "Recusou o termo de responsabilidade"
+            }
+          ],
+          "nota_declarada": [
+            {
+              "parcial": "ETNICO",
+              "pergunta": "Você é indígena",
+              "tipo": "OPCOES_SOMADAS",
+              "pontos": {
+                "Sou indígena": 8,
+                "Moro em aldeia": 6
+              },
+              "teto": 14
+            }
+          ],
+          "divergencia_tolerancia": 30,
+          "desempate": ["IDOSO", "EXPERIENCIA_DECLARADA", "MAIOR_IDADE"],
+          "pergunta_experiencia": [
+            "Selecione sua Experiência Profissional",
+            "Marque a pontuação referente a sua experiência profissional",
+            "Marque a pontuação referente à experiência profissional"
+          ]
+        },
+        "lote": {
+          "base": "FIXO",
+          "multiplo": 1,
+          "fixo": 2,
+          "inclui_cr": false,
+          "por_modalidade": false,
+          "inclui_empatados": false,
+          "linha_anda": true,
+          "publica_reposicao": false
+        },
+        "blocos": [
+          {
+            "codigo": "MODALIDADE",
+            "titulo": "Sistema de concorrência",
+            "tipo": "REGISTRO",
+            "perguntas": ["Indique em qual sistema de concorrência"]
+          }
+        ]
+      },
+      "vaga": {
+        "codigo": "900101",
+        "vagas_imediatas": 1,
+        "cadastro_reserva": false,
+        "modalidades": null
+      },
+      "candidatos": [
+        {
+          "id": "s01",
+          "codigo": "1010001",
+          "ativo": true,
+          "nascimento": "1990-01-01",
+          "candidatura": "2026-09-20T12:00:00+00:00",
+          "colunas": {
+            "SITUAÇÃO": "INSCRITO",
+            "SITUAÇÃO - NÍVEL FUNDAMENTAL": "FINALIZADO",
+            "NOTA - NÍVEL FUNDAMENTAL": "20,0/50,0",
+            "Pergunta 5 - Indique em qual sistema de concorrência deseja se inscrever:": "\"Ampla Concorrência\"",
+            "Pergunta 6 - Você é indígena e mora em aldeia?(será necessária a comprovação)": "\"Sou indígena\", \"Moro em aldeia\"",
+            "Pergunta 17 - Selecione sua Experiência Profissional na área/vaga em que concorre:(0,2 ponto por mês)&nbsp;Pontuação máxima: 10 pontos.": "\"1 ano e 10 meses\"",
+            "Pergunta 23 - TERMO DE RESPONSABILIDADE PELAS INFORMAÇÕES DECLARADASDeclaro que todas as informações prestadas": "\"Estou de acordo\""
+          }
+        },
+        {
+          "id": "s02",
+          "codigo": "1010002",
+          "ativo": true,
+          "nascimento": "1991-01-01",
+          "candidatura": "2026-09-20T12:00:00+00:00",
+          "colunas": {
+            "SITUAÇÃO": "INSCRITO",
+            "SITUAÇÃO - NÍVEL FUNDAMENTAL": "FINALIZADO",
+            "NOTA - NÍVEL FUNDAMENTAL": "20,0/50,0",
+            "Pergunta 5 - Indique em qual sistema de concorrência deseja se inscrever:": "\"Ampla Concorrência\"",
+            "Pergunta 6 - Você é indígena e mora em aldeia?(será necessária a comprovação)": "\"Sou indígena\", \"Moro em aldeia\"",
+            "Pergunta 17 - Marque a pontuação referente a sua experiência profissional na vaga em que concorre": "\"4 anos e 2 meses\"",
+            "Pergunta 23 - TERMO DE RESPONSABILIDADE PELAS INFORMAÇÕES DECLARADASDeclaro que todas as informações prestadas": "\"Estou de acordo\""
+          }
+        },
+        {
+          "id": "s03",
+          "codigo": "1010003",
+          "ativo": true,
+          "nascimento": "1992-01-01",
+          "candidatura": "2026-09-20T12:00:00+00:00",
+          "colunas": {
+            "SITUAÇÃO": "INSCRITO",
+            "SITUAÇÃO - NÍVEL FUNDAMENTAL": "FINALIZADO",
+            "NOTA - NÍVEL FUNDAMENTAL": "20,0/50,0",
+            "Pergunta 5 - Indique em qual sistema de concorrência deseja se inscrever:": "\"Ampla Concorrência\"",
+            "Pergunta 6 - Você é indígena e mora em aldeia?(será necessária a comprovação)": "\"Sou indígena\", \"Moro em aldeia\"",
+            "Pergunta 17 - Marque a pontuação referente à experiência profissional que você possui na área": "\"3 meses\"",
+            "Pergunta 23 - TERMO DE RESPONSABILIDADE PELAS INFORMAÇÕES DECLARADASDeclaro que todas as informações prestadas": "\"Não estou de acordo\""
+          }
+        }
+      ],
+      "anterior": {},
+      "ultimo_lote": 0,
+      "refazer": false,
+      "hoje": "2026-10-07",
+      "esperado": {
+        "linhas": {
+          "s01": {
+            "situacao": "NO_LOTE",
+            "motivo_codigo": null,
+            "posicao": 2,
+            "posicao_modalidade": 2,
+            "lote": 1,
+            "lista_lote": "GERAL",
+            "entrada": "INICIAL",
+            "motivo_entrada": "Lote inicial: 2 (número fixo)",
+            "nota": 20,
+            "origem_nota": "ART",
+            "divergente": false,
+            "modalidade": "AC"
+          },
+          "s02": {
+            "situacao": "NO_LOTE",
+            "motivo_codigo": null,
+            "posicao": 1,
+            "posicao_modalidade": 1,
+            "lote": 1,
+            "lista_lote": "GERAL",
+            "entrada": "INICIAL",
+            "motivo_entrada": "Lote inicial: 2 (número fixo)",
+            "nota": 20,
+            "origem_nota": "ART",
+            "divergente": false,
+            "modalidade": "AC"
+          },
+          "s03": {
+            "situacao": "ELIMINADO",
+            "motivo_codigo": "TERMO",
+            "posicao": null,
+            "posicao_modalidade": null,
+            "lote": null,
+            "lista_lote": null,
+            "entrada": null,
+            "motivo_entrada": null,
+            "nota": 20,
+            "origem_nota": "ART",
+            "divergente": false,
+            "modalidade": "AC"
+          }
+        },
+        "resumo": {
+          "inscritos": 3,
+          "eliminados": 1,
+          "ranqueados": 2,
+          "no_lote": 2,
+          "tamanho": 2,
+          "descricao": "2 (número fixo)",
+          "por_modalidade": null,
+          "art_corte": 20,
+          "divergencias": 0,
+          "sem_art": 0,
+          "acima_do_corte": 0,
+          "entraram": 2,
+          "lote_novo": 1,
+          "saidas": [],
+          "avisos": []
+        }
+      }
+    },
+    {
+      "nome": "perguntas pelo enunciado: texto que casa com mais de uma coluna não vale e vira aviso (experiência, termo, nota declarada e modalidade)",
+      "historia": "AM-4.2",
+      "regra": {
+        "schema": 1,
+        "provisoria": {
+          "eliminacao_automatica": [
+            {
+              "codigo": "CANCELADO",
+              "coluna": "SITUAÇÃO",
+              "quando": ["CANCELADO"],
+              "motivo": "Cancelou a inscrição"
+            },
+            {
+              "codigo": "TERMO",
+              "pergunta": "Termo de responsabilidade",
+              "quando": ["Não estou de acordo"],
+              "motivo": "Recusou o termo de responsabilidade"
+            }
+          ],
+          "nota_declarada": [
+            {
+              "parcial": "ETNICO",
+              "pergunta": "Pergunta",
+              "tipo": "OPCOES_SOMADAS",
+              "pontos": {
+                "Sou indígena": 8,
+                "Moro em aldeia": 6
+              },
+              "teto": 14
+            }
+          ],
+          "divergencia_tolerancia": 30,
+          "desempate": ["IDOSO", "EXPERIENCIA_DECLARADA", "MAIOR_IDADE"],
+          "pergunta_experiencia": [
+            "Selecione sua Experiência Profissional",
+            "Marque a pontuação referente a sua experiência profissional",
+            "Marque a pontuação referente à experiência profissional"
+          ]
+        },
+        "lote": {
+          "base": "FIXO",
+          "multiplo": 1,
+          "fixo": 2,
+          "inclui_cr": false,
+          "por_modalidade": false,
+          "inclui_empatados": false,
+          "linha_anda": true,
+          "publica_reposicao": false
+        },
+        "blocos": [
+          {
+            "codigo": "MODALIDADE",
+            "titulo": "Sistema de concorrência",
+            "tipo": "REGISTRO",
+            "perguntas": ["Indique em qual sistema de concorrência"]
+          }
+        ]
+      },
+      "vaga": {
+        "codigo": "900101",
+        "vagas_imediatas": 1,
+        "cadastro_reserva": false,
+        "modalidades": null
+      },
+      "candidatos": [
+        {
+          "id": "s01",
+          "codigo": "1010001",
+          "ativo": true,
+          "nascimento": "1990-01-01",
+          "candidatura": "2026-09-20T12:00:00+00:00",
+          "colunas": {
+            "SITUAÇÃO": "INSCRITO",
+            "SITUAÇÃO - NÍVEL FUNDAMENTAL": "FINALIZADO",
+            "NOTA - NÍVEL FUNDAMENTAL": "20,0/50,0",
+            "Pergunta 5 - Indique em qual sistema de concorrência deseja se inscrever:": "\"Ampla Concorrência\"",
+            "Pergunta 6 - Você é indígena e mora em aldeia?(será necessária a comprovação)": "\"Sou indígena\", \"Moro em aldeia\"",
+            "Pergunta 17 - Selecione sua Experiência Profissional na área/vaga em que concorre:(0,2 ponto por mês)&nbsp;Pontuação máxima: 10 pontos.": "\"1 ano e 10 meses\"",
+            "Pergunta 23 - TERMO DE RESPONSABILIDADE PELAS INFORMAÇÕES DECLARADASDeclaro que todas as informações prestadas": "\"Estou de acordo\""
+          }
+        },
+        {
+          "id": "s02",
+          "codigo": "1010002",
+          "ativo": true,
+          "nascimento": "1991-01-01",
+          "candidatura": "2026-09-20T12:00:00+00:00",
+          "colunas": {
+            "SITUAÇÃO": "INSCRITO",
+            "SITUAÇÃO - NÍVEL FUNDAMENTAL": "FINALIZADO",
+            "NOTA - NÍVEL FUNDAMENTAL": "20,0/50,0",
+            "Pergunta 5 - Indique em qual sistema de concorrência deseja se inscrever:": "\"Ampla Concorrência\"",
+            "Pergunta 6 - Você é indígena e mora em aldeia?(será necessária a comprovação)": "\"Sou indígena\", \"Moro em aldeia\"",
+            "Pergunta 17 - Marque a pontuação referente a sua experiência profissional na vaga em que concorre": "\"4 anos e 2 meses\"",
+            "Pergunta 23 - TERMO DE RESPONSABILIDADE PELAS INFORMAÇÕES DECLARADASDeclaro que todas as informações prestadas": "\"Estou de acordo\""
+          }
+        },
+        {
+          "id": "s04",
+          "codigo": "1010004",
+          "ativo": true,
+          "nascimento": "1985-01-01",
+          "candidatura": "2026-09-20T12:00:00+00:00",
+          "colunas": {
+            "SITUAÇÃO": "INSCRITO",
+            "SITUAÇÃO - NÍVEL FUNDAMENTAL": "FINALIZADO",
+            "NOTA - NÍVEL FUNDAMENTAL": "20,0/50,0",
+            "Pergunta 5 - Indique em qual sistema de concorrência deseja se inscrever:": "\"Ampla Concorrência\"",
+            "Pergunta 6 - Você é indígena e mora em aldeia?(será necessária a comprovação)": "\"Sou indígena\", \"Moro em aldeia\"",
+            "Pergunta 17 - Selecione sua Experiência Profissional na área/vaga em que concorre:(0,2 ponto por mês)&nbsp;Pontuação máxima: 10 pontos.": "\"4 anos e 2 meses\"",
+            "Pergunta 23 - TERMO DE RESPONSABILIDADE PELAS INFORMAÇÕES DECLARADASDeclaro que todas as informações prestadas": "\"Estou de acordo\"",
+            "Pergunta 19 - Marque a pontuação referente a sua experiência profissional na vaga em que concorre": "\"1 mês\"",
+            "Pergunta 26 - TERMO DE RESPONSABILIDADE (repetida)": "\"Não estou de acordo\"",
+            "Pergunta 25 - Indique em qual sistema de concorrência (repetida)": "\"Pretos e Pardos\""
+          }
+        }
+      ],
+      "anterior": {},
+      "ultimo_lote": 0,
+      "refazer": false,
+      "hoje": "2026-10-07",
+      "esperado": {
+        "linhas": {
+          "s01": {
+            "situacao": "NO_LOTE",
+            "motivo_codigo": null,
+            "posicao": 2,
+            "posicao_modalidade": 2,
+            "lote": 1,
+            "lista_lote": "GERAL",
+            "entrada": "INICIAL",
+            "motivo_entrada": "Lote inicial: 2 (número fixo)",
+            "nota": 20,
+            "origem_nota": "ART",
+            "divergente": false,
+            "modalidade": "AC"
+          },
+          "s02": {
+            "situacao": "NO_LOTE",
+            "motivo_codigo": null,
+            "posicao": 1,
+            "posicao_modalidade": 1,
+            "lote": 1,
+            "lista_lote": "GERAL",
+            "entrada": "INICIAL",
+            "motivo_entrada": "Lote inicial: 2 (número fixo)",
+            "nota": 20,
+            "origem_nota": "ART",
+            "divergente": false,
+            "modalidade": "AC"
+          },
+          "s04": {
+            "situacao": "RANQUEADO",
+            "motivo_codigo": null,
+            "posicao": 3,
+            "posicao_modalidade": 3,
+            "lote": null,
+            "lista_lote": null,
+            "entrada": null,
+            "motivo_entrada": null,
+            "nota": 20,
+            "origem_nota": "ART",
+            "divergente": false,
+            "modalidade": "AC"
+          }
+        },
+        "resumo": {
+          "inscritos": 3,
+          "eliminados": 0,
+          "ranqueados": 3,
+          "no_lote": 2,
+          "tamanho": 2,
+          "descricao": "2 (número fixo)",
+          "por_modalidade": null,
+          "art_corte": 20,
+          "divergencias": 0,
+          "sem_art": 0,
+          "acima_do_corte": 0,
+          "entraram": 2,
+          "lote_novo": 1,
+          "saidas": [],
+          "avisos": [
+            "PERGUNTA_AMBIGUA:EXPERIENCIA_DECLARADA",
+            "PERGUNTA_AMBIGUA:MODALIDADE",
+            "PERGUNTA_AMBIGUA:NOTA_ETNICO",
+            "PERGUNTA_AMBIGUA:TERMO"
+          ]
+        }
+      }
     }
-  ]
+  ],
+  "perguntas": [
+    {
+      "nome": "compatibilidade: \"Pergunta 17 -\" ainda acha a coluna pelo começo do nome",
+      "colunas": [
+        "Pergunta 9 - Você possui registro profissional ativo, junto ao respectivo Conselho Regional de Classe da sua área de formação?(obrigatória comprovação na pergunta poster",
+        "Pergunta 11 - Experiência Profissional em atividades compatíveis com o cargo: (contabilizada a partir de 06 meses completos, sem sobreposição de tempo, excedente ao perí",
+        "Pergunta 12 - Anexe o comprovante de Experiência Profissional em atividades compatíveis com o cargo.Comprovante de experiência profissional: Se vínculo perante empresa p",
+        "Pergunta 13 - Qual seu Nível de Titulação Acadêmica?(será necessária a comprovação)Considera-se a maior titulação apresentada:Especialização: 05 pontosMestrado: 08 ponto",
+        "Pergunta 17 - Indique qual sistema de concorrência você deseja se inscrever?",
+        "Pergunta 19 - Candidatos&nbsp;concorrendo às vagas destinadas a Pretos ou Pardos, grave um vídeo, em fundo branco, com duração máxima de 20 segundos, apresentando o seu"
+      ],
+      "pergunta": "Pergunta 17 -",
+      "esperado": {
+        "coluna": "Pergunta 17 - Indique qual sistema de concorrência você deseja se inscrever?",
+        "ambigua": false
+      }
+    },
+    {
+      "nome": "93/2026 Médico: \"Experiência Profissional\" é a Pergunta 11",
+      "colunas": [
+        "Pergunta 9 - Você possui registro profissional ativo, junto ao respectivo Conselho Regional de Classe da sua área de formação?(obrigatória comprovação na pergunta poster",
+        "Pergunta 11 - Experiência Profissional em atividades compatíveis com o cargo: (contabilizada a partir de 06 meses completos, sem sobreposição de tempo, excedente ao perí",
+        "Pergunta 12 - Anexe o comprovante de Experiência Profissional em atividades compatíveis com o cargo.Comprovante de experiência profissional: Se vínculo perante empresa p",
+        "Pergunta 13 - Qual seu Nível de Titulação Acadêmica?(será necessária a comprovação)Considera-se a maior titulação apresentada:Especialização: 05 pontosMestrado: 08 ponto",
+        "Pergunta 17 - Indique qual sistema de concorrência você deseja se inscrever?",
+        "Pergunta 19 - Candidatos&nbsp;concorrendo às vagas destinadas a Pretos ou Pardos, grave um vídeo, em fundo branco, com duração máxima de 20 segundos, apresentando o seu"
+      ],
+      "pergunta": "Experiência Profissional",
+      "esperado": {
+        "coluna": "Pergunta 11 - Experiência Profissional em atividades compatíveis com o cargo: (contabilizada a partir de 06 meses completos, sem sobreposição de tempo, excedente ao perí",
+        "ambigua": false
+      }
+    },
+    {
+      "nome": "93/2026 Téc. Enfermagem: a mesma pergunta é a 12",
+      "colunas": [
+        "Pergunta 12 - Experiência Profissional em atividades compatíveis com o cargo:Será necessário comprovar(contabilizada a partir de 6 meses completos, sem sobreposição de t",
+        "Pergunta 13 - Anexe o comprovante de Experiência Profissional em atividades compatíveis com o cargo.Comprovante de experiência profissional: Se vínculo perante empresa p",
+        "Pergunta 16 - Indique qual sistema de concorrência você deseja se inscrever?",
+        "Pergunta 17 - Candidatos às vagas destinadas a Pretos ou Pardos e QuilombolasAnexe, neste campo, a autodeclaração conforme o modelo constante no Anexo IV do Edital.Impor"
+      ],
+      "pergunta": "Experiência Profissional",
+      "esperado": {
+        "coluna": "Pergunta 12 - Experiência Profissional em atividades compatíveis com o cargo:Será necessário comprovar(contabilizada a partir de 6 meses completos, sem sobreposição de t",
+        "ambigua": false
+      }
+    },
+    {
+      "nome": "93/2026 Téc. Segurança: a mesma pergunta é a 10",
+      "colunas": [
+        "Pergunta 10 - Experiência Profissional em atividades compatíveis com o cargo:Será necessário comprovar(contabilizada a partir de 6 meses completos, sem sobreposição de t",
+        "Pergunta 11 - Anexe o comprovante de Experiência Profissional em atividades compatíveis com o cargo.Comprovante de experiência profissional: Se vínculo perante empresa p",
+        "Pergunta 14 - Indique qual sistema de concorrência você deseja se inscrever?"
+      ],
+      "pergunta": "Experiência Profissional",
+      "esperado": {
+        "coluna": "Pergunta 10 - Experiência Profissional em atividades compatíveis com o cargo:Será necessário comprovar(contabilizada a partir de 6 meses completos, sem sobreposição de t",
+        "ambigua": false
+      }
+    },
+    {
+      "nome": "sem acento, sem caixa e com espaços a mais",
+      "colunas": [
+        "Pergunta 10 - Experiência Profissional em atividades compatíveis com o cargo:Será necessário comprovar(contabilizada a partir de 6 meses completos, sem sobreposição de t",
+        "Pergunta 11 - Anexe o comprovante de Experiência Profissional em atividades compatíveis com o cargo.Comprovante de experiência profissional: Se vínculo perante empresa p",
+        "Pergunta 14 - Indique qual sistema de concorrência você deseja se inscrever?"
+      ],
+      "pergunta": "  experiencia   PROFISSIONAL em atividades ",
+      "esperado": {
+        "coluna": "Pergunta 10 - Experiência Profissional em atividades compatíveis com o cargo:Será necessário comprovar(contabilizada a partir de 6 meses completos, sem sobreposição de t",
+        "ambigua": false
+      }
+    },
+    {
+      "nome": "\"Anexe o comprovante de Experiência…\" só acha o anexo",
+      "colunas": [
+        "Pergunta 9 - Você possui registro profissional ativo, junto ao respectivo Conselho Regional de Classe da sua área de formação?(obrigatória comprovação na pergunta poster",
+        "Pergunta 11 - Experiência Profissional em atividades compatíveis com o cargo: (contabilizada a partir de 06 meses completos, sem sobreposição de tempo, excedente ao perí",
+        "Pergunta 12 - Anexe o comprovante de Experiência Profissional em atividades compatíveis com o cargo.Comprovante de experiência profissional: Se vínculo perante empresa p",
+        "Pergunta 13 - Qual seu Nível de Titulação Acadêmica?(será necessária a comprovação)Considera-se a maior titulação apresentada:Especialização: 05 pontosMestrado: 08 ponto",
+        "Pergunta 17 - Indique qual sistema de concorrência você deseja se inscrever?",
+        "Pergunta 19 - Candidatos&nbsp;concorrendo às vagas destinadas a Pretos ou Pardos, grave um vídeo, em fundo branco, com duração máxima de 20 segundos, apresentando o seu"
+      ],
+      "pergunta": "Anexe o comprovante de Experiência Profissional",
+      "esperado": {
+        "coluna": "Pergunta 12 - Anexe o comprovante de Experiência Profissional em atividades compatíveis com o cargo.Comprovante de experiência profissional: Se vínculo perante empresa p",
+        "ambigua": false
+      }
+    },
+    {
+      "nome": "o &nbsp; do enunciado vale como espaço",
+      "colunas": [
+        "Pergunta 9 - Você possui registro profissional ativo, junto ao respectivo Conselho Regional de Classe da sua área de formação?(obrigatória comprovação na pergunta poster",
+        "Pergunta 11 - Experiência Profissional em atividades compatíveis com o cargo: (contabilizada a partir de 06 meses completos, sem sobreposição de tempo, excedente ao perí",
+        "Pergunta 12 - Anexe o comprovante de Experiência Profissional em atividades compatíveis com o cargo.Comprovante de experiência profissional: Se vínculo perante empresa p",
+        "Pergunta 13 - Qual seu Nível de Titulação Acadêmica?(será necessária a comprovação)Considera-se a maior titulação apresentada:Especialização: 05 pontosMestrado: 08 ponto",
+        "Pergunta 17 - Indique qual sistema de concorrência você deseja se inscrever?",
+        "Pergunta 19 - Candidatos&nbsp;concorrendo às vagas destinadas a Pretos ou Pardos, grave um vídeo, em fundo branco, com duração máxima de 20 segundos, apresentando o seu"
+      ],
+      "pergunta": "Candidatos concorrendo às vagas destinadas a Pretos ou Pardos, grave",
+      "esperado": {
+        "coluna": "Pergunta 19 - Candidatos&nbsp;concorrendo às vagas destinadas a Pretos ou Pardos, grave um vídeo, em fundo branco, com duração máxima de 20 segundos, apresentando o seu",
+        "ambigua": false
+      }
+    },
+    {
+      "nome": "enunciado colado na observação",
+      "colunas": [
+        "Pergunta 9 - Você possui registro profissional ativo, junto ao respectivo Conselho Regional de Classe da sua área de formação?(obrigatória comprovação na pergunta poster",
+        "Pergunta 11 - Experiência Profissional em atividades compatíveis com o cargo: (contabilizada a partir de 06 meses completos, sem sobreposição de tempo, excedente ao perí",
+        "Pergunta 12 - Anexe o comprovante de Experiência Profissional em atividades compatíveis com o cargo.Comprovante de experiência profissional: Se vínculo perante empresa p",
+        "Pergunta 13 - Qual seu Nível de Titulação Acadêmica?(será necessária a comprovação)Considera-se a maior titulação apresentada:Especialização: 05 pontosMestrado: 08 ponto",
+        "Pergunta 17 - Indique qual sistema de concorrência você deseja se inscrever?",
+        "Pergunta 19 - Candidatos&nbsp;concorrendo às vagas destinadas a Pretos ou Pardos, grave um vídeo, em fundo branco, com duração máxima de 20 segundos, apresentando o seu"
+      ],
+      "pergunta": "Qual seu Nível de Titulação Acadêmica?",
+      "esperado": {
+        "coluna": "Pergunta 13 - Qual seu Nível de Titulação Acadêmica?(será necessária a comprovação)Considera-se a maior titulação apresentada:Especialização: 05 pontosMestrado: 08 ponto",
+        "ambigua": false
+      }
+    },
+    {
+      "nome": "\"Indique qual sistema de concorrência\" é a 16 nesta vaga",
+      "colunas": [
+        "Pergunta 12 - Experiência Profissional em atividades compatíveis com o cargo:Será necessário comprovar(contabilizada a partir de 6 meses completos, sem sobreposição de t",
+        "Pergunta 13 - Anexe o comprovante de Experiência Profissional em atividades compatíveis com o cargo.Comprovante de experiência profissional: Se vínculo perante empresa p",
+        "Pergunta 16 - Indique qual sistema de concorrência você deseja se inscrever?",
+        "Pergunta 17 - Candidatos às vagas destinadas a Pretos ou Pardos e QuilombolasAnexe, neste campo, a autodeclaração conforme o modelo constante no Anexo IV do Edital.Impor"
+      ],
+      "pergunta": "Indique qual sistema de concorrência",
+      "esperado": {
+        "coluna": "Pergunta 16 - Indique qual sistema de concorrência você deseja se inscrever?",
+        "ambigua": false
+      }
+    },
+    {
+      "nome": "ambígua: casa com duas colunas, não vale nenhuma",
+      "colunas": [
+        "Pergunta 10 - Experiência Profissional em atividades compatíveis com o cargo:Será necessário comprovar(contabilizada a partir de 6 meses completos, sem sobreposição de t",
+        "Pergunta 11 - Anexe o comprovante de Experiência Profissional em atividades compatíveis com o cargo.Comprovante de experiência profissional: Se vínculo perante empresa p",
+        "Pergunta 14 - Indique qual sistema de concorrência você deseja se inscrever?",
+        "Pergunta 15 - Experiência Profissional em Saúde Indígena"
+      ],
+      "pergunta": "Experiência Profissional",
+      "esperado": {
+        "coluna": null,
+        "ambigua": true
+      }
+    },
+    {
+      "nome": "ambígua pelo nome: \"Pergunta 1\" sem o traço casa com a 10, a 11 e a 14",
+      "colunas": [
+        "Pergunta 10 - Experiência Profissional em atividades compatíveis com o cargo:Será necessário comprovar(contabilizada a partir de 6 meses completos, sem sobreposição de t",
+        "Pergunta 11 - Anexe o comprovante de Experiência Profissional em atividades compatíveis com o cargo.Comprovante de experiência profissional: Se vínculo perante empresa p",
+        "Pergunta 14 - Indique qual sistema de concorrência você deseja se inscrever?"
+      ],
+      "pergunta": "Pergunta 1",
+      "esperado": {
+        "coluna": null,
+        "ambigua": true
+      }
+    },
+    {
+      "nome": "nenhuma coluna casa",
+      "colunas": [
+        "Pergunta 12 - Experiência Profissional em atividades compatíveis com o cargo:Será necessário comprovar(contabilizada a partir de 6 meses completos, sem sobreposição de t",
+        "Pergunta 13 - Anexe o comprovante de Experiência Profissional em atividades compatíveis com o cargo.Comprovante de experiência profissional: Se vínculo perante empresa p",
+        "Pergunta 16 - Indique qual sistema de concorrência você deseja se inscrever?",
+        "Pergunta 17 - Candidatos às vagas destinadas a Pretos ou Pardos e QuilombolasAnexe, neste campo, a autodeclaração conforme o modelo constante no Anexo IV do Edital.Impor"
+      ],
+      "pergunta": "Qual seu Nível de Titulação",
+      "esperado": {
+        "coluna": null,
+        "ambigua": false
+      }
+    },
+    {
+      "nome": "Saúde Indígena: a lista de alternativas acha a experiência no questionário 1",
+      "colunas": [
+        "Pergunta 6 - Você é indígena e mora em aldeia?(será necessária a comprovação)Ser Indígena: 8 pontosResidir em Aldeia: 6 pontosMáximo: 14 pontos",
+        "Pergunta 17 - Selecione sua Experiência Profissional na área/vaga em que concorre:(0,2 ponto por mês)&nbsp;Pontuação máxima: 10 pontos.",
+        "Pergunta 18 - Anexe o comprovante de Experiência Profissional na vaga em que concorre:Serão aceitos comprovante de acordo com o item 8.15 do edital e suas respectivas al"
+      ],
+      "pergunta": [
+        "Selecione sua Experiência Profissional",
+        "Marque a pontuação referente a sua experiência profissional",
+        "Marque a pontuação referente à experiência profissional"
+      ],
+      "esperado": {
+        "coluna": "Pergunta 17 - Selecione sua Experiência Profissional na área/vaga em que concorre:(0,2 ponto por mês)&nbsp;Pontuação máxima: 10 pontos.",
+        "ambigua": false
+      }
+    },
+    {
+      "nome": "Saúde Indígena: a lista de alternativas acha a experiência no questionário 2",
+      "colunas": [
+        "Pergunta 6 - Você é indígena e mora em aldeia?(será necessária a comprovação)Ser Indígena: 8 pontosResidir em Aldeia: 6 pontosMáximo: 14 pontos",
+        "Pergunta 17 - Marque a pontuação referente a sua experiência profissional na vaga em que concorre",
+        "Pergunta 18 - Anexe o comprovante de Experiência Profissional na vaga em que concorre:Serão aceitos comprovante de acordo com o item 8.15 do edital e suas respectivas al"
+      ],
+      "pergunta": [
+        "Selecione sua Experiência Profissional",
+        "Marque a pontuação referente a sua experiência profissional",
+        "Marque a pontuação referente à experiência profissional"
+      ],
+      "esperado": {
+        "coluna": "Pergunta 17 - Marque a pontuação referente a sua experiência profissional na vaga em que concorre",
+        "ambigua": false
+      }
+    },
+    {
+      "nome": "Saúde Indígena: a lista de alternativas acha a experiência no questionário 3",
+      "colunas": [
+        "Pergunta 6 - Você é indígena e mora em aldeia?(será necessária a comprovação)Ser Indígena: 8 pontosResidir em Aldeia: 6 pontosMáximo: 14 pontos",
+        "Pergunta 17 - Marque a pontuação referente à experiência profissional que você possui na área",
+        "Pergunta 18 - Anexe o comprovante de Experiência Profissional na vaga em que concorre:Serão aceitos comprovante de acordo com o item 8.15 do edital e suas respectivas al"
+      ],
+      "pergunta": [
+        "Selecione sua Experiência Profissional",
+        "Marque a pontuação referente a sua experiência profissional",
+        "Marque a pontuação referente à experiência profissional"
+      ],
+      "esperado": {
+        "coluna": "Pergunta 17 - Marque a pontuação referente à experiência profissional que você possui na área",
+        "ambigua": false
+      }
+    },
+    {
+      "nome": "lista de alternativas que casa com duas colunas é ambígua",
+      "colunas": [
+        "Pergunta 6 - Você é indígena e mora em aldeia?(será necessária a comprovação)Ser Indígena: 8 pontosResidir em Aldeia: 6 pontosMáximo: 14 pontos",
+        "Pergunta 17 - Selecione sua Experiência Profissional na área/vaga em que concorre:(0,2 ponto por mês)&nbsp;Pontuação máxima: 10 pontos.",
+        "Pergunta 18 - Anexe o comprovante de Experiência Profissional na vaga em que concorre:Serão aceitos comprovante de acordo com o item 8.15 do edital e suas respectivas al",
+        "Pergunta 19 - Marque a pontuação referente a sua experiência profissional na vaga em que concorre"
+      ],
+      "pergunta": [
+        "Selecione sua Experiência Profissional",
+        "Marque a pontuação referente a sua experiência profissional",
+        "Marque a pontuação referente à experiência profissional"
+      ],
+      "esperado": {
+        "coluna": null,
+        "ambigua": true
+      }
+    }
+  ],
+  "respostas": {
+    "texto": [
+      ["\"1 ano\"", "1 ano"],
+      ["\"Não possuo\"", "Não possuo"],
+      ["\"6 meses obrigatórios&nbsp;\"", "6 meses obrigatórios"],
+      ["--", ""],
+      ["Resposta não informada", ""],
+      ["\" \"", ""],
+      ["Anexo", "Anexo"],
+      ["FINALIZADO", "FINALIZADO"],
+      [null, ""]
+    ],
+    "opcoes": [
+      [
+        "\"Sou indígena\", \"Moro em aldeia\"",
+        ["Sou indígena", "Moro em aldeia"]
+      ],
+      ["\"Sou indígena\"", ["Sou indígena"]],
+      ["Sou indígena; Moro em aldeia", ["Sou indígena", "Moro em aldeia"]],
+      ["\"Não se aplica\"", ["Não se aplica"]],
+      ["\" \"", []],
+      ["--", []]
+    ],
+    "mesma_opcao": [
+      [
+        "\"Certificado de conclusão de nível médio porinstituição reconhecida pelo MEC\"",
+        "Certificado de conclusão de nível médio por instituição reconhecida pelo MEC",
+        true
+      ],
+      ["\"1 ano&nbsp;\"", "1 ano", true],
+      ["\"Especialização\"", "especializacao", true],
+      ["\"Mestrado\"", "Especialização", false]
+    ],
+    "meses": [
+      ["\"6 meses obrigatórios\"", 6],
+      ["\"6 meses obrigatórios&nbsp;\"", 6],
+      ["\"1 ano\"", 12],
+      ["\"1 ano e 6 meses\"", 18],
+      ["\"1 anos e 6 meses\"", 18],
+      ["\"4 anos ou mais\"", 48],
+      ["\"5 anos e 6 meses ou mais\"", 66],
+      ["\"1 mês\"", 1],
+      ["\"3 meses\"", 3],
+      ["\"1 ano e 10 meses\"", 22],
+      ["\"2 anos e 1 mês\"", 25],
+      ["\"4 anos e 2 meses\"", 50],
+      ["\"Não possuo\"", 0],
+      ["--", null],
+      ["De 1 a 2 anos", 12]
+    ],
+    "art": [
+      ["45,0/50,0", 45],
+      ["\"20,5/30,0\"", 20.5],
+      ["--", null]
+    ]
+  }
 }

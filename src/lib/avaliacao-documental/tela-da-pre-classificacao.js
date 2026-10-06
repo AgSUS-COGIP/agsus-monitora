@@ -8,7 +8,10 @@
   resultado que o job Python gravou. Aqui não se recalcula ninguém.
 */
 import { normalizarRegraAnalise } from "./regra.js";
-import { tamanhoDoLote } from "./pre-classificacao.js";
+import {
+  PREFIXO_DO_AVISO_DE_PERGUNTA_AMBIGUA,
+  tamanhoDoLote,
+} from "./pre-classificacao.js";
 
 const lista = (v) => (Array.isArray(v) ? v : []);
 const numero = (v) => (Number.isFinite(Number(v)) ? Number(v) : 0);
@@ -32,7 +35,18 @@ export function textoDoAviso(codigo) {
   const c = String(codigo ?? "");
   if (c.startsWith("COLUNA_AUSENTE:"))
     return `A coluna da regra ${c.slice(15)} não veio no arquivo.`;
+  if (c.startsWith(PREFIXO_DO_AVISO_DE_PERGUNTA_AMBIGUA))
+    return `${perguntaDoAviso(c.slice(PREFIXO_DO_AVISO_DE_PERGUNTA_AMBIGUA.length))} casa com mais de uma coluna do arquivo: na regra, use um começo de enunciado que só ela tenha.`;
   return AVISOS_DA_VAGA[c] ?? c;
+}
+
+function perguntaDoAviso(origem) {
+  if (origem === "MODALIDADE") return "A pergunta do sistema de concorrência";
+  if (origem === "EXPERIENCIA_DECLARADA")
+    return "A pergunta de experiência do desempate";
+  if (origem.startsWith("NOTA_"))
+    return `A pergunta da nota declarada ${origem.slice(5)}`;
+  return `A pergunta da eliminação ${origem}`;
 }
 
 /** Por que a última execução não tratou o edital (situação gravada pelo job). */

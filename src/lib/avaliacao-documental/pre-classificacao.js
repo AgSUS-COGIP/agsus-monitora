@@ -21,6 +21,9 @@
     a faixa respondida em provisoria.pergunta_experiencia, em meses —,
     MAIOR_IDADE ou MAIS_VELHO, CANDIDATURA) e o código do candidato;
   - a nota declarada só confere a ART: divergência além da tolerância é aviso;
+  - as perguntas da regra são achadas pelo começo do enunciado (ou do nome da
+    coluna; ver nota-declarada.js): a que casa com mais de uma coluna não vale
+    e vira o aviso PERGUNTA_AMBIGUA:<de onde>;
   - lote: o tamanho da vaga (lote.por_vaga), o número fixo, a nota mínima
     (NOTA_MINIMA: entram todos os não eliminados com a nota ≥
     lote.nota_minima, como o item 8.2.6 do 93/2026) ou o múltiplo das
@@ -36,13 +39,17 @@ import { codigosDaModalidade } from "../classificacao/catalogo.js";
 import { DESEMPATE_PADRAO_DA_PROVISORIA } from "./catalogo.js";
 import {
   calcularNotaDeclarada,
+  chaveDaOpcao,
   colunaDaPergunta,
   divergeDaArt,
   lerArt,
   normalizarTexto,
+  perguntaAmbigua,
+  textoDaResposta,
 } from "./nota-declarada.js";
 
 export const PREFIXO_DA_ART = "NOTA - ";
+export const PREFIXO_DO_AVISO_DE_PERGUNTA_AMBIGUA = "PERGUNTA_AMBIGUA:";
 export const SAIU_DA_EMPREGARE = Object.freeze({
   codigo: "SAIU_DA_EMPREGARE",
   motivo: "Saiu do arquivo da Empregare",
@@ -79,8 +86,35 @@ function valoresDaFonte(regraDeEliminacao, colunas) {
     const alvo = normalizarTexto(regraDeEliminacao.coluna_prefixo);
     return nomes.filter((n) => normalizarTexto(n).startsWith(alvo));
   }
+  // Pergunta ambígua: null (nem ausente nem lida; o aviso é PERGUNTA_AMBIGUA).
+  if (perguntaAmbigua(colunas, regraDeEliminacao.pergunta)) return null;
   const coluna = colunaDaPergunta(colunas, regraDeEliminacao.pergunta);
   return coluna ? [coluna] : [];
+}
+
+/**
+ * As perguntas da regra que casam com mais de uma coluna do candidato, como
+ * os códigos dos avisos da vaga: PERGUNTA_AMBIGUA:<código da eliminação>,
+ * PERGUNTA_AMBIGUA:NOTA_<parcial>, PERGUNTA_AMBIGUA:MODALIDADE e
+ * PERGUNTA_AMBIGUA:EXPERIENCIA_DECLARADA (só quando o desempate a usa).
+ */
+export function perguntasAmbiguas(regra, colunas, perguntaDaExperiencia) {
+  const provisoria = regra?.provisoria ?? {};
+  const bloco = lista(regra?.blocos).find((b) => b?.codigo === "MODALIDADE");
+  const fontes = [
+    ...lista(provisoria.eliminacao_automatica)
+      .filter((e) => !e?.coluna && !e?.coluna_prefixo)
+      .map((e) => [e.codigo, e.pergunta]),
+    ...lista(provisoria.nota_declarada).map((i) => [
+      `NOTA_${i?.parcial ?? ""}`,
+      i?.pergunta,
+    ]),
+    ["MODALIDADE", lista(bloco?.perguntas)[0]],
+    ["EXPERIENCIA_DECLARADA", perguntaDaExperiencia],
+  ];
+  return fontes
+    .filter(([, pergunta]) => pergunta && perguntaAmbigua(colunas, pergunta))
+    .map(([codigo]) => `${PREFIXO_DO_AVISO_DE_PERGUNTA_AMBIGUA}${codigo}`);
 }
 
 /**
@@ -92,14 +126,15 @@ export function eliminacaoDoCandidato(regra, colunas) {
   const ausentes = [];
   for (const e of lista(regra?.provisoria?.eliminacao_automatica)) {
     const nomes = valoresDaFonte(e, colunas);
+    if (nomes === null) continue;
     if (!nomes.length) {
       ausentes.push(e.codigo);
       continue;
     }
-    const quando = lista(e.quando).map(normalizarTexto);
-    const exceto = lista(e.exceto).map(normalizarTexto);
+    const quando = lista(e.quando).map(chaveDaOpcao);
+    const exceto = lista(e.exceto).map(chaveDaOpcao);
     const elimina = nomes.some((nome) => {
-      const valor = normalizarTexto(colunas[nome]);
+      const valor = chaveDaOpcao(colunas[nome]);
       if (quando.length && quando.includes(valor)) return true;
       return exceto.length > 0 && !exceto.includes(valor);
     });
@@ -147,13 +182,16 @@ const vezes = (multiplo, n) => Math.ceil(multiplo * n - 1e-9);
 
 /**
  * Os meses de experiência de uma resposta da Empregare ("De 1 a 2 anos" → 12,
- * "Mais de 5 anos" → 60, "6 meses" → 6, "Sem experiência" → 0): o limite de
- * baixo da faixa; null quando não dá para ler.
+ * "Mais de 5 anos" → 60, "6 meses obrigatórios" → 6, "\"1 ano e 6 meses\"" →
+ * 18, "4 anos e 2 meses" → 50, "Não possuo" → 0): o limite de baixo da
+ * faixa; null quando não dá para ler ("--").
  */
 export function mesesDeclarados(valor) {
   if (typeof valor === "number") return Number.isFinite(valor) ? valor : null;
-  const texto = normalizarTexto(valor);
+  const texto = normalizarTexto(textoDaResposta(valor));
   if (!texto) return null;
+  const anosEMeses = /(\d+) anos? e (\d+) mes(es)?\b/.exec(texto);
+  if (anosEMeses) return Number(anosEMeses[1]) * 12 + Number(anosEMeses[2]);
   const numero = /(\d+(?:[.,]\d+)?)/.exec(texto);
   if (!numero)
     return /\b(sem|nenhum|nenhuma|nao possuo|nao tenho)\b/.test(texto)
@@ -353,6 +391,12 @@ export function preClassificarVaga({
         for (const codigo of r.ausentes) avisos.add(`COLUNA_AUSENTE:${codigo}`);
       }
     }
+    for (const aviso of perguntasAmbiguas(
+      regra,
+      colunas,
+      perguntaDaExperiencia,
+    ))
+      avisos.add(aviso);
     const art = artDasColunas(colunas);
     const declarada = temDeclarada
       ? calcularNotaDeclarada(regra, colunas)

@@ -1,5 +1,5 @@
 {
-  "sobre": "Casos dourados dos modelos lidos dos editais recentes (docs/analises-no-monitora/regras-dos-editais-recentes.md). Os modelos ficam em tests/fixtures/avaliacao-documental/modelos/<CODIGO>.json, iguais aos de supabase/correcoes/20261006-modelos-dos-editais-recentes.sql (e, o PROJ26-RIO-DOCE, aos de 20261006-modelo-proj26-rio-doce.sql). 'pontuacao' roda em src/lib/avaliacao-documental/pontuacao.js (tests/modelos-dos-editais-recentes.test.js); 'lote' e 'provisoria' rodam no JS e na conta oficial em Python (tests/python/test_modelos_dos_editais_recentes.py). Dados fictícios; 'conta' explica o número esperado.",
+  "sobre": "Casos dourados dos modelos lidos dos editais recentes (docs/analises-no-monitora/regras-dos-editais-recentes.md). Os modelos ficam em tests/fixtures/avaliacao-documental/modelos/<CODIGO>.json, iguais aos de supabase/correcoes/20261006-modelos-dos-editais-recentes.sql (e, o PROJ26-RIO-DOCE, aos de 20261006-modelo-proj26-rio-doce.sql), com 20261007-perguntas-pelo-texto.sql por cima; o PROJ26-CURRICULAR é o do banco com a mesma correção. 'provisoria_pelo_enunciado' usa colunas e respostas no formato real da Empregare (aspas, &nbsp;, '--'). 'pontuacao' roda em src/lib/avaliacao-documental/pontuacao.js (tests/modelos-dos-editais-recentes.test.js); 'lote' e 'provisoria' rodam no JS e na conta oficial em Python (tests/python/test_modelos_dos_editais_recentes.py). Dados fictícios; 'conta' explica o número esperado.",
   "pontuacao": [
     {
       "nome": "Alagoas e Sergipe: superior indígena de aldeia, três títulos e 24 meses",
@@ -587,5 +587,225 @@
       }
     }
   ],
-  "hoje": "2026-10-06"
+  "hoje": "2026-10-06",
+  "hoje_pelo_enunciado": "2026-10-07",
+  "provisoria_pelo_enunciado": [
+    {
+      "nome": "93/2026: a experiência é a Pergunta 10, 11 ou 12 conforme a vaga (e a 17 é cota ou sistema de concorrência); o anexo do comprovante não confunde; respostas entre aspas, com &nbsp;, \"--\" e o erro \"1 anos e 6 meses\"",
+      "modelo": "PROJ26-CURRICULAR",
+      "vaga": {
+        "codigo": "900114",
+        "vagas_imediatas": 1,
+        "cadastro_reserva": true,
+        "modalidades": null
+      },
+      "candidatos": [
+        {
+          "id": "d01",
+          "codigo": "9300001",
+          "ativo": true,
+          "nascimento": "1990-01-01",
+          "candidatura": "2026-09-20T12:00:00+00:00",
+          "colunas": {
+            "SITUAÇÃO": "INSCRITO",
+            "SITUAÇÃO - EDITAL N° 932026 - TEC. DE S": "FINALIZADO",
+            "NOTA - EDITAL N° 932026 - TEC. DE S": "20,0/50,0",
+            "REPROVADO": "NÃO",
+            "NOTA FIT COMPORTAMENTAL": "--",
+            "Pergunta 10 - Experiência Profissional em atividades compatíveis com o cargo:Será necessário comprovar(contabilizada a partir de 6 meses completos, sem sobreposição de t": "\"1 ano e 6 meses\"",
+            "Pergunta 11 - Anexe o comprovante de Experiência Profissional em atividades compatíveis com o cargo.Comprovante de experiência profissional: Se vínculo perante empresa p": "Anexo",
+            "Pergunta 14 - Indique qual sistema de concorrência você deseja se inscrever?": "\"Ampla Concorrência\""
+          }
+        },
+        {
+          "id": "d02",
+          "codigo": "9300002",
+          "ativo": true,
+          "nascimento": "1992-01-01",
+          "candidatura": "2026-09-20T12:00:00+00:00",
+          "colunas": {
+            "SITUAÇÃO": "INSCRITO",
+            "SITUAÇÃO - TÉCNICO DE ENFERMAGEM DO TR": "FINALIZADO",
+            "NOTA - TÉCNICO DE ENFERMAGEM DO TR": "20,0/50,0",
+            "REPROVADO": "NÃO",
+            "NOTA FIT COMPORTAMENTAL": "--",
+            "Pergunta 12 - Experiência Profissional em atividades compatíveis com o cargo:Será necessário comprovar(contabilizada a partir de 6 meses completos, sem sobreposição de t": "\"5 anos e 6 meses ou mais\"",
+            "Pergunta 13 - Anexe o comprovante de Experiência Profissional em atividades compatíveis com o cargo.Comprovante de experiência profissional: Se vínculo perante empresa p": "Anexo",
+            "Pergunta 16 - Indique qual sistema de concorrência você deseja se inscrever?": "\"Pretos ou Pardos\"",
+            "Pergunta 17 - Candidatos às vagas destinadas a Pretos ou Pardos e QuilombolasAnexe, neste campo, a autodeclaração conforme o modelo constante no Anexo IV do Edital.Impor": "Anexo"
+          }
+        },
+        {
+          "id": "d03",
+          "codigo": "9300003",
+          "ativo": true,
+          "nascimento": "1980-01-01",
+          "candidatura": "2026-09-20T12:00:00+00:00",
+          "colunas": {
+            "SITUAÇÃO": "INSCRITO",
+            "SITUAÇÃO - Nº 932026 - NÍVEL SUPER": "FINALIZADO",
+            "NOTA - Nº 932026 - NÍVEL SUPER": "20,0/50,0",
+            "REPROVADO": "NÃO",
+            "NOTA FIT COMPORTAMENTAL": "--",
+            "Pergunta 11 - Experiência Profissional em atividades compatíveis com o cargo: (contabilizada a partir de 06 meses completos, sem sobreposição de tempo, excedente ao perí": "\"6 meses obrigatórios&nbsp;\"",
+            "Pergunta 12 - Anexe o comprovante de Experiência Profissional em atividades compatíveis com o cargo.Comprovante de experiência profissional: Se vínculo perante empresa p": "Anexo",
+            "Pergunta 17 - Indique qual sistema de concorrência você deseja se inscrever?": "\"Ampla Concorrência\""
+          }
+        },
+        {
+          "id": "d04",
+          "codigo": "9300004",
+          "ativo": true,
+          "nascimento": "1985-01-01",
+          "candidatura": "2026-09-20T12:00:00+00:00",
+          "colunas": {
+            "SITUAÇÃO": "INSCRITO",
+            "SITUAÇÃO - NÍVEL SUPERIOR ENGEN": "FINALIZADO",
+            "NOTA - NÍVEL SUPERIOR ENGEN": "20,0/50,0",
+            "REPROVADO": "NÃO",
+            "NOTA FIT COMPORTAMENTAL": "--",
+            "Pergunta 11 - Experiência Profissional em atividades compatíveis com o cargo:(contabilizada a partir de 06 meses completos, sem sobreposição de tempo, excedente ao perío": "\"1 anos e 6 meses\"",
+            "Pergunta 12 - Anexe o comprovante de Experiência Profissional em atividades compatíveis com o cargo.Comprovante de experiência profissional: Se vínculo perante empresa p": "Anexo",
+            "Pergunta 17 - Indique qual sistema de concorrência você deseja se inscrever?": "\"Ampla Concorrência\""
+          }
+        },
+        {
+          "id": "d05",
+          "codigo": "9300005",
+          "ativo": true,
+          "nascimento": "1960-01-01",
+          "candidatura": "2026-09-20T12:00:00+00:00",
+          "colunas": {
+            "SITUAÇÃO": "INSCRITO",
+            "SITUAÇÃO - NÍVEL SUPERIOR ENFER": "FINALIZADO",
+            "NOTA - NÍVEL SUPERIOR ENFER": "20,0/50,0",
+            "REPROVADO": "NÃO",
+            "NOTA FIT COMPORTAMENTAL": "--",
+            "Pergunta 11 - Experiência Profissional em atividades compatíveis com o cargo:(contabilizada a partir de 06 meses completos, sem sobreposição de tempo, excedente ao perío": "--",
+            "Pergunta 12 - Anexe o comprovante de Experiência Profissional em atividades compatíveis com o cargo.Comprovante de experiência profissional: Se vínculo perante empresa p": "Resposta não informada",
+            "Pergunta 17 - Indique qual sistema de concorrência você deseja se inscrever?": "\"Ampla Concorrência\""
+          }
+        },
+        {
+          "id": "d06",
+          "codigo": "9300006",
+          "ativo": true,
+          "nascimento": "1991-01-01",
+          "candidatura": "2026-09-20T12:00:00+00:00",
+          "colunas": {
+            "SITUAÇÃO": "INSCRITO",
+            "SITUAÇÃO - NÍVEL SUPERIOR ENFER": "EM ANDAMENTO",
+            "NOTA - NÍVEL SUPERIOR ENFER": "--",
+            "REPROVADO": "NÃO",
+            "NOTA FIT COMPORTAMENTAL": "--",
+            "Pergunta 11 - Experiência Profissional em atividades compatíveis com o cargo:(contabilizada a partir de 06 meses completos)": "\"4 anos ou mais\""
+          }
+        },
+        {
+          "id": "d07",
+          "codigo": "9300007",
+          "ativo": true,
+          "nascimento": "1993-01-01",
+          "candidatura": "2026-09-20T12:00:00+00:00",
+          "colunas": {
+            "SITUAÇÃO": "CANCELADO",
+            "SITUAÇÃO - NÍVEL SUPERIOR ENFER": "FINALIZADO",
+            "NOTA - NÍVEL SUPERIOR ENFER": "20,0/50,0",
+            "REPROVADO": "NÃO",
+            "NOTA FIT COMPORTAMENTAL": "--",
+            "Pergunta 11 - Experiência Profissional em atividades compatíveis com o cargo:(contabilizada a partir de 06 meses completos)": "\"4 anos ou mais\""
+          }
+        }
+      ],
+      "conta": "d05 idoso (60+) primeiro; depois a experiência: d02 66 meses, d04 e d01 18 meses (empate: maior idade, d04 de 1985), d03 6 meses; d06 não finalizou e d07 cancelou",
+      "esperado": {
+        "posicoes": {
+          "d01": 4,
+          "d02": 2,
+          "d03": 5,
+          "d04": 3,
+          "d05": 1,
+          "d06": null,
+          "d07": null
+        },
+        "eliminados": {
+          "d06": "QUESTIONARIO",
+          "d07": "CANCELADO"
+        },
+        "avisos": []
+      }
+    },
+    {
+      "nome": "114/2026: a experiência é a Pergunta 7, 9 ou 11 conforme o cargo",
+      "modelo": "PROJ26-RIO-DOCE",
+      "vaga": {
+        "codigo": "900114",
+        "vagas_imediatas": 1,
+        "cadastro_reserva": true,
+        "modalidades": null
+      },
+      "candidatos": [
+        {
+          "id": "m01",
+          "codigo": "1140001",
+          "ativo": true,
+          "nascimento": "1990-01-01",
+          "candidatura": "2026-09-20T12:00:00+00:00",
+          "colunas": {
+            "SITUAÇÃO": "INSCRITO",
+            "SITUAÇÃO - MOTORISTA D": "FINALIZADO",
+            "NOTA - MOTORISTA D": "20,0/50,0",
+            "REPROVADO": "NÃO",
+            "NOTA FIT COMPORTAMENTAL": "--",
+            "Pergunta 7 - Você possui CNH categoria D vigente?": "\"Sim\"",
+            "Pergunta 11 - Experiência Profissional na área em que concorre, conforme requisitos do Edital:": "\"2 anos\"",
+            "Pergunta 12 - Anexe o comprovante de Experiência Profissional na área em que concorre": "Anexo",
+            "Pergunta 13 - Você possui Certificado de capacitação ou treinamento específico para condução, manejo e operação de Unidade Móvel de Controle da Qualidade da Água – UMCQA": "\"Sim\""
+          }
+        },
+        {
+          "id": "m02",
+          "codigo": "1140002",
+          "ativo": true,
+          "nascimento": "1991-01-01",
+          "candidatura": "2026-09-20T12:00:00+00:00",
+          "colunas": {
+            "SITUAÇÃO": "INSCRITO",
+            "SITUAÇÃO - NÍVEL TÉCNICO": "FINALIZADO",
+            "NOTA - NÍVEL TÉCNICO": "20,0/50,0",
+            "REPROVADO": "NÃO",
+            "NOTA FIT COMPORTAMENTAL": "--",
+            "Pergunta 9 - Experiência Profissional na área em que concorre, conforme requisitos do Edital:": "\"4 anos ou mais\"",
+            "Pergunta 10 - Anexe o comprovante de Experiência Profissional na área em que concorre": "Anexo"
+          }
+        },
+        {
+          "id": "m03",
+          "codigo": "1140003",
+          "ativo": true,
+          "nascimento": "1970-01-01",
+          "candidatura": "2026-09-20T12:00:00+00:00",
+          "colunas": {
+            "SITUAÇÃO": "INSCRITO",
+            "SITUAÇÃO - NÍVEL MÉDIO": "FINALIZADO",
+            "NOTA - NÍVEL MÉDIO": "20,0/50,0",
+            "REPROVADO": "NÃO",
+            "NOTA FIT COMPORTAMENTAL": "--",
+            "Pergunta 7 - Experiência Profissional na área em que concorre, conforme requisitos do Edital:": "\"1 ano&nbsp;\"",
+            "Pergunta 8 - Anexe o comprovante de Experiência Profissional na área em que concorre": "Anexo"
+          }
+        }
+      ],
+      "conta": "ninguém com 60+; m02 48 meses, m01 24, m03 12",
+      "esperado": {
+        "posicoes": {
+          "m01": 2,
+          "m02": 1,
+          "m03": 3
+        },
+        "eliminados": {},
+        "avisos": []
+      }
+    }
+  ]
 }
