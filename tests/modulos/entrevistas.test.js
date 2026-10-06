@@ -973,6 +973,63 @@ describe("visões de condução e roteiros", () => {
     ]);
   });
 
+  it("enquanto as notas são gravadas, a ficha não aceita digitação e Recarregar e Convocar ficam desativados", async () => {
+    let liberar;
+    const supabase = supabaseDaConducao({
+      respostas: {
+        lancar_notas_entrevista: () =>
+          new Promise((resolver) => {
+            liberar = () => resolver({ data: EDITAL, error: null });
+          }),
+      },
+    });
+    await montar(supabase);
+    await abrirEdital();
+    await clicar(
+      document.querySelector("#entrevistasFicha tr.entrevistas-linha"),
+    );
+    const ficha = document.getElementById("entrevistasFichaDoCandidato");
+    const celulas = ficha.querySelectorAll("select.entrevistas-nota");
+    await escolher(celulas[0], "4");
+    expect(botao("Recarregar").disabled).toBe(false);
+    expect(document.getElementById("entrevistasConvocar").disabled).toBe(false);
+    await clicar(ficha.querySelector('button[type="submit"]'));
+    expect([...celulas].every((c) => c.disabled)).toBe(true);
+    expect(
+      [...ficha.querySelectorAll(".ui-segmentado button")].every(
+        (b) => b.disabled,
+      ),
+    ).toBe(true);
+    expect(botao("Recarregar").disabled).toBe(true);
+    expect(document.getElementById("entrevistasConvocar").disabled).toBe(true);
+    await act(async () => liberar());
+    await esperar();
+    expect([...celulas].some((c) => c.disabled)).toBe(false);
+    expect(botao("Recarregar").disabled).toBe(false);
+  });
+
+  it("roteiros indisponíveis: avisa e não relê a cada volta à visão", async () => {
+    const supabase = supabaseDaConducao({
+      respostas: {
+        listar_roteiros_entrevista: () => ({
+          data: null,
+          error: { code: "XX000", message: "falhou" },
+        }),
+      },
+    });
+    await montar(supabase);
+    await clicar(visao("conduzir"));
+    await esperar();
+    expect(naTela("Roteiros indisponíveis")).toBe(true);
+    expect(chamadas(supabase, "listar_roteiros_entrevista")).toHaveLength(1);
+    await clicar(visao("resultados"));
+    await esperar();
+    await clicar(visao("conduzir"));
+    await esperar();
+    expect(chamadas(supabase, "listar_roteiros_entrevista")).toHaveLength(1);
+    expect(naTela("Roteiros indisponíveis")).toBe(true);
+  });
+
   it("modo AVALIADOR: só a coluna do avaliador ligado ao perfil fica aberta", async () => {
     const edital = {
       ...EDITAL,

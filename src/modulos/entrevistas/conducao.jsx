@@ -588,6 +588,7 @@ function PassoDeConvocacao({
   grupos,
   calculo,
   salvando,
+  ocupado,
   aoConvocar,
   aoDesconvocar,
 }) {
@@ -809,7 +810,7 @@ function PassoDeConvocacao({
             className="btn"
             id="entrevistasConvocar"
             data-tour="entrevistas-conduzir-convocar"
-            disabled={!selecao.size || salvando}
+            disabled={!selecao.size || ocupado}
             onClick={() => void aoConvocar([...selecao])}
           >
             <i className="fa-solid fa-bullhorn" aria-hidden="true" />{" "}
@@ -1136,7 +1137,7 @@ export function VisaoDeConducao({ conducao, area, entrevistasDoPainel }) {
             <button
               type="button"
               className="btn secondary entrevistas-botao-alinhado"
-              disabled={e.carregandoEdital}
+              disabled={e.carregandoEdital || Boolean(e.acao)}
               onClick={() => void conducao.recarregarEdital()}
             >
               <i className="fa-solid fa-rotate" aria-hidden="true" /> Recarregar
@@ -1200,6 +1201,7 @@ export function VisaoDeConducao({ conducao, area, entrevistasDoPainel }) {
             grupos={grupos}
             calculo={e.calculo}
             salvando={acao === "convocar" || acao === "desconvocar"}
+            ocupado={Boolean(e.acao)}
             aoConvocar={conducao.convocar}
             aoDesconvocar={conducao.desconvocar}
           />
