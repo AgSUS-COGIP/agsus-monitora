@@ -116,6 +116,23 @@ describe("ordenarPorClassificacao", () => {
       "ZILDA",
     ]);
   });
+
+  it("sem classificação ou sem nota vai para o fim, não vale zero", () => {
+    const linhas = [
+      { nome: "ANA", nota: 8, classificacao: 1 },
+      { nome: "BIA", nota: 8, classificacao: null },
+      { nome: "CAIO", nota: 8, classificacao: "" },
+      { nome: "DORA", nota: null, classificacao: 2 },
+      { nome: "EVA", nota: 0, classificacao: 3 },
+    ];
+    expect(ordenarPorClassificacao(linhas).map((linha) => linha.nome)).toEqual([
+      "ANA",
+      "BIA",
+      "CAIO",
+      "EVA",
+      "DORA",
+    ]);
+  });
 });
 
 describe("montarConvocacaoDaVaga", () => {
