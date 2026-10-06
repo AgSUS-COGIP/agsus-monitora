@@ -41,7 +41,8 @@ módulos, **para** achar o erro antes que ele saia numa lista publicada.
 que nada pessoal vaze no log público do GitHub nem na tela de quem não deveria ver.
 
 - **CF-2.1** — **Dado** vários casos da mesma conferência no mesmo edital, **quando** o job grava,
-  **então** vira um aviso só, com a quantidade e até 20 exemplos.
+  **então** vira um aviso só, com a quantidade, até 20 exemplos e todos os casos (até 5000), cada um
+  só com a análise, o código do candidato, outra referência e o dado que motivou o aviso.
 - **CF-2.2** — **Dado** um exemplo com espaço, `@` ou 11 dígitos seguidos (nome, e-mail, CPF),
   **quando** o job tenta gravar, **então** o job descarta o exemplo e o banco recusa (22023).
 - **CF-2.3** — **Dado** as leituras do job, **quando** devolvem candidatos, **então** vêm só ids,
@@ -67,12 +68,23 @@ topo da minha tela quantos avisos há, **para** corrigir sem procurar.
   Entrevistas, Classificação ou Lista de aprovados, **então** vejo o selo "N avisos" com a cor do
   mais grave; sem aviso, o selo não aparece.
 - **CF-4.2** — **Dado** o selo, **quando** clico, **então** a gaveta lista os avisos do módulo:
-  gravidade, título, onde (edital, área ou vaga), resumo, desde quando, quantidade e os exemplos.
+  gravidade, título, onde (edital, área ou vaga), resumo, desde quando e a quantidade de casos.
 - **CF-4.3** — **Dado** que sou administrador global, **quando** abro Configurações › Status das
   atualizações, **então** vejo o cartão "Avisos de conferência" com todos os avisos e o filtro por
   módulo (com a contagem de cada um).
 - **CF-4.4** — **Dado** que não tenho o módulo, a área ou o edital no meu recorte, **quando** peço
   os avisos, **então** não os vejo; avisos das cargas e sem área, só o administrador global.
+
+- **CF-4.5** — **Dado** um aviso, **quando** abro os casos, **então** vejo todos, 50 por vez, cada
+  um com o código do candidato, o nome, o edital, a vaga, o responsável e o motivo (ex.: data da
+  análise × data da inscrição; no candidato em dois editais, as análises dele em cada edital); o
+  nome só aparece se a análise for da minha área e do meu recorte.
+- **CF-4.6** — **Dado** os casos de um aviso, **quando** busco por código ou nome (sem acento),
+  **então** a lista mostra só os casos que batem; o campo do topo da gaveta busca em todos os avisos.
+- **CF-4.7** — **Dado** um caso das análises, **quando** clico, **então** o Painel das análises
+  abre buscando pelo nome e com a análise aberta (procura em "Todos" se não estiver no escopo atual).
+- **CF-4.8** — **Dado** os casos de um aviso, **quando** clico em "Exportar CSV", **então** baixo
+  todos os casos, com as células protegidas contra fórmula.
 
 ## CF-5 — Ignorar com motivo
 

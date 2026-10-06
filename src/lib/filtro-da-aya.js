@@ -74,7 +74,8 @@ const KPI_DAS_ANALISES = Object.freeze({
 });
 
 /**
- * Análises: os editais (escolha múltipla, pelo valor da linha) e o KPI.
+ * Análises: os editais (escolha múltipla, pelo valor da linha), o KPI e a
+ * busca (o caso de um aviso de conferência busca pelo nome do candidato).
  * Devolve `{ filtros, kpi }`; o KPI fica como estava se a métrica não tem um.
  */
 export function filtrosDasAnalises(atuais, pedido, linhas, kpiAtual = "") {
@@ -86,10 +87,13 @@ export function filtrosDasAnalises(atuais, pedido, linhas, kpiAtual = "") {
     ),
   ];
   const escolhidos = opcoesDoEdital(editais, pedido?.edital);
+  const filtros = escolhidos.length
+    ? { ...atuais, edital: escolhidos }
+    : { ...atuais };
+  const busca = String(pedido?.busca ?? "").trim();
+  if (busca) filtros.busca = busca;
   return {
-    filtros: escolhidos.length
-      ? { ...atuais, edital: escolhidos }
-      : { ...atuais },
+    filtros,
     kpi: KPI_DAS_ANALISES[pedido?.metrica] ?? kpiAtual,
   };
 }
