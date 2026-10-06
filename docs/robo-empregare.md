@@ -12,8 +12,10 @@ roda no GitHub Actions e, para cada vaga:
 1. entra no portal da empresa (`corporate.empregare.com`) com o usuário do robô;
 2. busca a vaga em **Vagas Anunciadas** → Processo Seletivo → **Relatório e Indicadores** →
    **Exportar Candidatos**, com as respostas do questionário e de competência;
-3. espera o arquivo na **Central de Exportações** (até 12 voltas de 30 s) e baixa;
-4. lê o Excel e grava no Supabase (`TB_EMPREGARE_CANDIDATO`, um candidato por vaga, com todas as
+3. enquanto a Empregare gera o arquivo, abre as **candidaturas da vaga** e guarda os links para
+   a ficha da avaliação documental (abaixo);
+4. espera o arquivo na **Central de Exportações** (até 12 voltas de 30 s) e baixa;
+5. lê o Excel e grava no Supabase (`TB_EMPREGARE_CANDIDATO`, um candidato por vaga, com todas as
    colunas originais; log em `TL_SYNC_EMPREGARE`).
 
 É a mesma sequência do robô antigo (repositório privado `COGIP_extracao-empregare`), sem planilha
@@ -61,6 +63,26 @@ execuções seguintes.
   coluna muda.
 - Quem lê (RPC `obter_candidatos_empregare`): Seleção ≥ editor, com a área e o recorte do edital;
   vaga sem edital, só o administrador global.
+
+### Links para a ficha (migration `20261007160000_link_do_candidato_na_empregare.sql`)
+
+O endereço da vaga com o código numérico dá "Sem permissão" na Empregare. Por isso o robô guarda:
+
+- o **identificador interno da vaga** (o trecho de `/empresa/vagas/candidaturas/<id>|`, lido do
+  link "Processo Seletivo" da busca), em `TB_EMPREGARE_VAGA.CO_VAGA_INTERNO`;
+- o **link de detalhes de cada candidato** (`/empresa/curriculo/detalhes?tokenCandidato=…`), em
+  `TB_EMPREGARE_CANDIDATO.DS_LINK_DETALHE`. Ele abre as candidaturas da vaga na aba Todos, carrega
+  a lista inteira (espera até 20 s o AJAX da 1ª página, de 15; rola até o fim enquanto vierem
+  mais, parando após 2 rolagens sem novidade; até 120 s por vaga e 25 min por
+  execução) e casa o `data-pessoa-id` de cada candidato com o código do Excel.
+
+Os tokens podem mudar: cada execução recaptura; sem link novo, fica o anterior. Se a lista falhar,
+o log diz `não consegui ler a lista de candidatos` e a vaga é exportada e gravada do mesmo jeito.
+Os links levam tokens da área logada: só a ficha (`obter_ficha_analise`, para quem pode ver a
+ficha) os devolve; nunca vão para lista, CSV ou log (o log mostra só `N link(s) de candidato` e
+`N com link da Empregare`). Banco sem a migration: o robô grava como antes e avisa. Se o log
+disser `(N com link fora do formato)`, o link traz caractere que a CK `CK_EMPREGCAND_DSLINKDETALHE`
+não aceita: ajuste a CK (migration) e `_LINK_DETALHE` em `navegador_empregare.py` juntos.
 
 ## Segredos a cadastrar (uma vez)
 
@@ -138,17 +160,18 @@ dado de candidato em issue, PR ou log.
 
 ## Quando falha
 
-| O que aparece                                              | O que fazer                                                                                                                                                                              |
-| ---------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `Falta EMPREGARE_EMAIL` / `EMPREGARE_SENHA`                | Cadastre os secrets (acima).                                                                                                                                                             |
-| `A Empregare não aceitou o login`                          | A senha mudou ou o usuário foi bloqueado. Entre no portal com o usuário do robô, acerte e atualize o secret `EMPREGARE_SENHA`. Rode `fumaca`.                                            |
-| `não consegui pedir a exportação` em todas as vagas        | A Empregare mudou a tela (botões, textos ou ids). Rode `fumaca`; se o login passa, os seletores em `scripts/robo-empregare/navegador_empregare.py` (`exportar_vaga`) precisam de ajuste. |
-| `exportação ainda não disponível` até acabar as tentativas | A Empregare demorou a gerar os arquivos. Rode de novo mais tarde (as vagas que faltaram vão primeiro).                                                                                   |
-| `RECUSADA pela trava`                                      | O arquivo veio com menos da metade dos candidatos. Confira a vaga na Empregare; se a redução for real, rode `forcar` com `vagas` = o código.                                             |
-| `Já há uma execução do robô da Empregare em andamento`     | Outra execução está aberta. Espere; uma execução que morreu sem fechar é liberada sozinha depois de 3 h.                                                                                 |
-| `… respondeu 404` com `listar_vagas_empregare`             | A migration `20261005170000_robo_empregare.sql` ainda não foi aplicada.                                                                                                                  |
-| `… respondeu 401`                                          | A `service_role` do Supabase mudou: atualize `SUPABASE_SERVICE_ROLE_KEY`.                                                                                                                |
-| Botão: "O GitHub recusou o pedido"                         | O `GITHUB_DISPATCH_TOKEN` venceu ou não tem "Actions: read and write" no repositório. Gere outro e atualize na Vercel.                                                                   |
+| O que aparece                                              | O que fazer                                                                                                                                                                                                                       |
+| ---------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Falta EMPREGARE_EMAIL` / `EMPREGARE_SENHA`                | Cadastre os secrets (acima).                                                                                                                                                                                                      |
+| `A Empregare não aceitou o login`                          | A senha mudou ou o usuário foi bloqueado. Entre no portal com o usuário do robô, acerte e atualize o secret `EMPREGARE_SENHA`. Rode `fumaca`.                                                                                     |
+| `não consegui pedir a exportação` em todas as vagas        | A Empregare mudou a tela (botões, textos ou ids). Rode `fumaca`; se o login passa, os seletores em `scripts/robo-empregare/navegador_empregare.py` (`exportar_vaga`) precisam de ajuste.                                          |
+| `0 link(s) de candidato` ou `não consegui ler a lista`     | A tela de candidaturas mudou (o `data-pessoa-id` ou o link de detalhes). A exportação não é afetada; ajuste `ler_candidatos_do_html` e os `JS_…` da lista em `navegador_empregare.py`. A ficha cai em "Abrir vagas na Empregare". |
+| `exportação ainda não disponível` até acabar as tentativas | A Empregare demorou a gerar os arquivos. Rode de novo mais tarde (as vagas que faltaram vão primeiro).                                                                                                                            |
+| `RECUSADA pela trava`                                      | O arquivo veio com menos da metade dos candidatos. Confira a vaga na Empregare; se a redução for real, rode `forcar` com `vagas` = o código.                                                                                      |
+| `Já há uma execução do robô da Empregare em andamento`     | Outra execução está aberta. Espere; uma execução que morreu sem fechar é liberada sozinha depois de 3 h.                                                                                                                          |
+| `… respondeu 404` com `listar_vagas_empregare`             | A migration `20261005170000_robo_empregare.sql` ainda não foi aplicada.                                                                                                                                                           |
+| `… respondeu 401`                                          | A `service_role` do Supabase mudou: atualize `SUPABASE_SERVICE_ROLE_KEY`.                                                                                                                                                         |
+| Botão: "O GitHub recusou o pedido"                         | O `GITHUB_DISPATCH_TOKEN` venceu ou não tem "Actions: read and write" no repositório. Gere outro e atualize na Vercel.                                                                                                            |
 
 Situações da execução: **CONCLUIDA** (todas as vagas gravadas), **PARCIAL** (alguma vaga falhou,
 foi recusada ou ficou no meio — o workflow fica vermelho para avisar), **FALHOU** (erro geral ou
@@ -177,7 +200,8 @@ computador: rode-os pelo GitHub.
 - `api/rodar-carga.js` e `src/lib/robos-de-carga.js`: o **Rodar agora** (lista fixa robô →
   workflow, regras do botão).
 - `src/componentes/saude-das-cargas/` e `src/lib/saude-das-cargas.js`: a tela de status.
-- `supabase/migrations/20261005170000_robo_empregare.sql` e `20261006080000_robo_empregare_vagas_do_quadro.sql`
+- `supabase/migrations/20261005170000_robo_empregare.sql`, `20261006080000_robo_empregare_vagas_do_quadro.sql`
+  e `20261007160000_link_do_candidato_na_empregare.sql`
   (vagas também do quadro do edital), cada uma com `ensaios/` e `rollback/`.
 - Testes: `tests/python/test_robo_empregare.py`, `tests/rodar-carga-api.test.js`,
   `tests/robo-empregare-migration.test.js`, `tests/robo-empregare-vagas-do-quadro.test.js`,

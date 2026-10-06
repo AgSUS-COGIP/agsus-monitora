@@ -735,6 +735,11 @@ describe("boas-vindas e marcos do ano", () => {
     });
     const marco = secao.querySelector(".marcos-do-ano");
     expect(marco.textContent).toContain("Saúde Indígena passou de");
+    // E os fogos do marco, com o agradecimento à equipe (o número vai no céu).
+    expect(document.querySelector(".comemoracao").textContent).toContain(
+      "7.500 análises concluídas em 2026. Obrigado, equipe da Saúde Indígena!",
+    );
+    document.querySelector(".comemoracao__fechar").click();
     await clicar(marco.querySelector("button"));
     expect(secao.querySelector(".marcos-do-ano")).toBeNull();
   });

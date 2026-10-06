@@ -4345,6 +4345,602 @@
       }
     },
     {
+      "nome": "nota declarada por nível (93/2026, vaga técnica): a experiência vale +4 por 6 meses e a ART confere; só a declarada completa conta divergência",
+      "historia": "AM-4.3",
+      "regra": {
+        "schema": 1,
+        "titulo_etapa": "Avaliação Documental e de Títulos",
+        "provisoria": {
+          "eliminacao_automatica": [
+            {
+              "codigo": "CANCELADO",
+              "coluna": "SITUAÇÃO",
+              "quando": ["CANCELADO"],
+              "motivo": "Cancelou a inscrição"
+            }
+          ],
+          "nota_declarada": [
+            {
+              "parcial": "FORMACAO",
+              "pergunta": "Qual seu Nível de Titulação Acadêmica",
+              "tipo": "OPCAO",
+              "pontos": {
+                "Especialização": 5,
+                "Mestrado": 8,
+                "Doutorado": 10,
+                "Não possuo": 0
+              }
+            },
+            {
+              "parcial": "CURSOS",
+              "pergunta": "Selecione a pontuação relativa à carga horária de Cursos",
+              "tipo": "OPCAO",
+              "pontos": {
+                "Não possuo": 0,
+                "1 ponto": 1,
+                "2 pontos": 2,
+                "3 pontos": 3,
+                "4 pontos": 4,
+                "5 pontos": 5,
+                "6 pontos": 6,
+                "7 pontos": 7,
+                "8 pontos": 8,
+                "9 pontos": 9,
+                "10 pontos": 10
+              }
+            },
+            {
+              "parcial": "EXPERIENCIA",
+              "pergunta": "Experiência Profissional",
+              "tipo": "OPCAO",
+              "pontos_por_nivel": {
+                "superior": {
+                  "6 meses obrigatórios": 0,
+                  "1 ano": 5,
+                  "1 ano e 6 meses": 10,
+                  "1 anos e 6 meses": 10,
+                  "2 anos": 15,
+                  "2 anos e 6 meses": 20,
+                  "3 anos": 25,
+                  "3 anos e 6 meses": 30,
+                  "4 anos ou mais": 35
+                },
+                "tecnico": {
+                  "6 meses obrigatórios": 0,
+                  "1 ano": 4,
+                  "1 ano e 6 meses": 8,
+                  "1 anos e 6 meses": 8,
+                  "2 anos": 12,
+                  "2 anos e 6 meses": 16,
+                  "3 anos": 20,
+                  "3 anos e 6 meses": 24,
+                  "4 anos": 28,
+                  "4 anos e 6 meses": 32,
+                  "5 anos": 36,
+                  "5 anos e 6 meses ou mais": 40
+                },
+                "medio": {
+                  "6 meses obrigatórios": 0,
+                  "1 ano": 4,
+                  "1 ano e 6 meses": 8,
+                  "1 anos e 6 meses": 8,
+                  "2 anos": 12,
+                  "2 anos e 6 meses": 16,
+                  "3 anos": 20,
+                  "3 anos e 6 meses": 24,
+                  "4 anos": 28,
+                  "4 anos e 6 meses": 32,
+                  "5 anos": 36,
+                  "5 anos e 6 meses ou mais": 40
+                }
+              }
+            }
+          ],
+          "divergencia_tolerancia": 0,
+          "desempate": ["IDOSO", "MAIOR_IDADE"]
+        },
+        "lote": {
+          "base": "FIXO",
+          "multiplo": 1,
+          "fixo": 2,
+          "inclui_cr": false,
+          "por_modalidade": false,
+          "inclui_empatados": false,
+          "linha_anda": true,
+          "publica_reposicao": false
+        },
+        "blocos": [
+          {
+            "codigo": "IDENTIDADE",
+            "titulo": "Identidade",
+            "tipo": "DOCUMENTO",
+            "perguntas": [],
+            "efeitos": {
+              "NAO_CONFORME": "ELIMINA",
+              "NAO_ENVIADO": "ELIMINA"
+            },
+            "motivos": []
+          }
+        ]
+      },
+      "vaga": {
+        "codigo": "180250",
+        "vagas_imediatas": 1,
+        "cadastro_reserva": false,
+        "modalidades": null,
+        "nivel": "tecnico"
+      },
+      "candidatos": [
+        {
+          "id": "t01",
+          "codigo": "9301",
+          "ativo": true,
+          "nascimento": "1980-01-01",
+          "candidatura": "2026-09-20T12:00:00+00:00",
+          "colunas": {
+            "SITUAÇÃO": "INSCRITO",
+            "NOTA - TÉCNICO DE ENFERMAGEM DO TRABALHO - N° 93/2026": "50,0/50,0",
+            "Pergunta 12 - Experiência Profissional em atividades compatíveis com o cargo: (contabilizada a partir de 06 meses completos, sem sobreposição de tempo, excedente ao perí": "\"5 anos e 6 meses ou mais\"",
+            "Pergunta 13 - Anexe o comprovante de Experiência Profissional em atividades compatíveis com o cargo.": "https://exemplo/anexo.pdf",
+            "Pergunta 14 - Selecione a pontuação relativa à carga horária de Cursos de Aperfeiçoamento na área da vaga": "\"10 pontos\""
+          }
+        },
+        {
+          "id": "t02",
+          "codigo": "9302",
+          "ativo": true,
+          "nascimento": "1985-01-01",
+          "candidatura": "2026-09-20T12:00:00+00:00",
+          "colunas": {
+            "SITUAÇÃO": "INSCRITO",
+            "NOTA - TÉCNICO DE ENFERMAGEM DO TRABALHO - N° 93/2026": "48,0/50,0",
+            "Pergunta 12 - Experiência Profissional em atividades compatíveis com o cargo: (contabilizada a partir de 06 meses completos, sem sobreposição de tempo, excedente ao perí": "\"5 anos e 6 meses ou mais\"",
+            "Pergunta 13 - Anexe o comprovante de Experiência Profissional em atividades compatíveis com o cargo.": "https://exemplo/anexo.pdf",
+            "Pergunta 14 - Selecione a pontuação relativa à carga horária de Cursos de Aperfeiçoamento na área da vaga": "\"8 pontos\""
+          }
+        },
+        {
+          "id": "t03",
+          "codigo": "9303",
+          "ativo": true,
+          "nascimento": "1990-01-01",
+          "candidatura": "2026-09-20T12:00:00+00:00",
+          "colunas": {
+            "SITUAÇÃO": "INSCRITO",
+            "NOTA - TÉCNICO DE ENFERMAGEM DO TRABALHO - N° 93/2026": "30,0/50,0",
+            "Pergunta 12 - Experiência Profissional em atividades compatíveis com o cargo: (contabilizada a partir de 06 meses completos, sem sobreposição de tempo, excedente ao perí": "\"1 anos e 6 meses\"",
+            "Pergunta 13 - Anexe o comprovante de Experiência Profissional em atividades compatíveis com o cargo.": "https://exemplo/anexo.pdf",
+            "Pergunta 14 - Selecione a pontuação relativa à carga horária de Cursos de Aperfeiçoamento na área da vaga": "\"4 pontos\""
+          }
+        },
+        {
+          "id": "t04",
+          "codigo": "9304",
+          "ativo": true,
+          "nascimento": "1992-01-01",
+          "candidatura": "2026-09-20T12:00:00+00:00",
+          "colunas": {
+            "SITUAÇÃO": "INSCRITO",
+            "NOTA - TÉCNICO DE ENFERMAGEM DO TRABALHO - N° 93/2026": "20,0/50,0",
+            "Pergunta 12 - Experiência Profissional em atividades compatíveis com o cargo: (contabilizada a partir de 06 meses completos, sem sobreposição de tempo, excedente ao perí": "\"Mais de 10 anos\"",
+            "Pergunta 13 - Anexe o comprovante de Experiência Profissional em atividades compatíveis com o cargo.": "https://exemplo/anexo.pdf",
+            "Pergunta 14 - Selecione a pontuação relativa à carga horária de Cursos de Aperfeiçoamento na área da vaga": "\"2 pontos\""
+          }
+        }
+      ],
+      "anterior": {},
+      "ultimo_lote": 0,
+      "refazer": false,
+      "hoje": "2026-10-07",
+      "esperado": {
+        "linhas": {
+          "t01": {
+            "situacao": "NO_LOTE",
+            "motivo_codigo": null,
+            "posicao": 1,
+            "posicao_modalidade": 1,
+            "lote": 1,
+            "lista_lote": "GERAL",
+            "entrada": "INICIAL",
+            "motivo_entrada": "Lote inicial: 2 (número fixo)",
+            "nota": 50,
+            "origem_nota": "ART",
+            "divergente": false,
+            "modalidade": "AC"
+          },
+          "t02": {
+            "situacao": "NO_LOTE",
+            "motivo_codigo": null,
+            "posicao": 2,
+            "posicao_modalidade": 2,
+            "lote": 1,
+            "lista_lote": "GERAL",
+            "entrada": "INICIAL",
+            "motivo_entrada": "Lote inicial: 2 (número fixo)",
+            "nota": 48,
+            "origem_nota": "ART",
+            "divergente": false,
+            "modalidade": "AC"
+          },
+          "t03": {
+            "situacao": "RANQUEADO",
+            "motivo_codigo": null,
+            "posicao": 3,
+            "posicao_modalidade": 3,
+            "lote": null,
+            "lista_lote": null,
+            "entrada": null,
+            "motivo_entrada": null,
+            "nota": 30,
+            "origem_nota": "ART",
+            "divergente": true,
+            "modalidade": "AC"
+          },
+          "t04": {
+            "situacao": "RANQUEADO",
+            "motivo_codigo": null,
+            "posicao": 4,
+            "posicao_modalidade": 4,
+            "lote": null,
+            "lista_lote": null,
+            "entrada": null,
+            "motivo_entrada": null,
+            "nota": 20,
+            "origem_nota": "ART",
+            "divergente": false,
+            "modalidade": "AC"
+          }
+        },
+        "resumo": {
+          "inscritos": 4,
+          "eliminados": 0,
+          "ranqueados": 4,
+          "no_lote": 2,
+          "tamanho": 2,
+          "descricao": "2 (número fixo)",
+          "por_modalidade": null,
+          "art_corte": 48,
+          "divergencias": 1,
+          "sem_art": 0,
+          "acima_do_corte": 0,
+          "entraram": 2,
+          "lote_novo": 1,
+          "saidas": [],
+          "avisos": []
+        }
+      },
+      "esperado_declarada": {
+        "t01": {
+          "declarada": 50,
+          "parciais": {
+            "FORMACAO": 0,
+            "CURSOS": 10,
+            "EXPERIENCIA": 40
+          }
+        },
+        "t02": {
+          "declarada": 48,
+          "parciais": {
+            "FORMACAO": 0,
+            "CURSOS": 8,
+            "EXPERIENCIA": 40
+          }
+        },
+        "t03": {
+          "declarada": 12,
+          "parciais": {
+            "FORMACAO": 0,
+            "CURSOS": 4,
+            "EXPERIENCIA": 8
+          }
+        },
+        "t04": {
+          "declarada": 2,
+          "parciais": {
+            "FORMACAO": 0,
+            "CURSOS": 2,
+            "EXPERIENCIA": 0
+          }
+        }
+      }
+    },
+    {
+      "nome": "vaga sem nível conhecido: a experiência por nível não soma, vira aviso SEM_NIVEL e ninguém diverge",
+      "historia": "AM-4.3",
+      "regra": {
+        "schema": 1,
+        "titulo_etapa": "Avaliação Documental e de Títulos",
+        "provisoria": {
+          "eliminacao_automatica": [
+            {
+              "codigo": "CANCELADO",
+              "coluna": "SITUAÇÃO",
+              "quando": ["CANCELADO"],
+              "motivo": "Cancelou a inscrição"
+            }
+          ],
+          "nota_declarada": [
+            {
+              "parcial": "FORMACAO",
+              "pergunta": "Qual seu Nível de Titulação Acadêmica",
+              "tipo": "OPCAO",
+              "pontos": {
+                "Especialização": 5,
+                "Mestrado": 8,
+                "Doutorado": 10,
+                "Não possuo": 0
+              }
+            },
+            {
+              "parcial": "CURSOS",
+              "pergunta": "Selecione a pontuação relativa à carga horária de Cursos",
+              "tipo": "OPCAO",
+              "pontos": {
+                "Não possuo": 0,
+                "1 ponto": 1,
+                "2 pontos": 2,
+                "3 pontos": 3,
+                "4 pontos": 4,
+                "5 pontos": 5,
+                "6 pontos": 6,
+                "7 pontos": 7,
+                "8 pontos": 8,
+                "9 pontos": 9,
+                "10 pontos": 10
+              }
+            },
+            {
+              "parcial": "EXPERIENCIA",
+              "pergunta": "Experiência Profissional",
+              "tipo": "OPCAO",
+              "pontos_por_nivel": {
+                "superior": {
+                  "6 meses obrigatórios": 0,
+                  "1 ano": 5,
+                  "1 ano e 6 meses": 10,
+                  "1 anos e 6 meses": 10,
+                  "2 anos": 15,
+                  "2 anos e 6 meses": 20,
+                  "3 anos": 25,
+                  "3 anos e 6 meses": 30,
+                  "4 anos ou mais": 35
+                },
+                "tecnico": {
+                  "6 meses obrigatórios": 0,
+                  "1 ano": 4,
+                  "1 ano e 6 meses": 8,
+                  "1 anos e 6 meses": 8,
+                  "2 anos": 12,
+                  "2 anos e 6 meses": 16,
+                  "3 anos": 20,
+                  "3 anos e 6 meses": 24,
+                  "4 anos": 28,
+                  "4 anos e 6 meses": 32,
+                  "5 anos": 36,
+                  "5 anos e 6 meses ou mais": 40
+                },
+                "medio": {
+                  "6 meses obrigatórios": 0,
+                  "1 ano": 4,
+                  "1 ano e 6 meses": 8,
+                  "1 anos e 6 meses": 8,
+                  "2 anos": 12,
+                  "2 anos e 6 meses": 16,
+                  "3 anos": 20,
+                  "3 anos e 6 meses": 24,
+                  "4 anos": 28,
+                  "4 anos e 6 meses": 32,
+                  "5 anos": 36,
+                  "5 anos e 6 meses ou mais": 40
+                }
+              }
+            }
+          ],
+          "divergencia_tolerancia": 0,
+          "desempate": ["IDOSO", "MAIOR_IDADE"]
+        },
+        "lote": {
+          "base": "FIXO",
+          "multiplo": 1,
+          "fixo": 2,
+          "inclui_cr": false,
+          "por_modalidade": false,
+          "inclui_empatados": false,
+          "linha_anda": true,
+          "publica_reposicao": false
+        },
+        "blocos": [
+          {
+            "codigo": "IDENTIDADE",
+            "titulo": "Identidade",
+            "tipo": "DOCUMENTO",
+            "perguntas": [],
+            "efeitos": {
+              "NAO_CONFORME": "ELIMINA",
+              "NAO_ENVIADO": "ELIMINA"
+            },
+            "motivos": []
+          }
+        ]
+      },
+      "vaga": {
+        "codigo": "180250",
+        "vagas_imediatas": 1,
+        "cadastro_reserva": false,
+        "modalidades": null,
+        "nivel": null
+      },
+      "candidatos": [
+        {
+          "id": "t01",
+          "codigo": "9301",
+          "ativo": true,
+          "nascimento": "1980-01-01",
+          "candidatura": "2026-09-20T12:00:00+00:00",
+          "colunas": {
+            "SITUAÇÃO": "INSCRITO",
+            "NOTA - TÉCNICO DE ENFERMAGEM DO TRABALHO - N° 93/2026": "50,0/50,0",
+            "Pergunta 12 - Experiência Profissional em atividades compatíveis com o cargo: (contabilizada a partir de 06 meses completos, sem sobreposição de tempo, excedente ao perí": "\"5 anos e 6 meses ou mais\"",
+            "Pergunta 13 - Anexe o comprovante de Experiência Profissional em atividades compatíveis com o cargo.": "https://exemplo/anexo.pdf",
+            "Pergunta 14 - Selecione a pontuação relativa à carga horária de Cursos de Aperfeiçoamento na área da vaga": "\"10 pontos\""
+          }
+        },
+        {
+          "id": "t02",
+          "codigo": "9302",
+          "ativo": true,
+          "nascimento": "1985-01-01",
+          "candidatura": "2026-09-20T12:00:00+00:00",
+          "colunas": {
+            "SITUAÇÃO": "INSCRITO",
+            "NOTA - TÉCNICO DE ENFERMAGEM DO TRABALHO - N° 93/2026": "48,0/50,0",
+            "Pergunta 12 - Experiência Profissional em atividades compatíveis com o cargo: (contabilizada a partir de 06 meses completos, sem sobreposição de tempo, excedente ao perí": "\"5 anos e 6 meses ou mais\"",
+            "Pergunta 13 - Anexe o comprovante de Experiência Profissional em atividades compatíveis com o cargo.": "https://exemplo/anexo.pdf",
+            "Pergunta 14 - Selecione a pontuação relativa à carga horária de Cursos de Aperfeiçoamento na área da vaga": "\"8 pontos\""
+          }
+        },
+        {
+          "id": "t03",
+          "codigo": "9303",
+          "ativo": true,
+          "nascimento": "1990-01-01",
+          "candidatura": "2026-09-20T12:00:00+00:00",
+          "colunas": {
+            "SITUAÇÃO": "INSCRITO",
+            "NOTA - TÉCNICO DE ENFERMAGEM DO TRABALHO - N° 93/2026": "30,0/50,0",
+            "Pergunta 12 - Experiência Profissional em atividades compatíveis com o cargo: (contabilizada a partir de 06 meses completos, sem sobreposição de tempo, excedente ao perí": "\"1 anos e 6 meses\"",
+            "Pergunta 13 - Anexe o comprovante de Experiência Profissional em atividades compatíveis com o cargo.": "https://exemplo/anexo.pdf",
+            "Pergunta 14 - Selecione a pontuação relativa à carga horária de Cursos de Aperfeiçoamento na área da vaga": "\"4 pontos\""
+          }
+        },
+        {
+          "id": "t04",
+          "codigo": "9304",
+          "ativo": true,
+          "nascimento": "1992-01-01",
+          "candidatura": "2026-09-20T12:00:00+00:00",
+          "colunas": {
+            "SITUAÇÃO": "INSCRITO",
+            "NOTA - TÉCNICO DE ENFERMAGEM DO TRABALHO - N° 93/2026": "20,0/50,0",
+            "Pergunta 12 - Experiência Profissional em atividades compatíveis com o cargo: (contabilizada a partir de 06 meses completos, sem sobreposição de tempo, excedente ao perí": "\"Mais de 10 anos\"",
+            "Pergunta 13 - Anexe o comprovante de Experiência Profissional em atividades compatíveis com o cargo.": "https://exemplo/anexo.pdf",
+            "Pergunta 14 - Selecione a pontuação relativa à carga horária de Cursos de Aperfeiçoamento na área da vaga": "\"2 pontos\""
+          }
+        }
+      ],
+      "anterior": {},
+      "ultimo_lote": 0,
+      "refazer": false,
+      "hoje": "2026-10-07",
+      "esperado": {
+        "linhas": {
+          "t01": {
+            "situacao": "NO_LOTE",
+            "motivo_codigo": null,
+            "posicao": 1,
+            "posicao_modalidade": 1,
+            "lote": 1,
+            "lista_lote": "GERAL",
+            "entrada": "INICIAL",
+            "motivo_entrada": "Lote inicial: 2 (número fixo)",
+            "nota": 50,
+            "origem_nota": "ART",
+            "divergente": false,
+            "modalidade": "AC"
+          },
+          "t02": {
+            "situacao": "NO_LOTE",
+            "motivo_codigo": null,
+            "posicao": 2,
+            "posicao_modalidade": 2,
+            "lote": 1,
+            "lista_lote": "GERAL",
+            "entrada": "INICIAL",
+            "motivo_entrada": "Lote inicial: 2 (número fixo)",
+            "nota": 48,
+            "origem_nota": "ART",
+            "divergente": false,
+            "modalidade": "AC"
+          },
+          "t03": {
+            "situacao": "RANQUEADO",
+            "motivo_codigo": null,
+            "posicao": 3,
+            "posicao_modalidade": 3,
+            "lote": null,
+            "lista_lote": null,
+            "entrada": null,
+            "motivo_entrada": null,
+            "nota": 30,
+            "origem_nota": "ART",
+            "divergente": false,
+            "modalidade": "AC"
+          },
+          "t04": {
+            "situacao": "RANQUEADO",
+            "motivo_codigo": null,
+            "posicao": 4,
+            "posicao_modalidade": 4,
+            "lote": null,
+            "lista_lote": null,
+            "entrada": null,
+            "motivo_entrada": null,
+            "nota": 20,
+            "origem_nota": "ART",
+            "divergente": false,
+            "modalidade": "AC"
+          }
+        },
+        "resumo": {
+          "inscritos": 4,
+          "eliminados": 0,
+          "ranqueados": 4,
+          "no_lote": 2,
+          "tamanho": 2,
+          "descricao": "2 (número fixo)",
+          "por_modalidade": null,
+          "art_corte": 48,
+          "divergencias": 0,
+          "sem_art": 0,
+          "acima_do_corte": 0,
+          "entraram": 2,
+          "lote_novo": 1,
+          "saidas": [],
+          "avisos": ["SEM_NIVEL:NOTA_EXPERIENCIA"]
+        }
+      },
+      "esperado_declarada": {
+        "t01": {
+          "declarada": 10,
+          "parciais": {
+            "FORMACAO": 0,
+            "CURSOS": 10
+          }
+        },
+        "t02": {
+          "declarada": 8,
+          "parciais": {
+            "FORMACAO": 0,
+            "CURSOS": 8
+          }
+        },
+        "t03": {
+          "declarada": 4,
+          "parciais": {
+            "FORMACAO": 0,
+            "CURSOS": 4
+          }
+        },
+        "t04": {
+          "declarada": 2,
+          "parciais": {
+            "FORMACAO": 0,
+            "CURSOS": 2
+          }
+        }
+      }
+    },
+    {
       "nome": "perguntas pelo enunciado: texto que casa com mais de uma coluna não vale e vira aviso (experiência, termo, nota declarada e modalidade)",
       "historia": "AM-4.2",
       "regra": {
@@ -4836,6 +5432,520 @@
       ["45,0/50,0", 45],
       ["\"20,5/30,0\"", 20.5],
       ["--", null]
+    ]
+  },
+  "nota_declarada_por_nivel": {
+    "sobre": "Nota declarada com pontos por nível (93/2026: experiência +5 a cada 6 meses além dos 6 obrigatórios no nível superior, máx. 35; +4 no técnico e no médio, máx. 40). O mesmo resultado em nota-declarada.js e nota_declarada.py.",
+    "regra": {
+      "schema": 1,
+      "provisoria": {
+        "nota_declarada": [
+          {
+            "parcial": "FORMACAO",
+            "pergunta": "Qual seu Nível de Titulação Acadêmica",
+            "tipo": "OPCAO",
+            "pontos": {
+              "Especialização": 5,
+              "Mestrado": 8,
+              "Doutorado": 10,
+              "Não possuo": 0
+            }
+          },
+          {
+            "parcial": "CURSOS",
+            "pergunta": "Selecione a pontuação relativa à carga horária de Cursos",
+            "tipo": "OPCAO",
+            "pontos": {
+              "Não possuo": 0,
+              "1 ponto": 1,
+              "2 pontos": 2,
+              "3 pontos": 3,
+              "4 pontos": 4,
+              "5 pontos": 5,
+              "6 pontos": 6,
+              "7 pontos": 7,
+              "8 pontos": 8,
+              "9 pontos": 9,
+              "10 pontos": 10
+            }
+          },
+          {
+            "parcial": "EXPERIENCIA",
+            "pergunta": "Experiência Profissional",
+            "tipo": "OPCAO",
+            "pontos_por_nivel": {
+              "superior": {
+                "6 meses obrigatórios": 0,
+                "1 ano": 5,
+                "1 ano e 6 meses": 10,
+                "1 anos e 6 meses": 10,
+                "2 anos": 15,
+                "2 anos e 6 meses": 20,
+                "3 anos": 25,
+                "3 anos e 6 meses": 30,
+                "4 anos ou mais": 35
+              },
+              "tecnico": {
+                "6 meses obrigatórios": 0,
+                "1 ano": 4,
+                "1 ano e 6 meses": 8,
+                "1 anos e 6 meses": 8,
+                "2 anos": 12,
+                "2 anos e 6 meses": 16,
+                "3 anos": 20,
+                "3 anos e 6 meses": 24,
+                "4 anos": 28,
+                "4 anos e 6 meses": 32,
+                "5 anos": 36,
+                "5 anos e 6 meses ou mais": 40
+              },
+              "medio": {
+                "6 meses obrigatórios": 0,
+                "1 ano": 4,
+                "1 ano e 6 meses": 8,
+                "1 anos e 6 meses": 8,
+                "2 anos": 12,
+                "2 anos e 6 meses": 16,
+                "3 anos": 20,
+                "3 anos e 6 meses": 24,
+                "4 anos": 28,
+                "4 anos e 6 meses": 32,
+                "5 anos": 36,
+                "5 anos e 6 meses ou mais": 40
+              }
+            }
+          }
+        ]
+      }
+    },
+    "casos": [
+      {
+        "nome": "técnico real do 93: '5 anos e 6 meses ou mais' + cursos '10 pontos' = 50 (a vaga técnica não pergunta a titulação)",
+        "nivel": "tecnico",
+        "respostas": {
+          "Pergunta 12 - Experiência Profissional em atividades compatíveis com o cargo: (contabilizada a partir de 06 meses completos, sem sobreposição de tempo, excedente ao perí": "\"5 anos e 6 meses ou mais\"",
+          "Pergunta 13 - Anexe o comprovante de Experiência Profissional em atividades compatíveis com o cargo.": "https://exemplo/anexo.pdf",
+          "Pergunta 14 - Selecione a pontuação relativa à carga horária de Cursos de Aperfeiçoamento na área da vaga": "\"10 pontos\"",
+          "NOTA - TÉCNICO DE ENFERMAGEM DO TRABALHO - N° 93/2026": "50,0/50,0"
+        },
+        "esperado": {
+          "total": 50,
+          "parciais": {
+            "FORMACAO": 0,
+            "CURSOS": 10,
+            "EXPERIENCIA": 40
+          },
+          "itens": [
+            {
+              "parcial": "FORMACAO",
+              "pergunta": "Qual seu Nível de Titulação Acadêmica",
+              "coluna": null,
+              "resposta": "",
+              "mapeada": false,
+              "ambigua": false,
+              "nivel_desconhecido": false,
+              "pontos": 0
+            },
+            {
+              "parcial": "CURSOS",
+              "pergunta": "Selecione a pontuação relativa à carga horária de Cursos",
+              "coluna": "Pergunta 14 - Selecione a pontuação relativa à carga horária de Cursos de Aperfeiçoamento na área da vaga",
+              "resposta": "\"10 pontos\"",
+              "mapeada": true,
+              "ambigua": false,
+              "nivel_desconhecido": false,
+              "pontos": 10
+            },
+            {
+              "parcial": "EXPERIENCIA",
+              "pergunta": "Experiência Profissional",
+              "coluna": "Pergunta 12 - Experiência Profissional em atividades compatíveis com o cargo: (contabilizada a partir de 06 meses completos, sem sobreposição de tempo, excedente ao perí",
+              "resposta": "\"5 anos e 6 meses ou mais\"",
+              "mapeada": true,
+              "ambigua": false,
+              "nivel_desconhecido": false,
+              "pontos": 40
+            }
+          ],
+          "sem_mapa": 0,
+          "completa": true
+        }
+      },
+      {
+        "nome": "superior: a mesma faixa vale 5 por 6 meses ('1 anos e 6 meses' = 10, com &nbsp; e aspas)",
+        "nivel": "superior",
+        "respostas": {
+          "Pergunta 10 - Qual seu Nível de Titulação Acadêmica?": "\"Mestrado\"",
+          "Pergunta 12 - Experiência Profissional em atividades compatíveis com o cargo: (contabilizada a partir de 06 meses completos, sem sobreposição de tempo, excedente ao perí": "\"1 anos e 6 meses&nbsp;\"",
+          "Pergunta 14 - Selecione a pontuação relativa à carga horária de Cursos de Aperfeiçoamento na área da vaga": "\"3 pontos\""
+        },
+        "esperado": {
+          "total": 21,
+          "parciais": {
+            "FORMACAO": 8,
+            "CURSOS": 3,
+            "EXPERIENCIA": 10
+          },
+          "itens": [
+            {
+              "parcial": "FORMACAO",
+              "pergunta": "Qual seu Nível de Titulação Acadêmica",
+              "coluna": "Pergunta 10 - Qual seu Nível de Titulação Acadêmica?",
+              "resposta": "\"Mestrado\"",
+              "mapeada": true,
+              "ambigua": false,
+              "nivel_desconhecido": false,
+              "pontos": 8
+            },
+            {
+              "parcial": "CURSOS",
+              "pergunta": "Selecione a pontuação relativa à carga horária de Cursos",
+              "coluna": "Pergunta 14 - Selecione a pontuação relativa à carga horária de Cursos de Aperfeiçoamento na área da vaga",
+              "resposta": "\"3 pontos\"",
+              "mapeada": true,
+              "ambigua": false,
+              "nivel_desconhecido": false,
+              "pontos": 3
+            },
+            {
+              "parcial": "EXPERIENCIA",
+              "pergunta": "Experiência Profissional",
+              "coluna": "Pergunta 12 - Experiência Profissional em atividades compatíveis com o cargo: (contabilizada a partir de 06 meses completos, sem sobreposição de tempo, excedente ao perí",
+              "resposta": "\"1 anos e 6 meses&nbsp;\"",
+              "mapeada": true,
+              "ambigua": false,
+              "nivel_desconhecido": false,
+              "pontos": 10
+            }
+          ],
+          "sem_mapa": 0,
+          "completa": true
+        }
+      },
+      {
+        "nome": "médio: '1 ano' vale 4",
+        "nivel": "medio",
+        "respostas": {
+          "Pergunta 12 - Experiência Profissional em atividades compatíveis com o cargo: (contabilizada a partir de 06 meses completos, sem sobreposição de tempo, excedente ao perí": "\"1 ano&nbsp;\"",
+          "Pergunta 14 - Selecione a pontuação relativa à carga horária de Cursos de Aperfeiçoamento na área da vaga": "\"Não possuo\""
+        },
+        "esperado": {
+          "total": 4,
+          "parciais": {
+            "FORMACAO": 0,
+            "CURSOS": 0,
+            "EXPERIENCIA": 4
+          },
+          "itens": [
+            {
+              "parcial": "FORMACAO",
+              "pergunta": "Qual seu Nível de Titulação Acadêmica",
+              "coluna": null,
+              "resposta": "",
+              "mapeada": false,
+              "ambigua": false,
+              "nivel_desconhecido": false,
+              "pontos": 0
+            },
+            {
+              "parcial": "CURSOS",
+              "pergunta": "Selecione a pontuação relativa à carga horária de Cursos",
+              "coluna": "Pergunta 14 - Selecione a pontuação relativa à carga horária de Cursos de Aperfeiçoamento na área da vaga",
+              "resposta": "\"Não possuo\"",
+              "mapeada": true,
+              "ambigua": false,
+              "nivel_desconhecido": false,
+              "pontos": 0
+            },
+            {
+              "parcial": "EXPERIENCIA",
+              "pergunta": "Experiência Profissional",
+              "coluna": "Pergunta 12 - Experiência Profissional em atividades compatíveis com o cargo: (contabilizada a partir de 06 meses completos, sem sobreposição de tempo, excedente ao perí",
+              "resposta": "\"1 ano&nbsp;\"",
+              "mapeada": true,
+              "ambigua": false,
+              "nivel_desconhecido": false,
+              "pontos": 4
+            }
+          ],
+          "sem_mapa": 0,
+          "completa": true
+        }
+      },
+      {
+        "nome": "sem nível: a experiência respondida não soma e a declarada fica incompleta",
+        "nivel": null,
+        "respostas": {
+          "Pergunta 10 - Qual seu Nível de Titulação Acadêmica?": "\"Especialização\"",
+          "Pergunta 12 - Experiência Profissional em atividades compatíveis com o cargo: (contabilizada a partir de 06 meses completos, sem sobreposição de tempo, excedente ao perí": "\"4 anos ou mais\"",
+          "Pergunta 14 - Selecione a pontuação relativa à carga horária de Cursos de Aperfeiçoamento na área da vaga": "\"2 pontos\""
+        },
+        "esperado": {
+          "total": 7,
+          "parciais": {
+            "FORMACAO": 5,
+            "CURSOS": 2
+          },
+          "itens": [
+            {
+              "parcial": "FORMACAO",
+              "pergunta": "Qual seu Nível de Titulação Acadêmica",
+              "coluna": "Pergunta 10 - Qual seu Nível de Titulação Acadêmica?",
+              "resposta": "\"Especialização\"",
+              "mapeada": true,
+              "ambigua": false,
+              "nivel_desconhecido": false,
+              "pontos": 5
+            },
+            {
+              "parcial": "CURSOS",
+              "pergunta": "Selecione a pontuação relativa à carga horária de Cursos",
+              "coluna": "Pergunta 14 - Selecione a pontuação relativa à carga horária de Cursos de Aperfeiçoamento na área da vaga",
+              "resposta": "\"2 pontos\"",
+              "mapeada": true,
+              "ambigua": false,
+              "nivel_desconhecido": false,
+              "pontos": 2
+            },
+            {
+              "parcial": "EXPERIENCIA",
+              "pergunta": "Experiência Profissional",
+              "coluna": "Pergunta 12 - Experiência Profissional em atividades compatíveis com o cargo: (contabilizada a partir de 06 meses completos, sem sobreposição de tempo, excedente ao perí",
+              "resposta": "\"4 anos ou mais\"",
+              "mapeada": false,
+              "ambigua": false,
+              "nivel_desconhecido": true,
+              "pontos": 0
+            }
+          ],
+          "sem_mapa": 0,
+          "completa": false
+        }
+      },
+      {
+        "nome": "sem nível e sem resposta de experiência ('--'): nada a pontuar, a declarada continua completa",
+        "nivel": null,
+        "respostas": {
+          "Pergunta 10 - Qual seu Nível de Titulação Acadêmica?": "\"Especialização\"",
+          "Pergunta 12 - Experiência Profissional em atividades compatíveis com o cargo: (contabilizada a partir de 06 meses completos, sem sobreposição de tempo, excedente ao perí": "--",
+          "Pergunta 14 - Selecione a pontuação relativa à carga horária de Cursos de Aperfeiçoamento na área da vaga": "\"2 pontos\""
+        },
+        "esperado": {
+          "total": 7,
+          "parciais": {
+            "FORMACAO": 5,
+            "CURSOS": 2,
+            "EXPERIENCIA": 0
+          },
+          "itens": [
+            {
+              "parcial": "FORMACAO",
+              "pergunta": "Qual seu Nível de Titulação Acadêmica",
+              "coluna": "Pergunta 10 - Qual seu Nível de Titulação Acadêmica?",
+              "resposta": "\"Especialização\"",
+              "mapeada": true,
+              "ambigua": false,
+              "nivel_desconhecido": false,
+              "pontos": 5
+            },
+            {
+              "parcial": "CURSOS",
+              "pergunta": "Selecione a pontuação relativa à carga horária de Cursos",
+              "coluna": "Pergunta 14 - Selecione a pontuação relativa à carga horária de Cursos de Aperfeiçoamento na área da vaga",
+              "resposta": "\"2 pontos\"",
+              "mapeada": true,
+              "ambigua": false,
+              "nivel_desconhecido": false,
+              "pontos": 2
+            },
+            {
+              "parcial": "EXPERIENCIA",
+              "pergunta": "Experiência Profissional",
+              "coluna": "Pergunta 12 - Experiência Profissional em atividades compatíveis com o cargo: (contabilizada a partir de 06 meses completos, sem sobreposição de tempo, excedente ao perí",
+              "resposta": "--",
+              "mapeada": false,
+              "ambigua": false,
+              "nivel_desconhecido": false,
+              "pontos": 0
+            }
+          ],
+          "sem_mapa": 0,
+          "completa": true
+        }
+      },
+      {
+        "nome": "fundamental (sem pontos na regra para o nível): fica de fora como sem nível",
+        "nivel": "fundamental",
+        "respostas": {
+          "Pergunta 12 - Experiência Profissional em atividades compatíveis com o cargo: (contabilizada a partir de 06 meses completos, sem sobreposição de tempo, excedente ao perí": "\"2 anos\"",
+          "Pergunta 14 - Selecione a pontuação relativa à carga horária de Cursos de Aperfeiçoamento na área da vaga": "\"1 ponto\""
+        },
+        "esperado": {
+          "total": 1,
+          "parciais": {
+            "FORMACAO": 0,
+            "CURSOS": 1
+          },
+          "itens": [
+            {
+              "parcial": "FORMACAO",
+              "pergunta": "Qual seu Nível de Titulação Acadêmica",
+              "coluna": null,
+              "resposta": "",
+              "mapeada": false,
+              "ambigua": false,
+              "nivel_desconhecido": false,
+              "pontos": 0
+            },
+            {
+              "parcial": "CURSOS",
+              "pergunta": "Selecione a pontuação relativa à carga horária de Cursos",
+              "coluna": "Pergunta 14 - Selecione a pontuação relativa à carga horária de Cursos de Aperfeiçoamento na área da vaga",
+              "resposta": "\"1 ponto\"",
+              "mapeada": true,
+              "ambigua": false,
+              "nivel_desconhecido": false,
+              "pontos": 1
+            },
+            {
+              "parcial": "EXPERIENCIA",
+              "pergunta": "Experiência Profissional",
+              "coluna": "Pergunta 12 - Experiência Profissional em atividades compatíveis com o cargo: (contabilizada a partir de 06 meses completos, sem sobreposição de tempo, excedente ao perí",
+              "resposta": "\"2 anos\"",
+              "mapeada": false,
+              "ambigua": false,
+              "nivel_desconhecido": true,
+              "pontos": 0
+            }
+          ],
+          "sem_mapa": 0,
+          "completa": false
+        }
+      },
+      {
+        "nome": "resposta fora do mapa: sem_mapa e declarada incompleta",
+        "nivel": "superior",
+        "respostas": {
+          "Pergunta 10 - Qual seu Nível de Titulação Acadêmica?": "\"Doutorado\"",
+          "Pergunta 12 - Experiência Profissional em atividades compatíveis com o cargo: (contabilizada a partir de 06 meses completos, sem sobreposição de tempo, excedente ao perí": "\"10 anos\"",
+          "Pergunta 14 - Selecione a pontuação relativa à carga horária de Cursos de Aperfeiçoamento na área da vaga": "\"5 pontos\""
+        },
+        "esperado": {
+          "total": 15,
+          "parciais": {
+            "FORMACAO": 10,
+            "CURSOS": 5,
+            "EXPERIENCIA": 0
+          },
+          "itens": [
+            {
+              "parcial": "FORMACAO",
+              "pergunta": "Qual seu Nível de Titulação Acadêmica",
+              "coluna": "Pergunta 10 - Qual seu Nível de Titulação Acadêmica?",
+              "resposta": "\"Doutorado\"",
+              "mapeada": true,
+              "ambigua": false,
+              "nivel_desconhecido": false,
+              "pontos": 10
+            },
+            {
+              "parcial": "CURSOS",
+              "pergunta": "Selecione a pontuação relativa à carga horária de Cursos",
+              "coluna": "Pergunta 14 - Selecione a pontuação relativa à carga horária de Cursos de Aperfeiçoamento na área da vaga",
+              "resposta": "\"5 pontos\"",
+              "mapeada": true,
+              "ambigua": false,
+              "nivel_desconhecido": false,
+              "pontos": 5
+            },
+            {
+              "parcial": "EXPERIENCIA",
+              "pergunta": "Experiência Profissional",
+              "coluna": "Pergunta 12 - Experiência Profissional em atividades compatíveis com o cargo: (contabilizada a partir de 06 meses completos, sem sobreposição de tempo, excedente ao perí",
+              "resposta": "\"10 anos\"",
+              "mapeada": false,
+              "ambigua": false,
+              "nivel_desconhecido": false,
+              "pontos": 0
+            }
+          ],
+          "sem_mapa": 1,
+          "completa": false
+        }
+      }
+    ]
+  },
+  "niveis_da_vaga": {
+    "sobre": "O nível da vaga para a nota declarada por nível (nivelDaVaga de src/lib/classificacao/vagas.js e nivel_da_vaga do job): termo da regra de classificação, nível escrito no cargo ('(Nível Superior)'), cargo que começa com 'Técnico' e o nível padrão.",
+    "casos": [
+      {
+        "cargo": "ANALISTA DE GESTÃO: MÉDICO DO TRABALHO (Nível Superior)",
+        "documental": {},
+        "esperado": "superior"
+      },
+      {
+        "cargo": "ANALISTA DE GESTÃO: ENFERMEIRO DO TRABALHO (Nível Superior))",
+        "documental": {},
+        "esperado": "superior"
+      },
+      {
+        "cargo": "TÉCNICO DE ENFERMAGEM DO TRABALHO",
+        "documental": {},
+        "esperado": "tecnico"
+      },
+      {
+        "cargo": "TÉCNICO DE SEGURANÇA DO TRABALHO (Nível Médio)",
+        "documental": {},
+        "esperado": "medio"
+      },
+      {
+        "cargo": "Analista Técnico de Saúde Indígena",
+        "documental": {},
+        "esperado": null
+      },
+      {
+        "cargo": "Analista Técnico de Saúde Indígena",
+        "documental": {
+          "nivel_padrao": "superior"
+        },
+        "esperado": "superior"
+      },
+      {
+        "cargo": "Agente de Combate a Endemias",
+        "documental": {
+          "niveis_por_cargo": [
+            {
+              "termo": "Agente",
+              "nivel": "fundamental"
+            }
+          ]
+        },
+        "esperado": "fundamental"
+      },
+      {
+        "cargo": "Técnico de Enfermagem (Nível Superior)",
+        "documental": {
+          "niveis_por_cargo": [
+            {
+              "termo": "Técnico",
+              "nivel": "tecnico"
+            }
+          ]
+        },
+        "esperado": "tecnico"
+      },
+      {
+        "cargo": "",
+        "documental": {
+          "nivel_padrao": "medio"
+        },
+        "esperado": "medio"
+      },
+      {
+        "cargo": null,
+        "documental": {},
+        "esperado": null
+      }
     ]
   }
 }

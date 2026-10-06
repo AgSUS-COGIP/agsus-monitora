@@ -721,12 +721,14 @@ export const VERBETES_AYA = Object.freeze([
       "nota declarada",
       "divergencia da art",
       "respostas encontradas",
+      "pontos por nivel",
+      "experiencia por nivel",
     ],
     resposta:
-      "Para quem coordena, a aba Regra lista as perguntas da última carga do robô da Empregare nas vagas do edital, com as respostas encontradas e quantas vezes cada uma aparece — respostas que aparecem uma vez só não são mostradas, para não expor texto livre. Dali se liga a pergunta a um bloco ou se cria a pontuação da nota declarada: cada resposta vale pontos (ou meses × pontos por mês), por parcial. A nota declarada só confere a ART (a nota do questionário da Empregare); se divergir além da tolerância, vira aviso, e a ordem da Provisória continua pela ART.",
+      'Para quem coordena, a aba Regra lista as perguntas da última carga do robô da Empregare nas vagas do edital, com as respostas encontradas e quantas vezes cada uma aparece — respostas que aparecem uma vez só não são mostradas, para não expor texto livre. Dali se liga a pergunta a um bloco ou se cria a pontuação da nota declarada: cada resposta vale pontos (ou meses × pontos por mês), por parcial. Quando a mesma resposta vale pontos diferentes conforme o nível da vaga, marque "Pontos por nível" na pergunta: aparece uma coluna de pontos para Superior, Técnico e Médio (no 93/2026, "1 ano" de experiência vale 5 no nível superior e 4 no técnico e no médio). O nível sai do nome do cargo da vaga ("(Nível Superior)", "Técnico de…") ou da regra de classificação do edital. Essa nota recalculada (na tela, "Nota recalculada" na aba Regra e a coluna "Recalculada" na Pré-classificação) só confere a ART, a "Nota declarada (ART)" do questionário da Empregare; se divergir além da tolerância, vira aviso, e a ordem da Provisória continua pela ART.',
     fato: "",
     fonte:
-      "src/lib/avaliacao-documental/nota-declarada.js; supabase/migrations/20261006100000_regra_da_analise.sql",
+      "src/lib/avaliacao-documental/nota-declarada.js; supabase/migrations/20261006100000_regra_da_analise.sql; supabase/migrations/20261007140000_declarada_por_nivel.sql",
     abrir: "avaliacao-documental",
   },
   {
@@ -904,12 +906,14 @@ export const VERBETES_AYA = Object.freeze([
       "art x declarada",
       "nota declarada diferente",
       "por que diverge",
+      "muitas divergencias",
+      "nivel da vaga nao identificado",
     ],
     resposta:
-      'A ART (Nota da Autodeclaração de Requisitos e Títulos) é a nota que a Empregare calcula com as respostas do questionário. Se a regra tiver a nota declarada configurada (aba Regra), o sistema recalcula a nota pelas mesmas respostas e compara: diferença acima da tolerância da regra aparece como "diverge" na linha do candidato e no contador "ART × recalculada" (na tabela da vaga, a coluna "Recalculada" ao lado da "Nota declarada (ART)"). É só um aviso para a coordenação conferir o questionário ou a regra; a ordem da Provisória continua pela ART.',
+      'A ART (Nota da Autodeclaração de Requisitos e Títulos) é a nota que a Empregare calcula com as respostas do questionário. Se a regra tiver a nota declarada configurada (aba Regra), o sistema recalcula a nota pelas mesmas respostas e compara: diferença acima da tolerância da regra aparece como "diverge" na linha do candidato e no contador "ART × recalculada" (na tabela da vaga, a coluna "Recalculada" ao lado da "Nota declarada (ART)"). Só compara quando a nota declarada do candidato está completa: toda pergunta da nota declarada achada sem ambiguidade, a resposta dada mapeada na regra e, na pergunta com pontos por nível, o nível da vaga conhecido (resposta em branco, ou pergunta que não existe no questionário da vaga, vale zero, como na ART). Faltando um pedaço, não conta divergência. Se o nível da vaga não for identificado, a pergunta por nível fica fora da conta e a vaga mostra o aviso para conferir o cargo ou a regra de classificação. Muitas divergências de uma vez costumam indicar que falta uma pergunta na nota declarada da regra (no 93/2026, a experiência). É só um aviso para a coordenação conferir o questionário ou a regra; a ordem da Provisória continua pela ART.',
     fato: "",
     fonte:
-      "src/lib/avaliacao-documental/nota-declarada.js; python/monitora/avaliacao_documental/nota_declarada.py",
+      "src/lib/avaliacao-documental/nota-declarada.js; python/monitora/avaliacao_documental/nota_declarada.py; src/lib/avaliacao-documental/pre-classificacao.js",
     abrir: "avaliacao-documental",
   },
   {
@@ -1194,7 +1198,7 @@ export const VERBETES_AYA = Object.freeze([
       "apurado com traco",
     ],
     resposta:
-      'A ficha abre na aba Fila (Pegar próximo ou Abrir). Cada bloco da regra vira um cartão, na ordem da regra: o título, o item do edital e o que o candidato DECLAROU na Empregare (a resposta das perguntas ligadas ao bloco: "Anexo", "4 anos ou mais", "Especialização"…). Os documentos ficam na Empregare: use "Copiar código" e "Abrir vagas na Empregare" (copia o código da vaga: cole na busca de Vagas Anunciadas, abra a vaga e procure o candidato pelo código) para conferir o arquivo. Em cada bloco marque Conforme, Não conforme ou Não enviado; no Não conforme e no Não enviado escolha o motivo na lista. Nos blocos que pontuam, lance os títulos, os cursos (com a carga horária) e os vínculos (com início e fim): os pontos saem na hora pela regra. A lateral mostra a nota ao vivo, o resultado e o parecer. Enquanto falta conferir algum bloco, o resultado fica neutro — "Em análise · 2 de 4 requisitos conferidos" (os requisitos são os blocos que podem eliminar), com a nota parcial — e a coluna Apurado mostra "—" nos blocos ainda não conferidos, sem destacar diferença: a conta trata o bloco não marcado como Conforme e a experiência sem vínculo como abaixo do mínimo, por isso o Inapto só aparece quando um bloco conferido elimina (Não conforme ou Não enviado com efeito eliminatório, ou a experiência conferida abaixo do mínimo). Apto ou Inapto pela nota mínima só com tudo conferido. Marcado, o cartão muda de cor (verde Conforme, vermelho Não conforme, cinza Não enviado), ganha o selo da situação e o botão escolhido fica com o ✓. Cotas e blocos que não valem para o candidato ficam numa linha no fim ("Não se aplicam: …"), que abre ao clicar. Sem resposta na Empregare, o bloco sugere "Não enviado".',
+      'A ficha abre na aba Fila (Pegar próximo ou Abrir). Cada bloco da regra vira um cartão, na ordem da regra: o título, o item do edital e o que o candidato DECLAROU na Empregare (a resposta das perguntas ligadas ao bloco: "Anexo", "4 anos ou mais", "Especialização"…). Os documentos ficam na Empregare (entre logado nela): "Abrir candidato na Empregare" abre direto a página do candidato, pelo link que o robô captura. Sem o link, o botão abre a vaga (e copia o código do candidato para a busca das candidaturas) ou, se nem a vaga foi capturada, "Abrir vagas na Empregare" copia o código da vaga para colar na busca de Vagas Anunciadas; "Copiar código" copia o código do candidato. Em cada bloco marque Conforme, Não conforme ou Não enviado; no Não conforme e no Não enviado escolha o motivo na lista. Nos blocos que pontuam, lance os títulos, os cursos (com a carga horária) e os vínculos (com início e fim): os pontos saem na hora pela regra. A lateral mostra a nota ao vivo, o resultado e o parecer. Enquanto falta conferir algum bloco, o resultado fica neutro — "Em análise · 2 de 4 requisitos conferidos" (os requisitos são os blocos que podem eliminar), com a nota parcial — e a coluna Apurado mostra "—" nos blocos ainda não conferidos, sem destacar diferença: a conta trata o bloco não marcado como Conforme e a experiência sem vínculo como abaixo do mínimo, por isso o Inapto só aparece quando um bloco conferido elimina (Não conforme ou Não enviado com efeito eliminatório, ou a experiência conferida abaixo do mínimo). Apto ou Inapto pela nota mínima só com tudo conferido. Marcado, o cartão muda de cor (verde Conforme, vermelho Não conforme, cinza Não enviado), ganha o selo da situação e o botão escolhido fica com o ✓. Cotas e blocos que não valem para o candidato ficam numa linha no fim ("Não se aplicam: …"), que abre ao clicar. Sem resposta na Empregare, o bloco sugere "Não enviado".',
     fato: "No MONITORA, a ficha mostra o que o candidato declarou na Empregare e calcula a nota pela regra do edital enquanto o analista confere.",
     fonte:
       "src/modulos/avaliacao-documental/ficha/ficha.jsx; src/lib/avaliacao-documental/ficha.js; src/lib/avaliacao-documental/pontuacao.js",
@@ -1233,7 +1237,7 @@ export const VERBETES_AYA = Object.freeze([
       "declarado apurado",
     ],
     resposta:
-      'Em cada bloco que pontua aparecem três números: Declarado (o que a resposta da Empregare vale pela nota declarada da regra), Calculado (o que os itens lançados dão) e Apurado (a nota que vale). O analista pode ajustar o Apurado para menos ou para mais, até o teto do bloco no nível da vaga; "Usar o calculado" volta à conta. Toda nota apurada diferente da declarada pede justificativa: um motivo do bloco ou uma observação pronta da regra (ex.: "Nota de experiência diminuída", "Nota de cursos diminuída", "Experiência anterior à diplomação não é computada") e, se quiser, um complemento. Sem justificativa, o bloco avisa e a ficha não conclui. A lateral destaca a diferença com a justificativa ao lado, e ela entra no parecer. Quem é inapto por requisito não precisa justificar as notas. Bloco sem pergunta mapeada na nota declarada mostra "—" e não pede justificativa.',
+      'Em cada bloco que pontua aparecem três números: Declarado (o que a resposta da Empregare vale pela nota declarada da regra), Calculado (o que os itens lançados dão) e Apurado (a nota que vale). O analista pode ajustar o Apurado para menos ou para mais, até o teto do bloco no nível da vaga; "Usar o calculado" volta à conta. Toda nota apurada diferente da declarada pede justificativa: um motivo do bloco ou uma observação pronta da regra (ex.: "Nota de experiência diminuída", "Nota de cursos diminuída", "Experiência anterior à diplomação não é computada") e, se quiser, um complemento. Sem justificativa, o bloco avisa e a ficha não conclui. A lateral destaca a diferença com a justificativa ao lado, e ela entra no parecer. Quem é inapto por requisito não precisa justificar as notas. Bloco sem pergunta mapeada na nota declarada mostra "—" e não pede justificativa. Na pergunta com pontos por nível (a experiência do 93/2026), o Declarado é o do nível da vaga na ficha; mudar o nível muda o Declarado.',
     fato: "No MONITORA, nota apurada diferente da declarada na ficha exige justificativa padronizada, que vai para o parecer e para o histórico.",
     fonte:
       "src/lib/avaliacao-documental/ficha.js (pendenciasDaFicha, divergenciaDoBloco); supabase/migrations/20261007130000_conteudo_da_ficha.sql (FC_PENDENCIAS_FICHA)",
@@ -4742,14 +4746,19 @@ export const VERBETES_AYA = Object.freeze([
     perguntas: [
       "comemoracoes",
       "confete",
+      "fogos",
+      "fogos de artificio",
       "marcos do ano",
       "o que sao as comemoracoes",
+      "som da comemoracao",
+      "pular comemoracao",
+      "arara nos fogos",
     ],
     resposta:
-      "As comemorações celebram o processo e a equipe, nunca uma pessoa (não há ranking): edital todo analisado e fila de análises zerada, vaga pronta para o resultado final nas Entrevistas, marcos do ano da área (1.000, 2.500, 5.000, 7.500 e 10.000 análises concluídas, depois a cada 5.000) e acesso liberado ou reativado. Aparecem como confete por cerca de 3 segundos e um aviso no topo (só o aviso com movimento reduzido), uma vez por pessoa. Liga e desliga em Módulos e abas › Sistema inteiro; desligado, ninguém vê.",
+      'As comemorações celebram o processo e a equipe, nunca uma pessoa (não há ranking): edital todo analisado e fila de análises zerada, vaga pronta para o resultado final nas Entrevistas, marcos do ano da área (1.000, 2.500, 5.000, 7.500 e 10.000 análises concluídas, depois a cada 5.000) e acesso liberado ou reativado. São fogos de artifício por 5 a 6 segundos: a tela escurece de leve, eu (a arara azul) atravesso voando e solto o primeiro foguete, e o último estouro desenha o marco no céu — o número no marco do ano ("1.000 análises concluídas em 2026. Obrigado, equipe de Projetos!"), um coração no edital todo analisado, uma estrela na fila zerada e um visto no acesso liberado. O aviso no topo tem "Pular" (encerra os fogos na hora) e um botão de som, desligado por padrão: ligado, os estalos só tocam depois de você interagir com a página, e a escolha fica guardada neste navegador. Com movimento reduzido, só o aviso. Cada marco aparece uma vez por pessoa. Liga e desliga em Módulos e abas › Sistema inteiro; desligado, ninguém vê.',
     fato: "",
     fonte:
-      "src/lib/comemoracao.js; supabase/migrations/20260930150000_comemoracoes_e_marcos.sql",
+      "src/lib/comemoracao.js; src/lib/fogos.js; src/lib/fogos-cena.js; src/lib/fogos-formas.js; supabase/migrations/20260930150000_comemoracoes_e_marcos.sql",
   },
   {
     arquivo: "regras-dos-recursos.md",

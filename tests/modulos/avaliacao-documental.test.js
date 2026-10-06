@@ -12,6 +12,7 @@ import {
   digitar,
   escolher,
   esperar,
+  teclar,
 } from "../componentes/interacoes.js";
 
 /*
@@ -325,6 +326,52 @@ describe("regra da avaliação (AM-2)", () => {
     );
     expect(comecoDoEnunciado("SITUAÇÃO")).toBe("SITUAÇÃO");
   });
+
+  it("nota declarada com pontos por nível: uma coluna por nível, salva em pontos_por_nivel", async () => {
+    const supabase = supabaseFalso();
+    await montar(supabase);
+    const grupo = [...secao.querySelectorAll(".avd-subgrupo")].find((g) =>
+      g.querySelector("h3")?.textContent.startsWith("Nota recalculada"),
+    );
+    await clicar(botao("Pergunta pontuada", grupo));
+    const item = [...grupo.querySelectorAll(".avd-declarada")].at(-1);
+    const caixa = [...item.querySelectorAll("label")]
+      .find((l) => l.textContent.includes("Pontos por nível"))
+      .querySelector("input");
+    await clicar(caixa);
+    const rotulo = [...item.querySelectorAll("label")].find((l) =>
+      l.textContent.includes("Pergunta (começo"),
+    );
+    const pergunta = document.getElementById(rotulo.htmlFor);
+    await digitar(pergunta, "Experiência Profissional");
+    const resposta = item.querySelector(
+      "input[placeholder='Texto exato da resposta']",
+    );
+    await digitar(resposta, "1 ano");
+    await teclar(resposta, "Enter");
+    const linha = item.querySelector(".avd-recuo");
+    expect(linha.textContent).toContain("1 ano");
+    expect(linha.textContent).toContain("Superior");
+    expect(linha.textContent).toContain("Técnico");
+    expect(linha.textContent).toContain("Médio");
+    const [superior, tecnico] = linha.querySelectorAll("input");
+    await digitar(superior, "5");
+    await digitar(tecnico, "4");
+    const motivo = [...secao.querySelectorAll(".ui-barra-de-salvar input")][0];
+    await digitar(motivo, "Experiência por nível conforme o edital");
+    await clicar(secao.querySelector("[data-acao='salvar-regra']"));
+    await esperar();
+    const chamada = supabase.rpc.mock.calls.find(
+      ([nome]) => nome === "salvar_regra_analise",
+    );
+    const salvo = chamada[1].p_configuracao.provisoria.nota_declarada.at(-1);
+    expect(salvo.pontos).toBeUndefined();
+    expect(salvo.pontos_por_nivel).toEqual({
+      superior: { "1 ano": 5 },
+      tecnico: { "1 ano": 4 },
+      medio: { "1 ano": 0 },
+    });
+  }, 20000);
 
   it("AM-2.7: a prévia calcula a nota, a situação e o parecer sem gravar", async () => {
     const supabase = supabaseFalso();

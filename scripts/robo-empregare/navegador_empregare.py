@@ -18,12 +18,27 @@ Diferenças do original:
   - nada de nome, e-mail ou CPF no log: só códigos de vaga e contagens.
 
 Tempos e repetições são os do original (TENTATIVAS_CENTRAL, ESPERA_…).
+
+Links para a ficha da avaliação documental (fase F7; migration
+20261007160000_link_do_candidato_na_empregare.sql): ao pedir a exportação, o
+robô guarda o identificador interno da vaga (do link
+/empresa/vagas/candidaturas/<id>|; o código numérico dá "Sem permissão") e,
+em capturar_candidatos, abre as candidaturas da vaga, carrega a lista inteira
+(espera o AJAX da 1ª página e rola até o fim: rolagem infinita) e lê do HTML,
+em cada div.curriculo-list-item, o código de cada
+candidato (data-pessoa-id, o mesmo CÓDIGO do Excel) e o link de detalhes
+(/empresa/curriculo/detalhes?tokenCandidato=…). Lê o DOM, e não o POST
+GetCandidatos, porque o formato desse POST não é público e o DOM é o que a
+tela mostra. Falha aqui só registra aviso: a exportação segue. Os links levam
+tokens de acesso: nunca vão para o log (só contagens).
 """
 
 import os
 import re
 import time
 from datetime import datetime, timedelta
+from html.parser import HTMLParser
+from urllib.parse import unquote
 
 from monitora.mascaramento import resumo_do_erro
 
@@ -31,6 +46,18 @@ URL_BASE = "https://corporate.empregare.com"
 URL_LOGIN = URL_BASE + "/empresa/login"
 URL_VAGAS = URL_BASE + "/empresa/vagas"
 URL_EXPORTACOES = URL_BASE + "/empresa/exportacoes"
+URL_CANDIDATURAS = URL_BASE + "/empresa/vagas/candidaturas/"
+
+# Lista de candidatos da vaga: limites para não prender a execução numa vaga.
+LIMITE_DE_PAGINAS = 100
+LIMITE_DE_ROLAGENS = 300
+RODADAS_SEM_NOVIDADE = 2  # rolagens seguidas sem candidato novo = fim da lista
+ESPERA_PELA_LISTA = 20  # segundos até o AJAX trazer a 1ª página de candidatos
+ESPERA_POR_MAIS = 6  # segundos esperando a rolagem trazer mais candidatos
+INTERVALO_DA_LISTA = 0.5  # segundos entre uma contagem e outra
+TEMPO_LIMITE_DA_LISTA = 120  # segundos por vaga
+ORCAMENTO_DOS_LINKS = 25 * 60  # segundos na execução inteira (o workflow tem 120 min)
+ESPERA_DA_LISTA = 1.5  # segundos depois de rolar ou trocar de página
 
 SITUACAO_DISPONIVEL = "Disponível"
 ORIGEM_EXPORTACAO = "Candidatos da vaga (Excel)"
@@ -65,6 +92,88 @@ const h = document.querySelector('.tabulator-tableholder');
 if (!h) { return [0, 0]; }
 h.scrollTop = arguments[0];
 return [h.scrollTop, h.scrollHeight - h.clientHeight];
+"""
+
+# Lista de candidatos da vaga (candidaturas). Nada aqui devolve dado pessoal ao log:
+# o Python lê só contagens e o HTML, de onde tira código e link.
+# Estrutura do portal (conferida em 10/2026): a lista chega por AJAX depois do load,
+# em div.curriculo-append > div.list-group.candidatura-group#curriculo-pagina-N (15 por
+# página, a seguinte entra ao rolar até o fim); cada candidato é um div.curriculo-list-item
+# com a.link-curriculo (link de detalhes) e li[data-pessoa-id] (o CÓDIGO do Excel).
+SELETOR_ITEM_DA_LISTA = ".curriculo-list-item"
+SELETOR_LINK_DA_LISTA = ".curriculo-list-item a.link-curriculo"
+SELETOR_LINK_DETALHE = 'a[href*="/empresa/curriculo/detalhes"]'
+
+JS_CONTAR_LINKS = f"""
+const daLista = document.querySelectorAll('{SELETOR_LINK_DA_LISTA}').length;
+return daLista || document.querySelectorAll('{SELETOR_LINK_DETALHE}').length;
+"""
+
+JS_PRIMEIRO_LINK = f"""
+const a = document.querySelector('{SELETOR_LINK_DETALHE}');
+return a ? a.getAttribute('href') : '';
+"""
+
+JS_ABA_TODOS = """
+const abas = document.querySelectorAll(
+  '.nav a, .nav button, [role="tablist"] a, [role="tablist"] button, [role="tab"], .nav-tabs a, .tabs a'
+);
+for (const aba of abas) {
+  const texto = (aba.textContent || '').replace(/\\s+/g, ' ').trim();
+  if (!/^todos\\b/i.test(texto)) { continue; }
+  const item = aba.closest('li');
+  const ativa = aba.classList.contains('active') || aba.getAttribute('aria-selected') === 'true'
+    || (item && item.classList.contains('active'));
+  if (!ativa) { aba.click(); return true; }
+  return false;
+}
+return false;
+"""
+
+JS_ROLAR_LISTA = f"""
+const itens = document.querySelectorAll('{SELETOR_ITEM_DA_LISTA}');
+if (itens.length) {{ itens[itens.length - 1].scrollIntoView({{block: 'end'}}); }}
+window.scrollTo(0, Math.max(document.body.scrollHeight, document.documentElement.scrollHeight));
+const vistos = new Set();
+document.querySelectorAll('{SELETOR_LINK_DETALHE}').forEach(function (a) {{
+  let p = a.parentElement;
+  while (p && p !== document.body) {{
+    if (!vistos.has(p) && p.scrollHeight > p.clientHeight + 10
+        && /(auto|scroll)/.test(getComputedStyle(p).overflowY)) {{
+      vistos.add(p);
+      p.scrollTop = p.scrollHeight;
+    }}
+    p = p.parentElement;
+  }}
+}});
+const mais = Array.from(document.querySelectorAll('button, a')).find(function (b) {{
+  const t = (b.textContent || '').replace(/\\s+/g, ' ').trim().toLowerCase();
+  return b.offsetParent !== null && !b.disabled
+    && /^(carregar|ver|mostrar|exibir) mais/.test(t);
+}});
+if (mais) {{ mais.click(); return true; }}
+return false;
+"""
+
+JS_PROXIMA_PAGINA = """
+const desabilitado = function (el) {
+  const item = el.closest('li');
+  return el.disabled || el.classList.contains('disabled') || el.getAttribute('aria-disabled') === 'true'
+    || (item && item.classList.contains('disabled'));
+};
+const opcoes = Array.from(document.querySelectorAll(
+  'a[rel="next"], .pagination .next a, .pagination li.next a, .pagination a, .pagination button, '
+  + '[aria-label*="róxim" i], .paginate_button.next'
+));
+const proxima = opcoes.find(function (el) {
+  if (desabilitado(el) || el.offsetParent === null) { return false; }
+  const t = (el.textContent || '').replace(/\\s+/g, ' ').trim().toLowerCase();
+  const rotulo = (el.getAttribute('aria-label') || '').toLowerCase();
+  return el.getAttribute('rel') === 'next' || el.matches('.next a, li.next a, .paginate_button.next')
+    || /^(próxim[ao]|seguinte|›|»|>)$/.test(t) || /próxim/.test(rotulo);
+});
+if (proxima) { proxima.click(); return true; }
+return false;
 """
 
 
@@ -123,6 +232,230 @@ def escolher_exportacao(linhas, codigo, desde=None):
     return escolhida, "ok"
 
 
+# ── Links da vaga e dos candidatos: regras puras ────────────────────────────
+
+_CAMINHO_CANDIDATURAS = re.compile(r"/empresa/vagas/candidaturas/([^/?#\s\"'<>]+)(?=$|[/?#\s\"'])")
+# Mesmo formato que o banco aceita (CK_EMPREGVAGA_COVAGAINTERNO).
+_ID_INTERNO = re.compile(r"^[A-Za-z0-9_.~=-]{1,96}\|{0,3}$")
+_SO_CODIGO = re.compile(r"^[0-9]+\|*$")
+# Mesmo formato que o banco aceita (CK_EMPREGCAND_DSLINKDETALHE).
+_LINK_DETALHE = re.compile(r"^https://corporate\.empregare\.com/empresa/curriculo/detalhes\?[A-Za-z0-9_.~=&%|+/:-]+$")
+_CODIGO_DO_CANDIDATO = re.compile(r"^[A-Za-z0-9._-]{1,60}$")
+_TAGS_SEM_FIM = {"area", "base", "br", "col", "embed", "hr", "img", "input", "link", "meta", "source", "track", "wbr"}
+
+
+def id_interno_da_vaga(endereco):
+    """
+    '/empresa/vagas/candidaturas/Ab1cD2eF3g|?m=2' → 'Ab1cD2eF3g|'. O código
+    numérico (que dá "Sem permissão") ou outro formato → None.
+    """
+    m = _CAMINHO_CANDIDATURAS.search(unquote(str(endereco or "")))
+    if not m:
+        return None
+    ident = m.group(1)
+    if _SO_CODIGO.match(ident) or not _ID_INTERNO.match(ident):
+        return None
+    return ident
+
+
+def link_de_detalhe(endereco):
+    """Link absoluto da página de detalhes do candidato, ou None se não for um."""
+    texto = str(endereco or "").strip()
+    if texto.startswith("/"):
+        texto = URL_BASE + texto
+    if len(texto) > 600 or "tokenCandidato=" not in texto or not _LINK_DETALHE.match(texto):
+        return None
+    return texto
+
+
+class _Arvore(HTMLParser):
+    """Árvore mínima do HTML (tag, atributos, filhos, pai), tolerante a tag sem fim."""
+
+    def __init__(self):
+        super().__init__(convert_charrefs=True)
+        self.raiz = {"tag": "#raiz", "attrs": {}, "filhos": [], "pai": None}
+        self.atual = self.raiz
+
+    def handle_starttag(self, tag, attrs):
+        no = {"tag": tag, "attrs": dict(attrs), "filhos": [], "pai": self.atual}
+        self.atual["filhos"].append(no)
+        if tag not in _TAGS_SEM_FIM:
+            self.atual = no
+
+    def handle_startendtag(self, tag, attrs):
+        self.atual["filhos"].append({"tag": tag, "attrs": dict(attrs), "filhos": [], "pai": self.atual})
+
+    def handle_endtag(self, tag):
+        no = self.atual
+        while no is not None and no["tag"] != tag:
+            no = no["pai"]
+        if no is not None and no["pai"] is not None:
+            self.atual = no["pai"]
+
+
+def _classes(no):
+    return (no["attrs"].get("class") or "").split()
+
+
+def _descendentes(no):
+    pilha = list(reversed(no["filhos"]))
+    while pilha:
+        atual = pilha.pop()
+        yield atual
+        pilha.extend(reversed(atual["filhos"]))
+
+
+def _codigo_do_no(no):
+    return (no["attrs"].get("data-pessoa-id") or no["attrs"].get("data-pessoaid") or "").strip()
+
+
+def ler_lista_de_candidatos(html):
+    """
+    Candidatos da lista de candidaturas: ([{"codigo", "link"}], descartados), na
+    ordem da página. Com a estrutura do portal (div.curriculo-list-item), cada
+    item dá um par: o href do a.link-curriculo e o data-pessoa-id do li do mesmo
+    item. Sem ela, a leitura genérica. `descartados` = itens com link fora do
+    formato aceito pelo banco (só para contar no log).
+    """
+    arvore = _Arvore()
+    arvore.feed(str(html or ""))
+    arvore.close()
+    itens = [n for n in _descendentes(arvore.raiz) if "curriculo-list-item" in _classes(n)]
+    if not itens:
+        return _ler_generico(arvore), 0
+    candidatos = []
+    descartados = 0
+    for item in itens:
+        dentro = list(_descendentes(item))
+        ancoras = [n for n in dentro if n["tag"] == "a" and "link-curriculo" in _classes(n)] or [
+            n for n in dentro if n["tag"] == "a" and "/empresa/curriculo/detalhes" in (n["attrs"].get("href") or "")
+        ]
+        if not ancoras:
+            continue
+        link = link_de_detalhe(ancoras[0]["attrs"].get("href"))
+        codigos = {c for c in (_codigo_do_no(n) for n in [item, *dentro]) if c}
+        codigo = next(iter(codigos)) if len(codigos) == 1 else None
+        if not link:
+            descartados += 1
+        elif codigo and _CODIGO_DO_CANDIDATO.match(codigo):
+            candidatos.append({"codigo": codigo, "link": link})
+    return candidatos, descartados
+
+
+def ler_candidatos_do_html(html):
+    """
+    Candidatos da lista de candidaturas: [{"codigo", "link"}], na ordem da página
+    (ver ler_lista_de_candidatos). Na leitura genérica, o código é o
+    data-pessoa-id do bloco do candidato: do próprio link, de um ancestral ou de
+    um vizinho no mesmo bloco (o menor bloco que tem um só data-pessoa-id). Link
+    sem código, com código ambíguo ou fora do formato fica de fora.
+    """
+    return ler_lista_de_candidatos(html)[0]
+
+
+def _ler_generico(arvore):
+    # data-pessoa-id de cada subárvore, de baixo para cima (sem recursão: a lista pode ser longa).
+    ordem = []
+    pilha = [arvore.raiz]
+    while pilha:
+        no = pilha.pop()
+        ordem.append(no)
+        pilha.extend(no["filhos"])
+    ids_por_no = {}
+    for no in reversed(ordem):
+        ids = set()
+        proprio = _codigo_do_no(no)
+        if proprio:
+            ids.add(proprio)
+        for filho in no["filhos"]:
+            ids |= ids_por_no[id(filho)]
+        ids_por_no[id(no)] = ids
+
+    candidatos = []
+    pilha = [arvore.raiz]
+    while pilha:
+        no = pilha.pop()
+        pilha.extend(reversed(no["filhos"]))
+        if no["tag"] != "a":
+            continue
+        link = link_de_detalhe(no["attrs"].get("href"))
+        if not link:
+            continue
+        bloco = no
+        while bloco is not None and not ids_por_no[id(bloco)]:
+            bloco = bloco["pai"]
+        ids = ids_por_no[id(bloco)] if bloco is not None else set()
+        if len(ids) != 1:
+            continue
+        codigo = next(iter(ids))
+        if _CODIGO_DO_CANDIDATO.match(codigo):
+            candidatos.append({"codigo": codigo, "link": link})
+    return candidatos
+
+
+def juntar_candidatos(acumulado, novos):
+    """Acrescenta em `acumulado` ({código: link}) os novos; vale o primeiro link de cada código. Devolve quantos entraram."""
+    entraram = 0
+    for c in novos:
+        if c["codigo"] not in acumulado:
+            acumulado[c["codigo"]] = c["link"]
+            entraram += 1
+    return entraram
+
+
+def carregar_lista_inteira(
+    contar,
+    rolar,
+    prazo=None,
+    total=None,
+    espera=ESPERA_POR_MAIS,
+    rodadas_sem_novidade=RODADAS_SEM_NOVIDADE,
+    intervalo=0.5,
+    dormir=time.sleep,
+    agora=time.monotonic,
+):
+    """
+    Rolagem infinita: rola até o fim e espera (até `espera` s) a contagem crescer;
+    para quando não cresce em `rodadas_sem_novidade` rolagens seguidas, quando
+    chega ao `total` esperado (se conhecido), no prazo ou no limite de rolagens.
+    Devolve a contagem final.
+    """
+    atual = contar()
+    seguidas = 0
+    for _ in range(LIMITE_DE_ROLAGENS):
+        if (total and atual >= total) or (prazo is not None and agora() >= prazo):
+            break
+        rolar()
+        fim = agora() + espera
+        cresceu = False
+        while agora() < fim:
+            dormir(intervalo)
+            novo = contar()
+            if novo > atual:
+                atual, cresceu = novo, True
+                break
+        seguidas = 0 if cresceu else seguidas + 1
+        if seguidas >= rodadas_sem_novidade:
+            break
+    return atual
+
+
+def percorrer_paginas(ler_pagina, proxima_pagina, limite=LIMITE_DE_PAGINAS, prazo=None, agora=time.monotonic):
+    """
+    Lê página por página até uma página não trazer candidato novo, não haver
+    próxima, ou estourar o limite de páginas ou o prazo. Devolve {código: link}.
+    """
+    candidatos = {}
+    for _ in range(limite):
+        if not juntar_candidatos(candidatos, ler_pagina()):
+            break
+        if prazo is not None and agora() >= prazo:
+            break
+        if not proxima_pagina():
+            break
+    return candidatos
+
+
 # ── Navegador ───────────────────────────────────────────────────────────────
 
 
@@ -133,6 +466,9 @@ class PortalEmpregare:
         self.pasta = pasta_de_download
         self.registrar = registrar
         self.driver = None
+        self.ids_das_vagas = {}  # código da vaga → identificador interno (do link de candidaturas)
+        self.tempo_em_links = 0.0  # segundos gastos lendo listas de candidatos (ORCAMENTO_DOS_LINKS)
+        self.descartados = 0  # links fora do formato na última lista lida (só contagem)
 
     def __enter__(self):
         self.driver = self._iniciar()
@@ -291,8 +627,11 @@ class PortalEmpregare:
                     )
                 )
             )
+            self._guardar_id_da_vaga(codigo, lambda: processo.get_attribute("href"))
             self.clicar(processo)
             time.sleep(3)
+            if str(codigo) not in self.ids_das_vagas:
+                self._guardar_id_da_vaga(codigo, lambda: self.driver.current_url)
 
             relatorio = self._esperar(20).until(
                 presente(
@@ -333,6 +672,110 @@ class PortalEmpregare:
             except Exception:
                 pass
             return False
+
+    # ── Links da vaga e dos candidatos ──
+
+    def _guardar_id_da_vaga(self, codigo, ler_endereco):
+        """Guarda o identificador interno lido do endereço; nunca levanta (a exportação não depende disto)."""
+        try:
+            ident = id_interno_da_vaga(ler_endereco())
+        except Exception:
+            ident = None
+        if ident:
+            self.ids_das_vagas[str(codigo)] = ident
+        return ident
+
+    def capturar_candidatos(self, codigo, total=None):
+        """
+        Links da vaga para o banco: {"vaga_interno": id, "candidatos": {código: link}},
+        ou None sem o identificador interno da vaga. Nunca levanta: falha vira aviso
+        (só contagens no log) e a exportação segue. Volta para Vagas Anunciadas.
+        """
+        ident = self.ids_das_vagas.get(str(codigo))
+        if not ident:
+            self.registrar(f"Vaga {codigo}: sem o identificador interno da vaga; links dos candidatos não capturados.")
+            return None
+        candidatos = {}
+        self.descartados = 0
+        restante = ORCAMENTO_DOS_LINKS - self.tempo_em_links
+        if restante <= 0:
+            self.registrar(f"Vaga {codigo}: tempo dos links esgotado nesta execução; só o identificador da vaga.")
+            return {"vaga_interno": ident, "candidatos": candidatos}
+        inicio = time.monotonic()
+        try:
+            prazo = inicio + min(TEMPO_LIMITE_DA_LISTA, restante)
+            self._abrir_candidaturas(ident)
+            candidatos = percorrer_paginas(
+                lambda: self._carregar_e_ler_pagina(prazo, total), self._proxima_pagina, prazo=prazo
+            )
+            if time.monotonic() >= prazo:
+                self.registrar(
+                    f"Vaga {codigo}: a lista de candidatos passou de {TEMPO_LIMITE_DA_LISTA}s; ficou o que deu."
+                )
+            fora = f" ({self.descartados} com link fora do formato)" if self.descartados else ""
+            self.registrar(f"Vaga {codigo}: {len(candidatos)} link(s) de candidato capturado(s){fora}.")
+        except Exception as erro:
+            self.registrar(
+                f"Vaga {codigo}: não consegui ler a lista de candidatos ({resumo_do_erro(erro)}); "
+                f"segue com {len(candidatos)} link(s)."
+            )
+        finally:
+            self.tempo_em_links += time.monotonic() - inicio
+            try:
+                self.abrir_vagas_anunciadas()
+            except Exception:
+                pass
+        return {"vaga_interno": ident, "candidatos": candidatos}
+
+    def _esperar_a_lista(self):
+        """Espera o AJAX trazer a 1ª página (.curriculo-list-item a.link-curriculo). False se não veio."""
+        from selenium.common.exceptions import TimeoutException
+        from selenium.webdriver.common.by import By
+        from selenium.webdriver.support import expected_conditions as EC
+
+        try:
+            self._esperar(ESPERA_PELA_LISTA).until(
+                EC.presence_of_element_located((By.CSS_SELECTOR, SELETOR_LINK_DA_LISTA))
+            )
+            return True
+        except TimeoutException:
+            return False
+
+    def _abrir_candidaturas(self, ident):
+        """Candidaturas da vaga, na aba Todos quando ela existe; espera o AJAX da lista."""
+        self.driver.get(URL_CANDIDATURAS + ident)
+        veio = self._esperar_a_lista()
+        if self.driver.execute_script(JS_ABA_TODOS):
+            time.sleep(3)  # a aba pode recarregar a página
+            veio = self._esperar_a_lista()
+        if not veio:
+            time.sleep(ESPERA_DA_LISTA)  # vaga sem candidato ou tela diferente: a leitura genérica ainda tenta
+
+    def _carregar_e_ler_pagina(self, prazo, total=None):
+        """Rola até a lista parar de crescer (rolagem infinita) e lê os candidatos carregados."""
+        carregar_lista_inteira(
+            lambda: self.driver.execute_script(JS_CONTAR_LINKS) or 0,
+            lambda: self.driver.execute_script(JS_ROLAR_LISTA),
+            prazo=prazo,
+            total=total,
+            espera=ESPERA_POR_MAIS,
+            intervalo=INTERVALO_DA_LISTA,
+        )
+        candidatos, descartados = ler_lista_de_candidatos(self.driver.page_source)
+        self.descartados = max(self.descartados, descartados)
+        return candidatos
+
+    def _proxima_pagina(self):
+        """Clica na próxima página da lista, se houver. True se mudou de página."""
+        primeiro = self.driver.execute_script(JS_PRIMEIRO_LINK)
+        if not self.driver.execute_script(JS_PROXIMA_PAGINA):
+            return False
+        fim = time.monotonic() + 20
+        while time.monotonic() < fim:
+            time.sleep(ESPERA_DA_LISTA)
+            if self.driver.execute_script(JS_PRIMEIRO_LINK) != primeiro:
+                return True
+        return False
 
     # ── Central de Exportações ──
 

@@ -1,6 +1,7 @@
 /*
   Comemorações (src/modules/comemoracao.js): o aviso no topo, por cima de
-  tudo, e os fogos de artifício num canvas que não recebe clique. Vale no MONITORA e nos
+  tudo (com "Pular", som e ×); por baixo dele, o véu escuro, o canvas dos
+  fogos e a Aya voando — nenhum deles recebe clique. Vale no MONITORA e nos
   painéis (análises, entrevistas), que importam tokens.css.
 */
 .comemoracao {
@@ -13,6 +14,9 @@
   display: flex;
   align-items: center;
   gap: var(--space-3, 12px);
+  /* Largura do conteúdo: com left: 50%, o encolher-para-caber parava na
+     metade da tela e espremia a frase. */
+  width: max-content;
   max-width: min(560px, calc(100vw - 32px));
   padding: var(--space-3, 12px) var(--space-4, 16px);
   border: 1px solid var(--border-subtle);
@@ -54,6 +58,80 @@
   height: 100%;
   pointer-events: none;
 }
+/* O véu: escurece a tela para as cores brilharem. A opacidade (0–1) vem do
+   show; a força máxima, daqui — mais leve no tema escuro, que já é escuro. */
+.comemoracao__veu {
+  position: fixed;
+  inset: 0;
+  z-index: 10043;
+  background: radial-gradient(
+    120% 90% at 50% 30%,
+    rgb(11 31 61 / 0.55),
+    rgb(5 14 30 / 0.72)
+  );
+  pointer-events: none;
+  opacity: 0;
+}
+html[data-theme="dark"] .comemoracao__veu {
+  background: radial-gradient(
+    120% 90% at 50% 30%,
+    rgb(0 0 0 / 0.38),
+    rgb(0 0 0 / 0.58)
+  );
+}
+/* A Aya: posição e bater de asas por transform, a cada quadro. */
+.comemoracao__aya {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 10044;
+  object-fit: contain;
+  pointer-events: none;
+  transform-origin: 50% 50%;
+  will-change: transform, opacity;
+  filter: drop-shadow(0 0 10px rgb(255 214 90 / 0.55));
+}
+.comemoracao__acoes {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: var(--space-1, 4px);
+}
+.comemoracao__pular {
+  height: 32px;
+  padding: 0 var(--space-3, 12px);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md, 8px);
+  background: transparent;
+  color: var(--text-primary);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.comemoracao__som {
+  display: inline-grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border: 0;
+  border-radius: var(--radius-md, 8px);
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+.comemoracao__som[aria-pressed="true"] {
+  color: var(--brand-primary);
+}
+.comemoracao__pular:hover,
+.comemoracao__som:hover {
+  background: var(--surface-muted, rgba(0, 0, 0, 0.06));
+}
+.comemoracao__pular:focus-visible,
+.comemoracao__som:focus-visible {
+  outline: 2px solid var(--brand-primary);
+  outline-offset: 2px;
+}
 @keyframes comemoracao-entra {
   from {
     opacity: 0;
@@ -66,6 +144,8 @@
   }
 }
 .comemoracao__corpo {
+  flex: 1 1 auto;
+  min-width: 0;
   display: grid;
   gap: var(--space-2, 8px);
 }

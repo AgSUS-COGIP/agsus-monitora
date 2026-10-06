@@ -48,6 +48,35 @@ const comAsPerguntasPeloTexto = (codigo, m) =>
         provisoria: { ...m.provisoria, ...PERGUNTAS_PELO_TEXTO[codigo] },
       }
     : m;
+// 20261007-declarada-experiencia-por-nivel.sql: o item de experiência da nota declarada.
+const EXPERIENCIA_DECLARADA = Object.fromEntries(
+  [
+    ...ler(
+      "supabase/correcoes/20261007-declarada-experiencia-por-nivel.sql",
+    ).matchAll(/\('([A-Z0-9-]+)', \$item\$(.*?)\$item\$::jsonb\)/g),
+  ].map((m) => [m[1], JSON.parse(m[2])]),
+);
+const comAExperienciaDeclarada = (codigo, m) =>
+  EXPERIENCIA_DECLARADA[codigo]
+    ? {
+        ...m,
+        provisoria: {
+          ...m.provisoria,
+          nota_declarada: [
+            ...m.provisoria.nota_declarada.filter(
+              (i) => i.parcial !== "EXPERIENCIA",
+            ),
+            EXPERIENCIA_DECLARADA[codigo],
+          ],
+        },
+      }
+    : m;
+// 20261007-perguntas-da-ficha-proj26.sql: a nota declarada de titulação e cursos do 93/2026.
+const DECLARADA_DA_FICHA = JSON.parse(
+  /\$n\$(.*?)\$n\$/s.exec(
+    ler("supabase/correcoes/20261007-perguntas-da-ficha-proj26.sql"),
+  )[1],
+);
 const SI = modelosDaCorrecao("20261006-modelos-dos-editais-recentes.sql");
 const RIO_DOCE = modelosDaCorrecao("20261006-modelo-proj26-rio-doce.sql");
 const PERGUNTA_PELO_NUMERO = /^pergunta \d+ ?-/i;
@@ -74,7 +103,10 @@ describe("correções dos modelos dos editais recentes", () => {
   it("a do Rio Doce traz o PROJ26-RIO-DOCE e avisa que é depois da F3", () => {
     expect(Object.keys(RIO_DOCE)).toEqual(DEPOIS_DA_F3);
     expect(
-      comAsPerguntasPeloTexto("PROJ26-RIO-DOCE", RIO_DOCE["PROJ26-RIO-DOCE"]),
+      comAExperienciaDeclarada(
+        "PROJ26-RIO-DOCE",
+        comAsPerguntasPeloTexto("PROJ26-RIO-DOCE", RIO_DOCE["PROJ26-RIO-DOCE"]),
+      ),
     ).toEqual(modelo("PROJ26-RIO-DOCE"));
     expect(
       ler("supabase/correcoes/20261006-modelo-proj26-rio-doce.sql"),
@@ -111,6 +143,42 @@ describe("correções dos modelos dos editais recentes", () => {
           modelo(codigo).provisoria.nota_declarada.map((i) => i.pergunta),
         ).filter((t) => PERGUNTA_PELO_NUMERO.test(t)),
       ).toEqual([]);
+  });
+
+  it("a da experiência declarada por nível: 93/2026 por nível (superior +5 até 35, técnico e médio +4 até 40) e 114/2026 +5 até 35 em todos, idempotente e validada", () => {
+    expect(Object.keys(EXPERIENCIA_DECLARADA).sort()).toEqual([
+      "PROJ26-CURRICULAR",
+      "PROJ26-RIO-DOCE",
+    ]);
+    const cur = EXPERIENCIA_DECLARADA["PROJ26-CURRICULAR"];
+    expect(cur.pergunta).toBe("Experiência Profissional");
+    const maximo = (mapa) => Math.max(...Object.values(mapa));
+    expect(maximo(cur.pontos_por_nivel.superior)).toBe(35);
+    expect(maximo(cur.pontos_por_nivel.tecnico)).toBe(40);
+    expect(cur.pontos_por_nivel.medio).toEqual(cur.pontos_por_nivel.tecnico);
+    expect(cur.pontos_por_nivel.superior["1 anos e 6 meses"]).toBe(10);
+    expect(cur.pontos_por_nivel.tecnico["5 anos e 6 meses ou mais"]).toBe(40);
+    const rio = EXPERIENCIA_DECLARADA["PROJ26-RIO-DOCE"];
+    expect(rio.pontos).toEqual(cur.pontos_por_nivel.superior);
+    expect(rio.pontos_por_nivel).toBeUndefined();
+    // O PROJ26-CURRICULAR: titulação e cursos (perguntas da ficha) + a experiência.
+    expect(modelo("PROJ26-CURRICULAR").provisoria.nota_declarada).toEqual([
+      ...DECLARADA_DA_FICHA,
+      cur,
+    ]);
+    for (const codigo of ["PROJ26-CURRICULAR", "PROJ26-RIO-DOCE"])
+      expect(comAExperienciaDeclarada(codigo, modelo(codigo))).toEqual(
+        modelo(codigo),
+      );
+    const sql = ler(
+      "supabase/correcoes/20261007-declarada-experiencia-por-nivel.sql",
+    );
+    expect(sql).toContain(
+      'perform private."FC_VALIDAR_REGRA_ANALISE"(v_modelo."DS_CONFIGURACAO");',
+    );
+    expect(sql).toContain("is distinct from 'EXPERIENCIA'");
+    expect(sql).toMatch(/^begin;$/m);
+    expect(sql).toMatch(/^commit;$/m);
   });
 
   it.each([

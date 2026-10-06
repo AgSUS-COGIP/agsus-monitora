@@ -7,6 +7,7 @@ import {
   declaradaDaFicha,
   divergenciaDoBloco,
   enderecoDaVagaNaEmpregare,
+  enderecoDoCandidatoNaEmpregare,
   lancamentoInicial,
   nivelDaFicha,
   nomeCurtoDoBloco,
@@ -161,6 +162,18 @@ describe("lançamento inicial", () => {
       }),
     ).toBe("tecnico");
     expect(nivelDaFicha("Engenheiro", {})).toBe("superior");
+  });
+
+  it("sem termo na regra, o nível escrito no cargo (93/2026: '(Nível Superior)', 'TÉCNICO DE…')", () => {
+    expect(nivelDaFicha("TÉCNICO DE ENFERMAGEM DO TRABALHO", {})).toBe(
+      "tecnico",
+    );
+    expect(
+      nivelDaFicha("TÉCNICO DE SEGURANÇA DO TRABALHO (Nível Médio)", {}),
+    ).toBe("medio");
+    expect(
+      nivelDaFicha("ANALISTA DE GESTÃO: MÉDICO DO TRABALHO (Nível Superior)"),
+    ).toBe("superior");
   });
 
   it("indígena e aldeia como o candidato respondeu, só com critério étnico na regra", () => {
@@ -395,6 +408,32 @@ describe("apoio da tela", () => {
     expect(enderecoDaVagaNaEmpregare("abc")).toBeNull();
   });
 
+  it("com o identificador interno, a vaga abre direto nas candidaturas", () => {
+    expect(enderecoDaVagaNaEmpregare("177979", "Ab1cD2eF3g|")).toBe(
+      "https://corporate.empregare.com/empresa/vagas/candidaturas/Ab1cD2eF3g|",
+    );
+    // O código numérico não abre (Sem permissão) e lixo não vira endereço: lista de vagas.
+    for (const ruim of ["177979|", "177979", "a b", "x/../y", "", null])
+      expect(enderecoDaVagaNaEmpregare("177979", ruim)).toBe(
+        "https://corporate.empregare.com/empresa/vagas",
+      );
+  });
+
+  it("link do candidato só se for a página de detalhes da Empregare", () => {
+    const link =
+      "https://corporate.empregare.com/empresa/curriculo/detalhes?tokenCandidato=TKfict&id=IDfict|&candidatura=CDfict||";
+    expect(enderecoDoCandidatoNaEmpregare(link)).toBe(link);
+    for (const ruim of [
+      null,
+      "",
+      "javascript:alert(1)",
+      "https://exemplo.invalid/empresa/curriculo/detalhes?x=1",
+      "http://corporate.empregare.com/empresa/curriculo/detalhes?x=1",
+      `${link}"><script>`,
+    ])
+      expect(enderecoDoCandidatoNaEmpregare(ruim)).toBeNull();
+  });
+
   it("alteração do histórico em texto", () => {
     expect(textoDaAlteracao({ rotulo: "Experiência", de: 25, para: 20 })).toBe(
       "Experiência: 25 → 20",
@@ -503,5 +542,51 @@ describe("conferência: em análise, progresso e o que falta", () => {
       "Falta: Documento de identificação oficial com foto, Formação exigida pela vaga, Registro ativo no conselho de classe e mais 3",
     );
     expect(nomeCurtoDoBloco(bloco("COTA_PCD"))).toBe("Pessoa com deficiência");
+  });
+});
+
+describe("experiência declarada por nível (93/2026)", () => {
+  const COM_EXP = structuredClone(REGRA);
+  COM_EXP.provisoria.nota_declarada.push({
+    parcial: "EXPERIENCIA",
+    pergunta: "Experiência Profissional",
+    tipo: "OPCAO",
+    pontos_por_nivel: {
+      superior: { "6 meses obrigatórios": 0, "2 anos": 15 },
+      tecnico: { "6 meses obrigatórios": 0, "2 anos": 12 },
+      medio: { "6 meses obrigatórios": 0, "2 anos": 12 },
+    },
+  });
+  const RESP = {
+    ...RESPOSTAS,
+    "Pergunta 11 - Experiência Profissional em atividades compatíveis com o cargo: (contabilizada a partir de 06 meses)":
+      '"2 anos&nbsp;"',
+  };
+
+  it("o bloco de experiência mostra os pontos declarados do nível da vaga", () => {
+    expect(declaradaDaFicha(COM_EXP, RESP, "superior").parciais).toEqual({
+      FORMACAO: 5,
+      CURSOS: 5,
+      EXPERIENCIA: 15,
+    });
+    expect(
+      declaradaDaFicha(COM_EXP, RESP, "tecnico").parciais.EXPERIENCIA,
+    ).toBe(12);
+    expect(
+      declaradaDaFicha(COM_EXP, RESP, "fundamental").parciais.EXPERIENCIA,
+    ).toBeUndefined();
+  });
+
+  it("nota apurada da experiência diferente da declarada exige justificativa", () => {
+    const lanc = lancamentoCompleto();
+    const av = calcularFicha(COM_EXP, lanc, DOCUMENTAL);
+    expect(av.parciais.EXPERIENCIA).toBe(25);
+    const declarada = declaradaDaFicha(COM_EXP, RESP, lanc.nivel);
+    expect(pendenciasDaFicha(COM_EXP, lanc, av, declarada)).toContainEqual({
+      bloco: "EXPERIENCIA",
+      tipo: "justificativa",
+      texto: "Nota diferente da declarada: escolha a justificativa.",
+    });
+    expect(resumoParaGravar(av, declarada).declarada.EXPERIENCIA).toBe(15);
   });
 });

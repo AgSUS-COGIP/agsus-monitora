@@ -5,6 +5,7 @@ import {
   DESEMPATES_DA_PROVISORIA,
   DESTINO_DOS_NOVOS,
   MODOS_DE_DISTRIBUICAO,
+  NIVEIS,
   PARCIAIS,
   rotuloDe,
   SINAIS_DA_REVISAO,
@@ -187,16 +188,104 @@ function Perguntas({ perguntas, regra, aoMudar }) {
   );
 }
 
+/* Os níveis que um item por nível mostra: os do mapa, na ordem do catálogo. */
+const NIVEIS_DA_DECLARADA = ["superior", "tecnico", "medio"];
+const niveisDoItem = (item) =>
+  NIVEIS.map(([n]) => n).filter((n) => item.pontos_por_nivel?.[n]);
+
+/* Liga ou desliga os pontos por nível (uma coluna por nível, as mesmas respostas). */
+function comPontosPorNivel(item, ligar) {
+  const novo = { ...item };
+  if (ligar) {
+    const base = item.pontos ?? {};
+    novo.pontos_por_nivel = Object.fromEntries(
+      NIVEIS_DA_DECLARADA.map((n) => [n, { ...base }]),
+    );
+    delete novo.pontos;
+  } else {
+    const primeiro = niveisDoItem(item)[0];
+    novo.pontos = { ...(item.pontos_por_nivel?.[primeiro] ?? {}) };
+    delete novo.pontos_por_nivel;
+  }
+  return novo;
+}
+
+/* As respostas de um item por nível: a união das respostas de todos os níveis. */
+const respostasPorNivel = (item) => [
+  ...new Set(
+    niveisDoItem(item).flatMap((n) => Object.keys(item.pontos_por_nivel[n])),
+  ),
+];
+
+function RespostasPorNivel({ item, aoMudar }) {
+  const niveis = niveisDoItem(item);
+  const comMapa = (transformar) =>
+    aoMudar({
+      ...item,
+      pontos_por_nivel: Object.fromEntries(
+        niveis.map((n) => [n, transformar(n, item.pontos_por_nivel[n])]),
+      ),
+    });
+  return (
+    <>
+      {respostasPorNivel(item).map((resposta) => (
+        <div className="avd-linha avd-recuo" key={resposta}>
+          <span className="avd-resposta">{resposta}</span>
+          {niveis.map((n) => (
+            <CampoNumero
+              key={n}
+              rotulo={rotuloDe(NIVEIS, n)}
+              valor={item.pontos_por_nivel[n][resposta]}
+              aoMudar={(v) =>
+                comMapa((nivel, mapa) =>
+                  nivel === n ? { ...mapa, [resposta]: v } : mapa,
+                )
+              }
+            />
+          ))}
+          <BotaoTirar
+            rotulo="Tirar a resposta"
+            aoClicar={() =>
+              comMapa((_, mapa) => {
+                const resto = { ...mapa };
+                delete resto[resposta];
+                return resto;
+              })
+            }
+          />
+        </div>
+      ))}
+      <label className="avd-inline avd-recuo">
+        Resposta{" "}
+        <input
+          placeholder="Texto exato da resposta"
+          onKeyDown={(ev) => {
+            if (ev.key !== "Enter") return;
+            ev.preventDefault();
+            const texto = ev.currentTarget.value.trim();
+            if (texto) comMapa((_, mapa) => ({ ...mapa, [texto]: 0 }));
+            ev.currentTarget.value = "";
+          }}
+        />
+      </label>
+    </>
+  );
+}
+
 function NotaDeclarada({ regra, aoMudar }) {
   const itens = regra.provisoria.nota_declarada;
   const mudar = (i, item) =>
     aoMudar(comValor(regra, ["provisoria", "nota_declarada", i], item));
   return (
     <div className="avd-subgrupo">
-      <h3>Nota declarada (confere a ART)</h3>
+      <h3>Nota recalculada (confere a nota declarada, ART)</h3>
       {itens.map((item, i) => {
         const chave = item.tipo === "FAIXA_EM_MESES" ? "meses" : "pontos";
         const mapa = item[chave] ?? {};
+        const porNivel =
+          item.tipo !== "FAIXA_EM_MESES" &&
+          item.pontos_por_nivel !== null &&
+          typeof item.pontos_por_nivel === "object";
         return (
           <div key={i} className="avd-declarada">
             <div className="avd-linha">
@@ -216,12 +305,17 @@ function NotaDeclarada({ regra, aoMudar }) {
                 valor={item.tipo}
                 opcoes={TIPOS_DA_NOTA_DECLARADA}
                 aoMudar={(v) => {
-                  const novo = { ...item, tipo: v };
+                  const novo = {
+                    ...(v === "FAIXA_EM_MESES" && porNivel
+                      ? comPontosPorNivel(item, false)
+                      : item),
+                    tipo: v,
+                  };
                   if (v === "FAIXA_EM_MESES") {
-                    novo.meses = item.meses ?? item.pontos ?? {};
+                    novo.meses = novo.meses ?? novo.pontos ?? {};
                     delete novo.pontos;
                     novo.pontos_por_mes = item.pontos_por_mes ?? 0;
-                  } else {
+                  } else if (!porNivel) {
                     novo.pontos = item.pontos ?? item.meses ?? {};
                     delete novo.meses;
                     delete novo.pontos_por_mes;
@@ -241,6 +335,13 @@ function NotaDeclarada({ regra, aoMudar }) {
                 valor={item.teto}
                 aoMudar={(v) => mudar(i, { ...item, teto: v })}
               />
+              {item.tipo !== "FAIXA_EM_MESES" ? (
+                <Caixa
+                  rotulo="Pontos por nível"
+                  marcado={porNivel}
+                  aoMudar={(v) => mudar(i, comPontosPorNivel(item, v))}
+                />
+              ) : null}
               <BotaoTirar
                 rotulo="Tirar a pergunta"
                 aoClicar={() =>
@@ -254,7 +355,10 @@ function NotaDeclarada({ regra, aoMudar }) {
                 }
               />
             </div>
-            {Object.entries(mapa).map(([resposta, valor]) => (
+            {porNivel ? (
+              <RespostasPorNivel item={item} aoMudar={(v) => mudar(i, v)} />
+            ) : null}
+            {(porNivel ? [] : Object.entries(mapa)).map(([resposta, valor]) => (
               <div className="avd-linha avd-recuo" key={resposta}>
                 <span className="avd-resposta">{resposta}</span>
                 <CampoNumero
@@ -274,20 +378,22 @@ function NotaDeclarada({ regra, aoMudar }) {
                 />
               </div>
             ))}
-            <label className="avd-inline avd-recuo">
-              Resposta{" "}
-              <input
-                placeholder="Texto exato da resposta"
-                onKeyDown={(ev) => {
-                  if (ev.key !== "Enter") return;
-                  ev.preventDefault();
-                  const texto = ev.currentTarget.value.trim();
-                  if (texto)
-                    mudar(i, { ...item, [chave]: { ...mapa, [texto]: 0 } });
-                  ev.currentTarget.value = "";
-                }}
-              />
-            </label>
+            {porNivel ? null : (
+              <label className="avd-inline avd-recuo">
+                Resposta{" "}
+                <input
+                  placeholder="Texto exato da resposta"
+                  onKeyDown={(ev) => {
+                    if (ev.key !== "Enter") return;
+                    ev.preventDefault();
+                    const texto = ev.currentTarget.value.trim();
+                    if (texto)
+                      mudar(i, { ...item, [chave]: { ...mapa, [texto]: 0 } });
+                    ev.currentTarget.value = "";
+                  }}
+                />
+              </label>
+            )}
           </div>
         );
       })}
@@ -824,7 +930,7 @@ export function Regra({ e, estado }) {
             ) : rascunho.lote.base === "NOTA_MINIMA" ? (
               <>
                 <CampoNumero
-                  rotulo="Nota mínima (ART)"
+                  rotulo="Nota mínima (nota declarada, ART)"
                   valor={rascunho.lote.nota_minima}
                   aoMudar={(v) => mudar(["lote", "nota_minima"], v)}
                 />

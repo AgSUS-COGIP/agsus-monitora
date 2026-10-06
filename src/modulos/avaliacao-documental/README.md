@@ -65,7 +65,7 @@ até a 10ª posição do cadastro reserva) é regra da lista CONVOCACAO da Class
 - lateral: resultado e nota ao vivo ("Em análise · X de N requisitos conferidos" enquanto falta
   conferir; Inapto só quando um bloco conferido elimina), declarado × apurado (apurado "—" e sem
   destaque antes de conferir; depois, a diferença destacada, com a justificativa),
-  nível da vaga, "Copiar código", "Abrir vagas na Empregare" (copia o código da vaga para a busca; o acesso fica registrado), observações
+  nível da vaga, "Copiar código", "Abrir candidato na Empregare" (o link capturado pelo robô; sem ele, a vaga ou a lista de vagas com o código copiado para a busca; o acesso fica registrado), observações
   prontas, observação livre e o parecer gerado;
 - barra: "Salvo às HH:MM" (rascunho automático), "N de M itens conferidos" e "Falta: …",
   "Salvar rascunho", "Concluir e próxima" (travado até não faltar nada), "Fechar e
