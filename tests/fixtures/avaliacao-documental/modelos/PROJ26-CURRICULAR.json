@@ -372,12 +372,6 @@
         "coluna": "SITUAÇÃO",
         "motivo": "Cancelou a inscrição",
         "quando": ["CANCELADO"]
-      },
-      {
-        "codigo": "REPROVADO_EMPREGARE",
-        "coluna": "REPROVADO",
-        "motivo": "Reprovado na Empregare",
-        "quando": ["SIM"]
       }
     ],
     "divergencia_tolerancia": 0
