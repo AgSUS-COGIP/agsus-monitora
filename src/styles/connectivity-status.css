@@ -1,7 +1,10 @@
 .connectivity-status {
   position: fixed;
   left: 50%;
-  bottom: calc(20px + env(safe-area-inset-bottom));
+  bottom: calc(
+    20px +
+      max(env(safe-area-inset-bottom), var(--recuo-da-navegacao-inferior, 0px))
+  );
   z-index: var(--z-toast);
   display: flex;
   width: min(560px, calc(100vw - 40px));

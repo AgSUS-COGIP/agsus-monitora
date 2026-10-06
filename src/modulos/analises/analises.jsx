@@ -186,12 +186,34 @@ function TelaDaArea({ estado, e }) {
     if (carregado) setFiltros((atuais) => apararSelecao(atuais, linhas));
   }, [carregado, linhas]);
 
-  // "Abrir" numa resposta com número da Aya: a tela abre já recortada.
+  /*
+    "Abrir" numa resposta com número da Aya: a tela abre já recortada. O caso
+    de um aviso de conferência traz também a busca (o nome) e a análise a
+    abrir na gaveta.
+  */
+  const [analiseDoAviso, setAnaliseDoAviso] = useState(null);
   usarPedidoDeFiltro("analises", carregado, (pedido) => {
     const proximo = filtrosDasAnalises(filtros, pedido, linhas, kpi);
     setFiltros(proximo.filtros);
     setKpi(proximo.kpi);
+    if (proximo.filtros.busca !== filtros.busca)
+      setBuscaDigitada(proximo.filtros.busca);
+    if (pedido.analise) setAnaliseDoAviso(String(pedido.analise));
   });
+
+  /* A análise do caso: abre na gaveta; fora do escopo atual, procura em "Todos". */
+  useEffect(() => {
+    if (!analiseDoAviso || !carregado) return;
+    const linha = linhas.find((l) => String(l.id) === analiseDoAviso);
+    if (linha) {
+      setAnaliseDoAviso(null);
+      void estado.abrirDetalhe(linha.__chave);
+    } else if (escopo !== "todos") {
+      void estado.trocarEscopo("todos");
+    } else {
+      setAnaliseDoAviso(null);
+    }
+  }, [analiseDoAviso, carregado, linhas, escopo, estado]);
 
   // Buscar (geral ou na fila) inclui o parecer: traz os pareceres em lote.
   const buscando = Boolean(filtros.busca.trim() || buscaDaFila.trim());

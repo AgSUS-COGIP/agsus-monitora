@@ -13,6 +13,7 @@ import { comTempoLimite, mensagemDeFalha } from "../../lib/falha-de-rede.js";
 import {
   ENDERECO_RODAR_CARGA,
   MENSAGENS_DO_DISPARO,
+  motivoDaRecusa,
 } from "../../lib/robos-de-carga.js";
 import { normalizarSaude } from "../../lib/saude-das-cargas.js";
 import { exigirSessao } from "../../lib/sessao.js";
@@ -174,11 +175,11 @@ export function criarEstadoDaSaude({
     avisar(
       {
         tom: "erro",
-        texto:
-          corpo?.erro ||
-          (resposta.status === 404
-            ? "Só na versão publicada."
-            : "Não consegui pedir a carga."),
+        texto: motivoDaRecusa(
+          resposta.status,
+          corpo,
+          "Não consegui pedir a carga.",
+        ),
       },
       null,
     );

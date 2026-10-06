@@ -484,6 +484,14 @@ export function PreClassificacao({ e, estado, pre }) {
         ) : null}
       </section>
 
+      {p.aviso ? (
+        <Aviso
+          tom={p.aviso.tom === "info" ? undefined : p.aviso.tom}
+          papel={p.aviso.tom === "danger" ? "alert" : "status"}
+        >
+          {p.aviso.texto}
+        </Aviso>
+      ) : null}
       {d.pode_coordenar && !conferida ? (
         <Aviso tom="warning">
           {d.regra

@@ -23,7 +23,8 @@ continua sendo a leitura. Desenho e fases: `docs/analises-no-monitora/`; histór
   eliminados, ranqueados, lote "N de M", divergência ART × declarada), a linha de corte, os
   eliminados com o motivo e os avisos da vaga;
 - "Recalcular" (coordenação): `POST /api/rodar-carga` com o edital, travado com a regra não
-  conferida ou o job rodando;
+  conferida ou o job rodando; o resultado do pedido fica na aba (o motivo da recusa, com o botão
+  de volta, ou "pedido") e a aba relê sozinha até a execução terminar;
 - tamanho do lote por vaga: o campo vira `lote.por_vaga` numa versão nova da regra (com motivo);
 - listas oficiais PROVISORIA e LOTE (cada reposição, se a regra publica): registradas no banco
   (`registrar_lista_pre_classificacao`) e exportadas pelo gerador da Classificação.
@@ -116,10 +117,14 @@ avaliacao-documental.css  só tokens
   declarado, pendências, resumo); o banco revalida e grava
   (`supabase/migrations/20261007130000_conteudo_da_ficha.sql`); o Python
   (`python/monitora/avaliacao_documental/pontuacao.py`) reconfere em lote pelos casos dourados.
+- A ficha não concluída segue a versão da regra do último recálculo (`FC_ABRIR_FICHAS`, a cada
+  execução do job); a concluída mantém a versão com que foi analisada
+  (`supabase/migrations/20261007110000_ficha_segue_versao_da_pre_classificacao.sql`).
 - Testes: `tests/modulos/avaliacao-documental.test.js`, `tests/modulos/avaliacao-documental-fila.test.js`,
   `tests/modulos/avaliacao-documental-ficha.test.js`, `tests/lib/avaliacao-documental-ficha.test.js`,
   `tests/conteudo-da-ficha-migration.test.js`, `tests/python/test_pontuacao.py`,
-  `tests/fichas-fila-reserva-migration.test.js`, `tests/python/test_distribuicao.py`,
+  `tests/fichas-fila-reserva-migration.test.js`, `tests/ficha-segue-versao-migration.test.js`,
+  `tests/python/test_distribuicao.py`,
   `tests/modulos/avaliacao-documental-pre-classificacao.test.js`,
   `tests/lib/avaliacao-documental-*.test.js`, `tests/avaliacao-documental-migration.test.js`,
   `tests/pre-classificacao-migration.test.js`, `tests/python/test_pre_classificacao.py` e

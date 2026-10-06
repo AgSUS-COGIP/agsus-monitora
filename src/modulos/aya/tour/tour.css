@@ -263,7 +263,9 @@
 .aya-oferta--balao {
   position: fixed;
   right: clamp(14px, 2vw, 24px);
-  bottom: calc(clamp(16px, 2vw, 24px) + 58px);
+  bottom: calc(
+    clamp(16px, 2vw, 24px) + 58px + var(--recuo-da-navegacao-inferior, 0px)
+  );
   width: min(280px, calc(100vw - 32px));
   box-shadow: var(--shadow-overlay);
   pointer-events: auto;

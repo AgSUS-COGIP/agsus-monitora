@@ -3,9 +3,11 @@ As regras das conferências de consistência, sem rede e sem banco: entram os
 dados das RPCs de leitura (conferencia_ler_*), saem avisos.
 
 Cada aviso é UM por conferência + escopo (edital, área ou vaga), com a
-quantidade de casos e até 20 exemplos SÓ com ids e códigos — nunca nome, CPF
-ou e-mail (o banco também recusa). O resumo é montado aqui, com contagens e
-números de edital.
+quantidade de casos, até 20 exemplos e TODOS os casos (até 5000) SÓ com ids,
+códigos e o dado que motivou o aviso (datas, notas, corte, teto) — nunca nome,
+CPF ou e-mail (o banco também recusa). Nome, edital, vaga e responsável a tela
+busca na análise, com a permissão de quem lê (listar_casos_aviso_conferencia).
+O resumo é montado aqui, com contagens e números de edital.
 
 Testes: tests/python/test_conferencias.py.
 """
@@ -18,11 +20,15 @@ from datetime import date, datetime, time, timedelta
 from catalogo import CATALOGO
 
 MAX_EXEMPLOS = 20
+MAX_CASOS = 5000
 TOLERANCIA = 0.01
 VARIACAO_BRUSCA = 0.5
 _EXEMPLO_SEGURO = re.compile(r"^[A-Za-z0-9._:/-]{1,80}$")
 _ONZE_DIGITOS = re.compile(r"\d{11}")
 _ESCOPO_SEGURO = re.compile(r"[^A-Za-z0-9._:/|-]")
+_UUID = re.compile(r"^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$")
+_CHAVE_DO_DETALHE = re.compile(r"^[a-z_]{1,30}$")
+_VALOR_DO_DETALHE = re.compile(r"^[A-Za-z0-9._:/-]{0,40}$")
 
 
 # ── Utilidades ──────────────────────────────────────────────────────────────
@@ -77,6 +83,46 @@ def exemplo_seguro(valor):
     return texto
 
 
+def detalhe_seguro(detalhe):
+    """Só chaves simples e valores número, booleano ou texto de identificador (datas, códigos)."""
+    saida = {}
+    for chave, valor in (detalhe or {}).items():
+        if not _CHAVE_DO_DETALHE.match(str(chave)) or valor is None:
+            continue
+        if isinstance(valor, bool):
+            saida[chave] = valor
+        elif isinstance(valor, (int, float)):
+            if not (isinstance(valor, float) and math.isnan(valor)):
+                saida[chave] = valor
+        else:
+            texto = valor.isoformat() if isinstance(valor, (date, datetime)) else str(valor).strip()
+            if _VALOR_DO_DETALHE.match(texto) and not _ONZE_DIGITOS.search(texto):
+                saida[chave] = texto
+    return saida
+
+
+def caso_seguro(caso):
+    """
+    O caso como o banco aceita: análise (uuid), código do candidato, outra
+    referência e o detalhe. None se não sobrar nenhum identificador.
+    """
+    caso = caso or {}
+    analise = str(caso.get("analise") or "").strip()
+    saida = {}
+    if _UUID.match(analise):
+        saida["analise"] = analise
+    for campo in ("codigo", "referencia"):
+        seguro = exemplo_seguro(caso.get(campo)) if caso.get(campo) is not None else None
+        if seguro:
+            saida[campo] = seguro
+    if not saida:
+        return None
+    detalhe = detalhe_seguro(caso.get("detalhe"))
+    if detalhe:
+        saida["detalhe"] = detalhe
+    return saida
+
+
 def escopo_de(tipo, identificador):
     ident = _ESCOPO_SEGURO.sub("-", str(identificador or "sem")).strip("-")[:170] or "sem"
     return f"{tipo}:{ident}"
@@ -99,7 +145,11 @@ class Acumulador:
     def area_do_edital(self, edital):
         return (self._editais.get(edital) or {}).get("area")
 
-    def anotar(self, codigo, *, edital=None, area=None, escopo=None, exemplo=None, quantidade=1, extra=None):
+    def anotar(self, codigo, *, edital=None, area=None, escopo=None, exemplo=None, quantidade=1, extra=None, caso=None):
+        """
+        Soma o caso ao aviso. `caso` ({analise, codigo, referencia, detalhe})
+        diz como a tela acha o caso; sem ele, o exemplo vira a referência.
+        """
         if codigo not in CATALOGO:
             raise KeyError(codigo)
         area = area or self.area_do_edital(edital)
@@ -118,20 +168,36 @@ class Acumulador:
                 "edital": edital,
                 "quantidade": 0,
                 "exemplos": [],
+                "casos": [],
                 "extra": dict(extra or {}),
+                "_chaves": set(),
             }
         aviso["quantidade"] += quantidade
+        self.acrescentar(aviso, exemplo, caso)
+        return aviso
+
+    @staticmethod
+    def acrescentar(aviso, exemplo=None, caso=None):
+        """Mais um exemplo (até 20) e mais um caso (até 5000, sem repetir) no aviso."""
         seguro = exemplo_seguro(exemplo) if exemplo is not None else None
         if seguro and seguro not in aviso["exemplos"] and len(aviso["exemplos"]) < MAX_EXEMPLOS:
             aviso["exemplos"].append(seguro)
-        return aviso
+        bruto = caso if caso is not None else ({"referencia": exemplo} if exemplo is not None else None)
+        limpo = caso_seguro(bruto) if bruto is not None else None
+        if not limpo or len(aviso["casos"]) >= MAX_CASOS:
+            return
+        chave = (limpo.get("analise"), limpo.get("codigo"), limpo.get("referencia"))
+        if chave in aviso["_chaves"]:
+            return
+        aviso["_chaves"].add(chave)
+        aviso["casos"].append(limpo)
 
     def avisos(self, resumir):
         """Lista final, com o resumo de cada aviso (resumir(aviso, numero_do_edital) → texto)."""
         saida = []
         for aviso in self._avisos.values():
             texto = resumir(aviso, self.numero_do_edital(aviso["edital"]))
-            final = {k: v for k, v in aviso.items() if k != "extra"}
+            final = {k: v for k, v in aviso.items() if k not in ("extra", "_chaves")}
             final["resumo"] = texto[:300]
             saida.append(final)
         return saida
@@ -216,11 +282,18 @@ def conferir_analises(paginas, contexto, acumulador):
                     area=area,
                     exemplo=ident,
                     extra={"corte": f"{corte:g}"},
+                    caso={"analise": ident, "detalhe": {"nota": nota, "corte": corte}},
                 )
 
             partes = [numero(a.get(c)) for c in ("formacao", "cursos", "experiencia", "etnico")]
             if nota is not None and all(p is not None for p in partes) and abs(sum(partes) - nota) > TOLERANCIA:
-                acumulador.anotar("ANALISE_NOTA_DIFERENTE_DA_SOMA", edital=edital, area=area, exemplo=ident)
+                acumulador.anotar(
+                    "ANALISE_NOTA_DIFERENTE_DA_SOMA",
+                    edital=edital,
+                    area=area,
+                    exemplo=ident,
+                    caso={"analise": ident, "detalhe": {"nota": nota, "soma": round(sum(partes), 4)}},
+                )
 
             teto = numero(regra.get("teto_experiencia"))
             experiencia = numero(a.get("experiencia"))
@@ -231,12 +304,26 @@ def conferir_analises(paginas, contexto, acumulador):
                     area=area,
                     exemplo=ident,
                     extra={"teto": f"{teto:g}"},
+                    caso={"analise": ident, "detalhe": {"experiencia": experiencia, "teto": teto}},
                 )
 
             data_analise = dia(a.get("data_analise"))
             inscricao = dia(a.get("inscricao"))
             if data_analise and (data_analise > hoje or (inscricao and data_analise < inscricao)):
-                acumulador.anotar("ANALISE_DATA_INVALIDA", edital=edital, area=area, exemplo=ident)
+                acumulador.anotar(
+                    "ANALISE_DATA_INVALIDA",
+                    edital=edital,
+                    area=area,
+                    exemplo=ident,
+                    caso={
+                        "analise": ident,
+                        "detalhe": {
+                            "data_analise": data_analise,
+                            "inscricao": inscricao,
+                            "motivo": "futuro" if data_analise > hoje else "antes_da_inscricao",
+                        },
+                    },
+                )
 
             codigo = a.get("codigo")
             if codigo and edital and (editais.get(edital) or {}).get("ativo"):
@@ -248,7 +335,12 @@ def conferir_analises(paginas, contexto, acumulador):
         if len(conjunto) < 2:
             continue
         for area in sorted(areas_por_codigo[codigo]) or [None]:
-            acumulador.anotar("ANALISE_EM_DOIS_EDITAIS", area=area, exemplo=codigo)
+            acumulador.anotar(
+                "ANALISE_EM_DOIS_EDITAIS",
+                area=area,
+                exemplo=codigo,
+                caso={"codigo": codigo, "detalhe": {"editais": len(conjunto)}},
+            )
 
 
 # ── Entrevistas ─────────────────────────────────────────────────────────────
@@ -293,6 +385,7 @@ def conferir_entrevistas(dados, contexto, acumulador):
                     edital=g.get("edital"),
                     area=g.get("area"),
                     exemplo=g.get("analise"),
+                    caso={"analise": g.get("analise"), "detalhe": {"data_entrevista": data}},
                 )
                 break
 
@@ -312,6 +405,11 @@ def conferir_entrevistas(dados, contexto, acumulador):
                 edital=entrevista.get("edital"),
                 area=entrevista.get("area"),
                 exemplo=entrevista.get("id"),
+                caso={
+                    "analise": entrevista.get("analise"),
+                    "referencia": entrevista.get("id"),
+                    "detalhe": {"nota": nota, "maxima": numero(competencia.get("maxima"))},
+                },
             )
 
     # Convocado pelo sistema que não está na lista de convocação vigente.
@@ -321,13 +419,23 @@ def conferir_entrevistas(dados, contexto, acumulador):
             continue
         if e["analise"] not in convocacao.get(e["edital"], set()):
             acumulador.anotar(
-                "ENTREVISTA_FORA_DA_CONVOCACAO", edital=e["edital"], area=e.get("area"), exemplo=e["analise"]
+                "ENTREVISTA_FORA_DA_CONVOCACAO",
+                edital=e["edital"],
+                area=e.get("area"),
+                exemplo=e["analise"],
+                caso={"analise": e["analise"]},
             )
 
     # Dois horários: duas entrevistas ativas no mesmo edital para a mesma análise…
     for (edital, analise), lista in por_candidato.items():
         if len(lista) > 1:
-            acumulador.anotar("ENTREVISTA_HORARIO_DUPLICADO", edital=edital, area=lista[0].get("area"), exemplo=analise)
+            acumulador.anotar(
+                "ENTREVISTA_HORARIO_DUPLICADO",
+                edital=edital,
+                area=lista[0].get("area"),
+                exemplo=analise,
+                caso={"analise": analise, "detalhe": {"horarios": len(lista)}},
+            )
     # …ou o mesmo candidato (código) em horários que se cruzam em editais diferentes.
     por_codigo_e_dia = defaultdict(list)
     for g in dados.get("agenda") or []:
@@ -344,7 +452,7 @@ def conferir_entrevistas(dados, contexto, acumulador):
                     cruzam = True
         if cruzam:
             for area in sorted({g.get("area") for g in lista if g.get("area")}) or [None]:
-                acumulador.anotar("ENTREVISTA_HORARIO_DUPLICADO", area=area, exemplo=codigo)
+                acumulador.anotar("ENTREVISTA_HORARIO_DUPLICADO", area=area, exemplo=codigo, caso={"codigo": codigo})
 
 
 # ── Classificação ───────────────────────────────────────────────────────────
@@ -375,9 +483,7 @@ def conferir_classificacao(dados, acumulador):
                 exemplo=lista.get("id"),
             )
             for vaga in lista.get("vagas_pendentes") or []:
-                seguro = exemplo_seguro(vaga)
-                if seguro and seguro not in aviso["exemplos"] and len(aviso["exemplos"]) < MAX_EXEMPLOS:
-                    aviso["exemplos"].append(seguro)
+                Acumulador.acrescentar(aviso, vaga)
 
     for v in dados.get("vagas_sem_quadro") or []:
         acumulador.anotar(
@@ -422,9 +528,7 @@ def conferir_aprovados(dados, contexto, acumulador, dias_convocado=15):
         for area in sorted({c.get("area") for c in lista if c.get("area")}) or [None]:
             aviso = acumulador.anotar("APROVADOS_CONTRATADO_DUPLICADO", area=area, exemplo=lista[0].get("id"))
             for c in lista[1:]:
-                seguro = exemplo_seguro(c.get("id"))
-                if seguro and seguro not in aviso["exemplos"] and len(aviso["exemplos"]) < MAX_EXEMPLOS:
-                    aviso["exemplos"].append(seguro)
+                Acumulador.acrescentar(aviso, c.get("id"))
 
     for p in dados.get("pendencias") or []:
         ids = p.get("candidatos") or []
@@ -438,9 +542,7 @@ def conferir_aprovados(dados, contexto, acumulador, dias_convocado=15):
             exemplo=ids[0],
         )
         for ident in ids[1:]:
-            seguro = exemplo_seguro(ident)
-            if seguro and seguro not in aviso["exemplos"] and len(aviso["exemplos"]) < MAX_EXEMPLOS:
-                aviso["exemplos"].append(seguro)
+            Acumulador.acrescentar(aviso, ident)
 
 
 # ── Cargas ──────────────────────────────────────────────────────────────────

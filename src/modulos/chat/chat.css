@@ -182,7 +182,9 @@
   position: fixed;
   z-index: 10043;
   right: max(16px, env(safe-area-inset-right, 0px));
-  bottom: calc(clamp(16px, 2vw, 24px) + 88px);
+  bottom: calc(
+    clamp(16px, 2vw, 24px) + 88px + var(--recuo-da-navegacao-inferior, 0px)
+  );
   width: min(340px, calc(100vw - 32px));
   pointer-events: none;
 }

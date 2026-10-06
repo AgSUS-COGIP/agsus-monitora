@@ -165,3 +165,13 @@ export const MENSAGENS_DO_DISPARO = Object.freeze({
     "O GitHub recusou o pedido: confira o GITHUB_DISPATCH_TOKEN (Actions: read and write).",
   github_fora: "O GitHub não respondeu. Tente de novo em instantes.",
 });
+
+/**
+ * Por que o pedido a /api/rodar-carga não saiu, para a tela: a mensagem da
+ * função (`corpo.erro`), "Só na versão publicada." no 404 (fora da Vercel a
+ * função não existe) ou `padrao`.
+ */
+export function motivoDaRecusa(status, corpo, padrao) {
+  if (typeof corpo?.erro === "string" && corpo.erro.trim()) return corpo.erro;
+  return status === 404 ? "Só na versão publicada." : padrao;
+}
