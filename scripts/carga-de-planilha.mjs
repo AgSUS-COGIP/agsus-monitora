@@ -25,6 +25,8 @@ import { parseEnv } from "node:util";
 const ESCOPO = "https://www.googleapis.com/auth/spreadsheets.readonly";
 const RAIZ = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 export const GUIA = "docs/sincronizacao-das-planilhas.md";
+/** Tempo máximo de cada chamada HTTP: conexão pendurada não come os 10 min do job. */
+const TEMPO_LIMITE_MS = 60_000;
 
 /** `--seco` (só lê) e `--forcar` (aceita carga pequena). */
 export function argumentos(lista = process.argv.slice(2)) {
@@ -91,6 +93,7 @@ export async function tokenDoGoogle(conta) {
 
   const resposta = await fetch(tokenUri, {
     method: "POST",
+    signal: AbortSignal.timeout(TEMPO_LIMITE_MS),
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
     body: new URLSearchParams({
       grant_type: "urn:ietf:params:oauth:grant-type:jwt-bearer",
@@ -112,6 +115,7 @@ export async function lerAba(token, conta, { idGoogle, aba }) {
   const url = `https://sheets.googleapis.com/v4/spreadsheets/${idGoogle}/values/${faixa}?valueRenderOption=FORMATTED_VALUE&majorDimension=ROWS`;
   const resposta = await fetch(url, {
     headers: { Authorization: `Bearer ${token}` },
+    signal: AbortSignal.timeout(TEMPO_LIMITE_MS),
   });
   const dados = await resposta.json().catch(() => ({}));
   if (resposta.status === 403 || resposta.status === 404) {
@@ -145,26 +149,64 @@ export function configuracaoDoSupabase(workflow) {
   return { url, chave };
 }
 
-export async function chamarRpc({ url, chave }, funcao, corpo) {
+/**
+  Só `code` e `message` do erro do PostgREST. `details` e `hint` ficam de fora:
+  o Postgres põe neles a linha recusada inteira ("Failing row contains (...)"),
+  com nome e e-mail do candidato, e o log do Actions é público.
+*/
+export function textoDoErro(texto) {
+  let corpo;
+  try {
+    corpo = JSON.parse(texto);
+  } catch {
+    return "resposta sem JSON";
+  }
+  if (!corpo || typeof corpo !== "object") return "resposta sem JSON";
+  const codigo = String(corpo.code || "").trim();
+  const mensagem = String(corpo.message || "").trim();
+  if (codigo && mensagem) return `${codigo}: ${mensagem}`;
+  return codigo || mensagem || "erro sem mensagem";
+}
+
+export async function chamarRpc(
+  { url, chave },
+  funcao,
+  corpo,
+  {
+    buscar = fetch,
+    esperar = (ms) => new Promise((r) => setTimeout(r, ms)),
+  } = {},
+) {
   let ultimoErro = null;
   for (let tentativa = 1; tentativa <= 3; tentativa++) {
-    const resposta = await fetch(`${url}/rest/v1/rpc/${funcao}`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        apikey: chave,
-        Authorization: `Bearer ${chave}`,
-      },
-      body: JSON.stringify(corpo),
-    });
+    let resposta;
+    try {
+      resposta = await buscar(`${url}/rest/v1/rpc/${funcao}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          apikey: chave,
+          Authorization: `Bearer ${chave}`,
+        },
+        body: JSON.stringify(corpo),
+        signal: AbortSignal.timeout(TEMPO_LIMITE_MS),
+      });
+    } catch (erro) {
+      // Rede caiu ou estourou o tempo: repete, como o 5xx.
+      ultimoErro = new Error(
+        `${funcao} sem resposta: ${erro?.name || "erro de rede"}`,
+      );
+      await esperar(1500 * tentativa);
+      continue;
+    }
     const texto = await resposta.text();
     if (resposta.ok) return texto ? JSON.parse(texto) : null;
     ultimoErro = new Error(
-      `${funcao} respondeu ${resposta.status}: ${texto.slice(0, 500)}`,
+      `${funcao} respondeu ${resposta.status}: ${textoDoErro(texto)}`,
     );
     // Erro do banco (4xx) não melhora repetindo; só rede/servidor (5xx).
     if (resposta.status < 500) break;
-    await new Promise((r) => setTimeout(r, 1500 * tentativa));
+    await esperar(1500 * tentativa);
   }
   throw ultimoErro;
 }

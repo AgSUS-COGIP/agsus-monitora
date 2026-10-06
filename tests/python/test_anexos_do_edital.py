@@ -36,6 +36,11 @@ class Periodo(unittest.TestCase):
     def test_data_impossivel(self):
         self.assertEqual(ax.datas_com_ano([ax.ler_periodo("31/02")], 2026), [None])
 
+    def test_29_de_fevereiro_na_virada_nao_derruba_o_cronograma(self):
+        datas = ax.datas_com_ano([ax.ler_periodo("10/12"), ax.ler_periodo("29/02"), ax.ler_periodo("10/03")], 2028)
+        self.assertEqual(datas[0], (date(2028, 12, 10), date(2028, 12, 10)))
+        self.assertIsNone(datas[1])
+
 
 class Cronograma(unittest.TestCase):
     def test_tabela_do_anexo_i(self):
