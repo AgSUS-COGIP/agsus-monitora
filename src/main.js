@@ -41,6 +41,7 @@ import "./modulos/recursos/recursos.css";
 import "./modulos/entrevistas/entrevistas.css";
 import "./modulos/selecao/selecao.css";
 import "./modulos/classificacao/classificacao.css";
+import "./modulos/conferencias/conferencias.css";
 import "./modulos/visao-geral/visao-geral.css";
 import "./modulos/aya/aya.css";
 import "./modulos/chat/chat.css";

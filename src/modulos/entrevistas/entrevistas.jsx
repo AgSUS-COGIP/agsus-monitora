@@ -31,6 +31,7 @@ import {
 } from "./paineis.jsx";
 import { VisaoDeRoteiros } from "./roteiros.jsx";
 import { MENSAGEM_SEM_ENTREVISTAS, TabelaDeEntrevistas } from "./tabela.jsx";
+import { SeloDeAvisos } from "../conferencias/avisos-de-conferencia.jsx";
 
 /*
   A tela de Entrevistas (view `entrevistas`), um módulo do app: monta direto
@@ -172,7 +173,9 @@ function TelaDaArea({ estado, conducao, e, visao, aoTrocarVisao }) {
         visoes={comVisoes ? VISOES : null}
         visao={visao}
         aoTrocarVisao={aoTrocarVisao}
-      />
+      >
+        <SeloDeAvisos modulo="entrevistas" />
+      </Topo>
 
       {e.semSessao ? (
         <Aviso tom="warning" papel="alert">

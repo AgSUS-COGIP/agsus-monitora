@@ -25,7 +25,7 @@ import re
 import time
 from datetime import datetime, timedelta
 
-from mascaramento import resumo_do_erro
+from monitora.mascaramento import resumo_do_erro
 
 URL_BASE = "https://corporate.empregare.com"
 URL_LOGIN = URL_BASE + "/empresa/login"
@@ -206,9 +206,7 @@ class PortalEmpregare:
         self._esperar(20).until(EC.presence_of_element_located((By.ID, "loginSenha"))).send_keys(senha)
         self._esperar(20).until(EC.element_to_be_clickable((By.ID, "btn-login-acessar"))).click()
         try:
-            self._esperar(30).until(
-                EC.presence_of_element_located((By.CSS_SELECTOR, 'a[href="/empresa/vagas"]'))
-            )
+            self._esperar(30).until(EC.presence_of_element_located((By.CSS_SELECTOR, 'a[href="/empresa/vagas"]')))
         except TimeoutException as erro:
             if "/login" in (d.current_url or ""):
                 raise ErroDeLogin(
@@ -248,8 +246,7 @@ class PortalEmpregare:
             time.sleep(0.5)
         if not campo.is_selected():
             self.driver.execute_script(
-                "arguments[0].checked = true;"
-                "arguments[0].dispatchEvent(new Event('change', {bubbles:true}));",
+                "arguments[0].checked = true;arguments[0].dispatchEvent(new Event('change', {bubbles:true}));",
                 campo,
             )
             time.sleep(0.5)
@@ -322,9 +319,7 @@ class PortalEmpregare:
 
             self.clicar(self._esperar(20).until(presente((By.ID, "btn-exportar-candidatos"))))
             try:
-                ok = self._esperar(10).until(
-                    presente((By.CSS_SELECTOR, "button.confirm, button.swal2-confirm"))
-                )
+                ok = self._esperar(10).until(presente((By.CSS_SELECTOR, "button.confirm, button.swal2-confirm")))
                 self.clicar(ok)
             except TimeoutException:
                 pass

@@ -21,6 +21,7 @@ import { criarEstadoDaClassificacao, MENSAGEM_SEM_ACESSO } from "./estado.js";
 import { criarEstadoDaAgenda } from "./estado-da-agenda.js";
 import { Listas } from "./listas.jsx";
 import { Regra } from "./regra.jsx";
+import { SeloDeAvisos } from "../conferencias/avisos-de-conferencia.jsx";
 
 /*
   A tela de Classificação (view `classificacao`), módulo do app: monta direto
@@ -123,7 +124,9 @@ function TelaDaArea({ estado, agenda, e }) {
         atualizarDesativado={
           !e.area || e.carregandoEditais || e.carregandoEdital
         }
-      />
+      >
+        <SeloDeAvisos modulo="classificacao" />
+      </TopoDoPainel>
 
       {e.semAcesso ? (
         <Aviso tom="warning" papel="alert">

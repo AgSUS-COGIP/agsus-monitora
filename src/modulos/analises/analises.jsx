@@ -42,6 +42,7 @@ import { criarEstadoDasAnalises } from "./estado.js";
 import { GavetaDaAnalise } from "./gaveta.jsx";
 import { chipsDosFiltros, Filtros, Graficos, Indicadores } from "./paineis.jsx";
 import { TabelaDeAnalises } from "./tabela.jsx";
+import { SeloDeAvisos } from "../conferencias/avisos-de-conferencia.jsx";
 
 /*
   A tela de Análises curriculares (view `analises`), um módulo do app: monta
@@ -311,7 +312,9 @@ function TelaDaArea({ estado, e }) {
         }
         aoExportar={exportar}
         exportarDesativado={!carregado || !recorte.length}
-      />
+      >
+        <SeloDeAvisos modulo="analises" />
+      </TopoDoPainel>
 
       <AvisoDaTela e={e} demora={demora} aoTentarDeNovo={recarregar} />
 

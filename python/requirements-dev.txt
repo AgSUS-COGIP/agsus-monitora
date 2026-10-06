@@ -1,0 +1,5 @@
+# Ferramentas de desenvolvimento do Python do MONITORA (CI e máquina local).
+# Não vão para a Vercel (o requirements.txt da raiz é só das funções api/*.py)
+# nem para os jobs (cada job tem o próprio requirements, quando precisa).
+pytest==8.4.2
+ruff==0.13.3
