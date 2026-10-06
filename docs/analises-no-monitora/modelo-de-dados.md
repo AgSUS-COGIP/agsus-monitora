@@ -1,6 +1,6 @@
 # Avaliação documental — proposta de modelo de dados
 
-**Só proposta.** Não há migration, e nada foi aplicado no banco. O desenho funcional está no
+**Proposta, com a fase F1 já em migration** (`20261006090000` e `20261006100000`, ainda por aplicar): recurso, regra, modelos, equipe, aldeias e dono da avaliação. O formato implementado da regra (`DS_CONFIGURACAO`) está em `src/lib/avaliacao-documental/regra.js` — ele acrescenta ao exemplo da seção 2.1 o tipo de bloco `CURSOS`, os valores por nível (`por_nivel`) e a experiência por período (`pontuacao`, `periodo_meses`, `desconta_minimo`). O resto continua proposta. O desenho funcional está no
 [README](README.md). Esta proposta segue o padrão MAD (PDTIC 2026–2027; resumo em
 `docs/padronizacao_nomenclatura_*.md`). Antes de virar migration, passa pela skill
 `mad-ddl-review`.

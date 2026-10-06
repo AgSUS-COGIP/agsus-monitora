@@ -41,6 +41,7 @@ import "./modulos/recursos/recursos.css";
 import "./modulos/entrevistas/entrevistas.css";
 import "./modulos/selecao/selecao.css";
 import "./modulos/classificacao/classificacao.css";
+import "./modulos/avaliacao-documental/avaliacao-documental.css";
 import "./modulos/conferencias/conferencias.css";
 import "./modulos/visao-geral/visao-geral.css";
 import "./modulos/aya/aya.css";
@@ -80,6 +81,7 @@ import { montarEntrevistas } from "./modulos/entrevistas/entrevistas.jsx";
 import { montarAnalises } from "./modulos/analises/analises.jsx";
 import { montarSelecao } from "./modulos/selecao/selecao.jsx";
 import { montarClassificacao } from "./modulos/classificacao/classificacao.jsx";
+import { montarAvaliacaoDocumental } from "./modulos/avaliacao-documental/avaliacao-documental.jsx";
 import { montarVisaoGeral } from "./modulos/visao-geral/visao-geral.jsx";
 import { situacaoDoSistema } from "./modules/situacao-dos-modulos.js";
 import { montarAcessos } from "./modulos/acessos/acessos.jsx";
@@ -213,6 +215,15 @@ window.selecaoController = montarSelecao({ toast: window.monitoraToast });
   (src/lib/classificacao/).
 */
 window.classificacaoController = montarClassificacao({
+  toast: window.monitoraToast,
+});
+
+/*
+  Avaliação documental: módulo de src/modulos/, na própria <section> (área do
+  app, render() a cada abertura). A regra é de cada edital; a conta da prévia,
+  da lib pura (src/lib/avaliacao-documental/).
+*/
+window.avaliacaoDocumentalController = montarAvaliacaoDocumental({
   toast: window.monitoraToast,
 });
 

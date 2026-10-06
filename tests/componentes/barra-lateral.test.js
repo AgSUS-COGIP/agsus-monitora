@@ -216,7 +216,7 @@ describe("áreas abertas por padrão", () => {
       ["Visão geral", "saude-indigena"],
       ["Editais", "saude-indigena"],
       ["Cronograma", "saude-indigena"],
-      ["Análises curriculares", "saude-indigena"],
+      ["Painel das análises", "saude-indigena"],
       ["Lista de aprovados", "saude-indigena"],
     ]);
   });
@@ -520,7 +520,7 @@ describe("barra recolhida: páginas da área como ícones", () => {
       ["Visão geral", "map", "Visão geral"],
       ["Editais", "file-text", "Editais"],
       ["Cronograma", "calendar-days", "Cronograma"],
-      ["Análises curriculares", "file-search", "Análises curriculares"],
+      ["Painel das análises", "file-search", "Painel das análises"],
       ["Recursos", "scale", "Recursos · BETA"],
       ["Lista de aprovados", "user-round-check", "Lista de aprovados"],
     ]);

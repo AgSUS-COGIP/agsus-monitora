@@ -36,6 +36,13 @@ O robô liga cada vaga ao edital pela Seleção (`TB_EMPREGARE_VAGA.CO_MONITORAM
   - a geração dos documentos grandes das listas, se o DOCX no navegador não der conta (F6).
 
   A regra de negócio continua no banco (RPCs). O Python orquestra, carrega e confere.
+- **Conta pesada ou em lote não roda em função SQL a cada requisição nem no navegador por usuário**
+  (orientação de 06/10/2026). Ela vai para a base Python (`python/monitora/`, jobs no GitHub
+  Actions ou `api/*.py`), que grava o resultado pronto; o banco fica com gravação, validação,
+  permissão e consultas leves. A lib pura de `src/lib/avaliacao-documental/` serve à prévia
+  instantânea da tela e é a referência dos **casos dourados**
+  (`tests/fixtures/avaliacao-documental/casos-de-pontuacao.json`), que o Python reproduz a partir da
+  F2 (pré-classificação e nota declarada em lote).
 - Cada fase termina com: testes verdes, `npm run build`, conferência no navegador e a Aya
   atualizada (`docs/aya/regras-da-avaliacao-documental.md`).
 
@@ -65,7 +72,28 @@ o robô em Configurações › Status das atualizações › Rodar agora.
 
 ## F1 — Menu, permissão e regra da avaliação por edital
 
-**Entrega:**
+**Situação: feita em 06/10/2026** (branch `feat/avaliacao-documental-f1`; migrations ainda por
+aplicar). O que entrou:
+
+- `20261006090000_avaliacao_documental_permissao_e_menu.sql`: o recurso (administrador global,
+  edital_gestor e coordenador = Administrador; os demais grupos sem acesso no piloto), a aba
+  "Avaliação documental" desligada na ordem 5 e o rótulo "Painel das análises";
+  `20261006090500_liga_aba_avaliacao_documental.sql` liga a aba com o merge do front.
+- `20261006100000_regra_da_analise.sql`: as tabelas da lista abaixo, a validação da regra no banco
+  (`FC_VALIDAR_REGRA_ANALISE`, estrutura apenas — nenhuma conta de pontos em SQL) e as RPCs
+  `listar_editais_avaliacao`, `obter_regra_analise`, `copiar_modelo_regra_analise`,
+  `salvar_regra_analise`, `conferir_regra_analise`, `obter_equipe_edital`, `salvar_equipe_edital` e
+  `salvar_aldeias_dsei`. A `simular_regra_analise` do desenho virou a prévia no navegador (lib pura,
+  sem gravar); `salvar_aldeias_dsei` recebe a lista inteira do DSEI.
+- `supabase/correcoes/20261006-modelos-da-regra-da-analise.sql`: os modelos PROJ26-CURRICULAR
+  (lido do PDF do 93/2026), SI26-INTERIOR-SUL (simulador do 28/2026) e SI26-100, e o 93/2026 em
+  `PLANILHA`. O SI26-83 ficou de fora (falta o questionário/regra para montá-lo).
+- Tela `src/modulos/avaliacao-documental/` (abas Regra e Equipe, prévia com candidato fictício),
+  lógica pura `src/lib/avaliacao-documental/` com os casos dourados e os verbetes da Aya.
+- Fica para a F3: AM-2.3 (fichas afetadas por versão nova; a RPC já devolve a lista, vazia) e AM-3.3
+  (fichas em análise de quem sai da equipe).
+
+**Entrega (planejada):**
 
 - o recurso de permissão `avaliacao_documental`;
 - no menu, "Painel das análises" (o rótulo novo da tela de hoje) e "Avaliação documental" (a tela

@@ -149,7 +149,7 @@ const TOURS = Object.freeze({
     ]),
   }),
   analises: Object.freeze({
-    titulo: "Análises curriculares",
+    titulo: "Painel das análises",
     passos: Object.freeze([
       passo(
         "#analises-filtro-escopo",
@@ -478,7 +478,7 @@ const TRILHAS = Object.freeze([
       ),
       passo(
         "#page-analises .analises-kpis",
-        "3. Análises curriculares",
+        "3. Painel das análises",
         "A análise de cada candidato chega das planilhas; acompanhe as pendências e os resultados.",
         { pagina: "analises" },
       ),

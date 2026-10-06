@@ -121,6 +121,17 @@ export function canViewSelecao(profile) {
 }
 
 /*
+  Avaliação documental (20261006090000_avaliacao_documental_permissao_e_menu.sql):
+  ver a regra e a equipe (leitor). Quem coordena cada edital o banco decide
+  (gestor do edital ou coordenação na equipe, com Administrador). Sem a matriz
+  (contexto antigo), não aparece: o banco ainda não tem o recurso.
+*/
+export function canViewAvaliacaoDocumental(profile) {
+  if (profile?.permissoes) return hasResource(profile, "avaliacao_documental");
+  return false;
+}
+
+/*
   Aba Classificação (20261002150000_classificacao.sql): ver (leitor); salvar a
   regra do edital, gerar e publicar listas e registrar sorteio (editor).
 */
@@ -274,6 +285,7 @@ export function paginasPermitidas(profile) {
     calendario: profile?.permissoes ? pode("calendario") : pode("cores"),
     approved: canViewCore(profile),
     analises: pode("analises"),
+    "avaliacao-documental": canViewAvaliacaoDocumental(profile),
     entrevistas: canViewEntrevistas(profile),
     classificacao: canViewClassificacao(profile),
     recursos: canViewRecursos(profile),

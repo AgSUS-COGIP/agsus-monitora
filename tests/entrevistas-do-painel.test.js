@@ -343,10 +343,10 @@ describe("registro da aba", async () => {
       view: "entrevistas",
       recurso: "entrevistas",
       icone: "messages-square",
-      ordem: 6,
+      ordem: 7,
       beta: true,
     });
-    expect(ABAS_DO_MENU.find((aba) => aba.id === "recursos").ordem).toBe(5);
+    expect(ABAS_DO_MENU.find((aba) => aba.id === "recursos").ordem).toBe(6);
     expect(NOMES_DE_ICONES).toContain("messages-square");
     expect(RESOURCES).toContainEqual(["entrevistas", "Entrevistas"]);
   });
