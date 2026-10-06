@@ -1,0 +1,346 @@
+/*
+  Estado da aba Fila (fase F3), fora do React (useSyncExternalStore). Não
+  importa React. As regras puras estão em src/lib/avaliacao-documental/fila.js
+  e distribuicao.js; aqui, a leitura, as ações e a reserva da ficha aberta.
+
+  RPCs (supabase/migrations/20261006120000_fichas_fila_e_reserva.sql;
+  contrato em src/lib/rpc-contrato.js):
+    obter_fila_avaliacao(p_edital)                     a fila do edital
+    pegar_proxima_ficha(p_edital, p_vaga)              "Pegar próximo"
+    reservar_ficha(p_ficha)                            abre (reserva 15 min)
+    renovar_reserva(p_ficha)                           a cada 5 min, enquanto aberta
+    liberar_reserva(p_edital, p_fichas, p_motivo)      ao fechar; coordenação, com motivo
+    distribuir_fichas(p_edital, p_atribuicoes, p_motivo)
+    mandar_fichas_revisao(p_edital, p_fichas, p_motivo)
+    abrir_fichas_do_edital(p_edital)
+    salvar_filtro_fila(p_nome, p_filtro) / excluir_filtro_fila(p_filtro)
+  O último filtro usado fica no navegador só por conveniência (try/catch);
+  os filtros salvos com nome ficam no banco, por pessoa.
+*/
+import { comTempoLimite } from "../../lib/falha-de-rede.js";
+import {
+  FILTRO_INICIAL,
+  normalizarFiltro,
+} from "../../lib/avaliacao-documental/fila.js";
+import { mensagemDoBanco } from "./estado.js";
+
+const RPC_OBTER_FILA = "obter_fila_avaliacao";
+const RPC_PEGAR_PROXIMA = "pegar_proxima_ficha";
+const RPC_RESERVAR = "reservar_ficha";
+const RPC_RENOVAR = "renovar_reserva";
+const RPC_LIBERAR = "liberar_reserva";
+const RPC_DISTRIBUIR = "distribuir_fichas";
+const RPC_REVISAO = "mandar_fichas_revisao";
+const RPC_ABRIR_FICHAS = "abrir_fichas_do_edital";
+const RPC_SALVAR_FILTRO = "salvar_filtro_fila";
+const RPC_EXCLUIR_FILTRO = "excluir_filtro_fila";
+
+const TEMPO_LIMITE_MS = 45000;
+/* A reserva dura 15 minutos; a tela renova bem antes. */
+export const RENOVAR_A_CADA_MS = 5 * 60 * 1000;
+const CHAVE_DO_FILTRO = "monitora.avaliacao-documental.fila.filtro";
+
+const INICIAL = Object.freeze({
+  editalId: "",
+  dados: null,
+  carregando: false,
+  erro: "",
+  filtro: FILTRO_INICIAL,
+  aberta: null,
+  abrindo: false,
+  acao: "",
+});
+
+function armazenamentoPadrao() {
+  try {
+    return globalThis.localStorage ?? null;
+  } catch {
+    return null;
+  }
+}
+
+function lerFiltro(armazenamento) {
+  try {
+    const texto = armazenamento?.getItem(CHAVE_DO_FILTRO);
+    return texto ? normalizarFiltro(JSON.parse(texto)) : FILTRO_INICIAL;
+  } catch {
+    return FILTRO_INICIAL;
+  }
+}
+
+function guardarFiltro(armazenamento, filtro) {
+  try {
+    armazenamento?.setItem(CHAVE_DO_FILTRO, JSON.stringify(filtro));
+  } catch {
+    /* Sem armazenamento no navegador: o filtro vale só nesta visita. */
+  }
+}
+
+export function criarEstadoDaFila({
+  supabase = null,
+  toast = (mensagem) => console.info(mensagem),
+  armazenamento = armazenamentoPadrao(),
+  agendar = (fn, ms) => setInterval(fn, ms),
+  cancelar = (id) => clearInterval(id),
+  tempoLimiteMs = TEMPO_LIMITE_MS,
+} = {}) {
+  let estado = { ...INICIAL, filtro: lerFiltro(armazenamento) };
+  let pedido = 0;
+  let renovacao = null;
+  const ouvintes = new Set();
+  const publicar = (mudancas) => {
+    estado = { ...estado, ...mudancas };
+    for (const ouvinte of ouvintes) ouvinte();
+  };
+
+  async function rpc(nome, argumentos) {
+    if (!supabase) throw new Error("Sem conexão com o banco.");
+    const { data, error } = await comTempoLimite(
+      supabase.rpc(nome, argumentos),
+      tempoLimiteMs,
+    );
+    if (error) throw error;
+    return data;
+  }
+
+  function pararRenovacao() {
+    if (renovacao !== null) cancelar(renovacao);
+    renovacao = null;
+  }
+
+  async function carregar(editalId = estado.editalId) {
+    const meu = ++pedido;
+    if (!editalId) {
+      pararRenovacao();
+      publicar({ ...INICIAL, filtro: estado.filtro });
+      return false;
+    }
+    publicar(
+      editalId !== estado.editalId
+        ? { ...INICIAL, filtro: estado.filtro, editalId, carregando: true }
+        : { carregando: true, erro: "" },
+    );
+    try {
+      const dados = await rpc(RPC_OBTER_FILA, { p_edital: editalId });
+      if (meu !== pedido) return false;
+      publicar({ dados, carregando: false, erro: "" });
+      return true;
+    } catch (erro) {
+      if (meu !== pedido) return false;
+      publicar({ carregando: false, erro: mensagemDoBanco(erro) });
+      return false;
+    }
+  }
+
+  function mudarFiltro(mudancas) {
+    const filtro = normalizarFiltro({ ...estado.filtro, ...mudancas });
+    guardarFiltro(armazenamento, filtro);
+    publicar({ filtro });
+  }
+
+  function mostrarFicha(r) {
+    pararRenovacao();
+    publicar({ aberta: r, abrindo: false });
+    if (r?.reservada && r.ficha?.id) {
+      const id = r.ficha.id;
+      renovacao = agendar(() => renovar(id), RENOVAR_A_CADA_MS);
+    }
+  }
+
+  async function abrir(fichaId) {
+    if (!fichaId) return false;
+    await fechar();
+    publicar({ abrindo: true });
+    try {
+      mostrarFicha(await rpc(RPC_RESERVAR, { p_ficha: fichaId }));
+      return true;
+    } catch (erro) {
+      publicar({ abrindo: false });
+      toast(
+        `Não foi possível abrir a ficha: ${mensagemDoBanco(erro)}`,
+        "error",
+      );
+      return false;
+    }
+  }
+
+  async function pegarProxima(vaga = "") {
+    await fechar();
+    publicar({ abrindo: true });
+    try {
+      const r = await rpc(RPC_PEGAR_PROXIMA, {
+        p_edital: estado.editalId,
+        p_vaga: vaga || null,
+      });
+      if (!r?.ficha) {
+        publicar({ abrindo: false });
+        toast(r?.motivo || "Nenhuma ficha livre na fila.", "info");
+        return false;
+      }
+      mostrarFicha(r);
+      void carregar();
+      return true;
+    } catch (erro) {
+      publicar({ abrindo: false });
+      toast(
+        `Não foi possível pegar a próxima: ${mensagemDoBanco(erro)}`,
+        "error",
+      );
+      return false;
+    }
+  }
+
+  async function renovar(fichaId) {
+    if (estado.aberta?.ficha?.id !== fichaId) return pararRenovacao();
+    try {
+      const r = await rpc(RPC_RENOVAR, { p_ficha: fichaId });
+      if (estado.aberta?.ficha?.id === fichaId)
+        publicar({
+          aberta: { ...estado.aberta, ficha: r?.ficha ?? estado.aberta.ficha },
+        });
+    } catch (erro) {
+      pararRenovacao();
+      if (estado.aberta?.ficha?.id === fichaId)
+        publicar({
+          aberta: {
+            ...estado.aberta,
+            reservada: false,
+            somente_leitura: true,
+            motivo: mensagemDoBanco(erro),
+          },
+        });
+    }
+  }
+
+  /* Fecha a ficha aberta e libera a reserva dela (se era sua). */
+  async function fechar() {
+    const aberta = estado.aberta;
+    pararRenovacao();
+    if (!aberta) return true;
+    publicar({ aberta: null });
+    if (aberta.reservada && aberta.ficha?.id) {
+      try {
+        await rpc(RPC_LIBERAR, {
+          p_edital: estado.editalId,
+          p_fichas: [aberta.ficha.id],
+          p_motivo: null,
+        });
+      } catch {
+        /* A reserva vence sozinha em 15 minutos. */
+      }
+      void carregar();
+    }
+    return true;
+  }
+
+  async function executar(nome, chamada, sucesso) {
+    publicar({ acao: nome });
+    try {
+      const r = await chamada();
+      if (sucesso) toast(sucesso(r), "success");
+      await carregar();
+      return { ok: true, resultado: r };
+    } catch (erro) {
+      const mensagem = mensagemDoBanco(erro);
+      if (erro?.code === "40001") void carregar();
+      return { ok: false, erro: mensagem };
+    } finally {
+      publicar({ acao: "" });
+    }
+  }
+
+  const distribuir = (atribuicoes, motivo) =>
+    executar(
+      "distribuir",
+      () =>
+        rpc(RPC_DISTRIBUIR, {
+          p_edital: estado.editalId,
+          p_atribuicoes: atribuicoes,
+          p_motivo: motivo || null,
+        }),
+      (r) => `${r?.alteradas ?? 0} ficha(s) distribuída(s).`,
+    );
+
+  const liberarReservas = (fichas, motivo) =>
+    executar(
+      "liberar",
+      () =>
+        rpc(RPC_LIBERAR, {
+          p_edital: estado.editalId,
+          p_fichas: fichas,
+          p_motivo: motivo || null,
+        }),
+      (r) => `${r?.liberadas ?? 0} reserva(s) liberada(s).`,
+    );
+
+  const mandarParaRevisao = (fichas, motivo) =>
+    executar(
+      "revisao",
+      () =>
+        rpc(RPC_REVISAO, {
+          p_edital: estado.editalId,
+          p_fichas: fichas,
+          p_motivo: motivo,
+        }),
+      (r) => `${r?.alteradas ?? 0} ficha(s) mandada(s) para revisão.`,
+    );
+
+  const abrirFichasDoLote = () =>
+    executar(
+      "abrir-fichas",
+      () => rpc(RPC_ABRIR_FICHAS, { p_edital: estado.editalId }),
+      (r) => `${r?.criadas ?? 0} ficha(s) aberta(s).`,
+    );
+
+  async function salvarFiltro(nome) {
+    try {
+      const filtros = await rpc(RPC_SALVAR_FILTRO, {
+        p_nome: nome,
+        p_filtro: estado.filtro,
+      });
+      if (estado.dados) publicar({ dados: { ...estado.dados, filtros } });
+      toast("Filtro salvo.", "success");
+      return true;
+    } catch (erro) {
+      toast(
+        `Não foi possível salvar o filtro: ${mensagemDoBanco(erro)}`,
+        "error",
+      );
+      return false;
+    }
+  }
+
+  async function excluirFiltro(id) {
+    try {
+      const filtros = await rpc(RPC_EXCLUIR_FILTRO, { p_filtro: id });
+      if (estado.dados) publicar({ dados: { ...estado.dados, filtros } });
+      return true;
+    } catch (erro) {
+      toast(
+        `Não foi possível excluir o filtro: ${mensagemDoBanco(erro)}`,
+        "error",
+      );
+      return false;
+    }
+  }
+
+  return {
+    obter: () => estado,
+    assinar(ouvinte) {
+      ouvintes.add(ouvinte);
+      return () => ouvintes.delete(ouvinte);
+    },
+    carregar,
+    mudarFiltro,
+    abrir,
+    pegarProxima,
+    renovar,
+    fechar,
+    distribuir,
+    liberarReservas,
+    mandarParaRevisao,
+    abrirFichasDoLote,
+    salvarFiltro,
+    excluirFiltro,
+  };
+}

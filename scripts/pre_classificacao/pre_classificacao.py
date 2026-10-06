@@ -44,6 +44,7 @@ from collections import Counter
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[2] / "python"))
 
 from monitora import execucao, supabase_rpc  # noqa: E402
+from monitora.avaliacao_documental.distribuicao import atribuicoes_dos_novos  # noqa: E402
 from monitora.avaliacao_documental.pre_classificacao import (  # noqa: E402
     normalizar_regra,
     pre_classificar_vaga,
@@ -202,6 +203,29 @@ def processar_edital(chamar, edital, hoje, refazer, gravar):
     return resultado
 
 
+def abrir_fichas(chamar, id_execucao, edital_id):
+    """
+    No fim do edital: lê a distribuição, calcula para quem vão as fichas novas
+    (distribuição inicial: quem tem menos pendentes) e pede ao banco para abrir
+    as fichas do lote (abrir_fichas_pre_classificacao valida e grava). Devolve
+    as contagens (sem dado pessoal).
+    """
+    distribuicao = chamar("pre_classificacao_ler_distribuicao", {"p_edital": edital_id}) or {}
+    atribuicoes = atribuicoes_dos_novos(distribuicao)
+    r = (
+        chamar(
+            "abrir_fichas_pre_classificacao",
+            {"p_execucao": id_execucao, "p_edital": edital_id, "p_atribuicoes": atribuicoes},
+        )
+        or {}
+    )
+    return {
+        "fichas_criadas": int(r.get("criadas") or 0),
+        "fichas_atribuidas": int(r.get("atribuidas") or 0),
+        "fichas_fora_do_lote": int(r.get("fora_do_lote") or 0),
+    }
+
+
 def payload_da_vaga(resultado_da_vaga):
     resumo = resultado_da_vaga["resumo"]
     return (
@@ -224,10 +248,16 @@ def linha_do_resumo(r):
         if avisos
         else (" · avisos: " + ", ".join(r["avisos"]) if r["avisos"] else "")
     )
+    texto_fichas = (
+        f" · fichas: {r['fichas_criadas']} aberta(s), {r['fichas_atribuidas']} atribuída(s), "
+        f"{r['fichas_fora_do_lote']} fora do lote"
+        if "fichas_criadas" in r
+        else ""
+    )
     return (
         f"{prefixo}{r['vagas']} vaga(s) · {r['inscritos']} inscritos · {r['eliminados']} eliminados · "
         f"{r['ranqueados']} na Provisória · {r['no_lote']} no lote · {r['divergencias']} divergência(s) ART × declarada"
-        f"{texto_avisos}."
+        f"{texto_fichas}{texto_avisos}."
     )
 
 
@@ -318,7 +348,10 @@ def principal(args, configuracao=None, chamar_rpc=None):
                 )
 
             try:
-                resultados.append(processar_edital(chamar, edital, hoje, args.refazer_lote, gravar))
+                resultado = processar_edital(chamar, edital, hoje, args.refazer_lote, gravar)
+                if resultado["situacao"] == "PROCESSADO":
+                    resultado.update(abrir_fichas(chamar, id_execucao, edital["id"]))
+                resultados.append(resultado)
             except Exception as erro:
                 mensagem = resumo_do_erro(erro)[:300]
                 log.warning("Edital %s falhou: %s", edital.get("rotulo"), mensagem)

@@ -92,7 +92,15 @@ async function principal() {
     p_forcar: forcar,
   });
 
-  if (fim?.situacao !== "CONCLUIDA") {
+  if (fim?.situacao !== "CONCLUIDA" && fim?.situacao !== "RECUSADA") {
+    // Resposta vazia ou outra situação não é a recusa da "menos da metade".
+    resumir(TITULO, [
+      `Carga ${sync} sem fechamento: o banco respondeu ${fim?.situacao ?? "nada"}.`,
+    ]);
+    return 1;
+  }
+
+  if (fim.situacao === "RECUSADA") {
     resumir(TITULO, [
       `Carga ${sync} RECUSADA: a planilha trouxe ${fim?.linhas} linhas e o banco tem ${fim?.ativas} ativas (menos da metade).`,
       "Nada foi desativado. Confira a aba Entrevistados; se estiver certa, rode de novo com --forcar.",

@@ -1,4 +1,5 @@
 import { useEffect, useState, useSyncExternalStore } from "react";
+import { editaisDaEscolha } from "../../lib/avaliacao-documental/editais.js";
 import { montarModulo } from "../../app/montar-modulo.jsx";
 import { obterDadosDoMonitoramento } from "../../componentes/dados-do-monitoramento.js";
 import { usarAreaAtual } from "../../componentes/usar-area-atual.js";
@@ -13,7 +14,9 @@ import { CHAVE_DO_CABECALHO } from "../../lib/cabecalho-dos-documentos.js";
 import { estadoDasConfiguracoes } from "../configuracoes/estado.js";
 import { Equipe } from "./equipe.jsx";
 import { criarEstadoDaAvaliacao, MENSAGEM_SEM_ACESSO } from "./estado.js";
+import { criarEstadoDaFila } from "./estado-da-fila.js";
 import { criarEstadoDaPreClassificacao } from "./estado-da-pre-classificacao.js";
+import { Fila } from "./fila.jsx";
 import { PreClassificacao } from "./pre-classificacao.jsx";
 import { Regra } from "./regra.jsx";
 
@@ -23,18 +26,20 @@ import { Regra } from "./regra.jsx";
   navegação é dona da classe `.active` e chama `render()` ao navegar (tabela
   `TELAS_REACT` de src/app/navegacao.js).
 
-  Fases F1 e F2 (docs/analises-no-monitora/plano-de-construcao.md): escolha
-  do edital, a regra da avaliação (modelo, versões com motivo, perguntas da
-  Empregare, prévia com candidato fictício), a equipe e a pré-classificação
-  (Provisória por ART e lote, gravados pelo job Python; listas PROVISORIA e
-  LOTE). A fila e a ficha entram nas fases seguintes. O Painel das análises
-  (view `analises`) continua sendo a leitura.
+  Fases F1 a F3 (docs/analises-no-monitora/plano-de-construcao.md): escolha
+  do edital (só os vigentes, com "Mostrar todos os editais da área"), a regra
+  da avaliação (modelo, versões com motivo, perguntas da Empregare, prévia com
+  candidato fictício), a equipe, a pré-classificação (Provisória por ART e
+  lote, gravados pelo job Python; listas PROVISORIA e LOTE) e a fila (etapas,
+  distribuição e reserva da ficha). O conteúdo da ficha entra na F4. O Painel
+  das análises (view `analises`) continua sendo a leitura.
 */
 
 const VISOES = [
   { valor: "regra", rotulo: "Regra", icone: "fa-sliders" },
   { valor: "equipe", rotulo: "Equipe", icone: "fa-users" },
   { valor: "pre", rotulo: "Pré-classificação", icone: "fa-ranking-star" },
+  { valor: "fila", rotulo: "Fila", icone: "fa-list-check" },
 ];
 const ORIGENS = {
   PLANILHA: "Planilha",
@@ -52,8 +57,13 @@ function textoDoStatus(e) {
   return e.dados ? "Sem regra" : "";
 }
 
-function TelaDaArea({ estado, pre, e }) {
+function TelaDaArea({ estado, pre, fila, e }) {
   const [visao, setVisao] = useState("regra");
+  const [todos, setTodos] = useState(false);
+  const { lista: editais, ocultos } = editaisDaEscolha(e.editais, {
+    todos,
+    escolhido: e.editalId,
+  });
   const recarregar = () => void estado.carregar(e.area);
   const papel = e.dados?.papel;
   return (
@@ -65,6 +75,7 @@ function TelaDaArea({ estado, pre, e }) {
             opcoes={VISOES}
             valor={visao}
             aoMudar={setVisao}
+            tour="avd-visoes"
           />
         }
         status={textoDoStatus(e)}
@@ -72,6 +83,7 @@ function TelaDaArea({ estado, pre, e }) {
           recarregar();
           if (e.editalId) void estado.escolherEdital(e.editalId);
           if (visao === "pre") void pre.carregar(e.editalId);
+          if (visao === "fila") void fila.carregar(e.editalId);
         }}
         atualizarDesativado={
           !e.area || e.carregandoEditais || e.carregandoEdital
@@ -102,17 +114,20 @@ function TelaDaArea({ estado, pre, e }) {
             <Campo rotulo="Edital">
               <select
                 value={e.editalId}
+                data-tour="avd-seletor-edital"
                 disabled={!e.carregado}
                 onChange={(ev) => void estado.escolherEdital(ev.target.value)}
               >
                 <option value="">
                   {e.carregado
-                    ? e.editais.length
+                    ? editais.length
                       ? "Escolha o edital"
-                      : "Nenhum edital nesta área"
+                      : e.editais.length
+                        ? "Nenhum edital vigente nesta área"
+                        : "Nenhum edital nesta área"
                     : "Carregando…"}
                 </option>
-                {e.editais.map((ed) => (
+                {editais.map((ed) => (
                   <option key={ed.id} value={ed.id}>
                     {[ed.edital, ed.unidade].filter(Boolean).join(" - ")}
                     {ed.versao_regra ? ` · regra v${ed.versao_regra}` : ""}
@@ -120,6 +135,16 @@ function TelaDaArea({ estado, pre, e }) {
                 ))}
               </select>
             </Campo>
+            {ocultos || todos ? (
+              <label className="avd-caixa" data-tour="avd-todos-editais">
+                <input
+                  type="checkbox"
+                  checked={todos}
+                  onChange={(ev) => setTodos(ev.target.checked)}
+                />
+                Mostrar todos os editais da área
+              </label>
+            ) : null}
             {e.dados ? (
               <span
                 className="ui-texto-secundario"
@@ -152,6 +177,8 @@ function TelaDaArea({ estado, pre, e }) {
                   e={e}
                   estado={estado}
                 />
+              ) : visao === "fila" ? (
+                <Fila key={e.editalId} e={e} fila={fila} />
               ) : visao === "pre" ? (
                 <PreClassificacao
                   key={`${e.editalId}:${e.dados.regra?.versao ?? 0}`}
@@ -179,7 +206,7 @@ function TelaDaArea({ estado, pre, e }) {
   );
 }
 
-export function TelaDaAvaliacaoDocumental({ estado, pre }) {
+export function TelaDaAvaliacaoDocumental({ estado, pre, fila }) {
   const e = useSyncExternalStore(estado.assinar, estado.obter);
   const { area: areaDoApp } = usarAreaAtual();
   useEffect(() => {
@@ -188,7 +215,13 @@ export function TelaDaAvaliacaoDocumental({ estado, pre }) {
       void estado.carregar(areaDoApp);
   }, [estado, areaDoApp]);
   return (
-    <TelaDaArea key={e.area || "sem-area"} estado={estado} pre={pre} e={e} />
+    <TelaDaArea
+      key={e.area || "sem-area"}
+      estado={estado}
+      pre={pre}
+      fila={fila}
+      e={e}
+    />
   );
 }
 
@@ -214,16 +247,18 @@ export function montarAvaliacaoDocumental({
     ...(buscar ? { buscar } : {}),
     ...(obterToken ? { obterToken } : {}),
   });
+  const fila = criarEstadoDaFila({ supabase, toast });
   const raiz = secao
     ? montarModulo(
         secao,
-        <TelaDaAvaliacaoDocumental estado={estado} pre={pre} />,
+        <TelaDaAvaliacaoDocumental estado={estado} pre={pre} fila={fila} />,
         { nome: "a tela de avaliação documental" },
       ).raiz
     : null;
   return {
     estado,
     pre,
+    fila,
     raiz,
     render() {
       return estado.carregar(String(areaAtual() ?? "").trim());

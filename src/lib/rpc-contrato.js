@@ -1030,6 +1030,67 @@ export const CONTRATO_RPC = {
     resumo:
       "Registra a lista PROVISORIA ou LOTE (p_lote = só aquela reposição) em TB_LISTA_CLASSIFICACAO, com o retrato montado no banco a partir da pré-classificação. Coordenação do edital ou Editor na Classificação; exige a regra de classificação.",
   },
+  // ── Avaliação documental: fila, distribuição e reserva (20261006120000_fichas_fila_e_reserva.sql)
+  obter_fila_avaliacao: {
+    argumentos: ["p_edital"],
+    critica: false,
+    resumo:
+      "A fila do edital: cada inscrito da pré-classificação com a ficha (situação, responsável, reserva vigente, versão; nome sem CPF nem contato), as vagas, os analistas com as pendentes, a distribuição da regra, quantos do lote estão sem ficha e os filtros salvos de quem chama. Leitor da Avaliação documental.",
+  },
+  pegar_proxima_ficha: {
+    argumentos: ["p_edital", "p_vaga"],
+    critica: false,
+    resumo:
+      "Pegar próximo: a próxima ficha na ordem da Provisória (as suas primeiro; depois a primeira livre, quando a regra deixa), reservada por 15 minutos; duas pessoas nunca recebem a mesma. Analista do edital.",
+  },
+  reservar_ficha: {
+    argumentos: ["p_ficha"],
+    critica: false,
+    resumo:
+      "Abre a ficha: reserva por 15 minutos para o responsável (ou analista que pega uma livre) ou devolve só para leitura com o motivo (Em uso por … desde …). Registra o acesso.",
+  },
+  renovar_reserva: {
+    argumentos: ["p_ficha"],
+    critica: false,
+    resumo:
+      "Renova a reserva de quem está com a ficha aberta (sem mudar a versão); 40001 quando a ficha já não está com a pessoa.",
+  },
+  liberar_reserva: {
+    argumentos: ["p_edital", "p_fichas", "p_motivo"],
+    critica: false,
+    resumo:
+      "Libera reservas: a própria, sem motivo; a de outra pessoa, só a coordenação e com motivo de 10 a 2.000.",
+  },
+  distribuir_fichas: {
+    argumentos: ["p_edital", "p_atribuicoes", "p_motivo"],
+    critica: false,
+    resumo:
+      "Distribuição inicial, redistribuição (motivo) e devolução à fila (motivo) pela coordenação: [{ficha, versao, usuario}], com controle otimista (40001), sem mexer em ficha concluída ou fora do lote.",
+  },
+  mandar_fichas_revisao: {
+    argumentos: ["p_edital", "p_fichas", "p_motivo"],
+    critica: false,
+    resumo:
+      "A coordenação manda fichas pendentes ou em análise para revisão, com motivo; [{ficha, versao}] com controle otimista.",
+  },
+  abrir_fichas_do_edital: {
+    argumentos: ["p_edital"],
+    critica: false,
+    resumo:
+      "A coordenação abre as fichas do lote que faltam (o job já faz no fim da pré-classificação), marca fora do lote quem saiu e devolve quem voltou.",
+  },
+  salvar_filtro_fila: {
+    argumentos: ["p_nome", "p_filtro"],
+    critica: false,
+    resumo:
+      "Salva (ou troca, pelo nome) um filtro da fila de quem chama; até 30. Devolve os filtros salvos.",
+  },
+  excluir_filtro_fila: {
+    argumentos: ["p_filtro"],
+    critica: false,
+    resumo:
+      "Exclui (desativa) um filtro salvo de quem chama. Devolve os filtros salvos.",
+  },
   // ── Avaliação documental: regra e equipe (20261006100000_regra_da_analise.sql)
   listar_editais_avaliacao: {
     argumentos: ["p_area"],

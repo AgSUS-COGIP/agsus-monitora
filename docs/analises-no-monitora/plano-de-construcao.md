@@ -8,13 +8,13 @@ e as histórias (códigos AM-n) em
 
 ## Ponto de partida do 93/2026 (banco em 05/10/2026, só contagens)
 
-| O quê | Hoje |
-|---|---|
-| Análises ativas (planilha de Projetos) | 86, em 5 vagas: 71 Pendentes e 15 em Revisar (com parecer e sem etapa) |
-| Regra de classificação | cadastrada (1) |
-| Quadro de vagas | 5 vagas, 11 vagas imediatas |
-| Vagas na Seleção (`TB_SELECAO_VAGA`) | **0** |
-| Vagas e candidatos no robô da Empregare | **0** / **0** |
+| O quê                                   | Hoje                                                                   |
+| --------------------------------------- | ---------------------------------------------------------------------- |
+| Análises ativas (planilha de Projetos)  | 86, em 5 vagas: 71 Pendentes e 15 em Revisar (com parecer e sem etapa) |
+| Regra de classificação                  | cadastrada (1)                                                         |
+| Quadro de vagas                         | 5 vagas, 11 vagas imediatas                                            |
+| Vagas na Seleção (`TB_SELECAO_VAGA`)    | **0**                                                                  |
+| Vagas e candidatos no robô da Empregare | **0** / **0**                                                          |
 
 O robô liga cada vaga ao edital pela Seleção (`TB_EMPREGARE_VAGA.CO_MONITORAMENTO`). Por isso, o
 **primeiro passo** é colocar as 5 vagas do 93/2026 na Seleção e rodar o robô para elas (fase F0).
@@ -36,6 +36,7 @@ O robô liga cada vaga ao edital pela Seleção (`TB_EMPREGARE_VAGA.CO_MONITORAM
   - a geração dos documentos grandes das listas, se o DOCX no navegador não der conta (F6).
 
   A regra de negócio continua no banco (RPCs). O Python orquestra, carrega e confere.
+
 - **Conta pesada ou em lote não roda em função SQL a cada requisição nem no navegador por usuário**
   (orientação de 06/10/2026). Ela vai para a base Python (`python/monitora/`, jobs no GitHub
   Actions ou `api/*.py`), que grava o resultado pronto; o banco fica com gravação, validação,
@@ -184,7 +185,39 @@ incompleto, que impede a sugestão do lote (a tela pede o número).
 
 ## F3 — Fila, distribuição personalizável e reserva
 
-**Entrega:**
+**Situação: feita em 06/10/2026** (branch `feat/avaliacao-documental-f3`; migrations ainda por
+aplicar). O que entrou:
+
+- `20261006120000_fichas_fila_e_reserva.sql`: `TB_FICHA_ANALISE` (situação PENDENTE, EM_ANALISE,
+  REVISAR, CONCLUIDA ou FORA_LOTE; responsável; reserva de 15 minutos; versão otimista),
+  `TH_FICHA_ANALISE` (histórico de criar, pegar, reservar, liberar, distribuir, redistribuir,
+  devolver, revisar, sair e voltar ao lote), `TL_ACESSO_FICHA_ANALISE` (LGPD) e
+  `TB_FILTRO_FILA_ANALISE` (filtros salvos por pessoa); as RPCs da tela `obter_fila_avaliacao`,
+  `pegar_proxima_ficha` (`for update skip locked`), `reservar_ficha`, `renovar_reserva`,
+  `liberar_reserva`, `distribuir_fichas`, `mandar_fichas_revisao`, `abrir_fichas_do_edital`,
+  `salvar_filtro_fila` e `excluir_filtro_fila`, e as do job (`service_role`)
+  `pre_classificacao_ler_distribuicao` e `abrir_fichas_pre_classificacao`; as travas de quem tem
+  ficha não sair do lote por "refazer" e de analista com fichas abertas não sair da equipe (AM-3.3).
+  As fichas são abertas pelo **job da pré-classificação** no fim de cada edital (o banco valida e
+  grava em `FC_ABRIR_FICHAS`); a distribuição dos que entram depois é calculada em Python
+  (`python/monitora/avaliacao_documental/distribuicao.py`), com a mesma conta da prévia da tela
+  (`src/lib/avaliacao-documental/distribuicao.js`) e casos dourados comuns. No lugar de
+  `atribuir_fichas`, `distribuir_fichas` faz distribuir, redistribuir e devolver à fila.
+- `20261006120500_lote_por_nota_minima.sql`: a base `NOTA_MINIMA` do lote (93/2026, item 8.2.6),
+  os desempates `EXPERIENCIA_DECLARADA` e `MAIOR_IDADE` (item 10.1) e o status dos editais em
+  `listar_editais_avaliacao` (o seletor mostra só os vigentes); correções
+  `supabase/correcoes/20261006-modelo-proj26-nota-minima.sql` (o PROJ26-CURRICULAR só do 93/2026,
+  com o lote, o desempate e as cotas PI e PQ dos itens 5.7.5 e 5.7.6).
+- Aba **Fila** (`src/modulos/avaliacao-documental/fila.jsx`), lógica pura em
+  `src/lib/avaliacao-documental/fila.js`, tours da Aya e verbetes.
+- Ficam para a F4: o conteúdo da ficha (blocos, títulos, vínculos, nota), AM-2.3 (fichas
+  concluídas afetadas por versão nova da regra) e AM-12.1/12.3 a 12.6. Fica para a F5: validar ou
+  devolver a ficha em revisão.
+- A convocação para a Análise Comportamental do 93/2026 (item 8.2.10.11: até 5× as vagas imediatas
+  e até a 10ª posição do cadastro reserva) é regra da lista CONVOCACAO da Classificação, não do
+  lote da avaliação documental.
+
+**Entrega (planejada):**
 
 - a fila do lote na ordem da Provisória;
 - "Pegar próximo" ou distribuição inicial (escolha do gestor ou do coordenador) e a redistribuição

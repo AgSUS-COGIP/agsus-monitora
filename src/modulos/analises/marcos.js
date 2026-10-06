@@ -3,7 +3,7 @@
   zerada. Chamado pelo estado (estado.js) sempre que as linhas do escopo
   "Ativo" chegam (do servidor ou da cópia do navegador) — Inativo e Todos
   misturam editais encerrados. A regra (linha de base, transições, frases) é
-  de src/lib/comemoracao.js; o aviso e o confete, de src/modules/comemoracao.js.
+  de src/lib/comemoracao.js; o aviso e os fogos, de src/modules/comemoracao.js.
   `ligadas` é o liga/desliga das comemorações que o app já leu (situação do
   sistema); desligadas, o estado segue guardado em silêncio. Este arquivo não
   importa React.

@@ -3453,6 +3453,713 @@
           "avisos": ["COLUNA_AUSENTE:REPROVADO_EMPREGARE"]
         }
       }
+    },
+    {
+      "nome": "lote pela nota mínima: entram todos com a ART a partir de 15 (item 8.2.6), sem olhar o quadro",
+      "historia": "AM-5.0, AM-5.1",
+      "regra": {
+        "schema": 1,
+        "provisoria": {
+          "eliminacao_automatica": [
+            {
+              "codigo": "CANCELADO",
+              "coluna": "SITUAÇÃO",
+              "quando": ["CANCELADO"],
+              "motivo": "Cancelou a inscrição"
+            }
+          ],
+          "nota_declarada": [],
+          "divergencia_tolerancia": 0
+        },
+        "lote": {
+          "base": "NOTA_MINIMA",
+          "multiplo": null,
+          "fixo": null,
+          "inclui_cr": false,
+          "por_modalidade": false,
+          "inclui_empatados": true,
+          "linha_anda": true,
+          "publica_reposicao": false,
+          "nota_minima": 15,
+          "item_edital": "8.2.6"
+        },
+        "blocos": [
+          {
+            "codigo": "MODALIDADE",
+            "titulo": "Sistema de concorrência",
+            "tipo": "REGISTRO",
+            "perguntas": ["Pergunta 5 -"]
+          }
+        ]
+      },
+      "vaga": {
+        "codigo": "900093",
+        "vagas_imediatas": 1,
+        "cadastro_reserva": true,
+        "modalidades": null
+      },
+      "candidatos": [
+        {
+          "id": "n01",
+          "codigo": "8000001",
+          "ativo": true,
+          "nascimento": "1990-01-01",
+          "candidatura": "2026-09-11T12:00:00+00:00",
+          "colunas": {
+            "SITUAÇÃO": "Ativo",
+            "NOTA - Questionário": "22,0/30,0"
+          }
+        },
+        {
+          "id": "n02",
+          "codigo": "8000002",
+          "ativo": true,
+          "nascimento": "1990-01-01",
+          "candidatura": "2026-09-12T12:00:00+00:00",
+          "colunas": {
+            "SITUAÇÃO": "Ativo",
+            "NOTA - Questionário": "15,0/30,0"
+          }
+        },
+        {
+          "id": "n03",
+          "codigo": "8000003",
+          "ativo": true,
+          "nascimento": "1990-01-01",
+          "candidatura": "2026-09-13T12:00:00+00:00",
+          "colunas": {
+            "SITUAÇÃO": "Ativo",
+            "NOTA - Questionário": "14,5/30,0"
+          }
+        },
+        {
+          "id": "n04",
+          "codigo": "8000004",
+          "ativo": true,
+          "nascimento": "1990-01-01",
+          "candidatura": "2026-09-14T12:00:00+00:00",
+          "colunas": {
+            "SITUAÇÃO": "Cancelado",
+            "NOTA - Questionário": "29,0/30,0"
+          }
+        },
+        {
+          "id": "n05",
+          "codigo": "8000005",
+          "ativo": true,
+          "nascimento": "1990-01-01",
+          "candidatura": "2026-09-15T12:00:00+00:00",
+          "colunas": {
+            "SITUAÇÃO": "Ativo",
+            "NOTA - Questionário": "18,0/30,0"
+          }
+        },
+        {
+          "id": "n06",
+          "codigo": "8000006",
+          "ativo": true,
+          "nascimento": "1990-01-01",
+          "candidatura": "2026-09-16T12:00:00+00:00",
+          "colunas": {
+            "SITUAÇÃO": "Ativo",
+            "NOTA - Questionário": "sem nota"
+          }
+        }
+      ],
+      "anterior": {},
+      "ultimo_lote": 0,
+      "refazer": false,
+      "hoje": "2026-10-06",
+      "esperado": {
+        "linhas": {
+          "n01": {
+            "situacao": "NO_LOTE",
+            "motivo_codigo": null,
+            "posicao": 1,
+            "posicao_modalidade": 1,
+            "lote": 1,
+            "lista_lote": "GERAL",
+            "entrada": "INICIAL",
+            "motivo_entrada": "Lote inicial: nota ≥ 15 (item 8.2.6) = 3",
+            "nota": 22,
+            "origem_nota": "ART",
+            "divergente": false,
+            "modalidade": "AC"
+          },
+          "n02": {
+            "situacao": "NO_LOTE",
+            "motivo_codigo": null,
+            "posicao": 3,
+            "posicao_modalidade": 3,
+            "lote": 1,
+            "lista_lote": "GERAL",
+            "entrada": "INICIAL",
+            "motivo_entrada": "Lote inicial: nota ≥ 15 (item 8.2.6) = 3",
+            "nota": 15,
+            "origem_nota": "ART",
+            "divergente": false,
+            "modalidade": "AC"
+          },
+          "n03": {
+            "situacao": "RANQUEADO",
+            "motivo_codigo": null,
+            "posicao": 4,
+            "posicao_modalidade": 4,
+            "lote": null,
+            "lista_lote": null,
+            "entrada": null,
+            "motivo_entrada": null,
+            "nota": 14.5,
+            "origem_nota": "ART",
+            "divergente": false,
+            "modalidade": "AC"
+          },
+          "n04": {
+            "situacao": "ELIMINADO",
+            "motivo_codigo": "CANCELADO",
+            "posicao": null,
+            "posicao_modalidade": null,
+            "lote": null,
+            "lista_lote": null,
+            "entrada": null,
+            "motivo_entrada": null,
+            "nota": 29,
+            "origem_nota": "ART",
+            "divergente": false,
+            "modalidade": "AC"
+          },
+          "n05": {
+            "situacao": "NO_LOTE",
+            "motivo_codigo": null,
+            "posicao": 2,
+            "posicao_modalidade": 2,
+            "lote": 1,
+            "lista_lote": "GERAL",
+            "entrada": "INICIAL",
+            "motivo_entrada": "Lote inicial: nota ≥ 15 (item 8.2.6) = 3",
+            "nota": 18,
+            "origem_nota": "ART",
+            "divergente": false,
+            "modalidade": "AC"
+          },
+          "n06": {
+            "situacao": "RANQUEADO",
+            "motivo_codigo": null,
+            "posicao": 5,
+            "posicao_modalidade": 5,
+            "lote": null,
+            "lista_lote": null,
+            "entrada": null,
+            "motivo_entrada": null,
+            "nota": null,
+            "origem_nota": null,
+            "divergente": false,
+            "modalidade": "AC"
+          }
+        },
+        "resumo": {
+          "inscritos": 6,
+          "eliminados": 1,
+          "ranqueados": 5,
+          "no_lote": 3,
+          "tamanho": 3,
+          "descricao": "nota ≥ 15 (item 8.2.6) = 3",
+          "por_modalidade": null,
+          "art_corte": 15,
+          "divergencias": 0,
+          "sem_art": 1,
+          "acima_do_corte": 0,
+          "entraram": 3,
+          "lote_novo": 1,
+          "saidas": [],
+          "avisos": ["ART_AUSENTE"]
+        }
+      }
+    },
+    {
+      "nome": "nota mínima e a linha anda: quem chega com 15 ou mais entra; quem sai eliminado não é reposto por quem tem menos",
+      "historia": "AM-5.3, AM-5.5",
+      "regra": {
+        "schema": 1,
+        "provisoria": {
+          "eliminacao_automatica": [
+            {
+              "codigo": "CANCELADO",
+              "coluna": "SITUAÇÃO",
+              "quando": ["CANCELADO"],
+              "motivo": "Cancelou a inscrição"
+            }
+          ],
+          "nota_declarada": [],
+          "divergencia_tolerancia": 0
+        },
+        "lote": {
+          "base": "NOTA_MINIMA",
+          "multiplo": null,
+          "fixo": null,
+          "inclui_cr": false,
+          "por_modalidade": false,
+          "inclui_empatados": true,
+          "linha_anda": true,
+          "publica_reposicao": false,
+          "nota_minima": 15,
+          "item_edital": "8.2.6"
+        },
+        "blocos": [
+          {
+            "codigo": "MODALIDADE",
+            "titulo": "Sistema de concorrência",
+            "tipo": "REGISTRO",
+            "perguntas": ["Pergunta 5 -"]
+          }
+        ]
+      },
+      "vaga": {
+        "codigo": "900093",
+        "vagas_imediatas": 1,
+        "cadastro_reserva": true,
+        "modalidades": null
+      },
+      "candidatos": [
+        {
+          "id": "n01",
+          "codigo": "8000001",
+          "ativo": true,
+          "nascimento": "1990-01-01",
+          "candidatura": "2026-09-11T12:00:00+00:00",
+          "colunas": {
+            "SITUAÇÃO": "Cancelado",
+            "NOTA - Questionário": "22,0/30,0"
+          }
+        },
+        {
+          "id": "n02",
+          "codigo": "8000002",
+          "ativo": true,
+          "nascimento": "1990-01-01",
+          "candidatura": "2026-09-12T12:00:00+00:00",
+          "colunas": {
+            "SITUAÇÃO": "Ativo",
+            "NOTA - Questionário": "15,0/30,0"
+          }
+        },
+        {
+          "id": "n03",
+          "codigo": "8000003",
+          "ativo": true,
+          "nascimento": "1990-01-01",
+          "candidatura": "2026-09-13T12:00:00+00:00",
+          "colunas": {
+            "SITUAÇÃO": "Ativo",
+            "NOTA - Questionário": "14,5/30,0"
+          }
+        },
+        {
+          "id": "n05",
+          "codigo": "8000005",
+          "ativo": true,
+          "nascimento": "1990-01-01",
+          "candidatura": "2026-09-15T12:00:00+00:00",
+          "colunas": {
+            "SITUAÇÃO": "Ativo",
+            "NOTA - Questionário": "18,0/30,0"
+          }
+        },
+        {
+          "id": "n07",
+          "codigo": "8000007",
+          "ativo": true,
+          "nascimento": "1990-01-01",
+          "candidatura": "2026-09-17T12:00:00+00:00",
+          "colunas": {
+            "SITUAÇÃO": "Ativo",
+            "NOTA - Questionário": "16,0/30,0"
+          }
+        }
+      ],
+      "anterior": {
+        "n01": {
+          "situacao": "NO_LOTE",
+          "posicao": 1,
+          "lote": 1,
+          "lista_lote": "GERAL",
+          "entrada": "INICIAL",
+          "motivo_entrada": "Lote inicial: nota ≥ 15 (item 8.2.6) = 3"
+        },
+        "n05": {
+          "situacao": "NO_LOTE",
+          "posicao": 2,
+          "lote": 1,
+          "lista_lote": "GERAL",
+          "entrada": "INICIAL",
+          "motivo_entrada": "Lote inicial: nota ≥ 15 (item 8.2.6) = 3"
+        },
+        "n02": {
+          "situacao": "NO_LOTE",
+          "posicao": 3,
+          "lote": 1,
+          "lista_lote": "GERAL",
+          "entrada": "INICIAL",
+          "motivo_entrada": "Lote inicial: nota ≥ 15 (item 8.2.6) = 3"
+        },
+        "n03": {
+          "situacao": "RANQUEADO",
+          "posicao": 4
+        }
+      },
+      "ultimo_lote": 1,
+      "refazer": false,
+      "hoje": "2026-10-06",
+      "esperado": {
+        "linhas": {
+          "n01": {
+            "situacao": "ELIMINADO",
+            "motivo_codigo": "CANCELADO",
+            "posicao": null,
+            "posicao_modalidade": null,
+            "lote": null,
+            "lista_lote": null,
+            "entrada": null,
+            "motivo_entrada": null,
+            "nota": 22,
+            "origem_nota": "ART",
+            "divergente": false,
+            "modalidade": "AC"
+          },
+          "n02": {
+            "situacao": "NO_LOTE",
+            "motivo_codigo": null,
+            "posicao": 3,
+            "posicao_modalidade": 3,
+            "lote": 1,
+            "lista_lote": "GERAL",
+            "entrada": "INICIAL",
+            "motivo_entrada": "Lote inicial: nota ≥ 15 (item 8.2.6) = 3",
+            "nota": 15,
+            "origem_nota": "ART",
+            "divergente": false,
+            "modalidade": "AC"
+          },
+          "n03": {
+            "situacao": "RANQUEADO",
+            "motivo_codigo": null,
+            "posicao": 4,
+            "posicao_modalidade": 4,
+            "lote": null,
+            "lista_lote": null,
+            "entrada": null,
+            "motivo_entrada": null,
+            "nota": 14.5,
+            "origem_nota": "ART",
+            "divergente": false,
+            "modalidade": "AC"
+          },
+          "n05": {
+            "situacao": "NO_LOTE",
+            "motivo_codigo": null,
+            "posicao": 1,
+            "posicao_modalidade": 1,
+            "lote": 1,
+            "lista_lote": "GERAL",
+            "entrada": "INICIAL",
+            "motivo_entrada": "Lote inicial: nota ≥ 15 (item 8.2.6) = 3",
+            "nota": 18,
+            "origem_nota": "ART",
+            "divergente": false,
+            "modalidade": "AC"
+          },
+          "n07": {
+            "situacao": "NO_LOTE",
+            "motivo_codigo": null,
+            "posicao": 2,
+            "posicao_modalidade": 2,
+            "lote": 2,
+            "lista_lote": "GERAL",
+            "entrada": "REPOSICAO",
+            "motivo_entrada": "Entrou no lugar de 8000001 (Cancelou a inscrição)",
+            "nota": 16,
+            "origem_nota": "ART",
+            "divergente": false,
+            "modalidade": "AC"
+          }
+        },
+        "resumo": {
+          "inscritos": 5,
+          "eliminados": 1,
+          "ranqueados": 4,
+          "no_lote": 3,
+          "tamanho": 3,
+          "descricao": "nota ≥ 15 (item 8.2.6) = 3",
+          "por_modalidade": null,
+          "art_corte": 15,
+          "divergencias": 0,
+          "sem_art": 0,
+          "acima_do_corte": 0,
+          "entraram": 1,
+          "lote_novo": 2,
+          "saidas": [
+            {
+              "id": "n01",
+              "codigo": "8000001",
+              "motivo": "Cancelou a inscrição"
+            }
+          ],
+          "avisos": []
+        }
+      }
+    },
+    {
+      "nome": "desempate do 93/2026 (item 10.1): 60 anos ou mais, depois a maior experiência declarada, depois a maior idade",
+      "historia": "AM-4.2",
+      "regra": {
+        "schema": 1,
+        "provisoria": {
+          "eliminacao_automatica": [
+            {
+              "codigo": "CANCELADO",
+              "coluna": "SITUAÇÃO",
+              "quando": ["CANCELADO"],
+              "motivo": "Cancelou a inscrição"
+            }
+          ],
+          "nota_declarada": [],
+          "divergencia_tolerancia": 0,
+          "desempate": ["IDOSO", "EXPERIENCIA_DECLARADA", "MAIOR_IDADE"],
+          "pergunta_experiencia": "Pergunta 17 -"
+        },
+        "lote": {
+          "base": "FIXO",
+          "multiplo": 1,
+          "fixo": 3,
+          "inclui_cr": false,
+          "por_modalidade": false,
+          "inclui_empatados": false,
+          "linha_anda": true,
+          "publica_reposicao": false
+        },
+        "blocos": [
+          {
+            "codigo": "MODALIDADE",
+            "titulo": "Sistema de concorrência",
+            "tipo": "REGISTRO",
+            "perguntas": ["Pergunta 5 -"]
+          }
+        ]
+      },
+      "vaga": {
+        "codigo": "900093",
+        "vagas_imediatas": 1,
+        "cadastro_reserva": true,
+        "modalidades": null
+      },
+      "candidatos": [
+        {
+          "id": "n01",
+          "codigo": "8000001",
+          "ativo": true,
+          "nascimento": "1995-05-01",
+          "candidatura": "2026-09-11T12:00:00+00:00",
+          "colunas": {
+            "SITUAÇÃO": "Ativo",
+            "NOTA - Questionário": "20,0/30,0",
+            "Pergunta 17 - Tempo de experiência": "De 1 a 2 anos"
+          }
+        },
+        {
+          "id": "n02",
+          "codigo": "8000002",
+          "ativo": true,
+          "nascimento": "1980-05-01",
+          "candidatura": "2026-09-12T12:00:00+00:00",
+          "colunas": {
+            "SITUAÇÃO": "Ativo",
+            "NOTA - Questionário": "20,0/30,0",
+            "Pergunta 17 - Tempo de experiência": "De 6 meses a 1 ano"
+          }
+        },
+        {
+          "id": "n03",
+          "codigo": "8000003",
+          "ativo": true,
+          "nascimento": "1960-01-01",
+          "candidatura": "2026-09-13T12:00:00+00:00",
+          "colunas": {
+            "SITUAÇÃO": "Ativo",
+            "NOTA - Questionário": "20,0/30,0",
+            "Pergunta 17 - Tempo de experiência": "Sem experiência"
+          }
+        },
+        {
+          "id": "n04",
+          "codigo": "8000004",
+          "ativo": true,
+          "nascimento": "1990-05-01",
+          "candidatura": "2026-09-14T12:00:00+00:00",
+          "colunas": {
+            "SITUAÇÃO": "Ativo",
+            "NOTA - Questionário": "20,0/30,0",
+            "Pergunta 17 - Tempo de experiência": "Mais de 5 anos"
+          }
+        },
+        {
+          "id": "n05",
+          "codigo": "8000005",
+          "ativo": true,
+          "nascimento": "1985-05-01",
+          "candidatura": "2026-09-15T12:00:00+00:00",
+          "colunas": {
+            "SITUAÇÃO": "Ativo",
+            "NOTA - Questionário": "20,0/30,0",
+            "Pergunta 17 - Tempo de experiência": "De 1 a 2 anos"
+          }
+        },
+        {
+          "id": "n06",
+          "codigo": "8000006",
+          "ativo": true,
+          "nascimento": "1970-05-01",
+          "candidatura": "2026-09-16T12:00:00+00:00",
+          "colunas": {
+            "SITUAÇÃO": "Ativo",
+            "NOTA - Questionário": "20,0/30,0",
+            "Pergunta 17 - Tempo de experiência": "texto livre"
+          }
+        },
+        {
+          "id": "n08",
+          "codigo": "8000008",
+          "ativo": true,
+          "nascimento": "2000-01-01",
+          "candidatura": "2026-09-18T12:00:00+00:00",
+          "colunas": {
+            "SITUAÇÃO": "Ativo",
+            "NOTA - Questionário": "25,0/30,0"
+          }
+        }
+      ],
+      "anterior": {},
+      "ultimo_lote": 0,
+      "refazer": false,
+      "hoje": "2026-10-06",
+      "esperado": {
+        "linhas": {
+          "n01": {
+            "situacao": "RANQUEADO",
+            "motivo_codigo": null,
+            "posicao": 5,
+            "posicao_modalidade": 5,
+            "lote": null,
+            "lista_lote": null,
+            "entrada": null,
+            "motivo_entrada": null,
+            "nota": 20,
+            "origem_nota": "ART",
+            "divergente": false,
+            "modalidade": "AC"
+          },
+          "n02": {
+            "situacao": "RANQUEADO",
+            "motivo_codigo": null,
+            "posicao": 6,
+            "posicao_modalidade": 6,
+            "lote": null,
+            "lista_lote": null,
+            "entrada": null,
+            "motivo_entrada": null,
+            "nota": 20,
+            "origem_nota": "ART",
+            "divergente": false,
+            "modalidade": "AC"
+          },
+          "n03": {
+            "situacao": "NO_LOTE",
+            "motivo_codigo": null,
+            "posicao": 2,
+            "posicao_modalidade": 2,
+            "lote": 1,
+            "lista_lote": "GERAL",
+            "entrada": "INICIAL",
+            "motivo_entrada": "Lote inicial: 3 (número fixo)",
+            "nota": 20,
+            "origem_nota": "ART",
+            "divergente": false,
+            "modalidade": "AC"
+          },
+          "n04": {
+            "situacao": "NO_LOTE",
+            "motivo_codigo": null,
+            "posicao": 3,
+            "posicao_modalidade": 3,
+            "lote": 1,
+            "lista_lote": "GERAL",
+            "entrada": "INICIAL",
+            "motivo_entrada": "Lote inicial: 3 (número fixo)",
+            "nota": 20,
+            "origem_nota": "ART",
+            "divergente": false,
+            "modalidade": "AC"
+          },
+          "n05": {
+            "situacao": "RANQUEADO",
+            "motivo_codigo": null,
+            "posicao": 4,
+            "posicao_modalidade": 4,
+            "lote": null,
+            "lista_lote": null,
+            "entrada": null,
+            "motivo_entrada": null,
+            "nota": 20,
+            "origem_nota": "ART",
+            "divergente": false,
+            "modalidade": "AC"
+          },
+          "n06": {
+            "situacao": "RANQUEADO",
+            "motivo_codigo": null,
+            "posicao": 7,
+            "posicao_modalidade": 7,
+            "lote": null,
+            "lista_lote": null,
+            "entrada": null,
+            "motivo_entrada": null,
+            "nota": 20,
+            "origem_nota": "ART",
+            "divergente": false,
+            "modalidade": "AC"
+          },
+          "n08": {
+            "situacao": "NO_LOTE",
+            "motivo_codigo": null,
+            "posicao": 1,
+            "posicao_modalidade": 1,
+            "lote": 1,
+            "lista_lote": "GERAL",
+            "entrada": "INICIAL",
+            "motivo_entrada": "Lote inicial: 3 (número fixo)",
+            "nota": 25,
+            "origem_nota": "ART",
+            "divergente": false,
+            "modalidade": "AC"
+          }
+        },
+        "resumo": {
+          "inscritos": 7,
+          "eliminados": 0,
+          "ranqueados": 7,
+          "no_lote": 3,
+          "tamanho": 3,
+          "descricao": "3 (número fixo)",
+          "por_modalidade": null,
+          "art_corte": 20,
+          "divergencias": 0,
+          "sem_art": 0,
+          "acima_do_corte": 0,
+          "entraram": 3,
+          "lote_novo": 1,
+          "saidas": [],
+          "avisos": []
+        }
+      }
     }
   ]
 }

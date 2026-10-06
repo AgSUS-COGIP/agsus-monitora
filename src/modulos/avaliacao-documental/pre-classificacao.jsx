@@ -141,7 +141,7 @@ function VagaDaPre({
             <span title={sugerido.descricao || undefined}>
               {sugerido.tamanho
                 ? `sugerido ${sugerido.descricao}`
-                : "sem quadro de vagas"}
+                : sugerido.descricao || "sem quadro de vagas"}
             </span>
           </label>
         ) : null}

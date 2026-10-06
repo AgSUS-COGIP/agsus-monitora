@@ -126,6 +126,33 @@ class PecasDaConta(unittest.TestCase):
         self.assertEqual((r["tamanho"], r["descricao"]), (8, "2,5 × 3 = 8"))
         self.assertEqual(pc.tamanho_do_lote(lote, {"vagas_imediatas": 0})["aviso"], "SEM_VAGAS")
 
+    def test_lote_pela_nota_minima(self):
+        self.assertEqual(
+            pc.tamanho_do_lote({"base": "NOTA_MINIMA", "nota_minima": 15, "item_edital": "8.2.6"}, {}),
+            {
+                "tamanho": None,
+                "descricao": "nota ≥ 15 (item 8.2.6)",
+                "por_modalidade": None,
+                "aviso": None,
+                "nota_minima": 15,
+            },
+        )
+        self.assertEqual(pc.tamanho_do_lote({"base": "NOTA_MINIMA"}, {})["aviso"], "SEM_NOTA_MINIMA")
+
+    def test_meses_declarados_como_o_javascript(self):
+        casos = {
+            "De 1 a 2 anos": 12,
+            "Mais de 5 anos": 60,
+            "De 6 meses a 1 ano": 6,
+            "Sem experiência": 0,
+            "1,5 ano": 18,
+            "texto livre": None,
+            "": None,
+        }
+        for texto, meses in casos.items():
+            self.assertEqual(pc.meses_declarados(texto), meses, texto)
+        self.assertEqual(pc.meses_declarados(24), 24)
+
     def test_vagas_por_modalidade_e_codigos(self):
         self.assertEqual(
             pc.vagas_por_modalidade({"Ampla Concorrência": "2", "PcD": None, "Indígenas": 1}),

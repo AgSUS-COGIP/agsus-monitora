@@ -1,0 +1,591 @@
+{
+  "sobre": "Casos dourados dos modelos lidos dos editais recentes (docs/analises-no-monitora/regras-dos-editais-recentes.md). Os modelos ficam em tests/fixtures/avaliacao-documental/modelos/<CODIGO>.json, iguais aos de supabase/correcoes/20261006-modelos-dos-editais-recentes.sql (e, o PROJ26-RIO-DOCE, aos de 20261006-modelo-proj26-rio-doce.sql). 'pontuacao' roda em src/lib/avaliacao-documental/pontuacao.js (tests/modelos-dos-editais-recentes.test.js); 'lote' e 'provisoria' rodam no JS e na conta oficial em Python (tests/python/test_modelos_dos_editais_recentes.py). Dados fictícios; 'conta' explica o número esperado.",
+  "pontuacao": [
+    {
+      "nome": "Alagoas e Sergipe: superior indígena de aldeia, três títulos e 24 meses",
+      "modelo": "SI26-ALSE",
+      "conta": "étnico 8 + 6 = 14; títulos cumulativos 1 + 2 + 3 = 6 (teto 6); 731 dias = 24 meses × 0,2 = 4,8",
+      "candidato": {
+        "nivel": "superior",
+        "modalidade": "AC",
+        "indigena": true,
+        "mora_aldeia": true,
+        "aldeia_na_lista": false,
+        "titulos": [
+          { "titulo": "ESPECIALIZACAO", "aceito": true },
+          { "titulo": "MESTRADO", "aceito": true },
+          { "titulo": "DOUTORADO", "aceito": true }
+        ],
+        "vinculos": [
+          {
+            "categoria": "SAUDE_INDIGENA",
+            "inicio": "2020-01-01",
+            "fim": "2021-12-31",
+            "aceito": true
+          }
+        ]
+      },
+      "opcoes": {},
+      "esperado": {
+        "resultado": "APTO",
+        "nota_apurada": 24.8,
+        "nota_final": 24.8,
+        "parciais": { "ETNICO": 14, "FORMACAO": 6, "EXPERIENCIA": 4.8 },
+        "eliminatorios": [],
+        "encaminhamentos": [],
+        "experiencia": {
+          "meses": 24,
+          "meses_estagio": 0,
+          "meses_considerados": 24,
+          "pontos": 4.8,
+          "abaixo_do_minimo": false
+        }
+      }
+    },
+    {
+      "nome": "Alagoas e Sergipe: fundamental com ensino médio e só 1 mês de experiência",
+      "modelo": "SI26-ALSE",
+      "conta": "ensino médio no nível fundamental = 6; 59 dias = 1 mês, abaixo do mínimo de 3 meses (8.12 c) → inapto, nota 0",
+      "candidato": {
+        "nivel": "fundamental",
+        "modalidade": "AC",
+        "indigena": false,
+        "titulos": [{ "titulo": "ENSINO_MEDIO", "aceito": true }],
+        "vinculos": [
+          {
+            "categoria": "AREA",
+            "inicio": "2026-01-01",
+            "fim": "2026-02-28",
+            "aceito": true
+          }
+        ]
+      },
+      "opcoes": {},
+      "esperado": {
+        "resultado": "INAPTO_REQUISITO",
+        "nota_apurada": 6.2,
+        "nota_final": 0,
+        "parciais": { "ETNICO": 0, "FORMACAO": 6, "EXPERIENCIA": 0.2 },
+        "eliminatorios": [
+          "Item 8.12 c: não comprovou a experiência profissional mínima de 3 meses."
+        ],
+        "encaminhamentos": [],
+        "experiencia": {
+          "meses": 1,
+          "meses_estagio": 0,
+          "meses_considerados": 1,
+          "pontos": 0.2,
+          "abaixo_do_minimo": true
+        }
+      }
+    },
+    {
+      "nome": "Alagoas e Sergipe: médio indígena sem a declaração de aldeia, só estágio de 1.000 h",
+      "modelo": "SI26-ALSE",
+      "conta": "étnico só 8 (sem a residência em aldeia no Anexo VI); técnico 1 + graduação 2 = 3; estágio 1.000 h ÷ 8 h ÷ 22 dias = 5 meses × 0,2 = 1 (o estágio conta para o mínimo de 3)",
+      "candidato": {
+        "nivel": "medio",
+        "modalidade": "AC",
+        "indigena": true,
+        "mora_aldeia": true,
+        "blocos": {
+          "ETNICO": {
+            "situacao": "NAO_CONFORME",
+            "motivos": ["SEM_RESIDENCIA_ALDEIA"]
+          }
+        },
+        "titulos": [
+          { "titulo": "TECNICO", "aceito": true },
+          { "titulo": "GRADUACAO", "aceito": true }
+        ],
+        "vinculos": [],
+        "estagio_horas": 1000
+      },
+      "opcoes": {},
+      "esperado": {
+        "resultado": "APTO",
+        "nota_apurada": 12,
+        "nota_final": 12,
+        "parciais": { "ETNICO": 8, "FORMACAO": 3, "EXPERIENCIA": 1 },
+        "eliminatorios": [],
+        "encaminhamentos": [],
+        "experiencia": {
+          "meses": 0,
+          "meses_estagio": 5,
+          "meses_considerados": 5,
+          "pontos": 1,
+          "abaixo_do_minimo": false
+        }
+      }
+    },
+    {
+      "nome": "Parintins: técnico indígena de aldeia, 4 meses de vínculo e estágio de 880 h somados",
+      "modelo": "SI26-PARINTINS",
+      "conta": "étnico 14; especialização técnica 2 + graduação 4 = 6; estágio 880 h ÷ 4 h ÷ 22 = 10 meses, somado aos 4 meses do vínculo = 14 meses × 0,2 = 2,8",
+      "candidato": {
+        "nivel": "tecnico",
+        "modalidade": "AC",
+        "indigena": true,
+        "mora_aldeia": true,
+        "titulos": [
+          { "titulo": "ESPECIALIZACAO", "aceito": true },
+          { "titulo": "GRADUACAO", "aceito": true }
+        ],
+        "vinculos": [
+          {
+            "categoria": "AREA",
+            "inicio": "2025-01-01",
+            "fim": "2025-04-30",
+            "aceito": true
+          }
+        ],
+        "estagio_horas": 880
+      },
+      "opcoes": {},
+      "esperado": {
+        "resultado": "APTO",
+        "nota_apurada": 22.8,
+        "nota_final": 22.8,
+        "parciais": { "ETNICO": 14, "FORMACAO": 6, "EXPERIENCIA": 2.8 },
+        "eliminatorios": [],
+        "encaminhamentos": [],
+        "experiencia": {
+          "meses": 4,
+          "meses_estagio": 10,
+          "meses_considerados": 14,
+          "pontos": 2.8,
+          "abaixo_do_minimo": false
+        }
+      }
+    },
+    {
+      "nome": "Parintins: superior PP com documento de identidade vencido",
+      "modelo": "SI26-PARINTINS",
+      "conta": "identidade fora da validade elimina (6.4 c), nota 0; a cota PP conforme ainda encaminha à heteroidentificação",
+      "candidato": {
+        "nivel": "superior",
+        "modalidade": "PP",
+        "indigena": false,
+        "blocos": {
+          "IDENTIDADE": { "situacao": "NAO_CONFORME", "motivos": ["VENCIDO"] }
+        },
+        "titulos": [{ "titulo": "MESTRADO", "aceito": true }],
+        "vinculos": [
+          {
+            "categoria": "AREA",
+            "inicio": "2024-01-01",
+            "fim": "2024-12-31",
+            "aceito": true
+          }
+        ]
+      },
+      "opcoes": {},
+      "esperado": {
+        "resultado": "INAPTO_REQUISITO",
+        "nota_apurada": 4.4,
+        "nota_final": 0,
+        "parciais": { "ETNICO": 0, "FORMACAO": 2, "EXPERIENCIA": 2.4 },
+        "eliminatorios": [
+          "Item 6.4 c: Documento de identidade fora do prazo de validade."
+        ],
+        "encaminhamentos": ["ENCAMINHA_HETEROIDENTIFICACAO"],
+        "experiencia": {
+          "meses": 12,
+          "meses_estagio": 0,
+          "meses_considerados": 12,
+          "pontos": 2.4,
+          "abaixo_do_minimo": false
+        }
+      }
+    },
+    {
+      "nome": "Médio Rio Solimões: superior com 5 meses (mínimo de 6)",
+      "modelo": "SI26-MRSA",
+      "conta": "151 dias = 5 meses, abaixo do mínimo de 6 meses (8.12 c) → inapto",
+      "candidato": {
+        "nivel": "superior",
+        "modalidade": "AC",
+        "indigena": false,
+        "titulos": [],
+        "vinculos": [
+          {
+            "categoria": "AREA",
+            "inicio": "2026-01-01",
+            "fim": "2026-05-31",
+            "aceito": true
+          }
+        ]
+      },
+      "opcoes": {},
+      "esperado": {
+        "resultado": "INAPTO_REQUISITO",
+        "nota_apurada": 1,
+        "nota_final": 0,
+        "parciais": { "ETNICO": 0, "FORMACAO": 0, "EXPERIENCIA": 1 },
+        "eliminatorios": [
+          "Item 8.12 c: não comprovou a experiência profissional mínima de 6 meses."
+        ],
+        "encaminhamentos": [],
+        "experiencia": {
+          "meses": 5,
+          "meses_estagio": 0,
+          "meses_considerados": 5,
+          "pontos": 1,
+          "abaixo_do_minimo": true
+        }
+      }
+    },
+    {
+      "nome": "Médio Rio Solimões: indígena sem as assinaturas do Anexo VI, 60 meses na Saúde Indígena",
+      "modelo": "SI26-MRSA",
+      "conta": "Anexo VI sem as assinaturas zera o étnico (8.13.2), sem eliminar; especialização 1 + doutorado 3 = 4; 1.827 dias = 60 meses × 0,2 = 12 → teto 10",
+      "candidato": {
+        "nivel": "superior",
+        "modalidade": "AC",
+        "indigena": true,
+        "mora_aldeia": true,
+        "blocos": {
+          "ETNICO": {
+            "situacao": "NAO_CONFORME",
+            "motivos": ["SEM_ASSINATURAS"]
+          }
+        },
+        "titulos": [
+          { "titulo": "ESPECIALIZACAO", "aceito": true },
+          { "titulo": "DOUTORADO", "aceito": true }
+        ],
+        "vinculos": [
+          {
+            "categoria": "SAUDE_INDIGENA",
+            "inicio": "2020-01-01",
+            "fim": "2024-12-31",
+            "aceito": true
+          }
+        ]
+      },
+      "opcoes": {},
+      "esperado": {
+        "resultado": "APTO",
+        "nota_apurada": 14,
+        "nota_final": 14,
+        "parciais": { "ETNICO": 0, "FORMACAO": 4, "EXPERIENCIA": 10 },
+        "eliminatorios": [],
+        "encaminhamentos": [],
+        "experiencia": {
+          "meses": 60,
+          "meses_estagio": 0,
+          "meses_considerados": 60,
+          "pontos": 10,
+          "abaixo_do_minimo": false
+        }
+      }
+    },
+    {
+      "nome": "CASAI Brasília (SI26-100 corrigido): especialização e mestrado somam",
+      "modelo": "SI26-100",
+      "conta": "étnico 14; títulos cumulativos 1 + 2 = 3 (item 8.13.4.1; o modelo antigo dava só 2); 365 dias = 12 meses × 0,2 = 2,4",
+      "candidato": {
+        "nivel": "superior",
+        "modalidade": "AC",
+        "indigena": true,
+        "mora_aldeia": true,
+        "titulos": [
+          { "titulo": "ESPECIALIZACAO", "aceito": true },
+          { "titulo": "MESTRADO", "aceito": true }
+        ],
+        "vinculos": [
+          {
+            "categoria": "AREA",
+            "inicio": "2025-01-01",
+            "fim": "2025-12-31",
+            "aceito": true
+          }
+        ]
+      },
+      "opcoes": {},
+      "esperado": {
+        "resultado": "APTO",
+        "nota_apurada": 19.4,
+        "nota_final": 19.4,
+        "parciais": { "ETNICO": 14, "FORMACAO": 3, "EXPERIENCIA": 2.4 },
+        "eliminatorios": [],
+        "encaminhamentos": [],
+        "experiencia": {
+          "meses": 12,
+          "meses_estagio": 0,
+          "meses_considerados": 12,
+          "pontos": 2.4,
+          "abaixo_do_minimo": false
+        }
+      }
+    },
+    {
+      "nome": "CASAI Brasília (SI26-100 corrigido): médio PcD com técnico e especialização",
+      "modelo": "SI26-100",
+      "conta": "nível médio: técnico 1 + especialização 3 = 4; 180 dias = 6 meses × 0,2 = 1,2; a cota PcD conforme encaminha à avaliação biopsicossocial",
+      "candidato": {
+        "nivel": "medio",
+        "modalidade": "PCD",
+        "indigena": false,
+        "titulos": [
+          { "titulo": "TECNICO", "aceito": true },
+          { "titulo": "ESPECIALIZACAO", "aceito": true }
+        ],
+        "vinculos": [
+          {
+            "categoria": "AREA",
+            "inicio": "2025-01-01",
+            "fim": "2025-06-29",
+            "aceito": true
+          }
+        ]
+      },
+      "opcoes": {},
+      "esperado": {
+        "resultado": "APTO",
+        "nota_apurada": 5.2,
+        "nota_final": 5.2,
+        "parciais": { "ETNICO": 0, "FORMACAO": 4, "EXPERIENCIA": 1.2 },
+        "eliminatorios": [],
+        "encaminhamentos": ["ENCAMINHA_PERICIA"],
+        "experiencia": {
+          "meses": 6,
+          "meses_estagio": 0,
+          "meses_considerados": 6,
+          "pontos": 1.2,
+          "abaixo_do_minimo": false
+        }
+      }
+    },
+    {
+      "nome": "Rio Doce: superior com mestrado, três cursos e 30 meses",
+      "modelo": "PROJ26-RIO-DOCE",
+      "conta": "mestrado 8; cursos 1 + 2 + 3 = 6 → teto 5; 912 dias = 30 meses, menos os 6 do mínimo = 24 → 4 blocos de 6 meses × 5 = 20; total 33 (mínima 10)",
+      "candidato": {
+        "nivel": "superior",
+        "modalidade": "AC",
+        "titulos": [{ "titulo": "MESTRADO", "aceito": true }],
+        "cursos": [
+          { "horas": 50, "aceito": true },
+          { "horas": 100, "aceito": true },
+          { "horas": 200, "aceito": true }
+        ],
+        "vinculos": [
+          {
+            "categoria": "AREA",
+            "inicio": "2023-01-01",
+            "fim": "2025-06-30",
+            "aceito": true
+          }
+        ]
+      },
+      "opcoes": { "notaMinima": 10 },
+      "esperado": {
+        "resultado": "APTO",
+        "nota_apurada": 33,
+        "nota_final": 33,
+        "parciais": { "FORMACAO": 8, "CURSOS": 5, "EXPERIENCIA": 20 },
+        "eliminatorios": [],
+        "encaminhamentos": [],
+        "experiencia": {
+          "meses": 30,
+          "meses_estagio": 0,
+          "meses_considerados": 30,
+          "pontos": 20,
+          "abaixo_do_minimo": false
+        }
+      }
+    },
+    {
+      "nome": "Rio Doce: médio com três cursos de 120 h ou mais e 14 meses",
+      "modelo": "PROJ26-RIO-DOCE",
+      "conta": "cursos 6 × 3 = 18 → teto 10; 424 dias = 14 meses, menos 6 = 8 → 1 bloco × 5 = 5 (no 114 o médio/técnico também vale 5 por bloco, máx. 35); total 15",
+      "candidato": {
+        "nivel": "medio",
+        "modalidade": "AC",
+        "titulos": [],
+        "cursos": [
+          { "horas": 120, "aceito": true },
+          { "horas": 150, "aceito": true },
+          { "horas": 200, "aceito": true }
+        ],
+        "vinculos": [
+          {
+            "categoria": "AREA",
+            "inicio": "2025-01-01",
+            "fim": "2026-02-28",
+            "aceito": true
+          }
+        ]
+      },
+      "opcoes": { "notaMinima": 10 },
+      "esperado": {
+        "resultado": "APTO",
+        "nota_apurada": 15,
+        "nota_final": 15,
+        "parciais": { "FORMACAO": 0, "CURSOS": 10, "EXPERIENCIA": 5 },
+        "eliminatorios": [],
+        "encaminhamentos": [],
+        "experiencia": {
+          "meses": 14,
+          "meses_estagio": 0,
+          "meses_considerados": 14,
+          "pontos": 5,
+          "abaixo_do_minimo": false
+        }
+      }
+    },
+    {
+      "nome": "Rio Doce: técnico com 5 meses (mínimo de 6)",
+      "modelo": "PROJ26-RIO-DOCE",
+      "conta": "151 dias = 5 meses, abaixo do mínimo de 6 (1.1.1 c) → inapto; o curso de 40 h valeria 2",
+      "candidato": {
+        "nivel": "tecnico",
+        "modalidade": "AC",
+        "titulos": [],
+        "cursos": [{ "horas": 40, "aceito": true }],
+        "vinculos": [
+          {
+            "categoria": "AREA",
+            "inicio": "2026-01-01",
+            "fim": "2026-05-31",
+            "aceito": true
+          }
+        ]
+      },
+      "opcoes": { "notaMinima": 10 },
+      "esperado": {
+        "resultado": "INAPTO_REQUISITO",
+        "nota_apurada": 2,
+        "nota_final": 0,
+        "parciais": { "FORMACAO": 0, "CURSOS": 2, "EXPERIENCIA": 0 },
+        "eliminatorios": [
+          "Item 1.1.1 c: não comprovou a experiência profissional mínima de 6 meses."
+        ],
+        "encaminhamentos": [],
+        "experiencia": {
+          "meses": 5,
+          "meses_estagio": 0,
+          "meses_considerados": 5,
+          "pontos": 0,
+          "abaixo_do_minimo": true
+        }
+      }
+    }
+  ],
+  "lote": [
+    {
+      "modelo": "SI26-ALSE",
+      "vaga": {
+        "codigo": "900001",
+        "vagas_imediatas": 1,
+        "cadastro_reserva": true
+      },
+      "esperado": {
+        "tamanho": 10,
+        "descricao": "5 × (1 + CR) = 10",
+        "aviso": null
+      }
+    },
+    {
+      "modelo": "SI26-PARINTINS",
+      "vaga": {
+        "codigo": "900002",
+        "vagas_imediatas": 0,
+        "cadastro_reserva": true
+      },
+      "esperado": {
+        "tamanho": 5,
+        "descricao": "5 × (0 + CR) = 5",
+        "aviso": null
+      }
+    },
+    {
+      "modelo": "SI26-MRSA",
+      "vaga": {
+        "codigo": "900003",
+        "vagas_imediatas": 2,
+        "cadastro_reserva": false
+      },
+      "esperado": { "tamanho": 10, "descricao": "5 × 2 = 10", "aviso": null }
+    },
+    {
+      "modelo": "SI26-100",
+      "vaga": {
+        "codigo": "900004",
+        "vagas_imediatas": 1,
+        "cadastro_reserva": true
+      },
+      "esperado": { "tamanho": 6, "descricao": "6 × 1 = 6", "aviso": null }
+    },
+    {
+      "modelo": "SI26-100",
+      "vaga": {
+        "codigo": "900005",
+        "vagas_imediatas": 0,
+        "cadastro_reserva": true
+      },
+      "esperado": { "tamanho": null, "descricao": "", "aviso": "SEM_VAGAS" }
+    }
+  ],
+  "provisoria": [
+    {
+      "nome": "Parintins: empate na ART vai pela maior idade (8.4.4.1)",
+      "modelo": "SI26-PARINTINS",
+      "esperado": { "c01": 3, "c02": 1, "c03": 2 }
+    },
+    {
+      "nome": "Alagoas e Sergipe: sem regra no edital, vale o desempate padrão (idoso, depois a candidatura mais antiga)",
+      "modelo": "SI26-ALSE",
+      "esperado": { "c01": 1, "c02": 3, "c03": 2 }
+    }
+  ],
+  "provisoria_vaga": {
+    "codigo": "900010",
+    "vagas_imediatas": 0,
+    "cadastro_reserva": true,
+    "modalidades": { "Ampla Concorrência": 1 }
+  },
+  "provisoria_candidatos": [
+    {
+      "id": "c01",
+      "codigo": "7100001",
+      "ativo": true,
+      "nascimento": "1995-05-05",
+      "candidatura": "2026-09-20T12:00:00+00:00",
+      "colunas": {
+        "SITUAÇÃO": "Ativo",
+        "SITUAÇÃO - Questionário de seleção": "FINALIZADO",
+        "NOTA - Questionário de seleção": "20,0/30,0",
+        "REPROVADO": "NÃO"
+      }
+    },
+    {
+      "id": "c02",
+      "codigo": "7100002",
+      "ativo": true,
+      "nascimento": "1975-03-03",
+      "candidatura": "2026-09-22T12:00:00+00:00",
+      "colunas": {
+        "SITUAÇÃO": "Ativo",
+        "SITUAÇÃO - Questionário de seleção": "FINALIZADO",
+        "NOTA - Questionário de seleção": "20,0/30,0",
+        "REPROVADO": "NÃO"
+      }
+    },
+    {
+      "id": "c03",
+      "codigo": "7100003",
+      "ativo": true,
+      "nascimento": "1985-04-04",
+      "candidatura": "2026-09-21T12:00:00+00:00",
+      "colunas": {
+        "SITUAÇÃO": "Ativo",
+        "SITUAÇÃO - Questionário de seleção": "FINALIZADO",
+        "NOTA - Questionário de seleção": "20,0/30,0",
+        "REPROVADO": "NÃO"
+      }
+    }
+  ],
+  "hoje": "2026-10-06"
+}

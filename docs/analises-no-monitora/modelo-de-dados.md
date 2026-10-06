@@ -21,17 +21,17 @@ O padrão, em resumo:
 
 Tabelas que já existem e são reaproveitadas:
 
-| Tabela | Uso aqui |
-|---|---|
-| `TB_ANALISE_CURRICULAR` | destino da publicação |
-| `TB_PLANILHA_ANALISE` | ganha as origens `monitora-*` |
-| `TB_EMPREGARE_CANDIDATO` / `TB_EMPREGARE_VAGA` | origem dos candidatos e das vagas |
-| `TB_MONITORAMENTO_INDIGENA` | o edital |
-| `TD_UNIDADE` | o DSEI |
-| `TB_QUADRO_VAGA_EDITAL` | as vagas por modalidade |
-| `TH_REGRA_CLASSIFICACAO` | nota mínima, casas e arredondamento |
-| `TB_LISTA_CLASSIFICACAO` | ganha os tipos `PROVISORIA` e `LOTE` |
-| `TB_AJUSTE_PONTUACAO_RECURSO` | ajuste de pontuação do recurso |
+| Tabela                                         | Uso aqui                             |
+| ---------------------------------------------- | ------------------------------------ |
+| `TB_ANALISE_CURRICULAR`                        | destino da publicação                |
+| `TB_PLANILHA_ANALISE`                          | ganha as origens `monitora-*`        |
+| `TB_EMPREGARE_CANDIDATO` / `TB_EMPREGARE_VAGA` | origem dos candidatos e das vagas    |
+| `TB_MONITORAMENTO_INDIGENA`                    | o edital                             |
+| `TD_UNIDADE`                                   | o DSEI                               |
+| `TB_QUADRO_VAGA_EDITAL`                        | as vagas por modalidade              |
+| `TH_REGRA_CLASSIFICACAO`                       | nota mínima, casas e arredondamento  |
+| `TB_LISTA_CLASSIFICACAO`                       | ganha os tipos `PROVISORIA` e `LOTE` |
+| `TB_AJUSTE_PONTUACAO_RECURSO`                  | ajuste de pontuação do recurso       |
 
 ## Visão geral
 
@@ -162,65 +162,246 @@ superior), com textos encurtados e comentários `//` só para leitura:
   "provisoria": {
     "ordem": ["ART_DESC", "IDADE_60", "DATA_CANDIDATURA"],
     "eliminacao_automatica": [
-      { "codigo": "CANCELADO", "coluna": "SITUAÇÃO", "quando": ["CANCELADO"], "motivo": "Cancelou a inscrição" },
-      { "codigo": "QUESTIONARIO", "coluna_prefixo": "SITUAÇÃO - ", "exceto": ["FINALIZADO"], "motivo": "Não finalizou o questionário" },
-      { "codigo": "REPROVADO_EMPREGARE", "coluna": "REPROVADO", "quando": ["SIM"], "motivo": "Reprovado na Empregare" },
-      { "codigo": "TERMO", "pergunta": "Pergunta 23 -", "quando": ["não estou de acordo"], "motivo": "Recusou o termo de responsabilidade" }
+      {
+        "codigo": "CANCELADO",
+        "coluna": "SITUAÇÃO",
+        "quando": ["CANCELADO"],
+        "motivo": "Cancelou a inscrição"
+      },
+      {
+        "codigo": "QUESTIONARIO",
+        "coluna_prefixo": "SITUAÇÃO - ",
+        "exceto": ["FINALIZADO"],
+        "motivo": "Não finalizou o questionário"
+      },
+      {
+        "codigo": "REPROVADO_EMPREGARE",
+        "coluna": "REPROVADO",
+        "quando": ["SIM"],
+        "motivo": "Reprovado na Empregare"
+      },
+      {
+        "codigo": "TERMO",
+        "pergunta": "Pergunta 23 -",
+        "quando": ["não estou de acordo"],
+        "motivo": "Recusou o termo de responsabilidade"
+      }
     ],
-    "nota_declarada": [                    // só confere a ART; divergência vira aviso
-      { "parcial": "FORMACAO", "pergunta": "Pergunta 15 -", "tipo": "OPCAO", "pontos": { "Especialização na área à qual concorre": 1, "Não possuo": 0 } },
-      { "parcial": "EXPERIENCIA", "pergunta": "Pergunta 17 -", "tipo": "FAIXA_EM_MESES", "pontos_por_mes": 0.2, "teto": 10 },
-      { "parcial": "ETNICO", "pergunta": "Pergunta 6 -", "tipo": "OPCOES_SOMADAS", "pontos": { "Sou indígena": 8, "Moro em aldeia": 6 }, "teto": 14 }
+    "nota_declarada": [
+      // só confere a ART; divergência vira aviso
+      {
+        "parcial": "FORMACAO",
+        "pergunta": "Pergunta 15 -",
+        "tipo": "OPCAO",
+        "pontos": {
+          "Especialização na área à qual concorre": 1,
+          "Não possuo": 0
+        }
+      },
+      {
+        "parcial": "EXPERIENCIA",
+        "pergunta": "Pergunta 17 -",
+        "tipo": "FAIXA_EM_MESES",
+        "pontos_por_mes": 0.2,
+        "teto": 10
+      },
+      {
+        "parcial": "ETNICO",
+        "pergunta": "Pergunta 6 -",
+        "tipo": "OPCOES_SOMADAS",
+        "pontos": { "Sou indígena": 8, "Moro em aldeia": 6 },
+        "teto": 14
+      }
     ]
   },
-  "lote": { "base": "MULTIPLO_VAGAS", "multiplo": 3,   // sem padrão fixo: a tela sugere, o gestor/coordenador edita
-            "inclui_cr": true, "fixo": null,
-            "por_modalidade": false, "inclui_empatados": true, "linha_anda": true,
-            "publica_reposicao": false },   // personalizável por edital (decidido em 05/10/2026)
-  "distribuicao": { "modo": "PEGAR_PROXIMO", "inicial": { "criterio": "PARTES_IGUAIS", "novos": "MENOS_PENDENTES" } },
-  "revisao": { "amostra_percentual": 10, "minimo_por_analista": 5, "todas": false, "inaptos_requisito": true,
-               "inaptos_nota": false, "divergencia_pontos": 2, "sinais": ["VINCULO_ATIVO"], "entrou_pela_linha": false,
-               "duplo_cego": false },
+  "lote": {
+    "base": "MULTIPLO_VAGAS",
+    "multiplo": 3, // sem padrão fixo: a tela sugere, o gestor/coordenador edita
+    "inclui_cr": true,
+    "fixo": null,
+    "por_modalidade": false,
+    "inclui_empatados": true,
+    "linha_anda": true,
+    "publica_reposicao": false
+  }, // personalizável por edital (decidido em 05/10/2026)
+  "distribuicao": {
+    "modo": "PEGAR_PROXIMO",
+    "inicial": { "criterio": "PARTES_IGUAIS", "novos": "MENOS_PENDENTES" }
+  },
+  "revisao": {
+    "amostra_percentual": 10,
+    "minimo_por_analista": 5,
+    "todas": false,
+    "inaptos_requisito": true,
+    "inaptos_nota": false,
+    "divergencia_pontos": 2,
+    "sinais": ["VINCULO_ATIVO"],
+    "entrou_pela_linha": false,
+    "duplo_cego": false
+  },
 
   "blocos": [
-    { "codigo": "IDENTIDADE", "titulo": "Documento de identidade com foto", "item_edital": "6.4 c",
-      "perguntas": ["Pergunta 4 -"], "tipo": "DOCUMENTO",
+    {
+      "codigo": "IDENTIDADE",
+      "titulo": "Documento de identidade com foto",
+      "item_edital": "6.4 c",
+      "perguntas": ["Pergunta 4 -"],
+      "tipo": "DOCUMENTO",
       "efeitos": { "NAO_CONFORME": "ELIMINA", "NAO_ENVIADO": "ELIMINA" },
-      "motivos": [{ "codigo": "ILEGIVEL", "texto": "Documento ilegível", "item_edital": "6.4 c", "efeito": "ELIMINA" },
-                  { "codigo": "SEM_VERSO", "texto": "Documento sem o verso", "item_edital": "6.4 c", "efeito": "ELIMINA" }] },
-    { "codigo": "MODALIDADE", "titulo": "Sistema de concorrência", "perguntas": ["Pergunta 5 -"], "tipo": "REGISTRO" },
-    { "codigo": "ETNICO", "titulo": "Critério étnico", "item_edital": "8.13", "perguntas": ["Pergunta 6 -", "Pergunta 7 -"],
-      "tipo": "PONTUACAO", "parcial": "ETNICO", "indigena": 8, "aldeia": 6, "teto": 14, "lista_aldeias": "DSEI_DO_EDITAL",
-      "efeitos": { "NAO_CONFORME": "ZERA_PONTOS", "NAO_ENVIADO": "ZERA_PONTOS" },
-      "motivos": [{ "codigo": "SEM_ASSINATURA", "texto": "Declaração sem as assinaturas das lideranças (Anexo VI)", "item_edital": "7.3 a" },
-                  { "codigo": "ALDEIA_FORA", "texto": "Aldeia fora da área do DSEI", "item_edital": "7.2.2", "efeito": "SEM_PONTOS_ALDEIA" }] },
-    { "codigo": "COTA_PP", "titulo": "Pretos e pardos", "condicao": "MODALIDADE=PP",
-      "perguntas": ["Pergunta 8 -", "Pergunta 9 -", "Pergunta 10 -"], "tipo": "COTA",
-      "efeitos": { "CONFORME": "ENCAMINHA_HETEROIDENTIFICACAO", "NAO_CONFORME": "SEGUE_AMPLA", "NAO_ENVIADO": "SEGUE_AMPLA" } },
-    { "codigo": "COTA_QUILOMBOLA", "condicao": "MODALIDADE=QUILOMBOLA", "perguntas": ["Pergunta 11 -"], "tipo": "COTA" },
-    { "codigo": "COTA_PCD", "condicao": "MODALIDADE=PCD", "perguntas": ["Pergunta 12 -"], "tipo": "COTA",
-      "efeitos": { "CONFORME": "ENCAMINHA_PERICIA", "NAO_CONFORME": "SEGUE_AMPLA" } },
-    { "codigo": "GRADUACAO", "titulo": "Graduação exigida e diploma (frente e verso)", "item_edital": "8.11.2",
-      "perguntas": ["Pergunta 13 -", "Pergunta 14 -"], "tipo": "DOCUMENTO",
-      "efeitos": { "NAO_CONFORME": "ELIMINA", "NAO_ENVIADO": "ELIMINA" } },
-    { "codigo": "FORMACAO", "titulo": "Outras formações", "perguntas": ["Pergunta 15 -", "Pergunta 16 -"],
-      "tipo": "TITULOS", "parcial": "FORMACAO", "cumulativa": false,
-      "titulos": [["ESPECIALIZACAO", 1], ["RESIDENCIA", 2], ["MESTRADO", 2], ["DOUTORADO", 3]] },
-    { "codigo": "EXPERIENCIA", "titulo": "Experiência profissional", "item_edital": "8.14",
-      "perguntas": ["Pergunta 17 -", "Pergunta 18 -"], "tipo": "VINCULOS", "parcial": "EXPERIENCIA",
-      "categorias": [{ "codigo": "SAUDE_INDIGENA", "desempate": 1 }, { "codigo": "ATENCAO_BASICA", "desempate": 2 }, { "codigo": "AREA" }],
-      "minimo_meses": 6, "efeito_minimo": "ELIMINA", "pontos_por_mes": 0.2, "teto": 10, "dias_por_mes": 30,
-      "unir_sobreposicao": true, "conta_ate": "DATA_CORTE", "max_vinculos": 20,
-      "estagio_indigena": { "ativo": true, "horas_por_dia": 8, "dias_por_mes": 22, "so_sem_experiencia": true } },
-    { "codigo": "PARENTESCO", "perguntas": ["Pergunta 19 -", "Pergunta 20 -"], "tipo": "REGISTRO", "alerta_quando": ["\"Sim\""] },
-    { "codigo": "VINCULO_ATIVO", "perguntas": ["Pergunta 21 -"], "tipo": "REGISTRO", "alerta_quando": ["\"Sim\""] },
-    { "codigo": "OUTROS_DSEI", "perguntas": ["Pergunta 22 -"], "tipo": "REGISTRO" }
+      "motivos": [
+        {
+          "codigo": "ILEGIVEL",
+          "texto": "Documento ilegível",
+          "item_edital": "6.4 c",
+          "efeito": "ELIMINA"
+        },
+        {
+          "codigo": "SEM_VERSO",
+          "texto": "Documento sem o verso",
+          "item_edital": "6.4 c",
+          "efeito": "ELIMINA"
+        }
+      ]
+    },
+    {
+      "codigo": "MODALIDADE",
+      "titulo": "Sistema de concorrência",
+      "perguntas": ["Pergunta 5 -"],
+      "tipo": "REGISTRO"
+    },
+    {
+      "codigo": "ETNICO",
+      "titulo": "Critério étnico",
+      "item_edital": "8.13",
+      "perguntas": ["Pergunta 6 -", "Pergunta 7 -"],
+      "tipo": "PONTUACAO",
+      "parcial": "ETNICO",
+      "indigena": 8,
+      "aldeia": 6,
+      "teto": 14,
+      "lista_aldeias": "DSEI_DO_EDITAL",
+      "efeitos": {
+        "NAO_CONFORME": "ZERA_PONTOS",
+        "NAO_ENVIADO": "ZERA_PONTOS"
+      },
+      "motivos": [
+        {
+          "codigo": "SEM_ASSINATURA",
+          "texto": "Declaração sem as assinaturas das lideranças (Anexo VI)",
+          "item_edital": "7.3 a"
+        },
+        {
+          "codigo": "ALDEIA_FORA",
+          "texto": "Aldeia fora da área do DSEI",
+          "item_edital": "7.2.2",
+          "efeito": "SEM_PONTOS_ALDEIA"
+        }
+      ]
+    },
+    {
+      "codigo": "COTA_PP",
+      "titulo": "Pretos e pardos",
+      "condicao": "MODALIDADE=PP",
+      "perguntas": ["Pergunta 8 -", "Pergunta 9 -", "Pergunta 10 -"],
+      "tipo": "COTA",
+      "efeitos": {
+        "CONFORME": "ENCAMINHA_HETEROIDENTIFICACAO",
+        "NAO_CONFORME": "SEGUE_AMPLA",
+        "NAO_ENVIADO": "SEGUE_AMPLA"
+      }
+    },
+    {
+      "codigo": "COTA_QUILOMBOLA",
+      "condicao": "MODALIDADE=QUILOMBOLA",
+      "perguntas": ["Pergunta 11 -"],
+      "tipo": "COTA"
+    },
+    {
+      "codigo": "COTA_PCD",
+      "condicao": "MODALIDADE=PCD",
+      "perguntas": ["Pergunta 12 -"],
+      "tipo": "COTA",
+      "efeitos": {
+        "CONFORME": "ENCAMINHA_PERICIA",
+        "NAO_CONFORME": "SEGUE_AMPLA"
+      }
+    },
+    {
+      "codigo": "GRADUACAO",
+      "titulo": "Graduação exigida e diploma (frente e verso)",
+      "item_edital": "8.11.2",
+      "perguntas": ["Pergunta 13 -", "Pergunta 14 -"],
+      "tipo": "DOCUMENTO",
+      "efeitos": { "NAO_CONFORME": "ELIMINA", "NAO_ENVIADO": "ELIMINA" }
+    },
+    {
+      "codigo": "FORMACAO",
+      "titulo": "Outras formações",
+      "perguntas": ["Pergunta 15 -", "Pergunta 16 -"],
+      "tipo": "TITULOS",
+      "parcial": "FORMACAO",
+      "cumulativa": false,
+      "titulos": [
+        ["ESPECIALIZACAO", 1],
+        ["RESIDENCIA", 2],
+        ["MESTRADO", 2],
+        ["DOUTORADO", 3]
+      ]
+    },
+    {
+      "codigo": "EXPERIENCIA",
+      "titulo": "Experiência profissional",
+      "item_edital": "8.14",
+      "perguntas": ["Pergunta 17 -", "Pergunta 18 -"],
+      "tipo": "VINCULOS",
+      "parcial": "EXPERIENCIA",
+      "categorias": [
+        { "codigo": "SAUDE_INDIGENA", "desempate": 1 },
+        { "codigo": "ATENCAO_BASICA", "desempate": 2 },
+        { "codigo": "AREA" }
+      ],
+      "minimo_meses": 6,
+      "efeito_minimo": "ELIMINA",
+      "pontos_por_mes": 0.2,
+      "teto": 10,
+      "dias_por_mes": 30,
+      "unir_sobreposicao": true,
+      "conta_ate": "DATA_CORTE",
+      "max_vinculos": 20,
+      "estagio_indigena": {
+        "ativo": true,
+        "horas_por_dia": 8,
+        "dias_por_mes": 22,
+        "so_sem_experiencia": true
+      }
+    },
+    {
+      "codigo": "PARENTESCO",
+      "perguntas": ["Pergunta 19 -", "Pergunta 20 -"],
+      "tipo": "REGISTRO",
+      "alerta_quando": ["\"Sim\""]
+    },
+    {
+      "codigo": "VINCULO_ATIVO",
+      "perguntas": ["Pergunta 21 -"],
+      "tipo": "REGISTRO",
+      "alerta_quando": ["\"Sim\""]
+    },
+    {
+      "codigo": "OUTROS_DSEI",
+      "perguntas": ["Pergunta 22 -"],
+      "tipo": "REGISTRO"
+    }
   ],
 
   "situacoes": {
-    "APTO":             { "etapa": "Triados",   "status": "Aprovado" },
-    "INAPTO_REQUISITO": { "etapa": "Reprovado", "status": "Reprovado", "nota_zero": true },
-    "INAPTO_NOTA":      { "etapa": "Reprovado", "status": "Reprovado" }
+    "APTO": { "etapa": "Triados", "status": "Aprovado" },
+    "INAPTO_REQUISITO": {
+      "etapa": "Reprovado",
+      "status": "Reprovado",
+      "nota_zero": true
+    },
+    "INAPTO_NOTA": { "etapa": "Reprovado", "status": "Reprovado" }
   },
   "corte": { "fonte": "REGRA_CLASSIFICACAO", "item_edital": "8.5" },
   "parecer": {
@@ -230,22 +411,31 @@ superior), com textos encurtados e comentários `//` só para leitura:
     "observacoes": "\n\nObservações da análise:\n{observacoes}"
   },
   "observacoes_prontas": [
-    { "codigo": "SEM_DETALHAMENTO", "rotulo": "Sem detalhamento das atividades", "item_edital": "8.14 b", "texto": "…" },
-    { "codigo": "EXP_DIMINUIDA", "rotulo": "Nota de experiência diminuída", "texto": "…" }
+    {
+      "codigo": "SEM_DETALHAMENTO",
+      "rotulo": "Sem detalhamento das atividades",
+      "item_edital": "8.14 b",
+      "texto": "…"
+    },
+    {
+      "codigo": "EXP_DIMINUIDA",
+      "rotulo": "Nota de experiência diminuída",
+      "texto": "…"
+    }
   ]
 }
 ```
 
 Tipos de bloco:
 
-| Tipo | Conteúdo |
-|---|---|
+| Tipo        | Conteúdo                   |
+| ----------- | -------------------------- |
 | `DOCUMENTO` | situação + motivo + efeito |
-| `PONTUACAO` | situação + pontos |
-| `COTA` | situação + encaminhamento |
-| `TITULOS` | lista de títulos |
-| `VINCULOS` | tabela de vínculos |
-| `REGISTRO` | só registro ou alerta |
+| `PONTUACAO` | situação + pontos          |
+| `COTA`      | situação + encaminhamento  |
+| `TITULOS`   | lista de títulos           |
+| `VINCULOS`  | tabela de vínculos         |
+| `REGISTRO`  | só registro ou alerta      |
 
 Efeitos: `ELIMINA`, `ZERA_PONTOS`, `SEM_PONTOS_ALDEIA`, `AJUSTA_PONTOS`, `SO_REGISTRO`,
 `ENCAMINHA_HETEROIDENTIFICACAO`, `ENCAMINHA_PERICIA` e `SEGUE_AMPLA`. Os pesos variam por edital:
@@ -355,6 +545,14 @@ Regras de `private."FC_PRE_CLASSIFICAR_VAGA"` (roda no fim de cada carga e a cad
 - Quem já tem ficha não sai do lote por recálculo.
 
 ## 6. `TB_FICHA_ANALISE` — a ficha
+
+**Implementada na F3** (`20261006120000_fichas_fila_e_reserva.sql`) só com as colunas da fila e da
+reserva: situação (`FORA_LOTE` guarda `DS_MOTIVO_SAIDA`), responsável e `DT_ATRIBUICAO`, reserva
+(`CO_USUARIO_RESERVA`, `DT_RESERVA`, `DT_RESERVA_EXPIRA`), `NU_LOTE`, a versão da regra e
+`NU_VERSAO`. A chave estrangeira é para `TB_PRE_CLASSIFICACAO`. `TH_FICHA_ANALISE` saiu com
+identidade própria e as colunas da transição (sem o retrato, que é da F4); entram também
+`TL_ACESSO_FICHA_ANALISE` e `TB_FILTRO_FILA_ANALISE` (filtros salvos). As colunas de resultado,
+nota e parecer abaixo chegam na F4. O texto abaixo é a proposta original.
 
 ```sql
 create table public."TB_FICHA_ANALISE" (
@@ -646,51 +844,51 @@ como "Justificativa" dos inaptos.
 
 `private."FC_PUBLICAR_FICHA"` roda só quando o edital está em `MONITORA`:
 
-| Coluna | Valor |
-|---|---|
-| `id` | adotado da planilha ou novo |
-| `CO_PLANILHA` / `CO_AREA` | `monitora-<área>` / área do edital |
-| `grupo`, `unidade`, `edital`, `codigo_vaga`, `nome_vaga`, `categoria`, `regime`, `carga_horaria` | edital e vaga |
-| `candidato`, `id_origem` | NOME e CÓDIGO da Empregare (a `chave_natural` fica igual à da planilha) |
-| `data_nascimento`, `idade`, `pcd`, `modalidade_concorrencia` | Empregare e ficha |
-| `nota_empregare` | **ART** (a Classificação a lê como `nota_art`) |
-| `status_consolidado` / `etapa` | pelos `situacoes` da regra (Apto → Aprovado/"Triados"; Inapto → Reprovado/"Reprovado"); Pendente/Revisar durante a avaliação |
-| `responsavel_analise`, `data_analise` | do login e da conclusão |
-| as quatro `pontuacao_*`, `nota_final_ajustada`, `somatorio` | parciais e nota (0 se inapto por requisito) |
-| `experiencia_*_total` (e anos/meses/dias) | `QT_DIAS_*`, na unidade da planilha |
-| `analise` | `DS_PARECER` |
-| `ativo` | `true`; `FORA_LOTE` → `false` |
+| Coluna                                                                                           | Valor                                                                                                                        |
+| ------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------- |
+| `id`                                                                                             | adotado da planilha ou novo                                                                                                  |
+| `CO_PLANILHA` / `CO_AREA`                                                                        | `monitora-<área>` / área do edital                                                                                           |
+| `grupo`, `unidade`, `edital`, `codigo_vaga`, `nome_vaga`, `categoria`, `regime`, `carga_horaria` | edital e vaga                                                                                                                |
+| `candidato`, `id_origem`                                                                         | NOME e CÓDIGO da Empregare (a `chave_natural` fica igual à da planilha)                                                      |
+| `data_nascimento`, `idade`, `pcd`, `modalidade_concorrencia`                                     | Empregare e ficha                                                                                                            |
+| `nota_empregare`                                                                                 | **ART** (a Classificação a lê como `nota_art`)                                                                               |
+| `status_consolidado` / `etapa`                                                                   | pelos `situacoes` da regra (Apto → Aprovado/"Triados"; Inapto → Reprovado/"Reprovado"); Pendente/Revisar durante a avaliação |
+| `responsavel_analise`, `data_analise`                                                            | do login e da conclusão                                                                                                      |
+| as quatro `pontuacao_*`, `nota_final_ajustada`, `somatorio`                                      | parciais e nota (0 se inapto por requisito)                                                                                  |
+| `experiencia_*_total` (e anos/meses/dias)                                                        | `QT_DIAS_*`, na unidade da planilha                                                                                          |
+| `analise`                                                                                        | `DS_PARECER`                                                                                                                 |
+| `ativo`                                                                                          | `true`; `FORA_LOTE` → `false`                                                                                                |
 
 Depois de publicar, a função marca o cache do Painel das análises como vencido, para o painel
 mostrar a mudança na hora.
 
 ## 14. RPCs (todas `public`, `SECURITY DEFINER`, `set search_path to ''`, em `rpc-contrato.js`)
 
-| RPC | Quem | O que faz |
-|---|---|---|
-| `obter_provisoria(p_edital, p_vaga)` | Leitor+ | contadores, Provisória por ART, lote, primeiros de fora e eliminados com motivo |
-| `obter_fila_avaliacao(p_edital, p_filtros, p_pagina)` | Leitor+ | indicadores e fichas do lote (sem CPF) |
-| `abrir_ficha_por_codigo(p_edital, p_codigo)` | papel no edital | busca por código Empregare |
-| `salvar_url_candidaturas_vaga(p_vaga, p_url)` | gestor ou coordenador do edital da vaga | cadastro manual do endereço de candidaturas (só endereço da Empregare; `TP_ORIGEM_URL = MANUAL`) |
-| `gravar_urls_empregare(p_sync, p_lote jsonb)` | robô (`service_role`) | grava `DS_URL_CANDIDATURAS` por vaga e `DS_URL_CURRICULO` por candidato (casando `data-pessoa-id`), com `DT_CAPTURA_URL` |
-| `pegar_proxima_ficha(p_edital, p_vaga)` | analista (modo `PEGAR_PROXIMO`) | reserva atômica na ordem da Provisória |
-| `distribuir_fichas(p_edital, p_config)` | gestor ou coordenador | distribuição inicial ou redistribuição, com prévia |
-| `atribuir_fichas(p_fichas, p_usuario, p_motivo)` | gestor ou coordenador | atribui ou redistribui |
-| `reservar_ficha(p_ficha)` / `renovar_reserva(p_ficha)` / `liberar_reserva(p_ficha, p_motivo)` | responsável / coordenação | trava de concorrência (15 min) |
-| `obter_ficha(p_ficha)` | papel no edital (Leitor: só concluída) | ficha, blocos com o declarado, títulos, vínculos, regra da versão, sinais, histórico e o link "Abrir na Empregare" (o currículo, se capturado; senão, as candidaturas da vaga, mais o código para copiar); registra `ABRIR_FICHA` |
-| `buscar_aldeia_dsei(p_ficha, p_texto)` | papel no edital | autocompletar da aldeia |
-| `revelar_dado_ficha(p_ficha, p_campo)` / `registrar_acesso_ficha(p_ficha, p_tipo, p_alvo)` | papel na ficha | LGPD |
-| `salvar_ficha(p_ficha, p_versao, p_dados)` | quem tem a reserva | rascunho (blocos, títulos, vínculos, aldeia, estágio, observações); recalcula efeitos, nota, desempates, resultado e parecer; grava os eventos |
-| `concluir_ficha(p_ficha, p_versao)` | responsável | confere os motivos obrigatórios, conclui, sorteia a revisão, publica e faz a linha andar |
-| `pedir_revisao_ficha`, `validar_ficha`, `devolver_ficha`, `reabrir_ficha` | como no README | transições com motivo |
-| `obter_regra_analise` / `salvar_regra_analise` / `simular_regra_analise` / `copiar_modelo_regra_analise` | Leitor / coordenação | regra versionada; lista as perguntas e as respostas encontradas na carga |
-| `salvar_aldeias_dsei(p_unidade, p_aldeias, p_fonte)` | administrador global | lista de aldeias |
-| `salvar_equipe_edital(p_edital, p_equipe, p_motivo)` | gestor ou coordenador | equipe |
-| `definir_origem_analise(p_edital, p_origem, p_motivo)` | administrador global | comparação e virada |
-| `abrir_fichas_do_edital(p_edital)` | coordenação e robô (`service_role`) | recalcula a Provisória e o lote e cria as fichas do lote |
-| `obter_comparacao_analise(p_edital)` | coordenação | planilha × MONITORA |
-| `obter_produtividade_analise(p_edital, p_de, p_ate)` | coordenação | produtividade, motivos e encaminhamentos |
-| `gerar_lista_classificacao` (já existe) | Editor de Classificação | passa a aceitar `PROVISORIA` e `LOTE` |
+| RPC                                                                                                      | Quem                                    | O que faz                                                                                                                                                                                                                         |
+| -------------------------------------------------------------------------------------------------------- | --------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `obter_provisoria(p_edital, p_vaga)`                                                                     | Leitor+                                 | contadores, Provisória por ART, lote, primeiros de fora e eliminados com motivo                                                                                                                                                   |
+| `obter_fila_avaliacao(p_edital, p_filtros, p_pagina)`                                                    | Leitor+                                 | indicadores e fichas do lote (sem CPF)                                                                                                                                                                                            |
+| `abrir_ficha_por_codigo(p_edital, p_codigo)`                                                             | papel no edital                         | busca por código Empregare                                                                                                                                                                                                        |
+| `salvar_url_candidaturas_vaga(p_vaga, p_url)`                                                            | gestor ou coordenador do edital da vaga | cadastro manual do endereço de candidaturas (só endereço da Empregare; `TP_ORIGEM_URL = MANUAL`)                                                                                                                                  |
+| `gravar_urls_empregare(p_sync, p_lote jsonb)`                                                            | robô (`service_role`)                   | grava `DS_URL_CANDIDATURAS` por vaga e `DS_URL_CURRICULO` por candidato (casando `data-pessoa-id`), com `DT_CAPTURA_URL`                                                                                                          |
+| `pegar_proxima_ficha(p_edital, p_vaga)`                                                                  | analista (modo `PEGAR_PROXIMO`)         | reserva atômica na ordem da Provisória                                                                                                                                                                                            |
+| `distribuir_fichas(p_edital, p_config)`                                                                  | gestor ou coordenador                   | distribuição inicial ou redistribuição, com prévia                                                                                                                                                                                |
+| `atribuir_fichas(p_fichas, p_usuario, p_motivo)`                                                         | gestor ou coordenador                   | atribui ou redistribui                                                                                                                                                                                                            |
+| `reservar_ficha(p_ficha)` / `renovar_reserva(p_ficha)` / `liberar_reserva(p_ficha, p_motivo)`            | responsável / coordenação               | trava de concorrência (15 min)                                                                                                                                                                                                    |
+| `obter_ficha(p_ficha)`                                                                                   | papel no edital (Leitor: só concluída)  | ficha, blocos com o declarado, títulos, vínculos, regra da versão, sinais, histórico e o link "Abrir na Empregare" (o currículo, se capturado; senão, as candidaturas da vaga, mais o código para copiar); registra `ABRIR_FICHA` |
+| `buscar_aldeia_dsei(p_ficha, p_texto)`                                                                   | papel no edital                         | autocompletar da aldeia                                                                                                                                                                                                           |
+| `revelar_dado_ficha(p_ficha, p_campo)` / `registrar_acesso_ficha(p_ficha, p_tipo, p_alvo)`               | papel na ficha                          | LGPD                                                                                                                                                                                                                              |
+| `salvar_ficha(p_ficha, p_versao, p_dados)`                                                               | quem tem a reserva                      | rascunho (blocos, títulos, vínculos, aldeia, estágio, observações); recalcula efeitos, nota, desempates, resultado e parecer; grava os eventos                                                                                    |
+| `concluir_ficha(p_ficha, p_versao)`                                                                      | responsável                             | confere os motivos obrigatórios, conclui, sorteia a revisão, publica e faz a linha andar                                                                                                                                          |
+| `pedir_revisao_ficha`, `validar_ficha`, `devolver_ficha`, `reabrir_ficha`                                | como no README                          | transições com motivo                                                                                                                                                                                                             |
+| `obter_regra_analise` / `salvar_regra_analise` / `simular_regra_analise` / `copiar_modelo_regra_analise` | Leitor / coordenação                    | regra versionada; lista as perguntas e as respostas encontradas na carga                                                                                                                                                          |
+| `salvar_aldeias_dsei(p_unidade, p_aldeias, p_fonte)`                                                     | administrador global                    | lista de aldeias                                                                                                                                                                                                                  |
+| `salvar_equipe_edital(p_edital, p_equipe, p_motivo)`                                                     | gestor ou coordenador                   | equipe                                                                                                                                                                                                                            |
+| `definir_origem_analise(p_edital, p_origem, p_motivo)`                                                   | administrador global                    | comparação e virada                                                                                                                                                                                                               |
+| `abrir_fichas_do_edital(p_edital)`                                                                       | coordenação e robô (`service_role`)     | recalcula a Provisória e o lote e cria as fichas do lote                                                                                                                                                                          |
+| `obter_comparacao_analise(p_edital)`                                                                     | coordenação                             | planilha × MONITORA                                                                                                                                                                                                               |
+| `obter_produtividade_analise(p_edital, p_de, p_ate)`                                                     | coordenação                             | produtividade, motivos e encaminhamentos                                                                                                                                                                                          |
+| `gerar_lista_classificacao` (já existe)                                                                  | Editor de Classificação                 | passa a aceitar `PROVISORIA` e `LOTE`                                                                                                                                                                                             |
 
 Funções privadas:
 

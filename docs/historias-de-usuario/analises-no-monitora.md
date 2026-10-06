@@ -16,6 +16,10 @@ a AM-16.3 (`supabase/migrations/20261006110000…`, job `scripts/pre_classificac
 Pré-classificação). AM-5.3 e AM-5.4 ("a linha anda" pela conclusão da ficha) esperam as fichas
 (F3/F4); nesta fase o lote é reposto quando alguém do lote é eliminado na carga seguinte.
 
+**Implementadas (fase F3, 06/10/2026):** AM-6.1 a AM-6.4, AM-12.2 e AM-3.3
+(`supabase/migrations/20261006120000…` e `…120500…`, aba Fila). O lote pela nota mínima (93/2026,
+item 8.2.6) e o desempate do item 10.1 entram em AM-5.0 e AM-4.2.
+
 Papéis:
 
 - **analista**: Editor em `avaliacao_documental`, com o papel ANALISTA no edital;

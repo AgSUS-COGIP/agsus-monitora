@@ -8,13 +8,19 @@ conferências…), concedidas só ao service_role.
 
 Variáveis: SUPABASE_URL (aceita VITE_SUPABASE_URL) e SUPABASE_SERVICE_ROLE_KEY.
 Repete até 3 vezes só erro de rede ou 5xx; erro do banco (4xx) não melhora
-repetindo. A mensagem de erro passa pelo mascaramento antes de subir.
+repetindo. Do erro do PostgREST sobem só `code` e `message`, mascarados:
+`details` e `hint` ficam de fora porque o Postgres põe neles a linha recusada
+inteira ("Failing row contains (...)"), com nome e data de nascimento, que o
+mascaramento não reconhece. As RPCs que criam registro (`iniciar_*`) devem
+ser chamadas com `tentativas=1`: repetir depois de uma resposta perdida
+esbarra na execução que a primeira tentativa já abriu.
 
 Funções da Vercel (api/*.py) NÃO usam este módulo: lá a chamada vai com o
 Bearer de quem pediu, para o banco decidir a permissão (ver
 docs/python-no-monitora.md).
 """
 
+import http.client
 import json
 import time
 import urllib.error
@@ -24,6 +30,21 @@ from monitora.config import ErroDeConfiguracao, ler
 from monitora.mascaramento import mascarar
 
 GUIA_PADRAO = "docs/python-no-monitora.md"
+
+
+def texto_do_erro(texto):
+    """Só `code` e `message` do erro do PostgREST; nunca `details` nem `hint`."""
+    try:
+        corpo = json.loads(texto)
+    except (TypeError, ValueError):
+        return texto
+    if not isinstance(corpo, dict):
+        return texto
+    codigo = str(corpo.get("code") or "").strip()
+    mensagem = str(corpo.get("message") or "").strip()
+    if not codigo and not mensagem:
+        return "erro sem mensagem"
+    return f"{codigo}: {mensagem}" if codigo and mensagem else (codigo or mensagem)
 
 
 class ErroDoSupabase(Exception):
@@ -69,10 +90,10 @@ def chamar(config, funcao, corpo, tentativas=3, abrir=urllib.request.urlopen, es
                 return json.loads(texto) if texto else None
         except urllib.error.HTTPError as erro:
             texto = erro.read().decode("utf-8", "replace")
-            ultimo = ErroDoSupabase(funcao, erro.code, texto)
+            ultimo = ErroDoSupabase(funcao, erro.code, texto_do_erro(texto))
             if erro.code < 500:
                 break
-        except (urllib.error.URLError, TimeoutError, ConnectionError) as erro:
+        except (urllib.error.URLError, TimeoutError, ConnectionError, http.client.HTTPException) as erro:
             ultimo = ErroDoSupabase(funcao, "sem resposta", str(erro))
         esperar(1.5 * tentativa)
     raise ultimo

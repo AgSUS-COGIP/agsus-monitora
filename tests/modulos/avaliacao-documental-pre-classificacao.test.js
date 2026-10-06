@@ -29,7 +29,10 @@ const { regras } = JSON.parse(
   ),
 );
 const PROJ = regras["PROJ26-CURRICULAR"];
-const CONFIG = { ...PROJ, lote: { ...PROJ.lote, publica_reposicao: true } };
+const CONFIG = {
+  ...PROJ,
+  lote: { ...PROJ.lote, base: "MULTIPLO_VAGAS", publica_reposicao: true },
+};
 
 const regraSalva = (versao, configuracao = CONFIG, situacao = "CONFERIDA") => ({
   versao,

@@ -1,0 +1,161 @@
+{
+  "descricao": "Casos dourados da distribuição das fichas (src/lib/avaliacao-documental/distribuicao.js e python/monitora/avaliacao_documental/distribuicao.py). Os dois lados têm de dar o mesmo resultado.",
+  "casos": [
+    {
+      "nome": "partes iguais do zero, empate pela ordem dos analistas",
+      "entrada": {
+        "fichas": [
+          { "id": "f1", "vaga": "10" },
+          { "id": "f2", "vaga": "10" },
+          { "id": "f3", "vaga": "10" },
+          { "id": "f4", "vaga": "10" },
+          { "id": "f5", "vaga": "10" },
+          { "id": "f6", "vaga": "10" },
+          { "id": "f7", "vaga": "10" }
+        ],
+        "analistas": [
+          { "usuario": "a", "vagas": null, "limite": null, "pendentes": 0 },
+          { "usuario": "b", "vagas": null, "limite": null, "pendentes": 0 },
+          { "usuario": "c", "vagas": null, "limite": null, "pendentes": 0 }
+        ],
+        "criterio": "PARTES_IGUAIS",
+        "limite_por_analista": null
+      },
+      "esperado": {
+        "atribuicoes": [
+          { "ficha": "f1", "usuario": "a" },
+          { "ficha": "f2", "usuario": "b" },
+          { "ficha": "f3", "usuario": "c" },
+          { "ficha": "f4", "usuario": "a" },
+          { "ficha": "f5", "usuario": "b" },
+          { "ficha": "f6", "usuario": "c" },
+          { "ficha": "f7", "usuario": "a" }
+        ],
+        "sobra": [],
+        "por_analista": { "a": 3, "b": 2, "c": 2 }
+      }
+    },
+    {
+      "nome": "quem entra depois vai para quem tem menos pendentes",
+      "entrada": {
+        "fichas": [
+          { "id": "n1", "vaga": "10" },
+          { "id": "n2", "vaga": "10" },
+          { "id": "n3", "vaga": "10" }
+        ],
+        "analistas": [
+          { "usuario": "a", "vagas": null, "limite": null, "pendentes": 5 },
+          { "usuario": "b", "vagas": null, "limite": null, "pendentes": 2 },
+          { "usuario": "c", "vagas": null, "limite": null, "pendentes": 3 }
+        ],
+        "criterio": "PARTES_IGUAIS",
+        "limite_por_analista": null
+      },
+      "esperado": {
+        "atribuicoes": [
+          { "ficha": "n1", "usuario": "b" },
+          { "ficha": "n2", "usuario": "b" },
+          { "ficha": "n3", "usuario": "c" }
+        ],
+        "sobra": [],
+        "por_analista": { "a": 0, "b": 2, "c": 1 }
+      }
+    },
+    {
+      "nome": "analista de uma vaga só recebe fichas dela; vaga sem analista sobra",
+      "entrada": {
+        "fichas": [
+          { "id": "f1", "vaga": "10" },
+          { "id": "f2", "vaga": "20" },
+          { "id": "f3", "vaga": "20" },
+          { "id": "f4", "vaga": "30" }
+        ],
+        "analistas": [
+          { "usuario": "a", "vagas": ["10"], "limite": null, "pendentes": 0 },
+          {
+            "usuario": "b",
+            "vagas": ["20", "10"],
+            "limite": null,
+            "pendentes": 0
+          }
+        ],
+        "criterio": "PARTES_IGUAIS",
+        "limite_por_analista": null
+      },
+      "esperado": {
+        "atribuicoes": [
+          { "ficha": "f1", "usuario": "a" },
+          { "ficha": "f2", "usuario": "b" },
+          { "ficha": "f3", "usuario": "b" }
+        ],
+        "sobra": ["f4"],
+        "por_analista": { "a": 1, "b": 2 }
+      }
+    },
+    {
+      "nome": "limite da equipe vale mesmo em partes iguais",
+      "entrada": {
+        "fichas": [
+          { "id": "f1", "vaga": "10" },
+          { "id": "f2", "vaga": "10" },
+          { "id": "f3", "vaga": "10" },
+          { "id": "f4", "vaga": "10" }
+        ],
+        "analistas": [
+          { "usuario": "a", "vagas": null, "limite": 1, "pendentes": 0 },
+          { "usuario": "b", "vagas": null, "limite": null, "pendentes": 0 }
+        ],
+        "criterio": "PARTES_IGUAIS",
+        "limite_por_analista": 1
+      },
+      "esperado": {
+        "atribuicoes": [
+          { "ficha": "f1", "usuario": "a" },
+          { "ficha": "f2", "usuario": "b" },
+          { "ficha": "f3", "usuario": "b" },
+          { "ficha": "f4", "usuario": "b" }
+        ],
+        "sobra": [],
+        "por_analista": { "a": 1, "b": 3 }
+      }
+    },
+    {
+      "nome": "critério LIMITE: o menor entre o da regra e o da equipe; o resto sobra",
+      "entrada": {
+        "fichas": [
+          { "id": "f1", "vaga": "10" },
+          { "id": "f2", "vaga": "10" },
+          { "id": "f3", "vaga": "10" },
+          { "id": "f4", "vaga": "10" },
+          { "id": "f5", "vaga": "10" },
+          { "id": "f6", "vaga": "10" }
+        ],
+        "analistas": [
+          { "usuario": "a", "vagas": null, "limite": 1, "pendentes": 0 },
+          { "usuario": "b", "vagas": null, "limite": null, "pendentes": 1 }
+        ],
+        "criterio": "LIMITE",
+        "limite_por_analista": 3
+      },
+      "esperado": {
+        "atribuicoes": [
+          { "ficha": "f1", "usuario": "a" },
+          { "ficha": "f2", "usuario": "b" },
+          { "ficha": "f3", "usuario": "b" }
+        ],
+        "sobra": ["f4", "f5", "f6"],
+        "por_analista": { "a": 1, "b": 2 }
+      }
+    },
+    {
+      "nome": "sem analistas, tudo sobra",
+      "entrada": {
+        "fichas": [{ "id": "f1", "vaga": "10" }],
+        "analistas": [],
+        "criterio": "PARTES_IGUAIS",
+        "limite_por_analista": null
+      },
+      "esperado": { "atribuicoes": [], "sobra": ["f1"], "por_analista": {} }
+    }
+  ]
+}
