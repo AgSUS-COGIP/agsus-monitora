@@ -2440,7 +2440,7 @@ export const VERBETES_AYA = Object.freeze([
       "para que serve o selo de avisos",
     ],
     resposta:
-      "Todo dia às 6h de Brasília um job em Python lê o banco e confere regras que atravessam os módulos — análises, entrevistas, classificação, lista de aprovados e as cargas da Empregare. Cada problema achado vira um aviso por edital (ou por área, ou por vaga da Empregare), com a gravidade (Crítico, Atenção ou Informativo), a quantidade de casos e até 20 exemplos só com códigos e ids, nunca nome ou CPF. Os avisos aparecem no selo do topo de Análises, Entrevistas, Classificação e Lista de aprovados (só os do módulo, na área atual; o selo some quando não há aviso) e, todos juntos, em Configurações › Status das atualizações. A conferência só avisa: não muda análise, entrevista, lista nem aprovado. Quando a conferência deixa de achar o problema, o aviso some sozinho na execução seguinte.",
+      "Todo dia às 6h de Brasília um job em Python lê o banco e confere regras que atravessam os módulos — análises, entrevistas, classificação, lista de aprovados e as cargas da Empregare. Cada problema achado vira um aviso por edital (ou por área, ou por vaga da Empregare), com a gravidade (Crítico, Atenção ou Informativo) e todos os casos (até 5000 por aviso). O job guarda só códigos, ids e o dado que motivou o aviso, nunca nome ou CPF; o nome aparece na tela para quem pode ver aquela análise. Os avisos aparecem no selo do topo de Análises, Entrevistas, Classificação e Lista de aprovados (só os do módulo, na área atual; o selo some quando não há aviso) e, todos juntos, em Configurações › Status das atualizações. A conferência só avisa: não muda análise, entrevista, lista nem aprovado. Quando a conferência deixa de achar o problema, o aviso some sozinho na execução seguinte.",
     fato: "",
     fonte:
       "scripts/conferencias/; supabase/migrations/20261005210000_conferencias_de_consistencia.sql",
@@ -2493,6 +2493,28 @@ export const VERBETES_AYA = Object.freeze([
     fato: "",
     fonte:
       "supabase/migrations/20261005210000_conferencias_de_consistencia.sql",
+  },
+  {
+    arquivo: "regras-das-conferencias.md",
+    titulo: "Conferir os casos de um aviso",
+    perguntas: [
+      "como conferir um aviso",
+      "ver os casos do aviso",
+      "quais analises estao erradas",
+      "casos do aviso",
+      "buscar candidato nos avisos",
+      "pesquisar codigo do candidato no aviso",
+      "exportar casos do aviso",
+      "csv dos avisos",
+      "abrir a analise do aviso",
+      "candidato analisado em dois editais",
+      "data da analise antes da inscricao",
+    ],
+    resposta:
+      'Na gaveta dos avisos, o botão com o número de casos abre a lista de todos os casos do aviso, 50 por vez ("Mostrar mais" traz os seguintes). Cada caso mostra o código do candidato na Empregare, o nome, o edital, a vaga, o responsável pela análise e o motivo: por exemplo, a data da análise e a data da inscrição, a nota e a nota mínima, a nota e a soma das parciais, a experiência e o teto. No candidato analisado em dois editais ativos aparecem as análises dele em cada edital, com vaga e situação, e quantas ficaram fora do seu acesso. O campo do aviso busca por código ou nome (sem acento) e "Exportar CSV" baixa todos os casos do aviso. O campo do topo da gaveta procura o candidato em todos os avisos. Clicar num caso das análises abre o Painel das análises já buscando pelo nome e com a análise aberta, para conferir e corrigir na planilha; o aviso some na conferência seguinte, quando o problema não aparecer mais. O nome, a vaga e o responsável só aparecem para quem tem a área e o edital da análise no seu recorte.',
+    fato: "",
+    fonte:
+      "src/modulos/conferencias/avisos-de-conferencia.jsx; supabase/migrations/20261007120000_casos_dos_avisos_de_conferencia.sql",
   },
   {
     arquivo: "regras-das-configuracoes.md",

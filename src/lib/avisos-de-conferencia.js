@@ -9,7 +9,12 @@
   e pelo "Rodar agora"). O catálogo (código → módulo, gravidade, título) é o
   mesmo do job: tests/fixtures/conferencias/catalogo.json é o caso dourado que
   o vitest e o pytest conferem.
+
+  Os casos de cada aviso (todos, não só os 20 exemplos) vêm de
+  `listar_casos_aviso_conferencia` (20261007120000): quem é (código, nome),
+  onde (edital, vaga, responsável), o motivo (datas, notas) e o CSV.
 */
+import { sanitizeCsvCell } from "./csv-security.js";
 
 export const CONFERENCIAS = Object.freeze({
   ANALISE_APROVADA_ABAIXO_DO_CORTE: Object.freeze({
@@ -239,4 +244,221 @@ export function diaDoAviso(valor) {
   if (!(valor instanceof Date)) return "—";
   const dois = (n) => String(n).padStart(2, "0");
   return `${dois(valor.getDate())}/${dois(valor.getMonth() + 1)}/${valor.getFullYear()}`;
+}
+
+/* ── Casos de um aviso (listar_casos_aviso_conferencia, 20261007120000) ── */
+
+/** Casos por página na gaveta; o CSV lê de 1000 em 1000. */
+export const CASOS_POR_PAGINA = 50;
+export const CASOS_POR_PAGINA_DO_CSV = 1000;
+
+/** "dd/mm/aaaa" de "aaaa-mm-dd…" (sem fuso: a data é do dia); "" se não der. */
+export function diaDoCaso(valor) {
+  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(texto(valor));
+  return m ? `${m[3]}/${m[2]}/${m[1]}` : "";
+}
+
+const numeroDoCaso = (valor) => {
+  if (valor === null || valor === undefined || valor === "") return "—";
+  const n = Number(valor);
+  return Number.isFinite(n)
+    ? n.toLocaleString("pt-BR", { maximumFractionDigits: 2 })
+    : "—";
+};
+
+/** "1777 · Enfermeiro" (o que houver). */
+const vagaDe = (codigo, nome) =>
+  [texto(codigo), texto(nome)].filter(Boolean).join(" · ");
+
+function normalizarAnaliseDoCaso(bruto) {
+  return {
+    id: texto(bruto?.id) || null,
+    edital: texto(bruto?.edital),
+    vaga: vagaDe(bruto?.codigo_vaga, bruto?.nome_vaga),
+    status: texto(bruto?.status),
+    responsavel: texto(bruto?.responsavel),
+    dataAnalise: texto(bruto?.data_analise) || null,
+  };
+}
+
+/**
+ * O que motivou o aviso, em uma linha curta ("Análise em 01/09/2026, antes
+ * da inscrição em 10/09/2026"). "" quando o caso não traz o dado.
+ */
+export function motivoDoCaso(conferencia, detalhe = {}, caso = {}) {
+  const d = detalhe || {};
+  switch (conferencia) {
+    case "ANALISE_DATA_INVALIDA": {
+      const analise = diaDoCaso(d.data_analise || caso.dataAnalise);
+      if (!analise) return "";
+      if (d.motivo === "futuro") return `Análise em ${analise}, data futura`;
+      const inscricao = diaDoCaso(d.inscricao);
+      return inscricao
+        ? `Análise em ${analise}, antes da inscrição em ${inscricao}`
+        : `Análise em ${analise}`;
+    }
+    case "ANALISE_APROVADA_ABAIXO_DO_CORTE":
+      return `Nota ${numeroDoCaso(d.nota)} · mínima ${numeroDoCaso(d.corte)}`;
+    case "ANALISE_NOTA_DIFERENTE_DA_SOMA":
+      return `Nota ${numeroDoCaso(d.nota)} · soma das parciais ${numeroDoCaso(d.soma)}`;
+    case "ANALISE_EXPERIENCIA_ACIMA_DO_TETO":
+      return `Experiência ${numeroDoCaso(d.experiencia)} · teto ${numeroDoCaso(d.teto)}`;
+    case "ANALISE_EM_DOIS_EDITAIS": {
+      const n = Number(d.editais) || caso.analises?.length || 0;
+      return n > 1 ? `Em ${n} editais ativos` : "Em mais de um edital ativo";
+    }
+    case "ENTREVISTA_SEM_NOTA_APOS_DATA":
+      return d.data_entrevista
+        ? `Entrevista em ${diaDoCaso(d.data_entrevista)}, sem nota`
+        : "";
+    case "ENTREVISTA_NOTA_FORA_DA_ESCALA":
+      return d.maxima !== undefined && d.maxima !== null
+        ? `Nota ${numeroDoCaso(d.nota)} · máxima ${numeroDoCaso(d.maxima)}`
+        : `Nota ${numeroDoCaso(d.nota)}`;
+    case "ENTREVISTA_HORARIO_DUPLICADO":
+      return Number(d.horarios) > 1 ? `${d.horarios} horários` : "";
+    default:
+      return "";
+  }
+}
+
+/** Um caso de `listar_casos_aviso_conferencia`, pronto para a tela e o CSV. */
+export function normalizarCaso(bruto) {
+  const conferencia = texto(bruto?.conferencia);
+  const detalhe =
+    bruto?.detalhe && typeof bruto.detalhe === "object" ? bruto.detalhe : {};
+  const caso = {
+    avisoId: texto(bruto?.aviso_id),
+    conferencia,
+    titulo: tituloDaConferencia(conferencia),
+    ordem: Math.max(0, Math.round(Number(bruto?.ordem) || 0)),
+    analiseId: texto(bruto?.analise_id) || null,
+    codigo: texto(bruto?.codigo),
+    nome: texto(bruto?.nome),
+    edital: texto(bruto?.edital),
+    vaga: vagaDe(bruto?.codigo_vaga, bruto?.nome_vaga),
+    responsavel: texto(bruto?.responsavel),
+    status: texto(bruto?.status),
+    dataAnalise: texto(bruto?.data_analise) || null,
+    referencia: texto(bruto?.referencia),
+    detalhe,
+    analises: (Array.isArray(bruto?.analises) ? bruto.analises : []).map(
+      normalizarAnaliseDoCaso,
+    ),
+    foraDoAcesso: Math.max(0, Math.round(Number(bruto?.fora_do_acesso) || 0)),
+  };
+  caso.chave = `${caso.avisoId}:${caso.ordem}`;
+  caso.motivo = motivoDoCaso(conferencia, detalhe, caso);
+  return caso;
+}
+
+/** A página de `listar_casos_aviso_conferencia`: `{ total, casos }`. */
+export function normalizarCasos(dados) {
+  const casos = (Array.isArray(dados?.casos) ? dados.casos : []).map(
+    normalizarCaso,
+  );
+  return {
+    total: Math.max(casos.length, Math.round(Number(dados?.total) || 0)),
+    casos,
+  };
+}
+
+/** Junta a página nova às anteriores, sem repetir caso. */
+export function juntarPaginasDeCasos(anteriores, nova) {
+  const vistos = new Set((anteriores || []).map((c) => c.chave));
+  return [
+    ...(anteriores || []),
+    ...(nova || []).filter((c) => !vistos.has(c.chave)),
+  ];
+}
+
+/** Quantos casos ainda faltam carregar. */
+export const casosRestantes = (carregados, total) =>
+  Math.max(0, (Number(total) || 0) - (carregados?.length || 0));
+
+/** O texto de busca enviado ao banco (até 80 caracteres; vazio = sem busca). */
+export const termoDeBusca = (valor) =>
+  texto(valor).replace(/\s+/g, " ").slice(0, 80);
+
+/** Quem é o caso, em uma linha: "177979 · Nome" ou a referência. */
+export function quemDoCaso(caso) {
+  const partes = [caso?.codigo, caso?.nome].map(texto).filter(Boolean);
+  if (partes.length) return partes.join(" · ");
+  return caso?.referencia
+    ? `Referência ${caso.referencia}`
+    : "Sem identificação";
+}
+
+/** Edital, vaga e responsável do caso, em uma linha (o que houver). */
+export function ondeDoCaso(caso) {
+  return [
+    caso?.edital,
+    caso?.vaga,
+    caso?.responsavel ? `Resp. ${caso.responsavel}` : "",
+  ]
+    .map(texto)
+    .filter(Boolean)
+    .join(" · ");
+}
+
+/** O caso abre o Painel das análises? (aviso das análises, com análise para mostrar). */
+export const casoAbreAnalise = (caso, modulo) =>
+  modulo === "analises" &&
+  Boolean(caso?.analiseId || caso?.analises?.some((a) => a.id));
+
+/**
+ * O pedido de filtro (src/app/pedido-de-filtro.js) que leva o Painel das
+ * análises ao caso: a busca pelo nome e a análise a abrir na gaveta.
+ */
+export function filtroDoCaso(caso) {
+  const analise =
+    caso?.analiseId || caso?.analises?.find((a) => a.id)?.id || null;
+  return { busca: texto(caso?.nome), analise };
+}
+
+const COLUNAS_DO_CSV_DE_CASOS = Object.freeze([
+  ["Aviso", (c) => c.titulo],
+  ["Código do candidato", (c) => c.codigo],
+  ["Nome", (c) => c.nome],
+  ["Edital", (c) => c.edital],
+  ["Vaga", (c) => c.vaga],
+  ["Responsável pela análise", (c) => c.responsavel],
+  ["Situação", (c) => c.status],
+  ["Data da análise", (c) => diaDoCaso(c.dataAnalise)],
+  ["Motivo", (c) => c.motivo],
+  [
+    "Análises do candidato",
+    (c) =>
+      c.analises
+        .map((a) => [a.edital, a.vaga, a.status].filter(Boolean).join(" · "))
+        .join(" | "),
+  ],
+  ["Referência", (c) => c.referencia],
+]);
+
+/** CSV (";") dos casos, com cada célula protegida contra fórmula. */
+export function csvDosCasos(casos) {
+  const celula = (valor) =>
+    sanitizeCsvCell(
+      String(valor ?? "")
+        .replace(/[\r\n;]/g, " ")
+        .replace(/"/g, "'"),
+    );
+  return [
+    COLUNAS_DO_CSV_DE_CASOS.map(([titulo]) => titulo).join(";"),
+    ...(casos || []).map((caso) =>
+      COLUNAS_DO_CSV_DE_CASOS.map(([, valor]) => celula(valor(caso))).join(";"),
+    ),
+  ].join("\n");
+}
+
+/** "avisos-analise-data-invalida-2026-10-06.csv" ("avisos-busca-…" na busca geral). */
+export function nomeDoCsvDosCasos(aviso, agora = new Date()) {
+  const base =
+    texto(aviso?.conferencia)
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-|-$/g, "") || "busca";
+  const dois = (n) => String(n).padStart(2, "0");
+  return `avisos-${base}-${agora.getFullYear()}-${dois(agora.getMonth() + 1)}-${dois(agora.getDate())}.csv`;
 }

@@ -4,7 +4,8 @@ CONFERÊNCIAS DE CONSISTÊNCIA DO MONITORA (job Python, só leitura)
 Lê o banco pelas RPCs de leitura (conferencia_ler_*, só service_role), confere
 regras que atravessam os módulos — Análises, Entrevistas, Classificação, Lista
 de aprovados e as cargas da Empregare — e grava AVISOS em
-TB_AVISO_CONFERENCIA (supabase/migrations/20261005210000_conferencias_de_consistencia.sql).
+TB_AVISO_CONFERENCIA (supabase/migrations/20261005210000_conferencias_de_consistencia.sql),
+com todos os casos de cada um em TB_CASO_AVISO_CONFERENCIA (20261007120000).
 Não muda análise, entrevista, lista nem aprovado. As regras estão em regras.py;
 o catálogo (código, módulo, gravidade, título), em catalogo.py.
 
@@ -44,6 +45,7 @@ from monitora.registro import registro  # noqa: E402
 TITULO = "Conferências de consistência → MONITORA"
 TAMANHO_DA_PAGINA = 5000
 TAMANHO_DO_LOTE = 500
+CASOS_POR_LOTE = 20000
 log = registro("conferencias")
 
 
@@ -71,6 +73,20 @@ def paginas_de_analises(chamar):
         if not proximo or proximo == apos:
             return
         apos = proximo
+
+
+def lotes(avisos, tamanho=TAMANHO_DO_LOTE, casos_por_lote=CASOS_POR_LOTE):
+    """Avisos em lotes de até `tamanho` avisos e `casos_por_lote` casos (um aviso nunca se parte)."""
+    lote, casos = [], 0
+    for aviso in avisos:
+        n = len(aviso.get("casos") or [])
+        if lote and (len(lote) >= tamanho or casos + n > casos_por_lote):
+            yield lote
+            lote, casos = [], 0
+        lote.append(aviso)
+        casos += n
+    if lote:
+        yield lote
 
 
 def conferir(chamar, dias_convocado):
@@ -145,11 +161,8 @@ def principal(args, configuracao=None, chamar_rpc=None):
     log.info("Execução %s (disparo %s).", id_execucao, tipo.lower())
     try:
         avisos, rodadas, falhas = conferir(chamar, args.dias_convocado)
-        for inicio in range(0, len(avisos), TAMANHO_DO_LOTE):
-            chamar(
-                "gravar_avisos_conferencia",
-                {"p_execucao": id_execucao, "p_avisos": avisos[inicio : inicio + TAMANHO_DO_LOTE]},
-            )
+        for lote in lotes(avisos):
+            chamar("gravar_avisos_conferencia", {"p_execucao": id_execucao, "p_avisos": lote})
     except Exception as erro:
         mensagem = resumo_do_erro(erro)
         try:
