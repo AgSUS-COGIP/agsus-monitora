@@ -692,6 +692,15 @@ describe("tabela de processos", () => {
     expect(conteudo).toContain("DSEI Yanomami");
     expect(conteudo).not.toContain("DSEI Xingu");
   });
+
+  it("recorte sem nenhuma linha não exporta a área inteira", async () => {
+    await montar();
+    await act(async () => estado.definirBusca("nenhum processo tem isto"));
+    expect(linhas()).toHaveLength(0);
+    expect(secao.querySelector('[data-acao="exportar"]').disabled).toBe(true);
+    estado.exportarCsv();
+    expect(baixar).not.toHaveBeenCalled();
+  });
 });
 
 describe("boas-vindas e marcos do ano", () => {
