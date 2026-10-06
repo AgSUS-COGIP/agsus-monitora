@@ -407,14 +407,16 @@ export function calcularEntrevista({ roteiro, compareceu, avaliacoes }) {
       eliminatoria,
     };
   });
+  /* As notas têm 2 casas: no numeric do banco a soma é exata; aqui o ponto
+     flutuante dá 11,999… no lugar de 12. Arredondada, compara como lá. */
+  const soma = arredondar(total);
   const minimoTotal = numero(roteiro?.nota_minima_total);
-  const totalFinal =
-    compareceu === "N" ? 0 : falta && total === 0 ? null : arredondar(total);
+  const totalFinal = compareceu === "N" ? 0 : falta && soma === 0 ? null : soma;
   let parecer;
   if (compareceu === "N" && roteiro?.ausencia_elimina !== false)
     parecer = "INAPTO";
   else if (compareceu !== "S" || falta) parecer = "SEM_PARECER";
-  else if (reprova || (minimoTotal !== null && total < minimoTotal))
+  else if (reprova || (minimoTotal !== null && soma < minimoTotal))
     parecer = "INAPTO";
   else parecer = "APTO";
   return {
@@ -426,7 +428,7 @@ export function calcularEntrevista({ roteiro, compareceu, avaliacoes }) {
       minimoTotal !== null &&
       !falta &&
       compareceu === "S" &&
-      total < minimoTotal,
+      soma < minimoTotal,
     minimoTotal,
   };
 }
