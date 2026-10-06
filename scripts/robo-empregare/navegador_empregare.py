@@ -24,7 +24,8 @@ Links para a ficha da avaliação documental (fase F7; migration
 robô guarda o identificador interno da vaga (do link
 /empresa/vagas/candidaturas/<id>|; o código numérico dá "Sem permissão") e,
 em capturar_candidatos, abre as candidaturas da vaga, carrega a lista inteira
-(rolando, "carregar mais" e próxima página) e lê do HTML o código de cada
+(espera o AJAX da 1ª página e rola até o fim: rolagem infinita) e lê do HTML,
+em cada div.curriculo-list-item, o código de cada
 candidato (data-pessoa-id, o mesmo CÓDIGO do Excel) e o link de detalhes
 (/empresa/curriculo/detalhes?tokenCandidato=…). Lê o DOM, e não o POST
 GetCandidatos, porque o formato desse POST não é público e o DOM é o que a
@@ -50,7 +51,10 @@ URL_CANDIDATURAS = URL_BASE + "/empresa/vagas/candidaturas/"
 # Lista de candidatos da vaga: limites para não prender a execução numa vaga.
 LIMITE_DE_PAGINAS = 100
 LIMITE_DE_ROLAGENS = 300
-RODADAS_SEM_NOVIDADE = 3  # rolagens seguidas sem candidato novo = fim da lista
+RODADAS_SEM_NOVIDADE = 2  # rolagens seguidas sem candidato novo = fim da lista
+ESPERA_PELA_LISTA = 20  # segundos até o AJAX trazer a 1ª página de candidatos
+ESPERA_POR_MAIS = 6  # segundos esperando a rolagem trazer mais candidatos
+INTERVALO_DA_LISTA = 0.5  # segundos entre uma contagem e outra
 TEMPO_LIMITE_DA_LISTA = 120  # segundos por vaga
 ORCAMENTO_DOS_LINKS = 25 * 60  # segundos na execução inteira (o workflow tem 120 min)
 ESPERA_DA_LISTA = 1.5  # segundos depois de rolar ou trocar de página
@@ -92,9 +96,18 @@ return [h.scrollTop, h.scrollHeight - h.clientHeight];
 
 # Lista de candidatos da vaga (candidaturas). Nada aqui devolve dado pessoal ao log:
 # o Python lê só contagens e o HTML, de onde tira código e link.
+# Estrutura do portal (conferida em 10/2026): a lista chega por AJAX depois do load,
+# em div.curriculo-append > div.list-group.candidatura-group#curriculo-pagina-N (15 por
+# página, a seguinte entra ao rolar até o fim); cada candidato é um div.curriculo-list-item
+# com a.link-curriculo (link de detalhes) e li[data-pessoa-id] (o CÓDIGO do Excel).
+SELETOR_ITEM_DA_LISTA = ".curriculo-list-item"
+SELETOR_LINK_DA_LISTA = ".curriculo-list-item a.link-curriculo"
 SELETOR_LINK_DETALHE = 'a[href*="/empresa/curriculo/detalhes"]'
 
-JS_CONTAR_LINKS = f"return document.querySelectorAll('{SELETOR_LINK_DETALHE}').length;"
+JS_CONTAR_LINKS = f"""
+const daLista = document.querySelectorAll('{SELETOR_LINK_DA_LISTA}').length;
+return daLista || document.querySelectorAll('{SELETOR_LINK_DETALHE}').length;
+"""
 
 JS_PRIMEIRO_LINK = f"""
 const a = document.querySelector('{SELETOR_LINK_DETALHE}');
@@ -118,7 +131,9 @@ return false;
 """
 
 JS_ROLAR_LISTA = f"""
-window.scrollTo(0, document.body.scrollHeight);
+const itens = document.querySelectorAll('{SELETOR_ITEM_DA_LISTA}');
+if (itens.length) {{ itens[itens.length - 1].scrollIntoView({{block: 'end'}}); }}
+window.scrollTo(0, Math.max(document.body.scrollHeight, document.documentElement.scrollHeight));
 const vistos = new Set();
 document.querySelectorAll('{SELETOR_LINK_DETALHE}').forEach(function (a) {{
   let p = a.parentElement;
@@ -278,18 +293,67 @@ class _Arvore(HTMLParser):
             self.atual = no["pai"]
 
 
-def ler_candidatos_do_html(html):
+def _classes(no):
+    return (no["attrs"].get("class") or "").split()
+
+
+def _descendentes(no):
+    pilha = list(reversed(no["filhos"]))
+    while pilha:
+        atual = pilha.pop()
+        yield atual
+        pilha.extend(reversed(atual["filhos"]))
+
+
+def _codigo_do_no(no):
+    return (no["attrs"].get("data-pessoa-id") or no["attrs"].get("data-pessoaid") or "").strip()
+
+
+def ler_lista_de_candidatos(html):
     """
-    Candidatos da lista de candidaturas: [{"codigo", "link"}], na ordem da página.
-    O código é o data-pessoa-id do bloco do candidato: do próprio link, de um
-    ancestral ou de um vizinho no mesmo bloco (o menor bloco que tem um só
-    data-pessoa-id). Link sem código, com código ambíguo ou fora do formato fica
-    de fora.
+    Candidatos da lista de candidaturas: ([{"codigo", "link"}], descartados), na
+    ordem da página. Com a estrutura do portal (div.curriculo-list-item), cada
+    item dá um par: o href do a.link-curriculo e o data-pessoa-id do li do mesmo
+    item. Sem ela, a leitura genérica. `descartados` = itens com link fora do
+    formato aceito pelo banco (só para contar no log).
     """
     arvore = _Arvore()
     arvore.feed(str(html or ""))
     arvore.close()
+    itens = [n for n in _descendentes(arvore.raiz) if "curriculo-list-item" in _classes(n)]
+    if not itens:
+        return _ler_generico(arvore), 0
+    candidatos = []
+    descartados = 0
+    for item in itens:
+        dentro = list(_descendentes(item))
+        ancoras = [n for n in dentro if n["tag"] == "a" and "link-curriculo" in _classes(n)] or [
+            n for n in dentro if n["tag"] == "a" and "/empresa/curriculo/detalhes" in (n["attrs"].get("href") or "")
+        ]
+        if not ancoras:
+            continue
+        link = link_de_detalhe(ancoras[0]["attrs"].get("href"))
+        codigos = {c for c in (_codigo_do_no(n) for n in [item, *dentro]) if c}
+        codigo = next(iter(codigos)) if len(codigos) == 1 else None
+        if not link:
+            descartados += 1
+        elif codigo and _CODIGO_DO_CANDIDATO.match(codigo):
+            candidatos.append({"codigo": codigo, "link": link})
+    return candidatos, descartados
 
+
+def ler_candidatos_do_html(html):
+    """
+    Candidatos da lista de candidaturas: [{"codigo", "link"}], na ordem da página
+    (ver ler_lista_de_candidatos). Na leitura genérica, o código é o
+    data-pessoa-id do bloco do candidato: do próprio link, de um ancestral ou de
+    um vizinho no mesmo bloco (o menor bloco que tem um só data-pessoa-id). Link
+    sem código, com código ambíguo ou fora do formato fica de fora.
+    """
+    return ler_lista_de_candidatos(html)[0]
+
+
+def _ler_generico(arvore):
     # data-pessoa-id de cada subárvore, de baixo para cima (sem recursão: a lista pode ser longa).
     ordem = []
     pilha = [arvore.raiz]
@@ -300,7 +364,7 @@ def ler_candidatos_do_html(html):
     ids_por_no = {}
     for no in reversed(ordem):
         ids = set()
-        proprio = (no["attrs"].get("data-pessoa-id") or "").strip()
+        proprio = _codigo_do_no(no)
         if proprio:
             ids.add(proprio)
         for filho in no["filhos"]:
@@ -339,6 +403,43 @@ def juntar_candidatos(acumulado, novos):
     return entraram
 
 
+def carregar_lista_inteira(
+    contar,
+    rolar,
+    prazo=None,
+    total=None,
+    espera=ESPERA_POR_MAIS,
+    rodadas_sem_novidade=RODADAS_SEM_NOVIDADE,
+    intervalo=0.5,
+    dormir=time.sleep,
+    agora=time.monotonic,
+):
+    """
+    Rolagem infinita: rola até o fim e espera (até `espera` s) a contagem crescer;
+    para quando não cresce em `rodadas_sem_novidade` rolagens seguidas, quando
+    chega ao `total` esperado (se conhecido), no prazo ou no limite de rolagens.
+    Devolve a contagem final.
+    """
+    atual = contar()
+    seguidas = 0
+    for _ in range(LIMITE_DE_ROLAGENS):
+        if (total and atual >= total) or (prazo is not None and agora() >= prazo):
+            break
+        rolar()
+        fim = agora() + espera
+        cresceu = False
+        while agora() < fim:
+            dormir(intervalo)
+            novo = contar()
+            if novo > atual:
+                atual, cresceu = novo, True
+                break
+        seguidas = 0 if cresceu else seguidas + 1
+        if seguidas >= rodadas_sem_novidade:
+            break
+    return atual
+
+
 def percorrer_paginas(ler_pagina, proxima_pagina, limite=LIMITE_DE_PAGINAS, prazo=None, agora=time.monotonic):
     """
     Lê página por página até uma página não trazer candidato novo, não haver
@@ -367,6 +468,7 @@ class PortalEmpregare:
         self.driver = None
         self.ids_das_vagas = {}  # código da vaga → identificador interno (do link de candidaturas)
         self.tempo_em_links = 0.0  # segundos gastos lendo listas de candidatos (ORCAMENTO_DOS_LINKS)
+        self.descartados = 0  # links fora do formato na última lista lida (só contagem)
 
     def __enter__(self):
         self.driver = self._iniciar()
@@ -583,7 +685,7 @@ class PortalEmpregare:
             self.ids_das_vagas[str(codigo)] = ident
         return ident
 
-    def capturar_candidatos(self, codigo):
+    def capturar_candidatos(self, codigo, total=None):
         """
         Links da vaga para o banco: {"vaga_interno": id, "candidatos": {código: link}},
         ou None sem o identificador interno da vaga. Nunca levanta: falha vira aviso
@@ -594,6 +696,7 @@ class PortalEmpregare:
             self.registrar(f"Vaga {codigo}: sem o identificador interno da vaga; links dos candidatos não capturados.")
             return None
         candidatos = {}
+        self.descartados = 0
         restante = ORCAMENTO_DOS_LINKS - self.tempo_em_links
         if restante <= 0:
             self.registrar(f"Vaga {codigo}: tempo dos links esgotado nesta execução; só o identificador da vaga.")
@@ -603,13 +706,14 @@ class PortalEmpregare:
             prazo = inicio + min(TEMPO_LIMITE_DA_LISTA, restante)
             self._abrir_candidaturas(ident)
             candidatos = percorrer_paginas(
-                lambda: self._carregar_e_ler_pagina(prazo), self._proxima_pagina, prazo=prazo
+                lambda: self._carregar_e_ler_pagina(prazo, total), self._proxima_pagina, prazo=prazo
             )
             if time.monotonic() >= prazo:
                 self.registrar(
                     f"Vaga {codigo}: a lista de candidatos passou de {TEMPO_LIMITE_DA_LISTA}s; ficou o que deu."
                 )
-            self.registrar(f"Vaga {codigo}: {len(candidatos)} link(s) de candidato capturado(s).")
+            fora = f" ({self.descartados} com link fora do formato)" if self.descartados else ""
+            self.registrar(f"Vaga {codigo}: {len(candidatos)} link(s) de candidato capturado(s){fora}.")
         except Exception as erro:
             self.registrar(
                 f"Vaga {codigo}: não consegui ler a lista de candidatos ({resumo_do_erro(erro)}); "
@@ -623,34 +727,43 @@ class PortalEmpregare:
                 pass
         return {"vaga_interno": ident, "candidatos": candidatos}
 
-    def _abrir_candidaturas(self, ident):
-        """Candidaturas da vaga, na aba Todos quando ela existe; espera a lista (ou a falta dela)."""
+    def _esperar_a_lista(self):
+        """Espera o AJAX trazer a 1ª página (.curriculo-list-item a.link-curriculo). False se não veio."""
         from selenium.common.exceptions import TimeoutException
+        from selenium.webdriver.common.by import By
+        from selenium.webdriver.support import expected_conditions as EC
 
+        try:
+            self._esperar(ESPERA_PELA_LISTA).until(
+                EC.presence_of_element_located((By.CSS_SELECTOR, SELETOR_LINK_DA_LISTA))
+            )
+            return True
+        except TimeoutException:
+            return False
+
+    def _abrir_candidaturas(self, ident):
+        """Candidaturas da vaga, na aba Todos quando ela existe; espera o AJAX da lista."""
         self.driver.get(URL_CANDIDATURAS + ident)
-        time.sleep(2)
+        veio = self._esperar_a_lista()
         if self.driver.execute_script(JS_ABA_TODOS):
             time.sleep(3)  # a aba pode recarregar a página
-        try:
-            self._esperar(30).until(lambda d: d.execute_script(JS_CONTAR_LINKS) > 0)
-        except TimeoutException:
-            pass  # vaga sem candidato ou a lista não carregou: a leitura devolve zero
+            veio = self._esperar_a_lista()
+        if not veio:
+            time.sleep(ESPERA_DA_LISTA)  # vaga sem candidato ou tela diferente: a leitura genérica ainda tenta
 
-    def _carregar_e_ler_pagina(self, prazo):
-        """Rola (e clica "carregar mais") até a lista parar de crescer; lê os candidatos da página."""
-        sem_novidade = 0
-        anterior = self.driver.execute_script(JS_CONTAR_LINKS)
-        for _ in range(LIMITE_DE_ROLAGENS):
-            if time.monotonic() >= prazo:
-                break
-            self.driver.execute_script(JS_ROLAR_LISTA)
-            time.sleep(ESPERA_DA_LISTA)
-            atual = self.driver.execute_script(JS_CONTAR_LINKS)
-            sem_novidade = sem_novidade + 1 if atual <= anterior else 0
-            anterior = max(anterior, atual)
-            if sem_novidade >= RODADAS_SEM_NOVIDADE:
-                break
-        return ler_candidatos_do_html(self.driver.page_source)
+    def _carregar_e_ler_pagina(self, prazo, total=None):
+        """Rola até a lista parar de crescer (rolagem infinita) e lê os candidatos carregados."""
+        carregar_lista_inteira(
+            lambda: self.driver.execute_script(JS_CONTAR_LINKS) or 0,
+            lambda: self.driver.execute_script(JS_ROLAR_LISTA),
+            prazo=prazo,
+            total=total,
+            espera=ESPERA_POR_MAIS,
+            intervalo=INTERVALO_DA_LISTA,
+        )
+        candidatos, descartados = ler_lista_de_candidatos(self.driver.page_source)
+        self.descartados = max(self.descartados, descartados)
+        return candidatos
 
     def _proxima_pagina(self):
         """Clica na próxima página da lista, se houver. True se mudou de página."""

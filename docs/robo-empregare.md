@@ -72,14 +72,17 @@ O endereço da vaga com o código numérico dá "Sem permissão" na Empregare. P
   link "Processo Seletivo" da busca), em `TB_EMPREGARE_VAGA.CO_VAGA_INTERNO`;
 - o **link de detalhes de cada candidato** (`/empresa/curriculo/detalhes?tokenCandidato=…`), em
   `TB_EMPREGARE_CANDIDATO.DS_LINK_DETALHE`. Ele abre as candidaturas da vaga na aba Todos, carrega
-  a lista inteira (rola, "carregar mais", próxima página; até 120 s por vaga e 25 min por
+  a lista inteira (espera até 20 s o AJAX da 1ª página, de 15; rola até o fim enquanto vierem
+  mais, parando após 2 rolagens sem novidade; até 120 s por vaga e 25 min por
   execução) e casa o `data-pessoa-id` de cada candidato com o código do Excel.
 
 Os tokens podem mudar: cada execução recaptura; sem link novo, fica o anterior. Se a lista falhar,
 o log diz `não consegui ler a lista de candidatos` e a vaga é exportada e gravada do mesmo jeito.
 Os links levam tokens da área logada: só a ficha (`obter_ficha_analise`, para quem pode ver a
 ficha) os devolve; nunca vão para lista, CSV ou log (o log mostra só `N link(s) de candidato` e
-`N com link da Empregare`). Banco sem a migration: o robô grava como antes e avisa.
+`N com link da Empregare`). Banco sem a migration: o robô grava como antes e avisa. Se o log
+disser `(N com link fora do formato)`, o link traz caractere que a CK `CK_EMPREGCAND_DSLINKDETALHE`
+não aceita: ajuste a CK (migration) e `_LINK_DETALHE` em `navegador_empregare.py` juntos.
 
 ## Segredos a cadastrar (uma vez)
 
