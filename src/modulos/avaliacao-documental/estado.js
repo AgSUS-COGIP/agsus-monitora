@@ -16,7 +16,12 @@
     salvar_aldeias_dsei(...)                    lista de aldeias (admin global)
 
   A conta da prévia é a de src/lib/avaliacao-documental/pontuacao.js, feita no
-  componente; aqui só a carga e a gravação.
+  componente; aqui só a carga e a gravação. A aba aberta (`visao`) mora aqui
+  para o "Atualizar" e a reabertura da tela relerem a aba certa.
+
+  Leitura x gravação: a leitura do edital que estava no ar quando uma gravação
+  terminou pode ter saído antes dela (banco lento): a resposta velha não
+  sobrescreve a gravada; a leitura se refaz.
 */
 import {
   comTempoLimite,
@@ -36,8 +41,16 @@ const RPC_SALVAR_ALDEIAS = "salvar_aldeias_dsei";
 export const MENSAGEM_SEM_ACESSO = "Sem acesso à Avaliação documental";
 const TEMPO_LIMITE_MS = 45000;
 
+export const VISOES_DA_AVALIACAO = Object.freeze([
+  "regra",
+  "equipe",
+  "pre",
+  "fila",
+]);
+
 const ESTADO_INICIAL = Object.freeze({
   area: "",
+  visao: "regra",
   editais: [],
   carregado: false,
   carregandoEditais: false,
@@ -70,6 +83,7 @@ export function criarEstadoDaAvaliacao({
   let estado = ESTADO_INICIAL;
   let pedidoDosEditais = 0;
   let pedidoDoEdital = 0;
+  let gravacoes = 0;
   const ouvintes = new Set();
 
   function publicar(mudancas) {
@@ -148,12 +162,15 @@ export function criarEstadoDaAvaliacao({
       erroDoEdital: "",
       ...(editalId !== estado.editalId ? { dados: null, equipe: null } : {}),
     });
+    const gravacoesAntes = gravacoes;
     try {
       const [dados, equipe] = await Promise.all([
         rpc(RPC_OBTER_REGRA, { p_edital: editalId }),
         rpc(RPC_OBTER_EQUIPE, { p_edital: editalId }),
       ]);
       if (meu !== pedidoDoEdital) return false;
+      // Gravou-se no meio da leitura: ela pode ser de antes; lê de novo.
+      if (gravacoesAntes !== gravacoes) return escolherEdital(editalId);
       publicar({ dados, equipe, carregandoEdital: false });
       return true;
     } catch (erro) {
@@ -172,6 +189,7 @@ export function criarEstadoDaAvaliacao({
     publicar({ salvando: true });
     try {
       const resposta = await rpc(nome, argumentos);
+      gravacoes += 1;
       if (editalId === estado.editalId && estado.dados)
         publicar({
           dados: { ...estado.dados, regra: resposta?.regra ?? null },
@@ -205,6 +223,10 @@ export function criarEstadoDaAvaliacao({
     },
     carregar,
     escolherEdital,
+    mudarVisao(visao) {
+      if (VISOES_DA_AVALIACAO.includes(visao) && visao !== estado.visao)
+        publicar({ visao });
+    },
     copiarModelo: (modelo) =>
       gravarRegra(
         RPC_COPIAR_MODELO,
@@ -237,6 +259,7 @@ export function criarEstadoDaAvaliacao({
           p_equipe: equipe,
           p_motivo: motivo || null,
         });
+        gravacoes += 1;
         if (editalId === estado.editalId) publicar({ equipe: nova });
         toast("Equipe salva.", "success");
         return { ok: true };

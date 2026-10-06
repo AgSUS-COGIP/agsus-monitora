@@ -578,10 +578,6 @@
     border: 0;
     border-radius: 0;
   }
-
-  .aya-arara {
-    bottom: calc(76px + env(safe-area-inset-bottom));
-  }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -597,9 +593,15 @@
   }
 }
 
-/* Celular: acima do menu inferior, para não tapar o último item. */
+/* Celular: acima do menu inferior (o recuo é 0 sem ele). */
 @media (max-width: 900px) {
   .aya-arara {
-    bottom: calc(env(safe-area-inset-bottom, 0px) + 92px);
+    bottom: calc(
+      max(
+          env(safe-area-inset-bottom, 0px),
+          var(--recuo-da-navegacao-inferior)
+        ) +
+        var(--space-4)
+    );
   }
 }

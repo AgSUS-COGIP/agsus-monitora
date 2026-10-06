@@ -170,7 +170,7 @@
 .config-barra {
   position: fixed;
   right: var(--space-4);
-  bottom: var(--space-4);
+  bottom: calc(var(--space-4) + var(--recuo-da-navegacao-inferior, 0px));
   left: calc(var(--sidebar-mini) + var(--space-4));
   z-index: calc(var(--z-header) - 1);
   display: flex;

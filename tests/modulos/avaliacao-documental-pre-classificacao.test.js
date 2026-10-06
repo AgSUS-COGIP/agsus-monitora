@@ -265,6 +265,13 @@ const buscar = vi.fn(async () => ({
   status: 202,
   json: async () => ({ ok: true }),
 }));
+/* As releituras do acompanhamento do Recalcular: o teste as roda à mão. */
+let agendados = [];
+const agendar = (fn) => agendados.push(fn);
+const rodarAgendado = () =>
+  act(async () => {
+    await agendados.shift()();
+  });
 
 async function montar(supabase) {
   secao = document.createElement("section");
@@ -277,6 +284,7 @@ async function montar(supabase) {
       toast,
       buscar,
       obterToken: async () => "token",
+      agendar,
     });
   });
   await act(async () => void painel.render());
@@ -305,6 +313,7 @@ afterEach(async () => {
   redefinirDadosDoMonitoramento();
   toast.mockClear();
   buscar.mockClear();
+  agendados = [];
 });
 
 describe("Pré-classificação (AM-4)", () => {
@@ -366,6 +375,127 @@ describe("Pré-classificação (AM-4)", () => {
     await montar(supabaseFalso({ pode: false }));
     expect(secao.querySelector("[data-acao='recalcular']")).toBeNull();
     expect(secao.querySelector(".avd-vaga input")).toBeNull();
+  });
+
+  it("Atualizar e a reabertura da tela relêem a pré-classificação da aba aberta", async () => {
+    const supabase = supabaseFalso();
+    await montar(supabase);
+    const kpis = () => secao.querySelector(".ui-kpis").textContent;
+    expect(kpis()).toContain("Inscritos5");
+    const normal = supabase.rpc.getMockImplementation();
+    const comInscritos = (n) => {
+      const pre = PRE(regraSalva(2));
+      pre.vagas[0] = { ...pre.vagas[0], inscritos: n };
+      supabase.rpc.mockImplementation(async (nome, args) =>
+        nome === "obter_pre_classificacao"
+          ? { data: pre, error: null }
+          : normal(nome, args),
+      );
+    };
+    comInscritos(9);
+    await clicar(secao.querySelector("[data-acao='atualizar']"));
+    await esperar();
+    expect(kpis()).toContain("Inscritos9");
+    // Voltar à tela pelo menu ou "Atualizar dados" do app chamam render().
+    comInscritos(11);
+    await act(async () => void painel.render());
+    await esperar();
+    expect(kpis()).toContain("Inscritos11");
+  });
+
+  it("Recalcular que falha diz por quê e o botão volta", async () => {
+    await montar(supabaseFalso());
+    const recalcular = () => secao.querySelector("[data-acao='recalcular']");
+    buscar.mockResolvedValueOnce({
+      status: 404,
+      json: async () => {
+        throw new SyntaxError("não é json");
+      },
+    });
+    await clicar(recalcular());
+    await esperar();
+    expect(secao.querySelector("[role='alert']").textContent).toBe(
+      "Recálculo não pedido: Só na versão publicada.",
+    );
+    expect(recalcular().textContent).toBe("Recalcular");
+    expect(recalcular().disabled).toBe(false);
+    expect(toast).toHaveBeenLastCalledWith(
+      "Recálculo não pedido: Só na versão publicada.",
+      "error",
+    );
+
+    buscar.mockRejectedValueOnce(new TypeError("Failed to fetch"));
+    await clicar(recalcular());
+    await esperar();
+    expect(secao.querySelector("[role='alert']").textContent).toMatch(
+      /^Recálculo não pedido: /,
+    );
+    expect(recalcular().disabled).toBe(false);
+
+    buscar.mockResolvedValueOnce({
+      status: 403,
+      json: async () => ({
+        erro: "Só a coordenação da avaliação do edital recalcula a pré-classificação.",
+      }),
+    });
+    await clicar(recalcular());
+    await esperar();
+    expect(secao.querySelector("[role='alert']").textContent).toBe(
+      "Recálculo não pedido: Só a coordenação da avaliação do edital recalcula a pré-classificação.",
+    );
+    expect(agendados).toHaveLength(0);
+  });
+
+  it("Recalcular pedido avisa e relê sozinho até a execução terminar", async () => {
+    const supabase = supabaseFalso();
+    await montar(supabase);
+    await clicar(secao.querySelector("[data-acao='recalcular']"));
+    await esperar();
+    expect(secao.querySelector("[role='status']").textContent).toMatch(
+      /^Recálculo pedido às \d\d:\d\d\. A lista atualiza sozinha quando terminar\.$/,
+    );
+    expect(agendados).toHaveLength(1);
+
+    const normal = supabase.rpc.getMockImplementation();
+    const responder = (pre) =>
+      supabase.rpc.mockImplementation(async (nome, args) =>
+        nome === "obter_pre_classificacao"
+          ? { data: pre, error: null }
+          : normal(nome, args),
+      );
+    // 1ª releitura: o job está rodando.
+    responder(PRE(regraSalva(2), true, { em_andamento: true }));
+    await rodarAgendado();
+    expect(secao.querySelector("[data-acao='recalcular']").textContent).toBe(
+      "Rodando…",
+    );
+    expect(agendados).toHaveLength(1);
+    // 2ª releitura: terminou, com a execução nova e os números novos.
+    const nova = PRE(regraSalva(2), true, {
+      ultima_execucao: {
+        id: "precl-2",
+        inicio: "2026-10-06T13:00:00Z",
+        fim: "2026-10-06T13:01:00Z",
+        situacao: "CONCLUIDA",
+        disparo: "TELA",
+        edital: { edital: "e93", situacao: "PROCESSADO" },
+      },
+    });
+    nova.vagas[0] = { ...nova.vagas[0], inscritos: 9 };
+    responder(nova);
+    await rodarAgendado();
+    expect(agendados).toHaveLength(0);
+    expect(secao.querySelector(".ui-kpis").textContent).toContain("Inscritos9");
+    expect(secao.querySelector("[role='status']").textContent).toMatch(
+      /^Pré-classificação recalculada às \d\d:\d\d\.$/,
+    );
+    expect(secao.querySelector("[data-acao='recalcular']").textContent).toBe(
+      "Recalcular",
+    );
+    expect(toast).toHaveBeenLastCalledWith(
+      expect.stringMatching(/^Pré-classificação recalculada/),
+      "success",
+    );
   });
 
   it("regra não conferida trava o Recalcular e diz o que fazer", async () => {

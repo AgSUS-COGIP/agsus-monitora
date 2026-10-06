@@ -57,8 +57,8 @@ function textoDoStatus(e) {
   return e.dados ? "Sem regra" : "";
 }
 
-function TelaDaArea({ estado, pre, fila, e }) {
-  const [visao, setVisao] = useState("regra");
+function TelaDaArea({ estado, pre, fila, atualizar, e }) {
+  const visao = e.visao;
   const [todos, setTodos] = useState(false);
   const { lista: editais, ocultos } = editaisDaEscolha(e.editais, {
     todos,
@@ -74,17 +74,12 @@ function TelaDaArea({ estado, pre, fila, e }) {
             rotulo="Visão"
             opcoes={VISOES}
             valor={visao}
-            aoMudar={setVisao}
+            aoMudar={estado.mudarVisao}
             tour="avd-visoes"
           />
         }
         status={textoDoStatus(e)}
-        aoAtualizar={() => {
-          recarregar();
-          if (e.editalId) void estado.escolherEdital(e.editalId);
-          if (visao === "pre") void pre.carregar(e.editalId);
-          if (visao === "fila") void fila.carregar(e.editalId);
-        }}
+        aoAtualizar={() => void atualizar()}
         atualizarDesativado={
           !e.area || e.carregandoEditais || e.carregandoEdital
         }
@@ -206,7 +201,7 @@ function TelaDaArea({ estado, pre, fila, e }) {
   );
 }
 
-export function TelaDaAvaliacaoDocumental({ estado, pre, fila }) {
+export function TelaDaAvaliacaoDocumental({ estado, pre, fila, atualizar }) {
   const e = useSyncExternalStore(estado.assinar, estado.obter);
   const { area: areaDoApp } = usarAreaAtual();
   useEffect(() => {
@@ -220,14 +215,33 @@ export function TelaDaAvaliacaoDocumental({ estado, pre, fila }) {
       estado={estado}
       pre={pre}
       fila={fila}
+      atualizar={atualizar}
       e={e}
     />
   );
 }
 
 /**
+ * "Atualizar" e reabertura da tela: os editais da área e o edital aberto
+ * (regra e equipe) e, na Pré-classificação ou na Fila, a aba aberta.
+ */
+export function criarAtualizacao({ estado, pre, fila }) {
+  return async function atualizar(area = estado.obter().area) {
+    const { area: antes, editalId, visao } = estado.obter();
+    const pedidos = [estado.carregar(area)];
+    if (area && area === antes && editalId) {
+      if (visao === "pre") pedidos.push(pre.carregar(editalId));
+      if (visao === "fila") pedidos.push(fila.carregar(editalId));
+    }
+    const [editais] = await Promise.all(pedidos);
+    return editais;
+  };
+}
+
+/**
  * Monta a tela na `<section id="page-avaliacao-documental">` e devolve o
- * controlador do legado: `render()` a cada abertura (carrega a área atual).
+ * controlador do legado: `render()` a cada abertura e no "Atualizar dados"
+ * do app (relê a área atual e a aba aberta).
  */
 export function montarAvaliacaoDocumental({
   secao = document.getElementById("page-avaliacao-documental"),
@@ -236,6 +250,7 @@ export function montarAvaliacaoDocumental({
   areaAtual = () => obterDadosDoMonitoramento().areaAtual,
   buscar,
   obterToken,
+  agendar,
   cabecalho = () =>
     estadoDasConfiguracoes.obter().valores?.get?.(CHAVE_DO_CABECALHO) || "",
 } = {}) {
@@ -246,12 +261,19 @@ export function montarAvaliacaoDocumental({
     cabecalho,
     ...(buscar ? { buscar } : {}),
     ...(obterToken ? { obterToken } : {}),
+    ...(agendar ? { agendar } : {}),
   });
   const fila = criarEstadoDaFila({ supabase, toast });
+  const atualizar = criarAtualizacao({ estado, pre, fila });
   const raiz = secao
     ? montarModulo(
         secao,
-        <TelaDaAvaliacaoDocumental estado={estado} pre={pre} fila={fila} />,
+        <TelaDaAvaliacaoDocumental
+          estado={estado}
+          pre={pre}
+          fila={fila}
+          atualizar={atualizar}
+        />,
         { nome: "a tela de avaliação documental" },
       ).raiz
     : null;
@@ -260,8 +282,9 @@ export function montarAvaliacaoDocumental({
     pre,
     fila,
     raiz,
+    atualizar,
     render() {
-      return estado.carregar(String(areaAtual() ?? "").trim());
+      return atualizar(String(areaAtual() ?? "").trim());
     },
   };
 }

@@ -109,21 +109,29 @@ body {
   white-space: nowrap;
   border: 0;
 }
+/*
+  Fora da tela até receber o foco. Escondido pela própria altura (translateY
+  -100%), não por um "top" fixo: com o texto quebrando em duas linhas (celular
+  estreito, fonte maior), o "top: -44px" deixava a segunda linha
+  ("…principal") por cima do cabeçalho e cortava o título da página.
+*/
 .skip-link {
   position: absolute;
   left: 8px;
-  top: -44px;
+  top: 0;
   z-index: var(--z-toast);
+  max-width: calc(100vw - 16px);
   background: var(--agsus-azul);
   color: #fff;
   padding: 10px 16px;
   border-radius: 0 0 10px 10px;
   font-weight: 600;
-  transition: top 0.15s;
+  transform: translateY(-100%);
+  transition: transform 0.15s;
   text-decoration: none;
 }
 .skip-link:focus {
-  top: 0;
+  transform: none;
 }
 a:focus-visible,
 button:focus-visible,

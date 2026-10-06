@@ -10,7 +10,10 @@
                                                       PROVISORIA ou LOTE
     publicar_lista_classificacao(p_lista)             marca a lista como publicada
   "Recalcular": POST /api/rodar-carga { robo: "pre_classificacao", edital }
-  (api/rodar-carga.js confere no banco se quem clicou coordena o edital).
+  (api/rodar-carga.js confere no banco se quem clicou coordena o edital). O
+  resultado do pedido fica na aba (`aviso`): o erro, com o botão de volta; ou
+  "pedido", e a aba acompanha a execução (em_andamento e ultima_execucao de
+  obter_pre_classificacao) e relê sozinha quando ela termina.
   O documento das listas sai do gerador da Classificação
   (src/lib/classificacao/documento-sei.js e documento-docx.js).
 */
@@ -29,6 +32,8 @@ import { LOGO_PADRAO_DA_BARRA } from "../../lib/marca-da-barra-lateral.js";
 import {
   ENDERECO_RODAR_CARGA,
   MENSAGENS_DO_DISPARO,
+  motivoDaRecusa,
+  roboDeCarga,
 } from "../../lib/robos-de-carga.js";
 import { exigirSessao } from "../../lib/sessao.js";
 import { baixarNoNavegador } from "../classificacao/estado.js";
@@ -43,8 +48,11 @@ const RPC_OBTER_PRE_CLASSIFICACAO = "obter_pre_classificacao";
 const RPC_REGISTRAR_LISTA = "registrar_lista_pre_classificacao";
 const RPC_PUBLICAR_LISTA = "publicar_lista_classificacao";
 const TEMPO_LIMITE_MS = 45000;
-/* O job leva de segundos a poucos minutos: a tela relê nestes momentos. */
-const RELEITURAS_MS = [45000, 120000];
+/* O job leva de segundos a poucos minutos: a aba relê neste intervalo até
+   a execução terminar, no máximo pelo tempo limite do workflow. */
+const INTERVALO_DO_ACOMPANHAMENTO_MS = 15000;
+const LIMITE_DO_ACOMPANHAMENTO_MS =
+  (roboDeCarga("pre_classificacao")?.limiteMin ?? 20) * 60000;
 
 const INICIAL = Object.freeze({
   editalId: "",
@@ -52,9 +60,13 @@ const INICIAL = Object.freeze({
   carregando: false,
   erro: "",
   pedidoEm: null,
+  aviso: null,
   registrando: "",
   registradas: {},
 });
+
+const hora = (data) =>
+  data.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
 
 export function chaveDaLista(tipo, lote = null) {
   return lote ? `${tipo}:${lote}` : tipo;
@@ -76,6 +88,7 @@ export function criarEstadoDaPreClassificacao({
 } = {}) {
   let estado = INICIAL;
   let pedido = 0;
+  let acompanhamento = 0;
   const ouvintes = new Set();
   const publicar = (mudancas) => {
     estado = { ...estado, ...mudancas };
@@ -122,8 +135,18 @@ export function criarEstadoDaPreClassificacao({
   async function recalcular() {
     const editalId = estado.editalId;
     if (!editalId) return false;
-    publicar({ pedidoEm: agora() });
+    const antes = estado.dados?.ultima_execucao?.id ?? null;
+    const em = agora();
+    acompanhamento += 1;
+    const doEdital = (mudancas) => {
+      if (estado.editalId === editalId) publicar(mudancas);
+    };
+    publicar({
+      pedidoEm: em,
+      aviso: { tom: "info", texto: "Pedindo o recálculo…" },
+    });
     let resposta;
+    let corpo;
     try {
       const token = await obterToken();
       resposta = await comTempoLimite(
@@ -137,34 +160,84 @@ export function criarEstadoDaPreClassificacao({
         }),
         20000,
       );
+      corpo = await Promise.resolve()
+        .then(() => resposta.json())
+        .catch(() => ({}));
     } catch (falha) {
-      publicar({ pedidoEm: null });
-      toast(mensagemDeFalha(falha), "error");
-      return false;
+      return recusado(doEdital, mensagemDeFalha(falha));
     }
-    const corpo = await resposta.json().catch(() => ({}));
-    if (resposta.status === 202) {
-      toast(
-        "Recálculo pedido. A lista atualiza quando o job terminar.",
-        "success",
-      );
-      for (const ms of RELEITURAS_MS)
-        agendar(() => {
-          if (estado.editalId === editalId) void carregar(editalId);
-        }, ms);
-      return true;
+    if (resposta?.status === 202 || resposta?.status === 409) {
+      const texto =
+        resposta.status === 202
+          ? `Recálculo pedido às ${hora(em)}. A lista atualiza sozinha quando terminar.`
+          : `${MENSAGENS_DO_DISPARO.rodando} A lista atualiza sozinha quando terminar.`;
+      doEdital({ aviso: { tom: "info", texto } });
+      toast(texto, resposta.status === 202 ? "success" : "info");
+      acompanhar(editalId, antes, em);
+      return resposta.status === 202;
     }
-    publicar({ pedidoEm: resposta.status === 409 ? estado.pedidoEm : null });
-    toast(
-      resposta.status === 409
-        ? MENSAGENS_DO_DISPARO.rodando
-        : corpo?.erro ||
-            (resposta.status === 404
-              ? "Só na versão publicada."
-              : "Não foi possível pedir o recálculo."),
-      resposta.status === 409 ? "info" : "error",
+    return recusado(
+      doEdital,
+      motivoDaRecusa(
+        resposta?.status,
+        corpo,
+        "Não foi possível pedir o recálculo.",
+      ),
     );
+  }
+
+  function recusado(doEdital, motivo) {
+    const texto = `Recálculo não pedido: ${motivo}`;
+    doEdital({ pedidoEm: null, aviso: { tom: "danger", texto } });
+    toast(texto, "error");
     return false;
+  }
+
+  /*
+    Relê até a execução pedida terminar: sem execução em andamento e com uma
+    última execução diferente da que havia no clique. Para no tempo limite do
+    workflow, ao trocar de edital ou num pedido novo.
+  */
+  function acompanhar(editalId, antes, desde) {
+    const meu = acompanhamento;
+    const vale = () => meu === acompanhamento && estado.editalId === editalId;
+    const passo = async () => {
+      if (!vale()) return;
+      await carregar(editalId);
+      if (!vale()) return;
+      const d = estado.dados;
+      const ultima = d?.ultima_execucao;
+      if (
+        d &&
+        !d.em_andamento &&
+        ultima?.id &&
+        ultima.id !== antes &&
+        ultima.situacao !== "EM_ANDAMENTO"
+      ) {
+        const falhou = ultima.situacao === "FALHOU";
+        const texto = falhou
+          ? `O recálculo falhou${ultima.mensagem ? `: ${ultima.mensagem}` : "."}`
+          : `Pré-classificação recalculada às ${hora(ultima.fim ? new Date(ultima.fim) : agora())}.`;
+        publicar({
+          pedidoEm: null,
+          aviso: { tom: falhou ? "danger" : "info", texto },
+        });
+        toast(texto, falhou ? "error" : "success");
+        return;
+      }
+      if (agora().getTime() - desde.getTime() >= LIMITE_DO_ACOMPANHAMENTO_MS) {
+        publicar({
+          pedidoEm: null,
+          aviso: {
+            tom: "warning",
+            texto: "O recálculo ainda não terminou. Use Atualizar mais tarde.",
+          },
+        });
+        return;
+      }
+      agendar(passo, INTERVALO_DO_ACOMPANHAMENTO_MS);
+    };
+    agendar(passo, INTERVALO_DO_ACOMPANHAMENTO_MS);
   }
 
   /* Registra a lista PROVISORIA ou LOTE (o banco monta o retrato). */

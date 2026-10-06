@@ -249,6 +249,58 @@ describe("regra da avaliação (AM-2)", () => {
     );
   });
 
+  it("salvar com uma leitura no ar: o cabeçalho fica na versão nova, sem voltar à anterior", async () => {
+    const supabase = supabaseFalso();
+    await montar(supabase);
+    await clicar(secao.querySelector("[data-acao='conferir-regra']"));
+    await esperar();
+    const resumo = () =>
+      secao.querySelector(".avd-resumo-da-regra").textContent;
+    expect(resumo()).toContain("Conferida");
+
+    // Banco lento: a leitura do "Atualizar" sai com a regra v1 e só volta
+    // depois de a versão 2 ser gravada.
+    const normal = supabase.rpc.getMockImplementation();
+    let soltar;
+    supabase.rpc.mockImplementation(async (nome, args) => {
+      if (nome !== "obter_regra_analise") return normal(nome, args);
+      const velha = await normal(nome, args);
+      await new Promise((r) => {
+        soltar = r;
+      });
+      return velha;
+    });
+    await clicar(secao.querySelector("[data-acao='atualizar']"));
+    await esperar();
+    expect(soltar).toBeTypeOf("function");
+    supabase.rpc.mockImplementation(normal);
+
+    const titulo = secao
+      .querySelector("#avdGeral")
+      .closest("section")
+      .querySelector("input");
+    await digitar(titulo, "Avaliação Documental e de Títulos — 93/2026");
+    await digitar(
+      secao.querySelector(".ui-barra-de-salvar input"),
+      "Título conforme o edital publicado",
+    );
+    await clicar(secao.querySelector("[data-acao='salvar-regra']"));
+    await esperar();
+    expect(resumo()).toContain("Regra v2");
+
+    await act(async () => soltar());
+    await esperar();
+    expect(resumo()).toContain("Regra v2");
+    expect(resumo()).toContain("Conferir");
+    expect(secao.querySelector("[data-acao='conferir-regra']")).not.toBeNull();
+    expect(
+      secao.querySelector("[data-acao='salvar-regra']").textContent,
+    ).toContain("versão 3");
+    expect(secao.querySelector("[data-status-da-carga]").textContent).toBe(
+      "Regra v2 · Conferir",
+    );
+  }, 20000);
+
   it("AM-2.4: liga uma pergunta da carga a um bloco", async () => {
     await montar(supabaseFalso());
     const perguntas = secao.querySelector("#avdPerguntas").closest("section");
