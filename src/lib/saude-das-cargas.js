@@ -16,9 +16,11 @@
 
   OS PRAZOS (folga sobre o esperado, decisão de 01/10/2026)
     Análises, incremental   esperado a cada 20 min · atrasada depois de 1 h
-    Entrevistas e Seleção   esperado de hora em hora das 7h às 19h (Brasília) ·
+    Entrevistas             esperado de hora em hora das 7h às 19h (Brasília) ·
                             atrasada depois de 4 h das 9h às 20h; fora disso,
                             depois de 14 h (a noite sem carga não conta)
+    Seleção                 esperado de hora em hora, o dia todo (decisão de 06/10/2026) ·
+                            atrasada depois de 4 h
     Robô da Empregare       sem prazo: só roda pelo "Rodar agora" (decisão de 05/10/2026)
     Conferências            todo dia às 6h (Brasília) · atrasada depois de 26 h
     Tarefas a cada 2 min    atrasada depois de 15 min
@@ -270,8 +272,8 @@ export function normalizarSaude(dados, agora = new Date()) {
         id: "selecao",
         nome: "Seleção (planilha Auditoria)",
         onde: "GitHub Actions · Sincronizar seleção",
-        esperado: "de hora em hora, das 7h às 19h",
-        prazoMin: prazoDeHoraEmHora(agora),
+        esperado: "de hora em hora, o dia todo",
+        prazoMin: PRAZO_DE_HORA_EM_HORA_MIN,
         tipo: "planilha",
         execucoes: dados?.selecao,
       },
@@ -364,7 +366,7 @@ export function normalizarSaude(dados, agora = new Date()) {
       id: "planilhas",
       titulo: "Planilhas pelo GitHub Actions",
       descricao:
-        "Entrevistas e Seleção, de hora em hora das 7h às 19h. Rodar agora: o botão de cada uma (ou GitHub → Actions → Run workflow).",
+        "Seleção de hora em hora o dia todo; Entrevistas de hora em hora das 7h às 19h. Rodar agora: o botão de cada uma (ou GitHub → Actions → Run workflow).",
       cargas: planilhas,
     },
     {
@@ -494,7 +496,7 @@ export function visaoSimples(saude) {
         titulo: carga.id === "selecao" ? "Seleção" : "Entrevistas",
         explicacao:
           carga.id === "selecao"
-            ? "Atualiza a aba Seleção a partir da planilha Auditoria, de hora em hora das 7h às 19h."
+            ? "Atualiza a aba Seleção a partir da planilha Auditoria, de hora em hora o dia todo."
             : "Atualiza a aba Entrevistas a partir da planilha de entrevistados, de hora em hora das 7h às 19h.",
         partes: [carga],
         situacoesQueContam: [carga.situacao],

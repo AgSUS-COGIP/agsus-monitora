@@ -334,6 +334,15 @@ describe("robô da Empregare (20261005170000)", () => {
     );
   });
 
+  it("seleção roda o dia todo: prazo de 4 h também à noite; entrevistas seguem o da noite", () => {
+    // 23h de Brasília = 02h UTC do dia seguinte.
+    const noite = normalizarSaude(PAYLOAD, new Date("2026-10-02T02:00:00Z"));
+    const planilhas = noite.grupos.find((g) => g.id === "planilhas").cargas;
+    const prazo = (id) => planilhas.find((c) => c.id === id).prazoMin;
+    expect(prazo("selecao")).toBe(PRAZO_DE_HORA_EM_HORA_MIN);
+    expect(prazo("entrevistas")).toBe(PRAZO_DA_NOITE_MIN);
+  });
+
   it("robô da Empregare sem prazo: só roda quando alguém pede, nunca fica atrasado", () => {
     const domingo = new Date("2026-10-04T15:00:00Z");
     const umMesAntes = new Date("2026-09-02T09:40:00Z").toISOString();

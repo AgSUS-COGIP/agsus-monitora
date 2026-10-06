@@ -1,9 +1,6 @@
 /*
   /api/rodar-carga — "Rodar agora" das cargas do GitHub Actions (Configurações ›
-  Status das atualizações) e dos dashboards de Seleção e Entrevistas.
-  GET ?robo=selecao|entrevistas e POST desses robôs também aceitam editor/admin
-  do módulo, conferido na RPC pode_atualizar_dashboard. O GET sem filtro continua
-  exclusivo do administrador global; consultas por módulo só leem seu workflow.
+  Status das atualizações), só para o administrador global.
 
     GET   → { configurado: true, robos: { empregare: { rodando, execucao }, … } }
             (se cada workflow tem execução na fila ou rodando no GitHub)
@@ -39,7 +36,6 @@ import {
   inputsDoDisparo,
   MENSAGENS_DO_DISPARO,
   RAMO_DAS_CARGAS,
-  RPC_PODE_ATUALIZAR_DASHBOARD,
   REPOSITORIO_DAS_CARGAS,
   ROBOS_DE_CARGA,
   roboDeCarga,
@@ -74,7 +70,7 @@ function configuracaoDoSupabase(ambiente) {
  */
 export async function administradorDaRequisicao(
   autorizacao,
-  { ambiente = process.env, buscar = fetch, edital = "", modulo = "" } = {},
+  { ambiente = process.env, buscar = fetch, edital = "" } = {},
 ) {
   const texto = String(autorizacao || "");
   const token = /^bearer\s+/i.test(texto)
@@ -100,20 +96,6 @@ export async function administradorDaRequisicao(
     });
     if (permissao.ok && (await permissao.json()) === true)
       return { id: String(id), admin: true };
-    if (["selecao", "entrevistas"].includes(modulo)) {
-      const doModulo = await buscar(
-        `${url}/rest/v1/rpc/${RPC_PODE_ATUALIZAR_DASHBOARD}`,
-        {
-          method: "POST",
-          headers: { ...cabecalhos, "Content-Type": "application/json" },
-          body: JSON.stringify({ p_modulo: modulo }),
-          signal: AbortSignal.timeout(TEMPO_LIMITE_MS),
-        },
-      );
-      if (doModulo.ok && (await doModulo.json()) === true)
-        return { id: String(id), admin: false };
-      return { erro: "sem_permissao_modulo" };
-    }
     if (!edital) return { erro: "sem_permissao" };
     const doEdital = await buscar(
       `${url}/rest/v1/rpc/pode_recalcular_pre_classificacao`,
@@ -140,12 +122,9 @@ const cabecalhosDoGithub = (token) => ({
 });
 
 /** Execuções em curso de cada robô no GitHub. */
-export async function situacaoNoGithub(
-  token,
-  { buscar = fetch, selecionado = null } = {},
-) {
+export async function situacaoNoGithub(token, { buscar = fetch } = {}) {
   const robos = {};
-  for (const robo of selecionado ? [selecionado] : ROBOS_DE_CARGA) {
+  for (const robo of ROBOS_DE_CARGA) {
     const resposta = await buscar(
       `${GITHUB}/repos/${REPOSITORIO_DAS_CARGAS}/actions/workflows/${robo.workflow}/runs?per_page=5`,
       {
@@ -160,21 +139,9 @@ export async function situacaoNoGithub(
     }
     const dados = await resposta.json();
     const emCurso = execucaoEmCurso(dados?.workflow_runs);
-    const ultima = emCurso || dados?.workflow_runs?.[0];
     robos[robo.id] = {
       rodando: Boolean(emCurso),
       execucao: emCurso?.html_url || null,
-      ...(selecionado
-        ? {
-            ultima: ultima
-              ? {
-                  id: ultima.id,
-                  status: ultima.status,
-                  conclusao: ultima.conclusion,
-                }
-              : null,
-          }
-        : {}),
     };
   }
   return robos;
@@ -205,13 +172,7 @@ export default async function handler(req, res, opcoes = {}) {
 
   // O pedido por edital (Recalcular da coordenação) só vale no POST de um robô por edital.
   const corpo = req.method === "POST" ? lerCorpo(req) : {};
-  const filtro = req.method === "GET" ? String(req.query?.robo || "") : "";
-  const roboPedido = roboDeCarga(req.method === "POST" ? corpo.robo : filtro);
-  if (filtro && !["selecao", "entrevistas"].includes(filtro))
-    return responder(res, 400, { erro: MENSAGENS_DO_DISPARO.robo_invalido });
-  const modulo = ["selecao", "entrevistas"].includes(roboPedido?.id)
-    ? roboPedido.id
-    : "";
+  const roboPedido = req.method === "POST" ? roboDeCarga(corpo.robo) : null;
   const textoDoEdital = String(corpo.edital ?? "").trim();
   const edital = roboPedido?.porEdital ? editalDoPedido(textoDoEdital) : "";
   if (roboPedido?.porEdital && textoDoEdital && !edital)
@@ -221,17 +182,13 @@ export default async function handler(req, res, opcoes = {}) {
     ambiente,
     buscar,
     edital,
-    modulo,
   });
   if (quem.erro === "sem_sessao")
     return responder(res, 401, { erro: MENSAGENS_DO_DISPARO.sem_sessao });
   if (quem.erro)
     return responder(res, 403, {
       erro:
-        (quem.erro === "sem_permissao_modulo"
-          ? "É necessário ser editor ou administrador deste módulo para atualizar os dados."
-          : MENSAGENS_DO_DISPARO[quem.erro]) ||
-        MENSAGENS_DO_DISPARO.sem_permissao,
+        MENSAGENS_DO_DISPARO[quem.erro] || MENSAGENS_DO_DISPARO.sem_permissao,
     });
 
   const token = String(ambiente.GITHUB_DISPATCH_TOKEN || "").trim();
@@ -243,10 +200,7 @@ export default async function handler(req, res, opcoes = {}) {
 
   let robos;
   try {
-    robos = await situacaoNoGithub(token, {
-      buscar,
-      selecionado: modulo ? roboPedido : null,
-    });
+    robos = await situacaoNoGithub(token, { buscar });
   } catch (erro) {
     return responder(res, 502, {
       configurado: true,
