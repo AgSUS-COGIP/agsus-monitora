@@ -1,4 +1,11 @@
-import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  useSyncExternalStore,
+} from "react";
 import { ordinal } from "../../lib/classificacao/numeros.js";
 import {
   acoesDaSelecao,
@@ -13,6 +20,11 @@ import {
   SITUACOES_DA_FICHA,
   textoDaReserva,
 } from "../../lib/avaliacao-documental/fila.js";
+import {
+  textoDaNota,
+  textoDoResultado,
+  tomDoResultado,
+} from "../../lib/avaliacao-documental/ficha.js";
 import { nota } from "../../lib/avaliacao-documental/tela-da-pre-classificacao.js";
 import {
   Abas,
@@ -24,13 +36,14 @@ import {
   Kv,
   Selo,
 } from "../../ui/index.js";
+import { ConteudoDaFicha } from "./ficha/ficha.jsx";
 
 /*
   Aba Fila (fase F3): as etapas com contadores no topo (clicáveis como filtro),
   os filtros e os filtros salvos, "Pegar próximo" e "Minhas fichas" para o
   analista, as ações em lote da coordenação (distribuir, redistribuir, liberar
   reservas e mandar para revisão, com confirmação e motivo) e a ficha aberta
-  com a reserva. O conteúdo da análise entra na F4. Explicações:
+  com a reserva; o conteúdo da análise (F4) é ficha/ficha.jsx. Explicações:
   docs/aya/regras-da-avaliacao-documental.md.
 */
 
@@ -42,6 +55,12 @@ const ROTULO_DA_PRE = {
 };
 
 function SituacaoDaLinha({ c }) {
+  if (c.ficha?.situacao === "CONCLUIDA" && c.ficha.resultado)
+    return (
+      <Selo tom={tomDoResultado(c.ficha.resultado)}>
+        {textoDoResultado(c.ficha.resultado)}
+      </Selo>
+    );
   if (c.ficha) {
     const s = SITUACOES_DA_FICHA[c.ficha.situacao] || {};
     return (
@@ -296,8 +315,17 @@ function AcaoEmLote({ fila, acao, dados, aoFechar }) {
   );
 }
 
-function FichaAberta({ fila, aberta, dados }) {
+function FichaAberta({ fila, aberta, dados, filtroVaga }) {
   const f = aberta.ficha;
+  // O conteúdo da ficha salva o que falta (e confirma) antes de a gaveta fechar.
+  const antesDeFechar = useRef(null);
+  const registrarAntesDeFechar = useCallback((fn) => {
+    antesDeFechar.current = fn;
+  }, []);
+  const fechar = async () => {
+    if (antesDeFechar.current && !(await antesDeFechar.current())) return;
+    await fila.fechar();
+  };
   const [liberando, setLiberando] = useState(false);
   const [motivo, setMotivo] = useState("");
   const [erro, setErro] = useState("");
@@ -310,7 +338,8 @@ function FichaAberta({ fila, aberta, dados }) {
       sobretitulo={[`Vaga ${f.vaga}`, f.cargo].filter(Boolean).join(" · ")}
       titulo={`Candidato ${f.codigo}`}
       resumo={<Selo tom={situacao.tom}>{situacao.rotulo || f.situacao}</Selo>}
-      aoFechar={() => void fila.fechar()}
+      aoFechar={() => void fechar()}
+      cartaoClassName="avd-ficha-cartao"
       tour="avd-ficha"
     >
       <div className="avd-gaveta-corpo">
@@ -330,7 +359,13 @@ function FichaAberta({ fila, aberta, dados }) {
         {aberta.somente_leitura && aberta.motivo ? (
           <Aviso tom="warning">Só leitura: {aberta.motivo}</Aviso>
         ) : null}
-        <Aviso>O conteúdo da análise chega na fase F4.</Aviso>
+        <ConteudoDaFicha
+          fila={fila}
+          aberta={aberta}
+          filtroVaga={filtroVaga}
+          aoFechar={fechar}
+          registrarAntesDeFechar={registrarAntesDeFechar}
+        />
         {dados.pode_coordenar && reservaDeOutro ? (
           liberando ? (
             <div className="avd-inline">
@@ -370,15 +405,6 @@ function FichaAberta({ fila, aberta, dados }) {
             {erro}
           </Aviso>
         ) : null}
-        <div className="ui-acoes">
-          <button
-            type="button"
-            className="btn"
-            onClick={() => void fila.fechar()}
-          >
-            {aberta.reservada ? "Fechar e liberar" : "Fechar"}
-          </button>
-        </div>
       </div>
     </Gaveta>
   );
@@ -453,6 +479,7 @@ export function Fila({ e, fila }) {
   const todasMarcadas =
     comFicha.length > 0 && comFicha.every((c) => selecao.has(c.id));
   const minhas = st.filtro.responsavel === "eu";
+  const concluidas = st.filtro.etapa === "concluidas";
 
   return (
     <div className="avd-fila" data-tour="avd-fila">
@@ -652,6 +679,7 @@ export function Fila({ e, fila }) {
                 <th scope="col">Código</th>
                 <th scope="col">Nome</th>
                 <th scope="col">ART</th>
+                {concluidas ? <th scope="col">Nota</th> : null}
                 <th scope="col">Situação</th>
                 <th scope="col">Responsável</th>
                 <th scope="col">Reserva</th>
@@ -680,6 +708,9 @@ export function Fila({ e, fila }) {
                   <td>{c.codigo}</td>
                   <td>{c.nome}</td>
                   <td>{nota(c.art)}</td>
+                  {concluidas ? (
+                    <td>{textoDaNota(c.ficha?.nota_final)}</td>
+                  ) : null}
                   <td>
                     <SituacaoDaLinha c={c} />
                   </td>
@@ -724,10 +755,11 @@ export function Fila({ e, fila }) {
       ) : null}
       {st.aberta?.ficha ? (
         <FichaAberta
-          key={`${st.aberta.ficha.id}:${st.aberta.ficha.versao}`}
+          key={st.aberta.ficha.id}
           fila={fila}
           aberta={st.aberta}
           dados={dados}
+          filtroVaga={st.filtro.vaga}
         />
       ) : null}
     </div>

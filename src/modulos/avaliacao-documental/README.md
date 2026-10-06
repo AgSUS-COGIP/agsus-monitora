@@ -51,7 +51,23 @@ continua sendo a leitura. Desenho e fases: `docs/analises-no-monitora/`; histór
 A convocação para a Análise Comportamental (93/2026, item 8.2.10.11: até 5× as vagas imediatas e
 até a 10ª posição do cadastro reserva) é regra da lista CONVOCACAO da Classificação, não do lote.
 
-A próxima fase traz o conteúdo da ficha (F4).
+## Fase F4
+
+- **Conteúdo da ficha** (`ficha/`), dentro da gaveta da Fila: um cartão por bloco da regra, na
+  ordem da regra, com o que o candidato declarou na Empregare (as respostas das perguntas ligadas,
+  lidas como a nota declarada lê: aspas, múltipla escolha, "--", &nbsp;); Conforme / Não conforme
+  / Não enviado (teclas 1, 2, 3; J/K; Ctrl+S; Ctrl+Enter), motivo em lista; títulos, cursos e
+  vínculos que pontuam na hora; nota apurada ajustável até o teto, com justificativa obrigatória
+  quando difere da declarada;
+- lateral: resultado e nota ao vivo, declarado × apurado (diferença destacada, com a justificativa),
+  nível da vaga, "Copiar código", "Abrir vagas na Empregare" (copia o código da vaga para a busca; o acesso fica registrado), observações
+  prontas, observação livre e o parecer gerado;
+- barra: "Salvo às HH:MM" (rascunho automático), "Salvar rascunho", "Concluir e próxima", "Fechar e
+  liberar" (salva antes de soltar a reserva; aviso ao sair com alteração não salva);
+- concluída: só leitura, com o parecer gravado e o histórico; a coordenação reabre com motivo;
+- na Fila, as concluídas mostram nota e resultado; o analista vê só as vagas que analisa.
+
+A próxima fase traz a revisão (F5).
 
 ## Arquivos
 
@@ -66,6 +82,10 @@ pre-classificacao.jsx     aba Pré-classificação (contadores, vagas, listas of
 fila.jsx                  aba Fila (etapas, filtros, ações em lote, ficha aberta)
 estado-da-fila.js         store da aba: obter_fila_avaliacao, Pegar próximo, reserva
                           (renovação e liberação), distribuição, revisão, filtros salvos
+ficha/ficha.jsx           conteúdo da ficha aberta (blocos, lateral, barra, histórico)
+ficha/estado-da-ficha.js  store da ficha: obter_ficha_analise, rascunho automático,
+                          concluir_ficha, reabrir_ficha, registrar_acesso_ficha
+ficha/ficha.css           estilos da ficha (só tokens)
 estado-da-pre-classificacao.js  store da aba: obter_pre_classificacao, Recalcular,
                           registrar/publicar as listas, Copiar para o SEI e DOCX
 campos.jsx                peças de formulário da regra
@@ -93,10 +113,16 @@ avaliacao-documental.css  só tokens
   prévia) e em `python/monitora/avaliacao_documental/distribuicao.py` (o job, para as fichas que
   entram depois), conferida por `tests/fixtures/avaliacao-documental/casos-de-distribuicao.json`.
   O banco valida e grava (`supabase/migrations/20261006120000_fichas_fila_e_reserva.sql`).
+- A ficha: a tela calcula com `pontuacao.js` (e `src/lib/avaliacao-documental/ficha.js`:
+  declarado, pendências, resumo); o banco revalida e grava
+  (`supabase/migrations/20261007130000_conteudo_da_ficha.sql`); o Python
+  (`python/monitora/avaliacao_documental/pontuacao.py`) reconfere em lote pelos casos dourados.
 - A ficha não concluída segue a versão da regra do último recálculo (`FC_ABRIR_FICHAS`, a cada
   execução do job); a concluída mantém a versão com que foi analisada
   (`supabase/migrations/20261007110000_ficha_segue_versao_da_pre_classificacao.sql`).
 - Testes: `tests/modulos/avaliacao-documental.test.js`, `tests/modulos/avaliacao-documental-fila.test.js`,
+  `tests/modulos/avaliacao-documental-ficha.test.js`, `tests/lib/avaliacao-documental-ficha.test.js`,
+  `tests/conteudo-da-ficha-migration.test.js`, `tests/python/test_pontuacao.py`,
   `tests/fichas-fila-reserva-migration.test.js`, `tests/ficha-segue-versao-migration.test.js`,
   `tests/python/test_distribuicao.py`,
   `tests/modulos/avaliacao-documental-pre-classificacao.test.js`,

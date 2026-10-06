@@ -1048,7 +1048,7 @@ export const CONTRATO_RPC = {
     argumentos: ["p_edital"],
     critica: false,
     resumo:
-      "A fila do edital: cada inscrito da pré-classificação com a ficha (situação, responsável, reserva vigente, versão; nome sem CPF nem contato), as vagas, os analistas com as pendentes, a distribuição da regra, quantos do lote estão sem ficha e os filtros salvos de quem chama. Leitor da Avaliação documental.",
+      "A fila do edital: cada inscrito da pré-classificação com a ficha (situação, responsável, reserva vigente, versão, rascunho e, concluída, resultado e nota; nome sem CPF nem contato), as vagas, os analistas com as pendentes, a distribuição da regra, quantos do lote estão sem ficha e os filtros salvos de quem chama. O analista vê só as vagas dele. Leitor da Avaliação documental.",
   },
   pegar_proxima_ficha: {
     argumentos: ["p_edital", "p_vaga"],
@@ -1104,6 +1104,50 @@ export const CONTRATO_RPC = {
     resumo:
       "Exclui (desativa) um filtro salvo de quem chama. Devolve os filtros salvos.",
   },
+  // ── Avaliação documental: conteúdo da ficha (20261007130000_conteudo_da_ficha.sql)
+  obter_ficha_analise: {
+    argumentos: ["p_ficha"],
+    critica: false,
+    resumo:
+      "A ficha para analisar: cabeçalho, lançamento e resultado gravados, a regra com que é analisada (a vigente; a da conclusão, se concluída), nota mínima e níveis da regra de classificação, nota declarada e ART, as respostas da Empregare só das perguntas que a regra liga, o histórico e se pode editar ou reabrir. Coordenação, revisão, analista da vaga; leitor só a concluída.",
+  },
+  salvar_rascunho_ficha: {
+    argumentos: [
+      "p_ficha",
+      "p_versao",
+      "p_lancamento",
+      "p_resultado",
+      "p_parecer",
+    ],
+    critica: false,
+    resumo:
+      "Salvamento automático da ficha: lançamento, resultado da conta da tela e parecer, revalidados contra a regra (estrutura, limites, coerência); exige a reserva (55P03) e a versão aberta (40001); renova a reserva; alteração vai ao histórico.",
+  },
+  concluir_ficha: {
+    argumentos: [
+      "p_ficha",
+      "p_versao",
+      "p_versao_regra",
+      "p_lancamento",
+      "p_resultado",
+      "p_parecer",
+    ],
+    critica: false,
+    resumo:
+      "Conclui a ficha: confere reserva, versões (ficha e regra vigente conferida), estrutura e o que falta (situação, motivos, itens, justificativa de nota diferente da declarada); grava resultado, notas, parecer e a versão da regra; libera a reserva.",
+  },
+  reabrir_ficha: {
+    argumentos: ["p_ficha", "p_versao", "p_motivo"],
+    critica: false,
+    resumo:
+      "A coordenação reabre uma ficha concluída (volta a Em análise com o mesmo responsável), com motivo de 10 a 2.000.",
+  },
+  registrar_acesso_ficha: {
+    argumentos: ["p_ficha", "p_tipo"],
+    critica: false,
+    resumo:
+      "Registra (LGPD) que quem vê a ficha abriu o candidato na Empregare (ABRIR_EMPREGARE) ou copiou o código (COPIAR_CODIGO).",
+  },
   // ── Avaliação documental: regra e equipe (20261006100000_regra_da_analise.sql)
   listar_editais_avaliacao: {
     argumentos: ["p_area"],
@@ -1121,7 +1165,7 @@ export const CONTRATO_RPC = {
     argumentos: ["p_edital", "p_configuracao", "p_versao_atual", "p_motivo"],
     critica: false,
     resumo:
-      "Salva a regra como versão nova (40001 se a versão aberta não é a vigente; motivo de 10 a 2.000 da 2ª em diante) e volta para Conferir. Só a coordenação do edital.",
+      "Salva a regra como versão nova (40001 se a versão aberta não é a vigente; motivo de 10 a 2.000 da 2ª em diante) e volta para Conferir; devolve as fichas concluídas com versão anterior (nenhuma nota muda). Só a coordenação do edital.",
   },
   copiar_modelo_regra_analise: {
     argumentos: ["p_edital", "p_modelo"],

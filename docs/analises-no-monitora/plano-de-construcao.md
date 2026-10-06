@@ -239,6 +239,43 @@ ensaio.
 
 ## F4 — Ficha por documento gravando em `TB_ANALISE_CURRICULAR`
 
+**Situação: feita em 07/10/2026** (branch `feat/avaliacao-documental-f4`; migration ainda por
+aplicar; ensaio no banco real OK, desfeito). Pedido do usuário: "algo tranquilo para o analista
+analisar… para sair das planilhas". O que entrou:
+
+- `20261007130000_conteudo_da_ficha.sql`: no lugar de `TB_ITEM_FICHA_ANALISE`,
+  `TB_TITULO_FICHA_ANALISE` e `TB_VINCULO_EXPERIENCIA`, o lançamento do analista fica em
+  `TB_FICHA_ANALISE."DS_LANCAMENTO"` (jsonb no formato do candidato de `pontuacao.js`: situação,
+  motivos, nota ajustada e justificativas de cada bloco; títulos, cursos e vínculos; observações),
+  com `DS_RESULTADO`, `DS_PARECER`, `TP_RESULTADO`, as notas, o rascunho e a conclusão; o
+  histórico (`TH_FICHA_ANALISE`) ganhou SALVAR, CONCLUIR e REABRIR com o retrato e o que mudou (de
+  quanto para quanto, com a justificativa), no lugar de `TL_EVENTO_FICHA_ANALISE`. RPCs
+  `obter_ficha_analise` (só as respostas das perguntas que a regra liga; nunca CPF ou contato),
+  `salvar_rascunho_ficha`, `concluir_ficha`, `reabrir_ficha` e `registrar_acesso_ficha`;
+  `obter_fila_avaliacao` traz resultado e nota e mostra ao analista só as vagas dele;
+  `salvar_regra_analise` devolve as fichas concluídas com versão anterior (AM-2.3).
+- **A conta:** a tela calcula com `src/lib/avaliacao-documental/pontuacao.js`; o banco **não refaz a
+  conta** (revalida estrutura, limites e coerência: blocos e motivos da regra, teto, soma, bloco
+  eliminatório ⇒ inapto, nota mínima, pendências e justificativa); o Python
+  (`python/monitora/avaliacao_documental/pontuacao.py`, `conferir_ficha`) recalcula em lote, pelos
+  mesmos casos dourados (incluindo os novos da ficha).
+- **A versão da regra:** pendente e em análise seguem a vigente; concluir exige a vigente e
+  conferida e grava a versão usada; a concluída não muda.
+- Tela `src/modulos/avaliacao-documental/ficha/` dentro da gaveta da Fila: cartões por bloco com o
+  declarado, Conforme/Não conforme/Não enviado (1/2/3), motivo em lista, itens que pontuam na hora,
+  nota ajustável com justificativa, lateral com declarado × apurado e o parecer, rascunho
+  automático, "Concluir e próxima", "Fechar e liberar"; concluída só leitura com o histórico e
+  "Reabrir" (coordenação).
+- `supabase/correcoes/20261007-perguntas-da-ficha-proj26.sql`: o modelo PROJ26-CURRICULAR com as
+  perguntas ligadas aos blocos e a nota declarada de titulação e cursos (a regra do 93/2026 muda só
+  quando a coordenação salvar a versão nova).
+- **Ficam para a F5 e depois:** validar/devolver a revisão e o sorteio (F5); publicar em
+  `TB_ANALISE_CURRICULAR` (junto da virada, F8); "a linha anda" pela conclusão (hoje pelo
+  recálculo); a busca da aldeia na lista do DSEI; comparar duas versões do histórico; o job Python
+  que roda `conferir_ficha` em todas as concluídas; a coordenação editar sem pegar a reserva.
+
+O desenho original:
+
 **Entrega:** a ficha completa.
 
 - os blocos por documento ou pergunta, com o declarado, a situação, os motivos e o efeito;

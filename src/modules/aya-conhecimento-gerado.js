@@ -1096,7 +1096,7 @@ export const VERBETES_AYA = Object.freeze([
       "quanto tempo dura a reserva",
     ],
     resposta:
-      'Quem abre a própria ficha fica com a reserva por 15 minutos, renovada sozinha enquanto a ficha está aberta e liberada ao fechar; só quem tem a reserva grava. Quem abre uma ficha em uso vê "Em uso por <nome> desde HH:MM", só para leitura. Se a pessoa saiu sem fechar, a reserva vence sozinha; a coordenação pode liberar antes (na ficha ou em lote, em "Liberar reservas"), com motivo, e isso fica no histórico. Mudar a ficha com uma versão velha é recusado ("mudou desde que você abriu"). O conteúdo da análise entra na fase F4.',
+      'Quem abre a própria ficha fica com a reserva por 15 minutos, renovada sozinha enquanto a ficha está aberta e liberada ao fechar; só quem tem a reserva grava. Quem abre uma ficha em uso vê "Em uso por <nome> desde HH:MM", só para leitura. Se a pessoa saiu sem fechar, a reserva vence sozinha; a coordenação pode liberar antes (na ficha ou em lote, em "Liberar reservas"), com motivo, e isso fica no histórico. Mudar a ficha com uma versão velha é recusado ("mudou desde que você abriu").',
     fato: "",
     fonte:
       "supabase/migrations/20261006120000_fichas_fila_e_reserva.sql (reservar_ficha, renovar_reserva, liberar_reserva)",
@@ -1132,6 +1132,140 @@ export const VERBETES_AYA = Object.freeze([
       "A coordenação marca fichas na lista e escolhe: Distribuir (com a prévia), Liberar reservas ou Mandar para revisão (fichas pendentes ou em análise; motivo obrigatório). Toda ação pede confirmação e fica no histórico da ficha. Um analista com fichas pendentes ou em análise só sai da equipe depois que elas forem redistribuídas ou devolvidas à fila.",
     fato: "",
     fonte: "supabase/migrations/20261006120000_fichas_fila_e_reserva.sql",
+    abrir: "avaliacao-documental",
+  },
+  {
+    arquivo: "regras-da-avaliacao-documental.md",
+    titulo: "Como analisar uma ficha",
+    perguntas: [
+      "como analisar a ficha",
+      "analisar candidato",
+      "ficha da avaliacao documental",
+      "conteudo da ficha",
+      "sair das planilhas",
+      "como conferir os documentos",
+    ],
+    resposta:
+      'A ficha abre na aba Fila (Pegar próximo ou Abrir). Cada bloco da regra vira um cartão, na ordem da regra: o título, o item do edital e o que o candidato DECLAROU na Empregare (a resposta das perguntas ligadas ao bloco: "Anexo", "4 anos ou mais", "Especialização"…). Os documentos ficam na Empregare: use "Copiar código" e "Abrir vagas na Empregare" (copia o código da vaga: cole na busca de Vagas Anunciadas, abra a vaga e procure o candidato pelo código) para conferir o arquivo. Em cada bloco marque Conforme, Não conforme ou Não enviado; no Não conforme e no Não enviado escolha o motivo na lista. Nos blocos que pontuam, lance os títulos, os cursos (com a carga horária) e os vínculos (com início e fim): os pontos saem na hora pela regra. A lateral mostra a nota ao vivo, o resultado (Apto, Inapto por requisito ou por nota mínima) e o parecer. Cota de outra modalidade aparece como "Não se aplica". Sem resposta na Empregare, o bloco sugere "Não enviado".',
+    fato: "No MONITORA, a ficha mostra o que o candidato declarou na Empregare e calcula a nota pela regra do edital enquanto o analista confere.",
+    fonte:
+      "src/modulos/avaliacao-documental/ficha/ficha.jsx; src/lib/avaliacao-documental/ficha.js; src/lib/avaliacao-documental/pontuacao.js",
+    abrir: "avaliacao-documental",
+  },
+  {
+    arquivo: "regras-da-avaliacao-documental.md",
+    titulo: "Atalhos da ficha",
+    perguntas: [
+      "atalhos da ficha",
+      "teclas da ficha",
+      "tecla 1 2 3",
+      "ctrl enter concluir",
+      "ctrl s salvar",
+      "j e k na ficha",
+      "analisar mais rapido",
+    ],
+    resposta:
+      "Na ficha aberta: 1 marca Conforme (e passa ao próximo bloco), 2 marca Não conforme e 3 Não enviado (ficam no bloco para escolher o motivo); J e K vão ao bloco seguinte e ao anterior; Ctrl+S salva o rascunho na hora; Ctrl+Enter confere o que falta, conclui e abre a próxima ficha. Os atalhos não valem enquanto o cursor está num campo de texto. No celular, os botões fazem o mesmo.",
+    fato: "",
+    fonte:
+      "src/modulos/avaliacao-documental/ficha/ficha.jsx (aoTeclar); src/lib/avaliacao-documental/ficha.js (situacaoDaTecla)",
+    abrir: "avaliacao-documental",
+  },
+  {
+    arquivo: "regras-da-avaliacao-documental.md",
+    titulo: "Nota declarada × apurada e justificativa",
+    perguntas: [
+      "divergencia na ficha",
+      "nota diferente da declarada",
+      "justificativa da nota",
+      "ajustar a nota",
+      "alterar a nota do bloco",
+      "nota diminuida",
+      "por que pede justificativa",
+      "declarado apurado",
+    ],
+    resposta:
+      'Em cada bloco que pontua aparecem três números: Declarado (o que a resposta da Empregare vale pela nota declarada da regra), Calculado (o que os itens lançados dão) e Apurado (a nota que vale). O analista pode ajustar o Apurado para menos ou para mais, até o teto do bloco no nível da vaga; "Usar o calculado" volta à conta. Toda nota apurada diferente da declarada pede justificativa: um motivo do bloco ou uma observação pronta da regra (ex.: "Nota de experiência diminuída", "Nota de cursos diminuída", "Experiência anterior à diplomação não é computada") e, se quiser, um complemento. Sem justificativa, o bloco avisa e a ficha não conclui. A lateral destaca a diferença com a justificativa ao lado, e ela entra no parecer. Quem é inapto por requisito não precisa justificar as notas. Bloco sem pergunta mapeada na nota declarada mostra "—" e não pede justificativa.',
+    fato: "No MONITORA, nota apurada diferente da declarada na ficha exige justificativa padronizada, que vai para o parecer e para o histórico.",
+    fonte:
+      "src/lib/avaliacao-documental/ficha.js (pendenciasDaFicha, divergenciaDoBloco); supabase/migrations/20261007130000_conteudo_da_ficha.sql (FC_PENDENCIAS_FICHA)",
+    abrir: "avaliacao-documental",
+  },
+  {
+    arquivo: "regras-da-avaliacao-documental.md",
+    titulo: "Parecer da ficha",
+    perguntas: [
+      "parecer da ficha",
+      "parecer automatico",
+      "como o parecer e gerado",
+      "copiar parecer",
+      "observacao da ficha",
+      "observacoes prontas na ficha",
+      "editar o parecer",
+    ],
+    resposta:
+      'O parecer é gerado pela regra do edital: no Apto, a nota total e a distribuição por bloco; no Inapto por requisito, os motivos eliminatórios com o item do edital; no Inapto por nota mínima, a nota obtida e a mínima. Os motivos dos blocos, as justificativas de nota, as observações prontas marcadas e a Observação livre entram em "Observações da análise". O texto não se edita direto: muda-se pelo que foi marcado e pelo campo Observação. "Copiar parecer" copia o texto. Na ficha concluída, vale o parecer gravado na conclusão.',
+    fato: "",
+    fonte:
+      "src/lib/avaliacao-documental/pontuacao.js (calcularAvaliacao); src/modulos/avaliacao-documental/ficha/ficha.jsx",
+    abrir: "avaliacao-documental",
+  },
+  {
+    arquivo: "regras-da-avaliacao-documental.md",
+    titulo: "Rascunho, concluir e próxima",
+    perguntas: [
+      "salvar rascunho da ficha",
+      "salvo as",
+      "rascunho automatico",
+      "concluir e proxima",
+      "concluir ficha",
+      "fechar e liberar",
+      "o que falta para concluir",
+      "perdi o que fiz",
+    ],
+    resposta:
+      'Cada mudança na ficha é salva sozinha em um ou dois segundos; "Salvo às HH:MM" aparece só depois de o banco confirmar, e "Alteração não salva" enquanto falta. "Salvar rascunho" (ou Ctrl+S) salva na hora. "Concluir e próxima" confere o que falta — situação de cada bloco, motivo do Não conforme e do Não enviado, motivo do item recusado, datas dos vínculos e justificativa de nota diferente da declarada —, conclui e já abre a próxima ficha da sua fila. "Fechar e liberar" salva o que falta e solta a reserva; fechar a aba do navegador com alteração não salva pede confirmação. Se outra pessoa ou outra aba mexeu na ficha, o salvamento para com o aviso e nada é sobrescrito. A conclusão grava quem concluiu (o login) e a hora; não há campo para digitar.',
+    fato: "",
+    fonte:
+      "src/modulos/avaliacao-documental/ficha/estado-da-ficha.js; supabase/migrations/20261007130000_conteudo_da_ficha.sql (salvar_rascunho_ficha, concluir_ficha)",
+    abrir: "avaliacao-documental",
+  },
+  {
+    arquivo: "regras-da-avaliacao-documental.md",
+    titulo: "Ficha concluída, histórico e reabrir",
+    perguntas: [
+      "ficha concluida",
+      "reabrir ficha",
+      "historico da ficha",
+      "quem mudou a nota",
+      "de quanto para quanto",
+      "versao da regra na ficha",
+      "regra mudou depois de concluir",
+      "fichas afetadas",
+    ],
+    resposta:
+      "A ficha concluída fica só para leitura, com o resultado, a nota, o parecer gravado e o histórico: cada rascunho com mudança, a conclusão e a reabertura, com quem, quando e o que mudou (situação, motivo, a nota de cada bloco de quanto para quanto e a justificativa). Só a coordenação do edital reabre, com motivo; a ficha volta a Em análise com o mesmo responsável. A ficha é analisada pela versão vigente da regra; ao concluir, guarda a versão usada, e uma versão nova da regra não muda a nota de quem já foi concluído (o banco lista as fichas afetadas ao salvar a regra). Pendentes e em análise passam a seguir a versão nova; concluir exige a versão vigente conferida.",
+    fato: "",
+    fonte:
+      "supabase/migrations/20261007130000_conteudo_da_ficha.sql (reabrir_ficha, FC_REGRA_VIGENTE_FICHA, salvar_regra_analise)",
+    abrir: "avaliacao-documental",
+  },
+  {
+    arquivo: "regras-da-avaliacao-documental.md",
+    titulo: "Quem vê e quem grava a ficha",
+    perguntas: [
+      "quem ve a ficha",
+      "analista ve so as vagas dele",
+      "quem pode gravar a ficha",
+      "leitor ve a ficha",
+      "dados pessoais na ficha",
+      "cpf na ficha",
+    ],
+    resposta:
+      "O analista vê, na Fila e na ficha, só as vagas que analisa na equipe do edital; a coordenação e a revisão veem todas; quem só lê a Avaliação documental vê a ficha concluída. Grava só quem está com a reserva da ficha em análise. A ficha recebe da Empregare apenas as respostas das perguntas que a regra liga aos blocos e à nota declarada — nunca CPF, e-mail, telefone ou outra resposta —, e copiar o código ou abrir a Empregare fica registrado.",
+    fato: "",
+    fonte:
+      "supabase/migrations/20261007130000_conteudo_da_ficha.sql (FC_EXIGIR_VER_FICHA, FC_RESPOSTAS_DA_FICHA, registrar_acesso_ficha)",
     abrir: "avaliacao-documental",
   },
   {

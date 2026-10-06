@@ -9,10 +9,12 @@
     nivel: "superior" | "tecnico" | "medio" | "fundamental",
     modalidade: "AC" | "PP" | …,
     indigena, mora_aldeia, aldeia_na_lista: boolean,
-    blocos: { <CODIGO>: { situacao, motivos: [<código>], motivo_livre } },
-    titulos: [{ titulo: "ESPECIALIZACAO", aceito }],
-    cursos: [{ horas, aceito }],
-    vinculos: [{ categoria, inicio: "AAAA-MM-DD", fim, aceito }],
+    blocos: { <CODIGO>: { situacao, motivos: [<código>], motivo_livre,
+                          nota_ajustada, justificativas: [<código>],
+                          justificativa_livre } },
+    titulos: [{ titulo: "ESPECIALIZACAO", nome, aceito, motivo }],
+    cursos: [{ nome, horas, aceito, motivo }],
+    vinculos: [{ empregador, categoria, inicio: "AAAA-MM-DD", fim, aceito, motivo }],
     estagio_horas,
     observacoes, observacoes_prontas: [<código>]
   }
@@ -31,7 +33,12 @@
     experiência = horas ÷ horas_por_dia ÷ dias_por_mes (só os inteiros);
   - desempate em anos (365 dias), meses (30) e dias;
   - nota abaixo da mínima (a da regra de classificação, por nível se houver)
-    dá Inapto (nota mínima).
+    dá Inapto (nota mínima);
+  - a ficha (F4) pode AJUSTAR a nota de um bloco que pontua (nota_ajustada,
+    de 0 até o teto do bloco no nível da vaga) por cima do que os itens
+    lançados dão; o efeito do bloco (elimina, zera) continua valendo. As
+    justificativas do bloco (códigos dos motivos do bloco ou das observações
+    prontas, e o complemento livre) entram nas observações do parecer.
 */
 import {
   FORCA_DO_EFEITO,
@@ -210,6 +217,44 @@ export function doNivel(bloco, nivel) {
   return doNivelDaVaga ? { ...bloco, ...doNivelDaVaga } : bloco;
 }
 
+/** O teto de um bloco que pontua no nível da vaga (null = sem teto). */
+export function tetoDoBloco(bloco, nivel) {
+  const teto = ["CURSOS", "VINCULOS"].includes(bloco.tipo)
+    ? doNivel(bloco, nivel).teto
+    : bloco.teto;
+  return teto === null || teto === undefined ? null : numero(teto);
+}
+
+/** A nota ajustada pela ficha, ou null quando o bloco segue o cálculo. */
+export function notaAjustada(lancado) {
+  const v = lancado?.nota_ajustada;
+  return typeof v === "number" && Number.isFinite(v) ? v : null;
+}
+
+/**
+ * Os textos das justificativas escolhidas num bloco: o motivo do bloco (com o
+ * item do edital) ou a observação pronta da regra, e o complemento livre.
+ */
+export function textosDasJustificativas(regra, bloco, lancado) {
+  const textos = [];
+  for (const codigo of lista(lancado?.justificativas)) {
+    const motivo = lista(bloco.motivos).find((m) => m.codigo === codigo);
+    if (motivo) {
+      textos.push(
+        comItem(motivo.item_edital || bloco.item_edital, motivo.texto),
+      );
+      continue;
+    }
+    const pronta = lista(regra.observacoes_prontas).find(
+      (o) => o.codigo === codigo,
+    );
+    if (pronta) textos.push(pronta.texto);
+  }
+  const livre = String(lancado?.justificativa_livre ?? "").trim();
+  if (livre) textos.push(comItem(bloco.item_edital, livre));
+  return textos;
+}
+
 function pontosDosCursos(blocoGeral, candidato) {
   const bloco = doNivel(blocoGeral, candidato.nivel);
   const total = lista(candidato.cursos)
@@ -331,6 +376,8 @@ export function calcularAvaliacao(regraEntrada, candidato = {}, opcoes = {}) {
   const avaliados = avaliarBlocos(regra, candidato, situacaoPadrao);
 
   const parciais = {};
+  const calculados = {};
+  const ajustes = {};
   let experiencia = null;
   const eliminatorios = [];
   const encaminhamentos = [];
@@ -362,7 +409,20 @@ export function calcularAvaliacao(regraEntrada, candidato = {}, opcoes = {}) {
             );
         }
       }
-      if (["ELIMINA", "ZERA_PONTOS"].includes(efeito)) pontos = 0;
+      const zera = ["ELIMINA", "ZERA_PONTOS"].includes(efeito);
+      calculados[parcial] = zera ? 0 : arredondar(pontos);
+      const ajuste = notaAjustada(candidato.blocos?.[bloco.codigo]);
+      if (ajuste !== null) {
+        pontos = comTeto(
+          Math.max(0, ajuste),
+          tetoDoBloco(bloco, candidato.nivel),
+        );
+        ajustes[parcial] = {
+          calculado: calculados[parcial],
+          ajustado: zera ? 0 : arredondar(pontos),
+        };
+      }
+      if (zera) pontos = 0;
       parciais[parcial] = arredondar(pontos);
     }
     if (efeito === "ELIMINA") {
@@ -387,12 +447,20 @@ export function calcularAvaliacao(regraEntrada, candidato = {}, opcoes = {}) {
         encaminhamentos.push(efeito);
       for (const m of motivos)
         observacoes.push(comItem(m.item_edital, m.texto));
+      if (parcial)
+        for (const t of textosDasJustificativas(
+          regra,
+          bloco,
+          candidato.blocos?.[bloco.codigo],
+        ))
+          if (!observacoes.includes(t)) observacoes.push(t);
     }
   }
 
   for (const codigo of lista(candidato.observacoes_prontas)) {
     const pronta = regra.observacoes_prontas.find((o) => o.codigo === codigo);
-    if (pronta) observacoes.push(pronta.texto);
+    if (pronta && !observacoes.includes(pronta.texto))
+      observacoes.push(pronta.texto);
   }
   const livre = String(candidato.observacoes ?? "").trim();
   if (livre) observacoes.push(livre);
@@ -445,6 +513,8 @@ export function calcularAvaliacao(regraEntrada, candidato = {}, opcoes = {}) {
     nota_final: notaFinal,
     nota_minima: notaMinima,
     parciais,
+    calculados,
+    ajustes,
     blocos: avaliados.map(({ bloco, situacao, efeito, motivos }) => ({
       codigo: bloco.codigo,
       situacao,

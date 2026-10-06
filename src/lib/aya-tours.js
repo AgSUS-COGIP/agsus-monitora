@@ -791,7 +791,53 @@ const TOURS = Object.freeze({
       passo(
         t("avd-fila-tabela"),
         "As fichas",
-        "Situação, responsável e quem está com a ficha aberta agora; Abrir mostra o cabeçalho da ficha.",
+        "Situação, responsável e quem está com a ficha aberta agora; nas concluídas, a nota e o resultado. Abrir mostra a ficha.",
+      ),
+      passo(
+        t("avd-ficha-blocos"),
+        "Um cartão por bloco",
+        "O que o candidato declarou na Empregare e Conforme, Não conforme ou Não enviado; as teclas 1, 2 e 3 marcam o bloco da vez.",
+      ),
+      passo(
+        t("avd-ficha-itens"),
+        "Títulos, cursos e vínculos",
+        "Lance os itens comprovados; os pontos são calculados na hora pela regra.",
+      ),
+      passo(
+        t("avd-ficha-nota"),
+        "Nota do bloco",
+        "Declarado, calculado e apurado; dá para ajustar a nota até o teto do bloco.",
+      ),
+      passo(
+        t("avd-ficha-justificativa"),
+        "Justificativa",
+        "Nota diferente da declarada pede uma justificativa da lista; ela entra no parecer.",
+      ),
+      passo(
+        t("avd-ficha-comparacao"),
+        "Declarado × apurado",
+        "A nota ao vivo de cada bloco; a diferença aparece destacada, com a justificativa.",
+      ),
+      passo(
+        t("avd-ficha-empregare"),
+        "Empregare",
+        "Copie o código e abra a vaga na Empregare para conferir os documentos.",
+      ),
+      passo(
+        t("avd-ficha-parecer"),
+        "Parecer",
+        "Gerado pela regra a partir dos motivos, das justificativas e da observação.",
+      ),
+      passo(
+        t("avd-ficha-barra"),
+        "Salvar e concluir",
+        "O rascunho salva sozinho; Concluir e próxima confere o que falta, conclui e abre a próxima.",
+      ),
+      passo(
+        t("avd-ficha-reabrir"),
+        "Reabrir",
+        "A coordenação reabre uma ficha concluída, com motivo.",
+        { exige: coordenaAvaliacao },
       ),
       PASSO_DA_AYA,
     ]),

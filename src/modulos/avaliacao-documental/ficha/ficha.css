@@ -1,0 +1,320 @@
+/* Conteúdo da ficha da Avaliação documental (ficha/ficha.jsx). Só tokens. */
+
+/* A gaveta da ficha é larga: blocos à esquerda, nota e parecer à direita. */
+.modal-card.ui-gaveta.avd-ficha-cartao {
+  width: min(1240px, 100vw);
+}
+.avd-ficha {
+  display: grid;
+  gap: var(--space-3);
+}
+.avd-ficha-grade {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(280px, 340px);
+  align-items: start;
+  gap: var(--space-4);
+}
+.avd-ficha-blocos {
+  display: grid;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+/* Cartão do bloco */
+.avd-ficha-bloco {
+  display: grid;
+  gap: var(--space-3);
+  border-left: 4px solid var(--border-subtle);
+  outline: none;
+}
+.avd-ficha-bloco[data-ativo="sim"] {
+  box-shadow: 0 0 0 2px var(--focus-ring);
+}
+.avd-ficha-bloco[data-situacao="CONFORME"] {
+  border-left-color: var(--state-success);
+}
+.avd-ficha-bloco[data-situacao="NAO_CONFORME"],
+.avd-ficha-bloco[data-situacao="NAO_ENVIADO"] {
+  border-left-color: var(--state-danger);
+}
+.avd-ficha-bloco[data-situacao="NAO_SE_APLICA"] {
+  opacity: 0.7;
+}
+.avd-ficha-bloco-topo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+.avd-ficha-bloco-topo h3 {
+  margin: 0;
+  margin-right: auto;
+  font-size: var(--text-body);
+  font-weight: var(--font-weight-semibold);
+}
+.avd-ficha-declarado {
+  display: grid;
+  gap: var(--space-1);
+  margin: 0;
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-md);
+  background: var(--state-info-soft);
+}
+.avd-ficha-declarado > div {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--space-2);
+}
+.avd-ficha-declarado dt {
+  color: var(--text-secondary);
+  font-size: var(--text-caption);
+}
+.avd-ficha-declarado dd {
+  margin: 0;
+  font-weight: var(--font-weight-semibold);
+  text-align: right;
+}
+.avd-ficha-sugestao {
+  margin: 0;
+  color: var(--state-warning);
+  font-size: var(--text-caption);
+}
+
+/* Conforme / Não conforme / Não enviado: botões grandes, tocáveis no celular. */
+.avd-ficha-situacoes {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-2);
+}
+.avd-ficha-situacao {
+  min-height: var(--mobile-touch-size, 44px);
+  padding: var(--space-2);
+  border: 1px solid var(--border-control);
+  border-radius: var(--radius-md);
+  background: var(--surface-card);
+  color: var(--text-primary);
+  font-weight: var(--font-weight-medium);
+  cursor: pointer;
+}
+.avd-ficha-situacao kbd {
+  color: var(--text-secondary);
+  font-size: var(--text-caption);
+}
+.avd-ficha-situacao[aria-pressed="true"][data-valor="CONFORME"] {
+  border-color: var(--state-success);
+  background: var(--state-success-soft);
+}
+.avd-ficha-situacao[aria-pressed="true"][data-valor="NAO_CONFORME"],
+.avd-ficha-situacao[aria-pressed="true"][data-valor="NAO_ENVIADO"] {
+  border-color: var(--state-danger);
+  background: var(--state-danger-soft);
+}
+.avd-ficha-situacao:disabled {
+  cursor: default;
+}
+.avd-ficha-caixas {
+  display: grid;
+  gap: var(--space-1);
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+.avd-ficha-caixas legend {
+  margin-bottom: var(--space-1);
+  color: var(--text-secondary);
+  font-size: var(--text-caption);
+}
+
+/* Itens: títulos, cursos e vínculos */
+.avd-ficha-itens {
+  display: grid;
+  gap: var(--space-2);
+}
+.avd-ficha-itens > .btn {
+  justify-self: start;
+}
+.avd-ficha-item {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+.avd-ficha-item > input:not([type="checkbox"]),
+.avd-ficha-item > select {
+  flex: 1 1 140px;
+  min-width: 0;
+}
+.avd-ficha-item > input[type="number"],
+.avd-ficha-item > input[type="date"] {
+  flex: 0 1 150px;
+}
+.avd-ficha-item[data-aceito="false"] > input:not([type="checkbox"]) {
+  text-decoration: line-through;
+}
+.avd-ficha-aceito {
+  white-space: nowrap;
+}
+
+/* Nota do bloco e justificativa */
+.avd-ficha-nota {
+  display: grid;
+  gap: var(--space-2);
+}
+.avd-ficha-numeros {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--space-2) var(--space-4);
+}
+.avd-ficha-numeros > span {
+  display: grid;
+  color: var(--text-secondary);
+  font-size: var(--text-caption);
+}
+.avd-ficha-numeros > span strong {
+  color: var(--text-primary);
+  font-size: var(--text-body);
+}
+.avd-ficha-numeros .ui-campo {
+  width: 150px;
+}
+.avd-ficha-numeros input[data-divergente="sim"] {
+  border-color: var(--state-warning);
+}
+.avd-ficha-justificativa {
+  display: grid;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-md);
+  background: var(--state-warning-soft);
+}
+.avd-ficha-pendencias {
+  margin: 0;
+  padding-left: var(--space-4);
+  color: var(--state-warning);
+  font-size: var(--text-caption);
+}
+
+/* Lateral fixa: nota ao vivo, declarado × apurado, parecer */
+.avd-ficha-lateral {
+  position: sticky;
+  top: var(--space-2);
+  display: grid;
+  gap: var(--space-3);
+}
+.avd-ficha-total {
+  display: grid;
+  justify-items: start;
+  gap: var(--space-1);
+}
+.avd-ficha-nota-total {
+  font-size: var(--text-h3);
+  line-height: var(--leading-metric-sm);
+}
+.avd-ficha-total > span {
+  color: var(--text-secondary);
+  font-size: var(--text-caption);
+}
+.avd-ficha-comparacao {
+  display: grid;
+  font-size: var(--text-body-sm);
+}
+.avd-ficha-linha {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 72px 72px;
+  gap: var(--space-2);
+  padding: var(--space-1) 0;
+  border-bottom: 1px solid var(--border-subtle);
+}
+.avd-ficha-linha > span:not(:first-child) {
+  text-align: right;
+}
+.avd-ficha-linha-topo {
+  color: var(--text-secondary);
+  font-size: var(--text-caption);
+}
+.avd-ficha-linha small {
+  display: block;
+  color: var(--text-secondary);
+  font-size: var(--text-caption);
+}
+.avd-ficha-linha[data-divergente="sim"] > span:last-child {
+  color: var(--state-warning);
+  font-weight: var(--font-weight-semibold);
+}
+.avd-ficha-empregare {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+.avd-ficha-parecer {
+  display: grid;
+  gap: var(--space-2);
+}
+.avd-ficha-parecer pre {
+  max-height: 280px;
+  margin: 0;
+  overflow: auto;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  background: var(--surface-card);
+  font-family: inherit;
+  font-size: var(--text-body-sm);
+  white-space: pre-wrap;
+}
+.avd-ficha-historico ol {
+  display: grid;
+  gap: var(--space-2);
+  margin: var(--space-2) 0 0;
+  padding-left: var(--space-4);
+  font-size: var(--text-body-sm);
+}
+.avd-ficha-historico span {
+  color: var(--text-secondary);
+}
+
+/* Barra de ações presa ao pé da gaveta (a gaveta fica por cima da navegação inferior). */
+.avd-ficha-barra {
+  z-index: var(--z-sticky, 100);
+  align-items: center;
+  padding-bottom: calc(var(--space-3) + var(--mobile-safe-bottom, 0px));
+}
+.avd-ficha-salvo {
+  margin-right: auto;
+  color: var(--text-secondary);
+  font-size: var(--text-caption);
+}
+.avd-ficha-erro {
+  color: var(--state-danger);
+  font-size: var(--text-caption);
+}
+
+@media (max-width: 900px) {
+  .avd-ficha-grade {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .avd-ficha-lateral {
+    position: static;
+  }
+  .avd-ficha-situacao kbd {
+    display: none;
+  }
+  /* Celular: a barra numa linha de três botões, com o "Salvo às" em cima. */
+  .avd-ficha-barra {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: var(--space-1-5);
+  }
+  .avd-ficha-barra .btn {
+    min-width: 0;
+    padding-inline: var(--space-2);
+    white-space: normal;
+  }
+  .avd-ficha-salvo,
+  .avd-ficha-erro,
+  .avd-ficha-barra > .avd-inline {
+    grid-column: 1 / -1;
+  }
+}
