@@ -577,16 +577,24 @@ export function conflitosDaAgenda(itens, regraBruta = null) {
     const ordenados = [...lista].sort(
       (a, b) => minutos(a.inicio) - minutos(b.inicio),
     );
-    for (let k = 1; k < ordenados.length; k += 1) {
-      const a = ordenados[k - 1];
-      const b = ordenados[k];
+    /*
+      Compara cada horário com o que termina mais tarde entre os anteriores,
+      não só com o vizinho: uma entrevista longa pode cobrir várias seguintes.
+    */
+    let a = null;
+    for (const b of ordenados) {
       // O repetido já é acusado como REPETIDO; não conflita consigo.
-      if (a.analiseId !== b.analiseId && minutos(b.inicio) < minutos(a.fim))
+      if (
+        a &&
+        a.analiseId !== b.analiseId &&
+        minutos(b.inicio) < minutos(a.fim)
+      )
         conflitos.push({
           tipo: "HORARIO",
           ids: [a.analiseId, b.analiseId],
           texto: `${a.nome} e ${b.nome}: ${nomeDaBanca(regraBruta, a.banca)}, ${dataBR(a.data)}, ${a.inicio}.`,
         });
+      if (!a || minutos(b.fim) > minutos(a.fim)) a = b;
     }
   }
   return conflitos;
