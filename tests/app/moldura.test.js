@@ -8,6 +8,10 @@ import {
   EVENTO_BARRA_ALTERNADA,
   EVENTO_TEMA_ALTERADO,
 } from "../../src/lib/eventos-da-barra-lateral.js";
+import {
+  definirAreaAtual,
+  redefinirDadosDoMonitoramento,
+} from "../../src/componentes/dados-do-monitoramento.js";
 
 /* A moldura do app (src/app/moldura.js): barra, tema, tela cheia e PDF. */
 
@@ -48,7 +52,10 @@ beforeEach(() => {
   document.documentElement.setAttribute("data-theme", "");
   document.body.innerHTML = `<i id="fullscreenActionIcon"></i><div class="content"><p>conteúdo</p></div>`;
 });
-afterEach(() => vi.useRealTimers());
+afterEach(() => {
+  vi.useRealTimers();
+  redefinirDadosDoMonitoramento();
+});
 
 describe("barra lateral", () => {
   it("no computador, recolhe/expande, guarda e avisa a barra React", () => {
@@ -159,5 +166,16 @@ describe("relatório em PDF", () => {
     vi.advanceTimersByTime(1500);
     expect(document.getElementById("printReportHeader")).toBeNull();
     expect(avisar).toHaveBeenCalled();
+  });
+
+  it.each([
+    ["saude-indigena", "AgSUS Monitora — Saúde Indígena"],
+    ["sede", "AgSUS Monitora — SEDE"],
+    ["projetos", "AgSUS Monitora — Projetos"],
+  ])("o título do relatório é o da área aberta (%s)", (area, titulo) => {
+    definirAreaAtual(area);
+    montar().moldura.exportarPdf();
+    const cabecalho = document.getElementById("printReportHeader");
+    expect(cabecalho.firstChild.firstChild.textContent).toBe(titulo);
   });
 });
