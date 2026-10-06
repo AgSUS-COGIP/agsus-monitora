@@ -564,11 +564,71 @@ describe("login Google", () => {
     cliente.definirSessao(sessaoDe("u5"));
     await janela.ouvintes.message({
       origin: "https://monitora.test",
-      data: { type: "agsus-monitora:login-concluido" },
+      data: { type: "agsus-monitora:login-concluido", result: "success" },
     });
     expect(sistema.abrir).toHaveBeenCalledWith(
       expect.objectContaining({ origem: "oauth_popup" }),
     );
+  });
+
+  it("o popup avisa que falhou: mensagem certa na hora e o vigia da janela sai", async () => {
+    const popup = {
+      closed: false,
+      location: { replace: vi.fn() },
+      close: vi.fn(),
+    };
+    const janela = janelaFalsa({ popup });
+    janela.setInterval = vi.fn(() => 7);
+    const { sessao, cliente } = montar({ janela });
+    await sessao.iniciar();
+    await sessao.entrarComGoogle();
+    const vigia = janela.setInterval.mock.calls[0][0];
+    const consultas = cliente.auth.getSession.mock.calls.length;
+
+    await janela.ouvintes.message({
+      origin: "https://monitora.test",
+      data: {
+        type: "agsus-monitora:login-concluido",
+        result: "oauth_callback",
+      },
+    });
+    expect(janela.clearInterval).toHaveBeenCalledWith(7);
+    expect(sessao.obter().entrando).toBe(false);
+    expect(sessao.obter().mensagem).toEqual({
+      texto: MENSAGENS.falhaNoRetorno,
+      tom: "error",
+    });
+    // Sem esperar sessão que não vem.
+    expect(cliente.auth.getSession).toHaveBeenCalledTimes(consultas);
+
+    // A janela fechou por conclusão: nada de "fechada antes de concluir".
+    popup.closed = true;
+    await vigia();
+    expect(sessao.obter().mensagem.texto).toBe(MENSAGENS.falhaNoRetorno);
+  });
+
+  it("janela fechada e a sessão não pôde ser lida: o botão volta", async () => {
+    const popup = {
+      closed: false,
+      location: { replace: vi.fn() },
+      close: vi.fn(),
+    };
+    const janela = janelaFalsa({ popup });
+    const { sessao, cliente } = montar({ janela });
+    await sessao.iniciar();
+    await sessao.entrarComGoogle();
+    const vigia = janela.setInterval.mock.calls[0][0];
+    const erro = vi.spyOn(console, "error").mockImplementation(() => {});
+    cliente.auth.getSession.mockRejectedValue(new Error("armazenamento"));
+    popup.closed = true;
+    vigia();
+    await proximoCiclo();
+    expect(sessao.obter().entrando).toBe(false);
+    expect(sessao.obter().mensagem).toEqual({
+      texto: MENSAGENS.falhaNoPopup,
+      tom: "error",
+    });
+    erro.mockRestore();
   });
 
   it("mensagem de outra origem é ignorada", async () => {

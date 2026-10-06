@@ -186,6 +186,8 @@ export function criarSessao({
   let iniciado = false;
   let ouvintesDaJanela = false;
   let trocandoCodigo = false;
+  let vigiaDoPopup = null;
+  let tentativaDoPopup = 0;
   let usuarioCarregado = "";
   let ultimoSignedIn = 0;
   let carregamento = null;
@@ -588,29 +590,67 @@ export function criarSessao({
     });
   }
 
-  function vigiarPopup(popup) {
-    const relogio = janela.setInterval(async () => {
-      if (!popup.closed) return;
-      janela.clearInterval(relogio);
-      const sessao = await esperarSessao("", 1400);
+  function pararVigiaDoPopup() {
+    if (vigiaDoPopup === null) return;
+    janela.clearInterval(vigiaDoPopup);
+    vigiaDoPopup = null;
+  }
+
+  /*
+    Espera a sessão que o popup deixou no armazenamento e entra; sem ela, o
+    botão volta com `mensagem`. Uma tentativa mais nova (a mensagem do popup
+    chegou enquanto o vigia esperava) torna esta sem efeito.
+  */
+  async function concluirPeloPopup(tentativa, limiteMs, mensagem) {
+    try {
+      const sessao = await esperarSessao("", limiteMs);
+      if (tentativa !== tentativaDoPopup) return;
       if (isUsableSession(sessao)) {
         await entrar(sessao, "oauth_popup");
         return;
       }
-      liberarBotao({ texto: MENSAGENS.janelaFechada, tom: "warn" });
+      liberarBotao(mensagem);
+    } catch (erro) {
+      console.error("Falha ao concluir o login pelo popup:", erro);
+      if (tentativa === tentativaDoPopup)
+        liberarBotao({ texto: MENSAGENS.falhaNoPopup, tom: "error" });
+    }
+  }
+
+  /* A janela fechada sem a mensagem do popup: a pessoa desistiu. */
+  function vigiarPopup(popup) {
+    pararVigiaDoPopup();
+    const tentativa = ++tentativaDoPopup;
+    vigiaDoPopup = janela.setInterval(() => {
+      if (!popup.closed) return;
+      pararVigiaDoPopup();
+      void concluirPeloPopup(tentativa, 1400, {
+        texto: MENSAGENS.janelaFechada,
+        tom: "warn",
+      });
     }, 400);
   }
 
   /*
-    O popup (auth/callback.html) avisa aqui quando trocou o código; a sessão
-    chega pelo armazenamento compartilhado.
+    O popup (auth/callback.html) avisa aqui como terminou (`result`). Deu certo,
+    a sessão chega pelo armazenamento compartilhado; deu errado, a mensagem é
+    imediata. Nos dois casos o vigia da janela sai: ela fechou por conclusão,
+    não por desistência.
   */
   async function aoReceberMensagem(evento) {
     if (evento.origin !== janela.location.origin) return;
     if (evento.data?.type !== LOGIN_POPUP_MESSAGE) return;
-    const sessao = await esperarSessao("", 5000);
-    if (isUsableSession(sessao)) await entrar(sessao, "oauth_popup");
-    else liberarBotao({ texto: MENSAGENS.falhaNoPopup, tom: "error" });
+    pararVigiaDoPopup();
+    const tentativa = ++tentativaDoPopup;
+    // A mesma mensagem do retorno com `?auth_error=` (login sem popup).
+    if (evento.data.result !== "success") {
+      liberarBotao({ texto: MENSAGENS.falhaNoRetorno, tom: "error" });
+      return;
+    }
+    await concluirPeloPopup(tentativa, 5000, {
+      texto: MENSAGENS.falhaNoPopup,
+      tom: "error",
+    });
   }
 
   /*
