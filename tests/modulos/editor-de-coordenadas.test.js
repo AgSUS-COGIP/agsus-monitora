@@ -390,6 +390,23 @@ describe("editor de coordenadas: sugestões", () => {
     expect(pin.latlng).toEqual([-12, -51]);
     expect(chamadas(RPC_SALVAR)).toHaveLength(0);
   });
+
+  it("a dica do círculo é texto: nome de base externa não vira HTML", async () => {
+    respostas[RPC_PENDENCIAS] = () => {
+      const pendencia = pendenciaDoPoloA();
+      pendencia.candidatos[0].n = '<img src=x onerror="alert(1)">';
+      return { data: [pendencia], error: null };
+    };
+    await renderizar();
+    await escolher("Polo · Polo A");
+    const circulos = [...mapa.camadas]
+      .flatMap((c) => [...(c.camadas || [])])
+      .filter((c) => c.tipo === "circleMarker");
+    expect(circulos.length).toBeGreaterThan(0);
+    for (const c of circulos) expect(typeof c.dica).not.toBe("string");
+    const dicas = circulos.map((c) => c.dica.textContent).join(" ");
+    expect(dicas).toContain('<img src=x onerror="alert(1)">');
+  });
 });
 
 describe("editor de coordenadas: histórico e desfazer", () => {
