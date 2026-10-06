@@ -45,7 +45,7 @@ os modelos em `supabase/correcoes/20261006-modelos-da-regra-da-analise.sql` e o 
 ## Blocos, situações e efeitos
 
 **perguntas:** blocos da ficha | bloco da regra | efeito do bloco | situacoes do bloco | motivos padronizados | o que elimina | eliminatorio
-**resposta:** Na regra, cada documento ou pergunta da Empregare vira um bloco: título, item do edital, as perguntas ligadas pelo começo do enunciado (ex.: "Pergunta 15 -"), uma condição opcional (só para indígena, só para uma modalidade) e o efeito de cada situação — Conforme, Não conforme, Não enviado (Não se aplica não tem efeito). Os efeitos são: elimina (inapto, nota 0), zera os pontos do bloco, tira só os pontos de aldeia, só registro, encaminha à heteroidentificação ou à perícia, e segue na ampla. Cada bloco tem motivos padronizados com o texto que vai ao parecer e o item do edital; um motivo com efeito próprio vale no lugar do efeito da situação (ex.: "Aldeia fora do DSEI" só tira a aldeia).
+**resposta:** Na regra, cada documento ou pergunta da Empregare vira um bloco: título, item do edital, as perguntas ligadas pelo começo do enunciado (ex.: "Você é indígena e mora em aldeia"), uma condição opcional (só para indígena, só para uma modalidade) e o efeito de cada situação — Conforme, Não conforme, Não enviado (Não se aplica não tem efeito). Os efeitos são: elimina (inapto, nota 0), zera os pontos do bloco, tira só os pontos de aldeia, só registro, encaminha à heteroidentificação ou à perícia, e segue na ampla. Cada bloco tem motivos padronizados com o texto que vai ao parecer e o item do edital; um motivo com efeito próprio vale no lugar do efeito da situação (ex.: "Aldeia fora do DSEI" só tira a aldeia).
 **fonte:** src/lib/avaliacao-documental/catalogo.js; src/lib/avaliacao-documental/pontuacao.js
 **abrir:** avaliacao-documental
 
@@ -54,6 +54,13 @@ os modelos em `supabase/correcoes/20261006-modelos-da-regra-da-analise.sql` e o 
 **perguntas:** perguntas da empregare na regra | ligar pergunta ao bloco | nota declarada | divergencia da art | respostas encontradas
 **resposta:** Para quem coordena, a aba Regra lista as perguntas da última carga do robô da Empregare nas vagas do edital, com as respostas encontradas e quantas vezes cada uma aparece — respostas que aparecem uma vez só não são mostradas, para não expor texto livre. Dali se liga a pergunta a um bloco ou se cria a pontuação da nota declarada: cada resposta vale pontos (ou meses × pontos por mês), por parcial. A nota declarada só confere a ART (a nota do questionário da Empregare); se divergir além da tolerância, vira aviso, e a ordem da Provisória continua pela ART.
 **fonte:** src/lib/avaliacao-documental/nota-declarada.js; supabase/migrations/20261006100000_regra_da_analise.sql
+**abrir:** avaliacao-documental
+
+## Como a regra acha a pergunta da Empregare
+
+**perguntas:** pergunta pelo enunciado | numero da pergunta muda | pergunta 17 | pergunta da experiencia | comeco do enunciado | pergunta ambigua | casa com mais de uma coluna | alternativas da pergunta
+**resposta:** No arquivo da Empregare cada pergunta é uma coluna "Pergunta N - enunciado", e o número N da mesma pergunta muda de vaga para vaga no mesmo edital (no 93/2026 a experiência é a Pergunta 10, 11 ou 12, conforme o cargo). Por isso, na regra, escreva o começo do enunciado — por exemplo "Experiência Profissional" —, sem acento ou caixa importando; ele não confunde com "Anexe o comprovante de Experiência Profissional…", que começa diferente. O começo do nome ("Pergunta 15 -") ainda funciona, mas só serve quando o número não muda. Quando o próprio enunciado muda de questionário para questionário, separe as alternativas com ";" (ex.: "Selecione sua Experiência Profissional; Marque a pontuação referente"): vale qualquer uma. Se o texto casar com mais de uma coluna, a regra não usa nenhuma e a Pré-classificação avisa que a pergunta é ambígua; aí escreva um começo que só ela tenha.
+**fonte:** src/lib/avaliacao-documental/nota-declarada.js; python/monitora/avaliacao_documental/nota_declarada.py; supabase/correcoes/20261007-perguntas-pelo-texto.sql
 **abrir:** avaliacao-documental
 
 ## Testar a regra com um candidato fictício
@@ -161,7 +168,7 @@ os modelos em `supabase/correcoes/20261006-modelos-da-regra-da-analise.sql` e o 
 ## Desempate da Provisória
 
 **perguntas:** desempate da provisoria | criterios de desempate da art | empate na art | item 10.1 | maior experiencia declarada | idade igual ou superior a 60 | maior idade no desempate
-**resposta:** Com a mesma ART, a Provisória segue os desempates da regra, na ordem escolhida na aba Regra: 60 anos ou mais (o mais velho primeiro), a maior experiência declarada (a faixa respondida na pergunta da experiência do questionário, lida em meses pelo limite de baixo — "De 1 a 2 anos" vale 12; resposta que não dá para ler fica por último), a maior idade e a candidatura mais antiga. Por último vale sempre o código do candidato. O 93/2026 (item 10.1) usa 60 anos ou mais, a experiência declarada e a maior idade; a experiência comprovada entra quando houver a ficha.
+**resposta:** Com a mesma ART, a Provisória segue os desempates da regra, na ordem escolhida na aba Regra: 60 anos ou mais (o mais velho primeiro), a maior experiência declarada (a faixa respondida na pergunta da experiência do questionário, achada pelo começo do enunciado, e lida em meses pelo limite de baixo — "6 meses obrigatórios" vale 6, "1 ano e 6 meses" vale 18, "De 1 a 2 anos" vale 12; resposta vazia ("--") ou que não dá para ler fica por último), a maior idade e a candidatura mais antiga. Por último vale sempre o código do candidato. O 93/2026 e o 114/2026 (item 10.1) usam 60 anos ou mais, a experiência declarada (pergunta "Experiência Profissional") e a maior idade; a experiência comprovada entra quando houver a ficha.
 **fonte:** src/lib/avaliacao-documental/pre-classificacao.js; python/monitora/avaliacao_documental/pre_classificacao.py
 **abrir:** avaliacao-documental
 
