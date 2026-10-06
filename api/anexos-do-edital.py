@@ -103,7 +103,11 @@ def datas_com_ano(periodos, ano):
                 break
             if not a and anterior and (anterior - data).days > 60:
                 atual += 1
-                data = date(atual, m, d)
+                try:
+                    data = date(atual, m, d)
+                except ValueError:  # 29/02 num ano que não é bissexto
+                    par = None
+                    break
             par.append(data)
             anterior = data
         saida.append(tuple(par) if par else None)
@@ -318,7 +322,10 @@ class handler(BaseHTTPRequestHandler):
     def do_POST(self):
         if not usuario_autenticado(self.headers.get("Authorization", "")):
             return self._responder(401, {"erro": "Entre no MONITORA para importar anexos."})
-        tamanho = int(self.headers.get("Content-Length") or 0)
+        try:
+            tamanho = int(self.headers.get("Content-Length") or 0)
+        except ValueError:
+            tamanho = 0
         if tamanho <= 0:
             return self._responder(400, {"erro": "Envie o PDF de anexos do edital."})
         if tamanho > LIMITE_BYTES:
