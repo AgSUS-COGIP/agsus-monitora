@@ -386,17 +386,36 @@ describe("KPIs, gráficos e pendências", () => {
     expect(analisesPorResponsavel(linhas, 1)).toHaveLength(1);
   });
 
-  it("tendência diária em ordem, com fora do período e data no futuro", () => {
+  it("tendência diária em ordem, com data no futuro, só das análises com decisão", () => {
+    // A 5 ("Outro", conta como pendente) tem data, mas não é análise feita.
     expect(tendenciaDiaria(linhas)).toEqual([
-      expect.objectContaining({
-        rotulo: "09/09/2026",
-        valor: 1,
-        fora: 1,
-        futuras: 0,
-      }),
       expect.objectContaining({ rotulo: "10/09/2026", valor: 2, fora: 0 }),
       expect.objectContaining({ rotulo: "02/10/2026", valor: 1, futuras: 1 }),
     ]);
+  });
+
+  it("pendente com data (planilha refeita) não entra no gráfico", () => {
+    const dias = tendenciaDiaria(
+      prontas([
+        linha({
+          id: "a",
+          status_consolidado: "Pendente",
+          data_analise: "06/10/2026",
+        }),
+        linha({
+          id: "b",
+          status_consolidado: "Pendente",
+          data_analise: "06/10/2026",
+        }),
+        linha({
+          id: "c",
+          status_consolidado: "Aprovado",
+          data_analise: "06/10/2026",
+        }),
+        linha({ id: "d", status_consolidado: "", data_analise: "05/10/2026" }),
+      ]),
+    );
+    expect(dias.map((d) => [d.rotulo, d.valor])).toEqual([["06/10/2026", 1]]);
   });
 
   it("pendências na ordem de gravidade, com o atalho de cada uma (inclui sem responsável)", () => {
@@ -609,10 +628,14 @@ describe("CSV", () => {
 /* Histórias em docs/historias-de-usuario/analises-curriculares.md. */
 describe("AC-1/AC-2 — filtro por data da análise (regra)", () => {
   const linhas = [
-    { id: "1", data_analise: "01/09/2026" },
-    { id: "2", data_analise: "2026-09-15" },
-    { id: "3", data_analise: "15/09/2026" },
-    { id: "4", data_analise: "2026-09-20T10:00:00" },
+    { id: "1", status_consolidado: "Aprovado", data_analise: "01/09/2026" },
+    { id: "2", status_consolidado: "Aprovado", data_analise: "2026-09-15" },
+    { id: "3", status_consolidado: "Reprovado", data_analise: "15/09/2026" },
+    {
+      id: "4",
+      status_consolidado: "Revisar",
+      data_analise: "2026-09-20T10:00:00",
+    },
     { id: "5", data_analise: "" },
     { id: "6", data_analise: "data esquisita" },
   ];

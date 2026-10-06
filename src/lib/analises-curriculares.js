@@ -566,10 +566,17 @@ export function analisesPorResponsavel(linhas, limite = 12) {
     .slice(0, limite);
 }
 
-/* Análises por dia; `fora` e `futuras` marcam os pontos em vermelho. */
+/*
+  Análises feitas por dia; `fora` e `futuras` marcam os pontos em vermelho.
+  Só conta análise com decisão (Aprovado, Reprovado ou Revisar): pendente com
+  data (planilha refeita, data preenchida antes da análise) não é análise feita.
+*/
+const STATUS_COM_DECISAO = new Set(["Aprovado", "Reprovado", "Revisar"]);
+
 export function tendenciaDiaria(linhas) {
   const porDia = new Map();
   for (const linha of linhas || []) {
+    if (!STATUS_COM_DECISAO.has(texto(linha.status_consolidado))) continue;
     const rotulo = formatarData(linha.data_analise);
     if (!rotulo) continue;
     if (!porDia.has(rotulo))
