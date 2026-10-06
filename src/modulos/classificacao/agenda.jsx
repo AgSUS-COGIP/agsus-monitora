@@ -1031,14 +1031,14 @@ export function Agenda({ estado, agenda, e, calcular }) {
         {a.erro}
       </Aviso>
     );
-  if (a.erro && !a.dados)
-    return (
-      <ErroAoCarregar
-        oQue="a agenda das entrevistas"
-        mensagem={a.erro}
-        aoTentar={() => void agenda.carregar(e.editalId)}
-      />
-    );
+  const erro = a.erro ? (
+    <ErroAoCarregar
+      oQue="a agenda das entrevistas"
+      mensagem={a.erro}
+      aoTentar={() => void agenda.carregar(e.editalId)}
+    />
+  ) : null;
+  if (erro && !a.dados) return erro;
   if (!a.dados || a.editalId !== e.editalId)
     return (
       <div className="ui-card" aria-busy="true">
@@ -1049,6 +1049,7 @@ export function Agenda({ estado, agenda, e, calcular }) {
   const podeEditar = Boolean(a.dados.pode_editar);
   return (
     <div className="classificacao-agenda">
+      {erro}
       <FormularioDaRegra
         key={`${e.editalId}:${a.dados.regra?.versao ?? 0}`}
         agenda={agenda}
