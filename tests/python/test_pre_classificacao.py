@@ -228,5 +228,61 @@ class PecasDaConta(unittest.TestCase):
         self.assertEqual(pc.numero_no_texto(18.5), "18,5")
 
 
+class NotaDeclaradaPorNivel(unittest.TestCase):
+    ND = PRE["nota_declarada_por_nivel"]
+
+    def test_casos_dourados(self):
+        for caso in self.ND["casos"]:
+            with self.subTest(caso["nome"]):
+                self.assertEqual(
+                    nd.calcular_nota_declarada(self.ND["regra"], caso["respostas"], caso["nivel"]),
+                    caso["esperado"],
+                )
+
+    def test_caso_real_do_93_tecnico_50_igual_a_art(self):
+        respostas = self.ND["casos"][0]["respostas"]
+        r = nd.calcular_nota_declarada(self.ND["regra"], respostas, "tecnico")
+        self.assertEqual(r["parciais"], {"FORMACAO": 0, "CURSOS": 10, "EXPERIENCIA": 40})
+        self.assertEqual(r["total"], 50)
+        self.assertTrue(r["completa"])
+        self.assertFalse(nd.diverge_da_art(pc.art_das_colunas(respostas), r["total"]))
+
+    def test_mesma_resposta_por_nivel_e_sem_nivel(self):
+        respostas = {"Pergunta 11 - Experiência Profissional": '"1 ano"'}
+
+        def exp(nivel):
+            return nd.calcular_nota_declarada(self.ND["regra"], respostas, nivel)["parciais"].get("EXPERIENCIA")
+
+        self.assertEqual([exp("superior"), exp("tecnico"), exp("medio")], [5, 4, 4])
+        sem = nd.calcular_nota_declarada(self.ND["regra"], respostas, None)
+        self.assertNotIn("EXPERIENCIA", sem["parciais"])
+        self.assertTrue(sem["itens"][2]["nivel_desconhecido"])
+        self.assertFalse(sem["completa"])
+        self.assertEqual(sem["sem_mapa"], 0)
+
+    def test_nivel_da_vaga(self):
+        for caso in PRE["niveis_da_vaga"]["casos"]:
+            with self.subTest(caso["cargo"]):
+                self.assertEqual(pc.nivel_da_vaga(caso["cargo"], caso["documental"]), caso["esperado"])
+
+    def test_divergencia_so_com_declarada_completa_e_aviso_sem_nivel(self):
+        por_nivel, sem_nivel = [c for c in PRE["casos"] if "nível" in c["nome"]]
+
+        def div(caso):
+            return {l["id"]: l["divergente"] for l in rodar(caso)["linhas"]}
+
+        self.assertEqual(div(por_nivel), {"t01": False, "t02": False, "t03": True, "t04": False})
+        self.assertEqual(div(sem_nivel), {"t01": False, "t02": False, "t03": False, "t04": False})
+        self.assertEqual(rodar(sem_nivel)["resumo"]["avisos"], ["SEM_NIVEL:NOTA_EXPERIENCIA"])
+        for caso in (por_nivel, sem_nivel):
+            self.assertEqual(
+                {
+                    l["id"]: {"declarada": l["declarada"], "parciais": l["declarada_parciais"]}
+                    for l in rodar(caso)["linhas"]
+                },
+                caso["esperado_declarada"],
+            )
+
+
 if __name__ == "__main__":
     unittest.main()

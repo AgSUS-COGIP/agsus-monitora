@@ -887,7 +887,7 @@
         "eliminados": {
           "d07": "CANCELADO"
         },
-        "avisos": ["ART_AUSENTE"]
+        "avisos": ["ART_AUSENTE", "SEM_NIVEL:NOTA_EXPERIENCIA"]
       }
     },
     {

@@ -225,6 +225,17 @@ class Fluxo(unittest.TestCase):
         rodar(banco, [])
         self.assertEqual(banco.de("abrir_fichas_pre_classificacao"), [])
 
+    def test_a_vaga_leva_o_nivel_do_cargo_e_da_regra_de_classificacao(self):
+        quadro = {"vagas_imediatas": 1, "cadastro_reserva": False, "modalidades": None}
+        tecnico = job.dados_da_vaga(
+            {"codigo": "180250", "cargo": "TÉCNICO DE ENFERMAGEM DO TRABALHO", "quadro": quadro}
+        )
+        self.assertEqual(tecnico["nivel"], "tecnico")
+        superior = job.dados_da_vaga({"codigo": "179698", "cargo": "MÉDICO DO TRABALHO (Nível Superior)"}, {})
+        self.assertEqual((superior["nivel"], superior["vagas_imediatas"]), ("superior", None))
+        self.assertIsNone(job.dados_da_vaga({"codigo": "1", "cargo": "Engenheiro"}, {})["nivel"])
+        self.assertEqual(job.dados_da_vaga({"codigo": "1", "cargo": None}, {"nivel_padrao": "medio"})["nivel"], "medio")
+
     def test_o_resumo_nao_tem_dado_pessoal(self):
         banco = BancoFalso([edital_93()], CANDIDATOS)
         _codigo, saida = rodar(banco, [])

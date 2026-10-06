@@ -159,6 +159,18 @@ describe("lançamento inicial", () => {
     expect(nivelDaFicha("Engenheiro", {})).toBe("superior");
   });
 
+  it("sem termo na regra, o nível escrito no cargo (93/2026: '(Nível Superior)', 'TÉCNICO DE…')", () => {
+    expect(nivelDaFicha("TÉCNICO DE ENFERMAGEM DO TRABALHO", {})).toBe(
+      "tecnico",
+    );
+    expect(
+      nivelDaFicha("TÉCNICO DE SEGURANÇA DO TRABALHO (Nível Médio)", {}),
+    ).toBe("medio");
+    expect(
+      nivelDaFicha("ANALISTA DE GESTÃO: MÉDICO DO TRABALHO (Nível Superior)"),
+    ).toBe("superior");
+  });
+
   it("indígena e aldeia como o candidato respondeu, só com critério étnico na regra", () => {
     const regra = structuredClone(REGRA);
     regra.blocos.push({
@@ -391,5 +403,50 @@ describe("apoio da tela", () => {
     expect(
       textoDaAlteracao({ rotulo: "Situação", de: null, para: "CONFORME" }),
     ).toBe("Situação: — → CONFORME");
+  });
+});
+
+describe("experiência declarada por nível (93/2026)", () => {
+  const COM_EXP = structuredClone(REGRA);
+  COM_EXP.provisoria.nota_declarada.push({
+    parcial: "EXPERIENCIA",
+    pergunta: "Experiência Profissional",
+    tipo: "OPCAO",
+    pontos_por_nivel: {
+      superior: { "6 meses obrigatórios": 0, "2 anos": 15 },
+      tecnico: { "6 meses obrigatórios": 0, "2 anos": 12 },
+      medio: { "6 meses obrigatórios": 0, "2 anos": 12 },
+    },
+  });
+  const RESP = {
+    ...RESPOSTAS,
+    "Pergunta 11 - Experiência Profissional em atividades compatíveis com o cargo: (contabilizada a partir de 06 meses)":
+      '"2 anos&nbsp;"',
+  };
+
+  it("o bloco de experiência mostra os pontos declarados do nível da vaga", () => {
+    expect(declaradaDaFicha(COM_EXP, RESP, "superior").parciais).toEqual({
+      FORMACAO: 5,
+      CURSOS: 5,
+      EXPERIENCIA: 15,
+    });
+    expect(
+      declaradaDaFicha(COM_EXP, RESP, "tecnico").parciais.EXPERIENCIA,
+    ).toBe(12);
+    expect(
+      declaradaDaFicha(COM_EXP, RESP, "fundamental").parciais.EXPERIENCIA,
+    ).toBeUndefined();
+  });
+
+  it("nota apurada da experiência diferente da declarada exige justificativa", () => {
+    const lanc = lancamentoCompleto();
+    const av = calcularFicha(COM_EXP, lanc, DOCUMENTAL);
+    expect(av.parciais.EXPERIENCIA).toBe(25);
+    const declarada = declaradaDaFicha(COM_EXP, RESP, lanc.nivel);
+    expect(pendenciasDaFicha(COM_EXP, lanc, av, declarada)).toContainEqual({
+      bloco: "EXPERIENCIA",
+      texto: "Nota diferente da declarada: escolha a justificativa.",
+    });
+    expect(resumoParaGravar(av, declarada).declarada.EXPERIENCIA).toBe(15);
   });
 });

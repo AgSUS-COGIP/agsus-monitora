@@ -618,6 +618,29 @@ describe("estado da ficha: salvamento automático", () => {
       return r;
     });
 
+  it("a declarada segue o nível do lançamento (experiência com pontos por nível)", async () => {
+    const ficha = fichaDoBanco();
+    ficha.regra.configuracao = structuredClone(REGRA);
+    ficha.regra.configuracao.provisoria.nota_declarada.push({
+      parcial: "EXPERIENCIA",
+      pergunta: "Experiência Profissional",
+      tipo: "OPCAO",
+      pontos_por_nivel: {
+        superior: { "4 anos ou mais": 35 },
+        tecnico: { "4 anos ou mais": 28 },
+      },
+    });
+    const { estado } = loja(
+      rpcFalso({ obter_ficha_analise: () => structuredClone(ficha) }),
+    );
+    await estado.carregar("f1");
+    expect(estado.obter().lancamento.nivel).toBe("superior");
+    expect(estado.obter().declarada.parciais.EXPERIENCIA).toBe(35);
+    estado.mudar((l) => ({ ...l, nivel: "tecnico" }));
+    expect(estado.obter().declarada.parciais.EXPERIENCIA).toBe(28);
+    estado.descartar();
+  });
+
   it("cada mudança agenda o rascunho; mudança durante o envio salva de novo com a versão nova", async () => {
     let soltar;
     const rpc = rpcFalso({

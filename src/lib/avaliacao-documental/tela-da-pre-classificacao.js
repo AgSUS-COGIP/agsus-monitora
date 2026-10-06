@@ -10,6 +10,7 @@
 import { normalizarRegraAnalise } from "./regra.js";
 import {
   PREFIXO_DO_AVISO_DE_PERGUNTA_AMBIGUA,
+  PREFIXO_DO_AVISO_DE_SEM_NIVEL,
   tamanhoDoLote,
 } from "./pre-classificacao.js";
 
@@ -37,6 +38,8 @@ export function textoDoAviso(codigo) {
     return `A coluna da regra ${c.slice(15)} não veio no arquivo.`;
   if (c.startsWith(PREFIXO_DO_AVISO_DE_PERGUNTA_AMBIGUA))
     return `${perguntaDoAviso(c.slice(PREFIXO_DO_AVISO_DE_PERGUNTA_AMBIGUA.length))} casa com mais de uma coluna do arquivo: na regra, use um começo de enunciado que só ela tenha.`;
+  if (c.startsWith(PREFIXO_DO_AVISO_DE_SEM_NIVEL))
+    return `${perguntaDoAviso(c.slice(PREFIXO_DO_AVISO_DE_SEM_NIVEL.length))} pontua por nível, e o nível da vaga não foi identificado (ou não tem pontos na regra): ficou fora da nota declarada e da conferência com a ART.`;
   return AVISOS_DA_VAGA[c] ?? c;
 }
 

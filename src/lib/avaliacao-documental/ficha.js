@@ -6,7 +6,8 @@
     perguntas ligadas ao bloco na regra (o formato real: aspas, múltipla
     escolha, "--", &nbsp;), pela mesma leitura da nota declarada
     (nota-declarada.js);
-  - os pontos declarados por parcial (calcularNotaDeclarada com a regra);
+  - os pontos declarados por parcial (calcularNotaDeclarada com a regra, no
+    nível da vaga do lançamento — itens com pontos_por_nivel);
   - o lançamento inicial (nível da vaga, modalidade, indígena e aldeia pelas
     respostas) e o que falta para concluir (pendências): situação de cada
     bloco, motivo do Não conforme/Não enviado, motivo do item recusado e
@@ -109,13 +110,16 @@ export function sugereNaoEnviado(linhas) {
 
 /**
  * Os pontos declarados por parcial: a nota declarada da regra a partir das
- * respostas. Só entra a parcial cuja pergunta foi achada nas respostas.
+ * respostas, no nível da vaga do lançamento (a experiência do 93/2026 vale
+ * 5 a cada 6 meses no nível superior e 4 no técnico). Só entra a parcial cuja
+ * pergunta foi achada nas respostas e, no item por nível, com pontos para o
+ * nível.
  */
-export function declaradaDaFicha(regra, respostas) {
-  const calc = calcularNotaDeclarada(regra, respostas ?? {});
+export function declaradaDaFicha(regra, respostas, nivel = null) {
+  const calc = calcularNotaDeclarada(regra, respostas ?? {}, nivel);
   const parciais = {};
   for (const item of calc.itens)
-    if (item.coluna)
+    if (item.coluna && !item.nivel_desconhecido)
       parciais[item.parcial] =
         Math.round(((parciais[item.parcial] ?? 0) + item.pontos) * 1e4) / 1e4;
   return {
