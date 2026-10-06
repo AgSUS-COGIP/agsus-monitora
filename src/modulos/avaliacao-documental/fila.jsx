@@ -562,7 +562,7 @@ export function Fila({ e, fila }) {
               disabled={st.abrindo}
               onClick={() => void fila.pegarProxima(st.filtro.vaga)}
             >
-              <i className="fa-solid fa-forward" aria-hidden="true" /> Pegar
+              <i className="fa-solid fa-arrow-right" aria-hidden="true" /> Pegar
               próximo
             </button>
           ) : null}
