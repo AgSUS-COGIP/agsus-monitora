@@ -496,11 +496,17 @@ export function criarEstadoDaClassificacao({
   ) {
     if (!registrado?.retrato) return false;
     const { retrato } = registrado;
-    const nome = nomeDoArquivo(retrato, lista);
+    /*
+      O XLSX é a planilha inteira do retrato (classificação e eliminados), para
+      conferência: o recorte da lista vale para o documento, e o nome do
+      arquivo não pode dizer um recorte que o conteúdo não tem.
+    */
     if (formato === "xlsx") {
+      const nome = nomeDoArquivo(retrato);
       baixar(gerarXlsxDaLista(retrato), `${nome}.xlsx`, MIME_XLSX);
       return true;
     }
+    const nome = nomeDoArquivo(retrato, lista);
     const doc = documentoDaLista(registrado, { lista, fase, documento });
     const marca = marcaDoDocumento();
     if (formato === "docx") {

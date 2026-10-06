@@ -402,6 +402,29 @@ describe("tela de Classificação", () => {
     expect(pagina).toContain("AGÊNCIA DE TESTE");
   });
 
+  it("Exportar: o recorte é de cada lista; o XLSX (planilha inteira) não leva o recorte no nome", async () => {
+    await montar(supabaseFalso());
+    await abrirEdital();
+    await clicar(secao.querySelector("[data-acao='gerar']"));
+    await esperar();
+    const recorte = () =>
+      secao.querySelector("[data-tour='classificacao-exportar-lista']");
+    await escolher(recorte(), "geral");
+    baixar.mockClear();
+    await clicar(secao.querySelector("[data-exportar='docx']"));
+    await esperar();
+    expect(baixar.mock.calls[0][1]).toBe(
+      "classificacao-final-83-2026-geral.docx",
+    );
+    await clicar(secao.querySelector("[data-exportar='xlsx']"));
+    expect(baixar.mock.calls[1][1]).toBe("classificacao-final-83-2026.xlsx");
+
+    await clicar(
+      secao.querySelector(".classificacao-tipos [data-valor='PRELIMINAR']"),
+    );
+    expect(recorte().value).toBe("todas");
+  });
+
   it("Copiar para o SEI: HTML com as classes do SEI e texto numerado, da lista registrada", async () => {
     await montar(supabaseFalso());
     await abrirEdital();
@@ -583,6 +606,67 @@ describe("tela de Classificação", () => {
     ]);
     expect(toast).toHaveBeenCalledWith("Regra salva (versão 3).", "success");
   });
+
+  it("Regra: digitar tecla a tecla não come a vírgula nem o espaço (números e listas)", async () => {
+    const supabase = supabaseFalso();
+    await montar(supabase);
+    await abrirEdital();
+    await clicar(secao.querySelector(".ui-topo [data-valor='regra']"));
+    const campo = (rotulo) => {
+      const label = [...secao.querySelectorAll("label")].find(
+        (l) => l.textContent.trim() === rotulo,
+      );
+      return document.getElementById(label.htmlFor);
+    };
+    // Cada pedaço continua o que o campo mostra, como teclas seguidas.
+    const digitarAosPoucos = async (entrada, pedacos) => {
+      await digitar(entrada, "");
+      for (const p of pedacos) await digitar(entrada, entrada.value + p);
+    };
+    const pp = secao.querySelector("[data-modalidade='PP']");
+
+    const minimo = campo("Mínimo documental");
+    await digitarAosPoucos(minimo, ["7,", "5"]);
+    expect(minimo.value).toBe("7,5");
+    const percentual = pp.querySelector("[aria-label='Percentual']");
+    await digitarAosPoucos(percentual, ["12,", "5"]);
+    expect(percentual.value).toBe("12,5");
+    const niveis = campo("Nível pelo início do cargo");
+    await digitarAosPoucos(niveis, [
+      "Técnico",
+      "=tecnico;",
+      " Agente ",
+      "de saúde=fundamental",
+    ]);
+    expect(niveis.value).toBe("Técnico=tecnico; Agente de saúde=fundamental");
+    const agrupa = pp.querySelector("[aria-label='Reúne as modalidades']");
+    await digitarAosPoucos(agrupa, ["PI,", " PQ"]);
+    expect(agrupa.value).toBe("PI, PQ");
+    const situacoes = campo("Situações aptas na análise");
+    await digitarAosPoucos(situacoes, ["Aprovado,", " Apto ", "com ressalva"]);
+    expect(situacoes.value).toBe("Aprovado, Apto com ressalva");
+
+    await digitar(
+      [...secao.querySelectorAll(".classificacao-salvar input")][0],
+      "Mínimos do item 9",
+    );
+    await clicar(secao.querySelector("[data-acao='salvar-regra']"));
+    await esperar();
+    const { p_configuracao } = supabase.rpc.mock.calls.find(
+      ([nome]) => nome === "salvar_regra_classificacao",
+    )[1];
+    expect(p_configuracao.documental).toMatchObject({
+      nota_minima: 7.5,
+      situacoes_aptas: ["Aprovado", "Apto com ressalva"],
+      niveis_por_cargo: [
+        { termo: "Técnico", nivel: "tecnico" },
+        { termo: "Agente de saúde", nivel: "fundamental" },
+      ],
+    });
+    expect(
+      p_configuracao.modalidades.find((m) => m.codigo === "PP"),
+    ).toMatchObject({ percentual: 12.5, agrupa: ["PI", "PQ"] });
+  }, 30000);
 
   it("sem permissão no banco, mostra o aviso de acesso", async () => {
     const supabase = {
