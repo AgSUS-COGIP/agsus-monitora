@@ -311,6 +311,191 @@ class CentralDeExportacoes(unittest.TestCase):
             os.environ.update(antigo)
 
 
+# Tokens e identificadores FICTÍCIOS (formato do portal, valores inventados).
+LINK_1 = "/empresa/curriculo/detalhes?tokenCandidato=TKfict01&id=IDfict01|&candidatura=CDfict01||"
+LINK_2 = "/empresa/curriculo/detalhes?tokenCandidato=TKfict02&id=IDfict02|&candidatura=CDfict02||"
+LINK_3 = "/empresa/curriculo/detalhes?tokenCandidato=TKfict03&id=IDfict03|&candidatura=CDfict03||"
+
+HTML_DA_LISTA = f"""
+<html><body>
+<div class="nav"><a class="active" href="#">Todos (4)</a></div>
+<ul id="lista">
+  <li class="candidato" data-pessoa-id="7000001">
+    <img src="foto.png"><span>Pessoa Fictícia Um</span><br>
+    <a href="{LINK_1.replace("&", "&amp;")}">Ver detalhes</a>
+  </li>
+  <li class="candidato">
+    <input type="checkbox" data-pessoa-id="7000002" data-tokencandidato="TKfict02">
+    <div class="acoes"><a href="https://corporate.empregare.com{LINK_2}">Detalhes</a></div>
+  </li>
+  <li class="candidato" data-pessoa-id="7000003">
+    <a href="{LINK_3}">Detalhes</a>
+    <a href="{LINK_3}">Currículo</a>
+  </li>
+  <li class="candidato"><a href="/empresa/curriculo/detalhes?tokenCandidato=TKsemcodigo&id=X|">Sem código</a></li>
+  <li class="candidato" data-pessoa-id="7000004"><a href="javascript:alert(1)">Outro link</a></li>
+</ul>
+</body></html>
+"""
+
+
+class LinksDaEmpregare(unittest.TestCase):
+    def test_id_interno_da_vaga(self):
+        self.assertEqual(nav.id_interno_da_vaga("/empresa/vagas/candidaturas/Ab1cD2eF3g|"), "Ab1cD2eF3g|")
+        self.assertEqual(
+            nav.id_interno_da_vaga("https://corporate.empregare.com/empresa/vagas/candidaturas/Ab1cD2eF3g%7C?m=2"),
+            "Ab1cD2eF3g|",
+        )
+        # O código numérico dá "Sem permissão" no portal: não serve.
+        self.assertIsNone(nav.id_interno_da_vaga("/empresa/vagas/candidaturas/180231"))
+        self.assertIsNone(nav.id_interno_da_vaga("/empresa/vagas/candidaturas/180231|"))
+        self.assertIsNone(nav.id_interno_da_vaga("/empresa/vagas"))
+        self.assertIsNone(nav.id_interno_da_vaga("/empresa/vagas/candidaturas/a<b>"))
+        self.assertIsNone(nav.id_interno_da_vaga(None))
+
+    def test_link_de_detalhe(self):
+        self.assertEqual(nav.link_de_detalhe(LINK_1), nav.URL_BASE + LINK_1)
+        self.assertEqual(nav.link_de_detalhe(nav.URL_BASE + LINK_1), nav.URL_BASE + LINK_1)
+        self.assertIsNone(nav.link_de_detalhe("https://exemplo.invalid" + LINK_1))
+        self.assertIsNone(nav.link_de_detalhe("javascript:alert(1)"))
+        self.assertIsNone(nav.link_de_detalhe("/empresa/curriculo/detalhes?id=1"))
+        self.assertIsNone(nav.link_de_detalhe(LINK_1 + '"><script>'))
+
+    def test_le_codigo_e_link_de_cada_candidato(self):
+        candidatos = nav.ler_candidatos_do_html(HTML_DA_LISTA)
+        self.assertEqual(
+            candidatos,
+            [
+                {"codigo": "7000001", "link": nav.URL_BASE + LINK_1},  # &amp; volta a &
+                {"codigo": "7000002", "link": nav.URL_BASE + LINK_2},  # código no vizinho do link
+                {"codigo": "7000003", "link": nav.URL_BASE + LINK_3},
+                {"codigo": "7000003", "link": nav.URL_BASE + LINK_3},
+            ],
+        )
+
+    def test_bloco_com_dois_codigos_e_ambiguo(self):
+        html = f'<div><span data-pessoa-id="1"></span><span data-pessoa-id="2"></span><a href="{LINK_1}">x</a></div>'
+        self.assertEqual(nav.ler_candidatos_do_html(html), [])
+        self.assertEqual(nav.ler_candidatos_do_html(""), [])
+
+    def test_lista_longa_sem_estourar_a_recursao(self):
+        itens = "".join(
+            f'<div data-pessoa-id="{i}"><a href="/empresa/curriculo/detalhes?tokenCandidato=T{i}&id=I{i}|">d</a></div>'
+            for i in range(1, 3001)
+        )
+        self.assertEqual(len(nav.ler_candidatos_do_html(f"<main>{itens}</main>")), 3000)
+
+    def test_percorre_paginas_ate_acabar(self):
+        paginas = [
+            [{"codigo": "1", "link": "a"}, {"codigo": "2", "link": "b"}],
+            [{"codigo": "3", "link": "c"}, {"codigo": "1", "link": "outro"}],
+            [{"codigo": "3", "link": "c"}],  # só repetidos: fim
+            [{"codigo": "4", "link": "d"}],
+        ]
+        lidas = iter(paginas)
+        cliques = []
+        resultado = nav.percorrer_paginas(lambda: next(lidas), lambda: cliques.append(1) or True)
+        self.assertEqual(resultado, {"1": "a", "2": "b", "3": "c"})
+        self.assertEqual(len(cliques), 2)
+
+    def test_para_sem_proxima_pagina_no_limite_e_no_prazo(self):
+        def pagina():
+            pagina.n += 1
+            return [{"codigo": str(pagina.n), "link": "x"}]
+
+        pagina.n = 0
+        self.assertEqual(len(nav.percorrer_paginas(pagina, lambda: False)), 1)
+        pagina.n = 0
+        self.assertEqual(len(nav.percorrer_paginas(pagina, lambda: True, limite=5)), 5)
+        pagina.n = 0
+        relogio = iter([0, 10, 20, 30])
+        self.assertEqual(len(nav.percorrer_paginas(pagina, lambda: True, prazo=15, agora=lambda: next(relogio))), 3)
+
+    def test_mascaramento_tira_tokens_dos_links(self):
+        texto = f"falhou em {nav.URL_BASE}{LINK_1} vindo de {nav.URL_CANDIDATURAS}Ab1cD2eF3g|?m=2"
+        saida = mascaramento.mascarar(texto)
+        for proibido in ("TKfict01", "IDfict01", "CDfict01", "Ab1cD2eF3g"):
+            self.assertNotIn(proibido, saida)
+        self.assertIn("tokenCandidato=<token>", saida)
+        self.assertIn("/empresa/vagas/candidaturas/<id>", saida)
+        self.assertEqual(mascaramento.mascarar("p_vaga_id=177979"), "p_vaga_id=177979")
+
+
+class PortalFalso(nav.PortalEmpregare):
+    """O portal sem Chrome: páginas de HTML fictício e contagem do que aconteceria."""
+
+    def __init__(self, paginas, falha=None):
+        self.logs = []
+        super().__init__("pasta-falsa", self.logs.append)
+        self.paginas = list(paginas)
+        self.falha = falha
+        self.abertas = []
+        self.voltou = 0
+
+    def _abrir_candidaturas(self, ident):
+        self.abertas.append(ident)
+
+    def _carregar_e_ler_pagina(self, prazo):
+        if self.falha:
+            raise self.falha
+        return nav.ler_candidatos_do_html(self.paginas[0] if self.paginas else "")
+
+    def _proxima_pagina(self):
+        self.paginas.pop(0)
+        return bool(self.paginas)
+
+    def abrir_vagas_anunciadas(self):
+        self.voltou += 1
+
+
+class CapturaDosCandidatos(unittest.TestCase):
+    def test_captura_paginas_e_so_conta_no_log(self):
+        segunda = f'<li data-pessoa-id="7000009"><a href="{LINK_2}">d</a></li>'
+        portal = PortalFalso([HTML_DA_LISTA, segunda])
+        portal._guardar_id_da_vaga("180231", lambda: "/empresa/vagas/candidaturas/Ab1cD2eF3g|")
+        r = portal.capturar_candidatos("180231")
+        self.assertEqual(r["vaga_interno"], "Ab1cD2eF3g|")
+        self.assertEqual(sorted(r["candidatos"]), ["7000001", "7000002", "7000003", "7000009"])
+        self.assertEqual(portal.abertas, ["Ab1cD2eF3g|"])
+        self.assertEqual(portal.voltou, 1)
+        log = "\n".join(portal.logs)
+        self.assertIn("4 link(s) de candidato", log)
+        for proibido in ("TKfict", "IDfict", "Ab1cD2eF3g", "7000001", "Pessoa Fictícia"):
+            self.assertNotIn(proibido, log)
+
+    def test_falha_na_lista_vira_aviso_e_segue(self):
+        portal = PortalFalso([HTML_DA_LISTA], falha=RuntimeError("Message: timeout em tokenCandidato=TKfict01"))
+        portal.ids_das_vagas["180231"] = "Ab1cD2eF3g|"
+        r = portal.capturar_candidatos("180231")
+        self.assertEqual(r, {"vaga_interno": "Ab1cD2eF3g|", "candidatos": {}})
+        self.assertEqual(portal.voltou, 1)
+        self.assertIn("não consegui ler a lista de candidatos", portal.logs[-1])
+        self.assertNotIn("TKfict01", portal.logs[-1])
+
+    def test_sem_identificador_nao_abre_nada(self):
+        portal = PortalFalso([HTML_DA_LISTA])
+        self.assertIsNone(portal.capturar_candidatos("180231"))
+        self.assertEqual(portal.abertas, [])
+        self.assertIn("sem o identificador interno", portal.logs[-1])
+
+    def test_tempo_dos_links_esgotado_guarda_so_a_vaga(self):
+        portal = PortalFalso([HTML_DA_LISTA])
+        portal.ids_das_vagas["180231"] = "Ab1cD2eF3g|"
+        portal.tempo_em_links = nav.ORCAMENTO_DOS_LINKS
+        self.assertEqual(portal.capturar_candidatos("180231"), {"vaga_interno": "Ab1cD2eF3g|", "candidatos": {}})
+        self.assertEqual(portal.abertas, [])
+
+    def test_guardar_id_nunca_derruba_a_exportacao(self):
+        portal = PortalFalso([])
+
+        def explode():
+            raise RuntimeError("elemento sumiu")
+
+        self.assertIsNone(portal._guardar_id_da_vaga("180231", explode))
+        self.assertIsNone(portal._guardar_id_da_vaga("180231", lambda: "/empresa/vagas/candidaturas/180231"))
+        self.assertEqual(portal.ids_das_vagas, {})
+
+
 @unittest.skipUnless(TEM_PANDAS, "pandas/openpyxl não instalados")
 class FluxoDeUmaVaga(unittest.TestCase):
     def setUp(self):
@@ -342,6 +527,72 @@ class FluxoDeUmaVaga(unittest.TestCase):
         self.assertEqual([len(l["p_linhas"]) for l in lotes], [500, 500, 202])
         self.assertTrue(all(l["p_total"] == 1202 for l in lotes))
         self.assertEqual(chamadas[-1][1]["p_colunas"], ["Nome", "E-mail"])
+
+    def test_grava_links_dos_candidatos_e_identificador_da_vaga(self):
+        caminho = LeituraDoExcel._excel(
+            self,
+            {
+                "Candidatos": [
+                    ["Código do candidato", "Nome"],
+                    ["7000001", "Pessoa Fictícia Um"],
+                    ["7000002", "Pessoa Fictícia Dois"],
+                    ["7000005", "Pessoa Fictícia Cinco"],
+                ]
+            },
+        )
+        chamadas = []
+
+        def chamar(_config, funcao, corpo):
+            chamadas.append((funcao, corpo))
+            if funcao == "fechar_vaga_empregare":
+                return {"situacao": "GRAVADA", "ativos": 3, "desativadas": 0}
+            return {"situacao": "EM_CARGA", "gravadas": len(corpo["p_linhas"])}
+
+        enderecos = {
+            "vaga_interno": "Ab1cD2eF3g|",
+            "candidatos": {"7000001": nav.URL_BASE + LINK_1, "7000002": nav.URL_BASE + LINK_2, "7999999": "x"},
+        }
+        saida = []
+        antigo = self.robo.registrar
+        self.robo.registrar = saida.append
+        try:
+            situacao = self.robo.gravar_vaga({}, "gh-x", "177979", caminho, chamar, enderecos=enderecos)
+        finally:
+            self.robo.registrar = antigo
+        self.assertEqual(situacao, "GRAVADA")
+        linhas = {l["codigo"]: l.get("link") for l in chamadas[0][1]["p_linhas"]}
+        self.assertEqual(linhas, {"7000001": nav.URL_BASE + LINK_1, "7000002": nav.URL_BASE + LINK_2, "7000005": None})
+        self.assertEqual(chamadas[-1][1]["p_vaga_interno"], "Ab1cD2eF3g|")
+        self.assertIn("2 com link da Empregare", saida[-1])
+        self.assertNotIn("TKfict", "\n".join(saida))
+
+    def test_sem_links_grava_como_antes(self):
+        chamadas = []
+
+        def chamar(_config, funcao, corpo):
+            chamadas.append((funcao, corpo))
+            return {"situacao": "GRAVADA" if funcao == "fechar_vaga_empregare" else "EM_CARGA"}
+
+        self.robo.gravar_vaga({}, "gh-x", "177979", self.caminho, chamar, enderecos=None)
+        self.assertNotIn("p_vaga_interno", chamadas[-1][1])
+        self.assertTrue(all("link" not in l for _, c in chamadas[:-1] for l in c["p_linhas"]))
+
+    def test_banco_sem_a_migration_fecha_sem_o_identificador(self):
+        chamadas = []
+
+        def chamar(_config, funcao, corpo):
+            chamadas.append((funcao, dict(corpo)))
+            if funcao == "fechar_vaga_empregare" and "p_vaga_interno" in corpo:
+                raise self.robo.supabase_rpc.ErroDoSupabase(funcao, 404, "PGRST202: function not found")
+            return {"situacao": "GRAVADA" if funcao == "fechar_vaga_empregare" else "EM_CARGA"}
+
+        situacao = self.robo.gravar_vaga(
+            {}, "gh-x", "177979", self.caminho, chamar, enderecos={"vaga_interno": "Ab1cD2eF3g|", "candidatos": {}}
+        )
+        self.assertEqual(situacao, "GRAVADA")
+        fechamentos = [c for f, c in chamadas if f == "fechar_vaga_empregare"]
+        self.assertEqual(len(fechamentos), 2)
+        self.assertNotIn("p_vaga_interno", fechamentos[-1])
 
     def test_trava_para_no_primeiro_lote(self):
         chamadas = []
