@@ -54,6 +54,9 @@ export const LOCAL_PADRAO = "Brasília";
 const VAZIA = "Não houve candidatos aptos.";
 const VAZIA_ELIMINADOS = "Não houve candidatos eliminados.";
 const VAZIA_CONVOCACAO = "Não houve candidatos convocados.";
+const VAZIA_PROVISORIA = "Não houve candidatos classificados.";
+/* Coluna da nota nas listas da pré-classificação (item 8.3.1). */
+const COLUNA_DA_ART = "Nota da Autodeclaração de Requisitos e Títulos (ART)";
 
 /* ── Textos-padrão (das publicações) ─────────────────────────────────── */
 
@@ -99,6 +102,29 @@ const ENTREVISTA_ELIMINADOS_PRELIMINARES = linhas(
   `A ${AGSUS}{autoridade}, em conformidade com o Edital nº {edital}, referente ao Processo Seletivo Simplificado destinado {ao} **{unidade}**, torna público o **Resultado {fase} da Etapa de Entrevistas dos Candidatos Eliminados**, conforme previsto no item 9 do referido Edital.`,
   "A relação apresentada neste documento contempla os candidatos eliminados na etapa de Entrevistas, com o nome completo, a nota obtida e o respectivo motivo da eliminação.",
 );
+/*
+  As listas da pré-classificação (Avaliação documental, fase F2): a Lista
+  Geral de Classificação Provisória por ART (item 8.3.1, caráter provisório,
+  não valida documentos) e o Lote de Convocação (item 8.4). Os itens do
+  edital ficam no texto e podem ser trocados por edital (regra.documento).
+*/
+const PROVISORIA_PRELIMINARES = linhas(
+  `A ${AGSUS}{autoridade}, em conformidade com o **Edital nº {edital}**, referente ao Processo Seletivo Simplificado destinado {ao} **{unidade}**, ${COMPROMISSO}, torna pública a **Lista Geral de Classificação Provisória – Ranqueamento Eletrônico**, conforme previsto no item 8.3.1 do referido Edital.`,
+  "A classificação segue a Nota da Autodeclaração de Requisitos e Títulos (ART), obtida das respostas do candidato ao questionário da plataforma de inscrições, em ordem decrescente.",
+  "Esta lista tem caráter provisório e classificatório e não valida os documentos apresentados, que serão conferidos na etapa de Avaliação Documental e de Títulos, nos termos do item 8.4 do Edital.",
+  "Apresenta-se, a seguir, a relação dos(as) candidatos(as) por vaga, com a classificação, o nome completo e a nota da ART.",
+);
+const PROVISORIA_ELIMINADOS_PRELIMINARES = linhas(
+  `A ${AGSUS}{autoridade}, em conformidade com o **Edital nº {edital}**, referente ao Processo Seletivo Simplificado destinado {ao} **{unidade}**, torna pública a relação dos **Candidatos Eliminados na Lista Geral de Classificação Provisória**, conforme previsto no item 8.3.1 do referido Edital.`,
+  QUESTIONARIOS,
+  "A relação apresentada neste documento contempla, por vaga, o nome completo e o motivo da eliminação.",
+);
+const LOTE_PRELIMINARES = linhas(
+  `A ${AGSUS}{autoridade}, em conformidade com o **Edital nº {edital}**, referente ao Processo Seletivo Simplificado destinado {ao} **{unidade}**, ${COMPROMISSO}, torna pública a relação dos(as) candidatos(as) convocados(as) para a **Etapa de Avaliação Documental e de Títulos**, conforme previsto no item 8.4 do referido Edital.`,
+  "A avaliação documental é restrita aos candidatos classificados na Lista Geral de Classificação Provisória dentro do limite do lote de convocação. Havendo eliminação ou desistência, novos candidatos poderão ser convocados, respeitada a ordem de classificação.",
+  "Apresenta-se, a seguir, a relação dos(as) candidatos(as) convocados(as), por vaga, com a classificação na Lista Provisória, o nome completo e a nota da ART.",
+);
+
 const FINAL_PRELIMINARES = linhas(
   `A Agência Brasileira de Apoio à Gestão do SUS (AgSUS){autoridade}, em conformidade com o **Edital nº {edital}**, referente {ao} **{unidade}**, ${COMPROMISSO}, torna público o **Resultado {fase} do Processo Seletivo {publico}**, conforme previsto no item 10 do referido Edital.`,
   "A nota final do processo seletivo corresponde à soma das pontuações obtidas na Avaliação Documental e de Títulos (até 30 pontos) e na Entrevista Individual (até 20 pontos).",
@@ -115,6 +141,29 @@ const FINAL_ELIMINADOS_PRELIMINARES = linhas(
   da documental como "das Vagas de Ampla Concorrência").
 */
 export const MODELOS_PADRAO = Object.freeze({
+  PROVISORIA: {
+    rotulo: "Lista Geral de Classificação Provisória (ART)",
+    titulo: "LISTA GERAL DE CLASSIFICAÇÃO PROVISÓRIA - RANQUEAMENTO ELETRÔNICO",
+    preliminares: PROVISORIA_PRELIMINARES,
+    finais: linhas(
+      "A convocação para a etapa de Avaliação Documental e de Títulos observará a ordem desta lista e o limite do lote de convocação previsto no item 8.4 do Edital.",
+      "As publicações referentes às próximas etapas do Processo Seletivo Simplificado serão divulgadas na página oficial da AgSUS.",
+    ),
+  },
+  PROVISORIA_ELIMINADOS: {
+    rotulo: "Lista Provisória — eliminados",
+    titulo: "LISTA GERAL DE CLASSIFICAÇÃO PROVISÓRIA - CANDIDATOS ELIMINADOS",
+    preliminares: PROVISORIA_ELIMINADOS_PRELIMINARES,
+    finais:
+      "Os candidatos relacionados nesta publicação não serão convocados para a etapa de Avaliação Documental e de Títulos.",
+  },
+  LOTE: {
+    rotulo: "Lote de convocação (avaliação documental)",
+    titulo: "LOTE DE CONVOCAÇÃO - ETAPA DE AVALIAÇÃO DOCUMENTAL E DE TÍTULOS",
+    preliminares: LOTE_PRELIMINARES,
+    finais:
+      "O resultado da etapa de Avaliação Documental e de Títulos será publicado conforme o cronograma estabelecido no Edital.",
+  },
   PRELIMINAR_PRELIMINAR: {
     rotulo: "Avaliação documental — resultado preliminar",
     publico_geral: "das Vagas de Ampla Concorrência",
@@ -234,10 +283,12 @@ export const MODELOS_PADRAO = Object.freeze({
 });
 
 const FASE_PADRAO = Object.freeze({ FINAL: "FINAL" });
+/* Listas sem fase no título (a convocação e as da pré-classificação). */
+const SEM_FASE = new Set(["CONVOCACAO", "PROVISORIA", "LOTE"]);
 
 /** A fase da publicação: a escolhida, ou a padrão da etapa (FINAL no resultado final). */
 export function faseDaPublicacao(tipo, fase) {
-  if (tipo === "CONVOCACAO") return null;
+  if (SEM_FASE.has(tipo)) return null;
   return fase === "FINAL" || fase === "PRELIMINAR"
     ? fase
     : FASE_PADRAO[tipo] || "PRELIMINAR";
@@ -245,7 +296,9 @@ export function faseDaPublicacao(tipo, fase) {
 
 /** A chave do modelo de texto: "PRELIMINAR_FINAL_ELIMINADOS", "CONVOCACAO"… */
 export function chaveDoModelo(tipo, fase, lista = "todas") {
-  if (tipo === "CONVOCACAO") return "CONVOCACAO";
+  if (tipo === "CONVOCACAO" || tipo === "LOTE") return tipo;
+  if (tipo === "PROVISORIA")
+    return lista === "eliminados" ? "PROVISORIA_ELIMINADOS" : "PROVISORIA";
   const f = faseDaPublicacao(tipo, fase);
   const chave = `${tipo}_${f}${lista === "eliminados" ? "_ELIMINADOS" : ""}`;
   return MODELOS_PADRAO[chave] ? chave : `${tipo}_${f}`;
@@ -478,6 +531,7 @@ const LARGURAS = Object.freeze({
   DATA: 12,
   HORA: 9,
   Justificativa: 34,
+  [COLUNA_DA_ART]: 30,
 });
 const ELASTICAS = new Set(["Nome", "NOME", "Vaga"]);
 
@@ -568,6 +622,9 @@ function tabelasDaLista(retrato, lista, agenda = null) {
     if (tipo === "ENTREVISTA") {
       rotulos = ["Classificação", "NOME", "NOTA"];
       alinhamento = "centro";
+    } else if (tipo === "PROVISORIA" || tipo === "LOTE") {
+      rotulos = ["Classificação", "Nome", COLUNA_DA_ART];
+      alinhamento = "nome-esquerda";
     } else if (tipo === "FINAL") {
       rotulos = [
         "CLASSIFICAÇÃO",
@@ -596,7 +653,12 @@ function tabelasDaLista(retrato, lista, agenda = null) {
         formatarNota(l.nota, casas),
         ...parciais.map((p) => nota(l.parciais?.[p])),
       ]),
-      vazia: VAZIA,
+      vazia:
+        tipo === "LOTE"
+          ? VAZIA_CONVOCACAO
+          : tipo === "PROVISORIA"
+            ? VAZIA_PROVISORIA
+            : VAZIA,
     };
   };
 

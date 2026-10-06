@@ -258,6 +258,16 @@ export const TIPOS_DE_LISTA = Object.freeze([
   ["FINAL", "Resultado final"],
 ]);
 
+/*
+  As listas que vêm da pré-classificação da Avaliação documental (fase F2;
+  registradas por registrar_lista_pre_classificacao, não pelo motor). Ficam
+  fora de TIPOS_DE_LISTA para a tela da Classificação não oferecê-las.
+*/
+export const TIPOS_DE_LISTA_DA_PRE_CLASSIFICACAO = Object.freeze([
+  ["PROVISORIA", "Lista provisória por ART"],
+  ["LOTE", "Lote de convocação"],
+]);
+
 /* Fase da publicação de uma lista (título do documento). */
 export const FASES_DA_PUBLICACAO = Object.freeze([
   ["PRELIMINAR", "Preliminar"],

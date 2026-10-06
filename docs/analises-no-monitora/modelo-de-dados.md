@@ -302,6 +302,13 @@ distribuem e configuram a revisão (decidido em 05/10/2026).
 
 ## 5. `TB_PRE_CLASSIFICACAO` — Provisória por ART e lote
 
+**Implementada na F2** (`20261006110000_pre_classificacao_e_lote.sql`) com diferenças desta
+proposta: a conta é do job Python (não há `FC_PRE_CLASSIFICAR_VAGA`); entram `TB_PRE_CLASSIF_VAGA`
+(resumo por vaga), `TH_PRE_CLASSIFICACAO` (histórico) e `TL_PRE_CLASSIFICACAO` (execuções); a
+tabela ganhou `DS_MOTIVO_ELIMINACAO`, `VL_NOTA_ORDEM`, `TP_ORIGEM_NOTA`, `ST_DIVERGENTE`,
+`CO_LISTA_LOTE`, `TP_ENTRADA_LOTE` e `CO_EXECUCAO` (no lugar de `NO_ORIGEM_CONVOCACAO`). O texto
+abaixo é a proposta original.
+
 ```sql
 create table public."TB_PRE_CLASSIFICACAO" (
   "CO_MONITORAMENTO" uuid not null,

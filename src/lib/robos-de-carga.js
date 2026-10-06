@@ -1,12 +1,14 @@
 /*
   "Rodar agora" das cargas pelo GitHub Actions, sem DOM e sem rede.
 
-  Usado pelos dois lados:
+  Usado por:
     api/rodar-carga.js       a lista fixa (whitelist) robô → arquivo do workflow,
-                             o que conta como execução em curso no GitHub e as
-                             mensagens de resposta;
+                             o que conta como execução em curso no GitHub, os
+                             inputs do disparo e as mensagens de resposta;
     Configurações › Status   o estado do botão "Rodar agora" de cada carga
-    das atualizações         (src/componentes/saude-das-cargas/).
+    das atualizações         (src/componentes/saude-das-cargas/);
+    Avaliação documental ›   o "Recalcular" da coordenação, que dispara a
+    Pré-classificação        pré-classificação de um edital só.
 
   O botão fica desabilitado enquanto a carga roda: pelo GitHub (execução na
   fila ou rodando), pelo log do banco (execução EM_ANDAMENTO começada há menos
@@ -44,7 +46,34 @@ export const ROBOS_DE_CARGA = Object.freeze([
     workflow: "conferencias.yml",
     limiteMin: 20,
   }),
+  /*
+    porEdital: além do administrador global (Rodar agora, todos os editais),
+    a coordenação do edital dispara para um edital só (Recalcular da aba
+    Pré-classificação); o banco decide em pode_recalcular_pre_classificacao.
+  */
+  Object.freeze({
+    id: "pre_classificacao",
+    nome: "Pré-classificação (Avaliação documental)",
+    workflow: "pre-classificacao.yml",
+    limiteMin: 20,
+    porEdital: true,
+  }),
 ]);
+
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/** O id de edital do pedido (uuid) ou "" (todos os editais). */
+export function editalDoPedido(valor) {
+  const texto = String(valor ?? "").trim();
+  return UUID.test(texto) ? texto.toLowerCase() : "";
+}
+
+/** Os inputs do workflow_dispatch de um robô (o edital só nos robôs por edital). */
+export function inputsDoDisparo(robo, usuario, edital = "") {
+  const inputs = { modo: "normal", disparado_por: String(usuario || "") };
+  if (robo?.porEdital) inputs.editais = editalDoPedido(edital);
+  return inputs;
+}
 
 export const roboDeCarga = (id) =>
   ROBOS_DE_CARGA.find((r) => r.id === String(id || "")) || null;
@@ -126,6 +155,9 @@ export function estadoDoBotao({
 export const MENSAGENS_DO_DISPARO = Object.freeze({
   sem_sessao: "Entre no MONITORA de novo para rodar a carga.",
   sem_permissao: "Só o administrador global roda as cargas.",
+  sem_permissao_edital:
+    "Só a coordenação da avaliação do edital recalcula a pré-classificação.",
+  edital_invalido: "Edital inválido.",
   sem_token: "Falta configurar GITHUB_DISPATCH_TOKEN na Vercel.",
   robo_invalido: "Carga desconhecida.",
   rodando: "Esta carga já está rodando.",

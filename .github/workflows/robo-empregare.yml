@@ -11,6 +11,9 @@ name: Robô da Empregare
 #   - pelo "Rodar agora" das Configurações › Status das atualizações
 #     (api/rodar-carga.js, só administrador global; disparado_por = id do usuário);
 #   - pelo botão "Run workflow" desta aba Actions.
+# Ao fim de uma carga normal ou forçada, o passo "Pré-classificar" recalcula a
+# pré-classificação da Avaliação documental dos editais carregados
+# (scripts/pre_classificacao/; ver pre-classificacao.yml).
 # Como operar e o que fazer quando falha: docs/robo-empregare.md.
 #
 # O REPOSITÓRIO É PÚBLICO e este log também: o robô só imprime contagens,
@@ -111,3 +114,18 @@ jobs:
             forcar) args+=(--forcar) ;;
           esac
           python scripts/robo-empregare/robo_empregare.py "${args[@]}"
+
+      # Ao fim de uma carga (normal ou forçada), recalcula a pré-classificação da
+      # Avaliação documental dos editais das vagas carregadas (job Python
+      # scripts/pre_classificacao/, --apos-robo; o mesmo de pre-classificacao.yml).
+      # Roda também se o robô terminou parcial. Uma falha aqui não muda o
+      # resultado do robô: aparece no log e no Status das atualizações, e o
+      # "Recalcular" da aba Pré-classificação refaz.
+      - name: Pré-classificar os editais carregados
+        if: ${{ !cancelled() && (inputs.modo == 'normal' || inputs.modo == 'forcar') }}
+        continue-on-error: true
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          DISPARADO_POR: robo
+        run: python scripts/pre_classificacao/pre_classificacao.py --apos-robo
