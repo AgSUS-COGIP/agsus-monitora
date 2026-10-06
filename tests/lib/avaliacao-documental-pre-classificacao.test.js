@@ -12,9 +12,12 @@ import {
   tamanhoDoLote,
   vagasPorModalidade,
 } from "../../src/lib/avaliacao-documental/pre-classificacao.js";
+import { nivelDaVaga } from "../../src/lib/classificacao/vagas.js";
 import {
+  calcularNotaDeclarada,
   chaveDaOpcao,
   colunaDaPergunta,
+  divergeDaArt,
   lerArt,
   opcoesDaResposta,
   perguntaAmbigua,
@@ -287,5 +290,102 @@ describe("regra: desempate e lote por vaga", () => {
       /Lote por vaga/,
     );
     expect(com((r) => (r.lote.por_vaga = { 179698: 40 }))).toBe("");
+  });
+});
+
+describe("nota declarada por nível da vaga (os mesmos casos no pytest)", () => {
+  const ND = CASOS.nota_declarada_por_nivel;
+  it.each(ND.casos.map((c) => [c.nome, c]))("%s", (_nome, c) => {
+    expect(calcularNotaDeclarada(ND.regra, c.respostas, c.nivel)).toEqual(
+      c.esperado,
+    );
+  });
+
+  it("caso real do 93/2026: vaga técnica, '5 anos e 6 meses ou mais' + cursos '10 pontos' = 50 = ART", () => {
+    const r = calcularNotaDeclarada(ND.regra, ND.casos[0].respostas, "tecnico");
+    expect(r.parciais).toEqual({ FORMACAO: 0, CURSOS: 10, EXPERIENCIA: 40 });
+    expect(r.total).toBe(50);
+    expect(r.completa).toBe(true);
+    expect(divergeDaArt(artDasColunas(ND.casos[0].respostas), r.total)).toBe(
+      false,
+    );
+  });
+
+  it("a mesma resposta vale pontos diferentes por nível; sem nível não soma", () => {
+    const respostas = { "Pergunta 11 - Experiência Profissional": '"1 ano"' };
+    const exp = (nivel) =>
+      calcularNotaDeclarada(ND.regra, respostas, nivel).parciais.EXPERIENCIA;
+    expect([exp("superior"), exp("tecnico"), exp("medio")]).toEqual([5, 4, 4]);
+    const sem = calcularNotaDeclarada(ND.regra, respostas, null);
+    expect(sem.parciais.EXPERIENCIA).toBeUndefined();
+    expect(sem.itens[2].nivel_desconhecido).toBe(true);
+    expect(sem.completa).toBe(false);
+    expect(sem.sem_mapa).toBe(0);
+  });
+
+  it("o nível da vaga sai do cargo e da regra de classificação", () => {
+    for (const c of CASOS.niveis_da_vaga.casos)
+      expect(
+        nivelDaVaga({ cargo: c.cargo ?? "" }, { documental: c.documental }),
+        String(c.cargo),
+      ).toBe(c.esperado);
+  });
+
+  it("divergência ART × declarada só com a declarada completa; sem nível vira aviso", () => {
+    const [porNivel, semNivel] = CASOS.casos.filter((c) =>
+      c.nome.includes("nível"),
+    );
+    const div = (caso) =>
+      Object.fromEntries(rodar(caso).linhas.map((l) => [l.id, l.divergente]));
+    expect(div(porNivel)).toEqual({
+      t01: false,
+      t02: false,
+      t03: true,
+      t04: false,
+    });
+    expect(div(semNivel)).toEqual({
+      t01: false,
+      t02: false,
+      t03: false,
+      t04: false,
+    });
+    expect(rodar(semNivel).resumo.avisos).toEqual([
+      "SEM_NIVEL:NOTA_EXPERIENCIA",
+    ]);
+    for (const caso of [porNivel, semNivel])
+      expect(
+        Object.fromEntries(
+          rodar(caso).linhas.map((l) => [
+            l.id,
+            { declarada: l.declarada, parciais: l.declarada_parciais },
+          ]),
+        ),
+      ).toEqual(caso.esperado_declarada);
+  });
+
+  it("a regra aceita pontos por nível só em OPCAO/OPCOES_SOMADAS, com nível conhecido, sem os pontos simples", () => {
+    const regra = (item) =>
+      normalizarRegraAnalise({
+        ...CASOS.casos[0].regra,
+        provisoria: {
+          ...CASOS.casos[0].regra.provisoria,
+          nota_declarada: [item],
+        },
+      });
+    const exp = ND.regra.provisoria.nota_declarada[2];
+    const erros = (item) => validarRegraAnalise(regra(item)).join(" ");
+    expect(erros(exp)).toBe("");
+    expect(erros({ ...exp, tipo: "OPCOES_SOMADAS" })).toBe("");
+    expect(erros({ ...exp, pontos: { "1 ano": 5 } })).toMatch(/não os dois/);
+    expect(
+      erros({ ...exp, tipo: "FAIXA_EM_MESES", meses: {}, pontos_por_mes: 1 }),
+    ).toMatch(/só em OPCAO ou OPCOES_SOMADAS/);
+    expect(erros({ ...exp, pontos_por_nivel: { doutor: { a: 1 } } })).toMatch(
+      /pontos por nível/,
+    );
+    expect(erros({ ...exp, pontos_por_nivel: {} })).toMatch(/pontos por nível/);
+    expect(
+      erros({ ...exp, pontos_por_nivel: { superior: { a: 101 } } }),
+    ).toMatch(/pontos por nível/);
   });
 });

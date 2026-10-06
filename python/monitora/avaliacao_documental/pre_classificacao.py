@@ -16,6 +16,7 @@ e o código do candidato, notas, posições e motivos.
 
 import math
 import re
+import unicodedata
 from functools import cmp_to_key
 
 from monitora.avaliacao_documental.nota_declarada import (
@@ -31,6 +32,8 @@ from monitora.avaliacao_documental.nota_declarada import (
 
 PREFIXO_DA_ART = "NOTA - "
 PREFIXO_DO_AVISO_DE_PERGUNTA_AMBIGUA = "PERGUNTA_AMBIGUA:"
+PREFIXO_DO_AVISO_DE_SEM_NIVEL = "SEM_NIVEL:"
+NIVEIS = ("superior", "tecnico", "medio", "fundamental")
 SAIU_DA_EMPREGARE = {"codigo": "SAIU_DA_EMPREGARE", "motivo": "Saiu do arquivo da Empregare"}
 DESEMPATE_PADRAO = ["IDOSO", "CANDIDATURA"]
 LOTE_PADRAO = {
@@ -47,6 +50,9 @@ _DATA = re.compile(r"^(\d{4})-(\d{2})-(\d{2})")
 _NUMERO_DO_QUADRO = re.compile(r"^\d+(\.\d+)?$")
 _NO_LOTE = {"NO_LOTE", "ANALISADO"}
 _ANOS_E_MESES = re.compile(r"([0-9]+) anos? e ([0-9]+) mes(es)?\b")
+_NIVEL_ESCRITO = re.compile(r"\bnivel (superior|tecnico|medio|fundamental)\b")
+_COMECA_COM_TECNICO = re.compile(r"^tecnic[oa]\b")
+_MARCAS = re.compile("[̀-ͯ]")
 
 
 def _objeto(v):
@@ -87,6 +93,41 @@ def normalizar_regra(entrada):
         "lote": {**LOTE_PADRAO, **_objeto(r.get("lote"))},
         "blocos": _lista(r.get("blocos")),
     }
+
+
+def _sem_acento(valor):
+    """semAcento da Classificação: sem acento e minúsculo."""
+    return _MARCAS.sub("", unicodedata.normalize("NFD", "" if valor is None else str(valor))).lower()
+
+
+def nivel_no_nome_do_cargo(cargo):
+    """O nível escrito no cargo ("(Nível Superior)") ou o cargo que começa com "Técnico"; None se não diz."""
+    c = re.sub(r"\s+", " ", _sem_acento(cargo)).strip()
+    escrito = _NIVEL_ESCRITO.search(c)
+    if escrito:
+        return escrito.group(1)
+    return "tecnico" if _COMECA_COM_TECNICO.search(c) else None
+
+
+def nivel_da_vaga(cargo, documental=None):
+    """
+    O nível da vaga (nivelDaVaga de src/lib/classificacao/vagas.js, sem a
+    categoria): niveis_por_cargo da regra de classificação (o cargo COMEÇA com
+    o termo), o nível escrito no nome do cargo e o nível padrão da regra.
+    """
+    doc = _objeto(documental)
+    c = _sem_acento(cargo)
+    for n in _lista(doc.get("niveis_por_cargo")):
+        n = _objeto(n)
+        termo = str(n.get("termo") if n.get("termo") is not None else "").strip()
+        nivel = n.get("nivel")
+        if termo and nivel in NIVEIS and c.strip().startswith(_sem_acento(termo).strip()):
+            return nivel
+    do_nome = nivel_no_nome_do_cargo(cargo)
+    if do_nome:
+        return do_nome
+    padrao = doc.get("nivel_padrao")
+    return padrao if padrao in NIVEIS else None
 
 
 def numero_no_texto(n):
@@ -378,7 +419,8 @@ def pre_classificar_vaga(regra, vaga, candidatos, anterior=None, ultimo_lote=0, 
     """
     Pré-classifica os inscritos de uma vaga (mesmo contrato de preClassificarVaga do JS).
       regra        normalizar_regra(configuração do edital)
-      vaga         {codigo, vagas_imediatas, cadastro_reserva, modalidades}
+      vaga         {codigo, vagas_imediatas, cadastro_reserva, modalidades, nivel}
+                   (nivel: o da vaga, para a nota declarada por nível; None = desconhecido)
       candidatos   [{id, codigo, ativo, colunas, nascimento, candidatura}]
       anterior     {id: {situacao, lote, lista_lote, entrada, motivo_entrada, posicao}}
     Devolve {"linhas": [...], "resumo": {...}}.
@@ -391,6 +433,7 @@ def pre_classificar_vaga(regra, vaga, candidatos, anterior=None, ultimo_lote=0, 
     desempate = provisoria["desempate"] if isinstance(provisoria.get("desempate"), list) else DESEMPATE_PADRAO
     avisos = set()
     pergunta_da_experiencia = provisoria.get("pergunta_experiencia") if "EXPERIENCIA_DECLARADA" in desempate else None
+    nivel_da_vaga_atual = _objeto(vaga).get("nivel") if _objeto(vaga).get("nivel") in NIVEIS else None
 
     linhas = []
     for c in _lista(candidatos):
@@ -407,7 +450,13 @@ def pre_classificar_vaga(regra, vaga, candidatos, anterior=None, ultimo_lote=0, 
                 avisos.update(f"COLUNA_AUSENTE:{codigo}" for codigo in ausentes)
         avisos.update(perguntas_ambiguas(regra, colunas, pergunta_da_experiencia))
         art = art_das_colunas(colunas)
-        declarada = calcular_nota_declarada(regra, colunas) if tem_declarada else None
+        declarada = calcular_nota_declarada(regra, colunas, nivel_da_vaga_atual) if tem_declarada else None
+        if declarada:
+            avisos.update(
+                f"{PREFIXO_DO_AVISO_DE_SEM_NIVEL}NOTA_{i['parcial'] or ''}"
+                for i in declarada["itens"]
+                if i["nivel_desconhecido"]
+            )
         nota = art if art is not None else (declarada["total"] if declarada else None)
         coluna_da_experiencia = (
             coluna_da_pergunta(colunas, pergunta_da_experiencia) if pergunta_da_experiencia else None
@@ -428,7 +477,10 @@ def pre_classificar_vaga(regra, vaga, candidatos, anterior=None, ultimo_lote=0, 
                 "declarada": declarada["total"] if declarada else None,
                 "declarada_parciais": declarada["parciais"] if declarada else None,
                 "sem_mapa": declarada["sem_mapa"] if declarada else 0,
-                "divergente": diverge_da_art(art, declarada["total"], tolerancia) if declarada else False,
+                # Só a declarada completa confere a ART (a incompleta não diverge).
+                "divergente": diverge_da_art(art, declarada["total"], tolerancia)
+                if declarada and declarada["completa"]
+                else False,
                 "modalidade": modalidade_do_candidato(regra, colunas),
                 "posicao": None,
                 "posicao_modalidade": None,

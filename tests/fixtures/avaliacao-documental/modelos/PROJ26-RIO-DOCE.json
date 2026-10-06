@@ -13,7 +13,24 @@
         "motivo": "Cancelou a inscrição"
       }
     ],
-    "nota_declarada": [],
+    "nota_declarada": [
+      {
+        "parcial": "EXPERIENCIA",
+        "pergunta": "Experiência Profissional",
+        "tipo": "OPCAO",
+        "pontos": {
+          "6 meses obrigatórios": 0,
+          "1 ano": 5,
+          "1 ano e 6 meses": 10,
+          "1 anos e 6 meses": 10,
+          "2 anos": 15,
+          "2 anos e 6 meses": 20,
+          "3 anos": 25,
+          "3 anos e 6 meses": 30,
+          "4 anos ou mais": 35
+        }
+      }
+    ],
     "divergencia_tolerancia": 0,
     "desempate": ["IDOSO", "EXPERIENCIA_DECLARADA", "MAIOR_IDADE"],
     "pergunta_experiencia": "Experiência Profissional"

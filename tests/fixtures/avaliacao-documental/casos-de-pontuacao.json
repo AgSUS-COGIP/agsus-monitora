@@ -2531,6 +2531,8 @@
             "coluna": "Pergunta 15 - Outras formações (especialização, mestrado, doutorado)",
             "resposta": "Especialização na área à qual concorre",
             "mapeada": true,
+            "ambigua": false,
+            "nivel_desconhecido": false,
             "pontos": 1
           },
           {
@@ -2539,10 +2541,13 @@
             "coluna": "Pergunta 6 - Você é indígena e mora em aldeia?",
             "resposta": "Sou indígena; Moro em aldeia",
             "mapeada": true,
+            "ambigua": false,
+            "nivel_desconhecido": false,
             "pontos": 14
           }
         ],
-        "sem_mapa": 0
+        "sem_mapa": 0,
+        "completa": true
       }
     },
     {
@@ -2565,6 +2570,8 @@
             "coluna": "Pergunta 15 - Outras formações",
             "resposta": "Mestrado",
             "mapeada": false,
+            "ambigua": false,
+            "nivel_desconhecido": false,
             "pontos": 0
           },
           {
@@ -2573,10 +2580,13 @@
             "coluna": "Pergunta 6 - Você é indígena?",
             "resposta": "Não sou indígena",
             "mapeada": false,
+            "ambigua": false,
+            "nivel_desconhecido": false,
             "pontos": 0
           }
         ],
-        "sem_mapa": 2
+        "sem_mapa": 2,
+        "completa": false
       }
     }
   ]

@@ -38,7 +38,10 @@
           "item_edital": "6.5.1"
         }
       ],
-      "perguntas": [],
+      "perguntas": [
+        "Anexe o documento de identificação",
+        "Anexe um documento de identificação"
+      ],
       "item_edital": "6.5"
     },
     {
@@ -69,7 +72,12 @@
           "item_edital": "8.2.1"
         }
       ],
-      "perguntas": [],
+      "perguntas": [
+        "Você possui Graduação na área da vaga",
+        "Você possui Ensino Médio completo e Curso Técnico",
+        "Anexe a comprovação de Nível",
+        "Anexe a comprovação de conclusão do Ensino Médio"
+      ],
       "item_edital": "8.2.1"
     },
     {
@@ -88,7 +96,10 @@
           "item_edital": "6.4"
         }
       ],
-      "perguntas": [],
+      "perguntas": [
+        "Você possui registro profissional ativo",
+        "Anexe o comprovante do seu registro profissional"
+      ],
       "item_edital": "6.4"
     },
     {
@@ -102,7 +113,10 @@
       },
       "motivos": [],
       "condicao": "MODALIDADE=PP",
-      "perguntas": [],
+      "perguntas": [
+        "Candidatos às vagas destinadas a Pretos ou Pardos",
+        "Candidatos concorrendo às vagas destinadas a Pretos ou Pardos"
+      ],
       "item_edital": ""
     },
     {
@@ -116,7 +130,7 @@
       },
       "motivos": [],
       "condicao": "MODALIDADE=PCD",
-      "perguntas": [],
+      "perguntas": ["Os candidatos que concorrem às vagas destinadas a PcD"],
       "item_edital": ""
     },
     {
@@ -143,7 +157,7 @@
         }
       ],
       "condicao": "MODALIDADE=PI",
-      "perguntas": [],
+      "perguntas": ["Para candidatos que se declaram indígenas"],
       "item_edital": "5.7.5"
     },
     {
@@ -170,7 +184,7 @@
         }
       ],
       "condicao": "MODALIDADE=PQ",
-      "perguntas": [],
+      "perguntas": ["Para candidatos que se declaram quilombolas"],
       "item_edital": "5.7.6"
     },
     {
@@ -187,7 +201,10 @@
         }
       ],
       "parcial": "FORMACAO",
-      "perguntas": [],
+      "perguntas": [
+        "Qual seu Nível de Titulação Acadêmica",
+        "Anexe seu comprovante de Titulação Acadêmica"
+      ],
       "cumulativa": false,
       "item_edital": "8.2.6",
       "pontos_por_nivel": {
@@ -238,7 +255,10 @@
         }
       ],
       "parcial": "CURSOS",
-      "perguntas": [],
+      "perguntas": [
+        "Selecione a pontuação relativa à carga horária de Cursos",
+        "Anexe os seus Certificados de Conclusão dos Cursos"
+      ],
       "por_nivel": {
         "medio": {
           "teto": 10,
@@ -302,7 +322,10 @@
         }
       ],
       "parcial": "EXPERIENCIA",
-      "perguntas": [],
+      "perguntas": [
+        "Experiência Profissional em atividades",
+        "Anexe o comprovante de Experiência Profissional"
+      ],
       "pontuacao": "POR_PERIODO",
       "por_nivel": {
         "medio": {
@@ -364,7 +387,83 @@
   },
   "provisoria": {
     "desempate": ["IDOSO", "EXPERIENCIA_DECLARADA", "MAIOR_IDADE"],
-    "nota_declarada": [],
+    "nota_declarada": [
+      {
+        "parcial": "FORMACAO",
+        "pergunta": "Qual seu Nível de Titulação Acadêmica",
+        "tipo": "OPCAO",
+        "pontos": {
+          "Especialização": 5,
+          "Mestrado": 8,
+          "Doutorado": 10,
+          "Não possuo": 0
+        }
+      },
+      {
+        "parcial": "CURSOS",
+        "pergunta": "Selecione a pontuação relativa à carga horária de Cursos",
+        "tipo": "OPCAO",
+        "pontos": {
+          "Não possuo": 0,
+          "1 ponto": 1,
+          "2 pontos": 2,
+          "3 pontos": 3,
+          "4 pontos": 4,
+          "5 pontos": 5,
+          "6 pontos": 6,
+          "7 pontos": 7,
+          "8 pontos": 8,
+          "9 pontos": 9,
+          "10 pontos": 10
+        }
+      },
+      {
+        "parcial": "EXPERIENCIA",
+        "pergunta": "Experiência Profissional",
+        "tipo": "OPCAO",
+        "pontos_por_nivel": {
+          "superior": {
+            "6 meses obrigatórios": 0,
+            "1 ano": 5,
+            "1 ano e 6 meses": 10,
+            "1 anos e 6 meses": 10,
+            "2 anos": 15,
+            "2 anos e 6 meses": 20,
+            "3 anos": 25,
+            "3 anos e 6 meses": 30,
+            "4 anos ou mais": 35
+          },
+          "tecnico": {
+            "6 meses obrigatórios": 0,
+            "1 ano": 4,
+            "1 ano e 6 meses": 8,
+            "1 anos e 6 meses": 8,
+            "2 anos": 12,
+            "2 anos e 6 meses": 16,
+            "3 anos": 20,
+            "3 anos e 6 meses": 24,
+            "4 anos": 28,
+            "4 anos e 6 meses": 32,
+            "5 anos": 36,
+            "5 anos e 6 meses ou mais": 40
+          },
+          "medio": {
+            "6 meses obrigatórios": 0,
+            "1 ano": 4,
+            "1 ano e 6 meses": 8,
+            "1 anos e 6 meses": 8,
+            "2 anos": 12,
+            "2 anos e 6 meses": 16,
+            "3 anos": 20,
+            "3 anos e 6 meses": 24,
+            "4 anos": 28,
+            "4 anos e 6 meses": 32,
+            "5 anos": 36,
+            "5 anos e 6 meses ou mais": 40
+          }
+        }
+      }
+    ],
     "pergunta_experiencia": "Experiência Profissional",
     "eliminacao_automatica": [
       {

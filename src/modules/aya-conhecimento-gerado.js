@@ -721,12 +721,14 @@ export const VERBETES_AYA = Object.freeze([
       "nota declarada",
       "divergencia da art",
       "respostas encontradas",
+      "pontos por nivel",
+      "experiencia por nivel",
     ],
     resposta:
-      "Para quem coordena, a aba Regra lista as perguntas da última carga do robô da Empregare nas vagas do edital, com as respostas encontradas e quantas vezes cada uma aparece — respostas que aparecem uma vez só não são mostradas, para não expor texto livre. Dali se liga a pergunta a um bloco ou se cria a pontuação da nota declarada: cada resposta vale pontos (ou meses × pontos por mês), por parcial. A nota declarada só confere a ART (a nota do questionário da Empregare); se divergir além da tolerância, vira aviso, e a ordem da Provisória continua pela ART.",
+      'Para quem coordena, a aba Regra lista as perguntas da última carga do robô da Empregare nas vagas do edital, com as respostas encontradas e quantas vezes cada uma aparece — respostas que aparecem uma vez só não são mostradas, para não expor texto livre. Dali se liga a pergunta a um bloco ou se cria a pontuação da nota declarada: cada resposta vale pontos (ou meses × pontos por mês), por parcial. Quando a mesma resposta vale pontos diferentes conforme o nível da vaga, marque "Pontos por nível" na pergunta: aparece uma coluna de pontos para Superior, Técnico e Médio (no 93/2026, "1 ano" de experiência vale 5 no nível superior e 4 no técnico e no médio). O nível sai do nome do cargo da vaga ("(Nível Superior)", "Técnico de…") ou da regra de classificação do edital. A nota declarada só confere a ART (a nota do questionário da Empregare); se divergir além da tolerância, vira aviso, e a ordem da Provisória continua pela ART.',
     fato: "",
     fonte:
-      "src/lib/avaliacao-documental/nota-declarada.js; supabase/migrations/20261006100000_regra_da_analise.sql",
+      "src/lib/avaliacao-documental/nota-declarada.js; supabase/migrations/20261006100000_regra_da_analise.sql; supabase/migrations/20261007140000_declarada_por_nivel.sql",
     abrir: "avaliacao-documental",
   },
   {
@@ -885,12 +887,14 @@ export const VERBETES_AYA = Object.freeze([
       "art x declarada",
       "nota declarada diferente",
       "por que diverge",
+      "muitas divergencias",
+      "nivel da vaga nao identificado",
     ],
     resposta:
-      'A ART (Nota da Autodeclaração de Requisitos e Títulos) é a nota que a Empregare calcula com as respostas do questionário. Se a regra tiver a nota declarada configurada (aba Regra), o sistema recalcula a nota pelas mesmas respostas e compara: diferença acima da tolerância da regra aparece como "diverge" na linha do candidato e no contador "ART × declarada". É só um aviso para a coordenação conferir o questionário ou a regra; a ordem da Provisória continua pela ART.',
+      'A ART (Nota da Autodeclaração de Requisitos e Títulos) é a nota que a Empregare calcula com as respostas do questionário. Se a regra tiver a nota declarada configurada (aba Regra), o sistema recalcula a nota pelas mesmas respostas e compara: diferença acima da tolerância da regra aparece como "diverge" na linha do candidato e no contador "ART × declarada". Só compara quando a nota declarada do candidato está completa: toda pergunta da nota declarada achada sem ambiguidade, a resposta dada mapeada na regra e, na pergunta com pontos por nível, o nível da vaga conhecido (resposta em branco, ou pergunta que não existe no questionário da vaga, vale zero, como na ART). Faltando um pedaço, não conta divergência. Se o nível da vaga não for identificado, a pergunta por nível fica fora da conta e a vaga mostra o aviso para conferir o cargo ou a regra de classificação. Muitas divergências de uma vez costumam indicar que falta uma pergunta na nota declarada da regra (no 93/2026, a experiência). É só um aviso para a coordenação conferir o questionário ou a regra; a ordem da Provisória continua pela ART.',
     fato: "",
     fonte:
-      "src/lib/avaliacao-documental/nota-declarada.js; python/monitora/avaliacao_documental/nota_declarada.py",
+      "src/lib/avaliacao-documental/nota-declarada.js; python/monitora/avaliacao_documental/nota_declarada.py; src/lib/avaliacao-documental/pre-classificacao.js",
     abrir: "avaliacao-documental",
   },
   {
@@ -1185,7 +1189,7 @@ export const VERBETES_AYA = Object.freeze([
       "declarado apurado",
     ],
     resposta:
-      'Em cada bloco que pontua aparecem três números: Declarado (o que a resposta da Empregare vale pela nota declarada da regra), Calculado (o que os itens lançados dão) e Apurado (a nota que vale). O analista pode ajustar o Apurado para menos ou para mais, até o teto do bloco no nível da vaga; "Usar o calculado" volta à conta. Toda nota apurada diferente da declarada pede justificativa: um motivo do bloco ou uma observação pronta da regra (ex.: "Nota de experiência diminuída", "Nota de cursos diminuída", "Experiência anterior à diplomação não é computada") e, se quiser, um complemento. Sem justificativa, o bloco avisa e a ficha não conclui. A lateral destaca a diferença com a justificativa ao lado, e ela entra no parecer. Quem é inapto por requisito não precisa justificar as notas. Bloco sem pergunta mapeada na nota declarada mostra "—" e não pede justificativa.',
+      'Em cada bloco que pontua aparecem três números: Declarado (o que a resposta da Empregare vale pela nota declarada da regra), Calculado (o que os itens lançados dão) e Apurado (a nota que vale). O analista pode ajustar o Apurado para menos ou para mais, até o teto do bloco no nível da vaga; "Usar o calculado" volta à conta. Toda nota apurada diferente da declarada pede justificativa: um motivo do bloco ou uma observação pronta da regra (ex.: "Nota de experiência diminuída", "Nota de cursos diminuída", "Experiência anterior à diplomação não é computada") e, se quiser, um complemento. Sem justificativa, o bloco avisa e a ficha não conclui. A lateral destaca a diferença com a justificativa ao lado, e ela entra no parecer. Quem é inapto por requisito não precisa justificar as notas. Bloco sem pergunta mapeada na nota declarada mostra "—" e não pede justificativa. Na pergunta com pontos por nível (a experiência do 93/2026), o Declarado é o do nível da vaga na ficha; mudar o nível muda o Declarado.',
     fato: "No MONITORA, nota apurada diferente da declarada na ficha exige justificativa padronizada, que vai para o parecer e para o histórico.",
     fonte:
       "src/lib/avaliacao-documental/ficha.js (pendenciasDaFicha, divergenciaDoBloco); supabase/migrations/20261007130000_conteudo_da_ficha.sql (FC_PENDENCIAS_FICHA)",
