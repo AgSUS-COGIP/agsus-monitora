@@ -569,6 +569,105 @@ class PortalFalso(nav.PortalEmpregare):
         self.voltou += 1
 
 
+class DiagnosticoDaLista(unittest.TestCase):
+    PAGINA = {
+        "caminho": "/empresa/vagas/candidaturas/Mc5fictPML0|",
+        "titulo": "Candidaturas | Empregare (contato pessoa@exemplo.invalid)",
+        "itens": 0,
+        "links_curriculo": 0,
+        "pessoas": 0,
+        "detalhes": 0,
+        "pagina1": 0,
+        "iframes": 1,
+        "abas": ["Todos (86)", "Interessados (10)", "Pessoa Fictícia 3787275", "Triados"],
+        "aba_ativa": "Todos (86)",
+    }
+
+    def test_linha_segura_com_contagens_e_abas(self):
+        fonte = "<html>" + "x" * 94 + "</html>"
+        texto = nav.texto_do_diagnostico(dict(self.PAGINA, espera="estourou", janelas=2), fonte)
+        for esperado in (
+            "página /empresa/vagas/candidaturas/<id>",
+            "espera estourou",
+            "janelas 2",
+            "não clicou em Todos",
+            "itens 0 · a.link-curriculo 0 · li[data-pessoa-id] 0 · links de detalhe 0 · #curriculo-pagina-1 0",
+            "iframes 1",
+            "abas 4 (ativa: Todos (86)) [Todos (86), Interessados (10), outra, Triados]",
+            "page_source 107 caracteres, curriculo-list-item: não, link-curriculo: não",
+        ):
+            self.assertIn(esperado, texto)
+        for proibido in ("Mc5fictPML0", "pessoa@exemplo.invalid", "Pessoa Fictícia", "3787275"):
+            self.assertNotIn(proibido, texto)
+
+    def test_sem_permissao_e_sem_fonte_quando_leu_algo(self):
+        texto = nav.texto_do_diagnostico(
+            {"caminho": "/Company/Home/SemPermissao?tokenCandidato=TKfict", "titulo": "Sem permissão", "espera": "ok"}
+        )
+        self.assertIn("página /Company/Home/SemPermissao;", texto)
+        self.assertNotIn("TKfict", texto)
+        self.assertNotIn("page_source", texto)
+        self.assertEqual(
+            nav.texto_do_diagnostico({"erro": "JavascriptException"}), "sem diagnóstico (JavascriptException)"
+        )
+
+    def test_portal_monta_o_diagnostico_e_le_o_page_source_so_sem_candidatos(self):
+        class DriverFalso:
+            lido = 0
+
+            @property
+            def page_source(self):
+                DriverFalso.lido += 1
+                return '<div class="curriculo-append"></div>'
+
+            def execute_script(self, js, *args):
+                return dict(DiagnosticoDaLista.PAGINA) if js == nav.JS_DIAGNOSTICO_DA_LISTA else None
+
+        portal = nav.PortalEmpregare("pasta-falsa", lambda _m: None)
+        portal.driver = DriverFalso()
+        portal.diagnostico = {"espera": "estourou", "janelas": 1, "clicou_todos": True}
+        texto = portal._diagnosticar_lista(0)
+        self.assertIn("clicou em Todos", texto)
+        self.assertIn("page_source 36 caracteres", texto)
+        portal._diagnosticar_lista(3)
+        self.assertEqual(DriverFalso.lido, 1)
+
+    def test_aba_todos_so_texto_exato_e_mesma_pagina(self):
+        js = nav.JS_ABA_TODOS
+        self.assertIn("^todos\\s*\\(?\\d*\\)?$", js)
+        self.assertIn("mesmaPagina(aba)", js)
+        self.assertNotIn("'.nav a", js)
+
+    def test_volta_para_a_janela_do_login(self):
+        class Troca:
+            def __init__(self, driver):
+                self.d = driver
+
+            @property
+            def alert(self):
+                raise RuntimeError("sem alerta")
+
+            def window(self, h):
+                self.d.atual = h
+
+        class DriverFalso:
+            window_handles = ["login", "exportacao"]
+            atual = "exportacao"
+
+            def __init__(self):
+                self.switch_to = Troca(self)
+
+            @property
+            def current_window_handle(self):
+                return self.atual
+
+        portal = nav.PortalEmpregare("pasta-falsa", lambda _m: None)
+        portal.driver = DriverFalso()
+        portal.janela = "login"
+        self.assertEqual(portal._voltar_para_a_janela(), 2)
+        self.assertEqual(portal.driver.atual, "login")
+
+
 class CapturaDosCandidatos(unittest.TestCase):
     def test_captura_paginas_e_so_conta_no_log(self):
         segunda = f'<li data-pessoa-id="7000009"><a href="{LINK_2}">d</a></li>'
@@ -590,8 +689,9 @@ class CapturaDosCandidatos(unittest.TestCase):
         r = portal.capturar_candidatos("180231")
         self.assertEqual(r, {"vaga_interno": "Ab1cD2eF3g|", "candidatos": {}})
         self.assertEqual(portal.voltou, 1)
-        self.assertIn("não consegui ler a lista de candidatos", portal.logs[-1])
-        self.assertNotIn("TKfict01", portal.logs[-1])
+        self.assertIn("não consegui ler a lista de candidatos", portal.logs[-2])
+        self.assertIn("diagnóstico da lista", portal.logs[-1])
+        self.assertNotIn("TKfict01", "\n".join(portal.logs))
 
     def test_sem_identificador_nao_abre_nada(self):
         portal = PortalFalso([HTML_DA_LISTA])
