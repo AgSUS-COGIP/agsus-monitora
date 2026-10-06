@@ -198,6 +198,35 @@ describe("Configurações › Mensagens (chat)", () => {
     );
   });
 
+  it("sem resposta do banco (rede ou tempo), não afirma que nada foi apagado e relê os números", async () => {
+    let zerado = false;
+    const { rpc } = await montar({
+      obter_retencao_chat: () =>
+        zerado ? { ...LEITURA, mensagens: 0, reacoes: 0 } : LEITURA,
+      // A transação terminou no banco, mas a resposta não chegou.
+      zerar_mensagens_chat: () => {
+        zerado = true;
+        return { __erro: { message: "TypeError: Failed to fetch" } };
+      },
+    });
+    await clicar(botao("Zerar mensagens…"));
+    await digitar(document.getElementById("configChatZerarPalavra"), "ZERAR");
+    await digitar(document.getElementById("configChatMotivoZerar"), "Teste");
+    const confirmar = [
+      ...document.querySelectorAll(".config-governance-footer button"),
+    ].find((b) => b.textContent.includes("Zerar mensagens"));
+    await clicar(confirmar);
+    await esperar();
+
+    expect(document.body.textContent).toContain(
+      "Não foi possível confirmar se as mensagens foram apagadas.",
+    );
+    expect(document.body.textContent).not.toContain("Nada foi apagado.");
+    expect(
+      rpc.mock.calls.filter(([nome]) => nome === "obter_retencao_chat"),
+    ).toHaveLength(2);
+  });
+
   it("sem a migration, diz qual aplicar", async () => {
     await montar({
       obter_retencao_chat: () => ({ __erro: { code: "PGRST202" } }),

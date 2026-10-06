@@ -326,7 +326,12 @@ function DialogoDeZerar({ estado, atual, incluirConversas, aoFechar }) {
     >
       {atual.acaoComErro === "zerar" ? (
         <Aviso tom="danger" papel="alert" className="config-alerta">
-          <strong>Nada foi apagado.</strong> <span>{atual.erroDaAcao}</span>
+          <strong>
+            {atual.semConfirmacao
+              ? "Não foi possível confirmar se as mensagens foram apagadas."
+              : "Nada foi apagado."}
+          </strong>{" "}
+          <span>{atual.erroDaAcao}</span>
         </Aviso>
       ) : null}
       <Aviso tom="warning" className="config-alerta">
@@ -517,6 +522,9 @@ export function SecaoMensagensDoChat({ estado, configuracoes }) {
         ) : null}
         {atual.acaoComErro === "prazo" ? (
           <Aviso tom="danger" papel="alert" className="config-alerta">
+            {atual.semConfirmacao
+              ? "Não foi possível confirmar se o prazo foi salvo. "
+              : ""}
             {atual.erroDaAcao}
           </Aviso>
         ) : null}

@@ -7,7 +7,11 @@
   devolvem a leitura nova, que substitui a anterior. A tela lê com
   `useSyncExternalStore`. Não importa React.
 */
-import { comTempoLimite, mensagemDeFalha } from "../../lib/falha-de-rede.js";
+import {
+  comTempoLimite,
+  ehFalhaDeConexao,
+  mensagemDeFalha,
+} from "../../lib/falha-de-rede.js";
 import {
   mensagemDeErroDaRetencao,
   normalizarRetencao,
@@ -29,6 +33,8 @@ export function criarEstadoDasMensagensDoChat({
     acao: null,
     erroDaAcao: "",
     acaoComErro: null,
+    /* A ação falhou por tempo ou rede: o banco pode ter concluído. */
+    semConfirmacao: false,
     aviso: "",
   };
   let pedido = 0;
@@ -40,6 +46,11 @@ export function criarEstadoDasMensagensDoChat({
   const cliente = () =>
     typeof supabase === "function" ? supabase() : supabase;
 
+  /* Tempo esgotado ou rede caída: a resposta não veio, mas o banco pode ter
+     terminado a transação. */
+  const semResposta = (falha) =>
+    Object.assign(new Error(mensagemDeFalha(falha)), { semResposta: true });
+
   async function rpc(nome, argumentos) {
     const banco = cliente();
     if (!banco) throw new Error("Sem conexão com o banco.");
@@ -50,9 +61,12 @@ export function criarEstadoDasMensagensDoChat({
         tempoLimiteMs,
       );
     } catch (falha) {
-      throw new Error(mensagemDeFalha(falha));
+      throw semResposta(falha);
     }
-    if (resposta.error) throw resposta.error;
+    if (resposta.error)
+      throw ehFalhaDeConexao(resposta.error)
+        ? semResposta(resposta.error)
+        : resposta.error;
     return normalizarRetencao(resposta.data);
   }
 
@@ -74,17 +88,27 @@ export function criarEstadoDasMensagensDoChat({
   async function agir(tipo, nome, argumentos, aviso) {
     if (estado.acao) return false;
     pedido++;
-    publicar({ acao: tipo, erroDaAcao: "", acaoComErro: null, aviso: "" });
+    publicar({
+      acao: tipo,
+      erroDaAcao: "",
+      acaoComErro: null,
+      semConfirmacao: false,
+      aviso: "",
+    });
     try {
       const dados = await rpc(nome, argumentos);
       publicar({ acao: null, status: "ready", dados, aviso });
       return true;
     } catch (erro) {
+      const semConfirmacao = erro?.semResposta === true;
       publicar({
         acao: null,
         erroDaAcao: mensagemDeErroDaRetencao(erro),
         acaoComErro: tipo,
+        semConfirmacao,
       });
+      // Relê os números: mostram se a ação chegou a valer.
+      if (semConfirmacao) void carregar();
       return false;
     }
   }
@@ -122,6 +146,7 @@ export function criarEstadoDasMensagensDoChat({
     carregar,
     salvarPrazo,
     zerar,
-    limparErroDaAcao: () => publicar({ erroDaAcao: "", acaoComErro: null }),
+    limparErroDaAcao: () =>
+      publicar({ erroDaAcao: "", acaoComErro: null, semConfirmacao: false }),
   };
 }
