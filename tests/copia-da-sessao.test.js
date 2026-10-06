@@ -24,7 +24,7 @@ const RESPOSTAS = {
   mapa: ok([{ chave: "lmap", payload: { dsei: [] } }]),
   unidades: ok([{ id_unidade: 7, nome_oficial: "DSEI Yanomami" }]),
   abas: ok([{ co_aba: "editais", no_aba: "Editais", co_view: "nucleo" }]),
-  monitoramento: [{ resumo: 1 }, ok([{ id: 10, edital: "01/2026" }])],
+  monitoramento: ok([{ id: 10, edital: "01/2026" }]),
 };
 
 const PERFIL = {
@@ -77,10 +77,8 @@ describe("dados das respostas", () => {
       mapa: [{ chave: "lmap", payload: { dsei: [] } }],
       unidades: [{ id_unidade: 7, nome_oficial: "DSEI Yanomami" }],
       abas: [{ co_aba: "editais", no_aba: "Editais", co_view: "nucleo" }],
-      monitoramento: {
-        payload: { resumo: 1 },
-        linhas: [{ id: 10, edital: "01/2026" }],
-      },
+      // Só as linhas: o payload consolidado da RPC não era lido por ninguém.
+      monitoramento: { linhas: [{ id: 10, edital: "01/2026" }] },
     });
   });
 
@@ -113,7 +111,7 @@ describe("dados das respostas", () => {
 
   it("nenhuma cópia se a tabela do monitoramento falhou", () => {
     expect(
-      dadosDasRespostas({ ...RESPOSTAS, monitoramento: [null, falha] }),
+      dadosDasRespostas({ ...RESPOSTAS, monitoramento: falha }),
     ).toBeNull();
   });
 

@@ -227,7 +227,15 @@ describe("entrada", () => {
     expect(copia.guardar).toHaveBeenCalledTimes(1);
     const guardada = copia.guardar.mock.calls[0][0];
     expect(guardada).toMatchObject({ usuarioId: "u1", versao: "v1" });
-    expect(guardada.dados.monitoramento.linhas).toEqual(LINHAS);
+    expect(guardada.dados.monitoramento).toEqual({ linhas: LINHAS });
+  });
+
+  it("não chama a RPC do payload consolidado (ninguém o lia)", async () => {
+    const { carga, cliente } = montar();
+    await carga.carregarEntrada();
+    await esperarTudo();
+    await carga.atualizarDados();
+    expect(cliente.rpc).not.toHaveBeenCalled();
   });
 
   it("a cópia que serve abre a tela; a configuração vem dela, não da rede", async () => {
@@ -237,7 +245,7 @@ describe("entrada", () => {
       mapa: [],
       unidades: [],
       abas: null,
-      monitoramento: { payload: null, linhas: LINHAS },
+      monitoramento: { linhas: LINHAS },
     };
     const copiaGuardada = montarCopia({
       usuarioId: "u1",
@@ -326,6 +334,61 @@ describe("Realtime do monitoramento", () => {
     ).toHaveLength(1);
     carga.pararRealtime();
     expect(cliente.removeChannel).toHaveBeenCalledWith(canais[0]);
+  });
+
+  it("releitura que falha não diz que atualizou (o erro já foi avisado)", async () => {
+    vi.useFakeTimers();
+    const { carga, canais, avisar } = montar({
+      erroNasLinhas: { message: "falhou" },
+    });
+    carga.iniciarRealtime();
+    canais[0].ao();
+    await vi.advanceTimersByTimeAsync(800);
+    expect(avisar).toHaveBeenCalledWith(
+      "Erro ao carregar dados: falhou",
+      "error",
+    );
+    expect(avisar).not.toHaveBeenCalledWith(
+      "Dashboard atualizado automaticamente.",
+      "ok",
+    );
+  });
+
+  it("releitura que estoura vira aviso de erro, sem rejeição solta", async () => {
+    vi.useFakeTimers();
+    const { carga, canais, avisar, cliente } = montar();
+    carga.iniciarRealtime();
+    cliente.from.mockImplementation(() => {
+      throw new Error("sem rede");
+    });
+    canais[0].ao();
+    await vi.advanceTimersByTimeAsync(800);
+    expect(avisar).toHaveBeenCalledWith(
+      "Erro ao carregar dados: sem rede",
+      "error",
+    );
+    expect(avisar).not.toHaveBeenCalledWith(
+      "Dashboard atualizado automaticamente.",
+      "ok",
+    );
+  });
+
+  it("esquecer (saída) fecha o canal e tira as linhas do store; o próximo login assina de novo", async () => {
+    const { carga, cliente, canais } = montar();
+    await carga.carregarEntrada();
+    carga.iniciarRealtime();
+    expect(obterDadosDoMonitoramento().linhas).toEqual(LINHAS);
+
+    carga.esquecer();
+    expect(cliente.removeChannel).toHaveBeenCalledWith(canais[0]);
+    expect(carga.linhas()).toEqual([]);
+    expect(obterDadosDoMonitoramento()).toMatchObject({
+      linhas: [],
+      carregado: false,
+    });
+
+    carga.iniciarRealtime();
+    expect(cliente.channel).toHaveBeenCalledTimes(2);
   });
 
   it("desligado na configuração, não assina", () => {

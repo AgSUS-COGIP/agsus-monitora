@@ -21,7 +21,7 @@ const CHAVE = "sessao";
   depender de alguém lembrar de mudar um número quando as colunas mudarem. O
   número à frente é para mudança do formato do registro.
 */
-export const VERSAO_DA_COPIA = `1:${import.meta.url}`;
+export const VERSAO_DA_COPIA = `2:${import.meta.url}`;
 
 function abrirBanco() {
   return new Promise((resolver, rejeitar) => {

@@ -125,7 +125,10 @@ export function localizarLinhaDoMonitoramento(id) {
 
 // ── Ganchos da sessão ───────────────────────────────────────────────────
 
-/* A pessoa saiu (ou a sessão acabou): nada dela fica na tela. */
+/*
+  A pessoa saiu (ou a sessão acabou, ou saiu em outra aba): nada dela fica na
+  tela. `carga.esquecer` também fecha o Realtime e tira as linhas do store.
+*/
 function limparEstadoDeslogado() {
   carga.esquecer();
   presenca.pararTudo();
@@ -167,12 +170,14 @@ async function abrirSistema({ origem }) {
   return true;
 }
 
-/* Sem acesso, ou acesso revogado: nada desta pessoa fica no navegador. */
+/*
+  Sem acesso, ou acesso revogado: nada desta pessoa fica no navegador, e nada
+  dela continua batendo no banco (heartbeat e Pessoas online param juntos).
+*/
 function ficarSemAcesso() {
   carga.esquecer();
   void carga.apagarCopia();
-  carga.pararRealtime();
-  presenca.pararHeartbeat();
+  presenca.pararTudo();
   encerrarEspera();
   perfil.esconderApp();
 }

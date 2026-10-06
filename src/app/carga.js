@@ -32,6 +32,7 @@ import {
 } from "../modules/situacao-dos-modulos.js";
 import { esconderEsqueleto, marcarAtualizacao } from "./carregamento.js";
 import {
+  esquecerLinhasDoMonitoramento,
   publicarLinhasDoMonitoramento,
   publicarUnidadesDoCatalogo,
 } from "../componentes/dados-do-monitoramento.js";
@@ -54,7 +55,6 @@ import { avisar as avisarPadrao } from "./avisos.js";
   Visão geral.
 */
 
-const RPC_PAYLOAD_DO_MONITORAMENTO = "get_monitoramento_dashboard_payload";
 const TABELA_DO_MAPA = "TB_CONFIG_MAPA_SAUDE_INDIG";
 
 /*
@@ -137,18 +137,6 @@ export function criarCarga({
       .select("chave,payload")
       .in("chave", ["lmap", "rede_cnes"]);
 
-  async function payloadDoMonitoramento() {
-    const { data, error } = await sb().rpc(RPC_PAYLOAD_DO_MONITORAMENTO);
-    if (error) {
-      console.warn(
-        "Payload consolidado de monitoramento indisponível; usando carregamento legado:",
-        error,
-      );
-      return null;
-    }
-    return data || null;
-  }
-
   function podeCarregarMonitoramento() {
     return (
       pode("ind") ||
@@ -159,16 +147,16 @@ export function criarCarga({
     );
   }
 
+  // `Promise.resolve` dispara a consulta já (ver `iniciarConsultas`).
   const consultaDoMonitoramento = () =>
-    Promise.all([
-      payloadDoMonitoramento(),
+    Promise.resolve(
       sb()
         .from("TB_MONITORAMENTO_INDIGENA")
         .select(COLUNAS_DO_MONITORAMENTO)
         .eq("ativo", true)
         .order("unidade", { ascending: true })
         .order("edital", { ascending: true }),
-    ]);
+    );
 
   /*
     As consultas da entrada saem juntas: dependem só da sessão e do perfil, não
@@ -252,16 +240,15 @@ export function criarCarga({
   async function carregarLinhas({ consulta } = {}) {
     if (cargaDasLinhas) return cargaDasLinhas;
     const rodada = ++rodadaDasLinhas;
-    cargaDasLinhas = (async () => {
+    const carga = (async () => {
       if (!podeCarregarMonitoramento()) {
         linhas = [];
         publicarLinhasDoMonitoramento(linhas);
         navegacao.montarMenu();
         return true;
       }
-      const [, resposta] = await (consulta || consultaDoMonitoramento());
+      const { data, error } = await (consulta || consultaDoMonitoramento());
       if (rodada !== rodadaDasLinhas) return false;
-      const { data, error } = resposta;
       if (error) {
         avisar("Erro ao carregar dados: " + erroAmigavel(error), "error");
         return false;
@@ -271,10 +258,12 @@ export function criarCarga({
       publicarLinhasDoMonitoramento(linhas);
       return true;
     })();
+    cargaDasLinhas = carga;
     try {
-      return await cargaDasLinhas;
+      return await carga;
     } finally {
-      cargaDasLinhas = null;
+      // `esquecer` pode ter soltado esta carga e outra já ter começado.
+      if (cargaDasLinhas === carga) cargaDasLinhas = null;
     }
   }
 
@@ -430,6 +419,17 @@ export function criarCarga({
 
   // ── Realtime do monitoramento ─────────────────────────────────────────
 
+  /* Sucesso só quando as linhas vieram; a falha já foi avisada pela carga. */
+  async function releituraDoRealtime() {
+    try {
+      if (await carregarLinhas())
+        avisar("Dashboard atualizado automaticamente.", "ok");
+    } catch (erro) {
+      console.warn("Falha na releitura do Realtime:", erro);
+      avisar("Erro ao carregar dados: " + erroAmigavel(erro), "error");
+    }
+  }
+
   function iniciarRealtime() {
     if (!sb() || !obterUsuario()) return;
     if (!configuracao.booleano("feature_realtime_monitoramento", true)) return;
@@ -443,10 +443,7 @@ export function criarCarga({
           () => {
             // Mudanças em rajada viram uma releitura só.
             clearTimeout(esperaDoRealtime);
-            esperaDoRealtime = setTimeout(async () => {
-              await carregarLinhas();
-              avisar("Dashboard atualizado automaticamente.", "ok");
-            }, 800);
+            esperaDoRealtime = setTimeout(releituraDoRealtime, 800);
           },
         )
         .subscribe();
@@ -467,10 +464,18 @@ export function criarCarga({
     canal = null;
   }
 
-  /* A pessoa saiu (ou ficou sem acesso): nada dela fica na memória. */
+  /*
+    A pessoa saiu (ou ficou sem acesso): nada dela fica na memória nem na
+    escuta. Sem o canal, o próximo login assina de novo (`iniciarRealtime`); a
+    rodada nova descarta a carga de linhas que ainda estiver a caminho.
+  */
   function esquecer() {
+    pararRealtime();
+    rodadaDasLinhas += 1;
+    cargaDasLinhas = null;
     linhas = [];
     copiaEmLeitura = null;
+    esquecerLinhasDoMonitoramento();
   }
 
   return {

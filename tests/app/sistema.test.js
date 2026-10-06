@@ -65,6 +65,13 @@ describe("ligarSistema", () => {
     document.getElementById("appScreen").classList.remove("hidden");
     await act(async () => ganchos.aoSair());
     expect(document.getElementById("appScreen").classList).toContain("hidden");
+
+    // Sem acesso: a memória sai e a presença para inteira (heartbeat e a batida de Pessoas online).
+    const esquecer = vi.spyOn(sistema.carga, "esquecer");
+    const pararTudo = vi.spyOn(sistema.presenca, "pararTudo");
+    await act(async () => ganchos.aoFicarSemAcesso());
+    expect(esquecer).toHaveBeenCalled();
+    expect(pararTudo).toHaveBeenCalled();
   });
 
   it("a busca global sem linha carregada não navega", async () => {
