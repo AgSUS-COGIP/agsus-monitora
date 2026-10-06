@@ -80,7 +80,10 @@ export function GavetaDaAnalise({
       }
     >
       {d.contexto.length ? (
-        <div className="ui-gaveta-contexto">
+        <div
+          className="ui-gaveta-contexto"
+          data-tour="analises-gaveta-contexto"
+        >
           {d.contexto.map(([rotulo, valor]) => (
             <div key={rotulo}>
               <small>{rotulo}</small>
@@ -93,7 +96,7 @@ export function GavetaDaAnalise({
       {situacao === "carregando" ? (
         <SecoesEsqueleto />
       ) : (
-        <div className="ui-gaveta-corpo">
+        <div className="ui-gaveta-corpo" data-tour="analises-gaveta-secoes">
           {situacao === "erro" ? (
             <p className="ui-aviso" data-tone="warning" role="alert">
               Não foi possível carregar o detalhamento.{" "}
@@ -107,7 +110,10 @@ export function GavetaDaAnalise({
             </p>
           ) : null}
           {d.origem || d.pdf ? (
-            <div className="ui-acoes analises-links">
+            <div
+              className="ui-acoes analises-links"
+              data-tour="analises-gaveta-links"
+            >
               {d.origem ? (
                 <a
                   className="btn secondary small"

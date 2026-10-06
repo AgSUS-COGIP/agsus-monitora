@@ -37,6 +37,7 @@ export function TabelaDeAnalises({
 }) {
   return (
     <TabelaInfinita
+      tour="analises-lista"
       idDoTitulo="analisesFilaTitulo"
       titulo="Fila de análises"
       busca={{
@@ -81,6 +82,7 @@ export function TabelaDeAnalises({
               type="button"
               className="btn secondary small"
               data-acao="detalhes"
+              data-tour="analises-detalhes"
               aria-label={`Detalhes de ${ou(linha.candidato, "registro")}`}
               onClick={() => aoAbrir(linha.__chave)}
             >

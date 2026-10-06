@@ -232,6 +232,7 @@ function Prazo({ estado, atual }) {
         <button
           type="button"
           className="btn green"
+          data-tour="config-mensagens-salvar-prazo"
           disabled={salvando || igual || Boolean(atual.acao)}
           aria-busy={salvando || undefined}
           onClick={pedirSalvar}
@@ -392,6 +393,7 @@ function Zerar({ estado, atual }) {
         <button
           type="button"
           className="btn danger"
+          data-tour="config-mensagens-zerar"
           disabled={
             Boolean(atual.acao) ||
             (vazio && !(incluirConversas && dados.conversasSemParticipante))
@@ -421,6 +423,7 @@ function Historico({ historico }) {
     <section
       className="config-historico"
       aria-labelledby="configChatHistoricoTitulo"
+      data-tour="config-mensagens-historico"
     >
       <div className="config-card-title">
         <div>
@@ -501,7 +504,10 @@ export function SecaoMensagensDoChat({ estado, configuracoes }) {
     );
 
   return (
-    <div className="config-secao-react config-chat">
+    <div
+      className="config-secao-react config-chat"
+      data-tour="config-mensagens"
+    >
       <div className="config-secao-react__campos">
         <Numeros dados={atual.dados} />
         {atual.aviso ? (

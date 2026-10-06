@@ -295,6 +295,13 @@ function Area({
         area.id === AREA_DAS_CONFIGURACOES && "menu-area--administracao",
       )}
       data-area={area.id}
+      data-tour={
+        semCabecalho
+          ? "barra-itens-da-area"
+          : area.id === AREA_DAS_CONFIGURACOES
+            ? "barra-administracao"
+            : undefined
+      }
       {...(direto ? {} : eventos)}
       onKeyDown={direto ? undefined : dispensarPorEsc}
     >
@@ -398,6 +405,7 @@ function SeletorDeArea({
         flutuante && "menu-area--flutuante",
       )}
       data-seletor-de-area={atual.id}
+      data-tour="barra-seletor-de-area"
       {...eventos}
       onKeyDown={aoTeclar}
     >
@@ -640,6 +648,7 @@ export function Navegacao({ arvore, ativo, opcoes, trilho }) {
       <nav
         id="nav"
         ref={refNav}
+        data-tour="barra-menu"
         className="menu-lateral"
         aria-label="Áreas do sistema"
       >

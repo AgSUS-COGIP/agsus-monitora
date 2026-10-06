@@ -98,7 +98,7 @@ export function SecaoDoParecer({
 
   return (
     <Secao icone="fa-scale-balanced" titulo="Parecer jurídico" secao="parecer">
-      <div className="recursos-parecer">
+      <div className="recursos-parecer" data-tour="recursos-parecer">
         <div className="ui-kv-grade">
           <Kv rotulo="Situação">
             <SeloDaSituacao situacao={r.situacao} />

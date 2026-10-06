@@ -1,4 +1,6 @@
 import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
+import { usarPedidoDeFiltro } from "../../app/pedido-de-filtro.js";
+import { filtrosDeEntrevistas } from "../../lib/filtro-da-aya.js";
 import { montarModulo } from "../../app/montar-modulo.jsx";
 import { usarTemaEscuro } from "../../app/tema.js";
 import { obterDadosDoMonitoramento } from "../../componentes/dados-do-monitoramento.js";
@@ -144,6 +146,11 @@ function TelaDaArea({ estado, conducao, e, visao, aoTrocarVisao }) {
   const trocarFiltro = (campo, valor) =>
     setFiltros((atuais) => ({ ...atuais, [campo]: valor }));
   const recarregar = () => void estado.carregar(area);
+  // "Abrir" numa resposta com número da Aya: Resultados, já recortado.
+  usarPedidoDeFiltro("entrevistas", carregado, (pedido) => {
+    aoTrocarVisao?.("resultados");
+    setFiltros((atuais) => filtrosDeEntrevistas(atuais, pedido, opcoes));
+  });
 
   /* Atualizar relê "Resultados" e, na visão aberta, o que ela mostra. */
   function atualizar() {
@@ -156,7 +163,7 @@ function TelaDaArea({ estado, conducao, e, visao, aoTrocarVisao }) {
   }
 
   return (
-    <div className="ui-tela entrevistas-tela">
+    <div className="ui-tela entrevistas-tela" data-tour="entrevistas-tela">
       <Topo
         status={textoDoStatus(e)}
         aoAtualizar={atualizar}

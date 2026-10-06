@@ -56,6 +56,7 @@ export function TabelaInfinita({
   ferramentas = null,
   className,
   idDoCorpo,
+  tour,
 }) {
   const [buscaPropria, setBuscaPropria] = useState("");
   const controlada = valor !== undefined;
@@ -93,6 +94,7 @@ export function TabelaInfinita({
     <section
       className={classes("ui-card ui-tabela", className)}
       aria-labelledby={idDoTitulo}
+      data-tour={tour}
     >
       <div className="ui-tabela-topo">
         <div>

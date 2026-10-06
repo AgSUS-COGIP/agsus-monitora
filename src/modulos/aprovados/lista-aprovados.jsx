@@ -91,6 +91,7 @@ function Visoes({ aba, aoMudar }) {
   return (
     <div
       className="ui-segmentado approved-visoes"
+      data-tour="aprovados-visoes"
       role="tablist"
       aria-label="Visões da lista do edital"
     >
@@ -107,6 +108,7 @@ function Visoes({ aba, aoMudar }) {
           aria-selected={aba === item.nome}
           aria-controls={item.painel}
           data-approved-tab={item.nome}
+          data-tour={`aprovados-aba-${item.nome}`}
           onClick={() => aoMudar(item.nome)}
         >
           <i className={`fa-solid ${item.icone}`} aria-hidden="true" />
@@ -304,6 +306,7 @@ export function ListaAprovados({ estado }) {
   return (
     <div className="ui-tela aprovados-tela">
       <TopoDoPainel
+        tour="aprovados-topo"
         visoes={<Visoes aba={aba} aoMudar={setAba} />}
         status={textoDoStatus(dados)}
         aoAtualizar={() => void estado.carregar()}
@@ -334,6 +337,7 @@ export function ListaAprovados({ estado }) {
           {podeSubJudice ? (
             <button
               id="approvedAddSubJudiceBtn"
+              data-tour="aprovados-sub-judice"
               className="btn green"
               type="button"
               disabled={!temListaAtiva}

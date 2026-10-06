@@ -25,6 +25,7 @@ export function PainelDeFiltros({
   subtitulo,
   rotuloMostrar = "Mostrar filtros",
   rotuloOcultar = "Ocultar filtros",
+  tour,
   children,
 }) {
   // Nasce recolhido (pedido de 02/10): a tela abre com os dados; os filtros
@@ -44,6 +45,7 @@ export function PainelDeFiltros({
       <section
         className={classes("ui-card ui-filtros", className)}
         aria-labelledby={idDoTitulo}
+        data-tour={tour}
       >
         <div className="ui-filtros-topo">{titulo}</div>
         {children}
@@ -64,6 +66,7 @@ export function PainelDeFiltros({
         recolhido && "is-recolhido",
       )}
       aria-labelledby={idDoTitulo}
+      data-tour={tour}
     >
       <div className="ui-filtros-topo">
         {titulo}

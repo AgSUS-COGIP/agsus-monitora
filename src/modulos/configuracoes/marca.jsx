@@ -114,7 +114,10 @@ export function SecaoMarca({ estado }) {
   // Assina o estado: cada tecla redesenha campos e prévia.
   useSyncExternalStore(estado.assinar, estado.obter);
   return (
-    <div className="config-secao-react config-secao-react--com-previa">
+    <div
+      className="config-secao-react config-secao-react--com-previa"
+      data-tour="config-marca"
+    >
       <div className="config-secao-react__campos">
         {GRUPOS.map((grupo) => (
           <Grupo key={grupo.id} secao="marca" {...grupo}>

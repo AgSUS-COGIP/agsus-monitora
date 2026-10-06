@@ -49,7 +49,7 @@ os modelos em `supabase/correcoes/20261006-modelos-da-regra-da-analise.sql` e o 
 
 ## Perguntas da Empregare e nota declarada
 
-**perguntas:** perguntas da empregare na regra | ligar pergunta ao bloco | nota declarada | divergencia da art | art | respostas encontradas
+**perguntas:** perguntas da empregare na regra | ligar pergunta ao bloco | nota declarada | divergencia da art | respostas encontradas
 **resposta:** Para quem coordena, a aba Regra lista as perguntas da última carga do robô da Empregare nas vagas do edital, com as respostas encontradas e quantas vezes cada uma aparece — respostas que aparecem uma vez só não são mostradas, para não expor texto livre. Dali se liga a pergunta a um bloco ou se cria a pontuação da nota declarada: cada resposta vale pontos (ou meses × pontos por mês), por parcial. A nota declarada só confere a ART (a nota do questionário da Empregare); se divergir além da tolerância, vira aviso, e a ordem da Provisória continua pela ART.
 **fonte:** src/lib/avaliacao-documental/nota-declarada.js; supabase/migrations/20261006100000_regra_da_analise.sql
 **abrir:** avaliacao-documental

@@ -27,6 +27,7 @@ export function Grupo({ secao, id, titulo, icone, tom, children }) {
       className="config-grupo"
       data-tom={tom}
       data-grupo={id}
+      data-tour={`config-${secao}-${id}`}
       aria-labelledby={tituloId}
     >
       <header className="config-grupo__cabecalho">

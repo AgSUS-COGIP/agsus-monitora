@@ -2,8 +2,8 @@
   O tour guiado da Aya ("Me mostra esta tela") e o motor das trilhas.
 
   Escurece a página com um recorte (spotlight) no elemento da vez e mostra um
-  balão curto ao lado dele: contador ("2 de 6"), título, uma ou duas frases e
-  os botões Pular · Voltar · Próximo. O roteiro vem de src/lib/aya-tours.js.
+  balão curto ao lado dele: contador ("Passo 2 de 6"), título, uma ou duas frases e
+  os botões Pular · Anterior · Próximo. O roteiro vem de src/lib/aya-tours.js.
 
   - O passo aponta para um seletor estável (id, data-tour, data-*). Se o
     elemento não existe ou está escondido (sem permissão, tela vazia, aba
@@ -15,6 +15,9 @@
     do recorte); o resto da página não recebe clique enquanto o tour corre.
   - Teclado: Esc sai, ← e → navegam, Tab fica preso no balão. O leitor de
     tela ouve "Passo 2 de 6: título. texto" a cada passo.
+  - O recorte acompanha o elemento: rolagem, redimensionar a janela e um
+    ResizeObserver no elemento da vez (o elemento é achado com
+    querySelector na hora do passo; nada de MutationObserver).
   - Celular (até 600px): balão com a largura da tela, embaixo ou em cima,
     do lado oposto ao elemento. Tema escuro: só tokens (tour.css).
 
@@ -30,12 +33,15 @@ import {
   useState,
 } from "react";
 import { createPortal } from "react-dom";
-import { posicaoDoBalao } from "../../../lib/aya-tours.js";
+import {
+  geometriaDoHolofote,
+  posicaoDoBalao,
+  rotuloDoPasso,
+} from "../../../lib/aya-tours.js";
 
 const FOCAVEIS =
   'button:not([disabled]), a[href], [tabindex]:not([tabindex="-1"])';
 const INTERVALO_DA_PROCURA = 120;
-const MARGEM_DO_RECORTE = 6;
 
 /* O elemento está na tela? Escondido por `hidden`, página inativa ou display:none não conta. */
 export function elementoVisivel(elemento) {
@@ -79,14 +85,9 @@ function telaDeCelular(janela) {
   }
 }
 
+/* O recorte e as faixas saem do mesmo retângulo (moldura == área clara). */
 function medir(elemento) {
-  const caixa = elemento.getBoundingClientRect();
-  return {
-    top: caixa.top - MARGEM_DO_RECORTE,
-    left: caixa.left - MARGEM_DO_RECORTE,
-    width: caixa.width + MARGEM_DO_RECORTE * 2,
-    height: caixa.height + MARGEM_DO_RECORTE * 2,
-  };
+  return geometriaDoHolofote(elemento.getBoundingClientRect());
 }
 
 /** Dá para destacar? Sem passos com alvo visível ou sem alvo, não há o que mostrar. */
@@ -242,7 +243,13 @@ export function Tour({
     janela.addEventListener("scroll", atualizar, true);
     janela.addEventListener("resize", atualizar);
     documento.addEventListener("click", atualizar, true);
+    // O elemento mudou de tamanho (filtro aberto, lista carregou): mede de novo.
+    const Observador = janela.ResizeObserver;
+    const observador =
+      typeof Observador === "function" ? new Observador(atualizar) : null;
+    observador?.observe(elemento);
     return () => {
+      observador?.disconnect();
       janela.cancelAnimationFrame?.(quadro);
       janela.removeEventListener("scroll", atualizar, true);
       janela.removeEventListener("resize", atualizar);
@@ -256,7 +263,7 @@ export function Tour({
     const balao = refBalao.current;
     setPosicao(
       posicaoDoBalao({
-        caixa,
+        caixa: caixa?.recorte ?? null,
         balao: {
           largura: balao?.offsetWidth || 0,
           altura: balao?.offsetHeight || 0,
@@ -327,7 +334,7 @@ export function Tour({
   if (!atual) return null;
   const passo = passos[atual.indice];
   const ultimo = atual.indice >= total - 1;
-  const contador = `${atual.indice + 1} de ${total}`;
+  const contador = rotuloDoPasso(atual.indice, total);
   const estiloDoBalao =
     posicao && posicao.modo !== "celular"
       ? { top: `${posicao.top}px`, left: `${posicao.left}px` }
@@ -346,51 +353,13 @@ export function Tour({
     <div className="aya-tour" data-tour-ativo="">
       {caixa ? (
         <>
-          <div
-            className="aya-tour__faixa"
-            style={{
-              top: 0,
-              left: 0,
-              right: 0,
-              height: Math.max(0, caixa.top),
-            }}
-          />
-          <div
-            className="aya-tour__faixa"
-            style={{
-              top: caixa.top + caixa.height,
-              left: 0,
-              right: 0,
-              bottom: 0,
-            }}
-          />
-          <div
-            className="aya-tour__faixa"
-            style={{
-              top: caixa.top,
-              left: 0,
-              width: Math.max(0, caixa.left),
-              height: caixa.height,
-            }}
-          />
-          <div
-            className="aya-tour__faixa"
-            style={{
-              top: caixa.top,
-              left: caixa.left + caixa.width,
-              right: 0,
-              height: caixa.height,
-            }}
-          />
+          {caixa.faixas.map((faixa, indice) => (
+            <div key={indice} className="aya-tour__faixa" style={faixa} />
+          ))}
           <div
             className="aya-tour__recorte"
             aria-hidden="true"
-            style={{
-              top: caixa.top,
-              left: caixa.left,
-              width: caixa.width,
-              height: caixa.height,
-            }}
+            style={caixa.recorte}
           />
         </>
       ) : (
@@ -432,7 +401,7 @@ export function Tour({
                 onClick={voltar}
                 disabled={atual.indice === 0}
               >
-                Voltar
+                Anterior
               </button>
               <button
                 ref={refProximo}
@@ -447,7 +416,7 @@ export function Tour({
         </article>
       </section>
       <p className="aya-visualmente-oculto" role="status" aria-live="polite">
-        {`Passo ${contador}: ${passo.titulo}. ${passo.texto}`}
+        {`${contador}: ${passo.titulo}. ${passo.texto}`}
       </p>
     </div>,
     documento.body,

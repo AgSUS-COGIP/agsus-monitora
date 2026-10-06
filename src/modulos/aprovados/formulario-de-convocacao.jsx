@@ -180,7 +180,7 @@ export function FormularioDeConvocacao({
       role="tabpanel"
       aria-labelledby="approvedImportTabConvocacao"
     >
-      <fieldset className="convocacao-tipo">
+      <fieldset className="convocacao-tipo" data-tour="aprovados-modelo-tipo">
         <legend>Tipo de convocação</legend>
         <label className="convocacao-tipo-card">
           <input
@@ -218,6 +218,7 @@ export function FormularioDeConvocacao({
       {/* Sem proporcionalidade não há reserva a distribuir; o quadro sai da frente. */}
       <div
         id="convocacaoQuadro"
+        data-tour="aprovados-modelo-de-regras"
         className={classes(
           "convocacao-quadro",
           !formulario.proporcionalidade && "hidden",
@@ -367,6 +368,7 @@ export function FormularioDeConvocacao({
         </p>
         <div
           id="convocacaoVagasBloco"
+          data-tour="aprovados-modelo-vagas"
           className={bloqueado ? "hidden" : undefined}
         >
           <div className="convocacao-bloco-head">
@@ -508,6 +510,7 @@ export function FormularioDeConvocacao({
             estado={estado}
             acao="salvar-configuracao"
             id="convocacaoSalvar"
+            data-tour="aprovados-modelo-salvar"
             className="btn green"
             onClick={() => void estado.salvarConfiguracao(formulario)}
           >

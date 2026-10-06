@@ -60,6 +60,7 @@ export function Gaveta({
   titulo,
   resumo,
   rotuloDoFechar,
+  tour,
   children,
 }) {
   const { fundo, cartao } = usarClassesDaGaveta();
@@ -69,6 +70,7 @@ export function Gaveta({
       rotuloId={tituloId}
       aoFechar={aoFechar}
       fecharAoClicarFora={fecharAoClicarFora}
+      tour={tour}
       className={classes(fundo, className)}
       cartaoClassName={classes(cartao, cartaoClassName)}
     >

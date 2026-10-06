@@ -70,3 +70,10 @@ desativadas. O acesso ao MONITORA é só por convite. Fontes: `src/modulos/acess
 **perguntas:** trava de area | pessoa sem area | conta de setor | email compartilhado | mover para coordenacoes
 **resposta:** O banco recusa salvar uma pessoa ativa sem nenhuma área (menos o administrador global, que já vê todas); o modal avisa e o salvar espera a área. Uma conta de setor (e-mail compartilhado) pode virar coordenação em "Avançado" › "Mover para Coordenações" (só o administrador global, com confirmação escrita): cria a coordenação com o nome da conta e desativa a conta, de forma reversível.
 **fonte:** supabase/migrations/20260930130000_acessos_trava_de_area_e_convite.sql; supabase/migrations/20260929190100_adicionar_pessoa_e_contas_de_coordenacao.sql
+
+## Pessoa que não consegue entrar
+
+**perguntas:** nao consigo entrar | por que nao consigo entrar | pessoa nao consegue entrar | o convite nao funciona | erro ao entrar no monitora
+**resposta:** Confira, nesta ordem: a pessoa entrou com a conta Google do e-mail convidado (o link sozinho não dá acesso e outra conta não serve); o e-mail é de um domínio permitido (Configurações › Tela de acesso); e o cadastro está ativo — conta desativada vê "Seu acesso ao MONITORA foi desativado." e pode pedir reativação. Quem entra sem convite vê a tela de pedido de acesso, que vai para Acessos › Usuários › Pendentes. Se o Login Google estiver Inativo, o botão some da tela de entrada; com o sistema inteiro em manutenção, quem não é administrador global vê a tela de manutenção.
+**fonte:** src/lib/convite-de-acesso.js; src/lib/solicitacao-de-acesso.js; supabase/migrations/20260930180000_contas_desativadas_e_reativacao.sql; src/lib/situacao-dos-modulos.js
+**abrir:** config:acessos

@@ -45,10 +45,15 @@ describe("respostas sobre as regras do sistema", () => {
     expect(texto).toContain("e-mail convidado");
   });
 
-  it("vagas imediatas: manual, depois quadro, depois lista", () => {
+  it("vagas imediatas: quadro do edital, depois a Convocação, depois a regra (sem número manual)", () => {
     const texto = resposta("De onde vêm as vagas imediatas?");
-    expect(texto.indexOf("manual")).toBeLessThan(texto.indexOf("quadro"));
-    expect(texto.indexOf("quadro")).toBeLessThan(texto.lastIndexOf("lista"));
+    expect(texto).toContain("não se digitam mais à mão");
+    const quadro = texto.indexOf("quadro de vagas do edital");
+    const convocacao = texto.indexOf("Lista de aprovados › Convocação");
+    const regra = texto.indexOf("percentuais da regra");
+    expect(quadro).toBeGreaterThan(-1);
+    expect(quadro).toBeLessThan(convocacao);
+    expect(convocacao).toBeLessThan(regra);
   });
 
   it("escopo das análises e manutenção de abas", () => {

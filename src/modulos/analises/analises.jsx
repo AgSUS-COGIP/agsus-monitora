@@ -1,4 +1,6 @@
 import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
+import { usarPedidoDeFiltro } from "../../app/pedido-de-filtro.js";
+import { filtrosDasAnalises } from "../../lib/filtro-da-aya.js";
 import { montarModulo } from "../../app/montar-modulo.jsx";
 import { usarTemaEscuro } from "../../app/tema.js";
 import { obterDadosDoMonitoramento } from "../../componentes/dados-do-monitoramento.js";
@@ -184,6 +186,13 @@ function TelaDaArea({ estado, e }) {
     if (carregado) setFiltros((atuais) => apararSelecao(atuais, linhas));
   }, [carregado, linhas]);
 
+  // "Abrir" numa resposta com número da Aya: a tela abre já recortada.
+  usarPedidoDeFiltro("analises", carregado, (pedido) => {
+    const proximo = filtrosDasAnalises(filtros, pedido, linhas, kpi);
+    setFiltros(proximo.filtros);
+    setKpi(proximo.kpi);
+  });
+
   // Buscar (geral ou na fila) inclui o parecer: traz os pareceres em lote.
   const buscando = Boolean(filtros.busca.trim() || buscaDaFila.trim());
   useEffect(() => {
@@ -295,6 +304,7 @@ function TelaDaArea({ estado, e }) {
   return (
     <div className="ui-tela analises-tela">
       <TopoDoPainel
+        tour="analises-topo"
         status={textoDoStatus(e)}
         aoAtualizar={() => void estado.atualizar()}
         atualizarDesativado={

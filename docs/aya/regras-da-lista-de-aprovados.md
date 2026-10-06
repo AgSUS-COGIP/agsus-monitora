@@ -12,7 +12,7 @@ publicada do resultado final da Classificação; `src/lib/publicacao-de-aprovado
 ## Tela da Lista de aprovados
 
 **perguntas:** tela da lista de aprovados | lista de aprovados | aba lista de aprovados | para que serve lista de aprovados | para que serve a lista de aprovados | status do candidato
-**resposta:** A Lista de aprovados mostra a lista vigente de cada edital da área atual. Os status do candidato são Convocado, Contratado, Desistente, Migração e Documentação Rejeitada; Contratado e Migração exigem matrícula e Convocado leva a data da convocação. Status já definido só quem tem Administrador em Aprovados altera (os demais veem um cadeado), exceto do Convocado para o status seguinte. Clicar no nome abre a gaveta do candidato, com os dados e as cartas de convocação emitidas. Quem tem Editor em Aprovados muda status; o grupo Gestor edita a lista desde que tenha a área e o edital. Quem importou ou substituiu a lista fica registrado.
+**resposta:** A Lista de aprovados mostra a lista vigente de cada edital da área atual, em duas abas: Aprovados (os candidatos e o status) e Convocação (a ordem de chamada, os a convocar e a carta de convocação). Os status do candidato são Convocado, Contratado, Desistente, Migração e Documentação Rejeitada; Contratado e Migração exigem matrícula e Convocado leva a data da convocação. Status já definido só quem tem Administrador em Aprovados altera (os demais veem um cadeado), exceto do Convocado para o status seguinte. Clicar no nome abre a gaveta do candidato, com os dados e as cartas de convocação emitidas. Quem tem Editor em Aprovados muda status; o grupo Gestor edita a lista desde que tenha a área e o edital. Quem importou ou substituiu a lista fica registrado.
 **fonte:** src/lib/lista-aprovados-rules.js; src/modulos/aprovados/; supabase/migrations/20260930200000_aprovados_por_grupo_edital_gestor_edita.sql
 **abrir:** approved
 
@@ -84,7 +84,7 @@ publicada do resultado final da Classificação; `src/lib/publicacao-de-aprovado
 
 ## Status Convocado
 
-**perguntas:** status convocado | o que e convocado | convocado | data da convocacao | marcar como convocado | convocado para contratacao
+**perguntas:** status convocado | o que e convocado | convocado | data da convocacao | marcar como convocado | convocado para contratacao | fim de fila | status fim de fila | sumiu o fim de fila
 **resposta:** Convocado é o candidato chamado para a contratação que ainda vai se apresentar e entregar os documentos; o status leva a data da convocação (hoje, por padrão, nunca futura). O caminho seguinte é Contratado, Desistente ou Documentação Rejeitada: quem tem Editor em Aprovados faz essa passagem sem o cadeado, mas voltar a "Sem status" é só do Administrador em Aprovados. A data continua registrada depois que o status muda e some se o status for apagado. Convocado não conta como contratado na Seleção nem nos indicadores de contratados (que somam Contratado e Migração). O status "Fim de Fila" deixou de existir.
 **fonte:** src/lib/lista-aprovados-rules.js; supabase/migrations/20261005180000_convocado_e_carta_de_convocacao.sql
 **abrir:** approved
@@ -128,4 +128,25 @@ publicada do resultado final da Classificação; `src/lib/publicacao-de-aprovado
 **perguntas:** historico de cartas do candidato | cartas emitidas | gaveta do candidato | ver cartas de convocacao do candidato
 **resposta:** Clique no nome do candidato, em qualquer aba, para abrir a gaveta: os dados da lista, o status com a data da convocação e as cartas de convocação emitidas para ele (também nas listas anteriores do edital), com quando, quem, modelo e versão, como saiu, o prazo e se a convocação foi marcada pela carta.
 **fonte:** src/modulos/aprovados/gaveta-do-candidato.jsx; supabase/migrations/20261005180000_convocado_e_carta_de_convocacao.sql (listar_cartas_do_candidato)
+**abrir:** approved
+
+## Cadeado no status do candidato
+
+**perguntas:** cadeado no status | por que aparece um cadeado | nao consigo mudar o status | status travado | voltar para sem status | desfazer status do candidato
+**resposta:** O cadeado aparece para quem tem Editor em Aprovados quando a lista é inativa ou quando o status já foi definido e só o Administrador em Aprovados pode mudá-lo (inclusive voltar a "Sem status"). A exceção é o Convocado: o Editor o leva para Contratado, Desistente ou Documentação Rejeitada sem cadeado. Sem Editor em Aprovados, a coluna mostra só um traço. Peça a mudança a quem tem Administrador em Aprovados.
+**fonte:** src/modulos/aprovados/partes.jsx (AcaoDeStatus); src/lib/lista-aprovados-rules.js; src/lib/access-roles.js
+**abrir:** approved
+
+## Carta de convocação que não aparece
+
+**perguntas:** carta de convocacao nao aparece | sumiu o botao da carta | nao consigo emitir a carta | envelope da carta nao aparece
+**resposta:** O botão "Carta de convocação", na aba Convocação, e o envelope na linha e na gaveta do candidato só aparecem para quem tem Editor em Aprovados, e só para candidatos de lista ativa. Com Leitor, ou numa lista inativa, eles não aparecem. Criar e alterar os modelos da carta também é de quem tem Editor em Aprovados.
+**fonte:** src/modulos/aprovados/partes.jsx (AcaoDeCarta); src/modulos/aprovados/aba-convocacao.jsx
+**abrir:** approved
+
+## Edital sem lista de aprovados
+
+**perguntas:** por que o edital nao tem lista de aprovados | lista de aprovados vazia | edital nao aparece na lista de aprovados | nao tem lista de aprovados
+**resposta:** A Lista de aprovados mostra a lista vigente de cada edital da área atual (e do recorte da sua coordenação). Edital sem lista ainda não teve o resultado final publicado da Classificação nem planilha importada: publique em Classificação › Resultado final ("Publicar como lista de aprovados") ou, em edital sem análise no sistema, importe o XLSX (Editor em Importação e convocação). As listas anteriores ficam inativas, para consulta, no modal "Listas do edital".
+**fonte:** src/lib/publicacao-de-aprovados.js; src/modulos/aprovados/modal-listas-do-edital.jsx; src/lib/access-roles.js
 **abrir:** approved

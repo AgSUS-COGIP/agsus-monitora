@@ -49,3 +49,17 @@ ficam aqui, com a Aya. Fontes: `src/modulos/selecao/`, `src/lib/selecao-do-paine
 **perguntas:** alertas identificados no recorte | observacao da selecao | alertas da selecao
 **resposta:** Na Seleção, os alertas identificados no recorte são as observações da coluna Observação da planilha Auditoria. Cada observação aparece uma vez, sem diferenciar maiúsculas, com quantas vagas a têm e em quais unidades e editais.
 **fonte:** src/lib/selecao-do-painel.js
+
+## Quem vê a Seleção
+
+**perguntas:** quem pode ver a selecao | nao vejo a aba selecao | permissao selecao | posso editar a selecao
+**resposta:** A Seleção usa a permissão "Seleção" (Leitor basta, em Configurações › Acessos) e é só de consulta: nenhum número se edita ali. Os números vêm da planilha Auditoria, das entrevistas registradas e da lista de aprovados vigente; para mudar, corrija a fonte. A tela mostra só a área escolhida no menu.
+**fonte:** src/lib/access-roles.js (canViewSelecao); supabase/migrations/20261001090000_selecao.sql
+**abrir:** selecao
+
+## Vaga ou número que não bate na Seleção
+
+**perguntas:** por que a vaga nao aparece na selecao | numero da selecao nao bate | vaga sumiu da selecao | contratados da selecao diferente | selecao desatualizada
+**resposta:** A vaga que saiu da planilha Auditoria fica inativa e some da tela; na Saúde Indígena só entram as vagas de DSEI e CASAI (as outras vão para SEDE ou Projetos pelo edital). Aprovados e contratados vêm da lista de aprovados vigente — contratado é Contratado ou Migração, e Convocado não conta —, e sem lista a vaga não soma nenhum dos dois. A carga roda de hora em hora, das 7h às 19h de Brasília, e o topo mostra "Conferido às …". Confira também os quatro filtros e a barra do ranking de unidades que estiver clicada.
+**fonte:** supabase/migrations/20261001090000_selecao.sql; supabase/migrations/20261001100000_selecao_area_pelos_editais.sql; src/lib/selecao-do-painel.js; .github/workflows/sincronizar-selecao.yml
+**abrir:** selecao

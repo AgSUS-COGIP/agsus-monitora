@@ -30,8 +30,8 @@ export function Rodape({ alca = null }) {
   };
 
   return (
-    <div className="side-footer">
-      <div className="side-tema" data-tema={tema.tema}>
+    <div className="side-footer" data-tour="barra-rodape">
+      <div className="side-tema" data-tema={tema.tema} data-tour="barra-tema">
         <div className="side-tema__opcoes" role="group" aria-label="Tema">
           {OPCOES_DE_TEMA.map((opcao) => (
             <button
@@ -62,6 +62,7 @@ export function Rodape({ alca = null }) {
         id="sidebarLogoutBtn"
         type="button"
         className="side-logout"
+        data-tour="barra-sair"
         aria-label="Sair da sessão atual"
         data-dica="Sair"
         onClick={() => void performExplicitLogout()}

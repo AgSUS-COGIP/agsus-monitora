@@ -52,8 +52,8 @@ publicação no histórico de Operação, de onde uma versão pode ser restaurad
 
 ## Arte de fundo da tela de acesso
 
-**perguntas:** arte de fundo | como trocar a arte de fundo da tela de acesso | como trocar a arte de fundo | imagem de fundo do acesso | fundo da tela de login | artes enviadas
-**resposta:** A arte de fundo da tela de acesso é escolhida em Configurações › Aparência. Use uma arte 16:9, em JPG, PNG ou WEBP, de até 6 MB. Diferente dos outros campos, a arte é aplicada na hora, sem passar por "Salvar alterações". Toda imagem enviada fica guardada em Artes enviadas para ser reutilizada. A arte em uso não pode ser apagada: para apagá-la, escolha outra ou restaure o padrão antes. Restaurar padrão volta para a arte institucional.
+**perguntas:** arte de fundo | como trocar a arte de fundo da tela de acesso | como trocar a arte de fundo | imagem de fundo do acesso | fundo da tela de login | artes enviadas | arte de fundo cortada | logo cortado no login
+**resposta:** A arte de fundo da tela de acesso é escolhida em Configurações › Aparência. Use uma arte 16:9, em JPG, PNG ou WEBP, de até 6 MB. Diferente dos outros campos, a arte é aplicada na hora, sem passar por "Salvar alterações". Toda imagem enviada fica guardada em Artes enviadas para ser reutilizada. A arte em uso não pode ser apagada: para apagá-la, escolha outra ou restaure o padrão antes. Restaurar padrão volta para a arte institucional. Em tela mais larga que 16:9, a arte aparece inteira à direita, sobre uma cópia dela desfocada, sem cortar o logo; em tela mais estreita, o corte cai à esquerda, onde fica o cartão.
 **fonte:** interface do MONITORA
 
 ## Logo da tela de acesso
@@ -120,3 +120,10 @@ publicação no histórico de Operação, de onde uma versão pode ser restaurad
 **resposta:** Em Configurações › Operação ficam a versão do sistema e a versão publicada, o Realtime do monitoramento (ativo ou inativo), o heartbeat de auditoria (1 a 60 minutos), o e-mail do suporte (para onde a Aya abre chamados) e o histórico de publicações, com Restaurar.
 **fonte:** src/modulos/configuracoes/operacao.jsx; src/lib/publicacao-de-configuracoes.js
 **abrir:** config:operacao
+
+## Tela de entrada enquanto carrega
+
+**perguntas:** tela de login pisca | login piscando | cartao de login muda de tamanho | tela de entrada carregando
+**resposta:** Enquanto o sistema carrega, a tela de entrada mostra um cartão provisório com as mesmas peças do cartão de verdade — a marca, a saudação padrão e o botão do Google, ainda sem ação —, por isso a troca não pisca nem muda de tamanho. Quando o sistema termina de carregar, entram a saudação e o botão configurados em Configurações › Tela de acesso.
+**fonte:** index.html; src/styles/platform-shell.css
+**abrir:** config:acesso

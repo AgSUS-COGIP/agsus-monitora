@@ -55,6 +55,7 @@ export function Topo({
       visoes={
         visoes ? (
           <Segmentado
+            tour="entrevistas-visoes"
             rotulo="Visão da tela"
             className="entrevistas-visoes"
             opcoes={visoes}
@@ -107,7 +108,7 @@ export function Filtros({ filtros, opcoes, carregado, aoMudar, aoLimpar }) {
       quantos={ativos.length}
       aoLimpar={aoLimpar}
     >
-      <div className="ui-grade-de-campos">
+      <div className="ui-grade-de-campos" data-tour="entrevistas-filtros">
         <Campo rotulo="Buscar candidato">
           <input
             id="filtro-busca"
@@ -172,7 +173,11 @@ export function Indicadores({
   const n = (valor) => formatNumberBR(valor);
   const carregando = !carregado;
   return (
-    <GradeDeKpis className="entrevistas-kpis" rotulo="Indicadores">
+    <GradeDeKpis
+      tour="entrevistas-kpis"
+      className="entrevistas-kpis"
+      rotulo="Indicadores"
+    >
       <Kpi
         cor="k-cyan"
         icone="fa-briefcase"
@@ -478,7 +483,10 @@ export function Graficos({
             }}
           />
         </CardDeGrafico>
-        <article className="ui-card entrevistas-bloco-de-pendencias">
+        <article
+          className="ui-card entrevistas-bloco-de-pendencias"
+          data-tour="entrevistas-pendencias"
+        >
           <h2 className="ui-titulo">Pendências</h2>
           <Pendencias
             pendencias={pendencias}

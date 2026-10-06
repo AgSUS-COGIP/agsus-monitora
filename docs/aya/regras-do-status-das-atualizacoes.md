@@ -6,7 +6,7 @@ falhou. Fontes: `src/componentes/saude-das-cargas/`, `src/lib/saude-das-cargas.j
 
 ## Seção Status das atualizações
 
-**perguntas:** o que e o status das atualizacoes | status das atualizacoes | para que serve status das atualizacoes | para que serve a secao status das atualizacoes | saude das cargas
+**perguntas:** o que e o status das atualizacoes | status das atualizacoes | para que serve status das atualizacoes | para que serve a secao status das atualizacoes | saude das cargas | quem ve o status das atualizacoes | nao vejo status das atualizacoes
 **resposta:** Em Configurações › Status das atualizações (só o administrador global) aparece, para cada carga de dados, a última execução e um selo: "Falhou" (a execução terminada mais recente deu erro), "Em andamento", "Atrasada" (a última que deu certo passou do prazo), "Em dia" ou "Ainda sem carga". Mostra as 10 últimas execuções de cada uma.
 **fonte:** src/lib/saude-das-cargas.js; supabase/migrations/20261001120000_saude_das_cargas.sql
 **abrir:** config:cargas
@@ -14,8 +14,8 @@ falhou. Fontes: `src/componentes/saude-das-cargas/`, `src/lib/saude-das-cargas.j
 ## Horários das atualizações
 
 **perguntas:** quando cada atualizacao de dados roda | horarios das atualizacoes | quando os dados sao atualizados | carga atrasada | cargas de dados
-**resposta:** As análises curriculares chegam pelo Apps Script das planilhas (o envio incremental é esperado a cada 20 minutos e fica "Atrasada" depois de 1 hora; a carga completa não tem prazo). Entrevistas e Seleção carregam pelo GitHub Actions de hora em hora, das 7h às 19h de Brasília, e ficam atrasadas depois de 4 horas durante o dia (à noite, sem carga, só depois de 14 horas). O robô da Empregare não tem agenda: roda só quando um administrador clica em "Rodar agora", por isso nunca fica "Atrasado". As conferências de consistência rodam todo dia às 6h de Brasília e ficam atrasadas depois de 26 horas. A pré-classificação da Avaliação documental roda no fim de cada carga do robô da Empregare e no Recalcular da coordenação, sem agenda, por isso também nunca fica "Atrasada". As tarefas do banco que rodam a cada 2 minutos (como o pacote do painel de análises e o das entrevistas) atrasam depois de 15 minutos; as diárias, depois de 26 horas; as mensais, depois de 32 dias. Os KPIs dos editais são recalculados às 10h de Brasília, depois da carga da Seleção.
-**fonte:** src/lib/saude-das-cargas.js; supabase/migrations/20261001120000_saude_das_cargas.sql; supabase/migrations/20260930235900_kpis_uma_vez_por_dia.sql
+**resposta:** As análises curriculares chegam pelo Apps Script das planilhas (o envio incremental é esperado a cada 20 minutos e fica "Atrasada" depois de 1 hora; a carga completa não tem prazo). Entrevistas e Seleção carregam pelo GitHub Actions de hora em hora, das 7h às 19h de Brasília, e ficam atrasadas depois de 4 horas durante o dia (à noite, sem carga, só depois de 14 horas). O robô da Empregare não tem agenda: roda só quando um administrador clica em "Rodar agora", por isso nunca fica "Atrasado". As tarefas do banco que rodam a cada 2 minutos (como o pacote do painel de análises e o das entrevistas) atrasam depois de 15 minutos; as diárias, depois de 26 horas; as mensais, depois de 32 dias. As conferências de consistência rodam todo dia às 6h de Brasília e ficam atrasadas depois de 26 horas. A pré-classificação da Avaliação documental roda no fim de cada carga do robô da Empregare e no Recalcular da coordenação, sem agenda, por isso também nunca fica "Atrasada". A retenção das mensagens do chat roda todo dia às 3h15 de Brasília. Os KPIs dos editais são recalculados no fim de cada carga da Seleção e, de novo, às 10h de Brasília.
+**fonte:** src/lib/saude-das-cargas.js; supabase/migrations/20261001120000_saude_das_cargas.sql; supabase/migrations/20261002090000_kpis_depois_da_carga_da_selecao.sql; supabase/migrations/20261002130000_kpis_de_todo_edital_com_fonte.sql; .github/workflows/sincronizar-selecao.yml; .github/workflows/sincronizar-entrevistas.yml; supabase/migrations/20260930235900_kpis_uma_vez_por_dia.sql
 
 ## Rodar agora
 
@@ -34,7 +34,7 @@ falhou. Fontes: `src/componentes/saude-das-cargas/`, `src/lib/saude-das-cargas.j
 ## Robô da Empregare
 
 **perguntas:** robo da empregare | o que e o robo da empregare | candidatos da empregare | carga da empregare | exportacao da empregare | excel da empregare | robo empregare falhou | robo da empregare parcial
-**resposta:** A Empregare não tem API, então um robô entra no portal da empresa, pede a exportação "Candidatos da vaga (Excel)" de cada vaga dos editais ativos em curso (as vagas vêm do quadro de vagas do edital e, nos editais antigos, da Seleção), baixa os arquivos e grava os candidatos no MONITORA, com todas as colunas e respostas do questionário. Uma vaga cujo arquivo traz menos da metade dos candidatos que já tinha é recusada (nada muda nela) e quem sai do arquivo fica inativo, sem ser apagado. "Falhou" na linha do robô pode ser falha geral (por exemplo, login recusado) ou execução parcial (alguma vaga não baixou ou foi recusada); a mensagem traz as contagens de vagas pedidas, baixadas, com falha e recusadas.
+**resposta:** A Empregare não tem API, então um robô entra no portal da empresa, pede a exportação "Candidatos da vaga (Excel)" de cada vaga dos editais ativos em curso (as vagas vêm do quadro de vagas do edital e, nos editais antigos, da Seleção), baixa os arquivos e grava os candidatos no MONITORA, com todas as colunas e respostas do questionário. Uma vaga cujo arquivo traz menos da metade dos candidatos que já tinha é recusada (nada muda nela) e quem sai do arquivo fica inativo, sem ser apagado. "Falhou" na linha do robô pode ser falha geral (por exemplo, login recusado) ou execução parcial (alguma vaga não baixou ou foi recusada); a mensagem traz as contagens de vagas pedidas, baixadas, com falha e recusadas. Ele não tem agenda automática: roda só quando o administrador global clica em "Rodar agora".
 **fonte:** docs/robo-empregare.md; supabase/migrations/20261005170000_robo_empregare.sql; supabase/migrations/20261006080000_robo_empregare_vagas_do_quadro.sql
 **abrir:** config:cargas
 
@@ -43,4 +43,11 @@ falhou. Fontes: `src/componentes/saude-das-cargas/`, `src/lib/saude-das-cargas.j
 **perguntas:** de onde vem as vagas do robo da empregare | quais vagas o robo da empregare exporta | robo da empregare nao trouxe o edital | edital sem candidatos da empregare | vaga fora da selecao no robo | quadro de vagas no robo da empregare
 **resposta:** O robô escolhe as vagas no próprio MONITORA, sem depender da planilha Auditoria. A fonte principal é o quadro de vagas do edital: em todo edital com quadro salvo, entram os códigos de vaga da Empregare das análises daquele edital (o mesmo vínculo vaga → linha do quadro da Classificação). A Seleção (planilha Auditoria) continua como segunda fonte, para os editais antigos; um código que está nas duas entra uma vez só, ligado ao edital do quadro. Sem filtro, entram as vagas dos editais ativos e em curso; pelo GitHub dá para pedir editais ou códigos. Edital sem quadro e fora da Seleção não entra: salve o quadro de vagas do edital ou rode pelo GitHub com os códigos.
 **fonte:** docs/robo-empregare.md; supabase/migrations/20261006080000_robo_empregare_vagas_do_quadro.sql
+**abrir:** config:cargas
+
+## Carga com falha ou atrasada
+
+**perguntas:** carga falhou o que fazer | o que fazer quando a carga falha | selo falhou | carga recusada
+**resposta:** Veja as últimas execuções da linha e a mensagem da que falhou. Uma carga recusada (planilha com menos da metade das linhas, ou vaga da Empregare com menos da metade dos candidatos) não mudou nada: os dados de antes continuam na tela. Em Seleção, Entrevistas e no robô da Empregare, depois de corrigir a causa, o administrador global pode usar "Rodar agora"; as análises não têm esse botão, porque o envio sai do Apps Script de cada planilha. Atrasada quer dizer que a última execução que deu certo passou do prazo da carga.
+**fonte:** src/lib/saude-das-cargas.js; src/lib/robos-de-carga.js; docs/sincronizacao-das-planilhas.md
 **abrir:** config:cargas

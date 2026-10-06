@@ -173,6 +173,7 @@ export function Solicitacoes({ estado, atual }) {
       data-mobile-table="scroll"
       role="region"
       aria-label="Pedidos de acesso pendentes"
+      data-tour="acessos-pendentes"
     >
       <table>
         <thead>

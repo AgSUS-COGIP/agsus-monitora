@@ -59,7 +59,12 @@ export function BoasVindas({ obterPerfil, agora }) {
     .filter(Boolean)
     .join(", ");
   return (
-    <div className="boas-vindas" role="status" aria-live="polite">
+    <div
+      className="boas-vindas"
+      role="status"
+      aria-live="polite"
+      data-tour="visao-geral-boas-vindas"
+    >
       <div className="boas-vindas__texto">
         <strong>{titulo}</strong>
         <span>{resumoDoDia(quantidade)}</span>
@@ -69,6 +74,7 @@ export function BoasVindas({ obterPerfil, agora }) {
           type="button"
           className="boas-vindas__acao"
           data-boas-vindas="cronograma"
+          data-tour="visao-geral-ver-cronograma"
           onClick={() => abrirCronogramaDaArea(areaAtual)}
         >
           Ver cronograma

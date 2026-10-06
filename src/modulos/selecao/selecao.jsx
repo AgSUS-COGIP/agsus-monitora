@@ -1,4 +1,6 @@
 import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
+import { usarPedidoDeFiltro } from "../../app/pedido-de-filtro.js";
+import { filtrosDaSelecao } from "../../lib/filtro-da-aya.js";
 import { montarModulo } from "../../app/montar-modulo.jsx";
 import { usarTemaEscuro } from "../../app/tema.js";
 import { obterDadosDoMonitoramento } from "../../componentes/dados-do-monitoramento.js";
@@ -95,6 +97,12 @@ function TelaDaArea({ estado, e }) {
 
   const trocarFiltro = (campo, valores) =>
     setFiltros((atuais) => ({ ...atuais, [campo]: valores }));
+  // "Abrir" numa resposta com número da Aya: a tela abre já recortada.
+  usarPedidoDeFiltro("selecao", carregado, (pedido) =>
+    setFiltros((atuais) =>
+      filtrosDaSelecao(atuais, pedido, opcoesDosFiltros(vagas)),
+    ),
+  );
   // Barra do ranking: filtra a unidade; clicar de novo na mesma tira o filtro.
   const alternarUnidade = (unidade) =>
     setFiltros((atuais) => ({

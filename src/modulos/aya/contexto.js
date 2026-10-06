@@ -121,3 +121,48 @@ export function collectAyaPageContext(doc = document) {
     editais,
   };
 }
+
+/*
+  A aba e o edital escolhidos na tela aberta, para a Aya adaptar a resposta
+  (e o tour) ao que a pessoa está vendo. Só o que a tela já mostra: a opção
+  marcada do seletor de abas ou visões (`[data-tour]` com role=radiogroup ou
+  tablist) e o número do edital escolhido (nunca o nome de alguém).
+*/
+const MARCADA =
+  "[aria-checked='true'], [aria-selected='true'], [aria-pressed='true']";
+
+export function estadoDaTela(doc = document) {
+  const pagina = doc.querySelector(".page.active") || doc;
+  let aba = "";
+  for (const grupo of pagina.querySelectorAll(
+    "[data-tour][role='radiogroup'], [data-tour][role='tablist'], [role='tablist'][data-tour]",
+  )) {
+    if (grupo.closest("[hidden]")) continue;
+    const marcada = grupo.querySelector(MARCADA);
+    if (marcada) {
+      aba = compactText(
+        marcada.getAttribute("data-valor") || marcada.textContent,
+        40,
+      );
+      break;
+    }
+  }
+  let edital = "";
+  for (const campo of pagina.querySelectorAll(
+    "[data-tour$='seletor-edital'], [data-tour$='-edital']",
+  )) {
+    const select = campo.matches("select")
+      ? campo
+      : campo.querySelector("select");
+    const texto = select
+      ? select.selectedOptions?.[0]?.textContent || ""
+      : campo.textContent || "";
+    const numero = String(texto).match(NUMERO_DO_EDITAL);
+    if (numero) {
+      edital = numero[0];
+      break;
+    }
+  }
+  if (!edital) edital = editalAberto(doc).replace(/^Edital /, "");
+  return { aba, edital };
+}

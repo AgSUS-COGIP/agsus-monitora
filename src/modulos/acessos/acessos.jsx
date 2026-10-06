@@ -97,6 +97,7 @@ export function Acessos({ estado, secoesDeConfiguracao = [] }) {
           idDaAba: `acessos-aba-${aba.id}`,
           idDoPainel: `acessos-painel-${aba.id}`,
           contagem: aba.id === "usuarios" ? atual.solicitacoes.length : 0,
+          dados: { "data-tour": `acessos-aba-${aba.id}` },
         }))}
       />
       {painel("usuarios", <AbaUsuarios estado={estado} />)}

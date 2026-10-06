@@ -491,7 +491,7 @@ export const VERBETES_AYA = Object.freeze([
       "para que serve a aya",
     ],
     resposta:
-      "Eu explico cada tela do MONITORA e as regras de cada etapa do processo seletivo, sempre na página e na área em que você está, e leio o que já está carregado na tela. Uso a base de conhecimento, sem IA local, máquina ou túnel. Reconheço sinônimos, perguntas sem acento e pequenos erros de digitação. Quando não tenho certeza, ofereço até três perguntas parecidas e a opção de abrir chamado; perguntas fora do MONITORA recebem sugestões do que posso explicar. Quando a resposta depende de um dado que não está carregado, eu digo isso em vez de inventar. Posso oferecer um botão para abrir a tela certa, mas não altero nada por você.",
+      "Eu explico cada tela do MONITORA e as regras de cada etapa do processo seletivo, sempre na página e na área em que você está, e leio o que já está carregado na tela. Respondo só com a base de conhecimento escrita e conferida pela equipe. Reconheço sinônimos, perguntas sem acento e pequenos erros de digitação. Quando não tenho certeza, ofereço até três perguntas parecidas e a opção de abrir chamado; perguntas fora do MONITORA recebem sugestões do que posso explicar. Quando a resposta depende de um dado que não está carregado, eu digo isso em vez de inventar. Também respondo números ao vivo (contagens e datas), explico a permissão que falta para o seu perfil e mostro a tela item por item. Posso oferecer um botão para abrir a tela certa, mas não altero nada por você.",
     fato: "A interface do MONITORA não tem textos explicativos: quem explica as telas e as regras é a Aya, no contexto da página e da área atuais.",
     fonte: "comportamento da Aya",
   },
@@ -547,10 +547,13 @@ export const VERBETES_AYA = Object.freeze([
       "como funciona o tour",
       "mostrar a tela",
       "me mostra a tela",
+      "item por item",
+      "passo a passo",
+      "educacao guiada",
     ],
     resposta:
-      'Em Editais, Cronograma, Análises curriculares, Recursos, Entrevistas, Lista de aprovados, Seleção, Visão geral e Configurações › Acessos, toque em "Me mostra esta tela" (a sugestão do painel ou o ícone de bússola no topo dele). Eu escureço a página e destaco uma parte por vez, com uma explicação curta. Use Próximo e Voltar (ou as setas do teclado), Pular ou Esc para sair. O que o seu perfil não vê, ou o que a tela ainda não tem, eu pulo. O tour só mostra: não altera nada.',
-    fato: 'A Aya tem um tour guiado ("Me mostra esta tela") que destaca as partes da página atual, uma por vez.',
+      'Toque em "Me mostra esta tela, item por item" (no começo do meu painel ou no ícone de bússola no topo dele) ou escreva "me mostra esta tela". Eu escureço a página e destaco um item por vez, com um título curto e uma ou duas frases, e mostro "Passo 3 de 9". Use Próximo e Anterior (ou as setas do teclado), Pular ou Esc para sair. Cada tela tem o seu tour, e as abas principais têm o próprio: Entrevistas (Resultados, Conduzir e Roteiros), Classificação (Listas, Agenda e Regra), Lista de aprovados (Aprovados e Convocação), cada seção de Configurações e o Status das atualizações. O que o seu perfil não vê, ou o que a tela ainda não tem, eu pulo. Na primeira visita a cada tela eu convido uma vez, sem obrigar; dá para reabrir quando quiser. O tour só mostra: não altera nada.',
+    fato: 'A Aya tem um tour guiado ("Me mostra esta tela") que destaca os itens da página e da aba atuais, um por vez.',
     fonte: "src/modulos/aya/tour/; src/lib/aya-tours.js",
   },
   {
@@ -564,11 +567,60 @@ export const VERBETES_AYA = Object.freeze([
       "como aprender a usar o monitora",
       "primeiros passos",
       "do edital ao aprovado",
+      "convocar e emitir carta",
     ],
     resposta:
-      'Na seção "Aprender" do meu painel ficam as trilhas: tours que atravessam várias telas na ordem do trabalho. São elas: Primeiros passos; Do edital ao aprovado; Conduzir uma entrevista; Registrar e decidir um recurso; e Dar acesso a alguém. Eu mostro só as que o seu perfil pode fazer. O progresso ("3 de 7", "Concluída") fica guardado só neste navegador: sair no meio e voltar depois retoma de onde parou, e uma trilha concluída pode ser refeita. Na primeira entrada eu ofereço "Primeiros passos" uma única vez, sem obrigar.',
-    fato: "As trilhas da Aya (seção Aprender) são Primeiros passos, Do edital ao aprovado, Conduzir uma entrevista, Registrar e decidir um recurso e Dar acesso a alguém; aparecem conforme as permissões do perfil.",
+      'Na seção "Aprender" do meu painel ficam as trilhas: tours que atravessam várias telas na ordem do trabalho. São elas: Primeiros passos; Do edital ao aprovado; Conduzir uma entrevista; Registrar e decidir um recurso; Convocar e emitir carta; e Dar acesso a alguém. Eu mostro só as que o seu perfil pode fazer e pulo as telas que você não acessa. O progresso ("3 de 7", "Concluída") fica guardado só neste navegador: sair no meio e voltar depois retoma de onde parou, e uma trilha concluída pode ser refeita. Na primeira entrada eu ofereço "Primeiros passos" uma única vez, sem obrigar.',
+    fato: "As trilhas da Aya (seção Aprender) são Primeiros passos, Do edital ao aprovado, Conduzir uma entrevista, Registrar e decidir um recurso, Convocar e emitir carta e Dar acesso a alguém; aparecem conforme as permissões do perfil.",
     fonte: "src/modulos/aya/tour/; src/lib/aya-tours.js",
+  },
+  {
+    arquivo: "assistente-aya.md",
+    titulo: "Números ao vivo",
+    perguntas: [
+      "a aya responde numeros",
+      "perguntas com numero",
+      "dados ao vivo",
+      "quantas analises pendentes",
+      "quantos recursos aguardando parecer",
+      "quantos convocados sem nota",
+      "quando foi a ultima carga",
+    ],
+    resposta:
+      'Eu respondo perguntas com número usando os dados que você já pode ver, só para leitura: por exemplo "quantas análises pendentes tem o 93/2026?", "quantos recursos aguardando parecer?", "quantos convocados sem nota?", "qual a taxa de contratação do edital 12/2026?", "quando foi a última carga da Seleção?" e, para o administrador global, "tem alguma carga atrasada?". Uso a área do menu (ou a que você disser, como "na SEDE") e o edital da pergunta ou o escolhido na tela. Mostro só contagens e datas, nunca nomes ou CPF, e o botão "Abrir" leva à tela já recortada (em Recursos, Entrevistas e Seleção). Se o seu acesso não inclui a tela, eu digo isso em vez de mostrar o número.',
+    fato: "",
+    fonte:
+      "src/lib/intencoes-da-aya.js; src/lib/dados-da-aya.js; src/modulos/aya/fontes.js",
+  },
+  {
+    arquivo: "assistente-aya.md",
+    titulo: "Botão que não aparece",
+    perguntas: [
+      "nao aparece o botao",
+      "o botao sumiu",
+      "cade o botao",
+      "por que nao consigo",
+      "por que o botao nao aparece",
+      "botao desabilitado",
+    ],
+    resposta:
+      'Diga qual botão ou ação (por exemplo "não aparece o botão de novo recurso" ou "não consigo emitir a carta") e eu confiro no seu perfil: se você não tem a permissão, digo qual falta (por exemplo, nível Editor em Recursos) e que quem libera é o administrador de acessos da sua coordenação, em Configurações › Acessos; se você tem, digo onde o botão fica e o que conferir (área do menu, edital escolhido).',
+    fato: "",
+    fonte: "src/lib/permissoes-da-aya.js; src/lib/access-roles.js",
+  },
+  {
+    arquivo: "assistente-aya.md",
+    titulo: "Perguntas sem resposta",
+    perguntas: [
+      "perguntas sem resposta",
+      "copiar perguntas sem resposta",
+      "melhorar a aya",
+      "a aya nao entendeu",
+    ],
+    resposta:
+      'Quando você marca "não ajudou", ou quando eu não entendo a pergunta, eu guardo a pergunta neste navegador, sem e-mail, CPF, telefone ou números longos, com a página. O administrador global vê no topo do meu painel o botão "Copiar perguntas sem resposta", para a equipe acrescentar o que falta na minha base.',
+    fato: "",
+    fonte: "src/lib/perguntas-sem-resposta.js; src/modulos/aya/aya.jsx",
   },
   {
     arquivo: "regras-da-avaliacao-documental.md",
@@ -668,7 +720,6 @@ export const VERBETES_AYA = Object.freeze([
       "ligar pergunta ao bloco",
       "nota declarada",
       "divergencia da art",
-      "art",
       "respostas encontradas",
     ],
     resposta:
@@ -913,7 +964,7 @@ export const VERBETES_AYA = Object.freeze([
       "para que serve a classificacao",
     ],
     resposta:
-      'A Classificação monta as listas de um edital, na ordem das publicações da AgSUS — avaliação documental e de títulos, convocação para entrevista, resultado da entrevista e resultado final — com a regra que o gestor daquele edital decidiu. Cada lista traz a classificação geral e a de cada modalidade, os eliminados com o motivo e, ao abrir um candidato, a explicação da posição. Os avisos do topo apontam dados que faltam (entrevista sem análise, candidato convocado sem entrevista, sem data de nascimento para o critério de 60 anos…). "Gerar" registra a lista; dela sai o documento oficial — "Copiar para o SEI", "Como fica no SEI", "Baixar DOCX" com papel timbrado, PDF — e a planilha XLSX. Leitor vê; Editor de Classificação muda a regra, gera, publica e registra sorteio ou decisão.',
+      'A Classificação monta as listas de um edital, na ordem das publicações da AgSUS — avaliação documental e de títulos, convocação para entrevista, resultado da entrevista e resultado final — com a regra que o gestor daquele edital decidiu. Cada lista traz a classificação geral e a de cada modalidade, os eliminados com o motivo e, ao abrir um candidato, a explicação da posição. Os avisos do topo apontam dados que faltam (entrevista sem análise, candidato convocado sem entrevista, sem data de nascimento para o critério de 60 anos…). "Gerar" registra a lista; dela sai o documento oficial — "Copiar para o SEI", "Como fica no SEI", "Baixar DOCX" com papel timbrado, PDF — e a planilha XLSX. A tela tem três visões, no topo: Listas, Agenda (a agenda das entrevistas dos convocados) e Regra. Leitor vê; Editor de Classificação muda a regra, gera, publica e registra sorteio ou decisão.',
     fato: "",
     fonte:
       "src/modulos/classificacao/; supabase/migrations/20261002150000_classificacao.sql",
@@ -1204,6 +1255,7 @@ export const VERBETES_AYA = Object.freeze([
       "quem pode mudar a regra de classificacao",
       "quem pode gerar a lista de classificacao",
       "permissao classificacao",
+      "nao vejo a aba classificacao",
     ],
     resposta:
       'A aba Classificação usa a permissão "Classificação" (Configurações › Acessos): Leitor vê as listas, a regra e as explicações; Editor salva a regra do edital, gera e publica listas e registra sorteio ou decisão. Por padrão, o administrador é Administrador; gestor de edital e coordenador, Editor; contratador, usuário e jurídico, Leitor. Também vale a área e o recorte da coordenação do edital.',
@@ -1247,6 +1299,67 @@ export const VERBETES_AYA = Object.freeze([
     abrir: "classificacao",
   },
   {
+    arquivo: "regras-da-classificacao.md",
+    titulo: "Botões Gerar, exportar e publicar desabilitados",
+    perguntas: [
+      "por que nao aparece o botao gerar",
+      "botao gerar nao aparece",
+      "botao publicar desabilitado",
+      "nao consigo publicar a lista de classificacao",
+      "copiar para o sei desabilitado",
+      "nao consigo exportar a classificacao",
+      "publicar como lista de aprovados nao aparece",
+    ],
+    resposta:
+      '"Gerar", "Marcar como publicada" e "Publicar como lista de aprovados" só aparecem para quem tem Editor em Classificação, com a área e o edital; "Gerar" fica desabilitado enquanto o edital não tem regra salva. Copiar para o SEI, Como fica no SEI, Baixar DOCX, PDF e XLSX ficam desabilitados até existir uma lista gerada naquela etapa: gere primeiro. "Marcar como publicada" e "Publicar como lista de aprovados" ficam desabilitados enquanto houver empate esperando sorteio ou decisão, e "Publicar como lista de aprovados" só existe na lista Resultado final.',
+    fato: "",
+    fonte:
+      "src/modulos/classificacao/listas.jsx; src/lib/access-roles.js (canEditClassificacao)",
+    abrir: "classificacao",
+  },
+  {
+    arquivo: "regras-da-classificacao.md",
+    titulo: "Siglas das modalidades e cadastro reserva",
+    perguntas: [
+      "siglas das modalidades",
+      "o que e ac",
+      "ampla concorrencia",
+      "o que e pp",
+      "pretos e pardos",
+      "o que e pi",
+      "o que e pq",
+      "quilombolas",
+      "o que e pcd",
+      "pessoa com deficiencia",
+      "o que e ppiq",
+      "o que e cr",
+      "cotas da classificacao",
+    ],
+    resposta:
+      'Nas listas e nos documentos, AC é ampla concorrência; PcD, pessoas com deficiência; PP, pretos e pardos; PI, indígenas; PQ, quilombolas; e PPIQ, a reserva conjunta de pretos e pardos, indígenas e quilombolas de alguns editais. CR é cadastro reserva: quem passou, mas ficou além das vagas imediatas, ou a vaga que só tem cadastro reserva (no cabeçalho, "- Cadastro Reserva"). O cotista também concorre na ampla, e quem é chamado pela ampla não gasta a vaga reservada. Percentual, lista própria e remanejamento de cada modalidade são da regra de classificação do edital.',
+    fato: "",
+    fonte:
+      "src/lib/classificacao/catalogo.js (MODALIDADES_CONHECIDAS); src/lib/classificacao/motor.js; src/lib/classificacao/vagas.js",
+    abrir: "classificacao",
+  },
+  {
+    arquivo: "regras-da-classificacao.md",
+    titulo: "Nota da ART e lote de convocação",
+    perguntas: [
+      "o que e art",
+      "nota da art",
+      "autodeclaracao de requisitos e titulos",
+      "lote",
+      "triado",
+    ],
+    resposta:
+      'ART é a nota da Autodeclaração de Requisitos e Títulos, a nota do questionário da Empregare. Na Classificação ela pode entrar como componente da nota final ("Nota da autodeclaração (ART)") quando a regra do edital usar, e o recurso deferido pode ajustá-la. A lista provisória do ranqueamento pela ART e a linha de corte (o lote de convocação para a avaliação documental) ainda não são geradas pelo MONITORA: a classificação começa na avaliação documental dos candidatos do lote (situação Triado ou Aprovado na análise).',
+    fato: "",
+    fonte:
+      "src/lib/classificacao/catalogo.js (COMPONENTES_DA_NOTA); supabase/correcoes/20261002-regras-de-classificacao-todos-os-editais.sql (importacao.em_aberto)",
+    abrir: "classificacao",
+  },
+  {
     arquivo: "regras-da-lista-de-aprovados.md",
     titulo: "Tela da Lista de aprovados",
     perguntas: [
@@ -1258,7 +1371,7 @@ export const VERBETES_AYA = Object.freeze([
       "status do candidato",
     ],
     resposta:
-      "A Lista de aprovados mostra a lista vigente de cada edital da área atual. Os status do candidato são Convocado, Contratado, Desistente, Migração e Documentação Rejeitada; Contratado e Migração exigem matrícula e Convocado leva a data da convocação. Status já definido só quem tem Administrador em Aprovados altera (os demais veem um cadeado), exceto do Convocado para o status seguinte. Clicar no nome abre a gaveta do candidato, com os dados e as cartas de convocação emitidas. Quem tem Editor em Aprovados muda status; o grupo Gestor edita a lista desde que tenha a área e o edital. Quem importou ou substituiu a lista fica registrado.",
+      "A Lista de aprovados mostra a lista vigente de cada edital da área atual, em duas abas: Aprovados (os candidatos e o status) e Convocação (a ordem de chamada, os a convocar e a carta de convocação). Os status do candidato são Convocado, Contratado, Desistente, Migração e Documentação Rejeitada; Contratado e Migração exigem matrícula e Convocado leva a data da convocação. Status já definido só quem tem Administrador em Aprovados altera (os demais veem um cadeado), exceto do Convocado para o status seguinte. Clicar no nome abre a gaveta do candidato, com os dados e as cartas de convocação emitidas. Quem tem Editor em Aprovados muda status; o grupo Gestor edita a lista desde que tenha a área e o edital. Quem importou ou substituiu a lista fica registrado.",
     fato: "",
     fonte:
       "src/lib/lista-aprovados-rules.js; src/modulos/aprovados/; supabase/migrations/20260930200000_aprovados_por_grupo_edital_gestor_edita.sql",
@@ -1434,6 +1547,9 @@ export const VERBETES_AYA = Object.freeze([
       "data da convocacao",
       "marcar como convocado",
       "convocado para contratacao",
+      "fim de fila",
+      "status fim de fila",
+      "sumiu o fim de fila",
     ],
     resposta:
       'Convocado é o candidato chamado para a contratação que ainda vai se apresentar e entregar os documentos; o status leva a data da convocação (hoje, por padrão, nunca futura). O caminho seguinte é Contratado, Desistente ou Documentação Rejeitada: quem tem Editor em Aprovados faz essa passagem sem o cadeado, mas voltar a "Sem status" é só do Administrador em Aprovados. A data continua registrada depois que o status muda e some se o status for apagado. Convocado não conta como contratado na Seleção nem nos indicadores de contratados (que somam Contratado e Migração). O status "Fim de Fila" deixou de existir.',
@@ -1532,6 +1648,56 @@ export const VERBETES_AYA = Object.freeze([
     fato: "",
     fonte:
       "src/modulos/aprovados/gaveta-do-candidato.jsx; supabase/migrations/20261005180000_convocado_e_carta_de_convocacao.sql (listar_cartas_do_candidato)",
+    abrir: "approved",
+  },
+  {
+    arquivo: "regras-da-lista-de-aprovados.md",
+    titulo: "Cadeado no status do candidato",
+    perguntas: [
+      "cadeado no status",
+      "por que aparece um cadeado",
+      "nao consigo mudar o status",
+      "status travado",
+      "voltar para sem status",
+      "desfazer status do candidato",
+    ],
+    resposta:
+      'O cadeado aparece para quem tem Editor em Aprovados quando a lista é inativa ou quando o status já foi definido e só o Administrador em Aprovados pode mudá-lo (inclusive voltar a "Sem status"). A exceção é o Convocado: o Editor o leva para Contratado, Desistente ou Documentação Rejeitada sem cadeado. Sem Editor em Aprovados, a coluna mostra só um traço. Peça a mudança a quem tem Administrador em Aprovados.',
+    fato: "",
+    fonte:
+      "src/modulos/aprovados/partes.jsx (AcaoDeStatus); src/lib/lista-aprovados-rules.js; src/lib/access-roles.js",
+    abrir: "approved",
+  },
+  {
+    arquivo: "regras-da-lista-de-aprovados.md",
+    titulo: "Carta de convocação que não aparece",
+    perguntas: [
+      "carta de convocacao nao aparece",
+      "sumiu o botao da carta",
+      "nao consigo emitir a carta",
+      "envelope da carta nao aparece",
+    ],
+    resposta:
+      'O botão "Carta de convocação", na aba Convocação, e o envelope na linha e na gaveta do candidato só aparecem para quem tem Editor em Aprovados, e só para candidatos de lista ativa. Com Leitor, ou numa lista inativa, eles não aparecem. Criar e alterar os modelos da carta também é de quem tem Editor em Aprovados.',
+    fato: "",
+    fonte:
+      "src/modulos/aprovados/partes.jsx (AcaoDeCarta); src/modulos/aprovados/aba-convocacao.jsx",
+    abrir: "approved",
+  },
+  {
+    arquivo: "regras-da-lista-de-aprovados.md",
+    titulo: "Edital sem lista de aprovados",
+    perguntas: [
+      "por que o edital nao tem lista de aprovados",
+      "lista de aprovados vazia",
+      "edital nao aparece na lista de aprovados",
+      "nao tem lista de aprovados",
+    ],
+    resposta:
+      'A Lista de aprovados mostra a lista vigente de cada edital da área atual (e do recorte da sua coordenação). Edital sem lista ainda não teve o resultado final publicado da Classificação nem planilha importada: publique em Classificação › Resultado final ("Publicar como lista de aprovados") ou, em edital sem análise no sistema, importe o XLSX (Editor em Importação e convocação). As listas anteriores ficam inativas, para consulta, no modal "Listas do edital".',
+    fato: "",
+    fonte:
+      "src/lib/publicacao-de-aprovados.js; src/modulos/aprovados/modal-listas-do-edital.jsx; src/lib/access-roles.js",
     abrir: "approved",
   },
   {
@@ -1635,6 +1801,39 @@ export const VERBETES_AYA = Object.freeze([
       "Na Seleção, os alertas identificados no recorte são as observações da coluna Observação da planilha Auditoria. Cada observação aparece uma vez, sem diferenciar maiúsculas, com quantas vagas a têm e em quais unidades e editais.",
     fato: "",
     fonte: "src/lib/selecao-do-painel.js",
+  },
+  {
+    arquivo: "regras-da-selecao.md",
+    titulo: "Quem vê a Seleção",
+    perguntas: [
+      "quem pode ver a selecao",
+      "nao vejo a aba selecao",
+      "permissao selecao",
+      "posso editar a selecao",
+    ],
+    resposta:
+      'A Seleção usa a permissão "Seleção" (Leitor basta, em Configurações › Acessos) e é só de consulta: nenhum número se edita ali. Os números vêm da planilha Auditoria, das entrevistas registradas e da lista de aprovados vigente; para mudar, corrija a fonte. A tela mostra só a área escolhida no menu.',
+    fato: "",
+    fonte:
+      "src/lib/access-roles.js (canViewSelecao); supabase/migrations/20261001090000_selecao.sql",
+    abrir: "selecao",
+  },
+  {
+    arquivo: "regras-da-selecao.md",
+    titulo: "Vaga ou número que não bate na Seleção",
+    perguntas: [
+      "por que a vaga nao aparece na selecao",
+      "numero da selecao nao bate",
+      "vaga sumiu da selecao",
+      "contratados da selecao diferente",
+      "selecao desatualizada",
+    ],
+    resposta:
+      'A vaga que saiu da planilha Auditoria fica inativa e some da tela; na Saúde Indígena só entram as vagas de DSEI e CASAI (as outras vão para SEDE ou Projetos pelo edital). Aprovados e contratados vêm da lista de aprovados vigente — contratado é Contratado ou Migração, e Convocado não conta —, e sem lista a vaga não soma nenhum dos dois. A carga roda de hora em hora, das 7h às 19h de Brasília, e o topo mostra "Conferido às …". Confira também os quatro filtros e a barra do ranking de unidades que estiver clicada.',
+    fato: "",
+    fonte:
+      "supabase/migrations/20261001090000_selecao.sql; supabase/migrations/20261001100000_selecao_area_pelos_editais.sql; src/lib/selecao-do-painel.js; .github/workflows/sincronizar-selecao.yml",
+    abrir: "selecao",
   },
   {
     arquivo: "regras-da-visao-geral.md",
@@ -1788,6 +1987,38 @@ export const VERBETES_AYA = Object.freeze([
       "supabase/migrations/20261002130000_kpis_de_todo_edital_com_fonte.sql; supabase/migrations/20261002090000_kpis_depois_da_carga_da_selecao.sql; src/lib/indicadores-do-monitoramento.js",
   },
   {
+    arquivo: "regras-da-visao-geral.md",
+    titulo: "Números da Visão geral que não batem",
+    perguntas: [
+      "por que o numero da visao geral nao bate",
+      "kpi da visao geral diferente",
+      "contratados diferente da lista de aprovados",
+      "numero da visao geral desatualizado",
+      "vagas nao batem",
+    ],
+    resposta:
+      "Os números de cada edital são recalculados pelo banco no fim de cada carga da Seleção (de hora em hora, das 7h às 19h de Brasília) e, de novo, às 10h; entre uma carga e outra, a lista de aprovados pode já ter mudado. Contratadas ficam limitadas às vagas imediatas de cada edital (o excedente vai para Cadastro reserva), editais cancelados não entram em nenhum indicador e as Vagas vêm do cadastro do edital, em Editais. Confira também a área atual, os filtros (guardados no navegador) e a busca, que valem para a página toda.",
+    fato: "",
+    fonte:
+      "src/lib/indicadores-do-monitoramento.js; supabase/migrations/20261002130000_kpis_de_todo_edital_com_fonte.sql; supabase/migrations/20261002090000_kpis_depois_da_carga_da_selecao.sql",
+    abrir: "dashboard",
+  },
+  {
+    arquivo: "regras-da-visao-geral.md",
+    titulo: "Quem vê a Visão geral",
+    perguntas: [
+      "quem pode ver a visao geral",
+      "nao vejo a visao geral",
+      "permissao visao geral",
+      "posso editar a visao geral",
+    ],
+    resposta:
+      'A Visão geral usa a permissão "Visão geral" (Leitor basta, em Configurações › Acessos), mostra só a área atual e é só de consulta. Para mudar vagas, cronograma ou status de um edital, use Editais (Editor em Editais ou em Cronograma); os rótulos dos indicadores mudam em Configurações › Página inicial. Corrigir coordenadas dos mapas é do administrador global ou do Gestor.',
+    fato: "",
+    fonte: "src/lib/access-roles.js (paginasPermitidas, podeEditarCoordenadas)",
+    abrir: "dashboard",
+  },
+  {
     arquivo: "regras-das-analises.md",
     titulo: "Painel das análises",
     perguntas: [
@@ -1876,6 +2107,79 @@ export const VERBETES_AYA = Object.freeze([
     fato: "",
     fonte:
       "apps-script/LEIA-ME.md; supabase/migrations/20261001140000_incremental_remove_ausentes.sql; supabase/migrations/20260930100000_analises_sem_registro_fantasma.sql",
+  },
+  {
+    arquivo: "regras-das-analises.md",
+    titulo: "Conferido às, no topo da tela",
+    perguntas: [
+      "conferido as",
+      "o que e conferido as",
+      "o que quer dizer conferido",
+      "ultima mudanca",
+      "hora no topo da tela",
+      "atualizado em",
+      "a tela parece parada",
+      "dados parados",
+      "por que a hora nao muda",
+    ],
+    resposta:
+      'No topo de Análises curriculares, Seleção e Entrevistas, "Conferido às 09:32" é a última vez que a carga conferiu os dados (horário de Brasília; se foi em outro dia, aparece a data, como "em 04/10, 13:05"). Nas Análises curriculares, vem junto "última mudança em …": quando os dados mudaram de fato. Se a carga rodou e a planilha não tinha nada novo, o "Conferido" avança e a última mudança fica — os dados não estão parados. Sem registro de conferência, aparece "Atualizado em …". Se suspeitar de carga atrasada ou com falha, o administrador global confere em Configurações › Status das atualizações.',
+    fato: "",
+    fonte:
+      "src/lib/texto-da-conferencia.js; src/modulos/analises/analises.jsx; src/modulos/selecao/selecao.jsx; src/modulos/entrevistas/entrevistas.jsx",
+  },
+  {
+    arquivo: "regras-das-analises.md",
+    titulo: "Quem vê as Análises curriculares",
+    perguntas: [
+      "quem pode ver as analises curriculares",
+      "nao vejo a aba analises",
+      "permissao analises",
+      "posso editar a analise no monitora",
+      "onde corrijo a analise",
+      "corrigir nota da analise",
+    ],
+    resposta:
+      'A aba usa a permissão "Análises curriculares" (Leitor basta, em Configurações › Acessos) e mostra só a área atual e, com coordenação, os editais dela. Ela é só de consulta: a análise é feita e corrigida nas planilhas de análise, que chegam ao MONITORA pelo Apps Script. Nota alterada por recurso não muda a análise: vale como ajuste aprovado, aplicado na Classificação.',
+    fato: "",
+    fonte:
+      "src/lib/access-roles.js; src/lib/permissoes-recursos.js; src/modulos/analises/; apps-script/LEIA-ME.md",
+    abrir: "analises",
+  },
+  {
+    arquivo: "regras-das-analises.md",
+    titulo: "Número das Análises que não bate",
+    perguntas: [
+      "por que o numero das analises nao bate",
+      "numero diferente da planilha",
+      "total de analises diferente",
+      "analise nao aparece",
+      "candidato sumiu das analises",
+    ],
+    resposta:
+      'Confira primeiro o recorte: a Situação do processo começa em Ativo (editais encerrados ficam em Inativo), os filtros e o filtro de data (chip Data) recortam todos os números, e a tela é só da área atual. O envio das planilhas é esperado a cada 20 minutos e o Ativo vem de um pacote remontado a cada 2 minutos, então uma mudança recente pode demorar um pouco; o "Conferido às" do topo diz quando a carga conferiu. Quem saiu da planilha é desativado no MONITORA, e o mesmo candidato repetido na mesma vaga e edital conta uma vez só (o registro mais recente).',
+    fato: "",
+    fonte:
+      "src/lib/analises-curriculares.js; supabase/migrations/20261001140000_incremental_remove_ausentes.sql; supabase/migrations/20260930100000_analises_sem_registro_fantasma.sql",
+    abrir: "analises",
+  },
+  {
+    arquivo: "regras-das-analises.md",
+    titulo: "Avaliação documental no MONITORA (em construção)",
+    perguntas: [
+      "avaliacao documental no monitora",
+      "analisar no monitora",
+      "fazer a analise curricular no monitora",
+      "ficha de analise do candidato",
+      "quando vou analisar pelo monitora",
+      "simulador da analise",
+    ],
+    resposta:
+      "Está em construção. Hoje a análise curricular é feita nas planilhas (com o simulador) e o MONITORA só a lê, nesta tela. O desenho em aprovação prevê o módulo Avaliação documental dentro do MONITORA: a lista provisória pela nota da ART, o lote de convocação montado sozinho e uma ficha por candidato, com um bloco por documento e o atalho para a Empregare, gravando direto na base que a Classificação já lê. A tela de hoje continua como painel de leitura das análises. Ainda não há data.",
+    fato: "",
+    fonte:
+      "docs/analises-no-monitora/README.md (desenho, branch docs/analises-no-monitora)",
+    abrir: "analises",
   },
   {
     arquivo: "regras-das-areas.md",
@@ -2124,9 +2428,11 @@ export const VERBETES_AYA = Object.freeze([
       "imagem de fundo do acesso",
       "fundo da tela de login",
       "artes enviadas",
+      "arte de fundo cortada",
+      "logo cortado no login",
     ],
     resposta:
-      'A arte de fundo da tela de acesso é escolhida em Configurações › Aparência. Use uma arte 16:9, em JPG, PNG ou WEBP, de até 6 MB. Diferente dos outros campos, a arte é aplicada na hora, sem passar por "Salvar alterações". Toda imagem enviada fica guardada em Artes enviadas para ser reutilizada. A arte em uso não pode ser apagada: para apagá-la, escolha outra ou restaure o padrão antes. Restaurar padrão volta para a arte institucional.',
+      'A arte de fundo da tela de acesso é escolhida em Configurações › Aparência. Use uma arte 16:9, em JPG, PNG ou WEBP, de até 6 MB. Diferente dos outros campos, a arte é aplicada na hora, sem passar por "Salvar alterações". Toda imagem enviada fica guardada em Artes enviadas para ser reutilizada. A arte em uso não pode ser apagada: para apagá-la, escolha outra ou restaure o padrão antes. Restaurar padrão volta para a arte institucional. Em tela mais larga que 16:9, a arte aparece inteira à direita, sobre uma cópia dela desfocada, sem cortar o logo; em tela mais estreita, o corte cai à esquerda, onde fica o cartão.',
     fato: "",
     fonte: "interface do MONITORA",
   },
@@ -2293,6 +2599,21 @@ export const VERBETES_AYA = Object.freeze([
     fonte:
       "src/modulos/configuracoes/operacao.jsx; src/lib/publicacao-de-configuracoes.js",
     abrir: "config:operacao",
+  },
+  {
+    arquivo: "regras-das-configuracoes.md",
+    titulo: "Tela de entrada enquanto carrega",
+    perguntas: [
+      "tela de login pisca",
+      "login piscando",
+      "cartao de login muda de tamanho",
+      "tela de entrada carregando",
+    ],
+    resposta:
+      "Enquanto o sistema carrega, a tela de entrada mostra um cartão provisório com as mesmas peças do cartão de verdade — a marca, a saudação padrão e o botão do Google, ainda sem ação —, por isso a troca não pisca nem muda de tamanho. Quando o sistema termina de carregar, entram a saudação e o botão configurados em Configurações › Tela de acesso.",
+    fato: "",
+    fonte: "index.html; src/styles/platform-shell.css",
+    abrir: "config:acesso",
   },
   {
     arquivo: "regras-das-entrevistas.md",
@@ -2618,6 +2939,24 @@ export const VERBETES_AYA = Object.freeze([
     abrir: "entrevistas",
   },
   {
+    arquivo: "regras-das-entrevistas.md",
+    titulo: "Quem pode conduzir entrevistas",
+    perguntas: [
+      "quem pode lancar notas",
+      "quem pode conduzir entrevistas",
+      "nao aparece o botao convocar",
+      "nao consigo lancar nota",
+      "botoes sumiram em entrevistas",
+      "permissao entrevistas",
+    ],
+    resposta:
+      'Ver Resultados, Conduzir entrevistas e Roteiros é de quem tem Leitor em Entrevistas. Lançar notas, convocar, desconvocar, salvar a configuração do edital e editar roteiros exige Editor em Entrevistas e acesso à área e ao edital (recorte da coordenação); sem isso, a tela mostra tudo, sem os botões. No modo "Cada avaliador lança a sua", cada avaliador só edita a própria coluna. "Convocar selecionados" só aparece quando a Classificação já gerou a lista de convocação do edital, e liberar edital fora da janela é só do administrador global.',
+    fato: "",
+    fonte:
+      "src/modulos/entrevistas/conducao.jsx; src/lib/access-roles.js; supabase/migrations/20260930220000_entrevistas_roteiros_e_notas.sql",
+    abrir: "config:acessos",
+  },
+  {
     arquivo: "regras-do-chat.md",
     titulo: "O que é o chat",
     perguntas: [
@@ -2931,9 +3270,11 @@ export const VERBETES_AYA = Object.freeze([
       "quem altera o cronograma",
       "como editar uma etapa do cronograma",
       "editar cronograma",
+      "quem ve o cronograma",
+      "nao vejo a aba cronograma",
     ],
     resposta:
-      "As etapas se alteram no formulário do edital, na tela Editais, por quem tem nível Editor em Editais ou em Cronograma. O Cronograma em si só mostra as datas salvas. Em edital já cadastrado, a alteração pede um motivo, que vai para o histórico do edital.",
+      "As etapas se alteram no formulário do edital, na tela Editais, por quem tem nível Editor em Editais ou em Cronograma. O Cronograma em si só mostra as datas salvas, e vê a aba quem tem pelo menos Leitor em Cronograma. Em edital já cadastrado, a alteração pede um motivo, que vai para o histórico do edital.",
     fato: "",
     fonte: "src/lib/access-roles.js; src/modulos/editais/modal-do-edital.jsx",
     abrir: "nucleo",
@@ -2953,6 +3294,22 @@ export const VERBETES_AYA = Object.freeze([
     fato: "",
     fonte:
       "src/modulos/cronograma/calendario-editais.jsx; src/lib/calendario-editais.js",
+    abrir: "calendario",
+  },
+  {
+    arquivo: "regras-do-cronograma.md",
+    titulo: "Etapa ou edital que não aparece no Cronograma",
+    perguntas: [
+      "por que o edital nao aparece no cronograma",
+      "etapa nao aparece no cronograma",
+      "sumiu a etapa do cronograma",
+      "cronograma vazio",
+    ],
+    resposta:
+      'O Cronograma só mostra etapas já salvas no cronograma de cada edital, em Editais, e só da área atual: edital sem cronograma não aparece. "Ocultar concluídas" começa ligada, então as etapas que já terminaram ficam escondidas até você desligá-la ou clicar em "Limpar tudo". Etapa com ano impossível sai de "Próximas etapas" e aparece na lista para correção. Confira também a busca e os filtros de unidade, edital e tipo de etapa.',
+    fato: "",
+    fonte:
+      "src/modulos/cronograma/calendario-editais.jsx; src/lib/calendario-editais.js; src/lib/datas-do-cronograma.js",
     abrir: "calendario",
   },
   {
@@ -3250,7 +3607,8 @@ export const VERBETES_AYA = Object.freeze([
     resposta:
       'Pessoas online fica no cabeçalho e só o administrador global e o Gestor veem (o chat está em teste com os dois). Mostra quem está com o MONITORA aberto: nome, foto ou iniciais, grupo e onde a pessoa está, como "Análises curriculares · Saúde Indígena" ou "Configurações › Acessos" (painel externo aparece como "Painel externo"). Atualiza a cada 45 segundos com a aba visível, e trocar de página, área ou seção avisa na hora.',
     fato: "",
-    fonte: "src/lib/online-presence.js; src/modules/legacy-app.js",
+    fonte:
+      "src/lib/online-presence.js; src/app/presenca.js; src/componentes/pessoas-online/pessoas-online.jsx; src/lib/access-roles.js (podeVerPessoasOnline)",
   },
   {
     arquivo: "regras-do-sistema.md",
@@ -3265,7 +3623,7 @@ export const VERBETES_AYA = Object.freeze([
     resposta:
       "O MONITORA procura versão nova ao voltar para a aba ou reconectar (no máximo a cada 15 minutos), sem aviso na tela. A versão nova fica esperando e só entra na próxima troca de página: depois da pergunta sobre alterações não salvas, a página recarrega e abre a tela que você pediu (com a permissão conferida de novo). Assim ninguém perde o que está digitando, como notas de entrevista ou a resposta de um recurso.",
     fato: "",
-    fonte: "src/modules/pwa-lifecycle.js; src/modules/legacy-app.js (navigate)",
+    fonte: "src/modules/pwa-lifecycle.js; src/app/navegacao.js (navigate)",
   },
   {
     arquivo: "regras-do-sistema.md",
@@ -3283,6 +3641,22 @@ export const VERBETES_AYA = Object.freeze([
       "src/lib/busca-global.js; src/componentes/busca-global/busca-global.jsx; src/lib/responsavel-do-edital.js",
   },
   {
+    arquivo: "regras-do-sistema.md",
+    titulo: "Foto do perfil",
+    perguntas: [
+      "foto do perfil",
+      "minha foto nao aparece",
+      "foto do google",
+      "trocar minha foto",
+      "avatar",
+      "iniciais no lugar da foto",
+    ],
+    resposta:
+      "A foto que aparece para os colegas (em Pessoas online, no chat e em Acessos) é a da conta Google com que você entra. O MONITORA a copia para o seu perfil quando o perfil é criado ou ligado à sua conta e, depois, sempre que ela muda (no sinal de presença enviado enquanto o sistema está aberto); só vale endereço https. Não há escolha de foto dentro do MONITORA: para trocar, troque a foto da conta Google. Sem foto no Google, aparecem as iniciais.",
+    fato: "",
+    fonte: "supabase/migrations/20261005200000_foto_do_google_no_perfil.sql",
+  },
+  {
     arquivo: "regras-do-status-das-atualizacoes.md",
     titulo: "Seção Status das atualizações",
     perguntas: [
@@ -3291,6 +3665,8 @@ export const VERBETES_AYA = Object.freeze([
       "para que serve status das atualizacoes",
       "para que serve a secao status das atualizacoes",
       "saude das cargas",
+      "quem ve o status das atualizacoes",
+      "nao vejo status das atualizacoes",
     ],
     resposta:
       'Em Configurações › Status das atualizações (só o administrador global) aparece, para cada carga de dados, a última execução e um selo: "Falhou" (a execução terminada mais recente deu erro), "Em andamento", "Atrasada" (a última que deu certo passou do prazo), "Em dia" ou "Ainda sem carga". Mostra as 10 últimas execuções de cada uma.',
@@ -3310,10 +3686,10 @@ export const VERBETES_AYA = Object.freeze([
       "cargas de dados",
     ],
     resposta:
-      'As análises curriculares chegam pelo Apps Script das planilhas (o envio incremental é esperado a cada 20 minutos e fica "Atrasada" depois de 1 hora; a carga completa não tem prazo). Entrevistas e Seleção carregam pelo GitHub Actions de hora em hora, das 7h às 19h de Brasília, e ficam atrasadas depois de 4 horas durante o dia (à noite, sem carga, só depois de 14 horas). O robô da Empregare não tem agenda: roda só quando um administrador clica em "Rodar agora", por isso nunca fica "Atrasado". As conferências de consistência rodam todo dia às 6h de Brasília e ficam atrasadas depois de 26 horas. A pré-classificação da Avaliação documental roda no fim de cada carga do robô da Empregare e no Recalcular da coordenação, sem agenda, por isso também nunca fica "Atrasada". As tarefas do banco que rodam a cada 2 minutos (como o pacote do painel de análises e o das entrevistas) atrasam depois de 15 minutos; as diárias, depois de 26 horas; as mensais, depois de 32 dias. Os KPIs dos editais são recalculados às 10h de Brasília, depois da carga da Seleção.',
+      'As análises curriculares chegam pelo Apps Script das planilhas (o envio incremental é esperado a cada 20 minutos e fica "Atrasada" depois de 1 hora; a carga completa não tem prazo). Entrevistas e Seleção carregam pelo GitHub Actions de hora em hora, das 7h às 19h de Brasília, e ficam atrasadas depois de 4 horas durante o dia (à noite, sem carga, só depois de 14 horas). O robô da Empregare não tem agenda: roda só quando um administrador clica em "Rodar agora", por isso nunca fica "Atrasado". As tarefas do banco que rodam a cada 2 minutos (como o pacote do painel de análises e o das entrevistas) atrasam depois de 15 minutos; as diárias, depois de 26 horas; as mensais, depois de 32 dias. As conferências de consistência rodam todo dia às 6h de Brasília e ficam atrasadas depois de 26 horas. A pré-classificação da Avaliação documental roda no fim de cada carga do robô da Empregare e no Recalcular da coordenação, sem agenda, por isso também nunca fica "Atrasada". A retenção das mensagens do chat roda todo dia às 3h15 de Brasília. Os KPIs dos editais são recalculados no fim de cada carga da Seleção e, de novo, às 10h de Brasília.',
     fato: "",
     fonte:
-      "src/lib/saude-das-cargas.js; supabase/migrations/20261001120000_saude_das_cargas.sql; supabase/migrations/20260930235900_kpis_uma_vez_por_dia.sql",
+      "src/lib/saude-das-cargas.js; supabase/migrations/20261001120000_saude_das_cargas.sql; supabase/migrations/20261002090000_kpis_depois_da_carga_da_selecao.sql; supabase/migrations/20261002130000_kpis_de_todo_edital_com_fonte.sql; .github/workflows/sincronizar-selecao.yml; .github/workflows/sincronizar-entrevistas.yml; supabase/migrations/20260930235900_kpis_uma_vez_por_dia.sql",
   },
   {
     arquivo: "regras-do-status-das-atualizacoes.md",
@@ -3368,7 +3744,7 @@ export const VERBETES_AYA = Object.freeze([
       "robo da empregare parcial",
     ],
     resposta:
-      'A Empregare não tem API, então um robô entra no portal da empresa, pede a exportação "Candidatos da vaga (Excel)" de cada vaga dos editais ativos em curso (as vagas vêm do quadro de vagas do edital e, nos editais antigos, da Seleção), baixa os arquivos e grava os candidatos no MONITORA, com todas as colunas e respostas do questionário. Uma vaga cujo arquivo traz menos da metade dos candidatos que já tinha é recusada (nada muda nela) e quem sai do arquivo fica inativo, sem ser apagado. "Falhou" na linha do robô pode ser falha geral (por exemplo, login recusado) ou execução parcial (alguma vaga não baixou ou foi recusada); a mensagem traz as contagens de vagas pedidas, baixadas, com falha e recusadas.',
+      'A Empregare não tem API, então um robô entra no portal da empresa, pede a exportação "Candidatos da vaga (Excel)" de cada vaga dos editais ativos em curso (as vagas vêm do quadro de vagas do edital e, nos editais antigos, da Seleção), baixa os arquivos e grava os candidatos no MONITORA, com todas as colunas e respostas do questionário. Uma vaga cujo arquivo traz menos da metade dos candidatos que já tinha é recusada (nada muda nela) e quem sai do arquivo fica inativo, sem ser apagado. "Falhou" na linha do robô pode ser falha geral (por exemplo, login recusado) ou execução parcial (alguma vaga não baixou ou foi recusada); a mensagem traz as contagens de vagas pedidas, baixadas, com falha e recusadas. Ele não tem agenda automática: roda só quando o administrador global clica em "Rodar agora".',
     fato: "",
     fonte:
       "docs/robo-empregare.md; supabase/migrations/20261005170000_robo_empregare.sql; supabase/migrations/20261006080000_robo_empregare_vagas_do_quadro.sql",
@@ -3390,6 +3766,22 @@ export const VERBETES_AYA = Object.freeze([
     fato: "",
     fonte:
       "docs/robo-empregare.md; supabase/migrations/20261006080000_robo_empregare_vagas_do_quadro.sql",
+    abrir: "config:cargas",
+  },
+  {
+    arquivo: "regras-do-status-das-atualizacoes.md",
+    titulo: "Carga com falha ou atrasada",
+    perguntas: [
+      "carga falhou o que fazer",
+      "o que fazer quando a carga falha",
+      "selo falhou",
+      "carga recusada",
+    ],
+    resposta:
+      'Veja as últimas execuções da linha e a mensagem da que falhou. Uma carga recusada (planilha com menos da metade das linhas, ou vaga da Empregare com menos da metade dos candidatos) não mudou nada: os dados de antes continuam na tela. Em Seleção, Entrevistas e no robô da Empregare, depois de corrigir a causa, o administrador global pode usar "Rodar agora"; as análises não têm esse botão, porque o envio sai do Apps Script de cada planilha. Atrasada quer dizer que a última execução que deu certo passou do prazo da carga.',
+    fato: "",
+    fonte:
+      "src/lib/saude-das-cargas.js; src/lib/robos-de-carga.js; docs/sincronizacao-das-planilhas.md",
     abrir: "config:cargas",
   },
   {
@@ -3547,6 +3939,23 @@ export const VERBETES_AYA = Object.freeze([
       "supabase/migrations/20260930130000_acessos_trava_de_area_e_convite.sql; supabase/migrations/20260929190100_adicionar_pessoa_e_contas_de_coordenacao.sql",
   },
   {
+    arquivo: "regras-dos-acessos.md",
+    titulo: "Pessoa que não consegue entrar",
+    perguntas: [
+      "nao consigo entrar",
+      "por que nao consigo entrar",
+      "pessoa nao consegue entrar",
+      "o convite nao funciona",
+      "erro ao entrar no monitora",
+    ],
+    resposta:
+      'Confira, nesta ordem: a pessoa entrou com a conta Google do e-mail convidado (o link sozinho não dá acesso e outra conta não serve); o e-mail é de um domínio permitido (Configurações › Tela de acesso); e o cadastro está ativo — conta desativada vê "Seu acesso ao MONITORA foi desativado." e pode pedir reativação. Quem entra sem convite vê a tela de pedido de acesso, que vai para Acessos › Usuários › Pendentes. Se o Login Google estiver Inativo, o botão some da tela de entrada; com o sistema inteiro em manutenção, quem não é administrador global vê a tela de manutenção.',
+    fato: "",
+    fonte:
+      "src/lib/convite-de-acesso.js; src/lib/solicitacao-de-acesso.js; supabase/migrations/20260930180000_contas_desativadas_e_reativacao.sql; src/lib/situacao-dos-modulos.js",
+    abrir: "config:acessos",
+  },
+  {
     arquivo: "regras-dos-editais.md",
     titulo: "Tela de Editais",
     perguntas: [
@@ -3689,10 +4098,11 @@ export const VERBETES_AYA = Object.freeze([
       "vaga imediata",
     ],
     resposta:
-      'Nas Entrevistas, as vagas imediatas de cada vaga seguem esta ordem: primeiro o número digitado na configuração da entrevista (manual), depois o quadro de vagas do edital ("do quadro do edital") e, por último, a lista de vagas imediatas da convocação. Só é gravado como manual o número que a pessoa digitou ou alterou; o que veio do quadro ou da lista continua seguindo a fonte. Na Lista de aprovados, as vagas imediatas são informadas por vaga no modelo de convocação, e zero vira cadastro reserva.',
+      "No MONITORA, as vagas imediatas não se digitam mais à mão (manual) nas Entrevistas: o número digitado lá antes ficou no banco, sem uso. Valem, nesta ordem: o quadro de vagas do edital, cadastrado em Editais; sem ele, a configuração de convocação do edital, em Lista de aprovados › Convocação (o total de vagas imediatas informado por vaga e dividido pelo modelo de cotas; zero quer dizer só cadastro reserva). Quando o quadro só traz o total, a divisão por modalidade sai dessa configuração ou dos percentuais da regra de classificação. A Classificação, a convocação das Entrevistas e a ordem de chamada da lista de aprovados usam essa mesma conta.",
     fato: "",
     fonte:
-      "supabase/migrations/20260930233000_quadro_de_vagas_do_edital.sql (obter_entrevistas_do_edital); src/lib/conducao-de-entrevista.js",
+      "src/lib/classificacao/vagas.js; src/lib/classificacao/convocacao-do-edital.js; src/lib/configuracao-de-convocacao.js; supabase/migrations/20261005150000_convocacao_unica_da_entrevista.sql",
+    abrir: "nucleo",
   },
   {
     arquivo: "regras-dos-editais.md",
@@ -3721,6 +4131,40 @@ export const VERBETES_AYA = Object.freeze([
       "No formulário do edital, Inscritos, Aptos análise, Cancelados, Eliminados nota, Reprovados análise, Total eliminados, Aprovados análise, Aprovados prova, Entrevistados, Contratados e Vagas ociosas aparecem só para conferência: vêm das cargas do sistema e não se editam ali. A UF é preenchida pela unidade escolhida, e unidade nova digitada fica registrada na área do edital ao salvar.",
     fato: "",
     fonte: "src/modulos/editais/modal-do-edital.jsx",
+  },
+  {
+    arquivo: "regras-dos-editais.md",
+    titulo: "Quem pode cadastrar e editar editais",
+    perguntas: [
+      "quem pode editar edital",
+      "quem pode cadastrar edital",
+      "botao novo edital nao aparece",
+      "nao consigo editar o edital",
+      "sumiu o lapis do edital",
+      "permissao editais",
+    ],
+    resposta:
+      'Cadastrar ("Novo edital") e editar (o lápis da linha) é de quem tem nível Editor em Editais ou em Cronograma, em Configurações › Acessos. Com Leitor, a tela mostra a tabela, os indicadores e o "Ver cronograma", sem esses botões. Na linha, o ícone da Lista de aprovados aparece para quem tem Editor em Importação e convocação, e o botão "Conversa" para quem usa as Mensagens. Mover o edital de área é só do administrador global.',
+    fato: "",
+    fonte:
+      "src/modulos/editais/nucleo.jsx; src/lib/access-roles.js (canManageEditais, canImportApprovedList, canMoveEditalBetweenAreas)",
+    abrir: "config:acessos",
+  },
+  {
+    arquivo: "regras-dos-editais.md",
+    titulo: "Edital que não aparece em Editais",
+    perguntas: [
+      "por que o edital nao aparece em editais",
+      "edital sumiu de editais",
+      "nao acho o edital",
+      "edital nao aparece na tabela de editais",
+    ],
+    resposta:
+      "Editais mostra só os editais da área escolhida no menu e, se você está numa coordenação, só os do recorte dela; quem não é administrador global nem recebe do banco editais de outras áreas. Confira também os filtros e o indicador clicado: Editais ativos ou Editais inativos deixam só aquela situação (chip Situação), e clicar de novo no indicador ou no x do chip volta a mostrar todos. Edital desligado no banco não aparece. Se o edital é de outra área, troque a área no menu ou peça a liberação a quem administra os acessos.",
+    fato: "",
+    fonte:
+      "src/lib/editais-do-nucleo.js; src/modulos/editais/painel-operacional.jsx; supabase/migrations/20260925181000_recorta_dados_por_area.sql",
+    abrir: "nucleo",
   },
   {
     arquivo: "regras-dos-mapas.md",
@@ -3931,7 +4375,7 @@ export const VERBETES_AYA = Object.freeze([
       "recursos dos candidatos",
     ],
     resposta:
-      "Recursos acompanha os recursos dos candidatos da área atual, do registro à resposta enviada: indicadores, pendências prioritárias, gráficos, a fila e o detalhe de cada recurso (dados, anexos, etapas, parecer e resposta). Leitor vê; Editor registra, anexa, escreve a resposta e envia para o parecer jurídico; quem tem a permissão Parecer jurídico decide. Quem está numa coordenação vê só os recursos dos editais dela. As origens ativas são análise curricular, entrevista e resultado final, e não pode haver dois recursos sem decisão para o mesmo candidato, edital e origem.",
+      "Recursos acompanha os recursos dos candidatos da área atual, do registro à resposta enviada: indicadores, pendências prioritárias, gráficos, a fila e o detalhe de cada recurso (dados, anexos, etapas, parecer e resposta). Leitor vê; Editor registra, anexa, escreve a resposta e envia para o parecer jurídico; quem tem a permissão Parecer jurídico decide. Quem está numa coordenação vê só os recursos dos editais dela. As origens ativas são análise curricular, entrevista e resultado final; um segundo recurso sem decisão para o mesmo candidato, edital e origem gera um aviso e só é gravado com confirmação.",
     fato: "",
     fonte:
       "src/modulos/recursos/; supabase/migrations/20260929120000_recursos.sql; supabase/migrations/20260929190200_recorte_por_coordenacao_nos_recursos.sql; supabase/migrations/20261001170000_recursos_parecer_juridico.sql",
@@ -4161,6 +4605,40 @@ export const VERBETES_AYA = Object.freeze([
     fato: "",
     fonte:
       "supabase/migrations/20261005130000_recurso_ajusta_pontuacao.sql; src/lib/recursos-dos-candidatos.js",
+    abrir: "recursos",
+  },
+  {
+    arquivo: "regras-dos-recursos.md",
+    titulo: "Registrar um recurso",
+    perguntas: [
+      "como registrar um recurso",
+      "novo recurso",
+      "cadastrar recurso",
+      "lancar recurso",
+      "registrar recurso do candidato",
+      "candidato nao encontrado no recurso",
+    ],
+    resposta:
+      'Em Recursos, "Novo recurso" (para quem tem Editor em Recursos) abre o cadastro: escolha o edital (só os da área atual), a origem e o candidato, buscado nas análises curriculares daquele edital; cargo, vaga, código, nota atual e resultado vêm sozinhos, e o analista vem preenchido com o responsável pela análise. "Não encontrei o candidato" permite digitar o nome, e o recurso fica marcado como fora das análises. O recurso nasce Registrado; depois, anexe os documentos, escreva a resposta e envie para o parecer jurídico. Na edição, edital e candidato não mudam: para isso, exclua e cadastre de novo.',
+    fato: "",
+    fonte:
+      "src/modulos/recursos/formulario.jsx; supabase/migrations/20261001170000_recursos_parecer_juridico.sql",
+    abrir: "recursos",
+  },
+  {
+    arquivo: "regras-dos-recursos.md",
+    titulo: "Ajuste da pontuação que não aparece",
+    perguntas: [
+      "ajuste da pontuacao nao aparece",
+      "por que nao vejo o ajuste da pontuacao",
+      "nao consigo ajustar a nota no recurso",
+      "sumiu o ajuste da pontuacao",
+    ],
+    resposta:
+      'A seção "Ajuste da pontuação" da gaveta só aparece quando o recurso é de um candidato das análises (recurso "fora das análises" não tem) e o edital tem regra de classificação salva. Propor é de quem tem a permissão "Parecer jurídico (Recursos)", com o recurso em análise jurídica ou já deferido (total ou parcialmente); quem não pode propor só vê a seção se já houver versões do ajuste. Indeferir, devolver, reabrir ou excluir o recurso cancela o ajuste.',
+    fato: "",
+    fonte:
+      "src/modulos/recursos/ajuste.jsx; supabase/migrations/20261005130000_recurso_ajusta_pontuacao.sql",
     abrir: "recursos",
   },
 ]);

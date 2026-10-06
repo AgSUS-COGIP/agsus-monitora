@@ -43,6 +43,7 @@ export function Modal({
   fecharAoClicarFora = true,
   className = "",
   cartaoClassName = "",
+  tour,
   children,
 }) {
   const cartao = useRef(null);
@@ -98,6 +99,7 @@ export function Modal({
       className={classes("modal", className, "show")}
       role="dialog"
       aria-modal="true"
+      data-tour={tour}
       aria-labelledby={rotuloId}
       aria-label={rotuloId ? undefined : rotulo}
       onClick={(evento) => {

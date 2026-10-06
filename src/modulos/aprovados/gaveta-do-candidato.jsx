@@ -86,7 +86,10 @@ export function GavetaDoCandidato({ estado, perfil, candidato, convocacao }) {
     >
       <div className="ui-gaveta-corpo aprovados-gaveta-corpo">
         {podeStatus || podeCarta ? (
-          <div className="ui-acoes aprovados-gaveta-acoes">
+          <div
+            className="ui-acoes aprovados-gaveta-acoes"
+            data-tour="aprovados-gaveta-acoes"
+          >
             {podeStatus ? (
               <button
                 type="button"

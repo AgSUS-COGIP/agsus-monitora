@@ -110,6 +110,7 @@ function ListaDeConversas({ estado, e }) {
           id={idDaBusca}
           type="search"
           className="chat-busca"
+          data-tour="chat-busca"
           placeholder="Buscar conversa"
           value={busca}
           onChange={(ev) => setBusca(ev.target.value)}
@@ -117,6 +118,7 @@ function ListaDeConversas({ estado, e }) {
         <button
           type="button"
           className="btn small"
+          data-tour="chat-nova-conversa"
           onClick={() => estado.mostrar("nova")}
         >
           <i className="fa-solid fa-pen-to-square" aria-hidden="true" /> Nova
@@ -142,7 +144,7 @@ function ListaDeConversas({ estado, e }) {
           <div className="ui-esqueleto-linha" />
         </div>
       ) : conversas.length ? (
-        <ul className="chat-itens">
+        <ul className="chat-itens" data-tour="chat-conversas">
           {conversas.map((c) => (
             <ItemDaConversa
               key={c.id}
@@ -157,7 +159,7 @@ function ListaDeConversas({ estado, e }) {
           {busca ? "Nenhuma conversa encontrada." : "Nenhuma conversa ainda."}
         </EstadoVazio>
       ) : null}
-      <fieldset className="chat-preferencias">
+      <fieldset className="chat-preferencias" data-tour="chat-avisos">
         <legend>Avisos</legend>
         <label>
           <input
@@ -366,6 +368,7 @@ export default function PainelDoChat({ estado, id }) {
       id={id}
       ref={painel}
       className="chat-painel"
+      data-tour="chat-painel"
       aria-labelledby={idDoTitulo}
     >
       <header className="chat-painel__topo">
@@ -389,6 +392,7 @@ export default function PainelDoChat({ estado, id }) {
           type="button"
           className="chat-icone"
           aria-label="Fechar mensagens"
+          data-tour="chat-fechar"
           onClick={() => estado.fechar()}
         >
           <i className="fa-solid fa-xmark" aria-hidden="true" />

@@ -144,7 +144,7 @@ describe("Me mostra esta tela", () => {
   });
 
   it("tela sem roteiro não oferece o tour", async () => {
-    definirPaginaDaAya("config", "Configurações");
+    definirPaginaDaAya("external", "Painel externo");
     await montar();
     await abrirPainel();
     expect(botao("Me mostra esta tela")).toBeFalsy();
@@ -175,7 +175,7 @@ describe("Aprender", () => {
     ]);
     expect(
       $(".aya-trilha[data-trilha='primeiros-passos']").textContent,
-    ).toContain("7 passos");
+    ).toContain("8 passos");
   });
 
   it("a trilha navega, guarda o passo e retoma de onde parou", async () => {
@@ -198,7 +198,7 @@ describe("Aprender", () => {
     await abrirPainel();
     expect(
       $(".aya-trilha[data-trilha='primeiros-passos']").textContent,
-    ).toContain("4 de 7");
+    ).toContain("4 de 8");
     await clicar($(".aya-trilha[data-trilha='primeiros-passos']"));
     expect(tituloDoPasso()).toBe("Visão geral: filtros");
   });
@@ -206,7 +206,7 @@ describe("Aprender", () => {
   it("chegar ao fim marca a trilha como concluída", async () => {
     localStorage.setItem(
       CHAVE_PROGRESSO_DAS_TRILHAS,
-      JSON.stringify({ "primeiros-passos": { passo: 6, concluida: false } }),
+      JSON.stringify({ "primeiros-passos": { passo: 7, concluida: false } }),
     );
     definirPaginaDaAya("dashboard", "Visão geral");
     await montar();
@@ -246,6 +246,12 @@ describe("primeira entrada", () => {
     expect($(".aya-tour")).toBeNull();
     expect($(".aya-painel")).toBeNull();
     expect(localStorage.getItem(CHAVE_OFERTA_DE_PRIMEIROS_PASSOS)).toBe("1");
+    await clicar(botao("Agora não"));
+    expect($(".aya-oferta[aria-label='Primeiros passos']")).toBeNull();
+    // Depois dela, o convite discreto para o tour desta tela (uma vez só).
+    expect($(".aya-oferta--balao").getAttribute("aria-label")).toMatch(
+      /^Tour: /,
+    );
     await clicar(botao("Agora não"));
     expect($(".aya-oferta")).toBeNull();
 

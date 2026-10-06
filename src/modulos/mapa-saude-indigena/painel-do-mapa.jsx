@@ -133,6 +133,7 @@ export function TopoDoMapa({
           }}
           disabled={!mapa}
           title="Voltar à visão do Brasil inteiro"
+          data-tour="visao-geral-mapa-brasil"
         >
           Brasil
         </button>

@@ -1,4 +1,6 @@
 import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
+import { usarPedidoDeFiltro } from "../../app/pedido-de-filtro.js";
+import { filtrosDeRecursos } from "../../lib/filtro-da-aya.js";
 import { montarModulo } from "../../app/montar-modulo.jsx";
 import { usarTemaEscuro } from "../../app/tema.js";
 import { obterDadosDoMonitoramento } from "../../componentes/dados-do-monitoramento.js";
@@ -121,6 +123,10 @@ function TelaDaArea({ estado, e }) {
   const trocarFiltro = (campo, valor) =>
     setFiltros((atuais) => ({ ...atuais, [campo]: valor }));
   const recarregar = () => void estado.carregar(area);
+  // "Abrir" numa resposta com número da Aya: a tela abre já recortada.
+  usarPedidoDeFiltro("recursos", carregado, (pedido) =>
+    setFiltros((atuais) => filtrosDeRecursos(atuais, pedido, opcoes)),
+  );
 
   return (
     <div className="ui-tela recursos-tela">

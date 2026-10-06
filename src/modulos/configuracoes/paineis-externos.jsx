@@ -138,10 +138,16 @@ export function SecaoPaineisExternos({ estado }) {
   useSyncExternalStore(estado.assinar, estado.obter);
   const paineis = estado.paineisAtuais();
   return (
-    <div className="config-secao-react config-secao-react--com-previa">
+    <div
+      className="config-secao-react config-secao-react--com-previa"
+      data-tour="config-recursos"
+    >
       <div className="config-secao-react__campos">
         {paineis.length ? (
-          <div className="painel-externo-tabela">
+          <div
+            className="painel-externo-tabela"
+            data-tour="config-recursos-tabela"
+          >
             <table data-mobile-table="scroll">
               <thead>
                 <tr>

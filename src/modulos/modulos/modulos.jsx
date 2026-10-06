@@ -205,6 +205,7 @@ function BarraDeRevisao({ estado, atual }) {
           <button
             type="button"
             className="btn primary"
+            data-tour="config-modulos-revisar"
             onClick={() => setRevisando(true)}
           >
             Revisar e salvar
@@ -277,6 +278,7 @@ function BarraDeRevisao({ estado, atual }) {
           acao="salvar"
           type="submit"
           className="btn primary"
+          data-tour="config-modulos-salvar"
           disabled={problemas.length > 0}
         >
           Salvar alterações
@@ -361,7 +363,7 @@ export function ModulosEAbas({ estado }) {
   const estadoDoSistema = situacao(sistema);
 
   return (
-    <div className="modulos-tela">
+    <div className="modulos-tela" data-tour="config-modulos">
       {atual.aviso ? (
         <Aviso
           tom={atual.aviso.tom === "danger" ? "danger" : "warning"}
@@ -386,7 +388,10 @@ export function ModulosEAbas({ estado }) {
         {estadoDoSistema === "manutencao" ? (
           <CamposDaManutencao estado={estado} alvo={sistema} valor={valor} />
         ) : null}
-        <label className="modulos-comemoracoes">
+        <label
+          className="modulos-comemoracoes"
+          data-tour="config-modulos-comemoracoes"
+        >
           <input
             type="checkbox"
             checked={valor(sistema, "comemoracoes") !== "N"}
@@ -453,7 +458,11 @@ export function ModulosEAbas({ estado }) {
       })}
 
       <Cartao titulo="Abas (em todas as áreas)" icone="list-filter">
-        <ul className="modulos-lista" aria-label="Abas em todas as áreas">
+        <ul
+          className="modulos-lista"
+          aria-label="Abas em todas as áreas"
+          data-tour="config-modulos-abas"
+        >
           {(arvore.abas || []).map((aba) => {
             const alvo = { escopo: "aba", aba: aba.co_aba };
             const beta = valor(alvo, "beta") === "S";
@@ -489,7 +498,11 @@ export function ModulosEAbas({ estado }) {
 
       <Cartao titulo="Painéis externos" icone="square-arrow-out-up-right">
         {(arvore.paineis || []).length ? (
-          <ul className="modulos-lista" aria-label="Painéis externos">
+          <ul
+            className="modulos-lista"
+            aria-label="Painéis externos"
+            data-tour="config-modulos-paineis"
+          >
             {arvore.paineis.map((painel) => (
               <LinhaDoItem
                 key={painel.id}

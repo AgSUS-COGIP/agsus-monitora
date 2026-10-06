@@ -19,10 +19,11 @@ export function TopoDoPainel({
   atualizarDesativado,
   aoExportar,
   exportarDesativado,
+  tour,
   children,
 }) {
   return (
-    <header className="ui-topo">
+    <header className="ui-topo" data-tour={tour}>
       {visoes ? <div className="ui-topo-titulo">{visoes}</div> : null}
       <div className="ui-topo-acoes">
         <span className="status-discreto" data-status-da-carga="">

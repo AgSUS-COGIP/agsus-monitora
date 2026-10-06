@@ -137,3 +137,10 @@ agenda das entrevistas, em
 **resposta:** Em Conduzir entrevistas, ao abrir o edital, o cartão "Agenda do dia" mostra a agenda salva por horário: escolha o dia (abre em hoje, no horário de Brasília, ou no próximo dia com entrevista) e, havendo mais de uma, a banca. A linha de quem já está convocado no sistema abre a ficha de notas. A agenda é só de consulta ali; ela é montada e ajustada na Classificação, visão Agenda. Sem agenda salva, o cartão não aparece.
 **fonte:** src/modulos/entrevistas/agenda-do-dia.jsx
 **abrir:** entrevistas
+
+## Quem pode conduzir entrevistas
+
+**perguntas:** quem pode lancar notas | quem pode conduzir entrevistas | nao aparece o botao convocar | nao consigo lancar nota | botoes sumiram em entrevistas | permissao entrevistas
+**resposta:** Ver Resultados, Conduzir entrevistas e Roteiros é de quem tem Leitor em Entrevistas. Lançar notas, convocar, desconvocar, salvar a configuração do edital e editar roteiros exige Editor em Entrevistas e acesso à área e ao edital (recorte da coordenação); sem isso, a tela mostra tudo, sem os botões. No modo "Cada avaliador lança a sua", cada avaliador só edita a própria coluna. "Convocar selecionados" só aparece quando a Classificação já gerou a lista de convocação do edital, e liberar edital fora da janela é só do administrador global.
+**fonte:** src/modulos/entrevistas/conducao.jsx; src/lib/access-roles.js; supabase/migrations/20260930220000_entrevistas_roteiros_e_notas.sql
+**abrir:** config:acessos

@@ -72,6 +72,7 @@ function Editor({
   return (
     <form
       className="acessos-detalhe"
+      data-tour="acessos-grupo-editor"
       onSubmit={salvar}
       noValidate
       aria-label={novo ? "Novo grupo" : `Grupo ${grupo.nome}`}
@@ -128,7 +129,7 @@ function Editor({
       ) : null}
 
       <h4>Permissões</h4>
-      <ul className="acessos-modulos">
+      <ul className="acessos-modulos" data-tour="acessos-grupo-permissoes">
         {RESOURCES.map(([recurso, rotulo]) => (
           <li key={recurso}>
             <div>
@@ -194,6 +195,7 @@ function Editor({
               estado={estado}
               acao="grupo"
               type="submit"
+              data-tour="acessos-grupo-salvar"
               className="btn primary"
               disabled={!alterado && !novo}
             >
@@ -250,6 +252,7 @@ export function AbaGrupos({ estado, aoVerPessoas }) {
     <section
       className="acessos-mestre-detalhe"
       aria-label="Grupos de permissões"
+      data-tour="acessos-grupos"
     >
       <ListaMestre
         rotulo="Grupos"

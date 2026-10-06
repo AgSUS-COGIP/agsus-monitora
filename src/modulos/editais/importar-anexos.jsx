@@ -198,6 +198,7 @@ export function ImportarAnexos({
   return (
     <section
       id="anexosDoEdital"
+      data-tour="editais-anexos"
       className="cronograma-copy-box anexos-box ui-campo-largo"
     >
       <strong className="cronograma-copy-heading">Anexos do edital</strong>
@@ -213,6 +214,7 @@ export function ImportarAnexos({
         />
         <button
           id="anexosEscolher"
+          data-tour="editais-anexos-escolher"
           className="btn secondary"
           type="button"
           disabled={lendo}
@@ -265,7 +267,7 @@ export function ImportarAnexos({
               </button>
             )}
           </div>
-          <div className="anexos-linha">
+          <div className="anexos-linha" data-tour="editais-quadro-de-vagas">
             <div>
               <strong>Quadro de vagas</strong>{" "}
               {lido.vagas.length
@@ -322,7 +324,7 @@ export function ImportarAnexos({
 
       {!lido && linhasSalvas.length > 0 && (
         <div className="anexos-resultado">
-          <div className="anexos-linha">
+          <div className="anexos-linha" data-tour="editais-quadro-de-vagas">
             <div>
               <strong>Quadro de vagas salvo</strong>{" "}
               {frase(resumoDoQuadro(linhasSalvas))}

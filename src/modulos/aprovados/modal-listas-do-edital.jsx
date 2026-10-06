@@ -106,6 +106,7 @@ function DaClassificacao({ estado, editalId, rotulo, publicacao }) {
         type="button"
         className="btn secondary"
         data-acao="ir-para-classificacao"
+        data-tour="aprovados-listas-publicar-da-classificacao"
         onClick={() => estado.irParaClassificacao(editalId, rotulo)}
       >
         <i className="fa-solid fa-list-ol" aria-hidden="true" />{" "}
@@ -178,6 +179,7 @@ function PainelDoArquivo({
     >
       <div
         id="approvedImportCurrentState"
+        data-tour="aprovados-listas-origem"
         className={classes("approved-import-state", lista && "has-list")}
       >
         <ResumoDaListaAtual lista={lista} podeSubstituir={podeSubstituir} />
@@ -196,6 +198,7 @@ function PainelDoArquivo({
       <div className="form-grid">
         <div
           id="approvedImportFileRow"
+          data-tour="aprovados-listas-arquivo"
           className={classes("form-row full", soLeitura && "hidden")}
         >
           <label htmlFor="approvedImportFile">Arquivo XLSX</label>
@@ -290,6 +293,7 @@ function PainelDoArquivo({
             estado={estado}
             acao="importar"
             id="approvedImportSubmit"
+            data-tour="aprovados-listas-importar"
             className="btn green"
             onClick={() =>
               void estado.importarLista({
@@ -379,7 +383,10 @@ export function ModalListasDoEdital({ estado, dados, editalId, rotulo }) {
             icone: item.icone,
             idDaAba: item.id,
             idDoPainel: item.painel,
-            dados: { "data-import-tab": item.nome },
+            dados: {
+              "data-import-tab": item.nome,
+              "data-tour": `aprovados-listas-aba-${item.nome}`,
+            },
           }))}
         />
         <PainelDoArquivo

@@ -102,10 +102,11 @@ function TelaDaArea({ estado, agenda, e }) {
     : null;
 
   return (
-    <div className="ui-tela classificacao-tela">
+    <div className="ui-tela classificacao-tela" data-tour="classificacao-tela">
       <TopoDoPainel
         visoes={
           <Segmentado
+            tour="classificacao-abas"
             rotulo="Visão"
             opcoes={VISOES}
             valor={visao}
@@ -147,10 +148,15 @@ function TelaDaArea({ estado, agenda, e }) {
 
       {e.semAcesso ? null : (
         <>
-          <section className="ui-card classificacao-edital" aria-label="Edital">
+          <section
+            className="ui-card classificacao-edital"
+            aria-label="Edital"
+            data-tour="classificacao-edital"
+          >
             <Campo rotulo="Edital">
               <select
                 id={idEdital}
+                data-tour="classificacao-seletor-edital"
                 value={e.editalId}
                 disabled={!e.carregado}
                 onChange={(ev) => void estado.escolherEdital(ev.target.value)}

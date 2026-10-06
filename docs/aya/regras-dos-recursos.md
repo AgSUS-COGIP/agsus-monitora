@@ -14,7 +14,7 @@ viraram filtro) estão registrados nestes verbetes. Fontes:
 ## Tela de Recursos
 
 **perguntas:** tela de recursos | tela recursos | aba recursos | para que serve recursos | para que serve a tela de recursos | recursos dos candidatos
-**resposta:** Recursos acompanha os recursos dos candidatos da área atual, do registro à resposta enviada: indicadores, pendências prioritárias, gráficos, a fila e o detalhe de cada recurso (dados, anexos, etapas, parecer e resposta). Leitor vê; Editor registra, anexa, escreve a resposta e envia para o parecer jurídico; quem tem a permissão Parecer jurídico decide. Quem está numa coordenação vê só os recursos dos editais dela. As origens ativas são análise curricular, entrevista e resultado final, e não pode haver dois recursos sem decisão para o mesmo candidato, edital e origem.
+**resposta:** Recursos acompanha os recursos dos candidatos da área atual, do registro à resposta enviada: indicadores, pendências prioritárias, gráficos, a fila e o detalhe de cada recurso (dados, anexos, etapas, parecer e resposta). Leitor vê; Editor registra, anexa, escreve a resposta e envia para o parecer jurídico; quem tem a permissão Parecer jurídico decide. Quem está numa coordenação vê só os recursos dos editais dela. As origens ativas são análise curricular, entrevista e resultado final; um segundo recurso sem decisão para o mesmo candidato, edital e origem gera um aviso e só é gravado com confirmação.
 **fonte:** src/modulos/recursos/; supabase/migrations/20260929120000_recursos.sql; supabase/migrations/20260929190200_recorte_por_coordenacao_nos_recursos.sql; supabase/migrations/20261001170000_recursos_parecer_juridico.sql
 **abrir:** recursos
 
@@ -106,4 +106,18 @@ viraram filtro) estão registrados nestes verbetes. Fontes:
 **perguntas:** o recurso mudou a classificacao | caixa mudou a classificacao | classificacao mudou | marcar que mudou a classificacao
 **resposta:** No MONITORA, "O recurso mudou a classificação" deixou de ser uma caixa marcada à mão: é marcada automaticamente quando o ajuste da pontuação aprovado muda a posição ou a situação do candidato (pela prévia calculada na aprovação) e desmarcada quando esse ajuste é cancelado. Os recursos marcados à mão antes dessa mudança continuam como estavam. A marca alimenta a pendência "Mudança de nota ou classificação", o filtro e o CSV.
 **fonte:** supabase/migrations/20261005130000_recurso_ajusta_pontuacao.sql; src/lib/recursos-dos-candidatos.js
+**abrir:** recursos
+
+## Registrar um recurso
+
+**perguntas:** como registrar um recurso | novo recurso | cadastrar recurso | lancar recurso | registrar recurso do candidato | candidato nao encontrado no recurso
+**resposta:** Em Recursos, "Novo recurso" (para quem tem Editor em Recursos) abre o cadastro: escolha o edital (só os da área atual), a origem e o candidato, buscado nas análises curriculares daquele edital; cargo, vaga, código, nota atual e resultado vêm sozinhos, e o analista vem preenchido com o responsável pela análise. "Não encontrei o candidato" permite digitar o nome, e o recurso fica marcado como fora das análises. O recurso nasce Registrado; depois, anexe os documentos, escreva a resposta e envie para o parecer jurídico. Na edição, edital e candidato não mudam: para isso, exclua e cadastre de novo.
+**fonte:** src/modulos/recursos/formulario.jsx; supabase/migrations/20261001170000_recursos_parecer_juridico.sql
+**abrir:** recursos
+
+## Ajuste da pontuação que não aparece
+
+**perguntas:** ajuste da pontuacao nao aparece | por que nao vejo o ajuste da pontuacao | nao consigo ajustar a nota no recurso | sumiu o ajuste da pontuacao
+**resposta:** A seção "Ajuste da pontuação" da gaveta só aparece quando o recurso é de um candidato das análises (recurso "fora das análises" não tem) e o edital tem regra de classificação salva. Propor é de quem tem a permissão "Parecer jurídico (Recursos)", com o recurso em análise jurídica ou já deferido (total ou parcialmente); quem não pode propor só vê a seção se já houver versões do ajuste. Indeferir, devolver, reabrir ou excluir o recurso cancela o ajuste.
+**fonte:** src/modulos/recursos/ajuste.jsx; supabase/migrations/20261005130000_recurso_ajusta_pontuacao.sql
 **abrir:** recursos

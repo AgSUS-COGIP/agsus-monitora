@@ -108,6 +108,7 @@ export function Filtros({
 
   return (
     <PainelDeFiltros
+      tour="analises-filtros"
       idDoTitulo="analisesFiltrosTitulo"
       quantos={quantosFiltros(filtros) + comData}
       escopo={rotuloDoEscopo(escopo)}
@@ -115,10 +116,11 @@ export function Filtros({
       aoLimpar={aoLimpar}
       aoRecolher={() => setMaisOpcoes(false)}
     >
-      <div className="ui-grade-de-campos">
+      <div className="ui-grade-de-campos" data-tour="analises-filtros-campos">
         <Campo rotulo="Situação do processo">
           <select
             id="analises-filtro-escopo"
+            data-tour="analises-escopo"
             value={escopo}
             disabled={!carregado}
             onChange={(evento) => aoEscopo(evento.target.value)}
@@ -143,6 +145,7 @@ export function Filtros({
         <Campo rotulo="Data da análise: de">
           <input
             id="analises-filtro-data-inicio"
+            data-tour="analises-data-inicio"
             type="date"
             value={inicio}
             max={fim || undefined}
@@ -153,6 +156,7 @@ export function Filtros({
         <Campo rotulo="Data da análise: até">
           <input
             id="analises-filtro-data-fim"
+            data-tour="analises-data-fim"
             type="date"
             value={fim}
             min={inicio || undefined}
@@ -163,6 +167,7 @@ export function Filtros({
         <Campo rotulo="Buscar em toda a tela">
           <input
             id="analises-filtro-busca"
+            data-tour="analises-busca"
             type="search"
             value={busca}
             disabled={!carregado}
@@ -262,7 +267,11 @@ const KPIS = [
 export function Indicadores({ kpis, carregado, kpi, aoKpi }) {
   const valor = (numero) => formatNumberBR(numero);
   return (
-    <GradeDeKpis className="analises-kpis" rotulo="Indicadores">
+    <GradeDeKpis
+      tour="analises-kpis"
+      className="analises-kpis"
+      rotulo="Indicadores"
+    >
       <Kpi
         cor="k-cyan"
         icone="fa-users"

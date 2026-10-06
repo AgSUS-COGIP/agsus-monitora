@@ -344,6 +344,7 @@ function BarraDeSalvar({ estado, rascunho, matriz }) {
   return (
     <form
       className="ui-barra-de-salvar acessos-salvar"
+      data-tour="acessos-salvar"
       onSubmit={(evento) => {
         evento.preventDefault();
         setTentou(true);
@@ -403,6 +404,7 @@ function BarraDeSalvar({ estado, rascunho, matriz }) {
           acao="salvar"
           type="submit"
           className="btn primary"
+          data-tour="acessos-salvar-confirmar"
           disabled={semArea.length > 0}
         >
           Salvar alterações
@@ -460,7 +462,7 @@ function Ativos({ estado, atual, busca, setBusca, campoDeBusca }) {
 
   return (
     <>
-      <div className="acessos-filtros">
+      <div className="acessos-filtros" data-tour="acessos-filtros">
         {campoDeBusca}
         <select
           aria-label="Filtrar por grupo"
@@ -515,7 +517,7 @@ function Ativos({ estado, atual, busca, setBusca, campoDeBusca }) {
             Limpar filtros
           </button>
         ) : null}
-        <label className="acessos-alternar">
+        <label className="acessos-alternar" data-tour="acessos-por-modulo">
           <input
             type="checkbox"
             checked={porModulo}
@@ -544,6 +546,7 @@ function Ativos({ estado, atual, busca, setBusca, campoDeBusca }) {
         tabIndex={0}
         role="region"
         aria-label={porModulo ? "Permissões por módulo" : "Pessoas com acesso"}
+        data-tour="acessos-lista"
       >
         <table>
           <thead>
@@ -690,7 +693,7 @@ export function AbaUsuarios({ estado }) {
   return (
     <section className="acessos-usuarios" aria-label="Usuários">
       <div className="acessos-topo">
-        <span className="acessos-topo-inicio">
+        <span className="acessos-topo-inicio" data-tour="acessos-situacao">
           <Segmentado
             className="acessos-segmentado"
             rotulo="Situação"

@@ -44,7 +44,10 @@ const GRUPOS = Object.freeze([
 export function SecaoTelaDeAcesso({ estado }) {
   useSyncExternalStore(estado.assinar, estado.obter);
   return (
-    <div className="config-secao-react config-secao-react--com-previa">
+    <div
+      className="config-secao-react config-secao-react--com-previa"
+      data-tour="config-acesso"
+    >
       <div className="config-secao-react__campos">
         {GRUPOS.map((grupo) => (
           <Grupo key={grupo.id} secao="acesso" {...grupo}>

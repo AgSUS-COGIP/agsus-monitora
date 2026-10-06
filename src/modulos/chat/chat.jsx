@@ -48,6 +48,7 @@ export function Chat({ estado }) {
         className={`chat-botao${e.aberto ? " is-aberto" : ""}`}
         aria-label={rotuloDoBotao(total)}
         title="Mensagens"
+        data-tour="chat-botao"
         aria-expanded={e.aberto ? "true" : "false"}
         aria-controls={ID_DO_PAINEL}
         onClick={() => estado.alternar()}

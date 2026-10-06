@@ -70,6 +70,9 @@ export function OfertaDePrimeirosPassos({
   estilo,
   aoAceitar,
   aoRecusar,
+  rotulo = "Primeiros passos",
+  destaque = "Primeira vez no MONITORA?",
+  texto = "Posso te mostrar o básico em poucos passos.",
 }) {
   return (
     <div
@@ -80,11 +83,10 @@ export function OfertaDePrimeirosPassos({
       }
       style={noPainel ? undefined : estilo}
       role="region"
-      aria-label="Primeiros passos"
+      aria-label={rotulo}
     >
       <p className="aya-oferta__texto">
-        <strong>Primeira vez no MONITORA?</strong> Posso te mostrar o básico em
-        poucos passos.
+        <strong>{destaque}</strong> {texto}
       </p>
       <div className="aya-oferta__acoes">
         <button type="button" className="aya-oferta__sim" onClick={aoAceitar}>

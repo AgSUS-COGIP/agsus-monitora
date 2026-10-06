@@ -75,6 +75,7 @@ function Emitida({ estado, emissao, candidatos, hoje }) {
             estado={estado}
             acao="marcar-convocados"
             id="cartaMarcarConvocados"
+            data-tour="aprovados-carta-marcar-convocados"
             className="btn green small"
             onClick={async () => {
               const resultado = await estado.carta.marcar(
@@ -205,6 +206,7 @@ export function ModalDaCarta({
               type="button"
               className="btn green"
               id="cartaCriarModelo"
+              data-tour="aprovados-carta-criar-modelo"
               onClick={estado.abrirModelosDaCarta}
             >
               <i className="fa-solid fa-file-pen" aria-hidden="true" /> Criar
@@ -217,11 +219,13 @@ export function ModalDaCarta({
           <form
             className="carta-formulario"
             aria-label="Dados da emissão"
+            data-tour="aprovados-carta-campos"
             onSubmit={(evento) => evento.preventDefault()}
           >
             <Campo rotulo="Modelo">
               <select
                 id="cartaModelo"
+                data-tour="aprovados-carta-modelo"
                 data-foco-inicial
                 value={modelo.id}
                 onChange={(evento) => {
@@ -318,7 +322,7 @@ export function ModalDaCarta({
               </Aviso>
             ) : null}
           </form>
-          <div className="carta-previa">
+          <div className="carta-previa" data-tour="aprovados-carta-previa">
             {porCandidato ? (
               <div className="carta-navegacao">
                 <button
@@ -367,7 +371,10 @@ export function ModalDaCarta({
       ) : null}
 
       {modelo && opcoes.length ? (
-        <div className="ui-acoes carta-acoes">
+        <div
+          className="ui-acoes carta-acoes"
+          data-tour="aprovados-carta-emitir"
+        >
           <BotaoDeAcao
             estado={estado.carta}
             acao="emitir-PDF"

@@ -209,6 +209,7 @@ function LinhaDoRecurso({ recurso: r, origens, comemoracoes, aoAbrir }) {
         <button
           type="button"
           className="btn secondary small"
+          data-tour="recursos-detalhes"
           onClick={(evento) => {
             evento.stopPropagation();
             aoAbrir(r.id);
@@ -233,6 +234,7 @@ export function TabelaDeRecursos({
 }) {
   return (
     <TabelaInfinita
+      tour="recursos-fila"
       idDoTitulo="recursosFilaTitulo"
       titulo="Fila de recursos"
       busca={{

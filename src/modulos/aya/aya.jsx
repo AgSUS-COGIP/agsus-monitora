@@ -49,6 +49,8 @@ import {
   VIEWS_DA_AYA,
 } from "../../lib/aya-paginas.js";
 import {
+  chaveDoTour,
+  deveConvidar,
   passoParaRetomar,
   tourDaPagina,
   trilhasDoPerfil,
@@ -56,8 +58,17 @@ import {
 import { montarChamado, pedeSuporte } from "../../lib/chamado-da-aya.js";
 import { nomeDaArea } from "../../lib/menu-lateral.js";
 import { abrirSecaoDeConfiguracao } from "../configuracoes/secoes.js";
-import { collectAyaPageContext } from "./contexto.js";
+import { collectAyaPageContext, estadoDaTela } from "./contexto.js";
 import { responderAya } from "../../lib/busca-da-aya.js";
+import { responderComDados } from "../../lib/dados-da-aya.js";
+import { isAdminGlobal } from "../../lib/access-roles.js";
+import {
+  comPerguntaSemResposta,
+  perguntasGuardadas,
+  textoDasPerguntas,
+} from "../../lib/perguntas-sem-resposta.js";
+import { pedirFiltro } from "../../app/pedido-de-filtro.js";
+import { criarFontesDaAya } from "./fontes.js";
 import {
   esquecerConversa,
   lerConversa,
@@ -67,18 +78,21 @@ import { assinarPaginaDaAya, obterPaginaDaAya } from "./estado.js";
 import { OfertaDePrimeirosPassos, SecaoAprender } from "./tour/aprender.jsx";
 import {
   concluirTrilha,
+  lerConvitesDeTour,
   lerProgressoDasTrilhas,
+  marcarConviteDeTour,
   marcarOfertaDePrimeirosPassos,
   ofertaDePrimeirosPassosFeita,
   salvarPassoDaTrilha,
 } from "./tour/progresso.js";
-import { Tour } from "./tour/tour.jsx";
+import { acharAlvo, Tour } from "./tour/tour.jsx";
 
 /* As mesmas chaves do painel antigo: quem fechou a Aya ou moveu a arara continua assim. */
 export const CHAVE_OCULTA = "agsus_monitora_arara_oculta_v1";
 export const CHAVE_POSICAO_DA_ARARA =
   "agsus_monitora_nina_launcher_position_v1";
 export const CHAVE_AVALIACOES = "agsus_aya_avaliacoes_v1";
+export const CHAVE_SEM_RESPOSTA = "agsus_aya_perguntas_sem_resposta_v1";
 
 const AVATAR = "/assets/arara-azul-monitora.png";
 const LIMITE_DE_AVALIACOES = 200;
@@ -89,6 +103,8 @@ const ROTULO_DA_ORIGEM = Object.freeze({
   "curated-official": "Fonte oficial",
   "monitora-local-context": "Dados desta tela",
   "base-monitora": "Base do MONITORA",
+  "monitora-dados": "Dados ao vivo",
+  "monitora-perfil": "Seu acesso",
 });
 
 /* localStorage pode faltar (janela privada, bloqueio): a Aya funciona igual. */
@@ -122,6 +138,53 @@ function registrarAvaliacao(janela, avaliacao) {
     JSON.stringify(lista.slice(-LIMITE_DE_AVALIACOES)),
   );
 }
+
+function lerSemResposta(janela) {
+  try {
+    return perguntasGuardadas(
+      JSON.parse(ler(janela, CHAVE_SEM_RESPOSTA) || "[]"),
+    );
+  } catch {
+    return [];
+  }
+}
+
+function guardarSemResposta(janela, item) {
+  const lista = comPerguntaSemResposta(lerSemResposta(janela), item);
+  gravar(janela, CHAVE_SEM_RESPOSTA, JSON.stringify(lista));
+  return lista;
+}
+
+/*
+  A resposta padrão: primeiro as perguntas com número (dados ao vivo, só
+  leitura, pelas RPCs que a pessoa já pode chamar); depois a base de
+  verbetes, com a aba e o edital da tela e o perfil de quem pergunta.
+*/
+let fontesPadrao = null;
+async function perguntarPadrao(opcoes) {
+  const tela = estadoDaTela(opcoes.doc);
+  fontesPadrao ||= criarFontesDaAya();
+  const comDados = await responderComDados({
+    pergunta: opcoes.question,
+    contexto: { view: opcoes.section, area: opcoes.area, edital: tela.edital },
+    perfil: opcoes.perfil,
+    buscar: fontesPadrao.buscar,
+  });
+  if (comDados) return comDados;
+  return responderAya({
+    ...opcoes,
+    aba: tela.aba,
+    context: collectAyaPageContext(opcoes.doc),
+  });
+}
+
+const PEDE_TOUR =
+  /\b(me mostr\w* (a |esta |essa )?tela|mostr\w* (esta|essa|a) tela|tour|item por item|passo a passo|educacao guiada|me (ensina|ensine) (a )?(usar )?(esta|essa|a) tela)\b/;
+const normalizarPedido = (texto) =>
+  String(texto)
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase();
 
 const ehApresentacaoGuardada = (turno) =>
   turno?.role === "assistant" &&
@@ -325,6 +388,16 @@ function Mensagem({
           <Icone nome="arrow-right" tamanho={14} />
         </button>
       ) : null}
+      {!acao && mensagem.acaoDados ? (
+        <button
+          type="button"
+          className="aya-acao"
+          onClick={() => aoAbrir(mensagem.acaoDados)}
+        >
+          Abrir
+          <Icone nome="arrow-right" tamanho={14} />
+        </button>
+      ) : null}
       {mensagem.sugestoes?.length ? (
         <div className="aya-sugestoes">
           {mensagem.sugestoes.map((s) => (
@@ -490,8 +563,7 @@ const perfilDoLegado = () => globalThis.window?.getMonitoraProfile?.() || null;
 export const ID_DOS_PRIMEIROS_PASSOS = "primeiros-passos";
 
 export function Aya({
-  perguntar = (opcoes) =>
-    responderAya({ ...opcoes, context: collectAyaPageContext(opcoes.doc) }),
+  perguntar = perguntarPadrao,
   navegar = navegarPelaJanela,
   abrirSecao = abrirSecaoPadrao,
   configuracao = configuracaoPublicada,
@@ -515,6 +587,8 @@ export function Aya({
   const [texto, setTexto] = useState("");
   const [revelando, setRevelando] = useState("");
   const [chamadoPara, setChamadoPara] = useState("");
+  const [semResposta, setSemResposta] = useState(() => lerSemResposta(janela));
+  const [copiado, setCopiado] = useState("");
 
   const refPainel = useRef(null);
   const refCampo = useRef(null);
@@ -530,14 +604,16 @@ export function Aya({
 
   /* ---------- Tour da tela e trilhas ---------- */
 
-  const tourDaTela = tourDaPagina(local);
   const perfil = obterPerfil();
+  const tourDaTela = tourDaPagina({ ...local, perfil });
   const trilhas = trilhasDoPerfil(perfil);
   const [tour, setTour] = useState(null);
   const [progresso, setProgresso] = useState(() =>
     lerProgressoDasTrilhas(janela),
   );
   const [oferta, setOferta] = useState(false);
+  // Convite da primeira visita a esta tela: { chave, titulo } ou null.
+  const [convite, setConvite] = useState(null);
   const temPrimeirosPassos = trilhas.some(
     (t) => t.id === ID_DOS_PRIMEIROS_PASSOS,
   );
@@ -549,6 +625,32 @@ export function Aya({
     marcarOfertaDePrimeirosPassos(janela);
     setOferta(true);
   }, [local.view, temPrimeirosPassos, tour, oferta, janela]);
+
+  // Primeira visita a uma tela com tour: um convite discreto, uma vez só.
+  // Espera a oferta dos Primeiros passos (que vem antes) e nunca durante um tour.
+  const chaveDaTela = chaveDoTour(local);
+  const temTourNaTela = Boolean(tourDaTela);
+  const tituloDoTourDaTela = tourDaTela?.titulo || "";
+  const temPerfil = Boolean(perfil);
+  useEffect(() => {
+    if (!local.view || !temTourNaTela || !temPerfil) return;
+    const ocupado =
+      Boolean(tour) ||
+      oferta ||
+      (temPrimeirosPassos && !ofertaDePrimeirosPassosFeita(janela));
+    if (
+      !deveConvidar({
+        chave: chaveDaTela,
+        feitos: lerConvitesDeTour(janela),
+        ocupado,
+      })
+    ) {
+      if (convite && convite.chave !== chaveDaTela) setConvite(null);
+      return;
+    }
+    marcarConviteDeTour(janela, chaveDaTela);
+    setConvite({ chave: chaveDaTela, titulo: tituloDoTourDaTela });
+  }, [chaveDaTela, temTourNaTela, temPerfil, tour, oferta]);
 
   /* Leva à tela do passo da trilha; diz se precisou trocar de tela. */
   const irParaOPasso = useCallback(
@@ -577,18 +679,28 @@ export function Aya({
 
   function comecarTour(novo) {
     setOferta(false);
+    setConvite(null);
     setAberta(false);
     setTour(novo);
   }
 
+  /* O tour da tela e da aba abertas agora (a aba se lê na hora do clique). */
   function mostrarEstaTela() {
-    if (!tourDaTela) return;
+    const { aba } = estadoDaTela(janela.document);
+    const escolhido = tourDaPagina({ ...local, aba, perfil }) || tourDaTela;
+    if (!escolhido) return false;
+    // Só os itens que estão na tela agora (ou que aparecem ao abrir a aba
+    // do passo), para o "Passo 3 de 9" contar o que a pessoa vai ver.
+    const visiveis = escolhido.passos.filter(
+      (p) => !p.alvo || p.antes || acharAlvo(p, janela.document),
+    );
     comecarTour({
-      chave: `tela:${tourDaTela.chave}`,
-      rotulo: `Tour: ${tourDaTela.titulo}`,
-      passos: tourDaTela.passos,
+      chave: `tela:${escolhido.chave}`,
+      rotulo: `Tour: ${escolhido.titulo}`,
+      passos: visiveis.length ? visiveis : escolhido.passos,
       inicio: 0,
     });
+    return true;
   }
 
   function iniciarTrilha(trilha) {
@@ -707,6 +819,11 @@ export function Aya({
   async function enviar(pergunta) {
     const limpa = String(pergunta || "").trim();
     if (!limpa || ocupada) return;
+    // "Me mostra esta tela", "tour", "item por item": começa o tour da tela.
+    if (PEDE_TOUR.test(normalizarPedido(limpa)) && mostrarEstaTela()) {
+      setTexto("");
+      return;
+    }
     const historico = mensagens.map((m) => ({
       role: m.papel === "user" ? "user" : "assistant",
       content: m.texto,
@@ -727,6 +844,7 @@ export function Aya({
         secao: local.view === "config" ? local.secao : "",
         history: historico,
         doc: janela.document,
+        perfil: obterPerfil(),
       });
     } catch {
       resultado = {
@@ -748,10 +866,20 @@ export function Aya({
         provider: resultado?.provider || "base-monitora",
         fontes: resultado?.sources || [],
         acao: resultado?.acao || "",
+        acaoDados: resultado?.acaoDados || null,
         sugestoes: resultado?.sugestoes || [],
         oferecerChamado: !!resultado?.oferecerChamado,
       },
     ]);
+    if (resultado?.semResposta)
+      setSemResposta(
+        guardarSemResposta(janela, {
+          pergunta: limpa,
+          pagina: pagina.chave,
+          motivo: "nao-entendeu",
+          quando: new Date().toISOString(),
+        }),
+      );
     setRevelando(movimentoReduzido(janela) ? "" : id);
     if (pedeSuporte(limpa) || resultado?.oferecerChamado) setChamadoPara(id);
     setOcupada(false);
@@ -769,10 +897,37 @@ export function Aya({
       area: local.area,
       util: valor === "sim",
     });
-    if (valor === "nao") setChamadoPara(mensagem.id);
+    if (valor === "nao") {
+      setChamadoPara(mensagem.id);
+      const indice = mensagens.findIndex((m) => m.id === mensagem.id);
+      const pergunta = [...mensagens.slice(0, Math.max(0, indice))]
+        .reverse()
+        .find((m) => m.papel === "user")?.texto;
+      if (pergunta)
+        setSemResposta(
+          guardarSemResposta(janela, {
+            pergunta,
+            pagina: pagina.chave,
+            motivo: "nao-ajudou",
+            quando: new Date().toISOString(),
+          }),
+        );
+    }
+  }
+
+  async function copiarSemResposta() {
+    const texto = textoDasPerguntas(semResposta);
+    try {
+      await janela.navigator.clipboard.writeText(texto);
+      setCopiado(`${semResposta.length} pergunta(s) copiada(s).`);
+    } catch {
+      setCopiado("Não consegui copiar. Tente de novo.");
+    }
   }
 
   function abrirTela(acao) {
+    if (acao.filtro && Object.keys(acao.filtro).length)
+      pedirFiltro(acao.view, acao.filtro);
     if (acao.secao) {
       navegar("config");
       abrirSecao(acao.secao);
@@ -840,6 +995,17 @@ export function Aya({
             Fale com a Aya
           </span>
         </button>
+      ) : null}
+
+      {convite && !oferta && !aberta && !tour ? (
+        <OfertaDePrimeirosPassos
+          estilo={estiloDaOferta(posicao)}
+          rotulo={`Tour: ${convite.titulo}`}
+          destaque={`Primeira vez em ${convite.titulo}?`}
+          texto="Posso mostrar a tela item por item."
+          aoAceitar={mostrarEstaTela}
+          aoRecusar={() => setConvite(null)}
+        />
       ) : null}
 
       {oferta && !aberta && !tour ? (
@@ -923,6 +1089,17 @@ export function Aya({
               >
                 <Icone nome="mail" tamanho={16} />
               </a>
+              {isAdminGlobal(perfil) && semResposta.length ? (
+                <button
+                  type="button"
+                  className="aya-icone-botao"
+                  aria-label="Copiar perguntas sem resposta"
+                  title="Copiar perguntas sem resposta"
+                  onClick={copiarSemResposta}
+                >
+                  <Icone nome="copy" tamanho={16} />
+                </button>
+              ) : null}
               <button
                 type="button"
                 className="aya-icone-botao"
@@ -945,6 +1122,11 @@ export function Aya({
             </div>
           </header>
 
+          {copiado ? (
+            <p className="aya-visualmente-oculto" role="status">
+              {copiado}
+            </p>
+          ) : null}
           <div className="aya-painel__corpo" ref={refCorpo}>
             <ol className="aya-mensagens aya-mensagens--inicio">
               <li className="aya-mensagem aya-mensagem--aya">
@@ -965,6 +1147,19 @@ export function Aya({
                 aoAceitar={aceitarOferta}
                 aoRecusar={() => setOferta(false)}
               />
+            ) : null}
+
+            {semPergunta && tourDaTela ? (
+              <div className="aya-sugestoes aya-sugestoes--inicio">
+                <button
+                  type="button"
+                  className="aya-sugestao"
+                  onClick={mostrarEstaTela}
+                >
+                  <Icone nome="compass" tamanho={14} />
+                  Me mostra esta tela, item por item
+                </button>
+              </div>
             ) : null}
 
             {semPergunta ? (

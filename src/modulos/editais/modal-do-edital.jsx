@@ -368,7 +368,10 @@ export function ModalDoEdital({ estado, id, agora = () => new Date() }) {
       aoFechar={pedirParaFechar}
       fecharAoClicarFora={false}
     >
-      <div className="modal-head edital-cabecalho">
+      <div
+        className="modal-head edital-cabecalho"
+        data-tour="editais-formulario-cabecalho"
+      >
         <div className="edital-titulo">
           <h3 id="editModalTitle">{id ? "Editar edital" : "Novo edital"}</h3>
           <span id="mArea" className="edital-area">
@@ -526,7 +529,10 @@ export function ModalDoEdital({ estado, id, agora = () => new Date() }) {
             </div>
           </section>
         )}
-        <div className="ui-grade-de-campos editais-formulario">
+        <div
+          className="ui-grade-de-campos editais-formulario"
+          data-tour="editais-formulario-campos"
+        >
           <div className="subsection">Identificação do edital</div>
           <Campo rotulo="Processo">
             <input
@@ -775,6 +781,7 @@ export function ModalDoEdital({ estado, id, agora = () => new Date() }) {
           </button>
           <button
             id="saveEditalBtn"
+            data-tour="editais-salvar"
             className="btn green"
             type="button"
             disabled={salvando || cronograma.carregando}

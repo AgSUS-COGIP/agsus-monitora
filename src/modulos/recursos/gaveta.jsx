@@ -159,7 +159,7 @@ export function GavetaDoRecurso({
         </>
       }
     >
-      <div className="ui-gaveta-contexto">
+      <div className="ui-gaveta-contexto" data-tour="recursos-gaveta-contexto">
         <div>
           <small>Edital</small>
           <strong>{r.edital}</strong>
@@ -190,7 +190,7 @@ export function GavetaDoRecurso({
       <div className="ui-gaveta-corpo">
         <div className="recursos-corpo">
           {podeEditar && !excluindo ? (
-            <div className="ui-acoes">
+            <div className="ui-acoes" data-tour="recursos-gaveta-acoes">
               <button
                 type="button"
                 className="btn small"
@@ -226,7 +226,7 @@ export function GavetaDoRecurso({
           <SecaoDoAjuste estado={estado} recurso={r} acao={acao} />
 
           <Secao icone="fa-list-check" titulo="Etapas" secao="etapas">
-            <ul className="recursos-checklist">
+            <ul className="recursos-checklist" data-tour="recursos-etapas">
               {ETAPAS.map((etapa) => {
                 const feita = r.etapas[etapa.id];
                 const emCurso = acao?.tipo === `etapa:${r.id}:${etapa.id}`;

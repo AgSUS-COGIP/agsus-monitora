@@ -561,7 +561,7 @@ export function SecaoDoAjuste({ estado, recurso: r, acao }) {
 
   return (
     <Secao icone="fa-sliders" titulo="Ajuste da pontuação" secao="ajuste">
-      <div className="recursos-ajustes">
+      <div className="recursos-ajustes" data-tour="recursos-ajuste">
         {aprovado ? (
           <CartaoDoAjuste ajuste={aprovado}>{acoesDo(aprovado)}</CartaoDoAjuste>
         ) : null}

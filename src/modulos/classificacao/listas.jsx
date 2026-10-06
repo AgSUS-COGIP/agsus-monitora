@@ -86,7 +86,11 @@ export function Indicadores({ resultado, carregando }) {
   const t = resultado?.totais || {};
   const n = (v) => (Number.isFinite(v) ? v.toLocaleString("pt-BR") : "0");
   return (
-    <GradeDeKpis rotulo="Indicadores da lista" className="classificacao-kpis">
+    <GradeDeKpis
+      tour="classificacao-kpis"
+      rotulo="Indicadores da lista"
+      className="classificacao-kpis"
+    >
       <Kpi
         chave="candidatos"
         icone="fa-users"
@@ -137,7 +141,10 @@ function Avisos({ resultado, podeEditar, aoResolver }) {
   return (
     <Aviso tom={tom} papel="status" className="classificacao-avisos">
       {resultado.pendencias.length ? (
-        <ul className="classificacao-pendencias">
+        <ul
+          className="classificacao-pendencias"
+          data-tour="classificacao-empates"
+        >
           {resultado.pendencias.map((p) => (
             <li key={p.chave}>
               <span>
@@ -186,12 +193,13 @@ function Filtros({ resultado, regra, recorte, aoMudar }) {
   );
   return (
     <PainelDeFiltros
+      tour="classificacao-filtros-painel"
       idDoTitulo="classificacaoFiltrosTitulo"
       className="classificacao-filtros"
       quantos={filtrosAtivosDoRecorte(recorte)}
       aoLimpar={() => aoMudar(RECORTE_VAZIO)}
     >
-      <div className="ui-grade-de-campos">
+      <div className="ui-grade-de-campos" data-tour="classificacao-filtros">
         <Campo rotulo="Vaga">
           <select
             id={ids.vaga}
@@ -693,6 +701,7 @@ function Acoes({
     <section
       className="ui-card classificacao-acoes"
       aria-label="Geração e exportação"
+      data-tour="classificacao-acoes"
     >
       <div className="classificacao-acoes-linha">
         {e.podeEditar ? (
@@ -700,6 +709,7 @@ function Acoes({
             type="button"
             className="btn"
             data-acao="gerar"
+            data-tour="classificacao-gerar"
             disabled={!resultado || e.gerando || !dados?.regra}
             onClick={gerar}
           >
@@ -710,6 +720,7 @@ function Acoes({
         <Campo rotulo="Exportar">
           <select
             id={idLista}
+            data-tour="classificacao-exportar-lista"
             value={lista}
             onChange={(ev) => setLista(ev.target.value)}
           >
@@ -748,6 +759,7 @@ function Acoes({
           type="button"
           className="btn"
           data-acao="copiar-sei"
+          data-tour="classificacao-copiar-sei"
           disabled={!ultima}
           onClick={copiarParaSei}
         >
@@ -758,6 +770,7 @@ function Acoes({
           type="button"
           className="btn secondary"
           data-acao="ver-documento"
+          data-tour="classificacao-ver-documento"
           disabled={!ultima}
           onClick={abrirDocumento}
         >
@@ -784,6 +797,7 @@ function Acoes({
             type="button"
             className="btn secondary"
             data-acao="abrir-agenda"
+            data-tour="classificacao-abrir-agenda"
             onClick={aoAbrirAgenda}
           >
             <i className="fa-solid fa-calendar-days" aria-hidden="true" />{" "}
@@ -809,6 +823,7 @@ function Acoes({
             type="button"
             className="btn secondary"
             data-acao="publicar-aprovados"
+            data-tour="classificacao-publicar-aprovados"
             disabled={ultima.pendencias > 0}
             onClick={abrirPublicacaoDeAprovados}
           >
@@ -898,7 +913,7 @@ export function Listas({ estado, e, calcular, aoAbrirAgenda }) {
   };
 
   return (
-    <div className="classificacao-listas">
+    <div className="classificacao-listas" data-tour="classificacao-listas">
       <Segmentado
         rotulo="Lista"
         className="classificacao-tipos"

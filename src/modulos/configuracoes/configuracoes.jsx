@@ -67,7 +67,11 @@ function Cabecalho({ estado }) {
   const comSalvar = !SECOES_COM_SALVAR_PROPRIO.includes(secao.id);
   const erros = atual.errosDaValidacao;
   return (
-    <header className="config-cabecalho" data-secao={secao.id}>
+    <header
+      className="config-cabecalho"
+      data-secao={secao.id}
+      data-tour="config-cabecalho"
+    >
       <div className="config-cabecalho__linha">
         <span className="config-cabecalho__icone" aria-hidden="true">
           <Icone nome={secao.iconeDoMenu} tamanho={18} />
@@ -125,7 +129,7 @@ function BarraDeSalvar({ estado }) {
   const alterado = estado.temAlteracoes();
   const situacao = situacaoDaBarra(atual, alterado);
   return (
-    <div className="config-barra" aria-live="polite">
+    <div className="config-barra" aria-live="polite" data-tour="config-barra">
       <div className="config-barra__situacao">
         <span
           className={`config-barra__icone config-barra__icone--${situacao.tom}`}
@@ -152,6 +156,7 @@ function BarraDeSalvar({ estado }) {
         <button
           type="button"
           className="btn green config-barra__salvar"
+          data-tour="config-publicar"
           disabled={!alterado || atual.salvando}
           aria-busy={atual.salvando || undefined}
           onClick={() => void estado.revisar()}
@@ -286,6 +291,7 @@ function DialogoDeRevisao({ estado, modal }) {
           <button
             type="button"
             className="btn green"
+            data-tour="config-publicar-confirmar"
             disabled={modal.enviando}
             aria-busy={modal.enviando || undefined}
             onClick={publicar}
@@ -452,6 +458,7 @@ function Historico({ estado }) {
   return (
     <section
       id="configHistoryCard"
+      data-tour="config-operacao-historico"
       className="config-historico"
       aria-labelledby="configHistoryTitle"
     >

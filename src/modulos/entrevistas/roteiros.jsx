@@ -121,6 +121,7 @@ export function VisaoDeRoteiros({ conducao, area }) {
     <section
       className="ui-card entrevistas-passo"
       aria-labelledby="entrevistasRoteirosTitulo"
+      data-tour="entrevistas-roteiros"
     >
       <div className="entrevistas-passo-topo">
         <div>
@@ -142,6 +143,7 @@ export function VisaoDeRoteiros({ conducao, area }) {
               type="button"
               className="btn"
               id="entrevistasNovoRoteiro"
+              data-tour="entrevistas-roteiros-novo"
               onClick={() => setAberto({ roteiro: null, modo: "novo" })}
             >
               <i className="fa-solid fa-plus" aria-hidden="true" /> Novo roteiro
@@ -154,7 +156,11 @@ export function VisaoDeRoteiros({ conducao, area }) {
           Não foi possível carregar os roteiros: {roteiros.erro}
         </Aviso>
       ) : null}
-      <div className="entrevistas-cartoes" aria-busy={roteiros.carregando}>
+      <div
+        className="entrevistas-cartoes"
+        aria-busy={roteiros.carregando}
+        data-tour="entrevistas-roteiros-lista"
+      >
         {!roteiros.carregado && roteiros.carregando ? (
           <Carregando>Carregando roteiros…</Carregando>
         ) : roteiros.lista.length ? (
@@ -668,7 +674,10 @@ export function EditorDeRoteiro({
       titulo={titulo}
       rotuloDoFechar="Fechar o roteiro"
       resumo={
-        <span id="entrevistasPreviaDoRoteiro">
+        <span
+          id="entrevistasPreviaDoRoteiro"
+          data-tour="entrevistas-roteiros-pontuacao"
+        >
           <i className="fa-solid fa-chart-simple" aria-hidden="true" />
           {textoDaPontuacao(r)}
         </span>
@@ -888,7 +897,12 @@ export function EditorDeRoteiro({
             {somenteLeitura ? "Fechar" : "Cancelar"}
           </button>
           {somenteLeitura ? null : (
-            <button type="submit" className="btn" disabled={salvando}>
+            <button
+              type="submit"
+              className="btn"
+              disabled={salvando}
+              data-tour="entrevistas-roteiros-salvar"
+            >
               <i className="fa-solid fa-floppy-disk" aria-hidden="true" />{" "}
               {salvando
                 ? "Salvando…"

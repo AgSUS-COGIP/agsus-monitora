@@ -74,7 +74,7 @@ afterEach(async () => {
 describe("passos", () => {
   it("começa no primeiro, com contador, título e texto", async () => {
     await montar();
-    expect(contador()).toBe("1 de 4");
+    expect(contador()).toBe("Passo 1 de 4");
     expect(titulo()).toBe("Um");
     expect(balao().getAttribute("role")).toBe("dialog");
     expect($(".aya-tour__recorte")).not.toBeNull();
@@ -85,8 +85,8 @@ describe("passos", () => {
     await montar();
     await clicar(botao("Próximo"));
     expect(titulo()).toBe("Três");
-    expect(contador()).toBe("3 de 4");
-    await clicar(botao("Voltar"));
+    expect(contador()).toBe("Passo 3 de 4");
+    await clicar(botao("Anterior"));
     expect(titulo()).toBe("Um");
   });
 
@@ -152,7 +152,7 @@ describe("teclado e leitor de tela", () => {
     await montar();
     expect(balao().contains(document.activeElement)).toBe(true);
     expect(document.activeElement.textContent).toBe("Próximo");
-    // Tab no último focável volta ao primeiro (Voltar está desabilitado no 1º passo).
+    // Tab no último focável volta ao primeiro (Anterior está desabilitado no 1º passo).
     await teclar(document.activeElement, "Tab");
     expect(document.activeElement.textContent).toBe("Pular");
     await teclar(document.activeElement, "Tab", { shiftKey: true });
@@ -198,5 +198,47 @@ describe("passo em outra tela", () => {
     });
     await act(async () => vi.advanceTimersByTime(2000));
     expect(aoFechar).toHaveBeenCalledWith("concluiu", 0);
+  });
+});
+
+describe("holofote acompanha o elemento", () => {
+  it("observa o tamanho do elemento da vez e troca ao mudar de passo", async () => {
+    const observados = [];
+    const desligados = [];
+    class ObservadorFalso {
+      constructor(aoMudar) {
+        this.aoMudar = aoMudar;
+      }
+      observe(elemento) {
+        observados.push(elemento.id);
+      }
+      disconnect() {
+        desligados.push(true);
+      }
+    }
+    const original = window.ResizeObserver;
+    window.ResizeObserver = ObservadorFalso;
+    try {
+      await montar();
+      expect(observados).toEqual(["um"]);
+      await clicar(botao("Próximo"));
+      expect(observados).toEqual(["um", "tres"]);
+      expect(desligados.length).toBeGreaterThanOrEqual(1);
+      // O leitor de tela ouve "Passo 3 de 4: …" (o ausente foi pulado).
+      expect($(".aya-tour [role='status']").textContent).toBe(
+        "Passo 3 de 4: Três. Terceiro.",
+      );
+    } finally {
+      window.ResizeObserver = original;
+    }
+  });
+
+  it("recorta o elemento com quatro faixas em volta e o deixa clicável", async () => {
+    await montar();
+    expect(document.querySelectorAll(".aya-tour__faixa")).toHaveLength(4);
+    const recorte = $(".aya-tour__recorte");
+    expect(recorte.getAttribute("aria-hidden")).toBe("true");
+    expect(balao().getAttribute("aria-modal")).toBe("true");
+    expect(document.activeElement).toBe(botao("Próximo"));
   });
 });

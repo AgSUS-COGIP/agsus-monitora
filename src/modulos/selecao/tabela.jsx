@@ -38,7 +38,7 @@ const pelaBusca = (vagas, busca) => filtrarVagas(vagas, FILTROS_VAZIOS, busca);
 function LinhaDaVaga({ vaga: v }) {
   const n = formatarQuantidade;
   return (
-    <tr className="selecao-linha">
+    <tr className="selecao-linha" data-tour="selecao-vaga">
       <td>
         <span className="ui-texto-principal">{v.unidade || "—"}</span>
       </td>
@@ -67,6 +67,7 @@ export function TabelaDeVagas({ vagas, total, carregado, area }) {
   const daUnidade = rotuloDaUnidade(area) === "Nome DSEI" ? "DSEI" : "unidade";
   return (
     <TabelaInfinita
+      tour="selecao-tabela"
       idDoTitulo="selecaoTabelaTitulo"
       titulo="Base operacional consolidada"
       busca={{

@@ -71,6 +71,7 @@ export function PainelOperacional({ estado, nucleo }) {
   return (
     <>
       <GradeDeKpis
+        tour="editais-kpis"
         id="nucleoOperationalKpis"
         className="editais-kpis"
         rotulo="Cronogramas e alertas"
@@ -98,7 +99,11 @@ export function PainelOperacional({ estado, nucleo }) {
         ))}
       </GradeDeKpis>
       {filtroAtivo ? (
-        <div id="nucleoActiveAlertFilter" role="status">
+        <div
+          id="nucleoActiveAlertFilter"
+          role="status"
+          data-tour="editais-filtro-ativo"
+        >
           <ChipsDeFiltro>
             <ChipDeFiltro
               rotulo={rotuloDoFiltroOperacional(filtro)}

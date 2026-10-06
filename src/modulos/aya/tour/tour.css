@@ -33,12 +33,8 @@
   box-shadow:
     0 0 0 3px var(--brand-accent),
     0 0 0 6px color-mix(in srgb, var(--brand-accent) 35%, transparent);
+  /* Sem transição: a moldura anda junto com as faixas (mesmo retângulo). */
   pointer-events: none;
-  transition:
-    top var(--duration-base) var(--ease-standard),
-    left var(--duration-base) var(--ease-standard),
-    width var(--duration-base) var(--ease-standard),
-    height var(--duration-base) var(--ease-standard);
 }
 
 .aya-tour__balao {
@@ -150,12 +146,6 @@
 
 .aya-tour__balao--celular-cima {
   top: calc(8px + env(safe-area-inset-top, 0px));
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .aya-tour__recorte {
-    transition: none;
-  }
 }
 
 @media print {
