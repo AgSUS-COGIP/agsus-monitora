@@ -72,7 +72,12 @@
         ],
         "analistas": [
           { "usuario": "a", "vagas": ["10"], "limite": null, "pendentes": 0 },
-          { "usuario": "b", "vagas": ["20", "10"], "limite": null, "pendentes": 0 }
+          {
+            "usuario": "b",
+            "vagas": ["20", "10"],
+            "limite": null,
+            "pendentes": 0
+          }
         ],
         "criterio": "PARTES_IGUAIS",
         "limite_por_analista": null
