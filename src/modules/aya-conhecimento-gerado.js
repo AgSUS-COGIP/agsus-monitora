@@ -1909,7 +1909,7 @@ export const VERBETES_AYA = Object.freeze([
       "atualizacao da selecao",
     ],
     resposta:
-      "A Seleção é carregada de hora em hora, das 7h às 19h de Brasília, pelo GitHub Actions, a partir da aba Resultado da planilha Auditoria (também pode ser disparada à mão). Uma carga com menos da metade das vagas ativas é recusada e nada é desativado. A vaga que sai da planilha fica inativa, guardada para histórico. Na Saúde Indígena só entram as vagas de DSEI e CASAI; as de outras unidades vão para SEDE ou Projetos pelo edital achado.",
+      "A Seleção é carregada de hora em hora, o dia todo, pelo GitHub Actions, a partir da aba Resultado da planilha Auditoria (também pode ser disparada à mão). Uma carga com menos da metade das vagas ativas é recusada e nada é desativado. A vaga que sai da planilha fica inativa, guardada para histórico. Na Saúde Indígena só entram as vagas de DSEI e CASAI; as de outras unidades vão para SEDE ou Projetos pelo edital achado.",
     fato: "",
     fonte:
       ".github/workflows/sincronizar-selecao.yml; supabase/migrations/20261001090000_selecao.sql; supabase/migrations/20261001100000_selecao_area_pelos_editais.sql",
@@ -2010,7 +2010,7 @@ export const VERBETES_AYA = Object.freeze([
       "selecao desatualizada",
     ],
     resposta:
-      'A vaga que saiu da planilha Auditoria fica inativa e some da tela; na Saúde Indígena só entram as vagas de DSEI e CASAI (as outras vão para SEDE ou Projetos pelo edital). Aprovados e contratados vêm da lista de aprovados vigente — contratado é Contratado ou Migração, e Convocado não conta —, e sem lista a vaga não soma nenhum dos dois. A carga roda de hora em hora, das 7h às 19h de Brasília, e o topo mostra "Conferido às …". Confira também os quatro filtros e a barra do ranking de unidades que estiver clicada.',
+      'A vaga que saiu da planilha Auditoria fica inativa e some da tela; na Saúde Indígena só entram as vagas de DSEI e CASAI (as outras vão para SEDE ou Projetos pelo edital). Aprovados e contratados vêm da lista de aprovados vigente — contratado é Contratado ou Migração, e Convocado não conta —, e sem lista a vaga não soma nenhum dos dois. A carga roda de hora em hora, o dia todo, e o topo mostra "Conferido às …". Confira também os quatro filtros e a barra do ranking de unidades que estiver clicada.',
     fato: "",
     fonte:
       "supabase/migrations/20261001090000_selecao.sql; supabase/migrations/20261001100000_selecao_area_pelos_editais.sql; src/lib/selecao-do-painel.js; .github/workflows/sincronizar-selecao.yml",
@@ -2178,7 +2178,7 @@ export const VERBETES_AYA = Object.freeze([
       "vagas nao batem",
     ],
     resposta:
-      "Os números de cada edital são recalculados pelo banco no fim de cada carga da Seleção (de hora em hora, das 7h às 19h de Brasília) e, de novo, às 10h; entre uma carga e outra, a lista de aprovados pode já ter mudado. Contratadas ficam limitadas às vagas imediatas de cada edital (o excedente vai para Cadastro reserva), editais cancelados não entram em nenhum indicador e as Vagas vêm do cadastro do edital, em Editais. Confira também a área atual, os filtros (guardados no navegador) e a busca, que valem para a página toda.",
+      "Os números de cada edital são recalculados pelo banco no fim de cada carga da Seleção (de hora em hora, o dia todo) e, de novo, às 10h; entre uma carga e outra, a lista de aprovados pode já ter mudado. Contratadas ficam limitadas às vagas imediatas de cada edital (o excedente vai para Cadastro reserva), editais cancelados não entram em nenhum indicador e as Vagas vêm do cadastro do edital, em Editais. Confira também a área atual, os filtros (guardados no navegador) e a busca, que valem para a página toda.",
     fato: "",
     fonte:
       "src/lib/indicadores-do-monitoramento.js; supabase/migrations/20261002130000_kpis_de_todo_edital_com_fonte.sql; supabase/migrations/20261002090000_kpis_depois_da_carga_da_selecao.sql",
@@ -3012,7 +3012,7 @@ export const VERBETES_AYA = Object.freeze([
       "atualizacao das entrevistas",
     ],
     resposta:
-      'Os dados de Resultados vêm da planilha "[dash] entrevistados" (aba Entrevistados), carregada de hora em hora, das 7h às 19h de Brasília, pelo GitHub Actions, que também pode ser disparado à mão. Uma carga com menos da metade das linhas ativas é recusada, para não apagar tudo por uma planilha quebrada; quem some da planilha fica inativo, nada é apagado. A data da última carga aparece no topo da tela.',
+      'Os dados de Resultados vêm da planilha "[dash] entrevistados" (aba Entrevistados), carregada de hora em hora, o dia todo, pelo GitHub Actions, que também pode ser disparado à mão. Uma carga com menos da metade das linhas ativas é recusada, para não apagar tudo por uma planilha quebrada; quem some da planilha fica inativo, nada é apagado. A data da última carga aparece no topo da tela.',
     fato: "",
     fonte:
       ".github/workflows/sincronizar-entrevistas.yml; docs/sincronizacao-das-planilhas.md; supabase/migrations/20260929235000_entrevistas.sql",
@@ -3867,7 +3867,7 @@ export const VERBETES_AYA = Object.freeze([
       "cargas de dados",
     ],
     resposta:
-      'As análises curriculares chegam pelo Apps Script das planilhas (o envio incremental é esperado a cada 20 minutos e fica "Atrasada" depois de 1 hora; a carga completa não tem prazo). Entrevistas e Seleção carregam pelo GitHub Actions de hora em hora, das 7h às 19h de Brasília, e ficam atrasadas depois de 4 horas durante o dia (à noite, sem carga, só depois de 14 horas). O robô da Empregare não tem agenda: roda só quando um administrador clica em "Rodar agora", por isso nunca fica "Atrasado". As tarefas do banco que rodam a cada 2 minutos (como o pacote do painel de análises e o das entrevistas) atrasam depois de 15 minutos; as diárias, depois de 26 horas; as mensais, depois de 32 dias. As conferências de consistência rodam todo dia às 6h de Brasília e ficam atrasadas depois de 26 horas. A pré-classificação da Avaliação documental roda no fim de cada carga do robô da Empregare e no Recalcular da coordenação, sem agenda, por isso também nunca fica "Atrasada". A retenção das mensagens do chat roda todo dia às 3h15 de Brasília. Os KPIs dos editais são recalculados no fim de cada carga da Seleção e, de novo, às 10h de Brasília.',
+      'As análises curriculares chegam pelo Apps Script das planilhas (o envio incremental é esperado a cada 20 minutos e fica "Atrasada" depois de 1 hora; a carga completa não tem prazo). Seleção e Entrevistas carregam pelo GitHub Actions de hora em hora, o dia todo, e ficam atrasadas depois de 4 horas. O robô da Empregare não tem agenda: roda só quando um administrador clica em "Rodar agora", por isso nunca fica "Atrasado". As tarefas do banco que rodam a cada 2 minutos (como o pacote do painel de análises e o das entrevistas) atrasam depois de 15 minutos; as diárias, depois de 26 horas; as mensais, depois de 32 dias. As conferências de consistência rodam todo dia às 6h de Brasília e ficam atrasadas depois de 26 horas. A pré-classificação da Avaliação documental roda no fim de cada carga do robô da Empregare e no Recalcular da coordenação, sem agenda, por isso também nunca fica "Atrasada". A retenção das mensagens do chat roda todo dia às 3h15 de Brasília. Os KPIs dos editais são recalculados no fim de cada carga da Seleção e, de novo, às 10h de Brasília.',
     fato: "",
     fonte:
       "src/lib/saude-das-cargas.js; supabase/migrations/20261001120000_saude_das_cargas.sql; supabase/migrations/20261002090000_kpis_depois_da_carga_da_selecao.sql; supabase/migrations/20261002130000_kpis_de_todo_edital_com_fonte.sql; .github/workflows/sincronizar-selecao.yml; .github/workflows/sincronizar-entrevistas.yml; supabase/migrations/20260930235900_kpis_uma_vez_por_dia.sql",

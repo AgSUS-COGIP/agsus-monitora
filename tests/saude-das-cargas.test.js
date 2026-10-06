@@ -4,8 +4,6 @@ import {
   prazoDaAgenda,
   PRAZO_DIARIO_MIN,
   PRAZO_DE_HORA_EM_HORA_MIN,
-  PRAZO_DA_NOITE_MIN,
-  prazoDeHoraEmHora,
   PRAZO_FREQUENTE_MIN,
   PRAZO_MENSAL_MIN,
   textoDaIdade,
@@ -320,18 +318,13 @@ describe("robô da Empregare (20261005170000)", () => {
     expect(robo).toMatchObject({ situacao: "em_dia", emAndamento: true });
   });
 
-  it("prazo de hora em hora: 4 h de dia, 14 h à noite", () => {
-    // 12h de Brasília = 15h UTC; 23h de Brasília = 02h UTC do dia seguinte.
-    expect(prazoDeHoraEmHora(new Date("2026-10-05T15:00:00Z"))).toBe(
-      PRAZO_DE_HORA_EM_HORA_MIN,
-    );
-    expect(prazoDeHoraEmHora(new Date("2026-10-06T02:00:00Z"))).toBe(
-      PRAZO_DA_NOITE_MIN,
-    );
-    // 8h de Brasília (11h UTC): a primeira carga das 7h pode atrasar; vale a noite.
-    expect(prazoDeHoraEmHora(new Date("2026-10-05T11:00:00Z"))).toBe(
-      PRAZO_DA_NOITE_MIN,
-    );
+  it("entrevistas e seleção rodam o dia todo: prazo de 4 h também à noite", () => {
+    // 23h de Brasília = 02h UTC do dia seguinte.
+    const noite = normalizarSaude(PAYLOAD, new Date("2026-10-02T02:00:00Z"));
+    const planilhas = noite.grupos.find((g) => g.id === "planilhas").cargas;
+    const prazo = (id) => planilhas.find((c) => c.id === id).prazoMin;
+    expect(prazo("selecao")).toBe(PRAZO_DE_HORA_EM_HORA_MIN);
+    expect(prazo("entrevistas")).toBe(PRAZO_DE_HORA_EM_HORA_MIN);
   });
 
   it("robô da Empregare sem prazo: só roda quando alguém pede, nunca fica atrasado", () => {

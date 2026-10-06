@@ -6,7 +6,7 @@
   mesmas RPCs que o Apps Script usava: `sincronizar_entrevistas` em lotes de
   500 e `finalizar_sync_entrevistas` no fim. As tabelas (TB_ENTREVISTA,
   TB_ENTREVISTA_NOTA, TL_SYNC_ENTREVISTA) não mudam; muda só quem as alimenta.
-  Roda de hora em hora (7h–19h) pelo GitHub Actions (.github/workflows/sincronizar-entrevistas.yml).
+  Roda de hora em hora (o dia todo) pelo GitHub Actions (.github/workflows/sincronizar-entrevistas.yml).
 
   Onde está a planilha: `PLANILHAS.entrevistados` em src/lib/planilhas.js.
   Como a aba vira linhas: src/lib/entrevistas-da-planilha.js.

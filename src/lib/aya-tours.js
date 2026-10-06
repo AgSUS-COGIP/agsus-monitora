@@ -720,7 +720,7 @@ const TOURS = Object.freeze({
       passo(
         [t("selecao-tabela"), "[aria-labelledby='selecaoTabelaTitulo']"],
         "Tabela de vagas",
-        "O funil de cada vaga; a carga roda de hora em hora, das 7h às 19h.",
+        "O funil de cada vaga; a carga roda de hora em hora.",
       ),
       PASSO_DA_AYA,
     ]),
@@ -930,7 +930,7 @@ const TOURS = Object.freeze({
       passo(
         "[data-carga='selecao'] .saude-rodar, [data-carga='entrevistas'] .saude-rodar",
         "Rodar agora",
-        "Dispara a carga fora do horário; Seleção e Entrevistas rodam de hora em hora, das 7h às 19h.",
+        "Dispara a carga fora do horário; Seleção e Entrevistas rodam de hora em hora.",
       ),
       passo(
         [t("cargas-rodar-empregare"), t("cargas-empregare")],

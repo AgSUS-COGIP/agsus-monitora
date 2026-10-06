@@ -15,7 +15,6 @@ export function TopoDoPainel({
   visoes = null,
   status,
   aoAtualizar,
-  atualizacao,
   idDaAtualizacao,
   atualizarDesativado,
   aoExportar,
@@ -30,18 +29,16 @@ export function TopoDoPainel({
         <span className="status-discreto" data-status-da-carga="">
           {status}
         </span>
-        {atualizacao ?? (
-          <button
-            id={idDaAtualizacao}
-            type="button"
-            className="btn secondary"
-            data-acao="atualizar"
-            disabled={atualizarDesativado}
-            onClick={aoAtualizar}
-          >
-            <i className="fa-solid fa-rotate" aria-hidden="true" /> Atualizar
-          </button>
-        )}
+        <button
+          id={idDaAtualizacao}
+          type="button"
+          className="btn secondary"
+          data-acao="atualizar"
+          disabled={atualizarDesativado}
+          onClick={aoAtualizar}
+        >
+          <i className="fa-solid fa-rotate" aria-hidden="true" /> Atualizar
+        </button>
         {aoExportar ? (
           <button
             type="button"

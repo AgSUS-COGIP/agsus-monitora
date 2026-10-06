@@ -1,4 +1,3 @@
-import { AtualizacaoDoDashboard } from "../../componentes/atualizacao-do-dashboard.jsx";
 import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import { usarPedidoDeFiltro } from "../../app/pedido-de-filtro.js";
 import { filtrosDaSelecao } from "../../lib/filtro-da-aya.js";
@@ -119,13 +118,7 @@ function TelaDaArea({ estado, e }) {
     <div className="ui-tela selecao-tela">
       <Topo
         status={textoDoStatus(e)}
-        atualizacao={
-          <AtualizacaoDoDashboard
-            robo="selecao"
-            aoRecarregar={recarregar}
-            desativado={!area || e.atualizando || e.semSessao || e.semAcesso}
-          />
-        }
+        aoAtualizar={recarregar}
         atualizarDesativado={!area || e.atualizando || e.semSessao}
         aoExportar={() => estado.exportarCsv(filtradas)}
         exportarDesativado={!carregado || !filtradas.length}
