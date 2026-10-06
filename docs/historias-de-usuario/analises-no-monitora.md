@@ -20,6 +20,19 @@ Pré-classificação). AM-5.3 e AM-5.4 ("a linha anda" pela conclusão da ficha)
 (`supabase/migrations/20261006120000…` e `…120500…`, aba Fila). O lote pela nota mínima (93/2026,
 item 8.2.6) e o desempate do item 10.1 entram em AM-5.0 e AM-4.2.
 
+**Implementadas (fase F4, 07/10/2026):** AM-2.3 (a ficha guarda a versão da regra da conclusão;
+versão nova lista as concluídas afetadas), AM-7.1, AM-7.2 (com "Copiar código" e a vaga na
+Empregare; o currículo direto é da F7), AM-7.3 a AM-7.7, AM-8.1 a AM-8.3 (indígena, aldeia e "aldeia
+na lista" marcados pelo analista; a busca da aldeia no DSEI fica para depois), AM-9.1, AM-9.2,
+AM-10.1 a AM-10.6, AM-11.1 a AM-11.3, AM-12.1, AM-12.3 a AM-12.6 (atalhos 1/2/3, J/K, Ctrl+S e
+Ctrl+Enter) e AM-14.1 (histórico com o que mudou) (`supabase/migrations/20261007110000…`,
+`src/modulos/avaliacao-documental/ficha/`). Pedido de 07/10/2026: em cada bloco que pontua o
+analista ajusta a nota apurada (até o teto) e **toda nota diferente da declarada exige justificativa**
+padronizada (motivo do bloco ou observação pronta, com complemento opcional), que vai para a
+lateral, o parecer e o histórico (de quanto para quanto). Ficam para depois: AM-14.2 (comparar duas
+versões), AM-14.3 (CPF mascarado com "Mostrar": a ficha não traz CPF), AM-15 (publicação em
+`TB_ANALISE_CURRICULAR`, com a virada da F8) e AM-5.3/5.4 (a linha anda pela conclusão).
+
 Papéis:
 
 - **analista**: Editor em `avaliacao_documental`, com o papel ANALISTA no edital;

@@ -552,7 +552,11 @@ reserva: situação (`FORA_LOTE` guarda `DS_MOTIVO_SAIDA`), responsável e `DT_A
 `NU_VERSAO`. A chave estrangeira é para `TB_PRE_CLASSIFICACAO`. `TH_FICHA_ANALISE` saiu com
 identidade própria e as colunas da transição (sem o retrato, que é da F4); entram também
 `TL_ACESSO_FICHA_ANALISE` e `TB_FILTRO_FILA_ANALISE` (filtros salvos). As colunas de resultado,
-nota e parecer abaixo chegam na F4. O texto abaixo é a proposta original.
+nota e parecer abaixo chegaram na F4 (`20261007110000_conteudo_da_ficha.sql`) de forma mais
+enxuta: o lançamento inteiro em `DS_LANCAMENTO` (jsonb), o resultado da conta em `DS_RESULTADO`,
+`DS_PARECER`, `TP_RESULTADO`, `VL_NOTA_APURADA`, `VL_NOTA_FINAL`, rascunho e conclusão; as seções
+7 a 10 (itens, títulos, vínculos e eventos em tabelas próprias) ficaram no jsonb e no histórico.
+O texto abaixo é a proposta original.
 
 ```sql
 create table public."TB_FICHA_ANALISE" (
