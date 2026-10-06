@@ -17,9 +17,13 @@
     eliminado ("Saiu do arquivo da Empregare");
   - ordem: ART decrescente (coluna "NOTA - …" da Empregare, "24,0/30,0");
     sem ART, a nota declarada recalculada pela regra, com aviso; depois o
-    desempate da regra (provisoria.desempate) e o código do candidato;
+    desempate da regra (provisoria.desempate: IDOSO, EXPERIENCIA_DECLARADA —
+    a faixa respondida em provisoria.pergunta_experiencia, em meses —,
+    MAIS_VELHO, CANDIDATURA) e o código do candidato;
   - a nota declarada só confere a ART: divergência além da tolerância é aviso;
-  - lote: o tamanho da vaga (lote.por_vaga), o número fixo ou o múltiplo das
+  - lote: o tamanho da vaga (lote.por_vaga), o número fixo, a nota mínima
+    (NOTA_MINIMA: entram todos os não eliminados com a nota ≥
+    lote.nota_minima, como o item 8.2.6 do 93/2026) ou o múltiplo das
     vagas imediatas do quadro (+1 com cadastro reserva, se inclui_cr), geral
     ou por modalidade (ampla primeiro, depois cada cota entre os da cota), com
     os empatados na linha de corte (mesma nota), se a regra mandar;
@@ -142,6 +146,27 @@ export function vagasPorModalidade(modalidades) {
 const vezes = (multiplo, n) => Math.ceil(multiplo * n - 1e-9);
 
 /**
+ * Os meses de experiência de uma resposta da Empregare ("De 1 a 2 anos" → 12,
+ * "Mais de 5 anos" → 60, "6 meses" → 6, "Sem experiência" → 0): o limite de
+ * baixo da faixa; null quando não dá para ler.
+ */
+export function mesesDeclarados(valor) {
+  if (typeof valor === "number") return Number.isFinite(valor) ? valor : null;
+  const texto = normalizarTexto(valor);
+  if (!texto) return null;
+  const numero = /(\d+(?:[.,]\d+)?)/.exec(texto);
+  if (!numero)
+    return /\b(sem|nenhum|nenhuma|nao possuo|nao tenho)\b/.test(texto)
+      ? 0
+      : null;
+  const n = Number(numero[1].replace(",", "."));
+  const unidade = /(ano|mes)/.exec(
+    texto.slice(numero.index + numero[0].length),
+  );
+  return unidade?.[1] === "ano" ? n * 12 : n;
+}
+
+/**
  * O tamanho do lote de uma vaga.
  *   lote  regra.lote (normalizada)
  *   vaga  { codigo, vagas_imediatas (null sem quadro), cadastro_reserva, modalidades }
@@ -166,6 +191,27 @@ export function tamanhoDoLote(lote, vaga) {
       por_modalidade: null,
       aviso: null,
     };
+  if (lote?.base === "NOTA_MINIMA") {
+    const minimo =
+      typeof lote.nota_minima === "number" && Number.isFinite(lote.nota_minima)
+        ? lote.nota_minima
+        : null;
+    if (minimo === null)
+      return {
+        tamanho: null,
+        descricao: "",
+        por_modalidade: null,
+        aviso: "SEM_NOTA_MINIMA",
+      };
+    // O tamanho depende das notas: preClassificarVaga conta quem tem a nota mínima.
+    return {
+      tamanho: null,
+      descricao: `nota ≥ ${numeroNoTexto(minimo)}${lote.item_edital ? ` (item ${lote.item_edital})` : ""}`,
+      por_modalidade: null,
+      aviso: null,
+      nota_minima: minimo,
+    };
+  }
   const imediatas = vaga?.vagas_imediatas;
   if (imediatas === null || imediatas === undefined)
     return {
@@ -242,7 +288,13 @@ function comparador(desempate, hoje) {
         const ib = idoso(b);
         if (ia !== ib) return ia ? -1 : 1;
         if (ia) r = comparaTexto(a.nascimento, b.nascimento);
-      } else if (d === "MAIS_VELHO")
+      } else if (d === "EXPERIENCIA_DECLARADA")
+        r = comparaNulosPorUltimo(
+          a.experiencia,
+          b.experiencia,
+          (x, y) => y - x,
+        );
+      else if (d === "MAIS_VELHO")
         r = comparaNulosPorUltimo(a.nascimento, b.nascimento, comparaTexto);
       else if (d === "CANDIDATURA")
         r = comparaNulosPorUltimo(a.candidatura, b.candidatura, comparaTexto);
@@ -282,6 +334,9 @@ export function preClassificarVaga({
     ? provisoria.desempate
     : DESEMPATE_PADRAO_DA_PROVISORIA;
   const avisos = new Set();
+  const perguntaDaExperiencia = desempate.includes("EXPERIENCIA_DECLARADA")
+    ? provisoria.pergunta_experiencia
+    : null;
 
   const linhas = [];
   for (const c of lista(candidatos)) {
@@ -303,11 +358,17 @@ export function preClassificarVaga({
       ? calcularNotaDeclarada(regra, colunas)
       : null;
     const nota = art ?? declarada?.total ?? null;
+    const colunaDaExperiencia = perguntaDaExperiencia
+      ? colunaDaPergunta(colunas, perguntaDaExperiencia)
+      : null;
     linhas.push({
       id: c.id,
       codigo: String(c.codigo ?? ""),
       nascimento: c.nascimento ?? null,
       candidatura: c.candidatura ?? null,
+      experiencia: colunaDaExperiencia
+        ? mesesDeclarados(colunas[colunaDaExperiencia])
+        : null,
       situacao: eliminacao ? "ELIMINADO" : "RANQUEADO",
       motivo_codigo: eliminacao?.codigo ?? null,
       motivo: eliminacao?.motivo ?? null,
@@ -384,6 +445,15 @@ export function preClassificarVaga({
     }
   }
   const herdados = [...membros];
+  // Lote pela nota mínima: entram todos com a nota mínima (quem já estava fica).
+  const notaMinima = t.nota_minima ?? null;
+  const temNotaMinima = (l) => l.nota !== null && l.nota >= notaMinima;
+  if (notaMinima !== null) {
+    t.tamanho =
+      ranqueados.filter(temNotaMinima).length +
+      membros.filter((m) => !temNotaMinima(m)).length;
+    t.descricao = `${t.descricao} = ${t.tamanho}`;
+  }
   const inicial =
     refazer ||
     !linhas.some((l) => l._anterior && NO_LOTE.has(l._anterior.situacao));
@@ -445,6 +515,7 @@ export function preClassificarVaga({
       for (const l of ranqueados) {
         if (ocupados >= tamanho) break;
         if (l.situacao !== "RANQUEADO" || !cabeNaLista(l, b)) continue;
+        if (notaMinima !== null && !temNotaMinima(l)) continue;
         entrar(l, false);
         ocupados += 1;
       }
@@ -501,7 +572,9 @@ export function preClassificarVaga({
   for (const l of linhas) delete l._anterior;
   const conta = (f) => linhas.filter(f).length;
   return {
-    linhas: linhas.map(({ nascimento, candidatura, ...resto }) => resto),
+    linhas: linhas.map(
+      ({ nascimento, candidatura, experiencia, ...resto }) => resto,
+    ),
     resumo: {
       inscritos: linhas.length,
       eliminados: conta((l) => l.situacao === "ELIMINADO"),

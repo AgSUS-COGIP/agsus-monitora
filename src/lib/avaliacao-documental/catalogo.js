@@ -120,8 +120,15 @@ export const TIPOS_DA_NOTA_DECLARADA = Object.freeze([
   Por último vale sempre o código do candidato (para a ordem não variar).
 */
 export const DESEMPATES_DA_PROVISORIA = Object.freeze([
-  ["IDOSO", "Idoso (60 anos ou mais), o mais velho primeiro"],
-  ["MAIS_VELHO", "O mais velho primeiro"],
+  [
+    "IDOSO",
+    "Idade de 60 anos ou mais (Estatuto da Pessoa Idosa), o mais velho primeiro",
+  ],
+  [
+    "EXPERIENCIA_DECLARADA",
+    "Maior experiência declarada no questionário (a pergunta da experiência)",
+  ],
+  ["MAIS_VELHO", "Maior idade (o mais velho primeiro)"],
   ["CANDIDATURA", "A candidatura mais antiga primeiro"],
 ]);
 
@@ -148,6 +155,7 @@ export const ENTRADAS_NO_LOTE = Object.freeze([
 export const BASES_DO_LOTE = Object.freeze([
   ["MULTIPLO_VAGAS", "Múltiplo das vagas imediatas"],
   ["FIXO", "Número fixo por vaga"],
+  ["NOTA_MINIMA", "Todos com a nota mínima (ex.: item 8.2.6)"],
 ]);
 
 export const MODOS_DE_DISTRIBUICAO = Object.freeze([
