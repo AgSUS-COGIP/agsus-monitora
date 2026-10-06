@@ -606,6 +606,19 @@ export const CONTRATO_RPC = {
     resumo:
       "Avisos abertos e ignorados das conferências (job Python scripts/conferencias/) que a pessoa pode ver: módulo (leitor), área e recorte do edital; cargas e avisos sem área, só o administrador global. Área e módulo opcionais; pode_ignorar por aviso. Cartão do Status das atualizações e selo de cada tela.",
   },
+  listar_casos_aviso_conferencia: {
+    argumentos: [
+      "p_aviso",
+      "p_busca",
+      "p_area",
+      "p_modulo",
+      "p_limite",
+      "p_deslocamento",
+    ],
+    critica: false,
+    resumo:
+      "Casos de um aviso de conferência, ou de todos os avisos que a pessoa vê (com busca), em páginas de até 1000 (20261007120000): código, nome, edital, vaga, responsável e situação da análise (só se for da área e do recorte de quem lê), o motivo e, no candidato em dois editais, as análises dele. Busca por código ou nome, sem acento. Sem CPF. Gaveta dos avisos e CSV.",
+  },
   ignorar_aviso_conferencia: {
     argumentos: ["p_id", "p_motivo"],
     critica: false,

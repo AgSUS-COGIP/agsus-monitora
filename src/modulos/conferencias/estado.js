@@ -7,11 +7,37 @@
   Quem usa: o cartão "Avisos de conferência" de Configurações › Status das
   atualizações (todos os módulos) e o selo de cada tela (Análises,
   Entrevistas, Classificação, Lista de aprovados), recortado pela área.
+
+  Os casos de cada aviso (`listar_casos_aviso_conferencia`) não ficam aqui:
+  cada lista aberta guarda as páginas dela; aqui só a leitura, a leitura de
+  todos (CSV) e o download.
 */
-import { normalizarAvisos } from "../../lib/avisos-de-conferencia.js";
+import {
+  CASOS_POR_PAGINA,
+  CASOS_POR_PAGINA_DO_CSV,
+  csvDosCasos,
+  juntarPaginasDeCasos,
+  nomeDoCsvDosCasos,
+  normalizarAvisos,
+  normalizarCasos,
+  termoDeBusca,
+} from "../../lib/avisos-de-conferencia.js";
 import { comTempoLimite, mensagemDeFalha } from "../../lib/falha-de-rede.js";
 
-export function criarEstadoDosAvisos({ supabase }) {
+function baixarNoNavegador(conteudo, nome) {
+  // O BOM faz o Excel abrir em UTF-8.
+  const arquivo = new Blob(["﻿" + conteudo], {
+    type: "text/csv;charset=utf-8;",
+  });
+  const url = URL.createObjectURL(arquivo);
+  const ancora = document.createElement("a");
+  ancora.href = url;
+  ancora.download = nome;
+  ancora.click();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+export function criarEstadoDosAvisos({ supabase, baixar = baixarNoNavegador }) {
   let estado = {
     status: "idle",
     lista: null,
@@ -93,6 +119,57 @@ export function criarEstadoDosAvisos({ supabase }) {
     return true;
   }
 
+  /*
+    Uma página de casos: de um aviso (`avisoId`) ou, com `busca`, de todos os
+    avisos do recorte atual (área e módulo da última leitura). Devolve
+    `{ total, casos }` normalizados; lança o erro da RPC.
+  */
+  async function listarCasos({
+    avisoId = null,
+    busca = "",
+    limite = CASOS_POR_PAGINA,
+    deslocamento = 0,
+  } = {}) {
+    if (!supabase) throw new Error("Sem conexão com o banco.");
+    const { data, error } = await comTempoLimite(
+      supabase.rpc("listar_casos_aviso_conferencia", {
+        p_aviso: avisoId || null,
+        p_busca: termoDeBusca(busca) || null,
+        p_area: avisoId ? null : filtro.area,
+        p_modulo: avisoId ? null : filtro.modulo,
+        p_limite: limite,
+        p_deslocamento: deslocamento,
+      }),
+      20000,
+    );
+    if (error) throw error;
+    return normalizarCasos(data);
+  }
+
+  /* Todos os casos (para o CSV), de 1000 em 1000. */
+  async function todosOsCasos({ avisoId = null, busca = "" } = {}) {
+    let casos = [];
+    for (;;) {
+      const pagina = await listarCasos({
+        avisoId,
+        busca,
+        limite: CASOS_POR_PAGINA_DO_CSV,
+        deslocamento: casos.length,
+      });
+      const antes = casos.length;
+      casos = juntarPaginasDeCasos(casos, pagina.casos);
+      if (casos.length === antes || casos.length >= pagina.total) return casos;
+    }
+  }
+
+  /** Baixa o CSV dos casos de um aviso (ou da busca geral). true se baixou. */
+  async function exportarCasos({ aviso = null, busca = "" } = {}) {
+    const casos = await todosOsCasos({ avisoId: aviso?.id || null, busca });
+    if (!casos.length) return false;
+    baixar(csvDosCasos(casos), nomeDoCsvDosCasos(aviso));
+    return true;
+  }
+
   return {
     assinar(ouvinte) {
       ouvintes.add(ouvinte);
@@ -101,5 +178,8 @@ export function criarEstadoDosAvisos({ supabase }) {
     obter: () => estado,
     carregar,
     ignorar,
+    listarCasos,
+    todosOsCasos,
+    exportarCasos,
   };
 }

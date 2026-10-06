@@ -1,21 +1,33 @@
 import {
+  useCallback,
   useEffect,
   useId,
   useMemo,
+  useRef,
   useState,
   useSyncExternalStore,
 } from "react";
+import { pedirFiltro } from "../../app/pedido-de-filtro.js";
 import { usarAreaAtual } from "../../componentes/usar-area-atual.js";
 import { Icone } from "../../componentes/icone.jsx";
 import {
+  casoAbreAnalise,
+  casosRestantes,
+  CONFERENCIAS,
   contagemPorModulo,
   diaDoAviso,
   erroDoMotivo,
   filtrarPorModulo,
+  filtroDoCaso,
+  juntarPaginasDeCasos,
   LIMITES_DO_MOTIVO,
   MODULOS_DOS_AVISOS,
+  ondeDoCaso,
+  quemDoCaso,
+  termoDeBusca,
   tomDoSelo,
 } from "../../lib/avisos-de-conferencia.js";
+import { mensagemDeFalha } from "../../lib/falha-de-rede.js";
 import { getSupabaseClient } from "../../lib/supabaseClient.js";
 import { formatNumberBR } from "../../lib/formatters.js";
 import { Gaveta, Segmentado } from "../../ui/index.js";
@@ -32,13 +44,296 @@ import { criarEstadoDosAvisos } from "./estado.js";
                      abre a gaveta com a lista filtrada.
 
   Cada aviso: gravidade, título, onde (edital, área ou vaga), o resumo do job,
-  desde quando e os exemplos (só ids e códigos). Quem administra o módulo (ou
-  o administrador global) ignora com motivo; o ignorado volta sozinho se a
-  quantidade crescer. As regras puras: src/lib/avisos-de-conferencia.js.
+  desde quando e os casos — todos, em páginas, com busca por código ou nome e
+  CSV (listar_casos_aviso_conferencia). Cada caso mostra quem é (código e
+  nome), onde (edital, vaga, responsável) e o motivo (datas, notas); caso das
+  análises abre o Painel das análises naquela análise. No topo da lista, a
+  busca em todos os avisos. Quem administra o módulo (ou o administrador
+  global) ignora com motivo; o ignorado volta sozinho se a quantidade crescer.
+  As regras puras: src/lib/avisos-de-conferencia.js.
 */
+
+const ESPERA_DA_BUSCA_MS = 300;
 
 function usarEstado(estado) {
   return useSyncExternalStore(estado.assinar, estado.obter);
+}
+
+function usarComEspera(valor, ms) {
+  const [atrasado, setAtrasado] = useState(valor);
+  useEffect(() => {
+    const t = setTimeout(() => setAtrasado(valor), ms);
+    return () => clearTimeout(t);
+  }, [valor, ms]);
+  return atrasado;
+}
+
+/** Leva o Painel das análises ao caso: busca pelo nome e abre a análise. */
+export function abrirCasoNasAnalises(
+  caso,
+  {
+    navegar = true,
+    pedir = pedirFiltro,
+    ir = (view) => globalThis.window?.navigate?.(view),
+  } = {},
+) {
+  pedir("analises", filtroDoCaso(caso));
+  if (navegar) ir("analises");
+}
+
+/*
+  As páginas de casos de um aviso (ou da busca em todos): a primeira quando o
+  aviso ou a busca muda; "Mostrar mais" pede a seguinte. Resposta atrasada de
+  uma busca antiga é descartada.
+*/
+function usarCasos(estado, { avisoId = null, busca = "" }) {
+  const [lista, setLista] = useState({
+    status: "carregando",
+    casos: [],
+    total: 0,
+    erro: "",
+  });
+  const pedido = useRef(0);
+  const termo = termoDeBusca(busca);
+
+  useEffect(() => {
+    const meu = ++pedido.current;
+    setLista({ status: "carregando", casos: [], total: 0, erro: "" });
+    estado
+      .listarCasos({ avisoId, busca: termo })
+      .then(({ casos, total }) => {
+        if (meu === pedido.current)
+          setLista({ status: "pronto", casos, total, erro: "" });
+      })
+      .catch((falha) => {
+        if (meu === pedido.current)
+          setLista({
+            status: "erro",
+            casos: [],
+            total: 0,
+            erro: falha?.message || mensagemDeFalha(falha),
+          });
+      });
+  }, [estado, avisoId, termo]);
+
+  const carregarMais = useCallback(() => {
+    const meu = pedido.current;
+    setLista((atual) => ({ ...atual, status: "mais" }));
+    estado
+      .listarCasos({ avisoId, busca: termo, deslocamento: lista.casos.length })
+      .then(({ casos, total }) => {
+        if (meu === pedido.current)
+          setLista((atual) => ({
+            status: "pronto",
+            casos: juntarPaginasDeCasos(atual.casos, casos),
+            total,
+            erro: "",
+          }));
+      })
+      .catch((falha) => {
+        if (meu === pedido.current)
+          setLista((atual) => ({
+            ...atual,
+            status: "pronto",
+            erro: falha?.message || mensagemDeFalha(falha),
+          }));
+      });
+  }, [estado, avisoId, termo, lista.casos.length]);
+
+  return { ...lista, carregarMais };
+}
+
+function ItemDoCaso({ caso, mostrarAviso, aoAbrir }) {
+  const modulo = CONFERENCIAS[caso.conferencia]?.modulo;
+  const abre = Boolean(aoAbrir) && casoAbreAnalise(caso, modulo);
+  const onde = ondeDoCaso(caso);
+  const conteudo = (
+    <>
+      <span className="conf-caso__quem">{quemDoCaso(caso)}</span>
+      {mostrarAviso ? (
+        <span className="conf-caso__aviso">{caso.titulo}</span>
+      ) : null}
+      {onde ? <span className="conf-caso__onde">{onde}</span> : null}
+      {caso.motivo ? (
+        <span className="conf-caso__motivo">{caso.motivo}</span>
+      ) : null}
+      {caso.analises.length ? (
+        <span className="conf-caso__analises">
+          {caso.analises.map((a) => (
+            <span key={a.id || `${a.edital}:${a.vaga}`}>
+              {[a.edital, a.vaga, a.status].filter(Boolean).join(" · ")}
+            </span>
+          ))}
+          {caso.foraDoAcesso ? (
+            <span>
+              + {caso.foraDoAcesso}{" "}
+              {caso.foraDoAcesso === 1 ? "análise" : "análises"} fora do seu
+              acesso
+            </span>
+          ) : null}
+        </span>
+      ) : null}
+    </>
+  );
+  return (
+    <li>
+      {abre ? (
+        <button
+          type="button"
+          className="conf-caso conf-caso--clicavel"
+          onClick={() => aoAbrir(caso)}
+          title="Abrir no Painel das análises"
+        >
+          {conteudo}
+        </button>
+      ) : (
+        <div className="conf-caso">{conteudo}</div>
+      )}
+    </li>
+  );
+}
+
+/** Os casos (de um aviso ou da busca em todos), em páginas. */
+function ListaDeCasos({
+  estado,
+  avisoId,
+  busca,
+  mostrarAviso,
+  aoAbrirCaso,
+  exemplos = [],
+}) {
+  const casos = usarCasos(estado, { avisoId, busca });
+  if (casos.status === "carregando")
+    return (
+      <p className="conf-vazio" role="status">
+        Consultando os casos…
+      </p>
+    );
+  if (casos.status === "erro")
+    return (
+      <p className="conf-vazio" role="alert">
+        {casos.erro}
+      </p>
+    );
+  if (!casos.casos.length) {
+    // Aviso gravado antes dos casos (job antigo): ficam os exemplos.
+    if (!termoDeBusca(busca) && exemplos.length)
+      return (
+        <ul className="conf-aviso__exemplos" aria-label="Exemplos">
+          {exemplos.map((e) => (
+            <li key={e}>
+              <code>{e}</code>
+            </li>
+          ))}
+        </ul>
+      );
+    return (
+      <p className="conf-vazio" role="status">
+        {termoDeBusca(busca) ? "Nenhum caso com essa busca." : "Sem casos."}
+      </p>
+    );
+  }
+  const restam = casosRestantes(casos.casos, casos.total);
+  return (
+    <div className="conf-casos">
+      <small className="conf-casos__total" role="status">
+        {formatNumberBR(casos.casos.length)} de {formatNumberBR(casos.total)}
+      </small>
+      <ul className="conf-casos__lista" aria-label="Casos">
+        {casos.casos.map((caso) => (
+          <ItemDoCaso
+            key={caso.chave}
+            caso={caso}
+            mostrarAviso={mostrarAviso}
+            aoAbrir={aoAbrirCaso}
+          />
+        ))}
+      </ul>
+      {casos.erro ? (
+        <small className="conf-ignorar__erro" role="alert">
+          {casos.erro}
+        </small>
+      ) : null}
+      {restam ? (
+        <button
+          type="button"
+          className="btn secondary conf-botao"
+          disabled={casos.status === "mais"}
+          onClick={casos.carregarMais}
+        >
+          {casos.status === "mais"
+            ? "Carregando…"
+            : `Mostrar mais (${formatNumberBR(restam)})`}
+        </button>
+      ) : null}
+    </div>
+  );
+}
+
+function BotaoDeCsv({ estado, aviso = null, busca = "" }) {
+  const [exportando, setExportando] = useState(false);
+  const [erro, setErro] = useState("");
+  async function exportar() {
+    setExportando(true);
+    setErro("");
+    try {
+      if (!(await estado.exportarCasos({ aviso, busca })))
+        setErro("Nenhum caso para exportar.");
+    } catch (falha) {
+      setErro(falha?.message || mensagemDeFalha(falha));
+    } finally {
+      setExportando(false);
+    }
+  }
+  return (
+    <>
+      <button
+        type="button"
+        className="btn secondary conf-botao"
+        disabled={exportando}
+        onClick={() => void exportar()}
+      >
+        {exportando ? "Exportando…" : "Exportar CSV"}
+      </button>
+      {erro ? (
+        <small className="conf-ignorar__erro" role="alert">
+          {erro}
+        </small>
+      ) : null}
+    </>
+  );
+}
+
+function CasosDoAviso({ aviso, estado, aoAbrirCaso }) {
+  const [digitado, setDigitado] = useState("");
+  const busca = usarComEspera(digitado, ESPERA_DA_BUSCA_MS);
+  const id = useId();
+  return (
+    <div className="conf-aviso__casos">
+      <div className="conf-casos__barra">
+        <label htmlFor={id} className="sr-only">
+          Buscar nos casos
+        </label>
+        <input
+          id={id}
+          type="search"
+          className="conf-casos__busca"
+          placeholder="Código ou nome"
+          value={digitado}
+          maxLength={80}
+          onChange={(e) => setDigitado(e.target.value)}
+        />
+        <BotaoDeCsv estado={estado} aviso={aviso} busca="" />
+      </div>
+      <ListaDeCasos
+        estado={estado}
+        avisoId={aviso.id}
+        busca={busca}
+        aoAbrirCaso={aoAbrirCaso}
+        exemplos={aviso.exemplos}
+      />
+    </div>
+  );
 }
 
 function FormularioDeIgnorar({ aviso, estado, ignorando, erro, aoCancelar }) {
@@ -81,8 +376,8 @@ function FormularioDeIgnorar({ aviso, estado, ignorando, erro, aoCancelar }) {
   );
 }
 
-function ItemDoAviso({ aviso, estado, atual, mostrarModulo }) {
-  const [exemplos, setExemplos] = useState(false);
+function ItemDoAviso({ aviso, estado, atual, mostrarModulo, aoAbrirCaso }) {
+  const [casos, setCasos] = useState(false);
   const [ignorar, setIgnorar] = useState(false);
   const modulo = MODULOS_DOS_AVISOS.find((m) => m.valor === aviso.modulo);
   return (
@@ -105,22 +400,18 @@ function ItemDoAviso({ aviso, estado, atual, mostrarModulo }) {
         <small>
           {aviso.situacao === "IGNORADO"
             ? `Ignorado em ${diaDoAviso(aviso.ignoradoEm)}: ${aviso.motivo}`
-            : `Desde ${diaDoAviso(aviso.primeiraVez)} · ${formatNumberBR(aviso.quantidade)} ${aviso.quantidade === 1 ? "caso" : "casos"}`}
+            : `Desde ${diaDoAviso(aviso.primeiraVez)}`}
         </small>
-        {aviso.exemplos.length ? (
-          <button
-            type="button"
-            className="btn secondary conf-botao"
-            aria-expanded={exemplos}
-            onClick={() => setExemplos((v) => !v)}
-          >
-            <Icone
-              nome={exemplos ? "chevron-up" : "chevron-down"}
-              tamanho={14}
-            />
-            Exemplos ({aviso.exemplos.length})
-          </button>
-        ) : null}
+        <button
+          type="button"
+          className="btn secondary conf-botao"
+          aria-expanded={casos}
+          onClick={() => setCasos((v) => !v)}
+        >
+          <Icone nome={casos ? "chevron-up" : "chevron-down"} tamanho={14} />
+          {formatNumberBR(aviso.quantidade)}{" "}
+          {aviso.quantidade === 1 ? "caso" : "casos"}
+        </button>
         {aviso.podeIgnorar && !ignorar ? (
           <button
             type="button"
@@ -131,14 +422,8 @@ function ItemDoAviso({ aviso, estado, atual, mostrarModulo }) {
           </button>
         ) : null}
       </div>
-      {exemplos ? (
-        <ul className="conf-aviso__exemplos" aria-label="Exemplos">
-          {aviso.exemplos.map((e) => (
-            <li key={e}>
-              <code>{e}</code>
-            </li>
-          ))}
-        </ul>
+      {casos ? (
+        <CasosDoAviso aviso={aviso} estado={estado} aoAbrirCaso={aoAbrirCaso} />
       ) : null}
       {ignorar ? (
         <FormularioDeIgnorar
@@ -153,10 +438,38 @@ function ItemDoAviso({ aviso, estado, atual, mostrarModulo }) {
   );
 }
 
-/** A lista de avisos (abertos e, recolhidos, os ignorados). */
-export function ListaDeAvisos({ estado, lista, mostrarModulo = false }) {
+/** A busca em todos os avisos do recorte (código ou nome do candidato). */
+function BuscaNosAvisos({ valor, aoMudar }) {
+  const id = useId();
+  return (
+    <div className="conf-busca">
+      <label htmlFor={id} className="sr-only">
+        Buscar candidato em todos os avisos
+      </label>
+      <Icone nome="search" tamanho={14} />
+      <input
+        id={id}
+        type="search"
+        placeholder="Buscar candidato em todos os avisos (código ou nome)"
+        value={valor}
+        maxLength={80}
+        onChange={(e) => aoMudar(e.target.value)}
+      />
+    </div>
+  );
+}
+
+/** A lista de avisos (abertos e, recolhidos, os ignorados), com a busca em todos. */
+export function ListaDeAvisos({
+  estado,
+  lista,
+  mostrarModulo = false,
+  aoAbrirCaso = abrirCasoNasAnalises,
+}) {
   const atual = usarEstado(estado);
   const [verIgnorados, setVerIgnorados] = useState(false);
+  const [digitado, setDigitado] = useState("");
+  const busca = termoDeBusca(usarComEspera(digitado, ESPERA_DA_BUSCA_MS));
   if (atual.status === "error")
     return (
       <p className="conf-vazio" role="alert">
@@ -171,54 +484,77 @@ export function ListaDeAvisos({ estado, lista, mostrarModulo = false }) {
         Consultando os avisos…
       </p>
     );
+  const temAvisos = lista.abertos.length + lista.ignorados.length > 0;
   return (
     <>
-      {lista.abertos.length ? (
-        <ul className="conf-lista">
-          {lista.abertos.map((aviso) => (
-            <ItemDoAviso
-              key={aviso.id}
-              aviso={aviso}
-              estado={estado}
-              atual={atual}
-              mostrarModulo={mostrarModulo}
-            />
-          ))}
-        </ul>
+      {temAvisos ? (
+        <BuscaNosAvisos valor={digitado} aoMudar={setDigitado} />
+      ) : null}
+      {temAvisos && busca ? (
+        <div className="conf-resultados">
+          <div className="conf-casos__barra">
+            <strong>Casos com “{busca}”</strong>
+            <BotaoDeCsv estado={estado} busca={busca} />
+          </div>
+          <ListaDeCasos
+            estado={estado}
+            busca={busca}
+            mostrarAviso
+            aoAbrirCaso={aoAbrirCaso}
+          />
+        </div>
       ) : (
-        <p className="conf-vazio" role="status">
-          <Icone nome="circle-check" tamanho={16} /> Nenhum aviso aberto.
-        </p>
-      )}
-      {lista.ignorados.length ? (
-        <div className="conf-ignorados">
-          <button
-            type="button"
-            className="btn secondary conf-botao"
-            aria-expanded={verIgnorados}
-            onClick={() => setVerIgnorados((v) => !v)}
-          >
-            <Icone
-              nome={verIgnorados ? "chevron-up" : "chevron-down"}
-              tamanho={14}
-            />
-            Ignorados ({lista.ignorados.length})
-          </button>
-          {verIgnorados ? (
+        <>
+          {lista.abertos.length ? (
             <ul className="conf-lista">
-              {lista.ignorados.map((aviso) => (
+              {lista.abertos.map((aviso) => (
                 <ItemDoAviso
                   key={aviso.id}
                   aviso={aviso}
                   estado={estado}
                   atual={atual}
                   mostrarModulo={mostrarModulo}
+                  aoAbrirCaso={aoAbrirCaso}
                 />
               ))}
             </ul>
+          ) : (
+            <p className="conf-vazio" role="status">
+              <Icone nome="circle-check" tamanho={16} /> Nenhum aviso aberto.
+            </p>
+          )}
+          {lista.ignorados.length ? (
+            <div className="conf-ignorados">
+              <button
+                type="button"
+                className="btn secondary conf-botao"
+                aria-expanded={verIgnorados}
+                onClick={() => setVerIgnorados((v) => !v)}
+              >
+                <Icone
+                  nome={verIgnorados ? "chevron-up" : "chevron-down"}
+                  tamanho={14}
+                />
+                Ignorados ({lista.ignorados.length})
+              </button>
+              {verIgnorados ? (
+                <ul className="conf-lista">
+                  {lista.ignorados.map((aviso) => (
+                    <ItemDoAviso
+                      key={aviso.id}
+                      aviso={aviso}
+                      estado={estado}
+                      atual={atual}
+                      mostrarModulo={mostrarModulo}
+                      aoAbrirCaso={aoAbrirCaso}
+                    />
+                  ))}
+                </ul>
+              ) : null}
+            </div>
           ) : null}
-        </div>
-      ) : null}
+        </>
+      )}
     </>
   );
 }
@@ -227,6 +563,7 @@ export function ListaDeAvisos({ estado, lista, mostrarModulo = false }) {
 export function CartaoDeAvisos({
   supabase = getSupabaseClient(),
   estado: externo,
+  aoAbrirCaso,
 }) {
   const estado = useMemo(
     () => externo || criarEstadoDosAvisos({ supabase }),
@@ -269,6 +606,7 @@ export function CartaoDeAvisos({
         estado={estado}
         lista={filtrarPorModulo(atual.lista, modulo)}
         mostrarModulo={modulo === "todos"}
+        {...(aoAbrirCaso ? { aoAbrirCaso } : {})}
       />
     </section>
   );
@@ -283,6 +621,7 @@ export function SeloDeAvisos({
   modulo,
   supabase = getSupabaseClient(),
   estado: externo,
+  aoAbrirCaso = abrirCasoNasAnalises,
 }) {
   const { area } = usarAreaAtual();
   const estado = useMemo(
@@ -298,6 +637,11 @@ export function SeloDeAvisos({
   const abertos = atual.lista?.abertos || [];
   if (!abertos.length && !aberta) return null;
   const tom = tomDoSelo(abertos) || "info";
+  // Na própria tela das análises, o caso só recorta a tela (sem navegar).
+  const abrirCaso = (caso) => {
+    setAberta(false);
+    aoAbrirCaso(caso, { navegar: modulo !== "analises" });
+  };
   return (
     <>
       <button
@@ -319,7 +663,11 @@ export function SeloDeAvisos({
           cartaoClassName="conf-gaveta"
         >
           <div className="conf-gaveta__corpo">
-            <ListaDeAvisos estado={estado} lista={atual.lista} />
+            <ListaDeAvisos
+              estado={estado}
+              lista={atual.lista}
+              aoAbrirCaso={abrirCaso}
+            />
           </div>
         </Gaveta>
       ) : null}

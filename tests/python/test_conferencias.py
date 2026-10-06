@@ -67,6 +67,84 @@ class Exemplos(unittest.TestCase):
         self.assertEqual(len(aviso["exemplos"]), 20)
 
 
+class Casos(unittest.TestCase):
+    def test_caso_so_com_ids_codigos_e_detalhe_simples(self):
+        self.assertEqual(
+            regras.caso_seguro({"analise": A1, "detalhe": {"nota": 50, "corte": 60.0, "inscricao": "2026-09-10"}}),
+            {"analise": A1, "detalhe": {"nota": 50, "corte": 60.0, "inscricao": "2026-09-10"}},
+        )
+        self.assertEqual(regras.caso_seguro({"codigo": "C1"}), {"codigo": "C1"})
+        self.assertIsNone(regras.caso_seguro({"codigo": "Pessoa Fictícia"}))
+        self.assertIsNone(regras.caso_seguro({"analise": "nao-e-uuid"}))
+        limpo = regras.caso_seguro(
+            {"referencia": "x", "detalhe": {"nome": "Pessoa Fictícia", "cpf": "00000000191", "Chave": 1, "ok": True}}
+        )
+        self.assertEqual(limpo, {"referencia": "x", "detalhe": {"ok": True}})
+
+    def test_todos_os_casos_alem_dos_vinte_exemplos(self):
+        ac = regras.Acumulador()
+        for i in range(30):
+            ac.anotar("CARGA_VARIACAO_BRUSCA", escopo="vaga:1", exemplo=str(1000 + i))
+        ac.anotar("CARGA_VARIACAO_BRUSCA", escopo="vaga:1", exemplo="1000")  # repetido: não duplica o caso
+        aviso = ac.avisos(regras.resumir)[0]
+        self.assertEqual(len(aviso["exemplos"]), 20)
+        self.assertEqual(len(aviso["casos"]), 30)
+        self.assertEqual(aviso["casos"][0], {"referencia": "1000"})
+        self.assertNotIn("_chaves", aviso)
+
+    def test_no_maximo_cinco_mil_casos(self):
+        ac = regras.Acumulador()
+        for i in range(regras.MAX_CASOS + 10):
+            ac.anotar("CARGA_VARIACAO_BRUSCA", escopo="vaga:1", exemplo=f"v{i}")
+        self.assertEqual(len(ac.avisos(regras.resumir)[0]["casos"]), regras.MAX_CASOS)
+
+    def test_casos_das_analises_com_o_motivo(self):
+        linhas = [
+            {"id": A1, "area": "saude-indigena", "edital": E1, "status": "Aprovado", "nota": 50,
+             "formacao": 10, "cursos": 10, "experiencia": 45, "etnico": 10, "codigo": "C1",
+             "data_analise": "2026-09-01", "inscricao": "2026-09-10"},
+            {"id": A3, "area": "saude-indigena", "edital": E2, "status": "Aprovado", "nota": 40,
+             "data_analise": "2026-12-01", "codigo": "C1"},
+        ]  # fmt: skip
+        ac = regras.Acumulador({e["id"]: e for e in CONTEXTO["editais"]})
+        regras.conferir_analises([linhas], CONTEXTO, ac)
+        avisos = _avisos(ac)
+        self.assertEqual(
+            avisos[("ANALISE_APROVADA_ABAIXO_DO_CORTE", f"edital:{E1}")]["casos"],
+            [{"analise": A1, "detalhe": {"nota": 50.0, "corte": 60.0}}],
+        )
+        self.assertEqual(
+            avisos[("ANALISE_NOTA_DIFERENTE_DA_SOMA", f"edital:{E1}")]["casos"][0]["detalhe"],
+            {"nota": 50.0, "soma": 75.0},
+        )
+        self.assertEqual(
+            avisos[("ANALISE_EXPERIENCIA_ACIMA_DO_TETO", f"edital:{E1}")]["casos"][0]["detalhe"],
+            {"experiencia": 45.0, "teto": 30.0},
+        )
+        self.assertEqual(
+            avisos[("ANALISE_DATA_INVALIDA", f"edital:{E1}")]["casos"][0],
+            {
+                "analise": A1,
+                "detalhe": {"data_analise": "2026-09-01", "inscricao": "2026-09-10", "motivo": "antes_da_inscricao"},
+            },
+        )
+        self.assertEqual(
+            avisos[("ANALISE_DATA_INVALIDA", f"edital:{E2}")]["casos"][0]["detalhe"],
+            {"data_analise": "2026-12-01", "motivo": "futuro"},
+        )
+        self.assertEqual(
+            avisos[("ANALISE_EM_DOIS_EDITAIS", "area:saude-indigena")]["casos"],
+            [{"codigo": "C1", "detalhe": {"editais": 2}}],
+        )
+
+    def test_lotes_por_avisos_e_por_casos(self):
+        avisos = [{"casos": [{}] * n} for n in (5, 5, 5, 1)]
+        self.assertEqual([len(lote) for lote in conferencias.lotes(avisos, tamanho=10, casos_por_lote=10)], [2, 2])
+        self.assertEqual([len(lote) for lote in conferencias.lotes(avisos, tamanho=3, casos_por_lote=100)], [3, 1])
+        # Um aviso maior que o lote vai sozinho, inteiro.
+        self.assertEqual([len(lote) for lote in conferencias.lotes([{"casos": [{}] * 50}], casos_por_lote=10)], [1])
+
+
 class Analises(unittest.TestCase):
     def test_regras_das_analises(self):
         linhas = [
