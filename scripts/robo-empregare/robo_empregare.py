@@ -19,8 +19,14 @@ Uso
   python scripts/robo-empregare/robo_empregare.py --fumaca
       teste de fumaça: entra na Empregare, abre Vagas e a Central e sai
       (não exporta, não grava; não precisa do Supabase)
+  python scripts/robo-empregare/robo_empregare.py --sondar --vagas 177979 --limite 2
+      só leitura: abre 1 a 3 candidatos da vaga e escreve no log a ESTRUTURA da
+      aba Questionários (seletores, perguntas, padrão mascarado dos links dos
+      anexos, status sem cookies); não exporta, não grava, não usa o Supabase
   python scripts/robo-empregare/robo_empregare.py [--editais 80/2026,81/2026]
-      [--vagas 177979,177980] [--limite 60] [--forcar] [--disparado-por agenda|<uuid>]
+      [--vagas 177979,177980] [--limite 60] [--forcar] [--anexos] [--disparado-por agenda|<uuid>]
+      --anexos: também guarda o link de cada anexo do questionário (opcional
+      até validarmos; anexos_empregare.py, migration 20261008160000)
 
 Variáveis: EMPREGARE_EMAIL, EMPREGARE_SENHA, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY.
 O log é público (repositório público): só contagens, códigos de vaga e números
@@ -42,6 +48,7 @@ from datetime import datetime
 # A base comum (python/monitora/) vem do próprio repositório, sem instalar nada.
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[2] / "python"))
 
+import anexos_empregare as anexos  # noqa: E402
 import navegador_empregare as nav  # noqa: E402
 from planilha_empregare import em_lotes, ler_planilha  # noqa: E402
 
@@ -67,6 +74,8 @@ def argumentos(lista=None):
     p.add_argument("--seco", action="store_true", help="só lista as vagas que exportaria")
     p.add_argument("--fumaca", action="store_true", help="só entra na Empregare e abre a Central")
     p.add_argument("--forcar", action="store_true", help="aceita arquivo com menos da metade dos candidatos")
+    p.add_argument("--sondar", action="store_true", help="só lê a estrutura da aba Questionários (1 a 3 candidatos)")
+    p.add_argument("--anexos", action="store_true", help="também guarda o link de cada anexo do questionário")
     p.add_argument("--editais", default="", help="números de edital: 80/2026,81/2026")
     p.add_argument("--vagas", default="", help="códigos de vaga: 177979,177980")
     p.add_argument("--limite", type=int, default=LIMITE_PADRAO, help="máximo de vagas (1 a 500)")
@@ -83,6 +92,8 @@ def argumentos(lista=None):
         p.error(f"código de vaga inválido: {', '.join(mascarar(r) for r in ruins)} (só dígitos)")
     if not 1 <= args.limite <= 500:
         p.error("limite fora de 1 a 500")
+    if args.sondar and len(args.vagas) != 1:
+        p.error("o modo sondar pede exatamente um código de vaga em --vagas")
     return args
 
 
@@ -200,6 +211,8 @@ def gravar_vaga(config, sync, codigo, caminho, chamar=supabase_rpc.chamar, ender
         registrar(
             f"Vaga {codigo}: gravada · {detalhes} · {fim.get('ativos')} ativos · {fim.get('desativadas')} saíram."
         )
+        if (enderecos or {}).get("anexos"):
+            anexos.gravar_anexos(config, sync, codigo, enderecos["anexos"], chamar, registrar)
     elif situacao == "RECUSADA":
         registrar(f"Vaga {codigo}: RECUSADA pela trava · {detalhes} (menos da metade dos ativos; nada mudou).")
     return situacao
@@ -244,6 +257,51 @@ def baixar_e_gravar(portal, config, sync, pedidas, pasta, desde, dormir=time.sle
     return baixadas, falhas + len(pendentes)
 
 
+class CapturaDeAnexos:
+    """
+    --anexos: depois dos links dos candidatos, lê a aba Questionários de cada um
+    (anexos_empregare.capturar_anexos) dentro do orçamento da execução e põe o
+    resultado em enderecos["anexos"]; gravar_vaga grava depois de fechar a vaga.
+    Banco sem a migration 20261008160000: avisa uma vez e não captura.
+    """
+
+    def __init__(self, config, chamar=supabase_rpc.chamar, agora=time.monotonic):
+        self.config = config
+        self.chamar = chamar
+        self.agora = agora
+        self.gasto = 0.0
+        self.desligada = False
+
+    def da_vaga(self, portal, codigo, enderecos):
+        if self.desligada or not enderecos or not enderecos.get("candidatos"):
+            return
+        restante = anexos.ORCAMENTO_DOS_ANEXOS - self.gasto
+        if restante <= 0:
+            registrar(f"Vaga {codigo}: tempo dos anexos esgotado nesta execução.")
+            return
+        try:
+            ja = anexos.anexos_capturados(self.config, codigo, self.chamar)
+        except Exception as erro:
+            registrar(f"Vaga {codigo}: não consegui ler os anexos já capturados ({resumo_do_erro(erro)}).")
+            ja = []
+        if ja is None:
+            registrar("O banco ainda não guarda os anexos (falta a migration 20261008160000); anexos não capturados.")
+            self.desligada = True
+            return
+        inicio = self.agora()
+        try:
+            enderecos["anexos"] = anexos.capturar_anexos(
+                portal,
+                codigo,
+                enderecos["candidatos"],
+                ja,
+                registrar,
+                prazo=inicio + min(anexos.TEMPO_LIMITE_DOS_ANEXOS, restante),
+            )
+        finally:
+            self.gasto += self.agora() - inicio
+
+
 # ── Execução ────────────────────────────────────────────────────────────────
 
 
@@ -263,9 +321,26 @@ def fumaca():
     return 0
 
 
+def sondar(args):
+    """Modo sondar: só leitura, sem Supabase; o log leva só a estrutura (anexos_empregare.sondar)."""
+    vaga = args.vagas[0]
+    limite = min(args.limite, anexos.LIMITE_DA_SONDAGEM)
+    if args.limite > limite:
+        registrar(f"Sondagem: limite reduzido de {args.limite} para {limite} candidato(s).")
+    email, senha = nav.credenciais()
+    with tempfile.TemporaryDirectory() as pasta, nav.PortalEmpregare(pasta, registrar) as portal:
+        portal.entrar(email, senha)
+        portal.abrir_vagas_anunciadas()
+        linhas = anexos.sondar(portal, vaga, limite, registrar)
+    resumir(linhas)
+    return 0
+
+
 def principal(args):
     if args.fumaca:
         return fumaca()
+    if args.sondar:
+        return sondar(args)
 
     config = supabase_rpc.configuracao(GUIA)
     lista = supabase_rpc.chamar(
@@ -293,6 +368,8 @@ def principal(args):
     tipo, usuario = disparo(args.disparado_por)
     sync = identificador()
     filtro = {"editais": args.editais, "vagas": args.vagas, "limite": args.limite}
+    if args.anexos:
+        filtro["anexos"] = True
     supabase_rpc.chamar(
         config,
         "iniciar_sync_empregare",
@@ -320,12 +397,15 @@ def principal(args):
                 desde = datetime.now(FUSO).replace(tzinfo=None)
                 pedidas = []
                 enderecos = {}
+                captura = CapturaDeAnexos(config) if args.anexos else None
                 for v in vagas:
                     registrar(f"Vaga {v['vaga']} (edital {v.get('edital') or '—'}): pedindo a exportação.")
                     if portal.exportar_vaga(v["vaga"]):
                         pedidas.append(v["vaga"])
                         # Enquanto a Empregare gera o arquivo: os links da vaga e dos candidatos.
                         enderecos[v["vaga"]] = portal.capturar_candidatos(v["vaga"])
+                        if captura:
+                            captura.da_vaga(portal, v["vaga"], enderecos[v["vaga"]])
                     else:
                         falhas += 1
                 if pedidas:

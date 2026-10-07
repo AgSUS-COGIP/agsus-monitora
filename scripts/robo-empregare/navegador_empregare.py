@@ -714,31 +714,50 @@ class PortalEmpregare:
                 select.select_by_value(opcao.get_attribute("value"))
                 break
 
-    def exportar_vaga(self, codigo):
-        """Pede a exportação "Candidatos da vaga (Excel)" da vaga. True se pediu."""
-        from selenium.common.exceptions import TimeoutException
+    def _buscar_processo(self, codigo):
+        """Busca a vaga em Vagas Anunciadas e devolve o link "Processo Seletivo" (guarda o identificador interno)."""
         from selenium.webdriver.common.by import By
         from selenium.webdriver.common.keys import Keys
         from selenium.webdriver.support import expected_conditions as EC
 
         presente = EC.presence_of_element_located
-        try:
-            busca = self._esperar(20).until(presente((By.ID, "Palavras")))
-            busca.send_keys(Keys.CONTROL + "a")
-            busca.send_keys(Keys.DELETE)
-            busca.send_keys(str(codigo))
-            busca.send_keys(Keys.ENTER)
-            time.sleep(3)
-
-            processo = self._esperar(20).until(
-                presente(
-                    (
-                        By.XPATH,
-                        '//a[contains(@href,"/empresa/vagas/candidaturas/") and contains(.,"Processo Seletivo")]',
-                    )
+        busca = self._esperar(20).until(presente((By.ID, "Palavras")))
+        busca.send_keys(Keys.CONTROL + "a")
+        busca.send_keys(Keys.DELETE)
+        busca.send_keys(str(codigo))
+        busca.send_keys(Keys.ENTER)
+        time.sleep(3)
+        processo = self._esperar(20).until(
+            presente(
+                (
+                    By.XPATH,
+                    '//a[contains(@href,"/empresa/vagas/candidaturas/") and contains(.,"Processo Seletivo")]',
                 )
             )
-            self._guardar_id_da_vaga(codigo, lambda: processo.get_attribute("href"))
+        )
+        self._guardar_id_da_vaga(codigo, lambda: processo.get_attribute("href"))
+        return processo
+
+    def localizar_vaga(self, codigo):
+        """
+        Só leitura (modo sondar): busca a vaga e lê o identificador interno do
+        link "Processo Seletivo", sem clicar nem exportar. Devolve o identificador ou None.
+        """
+        try:
+            self._buscar_processo(codigo)
+        except Exception as erro:
+            self.registrar(f"Vaga {codigo}: não achei o Processo Seletivo ({resumo_do_erro(erro)}).")
+        return self.ids_das_vagas.get(str(codigo))
+
+    def exportar_vaga(self, codigo):
+        """Pede a exportação "Candidatos da vaga (Excel)" da vaga. True se pediu."""
+        from selenium.common.exceptions import TimeoutException
+        from selenium.webdriver.common.by import By
+        from selenium.webdriver.support import expected_conditions as EC
+
+        presente = EC.presence_of_element_located
+        try:
+            processo = self._buscar_processo(codigo)
             self.clicar(processo)
             time.sleep(3)
             if str(codigo) not in self.ids_das_vagas:

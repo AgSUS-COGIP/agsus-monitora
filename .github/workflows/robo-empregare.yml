@@ -11,6 +11,11 @@ name: Robô da Empregare
 #   - pelo "Rodar agora" das Configurações › Status das atualizações
 #     (RPC disparar_robo, só administrador global; disparado_por = id do usuário);
 #   - pelo botão "Run workflow" desta aba Actions.
+# Modo "sondar" (só pelo Run workflow): só leitura, abre 1 a 3 candidatos da
+# vaga informada em "vagas" (limite = candidatos) e escreve no log só a
+# estrutura da aba Questionários, com os links mascarados. Não usa o Supabase.
+# "anexos" (opcional até validarmos): no modo normal/forcar, guarda também o
+# link de cada anexo do questionário (scripts/robo-empregare/anexos_empregare.py).
 # Ao fim de uma carga normal ou forçada, o passo "Pré-classificar" recalcula a
 # pré-classificação da Avaliação documental dos editais carregados
 # (scripts/pre_classificacao/; ver pre-classificacao.yml).
@@ -30,13 +35,14 @@ on:
   workflow_dispatch:
     inputs:
       modo:
-        description: "normal = exporta e grava; seco = só lista as vagas; fumaca = só testa o login; forcar = aceita arquivo com menos da metade dos candidatos"
+        description: "normal = exporta e grava; seco = só lista as vagas; fumaca = só testa o login; forcar = aceita arquivo com menos da metade dos candidatos; sondar = só lê a estrutura da aba Questionários (1 vaga em vagas, 1 a 3 candidatos em limite)"
         type: choice
         options:
           - normal
           - seco
           - fumaca
           - forcar
+          - sondar
         default: normal
       editais:
         description: "Opcional: números de edital separados por vírgula (ex.: 80/2026, 81/2026)"
@@ -53,6 +59,11 @@ on:
         type: string
         required: false
         default: "60"
+      anexos:
+        description: "Também guarda o link de cada anexo do questionário (modo normal/forcar; opcional até validarmos)"
+        type: boolean
+        required: false
+        default: false
       disparado_por:
         description: "Preenchido pelo MONITORA (id do usuário); em branco = GitHub"
         type: string
@@ -105,6 +116,7 @@ jobs:
           EDITAIS: ${{ inputs.editais }}
           VAGAS: ${{ inputs.vagas }}
           LIMITE: ${{ inputs.limite || '60' }}
+          ANEXOS: ${{ inputs.anexos && 'sim' || 'nao' }}
           DISPARADO_POR: ${{ inputs.disparado_por }}
         run: |
           args=(--editais "$EDITAIS" --vagas "$VAGAS" --limite "$LIMITE")
@@ -112,7 +124,9 @@ jobs:
             seco)   args+=(--seco) ;;
             fumaca) args+=(--fumaca) ;;
             forcar) args+=(--forcar) ;;
+            sondar) args+=(--sondar) ;;
           esac
+          if [ "$ANEXOS" = "sim" ]; then args+=(--anexos); fi
           python scripts/robo-empregare/robo_empregare.py "${args[@]}"
 
       # Ao fim de uma carga (normal ou forçada), recalcula a pré-classificação da

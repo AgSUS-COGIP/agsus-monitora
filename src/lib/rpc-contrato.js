@@ -1213,7 +1213,7 @@ export const CONTRATO_RPC = {
     argumentos: ["p_ficha"],
     critica: false,
     resumo:
-      "A ficha para analisar: cabeçalho, lançamento e resultado gravados, a regra com que é analisada (a vigente; a da conclusão, se concluída), nota mínima e níveis da regra de classificação, nota declarada e ART, as respostas da Empregare só das perguntas que a regra liga, os links da Empregare capturados pelo robô (candidato e candidaturas da vaga — 20261007160000; dado restrito), o histórico e se pode editar ou reabrir. Coordenação, revisão, analista da vaga; leitor só a concluída.",
+      "A ficha para analisar: cabeçalho, lançamento e resultado gravados, a regra com que é analisada (a vigente; a da conclusão, se concluída), nota mínima e níveis da regra de classificação, nota declarada e ART, as respostas da Empregare só das perguntas que a regra liga, os links da Empregare capturados pelo robô (candidato e candidaturas da vaga — 20261007160000; os anexos do questionário por pergunta — 20261008160000; dado restrito), o histórico e se pode editar ou reabrir. Coordenação, revisão, analista da vaga; leitor só a concluída.",
   },
   salvar_rascunho_ficha: {
     argumentos: [

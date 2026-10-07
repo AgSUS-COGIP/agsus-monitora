@@ -92,6 +92,49 @@ links de detalhe, `#curriculo-pagina-1` e iframes, e as abas de etapa (só nomes
 a ativa). Sem nenhum link lido, mostra ainda o tamanho do `page_source` e se ele contém
 `curriculo-list-item` e `link-curriculo`.
 
+### Anexos do questionário (migration `20261008160000_anexos_da_empregare.sql`)
+
+A exportação não traz o link dos anexos (só "Sim"/"--") e o link de detalhes abre o currículo, não
+o documento. Os arquivos ficam na página de detalhes do candidato, aba **Questionários** (ou na
+visão "imprimir", `/empresa/questionarios/imprimir/<id>|`). O formato dessa aba ainda não foi
+conferido; por isso há dois passos (`scripts/robo-empregare/anexos_empregare.py`):
+
+1. **Sondar** (modo `sondar`, só leitura, sem Supabase): com `vagas` = **um** código e `limite` =
+   **1 a 3** candidatos (acima de 3 vira 3), o robô busca a vaga (só lê o link "Processo
+   Seletivo"; não exporta), lê a lista de candidatos, abre a página de detalhes de cada um, clica
+   na aba Questionários e, se houver, abre a visão imprimir. O log traz **só a estrutura**: as abas
+   da página (só nomes conhecidos), como é a aba Questionários (tag, âncora, classes), o painel,
+   quantas perguntas (por classe e por "Pergunta N"), as contagens de seletores, as classes com
+   pergunta/resposta/anexo e, por arquivo, o número da pergunta, o enunciado (texto do edital;
+   só aparece se parecer enunciado — pede anexo, documento, comprovante…; senão só o tamanho), o
+   **padrão** do link (`https://<host>/<palavras>/<MASCARADO>`, com a extensão e os nomes dos
+   parâmetros), se é assinado/expira (parâmetros `X-Amz-Signature`, `Expires`, `token`…) e o status
+   de um **HEAD sem cookies** (e, na mesma origem, com a sessão do navegador). Nunca nome, CPF,
+   e-mail, nome de arquivo nem URL completa.
+2. **Capturar** (`anexos` marcado no Run workflow, modo `normal`/`forcar`; opcional até
+   validarmos): depois dos links dos candidatos, para cada candidato com link de detalhe, lê a aba
+   Questionários e guarda por pergunta de anexo **um** link em `TB_EMPREGARE_ANEXO`
+   (`gravar_anexos_empregare`, depois de fechar a vaga): o do arquivo (`ARQUIVO`) se for público
+   e sem validade; se exigir sessão ou expirar, o da página do questionário (`QUESTIONARIO`: a
+   visão imprimir ou a página de detalhes, com a âncora da pergunta ou da aba). Até 10 min por vaga
+   e 30 min por execução; quem já tem anexo capturado há menos de 7 dias vai para o fim da fila
+   (`anexos_capturados_empregare`), então as execuções seguintes completam. O candidato relido
+   fica só com as perguntas lidas agora. No log, só contagens (`anexos lidos de N…`, `N link(s)
+de anexo gravado(s)`). Banco sem a migration: avisa e segue sem anexos.
+
+Depois do log do `sondar`, ajuste em `anexos_empregare.py` os `JS_…` (aba, painel, links de
+arquivo) e, se o link de arquivo com sessão servir para quem está logado na Empregare, troque
+`ARQUIVO_COM_SESSAO_VIRA_PAGINA`. A pergunta é o número do "Pergunta N" do enunciado ou a ordem
+do bloco na aba; confira no log se bate com o "Pergunta N" das colunas do Excel.
+
+**Na ficha**: `obter_ficha_analise` devolve `empregare.anexos` (`pergunta`, `enunciado`, `tipo`,
+`link`, `capturado_em`; dado restrito, só para quem pode ver a ficha). A regra do botão está em
+`src/lib/avaliacao-documental/link-do-anexo.ts`: com o link do arquivo, **Ver documento**; com a
+página do questionário ou sem captura, **Abrir na Empregare** e a dica "aba Questionários ›
+Pergunta N" (o candidato; sem ele, a vaga). A ficha casa o anexo pela pergunta da coluna e, sem
+número, pelo enunciado. O componente da ficha só chama `anexosDaEmpregare`, `enderecoDoAnexo` e
+`apresentacaoDoAnexo` (mesma forma de `anexo-na-empregare.ts` do redesenho da ficha).
+
 ## Segredos a cadastrar (uma vez)
 
 **GitHub** — repositório → Settings → Secrets and variables → **Actions** → New repository secret:
@@ -129,12 +172,13 @@ pré-classificação e as conferências têm a mesma gaveta, com os campos que a
 
 **Pelo GitHub:** aba **Actions** → **Robô da Empregare** → **Run workflow**:
 
-| Campo     | Para quê                                                                                                                                                                                                                   |
-| --------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `modo`    | `normal` (exporta e grava) · `seco` (só lista as vagas que exportaria; não entra na Empregare) · `fumaca` (só testa login e Central; não exporta nem grava) · `forcar` (aceita arquivo com menos da metade dos candidatos) |
-| `editais` | opcional: números separados por vírgula                                                                                                                                                                                    |
-| `vagas`   | opcional: códigos separados por vírgula                                                                                                                                                                                    |
-| `limite`  | máximo de vagas (padrão 60)                                                                                                                                                                                                |
+| Campo     | Para quê                                                                                                                                                                                                                                                                                                                                     |
+| --------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `modo`    | `normal` (exporta e grava) · `seco` (só lista as vagas que exportaria; não entra na Empregare) · `fumaca` (só testa login e Central; não exporta nem grava) · `forcar` (aceita arquivo com menos da metade dos candidatos) · `sondar` (só lê a estrutura da aba Questionários de 1 a 3 candidatos de uma vaga; ver "Anexos do questionário") |
+| `editais` | opcional: números separados por vírgula                                                                                                                                                                                                                                                                                                      |
+| `vagas`   | opcional: códigos separados por vírgula                                                                                                                                                                                                                                                                                                      |
+| `limite`  | máximo de vagas (padrão 60); no `sondar`, candidatos (1 a 3)                                                                                                                                                                                                                                                                                 |
+| `anexos`  | também guarda o link de cada anexo do questionário (modo `normal`/`forcar`; opcional até validarmos)                                                                                                                                                                                                                                         |
 
 **Sem agenda automática** (decisão de 05/10/2026): o robô só roda quando um administrador clica em
 "Rodar agora" ou alguém dispara pelo GitHub. Uma execução por vez (as outras esperam na fila); tempo limite de 2 h.
@@ -204,6 +248,7 @@ computador: rode-os pelo GitHub.
 
 - `.github/workflows/robo-empregare.yml`: disparo manual, botão e segredos.
 - `scripts/robo-empregare/robo_empregare.py` (entrada), `navegador_empregare.py` (Selenium),
+  `anexos_empregare.py` (aba Questionários: `sondar` e captura dos anexos),
   `planilha_empregare.py` (leitura do Excel e chave), `requirements.txt` (separado do da raiz,
   para não pesar as funções da Vercel). RPC e mascaramento vêm da base comum `python/monitora/`
   (`supabase_rpc.py`, `mascaramento.py`; guia em `docs/python-no-monitora.md`).
@@ -211,9 +256,12 @@ computador: rode-os pelo GitHub.
   o **Rodar agora** (lista fixa robô → workflow, opções, quem pode, regras do botão).
 - `src/componentes/saude-das-cargas/` e `src/lib/saude-das-cargas.js`: a tela de status.
 - `supabase/migrations/20261005170000_robo_empregare.sql`, `20261006080000_robo_empregare_vagas_do_quadro.sql`
-  e `20261007160000_link_do_candidato_na_empregare.sql`
-  (vagas também do quadro do edital), cada uma com `ensaios/` e `rollback/`.
-- Testes: `tests/python/test_robo_empregare.py`, `tests/agenda-dos-robos-migration.test.js`,
+  (vagas também do quadro do edital), `20261007160000_link_do_candidato_na_empregare.sql` e
+  `20261008160000_anexos_da_empregare.sql` (anexos do questionário), cada uma com `ensaios/` e `rollback/`.
+- `src/lib/avaliacao-documental/link-do-anexo.ts`: o link de cada anexo na ficha.
+- Testes: `tests/python/test_robo_empregare.py`, `tests/python/test_anexos_empregare.py`,
+  `tests/anexos-da-empregare-migration.test.js`, `tests/link-do-anexo.test.js`,
+  `tests/agenda-dos-robos-migration.test.js`,
   `tests/robo-empregare-migration.test.js`, `tests/robo-empregare-vagas-do-quadro.test.js`,
   `tests/saude-das-cargas.test.js`,
   `tests/componentes/saude-das-cargas.test.js`.
