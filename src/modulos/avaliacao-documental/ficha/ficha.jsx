@@ -15,6 +15,7 @@ import {
   enderecoDoCandidatoNaEmpregare,
   nomeCurtoDoBloco,
   opcoesDeJustificativa,
+  previaDoParecer,
   respostasDoBloco,
   situacaoDaTecla,
   SITUACOES_DA_FICHA,
@@ -669,6 +670,10 @@ function Lateral({ st, loja, ficha, mudar, desabilitado }) {
   const resultado = concluida
     ? gravado.resultado
     : (st.conferencia?.situacao ?? avaliacao.resultado);
+  // Falta conferir algum item: a prévia não traz resultado, só os motivos já lançados.
+  const previa = concluida
+    ? { completa: true, texto: gravado.parecer, motivos: [] }
+    : previaDoParecer(avaliacao, st.conferencia, lancamento);
   return (
     <aside
       className="avd-ficha-lateral"
@@ -867,25 +872,40 @@ function Lateral({ st, loja, ficha, mudar, desabilitado }) {
         <div className="avd-inline">
           <strong>
             Parecer
-            {emAnalise ? (
+            {!concluida && !previa.completa ? (
               <small className="avd-ficha-parcial"> (prévia)</small>
             ) : null}
           </strong>
-          <button
-            type="button"
-            className="btn secondary small"
-            onClick={async () =>
-              setCopiado(
-                (await copiar(gravado.parecer))
-                  ? "Parecer copiado"
-                  : "Não foi possível copiar",
-              )
-            }
-          >
-            Copiar parecer
-          </button>
+          {previa.completa ? (
+            <button
+              type="button"
+              className="btn secondary small"
+              onClick={async () =>
+                setCopiado(
+                  (await copiar(previa.texto))
+                    ? "Parecer copiado"
+                    : "Não foi possível copiar",
+                )
+              }
+            >
+              Copiar parecer
+            </button>
+          ) : null}
         </div>
-        <pre>{gravado.parecer}</pre>
+        {previa.completa ? (
+          <pre>{previa.texto}</pre>
+        ) : (
+          <div className="avd-ficha-parecer-previa">
+            <p>{previa.texto}</p>
+            {previa.motivos.length ? (
+              <ul>
+                {previa.motivos.map((m) => (
+                  <li key={m}>{m}</li>
+                ))}
+              </ul>
+            ) : null}
+          </div>
+        )}
       </div>
     </aside>
   );

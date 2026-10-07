@@ -414,6 +414,31 @@ describe("ficha: em análise até conferir (sem Inapto nem diferença antes da h
     expect(botao("Concluir e próxima").disabled).toBe(true);
   });
 
+  it("a prévia do parecer não traz resultado enquanto falta conferir; só os motivos já lançados", async () => {
+    await abrirFicha(supabaseFalso());
+    const parecer = () => document.querySelector(".avd-ficha-parecer");
+    expect(parecer().textContent).toContain(
+      "Em análise — o parecer é gerado quando todos os itens forem conferidos",
+    );
+    expect(parecer().textContent).not.toMatch(/HABILITADO/);
+    expect(botao("Copiar parecer")).toBeUndefined();
+    // Um requisito conferido elimina: o selo diz Inapto, o parecer continua sem resultado.
+    await clicar(
+      cartao("REGISTRO_CONSELHO").querySelector("[data-valor='NAO_ENVIADO']"),
+    );
+    await clicar(
+      cartao("REGISTRO_CONSELHO").querySelector(
+        "fieldset input[type='checkbox']",
+      ),
+    );
+    expect(document.querySelector(".avd-ficha-total").textContent).toContain(
+      "Inapto (requisito)",
+    );
+    expect(parecer().textContent).not.toMatch(/HABILITADO/);
+    expect(parecer().querySelectorAll("li")).toHaveLength(1);
+    expect(parecer().querySelector("li").textContent).toMatch(/^Item 6\.4: /);
+  });
+
   it("marcado, o cartão muda de estado e ganha o selo; a diferença aparece só depois de conferir", async () => {
     await abrirFicha(supabaseFalso());
     await clicar(cartao("IDENTIDADE").querySelector("[data-valor='CONFORME']"));
@@ -497,6 +522,15 @@ describe("ficha: itens, nota e justificativa (AM-9, AM-10, AM-11)", () => {
     expect(cartao("CURSOS").textContent).not.toContain(
       "Nota diferente da declarada",
     );
+    // O parecer sai com tudo conferido (antes, a prévia não traz resultado).
+    for (const codigo of [
+      "IDENTIDADE",
+      "ESCOLARIDADE",
+      "REGISTRO_CONSELHO",
+      "FORMACAO",
+      "EXPERIENCIA",
+    ])
+      await clicar(cartao(codigo).querySelector("[data-valor='CONFORME']"));
     expect(
       document.querySelector(".avd-ficha-parecer pre").textContent,
     ).toContain("Nota de cursos de aperfeiçoamento diminuída");

@@ -514,3 +514,22 @@
     grid-column: 1 / -1;
   }
 }
+
+/* Prévia do parecer com item ainda não conferido: sem resultado, só os motivos já lançados. */
+.avd-ficha-parecer-previa {
+  display: grid;
+  gap: var(--space-1);
+  padding: var(--space-2) var(--space-3);
+  border: 1px dashed var(--border-subtle);
+  border-radius: var(--radius-md);
+  color: var(--text-secondary);
+  font-size: var(--text-body-sm);
+}
+.avd-ficha-parecer-previa p {
+  margin: 0;
+}
+.avd-ficha-parecer-previa ul {
+  margin: 0;
+  padding-left: var(--space-4);
+  color: var(--text-primary);
+}

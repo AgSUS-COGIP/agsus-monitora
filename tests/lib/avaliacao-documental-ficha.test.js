@@ -7,18 +7,23 @@ import {
   declaradaDaFicha,
   divergenciaDoBloco,
   enderecoDaVagaNaEmpregare,
+  ehAnexo,
   enderecoDoCandidatoNaEmpregare,
+  etapasDaFicha,
   lancamentoInicial,
   nivelDaFicha,
   nomeCurtoDoBloco,
+  nomeDaEtapa,
   opcoesDeJustificativa,
   pendenciasDaFicha,
+  previaDoParecer,
   respostasDoBloco,
   resumoParaGravar,
   situacaoDaTecla,
   sugereNaoEnviado,
   textoDaAlteracao,
   textoDaSituacaoDaConferencia,
+  TEXTO_DO_PARECER_EM_ANALISE,
   textoDoProgresso,
   titulosDoNivel,
 } from "../../src/lib/avaliacao-documental/ficha.js";
@@ -588,5 +593,104 @@ describe("experiência declarada por nível (93/2026)", () => {
       texto: "Nota diferente da declarada: escolha a justificativa.",
     });
     expect(resumoParaGravar(av, declarada).declarada.EXPERIENCIA).toBe(15);
+  });
+});
+
+describe("modo de análise: etapas, prévia do parecer e anexos", () => {
+  const declarada = declaradaDaFicha(REGRA, RESPOSTAS);
+  const nova = () =>
+    lancamentoInicial({
+      regra: REGRA,
+      respostas: RESPOSTAS,
+      modalidade: "AC",
+      cargo: "Engenheiro de Segurança do Trabalho",
+      documental: DOCUMENTAL,
+    });
+  const conta = (lanc) => {
+    const av = calcularFicha(REGRA, lanc, DOCUMENTAL);
+    const pendencias = pendenciasDaFicha(REGRA, lanc, av, declarada);
+    return {
+      av,
+      pendencias,
+      c: conferenciaDaFicha(REGRA, lanc, av, pendencias),
+    };
+  };
+
+  it("nomes curtos das etapas do 93/2026", () => {
+    expect(
+      REGRA.blocos
+        .filter((b) => b.tipo !== "COTA" && b.tipo !== "REGISTRO")
+        .map(nomeDaEtapa),
+    ).toEqual([
+      "Identidade",
+      "Formação",
+      "Conselho",
+      "Titulação",
+      "Cursos",
+      "Experiência",
+    ]);
+    expect(nomeDaEtapa({ titulo: "Qualquer", rotulo_curto: "Meu" })).toBe(
+      "Meu",
+    );
+  });
+
+  it("estado de cada etapa: não conferido, conforme, não enviado e pendência", () => {
+    const lanc = nova();
+    lanc.blocos.IDENTIDADE = { situacao: "CONFORME" };
+    lanc.blocos.ESCOLARIDADE = { situacao: "NAO_ENVIADO" };
+    lanc.blocos.REGISTRO_CONSELHO = {
+      situacao: "NAO_CONFORME",
+      motivos: ["SEM_REGISTRO"],
+    };
+    const { pendencias } = conta(lanc);
+    expect(etapasDaFicha(REGRA, lanc, pendencias)).toEqual([
+      { codigo: "IDENTIDADE", nome: "Identidade", estado: "CONFORME" },
+      { codigo: "ESCOLARIDADE", nome: "Formação", estado: "pendencia" },
+      { codigo: "REGISTRO_CONSELHO", nome: "Conselho", estado: "NAO_CONFORME" },
+      { codigo: "FORMACAO", nome: "Titulação", estado: "nao_conferido" },
+      { codigo: "CURSOS", nome: "Cursos", estado: "nao_conferido" },
+      { codigo: "EXPERIENCIA", nome: "Experiência", estado: "nao_conferido" },
+    ]);
+  });
+
+  it("com item não conferido, a prévia do parecer não traz resultado; só os motivos já lançados", () => {
+    const lanc = nova();
+    const { av, c } = conta(lanc);
+    // A conta, sozinha, já daria INABILITADO (experiência sem vínculo).
+    expect(av.parecer).toContain("INABILITADO");
+    const previa = previaDoParecer(av, c, lanc);
+    expect(previa).toEqual({
+      completa: false,
+      texto: TEXTO_DO_PARECER_EM_ANALISE,
+      motivos: [],
+    });
+    lanc.blocos.REGISTRO_CONSELHO = {
+      situacao: "NAO_ENVIADO",
+      motivos: ["SEM_REGISTRO"],
+    };
+    const depois = conta(lanc);
+    const comMotivo = previaDoParecer(depois.av, depois.c, lanc);
+    expect(comMotivo.completa).toBe(false);
+    expect(comMotivo.texto).not.toMatch(/HABILITADO/);
+    expect(comMotivo.motivos).toHaveLength(1);
+    expect(comMotivo.motivos[0]).toMatch(/^Item 6\.4: /);
+  });
+
+  it("tudo conferido: o parecer da conta", () => {
+    const lanc = lancamentoCompleto();
+    const { av, c } = conta(lanc);
+    expect(previaDoParecer(av, c, lanc)).toEqual({
+      completa: true,
+      texto: av.parecer,
+      motivos: [],
+    });
+    expect(av.parecer).toContain("HABILITADO(A)");
+  });
+
+  it("anexo: a resposta que a Empregare escreve como Anexo", () => {
+    expect(ehAnexo("Anexo")).toBe(true);
+    expect(ehAnexo(" anexo ")).toBe(true);
+    expect(ehAnexo("Especialização")).toBe(false);
+    expect(ehAnexo("")).toBe(false);
   });
 });
