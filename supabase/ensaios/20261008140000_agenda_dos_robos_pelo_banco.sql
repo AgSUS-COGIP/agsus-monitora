@@ -40,6 +40,9 @@ begin
   if to_regclass('public."TL_EXPURGO_ANEXO_CHAT"') is null then
     raise exception 'Aplique antes 20261007250000_expurgo_diario_dos_anexos_do_chat.sql.';
   end if;
+  if to_regprocedure('private."FC_EXECUCAO_EH_TREINAMENTO"(text)') is null then
+    raise exception 'Aplique antes 20261008110000_treinamento_avaliacao_documental.sql.';
+  end if;
 end;
 $$;
 
@@ -661,7 +664,7 @@ begin
           'refazer', p."ST_REFAZER_LOTE" = 'S',
           'execucao', p."DS_URL_EXECUCAO"
         ) order by p."DT_INICIO" desc), '[]'::json)
-        from (select * from public."TL_PRE_CLASSIFICACAO" t order by t."DT_INICIO" desc limit 10) p
+        from (select * from public."TL_PRE_CLASSIFICACAO" t where not private."FC_EXECUCAO_EH_TREINAMENTO"(t."CO_EXECUCAO") order by t."DT_INICIO" desc limit 10) p
     ),
     -- [expurgo-diario] o job diário do expurgo dos anexos do chat (20261007250000)
     'expurgo_chat', (

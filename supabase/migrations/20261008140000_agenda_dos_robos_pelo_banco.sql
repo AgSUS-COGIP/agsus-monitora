@@ -57,12 +57,12 @@
        Rodar agora / fim do robô), mas estão na lista fixa.
     6. get_saude_das_cargas(): ganha 'agenda_dos_robos' (chave cadastrada,
        último disparo aceito, falhas e "sem chave" nas últimas 24 h e os
-       últimos disparos). Corpo de 20261007250000 + a chave nova.
+       últimos disparos). Corpo de 20261008110000 (treinamento fora) + a chave nova.
 
   Desligar: select cron.unschedule('agsus_robo_<nome>'); — e devolver o
   `schedule` ao workflow (docs/agenda-dos-robos.md).
 
-  PRÉ-REQUISITOS: pg_cron, Supabase Vault e 20261007250000 aplicadas.
+  PRÉ-REQUISITOS: pg_cron, Supabase Vault, 20261007250000 e 20261008110000 aplicadas.
 
   Ensaio: supabase/ensaios/20261008140000_agenda_dos_robos_pelo_banco.sql
   Rollback: supabase/rollback/20261008140000_agenda_dos_robos_pelo_banco.sql
@@ -80,6 +80,9 @@ begin
   end if;
   if to_regclass('public."TL_EXPURGO_ANEXO_CHAT"') is null then
     raise exception 'Aplique antes 20261007250000_expurgo_diario_dos_anexos_do_chat.sql.';
+  end if;
+  if to_regprocedure('private."FC_EXECUCAO_EH_TREINAMENTO"(text)') is null then
+    raise exception 'Aplique antes 20261008110000_treinamento_avaliacao_documental.sql.';
   end if;
 end;
 $$;
@@ -702,7 +705,7 @@ begin
           'refazer', p."ST_REFAZER_LOTE" = 'S',
           'execucao', p."DS_URL_EXECUCAO"
         ) order by p."DT_INICIO" desc), '[]'::json)
-        from (select * from public."TL_PRE_CLASSIFICACAO" t order by t."DT_INICIO" desc limit 10) p
+        from (select * from public."TL_PRE_CLASSIFICACAO" t where not private."FC_EXECUCAO_EH_TREINAMENTO"(t."CO_EXECUCAO") order by t."DT_INICIO" desc limit 10) p
     ),
     -- [expurgo-diario] o job diário do expurgo dos anexos do chat (20261007250000)
     'expurgo_chat', (
