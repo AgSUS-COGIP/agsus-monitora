@@ -9,7 +9,8 @@ Supabase; um servidor web pequeno, em TypeScript, entrega as páginas. Detalhes 
 
 ## Stack
 
-- Vite 7 + React 19 (`src/componentes/`) e JavaScript modular legado (`src/modules/`), HTML e CSS
+- Vite 7 + React 19 (`src/modulos/`, `src/app/`, `src/ui/` e componentes compartilhados em
+  `src/componentes/`) e JavaScript modular legado (`src/modules/`), HTML e CSS
 - Supabase: Postgres com RLS, RPCs, login Google e rotinas agendadas (`pg_cron`)
 - Funções serverless na Vercel (`api/`): Node e uma em Python (`anexos-do-edital.py`, que lê o
   PDF de anexos do edital com pdfplumber; dependências em `requirements.txt`)
@@ -17,7 +18,9 @@ Supabase; um servidor web pequeno, em TypeScript, entrega as páginas. Detalhes 
   (`apps-script/`)
 - Servidor web em TypeScript (`server/servidor.ts`), rodando direto no Node 24, sem dependências;
   a Vercel continua como caminho estático
-- Vitest e Playwright nos testes do front; `unittest` nos testes da função Python
+- Python nos jobs da Empregare, conferências e pré-classificação, com biblioteca comum em
+  `python/monitora/`; guia em [docs/python-no-monitora.md](docs/python-no-monitora.md)
+- Vitest e Playwright nos testes do front; Ruff e pytest nas verificações de Python
 
 ## Áreas e módulos
 
@@ -26,17 +29,21 @@ acesso libera. O menu lateral mostra, por área, as abas ativas (catálogo em `T
 área em `RL_ABA_AREA`). Módulos e abas podem ser desligados ou postos em manutenção em
 **Configurações → Módulos e abas**, sem deploy.
 
-| Módulo              | Onde                                                 | O que faz                                                                                                 |
-| ------------------- | ---------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
-| Visão geral e mapas | `index.html`                                         | terras indígenas, DSEIs e editais no mapa                                                                 |
-| Editais             | `index.html` (`src/componentes/nucleo/`)             | cadastro do edital e do cronograma; importa cronograma e quadro de vagas do PDF de anexos                 |
-| Cronograma          | `index.html` (`src/componentes/calendario-editais/`) | calendário das etapas de todos os editais                                                                 |
-| Análises            | `index.html` (`src/modulos/analises/`)               | análises curriculares vindas das planilhas: filtros, KPIs, gráficos, pendências, fila e gaveta de detalhe |
-| Seleção             | `index.html` (`src/modulos/selecao/`)                | funil por vaga (inscritos, aptos, eliminados)                                                             |
-| Entrevistas         | `index.html` (`src/modulos/entrevistas/`)            | resultados, condução (roteiro, convocação, banca, notas) e roteiros                                       |
-| Recursos            | `index.html` (`src/modulos/recursos/`)               | recursos dos candidatos: fila, gaveta com etapas, resposta e anexos                                       |
-| Lista de aprovados  | `index.html` (`src/componentes/lista-aprovados/`)    | aprovados e convocação                                                                                    |
-| Acessos             | `index.html` (`src/modulos/acessos/`)            | convites, grupos, contas desativadas e reativação                                                         |
+| Módulo               | Onde                                               | O que faz                                                                                                 |
+| -------------------- | -------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| Visão geral e mapas  | `index.html`                                       | terras indígenas, DSEIs e editais no mapa                                                                 |
+| Editais              | `index.html` (`src/modulos/editais/`)              | cadastro do edital e do cronograma; importa cronograma e quadro de vagas do PDF de anexos                 |
+| Cronograma           | `index.html` (`src/modulos/cronograma/`)           | calendário das etapas de todos os editais                                                                 |
+| Análises             | `index.html` (`src/modulos/analises/`)             | análises curriculares vindas das planilhas: filtros, KPIs, gráficos, pendências, fila e gaveta de detalhe |
+| Seleção              | `index.html` (`src/modulos/selecao/`)              | funil por vaga (inscritos, aptos, eliminados)                                                             |
+| Entrevistas          | `index.html` (`src/modulos/entrevistas/`)          | resultados, condução (roteiro, convocação, banca, notas) e roteiros                                       |
+| Recursos             | `index.html` (`src/modulos/recursos/`)             | recursos dos candidatos: fila, gaveta com etapas, resposta e anexos                                       |
+| Avaliação documental | `index.html` (`src/modulos/avaliacao-documental/`) | regra, equipe, pré-classificação e fila de fichas                                                         |
+| Classificação        | `index.html` (`src/modulos/classificacao/`)        | regras por edital, listas, sorteio, exportação e publicação na Lista de aprovados                         |
+| Lista de aprovados   | `index.html` (`src/modulos/aprovados/`)            | aprovados e convocação                                                                                    |
+| Mensagens            | cabeçalho (`src/modulos/chat/`)                    | conversas, anexos, respostas, menções, busca e compartilhamento de telas e fichas                         |
+| Aya                  | painel lateral (`src/modulos/aya/`)                | assistência e orientação contextual com a base de `docs/aya/`                                             |
+| Acessos              | `index.html` (`src/modulos/acessos/`)              | convites, grupos, contas desativadas e reativação                                                         |
 
 Em **Conduzir entrevistas** aparecem só os editais na janela da entrevista pelo cronograma (de 7
 dias antes a 15 dias depois das etapas de entrevista), os liberados pelo administrador global e os
@@ -55,7 +62,9 @@ que ainda têm convocado sem parecer.
 | Python     | 3.12 com `pdfplumber`   | só para testar `api/anexos-do-edital.py` na máquina |
 
 O Node 24 executa o servidor TypeScript direto, sem etapa de compilação. Não há PHP nem Composer.
-O Python não é preciso para rodar o sistema: a Vercel instala o `requirements.txt` sozinha.
+O Python não é preciso para abrir o frontend e o servidor estático. Para as funções e os jobs,
+instale as dependências do componente correspondente; a Vercel instala o `requirements.txt` da
+raiz no deploy das funções. Consulte [docs/python-no-monitora.md](docs/python-no-monitora.md).
 
 ### 2. Clonar e instalar
 
@@ -211,8 +220,13 @@ docker run -d -p 8000:8000 monitora
 A imagem tem `HEALTHCHECK` em `/up`. Em produção, coloque um proxy HTTPS na frente e preserve o
 domínio atual, para manter os endereços de retorno do login já autorizados.
 
-**CI.** Todo Pull Request para `main` roda `.github/workflows/build-and-smoke.yml`: lint, formatação,
-testes com cobertura, build, smoke no navegador contra o `npm start` e o mesmo smoke contra a imagem Docker.
+**CI.** Todo Pull Request para `main` roda `.github/workflows/build-and-smoke.yml`: checagens de
+arquitetura, lint, formatação, testes com cobertura, build, smoke no navegador, smoke contra o
+servidor TypeScript e contra a imagem Docker. O job Python executa Ruff (lint e formatação) e
+pytest. O contrato de RPC também é conferido contra o banco de desenvolvimento quando o segredo
+`SUPABASE_DB_URL_DEV` está configurado; sem ele, essa verificação é ignorada, e a checagem estática
+continua no build. O mínimo de cobertura configurado hoje é 1% para linhas, funções, instruções
+e ramos; isso não comprova cobertura dos fluxos críticos.
 
 ## Problemas comuns
 
@@ -236,7 +250,10 @@ npm run test:smoke                       # smoke no navegador (Playwright)
 npm run test:e2e                         # todos os testes de navegador
 npm run typecheck                        # tipos do servidor TypeScript
 npm run test:smoke:servidor              # smoke no navegador contra o servidor TypeScript
-python -m unittest discover -s tests/python   # testes da função Python (anexos do edital)
+python -m pip install -r python/requirements-dev.txt -r scripts/robo-empregare/requirements.txt
+python -m pytest                         # testes Python (funções, jobs e regras)
+python -m ruff check .                    # lint Python
+python -m ruff format --check .           # formatação Python
 ```
 
 Os testes unitários **bloqueiam a rede** (`tests/setup/rede-bloqueada.js`). Eles nunca falam com o
@@ -252,13 +269,17 @@ Supabase de verdade, mesmo com o `.env.local` preenchido.
 ├── src/
 │   ├── main.js             entrada do painel principal
 │   ├── lib/                lógica pura e testável
-│   ├── componentes/        telas em React (menu lateral, editais, entrevistas, acessos…)
+│   ├── app/                sessão, navegação, carga, configuração e montagem dos módulos
+│   ├── ui/                 componentes visuais compartilhados
+│   ├── componentes/        peças compartilhadas (barra lateral, busca global, pessoas online)
 │   ├── modules/            funcionalidades de tela legadas, um arquivo por feature
 │   ├── styles/             CSS do painel principal
-│   ├── modulos/            telas React migradas (Recursos, Entrevistas, Análises curriculares, Seleção)
+│   ├── modulos/            telas e recursos React, uma pasta por módulo
+│   ├── legado/             reservado à migração; hoje contém apenas README
 │   └── auth/               callback do login
 ├── api/                    funções serverless da Vercel (AYA, proxies FUNAI, anexos do edital em Python)
 ├── requirements.txt        dependências das funções Python da Vercel
+├── python/                 biblioteca comum dos jobs e regras Python
 ├── apps-script/            scripts das planilhas (saude-indigena/, sede/, projetos/); ver LEIA-ME.md
 ├── public/                 imagens e dados geográficos (gerados por scripts)
 ├── supabase/
@@ -267,7 +288,7 @@ Supabase de verdade, mesmo com o `.env.local` preenchido.
 │   └── correcoes/          correções pontuais de dados
 ├── server/servidor.ts      servidor web (TypeScript)
 ├── scripts/                checagens do build e ferramentas
-├── tests/                  Vitest (*.test.js), Playwright (*.spec.js) e tests/python/
+├── tests/                  Vitest (*.test.js), Playwright (*.spec.js), testes Python e fixtures compartilhadas
 └── docs/                   decisões técnicas e auditorias
 ```
 
@@ -300,7 +321,8 @@ Não coloque chaves secretas, tokens, senhas ou credenciais no repositório.
 2. Implementar a alteração, com teste.
 3. Rodar `npm run build` (inclui as sete etapas descritas em [Build e implantação](#build-e-implantação)).
 4. Testar localmente (caminho A ou B): login, permissões, painéis e análises.
-5. Se houver migration: ensaiar, aplicar em produção e registrar (seção [Supabase](#supabase)).
+5. Se houver migration: ensaiar, revisar a compatibilidade com o frontend em produção e definir
+   a ordem de aplicação e o rollback. Aplicar e registrar conforme essa sequência (seção [Supabase](#supabase)).
 6. Abrir o Pull Request e esperar o CI.
 7. Fazer o merge em `main` somente depois da validação: o merge publica em produção.
 
@@ -340,5 +362,6 @@ Junto com o código, conceda ou envie:
 - `main` é a branch de produção. Mudanças estruturais passam por Pull Request.
 - Alterações no banco são versionadas em `supabase/migrations/`.
 - Dados sensíveis e credenciais não vão para o GitHub.
-- Prefira pequenas entregas validadas em preview a grandes refatorações.
+- Prefira pequenas entregas validadas localmente e no CI. A configuração atual não publica
+  previews por branch; registre a limitação dos fluxos que dependem de `/api/*`.
 - Plano técnico de evolução: `docs/arquitetura-evolucao.md`. Padrão de interface: `DESIGN.md`.
