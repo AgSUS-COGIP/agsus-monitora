@@ -26,7 +26,13 @@ tabela.jsx              tabela de resultados (TabelaInfinita) e o selo do parece
 gaveta.jsx              detalhe da entrevista (caminho do candidato, critérios) e aprovados sem entrevista
 conducao.jsx            "Conduzir entrevistas": edital, liberação (admin global), os três passos;
                         regra e vagas da Classificação (só leitura) e a lista de convocação
-ficha.jsx               ficha de notas por avaliador (Enter avança, Ctrl+Enter salva)
+ficha.jsx               ficha de notas em modo de análise (tela inteira, como a da Avaliação documental):
+                        topo preso, competências com os avaliadores lado a lado (aspectos: um campo por
+                        aspecto e a média), prévia do parecer na lateral, barra presa; componente
+                        independente (dados, convocado, convocados, aoSalvar, aoAbrir, aoFechar).
+                        Enter avança, Ctrl+Enter salva, Esc volta; celular: uma competência por vez
+campo-de-nota.tsx       campo compacto da nota e os botões da escala (0 a 5)
+aspectos-do-roteiro.tsx aspectos do roteiro no editor (e o modelo Conceitua · Propriedade · Profundidade)
 agenda-do-dia.jsx       "Agenda do dia" (só leitura): a agenda salva na Classificação › Agenda,
                         por dia e banca; a linha do convocado abre a ficha
 roteiros.jsx            cartões dos roteiros e o editor (gaveta), com versões

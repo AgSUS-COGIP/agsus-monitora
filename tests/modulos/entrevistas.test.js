@@ -910,21 +910,24 @@ describe("visões de condução e roteiros", () => {
       document.querySelector("#entrevistasFicha tr.entrevistas-linha"),
     );
     const ficha = document.getElementById("entrevistasFichaDoCandidato");
-    const celulas = ficha.querySelectorAll("select.entrevistas-nota");
+    const celulas = ficha.querySelectorAll("input.entrevistas-nota");
     expect(celulas).toHaveLength(4);
-    expect(celulas[0].querySelector('option[value="3"]').textContent).toBe(
-      "3 — Nível 3",
+    // Os botões da escala trazem o nome do nível no título.
+    expect(
+      ficha.querySelector('.entrevistas-botao-de-nota[data-nota="3"]').title,
+    ).toBe("Nível 3 — Parâmetro 3");
+    await clicar(
+      ficha.querySelector('.entrevistas-comparecimento button[data-valor="S"]'),
     );
-    await clicar(ficha.querySelector('.ui-segmentado button[data-valor="S"]'));
-    for (const celula of celulas) await escolher(celula, "3");
+    for (const celula of celulas) await digitar(celula, "3");
     expect(
       document.getElementById("entrevistasFichaTotal").textContent,
     ).toContain("6");
     expect(document.getElementById("entrevistasFichaParecer").textContent).toBe(
       "Apto",
     );
-    await escolher(celulas[0], "1");
-    await escolher(celulas[1], "1");
+    await digitar(celulas[0], "1");
+    await digitar(celulas[1], "1");
     expect(document.getElementById("entrevistasFichaParecer").textContent).toBe(
       "Inapto",
     );
@@ -960,9 +963,9 @@ describe("visões de condução e roteiros", () => {
       document.querySelector("#entrevistasFicha tr.entrevistas-linha"),
     );
     const ficha = document.getElementById("entrevistasFichaDoCandidato");
-    const celulas = ficha.querySelectorAll("select.entrevistas-nota");
+    const celulas = ficha.querySelectorAll("input.entrevistas-nota");
     celulas[0].focus();
-    await escolher(celulas[0], "4");
+    await digitar(celulas[0], "4");
     await teclar(celulas[0], "Enter");
     expect(document.activeElement).toBe(celulas[1]);
     await teclar(celulas[1], "Enter", { ctrlKey: true });
@@ -973,7 +976,7 @@ describe("visões de condução e roteiros", () => {
     ]);
   });
 
-  it("enquanto as notas são gravadas, a ficha não aceita digitação e Recarregar e Convocar ficam desativados", async () => {
+  it("enquanto as notas são gravadas, a ficha (em tela cheia, sem o resto da condução) não aceita digitação", async () => {
     let liberar;
     const supabase = supabaseDaConducao({
       respostas: {
@@ -989,23 +992,21 @@ describe("visões de condução e roteiros", () => {
       document.querySelector("#entrevistasFicha tr.entrevistas-linha"),
     );
     const ficha = document.getElementById("entrevistasFichaDoCandidato");
-    const celulas = ficha.querySelectorAll("select.entrevistas-nota");
-    await escolher(celulas[0], "4");
-    expect(botao("Recarregar").disabled).toBe(false);
-    expect(document.getElementById("entrevistasConvocar").disabled).toBe(false);
+    const celulas = ficha.querySelectorAll("input.entrevistas-nota");
+    await digitar(celulas[0], "4");
+    // Modo de análise: a ficha ocupa a tela; o topo e os passos da condução somem.
+    expect(document.querySelector(".ui-topo")).toBeNull();
+    expect(document.getElementById("entrevistasConvocar")).toBeNull();
     await clicar(ficha.querySelector('button[type="submit"]'));
     expect([...celulas].every((c) => c.disabled)).toBe(true);
     expect(
-      [...ficha.querySelectorAll(".ui-segmentado button")].every(
+      [...ficha.querySelectorAll(".entrevistas-comparecimento button")].every(
         (b) => b.disabled,
       ),
     ).toBe(true);
-    expect(botao("Recarregar").disabled).toBe(true);
-    expect(document.getElementById("entrevistasConvocar").disabled).toBe(true);
     await act(async () => liberar());
     await esperar();
     expect([...celulas].some((c) => c.disabled)).toBe(false);
-    expect(botao("Recarregar").disabled).toBe(false);
   });
 
   it("roteiros indisponíveis: avisa e não relê a cada volta à visão", async () => {
@@ -1041,7 +1042,7 @@ describe("visões de condução e roteiros", () => {
       document.querySelector("#entrevistasFicha tr.entrevistas-linha"),
     );
     const ficha = document.getElementById("entrevistasFichaDoCandidato");
-    const celulas = [...ficha.querySelectorAll("select.entrevistas-nota")];
+    const celulas = [...ficha.querySelectorAll("input.entrevistas-nota")];
     expect(celulas).toHaveLength(2);
     expect(
       celulas.every((c) => c.getAttribute("aria-label").includes("Ana")),
@@ -1125,9 +1126,9 @@ describe("visões de condução e roteiros", () => {
       document.querySelector("#entrevistasFicha tr.entrevistas-linha"),
     );
     const ficha = document.getElementById("entrevistasFichaDoCandidato");
-    expect(ficha.querySelectorAll("select.entrevistas-nota")).toHaveLength(0);
+    expect(ficha.querySelectorAll("input.entrevistas-nota")).toHaveLength(0);
     expect(ficha.querySelector('button[type="submit"]')).toBeNull();
-    await clicar(ficha.querySelector(".ui-gaveta-fechar"));
+    await clicar(ficha.querySelector('[data-acao="voltar-a-lista"]'));
     await clicar(visao("roteiros"));
     await esperar();
     expect(document.getElementById("entrevistasNovoRoteiro")).toBeNull();
@@ -1624,5 +1625,157 @@ describe("agenda do dia em Conduzir entrevistas", () => {
     await abrirEdital();
     expect(document.querySelector('[data-passo="agenda"]')).toBeNull();
     expect(document.querySelector('[data-passo="ficha"]')).not.toBeNull();
+  });
+});
+
+describe("aspectos da entrevista (roteiro com Conceitua · Propriedade · Profundidade)", () => {
+  const ASPECTOS = [
+    { id: "s1", ordem: 1, nome: "Conceitua" },
+    { id: "s2", ordem: 2, nome: "Propriedade" },
+    { id: "s3", ordem: 3, nome: "Profundidade" },
+  ];
+  const editalComAspectos = () => ({
+    ...EDITAL,
+    configuracao: {
+      ...EDITAL.configuracao,
+      roteiro: { ...ROTEIRO, notas_eliminatorias: [], aspectos: ASPECTOS },
+    },
+    convocados: [
+      {
+        ...EDITAL.convocados[0],
+        avaliacoes: [
+          {
+            competencia: "c1",
+            avaliador: "a1",
+            nota: 1.33,
+            aspectos: [
+              { aspecto: "s1", nota: 2 },
+              { aspecto: "s2", nota: 1 },
+              { aspecto: "s3", nota: 1 },
+            ],
+          },
+        ],
+      },
+    ],
+  });
+
+  async function abrirFicha(supabase) {
+    await montar(supabase);
+    await abrirEdital();
+    await clicar(
+      document.querySelector("#entrevistasFicha tr.entrevistas-linha"),
+    );
+    return document.getElementById("entrevistasFichaDoCandidato");
+  }
+
+  it("3 campos por avaliador, média ao lado, e grava todos os aspectos", async () => {
+    const supabase = supabaseDaConducao({ edital: editalComAspectos() });
+    const ficha = await abrirFicha(supabase);
+    const campos = [...ficha.querySelectorAll("input.entrevistas-nota")];
+    // 2 competências × 2 avaliadores × 3 aspectos.
+    expect(campos).toHaveLength(12);
+    expect(campos.slice(0, 3).map((c) => c.value)).toEqual(["2", "1", "1"]);
+    expect(ficha.querySelector(".entrevistas-ficha-media").textContent).toBe(
+      "= 1,33",
+    );
+    // Beto em c1: 3 aspectos (2, 2, 3) → 2,33; a média da banca 1,83 fica abaixo do mínimo.
+    await digitar(campos[3], "2");
+    await digitar(campos[4], "2");
+    await digitar(campos[5], "3");
+    expect(
+      ficha.querySelectorAll(".entrevistas-ficha-media")[1].textContent,
+    ).toBe("= 2,33");
+    expect(ficha.querySelector('[data-competencia="1"]').dataset.situacao).toBe(
+      "reprova",
+    );
+    await clicar(
+      ficha.querySelector('.entrevistas-comparecimento button[data-valor="S"]'),
+    );
+    await clicar(ficha.querySelector('button[type="submit"]'));
+    await esperar();
+    const [[, argumentos]] = chamadas(supabase, "lancar_notas_entrevista");
+    expect(argumentos.p_dados.notas).toEqual([
+      {
+        competencia: "c1",
+        avaliador: "a2",
+        aspectos: [
+          { aspecto: "s1", nota: 2 },
+          { aspecto: "s2", nota: 2 },
+          { aspecto: "s3", nota: 3 },
+        ],
+      },
+    ]);
+  });
+
+  it("aspecto faltando não salva e avisa; apagar todos manda aspectos nulo", async () => {
+    const supabase = supabaseDaConducao({ edital: editalComAspectos() });
+    const ficha = await abrirFicha(supabase);
+    const campos = [...ficha.querySelectorAll("input.entrevistas-nota")];
+    await digitar(campos[3], "4");
+    await clicar(ficha.querySelector('button[type="submit"]'));
+    expect(ficha.textContent).toContain(
+      "Complete os 3 aspectos de Beto em “Políticas públicas”",
+    );
+    expect(chamadas(supabase, "lancar_notas_entrevista")).toHaveLength(0);
+    await digitar(campos[3], "");
+    for (const campo of campos.slice(0, 3)) await digitar(campo, "");
+    await clicar(ficha.querySelector('button[type="submit"]'));
+    await esperar();
+    const [[, argumentos]] = chamadas(supabase, "lancar_notas_entrevista");
+    expect(argumentos.p_dados.notas).toEqual([
+      { competencia: "c1", avaliador: "a1", aspectos: null },
+    ]);
+  });
+
+  it("os botões da escala preenchem o campo em foco e passam ao próximo", async () => {
+    const ficha = await abrirFicha(
+      supabaseDaConducao({ edital: editalComAspectos() }),
+    );
+    const campos = [...ficha.querySelectorAll("input.entrevistas-nota")];
+    await act(async () => campos[3].focus());
+    await clicar(
+      ficha.querySelector(
+        '[data-competencia="1"] .entrevistas-botao-de-nota[data-nota="5"]',
+      ),
+    );
+    expect(campos[3].value).toBe("5");
+    expect(document.activeElement).toBe(campos[4]);
+  });
+
+  it("Voltar à lista sai do modo de análise e o topo volta", async () => {
+    const ficha = await abrirFicha(
+      supabaseDaConducao({ edital: editalComAspectos() }),
+    );
+    expect(document.querySelector(".ui-topo")).toBeNull();
+    await clicar(ficha.querySelector('[data-acao="voltar-a-lista"]'));
+    expect(document.getElementById("entrevistasFichaDoCandidato")).toBeNull();
+    expect(document.querySelector(".ui-topo")).not.toBeNull();
+    expect(document.querySelector("#entrevistasFicha")).not.toBeNull();
+  });
+
+  it("o editor do roteiro preenche o modelo e grava os aspectos", async () => {
+    const supabase = supabaseDaConducao();
+    await montar(supabase);
+    await clicar(visao("roteiros"));
+    await esperar();
+    const editar = [
+      ...document.querySelectorAll('[data-roteiro="r1"] button'),
+    ].find((b) => b.textContent.includes("Editar (cria versão 2)"));
+    await clicar(editar);
+    const editor = document.getElementById("entrevistasEditorDeRoteiro");
+    await clicar(editor.querySelector('[data-acao="modelo-de-aspectos"]'));
+    // Com aspectos, as médias eliminatórias saem (vale o mínimo da competência).
+    expect(editor.textContent).toContain(
+      "Com aspectos, elimina quem fica abaixo do mínimo",
+    );
+    await clicar(editor.querySelector('button[type="submit"]'));
+    await esperar();
+    const [[, { p_dados }]] = chamadas(supabase, "salvar_roteiro_entrevista");
+    expect(p_dados.aspectos).toEqual([
+      { nome: "Conceitua" },
+      { nome: "Propriedade" },
+      { nome: "Profundidade" },
+    ]);
+    expect(p_dados.notas_eliminatorias).toEqual([]);
   });
 });

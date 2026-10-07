@@ -96,6 +96,8 @@ const ESTADO_INICIAL = Object.freeze({
   podeEditar: null,
   /** `{ tipo, rotulo }` da gravação em curso, ou `null`. */
   acao: null,
+  /** Convocado com a ficha de notas aberta (modo de análise, tela inteira). */
+  fichaAberta: null,
 });
 
 export function mensagemDe(erro) {
@@ -301,6 +303,7 @@ export function criarEstadoDaConducao({
       edital: mesmo ? estado.edital : null,
       agenda: mesmo ? estado.agenda : null,
       calculo: mesmo ? estado.calculo : null,
+      fichaAberta: mesmo ? estado.fichaAberta : null,
       carregandoEdital: Boolean(id),
       erroDoEdital: "",
     });
@@ -438,6 +441,11 @@ export function criarEstadoDaConducao({
     });
   }
 
+  /** Abre (id do convocado) ou fecha (null) a ficha de notas. */
+  function abrirFicha(id) {
+    publicar({ fichaAberta: id || null });
+  }
+
   return {
     obter: () => estado,
     assinar(ouvinte) {
@@ -455,5 +463,6 @@ export function criarEstadoDaConducao({
     convocar,
     desconvocar,
     lancarNotas,
+    abrirFicha,
   };
 }

@@ -1,5 +1,5 @@
 {
-  "descricao": "Casos dourados do cálculo da entrevista (nota por competência = média das notas lançadas × peso, 2 casas; total = soma; parecer APTO/INAPTO/SEM_PARECER). A mesma regra de private.\"FC_CALCULAR_ENTREVISTA\" (banco), calcularEntrevista (src/lib/conducao-de-entrevista.js, a prévia da tela) e monitora.entrevistas.calculo (Python, recálculo em lote). Conferidos por tests/entrevistas-calculo-dourado.test.js e tests/python/test_entrevistas_calculo.py. Dados fictícios.",
+  "descricao": "Casos dourados do cálculo da entrevista (nota por competência = média das notas lançadas × peso, 2 casas; total = soma; parecer APTO/INAPTO/SEM_PARECER). A mesma regra de private.\"FC_CALCULAR_ENTREVISTA\" (banco), calcularEntrevista (src/lib/conducao-de-entrevista.js, a prévia da tela) e monitora.entrevistas.calculo (Python, recálculo em lote). Conferidos por tests/entrevistas-calculo-dourado.test.js e tests/python/test_entrevistas_calculo.py. Roteiro com aspectos (caso.aspectos: por competência, uma lista de notas por avaliador, na ordem dos aspectos): nota do avaliador = média dos aspectos (só com todos lançados), total = soma sem arredondar (2 casas no fim), sem notas eliminatórias; o ensaio supabase/ensaios/20261008100000_aspectos_da_entrevista.sql roda os mesmos casos no banco. Dados fictícios.",
   "roteiros": {
     "niveis": {
       "escala": "NIVEIS",
@@ -76,9 +76,27 @@
       "nota_minima_total": 12,
       "notas_eliminatorias": [],
       "competencias": [
-        { "id": "t1", "ordem": 1, "nome": "t1", "nota_maxima": 5, "peso": 1 },
-        { "id": "t2", "ordem": 2, "nome": "t2", "nota_maxima": 5, "peso": 1 },
-        { "id": "t3", "ordem": 3, "nome": "t3", "nota_maxima": 5, "peso": 1 }
+        {
+          "id": "t1",
+          "ordem": 1,
+          "nome": "t1",
+          "nota_maxima": 5,
+          "peso": 1
+        },
+        {
+          "id": "t2",
+          "ordem": 2,
+          "nome": "t2",
+          "nota_maxima": 5,
+          "peso": 1
+        },
+        {
+          "id": "t3",
+          "ordem": 3,
+          "nome": "t3",
+          "nota_maxima": 5,
+          "peso": 1
+        }
       ]
     },
     "percentual_quebrado": {
@@ -116,6 +134,67 @@
           "peso": 1.25
         }
       ]
+    },
+    "aspectos_si": {
+      "escala": "NIVEIS",
+      "nota_minima_total": 8,
+      "notas_eliminatorias": [0, 1],
+      "ausencia_elimina": true,
+      "aspectos": [
+        {
+          "id": "s1",
+          "ordem": 1,
+          "nome": "Conceitua"
+        },
+        {
+          "id": "s2",
+          "ordem": 2,
+          "nome": "Propriedade"
+        },
+        {
+          "id": "s3",
+          "ordem": 3,
+          "nome": "Profundidade"
+        }
+      ],
+      "competencias": [
+        {
+          "id": "c1",
+          "ordem": 1,
+          "nome": "C1",
+          "nota_maxima": 5,
+          "peso": 1,
+          "minimo": 2,
+          "tipo_minimo": "VALOR"
+        },
+        {
+          "id": "c2",
+          "ordem": 2,
+          "nome": "C2",
+          "nota_maxima": 5,
+          "peso": 1,
+          "minimo": 2,
+          "tipo_minimo": "VALOR"
+        },
+        {
+          "id": "c3",
+          "ordem": 3,
+          "nome": "C3",
+          "nota_maxima": 5,
+          "peso": 1,
+          "minimo": 2,
+          "tipo_minimo": "VALOR"
+        },
+        {
+          "id": "c4",
+          "ordem": 4,
+          "nome": "C4",
+          "nota_maxima": 5,
+          "peso": 1,
+          "minimo": 2,
+          "tipo_minimo": "VALOR"
+        }
+      ]
     }
   },
   "casos": [
@@ -123,21 +202,44 @@
       "nome": "APTO: média × peso por competência, total e mínimos cumpridos",
       "roteiro": "niveis",
       "compareceu": "S",
-      "notas": { "c1": [3, 4], "c2": [2, 3], "c3": [5, 5], "c4": [2, 2] },
-      "esperado": { "notas": [3.5, 2.5, 5, 2], "total": 13, "parecer": "APTO" }
+      "notas": {
+        "c1": [3, 4],
+        "c2": [2, 3],
+        "c3": [5, 5],
+        "c4": [2, 2]
+      },
+      "esperado": {
+        "notas": [3.5, 2.5, 5, 2],
+        "total": 13,
+        "parecer": "APTO"
+      }
     },
     {
       "nome": "INAPTO por média eliminatória (1)",
       "roteiro": "niveis",
       "compareceu": "S",
-      "notas": { "c1": [1, 1], "c2": [5, 5], "c3": [5, 5], "c4": [5, 5] },
-      "esperado": { "notas": [1, 5, 5, 5], "total": 16, "parecer": "INAPTO" }
+      "notas": {
+        "c1": [1, 1],
+        "c2": [5, 5],
+        "c3": [5, 5],
+        "c4": [5, 5]
+      },
+      "esperado": {
+        "notas": [1, 5, 5, 5],
+        "total": 16,
+        "parecer": "INAPTO"
+      }
     },
     {
       "nome": "INAPTO pelo mínimo da competência (média 1,5 não é eliminatória)",
       "roteiro": "niveis",
       "compareceu": "S",
-      "notas": { "c1": [1, 2], "c2": [5, 5], "c3": [5, 5], "c4": [5, 5] },
+      "notas": {
+        "c1": [1, 2],
+        "c2": [5, 5],
+        "c3": [5, 5],
+        "c4": [5, 5]
+      },
       "esperado": {
         "notas": [1.5, 5, 5, 5],
         "total": 16.5,
@@ -149,21 +251,41 @@
       "roteiro": "niveis",
       "nota_minima_total": 12,
       "compareceu": "S",
-      "notas": { "c1": [2, 2], "c2": [2, 2], "c3": [3, 3], "c4": [2, 2] },
-      "esperado": { "notas": [2, 2, 3, 2], "total": 9, "parecer": "INAPTO" }
+      "notas": {
+        "c1": [2, 2],
+        "c2": [2, 2],
+        "c3": [3, 3],
+        "c4": [2, 2]
+      },
+      "esperado": {
+        "notas": [2, 2, 3, 2],
+        "total": 9,
+        "parecer": "INAPTO"
+      }
     },
     {
       "nome": "peso 1,5 e mínimo percentual (50% de 2 × 1,5 = 1,5); total 4,38 < 5",
       "roteiro": "faixa",
       "compareceu": "S",
-      "notas": { "p1": [2, 1.5], "p2": [1.5, 2] },
-      "esperado": { "notas": [1.75, 2.63], "total": 4.38, "parecer": "INAPTO" }
+      "notas": {
+        "p1": [2, 1.5],
+        "p2": [1.5, 2]
+      },
+      "esperado": {
+        "notas": [1.75, 2.63],
+        "total": 4.38,
+        "parecer": "INAPTO"
+      }
     },
     {
       "nome": "competência sem nota = SEM_PARECER (o total soma as que têm nota)",
       "roteiro": "niveis",
       "compareceu": "S",
-      "notas": { "c1": [4], "c2": [4], "c3": [4] },
+      "notas": {
+        "c1": [4],
+        "c2": [4],
+        "c3": [4]
+      },
       "esperado": {
         "notas": [4, 4, 4, null],
         "total": 12,
@@ -185,21 +307,42 @@
       "nome": "faltou e a ausência elimina: total 0 e INAPTO",
       "roteiro": "niveis",
       "compareceu": "N",
-      "notas": { "c1": [5], "c2": [5], "c3": [5], "c4": [5] },
-      "esperado": { "notas": [5, 5, 5, 5], "total": 0, "parecer": "INAPTO" }
+      "notas": {
+        "c1": [5],
+        "c2": [5],
+        "c3": [5],
+        "c4": [5]
+      },
+      "esperado": {
+        "notas": [5, 5, 5, 5],
+        "total": 0,
+        "parecer": "INAPTO"
+      }
     },
     {
       "nome": "faltou e a ausência não elimina: total 0 e SEM_PARECER",
       "roteiro": "faixa",
       "compareceu": "N",
-      "notas": { "p1": [2], "p2": [2] },
-      "esperado": { "notas": [2, 3], "total": 0, "parecer": "SEM_PARECER" }
+      "notas": {
+        "p1": [2],
+        "p2": [2]
+      },
+      "esperado": {
+        "notas": [2, 3],
+        "total": 0,
+        "parecer": "SEM_PARECER"
+      }
     },
     {
       "nome": "comparecimento não informado: SEM_PARECER",
       "roteiro": "niveis",
       "compareceu": null,
-      "notas": { "c1": [5], "c2": [5], "c3": [5], "c4": [5] },
+      "notas": {
+        "c1": [5],
+        "c2": [5],
+        "c3": [5],
+        "c4": [5]
+      },
       "esperado": {
         "notas": [5, 5, 5, 5],
         "total": 20,
@@ -210,37 +353,319 @@
       "nome": "total no mínimo exato é APTO (3,3 + 4,85 + 3,85 = 12)",
       "roteiro": "limite_12",
       "compareceu": "S",
-      "notas": { "t1": [3.3], "t2": [4.85], "t3": [3.85] },
-      "esperado": { "notas": [3.3, 4.85, 3.85], "total": 12, "parecer": "APTO" }
+      "notas": {
+        "t1": [3.3],
+        "t2": [4.85],
+        "t3": [3.85]
+      },
+      "esperado": {
+        "notas": [3.3, 4.85, 3.85],
+        "total": 12,
+        "parecer": "APTO"
+      }
     },
     {
       "nome": "mínimo percentual sem arredondar: 10,84% de 10 = 1,084 e a nota 1,08 fica abaixo",
       "roteiro": "percentual_quebrado",
       "compareceu": "S",
-      "notas": { "m1": [1.08] },
-      "esperado": { "notas": [1.08], "total": 1.08, "parecer": "INAPTO" }
+      "notas": {
+        "m1": [1.08]
+      },
+      "esperado": {
+        "notas": [1.08],
+        "total": 1.08,
+        "parecer": "INAPTO"
+      }
     },
     {
       "nome": "arredonda meio para cima: média 2,335 × 1 = 2,34 (três avaliadores)",
       "roteiro": "limite_12",
       "nota_minima_total": null,
       "compareceu": "S",
-      "notas": { "t1": [2.33, 2.34, 2.335], "t2": [1], "t3": [1] },
-      "esperado": { "notas": [2.34, 1, 1], "total": 4.34, "parecer": "APTO" }
+      "notas": {
+        "t1": [2.33, 2.34, 2.335],
+        "t2": [1],
+        "t3": [1]
+      },
+      "esperado": {
+        "notas": [2.34, 1, 1],
+        "total": 4.34,
+        "parecer": "APTO"
+      }
     },
     {
       "nome": "ordem das competências pela ordem do roteiro; peso 0,5 e média eliminatória 0,5",
       "roteiro": "peso_menor",
       "compareceu": "S",
-      "notas": { "k1": [3, 4], "k2": [0.5, 0.5] },
-      "esperado": { "notas": [4.38, 0.25], "total": 4.63, "parecer": "INAPTO" }
+      "notas": {
+        "k1": [3, 4],
+        "k2": [0.5, 0.5]
+      },
+      "esperado": {
+        "notas": [4.38, 0.25],
+        "total": 4.63,
+        "parecer": "INAPTO"
+      }
     },
     {
       "nome": "sem mínimo total nem eliminatória: APTO com notas quebradas",
       "roteiro": "peso_menor",
       "compareceu": "S",
-      "notas": { "k1": [2.5, 3, 3.5], "k2": [1, 2] },
-      "esperado": { "notas": [3.75, 0.75], "total": 4.5, "parecer": "APTO" }
+      "notas": {
+        "k1": [2.5, 3, 3.5],
+        "k2": [1, 2]
+      },
+      "esperado": {
+        "notas": [3.75, 0.75],
+        "total": 4.5,
+        "parecer": "APTO"
+      }
+    },
+    {
+      "nome": "aspectos (a): avaliadores 5 e 6 com 2,1,1 na competência 1 = 1,11; final 4,11",
+      "roteiro": "aspectos_si",
+      "compareceu": "S",
+      "aspectos": {
+        "c1": [
+          [1, 1, 1],
+          [1, 1, 1],
+          [1, 1, 1],
+          [1, 1, 1],
+          [2, 1, 1],
+          [2, 1, 1]
+        ],
+        "c2": [
+          [1, 1, 1],
+          [1, 1, 1],
+          [1, 1, 1],
+          [1, 1, 1],
+          [1, 1, 1],
+          [1, 1, 1]
+        ],
+        "c3": [
+          [1, 1, 1],
+          [1, 1, 1],
+          [1, 1, 1],
+          [1, 1, 1],
+          [1, 1, 1],
+          [1, 1, 1]
+        ],
+        "c4": [
+          [1, 1, 1],
+          [1, 1, 1],
+          [1, 1, 1],
+          [1, 1, 1],
+          [1, 1, 1],
+          [1, 1, 1]
+        ]
+      },
+      "esperado": {
+        "notas": [1.11, 1, 1, 1],
+        "total": 4.11,
+        "parecer": "INAPTO"
+      }
+    },
+    {
+      "nome": "aspectos (b): avaliador 3 com 2,2,3 na competência 4 = 2,06; final 8,06 APTO",
+      "roteiro": "aspectos_si",
+      "compareceu": "S",
+      "aspectos": {
+        "c1": [
+          [2, 2, 2],
+          [2, 2, 2],
+          [2, 2, 2],
+          [2, 2, 2],
+          [2, 2, 2],
+          [2, 2, 2]
+        ],
+        "c2": [
+          [2, 2, 2],
+          [2, 2, 2],
+          [2, 2, 2],
+          [2, 2, 2],
+          [2, 2, 2],
+          [2, 2, 2]
+        ],
+        "c3": [
+          [2, 2, 2],
+          [2, 2, 2],
+          [2, 2, 2],
+          [2, 2, 2],
+          [2, 2, 2],
+          [2, 2, 2]
+        ],
+        "c4": [
+          [2, 2, 2],
+          [2, 2, 2],
+          [2, 2, 3],
+          [2, 2, 2],
+          [2, 2, 2],
+          [2, 2, 2]
+        ]
+      },
+      "esperado": {
+        "notas": [2, 2, 2, 2.06],
+        "total": 8.06,
+        "parecer": "APTO"
+      }
+    },
+    {
+      "nome": "aspectos (c): 4,61 + 4,67 + 4,61 + 4,78 = 18,67 APTO",
+      "roteiro": "aspectos_si",
+      "compareceu": "S",
+      "aspectos": {
+        "c1": [
+          [4, 4, 4],
+          [4, 4, 5],
+          [4, 5, 5],
+          [5, 5, 5],
+          [4, 5, 5],
+          [5, 5, 5]
+        ],
+        "c2": [
+          [4, 4, 5],
+          [4, 5, 5],
+          [4, 5, 5],
+          [4, 5, 5],
+          [4, 5, 5],
+          [5, 5, 5]
+        ],
+        "c3": [
+          [4, 4, 4],
+          [4, 4, 5],
+          [4, 5, 5],
+          [5, 5, 5],
+          [4, 5, 5],
+          [5, 5, 5]
+        ],
+        "c4": [
+          [4, 5, 5],
+          [4, 5, 5],
+          [4, 5, 5],
+          [4, 5, 5],
+          [5, 5, 5],
+          [5, 5, 5]
+        ]
+      },
+      "esperado": {
+        "notas": [4.61, 4.67, 4.61, 4.78],
+        "total": 18.67,
+        "parecer": "APTO"
+      }
+    },
+    {
+      "nome": "aspectos: total arredonda só no fim (4 × 2,0556 = 8,22, não 8,24)",
+      "roteiro": "aspectos_si",
+      "compareceu": "S",
+      "aspectos": {
+        "c1": [
+          [2, 2, 2],
+          [2, 2, 2],
+          [2, 2, 2],
+          [2, 2, 2],
+          [2, 2, 2],
+          [2, 2, 3]
+        ],
+        "c2": [
+          [2, 2, 2],
+          [2, 2, 2],
+          [2, 2, 2],
+          [2, 2, 2],
+          [2, 2, 2],
+          [2, 2, 3]
+        ],
+        "c3": [
+          [2, 2, 2],
+          [2, 2, 2],
+          [2, 2, 2],
+          [2, 2, 2],
+          [2, 2, 2],
+          [2, 2, 3]
+        ],
+        "c4": [
+          [2, 2, 2],
+          [2, 2, 2],
+          [2, 2, 2],
+          [2, 2, 2],
+          [2, 2, 2],
+          [2, 2, 3]
+        ]
+      },
+      "esperado": {
+        "notas": [2.06, 2.06, 2.06, 2.06],
+        "total": 8.22,
+        "parecer": "APTO"
+      }
+    },
+    {
+      "nome": "aspectos: avaliador com aspecto faltando não conta na média",
+      "roteiro": "aspectos_si",
+      "compareceu": "S",
+      "aspectos": {
+        "c1": [
+          [3, 3, 3],
+          [5, 5, null]
+        ],
+        "c2": [[3, 3, 3]],
+        "c3": [[3, 3, 3]],
+        "c4": [[3, 3, 3]]
+      },
+      "esperado": {
+        "notas": [3, 3, 3, 3],
+        "total": 12,
+        "parecer": "APTO"
+      }
+    },
+    {
+      "nome": "aspectos: competência sem avaliador completo = SEM_PARECER",
+      "roteiro": "aspectos_si",
+      "compareceu": "S",
+      "aspectos": {
+        "c1": [[3, 3, 3]],
+        "c2": [[3, 3, 3]],
+        "c3": [[3, 3, 3]],
+        "c4": [[2, null, null]]
+      },
+      "esperado": {
+        "notas": [3, 3, 3, null],
+        "total": 9,
+        "parecer": "SEM_PARECER"
+      }
+    },
+    {
+      "nome": "aspectos: eliminação pelo mínimo (1,67 < 2) mesmo com total alto",
+      "roteiro": "aspectos_si",
+      "compareceu": "S",
+      "aspectos": {
+        "c1": [[2, 2, 1]],
+        "c2": [[5, 5, 5]],
+        "c3": [[5, 5, 5]],
+        "c4": [[5, 5, 5]]
+      },
+      "esperado": {
+        "notas": [1.67, 5, 5, 5],
+        "total": 16.67,
+        "parecer": "INAPTO"
+      }
+    },
+    {
+      "nome": "aspectos: competência no mínimo exato (média 2) é APTO",
+      "roteiro": "aspectos_si",
+      "compareceu": "S",
+      "aspectos": {
+        "c1": [
+          [2, 2, 2],
+          [2, 2, 2]
+        ],
+        "c2": [[3, 3, 3]],
+        "c3": [[3, 3, 3]],
+        "c4": [[1, 2, 3]]
+      },
+      "esperado": {
+        "notas": [2, 3, 3, 2],
+        "total": 10,
+        "parecer": "APTO"
+      }
     }
   ]
 }
