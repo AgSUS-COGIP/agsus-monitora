@@ -657,3 +657,89 @@ export function previaDoParecer(avaliacao, conferencia, lancamento) {
 
 /** A resposta declarada é um anexo (a Empregare escreve "Anexo")? */
 export const ehAnexo = (texto) => /^anexo\b/i.test(String(texto ?? "").trim());
+
+/* ── Modo foco: passos, para onde ir depois de decidir e a composição da nota ── */
+
+/** O último passo do modo foco: o resumo, a nota final, as observações e o parecer. */
+export const PASSO_DA_CONCLUSAO = "CONCLUSAO";
+
+const RESOLVIDOS = new Set([
+  "CONFORME",
+  "NAO_CONFORME",
+  "NAO_ENVIADO",
+  "opcional",
+]);
+
+/**
+ * Os passos do modo de análise (o stepper do topo): as etapas de etapasDaFicha,
+ * o critério étnico mesmo quando ainda não vale (é nele que se marca "Indígena";
+ * estado "opcional") e, no fim, a Conclusão (estado "pronta" quando nada falta).
+ */
+export function passosDaFicha(regraEntrada, lancamento, pendencias = []) {
+  const regra = normalizarRegraAnalise(regraEntrada);
+  const etapas = new Map(
+    etapasDaFicha(regra, lancamento, pendencias).map((e) => [e.codigo, e]),
+  );
+  const passos = [];
+  for (const b of regra.blocos) {
+    const etapa = etapas.get(b.codigo);
+    if (etapa) passos.push(etapa);
+    else if (b.tipo === "PONTUACAO")
+      passos.push({
+        codigo: b.codigo,
+        nome: nomeDaEtapa(b),
+        estado: "opcional",
+      });
+  }
+  passos.push({
+    codigo: PASSO_DA_CONCLUSAO,
+    nome: "Conclusão",
+    estado: lista(pendencias).length ? "nao_conferido" : "pronta",
+  });
+  return passos;
+}
+
+/**
+ * Para onde o modo foco vai depois de uma decisão: o próximo passo, depois do
+ * atual, que ainda pede algo; não havendo, o primeiro que pede antes dele; e,
+ * com tudo resolvido, a Conclusão.
+ */
+export function proximoPassoPendente(passos, atual) {
+  const itens = lista(passos).filter((p) => p.codigo !== PASSO_DA_CONCLUSAO);
+  const i = itens.findIndex((p) => p.codigo === atual);
+  const pede = (p) => !RESOLVIDOS.has(p.estado);
+  const depois = itens.slice(i + 1).find(pede);
+  const antes = i > 0 ? itens.slice(0, i).find(pede) : undefined;
+  return (depois ?? antes)?.codigo ?? PASSO_DA_CONCLUSAO;
+}
+
+/**
+ * A composição da nota (as barras da lateral e da Conclusão): uma linha por
+ * bloco que pontua e se aplica, com o apurado (null antes de conferir), o
+ * declarado (null sem pergunta mapeada), o teto no nível e se diverge.
+ */
+export function composicaoDaNota(
+  regraEntrada,
+  lancamento,
+  avaliacao,
+  declarada,
+) {
+  const regra = normalizarRegraAnalise(regraEntrada);
+  return regra.blocos
+    .filter((b) => PARCIAL_DO_TIPO[b.tipo] && blocoSeAplica(b, lancamento))
+    .map((b) => {
+      const parcial = PARCIAL_DO_TIPO[b.tipo];
+      const conferido = blocoConferido(lancamento, b);
+      const decl = objeto(declarada?.parciais)[parcial];
+      return {
+        bloco: b.codigo,
+        parcial,
+        rotulo: rotuloDe(PARCIAIS, parcial),
+        apurado: conferido ? (avaliacao?.parciais?.[parcial] ?? 0) : null,
+        declarado: typeof decl === "number" ? decl : null,
+        teto: tetoDoBloco(b, lancamento?.nivel),
+        divergente:
+          conferido && Boolean(divergenciaDoBloco(b, avaliacao, declarada)),
+      };
+    });
+}

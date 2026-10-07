@@ -1193,3 +1193,72 @@ th[aria-sort="descending"] .ui-ordenar i {
   width: 1rem;
   color: var(--text-secondary);
 }
+
+/* Popover (src/ui/popover.tsx): botão discreto e painel por cima, alinhado ao botão. */
+.ui-popover {
+  position: relative;
+  display: inline-flex;
+}
+.ui-popover-botao {
+  display: inline-grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-full, 999px);
+  background: var(--surface-card);
+  color: var(--text-secondary);
+  font: inherit;
+  font-size: var(--text-caption);
+  font-weight: var(--font-weight-semibold);
+  cursor: pointer;
+  transition:
+    background-color var(--duration-fast, 120ms) var(--ease-standard),
+    color var(--duration-fast, 120ms) var(--ease-standard);
+}
+.ui-popover-botao:hover,
+.ui-popover-botao[aria-expanded="true"] {
+  background: var(--surface-hover);
+  color: var(--text-primary);
+}
+.ui-popover-botao:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+.ui-popover-painel {
+  position: absolute;
+  top: calc(100% + var(--space-1-5));
+  z-index: var(--z-popover, 10040);
+  display: grid;
+  gap: var(--space-2);
+  width: max-content;
+  min-width: 220px;
+  max-width: min(340px, calc(100vw - 2 * var(--space-4)));
+  padding: var(--space-3);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  background: var(--surface-card);
+  box-shadow: var(--shadow-overlay);
+  color: var(--text-primary);
+  font-size: var(--text-body-sm);
+  text-align: left;
+  animation: ui-popover-entrar var(--duration-fast, 120ms) var(--ease-standard);
+}
+.ui-popover-painel[data-lado="direita"] {
+  right: 0;
+}
+.ui-popover-painel[data-lado="esquerda"] {
+  left: 0;
+}
+@keyframes ui-popover-entrar {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ui-popover-painel {
+    animation: none;
+  }
+}
