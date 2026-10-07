@@ -1,4 +1,12 @@
+import type { PropsWithChildren } from "react";
 import { classes } from "./classes.js";
+
+export type PropriedadesDoAviso = PropsWithChildren<{
+  tom?: "info" | "warning" | "danger";
+  papel?: "alert" | "status";
+  como?: "div" | "p";
+  className?: string;
+}>;
 
 /*
   Aviso em faixa (`.ui-aviso`): borda à esquerda na cor do tom ("info", o
@@ -12,7 +20,7 @@ export function Aviso({
   como: Elemento = "div",
   className,
   children,
-}) {
+}: PropriedadesDoAviso) {
   return (
     <Elemento
       className={classes("ui-aviso", className)}

@@ -1,5 +1,6 @@
 import js from "@eslint/js";
 import globals from "globals";
+import tsParser from "@typescript-eslint/parser";
 
 export default [
   {
@@ -41,6 +42,23 @@ export default [
       "no-undef": "error",
       "no-redeclare": "error",
       "no-unreachable": "error",
+      "no-constant-condition": ["error", { checkLoops: false }],
+    },
+  },
+  {
+    files: ["src/**/*.{ts,tsx}", "server/**/*.ts", "tests/tipos/**/*.tsx"],
+    languageOptions: {
+      parser: tsParser,
+      ecmaVersion: "latest",
+      sourceType: "module",
+      globals: { ...globals.browser, ...globals.node },
+    },
+    rules: {
+      ...js.configs.recommended.rules,
+      // O compilador verifica nomes e redeclarações com o escopo de tipos.
+      "no-undef": "off",
+      "no-redeclare": "off",
+      "no-unused-vars": "off",
       "no-constant-condition": ["error", { checkLoops: false }],
     },
   },

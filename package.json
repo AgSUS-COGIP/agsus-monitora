@@ -32,7 +32,9 @@
     "aya:conhecimento": "node scripts/compilar-conhecimento-aya.mjs",
     "icones": "node scripts/gerar-icones-lucide.mjs",
     "start": "node server/servidor.ts",
-    "typecheck": "tsc -p tsconfig.json",
+    "typecheck": "npm run typecheck:servidor && npm run typecheck:frontend",
+    "typecheck:servidor": "tsc -p tsconfig.json",
+    "typecheck:frontend": "tsc -p tsconfig.frontend.json",
     "test:smoke:servidor": "node scripts/test-servidor-smoke.mjs"
   },
   "dependencies": {
@@ -49,6 +51,9 @@
     "@eslint/js": "^9",
     "@playwright/test": "^1",
     "@types/node": "^24.13.6",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@typescript-eslint/parser": "^8.71.1",
     "@vitejs/plugin-react": "^5.2.0",
     "@vitest/coverage-v8": "^4",
     "eslint": "^9",

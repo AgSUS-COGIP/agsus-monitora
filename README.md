@@ -9,7 +9,7 @@ Supabase; um servidor web pequeno, em TypeScript, entrega as páginas. Detalhes 
 
 ## Stack
 
-- Vite 7 + React 19 (`src/modulos/`, `src/app/`, `src/ui/` e componentes compartilhados em
+- Vite 7 + React 19, com TypeScript gradual no frontend (`src/modulos/`, `src/app/`, `src/ui/` e componentes compartilhados em
   `src/componentes/`) e JavaScript modular legado (`src/modules/`), HTML e CSS
 - Supabase: Postgres com RLS, RPCs, login Google e rotinas agendadas (`pg_cron`)
 - Funções serverless na Vercel (`api/`): Node e uma em Python (`anexos-do-edital.py`, que lê o
@@ -156,15 +156,15 @@ configurar as permissões antes de a pessoa ver os painéis.
 Sete etapas, em ordem. Se qualquer uma falhar, o build para e a mensagem diz qual regra foi violada:
 corrija o código, não a checagem.
 
-| #   | Etapa                       | Script                    | O que barra                                                                            |
-| --- | --------------------------- | ------------------------- | -------------------------------------------------------------------------------------- |
-| 1   | Base de conhecimento da AYA | `aya:conhecimento`        | gera `src/modules/aya-conhecimento-gerado.js` a partir de `docs/aya/*.md`              |
-| 2   | Tipos do servidor           | `typecheck`               | erro de tipo em `server/*.ts`                                                          |
-| 3   | Arquitetura de autenticação | `check:auth-architecture` | cliente Supabase criado fora de `src/lib/supabaseClient.js`, fluxo OAuth implícito     |
-| 4   | Contrato de RPC             | `check:rpc-contract`      | `.rpc("nome")` que não está em `src/lib/rpc-contrato.js`, ou RPC declarada e não usada |
-| 5   | Compilação                  | `vite build`              | erro de sintaxe ou de import; gera o `dist/`                                           |
-| 6   | Segurança do HTML           | `check:dist-security`     | Supabase por CDN, recurso `http://` inseguro no HTML gerado                            |
-| 7   | Orçamento de bundles        | `check:bundle-size`       | JS ou CSS acima do limite (maior JS: 2.500 KB bruto / 700 KB gzip)                     |
+| #   | Etapa                        | Script                    | O que barra                                                                            |
+| --- | ---------------------------- | ------------------------- | -------------------------------------------------------------------------------------- |
+| 1   | Base de conhecimento da AYA  | `aya:conhecimento`        | gera `src/modules/aya-conhecimento-gerado.js` a partir de `docs/aya/*.md`              |
+| 2   | Tipos do servidor e frontend | `typecheck`               | erro de tipo no servidor, nos arquivos TS/TSX do frontend e nos casos de contrato      |
+| 3   | Arquitetura de autenticação  | `check:auth-architecture` | cliente Supabase criado fora de `src/lib/supabaseClient.js`, fluxo OAuth implícito     |
+| 4   | Contrato de RPC              | `check:rpc-contract`      | `.rpc("nome")` que não está em `src/lib/rpc-contrato.js`, ou RPC declarada e não usada |
+| 5   | Compilação                   | `vite build`              | erro de sintaxe ou de import; gera o `dist/`                                           |
+| 6   | Segurança do HTML            | `check:dist-security`     | Supabase por CDN, recurso `http://` inseguro no HTML gerado                            |
+| 7   | Orçamento de bundles         | `check:bundle-size`       | JS ou CSS acima do limite (maior JS: 2.500 KB bruto / 700 KB gzip)                     |
 
 Leva poucos segundos. Os limites do orçamento podem ser ajustados por variável de ambiente
 (`BUNDLE_MAX_*`), mas subir o limite exige justificativa no PR.
@@ -248,7 +248,8 @@ npm run lint                             # lint dos arquivos alterados
 npm run check:architecture               # checagens de arquitetura sem build
 npm run test:smoke                       # smoke no navegador (Playwright)
 npm run test:e2e                         # todos os testes de navegador
-npm run typecheck                        # tipos do servidor TypeScript
+npm run typecheck                        # tipos do servidor e do frontend migrado
+npm run typecheck:frontend               # tipos dos arquivos TS/TSX e contratos do frontend
 npm run test:smoke:servidor              # smoke no navegador contra o servidor TypeScript
 python -m pip install -r python/requirements-dev.txt -r scripts/robo-empregare/requirements.txt
 python -m pytest                         # testes Python (funções, jobs e regras)
@@ -365,3 +366,4 @@ Junto com o código, conceda ou envie:
 - Prefira pequenas entregas validadas localmente e no CI. A configuração atual não publica
   previews por branch; registre a limitação dos fluxos que dependem de `/api/*`.
 - Plano técnico de evolução: `docs/arquitetura-evolucao.md`. Padrão de interface: `DESIGN.md`.
+- Migração gradual para TypeScript: [docs/typescript-no-frontend.md](docs/typescript-no-frontend.md).
