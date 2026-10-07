@@ -3904,7 +3904,7 @@ export const VERBETES_AYA = Object.freeze([
       'O Cronograma mostra, num calendário, as etapas dos cronogramas cadastrados em Editais, só da área atual. A tela é só de leitura e se atualiza quando um cronograma é salvo. O mês mostra quantas etapas de cada tipo há em cada dia (uma etapa conta no dia em que começa e no dia em que termina), e há filtros por unidade, edital, tipo de etapa e busca. O tipo é deduzido do texto da atividade: Impugnação, Recursos, Resultado final, Resultado, Convocação para entrevista, Entrevistas, Inscrições, Análise curricular ou Outros. Etapas com ano impossível ficam fora de "Próximas etapas" e aparecem listadas para correção.',
     fato: "",
     fonte:
-      "src/modulos/cronograma/calendario-editais.jsx; src/lib/calendario-editais.js; src/lib/etapas-de-edital.js; src/lib/datas-do-cronograma.js",
+      "src/modulos/cronograma/calendario-editais.tsx; src/lib/calendario-editais.ts; src/lib/etapas-de-edital.js; src/lib/datas-do-cronograma.js",
     abrir: "calendario",
   },
   {
@@ -3938,7 +3938,7 @@ export const VERBETES_AYA = Object.freeze([
       'Os filtros ficam recolhidos em "Refinar resultados" (o botão "Mostrar filtros" abre): busca por etapa, edital ou unidade, unidade, edital, tipo de etapa e "Ocultar concluídas". "Ocultar concluídas" começa ligada, porque o que já terminou raramente é o que se procura; "Limpar tudo" tira os filtros e mostra também as concluídas. A linha do tempo oferece só os editais que restaram no filtro, e clicar numa etapa (nas próximas etapas ou no dia) mostra o edital dela na linha do tempo.',
     fato: "",
     fonte:
-      "src/modulos/cronograma/calendario-editais.jsx; src/lib/calendario-editais.js",
+      "src/modulos/cronograma/calendario-editais.tsx; src/lib/calendario-editais.ts",
     abrir: "calendario",
   },
   {
@@ -3954,7 +3954,7 @@ export const VERBETES_AYA = Object.freeze([
       'O Cronograma só mostra etapas já salvas no cronograma de cada edital, em Editais, e só da área atual: edital sem cronograma não aparece. "Ocultar concluídas" começa ligada, então as etapas que já terminaram ficam escondidas até você desligá-la ou clicar em "Limpar tudo". Etapa com ano impossível sai de "Próximas etapas" e aparece na lista para correção. Confira também a busca e os filtros de unidade, edital e tipo de etapa.',
     fato: "",
     fonte:
-      "src/modulos/cronograma/calendario-editais.jsx; src/lib/calendario-editais.js; src/lib/datas-do-cronograma.js",
+      "src/modulos/cronograma/calendario-editais.tsx; src/lib/calendario-editais.ts; src/lib/datas-do-cronograma.js",
     abrir: "calendario",
   },
   {

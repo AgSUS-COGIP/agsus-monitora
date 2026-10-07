@@ -1,3 +1,9 @@
+import type {
+  CelulaDoCalendario,
+  EditalComDataARevisar,
+  EtapaDoCalendario,
+  MarcoDaEtapa,
+} from "./tipos.ts";
 import { dataLocal, situacaoDaEtapa } from "../../lib/etapas-de-edital.js";
 import {
   DIAS_SEMANA,
@@ -6,7 +12,7 @@ import {
   formatarCurto,
   periodoDaEtapa,
   tituloDoDia,
-} from "../../lib/calendario-editais.js";
+} from "../../lib/calendario-editais.ts";
 import { Aviso, classes, Modal } from "../../ui/index.js";
 
 /*
@@ -16,7 +22,19 @@ import { Aviso, classes, Modal } from "../../ui/index.js";
   cor de cada tipo sai de `data-cor`, e o CSS decide o que é "rosa".
 */
 
-export function Seletor({ id, vazio, opcoes, valor, aoMudar }) {
+export function Seletor({
+  id,
+  vazio,
+  opcoes,
+  valor,
+  aoMudar,
+}: {
+  id: string;
+  vazio: string;
+  opcoes: readonly (readonly [string, string])[];
+  valor: string;
+  aoMudar: (valor: string) => void;
+}) {
   return (
     <select
       id={id}
@@ -33,7 +51,15 @@ export function Seletor({ id, vazio, opcoes, valor, aoMudar }) {
   );
 }
 
-export function GradeDoMes({ celulas, selecionado, aoEscolherDia }) {
+export function GradeDoMes({
+  celulas,
+  selecionado,
+  aoEscolherDia,
+}: {
+  celulas: readonly CelulaDoCalendario[];
+  selecionado: string;
+  aoEscolherDia: (chave: string) => void;
+}) {
   return (
     <>
       <div className="cal-semana">
@@ -108,6 +134,12 @@ export function ItemDeEtapa({
   mostrarData = false,
   dataExibida = null,
   aoEscolher,
+}: {
+  etapa: EtapaDoCalendario;
+  marco?: MarcoDaEtapa;
+  mostrarData?: boolean;
+  dataExibida?: string | null;
+  aoEscolher: (editalId: string) => void;
 }) {
   return (
     <button
@@ -146,14 +178,18 @@ export function ItemDeEtapa({
   );
 }
 
-const chaveDaEtapa = (etapa, indice) =>
+const chaveDaEtapa = (etapa: EtapaDoCalendario, indice: number) =>
   `${etapa.editalId}:${etapa.ordem}:${etapa.data_inicio}:${indice}`;
 
 /*
   Avisa quem pode corrigir quando há etapa de data impossível (ano digitado
   errado): sem isto, ela só sumia da lista de "Próximas etapas".
 */
-export function AvisoDeDatasARevisar({ editais }) {
+export function AvisoDeDatasARevisar({
+  editais,
+}: {
+  editais: readonly EditalComDataARevisar[];
+}) {
   if (!editais.length) return null;
   return (
     <Aviso tom="warning" papel="status" como="p" className="cal-aviso-datas">
@@ -167,7 +203,15 @@ export function AvisoDeDatasARevisar({ editais }) {
   );
 }
 
-export function ProximasEtapas({ etapas, hoje, aoEscolher }) {
+export function ProximasEtapas({
+  etapas,
+  hoje,
+  aoEscolher,
+}: {
+  etapas: readonly EtapaDoCalendario[];
+  hoje: Date;
+  aoEscolher: (editalId: string) => void;
+}) {
   if (!etapas.length)
     return (
       <p className="cal-vazio">
@@ -185,7 +229,15 @@ export function ProximasEtapas({ etapas, hoje, aoEscolher }) {
   ));
 }
 
-export function LinhaDoTempo({ editalId, etapas, hoje }) {
+export function LinhaDoTempo({
+  editalId,
+  etapas,
+  hoje,
+}: {
+  editalId: string;
+  etapas: readonly EtapaDoCalendario[];
+  hoje: Date;
+}) {
   if (!editalId) return <li className="cal-vazio">Selecione um edital.</li>;
   if (!etapas.length)
     return <li className="cal-vazio">Este edital não tem etapas com data.</li>;
@@ -209,7 +261,17 @@ export function LinhaDoTempo({ editalId, etapas, hoje }) {
   grade de vista nem rolar até ao rodapé. Escolher uma etapa foca o edital dela
   na linha do tempo e fecha o popup.
 */
-export function DiaDoCalendario({ chave, etapas, aoFechar, aoEscolherEdital }) {
+export function DiaDoCalendario({
+  chave,
+  etapas,
+  aoFechar,
+  aoEscolherEdital,
+}: {
+  chave: string;
+  etapas: readonly EtapaDoCalendario[];
+  aoFechar: () => void;
+  aoEscolherEdital: (editalId: string) => void;
+}) {
   const doDia = etapasDoDia(etapas, chave);
   return (
     <Modal

@@ -2,10 +2,12 @@
 
 Início da migração gradual: 07/10/2026.
 
-O frontend mantém React e Vite. `Aviso`, `BotaoDeAcao` e o módulo Seleção estão em
+O frontend mantém React e Vite. `Aviso`, `BotaoDeAcao`, Seleção e Cronograma estão em
 TypeScript. Seleção inclui estado, componentes, filtros, indicadores, gráficos, tabela
-e regras puras em `src/lib/selecao-do-painel.ts`. O restante segue em JavaScript/JSX.
-Os componentes compartilhados consumidos por Seleção declaram seus contratos em JSDoc.
+e regras puras em `src/lib/selecao-do-painel.ts`. Cronograma inclui estado, calendário,
+filtros, modal do dia, próximas etapas, linha do tempo e regras em
+`src/lib/calendario-editais.ts`. O restante segue em JavaScript/JSX. Componentes e helpers
+compartilhados consumidos por esses módulos declaram seus contratos em JSDoc.
 
 ## Verificação
 
@@ -21,8 +23,8 @@ O build já chama `typecheck`, então erros nos arquivos migrados bloqueiam o bu
 `tests/tipos/`. Usa modo estrito, DOM, JSX do React e resolução de módulos do bundler.
 `allowJs` permite importar o código existente; `checkJs` está desligado. Portanto, o compilador
 não verifica todos os consumidores JavaScript nem valida JSON em tempo de execução.
-Seleção faz a verificação de objetos e listas no normalizador; limites dessa verificação
-estão no README do módulo.
+Seleção e Cronograma verificam objetos e listas nas fronteiras de leitura; limites dessa
+verificação estão nos READMEs dos módulos.
 
 Lint e formatação incrementais incluem `.ts` e `.tsx`. O ESLint usa o parser TypeScript;
 nomes e redeclarações nesses arquivos são verificados pelo compilador. Tipos do React e o
@@ -46,6 +48,8 @@ atributos acessíveis e o bloqueio do botão durante ações.
 Seleção está migrada em `src/modulos/selecao/`, com contratos em `tipos.ts`.
 O escopo e as limitações estão em
 [../src/modulos/selecao/README.md](../src/modulos/selecao/README.md).
+Cronograma também está migrado; carga, contratos e limites estão em
+[../src/modulos/cronograma/README.md](../src/modulos/cronograma/README.md).
 
 Escolher um módulo por entrega, levantar os consumidores e manter o comportamento coberto
 pelos testes. Declarar contratos de dados e ações sem `any` ou supressões de erros. Atualizar

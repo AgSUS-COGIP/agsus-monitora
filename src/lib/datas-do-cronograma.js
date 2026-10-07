@@ -33,6 +33,11 @@ export function etapaComDatasValidas(etapa) {
   começar; o fim, se já está em andamento. Um prazo aberto desde agosto que
   termina amanhã é "amanhã", não "agosto".
 */
+/**
+ * @param {{ data_inicio: string, data_fim: string }} etapa
+ * @param {string} hoje
+ * @returns {string}
+ */
 export function proximaDataDaEtapa(etapa, hoje) {
   return etapa.data_inicio >= hoje ? etapa.data_inicio : etapa.data_fim;
 }
@@ -40,6 +45,11 @@ export function proximaDataDaEtapa(etapa, hoje) {
 /**
  * Etapas ainda não encerradas, da mais próxima para a mais distante.
  * Etapas com data impossível ficam de fora: não há como dizer quando vêm.
+ * @template {{ data_inicio: string, data_fim: string, ordem?: number }} T
+ * @param {readonly T[]} etapas
+ * @param {string} hoje
+ * @param {number} [limite]
+ * @returns {T[]}
  */
 export function proximasEtapas(etapas, hoje, limite = Infinity) {
   return etapas
@@ -55,7 +65,10 @@ export function proximasEtapas(etapas, hoje, limite = Infinity) {
     .map(({ etapa }) => etapa);
 }
 
-/** Editais com pelo menos uma etapa de data impossível, para quem vai corrigir. */
+/** Editais com pelo menos uma etapa de data impossível, para quem vai corrigir.
+ * @param {readonly { edital: string, unidade: string, data_inicio: string, data_fim: string }[]} etapas
+ * @returns {{ edital: string, etapasComProblema: number }[]}
+ */
 export function editaisComDatasARevisar(etapas) {
   const porEdital = new Map();
   for (const etapa of etapas) {

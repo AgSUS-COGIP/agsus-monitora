@@ -37,7 +37,7 @@ Arquivos que exigem cuidado:
   salvar (erros e avisos), modelo padrão, datas coladas em lote e situação na linha do tempo.
 - `anexos-do-candidato.js` — anexos PDF do candidato aprovado (o PDF fica no banco, em bytea): base64 de ida e volta, limites (2 MB, 5 por
   candidato), validação antes do envio e agrupamento por candidato. O banco repete os limites.
-- `calendario-editais.js` — o Calendário de Editais sem DOM: etapas por dia (conta no início e no
+- `calendario-editais.ts` — o Calendário de Editais sem DOM: etapas por dia (conta no início e no
   fim, não no meio), filtros, grade de 42 células, próximas etapas. O desenho é de
   `src/modulos/cronograma/`.
 - `configuracao-de-convocacao.js` — leitura do modelo e das vagas que o banco guarda, precedência do

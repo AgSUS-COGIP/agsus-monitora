@@ -138,6 +138,13 @@ export function idsDasLinhas(linhas) {
   Cronograma e Lista de aprovados não trazem a área: trazem o edital (etapa,
   lista e candidato). O recorte é pelo conjunto de ids dos editais da área.
 */
+/**
+ * @template T
+ * @param {readonly T[]} itens
+ * @param {ReadonlySet<string>} ids
+ * @param {keyof T} [campo]
+ * @returns {T[]}
+ */
 export function soDosEditais(itens, ids, campo = "edital_id") {
   return (Array.isArray(itens) ? itens : []).filter((item) =>
     ids.has(String(item?.[campo])),

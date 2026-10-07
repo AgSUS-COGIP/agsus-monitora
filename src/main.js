@@ -75,7 +75,7 @@ import { initGoogleProfilePhoto } from "./modules/google-profile-photo.js";
 import { initNielsenShellUx } from "./modules/nielsen-shell-ux.js";
 import { montarBarraLateral } from "./componentes/barra-lateral/barra-lateral.jsx";
 import { montarListaAprovados } from "./modulos/aprovados/lista-aprovados.jsx";
-import { montarCalendarioEditais } from "./modulos/cronograma/calendario-editais.jsx";
+import { montarCalendarioEditais } from "./modulos/cronograma/calendario-editais.tsx";
 import { montarNucleo } from "./modulos/editais/nucleo.jsx";
 import { montarRecursos } from "./modulos/recursos/recursos.jsx";
 import { montarEntrevistas } from "./modulos/entrevistas/entrevistas.jsx";

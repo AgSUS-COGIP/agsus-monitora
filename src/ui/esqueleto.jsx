@@ -22,6 +22,9 @@ export function LinhasEsqueleto({ colunas, linhas = 8 }) {
   ));
 }
 
+/**
+ * @param {{ quantos?: number, className?: string, como?: import("react").ElementType }} props
+ */
 export function BlocosEsqueleto({ quantos = 3, className, como: Elemento }) {
   return Array.from({ length: quantos }, (_, indice) => {
     const bloco = (

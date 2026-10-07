@@ -1,6 +1,6 @@
 import { act } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { montarCalendarioEditais } from "../../src/modulos/cronograma/calendario-editais.jsx";
+import { montarCalendarioEditais } from "../../src/modulos/cronograma/calendario-editais.tsx";
 import { clicar, digitar, escolher, esperar, teclar } from "./interacoes.js";
 import {
   definirAreaAtual,
@@ -22,7 +22,7 @@ afterEach(() => redefinirDadosDoMonitoramento());
 
 /*
   O Calendário de Editais em React: a costura entre o carregamento (1 + N
-  RPCs), a lógica de `src/lib/calendario-editais.js` e o desenho. "Hoje" é fixo
+  RPCs), a lógica de `src/lib/calendario-editais.ts` e o desenho. "Hoje" é fixo
   em 15/09/2026, uma terça-feira.
 */
 

@@ -22,7 +22,7 @@ Supabase; um servidor web pequeno, em TypeScript, entrega as páginas. Detalhes 
   `python/monitora/`; guia em [docs/python-no-monitora.md](docs/python-no-monitora.md)
 - Vitest e Playwright nos testes do front; Ruff e pytest nas verificações de Python
 
-Seleção já usa TypeScript no estado, nos componentes e nas regras do painel. A migração
+Seleção e Cronograma já usam TypeScript no estado, nos componentes e nas regras das telas. A migração
 continua por módulo; contratos e comandos de verificação estão em
 [docs/typescript-no-frontend.md](docs/typescript-no-frontend.md).
 
