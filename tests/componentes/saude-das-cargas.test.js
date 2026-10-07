@@ -307,3 +307,60 @@ describe("a seção na Administração", async () => {
     ).toBe(false);
   });
 });
+
+describe("Agenda dos robôs (20261008140000)", () => {
+  const comAgenda = (agenda) => ({
+    resposta: { data: { ...PAYLOAD, agenda_dos_robos: agenda }, error: null },
+  });
+
+  it("mostra o último pedido aceito e as falhas das últimas 24 h", async () => {
+    await montar(
+      comAgenda({
+        chave_cadastrada: true,
+        ultimo_aceito: ha(20),
+        falhas_24h: 2,
+        sem_chave_24h: 0,
+        disparos: [
+          {
+            workflow: "sincronizar-entrevistas.yml",
+            inicio: ha(20),
+            fim: ha(20),
+            situacao: "ACEITO",
+            http: 204,
+          },
+        ],
+      }),
+    );
+    const linha = document.querySelector('[data-carga="agenda_dos_robos"]');
+    expect(linha.querySelector("strong").textContent).toBe("Agenda dos robôs");
+    expect(linha.querySelector(".saude-agenda").textContent).toMatch(
+      /^Último pedido aceito: .+ · 2 falhas em 24 h$/,
+    );
+    expect(linha.querySelector('[role="alert"]')).toBeNull();
+    await clicar(linha.querySelector(".saude-botao"));
+    expect(linha.querySelector(".saude-historico tbody").textContent).toContain(
+      "Entrevistas · HTTP 204",
+    );
+  });
+
+  it("sem a chave no Vault, avisa e pede o cadastro", async () => {
+    await montar(
+      comAgenda({
+        chave_cadastrada: false,
+        ultimo_aceito: null,
+        falhas_24h: 0,
+        sem_chave_24h: 3,
+        disparos: [],
+      }),
+    );
+    const linha = document.querySelector('[data-carga="agenda_dos_robos"]');
+    const aviso = linha.querySelector('.saude-agenda[role="alert"]');
+    expect(aviso.textContent).toBe(
+      "Sem chave no Vault: os robôs não rodam sozinhos. Cadastre github_disparo_robos.",
+    );
+    expect(linha.textContent).toContain("Falhou");
+    expect(document.querySelector(".saude-resumo").textContent).toContain(
+      "Agenda dos robôs (falhou)",
+    );
+  });
+});

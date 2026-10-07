@@ -16,12 +16,17 @@
 
   OS PRAZOS (folga sobre o esperado, decisão de 01/10/2026)
     Análises, incremental   esperado a cada 20 min · atrasada depois de 1 h
-    Entrevistas e Seleção   esperado de hora em hora, o dia todo (decisão de 06/10/2026) ·
+    Entrevistas             esperado de hora em hora, o dia todo (decisão de 06/10/2026) ·
                             atrasada depois de 4 h
+    Seleção                 às 8h10, 13h10 e 18h10 de Brasília (decisão de 07/10/2026) ·
+                            atrasada depois de 15 h (a noite inteira sem carga é esperada)
     Robô da Empregare       sem prazo: só roda pelo "Rodar agora" (decisão de 05/10/2026)
     Conferências            todo dia às 6h (Brasília) · atrasada depois de 26 h
     Expurgo dos anexos      todo dia às 6h30 (Brasília) · atrasada depois de 26 h
     do chat                 (20261007250000; parcial conta como falha, como nas conferências)
+    Agenda dos robôs        o banco pede cada execução ao GitHub (pg_cron + pg_net,
+                            20261008140000): falhou se o último pedido foi recusado ou se
+                            não há chave no Vault; atrasada sem pedido aceito há 2 h
     Tarefas a cada 2 min    atrasada depois de 15 min
     Tarefas diárias         atrasada depois de 26 h; mensais, depois de 32 dias
 */
@@ -32,6 +37,8 @@ export const PRAZO_DIARIO_MIN = 26 * 60;
 export const PRAZO_FREQUENTE_MIN = 15;
 export const PRAZO_MENSAL_MIN = 32 * 24 * 60;
 export const PRAZO_DE_HORA_EM_HORA_MIN = 4 * 60;
+export const PRAZO_SELECAO_MIN = 15 * 60;
+export const PRAZO_AGENDA_DOS_ROBOS_MIN = 2 * 60;
 
 export const SITUACOES = Object.freeze({
   em_dia: Object.freeze({ rotulo: "Em dia", tom: "sucesso", ordem: 4 }),
@@ -60,6 +67,21 @@ const TAREFAS = Object.freeze({
   agsus_eventos_acesso_limpeza_mensal: "Limpeza do registro de acessos",
   agsus_chat_retencao_diaria: "Retenção das mensagens do chat",
   agsus_analises_encerrar_inativas: "Encerrar cargas de análises paradas",
+  agsus_robo_sincronizar_entrevistas: "Agenda: pedir a carga das Entrevistas",
+  agsus_robo_sincronizar_selecao: "Agenda: pedir a carga da Seleção",
+  agsus_robo_conferencias: "Agenda: pedir as conferências",
+  agsus_robo_expurgo_anexos_chat: "Agenda: pedir o expurgo dos anexos do chat",
+  agsus_robo_conferir_disparos: "Agenda: conferir as respostas do GitHub",
+});
+
+/* Os workflows que o banco pede ao GitHub (lista fixa de FC_DISPARAR_ROBO). */
+const NOMES_DOS_WORKFLOWS = Object.freeze({
+  "sincronizar-entrevistas.yml": "Entrevistas",
+  "sincronizar-selecao.yml": "Seleção",
+  "conferencias.yml": "Conferências",
+  "expurgo-anexos-chat.yml": "Expurgo dos anexos do chat",
+  "robo-empregare.yml": "Robô da Empregare",
+  "pre-classificacao.yml": "Pré-classificação",
 });
 
 /* O estado de cada tipo de execução, em ok / falha / andamento. */
@@ -69,6 +91,7 @@ const ESTADOS = Object.freeze({
   robo: { ok: ["CONCLUIDA"], falha: ["FALHOU", "PARCIAL"] },
   conferencia: { ok: ["CONCLUIDA"], falha: ["FALHOU", "PARCIAL"] },
   tarefa: { ok: ["succeeded"], falha: ["failed"] },
+  disparo: { ok: ["ACEITO"], falha: ["FALHOU", "SEM_TOKEN"] },
 });
 
 const texto = (valor) => String(valor ?? "").trim();
@@ -215,6 +238,71 @@ function execucaoDaPreClassificacao(bruta) {
   };
 }
 
+/* Pedido da agenda ao GitHub: o robô e o código HTTP entram na mensagem. */
+function execucaoDoDisparo(bruta) {
+  const workflow = texto(bruta?.workflow);
+  const http = inteiro(bruta?.http);
+  const partes = [NOMES_DOS_WORKFLOWS[workflow] || workflow || "Robô"];
+  if (http !== null) partes.push(`HTTP ${http}`);
+  const mensagem = texto(bruta?.mensagem);
+  if (mensagem) partes.push(mensagem);
+  return { ...bruta, linhas: null, mensagem: partes.join(" · ") };
+}
+
+/*
+  A agenda dos robôs (get_saude_das_cargas.agenda_dos_robos, 20261008140000):
+  sem chave no Vault, falhou; senão, o selo pelos pedidos — o último fechado
+  recusado é falha e, sem pedido aceito há mais de 2 h, atrasada (a conta usa
+  o último aceito do banco, que pode ser anterior aos 20 pedidos da lista).
+*/
+function montarAgenda(bruta, agora) {
+  const carga = montarCarga(
+    {
+      id: "agenda_dos_robos",
+      nome: "Agenda dos robôs",
+      onde: "Banco (pg_cron + pg_net) → GitHub Actions",
+      esperado: "Entrevistas de hora em hora; Seleção às 8h10, 13h10 e 18h10",
+      prazoMin: PRAZO_AGENDA_DOS_ROBOS_MIN,
+      tipo: "disparo",
+      execucoes: (Array.isArray(bruta?.disparos) ? bruta.disparos : []).map(
+        execucaoDoDisparo,
+      ),
+    },
+    agora,
+  );
+  const chaveCadastrada =
+    typeof bruta?.chave_cadastrada === "boolean"
+      ? bruta.chave_cadastrada
+      : null;
+  const ultimoAceito = data(bruta?.ultimo_aceito);
+  const idadeMin = ultimoAceito
+    ? Math.max(
+        0,
+        Math.floor((agora.getTime() - ultimoAceito.getTime()) / MINUTO),
+      )
+    : carga.idadeMin;
+  const ultimaFechada = carga.historico.find((e) => e.situacao !== "andamento");
+  let situacao = carga.situacao;
+  if (chaveCadastrada === false || ultimaFechada?.situacao === "falha")
+    situacao = "falhou";
+  else if (ultimoAceito)
+    situacao = idadeMin > PRAZO_AGENDA_DOS_ROBOS_MIN ? "atrasada" : "em_dia";
+  return {
+    ...carga,
+    situacao,
+    idadeMin,
+    ultimaOk: ultimoAceito
+      ? carga.ultimaOk || { inicio: ultimoAceito, fim: ultimoAceito }
+      : carga.ultimaOk,
+    agenda: {
+      chaveCadastrada,
+      ultimoAceito,
+      falhas24h: inteiro(bruta?.falhas_24h) ?? 0,
+      semChave24h: inteiro(bruta?.sem_chave_24h) ?? 0,
+    },
+  };
+}
+
 function montarCarga(
   { id, nome, onde, esperado, prazoMin, tipo, execucoes },
   agora,
@@ -283,8 +371,8 @@ export function normalizarSaude(dados, agora = new Date()) {
         id: "selecao",
         nome: "Seleção (planilha Auditoria)",
         onde: "GitHub Actions · Sincronizar seleção",
-        esperado: "de hora em hora, o dia todo",
-        prazoMin: PRAZO_DE_HORA_EM_HORA_MIN,
+        esperado: "às 8h10, 13h10 e 18h10",
+        prazoMin: PRAZO_SELECAO_MIN,
         tipo: "planilha",
         execucoes: dados?.selecao,
       },
@@ -361,6 +449,12 @@ export function normalizarSaude(dados, agora = new Date()) {
       ),
     );
 
+  // A agenda só aparece depois da migration 20261008140000 (a chave vem no payload).
+  const agenda =
+    dados?.agenda_dos_robos && typeof dados.agenda_dos_robos === "object"
+      ? [montarAgenda(dados.agenda_dos_robos, agora)]
+      : [];
+
   const tarefasDisponiveis = Array.isArray(dados?.tarefas);
   const tarefas = (tarefasDisponiveis ? dados.tarefas : []).map((t) => {
     const nome = texto(t?.nome);
@@ -394,7 +488,7 @@ export function normalizarSaude(dados, agora = new Date()) {
       id: "planilhas",
       titulo: "Planilhas pelo GitHub Actions",
       descricao:
-        "Entrevistas e Seleção, de hora em hora o dia todo. Rodar agora: o botão de cada uma (ou GitHub → Actions → Run workflow).",
+        "Entrevistas de hora em hora; Seleção às 8h10, 13h10 e 18h10. Rodar agora: o botão de cada uma (ou GitHub → Actions → Run workflow).",
       cargas: planilhas,
     },
     {
@@ -403,6 +497,13 @@ export function normalizarSaude(dados, agora = new Date()) {
       descricao:
         "Candidatos de cada vaga, do Excel exportado da Empregare, quando um administrador pede (Rodar agora); conferências de consistência todo dia às 6h; expurgo dos anexos do chat todo dia às 6h30.",
       cargas: robos,
+    },
+    {
+      id: "agenda",
+      titulo: "Agenda dos robôs",
+      descricao:
+        "O banco pede ao GitHub cada execução agendada dos robôs, na hora certa.",
+      cargas: agenda,
     },
     {
       id: "tarefas",
@@ -524,7 +625,7 @@ export function visaoSimples(saude) {
         titulo: carga.id === "selecao" ? "Seleção" : "Entrevistas",
         explicacao:
           carga.id === "selecao"
-            ? "Atualiza a aba Seleção a partir da planilha Auditoria, de hora em hora o dia todo."
+            ? "Atualiza a aba Seleção a partir da planilha Auditoria, às 8h10, 13h10 e 18h10."
             : "Atualiza a aba Entrevistas a partir da planilha de entrevistados, de hora em hora o dia todo.",
         partes: [carga],
         situacoesQueContam: [carga.situacao],
@@ -562,6 +663,23 @@ export function visaoSimples(saude) {
         situacoesQueContam: [carga.situacao],
       }),
     );
+  }
+
+  for (const carga of porId.agenda?.cargas || []) {
+    const linha = juntar({
+      id: carga.id,
+      titulo: "Agenda dos robôs",
+      explicacao:
+        "O banco pede ao GitHub as cargas agendadas: Entrevistas, Seleção, conferências e expurgo.",
+      partes: [carga],
+      situacoesQueContam: [carga.situacao],
+    });
+    linhas.push({
+      ...linha,
+      ultimaAtualizacao: carga.agenda.ultimoAceito || linha.ultimaAtualizacao,
+      idadeMin: carga.idadeMin,
+      agenda: carga.agenda,
+    });
   }
 
   const tarefas = porId.tarefas;

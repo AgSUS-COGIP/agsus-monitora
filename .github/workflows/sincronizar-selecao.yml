@@ -2,7 +2,9 @@ name: Sincronizar seleção
 
 # Lê a aba Resultado da planilha "Auditoria" (funil da seleção por vaga) com a
 # conta de serviço do Google e grava no Supabase (scripts/sincronizar-selecao.mjs).
-# De hora em hora, o dia todo (o GitHub pode atrasar alguns minutos) e, quando precisar,
+# Às 8h10, 13h10 e 18h10 de Brasília, pedido pelo banco (pg_cron → workflow_dispatch com
+# disparado_por = AGENDA; docs/agenda-dos-robos.md — sem `schedule` aqui, que o GitHub
+# atrasava ou pulava) e, quando precisar,
 # pelo botão "Run workflow" na aba Actions ou pelo "Rodar agora" das
 # Configurações › Status das atualizações (api/rodar-carga.js).
 # Como operar e o que fazer quando falha: docs/sincronizacao-das-planilhas.md.
@@ -14,8 +16,6 @@ name: Sincronizar seleção
 # (os mesmos da sincronização das entrevistas).
 
 on:
-  schedule:
-    - cron: "0 * * * *"
   workflow_dispatch:
     inputs:
       modo:
@@ -27,7 +27,7 @@ on:
           - forcar
         default: normal
       disparado_por:
-        description: "Preenchido pelo MONITORA (Rodar agora, id do usuário); em branco = GitHub"
+        description: "Rodar agora do MONITORA = id do usuário; agenda do banco = AGENDA; em branco = GitHub"
         type: string
         required: false
         default: ""

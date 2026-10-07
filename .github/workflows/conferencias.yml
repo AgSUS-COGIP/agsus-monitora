@@ -7,7 +7,8 @@ name: Conferências de consistência
 # dados de negócio: não muda análise, entrevista, lista nem aprovado.
 #
 # Quando roda:
-#   - todo dia às 6h de Brasília (9h UTC; o GitHub pode atrasar alguns minutos);
+#   - todo dia às 6h de Brasília (9h UTC), pedido pelo banco (pg_cron → workflow_dispatch
+#     com disparado_por = AGENDA; docs/agenda-dos-robos.md; sem `schedule` aqui);
 #   - pelo "Rodar agora" das Configurações › Status das atualizações
 #     (api/rodar-carga.js, só administrador global; disparado_por = id do usuário);
 #   - pelo botão "Run workflow" desta aba Actions.
@@ -23,8 +24,6 @@ name: Conferências de consistência
 #   CONFERENCIA_DIAS_CONVOCADO   dias de "Convocado" sem desfecho até avisar (padrão 15)
 
 on:
-  schedule:
-    - cron: "0 9 * * *"
   workflow_dispatch:
     inputs:
       modo:
@@ -35,7 +34,7 @@ on:
           - seco
         default: normal
       disparado_por:
-        description: "Preenchido pelo MONITORA (Rodar agora, id do usuário); em branco = GitHub"
+        description: "Rodar agora do MONITORA = id do usuário; agenda do banco = AGENDA; em branco = GitHub"
         type: string
         required: false
         default: ""
@@ -73,7 +72,7 @@ jobs:
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
           CONFERENCIA_DIAS_CONVOCADO: ${{ vars.CONFERENCIA_DIAS_CONVOCADO }}
           MODO: ${{ inputs.modo || 'normal' }}
-          DISPARADO_POR: ${{ github.event_name == 'schedule' && 'agenda' || inputs.disparado_por }}
+          DISPARADO_POR: ${{ inputs.disparado_por }}
         run: |
           if [ "$MODO" = "seco" ]; then
             python scripts/conferencias/conferencias.py --seco

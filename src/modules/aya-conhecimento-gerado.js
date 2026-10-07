@@ -4371,10 +4371,35 @@ export const VERBETES_AYA = Object.freeze([
       "cargas de dados",
     ],
     resposta:
-      'As análises curriculares chegam pelo Apps Script das planilhas (o envio incremental é esperado a cada 20 minutos e fica "Atrasada" depois de 1 hora; a carga completa não tem prazo). Seleção e Entrevistas carregam pelo GitHub Actions de hora em hora, o dia todo, e ficam atrasadas depois de 4 horas. O robô da Empregare não tem agenda: roda só quando um administrador clica em "Rodar agora", por isso nunca fica "Atrasado". As tarefas do banco que rodam a cada 2 minutos (como o pacote do painel de análises e o das entrevistas) atrasam depois de 15 minutos; as diárias, depois de 26 horas; as mensais, depois de 32 dias. As conferências de consistência rodam todo dia às 6h de Brasília e ficam atrasadas depois de 26 horas. A pré-classificação da Avaliação documental roda no fim de cada carga do robô da Empregare e no Recalcular da coordenação, sem agenda, por isso também nunca fica "Atrasada". A retenção das mensagens do chat roda todo dia às 3h15 de Brasília, e o expurgo dos anexos do chat (tira do armazenamento os arquivos das mensagens já apagadas) às 6h30, atrasado depois de 26 horas; "Falhou" nele pode ser execução parcial, com arquivos que ficaram na fila para o dia seguinte. Os KPIs dos editais são recalculados no fim de cada carga da Seleção e, de novo, às 10h de Brasília.',
+      'As análises curriculares chegam pelo Apps Script das planilhas (o envio incremental é esperado a cada 20 minutos e fica "Atrasada" depois de 1 hora; a carga completa não tem prazo). Entrevistas carregam pelo GitHub Actions de hora em hora, o dia todo, e ficam atrasadas depois de 4 horas; a Seleção carrega às 8h10, 13h10 e 18h10 de Brasília e fica atrasada depois de 15 horas (a noite sem carga é esperada). Quem marca esses horários é o banco (Agenda dos robôs), não o GitHub. O robô da Empregare não tem agenda: roda só quando um administrador clica em "Rodar agora", por isso nunca fica "Atrasado". As tarefas do banco que rodam a cada 2 minutos (como o pacote do painel de análises e o das entrevistas) atrasam depois de 15 minutos; as diárias, depois de 26 horas; as mensais, depois de 32 dias. As conferências de consistência rodam todo dia às 6h de Brasília e ficam atrasadas depois de 26 horas. A pré-classificação da Avaliação documental roda no fim de cada carga do robô da Empregare e no Recalcular da coordenação, sem agenda, por isso também nunca fica "Atrasada". A retenção das mensagens do chat roda todo dia às 3h15 de Brasília, e o expurgo dos anexos do chat (tira do armazenamento os arquivos das mensagens já apagadas) às 6h30, atrasado depois de 26 horas; "Falhou" nele pode ser execução parcial, com arquivos que ficaram na fila para o dia seguinte. Os KPIs dos editais são recalculados no fim de cada carga da Seleção e, de novo, às 10h de Brasília.',
     fato: "",
     fonte:
-      "src/lib/saude-das-cargas.js; supabase/migrations/20261001120000_saude_das_cargas.sql; supabase/migrations/20261002090000_kpis_depois_da_carga_da_selecao.sql; supabase/migrations/20261002130000_kpis_de_todo_edital_com_fonte.sql; .github/workflows/sincronizar-selecao.yml; .github/workflows/sincronizar-entrevistas.yml; supabase/migrations/20260930235900_kpis_uma_vez_por_dia.sql; .github/workflows/expurgo-anexos-chat.yml",
+      "src/lib/saude-das-cargas.js; supabase/migrations/20261001120000_saude_das_cargas.sql; supabase/migrations/20261002090000_kpis_depois_da_carga_da_selecao.sql; supabase/migrations/20261002130000_kpis_de_todo_edital_com_fonte.sql; .github/workflows/sincronizar-selecao.yml; .github/workflows/sincronizar-entrevistas.yml; supabase/migrations/20260930235900_kpis_uma_vez_por_dia.sql; .github/workflows/expurgo-anexos-chat.yml; docs/agenda-dos-robos.md",
+  },
+  {
+    arquivo: "regras-do-status-das-atualizacoes.md",
+    titulo: "Agenda dos robôs",
+    perguntas: [
+      "agenda dos robos",
+      "o que e a agenda dos robos",
+      "por que o banco agenda os robos",
+      "quem agenda os robos",
+      "robo nao rodou no horario",
+      "github atrasou a carga",
+      "agenda dos robos falhou",
+      "sem chave no vault",
+      "chave dos robos expirou",
+      "token dos robos expirou",
+      "github_disparo_robos",
+      "trocar a chave dos robos",
+      "http 401 na agenda dos robos",
+    ],
+    resposta:
+      'O agendamento do próprio GitHub atrasava ou pulava as cargas (as de hora em hora chegaram a rodar só a cada 5 a 8 horas). Por isso o banco do MONITORA passou a ser o único agendador: na hora marcada, ele pede ao GitHub a execução de Entrevistas (de hora em hora), Seleção (8h10, 13h10 e 18h10), Conferências (6h) e Expurgo dos anexos do chat (6h30). A linha "Agenda dos robôs" do Status das atualizações mostra o último pedido aceito e as falhas das últimas 24 horas. "Sem chave no Vault" quer dizer que falta o token do GitHub no Supabase: nada é pedido e as cargas param de rodar sozinhas. "Falhou" com HTTP 401 quer dizer chave inválida ou expirada (403 ou 404: sem permissão no repositório). Para resolver, gere um novo token fine-grained (Actions: read and write, só o repositório agsus-monitora) e, no Supabase (Integrations › Vault › Secrets), troque o valor do segredo github_disparo_robos, com o mesmo nome. O próximo horário já usa a chave nova; para não esperar, use o "Rodar agora" de cada carga.',
+    fato: "",
+    fonte:
+      "docs/agenda-dos-robos.md; supabase/migrations/20261008140000_agenda_dos_robos_pelo_banco.sql; src/lib/saude-das-cargas.js",
+    abrir: "config:cargas",
   },
   {
     arquivo: "regras-do-status-das-atualizacoes.md",

@@ -16,6 +16,7 @@ import {
 import { getSupabaseClient } from "../../lib/supabaseClient.js";
 import { CartaoDeAvisos } from "../../modulos/conferencias/avisos-de-conferencia.jsx";
 import { Icone } from "../icone.jsx";
+import { AgendaDosRobos } from "./agenda-dos-robos.tsx";
 import { criarEstadoDaSaude } from "./estado.js";
 import { Acompanhamento, UltimasExecucoes } from "./execucoes-dos-robos.jsx";
 import { RodarComOpcoes } from "./rodar-com-opcoes.jsx";
@@ -46,6 +47,10 @@ import { RodarComOpcoes } from "./rodar-com-opcoes.jsx";
   (execucoes-dos-robos.jsx); em "Detalhes", o robô da Empregare e a
   pré-classificação mostram as últimas execuções com os parâmetros e quem
   pediu (get_painel_dos_robos).
+
+  "Agenda dos robôs" (20261008140000): o banco pede ao GitHub as cargas
+  agendadas; a linha mostra o último pedido aceito e as falhas, ou o aviso de
+  chave ausente no Vault (agenda-dos-robos.tsx).
 */
 
 const classes = (...lista) => lista.filter(Boolean).join(" ");
@@ -252,6 +257,7 @@ function Linha({ linha, atual, estado }) {
           ) : null}
         </div>
       </div>
+      {linha.agenda ? <AgendaDosRobos agenda={linha.agenda} /> : null}
       {linha.erro ? (
         <p className="saude-erro" role="note">
           <strong>
