@@ -1,34 +1,44 @@
-import type { KeyboardEvent } from "react";
+import { useEffect, useRef, useState } from "react";
+import type { KeyboardEvent, Ref } from "react";
+import { lerDigitacao } from "../../lib/digitacao-de-notas.ts";
 import { classes } from "../../ui/classes.js";
 
 /*
-  Campos da ficha de notas (ficha.jsx), compactos para caber os avaliadores
-  lado a lado:
+  A célula da matriz de notas (matriz-de-notas.tsx): o campo grande de uma
+  nota, com o fluxo de planilha.
 
-  - CampoDeNota: a nota digitada (o texto, "2" ou "2,5"); ao focar seleciona o
-    que está escrito, para a próxima tecla trocar. `indice` marca a ordem do
-    Enter (data-celula). Quem não lança vê só o número.
-  - BotoesDeNota: as notas da escala em botões (0 a 5, com o nome do nível no
-    título); escolher um preenche o campo em foco da competência e passa ao
-    próximo.
+  - Ao focar, seleciona o que está escrito: a próxima tecla troca a nota.
+  - O que é digitado passa por `lerDigitacao` (src/lib/digitacao-de-notas.ts):
+    nota completa da escala grava e chama `aoAvancar` (a matriz foca a
+    próxima célula); parcial ("1" num 0 a 10) grava e espera; fora da escala
+    não muda a célula e chama `aoRecusar` (a matriz avisa, a célula treme).
+  - Preenchida, pulsa de leve (Web Animations; nada com movimento reduzido).
+  - Em foco, a dica com o nível da nota ("4 · Muito bom") ou a escala.
+  Quem só lê vê o número (`editavel` falso).
 */
 
 export type OpcaoDeNota = { valor: number; rotulo: string; descricao: string };
 
-type PropriedadesDoCampo = {
+export type PropriedadesDaCelula = {
   valor: string;
   rotulo: string;
   editavel: boolean;
+  opcoes: readonly OpcaoDeNota[];
+  /** "0 a 5": a dica da célula vazia. */
+  escala: string;
   desabilitado?: boolean;
   invalida?: boolean;
-  indice?: number;
-  ativo?: boolean;
-  titulo?: string;
-  /** Chave da nota e competência (data-chave, data-competencia): o Enter e os botões acham o campo. */
-  chave?: string;
-  competencia?: string;
-  competenciaIndice?: number;
+  /** A escala tem notas quebradas (3,5): teclado com vírgula no celular. */
+  decimal?: boolean;
+  /** Linha e coluna na matriz (data-linha, data-coluna). */
+  linha: number;
+  coluna: number;
+  /** Chave da nota (data-chave): `competência|avaliador|aspecto`. */
+  chave: string;
+  campo?: Ref<HTMLInputElement>;
   aoMudar: (valor: string) => void;
+  aoAvancar: () => void;
+  aoRecusar: (texto: string) => void;
   aoTeclar: (evento: KeyboardEvent<HTMLInputElement>) => void;
   aoFocar?: () => void;
 };
@@ -36,108 +46,133 @@ type PropriedadesDoCampo = {
 const numeroBR = (valor: string) =>
   valor === "" ? "—" : valor.replace(".", ",");
 
-export function CampoDeNota({
+export const movimentoReduzido = () =>
+  globalThis.matchMedia?.("(prefers-reduced-motion: reduce)").matches === true;
+
+/** Uma animação curta, se o navegador tiver Web Animations e a pessoa não pediu menos movimento. */
+export function animar(
+  elemento: Element | null | undefined,
+  quadros: Keyframe[],
+  duracao = 200,
+) {
+  if (!elemento || movimentoReduzido() || !("animate" in elemento)) return;
+  elemento.animate(quadros, {
+    duration: duracao,
+    easing: "cubic-bezier(0.2, 0, 0, 1)",
+  });
+}
+
+export function nivelDaNota(
+  opcoes: readonly OpcaoDeNota[],
+  valor: string,
+): OpcaoDeNota | undefined {
+  if (valor === "") return undefined;
+  const n = Number(valor.replace(",", "."));
+  return opcoes.find((o) => o.valor === n);
+}
+
+export function CelulaDeNota({
   valor,
   rotulo,
   editavel,
+  opcoes,
+  escala,
   desabilitado = false,
   invalida = false,
-  indice,
-  ativo = false,
-  titulo,
+  decimal = false,
+  linha,
+  coluna,
   chave,
-  competencia,
-  competenciaIndice,
+  campo,
   aoMudar,
+  aoAvancar,
+  aoRecusar,
   aoTeclar,
   aoFocar,
-}: PropriedadesDoCampo) {
+}: PropriedadesDaCelula) {
+  const [focada, setFocada] = useState(false);
+  const caixa = useRef<HTMLSpanElement>(null);
+  const anterior = useRef(valor);
+
+  useEffect(() => {
+    if (anterior.current !== valor && valor !== "")
+      animar(caixa.current, [
+        { transform: "scale(1)" },
+        { transform: "scale(1.07)" },
+        { transform: "scale(1)" },
+      ]);
+    anterior.current = valor;
+  }, [valor]);
+
+  const nivel = nivelDaNota(opcoes, valor);
+  const dica = nivel
+    ? [numeroBR(valor), nivel.rotulo].filter(Boolean).join(" · ")
+    : valor === ""
+      ? escala
+      : "";
+
   if (!editavel)
     return (
       <span
-        className="entrevistas-nota-fixa"
-        aria-label={rotulo}
-        title={titulo || undefined}
+        className="entrevistas-celula entrevistas-celula-fixa"
+        aria-label={`${rotulo}: ${numeroBR(valor)}`}
+        title={nivel?.rotulo || undefined}
+        data-linha={linha}
+        data-coluna={coluna}
       >
         {numeroBR(valor)}
       </span>
     );
   return (
-    <input
-      type="text"
-      inputMode="decimal"
-      autoComplete="off"
-      maxLength={5}
+    <span
+      ref={caixa}
       className={classes(
-        "entrevistas-nota",
+        "entrevistas-celula",
+        valor !== "" && "is-preenchida",
         invalida && "is-invalida",
-        ativo && "is-ativa",
       )}
-      value={valor}
-      aria-label={rotulo}
-      aria-invalid={invalida || undefined}
-      title={titulo || undefined}
-      data-celula={indice}
-      data-chave={chave}
-      data-competencia={competencia}
-      data-competencia-indice={competenciaIndice}
-      disabled={desabilitado}
-      onFocus={(e) => {
-        e.currentTarget.select();
-        aoFocar?.();
-      }}
-      onChange={(e) => aoMudar(e.target.value.replace(/[^\d.,]/g, ""))}
-      onKeyDown={aoTeclar}
-    />
-  );
-}
-
-type PropriedadesDosBotoes = {
-  opcoes: OpcaoDeNota[];
-  atual: string | null;
-  desabilitado?: boolean;
-  rotulo: string;
-  aoEscolher: (valor: number) => void;
-};
-
-export function BotoesDeNota({
-  opcoes,
-  atual,
-  desabilitado = false,
-  rotulo,
-  aoEscolher,
-}: PropriedadesDosBotoes) {
-  return (
-    <div
-      className="entrevistas-botoes-de-nota"
-      role="group"
-      aria-label={rotulo}
     >
-      {opcoes.map((o) => {
-        const escolhida =
-          atual !== null && Number(atual.replace(",", ".")) === o.valor;
-        return (
-          <button
-            key={o.valor}
-            type="button"
-            className={classes(
-              "entrevistas-botao-de-nota",
-              escolhida && "is-escolhida",
-            )}
-            data-nota={o.valor}
-            aria-pressed={escolhida}
-            title={
-              [o.rotulo, o.descricao].filter(Boolean).join(" — ") || undefined
-            }
-            disabled={desabilitado}
-            // Não tira o foco do campo: o botão preenche o campo em foco.
-            onMouseDown={(e) => e.preventDefault()}
-            onClick={() => aoEscolher(o.valor)}
-          >
-            {String(o.valor).replace(".", ",")}
-          </button>
-        );
-      })}
-    </div>
+      <input
+        ref={campo}
+        type="text"
+        inputMode={decimal ? "decimal" : "numeric"}
+        enterKeyHint="next"
+        autoComplete="off"
+        maxLength={5}
+        className="entrevistas-nota"
+        value={valor}
+        aria-label={rotulo}
+        aria-invalid={invalida || undefined}
+        title={nivel?.rotulo || undefined}
+        data-chave={chave}
+        data-linha={linha}
+        data-coluna={coluna}
+        disabled={desabilitado}
+        onFocus={(e) => {
+          e.currentTarget.select();
+          setFocada(true);
+          aoFocar?.();
+        }}
+        onBlur={() => setFocada(false)}
+        onChange={(e) => {
+          const lida = lerDigitacao(
+            e.target.value,
+            opcoes.map((o) => o.valor),
+          );
+          if (lida.estado === "recusada") {
+            aoRecusar(lida.texto);
+            return;
+          }
+          aoMudar(lida.texto);
+          if (lida.estado === "completa") aoAvancar();
+        }}
+        onKeyDown={aoTeclar}
+      />
+      {focada && dica ? (
+        <span className="entrevistas-celula-dica" aria-hidden="true">
+          {dica}
+        </span>
+      ) : null}
+    </span>
   );
 }

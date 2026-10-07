@@ -15,49 +15,80 @@ import {
   podeLancarPor,
   rotuloDoLancamento,
 } from "../../lib/conducao-de-entrevista.js";
+import { textoDaEscala } from "../../lib/digitacao-de-notas.ts";
 import {
+  lerNumero,
+  maximoDaCompetencia,
+  minimoEmPontos,
   notaNaEscala,
   opcoesDaEscala,
   pontuacaoMaxima,
   rotuloDoPeso,
 } from "../../lib/roteiro-de-entrevista.js";
-import { Aviso, classes } from "../../ui/index.js";
-import { BotoesDeNota, CampoDeNota } from "./campo-de-nota.tsx";
-import { numeroBR } from "./partes.jsx";
-import { SeloDoParecer } from "./tabela.jsx";
+import { Aviso, classes, Segmentado } from "../../ui/index.js";
+import { Popover } from "../../ui/popover.tsx";
+import { AbasDaFicha } from "./abas-da-ficha.tsx";
+import { CabecalhoDaFicha } from "./cabecalho-da-ficha.tsx";
+import { nivelDaNota } from "./campo-de-nota.tsx";
+import { MatrizDeNotas } from "./matriz-de-notas.tsx";
+import { numeroBR, ResultadoDaFicha } from "./resultado-da-ficha.tsx";
 
 /*
   Ficha de notas de um convocado, em MODO DE ANÁLISE: ocupa a área de conteúdo
-  (só o menu lateral do sistema fica), no padrão da ficha da Avaliação
-  documental — topo preso (voltar, candidato, dados, anterior/próximo),
-  competências à esquerda, a prévia do parecer numa lateral fixa e a barra de
-  ações presa embaixo (acima do menu inferior no celular).
+  (só o menu lateral do sistema fica), no desenho da ficha da Avaliação
+  documental — cabeçalho enxuto e preso (cabecalho-da-ficha.tsx), a matriz
+  de notas à esquerda, o resultado vivo numa lateral (resultado-da-ficha.tsx)
+  e um rodapé mínimo preso embaixo (acima do menu inferior no celular).
 
   Componente independente: recebe o payload do edital (`dados`: roteiro,
   banca, permissões), o convocado, a lista para anterior/próximo
   (`convocados`) e as ações (`aoSalvar`, `aoAbrir`, `aoFechar`); não depende
   da tela em volta.
 
-  Por competência, os avaliadores lado a lado, cada um com o campo da nota (ou
-  um por aspecto, quando o roteiro tem aspectos, e a média dele ao lado). Os
-  botões da escala preenchem o campo em foco da competência e passam ao
-  próximo. A prévia (calcularEntrevista, as mesmas regras do banco) muda de
-  cor na hora; depois de salvar vale o que o banco devolveu. Cores das
-  situações: as da Avaliação documental (verde, vermelho, amarelo, cinza).
+  O lançamento normal é a secretaria passando a limpo a folha de cada
+  avaliador: o modo padrão é POR AVALIADOR — uma aba por avaliador e, nela,
+  a matriz competências × aspectos (ou uma coluna "Nota" sem aspectos), com
+  o fluxo de planilha da matriz-de-notas.tsx. Completo um avaliador, a ficha
+  passa sozinha ao próximo (o check aparece na aba); com todos completos, o
+  foco vai ao botão principal. "Por competência" (para lançar ao vivo) troca
+  as abas pelas competências e as linhas pelos avaliadores; a escolha fica no
+  navegador (só conveniência). Digitar a primeira nota marca "Compareceu" se
+  o comparecimento ainda não foi informado. Com "Faltou", a matriz some e
+  fica a confirmação com o efeito no parecer.
 
-  Lançamento "Cada avaliador lança a sua": só a coluna do membro ligado ao
-  perfil fica aberta (o administrador global lança por todos).
+  A prévia (calcularEntrevista, as mesmas regras do banco) muda na hora;
+  depois de salvar vale o que o banco devolveu.
 
-  Teclado: Enter passa ao próximo campo; Ctrl+Enter salva; Esc volta à lista.
-  Celular: uma competência por vez (abas numeradas).
+  Lançamento "Cada avaliador lança a sua": só as notas do membro ligado ao
+  perfil ficam abertas (o administrador global lança por todos).
+
+  Teclado: dígitos lançam e avançam; Enter/setas andam; Ctrl+Enter salva;
+  Esc volta à lista. Celular: um avaliador por vez, uma competência por
+  linha com as células grandes e o teclado numérico.
 */
 
-const COMPARECIMENTO = [
-  { valor: "S", rotulo: "Compareceu", icone: "fa-user-check" },
-  { valor: "N", rotulo: "Faltou", icone: "fa-user-xmark" },
+const CHAVE_DO_MODO = "monitora.entrevistas.ficha-de-notas.modo";
+const MODOS = [
+  { valor: "avaliador", rotulo: "Por avaliador" },
+  { valor: "competencia", rotulo: "Por competência" },
 ];
 
-const TOM_DO_PARECER = { APTO: "ok", INAPTO: "reprova" };
+function lerModo() {
+  try {
+    return globalThis.localStorage?.getItem(CHAVE_DO_MODO) === "competencia"
+      ? "competencia"
+      : "avaliador";
+  } catch {
+    return "avaliador";
+  }
+}
+function guardarModo(modo) {
+  try {
+    globalThis.localStorage?.setItem(CHAVE_DO_MODO, modo);
+  } catch {
+    /* sem armazenamento: vale só nesta abertura */
+  }
+}
 
 function estadoInicial(dados, convocado, aspectos) {
   const bancas = bancasDoEdital(dados.avaliadores);
@@ -70,147 +101,69 @@ function estadoInicial(dados, convocado, aspectos) {
   };
 }
 
-/* A situação da competência para a cor do cartão (as da Avaliação documental). */
-function situacaoDaCompetencia(linha, incompleta) {
-  if (!linha || linha.quantidade === 0)
-    return incompleta ? "parcial" : "pendente";
-  if (linha.abaixoDoMinimo || linha.eliminatoria) return "reprova";
-  return incompleta ? "parcial" : "ok";
+const vazio = (valor) => (valor ?? "") === "";
+const horaCurta = (data) =>
+  data.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+
+/*
+  Os motivos do parecer para a lateral, curtos: com falta, só o da falta (as
+  competências sem nota não importam); várias competências sem nota viram
+  uma frase só.
+*/
+function motivosCurtos(motivos, compareceu) {
+  if (compareceu === "N") return motivos.slice(0, 1);
+  const semNota = motivos.filter((m) => m.startsWith("Sem nota em "));
+  if (semNota.length < 2) return motivos;
+  const primeiro = motivos.indexOf(semNota[0]);
+  const resto = motivos.filter((m) => !semNota.includes(m));
+  resto.splice(primeiro, 0, `Sem nota em ${semNota.length} competências.`);
+  return resto;
 }
 
-/* Média dos aspectos de um avaliador numa competência, com o que está digitado. */
-function mediaDoAvaliador(mapa, aspectos, competencia, avaliador) {
-  return mediaDosAspectos(
-    aspectos,
-    Object.fromEntries(
-      aspectos.map((x) => [
-        x.id,
-        mapa[chaveDaNota(competencia, avaliador, x.id)],
-      ]),
-    ),
-  );
-}
-
-/* "Conceitua" → "Conc." (o nome inteiro fica no título e na legenda da competência). */
-const abreviar = (nome) => (nome.length <= 5 ? nome : `${nome.slice(0, 4)}.`);
-
-function Comparecimento({ valor, desabilitado, aoMudar }) {
+function LegendaDaEscala({ niveis, destaque }) {
+  if (!niveis.length) return null;
   return (
-    <div
-      className="entrevistas-comparecimento"
-      role="radiogroup"
-      aria-label="Comparecimento"
-      data-tour="entrevistas-ficha-comparecimento"
-    >
-      {COMPARECIMENTO.map((o) => (
-        <button
-          key={o.valor}
-          type="button"
-          role="radio"
-          aria-checked={valor === o.valor}
-          data-valor={o.valor}
-          className={classes(
-            "entrevistas-comparecimento-opcao",
-            valor === o.valor && "is-escolhida",
-          )}
-          disabled={desabilitado}
-          onClick={() => aoMudar(o.valor)}
-        >
-          <i className={`fa-solid ${o.icone}`} aria-hidden="true" /> {o.rotulo}
-        </button>
-      ))}
-    </div>
-  );
-}
-
-function LegendaDosNiveis({ roteiro }) {
-  if (roteiro?.escala !== "NIVEIS" || !roteiro.niveis?.length) return null;
-  return (
-    <details className="ui-card entrevistas-legenda" open>
-      <summary>Níveis da escala</summary>
-      <ul>
-        {roteiro.niveis.map((n) => (
-          <li key={n.nota} title={n.descricao || undefined}>
-            <b>{numeroBR(n.nota)}</b> {n.nome}
-          </li>
-        ))}
-      </ul>
-    </details>
-  );
-}
-
-function Lateral({
-  resultado,
-  motivos,
-  maxima,
-  competencias,
-  roteiro,
-  progresso,
-}) {
-  const tom = TOM_DO_PARECER[resultado.parecer] || "neutro";
-  return (
-    <aside
-      className="entrevistas-analise-lateral"
-      aria-label="Prévia do resultado"
-      data-tour="entrevistas-ficha-previa"
-    >
-      <div
-        className="ui-card entrevistas-previa"
-        data-tom={tom}
-        aria-live="polite"
-      >
-        <span className="entrevistas-previa-rotulo">Prévia do parecer</span>
+    <p className="entrevistas-legenda" aria-label="Níveis da escala">
+      {niveis.map((n) => (
         <span
-          id="entrevistasFichaParecer"
-          className="entrevistas-previa-parecer"
+          key={n.valor}
+          className={classes(destaque === n.valor && "is-destaque")}
+          title={n.descricao || undefined}
         >
-          <SeloDoParecer parecer={resultado.parecer} />
+          <b>{numeroBR(n.valor)}</b> {n.rotulo}
         </span>
-        <div className="entrevistas-previa-total">
-          <strong id="entrevistasFichaTotal">
-            {numeroBR(resultado.total)}
-            <small> / {numeroBR(maxima)}</small>
-          </strong>
-          {resultado.minimoTotal !== null ? (
-            <span
-              className={classes(
-                "entrevistas-previa-minimo",
-                resultado.abaixoDoMinimoTotal && "is-abaixo",
-              )}
-            >
-              mínimo {numeroBR(resultado.minimoTotal)}
-            </span>
-          ) : null}
-        </div>
-        <ul className="entrevistas-previa-competencias">
-          {competencias.map((c, i) => {
-            const linha = resultado.competencias.find((x) => x.id === c.id);
-            return (
-              <li
-                key={c.id}
-                data-situacao={situacaoDaCompetencia(linha, false)}
-              >
-                <span>
-                  {i + 1}. {c.nome}
-                </span>
-                <b>{numeroBR(linha?.nota)}</b>
-              </li>
-            );
-          })}
-        </ul>
-        {motivos.length ? (
-          <ul className="entrevistas-previa-motivos">
-            {motivos.map((m) => (
-              <li key={m}>{m}</li>
-            ))}
-          </ul>
-        ) : null}
-        <small className="ui-texto-secundario">
-          {progresso.lancadas} de {progresso.esperadas} notas de avaliador
-        </small>
-      </div>
-      <LegendaDosNiveis roteiro={roteiro} />
-    </aside>
+      ))}
+    </p>
+  );
+}
+
+function Atalhos() {
+  const linhas = [
+    ["0–5", "lança e passa à próxima"],
+    ["Enter · setas", "andam pela matriz"],
+    ["Tab · Shift+Tab", "próxima · anterior"],
+    ["Backspace", "apaga; vazia, volta"],
+    ["Ctrl+Enter", "salva"],
+    ["Esc", "volta à lista"],
+  ];
+  return (
+    <Popover
+      rotulo="Atalhos do teclado"
+      gatilho="?"
+      className="entrevistas-popover-acima"
+      acao="atalhos-da-ficha"
+    >
+      <dl className="entrevistas-atalhos">
+        {linhas.map(([tecla, efeito]) => (
+          <div key={tecla}>
+            <dt>
+              <kbd>{tecla}</kbd>
+            </dt>
+            <dd>{efeito}</dd>
+          </div>
+        ))}
+      </dl>
+    </Popover>
   );
 }
 
@@ -227,9 +180,13 @@ export function FichaDoCandidato({
   const aspectos = useMemo(() => aspectosDoRoteiro(roteiro), [roteiro]);
   const [f, setF] = useState(() => estadoInicial(dados, convocado, aspectos));
   const [erro, setErro] = useState("");
-  const [ativo, setAtivo] = useState(null);
-  const [aba, setAba] = useState(0);
-  const raiz = useRef(null);
+  const [modo, setModo] = useState(lerModo);
+  const [aba, setAba] = useState(null);
+  const [emFoco, setEmFoco] = useState(null);
+  const [salvoEm, setSalvoEm] = useState(null);
+  const [pedidoDeAvanco, setPedidoDeAvanco] = useState(0);
+  const [focarNaAba, setFocarNaAba] = useState(null);
+  const principal = useRef(null);
 
   /* O payload novo (depois de salvar ou recarregar) é a verdade: a ficha recomeça dele. */
   useEffect(() => {
@@ -257,15 +214,24 @@ export function FichaDoCandidato({
       }),
     [roteiro, f.compareceu, f.mapa, aspectos],
   );
-  const motivos = motivosDoParecer(resultado, f.compareceu, roteiro);
+  const motivos = motivosCurtos(
+    motivosDoParecer(resultado, f.compareceu, roteiro),
+    f.compareceu,
+  );
   const alteradas = notasAlteradas(f.original, f.mapa, aspectos);
+  // Para o rodapé: as células mudadas (com aspectos, uma nota do banco são vários aspectos).
+  const celulasAlteradas = [
+    ...new Set([...Object.keys(f.original), ...Object.keys(f.mapa)]),
+  ].filter(
+    (chave) => lerNumero(f.original[chave]) !== lerNumero(f.mapa[chave]),
+  ).length;
   const incompletas = aspectosIncompletos(f.mapa, aspectos);
   const mudouComparecimento =
     f.compareceu && f.compareceu !== (convocado.compareceu || null);
   const mudouBanca =
     f.banca !== null && Number(f.banca) !== Number(convocado.banca ?? NaN);
   const invalidas = Object.entries(f.mapa).filter(([chave, valor]) => {
-    if (valor === "" || valor === undefined) return false;
+    if (vazio(valor)) return false;
     const competencia = competencias.find((c) => c.id === chave.split("|")[0]);
     return competencia && !notaNaEscala(roteiro, competencia, valor);
   }).length;
@@ -277,22 +243,199 @@ export function FichaDoCandidato({
   const maxima = pontuacaoMaxima(competencias);
   const modoAvaliador = dados.configuracao?.lancamento === "AVALIADOR";
   const sujo = alteradas.length > 0 || mudouComparecimento || mudouBanca;
-  const progresso = {
-    lancadas: competencias.reduce(
-      (soma, c) =>
-        soma +
-        avaliadores.filter((a) =>
-          aspectos.length
-            ? mediaDoAvaliador(f.mapa, aspectos, c.id, a.id) !== null
-            : (f.mapa[chaveDaNota(c.id, a.id)] ?? "") !== "",
-        ).length,
-      0,
-    ),
-    esperadas: competencias.length * avaliadores.length,
-  };
+  const faltou = f.compareceu === "N";
+  const mostrarBanca =
+    bancas.length > 1 ||
+    (convocado.banca !== null &&
+      convocado.banca !== undefined &&
+      !bancas.includes(Number(convocado.banca)));
+
+  /* As células de uma competência × avaliador (uma por aspecto, ou uma só). */
+  const chavesDe = (c, a) =>
+    aspectos.length
+      ? aspectos.map((x) => ({
+          chave: chaveDaNota(c.id, a.id, x.id),
+          nome: x.nome,
+        }))
+      : [{ chave: chaveDaNota(c.id, a.id), nome: "" }];
+  const valida = (c, chave) =>
+    !vazio(f.mapa[chave]) && notaNaEscala(roteiro, c, f.mapa[chave]);
+  const escalaDe = useMemo(() => {
+    const porMaximo = new Map();
+    return (c) => {
+      const chave = String(c.nota_maxima);
+      if (!porMaximo.has(chave)) {
+        const opcoes = opcoesDaEscala(roteiro, c.nota_maxima);
+        porMaximo.set(chave, {
+          opcoes,
+          escala: textoDaEscala(opcoes.map((o) => o.valor)),
+          decimal: opcoes.some((o) => !Number.isInteger(o.valor)),
+        });
+      }
+      return porMaximo.get(chave);
+    };
+  }, [roteiro]);
+
+  const contar = (pares) => ({
+    preenchidas: pares.filter(([c, chave]) => valida(c, chave)).length,
+    total: pares.length,
+  });
+  const paresDoAvaliador = (a) =>
+    competencias.flatMap((c) => chavesDe(c, a).map((x) => [c, x.chave]));
+  const paresDaCompetencia = (c) =>
+    avaliadores.flatMap((a) => chavesDe(c, a).map((x) => [c, x.chave]));
+  const progresso = contar(avaliadores.flatMap(paresDoAvaliador));
+
+  const abas =
+    modo === "avaliador"
+      ? avaliadores.map((a) => ({
+          id: a.id,
+          titulo: a.nome,
+          detalhe: [a.origem, a.ativo === false ? "saiu da banca" : ""]
+            .filter(Boolean)
+            .join(" · "),
+          ...contar(paresDoAvaliador(a)),
+          pendente: incompletas.some((x) => x.avaliador === a.id),
+          editavel: podeLancarPor(dados, a),
+        }))
+      : competencias.map((c, i) => ({
+          id: c.id,
+          titulo: `${i + 1}. ${c.nome}`,
+          ...contar(paresDaCompetencia(c)),
+          pendente: incompletas.some((x) => x.competencia === c.id),
+          editavel: avaliadores.some((a) => podeLancarPor(dados, a)),
+        }));
+  const abaPadrao =
+    abas.find((x) => x.editavel && x.preenchidas < x.total) ||
+    abas.find((x) => x.editavel) ||
+    abas[0];
+  const ativa = abas.find((x) => x.id === aba) || abaPadrao || null;
+  /* A aba padrão fica fixa ao abrir (e ao trocar o modo): completar não a troca por baixo. */
+  const abriu = useRef(false);
+  useEffect(() => {
+    if (ativa && ativa.id !== aba) setAba(ativa.id);
+    // Ao abrir (com teclado), o foco já vai para a primeira célula vazia.
+    if (ativa && !abriu.current) {
+      abriu.current = true;
+      if (globalThis.matchMedia?.("(pointer: coarse)").matches !== true)
+        setFocarNaAba(ativa.id);
+    }
+  }, [ativa?.id, aba]);
+  const abasRef = useRef(abas);
+  abasRef.current = abas;
+
+  /* Fim da matriz: com a aba completa, passa à próxima incompleta (ou ao botão principal). */
+  useEffect(() => {
+    if (!pedidoDeAvanco) return undefined;
+    const atuais = abasRef.current;
+    const i = atuais.findIndex((x) => x.id === ativa?.id);
+    const atual = atuais[i];
+    if (!atual || atual.preenchidas < atual.total) return undefined;
+    const falta = (x) => x.editavel && x.preenchidas < x.total;
+    const seguinte =
+      atuais.slice(i + 1).find(falta) || atuais.slice(0, i).find(falta);
+    const t = setTimeout(() => {
+      if (seguinte) {
+        setFocarNaAba(seguinte.id);
+        setAba(seguinte.id);
+      } else principal.current?.focus();
+    }, 380);
+    return () => clearTimeout(t);
+    // Só a cada pedido: o resto é lido no momento.
+  }, [pedidoDeAvanco]);
+
+  const linhas = !ativa
+    ? []
+    : modo === "avaliador"
+      ? competencias.map((c, i) => {
+          const a = avaliadores.find((x) => x.id === ativa.id);
+          return linhaDaMatriz({
+            id: c.id,
+            titulo: `${i + 1}. ${c.nome}`,
+            detalhe: detalheDaCompetencia(c),
+            descricao: c.descricao || undefined,
+            c,
+            a,
+          });
+        })
+      : avaliadores.map((a) => {
+          const c = competencias.find((x) => x.id === ativa.id);
+          return linhaDaMatriz({
+            id: a.id,
+            titulo: a.nome,
+            detalhe: [a.origem, a.ativo === false ? "saiu da banca" : ""]
+              .filter(Boolean)
+              .join(" · "),
+            c,
+            a,
+          });
+        });
+
+  function detalheDaCompetencia(c) {
+    const minimo = minimoEmPontos(c);
+    const peso = rotuloDoPeso(c.peso);
+    return [
+      minimo !== null ? `mín. ${numeroBR(minimo)}` : "",
+      peso ? `peso ${peso}` : "",
+      c.avaliacao === "GRUPO" ? "em grupo" : "",
+    ]
+      .filter(Boolean)
+      .join(" · ");
+  }
+
+  function linhaDaMatriz({ id, titulo, detalhe, descricao, c, a }) {
+    const editavel = podeLancarPor(dados, a);
+    const campos = chavesDe(c, a);
+    const media = aspectos.length
+      ? mediaDosAspectos(
+          aspectos,
+          Object.fromEntries(
+            aspectos.map((x) => [x.id, f.mapa[chaveDaNota(c.id, a.id, x.id)]]),
+          ),
+        )
+      : null;
+    const minimo = minimoEmPontos(c);
+    const peso = lerNumero(c.peso) ?? 1;
+    return {
+      id,
+      titulo,
+      detalhe,
+      descricao,
+      ...escalaDe(c),
+      media,
+      abaixoDoMinimo:
+        media !== null && minimo !== null && media * peso < minimo,
+      incompleta: incompletas.some(
+        (x) => x.competencia === c.id && x.avaliador === a.id,
+      ),
+      celulas: campos.map((campo) => {
+        const valor = f.mapa[campo.chave] ?? "";
+        return {
+          chave: campo.chave,
+          valor,
+          rotulo: `Nota de ${a.nome} em ${c.nome}${campo.nome ? ` · ${campo.nome}` : ""}`,
+          editavel,
+          invalida:
+            valor !== "" &&
+            !valor.endsWith(",") &&
+            !notaNaEscala(roteiro, c, valor),
+        };
+      }),
+    };
+  }
 
   const mudarNota = (chave, valor) =>
-    setF((atual) => ({ ...atual, mapa: { ...atual.mapa, [chave]: valor } }));
+    setF((atual) => ({
+      ...atual,
+      compareceu: atual.compareceu || (vazio(valor) ? null : "S"),
+      mapa: { ...atual.mapa, [chave]: valor },
+    }));
+
+  function trocarModo(novo) {
+    setModo(novo);
+    setAba(null);
+    guardarModo(novo);
+  }
 
   function podeSair() {
     if (!sujo) return true;
@@ -325,9 +468,10 @@ export function FichaDoCandidato({
       setErro("Há notas fora da escala do roteiro; corrija antes de salvar.");
       return;
     }
-    if (incompletas.length) {
+    if (incompletas.length && !faltou) {
       const c = competencias.find((x) => x.id === incompletas[0].competencia);
       const a = avaliadores.find((x) => x.id === incompletas[0].avaliador);
+      setAba(modo === "avaliador" ? a?.id : c?.id);
       setErro(
         `Complete os ${aspectos.length} aspectos de ${a?.nome || "um avaliador"} em “${c?.nome || ""}” (ou apague todos).`,
       );
@@ -348,153 +492,101 @@ export function FichaDoCandidato({
       setErro(resposta.erro);
       return;
     }
+    setSalvoEm(new Date());
     if (abrirProximo && proximo) aoAbrir(proximo.id);
   }
 
-  const celulas = () => [
-    ...(raiz.current?.querySelectorAll("[data-celula]") || []),
-  ];
-  function focarDepois(atual) {
-    const todas = celulas();
-    const seguinte = todas[todas.indexOf(atual) + 1];
-    if (!seguinte) return;
-    const indice = Number(seguinte.dataset.competenciaIndice);
-    if (Number.isInteger(indice) && indice !== aba) {
-      setAba(indice);
-      setTimeout(() => seguinte.focus(), 0);
-    } else seguinte.focus();
-  }
-
-  /* Enter: próximo campo; Ctrl+Enter: salva. */
-  function aoTeclar(evento) {
-    if (evento.key !== "Enter") return;
-    evento.preventDefault();
-    if (evento.ctrlKey || evento.metaKey) {
-      void salvar();
-      return;
-    }
-    focarDepois(evento.currentTarget);
-  }
-
-  /* Botão de nota: preenche o campo em foco da competência (ou o primeiro vazio) e passa ao próximo. */
-  function escolherNota(competencia, valor) {
-    const daCompetencia = celulas().filter(
-      (c) => c.dataset.competencia === competencia,
-    );
-    const campo =
-      (ativo?.competencia === competencia &&
-        daCompetencia.find((c) => c.dataset.chave === ativo.chave)) ||
-      daCompetencia.find((c) => (f.mapa[c.dataset.chave] ?? "") === "") ||
-      daCompetencia[0];
-    if (!campo) return;
-    mudarNota(campo.dataset.chave, String(valor));
-    focarDepois(campo);
-  }
-
-  let indiceDaCelula = 0;
+  const niveis =
+    roteiro?.escala === "NIVEIS" && competencias[0]
+      ? escalaDe(competencias[0]).opcoes.filter((o) => o.rotulo)
+      : [];
+  const valorEmFoco = emFoco ? f.mapa[emFoco] : undefined;
+  const destaque =
+    valorEmFoco !== undefined && valorEmFoco !== ""
+      ? nivelDaNota(niveis, valorEmFoco)?.valor
+      : undefined;
+  const competenciaAtiva =
+    modo === "competencia" && ativa
+      ? resultado.competencias.find((x) => x.id === ativa.id)
+      : null;
+  // Parecer definitivo só com tudo lançado; antes, a lateral é uma prévia neutra.
+  const faltamNotas = progresso.total - progresso.preenchidas;
+  const pendencia = faltou
+    ? ""
+    : faltamNotas > 0
+      ? faltamNotas === 1
+        ? "falta 1 nota"
+        : `faltam ${faltamNotas} notas`
+      : f.compareceu !== "S"
+        ? "falta o comparecimento"
+        : "";
+  const tom = pendencia
+    ? "neutro"
+    : resultado.parecer === "APTO"
+      ? "ok"
+      : resultado.parecer === "INAPTO"
+        ? "reprova"
+        : "neutro";
+  const estadoDaGravacao = salvando
+    ? { tom: "salvando", texto: "Salvando…" }
+    : sujo
+      ? {
+          tom: "pendente",
+          texto: celulasAlteradas
+            ? `${celulasAlteradas} ${celulasAlteradas === 1 ? "nota alterada" : "notas alteradas"}, sem salvar`
+            : "Alterações sem salvar",
+        }
+      : salvoEm
+        ? { tom: "salvo", texto: `Salvo às ${horaCurta(salvoEm)}` }
+        : { tom: "salvo", texto: "Sem alterações" };
 
   return (
     <section
       className="entrevistas-analise"
       id="entrevistasFichaDoCandidato"
-      ref={raiz}
       aria-labelledby="entrevistasFichaTitulo"
       data-tour="entrevistas-ficha"
     >
-      <header
-        className="entrevistas-analise-topo"
-        data-tour="entrevistas-ficha-topo"
-      >
-        <button
-          type="button"
-          className="btn secondary small"
-          data-acao="voltar-a-lista"
-          onClick={voltar}
-        >
-          <i className="fa-solid fa-arrow-left" aria-hidden="true" /> Voltar à
-          lista
-        </button>
-        <div className="entrevistas-analise-identidade">
-          <span className="ui-texto-secundario">
-            {[
-              convocado.vaga && `Vaga ${convocado.vaga}`,
-              nomeDoCargo(convocado.cargo),
-            ]
-              .filter(Boolean)
-              .join(" · ") || "Ficha de notas"}
-          </span>
-          <h2 id="entrevistasFichaTitulo">
-            {convocado.candidato}
-            {convocado.codigo ? <span> · cód. {convocado.codigo}</span> : null}
-          </h2>
-        </div>
-        <dl
-          className="entrevistas-analise-dados"
-          aria-label="Dados do convocado"
-        >
-          <div>
-            <dt>Modalidade</dt>
-            <dd>{convocado.modalidade || "—"}</dd>
-          </div>
-          <div>
-            <dt>Nota da análise</dt>
-            <dd>{numeroBR(convocado.nota_analise)}</dd>
-          </div>
-          <div>
-            <dt>Gravado</dt>
-            <dd>
-              {numeroBR(convocado.nota)}{" "}
-              <SeloDoParecer parecer={convocado.parecer} />
-            </dd>
-          </div>
-          <div>
-            <dt>Roteiro</dt>
-            <dd title={roteiro?.nome || undefined}>
-              {roteiro ? `v${roteiro.versao}` : "—"}
-              {aspectos.length ? ` · ${aspectos.length} aspectos` : ""}
-            </dd>
-          </div>
-          <div>
-            <dt>Lançamento</dt>
-            <dd>{rotuloDoLancamento(dados.configuracao?.lancamento)}</dd>
-          </div>
-        </dl>
-        <nav className="entrevistas-analise-navegacao" aria-label="Convocados">
-          <button
-            type="button"
-            className="btn secondary small"
-            data-acao="ficha-anterior"
-            disabled={!anterior || salvando}
-            title={anterior?.candidato}
-            onClick={() => ir(anterior)}
-          >
-            <i className="fa-solid fa-chevron-left" aria-hidden="true" />{" "}
-            Anterior
-          </button>
-          {posicao >= 0 ? (
-            <span className="ui-texto-secundario">
-              {posicao + 1} de {lista.length}
-            </span>
-          ) : null}
-          <button
-            type="button"
-            className="btn secondary small"
-            data-acao="ficha-proxima"
-            disabled={!proximo || salvando}
-            title={proximo?.candidato}
-            onClick={() => ir(proximo)}
-          >
-            Próximo{" "}
-            <i className="fa-solid fa-chevron-right" aria-hidden="true" />
-          </button>
-        </nav>
-      </header>
+      <CabecalhoDaFicha
+        candidato={convocado.candidato}
+        codigo={convocado.codigo}
+        vaga={convocado.vaga}
+        cargo={nomeDoCargo(convocado.cargo)}
+        modalidade={convocado.modalidade}
+        notaDaAnalise={convocado.nota_analise}
+        roteiro={roteiro}
+        aspectos={aspectos.length}
+        lancamento={rotuloDoLancamento(dados.configuracao?.lancamento)}
+        gravado={{ nota: convocado.nota ?? null, parecer: convocado.parecer }}
+        compareceu={f.compareceu}
+        podeEditar={Boolean(dados.pode_editar)}
+        salvando={salvando}
+        aoMudarComparecimento={(compareceu) =>
+          setF((atual) => ({ ...atual, compareceu }))
+        }
+        bancas={bancas}
+        banca={f.banca}
+        mostrarBanca={mostrarBanca}
+        aoMudarBanca={(banca) => setF((atual) => ({ ...atual, banca }))}
+        posicao={posicao}
+        total={lista.length}
+        anterior={anterior}
+        proximo={proximo}
+        aoAnterior={() => ir(anterior)}
+        aoProximo={() => ir(proximo)}
+        aoVoltar={voltar}
+      />
 
       <form
         className="entrevistas-analise-formulario"
         onSubmit={(e) => {
           e.preventDefault();
           void salvar();
+        }}
+        onKeyDown={(e) => {
+          if (e.key !== "Enter" || !(e.ctrlKey || e.metaKey)) return;
+          e.preventDefault();
+          if (dados.pode_editar && !salvando) void salvar();
         }}
       >
         <div className="entrevistas-analise-grade">
@@ -504,252 +596,94 @@ export function FichaDoCandidato({
                 Configure a entrevista do edital antes de lançar notas.
               </Aviso>
             ) : null}
-            <div className="ui-card entrevistas-ficha-topo">
-              <Comparecimento
-                valor={f.compareceu}
-                desabilitado={!dados.pode_editar || salvando}
-                aoMudar={(compareceu) =>
-                  setF((atual) => ({ ...atual, compareceu }))
-                }
-              />
-              {bancas.length > 1 ||
-              (convocado.banca !== null && convocado.banca !== undefined) ? (
-                <label className="entrevistas-ficha-banca">
-                  <span>Banca</span>
-                  <select
-                    id="entrevistasFichaBanca"
-                    value={f.banca ?? ""}
-                    disabled={!dados.pode_editar || salvando}
-                    onChange={(e) =>
-                      setF((atual) => ({
-                        ...atual,
-                        banca:
-                          e.target.value === "" ? null : Number(e.target.value),
-                      }))
-                    }
-                  >
-                    <option value="">Todas</option>
-                    {bancas.map((b) => (
-                      <option key={b} value={b}>
-                        Banca {b}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-              ) : null}
-            </div>
 
-            {modoAvaliador && dados.pode_editar && !dados.admin_global ? (
-              <Aviso tom="info">
-                Você só edita a sua coluna.
-                {algumEditavel
-                  ? ""
-                  : " Nenhum membro desta banca está ligado ao seu perfil."}
-              </Aviso>
+            {roteiro && faltou ? (
+              <div className="entrevistas-falta" role="status">
+                <i className="fa-solid fa-user-xmark" aria-hidden="true" />
+                <div>
+                  <strong>Faltou à entrevista</strong>
+                  <p>
+                    {roteiro.ausencia_elimina !== false
+                      ? "A ausência elimina neste roteiro: parecer Inapto, total 0."
+                      : "Neste roteiro a ausência não elimina; o total fica 0."}
+                  </p>
+                </div>
+              </div>
             ) : null}
 
-            {roteiro && avaliadores.length ? (
-              <>
-                <nav
-                  className="entrevistas-competencias-abas"
-                  aria-label="Competências"
+            {roteiro && !faltou && avaliadores.length ? (
+              <div className="entrevistas-folha">
+                <div className="entrevistas-folha-topo">
+                  <AbasDaFicha
+                    rotulo={
+                      modo === "avaliador" ? "Avaliadores" : "Competências"
+                    }
+                    abas={abas}
+                    ativa={ativa?.id || ""}
+                    idDoPainel="entrevistasFichaPainel"
+                    modo={modo}
+                    aoEscolher={(id) => {
+                      setFocarNaAba(null);
+                      setAba(id);
+                    }}
+                  />
+                  <Segmentado
+                    rotulo="Lançar"
+                    className="entrevistas-modo-da-ficha"
+                    tour="entrevistas-ficha-modo"
+                    opcoes={MODOS}
+                    valor={modo}
+                    aoMudar={trocarModo}
+                  />
+                </div>
+                {modoAvaliador && dados.pode_editar && !dados.admin_global ? (
+                  <p className="entrevistas-folha-nota">
+                    Você lança só as suas notas.
+                    {algumEditavel
+                      ? ""
+                      : " Nenhum membro desta banca está ligado ao seu perfil."}
+                  </p>
+                ) : null}
+                <div
+                  id="entrevistasFichaPainel"
+                  role="tabpanel"
+                  className="entrevistas-folha-corpo"
                 >
-                  {competencias.map((c, i) => {
-                    const linha = resultado.competencias.find(
-                      (x) => x.id === c.id,
-                    );
-                    return (
-                      <button
-                        key={c.id}
-                        type="button"
-                        aria-pressed={aba === i}
-                        aria-label={`Competência ${i + 1}: ${c.nome}`}
-                        data-situacao={situacaoDaCompetencia(linha, false)}
-                        onClick={() => setAba(i)}
-                      >
-                        {i + 1}
-                        <small>{numeroBR(linha?.nota)}</small>
-                      </button>
-                    );
-                  })}
-                </nav>
-                {competencias.map((c, indiceDaCompetencia) => {
-                  const linha = resultado.competencias.find(
-                    (x) => x.id === c.id,
-                  );
-                  const peso = rotuloDoPeso(c.peso);
-                  const opcoes = opcoesDaEscala(roteiro, c.nota_maxima);
-                  const incompleta = incompletas.some(
-                    (x) => x.competencia === c.id,
-                  );
-                  const valorAtivo =
-                    ativo?.competencia === c.id
-                      ? (f.mapa[ativo.chave] ?? "")
-                      : null;
-                  return (
-                    <section
-                      key={c.id}
-                      className="ui-card entrevistas-ficha-competencia"
-                      data-competencia={c.ordem}
-                      data-situacao={situacaoDaCompetencia(linha, incompleta)}
-                      data-aba={
-                        aba === indiceDaCompetencia ? "ativa" : undefined
-                      }
-                      aria-labelledby={`entrevistasCompetencia-${c.id}`}
-                    >
-                      <header className="entrevistas-ficha-competencia-topo">
-                        <div>
-                          <h3
-                            id={`entrevistasCompetencia-${c.id}`}
-                            title={c.descricao || undefined}
-                          >
-                            {indiceDaCompetencia + 1}. {c.nome}
-                          </h3>
-                          <small>
-                            0 a {numeroBR(c.nota_maxima)}
-                            {peso ? ` · peso ${peso}` : ""}
-                            {c.avaliacao === "GRUPO" ? " · em grupo" : ""}
-                            {linha?.minimo !== null &&
-                            linha?.minimo !== undefined
-                              ? ` · mín. ${numeroBR(linha.minimo)}`
-                              : ""}
-                          </small>
-                          {aspectos.length ? (
-                            <small className="entrevistas-ficha-aspectos">
-                              Por avaliador:{" "}
-                              {aspectos.map((x) => x.nome).join(" · ")} (média)
-                            </small>
-                          ) : null}
-                        </div>
-                        <div className="entrevistas-ficha-competencia-nota">
-                          <span>
-                            Média da banca <b>{numeroBR(linha?.media)}</b>
-                          </span>
-                          <strong>{numeroBR(linha?.nota)}</strong>
-                          {linha?.abaixoDoMinimo ? (
-                            <small>abaixo do mínimo</small>
-                          ) : null}
-                          {linha?.eliminatoria ? (
-                            <small>eliminatória</small>
-                          ) : null}
-                        </div>
-                      </header>
-                      {algumEditavel && opcoes.length && opcoes.length <= 11 ? (
-                        <BotoesDeNota
-                          opcoes={opcoes}
-                          atual={valorAtivo}
-                          desabilitado={salvando}
-                          rotulo={`Notas de ${c.nome}`}
-                          aoEscolher={(valor) => escolherNota(c.id, valor)}
-                        />
-                      ) : null}
-                      <div
-                        className="entrevistas-ficha-avaliadores"
-                        data-aspectos={aspectos.length || undefined}
-                      >
-                        {avaliadores.map((a) => {
-                          const editavel = podeLancarPor(dados, a);
-                          const campos = aspectos.length
-                            ? aspectos.map((x) => ({
-                                chave: chaveDaNota(c.id, a.id, x.id),
-                                nome: x.nome,
-                              }))
-                            : [{ chave: chaveDaNota(c.id, a.id), nome: "" }];
-                          const media = aspectos.length
-                            ? mediaDoAvaliador(f.mapa, aspectos, c.id, a.id)
-                            : null;
-                          const faltando = incompletas.some(
-                            (x) =>
-                              x.competencia === c.id && x.avaliador === a.id,
-                          );
-                          return (
-                            <div
-                              key={a.id}
-                              className={classes(
-                                "entrevistas-ficha-avaliador",
-                                editavel && "is-editavel",
-                                faltando && "is-incompleto",
-                              )}
-                            >
-                              <div className="entrevistas-ficha-avaliador-nome">
-                                <b>{a.nome}</b>
-                                <small>
-                                  {a.origem}
-                                  {a.ativo === false ? " · saiu da banca" : ""}
-                                </small>
-                                {aspectos.length ? (
-                                  <span
-                                    className="entrevistas-ficha-media"
-                                    title="Média dos aspectos: a nota do avaliador"
-                                  >
-                                    ={" "}
-                                    {media === null
-                                      ? "—"
-                                      : numeroBR(Math.round(media * 100) / 100)}
-                                  </span>
-                                ) : null}
-                              </div>
-                              <div className="entrevistas-ficha-campos">
-                                {campos.map((campo) => {
-                                  const valor = f.mapa[campo.chave] ?? "";
-                                  const invalida =
-                                    valor !== "" &&
-                                    !notaNaEscala(roteiro, c, valor);
-                                  const escolhida = opcoes.find(
-                                    (o) =>
-                                      String(o.valor) ===
-                                      String(valor).replace(",", "."),
-                                  );
-                                  const indice = editavel
-                                    ? indiceDaCelula++
-                                    : undefined;
-                                  return (
-                                    <label
-                                      key={campo.chave}
-                                      className="entrevistas-ficha-campo"
-                                    >
-                                      {campo.nome ? (
-                                        <span title={campo.nome}>
-                                          {abreviar(campo.nome)}
-                                        </span>
-                                      ) : null}
-                                      <CampoDeNota
-                                        valor={valor}
-                                        rotulo={`Nota de ${a.nome} em ${c.nome}${campo.nome ? ` · ${campo.nome}` : ""}`}
-                                        editavel={editavel}
-                                        desabilitado={salvando}
-                                        invalida={invalida}
-                                        indice={indice}
-                                        ativo={ativo?.chave === campo.chave}
-                                        titulo={escolhida?.rotulo || undefined}
-                                        chave={campo.chave}
-                                        competencia={c.id}
-                                        competenciaIndice={indiceDaCompetencia}
-                                        aoMudar={(v) =>
-                                          mudarNota(campo.chave, v)
-                                        }
-                                        aoTeclar={aoTeclar}
-                                        aoFocar={() => {
-                                          setAtivo({
-                                            competencia: c.id,
-                                            chave: campo.chave,
-                                          });
-                                          setAba(indiceDaCompetencia);
-                                        }}
-                                      />
-                                    </label>
-                                  );
-                                })}
-                              </div>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </section>
-                  );
-                })}
-              </>
-            ) : roteiro ? (
+                  {competenciaAtiva ? (
+                    <div className="entrevistas-folha-titulo">
+                      <h3>{ativa.titulo}</h3>
+                      <p className="entrevistas-folha-resumo">
+                        {[
+                          detalheDaCompetencia(
+                            competencias.find((c) => c.id === ativa.id),
+                          ),
+                          `média da banca ${numeroBR(competenciaAtiva.media)}`,
+                        ]
+                          .filter(Boolean)
+                          .join(" · ")}
+                      </p>
+                    </div>
+                  ) : null}
+                  <MatrizDeNotas
+                    key={`${modo}:${ativa?.id}:${f.banca}`}
+                    rotulo={`Notas · ${ativa?.titulo || ""}`}
+                    colunas={
+                      aspectos.length
+                        ? aspectos.map((x) => ({ id: x.id, nome: x.nome }))
+                        : [{ id: "nota", nome: "Nota" }]
+                    }
+                    linhas={linhas}
+                    mostrarMedia={aspectos.length > 0}
+                    desabilitado={salvando}
+                    focarAoMontar={Boolean(ativa) && focarNaAba === ativa.id}
+                    aoMudar={mudarNota}
+                    aoFim={() => setPedidoDeAvanco((n) => n + 1)}
+                    aoFocar={setEmFoco}
+                  />
+                  <LegendaDaEscala niveis={niveis} destaque={destaque} />
+                </div>
+              </div>
+            ) : roteiro && !faltou ? (
               <Aviso tom="warning">
                 Nenhum membro na banca {f.banca ?? ""}. Cadastre a banca na
                 configuração.
@@ -757,56 +691,77 @@ export function FichaDoCandidato({
             ) : null}
           </div>
           {roteiro ? (
-            <Lateral
-              resultado={resultado}
-              motivos={motivos}
+            <ResultadoDaFicha
+              parecer={resultado.parecer}
+              total={resultado.total}
               maxima={maxima}
-              competencias={competencias}
-              roteiro={roteiro}
-              progresso={progresso}
+              minimoTotal={resultado.minimoTotal}
+              abaixoDoMinimoTotal={resultado.abaixoDoMinimoTotal}
+              competencias={competencias.map((c) => {
+                const linha = resultado.competencias.find((x) => x.id === c.id);
+                return {
+                  id: c.id,
+                  nome: c.nome,
+                  nota: linha?.nota ?? null,
+                  maximo: maximoDaCompetencia(c) ?? 0,
+                  minimo: linha?.minimo ?? null,
+                  abaixoDoMinimo: Boolean(linha?.abaixoDoMinimo),
+                  eliminatoria: Boolean(linha?.eliminatoria),
+                };
+              })}
+              motivos={motivos}
+              lancadas={progresso.preenchidas}
+              esperadas={progresso.total}
+              faltou={faltou}
+              pendencia={pendencia}
             />
           ) : null}
         </div>
 
-        <div className="ui-gaveta-rodape entrevistas-analise-barra">
-          <span className="entrevistas-rodape-resumo">
-            {alteradas.length
-              ? `${alteradas.length} ${alteradas.length === 1 ? "nota alterada" : "notas alteradas"}`
-              : "Sem alterações nas notas"}
-            {dados.pode_editar ? " · Enter avança, Ctrl+Enter salva" : ""}
-          </span>
-          {erro ? (
-            <span className="entrevistas-analise-erro" role="alert">
-              {erro}
+        {dados.pode_editar && roteiro ? (
+          <div className="entrevistas-analise-barra">
+            <span
+              className="entrevistas-gravacao"
+              data-estado={estadoDaGravacao.tom}
+              role="status"
+            >
+              {estadoDaGravacao.texto}
             </span>
-          ) : null}
-          <button
-            type="button"
-            className="btn secondary"
-            data-acao="fechar-ficha"
-            onClick={voltar}
-          >
-            Voltar
-          </button>
-          {dados.pode_editar && roteiro ? (
-            <>
-              {proximo ? (
-                <button
-                  type="button"
-                  className="btn secondary"
-                  disabled={salvando}
-                  onClick={() => void salvar({ abrirProximo: true })}
-                >
-                  Salvar e abrir o próximo
-                </button>
-              ) : null}
-              <button type="submit" className="btn" disabled={salvando}>
-                <i className="fa-solid fa-floppy-disk" aria-hidden="true" />{" "}
-                {salvando ? "Salvando…" : "Salvar notas"}
+            <span className="entrevistas-rodape-resultado" data-tom={tom}>
+              {numeroBR(resultado.total)} / {numeroBR(maxima)}
+            </span>
+            {erro ? (
+              <span className="entrevistas-analise-erro" role="alert">
+                {erro}
+              </span>
+            ) : null}
+            <Atalhos />
+            <button
+              type="submit"
+              ref={proximo ? undefined : principal}
+              className={proximo ? "btn secondary" : "btn"}
+              disabled={salvando}
+            >
+              {salvando ? "Salvando…" : "Salvar"}
+            </button>
+            {proximo ? (
+              <button
+                type="button"
+                ref={principal}
+                className="btn"
+                disabled={salvando}
+                onClick={() => void salvar({ abrirProximo: true })}
+              >
+                <span>
+                  Salvar e{" "}
+                  <span className="entrevistas-so-largo">abrir o </span>
+                  próximo
+                </span>
+                <i className="fa-solid fa-arrow-right" aria-hidden="true" />
               </button>
-            </>
-          ) : null}
-        </div>
+            ) : null}
+          </div>
+        ) : null}
       </form>
     </section>
   );

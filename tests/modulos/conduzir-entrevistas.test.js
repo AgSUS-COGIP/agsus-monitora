@@ -76,6 +76,7 @@ beforeEach(() => {
   redefinirDadosDoMonitoramento();
   definirAreaAtual("saude-indigena");
   guardado = memoria();
+  localStorage.clear();
 });
 
 afterEach(async () => {
@@ -316,6 +317,19 @@ async function abrirAFicha(id = "e1") {
   await clicar(document.querySelector(`[data-convocado="${id}"]`));
   return document.getElementById("entrevistasFichaDoCandidato");
 }
+
+/* A ficha: as células editáveis, as colunas da matriz, a aba escolhida. */
+const notas = (ficha) => [...ficha.querySelectorAll("input.entrevistas-nota")];
+const colunas = (ficha) =>
+  [...ficha.querySelectorAll(".entrevistas-matriz-coluna")].map(
+    (c) => c.textContent,
+  );
+const abaAtiva = () =>
+  document.querySelector('[role="tab"][aria-selected="true"]')?.textContent ||
+  "";
+/* A troca automática de avaliador espera o check aparecer (380 ms). */
+const esperarAvanco = () =>
+  esperar(() => new Promise((resolver) => setTimeout(resolver, 450)));
 
 /* ── A tela: visões, edital, fila do dia ───────────────────────────── */
 
@@ -999,28 +1013,68 @@ describe("Preparar, roteiros e ficha", () => {
     await montar(supabase);
     await abrirEdital();
     const ficha = await abrirAFicha();
-    const celulas = ficha.querySelectorAll("input.entrevistas-nota");
-    expect(celulas).toHaveLength(4);
-    // Os botões da escala trazem o nome do nível no título.
-    expect(
-      ficha.querySelector('.entrevistas-botao-de-nota[data-nota="3"]').title,
-    ).toBe("Nível 3 — Parâmetro 3");
+    // Por avaliador (padrão): a aba da Ana, uma coluna "Nota", uma linha por competência.
+    expect(abaAtiva()).toContain("Ana");
+    expect(colunas(ficha)).toEqual(["Nota"]);
+    let celulas = notas(ficha);
+    expect(celulas).toHaveLength(2);
+    // Legenda da escala numa linha.
+    expect(ficha.querySelector(".entrevistas-legenda").textContent).toContain(
+      "3 Nível 3",
+    );
     await clicar(
       ficha.querySelector('.entrevistas-comparecimento button[data-valor="S"]'),
     );
     for (const celula of celulas) await digitar(celula, "3");
+    // Ana completa: a aba ganha o check e a ficha passa sozinha ao Beto.
+    await esperarAvanco();
+    expect(abaAtiva()).toContain("Beto");
+    expect(
+      ficha.querySelector('[data-aba="a1"] .entrevistas-aba-da-ficha-check'),
+    ).not.toBeNull();
+    // Faltam as notas do Beto: a lateral é só uma prévia, em tom neutro.
+    const cartao = () => ficha.querySelector(".entrevistas-parecer");
+    expect(cartao().dataset.tom).toBe("neutro");
+    expect(cartao().dataset.previa).toBe("sim");
+    expect(cartao().textContent).toBe("PréviaApto · faltam 2 notas");
+    celulas = notas(ficha);
+    for (const celula of celulas) await digitar(celula, "3");
+    // Tudo lançado: o parecer fica definitivo, na cor dele.
+    expect(cartao().dataset.tom).toBe("ok");
+    expect(cartao().dataset.previa).toBeUndefined();
+    expect(cartao().textContent).toBe("ParecerApto");
     expect(
       document.getElementById("entrevistasFichaTotal").textContent,
     ).toContain("6");
     expect(document.getElementById("entrevistasFichaParecer").textContent).toBe(
       "Apto",
     );
+    expect(ficha.querySelector(".entrevistas-progresso").textContent).toContain(
+      "4 de 4 notas",
+    );
+    // Por competência: a aba de "Políticas públicas", os dois avaliadores nas linhas.
+    await clicar(
+      ficha.querySelector(
+        '.entrevistas-modo-da-ficha [data-valor="competencia"]',
+      ),
+    );
+    expect(abaAtiva()).toContain("Políticas públicas");
+    celulas = notas(ficha);
+    expect(celulas.map((c) => c.getAttribute("aria-label"))).toEqual([
+      "Nota de Ana em Políticas públicas",
+      "Nota de Beto em Políticas públicas",
+    ]);
     await digitar(celulas[0], "1");
     await digitar(celulas[1], "1");
     expect(document.getElementById("entrevistasFichaParecer").textContent).toBe(
       "Inapto",
     );
     expect(ficha.textContent).toContain("é eliminatória");
+    expect(
+      ficha.querySelector(
+        '.entrevistas-notas-da-banca li[data-situacao="abaixo"]',
+      ),
+    ).not.toBeNull();
 
     await clicar(ficha.querySelector('button[type="submit"]'));
     await esperar();
@@ -1042,22 +1096,70 @@ describe("Preparar, roteiros e ficha", () => {
     expect(aoMudarResultados).toHaveBeenCalledTimes(1);
   });
 
-  it("ficha pelo teclado: Enter avança para a próxima nota, Ctrl+Enter salva", async () => {
+  it("ficha pelo teclado: o dígito lança e avança, Enter anda, Ctrl+Enter salva", async () => {
     const supabase = supabaseDaConducao();
     await montar(supabase);
     await abrirEdital();
     const ficha = await abrirAFicha();
-    const celulas = ficha.querySelectorAll("input.entrevistas-nota");
-    celulas[0].focus();
+    const celulas = notas(ficha);
+    // Ao abrir, o foco já está na primeira célula vazia.
+    expect(document.activeElement).toBe(celulas[0]);
     await digitar(celulas[0], "4");
+    expect(document.activeElement).toBe(celulas[1]);
+    // Digitar a primeira nota marca "Compareceu".
+    expect(
+      ficha
+        .querySelector('.entrevistas-comparecimento button[data-valor="S"]')
+        .getAttribute("aria-checked"),
+    ).toBe("true");
+    await teclar(celulas[1], "ArrowUp");
+    expect(document.activeElement).toBe(celulas[0]);
     await teclar(celulas[0], "Enter");
     expect(document.activeElement).toBe(celulas[1]);
     await teclar(celulas[1], "Enter", { ctrlKey: true });
     await esperar();
     const [[, argumentos]] = chamadas(supabase, "lancar_notas_entrevista");
-    expect(argumentos.p_dados.notas).toEqual([
-      { competencia: "c1", avaliador: "a1", nota: 4 },
-    ]);
+    expect(argumentos.p_dados).toEqual({
+      notas: [{ competencia: "c1", avaliador: "a1", nota: 4 }],
+      compareceu: "S",
+      banca: 1,
+    });
+  });
+
+  it("Faltou: a matriz some e fica a confirmação com o efeito no parecer", async () => {
+    const supabase = supabaseDaConducao();
+    await montar(supabase);
+    await abrirEdital();
+    const ficha = await abrirAFicha();
+    await clicar(
+      ficha.querySelector('.entrevistas-comparecimento button[data-valor="N"]'),
+    );
+    expect(notas(ficha)).toHaveLength(0);
+    expect(ficha.querySelector(".entrevistas-matriz")).toBeNull();
+    expect(ficha.querySelector(".entrevistas-falta").textContent).toContain(
+      "A ausência elimina neste roteiro: parecer Inapto, total 0.",
+    );
+    expect(document.getElementById("entrevistasFichaParecer").textContent).toBe(
+      "Inapto",
+    );
+    expect(document.getElementById("entrevistasFichaTotal").textContent).toBe(
+      "0",
+    );
+    // Só o motivo da falta (não as competências sem nota).
+    expect(
+      [...ficha.querySelectorAll(".entrevistas-resultado-motivos li")].map(
+        (li) => li.textContent,
+      ),
+    ).toEqual(["Faltou: a ausência elimina neste roteiro."]);
+    await clicar(ficha.querySelector('button[type="submit"]'));
+    await esperar();
+    expect(chamadas(supabase, "lancar_notas_entrevista")[0][1].p_dados).toEqual(
+      {
+        notas: [],
+        compareceu: "N",
+        banca: 1,
+      },
+    );
   });
 
   it("enquanto as notas são gravadas, a ficha (em tela cheia, sem o resto da condução) não aceita digitação", async () => {
@@ -1112,7 +1214,7 @@ describe("Preparar, roteiros e ficha", () => {
     expect(naTela("Roteiros indisponíveis")).toBe(true);
   });
 
-  it("modo AVALIADOR: só a coluna do avaliador ligado ao perfil fica aberta", async () => {
+  it("modo AVALIADOR: só as notas do avaliador ligado ao perfil ficam abertas", async () => {
     const edital = {
       ...EDITAL,
       configuracao: { ...EDITAL.configuracao, lancamento: "AVALIADOR" },
@@ -1120,12 +1222,16 @@ describe("Preparar, roteiros e ficha", () => {
     await montar(supabaseDaConducao({ edital }));
     await abrirEdital();
     const ficha = await abrirAFicha();
-    const celulas = [...ficha.querySelectorAll("input.entrevistas-nota")];
+    expect(abaAtiva()).toContain("Ana");
+    const celulas = notas(ficha);
     expect(celulas).toHaveLength(2);
     expect(
       celulas.every((c) => c.getAttribute("aria-label").includes("Ana")),
     ).toBe(true);
-    expect(ficha.textContent).toContain("Você só edita a sua coluna.");
+    expect(ficha.textContent).toContain("Você lança só as suas notas.");
+    await clicar(ficha.querySelector('[role="tab"][data-aba="a2"]'));
+    expect(notas(ficha)).toHaveLength(0);
+    expect(ficha.querySelectorAll(".entrevistas-celula-fixa")).toHaveLength(2);
   });
 
   it("administrador global: mostra todos e libera edital fora da janela", async () => {
@@ -1247,26 +1353,33 @@ describe("aspectos da entrevista (roteiro com Conceitua · Propriedade · Profun
     return abrirAFicha();
   }
 
-  it("3 campos por avaliador, média ao lado, e grava todos os aspectos", async () => {
+  it("matriz competências × aspectos por avaliador, média da linha no chip, e grava todos os aspectos", async () => {
     const supabase = supabaseDaConducao({ edital: editalComAspectos() });
     const ficha = await abrirFicha(supabase);
-    const campos = [...ficha.querySelectorAll("input.entrevistas-nota")];
-    // 2 competências × 2 avaliadores × 3 aspectos.
-    expect(campos).toHaveLength(12);
+    expect(colunas(ficha)).toEqual([
+      "Conceitua",
+      "Propriedade",
+      "Profundidade",
+      "Média",
+    ]);
+    let campos = notas(ficha);
+    // Ana: 2 competências × 3 aspectos.
+    expect(campos).toHaveLength(6);
     expect(campos.slice(0, 3).map((c) => c.value)).toEqual(["2", "1", "1"]);
-    expect(ficha.querySelector(".entrevistas-ficha-media").textContent).toBe(
-      "= 1,33",
-    );
+    const chip = () => ficha.querySelector(".entrevistas-matriz-media");
+    expect(chip().textContent).toBe("1,33");
+    expect(chip().dataset.situacao).toBe("abaixo");
     // Beto em c1: 3 aspectos (2, 2, 3) → 2,33; a média da banca 1,83 fica abaixo do mínimo.
-    await digitar(campos[3], "2");
-    await digitar(campos[4], "2");
-    await digitar(campos[5], "3");
+    await clicar(ficha.querySelector('[role="tab"][data-aba="a2"]'));
+    campos = notas(ficha);
+    await digitar(campos[0], "2");
+    await digitar(campos[1], "2");
+    await digitar(campos[2], "3");
+    expect(chip().textContent).toBe("2,33");
+    expect(chip().dataset.situacao).toBe("ok");
     expect(
-      ficha.querySelectorAll(".entrevistas-ficha-media")[1].textContent,
-    ).toBe("= 2,33");
-    expect(ficha.querySelector('[data-competencia="1"]').dataset.situacao).toBe(
-      "reprova",
-    );
+      ficha.querySelector(".entrevistas-notas-da-banca li").dataset.situacao,
+    ).toBe("abaixo");
     await clicar(
       ficha.querySelector('.entrevistas-comparecimento button[data-valor="S"]'),
     );
@@ -1286,18 +1399,21 @@ describe("aspectos da entrevista (roteiro com Conceitua · Propriedade · Profun
     ]);
   });
 
-  it("aspecto faltando não salva e avisa; apagar todos manda aspectos nulo", async () => {
+  it("aspecto faltando não salva, avisa e abre a aba; apagar todos manda aspectos nulo", async () => {
     const supabase = supabaseDaConducao({ edital: editalComAspectos() });
     const ficha = await abrirFicha(supabase);
-    const campos = [...ficha.querySelectorAll("input.entrevistas-nota")];
-    await digitar(campos[3], "4");
+    await clicar(ficha.querySelector('[role="tab"][data-aba="a2"]'));
+    await digitar(notas(ficha)[0], "4");
+    await clicar(ficha.querySelector('[role="tab"][data-aba="a1"]'));
     await clicar(ficha.querySelector('button[type="submit"]'));
     expect(ficha.textContent).toContain(
       "Complete os 3 aspectos de Beto em “Políticas públicas”",
     );
+    expect(abaAtiva()).toContain("Beto");
     expect(chamadas(supabase, "lancar_notas_entrevista")).toHaveLength(0);
-    await digitar(campos[3], "");
-    for (const campo of campos.slice(0, 3)) await digitar(campo, "");
+    await digitar(notas(ficha)[0], "");
+    await clicar(ficha.querySelector('[role="tab"][data-aba="a1"]'));
+    for (const campo of notas(ficha).slice(0, 3)) await digitar(campo, "");
     await clicar(ficha.querySelector('button[type="submit"]'));
     await esperar();
     const [[, argumentos]] = chamadas(supabase, "lancar_notas_entrevista");
@@ -1306,19 +1422,64 @@ describe("aspectos da entrevista (roteiro com Conceitua · Propriedade · Profun
     ]);
   });
 
-  it("os botões da escala preenchem o campo em foco e passam ao próximo", async () => {
+  it("fluxo de digitação: avança, recusa fora da escala, Backspace volta e passa ao próximo avaliador", async () => {
     const ficha = await abrirFicha(
       supabaseDaConducao({ edital: editalComAspectos() }),
     );
-    const campos = [...ficha.querySelectorAll("input.entrevistas-nota")];
+    let campos = notas(ficha);
     await act(async () => campos[3].focus());
-    await clicar(
-      ficha.querySelector(
-        '[data-competencia="1"] .entrevistas-botao-de-nota[data-nota="5"]',
-      ),
-    );
+    await digitar(campos[3], "5");
     expect(campos[3].value).toBe("5");
     expect(document.activeElement).toBe(campos[4]);
+    // Fora da escala: a célula não muda, o foco fica e o aviso aparece.
+    await digitar(campos[4], "7");
+    expect(campos[4].value).toBe("");
+    expect(document.activeElement).toBe(campos[4]);
+    expect(ficha.querySelector(".entrevistas-matriz-aviso").textContent).toBe(
+      "“7” não está na escala (0 a 5).",
+    );
+    // Backspace na célula vazia volta à anterior.
+    await teclar(campos[4], "Backspace");
+    expect(document.activeElement).toBe(campos[3]);
+    await teclar(campos[3], "ArrowRight");
+    await digitar(campos[4], "4");
+    await digitar(campos[5], "3");
+    // Ana completa: check na aba e a ficha passa sozinha ao Beto, na primeira célula vazia.
+    await esperarAvanco();
+    expect(
+      ficha.querySelector('[data-aba="a1"] .entrevistas-aba-da-ficha-check'),
+    ).not.toBeNull();
+    expect(abaAtiva()).toContain("Beto");
+    campos = notas(ficha);
+    expect(document.activeElement).toBe(campos[0]);
+    expect(campos[0].getAttribute("aria-label")).toBe(
+      "Nota de Beto em Políticas públicas · Conceitua",
+    );
+    // Seta para baixo: a mesma coluna da competência seguinte.
+    await teclar(campos[0], "ArrowDown");
+    expect(document.activeElement).toBe(campos[3]);
+  });
+
+  it("Por competência fica lembrado no navegador", async () => {
+    const ficha = await abrirFicha(
+      supabaseDaConducao({ edital: editalComAspectos() }),
+    );
+    await clicar(
+      ficha.querySelector(
+        '.entrevistas-modo-da-ficha [data-valor="competencia"]',
+      ),
+    );
+    expect(abaAtiva()).toContain("Políticas públicas");
+    // Linhas = avaliadores (Ana e Beto) × 3 aspectos.
+    expect(notas(ficha)).toHaveLength(6);
+    await clicar(ficha.querySelector('[data-acao="voltar-a-lista"]'));
+    const outra = await abrirAFicha();
+    expect(abaAtiva()).toContain("Políticas públicas");
+    expect(
+      outra
+        .querySelector('.entrevistas-modo-da-ficha [data-valor="competencia"]')
+        .getAttribute("aria-checked"),
+    ).toBe("true");
   });
 
   it("Voltar à fila sai do modo de análise e o topo volta", async () => {

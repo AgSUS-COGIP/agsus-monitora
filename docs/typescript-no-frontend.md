@@ -14,7 +14,8 @@ saúde das cargas, agenda, histórico, acompanhamento, formulário de opções, 
 `src/lib/saude-das-cargas.ts` e `src/lib/painel-dos-robos.ts`. A validação das opções em
 `src/lib/robos-de-carga.js` continua compartilhada com a Avaliação documental, com contratos JSDoc.
 Em Entrevistas, as peças novas do Painel e de Conduzir (`andamento.tsx`, `conduzir.tsx`,
-`fila-do-dia.tsx`, `tipos.ts`, `src/lib/painel-de-entrevistas.ts` e `src/lib/fila-de-conducao.ts`)
+`fila-do-dia.tsx`, as peças da ficha de notas — cabeçalho, abas, matriz, célula, resultado —, `tipos.ts`,
+`src/lib/painel-de-entrevistas.ts`, `src/lib/fila-de-conducao.ts` e `src/lib/digitacao-de-notas.ts`)
 já nascem em TypeScript. Os mapas
 continuam em JavaScript, com contratos JSDoc na integração com a tela. Outros módulos
 combinam JavaScript/JSX com migrações pontuais para TypeScript: a ficha da Avaliação documental
