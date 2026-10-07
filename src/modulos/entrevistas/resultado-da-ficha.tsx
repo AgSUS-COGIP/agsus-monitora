@@ -37,6 +37,12 @@ export type PropriedadesDoResultado = {
   lancadas: number;
   esperadas: number;
   faltou: boolean;
+  /**
+   * O que ainda falta para o parecer ser definitivo ("faltam 9 notas", "falta
+   * o comparecimento"); vazio = tudo lançado. Com falta, o cartão fica neutro
+   * e diz "Prévia" — o cálculo é o mesmo, só a apresentação muda.
+   */
+  pendencia: string;
 };
 
 const ROTULO = {
@@ -130,9 +136,15 @@ export function ResultadoDaFicha({
   lancadas,
   esperadas,
   faltou,
+  pendencia,
 }: PropriedadesDoResultado) {
-  const tom =
-    parecer === "APTO" ? "ok" : parecer === "INAPTO" ? "reprova" : "neutro";
+  const tom = pendencia
+    ? "neutro"
+    : parecer === "APTO"
+      ? "ok"
+      : parecer === "INAPTO"
+        ? "reprova"
+        : "neutro";
   const numero = useRef<HTMLElement>(null);
   const anterior = useRef(total);
   useEffect(() => {
@@ -179,6 +191,7 @@ export function ResultadoDaFicha({
       <div
         className="entrevistas-parecer"
         data-tom={tom}
+        data-previa={pendencia ? "sim" : undefined}
         aria-live="polite"
         data-tour="entrevistas-ficha-parecer"
       >
@@ -187,9 +200,19 @@ export function ResultadoDaFicha({
           aria-hidden="true"
         />
         <div>
-          <span className="entrevistas-parecer-rotulo">Parecer</span>
-          <strong id="entrevistasFichaParecer">
-            {ROTULO[parecer] || ROTULO.SEM_PARECER}
+          <span className="entrevistas-parecer-rotulo">
+            {pendencia ? "Prévia" : "Parecer"}
+          </span>
+          <strong>
+            <span id="entrevistasFichaParecer">
+              {ROTULO[parecer] || ROTULO.SEM_PARECER}
+            </span>
+            {pendencia ? (
+              <small className="entrevistas-parecer-falta">
+                {" "}
+                · {pendencia}
+              </small>
+            ) : null}
           </strong>
         </div>
       </div>

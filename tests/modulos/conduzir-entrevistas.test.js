@@ -1032,8 +1032,17 @@ describe("Preparar, roteiros e ficha", () => {
     expect(
       ficha.querySelector('[data-aba="a1"] .entrevistas-aba-da-ficha-check'),
     ).not.toBeNull();
+    // Faltam as notas do Beto: a lateral é só uma prévia, em tom neutro.
+    const cartao = () => ficha.querySelector(".entrevistas-parecer");
+    expect(cartao().dataset.tom).toBe("neutro");
+    expect(cartao().dataset.previa).toBe("sim");
+    expect(cartao().textContent).toBe("PréviaApto · faltam 2 notas");
     celulas = notas(ficha);
     for (const celula of celulas) await digitar(celula, "3");
+    // Tudo lançado: o parecer fica definitivo, na cor dele.
+    expect(cartao().dataset.tom).toBe("ok");
+    expect(cartao().dataset.previa).toBeUndefined();
+    expect(cartao().textContent).toBe("ParecerApto");
     expect(
       document.getElementById("entrevistasFichaTotal").textContent,
     ).toContain("6");

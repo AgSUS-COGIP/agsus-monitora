@@ -1218,6 +1218,11 @@ table.entrevistas-tabela {
   font-weight: var(--font-weight-semibold);
   line-height: var(--leading-h3);
 }
+.entrevistas-parecer-falta {
+  color: var(--text-secondary);
+  font-size: var(--text-body-sm);
+  font-weight: var(--font-weight-medium);
+}
 .entrevistas-parecer[data-tom="ok"] {
   background: var(--state-success-soft);
   color: var(--state-success);

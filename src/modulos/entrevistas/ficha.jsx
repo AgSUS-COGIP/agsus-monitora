@@ -509,8 +509,20 @@ export function FichaDoCandidato({
     modo === "competencia" && ativa
       ? resultado.competencias.find((x) => x.id === ativa.id)
       : null;
-  const tom =
-    resultado.parecer === "APTO"
+  // Parecer definitivo só com tudo lançado; antes, a lateral é uma prévia neutra.
+  const faltamNotas = progresso.total - progresso.preenchidas;
+  const pendencia = faltou
+    ? ""
+    : faltamNotas > 0
+      ? faltamNotas === 1
+        ? "falta 1 nota"
+        : `faltam ${faltamNotas} notas`
+      : f.compareceu !== "S"
+        ? "falta o comparecimento"
+        : "";
+  const tom = pendencia
+    ? "neutro"
+    : resultado.parecer === "APTO"
       ? "ok"
       : resultado.parecer === "INAPTO"
         ? "reprova"
@@ -701,6 +713,7 @@ export function FichaDoCandidato({
               lancadas={progresso.preenchidas}
               esperadas={progresso.total}
               faltou={faltou}
+              pendencia={pendencia}
             />
           ) : null}
         </div>
