@@ -11,9 +11,6 @@ import { gravarArmazenamento, lerArmazenamento } from "./comemoracao.js";
 
 const limitar = (valor, min, max) => Math.min(max, Math.max(min, valor));
 
-/* A imagem da Aya, a mesma do painel dela (src/modulos/aya/aya.jsx). */
-export const IMAGEM_DA_AYA = "/assets/arara-azul-monitora.png";
-
 /*
   O voo: entra pela esquerda, sobe numa curva suave, passa pelo meio da tela
   e sai pela direita, mais alto. Solta o primeiro foguete em `soltura` s.
