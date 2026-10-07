@@ -6,7 +6,7 @@ name: Sincronizar seleção
 # disparado_por = AGENDA; docs/agenda-dos-robos.md — sem `schedule` aqui, que o GitHub
 # atrasava ou pulava) e, quando precisar,
 # pelo botão "Run workflow" na aba Actions ou pelo "Rodar agora" das
-# Configurações › Status das atualizações (api/rodar-carga.js).
+# Configurações › Status das atualizações (RPC disparar_robo).
 # Como operar e o que fazer quando falha: docs/sincronizacao-das-planilhas.md.
 #
 # Secrets do repositório (Settings → Secrets and variables → Actions):

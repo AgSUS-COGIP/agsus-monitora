@@ -91,7 +91,9 @@ com a conta em `monitora.avaliacao_documental`) e o expurgo diário dos anexos d
   `PARCIAL`, `FALHOU`), quem disparou e o endereço da execução; a execução esquecida não segura a
   próxima. Entra no **Status das atualizações** (`get_saude_das_cargas` + `src/lib/saude-das-cargas.js`).
 - **Rodar agora:** o workflow aceita `workflow_dispatch` com `modo` e `disparado_por`; o robô entra
-  na lista fixa `ROBOS_DE_CARGA` de `src/lib/robos-de-carga.js` (id = id da linha do Status).
+  na lista fixa `ROBOS_DE_CARGA` de `src/lib/robos-de-carga.js` (id = id da linha do Status) e
+  nas listas fixas de `disparar_robo` e `FC_DISPARAR_ROBO` (o banco pede ao GitHub com a chave do
+  Vault; `docs/agenda-dos-robos.md`).
   Inputs vão por variável de ambiente, nunca interpolados no shell.
 - **Saída do processo:** 0 concluída, 2 parcial, 1 erro.
 - **Testes** em `tests/python/test_<job>.py`, com banco falso (função `chamar` injetada) e dados
@@ -165,7 +167,7 @@ menos pendentes (`distribuicao.atribuicoes_dos_novos`); o banco valida cada atri
 - **Quando roda:** no fim de cada carga normal ou forçada do robô da Empregare (passo
   "Pré-classificar" em `robo-empregare.yml`, `DISPARADO_POR=robo`, `--apos-robo`; uma falha ali não
   muda o resultado do robô), pelo "Recalcular" da aba Pré-classificação (só a coordenação do edital;
-  `api/rodar-carga.js` confere `pode_recalcular_pre_classificacao` com o Bearer de quem clicou e
+  a RPC `disparar_robo` confere `pode_recalcular_pre_classificacao` de quem clicou e
   manda `editais` = o id do edital), pelo "Rodar agora" do Status das atualizações (todos) e pelo
   "Run workflow".
 - **Modos:** `normal`, `seco` (calcula e mostra o resumo; um edital com a regra ainda "Conferir"
@@ -280,7 +282,7 @@ tarefas deixava todo o resto lento.
    **incremental por edital** (o job lê só as linhas dos editais marcados e troca só a parte
    deles no instantâneo). Pré-requisitos: a marca guardar o edital (hoje é por área), o
    instantâneo dividido por edital e o disparo ao fim de cada sync das análises (que vem do Apps
-   Script, não do Actions — usar um `repository_dispatch` pelo `api/rodar-carga.js` ou um job
+   Script, não do Actions — usar a RPC `disparar_robo` / `FC_DISPARAR_ROBO` ou um job
    agendado que só roda com marca). Estimativa: 5–7 dias; risco médio (latência entre o sync e o
    painel, hoje ≤ 2 min).
 2. **Sincronizações das Entrevistas e da Seleção em Python** (hoje `scripts/sincronizar-*.mjs`).

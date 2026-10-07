@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-import { ROBOS_DE_CARGA } from "../src/lib/robos-de-carga.js";
+import { OPCOES_DOS_ROBOS, ROBOS_DE_CARGA } from "../src/lib/robos-de-carga.js";
 
 /*
   Migration 20261008140000 (agenda dos robôs pelo banco: pg_cron + pg_net →
@@ -55,11 +55,11 @@ describe("migration da agenda dos robôs (20261008140000)", () => {
     );
   });
 
-  it("só os inputs do workflow, em texto; disparado_por é sempre AGENDA e o ramo é main", () => {
+  it("só os inputs do workflow, em texto; disparado_por = AGENDA ou quem pediu; ramo main", () => {
     expect(DISPARAR).toContain("not ((c_aceitos -> p_workflow) ? i.key)");
     expect(DISPARAR).toContain("jsonb_typeof(i.value) <> 'string'");
     expect(DISPARAR).toContain(
-      "v_inputs || jsonb_build_object('disparado_por', 'AGENDA')",
+      "v_inputs || jsonb_build_object('disparado_por', v_disparado_por)",
     );
     expect(DISPARAR).toContain("'ref', 'main'");
     expect(DISPARAR).toContain(
@@ -102,8 +102,8 @@ describe("migration da agenda dos robôs (20261008140000)", () => {
 
   it("SECURITY DEFINER, search_path vazio e revoke de todos menos o dono", () => {
     for (const [corpo, assinatura] of [
-      [DISPARAR, 'private."FC_DISPARAR_ROBO"(text, jsonb)'],
-      [CONFERIR, 'private."FC_CONFERIR_DISPAROS_ROBO"()'],
+      [DISPARAR, 'private."FC_DISPARAR_ROBO"(text, jsonb, uuid)'],
+      [CONFERIR, 'private."FC_CONFERIR_DISPAROS_ROBO"(bigint)'],
     ]) {
       expect(corpo).toContain("security definer");
       expect(corpo).toContain("set search_path to ''");
@@ -210,7 +210,7 @@ describe("migration da agenda dos robôs (20261008140000)", () => {
   it("o rollback desliga as tarefas, apaga funções e tabela e volta get_saude_das_cargas", () => {
     expect(ROLLBACK).toContain("perform cron.unschedule(v_id);");
     expect(ROLLBACK).toContain(
-      'drop function if exists private."FC_DISPARAR_ROBO"(text, jsonb);',
+      'drop function if exists private."FC_DISPARAR_ROBO"(text, jsonb, uuid);',
     );
     expect(ROLLBACK).toContain(
       'drop table if exists public."TL_DISPARO_ROBO";',
@@ -220,6 +220,94 @@ describe("migration da agenda dos robôs (20261008140000)", () => {
     );
     expect(ROLLBACK).not.toContain("'agenda_dos_robos'");
     expect(ROLLBACK).toContain("drop extension if exists pg_net;");
+    expect(ROLLBACK).toContain(
+      "drop function if exists public.disparar_robo(text, jsonb);",
+    );
+    expect(ROLLBACK).toContain(
+      "drop function if exists public.situacao_do_disparo_robo(bigint);",
+    );
+  });
+});
+
+const RPC = corpoDaFuncao(MIGRATION, "create function public.disparar_robo(");
+const SITUACAO = corpoDaFuncao(
+  MIGRATION,
+  "create function public.situacao_do_disparo_robo(",
+);
+
+describe("Rodar agora pelo banco: disparar_robo (substitui api/rodar-carga.js)", () => {
+  it("os robôs da RPC são os de ROBOS_DE_CARGA, cada um com o seu workflow", () => {
+    for (const robo of ROBOS_DE_CARGA) {
+      const inicio = RPC.indexOf(`'${robo.id}', jsonb_build_object(`);
+      expect(inicio, robo.id).toBeGreaterThan(-1);
+      expect(RPC.slice(inicio, RPC.indexOf("\n", inicio))).toContain(
+        `'workflow', '${robo.workflow}'`,
+      );
+    }
+  });
+
+  it("só authenticated executa; SECURITY DEFINER e search_path vazio", () => {
+    for (const [corpo, assinatura] of [
+      [RPC, "public.disparar_robo(text, jsonb)"],
+      [SITUACAO, "public.situacao_do_disparo_robo(bigint)"],
+    ]) {
+      expect(corpo).toContain("security definer");
+      expect(corpo).toContain("set search_path to ''");
+      expect(MIGRATION).toContain(
+        `revoke all on function ${assinatura} from public, anon;`,
+      );
+      expect(MIGRATION).toContain(
+        `grant execute on function ${assinatura} to authenticated;`,
+      );
+    }
+  });
+
+  it("quem pode é o mesmo de antes: administrador global ou a coordenação do edital na pré-classificação", () => {
+    expect(RPC).toContain("if not public.pode_disparar_carga() then");
+    expect(RPC).toContain(
+      "public.pode_recalcular_pre_classificacao(v_editais[1]::uuid)",
+    );
+    expect(RPC).toContain(
+      "if v_modo <> 'normal' or cardinality(v_vagas) > 0 or v_limite is not null",
+    );
+    expect(RPC).toContain("or cardinality(v_editais) <> 1");
+    expect(RPC).toContain("errcode = '28000'");
+    expect(RPC).toContain("errcode = '42501'");
+  });
+
+  it("a lista branca de cada robô é a mesma de OPCOES_DOS_ROBOS", () => {
+    for (const [id, aceitas] of Object.entries(OPCOES_DOS_ROBOS)) {
+      const inicio = RPC.indexOf(`'${id}', jsonb_build_object(`);
+      const bloco = RPC.slice(inicio, RPC.indexOf("),\n    '", inicio + 1));
+      const modos = aceitas.modos.map((m) => `'${m.valor}'`).join(", ");
+      expect(bloco, id).toContain(`'modos', jsonb_build_array(${modos})`);
+      if (aceitas.editais)
+        expect(bloco, id).toContain(`'editais', '${aceitas.editais}'`);
+    }
+    for (const trecho of [
+      String.raw`'^\d{1,4}/\d{4}$'`,
+      String.raw`'^\d{1,20}$'`,
+      "not between 1 and 500",
+      "cardinality(v_editais) > 100",
+      "cardinality(v_vagas) > 500",
+    ])
+      expect(RPC).toContain(trecho);
+  });
+
+  it("pede pelo mesmo FC_DISPARAR_ROBO com o id de quem pediu e barra o pedido repetido em 2 min", () => {
+    expect(RPC).toContain(
+      `return private."FC_DISPARAR_ROBO"(v_robo ->> 'workflow', v_saida, v_uid);`,
+    );
+    expect(RPC).toContain("interval '2 minutes'");
+    expect(RPC).toContain("errcode = '55006'");
+  });
+
+  it("situacao_do_disparo_robo: só quem pediu ou o administrador global; fecha o pedido pela resposta", () => {
+    expect(SITUACAO).toContain('d."CO_USUARIO" = v_uid or private.is_master()');
+    expect(SITUACAO).toContain(
+      'perform private."FC_CONFERIR_DISPAROS_ROBO"(p_disparo);',
+    );
+    expect(SITUACAO).not.toMatch(/decrypted|vault\./);
   });
 });
 

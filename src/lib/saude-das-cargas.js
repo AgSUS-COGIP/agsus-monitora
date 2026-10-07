@@ -243,6 +243,7 @@ function execucaoDoDisparo(bruta) {
   const workflow = texto(bruta?.workflow);
   const http = inteiro(bruta?.http);
   const partes = [NOMES_DOS_WORKFLOWS[workflow] || workflow || "Robô"];
+  if (texto(bruta?.origem) === "MONITORA") partes.push("Rodar agora");
   if (http !== null) partes.push(`HTTP ${http}`);
   const mensagem = texto(bruta?.mensagem);
   if (mensagem) partes.push(mensagem);
@@ -670,7 +671,7 @@ export function visaoSimples(saude) {
       id: carga.id,
       titulo: "Agenda dos robôs",
       explicacao:
-        "O banco pede ao GitHub as cargas agendadas: Entrevistas, Seleção, conferências e expurgo.",
+        "O banco pede ao GitHub as cargas agendadas e as do Rodar agora, com a chave do Vault.",
       partes: [carga],
       situacoesQueContam: [carga.situacao],
     });

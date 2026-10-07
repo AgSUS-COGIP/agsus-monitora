@@ -51,11 +51,11 @@ o cruzamento do Apps Script é que teria de levá-las à aba.
 - Editais de **outras bancas** (04/2026, 96/2025, 97/2025, FGV, FCC) só têm inscritos e total de
   eliminados. Não é erro: o processo é outro.
 
-## Rodar agora (sem esperar a próxima hora)
+## Rodar agora (sem esperar o próximo horário)
 
 **Pelo MONITORA** (administrador global): Configurações → **Status das atualizações** → linha
-Entrevistas ou Seleção → **Rodar agora** (modo `normal`). Precisa do `GITHUB_DISPATCH_TOKEN` na
-Vercel (ver `docs/robo-empregare.md`); o botão fica desabilitado enquanto a carga roda.
+Entrevistas ou Seleção → **Rodar agora** (modo `normal`). O banco pede ao GitHub com a chave `github_disparo_robos` do Vault (ver
+`docs/agenda-dos-robos.md`); o botão fica desabilitado enquanto a carga roda.
 
 **Pelo GitHub** (qualquer modo):
 

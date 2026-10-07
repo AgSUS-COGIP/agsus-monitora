@@ -12,7 +12,7 @@ name: Expurgo dos anexos do chat
 #   - todo dia às 6h30 de Brasília (9h30 UTC), pedido pelo banco (pg_cron → workflow_dispatch
 #     com disparado_por = AGENDA; docs/agenda-dos-robos.md; sem `schedule` aqui);
 #   - pelo "Rodar agora" das Configurações › Status das atualizações
-#     (api/rodar-carga.js, só administrador global; disparado_por = id do usuário);
+#     (RPC disparar_robo, só administrador global; disparado_por = id do usuário);
 #   - pelo botão "Run workflow" desta aba Actions.
 # Guia: docs/python-no-monitora.md. Migration: 20261007250000_expurgo_diario_dos_anexos_do_chat.sql.
 #

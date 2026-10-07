@@ -1057,7 +1057,7 @@ export const VERBETES_AYA = Object.freeze([
       'A pré-classificação roda sozinha no fim de cada carga do robô da Empregare, para os editais das vagas carregadas. A coordenação do edital também pode clicar em "Recalcular" na aba Pré-classificação (o administrador global usa o "Rodar agora" das Configurações › Status das atualizações, para todos os editais). O botão fica travado enquanto a regra não está conferida ou enquanto o job roda. Depois do clique, a aba diz o que aconteceu: "Recálculo pedido às HH:MM" e, quando o job termina, "Pré-classificação recalculada" (a aba relê sozinha enquanto ele roda; o Atualizar também relê a aba aberta). Se o pedido não sai, aparece "Recálculo não pedido:" com o motivo e o botão volta; "Só na versão publicada" quer dizer que o MONITORA está rodando no computador, onde o pedido ao GitHub não existe. Edital sem regra conferida não é calculado: o job explica no resumo e a aba mostra o aviso "Edital sem regra conferida".',
     fato: "",
     fonte:
-      "scripts/pre_classificacao/pre_classificacao.py; .github/workflows/pre-classificacao.yml; api/rodar-carga.js",
+      "scripts/pre_classificacao/pre_classificacao.py; .github/workflows/pre-classificacao.yml; supabase/migrations/20261008140000_agenda_dos_robos_pelo_banco.sql",
     abrir: "avaliacao-documental",
   },
   {
@@ -4395,7 +4395,7 @@ export const VERBETES_AYA = Object.freeze([
       "http 401 na agenda dos robos",
     ],
     resposta:
-      'O agendamento do próprio GitHub atrasava ou pulava as cargas (as de hora em hora chegaram a rodar só a cada 5 a 8 horas). Por isso o banco do MONITORA passou a ser o único agendador: na hora marcada, ele pede ao GitHub a execução de Entrevistas (de hora em hora), Seleção (8h10, 13h10 e 18h10), Conferências (6h) e Expurgo dos anexos do chat (6h30). A linha "Agenda dos robôs" do Status das atualizações mostra o último pedido aceito e as falhas das últimas 24 horas. "Sem chave no Vault" quer dizer que falta o token do GitHub no Supabase: nada é pedido e as cargas param de rodar sozinhas. "Falhou" com HTTP 401 quer dizer chave inválida ou expirada (403 ou 404: sem permissão no repositório). Para resolver, gere um novo token fine-grained (Actions: read and write, só o repositório agsus-monitora) e, no Supabase (Integrations › Vault › Secrets), troque o valor do segredo github_disparo_robos, com o mesmo nome. O próximo horário já usa a chave nova; para não esperar, use o "Rodar agora" de cada carga.',
+      'O agendamento do próprio GitHub atrasava ou pulava as cargas (as de hora em hora chegaram a rodar só a cada 5 a 8 horas). Por isso o banco do MONITORA passou a ser o único agendador (e também quem atende o "Rodar agora", com a mesma chave): na hora marcada, ele pede ao GitHub a execução de Entrevistas (de hora em hora), Seleção (3 vezes ao dia: 8h10, 13h10 e 18h10), Conferências (6h) e Expurgo dos anexos do chat (6h30). A linha "Agenda dos robôs" do Status das atualizações mostra o último pedido aceito e as falhas das últimas 24 horas. "Sem chave no Vault" quer dizer que falta o token do GitHub no Supabase: nada é pedido e as cargas param de rodar sozinhas. "Falhou" com HTTP 401 quer dizer chave inválida ou expirada (403 ou 404: sem permissão no repositório). Para resolver, gere um novo token fine-grained (Actions: read and write, só o repositório agsus-monitora) e, no Supabase (Integrations › Vault › Secrets), troque o valor do segredo github_disparo_robos, com o mesmo nome. O próximo horário já usa a chave nova; para não esperar, use o "Rodar agora" de cada carga.',
     fato: "",
     fonte:
       "docs/agenda-dos-robos.md; supabase/migrations/20261008140000_agenda_dos_robos_pelo_banco.sql; src/lib/saude-das-cargas.js",
@@ -4418,10 +4418,10 @@ export const VERBETES_AYA = Object.freeze([
       "atualizar agora sem esperar",
     ],
     resposta:
-      'Em Configurações › Status das atualizações, o administrador global vê o botão "Rodar agora" nas linhas Robô da Empregare, Conferências de consistência, Expurgo dos anexos do chat, Pré-classificação (Avaliação documental), Seleção e Entrevistas. Na pré-classificação, o Rodar agora recalcula todos os editais ativos com vagas da Empregare; a coordenação de um edital usa o Recalcular da aba Pré-classificação. O clique pede ao GitHub Actions a execução do workflow daquela carga, em modo normal, e registra quem pediu; para escolher editais, vagas, modo ou limite, use "Opções". O botão fica desabilitado enquanto a carga roda (no GitHub ou no registro do banco) e por 3 minutos depois do pedido, até a execução aparecer. A nova execução entra na lista em alguns minutos; o robô da Empregare pode levar mais de meia hora.',
+      'Em Configurações › Status das atualizações, o administrador global vê o botão "Rodar agora" nas linhas Robô da Empregare, Conferências de consistência, Expurgo dos anexos do chat, Pré-classificação (Avaliação documental), Seleção e Entrevistas. Na pré-classificação, o Rodar agora recalcula todos os editais ativos com vagas da Empregare; a coordenação de um edital usa o Recalcular da aba Pré-classificação. O clique pede ao banco, que pede ao GitHub Actions (com a mesma chave da Agenda dos robôs) a execução do workflow daquela carga, em modo normal, e registra quem pediu; funciona também fora do site publicado; para escolher editais, vagas, modo ou limite, use "Opções". O botão fica desabilitado enquanto a carga roda (pelo registro do banco) e por 3 minutos depois do pedido; em segundos a linha diz se o GitHub aceitou. A nova execução entra na lista em alguns minutos; o robô da Empregare pode levar mais de meia hora.',
     fato: "",
     fonte:
-      "src/lib/robos-de-carga.js; api/rodar-carga.js; docs/robo-empregare.md",
+      "src/lib/robos-de-carga.js; supabase/migrations/20261008140000_agenda_dos_robos_pelo_banco.sql; docs/robo-empregare.md",
     abrir: "config:cargas",
   },
   {
@@ -4451,7 +4451,7 @@ export const VERBETES_AYA = Object.freeze([
       'Em Configurações › Status das atualizações, o administrador global tem o botão "Opções" nas linhas Robô da Empregare, Pré-classificação e Conferências de consistência. Ele abre uma gaveta para rodar com escolhas: editais (com busca e filtro por área; aparecem só os vigentes, e "Mostrar todos" traz os encerrados e cancelados), códigos de vaga da Empregare (cole a lista separada por vírgula, espaço ou linha; só dígitos — o que tiver letra é recusado; ao escolher o edital aparecem as vagas conhecidas dele com o cargo, e "Adicionar todas" põe todas), modo e limite de vagas (de 1 a 500; padrão 60). No robô da Empregare, os modos são: Normal (exporta, baixa e grava), Seco (só lista as vagas que exportaria, sem entrar na Empregare), Fumaça (só testa o login) e Forçar (grava mesmo se o arquivo vier com menos da metade dos candidatos). Na pré-classificação: Normal, Seco (calcula sem gravar) e Refazer lote (recorta o lote do zero, só antes das fichas). Nas conferências: Normal e Seco. Com códigos de vaga, o robô roda só os códigos; o edital escolhido serve para as sugestões. Antes de confirmar, "Vai rodar" mostra a prévia, como "5 vagas do 93/2026: 179698, 180231…", e avisa quando o limite corta (ficam as vagas nunca carregadas ou carregadas há mais tempo). Depois do pedido, a linha acompanha: "Pedido enviado. Aguardando o GitHub", depois "Rodando" e o resultado por vaga (gravada, candidatos no arquivo, ativos e quantos com link da Empregare), com o link da execução no GitHub. O modo seco e o fumaça não gravam no banco: o resultado fica no resumo da execução no GitHub. Em "Detalhes", o robô da Empregare e a pré-classificação mostram as 8 últimas execuções com quem pediu, os parâmetros usados e o resultado. A coordenação de um edital continua usando o Recalcular da aba Pré-classificação.',
     fato: "",
     fonte:
-      "src/lib/robos-de-carga.js; src/lib/painel-dos-robos.js; api/rodar-carga.js; supabase/migrations/20261007190000_painel_dos_robos.sql; docs/robo-empregare.md",
+      "src/lib/robos-de-carga.js; src/lib/painel-dos-robos.js; supabase/migrations/20261008140000_agenda_dos_robos_pelo_banco.sql; supabase/migrations/20261007190000_painel_dos_robos.sql; docs/robo-empregare.md",
     abrir: "config:cargas",
   },
   {
@@ -4460,15 +4460,18 @@ export const VERBETES_AYA = Object.freeze([
     perguntas: [
       "rodar agora desabilitado",
       "botao rodar agora nao funciona",
-      "falta configurar github_dispatch_token",
+      "rodar agora recusado",
+      "o github recusou o pedido",
+      "chave de disparo dos robos expirou",
       "github dispatch token",
-      "rodar agora so na versao publicada",
       "rodar agora pedido enviado",
+      "rodar agora acabou de ser pedida",
     ],
     resposta:
-      '"Falta configurar GITHUB_DISPATCH_TOKEN na Vercel" quer dizer que a Vercel não tem o token que deixa o MONITORA pedir execuções ao GitHub: crie um fine-grained token só com "Actions: read and write" no repositório agsus-monitora e cadastre como GITHUB_DISPATCH_TOKEN nas variáveis da Vercel. "Só na versão publicada" aparece fora da Vercel (no computador, a função não existe). "Rodando…" e "Pedido enviado" são esperados: a carga está na fila ou rodando. O estado e o histórico continuam visíveis em todos os casos.',
+      '"A chave de disparo dos robôs expirou ou foi recusada" quer dizer que o token do GitHub guardado no cofre do Supabase (Vault, nome github_disparo_robos) venceu, foi revogado ou não tem permissão: um administrador gera um novo token fine-grained (Actions: read and write, só o repositório agsus-monitora) e troca o valor do segredo no Vault, com o mesmo nome. É a mesma chave da Agenda dos robôs; a antiga variável GITHUB_DISPATCH_TOKEN da Vercel não é mais usada. "Rodando…" e "Pedido enviado" são esperados: a carga está na fila ou rodando. "Esta carga acabou de ser pedida" aparece num segundo clique em menos de 2 minutos. O estado e o histórico continuam visíveis em todos os casos.',
     fato: "",
-    fonte: "docs/robo-empregare.md; api/rodar-carga.js",
+    fonte:
+      "docs/agenda-dos-robos.md; docs/robo-empregare.md; supabase/migrations/20261008140000_agenda_dos_robos_pelo_banco.sql",
     abrir: "config:cargas",
   },
   {

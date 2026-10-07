@@ -6,6 +6,12 @@ o pg_cron chama `private."FC_DISPARAR_ROBO"`, que pede a execução ao GitHub pe
 (`workflow_dispatch`, ramo `main`, `disparado_por = AGENDA`) com o pg_net. Os workflows não têm
 mais `schedule`; continuam com o **Rodar agora** e o **Run workflow**.
 
+O **Rodar agora**, as **Opções** e o **Recalcular** da pré-classificação também passam pelo banco
+(RPC `disparar_robo`, que confere quem pede e as opções e chama o mesmo `FC_DISPARAR_ROBO` com
+`disparado_por` = id de quem clicou): **uma chave só**, a do Vault. Funciona também no computador
+(localhost). A antiga função `api/rodar-carga.js` saiu e a variável **`GITHUB_DISPATCH_TOKEN` da
+Vercel pode ser apagada** (Vercel → projeto → Settings → Environment Variables).
+
 Migration: `supabase/migrations/20261008140000_agenda_dos_robos_pelo_banco.sql` (ensaio e rollback
 em `supabase/ensaios/` e `supabase/rollback/`).
 
@@ -58,7 +64,8 @@ no Vault, **edite o segredo `github_disparo_robos`** trocando o valor (mesmo nom
 horário já usa a chave nova; para não esperar, use o **Rodar agora** de cada carga.
 
 Sem o segredo, cada horário registra **SEM_TOKEN** (nada é pedido ao GitHub) e a linha avisa
-"Sem chave no Vault".
+"Sem chave no Vault". No **Rodar agora**, a linha diz: "A chave de disparo dos robôs expirou ou foi
+recusada; um administrador precisa trocá-la no cofre (Vault) com o nome github_disparo_robos".
 
 ## Como saber se está funcionando
 

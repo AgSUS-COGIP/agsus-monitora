@@ -1,10 +1,11 @@
 -- ROLLBACK de supabase/migrations/20261008140000_agenda_dos_robos_pelo_banco.sql
--- Tira a agenda dos robôs do banco: desliga as tarefas agsus_robo_* do pg_cron, apaga as
+-- Tira a agenda dos robôs e o Rodar agora do banco (disparar_robo, situacao_do_disparo_robo): desliga as tarefas agsus_robo_* do pg_cron, apaga as
 -- funções FC_DISPARAR_ROBO e FC_CONFERIR_DISPAROS_ROBO e o registro TL_DISPARO_ROBO (só
 -- pedidos e códigos HTTP), volta get_saude_das_cargas à versão de
 -- 20261007250000_expurgo_diario_dos_anexos_do_chat.sql (sem a chave da agenda dos robôs) e remove a
 -- extensão pg_net (nada mais no MONITORA a usa).
--- ANTES: devolva o bloco `schedule` aos workflows sincronizar-entrevistas, sincronizar-selecao,
+-- ANTES: o Rodar agora volta a depender de api/rodar-carga.js e do GITHUB_DISPATCH_TOKEN da
+-- Vercel (git revert do commit que os tirou). Devolva também o bloco `schedule` aos workflows sincronizar-entrevistas, sincronizar-selecao,
 -- conferencias e expurgo-anexos-chat (git revert do commit da agenda), senão eles param de rodar
 -- sozinhos. O segredo github_disparo_robos do Vault não muda: apague-o à mão, se quiser
 -- (Integrations → Vault), e revogue o token no GitHub.
@@ -20,8 +21,15 @@ begin
 end;
 $$;
 
-drop function if exists private."FC_DISPARAR_ROBO"(text, jsonb);
-drop function if exists private."FC_CONFERIR_DISPAROS_ROBO"();
+drop function if exists public.disparar_robo(text, jsonb);
+drop function if exists public.situacao_do_disparo_robo(bigint);
+drop function if exists private."FC_DISPARAR_ROBO"(text, jsonb, uuid);
+drop function if exists private."FC_CONFERIR_DISPAROS_ROBO"(bigint);
+
+comment on function public.pode_disparar_carga() is
+  'true quando quem chama é o administrador global: api/rodar-carga.js confere com o Bearer de quem clicou em Rodar agora antes de disparar o workflow.';
+comment on function public.pode_recalcular_pre_classificacao(uuid) is
+  'true quando quem chama coordena a avaliação documental do edital (ou é o administrador global): api/rodar-carga.js confere com o Bearer de quem clicou em Recalcular antes de disparar o job da pré-classificação.';
 drop table if exists public."TL_DISPARO_ROBO";
 
 CREATE OR REPLACE FUNCTION public.get_saude_das_cargas()

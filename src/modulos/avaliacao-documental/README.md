@@ -22,7 +22,7 @@ continua sendo a leitura. Desenho e fases: `docs/analises-no-monitora/`; histór
   de cada vaga, como o job Python gravou (`scripts/pre_classificacao/`); contadores (inscritos,
   eliminados, ranqueados, lote "N de M", divergência ART × declarada), a linha de corte, os
   eliminados com o motivo e os avisos da vaga;
-- "Recalcular" (coordenação): `POST /api/rodar-carga` com o edital, travado com a regra não
+- "Recalcular" (coordenação): RPC `disparar_robo` com o edital (o banco pede ao GitHub), travado com a regra não
   conferida ou o job rodando; o resultado do pedido fica na aba (o motivo da recusa, com o botão
   de volta, ou "pedido") e a aba relê sozinha até a execução terminar;
 - tamanho do lote por vaga: o campo vira `lote.por_vaga` numa versão nova da regra (com motivo);
