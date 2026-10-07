@@ -48,11 +48,16 @@ export function filtrosDeRecursos(atuais, pedido, opcoes) {
   return proximos;
 }
 
-/** Entrevistas (Resultados): um edital e o parecer ou comparecimento. */
+/**
+ * Entrevistas (Resultados): um edital, o parecer ou comparecimento e a busca
+ * (o caso de um aviso de conferência busca o candidato).
+ */
 export function filtrosDeEntrevistas(atuais, pedido, opcoes) {
   const proximos = { ...atuais };
   const [edital] = opcoesDoEdital(opcoes?.editais, pedido?.edital);
   if (edital) proximos.edital = edital;
+  const busca = String(pedido?.busca ?? "").trim();
+  if (busca) proximos.busca = busca;
   const metrica = METRICA_DE_ENTREVISTAS[pedido?.metrica];
   if (metrica) proximos[metrica[0]] = metrica[1];
   return proximos;
