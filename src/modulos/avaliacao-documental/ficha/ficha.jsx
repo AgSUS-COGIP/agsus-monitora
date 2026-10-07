@@ -1,4 +1,5 @@
 import {
+  useCallback,
   useEffect,
   useMemo,
   useRef,
@@ -6,75 +7,90 @@ import {
   useSyncExternalStore,
 } from "react";
 import {
-  ACOES_DO_HISTORICO,
   BLOCOS_COM_ITENS,
-  blocoConferido,
   blocoSeAplica,
-  divergenciaDoBloco,
-  ehAnexo,
+  composicaoDaNota,
   enderecoDaVagaNaEmpregare,
   enderecoDoCandidatoNaEmpregare,
-  etapasDaFicha,
   nomeCurtoDoBloco,
-  opcoesDeJustificativa,
+  PASSO_DA_CONCLUSAO,
+  passosDaFicha,
   previaDoParecer,
-  respostasDoBloco,
+  proximoPassoPendente,
   situacaoDaTecla,
-  SITUACOES_DA_FICHA,
-  sugereNaoEnviado,
-  textoDaAlteracao,
-  textoDaNota,
   textoDaSituacaoDaConferencia,
-  textoDoProgresso,
   textoDoResultado,
   textoDoSalvo,
-  titulosDoNivel,
   tomDoResultado,
 } from "../../../lib/avaliacao-documental/ficha.js";
 import {
   NIVEIS,
-  PARCIAIS,
-  PARCIAL_DO_TIPO,
   rotuloDe,
 } from "../../../lib/avaliacao-documental/catalogo.js";
-import { tetoDoBloco } from "../../../lib/avaliacao-documental/pontuacao.js";
 import {
   DICA_DA_ART,
   ROTULO_DA_ART,
 } from "../../../lib/avaliacao-documental/tela-da-pre-classificacao.js";
-import { Aviso, Campo, Kv, Selo } from "../../../ui/index.js";
+import { Aviso, Campo } from "../../../ui/index.js";
 import { compartilharNoChat } from "../../chat/ponte.js";
 import { usarChatLiberado } from "../../chat/usar-chat-liberado.js";
+import { CabecalhoDaFicha } from "./cabecalho-da-ficha.tsx";
+import { ConclusaoDaFicha } from "./conclusao-da-ficha.tsx";
+import { copiar } from "./empregare.tsx";
+import { ItemDaFicha } from "./item-da-ficha.tsx";
+import { MaisAcoesDaFicha } from "./mais-acoes-da-ficha.tsx";
+import { ProgressoDaFicha } from "./progresso-da-ficha.tsx";
+import { ResumoDaNota } from "./resumo-da-nota.tsx";
+import { RodapeDaFicha } from "./rodape-da-ficha.tsx";
 import { criarEstadoDaFicha } from "./estado-da-ficha.js";
 
 /*
-  O conteúdo da ficha (fase F4), no modo de análise da aba Fila: no alto, as
-  etapas (o nome curto de cada item na cor do estado; clicar vai ao item) e a
-  linha de atalhos; um cartão compacto por bloco da regra (o que o candidato
-  declarou na Empregare, com "Ver na Empregare" ao lado do anexo, e na mesma
-  linha Conforme / Não conforme / Não enviado, teclas 1, 2 e 3; o motivo em
-  lista, os itens de formação, cursos e experiência e a nota com
-  justificativa). Marcado e sem pendência, o cartão recolhe numa linha
-  (título, selo e motivo) quando o analista passa ao próximo. A lateral tem a
-  nota ao vivo, declarada × apurada, o nível da vaga (só a coordenação muda) e
-  o parecer (sem resultado enquanto falta conferir); a barra de ações tem o
-  rascunho automático, "N de M", o que falta, Concluir e próxima e Fechar e
-  liberar. Concluída: só leitura, com o histórico; a coordenação reabre com
-  motivo. Explicações: docs/aya/regras-da-avaliacao-documental.md.
+  O conteúdo da ficha no modo de análise da aba Fila, calmo e guiado:
+  - no alto, o cabeçalho enxuto (cabecalho-da-ficha.tsx) e o stepper com a
+    barra de progresso (progresso-da-ficha.tsx);
+  - MODO FOCO (padrão): um item por vez, largo (item-da-ficha.tsx). Conforme
+    sem pendência avança sozinho ao próximo item que pede algo; Não conforme e
+    Não enviado abrem os motivos em chips. A etapa final, Conclusão
+    (conclusao-da-ficha.tsx), tem o resumo, a nota final, as observações e o
+    parecer. "Ver todos" troca para a lista completa, e a escolha fica
+    lembrada no navegador;
+  - fora da Conclusão, a lateral só com a nota, o mínimo, a composição por
+    bloco e o "⋯" (resumo-da-nota.tsx, mais-acoes-da-ficha.tsx);
+  - rodapé fixo mínimo (rodape-da-ficha.tsx).
+  Mesmas RPCs e mesma gravação (estado-da-ficha.js): rascunho automático,
+  conclusão só sem pendência, concluída só leitura com Reabrir. Teclas 1/2/3,
+  J/K, Ctrl+S e Ctrl+Enter. Explicações: docs/aya/regras-da-avaliacao-documental.md.
 */
+
+/* O passo já não pede nada (marcado sem pendência, opcional ou a Conclusão). */
+const passoResolvido = (passo) =>
+  !passo ||
+  passo.codigo === PASSO_DA_CONCLUSAO ||
+  !["nao_conferido", "pendencia"].includes(passo.estado);
+
+const CHAVE_DO_MODO = "monitora.avaliacao-documental.ficha-modo";
+const ESPERA_PARA_AVANCAR_MS = 420;
+
+function lerModo() {
+  try {
+    return globalThis.localStorage?.getItem(CHAVE_DO_MODO) === "lista"
+      ? "lista"
+      : "foco";
+  } catch {
+    return "foco";
+  }
+}
+function guardarModo(modo) {
+  try {
+    globalThis.localStorage?.setItem(CHAVE_DO_MODO, modo);
+  } catch {
+    /* sem armazenamento: o modo vale só nesta tela */
+  }
+}
 
 const ehCampoDeTexto = (alvo) =>
   ["INPUT", "TEXTAREA", "SELECT"].includes(alvo?.tagName) ||
   alvo?.isContentEditable;
-
-async function copiar(texto) {
-  try {
-    await globalThis.navigator?.clipboard?.writeText(texto);
-    return true;
-  } catch {
-    return false;
-  }
-}
 
 /* Os endereços da Empregare da ficha (obter_ficha_analise → empregare; sem eles, a lista de vagas). */
 function enderecosDaEmpregare(dados, ficha) {
@@ -85,1026 +101,6 @@ function enderecosDaEmpregare(dados, ficha) {
     vaga,
     vagaDireta: Boolean(vaga?.includes("/candidaturas/")),
   };
-}
-
-/*
-  O link para a Empregare: o candidato direto, pelo link que o robô capturou;
-  sem ele, a vaga (copiando o código do candidato para a busca das
-  candidaturas) ou a lista de vagas (copiando o código da vaga). Todo clique
-  registra o acesso (registrar_acesso_ficha).
-*/
-function LinkDaEmpregare({ empregare, rotulo, className = "btn secondary" }) {
-  const { enderecos, ficha, loja, aoAvisar } = empregare;
-  const { candidato, vaga, vagaDireta } = enderecos;
-  const icone = (
-    <i className="fa-solid fa-arrow-up-right-from-square" aria-hidden="true" />
-  );
-  if (candidato)
-    return (
-      <a
-        className={className}
-        href={candidato}
-        target="_blank"
-        rel="noopener noreferrer"
-        onClick={() => void loja.registrarAcesso("ABRIR_EMPREGARE")}
-      >
-        {icone} {rotulo || "Abrir candidato na Empregare"}
-      </a>
-    );
-  if (!vaga) return null;
-  return (
-    <a
-      className={className}
-      href={vaga}
-      target="_blank"
-      rel="noopener noreferrer"
-      onClick={async () => {
-        // Nas candidaturas da vaga, busca-se o candidato; na lista de vagas, a vaga.
-        const texto = String((vagaDireta ? ficha.codigo : ficha.vaga) ?? "");
-        const ok = await copiar(texto);
-        aoAvisar(
-          !ok
-            ? "Não foi possível copiar"
-            : vagaDireta
-              ? `Código ${texto} copiado: cole na busca das candidaturas`
-              : `Código da vaga ${texto} copiado: cole na busca de Vagas Anunciadas`,
-        );
-        void loja.registrarAcesso("ABRIR_EMPREGARE");
-      }}
-    >
-      {icone}{" "}
-      {rotulo ||
-        (vagaDireta ? "Abrir vaga na Empregare" : "Abrir vagas na Empregare")}
-    </a>
-  );
-}
-
-/* Uma resposta declarada: o enunciado numa linha (clique mostra inteiro), a resposta e, no anexo, a Empregare. */
-function RespostaDeclarada({ linha, empregare }) {
-  const [inteiro, setInteiro] = useState(false);
-  return (
-    <div className="avd-ficha-resposta" data-inteiro={inteiro || undefined}>
-      <button
-        type="button"
-        className="avd-ficha-enunciado"
-        aria-expanded={inteiro}
-        title={inteiro ? undefined : linha.enunciado}
-        onClick={() => setInteiro(!inteiro)}
-      >
-        {linha.enunciado}
-      </button>
-      <strong className="avd-ficha-texto-declarado">
-        {linha.texto || "Sem resposta"}
-      </strong>
-      {ehAnexo(linha.texto) ? (
-        <LinkDaEmpregare
-          empregare={empregare}
-          rotulo="Ver na Empregare"
-          className="avd-ficha-ver-anexo"
-        />
-      ) : null}
-    </div>
-  );
-}
-
-function Declarado({ linhas, sugestao, empregare }) {
-  if (!linhas.length) return <div className="avd-ficha-declarado" />;
-  return (
-    <div className="avd-ficha-declarado">
-      {linhas.map((l) => (
-        <RespostaDeclarada key={l.coluna} linha={l} empregare={empregare} />
-      ))}
-      {sugestao ? (
-        <p className="avd-ficha-sugestao">Sugestão: Não enviado</p>
-      ) : null}
-    </div>
-  );
-}
-
-function BotoesDeSituacao({ valor, aoMudar, desabilitado }) {
-  return (
-    <div
-      className="avd-ficha-situacoes"
-      role="group"
-      aria-label="Situação do bloco"
-    >
-      {SITUACOES_DA_FICHA.map(([codigo, rotulo, tecla]) => (
-        <button
-          key={codigo}
-          type="button"
-          className="avd-ficha-situacao"
-          data-valor={codigo}
-          aria-pressed={valor === codigo}
-          aria-keyshortcuts={tecla}
-          disabled={desabilitado}
-          onClick={() => aoMudar(valor === codigo ? null : codigo)}
-        >
-          {valor === codigo ? (
-            <i className="fa-solid fa-check" aria-hidden="true" />
-          ) : (
-            <kbd aria-hidden="true">{tecla}</kbd>
-          )}{" "}
-          {rotulo}
-        </button>
-      ))}
-    </div>
-  );
-}
-
-function Caixas({ opcoes, marcados, aoMudar, desabilitado, rotulo }) {
-  return (
-    <fieldset className="avd-ficha-caixas" disabled={desabilitado}>
-      <legend>{rotulo}</legend>
-      {opcoes.map((o) => (
-        <label key={o.codigo}>
-          <input
-            type="checkbox"
-            checked={marcados.includes(o.codigo)}
-            onChange={(ev) =>
-              aoMudar(
-                ev.target.checked
-                  ? [...marcados, o.codigo]
-                  : marcados.filter((c) => c !== o.codigo),
-              )
-            }
-          />{" "}
-          {o.texto}
-        </label>
-      ))}
-    </fieldset>
-  );
-}
-
-function MotivoDoItem({ bloco, valor, aoMudar, desabilitado }) {
-  return (
-    <select
-      aria-label="Motivo da recusa"
-      value={valor || ""}
-      disabled={desabilitado}
-      onChange={(ev) => aoMudar(ev.target.value || null)}
-    >
-      <option value="">Motivo da recusa…</option>
-      {(bloco.motivos || []).map((m) => (
-        <option key={m.codigo} value={m.codigo}>
-          {m.texto}
-        </option>
-      ))}
-    </select>
-  );
-}
-
-function Itens({ bloco, lancamento, mudar, desabilitado }) {
-  const chave = BLOCOS_COM_ITENS[bloco.tipo];
-  const itens = lancamento[chave] || [];
-  const categorias = bloco.categorias || [];
-  const titulos = titulosDoNivel(bloco, lancamento.nivel);
-  const alterar = (i, campos) =>
-    mudar((l) => {
-      l[chave] = (l[chave] || []).map((it, j) =>
-        j === i ? { ...it, ...campos } : it,
-      );
-      return l;
-    });
-  const novo = () => {
-    if (chave === "titulos")
-      return {
-        titulo: titulos[0]?.codigo || "ESPECIALIZACAO",
-        nome: "",
-        aceito: true,
-      };
-    if (chave === "cursos") return { nome: "", horas: "", aceito: true };
-    return {
-      empregador: "",
-      categoria: categorias[0]?.codigo,
-      inicio: "",
-      fim: "",
-      aceito: true,
-    };
-  };
-  return (
-    <div className="avd-ficha-itens" data-tour="avd-ficha-itens">
-      {itens.map((it, i) => (
-        <div
-          key={i}
-          className="avd-ficha-item"
-          data-aceito={it.aceito !== false}
-        >
-          {chave === "titulos" ? (
-            <select
-              aria-label="Título"
-              value={it.titulo}
-              disabled={desabilitado}
-              onChange={(ev) => alterar(i, { titulo: ev.target.value })}
-            >
-              {titulos.map((t) => (
-                <option key={t.codigo} value={t.codigo}>
-                  {t.rotulo}
-                  {t.pontos ? ` (${t.pontos})` : ""}
-                </option>
-              ))}
-            </select>
-          ) : null}
-          {chave === "vinculos" ? (
-            <input
-              aria-label="Empregador ou cargo"
-              placeholder="Empregador ou cargo"
-              value={it.empregador || ""}
-              maxLength={200}
-              disabled={desabilitado}
-              onChange={(ev) => alterar(i, { empregador: ev.target.value })}
-            />
-          ) : (
-            <input
-              aria-label={chave === "cursos" ? "Curso" : "Curso ou instituição"}
-              placeholder={
-                chave === "cursos" ? "Curso" : "Curso ou instituição"
-              }
-              value={it.nome || ""}
-              maxLength={200}
-              disabled={desabilitado}
-              onChange={(ev) => alterar(i, { nome: ev.target.value })}
-            />
-          )}
-          {chave === "cursos" ? (
-            <input
-              aria-label="Carga horária"
-              type="number"
-              min="0"
-              max="20000"
-              inputMode="numeric"
-              placeholder="Horas"
-              value={it.horas ?? ""}
-              disabled={desabilitado}
-              onChange={(ev) =>
-                alterar(i, {
-                  horas: ev.target.value === "" ? "" : Number(ev.target.value),
-                })
-              }
-            />
-          ) : null}
-          {chave === "vinculos" ? (
-            <>
-              {categorias.length > 1 ? (
-                <select
-                  aria-label="Categoria"
-                  value={it.categoria}
-                  disabled={desabilitado}
-                  onChange={(ev) => alterar(i, { categoria: ev.target.value })}
-                >
-                  {categorias.map((c) => (
-                    <option key={c.codigo} value={c.codigo}>
-                      {c.rotulo || c.codigo}
-                    </option>
-                  ))}
-                </select>
-              ) : null}
-              <input
-                aria-label="Início"
-                type="date"
-                value={it.inicio || ""}
-                disabled={desabilitado}
-                onChange={(ev) => alterar(i, { inicio: ev.target.value })}
-              />
-              <input
-                aria-label="Fim"
-                type="date"
-                value={it.fim || ""}
-                disabled={desabilitado}
-                onChange={(ev) => alterar(i, { fim: ev.target.value })}
-              />
-            </>
-          ) : null}
-          <label className="avd-ficha-aceito">
-            <input
-              type="checkbox"
-              checked={it.aceito !== false}
-              disabled={desabilitado}
-              onChange={(ev) =>
-                alterar(i, {
-                  aceito: ev.target.checked,
-                  motivo: ev.target.checked ? null : it.motivo,
-                })
-              }
-            />{" "}
-            Aceito
-          </label>
-          {it.aceito === false ? (
-            <MotivoDoItem
-              bloco={bloco}
-              valor={it.motivo}
-              desabilitado={desabilitado}
-              aoMudar={(motivo) => alterar(i, { motivo })}
-            />
-          ) : null}
-          {!desabilitado ? (
-            <button
-              type="button"
-              className="btn secondary small"
-              aria-label="Tirar o item"
-              onClick={() =>
-                mudar((l) => {
-                  l[chave] = l[chave].filter((_, j) => j !== i);
-                  return l;
-                })
-              }
-            >
-              <i className="fa-solid fa-xmark" aria-hidden="true" />
-            </button>
-          ) : null}
-        </div>
-      ))}
-      {!desabilitado ? (
-        <button
-          type="button"
-          className="btn secondary small"
-          onClick={() =>
-            mudar((l) => {
-              l[chave] = [...(l[chave] || []), novo()];
-              return l;
-            })
-          }
-        >
-          <i className="fa-solid fa-plus" aria-hidden="true" />{" "}
-          {chave === "titulos"
-            ? "Título"
-            : chave === "cursos"
-              ? "Curso"
-              : "Vínculo"}
-        </button>
-      ) : null}
-    </div>
-  );
-}
-
-function NotaDoBloco({
-  regra,
-  bloco,
-  lancado,
-  lancamento,
-  avaliacao,
-  declarada,
-  mudar,
-  desabilitado,
-  conferido,
-}) {
-  const parcial = PARCIAL_DO_TIPO[bloco.tipo];
-  const calculado = avaliacao.calculados?.[parcial] ?? 0;
-  const apurado = avaliacao.parciais?.[parcial] ?? 0;
-  const decl = declarada?.parciais?.[parcial];
-  const teto = tetoDoBloco(bloco, lancamento.nivel);
-  const ajuste =
-    typeof lancado.nota_ajustada === "number" ? lancado.nota_ajustada : null;
-  // A diferença para a declarada só conta depois de o bloco ser conferido.
-  const divergencia = conferido
-    ? divergenciaDoBloco(bloco, avaliacao, declarada)
-    : null;
-  const opcoes = opcoesDeJustificativa(regra, bloco);
-  const mostrarJustificativa =
-    Boolean(divergencia) ||
-    ajuste !== null ||
-    (lancado.justificativas || []).length;
-  const alterarBloco = (campos) =>
-    mudar((l) => {
-      l.blocos = {
-        ...l.blocos,
-        [bloco.codigo]: { ...(l.blocos?.[bloco.codigo] || {}), ...campos },
-      };
-      return l;
-    });
-  return (
-    <div className="avd-ficha-nota" data-tour="avd-ficha-nota">
-      <div className="avd-ficha-numeros">
-        <span>
-          Declarado{" "}
-          <strong>{decl === undefined ? "—" : textoDaNota(decl)}</strong>
-        </span>
-        <span>
-          Calculado <strong>{textoDaNota(calculado)}</strong>
-        </span>
-        <Campo
-          rotulo={`Apurado${teto !== null ? ` (até ${textoDaNota(teto)})` : ""}`}
-        >
-          <input
-            type="number"
-            min="0"
-            max={teto ?? undefined}
-            step="0.5"
-            inputMode="decimal"
-            value={ajuste ?? apurado}
-            disabled={desabilitado}
-            data-divergente={divergencia ? "sim" : undefined}
-            onChange={(ev) => {
-              const v = ev.target.value === "" ? null : Number(ev.target.value);
-              alterarBloco({
-                nota_ajustada: v === null || v === calculado ? null : v,
-              });
-            }}
-          />
-        </Campo>
-        {ajuste !== null && !desabilitado ? (
-          <button
-            type="button"
-            className="btn secondary small"
-            onClick={() => alterarBloco({ nota_ajustada: null })}
-          >
-            Usar o calculado
-          </button>
-        ) : null}
-      </div>
-      {mostrarJustificativa ? (
-        <div
-          className="avd-ficha-justificativa"
-          data-tour="avd-ficha-justificativa"
-        >
-          {opcoes.length ? (
-            <Caixas
-              rotulo="Justificativa da nota"
-              opcoes={opcoes}
-              marcados={lancado.justificativas || []}
-              desabilitado={desabilitado}
-              aoMudar={(justificativas) => alterarBloco({ justificativas })}
-            />
-          ) : null}
-          <Campo
-            rotulo={
-              opcoes.length ? "Complemento (opcional)" : "Justificativa da nota"
-            }
-          >
-            <input
-              value={lancado.justificativa_livre || ""}
-              maxLength={2000}
-              disabled={desabilitado}
-              onChange={(ev) =>
-                alterarBloco({ justificativa_livre: ev.target.value })
-              }
-            />
-          </Campo>
-        </div>
-      ) : null}
-    </div>
-  );
-}
-
-function Etnico({ lancamento, mudar, desabilitado }) {
-  const marcar = (campo) => (ev) =>
-    mudar((l) => {
-      l[campo] = ev.target.checked;
-      return l;
-    });
-  return (
-    <div className="avd-caixas">
-      <label>
-        <input
-          type="checkbox"
-          checked={Boolean(lancamento.indigena)}
-          disabled={desabilitado}
-          onChange={marcar("indigena")}
-        />{" "}
-        Indígena
-      </label>
-      <label>
-        <input
-          type="checkbox"
-          checked={Boolean(lancamento.mora_aldeia)}
-          disabled={desabilitado}
-          onChange={marcar("mora_aldeia")}
-        />{" "}
-        Mora em aldeia
-      </label>
-      <label>
-        <input
-          type="checkbox"
-          checked={Boolean(lancamento.aldeia_na_lista)}
-          disabled={desabilitado}
-          onChange={marcar("aldeia_na_lista")}
-        />{" "}
-        Aldeia na lista do DSEI
-      </label>
-    </div>
-  );
-}
-
-/* O selo do bloco conferido: [tom, rótulo, ícone]. */
-const SELO_DA_SITUACAO = {
-  CONFORME: ["aprovado", "Conforme", "fa-check"],
-  NAO_CONFORME: ["reprovado", "Não conforme", "fa-xmark"],
-  NAO_ENVIADO: ["neutro", "Não enviado", "fa-ban"],
-};
-
-/* O que o cartão recolhido mostra ao lado do selo: os motivos e, no bloco que pontua, o apurado. */
-function resumoDoBloco(bloco, lancado, avaliacao) {
-  const partes = (lancado.motivos || [])
-    .map((codigo) => (bloco.motivos || []).find((m) => m.codigo === codigo))
-    .filter(Boolean)
-    .map((m) => m.texto);
-  if (lancado.motivo_livre?.trim()) partes.push(lancado.motivo_livre.trim());
-  const parcial = PARCIAL_DO_TIPO[bloco.tipo];
-  if (parcial)
-    partes.push(`${textoDaNota(avaliacao.parciais?.[parcial] ?? 0)} pontos`);
-  return partes.join(" · ");
-}
-
-function CartaoDoBloco({
-  st,
-  bloco,
-  ativo,
-  aoFocar,
-  mudar,
-  desabilitado,
-  mostrarTodas,
-  empregare,
-}) {
-  const { lancamento, avaliacao, declarada, dados, pendencias } = st;
-  const regra = dados.regra.configuracao;
-  const lancado = lancamento.blocos?.[bloco.codigo] || {};
-  const linhas = respostasDoBloco(bloco, dados.respostas);
-  const aplica = blocoSeAplica(bloco, lancamento);
-  // null: recolhe sozinho quando o analista passa ao próximo; true/false: abriu ou recolheu à mão.
-  const [expandido, setExpandido] = useState(null);
-  const todasDoBloco = pendencias.filter((p) => p.bloco === bloco.codigo);
-  // "Marque a situação" só aparece depois de tentar concluir; o resto, na hora.
-  const doBloco = todasDoBloco.filter(
-    (p) => mostrarTodas || !p.texto.startsWith("Marque"),
-  );
-  const avaliado = avaliacao.blocos.find((b) => b.codigo === bloco.codigo);
-  const alterarBloco = (campos) =>
-    mudar((l) => {
-      l.blocos = {
-        ...l.blocos,
-        [bloco.codigo]: { ...(l.blocos?.[bloco.codigo] || {}), ...campos },
-      };
-      return l;
-    });
-  const pedeSituacao = bloco.tipo !== "REGISTRO" && aplica;
-  const conferido = pedeSituacao && blocoConferido(lancamento, bloco);
-  const situacao = SELO_DA_SITUACAO[lancado.situacao];
-  /* Marcado e sem nada a fazer, o cartão vira uma linha (título, selo e motivo)
-     quando o analista passa ao próximo. Fica aberto: o cartão da vez, com
-     pendência, ou Conforme num bloco de itens ainda sem item. */
-  const chaveDosItens = BLOCOS_COM_ITENS[bloco.tipo];
-  const semItens = chaveDosItens && !(lancamento[chaveDosItens] || []).length;
-  const podeRecolher =
-    conferido &&
-    !todasDoBloco.length &&
-    !(semItens && lancado.situacao === "CONFORME");
-  const recolhido = podeRecolher && (expandido === null ? !ativo : !expandido);
-  const resumo = recolhido ? resumoDoBloco(bloco, lancado, avaliacao) : "";
-  return (
-    <section
-      className="ui-card avd-ficha-bloco"
-      data-bloco={bloco.codigo}
-      data-situacao={aplica ? lancado.situacao || "" : "NAO_SE_APLICA"}
-      data-ativo={ativo ? "sim" : undefined}
-      data-recolhido={recolhido ? "sim" : undefined}
-      aria-labelledby={`avdBloco-${bloco.codigo}`}
-      tabIndex={-1}
-      onFocus={aoFocar}
-      onClick={aoFocar}
-    >
-      <header className="avd-ficha-bloco-topo">
-        {podeRecolher ? (
-          <button
-            type="button"
-            className="avd-ficha-alternar"
-            data-acao="alternar-bloco"
-            aria-expanded={!recolhido}
-            aria-controls={`avdBlocoCorpo-${bloco.codigo}`}
-            aria-label={recolhido ? "Mostrar o bloco" : "Recolher o bloco"}
-            onClick={() => setExpandido(recolhido)}
-          >
-            <i
-              className={`fa-solid ${recolhido ? "fa-chevron-right" : "fa-chevron-down"}`}
-              aria-hidden="true"
-            />
-          </button>
-        ) : null}
-        <h3 id={`avdBloco-${bloco.codigo}`} title={bloco.titulo}>
-          {bloco.titulo}
-        </h3>
-        {conferido && situacao ? (
-          <Selo tom={situacao[0]} className="avd-ficha-selo-situacao">
-            <i className={`fa-solid ${situacao[2]}`} aria-hidden="true" />{" "}
-            {situacao[1]}
-          </Selo>
-        ) : null}
-        {conferido && avaliado?.efeito && avaliado.efeito !== "SO_REGISTRO" ? (
-          <Selo tom={avaliado.efeito === "ELIMINA" ? "reprovado" : "revisar"}>
-            {avaliado.efeito === "ELIMINA"
-              ? "Elimina"
-              : avaliado.efeito.startsWith("ENCAMINHA")
-                ? "Encaminha"
-                : avaliado.efeito === "SEGUE_AMPLA"
-                  ? "Segue na ampla"
-                  : "Sem pontos"}
-          </Selo>
-        ) : null}
-        {resumo ? (
-          <span className="avd-ficha-resumo-do-bloco" title={resumo}>
-            {resumo}
-          </span>
-        ) : null}
-        {!aplica ? <Selo>Não se aplica</Selo> : null}
-        {bloco.item_edital ? (
-          <span className="avd-ficha-item-edital">
-            Item {bloco.item_edital}
-          </span>
-        ) : null}
-      </header>
-      {recolhido ? null : (
-        <div
-          className="avd-ficha-bloco-corpo"
-          id={`avdBlocoCorpo-${bloco.codigo}`}
-        >
-          {aplica ? (
-            <div className="avd-ficha-bloco-linha">
-              <Declarado
-                linhas={linhas}
-                sugestao={!lancado.situacao && sugereNaoEnviado(linhas)}
-                empregare={empregare}
-              />
-              {pedeSituacao ? (
-                <BotoesDeSituacao
-                  valor={lancado.situacao}
-                  desabilitado={desabilitado}
-                  aoMudar={(situacao) =>
-                    alterarBloco({
-                      situacao,
-                      motivos: ["NAO_CONFORME", "NAO_ENVIADO"].includes(
-                        situacao,
-                      )
-                        ? lancado.motivos || []
-                        : [],
-                    })
-                  }
-                />
-              ) : null}
-            </div>
-          ) : null}
-          {bloco.tipo === "PONTUACAO" ? (
-            <Etnico
-              lancamento={lancamento}
-              mudar={mudar}
-              desabilitado={desabilitado}
-            />
-          ) : null}
-          {pedeSituacao &&
-          ["NAO_CONFORME", "NAO_ENVIADO"].includes(lancado.situacao) ? (
-            (bloco.motivos || []).length ? (
-              <Caixas
-                rotulo="Motivo"
-                opcoes={bloco.motivos}
-                marcados={lancado.motivos || []}
-                desabilitado={desabilitado}
-                aoMudar={(motivos) => alterarBloco({ motivos })}
-              />
-            ) : (
-              <Campo rotulo="Motivo">
-                <input
-                  value={lancado.motivo_livre || ""}
-                  maxLength={2000}
-                  disabled={desabilitado}
-                  onChange={(ev) =>
-                    alterarBloco({ motivo_livre: ev.target.value })
-                  }
-                />
-              </Campo>
-            )
-          ) : null}
-          {aplica &&
-          (BLOCOS_COM_ITENS[bloco.tipo] || PARCIAL_DO_TIPO[bloco.tipo]) ? (
-            <div className="avd-ficha-apuracao">
-              {BLOCOS_COM_ITENS[bloco.tipo] ? (
-                <Itens
-                  bloco={bloco}
-                  lancamento={lancamento}
-                  mudar={mudar}
-                  desabilitado={desabilitado}
-                />
-              ) : null}
-              {PARCIAL_DO_TIPO[bloco.tipo] ? (
-                <NotaDoBloco
-                  regra={regra}
-                  bloco={bloco}
-                  lancado={lancado}
-                  lancamento={lancamento}
-                  avaliacao={avaliacao}
-                  declarada={declarada}
-                  mudar={mudar}
-                  desabilitado={desabilitado}
-                  conferido={conferido}
-                />
-              ) : null}
-            </div>
-          ) : null}
-          {doBloco.length && !desabilitado ? (
-            <ul className="avd-ficha-pendencias">
-              {doBloco.map((p) => (
-                <li key={p.texto}>{p.texto}</li>
-              ))}
-            </ul>
-          ) : null}
-        </div>
-      )}
-    </section>
-  );
-}
-
-function Lateral({
-  st,
-  loja,
-  ficha,
-  mudar,
-  desabilitado,
-  empregare,
-  copiado,
-  setCopiado,
-}) {
-  const { avaliacao, declarada, lancamento, dados } = st;
-  const regra = dados.regra.configuracao;
-  const pontuam = regra.blocos.filter(
-    (b) => PARCIAL_DO_TIPO[b.tipo] && blocoSeAplica(b, lancamento),
-  );
-  const art = dados.declarada_gravada?.art;
-  // O nível vem da vaga; só a coordenação muda (e isso muda os pontos declarados).
-  const mudaNivel = !desabilitado && dados.papel === "COORDENADOR";
-  // Concluída: o que foi gravado (resultado, nota e parecer); em análise, a conta ao vivo.
-  const concluida = ficha.situacao === "CONCLUIDA" && ficha.parecer;
-  const gravado = concluida
-    ? {
-        resultado: ficha.tp_resultado,
-        nota_final: ficha.nota_final,
-        parecer: ficha.parecer,
-      }
-    : avaliacao;
-  // "Compartilhar esta ficha": o cartão (edital e candidato pelo código) vai para uma conversa do chat.
-  const comChat = usarChatLiberado();
-  const compartilharFicha = () => {
-    const ok = compartilharNoChat({
-      view: "avaliacao-documental",
-      area: dados.edital?.area || "",
-      edital: { id: dados.edital?.id, titulo: dados.edital?.rotulo || "" },
-      ficha: { id: ficha.id, codigo: String(ficha.codigo ?? "") },
-    });
-    if (!ok) setCopiado("Não foi possível compartilhar esta ficha");
-  };
-  // Em análise (falta conferir e nada conferido eliminou): estado neutro, nota parcial.
-  const emAnalise = !concluida && st.conferencia?.situacao === "EM_ANALISE";
-  const resultado = concluida
-    ? gravado.resultado
-    : (st.conferencia?.situacao ?? avaliacao.resultado);
-  // Falta conferir algum item: a prévia não traz resultado, só os motivos já lançados.
-  const previa = concluida
-    ? { completa: true, texto: gravado.parecer, motivos: [] }
-    : previaDoParecer(avaliacao, st.conferencia, lancamento);
-  return (
-    <aside
-      className="avd-ficha-lateral"
-      aria-label="Nota e parecer"
-      data-tour="avd-ficha-lateral"
-    >
-      <div
-        className="ui-card avd-ficha-total"
-        data-resultado={resultado || undefined}
-      >
-        <Selo tom={emAnalise ? "neutro" : tomDoResultado(resultado)}>
-          {concluida || !st.conferencia
-            ? textoDoResultado(resultado)
-            : textoDaSituacaoDaConferencia(st.conferencia)}
-        </Selo>
-        <strong className="avd-ficha-nota-total">
-          {textoDaNota(emAnalise ? avaliacao.nota_apurada : gravado.nota_final)}
-          {emAnalise ? (
-            <small className="avd-ficha-parcial"> parcial</small>
-          ) : null}
-        </strong>
-        <span>
-          {avaliacao.nota_minima !== null
-            ? `mínima ${textoDaNota(avaliacao.nota_minima)}`
-            : ""}
-          {art !== null && art !== undefined ? (
-            <span title={DICA_DA_ART}>
-              {` · ${ROTULO_DA_ART} ${textoDaNota(art)}`}
-            </span>
-          ) : null}
-        </span>
-      </div>
-      <div
-        className="avd-ficha-comparacao"
-        role="table"
-        aria-label="Declarado × apurado"
-        data-tour="avd-ficha-comparacao"
-      >
-        <div className="avd-ficha-linha avd-ficha-linha-topo" role="row">
-          <span role="columnheader">Bloco</span>
-          <span role="columnheader">Declarado</span>
-          <span role="columnheader">Apurado</span>
-        </div>
-        {pontuam.map((b) => {
-          const p = PARCIAL_DO_TIPO[b.tipo];
-          // Antes de conferir o bloco: apurado "—", sem destacar diferença.
-          const conferido = blocoConferido(lancamento, b);
-          const div = conferido
-            ? divergenciaDoBloco(b, avaliacao, declarada)
-            : null;
-          const l = lancamento.blocos?.[b.codigo] || {};
-          const justificativas = opcoesDeJustificativa(regra, b)
-            .filter((o) => (l.justificativas || []).includes(o.codigo))
-            .map((o) => o.texto);
-          if (l.justificativa_livre?.trim())
-            justificativas.push(l.justificativa_livre.trim());
-          return (
-            <div
-              key={b.codigo}
-              className="avd-ficha-linha"
-              role="row"
-              data-divergente={div ? "sim" : undefined}
-              data-conferido={conferido ? "sim" : "nao"}
-            >
-              <span role="rowheader">
-                {rotuloDe(PARCIAIS, p)}
-                {div && justificativas.length ? (
-                  <small>{justificativas.join("; ")}</small>
-                ) : null}
-              </span>
-              <span role="cell">
-                {declarada?.parciais?.[p] === undefined
-                  ? "—"
-                  : textoDaNota(declarada.parciais[p])}
-              </span>
-              <span
-                role="cell"
-                title={conferido ? undefined : "Bloco ainda não conferido"}
-              >
-                {conferido ? textoDaNota(avaliacao.parciais?.[p] ?? 0) : "—"}
-              </span>
-            </div>
-          );
-        })}
-      </div>
-      {mudaNivel ? (
-        <Campo
-          rotulo="Nível da vaga"
-          dica="Mudar o nível muda os pontos declarados."
-        >
-          <select
-            value={lancamento.nivel}
-            data-acao="nivel-da-vaga"
-            onChange={(ev) =>
-              mudar((l) => {
-                l.nivel = ev.target.value;
-                return l;
-              })
-            }
-          >
-            {NIVEIS.map(([v, r]) => (
-              <option key={v} value={v}>
-                {r}
-              </option>
-            ))}
-          </select>
-        </Campo>
-      ) : (
-        <div className="avd-ficha-nivel" data-nivel={lancamento.nivel}>
-          <Kv rotulo="Nível da vaga">{rotuloDe(NIVEIS, lancamento.nivel)}</Kv>
-        </div>
-      )}
-      <div className="avd-ficha-empregare" data-tour="avd-ficha-empregare">
-        <button
-          type="button"
-          className="btn secondary small"
-          onClick={async () => {
-            const ok = await copiar(String(ficha.codigo ?? ""));
-            setCopiado(ok ? "Código copiado" : "Não foi possível copiar");
-            void loja.registrarAcesso("COPIAR_CODIGO");
-          }}
-        >
-          <i className="fa-regular fa-copy" aria-hidden="true" /> Copiar código{" "}
-          {ficha.codigo}
-        </button>
-        <LinkDaEmpregare
-          empregare={empregare}
-          className="btn secondary small"
-        />
-        {comChat ? (
-          <button
-            type="button"
-            className="btn secondary small"
-            data-tour="avd-ficha-compartilhar"
-            onClick={compartilharFicha}
-          >
-            <i className="fa-solid fa-comments" aria-hidden="true" />{" "}
-            Compartilhar esta ficha
-          </button>
-        ) : null}
-        {copiado ? <small role="status">{copiado}</small> : null}
-      </div>
-      {(regra.observacoes_prontas || []).length ? (
-        <Caixas
-          rotulo="Observações prontas"
-          opcoes={regra.observacoes_prontas.map((o) => ({
-            codigo: o.codigo,
-            texto: o.rotulo || o.texto,
-          }))}
-          marcados={lancamento.observacoes_prontas || []}
-          desabilitado={desabilitado}
-          aoMudar={(observacoes_prontas) =>
-            mudar((l) => {
-              l.observacoes_prontas = observacoes_prontas;
-              return l;
-            })
-          }
-        />
-      ) : null}
-      <Campo rotulo="Observação">
-        <textarea
-          rows={3}
-          maxLength={4000}
-          value={lancamento.observacoes || ""}
-          disabled={desabilitado}
-          onChange={(ev) =>
-            mudar((l) => {
-              l.observacoes = ev.target.value;
-              return l;
-            })
-          }
-        />
-      </Campo>
-      <div className="avd-ficha-parecer" data-tour="avd-ficha-parecer">
-        <div className="avd-inline">
-          <strong>
-            Parecer
-            {!concluida && !previa.completa ? (
-              <small className="avd-ficha-parcial"> (prévia)</small>
-            ) : null}
-          </strong>
-          {previa.completa ? (
-            <button
-              type="button"
-              className="btn secondary small"
-              onClick={async () =>
-                setCopiado(
-                  (await copiar(previa.texto))
-                    ? "Parecer copiado"
-                    : "Não foi possível copiar",
-                )
-              }
-            >
-              Copiar parecer
-            </button>
-          ) : null}
-        </div>
-        {previa.completa ? (
-          <pre>{previa.texto}</pre>
-        ) : (
-          <div className="avd-ficha-parecer-previa">
-            <p>{previa.texto}</p>
-            {previa.motivos.length ? (
-              <ul>
-                {previa.motivos.map((m) => (
-                  <li key={m}>{m}</li>
-                ))}
-              </ul>
-            ) : null}
-          </div>
-        )}
-      </div>
-    </aside>
-  );
-}
-
-function Historico({ itens }) {
-  if (!itens?.length) return null;
-  return (
-    <details
-      className="ui-card avd-ficha-historico"
-      data-tour="avd-ficha-historico"
-    >
-      <summary>Histórico ({itens.length})</summary>
-      <ol>
-        {itens.map((h) => (
-          <li key={`${h.versao}-${h.acao}-${h.quando}`}>
-            <span>
-              {new Date(h.quando).toLocaleString("pt-BR", {
-                timeZone: "America/Sao_Paulo",
-                dateStyle: "short",
-                timeStyle: "short",
-              })}
-            </span>{" "}
-            <strong>{ACOES_DO_HISTORICO[h.acao] || h.acao}</strong>
-            {h.por ? ` · ${h.por}` : ""}
-            {h.motivo ? ` · ${h.motivo}` : ""}
-            {(h.alteracao || []).length ? (
-              <ul>
-                {h.alteracao.map((a, i) => (
-                  <li key={i}>{textoDaAlteracao(a)}</li>
-                ))}
-              </ul>
-            ) : null}
-          </li>
-        ))}
-      </ol>
-    </details>
-  );
 }
 
 function Reabrir({ loja }) {
@@ -1146,77 +142,6 @@ function Reabrir({ loja }) {
   );
 }
 
-/* "4 de 7 itens conferidos" com a barra; verde quando tudo foi conferido. */
-function Progresso({ conferencia }) {
-  const { conferidos, total } = conferencia;
-  return (
-    <span className="avd-ficha-progresso" data-tour="avd-ficha-progresso">
-      <span
-        className="avd-ficha-progresso-barra"
-        role="progressbar"
-        aria-label="Itens conferidos"
-        aria-valuemin={0}
-        aria-valuemax={total}
-        aria-valuenow={conferidos}
-        aria-valuetext={textoDoProgresso(conferencia)}
-        data-completo={conferidos === total ? "sim" : undefined}
-      >
-        <span style={{ width: `${Math.round((conferidos / total) * 100)}%` }} />
-      </span>
-      <span>{textoDoProgresso(conferencia)}</span>
-    </span>
-  );
-}
-
-/* O ícone e o texto (leitor de tela) de cada estado da etapa. */
-const ESTADOS_DA_ETAPA = {
-  nao_conferido: ["", "não conferido"],
-  pendencia: ["fa-circle-exclamation", "falta completar"],
-  CONFORME: ["fa-check", "conforme"],
-  NAO_CONFORME: ["fa-xmark", "não conforme"],
-  NAO_ENVIADO: ["fa-ban", "não enviado"],
-};
-
-/*
-  As etapas do topo do modo de análise: o nome curto de cada item, na cor do
-  estado; clicar vai ao item. Com a linha de atalhos ao lado.
-*/
-function EtapasDaAnalise({ etapas, ativo, aoIr, comAtalhos }) {
-  return (
-    <div className="avd-ficha-etapas" data-tour="avd-ficha-etapas">
-      <ol aria-label="Itens da ficha">
-        {etapas.map((e) => {
-          const [icone, texto] = ESTADOS_DA_ETAPA[e.estado] || ["", ""];
-          return (
-            <li key={e.codigo}>
-              <button
-                type="button"
-                data-etapa={e.codigo}
-                data-estado={e.estado}
-                aria-current={e.codigo === ativo ? "step" : undefined}
-                onClick={() => aoIr(e.codigo)}
-              >
-                {icone ? (
-                  <i className={`fa-solid ${icone}`} aria-hidden="true" />
-                ) : null}
-                {e.nome}
-                <span className="sr-only"> ({texto})</span>
-              </button>
-            </li>
-          );
-        })}
-      </ol>
-      {comAtalhos ? (
-        <p className="avd-ficha-atalhos" data-tour="avd-ficha-atalhos">
-          <kbd>1</kbd> Conforme · <kbd>2</kbd> Não conforme · <kbd>3</kbd> Não
-          enviado · <kbd>J</kbd>/<kbd>K</kbd> navegar · <kbd>Ctrl+S</kbd> salvar
-          · <kbd>Ctrl+Enter</kbd> concluir
-        </p>
-      ) : null}
-    </div>
-  );
-}
-
 function textoDoEstado(st) {
   if (st.salvando) return "Salvando…";
   if (st.sujo) return "Alteração não salva";
@@ -1224,8 +149,10 @@ function textoDoEstado(st) {
 }
 
 /**
- * O corpo da ficha aberta. `registrarAntesDeFechar(fn)` recebe a função que a
- * gaveta chama antes de fechar (salva o que falta e confirma se não der).
+ * O corpo da ficha aberta. `registrarAntesDeFechar(fn)` recebe a função que o
+ * modo de análise chama antes de sair (salva o que falta e confirma se não
+ * der). `topo`: o que o cabeçalho mostra (fila.jsx); `children`: os avisos
+ * logo abaixo dele.
  */
 export function ConteudoDaFicha({
   fila,
@@ -1233,24 +160,42 @@ export function ConteudoDaFicha({
   filtroVaga,
   aoFechar,
   registrarAntesDeFechar,
+  topo,
+  children,
   criarLoja = criarEstadoDaFicha,
 }) {
   const [loja] = useState(() =>
     criarLoja({ rpc: fila.rpc, toast: fila.toast }),
   );
   const st = useSyncExternalStore(loja.assinar, loja.obter);
-  const [ativo, setAtivo] = useState(0);
+  const [escolhido, setEscolhido] = useState(null);
+  const [modo, setModo] = useState(lerModo);
+  const [direcao, setDirecao] = useState("frente");
   const [erroDeConclusao, setErroDeConclusao] = useState("");
   const [tentouConcluir, setTentouConcluir] = useState(false);
-  // "Código copiado" e afins, na lateral (o "Ver na Empregare" do anexo também avisa ali).
-  const [copiado, setCopiado] = useState("");
+  // "Código copiado" e afins, no rodapé.
+  const [aviso, setAviso] = useState("");
   const raiz = useRef(null);
+  const avanco = useRef(null);
+  // "Compartilhar no chat" no "⋯" (o cartão da ficha vai para uma conversa).
+  const comChat = usarChatLiberado();
   const fichaId = aberta.ficha.id;
 
   useEffect(() => {
     void loja.carregar(fichaId);
   }, [loja, fichaId]);
-  useEffect(() => () => loja.descartar(), [loja]);
+  useEffect(
+    () => () => {
+      clearTimeout(avanco.current);
+      loja.descartar();
+    },
+    [loja],
+  );
+  useEffect(() => {
+    if (!aviso) return undefined;
+    const id = setTimeout(() => setAviso(""), 6000);
+    return () => clearTimeout(id);
+  }, [aviso]);
 
   useEffect(() => {
     registrarAntesDeFechar?.(async () => {
@@ -1277,59 +222,224 @@ export function ConteudoDaFicha({
 
   const regra = st.dados?.regra?.configuracao;
   const blocos = useMemo(() => regra?.blocos || [], [regra]);
-  const comSituacao = useMemo(
+  const passos = useMemo(
     () =>
-      blocos
-        .map((b, i) => [b, i])
-        .filter(
-          ([b]) =>
-            b.tipo !== "REGISTRO" &&
-            st.lancamento &&
-            blocoSeAplica(b, st.lancamento),
-        ),
-    [blocos, st.lancamento],
+      regra && st.lancamento
+        ? passosDaFicha(regra, st.lancamento, st.pendencias)
+        : [],
+    [regra, st.lancamento, st.pendencias],
   );
+  const concluida = st.dados?.ficha?.situacao === "CONCLUIDA";
+  /* O passo inicial, decidido uma vez ao abrir: na concluída, a Conclusão; senão, o primeiro que pede algo. */
+  const inicial = useRef(null);
+  if (!inicial.current && passos.length)
+    inicial.current = concluida
+      ? PASSO_DA_CONCLUSAO
+      : proximoPassoPendente(passos, null);
+  const atual =
+    escolhido && passos.some((p) => p.codigo === escolhido)
+      ? escolhido
+      : inicial.current;
+
+  /* Vai ao passo: no foco, troca o item (com a animação); na lista, rola até ele. */
+  const irPara = useCallback(
+    (codigo) => {
+      if (!codigo) return;
+      clearTimeout(avanco.current);
+      const de = passos.findIndex((p) => p.codigo === atual);
+      const para = passos.findIndex((p) => p.codigo === codigo);
+      setDirecao(para < de ? "tras" : "frente");
+      setEscolhido(codigo);
+      // Sem mover o foco (o contorno do foco do app pesaria no cartão): o anúncio vai pelo aria-live.
+      const depois =
+        globalThis.requestAnimationFrame ?? ((fn) => setTimeout(fn, 0));
+      depois(() => {
+        if (modo === "foco") {
+          if (globalThis.scrollY > 0) globalThis.scrollTo?.({ top: 0 });
+          return;
+        }
+        raiz.current
+          ?.querySelector(`[data-bloco="${codigo}"]`)
+          ?.scrollIntoView?.({ block: "nearest" });
+      });
+    },
+    [passos, atual, modo],
+  );
+
+  /*
+    Os atalhos valem na página inteira enquanto a ficha está aberta (sem
+    precisar clicar nela antes), menos em campo de texto, com um modal aberto
+    ou com o foco em outro painel (chat, Aya).
+  */
+  const teclar = useRef(null);
+  teclar.current = null;
+  useEffect(() => {
+    const aoTeclarNaPagina = (ev) => {
+      if (ev.defaultPrevented || document.querySelector(".modal.show")) return;
+      const alvo = ev.target;
+      const area = raiz.current?.closest(".avd-analise") ?? raiz.current;
+      const naFicha =
+        alvo === document.body ||
+        alvo === document.documentElement ||
+        Boolean(area?.contains(alvo));
+      if (naFicha) teclar.current?.(ev);
+    };
+    document.addEventListener("keydown", aoTeclarNaPagina);
+    return () => document.removeEventListener("keydown", aoTeclarNaPagina);
+  }, []);
 
   if (st.erro)
     return (
-      <Aviso tom="danger" papel="alert">
-        Não foi possível abrir o conteúdo da ficha: {st.erro}
-      </Aviso>
+      <>
+        {topo ? <CabecalhoDaFicha {...topo} /> : null}
+        {children}
+        <Aviso tom="danger" papel="alert">
+          Não foi possível abrir o conteúdo da ficha: {st.erro}
+        </Aviso>
+      </>
     );
   if (!st.dados || !st.lancamento)
     return (
-      <div className="ui-card" aria-busy="true">
-        <div className="ui-esqueleto-linha" />
-        <div className="ui-esqueleto-linha" />
-      </div>
+      <>
+        {topo ? <CabecalhoDaFicha {...topo} /> : null}
+        {children}
+        <div className="ui-card" aria-busy="true">
+          <div className="ui-esqueleto-linha" />
+          <div className="ui-esqueleto-linha" />
+        </div>
+      </>
     );
 
   const ficha = { ...aberta.ficha, ...st.dados.ficha };
   const desabilitado = !st.podeEditar;
-  const concluida = st.dados.ficha.situacao === "CONCLUIDA";
   const conferencia = st.conferencia;
-  /* Os blocos que não valem para o candidato vão para uma linha no fim. O
-     critério étnico fica: é nele que se marca "Indígena", que o faz valer. */
-  const agrupado = (b) =>
-    b.tipo !== "PONTUACAO" && !blocoSeAplica(b, st.lancamento);
-  const naoSeAplicam = blocos.filter(agrupado);
-  const mudar = loja.mudar;
-  const etapas = etapasDaFicha(regra, st.lancamento, st.pendencias);
+  const avaliacao = st.avaliacao;
+  const lancamento = st.lancamento;
+  // Mexer no item (itens, nota, motivo) cancela o avanço sozinho que estava por vir.
+  const mudar = (transformar) => {
+    clearTimeout(avanco.current);
+    loja.mudar(transformar);
+  };
+  const itens = passos.filter((p) => p.codigo !== PASSO_DA_CONCLUSAO);
+  const naConclusao = atual === PASSO_DA_CONCLUSAO;
+  const foco = modo === "foco";
+  /* Os blocos que não valem para o candidato (o critério étnico fica: é nele que se marca "Indígena"). */
+  const naoSeAplicam = blocos.filter(
+    (b) =>
+      b.tipo !== "PONTUACAO" &&
+      b.tipo !== "REGISTRO" &&
+      !blocoSeAplica(b, lancamento),
+  );
+  const registros = blocos.filter((b) => b.tipo === "REGISTRO");
   const empregare = {
     enderecos: enderecosDaEmpregare(st.dados, ficha),
-    ficha,
+    codigoDoCandidato: String(ficha.codigo ?? ""),
+    codigoDaVaga: String(ficha.vaga ?? ""),
     loja,
-    aoAvisar: setCopiado,
+    aoAvisar: setAviso,
   };
 
-  /* Vai ao bloco (teclas J/K e depois do Conforme): foco e rolagem acompanham. */
-  function irPara(indice) {
-    setAtivo(indice);
-    const alvo = raiz.current?.querySelector(
-      `[data-bloco="${blocos[indice]?.codigo}"]`,
+  /* A nota: concluída, o que foi gravado; em análise, a conta ao vivo. */
+  const gravada = concluida && ficha.parecer;
+  const emAnalise = !gravada && conferencia?.situacao === "EM_ANALISE";
+  const resultado = gravada
+    ? ficha.tp_resultado
+    : (conferencia?.situacao ?? avaliacao.resultado);
+  const art = st.dados.declarada_gravada?.art;
+  const nota = {
+    nota: emAnalise
+      ? avaliacao.nota_apurada
+      : gravada
+        ? ficha.nota_final
+        : avaliacao.nota_final,
+    parcial: emAnalise,
+    minima: avaliacao.nota_minima ?? null,
+    art:
+      art !== null && art !== undefined
+        ? { rotulo: ROTULO_DA_ART, dica: DICA_DA_ART, valor: art }
+        : null,
+    selo: {
+      tom: emAnalise ? "neutro" : tomDoResultado(resultado),
+      texto:
+        gravada || !conferencia
+          ? textoDoResultado(resultado)
+          : textoDaSituacaoDaConferencia(conferencia),
+    },
+    resultado,
+    partes: composicaoDaNota(regra, lancamento, avaliacao, st.declarada),
+  };
+  const previa = gravada
+    ? { completa: true, texto: ficha.parecer, motivos: [] }
+    : previaDoParecer(avaliacao, conferencia, lancamento);
+
+  const compartilhar = comChat
+    ? () => {
+        const ok = compartilharNoChat({
+          view: "avaliacao-documental",
+          area: st.dados.edital?.area || "",
+          edital: {
+            id: st.dados.edital?.id,
+            titulo: st.dados.edital?.rotulo || "",
+          },
+          ficha: { id: ficha.id, codigo: String(ficha.codigo ?? "") },
+        });
+        if (!ok) setAviso("Não foi possível compartilhar esta ficha");
+      }
+    : null;
+  const maisAcoes = (
+    <MaisAcoesDaFicha
+      empregare={empregare}
+      aoCompartilhar={compartilhar}
+      nivel={
+        !desabilitado && st.dados.papel === "COORDENADOR"
+          ? {
+              valor: lancamento.nivel,
+              aoMudar: (nivel) =>
+                mudar((l) => {
+                  l.nivel = nivel;
+                  return l;
+                }),
+            }
+          : null
+      }
+    />
+  );
+
+  /* Depois de uma decisão: Conforme sem pendência avança (no foco) ao próximo que pede algo. */
+  function depoisDeDecidir(codigo, situacao) {
+    if (situacao !== "CONFORME" || modo !== "foco") return;
+    const agora = loja.obter();
+    if (agora.pendencias.some((p) => p.bloco === codigo)) return;
+    // Títulos, cursos ou vínculos ainda sem item: fica, para lançar os comprovados.
+    const bloco = blocos.find((b) => b.codigo === codigo);
+    const chave = BLOCOS_COM_ITENS[bloco?.tipo];
+    if (chave && !(agora.lancamento[chave] || []).length) return;
+    const proximo = proximoPassoPendente(
+      passosDaFicha(
+        agora.dados.regra.configuracao,
+        agora.lancamento,
+        agora.pendencias,
+      ),
+      codigo,
     );
-    alvo?.focus?.({ preventScroll: true });
-    alvo?.scrollIntoView?.({ block: "nearest" });
+    clearTimeout(avanco.current);
+    avanco.current = setTimeout(() => irPara(proximo), ESPERA_PARA_AVANCAR_MS);
+  }
+
+  function decidir(codigo, situacao) {
+    mudar((l) => {
+      const atualDoBloco = l.blocos?.[codigo] || {};
+      l.blocos = {
+        ...l.blocos,
+        [codigo]: {
+          ...atualDoBloco,
+          situacao,
+          motivos: situacao === "CONFORME" ? [] : atualDoBloco.motivos || [],
+        },
+      };
+      return l;
+    });
+    depoisDeDecidir(codigo, situacao);
   }
 
   async function concluirEProxima() {
@@ -1340,19 +450,12 @@ export function ConteudoDaFicha({
       await fila.pegarProxima(filtroVaga || "");
       return;
     }
-    if (r.pendencias?.length) {
-      // O que falta já está na barra ("Falta: …"); aqui, só vai ao primeiro bloco.
-      const primeiro = blocos.findIndex(
-        (b) => b.codigo === r.pendencias[0].bloco,
-      );
-      if (primeiro >= 0) {
-        setAtivo(primeiro);
-        raiz.current
-          ?.querySelector(`[data-bloco="${blocos[primeiro].codigo}"]`)
-          ?.scrollIntoView?.({ block: "center" });
-      }
-    } else setErroDeConclusao(r.erro || "Não foi possível concluir.");
+    if (r.pendencias?.length) irPara(r.pendencias[0].bloco);
+    else setErroDeConclusao(r.erro || "Não foi possível concluir.");
   }
+
+  const posicao = passos.findIndex((p) => p.codigo === atual);
+  const vizinho = (passo) => passos[posicao + passo]?.codigo;
 
   function aoTeclar(ev) {
     const ctrl = ev.ctrlKey || ev.metaKey;
@@ -1366,53 +469,155 @@ export function ConteudoDaFicha({
       void concluirEProxima();
       return;
     }
-    if (ctrl || ev.altKey || ehCampoDeTexto(ev.target) || desabilitado) return;
+    if (ctrl || ev.altKey || ehCampoDeTexto(ev.target)) return;
     const k = ev.key.toLowerCase();
     if (k === "j" || k === "k") {
       ev.preventDefault();
-      const pos = comSituacao.findIndex(([, i]) => i === ativo);
-      const prox =
-        comSituacao[
-          Math.min(
-            comSituacao.length - 1,
-            Math.max(0, pos + (k === "j" ? 1 : -1)),
-          )
-        ];
-      if (prox) irPara(prox[1]);
+      const alvo = vizinho(k === "j" ? 1 : -1);
+      if (alvo) irPara(alvo);
       return;
     }
+    if (desabilitado) return;
     const situacao = situacaoDaTecla(ev.key);
-    const bloco = blocos[ativo];
-    if (!situacao || !bloco || !comSituacao.some(([, i]) => i === ativo))
-      return;
+    const bloco = blocos.find((b) => b.codigo === atual);
+    if (!situacao || !bloco || !itens.some((p) => p.codigo === atual)) return;
+    if (bloco.tipo === "REGISTRO" || !blocoSeAplica(bloco, lancamento)) return;
     ev.preventDefault();
-    mudar((l) => {
-      const atual = l.blocos?.[bloco.codigo] || {};
-      l.blocos = {
-        ...l.blocos,
-        [bloco.codigo]: {
-          ...atual,
-          situacao,
-          motivos: situacao === "CONFORME" ? [] : atual.motivos || [],
-        },
+    decidir(bloco.codigo, situacao);
+  }
+
+  teclar.current = aoTeclar;
+
+  /* O botão primário do rodapé, conforme o momento. */
+  let primaria = null;
+  let secundaria = null;
+  if (st.podeEditar) {
+    if (naConclusao || !foco) {
+      primaria = {
+        rotulo: "Concluir e próxima",
+        acao: "concluir-e-proxima",
+        aoClicar: () => void concluirEProxima(),
+        desabilitado: st.concluindo || !conferencia?.pode_concluir,
+        dica: conferencia?.texto_da_falta || undefined,
       };
-      return l;
-    });
-    // Conforme passa ao próximo bloco; Não conforme e Não enviado ficam para o motivo.
-    if (situacao === "CONFORME") {
-      const pos = comSituacao.findIndex(([, i]) => i === ativo);
-      const prox = comSituacao[pos + 1];
-      if (prox) irPara(prox[1]);
+      secundaria = {
+        rotulo: "Salvar rascunho",
+        acao: "salvar-rascunho",
+        aoClicar: () => void loja.salvar(),
+        desabilitado: st.salvando || !st.sujo,
+      };
+    } else if (!passoResolvido(passos[posicao])) {
+      // O item da vez ainda pede algo: as decisões dele são a ação principal.
+    } else if (conferencia?.pode_concluir) {
+      primaria = {
+        rotulo: "Revisar e concluir",
+        acao: "ir-para-conclusao",
+        aoClicar: () => irPara(PASSO_DA_CONCLUSAO),
+      };
+    } else {
+      primaria = {
+        rotulo: "Próximo pendente",
+        acao: "proximo-pendente",
+        aoClicar: () => irPara(proximoPassoPendente(passos, atual)),
+      };
     }
   }
+
+  const conclusao = (
+    <ConclusaoDaFicha
+      st={st}
+      passos={passos}
+      blocos={blocos}
+      naoSeAplicam={naoSeAplicam.map((b) => nomeCurtoDoBloco(b))}
+      aoIr={irPara}
+      nota={nota}
+      previa={previa}
+      concluida={concluida}
+      desabilitado={desabilitado}
+      mudar={mudar}
+      aoCopiarParecer={async () =>
+        setAviso(
+          (await copiar(previa.texto))
+            ? "Parecer copiado"
+            : "Não foi possível copiar",
+        )
+      }
+      historico={st.dados.historico || []}
+      registros={
+        foco && registros.length
+          ? registros.map((b) => (
+              <ItemDaFicha
+                key={b.codigo}
+                st={st}
+                bloco={b}
+                modo="lista"
+                ativo={false}
+                desabilitado={desabilitado}
+                mostrarFaltaDeSituacao={false}
+                empregare={empregare}
+                mudar={mudar}
+              />
+            ))
+          : null
+      }
+    />
+  );
+  const item = (bloco, extra = {}) => (
+    <ItemDaFicha
+      key={bloco.codigo}
+      st={st}
+      bloco={bloco}
+      modo={modo}
+      desabilitado={desabilitado}
+      mostrarFaltaDeSituacao={tentouConcluir}
+      empregare={empregare}
+      mudar={mudar}
+      aoDecidir={depoisDeDecidir}
+      aoFocar={() => {
+        if (atual !== bloco.codigo) setEscolhido(bloco.codigo);
+      }}
+      ativo={!desabilitado && bloco.codigo === atual}
+      {...extra}
+    />
+  );
+  const blocoAtual = blocos.find((b) => b.codigo === atual);
+  const numero = itens.findIndex((p) => p.codigo === atual);
 
   return (
     <div
       className="avd-ficha"
       ref={raiz}
-      onKeyDown={aoTeclar}
+      data-modo={modo}
+      data-conclusao={naConclusao && foco ? "sim" : undefined}
       data-tour="avd-ficha-conteudo"
     >
+      {topo ? (
+        <CabecalhoDaFicha {...topo} nivel={rotuloDe(NIVEIS, lancamento.nivel)}>
+          <ProgressoDaFicha
+            passos={passos}
+            atual={atual}
+            conferencia={conferencia}
+            modo={modo}
+            aoIr={irPara}
+            comAtalhos={!desabilitado}
+            aoAlternarModo={() => {
+              const novo = foco ? "lista" : "foco";
+              guardarModo(novo);
+              setModo(novo);
+            }}
+          />
+        </CabecalhoDaFicha>
+      ) : null}
+      {children}
+      <p className="sr-only" aria-live="polite">
+        {foco
+          ? naConclusao
+            ? "Conclusão"
+            : blocoAtual && numero >= 0
+              ? `Item ${numero + 1} de ${itens.length}: ${blocoAtual.titulo}`
+              : ""
+          : ""}
+      </p>
       {st.aviso ? (
         <Aviso tom="warning" papel="alert">
           {st.aviso}
@@ -1430,128 +635,92 @@ export function ConteudoDaFicha({
         </Aviso>
       ) : null}
       <div className="avd-ficha-grade">
-        <div className="avd-ficha-blocos" data-tour="avd-ficha-blocos">
-          {etapas.length ? (
-            <EtapasDaAnalise
-              etapas={etapas}
-              ativo={desabilitado ? null : blocos[ativo]?.codigo}
-              comAtalhos={!desabilitado}
-              aoIr={(codigo) =>
-                irPara(blocos.findIndex((b) => b.codigo === codigo))
-              }
-            />
-          ) : null}
-          {blocos.map((b, i) =>
-            agrupado(b) ? null : (
-              <CartaoDoBloco
-                key={b.codigo}
-                st={st}
-                bloco={b}
-                ativo={i === ativo && !desabilitado}
-                aoFocar={() => setAtivo(i)}
-                mudar={mudar}
-                desabilitado={desabilitado}
-                mostrarTodas={tentouConcluir}
-                empregare={empregare}
-              />
-            ),
+        <div className="avd-ficha-principal" data-tour="avd-ficha-blocos">
+          {foco ? (
+            naConclusao ? (
+              <div
+                className="avd-ficha-palco"
+                key="conclusao"
+                data-direcao={direcao}
+              >
+                {conclusao}
+              </div>
+            ) : blocoAtual ? (
+              <div
+                className="avd-ficha-palco"
+                key={blocoAtual.codigo}
+                data-direcao={direcao}
+              >
+                {item(blocoAtual, {
+                  numero:
+                    numero >= 0
+                      ? { atual: numero + 1, total: itens.length }
+                      : null,
+                })}
+              </div>
+            ) : null
+          ) : (
+            <>
+              {blocos
+                .filter((b) => !naoSeAplicam.includes(b))
+                .map((b) => item(b))}
+              {naoSeAplicam.length ? (
+                <details
+                  className="ui-card avd-ficha-nao-se-aplicam"
+                  data-tour="avd-ficha-nao-se-aplicam"
+                >
+                  <summary>
+                    Não se aplicam:{" "}
+                    {naoSeAplicam.map((b) => nomeCurtoDoBloco(b)).join(", ")}
+                  </summary>
+                  {naoSeAplicam.map((b) => item(b, { ativo: false }))}
+                </details>
+              ) : null}
+              {conclusao}
+            </>
           )}
-          {naoSeAplicam.length ? (
-            <details
-              className="ui-card avd-ficha-nao-se-aplicam"
-              data-tour="avd-ficha-nao-se-aplicam"
-            >
-              <summary>
-                Não se aplicam:{" "}
-                {naoSeAplicam.map((b) => nomeCurtoDoBloco(b)).join(", ")}
-              </summary>
-              {naoSeAplicam.map((b) => (
-                <CartaoDoBloco
-                  key={b.codigo}
-                  st={st}
-                  bloco={b}
-                  ativo={false}
-                  aoFocar={() => {}}
-                  mudar={mudar}
-                  desabilitado={desabilitado}
-                  mostrarTodas={tentouConcluir}
-                  empregare={empregare}
-                />
-              ))}
-            </details>
-          ) : null}
-          <Historico itens={st.dados.historico} />
         </div>
-        <Lateral
-          st={st}
-          loja={loja}
-          ficha={ficha}
-          mudar={mudar}
-          desabilitado={desabilitado}
-          empregare={empregare}
-          copiado={copiado}
-          setCopiado={setCopiado}
-        />
+        {naConclusao && foco ? null : (
+          <aside
+            className="avd-ficha-lateral"
+            aria-label="Nota"
+            data-tour="avd-ficha-lateral"
+          >
+            <ResumoDaNota {...nota} acoes={maisAcoes} />
+          </aside>
+        )}
       </div>
-      <div
-        className="ui-gaveta-rodape avd-ficha-barra"
-        data-tour="avd-ficha-barra"
-      >
-        <div className="avd-ficha-andamento">
-          <span className="avd-ficha-salvo" role="status">
-            {concluida
-              ? `Concluída${st.dados.ficha.concluida_por ? ` por ${st.dados.ficha.concluida_por}` : ""}`
-              : textoDoEstado(st)}
-          </span>
-          {st.podeEditar && conferencia?.total ? (
-            <Progresso conferencia={conferencia} />
-          ) : null}
-          {st.podeEditar && conferencia?.texto_da_falta ? (
-            <span className="avd-ficha-falta" id="avdFichaFalta">
-              {conferencia.texto_da_falta}
-            </span>
-          ) : null}
-        </div>
-        {erroDeConclusao ? (
-          <span className="avd-ficha-erro" role="alert">
-            {erroDeConclusao}
-          </span>
-        ) : null}
-        {st.dados.pode_reabrir ? <Reabrir loja={loja} /> : null}
-        {st.podeEditar ? (
-          <>
-            <button
-              type="button"
-              className="btn secondary"
-              disabled={st.salvando || !st.sujo}
-              onClick={() => void loja.salvar()}
-            >
-              Salvar rascunho
-            </button>
-            <button
-              type="button"
-              className="btn"
-              data-acao="concluir-e-proxima"
-              disabled={st.concluindo || !conferencia?.pode_concluir}
-              aria-describedby={
-                conferencia?.texto_da_falta ? "avdFichaFalta" : undefined
+      <RodapeDaFicha
+        estado={
+          concluida
+            ? `Concluída${st.dados.ficha.concluida_por ? ` por ${st.dados.ficha.concluida_por}` : ""}`
+            : textoDoEstado(st)
+        }
+        aviso={aviso}
+        erro={erroDeConclusao}
+        anterior={
+          posicao > 0
+            ? {
+                rotulo: "Anterior",
+                acao: "item-anterior",
+                aoClicar: () => irPara(vizinho(-1)),
               }
-              title={conferencia?.texto_da_falta || undefined}
-              onClick={() => void concluirEProxima()}
-            >
-              Concluir e próxima
-            </button>
-          </>
-        ) : null}
-        <button
-          type="button"
-          className="btn secondary"
-          data-acao="fechar-ficha"
-          onClick={() => void aoFechar()}
-        >
-          {aberta.reservada && !concluida ? "Fechar e liberar" : "Fechar"}
-        </button>
-      </div>
+            : null
+        }
+        proximo={
+          posicao >= 0 && posicao < passos.length - 1
+            ? {
+                rotulo: "Próximo",
+                acao: "item-proximo",
+                aoClicar: () => irPara(vizinho(1)),
+              }
+            : null
+        }
+        secundaria={secundaria}
+        primaria={primaria}
+      >
+        {st.dados.pode_reabrir ? <Reabrir loja={loja} /> : null}
+      </RodapeDaFicha>
     </div>
   );
 }

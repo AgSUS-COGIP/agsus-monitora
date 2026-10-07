@@ -55,22 +55,30 @@ até a 10ª posição do cadastro reserva) é regra da lista CONVOCACAO da Class
 
 ## Fase F4
 
-- **Conteúdo da ficha** (`ficha/`), no modo de análise da Fila: um cartão por bloco da regra, na
-  ordem da regra (os que não se aplicam numa linha expansível no fim), com a cor e o selo da
-  situação depois de conferido, com o que o candidato declarou na Empregare (as respostas das perguntas ligadas,
-  lidas como a nota declarada lê: aspas, múltipla escolha, "--", &nbsp;); Conforme / Não conforme
-  / Não enviado (teclas 1, 2, 3; J/K; Ctrl+S; Ctrl+Enter), motivo em lista; títulos, cursos e
-  vínculos que pontuam na hora; nota apurada ajustável até o teto, com justificativa obrigatória
-  quando difere da declarada;
-- lateral: resultado e nota ao vivo ("Em análise · X de N requisitos conferidos" enquanto falta
-  conferir; Inapto só quando um bloco conferido elimina), declarado × apurado (apurado "—" e sem
-  destaque antes de conferir; depois, a diferença destacada, com a justificativa),
-  nível da vaga, "Copiar código", "Abrir candidato na Empregare" (o link capturado pelo robô; sem ele, a vaga ou a lista de vagas com o código copiado para a busca; o acesso fica registrado), observações
-  prontas, observação livre e o parecer gerado;
-- barra: "Salvo às HH:MM" (rascunho automático), "N de M itens conferidos" e "Falta: …",
-  "Salvar rascunho", "Concluir e próxima" (travado até não faltar nada), "Fechar e
-  liberar" (salva antes de soltar a reserva; aviso ao sair com alteração não salva);
-- concluída: só leitura, com o parecer gravado e o histórico; a coordenação reabre com motivo;
+- **Conteúdo da ficha** (`ficha/`), no modo de análise da Fila, calmo e guiado: cabeçalho enxuto
+  (nome e código, a vaga com o nível, chips da nota declarada, posição e modalidade; situação,
+  responsável, reserva e regra no "i"; aviso só com menos de 5 minutos de reserva) e o stepper
+  (um passo por item que se aplica + Conclusão, com a marca do estado e a barra de progresso);
+- **modo foco** (padrão): um item por vez — o que se pede (enunciado curto, "ver texto completo"),
+  a resposta da Empregare em destaque com "Abrir na Empregare" (o anexo diz onde achar o arquivo:
+  "Na Empregare: aba Questionários › Pergunta N — …"; o link sai de
+  `src/lib/avaliacao-documental/anexo-na-empregare.ts`, para trocar pelo link direto do arquivo), as
+  três decisões em botões grandes (teclas 1, 2, 3 no title; J/K; Ctrl+S; Ctrl+Enter), os motivos em
+  chips; nos itens que pontuam, a lista compacta de títulos, cursos e vínculos e "Declarado →
+  Apurado" (−/+ de meio ponto, até o teto) antes da decisão. Conforme sem pendência avança sozinho
+  ao próximo que pede algo (`proximoPassoPendente`); "Ver todos" troca para a lista compacta (a
+  escolha fica no navegador). Nota diferente da declarada pede justificativa;
+- lateral só com a nota (parcial enquanto falta conferir; "Em análise · X de N requisitos
+  conferidos"; Inapto só quando um item conferido elimina), o mínimo e a composição por bloco em
+  barras finas (`composicaoDaNota`); ações secundárias no "⋯" (copiar código, abrir na Empregare,
+  compartilhar no chat e, para a coordenação, o nível da vaga);
+- **Conclusão**: resumo de todos os itens (clicáveis), nota final com a composição, observações
+  prontas e observação, prévia do parecer (sem resultado enquanto falta conferir) e histórico;
+- rodapé mínimo: "Salvo às HH:MM" (rascunho automático), Anterior / Próximo item e o botão do
+  momento ("Próximo pendente", "Revisar e concluir"; na Conclusão, "Concluir e próxima", travado até
+  não faltar nada, e "Salvar rascunho"); "← Voltar à fila" salva antes de soltar a reserva;
+- concluída: abre na Conclusão, só leitura, com o parecer gravado e o histórico; a coordenação
+  reabre com motivo;
 - na Fila, as concluídas mostram nota e resultado; o analista vê só as vagas que analisa;
 - as listas da Fila são a TabelaInfinita (`src/ui/`): colunas por etapa, ordem por coluna, busca,
   "N de M", carregamento contínuo e Exportar CSV (`csvDaFila`, csv-security).
@@ -128,7 +136,9 @@ pre-classificacao.jsx     aba Pré-classificação (contadores, vagas, listas of
 fila.jsx                  aba Fila (etapas, filtros, ações em lote, ficha aberta)
 estado-da-fila.js         store da aba: obter_fila_avaliacao, Pegar próximo, reserva
                           (renovação e liberação), distribuição, revisão, filtros salvos
-ficha/ficha.jsx           conteúdo da ficha aberta (blocos, lateral, barra, histórico)
+ficha/ficha.jsx           conteúdo da ficha aberta: modo foco / lista, passos, teclas, rodapé
+ficha/*.tsx               cabeçalho, stepper, item, Conclusão, nota, "⋯", rodapé e links da
+                          Empregare (contratos em ficha/tipos.ts)
 ficha/estado-da-ficha.js  store da ficha: obter_ficha_analise, rascunho automático,
                           concluir_ficha, reabrir_ficha, registrar_acesso_ficha
 ficha/ficha.css           estilos da ficha (só tokens)

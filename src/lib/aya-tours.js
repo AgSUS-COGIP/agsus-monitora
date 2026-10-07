@@ -864,14 +864,19 @@ const TOURS = Object.freeze({
         "Agrupadas por vaga (com o lote e a linha de corte) quando a vaga é Todas; o cabeçalho ordena e Exportar CSV baixa a etapa. Abrir mostra a ficha em tela cheia.",
       ),
       passo(
-        t("avd-ficha-etapas"),
-        "Etapas da ficha",
-        "Cada item na cor do estado; clique para ir a ele. Ao lado, os atalhos.",
+        t("avd-ficha-topo"),
+        "Cabeçalho da ficha",
+        'O candidato, a vaga e só os chips essenciais; situação, responsável, reserva e regra ficam no "i".',
       ),
       passo(
-        t("avd-ficha-blocos"),
-        "Um cartão por bloco",
-        "O que o candidato declarou e, na mesma linha, Conforme, Não conforme ou Não enviado (teclas 1, 2 e 3); marcado, o cartão recolhe ao passar ao próximo.",
+        t("avd-ficha-etapas"),
+        "Passo a passo",
+        'Um passo por item, com a marca do estado e a barra de progresso; clique para ir a um item. "Ver todos" mostra a lista completa e o "?", os atalhos.',
+      ),
+      passo(
+        t("avd-ficha-decisoes"),
+        "Decida o item",
+        "Conforme, Não conforme ou Não enviado (teclas 1, 2 e 3). Conforme passa sozinho ao próximo; os outros abrem os motivos em chips.",
       ),
       passo(
         t("avd-ficha-itens"),
@@ -880,8 +885,8 @@ const TOURS = Object.freeze({
       ),
       passo(
         t("avd-ficha-nota"),
-        "Nota do bloco",
-        "Declarado, calculado e apurado; dá para ajustar a nota até o teto do bloco.",
+        "Declarado → Apurado",
+        "Ajuste o apurado de meio em meio ponto, até o teto do bloco; o calculado pelos itens fica embaixo.",
       ),
       passo(
         t("avd-ficha-justificativa"),
@@ -889,24 +894,19 @@ const TOURS = Object.freeze({
         "Nota diferente da declarada pede uma justificativa da lista; ela entra no parecer.",
       ),
       passo(
-        t("avd-ficha-comparacao"),
-        "Declarado × apurado",
-        "A nota ao vivo de cada bloco; a diferença aparece destacada, com a justificativa.",
+        t("avd-ficha-lateral"),
+        "Nota",
+        'A nota ao vivo e a composição por bloco; no "⋯", copiar o código, abrir a Empregare e compartilhar.',
       ),
       passo(
-        t("avd-ficha-empregare"),
-        "Empregare",
-        'Abra o candidato na Empregare (ou "Ver na Empregare" ao lado do anexo); sem o link, copie o código e abra a vaga.',
-      ),
-      passo(
-        t("avd-ficha-parecer"),
-        "Parecer",
-        "Sai com tudo conferido, pela regra, a partir dos motivos, das justificativas e da observação; antes, só os motivos já lançados.",
+        t("avd-ficha-conclusao"),
+        "Conclusão",
+        "O resumo dos itens (clique para voltar a um), a nota final, as observações e o parecer, que sai com tudo conferido.",
       ),
       passo(
         t("avd-ficha-barra"),
         "Salvar e concluir",
-        "O rascunho salva sozinho; Concluir e próxima confere o que falta, conclui e abre a próxima.",
+        'O rascunho salva sozinho; Anterior / Próximo e o botão do momento ("Próximo pendente", "Revisar e concluir" e, na Conclusão, "Concluir e próxima").',
       ),
       passo(
         t("avd-ficha-reabrir"),
