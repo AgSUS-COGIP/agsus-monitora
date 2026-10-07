@@ -36,7 +36,7 @@ import {
   publicarLinhasDoMonitoramento,
   publicarUnidadesDoCatalogo,
 } from "../componentes/dados-do-monitoramento.js";
-import { estadoDaVisaoGeral } from "../modulos/visao-geral/estado.js";
+import { estadoDaVisaoGeral } from "../modulos/visao-geral/estado.ts";
 import { avisar as avisarPadrao } from "./avisos.js";
 
 /*

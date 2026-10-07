@@ -7,7 +7,7 @@ import {
   situacaoDoSistema,
 } from "../modules/situacao-dos-modulos.js";
 import { esconderEsqueleto, mostrarEsqueleto } from "./carregamento.js";
-import { estadoDaVisaoGeral } from "../modulos/visao-geral/estado.js";
+import { estadoDaVisaoGeral } from "../modulos/visao-geral/estado.ts";
 import { montarPessoasOnline } from "../componentes/pessoas-online/pessoas-online.jsx";
 import { avisar, mostrarCarregamento } from "./avisos.js";
 import { criarCarga } from "./carga.js";

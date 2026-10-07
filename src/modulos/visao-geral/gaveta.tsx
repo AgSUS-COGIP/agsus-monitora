@@ -1,3 +1,4 @@
+import type { LinhaDaVisaoGeral } from "./tipos.ts";
 import { formatNumberBR } from "../../lib/formatters.js";
 import {
   contratacoesDoCadastroReserva,
@@ -9,7 +10,7 @@ import {
   linkSeguro,
   statusCanonico,
   urgenciaDoCronograma,
-} from "../../lib/visao-geral.js";
+} from "../../lib/visao-geral.ts";
 import { Gaveta, GradeDeKv, Kv, Secao } from "../../ui/index.js";
 
 /*
@@ -19,9 +20,17 @@ import { Gaveta, GradeDeKv, Kv, Secao } from "../../ui/index.js";
   linha do tempo do cronograma (a do Núcleo, só leitura) e voltar à linha.
 */
 
-const fmt = (valor) => formatNumberBR(valor);
+const fmt = (valor: unknown) => formatNumberBR(valor);
 
-export function GavetaDoProcesso({ linha, aoFechar, aoVoltarALinha }) {
+export function GavetaDoProcesso({
+  linha,
+  aoFechar,
+  aoVoltarALinha,
+}: {
+  linha: LinhaDaVisaoGeral;
+  aoFechar: () => void;
+  aoVoltarALinha: () => void;
+}) {
   const urgencia = urgenciaDoCronograma(linha);
   const percentual = Math.max(
     0,

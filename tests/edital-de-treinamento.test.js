@@ -18,7 +18,7 @@ import {
 } from "../src/lib/classificacao/exportacao.js";
 import { editaisParaConduzir } from "../src/lib/conducao-de-entrevista.js";
 import { editaisDaEscolha } from "../src/lib/avaliacao-documental/editais.js";
-import { indicadoresDaVisaoGeral } from "../src/lib/visao-geral.js";
+import { indicadoresDaVisaoGeral } from "../src/lib/visao-geral.ts";
 import { CONTRATO_RPC } from "../src/lib/rpc-contrato.js";
 import { COLUNAS_DO_MONITORAMENTO } from "../src/app/carga.js";
 
@@ -92,11 +92,11 @@ describe("fora dos indicadores e da Visão geral", () => {
   });
 
   it("a Visão geral, as boas-vindas e os indicadores de Editais aplicam o predicado", () => {
-    expect(ler("src/modulos/visao-geral/estado.js")).toContain(
-      "semTreinamento(linhasDaArea(linhas, areaAtual))",
+    expect(ler("src/modulos/visao-geral/estado.ts")).toContain(
+      "semTreinamento(linhasDaArea(linhasDaResposta(linhas), areaAtual))",
     );
-    expect(ler("src/modulos/visao-geral/boas-vindas.jsx")).toContain(
-      "semTreinamento(linhasDaArea(linhas, areaAtual))",
+    expect(ler("src/modulos/visao-geral/boas-vindas.tsx")).toContain(
+      "semTreinamento(linhasDaArea(linhasDaResposta(linhas), areaAtual))",
     );
     expect(ler("src/modulos/editais/nucleo.jsx")).toContain(
       "resumoDasLinhas(doResumo.resumo, semTreinamento(linhas))",

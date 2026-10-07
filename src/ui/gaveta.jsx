@@ -49,6 +49,9 @@ export function TopoDaGaveta({
  * `className` vai no fundo, `cartaoClassName` no cartão; `tituloId` liga o
  * título ao `aria-labelledby` do diálogo.
  */
+/**
+ * @param {{id?: string, tituloId?: string, aoFechar: () => void, fecharAoClicarFora?: boolean, className?: string, cartaoClassName?: string, sobretitulo?: import("react").ReactNode, titulo: import("react").ReactNode, resumo?: import("react").ReactNode, rotuloDoFechar?: string, tour?: string, children?: import("react").ReactNode}} props
+ */
 export function Gaveta({
   id,
   tituloId,

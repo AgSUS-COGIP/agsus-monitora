@@ -62,9 +62,9 @@ com fixture real das Lotações de `public/data`) e `tests/modulos/mapa-saude-in
 
 ## Ligação na Visão geral
 
-Ligado em `src/modulos/visao-geral/visao-geral.jsx` (`MapaDaSaudeIndigena`), só quando a área é a
+Ligado em `src/modulos/visao-geral/visao-geral.tsx` (`MapaDaSaudeIndigena`), só quando a área é a
 Saúde Indígena (`mapaDaVisaoGeral(area) === MAPA_DOS_DSEIS`). Lê o MESMO estado da Visão geral
-(`src/modulos/visao-geral/estado.js`) e pede a ele:
+(`src/modulos/visao-geral/estado.ts`) e pede a ele:
 
 ```jsx
 <MapaSaudeIndigena
