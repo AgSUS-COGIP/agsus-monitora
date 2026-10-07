@@ -920,9 +920,6 @@ table.entrevistas-tabela {
   font-size: var(--text-caption);
   font-variant-numeric: tabular-nums;
 }
-.entrevistas-aba-da-ficha.is-pendente .entrevistas-aba-da-ficha-conta {
-  color: var(--color-status-warning-text);
-}
 .entrevistas-aba-da-ficha-check {
   display: inline-grid;
   flex: 0 0 auto;
@@ -985,9 +982,6 @@ table.entrevistas-tabela {
 .entrevistas-matriz-titulo small {
   color: var(--text-secondary);
   font-size: var(--text-caption);
-}
-.entrevistas-matriz-linha.is-incompleta .entrevistas-matriz-titulo small {
-  color: var(--color-status-warning-text);
 }
 .entrevistas-matriz-media {
   display: inline-grid;
@@ -1210,7 +1204,7 @@ table.entrevistas-tabela {
 }
 .entrevistas-resultado-numero {
   position: absolute;
-  top: 44px;
+  top: 46px;
   left: 0;
   right: 0;
   display: grid;
@@ -1219,9 +1213,9 @@ table.entrevistas-tabela {
 .entrevistas-resultado-numero strong {
   display: block;
   color: var(--text-primary);
-  font-size: var(--text-display);
+  font-size: 32px;
   font-weight: var(--font-weight-semibold);
-  line-height: var(--leading-display);
+  line-height: 40px;
   letter-spacing: var(--tracking-display);
   font-variant-numeric: tabular-nums;
 }

@@ -1093,7 +1093,8 @@ describe("Preparar, roteiros e ficha", () => {
     await abrirEdital();
     const ficha = await abrirAFicha();
     const celulas = notas(ficha);
-    await act(async () => celulas[0].focus());
+    // Ao abrir, o foco já está na primeira célula vazia.
+    expect(document.activeElement).toBe(celulas[0]);
     await digitar(celulas[0], "4");
     expect(document.activeElement).toBe(celulas[1]);
     // Digitar a primeira nota marca "Compareceu".

@@ -105,6 +105,21 @@ const vazio = (valor) => (valor ?? "") === "";
 const horaCurta = (data) =>
   data.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
 
+/*
+  Os motivos do parecer para a lateral, curtos: com falta, só o da falta (as
+  competências sem nota não importam); várias competências sem nota viram
+  uma frase só.
+*/
+function motivosCurtos(motivos, compareceu) {
+  if (compareceu === "N") return motivos.slice(0, 1);
+  const semNota = motivos.filter((m) => m.startsWith("Sem nota em "));
+  if (semNota.length < 2) return motivos;
+  const primeiro = motivos.indexOf(semNota[0]);
+  const resto = motivos.filter((m) => !semNota.includes(m));
+  resto.splice(primeiro, 0, `Sem nota em ${semNota.length} competências.`);
+  return resto;
+}
+
 function LegendaDaEscala({ niveis, destaque }) {
   if (!niveis.length) return null;
   return (
@@ -199,12 +214,17 @@ export function FichaDoCandidato({
       }),
     [roteiro, f.compareceu, f.mapa, aspectos],
   );
-  // Com falta, só o motivo da falta (as competências sem nota não importam).
-  const motivos = motivosDoParecer(resultado, f.compareceu, roteiro).slice(
-    0,
-    f.compareceu === "N" ? 1 : undefined,
+  const motivos = motivosCurtos(
+    motivosDoParecer(resultado, f.compareceu, roteiro),
+    f.compareceu,
   );
   const alteradas = notasAlteradas(f.original, f.mapa, aspectos);
+  // Para o rodapé: as células mudadas (com aspectos, uma nota do banco são vários aspectos).
+  const celulasAlteradas = [
+    ...new Set([...Object.keys(f.original), ...Object.keys(f.mapa)]),
+  ].filter(
+    (chave) => lerNumero(f.original[chave]) !== lerNumero(f.mapa[chave]),
+  ).length;
   const incompletas = aspectosIncompletos(f.mapa, aspectos);
   const mudouComparecimento =
     f.compareceu && f.compareceu !== (convocado.compareceu || null);
@@ -291,8 +311,15 @@ export function FichaDoCandidato({
     abas[0];
   const ativa = abas.find((x) => x.id === aba) || abaPadrao || null;
   /* A aba padrão fica fixa ao abrir (e ao trocar o modo): completar não a troca por baixo. */
+  const abriu = useRef(false);
   useEffect(() => {
     if (ativa && ativa.id !== aba) setAba(ativa.id);
+    // Ao abrir (com teclado), o foco já vai para a primeira célula vazia.
+    if (ativa && !abriu.current) {
+      abriu.current = true;
+      if (globalThis.matchMedia?.("(pointer: coarse)").matches !== true)
+        setFocarNaAba(ativa.id);
+    }
   }, [ativa?.id, aba]);
   const abasRef = useRef(abas);
   abasRef.current = abas;
@@ -493,8 +520,8 @@ export function FichaDoCandidato({
     : sujo
       ? {
           tom: "pendente",
-          texto: alteradas.length
-            ? `${alteradas.length} ${alteradas.length === 1 ? "nota alterada" : "notas alteradas"}, sem salvar`
+          texto: celulasAlteradas
+            ? `${celulasAlteradas} ${celulasAlteradas === 1 ? "nota alterada" : "notas alteradas"}, sem salvar`
             : "Alterações sem salvar",
         }
       : salvoEm

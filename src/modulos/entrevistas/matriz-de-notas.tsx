@@ -24,7 +24,8 @@ import { animar, CelulaDeNota, type OpcaoDeNota } from "./campo-de-nota.tsx";
 
   Cada linha mostra a média dela num chip (vermelho abaixo do mínimo, verde
   ok) quando há aspectos. `focarAoMontar` foca a primeira célula vazia
-  editável quando a matriz aparece (troca automática de avaliador).
+  editável quando a matriz aparece ou quando passa a verdadeiro (ao abrir a
+  ficha e na troca automática de avaliador).
 */
 
 export type ColunaDaMatriz = { id: string; nome: string };
@@ -64,7 +65,8 @@ export type PropriedadesDaMatriz = {
   focarAoMontar?: boolean;
   aoMudar: (chave: string, valor: string) => void;
   aoFim?: () => void;
-  aoFocar?: (chave: string) => void;
+  /** A chave da célula em foco (null quando o foco sai da matriz). */
+  aoFocar?: (chave: string | null) => void;
 };
 
 const media2 = (n: number) =>
@@ -145,8 +147,7 @@ export function MatrizDeNotas({
     if (!focarAoMontar) return;
     const vazia = primeiraVazia();
     if (vazia) focar(vazia);
-    // Só ao montar: a troca automática de avaliador remonta a matriz.
-  }, []);
+  }, [focarAoMontar]);
 
   useEffect(() => {
     if (!aviso) return undefined;
@@ -163,6 +164,10 @@ export function MatrizDeNotas({
       data-media={mostrarMedia || undefined}
       style={{ "--colunas": colunas.length } as CSSProperties}
       data-tour="entrevistas-ficha-matriz"
+      onBlur={(e) => {
+        if (!e.currentTarget.contains(e.relatedTarget as Node | null))
+          aoFocar?.(null);
+      }}
     >
       <div className="entrevistas-matriz-cabecalho" aria-hidden="true">
         <span />
