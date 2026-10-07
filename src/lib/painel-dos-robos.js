@@ -3,7 +3,7 @@
   Status das atualizações), sem DOM e sem rede.
 
   Lê o que get_painel_dos_robos e listar_vagas_dos_robos devolvem
-  (supabase/migrations/20261007180000_painel_dos_robos.sql) e monta:
+  (supabase/migrations/20261007190000_painel_dos_robos.sql) e monta:
     - a lista de editais da escolha (por área; só os vigentes, pela regra da
       Avaliação documental, salvo "mostrar todos"; os escolhidos ficam);
     - o valor de cada edital no pedido (o robô da Empregare só aceita o

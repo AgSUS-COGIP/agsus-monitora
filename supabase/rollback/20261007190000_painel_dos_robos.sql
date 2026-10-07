@@ -1,4 +1,4 @@
--- ROLLBACK de supabase/migrations/20261007180000_painel_dos_robos.sql
+-- ROLLBACK de supabase/migrations/20261007190000_painel_dos_robos.sql
 -- Só leitura: apaga as duas funções. Nada gravado se perde; o "Rodar com opções"
 -- do Status das atualizações fica sem a lista de editais, as sugestões de vagas e o
 -- histórico (o disparo pelo /api/rodar-carga continua).

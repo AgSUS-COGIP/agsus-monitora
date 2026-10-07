@@ -33,8 +33,8 @@
 
   Pré-requisitos: 20261006080000 (vagas do quadro), 20261006110000
   (pré-classificação) e 20261007160000 (links da Empregare).
-  Ensaio: supabase/ensaios/20261007180000_painel_dos_robos.sql
-  Rollback: supabase/rollback/20261007180000_painel_dos_robos.sql
+  Ensaio: supabase/ensaios/20261007190000_painel_dos_robos.sql
+  Rollback: supabase/rollback/20261007190000_painel_dos_robos.sql
 */
 begin;
 

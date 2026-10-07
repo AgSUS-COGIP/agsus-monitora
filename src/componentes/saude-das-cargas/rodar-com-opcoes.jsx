@@ -292,7 +292,7 @@ export function RodarComOpcoes({ robo, linha, atual, estado, aoFechar }) {
             semPainel ? (
               <Aviso tom="warning">
                 Sem a lista de editais: falta aplicar a migration
-                20261007180000_painel_dos_robos.sql.
+                20261007190000_painel_dos_robos.sql.
               </Aviso>
             ) : (
               <CampoDosEditais

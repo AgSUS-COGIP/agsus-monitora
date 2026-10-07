@@ -1,5 +1,5 @@
 /*
-  ENSAIO de 20261007180000_painel_dos_robos.sql — begin … rollback.
+  ENSAIO de 20261007190000_painel_dos_robos.sql — begin … rollback.
 
   Como rodar: cole o arquivo inteiro no SQL Editor do Supabase (papel postgres)
   e execute. Ele abre uma transação, aplica o corpo da migration (sem o
@@ -14,7 +14,7 @@
 */
 begin;
 
--- Corpo de supabase/migrations/20261007180000_painel_dos_robos.sql (sem begin/commit):
+-- Corpo de supabase/migrations/20261007190000_painel_dos_robos.sql (sem begin/commit):
 do $$
 begin
   if to_regprocedure('private."FC_EMPREGARE_VAGAS_DO_QUADRO"(text)') is null then

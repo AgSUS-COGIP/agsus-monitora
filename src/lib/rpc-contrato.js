@@ -599,7 +599,7 @@ export const CONTRATO_RPC = {
     resumo:
       "Últimas 10 execuções de cada carga (análises por origem, entrevistas, seleção, robô da Empregare com vagas pedidas/baixadas/falhas/recusadas e quem disparou — 20261005170000 —, conferências de consistência com avisos novos/abertos/resolvidos — 20261005210000) e das tarefas agsus_* do pg_cron, para a seção Status das atualizações (só administrador global).",
   },
-  // ── Painel dos robôs (Status das atualizações, 20261007180000_painel_dos_robos.sql) ──
+  // ── Painel dos robôs (Status das atualizações, 20261007190000_painel_dos_robos.sql) ──
   get_painel_dos_robos: {
     argumentos: [],
     critica: false,

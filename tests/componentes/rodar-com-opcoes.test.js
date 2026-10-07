@@ -444,7 +444,7 @@ describe("Rodar com opções", () => {
     });
     await abrirOpcoes();
     expect(gaveta().textContent).toContain(
-      "20261007180000_painel_dos_robos.sql",
+      "20261007190000_painel_dos_robos.sql",
     );
     expect(gaveta().querySelector("textarea")).not.toBeNull();
   });
