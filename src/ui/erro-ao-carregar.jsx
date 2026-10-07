@@ -1,4 +1,4 @@
-import { Aviso } from "./aviso.jsx";
+import { Aviso } from "./aviso.tsx";
 
 /*
   A primeira carga de uma tela (ou de um bloco) falhou: o que não veio, a

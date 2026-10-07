@@ -2,7 +2,7 @@ import { execFileSync } from "node:child_process";
 import { extname } from "node:path";
 
 const BASE_REF = process.env.QUALITY_BASE_REF || "origin/main";
-const SUPPORTED_EXTENSIONS = new Set([".js", ".jsx", ".mjs"]);
+const SUPPORTED_EXTENSIONS = new Set([".js", ".jsx", ".mjs", ".ts", ".tsx"]);
 const EXCLUDED = new Set([]);
 
 function git(...args) {
@@ -41,7 +41,7 @@ const candidates = changedFiles.filter((path) => {
 
 if (!candidates.length) {
   console.log(
-    "Lint validado: nenhum ficheiro JavaScript elegível foi alterado.",
+    "Lint validado: nenhum ficheiro JavaScript ou TypeScript elegível foi alterado.",
   );
   process.exit(0);
 }
