@@ -1,33 +1,54 @@
 import { useEffect, useId, useLayoutEffect, useRef, useState } from "react";
 import {
   agruparPorDia,
+  cartaoDoLink,
   extrairMencoes,
   horaCurta,
   inserirMencao,
   inserirNoCursor,
   LIMITE_DO_TEXTO,
-  linkDaTela,
   mencaoEmDigitacao,
+  mencionaMe,
   outrasPessoas,
   partesDoTexto,
+  presencaDe,
   REACOES_RAPIDAS,
   resumoDasReacoes,
+  rotuloDaPresenca,
   sugestoesDeMencao,
+  textoDaCitacao,
+  vistoPor,
 } from "../../lib/chat.js";
+import {
+  ACEITA_NO_SELETOR_DO_CHAT,
+  ehImagem,
+  iconeDoAnexo,
+  imagensColadas,
+  juntarAnexos,
+  nomeDoPrint,
+  rotuloDoAnexo,
+} from "../../lib/anexos-do-chat.js";
+import { safeHttpUrl } from "../../lib/sanitize.js";
 import { irParaLink, linkDaTelaAtual } from "./ponte.js";
 import { SeletorDeEmoji } from "./seletor-de-emoji.jsx";
 
 /*
   A conversa aberta no painel: mensagens agrupadas por dia (Hoje, Ontem,
-  02/10), menções destacadas, link interno da tela ("Abrir"), reações rápidas,
-  o menu "⋯" de cada mensagem (reagir, copiar; na própria, editar e apagar —
-  sempre à vista, para funcionar no toque), "digitando…", "↓ Novas mensagens"
-  quando chega mensagem e a pessoa está lendo acima, e o campo de escrita
-  (Enter envia, Shift+Enter quebra linha, @ sugere pessoas, emojis,
-  Compartilhar esta tela). No menu da conversa: Limpar conversa (para mim).
+  02/10), menções destacadas (e a mensagem que menciona você), cartões dos
+  links internos (tela, edital, ficha da avaliação documental: título e
+  "Abrir" para quem tem a página), anexos (miniatura da imagem; arquivo por
+  URL assinada curta), citação (clicar rola até a original), "Encaminhada",
+  Visto (✓ enviada, ✓✓ vista; no grupo, quem viu no título), reações rápidas,
+  o menu "⋯" de cada mensagem (reagir, responder, encaminhar, copiar; na
+  própria, editar e apagar — sempre à vista, para funcionar no toque),
+  "digitando…", "↓ Novas mensagens" e o campo de escrita (Enter envia,
+  Shift+Enter quebra linha, @ sugere pessoas, emojis, anexar, colar print
+  com Ctrl+V, arrastar arquivo, Compartilhar esta tela). No menu da conversa:
+  fixar, marcar como não lida, silenciar, limpar (para mim).
 */
 
 const AVISO_DO_LIMITE = LIMITE_DO_TEXTO - 500;
+const DESTAQUE_MS = 2500;
 
 function nomeDe(conversa, id) {
   return (
@@ -73,6 +94,7 @@ async function copiarTexto(estado, texto) {
 }
 
 function TextoDaMensagem({ mensagem, conversa }) {
+  if (!mensagem.texto) return null;
   const mencionadas = (mensagem.mencoes || []).map((id) => ({
     id,
     nome: nomeDe(conversa, id),
@@ -92,18 +114,123 @@ function TextoDaMensagem({ mensagem, conversa }) {
   );
 }
 
-function LinkDaMensagem({ link }) {
-  const conferido = linkDaTela(link);
-  if (!conferido) return null;
+/* Cartão do link interno: título, detalhe e "Abrir" (só para quem tem a página). */
+export function CartaoDoLink({ link, paginas }) {
+  const cartao = cartaoDoLink(link, paginas);
+  if (!cartao) return null;
+  return (
+    <div className="chat-cartao" data-tipo={cartao.tipo}>
+      <i
+        className={`fa-solid ${cartao.icone} chat-cartao__icone`}
+        aria-hidden="true"
+      />
+      <span className="chat-cartao__corpo">
+        <strong>{cartao.titulo}</strong>
+        {cartao.detalhe ? <small>{cartao.detalhe}</small> : null}
+      </span>
+      {cartao.podeAbrir ? (
+        <button
+          type="button"
+          className="btn secondary small"
+          onClick={() => irParaLink(cartao.link)}
+        >
+          Abrir
+        </button>
+      ) : (
+        <small className="chat-cartao__sem-acesso">Sem acesso</small>
+      )}
+    </div>
+  );
+}
+
+/* Miniatura da imagem: a prévia local (enviando) ou a URL assinada curta. */
+function MiniaturaDoAnexo({ estado, anexo, aoAbrir }) {
+  const local =
+    typeof anexo.previa === "string" && anexo.previa.startsWith("blob:")
+      ? anexo.previa
+      : "";
+  const [url, setUrl] = useState(local);
+  const [falhou, setFalhou] = useState(false);
+  useEffect(() => {
+    if (local || !anexo.caminho) return undefined;
+    let vivo = true;
+    estado
+      .urlDoAnexo(anexo)
+      .then((u) => vivo && setUrl(safeHttpUrl(u || "")))
+      .catch(() => vivo && setFalhou(true));
+    return () => {
+      vivo = false;
+    };
+  }, [estado, anexo.caminho, local]);
   return (
     <button
       type="button"
-      className="chat-msg__link"
-      onClick={() => irParaLink(conferido)}
-      title="Abrir esta tela"
+      className="chat-anexo chat-anexo--imagem"
+      onClick={aoAbrir}
+      title={rotuloDoAnexo(anexo)}
+      aria-label={`Baixar ${anexo.nome}`}
+      disabled={!aoAbrir}
     >
-      <i className="fa-solid fa-display" aria-hidden="true" />
-      <span>{conferido.rotulo}</span>
+      {url && !falhou ? (
+        <img src={url} alt="" loading="lazy" onError={() => setFalhou(true)} />
+      ) : (
+        <i className="fa-solid fa-file-image" aria-hidden="true" />
+      )}
+    </button>
+  );
+}
+
+function AnexosDaMensagem({ estado, mensagem }) {
+  const anexos = mensagem.anexos || [];
+  if (!anexos.length) return null;
+  const enviando = Boolean(mensagem.pendente || mensagem.falhou);
+  return (
+    <ul className="chat-anexos" aria-label="Anexos">
+      {anexos.map((a) => (
+        <li key={a.id}>
+          {ehImagem(a.mime) ? (
+            <MiniaturaDoAnexo
+              estado={estado}
+              anexo={a}
+              aoAbrir={enviando ? null : () => void estado.baixarAnexo(a)}
+            />
+          ) : (
+            <button
+              type="button"
+              className="chat-anexo"
+              disabled={enviando}
+              onClick={() => void estado.baixarAnexo(a)}
+              aria-label={`Baixar ${a.nome}`}
+            >
+              <i
+                className={`fa-solid ${iconeDoAnexo(a.mime)}`}
+                aria-hidden="true"
+              />
+              <span>{rotuloDoAnexo(a)}</span>
+            </button>
+          )}
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+/* A citação na mensagem (Responder): clicar rola até a original. */
+function CitacaoDaMensagem({ estado, e, resposta }) {
+  if (!resposta?.id) return null;
+  return (
+    <button
+      type="button"
+      className="chat-citacao"
+      onClick={() => void estado.irParaMensagem(e.conversaId, resposta.id)}
+      title="Ir para a mensagem"
+    >
+      <strong>
+        {String(resposta.autor) === String(e.eu)
+          ? "Você"
+          : nomeDe(e.conversa, resposta.autor)}
+      </strong>
+      <span>{textoDaCitacao(resposta)}</span>
     </button>
   );
 }
@@ -133,7 +260,31 @@ function ReacoesDaMensagem({ estado, e, mensagem }) {
   );
 }
 
-/* O "⋯" de cada mensagem: reagir, copiar e, na própria, editar e apagar. */
+/* ✓ enviada, ✓✓ vista (direta) ou vista por todos (grupo); quem viu no título. */
+function Visto({ mensagem, conversa, eu }) {
+  const visto = vistoPor(mensagem, conversa, eu);
+  if (!visto) return null;
+  const direta = conversa?.tipo === "DIRETA";
+  const rotulo = direta
+    ? visto.todos
+      ? "Vista"
+      : "Enviada"
+    : visto.viram.length
+      ? `Visto por: ${visto.viram.join(", ")}`
+      : "Ninguém viu ainda";
+  return (
+    <span
+      className={`chat-visto${visto.todos ? " is-vista" : ""}`}
+      title={rotulo}
+      aria-label={rotulo}
+      data-visto={visto.viram.length}
+    >
+      {visto.todos || (!direta && visto.viram.length) ? "✓✓" : "✓"}
+    </span>
+  );
+}
+
+/* O "⋯" de cada mensagem: reagir, responder, encaminhar, copiar e, na própria, editar e apagar. */
 function MenuDaMensagem({ estado, e, mensagem, minha, aoEditar, aoApagar }) {
   const [aberto, setAberto] = useState(false);
   const caixa = useRef(null);
@@ -181,15 +332,33 @@ function MenuDaMensagem({ estado, e, mensagem, minha, aoEditar, aoApagar }) {
           <button
             type="button"
             role="menuitem"
-            onClick={fazer(() => void copiarTexto(estado, mensagem.texto))}
+            onClick={fazer(() => estado.responder(mensagem.id))}
           >
-            <i className="fa-solid fa-copy" aria-hidden="true" /> Copiar texto
+            <i className="fa-solid fa-reply" aria-hidden="true" /> Responder
           </button>
+          <button
+            type="button"
+            role="menuitem"
+            onClick={fazer(() => estado.pedirEncaminhamento(mensagem.id))}
+          >
+            <i className="fa-solid fa-share" aria-hidden="true" /> Encaminhar
+          </button>
+          {mensagem.texto ? (
+            <button
+              type="button"
+              role="menuitem"
+              onClick={fazer(() => void copiarTexto(estado, mensagem.texto))}
+            >
+              <i className="fa-solid fa-copy" aria-hidden="true" /> Copiar texto
+            </button>
+          ) : null}
           {minha ? (
             <>
-              <button type="button" role="menuitem" onClick={fazer(aoEditar)}>
-                <i className="fa-solid fa-pen" aria-hidden="true" /> Editar
-              </button>
+              {mensagem.texto ? (
+                <button type="button" role="menuitem" onClick={fazer(aoEditar)}>
+                  <i className="fa-solid fa-pen" aria-hidden="true" /> Editar
+                </button>
+              ) : null}
               <button
                 type="button"
                 role="menuitem"
@@ -228,10 +397,11 @@ function Mensagem({ estado, e, mensagem, mostrarAutor }) {
 
   const temMenu =
     !mensagem.pendente && !mensagem.falhou && !editando && !confirmando;
+  const mencionada = !minha && mencionaMe(mensagem, e.eu);
 
   return (
     <li
-      className={`chat-msg${minha ? " is-minha" : ""}${mensagem.falhou ? " is-falhou" : ""}${temMenu ? " tem-menu" : ""}`}
+      className={`chat-msg${minha ? " is-minha" : ""}${mensagem.falhou ? " is-falhou" : ""}${temMenu ? " tem-menu" : ""}${mencionada ? " is-mencionada" : ""}`}
       data-mensagem={mensagem.id}
     >
       {mostrarAutor && !minha ? (
@@ -239,6 +409,12 @@ function Mensagem({ estado, e, mensagem, mostrarAutor }) {
           {nomeDe(e.conversa, mensagem.autor)}
         </strong>
       ) : null}
+      {mensagem.encaminhada ? (
+        <small className="chat-msg__encaminhada">
+          <i className="fa-solid fa-share" aria-hidden="true" /> Encaminhada
+        </small>
+      ) : null}
+      <CitacaoDaMensagem estado={estado} e={e} resposta={mensagem.resposta} />
       {editando ? (
         <form
           className="chat-msg__edicao"
@@ -277,9 +453,12 @@ function Mensagem({ estado, e, mensagem, mostrarAutor }) {
       ) : (
         <>
           <TextoDaMensagem mensagem={mensagem} conversa={e.conversa} />
-          {mensagem.link ? <LinkDaMensagem link={mensagem.link} /> : null}
+          {mensagem.link ? (
+            <CartaoDoLink link={mensagem.link} paginas={e.paginas} />
+          ) : null}
         </>
       )}
+      <AnexosDaMensagem estado={estado} mensagem={mensagem} />
       <ReacoesDaMensagem estado={estado} e={e} mensagem={mensagem} />
       <small className="chat-msg__hora" aria-live="polite">
         {mensagem.pendente
@@ -287,6 +466,7 @@ function Mensagem({ estado, e, mensagem, mostrarAutor }) {
           : mensagem.falhou
             ? "Não enviada"
             : `${horaCurta(mensagem.criada_em)}${mensagem.editada_em ? " · editada" : ""}`}
+        <Visto mensagem={mensagem} conversa={e.conversa} eu={e.eu} />
       </small>
       {mensagem.falhou ? (
         <div className="chat-msg__acoes">
@@ -362,13 +542,70 @@ function Digitando({ digitando }) {
   );
 }
 
+/* Um anexo escolhido no campo: miniatura (imagem) ou ícone, nome e tirar. */
+function ChipDoAnexo({ anexo, aoTirar }) {
+  const [previa, setPrevia] = useState("");
+  useEffect(() => {
+    if (anexo.familia !== "imagem") return undefined;
+    let url = "";
+    try {
+      url = globalThis.URL?.createObjectURL?.(anexo.arquivo) || "";
+    } catch {
+      url = "";
+    }
+    setPrevia(url);
+    return () => {
+      if (url) globalThis.URL?.revokeObjectURL?.(url);
+    };
+  }, [anexo]);
+  const nome = anexo.arquivo?.name || "arquivo";
+  return (
+    <li className="chat-escrita__anexo">
+      {previa ? (
+        <img src={previa} alt="" />
+      ) : (
+        <i
+          className={`fa-solid ${iconeDoAnexo(anexo.mime)}`}
+          aria-hidden="true"
+        />
+      )}
+      <span title={nome}>{nome}</span>
+      <button
+        type="button"
+        className="chat-icone"
+        aria-label={`Tirar ${nome}`}
+        onClick={aoTirar}
+      >
+        <i className="fa-solid fa-xmark" aria-hidden="true" />
+      </button>
+    </li>
+  );
+}
+
+/* Print colado sem nome útil ("image.png"): ganha o nome com a data e a hora. */
+function comNomeDePrint(arquivo, agora) {
+  const ext = String(arquivo.type || "image/png").split("/")[1] || "png";
+  const nome = nomeDoPrint(agora, ext === "jpeg" ? "jpg" : ext);
+  try {
+    return new File([arquivo], nome, { type: arquivo.type || "image/png" });
+  } catch {
+    return arquivo;
+  }
+}
+
 function CampoDeEscrita({ estado, e }) {
   const [texto, setTexto] = useState("");
-  const [link, setLink] = useState(null);
+  // "Compartilhar esta ficha": o cartão escolhido fora do painel espera aqui.
+  const [link, setLink] = useState(() =>
+    e.linkPendente?.conversa === e.conversaId ? e.linkPendente.link : null,
+  );
+  const [anexos, setAnexos] = useState([]);
   const [cursor, setCursor] = useState(0);
   const [indice, setIndice] = useState(0);
   const [comEmojis, setComEmojis] = useState(false);
+  const [arrastando, setArrastando] = useState(false);
   const campo = useRef(null);
+  const seletorDeArquivo = useRef(null);
   const caixaDeEmojis = useRef(null);
   const botaoDeEmojis = useRef(null);
   const idDoCampo = useId();
@@ -380,21 +617,42 @@ function CampoDeEscrita({ estado, e }) {
   )?.nome;
   const fecharEmojis = () => setComEmojis(false);
   usarFecharFora(comEmojis, fecharEmojis, caixaDeEmojis, botaoDeEmojis);
+  const podeMandar =
+    (texto.trim() || anexos.length || link) && texto.length <= LIMITE_DO_TEXTO;
 
   useEffect(() => {
     campo.current?.focus();
+    if (e.linkPendente?.conversa === e.conversaId)
+      estado.consumirLinkPendente(e.conversaId);
   }, [e.conversaId]);
+  // Responder: o foco volta para o campo.
+  useEffect(() => {
+    if (e.resposta) campo.current?.focus();
+  }, [e.resposta]);
+
+  function juntar(arquivos) {
+    const { anexos: lista, recusados } = juntarAnexos(anexos, arquivos);
+    setAnexos(lista);
+    for (const r of recusados) estado.avisar(`${r.nome}: ${r.erro}`);
+  }
 
   async function enviar() {
-    if (!texto.trim() || texto.length > LIMITE_DO_TEXTO) return;
+    if (!podeMandar) return;
     const mencoes = extrairMencoes(texto, pessoas);
     const enviado = texto;
+    const comAnexos = anexos;
     setTexto("");
     setLink(null);
+    setAnexos([]);
     setCursor(0);
     setComEmojis(false);
     // Falhou: a mensagem fica na conversa como "Não enviada", com Tentar de novo.
-    await estado.enviar(enviado, { link, mencoes });
+    await estado.enviar(enviado, {
+      link,
+      mencoes,
+      anexos: comAnexos,
+      resposta: e.resposta,
+    });
   }
 
   function escolher(pessoa) {
@@ -442,35 +700,96 @@ function CampoDeEscrita({ estado, e }) {
     }
   }
 
+  /* Ctrl+V com imagem (print): vira anexo; texto colado segue normal. */
+  function aoColar(ev) {
+    const imagens = imagensColadas(ev.clipboardData);
+    if (!imagens.length) return;
+    ev.preventDefault();
+    const agora = new Date();
+    juntar(
+      imagens.map((img) =>
+        !img.name || /^image\.[a-z]+$/i.test(img.name)
+          ? comNomeDePrint(img, agora)
+          : img,
+      ),
+    );
+  }
+
   const compartilhar = () => {
     const atual = linkDaTelaAtual();
     if (atual) setLink(atual);
     else estado.avisar("Esta tela não tem link para compartilhar.");
   };
 
+  const cartao = link ? cartaoDoLink(link, e.paginas) : null;
+
   return (
     <form
-      className="chat-escrita"
+      className={`chat-escrita${arrastando ? " is-arrastando" : ""}`}
       data-tour="chat-escrita"
       onSubmit={(ev) => {
         ev.preventDefault();
         void enviar();
       }}
       onKeyDown={comEmojis ? escapeFecha(fecharEmojis) : undefined}
+      onDragOver={(ev) => {
+        if (!Array.from(ev.dataTransfer?.types || []).includes("Files")) return;
+        ev.preventDefault();
+        setArrastando(true);
+      }}
+      onDragLeave={() => setArrastando(false)}
+      onDrop={(ev) => {
+        if (!ev.dataTransfer?.files?.length) return;
+        ev.preventDefault();
+        setArrastando(false);
+        juntar(ev.dataTransfer.files);
+      }}
     >
-      {link ? (
-        <div className="chat-escrita__link">
-          <i className="fa-solid fa-display" aria-hidden="true" />
-          <span>{link.rotulo}</span>
+      {e.resposta ? (
+        <div className="chat-escrita__resposta" data-tour="chat-resposta">
+          <i className="fa-solid fa-reply" aria-hidden="true" />
+          <span>
+            <strong>
+              {String(e.resposta.autor) === String(e.eu)
+                ? "Você"
+                : nomeDe(e.conversa, e.resposta.autor)}
+            </strong>
+            {textoDaCitacao(e.resposta)}
+          </span>
           <button
             type="button"
             className="chat-icone"
-            aria-label="Tirar a tela"
+            aria-label="Não responder"
+            onClick={() => estado.cancelarResposta()}
+          >
+            <i className="fa-solid fa-xmark" aria-hidden="true" />
+          </button>
+        </div>
+      ) : null}
+      {cartao ? (
+        <div className="chat-escrita__link">
+          <i className={`fa-solid ${cartao.icone}`} aria-hidden="true" />
+          <span>{cartao.link.rotulo}</span>
+          <button
+            type="button"
+            className="chat-icone"
+            aria-label="Tirar o cartão"
             onClick={() => setLink(null)}
           >
             <i className="fa-solid fa-xmark" aria-hidden="true" />
           </button>
         </div>
+      ) : null}
+      {anexos.length ? (
+        <ul className="chat-escrita__anexos" aria-label="Anexos">
+          {anexos.map((a, i) => (
+            <ChipDoAnexo
+              key={`${a.arquivo?.name}-${i}`}
+              anexo={a}
+              aoTirar={() => setAnexos((atual) => atual.filter((x) => x !== a))}
+            />
+          ))}
+        </ul>
       ) : null}
       {sugestoes.length ? (
         <ul className="chat-sugestoes" role="listbox" aria-label="Mencionar">
@@ -515,6 +834,20 @@ function CampoDeEscrita({ estado, e }) {
         }}
         onSelect={(ev) => setCursor(ev.target.selectionStart ?? 0)}
         onKeyDown={aoTeclar}
+        onPaste={aoColar}
+      />
+      <input
+        ref={seletorDeArquivo}
+        type="file"
+        className="sr-only"
+        tabIndex={-1}
+        aria-hidden="true"
+        multiple
+        accept={ACEITA_NO_SELETOR_DO_CHAT}
+        onChange={(ev) => {
+          juntar(ev.target.files);
+          ev.target.value = "";
+        }}
       />
       <div className="chat-escrita__rodape">
         <button
@@ -531,6 +864,16 @@ function CampoDeEscrita({ estado, e }) {
         </button>
         <button
           type="button"
+          className="chat-icone chat-escrita__anexar"
+          aria-label="Anexar arquivo"
+          title="Anexar arquivo"
+          data-tour="chat-anexar"
+          onClick={() => seletorDeArquivo.current?.click()}
+        >
+          <i className="fa-solid fa-paperclip" aria-hidden="true" />
+        </button>
+        <button
+          type="button"
           className="btn secondary small"
           onClick={compartilhar}
           aria-pressed={link ? "true" : "false"}
@@ -544,7 +887,7 @@ function CampoDeEscrita({ estado, e }) {
             {LIMITE_DO_TEXTO.toLocaleString("pt-BR")}
           </small>
         ) : null}
-        <button type="submit" className="btn small" disabled={!texto.trim()}>
+        <button type="submit" className="btn small" disabled={!podeMandar}>
           <i className="fa-solid fa-paper-plane" aria-hidden="true" /> Enviar
         </button>
       </div>
@@ -563,6 +906,7 @@ function MenuDaConversa({ estado, e }) {
   usarFecharFora(aberto, fechar, caixa);
   const c = e.conversa;
   if (!c) return null;
+  const participa = c.participa !== false;
   return (
     <div
       className="chat-conversa__opcoes"
@@ -575,6 +919,7 @@ function MenuDaConversa({ estado, e }) {
         aria-label="Opções da conversa"
         aria-haspopup="menu"
         aria-expanded={aberto ? "true" : "false"}
+        data-tour="chat-opcoes-da-conversa"
         onClick={() => (aberto ? fechar() : setAberto(true))}
       >
         <i className="fa-solid fa-ellipsis" aria-hidden="true" />
@@ -609,6 +954,30 @@ function MenuDaConversa({ estado, e }) {
         </div>
       ) : aberto ? (
         <div className="chat-conversa__menu" role="menu">
+          {participa ? (
+            <>
+              <button
+                type="button"
+                role="menuitem"
+                onClick={() => {
+                  fechar();
+                  void estado.fixar(c.id, !c.fixada_em);
+                }}
+              >
+                {c.fixada_em ? "Soltar do topo" : "Fixar no topo"}
+              </button>
+              <button
+                type="button"
+                role="menuitem"
+                onClick={() => {
+                  fechar();
+                  void estado.marcarNaoLida(c.id);
+                }}
+              >
+                Marcar como não lida
+              </button>
+            </>
+          ) : null}
           <button
             type="button"
             role="menuitem"
@@ -710,17 +1079,43 @@ export function Conversa({ estado, e }) {
     else setNovas((n) => n + 1);
   }, [ultimaId, quantas]);
 
+  // Busca ou citação: rola até a mensagem e destaca por um instante.
+  useEffect(() => {
+    const id = e.destaque?.id;
+    if (!id || !lista.current) return undefined;
+    const alvo = lista.current.querySelector(
+      `[data-mensagem="${globalThis.CSS?.escape ? CSS.escape(id) : id}"]`,
+    );
+    if (!alvo) return undefined;
+    noFim.current = false;
+    alvo.scrollIntoView?.({ block: "center" });
+    alvo.classList.add("is-destaque");
+    const fim = setTimeout(
+      () => alvo.classList.remove("is-destaque"),
+      DESTAQUE_MS,
+    );
+    return () => {
+      clearTimeout(fim);
+      alvo.classList.remove("is-destaque");
+    };
+  }, [e.destaque]);
+
   const participantes = outrasPessoas(e.conversa, e.eu);
   const online = participantes.filter((p) => p.online).length;
 
   return (
     <div className="chat-conversa">
       <div className="chat-conversa__topo">
-        <small>
+        <small data-presenca={presencaDe(participantes[0])}>
+          {e.conversa?.fixada_em ? (
+            <i
+              className="fa-solid fa-thumbtack chat-conversa__fixada"
+              title="Fixada no topo"
+              aria-label="Fixada no topo"
+            />
+          ) : null}
           {e.conversa?.tipo === "DIRETA"
-            ? participantes[0]?.online
-              ? "Online"
-              : ""
+            ? rotuloDaPresenca(participantes[0])
             : `${participantes.length + 1} ${participantes.length ? "pessoas" : "pessoa"}${online ? ` · ${online} online` : ""}`}
         </small>
         <MenuDaConversa estado={estado} e={e} />
