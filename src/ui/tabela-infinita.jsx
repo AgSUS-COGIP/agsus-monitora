@@ -25,10 +25,11 @@ const ARIA_SORT = { asc: "ascending", desc: "descending" };
 const ICONE_DA_ORDEM = { asc: "fa-arrow-up", desc: "fa-arrow-down" };
 
 /**
+ * @template T
  * @param {object} p
  * @param {string} p.idDoTitulo
  * @param {string} p.titulo
- * @param {{ placeholder: string, rotulo: string, valor?: string, aoMudar?: (busca: string) => void, aoTeclar?: (evento: KeyboardEvent) => void, id?: string, tour?: string }} p.busca
+ * @param {{ placeholder: string, rotulo: string, valor?: string, aoMudar?: (busca: string) => void, aoTeclar?: (evento: import("react").KeyboardEvent<HTMLInputElement>) => void, id?: string, tour?: string }} p.busca
  *   `aoTeclar`: o onKeyDown do campo (ex.: Enter abre o achado); `tour`: o
  *   `data-tour` do campo
  * @param {Array<{ rotulo: string, chave?: string, cabecalho?: import("react").ReactNode, dica?: string, largura?: string, numero?: boolean, ordem?: string, aoOrdenar?: () => void }>} p.colunas
@@ -43,6 +44,13 @@ const ICONE_DA_ORDEM = { asc: "fa-arrow-up", desc: "fa-arrow-down" };
  * @param {import("react").ReactNode} [p.ferramentas] botões ao lado da busca
  * @param {string} [p.className] classe a mais no card (seletor de tour)
  * @param {string} [p.idDoCorpo] id do `<tbody>` (contrato com o legado e a Aya)
+ * @param {boolean} p.carregado
+ * @param {readonly T[]} p.itens
+ * @param {(itens: readonly T[], busca: string) => readonly T[]} p.filtrarPelaBusca
+ * @param {(item: T) => import("react").ReactNode} p.linha
+ * @param {number} p.total
+ * @param {string} [p.classeDaTabela]
+ * @param {string} [p.tour]
  */
 export function TabelaInfinita({
   idDoTitulo,

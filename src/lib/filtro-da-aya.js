@@ -63,7 +63,12 @@ export function filtrosDeEntrevistas(atuais, pedido, opcoes) {
   return proximos;
 }
 
-/** Seleção: os editais (escolha múltipla) com o número pedido. */
+/** Seleção: os editais (escolha múltipla) com o número pedido.
+ * @param {import("../modulos/selecao/tipos.ts").FiltrosDaSelecao} atuais
+ * @param {{ edital?: string } | null} pedido
+ * @param {import("../modulos/selecao/tipos.ts").OpcoesDosFiltros} opcoes
+ * @returns {import("../modulos/selecao/tipos.ts").FiltrosDaSelecao}
+ */
 export function filtrosDaSelecao(atuais, pedido, opcoes) {
   const editais = opcoesDoEdital(opcoes?.editais, pedido?.edital);
   return editais.length ? { ...atuais, editais } : { ...atuais };

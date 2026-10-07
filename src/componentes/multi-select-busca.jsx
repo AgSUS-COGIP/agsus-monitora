@@ -42,6 +42,9 @@ export function normalizarOpcoes(lista) {
     .filter((item) => item.value);
 }
 
+/**
+ * @param {{ id: string, opcoes?: readonly (string | { value: string, label?: string })[], selecionados?: readonly string[], placeholder?: string, aoMudar?: (valores: string[]) => void }} props
+ */
 export function MultiSelectBusca({
   id,
   opcoes = [],

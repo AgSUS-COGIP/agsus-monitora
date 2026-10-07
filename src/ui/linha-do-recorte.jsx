@@ -12,6 +12,9 @@ export function textoDoRecorte(ativos) {
     : "Sem filtros";
 }
 
+/**
+ * @param {{ ativos?: readonly (readonly [string, string, string])[], texto?: string, children?: import("react").ReactNode }} props
+ */
 export function LinhaDoRecorte({ ativos = [], texto, children }) {
   return (
     <section className="ui-card ui-recorte" aria-label="Recorte ativo">

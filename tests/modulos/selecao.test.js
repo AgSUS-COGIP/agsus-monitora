@@ -39,7 +39,7 @@ vi.mock("../../src/lib/chartjs-global.js", () => ({
   },
 }));
 
-const { montarSelecao } = await import("../../src/modulos/selecao/selecao.jsx");
+const { montarSelecao } = await import("../../src/modulos/selecao/selecao.tsx");
 const { criarEstadoDaSelecao } =
   await import("../../src/modulos/selecao/estado.ts");
 
@@ -424,6 +424,42 @@ describe("filtros", () => {
 });
 
 describe("gráficos", () => {
+  it("clique sem barra ou fora do ranking preserva o recorte; tooltip vazio não falha", async () => {
+    await montar(supabaseFalso({ data: PAYLOAD, error: null }));
+    const ranking = grafico("chartDsei");
+    await act(async () => {
+      ranking.options.onClick(null, []);
+      ranking.options.onClick(null, [{ index: 99 }]);
+    });
+    expect(recorte()).toBe("Sem filtros");
+    expect(linhas()).toHaveLength(2);
+    expect(ranking.options.plugins.tooltip.callbacks.title([])).toBe("");
+    expect(
+      ranking.options.plugins.tooltip.callbacks.title([{ dataIndex: 99 }]),
+    ).toBe("");
+  });
+
+  it("o plugin escreve a contagem da barra e ignora coordenadas ausentes", async () => {
+    await montar(supabaseFalso({ data: PAYLOAD, error: null }));
+    const barras = grafico("chartEliminados");
+    const ctx = { save: vi.fn(), restore: vi.fn(), fillText: vi.fn() };
+    const posicao = vi.fn(() => ({ x: 30, y: 60 }));
+    barras.ctx = ctx;
+    barras.getDatasetMeta = () => ({
+      data: [
+        { tooltipPosition: posicao },
+        { tooltipPosition: () => ({ x: null, y: null }) },
+      ],
+    });
+    barras.plugins[0].afterDatasetsDraw(barras);
+    expect(posicao).toHaveBeenCalledWith(false);
+    expect(ctx.fillText).toHaveBeenCalledTimes(1);
+    expect(ctx.fillText).toHaveBeenCalledWith("2", 30, 56);
+    expect(ctx.fillStyle).toBe("#526780");
+    expect(ctx.save).toHaveBeenCalledTimes(1);
+    expect(ctx.restore).toHaveBeenCalledTimes(1);
+  });
+
   it("desenha os 5 gráficos Chart.js, com o medidor de contratação", async () => {
     await montar(supabaseFalso({ data: PAYLOAD, error: null }));
     expect(
