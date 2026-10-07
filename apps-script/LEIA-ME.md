@@ -32,16 +32,21 @@ apps-script/
   saude-indigena/
     2-sincronizar-com-supabase-full.gs   substitui "Sincronizar com Supabase" (Scipts Monitora analises2)
     3-analises-incremental.gs            substitui "AnalisesIncremental" (Scipts Monitora analises3)
+    4-orquestrador-fato-supabase.gs      substitui o orquestrador (Scipts Monitora analises4), desde 07/10/2026
   projetos/
     1-atualizar-base.gs                  o "Atualizar base" (DIM_VAGAS -> FATO_ANALISES); ver nota abaixo
     2-sincronizar-com-supabase-full.gs   novo; substitui o antigo sync (Script Projetos1), que deve ser APAGADO
     3-analises-incremental.gs            novo
     4-orquestrador-fato-supabase.gs      novo (orquestrador igual ao da SI)
+  sede/
+    2-, 3- e 4-                          os mesmos de Projetos, com as origens da SEDE
 ```
 
 - O **"Atualizar base"** de cada planilha continua o que está lá (não muda).
-- O orquestrador da Saúde Indígena (Scipts Monitora analises4) **não muda**: ele
-  não consulta o banco diretamente.
+- O orquestrador da Saúde Indígena (Scipts Monitora analises4) passou a vir daqui
+  em 07/10/2026 (`saude-indigena/4-orquestrador-fato-supabase.gs`): é o de
+  Projetos **sem** a função pública `processarLoteSincronizacaoAnalises`, que o
+  "Atualizar base" da SI já tem. Ver "Sync incremental não trava" no fim.
 - O painel web de Projetos (Script Projetos3/4/6/7) não muda.
 - Nos arquivos da SI, cada linha alterada está marcada com `// [por-planilha]`.
   As mudanças são só estas: a lista `ORIGENS_PLANILHA`, o filtro
@@ -224,3 +229,65 @@ Agora, nas fases INIT e COMPARING (nada preparado nem processado no banco), o
 `3-analises-incremental.gs` das três planilhas recomeça a comparação com a
 planilha atual e apaga o staging daquele sync. Depois da preparação a trava
 continua (aí misturar planilhas seria errado).
+
+## Sync incremental não trava (07/10/2026)
+
+**O que aconteceu (06–07/10).** Um sync incremental da Saúde Indígena (log
+`TL_SYNC_ANALISE` id 5065) parou no meio da comparação: o orquestrador já tinha
+gastado a maior parte dos 30 min da execução atualizando a FATO e o incremental
+foi cortado. O banco recusava um sync novo enquanto aquele estivesse
+`carregado`, e nada o encerrava: ~16 h sem sincronizar. Depois que a linha foi
+marcada `erro` à mão, o script continuava tentando retomar o sync guardado
+(`"Status remoto nao permite retomada: erro"`) até alguém apagar a propriedade
+`ANALISES_SYNC_INCREMENTAL_CLIENT_V1`.
+
+**O que mudou.**
+
+- **Banco** (`supabase/migrations/20261007170000_sync_de_analises_nao_trava.sql`):
+  execução `carregado`/`processando` **sem progresso há mais de 30 min** é
+  encerrada como `erro` com a mensagem "Execução encerrada por inatividade…"
+  quando outra da mesma planilha pede para começar, e também por uma tarefa do
+  banco a cada 10 min (`agsus_analises_encerrar_inativas`). Nada é apagado.
+  Duas execuções ao mesmo tempo da mesma planilha continuam impossíveis. No
+  **Status das atualizações** a execução aparece como "Encerrada por inatividade".
+- **`3-analises-incremental.gs`** (as três planilhas): se o banco disser que o
+  sync guardado não pode seguir (`erro`, inexistente) ou se não houver
+  progresso há mais de 30 min, o script **descarta o estado local e começa um
+  sync novo na mesma execução**, com a linha
+  `Incremental: estado local do sync … descartado: …` no log.
+- **`4-orquestrador-fato-supabase.gs`** (as três planilhas): não espera um sync
+  em `erro` (esquece o `sync_id` e segue com um novo) e, se a FATO já consumiu
+  20 min da execução, deixa o incremental para a próxima verificação de 5 min
+  em vez de estourar os 30 min do Apps Script.
+
+**Colar nas planilhas** (só depois de a migration estar aplicada no banco):
+
+1. Abra a planilha > **Extensões > Apps Script**.
+2. Abra o arquivo do incremental (começa com "Sincronizacao incremental" ou
+   "PLANILHA … - sincronizacao incremental"), apague tudo e cole:
+   - Saúde Indígena: `saude-indigena/3-analises-incremental.gs`
+   - Projetos: `projetos/3-analises-incremental.gs`
+   - SEDE: `sede/3-analises-incremental.gs`
+3. Abra o arquivo do orquestrador (começa com "orquestrador automatico" ou
+   `const FATO_SUPABASE_ORQ_CFG`), apague tudo e cole:
+   - Saúde Indígena: `saude-indigena/4-orquestrador-fato-supabase.gs`
+   - Projetos: `projetos/4-orquestrador-fato-supabase.gs`
+   - SEDE: `sede/4-orquestrador-fato-supabase.gs`
+4. Salve (Ctrl+S). Os nomes das funções são os mesmos: não mexa nos
+   acionadores nem nas propriedades.
+5. Confira em **Execuções** o próximo `orquestrarFatoESupabaseAgendado`.
+
+**Se ainda assim travar** (não deveria; o banco e o script se destravam sozinhos
+em até ~40 min):
+
+1. No banco (SQL Editor), veja o pendente da planilha:
+   `select id, sync_id, status, updated_at from public."TL_SYNC_ANALISE" where status in ('carregado','processando') order by id desc;`
+2. Para encerrar já, sem esperar os 30 min (nada é apagado):
+   `select public."FC_ENCERRAR_SYNC_ANALISE_INATIVO"(null, 30);` encerra só os
+   parados há mais de 30 min; um parado há menos, encerre como em "Envio
+   recusado" acima (`update … set status = 'erro' …`).
+3. No Apps Script não é preciso apagar nada: o script descarta o estado na
+   próxima execução. Se quiser forçar, rode `limparEstadoLocalAnalisesIncremental`
+   com `'LIMPAR_ESTADO_LOCAL'` (ou apague a propriedade
+   `ANALISES_SYNC_INCREMENTAL_CLIENT_V1` em **Configurações do projeto >
+   Propriedades do script**).

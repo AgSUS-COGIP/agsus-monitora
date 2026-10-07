@@ -57,6 +57,7 @@ const TAREFAS = Object.freeze({
   agsus_analises_analyze_diario: "Estatísticas das tabelas de análises",
   agsus_eventos_acesso_limpeza_mensal: "Limpeza do registro de acessos",
   agsus_chat_retencao_diaria: "Retenção das mensagens do chat",
+  agsus_analises_encerrar_inativas: "Encerrar cargas de análises paradas",
 });
 
 /* O estado de cada tipo de execução, em ok / falha / andamento. */
@@ -97,6 +98,8 @@ function normalizarExecucao(bruta, tipo) {
     situacaoBruta,
     linhas: inteiro(bruta?.linhas),
     mensagem: texto(bruta?.mensagem) || null,
+    // Análises: o banco encerrou a carga parada há mais de 30 min (20261007170000).
+    encerradaPorInatividade: bruta?.encerrada_por_inatividade === true,
   };
 }
 
