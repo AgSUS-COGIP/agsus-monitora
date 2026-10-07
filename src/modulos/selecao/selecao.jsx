@@ -16,7 +16,7 @@ import {
 import { getSupabaseClient } from "../../lib/supabaseClient.js";
 import { Aviso } from "../../ui/index.js";
 import { textoDaConferencia } from "../../lib/texto-da-conferencia.js";
-import { criarEstadoDaSelecao, MENSAGEM_SEM_ACESSO } from "./estado.js";
+import { criarEstadoDaSelecao, MENSAGEM_SEM_ACESSO } from "./estado.ts";
 import {
   ativosDoRecorte,
   Filtros,
