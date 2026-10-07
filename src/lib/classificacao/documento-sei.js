@@ -567,6 +567,33 @@ function colunasComLargura(rotulos, alinhamento) {
   });
 }
 
+/*
+  Quem entrou no lote por decisão da coordenação (Lista Provisória e Lote:
+  l.decisao = o motivo, ex.: "Critério CORES") sai com uma marca no nome
+  ("*", "**"… uma por motivo) e a nota de rodapé da tabela.
+*/
+export const PREFIXO_DA_NOTA_DE_DECISAO =
+  "Incluído por decisão da coordenação: ";
+
+export function marcasDasDecisoes(linhas) {
+  const motivos = [];
+  for (const l of linhas || []) {
+    const motivo = String(l?.decisao ?? "").trim();
+    if (motivo && !motivos.includes(motivo)) motivos.push(motivo);
+  }
+  const marca = new Map(motivos.map((m, i) => [m, "*".repeat(i + 1)]));
+  return {
+    nome: (l) => {
+      const m = marca.get(String(l?.decisao ?? "").trim());
+      return m ? `${l.nome} ${m}` : l.nome;
+    },
+    notas: motivos.map(
+      (m) =>
+        `${marca.get(m)} ${PREFIXO_DA_NOTA_DE_DECISAO}${m.replace(/\.$/, "")}.`,
+    ),
+  };
+}
+
 function justificativa(e) {
   return [MOTIVOS_DE_ELIMINACAO[e.motivo] || e.motivo, e.detalhe]
     .filter(Boolean)
@@ -643,12 +670,17 @@ function tabelasDaLista(retrato, lista, agenda = null) {
       ];
       alinhamento = "esquerda";
     }
+    const decisoes =
+      tipo === "PROVISORIA" || tipo === "LOTE"
+        ? marcasDasDecisoes(linhasDaLista)
+        : { nome: (l) => l.nome, notas: [] };
     return {
       titulo: todas ? nomeDaLista(codigo) : "",
       colunas: colunasComLargura(rotulos, alinhamento),
+      notas: decisoes.notas,
       linhas: linhasDaLista.map((l) => [
         ordinal(l.posicao),
-        l.nome,
+        decisoes.nome(l),
         ...(comModalidade ? [siglaDasModalidades(l, modalidades)] : []),
         formatarNota(l.nota, casas),
         ...parciais.map((p) => nota(l.parciais?.[p])),
@@ -973,6 +1005,8 @@ export function htmlParaSei(doc) {
           `<p class="Texto_Centralizado"><strong>${escapar(t.titulo)}</strong></p>`,
         );
       partes.push(tabelaHtml(t));
+      for (const n of t.notas || [])
+        partes.push(`<p class="Texto_Alinhado_Esquerda">${escapar(n)}</p>`);
     }
   }
   partes.push('<p class="Texto_Justificado">&nbsp;</p>');
@@ -1016,6 +1050,7 @@ export function textoParaSei(doc) {
         saida.push(t.colunas.map((c) => c.rotulo).join("\t"));
         for (const l of t.linhas) saida.push(l.join("\t"));
       }
+      for (const n of t.notas || []) saida.push(n);
     }
     saida.push("");
   }

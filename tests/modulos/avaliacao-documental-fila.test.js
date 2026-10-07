@@ -736,3 +736,111 @@ describe("estado da fila: reserva", () => {
     expect(estado.obter().aberta.motivo).toContain("não está mais com você");
   });
 });
+
+describe("fila: inclusão no lote por decisão da coordenação", () => {
+  const comDecisao = (coordena = true) => {
+    const d = fila({ coordena });
+    d.candidatos = d.candidatos.map((c) =>
+      c.codigo === "7003"
+        ? { ...c, entrada: "DECISAO", decisao: "Critério CORES" }
+        : c.codigo === "7009"
+          ? { ...c, motivo_codigo: "QUESTIONARIO" }
+          : c,
+    );
+    return d;
+  };
+  const reservar = ({ p_ficha }) => {
+    const c = comDecisao().candidatos.find((x) => x.ficha?.id === p_ficha);
+    return {
+      ficha: {
+        ...c.ficha,
+        vaga: c.vaga,
+        codigo: c.codigo,
+        nome: c.nome,
+        posicao: c.posicao,
+        art: c.art,
+        modalidade: c.modalidade,
+        reserva: {
+          usuario: EU,
+          nome: "Ana",
+          desde: new Date().toISOString(),
+          expira: AGORA_MAIS,
+        },
+      },
+      reservada: true,
+      somente_leitura: false,
+    };
+  };
+
+  it('selo "Decisão: Critério CORES" na lista e no topo da ficha; "N pela regra + M por decisão"; revogar com motivo', async () => {
+    const revogar = vi.fn(() => ({ revogadas: 1, fichas_fora_do_lote: 1 }));
+    const supabase = supabaseFalso(comDecisao(), {
+      reservar_ficha: reservar,
+      revogar_decisao_lote: revogar,
+    });
+    await montar(supabase);
+    expect(secao.querySelector("[data-lote-da-fila]").textContent).toBe(
+      "Lote: 3 pela regra + 1 por decisão",
+    );
+    const linha = secao.querySelector("[data-candidato='7003']");
+    expect(linha.querySelector(".avd-selo-decisao").textContent).toBe(
+      "Decisão: Critério CORES",
+    );
+    expect(
+      secao.querySelector("[data-candidato='7002'] .avd-selo-decisao"),
+    ).toBeNull();
+
+    await clicar(botao("Abrir", linha));
+    await esperar();
+    const topo = secao.querySelector(".avd-analise-topo");
+    expect(topo.querySelector(".avd-selo-decisao").textContent).toBe(
+      "Decisão: Critério CORES",
+    );
+    await clicar(topo.querySelector("[data-acao='abrir-revogar-decisao']"));
+    await digitar(
+      topo.querySelector("[data-revogar='7003'] input"),
+      "Decisão registrada por engano",
+    );
+    await clicar(topo.querySelector("[data-acao='revogar-decisao']"));
+    await esperar();
+    expect(revogar).toHaveBeenCalledWith({
+      p_edital: "e93",
+      p_codigos: ["7003"],
+      p_motivo: "Decisão registrada por engano",
+      p_vaga: "179698",
+    });
+  });
+
+  it("incluir por decisão: só os de fora do lote; o analista não vê a ação", async () => {
+    const incluir = vi.fn(() => ({ incluidos: 1, fichas_criadas: 1 }));
+    await montar(
+      supabaseFalso(comDecisao(), { incluir_no_lote_por_decisao: incluir }),
+    );
+    await clicar(secao.querySelector("[data-acao='incluir-por-decisao']"));
+    const opcoes = [
+      ...document.querySelectorAll(
+        "table[aria-label='Candidatos fora do lote pela regra'] tbody tr",
+      ),
+    ].map((tr) => tr.dataset.candidato);
+    expect(opcoes).toEqual(["7009"]);
+    await clicar(document.querySelector("input[aria-label='Incluir 7009']"));
+    await clicar(
+      document.querySelector("[data-acao='confirmar-incluir-por-decisao']"),
+    );
+    await esperar();
+    expect(incluir).toHaveBeenCalledWith({
+      p_edital: "e93",
+      p_codigos: ["7009"],
+      p_motivo: "Critério CORES",
+      p_vaga: "179698",
+    });
+
+    await act(async () => painel?.raiz?.unmount());
+    secao.remove();
+    await montar(supabaseFalso(comDecisao(false)));
+    expect(secao.querySelector("[data-acao='incluir-por-decisao']")).toBeNull();
+    expect(
+      secao.querySelector("[data-candidato='7003'] .avd-selo-decisao"),
+    ).not.toBeNull();
+  });
+});

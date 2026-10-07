@@ -1000,6 +1000,29 @@ export const VERBETES_AYA = Object.freeze([
   },
   {
     arquivo: "regras-da-avaliacao-documental.md",
+    titulo: "Incluir no lote por decisão da coordenação",
+    perguntas: [
+      "incluir no lote por decisao da coordenacao",
+      "incluir por decisao",
+      "decisao da coordenacao",
+      "criterio cores",
+      "candidato fora do lote deve ser analisado",
+      "analisar candidato eliminado",
+      "analisar abaixo da nota minima",
+      "revogar decisao",
+      "selo decisao",
+      "lote pela regra mais por decisao",
+      "incluido por decisao da coordenacao",
+    ],
+    resposta:
+      'Quando a coordenação decide que candidatos que a regra deixa fora do lote (eliminados automaticamente, como o questionário não finalizado, ou abaixo da nota mínima) devem ser analisados, a coordenação do edital (gestor do edital, coordenador da equipe ou administrador global) clica em "Incluir por decisão da coordenação" na vaga da aba Pré-classificação ou na Fila, marca os candidatos e informa o motivo (de 5 a 250 caracteres; a sugestão é "Critério CORES"). O candidato entra na hora no último lote da vaga, com a ficha aberta na fila, e aparece com o selo "Decisão: Critério CORES" nas listas e no topo da ficha. A decisão vale em todo recálculo: mesmo que a regra o elimine ou o deixe abaixo do corte, ele continua no lote com a marca. Quem entra por decisão não conta para o tamanho do lote pela regra, não ocupa lugar de ninguém nem muda a linha de corte; os contadores mostram separado, por exemplo "Lote: 11 pela regra + 6 por decisão". Na Lista Provisória e no Lote de convocação, o nome sai com um asterisco e a nota "Incluído por decisão da coordenação: Critério CORES.". Para desfazer, a coordenação clica em "Revogar decisão" e informa o motivo (de 10 a 250 caracteres): o candidato volta ao que a regra diz e a ficha não concluída sai da fila como "Fora do lote". Com a ficha já concluída, a decisão não se revoga. Nada se apaga: a decisão, a revogação, quem fez, quando e o motivo ficam no histórico. Quem saiu do arquivo da Empregare não fica no lote, mesmo com decisão.',
+    fato: 'No MONITORA, a coordenação do edital inclui no lote, por decisão e com motivo (ex.: "Critério CORES"), candidatos que a regra deixa fora; eles ficam no lote em todo recálculo, contados à parte ("N pela regra + M por decisão"), até a coordenação revogar (não com a ficha concluída).',
+    fonte:
+      "supabase/migrations/20261007200000_inclusao_no_lote_por_decisao.sql; python/monitora/avaliacao_documental/pre_classificacao.py; src/modulos/avaliacao-documental/decisao-do-lote.jsx",
+    abrir: "avaliacao-documental",
+  },
+  {
+    arquivo: "regras-da-avaliacao-documental.md",
     titulo: "Recalcular a pré-classificação",
     perguntas: [
       "recalcular",
