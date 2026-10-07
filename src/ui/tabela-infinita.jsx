@@ -20,6 +20,53 @@ import { LinhasEsqueleto } from "./esqueleto.jsx";
 */
 
 const POR_VEZ = 50;
+
+/*
+  As linhas com o cabeçalho de cada grupo: o grupo recolhido aparece só pelo
+  cabeçalho; o aberto, com as linhas já carregadas (`visiveis`).
+*/
+function linhasAgrupadas({ naTabela, visiveis, grupo, linha, colunas }) {
+  const carregados = new Set(visiveis);
+  const quantos = new Map();
+  for (const item of naTabela) {
+    const chave = grupo.chave(item);
+    quantos.set(chave, (quantos.get(chave) ?? 0) + 1);
+  }
+  const saida = [];
+  let atual = null;
+  for (const item of naTabela) {
+    const chave = grupo.chave(item);
+    const recolhido = Boolean(grupo.recolhidos?.has(chave));
+    if (chave !== atual) {
+      atual = chave;
+      // Grupo aberto ainda não carregado: o cabeçalho espera as linhas.
+      if (!recolhido && !carregados.has(item)) break;
+      saida.push(
+        <tr
+          key={`grupo:${chave}`}
+          className="ui-tabela-grupo"
+          data-grupo={chave}
+        >
+          <th scope="colgroup" colSpan={colunas}>
+            <button
+              type="button"
+              aria-expanded={!recolhido}
+              onClick={() => grupo.aoAlternar?.(chave)}
+            >
+              <i
+                className={`fa-solid ${recolhido ? "fa-chevron-right" : "fa-chevron-down"}`}
+                aria-hidden="true"
+              />
+              {grupo.cabecalho(chave, quantos.get(chave))}
+            </button>
+          </th>
+        </tr>,
+      );
+    }
+    if (!recolhido && carregados.has(item)) saida.push(linha(item));
+  }
+  return saida;
+}
 const PERTO_DO_FIM_PX = 160;
 const ARIA_SORT = { asc: "ascending", desc: "descending" };
 const ICONE_DA_ORDEM = { asc: "fa-arrow-up", desc: "fa-arrow-down" };
@@ -29,7 +76,7 @@ const ICONE_DA_ORDEM = { asc: "fa-arrow-up", desc: "fa-arrow-down" };
  * @param {object} p
  * @param {string} p.idDoTitulo
  * @param {string} p.titulo
- * @param {{ placeholder: string, rotulo: string, valor?: string, aoMudar?: (busca: string) => void, aoTeclar?: (evento: import("react").KeyboardEvent<HTMLInputElement>) => void, id?: string, tour?: string }} p.busca
+ * @param {{ placeholder: string, rotulo: string, valor?: string, aoMudar?: (busca: string) => void, aoTeclar?: (evento: import("react").KeyboardEvent<HTMLInputElement>) => void, id?: string, tour?: string }} [p.busca]
  *   `aoTeclar`: o onKeyDown do campo (ex.: Enter abre o achado); `tour`: o
  *   `data-tour` do campo
  * @param {Array<{ rotulo: string, chave?: string, cabecalho?: import("react").ReactNode, dica?: string, largura?: string, numero?: boolean, ordem?: string, aoOrdenar?: () => void }>} p.colunas
@@ -51,19 +98,18 @@ const ICONE_DA_ORDEM = { asc: "fa-arrow-up", desc: "fa-arrow-down" };
  * @param {number} p.total
  * @param {string} [p.classeDaTabela]
  * @param {string} [p.tour]
+ * @param {{ chave: (item: T) => string, cabecalho: (chave: string, quantos: number) => import("react").ReactNode, recolhidos?: Set<string>, aoAlternar?: (chave: string) => void }} [p.grupo]
+ *   agrupa as linhas: um cabeçalho de grupo (`tr.ui-tabela-grupo`) sempre que
+ *   `chave(item)` muda (os itens já vêm na ordem dos grupos); o grupo em
+ *   `recolhidos` mostra só o cabeçalho, e clicar nele chama `aoAlternar`
+ *
+ * `busca` é opcional: sem ela, a tabela não desenha o campo (a tela o põe
+ * junto dos filtros) e `filtrarPelaBusca` recebe "".
  */
 export function TabelaInfinita({
   idDoTitulo,
   titulo,
-  busca: {
-    placeholder,
-    rotulo,
-    valor,
-    aoMudar,
-    aoTeclar,
-    id: idDaBusca,
-    tour: tourDaBusca,
-  },
+  busca: campoDeBusca = null,
   carregado,
   itens,
   filtrarPelaBusca,
@@ -77,7 +123,17 @@ export function TabelaInfinita({
   className,
   idDoCorpo,
   tour,
+  grupo = null,
 }) {
+  const {
+    placeholder,
+    rotulo,
+    valor,
+    aoMudar,
+    aoTeclar,
+    id: idDaBusca,
+    tour: tourDaBusca,
+  } = campoDeBusca || { valor: "" };
   const [buscaPropria, setBuscaPropria] = useState("");
   const controlada = valor !== undefined;
   const busca = controlada ? valor : buscaPropria;
@@ -91,8 +147,17 @@ export function TabelaInfinita({
     [itens, busca, filtrarPelaBusca],
   );
   useEffect(() => setLimite(POR_VEZ), [naTabela]);
-  const visiveis = naTabela.slice(0, limite);
-  const faltam = naTabela.length - visiveis.length;
+  const recolhidos = grupo?.recolhidos;
+  // Agrupada: os itens dos grupos recolhidos não contam para o carregamento contínuo.
+  const abertos = useMemo(
+    () =>
+      grupo && recolhidos?.size
+        ? naTabela.filter((item) => !recolhidos.has(grupo.chave(item)))
+        : naTabela,
+    [naTabela, grupo, recolhidos],
+  );
+  const visiveis = abertos.slice(0, limite);
+  const faltam = abertos.length - visiveis.length;
 
   // O modo cartão do celular relê os cabeçalhos a cada desenho.
   const desenhadas = carregado ? visiveis.length : -1;
@@ -123,18 +188,20 @@ export function TabelaInfinita({
           </h2>
         </div>
         <div className="ui-tabela-ferramentas">
-          <input
-            id={idDaBusca}
-            type="search"
-            className="ui-tabela-busca"
-            value={busca}
-            disabled={!carregado}
-            placeholder={placeholder}
-            aria-label={rotulo}
-            data-tour={tourDaBusca}
-            onChange={(evento) => setBusca(evento.target.value)}
-            onKeyDown={aoTeclar}
-          />
+          {campoDeBusca ? (
+            <input
+              id={idDaBusca}
+              type="search"
+              className="ui-tabela-busca"
+              value={busca}
+              disabled={!carregado}
+              placeholder={placeholder}
+              aria-label={rotulo}
+              data-tour={tourDaBusca}
+              onChange={(evento) => setBusca(evento.target.value)}
+              onKeyDown={aoTeclar}
+            />
+          ) : null}
           {ferramentas}
         </div>
       </div>
@@ -201,6 +268,14 @@ export function TabelaInfinita({
           <tbody id={idDoCorpo} aria-busy={carregado ? undefined : true}>
             {!carregado ? (
               <LinhasEsqueleto colunas={colunas.length} />
+            ) : grupo && naTabela.length ? (
+              linhasAgrupadas({
+                naTabela,
+                visiveis,
+                grupo,
+                linha,
+                colunas: colunas.length,
+              })
             ) : visiveis.length ? (
               visiveis.map(linha)
             ) : (

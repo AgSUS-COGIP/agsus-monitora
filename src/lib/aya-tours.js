@@ -750,15 +750,20 @@ const TOURS = Object.freeze({
     titulo: "Avaliação documental · Fila",
     passos: Object.freeze([
       passo(
+        t("avd-fila-andamento"),
+        "Andamento",
+        "Concluídas, em análise e pendentes do edital e de cada vaga; clique numa vaga para filtrar.",
+        { antes: `${t("avd-visoes")} [data-valor='fila']` },
+      ),
+      passo(
         t("avd-fila-etapas"),
         "Etapas com contadores",
         "Inscritos, no lote, pendentes, em análise, em revisão, concluídas e eliminados; clique numa etapa para filtrar.",
-        { antes: `${t("avd-visoes")} [data-valor='fila']` },
       ),
       passo(
         t("avd-fila-filtros"),
         "Filtros",
-        "Vaga, responsável e modalidade; a busca por código ou nome fica na tabela (Enter com o código abre a ficha).",
+        "Vaga, responsável, modalidade e código ou nome, numa linha (Enter com o código abre a ficha).",
       ),
       passo(
         t("avd-fila-filtros-salvos"),
@@ -777,26 +782,25 @@ const TOURS = Object.freeze({
         { exige: analisaDocumentos },
       ),
       passo(
-        t("avd-fila-distribuir-livres"),
-        "Distribuir",
-        "A coordenação divide as fichas livres entre a equipe, com a prévia antes de gravar.",
-        { exige: coordenaAvaliacao },
-      ),
-      passo(
-        t("avd-fila-abrir-fichas"),
-        "Abrir fichas do lote",
-        "Abre as fichas de quem entrou no lote e ainda não tem.",
+        t("avd-fila-acoes-coordenacao"),
+        "Ações da coordenação",
+        "Distribuir, liberar reservas, mandar para revisão, abrir fichas do lote e incluir por decisão, num menu só.",
         { exige: coordenaAvaliacao },
       ),
       passo(
         t("avd-fila-tabela"),
         "As fichas",
-        "As colunas de cada etapa; o cabeçalho ordena e Exportar CSV baixa a etapa. Abrir mostra a ficha em tela cheia.",
+        "Agrupadas por vaga (com o lote e a linha de corte) quando a vaga é Todas; o cabeçalho ordena e Exportar CSV baixa a etapa. Abrir mostra a ficha em tela cheia.",
+      ),
+      passo(
+        t("avd-ficha-etapas"),
+        "Etapas da ficha",
+        "Cada item na cor do estado; clique para ir a ele. Ao lado, os atalhos.",
       ),
       passo(
         t("avd-ficha-blocos"),
         "Um cartão por bloco",
-        "O que o candidato declarou na Empregare e Conforme, Não conforme ou Não enviado; as teclas 1, 2 e 3 marcam o bloco da vez.",
+        "O que o candidato declarou e, na mesma linha, Conforme, Não conforme ou Não enviado (teclas 1, 2 e 3); marcado, o cartão recolhe ao passar ao próximo.",
       ),
       passo(
         t("avd-ficha-itens"),
@@ -821,12 +825,12 @@ const TOURS = Object.freeze({
       passo(
         t("avd-ficha-empregare"),
         "Empregare",
-        "Abra o candidato na Empregare para conferir os documentos; sem o link, copie o código e abra a vaga.",
+        'Abra o candidato na Empregare (ou "Ver na Empregare" ao lado do anexo); sem o link, copie o código e abra a vaga.',
       ),
       passo(
         t("avd-ficha-parecer"),
         "Parecer",
-        "Gerado pela regra a partir dos motivos, das justificativas e da observação.",
+        "Sai com tudo conferido, pela regra, a partir dos motivos, das justificativas e da observação; antes, só os motivos já lançados.",
       ),
       passo(
         t("avd-ficha-barra"),

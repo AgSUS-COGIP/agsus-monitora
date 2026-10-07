@@ -21,6 +21,7 @@ import {
   ListaDePendencias,
   MaisOpcoes,
   MarcasDoRecorte,
+  MenuDeAcoes,
   PainelDeFiltros,
   Secao,
   Segmentado,
@@ -319,6 +320,93 @@ describe("TabelaInfinita", () => {
       caixa.dispatchEvent(new Event("scroll"));
     });
     expect(linhas().length).toBe(100);
+  });
+
+  it("agrupada: cabeçalho por grupo com a contagem; recolher deixa só o cabeçalho; sem busca, sem o campo", async () => {
+    const itens = [
+      { nome: "Ana", total: 1, vaga: "A" },
+      { nome: "Bia", total: 2, vaga: "A" },
+      { nome: "Caio", total: 3, vaga: "B" },
+    ];
+    const aoAlternar = vi.fn();
+    const grupo = (recolhidos = new Set()) => ({
+      chave: (item) => item.vaga,
+      cabecalho: (chave, quantos) => `Vaga ${chave} (${quantos})`,
+      recolhidos,
+      aoAlternar,
+    });
+    await montarNoApp(
+      h(
+        TabelaInfinita,
+        props({ itens, total: 3, busca: null, grupo: grupo() }),
+      ),
+    );
+    expect($(".ui-tabela-busca")).toBeNull();
+    const cabecalhos = () =>
+      [...document.querySelectorAll("tbody tr.ui-tabela-grupo")].map(
+        (tr) => tr.textContent,
+      );
+    expect(cabecalhos()).toEqual(["Vaga A (2)", "Vaga B (1)"]);
+    expect(linhas()).toHaveLength(5);
+    expect($("tr.ui-tabela-grupo th").colSpan).toBe(2);
+    await clicar($("tr[data-grupo='A'] button"));
+    expect(aoAlternar).toHaveBeenCalledWith("A");
+    await redesenhar(
+      h(
+        TabelaInfinita,
+        props({ itens, total: 3, busca: null, grupo: grupo(new Set(["A"])) }),
+      ),
+    );
+    expect(cabecalhos()).toEqual(["Vaga A (2)", "Vaga B (1)"]);
+    expect(linhas()).toHaveLength(3);
+    expect($("tr[data-grupo='A'] button").getAttribute("aria-expanded")).toBe(
+      "false",
+    );
+  });
+});
+
+describe("MenuDeAcoes", () => {
+  it("abre a lista, escolhe a ação e fecha; desabilitada fica à vista; Esc fecha", async () => {
+    const distribuir = vi.fn();
+    await montarNoApp(
+      h(MenuDeAcoes, {
+        rotulo: "Ações da coordenação",
+        contagem: 2,
+        acoes: [
+          {
+            id: "d",
+            rotulo: "Distribuir",
+            aoEscolher: distribuir,
+            dados: { "data-acao": "distribuir" },
+          },
+          {
+            id: "l",
+            rotulo: "Liberar",
+            aoEscolher: () => {},
+            desabilitado: true,
+          },
+        ],
+      }),
+    );
+    const botao = $("[data-acao='abrir-menu']");
+    expect(botao.textContent).toContain("Ações da coordenação");
+    expect($(".ui-contagem").textContent).toBe("2");
+    expect($("[role='menu']")).toBeNull();
+    await clicar(botao);
+    expect(botao.getAttribute("aria-expanded")).toBe("true");
+    const itens = document.querySelectorAll("[role='menuitem']");
+    expect([...itens].map((b) => b.textContent)).toEqual([
+      "Distribuir",
+      "Liberar",
+    ]);
+    expect(itens[1].disabled).toBe(true);
+    expect(document.activeElement).toBe(itens[0]);
+    await clicar($("[data-acao='distribuir']"));
+    expect(distribuir).toHaveBeenCalledTimes(1);
+    expect($("[role='menu']")).toBeNull();
+    await clicar(botao);
+    await teclar($("[role='menu']"), "Escape");
+    expect($("[role='menu']")).toBeNull();
   });
 });
 

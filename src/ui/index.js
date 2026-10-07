@@ -22,6 +22,7 @@ export {
 } from "./linha-do-recorte.jsx";
 export { ListaDePendencias } from "./lista-de-pendencias.jsx";
 export { MaisOpcoes } from "./mais-opcoes.jsx";
+export { MenuDeAcoes } from "./menu-de-acoes.jsx";
 export { Modal } from "./modal.jsx";
 export {
   ChipDeFiltro,

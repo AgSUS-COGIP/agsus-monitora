@@ -73,6 +73,107 @@ export function loteDaFila(candidatos, vaga = "") {
   return { pelaRegra: noLote.length - porDecisao, porDecisao };
 }
 
+/* ── Andamento por vaga e agrupamento da tabela ───────────────────────── */
+
+const noLote = (c) => NO_LOTE.has(c?.situacao_pre);
+
+/* A ordem das vagas: a do banco (dados.vagas) e, depois, as que só aparecem nos inscritos. */
+function ordemDasVagas(candidatos, vagas) {
+  const codigos = (Array.isArray(vagas) ? vagas : []).map((v) =>
+    String(v.codigo),
+  );
+  for (const c of Array.isArray(candidatos) ? candidatos : [])
+    if (c?.vaga && !codigos.includes(String(c.vaga)))
+      codigos.push(String(c.vaga));
+  return codigos;
+}
+
+function contarAndamento(lista) {
+  const doLote = lista.filter(noLote);
+  const conta = (situacao) =>
+    doLote.filter((c) => c.ficha?.situacao === situacao).length;
+  const concluidas = conta("CONCLUIDA");
+  const em_analise = conta("EM_ANALISE");
+  const revisao = conta("REVISAR");
+  return {
+    lote: doLote.length,
+    concluidas,
+    em_analise,
+    revisao,
+    // Pendente: ficha na fila ou quem está no lote e ainda não tem ficha.
+    pendentes: doLote.length - concluidas - em_analise - revisao,
+  };
+}
+
+/**
+ * O andamento do edital e de cada vaga (o resumo no alto da Fila), contado
+ * com a lista já carregada: { total, vagas: [{ codigo, cargo, lote,
+ * concluidas, em_analise, revisao, pendentes }] }. Só as vagas com lote.
+ */
+export function andamentoDaFila(candidatos, vagas = []) {
+  const lista = Array.isArray(candidatos) ? candidatos : [];
+  const cargo = Object.fromEntries(
+    (Array.isArray(vagas) ? vagas : []).map((v) => [String(v.codigo), v.cargo]),
+  );
+  return {
+    total: contarAndamento(lista),
+    vagas: ordemDasVagas(lista, vagas)
+      .map((codigo) => ({
+        codigo,
+        cargo: cargo[codigo] || "",
+        ...contarAndamento(lista.filter((c) => String(c.vaga) === codigo)),
+      }))
+      .filter((v) => v.lote > 0),
+  };
+}
+
+/** "Enfermeiro · concluídas 3 de 12 · em análise 2 · pendentes 7" (a revisão, quando houver). */
+export function textoDoAndamento(a) {
+  return [
+    a.cargo,
+    `concluídas ${a.concluidas} de ${a.lote}`,
+    `em análise ${a.em_analise}`,
+    a.revisao ? `em revisão ${a.revisao}` : "",
+    `pendentes ${a.pendentes}`,
+  ]
+    .filter(Boolean)
+    .join(" · ");
+}
+
+/**
+ * O cabeçalho do grupo da vaga na tabela: o lote pela regra e por decisão e
+ * a linha de corte (a menor nota do lote pela regra — a nota que o lote usou
+ * para ordenar, ou a ART; quem entrou por decisão não muda o corte).
+ */
+export function resumoDaVagaNaFila(candidatos, vaga) {
+  const { pelaRegra, porDecisao } = loteDaFila(candidatos, vaga);
+  const notas = (Array.isArray(candidatos) ? candidatos : [])
+    .filter(
+      (c) =>
+        String(c.vaga) === String(vaga) && noLote(c) && c.entrada !== "DECISAO",
+    )
+    .map((c) => Number(c.nota ?? c.art))
+    .filter((n) => Number.isFinite(n) && n > 0);
+  return {
+    pelaRegra,
+    porDecisao,
+    total: pelaRegra + porDecisao,
+    corte: notas.length ? Math.min(...notas) : null,
+  };
+}
+
+/** As linhas agrupadas por vaga (na ordem das vagas), mantendo a ordem de cada grupo. */
+export function agruparPorVaga(linhas, vagas = []) {
+  const lista = Array.isArray(linhas) ? linhas : [];
+  const posicao = new Map(
+    ordemDasVagas(lista, vagas).map((codigo, i) => [codigo, i]),
+  );
+  return lista
+    .map((c, i) => [c, posicao.get(String(c.vaga)) ?? Infinity, i])
+    .sort(([, a, i], [, b, j]) => a - b || i - j)
+    .map(([c]) => c);
+}
+
 export const FILTRO_INICIAL = Object.freeze({
   etapa: "lote",
   vaga: "",

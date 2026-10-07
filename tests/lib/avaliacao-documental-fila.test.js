@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
   acoesDaSelecao,
+  agruparPorVaga,
+  andamentoDaFila,
   colunasDaEtapa,
   contadoresDaFila,
   csvDaFila,
@@ -15,7 +17,9 @@ import {
   planoDeDistribuicao,
   proximaOrdem,
   reservaVigente,
+  resumoDaVagaNaFila,
   textoDaColuna,
+  textoDoAndamento,
   textoDaReserva,
   textoDaSituacaoNaFila,
 } from "../../src/lib/avaliacao-documental/fila.js";
@@ -343,5 +347,86 @@ describe("colunas de cada aba, ordem e CSV", () => {
     expect(nomeDoCsvDaFila("93/2026", "eliminados", new Date(2026, 9, 6))).toBe(
       "fila-93-2026-eliminados-2026-10-06.csv",
     );
+  });
+});
+
+describe("andamento por vaga e agrupamento da tabela", () => {
+  const c = (codigo, vaga, extra = {}) => ({
+    id: `c-${codigo}`,
+    codigo,
+    vaga,
+    situacao_pre: "NO_LOTE",
+    entrada: "REGRA",
+    ficha: null,
+    ...extra,
+  });
+  const f = (situacao) => ({ id: `f-${situacao}`, situacao });
+  const CANDIDATOS = [
+    c("1", "A", { ficha: f("CONCLUIDA"), nota: 30 }),
+    c("2", "A", { ficha: f("EM_ANALISE"), nota: 28 }),
+    c("3", "A", { ficha: f("PENDENTE"), nota: 25 }),
+    c("4", "A", { nota: 24 }),
+    c("5", "A", { entrada: "DECISAO", ficha: f("PENDENTE"), nota: 9 }),
+    c("6", "A", { situacao_pre: "ELIMINADO", nota: 40 }),
+    c("7", "B", { ficha: f("REVISAR"), art: 18 }),
+    c("8", "B", { ficha: f("CONCLUIDA"), situacao_pre: "ANALISADO", art: 20 }),
+    c("9", "C", { situacao_pre: "RANQUEADO" }),
+  ];
+  const VAGAS = [
+    { codigo: "B", cargo: "Enfermeiro" },
+    { codigo: "A", cargo: "Técnico" },
+    { codigo: "C", cargo: "Médico" },
+  ];
+
+  it("conta o andamento do edital e de cada vaga com lote, na ordem das vagas", () => {
+    const a = andamentoDaFila(CANDIDATOS, VAGAS);
+    expect(a.total).toEqual({
+      lote: 7,
+      concluidas: 2,
+      em_analise: 1,
+      revisao: 1,
+      pendentes: 3,
+    });
+    expect(a.vagas.map((v) => v.codigo)).toEqual(["B", "A"]);
+    expect(a.vagas[1]).toEqual({
+      codigo: "A",
+      cargo: "Técnico",
+      lote: 5,
+      concluidas: 1,
+      em_analise: 1,
+      revisao: 0,
+      pendentes: 3,
+    });
+    expect(textoDoAndamento(a.vagas[1])).toBe(
+      "Técnico · concluídas 1 de 5 · em análise 1 · pendentes 3",
+    );
+    expect(textoDoAndamento(a.vagas[0])).toBe(
+      "Enfermeiro · concluídas 1 de 2 · em análise 0 · em revisão 1 · pendentes 0",
+    );
+  });
+
+  it("o grupo da vaga: lote pela regra + por decisão e a linha de corte só com os da regra", () => {
+    expect(resumoDaVagaNaFila(CANDIDATOS, "A")).toEqual({
+      pelaRegra: 4,
+      porDecisao: 1,
+      total: 5,
+      corte: 24,
+    });
+    // Sem a nota do lote, a ART.
+    expect(resumoDaVagaNaFila(CANDIDATOS, "B").corte).toBe(18);
+    expect(resumoDaVagaNaFila(CANDIDATOS, "C")).toMatchObject({
+      total: 0,
+      corte: null,
+    });
+  });
+
+  it("agrupa por vaga sem mudar a ordem dentro do grupo", () => {
+    const linhas = [CANDIDATOS[2], CANDIDATOS[6], CANDIDATOS[0], CANDIDATOS[7]];
+    expect(agruparPorVaga(linhas, VAGAS).map((x) => x.codigo)).toEqual([
+      "7",
+      "8",
+      "3",
+      "1",
+    ]);
   });
 });
