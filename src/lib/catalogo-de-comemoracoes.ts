@@ -17,11 +17,7 @@
   (`sistema.comemoracoes`, src/lib/comemoracao.js).
 */
 
-import {
-  analisePendente,
-  gravarArmazenamento,
-  lerArmazenamento,
-} from "./comemoracao.js";
+import { analisePendente } from "./comemoracao.js";
 import { chaveDoDia } from "./analises-curriculares.js";
 import {
   DURACAO_MAXIMA_MS,
@@ -82,8 +78,6 @@ export interface ConfiguracaoDasComemoracoes {
 }
 
 export const CHAVE_DAS_COMEMORACOES = "comemoracoes_marcos";
-export const CHAVE_DA_PREFERENCIA_PESSOAL =
-  "agsus_monitora_comemoracoes_pessoais";
 export const LIMITE_DE_PERSONALIZADOS = 20;
 export const TAMANHO_DA_MENSAGEM = 160;
 export const DURACAO_MINIMA_S = DURACAO_MINIMA_MS / 1000;
@@ -126,7 +120,7 @@ export const CATALOGO_DE_MARCOS: readonly MarcoDoCatalogo[] = Object.freeze([
   {
     id: "edital-concluido",
     rotulo: "Edital 100% analisado",
-    grupo: "Análises curriculares",
+    grupo: "Análises",
     onde: "src/modulos/analises/marcos.js",
     forma: "coracao",
     padrao: opcoes("fogos", "normal"),
@@ -134,7 +128,7 @@ export const CATALOGO_DE_MARCOS: readonly MarcoDoCatalogo[] = Object.freeze([
   {
     id: "fila-zerada",
     rotulo: "Fila de análises zerada",
-    grupo: "Análises curriculares",
+    grupo: "Análises",
     onde: "src/modulos/analises/marcos.js",
     forma: "estrela",
     padrao: opcoes("fogos", "normal"),
@@ -424,21 +418,13 @@ export function definirConfiguracaoDasComemoracoes(bruto: unknown): void {
 export const configuracaoDasComemoracoes = (): ConfiguracaoDasComemoracoes =>
   publicada;
 
-// ── Preferência pessoal (neste navegador) ───────────────────────────────────
+// ── Preferência pessoal (neste navegador): src/lib/preferencia-de-comemoracoes.js ──
 
-/** Sem preferência guardada (ou sem armazenamento), ligadas. */
-export const comemoracoesPessoaisLigadas = (armazenamento: unknown): boolean =>
-  lerArmazenamento(armazenamento, CHAVE_DA_PREFERENCIA_PESSOAL) !== "0";
-
-export const guardarPreferenciaPessoal = (
-  armazenamento: unknown,
-  ligadas: boolean,
-): boolean =>
-  gravarArmazenamento(
-    armazenamento,
-    CHAVE_DA_PREFERENCIA_PESSOAL,
-    ligadas ? null : "0",
-  );
+export {
+  CHAVE_COMEMORACOES_PESSOAIS as CHAVE_DA_PREFERENCIA_PESSOAL,
+  comemoracoesPessoaisLigadas,
+  guardarPreferenciaPessoal,
+} from "./preferencia-de-comemoracoes.js";
 
 /**
  * A decisão de uma comemoração de marco: se aparece e com que opções. O

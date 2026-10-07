@@ -12,6 +12,9 @@ import { classes } from "./classes.js";
   Usado pelas visões de Entrevistas (no topo da tela), pela escala do roteiro,
   pelo modo de lançamento e pelo comparecimento da ficha.
 */
+/**
+ * @param {{ rotulo: string, opcoes: readonly { valor: any, rotulo: import("react").ReactNode, icone?: string }[], valor: any, aoMudar: (valor: any) => void, desabilitado?: boolean, className?: string, tour?: string }} props
+ */
 export function Segmentado({
   rotulo,
   opcoes,

@@ -214,7 +214,7 @@ describe("decisão de mostrar", () => {
     const armazenamento = memoria();
     expect(comemoracoesPessoaisLigadas(armazenamento)).toBe(true);
     guardarPreferenciaPessoal(armazenamento, false);
-    expect(armazenamento.guardado.get(CHAVE_DA_PREFERENCIA_PESSOAL)).toBe("0");
+    expect(armazenamento.guardado.get(CHAVE_DA_PREFERENCIA_PESSOAL)).toBe("1");
     expect(comemoracoesPessoaisLigadas(armazenamento)).toBe(false);
     const pessoal = comemoracoesPessoaisLigadas(armazenamento);
     expect(
@@ -340,5 +340,19 @@ describe("publicação com histórico (mesma das outras seções)", () => {
         after: "confete",
       },
     ]);
+  });
+});
+
+describe("preferência pessoal compartilhada com a mascote", () => {
+  it('a chave e o formato que a arara lê: "1" = desligadas', async () => {
+    const { CHAVE_COMEMORACOES_PESSOAIS } =
+      await import("../src/lib/preferencia-de-comemoracoes.js");
+    expect(CHAVE_COMEMORACOES_PESSOAIS).toBe(
+      "agsus_monitora_comemoracoes_desligadas",
+    );
+    expect(CHAVE_DA_PREFERENCIA_PESSOAL).toBe(CHAVE_COMEMORACOES_PESSOAIS);
+    const armazenamento = memoria();
+    armazenamento.setItem(CHAVE_COMEMORACOES_PESSOAIS, "1");
+    expect(comemoracoesPessoaisLigadas(armazenamento)).toBe(false);
   });
 });

@@ -128,7 +128,7 @@ describe("comemorar com a configuração dos marcos", () => {
 
   it("preferência pessoal desligada: nada, nem sem marco; o teste aparece", () => {
     const { doc, janela, guardado } = janelaFalsa();
-    guardado.set(CHAVE_DA_PREFERENCIA_PESSOAL, "0");
+    guardado.set(CHAVE_DA_PREFERENCIA_PESSOAL, "1");
     expect(
       comemorar({ texto: "x", marco: "fila-zerada", doc, janela }),
     ).toBeNull();

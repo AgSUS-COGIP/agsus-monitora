@@ -1366,39 +1366,233 @@ body:not(.sidebar-collapsed) .config-barra {
 
 /* ── Comemorações (comemoracoes.tsx, palco-de-testes.tsx) ─────────────── */
 
-.comemoracoes-lista {
-  display: grid;
-  gap: var(--space-2);
-  margin: 0;
-  padding: 0;
-  list-style: none;
+.comemoracoes__corpo {
+  gap: var(--space-6);
 }
 
-.comemoracoes-marco {
+/* "Para mim": interruptor na linha do título (Cabecalho). */
+.comemoracoes-pessoal {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-left: auto;
+  color: var(--text-secondary);
+  font-size: var(--text-body-sm);
+  cursor: pointer;
+}
+
+/* Interruptor (input role="switch"): trilho e bolinha só com CSS. */
+.comemoracoes-pessoal input,
+.comemoracoes-chave input {
+  position: relative;
+  flex: 0 0 auto;
+  width: 34px;
+  height: 20px;
+  margin: 0;
+  border-radius: var(--radius-full);
+  background: var(--border-control);
+  cursor: pointer;
+  transition: background 0.15s ease;
+  appearance: none;
+}
+.comemoracoes-pessoal input::after,
+.comemoracoes-chave input::after {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--surface-card);
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.25);
+  content: "";
+  transition: transform 0.15s ease;
+}
+.comemoracoes-pessoal input:checked,
+.comemoracoes-chave input:checked {
+  background: var(--brand-primary);
+}
+.comemoracoes-pessoal input:checked::after,
+.comemoracoes-chave input:checked::after {
+  transform: translateX(14px);
+}
+.comemoracoes-pessoal input:focus-visible,
+.comemoracoes-chave input:focus-visible {
+  outline: 2px solid var(--brand-primary);
+  outline-offset: 2px;
+}
+
+/* Palco: o destaque do topo. */
+.comemoracoes-palco {
   display: grid;
   gap: var(--space-3);
-  padding: var(--space-3) var(--space-4);
+  padding: var(--space-4);
   border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-lg);
-  background: var(--surface-card);
-}
-
-.comemoracoes-marco[data-ligado="false"] {
+  border-radius: var(--radius-xl);
   background: var(--surface-raised);
 }
 
-.comemoracoes-marco__topo {
+.comemoracoes-palco__titulo,
+.comemoracoes-bloco__titulo {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: var(--space-3);
-  min-width: 0;
+  gap: var(--space-2);
+  margin: 0;
+  color: var(--text-primary);
+  font-size: var(--text-body);
+  font-weight: var(--font-weight-semibold);
 }
 
-.comemoracoes-marco__acoes {
-  display: flex;
-  align-items: center;
+.comemoracoes-palco__previa {
+  position: relative;
+  height: 170px;
+  overflow: hidden;
+  border-radius: var(--radius-lg);
+  background: radial-gradient(
+    120% 100% at 50% 20%,
+    var(--color-blue-900),
+    var(--color-blue-950)
+  );
+}
+
+.comemoracoes-palco__previa canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.comemoracoes-palco__aya {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: var(--color-blue-200);
+}
+
+.comemoracoes-palco__efeitos,
+.comemoracoes-assistente__tipos {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+  gap: var(--space-2);
+}
+
+.comemoracoes-assistente__tipos {
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+}
+
+.comemoracoes-efeito {
+  display: grid;
+  justify-items: center;
   gap: var(--space-1);
+  min-height: 64px;
+  padding: var(--space-2);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  background: var(--surface-card);
+  color: var(--text-secondary);
+  font: inherit;
+  font-size: var(--text-caption);
+  text-align: center;
+  cursor: pointer;
+}
+
+.comemoracoes-efeito:hover {
+  border-color: var(--brand-primary);
+  color: var(--text-primary);
+}
+
+.comemoracoes-efeito.is-ativo {
+  border-color: var(--brand-primary);
+  background: var(--state-info-soft);
+  color: var(--brand-primary);
+  font-weight: var(--font-weight-medium);
+}
+
+.comemoracoes-efeito:focus-visible,
+.comemoracoes-chip:focus-within {
+  outline: 2px solid var(--brand-primary);
+  outline-offset: 2px;
+}
+
+.comemoracoes-palco__controles {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3) var(--space-5);
+}
+
+.comemoracoes-palco__duracao {
+  display: grid;
+  flex: 1 1 200px;
+  gap: var(--space-1);
+}
+.comemoracoes-palco__duracao span {
+  color: var(--text-secondary);
+  font-size: var(--text-caption);
+  font-weight: var(--font-weight-medium);
+  letter-spacing: normal;
+  text-transform: none;
+}
+
+.comemoracoes-palco__duracao input {
+  width: 100%;
+  accent-color: var(--brand-primary);
+}
+
+.comemoracoes-palco__soltar {
+  margin-left: auto;
+}
+
+/* Marcos: grupos com cabeçalho discreto e uma linha por marco. */
+.comemoracoes-bloco {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.comemoracoes-grupo {
+  display: grid;
+  gap: var(--space-1);
+}
+
+.comemoracoes-grupo__titulo {
+  margin: var(--space-2) 0 0;
+  color: var(--text-secondary);
+  font-size: var(--text-caption);
+  font-weight: var(--font-weight-medium);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.comemoracoes-lista {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  list-style: none;
+}
+
+.comemoracoes-marco + .comemoracoes-marco {
+  border-top: 1px solid var(--border-subtle);
+}
+
+.comemoracoes-marco[data-aberto="true"] {
+  background: var(--surface-raised);
+}
+
+.comemoracoes-marco__linha {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto auto;
+  align-items: center;
+  gap: var(--space-3);
+  min-height: 52px;
+  padding: var(--space-2) var(--space-3);
+}
+
+.comemoracoes-marco[data-ligado="false"] .comemoracoes-chip,
+.comemoracoes-marco[data-ligado="false"] .comemoracoes-intensidade {
+  opacity: 0.45;
 }
 
 .comemoracoes-chave {
@@ -1409,27 +1603,70 @@ body:not(.sidebar-collapsed) .config-barra {
   cursor: pointer;
 }
 
-.comemoracoes-chave input {
-  flex: 0 0 auto;
-  width: 18px;
-  height: 18px;
-  accent-color: var(--brand-primary);
-}
-
 .comemoracoes-chave span {
   display: grid;
   min-width: 0;
 }
 
 .comemoracoes-chave strong {
+  overflow: hidden;
   color: var(--text-primary);
   font-size: var(--text-body);
   font-weight: var(--font-weight-medium);
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .comemoracoes-chave small {
   color: var(--text-secondary);
   font-size: var(--text-caption);
+}
+
+/* O chip do efeito: ícone + select sem moldura. */
+.comemoracoes-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: 0 var(--space-2);
+  border-radius: var(--radius-full);
+  background: var(--state-info-soft);
+  color: var(--brand-primary);
+}
+
+.comemoracoes-chip select {
+  min-height: 28px;
+  padding: 0 var(--space-1);
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: var(--text-body-sm);
+  font-weight: var(--font-weight-medium);
+  cursor: pointer;
+}
+
+.comemoracoes-chip select:focus {
+  outline: none;
+}
+
+.comemoracoes-intensidade .ui-segmentado-opcao {
+  min-height: 28px;
+  padding: 0 var(--space-2);
+  font-size: var(--text-caption);
+}
+
+.comemoracoes-marco__acoes {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.comemoracoes-detalhes[aria-expanded="true"] {
+  color: var(--brand-primary);
+}
+
+.comemoracoes-marco__detalhes {
+  padding: 0 var(--space-3) var(--space-3) calc(30px + var(--space-6));
 }
 
 .comemoracoes-caixa {
@@ -1447,22 +1684,58 @@ body:not(.sidebar-collapsed) .config-barra {
   accent-color: var(--brand-primary);
 }
 
-.comemoracoes-testar {
-  flex: 0 0 auto;
-}
-
-.comemoracoes-palco {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-  gap: var(--space-3) var(--space-4);
+.comemoracoes-remover {
+  display: flex;
   align-items: end;
 }
 
-.comemoracoes-palco input[type="range"] {
-  width: 100%;
-  accent-color: var(--brand-primary);
+.comemoracoes-assistente {
+  display: grid;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border: 1px dashed var(--brand-primary);
+  border-radius: var(--radius-lg);
 }
 
-.comemoracoes-palco__soltar {
-  justify-self: start;
+.comemoracoes-assistente__titulo {
+  color: var(--text-primary);
+  font-size: var(--text-body);
+}
+
+/* Celular: duas linhas (nome e ações em cima; efeito e intensidade embaixo). */
+@media (max-width: 720px) {
+  .comemoracoes-marco__linha {
+    grid-template-areas:
+      "chave acoes"
+      "chip intensidade";
+    grid-template-columns: minmax(0, 1fr) auto;
+    row-gap: var(--space-2);
+  }
+  .comemoracoes-chave {
+    grid-area: chave;
+  }
+  .comemoracoes-chip {
+    grid-area: chip;
+    justify-self: start;
+    max-width: 100%;
+  }
+  .comemoracoes-intensidade {
+    grid-area: intensidade;
+    justify-self: end;
+  }
+  .comemoracoes-marco__acoes {
+    grid-area: acoes;
+  }
+  .comemoracoes-testar__texto {
+    display: none;
+  }
+  .comemoracoes-chave strong {
+    white-space: normal;
+  }
+  .comemoracoes-marco__detalhes {
+    padding-left: var(--space-3);
+  }
+  .comemoracoes-palco__soltar {
+    width: 100%;
+  }
 }

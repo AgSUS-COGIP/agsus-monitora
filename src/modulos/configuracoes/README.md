@@ -38,7 +38,7 @@ depois de entrar.
 
 **Respeita.** `prefers-reduced-motion` (só o aviso), o liga/desliga geral
 (Módulos e abas › Sistema inteiro) e a preferência pessoal deste navegador
-(`agsus_monitora_comemoracoes_pessoais` = `"0"`). "Testar" e o palco passam
+(`agsus_monitora_comemoracoes_desligadas` = `"1"`, `CHAVE_COMEMORACOES_PESSOAIS` em `src/lib/preferencia-de-comemoracoes.js`, a mesma que a mascote lê). "Testar" e o palco passam
 `teste: true`: ignoram a configuração e a preferência pessoal e não gravam.
 
 **Marcos personalizados.** "Edital X chegou a N contratados" (soma de

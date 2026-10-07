@@ -470,6 +470,7 @@ export function brilhoDoMotor(p) {
  * A cena de um efeito para uma tela. `intensidade`: suave, normal ou festa;
  * `duracaoMs`: 2–15 s (fogos: 4–15 s; vazio, a padrão de cada um);
  * `forma`, `comAya` e `amostrarTexto` vão para os fogos (fogos.js).
+ * @param {{ efeito?: string, intensidade?: string, duracaoMs?: number | null, largura?: number, altura?: number, paleta?: any, aleatorio?: () => number, forma?: any, comAya?: boolean, amostrarTexto?: any, limite?: number }} [opcoes]
  */
 export function criarCena({
   efeito = "fogos",

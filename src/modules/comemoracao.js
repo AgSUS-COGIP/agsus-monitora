@@ -212,6 +212,20 @@ function desenhar(contexto, show, { largura, altura, dt, halo }) {
   });
 }
 
+/**
+ * Um quadro de uma cena inteira (fogos + motor) num contexto só, limpo a
+ * cada quadro: a prévia do Palco de testes (Configurações › Comemorações).
+ */
+export function desenharPrevia(contexto, cena, { largura, altura, dt, halo }) {
+  contexto.globalCompositeOperation = "source-over";
+  contexto.clearRect?.(0, 0, largura, altura);
+  if (cena.show) desenhar(contexto, cena.show, { largura, altura, dt, halo });
+  contexto.globalCompositeOperation = "source-over";
+  desenharParticulasDoMotor(contexto, cena);
+}
+
+export { criarHalos, paletaDoTema };
+
 /*
   O texto do marco em pixels: escrito num canvas fora da tela (fillText) e
   lido com getImageData. Sem canvas 2D, null (fogos-formas.js usa a fonte de

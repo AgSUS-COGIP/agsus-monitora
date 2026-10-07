@@ -21,7 +21,7 @@ import {
   Modal,
 } from "../../ui/index.js";
 import { SecaoAparencia } from "./aparencia.jsx";
-import { SecaoComemoracoes } from "./comemoracoes.tsx";
+import { InterruptorPessoal, SecaoComemoracoes } from "./comemoracoes.tsx";
 import { estadoDasConfiguracoes, SECOES_COM_SALVAR_PROPRIO } from "./estado.js";
 import { criarEstadoDasMensagensDoChat } from "./estado-das-mensagens-do-chat.js";
 import { criarImagensDaAparencia } from "./imagens.js";
@@ -80,6 +80,8 @@ function Cabecalho({ estado }) {
         <div className="config-cabecalho__texto">
           <h2>{secao.rotulo}</h2>
         </div>
+        {/* Comemorações: a preferência deste navegador fica no título. */}
+        {secao.id === "comemoracoes" ? <InterruptorPessoal /> : null}
         {comSalvar && estado.temAlteracoes() ? (
           <span className="config-cabecalho__pendente">
             <span className="config-cabecalho__ponto" aria-hidden="true" />
