@@ -1,18 +1,14 @@
-import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   aplicarRoteiroNaConfiguracao,
   bancasDoEdital,
   completarMembrosPelaComposicao,
   dadosDaConfiguracaoParaSalvar,
   errosDaConfiguracao,
-  FILTROS_DA_FICHA,
-  filtrarConvocados,
   MODOS_DE_LANCAMENTO,
   novoAvaliador,
-  progressoDasNotas,
   rascunhoDaConfiguracao,
   rotuloDoLancamento,
-  avaliadoresDaFicha,
   nomeDoCargo,
   marcaDoEdital,
   textoDaJanela,
@@ -27,17 +23,15 @@ import {
   textoDaRegraDaClassificacao,
   textoDasVagas,
   textoDoLimite,
+  criteriosDeDesempate,
+  textoDoEmpateFinal,
 } from "../../lib/convocacao-da-entrevista.js";
 import { SeloDeTreinamento } from "../../componentes/selo-de-treinamento.jsx";
 import {
   editalEscolhido,
   sufixoDeTreinamento,
 } from "../../lib/edital-de-treinamento.js";
-import { rotuloDoComparecimento } from "../../lib/entrevistas-do-painel.js";
-import {
-  pontuacaoMaxima,
-  textoDaPontuacao,
-} from "../../lib/roteiro-de-entrevista.js";
+import { textoDaPontuacao } from "../../lib/roteiro-de-entrevista.js";
 import {
   Aviso,
   Campo,
@@ -48,38 +42,37 @@ import {
   Selo,
 } from "../../ui/index.js";
 import { irParaLink } from "../chat/ponte.js";
-import { AgendaDoDia } from "./agenda-do-dia.jsx";
-import { FichaDoCandidato } from "./ficha.jsx";
 import {
   BotaoDeLinha,
   ComposicaoDaBanca,
   numeroBR,
   trocarNaLista,
 } from "./partes.jsx";
-import { SeloDoParecer } from "./tabela.jsx";
 
 /*
-  Visão "Conduzir entrevistas" da tela de Entrevistas: escolhido o edital (da
-  área atual do app), três passos em cartões (`.ui-card`) —
+  As partes de "Conduzir entrevistas" (conduzir.tsx) que preparam o edital:
 
-  1. Configuração: o roteiro (a versão exata; pré-preenche a banca com o
-     padrão dele), a composição da banca, o modo de lançamento e os membros
-     da banca. Abaixo, só leitura, a regra de convocação e as vagas da
-     Classificação, com o caminho de onde se mudam.
-  2. Convocação: a lista de convocação da Classificação (a última gerada; sem
-     ela, o cálculo atual, sem convocar), por vaga, na ordem dela;
-     "Convocar selecionados" registra os da lista para a ficha e
-     "Desconvocar" (com motivo, só sem notas). Uma convocação só — nada de
-     ranking, regra ou vagas próprios (src/lib/convocacao-da-entrevista.js).
-  3. Ficha de notas: os convocados; cada um abre a ficha (ficha.jsx).
+  - SeletorDoEdital: o edital da área atual do app (na janela da entrevista,
+    liberado ou com convocado sem parecer), com o selo Treinamento, a
+    liberação fora da janela e "Mostrar todos os editais da área"
+    (administrador global) e os avisos de carga.
+  - PrepararEdital ("Preparar"), em cartões (`.ui-card`):
+    1. Configuração: o roteiro (a versão exata; pré-preenche a banca com o
+       padrão dele), a composição da banca, o modo de lançamento e os membros
+       da banca. Abaixo, só leitura, a regra de convocação, o desempate e as
+       vagas da Classificação, com o caminho de onde se mudam.
+    2. Convocação: a lista de convocação da Classificação (a última gerada;
+       sem ela, o cálculo atual, sem convocar), por vaga, na ordem dela;
+       "Convocar selecionados" registra os da lista para a ficha e
+       "Desconvocar" (com motivo, só sem notas). Uma convocação só — nada de
+       ranking, regra ou vagas próprios (src/lib/convocacao-da-entrevista.js).
+  - DesempateDaClassificacao: os critérios de desempate da regra de
+    classificação do edital, só leitura, com "Editar na Classificação" (o
+    mesmo bloco aparece no editor do roteiro).
 
-  Entre a convocação e a ficha, a "Agenda do dia" (agenda-do-dia.jsx), quando
-  o edital tem agenda salva (Classificação › Agenda): por horário e banca; a
-  linha do convocado abre a mesma ficha.
-
-  Quem não edita as entrevistas (`pode_editar` falso) vê tudo sem os botões
-  (sem selo "Somente consulta"). O administrador global vê "Mostrar todos os
-  editais da área" e libera um edital fora da janela.
+  A ficha de notas abre pela fila (fila-do-dia.tsx). Quem não edita as
+  entrevistas (`pode_editar` falso) vê tudo sem os botões (sem selo "Somente
+  consulta").
 */
 
 /* ── Convocação e vagas da Classificação (só leitura) ─────────────── */
@@ -142,6 +135,11 @@ function ConvocacaoDaClassificacao({ dados, grupos }) {
           Regra na Classificação
         </BotaoIrPara>
       </div>
+      <DesempateDaClassificacao
+        regra={regra}
+        edital={dados.edital}
+        comBotao={false}
+      />
       {vagas.length ? (
         <div className="entrevistas-tabela-rolagem">
           <table className="entrevistas-tabela" id="entrevistasVagas">
@@ -184,6 +182,50 @@ function ConvocacaoDaClassificacao({ dados, grupos }) {
             </tbody>
           </table>
         </div>
+      ) : null}
+    </div>
+  );
+}
+
+/**
+ * Os critérios de desempate da regra de classificação do edital (catálogo),
+ * só leitura: o desempate da entrevista é o da Classificação. Sem a regra
+ * (ou sem o edital), diz de onde vem e leva à Classificação.
+ */
+export function DesempateDaClassificacao({ regra, edital, comBotao = true }) {
+  const criterios = criteriosDeDesempate(regra);
+  const empateFinal = textoDoEmpateFinal(regra);
+  return (
+    <div
+      className="entrevistas-desempate-da-regra"
+      data-bloco="desempate-da-classificacao"
+      data-tour="entrevistas-desempate"
+    >
+      <span className="entrevistas-rotulo">Desempate (Classificação)</span>
+      {criterios?.length ? (
+        <ol className="entrevistas-criterios-de-desempate">
+          {criterios.map((c) => (
+            <li key={c.codigo} title={c.direcao}>
+              {c.nome}
+            </li>
+          ))}
+          {empateFinal ? (
+            <li className="entrevistas-empate-final">{empateFinal}</li>
+          ) : null}
+        </ol>
+      ) : (
+        <span className="ui-texto-secundario">
+          {regra
+            ? "A regra de classificação ainda não tem critérios de desempate."
+            : edital?.id
+              ? "O edital ainda não tem regra de classificação."
+              : "O da regra de classificação de cada edital."}
+        </span>
+      )}
+      {comBotao ? (
+        <BotaoIrPara view="classificacao" edital={edital}>
+          Editar na Classificação
+        </BotaoIrPara>
       ) : null}
     </div>
   );
@@ -841,168 +883,6 @@ function PassoDeConvocacao({
   );
 }
 
-/* ── Passo 3: ficha de notas ───────────────────────────────────────── */
-
-function PassoDaFicha({ dados, aoAbrir }) {
-  const [filtros, setFiltros] = useState(FILTROS_DA_FICHA);
-  const roteiro = dados.configuracao?.roteiro || null;
-  const visiveis = useMemo(
-    () => filtrarConvocados(dados.convocados, filtros),
-    [dados.convocados, filtros],
-  );
-  const vagas = [...new Set(dados.convocados.map((c) => c.vaga))].sort();
-  const bancas = bancasDoEdital(dados.avaliadores);
-  const mudar = (campo, valor) => setFiltros((f) => ({ ...f, [campo]: valor }));
-  const maxima = roteiro ? pontuacaoMaxima(roteiro.competencias) : null;
-
-  return (
-    <section
-      className="ui-card entrevistas-passo"
-      data-passo="ficha"
-      data-tour="entrevistas-conduzir-ficha"
-      aria-labelledby="entrevistasPasso3"
-    >
-      <div className="entrevistas-passo-topo">
-        <div>
-          <span className="entrevistas-sobretitulo">Passo 3</span>
-          <h2 className="ui-titulo" id="entrevistasPasso3">
-            Ficha de notas
-          </h2>
-        </div>
-      </div>
-      {dados.convocados.length ? (
-        <>
-          <div className="entrevistas-filtros">
-            <Campo rotulo="Vaga">
-              <select
-                value={filtros.vaga}
-                onChange={(e) => mudar("vaga", e.target.value)}
-              >
-                <option value="">Todas as vagas</option>
-                {vagas.map((v) => (
-                  <option key={v} value={v}>
-                    {v}
-                  </option>
-                ))}
-              </select>
-            </Campo>
-            <Campo rotulo="Banca">
-              <select
-                value={filtros.banca}
-                onChange={(e) => mudar("banca", e.target.value)}
-              >
-                <option value="">Todas as bancas</option>
-                {bancas.map((b) => (
-                  <option key={b} value={String(b)}>
-                    Banca {b}
-                  </option>
-                ))}
-                <option value="sem">Sem banca definida</option>
-              </select>
-            </Campo>
-            <Campo rotulo="Buscar candidato">
-              <input
-                type="search"
-                value={filtros.busca}
-                placeholder="Nome ou código"
-                onChange={(e) => mudar("busca", e.target.value)}
-              />
-            </Campo>
-          </div>
-          <div className="entrevistas-tabela-rolagem">
-            <table className="entrevistas-tabela" id="entrevistasFicha">
-              <thead>
-                <tr>
-                  <th scope="col">Candidato</th>
-                  <th scope="col">Vaga / Cargo</th>
-                  <th scope="col">Banca</th>
-                  <th scope="col">Compareceu</th>
-                  <th scope="col">Notas</th>
-                  <th scope="col">Nota</th>
-                  <th scope="col">Parecer</th>
-                </tr>
-              </thead>
-              <tbody>
-                {visiveis.map((c) => {
-                  const avaliadores = avaliadoresDaFicha(
-                    dados.avaliadores,
-                    c,
-                    c.banca,
-                  );
-                  const p = progressoDasNotas(
-                    c,
-                    avaliadores,
-                    roteiro?.competencias,
-                  );
-                  return (
-                    <tr
-                      key={c.id}
-                      className="entrevistas-linha"
-                      tabIndex={0}
-                      aria-label={`Ficha de ${c.candidato}`}
-                      onClick={() => aoAbrir(c.id)}
-                      onKeyDown={(e) => {
-                        if (
-                          e.target === e.currentTarget &&
-                          (e.key === "Enter" || e.key === " ")
-                        ) {
-                          e.preventDefault();
-                          aoAbrir(c.id);
-                        }
-                      }}
-                    >
-                      <td>
-                        <div className="ui-texto-principal">{c.candidato}</div>
-                        <span className="ui-texto-secundario">
-                          {c.codigo ? `Cód. ${c.codigo}` : "Sem código"}
-                        </span>
-                      </td>
-                      <td>
-                        <div className="ui-texto-principal">{c.vaga}</div>
-                        <span className="ui-texto-secundario">
-                          {nomeDoCargo(c.cargo)}
-                        </span>
-                      </td>
-                      <td>{c.banca ?? "—"}</td>
-                      <td>{rotuloDoComparecimento(c.compareceu)}</td>
-                      <td>
-                        {p.esperadas ? `${p.lancadas}/${p.esperadas}` : "—"}
-                      </td>
-                      <td>
-                        {numeroBR(c.nota)}
-                        {c.nota !== null && c.nota !== undefined && maxima ? (
-                          <span className="ui-texto-secundario">
-                            {" "}
-                            / {numeroBR(maxima)}
-                          </span>
-                        ) : null}
-                      </td>
-                      <td>
-                        <SeloDoParecer parecer={c.parecer} />
-                      </td>
-                    </tr>
-                  );
-                })}
-                {!visiveis.length ? (
-                  <tr>
-                    <td colSpan={7} className="ui-vazio">
-                      Nenhum convocado no filtro.
-                    </td>
-                  </tr>
-                ) : null}
-              </tbody>
-            </table>
-          </div>
-        </>
-      ) : (
-        <p className="entrevistas-vazio-linha">
-          Nenhum candidato convocado ainda.
-        </p>
-      )}
-    </section>
-  );
-}
-
 /* ── Liberação fora da janela (administrador global) ──────────────── */
 
 function LiberacaoDoEdital({ conducao, item, ocupado, doPainel }) {
@@ -1068,101 +948,52 @@ function LiberacaoDoEdital({ conducao, item, ocupado, doPainel }) {
   );
 }
 
-/* ── A visão ───────────────────────────────────────────────────────── */
+/* ── O edital ──────────────────────────────────────────────────────── */
 
-export function VisaoDeConducao({ conducao, area, entrevistasDoPainel }) {
-  const e = useSyncExternalStore(conducao.assinar, conducao.obter);
-  const aberta = e.fichaAberta;
-  const setAberta = conducao.abrirFicha;
-  const { editais, edital: dados, roteiros } = e;
-
-  useEffect(() => {
-    const atual = conducao.obter();
-    if (!atual.editais.carregado && !atual.editais.carregando)
-      void conducao.carregarEditais(area, entrevistasDoPainel);
-    if (!atual.roteiros.carregado && !atual.roteiros.carregando)
-      void conducao.carregarRoteiros(area);
-  }, [conducao, area, entrevistasDoPainel]);
-
-  const convocado = aberta
-    ? dados?.convocados.find((c) => c.id === aberta)
-    : null;
-  /* A convocação é a lista da Classificação (sem ela, o cálculo atual, só para ver). */
-  const fonte = useMemo(
-    () => (dados ? fonteDaConvocacao(dados, e.calculo?.resultado) : null),
-    [dados, e.calculo],
-  );
-  const grupos = useMemo(
-    () => (fonte ? gruposDaConvocacao(fonte.resultado, dados.convocados) : []),
-    [fonte, dados],
-  );
-  const acao = e.acao?.tipo || "";
-
-  /* Modo de análise: a ficha aberta ocupa a área de conteúdo (some o resto da tela). */
-  if (convocado)
-    return (
-      <div
-        className="entrevistas-visao entrevistas-conducao"
-        data-modo="analise"
-      >
-        <FichaDoCandidato
-          key={convocado.id}
-          dados={dados}
-          convocado={convocado}
-          convocados={dados.convocados}
-          salvando={acao === "notas"}
-          aoSalvar={(p) => conducao.lancarNotas(convocado.id, p)}
-          aoAbrir={(id) => setAberta(id)}
-          aoFechar={() => setAberta(null)}
-        />
-      </div>
-    );
-
+/**
+ * O edital da condução: o seletor (com o selo Treinamento), Recarregar, a
+ * liberação fora da janela e "Mostrar todos" (administrador global) e os
+ * avisos. `e` é o estado da condução (estado-da-conducao.js); `doPainel`, as
+ * entrevistas do painel (marcam "com entrevistas"), quando já lidas.
+ * @param {{ conducao: object, e: object, area: string, doPainel?: unknown[] }} props
+ */
+export function SeletorDoEdital({ conducao, e, area, doPainel = [] }) {
+  const { editais, roteiros } = e;
+  const escolhido = editalEscolhido(editais.lista, e.editalId);
   return (
-    <div className="entrevistas-visao entrevistas-conducao">
-      <section
-        className="ui-card entrevistas-passo"
-        aria-labelledby="entrevistasEditalTitulo"
-        data-tour="entrevistas-conduzir-edital"
-      >
-        <div className="entrevistas-passo-topo">
-          <div>
-            <h2 className="ui-titulo" id="entrevistasEditalTitulo">
-              Edital{" "}
-              <SeloDeTreinamento
-                edital={editalEscolhido(editais.lista, e.editalId)}
-              />
-            </h2>
-          </div>
-        </div>
-        <div className="entrevistas-filtros">
-          <Campo rotulo="Edital da área" largo>
-            <select
-              id="entrevistasEdital"
-              data-tour="entrevistas-conduzir-seletor-edital"
-              value={e.editalId}
-              disabled={editais.carregando}
-              onChange={(ev) => {
-                setAberta(null);
-                void conducao.abrirEdital(ev.target.value);
-              }}
-            >
-              <option value="">
-                {editais.carregando
-                  ? "Carregando editais…"
-                  : "Escolha o edital…"}
+    <section
+      className="ui-card entrevistas-passo entrevistas-seletor-do-edital"
+      aria-label="Edital"
+      data-tour="entrevistas-conduzir-edital"
+    >
+      <div className="entrevistas-filtros">
+        <Campo rotulo="Edital da área">
+          <select
+            id="entrevistasEdital"
+            data-tour="entrevistas-conduzir-seletor-edital"
+            value={e.editalId}
+            disabled={editais.carregando}
+            onChange={(ev) => {
+              conducao.abrirFicha(null);
+              void conducao.abrirEdital(ev.target.value);
+            }}
+          >
+            <option value="">
+              {editais.carregando ? "Carregando editais…" : "Escolha o edital…"}
+            </option>
+            {editais.lista.map((m) => (
+              <option key={m.id} value={m.id}>
+                {m.edital}
+                {m.unidade ? ` · ${m.unidade}` : ""}
+                {m.comEntrevistas ? " · com entrevistas" : ""}
+                {marcaDoEdital(m) ? ` · ${marcaDoEdital(m)}` : ""}
+                {sufixoDeTreinamento(m)}
               </option>
-              {editais.lista.map((m) => (
-                <option key={m.id} value={m.id}>
-                  {m.edital}
-                  {m.unidade ? ` · ${m.unidade}` : ""}
-                  {m.comEntrevistas ? " · com entrevistas" : ""}
-                  {marcaDoEdital(m) ? ` · ${marcaDoEdital(m)}` : ""}
-                  {sufixoDeTreinamento(m)}
-                </option>
-              ))}
-            </select>
-          </Campo>
+            ))}
+          </select>
+        </Campo>
+        <span className="entrevistas-seletor-acoes">
+          <SeloDeTreinamento edital={escolhido} />
           {e.editalId ? (
             <button
               type="button"
@@ -1173,81 +1004,91 @@ export function VisaoDeConducao({ conducao, area, entrevistasDoPainel }) {
               <i className="fa-solid fa-rotate" aria-hidden="true" /> Recarregar
             </button>
           ) : null}
-        </div>
-        {editais.admin ? (
-          <label className="entrevistas-todos">
-            <input
-              type="checkbox"
-              checked={editais.todos}
-              disabled={editais.carregando}
-              onChange={(ev) =>
-                void conducao.carregarEditais(area, entrevistasDoPainel, {
-                  todos: ev.target.checked,
-                })
-              }
-            />{" "}
-            Mostrar todos os editais da área
-          </label>
-        ) : null}
-        {editais.admin ? (
-          <LiberacaoDoEdital
-            key={e.editalId}
-            conducao={conducao}
-            item={editais.lista.find((m) => m.id === e.editalId)}
-            ocupado={Boolean(e.acao)}
-            doPainel={entrevistasDoPainel}
-          />
-        ) : null}
-        {editais.carregado && !editais.lista.length ? (
-          <Aviso tom="warning">{editais.erro}</Aviso>
-        ) : null}
-        {e.erroDoEdital ? (
-          <Aviso tom="danger" papel="alert">
-            Não foi possível abrir o edital: {e.erroDoEdital}
-          </Aviso>
-        ) : null}
-        {roteiros.erro ? (
-          <Aviso tom="warning">Roteiros indisponíveis: {roteiros.erro}</Aviso>
-        ) : null}
-        {e.carregandoEdital ? (
-          <Carregando>Carregando o edital…</Carregando>
-        ) : null}
-      </section>
-
-      {dados && !e.carregandoEdital ? (
-        <>
-          <PassoDeConfiguracao
-            key={`cfg-${dados.edital?.id}`}
-            dados={dados}
-            grupos={grupos}
-            roteiros={roteiros.lista}
-            salvando={acao === "configurar"}
-            aoSalvar={conducao.configurar}
-          />
-          <PassoDeConvocacao
-            key={`conv-${dados.edital?.id}`}
-            dados={dados}
-            fonte={fonte}
-            grupos={grupos}
-            calculo={e.calculo}
-            salvando={acao === "convocar" || acao === "desconvocar"}
-            ocupado={Boolean(e.acao)}
-            aoConvocar={conducao.convocar}
-            aoDesconvocar={conducao.desconvocar}
-          />
-          <AgendaDoDia
-            key={`agenda-${dados.edital?.id}`}
-            dados={dados}
-            agenda={e.agenda}
-            aoAbrir={setAberta}
-          />
-          <PassoDaFicha
-            key={`ficha-${dados.edital?.id}`}
-            dados={dados}
-            aoAbrir={setAberta}
-          />
-        </>
+        </span>
+      </div>
+      {editais.admin ? (
+        <label className="entrevistas-todos">
+          <input
+            type="checkbox"
+            checked={editais.todos}
+            disabled={editais.carregando}
+            onChange={(ev) =>
+              void conducao.carregarEditais(area, doPainel, {
+                todos: ev.target.checked,
+              })
+            }
+          />{" "}
+          Mostrar todos os editais da área
+        </label>
       ) : null}
-    </div>
+      {editais.admin ? (
+        <LiberacaoDoEdital
+          key={e.editalId}
+          conducao={conducao}
+          item={editais.lista.find((m) => m.id === e.editalId)}
+          ocupado={Boolean(e.acao)}
+          doPainel={doPainel}
+        />
+      ) : null}
+      {editais.carregado && !editais.lista.length ? (
+        <Aviso tom="warning">{editais.erro}</Aviso>
+      ) : null}
+      {e.erroDoEdital ? (
+        <Aviso tom="danger" papel="alert">
+          Não foi possível abrir o edital: {e.erroDoEdital}
+        </Aviso>
+      ) : null}
+      {roteiros.erro ? (
+        <Aviso tom="warning">Roteiros indisponíveis: {roteiros.erro}</Aviso>
+      ) : null}
+      {e.carregandoEdital ? (
+        <Carregando>Carregando o edital…</Carregando>
+      ) : null}
+    </section>
+  );
+}
+
+/* ── Preparar ──────────────────────────────────────────────────────── */
+
+/**
+ * "Preparar" o edital aberto: configuração (passo 1) e convocação (passo 2).
+ * `e` é o estado da condução; o edital aberto é `e.edital`.
+ * @param {{ conducao: object, e: object }} props
+ */
+export function PrepararEdital({ conducao, e }) {
+  const dados = e.edital;
+  /* A convocação é a lista da Classificação (sem ela, o cálculo atual, só para ver). */
+  const fonte = useMemo(
+    () => (dados ? fonteDaConvocacao(dados, e.calculo?.resultado) : null),
+    [dados, e.calculo],
+  );
+  const grupos = useMemo(
+    () => (fonte ? gruposDaConvocacao(fonte.resultado, dados.convocados) : []),
+    [fonte, dados],
+  );
+  const acao = e.acao?.tipo || "";
+  if (!dados || e.carregandoEdital) return null;
+  return (
+    <>
+      <PassoDeConfiguracao
+        key={`cfg-${dados.edital?.id}`}
+        dados={dados}
+        grupos={grupos}
+        roteiros={e.roteiros.lista}
+        salvando={acao === "configurar"}
+        aoSalvar={conducao.configurar}
+      />
+      <PassoDeConvocacao
+        key={`conv-${dados.edital?.id}`}
+        dados={dados}
+        fonte={fonte}
+        grupos={grupos}
+        calculo={e.calculo}
+        salvando={acao === "convocar" || acao === "desconvocar"}
+        ocupado={Boolean(e.acao)}
+        aoConvocar={conducao.convocar}
+        aoDesconvocar={conducao.desconvocar}
+      />
+    </>
   );
 }

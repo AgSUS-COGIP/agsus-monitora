@@ -4,6 +4,7 @@
   outra moldura (o texto de uma seção da gaveta).
 */
 
+/** @param {{ className?: string, children?: import("react").ReactNode }} props */
 export function EstadoVazio({ className, children }) {
   return <div className={className || "ui-vazio"}>{children}</div>;
 }

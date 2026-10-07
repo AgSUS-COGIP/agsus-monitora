@@ -14,13 +14,14 @@ import {
 } from "../componentes/interacoes.js";
 
 /*
-  A tela de Entrevistas como módulo do app (src/modulos/entrevistas/): monta
+  O Painel de entrevistas como módulo do app (src/modulos/entrevistas/): monta
   na própria `#page-entrevistas`, carrega a área atual do app quando o legado
   abre a tela (`render()`), segue o tema do app, usa o aviso global e os
   componentes de src/ui/ (classes .ui-*). "Resultados": KPIs, filtro, gaveta
   com o caminho do candidato (sem HTML vindo dos dados), lista dos aprovados
-  sem entrevista, estado vazio e sem acesso. Depois, "Conduzir entrevistas" e
-  "Roteiros".
+  sem entrevista, estado vazio e sem acesso; o andamento por edital e vaga, a
+  agenda dos próximos dias, os empates e as pendências de andamento.
+  "Conduzir entrevistas" (o fazer) é outra tela: conduzir-entrevistas.test.js.
 */
 
 // O Chart.js não desenha no jsdom (sem canvas): um falso guarda o que recebeu.
@@ -176,6 +177,8 @@ const linhasDaTabela = () =>
   document.querySelectorAll(".ui-tabela tbody tr.entrevistas-linha");
 const status = () => document.querySelector(".ui-topo .status-discreto");
 const naTela = (texto) => document.body.textContent.includes(texto);
+const chamadas = (supabase, nome) =>
+  supabase.rpc.mock.calls.filter(([n]) => n === nome);
 const botao = (texto) =>
   [...document.querySelectorAll("button")].find((b) =>
     b.textContent.trim().startsWith(texto),
@@ -288,6 +291,159 @@ describe("Resultados", () => {
   });
 });
 
+/*
+  O painel "vivo": andamento por edital e vaga, a agenda dos próximos dias do
+  edital do recorte, os empatados na nota da entrevista (o desempate é na
+  Classificação) e as pendências de andamento.
+*/
+describe("andamento, agenda e empates", () => {
+  const hoje = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "America/Sao_Paulo",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(new Date());
+  const EDITAL_ID = "11111111-2222-4333-8444-555555555555";
+  const doEdital = (id, extra) => ({
+    ...PAYLOAD.entrevistas[0],
+    edital_id: EDITAL_ID,
+    id,
+    candidato: `Candidato ${id}`,
+    codigo: id,
+    ...extra,
+  });
+  const PAYLOAD_DO_EDITAL = {
+    ...PAYLOAD,
+    entrevistas: [
+      doEdital("x1", { nota: 12, parecer: "APTO", compareceu: "S" }),
+      doEdital("x2", { nota: 12, parecer: "APTO", compareceu: "S" }),
+      doEdital("x3", { nota: null, parecer: "SEM_PARECER", compareceu: "S" }),
+      doEdital("x4", { nota: null, parecer: "SEM_PARECER", compareceu: null }),
+      doEdital("x5", {
+        vaga: "V2",
+        nota: 3,
+        parecer: "INAPTO",
+        compareceu: "N",
+      }),
+    ],
+  };
+  const supabaseDoEdital = (agenda) => ({
+    rpc: vi.fn(async (nome) =>
+      nome === "obter_agenda_entrevista"
+        ? { data: agenda, error: null }
+        : { data: PAYLOAD_DO_EDITAL, error: null },
+    ),
+    auth: {
+      getSession: async () => ({ data: { session: { user: { id: "u" } } } }),
+    },
+  });
+
+  it("um edital só: o resumo dele, um cartão por vaga e a agenda dos próximos dias", async () => {
+    const supabase = supabaseDoEdital({
+      itens: [
+        {
+          analise_id: "a1",
+          nome: "Candidato x4",
+          vaga: "V1",
+          data: hoje,
+          inicio: "08:00",
+        },
+      ],
+    });
+    await montar(supabase);
+    const andamento = secao.querySelector(".entrevistas-andamento");
+    expect(andamento.querySelector("h2").textContent).toBe(
+      "Edital Edital 01/2026",
+    );
+    expect(
+      [...andamento.querySelectorAll("[data-cartao]")].map((c) => [
+        c.dataset.cartao,
+        c.querySelector(".entrevistas-andamento-percentual").textContent,
+      ]),
+    ).toEqual([
+      ["vaga:V1", "50%"],
+      ["vaga:V2", "100%"],
+    ]);
+    expect(
+      andamento.querySelector(
+        '[data-cartao="vaga:V1"] [data-numero="convocados"] dd',
+      ).textContent,
+    ).toBe("4");
+    // A agenda do edital do recorte (m1).
+    expect(chamadas(supabase, "obter_agenda_entrevista")[0][1]).toEqual({
+      p_edital: EDITAL_ID,
+    });
+    const agenda = secao.querySelector(".entrevistas-agenda-proxima");
+    expect(agenda.querySelector('[data-hoje="sim"]').textContent).toContain(
+      "Candidato x4",
+    );
+    // Clicar na vaga recorta o painel (de novo, tira).
+    await clicar(andamento.querySelector('[data-cartao="vaga:V2"]'));
+    expect(linhasDaTabela()).toHaveLength(1);
+    await clicar(secao.querySelector('[data-cartao="vaga:V2"]'));
+    expect(linhasDaTabela()).toHaveLength(5);
+  });
+
+  it("empatados na nota: selo na tabela e o aviso que leva à Classificação no edital", async () => {
+    await montar(supabaseDoEdital(null));
+    const empatadas = [...linhasDaTabela()].filter((tr) =>
+      tr.querySelector(".entrevistas-selo-empate"),
+    );
+    expect(empatadas).toHaveLength(2);
+    const aviso = secao.querySelector(".entrevistas-empates");
+    expect(aviso.textContent).toContain(
+      "2 candidatos empatados na nota da entrevista",
+    );
+    expect(aviso.textContent).toContain("o desempate é feito na Classificação");
+    window.navigate = vi.fn();
+    window.classificacaoController = {
+      estado: { escolherEdital: vi.fn(async () => true) },
+    };
+    try {
+      await clicar(aviso.querySelector('[data-ir-para="classificacao"]'));
+      expect(window.navigate).toHaveBeenCalledWith("classificacao");
+      expect(
+        window.classificacaoController.estado.escolherEdital,
+      ).toHaveBeenCalledWith(EDITAL_ID);
+    } finally {
+      delete window.navigate;
+      delete window.classificacaoController;
+    }
+  });
+
+  it("pendências de andamento filtram o painel", async () => {
+    await montar(supabaseDoEdital(null));
+    const pendencia = [
+      ...secao.querySelectorAll(".entrevistas-bloco-de-pendencias button"),
+    ].find((b) => b.textContent.includes("Compareceu, sem nota"));
+    await clicar(pendencia);
+    expect(linhasDaTabela()).toHaveLength(1);
+    expect(linhasDaTabela()[0].textContent).toContain("Candidato x3");
+  });
+
+  it("vários editais: um cartão por edital; escolher um mostra as vagas", async () => {
+    await montar(supabaseFalso({ data: PAYLOAD, error: null }));
+    const andamento = secao.querySelector(".entrevistas-andamento");
+    expect(andamento.querySelector("h2").textContent).toBe(
+      "Andamento por edital",
+    );
+    expect(
+      [...andamento.querySelectorAll("[data-cartao]")].map(
+        (c) => c.dataset.cartao,
+      ),
+    ).toEqual(["edital:Edital 01/2026", "edital:Edital 02/2026"]);
+    expect(secao.querySelector(".entrevistas-agenda-proxima")).toBeNull();
+    await clicar(
+      andamento.querySelector('[data-cartao="edital:Edital 02/2026"]'),
+    );
+    expect(
+      [...secao.querySelectorAll(".entrevistas-andamento [data-cartao]")].map(
+        (c) => c.dataset.cartao,
+      ),
+    ).toEqual(["vaga:V2"]);
+  });
+});
+
 describe("cópia guardada (stale-while-revalidate)", async () => {
   const { criarEstadoDasEntrevistas } =
     await import("../../src/modulos/entrevistas/estado.js");
@@ -367,778 +523,6 @@ describe("cópia guardada (stale-while-revalidate)", async () => {
 });
 
 /*
-  Visões "Conduzir entrevistas" e "Roteiros" (fase 2): troca de visão no
-  cabeçalho, lista e edição de roteiro (versão nova), configuração,
-  convocação sugerida pela regra, ficha de notas (prévia do parecer, modo
-  AVALIADOR, erros do banco) e a releitura de "Resultados" depois de gravar.
-*/
-
-const PERFIL_DA_ANA = "11111111-1111-4111-8111-111111111111";
-
-const ROTEIRO = {
-  id: "r1",
-  origem: "r1",
-  versao: 1,
-  area: "saude-indigena",
-  nome: "Saúde Indígena 2026",
-  descricao: null,
-  etapa: "Entrevista Individual",
-  escala: "NIVEIS",
-  passo: 1,
-  notas_permitidas: [],
-  nota_minima_total: 4,
-  notas_eliminatorias: [0, 1],
-  ausencia_elimina: true,
-  desempate: ["Idade igual ou superior a 60 anos"],
-  soma_analise: true,
-  convocacao_padrao: {
-    multiplo_imediatas: 5,
-    posicao_cadastro_reserva: 10,
-    excecoes: [],
-  },
-  banca_padrao: [{ origem: "AgSUS", quantidade: 1 }],
-  ativo: true,
-  competencias: [
-    {
-      id: "c1",
-      ordem: 1,
-      nome: "Políticas públicas",
-      descricao: "SUS e SasiSUS",
-      nota_maxima: 5,
-      peso: 1,
-      minimo: 2,
-      tipo_minimo: "VALOR",
-      avaliacao: "INDIVIDUAL",
-    },
-    {
-      id: "c2",
-      ordem: 2,
-      nome: "Habilidade interpessoal",
-      descricao: null,
-      nota_maxima: 5,
-      peso: 1,
-      minimo: 2,
-      tipo_minimo: "VALOR",
-      avaliacao: "INDIVIDUAL",
-    },
-  ],
-  niveis: [0, 1, 2, 3, 4, 5].map((nota) => ({
-    nota,
-    nome: `Nível ${nota}`,
-    descricao: `Parâmetro ${nota}`,
-  })),
-  editais_em_uso: 1,
-};
-
-const EDITAL = {
-  edital: {
-    id: "m1",
-    edital: "100/2026",
-    unidade: "CASAI Brasília",
-    area: "saude-indigena",
-  },
-  pode_editar: true,
-  pode_gerar_lista: true,
-  admin_global: false,
-  meu_perfil: PERFIL_DA_ANA,
-  configuracao: {
-    roteiro: ROTEIRO,
-    banca: [{ origem: "AgSUS", quantidade: 1 }],
-    lancamento: "SECRETARIA",
-    atualizado_em: "2026-09-30T12:00:00Z",
-  },
-  regra_classificacao: {
-    versao: 2,
-    convocacao: {
-      multiplo_vagas: 1,
-      posicao_max_cr: 1,
-      incluir_empatados: true,
-      excecoes: [],
-    },
-  },
-  // A convocação é a lista CONVOCACAO da Classificação (1× 2 vagas: os dois primeiros).
-  lista_convocacao: {
-    lista: {
-      id: "lista1",
-      tipo: "CONVOCACAO",
-      versao_regra: 2,
-      gerada_em: "2026-10-05T13:30:00Z",
-      por: "Gestora",
-      publicada: false,
-    },
-    retrato: {
-      schema: 1,
-      tipo: "CONVOCACAO",
-      vagas: [
-        {
-          chave: "V1",
-          codigo: "V1",
-          cargo: "Enfermeiro",
-          lotacao: "Polo Base",
-          cabecalho: "VAGA V1 - Enfermeiro",
-          total: 2,
-          cadastro_reserva: false,
-          origem_das_vagas: "QUADRO",
-          limite_convocacao: { limite: 2, origem: "1 × 2 vaga(s)" },
-          geral: [1, 2].map((posicao) => ({
-            posicao,
-            analise_id: `an${posicao}`,
-            nome: `Candidato ${posicao}`,
-            nota: 90 - posicao,
-            modalidades: ["AC"],
-          })),
-          listas: {},
-          eliminados: [
-            {
-              analise_id: "an3",
-              nome: "Candidato 3",
-              motivo: "FORA_DO_LIMITE",
-            },
-          ],
-        },
-      ],
-    },
-  },
-  avaliadores: [
-    {
-      id: "a1",
-      nome: "Ana",
-      origem: "AgSUS",
-      banca: 1,
-      perfil: PERFIL_DA_ANA,
-      ativo: true,
-    },
-    {
-      id: "a2",
-      nome: "Beto",
-      origem: "CONDISI",
-      banca: 1,
-      perfil: null,
-      ativo: true,
-    },
-  ],
-  convocados: [
-    {
-      id: "e1",
-      analise_id: "an1",
-      candidato: "Candidato 1",
-      codigo: "K1",
-      vaga: "V1",
-      cargo: "Enfermeiro",
-      modalidade: "Ampla",
-      banca: 1,
-      compareceu: null,
-      nota: null,
-      parecer: "SEM_PARECER",
-      nota_analise: 89,
-      avaliacoes: [],
-      notas: [],
-    },
-  ],
-};
-
-function supabaseDaConducao({ edital = EDITAL, respostas = {} } = {}) {
-  const padrao = {
-    get_entrevistas_da_area: () => ({ data: PAYLOAD, error: null }),
-    listar_roteiros_entrevista: () => ({ data: [ROTEIRO], error: null }),
-    listar_editais_entrevista: () => ({
-      data: {
-        admin_global: false,
-        editais: [
-          {
-            id: "m1",
-            edital: "100/2026",
-            unidade: "CASAI Brasília",
-            na_janela: true,
-            visivel_por: "janela",
-          },
-        ],
-      },
-      error: null,
-    }),
-    obter_entrevistas_do_edital: () => ({ data: edital, error: null }),
-    salvar_roteiro_entrevista: (args) => ({
-      data: { ...ROTEIRO, id: "r1b", versao: 2, nome: args.p_dados.nome },
-      error: null,
-    }),
-    configurar_entrevista_edital: () => ({ data: edital, error: null }),
-    convocar_para_entrevista: () => ({
-      data: { convocados: 1, dados: edital },
-      error: null,
-    }),
-    lancar_notas_entrevista: () => ({ data: edital, error: null }),
-  };
-  return {
-    rpc: vi.fn(async (nome, args) => (respostas[nome] || padrao[nome])(args)),
-    auth: {
-      getSession: async () => ({ data: { session: { user: { id: "u" } } } }),
-    },
-  };
-}
-
-const visao = (valor) =>
-  document.querySelector(
-    `.ui-topo .entrevistas-visoes button[data-valor="${valor}"]`,
-  );
-const chamadas = (supabase, nome) =>
-  supabase.rpc.mock.calls.filter(([n]) => n === nome);
-
-async function abrirEdital() {
-  await clicar(visao("conduzir"));
-  await esperar();
-  await escolher(document.getElementById("entrevistasEdital"), "m1");
-  await esperar();
-}
-
-describe("visões de condução e roteiros", () => {
-  it("o cabeçalho troca de visão; Resultados é a primeira", async () => {
-    await montar(supabaseDaConducao());
-    expect(visao("resultados").getAttribute("aria-checked")).toBe("true");
-    expect(secao.querySelector(".entrevistas-kpis")).not.toBeNull();
-    expect(secao.querySelector('[data-acao="exportar"]')).not.toBeNull();
-    await clicar(visao("roteiros"));
-    await esperar();
-    expect(secao.querySelector(".entrevistas-kpis")).toBeNull();
-    expect(secao.querySelector('[data-acao="exportar"]')).toBeNull();
-    // Atualizar continua no topo em todas as visões.
-    expect(secao.querySelector('[data-acao="atualizar"]')).not.toBeNull();
-    expect(naTela("Roteiros de entrevista")).toBe(true);
-    expect(document.querySelector('[data-roteiro="r1"]').textContent).toContain(
-      "Usado em 1 edital",
-    );
-  });
-
-  it("editar um roteiro grava a versão seguinte, com a prévia e o +50%", async () => {
-    const supabase = supabaseDaConducao();
-    await montar(supabase);
-    await clicar(visao("roteiros"));
-    await esperar();
-    const editar = [
-      ...document.querySelectorAll('[data-roteiro="r1"] button'),
-    ].find((b) => b.textContent.includes("Editar (cria versão 2)"));
-    await clicar(editar);
-    const editor = document.getElementById("entrevistasEditorDeRoteiro");
-    expect(editor).not.toBeNull();
-    expect(
-      document.getElementById("entrevistasPreviaDoRoteiro").textContent,
-    ).toBe("Pontuação máxima 10 · mínimo 4");
-    const peso = editor.querySelectorAll(
-      'li[data-competencia="1"] input[type="number"]',
-    )[1];
-    await digitar(peso, "1.5");
-    expect(editor.textContent).toContain("+50% sobre a média da banca");
-    expect(
-      document.getElementById("entrevistasPreviaDoRoteiro").textContent,
-    ).toBe("Pontuação máxima 12,5 · mínimo 4");
-    await clicar(editor.querySelector('button[type="submit"]'));
-    await esperar();
-    const [[, { p_dados }]] = chamadas(supabase, "salvar_roteiro_entrevista");
-    expect(p_dados.origem).toBe("r1");
-    expect(p_dados.competencias[0].peso).toBe(1.5);
-    expect(p_dados.niveis).toHaveLength(6);
-    expect(document.getElementById("entrevistasEditorDeRoteiro")).toBeNull();
-    expect(chamadas(supabase, "listar_roteiros_entrevista").length).toBe(2);
-  });
-
-  it("formulário inválido não chama o banco", async () => {
-    const supabase = supabaseDaConducao();
-    await montar(supabase);
-    await clicar(visao("roteiros"));
-    await esperar();
-    await clicar(document.getElementById("entrevistasNovoRoteiro"));
-    const editor = document.getElementById("entrevistasEditorDeRoteiro");
-    await clicar(editor.querySelector('button[type="submit"]'));
-    expect(editor.textContent).toContain("Nome do roteiro: de 3 a 150");
-    expect(chamadas(supabase, "salvar_roteiro_entrevista")).toHaveLength(0);
-  });
-
-  it("convoca os da lista de convocação da Classificação (com o id da lista) e relê os resultados", async () => {
-    const supabase = supabaseDaConducao();
-    await montar(supabase);
-    await abrirEdital();
-    expect(chamadas(supabase, "obter_entrevistas_do_edital")[0][1]).toEqual({
-      p_edital: "m1",
-    });
-    // Com a lista registrada, o cálculo da Classificação nem é pedido.
-    expect(chamadas(supabase, "obter_classificacao_do_edital")).toHaveLength(0);
-    const passo = document.querySelector('[data-passo="convocacao"]');
-    expect(passo.dataset.fonte).toBe("LISTA");
-    expect(passo.textContent).toContain(
-      "Lista de convocação da Classificação · gerada em 05/10/2026, 10:30 por Gestora · regra v2",
-    );
-    const caixas = passo.querySelectorAll('input[type="checkbox"]');
-    // Só os dois da lista (o 3º está entre os eliminados); o 1º já está na ficha.
-    expect([...caixas].map((c) => [c.checked, c.disabled])).toEqual([
-      [true, true],
-      [true, false],
-    ]);
-    expect(passo.textContent).toContain(
-      "2 vagas imediatas · até a 2ª (1 × 2 vaga(s))",
-    );
-    expect(passo.textContent).not.toContain("Candidato 3");
-    expect(passo.textContent).not.toContain("Além da regra");
-    const antes = chamadas(supabase, "get_entrevistas_da_area").length;
-    await clicar(document.getElementById("entrevistasConvocar"));
-    await esperar();
-    expect(chamadas(supabase, "convocar_para_entrevista")[0][1]).toEqual({
-      p_edital: "m1",
-      p_lista: "lista1",
-      p_analises: ["an2"],
-    });
-    expect(chamadas(supabase, "get_entrevistas_da_area").length).toBe(
-      antes + 1,
-    );
-  });
-
-  it("a lista mudou na Classificação (40001): avisa e relê o edital", async () => {
-    const supabase = supabaseDaConducao({
-      respostas: {
-        convocar_para_entrevista: () => ({
-          data: null,
-          error: {
-            code: "40001",
-            message: "A lista de convocação mudou na Classificação; recarregue",
-          },
-        }),
-      },
-    });
-    await montar(supabase);
-    await abrirEdital();
-    await clicar(document.getElementById("entrevistasConvocar"));
-    await esperar();
-    expect(toast).toHaveBeenCalledWith(
-      "A lista de convocação mudou na Classificação; recarregue",
-      "error",
-    );
-    expect(chamadas(supabase, "obter_entrevistas_do_edital")).toHaveLength(2);
-  });
-
-  it("passo 1: regra e vagas da Classificação só para ler, com o caminho de onde se mudam; sem digitar vagas", async () => {
-    await montar(supabaseDaConducao());
-    await abrirEdital();
-    const passo = document.querySelector('[data-passo="configuracao"]');
-    expect(passo.textContent).toContain(
-      "Classificação, regra v2: 1× as vagas imediatas · até a 1ª no cadastro reserva",
-    );
-    const linha = document.querySelector(
-      '#entrevistasVagas tr[data-vaga="V1"]',
-    );
-    expect(
-      [...linha.querySelectorAll("td")].map((td) => td.textContent),
-    ).toEqual([
-      "V1",
-      "EnfermeiroPolo Base",
-      "2 vagas imediatas",
-      "até a 2ª (1 × 2 vaga(s))",
-      "quadro de vagas do editalEditais",
-    ]);
-    expect(linha.querySelector('[data-ir-para="nucleo"]')).not.toBeNull();
-    expect(
-      passo.querySelector('[data-ir-para="classificacao"]').textContent,
-    ).toBe("Regra na Classificação");
-    await clicar(
-      [...passo.querySelectorAll("button")].find((b) =>
-        b.textContent.includes("Editar configuração"),
-      ),
-    );
-    expect(
-      passo.querySelector('input[aria-label^="Vagas imediatas"]'),
-    ).toBeNull();
-    expect(passo.textContent).not.toContain("Múltiplo das vagas imediatas");
-  });
-
-  it("sem lista gerada: o cálculo atual com aviso e atalho para gerar; não convoca", async () => {
-    const UUID = "11111111-2222-4333-8444-555555555555";
-    const edital = {
-      ...EDITAL,
-      edital: { ...EDITAL.edital, id: UUID },
-      lista_convocacao: null,
-    };
-    const supabase = supabaseDaConducao({
-      edital,
-      respostas: {
-        obter_classificacao_do_edital: () => ({
-          data: {
-            edital: { id: UUID, edital: "100/2026", unidade: "CASAI Brasília" },
-            regra: {
-              versao: 2,
-              configuracao: {
-                convocacao: { multiplo_vagas: 1, posicao_max_cr: 1 },
-              },
-            },
-            quadro: [
-              {
-                id: "q1",
-                ordem: 1,
-                cargo: "Enfermeiro",
-                vagas_imediatas: 1,
-                cadastro_reserva: false,
-                modalidades: {},
-              },
-            ],
-            candidatos: [1, 2, 3].map((n) => ({
-              analise_id: `an${n}`,
-              nome: `Candidato ${n}`,
-              vaga: "V1",
-              cargo: "Enfermeiro",
-              status: "Aprovado",
-              nota_documental: 90 - n,
-              quadro: "q1",
-            })),
-            entrevistas: [],
-            cronograma: [],
-            desempates: [],
-            ajustes: [],
-          },
-          error: null,
-        }),
-        listar_configuracao_convocacao: () => ({ data: [], error: null }),
-        listar_modelos_convocacao: () => ({ data: [], error: null }),
-      },
-    });
-    await montar(supabase);
-    window.navigate = vi.fn();
-    window.classificacaoController = {
-      estado: { escolherEdital: vi.fn(async () => true) },
-    };
-    try {
-      await abrirEdital();
-      expect(chamadas(supabase, "obter_classificacao_do_edital")[0][1]).toEqual(
-        { p_edital: "m1" },
-      );
-      const passo = document.querySelector('[data-passo="convocacao"]');
-      expect(passo.dataset.fonte).toBe("CALCULO");
-      expect(passo.textContent).toContain(
-        "Lista ainda não gerada na Classificação",
-      );
-      // 1× 1 vaga: só o primeiro.
-      expect(passo.textContent).toContain("Candidato 1");
-      expect(passo.textContent).not.toContain("Candidato 2");
-      expect(document.getElementById("entrevistasConvocar")).toBeNull();
-      await clicar(
-        [...passo.querySelectorAll("button")].find(
-          (b) => b.textContent === "Gerar na Classificação",
-        ),
-      );
-      expect(window.navigate).toHaveBeenCalledWith("classificacao");
-      expect(
-        window.classificacaoController.estado.escolherEdital,
-      ).toHaveBeenCalledWith(UUID);
-    } finally {
-      delete window.navigate;
-      delete window.classificacaoController;
-    }
-  });
-
-  it("sem lista e sem acesso à Classificação: avisa, sem cálculo nem convocação", async () => {
-    const supabase = supabaseDaConducao({
-      edital: { ...EDITAL, lista_convocacao: null, pode_gerar_lista: false },
-      respostas: {
-        obter_classificacao_do_edital: () => ({
-          data: null,
-          error: { code: "42501", message: "Sem permissão" },
-        }),
-      },
-    });
-    await montar(supabase);
-    await abrirEdital();
-    const passo = document.querySelector('[data-passo="convocacao"]');
-    expect(passo.dataset.fonte).toBe("NENHUMA");
-    expect(passo.textContent).toContain(
-      "Lista ainda não gerada na Classificação.",
-    );
-    expect(passo.textContent).toContain(
-      "Seu acesso não inclui a Classificação deste edital.",
-    );
-    expect(passo.textContent).not.toContain("Gerar na Classificação");
-    expect(document.getElementById("entrevistasConvocar")).toBeNull();
-    // O convocado de antes continua (fora da lista vigente), e a ficha também.
-    expect(passo.textContent).toContain("Fora da lista vigente");
-    expect(document.querySelector("#entrevistasFicha")).not.toBeNull();
-  });
-
-  it("salva a configuração com o modo de lançamento e a banca", async () => {
-    const supabase = supabaseDaConducao();
-    await montar(supabase);
-    await abrirEdital();
-    const passo = document.querySelector('[data-passo="configuracao"]');
-    expect(passo.textContent).toContain("Saúde Indígena 2026");
-    await clicar(
-      [...passo.querySelectorAll("button")].find((b) =>
-        b.textContent.includes("Editar configuração"),
-      ),
-    );
-    await clicar(passo.querySelector('button[data-valor="AVALIADOR"]'));
-    await clicar(passo.querySelector('button[type="submit"]'));
-    await esperar();
-    const [[, argumentos]] = chamadas(supabase, "configurar_entrevista_edital");
-    expect(argumentos.p_edital).toBe("m1");
-    expect(argumentos.p_dados).not.toHaveProperty("vagas");
-    expect(argumentos.p_dados).not.toHaveProperty("convocacao");
-    expect(argumentos.p_dados).toMatchObject({
-      roteiro: "r1",
-      lancamento: "AVALIADOR",
-      avaliadores: [
-        {
-          id: "a1",
-          nome: "Ana",
-          origem: "AgSUS",
-          banca: 1,
-          perfil: PERFIL_DA_ANA,
-        },
-        { id: "a2", nome: "Beto", origem: "CONDISI", banca: 1, perfil: null },
-      ],
-    });
-  });
-
-  it("ficha de notas: prévia do parecer, gravação e erro do banco", async () => {
-    let falhar = true;
-    const supabase = supabaseDaConducao({
-      respostas: {
-        lancar_notas_entrevista: () =>
-          falhar
-            ? {
-                data: null,
-                error: { code: "22023", message: "Nota 7 fora da faixa" },
-              }
-            : { data: EDITAL, error: null },
-      },
-    });
-    await montar(supabase);
-    await abrirEdital();
-    await clicar(
-      document.querySelector("#entrevistasFicha tr.entrevistas-linha"),
-    );
-    const ficha = document.getElementById("entrevistasFichaDoCandidato");
-    const celulas = ficha.querySelectorAll("input.entrevistas-nota");
-    expect(celulas).toHaveLength(4);
-    // Os botões da escala trazem o nome do nível no título.
-    expect(
-      ficha.querySelector('.entrevistas-botao-de-nota[data-nota="3"]').title,
-    ).toBe("Nível 3 — Parâmetro 3");
-    await clicar(
-      ficha.querySelector('.entrevistas-comparecimento button[data-valor="S"]'),
-    );
-    for (const celula of celulas) await digitar(celula, "3");
-    expect(
-      document.getElementById("entrevistasFichaTotal").textContent,
-    ).toContain("6");
-    expect(document.getElementById("entrevistasFichaParecer").textContent).toBe(
-      "Apto",
-    );
-    await digitar(celulas[0], "1");
-    await digitar(celulas[1], "1");
-    expect(document.getElementById("entrevistasFichaParecer").textContent).toBe(
-      "Inapto",
-    );
-    expect(ficha.textContent).toContain("é eliminatória");
-
-    await clicar(ficha.querySelector('button[type="submit"]'));
-    await esperar();
-    expect(ficha.textContent).toContain("Dado inválido: Nota 7 fora da faixa.");
-    const [[, argumentos]] = chamadas(supabase, "lancar_notas_entrevista");
-    expect(argumentos.p_entrevista).toBe("e1");
-    expect(argumentos.p_dados.compareceu).toBe("S");
-    expect(argumentos.p_dados.notas).toHaveLength(4);
-    expect(argumentos.p_dados.notas).toContainEqual({
-      competencia: "c1",
-      avaliador: "a1",
-      nota: 1,
-    });
-
-    falhar = false;
-    const antes = chamadas(supabase, "get_entrevistas_da_area").length;
-    await clicar(ficha.querySelector('button[type="submit"]'));
-    await esperar();
-    expect(chamadas(supabase, "get_entrevistas_da_area").length).toBe(
-      antes + 1,
-    );
-  });
-
-  it("ficha pelo teclado: Enter avança para a próxima nota, Ctrl+Enter salva", async () => {
-    const supabase = supabaseDaConducao();
-    await montar(supabase);
-    await abrirEdital();
-    await clicar(
-      document.querySelector("#entrevistasFicha tr.entrevistas-linha"),
-    );
-    const ficha = document.getElementById("entrevistasFichaDoCandidato");
-    const celulas = ficha.querySelectorAll("input.entrevistas-nota");
-    celulas[0].focus();
-    await digitar(celulas[0], "4");
-    await teclar(celulas[0], "Enter");
-    expect(document.activeElement).toBe(celulas[1]);
-    await teclar(celulas[1], "Enter", { ctrlKey: true });
-    await esperar();
-    const [[, argumentos]] = chamadas(supabase, "lancar_notas_entrevista");
-    expect(argumentos.p_dados.notas).toEqual([
-      { competencia: "c1", avaliador: "a1", nota: 4 },
-    ]);
-  });
-
-  it("enquanto as notas são gravadas, a ficha (em tela cheia, sem o resto da condução) não aceita digitação", async () => {
-    let liberar;
-    const supabase = supabaseDaConducao({
-      respostas: {
-        lancar_notas_entrevista: () =>
-          new Promise((resolver) => {
-            liberar = () => resolver({ data: EDITAL, error: null });
-          }),
-      },
-    });
-    await montar(supabase);
-    await abrirEdital();
-    await clicar(
-      document.querySelector("#entrevistasFicha tr.entrevistas-linha"),
-    );
-    const ficha = document.getElementById("entrevistasFichaDoCandidato");
-    const celulas = ficha.querySelectorAll("input.entrevistas-nota");
-    await digitar(celulas[0], "4");
-    // Modo de análise: a ficha ocupa a tela; o topo e os passos da condução somem.
-    expect(document.querySelector(".ui-topo")).toBeNull();
-    expect(document.getElementById("entrevistasConvocar")).toBeNull();
-    await clicar(ficha.querySelector('button[type="submit"]'));
-    expect([...celulas].every((c) => c.disabled)).toBe(true);
-    expect(
-      [...ficha.querySelectorAll(".entrevistas-comparecimento button")].every(
-        (b) => b.disabled,
-      ),
-    ).toBe(true);
-    await act(async () => liberar());
-    await esperar();
-    expect([...celulas].some((c) => c.disabled)).toBe(false);
-  });
-
-  it("roteiros indisponíveis: avisa e não relê a cada volta à visão", async () => {
-    const supabase = supabaseDaConducao({
-      respostas: {
-        listar_roteiros_entrevista: () => ({
-          data: null,
-          error: { code: "XX000", message: "falhou" },
-        }),
-      },
-    });
-    await montar(supabase);
-    await clicar(visao("conduzir"));
-    await esperar();
-    expect(naTela("Roteiros indisponíveis")).toBe(true);
-    expect(chamadas(supabase, "listar_roteiros_entrevista")).toHaveLength(1);
-    await clicar(visao("resultados"));
-    await esperar();
-    await clicar(visao("conduzir"));
-    await esperar();
-    expect(chamadas(supabase, "listar_roteiros_entrevista")).toHaveLength(1);
-    expect(naTela("Roteiros indisponíveis")).toBe(true);
-  });
-
-  it("modo AVALIADOR: só a coluna do avaliador ligado ao perfil fica aberta", async () => {
-    const edital = {
-      ...EDITAL,
-      configuracao: { ...EDITAL.configuracao, lancamento: "AVALIADOR" },
-    };
-    await montar(supabaseDaConducao({ edital }));
-    await abrirEdital();
-    await clicar(
-      document.querySelector("#entrevistasFicha tr.entrevistas-linha"),
-    );
-    const ficha = document.getElementById("entrevistasFichaDoCandidato");
-    const celulas = [...ficha.querySelectorAll("input.entrevistas-nota")];
-    expect(celulas).toHaveLength(2);
-    expect(
-      celulas.every((c) => c.getAttribute("aria-label").includes("Ana")),
-    ).toBe(true);
-    expect(ficha.textContent).toContain("Você só edita a sua coluna.");
-  });
-
-  it("administrador global: mostra todos e libera edital fora da janela", async () => {
-    const editais = (todos) => ({
-      data: {
-        admin_global: true,
-        editais: [
-          {
-            id: "m1",
-            edital: "100/2026",
-            unidade: "CASAI Brasília",
-            na_janela: true,
-            visivel_por: "janela",
-          },
-          ...(todos
-            ? [
-                {
-                  id: "m9",
-                  edital: "120/2026",
-                  unidade: "DSEI X",
-                  na_janela: false,
-                  visivel_por: "admin",
-                },
-              ]
-            : []),
-        ],
-      },
-      error: null,
-    });
-    const supabase = supabaseDaConducao({
-      respostas: {
-        listar_editais_entrevista: (args) => editais(args.p_todos),
-        liberar_entrevista_edital: () => ({ data: {}, error: null }),
-      },
-    });
-    await montar(supabase);
-    await clicar(visao("conduzir"));
-    await esperar();
-    const seletor = document.getElementById("entrevistasEdital");
-    expect(seletor.querySelectorAll("option")).toHaveLength(2);
-    await clicar(document.querySelector(".entrevistas-todos input"));
-    await esperar();
-    expect(chamadas(supabase, "listar_editais_entrevista").at(-1)[1]).toEqual({
-      p_area: expect.any(String),
-      p_todos: true,
-    });
-    expect(seletor.textContent).toContain("120/2026 · DSEI X · fora da janela");
-    await escolher(seletor, "m9");
-    await esperar();
-    const caixa = document.getElementById("entrevistasLiberacao");
-    expect(caixa.textContent).toContain(
-      "sem etapa de entrevista no cronograma",
-    );
-    await digitar(caixa.querySelector('input[type="date"]'), "2026-11-15");
-    await digitar(
-      caixa.querySelector('input[type="text"]'),
-      "Cronograma em revisão",
-    );
-    await clicar(caixa.querySelector("button"));
-    await esperar();
-    expect(chamadas(supabase, "liberar_entrevista_edital")[0][1]).toEqual({
-      p_edital: "m9",
-      p_ate: "2026-11-15",
-      p_motivo: "Cronograma em revisão",
-    });
-  });
-
-  it("sem nível de editor, tudo aparece só para consulta", async () => {
-    const edital = { ...EDITAL, pode_editar: false };
-    await montar(supabaseDaConducao({ edital }));
-    await abrirEdital();
-    expect(document.getElementById("entrevistasConvocar")).toBeNull();
-    // Sem selo "Somente consulta": quem só lê não vê os controles de edição.
-    expect(naTela("Somente consulta")).toBe(false);
-    await clicar(
-      document.querySelector("#entrevistasFicha tr.entrevistas-linha"),
-    );
-    const ficha = document.getElementById("entrevistasFichaDoCandidato");
-    expect(ficha.querySelectorAll("input.entrevistas-nota")).toHaveLength(0);
-    expect(ficha.querySelector('button[type="submit"]')).toBeNull();
-    await clicar(ficha.querySelector('[data-acao="voltar-a-lista"]'));
-    await clicar(visao("roteiros"));
-    await esperar();
-    expect(document.getElementById("entrevistasNovoRoteiro")).toBeNull();
-    expect(document.querySelector('[data-roteiro="r1"]').textContent).toContain(
-      "Ver",
-    );
-  });
-});
-
-/*
   A tela dentro do app (Etapa 2): monta na seção sem pedir nada, abre pelo
   render() do legado, não repete o cabeçalho do app, usa só src/ui/ (.ui-*),
   segue o tema e a área do app e o aviso global.
@@ -1160,15 +544,12 @@ describe("a tela dentro do app", () => {
     expect(kpi("candidatos")).toBe("2");
   });
 
-  it("não repete o cabeçalho do app: topo com as visões, o status e as ações, sem tema nem tela cheia", async () => {
+  it("não repete o cabeçalho do app: topo com o status e as ações, sem visões, tema nem tela cheia", async () => {
     await montar(supabaseFalso({ data: PAYLOAD, error: null }));
     const topo = secao.querySelector("header.ui-topo");
     expect(topo.querySelector("h1, h2")).toBeNull();
-    expect(
-      [...topo.querySelectorAll(".entrevistas-visoes [role=radio]")].map((b) =>
-        b.textContent.trim(),
-      ),
-    ).toEqual(["Resultados", "Conduzir entrevistas", "Roteiros"]);
+    // Conduzir entrevistas é outra entrada do menu: o painel não tem visões.
+    expect(topo.querySelector(".entrevistas-visoes")).toBeNull();
     expect(
       [...topo.querySelectorAll(".ui-topo-acoes button")].map((b) =>
         b.textContent.trim(),
@@ -1179,16 +560,6 @@ describe("a tela dentro do app", () => {
     expect(document.querySelectorAll(".status-discreto")).toHaveLength(1);
     expect(naTela("Somente consulta")).toBe(false);
     expect(naTela("Painel de entrevistas")).toBe(false);
-  });
-
-  it("as visões trocam pelo teclado (setas), como um radiogroup", async () => {
-    await montar(supabaseFalso({ data: PAYLOAD, error: null }));
-    visao("resultados").focus();
-    await teclar(visao("resultados"), "ArrowRight");
-    await esperar();
-    expect(visao("conduzir").getAttribute("aria-checked")).toBe("true");
-    expect(document.activeElement).toBe(visao("conduzir"));
-    expect(document.getElementById("entrevistasEdital")).not.toBeNull();
   });
 
   it("usa src/ui/ com as classes .ui-*, sem o CSS nem os ids do painel de análises", async () => {
@@ -1328,7 +699,7 @@ describe("tema do app", () => {
 
 describe("área atual do app", () => {
   it("trocar a área com a tela aberta recarrega com a nova e zera os filtros", async () => {
-    const supabase = supabaseDaConducao();
+    const supabase = supabaseFalso({ data: PAYLOAD, error: null });
     await montar(supabase);
     await clicar(
       secao.querySelector('.entrevistas-kpis [data-kpi="aptos"] button'),
@@ -1347,26 +718,6 @@ describe("área atual do app", () => {
         .querySelector('.entrevistas-kpis [data-kpi="aptos"]')
         .classList.contains("is-ativo"),
     ).toBe(false);
-  });
-
-  it("na troca de área, o edital aberto sai e a condução relê os editais da nova área (a visão fica)", async () => {
-    const supabase = supabaseDaConducao();
-    await montar(supabase);
-    await abrirEdital();
-    expect(document.querySelector('[data-passo="convocacao"]')).not.toBeNull();
-
-    await act(async () => definirAreaAtual("projetos"));
-    await esperar();
-    expect(visao("conduzir").getAttribute("aria-checked")).toBe("true");
-    expect(document.querySelector('[data-passo="convocacao"]')).toBeNull();
-    expect(document.getElementById("entrevistasEdital").value).toBe("");
-    expect(chamadas(supabase, "listar_editais_entrevista").at(-1)[1]).toEqual({
-      p_area: "projetos",
-      p_todos: false,
-    });
-    expect(chamadas(supabase, "listar_roteiros_entrevista").at(-1)[1]).toEqual({
-      p_area: "projetos",
-    });
   });
 
   it("cada abertura pega a área de agora; na mesma área, relê por trás", async () => {
@@ -1394,7 +745,7 @@ describe("área atual do app", () => {
 
   it("outro usuário na mesma aba: o que era do anterior sai da tela", async () => {
     const avisar = [];
-    const supabase = supabaseDaConducao();
+    const supabase = supabaseFalso({ data: PAYLOAD, error: null });
     supabase.auth.onAuthStateChange = (ouvinte) => {
       avisar.push(ouvinte);
       return { data: { subscription: { unsubscribe() {} } } };
@@ -1404,12 +755,10 @@ describe("área atual do app", () => {
       act(async () => avisar.forEach((f) => f("SIGNED_IN", usuario)));
     await todos({ user: { id: "a" } });
     expect(linhasDaTabela()).toHaveLength(2);
-    await abrirEdital();
 
     await todos({ user: { id: "b" } });
     expect(painel.estado.obter().carregado).toBe(false);
     expect(painel.estado.obter().area).toBe("");
-    expect(painel.conducao.obter().edital).toBeNull();
     expect(naTela("Bruno")).toBe(false);
   });
 });
@@ -1500,282 +849,5 @@ describe("carga", () => {
     expect(status().textContent).toBe("Sessão não localizada");
     expect(supabase.rpc).not.toHaveBeenCalled();
     expect(secao.querySelector(".entrevistas-visoes")).toBeNull();
-  });
-
-  it("Atualizar na visão Conduzir relê os resultados, os editais e o edital aberto", async () => {
-    const supabase = supabaseDaConducao();
-    await montar(supabase);
-    await abrirEdital();
-    const antes = {
-      resultados: chamadas(supabase, "get_entrevistas_da_area").length,
-      editais: chamadas(supabase, "listar_editais_entrevista").length,
-      edital: chamadas(supabase, "obter_entrevistas_do_edital").length,
-    };
-    await clicar(secao.querySelector('[data-acao="atualizar"]'));
-    await esperar();
-    expect(chamadas(supabase, "get_entrevistas_da_area").length).toBe(
-      antes.resultados + 1,
-    );
-    expect(chamadas(supabase, "listar_editais_entrevista").length).toBe(
-      antes.editais + 1,
-    );
-    expect(chamadas(supabase, "obter_entrevistas_do_edital").length).toBe(
-      antes.edital + 1,
-    );
-  });
-});
-
-describe("agenda do dia em Conduzir entrevistas", () => {
-  const AGENDA = {
-    edital: { id: "m1", edital: "100/2026" },
-    pode_editar: false,
-    regra: {
-      versao: 1,
-      configuracao: { bancas: 2, nomes_das_bancas: ["Sala A", "Sala B"] },
-    },
-    itens: [
-      {
-        analise_id: "an2",
-        nome: "Candidato 2",
-        vaga: "V1",
-        cargo: "Enfermeiro",
-        data: "2026-10-06",
-        inicio: "09:00",
-        fim: "09:30",
-        banca: 2,
-        origem: "GERADA",
-      },
-      {
-        analise_id: "an1",
-        nome: "Candidato 1",
-        vaga: "V1",
-        cargo: "Enfermeiro",
-        data: "2026-10-06",
-        inicio: "08:00",
-        fim: "08:30",
-        banca: 1,
-        origem: "MANUAL",
-      },
-      {
-        analise_id: "an3",
-        nome: "Candidato 3",
-        vaga: "V1",
-        cargo: "Enfermeiro",
-        data: "2026-10-07",
-        inicio: "08:00",
-        fim: "08:30",
-        banca: 1,
-        origem: "GERADA",
-      },
-    ],
-    bancas: [],
-    historico: [],
-  };
-
-  it("mostra a agenda salva por horário, filtra por dia e banca e abre a ficha do convocado", async () => {
-    const supabase = supabaseDaConducao({
-      respostas: {
-        obter_agenda_entrevista: () => ({ data: AGENDA, error: null }),
-      },
-    });
-    await montar(supabase);
-    await abrirEdital();
-    expect(chamadas(supabase, "obter_agenda_entrevista")[0][1]).toEqual({
-      p_edital: "m1",
-    });
-    const cartao = document.querySelector('[data-passo="agenda"]');
-    const linhas = () =>
-      [...cartao.querySelectorAll("tbody tr[data-candidato]")].map((tr) =>
-        [...tr.querySelectorAll("td")].slice(0, 3).map((td) => td.textContent),
-      );
-    // Hoje (fora da agenda) cai no próximo dia com entrevista ou no último.
-    await escolher(
-      cartao.querySelector("[data-campo='agenda-dia']"),
-      "2026-10-06",
-    );
-    expect(linhas()).toEqual([
-      ["08:00–08:30", "Sala A", "Candidato 1"],
-      ["09:00–09:30", "Sala B", "Candidato 2"],
-    ]);
-    await escolher(cartao.querySelector("[data-campo='agenda-banca']"), "2");
-    expect(linhas()).toEqual([["09:00–09:30", "Sala B", "Candidato 2"]]);
-    await escolher(cartao.querySelector("[data-campo='agenda-banca']"), "");
-    // Só quem já está convocado no sistema abre a ficha.
-    expect(
-      cartao
-        .querySelector("tr[data-candidato='an2']")
-        .classList.contains("entrevistas-linha"),
-    ).toBe(false);
-    await clicar(cartao.querySelector("tr[data-candidato='an1']"));
-    expect(
-      document.getElementById("entrevistasFichaTitulo").textContent,
-    ).toContain("Candidato 1");
-  });
-
-  it("sem agenda salva (ou sem a migration), o cartão não aparece e a condução segue", async () => {
-    const supabase = supabaseDaConducao({
-      respostas: {
-        obter_agenda_entrevista: () => ({
-          data: null,
-          error: { code: "PGRST202", message: "função ausente" },
-        }),
-      },
-    });
-    await montar(supabase);
-    await abrirEdital();
-    expect(document.querySelector('[data-passo="agenda"]')).toBeNull();
-    expect(document.querySelector('[data-passo="ficha"]')).not.toBeNull();
-  });
-});
-
-describe("aspectos da entrevista (roteiro com Conceitua · Propriedade · Profundidade)", () => {
-  const ASPECTOS = [
-    { id: "s1", ordem: 1, nome: "Conceitua" },
-    { id: "s2", ordem: 2, nome: "Propriedade" },
-    { id: "s3", ordem: 3, nome: "Profundidade" },
-  ];
-  const editalComAspectos = () => ({
-    ...EDITAL,
-    configuracao: {
-      ...EDITAL.configuracao,
-      roteiro: { ...ROTEIRO, notas_eliminatorias: [], aspectos: ASPECTOS },
-    },
-    convocados: [
-      {
-        ...EDITAL.convocados[0],
-        avaliacoes: [
-          {
-            competencia: "c1",
-            avaliador: "a1",
-            nota: 1.33,
-            aspectos: [
-              { aspecto: "s1", nota: 2 },
-              { aspecto: "s2", nota: 1 },
-              { aspecto: "s3", nota: 1 },
-            ],
-          },
-        ],
-      },
-    ],
-  });
-
-  async function abrirFicha(supabase) {
-    await montar(supabase);
-    await abrirEdital();
-    await clicar(
-      document.querySelector("#entrevistasFicha tr.entrevistas-linha"),
-    );
-    return document.getElementById("entrevistasFichaDoCandidato");
-  }
-
-  it("3 campos por avaliador, média ao lado, e grava todos os aspectos", async () => {
-    const supabase = supabaseDaConducao({ edital: editalComAspectos() });
-    const ficha = await abrirFicha(supabase);
-    const campos = [...ficha.querySelectorAll("input.entrevistas-nota")];
-    // 2 competências × 2 avaliadores × 3 aspectos.
-    expect(campos).toHaveLength(12);
-    expect(campos.slice(0, 3).map((c) => c.value)).toEqual(["2", "1", "1"]);
-    expect(ficha.querySelector(".entrevistas-ficha-media").textContent).toBe(
-      "= 1,33",
-    );
-    // Beto em c1: 3 aspectos (2, 2, 3) → 2,33; a média da banca 1,83 fica abaixo do mínimo.
-    await digitar(campos[3], "2");
-    await digitar(campos[4], "2");
-    await digitar(campos[5], "3");
-    expect(
-      ficha.querySelectorAll(".entrevistas-ficha-media")[1].textContent,
-    ).toBe("= 2,33");
-    expect(ficha.querySelector('[data-competencia="1"]').dataset.situacao).toBe(
-      "reprova",
-    );
-    await clicar(
-      ficha.querySelector('.entrevistas-comparecimento button[data-valor="S"]'),
-    );
-    await clicar(ficha.querySelector('button[type="submit"]'));
-    await esperar();
-    const [[, argumentos]] = chamadas(supabase, "lancar_notas_entrevista");
-    expect(argumentos.p_dados.notas).toEqual([
-      {
-        competencia: "c1",
-        avaliador: "a2",
-        aspectos: [
-          { aspecto: "s1", nota: 2 },
-          { aspecto: "s2", nota: 2 },
-          { aspecto: "s3", nota: 3 },
-        ],
-      },
-    ]);
-  });
-
-  it("aspecto faltando não salva e avisa; apagar todos manda aspectos nulo", async () => {
-    const supabase = supabaseDaConducao({ edital: editalComAspectos() });
-    const ficha = await abrirFicha(supabase);
-    const campos = [...ficha.querySelectorAll("input.entrevistas-nota")];
-    await digitar(campos[3], "4");
-    await clicar(ficha.querySelector('button[type="submit"]'));
-    expect(ficha.textContent).toContain(
-      "Complete os 3 aspectos de Beto em “Políticas públicas”",
-    );
-    expect(chamadas(supabase, "lancar_notas_entrevista")).toHaveLength(0);
-    await digitar(campos[3], "");
-    for (const campo of campos.slice(0, 3)) await digitar(campo, "");
-    await clicar(ficha.querySelector('button[type="submit"]'));
-    await esperar();
-    const [[, argumentos]] = chamadas(supabase, "lancar_notas_entrevista");
-    expect(argumentos.p_dados.notas).toEqual([
-      { competencia: "c1", avaliador: "a1", aspectos: null },
-    ]);
-  });
-
-  it("os botões da escala preenchem o campo em foco e passam ao próximo", async () => {
-    const ficha = await abrirFicha(
-      supabaseDaConducao({ edital: editalComAspectos() }),
-    );
-    const campos = [...ficha.querySelectorAll("input.entrevistas-nota")];
-    await act(async () => campos[3].focus());
-    await clicar(
-      ficha.querySelector(
-        '[data-competencia="1"] .entrevistas-botao-de-nota[data-nota="5"]',
-      ),
-    );
-    expect(campos[3].value).toBe("5");
-    expect(document.activeElement).toBe(campos[4]);
-  });
-
-  it("Voltar à lista sai do modo de análise e o topo volta", async () => {
-    const ficha = await abrirFicha(
-      supabaseDaConducao({ edital: editalComAspectos() }),
-    );
-    expect(document.querySelector(".ui-topo")).toBeNull();
-    await clicar(ficha.querySelector('[data-acao="voltar-a-lista"]'));
-    expect(document.getElementById("entrevistasFichaDoCandidato")).toBeNull();
-    expect(document.querySelector(".ui-topo")).not.toBeNull();
-    expect(document.querySelector("#entrevistasFicha")).not.toBeNull();
-  });
-
-  it("o editor do roteiro preenche o modelo e grava os aspectos", async () => {
-    const supabase = supabaseDaConducao();
-    await montar(supabase);
-    await clicar(visao("roteiros"));
-    await esperar();
-    const editar = [
-      ...document.querySelectorAll('[data-roteiro="r1"] button'),
-    ].find((b) => b.textContent.includes("Editar (cria versão 2)"));
-    await clicar(editar);
-    const editor = document.getElementById("entrevistasEditorDeRoteiro");
-    await clicar(editor.querySelector('[data-acao="modelo-de-aspectos"]'));
-    // Com aspectos, as médias eliminatórias saem (vale o mínimo da competência).
-    expect(editor.textContent).toContain(
-      "Com aspectos, elimina quem fica abaixo do mínimo",
-    );
-    await clicar(editor.querySelector('button[type="submit"]'));
-    await esperar();
-    const [[, { p_dados }]] = chamadas(supabase, "salvar_roteiro_entrevista");
-    expect(p_dados.aspectos).toEqual([
-      { nome: "Conceitua" },
-      { nome: "Propriedade" },
-      { nome: "Profundidade" },
-    ]);
-    expect(p_dados.notas_eliminatorias).toEqual([]);
   });
 });

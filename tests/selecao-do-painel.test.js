@@ -314,7 +314,7 @@ describe("registro da aba", async () => {
       view: "selecao",
       recurso: "selecao",
       icone: "funnel",
-      ordem: 10,
+      ordem: 11,
       beta: true,
     });
     expect(NOMES_DE_ICONES).toContain("funnel");

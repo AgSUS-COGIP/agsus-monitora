@@ -1,31 +1,58 @@
 # `src/modulos/entrevistas/` — Entrevistas
 
-A tela `#page-entrevistas` (view `entrevistas`), módulo do app desde a Etapa 2: monta na própria
-`<section>` por `montarEntrevistas()` (`src/main.js` → `window.entrevistasController`); o legado
-chama `render()` ao navegar (`TELAS_REACT`). Área = a atual do app; sessão, tema, aviso, tela
-cheia e comemorações = os do app.
+Duas entradas do menu, com o mesmo recurso de permissão (`entrevistas`), como o Painel das análises
+ao lado da Avaliação documental (acompanhar × fazer):
 
-Três visões no `Segmentado` do topo: **Resultados** (planilha + entrevistas conduzidas no sistema),
-**Conduzir entrevistas** (edital → configuração, convocação, ficha de notas) e **Roteiros**
-(versões).
+- **Painel de entrevistas** (view `entrevistas`, `#page-entrevistas`, `montarEntrevistas()` →
+  `window.entrevistasController`): só leitura, para gestão e coordenação — filtros, KPIs, andamento
+  por edital e por vaga em cartões (barra nas cores da Avaliação documental), agenda dos próximos
+  dias (com um edital), gráficos, pendências (inclusive sem comparecimento, sem nota e sem parecer),
+  empatados na nota da entrevista com o aviso "o desempate é feito na Classificação", tabela,
+  exportação e a gaveta do candidato. O edital de treinamento fica fora (o cache do painel,
+  `private."FC_MONTAR_ENTREVISTAS_AREA"`, não o lê).
+- **Conduzir entrevistas** (view `conduzir-entrevistas`, `#page-conduzir-entrevistas`,
+  `montarConducaoDeEntrevistas()` → `window.conduzirEntrevistasController`): o fazer, para secretaria
+  e avaliadores. Visões no topo: **Fila** (abre em Hoje pela agenda salva na Classificação › Agenda;
+  sem entrevista hoje, Próximos; sem agenda, Todos; vaga e situações — aguardando, em andamento,
+  concluída, faltou —; o contador "X de Y hoje" no topo; o cartão abre a ficha em tela cheia, com
+  "Salvar e abrir o próximo" na ordem da fila; concluir o dia comemora uma vez) e **Preparar**
+  (configuração e convocação do edital e os **roteiros** da área — a configuração do gestor, como
+  Regra e Equipe ficam na própria tela da Avaliação documental). O último edital aberto na área
+  fica no navegador (só conveniência); com um só na lista, ele abre sozinho.
+
+Links antigos (`entrevistas:conduzir`, `entrevistas:roteiros`) vão para Conduzir entrevistas
+(`destinoDaTela`, `src/lib/navegacao.js`; o controlador tem `abrirVisao` e `abrirEdital`).
+
+**Desempate**: uma fonte só, a regra de classificação do edital. `obter_entrevistas_do_edital` traz
+`regra_classificacao.desempate` e `empate_final` (migration `20261008130000`); Preparar e o editor do
+roteiro mostram os critérios só para ler, com "Editar na Classificação". O texto livre antigo do
+roteiro (`TB_ROTEIRO_ENTREVISTA."DS_DESEMPATE"`) fica no banco: a tela não o mostra nem o edita e o
+repassa sem mudança a cada versão nova.
 
 A convocação é uma só: a lista CONVOCACAO da Classificação (a última gerada, que vem em
-`obter_entrevistas_do_edital.lista_convocacao`). O passo 2 mostra essa lista e
+`obter_entrevistas_do_edital.lista_convocacao`). Preparar › Convocação mostra essa lista e
 `convocar_para_entrevista(p_edital, p_lista, p_analises)` registra para a ficha só quem está nela
 (migration `20261005150000_convocacao_unica_da_entrevista.sql`). Sem lista gerada, o cálculo atual
 do motor (`obter_classificacao_do_edital`, só para ver) e o atalho para gerar na Classificação.
-Vagas imediatas e regra de convocação não se configuram aqui: o passo 1 mostra as da Classificação,
+Vagas imediatas e regra de convocação não se configuram aqui: Preparar › Configuração mostra as da Classificação,
 só leitura, com o botão para onde se mudam (Editais, Lista de aprovados, Classificação).
 
 ```
-entrevistas.jsx         <TelaDeEntrevistas> e montarEntrevistas() (área atual, troca de área, controlador)
-estado.js               store de "Resultados": carga da área (cópia guardada), gaveta, CSV, comemorações
-estado-da-conducao.js   store da condução e dos roteiros: editais, edital aberto, escritas (RPC), uma por vez
-paineis.jsx             topo (visões, status, ações), filtros, KPIs, recorte, gráficos, pendências
-tabela.jsx              tabela de resultados (TabelaInfinita) e o selo do parecer
+entrevistas.jsx         Painel de entrevistas: <TelaDeEntrevistas> e montarEntrevistas()
+estado.js               store do painel: carga da área (cópia guardada), gaveta, CSV, agenda do
+                        edital do recorte (obter_agenda_entrevista), comemorações
+andamento.tsx           andamento por edital e vaga (cartões e barra), agenda dos próximos dias,
+                        aviso dos empatados
+paineis.jsx             topo (status, ações), filtros, KPIs, recorte, gráficos, pendências
+tabela.jsx              tabela de resultados (TabelaInfinita), selo do parecer e do empate
 gaveta.jsx              detalhe da entrevista (caminho do candidato, critérios) e aprovados sem entrevista
-conducao.jsx            "Conduzir entrevistas": edital, liberação (admin global), os três passos;
-                        regra e vagas da Classificação (só leitura) e a lista de convocação
+conduzir.tsx            Conduzir entrevistas: <TelaDeConducao>, visões Fila/Preparar, contador do dia,
+                        comemoração, montarConducaoDeEntrevistas() (render, abrirVisao, abrirEdital)
+fila-do-dia.tsx         a fila em cartões (avatar, horário, situação, notas), recortes e situações
+tipos.ts                contratos da tela nova com o estado da condução (JS)
+estado-da-conducao.js   store da condução e dos roteiros: editais, edital aberto, escritas (RPC), uma por vez
+conducao.jsx            SeletorDoEdital, PrepararEdital (configuração e convocação; regra, desempate e
+                        vagas da Classificação só leitura), DesempateDaClassificacao, liberação (admin global)
 ficha.jsx               ficha de notas em modo de análise (tela inteira, como a da Avaliação documental):
                         topo preso, competências com os avaliadores lado a lado (aspectos: um campo por
                         aspecto e a média), prévia do parecer na lateral, barra presa; componente
@@ -33,16 +60,17 @@ ficha.jsx               ficha de notas em modo de análise (tela inteira, como a
                         Enter avança, Ctrl+Enter salva, Esc volta; celular: uma competência por vez
 campo-de-nota.tsx       campo compacto da nota e os botões da escala (0 a 5)
 aspectos-do-roteiro.tsx aspectos do roteiro no editor (e o modelo Conceitua · Propriedade · Profundidade)
-agenda-do-dia.jsx       "Agenda do dia" (só leitura): a agenda salva na Classificação › Agenda,
-                        por dia e banca; a linha do convocado abre a ficha
-roteiros.jsx            cartões dos roteiros e o editor (gaveta), com versões
+roteiros.jsx            cartões dos roteiros e o editor (gaveta), com versões; desempate só leitura
 partes.jsx              composição da banca, botão de linha
 marcos.js               marco "vaga pronta" (comemoração)
-entrevistas.css         só o que é desta tela (tokens); o resto vem de src/ui/
+entrevistas.css         só o que é destas telas (tokens); o resto vem de src/ui/
 ```
 
-Regras puras em `src/lib/` (`entrevistas-do-painel.js`, `conducao-de-entrevista.js`,
+Regras puras em `src/lib/` (`entrevistas-do-painel.js`, `painel-de-entrevistas.ts` — andamento,
+empates, agenda dos próximos dias —, `fila-de-conducao.ts` — fila, situações, recortes, contador —,
+`conducao-de-entrevista.js`,
 `convocacao-da-entrevista.js` — a lista da Classificação por vaga, quem está na ficha, avisos —,
-`roteiro-de-entrevista.js`, `comemoracao.js`). Testes: `tests/modulos/entrevistas.test.js`,
+`roteiro-de-entrevista.js`, `comemoracao.js`). Testes: `tests/modulos/entrevistas.test.js` (painel), `tests/modulos/conduzir-entrevistas.test.js`,
+`tests/painel-e-conducao-de-entrevistas.test.js`,
 `tests/convocacao-da-entrevista.test.js`, `tests/conducao-de-entrevista.test.js` e
 `tests/convocacao-unica-da-entrevista-migration.test.js`.

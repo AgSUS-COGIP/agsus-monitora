@@ -7,8 +7,9 @@
   - A tela atual, para "Compartilhar esta tela": a página e a área vêm do estado
     que a Aya já acompanha (src/modulos/aya/estado.js, só leitura) e o edital
     aberto, de quem o abre (`definirEditalDaTela`).
-  - Ir para um link recebido: só dentro do app (view, área, seção, edital e
-    ficha da avaliação documental), pela navegação do legado
+  - Ir para um link recebido: só dentro do app (view, área, seção, edital —
+    aberto na Classificação, em Conduzir entrevistas e na Avaliação
+    documental — e ficha da avaliação documental), pela navegação do legado
     (`window.navigate`); o link é conferido de novo (`linkDaTela`) antes de
     qualquer coisa. A ficha abre pela Fila da Avaliação documental
     (`avaliacaoDocumentalController`): o banco confere a permissão de quem
@@ -112,6 +113,10 @@ export function irParaLink(
     void janela.classificacaoController?.estado
       ?.escolherEdital?.(link.edital.id)
       ?.catch?.(() => {});
+  if (link.edital && link.view === "conduzir-entrevistas")
+    void Promise.resolve(
+      janela.conduzirEntrevistasController?.abrirEdital?.(link.edital.id),
+    ).catch(() => {});
   if (link.edital && link.view === "avaliacao-documental")
     void abrirNaAvaliacaoDocumental(link, janela).catch(() => {});
   return true;

@@ -30,6 +30,14 @@ dos PDFs oficiais).
 **fonte:** src/lib/classificacao/catalogo.js; src/lib/classificacao/motor.js
 **abrir:** classificacao
 
+## Desempate da entrevista é na Classificação
+
+**perguntas:** desempate da entrevista na classificacao | empate na nota da entrevista | onde desempato a entrevista | editar na classificacao | criterios de desempate do roteiro sumiram | desempate do roteiro
+**resposta:** O desempate de quem empata na nota da entrevista é o da regra de classificação do edital: uma fonte só, aqui em Classificação › Regra (critérios do catálogo, a ordem e o empate final). O Painel de entrevistas marca os empatados e leva para cá; Conduzir entrevistas › Preparar e o editor do roteiro mostram os mesmos critérios só para ler, com "Editar na Classificação". O roteiro não tem mais critérios próprios (o texto antigo ficou guardado, sem uso). Na lista Resultado da entrevista, o empate que sobra fica na mesma posição; o desempate vale no resultado final.
+**fato:** O desempate da entrevista se configura em Classificação › Regra; o roteiro só mostra os critérios.
+**fonte:** src/lib/convocacao-da-entrevista.js; src/modulos/entrevistas/conducao.jsx; supabase/migrations/20261008130000_conduzir_entrevistas_no_menu.sql
+**abrir:** classificacao
+
 ## Empate final e sorteio
 
 **perguntas:** empate final | como funciona o empate final | como funciona o empate final e o sorteio | sorteio do empate | semente do sorteio | decisao manual do empate
@@ -55,7 +63,7 @@ dos PDFs oficiais).
 ## Convocação para entrevista
 
 **perguntas:** convocacao para entrevista da classificacao | limite da convocacao | como funciona o limite da convocacao | quantos candidatos sao convocados
-**resposta:** A lista de convocação são os primeiros da avaliação documental até o limite da regra: N vezes as vagas imediatas da vaga, ou, na vaga só de cadastro reserva, até a posição definida (ex.: 5 vezes as vagas e até a 10ª no 83/2026; 6 vezes e até a 5ª no 100/2026). Cargos podem ter exceção (Enfermeiro e Técnico de Enfermagem: 10 vezes e até a 20ª). Se houver empate no limite, a regra diz se os empatados entram todos. No resultado final, quem estava dentro do limite e não tem entrevista lançada vira aviso. É a única convocação do sistema: Entrevistas › Conduzir entrevistas convoca a partir da última lista de convocação gerada aqui, e só quem está nela; por isso, gere a lista antes de convocar e gere de novo quando a regra ou as vagas mudarem.
+**resposta:** A lista de convocação são os primeiros da avaliação documental até o limite da regra: N vezes as vagas imediatas da vaga, ou, na vaga só de cadastro reserva, até a posição definida (ex.: 5 vezes as vagas e até a 10ª no 83/2026; 6 vezes e até a 5ª no 100/2026). Cargos podem ter exceção (Enfermeiro e Técnico de Enfermagem: 10 vezes e até a 20ª). Se houver empate no limite, a regra diz se os empatados entram todos. No resultado final, quem estava dentro do limite e não tem entrevista lançada vira aviso. É a única convocação do sistema: Conduzir entrevistas › Preparar convoca a partir da última lista de convocação gerada aqui, e só quem está nela; por isso, gere a lista antes de convocar e gere de novo quando a regra ou as vagas mudarem.
 **fonte:** src/lib/classificacao/motor.js; supabase/migrations/20261005150000_convocacao_unica_da_entrevista.sql
 **abrir:** classificacao
 
