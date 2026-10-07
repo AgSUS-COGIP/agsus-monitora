@@ -658,18 +658,25 @@ table.entrevistas-tabela {
   gap: var(--space-1-5);
   margin-top: var(--space-1-5);
 }
+/* Chips no desenho da ficha da Avaliação documental (pílula discreta, valor em destaque). */
 .entrevistas-chip {
   display: inline-flex;
   align-items: center;
-  height: 24px;
+  gap: var(--space-1);
+  min-height: 24px;
   padding: 0 var(--space-2);
-  border-radius: var(--radius-sm);
-  background: var(--surface-hover);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-full);
+  background: var(--surface-raised);
   color: var(--text-secondary);
   font-size: var(--text-caption);
   font-weight: var(--font-weight-medium);
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
+}
+.entrevistas-chip strong {
+  color: var(--text-primary);
+  font-weight: var(--font-weight-semibold);
 }
 .entrevistas-analise-controles {
   display: flex;
@@ -701,63 +708,8 @@ table.entrevistas-tabela {
   text-align: center;
 }
 
-/* Popover (o "i" do cabeçalho e o "?" do rodapé) */
-.entrevistas-popover {
-  position: relative;
-  display: inline-flex;
-}
-.entrevistas-popover-botao {
-  display: inline-grid;
-  place-items: center;
-  width: 24px;
-  height: 24px;
-  padding: 0;
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-full);
-  background: var(--surface-card);
-  color: var(--text-secondary);
-  font: inherit;
-  font-size: var(--text-caption);
-  font-weight: var(--font-weight-semibold);
-  cursor: pointer;
-  transition:
-    background-color var(--duration-fast) var(--ease-standard),
-    color var(--duration-fast) var(--ease-standard);
-}
-.entrevistas-popover-botao:hover,
-.entrevistas-popover-botao[aria-expanded="true"] {
-  background: var(--surface-hover);
-  color: var(--text-primary);
-}
-.entrevistas-popover-botao:focus-visible {
-  outline: 2px solid var(--focus-ring);
-  outline-offset: 2px;
-}
-.entrevistas-popover-painel {
-  position: absolute;
-  top: calc(100% + var(--space-1-5));
-  z-index: 10;
-  display: grid;
-  gap: var(--space-2);
-  width: max-content;
-  min-width: 220px;
-  max-width: min(340px, calc(100vw - 2 * var(--space-4)));
-  padding: var(--space-4);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-lg);
-  background: var(--surface-card);
-  box-shadow: var(--shadow-md);
-  color: var(--text-primary);
-  font-size: var(--text-body-sm);
-  animation: entrevistas-surgir var(--duration-base) var(--ease-standard);
-}
-.entrevistas-popover-painel[data-lado="direita"] {
-  right: 0;
-}
-.entrevistas-popover-painel[data-lado="esquerda"] {
-  left: 0;
-}
-.entrevistas-popover-painel[data-acima] {
+/* Popover de src/ui/ (o "i" do cabeçalho e o "?" do rodapé): o do rodapé abre para cima. */
+.entrevistas-popover-acima .ui-popover-painel {
   top: auto;
   bottom: calc(100% + var(--space-1-5));
 }
@@ -1473,7 +1425,6 @@ table.entrevistas-tabela {
   }
 }
 @media (prefers-reduced-motion: reduce) {
-  .entrevistas-popover-painel,
   .entrevistas-celula-dica,
   .entrevistas-aba-da-ficha-check,
   .entrevistas-falta,
@@ -1572,12 +1523,10 @@ table.entrevistas-tabela {
     gap: var(--space-2);
     padding: var(--space-2) var(--space-3);
   }
-  .entrevistas-analise-barra .entrevistas-popover {
+  .entrevistas-analise-barra .ui-popover {
     display: none;
   }
-  .entrevistas-popover-botao {
-    width: 28px;
-    height: 28px;
+  .entrevistas-chips .ui-popover-botao {
     min-height: 28px;
   }
   .entrevistas-gravacao {

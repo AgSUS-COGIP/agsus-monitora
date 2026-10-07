@@ -1,5 +1,5 @@
+import { Popover } from "../../ui/popover.tsx";
 import { Segmentado } from "../../ui/index.js";
-import { PopoverDaFicha } from "./popover-da-ficha.tsx";
 import { numeroBR } from "./resultado-da-ficha.tsx";
 
 /*
@@ -41,7 +41,11 @@ export type PropriedadesDoCabecalho = {
   aoVoltar: () => void;
 };
 
-const COMPARECIMENTO = [
+const COMPARECIMENTO: ReadonlyArray<{
+  valor: "S" | "N" | "";
+  rotulo: string;
+  icone: string;
+}> = [
   { valor: "S", rotulo: "Compareceu", icone: "fa-user-check" },
   { valor: "N", rotulo: "Faltou", icone: "fa-user-xmark" },
 ];
@@ -55,16 +59,25 @@ const PARECER: Record<string, string> = {
 export function CabecalhoDaFicha(p: PropriedadesDoCabecalho) {
   const chips = [
     p.notaDaAnalise !== null && p.notaDaAnalise !== undefined
-      ? { chave: "analise", texto: `Análise ${numeroBR(p.notaDaAnalise)}` }
+      ? {
+          chave: "analise",
+          rotulo: "Análise",
+          valor: numeroBR(p.notaDaAnalise),
+        }
       : null,
-    p.modalidade ? { chave: "modalidade", texto: p.modalidade } : null,
+    p.modalidade
+      ? { chave: "modalidade", rotulo: "", valor: p.modalidade }
+      : null,
     p.roteiro
       ? {
           chave: "roteiro",
-          texto: `Roteiro v${p.roteiro.versao ?? "—"}${p.aspectos ? ` · ${p.aspectos} aspectos` : ""}`,
+          rotulo: "Roteiro",
+          valor: `v${p.roteiro.versao ?? "—"}${p.aspectos ? ` · ${p.aspectos} aspectos` : ""}`,
         }
       : null,
-  ].filter((c): c is { chave: string; texto: string } => Boolean(c));
+  ].filter((c): c is { chave: string; rotulo: string; valor: string } =>
+    Boolean(c),
+  );
   const vaga = [p.vaga && `Vaga ${p.vaga}`, p.cargo]
     .filter(Boolean)
     .join(" · ");
@@ -97,10 +110,11 @@ export function CabecalhoDaFicha(p: PropriedadesDoCabecalho) {
               className="entrevistas-chip"
               data-chip={c.chave}
             >
-              {c.texto}
+              {c.rotulo ? `${c.rotulo} ` : null}
+              <strong>{c.valor}</strong>
             </span>
           ))}
-          <PopoverDaFicha
+          <Popover
             rotulo="Detalhes da ficha"
             gatilho={<span className="entrevistas-popover-i">i</span>}
             lado="esquerda"
@@ -125,7 +139,7 @@ export function CabecalhoDaFicha(p: PropriedadesDoCabecalho) {
                 </div>
               ) : null}
             </dl>
-          </PopoverDaFicha>
+          </Popover>
         </div>
       </div>
       <div className="entrevistas-analise-controles">
@@ -134,9 +148,11 @@ export function CabecalhoDaFicha(p: PropriedadesDoCabecalho) {
           className="entrevistas-comparecimento"
           tour="entrevistas-ficha-comparecimento"
           opcoes={COMPARECIMENTO}
-          valor={p.compareceu}
+          valor={p.compareceu ?? ""}
           desabilitado={!p.podeEditar || p.salvando}
-          aoMudar={(valor: "S" | "N") => p.aoMudarComparecimento(valor)}
+          aoMudar={(valor: "S" | "N" | "") => {
+            if (valor) p.aoMudarComparecimento(valor);
+          }}
         />
         {p.mostrarBanca ? (
           <label className="entrevistas-ficha-banca">

@@ -26,11 +26,11 @@ import {
   rotuloDoPeso,
 } from "../../lib/roteiro-de-entrevista.js";
 import { Aviso, classes, Segmentado } from "../../ui/index.js";
+import { Popover } from "../../ui/popover.tsx";
 import { AbasDaFicha } from "./abas-da-ficha.tsx";
 import { CabecalhoDaFicha } from "./cabecalho-da-ficha.tsx";
 import { nivelDaNota } from "./campo-de-nota.tsx";
 import { MatrizDeNotas } from "./matriz-de-notas.tsx";
-import { PopoverDaFicha } from "./popover-da-ficha.tsx";
 import { numeroBR, ResultadoDaFicha } from "./resultado-da-ficha.tsx";
 
 /*
@@ -147,10 +147,10 @@ function Atalhos() {
     ["Esc", "volta à lista"],
   ];
   return (
-    <PopoverDaFicha
+    <Popover
       rotulo="Atalhos do teclado"
       gatilho="?"
-      acima
+      className="entrevistas-popover-acima"
       acao="atalhos-da-ficha"
     >
       <dl className="entrevistas-atalhos">
@@ -163,7 +163,7 @@ function Atalhos() {
           </div>
         ))}
       </dl>
-    </PopoverDaFicha>
+    </Popover>
   );
 }
 

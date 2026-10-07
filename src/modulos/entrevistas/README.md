@@ -65,7 +65,6 @@ matriz-de-notas.tsx     a matriz competências × aspectos (ou "Nota") com o flu
 campo-de-nota.tsx       a célula grande da matriz (dica do nível em foco, pulso ao preencher)
 resultado-da-ficha.tsx  a lateral viva: total no anel com o mínimo, barras por competência, parecer e
                         motivos, "X de Y notas"
-popover-da-ficha.tsx    o "i" e o "?" (atalhos) da ficha
 aspectos-do-roteiro.tsx aspectos do roteiro no editor (e o modelo Conceitua · Propriedade · Profundidade)
 roteiros.jsx            cartões dos roteiros e o editor (gaveta), com versões; desempate só leitura
 partes.jsx              composição da banca, botão de linha
