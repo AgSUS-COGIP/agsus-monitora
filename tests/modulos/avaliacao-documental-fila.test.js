@@ -351,7 +351,7 @@ describe("Fila (AM-6)", () => {
       p_ficha: "f1",
     });
     const gaveta = document.querySelector("[data-tour='avd-ficha']");
-    expect(gaveta.textContent).toContain("Candidato 7001");
+    expect(gaveta.textContent).toContain("Código 7001");
     expect(gaveta.textContent).toContain(
       "Só leitura: Em uso por outra pessoa.",
     );
@@ -581,15 +581,16 @@ describe("modo de análise: a ficha ocupa a tela", () => {
     await abrirPelaLista("7002");
     const analise = secao.querySelector("[data-tour='avd-ficha']");
     expect(analise.tagName).toBe("SECTION");
+    // O nome grande com o código; os chips só com o essencial (a ART com a dica).
     expect(analise.querySelector("h2").textContent).toBe(
-      "Candidato 7002 · Pessoa 7002",
+      "Pessoa 7002Código 7002",
     );
     expect(analise.querySelector(".avd-analise-dados").textContent).toContain(
-      "Nota declarada (ART)20",
+      "Declarada 20",
     );
     expect(
       analise.querySelector(
-        ".avd-analise-dados dt[title^='ART: Autodeclaração']",
+        ".avd-analise-dados .avd-chip[title^='ART: Autodeclaração']",
       ),
     ).not.toBeNull();
     expect(secao.querySelector("[data-tour='avd-fila-tabela']")).toBeNull();
@@ -643,13 +644,13 @@ describe("modo de análise: a ficha ocupa a tela", () => {
     await esperar();
     expect(
       secao.querySelector("[data-tour='avd-ficha'] h2").textContent,
-    ).toContain("Candidato 7002");
+    ).toContain("Código 7002");
     expect(navegacao().textContent).toContain("2 de 3");
     await clicar(secao.querySelector("[data-acao='ficha-proxima']"));
     await esperar();
     expect(
       secao.querySelector("[data-tour='avd-ficha'] h2").textContent,
-    ).toContain("Candidato 7001");
+    ).toContain("Código 7001");
     expect(secao.querySelector("[data-acao='ficha-proxima']").disabled).toBe(
       true,
     );
@@ -657,7 +658,7 @@ describe("modo de análise: a ficha ocupa a tela", () => {
     await esperar();
     expect(
       secao.querySelector("[data-tour='avd-ficha'] h2").textContent,
-    ).toContain("Candidato 7002");
+    ).toContain("Código 7002");
     const reservas = supabase.rpc.mock.calls
       .filter(([n]) => n === "reservar_ficha")
       .map(([, a]) => a.p_ficha);
@@ -686,7 +687,7 @@ describe("modo de análise: a ficha ocupa a tela", () => {
     });
     expect(
       secao.querySelector("[data-tour='avd-ficha'] h2").textContent,
-    ).toContain("Candidato 7003");
+    ).toContain("Código 7003");
   });
 });
 

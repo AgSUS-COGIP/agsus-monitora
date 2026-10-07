@@ -341,10 +341,11 @@ function AcaoEmLote({ fila, acao, dados, aoFechar }) {
 
 /*
   O modo de análise: a ficha aberta ocupa a área de conteúdo (a lista some;
-  fica só o menu lateral). Topo fixo e compacto (Voltar à fila, vaga,
-  candidato, posição, nota declarada, modalidade, reserva e Anterior /
-  Próxima entre as fichas da lista filtrada, salvando antes), e o conteúdo
-  da ficha em duas colunas (ficha/ficha.jsx). Esc também volta à fila.
+  fica só o menu lateral). Daqui saem os dados do cabeçalho (candidato, vaga,
+  chips, o "i" com situação, responsável, reserva e regra, Anterior /
+  Próxima entre as fichas da lista filtrada, salvando antes), que a ficha
+  desenha preso ao alto com o stepper (ficha/ficha.jsx), e os avisos logo
+  abaixo dele. Esc também volta à fila.
 */
 function ModoDeAnalise({
   fila,
@@ -441,6 +442,62 @@ function ModoDeAnalise({
     posicao >= 0 && posicao < navegaveis.length - 1
       ? navegaveis[posicao + 1]
       : null;
+  const meu = reservaVigente(f.reserva) && f.reserva.usuario === dados.eu;
+  // O cabeçalho é desenhado pela ficha (ficha/cabecalho-da-ficha.tsx), com o nível que ela calcula.
+  const topo = {
+    codigo: String(f.codigo ?? ""),
+    nome: f.nome,
+    vaga: f.vaga,
+    cargo: f.cargo,
+    declarada: f.art === null || f.art === undefined ? null : nota(f.art),
+    dicaDaDeclarada: DICA_DA_ART,
+    posicao: f.posicao ? ordinal(f.posicao) : null,
+    modalidade: f.modalidade || null,
+    informacoes: [
+      {
+        rotulo: "Situação",
+        valor: <Selo tom={situacao.tom}>{situacao.rotulo || f.situacao}</Selo>,
+      },
+      { rotulo: "Responsável", valor: f.responsavel_nome || "—" },
+      { rotulo: "Reserva", valor: textoDaReserva(f.reserva, dados.eu) || "—" },
+      { rotulo: ROTULO_DA_ART, valor: nota(f.art) },
+      ...(f.versao_regra
+        ? [{ rotulo: "Regra", valor: `v${f.versao_regra}` }]
+        : []),
+      ...(f.motivo_saida
+        ? [{ rotulo: "Saiu do lote", valor: f.motivo_saida }]
+        : []),
+    ],
+    fimDaMinhaReserva: meu ? f.reserva.expira : null,
+    decisao: inscrito ? (
+      <span className="avd-inline avd-analise-decisao">
+        <SeloDaDecisao c={inscrito} />
+        {dados.pode_coordenar ? (
+          <RevogarDecisao
+            c={inscrito}
+            aoRevogar={async (motivo) => {
+              const r = await fila.revogarDecisao([inscrito], motivo);
+              if (r.ok) await fila.abrir(f.id);
+              return r;
+            }}
+          />
+        ) : null}
+      </span>
+    ) : null,
+    voltar,
+    navegacao: {
+      posicao,
+      total: navegaveis.length,
+      anterior: anterior
+        ? { id: anterior.ficha.id, codigo: anterior.codigo }
+        : null,
+      proxima: proxima
+        ? { id: proxima.ficha.id, codigo: proxima.codigo }
+        : null,
+      abrindo,
+      ir: (id) => void ir(id),
+    },
+  };
   return (
     <section
       className="avd-analise"
@@ -448,152 +505,6 @@ function ModoDeAnalise({
       aria-labelledby="avdFichaTitulo"
       data-tour="avd-ficha"
     >
-      <header className="avd-analise-topo" data-tour="avd-ficha-topo">
-        <button
-          type="button"
-          className="btn secondary small"
-          data-acao="voltar-a-fila"
-          onClick={() => void voltar()}
-        >
-          <i className="fa-solid fa-arrow-left" aria-hidden="true" /> Voltar à
-          fila
-        </button>
-        <div className="avd-analise-identidade">
-          <span className="ui-texto-secundario">
-            {[`Vaga ${f.vaga}`, f.cargo].filter(Boolean).join(" · ")}
-          </span>
-          <h2 id="avdFichaTitulo">
-            Candidato {f.codigo}
-            {f.nome ? <span> · {f.nome}</span> : null}
-          </h2>
-          {inscrito ? (
-            <span className="avd-inline">
-              <SeloDaDecisao c={inscrito} />
-              {dados.pode_coordenar ? (
-                <RevogarDecisao
-                  c={inscrito}
-                  aoRevogar={async (motivo) => {
-                    const r = await fila.revogarDecisao([inscrito], motivo);
-                    if (r.ok) await fila.abrir(f.id);
-                    return r;
-                  }}
-                />
-              ) : null}
-            </span>
-          ) : null}
-        </div>
-        <dl className="avd-analise-dados" aria-label="Cabeçalho da ficha">
-          <div>
-            <dt>Posição</dt>
-            <dd>{f.posicao ? ordinal(f.posicao) : "—"}</dd>
-          </div>
-          <div>
-            <dt title={DICA_DA_ART}>{ROTULO_DA_ART}</dt>
-            <dd>{nota(f.art)}</dd>
-          </div>
-          <div>
-            <dt>Modalidade</dt>
-            <dd>{f.modalidade || "—"}</dd>
-          </div>
-          <div>
-            <dt>Situação</dt>
-            <dd>
-              <Selo tom={situacao.tom}>{situacao.rotulo || f.situacao}</Selo>
-            </dd>
-          </div>
-          <div>
-            <dt>Responsável</dt>
-            <dd>{f.responsavel_nome || "—"}</dd>
-          </div>
-          <div>
-            <dt>Reserva</dt>
-            <dd>{textoDaReserva(f.reserva, dados.eu) || "—"}</dd>
-          </div>
-          {f.versao_regra ? (
-            <div>
-              <dt>Regra</dt>
-              <dd>v{f.versao_regra}</dd>
-            </div>
-          ) : null}
-          {f.motivo_saida ? (
-            <div>
-              <dt>Saiu do lote</dt>
-              <dd>{f.motivo_saida}</dd>
-            </div>
-          ) : null}
-        </dl>
-        <nav className="avd-analise-navegacao" aria-label="Fichas da lista">
-          <button
-            type="button"
-            className="btn secondary small"
-            data-acao="ficha-anterior"
-            disabled={!anterior || abrindo}
-            title={anterior ? `Candidato ${anterior.codigo}` : undefined}
-            onClick={() => void ir(anterior?.ficha.id)}
-          >
-            <i className="fa-solid fa-chevron-left" aria-hidden="true" />{" "}
-            Anterior
-          </button>
-          {posicao >= 0 ? (
-            <span className="ui-texto-secundario">
-              {posicao + 1} de {navegaveis.length}
-            </span>
-          ) : null}
-          <button
-            type="button"
-            className="btn secondary small"
-            data-acao="ficha-proxima"
-            disabled={!proxima || abrindo}
-            title={proxima ? `Candidato ${proxima.codigo}` : undefined}
-            onClick={() => void ir(proxima?.ficha.id)}
-          >
-            Próxima{" "}
-            <i className="fa-solid fa-chevron-right" aria-hidden="true" />
-          </button>
-        </nav>
-      </header>
-      {aberta.somente_leitura && aberta.motivo ? (
-        <Aviso tom="warning">Só leitura: {aberta.motivo}</Aviso>
-      ) : null}
-      {dados.pode_coordenar && reservaDeOutro ? (
-        liberando ? (
-          <div className="avd-inline">
-            <Campo rotulo="Motivo para liberar a reserva" obrigatorio>
-              <input
-                value={motivo}
-                maxLength={2000}
-                onChange={(ev) => setMotivo(ev.target.value)}
-              />
-            </Campo>
-            <button
-              type="button"
-              className="btn small"
-              disabled={motivo.trim().length < 10}
-              onClick={async () => {
-                const r = await fila.liberarReservas([f.id], motivo.trim());
-                if (r.ok) await fila.abrir(f.id);
-                else setErro(r.erro);
-              }}
-            >
-              Liberar
-            </button>
-          </div>
-        ) : (
-          <button
-            type="button"
-            className="btn secondary avd-analise-liberar"
-            data-tour="avd-ficha-liberar"
-            onClick={() => setLiberando(true)}
-          >
-            Liberar a reserva
-          </button>
-        )
-      ) : null}
-      {erro ? (
-        <Aviso tom="danger" papel="alert">
-          {erro}
-        </Aviso>
-      ) : null}
       <ConteudoDaFicha
         key={f.id}
         fila={fila}
@@ -601,7 +512,51 @@ function ModoDeAnalise({
         filtroVaga={filtroVaga}
         aoFechar={voltar}
         registrarAntesDeFechar={registrarAntesDeFechar}
-      />
+        topo={topo}
+      >
+        {aberta.somente_leitura && aberta.motivo ? (
+          <Aviso tom="warning">Só leitura: {aberta.motivo}</Aviso>
+        ) : null}
+        {dados.pode_coordenar && reservaDeOutro ? (
+          liberando ? (
+            <div className="avd-inline">
+              <Campo rotulo="Motivo para liberar a reserva" obrigatorio>
+                <input
+                  value={motivo}
+                  maxLength={2000}
+                  onChange={(ev) => setMotivo(ev.target.value)}
+                />
+              </Campo>
+              <button
+                type="button"
+                className="btn small"
+                disabled={motivo.trim().length < 10}
+                onClick={async () => {
+                  const r = await fila.liberarReservas([f.id], motivo.trim());
+                  if (r.ok) await fila.abrir(f.id);
+                  else setErro(r.erro);
+                }}
+              >
+                Liberar
+              </button>
+            </div>
+          ) : (
+            <button
+              type="button"
+              className="btn secondary avd-analise-liberar"
+              data-tour="avd-ficha-liberar"
+              onClick={() => setLiberando(true)}
+            >
+              Liberar a reserva
+            </button>
+          )
+        ) : null}
+        {erro ? (
+          <Aviso tom="danger" papel="alert">
+            {erro}
+          </Aviso>
+        ) : null}
+      </ConteudoDaFicha>
     </section>
   );
 }
