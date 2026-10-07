@@ -1,3 +1,12 @@
+import type {
+  EditalDoRobo,
+  AreaDoRobo,
+  ExecucaoDoRobo,
+  PainelDosRobos,
+  VagaDoRobo,
+  PedidoDoRobo,
+  EtapaDoPedido,
+} from "../componentes/saude-das-cargas/tipos.ts";
 /*
   "Rodar com opções" e as últimas execuções dos robôs (Configurações ›
   Status das atualizações), sem DOM e sem rede.
@@ -22,32 +31,70 @@ import {
 } from "./edital-de-treinamento.js";
 import { OPCOES_DOS_ROBOS, roboDeCarga } from "./robos-de-carga.js";
 
-const data = (valor) => {
-  if (!valor) return null;
+const registro = (valor: unknown): Record<string, unknown> =>
+  valor !== null && typeof valor === "object" && !Array.isArray(valor)
+    ? (valor as Record<string, unknown>)
+    : {};
+const registros = (valor: unknown): Record<string, unknown>[] =>
+  (Array.isArray(valor) ? valor : [])
+    .filter(
+      (v: unknown) => v !== null && typeof v === "object" && !Array.isArray(v),
+    )
+    .map(registro);
+const texto = (valor: unknown): string =>
+  typeof valor === "string" ||
+  typeof valor === "number" ||
+  typeof valor === "boolean"
+    ? String(valor).trim()
+    : "";
+const data = (valor: unknown): Date | null => {
+  if (
+    !(
+      typeof valor === "string" ||
+      typeof valor === "number" ||
+      valor instanceof Date
+    ) ||
+    !valor
+  )
+    return null;
   const d = new Date(valor);
   return Number.isNaN(d.getTime()) ? null : d;
 };
-const numero = (valor) =>
-  valor === null || valor === undefined || valor === ""
-    ? null
-    : Number.isFinite(Number(valor))
-      ? Number(valor)
-      : null;
-const texto = (valor) => String(valor ?? "").trim();
-const lista = (valor) => (Array.isArray(valor) ? valor : []);
-const plural = (n, um, varios) => `${n} ${n === 1 ? um : varios}`;
+const numero = (valor: unknown): number | null => {
+  if ((typeof valor !== "number" && typeof valor !== "string") || valor === "")
+    return null;
+  const n = Number(valor);
+  return Number.isFinite(n) ? n : null;
+};
+const lista = <T>(valor: readonly T[] | null | undefined): readonly T[] =>
+  Array.isArray(valor) ? valor : [];
+const urlDaExecucao = (valor: unknown): string | null => {
+  const t = texto(valor);
+  if (!t) return null;
+  try {
+    const u = new URL(t);
+    return u.protocol === "http:" || u.protocol === "https:" ? t : null;
+  } catch {
+    return null;
+  }
+};
+const plural = (n: number, um: string, varios: string) =>
+  `${n} ${n === 1 ? um : varios}`;
 
 /* Quantos códigos a prévia mostra antes das reticências. */
 export const CODIGOS_NA_PREVIA = 8;
 
 /** Os códigos em texto curto: "179698, 180231, 180232…" (até `maximo`). */
-export function textoDosCodigos(codigos, maximo = CODIGOS_NA_PREVIA) {
+export function textoDosCodigos(
+  codigos: readonly string[] | null,
+  maximo = CODIGOS_NA_PREVIA,
+) {
   const todos = lista(codigos);
   const vistos = todos.slice(0, maximo).join(", ");
   return todos.length > maximo ? `${vistos}…` : vistos;
 }
 
-const QUEM_DO_DISPARO = Object.freeze({
+const QUEM_DO_DISPARO: Readonly<Record<string, string>> = Object.freeze({
   AGENDA: "Agenda",
   GITHUB: "GitHub",
   ROBO: "Depois do robô",
@@ -55,7 +102,9 @@ const QUEM_DO_DISPARO = Object.freeze({
 });
 
 /* Situações gravadas pelos robôs → rótulo e tom (os selos da tela). */
-export const SITUACOES_DA_EXECUCAO = Object.freeze({
+export const SITUACOES_DA_EXECUCAO: Readonly<
+  Record<string, { rotulo: string; tom: string }>
+> = Object.freeze({
   EM_ANDAMENTO: { rotulo: "Rodando", tom: "info" },
   CONCLUIDA: { rotulo: "Concluída", tom: "sucesso" },
   PARCIAL: { rotulo: "Parcial", tom: "aviso" },
@@ -63,7 +112,9 @@ export const SITUACOES_DA_EXECUCAO = Object.freeze({
 });
 
 /* Situação de cada vaga na última carga (TB_EMPREGARE_VAGA). */
-export const SITUACOES_DA_VAGA = Object.freeze({
+export const SITUACOES_DA_VAGA: Readonly<
+  Record<string, { rotulo: string; tom: string }>
+> = Object.freeze({
   GRAVADA: { rotulo: "Gravada", tom: "sucesso" },
   RECUSADA: { rotulo: "Recusada pela trava", tom: "aviso" },
   INCOMPLETA: { rotulo: "Incompleta", tom: "perigo" },
@@ -71,15 +122,16 @@ export const SITUACOES_DA_VAGA = Object.freeze({
   SEM_ARQUIVO: { rotulo: "Sem arquivo", tom: "perigo" },
 });
 
-function normalizarEdital(e) {
+function normalizarEdital(entrada: unknown): EditalDoRobo {
+  const e = registro(entrada);
   const edital = {
     id: texto(e?.id),
     numero: texto(e?.numero),
     edital: texto(e?.edital),
     area: texto(e?.area),
     unidade: texto(e?.unidade),
-    ativo: e?.ativo,
-    status: e?.status ?? "",
+    ativo: e?.ativo !== false,
+    status: texto(e?.status),
     treinamento: ehEditalDeTreinamento(e),
   };
   // O edital de treinamento não está entre os vigentes: só vai se pedido ("mostrar todos").
@@ -89,9 +141,14 @@ function normalizarEdital(e) {
   };
 }
 
-function parametrosDoRobo(filtro, forcada) {
-  const editais = lista(filtro?.editais).map(texto).filter(Boolean);
-  const vagas = lista(filtro?.vagas).map(texto).filter(Boolean);
+function parametrosDoRobo(entrada: unknown, forcada: boolean) {
+  const filtro = registro(entrada);
+  const editais = (Array.isArray(filtro.editais) ? filtro.editais : [])
+    .map(texto)
+    .filter(Boolean);
+  const vagas = (Array.isArray(filtro.vagas) ? filtro.vagas : [])
+    .map(texto)
+    .filter(Boolean);
   const limite = numero(filtro?.limite);
   const partes = [];
   if (vagas.length)
@@ -108,13 +165,14 @@ function parametrosDoRobo(filtro, forcada) {
   return { editais, vagas, limite, texto: partes.join(" · ") };
 }
 
-function normalizarExecucaoDoRobo(e) {
+function normalizarExecucaoDoRobo(entrada: unknown): ExecucaoDoRobo {
+  const e = registro(entrada);
   const parametros = parametrosDoRobo(e?.filtro, e?.forcada === true);
   const pedidas = numero(e?.vagas_pedidas) ?? 0;
   const baixadas = numero(e?.vagas_baixadas) ?? 0;
   const falhas = numero(e?.vagas_falha) ?? 0;
   const recusadas = numero(e?.vagas_recusadas) ?? 0;
-  const porVaga = lista(e?.por_vaga).map((v) => ({
+  const porVaga = registros(e.por_vaga).map((v) => ({
     vaga: texto(v?.vaga),
     situacao: texto(v?.situacao) || "EM_CARGA",
     arquivo: numero(v?.arquivo),
@@ -151,18 +209,27 @@ function normalizarExecucaoDoRobo(e) {
     fim: data(e?.fim),
     situacao: texto(e?.situacao) || "EM_ANDAMENTO",
     disparo: texto(e?.disparo),
-    quem: texto(e?.quem) || QUEM_DO_DISPARO[texto(e?.disparo)] || "—",
+    quem:
+      texto(e?.quem) ||
+      (Object.hasOwn(QUEM_DO_DISPARO, texto(e.disparo))
+        ? QUEM_DO_DISPARO[texto(e.disparo)]
+        : "") ||
+      "—",
     parametros,
     resultado: resultado.join(" · "),
     porVaga,
     mensagem: texto(e?.mensagem),
-    execucao: texto(e?.execucao) || null,
+    execucao: urlDaExecucao(e?.execucao),
   };
 }
 
-function normalizarExecucaoDaPreClassificacao(e, editais = []) {
+function normalizarExecucaoDaPreClassificacao(
+  entrada: unknown,
+  editais: readonly EditalDoRobo[] = [],
+): ExecucaoDoRobo {
+  const e = registro(entrada);
   // O Recalcular e o "Rodar com opções" pedem pelo id: mostra o número.
-  const pedido = lista(e?.pedido)
+  const pedido = (Array.isArray(e.pedido) ? e.pedido : [])
     .map(texto)
     .filter(Boolean)
     .map((p) => editais.find((ed) => ed.id === p.toLowerCase())?.numero || p);
@@ -174,14 +241,19 @@ function normalizarExecucaoDaPreClassificacao(e, editais = []) {
         : "Editais ativos com vagas da Empregare",
   ];
   if (e?.refazer === true) partes.push("refazer lote");
-  const n = (campo) => numero(e?.[campo]) ?? 0;
+  const n = (campo: string) => numero(e?.[campo]) ?? 0;
   return {
     id: texto(e?.id),
     inicio: data(e?.inicio),
     fim: data(e?.fim),
     situacao: texto(e?.situacao) || "EM_ANDAMENTO",
     disparo: texto(e?.disparo),
-    quem: texto(e?.quem) || QUEM_DO_DISPARO[texto(e?.disparo)] || "—",
+    quem:
+      texto(e?.quem) ||
+      (Object.hasOwn(QUEM_DO_DISPARO, texto(e.disparo))
+        ? QUEM_DO_DISPARO[texto(e.disparo)]
+        : "") ||
+      "—",
     parametros: { editais: pedido, texto: partes.join(" · ") },
     resultado: [
       plural(n("editais"), "edital", "editais"),
@@ -191,19 +263,20 @@ function normalizarExecucaoDaPreClassificacao(e, editais = []) {
     ].join(" · "),
     porVaga: [],
     mensagem: texto(e?.mensagem),
-    execucao: texto(e?.execucao) || null,
+    execucao: urlDaExecucao(e?.execucao),
   };
 }
 
 /** O retorno de get_painel_dos_robos, normalizado para a tela. */
-export function normalizarPainel(dados) {
-  const areas = lista(dados?.areas)
+export function normalizarPainel(entrada: unknown): PainelDosRobos {
+  const dados = registro(entrada);
+  const areas = registros(dados.areas)
     .map((a) => ({
       area: texto(a?.area),
       nome: texto(a?.nome) || texto(a?.area),
     }))
     .filter((a) => a.area);
-  const editais = lista(dados?.editais)
+  const editais = registros(dados.editais)
     .map(normalizarEdital)
     .filter((e) => e.id && e.numero);
   return {
@@ -211,8 +284,8 @@ export function normalizarPainel(dados) {
     areas,
     editais,
     execucoes: {
-      empregare: lista(dados?.empregare).map(normalizarExecucaoDoRobo),
-      pre_classificacao: lista(dados?.pre_classificacao).map((e) =>
+      empregare: registros(dados.empregare).map(normalizarExecucaoDoRobo),
+      pre_classificacao: registros(dados.pre_classificacao).map((e) =>
         normalizarExecucaoDaPreClassificacao(e, editais),
       ),
     },
@@ -220,8 +293,8 @@ export function normalizarPainel(dados) {
 }
 
 /** As vagas de listar_vagas_dos_robos: { vaga, editalId, cargo, ultimaCarga, situacao, ativos }. */
-export function normalizarVagas(dados) {
-  return lista(dados)
+export function normalizarVagas(dados: unknown): VagaDoRobo[] {
+  return registros(dados)
     .map((v) => ({
       vaga: texto(v?.vaga),
       editalId: texto(v?.edital_id),
@@ -233,11 +306,14 @@ export function normalizarVagas(dados) {
     .filter((v) => /^\d{1,20}$/.test(v.vaga));
 }
 
-const nomeDaArea = (areas, area) =>
+const nomeDaArea = (areas: readonly AreaDoRobo[], area: string) =>
   areas.find((a) => a.area === area)?.nome || area;
 
 /** O rótulo do edital na escolha: "93/2026 · SESMT (Projetos)". */
-export function rotuloDoEdital(edital, areas = []) {
+export function rotuloDoEdital(
+  edital: EditalDoRobo,
+  areas: readonly AreaDoRobo[] = [],
+) {
   const unidade = edital.unidade ? ` · ${edital.unidade}` : "";
   const area = edital.area ? ` (${nomeDaArea(areas, edital.area)})` : "";
   return `${edital.numero}${unidade}${area}${sufixoDeTreinamento(edital)}`;
@@ -249,9 +325,13 @@ export function rotuloDoEdital(edital, areas = []) {
  * — opcoes no formato do MultiSelectBusca ({ value: id, label }).
  */
 export function opcoesDosEditais(
-  editais,
-  areas,
-  { area = "", todos = false, escolhidos = [] } = {},
+  editais: readonly EditalDoRobo[],
+  areas: readonly AreaDoRobo[],
+  {
+    area = "",
+    todos = false,
+    escolhidos = [],
+  }: { area?: string; todos?: boolean; escolhidos?: readonly string[] } = {},
 ) {
   const marcados = new Set(escolhidos);
   const daArea = lista(editais).filter((e) => !area || e.area === area);
@@ -272,27 +352,34 @@ export function opcoesDosEditais(
  * (o que ele aceita), o id nos outros (o mesmo número pode existir em duas
  * áreas). Sem repetir.
  */
-export function editaisDoPedido(roboId, ids, editais) {
+export function editaisDoPedido(
+  roboId: string,
+  ids: readonly string[],
+  editais: readonly EditalDoRobo[],
+) {
   const formato = OPCOES_DOS_ROBOS[roboId]?.editais;
   if (!formato) return [];
   const escolhidos = lista(ids)
     .map((id) => lista(editais).find((e) => e.id === id))
-    .filter(Boolean);
+    .filter((e): e is EditalDoRobo => Boolean(e));
   const valores = escolhidos.map((e) =>
     formato === "numero" ? e.numero : e.id,
   );
   return [...new Set(valores)];
 }
 
-const numerosDosEditais = (ids, editais) => [
+const numerosDosEditais = (
+  ids: readonly string[],
+  editais: readonly EditalDoRobo[],
+) => [
   ...new Set(
     lista(ids)
       .map((id) => lista(editais).find((e) => e.id === id)?.numero)
-      .filter(Boolean),
+      .filter((n): n is string => Boolean(n)),
   ),
 ];
 
-const doEdital = (numeros) =>
+const doEdital = (numeros: readonly string[]) =>
   numeros.length === 1
     ? ` do ${numeros[0]}`
     : numeros.length > 1
@@ -318,9 +405,17 @@ export function previaDoDisparo({
   codigos = [],
   limite = null,
   vagas = [],
+}: {
+  robo: string;
+  modo?: string;
+  editaisIds?: readonly string[];
+  editais?: readonly EditalDoRobo[];
+  codigos?: readonly string[];
+  limite?: number | null;
+  vagas?: readonly VagaDoRobo[];
 }) {
   const nomes = numerosDosEditais(editaisIds, editais);
-  const avisos = [];
+  const avisos: string[] = [];
 
   if (robo === "pre_classificacao") {
     const alvo = nomes.length
@@ -354,14 +449,14 @@ export function previaDoDisparo({
       avisos,
     };
 
-  const teto = limite || OPCOES_DOS_ROBOS.empregare.limite.padrao;
+  const teto = limite || OPCOES_DOS_ROBOS.empregare?.limite?.padrao || 60;
   let base;
   let alvo;
   if (codigos.length) {
     // Os editais escolhidos só servem de sugestão: com códigos, valem os códigos.
     const ids = new Set(editaisIds);
     const foraDosEditais = codigos.some(
-      (c) => !ids.has(vagas.find((v) => v.vaga === c)?.editalId),
+      (c) => !ids.has(vagas.find((v) => v.vaga === c)?.editalId ?? ""),
     );
     if (nomes.length && foraDosEditais)
       avisos.push("Com códigos de vaga, o robô roda só os códigos.");
@@ -371,7 +466,7 @@ export function previaDoDisparo({
         ...new Set(
           base
             .map((c) => vagas.find((v) => v.vaga === c)?.editalId)
-            .filter(Boolean),
+            .filter((n): n is string => Boolean(n)),
         ),
       ],
       editais,
@@ -410,7 +505,7 @@ export function previaDoDisparo({
     : plural(base.length, "vaga", "vagas");
   const frase = `${prefixo}${quantas}${alvo}: ${textoDosCodigos(base)}`;
   return {
-    frase: prefixo ? frase[0].toUpperCase() + frase.slice(1) : frase,
+    frase: prefixo ? (frase[0] ?? "").toUpperCase() + frase.slice(1) : frase,
     codigos: base,
     avisos,
   };
@@ -431,10 +526,18 @@ const FOLGA_MS = 2 * 60000;
  * nos modos seco e fumaça, cujo resultado fica só no resumo do GitHub),
  * "rodando" (o banco registrou) ou "terminou" (o banco fechou).
  */
-export function acompanhamentoDoPedido({ robo, pedido, execucoes = [] }) {
+export function acompanhamentoDoPedido({
+  robo,
+  pedido,
+  execucoes = [],
+}: {
+  robo: string;
+  pedido: PedidoDoRobo | null | undefined;
+  execucoes?: readonly ExecucaoDoRobo[];
+}): EtapaDoPedido | null {
   if (!pedido?.em) return null;
   const desde = pedido.em.getTime() - FOLGA_MS;
-  const doBanco = lista(execucoes).find(
+  const doBanco = execucoes.find(
     (e) =>
       e.inicio &&
       e.inicio.getTime() >= desde &&

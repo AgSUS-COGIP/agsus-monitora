@@ -1,3 +1,14 @@
+import type {
+  Carga,
+  SituacaoDaCarga,
+  ExecucaoDaCarga,
+  LinhaDaSaude,
+  EstadoDaSaude,
+  ClienteDaSaude,
+  DependenciasDaSaude,
+  PropsDaLinha,
+  PropsDoRobo,
+} from "./tipos.ts";
 import { useEffect, useState, useSyncExternalStore } from "react";
 import { montarModulo } from "../../app/montar-modulo.jsx";
 import { isAdminGlobal } from "../../lib/access-roles.js";
@@ -12,14 +23,14 @@ import {
   SITUACOES,
   textoDaIdade,
   visaoSimples,
-} from "../../lib/saude-das-cargas.js";
+} from "../../lib/saude-das-cargas.ts";
 import { getSupabaseClient } from "../../lib/supabaseClient.js";
 import { CartaoDeAvisos } from "../../modulos/conferencias/avisos-de-conferencia.tsx";
 import { Icone } from "../icone.jsx";
 import { AgendaDosRobos } from "./agenda-dos-robos.tsx";
-import { criarEstadoDaSaude } from "./estado.js";
-import { Acompanhamento, UltimasExecucoes } from "./execucoes-dos-robos.jsx";
-import { RodarComOpcoes } from "./rodar-com-opcoes.jsx";
+import { criarEstadoDaSaude } from "./estado.ts";
+import { Acompanhamento, UltimasExecucoes } from "./execucoes-dos-robos.tsx";
+import { RodarComOpcoes } from "./rodar-com-opcoes.tsx";
 
 /*
   Configurações › Status das atualizações (só administrador global). A tela responde
@@ -28,7 +39,7 @@ import { RodarComOpcoes } from "./rodar-com-opcoes.jsx";
   do banco), com o selo e "atualizado há X". Os detalhes técnicos — cada
   script ou tarefa, agenda, linhas e as últimas 10 execuções — ficam em
   "Detalhes". Só leitura: uma RPC, `get_saude_das_cargas`
-  (20261001120000_saude_das_cargas.sql); as regras em src/lib/saude-das-cargas.js.
+  (20261001120000_saude_das_cargas.sql); as regras em src/lib/saude-das-cargas.ts.
 
   Abre pela seção (src/modulos/configuracoes/secoes.js → `render()`), que relê a cada
   vez: o estado das cargas muda a cada poucos minutos.
@@ -43,9 +54,9 @@ import { RodarComOpcoes } from "./rodar-com-opcoes.jsx";
   (src/lib/robos-de-carga.js).
 
   Robô da Empregare, Pré-classificação e Conferências têm também "Opções"
-  (rodar-com-opcoes.jsx: editais, códigos de vaga, modo, limite e prévia).
+  (rodar-com-opcoes.tsx: editais, códigos de vaga, modo, limite e prévia).
   Depois do pedido, a linha acompanha a execução até o resultado
-  (execucoes-dos-robos.jsx); em "Detalhes", o robô da Empregare e a
+  (execucoes-dos-robos.tsx); em "Detalhes", o robô da Empregare e a
   pré-classificação mostram as últimas execuções com os parâmetros e quem
   pediu (get_painel_dos_robos).
 
@@ -54,7 +65,8 @@ import { RodarComOpcoes } from "./rodar-com-opcoes.jsx";
   chave ausente no Vault (agenda-dos-robos.tsx).
 */
 
-const classes = (...lista) => lista.filter(Boolean).join(" ");
+const classes = (...lista: (string | false | null | undefined)[]) =>
+  lista.filter(Boolean).join(" ");
 
 const ICONE_DA_SITUACAO = Object.freeze({
   em_dia: "circle-check",
@@ -64,7 +76,7 @@ const ICONE_DA_SITUACAO = Object.freeze({
   nunca: "circle",
 });
 
-function Selo({ situacao }) {
+function Selo({ situacao }: { situacao: SituacaoDaCarga }) {
   const s = SITUACOES[situacao];
   return (
     <span className={`saude-selo saude-selo--${s.tom}`}>
@@ -74,7 +86,7 @@ function Selo({ situacao }) {
   );
 }
 
-function Historico({ execucoes }) {
+function Historico({ execucoes }: { execucoes: readonly ExecucaoDaCarga[] }) {
   if (!execucoes.length)
     return <p className="saude-parte__vazio">Nenhuma execução registrada.</p>;
   return (
@@ -125,7 +137,7 @@ function Historico({ execucoes }) {
 }
 
 /* Uma parte técnica (um script ou uma tarefa) dentro de "Detalhes". */
-function Parte({ parte }) {
+function Parte({ parte }: { parte: Carga }) {
   return (
     <div className="saude-parte">
       <div className="saude-parte__topo">
@@ -143,13 +155,19 @@ function Parte({ parte }) {
   );
 }
 
-function textoDaAtualizacao(linha) {
+function textoDaAtualizacao(linha: LinhaDaSaude) {
   if (linha.indisponivel) return "Sem acesso às tarefas";
   if (!linha.ultimaAtualizacao) return "Ainda não houve carga";
   return `Atualizado ${textoDaIdade(linha.idadeMin)}`;
 }
 
-function RodarAgora({ robo, linha, atual, estado, aoAbrirOpcoes }) {
+function RodarAgora({
+  robo,
+  linha,
+  atual,
+  estado,
+  aoAbrirOpcoes,
+}: PropsDaLinha & PropsDoRobo & { aoAbrirOpcoes: () => void }) {
   const botao = estadoDoBotao({
     robo,
     linha,
@@ -197,7 +215,7 @@ function RodarAgora({ robo, linha, atual, estado, aoAbrirOpcoes }) {
   );
 }
 
-function Linha({ linha, atual, estado }) {
+function Linha({ linha, atual, estado }: PropsDaLinha) {
   const [aberta, setAberta] = useState(false);
   const [opcoesAbertas, setOpcoesAbertas] = useState(false);
   const robo = roboDeCarga(linha.id);
@@ -293,7 +311,17 @@ function Linha({ linha, atual, estado }) {
   );
 }
 
-function Resumo({ atencao, geradoEm, carregando, aoAtualizar }) {
+function Resumo({
+  atencao,
+  geradoEm,
+  carregando,
+  aoAtualizar,
+}: {
+  atencao: readonly LinhaDaSaude[];
+  geradoEm: Date | null;
+  carregando: boolean;
+  aoAtualizar: () => void;
+}) {
   const tudoBem = !atencao.length;
   return (
     <div
@@ -340,7 +368,13 @@ function Resumo({ atencao, geradoEm, carregando, aoAtualizar }) {
   );
 }
 
-export function SaudeDasCargas({ estado, supabase }) {
+export function SaudeDasCargas({
+  estado,
+  supabase,
+}: {
+  estado: EstadoDaSaude;
+  supabase?: ClienteDaSaude | null;
+}) {
   const atual = useSyncExternalStore(estado.assinar, estado.obter);
 
   useEffect(() => {
@@ -419,7 +453,7 @@ export function montarSaudeDasCargas({
   getProfile,
   agora,
   agendar,
-} = {}) {
+}: Partial<DependenciasDaSaude> & { raizDaTela?: HTMLElement | null } = {}) {
   const estado = criarEstadoDaSaude({
     supabase,
     getProfile,

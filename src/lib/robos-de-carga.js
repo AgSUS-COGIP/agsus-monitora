@@ -81,6 +81,7 @@ export function editalDoPedido(valor) {
   formato aceito ("numero" = 93/2026; "numero_ou_id" = 93/2026 ou o id do
   edital); `vagas`, códigos da Empregare; `limite`, máximo de vagas.
 */
+/** @type {Readonly<Record<string, import("../componentes/saude-das-cargas/tipos.ts").OpcoesDoRobo>>} */
 export const OPCOES_DOS_ROBOS = Object.freeze({
   empregare: Object.freeze({
     modos: Object.freeze([
@@ -166,6 +167,7 @@ const CHAVES_DAS_OPCOES = ["modo", "editais", "vagas", "limite"];
  * Códigos de vaga colados (vírgula, ponto e vírgula, espaço ou linha):
  * { codigos } só com dígitos, sem repetir, e { invalidos } — o resto.
  */
+/** @param {unknown} texto @returns {{ codigos: string[], invalidos: string[] }} */
 export function separarCodigos(texto) {
   const partes = (Array.isArray(texto) ? texto : [texto])
     .flatMap((t) => String(t ?? "").split(/[\s,;]+/))
@@ -188,6 +190,11 @@ const listaDoPedido = (valor) =>
  * Confere as opções de "Rodar com opções" contra a lista branca do robô.
  * Devolve { opcoes: { modo, editais, vagas, limite } } ou
  * { erro: <código>, texto } — texto curto para a tela.
+ */
+/**
+ * @param {import("../componentes/saude-das-cargas/tipos.ts").RoboDeCarga | null} robo
+ * @param {unknown} bruto
+ * @returns {import("../componentes/saude-das-cargas/tipos.ts").ResultadoDasOpcoes}
  */
 export function validarOpcoes(robo, bruto) {
   const aceitas = OPCOES_DOS_ROBOS[robo?.id];
@@ -276,6 +283,7 @@ export function validarOpcoes(robo, bruto) {
   return { opcoes: { modo, editais, vagas, limite } };
 }
 
+/** @param {unknown} id @returns {import("../componentes/saude-das-cargas/tipos.ts").RoboDeCarga | null} */
 export const roboDeCarga = (id) =>
   ROBOS_DE_CARGA.find((r) => r.id === String(id || "")) || null;
 
@@ -287,6 +295,9 @@ export const ESPERA_DO_PEDIDO_MIN = 3;
  *   linha     a linha do Status das atualizações (partes[0].ultima)
  *   pedidoEm  Date do último clique nesta tela, ou null
  * Devolve { desabilitado, rotulo }.
+ */
+/**
+ * @param {{ robo: import("../componentes/saude-das-cargas/tipos.ts").RoboDeCarga, linha: import("../componentes/saude-das-cargas/tipos.ts").LinhaDaSaude, pedidoEm?: Date | null, agora?: Date }} props
  */
 export function estadoDoBotao({
   robo,
@@ -323,6 +334,7 @@ const CHAVE_RECUSADA = new Set([401, 403, 404]);
  * validarOpcoes (modo, editais, vagas, limite) ou, no Recalcular da
  * coordenação, só o edital. Sem nada, {} (o banco usa o modo normal).
  */
+/** @param {{ opcoes?: import("../componentes/saude-das-cargas/tipos.ts").OpcoesConferidas | null, edital?: string }} [pedido] @returns {import("../componentes/saude-das-cargas/tipos.ts").InputsDoPedido} */
 export function inputsDoPedido({ opcoes = null, edital = "" } = {}) {
   const inputs = {};
   if (opcoes?.modo) inputs.modo = opcoes.modo;
@@ -339,13 +351,24 @@ export function inputsDoPedido({ opcoes = null, edital = "" } = {}) {
  * A resposta de situacao_do_disparo_robo em { situacao, http, mensagem,
  * terminou, aviso } — `aviso` ({ tom, texto }) só quando o GitHub não aceitou.
  */
-export function situacaoDoPedido(bruta) {
-  const situacao = String(bruta?.situacao || "PEDIDO");
+/** @param {unknown} entrada @returns {import("../componentes/saude-das-cargas/tipos.ts").SituacaoDoPedido} */
+export function situacaoDoPedido(entrada) {
+  const bruta =
+    entrada !== null && typeof entrada === "object" && !Array.isArray(entrada)
+      ? entrada
+      : {};
+  const situacao =
+    typeof bruta.situacao === "string" && bruta.situacao
+      ? bruta.situacao
+      : "PEDIDO";
   const http =
-    Number.isFinite(Number(bruta?.http)) && bruta?.http !== null
+    (typeof bruta.http === "number" ||
+      (typeof bruta.http === "string" && bruta.http.trim() !== "")) &&
+    Number.isFinite(Number(bruta.http))
       ? Number(bruta.http)
       : null;
-  const mensagem = String(bruta?.mensagem || "").trim();
+  const mensagem =
+    typeof bruta.mensagem === "string" ? bruta.mensagem.trim() : "";
   let aviso = null;
   if (
     situacao === "SEM_TOKEN" ||
@@ -368,6 +391,7 @@ export function situacaoDoPedido(bruta) {
 }
 
 /* O erro da RPC em frase curta para a tela (a mensagem do banco já é em pt-BR). */
+/** @param {unknown} erro @param {string} [padrao] @returns {string} */
 export function mensagemDoErroDoDisparo(
   erro,
   padrao = "Não consegui pedir a carga.",

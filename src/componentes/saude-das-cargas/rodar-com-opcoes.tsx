@@ -1,9 +1,17 @@
+import type { FormEvent } from "react";
+import type {
+  EstadoDaSaude,
+  VagaDoRobo,
+  PainelDosRobos,
+  PropsDoRobo,
+  PropsDaLinha,
+} from "./tipos.ts";
 import { useEffect, useId, useMemo, useState } from "react";
 import {
   editaisDoPedido,
   opcoesDosEditais,
   previaDoDisparo,
-} from "../../lib/painel-dos-robos.js";
+} from "../../lib/painel-dos-robos.ts";
 import {
   estadoDoBotao,
   OPCOES_DOS_ROBOS,
@@ -21,16 +29,24 @@ import { MultiSelectBusca } from "../multi-select-busca.jsx";
   vagas conhecidas do edital, com o cargo), modo e limite, e a prévia do que
   vai rodar antes de confirmar. Só os campos que o robô aceita
   (OPCOES_DOS_ROBOS); a mesma validação da função (validarOpcoes) e as
-  regras da prévia em src/lib/painel-dos-robos.js. A explicação é da Aya
+  regras da prévia em src/lib/painel-dos-robos.ts. A explicação é da Aya
   (verbete "Rodar um robô com opções").
 */
 
 const ESPERA_DA_BUSCA_MS = 350;
 const SUGESTOES_VISIVEIS = 40;
 
-function useVagasConhecidas(estado, ids, codigos) {
+function useVagasConhecidas(
+  estado: EstadoDaSaude,
+  ids: string[],
+  codigos: string[],
+) {
   const chave = `${ids.join(",")}|${codigos.join(",")}`;
-  const [resultado, setResultado] = useState({
+  const [resultado, setResultado] = useState<{
+    chave: string;
+    vagas: VagaDoRobo[];
+    erro: string;
+  }>({
     chave: "",
     vagas: [],
     erro: "",
@@ -68,6 +84,14 @@ function CampoDosEditais({
   setTodos,
   ids,
   setIds,
+}: {
+  painel: Pick<PainelDosRobos, "editais" | "areas">;
+  area: string;
+  setArea: (valor: string) => void;
+  todos: boolean;
+  setTodos: (valor: boolean) => void;
+  ids: string[];
+  setIds: (valor: string[]) => void;
 }) {
   const idDoCampo = useId();
   const { opcoes, ocultos } = opcoesDosEditais(painel.editais, painel.areas, {
@@ -108,7 +132,21 @@ function CampoDosEditais({
   );
 }
 
-function Sugestoes({ vagas, ids, codigos, aoAdicionar, buscando, erro }) {
+function Sugestoes({
+  vagas,
+  ids,
+  codigos,
+  aoAdicionar,
+  buscando,
+  erro,
+}: {
+  vagas: readonly VagaDoRobo[];
+  ids: readonly string[];
+  codigos: readonly string[];
+  aoAdicionar: (codigos: string[]) => void;
+  buscando: boolean;
+  erro: string;
+}) {
   const escolhidos = new Set(ids);
   const jaTem = new Set(codigos);
   const doEdital = vagas.filter(
@@ -163,7 +201,15 @@ function Sugestoes({ vagas, ids, codigos, aoAdicionar, buscando, erro }) {
 }
 
 /* Os códigos colados, com o cargo de cada um (ou "não conhecida"). */
-function CodigosEscolhidos({ codigos, vagas, aoTirar }) {
+function CodigosEscolhidos({
+  codigos,
+  vagas,
+  aoTirar,
+}: {
+  codigos: readonly string[];
+  vagas: readonly VagaDoRobo[];
+  aoTirar: (codigo: string) => void;
+}) {
   if (!codigos.length) return null;
   return (
     <ul className="robos-opcoes__codigos" aria-label="Vagas escolhidas">
@@ -189,14 +235,25 @@ function CodigosEscolhidos({ codigos, vagas, aoTirar }) {
   );
 }
 
-export function RodarComOpcoes({ robo, linha, atual, estado, aoFechar }) {
-  const aceitas = OPCOES_DOS_ROBOS[robo.id];
+export function RodarComOpcoes({
+  robo,
+  linha,
+  atual,
+  estado,
+  aoFechar,
+}: PropsDoRobo & PropsDaLinha & { aoFechar: () => void }) {
+  const aceitas = OPCOES_DOS_ROBOS[robo.id] || {
+    modos: [],
+    editais: null,
+    vagas: false,
+    limite: null,
+  };
   const tituloId = useId();
   const painel = atual.painel?.dados || { editais: [], areas: [] };
   const semPainel = atual.painel?.status === "sem_funcao";
   const [area, setArea] = useState("");
   const [todos, setTodos] = useState(false);
-  const [ids, setIds] = useState([]);
+  const [ids, setIds] = useState<string[]>([]);
   const [textoDasVagas, setTextoDasVagas] = useState("");
   const [modo, setModo] = useState("normal");
   const [limite, setLimite] = useState("");
@@ -248,22 +305,22 @@ export function RodarComOpcoes({ robo, linha, atual, estado, aoFechar }) {
     botao.desabilitado ||
     enviando;
 
-  const adicionar = (novos) =>
+  const adicionar = (novos: readonly string[]) =>
     setTextoDasVagas((texto) =>
       [...separarCodigos(texto).codigos, ...novos]
         .filter((c, i, todos) => todos.indexOf(c) === i)
         .join(", "),
     );
-  const tirar = (codigo) =>
+  const tirar = (codigo: string) =>
     setTextoDasVagas((texto) =>
       separarCodigos(texto)
         .codigos.filter((c) => c !== codigo)
         .join(", "),
     );
 
-  async function rodar(evento) {
+  async function rodar(evento: FormEvent<HTMLFormElement>) {
     evento.preventDefault();
-    if (bloqueado) return;
+    if (bloqueado || !conferido.opcoes) return;
     setEnviando(true);
     const ok = await estado.rodarComOpcoes(
       robo.id,
