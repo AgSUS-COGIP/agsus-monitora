@@ -234,10 +234,19 @@ const botao = (texto, raiz = document.body) =>
   [...raiz.querySelectorAll("button")].find((b) =>
     b.textContent.trim().startsWith(texto),
   );
-const linhas = () =>
-  [...secao.querySelectorAll("[data-tour='avd-fila-tabela'] tbody tr")].map(
-    (tr) => tr.dataset.candidato,
+/* O menu "Ações da coordenação" (as ações só aparecem com ele aberto). */
+const abrirMenu = () =>
+  clicar(
+    secao.querySelector(
+      "[data-tour='avd-fila-acoes-coordenacao'] [data-acao='abrir-menu']",
+    ),
   );
+const linhas = () =>
+  [
+    ...secao.querySelectorAll(
+      "[data-tour='avd-fila-tabela'] tbody tr[data-candidato]",
+    ),
+  ].map((tr) => tr.dataset.candidato);
 
 beforeEach(() => {
   redefinirDadosDoMonitoramento();
@@ -378,6 +387,7 @@ describe("Fila (AM-6)", () => {
   it("AM-6.2: distribuir as livres mostra a prévia e só grava ao confirmar", async () => {
     const supabase = supabaseFalso();
     await montar(supabase);
+    await abrirMenu();
     await clicar(
       secao.querySelector("[data-tour='avd-fila-distribuir-livres']"),
     );
@@ -412,7 +422,8 @@ describe("Fila (AM-6)", () => {
     const supabase = supabaseFalso(fila(), { distribuir_fichas: () => erro });
     await montar(supabase);
     await clicar(secao.querySelector("[aria-label='Selecionar 7001']"));
-    await clicar(botao("Distribuir (1)", secao));
+    await abrirMenu();
+    await clicar(botao("Distribuir as selecionadas (1)", secao));
     const gaveta = document.querySelector("[data-tour='avd-fila-confirmar']");
     await escolher(gaveta.querySelector("select"), "u-beto");
     const confirmar = gaveta.querySelector(
@@ -432,7 +443,11 @@ describe("Fila (AM-6)", () => {
     expect(
       secao.querySelector("[data-tour='avd-fila-distribuir-livres']"),
     ).toBeNull();
+    expect(
+      secao.querySelector("[data-tour='avd-fila-acoes-coordenacao']"),
+    ).toBeNull();
     expect(secao.querySelector("[data-tour='avd-fila-pegar']")).not.toBeNull();
+    expect(secao.querySelector("[data-tour='avd-fila-minhas']")).not.toBeNull();
   });
 });
 
@@ -816,6 +831,7 @@ describe("fila: inclusão no lote por decisão da coordenação", () => {
     await montar(
       supabaseFalso(comDecisao(), { incluir_no_lote_por_decisao: incluir }),
     );
+    await abrirMenu();
     await clicar(secao.querySelector("[data-acao='incluir-por-decisao']"));
     const opcoes = [
       ...document.querySelectorAll(
@@ -840,7 +856,108 @@ describe("fila: inclusão no lote por decisão da coordenação", () => {
     await montar(supabaseFalso(comDecisao(false)));
     expect(secao.querySelector("[data-acao='incluir-por-decisao']")).toBeNull();
     expect(
+      secao.querySelector("[data-tour='avd-fila-acoes-coordenacao']"),
+    ).toBeNull();
+    expect(
       secao.querySelector("[data-candidato='7003'] .avd-selo-decisao"),
     ).not.toBeNull();
+  });
+});
+
+describe("fila: andamento, menu da coordenação e tabela agrupada por vaga", () => {
+  const duasVagas = () => {
+    const d = fila();
+    d.vagas = [
+      { codigo: "179698", cargo: "Técnico" },
+      { codigo: "180001", cargo: "Enfermeiro" },
+    ];
+    d.candidatos = [
+      ...d.candidatos.map((c) => ({
+        ...c,
+        nota: 30 - (Number(c.codigo) % 10),
+      })),
+      inscrito("8001", {
+        vaga: "180001",
+        nota: 22,
+        ficha: ficha("f9", "CONCLUIDA", { resultado: "APTO", nota_final: 20 }),
+      }),
+      inscrito("8002", {
+        vaga: "180001",
+        posicao: 2,
+        nota: 18,
+        entrada: "DECISAO",
+        decisao: "Critério CORES",
+        ficha: ficha("f10", "PENDENTE"),
+      }),
+    ];
+    return d;
+  };
+
+  it("resumo do andamento por vaga e do edital; clicar na vaga filtra", async () => {
+    await montar(supabaseFalso(duasVagas()));
+    const resumo = secao.querySelector("[data-tour='avd-fila-andamento']");
+    expect(resumo.querySelector(".avd-andamento-total").textContent).toContain(
+      "concluídas 1 de 6 · em análise 1 · pendentes 4",
+    );
+    const vagas = [...resumo.querySelectorAll("[data-vaga]")];
+    expect(vagas.map((b) => b.textContent)).toEqual([
+      "179698 Técnicoconcluídas 0 de 4 · em análise 1 · pendentes 3",
+      "180001 Enfermeiroconcluídas 1 de 2 · em análise 0 · pendentes 1",
+    ]);
+    await clicar(vagas[1]);
+    expect(linhas()).toEqual(["8001", "8002"]);
+    expect(
+      resumo.querySelector("[data-vaga='180001']").getAttribute("aria-pressed"),
+    ).toBe("true");
+    // Filtrada por vaga, a tabela não agrupa.
+    expect(secao.querySelector("tr.ui-tabela-grupo")).toBeNull();
+    await clicar(secao.querySelector("[data-vaga='180001']"));
+    expect(linhas()).toHaveLength(6);
+  });
+
+  it("todas as vagas: grupo por vaga com o lote e a linha de corte, recolhível", async () => {
+    await montar(supabaseFalso(duasVagas()));
+    const grupos = () => [
+      ...secao.querySelectorAll(
+        "[data-tour='avd-fila-tabela'] tr.ui-tabela-grupo",
+      ),
+    ];
+    expect(grupos().map((g) => g.textContent)).toEqual([
+      "179698Técnico · lote 4 · linha de corte 26 · 4 nesta lista",
+      "180001Enfermeiro · lote 2 (1 pela regra + 1 por decisão) · linha de corte 22 · 2 nesta lista",
+    ]);
+    await clicar(grupos()[0].querySelector("button"));
+    expect(linhas()).toEqual(["8001", "8002"]);
+    expect(grupos()).toHaveLength(2);
+    await clicar(grupos()[0].querySelector("button"));
+    expect(linhas()).toHaveLength(6);
+  });
+
+  it("as ações da coordenação ficam num menu; com seleção, o menu mostra a contagem", async () => {
+    await montar(supabaseFalso());
+    const menu = secao.querySelector(
+      "[data-tour='avd-fila-acoes-coordenacao']",
+    );
+    expect(menu.textContent).toContain("Ações da coordenação");
+    expect(secao.querySelector("[data-acao='incluir-por-decisao']")).toBeNull();
+    await clicar(secao.querySelector("[aria-label='Selecionar 7002']"));
+    expect(menu.querySelector(".ui-contagem").textContent).toBe("1");
+    expect(
+      secao.querySelector("[data-tour='avd-fila-acoes-lote']").textContent,
+    ).toContain("1 selecionada(s)");
+    await abrirMenu();
+    expect(
+      [...menu.querySelectorAll("[role='menuitem']")].map((b) => b.textContent),
+    ).toEqual([
+      "Incluir por decisão da coordenação",
+      "Distribuir as livres (2)",
+      "Distribuir as selecionadas (1)",
+      "Liberar reservas (0)",
+      "Mandar para revisão (1)",
+      "Abrir fichas do lote (1)",
+    ]);
+    expect(menu.querySelector("[data-acao='liberar-reservas']").disabled).toBe(
+      true,
+    );
   });
 });

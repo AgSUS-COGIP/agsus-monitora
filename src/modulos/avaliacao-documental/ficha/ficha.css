@@ -97,16 +97,24 @@
 }
 .avd-ficha-blocos {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--space-3);
   min-width: 0;
 }
 
-/* Cartão do bloco */
+/* Cartão do bloco: compacto (meta: a ficha do 93 quase inteira sem rolar em 1366×768). */
 .avd-ficha-bloco {
   display: grid;
-  gap: var(--space-3);
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
   border-left: 4px solid var(--border-subtle);
   outline: none;
+  /* Ao ir ao bloco (etapas, J/K), ele não para embaixo do topo fixo nem das etapas. */
+  scroll-margin-top: calc(
+    var(--avd-recuo-do-cabecalho, 0px) + var(--avd-altura-do-topo, 0px) +
+      var(--space-16)
+  );
+  scroll-margin-bottom: var(--space-20);
 }
 .avd-ficha-bloco[data-ativo="sim"] {
   box-shadow: 0 0 0 2px var(--focus-ring);
@@ -127,6 +135,10 @@
 .avd-ficha-bloco[data-situacao="NAO_SE_APLICA"] {
   opacity: 0.7;
 }
+/* Recolhido: uma linha (título, selo, motivo), expansível. */
+.avd-ficha-bloco[data-recolhido="sim"] {
+  padding-block: var(--space-1-5);
+}
 .avd-ficha-selo-situacao {
   font-weight: var(--font-weight-semibold);
 }
@@ -138,7 +150,7 @@
 .avd-ficha-nao-se-aplicam {
   display: grid;
   gap: var(--space-2);
-  padding-block: var(--space-2);
+  padding: var(--space-2) var(--space-3);
   color: var(--text-secondary);
   font-size: var(--text-body-sm);
 }
@@ -146,42 +158,117 @@
   cursor: pointer;
 }
 .avd-ficha-nao-se-aplicam .avd-ficha-bloco {
-  padding-block: var(--space-2);
   box-shadow: none;
 }
 .avd-ficha-bloco-topo {
   display: flex;
-  flex-wrap: wrap;
   align-items: center;
   gap: var(--space-2);
+  min-width: 0;
 }
 .avd-ficha-bloco-topo h3 {
+  flex: 0 1 auto;
+  min-width: 0;
   margin: 0;
-  margin-right: auto;
+  overflow: hidden;
   font-size: var(--text-body);
   font-weight: var(--font-weight-semibold);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.avd-ficha-bloco-topo > .ui-selo {
+  flex: 0 0 auto;
+}
+.avd-ficha-resumo-do-bloco {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--text-secondary);
+  font-size: var(--text-caption);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.avd-ficha-item-edital {
+  flex: 0 0 auto;
+  margin-left: auto;
+  color: var(--text-secondary);
+  font-size: var(--text-caption);
+  white-space: nowrap;
+}
+.avd-ficha-alternar {
+  display: inline-grid;
+  flex: 0 0 auto;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+.avd-ficha-alternar:hover {
+  background: var(--surface-hover);
+}
+.avd-ficha-bloco-corpo {
+  display: grid;
+  gap: var(--space-2);
+}
+/* A resposta declarada e, na mesma linha, Conforme / Não conforme / Não enviado. */
+.avd-ficha-bloco-linha {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+  gap: var(--space-2) var(--space-3);
 }
 .avd-ficha-declarado {
   display: grid;
-  gap: var(--space-1);
-  margin: 0;
-  padding: var(--space-2) var(--space-3);
+  gap: var(--space-0-5);
+  min-width: 0;
+}
+.avd-ficha-declarado:not(:empty) {
+  padding: var(--space-1) var(--space-2);
   border-radius: var(--radius-md);
   background: var(--state-info-soft);
 }
-.avd-ficha-declarado > div {
+.avd-ficha-resposta {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: center;
   gap: var(--space-2);
+  min-height: 24px;
 }
-.avd-ficha-declarado dt {
+.avd-ficha-enunciado {
+  min-width: 0;
+  padding: 0;
+  overflow: hidden;
+  border: 0;
+  background: none;
   color: var(--text-secondary);
+  font: inherit;
   font-size: var(--text-caption);
+  text-align: left;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  cursor: pointer;
 }
-.avd-ficha-declarado dd {
-  margin: 0;
+.avd-ficha-resposta[data-inteiro] .avd-ficha-enunciado {
+  white-space: normal;
+}
+.avd-ficha-texto-declarado {
+  font-size: var(--text-body-sm);
   font-weight: var(--font-weight-semibold);
   text-align: right;
+}
+.avd-ficha-ver-anexo {
+  color: var(--state-info);
+  font-size: var(--text-caption);
+  font-weight: var(--font-weight-medium);
+  white-space: nowrap;
+}
+.avd-ficha-ver-anexo:hover {
+  color: var(--text-primary);
 }
 .avd-ficha-sugestao {
   margin: 0;
@@ -189,25 +276,33 @@
   font-size: var(--text-caption);
 }
 
-/* Conforme / Não conforme / Não enviado: botões grandes, tocáveis no celular. */
+/* Conforme / Não conforme / Não enviado: menores, com o atalho à vista; no celular, tocáveis. */
 .avd-ficha-situacoes {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: var(--space-2);
+  display: flex;
+  gap: var(--space-1);
 }
 .avd-ficha-situacao {
-  min-height: var(--mobile-touch-size, 44px);
-  padding: var(--space-2);
+  min-height: 32px;
+  padding: var(--space-1) var(--space-2);
   border: 1px solid var(--border-control);
   border-radius: var(--radius-md);
   background: var(--surface-card);
   color: var(--text-primary);
+  font-size: var(--text-body-sm);
   font-weight: var(--font-weight-medium);
+  white-space: nowrap;
   cursor: pointer;
 }
 .avd-ficha-situacao kbd {
+  display: inline-block;
+  min-width: 1.25em;
+  padding: 0 var(--space-0-5);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
   color: var(--text-secondary);
+  font-family: inherit;
   font-size: var(--text-caption);
+  text-align: center;
 }
 /* O escolhido: borda dupla, fundo e texto na cor da situação, com o ✓. */
 .avd-ficha-situacao[aria-pressed="true"] {
@@ -279,6 +374,23 @@
   white-space: nowrap;
 }
 
+/*
+  Itens e nota do bloco numa linha ("+ Título · Declarado 5 · Calculado 0 ·
+  Apurado [0]"); com itens lançados, a lista ocupa a linha de cima.
+*/
+.avd-ficha-apuracao {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-4);
+}
+.avd-ficha-apuracao > .avd-ficha-itens:has(.avd-ficha-item),
+.avd-ficha-apuracao > .avd-ficha-nota {
+  flex: 1 1 auto;
+}
+.avd-ficha-apuracao > .avd-ficha-itens:has(.avd-ficha-item) {
+  flex-basis: 100%;
+}
 /* Nota do bloco e justificativa */
 .avd-ficha-nota {
   display: grid;
@@ -287,20 +399,35 @@
 .avd-ficha-numeros {
   display: flex;
   flex-wrap: wrap;
-  align-items: flex-end;
+  align-items: center;
   gap: var(--space-2) var(--space-4);
 }
 .avd-ficha-numeros > span {
-  display: grid;
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--space-1);
   color: var(--text-secondary);
   font-size: var(--text-caption);
 }
 .avd-ficha-numeros > span strong {
   color: var(--text-primary);
-  font-size: var(--text-body);
+  font-size: var(--text-body-sm);
 }
 .avd-ficha-numeros .ui-campo {
-  width: 150px;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-size: var(--text-caption);
+}
+.avd-ficha-numeros .ui-campo label {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--text-caption);
+}
+.avd-ficha-numeros .ui-campo input {
+  width: 80px;
+  min-height: 32px;
+  padding-block: var(--space-1);
 }
 .avd-ficha-numeros input[data-divergente="sim"] {
   border-color: var(--state-warning);
@@ -463,6 +590,95 @@
   font-size: var(--text-caption);
 }
 
+/*
+  Etapas do modo de análise: o nome curto de cada item na cor do estado, presas
+  logo abaixo do topo fixo; clicar vai ao item. Ao lado, a linha de atalhos.
+*/
+.avd-ficha-etapas {
+  position: sticky;
+  top: calc(
+    var(--avd-recuo-do-cabecalho, 0px) + var(--avd-altura-do-topo, 0px) +
+      var(--space-2)
+  );
+  z-index: 2;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1) var(--space-3);
+  padding: var(--space-1-5) var(--space-2);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  background: var(--surface-card);
+  box-shadow: var(--shadow-card);
+}
+.avd-ficha-etapas ol {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.avd-ficha-etapas button {
+  position: relative; /* o texto só para leitor de tela fica dentro da faixa que rola */
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  min-height: 28px;
+  padding: var(--space-0-5) var(--space-2);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-pill);
+  background: var(--surface-card);
+  color: var(--text-secondary);
+  font: inherit;
+  font-size: var(--text-caption);
+  font-weight: var(--font-weight-medium);
+  white-space: nowrap;
+  cursor: pointer;
+}
+.avd-ficha-etapas button[aria-current="step"] {
+  box-shadow: 0 0 0 2px var(--focus-ring);
+  color: var(--text-primary);
+}
+.avd-ficha-etapas button[data-estado="CONFORME"] {
+  border-color: var(--state-success);
+  background: var(--state-success-soft);
+  color: var(--state-success);
+}
+.avd-ficha-etapas button[data-estado="NAO_CONFORME"] {
+  border-color: var(--state-danger);
+  background: var(--state-danger-soft);
+  color: var(--state-danger);
+}
+.avd-ficha-etapas button[data-estado="NAO_ENVIADO"] {
+  border-color: var(--state-neutral);
+  background: var(--state-neutral-soft);
+  color: var(--text-primary);
+}
+.avd-ficha-etapas button[data-estado="pendencia"] {
+  border-color: var(--state-warning);
+  background: var(--state-warning-soft);
+  color: var(--text-primary);
+}
+.avd-ficha-atalhos {
+  margin: 0 0 0 auto;
+  color: var(--text-secondary);
+  font-size: var(--text-caption);
+}
+.avd-ficha-atalhos kbd {
+  padding: 0 var(--space-0-5);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  font-family: inherit;
+  font-size: var(--text-caption);
+}
+/* Nível da vaga: só leitura para o analista. */
+.avd-ficha-nivel .ui-kv {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
+}
+
 @media (max-width: 900px) {
   .avd-ficha-grade {
     grid-template-columns: minmax(0, 1fr);
@@ -494,8 +710,28 @@
   .avd-analise-navegacao {
     margin-left: 0;
   }
-  .avd-ficha-situacao kbd {
+  .avd-ficha-situacao kbd,
+  .avd-ficha-atalhos {
     display: none;
+  }
+  /* Celular: os botões embaixo da resposta, grandes e tocáveis. */
+  .avd-ficha-bloco-linha {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .avd-ficha-situacoes {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  .avd-ficha-situacao {
+    min-height: var(--mobile-touch-size, 44px);
+    white-space: normal;
+  }
+  /* As etapas numa faixa que rola de lado. */
+  .avd-ficha-etapas ol {
+    flex: 1 1 auto;
+    flex-wrap: nowrap;
+    min-width: 0;
+    overflow-x: auto;
   }
   /* Celular: a barra numa linha de três botões, com o "Salvo às" em cima. */
   .avd-ficha-barra {
@@ -513,4 +749,23 @@
   .avd-ficha-barra > .avd-inline {
     grid-column: 1 / -1;
   }
+}
+
+/* Prévia do parecer com item ainda não conferido: sem resultado, só os motivos já lançados. */
+.avd-ficha-parecer-previa {
+  display: grid;
+  gap: var(--space-1);
+  padding: var(--space-2) var(--space-3);
+  border: 1px dashed var(--border-subtle);
+  border-radius: var(--radius-md);
+  color: var(--text-secondary);
+  font-size: var(--text-body-sm);
+}
+.avd-ficha-parecer-previa p {
+  margin: 0;
+}
+.avd-ficha-parecer-previa ul {
+  margin: 0;
+  padding-left: var(--space-4);
+  color: var(--text-primary);
 }

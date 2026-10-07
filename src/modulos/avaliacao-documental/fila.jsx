@@ -10,6 +10,8 @@ import { ordinal } from "../../lib/classificacao/numeros.js";
 import { formatNumberBR } from "../../lib/formatters.js";
 import {
   acoesDaSelecao,
+  agruparPorVaga,
+  andamentoDaFila,
   COLUNAS_DA_FILA,
   colunasDaEtapa,
   contadoresDaFila,
@@ -23,10 +25,12 @@ import {
   planoDeDistribuicao,
   proximaOrdem,
   reservaVigente,
+  resumoDaVagaNaFila,
   SITUACOES_DA_FICHA,
   textoDaColuna,
   textoDaReserva,
   textoDaSituacaoNaFila,
+  textoDoAndamento,
 } from "../../lib/avaliacao-documental/fila.js";
 import { tomDoResultado } from "../../lib/avaliacao-documental/ficha.js";
 import {
@@ -41,6 +45,7 @@ import {
   Aviso,
   Campo,
   Gaveta,
+  MenuDeAcoes,
   Selo,
   TabelaInfinita,
 } from "../../ui/index.js";
@@ -52,10 +57,13 @@ import {
 import { ConteudoDaFicha } from "./ficha/ficha.jsx";
 
 /*
-  Aba Fila (fase F3): as etapas com contadores no topo (clicáveis como filtro),
-  os filtros e os filtros salvos, "Pegar próximo" e "Minhas fichas" para o
-  analista, as ações em lote da coordenação (distribuir, redistribuir, liberar
-  reservas e mandar para revisão, com confirmação e motivo), a inclusão no
+  Aba Fila (fase F3): o resumo do andamento (edital e cada vaga, clicável
+  como filtro), as etapas com contadores (clicáveis como filtro), os filtros
+  compactos numa linha com os filtros salvos, "Pegar próximo" e "Minhas
+  fichas" para o analista, o menu "Ações da coordenação" (distribuir,
+  redistribuir, liberar reservas, mandar para revisão, abrir fichas do lote e
+  incluir por decisão, com confirmação e motivo), a tabela agrupada por vaga
+  quando a vaga é "Todas", a inclusão no
   lote por decisão da coordenação (selo "Decisão: …" na lista e no topo da
   ficha, com "Revogar decisão": decisao-do-lote.jsx) e a ficha aberta
   com a reserva; o conteúdo da análise (F4) é ficha/ficha.jsx. Explicações:
@@ -98,7 +106,10 @@ function FiltrosSalvos({ fila, f, filtros }) {
   const [salvando, setSalvando] = useState(false);
   const [escolhido, setEscolhido] = useState("");
   return (
-    <div className="avd-inline" data-tour="avd-fila-filtros-salvos">
+    <div
+      className="avd-fila-filtros-salvos"
+      data-tour="avd-fila-filtros-salvos"
+    >
       <Campo rotulo="Filtros salvos">
         <select
           value={escolhido}
@@ -119,7 +130,7 @@ function FiltrosSalvos({ fila, f, filtros }) {
       {escolhido ? (
         <button
           type="button"
-          className="btn secondary small"
+          className="avd-link-discreto"
           onClick={async () => {
             if (await fila.excluirFiltro(escolhido)) setEscolhido("");
           }}
@@ -160,7 +171,7 @@ function FiltrosSalvos({ fila, f, filtros }) {
       ) : (
         <button
           type="button"
-          className="btn secondary small"
+          className="avd-link-discreto"
           disabled={filtroEhInicial(f)}
           onClick={() => setSalvando(true)}
         >
@@ -611,8 +622,9 @@ function Celula({ c, chave, eu }) {
   A tabela da aba (TabelaInfinita, src/ui/): as colunas que fazem sentido na
   etapa (Eliminados: motivo e ART; Concluídas: nota, resultado, responsável e
   data; Pendentes e Em análise: posição, ART, responsável e reserva), ordem
-  por coluna, a busca por código ou nome (Enter com o código abre a ficha),
-  "N de M", carregamento contínuo e "Exportar CSV" da aba, na ordem da tela.
+  por coluna, "N de M", carregamento contínuo, o grupo por vaga (código,
+  cargo, lote e linha de corte; recolhível) e "Exportar CSV" da aba, na ordem
+  da coluna e sem agrupar. A busca por código ou nome fica nos filtros.
 */
 function TabelaDaFila({
   st,
@@ -620,6 +632,7 @@ function TabelaDaFila({
   dados,
   linhas,
   ordenadas,
+  exibidas,
   ordem,
   setOrdem,
   total,
@@ -627,9 +640,8 @@ function TabelaDaFila({
   coordena,
   selecao,
   marcar,
-  busca,
-  aoBuscar,
-  aoTeclarNaBusca,
+  limparSelecao,
+  grupo,
 }) {
   const etapa = st.filtro.etapa;
   const chaves = colunasDaEtapa(etapa);
@@ -687,16 +699,8 @@ function TabelaDaFila({
       className="avd-fila-tabela"
       idDoTitulo="avdFilaTitulo"
       titulo={rotuloDaEtapa}
-      busca={{
-        placeholder: "Código ou nome",
-        rotulo: "Buscar por código ou nome",
-        valor: busca,
-        aoMudar: aoBuscar,
-        aoTeclar: aoTeclarNaBusca,
-        tour: "avd-fila-busca",
-      }}
       carregado
-      itens={ordenadas}
+      itens={exibidas}
       filtrarPelaBusca={jaFiltrado}
       colunas={colunas}
       classeDaTabela="avd-fila-lista"
@@ -713,16 +717,34 @@ function TabelaDaFila({
             ? `${formatNumberBR(total)} ${total === 1 ? "inscrito" : "inscritos"}`
             : `${formatNumberBR(quantos)} de ${formatNumberBR(total)}`
       }
+      grupo={grupo}
       ferramentas={
-        <button
-          type="button"
-          className="btn secondary small"
-          data-acao="exportar-csv"
-          disabled={!ordenadas.length}
-          onClick={() => fila.exportarCsv(ordenadas, etapa)}
-        >
-          <i className="fa-solid fa-download" aria-hidden="true" /> Exportar CSV
-        </button>
+        <>
+          {coordena && selecao.size ? (
+            <span className="avd-inline" data-tour="avd-fila-acoes-lote">
+              <span className="ui-texto-secundario">
+                {selecao.size} selecionada(s)
+              </span>
+              <button
+                type="button"
+                className="avd-link-discreto"
+                onClick={limparSelecao}
+              >
+                Limpar seleção
+              </button>
+            </span>
+          ) : null}
+          <button
+            type="button"
+            className="btn secondary small"
+            data-acao="exportar-csv"
+            disabled={!ordenadas.length}
+            onClick={() => fila.exportarCsv(ordenadas, etapa)}
+          >
+            <i className="fa-solid fa-download" aria-hidden="true" /> Exportar
+            CSV
+          </button>
+        </>
       }
       linha={(c) => (
         <tr key={c.id} data-candidato={c.codigo}>
@@ -767,12 +789,109 @@ function TabelaDaFila({
   );
 }
 
+/* A barra do andamento: concluídas, em análise e em revisão, na cor de cada uma; o resto é pendente. */
+function BarraDoAndamento({ a }) {
+  const parte = (n) => `${a.lote ? (n / a.lote) * 100 : 0}%`;
+  return (
+    <span
+      className="avd-andamento-barra"
+      role="progressbar"
+      aria-label="Fichas concluídas"
+      aria-valuemin={0}
+      aria-valuemax={a.lote}
+      aria-valuenow={a.concluidas}
+    >
+      <span data-parte="concluidas" style={{ width: parte(a.concluidas) }} />
+      <span data-parte="em_analise" style={{ width: parte(a.em_analise) }} />
+      <span data-parte="revisao" style={{ width: parte(a.revisao) }} />
+    </span>
+  );
+}
+
+/*
+  O resumo do andamento no alto da Fila: o edital e cada vaga ("cargo ·
+  concluídas X de N · em análise Y · pendentes Z") com a barra; clicar na
+  vaga filtra (de novo, tira o filtro). Contado com a lista já carregada
+  (obter_fila_avaliacao), sem consulta nova.
+*/
+function ResumoDoAndamento({ andamento, lote, vaga, aoEscolherVaga }) {
+  const t = andamento.total;
+  return (
+    <section
+      className="ui-card avd-andamento"
+      aria-label="Andamento da avaliação"
+      data-tour="avd-fila-andamento"
+    >
+      <div className="avd-andamento-total">
+        <strong>Edital</strong>
+        <span>
+          {textoDoAndamento({ ...t, cargo: "" })}
+          {lote.pelaRegra || lote.porDecisao ? (
+            <span className="ui-texto-secundario">
+              {" · "}
+              <span data-lote-da-fila>
+                {textoDoLote(lote.pelaRegra, lote.porDecisao)}
+              </span>
+            </span>
+          ) : null}
+        </span>
+        <BarraDoAndamento a={t} />
+      </div>
+      {andamento.vagas.length > 1 || vaga ? (
+        <ul className="avd-andamento-vagas">
+          {andamento.vagas.map((v) => (
+            <li key={v.codigo}>
+              <button
+                type="button"
+                data-vaga={v.codigo}
+                aria-pressed={vaga === v.codigo}
+                title={
+                  vaga === v.codigo
+                    ? "Mostrar todas as vagas"
+                    : `Mostrar só a vaga ${v.codigo}`
+                }
+                onClick={() =>
+                  aoEscolherVaga(vaga === v.codigo ? "" : v.codigo)
+                }
+              >
+                <span className="avd-andamento-texto">
+                  <strong>{v.codigo}</strong> {v.cargo}
+                </span>
+                <span className="avd-andamento-contas">
+                  {textoDoAndamento({ ...v, cargo: "" })}
+                </span>
+                <BarraDoAndamento a={v} />
+              </button>
+            </li>
+          ))}
+        </ul>
+      ) : null}
+    </section>
+  );
+}
+
+/* O cabeçalho do grupo da vaga na tabela: cargo, o lote e a linha de corte. */
+function textoDoGrupo(cargo, resumo, quantos) {
+  const lote = resumo.porDecisao
+    ? `lote ${resumo.total} (${resumo.pelaRegra} pela regra + ${resumo.porDecisao} por decisão)`
+    : `lote ${resumo.total}`;
+  return [
+    cargo,
+    resumo.total ? lote : "",
+    resumo.corte !== null ? `linha de corte ${nota(resumo.corte)}` : "",
+    `${quantos} nesta lista`,
+  ]
+    .filter(Boolean)
+    .join(" · ");
+}
+
 export function Fila({ e, fila }) {
   const st = useSyncExternalStore(fila.assinar, fila.obter);
   const [selecao, setSelecao] = useState(() => new Set());
   const [acao, setAcao] = useState(null);
   const [incluindo, setIncluindo] = useState(false);
   const [busca, setBusca] = useState(st.filtro.busca);
+  const [recolhidos, setRecolhidos] = useState(() => new Set());
   // A ordem da tabela fica aqui: Anterior / Próxima da ficha seguem a mesma.
   const [ordem, setOrdem] = useState({ chave: "", sentido: "" });
   const etapa = st.filtro.etapa;
@@ -794,14 +913,24 @@ export function Fila({ e, fila }) {
   const dados = st.dados;
   const candidatos = useMemo(() => dados?.candidatos || [], [dados]);
   const contadores = useMemo(() => contadoresDaFila(candidatos), [candidatos]);
+  const andamento = useMemo(
+    () => andamentoDaFila(candidatos, dados?.vagas),
+    [candidatos, dados?.vagas],
+  );
   const linhas = useMemo(
     () => filtrarFila(candidatos, st.filtro, dados?.eu),
     [candidatos, st.filtro, dados?.eu],
   );
   const ordenadas = useMemo(() => ordenarFila(linhas, ordem), [linhas, ordem]);
+  // Todas as vagas: a tabela agrupa por vaga (o CSV sai sem agrupar, na ordem da coluna).
+  const agrupada = !st.filtro.vaga;
+  const exibidas = useMemo(
+    () => (agrupada ? agruparPorVaga(ordenadas, dados?.vagas) : ordenadas),
+    [agrupada, ordenadas, dados?.vagas],
+  );
   const navegaveis = useMemo(
-    () => ordenadas.filter((c) => c.ficha?.id),
-    [ordenadas],
+    () => exibidas.filter((c) => c.ficha?.id),
+    [exibidas],
   );
   const modalidades = useMemo(
     () =>
@@ -856,6 +985,94 @@ export function Fila({ e, fila }) {
       return nova;
     });
   const minhas = st.filtro.responsavel === "eu";
+  const cargoDaVaga = Object.fromEntries(
+    (dados.vagas || []).map((v) => [String(v.codigo), v.cargo]),
+  );
+  const grupo = agrupada
+    ? {
+        chave: (c) => String(c.vaga ?? ""),
+        cabecalho: (vaga, quantos) => (
+          <>
+            <strong>{vaga}</strong>
+            <span className="ui-texto-secundario">
+              {textoDoGrupo(
+                cargoDaVaga[vaga],
+                resumoDaVagaNaFila(candidatos, vaga),
+                quantos,
+              )}
+            </span>
+          </>
+        ),
+        recolhidos,
+        aoAlternar: (vaga) =>
+          setRecolhidos((atual) => {
+            const novo = new Set(atual);
+            if (novo.has(vaga)) novo.delete(vaga);
+            else novo.add(vaga);
+            return novo;
+          }),
+      }
+    : null;
+
+  // As ações da coordenação num menu só (quem não coordena não vê o menu).
+  const acoesDaCoordenacao = [
+    {
+      id: "incluir",
+      rotulo: "Incluir por decisão da coordenação",
+      icone: "fa-user-plus",
+      desabilitado: !foraDoLote.length || Boolean(st.acao),
+      aoEscolher: () => setIncluindo(true),
+      dados: {
+        "data-acao": "incluir-por-decisao",
+        "data-tour": "avd-fila-incluir-por-decisao",
+      },
+    },
+    {
+      id: "distribuir-livres",
+      rotulo: `Distribuir as livres (${livres.length})`,
+      icone: "fa-user-group",
+      desabilitado: !livres.length,
+      aoEscolher: () => setAcao({ tipo: "distribuir", fichas: livres }),
+      dados: { "data-tour": "avd-fila-distribuir-livres" },
+    },
+    {
+      id: "distribuir",
+      rotulo: `Distribuir as selecionadas (${acoes.distribuir.length})`,
+      icone: "fa-users",
+      desabilitado: !acoes.distribuir.length,
+      aoEscolher: () =>
+        setAcao({ tipo: "distribuir", fichas: acoes.distribuir }),
+      dados: { "data-acao": "distribuir-selecionadas" },
+    },
+    {
+      id: "liberar",
+      rotulo: `Liberar reservas (${acoes.liberar.length})`,
+      icone: "fa-lock",
+      desabilitado: !acoes.liberar.length,
+      aoEscolher: () => setAcao({ tipo: "liberar", fichas: acoes.liberar }),
+      dados: { "data-acao": "liberar-reservas" },
+    },
+    {
+      id: "revisao",
+      rotulo: `Mandar para revisão (${acoes.revisao.length})`,
+      icone: "fa-rotate-left",
+      desabilitado: !acoes.revisao.length,
+      aoEscolher: () => setAcao({ tipo: "revisao", fichas: acoes.revisao }),
+      dados: { "data-acao": "mandar-para-revisao" },
+    },
+    ...(dados.sem_ficha
+      ? [
+          {
+            id: "abrir-fichas",
+            rotulo: `Abrir fichas do lote (${dados.sem_ficha})`,
+            icone: "fa-folder-open",
+            desabilitado: Boolean(st.acao),
+            aoEscolher: () => void fila.abrirFichasDoLote(),
+            dados: { "data-tour": "avd-fila-abrir-fichas" },
+          },
+        ]
+      : []),
+  ];
 
   if (st.aberta?.ficha || st.abrindo)
     return (
@@ -872,6 +1089,15 @@ export function Fila({ e, fila }) {
 
   return (
     <div className="avd-fila" data-tour="avd-fila">
+      {andamento.vagas.length ? (
+        <ResumoDoAndamento
+          andamento={andamento}
+          lote={lote}
+          vaga={st.filtro.vaga}
+          aoEscolherVaga={(vaga) => fila.mudarFiltro({ vaga })}
+        />
+      ) : null}
+
       <Abas
         rotulo="Etapas da fila"
         tour="avd-fila-etapas"
@@ -886,7 +1112,7 @@ export function Fila({ e, fila }) {
       />
 
       <section className="ui-card avd-fila-barra" aria-label="Filtros da fila">
-        <div className="avd-linha" data-tour="avd-fila-filtros">
+        <div className="avd-fila-filtros" data-tour="avd-fila-filtros">
           <Campo rotulo="Vaga">
             <select
               value={st.filtro.vaga}
@@ -932,13 +1158,30 @@ export function Fila({ e, fila }) {
               ))}
             </select>
           </Campo>
-        </div>
-        <div className="avd-inline avd-fila-acoes">
+          <Campo rotulo="Código ou nome">
+            <input
+              type="search"
+              value={busca}
+              placeholder="Código ou nome"
+              data-tour="avd-fila-busca"
+              onChange={(ev) => {
+                setBusca(ev.target.value);
+                fila.mudarFiltro({ busca: ev.target.value });
+              }}
+              onKeyDown={(ev) => {
+                if (ev.key !== "Enter") return;
+                const achado = fichaPeloCodigo(candidatos, busca);
+                if (achado) void fila.abrir(achado.ficha.id);
+              }}
+            />
+          </Campo>
           <FiltrosSalvos
             fila={fila}
             f={st.filtro}
             filtros={dados.filtros || []}
           />
+        </div>
+        <div className="avd-fila-acoes">
           {dados.eu ? (
             <button
               type="button"
@@ -966,85 +1209,17 @@ export function Fila({ e, fila }) {
               próximo
             </button>
           ) : null}
-          {coordena && dados.sem_ficha ? (
-            <button
-              type="button"
-              className="btn secondary"
-              data-tour="avd-fila-abrir-fichas"
-              disabled={Boolean(st.acao)}
-              onClick={() => void fila.abrirFichasDoLote()}
-            >
-              Abrir fichas do lote ({dados.sem_ficha})
-            </button>
-          ) : null}
           {coordena ? (
-            <button
-              type="button"
-              className="btn secondary"
-              data-acao="incluir-por-decisao"
-              data-tour="avd-fila-incluir-por-decisao"
-              disabled={!foraDoLote.length || Boolean(st.acao)}
-              onClick={() => setIncluindo(true)}
-            >
-              Incluir por decisão da coordenação
-            </button>
-          ) : null}
-          {lote.pelaRegra || lote.porDecisao ? (
-            <span className="ui-texto-secundario" data-lote-da-fila>
-              {textoDoLote(lote.pelaRegra, lote.porDecisao)}
-            </span>
-          ) : null}
-          {coordena && livres.length ? (
-            <button
-              type="button"
-              className="btn secondary"
-              data-tour="avd-fila-distribuir-livres"
-              onClick={() => setAcao({ tipo: "distribuir", fichas: livres })}
-            >
-              Distribuir as livres ({livres.length})
-            </button>
+            <MenuDeAcoes
+              rotulo="Ações da coordenação"
+              icone="fa-sliders"
+              tour="avd-fila-acoes-coordenacao"
+              contagem={selecionados.length}
+              acoes={acoesDaCoordenacao}
+            />
           ) : null}
         </div>
       </section>
-
-      {coordena && selecionados.length ? (
-        <div className="ui-card avd-inline" data-tour="avd-fila-acoes-lote">
-          <span>{selecionados.length} selecionada(s)</span>
-          <button
-            type="button"
-            className="btn secondary small"
-            disabled={!acoes.distribuir.length}
-            onClick={() =>
-              setAcao({ tipo: "distribuir", fichas: acoes.distribuir })
-            }
-          >
-            Distribuir ({acoes.distribuir.length})
-          </button>
-          <button
-            type="button"
-            className="btn secondary small"
-            disabled={!acoes.liberar.length}
-            onClick={() => setAcao({ tipo: "liberar", fichas: acoes.liberar })}
-          >
-            Liberar reservas ({acoes.liberar.length})
-          </button>
-          <button
-            type="button"
-            className="btn secondary small"
-            disabled={!acoes.revisao.length}
-            onClick={() => setAcao({ tipo: "revisao", fichas: acoes.revisao })}
-          >
-            Mandar para revisão ({acoes.revisao.length})
-          </button>
-          <button
-            type="button"
-            className="btn secondary small"
-            onClick={() => setSelecao(new Set())}
-          >
-            Limpar seleção
-          </button>
-        </div>
-      ) : null}
 
       <TabelaDaFila
         st={st}
@@ -1052,6 +1227,7 @@ export function Fila({ e, fila }) {
         dados={dados}
         linhas={linhas}
         ordenadas={ordenadas}
+        exibidas={exibidas}
         ordem={ordem}
         setOrdem={setOrdem}
         total={contadores[st.filtro.etapa] ?? 0}
@@ -1059,16 +1235,8 @@ export function Fila({ e, fila }) {
         coordena={coordena}
         selecao={selecao}
         marcar={marcar}
-        busca={busca}
-        aoBuscar={(texto) => {
-          setBusca(texto);
-          fila.mudarFiltro({ busca: texto });
-        }}
-        aoTeclarNaBusca={(ev) => {
-          if (ev.key !== "Enter") return;
-          const achado = fichaPeloCodigo(candidatos, busca);
-          if (achado) void fila.abrir(achado.ficha.id);
-        }}
+        limparSelecao={() => setSelecao(new Set())}
+        grupo={grupo}
       />
 
       {incluindo ? (

@@ -575,3 +575,85 @@ export function textoDaAlteracao(alt) {
   const para = a.para === null || a.para === undefined ? "—" : String(a.para);
   return `${a.rotulo || a.campo || ""}: ${de} → ${para}`;
 }
+
+/* ── Apoio do modo de análise: etapas, prévia do parecer e anexos ─────── */
+
+/* O nome curto da etapa pelo título do bloco (a regra pode trazer rotulo_curto). */
+const NOMES_DA_ETAPA = [
+  [/identifica|identidade/i, "Identidade"],
+  [/escolaridade|diploma|forma[cç][aã]o exigida/i, "Formação"],
+  [/conselho/i, "Conselho"],
+];
+const NOME_DO_TIPO_NA_ETAPA = {
+  TITULOS: "Titulação",
+  CURSOS: "Cursos",
+  VINCULOS: "Experiência",
+  PONTUACAO: "Critério étnico",
+};
+
+/** "Identidade", "Formação", "Conselho", "Titulação", "Cursos", "Experiência"… */
+export function nomeDaEtapa(bloco) {
+  const proprio = String(bloco?.rotulo_curto ?? "").trim();
+  if (proprio) return proprio;
+  if (NOME_DO_TIPO_NA_ETAPA[bloco?.tipo])
+    return NOME_DO_TIPO_NA_ETAPA[bloco.tipo];
+  const titulo = String(bloco?.titulo ?? "");
+  const achado = NOMES_DA_ETAPA.find(([padrao]) => padrao.test(titulo));
+  if (achado) return achado[1];
+  const curto = nomeCurtoDoBloco(bloco);
+  return curto.length > 18 ? `${curto.slice(0, 17).trim()}…` : curto;
+}
+
+/**
+ * As etapas do topo do modo de análise, uma por item que pede situação e se
+ * aplica: { codigo, nome, estado }. estado: "nao_conferido", "pendencia"
+ * (marcado, mas falta motivo, justificativa…), "CONFORME", "NAO_CONFORME"
+ * ou "NAO_ENVIADO".
+ */
+export function etapasDaFicha(regraEntrada, lancamento, pendencias = []) {
+  const regra = normalizarRegraAnalise(regraEntrada);
+  return regra.blocos
+    .filter((b) => pedeSituacao(b) && blocoSeAplica(b, lancamento))
+    .map((b) => {
+      const situacao = objeto(objeto(lancamento?.blocos)[b.codigo]).situacao;
+      const falta = lista(pendencias).some(
+        (p) => p.bloco === b.codigo && p.tipo !== "situacao",
+      );
+      return {
+        codigo: b.codigo,
+        nome: nomeDaEtapa(b),
+        estado: !situacao ? "nao_conferido" : falta ? "pendencia" : situacao,
+      };
+    });
+}
+
+export const TEXTO_DO_PARECER_EM_ANALISE =
+  "Em análise — o parecer é gerado quando todos os itens forem conferidos.";
+
+/**
+ * A prévia do parecer na lateral. Enquanto falta conferir algum item, nada de
+ * resultado (a conta trata o bloco não marcado como Conforme e a experiência
+ * sem vínculo como abaixo do mínimo): só o aviso e os motivos já lançados nos
+ * itens conferidos. Com tudo conferido, o parecer da conta.
+ * Devolve { completa, texto, motivos[] }.
+ */
+export function previaDoParecer(avaliacao, conferencia, lancamento) {
+  const completa =
+    !conferencia || (conferencia.conferidos ?? 0) >= (conferencia.total ?? 0);
+  if (completa)
+    return { completa: true, texto: avaliacao?.parecer ?? "", motivos: [] };
+  const motivos = [];
+  for (const b of lista(avaliacao?.blocos)) {
+    if (!blocoConferido(lancamento, { codigo: b.codigo })) continue;
+    for (const m of lista(b.motivos)) {
+      const texto = m.item_edital
+        ? `Item ${m.item_edital}: ${m.texto}`
+        : m.texto;
+      if (texto && !motivos.includes(texto)) motivos.push(texto);
+    }
+  }
+  return { completa: false, texto: TEXTO_DO_PARECER_EM_ANALISE, motivos };
+}
+
+/** A resposta declarada é um anexo (a Empregare escreve "Anexo")? */
+export const ehAnexo = (texto) => /^anexo\b/i.test(String(texto ?? "").trim());
