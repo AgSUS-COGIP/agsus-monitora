@@ -41,7 +41,7 @@ vi.mock("../../src/lib/chartjs-global.js", () => ({
 
 const { montarSelecao } = await import("../../src/modulos/selecao/selecao.jsx");
 const { criarEstadoDaSelecao } =
-  await import("../../src/modulos/selecao/estado.js");
+  await import("../../src/modulos/selecao/estado.ts");
 
 const PAYLOAD = {
   schema_version: 1,

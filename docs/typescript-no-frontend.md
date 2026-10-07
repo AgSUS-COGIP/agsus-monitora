@@ -41,6 +41,10 @@ atributos acessíveis e o bloqueio do botão durante ações.
 
 ## Próximas migrações
 
+Seleção começou pela camada de estado em `src/modulos/selecao/estado.ts`, com contratos em
+`tipos.ts`. Os componentes desse módulo continuam JSX. O escopo e as limitações estão em
+[../src/modulos/selecao/README.md](../src/modulos/selecao/README.md).
+
 Escolher um módulo por entrega, levantar os consumidores e manter o comportamento coberto
 pelos testes. Declarar contratos de dados e ações sem `any` ou supressões de erros. Atualizar
 os imports quando o arquivo mudar de extensão. Para dados externos, acrescentar validação
