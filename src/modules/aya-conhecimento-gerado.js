@@ -4653,6 +4653,45 @@ export const VERBETES_AYA = Object.freeze([
     abrir: "nucleo",
   },
   {
+    arquivo: "regras-dos-editais.md",
+    titulo: "Edital de treinamento",
+    perguntas: [
+      "edital de treinamento",
+      "treinamento",
+      "selo treinamento",
+      "edital de teste",
+      "como treinar",
+      "testar sem dados reais",
+      "treinar entrevistas",
+      "treinar avaliacao documental",
+      "dsei treinamento",
+    ],
+    resposta:
+      'O edital de treinamento ("Treinamento – Saúde Indígena (991/2099)", unidade fictícia "DSEI Treinamento") serve para praticar sem tocar em dados reais. Ele tem 3 vagas fictícias (Enfermeiro, Técnico de Enfermagem e Agente Indígena de Saúde), 15 candidatos fictícios ("Candidato Teste 01" a "Candidato Teste 15", sem CPF e com e-mail @exemplo.invalid), a janela de entrevista aberta, a lista de convocação pronta, um roteiro de entrevista de exemplo e a regra da avaliação documental copiada de um modelo da Saúde Indígena (na situação Conferir). Ele aparece com o selo Treinamento em Editais, Entrevistas › Conduzir, Avaliação documental e Classificação. Fica fora da Visão geral, dos indicadores, dos painéis (análises, entrevistas e aprovados), das comemorações, das conferências e dos robôs; a pré-classificação só roda para ele quando pedida para ele (em Rodar com opções, marque Mostrar todos e escolha o edital). Documento oficial gerado dele sai com "TREINAMENTO — SEM VALOR OFICIAL" no título. Não rode o robô da Empregare para ele: as vagas são fictícias.',
+    fato: "",
+    fonte:
+      "supabase/migrations/20261007230000_edital_de_treinamento.sql; src/lib/edital-de-treinamento.js",
+    abrir: "nucleo",
+  },
+  {
+    arquivo: "regras-dos-editais.md",
+    titulo: "Reiniciar o edital de treinamento",
+    perguntas: [
+      "reiniciar treinamento",
+      "reiniciar o treinamento",
+      "reiniciar edital de treinamento",
+      "zerar treinamento",
+      "voltar o treinamento ao inicio",
+      "limpar treinamento",
+    ],
+    resposta:
+      "Em Editais, o administrador global vê no edital de treinamento o botão Reiniciar treinamento (setas circulares). Ao clicar, a própria linha pede a confirmação; em Reiniciar, tudo o que foi feito no treinamento (convocações, notas, listas geradas, fichas e pré-classificação, aprovados, recursos, conversa) é apagado e os dados fictícios voltam ao estado inicial, com o cronograma recalculado a partir de hoje. Só o edital de treinamento pode ser reiniciado: o banco recusa qualquer edital real e nada dele é apagado.",
+    fato: "",
+    fonte:
+      "supabase/migrations/20261007230000_edital_de_treinamento.sql; src/modulos/editais/nucleo.jsx",
+    abrir: "nucleo",
+  },
+  {
     arquivo: "regras-dos-mapas.md",
     titulo: "Mapa de Projetos",
     perguntas: [

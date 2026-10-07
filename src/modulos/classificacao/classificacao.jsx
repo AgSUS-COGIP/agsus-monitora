@@ -10,6 +10,8 @@ import { estadoDasConfiguracoes } from "../configuracoes/estado.js";
 import { obterDadosDoMonitoramento } from "../../componentes/dados-do-monitoramento.js";
 import { CHAVE_DO_CABECALHO } from "../../lib/cabecalho-dos-documentos.js";
 import { usarAreaAtual } from "../../componentes/usar-area-atual.js";
+import { SeloDeTreinamento } from "../../componentes/selo-de-treinamento.jsx";
+import { sufixoDeTreinamento } from "../../lib/edital-de-treinamento.js";
 import { classificarEdital } from "../../lib/classificacao/ajustes.js";
 import { dataDeCorteDoCronograma } from "../../lib/classificacao/dados.js";
 import { getSupabaseClient } from "../../lib/supabaseClient.js";
@@ -125,6 +127,7 @@ function TelaDaArea({ estado, agenda, e }) {
           !e.area || e.carregandoEditais || e.carregandoEdital
         }
       >
+        <SeloDeTreinamento edital={editalEscolhido} />
         <SeloDeAvisos modulo="classificacao" />
       </TopoDoPainel>
 
@@ -175,10 +178,12 @@ function TelaDaArea({ estado, agenda, e }) {
                       ? ` (${ed.candidatos.toLocaleString("pt-BR")})`
                       : ""}
                     {ed.versao_regra ? ` · regra v${ed.versao_regra}` : ""}
+                    {sufixoDeTreinamento(ed)}
                   </option>
                 ))}
               </select>
             </Campo>
+            <SeloDeTreinamento edital={editalEscolhido} />
             {chat && e.editalId ? (
               <button
                 type="button"

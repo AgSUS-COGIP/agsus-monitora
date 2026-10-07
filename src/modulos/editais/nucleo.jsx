@@ -1,11 +1,17 @@
-import { useMemo, useSyncExternalStore } from "react";
+import { useMemo, useState, useSyncExternalStore } from "react";
 import { montarModulo } from "../../app/montar-modulo.jsx";
 import { getSupabaseClient } from "../../lib/supabaseClient.js";
 import { safeHttpUrl } from "../../lib/sanitize.js";
 import {
   canImportApprovedList,
   canManageEditais,
+  isAdminGlobal,
 } from "../../lib/access-roles.js";
+import {
+  ehEditalDeTreinamento,
+  semTreinamento,
+} from "../../lib/edital-de-treinamento.js";
+import { SeloDeTreinamento } from "../../componentes/selo-de-treinamento.jsx";
 import { formatarDataHora } from "../../lib/cronograma-do-edital.js";
 import {
   alertaDoTipo,
@@ -93,6 +99,12 @@ function LinhaDoEdital({ linha, item, perfil, estado, chat }) {
   const nome = linha.edital || linha.unidade;
   const podeEditar = canManageEditais(perfil);
   const podeListas = canImportApprovedList(perfil);
+  const podeReiniciar = isAdminGlobal(perfil) && ehEditalDeTreinamento(linha);
+  const [confirmando, setConfirmando] = useState(false);
+  const salvando = useSyncExternalStore(
+    estado.assinar,
+    () => estado.obter().salvando,
+  );
   const alerta =
     item && item.alerta_tipo !== "ok" ? alertaDoTipo(item.alerta_tipo) : null;
 
@@ -112,7 +124,8 @@ function LinhaDoEdital({ linha, item, perfil, estado, chat }) {
           </a>
         ) : (
           linha.edital || "-"
-        )}
+        )}{" "}
+        <SeloDeTreinamento edital={linha} />
       </td>
       <td>
         <Selo tom={SELO[tomDoStatusDoEdital(linha.status)]}>
@@ -199,7 +212,47 @@ function LinhaDoEdital({ linha, item, perfil, estado, chat }) {
               <i className="fa-solid fa-comments" aria-hidden="true" />
             </button>
           ) : null}
-          {!podeEditar && !podeListas && !item && !chat ? (
+          {podeReiniciar && !confirmando ? (
+            <button
+              type="button"
+              className="btn icon outline nucleo-reiniciar-treinamento"
+              title="Reiniciar treinamento"
+              aria-label={`Reiniciar treinamento ${nome || ""}`}
+              disabled={salvando}
+              onClick={() => setConfirmando(true)}
+            >
+              <i className="fa-solid fa-rotate" aria-hidden="true" />
+            </button>
+          ) : null}
+          {podeReiniciar && confirmando ? (
+            <div
+              className="nucleo-confirma-reinicio"
+              role="group"
+              aria-label={`Reiniciar o treinamento ${nome || ""}?`}
+            >
+              <span>Reiniciar {nome}? Os dados dele voltam ao início.</span>
+              <button
+                type="button"
+                className="btn danger small"
+                disabled={salvando}
+                onClick={async () => {
+                  if (await estado.reiniciarTreinamento(linha))
+                    setConfirmando(false);
+                }}
+              >
+                Reiniciar
+              </button>
+              <button
+                type="button"
+                className="btn secondary small"
+                disabled={salvando}
+                onClick={() => setConfirmando(false)}
+              >
+                Cancelar
+              </button>
+            </div>
+          ) : null}
+          {!podeEditar && !podeListas && !item && !chat && !podeReiniciar ? (
             <span className="approved-no-action">—</span>
           ) : null}
         </div>
@@ -235,7 +288,8 @@ export function Nucleo({ estado, agora }) {
   const { linhas, carregado } = usarAreaAtual();
   const doResumo = useSyncExternalStore(estado.assinar, estado.obter);
   const resumoDaArea = useMemo(
-    () => resumoDasLinhas(doResumo.resumo, linhas),
+    // O edital de treinamento aparece na tabela, mas não nos indicadores.
+    () => resumoDasLinhas(doResumo.resumo, semTreinamento(linhas)),
     [doResumo.resumo, linhas],
   );
   const nucleo = useMemo(
