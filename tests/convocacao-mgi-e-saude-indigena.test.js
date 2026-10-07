@@ -40,6 +40,146 @@ const posicoesDe = (sequencia, id) =>
   );
 
 describe("ordem do simulador do MGI", () => {
+  const candidato = (nome, modalidade, nota) => ({
+    candidato_id: nome,
+    nome,
+    modalidade,
+    nota,
+    classificacao: 101 - nota,
+    cargo: "ANALISTA",
+    codigo_vaga: "VG-MGI",
+    edital_id: "1",
+    edital: "FGV",
+    lista_ativa: true,
+  });
+
+  it("continua a série MGI no cadastro reserva quando há só 1 vaga imediata", () => {
+    const { linhas, totalImediatas } = montarConvocacaoDaVaga({
+      candidatos: [
+        candidato("AC-1", "Ampla concorrência", 100),
+        candidato("AC-2", "Ampla concorrência", 99),
+        candidato("PP-1", "Pretos e pardos", 98),
+        candidato("AC-3", "Ampla concorrência", 97),
+        candidato("PCD-1", "PCD", 96),
+        candidato("PP-2", "Pretos e pardos", 95),
+        candidato("AC-4", "Ampla concorrência", 94),
+        candidato("AC-5", "Ampla concorrência", 93),
+      ],
+      quadro: { ampla: 1 },
+      modelo: MGI,
+      proporcionalidade: true,
+    });
+
+    expect(totalImediatas).toBe(1);
+    expect(linhas.map((linha) => linha.categoria)).toEqual([
+      "ampla",
+      "pretos_pardos",
+      "ampla",
+      "ampla",
+      "pcd",
+      "pretos_pardos",
+      "ampla",
+      "ampla",
+    ]);
+    expect(linhas.map((linha) => linha.imediata)).toEqual([
+      true,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+    ]);
+  });
+
+  it("aplica a série MGI também quando não há vaga imediata", () => {
+    const { linhas, totalImediatas } = montarConvocacaoDaVaga({
+      candidatos: [
+        candidato("AC-1", "Ampla concorrência", 100),
+        candidato("PP-1", "Pretos e pardos", 99),
+        candidato("AC-2", "Ampla concorrência", 98),
+        candidato("AC-3", "Ampla concorrência", 97),
+        candidato("PCD-1", "PCD", 96),
+        candidato("PP-2", "Pretos e pardos", 95),
+      ],
+      quadro: {},
+      modelo: MGI,
+      proporcionalidade: true,
+    });
+
+    expect(totalImediatas).toBe(0);
+    expect(linhas.map((linha) => linha.categoria)).toEqual([
+      "ampla",
+      "pretos_pardos",
+      "ampla",
+      "ampla",
+      "pcd",
+      "pretos_pardos",
+    ]);
+    expect(linhas.every((linha) => !linha.imediata)).toBe(true);
+  });
+
+  it("segue a série MGI na reserva mesmo com os mínimos da FGV (2 racial, 5 PCD)", () => {
+    const referencia = modeloDeReferencia("mgi-simulador");
+    const FGV = normalizarModelo({
+      ...referencia,
+      categorias: referencia.categorias.map((categoria) =>
+        categoria.id === "pcd"
+          ? { ...categoria, minimo: 5 }
+          : categoria.ampla
+            ? categoria
+            : { ...categoria, minimo: 2 },
+      ),
+    });
+    const { linhas } = montarConvocacaoDaVaga({
+      candidatos: [
+        candidato("AC-1", "Ampla concorrência", 100),
+        candidato("AC-2", "Ampla concorrência", 99),
+        candidato("AC-3", "Ampla concorrência", 98),
+        candidato("AC-4", "Ampla concorrência", 97),
+        candidato("PP-1", "Pretos e pardos", 96),
+        candidato("PCD-1", "PCD", 95),
+        candidato("PP-2", "Pretos e pardos", 94),
+      ],
+      quadro: derivarQuadro(1, FGV),
+      modelo: FGV,
+      proporcionalidade: true,
+    });
+
+    expect(linhas.map((linha) => linha.candidato.nome)).toEqual([
+      "AC-1",
+      "PP-1",
+      "AC-2",
+      "AC-3",
+      "PCD-1",
+      "PP-2",
+      "AC-4",
+    ]);
+  });
+
+  it("nas imediatas respeita o quadro manual e na reserva segue a série", () => {
+    const { linhas } = montarConvocacaoDaVaga({
+      candidatos: [
+        candidato("AC-1", "Ampla concorrência", 100),
+        candidato("AC-2", "Ampla concorrência", 99),
+        candidato("PP-1", "Pretos e pardos", 98),
+        candidato("PP-2", "Pretos e pardos", 97),
+      ],
+      quadro: { pretos_pardos: 1 },
+      modelo: MGI,
+      proporcionalidade: true,
+    });
+
+    expect(linhas.map((linha) => linha.categoria)).toEqual([
+      "pretos_pardos",
+      "pretos_pardos",
+      "ampla",
+      "ampla",
+    ]);
+    expect(linhas[0].imediata).toBe(true);
+  });
+
   /* A simulação de 100 vagas que o simulador publica (PcD 5, PN 25, PI 3, PQ 2). */
   it("reproduz posição por posição a simulação de 100 vagas", () => {
     const quadro = derivarQuadro(100, MGI);

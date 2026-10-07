@@ -42,9 +42,11 @@
 
   O status "Fim de Fila" saiu (migration 20261005180000): ninguém o usava.
 
-  O ciclo de posições repete-se depois de esgotadas as vagas imediatas: é assim
-  que o cadastro de reserva sai ordenado pelo mesmo critério da convocação, e
-  não pela classificação crua.
+  O cadastro de reserva continua a sequência de convocação depois das vagas
+  imediatas. No modelo `serie_mgi`, isso significa continuar a série global do
+  MGI (2ª PP, 5ª PCD, 6ª PP etc.), mesmo quando a vaga tem apenas 1 ou nenhuma
+  vaga imediata. Nos demais modelos, preserva-se o ciclo definido pelo quadro
+  imediato.
 */
 
 import {
@@ -491,13 +493,6 @@ export function montarConvocacaoDaVaga({
   const totalImediatas = ciclo.length;
 
   /*
-    Sem quadro de vagas não há ciclo a repetir; a vaga inteira é cadastro de
-    reserva e sai na ordem geral. Chamar a isso um ciclo de ampla mantém uma só
-    travessia em vez de um segundo caminho de código.
-  */
-  const cicloEfetivo = ciclo.length ? ciclo : [ampla.id];
-
-  /*
     As reservas de cada candidato são lidas UMA vez: a leitura passa os termos de
     todas as categorias pela célula, e refazê-la a cada tentativa de preencher
     uma vaga tornaria o cálculo quadrático numa vaga com centenas de aprovados.
@@ -510,6 +505,25 @@ export function montarConvocacaoDaVaga({
   fila.forEach((item, indice) => {
     item.efetivas = reservasEfetivas(item.declaradas, modelo, posicoes[indice]);
   });
+
+  /*
+    O MGI define posições na ORDEM GLOBAL de convocação, não apenas dentro das
+    vagas imediatas. Por isso, para ordenar também o cadastro de reserva, a série
+    precisa ser gerada até a quantidade de candidatos da fila. O número de vagas
+    imediatas continua vindo exclusivamente do quadro original e serve apenas
+    para marcar `imediata`.
+
+    Exemplo com 1 vaga imediata: AC, PP, AC, AC, PCD, PP... A 1ª é imediata e
+    as demais são cadastro de reserva, mas a série não reinicia nem vira toda AC.
+
+    Os outros modos mantêm o comportamento anterior: repetem o ciclo calculado
+    a partir do quadro imediato. Sem quadro, caem para ampla concorrência.
+  */
+  const sequenciaDaFila =
+    modelo.distribuicao === "serie_mgi" && fila.length > 0
+      ? sequenciaDeConvocacao(derivarQuadro(fila.length, modelo), modelo)
+      : null;
+  const cicloEfetivo = ciclo.length ? ciclo : [ampla.id];
 
   /*
     Cada categoria guarda um ponteiro na fila, que só avança. Pode fazê-lo
@@ -550,7 +564,12 @@ export function montarConvocacaoDaVaga({
 
   const linhas = [];
   for (let volta = 0; linhas.length < fila.length; volta += 1) {
-    const categoriaDaVaga = cicloEfetivo[volta % cicloEfetivo.length];
+    // As imediatas seguem o quadro (que pode ser manual); a reserva, a série.
+    const categoriaDaVaga =
+      volta < totalImediatas
+        ? ciclo[volta]
+        : (sequenciaDaFila?.[volta] ??
+          cicloEfetivo[volta % cicloEfetivo.length]);
     const escolha = preencher(categoriaDaVaga);
     if (!escolha) break;
 
