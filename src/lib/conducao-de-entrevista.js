@@ -11,7 +11,9 @@
 
   `calcularEntrevista` é o espelho de `private."FC_CALCULAR_ENTREVISTA"`: a
   ficha mostra o parecer enquanto a pessoa digita, mas quem manda é o banco —
-  depois de salvar, vale o que `lancar_notas_entrevista` devolveu.
+  depois de salvar, vale o que `lancar_notas_entrevista` devolveu. A mesma regra
+  em Python (`monitora.entrevistas.calculo`, recálculo em lote) e os casos
+  dourados dos três lados: `tests/fixtures/entrevistas/casos-de-calculo.json`.
 */
 import { normalizarBusca } from "./entrevistas-do-painel.js";
 import {
