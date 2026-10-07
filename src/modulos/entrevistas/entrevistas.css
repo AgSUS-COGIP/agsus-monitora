@@ -561,9 +561,12 @@ table.entrevistas-tabela {
 .entrevistas-analise {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: auto minmax(0, 1fr);
   gap: var(--space-5);
   width: 100%;
   max-width: 1360px;
+  /* O rodapé fica no pé da tela mesmo com pouco conteúdo (Faltou). */
+  min-height: calc(100dvh - var(--header-height, 0px) - var(--space-8));
   min-width: 0;
   margin-inline: auto;
 }
@@ -796,9 +799,10 @@ table.entrevistas-tabela {
 
 /* Corpo: a folha e a lateral */
 .entrevistas-analise-formulario {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
+  display: flex;
+  flex-direction: column;
   gap: var(--space-4);
+  min-width: 0;
 }
 .entrevistas-analise-grade {
   display: grid;
@@ -1394,6 +1398,7 @@ table.entrevistas-tabela {
   bottom: var(--recuo-da-navegacao-inferior, 0px);
   z-index: 3;
   display: flex;
+  margin-top: auto;
   flex-wrap: wrap;
   align-items: center;
   gap: var(--space-2) var(--space-3);
