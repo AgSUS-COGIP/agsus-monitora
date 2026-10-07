@@ -2,7 +2,7 @@
 
 Avisos de conferência: o que o MONITORA confere todo dia entre os módulos, onde os avisos aparecem e
 quem pode ignorar. Fontes: `scripts/conferencias/`, `src/modulos/conferencias/`,
-`src/lib/avisos-de-conferencia.js` e as migrations `20261005210000_conferencias_de_consistencia.sql`,
+`src/lib/avisos-de-conferencia.ts` e as migrations `20261005210000_conferencias_de_consistencia.sql`,
 `20261007120000_casos_dos_avisos_de_conferencia.sql` e `20261007240000_casos_dos_avisos_resolvidos.sql`.
 
 ## Avisos de conferência
@@ -34,10 +34,10 @@ quem pode ignorar. Fontes: `scripts/conferencias/`, `src/modulos/conferencias/`,
 
 **perguntas:** como conferir um aviso | ver os casos do aviso | quais analises estao erradas | casos do aviso | buscar candidato nos avisos | pesquisar codigo do candidato no aviso | exportar casos do aviso | csv dos avisos | abrir a analise do aviso | candidato analisado em dois editais | data da analise antes da inscricao
 **resposta:** Na gaveta dos avisos, o botão com o número de casos abre a lista de todos os casos do aviso, 50 por vez ("Mostrar mais" traz os seguintes). Cada caso mostra o código do candidato na Empregare, o nome, o edital, a vaga, o responsável pela análise e o motivo: por exemplo, a data da análise e a data da inscrição, a nota e a nota mínima, a nota e a soma das parciais, a experiência e o teto. No candidato analisado em dois editais ativos aparecem as análises dele em cada edital, com vaga e situação, e quantas ficaram fora do seu acesso. O campo do aviso busca por código ou nome (sem acento) e "Exportar CSV" baixa todos os casos do aviso. O campo do topo da gaveta procura o candidato em todos os avisos. Clicar num caso das análises abre o Painel das análises já buscando pelo nome e com a análise aberta, para conferir e corrigir na planilha; o aviso some na conferência seguinte, quando o problema não aparecer mais. O nome, a vaga e o responsável só aparecem para quem tem a área e o edital da análise no seu recorte.
-**fonte:** src/modulos/conferencias/avisos-de-conferencia.jsx; supabase/migrations/20261007120000_casos_dos_avisos_de_conferencia.sql
+**fonte:** src/modulos/conferencias/avisos-de-conferencia.tsx; supabase/migrations/20261007120000_casos_dos_avisos_de_conferencia.sql
 
 ## Casos dos avisos da lista de aprovados, das entrevistas e da classificação
 
 **perguntas:** contratado em duas vagas | quem foi contratado em duas vagas | casos do aviso da lista de aprovados | convocado sem desfecho | casos do aviso das entrevistas | nota fora da escala | registro removido no aviso | sem acesso no aviso | referencia no aviso | abrir o aprovado do aviso
 **resposta:** Os casos de todos os módulos mostram quem é e o que conferir. Na lista de aprovados: o nome, o código do candidato na Empregare (quando há), o edital, a vaga e a situação com a data (por exemplo, "Contratado em 03/02/2026"); no "Contratado em duas vagas" aparecem todas as vagas da pessoa nas listas vigentes, com edital, vaga, situação e data, e quantas ficaram fora do seu acesso. Clicar no caso abre a Lista de aprovados só com as vagas daquela pessoa; "Ver todos" tira o recorte. Nas entrevistas: nome, código, edital, vaga, parecer e nota, e o clique abre Entrevistas já buscando o candidato, com a entrevista aberta. Na classificação aparecem a lista (tipo e data), a vaga (código e nome) ou o candidato do ajuste. Se o registro não existe mais, o caso mostra "Registro removido"; se ele é de uma área ou edital fora do seu acesso, "Sem acesso" — nunca o identificador interno.
-**fonte:** src/lib/avisos-de-conferencia.js; supabase/migrations/20261007240000_casos_dos_avisos_resolvidos.sql
+**fonte:** src/lib/avisos-de-conferencia.ts; supabase/migrations/20261007240000_casos_dos_avisos_resolvidos.sql

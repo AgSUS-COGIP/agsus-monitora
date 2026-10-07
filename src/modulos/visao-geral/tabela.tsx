@@ -1,3 +1,11 @@
+import type { MouseEvent as EventoReact } from "react";
+import type {
+  ColunaDaTabela,
+  EstadoDaVisaoGeral,
+  LinhaDaVisaoGeral,
+  PropsComTextos,
+  TextosDaVisaoGeral,
+} from "./tipos.ts";
 import { useEffect, useRef, useState } from "react";
 import { formatNumberBR } from "../../lib/formatters.js";
 import {
@@ -11,7 +19,7 @@ import {
   seloDoStatus,
   taxaDeOciosidade,
   urgenciaDoCronograma,
-} from "../../lib/visao-geral.js";
+} from "../../lib/visao-geral.ts";
 import { classes, Selo, TabelaInfinita } from "../../ui/index.js";
 
 /*
@@ -28,21 +36,34 @@ import { classes, Selo, TabelaInfinita } from "../../ui/index.js";
   recortadas.
 */
 
-const fmt = (valor) => formatNumberBR(valor);
+const fmt = (valor: unknown) => formatNumberBR(valor);
 const ESPERA_DA_BUSCA_MS = 300;
 const DESTAQUE_MS = 2500;
-const jaRecortadas = (itens) => itens;
+const jaRecortadas = (itens: readonly LinhaDaVisaoGeral[]) => itens;
 
-function MenuDeColunas({ colunas, aoAlternar, textos }) {
+function MenuDeColunas({
+  colunas,
+  aoAlternar,
+  textos,
+}: {
+  colunas: readonly ColunaDaTabela[];
+  aoAlternar: EstadoDaVisaoGeral["alternarColuna"];
+  textos: TextosDaVisaoGeral;
+}) {
   const [aberto, setAberto] = useState(false);
-  const raiz = useRef(null);
+  const raiz = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!aberto) return undefined;
-    const aoClicar = (evento) => {
-      if (!raiz.current?.contains(evento.target)) setAberto(false);
+    const aoClicar = (evento: MouseEvent) => {
+      if (
+        !raiz.current?.contains(
+          evento.target instanceof Node ? evento.target : null,
+        )
+      )
+        setAberto(false);
     };
-    const aoTeclar = (evento) => {
+    const aoTeclar = (evento: KeyboardEvent) => {
       if (evento.key === "Escape") setAberto(false);
     };
     document.addEventListener("click", aoClicar);
@@ -93,7 +114,13 @@ function MenuDeColunas({ colunas, aoAlternar, textos }) {
   );
 }
 
-function CelulaDoEdital({ linha, hoje }) {
+function CelulaDoEdital({
+  linha,
+  hoje,
+}: {
+  linha: LinhaDaVisaoGeral;
+  hoje: string | Date;
+}) {
   const link = linkSeguro(linha.link_edital);
   const prazo = prazoDoEdital(linha, hoje);
   const cronograma = seloDoCronograma(linha, hoje);
@@ -130,7 +157,7 @@ function CelulaDoEdital({ linha, hoje }) {
   );
 }
 
-function CelulaDaObservacao({ texto }) {
+function CelulaDaObservacao({ texto }: { texto: string }) {
   const [aberta, setAberta] = useState(false);
   const longa = observacaoLonga(texto);
   return (
@@ -152,7 +179,11 @@ function CelulaDaObservacao({ texto }) {
   );
 }
 
-function celula(campo, linha, hoje) {
+function celula(
+  campo: ColunaDaTabela,
+  linha: LinhaDaVisaoGeral,
+  hoje: string | Date,
+) {
   switch (campo) {
     case "unidade":
       return <td key={campo}>{linha.unidade}</td>;
@@ -223,13 +254,25 @@ function celula(campo, linha, hoje) {
 }
 
 /* Clique na linha abre os detalhes; link e botão dentro dela não. */
-const cliqueEmControle = (evento) =>
-  Boolean(evento.target.closest?.("a, button, input, label"));
+const cliqueEmControle = (evento: EventoReact) =>
+  Boolean(
+    evento.target instanceof Element &&
+    evento.target.closest("a, button, input, label"),
+  );
 
-export function TabelaDeProcessos({ e, estado, textos, aoAbrir, agora }) {
-  const [rascunho, setRascunho] = useState(null);
+export function TabelaDeProcessos({
+  e,
+  estado,
+  textos,
+  aoAbrir,
+  agora,
+}: PropsComTextos & {
+  aoAbrir: (linha: LinhaDaVisaoGeral) => void;
+  agora: () => Date;
+}) {
+  const [rascunho, setRascunho] = useState<string | null>(null);
   const [destacada, setDestacada] = useState("");
-  const caixa = useRef(null);
+  const caixa = useRef<HTMLDivElement>(null);
   // O dia de Brasília, o mesmo dos motivos do crítico (não o do navegador).
   const hoje = e.hoje || new Date(agora());
 
@@ -249,7 +292,9 @@ export function TabelaDeProcessos({ e, estado, textos, aoAbrir, agora }) {
     if (!destaque) return undefined;
     setDestacada(destaque.id);
     const alvo = [
-      ...(caixa.current?.querySelectorAll("tr[data-linha]") || []),
+      ...(caixa.current?.querySelectorAll<HTMLTableRowElement>(
+        "tr[data-linha]",
+      ) || []),
     ].find((tr) => tr.dataset.linha === destaque.id);
     alvo?.scrollIntoView?.({ behavior: "smooth", block: "center" });
     const apagar = setTimeout(() => setDestacada(""), DESTAQUE_MS);

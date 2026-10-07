@@ -1,3 +1,18 @@
+import type {
+  Acompanhamento,
+  Armazenamento,
+  Atalho,
+  BuscaDoAcompanhamento,
+  CampoDoFiltro,
+  ClienteDoAcompanhamento,
+  EstadoDaVisaoGeral,
+  EstadoProprio,
+  FiltrosDaVisaoGeral,
+  LinhaDaVisaoGeral,
+  LinhaDoMonitoramento,
+  OpcoesDoEstado,
+  SnapshotDaVisaoGeral,
+} from "./tipos.ts";
 /*
   Estado da Visão geral (`#page-dashboard`), fora do React: o recorte (cinco
   filtros, a busca, o DSEI aberto no mapa e o atalho — Críticos ou uma
@@ -35,6 +50,8 @@ import { semTreinamento } from "../../lib/edital-de-treinamento.js";
 import { chaveDoDsei } from "../../lib/mapa-saude-indigena/chaves.js";
 import {
   acompanhamentoDaResposta,
+  CAMPOS,
+  linhasDaResposta,
   alternarColuna,
   camposAtivos,
   csvDaVisaoGeral,
@@ -49,18 +66,20 @@ import {
   proximaOrdenacao,
   recortar,
   rotuloDoAtalho,
-} from "../../lib/visao-geral.js";
+} from "../../lib/visao-geral.ts";
 
 export const CHAVE_DOS_FILTROS = "agsus_monitora_filters_v1";
 export const CHAVE_DAS_COLUNAS = "agsus_visible_cols_v1";
 /** Etapas do cronograma e resumo das listas de aprovados da área. */
 export const RPC_ACOMPANHAMENTO = "listar_acompanhamento_da_visao_geral";
 
-const txt = (valor) => String(valor ?? "").trim();
+const txt = (valor: unknown) => String(valor ?? "").trim();
 
 /** A busca do acompanhamento pelo cliente Supabase da tela. */
-export function buscarAcompanhamentoNoSupabase(supabase) {
-  return async (area) => {
+export function buscarAcompanhamentoNoSupabase(
+  supabase: ClienteDoAcompanhamento,
+) {
+  return async (area: string) => {
     const { data, error } = await supabase.rpc(RPC_ACOMPANHAMENTO, {
       p_area: area,
     });
@@ -69,7 +88,10 @@ export function buscarAcompanhamentoNoSupabase(supabase) {
   };
 }
 
-function lerGuardado(armazenamento, chave) {
+function lerGuardado(
+  armazenamento: Armazenamento | null,
+  chave: string,
+): unknown {
   try {
     const bruto = armazenamento?.getItem(chave);
     return bruto ? JSON.parse(bruto) : null;
@@ -78,7 +100,11 @@ function lerGuardado(armazenamento, chave) {
   }
 }
 
-function guardar(armazenamento, chave, valor) {
+function guardar(
+  armazenamento: Armazenamento | null,
+  chave: string,
+  valor: unknown,
+) {
   try {
     armazenamento?.setItem(chave, JSON.stringify(valor));
   } catch {
@@ -86,7 +112,7 @@ function guardar(armazenamento, chave, valor) {
   }
 }
 
-function baixarNoNavegador(conteudo, nome) {
+function baixarNoNavegador(conteudo: string, nome: string) {
   const arquivo = new Blob([conteudo], { type: "text/csv;charset=utf-8;" });
   const url = URL.createObjectURL(arquivo);
   const ancora = document.createElement("a");
@@ -96,10 +122,10 @@ function baixarNoNavegador(conteudo, nome) {
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
-const mesmaLista = (a = [], b = []) =>
+const mesmaLista = (a: readonly string[] = [], b: readonly string[] = []) =>
   a.length === b.length && a.every((valor, i) => valor === b[i]);
-const mesmosFiltros = (a, b) =>
-  Object.keys(a).every((campo) => mesmaLista(a[campo], b[campo]));
+const mesmosFiltros = (a: FiltrosDaVisaoGeral, b: FiltrosDaVisaoGeral) =>
+  CAMPOS.every((campo) => mesmaLista(a[campo], b[campo]));
 
 const armazenamentoPadrao = () => {
   try {
@@ -117,12 +143,12 @@ export function criarEstadoDaVisaoGeral({
   armazenamento = armazenamentoPadrao(),
   agora = () => Date.now(),
   baixar = baixarNoNavegador,
-} = {}) {
-  const ouvintes = new Set();
-  let aviso = (mensagem) => console.info(mensagem);
-  let buscarAcompanhamento = null;
+}: OpcoesDoEstado = {}): EstadoDaVisaoGeral {
+  const ouvintes = new Set<() => void>();
+  let aviso = (mensagem: string) => console.info(mensagem);
+  let buscarAcompanhamento: BuscaDoAcompanhamento | null = null;
 
-  let proprio = {
+  let proprio: EstadoProprio = {
     filtros: normalizarFiltros(lerGuardado(armazenamento, CHAVE_DOS_FILTROS)),
     busca: "",
     dsei: { chave: "", nome: "" },
@@ -135,10 +161,21 @@ export function criarEstadoDaVisaoGeral({
     destaque: null,
     carregadoEm: 0,
   };
-  let instantaneo = null;
-  let fonte = { linhas: null, area: "" };
-  let enriquecidas = { chave: null, linhas: [] };
-  let pedido = null;
+  let instantaneo: SnapshotDaVisaoGeral;
+  let fonte: { linhas: readonly unknown[] | null; area: string } = {
+    linhas: null,
+    area: "",
+  };
+  let enriquecidas: {
+    chave: {
+      linhas: readonly unknown[];
+      area: string;
+      acompanhamento: Acompanhamento | null;
+      dia: string;
+    } | null;
+    linhas: LinhaDaVisaoGeral[];
+  } = { chave: null, linhas: [] };
+  let pedido: { linhas: readonly unknown[]; area: string } | null = null;
 
   const hoje = () => hojeEmBrasilia(new Date(agora()));
 
@@ -146,11 +183,11 @@ export function criarEstadoDaVisaoGeral({
     O acompanhamento vale para a área de que ele foi pedido; numa recarga, o
     anterior fica até o novo chegar.
   */
-  function acompanhamentoAtual(area) {
+  function acompanhamentoAtual(area: string) {
     const a = proprio.acompanhamento;
     return a && a.area === area ? a.dados : null;
   }
-  const acompanhamentoEmDia = (linhas, area) =>
+  const acompanhamentoEmDia = (linhas: readonly unknown[], area: string) =>
     proprio.acompanhamento?.area === area &&
     proprio.acompanhamento?.linhas === linhas;
 
@@ -171,7 +208,7 @@ export function criarEstadoDaVisaoGeral({
         chave: { linhas, area: areaAtual, acompanhamento, dia },
         // O edital de treinamento não entra na Visão geral (indicadores, mapas, tabela).
         linhas: enriquecerLinhas(
-          semTreinamento(linhasDaArea(linhas, areaAtual)),
+          semTreinamento(linhasDaArea(linhasDaResposta(linhas), areaAtual)),
           {
             hoje: dia,
             acompanhamento,
@@ -223,7 +260,7 @@ export function criarEstadoDaVisaoGeral({
   }
 
   /* Muda o estado próprio; filtros novos são podados e guardados. */
-  function publicar(mudancas) {
+  function publicar(mudancas: Partial<EstadoProprio>) {
     const anteriores = proprio.filtros;
     proprio = { ...proprio, ...mudancas };
     if (mudancas.filtros) {
@@ -249,10 +286,11 @@ export function criarEstadoDaVisaoGeral({
     if (!buscarAcompanhamento || !carregado || !areaAtual) return;
     if (pedido && pedido.linhas === linhas && pedido.area === areaAtual) return;
     if (acompanhamentoEmDia(linhas, areaAtual)) return;
+    const buscar = buscarAcompanhamento;
     const este = { linhas, area: areaAtual };
     pedido = este;
     Promise.resolve()
-      .then(() => buscarAcompanhamento(areaAtual))
+      .then(() => buscar(areaAtual))
       .then(
         (resposta) => {
           if (pedido !== este) return;
@@ -285,7 +323,7 @@ export function criarEstadoDaVisaoGeral({
   */
   function aoMudarDados() {
     const { linhas, areaAtual, carregado } = dados.obter();
-    const mudancas = {};
+    const mudancas: Partial<EstadoProprio> = {};
     if (fonte.linhas !== linhas && carregado) mudancas.carregadoEm = agora();
     if (fonte.area && fonte.area !== areaAtual) {
       mudancas.dsei = { chave: "", nome: "" };
@@ -310,7 +348,7 @@ export function criarEstadoDaVisaoGeral({
   fonte = { linhas: dados.obter().linhas, area: dados.obter().areaAtual };
   calcular();
 
-  function definirFiltro(campo, valores) {
+  function definirFiltro(campo: CampoDoFiltro, valores: readonly string[]) {
     publicar({
       filtros: {
         ...proprio.filtros,
@@ -323,7 +361,11 @@ export function criarEstadoDaVisaoGeral({
     Um clique num bloco (fase, projeto): filtra só aquele valor; o mesmo
     clique de novo tira o filtro.
   */
-  function alternarFiltroUnico(campo, valor, rotulo) {
+  function alternarFiltroUnico(
+    campo: CampoDoFiltro,
+    valor: string,
+    rotulo: string,
+  ) {
     const limpo = txt(valor);
     const atuais = proprio.filtros[campo] || [];
     const tirando = atuais.length === 1 && atuais[0] === limpo;
@@ -335,7 +377,7 @@ export function criarEstadoDaVisaoGeral({
     O KPI Críticos e as pendências do Pós-resultado: um atalho por vez; o
     mesmo clique de novo tira.
   */
-  function alternarAtalho(atalho) {
+  function alternarAtalho(atalho: Atalho) {
     const tirando = proprio.atalho === atalho;
     publicar({ atalho: tirando ? "" : atalho });
     aviso(
@@ -369,7 +411,7 @@ export function criarEstadoDaVisaoGeral({
     pela unidade e pelo edital dela, sem busca, atalho nem DSEI, e a linha em
     destaque.
   */
-  function localizar(linha) {
+  function localizar(linha: LinhaDoMonitoramento | null) {
     if (!linha) return;
     const filtros = filtrosVazios();
     if (txt(linha.unidade)) filtros.unidade = [txt(linha.unidade)];

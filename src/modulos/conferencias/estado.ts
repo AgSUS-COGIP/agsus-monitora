@@ -1,7 +1,16 @@
+import type {
+  EstadoDosAvisos,
+  ClienteDosAvisos,
+  SnapshotDosAvisos,
+  FiltroDosAvisos,
+  ConsultaDeCasos,
+  ExportacaoDeCasos,
+  Caso,
+} from "./tipos.ts";
 /*
   Estado dos avisos de conferência, fora do React: a última leitura de
   `listar_avisos_conferencia` (área e módulo opcionais), já normalizada por
-  src/lib/avisos-de-conferencia.js, e o "ignorar" com motivo
+  src/lib/avisos-de-conferencia.ts, e o "ignorar" com motivo
   (`ignorar_aviso_conferencia`). A tela lê com `useSyncExternalStore`.
 
   Quem usa: o cartão "Avisos de conferência" de Configurações › Status das
@@ -21,10 +30,10 @@ import {
   normalizarAvisos,
   normalizarCasos,
   termoDeBusca,
-} from "../../lib/avisos-de-conferencia.js";
+} from "../../lib/avisos-de-conferencia.ts";
 import { comTempoLimite, mensagemDeFalha } from "../../lib/falha-de-rede.js";
 
-function baixarNoNavegador(conteudo, nome) {
+function baixarNoNavegador(conteudo: string, nome: string) {
   // O BOM faz o Excel abrir em UTF-8.
   const arquivo = new Blob(["﻿" + conteudo], {
     type: "text/csv;charset=utf-8;",
@@ -37,8 +46,14 @@ function baixarNoNavegador(conteudo, nome) {
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
-export function criarEstadoDosAvisos({ supabase, baixar = baixarNoNavegador }) {
-  let estado = {
+export function criarEstadoDosAvisos({
+  supabase,
+  baixar = baixarNoNavegador,
+}: {
+  supabase: ClienteDosAvisos | null;
+  baixar?: (conteudo: string, nome: string) => void;
+}): EstadoDosAvisos {
+  let estado: SnapshotDosAvisos = {
     status: "idle",
     lista: null,
     erro: "",
@@ -47,14 +62,17 @@ export function criarEstadoDosAvisos({ supabase, baixar = baixarNoNavegador }) {
     erroAoIgnorar: "",
   };
   let pedido = 0;
-  let filtro = { area: null, modulo: null };
-  const ouvintes = new Set();
-  const publicar = (mudancas) => {
+  let filtro: FiltroDosAvisos = { area: null, modulo: null };
+  const ouvintes = new Set<() => void>();
+  const publicar = (mudancas: Partial<SnapshotDosAvisos>) => {
     estado = { ...estado, ...mudancas };
     for (const ouvinte of ouvintes) ouvinte();
   };
 
-  async function carregar({ area = null, modulo = null } = {}) {
+  async function carregar({
+    area = null,
+    modulo = null,
+  }: FiltroDosAvisos = {}) {
     const anterior = filtro;
     filtro = { area: area || null, modulo: modulo || null };
     const meu = ++pedido;
@@ -92,7 +110,7 @@ export function criarEstadoDosAvisos({ supabase, baixar = baixarNoNavegador }) {
     }
   }
 
-  async function ignorar(id, motivo) {
+  async function ignorar(id: string, motivo: string) {
     if (!supabase) return false;
     publicar({ ignorando: id, erroAoIgnorar: "" });
     try {
@@ -129,7 +147,7 @@ export function criarEstadoDosAvisos({ supabase, baixar = baixarNoNavegador }) {
     busca = "",
     limite = CASOS_POR_PAGINA,
     deslocamento = 0,
-  } = {}) {
+  }: ConsultaDeCasos = {}) {
     if (!supabase) throw new Error("Sem conexão com o banco.");
     const { data, error } = await comTempoLimite(
       supabase.rpc("listar_casos_aviso_conferencia", {
@@ -147,8 +165,11 @@ export function criarEstadoDosAvisos({ supabase, baixar = baixarNoNavegador }) {
   }
 
   /* Todos os casos (para o CSV), de 1000 em 1000. */
-  async function todosOsCasos({ avisoId = null, busca = "" } = {}) {
-    let casos = [];
+  async function todosOsCasos({
+    avisoId = null,
+    busca = "",
+  }: ConsultaDeCasos = {}) {
+    let casos: Caso[] = [];
     for (;;) {
       const pagina = await listarCasos({
         avisoId,
@@ -163,7 +184,10 @@ export function criarEstadoDosAvisos({ supabase, baixar = baixarNoNavegador }) {
   }
 
   /** Baixa o CSV dos casos de um aviso (ou da busca geral). true se baixou. */
-  async function exportarCasos({ aviso = null, busca = "" } = {}) {
+  async function exportarCasos({
+    aviso = null,
+    busca = "",
+  }: ExportacaoDeCasos = {}) {
     const casos = await todosOsCasos({ avisoId: aviso?.id || null, busca });
     if (!casos.length) return false;
     baixar(csvDosCasos(casos), nomeDoCsvDosCasos(aviso));
@@ -171,7 +195,7 @@ export function criarEstadoDosAvisos({ supabase, baixar = baixarNoNavegador }) {
   }
 
   return {
-    assinar(ouvinte) {
+    assinar(ouvinte: () => void) {
       ouvintes.add(ouvinte);
       return () => ouvintes.delete(ouvinte);
     },

@@ -30,7 +30,8 @@ const FATO_SUPABASE_ORQ_CFG = {
   SUCCESS_STATUSES: ['SUCCESS', 'NO_CHANGES'],
   // [nao-trava] Execucao do Apps Script tem 30 min. Se a FATO ja consumiu isto, o incremental
   // (ate ~5 min) fica para a proxima verificacao de 5 min, em vez de ser cortado no meio.
-  MAX_ELAPSED_BEFORE_INCREMENTAL_MS: 20 * 60 * 1000
+  // [sempre-avanca] 15 min de FATO + leitura da planilha + 4 min de trabalho cabem nos 30 min.
+  MAX_ELAPSED_BEFORE_INCREMENTAL_MS: 15 * 60 * 1000
 };
 
 // [nao-trava] Inicio desta execucao do orquestrador (cada execucao recarrega o script).

@@ -15,7 +15,7 @@ const TOM_DO_SELO = {
 };
 
 /**
- * @param {{ tom?: string, titulo?: string, className?: string, children?: import("react").ReactNode }} props
+ * @param {{tom?: string, titulo?: string, className?: string, children?: import("react").ReactNode}} props
  */
 export function Selo({ tom = "neutro", titulo, className, children }) {
   return (

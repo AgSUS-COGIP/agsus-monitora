@@ -42,7 +42,7 @@ import { criarEstadoDasAnalises } from "./estado.js";
 import { GavetaDaAnalise } from "./gaveta.jsx";
 import { chipsDosFiltros, Filtros, Graficos, Indicadores } from "./paineis.jsx";
 import { TabelaDeAnalises } from "./tabela.jsx";
-import { SeloDeAvisos } from "../conferencias/avisos-de-conferencia.jsx";
+import { SeloDeAvisos } from "../conferencias/avisos-de-conferencia.tsx";
 
 /*
   A tela de Análises curriculares (view `analises`), um módulo do app: monta

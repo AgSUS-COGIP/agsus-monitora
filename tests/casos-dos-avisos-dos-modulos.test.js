@@ -6,7 +6,7 @@ import {
   normalizarCaso,
   ondeDoCaso,
   quemDoCaso,
-} from "../src/lib/avisos-de-conferencia.js";
+} from "../src/lib/avisos-de-conferencia.ts";
 import { filtrosDeEntrevistas } from "../src/lib/filtro-da-aya.js";
 import {
   filterApprovedCandidates,

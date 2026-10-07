@@ -4,11 +4,14 @@
   outra moldura (o texto de uma seção da gaveta).
 */
 
-/** @param {{ className?: string, children?: import("react").ReactNode }} props */
+/**
+ * @param {{className?: string, children?: import("react").ReactNode}} props
+ */
 export function EstadoVazio({ className, children }) {
   return <div className={className || "ui-vazio"}>{children}</div>;
 }
 
+/** @param {{ className?: string, children?: import("react").ReactNode }} p */
 export function Carregando({ className, children = "Carregando…" }) {
   return <div className={className || "ui-vazio"}>{children}</div>;
 }

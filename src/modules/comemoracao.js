@@ -36,7 +36,7 @@ import "../styles/comemoracao.css";
   src/lib/comemoracao.js. Quem usa: o acesso liberado
   (comemoracao-do-acesso.js), o painel de análises, a tela de Entrevistas
   (src/modulos/entrevistas/marcos.js), os marcos do ano
-  (src/modulos/visao-geral/boas-vindas.jsx) e a Aya (fim de tour e de trilha).
+  (src/modulos/visao-geral/boas-vindas.tsx) e a Aya (fim de tour e de trilha).
 */
 
 export const TEMPO_DO_AVISO_MS = 12000;
@@ -561,6 +561,9 @@ function marcarSom(botao, ligado) {
  * Com fogos, o aviso ganha "Pular" (some quando o show acaba) e o botão de
  * som; o × também encerra o show. Sem fogos quando a pessoa pediu menos
  * movimento. Devolve o aviso (ou null).
+ */
+/**
+ * @param {{texto?: string, itens?: readonly string[], tituloDosItens?: string, forma?: {tipo: string, texto: string} | null, confete?: string | boolean, doc?: Document, janela?: Window, aleatorio?: () => number}} [opcoes]
  */
 export function comemorar({
   texto,

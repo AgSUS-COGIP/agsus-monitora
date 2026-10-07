@@ -1,3 +1,15 @@
+import type { FormEvent } from "react";
+import type {
+  Aviso,
+  Caso,
+  EstadoDosAvisos,
+  SnapshotDosAvisos,
+  ConsultaDeCasos,
+  ListaDeAvisosNormalizada,
+  ClienteDosAvisos,
+  AbrirCaso,
+  OpcoesDeAbrirCaso,
+} from "./tipos.ts";
 import {
   useCallback,
   useEffect,
@@ -26,12 +38,42 @@ import {
   termoDeBusca,
   tomDoSelo,
   VIEW_DO_MODULO,
-} from "../../lib/avisos-de-conferencia.js";
+} from "../../lib/avisos-de-conferencia.ts";
 import { mensagemDeFalha } from "../../lib/falha-de-rede.js";
 import { getSupabaseClient } from "../../lib/supabaseClient.js";
 import { formatNumberBR } from "../../lib/formatters.js";
 import { Gaveta, Segmentado } from "../../ui/index.js";
-import { criarEstadoDosAvisos } from "./estado.js";
+import { criarEstadoDosAvisos } from "./estado.ts";
+
+declare global {
+  interface Window {
+    navigate?: (view: string) => unknown;
+  }
+}
+type PropsDoEstado = { estado: EstadoDosAvisos; aoAbrirCaso?: AbrirCaso };
+type PropsDoAviso = PropsDoEstado & { aviso: Aviso };
+type PropsDoCartao = {
+  supabase?: ClienteDosAvisos | null;
+  estado?: EstadoDosAvisos;
+  aoAbrirCaso?: AbrirCaso;
+};
+interface PaginaNaTela {
+  status: "carregando" | "erro" | "pronto" | "mais";
+  casos: Caso[];
+  total: number;
+  erro: string;
+}
+const erroDaConsulta = (falha: unknown): string => {
+  if (
+    falha &&
+    typeof falha === "object" &&
+    "message" in falha &&
+    typeof falha.message === "string" &&
+    falha.message
+  )
+    return falha.message;
+  return mensagemDeFalha(falha);
+};
 
 /*
   Avisos de conferência (job Python scripts/conferencias/, todo dia às 6h).
@@ -51,16 +93,16 @@ import { criarEstadoDosAvisos } from "./estado.js";
   (análise, aprovado, entrevista; src/lib destinoDoCaso). No topo da lista, a
   busca em todos os avisos. Quem administra o módulo (ou o administrador
   global) ignora com motivo; o ignorado volta sozinho se a quantidade crescer.
-  As regras puras: src/lib/avisos-de-conferencia.js.
+  As regras puras: src/lib/avisos-de-conferencia.ts.
 */
 
 const ESPERA_DA_BUSCA_MS = 300;
 
-function usarEstado(estado) {
+function usarEstado(estado: EstadoDosAvisos) {
   return useSyncExternalStore(estado.assinar, estado.obter);
 }
 
-function usarComEspera(valor, ms) {
+function usarComEspera(valor: string, ms: number) {
   const [atrasado, setAtrasado] = useState(valor);
   useEffect(() => {
     const t = setTimeout(() => setAtrasado(valor), ms);
@@ -74,12 +116,12 @@ function usarComEspera(valor, ms) {
  * análise, a Lista de aprovados nas vagas da pessoa, Entrevistas no candidato.
  */
 export function abrirCaso(
-  caso,
+  caso: Caso,
   {
     navegar = true,
     pedir = pedirFiltro,
-    ir = (view) => globalThis.window?.navigate?.(view),
-  } = {},
+    ir = (view: string) => globalThis.window?.navigate?.(view),
+  }: OpcoesDeAbrirCaso = {},
 ) {
   const destino = destinoDoCaso(caso);
   if (!destino) return;
@@ -99,8 +141,11 @@ const TITULOS_DO_DESTINO = Object.freeze({
   aviso ou a busca muda; "Mostrar mais" pede a seguinte. Resposta atrasada de
   uma busca antiga é descartada.
 */
-function usarCasos(estado, { avisoId = null, busca = "" }) {
-  const [lista, setLista] = useState({
+function usarCasos(
+  estado: EstadoDosAvisos,
+  { avisoId = null, busca = "" }: ConsultaDeCasos,
+) {
+  const [lista, setLista] = useState<PaginaNaTela>({
     status: "carregando",
     casos: [],
     total: 0,
@@ -118,13 +163,13 @@ function usarCasos(estado, { avisoId = null, busca = "" }) {
         if (meu === pedido.current)
           setLista({ status: "pronto", casos, total, erro: "" });
       })
-      .catch((falha) => {
+      .catch((falha: unknown) => {
         if (meu === pedido.current)
           setLista({
             status: "erro",
             casos: [],
             total: 0,
-            erro: falha?.message || mensagemDeFalha(falha),
+            erro: erroDaConsulta(falha),
           });
       });
   }, [estado, avisoId, termo]);
@@ -143,12 +188,12 @@ function usarCasos(estado, { avisoId = null, busca = "" }) {
             erro: "",
           }));
       })
-      .catch((falha) => {
+      .catch((falha: unknown) => {
         if (meu === pedido.current)
           setLista((atual) => ({
             ...atual,
             status: "pronto",
-            erro: falha?.message || mensagemDeFalha(falha),
+            erro: erroDaConsulta(falha),
           }));
       });
   }, [estado, avisoId, termo, lista.casos.length]);
@@ -156,7 +201,15 @@ function usarCasos(estado, { avisoId = null, busca = "" }) {
   return { ...lista, carregarMais };
 }
 
-function ItemDoCaso({ caso, mostrarAviso, aoAbrir }) {
+function ItemDoCaso({
+  caso,
+  mostrarAviso,
+  aoAbrir,
+}: {
+  caso: Caso;
+  mostrarAviso?: boolean;
+  aoAbrir?: AbrirCaso;
+}) {
   const destino = aoAbrir ? destinoDoCaso(caso) : null;
   const onde = ondeDoCaso(caso);
   const conteudo = (
@@ -206,7 +259,7 @@ function ItemDoCaso({ caso, mostrarAviso, aoAbrir }) {
         <button
           type="button"
           className="conf-caso conf-caso--clicavel"
-          onClick={() => aoAbrir(caso)}
+          onClick={() => aoAbrir?.(caso)}
           title={TITULOS_DO_DESTINO[destino.view]}
         >
           {conteudo}
@@ -226,7 +279,8 @@ function ListaDeCasos({
   mostrarAviso,
   aoAbrirCaso,
   exemplos = [],
-}) {
+}: PropsDoEstado &
+  ConsultaDeCasos & { mostrarAviso?: boolean; exemplos?: readonly string[] }) {
   const casos = usarCasos(estado, { avisoId, busca });
   if (casos.status === "carregando")
     return (
@@ -295,7 +349,11 @@ function ListaDeCasos({
   );
 }
 
-function BotaoDeCsv({ estado, aviso = null, busca = "" }) {
+function BotaoDeCsv({
+  estado,
+  aviso = null,
+  busca = "",
+}: PropsDoEstado & { aviso?: Aviso | null; busca?: string }) {
   const [exportando, setExportando] = useState(false);
   const [erro, setErro] = useState("");
   async function exportar() {
@@ -305,7 +363,7 @@ function BotaoDeCsv({ estado, aviso = null, busca = "" }) {
       if (!(await estado.exportarCasos({ aviso, busca })))
         setErro("Nenhum caso para exportar.");
     } catch (falha) {
-      setErro(falha?.message || mensagemDeFalha(falha));
+      setErro(erroDaConsulta(falha));
     } finally {
       setExportando(false);
     }
@@ -329,7 +387,7 @@ function BotaoDeCsv({ estado, aviso = null, busca = "" }) {
   );
 }
 
-function CasosDoAviso({ aviso, estado, aoAbrirCaso }) {
+function CasosDoAviso({ aviso, estado, aoAbrirCaso }: PropsDoAviso) {
   const [digitado, setDigitado] = useState("");
   const busca = usarComEspera(digitado, ESPERA_DA_BUSCA_MS);
   const id = useId();
@@ -361,12 +419,22 @@ function CasosDoAviso({ aviso, estado, aoAbrirCaso }) {
   );
 }
 
-function FormularioDeIgnorar({ aviso, estado, ignorando, erro, aoCancelar }) {
+function FormularioDeIgnorar({
+  aviso,
+  estado,
+  ignorando,
+  erro,
+  aoCancelar,
+}: PropsDoAviso & {
+  ignorando: string | null;
+  erro: string;
+  aoCancelar: () => void;
+}) {
   const [motivo, setMotivo] = useState("");
   const [tocado, setTocado] = useState(false);
   const id = useId();
   const problema = erroDoMotivo(motivo);
-  async function confirmar(evento) {
+  async function confirmar(evento: FormEvent<HTMLFormElement>) {
     evento.preventDefault();
     setTocado(true);
     if (problema) return;
@@ -401,7 +469,13 @@ function FormularioDeIgnorar({ aviso, estado, ignorando, erro, aoCancelar }) {
   );
 }
 
-function ItemDoAviso({ aviso, estado, atual, mostrarModulo, aoAbrirCaso }) {
+function ItemDoAviso({
+  aviso,
+  estado,
+  atual,
+  mostrarModulo,
+  aoAbrirCaso,
+}: PropsDoAviso & { atual: SnapshotDosAvisos; mostrarModulo?: boolean }) {
   const [casos, setCasos] = useState(false);
   const [ignorar, setIgnorar] = useState(false);
   const modulo = MODULOS_DOS_AVISOS.find((m) => m.valor === aviso.modulo);
@@ -464,7 +538,13 @@ function ItemDoAviso({ aviso, estado, atual, mostrarModulo, aoAbrirCaso }) {
 }
 
 /** A busca em todos os avisos do recorte (código ou nome do candidato). */
-function BuscaNosAvisos({ valor, aoMudar }) {
+function BuscaNosAvisos({
+  valor,
+  aoMudar,
+}: {
+  valor: string;
+  aoMudar: (valor: string) => void;
+}) {
   const id = useId();
   return (
     <div className="conf-busca">
@@ -490,6 +570,9 @@ export function ListaDeAvisos({
   lista,
   mostrarModulo = false,
   aoAbrirCaso = abrirCaso,
+}: PropsDoEstado & {
+  lista: ListaDeAvisosNormalizada | null;
+  mostrarModulo?: boolean;
 }) {
   const atual = usarEstado(estado);
   const [verIgnorados, setVerIgnorados] = useState(false);
@@ -589,7 +672,7 @@ export function CartaoDeAvisos({
   supabase = getSupabaseClient(),
   estado: externo,
   aoAbrirCaso,
-}) {
+}: PropsDoCartao) {
   const estado = useMemo(
     () => externo || criarEstadoDosAvisos({ supabase }),
     [externo, supabase],
@@ -647,7 +730,7 @@ export function SeloDeAvisos({
   supabase = getSupabaseClient(),
   estado: externo,
   aoAbrirCaso = abrirCaso,
-}) {
+}: PropsDoCartao & { modulo: string }) {
   const { area } = usarAreaAtual();
   const estado = useMemo(
     () => externo || criarEstadoDosAvisos({ supabase }),
@@ -663,7 +746,7 @@ export function SeloDeAvisos({
   if (!abertos.length && !aberta) return null;
   const tom = tomDoSelo(abertos) || "info";
   // Caso que leva à própria tela só recorta a tela (sem navegar).
-  const abrirNoModulo = (caso) => {
+  const abrirNoModulo = (caso: Caso) => {
     setAberta(false);
     aoAbrirCaso(caso, {
       navegar: destinoDoCaso(caso)?.view !== VIEW_DO_MODULO[modulo],

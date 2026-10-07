@@ -46,11 +46,11 @@ function chavesSelecionadas(selecionados) {
  * @param {object} linha
  * @param {Record<string, Iterable<string>>} estado  valores selecionados por campo
  * @param {object} [opcoes]
- * @param {string[]} [opcoes.campos]           campos considerados (padrão: chaves do estado)
+ * @param {readonly string[]} [opcoes.campos]           campos considerados (padrão: chaves do estado)
  * @param {string} [opcoes.ignorarCampo]       campo desconsiderado (para montar as opções dele)
  * @param {(linha: object) => boolean} [opcoes.excluir]  regra extra de exclusão (ex.: encerrados)
  * @param {string} [opcoes.dsei]               chave do DSEI selecionado no mapa
- * @param {(linha: object) => string} [opcoes.chaveDsei]  chave do DSEI da linha
+ * @param {(linha: Record<string, unknown>) => string} [opcoes.chaveDsei]  chave do DSEI da linha
  */
 export function linhaAtende(linha, estado, opcoes = {}) {
   const { ignorarCampo = "", excluir, dsei = "", chaveDsei } = opcoes;

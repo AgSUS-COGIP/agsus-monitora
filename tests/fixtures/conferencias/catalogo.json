@@ -1,5 +1,5 @@
 {
-  "_leia": "Catálogo das conferências de consistência: a mesma lista é conferida pelo pytest (scripts/conferencias/catalogo.py) e pelo vitest (src/lib/avisos-de-conferencia.js). Mudou uma conferência: mude aqui e nos dois lados.",
+  "_leia": "Catálogo das conferências de consistência: a mesma lista é conferida pelo pytest (scripts/conferencias/catalogo.py) e pelo vitest (src/lib/avisos-de-conferencia.ts). Mudou uma conferência: mude aqui e nos dois lados.",
   "conferencias": {
     "ANALISE_APROVADA_ABAIXO_DO_CORTE": {
       "modulo": "analises",

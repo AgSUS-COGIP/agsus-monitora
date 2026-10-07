@@ -3,16 +3,18 @@
   `get_saude_das_cargas` já normalizada (src/lib/saude-das-cargas.js), o
   perfil e o erro. A tela lê com `useSyncExternalStore`. Não importa React.
 
-  "Rodar agora" (os robôs de ROBOS_DE_CARGA): `disparo` guarda a resposta
-  do GET de /api/rodar-carga (configurado? o que roda no GitHub? a última
-  execução de cada um); `pedidos` e `avisos`, o último clique de cada carga
-  nesta tela. As regras do botão são de src/lib/robos-de-carga.js.
+  "Rodar agora" (os robôs de ROBOS_DE_CARGA): a RPC disparar_robo pede ao
+  banco, que chama o GitHub com a chave do Vault (20261008140000); `pedidos`
+  e `avisos` guardam o último clique de cada carga nesta tela, e
+  situacao_do_disparo_robo diz se o GitHub aceitou (ou se a chave falta ou
+  expirou). As regras do botão são de src/lib/robos-de-carga.js.
 
   "Rodar com opções" e as últimas execuções: `painel` guarda
   get_painel_dos_robos (editais e histórico, src/lib/painel-dos-robos.js);
   `buscarVagas` pede listar_vagas_dos_robos para as sugestões do formulário;
-  `acompanhamentos` guarda o último pedido de cada robô (quando e qual modo)
-  e, enquanto ele não termina, a tela relê a cada 20 s.
+  `acompanhamentos` guarda o último pedido de cada robô (quando, qual modo,
+  o id do pedido e a situação dele) e, enquanto ele não termina, a tela
+  relê a cada 20 s.
 */
 import { isAdminGlobal } from "../../lib/access-roles.js";
 import { comTempoLimite, mensagemDeFalha } from "../../lib/falha-de-rede.js";
@@ -22,26 +24,25 @@ import {
   normalizarVagas,
 } from "../../lib/painel-dos-robos.js";
 import {
-  ENDERECO_RODAR_CARGA,
-  MENSAGENS_DO_DISPARO,
-  motivoDaRecusa,
+  inputsDoPedido,
+  mensagemDoErroDoDisparo,
   roboDeCarga,
+  RPC_DISPARAR_ROBO,
+  RPC_SITUACAO_DO_DISPARO,
+  situacaoDoPedido,
 } from "../../lib/robos-de-carga.js";
 import { normalizarSaude } from "../../lib/saude-das-cargas.js";
-import { exigirSessao } from "../../lib/sessao.js";
 
 const ESPERA_DEPOIS_DO_PEDIDO_MS = 20000;
+/* O GitHub responde ao banco em 1 ou 2 s: a primeira conferência do pedido. */
+const ESPERA_DA_RESPOSTA_MS = 3000;
 const RPC_PAINEL_DOS_ROBOS = "get_painel_dos_robos";
 const RPC_VAGAS_DOS_ROBOS = "listar_vagas_dos_robos";
-
-const lerJson = (resposta) => resposta.json().catch(() => ({}));
 
 export function criarEstadoDaSaude({
   supabase,
   getProfile,
   agora = () => new Date(),
-  buscar = (...args) => globalThis.fetch(...args),
-  obterToken = async () => (await exigirSessao(supabase)).access_token,
   agendar = (fn, ms) => setTimeout(fn, ms),
 }) {
   let estado = {
@@ -51,7 +52,6 @@ export function criarEstadoDaSaude({
     erro: "",
     erroCodigo: "",
     perfil: null,
-    disparo: { status: "carregando", robos: {}, erro: "" },
     pedidos: {},
     avisos: {},
     painel: { status: "idle", dados: null, erro: "" },
@@ -73,7 +73,7 @@ export function criarEstadoDaSaude({
       publicar({ status: "ready" });
       return;
     }
-    const extras = Promise.all([consultarDisparo(), carregarPainel()]);
+    const extras = Promise.all([conferirPedidos(), carregarPainel()]);
     if (!supabase) {
       publicar({
         status: "error",
@@ -190,13 +190,16 @@ export function criarEstadoDaSaude({
         if (!robo || !pedidoDoRobo?.em) return false;
         if (agoraMs - pedidoDoRobo.em.getTime() > robo.limiteMin * 60000)
           return false;
-        const etapa = acompanhamentoDoPedido({
+        const situacao = acompanhamentoDoPedido({
           robo: id,
           pedido: pedidoDoRobo,
           execucoes: estado.painel.dados?.execucoes?.[id] || [],
-          github: estado.disparo.robos?.[id] || null,
-        })?.etapa;
-        return etapa !== "terminou" && etapa !== "terminou_no_github";
+        });
+        return !(
+          situacao?.etapa === "terminou" ||
+          situacao?.etapa === "recusado" ||
+          (situacao?.etapa === "github" && situacao.semRegistro)
+        );
       },
     );
     if (!pendente) return;
@@ -207,102 +210,101 @@ export function criarEstadoDaSaude({
     }, ESPERA_DEPOIS_DO_PEDIDO_MS);
   }
 
-  async function pedir(metodo, corpo) {
-    const token = await obterToken();
-    return buscar(ENDERECO_RODAR_CARGA, {
-      method: metodo,
-      headers: {
-        Authorization: `Bearer ${token}`,
-        ...(corpo ? { "Content-Type": "application/json" } : {}),
-      },
-      ...(corpo ? { body: JSON.stringify(corpo) } : {}),
-    });
-  }
-
-  /* GET de /api/rodar-carga: configurado? o que roda agora no GitHub? */
-  async function consultarDisparo() {
+  /*
+    situacao_do_disparo_robo: o GitHub aceitou? Se recusou (ou falta a chave),
+    o acompanhamento da linha diz o que fazer e o botão volta a ficar
+    disponível.
+  */
+  async function conferirPedido(id) {
+    const pedidoDoRobo = estado.acompanhamentos[id];
+    if (!supabase || !pedidoDoRobo?.id || pedidoDoRobo.disparo?.terminou)
+      return;
     let resposta;
     try {
-      resposta = await comTempoLimite(pedir("GET"), 20000);
+      resposta = await comTempoLimite(
+        supabase.rpc(RPC_SITUACAO_DO_DISPARO, { p_disparo: pedidoDoRobo.id }),
+        20000,
+      );
     } catch {
-      publicar({
-        disparo: {
-          status: "erro",
-          robos: {},
-          erro: "Não consegui consultar o GitHub.",
-        },
-      });
       return;
     }
-    const corpo = await lerJson(resposta);
-    const status =
-      resposta.status === 404
-        ? "indisponivel"
-        : resposta.status === 503
-          ? "sem_token"
-          : resposta.ok
-            ? "ok"
-            : "erro";
+    if (resposta?.error || estado.acompanhamentos[id] !== pedidoDoRobo) return;
+    const disparo = situacaoDoPedido(resposta.data);
     publicar({
-      disparo: {
-        status,
-        robos: corpo?.robos || {},
-        erro: status === "erro" ? corpo?.erro || "" : "",
+      acompanhamentos: {
+        ...estado.acompanhamentos,
+        [id]: { ...pedidoDoRobo, disparo },
       },
+      ...(disparo.aviso
+        ? {
+            // O aviso fica no acompanhamento da linha (uma frase só).
+            avisos: { ...estado.avisos, [id]: null },
+            pedidos: { ...estado.pedidos, [id]: null },
+          }
+        : {}),
     });
   }
 
-  /* POST de /api/rodar-carga para um robô da lista (opções: "Rodar com opções"). */
+  /* Os pedidos desta tela que ainda esperam a resposta do GitHub. */
+  const conferirPedidos = () =>
+    Promise.all(Object.keys(estado.acompanhamentos).map(conferirPedido));
+
+  /* disparar_robo para um robô da lista (opções: "Rodar com opções"). */
   async function disparar(id, opcoes = null, frase = "") {
     const avisar = (aviso, pedido) =>
       publicar({
         avisos: { ...estado.avisos, [id]: aviso },
         pedidos: { ...estado.pedidos, [id]: pedido },
       });
+    if (!supabase) {
+      avisar({ tom: "erro", texto: "Sem conexão com o banco." }, null);
+      return false;
+    }
     avisar(null, agora());
     let resposta;
     try {
       resposta = await comTempoLimite(
-        pedir("POST", opcoes ? { robo: id, opcoes } : { robo: id }),
+        supabase.rpc(RPC_DISPARAR_ROBO, {
+          p_robo: id,
+          p_inputs: inputsDoPedido({ opcoes }),
+        }),
         20000,
       );
     } catch (falha) {
       avisar({ tom: "erro", texto: mensagemDeFalha(falha) }, null);
       return false;
     }
-    const corpo = await lerJson(resposta);
-    if (resposta.status === 202) {
-      avisar({ tom: "sucesso", texto: "Pedido enviado." }, agora());
-      publicar({
-        acompanhamentos: {
-          ...estado.acompanhamentos,
-          [id]: { em: agora(), modo: opcoes?.modo || "normal", frase },
+    const { data, error } = resposta || {};
+    if (error || data === null || data === undefined) {
+      avisar(
+        {
+          tom: error?.code === "55006" ? "info" : "erro",
+          texto: mensagemDoErroDoDisparo(error),
         },
-      });
-      releituraAgendada = true;
-      agendar(() => {
-        releituraAgendada = false;
-        void carregar();
-      }, ESPERA_DEPOIS_DO_PEDIDO_MS);
-      return true;
-    }
-    if (resposta.status === 409) {
-      avisar({ tom: "info", texto: MENSAGENS_DO_DISPARO.rodando }, null);
-      void consultarDisparo();
+        null,
+      );
       return false;
     }
-    avisar(
-      {
-        tom: "erro",
-        texto: motivoDaRecusa(
-          resposta.status,
-          corpo,
-          "Não consegui pedir a carga.",
-        ),
+    avisar({ tom: "sucesso", texto: "Pedido enviado." }, agora());
+    publicar({
+      acompanhamentos: {
+        ...estado.acompanhamentos,
+        [id]: {
+          em: agora(),
+          modo: opcoes?.modo || "normal",
+          frase,
+          id: data,
+          disparo: situacaoDoPedido({ situacao: "PEDIDO" }),
+        },
       },
-      null,
-    );
-    return false;
+    });
+    agendar(() => void conferirPedido(id), ESPERA_DA_RESPOSTA_MS);
+    releituraAgendada = true;
+    agendar(() => {
+      releituraAgendada = false;
+      void carregar();
+    }, ESPERA_DEPOIS_DO_PEDIDO_MS);
+    return true;
   }
 
   const rodarAgora = (id) => disparar(id);
@@ -321,7 +323,7 @@ export function criarEstadoDaSaude({
       return () => ouvintes.delete(ouvinte);
     },
     carregar,
-    consultarDisparo,
+    conferirPedido,
     agora,
     rodarAgora,
     rodarComOpcoes,

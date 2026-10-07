@@ -9,9 +9,10 @@ name: Expurgo dos anexos do chat
 # Cada execução fica em TL_EXPURGO_ANEXO_CHAT (Status das atualizações).
 #
 # Quando roda:
-#   - todo dia às 6h30 de Brasília (9h30 UTC; o GitHub pode atrasar alguns minutos);
+#   - todo dia às 6h30 de Brasília (9h30 UTC), pedido pelo banco (pg_cron → workflow_dispatch
+#     com disparado_por = AGENDA; docs/agenda-dos-robos.md; sem `schedule` aqui);
 #   - pelo "Rodar agora" das Configurações › Status das atualizações
-#     (api/rodar-carga.js, só administrador global; disparado_por = id do usuário);
+#     (RPC disparar_robo, só administrador global; disparado_por = id do usuário);
 #   - pelo botão "Run workflow" desta aba Actions.
 # Guia: docs/python-no-monitora.md. Migration: 20261007250000_expurgo_diario_dos_anexos_do_chat.sql.
 #
@@ -23,8 +24,6 @@ name: Expurgo dos anexos do chat
 #   SUPABASE_SERVICE_ROLE_KEY    chave service_role do Supabase
 
 on:
-  schedule:
-    - cron: "30 9 * * *"
   workflow_dispatch:
     inputs:
       modo:
@@ -35,7 +34,7 @@ on:
           - seco
         default: normal
       disparado_por:
-        description: "Preenchido pelo MONITORA (Rodar agora, id do usuário); em branco = GitHub"
+        description: "Rodar agora do MONITORA = id do usuário; agenda do banco = AGENDA; em branco = GitHub"
         type: string
         required: false
         default: ""
@@ -72,7 +71,7 @@ jobs:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
           MODO: ${{ inputs.modo || 'normal' }}
-          DISPARADO_POR: ${{ github.event_name == 'schedule' && 'agenda' || inputs.disparado_por }}
+          DISPARADO_POR: ${{ inputs.disparado_por }}
         run: |
           if [ "$MODO" = "seco" ]; then
             python scripts/expurgo_anexos_chat/expurgo_anexos_chat.py --seco

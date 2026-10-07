@@ -185,6 +185,10 @@ afterEach(async () => {
 });
 
 describe("regra da avaliação (AM-2)", () => {
+  // Estes casos são do modo avançado (o formulário inteiro); o assistente tem os seus
+  // (tests/modulos/avaliacao-documental-assistente.test.js).
+  beforeEach(() => localStorage.setItem("avd-regra-modo", "avancado"));
+  afterEach(() => localStorage.removeItem("avd-regra-modo"));
   it("AM-2.1: edital sem regra cria a versão 1 a partir do modelo", async () => {
     const supabase = supabaseFalso({ comRegra: false });
     await montar(supabase);

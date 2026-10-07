@@ -17,9 +17,9 @@ import { consumirPedidoDeFiltro } from "../../src/app/pedido-de-filtro.js";
 */
 
 const { SeloDeAvisos } =
-  await import("../../src/modulos/conferencias/avisos-de-conferencia.jsx");
+  await import("../../src/modulos/conferencias/avisos-de-conferencia.tsx");
 const { criarEstadoDosAvisos } =
-  await import("../../src/modulos/conferencias/estado.js");
+  await import("../../src/modulos/conferencias/estado.ts");
 
 const ANALISE = "00000000-0000-4000-a000-0000000000a1";
 const aviso = {

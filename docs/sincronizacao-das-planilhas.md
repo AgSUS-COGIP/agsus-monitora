@@ -17,11 +17,11 @@ planilha e grava no banco, o dia todo. As duas cargas funcionam do mesmo jeito e
 Entrevistas
   planilhas de entrevista de cada vaga
      └─ Apps Script "Cruzamento de entrevistados" (continua na planilha) monta a aba Entrevistados
-          └─ GitHub Actions, de hora em hora (o dia todo): scripts/sincronizar-entrevistas.mjs → Supabase
+          └─ GitHub Actions, de hora em hora (o dia todo, pedido pelo banco): scripts/sincronizar-entrevistas.mjs → Supabase
 
 Seleção
   planilha "Auditoria", aba Resultado (uma linha por vaga: inscritos, aptos, eliminados, triados…)
-     └─ GitHub Actions, de hora em hora (o dia todo): scripts/sincronizar-selecao.mjs → Supabase
+     └─ GitHub Actions, às 8h10, 13h10 e 18h10 (pedido pelo banco): scripts/sincronizar-selecao.mjs → Supabase
 ```
 
 O cruzamento das entrevistas continua no Apps Script porque as pastas das planilhas de vaga não
@@ -51,11 +51,11 @@ o cruzamento do Apps Script é que teria de levá-las à aba.
 - Editais de **outras bancas** (04/2026, 96/2025, 97/2025, FGV, FCC) só têm inscritos e total de
   eliminados. Não é erro: o processo é outro.
 
-## Rodar agora (sem esperar a próxima hora)
+## Rodar agora (sem esperar o próximo horário)
 
 **Pelo MONITORA** (administrador global): Configurações → **Status das atualizações** → linha
-Entrevistas ou Seleção → **Rodar agora** (modo `normal`). Precisa do `GITHUB_DISPATCH_TOKEN` na
-Vercel (ver `docs/robo-empregare.md`); o botão fica desabilitado enquanto a carga roda.
+Entrevistas ou Seleção → **Rodar agora** (modo `normal`). O banco pede ao GitHub com a chave `github_disparo_robos` do Vault (ver
+`docs/agenda-dos-robos.md`); o botão fica desabilitado enquanto a carga roda.
 
 **Pelo GitHub** (qualquer modo):
 
@@ -145,8 +145,8 @@ vai para o container (`docker run --env-file .env.local`).
 
 ## Arquivos
 
-- `.github/workflows/sincronizar-entrevistas.yml` e `sincronizar-selecao.yml`: horário
-  (`cron: "0 * * * *"`, de hora em hora, o dia todo) e o botão.
+- `.github/workflows/sincronizar-entrevistas.yml` e `sincronizar-selecao.yml`: o botão
+  (`workflow_dispatch`); os horários ficam no banco (pg_cron), ver `docs/agenda-dos-robos.md`.
 - `scripts/sincronizar-entrevistas.mjs` e `scripts/sincronizar-selecao.mjs`: as cargas;
   `scripts/carga-de-planilha.mjs`: o que as duas têm em comum (credencial, leitura da aba, RPC).
 - `src/lib/entrevistas-da-planilha.js` e `src/lib/selecao-da-planilha.js`: como cada aba vira
