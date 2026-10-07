@@ -13,7 +13,15 @@ import { classes } from "./classes.js";
   pelo modo de lançamento e pelo comparecimento da ficha.
 */
 /**
- * @param {{ rotulo: string, opcoes: readonly { valor: any, rotulo: import("react").ReactNode, icone?: string }[], valor: any, aoMudar: (valor: any) => void, desabilitado?: boolean, className?: string, tour?: string }} props
+ * @template {string} V
+ * @param {object} p
+ * @param {string} p.rotulo
+ * @param {ReadonlyArray<{ valor: V, rotulo: string, icone?: string }>} p.opcoes
+ * @param {V} p.valor
+ * @param {(valor: V) => void} p.aoMudar
+ * @param {boolean} [p.desabilitado]
+ * @param {string} [p.className]
+ * @param {string} [p.tour]
  */
 export function Segmentado({
   rotulo,

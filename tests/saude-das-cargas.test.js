@@ -3,7 +3,9 @@ import {
   normalizarSaude,
   prazoDaAgenda,
   PRAZO_DIARIO_MIN,
+  PRAZO_AGENDA_DOS_ROBOS_MIN,
   PRAZO_DE_HORA_EM_HORA_MIN,
+  PRAZO_SELECAO_MIN,
   PRAZO_FREQUENTE_MIN,
   PRAZO_MENSAL_MIN,
   textoDaIdade,
@@ -347,12 +349,15 @@ describe("robô da Empregare (20261005170000)", () => {
     expect(robo).toMatchObject({ situacao: "em_dia", emAndamento: true });
   });
 
-  it("entrevistas e seleção rodam o dia todo: prazo de 4 h também à noite", () => {
+  it("entrevistas rodam o dia todo (4 h também à noite); seleção 3 vezes ao dia (15 h)", () => {
     // 23h de Brasília = 02h UTC do dia seguinte.
     const noite = normalizarSaude(PAYLOAD, new Date("2026-10-02T02:00:00Z"));
     const planilhas = noite.grupos.find((g) => g.id === "planilhas").cargas;
     const prazo = (id) => planilhas.find((c) => c.id === id).prazoMin;
-    expect(prazo("selecao")).toBe(PRAZO_DE_HORA_EM_HORA_MIN);
+    expect(prazo("selecao")).toBe(PRAZO_SELECAO_MIN);
+    expect(planilhas.find((c) => c.id === "selecao").esperado).toBe(
+      "às 8h10, 13h10 e 18h10",
+    );
     expect(prazo("entrevistas")).toBe(PRAZO_DE_HORA_EM_HORA_MIN);
   });
 
@@ -503,5 +508,97 @@ describe("expurgo diário dos anexos do chat (20261007250000)", () => {
     expect(linha.situacao).toBe("falhou");
     expect(linha.erro.mensagem).toContain("2 ficaram na fila");
     expect(parcial([execucao("CONCLUIDA", 27 * 60)]).situacao).toBe("atrasada");
+  });
+});
+
+describe("agenda dos robôs pelo banco (20261008140000)", () => {
+  const BASE = { ...PAYLOAD, empregare: [], conferencias: [] };
+  const disparo = (situacao, minAtras, extra = {}) => ({
+    workflow: "sincronizar-entrevistas.yml",
+    inicio: ha(minAtras),
+    fim: situacao === "PEDIDO" ? null : ha(minAtras),
+    situacao,
+    http: situacao === "ACEITO" ? 204 : null,
+    mensagem: null,
+    ...extra,
+  });
+  const agenda = (bruta) =>
+    visaoSimples(
+      normalizarSaude({ ...BASE, agenda_dos_robos: bruta }, AGORA),
+    ).linhas.find((l) => l.id === "agenda_dos_robos");
+
+  it("sem a chave no payload, a linha não aparece; com ela, vem antes das tarefas do banco", () => {
+    expect(
+      visaoSimples(normalizarSaude(BASE, AGORA)).linhas.map((l) => l.id),
+    ).not.toContain("agenda_dos_robos");
+    const { linhas } = visaoSimples(
+      normalizarSaude(
+        {
+          ...BASE,
+          agenda_dos_robos: {
+            chave_cadastrada: true,
+            ultimo_aceito: ha(10),
+            falhas_24h: 0,
+            sem_chave_24h: 0,
+            disparos: [disparo("ACEITO", 10)],
+          },
+        },
+        AGORA,
+      ),
+    );
+    expect(linhas.map((l) => l.titulo).slice(-2)).toEqual([
+      "Agenda dos robôs",
+      "Atualização automática do banco",
+    ]);
+    const linha = linhas.find((l) => l.id === "agenda_dos_robos");
+    expect(linha).toMatchObject({ situacao: "em_dia", idadeMin: 10 });
+    expect(linha.agenda).toMatchObject({ chaveCadastrada: true, falhas24h: 0 });
+    expect(linha.partes[0].historico[0].mensagem).toBe(
+      "Entrevistas · HTTP 204",
+    );
+  });
+
+  it("sem chave cadastrada no Vault, falhou mesmo sem pedido nenhum", () => {
+    const linha = agenda({
+      chave_cadastrada: false,
+      ultimo_aceito: null,
+      falhas_24h: 0,
+      sem_chave_24h: 0,
+      disparos: [],
+    });
+    expect(linha.situacao).toBe("falhou");
+    expect(linha.agenda.chaveCadastrada).toBe(false);
+  });
+
+  it("o último pedido recusado (chave expirada) é falha, com o código e a mensagem do GitHub", () => {
+    const linha = agenda({
+      chave_cadastrada: true,
+      ultimo_aceito: ha(70),
+      falhas_24h: 1,
+      sem_chave_24h: 0,
+      disparos: [
+        disparo("FALHOU", 10, {
+          workflow: "sincronizar-selecao.yml",
+          http: 401,
+          mensagem: "GitHub 401: Bad credentials",
+        }),
+        disparo("ACEITO", 70),
+      ],
+    });
+    expect(linha.situacao).toBe("falhou");
+    expect(linha.erro.mensagem).toBe(
+      "Seleção · HTTP 401 · GitHub 401: Bad credentials",
+    );
+  });
+
+  it("sem pedido aceito há mais de 2 h fica atrasada; pedido aberto não conta como falha", () => {
+    const linha = agenda({
+      chave_cadastrada: true,
+      ultimo_aceito: ha(PRAZO_AGENDA_DOS_ROBOS_MIN + 30),
+      falhas_24h: 0,
+      sem_chave_24h: 0,
+      disparos: [disparo("PEDIDO", 1)],
+    });
+    expect(linha.situacao).toBe("atrasada");
   });
 });

@@ -201,7 +201,10 @@ describe("os efeitos no canvas", () => {
     rodar();
     expect(canvases(doc) + veus(doc)).toBe(0);
     expect(fim).toHaveBeenCalledTimes(1);
-    expect(eventos.at(-1).detail).toEqual({ estado: "parada" });
+    expect(eventos.at(-1).detail).toEqual({
+      estado: "parada",
+      duracaoMs: null,
+    });
   });
 
   it("cada efeito do motor monta, anima e some sozinho", () => {
@@ -223,7 +226,11 @@ describe("os efeitos no canvas", () => {
       const quadros = rodar();
       expect(quadros).toBeLessThanOrEqual(Math.ceil(3000 / 16.7) + 3);
       expect(canvases(doc) + veus(doc)).toBe(0);
-      expect(eventos).toHaveLength(0);
+      // A arara do canto comemora junto (evento), e para ao fim.
+      expect(eventos.map((e) => e.detail.estado)).toEqual([
+        "comemorando",
+        "parada",
+      ]);
     }
   });
 

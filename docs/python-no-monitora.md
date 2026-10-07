@@ -16,14 +16,14 @@ O Python faz o trabalho **pesado, em lote e de conferência**. Ele **não** subs
 
 ## Onde roda
 
-|              | Funções da Vercel (`api/*.py`)                                                                                     | Jobs no GitHub Actions (`scripts/<job>/`)                                                       |
-| ------------ | ------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------- |
-| Para quê     | pedido curto de quem está na tela (ler um PDF, gerar um arquivo pequeno)                                           | trabalho pesado ou em lote: robô, conferências, recálculos, documentos grandes                  |
-| Quem dispara | o navegador, com o Bearer do Supabase de quem está logado                                                          | agenda (`schedule`), o **Rodar agora** (`api/rodar-carga.js`) ou o "Run workflow"               |
-| Credencial   | a do usuário (o banco decide pela RLS/RPC); nunca a `service_role`                                                 | `SUPABASE_SERVICE_ROLE_KEY` dos secrets do repositório, só em RPCs concedidas ao `service_role` |
-| Limites      | plano **Hobby**: tempo curto (hoje `maxDuration: 30` no `vercel.json`), corpo do pedido de ~4,5 MB, pacote pequeno | até o `timeout-minutes` do workflow (robô: 120 min; conferências: 20 min)                       |
-| Dependências | só `requirements.txt` da raiz (hoje: `pdfplumber`) — tudo ali entra em toda função Python                          | `requirements.txt` próprio do job (ex.: `scripts/robo-empregare/requirements.txt`) ou nenhum    |
-| Log          | o da Vercel (privado)                                                                                              | **público** (o repositório é público): só contagens, códigos e números de edital                |
+|              | Funções da Vercel (`api/*.py`)                                                                                     | Jobs no GitHub Actions (`scripts/<job>/`)                                                                                          |
+| ------------ | ------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------- |
+| Para quê     | pedido curto de quem está na tela (ler um PDF, gerar um arquivo pequeno)                                           | trabalho pesado ou em lote: robô, conferências, recálculos, documentos grandes                                                     |
+| Quem dispara | o navegador, com o Bearer do Supabase de quem está logado                                                          | agenda do banco (pg_cron → `workflow_dispatch`, [agenda-dos-robos.md](agenda-dos-robos.md)), o **Rodar agora** ou o "Run workflow" |
+| Credencial   | a do usuário (o banco decide pela RLS/RPC); nunca a `service_role`                                                 | `SUPABASE_SERVICE_ROLE_KEY` dos secrets do repositório, só em RPCs concedidas ao `service_role`                                    |
+| Limites      | plano **Hobby**: tempo curto (hoje `maxDuration: 30` no `vercel.json`), corpo do pedido de ~4,5 MB, pacote pequeno | até o `timeout-minutes` do workflow (robô: 120 min; conferências: 20 min)                                                          |
+| Dependências | só `requirements.txt` da raiz (hoje: `pdfplumber`) — tudo ali entra em toda função Python                          | `requirements.txt` próprio do job (ex.: `scripts/robo-empregare/requirements.txt`) ou nenhum                                       |
+| Log          | o da Vercel (privado)                                                                                              | **público** (o repositório é público): só contagens, códigos e números de edital                                                   |
 
 Regra prática: se pode passar de alguns segundos, mexer em muitas linhas ou precisar de biblioteca
 grande, é **job**. Função da Vercel é para o que a pessoa espera com a tela aberta.
@@ -91,7 +91,9 @@ com a conta em `monitora.avaliacao_documental`) e o expurgo diário dos anexos d
   `PARCIAL`, `FALHOU`), quem disparou e o endereço da execução; a execução esquecida não segura a
   próxima. Entra no **Status das atualizações** (`get_saude_das_cargas` + `src/lib/saude-das-cargas.js`).
 - **Rodar agora:** o workflow aceita `workflow_dispatch` com `modo` e `disparado_por`; o robô entra
-  na lista fixa `ROBOS_DE_CARGA` de `src/lib/robos-de-carga.js` (id = id da linha do Status).
+  na lista fixa `ROBOS_DE_CARGA` de `src/lib/robos-de-carga.js` (id = id da linha do Status) e
+  nas listas fixas de `disparar_robo` e `FC_DISPARAR_ROBO` (o banco pede ao GitHub com a chave do
+  Vault; `docs/agenda-dos-robos.md`).
   Inputs vão por variável de ambiente, nunca interpolados no shell.
 - **Saída do processo:** 0 concluída, 2 parcial, 1 erro.
 - **Testes** em `tests/python/test_<job>.py`, com banco falso (função `chamar` injetada) e dados
@@ -113,8 +115,9 @@ leem: o vitest (`tests/*.test.js`) e o pytest (`tests/python/test_*.py`). Exempl
    (`regras.py`) e, se precisar de biblioteca, `scripts/<job>/requirements.txt`.
 2. Migration com as RPCs (leitura e gravação só `service_role`), o `TL_` da execução, ensaio e
    rollback; a linha nova em `get_saude_das_cargas`.
-3. `.github/workflows/<job>.yml`: `schedule` (se tiver agenda) + `workflow_dispatch` (`modo`,
-   `disparado_por`), `concurrency`, `timeout-minutes`, secrets por `env`. Cabeçalho dizendo que o log é
+3. `.github/workflows/<job>.yml`: só `workflow_dispatch` (`modo`, `disparado_por`) — sem `schedule`;
+   se tiver agenda, o workflow entra na lista fixa de `FC_DISPARAR_ROBO` e ganha uma tarefa
+   `agsus_robo_*` no pg_cron ([agenda-dos-robos.md](agenda-dos-robos.md)) — `concurrency`, `timeout-minutes`, secrets por `env`. Cabeçalho dizendo que o log é
    público.
 4. Robô em `ROBOS_DE_CARGA` (`src/lib/robos-de-carga.js`) e a linha em `src/lib/saude-das-cargas.js`.
 5. `tests/python/test_<job>.py`; verbete da Aya em `docs/aya/`; guia de operação em `docs/`.
@@ -164,7 +167,7 @@ menos pendentes (`distribuicao.atribuicoes_dos_novos`); o banco valida cada atri
 - **Quando roda:** no fim de cada carga normal ou forçada do robô da Empregare (passo
   "Pré-classificar" em `robo-empregare.yml`, `DISPARADO_POR=robo`, `--apos-robo`; uma falha ali não
   muda o resultado do robô), pelo "Recalcular" da aba Pré-classificação (só a coordenação do edital;
-  `api/rodar-carga.js` confere `pode_recalcular_pre_classificacao` com o Bearer de quem clicou e
+  a RPC `disparar_robo` confere `pode_recalcular_pre_classificacao` de quem clicou e
   manda `editais` = o id do edital), pelo "Rodar agora" do Status das atualizações (todos) e pelo
   "Run workflow".
 - **Modos:** `normal`, `seco` (calcula e mostra o resumo; um edital com a regra ainda "Conferir"
@@ -279,7 +282,7 @@ tarefas deixava todo o resto lento.
    **incremental por edital** (o job lê só as linhas dos editais marcados e troca só a parte
    deles no instantâneo). Pré-requisitos: a marca guardar o edital (hoje é por área), o
    instantâneo dividido por edital e o disparo ao fim de cada sync das análises (que vem do Apps
-   Script, não do Actions — usar um `repository_dispatch` pelo `api/rodar-carga.js` ou um job
+   Script, não do Actions — usar a RPC `disparar_robo` / `FC_DISPARAR_ROBO` ou um job
    agendado que só roda com marca). Estimativa: 5–7 dias; risco médio (latência entre o sync e o
    painel, hoje ≤ 2 min).
 2. **Sincronizações das Entrevistas e da Seleção em Python** (hoje `scripts/sincronizar-*.mjs`).
@@ -359,6 +362,6 @@ lista registrada.
 ### Sempre
 
 - Novas conferências entram no catálogo (`scripts/conferencias/catalogo.py`, o caso dourado e
-  `src/lib/avisos-de-conferencia.js`) com teste nos dois lados.
+  `src/lib/avisos-de-conferencia.ts`) com teste nos dois lados.
 - Toda entrega Python segue os padrões acima: RPC, log sem dado pessoal, testes, ruff, Status das
   atualizações.

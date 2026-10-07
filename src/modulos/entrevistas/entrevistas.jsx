@@ -17,8 +17,19 @@ import {
 import { getSupabaseClient } from "../../lib/supabaseClient.js";
 import { Aviso } from "../../ui/index.js";
 import { textoDaConferencia } from "../../lib/texto-da-conferencia.js";
-import { VisaoDeConducao } from "./conducao.jsx";
-import { criarEstadoDaConducao } from "./estado-da-conducao.js";
+import { hojeEmBrasilia } from "../../lib/fila-de-conducao.ts";
+import {
+  andamentoPorEdital,
+  gruposEmpatados,
+  mapaDeEmpates,
+} from "../../lib/painel-de-entrevistas.ts";
+import { irParaLink } from "../chat/ponte.js";
+import {
+  AgendaDosProximosDias,
+  AndamentoDasEntrevistas,
+  AvisoDeEmpates,
+  editalDoRecorte,
+} from "./andamento.tsx";
 import { criarEstadoDasEntrevistas, MENSAGEM_SEM_ACESSO } from "./estado.js";
 import { GavetaDaEntrevista, GavetaDosSemEntrevista } from "./gaveta.jsx";
 import {
@@ -29,63 +40,50 @@ import {
   Recorte,
   Topo,
 } from "./paineis.jsx";
-import { VisaoDeRoteiros } from "./roteiros.jsx";
 import { MENSAGEM_SEM_ENTREVISTAS, TabelaDeEntrevistas } from "./tabela.jsx";
-import { SeloDeAvisos } from "../conferencias/avisos-de-conferencia.jsx";
+import { SeloDeAvisos } from "../conferencias/avisos-de-conferencia.tsx";
 
 /*
-  A tela de Entrevistas (view `entrevistas`), um módulo do app: monta direto
-  na `<section id="page-entrevistas">` do index.html, como Recursos. A navegação
-  é dona da classe `.active` da seção e chama `render()` do
-  controlador ao navegar (tabela `TELAS_REACT` de src/app/navegacao.js).
+  O PAINEL DE ENTREVISTAS (view `entrevistas`, "acompanhar"; gestão e
+  coordenação), um módulo do app: monta direto na
+  `<section id="page-entrevistas">` do index.html, como Recursos. A navegação
+  é dona da classe `.active` da seção e chama `render()` do controlador ao
+  navegar (tabela `TELAS_REACT` de src/app/navegacao.js).
 
-  Três visões, no controle segmentado do topo da tela:
-  - "Resultados" (a primeira, só leitura): os dados da planilha de
-    entrevistas, carregada no banco pela sincronização
-    (`sincronizar_entrevistas`), e os das entrevistas conduzidas no sistema
-    (a mesma TB_ENTREVISTA); a última carga, os KPIs, os gráficos, as
-    pendências (aprovados sem entrevista, entrevistas sem análise, sem edital
-    e com nota divergente), a tabela e a gaveta com o caminho do candidato.
-  - "Conduzir entrevistas" (conducao.jsx): configurar, convocar e lançar as
-    notas de um edital. Cada gravação que muda o resultado relê "Resultados".
-  - "Roteiros" (roteiros.jsx): os modelos de entrevista, com versões.
-  Quem não edita as entrevistas não vê os controles de edição.
+  Fazer é em outra entrada do menu: "Conduzir entrevistas" (view
+  `conduzir-entrevistas`, conduzir.tsx) — a fila do dia, a ficha de notas, o
+  Preparar (configuração e convocação do edital) e os roteiros. O painel
+  só lê, como o Painel das análises ao lado da Avaliação documental.
+
+  O que mostra: os dados da planilha de entrevistas, carregada no banco pela
+  sincronização (`sincronizar_entrevistas`), e os das entrevistas conduzidas
+  no sistema (a mesma TB_ENTREVISTA); a última carga, os filtros, os KPIs, o
+  andamento por edital e por vaga (cartões com a barra), a agenda dos
+  próximos dias (com um edital), os gráficos, as pendências (aprovados sem
+  entrevista, sem análise, sem edital, nota divergente, sem comparecimento,
+  sem nota e sem parecer), os empatados na nota da entrevista (o desempate é
+  na Classificação), a tabela, a exportação e a gaveta com o caminho do
+  candidato. O edital de treinamento fica fora (o cache do painel não o lê).
 
   - Área: a área atual do app (menu lateral → dados-do-monitoramento.js). Cada
     abertura carrega a área de agora; trocar de área com a tela aberta
-    recarrega (filtros, busca, gaveta e o edital aberto recomeçam; a visão
-    escolhida fica).
+    recarrega (filtros, busca e gaveta recomeçam).
   - Sessão: o cliente Supabase único do app. Tema: o do app
     (`html[data-theme="dark"]`); os gráficos acompanham. Tela cheia: a do app.
   - Aviso (toast): o do app (`window.monitoraToast`, passado por src/main.js).
   - Comemorações: o liga/desliga do app, relido a cada abertura (marco "vaga
     pronta", marcos.js).
 
-  Sem tela de carregamento: antes da primeira carga, os KPIs, os gráficos, as
-  pendências e a tabela são o skeleton deles; falha na primeira carga vira um
-  aviso com "Tentar novamente". Sem permissão no banco (42501), "Sem acesso
-  às Entrevistas".
+  Sem tela de carregamento: antes da primeira carga, os KPIs, o andamento, os
+  gráficos, as pendências e a tabela são o skeleton deles; falha na primeira
+  carga vira um aviso com "Tentar novamente". Sem permissão no banco
+  (42501), "Sem acesso às Entrevistas".
+
+  Links antigos para as visões "Conduzir entrevistas" e "Roteiros" desta
+  tela vão para a tela nova (src/lib/navegacao.js, `destinoDaTela`).
 */
 
 const NUMEROS_ZERADOS = calcularIndicadores([]);
-
-export const VISOES = Object.freeze([
-  Object.freeze({
-    valor: "resultados",
-    rotulo: "Resultados",
-    icone: "fa-chart-column",
-  }),
-  Object.freeze({
-    valor: "conduzir",
-    rotulo: "Conduzir entrevistas",
-    icone: "fa-file-circle-check",
-  }),
-  Object.freeze({
-    valor: "roteiros",
-    rotulo: "Roteiros",
-    icone: "fa-list-check",
-  }),
-]);
 
 function textoDoStatus(e) {
   if (e.semSessao) return "Sessão não localizada";
@@ -103,7 +101,7 @@ function textoDoStatus(e) {
   A tela de uma área. Monta de novo quando a área muda (`key`): filtros e a
   busca da tabela recomeçam, como recomeçavam no antigo quadro.
 */
-function TelaDaArea({ estado, conducao, e, visao, aoTrocarVisao }) {
+function TelaDaArea({ estado, e }) {
   const [filtros, setFiltros] = useState(FILTROS_VAZIOS);
   const escuro = usarTemaEscuro();
   const { carregado, dados, area } = e;
@@ -113,6 +111,11 @@ function TelaDaArea({ estado, conducao, e, visao, aoTrocarVisao }) {
   const aprovados = dados?.aprovadosSemEntrevista || [];
   const filtradas = useMemo(
     () => filtrarEntrevistas(entrevistas, filtros),
+    [entrevistas, filtros],
+  );
+  // O andamento mostra todas as vagas do edital, mesmo com uma escolhida.
+  const semVaga = useMemo(
+    () => filtrarEntrevistas(entrevistas, { ...filtros, vaga: "" }),
     [entrevistas, filtros],
   );
   const aprovadosFiltrados = useMemo(
@@ -131,15 +134,23 @@ function TelaDaArea({ estado, conducao, e, visao, aoTrocarVisao }) {
     () => pendenciasDasEntrevistas(filtradas, aprovadosFiltrados),
     [filtradas, aprovadosFiltrados],
   );
+  const grupos = useMemo(() => gruposEmpatados(filtradas), [filtradas]);
+  const empates = useMemo(() => mapaDeEmpates(grupos), [grupos]);
+  const doRecorte = useMemo(
+    () => editalDoRecorte(andamentoPorEdital(semVaga), filtros.edital),
+    [semVaga, filtros.edital],
+  );
+  const editalId = doRecorte?.editalId || "";
   const ativos = filtrosAtivos(filtros, opcoes);
   const aberta = e.gaveta ? entrevistas.find((x) => x.id === e.gaveta) : null;
   const vazio = carregado && !entrevistas.length;
   const bloqueado = e.semAcesso || e.semSessao;
-  const comVisoes = Boolean(area) && !bloqueado;
-  // Modo de análise: a ficha de notas aberta ocupa a tela (some o topo).
-  const sc = useSyncExternalStore(conducao.assinar, conducao.obter);
-  const emAnalise =
-    comVisoes && visao === "conduzir" && Boolean(sc.fichaAberta && sc.edital);
+
+  /* A agenda dos próximos dias é a do edital do recorte. */
+  useEffect(() => {
+    if (carregado) void estado.carregarAgenda(editalId);
+  }, [estado, carregado, editalId]);
+  const agenda = e.agenda?.editalId === editalId ? e.agenda.itens : null;
 
   // KPI, pendência e fatia de gráfico: clicar de novo tira o filtro.
   const alternarFiltro = (campo, valor) =>
@@ -151,9 +162,8 @@ function TelaDaArea({ estado, conducao, e, visao, aoTrocarVisao }) {
     setFiltros((atuais) => ({ ...atuais, [campo]: valor }));
   const recarregar = () => void estado.carregar(area);
   // "Abrir" numa resposta com número da Aya ou num caso de aviso de
-  // conferência: Resultados, já recortado (e a entrevista do caso aberta).
+  // conferência: o painel já recortado (e a entrevista do caso aberta).
   usarPedidoDeFiltro("entrevistas", carregado, (pedido) => {
-    aoTrocarVisao?.("resultados");
     setFiltros((atuais) => filtrosDeEntrevistas(atuais, pedido, opcoes));
     if (
       pedido?.entrevista &&
@@ -162,36 +172,24 @@ function TelaDaArea({ estado, conducao, e, visao, aoTrocarVisao }) {
       estado.abrirGaveta(pedido.entrevista);
   });
 
-  /* Atualizar relê "Resultados" e, na visão aberta, o que ela mostra. */
-  function atualizar() {
-    recarregar();
-    if (visao === "conduzir") {
-      void conducao.carregarEditais(area, entrevistas);
-      if (conducao.obter().editalId) void conducao.recarregarEdital();
-    }
-    if (visao === "roteiros") void conducao.carregarRoteiros(area);
-  }
+  /* Outra tela, já no edital do recorte (ou no `id` pedido). */
+  const irCom = (view, id = editalId) =>
+    irParaLink({
+      view,
+      ...(id ? { edital: { id, titulo: doRecorte?.edital || "" } } : {}),
+    });
 
   return (
-    <div
-      className="ui-tela entrevistas-tela"
-      data-tour="entrevistas-tela"
-      data-modo={emAnalise ? "analise" : undefined}
-    >
-      {emAnalise ? null : (
-        <Topo
-          status={textoDoStatus(e)}
-          aoAtualizar={atualizar}
-          atualizarDesativado={!area || e.atualizando || e.semSessao}
-          aoExportar={() => estado.exportarCsv(filtradas)}
-          exportarDesativado={!carregado || !filtradas.length}
-          visoes={comVisoes ? VISOES : null}
-          visao={visao}
-          aoTrocarVisao={aoTrocarVisao}
-        >
-          <SeloDeAvisos modulo="entrevistas" />
-        </Topo>
-      )}
+    <div className="ui-tela entrevistas-tela" data-tour="entrevistas-tela">
+      <Topo
+        status={textoDoStatus(e)}
+        aoAtualizar={recarregar}
+        atualizarDesativado={!area || e.atualizando || e.semSessao}
+        aoExportar={() => estado.exportarCsv(filtradas)}
+        exportarDesativado={!carregado || !filtradas.length}
+      >
+        <SeloDeAvisos modulo="entrevistas" />
+      </Topo>
 
       {e.semSessao ? (
         <Aviso tom="warning" papel="alert">
@@ -208,18 +206,7 @@ function TelaDaArea({ estado, conducao, e, visao, aoTrocarVisao }) {
         </Aviso>
       ) : null}
 
-      {comVisoes && visao === "conduzir" ? (
-        <VisaoDeConducao
-          conducao={conducao}
-          area={area}
-          entrevistasDoPainel={entrevistas}
-        />
-      ) : null}
-      {comVisoes && visao === "roteiros" ? (
-        <VisaoDeRoteiros conducao={conducao} area={area} />
-      ) : null}
-
-      {bloqueado || visao !== "resultados" ? null : (
+      {bloqueado ? null : (
         <>
           {e.erroAoCarregar && !carregado ? (
             <Aviso tom="danger" papel="alert">
@@ -253,6 +240,24 @@ function TelaDaArea({ estado, conducao, e, visao, aoTrocarVisao }) {
             aoAbrirSemEntrevista={estado.abrirSemEntrevista}
           />
           <Recorte ativos={ativos} />
+          <AndamentoDasEntrevistas
+            entrevistas={semVaga}
+            carregado={carregado}
+            edital={filtros.edital}
+            vaga={filtros.vaga}
+            aoEscolherEdital={(edital) =>
+              setFiltros((atuais) => ({ ...atuais, edital, vaga: "" }))
+            }
+            aoEscolherVaga={(vaga) => trocarFiltro("vaga", vaga)}
+          />
+          {editalId ? (
+            <AgendaDosProximosDias
+              itens={agenda}
+              hoje={hojeEmBrasilia()}
+              aoConduzir={() => irCom("conduzir-entrevistas")}
+              aoAbrirAgenda={() => irCom("classificacao")}
+            />
+          ) : null}
           <Graficos
             entrevistas={filtradas}
             criterios={criterios}
@@ -263,10 +268,15 @@ function TelaDaArea({ estado, conducao, e, visao, aoTrocarVisao }) {
             aoAbrirSemEntrevista={estado.abrirSemEntrevista}
             escuro={escuro}
           />
+          <AvisoDeEmpates
+            grupos={grupos}
+            aoAbrirClassificacao={(id) => irCom("classificacao", id || "")}
+          />
           <TabelaDeEntrevistas
             entrevistas={filtradas}
             total={entrevistas.length}
             carregado={carregado}
+            empates={empates}
             aoAbrir={estado.abrirGaveta}
           />
         </>
@@ -288,10 +298,9 @@ function TelaDaArea({ estado, conducao, e, visao, aoTrocarVisao }) {
   );
 }
 
-export function TelaDeEntrevistas({ estado, conducao }) {
+export function TelaDeEntrevistas({ estado }) {
   const e = useSyncExternalStore(estado.assinar, estado.obter);
   const { area: areaDoApp } = usarAreaAtual();
-  const [visao, setVisao] = useState("resultados");
 
   /*
     A área do app mudou com a tela já aberta (o menu corrige a área, ou outra
@@ -300,29 +309,17 @@ export function TelaDeEntrevistas({ estado, conducao }) {
   */
   useEffect(() => {
     const { area } = estado.obter();
-    if (area && areaDoApp && area !== areaDoApp) {
-      conducao.trocarArea(areaDoApp);
+    if (area && areaDoApp && area !== areaDoApp)
       void estado.carregar(areaDoApp);
-    }
-  }, [estado, conducao, areaDoApp]);
+  }, [estado, areaDoApp]);
 
-  return (
-    <TelaDaArea
-      key={e.area || "sem-area"}
-      estado={estado}
-      conducao={conducao}
-      e={e}
-      visao={visao}
-      aoTrocarVisao={setVisao}
-    />
-  );
+  return <TelaDaArea key={e.area || "sem-area"} estado={estado} e={e} />;
 }
 
 /**
  * Monta a tela na `<section id="page-entrevistas">` e devolve o controlador
  * do legado: `render()` a cada abertura (carrega a área atual do app e relê
- * as comemorações), mais os dois estados e a raiz do React (os testes
- * desmontam por ela).
+ * as comemorações), o estado e a raiz do React (os testes desmontam por ela).
  */
 export function montarEntrevistas({
   secao = document.getElementById("page-entrevistas"),
@@ -339,27 +336,17 @@ export function montarEntrevistas({
     baixar,
     armazenamento,
   });
-  const conducao = criarEstadoDaConducao({
-    supabase,
-    toast,
-    // Notas, convocação e desconvocação mudam o que "Resultados" mostra.
-    aoMudarResultados: () => void estado.carregar(),
-  });
   const raiz = secao
-    ? montarModulo(
-        secao,
-        <TelaDeEntrevistas estado={estado} conducao={conducao} />,
-        { nome: "a tela de entrevistas" },
-      ).raiz
+    ? montarModulo(secao, <TelaDeEntrevistas estado={estado} />, {
+        nome: "o painel de entrevistas",
+      }).raiz
     : null;
   return {
     estado,
-    conducao,
     raiz,
     render() {
       estado.definirComemoracoes(comemoracoesLigadas());
       const area = String(areaAtual() ?? "").trim();
-      conducao.trocarArea(area);
       return estado.carregar(area);
     },
   };

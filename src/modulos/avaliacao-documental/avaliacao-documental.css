@@ -406,3 +406,617 @@
     margin-left: 0;
   }
 }
+
+/* Aba Regra: modo (assistente ou avançado) e dupla conferência. */
+.avd-modo-da-regra {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+.avd-dupla-conferencia {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  color: var(--state-warning);
+  font-size: var(--text-caption);
+}
+
+/* Assistente da regra (assistente/). */
+.avd-ast {
+  display: grid;
+  gap: var(--space-4);
+}
+.avd-ast-topo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-3);
+}
+.avd-ast-topo .ui-titulo i {
+  color: var(--brand-primary);
+}
+.avd-ast-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: var(--space-0-5) var(--space-2);
+  border-radius: var(--radius-pill);
+  background: var(--state-info-soft);
+  color: var(--state-info);
+  font-size: var(--text-caption);
+  font-weight: var(--font-weight-semibold, 600);
+  white-space: nowrap;
+}
+.avd-ast-chip[data-tom="alerta"] {
+  background: var(--state-warning-soft);
+  color: var(--state-warning);
+}
+
+/* Os passos, numerados, ligados por uma linha. */
+.avd-ast-passos ol {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.avd-ast-passos li {
+  position: relative;
+}
+.avd-ast-passos li + li::before {
+  content: "";
+  position: absolute;
+  top: 18px;
+  right: calc(50% + 22px);
+  left: calc(-50% + 22px);
+  height: 2px;
+  border-radius: var(--radius-pill);
+  background: var(--border-subtle);
+}
+.avd-ast-passos li[data-estado="feito"] + li::before {
+  background: var(--brand-primary);
+}
+.avd-ast-passos button {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-1);
+  width: 100%;
+  padding: var(--space-1);
+  border: 0;
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--text-secondary);
+  font: inherit;
+  font-size: var(--text-caption);
+  text-align: center;
+  cursor: pointer;
+  transition: background var(--duration-fast) var(--ease-standard);
+}
+.avd-ast-passos button:hover:not(:disabled) {
+  background: var(--surface-hover);
+}
+.avd-ast-passos button:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+.avd-ast-passos button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+.avd-ast-passo-numero {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border: 2px solid var(--border-subtle);
+  border-radius: var(--radius-full);
+  background: var(--surface-card);
+  color: var(--text-secondary);
+  font-size: var(--text-body-sm);
+  font-weight: var(--font-weight-semibold, 600);
+  transition:
+    background var(--duration-base) var(--ease-standard),
+    border-color var(--duration-base) var(--ease-standard),
+    transform var(--duration-base) var(--ease-standard);
+}
+.avd-ast-passos [data-estado="feito"] .avd-ast-passo-numero {
+  border-color: var(--brand-primary);
+  background: var(--brand-primary);
+  color: var(--text-inverse);
+}
+.avd-ast-passos [data-estado="atual"] .avd-ast-passo-numero {
+  border-color: var(--brand-primary);
+  color: var(--brand-primary);
+  transform: scale(1.08);
+  box-shadow: 0 0 0 4px var(--state-info-soft);
+}
+.avd-ast-passos [data-estado="atual"] button {
+  color: var(--text-primary);
+  font-weight: var(--font-weight-semibold, 600);
+}
+
+.avd-ast-corpo {
+  display: grid;
+  gap: var(--space-3);
+  animation: avd-ast-entra var(--duration-base) var(--ease-standard);
+}
+@keyframes avd-ast-entra {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .avd-ast-corpo {
+    animation: none;
+  }
+  .avd-ast-passo-numero {
+    transition: none;
+  }
+}
+.avd-ast-titulo-do-passo {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0;
+  color: var(--text-primary);
+  font-size: var(--text-h4, var(--text-lg));
+}
+.avd-ast-titulo-do-passo i {
+  color: var(--brand-primary);
+}
+.avd-ast-passo,
+.avd-ast-grupo {
+  display: grid;
+  gap: var(--space-3);
+  min-width: 0;
+}
+.avd-ast-grupo-titulo {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: var(--space-2) 0 0;
+  color: var(--text-primary);
+  font-size: var(--text-body);
+  font-weight: var(--font-weight-semibold, 600);
+}
+.avd-ast-contagem {
+  color: var(--text-secondary);
+  font-size: var(--text-caption);
+  font-weight: var(--font-weight-regular, 400);
+}
+.avd-ast-subtitulo {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--text-caption);
+  font-weight: var(--font-weight-semibold, 600);
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+.avd-ast-rotulo-da-linha {
+  flex-basis: 100%;
+}
+.avd-ast-nota {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--text-caption);
+}
+.avd-ast-alerta {
+  color: var(--state-danger);
+  font-size: var(--text-caption);
+}
+
+/* Passo 1: as opções do ponto de partida. */
+.avd-ast-opcoes {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: var(--space-2);
+}
+.avd-ast-opcao {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  background: var(--surface-card);
+  color: var(--text-primary);
+  cursor: pointer;
+  transition:
+    border-color var(--duration-fast) var(--ease-standard),
+    box-shadow var(--duration-fast) var(--ease-standard);
+}
+.avd-ast-opcao:hover {
+  border-color: var(--brand-primary);
+}
+.avd-ast-opcao i {
+  color: var(--brand-primary);
+}
+.avd-ast-opcao[data-escolhida="sim"] {
+  border-color: var(--brand-primary);
+  background: var(--state-info-soft);
+  box-shadow: 0 0 0 1px var(--brand-primary);
+}
+.avd-ast-opcao:has(input:disabled) {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+.avd-ast-escolha {
+  display: grid;
+  gap: var(--space-1);
+  max-width: 640px;
+  color: var(--text-secondary);
+  font-size: var(--text-caption);
+}
+
+/* Passo 2: o cardápio de cartões. */
+.avd-ast-cartoes {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 420px), 1fr));
+  gap: var(--space-3);
+  align-items: start;
+}
+.avd-ast-cartao {
+  display: grid;
+  gap: var(--space-2);
+  min-width: 0;
+  padding: var(--space-3);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  background: var(--surface-card);
+  transition:
+    border-color var(--duration-fast) var(--ease-standard),
+    box-shadow var(--duration-fast) var(--ease-standard);
+}
+.avd-ast-cartao[data-marcado="sim"] {
+  border-color: var(--brand-primary);
+  box-shadow: inset 3px 0 0 var(--brand-primary);
+}
+.avd-ast-cartao[data-marcado="nao"] {
+  background: var(--surface-page, var(--surface-card));
+}
+.avd-ast-cartao-topo {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+.avd-ast-cartao-marca {
+  display: flex;
+  flex: 1 1 auto;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+  color: var(--text-primary);
+  font-weight: var(--font-weight-medium, 500);
+  cursor: pointer;
+}
+.avd-ast-cartao-marca input {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--brand-primary);
+}
+.avd-ast-cartao[data-marcado="nao"] .avd-ast-cartao-rotulo {
+  color: var(--text-secondary);
+}
+.avd-ast-recolher {
+  margin-left: auto;
+}
+.avd-ast-cartao-corpo {
+  display: grid;
+  gap: var(--space-3);
+  padding-top: var(--space-2);
+  border-top: 1px dashed var(--border-subtle);
+}
+.avd-ast-motivos,
+.avd-ast-faixas,
+.avd-ast-nivel {
+  display: grid;
+  gap: var(--space-2);
+}
+.avd-ast-nivel {
+  padding-left: var(--space-3);
+  border-left: 2px solid var(--border-subtle);
+}
+.avd-ast-niveis {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1) var(--space-3);
+}
+.avd-ast-regrinha {
+  margin: 0;
+  color: var(--text-secondary);
+  font-family: var(--font-mono);
+  font-size: var(--text-caption);
+}
+.avd-ast-tabela-rolagem {
+  max-width: 100%;
+  overflow-x: auto;
+}
+.avd-ast-tabela {
+  width: 100%;
+  min-width: 0;
+  border-collapse: collapse;
+  font-size: var(--text-body-sm);
+}
+.avd-ast-tabela th,
+.avd-ast-tabela td {
+  padding: var(--space-1) var(--space-2);
+  border-bottom: 1px solid var(--border-subtle);
+  color: var(--text-primary);
+  text-align: left;
+  vertical-align: middle;
+}
+.avd-ast-tabela thead th {
+  color: var(--text-secondary);
+  font-size: var(--text-caption);
+  font-weight: var(--font-weight-semibold, 600);
+}
+.avd-ast-tabela tbody th {
+  font-weight: var(--font-weight-regular, 400);
+}
+.avd-ast-tabela input {
+  width: 6.5em;
+}
+.avd-ast-tabela tr[data-sem-pontos="sim"] th {
+  color: var(--state-danger);
+}
+
+/* Passo 3: a situação de cada pergunta. */
+.avd-ast-legenda {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-3);
+}
+.avd-ast-legenda .btn {
+  margin-left: auto;
+}
+.avd-ast-situacao {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-0-5) var(--space-2);
+  border-radius: var(--radius-pill);
+  background: var(--state-neutral-soft);
+  color: var(--state-neutral);
+  font-size: var(--text-caption);
+  font-weight: var(--font-weight-semibold, 600);
+  white-space: nowrap;
+}
+.avd-ast-situacao[data-tom="sucesso"] {
+  background: var(--state-success-soft);
+  color: var(--state-success);
+}
+.avd-ast-situacao[data-tom="alerta"] {
+  background: var(--state-warning-soft);
+  color: var(--state-warning);
+}
+.avd-ast-situacao[data-tom="perigo"] {
+  background: var(--state-danger-soft);
+  color: var(--state-danger);
+}
+.avd-ast-situacao-detalhe {
+  font-weight: var(--font-weight-regular, 400);
+}
+.avd-ast-lista-de-ligacoes {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.avd-ast-pergunta {
+  display: grid;
+  gap: var(--space-1);
+  padding: var(--space-2);
+  border: 1px solid var(--border-subtle);
+  border-left-width: 3px;
+  border-radius: var(--radius-md);
+}
+.avd-ast-pergunta[data-situacao="achou"] {
+  border-left-color: var(--state-success);
+}
+.avd-ast-pergunta[data-situacao="ambigua"] {
+  border-left-color: var(--state-warning);
+}
+.avd-ast-pergunta[data-situacao="nao_achou"],
+.avd-ast-pergunta[data-situacao="vazia"] {
+  border-left-color: var(--state-danger);
+}
+.avd-ast-pergunta > .avd-ast-situacao {
+  justify-self: start;
+}
+.avd-ast-pergunta-campos {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--space-2);
+}
+.avd-ast-pergunta-campos > .ui-campo {
+  flex: 3 1 280px;
+}
+.avd-ast-lista-de-perguntas select {
+  max-width: min(420px, 100%);
+}
+.avd-ast-colunas {
+  margin: 0;
+  padding-left: var(--space-5);
+  color: var(--text-secondary);
+  font-size: var(--text-caption);
+}
+.avd-ast-bloco-de-perguntas {
+  display: grid;
+  gap: var(--space-2);
+}
+.avd-ast-bloco-de-perguntas h4 {
+  margin: var(--space-1) 0 0;
+  color: var(--text-primary);
+  font-size: var(--text-body-sm);
+}
+.avd-ast-declarada {
+  display: grid;
+  gap: var(--space-2);
+}
+.avd-ast-visualmente-oculto {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+/* Passo 4: listas que se arrastam. */
+.avd-ast-fieldset {
+  display: grid;
+  gap: var(--space-3);
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+.avd-ast-ordem {
+  display: grid;
+  gap: var(--space-1-5);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.avd-ast-ordem-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  background: var(--surface-card);
+  transition:
+    border-color var(--duration-fast) var(--ease-standard),
+    transform var(--duration-fast) var(--ease-standard);
+}
+.avd-ast-ordem-item[draggable="true"] {
+  cursor: grab;
+}
+.avd-ast-ordem-item[data-arrastando="sim"] {
+  opacity: 0.5;
+}
+.avd-ast-ordem-item[data-sobre="sim"] {
+  border-color: var(--brand-primary);
+  transform: translateY(-1px);
+}
+.avd-ast-alca {
+  color: var(--text-secondary);
+}
+.avd-ast-ordem-numero {
+  min-width: 2.2em;
+  color: var(--brand-primary);
+  font-weight: var(--font-weight-semibold, 600);
+}
+.avd-ast-ordem-conteudo {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.avd-ast-ordem-acoes {
+  display: flex;
+  gap: var(--space-0-5);
+}
+.avd-ast-criterio {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+.avd-ast-criterio span {
+  flex: 1 1 200px;
+}
+
+/* Passo 5: resumo, comparação e salvar. */
+.avd-ast-resumo,
+.avd-ast-comparar {
+  display: grid;
+  gap: var(--space-3);
+}
+.avd-ast-resumo-sub {
+  margin: 0;
+  color: var(--text-secondary);
+}
+.avd-ast-resumo-secoes {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr));
+  gap: var(--space-3) var(--space-5);
+}
+.avd-ast-resumo-secao h4 {
+  margin: 0 0 var(--space-1);
+  color: var(--text-primary);
+  font-size: var(--text-body-sm);
+}
+.avd-ast-resumo-secao ul,
+.avd-ast-diferencas {
+  display: grid;
+  gap: var(--space-1);
+  margin: 0;
+  padding-left: var(--space-4);
+  color: var(--text-primary);
+  font-size: var(--text-body-sm);
+}
+.avd-ast-diferencas {
+  padding-left: 0;
+  list-style: none;
+}
+.avd-ast-pendencias {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-1);
+  margin: 0;
+  color: var(--state-warning);
+  font-size: var(--text-caption);
+}
+.avd-ast-navegacao {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+@media (max-width: 720px) {
+  .avd-ast-passos {
+    padding-bottom: var(--space-5);
+  }
+  .avd-ast-passos ol {
+    gap: var(--space-1);
+  }
+  .avd-ast-passo-rotulo {
+    display: none;
+  }
+  .avd-ast-passos [data-estado="atual"] .avd-ast-passo-rotulo {
+    position: absolute;
+    top: 44px;
+    left: 50%;
+    display: block;
+    width: max-content;
+    max-width: 60vw;
+    transform: translateX(-50%);
+  }
+  .avd-ast-passos li:first-child[data-estado="atual"] .avd-ast-passo-rotulo {
+    left: 0;
+    transform: none;
+  }
+  .avd-ast-passos li:last-child[data-estado="atual"] .avd-ast-passo-rotulo {
+    right: 0;
+    left: auto;
+    transform: none;
+  }
+  .avd-ast-ordem-item {
+    flex-wrap: wrap;
+  }
+  .avd-ast-legenda .btn {
+    margin-left: 0;
+  }
+}

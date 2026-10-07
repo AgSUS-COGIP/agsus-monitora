@@ -155,8 +155,8 @@ describe("rollback, ensaio e workflow", () => {
     expect(ENSAIO).not.toMatch(/^commit;/m);
   });
 
-  it("o workflow roda às 9h30 UTC, com modo seco, concorrência e só leitura do repositório", () => {
-    expect(WORKFLOW).toContain('cron: "30 9 * * *"');
+  it("o workflow (pedido às 9h30 UTC pelo banco, 20261008140000) tem modo seco, concorrência e só leitura do repositório", () => {
+    expect(WORKFLOW).not.toMatch(/^s*schedule:/m);
     expect(WORKFLOW).toMatch(/options:\n\s+- normal\n\s+- seco/);
     expect(WORKFLOW).toContain("group: expurgo-anexos-chat");
     expect(WORKFLOW).toMatch(/permissions:\n\s+contents: read/);

@@ -20,6 +20,9 @@
   porModalidade, total, origemDasVagas, limiteConvocacao) entram iguais.
 */
 
+import { DIRECOES, METODOS_DE_EMPATE_FINAL } from "./classificacao/catalogo.js";
+import { criteriosDaRegra } from "./classificacao/regra.js";
+
 const texto = (valor) => String(valor ?? "").trim();
 const numero = (valor) =>
   valor === null ||
@@ -297,4 +300,30 @@ export function avisosDaConvocacao(dados, fonte, grupos) {
       texto: `${fora} ${fora === 1 ? "convocado não está" : "convocados não estão"} na lista vigente.`,
     });
   return avisos;
+}
+
+/*
+  O desempate da entrevista é o da regra de classificação do edital (uma
+  fonte só: Classificação › Regra). `obter_entrevistas_do_edital` traz, da
+  versão vigente, `regra_classificacao.desempate` (critérios do catálogo, na
+  ordem) e `empate_final`; aqui viram o texto que a tela mostra, só para
+  ler. O antigo texto livre do roteiro (DS_DESEMPATE) não aparece mais.
+*/
+export function criteriosDeDesempate(regraDaClassificacao) {
+  if (!regraDaClassificacao || typeof regraDaClassificacao !== "object")
+    return null;
+  if (!Array.isArray(regraDaClassificacao.desempate)) return null;
+  return criteriosDaRegra({ desempate: regraDaClassificacao.desempate }).map(
+    (d) => ({
+      codigo: d.criterio,
+      nome: d.catalogo.nome,
+      direcao: DIRECOES.find(([valor]) => valor === d.direcao)?.[1] || "",
+    }),
+  );
+}
+
+/** "Sorteio registrado" (o método do empate que sobra), ou "". */
+export function textoDoEmpateFinal(regraDaClassificacao) {
+  const metodo = texto(regraDaClassificacao?.empate_final?.metodo);
+  return METODOS_DE_EMPATE_FINAL.find(([valor]) => valor === metodo)?.[1] || "";
 }

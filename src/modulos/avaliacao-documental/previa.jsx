@@ -51,6 +51,11 @@ const TOM_DO_RESULTADO = {
   INAPTO_NOTA: "pendente",
 };
 
+/**
+ * @param {object} p
+ * @param {object} p.regra o rascunho da regra (formato de regra.js)
+ * @param {{ nota_minima?: number | null, nota_minima_por_nivel?: object } | null | undefined} p.notaMinima
+ */
 export function Previa({ regra, notaMinima }) {
   const [aberta, setAberta] = useState(false);
   const [c, setC] = useState(CANDIDATO_INICIAL);

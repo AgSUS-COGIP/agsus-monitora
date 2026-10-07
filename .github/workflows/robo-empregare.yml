@@ -9,7 +9,7 @@ name: Robô da Empregare
 # Quando roda:
 #   - só quando alguém pede (decisão de 05/10/2026: sem agenda automática);
 #   - pelo "Rodar agora" das Configurações › Status das atualizações
-#     (api/rodar-carga.js, só administrador global; disparado_por = id do usuário);
+#     (RPC disparar_robo, só administrador global; disparado_por = id do usuário);
 #   - pelo botão "Run workflow" desta aba Actions.
 # Ao fim de uma carga normal ou forçada, o passo "Pré-classificar" recalcula a
 # pré-classificação da Avaliação documental dos editais carregados

@@ -207,9 +207,9 @@ describe("fogos de artifício no canvas", () => {
   it("a Aya voa (transform muda a cada quadro), solta o primeiro foguete e sai", () => {
     const { doc, janela, quadros } = janelaComCanvas();
     soltarFogos(doc, janela, { aleatorio: criarAleatorio(5) });
-    const aya = doc.querySelector("img.comemoracao__aya");
-    expect(aya.getAttribute("src")).toBe("/assets/arara-azul-monitora.png");
-    expect(aya.alt).toBe("");
+    // A arara viva (src/modulos/aya/mascote/), batendo as asas.
+    const aya = doc.querySelector(".comemoracao__aya");
+    expect(aya.getAttribute("aria-hidden")).toBe("true");
     let agora = 0;
     const transformacoes = new Set();
     for (let i = 0; i < 60; i += 1) {

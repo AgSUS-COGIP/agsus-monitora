@@ -5,9 +5,9 @@ import { clicar, digitar, esperar } from "./interacoes.js";
 /*
   Status das atualizações › "Opções" dos robôs (React): a gaveta "Rodar com
   opções" (editais vigentes, códigos colados com validação e cargo, modo com
-  explicação, limite e prévia), o pedido ao /api/rodar-carga com as opções,
-  o acompanhamento depois do pedido e as últimas execuções em "Detalhes".
-  Supabase e /api/rodar-carga falsos; nada roda de verdade.
+  explicação, limite e prévia), o pedido pela RPC disparar_robo com as
+  opções, o acompanhamento depois do pedido e as últimas execuções em
+  "Detalhes". Supabase falso; nada roda de verdade.
 */
 
 const { montarSaudeDasCargas } =
@@ -128,12 +128,6 @@ const VAGAS = [
   { vaga: "180232", edital_id: ID_93, cargo: "Médico do Trabalho" },
 ];
 
-const respostaHttp = (status, corpo = {}) => ({
-  ok: status >= 200 && status < 300,
-  status,
-  json: async () => corpo,
-});
-
 let raiz;
 let controlador;
 let depoisDoPedido;
@@ -159,6 +153,15 @@ function supabaseFalso() {
           error: null,
         };
       }
+      if (nome === "disparar_robo") {
+        depoisDoPedido = true;
+        return { data: 51, error: null };
+      }
+      if (nome === "situacao_do_disparo_robo")
+        return {
+          data: { disparo: 51, situacao: "ACEITO", http: 204 },
+          error: null,
+        };
       return { data: [], error: null };
     }),
   };
@@ -169,16 +172,6 @@ async function montar() {
   raiz = document.createElement("div");
   document.body.append(raiz);
   const supabase = supabaseFalso();
-  const buscar = vi.fn(async (_url, opcoes) => {
-    if (opcoes?.method === "POST") {
-      depoisDoPedido = true;
-      return respostaHttp(202, { ok: true, robo: "empregare" });
-    }
-    return respostaHttp(200, {
-      configurado: true,
-      robos: { empregare: { rodando: false, ultima: null } },
-    });
-  });
   const agendar = vi.fn();
   await act(async () => {
     controlador = montarSaudeDasCargas({
@@ -186,8 +179,6 @@ async function montar() {
       supabase,
       getProfile: () => ({ id: "u", ativo: true, admin_global: true }),
       agora: () => AGORA,
-      buscar,
-      obterToken: async () => "token-do-usuario",
       agendar,
     });
   });
@@ -195,7 +186,7 @@ async function montar() {
     await controlador.render();
   });
   await esperar();
-  return { supabase, buscar, agendar };
+  return { supabase, agendar };
 }
 
 const gaveta = () => document.querySelector(".robos-opcoes");
@@ -318,8 +309,8 @@ describe("Rodar com opções", () => {
     );
   });
 
-  it("confirma: pede ao /api/rodar-carga com as opções, fecha e acompanha a execução", async () => {
-    const { buscar, agendar } = await montar();
+  it("confirma: pede pela RPC disparar_robo com as opções, fecha e acompanha a execução", async () => {
+    const { supabase, agendar } = await montar();
     await abrirOpcoes();
     await escolherEdital("93/2026");
     await digitar(gaveta().querySelector("textarea"), "179698, 180231");
@@ -328,17 +319,15 @@ describe("Rodar com opções", () => {
     await esperarBusca();
     await clicar(botaoRodar());
     await esperar();
-    const post = buscar.mock.calls.find(([, o]) => o?.method === "POST");
-    expect(JSON.parse(post[1].body)).toEqual({
-      robo: "empregare",
-      opcoes: {
+    expect(supabase.rpc).toHaveBeenCalledWith("disparar_robo", {
+      p_robo: "empregare",
+      p_inputs: {
         modo: "forcar",
         editais: ["93/2026"],
         vagas: ["179698", "180231"],
-        limite: 2,
+        limite: "2",
       },
     });
-    expect(post[1].headers.Authorization).toBe("Bearer token-do-usuario");
     expect(gaveta()).toBeNull();
     const acompanhamento = () =>
       document.querySelector('[data-carga="empregare"] .robos-acompanhamento');
@@ -348,11 +337,19 @@ describe("Rodar com opções", () => {
     expect(acompanhamento().textContent).toContain(
       "2 vagas do 93/2026: 179698, 180231",
     );
-    expect(agendar).toHaveBeenCalledTimes(1);
+    // A conferência do pedido (3 s) e a releitura (20 s).
+    expect(agendar).toHaveBeenCalledTimes(2);
+    await act(async () => {
+      await agendar.mock.calls[0][0]();
+    });
+    await esperar();
+    expect(acompanhamento().textContent).toContain(
+      "Aceito pelo GitHub. Na fila ou rodando.",
+    );
 
     // A releitura agendada traz a execução do banco: rodando, por vaga e o link do GitHub.
     await act(async () => {
-      await agendar.mock.calls[0][0]();
+      await agendar.mock.calls[1][0]();
     });
     await esperar();
     expect(acompanhamento().textContent).toContain("Rodando.");
@@ -366,7 +363,7 @@ describe("Rodar com opções", () => {
       acompanhamento().querySelector("a.robos-github").getAttribute("href"),
     ).toBe("https://github.com/AgSUS-COGIP/agsus-monitora/actions/runs/3");
     // Enquanto roda, relê de novo.
-    expect(agendar).toHaveBeenCalledTimes(2);
+    expect(agendar).toHaveBeenCalledTimes(3);
     await clicar(
       acompanhamento().querySelector(".robos-acompanhamento__fechar"),
     );
@@ -395,7 +392,7 @@ describe("Rodar com opções", () => {
   });
 
   it("pré-classificação: editais pelo id, sem vagas nem limite", async () => {
-    const { buscar } = await montar();
+    const { supabase } = await montar();
     await abrirOpcoes("pre_classificacao");
     expect(gaveta().querySelector("textarea")).toBeNull();
     expect(gaveta().querySelector('input[type="number"]')).toBeNull();
@@ -404,15 +401,9 @@ describe("Rodar com opções", () => {
     expect(textoDaPrevia()).toBe("Refaz o lote de 1 edital: 93/2026.");
     await clicar(botaoRodar());
     await esperar();
-    const post = buscar.mock.calls.find(([, o]) => o?.method === "POST");
-    expect(JSON.parse(post[1].body)).toEqual({
-      robo: "pre_classificacao",
-      opcoes: {
-        modo: "refazer_lote",
-        editais: [ID_93],
-        vagas: [],
-        limite: null,
-      },
+    expect(supabase.rpc).toHaveBeenCalledWith("disparar_robo", {
+      p_robo: "pre_classificacao",
+      p_inputs: { modo: "refazer_lote", editais: [ID_93] },
     });
   });
 
@@ -432,10 +423,6 @@ describe("Rodar com opções", () => {
         supabase,
         getProfile: () => ({ id: "u", ativo: true, admin_global: true }),
         agora: () => AGORA,
-        buscar: vi.fn(async () =>
-          respostaHttp(200, { configurado: true, robos: {} }),
-        ),
-        obterToken: async () => "t",
         agendar: vi.fn(),
       });
     });

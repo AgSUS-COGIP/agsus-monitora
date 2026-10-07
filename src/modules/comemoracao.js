@@ -25,13 +25,17 @@ import {
 } from "../lib/catalogo-de-comemoracoes.ts";
 import {
   guardarSom,
-  IMAGEM_DA_AYA,
   opacidadeDoVeu,
   podeTocarSom,
   posicaoDaAya,
   somDoEstouro,
   somLigado,
 } from "../lib/fogos-cena.js";
+import {
+  definirEstadoDaAya,
+  EVENTO_ESTADO_DA_AYA,
+} from "../lib/estado-da-aya.ts";
+import { montarMascoteAvulsa } from "../modulos/aya/mascote/mascote.tsx";
 import { criarIcone } from "./icones.js";
 import "../styles/comemoracao.css";
 
@@ -264,25 +268,46 @@ function amostrarTexto(doc, janela, texto) {
   }
 }
 
-/* A Aya: a imagem do sistema, movida por transform a cada quadro. */
+/*
+  A Aya: a mesma arara viva do painel (src/modulos/aya/mascote/), batendo as
+  asas ("comemorando", sem poleiro), movida por transform a cada quadro.
+*/
+const desmontarAya = new WeakMap();
+
 function criarAya(doc, trajeto) {
-  const imagem = doc.createElement("img");
-  imagem.className = "comemoracao__aya";
-  imagem.alt = "";
-  imagem.setAttribute("aria-hidden", "true");
-  imagem.decoding = "async";
-  imagem.style.width = `${trajeto.tamanho}px`;
-  imagem.style.height = `${trajeto.tamanho}px`;
-  imagem.style.opacity = "0";
-  imagem.addEventListener("error", () => imagem.remove());
-  imagem.src = IMAGEM_DA_AYA;
-  return imagem;
+  const aya = doc.createElement("span");
+  aya.className = "comemoracao__aya";
+  aya.setAttribute("aria-hidden", "true");
+  aya.style.width = `${trajeto.tamanho}px`;
+  aya.style.height = `${trajeto.tamanho}px`;
+  aya.style.opacity = "0";
+  desmontarAya.set(
+    aya,
+    montarMascoteAvulsa(aya, {
+      estado: "comemorando",
+      poleiro: false,
+      tamanho: trajeto.tamanho,
+      ouvirAya: false,
+      atencao: false,
+      dormir: false,
+    }),
+  );
+  return aya;
+}
+
+function tirarAya(aya) {
+  if (!aya) return;
+  const desmontar = desmontarAya.get(aya);
+  desmontarAya.delete(aya);
+  aya.remove();
+  // Fora do quadro em andamento (o React não desmonta no meio de um render).
+  if (desmontar) setTimeout(desmontar, 0);
 }
 
 function moverAya(imagem, trajeto, t) {
   if (!imagem?.isConnected) return;
   if (t > trajeto.inicio + trajeto.duracao) {
-    imagem.remove();
+    tirarAya(imagem);
     return;
   }
   const aya = posicaoDaAya(trajeto, t);
@@ -433,12 +458,15 @@ export function criarSom(
 
 // ── Efeitos ─────────────────────────────────────────────────────────────────
 
-/* O aviso à mascote (ponto de integração fino; a mascote ouve, se existir). */
-export const EVENTO_DA_AYA = "aya:estado";
-function avisarAya(janela, detalhe) {
+/*
+  A mascote (src/modulos/aya/mascote/) comemora pelo evento global
+  `aya:estado` (definirEstadoDaAya, src/lib/estado-da-aya.ts): em toda
+  comemoração, com a duração do efeito; "parada" ao terminar.
+*/
+export const EVENTO_DA_AYA = EVENTO_ESTADO_DA_AYA;
+function avisarAya(janela, estado, duracaoMs) {
   try {
-    const Evento = janela?.CustomEvent || globalThis.CustomEvent;
-    janela?.dispatchEvent?.(new Evento(EVENTO_DA_AYA, { detail: detalhe }));
+    definirEstadoDaAya(estado, duracaoMs, janela);
   } catch {
     /* sem mascote ou sem eventos: nada a fazer */
   }
@@ -494,10 +522,10 @@ export function soltarFogos(
     const parar = () => {
       if (parado) return;
       parado = true;
-      avisarAya(janela, { estado: "parada" });
+      avisarAya(janela, "parada");
       aoTerminar?.();
     };
-    avisarAya(janela, { estado: "comemorando", duracaoMs: duracao });
+    avisarAya(janela, "comemorando", duracao);
     setTimeout(parar, duracao);
     return { parar };
   }
@@ -545,19 +573,16 @@ export function soltarFogos(
   const aya = show?.aya ? criarAya(doc, show.aya) : null;
   if (aya) doc.body.append(aya);
   const halo = criarHalos(doc);
-  if (chamaAya)
-    avisarAya(janela, {
-      estado: "comemorando",
-      duracaoMs: Math.round(cena.duracao * 1000),
-    });
+  // A arara do canto (e a do painel) comemora junto, pelo evento global.
+  avisarAya(janela, "comemorando", Math.round(cena.duracao * 1000));
   let parado = false;
   const parar = () => {
     if (parado) return;
     parado = true;
     for (const { canvas } of telas) canvas.remove();
     veu?.remove();
-    aya?.remove();
-    if (chamaAya) avisarAya(janela, { estado: "parada" });
+    tirarAya(aya);
+    avisarAya(janela, "parada");
     aoTerminar?.();
   };
   let anterior = null;

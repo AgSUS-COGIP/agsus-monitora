@@ -20,7 +20,16 @@ import {
   validarRegraAnalise,
 } from "../../lib/avaliacao-documental/regra.js";
 import { comecoDoEnunciado } from "../../lib/avaliacao-documental/nota-declarada.js";
-import { Aviso, Campo, EstadoVazio, Modal, Selo } from "../../ui/index.js";
+import {
+  Aviso,
+  Campo,
+  EstadoVazio,
+  Modal,
+  Segmentado,
+  Selo,
+} from "../../ui/index.js";
+import { AssistenteDaRegra } from "./assistente/assistente.tsx";
+import { ComparacaoDeVersoes, ResumoDaRegra } from "./assistente/conferir.tsx";
 import { Blocos } from "./blocos.jsx";
 import {
   BotaoMais,
@@ -37,10 +46,40 @@ import { Previa } from "./previa.jsx";
 
 /*
   Aba "Regra" da Avaliação documental: a regra da avaliação do edital, que a
-  coordenação (gestor do edital ou coordenação na equipe) cria a partir de um
-  modelo e muda em versões com motivo. Quem só lê vê o formulário travado. A
-  prévia "Testar com um candidato fictício" usa o rascunho e não grava.
+  coordenação (gestor do edital ou coordenação na equipe) cria e muda em
+  versões com motivo. Dois jeitos sobre o MESMO rascunho: o assistente
+  (assistente/, o padrão) e o modo avançado (o formulário inteiro, abaixo).
+  "Conferida" é dupla conferência: quem salvou a versão não a confere (o
+  banco recusa; o administrador global pode). Quem só lê vê o formulário
+  travado, o resumo e a comparação de versões. A prévia "Testar com um
+  candidato fictício" usa o rascunho e não grava.
 */
+
+const CHAVE_DO_MODO = "avd-regra-modo";
+const MODOS = [
+  {
+    valor: "assistente",
+    rotulo: "Assistente",
+    icone: "fa-wand-magic-sparkles",
+  },
+  { valor: "avancado", rotulo: "Modo avançado", icone: "fa-sliders" },
+];
+function lerModo() {
+  try {
+    return globalThis.localStorage?.getItem(CHAVE_DO_MODO) === "avancado"
+      ? "avancado"
+      : "assistente";
+  } catch {
+    return "assistente";
+  }
+}
+function guardarModo(modo) {
+  try {
+    globalThis.localStorage?.setItem(CHAVE_DO_MODO, modo);
+  } catch {
+    // Sem armazenamento (modo privado): vale só nesta abertura.
+  }
+}
 
 const dataHora = (iso) =>
   iso
@@ -679,6 +718,58 @@ function CarregarAldeias({ e, estado, aoFechar }) {
   );
 }
 
+function CabecalhoDaRegra({ regraSalva, leitura, mudou, e, estado, aoErro }) {
+  const outraPessoa = Boolean(regraSalva.conferir_pede_outra_pessoa);
+  return (
+    <section
+      className="ui-card avd-resumo-da-regra"
+      aria-label="Situação da regra"
+    >
+      <strong>Regra v{regraSalva.versao}</strong>
+      <Selo tom={regraSalva.situacao === "CONFERIDA" ? "aprovado" : "pendente"}>
+        {rotuloDe(SITUACOES_DA_REGRA, regraSalva.situacao)}
+      </Selo>
+      <span className="ui-texto-secundario">
+        {regraSalva.por} · {dataHora(regraSalva.atualizado_em)}
+        {regraSalva.modelo_origem
+          ? ` · modelo ${regraSalva.modelo_origem}`
+          : ""}
+        {regraSalva.situacao === "CONFERIDA" && regraSalva.conferida_por
+          ? ` · conferida por ${regraSalva.conferida_por}`
+          : ""}
+      </span>
+      {!leitura && regraSalva.situacao !== "CONFERIDA" ? (
+        <>
+          <button
+            type="button"
+            className="btn secondary small"
+            data-acao="conferir-regra"
+            data-tour="avd-regra-conferir"
+            disabled={mudou || e.salvando || outraPessoa}
+            title={
+              outraPessoa
+                ? "Dupla conferência: outra pessoa da coordenação confere"
+                : undefined
+            }
+            onClick={async () => {
+              const r = await estado.conferirRegra();
+              aoErro(r.ok ? "" : r.erro);
+            }}
+          >
+            Marcar como conferida
+          </button>
+          {outraPessoa ? (
+            <span className="avd-dupla-conferencia" data-dupla-conferencia="">
+              <i className="fa-solid fa-user-check" aria-hidden="true" /> Você
+              salvou esta versão: outra pessoa da coordenação confere.
+            </span>
+          ) : null}
+        </>
+      ) : null}
+    </section>
+  );
+}
+
 export function Regra({ e, estado }) {
   const dados = e.dados;
   const regraSalva = dados?.regra ?? null;
@@ -692,8 +783,75 @@ export function Regra({ e, estado }) {
   const [tentou, setTentou] = useState(false);
   const [erroDoBanco, setErroDoBanco] = useState("");
   const [aldeiasAbertas, setAldeiasAbertas] = useState(false);
+  const [modo, setModo] = useState(lerModo);
+  const mudarModo = (novo) => {
+    setModo(novo);
+    guardarModo(novo);
+  };
+  const seletorDeModo = leitura ? null : (
+    <div className="avd-modo-da-regra">
+      <Segmentado
+        rotulo="Como editar a regra"
+        opcoes={MODOS}
+        valor={modo}
+        aoMudar={mudarModo}
+        tour="avd-regra-modo"
+      />
+    </div>
+  );
+  const assistente = (
+    <AssistenteDaRegra
+      e={e}
+      estado={estado}
+      rascunho={rascunho}
+      inicial={inicial}
+      aoMudarRascunho={setRascunho}
+    />
+  );
 
-  if (!regraSalva || !rascunho) return <SemRegra e={e} estado={estado} />;
+  if (!regraSalva) {
+    if (leitura) return <SemRegra e={e} estado={estado} />;
+    return (
+      <div className="avd-regra">
+        {seletorDeModo}
+        {modo === "assistente" ? (
+          assistente
+        ) : (
+          <SemRegra e={e} estado={estado} />
+        )}
+      </div>
+    );
+  }
+  if (!rascunho) return <SemRegra e={e} estado={estado} />;
+  const cabecalho = (
+    <CabecalhoDaRegra
+      regraSalva={regraSalva}
+      leitura={leitura}
+      mudou={!regrasIguais(rascunho, inicial)}
+      e={e}
+      estado={estado}
+      aoErro={setErroDoBanco}
+    />
+  );
+  const avisoDoBanco = erroDoBanco ? (
+    <Aviso tom="danger" papel="alert">
+      {erroDoBanco}
+    </Aviso>
+  ) : null;
+  if (!leitura && modo === "assistente")
+    return (
+      <div className="avd-regra">
+        {cabecalho}
+        {avisoDoBanco}
+        {seletorDeModo}
+        {assistente}
+        <Versoes
+          regra={regraSalva}
+          podeUsar
+          aoUsar={(config) => setRascunho(normalizarRegraAnalise(config))}
+        />
+      </div>
+    );
 
   const erros = validarRegraAnalise(rascunho);
   const mudou = !regrasIguais(rascunho, inicial);
@@ -717,43 +875,9 @@ export function Regra({ e, estado }) {
 
   return (
     <form className="avd-regra" onSubmit={salvar} noValidate>
-      <section
-        className="ui-card avd-resumo-da-regra"
-        aria-label="Situação da regra"
-      >
-        <strong>Regra v{regraSalva.versao}</strong>
-        <Selo
-          tom={regraSalva.situacao === "CONFERIDA" ? "aprovado" : "pendente"}
-        >
-          {rotuloDe(SITUACOES_DA_REGRA, regraSalva.situacao)}
-        </Selo>
-        <span className="ui-texto-secundario">
-          {regraSalva.por} · {dataHora(regraSalva.atualizado_em)}
-          {regraSalva.modelo_origem
-            ? ` · modelo ${regraSalva.modelo_origem}`
-            : ""}
-        </span>
-        {!leitura && regraSalva.situacao !== "CONFERIDA" ? (
-          <button
-            type="button"
-            className="btn secondary small"
-            data-acao="conferir-regra"
-            disabled={mudou || e.salvando}
-            onClick={async () => {
-              const r = await estado.conferirRegra();
-              setErroDoBanco(r.ok ? "" : r.erro);
-            }}
-          >
-            Marcar como conferida
-          </button>
-        ) : null}
-      </section>
-
-      {erroDoBanco ? (
-        <Aviso tom="danger" papel="alert">
-          {erroDoBanco}
-        </Aviso>
-      ) : null}
+      {cabecalho}
+      {avisoDoBanco}
+      {seletorDeModo}
 
       <fieldset className="avd-campos" disabled={leitura}>
         <section className="ui-card" aria-labelledby="avdGeral">
@@ -1159,6 +1283,21 @@ export function Regra({ e, estado }) {
       )}
 
       <Previa regra={rascunho} notaMinima={dados.nota_minima} />
+
+      {leitura ? (
+        <ResumoDaRegra
+          regra={rascunho}
+          contexto={{
+            versao: regraSalva.versao,
+            notaMinima: dados.nota_minima?.nota_minima ?? null,
+            notaMinimaPorNivel: dados.nota_minima?.nota_minima_por_nivel ?? {},
+          }}
+        />
+      ) : null}
+      <ComparacaoDeVersoes
+        regraSalva={regraSalva}
+        rascunho={leitura ? null : rascunho}
+      />
 
       <Versoes
         regra={regraSalva}

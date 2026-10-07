@@ -8,17 +8,19 @@ import {
   previaDoDisparo,
 } from "../src/lib/painel-dos-robos.js";
 import {
-  editalDaCoordenacao,
-  inputsDoDisparo,
+  inputsDoPedido,
+  MENSAGEM_DA_CHAVE,
+  mensagemDoErroDoDisparo,
   OPCOES_DOS_ROBOS,
   roboDeCarga,
   separarCodigos,
+  situacaoDoPedido,
   validarOpcoes,
 } from "../src/lib/robos-de-carga.js";
 
 /*
   "Rodar com opções" dos robôs, sem DOM: a lista branca e a validação
-  (src/lib/robos-de-carga.js, a mesma da função) e a escolha de editais, a
+  (src/lib/robos-de-carga.js, a mesma de disparar_robo) e a escolha de editais, a
   prévia, o histórico e o acompanhamento (src/lib/painel-dos-robos.js).
 */
 
@@ -254,63 +256,65 @@ describe("lista branca de cada robô (validarOpcoes)", () => {
   });
 });
 
-describe("inputs do disparo e permissão da coordenação", () => {
-  it("sem opções, os inputs de sempre; com opções, só o que o robô aceita, em texto", () => {
-    expect(inputsDoDisparo(EMPREGARE, "u1")).toEqual({
-      modo: "normal",
-      disparado_por: "u1",
-    });
+describe("o pedido ao banco (disparar_robo)", () => {
+  it("p_inputs: as opções conferidas; no Recalcular, só o edital; sem nada, {}", () => {
+    expect(inputsDoPedido()).toEqual({});
     expect(
-      inputsDoDisparo(EMPREGARE, "u1", "", {
-        modo: "seco",
-        editais: ["93/2026", "81/2026"],
-        vagas: ["179698"],
-        limite: 5,
+      inputsDoPedido({
+        opcoes: {
+          modo: "seco",
+          editais: ["93/2026", "81/2026"],
+          vagas: ["179698"],
+          limite: 5,
+        },
       }),
     ).toEqual({
       modo: "seco",
-      disparado_por: "u1",
-      editais: "93/2026,81/2026",
-      vagas: "179698",
+      editais: ["93/2026", "81/2026"],
+      vagas: ["179698"],
       limite: "5",
     });
     expect(
-      inputsDoDisparo(PRE, "u1", "", {
-        modo: "normal",
-        editais: [ID_93],
-        vagas: ["1"],
-        limite: 3,
+      inputsDoPedido({
+        opcoes: { modo: "seco", editais: [], vagas: [], limite: null },
       }),
-    ).toEqual({ modo: "normal", disparado_por: "u1", editais: ID_93 });
-    expect(
-      inputsDoDisparo(CONFERENCIAS, "u1", "", {
-        modo: "seco",
-        editais: [],
-        vagas: [],
-        limite: null,
-      }),
-    ).toEqual({
-      modo: "seco",
-      disparado_por: "u1",
-    });
+    ).toEqual({ modo: "seco" });
+    expect(inputsDoPedido({ edital: ID_93 })).toEqual({ editais: [ID_93] });
+    expect(inputsDoPedido({ edital: "  " })).toEqual({});
   });
 
-  it("a coordenação só pede um edital pelo id, no modo normal, na pré-classificação", () => {
-    const so = (opcoes) =>
-      editalDaCoordenacao(PRE, "", {
-        modo: "normal",
-        editais: [],
-        vagas: [],
-        limite: null,
-        ...opcoes,
-      });
-    expect(editalDaCoordenacao(PRE, ID_93, null)).toBe(ID_93);
-    expect(so({ editais: [ID_93] })).toBe(ID_93);
-    expect(so({ editais: [ID_93], modo: "refazer_lote" })).toBe("");
-    expect(so({ editais: [ID_93, ID_80] })).toBe("");
-    expect(so({ editais: ["93/2026"] })).toBe("");
-    expect(so({})).toBe("");
-    expect(editalDaCoordenacao(EMPREGARE, ID_93, null)).toBe("");
+  it("o erro do banco vira frase curta; sem a função, diz a migration", () => {
+    expect(
+      mensagemDoErroDoDisparo({
+        code: "42501",
+        message: "Só o administrador global roda as cargas.",
+      }),
+    ).toBe("Só o administrador global roda as cargas.");
+    expect(mensagemDoErroDoDisparo({ code: "PGRST202" })).toContain(
+      "20261008140000",
+    );
+    expect(mensagemDoErroDoDisparo({}, "Padrão.")).toBe("Padrão.");
+  });
+
+  it("situação do pedido: PEDIDO espera; ACEITO segue; FALHOU e SEM_TOKEN avisam", () => {
+    expect(situacaoDoPedido({ situacao: "PEDIDO" })).toMatchObject({
+      terminou: false,
+      aceito: false,
+      aviso: null,
+    });
+    expect(situacaoDoPedido({ situacao: "ACEITO", http: 204 })).toMatchObject({
+      terminou: true,
+      aceito: true,
+      http: 204,
+      aviso: null,
+    });
+    expect(situacaoDoPedido({ situacao: "SEM_TOKEN" }).aviso).toEqual({
+      tom: "erro",
+      texto: MENSAGEM_DA_CHAVE,
+    });
+    expect(MENSAGEM_DA_CHAVE).toBe(
+      "A chave de disparo dos robôs expirou ou foi recusada; um administrador precisa trocá-la no cofre (Vault) com o nome github_disparo_robos.",
+    );
   });
 });
 
@@ -506,74 +510,89 @@ describe("acompanhamento do pedido", () => {
         { id: "n", inicio, situacao, disparo: "MONITORA", filtro: {} },
       ],
     }).execucoes.empregare;
+  const pedido = (situacao, extra = {}) => ({
+    em,
+    disparo: situacaoDoPedido({ situacao, ...extra }),
+  });
 
-  it("aguardando → GitHub → rodando → terminou", () => {
+  it("aguardando → aceito pelo GitHub → rodando → terminou", () => {
     expect(
       acompanhamentoDoPedido({ robo: "empregare", pedido: null }),
     ).toBeNull();
     expect(
-      acompanhamentoDoPedido({ robo: "empregare", pedido: { em } }).etapa,
+      acompanhamentoDoPedido({ robo: "empregare", pedido: pedido("PEDIDO") })
+        .etapa,
     ).toBe("aguardando");
     // A execução de antes do pedido não conta.
     expect(
       acompanhamentoDoPedido({
         robo: "empregare",
-        pedido: { em },
+        pedido: pedido("PEDIDO"),
         execucoes: execucoes("CONCLUIDA", "2026-10-07T10:00:00Z"),
-        github: {
-          ultima: { situacao: "completed", criada: "2026-10-07T10:00:00Z" },
-        },
       }).etapa,
     ).toBe("aguardando");
     expect(
       acompanhamentoDoPedido({
         robo: "empregare",
-        pedido: { em },
-        github: {
-          rodando: true,
-          execucao: "https://g/1",
-          ultima: {
-            situacao: "queued",
-            criada: "2026-10-07T12:00:05Z",
-            url: "https://g/1",
-          },
-        },
+        pedido: pedido("ACEITO", { http: 204 }),
       }),
-    ).toEqual({ etapa: "github", execucao: null, url: "https://g/1" });
+    ).toEqual({
+      etapa: "github",
+      execucao: null,
+      url: null,
+      semRegistro: false,
+    });
     const rodando = acompanhamentoDoPedido({
       robo: "empregare",
-      pedido: { em },
+      pedido: pedido("ACEITO"),
       execucoes: execucoes("EM_ANDAMENTO"),
     });
     expect(rodando.etapa).toBe("rodando");
     expect(
       acompanhamentoDoPedido({
         robo: "empregare",
-        pedido: { em },
+        pedido: pedido("ACEITO"),
         execucoes: execucoes("PARCIAL"),
       }).etapa,
     ).toBe("terminou");
   });
 
-  it("modo seco termina só no GitHub (sem registro no banco)", () => {
+  it("modo seco: aceito pelo GitHub e sem registro no banco", () => {
     expect(
       acompanhamentoDoPedido({
         robo: "empregare",
-        pedido: { em, modo: "seco" },
-        github: {
-          ultima: {
-            situacao: "completed",
-            conclusao: "success",
-            criada: "2026-10-07T12:00:10Z",
-            url: "https://g/2",
-          },
-        },
+        pedido: { ...pedido("ACEITO"), modo: "seco" },
       }),
-    ).toMatchObject({
-      etapa: "terminou_no_github",
-      conclusao: "success",
-      semRegistro: true,
-      url: "https://g/2",
-    });
+    ).toMatchObject({ etapa: "github", semRegistro: true });
+  });
+
+  it("chave ausente, vencida ou sem permissão: recusado, com a frase do cofre", () => {
+    for (const disparo of [
+      { situacao: "SEM_TOKEN" },
+      {
+        situacao: "FALHOU",
+        http: 401,
+        mensagem: "GitHub 401: Bad credentials",
+      },
+      { situacao: "FALHOU", http: 403 },
+      { situacao: "FALHOU", http: 404 },
+    ])
+      expect(
+        acompanhamentoDoPedido({
+          robo: "empregare",
+          pedido: pedido(disparo.situacao, disparo),
+        }),
+      ).toMatchObject({ etapa: "recusado", texto: MENSAGEM_DA_CHAVE });
+    expect(
+      acompanhamentoDoPedido({
+        robo: "empregare",
+        pedido: pedido("FALHOU", {
+          http: 422,
+          mensagem: "GitHub 422: Unexpected inputs provided",
+        }),
+      }).texto,
+    ).toBe(
+      "O GitHub não aceitou o pedido (GitHub 422: Unexpected inputs provided). Tente de novo em instantes.",
+    );
   });
 });

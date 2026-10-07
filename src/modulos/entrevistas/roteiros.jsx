@@ -29,6 +29,7 @@ import {
   Selo,
 } from "../../ui/index.js";
 import { AspectosDoRoteiro } from "./aspectos-do-roteiro.tsx";
+import { DesempateDaClassificacao } from "./conducao.jsx";
 import {
   BotaoDeLinha,
   ComposicaoDaBanca,
@@ -37,8 +38,16 @@ import {
 } from "./partes.jsx";
 
 /*
-  Visão "Roteiros" da tela de Entrevistas: os roteiros ativos da área (e os
-  de qualquer área), em cartões compactos, e o formulário na gaveta.
+  "Roteiros de entrevista", a configuração do gestor em Conduzir entrevistas
+  › Preparar (ao lado da configuração do edital): os roteiros ativos da área
+  (e os de qualquer área), em cartões compactos, e o formulário na gaveta.
+
+  Desempate: o roteiro não tem mais critérios próprios. O editor mostra, só
+  leitura, os da regra de classificação do edital aberto em Conduzir (sem
+  edital, diz que é o da regra de cada edital), com "Editar na
+  Classificação". O texto livre antigo (DS_DESEMPATE) continua no banco e
+  passa adiante sem mudança a cada versão nova; a tela não o mostra nem o
+  edita.
 
   Editar grava a versão seguinte (a anterior continua valendo para os editais
   que já a usam); "Duplicar" cria um roteiro novo a partir de outro. Quem não
@@ -188,6 +197,8 @@ export function VisaoDeRoteiros({ conducao, area }) {
           roteiro={aberto.roteiro}
           modo={aberto.modo}
           area={area}
+          regraDaClassificacao={e.edital?.regra_classificacao || null}
+          edital={e.edital?.edital || null}
           somenteLeitura={aberto.modo === "ver"}
           salvando={Boolean(e.acao)}
           aoSalvar={async (dados) => {
@@ -547,72 +558,6 @@ function NotasEliminatorias({ valor, aoMudar, somenteLeitura }) {
   );
 }
 
-function Desempate({ valor, aoMudar, erros, somenteLeitura }) {
-  return (
-    <div className="entrevistas-sublista" aria-label="Critérios de desempate">
-      {valor.length ? (
-        <ol className="entrevistas-linhas entrevistas-desempate">
-          {valor.map((criterio, indice) => (
-            // O critério é texto livre e pode repetir: a posição é a chave.
-            <li key={indice}>
-              <span className="entrevistas-ordem">{indice + 1}º</span>
-              <Campo
-                rotulo={`Critério ${indice + 1}`}
-                erro={erros[`desempate.${indice}`]}
-              >
-                <input
-                  type="text"
-                  value={criterio}
-                  disabled={somenteLeitura}
-                  onChange={(e) =>
-                    aoMudar(
-                      valor.map((x, i) => (i === indice ? e.target.value : x)),
-                    )
-                  }
-                />
-              </Campo>
-              {somenteLeitura ? null : (
-                <span className="entrevistas-competencia-acoes">
-                  <BotaoDeLinha
-                    icone="fa-chevron-up"
-                    rotulo={`Subir o critério ${indice + 1}`}
-                    desabilitado={indice === 0}
-                    aoClicar={() => aoMudar(moverItem(valor, indice, -1))}
-                  />
-                  <BotaoDeLinha
-                    icone="fa-chevron-down"
-                    rotulo={`Descer o critério ${indice + 1}`}
-                    desabilitado={indice === valor.length - 1}
-                    aoClicar={() => aoMudar(moverItem(valor, indice, 1))}
-                  />
-                  <BotaoDeLinha
-                    icone="fa-trash"
-                    rotulo={`Remover o critério ${indice + 1}`}
-                    aoClicar={() =>
-                      aoMudar(valor.filter((_, i) => i !== indice))
-                    }
-                  />
-                </span>
-              )}
-            </li>
-          ))}
-        </ol>
-      ) : (
-        <p className="entrevistas-vazio-linha">Sem critérios de desempate.</p>
-      )}
-      {somenteLeitura ? null : (
-        <button
-          type="button"
-          className="btn secondary small"
-          onClick={() => aoMudar([...valor, ""])}
-        >
-          <i className="fa-solid fa-plus" aria-hidden="true" /> Critério
-        </button>
-      )}
-    </div>
-  );
-}
-
 function SecaoDoFormulario({ titulo, icone, children }) {
   return (
     <Secao icone={icone} titulo={titulo}>
@@ -625,6 +570,8 @@ export function EditorDeRoteiro({
   roteiro,
   modo,
   area,
+  regraDaClassificacao = null,
+  edital = null,
   somenteLeitura = false,
   salvando = false,
   aoSalvar,
@@ -879,11 +826,11 @@ export function EditorDeRoteiro({
               />
               <span>Nota final = análise curricular + entrevista</span>
             </label>
-            <Desempate
-              valor={r.desempate}
-              erros={errosVisiveis}
-              somenteLeitura={somenteLeitura}
-              aoMudar={(desempate) => mudar({ desempate })}
+            {/* O desempate é o da regra de classificação do edital (uma
+                fonte só); o texto livre antigo do roteiro segue gravado. */}
+            <DesempateDaClassificacao
+              regra={regraDaClassificacao}
+              edital={edital}
             />
           </SecaoDoFormulario>
 

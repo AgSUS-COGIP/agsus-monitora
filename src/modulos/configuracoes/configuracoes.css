@@ -1739,3 +1739,37 @@ body:not(.sidebar-collapsed) .config-barra {
     width: 100%;
   }
 }
+
+/* Marca › Mascote (cartao-da-mascote.tsx): a arara grande, os tamanhos menores e os estados. */
+.cartao-da-mascote__palco {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--space-6);
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-lg);
+  background: var(--color-bg-subtle);
+}
+.cartao-da-mascote__tamanhos {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--space-4);
+  padding-bottom: var(--space-2);
+}
+.cartao-da-mascote__tamanhos .aya-retrato {
+  width: 64px;
+  height: 64px;
+}
+.cartao-da-mascote__tamanhos .cartao-da-mascote__retrato-pequeno {
+  width: 46px;
+  height: 46px;
+  padding: 2px;
+}
+.cartao-da-mascote__estados {
+  flex-wrap: wrap;
+  margin-top: var(--space-3);
+}
+.cartao-da-mascote__canto {
+  justify-self: start;
+  margin-top: var(--space-3);
+}

@@ -13,7 +13,7 @@ supabase/migrations/20261007250000_expurgo_diario_dos_anexos_do_chat.sql.
 
 Roda pelo GitHub Actions (.github/workflows/expurgo-anexos-chat.yml): todo dia
 às 6h30 de Brasília, pelo "Rodar agora" das Configurações › Status das
-atualizações (api/rodar-carga.js) ou pelo "Run workflow". Guia:
+atualizações (RPC disparar_robo) ou pelo "Run workflow". Guia:
 docs/python-no-monitora.md.
 
 Uso

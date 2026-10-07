@@ -17,7 +17,7 @@ Migration: supabase/migrations/20261006110000_pre_classificacao_e_lote.sql.
 
 Roda pelo GitHub Actions (.github/workflows/pre-classificacao.yml): pelo
 "Recalcular" da aba Pré-classificação e pelo "Rodar agora" das Configurações
-(api/rodar-carga.js), pelo "Run workflow" e, sozinho, no fim do robô da
+(RPC disparar_robo), pelo "Run workflow" e, sozinho, no fim do robô da
 Empregare (--apos-robo: os editais das vagas da última carga). Guia:
 docs/python-no-monitora.md.
 

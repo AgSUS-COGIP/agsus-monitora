@@ -2,12 +2,14 @@ import { useSyncExternalStore } from "react";
 import { corDoTextoPara } from "../../lib/contraste.js";
 import { camposDaSecao } from "../../lib/publicacao-de-configuracoes.js";
 import { Icone } from "../../componentes/icone.jsx";
+import { CartaoDaMascote } from "./cartao-da-mascote.tsx";
 import { CampoDaSecao, Grupo, Imagem, Previa } from "./partes.jsx";
 
 /*
   Configurações › Marca: a equipe responsável (pé da barra lateral), o
   rodapé e o cabeçalho da agência nos documentos oficiais (Classificação),
-  com a prévia da barra lateral ao lado. Os valores são do rascunho
+  com a prévia da barra lateral ao lado, e a mascote da Aya em cada estado
+  (cartao-da-mascote.tsx), para conferir. Os valores são do rascunho
   de `estado.js` e vão na publicação da barra fixa.
 
   A cor e o logo da barra são os da seção Aparência (com o rascunho, se
@@ -132,6 +134,7 @@ export function SecaoMarca({ estado }) {
             ))}
           </Grupo>
         ))}
+        <CartaoDaMascote />
       </div>
       <PreviaDaMarca estado={estado} />
     </div>

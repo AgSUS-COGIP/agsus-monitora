@@ -497,6 +497,27 @@ export const VERBETES_AYA = Object.freeze([
   },
   {
     arquivo: "assistente-aya.md",
+    titulo: "A arara da Aya (mascote)",
+    perguntas: [
+      "quem e a arara",
+      "a arara da aya",
+      "mascote da aya",
+      "mascote do monitora",
+      "por que a arara se mexe",
+      "a arara esta dormindo",
+      "a arara dorme",
+      "arara azul",
+      "por que a arara pisca",
+      "desligar animacao da arara",
+    ],
+    resposta:
+      'Sou eu: uma arara-azul (Anodorhynchus hyacinthinus), a ave azul-cobalto de anel amarelo nos olhos e faixa amarela no bico, que vive no Pantanal e no Cerrado. Eu me mexo para mostrar o que estou fazendo: respiro e pisco quando estou parada; inclino a cabeça e sigo o ponteiro com o olho quando você chega perto ou abre o painel; olho para cima enquanto procuro a resposta; mexo o bico enquanto o texto aparece; bato as asas nas comemorações; aceno uma vez quando você entra; e cochilo depois de alguns minutos sem uso (qualquer clique, tecla ou movimento me acorda). Se o seu sistema pede menos movimento, eu só pisco; se você desligou as comemorações, eu não comemoro. Em Configurações › Marca, o cartão "Mascote" mostra cada estado.',
+    fato: "A mascote da Aya é uma arara-azul animada com sete estados: parada, atenta, falando, pensando, comemorando, dormindo e acenando.",
+    fonte: "src/modulos/aya/mascote/; src/lib/estado-da-aya.ts",
+    abrir: "config:marca",
+  },
+  {
+    arquivo: "assistente-aya.md",
     titulo: "Dados e privacidade da Aya",
     perguntas: [
       "voce consulta meus dados",
@@ -670,10 +691,110 @@ export const VERBETES_AYA = Object.freeze([
       "regra conferida",
     ],
     resposta:
-      'Cada edital tem a sua regra da avaliação, e nada fica fixo no sistema: os pesos (por exemplo, indígena +8 e aldeia +6 no 100/2026, +7 e +5 no 28/2026), os títulos por nível, as faixas de cursos, a experiência (por mês ou por período de N meses, com ou sem o mínimo exigido), os efeitos de cada situação e os textos do parecer vêm da regra. A regra nasce de um modelo ou do zero e fica "Conferir"; salvar sempre cria uma versão nova (da segunda em diante com o motivo, de 10 a 2.000 caracteres), as anteriores ficam no histórico e não mudam, e quem coordena marca a versão vigente como "Conferida". Salvar outra versão volta a regra para "Conferir". A nota mínima não fica aqui: é a da regra de classificação do edital.',
+      'Cada edital tem a sua regra da avaliação, e nada fica fixo no sistema: os pesos (por exemplo, indígena +8 e aldeia +6 no 100/2026, +7 e +5 no 28/2026), os títulos por nível, as faixas de cursos, a experiência (por mês ou por período de N meses, com ou sem o mínimo exigido), os efeitos de cada situação e os textos do parecer vêm da regra. A regra nasce de um modelo ou do zero e fica "Conferir"; salvar sempre cria uma versão nova (da segunda em diante com o motivo, de 10 a 2.000 caracteres), as anteriores ficam no histórico e não mudam, e outra pessoa da coordenação marca a versão vigente como "Conferida" (dupla conferência: quem salvou não confere; o administrador global pode). Salvar outra versão volta a regra para "Conferir". A regra se monta pelo assistente (o padrão) ou pelo modo avançado. A nota mínima não fica aqui: é a da regra de classificação do edital.',
     fato: "No MONITORA, a regra da avaliação documental é de cada edital, versionada e imutável por versão; a nota mínima é a da regra de classificação.",
     fonte:
       "src/lib/avaliacao-documental/regra.js; supabase/migrations/20261006100000_regra_da_analise.sql",
+    abrir: "avaliacao-documental",
+  },
+  {
+    arquivo: "regras-da-avaliacao-documental.md",
+    titulo: "Assistente da regra",
+    perguntas: [
+      "assistente da regra",
+      "nova regra",
+      "editar regra",
+      "como criar a regra da avaliacao",
+      "criar regra pelo assistente",
+      "passos do assistente",
+      "cardapio da regra",
+      "o que vale ponto e o que elimina",
+      "modo avancado da regra",
+      "assistente ou modo avancado",
+    ],
+    resposta:
+      'Na aba Regra, quem coordena o edital escolhe "Assistente" (o padrão) ou "Modo avançado"; os dois mexem no mesmo rascunho, e a escolha fica lembrada neste navegador. O assistente ("Nova regra" ou "Editar regra") tem cinco passos, e dá para ir e voltar entre eles: 1) Ponto de partida: continuar da versão vigente, copiar a regra conferida de outro edital da mesma área (aparece o número, a unidade e a versão), usar um modelo ou começar do zero — sempre uma cópia independente, que não muda a origem; 2) O que vale e o que elimina: um cardápio de cartões com caixa — requisitos que eliminam (identidade, formação exigida, conselho de classe e outros documentos, com o item do edital e os motivos), titulação (pontos por título e por nível, vale o maior ou somam, teto), cursos (faixas de horas, pontos, teto, por nível), experiência (mínimo exigido, por mês ou por período, só além do mínimo, teto, por nível), critério étnico (indígena e aldeia; só na Saúde Indígena), as cotas, as eliminações da inscrição (inscrição cancelada, questionário não finalizado, reprovado na Empregare, termo recusado) e o corte por pontos mínimos com a nota usada (declarada na inscrição ou ART). Marcado, o cartão abre só os seus campos, já com valores sugeridos (do ponto de partida, dos modelos e das regras da área); desmarcado, some da regra, e marcar de novo traz de volta o que estava; 3) Perguntas da Empregare; 4) Nota mínima e desempate; 5) Testar e salvar: o candidato fictício, o resumo, a comparação de versões e o salvar, que cria a versão nova com o motivo (na primeira versão, o motivo diz de onde ela veio). O que o assistente não mostra (distribuição, revisão, textos do parecer, observações prontas) continua no modo avançado e não muda.',
+    fato: "No MONITORA, o assistente da regra da avaliação documental tem cinco passos (ponto de partida, cardápio do que vale e do que elimina, perguntas da Empregare, nota mínima e desempate, testar e salvar) e grava o mesmo formato de regra do modo avançado.",
+    fonte:
+      "src/modulos/avaliacao-documental/assistente/; src/lib/avaliacao-documental/assistente-da-regra.ts",
+    abrir: "avaliacao-documental",
+  },
+  {
+    arquivo: "regras-da-avaliacao-documental.md",
+    titulo: "Perguntas da Empregare no assistente",
+    perguntas: [
+      "cores das perguntas",
+      "pergunta verde",
+      "pergunta amarela",
+      "pergunta vermelha",
+      "ligar automaticamente",
+      "perguntas do questionario no assistente",
+      "escolher a pergunta da lista",
+      "pergunta nao achou",
+      "em quantas vagas",
+    ],
+    resposta:
+      'No passo 3 do assistente, o sistema lê as colunas "Pergunta N - …" da última carga de cada vaga do edital (só os nomes das colunas, nenhuma resposta) e liga sozinho, pelo começo do enunciado, o bloco que ainda não tem pergunta ("Ligar automaticamente" faz de novo, sem mexer no que já está ligado). Cada pergunta da regra aparece com uma cor, pela mesma regra de casamento da nota declarada e da ficha, vaga por vaga: verde "Achou" (uma coluna em cada vaga onde aparece; diz em quantas vagas), amarelo "Ambígua" (casa com mais de uma coluna numa vaga, e aí nenhuma é usada; aparecem as colunas) e vermelho "Não achou" (nenhuma vaga tem). Para acertar, escreva um começo que só ela tenha ou escolha em "Escolher da lista", que traz cada pergunta da carga uma vez, com em quantas vagas aparece. No mesmo passo, a nota declarada: em cada parcial (titulação, cursos, experiência, critério étnico), "conta na nota declarada" liga a pergunta e mostra as respostas da carga com quantas vezes aparecem e os pontos de cada uma (ou por nível); resposta da carga sem pontos fica em vermelho. Sem carga da Empregare, as perguntas ficam sem conferência.',
+    fato: "",
+    fonte:
+      "src/modulos/avaliacao-documental/assistente/perguntas.tsx; src/lib/avaliacao-documental/assistente-da-regra.ts; supabase/migrations/20261008120000_assistente_da_regra.sql",
+    abrir: "avaliacao-documental",
+  },
+  {
+    arquivo: "regras-da-avaliacao-documental.md",
+    titulo: "Nota mínima e desempate no assistente",
+    perguntas: [
+      "nota minima no assistente",
+      "desempate no assistente",
+      "arrastar desempate",
+      "ordenar o desempate no assistente",
+      "mudar a nota minima pela regra da avaliacao",
+      "regra de classificacao no assistente",
+    ],
+    resposta:
+      "No passo 4 do assistente ficam juntos a nota mínima e o desempate. A nota mínima (e a por nível, quando diferente) e os critérios de desempate da classificação são da regra de classificação do edital: o assistente mostra e, para quem tem Editor na Classificação, grava pelo mesmo caminho da aba Classificação, como versão nova dela, com o mesmo motivo (até 500 caracteres); sem a permissão, aparecem só para ler. Sem regra de classificação no edital, crie-a primeiro na Classificação. Embaixo, o desempate da lista do lote (Provisória), que é da regra da avaliação. Nas duas listas, arraste o critério ou use as setas para mudar a ordem, troque a direção e acrescente ou tire critérios. Ao salvar, a regra de classificação é gravada antes; se ela recusar, nada é salvo.",
+    fato: "",
+    fonte:
+      "src/modulos/avaliacao-documental/assistente/nota-e-desempate.tsx; supabase/migrations/20261002150000_classificacao.sql (salvar_regra_classificacao)",
+    abrir: "avaliacao-documental",
+  },
+  {
+    arquivo: "regras-da-avaliacao-documental.md",
+    titulo: "Resumo da regra e comparar versões",
+    perguntas: [
+      "resumo da regra",
+      "resumo de uma pagina",
+      "copiar a regra para o sei",
+      "imprimir a regra",
+      "comparar versoes da regra",
+      "diferenca entre versoes",
+      "o que mudou na regra",
+      "historico da regra",
+    ],
+    resposta:
+      'No passo 5 do assistente (e, para quem só lê, embaixo da regra), o "Resumo da regra" diz em linguagem simples o que elimina, quanto vale cada item, as cotas, a nota mínima e o lote, a nota declarada e os desempates; "Copiar para o SEI" leva o texto com títulos e listas, e "Imprimir" abre a impressão (dá para salvar em PDF). "Comparar versões" mostra o que entrou, o que saiu e o que mudou, com o nome de cada coisa ("Titulação acadêmica › teto: 10 → 12"), entre a vigente e o rascunho novo ou entre duas versões do histórico.',
+    fato: "",
+    fonte:
+      "src/lib/avaliacao-documental/resumo-da-regra.ts; src/lib/avaliacao-documental/comparar-regras.ts",
+    abrir: "avaliacao-documental",
+  },
+  {
+    arquivo: "regras-da-avaliacao-documental.md",
+    titulo: "Dupla conferência da regra",
+    perguntas: [
+      "dupla conferencia",
+      "nao consigo marcar como conferida",
+      "marcar como conferida desabilitado",
+      "quem confere a regra",
+      "quem salvou nao pode conferir",
+      "conferir a propria versao",
+      "regra conferida por outra pessoa",
+    ],
+    resposta:
+      '"Conferida" exige dupla conferência: quem salvou a versão vigente da regra não pode marcá-la como conferida — outra pessoa da coordenação do edital (o gestor do edital ou quem está como Coordenação na equipe) confere. O botão "Marcar como conferida" fica travado para quem salvou, com o aviso, e o banco recusa do mesmo jeito ("Dupla conferência: quem salvou a versão N não pode conferi-la"). O administrador global pode conferir mesmo a versão que salvou. Depois de conferida, o cabeçalho diz quem conferiu; salvar outra versão volta a regra para "Conferir".',
+    fato: "No MONITORA, a regra da avaliação documental só fica Conferida por outra pessoa da coordenação, que não salvou a versão (o administrador global é a exceção).",
+    fonte:
+      "supabase/migrations/20261008120000_assistente_da_regra.sql (conferir_regra_analise)",
     abrir: "avaliacao-documental",
   },
   {
@@ -688,7 +809,7 @@ export const VERBETES_AYA = Object.freeze([
       "modelo do simulador",
     ],
     resposta:
-      'Há três modelos para começar: PROJ26-CURRICULAR (Projetos, sem critério étnico, lido do edital 93/2026: titulação 5/8/10, cursos por faixa de horas e experiência a cada 6 meses além do mínimo), SI26-INTERIOR-SUL (o do simulador do DSEI Interior Sul, edital 28/2026: indígena +7 e aldeia da lista +5, cursos 0,5/0,3/0,2, experiência 0,2 por mês com teto 10 e o estágio de indígena) e SI26-100 (o questionário do 100/2026, nível superior: indígena +8 e aldeia +6, e a declaração irregular zera os pontos étnicos sem eliminar). "Criar a partir do modelo" faz a versão 1 do edital; num edital que já tem regra, "Carregar um modelo no formulário" leva o modelo ao formulário para salvar como versão nova, com o motivo.',
+      'Há três modelos para começar: PROJ26-CURRICULAR (Projetos, sem critério étnico, lido do edital 93/2026: titulação 5/8/10, cursos por faixa de horas e experiência a cada 6 meses além do mínimo), SI26-INTERIOR-SUL (o do simulador do DSEI Interior Sul, edital 28/2026: indígena +7 e aldeia da lista +5, cursos 0,5/0,3/0,2, experiência 0,2 por mês com teto 10 e o estágio de indígena) e SI26-100 (o questionário do 100/2026, nível superior: indígena +8 e aldeia +6, e a declaração irregular zera os pontos étnicos sem eliminar). No assistente, o modelo é um dos pontos de partida (e os modelos também sugerem os valores dos cartões); no modo avançado, "Criar a partir do modelo" faz a versão 1 do edital e, num edital que já tem regra, "Carregar um modelo no formulário" leva o modelo ao formulário para salvar como versão nova, com o motivo.',
     fato: "",
     fonte: "supabase/correcoes/20261006-modelos-da-regra-da-analise.sql",
     abrir: "avaliacao-documental",
@@ -1057,7 +1178,7 @@ export const VERBETES_AYA = Object.freeze([
       'A pré-classificação roda sozinha no fim de cada carga do robô da Empregare, para os editais das vagas carregadas. A coordenação do edital também pode clicar em "Recalcular" na aba Pré-classificação (o administrador global usa o "Rodar agora" das Configurações › Status das atualizações, para todos os editais). O botão fica travado enquanto a regra não está conferida ou enquanto o job roda. Depois do clique, a aba diz o que aconteceu: "Recálculo pedido às HH:MM" e, quando o job termina, "Pré-classificação recalculada" (a aba relê sozinha enquanto ele roda; o Atualizar também relê a aba aberta). Se o pedido não sai, aparece "Recálculo não pedido:" com o motivo e o botão volta; "Só na versão publicada" quer dizer que o MONITORA está rodando no computador, onde o pedido ao GitHub não existe. Edital sem regra conferida não é calculado: o job explica no resumo e a aba mostra o aviso "Edital sem regra conferida".',
     fato: "",
     fonte:
-      "scripts/pre_classificacao/pre_classificacao.py; .github/workflows/pre-classificacao.yml; api/rodar-carga.js",
+      "scripts/pre_classificacao/pre_classificacao.py; .github/workflows/pre-classificacao.yml; supabase/migrations/20261008140000_agenda_dos_robos_pelo_banco.sql",
     abrir: "avaliacao-documental",
   },
   {
@@ -1477,6 +1598,24 @@ export const VERBETES_AYA = Object.freeze([
   },
   {
     arquivo: "regras-da-classificacao.md",
+    titulo: "Desempate da entrevista é na Classificação",
+    perguntas: [
+      "desempate da entrevista na classificacao",
+      "empate na nota da entrevista",
+      "onde desempato a entrevista",
+      "editar na classificacao",
+      "criterios de desempate do roteiro sumiram",
+      "desempate do roteiro",
+    ],
+    resposta:
+      'O desempate de quem empata na nota da entrevista é o da regra de classificação do edital: uma fonte só, aqui em Classificação › Regra (critérios do catálogo, a ordem e o empate final). O Painel de entrevistas marca os empatados e leva para cá; Conduzir entrevistas › Preparar e o editor do roteiro mostram os mesmos critérios só para ler, com "Editar na Classificação". O roteiro não tem mais critérios próprios (o texto antigo ficou guardado, sem uso). Na lista Resultado da entrevista, o empate que sobra fica na mesma posição; o desempate vale no resultado final.',
+    fato: "O desempate da entrevista se configura em Classificação › Regra; o roteiro só mostra os critérios.",
+    fonte:
+      "src/lib/convocacao-da-entrevista.js; src/modulos/entrevistas/conducao.jsx; supabase/migrations/20261008130000_conduzir_entrevistas_no_menu.sql",
+    abrir: "classificacao",
+  },
+  {
+    arquivo: "regras-da-classificacao.md",
     titulo: "Empate final e sorteio",
     perguntas: [
       "empate final",
@@ -1535,7 +1674,7 @@ export const VERBETES_AYA = Object.freeze([
       "quantos candidatos sao convocados",
     ],
     resposta:
-      "A lista de convocação são os primeiros da avaliação documental até o limite da regra: N vezes as vagas imediatas da vaga, ou, na vaga só de cadastro reserva, até a posição definida (ex.: 5 vezes as vagas e até a 10ª no 83/2026; 6 vezes e até a 5ª no 100/2026). Cargos podem ter exceção (Enfermeiro e Técnico de Enfermagem: 10 vezes e até a 20ª). Se houver empate no limite, a regra diz se os empatados entram todos. No resultado final, quem estava dentro do limite e não tem entrevista lançada vira aviso. É a única convocação do sistema: Entrevistas › Conduzir entrevistas convoca a partir da última lista de convocação gerada aqui, e só quem está nela; por isso, gere a lista antes de convocar e gere de novo quando a regra ou as vagas mudarem.",
+      "A lista de convocação são os primeiros da avaliação documental até o limite da regra: N vezes as vagas imediatas da vaga, ou, na vaga só de cadastro reserva, até a posição definida (ex.: 5 vezes as vagas e até a 10ª no 83/2026; 6 vezes e até a 5ª no 100/2026). Cargos podem ter exceção (Enfermeiro e Técnico de Enfermagem: 10 vezes e até a 20ª). Se houver empate no limite, a regra diz se os empatados entram todos. No resultado final, quem estava dentro do limite e não tem entrevista lançada vira aviso. É a única convocação do sistema: Conduzir entrevistas › Preparar convoca a partir da última lista de convocação gerada aqui, e só quem está nela; por isso, gere a lista antes de convocar e gere de novo quando a regra ou as vagas mudarem.",
     fato: "",
     fonte:
       "src/lib/classificacao/motor.js; supabase/migrations/20261005150000_convocacao_unica_da_entrevista.sql",
@@ -2804,7 +2943,7 @@ export const VERBETES_AYA = Object.freeze([
       'Na gaveta dos avisos, o botão com o número de casos abre a lista de todos os casos do aviso, 50 por vez ("Mostrar mais" traz os seguintes). Cada caso mostra o código do candidato na Empregare, o nome, o edital, a vaga, o responsável pela análise e o motivo: por exemplo, a data da análise e a data da inscrição, a nota e a nota mínima, a nota e a soma das parciais, a experiência e o teto. No candidato analisado em dois editais ativos aparecem as análises dele em cada edital, com vaga e situação, e quantas ficaram fora do seu acesso. O campo do aviso busca por código ou nome (sem acento) e "Exportar CSV" baixa todos os casos do aviso. O campo do topo da gaveta procura o candidato em todos os avisos. Clicar num caso das análises abre o Painel das análises já buscando pelo nome e com a análise aberta, para conferir e corrigir na planilha; o aviso some na conferência seguinte, quando o problema não aparecer mais. O nome, a vaga e o responsável só aparecem para quem tem a área e o edital da análise no seu recorte.',
     fato: "",
     fonte:
-      "src/modulos/conferencias/avisos-de-conferencia.jsx; supabase/migrations/20261007120000_casos_dos_avisos_de_conferencia.sql",
+      "src/modulos/conferencias/avisos-de-conferencia.tsx; supabase/migrations/20261007120000_casos_dos_avisos_de_conferencia.sql",
   },
   {
     arquivo: "regras-das-conferencias.md",
@@ -2826,7 +2965,7 @@ export const VERBETES_AYA = Object.freeze([
       'Os casos de todos os módulos mostram quem é e o que conferir. Na lista de aprovados: o nome, o código do candidato na Empregare (quando há), o edital, a vaga e a situação com a data (por exemplo, "Contratado em 03/02/2026"); no "Contratado em duas vagas" aparecem todas as vagas da pessoa nas listas vigentes, com edital, vaga, situação e data, e quantas ficaram fora do seu acesso. Clicar no caso abre a Lista de aprovados só com as vagas daquela pessoa; "Ver todos" tira o recorte. Nas entrevistas: nome, código, edital, vaga, parecer e nota, e o clique abre Entrevistas já buscando o candidato, com a entrevista aberta. Na classificação aparecem a lista (tipo e data), a vaga (código e nome) ou o candidato do ajuste. Se o registro não existe mais, o caso mostra "Registro removido"; se ele é de uma área ou edital fora do seu acesso, "Sem acesso" — nunca o identificador interno.',
     fato: "",
     fonte:
-      "src/lib/avisos-de-conferencia.js; supabase/migrations/20261007240000_casos_dos_avisos_resolvidos.sql",
+      "src/lib/avisos-de-conferencia.ts; supabase/migrations/20261007240000_casos_dos_avisos_resolvidos.sql",
   },
   {
     arquivo: "regras-das-configuracoes.md",
@@ -3198,20 +3337,100 @@ export const VERBETES_AYA = Object.freeze([
   },
   {
     arquivo: "regras-das-entrevistas.md",
-    titulo: "Tela de Entrevistas",
+    titulo: "Painel de entrevistas",
     perguntas: [
+      "painel de entrevistas",
       "tela de entrevistas",
       "tela entrevistas",
       "aba entrevistas",
       "para que serve entrevistas",
       "para que serve a tela de entrevistas",
+      "para que serve o painel de entrevistas",
+      "onde acompanho as entrevistas",
+      "entrevistas resultados",
     ],
     resposta:
-      "Entrevistas tem três visões, escolhidas no topo: Resultados (só consulta), Conduzir entrevistas (Passo 1 Configuração, Passo 2 Convocação — a lista de convocação da Classificação — e Passo 3 Ficha de notas, por edital) e Roteiros. Tudo é da área atual; trocar de área recomeça filtros e edital aberto. Quem não tem nível Editor vê tudo, sem os botões. Lançar notas, convocar, configurar o edital e editar roteiros exige Editor em Entrevistas e acesso à área e ao edital.",
+      "O Painel de entrevistas é para acompanhar (gestão e coordenação), como o Painel das análises ao lado da Avaliação documental; fazer é em Conduzir entrevistas, outra entrada do menu. O painel mostra, da área atual: os indicadores, o andamento por edital e por vaga em cartões (convocados, entrevistados, faltaram, aptos, inaptos e sem parecer, com a barra), a agenda dos próximos dias quando há um edital escolhido, os gráficos, as pendências (sem comparecimento, sem nota, sem parecer, aprovados sem entrevista, sem análise, sem edital e nota divergente), os empatados na nota da entrevista, a tabela e a exportação em CSV. Só leitura. O edital de treinamento não entra no painel. Quem tem Leitor em Entrevistas vê o painel e Conduzir entrevistas; escrever exige Editor.",
+    fato: "O Painel de entrevistas acompanha; Conduzir entrevistas faz (fila do dia, ficha de notas, Preparar e roteiros). As duas usam o recurso Entrevistas.",
+    fonte:
+      "src/modulos/entrevistas/entrevistas.jsx; src/modulos/entrevistas/andamento.tsx; src/lib/painel-de-entrevistas.ts",
+    abrir: "entrevistas",
+  },
+  {
+    arquivo: "regras-das-entrevistas.md",
+    titulo: "Conduzir entrevistas",
+    perguntas: [
+      "conduzir entrevistas",
+      "para que serve conduzir entrevistas",
+      "fila do dia",
+      "fila de conduzir entrevistas",
+      "como funciona a fila de conduzir entrevistas",
+      "quem entrevisto hoje",
+      "7 de 12 hoje",
+      "contador do dia",
+      "hoje proximos todos",
+    ],
+    resposta:
+      'Conduzir entrevistas é a tela de fazer (secretaria e avaliadores), com entrada própria no menu. Escolha o edital (abre sozinho o último aberto na área ou, se houver um só, ele). A Fila abre em Hoje: os convocados com horário hoje na agenda salva na Classificação, em cartões com as iniciais, o horário, a banca e a situação — Aguardando (cinza), Em andamento (azul), Concluída (verde) e Faltou (amarelo), as cores da Avaliação documental. Sem entrevista hoje, abre em Próximos; sem agenda, em Todos. Dá para trocar entre Hoje, Próximos e Todos, escolher a vaga e clicar numa situação para filtrar. O topo mostra "X de Y hoje" (concluídas e faltas entre as de hoje). Clicar no cartão abre a ficha de notas em tela cheia; "Salvar e abrir o próximo" segue a ordem da fila. Ao concluir todas as de hoje, há uma comemoração (se as comemorações estiverem ligadas). Preparar, no topo, tem a configuração, a convocação e os roteiros.',
+    fato: "A fila de Conduzir entrevistas abre em Hoje, pela agenda salva na Classificação; concluída é quem tem parecer ou todas as notas, faltou é quem tem Faltou marcado.",
+    fonte:
+      "src/modulos/entrevistas/conduzir.tsx; src/modulos/entrevistas/fila-do-dia.tsx; src/lib/fila-de-conducao.ts",
+    abrir: "conduzir-entrevistas",
+  },
+  {
+    arquivo: "regras-das-entrevistas.md",
+    titulo: "Preparar o edital",
+    perguntas: [
+      "preparar",
+      "preparar edital",
+      "onde configuro a entrevista",
+      "onde convoco",
+      "configuracao da entrevista",
+      "onde ficou o passo 1",
+      "onde ficou a convocacao",
+    ],
+    resposta:
+      "Em Conduzir entrevistas › Preparar ficam a configuração do edital (roteiro, modo de lançamento, composição e membros da banca, e, só para ler, a regra de convocação, o desempate e as vagas da Classificação) e a convocação (a lista de convocação da Classificação, por vaga). Abaixo, os roteiros de entrevista da área. Quem não tem Editor vê tudo, sem os botões. Edital ainda não configurado mostra o aviso na Fila, com o atalho para Preparar.",
     fato: "",
     fonte:
-      "src/modulos/entrevistas/entrevistas.jsx; src/modulos/entrevistas/conducao.jsx; supabase/migrations/20260930220000_entrevistas_roteiros_e_notas.sql",
+      "src/modulos/entrevistas/conducao.jsx; src/modulos/entrevistas/conduzir.tsx",
+    abrir: "conduzir-entrevistas",
+  },
+  {
+    arquivo: "regras-das-entrevistas.md",
+    titulo: "Andamento por vaga no painel",
+    perguntas: [
+      "andamento por vaga",
+      "como e contado o andamento por vaga",
+      "barra de andamento",
+      "percentual feito",
+      "cartoes por vaga",
+      "andamento do edital",
+    ],
+    resposta:
+      "No Painel de entrevistas, cada cartão (de edital ou, com um edital escolhido, de vaga) mostra o percentual feito e uma barra: verde apto, vermelho inapto, amarelo faltou, azul em andamento (compareceu, sem parecer) e o fundo cinza é quem aguarda. Feito é apto, inapto ou faltou. Os números são convocados (todas as entrevistas do recorte), entrevistados (compareceram), faltaram, aptos, inaptos e sem parecer. Clicar num edital mostra as vagas dele; clicar numa vaga recorta o painel por ela (de novo, tira).",
+    fato: "",
+    fonte:
+      "src/lib/painel-de-entrevistas.ts; src/modulos/entrevistas/andamento.tsx",
     abrir: "entrevistas",
+  },
+  {
+    arquivo: "regras-das-entrevistas.md",
+    titulo: "Empate na nota da entrevista",
+    perguntas: [
+      "empate na entrevista",
+      "quem desempata a nota da entrevista",
+      "candidatos empatados",
+      "desempate da entrevista",
+      "criterios de desempate do roteiro",
+      "onde mudo o desempate",
+    ],
+    resposta:
+      'Empate é quando dois ou mais candidatos do mesmo edital e da mesma vaga têm a mesma nota na entrevista. O Painel de entrevistas marca esses candidatos com o selo "Empate" e avisa: o desempate é feito na Classificação, pelos critérios da regra de classificação do edital (Classificação › Regra), com o botão que abre a Classificação no edital. O roteiro não tem mais critérios de desempate próprios: no editor do roteiro e em Preparar, os critérios aparecem só para ler, os da regra de classificação, com "Editar na Classificação". O texto antigo do roteiro continua guardado, sem uso.',
+    fato: "O desempate da entrevista é o da regra de classificação do edital, feito na Classificação.",
+    fonte:
+      "src/lib/painel-de-entrevistas.ts; src/lib/convocacao-da-entrevista.js; supabase/migrations/20261008130000_conduzir_entrevistas_no_menu.sql",
+    abrir: "classificacao",
   },
   {
     arquivo: "regras-das-entrevistas.md",
@@ -3239,7 +3458,7 @@ export const VERBETES_AYA = Object.freeze([
       "edital sumiu de conduzir entrevistas",
     ],
     resposta:
-      'Um edital fica fora de Conduzir entrevistas quando: o cronograma não tem atividade com "entrevista" ou "comportamental" (aparece "sem etapa de entrevista no cronograma"); hoje está fora da janela (antes de 7 dias do início ou depois de 15 dias do fim das etapas de entrevista); não há liberação vigente (nunca liberado, vencida ou encerrada); e não há convocado sem parecer. Também some se o edital é de outra área, está inativo ou fica fora do recorte da sua coordenação, ou se você não tem acesso a Entrevistas ou à área. Ter entrevistas em Resultados não faz o edital entrar. Para incluir um edital fora da janela, peça ao administrador global que o libere; ele também tem a caixa "Mostrar todos os editais da área".',
+      'Um edital fica fora de Conduzir entrevistas quando: o cronograma não tem atividade com "entrevista" ou "comportamental" (aparece "sem etapa de entrevista no cronograma"); hoje está fora da janela (antes de 7 dias do início ou depois de 15 dias do fim das etapas de entrevista); não há liberação vigente (nunca liberado, vencida ou encerrada); e não há convocado sem parecer. Também some se o edital é de outra área, está inativo ou fica fora do recorte da sua coordenação, ou se você não tem acesso a Entrevistas ou à área. Ter entrevistas no Painel de entrevistas não faz o edital entrar. Para incluir um edital fora da janela, peça ao administrador global que o libere; ele também tem a caixa "Mostrar todos os editais da área".',
     fato: "",
     fonte:
       "supabase/migrations/20260930235000_janela_da_entrevista.sql; src/lib/conducao-de-entrevista.js",
@@ -3270,12 +3489,16 @@ export const VERBETES_AYA = Object.freeze([
       "roteiros de entrevista",
       "versao do roteiro",
       "o que e um roteiro",
+      "onde ficam os roteiros de entrevista",
+      "onde ficou roteiros",
+      "onde edito o roteiro",
     ],
     resposta:
-      'O roteiro é um modelo reutilizável da entrevista: competências (1 a 20, cada uma com nota máxima, peso e mínimo), escala, regra de aprovação, critérios de desempate e banca padrão; serve a vários editais. O roteiro não tem mais convocação padrão: quem é convocado sai da lista de convocação da Classificação, pela regra de classificação do edital. Editar grava uma versão nova: os editais que já usam a anterior continuam nela, e a nova vale para as próximas configurações. "Duplicar" cria um roteiro novo, na versão 1. Roteiro sem área serve para qualquer área.',
+      'Os roteiros ficam em Conduzir entrevistas › Preparar, na configuração do gestor (ao lado da configuração do edital, como a Regra fica na Avaliação documental). O roteiro é um modelo reutilizável da entrevista: competências (1 a 20, cada uma com nota máxima, peso e mínimo), escala, regra de aprovação e banca padrão; serve a vários editais. O desempate não é do roteiro: é o da regra de classificação do edital, mostrado só para ler. Quem é convocado sai da lista de convocação da Classificação. Editar grava uma versão nova: os editais que já usam a anterior continuam nela, e a nova vale para as próximas configurações. "Duplicar" cria um roteiro novo, na versão 1. Roteiro sem área serve para qualquer área.',
     fato: "",
     fonte:
-      "supabase/migrations/20260930220000_entrevistas_roteiros_e_notas.sql; src/lib/roteiro-de-entrevista.js",
+      "supabase/migrations/20260930220000_entrevistas_roteiros_e_notas.sql; src/lib/roteiro-de-entrevista.js; src/modulos/entrevistas/roteiros.jsx",
+    abrir: "conduzir-entrevistas",
   },
   {
     arquivo: "regras-das-entrevistas.md",
@@ -3347,7 +3570,7 @@ export const VERBETES_AYA = Object.freeze([
       "ninguem convocado na entrevista",
     ],
     resposta:
-      'Há uma convocação só: a lista "Convocação para entrevista" da Classificação. Em Conduzir entrevistas, o Passo 2 mostra a última lista gerada na Classificação, por vaga, na mesma ordem, com os mesmos critérios e o mesmo limite da regra de classificação do edital (N vezes as vagas imediatas ou até a posição do cadastro reserva, exceções por cargo, empatados no limite); quem está só na lista de uma modalidade aparece com a marca da lista. "Convocar selecionados" leva os da lista para a ficha de notas (todos vêm marcados; dá para desmarcar). O banco recusa quem não está na lista vigente e, se a Classificação gerou outra lista depois que a tela abriu, pede para recarregar. Convocar exige a configuração salva (Passo 1). Quem foi convocado antes e não está na lista vigente continua na ficha, com a marca "Fora da lista vigente". Desconvocar exige motivo (3 a 500 caracteres), fica no histórico e só vale para quem ainda não tem nota; nada é apagado.',
+      'Há uma convocação só: a lista "Convocação para entrevista" da Classificação. Em Conduzir entrevistas › Preparar, a convocação mostra a última lista gerada na Classificação, por vaga, na mesma ordem, com os mesmos critérios e o mesmo limite da regra de classificação do edital (N vezes as vagas imediatas ou até a posição do cadastro reserva, exceções por cargo, empatados no limite); quem está só na lista de uma modalidade aparece com a marca da lista. "Convocar selecionados" leva os da lista para a ficha de notas (todos vêm marcados; dá para desmarcar). O banco recusa quem não está na lista vigente e, se a Classificação gerou outra lista depois que a tela abriu, pede para recarregar. Convocar exige a configuração salva. Quem foi convocado antes e não está na lista vigente continua na ficha, com a marca "Fora da lista vigente". Desconvocar exige motivo (3 a 500 caracteres), fica no histórico e só vale para quem ainda não tem nota; nada é apagado.',
     fato: "No MONITORA, a convocação para a entrevista é a lista de convocação da Classificação; Entrevistas não tem ranking, regra nem vagas próprios.",
     fonte:
       "src/lib/convocacao-da-entrevista.js; src/modulos/entrevistas/conducao.jsx; supabase/migrations/20261005150000_convocacao_unica_da_entrevista.sql",
@@ -3384,7 +3607,7 @@ export const VERBETES_AYA = Object.freeze([
       "de onde vem o numero de vagas da entrevista",
     ],
     resposta:
-      'As vagas imediatas não se digitam na entrevista. O Passo 1 de Conduzir entrevistas mostra, só para ler, a regra de convocação da Classificação (versão vigente) e, por vaga, as vagas, até que posição se convoca e de onde vêm as vagas, com o botão para a tela onde se mudam: o quadro de vagas do edital (Editais), a configuração da convocação (Lista de aprovados) ou os percentuais da regra (Classificação). Vaga sem quadro aparece como "sem quadro de vagas": cadastre o quadro no edital. A regra de convocação (múltiplo, posição do cadastro reserva, exceções por cargo) muda em Classificação › Regra. O que a entrevista guardava antes (vagas digitadas e regra própria) ficou no banco, sem uso.',
+      'As vagas imediatas não se digitam na entrevista. A configuração (Conduzir entrevistas › Preparar) mostra, só para ler, a regra de convocação da Classificação (versão vigente) e, por vaga, as vagas, até que posição se convoca e de onde vêm as vagas, com o botão para a tela onde se mudam: o quadro de vagas do edital (Editais), a configuração da convocação (Lista de aprovados) ou os percentuais da regra (Classificação). Vaga sem quadro aparece como "sem quadro de vagas": cadastre o quadro no edital. A regra de convocação (múltiplo, posição do cadastro reserva, exceções por cargo) muda em Classificação › Regra. O que a entrevista guardava antes (vagas digitadas e regra própria) ficou no banco, sem uso.',
     fato: "",
     fonte:
       "src/modulos/entrevistas/conducao.jsx; src/lib/convocacao-da-entrevista.js; src/lib/classificacao/vagas.js",
@@ -3401,10 +3624,10 @@ export const VERBETES_AYA = Object.freeze([
       "resultado recalculado",
     ],
     resposta:
-      'Na ficha de notas, abra um convocado: a ficha ocupa a tela inteira (modo de análise; fica só o menu lateral), com o topo preso (Voltar à lista, candidato, Anterior e Próximo), as competências à esquerda e a prévia do parecer numa lateral fixa (total, mínimo, a nota de cada competência e os motivos; muda de cor na hora: verde apto, vermelho inapto). Marque Compareceu ou Faltou nos botões grandes do topo. Em cada competência, os avaliadores ficam lado a lado; os botões da escala (0 a 5) preenchem o campo em foco e passam ao próximo, ou digite a nota. Com aspectos, cada avaliador tem um campo por aspecto e a média dele ao lado. Os níveis da escala ficam na lateral e no título de cada botão. No celular, uma competência por vez (abas numeradas). Esc volta à lista; a nota precisa estar na escala do roteiro. A cada gravação o banco recalcula o resultado, que aparece em Resultados; toda nota lançada, corrigida ou apagada vai para o histórico. Enter passa para a próxima nota, Ctrl+Enter salva, e há "Salvar e abrir o próximo". A coluna Notas mostra lançadas sobre esperadas (competências × avaliadores da banca).',
+      'Na Fila de Conduzir entrevistas, abra um convocado: a ficha ocupa a tela inteira (modo de análise; fica só o menu lateral), com o topo preso (Voltar à fila, candidato, Anterior e Próximo), as competências à esquerda e a prévia do parecer numa lateral fixa (total, mínimo, a nota de cada competência e os motivos; muda de cor na hora: verde apto, vermelho inapto). Marque Compareceu ou Faltou nos botões grandes do topo. Em cada competência, os avaliadores ficam lado a lado; os botões da escala (0 a 5) preenchem o campo em foco e passam ao próximo, ou digite a nota. Com aspectos, cada avaliador tem um campo por aspecto e a média dele ao lado. Os níveis da escala ficam na lateral e no título de cada botão. No celular, uma competência por vez (abas numeradas). Esc volta à fila; a nota precisa estar na escala do roteiro. A cada gravação o banco recalcula o resultado, que aparece no Painel de entrevistas; toda nota lançada, corrigida ou apagada vai para o histórico. Enter passa para a próxima nota, Ctrl+Enter salva, e há "Salvar e abrir o próximo". O cartão da fila mostra as notas lançadas sobre as esperadas (competências × avaliadores da banca).',
     fato: "",
     fonte:
-      "src/modulos/entrevistas/ficha.jsx; supabase/migrations/20260930220000_entrevistas_roteiros_e_notas.sql; src/lib/conducao-de-entrevista.js",
+      "src/modulos/entrevistas/ficha.jsx; src/modulos/entrevistas/fila-do-dia.tsx; supabase/migrations/20260930220000_entrevistas_roteiros_e_notas.sql; src/lib/conducao-de-entrevista.js",
   },
   {
     arquivo: "regras-das-entrevistas.md",
@@ -3415,12 +3638,18 @@ export const VERBETES_AYA = Object.freeze([
       "aprovados sem entrevista",
       "nota divergente",
       "entrevista sem analise",
+      "pendencias das entrevistas",
+      "quais sao as pendencias das entrevistas",
+      "sem nota",
+      "sem parecer",
+      "sem comparecimento",
     ],
     resposta:
-      "Resultados é só de consulta (a condução é em Conduzir entrevistas). Indicadores: Vagas com entrevista, Candidatos, Compareceram, Aptos, Inaptos, Média das notas (de quem compareceu) e Aprovados na análise sem entrevista; clicar em Compareceram, Aptos ou Inaptos filtra a tela. A nota total vai de 0 a 20 e cada critério, em geral, de 0 a 5. Pendências: aprovados sem entrevista (só nas vagas que já têm entrevista), entrevista sem análise ligada, sem edital cadastrado e nota divergente (total diferente da soma dos critérios). A ligação com a análise curricular é pelo código do candidato e da vaga e, na falta, pelo nome.",
+      "Os resultados ficam no Painel de entrevistas, só de consulta (a condução é em Conduzir entrevistas). Indicadores: Vagas com entrevista, Candidatos, Compareceram, Aptos, Inaptos, Média das notas (de quem compareceu) e Aprovados na análise sem entrevista; clicar em Compareceram, Aptos ou Inaptos filtra a tela. Pendências: sem comparecimento registrado, compareceu sem nota, com nota sem parecer, aprovados sem entrevista (só nas vagas que já têm entrevista), entrevista sem análise ligada, sem edital cadastrado e nota divergente (total diferente da soma dos critérios); cada uma filtra o painel. A nota total vai de 0 a 20 e cada critério, em geral, de 0 a 5. A ligação com a análise curricular é pelo código do candidato e da vaga e, na falta, pelo nome.",
     fato: "",
     fonte:
       "src/modulos/entrevistas/paineis.jsx; src/lib/entrevistas-do-painel.js; supabase/migrations/20260929235000_entrevistas.sql",
+    abrir: "entrevistas",
   },
   {
     arquivo: "regras-das-entrevistas.md",
@@ -3432,7 +3661,7 @@ export const VERBETES_AYA = Object.freeze([
       "atualizacao das entrevistas",
     ],
     resposta:
-      'Os dados de Resultados vêm da planilha "[dash] entrevistados" (aba Entrevistados), carregada de hora em hora, o dia todo, pelo GitHub Actions, que também pode ser disparado à mão. Uma carga com menos da metade das linhas ativas é recusada, para não apagar tudo por uma planilha quebrada; quem some da planilha fica inativo, nada é apagado. A data da última carga aparece no topo da tela.',
+      'Os dados do Painel de entrevistas vêm da planilha "[dash] entrevistados" (aba Entrevistados), carregada de hora em hora, o dia todo, pelo GitHub Actions, que também pode ser disparado à mão. Uma carga com menos da metade das linhas ativas é recusada, para não apagar tudo por uma planilha quebrada; quem some da planilha fica inativo, nada é apagado. A data da última carga aparece no topo da tela.',
     fato: "",
     fonte:
       ".github/workflows/sincronizar-entrevistas.yml; docs/sincronizacao-das-planilhas.md; supabase/migrations/20260929235000_entrevistas.sql",
@@ -3448,7 +3677,7 @@ export const VERBETES_AYA = Object.freeze([
       "marcar horario da entrevista",
     ],
     resposta:
-      'A agenda das entrevistas fica na Classificação, na visão Agenda (ou pelo botão "Agenda das entrevistas" da lista Convocação para entrevista), porque os convocados saem dessa lista e a agenda preenche o documento dela. Cada edital tem a sua regra da agenda, com versões, e uma agenda salva: um horário por convocado, com dia, hora de Brasília e banca. Os convocados vêm da última lista de convocação gerada; sem lista gerada, do cálculo atual, com um aviso. Quem conduz vê a agenda do dia em Entrevistas › Conduzir entrevistas. Salvar a regra e a agenda exige Editor em Entrevistas ou em Classificação; ler, Leitor em uma delas; sempre com acesso à área e ao edital.',
+      'A agenda das entrevistas fica na Classificação, na visão Agenda (ou pelo botão "Agenda das entrevistas" da lista Convocação para entrevista), porque os convocados saem dessa lista e a agenda preenche o documento dela. Cada edital tem a sua regra da agenda, com versões, e uma agenda salva: um horário por convocado, com dia, hora de Brasília e banca. Os convocados vêm da última lista de convocação gerada; sem lista gerada, do cálculo atual, com um aviso. Quem conduz vê a fila do dia em Conduzir entrevistas. Salvar a regra e a agenda exige Editor em Entrevistas ou em Classificação; ler, Leitor em uma delas; sempre com acesso à área e ao edital.',
     fato: "",
     fonte:
       "src/modulos/classificacao/agenda.jsx; supabase/migrations/20261005120000_agenda_das_entrevistas.sql",
@@ -3530,14 +3759,15 @@ export const VERBETES_AYA = Object.freeze([
     perguntas: [
       "agenda do dia",
       "agenda da banca",
-      "quem entrevisto hoje",
       "horarios de hoje da entrevista",
+      "agenda dos proximos dias",
     ],
     resposta:
-      'Em Conduzir entrevistas, ao abrir o edital, o cartão "Agenda do dia" mostra a agenda salva por horário: escolha o dia (abre em hoje, no horário de Brasília, ou no próximo dia com entrevista) e, havendo mais de uma, a banca. A linha de quem já está convocado no sistema abre a ficha de notas. A agenda é só de consulta ali; ela é montada e ajustada na Classificação, visão Agenda. Sem agenda salva, o cartão não aparece.',
+      'A agenda é montada e ajustada na Classificação, visão Agenda. Em Conduzir entrevistas, a Fila usa a agenda salva: Hoje são os convocados com horário hoje (Brasília), Próximos os dos dias seguintes, por dia, e Todos inclui quem não tem horário. No Painel de entrevistas, com um edital escolhido, a "Agenda dos próximos dias" mostra até cinco dias com entrevista, um por coluna, com o botão Conduzir. Sem agenda salva, a Fila abre em Todos.',
     fato: "",
-    fonte: "src/modulos/entrevistas/agenda-do-dia.jsx",
-    abrir: "entrevistas",
+    fonte:
+      "src/modulos/entrevistas/fila-do-dia.tsx; src/modulos/entrevistas/andamento.tsx; src/lib/fila-de-conducao.ts",
+    abrir: "conduzir-entrevistas",
   },
   {
     arquivo: "regras-das-entrevistas.md",
@@ -3549,12 +3779,13 @@ export const VERBETES_AYA = Object.freeze([
       "nao consigo lancar nota",
       "botoes sumiram em entrevistas",
       "permissao entrevistas",
+      "nao vejo conduzir entrevistas no menu",
     ],
     resposta:
-      'Ver Resultados, Conduzir entrevistas e Roteiros é de quem tem Leitor em Entrevistas. Lançar notas, convocar, desconvocar, salvar a configuração do edital e editar roteiros exige Editor em Entrevistas e acesso à área e ao edital (recorte da coordenação); sem isso, a tela mostra tudo, sem os botões. No modo "Cada avaliador lança a sua", cada avaliador só edita a própria coluna. "Convocar selecionados" só aparece quando a Classificação já gerou a lista de convocação do edital, e liberar edital fora da janela é só do administrador global.',
+      'O Painel de entrevistas e Conduzir entrevistas usam o mesmo recurso, Entrevistas: quem tem Leitor vê os dois (a fila, as fichas, o Preparar e os roteiros, sem os botões). Lançar notas, convocar, desconvocar, salvar a configuração do edital e editar roteiros exige Editor em Entrevistas e acesso à área e ao edital (recorte da coordenação). No modo "Cada avaliador lança a sua", cada avaliador só edita a própria coluna. "Convocar selecionados" só aparece quando a Classificação já gerou a lista de convocação do edital, e liberar edital fora da janela é só do administrador global.',
     fato: "",
     fonte:
-      "src/modulos/entrevistas/conducao.jsx; src/lib/access-roles.js; supabase/migrations/20260930220000_entrevistas_roteiros_e_notas.sql",
+      "src/modulos/entrevistas/conduzir.tsx; src/lib/access-roles.js; supabase/migrations/20260930220000_entrevistas_roteiros_e_notas.sql",
     abrir: "config:acessos",
   },
   {
@@ -4437,10 +4668,35 @@ export const VERBETES_AYA = Object.freeze([
       "cargas de dados",
     ],
     resposta:
-      'As análises curriculares chegam pelo Apps Script das planilhas (o envio incremental é esperado a cada 20 minutos e fica "Atrasada" depois de 1 hora; a carga completa não tem prazo). Seleção e Entrevistas carregam pelo GitHub Actions de hora em hora, o dia todo, e ficam atrasadas depois de 4 horas. O robô da Empregare não tem agenda: roda só quando um administrador clica em "Rodar agora", por isso nunca fica "Atrasado". As tarefas do banco que rodam a cada 2 minutos (como o pacote do painel de análises e o das entrevistas) atrasam depois de 15 minutos; as diárias, depois de 26 horas; as mensais, depois de 32 dias. As conferências de consistência rodam todo dia às 6h de Brasília e ficam atrasadas depois de 26 horas. A pré-classificação da Avaliação documental roda no fim de cada carga do robô da Empregare e no Recalcular da coordenação, sem agenda, por isso também nunca fica "Atrasada". A retenção das mensagens do chat roda todo dia às 3h15 de Brasília, e o expurgo dos anexos do chat (tira do armazenamento os arquivos das mensagens já apagadas) às 6h30, atrasado depois de 26 horas; "Falhou" nele pode ser execução parcial, com arquivos que ficaram na fila para o dia seguinte. Os KPIs dos editais são recalculados no fim de cada carga da Seleção e, de novo, às 10h de Brasília.',
+      'As análises curriculares chegam pelo Apps Script das planilhas (o envio incremental é esperado a cada 20 minutos e fica "Atrasada" depois de 1 hora; a carga completa não tem prazo). Entrevistas carregam pelo GitHub Actions de hora em hora, o dia todo, e ficam atrasadas depois de 4 horas; a Seleção carrega às 8h10, 13h10 e 18h10 de Brasília e fica atrasada depois de 15 horas (a noite sem carga é esperada). Quem marca esses horários é o banco (Agenda dos robôs), não o GitHub. O robô da Empregare não tem agenda: roda só quando um administrador clica em "Rodar agora", por isso nunca fica "Atrasado". As tarefas do banco que rodam a cada 2 minutos (como o pacote do painel de análises e o das entrevistas) atrasam depois de 15 minutos; as diárias, depois de 26 horas; as mensais, depois de 32 dias. As conferências de consistência rodam todo dia às 6h de Brasília e ficam atrasadas depois de 26 horas. A pré-classificação da Avaliação documental roda no fim de cada carga do robô da Empregare e no Recalcular da coordenação, sem agenda, por isso também nunca fica "Atrasada". A retenção das mensagens do chat roda todo dia às 3h15 de Brasília, e o expurgo dos anexos do chat (tira do armazenamento os arquivos das mensagens já apagadas) às 6h30, atrasado depois de 26 horas; "Falhou" nele pode ser execução parcial, com arquivos que ficaram na fila para o dia seguinte. Os KPIs dos editais são recalculados no fim de cada carga da Seleção e, de novo, às 10h de Brasília.',
     fato: "",
     fonte:
-      "src/lib/saude-das-cargas.js; supabase/migrations/20261001120000_saude_das_cargas.sql; supabase/migrations/20261002090000_kpis_depois_da_carga_da_selecao.sql; supabase/migrations/20261002130000_kpis_de_todo_edital_com_fonte.sql; .github/workflows/sincronizar-selecao.yml; .github/workflows/sincronizar-entrevistas.yml; supabase/migrations/20260930235900_kpis_uma_vez_por_dia.sql; .github/workflows/expurgo-anexos-chat.yml",
+      "src/lib/saude-das-cargas.js; supabase/migrations/20261001120000_saude_das_cargas.sql; supabase/migrations/20261002090000_kpis_depois_da_carga_da_selecao.sql; supabase/migrations/20261002130000_kpis_de_todo_edital_com_fonte.sql; .github/workflows/sincronizar-selecao.yml; .github/workflows/sincronizar-entrevistas.yml; supabase/migrations/20260930235900_kpis_uma_vez_por_dia.sql; .github/workflows/expurgo-anexos-chat.yml; docs/agenda-dos-robos.md",
+  },
+  {
+    arquivo: "regras-do-status-das-atualizacoes.md",
+    titulo: "Agenda dos robôs",
+    perguntas: [
+      "agenda dos robos",
+      "o que e a agenda dos robos",
+      "por que o banco agenda os robos",
+      "quem agenda os robos",
+      "robo nao rodou no horario",
+      "github atrasou a carga",
+      "agenda dos robos falhou",
+      "sem chave no vault",
+      "chave dos robos expirou",
+      "token dos robos expirou",
+      "github_disparo_robos",
+      "trocar a chave dos robos",
+      "http 401 na agenda dos robos",
+    ],
+    resposta:
+      'O agendamento do próprio GitHub atrasava ou pulava as cargas (as de hora em hora chegaram a rodar só a cada 5 a 8 horas). Por isso o banco do MONITORA passou a ser o único agendador (e também quem atende o "Rodar agora", com a mesma chave): na hora marcada, ele pede ao GitHub a execução de Entrevistas (de hora em hora), Seleção (3 vezes ao dia: 8h10, 13h10 e 18h10), Conferências (6h) e Expurgo dos anexos do chat (6h30). A linha "Agenda dos robôs" do Status das atualizações mostra o último pedido aceito e as falhas das últimas 24 horas. "Sem chave no Vault" quer dizer que falta o token do GitHub no Supabase: nada é pedido e as cargas param de rodar sozinhas. "Falhou" com HTTP 401 quer dizer chave inválida ou expirada (403 ou 404: sem permissão no repositório). Para resolver, gere um novo token fine-grained (Actions: read and write, só o repositório agsus-monitora) e, no Supabase (Integrations › Vault › Secrets), troque o valor do segredo github_disparo_robos, com o mesmo nome. O próximo horário já usa a chave nova; para não esperar, use o "Rodar agora" de cada carga.',
+    fato: "",
+    fonte:
+      "docs/agenda-dos-robos.md; supabase/migrations/20261008140000_agenda_dos_robos_pelo_banco.sql; src/lib/saude-das-cargas.js",
+    abrir: "config:cargas",
   },
   {
     arquivo: "regras-do-status-das-atualizacoes.md",
@@ -4459,10 +4715,10 @@ export const VERBETES_AYA = Object.freeze([
       "atualizar agora sem esperar",
     ],
     resposta:
-      'Em Configurações › Status das atualizações, o administrador global vê o botão "Rodar agora" nas linhas Robô da Empregare, Conferências de consistência, Expurgo dos anexos do chat, Pré-classificação (Avaliação documental), Seleção e Entrevistas. Na pré-classificação, o Rodar agora recalcula todos os editais ativos com vagas da Empregare; a coordenação de um edital usa o Recalcular da aba Pré-classificação. O clique pede ao GitHub Actions a execução do workflow daquela carga, em modo normal, e registra quem pediu; para escolher editais, vagas, modo ou limite, use "Opções". O botão fica desabilitado enquanto a carga roda (no GitHub ou no registro do banco) e por 3 minutos depois do pedido, até a execução aparecer. A nova execução entra na lista em alguns minutos; o robô da Empregare pode levar mais de meia hora.',
+      'Em Configurações › Status das atualizações, o administrador global vê o botão "Rodar agora" nas linhas Robô da Empregare, Conferências de consistência, Expurgo dos anexos do chat, Pré-classificação (Avaliação documental), Seleção e Entrevistas. Na pré-classificação, o Rodar agora recalcula todos os editais ativos com vagas da Empregare; a coordenação de um edital usa o Recalcular da aba Pré-classificação. O clique pede ao banco, que pede ao GitHub Actions (com a mesma chave da Agenda dos robôs) a execução do workflow daquela carga, em modo normal, e registra quem pediu; funciona também fora do site publicado; para escolher editais, vagas, modo ou limite, use "Opções". O botão fica desabilitado enquanto a carga roda (pelo registro do banco) e por 3 minutos depois do pedido; em segundos a linha diz se o GitHub aceitou. A nova execução entra na lista em alguns minutos; o robô da Empregare pode levar mais de meia hora.',
     fato: "",
     fonte:
-      "src/lib/robos-de-carga.js; api/rodar-carga.js; docs/robo-empregare.md",
+      "src/lib/robos-de-carga.js; supabase/migrations/20261008140000_agenda_dos_robos_pelo_banco.sql; docs/robo-empregare.md",
     abrir: "config:cargas",
   },
   {
@@ -4492,7 +4748,7 @@ export const VERBETES_AYA = Object.freeze([
       'Em Configurações › Status das atualizações, o administrador global tem o botão "Opções" nas linhas Robô da Empregare, Pré-classificação e Conferências de consistência. Ele abre uma gaveta para rodar com escolhas: editais (com busca e filtro por área; aparecem só os vigentes, e "Mostrar todos" traz os encerrados e cancelados), códigos de vaga da Empregare (cole a lista separada por vírgula, espaço ou linha; só dígitos — o que tiver letra é recusado; ao escolher o edital aparecem as vagas conhecidas dele com o cargo, e "Adicionar todas" põe todas), modo e limite de vagas (de 1 a 500; padrão 60). No robô da Empregare, os modos são: Normal (exporta, baixa e grava), Seco (só lista as vagas que exportaria, sem entrar na Empregare), Fumaça (só testa o login) e Forçar (grava mesmo se o arquivo vier com menos da metade dos candidatos). Na pré-classificação: Normal, Seco (calcula sem gravar) e Refazer lote (recorta o lote do zero, só antes das fichas). Nas conferências: Normal e Seco. Com códigos de vaga, o robô roda só os códigos; o edital escolhido serve para as sugestões. Antes de confirmar, "Vai rodar" mostra a prévia, como "5 vagas do 93/2026: 179698, 180231…", e avisa quando o limite corta (ficam as vagas nunca carregadas ou carregadas há mais tempo). Depois do pedido, a linha acompanha: "Pedido enviado. Aguardando o GitHub", depois "Rodando" e o resultado por vaga (gravada, candidatos no arquivo, ativos e quantos com link da Empregare), com o link da execução no GitHub. O modo seco e o fumaça não gravam no banco: o resultado fica no resumo da execução no GitHub. Em "Detalhes", o robô da Empregare e a pré-classificação mostram as 8 últimas execuções com quem pediu, os parâmetros usados e o resultado. A coordenação de um edital continua usando o Recalcular da aba Pré-classificação.',
     fato: "",
     fonte:
-      "src/lib/robos-de-carga.js; src/lib/painel-dos-robos.js; api/rodar-carga.js; supabase/migrations/20261007190000_painel_dos_robos.sql; docs/robo-empregare.md",
+      "src/lib/robos-de-carga.js; src/lib/painel-dos-robos.js; supabase/migrations/20261008140000_agenda_dos_robos_pelo_banco.sql; supabase/migrations/20261007190000_painel_dos_robos.sql; docs/robo-empregare.md",
     abrir: "config:cargas",
   },
   {
@@ -4501,15 +4757,18 @@ export const VERBETES_AYA = Object.freeze([
     perguntas: [
       "rodar agora desabilitado",
       "botao rodar agora nao funciona",
-      "falta configurar github_dispatch_token",
+      "rodar agora recusado",
+      "o github recusou o pedido",
+      "chave de disparo dos robos expirou",
       "github dispatch token",
-      "rodar agora so na versao publicada",
       "rodar agora pedido enviado",
+      "rodar agora acabou de ser pedida",
     ],
     resposta:
-      '"Falta configurar GITHUB_DISPATCH_TOKEN na Vercel" quer dizer que a Vercel não tem o token que deixa o MONITORA pedir execuções ao GitHub: crie um fine-grained token só com "Actions: read and write" no repositório agsus-monitora e cadastre como GITHUB_DISPATCH_TOKEN nas variáveis da Vercel. "Só na versão publicada" aparece fora da Vercel (no computador, a função não existe). "Rodando…" e "Pedido enviado" são esperados: a carga está na fila ou rodando. O estado e o histórico continuam visíveis em todos os casos.',
+      '"A chave de disparo dos robôs expirou ou foi recusada" quer dizer que o token do GitHub guardado no cofre do Supabase (Vault, nome github_disparo_robos) venceu, foi revogado ou não tem permissão: um administrador gera um novo token fine-grained (Actions: read and write, só o repositório agsus-monitora) e troca o valor do segredo no Vault, com o mesmo nome. É a mesma chave da Agenda dos robôs; a antiga variável GITHUB_DISPATCH_TOKEN da Vercel não é mais usada. "Rodando…" e "Pedido enviado" são esperados: a carga está na fila ou rodando. "Esta carga acabou de ser pedida" aparece num segundo clique em menos de 2 minutos. O estado e o histórico continuam visíveis em todos os casos.',
     fato: "",
-    fonte: "docs/robo-empregare.md; api/rodar-carga.js",
+    fonte:
+      "docs/agenda-dos-robos.md; docs/robo-empregare.md; supabase/migrations/20261008140000_agenda_dos_robos_pelo_banco.sql",
     abrir: "config:cargas",
   },
   {
@@ -4966,7 +5225,7 @@ export const VERBETES_AYA = Object.freeze([
       "991/2099",
     ],
     resposta:
-      'Há dois editais de treinamento, para praticar sem tocar em dados reais. "Treinamento – Saúde Indígena (991/2099)" (unidade fictícia "DSEI Treinamento"): 3 vagas fictícias (Enfermeiro, Técnico de Enfermagem e Agente Indígena de Saúde), 15 candidatos fictícios ("Candidato Teste 01" a "15"), a janela de entrevista aberta, a lista de convocação pronta, um roteiro de entrevista de exemplo e a regra da avaliação documental do Edital 111/2026 (DSEI Parintins), com as perguntas do questionário da Saúde Indígena já ligadas, na situação Conferir. "Treinamento – Projetos (992/2099)" (unidade "Escritório Treinamento"): espelho do Edital 93/2026, com as mesmas 5 vagas e cargos (códigos fictícios 990992001 a 990992005), o cronograma com as inscrições encerradas e a análise curricular em andamento, a regra conferida do 93/2026 (versão 7) copiada, 40 candidatos fictícios ("Candidato Teste P01" a "P40") com o questionário no formato da Empregare, a pré-classificação já rodada e 21 fichas pendentes para os analistas. Nos dois, nenhum candidato tem CPF e os e-mails são @exemplo.invalid. Eles aparecem com o selo Treinamento em Editais, Entrevistas › Conduzir, Avaliação documental e Classificação. Ficam fora da Visão geral, dos indicadores, dos painéis (análises, entrevistas e aprovados), das comemorações, das conferências, dos robôs, do painel dos robôs e do Status das atualizações; a pré-classificação só roda para eles quando pedida para eles (em Rodar com opções, marque Mostrar todos e escolha o edital). Documento oficial gerado deles sai com "TREINAMENTO — SEM VALOR OFICIAL" no título. Não rode o robô da Empregare para eles: as vagas são fictícias.',
+      'Há dois editais de treinamento, para praticar sem tocar em dados reais. "Treinamento – Saúde Indígena (991/2099)" (unidade fictícia "DSEI Treinamento"): 3 vagas fictícias (Enfermeiro, Técnico de Enfermagem e Agente Indígena de Saúde), 15 candidatos fictícios ("Candidato Teste 01" a "15"), a janela de entrevista aberta, a lista de convocação pronta, um roteiro de entrevista de exemplo e a regra da avaliação documental do Edital 111/2026 (DSEI Parintins), com as perguntas do questionário da Saúde Indígena já ligadas, na situação Conferir. "Treinamento – Projetos (992/2099)" (unidade "Escritório Treinamento"): espelho do Edital 93/2026, com as mesmas 5 vagas e cargos (códigos fictícios 990992001 a 990992005), o cronograma com as inscrições encerradas e a análise curricular em andamento, a regra conferida do 93/2026 (versão 7) copiada, 40 candidatos fictícios ("Candidato Teste P01" a "P40") com o questionário no formato da Empregare, a pré-classificação já rodada e 21 fichas pendentes para os analistas. Nos dois, nenhum candidato tem CPF e os e-mails são @exemplo.invalid. Eles aparecem com o selo Treinamento em Editais, Conduzir entrevistas, Avaliação documental e Classificação. Ficam fora da Visão geral, dos indicadores, dos painéis (análises, entrevistas e aprovados), das comemorações, das conferências, dos robôs, do painel dos robôs e do Status das atualizações; a pré-classificação só roda para eles quando pedida para eles (em Rodar com opções, marque Mostrar todos e escolha o edital). Documento oficial gerado deles sai com "TREINAMENTO — SEM VALOR OFICIAL" no título. Não rode o robô da Empregare para eles: as vagas são fictícias.',
     fato: "",
     fonte:
       "supabase/migrations/20261007230000_edital_de_treinamento.sql; supabase/migrations/20261008110000_treinamento_avaliacao_documental.sql; src/lib/edital-de-treinamento.js",
