@@ -983,6 +983,11 @@ const TOURS = Object.freeze({
         "Robô da Empregare",
         "Não tem agenda: só roda quando um administrador clica em Rodar agora.",
       ),
+      passo(
+        t("robos-abrir-opcoes"),
+        "Rodar com opções",
+        "Escolhe editais, códigos de vaga, modo e limite, com a prévia antes de rodar.",
+      ),
       PASSO_DA_AYA,
     ]),
   }),

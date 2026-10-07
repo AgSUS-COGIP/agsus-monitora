@@ -6,7 +6,10 @@
                              o que conta como execução em curso no GitHub, os
                              inputs do disparo e as mensagens de resposta;
     Configurações › Status   o estado do botão "Rodar agora" de cada carga
-    das atualizações         (src/componentes/saude-das-cargas/);
+    das atualizações         (src/componentes/saude-das-cargas/) e o "Rodar
+                             com opções": OPCOES_DOS_ROBOS (a lista branca de
+                             cada robô), separarCodigos e validarOpcoes — a
+                             mesma conferência na tela e na função;
     Avaliação documental ›   o "Recalcular" da coordenação, que dispara a
     Pré-classificação        pré-classificação de um edital só.
 
@@ -68,10 +71,241 @@ export function editalDoPedido(valor) {
   return UUID.test(texto) ? texto.toLowerCase() : "";
 }
 
-/** Os inputs do workflow_dispatch de um robô (o edital só nos robôs por edital). */
-export function inputsDoDisparo(robo, usuario, edital = "") {
-  const inputs = { modo: "normal", disparado_por: String(usuario || "") };
+/*
+  "Rodar com opções" (Status das atualizações, só administrador global): o
+  que cada robô aceita no workflow_dispatch — a lista branca da função. Os
+  modos são os `options` do input `modo` de cada workflow; `editais` diz o
+  formato aceito ("numero" = 93/2026; "numero_ou_id" = 93/2026 ou o id do
+  edital); `vagas`, códigos da Empregare; `limite`, máximo de vagas.
+*/
+export const OPCOES_DOS_ROBOS = Object.freeze({
+  empregare: Object.freeze({
+    modos: Object.freeze([
+      {
+        valor: "normal",
+        rotulo: "Normal",
+        explicacao: "Exporta, baixa e grava os candidatos de cada vaga.",
+      },
+      {
+        valor: "seco",
+        rotulo: "Seco",
+        explicacao:
+          "Só lista as vagas que exportaria, sem entrar na Empregare. O resultado fica no resumo do GitHub.",
+      },
+      {
+        valor: "fumaca",
+        rotulo: "Fumaça",
+        explicacao:
+          "Só testa o login na Empregare; editais e vagas não contam.",
+      },
+      {
+        valor: "forcar",
+        rotulo: "Forçar",
+        explicacao:
+          "Grava mesmo se o arquivo vier com menos da metade dos candidatos ativos.",
+      },
+    ]),
+    editais: "numero",
+    vagas: true,
+    limite: Object.freeze({ min: 1, max: 500, padrao: 60 }),
+  }),
+  pre_classificacao: Object.freeze({
+    modos: Object.freeze([
+      {
+        valor: "normal",
+        rotulo: "Normal",
+        explicacao: "Calcula e grava a Lista Provisória e o lote de cada vaga.",
+      },
+      {
+        valor: "seco",
+        rotulo: "Seco",
+        explicacao:
+          "Só calcula; nada é gravado. O resultado fica no resumo do GitHub.",
+      },
+      {
+        valor: "refazer_lote",
+        rotulo: "Refazer lote",
+        explicacao:
+          "Recorta o lote de convocação do zero. Só antes das fichas começarem.",
+      },
+    ]),
+    editais: "numero_ou_id",
+    vagas: false,
+    limite: null,
+  }),
+  conferencias: Object.freeze({
+    modos: Object.freeze([
+      {
+        valor: "normal",
+        rotulo: "Normal",
+        explicacao: "Confere e grava os avisos.",
+      },
+      {
+        valor: "seco",
+        rotulo: "Seco",
+        explicacao:
+          "Só confere; nenhum aviso muda. O resultado fica no resumo do GitHub.",
+      },
+    ]),
+    editais: null,
+    vagas: false,
+    limite: null,
+  }),
+});
+
+export const MAXIMO_DE_EDITAIS = 100;
+export const MAXIMO_DE_VAGAS = 500;
+const NUMERO_DO_EDITAL = /^\d{1,4}\/\d{4}$/;
+const CODIGO_DE_VAGA = /^\d{1,20}$/;
+const CHAVES_DAS_OPCOES = ["modo", "editais", "vagas", "limite"];
+
+/**
+ * Códigos de vaga colados (vírgula, ponto e vírgula, espaço ou linha):
+ * { codigos } só com dígitos, sem repetir, e { invalidos } — o resto.
+ */
+export function separarCodigos(texto) {
+  const partes = (Array.isArray(texto) ? texto : [texto])
+    .flatMap((t) => String(t ?? "").split(/[\s,;]+/))
+    .filter(Boolean);
+  const codigos = [];
+  const invalidos = [];
+  for (const parte of partes) {
+    const lista = CODIGO_DE_VAGA.test(parte) ? codigos : invalidos;
+    if (!lista.includes(parte)) lista.push(parte);
+  }
+  return { codigos, invalidos };
+}
+
+const listaDoPedido = (valor) =>
+  (Array.isArray(valor) ? valor : String(valor ?? "").split(","))
+    .map((v) => String(v ?? "").trim())
+    .filter(Boolean);
+
+/**
+ * Confere as opções de "Rodar com opções" contra a lista branca do robô.
+ * Devolve { opcoes: { modo, editais, vagas, limite } } ou
+ * { erro: <código>, texto } — texto curto para a tela.
+ */
+export function validarOpcoes(robo, bruto) {
+  const aceitas = OPCOES_DOS_ROBOS[robo?.id];
+  if (!aceitas)
+    return {
+      erro: "sem_opcoes",
+      texto: "Esta carga só roda com os padrões.",
+    };
+  if (!bruto || typeof bruto !== "object" || Array.isArray(bruto))
+    return { erro: "opcoes_invalidas", texto: "Opções inválidas." };
+  for (const chave of Object.keys(bruto)) {
+    const valor = bruto[chave];
+    const vazio =
+      valor === null ||
+      valor === undefined ||
+      valor === "" ||
+      (Array.isArray(valor) && !valor.length);
+    if (
+      !CHAVES_DAS_OPCOES.includes(chave) ||
+      (!aceitas[chave] && !vazio && chave !== "modo")
+    )
+      return {
+        erro: "opcao_nao_aceita",
+        texto: `${robo.nome} não aceita “${String(chave).slice(0, 30)}”.`,
+      };
+  }
+
+  const modo = String(bruto.modo ?? "normal").trim() || "normal";
+  if (!aceitas.modos.some((m) => m.valor === modo))
+    return { erro: "modo_invalido", texto: "Modo inválido para este robô." };
+
+  const editais = [];
+  if (aceitas.editais)
+    for (const texto of listaDoPedido(bruto.editais)) {
+      const id = editalDoPedido(texto);
+      const valido =
+        NUMERO_DO_EDITAL.test(texto) ||
+        (aceitas.editais === "numero_ou_id" && id);
+      if (!valido)
+        return {
+          erro: "edital_invalido",
+          texto:
+            aceitas.editais === "numero"
+              ? `Edital inválido: ${texto.slice(0, 40)} (use o número, como 93/2026).`
+              : `Edital inválido: ${texto.slice(0, 40)}.`,
+        };
+      const normalizado = id || texto;
+      if (!editais.includes(normalizado)) editais.push(normalizado);
+    }
+  if (editais.length > MAXIMO_DE_EDITAIS)
+    return {
+      erro: "editais_demais",
+      texto: `No máximo ${MAXIMO_DE_EDITAIS} editais por vez.`,
+    };
+
+  let vagas = [];
+  if (aceitas.vagas) {
+    const { codigos, invalidos } = separarCodigos(bruto.vagas ?? "");
+    if (invalidos.length)
+      return {
+        erro: "vaga_invalida",
+        texto: `Código de vaga inválido: ${invalidos.slice(0, 3).join(", ").slice(0, 60)} (só dígitos).`,
+      };
+    if (codigos.length > MAXIMO_DE_VAGAS)
+      return {
+        erro: "vagas_demais",
+        texto: `No máximo ${MAXIMO_DE_VAGAS} vagas por vez.`,
+      };
+    vagas = codigos;
+  }
+
+  let limite = null;
+  const textoDoLimite = String(bruto.limite ?? "").trim();
+  if (aceitas.limite && textoDoLimite) {
+    const numero = /^\d{1,3}$/.test(textoDoLimite)
+      ? Number(textoDoLimite)
+      : NaN;
+    if (!(numero >= aceitas.limite.min && numero <= aceitas.limite.max))
+      return {
+        erro: "limite_invalido",
+        texto: `Limite de ${aceitas.limite.min} a ${aceitas.limite.max} vagas.`,
+      };
+    limite = numero;
+  }
+
+  return { opcoes: { modo, editais, vagas, limite } };
+}
+
+/**
+ * O edital que a coordenação pode pedir sem ser administrador global: só no
+ * robô por edital, um edital pelo id, no modo normal e sem outras opções.
+ * Fora disso, "" (só o administrador global).
+ */
+export function editalDaCoordenacao(robo, edital, opcoes) {
+  if (!robo?.porEdital) return "";
+  if (!opcoes) return editalDoPedido(edital);
+  const soUmId =
+    opcoes.editais?.length === 1 && editalDoPedido(opcoes.editais[0]);
+  if (opcoes.modo !== "normal" || opcoes.vagas?.length || opcoes.limite)
+    return "";
+  return soUmId || "";
+}
+
+/**
+ * Os inputs do workflow_dispatch de um robô (o edital só nos robôs por
+ * edital). `opcoes` (de validarOpcoes, já conferidas) troca o modo e
+ * acrescenta editais, vagas e limite — só os que o robô aceita.
+ */
+export function inputsDoDisparo(robo, usuario, edital = "", opcoes = null) {
+  const inputs = {
+    modo: opcoes?.modo || "normal",
+    disparado_por: String(usuario || ""),
+  };
   if (robo?.porEdital) inputs.editais = editalDoPedido(edital);
+  if (!opcoes) return inputs;
+  const aceitas = OPCOES_DOS_ROBOS[robo?.id] || {};
+  if (aceitas.editais && opcoes.editais?.length)
+    inputs.editais = opcoes.editais.join(",");
+  if (aceitas.vagas && opcoes.vagas?.length)
+    inputs.vagas = opcoes.vagas.join(",");
+  if (aceitas.limite && opcoes.limite) inputs.limite = String(opcoes.limite);
   return inputs;
 }
 
@@ -158,6 +392,7 @@ export const MENSAGENS_DO_DISPARO = Object.freeze({
   sem_permissao_edital:
     "Só a coordenação da avaliação do edital recalcula a pré-classificação.",
   edital_invalido: "Edital inválido.",
+  edital_e_opcoes: "Mande o edital dentro das opções.",
   sem_token: "Falta configurar GITHUB_DISPATCH_TOKEN na Vercel.",
   robo_invalido: "Carga desconhecida.",
   rodando: "Esta carga já está rodando.",

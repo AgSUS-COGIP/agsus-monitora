@@ -3,22 +3,36 @@
   `get_saude_das_cargas` já normalizada (src/lib/saude-das-cargas.js), o
   perfil e o erro. A tela lê com `useSyncExternalStore`. Não importa React.
 
-  "Rodar agora" (só Empregare, Seleção e Entrevistas): `disparo` guarda a
-  resposta do GET de /api/rodar-carga (configurado? o que roda no GitHub?);
-  `pedidos` e `avisos`, o último clique de cada carga nesta tela. As regras
-  do botão são de src/lib/robos-de-carga.js.
+  "Rodar agora" (os robôs de ROBOS_DE_CARGA): `disparo` guarda a resposta
+  do GET de /api/rodar-carga (configurado? o que roda no GitHub? a última
+  execução de cada um); `pedidos` e `avisos`, o último clique de cada carga
+  nesta tela. As regras do botão são de src/lib/robos-de-carga.js.
+
+  "Rodar com opções" e as últimas execuções: `painel` guarda
+  get_painel_dos_robos (editais e histórico, src/lib/painel-dos-robos.js);
+  `buscarVagas` pede listar_vagas_dos_robos para as sugestões do formulário;
+  `acompanhamentos` guarda o último pedido de cada robô (quando e qual modo)
+  e, enquanto ele não termina, a tela relê a cada 20 s.
 */
 import { isAdminGlobal } from "../../lib/access-roles.js";
 import { comTempoLimite, mensagemDeFalha } from "../../lib/falha-de-rede.js";
 import {
+  acompanhamentoDoPedido,
+  normalizarPainel,
+  normalizarVagas,
+} from "../../lib/painel-dos-robos.js";
+import {
   ENDERECO_RODAR_CARGA,
   MENSAGENS_DO_DISPARO,
   motivoDaRecusa,
+  roboDeCarga,
 } from "../../lib/robos-de-carga.js";
 import { normalizarSaude } from "../../lib/saude-das-cargas.js";
 import { exigirSessao } from "../../lib/sessao.js";
 
 const ESPERA_DEPOIS_DO_PEDIDO_MS = 20000;
+const RPC_PAINEL_DOS_ROBOS = "get_painel_dos_robos";
+const RPC_VAGAS_DOS_ROBOS = "listar_vagas_dos_robos";
 
 const lerJson = (resposta) => resposta.json().catch(() => ({}));
 
@@ -40,8 +54,11 @@ export function criarEstadoDaSaude({
     disparo: { status: "carregando", robos: {}, erro: "" },
     pedidos: {},
     avisos: {},
+    painel: { status: "idle", dados: null, erro: "" },
+    acompanhamentos: {},
   };
   let pedido = 0;
+  let releituraAgendada = false;
   const ouvintes = new Set();
   const publicar = (mudancas) => {
     estado = { ...estado, ...mudancas };
@@ -56,7 +73,7 @@ export function criarEstadoDaSaude({
       publicar({ status: "ready" });
       return;
     }
-    void consultarDisparo();
+    const extras = Promise.all([consultarDisparo(), carregarPainel()]);
     if (!supabase) {
       publicar({
         status: "error",
@@ -97,6 +114,97 @@ export function criarEstadoDaSaude({
       erro: "",
       erroCodigo: "",
     });
+    await extras;
+    if (meu === pedido) acompanhar();
+  }
+
+  /* get_painel_dos_robos: editais da escolha e as últimas execuções. */
+  async function carregarPainel() {
+    if (!supabase) return;
+    publicar({ painel: { ...estado.painel, status: "loading" } });
+    try {
+      const { data, error } = await comTempoLimite(
+        supabase.rpc(RPC_PAINEL_DOS_ROBOS),
+        30000,
+      );
+      if (error) {
+        publicar({
+          painel: {
+            status: error.code === "PGRST202" ? "sem_funcao" : "error",
+            dados: estado.painel.dados,
+            erro: error.message || "Falha ao consultar os robôs.",
+          },
+        });
+        return;
+      }
+      publicar({
+        painel: { status: "ready", dados: normalizarPainel(data), erro: "" },
+      });
+    } catch (falha) {
+      publicar({
+        painel: {
+          status: "error",
+          dados: estado.painel.dados,
+          erro: mensagemDeFalha(falha),
+        },
+      });
+    }
+  }
+
+  /* listar_vagas_dos_robos: as vagas conhecidas dos editais ou dos códigos. */
+  async function buscarVagas({ editais = [], vagas = [] } = {}) {
+    if (!supabase || (!editais.length && !vagas.length))
+      return { vagas: [], erro: "" };
+    try {
+      const { data, error } = await comTempoLimite(
+        supabase.rpc(RPC_VAGAS_DOS_ROBOS, {
+          p_editais: editais.length ? editais : null,
+          p_vagas: vagas.length ? vagas : null,
+        }),
+        30000,
+      );
+      if (error)
+        return {
+          vagas: [],
+          erro:
+            error.code === "PGRST202"
+              ? "O banco ainda não tem as vagas dos robôs (migration 20261007180000)."
+              : error.message || "Não consegui buscar as vagas.",
+        };
+      return { vagas: normalizarVagas(data), erro: "" };
+    } catch (falha) {
+      return { vagas: [], erro: mensagemDeFalha(falha) };
+    }
+  }
+
+  /*
+    Enquanto algum pedido desta tela não terminou (e não passou do tempo
+    limite do workflow), relê em 20 s: uma releitura agendada por vez.
+  */
+  function acompanhar() {
+    if (releituraAgendada) return;
+    const agoraMs = agora().getTime();
+    const pendente = Object.entries(estado.acompanhamentos).some(
+      ([id, pedidoDoRobo]) => {
+        const robo = roboDeCarga(id);
+        if (!robo || !pedidoDoRobo?.em) return false;
+        if (agoraMs - pedidoDoRobo.em.getTime() > robo.limiteMin * 60000)
+          return false;
+        const etapa = acompanhamentoDoPedido({
+          robo: id,
+          pedido: pedidoDoRobo,
+          execucoes: estado.painel.dados?.execucoes?.[id] || [],
+          github: estado.disparo.robos?.[id] || null,
+        })?.etapa;
+        return etapa !== "terminou" && etapa !== "terminou_no_github";
+      },
+    );
+    if (!pendente) return;
+    releituraAgendada = true;
+    agendar(() => {
+      releituraAgendada = false;
+      void carregar();
+    }, ESPERA_DEPOIS_DO_PEDIDO_MS);
   }
 
   async function pedir(metodo, corpo) {
@@ -144,8 +252,8 @@ export function criarEstadoDaSaude({
     });
   }
 
-  /* POST de /api/rodar-carga para um robô da lista. */
-  async function rodarAgora(id) {
+  /* POST de /api/rodar-carga para um robô da lista (opções: "Rodar com opções"). */
+  async function disparar(id, opcoes = null, frase = "") {
     const avisar = (aviso, pedido) =>
       publicar({
         avisos: { ...estado.avisos, [id]: aviso },
@@ -154,7 +262,10 @@ export function criarEstadoDaSaude({
     avisar(null, agora());
     let resposta;
     try {
-      resposta = await comTempoLimite(pedir("POST", { robo: id }), 20000);
+      resposta = await comTempoLimite(
+        pedir("POST", opcoes ? { robo: id, opcoes } : { robo: id }),
+        20000,
+      );
     } catch (falha) {
       avisar({ tom: "erro", texto: mensagemDeFalha(falha) }, null);
       return false;
@@ -162,7 +273,15 @@ export function criarEstadoDaSaude({
     const corpo = await lerJson(resposta);
     if (resposta.status === 202) {
       avisar({ tom: "sucesso", texto: "Pedido enviado." }, agora());
+      publicar({
+        acompanhamentos: {
+          ...estado.acompanhamentos,
+          [id]: { em: agora(), modo: opcoes?.modo || "normal", frase },
+        },
+      });
+      releituraAgendada = true;
       agendar(() => {
+        releituraAgendada = false;
         void carregar();
       }, ESPERA_DEPOIS_DO_PEDIDO_MS);
       return true;
@@ -186,6 +305,15 @@ export function criarEstadoDaSaude({
     return false;
   }
 
+  const rodarAgora = (id) => disparar(id);
+  const rodarComOpcoes = (id, opcoes, frase = "") =>
+    disparar(id, opcoes, frase);
+  function dispensarAcompanhamento(id) {
+    const resto = { ...estado.acompanhamentos };
+    delete resto[id];
+    publicar({ acompanhamentos: resto });
+  }
+
   return {
     obter: () => estado,
     assinar(ouvinte) {
@@ -196,5 +324,9 @@ export function criarEstadoDaSaude({
     consultarDisparo,
     agora,
     rodarAgora,
+    rodarComOpcoes,
+    buscarVagas,
+    carregarPainel,
+    dispensarAcompanhamento,
   };
 }

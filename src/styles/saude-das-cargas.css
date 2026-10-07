@@ -256,3 +256,229 @@
   overflow-wrap: anywhere;
   color: var(--text-secondary);
 }
+
+/* ── Rodar com opções (rodar-com-opcoes.jsx) ─────────────────────────── */
+.robos-opcoes__form {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+}
+.robos-opcoes__editais {
+  display: grid;
+  grid-template-columns: minmax(140px, 200px) minmax(0, 1fr);
+  gap: var(--space-2) var(--space-3);
+  align-items: end;
+}
+.robos-opcoes__todos {
+  display: inline-flex;
+  grid-column: 1 / -1;
+  align-items: center;
+  gap: var(--space-1-5);
+  color: var(--text-secondary);
+  font-size: var(--text-body-sm);
+}
+.robos-opcoes__vagas,
+.robos-opcoes__modo {
+  display: grid;
+  gap: var(--space-2);
+}
+.robos-opcoes__vagas textarea {
+  font-family: var(--font-mono);
+  resize: vertical;
+}
+.robos-opcoes__rotulo {
+  color: var(--text-primary);
+  font-size: var(--text-body-sm);
+  font-weight: 600;
+}
+.robos-opcoes__nota {
+  color: var(--text-secondary);
+  font-size: var(--text-caption);
+}
+.robos-opcoes__codigos,
+.robos-opcoes__sugestoes ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1-5);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.robos-opcoes__codigos li {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  max-width: 100%;
+  padding: 0 0 0 var(--space-2);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-pill);
+  background: var(--surface-raised);
+  font-size: var(--text-caption);
+}
+.robos-opcoes__codigos span,
+.robos-opcoes__sugestao span {
+  overflow: hidden;
+  color: var(--text-secondary);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.robos-opcoes__codigos span {
+  max-width: 16rem;
+}
+.robos-opcoes__tirar {
+  min-width: 24px;
+  min-height: 24px;
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+.robos-opcoes__tirar:hover {
+  color: var(--state-danger);
+}
+.robos-opcoes__sugestoes {
+  display: grid;
+  gap: var(--space-1-5);
+  padding: var(--space-2) var(--space-3);
+  border: 1px dashed var(--border-subtle);
+  border-radius: var(--radius-md);
+}
+.robos-opcoes__sugestoes-topo {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  color: var(--text-secondary);
+  font-size: var(--text-caption);
+}
+.robos-opcoes__sugestao {
+  display: inline-flex;
+  font: inherit;
+  align-items: baseline;
+  gap: var(--space-1);
+  max-width: 22rem;
+  min-height: 28px;
+  padding: 0 var(--space-2);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-pill);
+  background: var(--surface-card);
+  color: var(--text-primary);
+  font-size: var(--text-caption);
+  cursor: pointer;
+}
+.robos-opcoes__sugestao:hover {
+  border-color: var(--focus-ring);
+}
+.robos-opcoes__previa {
+  display: grid;
+  gap: var(--space-1);
+  padding: var(--space-3);
+  border-radius: var(--radius-md);
+  background: var(--state-info-soft);
+}
+.robos-opcoes__frase {
+  margin: 0;
+  color: var(--text-primary);
+  font-size: var(--text-body);
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+.robos-opcoes__aviso {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  color: var(--state-warning);
+  font-size: var(--text-caption);
+  font-weight: 600;
+}
+@media (max-width: 560px) {
+  .robos-opcoes__editais {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* ── Acompanhamento e últimas execuções (execucoes-dos-robos.jsx) ────── */
+.robos-acompanhamento {
+  display: grid;
+  gap: var(--space-1-5);
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  background: var(--state-info-soft);
+  color: var(--text-primary);
+  font-size: var(--text-body-sm);
+}
+.robos-acompanhamento--terminou,
+.robos-acompanhamento--terminou_no_github {
+  background: var(--surface-raised);
+}
+.robos-acompanhamento__topo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+.robos-acompanhamento__fechar {
+  min-width: 28px;
+  min-height: 28px;
+  margin-left: auto;
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: var(--text-body);
+  cursor: pointer;
+}
+.robos-acompanhamento__pedido,
+.robos-acompanhamento__resultado {
+  color: var(--text-secondary);
+  overflow-wrap: anywhere;
+}
+.robos-github {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-size: var(--text-caption);
+  font-weight: 600;
+  white-space: nowrap;
+}
+.robos-por-vaga__mensagem {
+  display: block;
+  margin-top: var(--space-0-5);
+  color: var(--text-secondary);
+  font-size: var(--text-caption);
+  overflow-wrap: anywhere;
+}
+.robos-execucoes__parametros {
+  min-width: 12rem;
+  overflow-wrap: anywhere;
+}
+.robos-execucoes__resultado span:not(.saude-selo) {
+  color: var(--text-secondary);
+}
+/* A coluna "Situação" (2ª) quebra a linha: a mensagem da trava é longa. */
+.saude-historico.robos-por-vaga td:nth-child(2),
+.saude-historico .robos-execucoes__linha-das-vagas td {
+  white-space: normal;
+}
+.saude-historico .robos-execucoes__linha-das-vagas td {
+  padding-top: 0;
+}
+.robos-execucoes__vagas {
+  margin-top: var(--space-1);
+}
+.robos-execucoes__vagas summary {
+  color: var(--text-secondary);
+  font-size: var(--text-caption);
+  cursor: pointer;
+}
+.robos-execucoes__vagas .saude-historico {
+  margin-top: var(--space-1);
+}
+/* Cabem na largura da linha (a tabela base do app pede 1180px). */
+.robos-execucoes table,
+.robos-por-vaga table {
+  min-width: 0;
+}

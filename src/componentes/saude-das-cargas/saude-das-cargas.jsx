@@ -2,7 +2,11 @@ import { useEffect, useState, useSyncExternalStore } from "react";
 import { montarModulo } from "../../app/montar-modulo.jsx";
 import { isAdminGlobal } from "../../lib/access-roles.js";
 import { formatNumberBR } from "../../lib/formatters.js";
-import { estadoDoBotao, roboDeCarga } from "../../lib/robos-de-carga.js";
+import {
+  estadoDoBotao,
+  OPCOES_DOS_ROBOS,
+  roboDeCarga,
+} from "../../lib/robos-de-carga.js";
 import {
   dataHora,
   SITUACOES,
@@ -13,6 +17,8 @@ import { getSupabaseClient } from "../../lib/supabaseClient.js";
 import { CartaoDeAvisos } from "../../modulos/conferencias/avisos-de-conferencia.jsx";
 import { Icone } from "../icone.jsx";
 import { criarEstadoDaSaude } from "./estado.js";
+import { Acompanhamento, UltimasExecucoes } from "./execucoes-dos-robos.jsx";
+import { RodarComOpcoes } from "./rodar-com-opcoes.jsx";
 
 /*
   Configurações › Status das atualizações (só administrador global). A tela responde
@@ -32,6 +38,13 @@ import { criarEstadoDaSaude } from "./estado.js";
   Empregare, Seleção, Entrevistas e Conferências têm "Rodar agora": o botão chama
   /api/rodar-carga (api/rodar-carga.js), que dispara o workflow no GitHub;
   fica desabilitado enquanto a carga roda (src/lib/robos-de-carga.js).
+
+  Robô da Empregare, Pré-classificação e Conferências têm também "Opções"
+  (rodar-com-opcoes.jsx: editais, códigos de vaga, modo, limite e prévia).
+  Depois do pedido, a linha acompanha a execução até o resultado
+  (execucoes-dos-robos.jsx); em "Detalhes", o robô da Empregare e a
+  pré-classificação mostram as últimas execuções com os parâmetros e quem
+  pediu (get_painel_dos_robos).
 */
 
 const classes = (...lista) => lista.filter(Boolean).join(" ");
@@ -129,7 +142,7 @@ function textoDaAtualizacao(linha) {
   return `Atualizado ${textoDaIdade(linha.idadeMin)}`;
 }
 
-function RodarAgora({ robo, linha, atual, estado }) {
+function RodarAgora({ robo, linha, atual, estado, aoAbrirOpcoes }) {
   const botao = estadoDoBotao({
     robo,
     disponibilidade: atual.disparo,
@@ -153,7 +166,21 @@ function RodarAgora({ robo, linha, atual, estado }) {
         <Icone nome="refresh-cw" tamanho={14} />
         {botao.rotulo}
       </button>
-      {aviso ? (
+      {OPCOES_DOS_ROBOS[robo.id] ? (
+        <button
+          type="button"
+          className="btn secondary saude-botao saude-opcoes"
+          data-tour={robo.id === "empregare" ? "robos-abrir-opcoes" : undefined}
+          disabled={botao.desabilitado}
+          title={botao.aviso || "Rodar com opções"}
+          onClick={aoAbrirOpcoes}
+        >
+          <Icone nome="sliders-horizontal" tamanho={14} />
+          Opções
+        </button>
+      ) : null}
+      {aviso &&
+      !(aviso.tom === "sucesso" && atual.acompanhamentos?.[robo.id]) ? (
         <small
           className={`saude-rodar__aviso saude-rodar__aviso--${aviso.tom}`}
           role={aviso.tom === "erro" ? "alert" : "status"}
@@ -169,7 +196,9 @@ function RodarAgora({ robo, linha, atual, estado }) {
 
 function Linha({ linha, atual, estado }) {
   const [aberta, setAberta] = useState(false);
+  const [opcoesAbertas, setOpcoesAbertas] = useState(false);
   const robo = roboDeCarga(linha.id);
+  const execucoes = atual.painel?.dados?.execucoes?.[linha.id];
   return (
     <li
       className={classes("saude-item", `saude-item--${linha.situacao}`)}
@@ -203,9 +232,10 @@ function Linha({ linha, atual, estado }) {
               linha={linha}
               atual={atual}
               estado={estado}
+              aoAbrirOpcoes={() => setOpcoesAbertas(true)}
             />
           ) : null}
-          {linha.partes.length ? (
+          {linha.partes.length || execucoes ? (
             <button
               type="button"
               className="btn secondary saude-botao"
@@ -229,12 +259,31 @@ function Linha({ linha, atual, estado }) {
           {linha.erro.mensagem || "sem mensagem registrada."}
         </p>
       ) : null}
+      {robo ? (
+        <Acompanhamento robo={robo} atual={atual} estado={estado} />
+      ) : null}
       {aberta ? (
         <div className="saude-item__detalhes">
-          {linha.partes.map((parte) => (
-            <Parte key={parte.id} parte={parte} />
-          ))}
+          {execucoes ? (
+            <div className="saude-parte">
+              <div className="saude-parte__topo">
+                <strong>Últimas execuções</strong>
+              </div>
+              <UltimasExecucoes execucoes={execucoes} />
+            </div>
+          ) : (
+            linha.partes.map((parte) => <Parte key={parte.id} parte={parte} />)
+          )}
         </div>
+      ) : null}
+      {robo && opcoesAbertas ? (
+        <RodarComOpcoes
+          robo={robo}
+          linha={linha}
+          atual={atual}
+          estado={estado}
+          aoFechar={() => setOpcoesAbertas(false)}
+        />
       ) : null}
     </li>
   );

@@ -37,7 +37,7 @@ A lista vem do MONITORA (RPC `listar_vagas_empregare`), de duas fontes (desde a 
 O mesmo código nas duas fontes entra **uma vez**, ligado ao edital do quadro. Cada vaga da lista
 diz a origem (`quadro`, `selecao` ou `pedida`), e o log da execução mostra a contagem por origem.
 Edital sem quadro e fora da Seleção não entra sozinho: salve o quadro de vagas do edital (no formulário do
-edital, pelo PDF de anexos) ou rode pelo GitHub com `vagas` = os códigos.
+edital, pelo PDF de anexos) ou rode pelo **Opções** (ou pelo GitHub) com os códigos.
 
 | Pedido                              | Vagas                                                                                                                                                 |
 | ----------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -127,6 +127,17 @@ o usa.
 a pessoa é administrador global no banco (`pode_disparar_carga`), aceita só as três cargas da lista
 e não dispara o que já está rodando. O botão volta a ficar livre quando a execução termina.
 
+**Rodar com opções (administrador global):** na mesma linha, **Opções** abre uma gaveta com os
+mesmos campos do Run workflow, sem ir ao GitHub: **editais** (seleção com busca, por área; só os
+vigentes, salvo "Mostrar todos"), **códigos de vaga** (lista colada, separada por vírgula, espaço ou
+linha; só dígitos; com sugestões das vagas conhecidas do edital e o cargo de cada uma —
+`listar_vagas_dos_robos`), **modo** (com a explicação de cada um) e **limite**, e a **prévia** do
+que vai rodar ("5 vagas do 93/2026: 179698, 180231…"). A função valida tudo de novo pela lista
+branca do robô (`validarOpcoes` em `src/lib/robos-de-carga.js`) e recusa com 400 o que não couber.
+Depois do pedido, a linha acompanha a execução (aguardando o GitHub → rodando → resultado por vaga:
+gravada, candidatos no arquivo, ativos e com link), com o link da execução no GitHub. A
+pré-classificação e as conferências têm a mesma gaveta, com os campos que aceitam.
+
 **Pelo GitHub:** aba **Actions** → **Robô da Empregare** → **Run workflow**:
 
 | Campo     | Para quê                                                                                                                                                                                                                   |
@@ -150,8 +161,10 @@ e não dispara o que já está rodando. O botão volta a ficar livre quando a ex
 ## Ver se rodou
 
 - Configurações › Status das atualizações, linha **Robô da Empregare**: selo, "atualizado há…" e,
-  em Detalhes, as 10 últimas execuções com vagas pedidas, baixadas, com falha, recusadas e quem
-  disparou (Rodar agora ou GitHub).
+  em Detalhes, as 8 últimas execuções (`get_painel_dos_robos`) com quem pediu, os parâmetros
+  (editais, vagas, limite, forçar), vagas baixadas/falhas/recusadas e, por vaga, situação,
+  candidatos e quantos com link da Empregare. O modo seco e o fumaça não gravam no banco: o
+  resultado fica no resumo da execução no GitHub.
 - No banco (SQL Editor):
   ```sql
   select "CO_SYNC", "DT_INICIO", "TP_SITUACAO", "TP_DISPARO", "QT_VAGA_PEDIDA", "QT_VAGA_BAIXADA",

@@ -5,8 +5,19 @@
     GET   → { configurado: true, robos: { empregare: { rodando, execucao }, … } }
             (se cada workflow tem execução na fila ou rodando no GitHub)
     POST  { robo: "empregare" | "selecao" | "entrevistas" | "conferencias"
-                  | "pre_classificacao", edital?: <uuid> }
-          → 202 { ok: true } depois de pedir o workflow_dispatch
+                  | "pre_classificacao", edital?: <uuid>,
+            opcoes?: { modo, editais, vagas, limite } }
+          → 202 { ok: true, robo, pedido? } depois de pedir o workflow_dispatch
+
+  "Rodar com opções" (Status das atualizações): `opcoes` passa pela lista
+  branca do robô (OPCOES_DOS_ROBOS / validarOpcoes em src/lib/robos-de-carga.js):
+  modo entre os do workflow, editais pelo número (93/2026) ou, na
+  pré-classificação, também pelo id; vagas só dígitos (até 500); limite de 1
+  a 500. Opção que o robô não aceita, ou formato errado: 400, e nada é pedido
+  ao GitHub. Com opções, só o administrador global — a coordenação continua
+  com o Recalcular de um edital (pelo id, modo normal). O robô grava no banco
+  quem pediu (disparado_por) e o filtro (TL_SYNC_EMPREGARE.DS_FILTRO,
+  TL_PRE_CLASSIFICACAO.DS_PEDIDO); a tela lê por get_painel_dos_robos.
 
   Quem pode: o Bearer do Supabase de quem clicou é conferido em /auth/v1/user e
   na RPC pode_disparar_carga (administrador global, migration 20261005170000),
@@ -31,6 +42,7 @@
 */
 import { origemDeTerceiro } from "../src/lib/origem-da-requisicao.js";
 import {
+  editalDaCoordenacao,
   editalDoPedido,
   execucaoEmCurso,
   inputsDoDisparo,
@@ -39,6 +51,7 @@ import {
   REPOSITORIO_DAS_CARGAS,
   ROBOS_DE_CARGA,
   roboDeCarga,
+  validarOpcoes,
 } from "../src/lib/robos-de-carga.js";
 
 const GITHUB = "https://api.github.com";
@@ -121,7 +134,10 @@ const cabecalhosDoGithub = (token) => ({
   "User-Agent": "agsus-monitora-rodar-carga",
 });
 
-/** Execuções em curso de cada robô no GitHub. */
+/**
+ * Execuções de cada robô no GitHub: { rodando, execucao } (a em curso) e
+ * `ultima` — a mais recente, para o acompanhamento depois do pedido.
+ */
 export async function situacaoNoGithub(token, { buscar = fetch } = {}) {
   const robos = {};
   for (const robo of ROBOS_DE_CARGA) {
@@ -139,9 +155,20 @@ export async function situacaoNoGithub(token, { buscar = fetch } = {}) {
     }
     const dados = await resposta.json();
     const emCurso = execucaoEmCurso(dados?.workflow_runs);
+    const ultima = Array.isArray(dados?.workflow_runs)
+      ? dados.workflow_runs[0]
+      : null;
     robos[robo.id] = {
       rodando: Boolean(emCurso),
       execucao: emCurso?.html_url || null,
+      ultima: ultima
+        ? {
+            url: ultima.html_url || null,
+            situacao: String(ultima.status || ""),
+            conclusao: ultima.conclusion ? String(ultima.conclusion) : null,
+            criada: ultima.created_at || null,
+          }
+        : null,
     };
   }
   return robos;
@@ -178,10 +205,22 @@ export default async function handler(req, res, opcoes = {}) {
   if (roboPedido?.porEdital && textoDoEdital && !edital)
     return responder(res, 400, { erro: MENSAGENS_DO_DISPARO.edital_invalido });
 
+  // "Rodar com opções": lista branca do robô antes de qualquer consulta.
+  let pedido = null;
+  if (roboPedido && corpo.opcoes !== undefined && corpo.opcoes !== null) {
+    if (textoDoEdital)
+      return responder(res, 400, {
+        erro: MENSAGENS_DO_DISPARO.edital_e_opcoes,
+      });
+    const conferidas = validarOpcoes(roboPedido, corpo.opcoes);
+    if (conferidas.erro) return responder(res, 400, { erro: conferidas.texto });
+    pedido = conferidas.opcoes;
+  }
+
   const quem = await administradorDaRequisicao(req.headers?.authorization, {
     ambiente,
     buscar,
-    edital,
+    edital: editalDaCoordenacao(roboPedido, edital, pedido),
   });
   if (quem.erro === "sem_sessao")
     return responder(res, 401, { erro: MENSAGENS_DO_DISPARO.sem_sessao });
@@ -231,7 +270,7 @@ export default async function handler(req, res, opcoes = {}) {
         },
         body: JSON.stringify({
           ref: RAMO_DAS_CARGAS,
-          inputs: inputsDoDisparo(robo, quem.id, edital),
+          inputs: inputsDoDisparo(robo, quem.id, edital, pedido),
         }),
         signal: AbortSignal.timeout(TEMPO_LIMITE_MS),
       },
@@ -243,5 +282,9 @@ export default async function handler(req, res, opcoes = {}) {
     return responder(res, 502, {
       erro: MENSAGENS_DO_DISPARO[falhaDoGithub(resposta.status)],
     });
-  return responder(res, 202, { ok: true, robo: robo.id });
+  return responder(res, 202, {
+    ok: true,
+    robo: robo.id,
+    ...(pedido ? { pedido } : {}),
+  });
 }

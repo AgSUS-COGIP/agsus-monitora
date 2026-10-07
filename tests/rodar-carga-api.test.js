@@ -253,6 +253,158 @@ describe("/api/rodar-carga", () => {
     expect(JSON.parse(despacho.opcoes.body).inputs.editais).toBe("");
   });
 
+  it("Rodar com opções: repassa editais, vagas, modo e limite ao workflow do robô", async () => {
+    const { res, chamadas } = await chamar({
+      corpo: {
+        robo: "empregare",
+        opcoes: {
+          modo: "seco",
+          editais: ["93/2026"],
+          vagas: "179698, 180231\n180231",
+          limite: "5",
+        },
+      },
+    });
+    expect(res.statusCode).toBe(202);
+    expect(res.corpo.pedido).toEqual({
+      modo: "seco",
+      editais: ["93/2026"],
+      vagas: ["179698", "180231"],
+      limite: 5,
+    });
+    const despacho = chamadas.find((c) => c.url.endsWith("/dispatches"));
+    expect(despacho.url).toContain("/workflows/robo-empregare.yml/");
+    expect(JSON.parse(despacho.opcoes.body)).toEqual({
+      ref: "main",
+      inputs: {
+        modo: "seco",
+        disparado_por: USUARIO,
+        editais: "93/2026",
+        vagas: "179698,180231",
+        limite: "5",
+      },
+    });
+  });
+
+  it("Rodar com opções: pré-classificação por id e conferências só com o modo", async () => {
+    const edital = "11111111-1111-4111-a111-111111111193";
+    const pre = await chamar({
+      corpo: {
+        robo: "pre_classificacao",
+        opcoes: { modo: "refazer_lote", editais: [edital, "94/2026"] },
+      },
+    });
+    expect(pre.res.statusCode).toBe(202);
+    const despacho = pre.chamadas.find((c) => c.url.endsWith("/dispatches"));
+    expect(JSON.parse(despacho.opcoes.body).inputs).toEqual({
+      modo: "refazer_lote",
+      disparado_por: USUARIO,
+      editais: `${edital},94/2026`,
+    });
+    const conf = await chamar({
+      corpo: { robo: "conferencias", opcoes: { modo: "seco" } },
+    });
+    expect(conf.res.statusCode).toBe(202);
+    expect(
+      JSON.parse(
+        conf.chamadas.find((c) => c.url.endsWith("/dispatches")).opcoes.body,
+      ).inputs,
+    ).toEqual({ modo: "seco", disparado_por: USUARIO });
+  });
+
+  it("Rodar com opções: recusa parâmetro inválido ou fora da lista branca antes de qualquer consulta", async () => {
+    const casos = [
+      [{ robo: "empregare", opcoes: { vagas: "17797x" } }, /só dígitos/],
+      [{ robo: "empregare", opcoes: { vagas: ["1; rm -rf"] } }, /só dígitos/],
+      [
+        { robo: "empregare", opcoes: { editais: ["93/2026,ref=x"] } },
+        /Edital inválido/,
+      ],
+      [
+        { robo: "empregare", opcoes: { modo: "refazer_lote" } },
+        /Modo inválido/,
+      ],
+      [{ robo: "empregare", opcoes: { limite: 900 } }, /1 a 500/],
+      [{ robo: "empregare", opcoes: { ref: "outro-ramo" } }, /não aceita/],
+      [
+        { robo: "empregare", opcoes: { disparado_por: "outra-pessoa" } },
+        /não aceita/,
+      ],
+      [
+        { robo: "pre_classificacao", opcoes: { vagas: ["179698"] } },
+        /não aceita/,
+      ],
+      [
+        { robo: "conferencias", opcoes: { editais: ["93/2026"] } },
+        /não aceita/,
+      ],
+      [{ robo: "selecao", opcoes: { modo: "seco" } }, /padrões/],
+      [{ robo: "empregare", opcoes: "seco" }, /Opções inválidas/],
+      [
+        {
+          robo: "pre_classificacao",
+          edital: "11111111-1111-4111-a111-111111111193",
+          opcoes: { modo: "normal" },
+        },
+        /dentro das opções/,
+      ],
+    ];
+    for (const [corpo, mensagem] of casos) {
+      const { res, chamadas } = await chamar({ corpo });
+      expect(res.statusCode, JSON.stringify(corpo)).toBe(400);
+      expect(res.corpo.erro).toMatch(mensagem);
+      expect(chamadas, JSON.stringify(corpo)).toEqual([]);
+    }
+  });
+
+  it("Rodar com opções: só o administrador global; a coordenação só o Recalcular de um edital", async () => {
+    const edital = "11111111-1111-4111-a111-111111111193";
+    const recalcular = await chamar({
+      admin: false,
+      coordena: true,
+      corpo: {
+        robo: "pre_classificacao",
+        opcoes: { modo: "normal", editais: [edital] },
+      },
+    });
+    expect(recalcular.res.statusCode).toBe(202);
+    for (const opcoes of [
+      { modo: "refazer_lote", editais: [edital] },
+      { modo: "normal", editais: [edital, "94/2026"] },
+      { modo: "normal" },
+    ]) {
+      const { res, chamadas } = await chamar({
+        admin: false,
+        coordena: true,
+        corpo: { robo: "pre_classificacao", opcoes },
+      });
+      expect(res.statusCode, JSON.stringify(opcoes)).toBe(403);
+      expect(chamadas.some((c) => c.url.includes("github"))).toBe(false);
+    }
+    const robo = await chamar({
+      admin: false,
+      coordena: true,
+      corpo: { robo: "empregare", opcoes: { vagas: ["179698"] } },
+    });
+    expect(robo.res.statusCode).toBe(403);
+  });
+
+  it("GET traz a última execução de cada robô no GitHub", async () => {
+    const { res } = await chamar({
+      metodo: "GET",
+      emCurso: { empregare: true },
+    });
+    expect(res.corpo.robos.empregare.ultima).toEqual({
+      url: "https://github.com/x/actions/runs/1",
+      situacao: "in_progress",
+      conclusao: null,
+      criada: null,
+    });
+    expect(res.corpo.robos.selecao.ultima).toMatchObject({
+      situacao: "completed",
+    });
+  });
+
   it("só GET e POST", async () => {
     expect((await chamar({ metodo: "DELETE" })).res.statusCode).toBe(405);
   });

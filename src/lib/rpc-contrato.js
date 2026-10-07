@@ -599,6 +599,19 @@ export const CONTRATO_RPC = {
     resumo:
       "Últimas 10 execuções de cada carga (análises por origem, entrevistas, seleção, robô da Empregare com vagas pedidas/baixadas/falhas/recusadas e quem disparou — 20261005170000 —, conferências de consistência com avisos novos/abertos/resolvidos — 20261005210000; análises com encerrada_por_inatividade — 20261007170000) e das tarefas agsus_* do pg_cron, para a seção Status das atualizações (só administrador global).",
   },
+  // ── Painel dos robôs (Status das atualizações, 20261007190000_painel_dos_robos.sql) ──
+  get_painel_dos_robos: {
+    argumentos: [],
+    critica: false,
+    resumo:
+      "Rodar com opções e histórico dos robôs: áreas, editais (com status, para a regra de vigente) e as 8 últimas execuções do robô da Empregare (filtro, quem pediu, contagens e, por vaga, situação, candidatos e com link) e da pré-classificação (pedido, quem pediu). Só administrador global.",
+  },
+  listar_vagas_dos_robos: {
+    argumentos: ["p_editais", "p_vagas"],
+    critica: false,
+    resumo:
+      "Vagas da Empregare conhecidas dos editais (ids) ou dos códigos pedidos (quadro do edital, Seleção e já carregadas): código, edital, cargo, última carga e situação. Sugestões do Rodar com opções; só administrador global.",
+  },
   // ── Conferências de consistência (20261005210000_conferencias_de_consistencia.sql) ──
   listar_avisos_conferencia: {
     argumentos: ["p_area", "p_modulo"],
