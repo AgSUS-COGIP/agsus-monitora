@@ -92,9 +92,9 @@ export function criarEstadoDoCalendario({
         ? todas.data
         : [];
       for (const etapa of etapas) {
-        porEdital
-          .get(String(registroDoCalendario(etapa).monitoramento_id))
-          ?.push(etapa);
+        const id = registroDoCalendario(etapa).monitoramento_id;
+        if (typeof id !== "string" && typeof id !== "number") continue;
+        porEdital.get(String(id))?.push(etapa);
       }
       return editais.map((edital) => porEdital.get(String(edital.id)) || []);
     }

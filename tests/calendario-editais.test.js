@@ -133,7 +133,13 @@ describe("fronteiras das RPCs do calendário", () => {
       data:
         nome === "get_nucleo_cronograma_resumo"
           ? RESUMO
-          : [null, false, [], ETAPA],
+          : [
+              null,
+              false,
+              [],
+              { ...ETAPA, monitoramento_id: { toString: null } },
+              ETAPA,
+            ],
       error: null,
     }));
     const estado = criarEstadoDoCalendario({ supabase: { auth, rpc } });
