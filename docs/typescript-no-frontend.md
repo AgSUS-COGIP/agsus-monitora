@@ -2,12 +2,18 @@
 
 Início da migração gradual: 07/10/2026.
 
-O frontend mantém React e Vite. `Aviso`, `BotaoDeAcao`, Seleção e Cronograma estão em
+O frontend mantém React e Vite. `Aviso`, `BotaoDeAcao`, Seleção, Cronograma e Visão geral estão em
 TypeScript. Seleção inclui estado, componentes, filtros, indicadores, gráficos, tabela
 e regras puras em `src/lib/selecao-do-painel.ts`. Cronograma inclui estado, calendário,
 filtros, modal do dia, próximas etapas, linha do tempo e regras em
-`src/lib/calendario-editais.ts`. O restante segue em JavaScript/JSX. Componentes e helpers
+`src/lib/calendario-editais.ts`. Visão geral inclui estado, filtros, indicadores, tabela,
+gaveta, boas-vindas, leitura dos marcos e regras em `src/lib/visao-geral.ts`. Os mapas
+continuam em JavaScript, com contratos JSDoc na integração com a tela. Outros módulos
+combinam JavaScript/JSX com migrações pontuais para TypeScript. Componentes e helpers
 compartilhados consumidos por esses módulos declaram seus contratos em JSDoc.
+O assistente da regra da Avaliação documental (`src/modulos/avaliacao-documental/assistente/`)
+já nasceu em TSX, com as regras em `src/lib/avaliacao-documental/assistente-da-regra.ts`,
+`resumo-da-regra.ts`, `comparar-regras.ts` e os contratos em `tipos-da-regra.ts`.
 
 ## Verificação
 
@@ -23,7 +29,7 @@ O build já chama `typecheck`, então erros nos arquivos migrados bloqueiam o bu
 `tests/tipos/`. Usa modo estrito, DOM, JSX do React e resolução de módulos do bundler.
 `allowJs` permite importar o código existente; `checkJs` está desligado. Portanto, o compilador
 não verifica todos os consumidores JavaScript nem valida JSON em tempo de execução.
-Seleção e Cronograma verificam objetos e listas nas fronteiras de leitura; limites dessa
+Seleção, Cronograma e Visão geral verificam objetos e listas nas fronteiras de leitura; limites dessa
 verificação estão nos READMEs dos módulos.
 
 Lint e formatação incrementais incluem `.ts` e `.tsx`. O ESLint usa o parser TypeScript;
@@ -50,6 +56,9 @@ O escopo e as limitações estão em
 [../src/modulos/selecao/README.md](../src/modulos/selecao/README.md).
 Cronograma também está migrado; carga, contratos e limites estão em
 [../src/modulos/cronograma/README.md](../src/modulos/cronograma/README.md).
+
+Visão geral também está migrada; contratos e integração com os mapas estão em
+[../src/modulos/visao-geral/README.md](../src/modulos/visao-geral/README.md).
 
 Escolher um módulo por entrega, levantar os consumidores e manter o comportamento coberto
 pelos testes. Declarar contratos de dados e ações sem `any` ou supressões de erros. Atualizar

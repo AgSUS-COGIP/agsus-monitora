@@ -1,3 +1,12 @@
+import type {
+  Configuracoes,
+  LinhaDaVisaoGeral,
+  OpcoesDaTela,
+  Perfil,
+  PropsDaTela,
+  PropsDoPainel,
+} from "./tipos.ts";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { useMemo, useState, useSyncExternalStore } from "react";
 import { montarModulo } from "../../app/montar-modulo.jsx";
 import { estadoDasConfiguracoes } from "../configuracoes/estado.js";
@@ -6,7 +15,7 @@ import { apagarCopiaDaSessao } from "../../modules/copia-da-sessao-indexeddb.js"
 import {
   temProcessosPorProjeto,
   textosDaVisaoGeral,
-} from "../../lib/visao-geral.js";
+} from "../../lib/visao-geral.ts";
 import {
   MAPA_DOS_DSEIS,
   MAPA_DOS_MUNICIPIOS,
@@ -15,12 +24,12 @@ import {
 import { criarCarregadorDeMunicipios } from "../mapa-de-projetos/carregador.js";
 import { MapaDeProjetos } from "../mapa-de-projetos/mapa-de-projetos.jsx";
 import { MapaSaudeIndigena } from "../mapa-saude-indigena/mapa-saude-indigena.jsx";
-import { BoasVindas, MarcosDoAno } from "./boas-vindas.jsx";
+import { BoasVindas, MarcosDoAno } from "./boas-vindas.tsx";
 import {
   buscarAcompanhamentoNoSupabase,
   estadoDaVisaoGeral,
-} from "./estado.js";
-import { GavetaDoProcesso } from "./gaveta.jsx";
+} from "./estado.ts";
+import { GavetaDoProcesso } from "./gaveta.tsx";
 import {
   Fases,
   Filtros,
@@ -28,8 +37,8 @@ import {
   PosResultado,
   ProcessosPorProjeto,
   Topo,
-} from "./paineis.jsx";
-import { TabelaDeProcessos } from "./tabela.jsx";
+} from "./paineis.tsx";
+import { TabelaDeProcessos } from "./tabela.tsx";
 
 /*
   A Visão geral (view `dashboard`), um módulo do app: monta direto na
@@ -37,7 +46,7 @@ import { TabelaDeProcessos } from "./tabela.jsx";
   navegação (classe `.active`, título do cabeçalho por área com
   `cabecalhoDaVisaoGeral`, permissão `ind`) e da carga das linhas
   (`loadData` → dados-do-monitoramento.js); a tela lê o estado
-  (`estado.js`); do banco, só os marcos do ano, o mapa de Projetos e o
+  (`estado.ts`); do banco, só os marcos do ano, o mapa de Projetos e o
   acompanhamento da área (etapas do cronograma e resumo das listas, pedido
   pelo estado com o cliente da tela).
 
@@ -64,7 +73,12 @@ import { TabelaDeProcessos } from "./tabela.jsx";
 */
 
 /* O mapa da Saúde Indígena lendo e pedindo ao estado da Visão geral. */
-function MapaDaSaudeIndigena({ e, estado, perfil, supabase }) {
+function MapaDaSaudeIndigena({
+  e,
+  estado,
+  perfil,
+  supabase,
+}: PropsDoPainel & { perfil: Perfil | null; supabase: SupabaseClient | null }) {
   const { lmap, redeCnes } = e.mapa || {};
   return (
     <div
@@ -96,7 +110,7 @@ function MapaDaSaudeIndigena({ e, estado, perfil, supabase }) {
   );
 }
 
-function usarTextos(configuracoes) {
+function usarTextos(configuracoes: Configuracoes) {
   const { valores } = useSyncExternalStore(
     configuracoes.assinar,
     configuracoes.obter,
@@ -115,13 +129,13 @@ export function TelaDaVisaoGeral({
   supabase,
   comemoracoesLigadas,
   agora,
-}) {
+}: PropsDaTela) {
   const e = useSyncExternalStore(estado.assinar, estado.obter);
   const textos = usarTextos(configuracoes);
   const mapa = mapaDaVisaoGeral(e.area);
-  const [aberta, setAberta] = useState(null);
+  const [aberta, setAberta] = useState<string | null>(null);
   // A linha aberta segue os dados: recarga atualiza a gaveta; se sumir, fecha.
-  const abrir = (linha) => setAberta(String(linha.id));
+  const abrir = (linha: LinhaDaVisaoGeral) => setAberta(String(linha.id));
   const linhaAberta = aberta
     ? e.linhasDaArea.find((linha) => String(linha.id) === aberta) || null
     : null;
@@ -207,7 +221,7 @@ export function montarVisaoGeral({
   carregadorDeMunicipios = criarCarregadorDeMunicipios({
     obterSupabase: () => supabase,
   }),
-} = {}) {
+}: OpcoesDaTela = {}) {
   estado.definirAviso(toast);
   estado.definirBuscaDoAcompanhamento(
     supabase ? buscarAcompanhamentoNoSupabase(supabase) : null,

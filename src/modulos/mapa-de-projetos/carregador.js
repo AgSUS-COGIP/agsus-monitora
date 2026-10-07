@@ -24,6 +24,9 @@ export const CACHE_TTL_MS = 5 * 60_000;
 
 export const ESCOLHA_INICIAL = Object.freeze({ projeto: "", agrupar: false });
 
+/**
+ * @param {{obterSupabase?: () => import("@supabase/supabase-js").SupabaseClient | null, relogio?: () => number}} [opcoes]
+ */
 export function criarCarregadorDeMunicipios({
   obterSupabase = () => null,
   relogio = () => Date.now(),

@@ -108,6 +108,11 @@ const emAndamento = (linha) =>
  * `hoje`: "AAAA-MM-DD" (Brasília). `etapas`: as etapas do cronograma deste
  * edital (`null` = não carregadas).
  */
+/**
+ * @param {import("../modulos/visao-geral/tipos.ts").LinhaDoMonitoramento} linha
+ * @param {{hoje?: string, etapas?: readonly import("../modulos/visao-geral/tipos.ts").EtapaDoAcompanhamento[] | null, limites?: {diasDoPrazo: number, diasParado: number, contratacaoMinima: number}}} [opcoes]
+ * @returns {import("../modulos/visao-geral/tipos.ts").Motivo[]}
+ */
 export function motivosDeAtencao(
   linha,
   { hoje, etapas = null, limites = LIMITES_DO_CRITICO } = {},

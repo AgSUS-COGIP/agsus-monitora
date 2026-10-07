@@ -41,6 +41,14 @@ export function comValor(objeto, caminho, valor) {
   return copia;
 }
 
+/**
+ * @param {object} p
+ * @param {import("react").ReactNode} p.rotulo
+ * @param {unknown} p.valor
+ * @param {(valor: number | string | null) => void} p.aoMudar
+ * @param {import("react").ReactNode} [p.dica]
+ * @param {boolean} [p.largo]
+ */
 export function CampoNumero({ rotulo, valor, aoMudar, dica, largo }) {
   return (
     <Campo rotulo={rotulo} dica={dica} largo={largo}>
@@ -53,6 +61,14 @@ export function CampoNumero({ rotulo, valor, aoMudar, dica, largo }) {
   );
 }
 
+/**
+ * @param {object} p
+ * @param {import("react").ReactNode} p.rotulo
+ * @param {string | null | undefined} p.valor
+ * @param {(valor: string) => void} p.aoMudar
+ * @param {number} [p.maximo]
+ * @param {boolean} [p.largo]
+ */
 export function CampoTexto({ rotulo, valor, aoMudar, maximo = 200, largo }) {
   return (
     <Campo rotulo={rotulo} largo={largo}>
@@ -68,6 +84,13 @@ export function CampoTexto({ rotulo, valor, aoMudar, maximo = 200, largo }) {
 /**
  * A pergunta da regra: o começo do enunciado ou alternativas separadas por
  * ";" (vira lista). Guarda o que foi digitado para não comer os espaços.
+ */
+/**
+ * @param {object} p
+ * @param {import("react").ReactNode} p.rotulo
+ * @param {string | string[] | null | undefined} p.valor
+ * @param {(valor: string | string[]) => void} p.aoMudar
+ * @param {boolean} [p.largo]
  */
 export function CampoPergunta({ rotulo, valor, aoMudar, largo }) {
   const [digitado, setDigitado] = useState(() => textoDaPergunta(valor));
@@ -98,6 +121,14 @@ export function CampoLista({ rotulo, valor, aoMudar, largo }) {
   );
 }
 
+/**
+ * @param {object} p
+ * @param {import("react").ReactNode} p.rotulo
+ * @param {string | null | undefined} p.valor
+ * @param {ReadonlyArray<readonly [string, string]>} p.opcoes
+ * @param {(valor: string | null) => void} p.aoMudar
+ * @param {string} [p.vazio]
+ */
 export function Escolha({ rotulo, valor, opcoes, aoMudar, vazio }) {
   return (
     <Campo rotulo={rotulo}>
@@ -116,6 +147,12 @@ export function Escolha({ rotulo, valor, opcoes, aoMudar, vazio }) {
   );
 }
 
+/**
+ * @param {object} p
+ * @param {import("react").ReactNode} p.rotulo
+ * @param {boolean | undefined} p.marcado
+ * @param {(marcado: boolean) => void} p.aoMudar
+ */
 export function Caixa({ rotulo, marcado, aoMudar }) {
   const id = useId();
   return (
@@ -131,6 +168,7 @@ export function Caixa({ rotulo, marcado, aoMudar }) {
   );
 }
 
+/** @param {{ rotulo: string, aoClicar: () => void }} p */
 export function BotaoTirar({ rotulo, aoClicar }) {
   return (
     <button
@@ -145,6 +183,7 @@ export function BotaoTirar({ rotulo, aoClicar }) {
   );
 }
 
+/** @param {{ children?: import("react").ReactNode, aoClicar: () => void }} p */
 export function BotaoMais({ children, aoClicar }) {
   return (
     <button type="button" className="btn secondary small" onClick={aoClicar}>

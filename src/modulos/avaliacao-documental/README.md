@@ -88,6 +88,33 @@ até a 10ª posição do cadastro reserva) é regra da lista CONVOCACAO da Class
 
 A próxima fase traz a revisão (F5).
 
+## Assistente da regra
+
+A aba Regra abre no **assistente** (`assistente/`, em TSX, contratos em `assistente/tipos.ts` e
+`src/lib/avaliacao-documental/tipos-da-regra.ts`); o **Modo avançado** é o formulário inteiro de
+`regra.jsx`. Os dois editam o mesmo rascunho e salvam o mesmo JSON (`regra.js`) pelo
+`salvar_regra_analise`. Cinco passos:
+
+1. ponto de partida (`partida.tsx`): versão vigente, regra conferida de outro edital da área,
+   modelo ou do zero — sempre cópia independente;
+2. cardápio (`cardapio.tsx`): cartões que ligam ou desligam um bloco, uma eliminação automática ou
+   o corte por pontos mínimos, com valores sugeridos das fontes (nenhum peso no código);
+3. perguntas da Empregare (`perguntas.tsx`): as colunas de cada vaga
+   (`obter_apoio_regra_analise`), ligação automática pelo enunciado, verde/amarelo/vermelho com a
+   regra de `nota-declarada.js`, e a nota declarada;
+4. nota mínima e desempate (`nota-e-desempate.tsx`, `lista-ordenavel.tsx`): a regra de
+   classificação (gravada por `salvar_regra_classificacao`, com a permissão dela) e o desempate da
+   Provisória;
+5. testar e salvar (`conferir.tsx`): `previa.jsx`, o resumo de uma página
+   (`resumo-da-regra.ts`, "Copiar para o SEI" e imprimir), a comparação de versões
+   (`comparar-regras.ts`) e o salvar com motivo.
+
+"Conferida" é dupla conferência: quem salvou a versão não confere (o banco recusa em
+`conferir_regra_analise`; o administrador global pode), e a regra vigente diz à tela
+(`conferir_pede_outra_pessoa`). Migration `20261008120000_assistente_da_regra.sql`. O critério de
+aceite (refazer a v7 do 93/2026 a partir do PROJ26) está em
+`tests/lib/avaliacao-documental-assistente.test.js`.
+
 ## Arquivos
 
 ```
@@ -142,7 +169,8 @@ avaliacao-documental.css  só tokens
 - A ficha não concluída segue a versão da regra do último recálculo (`FC_ABRIR_FICHAS`, a cada
   execução do job); a concluída mantém a versão com que foi analisada
   (`supabase/migrations/20261007110000_ficha_segue_versao_da_pre_classificacao.sql`).
-- Testes: `tests/modulos/avaliacao-documental.test.js`, `tests/modulos/avaliacao-documental-fila.test.js`,
+- Testes: `tests/modulos/avaliacao-documental.test.js`, `tests/modulos/avaliacao-documental-assistente.test.js`,
+  `tests/assistente-da-regra-migration.test.js`, `tests/modulos/avaliacao-documental-fila.test.js`,
   `tests/modulos/avaliacao-documental-ficha.test.js`, `tests/lib/avaliacao-documental-ficha.test.js`,
   `tests/conteudo-da-ficha-migration.test.js`, `tests/python/test_pontuacao.py`,
   `tests/fichas-fila-reserva-migration.test.js`, `tests/ficha-segue-versao-migration.test.js`,

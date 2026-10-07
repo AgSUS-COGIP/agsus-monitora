@@ -4,9 +4,9 @@ import {
   EVENTO_TEMA_ALTERADO,
 } from "../lib/eventos-da-barra-lateral.js";
 import { nomeDaArea } from "../lib/menu-lateral.js";
-import { resumoDoRelatorio } from "../lib/visao-geral.js";
+import { resumoDoRelatorio } from "../lib/visao-geral.ts";
 import { obterDadosDoMonitoramento } from "../componentes/dados-do-monitoramento.js";
-import { estadoDaVisaoGeral } from "../modulos/visao-geral/estado.js";
+import { estadoDaVisaoGeral } from "../modulos/visao-geral/estado.ts";
 import { avisar as avisarPadrao } from "./avisos.js";
 
 /*
