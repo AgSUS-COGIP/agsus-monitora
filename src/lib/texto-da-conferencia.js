@@ -44,6 +44,7 @@ export function quandoFoi(valor, agora = new Date()) {
   return `em ${dia(data).slice(0, 5)}, ${hora(data)}`;
 }
 
+/** @param {{ conferidoEm?: unknown, mudancaEm?: unknown, agora?: Date }} [opcoes] */
 export function textoDaConferencia({
   conferidoEm,
   mudancaEm,

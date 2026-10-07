@@ -19,7 +19,7 @@ import {
   taxaDeContratacao,
   topUnidades,
   triadosEReprovados,
-} from "../src/lib/selecao-do-painel.js";
+} from "../src/lib/selecao-do-painel.ts";
 
 /* O formato de get_selecao_da_area (20261001090000_selecao.sql). */
 const PAYLOAD = {
@@ -111,6 +111,47 @@ describe("payload da seleção", () => {
   it("payload estranho vira lista vazia", () => {
     expect(normalizarPayload(null).vagas).toEqual([]);
     expect(normalizarPayload({ vagas: "x" }).vagas).toEqual([]);
+  });
+
+  it("ignora entradas que não são objetos e mantém zero separado de número ausente", () => {
+    const dados = normalizarPayload({
+      vagas: [
+        null,
+        false,
+        7,
+        "vaga",
+        [],
+        {},
+        {
+          id: "valida",
+          inscritos: "12.6",
+          aptos: 0,
+          triados: "",
+          convocados: "não informado",
+          aprovados: null,
+        },
+      ],
+    });
+    expect(dados.vagas).toHaveLength(1);
+    expect(dados.vagas[0]).toMatchObject({
+      id: "valida",
+      inscritos: 13,
+      aptos: 0,
+      triados: null,
+      convocados: null,
+      aprovados: null,
+    });
+    expect(calcularIndicadores(dados.vagas)).toMatchObject({
+      vagas: 1,
+      inscritos: 13,
+      aptos: 0,
+      triados: null,
+      taxa: null,
+    });
+    for (const externo of [undefined, "resposta", 7, false, []]) {
+      expect(normalizarPayload(externo)).toMatchObject({ area: "", vagas: [] });
+      expect(PAINEL_DE_SELECAO.valido(externo)).toBe(false);
+    }
   });
 });
 

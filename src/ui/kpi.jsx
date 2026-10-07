@@ -24,6 +24,9 @@ const TOM_DA_COR = {
   "k-slate": "neutro",
 };
 
+/**
+ * @param {{ rotulo: import("react").ReactNode, valor: import("react").ReactNode, cor?: string, tom?: string, icone?: string, chave?: string, titulo?: string, ativo?: boolean, aoClicar?: () => void, carregando?: boolean, idDoValor?: string, tour?: string }} props
+ */
 export function Kpi({
   cor,
   tom,
@@ -94,7 +97,9 @@ export function Kpi({
   );
 }
 
-/** A grade de indicadores. */
+/** A grade de indicadores.
+ * @param {{ id?: string, className?: string, rotulo?: string, tour?: string, children?: import("react").ReactNode }} props
+ */
 export function GradeDeKpis({ id, className, rotulo, tour, children }) {
   return (
     <section

@@ -22,7 +22,7 @@ import {
   SITUACOES,
   visaoSimples,
 } from "./saude-das-cargas.js";
-import { calcularIndicadores as indicadoresDaSelecao } from "./selecao-do-painel.js";
+import { calcularIndicadores as indicadoresDaSelecao } from "./selecao-do-painel.ts";
 import {
   acaoDaIntencao,
   mesmoEdital,

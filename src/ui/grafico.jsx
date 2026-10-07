@@ -23,11 +23,16 @@ const TOKENS_DA_PALETA = {
   },
 };
 
+/**
+ * @param {boolean} escuro
+ * @param {{ grid: string, text: string, ok: string, bad: string, warn: string, review: string, blue: string, surface: string, neutro?: string }} reserva
+ */
 export function paletaDosGraficos(escuro, reserva) {
   const estilo =
     typeof getComputedStyle === "function"
       ? getComputedStyle(document.documentElement)
       : null;
+  /** @param {string} nome @param {string} padrao */
   const ler = (nome, padrao) => estilo?.getPropertyValue(nome).trim() || padrao;
   const estados = TOKENS_DA_PALETA[escuro ? "escuro" : "claro"];
   return {
@@ -55,6 +60,10 @@ export function paletaDosGraficos(escuro, reserva) {
   nas pendências e na tabela. `plugins` (opcional) são plugins do Chart.js só
   deste gráfico, fixos desde a criação (ex.: rótulo de valor nas barras).
 */
+/**
+ * @template {import("chart.js").ChartType} T
+ * @param {{ tipo: T, montar: () => { data: import("chart.js").ChartData<NoInfer<T>, number[], string>, options?: import("chart.js").ChartOptions<NoInfer<T>> }, dependencias: import("react").DependencyList, rotulo: string, id?: string, plugins?: import("chart.js").Plugin<NoInfer<T>>[] }} props
+ */
 export function Grafico({ tipo, montar, dependencias, rotulo, id, plugins }) {
   const canvas = useRef(null);
   const grafico = useRef(null);

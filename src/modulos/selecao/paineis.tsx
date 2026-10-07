@@ -1,3 +1,33 @@
+import type { ComponentProps } from "react";
+import type {
+  ChartType,
+  ChartOptions,
+  Plugin,
+  TooltipCallbacks,
+} from "chart.js";
+import type {
+  AtivoDoRecorte,
+  CampoDoFiltro,
+  FiltrosDaSelecao,
+  IndicadoresDaSelecao,
+  ObservacaoDaSelecao,
+  OpcoesDosFiltros,
+  VagaDaSelecao,
+} from "./tipos.ts";
+
+declare module "chart.js" {
+  interface PluginOptionsByType<TType extends ChartType> {
+    selecaoRotuloDeValor?: { cor: string };
+    selecaoTextoNoCentro?: {
+      cor: string;
+      corSecundaria: string;
+      principal?: string;
+      secundario?: string;
+    };
+  }
+}
+type Paleta = ReturnType<typeof paleta>;
+type EscalaDeBarras = NonNullable<ChartOptions<"bar">["scales"]>[string];
 import { useEffect, useMemo, useRef } from "react";
 import { MultiSelectBusca } from "../../componentes/multi-select-busca.jsx";
 import { formatNumberBR } from "../../lib/formatters.js";
@@ -11,7 +41,7 @@ import {
   rotuloDaUnidade,
   topUnidades,
   triadosEReprovados,
-} from "../../lib/selecao-do-painel.js";
+} from "../../lib/selecao-do-painel.ts";
 import { paletaDoPainel } from "../../lib/tema-do-painel.js";
 import {
   CardDeGrafico,
@@ -35,21 +65,24 @@ import {
   da coluna Observação.
 */
 
-const truncar = (valor, limite) => {
+const truncar = (valor: string, limite: number) => {
   const texto = String(valor ?? "").trim();
   return texto.length > limite ? `${texto.slice(0, limite - 1)}…` : texto;
 };
 
 /* ── Topo ───────────────────────────────────────────────────────────── */
 
-export function Topo(props) {
+export function Topo(props: ComponentProps<typeof TopoDoPainel>) {
   return <TopoDoPainel {...props} />;
 }
 
 /* ── Filtros ────────────────────────────────────────────────────────── */
 
 /** Os filtros ativos, como o recorte os descreve: `[campo, rótulo, valor]`. */
-export function ativosDoRecorte(filtros, area) {
+export function ativosDoRecorte(
+  filtros: FiltrosDaSelecao,
+  area: string,
+): AtivoDoRecorte[] {
   return filtrosAtivos(filtros, area).map(({ campo, rotulo, valores }) => [
     campo,
     rotulo,
@@ -64,6 +97,13 @@ export function Filtros({
   carregado,
   aoMudar,
   aoLimpar,
+}: {
+  filtros: FiltrosDaSelecao;
+  opcoes: OpcoesDosFiltros;
+  area: string;
+  carregado: boolean;
+  aoMudar: (campo: CampoDoFiltro, valores: readonly string[]) => void;
+  aoLimpar: () => void;
 }) {
   const ativos = filtrosAtivos(filtros, area);
   return (
@@ -127,7 +167,13 @@ export function Filtros({
 
 /* ── KPIs ───────────────────────────────────────────────────────────── */
 
-export function Indicadores({ indicadores: k, carregado }) {
+export function Indicadores({
+  indicadores: k,
+  carregado,
+}: {
+  indicadores: IndicadoresDaSelecao;
+  carregado: boolean;
+}) {
   const n = formatarQuantidade;
   const carregando = !carregado;
   return (
@@ -196,14 +242,14 @@ export function Indicadores({ indicadores: k, carregado }) {
 
 /* ── Recorte ativo ──────────────────────────────────────────────────── */
 
-export function Recorte({ ativos }) {
+export function Recorte({ ativos }: { ativos: AtivoDoRecorte[] }) {
   return <LinhaDoRecorte ativos={ativos} />;
 }
 
 /* ── Gráficos ───────────────────────────────────────────────────────── */
 
 /* Uma cor de texto dos tokens do app (com a reserva dos painéis, sem CSS). */
-function corDoToken(nome, reserva) {
+function corDoToken(nome: string, reserva: string) {
   const estilo =
     typeof getComputedStyle === "function"
       ? getComputedStyle(document.documentElement)
@@ -212,7 +258,7 @@ function corDoToken(nome, reserva) {
 }
 
 /* O número em cima (ou ao lado) de cada barra, como no painel antigo. */
-const rotuloDeValor = {
+const rotuloDeValor: Plugin<"bar"> = {
   id: "selecaoRotuloDeValor",
   afterDatasetsDraw(grafico) {
     const { ctx } = grafico;
@@ -221,10 +267,11 @@ const rotuloDeValor = {
     grafico.data.datasets.forEach((conjunto, i) => {
       grafico.getDatasetMeta(i).data.forEach((barra, j) => {
         const valor = conjunto.data[j];
-        if (!valor) return;
-        const { x, y } = barra.tooltipPosition();
+        if (typeof valor !== "number" || !valor) return;
+        const { x, y } = barra.tooltipPosition(false);
+        if (x === null || y === null) return;
         ctx.save();
-        ctx.fillStyle = cor;
+        ctx.fillStyle = cor || "#20324a";
         ctx.font = "600 11px Geist, system-ui, sans-serif";
         ctx.textAlign = deitado ? "left" : "center";
         ctx.textBaseline = deitado ? "middle" : "bottom";
@@ -240,7 +287,7 @@ const rotuloDeValor = {
 };
 
 /* O percentual no meio do medidor de contratação. */
-const textoNoCentro = {
+const textoNoCentro: Plugin<"doughnut"> = {
   id: "selecaoTextoNoCentro",
   afterDraw(grafico) {
     const cfg = grafico.options.plugins?.selecaoTextoNoCentro;
@@ -252,22 +299,33 @@ const textoNoCentro = {
     ctx.save();
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
-    ctx.fillStyle = cfg.cor;
+    ctx.fillStyle = cfg.cor || "#20324a";
     ctx.font = "800 28px Geist, system-ui, sans-serif";
     ctx.fillText(cfg.principal || "", x, y - 8);
-    ctx.fillStyle = cfg.corSecundaria;
+    ctx.fillStyle = cfg.corSecundaria || "#526780";
     ctx.font = "400 12px Geist, system-ui, sans-serif";
     ctx.fillText(cfg.secundario || "", x, y + 24);
     ctx.restore();
   },
 };
 
-function opcoesDeBarras(p, { deitado = false, aoClicar, dica } = {}) {
-  const categorias = {
+function opcoesDeBarras(
+  p: Paleta,
+  {
+    deitado = false,
+    aoClicar,
+    dica,
+  }: {
+    deitado?: boolean;
+    aoClicar?: (indice: number) => void;
+    dica?: Partial<TooltipCallbacks<"bar">>;
+  } = {},
+): ChartOptions<"bar"> {
+  const categorias: EscalaDeBarras = {
     ticks: { color: p.text, maxRotation: 0, autoSkip: false },
     grid: { display: false },
   };
-  const valores = {
+  const valores: EscalaDeBarras = {
     beginAtZero: true,
     grace: "12%",
     ticks: { color: p.text, precision: 0 },
@@ -289,13 +347,17 @@ function opcoesDeBarras(p, { deitado = false, aoClicar, dica } = {}) {
       : { x: categorias, y: valores },
     onClick: aoClicar
       ? (_, elementos) => {
-          if (elementos.length) aoClicar(elementos[0].index);
+          const primeiro = elementos[0];
+          if (primeiro) aoClicar(primeiro.index);
         }
       : undefined,
   };
 }
 
-function opcoesDeRosca(p, extra = {}) {
+function opcoesDeRosca(
+  p: Paleta,
+  extra: ChartOptions<"doughnut"> = {},
+): ChartOptions<"doughnut"> {
   return {
     responsive: true,
     maintainAspectRatio: false,
@@ -312,7 +374,8 @@ function opcoesDeRosca(p, extra = {}) {
 }
 
 /* As cores dos tokens do app (com a paleta dos painéis de reserva). */
-const paleta = (escuro) => paletaDosGraficos(escuro, paletaDoPainel(escuro));
+const paleta = (escuro: boolean) =>
+  paletaDosGraficos(escuro, paletaDoPainel(escuro));
 
 export function Graficos({
   vagas,
@@ -321,6 +384,13 @@ export function Graficos({
   carregado,
   escuro,
   aoFiltrarUnidade,
+}: {
+  vagas: readonly VagaDaSelecao[];
+  indicadores: IndicadoresDaSelecao;
+  area: string;
+  carregado: boolean;
+  escuro: boolean;
+  aoFiltrarUnidade: (unidade: string) => void;
 }) {
   const eliminados = useMemo(() => eliminadosAntesDaAnalise(vagas), [vagas]);
   const aptos = useMemo(() => aptosEEliminados(vagas), [vagas]);
@@ -521,12 +591,18 @@ export function Graficos({
               options: opcoesDeBarras(p, {
                 deitado: true,
                 dica: {
-                  title: (itens) => unidades[itens[0].dataIndex]?.rotulo || "",
+                  title: (itens) => {
+                    const primeiro = itens[0];
+                    return primeiro
+                      ? unidades[primeiro.dataIndex]?.rotulo || ""
+                      : "";
+                  },
                 },
-                aoClicar: (indice) =>
-                  unidades[indice] &&
-                  unidades[indice].rotulo !== "Sem unidade" &&
-                  filtrar.current(unidades[indice].rotulo),
+                aoClicar: (indice) => {
+                  const escolhida = unidades[indice];
+                  if (escolhida && escolhida.rotulo !== "Sem unidade")
+                    filtrar.current(escolhida.rotulo);
+                },
               }),
             };
           }}
@@ -538,7 +614,11 @@ export function Graficos({
 
 /* ── Observações ────────────────────────────────────────────────────── */
 
-export function Observacoes({ observacoes }) {
+export function Observacoes({
+  observacoes,
+}: {
+  observacoes: readonly ObservacaoDaSelecao[];
+}) {
   if (!observacoes.length) return null;
   return (
     <section

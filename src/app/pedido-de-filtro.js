@@ -43,6 +43,9 @@ const obterVersao = () => versao;
 /**
  * Na tela: quando chega um pedido para `view` e a tela está `pronta` (dados
  * carregados), chama `aplicar(filtro)` uma vez.
+ * @param {string} view
+ * @param {boolean} pronta
+ * @param {(filtro: { edital?: string, metrica?: string, busca?: string }) => void} aplicar
  */
 export function usarPedidoDeFiltro(view, pronta, aplicar) {
   const atual = useSyncExternalStore(assinar, obterVersao, obterVersao);

@@ -80,7 +80,7 @@ import { montarNucleo } from "./modulos/editais/nucleo.jsx";
 import { montarRecursos } from "./modulos/recursos/recursos.jsx";
 import { montarEntrevistas } from "./modulos/entrevistas/entrevistas.jsx";
 import { montarAnalises } from "./modulos/analises/analises.jsx";
-import { montarSelecao } from "./modulos/selecao/selecao.jsx";
+import { montarSelecao } from "./modulos/selecao/selecao.tsx";
 import { montarClassificacao } from "./modulos/classificacao/classificacao.jsx";
 import { montarAvaliacaoDocumental } from "./modulos/avaliacao-documental/avaliacao-documental.jsx";
 import { montarVisaoGeral } from "./modulos/visao-geral/visao-geral.jsx";

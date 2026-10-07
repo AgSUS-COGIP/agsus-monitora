@@ -1,4 +1,4 @@
-/** Contratos da etapa de estado da Seleção. Dados externos chegam como unknown. */
+/** Contratos da Seleção. Dados externos chegam como unknown. */
 export type VagaDaSelecao = {
   id: string;
   edital_id: unknown;
@@ -27,7 +27,7 @@ export type VagaDaSelecao = {
 
 export type DadosDaSelecao = {
   area: string;
-  // Estes campos são preservados pelo normalizador JS, sem validar sua forma.
+  // Preservados da origem; o normalizador não interpreta datas ou IDs.
   geradoEm: unknown;
   ultimaCarga: {
     em: unknown;
@@ -89,3 +89,35 @@ export type EstadoDaSelecao = {
   exportarCsv: (vagas: readonly VagaDaSelecao[]) => void;
   reiniciar: () => void;
 };
+
+export type CampoDoFiltro = "unidades" | "editais" | "cargos" | "vagas";
+export type FiltrosDaSelecao = Readonly<
+  Record<CampoDoFiltro, readonly string[]>
+>;
+export type OpcoesDosFiltros = Record<CampoDoFiltro, string[]>;
+export type CampoNumerico = {
+  [K in keyof VagaDaSelecao]: VagaDaSelecao[K] extends number | null
+    ? K
+    : never;
+}[keyof VagaDaSelecao];
+export type IndicadoresDaSelecao = {
+  vagas: number;
+  inscritos: number | null;
+  aptos: number | null;
+  triados: number | null;
+  convocados: number | null;
+  aprovados: number | null;
+  contratados: number | null;
+  taxa: number | null;
+};
+export type ObservacaoDaSelecao = {
+  texto: string;
+  vagas: number;
+  unidades: string[];
+  editais: string[];
+};
+export type AtivoDoRecorte = [CampoDoFiltro, string, string];
+export type OpcoesDaTelaDeSelecao = Pick<
+  OpcoesDoEstadoDaSelecao,
+  "supabase" | "toast" | "baixar" | "armazenamento"
+> & { secao?: HTMLElement | null; areaAtual?: () => unknown };

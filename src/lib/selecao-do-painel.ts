@@ -18,18 +18,35 @@ import { sanitizeCsvCell } from "./csv-security.js";
 import { dataHoraBR, normalizarBusca } from "./entrevistas-do-painel.js";
 import { formatNumberBR } from "./formatters.js";
 
+import type {
+  CampoDoFiltro,
+  CampoNumerico,
+  DadosDaSelecao,
+  FiltrosDaSelecao,
+  IndicadoresDaSelecao,
+  ObservacaoDaSelecao,
+  OpcoesDosFiltros,
+  VagaDaSelecao,
+} from "../modulos/selecao/tipos.ts";
 export { dataHoraBR };
 
-const texto = (valor) => String(valor ?? "").trim();
+/** JSON externo só é lido após verificar que é um objeto. */
+function registro(valor: unknown): Record<string, unknown> {
+  return typeof valor === "object" && valor !== null && !Array.isArray(valor)
+    ? (valor as Record<string, unknown>)
+    : {};
+}
 
-const inteiro = (valor) => {
+const texto = (valor: unknown) => String(valor ?? "").trim();
+
+const inteiro = (valor: unknown) => {
   if (valor === null || valor === undefined || valor === "") return null;
   const n = Number(valor);
   return Number.isFinite(n) ? Math.round(n) : null;
 };
 
 /* Os filtros do painel antigo: escolha múltipla em cada um, mais a busca da tabela. */
-export const FILTROS_VAZIOS = Object.freeze({
+export const FILTROS_VAZIOS: FiltrosDaSelecao = Object.freeze({
   unidades: Object.freeze([]),
   editais: Object.freeze([]),
   cargos: Object.freeze([]),
@@ -41,26 +58,13 @@ export const ORIGENS_DOS_CONVOCADOS = Object.freeze([
   Object.freeze({ id: "planilha", rotulo: "Planilha Auditoria (dado antigo)" }),
 ]);
 
-export const rotuloDaOrigem = (id) =>
+export const rotuloDaOrigem = (id: VagaDaSelecao["origemConvocados"]) =>
   ORIGENS_DOS_CONVOCADOS.find((o) => o.id === id)?.rotulo || "Planilha";
 
-const CAMPOS_NUMERICOS = Object.freeze([
-  ["inscritos", "inscritos"],
-  ["aptos", "aptos"],
-  ["cancelados", "cancelados"],
-  ["reprovadosQuestionario", "reprovados_questionario"],
-  ["eliminadosNota", "eliminados_nota"],
-  ["reprovadosAnalise", "reprovados_analise"],
-  ["triados", "triados"],
-  ["totalEliminados", "total_eliminados"],
-  ["convocados", "convocados"],
-  ["aprovados", "aprovados"],
-  ["contratados", "contratados"],
-  ["naoContratados", "nao_contratados"],
-]);
-
-function normalizarVaga(bruta) {
-  const v = {
+function normalizarVaga(valor: unknown): VagaDaSelecao {
+  const bruta = registro(valor);
+  const v: VagaDaSelecao = {
+    busca: "",
     id: texto(bruta?.id),
     edital_id: bruta?.edital_id ?? null,
     edital: texto(bruta?.edital) || texto(bruta?.edital_planilha),
@@ -74,9 +78,19 @@ function normalizarVaga(bruta) {
       texto(bruta?.origem_convocados) === "entrevistas"
         ? "entrevistas"
         : "planilha",
+    inscritos: inteiro(bruta.inscritos),
+    aptos: inteiro(bruta.aptos),
+    cancelados: inteiro(bruta.cancelados),
+    reprovadosQuestionario: inteiro(bruta.reprovados_questionario),
+    eliminadosNota: inteiro(bruta.eliminados_nota),
+    reprovadosAnalise: inteiro(bruta.reprovados_analise),
+    triados: inteiro(bruta.triados),
+    totalEliminados: inteiro(bruta.total_eliminados),
+    convocados: inteiro(bruta.convocados),
+    aprovados: inteiro(bruta.aprovados),
+    contratados: inteiro(bruta.contratados),
+    naoContratados: inteiro(bruta.nao_contratados),
   };
-  for (const [campo, chave] of CAMPOS_NUMERICOS)
-    v[campo] = inteiro(bruta?.[chave]);
   v.busca = normalizarBusca(
     [v.unidade, v.edital, v.cargo, v.vaga, v.vagaPlanilha, v.observacao]
       .filter(Boolean)
@@ -86,8 +100,12 @@ function normalizarVaga(bruta) {
 }
 
 /** O payload de `get_selecao_da_area` no formato do painel. */
-export function normalizarPayload(dados) {
-  const carga = dados?.ultima_carga;
+export function normalizarPayload(valor: unknown): DadosDaSelecao {
+  const dados = registro(valor);
+  const carga = dados.ultima_carga ? registro(dados.ultima_carga) : null;
+  const vagas: readonly unknown[] = Array.isArray(dados.vagas)
+    ? dados.vagas
+    : [];
   return {
     area: texto(dados?.area),
     geradoEm: dados?.gerado_em || null,
@@ -98,17 +116,20 @@ export function normalizarPayload(dados) {
           semEdital: inteiro(carga.sem_edital),
         }
       : null,
-    vagas: (Array.isArray(dados?.vagas) ? dados.vagas : [])
-      .map(normalizarVaga)
-      .filter((v) => v.id || v.vagaPlanilha),
+    vagas: vagas.map(normalizarVaga).filter((v) => v.id || v.vagaPlanilha),
   };
 }
 
 /* ── Filtros ────────────────────────────────────────────────────────── */
 
-const escolheu = (lista, valor) => !lista?.length || lista.includes(valor);
+const escolheu = (lista: readonly string[] | undefined, valor: string) =>
+  !lista?.length || lista.includes(valor);
 
-export function filtrarVagas(vagas, filtros = FILTROS_VAZIOS, busca = "") {
+export function filtrarVagas(
+  vagas: readonly VagaDaSelecao[],
+  filtros: FiltrosDaSelecao = FILTROS_VAZIOS,
+  busca = "",
+) {
   const termo = normalizarBusca(busca);
   return vagas.filter(
     (v) =>
@@ -120,13 +141,16 @@ export function filtrarVagas(vagas, filtros = FILTROS_VAZIOS, busca = "") {
   );
 }
 
-const ordenarPt = (a, b) =>
+const ordenarPt = (a: string, b: string) =>
   String(a).localeCompare(String(b), "pt-BR", {
     sensitivity: "base",
     numeric: true,
   });
 
-const distintos = (lista, campo) =>
+const distintos = (
+  lista: readonly VagaDaSelecao[],
+  campo: keyof VagaDaSelecao,
+) =>
   [...new Set(lista.map((item) => texto(item[campo])).filter(Boolean))].sort(
     ordenarPt,
   );
@@ -136,8 +160,12 @@ const distintos = (lista, campo) =>
   painel antigo): escolhido um DSEI, o filtro de edital só mostra os editais
   dele. A própria escolha de um filtro não limita as opções dele mesmo.
 */
-export function opcoesDosFiltros(vagas, filtros = FILTROS_VAZIOS) {
-  const sem = (campo) => filtrarVagas(vagas, { ...filtros, [campo]: [] });
+export function opcoesDosFiltros(
+  vagas: readonly VagaDaSelecao[],
+  filtros: FiltrosDaSelecao = FILTROS_VAZIOS,
+): OpcoesDosFiltros {
+  const sem = (campo: CampoDoFiltro) =>
+    filtrarVagas(vagas, { ...filtros, [campo]: [] });
   return {
     unidades: distintos(sem("unidades"), "unidade"),
     editais: distintos(sem("editais"), "edital"),
@@ -146,7 +174,11 @@ export function opcoesDosFiltros(vagas, filtros = FILTROS_VAZIOS) {
   };
 }
 
-export const CAMPOS_DO_FILTRO = Object.freeze([
+export const CAMPOS_DO_FILTRO: readonly {
+  campo: CampoDoFiltro;
+  rotulo: string;
+  todos: string;
+}[] = Object.freeze([
   Object.freeze({
     campo: "unidades",
     rotulo: "Nome DSEI",
@@ -170,12 +202,15 @@ export const CAMPOS_DO_FILTRO = Object.freeze([
 ]);
 
 /* Na SEDE e em Projetos a unidade não é DSEI. */
-export function rotuloDaUnidade(area) {
+export function rotuloDaUnidade(area: string) {
   return area === "saude-indigena" ? "Nome DSEI" : "Unidade";
 }
 
 /** Os filtros escolhidos, como os chips e o recorte (LinhaDoRecorte, src/ui/) os descrevem. */
-export function filtrosAtivos(filtros, area = "saude-indigena") {
+export function filtrosAtivos(
+  filtros: FiltrosDaSelecao,
+  area = "saude-indigena",
+) {
   return CAMPOS_DO_FILTRO.filter(({ campo }) => filtros[campo]?.length).map(
     ({ campo, rotulo }) => ({
       campo,
@@ -188,19 +223,24 @@ export function filtrosAtivos(filtros, area = "saude-indigena") {
 /* ── KPIs ───────────────────────────────────────────────────────────── */
 
 /** Soma de um campo; `null` quando nenhuma vaga tem o número. */
-export function somar(vagas, campo) {
-  let soma = null;
+export function somar(vagas: readonly VagaDaSelecao[], campo: CampoNumerico) {
+  let soma: number | null = null;
   for (const v of vagas) if (v[campo] !== null) soma = (soma ?? 0) + v[campo];
   return soma;
 }
 
 /** Contratados ÷ aprovados, de 0 a 1; `null` sem aprovados. */
-export function taxaDeContratacao(aprovados, contratados) {
+export function taxaDeContratacao(
+  aprovados: number | null,
+  contratados: number | null,
+) {
   if (!aprovados) return null;
   return (contratados ?? 0) / aprovados;
 }
 
-export function calcularIndicadores(vagas) {
+export function calcularIndicadores(
+  vagas: readonly VagaDaSelecao[],
+): IndicadoresDaSelecao {
   const aprovados = somar(vagas, "aprovados");
   const contratados = somar(vagas, "contratados");
   return {
@@ -216,14 +256,14 @@ export function calcularIndicadores(vagas) {
 }
 
 /** Número inteiro em pt-BR; zero quando não há o número (como no painel antigo). */
-export function formatarQuantidade(valor) {
+export function formatarQuantidade(valor: unknown) {
   if (valor === null || valor === undefined || !Number.isFinite(Number(valor)))
     return "0";
   return formatNumberBR(Number(valor));
 }
 
 /** "12,5%"; "0%" sem aprovados. */
-export function formatarTaxa(taxa) {
+export function formatarTaxa(taxa: number | null | undefined) {
   if (taxa === null || taxa === undefined) return "0%";
   const pct = Math.round(taxa * 1000) / 10;
   return `${formatNumberBR(pct, { maximumFractionDigits: 1 })}%`;
@@ -232,7 +272,7 @@ export function formatarTaxa(taxa) {
 /* ── Gráficos ───────────────────────────────────────────────────────── */
 
 /* "Eliminados antes da análise": cancelados, questionário e nota. */
-export function eliminadosAntesDaAnalise(vagas) {
+export function eliminadosAntesDaAnalise(vagas: readonly VagaDaSelecao[]) {
   return [
     {
       id: "cancelados",
@@ -253,7 +293,7 @@ export function eliminadosAntesDaAnalise(vagas) {
 }
 
 /* "Aptos na análise e eliminados": aptos para análise × total de eliminados. */
-export function aptosEEliminados(vagas) {
+export function aptosEEliminados(vagas: readonly VagaDaSelecao[]) {
   return [
     {
       id: "aptos",
@@ -269,7 +309,7 @@ export function aptosEEliminados(vagas) {
 }
 
 /* "Triados e reprovados na análise". */
-export function triadosEReprovados(vagas) {
+export function triadosEReprovados(vagas: readonly VagaDaSelecao[]) {
   return [
     { id: "triados", rotulo: "Triados", valor: somar(vagas, "triados") ?? 0 },
     {
@@ -281,8 +321,8 @@ export function triadosEReprovados(vagas) {
 }
 
 /* "Top DSEIs por inscritos". */
-export function topUnidades(vagas, limite = 10) {
-  const soma = new Map();
+export function topUnidades(vagas: readonly VagaDaSelecao[], limite = 10) {
+  const soma = new Map<string, number>();
   for (const v of vagas) {
     const unidade = v.unidade || "Sem unidade";
     soma.set(unidade, (soma.get(unidade) || 0) + (v.inscritos || 0));
@@ -300,19 +340,31 @@ export function topUnidades(vagas, limite = 10) {
   "Alertas identificados no recorte": cada observação da coluna T uma vez,
   com onde ela aparece (quantas vagas, em quais DSEIs e editais).
 */
-export function observacoesDoRecorte(vagas) {
-  const grupos = new Map();
+export function observacoesDoRecorte(
+  vagas: readonly VagaDaSelecao[],
+): ObservacaoDaSelecao[] {
+  const grupos = new Map<
+    string,
+    {
+      texto: string;
+      vagas: number;
+      unidades: Set<string>;
+      editais: Set<string>;
+    }
+  >();
   for (const v of vagas) {
     if (!v.observacao) continue;
     const chave = normalizarBusca(v.observacao);
-    if (!grupos.has(chave))
-      grupos.set(chave, {
+    let g = grupos.get(chave);
+    if (!g) {
+      g = {
         texto: v.observacao,
         vagas: 0,
-        unidades: new Set(),
-        editais: new Set(),
-      });
-    const g = grupos.get(chave);
+        unidades: new Set<string>(),
+        editais: new Set<string>(),
+      };
+      grupos.set(chave, g);
+    }
     g.vagas += 1;
     if (v.unidade) g.unidades.add(v.unidade);
     if (v.edital) g.editais.add(v.edital);
@@ -329,9 +381,13 @@ export function observacoesDoRecorte(vagas) {
 
 /* ── Datas e CSV ────────────────────────────────────────────────────── */
 
-const numeroDoCsv = (valor) => (valor === null ? "" : String(valor));
+const numeroDoCsv = (valor: number | null) =>
+  valor === null ? "" : String(valor);
 
-const COLUNAS_DO_CSV = Object.freeze([
+const COLUNAS_DO_CSV: readonly (readonly [
+  string,
+  (vaga: VagaDaSelecao) => string,
+])[] = Object.freeze([
   ["DSEI / Unidade", (v) => v.unidade],
   ["Edital", (v) => v.edital],
   ["Cargo", (v) => v.cargo],
@@ -358,8 +414,8 @@ const COLUNAS_DO_CSV = Object.freeze([
 const BOM = String.fromCharCode(0xfeff);
 
 /** CSV com `;` (Excel pt-BR), BOM e células protegidas contra fórmula. */
-export function csvDaSelecao(vagas) {
-  const celula = (valor) => {
+export function csvDaSelecao(vagas: readonly VagaDaSelecao[]) {
+  const celula = (valor: unknown) => {
     const seguro = sanitizeCsvCell(valor ?? "");
     return /[";\n\r]/.test(seguro) ? `"${seguro.replace(/"/g, '""')}"` : seguro;
   };
@@ -377,14 +433,16 @@ export function csvDaSelecao(vagas) {
 /* O tipo de payload para src/lib/cache-de-payload.js (a mesma cópia das Entrevistas). */
 export const PAINEL_DE_SELECAO = Object.freeze({
   nome: "painel de seleção",
-  chave: ({ area }) => `selecao:${String(area ?? "").trim()}`,
-  esquema: (payload) => payload?.schema_version,
+  chave: ({ area }: { area?: unknown }) =>
+    `selecao:${String(area ?? "").trim()}`,
+  esquema: (payload: unknown) => registro(payload).schema_version,
   esquemas: Object.freeze([1]),
-  valido: (payload) => Array.isArray(payload?.vagas),
+  valido: (payload: unknown) => Array.isArray(registro(payload).vagas),
 });
 
 /* O payload mudou? `gerado_em` muda a cada leitura e não conta. */
-export function payloadMudou(anterior, novo) {
-  const semData = (payload) => JSON.stringify({ ...payload, gerado_em: null });
+export function payloadMudou(anterior: unknown, novo: unknown) {
+  const semData = (payload: unknown) =>
+    JSON.stringify({ ...registro(payload), gerado_em: null });
   return !anterior || !novo || semData(anterior) !== semData(novo);
 }

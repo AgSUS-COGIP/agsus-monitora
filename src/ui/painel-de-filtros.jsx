@@ -12,6 +12,9 @@ import { classes } from "./classes.js";
   `rotuloOcultar` trocam os textos (a Visão geral os lê de Configurações ›
   Página inicial).
 */
+/**
+ * @param {{ idDoTitulo: string, className?: string, recolhivel?: boolean, quantos?: number, escopo?: string, podeLimpar?: boolean | number, aoLimpar?: () => void, aoRecolher?: (recolhido: boolean) => void, titulo?: string, subtitulo?: string, rotuloMostrar?: string, rotuloOcultar?: string, tour?: string, children?: import("react").ReactNode }} props
+ */
 export function PainelDeFiltros({
   idDoTitulo,
   className,
@@ -124,7 +127,9 @@ export function PainelDeFiltros({
   );
 }
 
-/** A faixa de filtros aplicados. */
+/** A faixa de filtros aplicados.
+ * @param {{ children?: import("react").ReactNode }} props
+ */
 export function ChipsDeFiltro({ children }) {
   return (
     <div className="ui-chips" aria-label="Filtros aplicados">
@@ -133,7 +138,9 @@ export function ChipsDeFiltro({ children }) {
   );
 }
 
-/** Um filtro aplicado: rótulo em negrito, o valor e o "x" que o tira. */
+/** Um filtro aplicado: rótulo em negrito, o valor e o "x" que o tira.
+ * @param {{ rotulo: string, aoTirar: () => void, children?: import("react").ReactNode }} props
+ */
 export function ChipDeFiltro({ rotulo, aoTirar, children }) {
   return (
     <button
