@@ -37,7 +37,6 @@ import {
   DICA_DA_ART,
   nota,
   podeIncluirPorDecisao,
-  ROTULO_DA_ART,
   textoDoLote,
 } from "../../lib/avaliacao-documental/tela-da-pre-classificacao.js";
 import {
@@ -460,7 +459,6 @@ function ModoDeAnalise({
       },
       { rotulo: "Responsável", valor: f.responsavel_nome || "—" },
       { rotulo: "Reserva", valor: textoDaReserva(f.reserva, dados.eu) || "—" },
-      { rotulo: ROTULO_DA_ART, valor: nota(f.art) },
       ...(f.versao_regra
         ? [{ rotulo: "Regra", valor: `v${f.versao_regra}` }]
         : []),
