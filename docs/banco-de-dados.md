@@ -932,8 +932,17 @@ Migration `20261007230000_edital_de_treinamento.sql` (ensaio e rollback com o me
 
 - **Marca:** `TB_MONITORAMENTO_INDIGENA."ST_TREINAMENTO"` (S/N, padrão N,
   `CK_MONITINDIG_STTREINAMENTO`). A tela não muda a marca; só
-  `private."FC_PREPARAR_EDITAL_TREINAMENTO"(p_area)` cria edital com S (hoje só a Saúde Indígena:
-  "Treinamento – Saúde Indígena (991/2099)", unidade "DSEI Treinamento").
+  `private."FC_PREPARAR_EDITAL_TREINAMENTO"(p_area)` cria edital com S, um por área:
+  - Saúde Indígena: "Treinamento – Saúde Indígena (991/2099)", unidade "DSEI Treinamento"
+    (`private."FC_PREPARAR_TREINAMENTO_SI"`): entrevistas, classificação e a regra da avaliação
+    documental do Edital 111/2026 (modelo SI26-PARINTINS, com as perguntas do questionário NERSSI
+    ligadas; nenhum edital SI tem regra conferida ainda), na situação Conferir;
+  - Projetos: "Treinamento – Projetos (992/2099)", unidade "Escritório Treinamento"
+    (`private."FC_PREPARAR_TREINAMENTO_PROJETOS"`, migration
+    `20261008110000_treinamento_avaliacao_documental.sql`): espelho do Edital 93/2026 (5 vagas com
+    códigos fictícios `99099200x`, quadro, cronograma relativo), cópia **independente** (só o JSON)
+    da regra conferida do 93/2026 (versão 7) e da regra da classificação, 40 candidatos fictícios
+    no formato da exportação da Empregare e a pré-classificação já gravada.
 - **Predicado único** — use estes, nunca `"ST_TREINAMENTO" = S` solto:
   `private."FC_EH_TREINAMENTO"(marca)`, `private."FC_EDITAL_EH_TREINAMENTO"(id)` e
   `private."FC_ANALISE_EH_TREINAMENTO"(origem_planilha)` (as análises fictícias têm
@@ -954,6 +963,15 @@ Migration `20261007230000_edital_de_treinamento.sql` (ensaio e rollback com o me
   `listar_editais_classificacao`, `FC_DADOS_CLASSIFICACAO_EDITAL`, `obter_pre_classificacao`,
   `pre_classificacao_ler_editais`, `get_painel_dos_robos`. O documento oficial gerado sai com
   "TREINAMENTO — SEM VALOR OFICIAL" no título (`documento-sei.js`).
+- **A pré-classificação pronta do treinamento de Projetos:** o resultado do cálculo Python (o
+  mesmo `processar_edital` do job, gerado por `scripts/pre_classificacao/gerar_treinamento.py` a
+  partir de `tests/fixtures/avaliacao-documental/treinamento-projetos.json`, conferido por
+  `tests/python/test_treinamento_projetos.py`) fica no corpo do preparar e é gravado por
+  `private."FC_PRE_CLASSIFICAR_TREINAMENTO"` pelas mesmas RPCs do job
+  (`gravar_pre_classificacao_vaga`, `abrir_fichas_pre_classificacao`,
+  `finalizar_pre_classificacao`), na execução `treinamento-<id do edital>`. Essa execução fica fora
+  do painel dos robôs e do Status das atualizações (`private."FC_EXECUCAO_EH_TREINAMENTO"`). Mudou a
+  regra, os fictícios ou o cálculo: rode o gerador e recrie a função numa migration nova.
 - **Caches (para quem mexer neles):** o predicado está nas montagens
   (`FC_MONTAR_ENTREVISTAS_AREA`, `FC_MONTAR_APROVADOS_AREA`) e na view que o painel das análises lê;
   função de cache nova que ler `TB_ENTREVISTA`, `TB_ANALISE_CURRICULAR`, `TB_LISTA_APROVADO` ou
@@ -974,7 +992,8 @@ os fictícios. Garantias:
    `FC_TG_REGRA_ANALISE_IMUTAVEL`, `FC_TG_AJUSTE_PONTUACAO_IMUTAVEL`) só deixam apagar quando a
    transação marcou `agsus.reinicio_treinamento` com o id de um edital de treinamento **e** a linha
    é desse edital (`private."FC_REINICIO_TREINAMENTO_PERMITE"`).
-3. Vaga da Empregare carregada pelo robô (`CO_SYNC`) ligada ao treinamento: recusa e não apaga.
+3. Vaga da Empregare carregada pelo robô (`CO_SYNC`) ligada ao treinamento: recusa e não apaga. O
+   preparar também recusa se o código de uma vaga fictícia já existir fora do treinamento.
 4. Análise só sai se for de origem `treinamento`, da área e do número do edital; FK de qualquer
    registro real para ela aborta tudo.
 5. O ensaio confere que regra real não se apaga nem com a marca, que o reinício recusa edital real
