@@ -31,6 +31,7 @@ import {
   obterDadosDoMonitoramento,
 } from "../../componentes/dados-do-monitoramento.js";
 import { hojeEmBrasilia } from "../../lib/cronograma-do-edital.js";
+import { semTreinamento } from "../../lib/edital-de-treinamento.js";
 import { chaveDoDsei } from "../../lib/mapa-saude-indigena/chaves.js";
 import {
   acompanhamentoDaResposta,
@@ -168,10 +169,14 @@ export function criarEstadoDaVisaoGeral({
     )
       enriquecidas = {
         chave: { linhas, area: areaAtual, acompanhamento, dia },
-        linhas: enriquecerLinhas(linhasDaArea(linhas, areaAtual), {
-          hoje: dia,
-          acompanhamento,
-        }),
+        // O edital de treinamento não entra na Visão geral (indicadores, mapas, tabela).
+        linhas: enriquecerLinhas(
+          semTreinamento(linhasDaArea(linhas, areaAtual)),
+          {
+            hoje: dia,
+            acompanhamento,
+          },
+        ),
       };
     return { daArea: enriquecidas.linhas, acompanhamento, dia };
   }

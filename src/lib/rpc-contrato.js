@@ -330,6 +330,13 @@ export const CONTRATO_RPC = {
     resumo:
       "Só admin: muda o edital de área, com motivo auditado em TH_MONITORAMENTO.",
   },
+  // ── Edital de treinamento (20261007230000_edital_de_treinamento.sql)
+  reiniciar_edital_treinamento: {
+    argumentos: ["p_edital"],
+    critica: false,
+    resumo:
+      "Só admin global: volta o edital de treinamento (ST_TREINAMENTO = S) ao estado inicial — apaga fisicamente os dados dele e recria os fictícios; edital real é recusado (42501).",
+  },
   listar_unidades_por_area: {
     argumentos: [],
     critica: false,

@@ -5,7 +5,8 @@
   Lê o que get_painel_dos_robos e listar_vagas_dos_robos devolvem
   (supabase/migrations/20261007190000_painel_dos_robos.sql) e monta:
     - a lista de editais da escolha (por área; só os vigentes, pela regra da
-      Avaliação documental, salvo "mostrar todos"; os escolhidos ficam);
+      Avaliação documental, salvo "mostrar todos"; os escolhidos ficam; o
+      edital de treinamento só com "mostrar todos", com "· Treinamento");
     - o valor de cada edital no pedido (o robô da Empregare só aceita o
       número; a pré-classificação recebe o id, que não confunde áreas);
     - a prévia do que vai rodar ("5 vagas do 93/2026: 179698, 180231…");
@@ -15,6 +16,10 @@
   (as mesmas da função api/rodar-carga.js).
 */
 import { editalVigente } from "./avaliacao-documental/editais.js";
+import {
+  ehEditalDeTreinamento,
+  sufixoDeTreinamento,
+} from "./edital-de-treinamento.js";
 import { OPCOES_DOS_ROBOS, roboDeCarga } from "./robos-de-carga.js";
 
 const data = (valor) => {
@@ -75,8 +80,13 @@ function normalizarEdital(e) {
     unidade: texto(e?.unidade),
     ativo: e?.ativo,
     status: e?.status ?? "",
+    treinamento: ehEditalDeTreinamento(e),
   };
-  return { ...edital, vigente: editalVigente(edital) };
+  // O edital de treinamento não está entre os vigentes: só vai se pedido ("mostrar todos").
+  return {
+    ...edital,
+    vigente: !edital.treinamento && editalVigente(edital),
+  };
 }
 
 function parametrosDoRobo(filtro, forcada) {
@@ -230,7 +240,7 @@ const nomeDaArea = (areas, area) =>
 export function rotuloDoEdital(edital, areas = []) {
   const unidade = edital.unidade ? ` · ${edital.unidade}` : "";
   const area = edital.area ? ` (${nomeDaArea(areas, edital.area)})` : "";
-  return `${edital.numero}${unidade}${area}`;
+  return `${edital.numero}${unidade}${area}${sufixoDeTreinamento(edital)}`;
 }
 
 /**

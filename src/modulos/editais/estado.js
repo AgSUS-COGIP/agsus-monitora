@@ -13,7 +13,9 @@
 import {
   canMoveEditalBetweenAreas,
   canManageEditais,
+  isAdminGlobal,
 } from "../../lib/access-roles.js";
+import { ehEditalDeTreinamento } from "../../lib/edital-de-treinamento.js";
 import { exigirSessao } from "../../lib/sessao.js";
 import { analisarCronograma } from "../../lib/cronograma-do-edital.js";
 import { lerAnexoNoServidor } from "../../lib/anexos-do-edital.js";
@@ -25,6 +27,7 @@ const RPC_UNIDADES_POR_AREA = "listar_unidades_por_area";
 const RPC_MOVER_DE_AREA = "mover_edital_de_area";
 const RPC_QUADRO = "obter_quadro_de_vagas";
 const RPC_SALVAR_QUADRO = "salvar_quadro_de_vagas";
+const RPC_REINICIAR_TREINAMENTO = "reiniciar_edital_treinamento";
 export const EVENTO_CRONOGRAMA_SALVO = "agsus:nucleo-cronograma-saved";
 
 const txt = (valor) => String(valor ?? "").trim();
@@ -370,6 +373,47 @@ export function criarEstadoDoNucleo({
     }
   }
 
+  /**
+   * Só admin global, só o edital de treinamento: volta os dados fictícios ao
+   * início (o banco recusa edital real). A confirmação é na própria página
+   * (LinhaDoEdital), por isso aqui não pergunta de novo.
+   */
+  async function reiniciarTreinamento(linha) {
+    if (estado.salvando) return false;
+    if (!isAdminGlobal(perfil())) {
+      toast("Só o administrador global reinicia o treinamento.", "warn");
+      return false;
+    }
+    if (!ehEditalDeTreinamento(linha)) {
+      toast("Só o edital de treinamento pode ser reiniciado.", "warn");
+      return false;
+    }
+    publicar({ salvando: true });
+    loader(true, "Editais", "Reiniciando o treinamento...", 70);
+    try {
+      await exigirSessao(supabase);
+      const { error } = await supabase.rpc(RPC_REINICIAR_TREINAMENTO, {
+        p_edital: linha.id,
+      });
+      if (error) throw error;
+      document.dispatchEvent(
+        new CustomEvent(EVENTO_CRONOGRAMA_SALVO, { detail: { id: linha.id } }),
+      );
+      await aoSalvar();
+      toast("Treinamento reiniciado.");
+      return true;
+    } catch (erro) {
+      toast(
+        `Erro ao reiniciar o treinamento: ${erro?.message || erro}`,
+        "error",
+      );
+      return false;
+    } finally {
+      loader(false);
+      publicar({ salvando: false });
+    }
+  }
+
   // ── Modais ─────────────────────────────────────────────────────────────
 
   function abrir(modal) {
@@ -411,6 +455,7 @@ export function criarEstadoDoNucleo({
     salvarQuadroDeVagas,
     salvarEdital,
     moverEdital,
+    reiniciarTreinamento,
     desligar() {
       assinaturaDoAuth?.data?.subscription?.unsubscribe?.();
       document.removeEventListener(EVENTO_CRONOGRAMA_SALVO, invalidarResumo);

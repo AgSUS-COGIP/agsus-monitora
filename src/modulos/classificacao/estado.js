@@ -49,6 +49,7 @@ import {
   textoParaSei,
 } from "../../lib/classificacao/documento-sei.js";
 import { gerarDocxOficial } from "../../lib/classificacao/documento-docx.js";
+import { ehEditalDeTreinamento } from "../../lib/edital-de-treinamento.js";
 import { LOGO_PADRAO_DA_BARRA } from "../../lib/marca-da-barra-lateral.js";
 import {
   copiarParaAreaDeTransferencia,
@@ -478,6 +479,9 @@ export function criarEstadoDaClassificacao({
       fase,
       regra: documento ? { ...configuracao, documento } : configuracao,
       agenda,
+      treinamento:
+        Boolean(estado.dados?.edital?.treinamento) ||
+        ehEditalDeTreinamento(registrado.retrato.edital),
     });
   }
 
