@@ -516,6 +516,37 @@ hash das funções, permissões, comentários e colunas iguais aos de antes).
   view), depois a migration. Ao contrário, o front antigo mostraria a lista
   enxuta sem grupo e sem detalhamento, e o Inativo quebraria (sem o filtrado).
 
+### 6.5 Os três caches só quando os dados mudam (07/10/2026)
+
+Migration `20261007220000_caches_so_quando_muda.sql` (rollback e ensaio com o
+mesmo nome em `supabase/rollback/` e `supabase/ensaios/`). Vale para o painel de
+análises (6.3/6.4), a lista de aprovados (12) e a aba Entrevistas.
+
+- **Marcas**: `private."TL_ALTERACAO_CACHE"` (tipo `APROVADOS`, `ANALISES` ou
+  `ENTREVISTAS`, área, tabela de origem). Gatilhos **por comando** (tabelas de
+  transição, nunca por linha) nas tabelas de origem só inserem; quem remonta
+  apaga as marcas da área **antes** de montar (mudança confirmada no meio deixa
+  marca nova). Sem marca = pacote em dia. Mudança sem efeito não marca: o
+  edital das análises e o monitoramento comparam antes × depois, e o
+  `finalizar_sync_analises_incremental` não regrava mais os editais iguais.
+- **As tarefas** `agsus_*_cache_*` (mesmos nomes e horários) só remontam a área
+  com marca, sem pacote ou com pacote de mais de 24 h. Sem mudança, ~1 ms (antes
+  0,6–1 s por execução, a cada 2 min). As funções de versão
+  (`FC_VERSAO_APROVADOS_AREA`, `FC_VERSAO_DADOS_ANALISE`, `FC_VERSAO_ENTREVISTAS`)
+  saíram; `DS_VERSAO_DADOS` é o instante da montagem.
+- **Lista de aprovados**: a versão entregue à tela é a do pacote; com marca
+  pendente, mais a contagem e a última marca (a cópia do navegador não vale);
+  com recorte, mais o md5 dos editais visíveis. Ensaio: 105–1.936 ms → 23–47 ms
+  por área; com a versão que ainda vale, 20 ms → 1–2 ms.
+- **Marcos da Visão geral** (`obter_marcos_da_area`): lê
+  `TA_PAINEL_ANALISE.DS_CONCLUIDAS_POR_ANO` (montada junto com o painel) em vez de
+  varrer a view da área. Ensaio: 3,7 s → 1 ms na Saúde Indígena; números iguais.
+- **Sem WAL**: os três caches e as tabelas de passagem do sync das análises
+  (`TM_ANALISE_CURRICULAR`, `TM_MANIFESTO_ANALISE`) são `UNLOGGED` (eram ~3,5 dos
+  4,5 GB de WAL em 5 dias, que o Realtime decodifica). Se o banco cair, o
+  Postgres os esvazia: os caches são remontados e o sync interrompido é
+  encerrado por `agsus_analises_encerrar_inativas`.
+
 ## 7. Edital sempre na área certa
 
 Migration `20260928220000_edital_na_area_certa.sql` (rollback em
