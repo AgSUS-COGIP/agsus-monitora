@@ -10,9 +10,11 @@ import {
 import { Selo, TabelaInfinita } from "../../ui/index.js";
 
 /*
-  "Entrevistas": a tabela da visão "Resultados", na tabela de carregamento
+  "Entrevistas": a tabela do Painel de entrevistas, na tabela de carregamento
   contínuo das telas (TabelaInfinita, src/ui/). A busca do cabeçalho vale só
-  para a tabela. Clique na linha (ou Enter/Espaço) abre a gaveta.
+  para a tabela. Clique na linha (ou Enter/Espaço) abre a gaveta. Quem empata
+  na nota da entrevista (mesmo edital e vaga) leva o selo "Empate": o
+  desempate é feito na Classificação (`empates`: id → quantos empatam).
 */
 
 const COLUNAS = [
@@ -46,7 +48,7 @@ export function ResumoDaAnalise({ analise }) {
 const pelaBusca = (entrevistas, busca) =>
   filtrarEntrevistas(entrevistas, { ...FILTROS_VAZIOS, busca });
 
-function LinhaDaEntrevista({ entrevista: e, aoAbrir }) {
+function LinhaDaEntrevista({ entrevista: e, empatados, aoAbrir }) {
   return (
     <tr
       className="entrevistas-linha"
@@ -89,6 +91,15 @@ function LinhaDaEntrevista({ entrevista: e, aoAbrir }) {
             Divergente
           </Selo>
         ) : null}
+        {empatados ? (
+          <Selo
+            tom="pendente"
+            className="entrevistas-selo-empate"
+            titulo={`Empate com ${empatados - 1} ${empatados === 2 ? "candidato" : "candidatos"} na mesma vaga: o desempate é feito na Classificação`}
+          >
+            Empate
+          </Selo>
+        ) : null}
       </td>
       <td>
         <SeloDoParecer parecer={e.parecer} />
@@ -105,6 +116,7 @@ export function TabelaDeEntrevistas({
   entrevistas,
   total,
   carregado,
+  empates = null,
   aoAbrir,
 }) {
   return (
@@ -121,7 +133,12 @@ export function TabelaDeEntrevistas({
       filtrarPelaBusca={pelaBusca}
       colunas={COLUNAS}
       linha={(e) => (
-        <LinhaDaEntrevista key={e.id} entrevista={e} aoAbrir={aoAbrir} />
+        <LinhaDaEntrevista
+          key={e.id}
+          entrevista={e}
+          empatados={empates?.get(e.id) || 0}
+          aoAbrir={aoAbrir}
+        />
       )}
       total={total}
       vazio={MENSAGEM_SEM_ENTREVISTAS}

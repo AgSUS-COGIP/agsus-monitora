@@ -146,7 +146,7 @@ aplicar). Pela decisão de 06/10/2026, a conta pesada é do **Python**, não de 
 - Job `scripts/pre_classificacao/` e workflow `pre-classificacao.yml` (editais, modo
   `normal`/`seco`/`refazer_lote`, `disparado_por`); roda sozinho no fim do robô da Empregare (passo
   novo em `robo-empregare.yml`, `--apos-robo`), pelo "Recalcular" da coordenação e pelo "Rodar
-  agora" (`api/rodar-carga.js` aceita o robô por edital).
+  agora" (hoje pela RPC `disparar_robo`, que aceita o robô por edital).
 - Aba **Pré-classificação** (`src/modulos/avaliacao-documental/pre-classificacao.jsx`): contadores,
   tabela por vaga com a linha de corte, divergência ART × declarada, eliminados à parte, tamanho do
   lote por vaga (versão nova da regra) e o registro/exportação das listas PROVISORIA e LOTE com o

@@ -4,7 +4,7 @@ quem disparou (agenda, "Rodar agora" do MONITORA ou "Run workflow" do
 GitHub), o identificador da execução, o endereço dela no GitHub e o resumo
 que aparece na página da execução (GITHUB_STEP_SUMMARY).
 
-O "Rodar agora" (api/rodar-carga.js) manda `disparado_por` = id do usuário;
+O "Rodar agora" (RPC disparar_robo) manda `disparado_por` = id do usuário;
 a agenda manda "agenda"; em branco = alguém clicou "Run workflow" no GitHub.
 """
 

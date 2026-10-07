@@ -227,7 +227,11 @@ describe("estado da aba: descongelar e recalcular", () => {
         p_vaga: null,
       },
     ]);
-    expect(pedidos).toEqual([{ robo: "pre_classificacao", edital: "ed-1" }]);
+    // O recálculo agora é pedido pelo banco (disparar_robo), não pela Vercel.
+    expect(rpcs).toContainEqual([
+      "disparar_robo",
+      { p_robo: "pre_classificacao", p_inputs: { editais: ["ed-1"] } },
+    ]);
     expect(toasts[0]).toEqual(["3 notas declaradas descongeladas.", "success"]);
   });
 

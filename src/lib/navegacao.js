@@ -39,6 +39,31 @@ export const ehPainelExterno = (view) =>
   String(view || "").startsWith(PREFIXO_DO_PAINEL);
 
 /*
+  Links antigos: a tela de Entrevistas tinha três visões (Resultados,
+  Conduzir entrevistas e Roteiros). Desde 07/10/2026 são duas entradas do
+  menu — o Painel de entrevistas (view `entrevistas`) e Conduzir entrevistas
+  (view `conduzir-entrevistas`, com Fila e Preparar; os roteiros ficam no
+  Preparar). `entrevistas:<visão>` vai para o lugar novo.
+*/
+const TELAS_ANTIGAS = Object.freeze({
+  "entrevistas:resultados": Object.freeze({ view: "entrevistas", visao: "" }),
+  "entrevistas:conduzir": Object.freeze({
+    view: "conduzir-entrevistas",
+    visao: "fila",
+  }),
+  "entrevistas:roteiros": Object.freeze({
+    view: "conduzir-entrevistas",
+    visao: "preparar",
+  }),
+});
+
+/** A tela pedida (e a visão dela), já trocando um link antigo pelo novo. */
+export function destinoDaTela(pedida) {
+  const tela = String(pedida ?? "").trim();
+  return TELAS_ANTIGAS[tela] || { view: tela, visao: "" };
+}
+
+/*
   O que pode o perfil, tela a tela, e o aviso de quem não pode. A ordem e os
   textos são os de sempre (o `navigate` do legado).
 */
@@ -67,6 +92,10 @@ const BLOQUEIOS = Object.freeze({
   ],
   recursos: [canViewRecursos, "Sem permissão para Recursos."],
   entrevistas: [canViewEntrevistas, "Sem permissão para Entrevistas."],
+  "conduzir-entrevistas": [
+    canViewEntrevistas,
+    "Sem permissão para Entrevistas.",
+  ],
   classificacao: [canViewClassificacao, "Sem permissão para Classificação."],
   selecao: [canViewSelecao, "Sem permissão para Seleção."],
   config: [podeAbrirConfiguracoes, "Sem permissão para Configurações."],

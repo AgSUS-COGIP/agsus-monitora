@@ -2,7 +2,7 @@
 
 Job Python diário (`scripts/conferencias/`, workflow `.github/workflows/conferencias.yml`) que lê o
 banco e grava **avisos**; banco em `supabase/migrations/20261005210000_conferencias_de_consistencia.sql`;
-tela em `src/modulos/conferencias/` (regras em `src/lib/avisos-de-conferencia.js`). Pedido do
+tela em `src/modulos/conferencias/` (regras em `src/lib/avisos-de-conferencia.ts`). Pedido do
 usuário: _"pode usar mais o Python, incluir em análises, entrevistas, lista de classificação, etc."_
 Arquitetura: [../python-no-monitora.md](../python-no-monitora.md).
 

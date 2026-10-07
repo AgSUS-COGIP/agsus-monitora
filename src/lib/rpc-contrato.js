@@ -604,7 +604,7 @@ export const CONTRATO_RPC = {
     argumentos: [],
     critica: false,
     resumo:
-      "Últimas 10 execuções de cada carga (análises por origem, entrevistas, seleção, robô da Empregare com vagas pedidas/baixadas/falhas/recusadas e quem disparou — 20261005170000 —, conferências de consistência com avisos novos/abertos/resolvidos — 20261005210000; análises com encerrada_por_inatividade — 20261007170000; expurgo diário dos anexos do chat com lotes/removidos/confirmados/falhas/pendentes — 20261007250000) e das tarefas agsus_* do pg_cron, para a seção Status das atualizações (só administrador global).",
+      "Últimas 10 execuções de cada carga (análises por origem, entrevistas, seleção, robô da Empregare com vagas pedidas/baixadas/falhas/recusadas e quem disparou — 20261005170000 —, conferências de consistência com avisos novos/abertos/resolvidos — 20261005210000; análises com encerrada_por_inatividade — 20261007170000; expurgo diário dos anexos do chat com lotes/removidos/confirmados/falhas/pendentes — 20261007250000; agenda dos robôs pelo banco com chave cadastrada, último pedido aceito, falhas/sem chave em 24 h e os últimos pedidos — 20261008140000) e das tarefas agsus_* do pg_cron, para a seção Status das atualizações (só administrador global).",
   },
   // ── Painel dos robôs (Status das atualizações, 20261007190000_painel_dos_robos.sql) ──
   get_painel_dos_robos: {
@@ -612,6 +612,19 @@ export const CONTRATO_RPC = {
     critica: false,
     resumo:
       "Rodar com opções e histórico dos robôs: áreas, editais (com status, para a regra de vigente) e as 8 últimas execuções do robô da Empregare (filtro, quem pediu, contagens e, por vaga, situação, candidatos e com link) e da pré-classificação (pedido, quem pediu). Só administrador global.",
+  },
+  // ── Rodar agora pelo banco (20261008140000_agenda_dos_robos_pelo_banco.sql) ──
+  disparar_robo: {
+    argumentos: ["p_robo", "p_inputs"],
+    critica: false,
+    resumo:
+      "Rodar agora, Opções e Recalcular: confere quem pede (administrador global; coordenação só na pré-classificação de um edital) e as opções do robô, pede o workflow ao GitHub com a chave do Vault e devolve o id do pedido (TL_DISPARO_ROBO). 28000, 42501, 22023 e 55006 (pedido repetido em 2 min).",
+  },
+  situacao_do_disparo_robo: {
+    argumentos: ["p_disparo"],
+    critica: false,
+    resumo:
+      "Situação de um pedido de disparar_robo (PEDIDO, ACEITO, FALHOU ou SEM_TOKEN, com o código HTTP e a mensagem do GitHub). Só quem pediu ou o administrador global.",
   },
   listar_vagas_dos_robos: {
     argumentos: ["p_editais", "p_vagas"],
@@ -668,7 +681,7 @@ export const CONTRATO_RPC = {
     argumentos: ["p_edital"],
     critica: false,
     resumo:
-      "Condução da entrevista de um edital: configuração (roteiro, banca, lançamento), a lista de convocação vigente da Classificação com o retrato (lista_convocacao), a regra de convocação vigente da Classificação, banca e convocados com as notas; pode_editar, pode_gerar_lista, admin_global e meu_perfil.",
+      "Condução da entrevista de um edital: configuração (roteiro, banca, lançamento), a lista de convocação vigente da Classificação com o retrato (lista_convocacao), a regra vigente da Classificação (convocação, desempate e empate final — 20261008130000), banca e convocados com as notas; pode_editar, pode_gerar_lista, admin_global e meu_perfil.",
   },
   configurar_entrevista_edital: {
     argumentos: ["p_edital", "p_dados"],
@@ -1268,7 +1281,13 @@ export const CONTRATO_RPC = {
     argumentos: ["p_edital", "p_versao"],
     critica: false,
     resumo:
-      "Marca a versão vigente da regra como conferida (40001 se não é a vigente). Só a coordenação do edital.",
+      "Marca a versão vigente da regra como conferida (40001 se não é a vigente). Dupla conferência: quem salvou a versão não confere (42501), salvo o administrador global. Só a coordenação do edital.",
+  },
+  obter_apoio_regra_analise: {
+    argumentos: ["p_edital"],
+    critica: false,
+    resumo:
+      "O que o assistente da regra lê: os nomes das colunas de pergunta da última carga de cada vaga (sem respostas), as regras conferidas dos outros editais da área (só a coordenação) e a regra de classificação vigente com pode_editar. Leitor.",
   },
   obter_equipe_edital: {
     argumentos: ["p_edital"],

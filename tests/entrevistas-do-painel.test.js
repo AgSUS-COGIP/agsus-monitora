@@ -292,13 +292,16 @@ describe("pendências, datas e CSV", () => {
   const { entrevistas, aprovadosSemEntrevista, ultimaCarga } =
     normalizarPayload(PAYLOAD);
 
-  it("conta as quatro pendências", () => {
+  it("conta as pendências (ligação e andamento)", () => {
     const p = pendenciasDasEntrevistas(entrevistas, aprovadosSemEntrevista);
     expect(Object.fromEntries(p.map((x) => [x.chave, x.valor]))).toEqual({
       sem_entrevista: 2,
       sem_analise: 1,
       sem_edital: 1,
       divergente: 1,
+      sem_comparecimento: 0,
+      sem_nota: 0,
+      sem_parecer: 0,
     });
   });
 
@@ -334,12 +337,29 @@ describe("registro da aba", async () => {
     await import("../src/lib/access-roles.js");
   const { NOMES_DE_ICONES } = await import("../src/modules/icones.js");
 
-  it("Entrevistas vem depois de Recursos e antes da Classificação e da Lista de aprovados, como beta", () => {
+  it("Painel de entrevistas e Conduzir entrevistas vêm depois de Recursos e antes da Classificação e da Lista de aprovados, como beta", () => {
     const ids = ABAS_DO_MENU.map((aba) => aba.id);
     expect(ids.indexOf("entrevistas")).toBe(ids.indexOf("recursos") + 1);
-    expect(ids.indexOf("classificacao")).toBe(ids.indexOf("entrevistas") + 1);
+    expect(ids.indexOf("conduzir-entrevistas")).toBe(
+      ids.indexOf("entrevistas") + 1,
+    );
+    expect(ids.indexOf("classificacao")).toBe(
+      ids.indexOf("conduzir-entrevistas") + 1,
+    );
+    expect(
+      ABAS_DO_MENU.find((aba) => aba.id === "conduzir-entrevistas"),
+    ).toMatchObject({
+      rotulo: "Conduzir entrevistas",
+      view: "conduzir-entrevistas",
+      recurso: "entrevistas",
+      icone: "clipboard-pen-line",
+      ordem: 8,
+      beta: true,
+    });
+    expect(NOMES_DE_ICONES).toContain("clipboard-pen-line");
     expect(ids.indexOf("aprovados")).toBe(ids.indexOf("classificacao") + 1);
     expect(ABAS_DO_MENU.find((aba) => aba.id === "entrevistas")).toMatchObject({
+      rotulo: "Painel de entrevistas",
       view: "entrevistas",
       recurso: "entrevistas",
       icone: "messages-square",

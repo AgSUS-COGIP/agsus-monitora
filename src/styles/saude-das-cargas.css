@@ -176,6 +176,13 @@
   overflow-wrap: anywhere;
 }
 
+/* Agenda dos robôs: o último pedido aceito ao GitHub e as falhas (agenda-dos-robos.tsx). */
+.saude-agenda {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--text-body-sm);
+}
+
 /* ── Detalhes: cada script ou tarefa, com o histórico ────────────────── */
 .saude-item__detalhes {
   display: grid;

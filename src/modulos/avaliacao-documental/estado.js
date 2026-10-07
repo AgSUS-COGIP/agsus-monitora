@@ -10,7 +10,14 @@
                                                 mínima, aldeias e perguntas
     copiar_modelo_regra_analise(...)            versão 1 a partir de um modelo
     salvar_regra_analise(...)                   versão nova (motivo da 2ª em diante)
-    conferir_regra_analise(...)                 a coordenação conferiu
+    conferir_regra_analise(...)                 outra pessoa da coordenação
+                                                conferiu (dupla conferência)
+    obter_apoio_regra_analise(p_edital)         o que o assistente lê: colunas
+                                                de pergunta por vaga, regras
+                                                conferidas da área e a regra
+                                                de classificação
+    salvar_regra_classificacao(...)             nota mínima e desempate, pela
+                                                RPC da Classificação (Editor)
     obter_equipe_edital(p_edital)               gestores, equipe e pessoas
     salvar_equipe_edital(...)                   a equipe inteira
     salvar_aldeias_dsei(...)                    lista de aldeias (admin global)
@@ -34,6 +41,8 @@ const RPC_OBTER_REGRA = "obter_regra_analise";
 const RPC_COPIAR_MODELO = "copiar_modelo_regra_analise";
 const RPC_SALVAR_REGRA = "salvar_regra_analise";
 const RPC_CONFERIR_REGRA = "conferir_regra_analise";
+const RPC_OBTER_APOIO = "obter_apoio_regra_analise";
+const RPC_SALVAR_CLASSIFICACAO = "salvar_regra_classificacao";
 const RPC_OBTER_EQUIPE = "obter_equipe_edital";
 const RPC_SALVAR_EQUIPE = "salvar_equipe_edital";
 const RPC_SALVAR_ALDEIAS = "salvar_aldeias_dsei";
@@ -62,6 +71,17 @@ const ESTADO_INICIAL = Object.freeze({
   carregandoEdital: false,
   erroDoEdital: "",
   salvando: false,
+  apoio: null,
+  carregandoApoio: false,
+  erroDoApoio: "",
+});
+
+/* Sem a RPC do assistente publicada: abre sem as perguntas por vaga, as regras da área e a classificação. */
+const APOIO_VAZIO = Object.freeze({
+  perguntas_por_vaga: [],
+  regras_da_area: [],
+  classificacao: { pode_ler: false, pode_editar: false, regra: null },
+  indisponivel: true,
 });
 
 export function mensagemDoBanco(erro) {
@@ -160,7 +180,9 @@ export function criarEstadoDaAvaliacao({
       editalId,
       carregandoEdital: true,
       erroDoEdital: "",
-      ...(editalId !== estado.editalId ? { dados: null, equipe: null } : {}),
+      ...(editalId !== estado.editalId
+        ? { dados: null, equipe: null, apoio: null, erroDoApoio: "" }
+        : {}),
     });
     const gravacoesAntes = gravacoes;
     try {
@@ -215,8 +237,33 @@ export function criarEstadoDaAvaliacao({
     });
   }
 
+  /* O que o assistente lê (uma vez por edital; "recarregar" lê de novo). */
+  let pedidoDoApoio = 0;
+  async function carregarApoio({ recarregar = false } = {}) {
+    const editalId = estado.editalId;
+    if (!editalId || (estado.apoio && !recarregar) || estado.carregandoApoio)
+      return estado.apoio;
+    const meu = ++pedidoDoApoio;
+    publicar({ carregandoApoio: true, erroDoApoio: "" });
+    try {
+      const apoio = await rpc(RPC_OBTER_APOIO, { p_edital: editalId });
+      if (meu !== pedidoDoApoio || editalId !== estado.editalId) return null;
+      publicar({ apoio: apoio ?? APOIO_VAZIO, carregandoApoio: false });
+      return apoio;
+    } catch (erro) {
+      if (meu !== pedidoDoApoio || editalId !== estado.editalId) return null;
+      publicar({
+        carregandoApoio: false,
+        apoio: erro?.code === "PGRST202" ? APOIO_VAZIO : null,
+        erroDoApoio: erro?.code === "PGRST202" ? "" : mensagemDoBanco(erro),
+      });
+      return null;
+    }
+  }
+
   return {
     obter: () => estado,
+    carregarApoio,
     assinar(ouvinte) {
       ouvintes.add(ouvinte);
       return () => ouvintes.delete(ouvinte);
@@ -250,6 +297,64 @@ export function criarEstadoDaAvaliacao({
         { p_edital: estado.editalId, p_versao: estado.dados?.regra?.versao },
         "Regra marcada como conferida.",
       ),
+    /*
+      Nota mínima e desempate: a regra de classificação inteira, pela RPC da
+      Classificação (a permissão é a dela). Devolve { ok, erro }.
+    */
+    async salvarRegraClassificacao(configuracao, versaoAtual, motivo) {
+      const editalId = estado.editalId;
+      publicar({ salvando: true });
+      try {
+        const regra = await rpc(RPC_SALVAR_CLASSIFICACAO, {
+          p_edital: editalId,
+          p_configuracao: configuracao,
+          p_versao_atual: versaoAtual ?? 0,
+          p_motivo: motivo || null,
+        });
+        gravacoes += 1;
+        if (editalId === estado.editalId) {
+          const documental = regra?.configuracao?.documental ?? {};
+          publicar({
+            apoio: estado.apoio
+              ? {
+                  ...estado.apoio,
+                  classificacao: {
+                    ...estado.apoio.classificacao,
+                    regra: regra
+                      ? {
+                          versao: regra.versao,
+                          configuracao: regra.configuracao,
+                          atualizado_em: regra.atualizado_em,
+                          por: regra.por,
+                        }
+                      : null,
+                  },
+                }
+              : estado.apoio,
+            dados: estado.dados
+              ? {
+                  ...estado.dados,
+                  nota_minima: {
+                    nota_minima: documental.nota_minima ?? null,
+                    nota_minima_por_nivel:
+                      documental.nota_minima_por_nivel ?? {},
+                    versao_regra_classificacao: regra?.versao ?? null,
+                  },
+                }
+              : estado.dados,
+          });
+        }
+        toast(
+          "Nota mínima e desempate salvos na regra de classificação.",
+          "success",
+        );
+        return { ok: true, regra };
+      } catch (erro) {
+        return { ok: false, erro: mensagemDoBanco(erro) };
+      } finally {
+        publicar({ salvando: false });
+      }
+    },
     async salvarEquipe(equipe, motivo) {
       const editalId = estado.editalId;
       publicar({ salvando: true });

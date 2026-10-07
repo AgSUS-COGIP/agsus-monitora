@@ -1,22 +1,56 @@
 # Regras das Entrevistas
 
-A aba Entrevistas (view `entrevistas`): Resultados, Conduzir entrevistas (configuração, convocação e
-ficha de notas) e Roteiros. Fontes: `src/modulos/entrevistas/`, `src/lib/conducao-de-entrevista.js`,
+Duas entradas do menu: o Painel de entrevistas (view `entrevistas`, acompanhar) e Conduzir
+entrevistas (view `conduzir-entrevistas`, fazer: fila do dia, ficha de notas e Preparar, com a
+configuração, a convocação e os roteiros). Fontes: `src/modulos/entrevistas/`, `src/lib/conducao-de-entrevista.js`,
 `src/lib/roteiro-de-entrevista.js`, `src/lib/entrevistas-do-painel.js`,
 `src/lib/convocacao-da-entrevista.js`, `docs/sincronizacao-das-planilhas.md`,
 `.github/workflows/sincronizar-entrevistas.yml` e as migrations `20260929235000_entrevistas.sql`,
 `20260930220000_entrevistas_roteiros_e_notas.sql`, `20260930235000_janela_da_entrevista.sql` e
 `20261005150000_convocacao_unica_da_entrevista.sql` (a convocação é a lista da Classificação); a
 agenda das entrevistas, em
-`src/modulos/classificacao/agenda.jsx`, `src/modulos/entrevistas/agenda-do-dia.jsx`,
-`src/lib/agenda-das-entrevistas.js` e `20261005120000_agenda_das_entrevistas.sql`.
+`src/modulos/classificacao/agenda.jsx`, `src/modulos/entrevistas/fila-do-dia.tsx`,
+`src/lib/agenda-das-entrevistas.js` e `20261005120000_agenda_das_entrevistas.sql`; a separação em
+duas entradas, em `src/modulos/entrevistas/conduzir.tsx`, `src/lib/fila-de-conducao.ts`,
+`src/lib/painel-de-entrevistas.ts` e `20261008130000_conduzir_entrevistas_no_menu.sql`.
 
-## Tela de Entrevistas
+## Painel de entrevistas
 
-**perguntas:** tela de entrevistas | tela entrevistas | aba entrevistas | para que serve entrevistas | para que serve a tela de entrevistas
-**resposta:** Entrevistas tem três visões, escolhidas no topo: Resultados (só consulta), Conduzir entrevistas (Passo 1 Configuração, Passo 2 Convocação — a lista de convocação da Classificação — e Passo 3 Ficha de notas, por edital) e Roteiros. Tudo é da área atual; trocar de área recomeça filtros e edital aberto. Quem não tem nível Editor vê tudo, sem os botões. Lançar notas, convocar, configurar o edital e editar roteiros exige Editor em Entrevistas e acesso à área e ao edital.
-**fonte:** src/modulos/entrevistas/entrevistas.jsx; src/modulos/entrevistas/conducao.jsx; supabase/migrations/20260930220000_entrevistas_roteiros_e_notas.sql
+**perguntas:** painel de entrevistas | tela de entrevistas | tela entrevistas | aba entrevistas | para que serve entrevistas | para que serve a tela de entrevistas | para que serve o painel de entrevistas | onde acompanho as entrevistas | entrevistas resultados
+**resposta:** O Painel de entrevistas é para acompanhar (gestão e coordenação), como o Painel das análises ao lado da Avaliação documental; fazer é em Conduzir entrevistas, outra entrada do menu. O painel mostra, da área atual: os indicadores, o andamento por edital e por vaga em cartões (convocados, entrevistados, faltaram, aptos, inaptos e sem parecer, com a barra), a agenda dos próximos dias quando há um edital escolhido, os gráficos, as pendências (sem comparecimento, sem nota, sem parecer, aprovados sem entrevista, sem análise, sem edital e nota divergente), os empatados na nota da entrevista, a tabela e a exportação em CSV. Só leitura. O edital de treinamento não entra no painel. Quem tem Leitor em Entrevistas vê o painel e Conduzir entrevistas; escrever exige Editor.
+**fato:** O Painel de entrevistas acompanha; Conduzir entrevistas faz (fila do dia, ficha de notas, Preparar e roteiros). As duas usam o recurso Entrevistas.
+**fonte:** src/modulos/entrevistas/entrevistas.jsx; src/modulos/entrevistas/andamento.tsx; src/lib/painel-de-entrevistas.ts
 **abrir:** entrevistas
+
+## Conduzir entrevistas
+
+**perguntas:** conduzir entrevistas | para que serve conduzir entrevistas | fila do dia | fila de conduzir entrevistas | como funciona a fila de conduzir entrevistas | quem entrevisto hoje | 7 de 12 hoje | contador do dia | hoje proximos todos
+**resposta:** Conduzir entrevistas é a tela de fazer (secretaria e avaliadores), com entrada própria no menu. Escolha o edital (abre sozinho o último aberto na área ou, se houver um só, ele). A Fila abre em Hoje: os convocados com horário hoje na agenda salva na Classificação, em cartões com as iniciais, o horário, a banca e a situação — Aguardando (cinza), Em andamento (azul), Concluída (verde) e Faltou (amarelo), as cores da Avaliação documental. Sem entrevista hoje, abre em Próximos; sem agenda, em Todos. Dá para trocar entre Hoje, Próximos e Todos, escolher a vaga e clicar numa situação para filtrar. O topo mostra "X de Y hoje" (concluídas e faltas entre as de hoje). Clicar no cartão abre a ficha de notas em tela cheia; "Salvar e abrir o próximo" segue a ordem da fila. Ao concluir todas as de hoje, há uma comemoração (se as comemorações estiverem ligadas). Preparar, no topo, tem a configuração, a convocação e os roteiros.
+**fato:** A fila de Conduzir entrevistas abre em Hoje, pela agenda salva na Classificação; concluída é quem tem parecer ou todas as notas, faltou é quem tem Faltou marcado.
+**fonte:** src/modulos/entrevistas/conduzir.tsx; src/modulos/entrevistas/fila-do-dia.tsx; src/lib/fila-de-conducao.ts
+**abrir:** conduzir-entrevistas
+
+## Preparar o edital
+
+**perguntas:** preparar | preparar edital | onde configuro a entrevista | onde convoco | configuracao da entrevista | onde ficou o passo 1 | onde ficou a convocacao
+**resposta:** Em Conduzir entrevistas › Preparar ficam a configuração do edital (roteiro, modo de lançamento, composição e membros da banca, e, só para ler, a regra de convocação, o desempate e as vagas da Classificação) e a convocação (a lista de convocação da Classificação, por vaga). Abaixo, os roteiros de entrevista da área. Quem não tem Editor vê tudo, sem os botões. Edital ainda não configurado mostra o aviso na Fila, com o atalho para Preparar.
+**fonte:** src/modulos/entrevistas/conducao.jsx; src/modulos/entrevistas/conduzir.tsx
+**abrir:** conduzir-entrevistas
+
+## Andamento por vaga no painel
+
+**perguntas:** andamento por vaga | como e contado o andamento por vaga | barra de andamento | percentual feito | cartoes por vaga | andamento do edital
+**resposta:** No Painel de entrevistas, cada cartão (de edital ou, com um edital escolhido, de vaga) mostra o percentual feito e uma barra: verde apto, vermelho inapto, amarelo faltou, azul em andamento (compareceu, sem parecer) e o fundo cinza é quem aguarda. Feito é apto, inapto ou faltou. Os números são convocados (todas as entrevistas do recorte), entrevistados (compareceram), faltaram, aptos, inaptos e sem parecer. Clicar num edital mostra as vagas dele; clicar numa vaga recorta o painel por ela (de novo, tira).
+**fonte:** src/lib/painel-de-entrevistas.ts; src/modulos/entrevistas/andamento.tsx
+**abrir:** entrevistas
+
+## Empate na nota da entrevista
+
+**perguntas:** empate na entrevista | quem desempata a nota da entrevista | candidatos empatados | desempate da entrevista | criterios de desempate do roteiro | onde mudo o desempate
+**resposta:** Empate é quando dois ou mais candidatos do mesmo edital e da mesma vaga têm a mesma nota na entrevista. O Painel de entrevistas marca esses candidatos com o selo "Empate" e avisa: o desempate é feito na Classificação, pelos critérios da regra de classificação do edital (Classificação › Regra), com o botão que abre a Classificação no edital. O roteiro não tem mais critérios de desempate próprios: no editor do roteiro e em Preparar, os critérios aparecem só para ler, os da regra de classificação, com "Editar na Classificação". O texto antigo do roteiro continua guardado, sem uso.
+**fato:** O desempate da entrevista é o da regra de classificação do edital, feito na Classificação.
+**fonte:** src/lib/painel-de-entrevistas.ts; src/lib/convocacao-da-entrevista.js; supabase/migrations/20261008130000_conduzir_entrevistas_no_menu.sql
+**abrir:** classificacao
 
 ## Janela da entrevista
 
@@ -28,7 +62,7 @@ agenda das entrevistas, em
 ## Edital que não aparece em Conduzir entrevistas
 
 **perguntas:** por que um edital nao aparece em conduzir entrevistas | por que o edital nao aparece em conduzir entrevistas | edital nao aparece em conduzir entrevistas | nenhum edital na janela da entrevista | edital sumiu de conduzir entrevistas
-**resposta:** Um edital fica fora de Conduzir entrevistas quando: o cronograma não tem atividade com "entrevista" ou "comportamental" (aparece "sem etapa de entrevista no cronograma"); hoje está fora da janela (antes de 7 dias do início ou depois de 15 dias do fim das etapas de entrevista); não há liberação vigente (nunca liberado, vencida ou encerrada); e não há convocado sem parecer. Também some se o edital é de outra área, está inativo ou fica fora do recorte da sua coordenação, ou se você não tem acesso a Entrevistas ou à área. Ter entrevistas em Resultados não faz o edital entrar. Para incluir um edital fora da janela, peça ao administrador global que o libere; ele também tem a caixa "Mostrar todos os editais da área".
+**resposta:** Um edital fica fora de Conduzir entrevistas quando: o cronograma não tem atividade com "entrevista" ou "comportamental" (aparece "sem etapa de entrevista no cronograma"); hoje está fora da janela (antes de 7 dias do início ou depois de 15 dias do fim das etapas de entrevista); não há liberação vigente (nunca liberado, vencida ou encerrada); e não há convocado sem parecer. Também some se o edital é de outra área, está inativo ou fica fora do recorte da sua coordenação, ou se você não tem acesso a Entrevistas ou à área. Ter entrevistas no Painel de entrevistas não faz o edital entrar. Para incluir um edital fora da janela, peça ao administrador global que o libere; ele também tem a caixa "Mostrar todos os editais da área".
 **fonte:** supabase/migrations/20260930235000_janela_da_entrevista.sql; src/lib/conducao-de-entrevista.js
 **abrir:** entrevistas
 
@@ -40,9 +74,10 @@ agenda das entrevistas, em
 
 ## Roteiros e versões
 
-**perguntas:** como funcionam as versoes dos roteiros | roteiro de entrevista | roteiros de entrevista | versao do roteiro | o que e um roteiro
-**resposta:** O roteiro é um modelo reutilizável da entrevista: competências (1 a 20, cada uma com nota máxima, peso e mínimo), escala, regra de aprovação, critérios de desempate e banca padrão; serve a vários editais. O roteiro não tem mais convocação padrão: quem é convocado sai da lista de convocação da Classificação, pela regra de classificação do edital. Editar grava uma versão nova: os editais que já usam a anterior continuam nela, e a nova vale para as próximas configurações. "Duplicar" cria um roteiro novo, na versão 1. Roteiro sem área serve para qualquer área.
-**fonte:** supabase/migrations/20260930220000_entrevistas_roteiros_e_notas.sql; src/lib/roteiro-de-entrevista.js
+**perguntas:** como funcionam as versoes dos roteiros | roteiro de entrevista | roteiros de entrevista | versao do roteiro | o que e um roteiro | onde ficam os roteiros de entrevista | onde ficou roteiros | onde edito o roteiro
+**resposta:** Os roteiros ficam em Conduzir entrevistas › Preparar, na configuração do gestor (ao lado da configuração do edital, como a Regra fica na Avaliação documental). O roteiro é um modelo reutilizável da entrevista: competências (1 a 20, cada uma com nota máxima, peso e mínimo), escala, regra de aprovação e banca padrão; serve a vários editais. O desempate não é do roteiro: é o da regra de classificação do edital, mostrado só para ler. Quem é convocado sai da lista de convocação da Classificação. Editar grava uma versão nova: os editais que já usam a anterior continuam nela, e a nova vale para as próximas configurações. "Duplicar" cria um roteiro novo, na versão 1. Roteiro sem área serve para qualquer área.
+**fonte:** supabase/migrations/20260930220000_entrevistas_roteiros_e_notas.sql; src/lib/roteiro-de-entrevista.js; src/modulos/entrevistas/roteiros.jsx
+**abrir:** conduzir-entrevistas
 
 ## Escalas e aprovação na entrevista
 
@@ -67,7 +102,7 @@ agenda das entrevistas, em
 ## Convocação para a entrevista
 
 **perguntas:** como funciona a regra de convocacao da entrevista | regra de convocacao da entrevista | convocacao da entrevista | desconvocar | convocar candidatos | quem e convocado para a entrevista | lista de convocacao na entrevista | conduzir entrevistas nao esta funcionando | ninguem convocado na entrevista
-**resposta:** Há uma convocação só: a lista "Convocação para entrevista" da Classificação. Em Conduzir entrevistas, o Passo 2 mostra a última lista gerada na Classificação, por vaga, na mesma ordem, com os mesmos critérios e o mesmo limite da regra de classificação do edital (N vezes as vagas imediatas ou até a posição do cadastro reserva, exceções por cargo, empatados no limite); quem está só na lista de uma modalidade aparece com a marca da lista. "Convocar selecionados" leva os da lista para a ficha de notas (todos vêm marcados; dá para desmarcar). O banco recusa quem não está na lista vigente e, se a Classificação gerou outra lista depois que a tela abriu, pede para recarregar. Convocar exige a configuração salva (Passo 1). Quem foi convocado antes e não está na lista vigente continua na ficha, com a marca "Fora da lista vigente". Desconvocar exige motivo (3 a 500 caracteres), fica no histórico e só vale para quem ainda não tem nota; nada é apagado.
+**resposta:** Há uma convocação só: a lista "Convocação para entrevista" da Classificação. Em Conduzir entrevistas › Preparar, a convocação mostra a última lista gerada na Classificação, por vaga, na mesma ordem, com os mesmos critérios e o mesmo limite da regra de classificação do edital (N vezes as vagas imediatas ou até a posição do cadastro reserva, exceções por cargo, empatados no limite); quem está só na lista de uma modalidade aparece com a marca da lista. "Convocar selecionados" leva os da lista para a ficha de notas (todos vêm marcados; dá para desmarcar). O banco recusa quem não está na lista vigente e, se a Classificação gerou outra lista depois que a tela abriu, pede para recarregar. Convocar exige a configuração salva. Quem foi convocado antes e não está na lista vigente continua na ficha, com a marca "Fora da lista vigente". Desconvocar exige motivo (3 a 500 caracteres), fica no histórico e só vale para quem ainda não tem nota; nada é apagado.
 **fato:** No MONITORA, a convocação para a entrevista é a lista de convocação da Classificação; Entrevistas não tem ranking, regra nem vagas próprios.
 **fonte:** src/lib/convocacao-da-entrevista.js; src/modulos/entrevistas/conducao.jsx; supabase/migrations/20261005150000_convocacao_unica_da_entrevista.sql
 **abrir:** entrevistas
@@ -82,32 +117,33 @@ agenda das entrevistas, em
 ## Vagas imediatas e regra de convocação na entrevista
 
 **perguntas:** vagas imediatas da entrevista | onde digitar as vagas imediatas | vagas imediatas por vaga | regra de convocacao da entrevista onde muda | multiplo das vagas imediatas | posicao do cadastro reserva na entrevista | de onde vem o numero de vagas da entrevista
-**resposta:** As vagas imediatas não se digitam na entrevista. O Passo 1 de Conduzir entrevistas mostra, só para ler, a regra de convocação da Classificação (versão vigente) e, por vaga, as vagas, até que posição se convoca e de onde vêm as vagas, com o botão para a tela onde se mudam: o quadro de vagas do edital (Editais), a configuração da convocação (Lista de aprovados) ou os percentuais da regra (Classificação). Vaga sem quadro aparece como "sem quadro de vagas": cadastre o quadro no edital. A regra de convocação (múltiplo, posição do cadastro reserva, exceções por cargo) muda em Classificação › Regra. O que a entrevista guardava antes (vagas digitadas e regra própria) ficou no banco, sem uso.
+**resposta:** As vagas imediatas não se digitam na entrevista. A configuração (Conduzir entrevistas › Preparar) mostra, só para ler, a regra de convocação da Classificação (versão vigente) e, por vaga, as vagas, até que posição se convoca e de onde vêm as vagas, com o botão para a tela onde se mudam: o quadro de vagas do edital (Editais), a configuração da convocação (Lista de aprovados) ou os percentuais da regra (Classificação). Vaga sem quadro aparece como "sem quadro de vagas": cadastre o quadro no edital. A regra de convocação (múltiplo, posição do cadastro reserva, exceções por cargo) muda em Classificação › Regra. O que a entrevista guardava antes (vagas digitadas e regra própria) ficou no banco, sem uso.
 **fonte:** src/modulos/entrevistas/conducao.jsx; src/lib/convocacao-da-entrevista.js; src/lib/classificacao/vagas.js
 **abrir:** entrevistas
 
 ## Ficha de notas
 
 **perguntas:** ficha de notas | como lancar notas da entrevista | lancar notas | comparecimento | resultado recalculado
-**resposta:** Na ficha de notas, abra um convocado: a ficha ocupa a tela inteira (modo de análise; fica só o menu lateral), com o topo preso (Voltar à lista, candidato, Anterior e Próximo), as competências à esquerda e a prévia do parecer numa lateral fixa (total, mínimo, a nota de cada competência e os motivos; muda de cor na hora: verde apto, vermelho inapto). Marque Compareceu ou Faltou nos botões grandes do topo. Em cada competência, os avaliadores ficam lado a lado; os botões da escala (0 a 5) preenchem o campo em foco e passam ao próximo, ou digite a nota. Com aspectos, cada avaliador tem um campo por aspecto e a média dele ao lado. Os níveis da escala ficam na lateral e no título de cada botão. No celular, uma competência por vez (abas numeradas). Esc volta à lista; a nota precisa estar na escala do roteiro. A cada gravação o banco recalcula o resultado, que aparece em Resultados; toda nota lançada, corrigida ou apagada vai para o histórico. Enter passa para a próxima nota, Ctrl+Enter salva, e há "Salvar e abrir o próximo". A coluna Notas mostra lançadas sobre esperadas (competências × avaliadores da banca).
-**fonte:** src/modulos/entrevistas/ficha.jsx; supabase/migrations/20260930220000_entrevistas_roteiros_e_notas.sql; src/lib/conducao-de-entrevista.js
+**resposta:** Na Fila de Conduzir entrevistas, abra um convocado: a ficha ocupa a tela inteira (modo de análise; fica só o menu lateral), com o topo preso (Voltar à fila, candidato, Anterior e Próximo), as competências à esquerda e a prévia do parecer numa lateral fixa (total, mínimo, a nota de cada competência e os motivos; muda de cor na hora: verde apto, vermelho inapto). Marque Compareceu ou Faltou nos botões grandes do topo. Em cada competência, os avaliadores ficam lado a lado; os botões da escala (0 a 5) preenchem o campo em foco e passam ao próximo, ou digite a nota. Com aspectos, cada avaliador tem um campo por aspecto e a média dele ao lado. Os níveis da escala ficam na lateral e no título de cada botão. No celular, uma competência por vez (abas numeradas). Esc volta à fila; a nota precisa estar na escala do roteiro. A cada gravação o banco recalcula o resultado, que aparece no Painel de entrevistas; toda nota lançada, corrigida ou apagada vai para o histórico. Enter passa para a próxima nota, Ctrl+Enter salva, e há "Salvar e abrir o próximo". O cartão da fila mostra as notas lançadas sobre as esperadas (competências × avaliadores da banca).
+**fonte:** src/modulos/entrevistas/ficha.jsx; src/modulos/entrevistas/fila-do-dia.tsx; supabase/migrations/20260930220000_entrevistas_roteiros_e_notas.sql; src/lib/conducao-de-entrevista.js
 
 ## Resultados das entrevistas
 
-**perguntas:** resultados das entrevistas | indicadores das entrevistas | aprovados sem entrevista | nota divergente | entrevista sem analise
-**resposta:** Resultados é só de consulta (a condução é em Conduzir entrevistas). Indicadores: Vagas com entrevista, Candidatos, Compareceram, Aptos, Inaptos, Média das notas (de quem compareceu) e Aprovados na análise sem entrevista; clicar em Compareceram, Aptos ou Inaptos filtra a tela. A nota total vai de 0 a 20 e cada critério, em geral, de 0 a 5. Pendências: aprovados sem entrevista (só nas vagas que já têm entrevista), entrevista sem análise ligada, sem edital cadastrado e nota divergente (total diferente da soma dos critérios). A ligação com a análise curricular é pelo código do candidato e da vaga e, na falta, pelo nome.
+**perguntas:** resultados das entrevistas | indicadores das entrevistas | aprovados sem entrevista | nota divergente | entrevista sem analise | pendencias das entrevistas | quais sao as pendencias das entrevistas | sem nota | sem parecer | sem comparecimento
+**resposta:** Os resultados ficam no Painel de entrevistas, só de consulta (a condução é em Conduzir entrevistas). Indicadores: Vagas com entrevista, Candidatos, Compareceram, Aptos, Inaptos, Média das notas (de quem compareceu) e Aprovados na análise sem entrevista; clicar em Compareceram, Aptos ou Inaptos filtra a tela. Pendências: sem comparecimento registrado, compareceu sem nota, com nota sem parecer, aprovados sem entrevista (só nas vagas que já têm entrevista), entrevista sem análise ligada, sem edital cadastrado e nota divergente (total diferente da soma dos critérios); cada uma filtra o painel. A nota total vai de 0 a 20 e cada critério, em geral, de 0 a 5. A ligação com a análise curricular é pelo código do candidato e da vaga e, na falta, pelo nome.
 **fonte:** src/modulos/entrevistas/paineis.jsx; src/lib/entrevistas-do-painel.js; supabase/migrations/20260929235000_entrevistas.sql
+**abrir:** entrevistas
 
 ## Carga das entrevistas
 
 **perguntas:** quando as entrevistas sao atualizadas | carga das entrevistas | planilha de entrevistados | atualizacao das entrevistas
-**resposta:** Os dados de Resultados vêm da planilha "[dash] entrevistados" (aba Entrevistados), carregada de hora em hora, o dia todo, pelo GitHub Actions, que também pode ser disparado à mão. Uma carga com menos da metade das linhas ativas é recusada, para não apagar tudo por uma planilha quebrada; quem some da planilha fica inativo, nada é apagado. A data da última carga aparece no topo da tela.
+**resposta:** Os dados do Painel de entrevistas vêm da planilha "[dash] entrevistados" (aba Entrevistados), carregada de hora em hora, o dia todo, pelo GitHub Actions, que também pode ser disparado à mão. Uma carga com menos da metade das linhas ativas é recusada, para não apagar tudo por uma planilha quebrada; quem some da planilha fica inativo, nada é apagado. A data da última carga aparece no topo da tela.
 **fonte:** .github/workflows/sincronizar-entrevistas.yml; docs/sincronizacao-das-planilhas.md; supabase/migrations/20260929235000_entrevistas.sql
 
 ## Agenda das entrevistas
 
 **perguntas:** agenda das entrevistas | como funciona a agenda das entrevistas | onde fica a agenda das entrevistas | gerar os horarios das entrevistas | marcar horario da entrevista
-**resposta:** A agenda das entrevistas fica na Classificação, na visão Agenda (ou pelo botão "Agenda das entrevistas" da lista Convocação para entrevista), porque os convocados saem dessa lista e a agenda preenche o documento dela. Cada edital tem a sua regra da agenda, com versões, e uma agenda salva: um horário por convocado, com dia, hora de Brasília e banca. Os convocados vêm da última lista de convocação gerada; sem lista gerada, do cálculo atual, com um aviso. Quem conduz vê a agenda do dia em Entrevistas › Conduzir entrevistas. Salvar a regra e a agenda exige Editor em Entrevistas ou em Classificação; ler, Leitor em uma delas; sempre com acesso à área e ao edital.
+**resposta:** A agenda das entrevistas fica na Classificação, na visão Agenda (ou pelo botão "Agenda das entrevistas" da lista Convocação para entrevista), porque os convocados saem dessa lista e a agenda preenche o documento dela. Cada edital tem a sua regra da agenda, com versões, e uma agenda salva: um horário por convocado, com dia, hora de Brasília e banca. Os convocados vêm da última lista de convocação gerada; sem lista gerada, do cálculo atual, com um aviso. Quem conduz vê a fila do dia em Conduzir entrevistas. Salvar a regra e a agenda exige Editor em Entrevistas ou em Classificação; ler, Leitor em uma delas; sempre com acesso à área e ao edital.
 **fonte:** src/modulos/classificacao/agenda.jsx; supabase/migrations/20261005120000_agenda_das_entrevistas.sql
 **abrir:** classificacao
 
@@ -141,14 +177,14 @@ agenda das entrevistas, em
 
 ## Agenda do dia em Conduzir entrevistas
 
-**perguntas:** agenda do dia | agenda da banca | quem entrevisto hoje | horarios de hoje da entrevista
-**resposta:** Em Conduzir entrevistas, ao abrir o edital, o cartão "Agenda do dia" mostra a agenda salva por horário: escolha o dia (abre em hoje, no horário de Brasília, ou no próximo dia com entrevista) e, havendo mais de uma, a banca. A linha de quem já está convocado no sistema abre a ficha de notas. A agenda é só de consulta ali; ela é montada e ajustada na Classificação, visão Agenda. Sem agenda salva, o cartão não aparece.
-**fonte:** src/modulos/entrevistas/agenda-do-dia.jsx
-**abrir:** entrevistas
+**perguntas:** agenda do dia | agenda da banca | horarios de hoje da entrevista | agenda dos proximos dias
+**resposta:** A agenda é montada e ajustada na Classificação, visão Agenda. Em Conduzir entrevistas, a Fila usa a agenda salva: Hoje são os convocados com horário hoje (Brasília), Próximos os dos dias seguintes, por dia, e Todos inclui quem não tem horário. No Painel de entrevistas, com um edital escolhido, a "Agenda dos próximos dias" mostra até cinco dias com entrevista, um por coluna, com o botão Conduzir. Sem agenda salva, a Fila abre em Todos.
+**fonte:** src/modulos/entrevistas/fila-do-dia.tsx; src/modulos/entrevistas/andamento.tsx; src/lib/fila-de-conducao.ts
+**abrir:** conduzir-entrevistas
 
 ## Quem pode conduzir entrevistas
 
-**perguntas:** quem pode lancar notas | quem pode conduzir entrevistas | nao aparece o botao convocar | nao consigo lancar nota | botoes sumiram em entrevistas | permissao entrevistas
-**resposta:** Ver Resultados, Conduzir entrevistas e Roteiros é de quem tem Leitor em Entrevistas. Lançar notas, convocar, desconvocar, salvar a configuração do edital e editar roteiros exige Editor em Entrevistas e acesso à área e ao edital (recorte da coordenação); sem isso, a tela mostra tudo, sem os botões. No modo "Cada avaliador lança a sua", cada avaliador só edita a própria coluna. "Convocar selecionados" só aparece quando a Classificação já gerou a lista de convocação do edital, e liberar edital fora da janela é só do administrador global.
-**fonte:** src/modulos/entrevistas/conducao.jsx; src/lib/access-roles.js; supabase/migrations/20260930220000_entrevistas_roteiros_e_notas.sql
+**perguntas:** quem pode lancar notas | quem pode conduzir entrevistas | nao aparece o botao convocar | nao consigo lancar nota | botoes sumiram em entrevistas | permissao entrevistas | nao vejo conduzir entrevistas no menu
+**resposta:** O Painel de entrevistas e Conduzir entrevistas usam o mesmo recurso, Entrevistas: quem tem Leitor vê os dois (a fila, as fichas, o Preparar e os roteiros, sem os botões). Lançar notas, convocar, desconvocar, salvar a configuração do edital e editar roteiros exige Editor em Entrevistas e acesso à área e ao edital (recorte da coordenação). No modo "Cada avaliador lança a sua", cada avaliador só edita a própria coluna. "Convocar selecionados" só aparece quando a Classificação já gerou a lista de convocação do edital, e liberar edital fora da janela é só do administrador global.
+**fonte:** src/modulos/entrevistas/conduzir.tsx; src/lib/access-roles.js; supabase/migrations/20260930220000_entrevistas_roteiros_e_notas.sql
 **abrir:** config:acessos

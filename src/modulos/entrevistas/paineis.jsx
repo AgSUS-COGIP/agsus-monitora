@@ -22,17 +22,16 @@ import {
   ListaDePendencias,
   paletaDosGraficos,
   PainelDeFiltros,
-  Segmentado,
   TopoDoPainel,
 } from "../../ui/index.js";
 
 /*
-  Os blocos da tela de Entrevistas, com os componentes de src/ui/: o topo (as
-  visões Resultados · Conduzir entrevistas · Roteiros num controle
-  segmentado, o status discreto da carga e as ações — o título e a área estão
+  Os blocos do Painel de entrevistas, com os componentes de src/ui/: o topo
+  (o status discreto da carga, Atualizar e Exportar — o título e a área estão
   no cabeçalho do app), "Refinar resultados", os KPIs em card compacto (os
   que filtram são botões), o recorte ativo, os gráficos Chart.js e as
-  pendências.
+  pendências. O andamento por edital e vaga, a agenda e os empates ficam em
+  andamento.tsx.
 */
 
 const truncar = (valor, limite) => {
@@ -42,32 +41,8 @@ const truncar = (valor, limite) => {
 
 /* ── Topo ───────────────────────────────────────────────────────────── */
 
-/* Exportar só na visão "Resultados". Sem `visoes` (sem acesso), sem o segmentado. */
-export function Topo({
-  visoes = null,
-  visao = "resultados",
-  aoTrocarVisao,
-  aoExportar,
-  ...props
-}) {
-  return (
-    <TopoDoPainel
-      visoes={
-        visoes ? (
-          <Segmentado
-            tour="entrevistas-visoes"
-            rotulo="Visão da tela"
-            className="entrevistas-visoes"
-            opcoes={visoes}
-            valor={visao}
-            aoMudar={aoTrocarVisao}
-          />
-        ) : null
-      }
-      aoExportar={visao === "resultados" ? aoExportar : undefined}
-      {...props}
-    />
-  );
+export function Topo(props) {
+  return <TopoDoPainel {...props} />;
 }
 
 /* ── Filtros ────────────────────────────────────────────────────────── */
@@ -75,11 +50,13 @@ export function Topo({
 export const CAMPOS_DO_FILTRO = [
   ["unidade", "Unidade (DSEI)", "unidades", "Todas as unidades"],
   ["edital", "Edital", "editais", "Todos os editais"],
+  ["vaga", "Vaga", "vagas", "Todas as vagas"],
   ["cargo", "Cargo", "cargos", "Todos os cargos"],
   ["parecer", "Parecer", "pareceres", "Todos os pareceres"],
   ["comparecimento", "Comparecimento", "comparecimentos", "Todos"],
   ["modalidade", "Modalidade", "modalidades", "Todas as modalidades"],
   ["ligacao", "Situação da ligação", "ligacoes", "Todas as situações"],
+  ["andamento", "Andamento", "andamentos", "Todos"],
 ];
 
 const rotuloDoValor = (opcoes, lista, valor) =>
@@ -264,17 +241,19 @@ function Pendencias({
   const itens = pendencias
     .filter((p) => p.valor > 0)
     .map((p) => {
-      // "Aprovados sem entrevista" abre a lista; as outras filtram a ligação.
+      // "Aprovados sem entrevista" abre a lista; as outras filtram (a
+      // ligação ou o andamento da entrevista, `campo`).
       const abreLista = p.chave === "sem_entrevista";
+      const campo = p.campo || "ligacao";
       return {
         chave: p.chave,
         titulo: p.titulo,
         detalhe: `${formatNumberBR(p.valor)} ${p.valor === 1 ? p.unidade[0] : p.unidade[1]} · ${p.subtitulo}`,
         tom: TOM_DA_SEVERIDADE[p.severidade],
-        ativo: abreLista ? undefined : filtros.ligacao === p.chave,
+        ativo: abreLista ? undefined : filtros[campo] === p.chave,
         aoClicar: abreLista
           ? aoAbrirSemEntrevista
-          : () => aoFiltrar("ligacao", p.chave),
+          : () => aoFiltrar(campo, p.chave),
       };
     });
   return (

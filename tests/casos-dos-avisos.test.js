@@ -13,9 +13,9 @@ import {
   ondeDoCaso,
   quemDoCaso,
   termoDeBusca,
-} from "../src/lib/avisos-de-conferencia.js";
+} from "../src/lib/avisos-de-conferencia.ts";
 import { filtrosDasAnalises } from "../src/lib/filtro-da-aya.js";
-import { criarEstadoDosAvisos } from "../src/modulos/conferencias/estado.js";
+import { criarEstadoDosAvisos } from "../src/modulos/conferencias/estado.ts";
 
 /*
   Casos dos avisos de conferência (listar_casos_aviso_conferencia,

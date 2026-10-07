@@ -18,6 +18,7 @@ import {
   TELA_SEM_ACESSO,
   bloqueioDaTela,
   codigoDoPainel,
+  destinoDaTela,
   ehPainelExterno,
   telaDeEntrada,
   telaInicialDoSistema,
@@ -84,9 +85,14 @@ export const TELAS_REACT = Object.freeze({
   ],
   recursos: (_valor, janela) => ["Recursos", "", janela.recursosController],
   entrevistas: (_valor, janela) => [
-    "Entrevistas",
+    "Painel de entrevistas",
     "",
     janela.entrevistasController,
+  ],
+  "conduzir-entrevistas": (_valor, janela) => [
+    "Conduzir entrevistas",
+    "",
+    janela.conduzirEntrevistasController,
   ],
   classificacao: (_valor, janela) => [
     "Classificação",
@@ -293,7 +299,9 @@ export function criarNavegacao({
   /** Abre a tela (o `navigate` de sempre). Sem permissão, avisa e fica onde está. */
   function irPara(pedida) {
     const anterior = view;
-    const tela = String(pedida ?? "").trim() || deEntrada();
+    // Link antigo (`entrevistas:conduzir`…) vai para a tela e a visão novas.
+    const destino = destinoDaTela(pedida);
+    const tela = destino.view || deEntrada();
     if (tela !== view && !confirmarSaida()) return;
     // Versão nova do sistema esperando: entra agora. A tela pedida fica guardada
     // e abre depois da recarga (a tela de entrada confere a permissão).
@@ -357,6 +365,7 @@ export function criarNavegacao({
       );
       $("page-" + tela)?.classList.add("active");
       definirTitulo(titulo, subtituloDaArea(subtitulo));
+      if (destino.visao) controlador?.abrirVisao?.(destino.visao);
       // O render das telas React costuma carregar dados: a falha vira aviso.
       Promise.resolve(controlador?.render()).catch((erro) => {
         console.error(`Falha ao abrir ${titulo}:`, erro);
