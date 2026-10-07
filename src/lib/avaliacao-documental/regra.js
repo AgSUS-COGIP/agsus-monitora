@@ -13,7 +13,10 @@
   {
     schema, modelo, titulo_etapa, edital_rotulo, casas_parecer,
     provisoria: { eliminacao_automatica[], nota_declarada[], divergencia_tolerancia,
-                  desempate[], pergunta_experiencia },
+                  desempate[], pergunta_experiencia, base_da_nota },
+    (base_da_nota: "DECLARADA" | "ART" — a nota do corte e da ordem do lote;
+    sem ela, DECLARADA quando há nota_declarada, senão ART; ver
+    BASES_DA_NOTA_DO_LOTE no catálogo)
     (pergunta_experiencia e nota_declarada[].pergunta: o começo do enunciado
     — ou uma lista de alternativas, quando o enunciado muda de questionário
     para questionário; casa com qualquer uma, ver nota-declarada.js;
@@ -34,6 +37,7 @@
   A nota mínima não fica aqui: é a da regra de classificação do edital.
 */
 import {
+  BASES_DA_NOTA_DO_LOTE,
   BASES_DO_LOTE,
   CRITERIOS_DA_DISTRIBUICAO,
   DESEMPATE_PADRAO_DA_PROVISORIA,
@@ -163,6 +167,17 @@ export function perguntaDoTexto(digitado) {
   return partes[0] ?? "";
 }
 
+/**
+ * A base da nota do lote: a da regra ou, sem ela, DECLARADA quando há nota
+ * declarada configurada (senão ART). Valor desconhecido fica como está, para a
+ * validação recusar.
+ */
+export function baseDaNota(provisoria) {
+  const base = ehObjeto(provisoria) ? provisoria.base_da_nota : undefined;
+  if (base !== undefined && base !== null) return base;
+  return lista(provisoria?.nota_declarada).length ? "DECLARADA" : "ART";
+}
+
 /** A regra com os valores padrão onde faltam (não muda a entrada). */
 export function normalizarRegraAnalise(entrada) {
   const r = ehObjeto(entrada) ? structuredClone(entrada) : {};
@@ -183,6 +198,7 @@ export function normalizarRegraAnalise(entrada) {
         ? provisoria.desempate
         : [...DESEMPATE_PADRAO_DA_PROVISORIA],
       pergunta_experiencia: normalizarPergunta(provisoria.pergunta_experiencia),
+      base_da_nota: baseDaNota(provisoria),
     },
     lote: { ...LOTE_PADRAO, ...(ehObjeto(r.lote) ? r.lote : {}) },
     distribuicao: {
@@ -670,6 +686,18 @@ export function validarRegraAnalise(regra) {
     });
   if (!nuloOuEntre(provisoria.divergencia_tolerancia, 0, 30))
     erros.push("Tolerância da divergência entre 0 e 30 pontos.");
+  const base = provisoria.base_da_nota;
+  if (base !== undefined && base !== null) {
+    if (!valores(BASES_DA_NOTA_DO_LOTE).has(base))
+      erros.push("Base da nota do lote: DECLARADA ou ART.");
+    else if (
+      base === "DECLARADA" &&
+      !(Array.isArray(declarada) && declarada.length)
+    )
+      erros.push(
+        "Base da nota do lote pela declarada: configure a nota declarada.",
+      );
+  }
   const desempate = provisoria.desempate;
   if (
     desempate !== undefined &&

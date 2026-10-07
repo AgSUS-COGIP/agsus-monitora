@@ -133,6 +133,18 @@ export const DESEMPATES_DA_PROVISORIA = Object.freeze([
   ["CANDIDATURA", "A candidatura mais antiga primeiro"],
 ]);
 
+/*
+  A nota que faz o corte e a ordem do lote (provisoria.base_da_nota). No
+  93/2026 (item 8.2.6) vale a pontuação AUTODECLARADA na inscrição: a nota
+  declarada recalculada pela regra, quando completa; a ART da Empregare muda
+  quando a equipe ajusta pontos na conferência e fica só para comparar. Sem
+  base na regra: DECLARADA quando há nota declarada configurada, senão ART.
+*/
+export const BASES_DA_NOTA_DO_LOTE = Object.freeze([
+  ["DECLARADA", "Nota declarada na inscrição"],
+  ["ART", "ART da Empregare"],
+]);
+
 export const DESEMPATE_PADRAO_DA_PROVISORIA = Object.freeze([
   "IDOSO",
   "CANDIDATURA",

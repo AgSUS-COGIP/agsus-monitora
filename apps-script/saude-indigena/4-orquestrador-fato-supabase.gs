@@ -1,8 +1,10 @@
 /**
- * PLANILHA SEDE - orquestrador automatico: DIM_VAGAS -> FATO_ANALISES -> Supabase incremental.
- * Mesmo codigo da Saude Indigena; nao consulta TL_SYNC_ANALISE diretamente.
- * Diferenca: acrescenta processarLoteSincronizacaoAnalises (sem '_'), que o
- * "Atualizar base" de Projetos nao tem. Ver apps-script/LEIA-ME.md.
+ * PLANILHA SAUDE INDIGENA - orquestrador automatico: DIM_VAGAS -> FATO_ANALISES -> Supabase incremental.
+ * Substitui o "Scipts Monitora analises4". Mesmo codigo de apps-script/projetos, SEM a funcao
+ * publica processarLoteSincronizacaoAnalises (o "Atualizar base" da Saude Indigena ja tem a dele;
+ * duas com o mesmo nome no projeto fariam valer a do arquivo carregado por ultimo).
+ * [nao-trava] 07/10/2026: nao espera retomada impossivel e nao encadeia o incremental quando a
+ * FATO ja consumiu 20 min da execucao. Ver apps-script/LEIA-ME.md.
  *
  * Adicione este arquivo AO LADO de:
  * - Atualizar base.gs
@@ -541,16 +543,6 @@ function removerGatilhosConflitantesFatoSupabase_() {
     removidos += 1;
   });
   return removidos;
-}
-
-/**
- * Handler PUBLICO para o gatilho de continuacao da FATO (o "Atualizar base" da
- * Saude Indigena ja tem esta funcao; o de Projetos nao). Gatilho nao chama funcao
- * terminada em '_'. So passa a ser usado se CFG.CONTINUATION_SYNC_TRIGGER_HANDLER
- * do "Atualizar base" de Projetos for trocado para 'processarLoteSincronizacaoAnalises'.
- */
-function processarLoteSincronizacaoAnalises(e) {
-  return processarLoteSincronizacaoAnalises_(e);
 }
 
 function logResultadoOrq_(result) {

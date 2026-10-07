@@ -4,8 +4,11 @@ PRÉ-CLASSIFICAÇÃO DA AVALIAÇÃO DOCUMENTAL (job Python, fase F2)
 Para cada edital, lê do MONITORA (RPCs só do service_role) a regra da avaliação
 e os inscritos que o robô da Empregare trouxe em cada vaga — sem o cadastro
 (nome, e-mail, CPF, telefone) —, calcula a Lista Geral de Classificação
-Provisória por ART (eliminação automática, ordem pela ART com o desempate da
-regra, nota declarada só para conferir) e o lote de convocação ("a linha anda")
+Provisória (eliminação automática, ordem pela base da nota da regra — a nota
+declarada completa, item 8.2.6, ou a ART — com o desempate da regra) e o lote
+de convocação ("a linha anda"); depois do fim das inscrições do cronograma do
+edital, congela a nota declarada completa de cada inscrito (o banco guarda e
+não deixa mudar até a coordenação descongelar)
 com python/monitora/avaliacao_documental/, e GRAVA O RESULTADO PRONTO
 (gravar_pre_classificacao_vaga). O banco valida e serve; a tela só lê.
 Migration: supabase/migrations/20261006110000_pre_classificacao_e_lote.sql.
@@ -46,6 +49,8 @@ sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[2] / "python"))
 from monitora import execucao, supabase_rpc  # noqa: E402
 from monitora.avaliacao_documental.distribuicao import atribuicoes_dos_novos  # noqa: E402
 from monitora.avaliacao_documental.pre_classificacao import (  # noqa: E402
+    congela_a_declarada,
+    fim_das_inscricoes,
     nivel_da_vaga,
     normalizar_regra,
     pre_classificar_vaga,
@@ -65,6 +70,8 @@ CAMPOS_DA_LINHA = (
     "origem_nota",
     "declarada",
     "declarada_parciais",
+    "declarada_completa",
+    "declarada_congelada",
     "sem_mapa",
     "divergente",
     "modalidade",
@@ -161,6 +168,8 @@ def processar_edital(chamar, edital, hoje, refazer, gravar):
         "ranqueados": 0,
         "no_lote": 0,
         "divergencias": 0,
+        "pela_art": 0,
+        "congeladas": 0,
         "avisos": [],
     }
     situacao = situacao_da_regra(edital)
@@ -178,6 +187,10 @@ def processar_edital(chamar, edital, hoje, refazer, gravar):
         resultado["avisos"].append("REFAZER_RECUSADO")
 
     regra = normalizar_regra(edital["regra"].get("configuracao"))
+    # A declarada congela na primeira pré-classificação depois do fim das inscrições (ou já, sem data).
+    congelar = congela_a_declarada(hoje, fim_das_inscricoes(edital.get("cronograma")))
+    resultado["base_da_nota"] = regra["provisoria"]["base_da_nota"]
+    resultado["congelar"] = congelar
     avisos = Counter()
     for vaga in vagas:
         lidos = chamar("pre_classificacao_ler_candidatos", {"p_edital": edital["id"], "p_vaga": vaga["codigo"]}) or {}
@@ -189,11 +202,12 @@ def processar_edital(chamar, edital, hoje, refazer, gravar):
             ultimo_lote=vaga.get("ultimo_lote") or 0,
             refazer=refazer,
             hoje=hoje,
+            congelar=congelar,
         )
         resumo = r["resumo"]
         if gravar is not None:
             gravar(vaga["codigo"], r)
-        for chave in ("inscritos", "eliminados", "ranqueados", "no_lote", "divergencias"):
+        for chave in ("inscritos", "eliminados", "ranqueados", "no_lote", "divergencias", "pela_art", "congeladas"):
             resultado[chave] += int(resumo[chave] or 0)
         avisos.update(resumo["avisos"])
         log.info(
@@ -261,10 +275,16 @@ def linha_do_resumo(r):
         if "fichas_criadas" in r
         else ""
     )
+    texto_base = (
+        f" · nota do lote: declarada ({r.get('pela_art', 0)} pela ART, sem declarada completa)"
+        if r.get("base_da_nota") == "DECLARADA"
+        else (" · nota do lote: ART" if r.get("base_da_nota") else "")
+    )
+    texto_congeladas = f" · {r['congeladas']} declarada(s) congelada(s)" if r.get("congeladas") else ""
     return (
         f"{prefixo}{r['vagas']} vaga(s) · {r['inscritos']} inscritos · {r['eliminados']} eliminados · "
         f"{r['ranqueados']} na Provisória · {r['no_lote']} no lote · {r['divergencias']} divergência(s) ART × declarada"
-        f"{texto_fichas}{texto_avisos}."
+        f"{texto_base}{texto_congeladas}{texto_fichas}{texto_avisos}."
     )
 
 

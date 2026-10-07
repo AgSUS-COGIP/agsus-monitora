@@ -17,6 +17,7 @@ e o código do candidato, notas, posições e motivos.
 import math
 import re
 import unicodedata
+from datetime import date
 from functools import cmp_to_key
 
 from monitora.avaliacao_documental.nota_declarada import (
@@ -36,6 +37,7 @@ PREFIXO_DO_AVISO_DE_SEM_NIVEL = "SEM_NIVEL:"
 NIVEIS = ("superior", "tecnico", "medio", "fundamental")
 SAIU_DA_EMPREGARE = {"codigo": "SAIU_DA_EMPREGARE", "motivo": "Saiu do arquivo da Empregare"}
 DESEMPATE_PADRAO = ["IDOSO", "CANDIDATURA"]
+BASES_DA_NOTA = ("DECLARADA", "ART")
 LOTE_PADRAO = {
     "base": "MULTIPLO_VAGAS",
     "multiplo": 3,
@@ -75,10 +77,41 @@ def normalizar_pergunta(valor):
     return valor.strip() or None if isinstance(valor, str) else None
 
 
+def base_da_nota(provisoria):
+    """
+    A base da nota do lote (baseDaNota do JS): a da regra ou, sem ela, DECLARADA
+    quando há nota declarada configurada (senão ART). Valor desconhecido fica
+    como está, para a validação recusar.
+    """
+    p = _objeto(provisoria)
+    if p.get("base_da_nota") is not None:
+        return p["base_da_nota"]
+    return "DECLARADA" if _lista(p.get("nota_declarada")) else "ART"
+
+
+def erros_da_base_da_nota(provisoria):
+    """Os erros da base da nota do lote (as mesmas mensagens de validarRegraAnalise e do banco)."""
+    p = _objeto(provisoria)
+    base = p.get("base_da_nota")
+    if base is None:
+        return []
+    if base not in BASES_DA_NOTA:
+        return ["Base da nota do lote: DECLARADA ou ART."]
+    if base == "DECLARADA" and not _lista(p.get("nota_declarada")):
+        return ["Base da nota do lote pela declarada: configure a nota declarada."]
+    return []
+
+
 def normalizar_regra(entrada):
-    """A parte da regra (normalizarRegraAnalise do JS) que a pré-classificação usa."""
+    """
+    A parte da regra (normalizarRegraAnalise do JS) que a pré-classificação usa.
+    Base da nota inválida levanta ValueError (o edital falha com a mensagem).
+    """
     r = _objeto(entrada)
     provisoria = _objeto(r.get("provisoria"))
+    erros = erros_da_base_da_nota(provisoria)
+    if erros:
+        raise ValueError(erros[0])
     tolerancia = provisoria.get("divergencia_tolerancia")
     return {
         "provisoria": {
@@ -89,6 +122,7 @@ def normalizar_regra(entrada):
             if isinstance(provisoria.get("desempate"), list)
             else list(DESEMPATE_PADRAO),
             "pergunta_experiencia": normalizar_pergunta(provisoria.get("pergunta_experiencia")),
+            "base_da_nota": base_da_nota(provisoria),
         },
         "lote": {**LOTE_PADRAO, **_objeto(r.get("lote"))},
         "blocos": _lista(r.get("blocos")),
@@ -158,6 +192,71 @@ def codigos_da_modalidade(texto):
     if re.search(r"\btrans\b|transgener|travesti", t):
         codigos.append("TRANS")
     return codigos
+
+
+def fim_das_inscricoes(cronograma):
+    """
+    "AAAA-MM-DD" do fim das inscrições no cronograma do edital
+    (dataDeCorteDoCronograma do JS): a etapa de inscrição (sem resultado,
+    recurso, homologação ou deferimento no nome); com prorrogação, o fim mais
+    tarde; sem fim, o início. None sem etapa de inscrição.
+    """
+    corte = None
+    for etapa in _lista(cronograma):
+        etapa = _objeto(etapa)
+        nome = _sem_acento(etapa.get("atividade"))
+        if not re.search(r"inscri", nome) or re.search(r"resultado|recurso|homolog|deferid", nome):
+            continue
+        fim = next((str(etapa.get(k))[:10] for k in ("fim", "inicio") if _data_valida(etapa.get(k))), None)
+        if fim and (corte is None or fim > corte):
+            corte = fim
+    return corte
+
+
+def _data_valida(valor):
+    m = _DATA.match(str(valor if valor is not None else "").strip())
+    if not m:
+        return False
+    try:
+        date(int(m.group(1)), int(m.group(2)), int(m.group(3)))
+    except ValueError:
+        return False
+    return True
+
+
+def congela_a_declarada(hoje, fim):
+    """Esta pré-classificação congela a nota declarada? Depois do fim das inscrições (hoje > fim) ou sem data de fim."""
+    if not fim:
+        return True
+    dia = _DATA.match(str(hoje or ""))
+    return bool(dia) and dia.group(0) > fim
+
+
+def declarada_congelada(valor):
+    """A declarada congelada lida do anterior ({total, parciais, sem_mapa, respostas}), ou None."""
+    if not isinstance(valor, dict) or not _numero_js(valor.get("total")):
+        return None
+    sem_mapa = valor.get("sem_mapa")
+    return {
+        "total": valor["total"],
+        "parciais": valor["parciais"] if isinstance(valor.get("parciais"), dict) else {},
+        "sem_mapa": sem_mapa if isinstance(sem_mapa, int) and not isinstance(sem_mapa, bool) else 0,
+        "respostas": _lista(valor.get("respostas")),
+    }
+
+
+def _retrato_da_declarada(declarada):
+    """O que se guarda ao congelar a declarada: o total, as parciais e as respostas usadas."""
+    return {
+        "total": declarada["total"],
+        "parciais": declarada["parciais"],
+        "sem_mapa": declarada["sem_mapa"],
+        "respostas": [
+            {"parcial": i["parcial"], "coluna": i["coluna"], "resposta": i["resposta"], "pontos": i["pontos"]}
+            for i in declarada["itens"]
+            if i["coluna"]
+        ],
+    }
 
 
 def art_das_colunas(colunas):
@@ -415,20 +514,25 @@ def _chave_de_ordem(desempate, hoje):
     return cmp_to_key(comparar)
 
 
-def pre_classificar_vaga(regra, vaga, candidatos, anterior=None, ultimo_lote=0, refazer=False, hoje=None):
+def pre_classificar_vaga(
+    regra, vaga, candidatos, anterior=None, ultimo_lote=0, refazer=False, hoje=None, congelar=False
+):
     """
     Pré-classifica os inscritos de uma vaga (mesmo contrato de preClassificarVaga do JS).
       regra        normalizar_regra(configuração do edital)
       vaga         {codigo, vagas_imediatas, cadastro_reserva, modalidades, nivel}
                    (nivel: o da vaga, para a nota declarada por nível; None = desconhecido)
       candidatos   [{id, codigo, ativo, colunas, nascimento, candidatura}]
-      anterior     {id: {situacao, lote, lista_lote, entrada, motivo_entrada, posicao}}
+      anterior     {id: {situacao, lote, lista_lote, entrada, motivo_entrada, posicao, declarada_congelada}}
+      congelar     guarda a declarada completa de quem ainda não a tem congelada (congela_a_declarada)
     Devolve {"linhas": [...], "resumo": {...}}.
     """
     anterior = anterior or {}
     provisoria = (regra or {}).get("provisoria") or {}
     lote_da_regra = (regra or {}).get("lote") or {}
     tem_declarada = len(_lista(provisoria.get("nota_declarada"))) > 0
+    # Corte e ordem pela declarada (padrão com nota declarada) ou pela ART.
+    pela_declarada = tem_declarada and (provisoria.get("base_da_nota") or "DECLARADA") == "DECLARADA"
     tolerancia = provisoria.get("divergencia_tolerancia") or 0
     desempate = provisoria["desempate"] if isinstance(provisoria.get("desempate"), list) else DESEMPATE_PADRAO
     avisos = set()
@@ -450,14 +554,26 @@ def pre_classificar_vaga(regra, vaga, candidatos, anterior=None, ultimo_lote=0, 
                 avisos.update(f"COLUNA_AUSENTE:{codigo}" for codigo in ausentes)
         avisos.update(perguntas_ambiguas(regra, colunas, pergunta_da_experiencia))
         art = art_das_colunas(colunas)
-        declarada = calcular_nota_declarada(regra, colunas, nivel_da_vaga_atual) if tem_declarada else None
+        # A declarada congelada vale como está; senão, recalculada pelas respostas.
+        guardada = declarada_congelada((ant or {}).get("declarada_congelada")) if tem_declarada else None
+        if guardada:
+            declarada = {**guardada, "completa": True, "itens": []}
+        else:
+            declarada = calcular_nota_declarada(regra, colunas, nivel_da_vaga_atual) if tem_declarada else None
+        congelada = guardada or (
+            _retrato_da_declarada(declarada) if congelar and declarada and declarada["completa"] else None
+        )
         if declarada:
             avisos.update(
                 f"{PREFIXO_DO_AVISO_DE_SEM_NIVEL}NOTA_{i['parcial'] or ''}"
                 for i in declarada["itens"]
                 if i["nivel_desconhecido"]
             )
-        nota = art if art is not None else (declarada["total"] if declarada else None)
+        pela_base = pela_declarada and bool(declarada) and declarada["completa"] is True
+        if pela_base:
+            nota = declarada["total"]
+        else:
+            nota = art if art is not None else (declarada["total"] if declarada else None)
         coluna_da_experiencia = (
             coluna_da_pergunta(colunas, pergunta_da_experiencia) if pergunta_da_experiencia else None
         )
@@ -473,10 +589,15 @@ def pre_classificar_vaga(regra, vaga, candidatos, anterior=None, ultimo_lote=0, 
                 "motivo": eliminacao["motivo"] if eliminacao else None,
                 "art": art,
                 "nota": nota,
-                "origem_nota": "ART" if art is not None else ("DECLARADA" if declarada else None),
+                "origem_nota": "DECLARADA"
+                if pela_base
+                else ("ART" if art is not None else ("DECLARADA" if declarada else None)),
                 "declarada": declarada["total"] if declarada else None,
                 "declarada_parciais": declarada["parciais"] if declarada else None,
+                "declarada_completa": declarada["completa"] if declarada else None,
+                "declarada_congelada": congelada,
                 "sem_mapa": declarada["sem_mapa"] if declarada else 0,
+                "_fora_da_base": pela_declarada and not pela_base,
                 # Só a declarada completa confere a ART (a incompleta não diverge).
                 "divergente": diverge_da_art(art, declarada["total"], tolerancia)
                 if declarada and declarada["completa"]
@@ -639,8 +760,15 @@ def pre_classificar_vaga(regra, vaga, candidatos, anterior=None, ultimo_lote=0, 
     if acima_do_corte:
         avisos.add("FORA_DO_LOTE_ACIMA_DO_CORTE")
     sem_art = sum(1 for l in linhas if l["situacao"] != "ELIMINADO" and l["art"] is None)
-    if sem_art:
+    # Sem ART só pesa para quem a nota não veio da declarada completa.
+    if any(
+        l["situacao"] != "ELIMINADO" and l["art"] is None and not (pela_declarada and l["declarada_completa"])
+        for l in linhas
+    ):
         avisos.add("ART_AUSENTE")
+    pela_art = sum(1 for l in linhas if l["situacao"] != "ELIMINADO" and l["_fora_da_base"])
+    if pela_art:
+        avisos.add("SEM_DECLARADA_COMPLETA")
 
     saida_das_linhas = [{k: v for k, v in l.items() if not k.startswith("_")} for l in linhas]
     return {
@@ -654,6 +782,9 @@ def pre_classificar_vaga(regra, vaga, candidatos, anterior=None, ultimo_lote=0, 
             "descricao": t["descricao"],
             "por_modalidade": t["por_modalidade"],
             "art_corte": art_corte,
+            "base_da_nota": "DECLARADA" if pela_declarada else "ART",
+            "pela_art": pela_art,
+            "congeladas": sum(1 for l in linhas if l["declarada_congelada"] is not None),
             "divergencias": sum(1 for l in linhas if l["divergente"]),
             "sem_art": sem_art,
             "acima_do_corte": acima_do_corte,

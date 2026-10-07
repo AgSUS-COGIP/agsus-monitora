@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
+import { criarEstadoDaPreClassificacao } from "../../src/modulos/avaliacao-documental/estado-da-pre-classificacao.js";
 import {
   contadoresDaPreClassificacao,
+  declaradasCongeladas,
   lotesAPublicar,
   nota,
   regraComTamanhos,
@@ -161,6 +163,95 @@ describe("tela da pré-classificação", () => {
     );
     expect(nota(24.5)).toBe("24,5");
     expect(nota(null)).toBe("—");
+    expect(textoDoAviso("SEM_DECLARADA_COMPLETA")).toMatch(
+      /sem nota declarada completa: o lote usou a ART/,
+    );
+  });
+
+  it("as notas declaradas congeladas do edital: quantas e desde quando", () => {
+    expect(declaradasCongeladas({})).toEqual({ quantidade: 0, em: null });
+    expect(
+      declaradasCongeladas({
+        candidatos: [
+          { declarada_congelada: 20, congelada_em: "2026-10-08T12:00:00Z" },
+          { declarada_congelada: 15, congelada_em: "2026-10-07T12:00:00Z" },
+          { declarada_congelada: null, congelada_em: null },
+          { declarada: 10 },
+        ],
+      }),
+    ).toEqual({ quantidade: 2, em: "2026-10-07T12:00:00Z" });
+  });
+});
+
+describe("estado da aba: descongelar e recalcular", () => {
+  const criar = (rpcs, pedidos) => {
+    const toasts = [];
+    const supabase = {
+      rpc: (nome, args) => {
+        rpcs.push([nome, args]);
+        return Promise.resolve(
+          nome === "descongelar_declarada_pre_classificacao"
+            ? { data: { descongeladas: 3 }, error: null }
+            : { data: { vagas: [], candidatos: [] }, error: null },
+        );
+      },
+    };
+    const pre = criarEstadoDaPreClassificacao({
+      supabase,
+      toast: (m, t) => toasts.push([m, t]),
+      obterToken: async () => "t",
+      buscar: async (url, opcoes) => {
+        pedidos.push(JSON.parse(opcoes.body));
+        return { status: 202, json: async () => ({}) };
+      },
+      agendar: () => {},
+    });
+    return { pre, toasts };
+  };
+
+  it("descongela o edital com o motivo e pede o recálculo", async () => {
+    const rpcs = [];
+    const pedidos = [];
+    const { pre, toasts } = criar(rpcs, pedidos);
+    await pre.carregar("ed-1");
+    expect(await pre.descongelar("  Respostas corrigidas na Empregare  ")).toBe(
+      true,
+    );
+    expect(rpcs).toContainEqual([
+      "descongelar_declarada_pre_classificacao",
+      {
+        p_edital: "ed-1",
+        p_motivo: "Respostas corrigidas na Empregare",
+        p_vaga: null,
+      },
+    ]);
+    expect(pedidos).toEqual([{ robo: "pre_classificacao", edital: "ed-1" }]);
+    expect(toasts[0]).toEqual(["3 notas declaradas descongeladas.", "success"]);
+  });
+
+  it("recusa do banco: avisa e não recalcula", async () => {
+    const pedidos = [];
+    const toasts = [];
+    const pre = criarEstadoDaPreClassificacao({
+      supabase: {
+        rpc: (nome) =>
+          Promise.resolve(
+            nome === "descongelar_declarada_pre_classificacao"
+              ? { data: null, error: { message: "Diga o motivo" } }
+              : { data: {}, error: null },
+          ),
+      },
+      toast: (m, t) => toasts.push([m, t]),
+      buscar: async (url, opcoes) => {
+        pedidos.push(opcoes);
+        return { status: 202, json: async () => ({}) };
+      },
+      agendar: () => {},
+    });
+    await pre.carregar("ed-1");
+    expect(await pre.descongelar("curto")).toBe(false);
+    expect(pedidos).toEqual([]);
+    expect(toasts.at(-1)[1]).toBe("error");
   });
 });
 
