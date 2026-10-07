@@ -88,7 +88,7 @@ import { montarVisaoGeral } from "./modulos/visao-geral/visao-geral.tsx";
 import { situacaoDoSistema } from "./modules/situacao-dos-modulos.js";
 import { montarAcessos } from "./modulos/acessos/acessos.jsx";
 import { montarModulos } from "./modulos/modulos/modulos.jsx";
-import { montarSaudeDasCargas } from "./componentes/saude-das-cargas/saude-das-cargas.jsx";
+import { montarSaudeDasCargas } from "./componentes/saude-das-cargas/saude-das-cargas.tsx";
 import { montarBuscaGlobal } from "./componentes/busca-global/busca-global.jsx";
 import { montarEntrada } from "./app/entrada/entrada.jsx";
 import { sessaoDoApp } from "./app/sessao.js";

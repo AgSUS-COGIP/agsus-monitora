@@ -10,7 +10,7 @@ import { clicar, esperar } from "./interacoes.js";
 */
 
 const { montarSaudeDasCargas } =
-  await import("../../src/componentes/saude-das-cargas/saude-das-cargas.jsx");
+  await import("../../src/componentes/saude-das-cargas/saude-das-cargas.tsx");
 
 const AGORA = new Date("2026-10-01T12:00:00Z");
 const ha = (min) => new Date(AGORA.getTime() - min * 60000).toISOString();

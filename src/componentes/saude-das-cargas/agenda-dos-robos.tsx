@@ -1,4 +1,4 @@
-import { dataHora } from "../../lib/saude-das-cargas.js";
+import { dataHora } from "../../lib/saude-das-cargas.ts";
 import { Aviso } from "../../ui/index.js";
 
 /*

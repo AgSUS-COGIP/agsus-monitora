@@ -1,6 +1,12 @@
+import type {
+  DependenciasDaSaude,
+  EstadoDaSaude,
+  SnapshotDaSaude,
+  OpcoesConferidas,
+} from "./tipos.ts";
 /*
   Estado da seção Status das atualizações, fora do React: a última leitura de
-  `get_saude_das_cargas` já normalizada (src/lib/saude-das-cargas.js), o
+  `get_saude_das_cargas` já normalizada (src/lib/saude-das-cargas.ts), o
   perfil e o erro. A tela lê com `useSyncExternalStore`. Não importa React.
 
   "Rodar agora" (os robôs de ROBOS_DE_CARGA): a RPC disparar_robo pede ao
@@ -10,7 +16,7 @@
   expirou). As regras do botão são de src/lib/robos-de-carga.js.
 
   "Rodar com opções" e as últimas execuções: `painel` guarda
-  get_painel_dos_robos (editais e histórico, src/lib/painel-dos-robos.js);
+  get_painel_dos_robos (editais e histórico, src/lib/painel-dos-robos.ts);
   `buscarVagas` pede listar_vagas_dos_robos para as sugestões do formulário;
   `acompanhamentos` guarda o último pedido de cada robô (quando, qual modo,
   o id do pedido e a situação dele) e, enquanto ele não termina, a tela
@@ -22,7 +28,7 @@ import {
   acompanhamentoDoPedido,
   normalizarPainel,
   normalizarVagas,
-} from "../../lib/painel-dos-robos.js";
+} from "../../lib/painel-dos-robos.ts";
 import {
   inputsDoPedido,
   mensagemDoErroDoDisparo,
@@ -31,7 +37,7 @@ import {
   RPC_SITUACAO_DO_DISPARO,
   situacaoDoPedido,
 } from "../../lib/robos-de-carga.js";
-import { normalizarSaude } from "../../lib/saude-das-cargas.js";
+import { normalizarSaude } from "../../lib/saude-das-cargas.ts";
 
 const ESPERA_DEPOIS_DO_PEDIDO_MS = 20000;
 /* O GitHub responde ao banco em 1 ou 2 s: a primeira conferência do pedido. */
@@ -44,8 +50,8 @@ export function criarEstadoDaSaude({
   getProfile,
   agora = () => new Date(),
   agendar = (fn, ms) => setTimeout(fn, ms),
-}) {
-  let estado = {
+}: DependenciasDaSaude): EstadoDaSaude {
+  let estado: SnapshotDaSaude = {
     status: "idle",
     dados: null,
     bruto: null,
@@ -59,8 +65,8 @@ export function criarEstadoDaSaude({
   };
   let pedido = 0;
   let releituraAgendada = false;
-  const ouvintes = new Set();
-  const publicar = (mudancas) => {
+  const ouvintes = new Set<() => void>();
+  const publicar = (mudancas: Partial<SnapshotDaSaude>) => {
     estado = { ...estado, ...mudancas };
     for (const ouvinte of ouvintes) ouvinte();
   };
@@ -152,7 +158,10 @@ export function criarEstadoDaSaude({
   }
 
   /* listar_vagas_dos_robos: as vagas conhecidas dos editais ou dos códigos. */
-  async function buscarVagas({ editais = [], vagas = [] } = {}) {
+  async function buscarVagas({
+    editais = [],
+    vagas = [],
+  }: { editais?: string[]; vagas?: string[] } = {}) {
     if (!supabase || (!editais.length && !vagas.length))
       return { vagas: [], erro: "" };
     try {
@@ -215,7 +224,7 @@ export function criarEstadoDaSaude({
     o acompanhamento da linha diz o que fazer e o botão volta a ficar
     disponível.
   */
-  async function conferirPedido(id) {
+  async function conferirPedido(id: string) {
     const pedidoDoRobo = estado.acompanhamentos[id];
     if (!supabase || !pedidoDoRobo?.id || pedidoDoRobo.disparo?.terminou)
       return;
@@ -250,8 +259,15 @@ export function criarEstadoDaSaude({
     Promise.all(Object.keys(estado.acompanhamentos).map(conferirPedido));
 
   /* disparar_robo para um robô da lista (opções: "Rodar com opções"). */
-  async function disparar(id, opcoes = null, frase = "") {
-    const avisar = (aviso, pedido) =>
+  async function disparar(
+    id: string,
+    opcoes: OpcoesConferidas | null = null,
+    frase = "",
+  ) {
+    const avisar = (
+      aviso: SnapshotDaSaude["avisos"][string],
+      pedido: Date | null,
+    ) =>
       publicar({
         avisos: { ...estado.avisos, [id]: aviso },
         pedidos: { ...estado.pedidos, [id]: pedido },
@@ -275,7 +291,13 @@ export function criarEstadoDaSaude({
       return false;
     }
     const { data, error } = resposta || {};
-    if (error || data === null || data === undefined) {
+    if (
+      error ||
+      !(
+        (typeof data === "number" && Number.isSafeInteger(data) && data > 0) ||
+        (typeof data === "string" && /^[1-9]\d*$/.test(data))
+      )
+    ) {
       avisar(
         {
           tom: error?.code === "55006" ? "info" : "erro",
@@ -307,10 +329,10 @@ export function criarEstadoDaSaude({
     return true;
   }
 
-  const rodarAgora = (id) => disparar(id);
-  const rodarComOpcoes = (id, opcoes, frase = "") =>
+  const rodarAgora = (id: string) => disparar(id);
+  const rodarComOpcoes = (id: string, opcoes: OpcoesConferidas, frase = "") =>
     disparar(id, opcoes, frase);
-  function dispensarAcompanhamento(id) {
+  function dispensarAcompanhamento(id: string) {
     const resto = { ...estado.acompanhamentos };
     delete resto[id];
     publicar({ acompanhamentos: resto });
@@ -318,7 +340,7 @@ export function criarEstadoDaSaude({
 
   return {
     obter: () => estado,
-    assinar(ouvinte) {
+    assinar(ouvinte: () => void) {
       ouvintes.add(ouvinte);
       return () => ouvintes.delete(ouvinte);
     },
