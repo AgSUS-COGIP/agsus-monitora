@@ -35,7 +35,8 @@ import { RodarComOpcoes } from "./rodar-com-opcoes.jsx";
   Abaixo da lista, o cartão "Avisos de conferência" (src/modulos/conferencias/):
   os avisos que o job Python das conferências gravou, de todos os módulos.
 
-  Empregare, Seleção, Entrevistas e Conferências têm "Rodar agora": o botão chama
+  Empregare, Seleção, Entrevistas, Conferências e o Expurgo dos anexos do chat têm
+  "Rodar agora": o botão chama
   /api/rodar-carga (api/rodar-carga.js), que dispara o workflow no GitHub;
   fica desabilitado enquanto a carga roda (src/lib/robos-de-carga.js).
 

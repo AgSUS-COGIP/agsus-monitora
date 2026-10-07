@@ -457,3 +457,51 @@ describe("pré-classificação da Avaliação documental (20261006110000)", () =
     );
   });
 });
+
+describe("expurgo diário dos anexos do chat (20261007250000)", () => {
+  const BASE = { ...PAYLOAD, empregare: [], conferencias: [] };
+
+  it("sem a chave no payload, a linha não aparece; com ela, vem antes das tarefas do banco", () => {
+    expect(
+      visaoSimples(normalizarSaude(BASE, AGORA)).linhas.map((l) => l.id),
+    ).not.toContain("expurgo_chat");
+    const s = normalizarSaude(
+      {
+        ...BASE,
+        expurgo_chat: [
+          execucao("CONCLUIDA", 60, {
+            confirmados: 120,
+            falhas: 0,
+            pendentes: 0,
+            disparo: "AGENDA",
+          }),
+        ],
+      },
+      AGORA,
+    );
+    const { linhas } = visaoSimples(s);
+    expect(linhas.map((l) => l.titulo).slice(-2)).toEqual([
+      "Expurgo dos anexos do chat",
+      "Atualização automática do banco",
+    ]);
+    const linha = linhas.find((l) => l.id === "expurgo_chat");
+    expect(linha.situacao).toBe("em_dia");
+    expect(linha.partes[0].prazoMin).toBe(PRAZO_DIARIO_MIN);
+    expect(linha.partes[0].historico[0].mensagem).toBe(
+      "120 arquivos removidos · 0 ficaram na fila · 0 na fila ao fim · disparo: agenda",
+    );
+  });
+
+  it("parcial conta como falha e mais de 26 h sem rodar fica atrasada", () => {
+    const parcial = (execucoes) =>
+      visaoSimples(
+        normalizarSaude({ ...BASE, expurgo_chat: execucoes }, AGORA),
+      ).linhas.find((l) => l.id === "expurgo_chat");
+    const linha = parcial([
+      execucao("PARCIAL", 10, { confirmados: 98, falhas: 2, pendentes: 2 }),
+    ]);
+    expect(linha.situacao).toBe("falhou");
+    expect(linha.erro.mensagem).toContain("2 ficaram na fila");
+    expect(parcial([execucao("CONCLUIDA", 27 * 60)]).situacao).toBe("atrasada");
+  });
+});

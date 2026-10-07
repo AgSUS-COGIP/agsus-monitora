@@ -49,6 +49,13 @@ export const ROBOS_DE_CARGA = Object.freeze([
     workflow: "conferencias.yml",
     limiteMin: 20,
   }),
+  /* Tira do Storage os arquivos da fila de expurgo dos anexos do chat (20261007250000). */
+  Object.freeze({
+    id: "expurgo_chat",
+    nome: "Expurgo dos anexos do chat",
+    workflow: "expurgo-anexos-chat.yml",
+    limiteMin: 20,
+  }),
   /*
     porEdital: além do administrador global (Rodar agora, todos os editais),
     a coordenação do edital dispara para um edital só (Recalcular da aba

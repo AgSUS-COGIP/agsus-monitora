@@ -12,7 +12,9 @@
   pela API. Depois de ler (com fila) e de cada ação, a seção pede a fila
   (preparar_expurgo_anexos_chat), remove os arquivos do bucket chat-anexos
   (a política de exclusão só aceita o que está na fila) e confirma
-  (confirmar_expurgo_anexos_chat). Falhou: fica para a próxima vez.
+  (confirmar_expurgo_anexos_chat). Falhou: fica para a próxima vez. O mesmo
+  roda todo dia às 6h30 pelo job scripts/expurgo_anexos_chat/ (service_role,
+  20261007250000): a tela só adianta o que ele faria.
 */
 import { BUCKET_DO_CHAT } from "../../lib/anexos-do-chat.js";
 import {
