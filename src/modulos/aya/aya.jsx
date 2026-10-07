@@ -86,6 +86,7 @@ import {
   salvarPassoDaTrilha,
 } from "./tour/progresso.js";
 import { acharAlvo, Tour } from "./tour/tour.jsx";
+import { Mascote } from "./mascote/mascote.tsx";
 
 /* As mesmas chaves do painel antigo: quem fechou a Aya ou moveu a arara continua assim. */
 export const CHAVE_OCULTA = "agsus_monitora_arara_oculta_v1";
@@ -94,8 +95,9 @@ export const CHAVE_POSICAO_DA_ARARA =
 export const CHAVE_AVALIACOES = "agsus_aya_avaliacoes_v1";
 export const CHAVE_SEM_RESPOSTA = "agsus_aya_perguntas_sem_resposta_v1";
 
-const AVATAR = "/assets/arara-azul-monitora.png";
 const LIMITE_DE_AVALIACOES = 200;
+/* Ao abrir o painel, a arara fica atenta por um instante. */
+const ATENTA_AO_ABRIR = Object.freeze({ estado: "atenta", duracaoMs: 2200 });
 const ARRASTE_MINIMO = 4;
 const MARGEM = 8;
 
@@ -962,6 +964,8 @@ export function Aya({
   }
 
   const semPergunta = !mensagens.some((m) => m.papel === "user");
+  // A arara do painel acompanha a resposta: pensa enquanto busca, fala enquanto o texto aparece.
+  const estadoDoPainel = ocupada ? "pensando" : revelando ? "falando" : null;
   const estiloDaArara = posicao
     ? {
         left: `${posicao.left}px`,
@@ -988,7 +992,12 @@ export function Aya({
           {...manipuladores}
         >
           <span className="aya-retrato">
-            <img src={AVATAR} alt="" width="70" height="70" draggable="false" />
+            <Mascote
+              enquadramento="retrato"
+              tamanho={42}
+              acenarAoEntrar
+              janela={janela}
+            />
             <span className="aya-selo-beta" aria-hidden="true">
               Beta
             </span>
@@ -1048,7 +1057,13 @@ export function Aya({
             </h2>
             <div className="aya-apresentacao">
               <span className="aya-avatar aya-retrato">
-                <img src={AVATAR} alt="" width="64" height="64" />
+                <Mascote
+                  enquadramento="retrato"
+                  tamanho={58}
+                  proprio={estadoDoPainel}
+                  momentoInicial={ATENTA_AO_ABRIR}
+                  janela={janela}
+                />
               </span>
               <div className="aya-apresentacao__textos">
                 <p className="aya-apresentacao__nome">

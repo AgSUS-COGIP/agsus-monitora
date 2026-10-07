@@ -85,7 +85,7 @@ html[data-theme="dark"] .comemoracao__veu {
   top: 0;
   left: 0;
   z-index: 10044;
-  object-fit: contain;
+  display: block;
   pointer-events: none;
   transform-origin: 50% 50%;
   will-change: transform, opacity;
