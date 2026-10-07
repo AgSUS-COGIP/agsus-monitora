@@ -552,490 +552,951 @@ table.entrevistas-tabela {
 
 /* ── Ficha de notas: modo de análise (ficha.jsx) ────────────────────── */
 /*
-  A ficha aberta ocupa a área de conteúdo, como a da Avaliação documental:
-  topo preso no alto, competências e a lateral da prévia (presa), barra de
-  ações presa ao pé (acima do menu inferior do celular). Cores das situações
-  iguais às da Avaliação documental: ok (verde), reprova (vermelho), parcial
-  (amarelo), pendente (cinza).
+  A ficha aberta ocupa a área de conteúdo, no desenho da ficha da Avaliação
+  documental: cabeçalho enxuto e preso (sem caixa: hierarquia e espaço), a
+  folha do avaliador (abas + matriz) num cartão, a lateral do resultado
+  presa ao rolar e o rodapé mínimo preso embaixo (acima do menu inferior do
+  celular). Cores: verde ok, vermelho abaixo do mínimo/inapto, cinza vazio.
 */
 .entrevistas-analise {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
-  gap: var(--space-3);
+  gap: var(--space-5);
+  width: 100%;
+  max-width: 1360px;
   min-width: 0;
+  margin-inline: auto;
 }
+
+/* Cabeçalho */
 .entrevistas-analise-topo {
   position: sticky;
   top: 0;
   z-index: 3;
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
   gap: var(--space-2) var(--space-4);
-  padding: var(--space-2) var(--space-3);
+  padding: var(--space-4) 0 var(--space-3);
+  border-bottom: 1px solid var(--border-subtle);
+  background: var(--surface-page);
+}
+.entrevistas-voltar,
+.entrevistas-navegar {
+  display: inline-grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
   border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-md);
   background: var(--surface-card);
-  box-shadow: var(--shadow-card);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition:
+    background-color var(--duration-fast) var(--ease-standard),
+    color var(--duration-fast) var(--ease-standard);
+}
+.entrevistas-voltar {
+  align-self: start;
+  margin-top: 2px;
+}
+.entrevistas-navegar {
+  width: 32px;
+  height: 32px;
+}
+.entrevistas-voltar:hover,
+.entrevistas-navegar:hover:not(:disabled) {
+  background: var(--surface-hover);
+  color: var(--text-primary);
+}
+.entrevistas-navegar:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+.entrevistas-voltar:focus-visible,
+.entrevistas-navegar:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
 }
 .entrevistas-analise-identidade {
   display: grid;
+  gap: var(--space-0-5);
   min-width: 0;
 }
 .entrevistas-analise-identidade h2 {
   margin: 0;
   overflow: hidden;
   color: var(--text-primary);
-  font-size: var(--text-body);
+  font-size: var(--text-h2);
   font-weight: var(--font-weight-semibold);
+  line-height: var(--leading-h2);
+  letter-spacing: var(--tracking-h2);
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 .entrevistas-analise-identidade h2 span {
   color: var(--text-secondary);
   font-weight: var(--font-weight-regular);
+  font-variant-numeric: tabular-nums;
 }
-.entrevistas-analise-dados {
+.entrevistas-analise-vaga {
+  margin: 0;
+  overflow: hidden;
+  color: var(--text-secondary);
+  font-size: var(--text-body-sm);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.entrevistas-chips {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: var(--space-1) var(--space-4);
-  margin: 0;
-  font-size: var(--text-caption);
+  gap: var(--space-1-5);
+  margin-top: var(--space-1-5);
 }
-.entrevistas-analise-dados dt {
+.entrevistas-chip {
+  display: inline-flex;
+  align-items: center;
+  height: 24px;
+  padding: 0 var(--space-2);
+  border-radius: var(--radius-sm);
+  background: var(--surface-hover);
   color: var(--text-secondary);
+  font-size: var(--text-caption);
+  font-weight: var(--font-weight-medium);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 }
-.entrevistas-analise-dados dd {
-  margin: 0;
-  color: var(--text-primary);
-  font-weight: var(--font-weight-semibold);
+.entrevistas-analise-controles {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-3);
+}
+.entrevistas-comparecimento .ui-segmentado-opcao.is-ativo[data-valor="S"] {
+  color: var(--state-success);
+}
+.entrevistas-comparecimento .ui-segmentado-opcao.is-ativo[data-valor="N"] {
+  color: var(--state-danger);
+}
+.entrevistas-tela .entrevistas-ficha-banca select {
+  min-height: 36px;
+  font-size: var(--text-body-sm);
 }
 .entrevistas-analise-navegacao {
   display: flex;
   align-items: center;
-  gap: var(--space-2);
-  margin-left: auto;
+  gap: var(--space-1-5);
 }
+.entrevistas-analise-posicao {
+  min-width: 4.5em;
+  color: var(--text-secondary);
+  font-size: var(--text-body-sm);
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+}
+
+/* Popover (o "i" do cabeçalho e o "?" do rodapé) */
+.entrevistas-popover {
+  position: relative;
+  display: inline-flex;
+}
+.entrevistas-popover-botao {
+  display: inline-grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-full);
+  background: var(--surface-card);
+  color: var(--text-secondary);
+  font: inherit;
+  font-size: var(--text-caption);
+  font-weight: var(--font-weight-semibold);
+  cursor: pointer;
+  transition:
+    background-color var(--duration-fast) var(--ease-standard),
+    color var(--duration-fast) var(--ease-standard);
+}
+.entrevistas-popover-botao:hover,
+.entrevistas-popover-botao[aria-expanded="true"] {
+  background: var(--surface-hover);
+  color: var(--text-primary);
+}
+.entrevistas-popover-botao:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+.entrevistas-popover-painel {
+  position: absolute;
+  top: calc(100% + var(--space-1-5));
+  z-index: 10;
+  display: grid;
+  gap: var(--space-2);
+  width: max-content;
+  min-width: 220px;
+  max-width: min(340px, calc(100vw - 2 * var(--space-4)));
+  padding: var(--space-4);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  background: var(--surface-card);
+  box-shadow: var(--shadow-md);
+  color: var(--text-primary);
+  font-size: var(--text-body-sm);
+  animation: entrevistas-surgir var(--duration-base) var(--ease-standard);
+}
+.entrevistas-popover-painel[data-lado="direita"] {
+  right: 0;
+}
+.entrevistas-popover-painel[data-lado="esquerda"] {
+  left: 0;
+}
+.entrevistas-popover-painel[data-acima] {
+  top: auto;
+  bottom: calc(100% + var(--space-1-5));
+}
+.entrevistas-detalhes,
+.entrevistas-atalhos {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+}
+.entrevistas-detalhes dt {
+  color: var(--text-secondary);
+  font-size: var(--text-caption);
+}
+.entrevistas-detalhes dd {
+  margin: 0;
+  font-weight: var(--font-weight-medium);
+}
+.entrevistas-atalhos > div {
+  display: grid;
+  grid-template-columns: 8.5em minmax(0, 1fr);
+  align-items: center;
+  gap: var(--space-3);
+}
+.entrevistas-atalhos dd {
+  margin: 0;
+  color: var(--text-secondary);
+}
+.entrevistas-atalhos kbd {
+  padding: 1px var(--space-1-5);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  background: var(--surface-hover);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  font-size: var(--text-caption);
+  font-weight: var(--font-weight-medium);
+  white-space: nowrap;
+}
+
+/* Corpo: a folha e a lateral */
 .entrevistas-analise-formulario {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
-  gap: var(--space-3);
+  gap: var(--space-4);
 }
 .entrevistas-analise-grade {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(260px, 320px);
+  grid-template-columns: minmax(0, 1fr) 320px;
   align-items: start;
-  gap: var(--space-4);
+  gap: var(--space-6);
 }
 .entrevistas-analise-principal {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
-  gap: var(--space-3);
+  gap: var(--space-4);
   min-width: 0;
 }
-.entrevistas-analise-lateral {
-  position: sticky;
-  top: var(--space-16);
+.entrevistas-folha {
   display: grid;
-  gap: var(--space-3);
-  max-height: calc(100dvh - 160px);
-  overflow: auto;
-}
-.entrevistas-analise-barra {
-  bottom: var(--recuo-da-navegacao-inferior, 0px);
-  z-index: 3;
-  align-items: center;
-  padding-inline: var(--space-4);
+  gap: var(--space-4);
+  padding: var(--space-5) var(--space-6) var(--space-4);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-card);
+  background: var(--surface-card);
 }
-.entrevistas-analise-erro {
-  flex: 1 1 100%;
-  color: var(--state-danger);
-  font-size: var(--text-body-sm);
-  font-weight: var(--font-weight-medium);
-  text-align: right;
-}
-
-/* Comparecimento: dois botões grandes. */
-.entrevistas-ficha-topo {
+.entrevistas-folha-topo {
   display: flex;
   flex-wrap: wrap;
-  align-items: flex-end;
-  gap: var(--space-4);
-  padding: var(--space-3);
-}
-.entrevistas-comparecimento {
-  display: flex;
-  flex: 1 1 320px;
-  gap: var(--space-2);
-}
-.entrevistas-comparecimento-opcao {
-  display: inline-flex;
-  flex: 1 1 0;
   align-items: center;
-  justify-content: center;
-  gap: var(--space-2);
-  min-height: 48px;
-  padding: var(--space-2) var(--space-4);
-  border: 2px solid var(--border-control);
-  border-radius: var(--radius-md);
-  background: var(--surface-card);
-  color: var(--text-primary);
-  font-size: var(--text-body);
-  font-weight: var(--font-weight-semibold);
-  cursor: pointer;
-}
-.entrevistas-comparecimento-opcao:hover:not(:disabled) {
-  border-color: var(--state-info);
-}
-.entrevistas-comparecimento-opcao[data-valor="S"].is-escolhida {
-  border-color: var(--state-success);
-  background: var(--state-success-soft);
-  color: var(--state-success);
-}
-.entrevistas-comparecimento-opcao[data-valor="N"].is-escolhida {
-  border-color: var(--state-danger);
-  background: var(--state-danger-soft);
-  color: var(--state-danger);
-}
-.entrevistas-ficha-banca {
-  display: grid;
-  gap: var(--space-1);
-  color: var(--text-secondary);
-  font-size: var(--text-caption);
-}
-
-/* Competência: cartão com a cor da situação. */
-.entrevistas-ficha-competencia {
-  display: grid;
-  gap: var(--space-2);
-  padding: var(--space-3);
-  border-left: 4px solid var(--border-subtle);
-  transition:
-    border-color var(--duration-base) ease,
-    background-color var(--duration-base) ease;
-}
-.entrevistas-ficha-competencia[data-situacao="ok"] {
-  border-color: var(--state-success);
-  background: var(--state-success-soft);
-}
-.entrevistas-ficha-competencia[data-situacao="reprova"] {
-  border-color: var(--state-danger);
-  background: var(--state-danger-soft);
-}
-.entrevistas-ficha-competencia[data-situacao="parcial"] {
-  border-color: var(--state-warning);
-  background: var(--state-warning-soft);
-}
-.entrevistas-ficha-competencia-topo {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: flex-start;
   justify-content: space-between;
-  gap: var(--space-2);
+  gap: var(--space-3);
 }
-.entrevistas-ficha-competencia-topo h3 {
+.entrevistas-folha-nota,
+.entrevistas-folha-resumo {
   margin: 0;
-  color: var(--text-primary);
-  font-size: var(--text-body);
-  font-weight: var(--font-weight-semibold);
-}
-.entrevistas-ficha-competencia-topo small {
   color: var(--text-secondary);
-  font-size: var(--text-caption);
-}
-.entrevistas-ficha-competencia-nota {
-  display: grid;
-  justify-items: end;
-  line-height: 1.1;
-}
-.entrevistas-ficha-competencia-nota span {
-  color: var(--text-secondary);
-  font-size: var(--text-caption);
-}
-.entrevistas-ficha-competencia-nota strong {
-  color: var(--text-primary);
-  font-size: var(--text-h3);
-  font-weight: var(--font-weight-semibold);
-  font-variant-numeric: tabular-nums;
-}
-.entrevistas-ficha-competencia[data-situacao="ok"]
-  .entrevistas-ficha-competencia-nota
-  strong {
-  color: var(--state-success);
-}
-.entrevistas-ficha-competencia[data-situacao="reprova"]
-  .entrevistas-ficha-competencia-nota
-  :is(strong, small) {
-  color: var(--state-danger);
-}
-
-/* Botões da escala (0 a 5): preenchem o campo em foco. */
-.entrevistas-botoes-de-nota {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-1);
-}
-.entrevistas-botao-de-nota {
-  min-width: 36px;
-  min-height: 32px;
-  padding: 0 var(--space-2);
-  border: 1px solid var(--border-control);
-  border-radius: var(--radius-sm);
-  background: var(--surface-card);
-  color: var(--text-primary);
-  font-weight: var(--font-weight-semibold);
-  font-variant-numeric: tabular-nums;
-  cursor: pointer;
-}
-.entrevistas-botao-de-nota:hover:not(:disabled) {
-  border-color: var(--state-info);
-  background: var(--state-info-soft);
-}
-.entrevistas-botao-de-nota.is-escolhida {
-  border-color: var(--state-info);
-  background: var(--state-info);
-  color: var(--text-inverse);
-}
-
-/* Avaliadores lado a lado. */
-.entrevistas-ficha-avaliadores {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(118px, 1fr));
-  gap: var(--space-2);
-}
-.entrevistas-ficha-avaliadores[data-aspectos] {
-  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-}
-.entrevistas-ficha-avaliador {
-  display: grid;
-  align-content: start;
-  gap: var(--space-1-5);
-  padding: var(--space-2);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-md);
-  background: var(--surface-card);
-}
-.entrevistas-ficha-avaliador.is-incompleto {
-  border-color: var(--state-warning);
-}
-.entrevistas-ficha-avaliador-nome {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  column-gap: var(--space-1);
-  min-width: 0;
-  line-height: 1.2;
-}
-.entrevistas-ficha-avaliador-nome small {
-  grid-column: 1;
-}
-.entrevistas-ficha-aspectos {
-  display: block;
-}
-.entrevistas-ficha-avaliador-nome b {
-  overflow: hidden;
   font-size: var(--text-body-sm);
-  font-weight: var(--font-weight-semibold);
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
-.entrevistas-ficha-avaliador.is-editavel .entrevistas-ficha-avaliador-nome b {
-  color: var(--state-info);
-}
-.entrevistas-ficha-avaliador-nome small {
-  color: var(--text-secondary);
-  font-size: var(--text-caption);
-}
-.entrevistas-ficha-campos {
-  display: flex;
-  align-items: flex-end;
-  gap: var(--space-1);
-}
-.entrevistas-ficha-campo {
-  display: grid;
-  gap: var(--space-0-5);
-  min-width: 0;
-}
-.entrevistas-ficha-campo > span {
-  overflow: hidden;
-  max-width: 3.4em;
-  text-transform: none;
-  letter-spacing: 0;
-  color: var(--text-secondary);
-  font-size: var(--text-xs);
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.entrevistas-ficha-media {
-  grid-column: 2;
-  grid-row: 1 / span 2;
-  align-self: center;
-  color: var(--text-primary);
-  font-size: var(--text-body-sm);
-  font-weight: var(--font-weight-semibold);
-  font-variant-numeric: tabular-nums;
-  white-space: nowrap;
-}
-.entrevistas-nota {
-  width: 2.6em;
-  color: var(--text-primary);
-  min-height: 36px;
-  padding: var(--space-1);
-  font-size: var(--text-body);
-  font-weight: var(--font-weight-semibold);
-  font-variant-numeric: tabular-nums;
-  text-align: center;
-}
-.entrevistas-ficha-avaliadores:not([data-aspectos]) .entrevistas-ficha-campo,
-.entrevistas-ficha-avaliadores:not([data-aspectos]) .entrevistas-nota {
-  width: 100%;
-}
-.entrevistas-nota.is-ativa {
-  border-color: var(--state-info);
-  box-shadow: 0 0 0 2px var(--state-info-soft);
-}
-.entrevistas-nota.is-invalida {
-  border-color: var(--state-danger);
-  background: var(--state-danger-soft);
-}
-.entrevistas-nota-fixa {
-  display: inline-grid;
-  min-width: 2em;
-  min-height: 36px;
-  place-items: center;
-  font-weight: var(--font-weight-semibold);
-  font-variant-numeric: tabular-nums;
-}
-
-/* Abas das competências: só no celular (uma competência por vez). */
-.entrevistas-competencias-abas {
-  display: none;
-}
-
-/* Lateral: a prévia do parecer, com a cor dele. */
-.entrevistas-previa {
-  display: grid;
-  gap: var(--space-2);
-  padding: var(--space-3);
-  border-top: 4px solid var(--border-subtle);
-  transition:
-    border-color var(--duration-base) ease,
-    background-color var(--duration-base) ease;
-}
-.entrevistas-previa[data-tom="ok"] {
-  border-top-color: var(--state-success);
-  background: var(--state-success-soft);
-}
-.entrevistas-previa[data-tom="reprova"] {
-  border-top-color: var(--state-danger);
-  background: var(--state-danger-soft);
-}
-.entrevistas-previa-rotulo {
-  color: var(--text-secondary);
-  font-size: var(--text-caption);
-  font-weight: var(--font-weight-semibold);
-}
-.entrevistas-previa-parecer .ui-selo {
-  font-size: var(--text-body);
-}
-.entrevistas-previa-total {
+.entrevistas-folha-titulo {
   display: flex;
   flex-wrap: wrap;
   align-items: baseline;
-  justify-content: space-between;
+  gap: var(--space-1) var(--space-3);
+}
+.entrevistas-folha-titulo h3 {
+  margin: 0;
+  color: var(--text-primary);
+  font-size: var(--text-h4);
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--leading-h4);
+}
+.entrevistas-folha-corpo {
+  display: grid;
   gap: var(--space-2);
 }
-.entrevistas-previa-total strong {
+.entrevistas-modo-da-ficha .ui-segmentado-opcao {
+  min-height: 28px;
+  padding: 0 var(--space-2);
+  font-size: var(--text-caption);
+}
+
+/* Abas da folha: um avaliador (ou uma competência) por aba */
+.entrevistas-abas-da-ficha {
+  display: flex;
+  gap: var(--space-2);
+  min-width: 0;
+  max-width: 100%;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.entrevistas-aba-da-ficha {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: var(--space-3);
+  max-width: 280px;
+  min-height: 44px;
+  padding: var(--space-1-5) var(--space-3);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  background: transparent;
   color: var(--text-primary);
-  font-size: var(--text-kpi);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    background-color var(--duration-fast) var(--ease-standard),
+    border-color var(--duration-fast) var(--ease-standard);
+}
+.entrevistas-aba-da-ficha:hover {
+  background: var(--surface-hover);
+}
+.entrevistas-aba-da-ficha.is-ativa {
+  border-color: var(--state-info);
+  background: var(--state-info-soft);
+  box-shadow: inset 0 -2px 0 var(--state-info);
+}
+.entrevistas-abas-da-ficha[data-modo="competencia"] .entrevistas-aba-da-ficha {
+  max-width: 180px;
+}
+.entrevistas-aba-da-ficha:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+.entrevistas-aba-da-ficha-nome {
+  display: grid;
+  min-width: 0;
+  line-height: var(--leading-body-sm);
+}
+.entrevistas-aba-da-ficha-nome b {
+  overflow: hidden;
+  font-size: var(--text-body-sm);
   font-weight: var(--font-weight-semibold);
-  font-variant-numeric: tabular-nums;
-  line-height: 1;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
-.entrevistas-previa[data-tom="ok"] .entrevistas-previa-total strong {
-  color: var(--state-success);
-}
-.entrevistas-previa[data-tom="reprova"] .entrevistas-previa-total strong {
-  color: var(--state-danger);
-}
-.entrevistas-previa-total small {
+.entrevistas-aba-da-ficha-nome small {
   color: var(--text-secondary);
+  font-size: var(--text-caption);
+}
+.entrevistas-aba-da-ficha-conta {
+  color: var(--text-secondary);
+  font-size: var(--text-caption);
+  font-variant-numeric: tabular-nums;
+}
+.entrevistas-aba-da-ficha.is-pendente .entrevistas-aba-da-ficha-conta {
+  color: var(--color-status-warning-text);
+}
+.entrevistas-aba-da-ficha-check {
+  display: inline-grid;
+  flex: 0 0 auto;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  border-radius: var(--radius-full);
+  background: var(--state-success);
+  color: var(--text-inverse);
+  font-size: 11px;
+  animation: entrevistas-check var(--duration-slow) var(--ease-standard);
+}
+
+/* Matriz: competências × aspectos, células grandes */
+.entrevistas-matriz {
+  --coluna-da-nota: 88px;
+  display: grid;
+  min-width: 0;
+}
+.entrevistas-matriz-cabecalho,
+.entrevistas-matriz-linha {
+  display: grid;
+  grid-template-columns:
+    minmax(0, 1fr) repeat(var(--colunas, 1), var(--coluna-da-nota))
+    64px;
+  align-items: center;
+  gap: var(--space-3);
+}
+.entrevistas-matriz:not([data-media]) .entrevistas-matriz-cabecalho,
+.entrevistas-matriz:not([data-media]) .entrevistas-matriz-linha {
+  grid-template-columns: minmax(0, 1fr) repeat(
+      var(--colunas, 1),
+      var(--coluna-da-nota)
+    );
+}
+.entrevistas-matriz-cabecalho {
+  padding-bottom: var(--space-2);
+}
+.entrevistas-matriz-coluna {
+  color: var(--text-secondary);
+  font-size: var(--text-caption);
+  font-weight: var(--font-weight-medium);
+  letter-spacing: var(--tracking-caption);
+  text-align: center;
+}
+.entrevistas-matriz-linha {
+  padding-block: var(--space-2);
+  border-top: 1px solid var(--border-subtle);
+}
+.entrevistas-matriz-titulo {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+.entrevistas-matriz-titulo span {
+  color: var(--text-primary);
   font-size: var(--text-body);
   font-weight: var(--font-weight-medium);
 }
-.entrevistas-previa-minimo {
-  padding: var(--space-0-5) var(--space-2);
-  border-radius: var(--radius-pill);
-  background: var(--state-neutral-soft);
+.entrevistas-matriz-titulo small {
   color: var(--text-secondary);
   font-size: var(--text-caption);
-  font-weight: var(--font-weight-semibold);
 }
-.entrevistas-previa-minimo.is-abaixo {
+.entrevistas-matriz-linha.is-incompleta .entrevistas-matriz-titulo small {
+  color: var(--color-status-warning-text);
+}
+.entrevistas-matriz-media {
+  display: inline-grid;
+  place-items: center;
+  justify-self: center;
+  min-width: 52px;
+  height: 28px;
+  padding: 0 var(--space-2);
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+  font-size: var(--text-body-sm);
+  font-weight: var(--font-weight-semibold);
+  font-variant-numeric: tabular-nums;
+  transition:
+    background-color var(--duration-slow) var(--ease-standard),
+    color var(--duration-slow) var(--ease-standard);
+}
+.entrevistas-matriz-media[data-situacao="ok"] {
+  background: var(--state-success-soft);
+  color: var(--state-success);
+}
+.entrevistas-matriz-media[data-situacao="abaixo"] {
   background: var(--state-danger-soft);
   color: var(--state-danger);
 }
-.entrevistas-previa-competencias,
-.entrevistas-previa-motivos {
-  display: grid;
-  gap: var(--space-1);
-  margin: 0;
-  padding: 0;
+.entrevistas-matriz-aviso {
+  min-height: 20px;
+  margin: var(--space-1) 0 0;
+  color: var(--color-status-warning-text);
   font-size: var(--text-body-sm);
-  list-style: none;
-}
-.entrevistas-previa-competencias li {
-  display: flex;
-  justify-content: space-between;
-  gap: var(--space-2);
-  padding-left: var(--space-2);
-  border-left: 3px solid var(--border-subtle);
-}
-.entrevistas-previa-competencias li[data-situacao="ok"] {
-  border-left-color: var(--state-success);
-}
-.entrevistas-previa-competencias li[data-situacao="reprova"] {
-  border-left-color: var(--state-danger);
-}
-.entrevistas-previa-competencias li[data-situacao="reprova"] b {
-  color: var(--state-danger);
-}
-.entrevistas-previa-motivos li {
-  color: var(--text-secondary);
-}
-.entrevistas-previa-motivos li::before {
-  content: "• ";
-}
-.entrevistas-legenda {
-  padding: var(--space-2) var(--space-3);
-  font-size: var(--text-body-sm);
-}
-.entrevistas-legenda summary {
-  font-weight: var(--font-weight-semibold);
-  cursor: pointer;
-}
-.entrevistas-legenda ul {
-  display: grid;
-  gap: var(--space-1);
-  margin: var(--space-2) 0 0;
-  padding: 0;
-  list-style: none;
-}
-.entrevistas-legenda li {
-  cursor: help;
-}
-.entrevistas-legenda b {
-  display: inline-block;
-  min-width: 1.5em;
-  color: var(--state-info);
-}
-.entrevistas-linha-aspecto {
-  grid-template-columns: 32px minmax(0, 1fr) auto;
+  font-weight: var(--font-weight-medium);
 }
 
+/* Célula */
+.entrevistas-celula {
+  position: relative;
+  display: block;
+}
+.entrevistas-tela .entrevistas-matriz input.entrevistas-nota {
+  display: block;
+  width: 100%;
+  height: 52px;
+  min-height: 52px;
+  padding: 0;
+  border: 1px solid var(--border-control);
+  border-radius: var(--radius-md);
+  background: var(--surface-card);
+  color: var(--text-primary);
+  caret-color: transparent;
+  font-size: var(--text-metric-sm);
+  font-weight: var(--font-weight-semibold);
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+  transition:
+    background-color var(--duration-fast) var(--ease-standard),
+    border-color var(--duration-fast) var(--ease-standard),
+    box-shadow var(--duration-fast) var(--ease-standard);
+}
+.entrevistas-tela .entrevistas-matriz input.entrevistas-nota:hover {
+  border-color: var(--text-secondary);
+}
+.entrevistas-tela
+  .entrevistas-matriz
+  .entrevistas-celula.is-preenchida
+  input.entrevistas-nota {
+  border-color: var(--border-subtle);
+  background: var(--surface-hover);
+}
+.entrevistas-tela .entrevistas-matriz input.entrevistas-nota:focus {
+  border-color: var(--color-action-primary);
+  background: var(--surface-card);
+  outline: none;
+  box-shadow: 0 0 0 3px var(--state-info-soft);
+}
+.entrevistas-tela
+  .entrevistas-matriz
+  .entrevistas-celula.is-invalida
+  input.entrevistas-nota {
+  border-color: var(--state-danger);
+  background: var(--state-danger-soft);
+}
+.entrevistas-tela .entrevistas-matriz input.entrevistas-nota:disabled {
+  cursor: progress;
+  opacity: 0.6;
+}
+.entrevistas-celula-fixa {
+  display: grid;
+  place-items: center;
+  height: 52px;
+  border-radius: var(--radius-md);
+  background: var(--surface-hover);
+  color: var(--text-primary);
+  font-size: var(--text-metric-sm);
+  font-weight: var(--font-weight-semibold);
+  font-variant-numeric: tabular-nums;
+}
+.entrevistas-celula-dica {
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 50%;
+  z-index: 5;
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-sm);
+  background: var(--text-primary);
+  color: var(--surface-card);
+  font-size: var(--text-caption);
+  font-weight: var(--font-weight-medium);
+  white-space: nowrap;
+  pointer-events: none;
+  transform: translateX(-50%);
+  animation: entrevistas-dica var(--duration-base) var(--ease-standard);
+}
+
+/* Legenda da escala, numa linha */
+.entrevistas-legenda {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1) var(--space-4);
+  margin: 0;
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--border-subtle);
+  color: var(--text-secondary);
+  font-size: var(--text-caption);
+}
+.entrevistas-legenda span {
+  padding: 1px var(--space-1);
+  border-radius: var(--radius-sm);
+  transition:
+    background-color var(--duration-fast) var(--ease-standard),
+    color var(--duration-fast) var(--ease-standard);
+}
+.entrevistas-legenda b {
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+}
+.entrevistas-legenda .is-destaque {
+  background: var(--state-info-soft);
+  color: var(--text-primary);
+}
+
+/* Faltou: a confirmação no lugar da matriz */
+.entrevistas-falta {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-6);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  background: var(--surface-card);
+  animation: entrevistas-surgir var(--duration-slow) var(--ease-standard);
+}
+.entrevistas-falta > i {
+  display: inline-grid;
+  flex: 0 0 auto;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  border-radius: var(--radius-full);
+  background: var(--state-danger-soft);
+  color: var(--state-danger);
+  font-size: 20px;
+}
+.entrevistas-falta strong {
+  font-size: var(--text-h4);
+  font-weight: var(--font-weight-semibold);
+}
+.entrevistas-falta p {
+  margin: var(--space-0-5) 0 0;
+  color: var(--text-secondary);
+  font-size: var(--text-body-sm);
+}
+
+/* Lateral: o resultado vivo */
+.entrevistas-analise-lateral {
+  position: sticky;
+  top: 128px;
+  display: grid;
+  gap: var(--space-4);
+  max-height: calc(100dvh - 200px);
+  padding: var(--space-5);
+  overflow: auto;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  background: var(--surface-card);
+}
+.entrevistas-resultado-total {
+  position: relative;
+  display: grid;
+  justify-items: center;
+}
+.entrevistas-anel {
+  display: block;
+  width: 152px;
+  height: 152px;
+}
+.entrevistas-anel circle {
+  fill: none;
+  stroke-width: 9;
+  stroke-linecap: round;
+}
+.entrevistas-anel-trilha {
+  stroke: var(--surface-hover);
+}
+.entrevistas-anel-valor {
+  stroke: var(--color-action-primary);
+  transition:
+    stroke-dasharray 420ms var(--ease-standard),
+    stroke var(--duration-slow) var(--ease-standard);
+}
+.entrevistas-anel[data-tom="ok"] .entrevistas-anel-valor {
+  stroke: var(--state-success);
+}
+.entrevistas-anel[data-tom="reprova"] .entrevistas-anel-valor {
+  stroke: var(--state-danger);
+}
+.entrevistas-anel-minimo {
+  stroke: var(--text-primary);
+  stroke-width: 2;
+  stroke-linecap: round;
+}
+.entrevistas-resultado-numero {
+  position: absolute;
+  top: 44px;
+  left: 0;
+  right: 0;
+  display: grid;
+  justify-items: center;
+}
+.entrevistas-resultado-numero strong {
+  display: block;
+  color: var(--text-primary);
+  font-size: var(--text-display);
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--leading-display);
+  letter-spacing: var(--tracking-display);
+  font-variant-numeric: tabular-nums;
+}
+.entrevistas-resultado-numero span {
+  color: var(--text-secondary);
+  font-size: var(--text-body-sm);
+  font-variant-numeric: tabular-nums;
+}
+.entrevistas-resultado-minimo {
+  margin-top: calc(-1 * var(--space-4));
+  color: var(--text-secondary);
+  font-size: var(--text-caption);
+  font-variant-numeric: tabular-nums;
+}
+.entrevistas-resultado-minimo.is-abaixo {
+  color: var(--state-danger);
+  font-weight: var(--font-weight-semibold);
+}
+.entrevistas-parecer {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  background: var(--state-neutral-soft);
+  color: var(--text-secondary);
+  transition:
+    background-color var(--duration-slow) var(--ease-standard),
+    color var(--duration-slow) var(--ease-standard);
+}
+.entrevistas-parecer > i {
+  font-size: 22px;
+}
+.entrevistas-parecer > div {
+  display: grid;
+}
+.entrevistas-parecer-rotulo {
+  color: var(--text-secondary);
+  font-size: var(--text-caption);
+}
+.entrevistas-parecer strong {
+  color: inherit;
+  font-size: var(--text-h3);
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--leading-h3);
+}
+.entrevistas-parecer[data-tom="ok"] {
+  background: var(--state-success-soft);
+  color: var(--state-success);
+}
+.entrevistas-parecer[data-tom="reprova"] {
+  background: var(--state-danger-soft);
+  color: var(--state-danger);
+}
+.entrevistas-resultado-motivos {
+  display: grid;
+  gap: var(--space-1);
+  margin: calc(-1 * var(--space-2)) 0 0;
+  padding: 0;
+  list-style: none;
+  color: var(--text-secondary);
+  font-size: var(--text-body-sm);
+}
+.entrevistas-resultado-motivos li {
+  position: relative;
+  padding-left: var(--space-3);
+}
+.entrevistas-resultado-motivos li::before {
+  content: "";
+  position: absolute;
+  top: 0.6em;
+  left: 0;
+  width: 4px;
+  height: 4px;
+  border-radius: var(--radius-full);
+  background: currentColor;
+}
+.entrevistas-notas-da-banca {
+  display: grid;
+  gap: var(--space-3);
+  margin: 0;
+  padding: var(--space-4) 0 0;
+  border-top: 1px solid var(--border-subtle);
+  list-style: none;
+}
+.entrevistas-nota-da-banca-rotulo {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-2);
+  margin-bottom: var(--space-1-5);
+  font-size: var(--text-body-sm);
+}
+.entrevistas-nota-da-banca-rotulo span {
+  overflow: hidden;
+  color: var(--text-primary);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.entrevistas-nota-da-banca-rotulo small {
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+.entrevistas-nota-da-banca-rotulo b {
+  font-weight: var(--font-weight-semibold);
+  font-variant-numeric: tabular-nums;
+}
+.entrevistas-notas-da-banca li[data-situacao="abaixo"] b {
+  color: var(--state-danger);
+}
+.entrevistas-notas-da-banca li[data-situacao="ok"] b {
+  color: var(--state-success);
+}
+.entrevistas-notas-da-banca li[data-situacao="vazia"] b {
+  color: var(--text-secondary);
+}
+.entrevistas-nota-da-banca {
+  position: relative;
+  height: 6px;
+  border-radius: var(--radius-full);
+  background: var(--surface-hover);
+}
+.entrevistas-nota-da-banca-valor {
+  position: absolute;
+  inset: 0;
+  border-radius: var(--radius-full);
+  background: var(--state-success);
+  transform-origin: left center;
+  transition:
+    transform 420ms var(--ease-standard),
+    background-color var(--duration-slow) var(--ease-standard);
+}
+.entrevistas-notas-da-banca
+  li[data-situacao="abaixo"]
+  .entrevistas-nota-da-banca-valor {
+  background: var(--state-danger);
+}
+.entrevistas-nota-da-banca-minimo {
+  position: absolute;
+  top: -3px;
+  bottom: -3px;
+  width: 2px;
+  border-radius: 1px;
+  background: var(--text-primary);
+  transform: translateX(-1px);
+}
+.entrevistas-progresso {
+  display: grid;
+  gap: var(--space-1-5);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--border-subtle);
+  color: var(--text-secondary);
+  font-size: var(--text-body-sm);
+  font-variant-numeric: tabular-nums;
+}
+.entrevistas-progresso b {
+  color: var(--text-primary);
+}
+.entrevistas-progresso-barra {
+  height: 4px;
+  overflow: hidden;
+  border-radius: var(--radius-full);
+  background: var(--surface-hover);
+}
+.entrevistas-progresso-barra span {
+  display: block;
+  height: 100%;
+  background: var(--color-action-primary);
+  transform-origin: left center;
+  transition: transform 420ms var(--ease-standard);
+}
+
+/* Rodapé mínimo */
+.entrevistas-analise-barra {
+  position: sticky;
+  bottom: var(--recuo-da-navegacao-inferior, 0px);
+  z-index: 3;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  background: var(--surface-card);
+  box-shadow: var(--shadow-sm);
+}
+.entrevistas-gravacao {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-right: auto;
+  color: var(--text-secondary);
+  font-size: var(--text-body-sm);
+}
+.entrevistas-gravacao::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: var(--radius-full);
+  background: var(--state-success);
+}
+.entrevistas-gravacao[data-estado="pendente"]::before {
+  background: var(--state-warning);
+}
+.entrevistas-gravacao[data-estado="salvando"]::before {
+  background: var(--state-info);
+  animation: entrevistas-pulsar 900ms ease-in-out infinite alternate;
+}
+.entrevistas-rodape-resultado {
+  display: none;
+}
+.entrevistas-analise-erro {
+  flex: 1 1 100%;
+  order: -1;
+  color: var(--state-danger);
+  font-size: var(--text-body-sm);
+  font-weight: var(--font-weight-medium);
+}
+.entrevistas-analise-barra .btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+@keyframes entrevistas-surgir {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+}
+@keyframes entrevistas-dica {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 2px);
+  }
+}
+@keyframes entrevistas-check {
+  from {
+    opacity: 0;
+    transform: scale(0.4);
+  }
+  60% {
+    transform: scale(1.15);
+  }
+}
+@keyframes entrevistas-pulsar {
+  to {
+    opacity: 0.35;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .entrevistas-popover-painel,
+  .entrevistas-celula-dica,
+  .entrevistas-aba-da-ficha-check,
+  .entrevistas-falta,
+  .entrevistas-gravacao::before {
+    animation: none;
+  }
+  .entrevistas-anel-valor,
+  .entrevistas-nota-da-banca-valor,
+  .entrevistas-progresso-barra span {
+    transition: none;
+  }
+}
+
+@media (max-width: 1180px) {
+  .entrevistas-analise-grade {
+    grid-template-columns: minmax(0, 1fr) 280px;
+    gap: var(--space-4);
+  }
+  .entrevistas-folha {
+    padding-inline: var(--space-4);
+  }
+}
 @media (max-width: 900px) {
   .entrevistas-analise-grade {
     grid-template-columns: minmax(0, 1fr);
@@ -1046,92 +1507,120 @@ table.entrevistas-tabela {
     overflow: visible;
   }
   .entrevistas-analise-topo {
-    gap: var(--space-1) var(--space-2);
-    padding: var(--space-2);
+    grid-template-columns: auto minmax(0, 1fr);
   }
-  .entrevistas-analise-identidade {
-    flex: 1 1 60%;
-  }
-  .entrevistas-analise-dados {
-    flex: 1 1 100%;
-    flex-wrap: nowrap;
-    min-width: 0;
-    overflow-x: auto;
-    order: 3;
-  }
-  .entrevistas-analise-dados > div {
-    flex: 0 0 auto;
-  }
-  .entrevistas-analise-navegacao {
-    margin-left: 0;
+  .entrevistas-analise-controles {
+    grid-column: 1 / -1;
+    justify-content: space-between;
   }
 }
 @media (max-width: 720px) {
-  /* Celular: uma competência por vez, pelas abas numeradas. */
-  .entrevistas-competencias-abas {
-    display: flex;
-    gap: var(--space-1);
+  .entrevistas-analise {
+    gap: var(--space-3);
   }
-  .entrevistas-competencias-abas button {
-    display: grid;
-    flex: 1 1 0;
-    justify-items: center;
-    min-height: 44px;
-    border: 1px solid var(--border-control);
-    border-radius: var(--radius-md);
-    background: var(--surface-card);
-    color: var(--text-primary);
-    font-weight: var(--font-weight-semibold);
+  .entrevistas-analise-topo {
+    gap: var(--space-2) var(--space-3);
+    padding-top: var(--space-3);
   }
-  .entrevistas-competencias-abas button small {
-    color: var(--text-secondary);
-    font-size: var(--text-caption);
-  }
-  .entrevistas-competencias-abas button[aria-pressed="true"] {
-    border-color: var(--state-info);
-    box-shadow: inset 0 -3px 0 var(--state-info);
-  }
-  .entrevistas-competencias-abas button[data-situacao="ok"] small {
-    color: var(--state-success);
-  }
-  .entrevistas-competencias-abas button[data-situacao="reprova"] small {
-    color: var(--state-danger);
-  }
-  .entrevistas-ficha-competencia:not([data-aba="ativa"]) {
-    display: none;
-  }
-  .entrevistas-botao-de-nota {
-    flex: 1 1 0;
-    min-height: 40px;
-  }
-  .entrevistas-ficha-avaliadores,
-  .entrevistas-ficha-avaliadores[data-aspectos] {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-  .entrevistas-nota {
-    width: 2.3em;
-  }
-  .entrevistas-comparecimento-opcao {
-    min-height: 52px;
-  }
-  .entrevistas-analise-barra {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: var(--space-1-5);
-  }
-  .entrevistas-analise-barra .btn {
-    min-width: 0;
-    padding-inline: var(--space-2);
+  .entrevistas-analise-identidade h2 {
+    font-size: var(--text-h3);
+    line-height: var(--leading-h3);
     white-space: normal;
   }
-  .entrevistas-analise-barra .entrevistas-rodape-resumo,
-  .entrevistas-analise-erro {
+  .entrevistas-voltar {
+    margin-top: 0;
+  }
+  .entrevistas-folha {
+    gap: var(--space-3);
+    padding: var(--space-3);
+  }
+  .entrevistas-folha-topo {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .entrevistas-modo-da-ficha {
+    justify-self: end;
+  }
+  /* Celular: uma competência por linha, o nome em cima e as células grandes. */
+  .entrevistas-matriz-cabecalho > span:first-child {
+    display: none;
+  }
+  .entrevistas-matriz-cabecalho,
+  .entrevistas-matriz-linha {
+    grid-template-columns: repeat(var(--colunas, 1), minmax(0, 1fr)) 56px;
+    gap: var(--space-2);
+  }
+  .entrevistas-matriz:not([data-media]) .entrevistas-matriz-cabecalho,
+  .entrevistas-matriz:not([data-media]) .entrevistas-matriz-linha {
+    grid-template-columns: repeat(var(--colunas, 1), minmax(0, 1fr));
+  }
+  .entrevistas-matriz-titulo {
     grid-column: 1 / -1;
-    text-align: left;
+  }
+  .entrevistas-tela .entrevistas-matriz input.entrevistas-nota,
+  .entrevistas-celula-fixa {
+    height: 56px;
+    min-height: 56px;
+  }
+  .entrevistas-matriz-media {
+    width: 100%;
+    min-width: 0;
+  }
+  .entrevistas-falta {
+    padding: var(--space-4);
+  }
+  .entrevistas-analise-barra {
+    gap: var(--space-2);
+    padding: var(--space-2) var(--space-3);
+  }
+  .entrevistas-analise-barra .entrevistas-popover {
+    display: none;
+  }
+  .entrevistas-popover-botao {
+    width: 28px;
+    height: 28px;
+    min-height: 28px;
+  }
+  .entrevistas-gravacao {
+    flex: 1 1 calc(100% - 140px);
+    font-size: var(--text-caption);
+  }
+  .entrevistas-so-largo {
+    display: none;
+  }
+  .entrevistas-rodape-resultado {
+    display: inline-flex;
+    align-items: center;
+    height: 24px;
+    padding: 0 var(--space-2);
+    border-radius: var(--radius-sm);
+    background: var(--state-neutral-soft);
+    color: var(--text-secondary);
+    font-size: var(--text-caption);
+    font-weight: var(--font-weight-semibold);
+    font-variant-numeric: tabular-nums;
+  }
+  .entrevistas-rodape-resultado[data-tom="ok"] {
+    background: var(--state-success-soft);
+    color: var(--state-success);
+  }
+  .entrevistas-rodape-resultado[data-tom="reprova"] {
+    background: var(--state-danger-soft);
+    color: var(--state-danger);
+  }
+  .entrevistas-analise-barra .btn {
+    flex: 1 1 40%;
+    justify-content: center;
+    min-width: 0;
+    padding-inline: var(--space-2);
   }
 }
 
 /* ── Roteiros: cartões compactos e o formulário ─────────────────────── */
+
+.entrevistas-linha-aspecto {
+  grid-template-columns: 32px minmax(0, 1fr) auto;
+}
 
 .entrevistas-cartoes {
   display: grid;
