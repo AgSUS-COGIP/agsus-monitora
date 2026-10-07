@@ -12,14 +12,7 @@ import { classes } from "./classes.js";
 const CONTROLES = ["input", "select", "textarea"];
 
 /**
- * @param {object} p
- * @param {import("react").ReactNode} p.rotulo
- * @param {import("react").ReactNode} [p.erro]
- * @param {import("react").ReactNode} [p.dica]
- * @param {boolean} [p.obrigatorio]
- * @param {boolean} [p.largo]
- * @param {string} [p.idDoControle]
- * @param {import("react").ReactNode} [p.children]
+ * @param {{ rotulo: import("react").ReactNode, erro?: import("react").ReactNode, dica?: import("react").ReactNode, obrigatorio?: boolean, largo?: boolean, idDoControle?: string, children?: import("react").ReactNode }} props
  */
 export function Campo({
   rotulo,

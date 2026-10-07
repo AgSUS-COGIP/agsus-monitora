@@ -1,3 +1,10 @@
+import type {
+  EditalDoCalendario,
+  EstadoDoCalendario,
+  FiltrosDoCalendario,
+  OpcoesDaTelaDoCalendario,
+  SnapshotDoCalendario,
+} from "./tipos.ts";
 import {
   useEffect,
   useMemo,
@@ -25,7 +32,7 @@ import {
   rotuloDoMes,
   somarMeses,
   unidadesDasEtapas,
-} from "../../lib/calendario-editais.js";
+} from "../../lib/calendario-editais.ts";
 import { formatarDataHora } from "../../lib/cronograma-do-edital.js";
 import { soDosEditais } from "../../componentes/dados-do-monitoramento.js";
 import { usarAreaAtual } from "../../componentes/usar-area-atual.js";
@@ -36,7 +43,7 @@ import {
   PainelDeFiltros,
   TopoDoPainel,
 } from "../../ui/index.js";
-import { criarEstadoDoCalendario } from "./estado.js";
+import { criarEstadoDoCalendario } from "./estado.ts";
 import {
   AvisoDeDatasARevisar,
   DiaDoCalendario,
@@ -45,7 +52,7 @@ import {
   LinhaDoTempo,
   ProximasEtapas,
   Seletor,
-} from "./partes.jsx";
+} from "./partes.tsx";
 
 /*
   Cronograma (view `calendario`), módulo do app — a página `#page-calendario`.
@@ -61,15 +68,21 @@ import {
   skeleton; se ela falha, o aviso com "Tentar novamente" fica no lugar da
   grade.
 
-  As etapas carregadas vivem em `estado.js`; o que é da tela — mês à vista,
+  As etapas carregadas vivem em `estado.ts`; o que é da tela — mês à vista,
   filtros, dia aberto, edital da linha do tempo — é estado deste componente, e
   sobrevive a sair e voltar à página.
 */
 
 const EVENTO_CRONOGRAMA_SALVO = "agsus:nucleo-cronograma-saved";
-const TIPOS_DO_FILTRO = TIPOS_DA_LEGENDA.map((tipo) => [tipo.id, tipo.rotulo]);
+const TIPOS_DO_FILTRO: readonly (readonly [string, string])[] =
+  TIPOS_DA_LEGENDA.map((tipo) => [tipo.id, tipo.rotulo]);
 
-function textoDoStatus({ carregando, carregado, erro, carregadoEm }) {
+function textoDoStatus({
+  carregando,
+  carregado,
+  erro,
+  carregadoEm,
+}: SnapshotDoCalendario) {
   if (erro && !carregado) return "Sem dados";
   if (!carregado) return "Carregando dados...";
   if (carregando) return "Atualizando...";
@@ -78,12 +91,18 @@ function textoDoStatus({ carregando, carregado, erro, carregadoEm }) {
     : "Base carregada";
 }
 
-export function CalendarioEditais({ estado, agora = () => new Date() }) {
+export function CalendarioEditais({
+  estado,
+  agora = () => new Date(),
+}: {
+  estado: EstadoDoCalendario;
+  agora?: () => Date;
+}) {
   const carga = useSyncExternalStore(estado.assinar, estado.obter);
   const { carregando, carregado, erro } = carga;
   /*
     As etapas chegam de todos os editais; a tela mostra só as dos editais da
-    área escolhida no menu. O cache de `estado.js` continua um só: trocar de
+    área escolhida no menu. O cache de `estado.ts` continua um só: trocar de
     área não repete os pedidos.
   */
   const { ids } = usarAreaAtual();
@@ -135,7 +154,7 @@ export function CalendarioEditais({ estado, agora = () => new Date() }) {
     () => etapasDoEdital(etapas, editalDaLinha),
     [etapas, editalDaLinha],
   );
-  const linhaDoTempo = useRef(null);
+  const linhaDoTempo = useRef<HTMLOListElement>(null);
   const primeiraCarga = !carregado && !erro;
 
   // A linha do tempo é vertical e rola dentro do cartão: ao trocar de edital,
@@ -144,17 +163,17 @@ export function CalendarioEditais({ estado, agora = () => new Date() }) {
     const lista = linhaDoTempo.current;
     if (!lista) return;
     const alvo =
-      lista.querySelector('[data-situacao="em-andamento"]') ||
+      lista.querySelector<HTMLElement>('[data-situacao="em-andamento"]') ||
       lista.querySelector('[data-situacao="futura"]');
     lista.scrollTop = alvo
       ? Math.max(0, alvo.offsetTop - lista.offsetTop - 8)
       : 0;
   }, [editalDaLinha, etapasDaLinha]);
 
-  const mudarFiltro = (chave, valor) =>
+  const mudarFiltro = (chave: keyof FiltrosDoCalendario, valor: string) =>
     setFiltros((atuais) => ({ ...atuais, [chave]: valor }));
 
-  function moverMes(passo) {
+  function moverMes(passo: number) {
     setMes((atual) => somarMeses(atual, passo));
     // O dia aberto era do mês anterior; deixá-lo aberto confundiria.
     setDiaAberto("");
@@ -171,7 +190,9 @@ export function CalendarioEditais({ estado, agora = () => new Date() }) {
     setOcultarConcluidas(false);
   }
 
-  const opcoesDeEdital = (lista) =>
+  const opcoesDeEdital = (
+    lista: readonly EditalDoCalendario[],
+  ): [string, string][] =>
     lista.map((edital) => [edital.id, rotuloDoEdital(edital)]);
   const quantos = Object.values(filtros).filter((valor) =>
     String(valor ?? "").trim(),
@@ -433,7 +454,7 @@ export function montarCalendarioEditais({
   supabase = getSupabaseClient(),
   toast,
   agora,
-} = {}) {
+}: OpcoesDaTelaDoCalendario = {}) {
   const estado = criarEstadoDoCalendario({ supabase, toast });
   const raiz = secao
     ? montarModulo(secao, <CalendarioEditais estado={estado} agora={agora} />, {
@@ -446,7 +467,7 @@ export function montarCalendarioEditais({
     /*
       Sem o carregamento de tela cheia: ele travava a navegação inteira. A
       grade e as listas são skeleton enquanto a primeira carga não chega; nas
-      seguintes, o cache de `estado.js` desenha na hora.
+      seguintes, o cache de `estado.ts` desenha na hora.
     */
     render: () => estado.carregar(),
     recarregar: () => estado.carregar(true),

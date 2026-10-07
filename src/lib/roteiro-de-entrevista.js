@@ -5,7 +5,8 @@
   mostra (pontuação máxima, mínimo de cada competência, "+50%" do peso, notas
   aceitas pela escala).
 
-  O contrato é o da migration 20260930220000_entrevistas_roteiros_e_notas.sql:
+  O contrato é o da migration 20260930220000_entrevistas_roteiros_e_notas.sql
+  (aspectos: 20261008100000_aspectos_da_entrevista.sql):
   editar um roteiro grava uma versão nova (`origem` = o roteiro de origem); a
   versão anterior continua valendo para os editais que já a usam.
 
@@ -35,6 +36,21 @@ export const TIPOS_DE_AVALIACAO = Object.freeze([
 ]);
 
 export const LIMITE_DE_COMPETENCIAS = 20;
+
+/** Até 10 aspectos por roteiro (constraint do banco). */
+export const LIMITE_DE_ASPECTOS = 10;
+
+/**
+ * Modelo de aspectos da planilha da Saúde Indígena: cada avaliador dá uma nota
+ * em cada um, e a nota dele na competência é a média.
+ */
+export const MODELO_DE_ASPECTOS = Object.freeze([
+  "Conceitua",
+  "Propriedade",
+  "Profundidade",
+]);
+
+export const novoAspecto = (nome = "") => ({ chave: novaChave(), nome });
 
 export const rotuloDaEscala = (valor) =>
   ESCALAS.find((e) => e.valor === valor)?.rotulo || valor || "—";
@@ -319,6 +335,7 @@ export function rascunhoDoRoteiro(
       notas_permitidas: "",
       niveis: [],
       competencias: [novaCompetencia()],
+      aspectos: [],
       nota_minima_total: "",
       notas_eliminatorias: [],
       ausencia_elimina: true,
@@ -360,6 +377,10 @@ export function rascunhoDoRoteiro(
         tipo_minimo: c.tipo_minimo === "PERCENTUAL" ? "PERCENTUAL" : "VALOR",
         avaliacao: c.avaliacao === "GRUPO" ? "GRUPO" : "INDIVIDUAL",
       })),
+    aspectos: (roteiro.aspectos || [])
+      .slice()
+      .sort((a, b) => (a.ordem ?? 0) - (b.ordem ?? 0))
+      .map((a) => novoAspecto(texto(a.nome))),
     nota_minima_total: textoDoNumero(roteiro.nota_minima_total),
     notas_eliminatorias: (roteiro.notas_eliminatorias || [])
       .map(lerNumero)
@@ -463,6 +484,19 @@ export function errosDoRoteiro(r) {
     }
   }
 
+  const aspectos = r?.aspectos || [];
+  if (aspectos.length > LIMITE_DE_ASPECTOS)
+    erros.aspectos = `Informe até ${LIMITE_DE_ASPECTOS} aspectos.`;
+  const nomesDosAspectos = new Set();
+  for (const a of aspectos) {
+    const nomeDoAspecto = texto(a.nome);
+    if (nomeDoAspecto.length < 2 || nomeDoAspecto.length > 60)
+      erros[`aspecto.${a.chave}`] = "Nome do aspecto: de 2 a 60 caracteres.";
+    else if (nomesDosAspectos.has(nomeDoAspecto.toLowerCase()))
+      erros[`aspecto.${a.chave}`] = "Dois aspectos com o mesmo nome.";
+    nomesDosAspectos.add(nomeDoAspecto.toLowerCase());
+  }
+
   const minimoTotal = lerNumero(r?.nota_minima_total);
   if (minimoTotal !== null) {
     if (Number.isNaN(minimoTotal) || minimoTotal < 0)
@@ -509,10 +543,12 @@ export function dadosDoRoteiroParaSalvar(r) {
       tipo_minimo: c.tipo_minimo === "PERCENTUAL" ? "PERCENTUAL" : "VALOR",
       avaliacao: c.avaliacao === "GRUPO" ? "GRUPO" : "INDIVIDUAL",
     })),
+    aspectos: (r.aspectos || []).map((a) => ({ nome: texto(a.nome) })),
     nota_minima_total: lerNumero(r.nota_minima_total),
-    notas_eliminatorias: [...new Set(r.notas_eliminatorias || [])].sort(
-      (a, b) => a - b,
-    ),
+    // Com aspectos, a eliminação é pelo mínimo da competência (o banco grava vazio).
+    notas_eliminatorias: (r.aspectos || []).length
+      ? []
+      : [...new Set(r.notas_eliminatorias || [])].sort((a, b) => a - b),
     ausencia_elimina: r.ausencia_elimina !== false,
     desempate: (r.desempate || []).map(texto).filter(Boolean),
     soma_analise: r.soma_analise !== false,
@@ -534,5 +570,9 @@ export function resumoDoRoteiro(roteiro) {
     emUso: Number(roteiro?.editais_em_uso) || 0,
     versao: Number(roteiro?.versao) || 1,
     grupo: competencias.some((c) => c.avaliacao === "GRUPO"),
+    aspectos: (roteiro?.aspectos || [])
+      .slice()
+      .sort((a, b) => (a.ordem ?? 0) - (b.ordem ?? 0))
+      .map((a) => texto(a.nome)),
   };
 }

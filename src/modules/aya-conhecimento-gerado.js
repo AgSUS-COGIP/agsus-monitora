@@ -1123,6 +1123,26 @@ export const VERBETES_AYA = Object.freeze([
   },
   {
     arquivo: "regras-da-avaliacao-documental.md",
+    titulo: "Treinar a avaliação documental com regras de editais verdadeiros",
+    perguntas: [
+      "treinamento da avaliacao documental",
+      "casos do treinamento",
+      "casos dos candidatos do treinamento",
+      "candidato teste p01",
+      "quem e o criterio cores no treinamento",
+      "regra do 93 no treinamento",
+      "regra do treinamento saude indigena",
+      "treinamento com regra real",
+    ],
+    resposta:
+      'O edital "Treinamento – Projetos (992/2099)" tem a regra conferida do Edital 93/2026 (versão 7: corte e ordem pela nota declarada, mínimo de 15 pontos do item 8.2.6, eliminação de quem cancelou e de quem não finalizou o questionário, pontos das perguntas por nível da vaga). É uma cópia: editar a regra no treino grava uma versão do treino e o 93/2026 não muda. A pré-classificação já foi rodada pelo mesmo cálculo do robô (11 eliminados, 8 na Provisória abaixo de 15 e 21 no lote, com 21 fichas pendentes, sem analista: distribua pela Fila). Casos dos candidatos: P01, P09, P18, P25 e P32 bem acima do corte; P07 e P31 com exatamente 15 (entram); P36 com 14 (fica fora); P03, P13, P14, P22, P27, P28 e P37 abaixo de 15; P04 e P20 com a ART alterada depois (a nota declarada vale e a divergência aparece); P21 com uma resposta de experiência fora do mapa da regra (a nota vem da ART); P24 sem ART (vale a declarada); P11 e P12 empatados com 24 (o P12, idoso, fica na frente); P33 e P40 empatados com 24 e a mesma experiência (o mais velho na frente); P34 e P35 empatados com 20 (quem declarou mais experiência na frente); P10 marcado como reprovado na Empregare, que não elimina; P05, P15, P16, P23, P29, P38 e P39 com o questionário Pendente, Em andamento ou nem começado (eliminados); P06, P17 e P30 cancelados; e o P08, o caso do "Critério CORES": questionário em andamento e nota declarada 38, eliminado pela regra, para a coordenação incluir no lote por decisão. No "Treinamento – Saúde Indígena (991/2099)", a regra é a do Edital 111/2026 (DSEI Parintins), porque nenhum edital da Saúde Indígena tem regra conferida no MONITORA ainda; ela já tem as perguntas do questionário da Saúde Indígena ligadas e fica em Conferir, para praticar a conferência.',
+    fato: "",
+    fonte:
+      "supabase/migrations/20261008110000_treinamento_avaliacao_documental.sql; scripts/pre_classificacao/gerar_treinamento.py; tests/fixtures/avaliacao-documental/treinamento-projetos.json",
+    abrir: "avaliacao-documental",
+  },
+  {
+    arquivo: "regras-da-avaliacao-documental.md",
     titulo: "Recalcular a pré-classificação",
     perguntas: [
       "recalcular",
@@ -3311,6 +3331,26 @@ export const VERBETES_AYA = Object.freeze([
   },
   {
     arquivo: "regras-das-entrevistas.md",
+    titulo: "Aspectos da entrevista e como a nota é calculada",
+    perguntas: [
+      "aspectos da entrevista",
+      "conceitua propriedade profundidade",
+      "como a nota da entrevista e calculada",
+      "como e calculada a nota da entrevista com aspectos",
+      "nota do avaliador",
+      "media dos aspectos",
+      "por que deu 1,11",
+      "arredondamento da nota da entrevista",
+    ],
+    resposta:
+      'O roteiro pode ter aspectos (opcionais; até 10), configurados na edição do roteiro — o botão "Conceitua · Propriedade · Profundidade" preenche o modelo da Saúde Indígena. Com aspectos, cada avaliador dá uma nota em cada aspecto, na escala do roteiro, e a nota dele na competência é a média dos aspectos, sem arredondar no meio (o avaliador só conta com todos os aspectos lançados). A nota da competência é a média dos avaliadores que lançaram, vezes o peso, com 2 casas. A nota final é a soma das competências sem arredondar, arredondada a 2 casas no fim. Exemplo: 4 avaliadores com 1, 1, 1 e 2 com 2, 1, 1 dão 1,11 na competência. Com aspectos, quem elimina é o mínimo da competência (abaixo dele, INAPTO): as notas eliminatórias exatas (0 ou 1) não se aplicam a médias. Roteiro sem aspectos continua com uma nota por avaliador. Editar o roteiro grava uma versão nova; os editais que já usam a anterior seguem nela.',
+    fato: "Com aspectos, a nota do avaliador é a média dos aspectos, a competência é a média dos avaliadores e o total é arredondado só no fim; elimina quem fica abaixo do mínimo da competência.",
+    fonte:
+      "supabase/migrations/20261008100000_aspectos_da_entrevista.sql; src/lib/conducao-de-entrevista.js; python/monitora/entrevistas/calculo.py; tests/fixtures/entrevistas/casos-de-calculo.json",
+    abrir: "entrevistas",
+  },
+  {
+    arquivo: "regras-das-entrevistas.md",
     titulo: "Banca da entrevista",
     perguntas: [
       "banca da entrevista",
@@ -3395,7 +3435,7 @@ export const VERBETES_AYA = Object.freeze([
       "resultado recalculado",
     ],
     resposta:
-      'Na ficha de notas, abra um convocado para lançar o comparecimento (Compareceu ou Faltou) e as notas; a nota precisa estar na escala do roteiro. A cada gravação o banco recalcula o resultado, que aparece em Resultados; toda nota lançada, corrigida ou apagada vai para o histórico. Enter passa para a próxima nota, Ctrl+Enter salva, e há "Salvar e abrir o próximo". A coluna Notas mostra lançadas sobre esperadas (competências × avaliadores da banca).',
+      'Na ficha de notas, abra um convocado: a ficha ocupa a tela inteira (modo de análise; fica só o menu lateral), com o topo preso (Voltar à lista, candidato, Anterior e Próximo), as competências à esquerda e a prévia do parecer numa lateral fixa (total, mínimo, a nota de cada competência e os motivos; muda de cor na hora: verde apto, vermelho inapto). Marque Compareceu ou Faltou nos botões grandes do topo. Em cada competência, os avaliadores ficam lado a lado; os botões da escala (0 a 5) preenchem o campo em foco e passam ao próximo, ou digite a nota. Com aspectos, cada avaliador tem um campo por aspecto e a média dele ao lado. Os níveis da escala ficam na lateral e no título de cada botão. No celular, uma competência por vez (abas numeradas). Esc volta à lista; a nota precisa estar na escala do roteiro. A cada gravação o banco recalcula o resultado, que aparece em Resultados; toda nota lançada, corrigida ou apagada vai para o histórico. Enter passa para a próxima nota, Ctrl+Enter salva, e há "Salvar e abrir o próximo". A coluna Notas mostra lançadas sobre esperadas (competências × avaliadores da banca).',
     fato: "",
     fonte:
       "src/modulos/entrevistas/ficha.jsx; supabase/migrations/20260930220000_entrevistas_roteiros_e_notas.sql; src/lib/conducao-de-entrevista.js",
@@ -4004,7 +4044,7 @@ export const VERBETES_AYA = Object.freeze([
       'O Cronograma mostra, num calendário, as etapas dos cronogramas cadastrados em Editais, só da área atual. A tela é só de leitura e se atualiza quando um cronograma é salvo. O mês mostra quantas etapas de cada tipo há em cada dia (uma etapa conta no dia em que começa e no dia em que termina), e há filtros por unidade, edital, tipo de etapa e busca. O tipo é deduzido do texto da atividade: Impugnação, Recursos, Resultado final, Resultado, Convocação para entrevista, Entrevistas, Inscrições, Análise curricular ou Outros. Etapas com ano impossível ficam fora de "Próximas etapas" e aparecem listadas para correção.',
     fato: "",
     fonte:
-      "src/modulos/cronograma/calendario-editais.jsx; src/lib/calendario-editais.js; src/lib/etapas-de-edital.js; src/lib/datas-do-cronograma.js",
+      "src/modulos/cronograma/calendario-editais.tsx; src/lib/calendario-editais.ts; src/lib/etapas-de-edital.js; src/lib/datas-do-cronograma.js",
     abrir: "calendario",
   },
   {
@@ -4038,7 +4078,7 @@ export const VERBETES_AYA = Object.freeze([
       'Os filtros ficam recolhidos em "Refinar resultados" (o botão "Mostrar filtros" abre): busca por etapa, edital ou unidade, unidade, edital, tipo de etapa e "Ocultar concluídas". "Ocultar concluídas" começa ligada, porque o que já terminou raramente é o que se procura; "Limpar tudo" tira os filtros e mostra também as concluídas. A linha do tempo oferece só os editais que restaram no filtro, e clicar numa etapa (nas próximas etapas ou no dia) mostra o edital dela na linha do tempo.',
     fato: "",
     fonte:
-      "src/modulos/cronograma/calendario-editais.jsx; src/lib/calendario-editais.js",
+      "src/modulos/cronograma/calendario-editais.tsx; src/lib/calendario-editais.ts",
     abrir: "calendario",
   },
   {
@@ -4054,7 +4094,7 @@ export const VERBETES_AYA = Object.freeze([
       'O Cronograma só mostra etapas já salvas no cronograma de cada edital, em Editais, e só da área atual: edital sem cronograma não aparece. "Ocultar concluídas" começa ligada, então as etapas que já terminaram ficam escondidas até você desligá-la ou clicar em "Limpar tudo". Etapa com ano impossível sai de "Próximas etapas" e aparece na lista para correção. Confira também a busca e os filtros de unidade, edital e tipo de etapa.',
     fato: "",
     fonte:
-      "src/modulos/cronograma/calendario-editais.jsx; src/lib/calendario-editais.js; src/lib/datas-do-cronograma.js",
+      "src/modulos/cronograma/calendario-editais.tsx; src/lib/calendario-editais.ts; src/lib/datas-do-cronograma.js",
     abrir: "calendario",
   },
   {
@@ -4955,12 +4995,15 @@ export const VERBETES_AYA = Object.freeze([
       "treinar entrevistas",
       "treinar avaliacao documental",
       "dsei treinamento",
+      "treinamento projetos",
+      "992/2099",
+      "991/2099",
     ],
     resposta:
-      'O edital de treinamento ("Treinamento – Saúde Indígena (991/2099)", unidade fictícia "DSEI Treinamento") serve para praticar sem tocar em dados reais. Ele tem 3 vagas fictícias (Enfermeiro, Técnico de Enfermagem e Agente Indígena de Saúde), 15 candidatos fictícios ("Candidato Teste 01" a "Candidato Teste 15", sem CPF e com e-mail @exemplo.invalid), a janela de entrevista aberta, a lista de convocação pronta, um roteiro de entrevista de exemplo e a regra da avaliação documental copiada de um modelo da Saúde Indígena (na situação Conferir). Ele aparece com o selo Treinamento em Editais, Entrevistas › Conduzir, Avaliação documental e Classificação. Fica fora da Visão geral, dos indicadores, dos painéis (análises, entrevistas e aprovados), das comemorações, das conferências e dos robôs; a pré-classificação só roda para ele quando pedida para ele (em Rodar com opções, marque Mostrar todos e escolha o edital). Documento oficial gerado dele sai com "TREINAMENTO — SEM VALOR OFICIAL" no título. Não rode o robô da Empregare para ele: as vagas são fictícias.',
+      'Há dois editais de treinamento, para praticar sem tocar em dados reais. "Treinamento – Saúde Indígena (991/2099)" (unidade fictícia "DSEI Treinamento"): 3 vagas fictícias (Enfermeiro, Técnico de Enfermagem e Agente Indígena de Saúde), 15 candidatos fictícios ("Candidato Teste 01" a "15"), a janela de entrevista aberta, a lista de convocação pronta, um roteiro de entrevista de exemplo e a regra da avaliação documental do Edital 111/2026 (DSEI Parintins), com as perguntas do questionário da Saúde Indígena já ligadas, na situação Conferir. "Treinamento – Projetos (992/2099)" (unidade "Escritório Treinamento"): espelho do Edital 93/2026, com as mesmas 5 vagas e cargos (códigos fictícios 990992001 a 990992005), o cronograma com as inscrições encerradas e a análise curricular em andamento, a regra conferida do 93/2026 (versão 7) copiada, 40 candidatos fictícios ("Candidato Teste P01" a "P40") com o questionário no formato da Empregare, a pré-classificação já rodada e 21 fichas pendentes para os analistas. Nos dois, nenhum candidato tem CPF e os e-mails são @exemplo.invalid. Eles aparecem com o selo Treinamento em Editais, Entrevistas › Conduzir, Avaliação documental e Classificação. Ficam fora da Visão geral, dos indicadores, dos painéis (análises, entrevistas e aprovados), das comemorações, das conferências, dos robôs, do painel dos robôs e do Status das atualizações; a pré-classificação só roda para eles quando pedida para eles (em Rodar com opções, marque Mostrar todos e escolha o edital). Documento oficial gerado deles sai com "TREINAMENTO — SEM VALOR OFICIAL" no título. Não rode o robô da Empregare para eles: as vagas são fictícias.',
     fato: "",
     fonte:
-      "supabase/migrations/20261007230000_edital_de_treinamento.sql; src/lib/edital-de-treinamento.js",
+      "supabase/migrations/20261007230000_edital_de_treinamento.sql; supabase/migrations/20261008110000_treinamento_avaliacao_documental.sql; src/lib/edital-de-treinamento.js",
     abrir: "nucleo",
   },
   {
@@ -4975,10 +5018,10 @@ export const VERBETES_AYA = Object.freeze([
       "limpar treinamento",
     ],
     resposta:
-      "Em Editais, o administrador global vê no edital de treinamento o botão Reiniciar treinamento (setas circulares). Ao clicar, a própria linha pede a confirmação; em Reiniciar, tudo o que foi feito no treinamento (convocações, notas, listas geradas, fichas e pré-classificação, aprovados, recursos, conversa) é apagado e os dados fictícios voltam ao estado inicial, com o cronograma recalculado a partir de hoje. Só o edital de treinamento pode ser reiniciado: o banco recusa qualquer edital real e nada dele é apagado.",
+      "Em Editais, o administrador global vê nos editais de treinamento (Saúde Indígena e Projetos) o botão Reiniciar treinamento (setas circulares). Ao clicar, a própria linha pede a confirmação; em Reiniciar, tudo o que foi feito naquele treinamento (convocações, notas, listas geradas, fichas e pré-classificação, decisões de lote, aprovados, recursos, conversa) é apagado e os dados fictícios voltam ao estado inicial, com o cronograma recalculado a partir de hoje. No de Projetos, a pré-classificação e as 21 fichas pendentes voltam prontas. Só os editais de treinamento podem ser reiniciados: o banco recusa qualquer edital real, e também recusa se uma vaga do treinamento tiver vindo do robô da Empregare; nesses casos nada é apagado.",
     fato: "",
     fonte:
-      "supabase/migrations/20261007230000_edital_de_treinamento.sql; src/modulos/editais/nucleo.jsx",
+      "supabase/migrations/20261008110000_treinamento_avaliacao_documental.sql; src/modulos/editais/nucleo.jsx",
     abrir: "nucleo",
   },
   {

@@ -22,6 +22,7 @@ import { criarPedidoDeAcesso } from "./pedido-de-acesso.js";
 */
 
 export const SLOGAN = "Monitoramento de Processos Seletivos";
+export const INSTITUICAO = "Agência Brasileira de Apoio à Gestão do SUS";
 
 /** O logo some se a imagem falhar (e volta se o endereço mudar). */
 function LogoDaInstituicao({ url }) {
@@ -135,6 +136,9 @@ export function TelaDeEntrada({ sessao, marca, pedido }) {
             <CartaoDoPedido pedido={pedido} sessao={sessao} />
           ) : null}
         </div>
+        <p className="login-instituicao" id="loginInstituicao">
+          <span>{INSTITUICAO}</span>
+        </p>
         <Rodape rodape={identidade.rodape} />
       </div>
       <div className="login-stripe" aria-hidden="true" />

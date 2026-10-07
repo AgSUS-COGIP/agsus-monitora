@@ -45,13 +45,13 @@ Quem usa hoje: o robô da Empregare (`scripts/robo-empregare/`), as conferência
 com a conta em `monitora.avaliacao_documental`) e o expurgo diário dos anexos do chat
 (`scripts/expurgo_anexos_chat/`, com `monitora.chat.expurgo`).
 
-| Módulo de domínio                                 | O que faz                                                                                                                  |
-| ------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
-| `monitora.avaliacao_documental.nota_declarada`    | a ART lida da Empregare e a nota declarada pela regra (cópia fiel de `nota-declarada.js`)                                  |
-| `monitora.avaliacao_documental.pre_classificacao` | eliminação automática, Provisória por ART, tamanho do lote e "a linha anda" (cópia fiel de `pre-classificacao.js`)         |
-| `monitora.avaliacao_documental.distribuicao`      | distribuição das fichas (menor carga, limites) e as fichas novas da distribuição inicial (cópia fiel de `distribuicao.js`) |
-| `monitora.entrevistas.calculo`                    | nota por competência, total e parecer da entrevista (a regra de `FC_CALCULAR_ENTREVISTA` e de `calcularEntrevista`)        |
-| `monitora.chat.expurgo`                           | tira do Storage, em lotes, os arquivos da fila de expurgo dos anexos do chat (API do Storage com a `service_role`)         |
+| Módulo de domínio                                 | O que faz                                                                                                                                |
+| ------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| `monitora.avaliacao_documental.nota_declarada`    | a ART lida da Empregare e a nota declarada pela regra (cópia fiel de `nota-declarada.js`)                                                |
+| `monitora.avaliacao_documental.pre_classificacao` | eliminação automática, Provisória por ART, tamanho do lote e "a linha anda" (cópia fiel de `pre-classificacao.js`)                       |
+| `monitora.avaliacao_documental.distribuicao`      | distribuição das fichas (menor carga, limites) e as fichas novas da distribuição inicial (cópia fiel de `distribuicao.js`)               |
+| `monitora.entrevistas.calculo`                    | nota por competência, total e parecer da entrevista, com ou sem aspectos (a regra de `FC_CALCULAR_ENTREVISTA` e de `calcularEntrevista`) |
+| `monitora.chat.expurgo`                           | tira do Storage, em lotes, os arquivos da fila de expurgo dos anexos do chat (API do Storage com a `service_role`)                       |
 
 ### Importar a base
 
@@ -263,7 +263,10 @@ tarefas deixava todo o resto lento.
 - **Cálculo da entrevista em Python** (`monitora.entrevistas.calculo`, Decimal): os 15 casos
   dourados de `tests/fixtures/entrevistas/casos-de-calculo.json` passam no vitest
   (`calcularEntrevista`, a prévia da tela), no pytest e na própria `FC_CALCULAR_ENTREVISTA`
-  (ensaio begin…rollback, um roteiro, uma entrevista e as avaliações fictícias por caso).
+  (ensaio begin…rollback, um roteiro, uma entrevista e as avaliações fictícias por caso). Com
+  aspectos (08/10/2026): os casos novos (`caso.aspectos`) rodam também no ensaio
+  `supabase/ensaios/20261008100000_aspectos_da_entrevista.sql`, que leva o mesmo json (o vitest
+  confere).
 
 ### Próximas entregas (plano, em ordem de ganho)
 

@@ -1072,7 +1072,8 @@ function LiberacaoDoEdital({ conducao, item, ocupado, doPainel }) {
 
 export function VisaoDeConducao({ conducao, area, entrevistasDoPainel }) {
   const e = useSyncExternalStore(conducao.assinar, conducao.obter);
-  const [aberta, setAberta] = useState(null);
+  const aberta = e.fichaAberta;
+  const setAberta = conducao.abrirFicha;
   const { editais, edital: dados, roteiros } = e;
 
   useEffect(() => {
@@ -1096,6 +1097,26 @@ export function VisaoDeConducao({ conducao, area, entrevistasDoPainel }) {
     [fonte, dados],
   );
   const acao = e.acao?.tipo || "";
+
+  /* Modo de análise: a ficha aberta ocupa a área de conteúdo (some o resto da tela). */
+  if (convocado)
+    return (
+      <div
+        className="entrevistas-visao entrevistas-conducao"
+        data-modo="analise"
+      >
+        <FichaDoCandidato
+          key={convocado.id}
+          dados={dados}
+          convocado={convocado}
+          convocados={dados.convocados}
+          salvando={acao === "notas"}
+          aoSalvar={(p) => conducao.lancarNotas(convocado.id, p)}
+          aoAbrir={(id) => setAberta(id)}
+          aoFechar={() => setAberta(null)}
+        />
+      </div>
+    );
 
   return (
     <div className="entrevistas-visao entrevistas-conducao">
@@ -1226,18 +1247,6 @@ export function VisaoDeConducao({ conducao, area, entrevistasDoPainel }) {
             aoAbrir={setAberta}
           />
         </>
-      ) : null}
-
-      {convocado ? (
-        <FichaDoCandidato
-          key={convocado.id}
-          dados={dados}
-          convocado={convocado}
-          salvando={acao === "notas"}
-          aoSalvar={(p) => conducao.lancarNotas(convocado.id, p)}
-          aoAbrirProximo={(id) => setAberta(id)}
-          aoFechar={() => setAberta(null)}
-        />
       ) : null}
     </div>
   );

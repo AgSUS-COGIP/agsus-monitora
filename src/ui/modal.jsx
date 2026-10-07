@@ -35,6 +35,9 @@ const focaveisDe = (cartao) =>
     (elemento) => !elemento.closest(".hidden, [hidden]"),
   );
 
+/**
+ * @param {{ id?: string, rotuloId?: string, rotulo?: string, aoFechar?: () => void, fecharAoClicarFora?: boolean, className?: string, cartaoClassName?: string, tour?: string, children?: import("react").ReactNode }} props
+ */
 export function Modal({
   id,
   rotuloId,

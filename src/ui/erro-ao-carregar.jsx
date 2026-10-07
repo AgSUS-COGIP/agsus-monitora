@@ -6,6 +6,9 @@ import { Aviso } from "./aviso.tsx";
   `className` acrescenta o espaçamento de quem usa; `id` e `idDoBotao`, o
   contrato de teste/DOM.
 */
+/**
+ * @param {{ oQue: string, mensagem?: string, aoTentar?: () => void, id?: string, idDoBotao?: string, className?: string }} props
+ */
 export function ErroAoCarregar({
   id,
   idDoBotao,
