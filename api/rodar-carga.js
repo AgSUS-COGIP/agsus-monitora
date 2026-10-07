@@ -5,7 +5,7 @@
     GET   → { configurado: true, robos: { empregare: { rodando, execucao }, … } }
             (se cada workflow tem execução na fila ou rodando no GitHub)
     POST  { robo: "empregare" | "selecao" | "entrevistas" | "conferencias"
-                  | "pre_classificacao", edital?: <uuid>,
+                  | "expurgo_chat" | "pre_classificacao", edital?: <uuid>,
             opcoes?: { modo, editais, vagas, limite } }
           → 202 { ok: true, robo, pedido? } depois de pedir o workflow_dispatch
 

@@ -66,14 +66,16 @@ chat.css               só tokens
   prazo em dias (padrão: guardar para sempre) aplicado na hora e todo dia pela tarefa
   `agsus_chat_retencao_diaria`; exclusão real das mensagens, reações e anexos, auditada em
   `TH_LIMPEZA_CHAT` (sem conteúdo). Os arquivos vão para a fila `TB_EXPURGO_ANEXO_CHAT` e saem do
-  Storage pela API quando a seção é aberta (`expurgarAnexos`; o Storage não aceita DELETE pelo
-  SQL). No painel, o DELETE do Realtime (só a chave) tira a mensagem (`tirarMensagens`) e a
+  Storage pela API (o Storage não aceita DELETE pelo SQL): todo dia às 6h30 de Brasília pelo job
+  `scripts/expurgo_anexos_chat/` (GitHub Actions `expurgo-anexos-chat.yml`, com a service_role, em
+  lotes de 100; o que falhar fica na fila; cada execução em `TL_EXPURGO_ANEXO_CHAT` e no Status das
+  atualizações) e também quando a seção é aberta (`expurgarAnexos`). No painel, o DELETE do Realtime (só a chave) tira a mensagem (`tirarMensagens`) e a
   releitura da página mais nova tira o que sumiu do banco (`reconciliarPagina`).
 
 Regras puras: `src/lib/chat.js`, `src/lib/anexos-do-chat.js`, `src/lib/avisos-do-chat.js` e
 `src/lib/emojis-do-chat.js`. Banco: `supabase/migrations/20261002210000_chat.sql`,
 `20261005100000_chat_limpar_e_reacoes.sql`, `20261005190000_chat_retencao_das_mensagens.sql` e
-`20261007210000_chat_v2.sql` (ensaios em `supabase/ensaios/`, rollbacks em `supabase/rollback/`).
+`20261007210000_chat_v2.sql` e `20261007250000_expurgo_diario_dos_anexos_do_chat.sql` (ensaios em `supabase/ensaios/`, rollbacks em `supabase/rollback/`).
 Explicações: `docs/aya/regras-do-chat.md`.
 Testes: `tests/chat.test.js`, `tests/avisos-do-chat.test.js`, `tests/chat-limpar-e-reacoes.test.js`, `tests/emojis-do-chat.test.js`,
 `tests/modulos/chat.test.js`, `tests/modulos/chat-estado-limpar-e-reacoes.test.js`,
@@ -81,5 +83,6 @@ Testes: `tests/chat.test.js`, `tests/avisos-do-chat.test.js`, `tests/chat-limpar
 retenção: `tests/retencao-do-chat.test.js`, `tests/chat-retencao-migration.test.js`,
 `tests/modulos/chat-estado-retencao.test.js`, `tests/componentes/mensagens-do-chat.test.js`;
 v2: `tests/anexos-do-chat.test.js`, `tests/chat-v2.test.js`, `tests/modulos/chat-v2.test.js`,
-`tests/modulos/chat-expurgo-e-ficha.test.js`, `tests/chat-v2-migration.test.js`.
+`tests/modulos/chat-expurgo-e-ficha.test.js`, `tests/chat-v2-migration.test.js`;
+expurgo diário: `tests/python/test_expurgo_anexos_chat.py`, `tests/expurgo-anexos-chat-migration.test.js`.
 Histórias de usuário: `docs/historias-de-usuario/chat.md`.

@@ -597,7 +597,7 @@ export const CONTRATO_RPC = {
     argumentos: [],
     critica: false,
     resumo:
-      "Últimas 10 execuções de cada carga (análises por origem, entrevistas, seleção, robô da Empregare com vagas pedidas/baixadas/falhas/recusadas e quem disparou — 20261005170000 —, conferências de consistência com avisos novos/abertos/resolvidos — 20261005210000; análises com encerrada_por_inatividade — 20261007170000) e das tarefas agsus_* do pg_cron, para a seção Status das atualizações (só administrador global).",
+      "Últimas 10 execuções de cada carga (análises por origem, entrevistas, seleção, robô da Empregare com vagas pedidas/baixadas/falhas/recusadas e quem disparou — 20261005170000 —, conferências de consistência com avisos novos/abertos/resolvidos — 20261005210000; análises com encerrada_por_inatividade — 20261007170000; expurgo diário dos anexos do chat com lotes/removidos/confirmados/falhas/pendentes — 20261007250000) e das tarefas agsus_* do pg_cron, para a seção Status das atualizações (só administrador global).",
   },
   // ── Painel dos robôs (Status das atualizações, 20261007190000_painel_dos_robos.sql) ──
   get_painel_dos_robos: {
@@ -1067,13 +1067,13 @@ export const CONTRATO_RPC = {
     argumentos: [],
     critica: false,
     resumo:
-      "Só administrador global (42501): põe na fila os arquivos nunca anexados (1 dia) e devolve até 100 caminhos do bucket chat-anexos para remover pela API do Storage.",
+      "Só administrador global (42501) — e a service_role do job diário (20261007250000): põe na fila os arquivos nunca anexados (1 dia) e devolve até 100 caminhos do bucket chat-anexos para remover pela API do Storage.",
   },
   confirmar_expurgo_anexos_chat: {
     argumentos: ["p_caminhos"],
     critica: false,
     resumo:
-      "Só administrador global (42501): marca como expurgados os caminhos da fila que já saíram do Storage. Devolve {confirmados, pendentes}.",
+      "Só administrador global (42501) — e a service_role do job diário (20261007250000): marca como expurgados os caminhos da fila que já saíram do Storage. Devolve {confirmados, pendentes}.",
   },
   // ── Retenção das mensagens do chat (20261005190000_chat_retencao_das_mensagens.sql)
   obter_retencao_chat: {

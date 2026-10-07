@@ -1,0 +1,81 @@
+name: Expurgo dos anexos do chat
+
+# Job Python (scripts/expurgo_anexos_chat/expurgo_anexos_chat.py) que tira do
+# Storage (bucket chat-anexos) os arquivos dos anexos de mensagens que a
+# retenção ou o "Zerar mensagens" já apagaram — a fila TB_EXPURGO_ANEXO_CHAT —
+# sem depender de um administrador abrir Configurações › Mensagens (chat). Em
+# lotes de 100: preparar_expurgo_anexos_chat → remove pela API do Storage →
+# confirmar_expurgo_anexos_chat. O que falhar fica na fila para o dia seguinte.
+# Cada execução fica em TL_EXPURGO_ANEXO_CHAT (Status das atualizações).
+#
+# Quando roda:
+#   - todo dia às 6h30 de Brasília (9h30 UTC; o GitHub pode atrasar alguns minutos);
+#   - pelo "Rodar agora" das Configurações › Status das atualizações
+#     (api/rodar-carga.js, só administrador global; disparado_por = id do usuário);
+#   - pelo botão "Run workflow" desta aba Actions.
+# Guia: docs/python-no-monitora.md. Migration: 20261007250000_expurgo_diario_dos_anexos_do_chat.sql.
+#
+# O REPOSITÓRIO É PÚBLICO e este log também: o job só imprime contagens —
+# nunca caminho, nome de arquivo nem conteúdo (python/monitora/chat/expurgo.py).
+#
+# Secrets do repositório (os mesmos das sincronizações e do robô):
+#   SUPABASE_URL                 https://<projeto>.supabase.co
+#   SUPABASE_SERVICE_ROLE_KEY    chave service_role do Supabase
+
+on:
+  schedule:
+    - cron: "30 9 * * *"
+  workflow_dispatch:
+    inputs:
+      modo:
+        description: "normal = remove da fila e do Storage; seco = só conta a fila e mostra o resumo"
+        type: choice
+        options:
+          - normal
+          - seco
+        default: normal
+      disparado_por:
+        description: "Preenchido pelo MONITORA (Rodar agora, id do usuário); em branco = GitHub"
+        type: string
+        required: false
+        default: ""
+
+permissions:
+  contents: read
+
+concurrency:
+  group: expurgo-anexos-chat
+  cancel-in-progress: false
+
+jobs:
+  expurgar:
+    name: Fila de expurgo → Storage
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Baixar código
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 1
+          show-progress: false
+
+      # Só biblioteca padrão (python/monitora/ e scripts/expurgo_anexos_chat/): sem pip install.
+      - name: Configurar Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      # Os inputs vão por variável de ambiente (nunca interpolados no shell).
+      - name: Expurgar
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          MODO: ${{ inputs.modo || 'normal' }}
+          DISPARADO_POR: ${{ github.event_name == 'schedule' && 'agenda' || inputs.disparado_por }}
+        run: |
+          if [ "$MODO" = "seco" ]; then
+            python scripts/expurgo_anexos_chat/expurgo_anexos_chat.py --seco
+          else
+            python scripts/expurgo_anexos_chat/expurgo_anexos_chat.py
+          fi
