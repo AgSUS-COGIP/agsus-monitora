@@ -16,6 +16,7 @@ import {
 import { getSupabaseClient } from "../../lib/supabaseClient.js";
 import { CartaoDeAvisos } from "../../modulos/conferencias/avisos-de-conferencia.tsx";
 import { Icone } from "../icone.jsx";
+import { AgendaDosRobos } from "./agenda-dos-robos.tsx";
 import { criarEstadoDaSaude } from "./estado.js";
 import { Acompanhamento, UltimasExecucoes } from "./execucoes-dos-robos.jsx";
 import { RodarComOpcoes } from "./rodar-com-opcoes.jsx";
@@ -36,9 +37,10 @@ import { RodarComOpcoes } from "./rodar-com-opcoes.jsx";
   os avisos que o job Python das conferências gravou, de todos os módulos.
 
   Empregare, Seleção, Entrevistas, Conferências e o Expurgo dos anexos do chat têm
-  "Rodar agora": o botão chama
-  /api/rodar-carga (api/rodar-carga.js), que dispara o workflow no GitHub;
-  fica desabilitado enquanto a carga roda (src/lib/robos-de-carga.js).
+  "Rodar agora": o botão chama a RPC disparar_robo (o banco pede o workflow ao
+  GitHub com a chave do Vault, 20261008140000) e acompanha por
+  situacao_do_disparo_robo; fica desabilitado enquanto a carga roda
+  (src/lib/robos-de-carga.js).
 
   Robô da Empregare, Pré-classificação e Conferências têm também "Opções"
   (rodar-com-opcoes.jsx: editais, códigos de vaga, modo, limite e prévia).
@@ -46,6 +48,10 @@ import { RodarComOpcoes } from "./rodar-com-opcoes.jsx";
   (execucoes-dos-robos.jsx); em "Detalhes", o robô da Empregare e a
   pré-classificação mostram as últimas execuções com os parâmetros e quem
   pediu (get_painel_dos_robos).
+
+  "Agenda dos robôs" (20261008140000): o banco pede ao GitHub as cargas
+  agendadas; a linha mostra o último pedido aceito e as falhas, ou o aviso de
+  chave ausente no Vault (agenda-dos-robos.tsx).
 */
 
 const classes = (...lista) => lista.filter(Boolean).join(" ");
@@ -146,7 +152,6 @@ function textoDaAtualizacao(linha) {
 function RodarAgora({ robo, linha, atual, estado, aoAbrirOpcoes }) {
   const botao = estadoDoBotao({
     robo,
-    disponibilidade: atual.disparo,
     linha,
     pedidoEm: atual.pedidos[robo.id] || null,
     agora: estado.agora(),
@@ -161,7 +166,6 @@ function RodarAgora({ robo, linha, atual, estado, aoAbrirOpcoes }) {
           robo.id === "empregare" ? "cargas-rodar-empregare" : undefined
         }
         disabled={botao.desabilitado}
-        title={botao.aviso || undefined}
         onClick={() => void estado.rodarAgora(robo.id)}
       >
         <Icone nome="refresh-cw" tamanho={14} />
@@ -173,7 +177,7 @@ function RodarAgora({ robo, linha, atual, estado, aoAbrirOpcoes }) {
           className="btn secondary saude-botao saude-opcoes"
           data-tour={robo.id === "empregare" ? "robos-abrir-opcoes" : undefined}
           disabled={botao.desabilitado}
-          title={botao.aviso || "Rodar com opções"}
+          title="Rodar com opções"
           onClick={aoAbrirOpcoes}
         >
           <Icone nome="sliders-horizontal" tamanho={14} />
@@ -188,8 +192,6 @@ function RodarAgora({ robo, linha, atual, estado, aoAbrirOpcoes }) {
         >
           {aviso.texto}
         </small>
-      ) : botao.aviso ? (
-        <small className="saude-rodar__aviso">{botao.aviso}</small>
       ) : null}
     </>
   );
@@ -252,6 +254,7 @@ function Linha({ linha, atual, estado }) {
           ) : null}
         </div>
       </div>
+      {linha.agenda ? <AgendaDosRobos agenda={linha.agenda} /> : null}
       {linha.erro ? (
         <p className="saude-erro" role="note">
           <strong>
@@ -415,16 +418,12 @@ export function montarSaudeDasCargas({
   supabase = getSupabaseClient(),
   getProfile,
   agora,
-  buscar,
-  obterToken,
   agendar,
 } = {}) {
   const estado = criarEstadoDaSaude({
     supabase,
     getProfile,
     ...(agora ? { agora } : {}),
-    ...(buscar ? { buscar } : {}),
-    ...(obterToken ? { obterToken } : {}),
     ...(agendar ? { agendar } : {}),
   });
   const raiz = raizDaTela

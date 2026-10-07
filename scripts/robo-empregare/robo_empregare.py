@@ -11,7 +11,7 @@ vagas do edital (fonte principal) e, para editais antigos, da Seleção
 
 Roda pelo GitHub Actions (.github/workflows/robo-empregare.yml): no horário de
 reserva, pelo botão "Run workflow" ou pelo "Rodar agora" das Configurações
-(api/rodar-carga.js). Guia de operação: docs/robo-empregare.md.
+(RPC disparar_robo). Guia de operação: docs/robo-empregare.md.
 
 Uso
   python scripts/robo-empregare/robo_empregare.py --seco

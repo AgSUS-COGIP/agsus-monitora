@@ -11,7 +11,7 @@ o catálogo (código, módulo, gravidade, título), em catalogo.py.
 
 Roda pelo GitHub Actions (.github/workflows/conferencias.yml): todo dia às 6h
 de Brasília, pelo "Rodar agora" das Configurações › Status das atualizações
-(api/rodar-carga.js) ou pelo "Run workflow". Guia: docs/python-no-monitora.md.
+(RPC disparar_robo) ou pelo "Run workflow". Guia: docs/python-no-monitora.md.
 
 Uso
   python scripts/conferencias/conferencias.py --seco

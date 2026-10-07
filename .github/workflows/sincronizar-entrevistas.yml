@@ -2,9 +2,11 @@ name: Sincronizar entrevistas
 
 # Lê a aba Entrevistados da planilha "[dash] entrevistados" com a conta de
 # serviço do Google e grava no Supabase (scripts/sincronizar-entrevistas.mjs).
-# De hora em hora, o dia todo (o GitHub pode atrasar alguns minutos) e, quando precisar,
+# De hora em hora, o dia todo, pedido pelo banco (pg_cron → workflow_dispatch com
+# disparado_por = AGENDA; docs/agenda-dos-robos.md — sem `schedule` aqui, que o GitHub
+# atrasava ou pulava) e, quando precisar,
 # pelo botão "Run workflow" na aba Actions ou pelo "Rodar agora" das
-# Configurações › Status das atualizações (api/rodar-carga.js).
+# Configurações › Status das atualizações (RPC disparar_robo).
 # Como operar e o que fazer quando falha: docs/sincronizacao-das-planilhas.md.
 #
 # Secrets do repositório (Settings → Secrets and variables → Actions):
@@ -13,8 +15,6 @@ name: Sincronizar entrevistas
 #   SUPABASE_SERVICE_ROLE_KEY    chave service_role do Supabase
 
 on:
-  schedule:
-    - cron: "0 * * * *"
   workflow_dispatch:
     inputs:
       modo:
@@ -26,7 +26,7 @@ on:
           - forcar
         default: normal
       disparado_por:
-        description: "Preenchido pelo MONITORA (Rodar agora, id do usuário); em branco = GitHub"
+        description: "Rodar agora do MONITORA = id do usuário; agenda do banco = AGENDA; em branco = GitHub"
         type: string
         required: false
         default: ""

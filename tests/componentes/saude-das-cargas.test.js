@@ -6,7 +6,7 @@ import { clicar, esperar } from "./interacoes.js";
   Configurações › Status das atualizações (React): carrega ao abrir a seção, mostra o
   resumo e um selo por carga, abre o histórico, mostra o erro da última falha
   como texto, avisa quem não é administrador global e a função que falta.
-  "Rodar agora" (Empregare, Seleção, Entrevistas) com /api/rodar-carga falso.
+  "Rodar agora" (Empregare, Seleção, Entrevistas) pela RPC disparar_robo falsa.
 */
 
 const { montarSaudeDasCargas } =
@@ -42,34 +42,30 @@ const PAYLOAD = {
 };
 
 const ADMIN = { id: "u", ativo: true, admin_global: true };
-const supabaseFalso = (resposta) => ({ rpc: vi.fn(async () => resposta) });
+const supabaseFalso = (resposta, rpcs = {}) => ({
+  rpc: vi.fn(async (nome, argumentos) =>
+    rpcs[nome] ? rpcs[nome](argumentos) : resposta,
+  ),
+});
 
 let raiz;
 let controlador;
 
-const respostaHttp = (status, corpo = {}) => ({
-  ok: status >= 200 && status < 300,
-  status,
-  json: async () => corpo,
-});
-
 async function montar({
   resposta = { data: PAYLOAD, error: null },
   perfil = ADMIN,
-  buscar = vi.fn(async () => respostaHttp(404)),
+  rpcs = {},
   agendar = vi.fn(),
 } = {}) {
   raiz = document.createElement("div");
   document.body.append(raiz);
-  const supabase = supabaseFalso(resposta);
+  const supabase = supabaseFalso(resposta, rpcs);
   await act(async () => {
     controlador = montarSaudeDasCargas({
       raizDaTela: raiz,
       supabase,
       getProfile: () => perfil,
       agora: () => AGORA,
-      buscar,
-      obterToken: async () => "token-do-usuario",
       agendar,
     });
   });
@@ -172,7 +168,7 @@ describe("Status das atualizações", () => {
   });
 });
 
-describe("Rodar agora", () => {
+describe("Rodar agora (pelo banco: disparar_robo)", () => {
   const COM_ROBO = {
     ...PAYLOAD,
     empregare: [
@@ -187,22 +183,13 @@ describe("Rodar agora", () => {
       },
     ],
   };
-  const disponivel = (rodando = {}) =>
-    respostaHttp(200, {
-      configurado: true,
-      robos: {
-        empregare: { rodando: Boolean(rodando.empregare) },
-        selecao: { rodando: Boolean(rodando.selecao) },
-        entrevistas: { rodando: false },
-      },
-    });
   const botaoDe = (id) =>
     document.querySelector(`[data-carga="${id}"] .saude-rodar`);
+  const linhaDe = (id) => document.querySelector(`[data-carga="${id}"]`);
 
-  it("só as três cargas do GitHub têm o botão; a linha do robô aparece", async () => {
-    await montar({
+  it("só as cargas do GitHub têm o botão, liberado sem consultar nada fora do banco", async () => {
+    const supabase = await montar({
       resposta: { data: COM_ROBO, error: null },
-      buscar: vi.fn(async () => disponivel()),
     });
     expect(botaoDe("empregare")).not.toBeNull();
     expect(botaoDe("selecao")).not.toBeNull();
@@ -210,81 +197,133 @@ describe("Rodar agora", () => {
     expect(botaoDe("analises:saude-indigena")).toBeNull();
     expect(botaoDe("tarefas")).toBeNull();
     expect(botaoDe("empregare").disabled).toBe(false);
-    expect(
-      document.querySelector('[data-carga="empregare"]').textContent,
-    ).toContain("Robô da Empregare");
+    expect(linhaDe("empregare").textContent).toContain("Robô da Empregare");
+    expect(supabase.rpc.mock.calls.map(([nome]) => nome)).not.toContain(
+      "disparar_robo",
+    );
   });
 
-  it("clicar pede ao /api/rodar-carga com o Bearer e desabilita até o GitHub mostrar", async () => {
-    const buscar = vi.fn(async (_url, opcoes) =>
-      opcoes?.method === "POST"
-        ? respostaHttp(202, { ok: true })
-        : disponivel(),
-    );
+  it("clicar chama disparar_robo, desabilita e acompanha até o GitHub aceitar", async () => {
     const agendar = vi.fn();
-    await montar({
+    const supabase = await montar({
       resposta: { data: COM_ROBO, error: null },
-      buscar,
+      rpcs: {
+        disparar_robo: async () => ({ data: 41, error: null }),
+        situacao_do_disparo_robo: async () => ({
+          data: { disparo: 41, situacao: "ACEITO", http: 204 },
+          error: null,
+        }),
+      },
       agendar,
     });
     await clicar(botaoDe("empregare"));
-    const post = buscar.mock.calls.find(([, o]) => o?.method === "POST");
-    expect(post[0]).toBe("/api/rodar-carga");
-    expect(JSON.parse(post[1].body)).toEqual({ robo: "empregare" });
-    expect(post[1].headers.Authorization).toBe("Bearer token-do-usuario");
+    expect(supabase.rpc).toHaveBeenCalledWith("disparar_robo", {
+      p_robo: "empregare",
+      p_inputs: {},
+    });
     expect(botaoDe("empregare").disabled).toBe(true);
     expect(botaoDe("empregare").textContent).toContain("Pedido enviado");
-    expect(naTela("Pedido enviado.")).toBe(true);
-    expect(agendar).toHaveBeenCalledTimes(1);
+    expect(linhaDe("empregare").textContent).toContain(
+      "Pedido enviado. Aguardando o GitHub.",
+    );
+    // A primeira conferência (3 s) e a releitura (20 s).
+    expect(agendar.mock.calls.map(([, ms]) => ms)).toEqual([3000, 20000]);
+    await act(async () => {
+      agendar.mock.calls[0][0]();
+    });
+    await esperar();
+    expect(supabase.rpc).toHaveBeenCalledWith("situacao_do_disparo_robo", {
+      p_disparo: 41,
+    });
+    expect(linhaDe("empregare").textContent).toContain(
+      "Aceito pelo GitHub. Na fila ou rodando.",
+    );
     // As outras cargas continuam liberadas.
     expect(botaoDe("selecao").disabled).toBe(false);
   });
 
-  it("desabilitado enquanto o GitHub roda", async () => {
+  it("chave do cofre vencida: a linha diz o que fazer e o botão volta", async () => {
+    const agendar = vi.fn();
     await montar({
       resposta: { data: COM_ROBO, error: null },
-      buscar: vi.fn(async () => disponivel({ selecao: true })),
+      rpcs: {
+        disparar_robo: async () => ({ data: 42, error: null }),
+        situacao_do_disparo_robo: async () => ({
+          data: {
+            disparo: 42,
+            situacao: "FALHOU",
+            http: 401,
+            mensagem: "GitHub 401: Bad credentials",
+          },
+          error: null,
+        }),
+      },
+      agendar,
+    });
+    await clicar(botaoDe("selecao"));
+    await act(async () => {
+      agendar.mock.calls[0][0]();
+    });
+    await esperar();
+    expect(linhaDe("selecao").textContent).toContain(
+      "A chave de disparo dos robôs expirou ou foi recusada; um administrador precisa trocá-la no cofre (Vault) com o nome github_disparo_robos.",
+    );
+    expect(botaoDe("selecao").disabled).toBe(false);
+  });
+
+  it("desabilitado enquanto a carga roda (registro do banco)", async () => {
+    await montar({
+      resposta: {
+        data: {
+          ...COM_ROBO,
+          selecao: [{ inicio: ha(2), situacao: "EM_ANDAMENTO" }],
+        },
+        error: null,
+      },
     });
     expect(botaoDe("selecao").disabled).toBe(true);
     expect(botaoDe("selecao").textContent).toContain("Rodando…");
     expect(botaoDe("empregare").disabled).toBe(false);
   });
 
-  it("sem token na Vercel: mostra o estado e diz o que falta configurar", async () => {
+  it("recusa do banco aparece na linha e libera o botão", async () => {
     await montar({
       resposta: { data: COM_ROBO, error: null },
-      buscar: vi.fn(async () =>
-        respostaHttp(503, { configurado: false, erro: "x" }),
-      ),
+      rpcs: {
+        disparar_robo: async () => ({
+          data: null,
+          error: {
+            code: "42501",
+            message: "Só o administrador global roda as cargas.",
+          },
+        }),
+      },
     });
-    expect(botaoDe("empregare").disabled).toBe(true);
-    expect(
-      document.querySelector('[data-carga="empregare"]').textContent,
-    ).toContain("Falta configurar GITHUB_DISPATCH_TOKEN na Vercel.");
-    expect(naTela("Atualizado há 30 min")).toBe(true);
-  });
-
-  it("erro do disparo aparece na linha e libera o botão", async () => {
-    const buscar = vi.fn(async (_url, opcoes) =>
-      opcoes?.method === "POST"
-        ? respostaHttp(403, {
-            erro: "Só o administrador global roda as cargas.",
-          })
-        : disponivel(),
-    );
-    await montar({ resposta: { data: COM_ROBO, error: null }, buscar });
     await clicar(botaoDe("entrevistas"));
     expect(
-      document.querySelector('[data-carga="entrevistas"] [role="alert"]')
-        .textContent,
+      linhaDe("entrevistas").querySelector('[role="alert"]').textContent,
     ).toBe("Só o administrador global roda as cargas.");
     expect(botaoDe("entrevistas").disabled).toBe(false);
   });
 
-  it("fora da versão publicada o botão fica desabilitado", async () => {
-    await montar({ resposta: { data: COM_ROBO, error: null } });
-    expect(botaoDe("empregare").disabled).toBe(true);
-    expect(naTela("Só na versão publicada.")).toBe(true);
+  it("pedido repetido em 2 min: aviso informativo, sem erro", async () => {
+    await montar({
+      resposta: { data: COM_ROBO, error: null },
+      rpcs: {
+        disparar_robo: async () => ({
+          data: null,
+          error: {
+            code: "55006",
+            message: "Esta carga acabou de ser pedida. Aguarde alguns minutos.",
+          },
+        }),
+      },
+    });
+    await clicar(botaoDe("entrevistas"));
+    expect(linhaDe("entrevistas").querySelector('[role="alert"]')).toBeNull();
+    expect(linhaDe("entrevistas").textContent).toContain(
+      "Esta carga acabou de ser pedida.",
+    );
   });
 });
 
@@ -305,5 +344,62 @@ describe("a seção na Administração", async () => {
         "cargas",
       ),
     ).toBe(false);
+  });
+});
+
+describe("Agenda dos robôs (20261008140000)", () => {
+  const comAgenda = (agenda) => ({
+    resposta: { data: { ...PAYLOAD, agenda_dos_robos: agenda }, error: null },
+  });
+
+  it("mostra o último pedido aceito e as falhas das últimas 24 h", async () => {
+    await montar(
+      comAgenda({
+        chave_cadastrada: true,
+        ultimo_aceito: ha(20),
+        falhas_24h: 2,
+        sem_chave_24h: 0,
+        disparos: [
+          {
+            workflow: "sincronizar-entrevistas.yml",
+            inicio: ha(20),
+            fim: ha(20),
+            situacao: "ACEITO",
+            http: 204,
+          },
+        ],
+      }),
+    );
+    const linha = document.querySelector('[data-carga="agenda_dos_robos"]');
+    expect(linha.querySelector("strong").textContent).toBe("Agenda dos robôs");
+    expect(linha.querySelector(".saude-agenda").textContent).toMatch(
+      /^Último pedido aceito: .+ · 2 falhas em 24 h$/,
+    );
+    expect(linha.querySelector('[role="alert"]')).toBeNull();
+    await clicar(linha.querySelector(".saude-botao"));
+    expect(linha.querySelector(".saude-historico tbody").textContent).toContain(
+      "Entrevistas · HTTP 204",
+    );
+  });
+
+  it("sem a chave no Vault, avisa e pede o cadastro", async () => {
+    await montar(
+      comAgenda({
+        chave_cadastrada: false,
+        ultimo_aceito: null,
+        falhas_24h: 0,
+        sem_chave_24h: 3,
+        disparos: [],
+      }),
+    );
+    const linha = document.querySelector('[data-carga="agenda_dos_robos"]');
+    const aviso = linha.querySelector('.saude-agenda[role="alert"]');
+    expect(aviso.textContent).toBe(
+      "Sem chave no Vault: os robôs não rodam sozinhos. Cadastre github_disparo_robos.",
+    );
+    expect(linha.textContent).toContain("Falhou");
+    expect(document.querySelector(".saude-resumo").textContent).toContain(
+      "Agenda dos robôs (falhou)",
+    );
   });
 });

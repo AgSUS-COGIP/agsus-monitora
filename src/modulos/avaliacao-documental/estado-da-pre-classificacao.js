@@ -15,8 +15,10 @@
     incluir_no_lote_por_decisao / revogar_decisao_lote  (20261007200000, decisao-no-banco.js)
                                                       a coordenação inclui no lote por
                                                       decisão ou revoga, com motivo
-  "Recalcular": POST /api/rodar-carga { robo: "pre_classificacao", edital }
-  (api/rodar-carga.js confere no banco se quem clicou coordena o edital). O
+  "Recalcular": disparar_robo('pre_classificacao', { editais: [edital] })
+  (o banco confere se quem clicou coordena o edital e pede o job ao GitHub
+  com a chave do Vault, 20261008140000); situacao_do_disparo_robo diz, em
+  poucos segundos, se o GitHub recusou ou se a chave falta ou expirou. O
   resultado do pedido fica na aba (`aviso`): o erro, com o botão de volta; ou
   "pedido", e a aba acompanha a execução (em_andamento e ultima_execucao de
   obter_pre_classificacao) e relê sozinha quando ela termina.
@@ -37,12 +39,13 @@ import { MIME_DOCX } from "../../lib/documento-da-resposta.js";
 import { comTempoLimite, mensagemDeFalha } from "../../lib/falha-de-rede.js";
 import { LOGO_PADRAO_DA_BARRA } from "../../lib/marca-da-barra-lateral.js";
 import {
-  ENDERECO_RODAR_CARGA,
-  MENSAGENS_DO_DISPARO,
-  motivoDaRecusa,
+  inputsDoPedido,
+  mensagemDoErroDoDisparo,
   roboDeCarga,
+  RPC_DISPARAR_ROBO,
+  RPC_SITUACAO_DO_DISPARO,
+  situacaoDoPedido,
 } from "../../lib/robos-de-carga.js";
-import { exigirSessao } from "../../lib/sessao.js";
 import { baixarNoNavegador } from "../classificacao/estado.js";
 import {
   copiarParaAreaDeTransferencia,
@@ -57,6 +60,8 @@ const RPC_REGISTRAR_LISTA = "registrar_lista_pre_classificacao";
 const RPC_PUBLICAR_LISTA = "publicar_lista_classificacao";
 const RPC_DESCONGELAR = "descongelar_declarada_pre_classificacao";
 const TEMPO_LIMITE_MS = 45000;
+/* O GitHub responde ao banco em 1 ou 2 s: quando conferir se aceitou o pedido. */
+const ESPERA_DA_RESPOSTA_MS = 3000;
 /* O job leva de segundos a poucos minutos: a aba relê neste intervalo até
    a execução terminar, no máximo pelo tempo limite do workflow. */
 const INTERVALO_DO_ACOMPANHAMENTO_MS = 15000;
@@ -84,8 +89,6 @@ export function chaveDaLista(tipo, lote = null) {
 export function criarEstadoDaPreClassificacao({
   supabase = null,
   toast = (mensagem) => console.info(mensagem),
-  buscar = (...args) => globalThis.fetch(...args),
-  obterToken = async () => (await exigirSessao(supabase)).access_token,
   agendar = (fn, ms) => setTimeout(fn, ms),
   agora = () => new Date(),
   baixar = baixarNoNavegador,
@@ -154,45 +157,52 @@ export function criarEstadoDaPreClassificacao({
       pedidoEm: em,
       aviso: { tom: "info", texto: "Pedindo o recálculo…" },
     });
-    let resposta;
-    let corpo;
+    let disparo;
     try {
-      const token = await obterToken();
-      resposta = await comTempoLimite(
-        buscar(ENDERECO_RODAR_CARGA, {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ robo: "pre_classificacao", edital: editalId }),
-        }),
-        20000,
+      disparo = await rpc(RPC_DISPARAR_ROBO, {
+        p_robo: "pre_classificacao",
+        p_inputs: inputsDoPedido({ edital: editalId }),
+      });
+    } catch (erro) {
+      if (erro?.code === "55006") {
+        const texto = `${mensagemDoErroDoDisparo(erro)} A lista atualiza sozinha quando terminar.`;
+        doEdital({ aviso: { tom: "info", texto } });
+        toast(texto, "info");
+        acompanhar(editalId, antes, em);
+        return false;
+      }
+      return recusado(
+        doEdital,
+        erro?.code
+          ? mensagemDoErroDoDisparo(erro, "Não foi possível pedir o recálculo.")
+          : mensagemDeFalha(erro),
       );
-      corpo = await Promise.resolve()
-        .then(() => resposta.json())
-        .catch(() => ({}));
-    } catch (falha) {
-      return recusado(doEdital, mensagemDeFalha(falha));
     }
-    if (resposta?.status === 202 || resposta?.status === 409) {
-      const texto =
-        resposta.status === 202
-          ? `Recálculo pedido às ${hora(em)}. A lista atualiza sozinha quando terminar.`
-          : `${MENSAGENS_DO_DISPARO.rodando} A lista atualiza sozinha quando terminar.`;
-      doEdital({ aviso: { tom: "info", texto } });
-      toast(texto, resposta.status === 202 ? "success" : "info");
-      acompanhar(editalId, antes, em);
-      return resposta.status === 202;
-    }
-    return recusado(
-      doEdital,
-      motivoDaRecusa(
-        resposta?.status,
-        corpo,
-        "Não foi possível pedir o recálculo.",
-      ),
+    const texto = `Recálculo pedido às ${hora(em)}. A lista atualiza sozinha quando terminar.`;
+    doEdital({ aviso: { tom: "info", texto } });
+    toast(texto, "success");
+    agendar(
+      () => void conferirDisparo(editalId, disparo),
+      ESPERA_DA_RESPOSTA_MS,
     );
+    acompanhar(editalId, antes, em);
+    return true;
+  }
+
+  /* O GitHub aceitou? Se recusou (ou falta a chave), a aba diz o que fazer. */
+  async function conferirDisparo(editalId, disparo) {
+    if (!supabase || disparo === null || disparo === undefined) return;
+    let situacao;
+    try {
+      situacao = situacaoDoPedido(
+        await rpc(RPC_SITUACAO_DO_DISPARO, { p_disparo: disparo }),
+      );
+    } catch {
+      return;
+    }
+    if (!situacao.aviso || estado.editalId !== editalId) return;
+    acompanhamento += 1;
+    recusado((mudancas) => publicar(mudancas), situacao.aviso.texto);
   }
 
   /*
