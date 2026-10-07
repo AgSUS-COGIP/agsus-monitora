@@ -1268,7 +1268,13 @@ export const CONTRATO_RPC = {
     argumentos: ["p_edital", "p_versao"],
     critica: false,
     resumo:
-      "Marca a versão vigente da regra como conferida (40001 se não é a vigente). Só a coordenação do edital.",
+      "Marca a versão vigente da regra como conferida (40001 se não é a vigente). Dupla conferência: quem salvou a versão não confere (42501), salvo o administrador global. Só a coordenação do edital.",
+  },
+  obter_apoio_regra_analise: {
+    argumentos: ["p_edital"],
+    critica: false,
+    resumo:
+      "O que o assistente da regra lê: os nomes das colunas de pergunta da última carga de cada vaga (sem respostas), as regras conferidas dos outros editais da área (só a coordenação) e a regra de classificação vigente com pode_editar. Leitor.",
   },
   obter_equipe_edital: {
     argumentos: ["p_edital"],

@@ -12,6 +12,17 @@ import { classes } from "./classes.js";
   Usado pelas visões de Entrevistas (no topo da tela), pela escala do roteiro,
   pelo modo de lançamento e pelo comparecimento da ficha.
 */
+/**
+ * @template {string} V
+ * @param {object} p
+ * @param {string} p.rotulo
+ * @param {ReadonlyArray<{ valor: V, rotulo: string, icone?: string }>} p.opcoes
+ * @param {V} p.valor
+ * @param {(valor: V) => void} p.aoMudar
+ * @param {boolean} [p.desabilitado]
+ * @param {string} [p.className]
+ * @param {string} [p.tour]
+ */
 export function Segmentado({
   rotulo,
   opcoes,

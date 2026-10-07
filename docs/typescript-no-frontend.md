@@ -11,6 +11,9 @@ gaveta, boas-vindas, leitura dos marcos e regras em `src/lib/visao-geral.ts`. Os
 continuam em JavaScript, com contratos JSDoc na integração com a tela. Outros módulos
 combinam JavaScript/JSX com migrações pontuais para TypeScript. Componentes e helpers
 compartilhados consumidos por esses módulos declaram seus contratos em JSDoc.
+O assistente da regra da Avaliação documental (`src/modulos/avaliacao-documental/assistente/`)
+já nasceu em TSX, com as regras em `src/lib/avaliacao-documental/assistente-da-regra.ts`,
+`resumo-da-regra.ts`, `comparar-regras.ts` e os contratos em `tipos-da-regra.ts`.
 
 ## Verificação
 
