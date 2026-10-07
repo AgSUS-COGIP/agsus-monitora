@@ -284,8 +284,6 @@ export function montarAvaliacaoDocumental({
   supabase = getSupabaseClient(),
   toast,
   areaAtual = () => obterDadosDoMonitoramento().areaAtual,
-  buscar,
-  obterToken,
   agendar,
   cabecalho = () =>
     estadoDasConfiguracoes.obter().valores?.get?.(CHAVE_DO_CABECALHO) || "",
@@ -295,8 +293,6 @@ export function montarAvaliacaoDocumental({
     supabase,
     toast,
     cabecalho,
-    ...(buscar ? { buscar } : {}),
-    ...(obterToken ? { obterToken } : {}),
     ...(agendar ? { agendar } : {}),
   });
   const fila = criarEstadoDaFila({ supabase, toast });

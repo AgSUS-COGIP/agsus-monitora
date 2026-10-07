@@ -154,7 +154,11 @@ export function podeUsarChat(profile) {
   return Boolean(profile?.permissoes) && hasResource(profile, "chat");
 }
 
-/* Aba Entrevistas (20260929235000_entrevistas.sql): só consulta nesta fase (leitor). */
+/*
+  Entrevistas (20260929235000_entrevistas.sql): o Painel de entrevistas e
+  Conduzir entrevistas usam o mesmo recurso; escrever (convocar, configurar,
+  lançar notas, roteiros) exige Editor, conferido pelo banco.
+*/
 export function canViewEntrevistas(profile) {
   if (profile?.permissoes) return hasResource(profile, "entrevistas");
   return normalizeRole(profile) !== "";
@@ -287,6 +291,7 @@ export function paginasPermitidas(profile) {
     analises: pode("analises"),
     "avaliacao-documental": canViewAvaliacaoDocumental(profile),
     entrevistas: canViewEntrevistas(profile),
+    "conduzir-entrevistas": canViewEntrevistas(profile),
     classificacao: canViewClassificacao(profile),
     recursos: canViewRecursos(profile),
     selecao: canViewSelecao(profile),

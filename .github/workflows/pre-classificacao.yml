@@ -10,7 +10,7 @@ name: Pré-classificação da Avaliação documental
 #   - pelo "Recalcular" da aba Avaliação documental › Pré-classificação (só a
 #     coordenação do edital; editais = o id do edital) e pelo "Rodar agora" das
 #     Configurações › Status das atualizações (administrador global; todos os
-#     editais ativos com vagas da Empregare) — os dois por api/rodar-carga.js,
+#     editais ativos com vagas da Empregare) — os dois pela RPC disparar_robo,
 #     com disparado_por = id do usuário;
 #   - sozinho, no fim do robô da Empregare (passo "Pré-classificar" de
 #     robo-empregare.yml, para os editais das vagas carregadas);

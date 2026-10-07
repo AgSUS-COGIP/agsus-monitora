@@ -59,8 +59,8 @@ describe("tours das telas", () => {
       "approved",
       "selecao",
       "classificacao",
-      "entrevistas:conduzir",
-      "entrevistas:roteiros",
+      "conduzir-entrevistas",
+      "conduzir-entrevistas:preparar",
       "classificacao:agenda",
       "classificacao:regra",
       "approved:convocacao",
@@ -114,10 +114,14 @@ describe("tours das telas", () => {
   });
 
   it("cada aba principal tem o próprio tour; aba sem tour usa o da tela", () => {
-    expect(chaveDoTour({ view: "entrevistas", aba: "conduzir" })).toBe(
-      "entrevistas:conduzir",
+    expect(chaveDoTour({ view: "conduzir-entrevistas", aba: "preparar" })).toBe(
+      "conduzir-entrevistas:preparar",
     );
-    expect(chaveDoTour({ view: "entrevistas", aba: "Resultados" })).toBe(
+    expect(chaveDoTour({ view: "conduzir-entrevistas", aba: "Fila" })).toBe(
+      "conduzir-entrevistas",
+    );
+    // As visões antigas da tela de Entrevistas não têm mais tour próprio.
+    expect(chaveDoTour({ view: "entrevistas", aba: "conduzir" })).toBe(
       "entrevistas",
     );
     expect(chaveDoTour({ view: "classificacao", aba: "regra" })).toBe(
@@ -260,7 +264,7 @@ describe("trilhas por permissão", () => {
       (t) => t.id === "do-edital-ao-aprovado",
     );
     expect(trilha.passos.map((p) => p.pagina)).not.toContain("analises");
-    expect(trilha.passos).toHaveLength(6);
+    expect(trilha.passos).toHaveLength(7);
   });
 });
 

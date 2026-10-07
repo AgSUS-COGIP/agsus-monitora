@@ -2,7 +2,6 @@ import { describe, expect, it } from "vitest";
 import {
   CHAVE_DO_SOM,
   guardarSom,
-  IMAGEM_DA_AYA,
   opacidadeDoVeu,
   podeTocarSom,
   pontoDaSoltura,
@@ -68,7 +67,6 @@ describe("o voo da Aya", () => {
     expect(soltura.y).toBeGreaterThan(aya.y);
     expect(trajeto.tamanho).toBeLessThanOrEqual(128);
     expect(trajetoDaAya({ largura: 320, altura: 400 }).tamanho).toBe(64);
-    expect(IMAGEM_DA_AYA).toBe("/assets/arara-azul-monitora.png");
   });
 });
 

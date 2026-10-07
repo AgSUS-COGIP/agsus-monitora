@@ -1,27 +1,22 @@
 /*
-  "Rodar agora" das cargas pelo GitHub Actions, sem DOM e sem rede.
+  Os robôs de carga (GitHub Actions) e o pedido pelo banco, sem DOM e sem rede.
 
   Usado por:
-    api/rodar-carga.js       a lista fixa (whitelist) robô → arquivo do workflow,
-                             o que conta como execução em curso no GitHub, os
-                             inputs do disparo e as mensagens de resposta;
-    Configurações › Status   o estado do botão "Rodar agora" de cada carga
-    das atualizações         (src/componentes/saude-das-cargas/) e o "Rodar
-                             com opções": OPCOES_DOS_ROBOS (a lista branca de
-                             cada robô), separarCodigos e validarOpcoes — a
-                             mesma conferência na tela e na função;
-    Avaliação documental ›   o "Recalcular" da coordenação, que dispara a
+    Configurações › Status   a lista fixa (robô → arquivo do workflow), o
+    das atualizações         estado do botão "Rodar agora" e o "Rodar com
+                             opções": OPCOES_DOS_ROBOS (a lista branca de cada
+                             robô), separarCodigos e validarOpcoes — a mesma
+                             conferência que o banco refaz em disparar_robo;
+    Avaliação documental ›   o "Recalcular" da coordenação, que pede a
     Pré-classificação        pré-classificação de um edital só.
 
-  O botão fica desabilitado enquanto a carga roda: pelo GitHub (execução na
-  fila ou rodando), pelo log do banco (execução EM_ANDAMENTO começada há menos
-  que o tempo limite do workflow) ou porque o pedido acabou de sair (o GitHub
-  leva alguns segundos para mostrar a execução na fila).
+  O pedido vai pela RPC disparar_robo (20261008140000): o banco confere quem
+  pede e as opções e chama o GitHub com a chave do Vault (github_disparo_robos).
+  A tela acompanha por situacao_do_disparo_robo (PEDIDO → ACEITO, FALHOU ou
+  SEM_TOKEN). O botão fica desabilitado enquanto a carga roda (execução
+  EM_ANDAMENTO no log do banco, começada há menos que o tempo limite do
+  workflow) e por alguns minutos depois do pedido.
 */
-
-export const ENDERECO_RODAR_CARGA = "/api/rodar-carga";
-export const REPOSITORIO_DAS_CARGAS = "AgSUS-COGIP/agsus-monitora";
-export const RAMO_DAS_CARGAS = "main";
 
 /* O id é o mesmo da linha do Status das atualizações (visaoSimples). */
 export const ROBOS_DE_CARGA = Object.freeze([
@@ -80,8 +75,9 @@ export function editalDoPedido(valor) {
 
 /*
   "Rodar com opções" (Status das atualizações, só administrador global): o
-  que cada robô aceita no workflow_dispatch — a lista branca da função. Os
-  modos são os `options` do input `modo` de cada workflow; `editais` diz o
+  que cada robô aceita no workflow_dispatch — a mesma lista branca de
+  disparar_robo, no banco. Os modos são os `options` do input `modo` de
+  cada workflow; `editais` diz o
   formato aceito ("numero" = 93/2026; "numero_ou_id" = 93/2026 ou o id do
   edital); `vagas`, códigos da Empregare; `limite`, máximo de vagas.
 */
@@ -280,140 +276,104 @@ export function validarOpcoes(robo, bruto) {
   return { opcoes: { modo, editais, vagas, limite } };
 }
 
-/**
- * O edital que a coordenação pode pedir sem ser administrador global: só no
- * robô por edital, um edital pelo id, no modo normal e sem outras opções.
- * Fora disso, "" (só o administrador global).
- */
-export function editalDaCoordenacao(robo, edital, opcoes) {
-  if (!robo?.porEdital) return "";
-  if (!opcoes) return editalDoPedido(edital);
-  const soUmId =
-    opcoes.editais?.length === 1 && editalDoPedido(opcoes.editais[0]);
-  if (opcoes.modo !== "normal" || opcoes.vagas?.length || opcoes.limite)
-    return "";
-  return soUmId || "";
-}
-
-/**
- * Os inputs do workflow_dispatch de um robô (o edital só nos robôs por
- * edital). `opcoes` (de validarOpcoes, já conferidas) troca o modo e
- * acrescenta editais, vagas e limite — só os que o robô aceita.
- */
-export function inputsDoDisparo(robo, usuario, edital = "", opcoes = null) {
-  const inputs = {
-    modo: opcoes?.modo || "normal",
-    disparado_por: String(usuario || ""),
-  };
-  if (robo?.porEdital) inputs.editais = editalDoPedido(edital);
-  if (!opcoes) return inputs;
-  const aceitas = OPCOES_DOS_ROBOS[robo?.id] || {};
-  if (aceitas.editais && opcoes.editais?.length)
-    inputs.editais = opcoes.editais.join(",");
-  if (aceitas.vagas && opcoes.vagas?.length)
-    inputs.vagas = opcoes.vagas.join(",");
-  if (aceitas.limite && opcoes.limite) inputs.limite = String(opcoes.limite);
-  return inputs;
-}
-
 export const roboDeCarga = (id) =>
   ROBOS_DE_CARGA.find((r) => r.id === String(id || "")) || null;
-
-/* Situações do GitHub Actions de uma execução que ainda não terminou. */
-const EM_CURSO_NO_GITHUB = new Set([
-  "queued",
-  "in_progress",
-  "waiting",
-  "requested",
-  "pending",
-]);
-
-/** A execução mais recente ainda em curso (lista de workflow_runs do GitHub), ou null. */
-export function execucaoEmCurso(execucoes) {
-  return (
-    (Array.isArray(execucoes) ? execucoes : []).find((e) =>
-      EM_CURSO_NO_GITHUB.has(String(e?.status || "")),
-    ) || null
-  );
-}
 
 /* Depois do clique, o botão espera até o GitHub mostrar a execução. */
 export const ESPERA_DO_PEDIDO_MIN = 3;
 
 /**
  * Estado do botão de um robô.
- *   disponibilidade  { status: "carregando" | "ok" | "sem_token" | "indisponivel" | "erro",
- *                      robos: { [id]: { rodando } } }  (resposta do GET de /api/rodar-carga)
- *   linha            a linha do Status das atualizações (emAndamento, partes[0].ultima)
- *   pedidoEm         Date do último clique nesta tela, ou null
- * Devolve { desabilitado, rotulo, aviso } — `aviso` é a frase curta que pede ação.
+ *   linha     a linha do Status das atualizações (partes[0].ultima)
+ *   pedidoEm  Date do último clique nesta tela, ou null
+ * Devolve { desabilitado, rotulo }.
  */
 export function estadoDoBotao({
   robo,
-  disponibilidade,
   linha,
   pedidoEm = null,
   agora = new Date(),
 }) {
-  const status = disponibilidade?.status || "carregando";
-  if (status === "sem_token")
-    return {
-      desabilitado: true,
-      rotulo: "Rodar agora",
-      aviso: "Falta configurar GITHUB_DISPATCH_TOKEN na Vercel.",
-    };
-  if (status === "indisponivel")
-    return {
-      desabilitado: true,
-      rotulo: "Rodar agora",
-      aviso: "Só na versão publicada.",
-    };
-  if (status === "erro")
-    return {
-      desabilitado: true,
-      rotulo: "Rodar agora",
-      aviso: disponibilidade?.erro || "Não consegui consultar o GitHub.",
-    };
-  if (status !== "ok")
-    return { desabilitado: true, rotulo: "Rodar agora", aviso: "" };
-
   const minutos = (d) =>
     d instanceof Date ? (agora.getTime() - d.getTime()) / 60000 : Infinity;
-  if (disponibilidade?.robos?.[robo.id]?.rodando)
-    return { desabilitado: true, rotulo: "Rodando…", aviso: "" };
   const ultima = linha?.partes?.[0]?.ultima;
   if (
     ultima?.situacao === "andamento" &&
     minutos(ultima.inicio) < (robo.limiteMin || 120)
   )
-    return { desabilitado: true, rotulo: "Rodando…", aviso: "" };
+    return { desabilitado: true, rotulo: "Rodando…" };
   if (minutos(pedidoEm) < ESPERA_DO_PEDIDO_MIN)
-    return { desabilitado: true, rotulo: "Pedido enviado", aviso: "" };
-  return { desabilitado: false, rotulo: "Rodar agora", aviso: "" };
+    return { desabilitado: true, rotulo: "Pedido enviado" };
+  return { desabilitado: false, rotulo: "Rodar agora" };
 }
 
-/* Mensagens da função para a tela (sem detalhe interno). */
-export const MENSAGENS_DO_DISPARO = Object.freeze({
-  sem_sessao: "Entre no MONITORA de novo para rodar a carga.",
-  sem_permissao: "Só o administrador global roda as cargas.",
-  sem_permissao_edital:
-    "Só a coordenação da avaliação do edital recalcula a pré-classificação.",
-  edital_invalido: "Edital inválido.",
-  edital_e_opcoes: "Mande o edital dentro das opções.",
-  sem_token: "Falta configurar GITHUB_DISPATCH_TOKEN na Vercel.",
-  robo_invalido: "Carga desconhecida.",
-  rodando: "Esta carga já está rodando.",
-  github_recusou:
-    "O GitHub recusou o pedido: confira o GITHUB_DISPATCH_TOKEN (Actions: read and write).",
-  github_fora: "O GitHub não respondeu. Tente de novo em instantes.",
-});
+/* ── O pedido pelo banco (20261008140000) ─────────────────────────────── */
+
+export const RPC_DISPARAR_ROBO = "disparar_robo";
+export const RPC_SITUACAO_DO_DISPARO = "situacao_do_disparo_robo";
+
+export const MENSAGEM_DA_CHAVE =
+  "A chave de disparo dos robôs expirou ou foi recusada; um administrador precisa trocá-la no cofre (Vault) com o nome github_disparo_robos.";
+
+/* Os códigos HTTP do GitHub que querem dizer "a chave não serve". */
+const CHAVE_RECUSADA = new Set([401, 403, 404]);
 
 /**
- * Por que o pedido a /api/rodar-carga não saiu, para a tela: a mensagem da
- * função (`corpo.erro`), "Só na versão publicada." no 404 (fora da Vercel a
- * função não existe) ou `padrao`.
+ * O que vai em p_inputs de disparar_robo: as opções já conferidas por
+ * validarOpcoes (modo, editais, vagas, limite) ou, no Recalcular da
+ * coordenação, só o edital. Sem nada, {} (o banco usa o modo normal).
  */
-export function motivoDaRecusa(status, corpo, padrao) {
-  if (typeof corpo?.erro === "string" && corpo.erro.trim()) return corpo.erro;
-  return status === 404 ? "Só na versão publicada." : padrao;
+export function inputsDoPedido({ opcoes = null, edital = "" } = {}) {
+  const inputs = {};
+  if (opcoes?.modo) inputs.modo = opcoes.modo;
+  if (opcoes?.editais?.length) inputs.editais = [...opcoes.editais];
+  if (opcoes?.vagas?.length) inputs.vagas = [...opcoes.vagas];
+  if (opcoes?.limite) inputs.limite = String(opcoes.limite);
+  // O banco confere o id (e se quem pede coordena o edital).
+  const id = String(edital ?? "").trim();
+  if (!opcoes && id) inputs.editais = [id];
+  return inputs;
+}
+
+/**
+ * A resposta de situacao_do_disparo_robo em { situacao, http, mensagem,
+ * terminou, aviso } — `aviso` ({ tom, texto }) só quando o GitHub não aceitou.
+ */
+export function situacaoDoPedido(bruta) {
+  const situacao = String(bruta?.situacao || "PEDIDO");
+  const http =
+    Number.isFinite(Number(bruta?.http)) && bruta?.http !== null
+      ? Number(bruta.http)
+      : null;
+  const mensagem = String(bruta?.mensagem || "").trim();
+  let aviso = null;
+  if (
+    situacao === "SEM_TOKEN" ||
+    (situacao === "FALHOU" && CHAVE_RECUSADA.has(http))
+  )
+    aviso = { tom: "erro", texto: MENSAGEM_DA_CHAVE };
+  else if (situacao === "FALHOU")
+    aviso = {
+      tom: "erro",
+      texto: `O GitHub não aceitou o pedido${mensagem ? ` (${mensagem})` : ""}. Tente de novo em instantes.`,
+    };
+  return {
+    situacao,
+    http,
+    mensagem,
+    terminou: situacao !== "PEDIDO",
+    aceito: situacao === "ACEITO",
+    aviso,
+  };
+}
+
+/* O erro da RPC em frase curta para a tela (a mensagem do banco já é em pt-BR). */
+export function mensagemDoErroDoDisparo(
+  erro,
+  padrao = "Não consegui pedir a carga.",
+) {
+  if (erro?.code === "PGRST202")
+    return "O banco ainda não tem o disparo dos robôs (migration 20261008140000).";
+  const texto = String(erro?.message || "").trim();
+  return texto || padrao;
 }

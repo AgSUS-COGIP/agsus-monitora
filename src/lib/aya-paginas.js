@@ -132,18 +132,30 @@ const PAGINAS = Object.freeze({
     ],
   },
   entrevistas: {
-    nome: "Entrevistas",
+    nome: "Painel de entrevistas",
     intro: () =>
-      "Posso explicar a janela da entrevista, os roteiros, a banca, a convocação e a ficha de notas.",
+      "Posso explicar o andamento por vaga, as pendências, os empates e de onde vêm os números.",
     sugestoes: () => [
+      sug("Painel", "Para que serve o Painel de entrevistas?"),
+      sug("Andamento", "Como é contado o andamento por vaga?"),
+      sug("Empate", "Quem desempata a nota da entrevista?"),
+      sug("Pendências", "Quais são as pendências das entrevistas?"),
+      sug("Carga", "Quando as entrevistas são atualizadas?"),
+    ],
+  },
+  "conduzir-entrevistas": {
+    nome: "Conduzir entrevistas",
+    intro: () =>
+      "Posso explicar a fila do dia, a ficha de notas, o Preparar (configuração e convocação) e os roteiros.",
+    sugestoes: () => [
+      sug("Fila do dia", "Como funciona a fila de Conduzir entrevistas?"),
       sug(
         "Edital não aparece",
         "Por que um edital não aparece em Conduzir entrevistas?",
       ),
-      sug("Janela", "Como funciona a janela da entrevista?"),
-      sug("Liberar edital", "Como liberar um edital fora da janela?"),
-      sug("Roteiros", "Como funcionam as versões dos roteiros?"),
+      sug("Ficha de notas", "Como lançar notas da entrevista?"),
       sug("Convocação", "Como funciona a regra de convocação da entrevista?"),
+      sug("Roteiros", "Onde ficam os roteiros de entrevista?"),
     ],
   },
   classificacao: {
@@ -313,8 +325,12 @@ export const ACOES_DA_AYA = Object.freeze({
   }),
   recursos: Object.freeze({ rotulo: "Abrir Recursos", view: "recursos" }),
   entrevistas: Object.freeze({
-    rotulo: "Abrir Entrevistas",
+    rotulo: "Abrir Painel de entrevistas",
     view: "entrevistas",
+  }),
+  "conduzir-entrevistas": Object.freeze({
+    rotulo: "Abrir Conduzir entrevistas",
+    view: "conduzir-entrevistas",
   }),
   classificacao: Object.freeze({
     rotulo: "Abrir Classificação",

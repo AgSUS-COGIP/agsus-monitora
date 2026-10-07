@@ -17,7 +17,7 @@ import {
   A aba Pré-classificação da Avaliação documental (fase F2): lê o que o job
   Python gravou (obter_pre_classificacao), mostra os contadores, a linha de
   corte, a divergência ART × declarada e os eliminados; a coordenação pede o
-  recálculo (POST /api/rodar-carga com o edital), muda o tamanho do lote por
+  recálculo (RPC disparar_robo com o edital), muda o tamanho do lote por
   vaga (versão nova da regra) e registra/exporta as listas PROVISORIA e LOTE.
   Códigos AM-4.x, AM-5.x e AM-16.x de docs/historias-de-usuario/analises-no-monitora.md.
 */
@@ -159,9 +159,16 @@ const PRE = (regra, pode = true, extra = {}) => ({
   ...extra,
 });
 
-function supabaseFalso({ pode = true, situacao = "CONFERIDA", pre } = {}) {
+function supabaseFalso({
+  pode = true,
+  situacao = "CONFERIDA",
+  pre,
+  disparo = "ACEITO",
+} = {}) {
   let regra = regraSalva(2, CONFIG, situacao);
   const respostas = {
+    disparar_robo: () => 61,
+    situacao_do_disparo_robo: () => ({ disparo: 61, situacao: disparo }),
     listar_editais_avaliacao: () => ({
       area: "projetos",
       editais: [
@@ -261,10 +268,6 @@ function supabaseFalso({ pode = true, situacao = "CONFERIDA", pre } = {}) {
 let secao;
 let painel;
 const toast = vi.fn();
-const buscar = vi.fn(async () => ({
-  status: 202,
-  json: async () => ({ ok: true }),
-}));
 /* As releituras do acompanhamento do Recalcular: o teste as roda à mão. */
 let agendados = [];
 const agendar = (fn) => agendados.push(fn);
@@ -282,8 +285,6 @@ async function montar(supabase) {
     painel = montarAvaliacaoDocumental({
       supabase,
       toast,
-      buscar,
-      obterToken: async () => "token",
       agendar,
     });
   });
@@ -312,7 +313,6 @@ afterEach(async () => {
   document.body.innerHTML = "";
   redefinirDadosDoMonitoramento();
   toast.mockClear();
-  buscar.mockClear();
   agendados = [];
 });
 
@@ -357,16 +357,14 @@ describe("Pré-classificação (AM-4)", () => {
   });
 
   it("Recalcular pede o job só do edital; leitor não vê o botão", async () => {
-    await montar(supabaseFalso());
+    const supabase = supabaseFalso();
+    await montar(supabase);
     await clicar(secao.querySelector("[data-acao='recalcular']"));
     await esperar();
-    expect(buscar).toHaveBeenCalledWith(
-      "/api/rodar-carga",
-      expect.objectContaining({
-        method: "POST",
-        body: JSON.stringify({ robo: "pre_classificacao", edital: "e93" }),
-      }),
-    );
+    expect(supabase.rpc).toHaveBeenCalledWith("disparar_robo", {
+      p_robo: "pre_classificacao",
+      p_inputs: { editais: ["e93"] },
+    });
     expect(secao.querySelector("[data-acao='recalcular']").textContent).toBe(
       "Pedido enviado",
     );
@@ -404,46 +402,62 @@ describe("Pré-classificação (AM-4)", () => {
   });
 
   it("Recalcular que falha diz por quê e o botão volta", async () => {
-    await montar(supabaseFalso());
+    const supabase = supabaseFalso();
+    await montar(supabase);
     const recalcular = () => secao.querySelector("[data-acao='recalcular']");
-    buscar.mockResolvedValueOnce({
-      status: 404,
-      json: async () => {
-        throw new SyntaxError("não é json");
+    supabase.rpc.mockImplementationOnce(async () => ({
+      data: null,
+      error: {
+        code: "42501",
+        message:
+          "Só a coordenação da avaliação do edital recalcula a pré-classificação.",
       },
-    });
+    }));
     await clicar(recalcular());
     await esperar();
     expect(secao.querySelector("[role='alert']").textContent).toBe(
-      "Recálculo não pedido: Só na versão publicada.",
+      "Recálculo não pedido: Só a coordenação da avaliação do edital recalcula a pré-classificação.",
     );
     expect(recalcular().textContent).toBe("Recalcular");
     expect(recalcular().disabled).toBe(false);
     expect(toast).toHaveBeenLastCalledWith(
-      "Recálculo não pedido: Só na versão publicada.",
+      "Recálculo não pedido: Só a coordenação da avaliação do edital recalcula a pré-classificação.",
       "error",
     );
 
-    buscar.mockRejectedValueOnce(new TypeError("Failed to fetch"));
+    supabase.rpc.mockImplementationOnce(async () => {
+      throw new TypeError("Failed to fetch");
+    });
     await clicar(recalcular());
     await esperar();
     expect(secao.querySelector("[role='alert']").textContent).toMatch(
       /^Recálculo não pedido: /,
     );
     expect(recalcular().disabled).toBe(false);
-
-    buscar.mockResolvedValueOnce({
-      status: 403,
-      json: async () => ({
-        erro: "Só a coordenação da avaliação do edital recalcula a pré-classificação.",
-      }),
-    });
-    await clicar(recalcular());
-    await esperar();
-    expect(secao.querySelector("[role='alert']").textContent).toBe(
-      "Recálculo não pedido: Só a coordenação da avaliação do edital recalcula a pré-classificação.",
-    );
     expect(agendados).toHaveLength(0);
+  });
+
+  it("Recalcular com a chave do cofre vencida: diz o que fazer e o botão volta", async () => {
+    const supabase = supabaseFalso({ disparo: "SEM_TOKEN" });
+    await montar(supabase);
+    await clicar(secao.querySelector("[data-acao='recalcular']"));
+    await esperar();
+    expect(supabase.rpc).toHaveBeenCalledWith("disparar_robo", {
+      p_robo: "pre_classificacao",
+      p_inputs: { editais: ["e93"] },
+    });
+    // A conferência do pedido (3 s) vem antes das releituras.
+    await rodarAgendado();
+    await esperar();
+    expect(supabase.rpc).toHaveBeenCalledWith("situacao_do_disparo_robo", {
+      p_disparo: 61,
+    });
+    expect(secao.querySelector("[role='alert']").textContent).toBe(
+      "Recálculo não pedido: A chave de disparo dos robôs expirou ou foi recusada; um administrador precisa trocá-la no cofre (Vault) com o nome github_disparo_robos.",
+    );
+    expect(secao.querySelector("[data-acao='recalcular']").disabled).toBe(
+      false,
+    );
   });
 
   it("Recalcular pedido avisa e relê sozinho até a execução terminar", async () => {
@@ -454,6 +468,10 @@ describe("Pré-classificação (AM-4)", () => {
     expect(secao.querySelector("[role='status']").textContent).toMatch(
       /^Recálculo pedido às \d\d:\d\d\. A lista atualiza sozinha quando terminar\.$/,
     );
+    // A conferência do pedido (o GitHub aceitou) e a primeira releitura.
+    expect(agendados).toHaveLength(2);
+    await rodarAgendado();
+    expect(secao.querySelector("[role='alert']")).toBeNull();
     expect(agendados).toHaveLength(1);
 
     const normal = supabase.rpc.getMockImplementation();

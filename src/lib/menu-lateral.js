@@ -97,7 +97,10 @@ export const AREAS_DO_MENU = Object.freeze([
   `20261002150000_classificacao.sql` (Classificação entra na 7 e empurra
   Aprovados e Seleção) e `20261006090000_avaliacao_documental_permissao_e_menu.sql`
   (Avaliação documental entra na 5 e empurra as seguintes; "Análises
-  curriculares" passa a se chamar "Painel das análises").
+  curriculares" passa a se chamar "Painel das análises") e
+  `20261008130000_conduzir_entrevistas_no_menu.sql` (Entrevistas vira "Painel
+  de entrevistas" e "Conduzir entrevistas" entra na 8, com o mesmo recurso
+  `entrevistas`; Classificação, Aprovados e Seleção descem uma posição).
 
   `recurso` é o recurso de permissão que a aba usa hoje (`TB_ABA.CO_RECURSO`);
   por enquanto só informa — quem decide o que o perfil vê é o `buildNav`.
@@ -196,7 +199,7 @@ export const ABAS_DO_MENU = Object.freeze(
     },
     {
       id: "entrevistas",
-      rotulo: "Entrevistas",
+      rotulo: "Painel de entrevistas",
       icone: "messages-square",
       ordem: 7,
       view: "entrevistas",
@@ -206,10 +209,21 @@ export const ABAS_DO_MENU = Object.freeze(
       areas: NAS_TRES_AREAS,
     },
     {
+      id: "conduzir-entrevistas",
+      rotulo: "Conduzir entrevistas",
+      icone: "clipboard-pen-line",
+      ordem: 8,
+      view: "conduzir-entrevistas",
+      recurso: "entrevistas",
+      tipo: "nativa",
+      beta: true,
+      areas: NAS_TRES_AREAS,
+    },
+    {
       id: "classificacao",
       rotulo: "Classificação",
       icone: "list-ordered",
-      ordem: 8,
+      ordem: 9,
       view: "classificacao",
       recurso: "classificacao",
       tipo: "nativa",
@@ -220,7 +234,7 @@ export const ABAS_DO_MENU = Object.freeze(
       id: "aprovados",
       rotulo: "Lista de aprovados",
       icone: "user-round-check",
-      ordem: 9,
+      ordem: 10,
       view: "approved",
       recurso: "aprovados",
       tipo: "nativa",
@@ -230,7 +244,7 @@ export const ABAS_DO_MENU = Object.freeze(
       id: "selecao",
       rotulo: "Seleção",
       icone: "funnel",
-      ordem: 10,
+      ordem: 11,
       view: "selecao",
       recurso: "selecao",
       tipo: "nativa",

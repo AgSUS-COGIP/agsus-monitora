@@ -236,7 +236,6 @@ export function RodarComOpcoes({ robo, linha, atual, estado, aoFechar }) {
   });
   const botao = estadoDoBotao({
     robo,
-    disponibilidade: atual.disparo,
     linha,
     pedidoEm: atual.pedidos[robo.id] || null,
     agora: estado.agora(),
@@ -393,8 +392,6 @@ export function RodarComOpcoes({ robo, linha, atual, estado, aoFechar }) {
             <Aviso tom="danger" papel="alert">
               {aviso.texto}
             </Aviso>
-          ) : botao.aviso ? (
-            <Aviso tom="warning">{botao.aviso}</Aviso>
           ) : null}
         </div>
         <div className="ui-gaveta-rodape">
