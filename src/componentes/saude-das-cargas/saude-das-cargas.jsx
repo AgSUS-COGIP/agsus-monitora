@@ -85,9 +85,11 @@ function Historico({ execucoes }) {
                 >
                   {e.situacao === "ok"
                     ? "Concluída"
-                    : e.situacao === "falha"
-                      ? "Falhou"
-                      : "Em andamento"}
+                    : e.encerradaPorInatividade
+                      ? "Encerrada por inatividade"
+                      : e.situacao === "falha"
+                        ? "Falhou"
+                        : "Em andamento"}
                 </span>
               </td>
               <td className="num">

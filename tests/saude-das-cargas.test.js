@@ -120,6 +120,35 @@ describe("selo de cada carga", () => {
       mensagem: "Timeout",
     });
     expect(c.ultimaOk.situacao).toBe("ok");
+    expect(c.historico[0].encerradaPorInatividade).toBe(false);
+  });
+
+  it("execução encerrada por inatividade (20261007170000) é falha marcada como tal", () => {
+    const saude = normalizarSaude(
+      {
+        analises: [
+          {
+            origem: "apps_script_analises_incremental_v1",
+            area: "saude-indigena",
+            tipo: "INCREMENTAL",
+            execucoes: [
+              execucao("erro", 5, {
+                mensagem:
+                  "Execução encerrada por inatividade: sem progresso desde 06/10/2026 16:49 (mais de 30 min).",
+                encerrada_por_inatividade: true,
+              }),
+            ],
+          },
+        ],
+      },
+      AGORA,
+    );
+    const c = saude.grupos[0].cargas[0];
+    expect(c.situacao).toBe("falhou");
+    expect(c.historico[0]).toMatchObject({
+      situacao: "falha",
+      encerradaPorInatividade: true,
+    });
   });
 
   it("a carga completa não tem prazo; sem execução é 'nunca rodou'", () => {
