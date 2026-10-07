@@ -95,11 +95,12 @@ function fichaDoBanco({
   lancamento = null,
   editar = true,
   reabrir = false,
+  papel = reabrir ? "COORDENADOR" : "ANALISTA",
 } = {}) {
   return {
     schema_version: 1,
     edital: { id: "e93", rotulo: "93/2026" },
-    papel: reabrir ? "COORDENADOR" : "ANALISTA",
+    papel,
     eu: EU,
     pode_editar: editar,
     pode_reabrir: reabrir,
@@ -503,6 +504,11 @@ describe("ficha: itens, nota e justificativa (AM-9, AM-10, AM-11)", () => {
       cartao("EXPERIENCIA").querySelector("input[aria-label='Fim']"),
       "2022-12-31",
     );
+    // Cursos conferido e sem pendência recolheu ao passar à experiência; clicar abre de novo.
+    expect(cartao("CURSOS").dataset.recolhido).toBe("sim");
+    expect(cartao("CURSOS").textContent).toContain("3 pontos");
+    await clicar(cartao("CURSOS"));
+    expect(cartao("CURSOS").dataset.recolhido).toBeUndefined();
     // Ajusta a nota para menos: diverge da declarada e pede justificativa.
     await digitar(
       cartao("CURSOS").querySelector(
@@ -685,6 +691,11 @@ describe("ficha concluída: só leitura, histórico e reabrir", () => {
       }),
     );
     await abrirFicha(supabase);
+    // Concluída: os itens conferidos ficam recolhidos numa linha, expansível.
+    expect(cartao("IDENTIDADE").dataset.recolhido).toBe("sim");
+    await clicar(
+      cartao("IDENTIDADE").querySelector("[data-acao='alternar-bloco']"),
+    );
     expect(
       cartao("IDENTIDADE").querySelector(".avd-ficha-situacao").disabled,
     ).toBe(true);
@@ -903,5 +914,144 @@ describe("ficha: abrir o candidato na Empregare (F7)", () => {
     expect(a.getAttribute("href")).toBe(
       "https://corporate.empregare.com/empresa/vagas",
     );
+  });
+});
+
+describe("modo de análise: etapas, nível da vaga, anexo na Empregare e atalhos", () => {
+  const etapa = (codigo) =>
+    document.querySelector(
+      `[data-tour='avd-ficha-etapas'] [data-etapa='${codigo}']`,
+    );
+
+  it("etapas com o nome curto de cada item, na cor do estado; clicar vai ao item", async () => {
+    await abrirFicha(supabaseFalso());
+    const nomes = [
+      ...document.querySelectorAll(
+        "[data-tour='avd-ficha-etapas'] [data-etapa]",
+      ),
+    ].map((b) => b.textContent.replace(/ \(.*\)$/, ""));
+    expect(nomes).toEqual([
+      "Identidade",
+      "Formação",
+      "Conselho",
+      "Titulação",
+      "Cursos",
+      "Experiência",
+    ]);
+    expect(etapa("IDENTIDADE").dataset.estado).toBe("nao_conferido");
+    expect(etapa("IDENTIDADE").getAttribute("aria-current")).toBe("step");
+    await teclar(document.querySelector(".avd-ficha"), "1");
+    expect(etapa("IDENTIDADE").dataset.estado).toBe("CONFORME");
+    await clicar(
+      cartao("ESCOLARIDADE").querySelector("[data-valor='NAO_ENVIADO']"),
+    );
+    // Não enviado sem o motivo: a etapa fica como pendência.
+    expect(etapa("ESCOLARIDADE").dataset.estado).toBe("pendencia");
+    await clicar(etapa("EXPERIENCIA"));
+    expect(cartao("EXPERIENCIA").dataset.ativo).toBe("sim");
+    expect(etapa("EXPERIENCIA").getAttribute("aria-current")).toBe("step");
+    // A barra de ações continua com "N de M" e o que falta.
+    const barra = document.querySelector("[data-tour='avd-ficha-barra']");
+    expect(barra.textContent).toContain("2 de 6 itens conferidos");
+    expect(barra.querySelector(".avd-ficha-falta").textContent).toMatch(
+      /^Falta: /,
+    );
+  });
+
+  it("a linha de atalhos aparece para quem edita", async () => {
+    await abrirFicha(supabaseFalso());
+    expect(
+      document.querySelector("[data-tour='avd-ficha-atalhos']").textContent,
+    ).toBe(
+      "1 Conforme · 2 Não conforme · 3 Não enviado · J/K navegar · Ctrl+S salvar · Ctrl+Enter concluir",
+    );
+  });
+
+  it("nível da vaga: só leitura para o analista", async () => {
+    await abrirFicha(supabaseFalso());
+    const lateral = document.querySelector("[data-tour='avd-ficha-lateral']");
+    expect(lateral.querySelector("[data-acao='nivel-da-vaga']")).toBeNull();
+    expect(lateral.querySelector(".avd-ficha-nivel").textContent).toBe(
+      "Nível da vagaSuperior",
+    );
+  });
+
+  it("nível da vaga: a coordenação muda, com o aviso de que muda os pontos declarados", async () => {
+    const supabase = supabaseFalso(fichaDoBanco({ papel: "COORDENADOR" }));
+    await abrirFicha(supabase);
+    const lateral = document.querySelector("[data-tour='avd-ficha-lateral']");
+    const nivel = lateral.querySelector("[data-acao='nivel-da-vaga']");
+    expect(nivel.value).toBe("superior");
+    expect(lateral.textContent).toContain(
+      "Mudar o nível muda os pontos declarados.",
+    );
+    await escolher(nivel, "tecnico");
+    await clicar(botao("Salvar rascunho"));
+    await esperar();
+    const [args] = chamadas(supabase, "salvar_rascunho_ficha");
+    expect(args.p_lancamento.nivel).toBe("tecnico");
+  });
+
+  it("anexo declarado: Ver na Empregare abre o candidato e registra o acesso", async () => {
+    const LINK =
+      "https://corporate.empregare.com/empresa/curriculo/detalhes?tokenCandidato=TKfict&id=IDfict|&candidatura=CDfict||";
+    const semNavegar = (ev) => {
+      if (ev.target.closest?.("a[target='_blank']")) ev.preventDefault();
+    };
+    document.addEventListener("click", semNavegar);
+    try {
+      const supabase = supabaseFalso({
+        ...fichaDoBanco(),
+        empregare: { link_candidato: LINK },
+      });
+      await abrirFicha(supabase);
+      const ver = cartao("IDENTIDADE").querySelector(".avd-ficha-ver-anexo");
+      expect(ver.textContent).toContain("Ver na Empregare");
+      expect(ver.getAttribute("href")).toBe(LINK);
+      expect(ver.getAttribute("rel")).toContain("noopener");
+      // Só ao lado de "Anexo": a titulação declarada não tem o atalho.
+      expect(
+        cartao("FORMACAO").querySelector(".avd-ficha-ver-anexo"),
+      ).toBeNull();
+      await clicar(ver);
+      await esperar();
+      expect(chamadas(supabase, "registrar_acesso_ficha")).toEqual([
+        { p_ficha: "f1", p_tipo: "ABRIR_EMPREGARE" },
+      ]);
+    } finally {
+      document.removeEventListener("click", semNavegar);
+    }
+  });
+
+  it("anexo sem o link do candidato: o mesmo da lateral (abre as vagas e copia o código da vaga)", async () => {
+    const escrever = vi.fn(async () => {});
+    vi.stubGlobal("navigator", { clipboard: { writeText: escrever } });
+    const semNavegar = (ev) => {
+      if (ev.target.closest?.("a[target='_blank']")) ev.preventDefault();
+    };
+    document.addEventListener("click", semNavegar);
+    try {
+      const supabase = supabaseFalso({ ...fichaDoBanco(), empregare: null });
+      await abrirFicha(supabase);
+      const ver = cartao("IDENTIDADE").querySelector(".avd-ficha-ver-anexo");
+      expect(ver.textContent).toContain("Ver na Empregare");
+      expect(ver.getAttribute("href")).toBe(
+        "https://corporate.empregare.com/empresa/vagas",
+      );
+      await clicar(ver);
+      await esperar();
+      expect(escrever).toHaveBeenCalledWith("179698");
+      expect(chamadas(supabase, "registrar_acesso_ficha")).toEqual([
+        { p_ficha: "f1", p_tipo: "ABRIR_EMPREGARE" },
+      ]);
+      expect(
+        document.querySelector(
+          "[data-tour='avd-ficha-empregare'] [role='status']",
+        ).textContent,
+      ).toContain("Código da vaga 179698 copiado");
+    } finally {
+      document.removeEventListener("click", semNavegar);
+      vi.unstubAllGlobals();
+    }
   });
 });

@@ -11,8 +11,10 @@ import {
   blocoConferido,
   blocoSeAplica,
   divergenciaDoBloco,
+  ehAnexo,
   enderecoDaVagaNaEmpregare,
   enderecoDoCandidatoNaEmpregare,
+  etapasDaFicha,
   nomeCurtoDoBloco,
   opcoesDeJustificativa,
   previaDoParecer,
@@ -40,18 +42,23 @@ import {
   DICA_DA_ART,
   ROTULO_DA_ART,
 } from "../../../lib/avaliacao-documental/tela-da-pre-classificacao.js";
-import { Aviso, Campo, Selo } from "../../../ui/index.js";
+import { Aviso, Campo, Kv, Selo } from "../../../ui/index.js";
 import { criarEstadoDaFicha } from "./estado-da-ficha.js";
 
 /*
-  O conteúdo da ficha (fase F4), dentro da gaveta da aba Fila: um cartão por
-  bloco da regra (o que o candidato declarou na Empregare, Conforme / Não
-  conforme / Não enviado com as teclas 1, 2 e 3, o motivo em lista, os itens
-  de formação, cursos e experiência e a nota com justificativa), a lateral com
-  a nota ao vivo, declarada × apurada e o parecer, e a barra de ações
-  (rascunho automático, Concluir e próxima, Fechar e liberar). Concluída: só
-  leitura, com o histórico; a coordenação reabre com motivo. Explicações:
-  docs/aya/regras-da-avaliacao-documental.md.
+  O conteúdo da ficha (fase F4), no modo de análise da aba Fila: no alto, as
+  etapas (o nome curto de cada item na cor do estado; clicar vai ao item) e a
+  linha de atalhos; um cartão compacto por bloco da regra (o que o candidato
+  declarou na Empregare, com "Ver na Empregare" ao lado do anexo, e na mesma
+  linha Conforme / Não conforme / Não enviado, teclas 1, 2 e 3; o motivo em
+  lista, os itens de formação, cursos e experiência e a nota com
+  justificativa). Marcado e sem pendência, o cartão recolhe numa linha
+  (título, selo e motivo) quando o analista passa ao próximo. A lateral tem a
+  nota ao vivo, declarada × apurada, o nível da vaga (só a coordenação muda) e
+  o parecer (sem resultado enquanto falta conferir); a barra de ações tem o
+  rascunho automático, "N de M", o que falta, Concluir e próxima e Fechar e
+  liberar. Concluída: só leitura, com o histórico; a coordenação reabre com
+  motivo. Explicações: docs/aya/regras-da-avaliacao-documental.md.
 */
 
 const ehCampoDeTexto = (alvo) =>
@@ -67,20 +74,108 @@ async function copiar(texto) {
   }
 }
 
-function Declarado({ linhas, sugestao }) {
-  if (!linhas.length) return null;
+/* Os endereços da Empregare da ficha (obter_ficha_analise → empregare; sem eles, a lista de vagas). */
+function enderecosDaEmpregare(dados, ficha) {
+  const empregare = dados.empregare || {};
+  const vaga = enderecoDaVagaNaEmpregare(ficha.vaga, empregare.vaga_interno);
+  return {
+    candidato: enderecoDoCandidatoNaEmpregare(empregare.link_candidato),
+    vaga,
+    vagaDireta: Boolean(vaga?.includes("/candidaturas/")),
+  };
+}
+
+/*
+  O link para a Empregare: o candidato direto, pelo link que o robô capturou;
+  sem ele, a vaga (copiando o código do candidato para a busca das
+  candidaturas) ou a lista de vagas (copiando o código da vaga). Todo clique
+  registra o acesso (registrar_acesso_ficha).
+*/
+function LinkDaEmpregare({ empregare, rotulo, className = "btn secondary" }) {
+  const { enderecos, ficha, loja, aoAvisar } = empregare;
+  const { candidato, vaga, vagaDireta } = enderecos;
+  const icone = (
+    <i className="fa-solid fa-arrow-up-right-from-square" aria-hidden="true" />
+  );
+  if (candidato)
+    return (
+      <a
+        className={className}
+        href={candidato}
+        target="_blank"
+        rel="noopener noreferrer"
+        onClick={() => void loja.registrarAcesso("ABRIR_EMPREGARE")}
+      >
+        {icone} {rotulo || "Abrir candidato na Empregare"}
+      </a>
+    );
+  if (!vaga) return null;
   return (
-    <dl className="avd-ficha-declarado">
+    <a
+      className={className}
+      href={vaga}
+      target="_blank"
+      rel="noopener noreferrer"
+      onClick={async () => {
+        // Nas candidaturas da vaga, busca-se o candidato; na lista de vagas, a vaga.
+        const texto = String((vagaDireta ? ficha.codigo : ficha.vaga) ?? "");
+        const ok = await copiar(texto);
+        aoAvisar(
+          !ok
+            ? "Não foi possível copiar"
+            : vagaDireta
+              ? `Código ${texto} copiado: cole na busca das candidaturas`
+              : `Código da vaga ${texto} copiado: cole na busca de Vagas Anunciadas`,
+        );
+        void loja.registrarAcesso("ABRIR_EMPREGARE");
+      }}
+    >
+      {icone}{" "}
+      {rotulo ||
+        (vagaDireta ? "Abrir vaga na Empregare" : "Abrir vagas na Empregare")}
+    </a>
+  );
+}
+
+/* Uma resposta declarada: o enunciado numa linha (clique mostra inteiro), a resposta e, no anexo, a Empregare. */
+function RespostaDeclarada({ linha, empregare }) {
+  const [inteiro, setInteiro] = useState(false);
+  return (
+    <div className="avd-ficha-resposta" data-inteiro={inteiro || undefined}>
+      <button
+        type="button"
+        className="avd-ficha-enunciado"
+        aria-expanded={inteiro}
+        title={inteiro ? undefined : linha.enunciado}
+        onClick={() => setInteiro(!inteiro)}
+      >
+        {linha.enunciado}
+      </button>
+      <strong className="avd-ficha-texto-declarado">
+        {linha.texto || "Sem resposta"}
+      </strong>
+      {ehAnexo(linha.texto) ? (
+        <LinkDaEmpregare
+          empregare={empregare}
+          rotulo="Ver na Empregare"
+          className="avd-ficha-ver-anexo"
+        />
+      ) : null}
+    </div>
+  );
+}
+
+function Declarado({ linhas, sugestao, empregare }) {
+  if (!linhas.length) return <div className="avd-ficha-declarado" />;
+  return (
+    <div className="avd-ficha-declarado">
       {linhas.map((l) => (
-        <div key={l.coluna}>
-          <dt>{l.enunciado}</dt>
-          <dd>{l.texto || "Sem resposta"}</dd>
-        </div>
+        <RespostaDeclarada key={l.coluna} linha={l} empregare={empregare} />
       ))}
       {sugestao ? (
         <p className="avd-ficha-sugestao">Sugestão: Não enviado</p>
       ) : null}
-    </dl>
+    </div>
   );
 }
 
@@ -98,6 +193,7 @@ function BotoesDeSituacao({ valor, aoMudar, desabilitado }) {
           className="avd-ficha-situacao"
           data-valor={codigo}
           aria-pressed={valor === codigo}
+          aria-keyshortcuts={tecla}
           disabled={desabilitado}
           onClick={() => aoMudar(valor === codigo ? null : codigo)}
         >
@@ -493,6 +589,19 @@ const SELO_DA_SITUACAO = {
   NAO_ENVIADO: ["neutro", "Não enviado", "fa-ban"],
 };
 
+/* O que o cartão recolhido mostra ao lado do selo: os motivos e, no bloco que pontua, o apurado. */
+function resumoDoBloco(bloco, lancado, avaliacao) {
+  const partes = (lancado.motivos || [])
+    .map((codigo) => (bloco.motivos || []).find((m) => m.codigo === codigo))
+    .filter(Boolean)
+    .map((m) => m.texto);
+  if (lancado.motivo_livre?.trim()) partes.push(lancado.motivo_livre.trim());
+  const parcial = PARCIAL_DO_TIPO[bloco.tipo];
+  if (parcial)
+    partes.push(`${textoDaNota(avaliacao.parciais?.[parcial] ?? 0)} pontos`);
+  return partes.join(" · ");
+}
+
 function CartaoDoBloco({
   st,
   bloco,
@@ -501,17 +610,19 @@ function CartaoDoBloco({
   mudar,
   desabilitado,
   mostrarTodas,
+  empregare,
 }) {
   const { lancamento, avaliacao, declarada, dados, pendencias } = st;
   const regra = dados.regra.configuracao;
   const lancado = lancamento.blocos?.[bloco.codigo] || {};
   const linhas = respostasDoBloco(bloco, dados.respostas);
   const aplica = blocoSeAplica(bloco, lancamento);
+  // null: recolhe sozinho quando o analista passa ao próximo; true/false: abriu ou recolheu à mão.
+  const [expandido, setExpandido] = useState(null);
+  const todasDoBloco = pendencias.filter((p) => p.bloco === bloco.codigo);
   // "Marque a situação" só aparece depois de tentar concluir; o resto, na hora.
-  const doBloco = pendencias.filter(
-    (p) =>
-      p.bloco === bloco.codigo &&
-      (mostrarTodas || !p.texto.startsWith("Marque")),
+  const doBloco = todasDoBloco.filter(
+    (p) => mostrarTodas || !p.texto.startsWith("Marque"),
   );
   const avaliado = avaliacao.blocos.find((b) => b.codigo === bloco.codigo);
   const alterarBloco = (campos) =>
@@ -525,21 +636,49 @@ function CartaoDoBloco({
   const pedeSituacao = bloco.tipo !== "REGISTRO" && aplica;
   const conferido = pedeSituacao && blocoConferido(lancamento, bloco);
   const situacao = SELO_DA_SITUACAO[lancado.situacao];
+  /* Marcado e sem nada a fazer, o cartão vira uma linha (título, selo e motivo)
+     quando o analista passa ao próximo. Fica aberto: o cartão da vez, com
+     pendência, ou Conforme num bloco de itens ainda sem item. */
+  const chaveDosItens = BLOCOS_COM_ITENS[bloco.tipo];
+  const semItens = chaveDosItens && !(lancamento[chaveDosItens] || []).length;
+  const podeRecolher =
+    conferido &&
+    !todasDoBloco.length &&
+    !(semItens && lancado.situacao === "CONFORME");
+  const recolhido = podeRecolher && (expandido === null ? !ativo : !expandido);
+  const resumo = recolhido ? resumoDoBloco(bloco, lancado, avaliacao) : "";
   return (
     <section
       className="ui-card avd-ficha-bloco"
       data-bloco={bloco.codigo}
       data-situacao={aplica ? lancado.situacao || "" : "NAO_SE_APLICA"}
       data-ativo={ativo ? "sim" : undefined}
+      data-recolhido={recolhido ? "sim" : undefined}
       aria-labelledby={`avdBloco-${bloco.codigo}`}
       tabIndex={-1}
       onFocus={aoFocar}
       onClick={aoFocar}
     >
       <header className="avd-ficha-bloco-topo">
-        <h3 id={`avdBloco-${bloco.codigo}`}>{bloco.titulo}</h3>
-        {bloco.item_edital ? <Selo>Item {bloco.item_edital}</Selo> : null}
-        {!aplica ? <Selo>Não se aplica</Selo> : null}
+        {podeRecolher ? (
+          <button
+            type="button"
+            className="avd-ficha-alternar"
+            data-acao="alternar-bloco"
+            aria-expanded={!recolhido}
+            aria-controls={`avdBlocoCorpo-${bloco.codigo}`}
+            aria-label={recolhido ? "Mostrar o bloco" : "Recolher o bloco"}
+            onClick={() => setExpandido(recolhido)}
+          >
+            <i
+              className={`fa-solid ${recolhido ? "fa-chevron-right" : "fa-chevron-down"}`}
+              aria-hidden="true"
+            />
+          </button>
+        ) : null}
+        <h3 id={`avdBloco-${bloco.codigo}`} title={bloco.titulo}>
+          {bloco.titulo}
+        </h3>
         {conferido && situacao ? (
           <Selo tom={situacao[0]} className="avd-ficha-selo-situacao">
             <i className={`fa-solid ${situacao[2]}`} aria-hidden="true" />{" "}
@@ -557,104 +696,135 @@ function CartaoDoBloco({
                   : "Sem pontos"}
           </Selo>
         ) : null}
+        {resumo ? (
+          <span className="avd-ficha-resumo-do-bloco" title={resumo}>
+            {resumo}
+          </span>
+        ) : null}
+        {!aplica ? <Selo>Não se aplica</Selo> : null}
+        {bloco.item_edital ? (
+          <span className="avd-ficha-item-edital">
+            Item {bloco.item_edital}
+          </span>
+        ) : null}
       </header>
-      {aplica ? (
-        <Declarado
-          linhas={linhas}
-          sugestao={!lancado.situacao && sugereNaoEnviado(linhas)}
-        />
-      ) : null}
-      {bloco.tipo === "PONTUACAO" ? (
-        <Etnico
-          lancamento={lancamento}
-          mudar={mudar}
-          desabilitado={desabilitado}
-        />
-      ) : null}
-      {pedeSituacao ? (
-        <BotoesDeSituacao
-          valor={lancado.situacao}
-          desabilitado={desabilitado}
-          aoMudar={(situacao) =>
-            alterarBloco({
-              situacao,
-              motivos: ["NAO_CONFORME", "NAO_ENVIADO"].includes(situacao)
-                ? lancado.motivos || []
-                : [],
-            })
-          }
-        />
-      ) : null}
-      {pedeSituacao &&
-      ["NAO_CONFORME", "NAO_ENVIADO"].includes(lancado.situacao) ? (
-        (bloco.motivos || []).length ? (
-          <Caixas
-            rotulo="Motivo"
-            opcoes={bloco.motivos}
-            marcados={lancado.motivos || []}
-            desabilitado={desabilitado}
-            aoMudar={(motivos) => alterarBloco({ motivos })}
-          />
-        ) : (
-          <Campo rotulo="Motivo">
-            <input
-              value={lancado.motivo_livre || ""}
-              maxLength={2000}
-              disabled={desabilitado}
-              onChange={(ev) => alterarBloco({ motivo_livre: ev.target.value })}
+      {recolhido ? null : (
+        <div
+          className="avd-ficha-bloco-corpo"
+          id={`avdBlocoCorpo-${bloco.codigo}`}
+        >
+          {aplica ? (
+            <div className="avd-ficha-bloco-linha">
+              <Declarado
+                linhas={linhas}
+                sugestao={!lancado.situacao && sugereNaoEnviado(linhas)}
+                empregare={empregare}
+              />
+              {pedeSituacao ? (
+                <BotoesDeSituacao
+                  valor={lancado.situacao}
+                  desabilitado={desabilitado}
+                  aoMudar={(situacao) =>
+                    alterarBloco({
+                      situacao,
+                      motivos: ["NAO_CONFORME", "NAO_ENVIADO"].includes(
+                        situacao,
+                      )
+                        ? lancado.motivos || []
+                        : [],
+                    })
+                  }
+                />
+              ) : null}
+            </div>
+          ) : null}
+          {bloco.tipo === "PONTUACAO" ? (
+            <Etnico
+              lancamento={lancamento}
+              mudar={mudar}
+              desabilitado={desabilitado}
             />
-          </Campo>
-        )
-      ) : null}
-      {aplica && BLOCOS_COM_ITENS[bloco.tipo] ? (
-        <Itens
-          bloco={bloco}
-          lancamento={lancamento}
-          mudar={mudar}
-          desabilitado={desabilitado}
-        />
-      ) : null}
-      {aplica && PARCIAL_DO_TIPO[bloco.tipo] ? (
-        <NotaDoBloco
-          regra={regra}
-          bloco={bloco}
-          lancado={lancado}
-          lancamento={lancamento}
-          avaliacao={avaliacao}
-          declarada={declarada}
-          mudar={mudar}
-          desabilitado={desabilitado}
-          conferido={conferido}
-        />
-      ) : null}
-      {doBloco.length && !desabilitado ? (
-        <ul className="avd-ficha-pendencias">
-          {doBloco.map((p) => (
-            <li key={p.texto}>{p.texto}</li>
-          ))}
-        </ul>
-      ) : null}
+          ) : null}
+          {pedeSituacao &&
+          ["NAO_CONFORME", "NAO_ENVIADO"].includes(lancado.situacao) ? (
+            (bloco.motivos || []).length ? (
+              <Caixas
+                rotulo="Motivo"
+                opcoes={bloco.motivos}
+                marcados={lancado.motivos || []}
+                desabilitado={desabilitado}
+                aoMudar={(motivos) => alterarBloco({ motivos })}
+              />
+            ) : (
+              <Campo rotulo="Motivo">
+                <input
+                  value={lancado.motivo_livre || ""}
+                  maxLength={2000}
+                  disabled={desabilitado}
+                  onChange={(ev) =>
+                    alterarBloco({ motivo_livre: ev.target.value })
+                  }
+                />
+              </Campo>
+            )
+          ) : null}
+          {aplica &&
+          (BLOCOS_COM_ITENS[bloco.tipo] || PARCIAL_DO_TIPO[bloco.tipo]) ? (
+            <div className="avd-ficha-apuracao">
+              {BLOCOS_COM_ITENS[bloco.tipo] ? (
+                <Itens
+                  bloco={bloco}
+                  lancamento={lancamento}
+                  mudar={mudar}
+                  desabilitado={desabilitado}
+                />
+              ) : null}
+              {PARCIAL_DO_TIPO[bloco.tipo] ? (
+                <NotaDoBloco
+                  regra={regra}
+                  bloco={bloco}
+                  lancado={lancado}
+                  lancamento={lancamento}
+                  avaliacao={avaliacao}
+                  declarada={declarada}
+                  mudar={mudar}
+                  desabilitado={desabilitado}
+                  conferido={conferido}
+                />
+              ) : null}
+            </div>
+          ) : null}
+          {doBloco.length && !desabilitado ? (
+            <ul className="avd-ficha-pendencias">
+              {doBloco.map((p) => (
+                <li key={p.texto}>{p.texto}</li>
+              ))}
+            </ul>
+          ) : null}
+        </div>
+      )}
     </section>
   );
 }
 
-function Lateral({ st, loja, ficha, mudar, desabilitado }) {
+function Lateral({
+  st,
+  loja,
+  ficha,
+  mudar,
+  desabilitado,
+  empregare,
+  copiado,
+  setCopiado,
+}) {
   const { avaliacao, declarada, lancamento, dados } = st;
   const regra = dados.regra.configuracao;
   const pontuam = regra.blocos.filter(
     (b) => PARCIAL_DO_TIPO[b.tipo] && blocoSeAplica(b, lancamento),
   );
   const art = dados.declarada_gravada?.art;
-  // Links capturados pelo robô (obter_ficha_analise → empregare); sem eles, a lista de vagas.
-  const empregare = dados.empregare || {};
-  const urlDoCandidato = enderecoDoCandidatoNaEmpregare(
-    empregare.link_candidato,
-  );
-  const urlDaVaga = enderecoDaVagaNaEmpregare(
-    ficha.vaga,
-    empregare.vaga_interno,
-  );
-  const vagaDireta = Boolean(urlDaVaga?.includes("/candidaturas/"));
+  // O nível vem da vaga; só a coordenação muda (e isso muda os pontos declarados).
+  const mudaNivel = !desabilitado && dados.papel === "COORDENADOR";
   // Concluída: o que foi gravado (resultado, nota e parecer); em análise, a conta ao vivo.
   const concluida = ficha.situacao === "CONCLUIDA" && ficha.parecer;
   const gravado = concluida
@@ -664,7 +834,6 @@ function Lateral({ st, loja, ficha, mudar, desabilitado }) {
         parecer: ficha.parecer,
       }
     : avaliacao;
-  const [copiado, setCopiado] = useState("");
   // Em análise (falta conferir e nada conferido eliminou): estado neutro, nota parcial.
   const emAnalise = !concluida && st.conferencia?.situacao === "EM_ANALISE";
   const resultado = concluida
@@ -759,24 +928,33 @@ function Lateral({ st, loja, ficha, mudar, desabilitado }) {
           );
         })}
       </div>
-      <Campo rotulo="Nível da vaga">
-        <select
-          value={lancamento.nivel}
-          disabled={desabilitado}
-          onChange={(ev) =>
-            mudar((l) => {
-              l.nivel = ev.target.value;
-              return l;
-            })
-          }
+      {mudaNivel ? (
+        <Campo
+          rotulo="Nível da vaga"
+          dica="Mudar o nível muda os pontos declarados."
         >
-          {NIVEIS.map(([v, r]) => (
-            <option key={v} value={v}>
-              {r}
-            </option>
-          ))}
-        </select>
-      </Campo>
+          <select
+            value={lancamento.nivel}
+            data-acao="nivel-da-vaga"
+            onChange={(ev) =>
+              mudar((l) => {
+                l.nivel = ev.target.value;
+                return l;
+              })
+            }
+          >
+            {NIVEIS.map(([v, r]) => (
+              <option key={v} value={v}>
+                {r}
+              </option>
+            ))}
+          </select>
+        </Campo>
+      ) : (
+        <div className="avd-ficha-nivel" data-nivel={lancamento.nivel}>
+          <Kv rotulo="Nível da vaga">{rotuloDe(NIVEIS, lancamento.nivel)}</Kv>
+        </div>
+      )}
       <div className="avd-ficha-empregare" data-tour="avd-ficha-empregare">
         <button
           type="button"
@@ -790,51 +968,10 @@ function Lateral({ st, loja, ficha, mudar, desabilitado }) {
           <i className="fa-regular fa-copy" aria-hidden="true" /> Copiar código{" "}
           {ficha.codigo}
         </button>
-        {urlDoCandidato ? (
-          <a
-            className="btn secondary small"
-            href={urlDoCandidato}
-            target="_blank"
-            rel="noopener noreferrer"
-            onClick={() => void loja.registrarAcesso("ABRIR_EMPREGARE")}
-          >
-            <i
-              className="fa-solid fa-arrow-up-right-from-square"
-              aria-hidden="true"
-            />{" "}
-            Abrir candidato na Empregare
-          </a>
-        ) : urlDaVaga ? (
-          <a
-            className="btn secondary small"
-            href={urlDaVaga}
-            target="_blank"
-            rel="noopener noreferrer"
-            onClick={async () => {
-              // Nas candidaturas da vaga, busca-se o candidato; na lista de vagas, a vaga.
-              const texto = String(
-                (vagaDireta ? ficha.codigo : ficha.vaga) ?? "",
-              );
-              const ok = await copiar(texto);
-              setCopiado(
-                !ok
-                  ? "Não foi possível copiar"
-                  : vagaDireta
-                    ? `Código ${texto} copiado: cole na busca das candidaturas`
-                    : `Código da vaga ${texto} copiado: cole na busca de Vagas Anunciadas`,
-              );
-              void loja.registrarAcesso("ABRIR_EMPREGARE");
-            }}
-          >
-            <i
-              className="fa-solid fa-arrow-up-right-from-square"
-              aria-hidden="true"
-            />{" "}
-            {vagaDireta
-              ? "Abrir vaga na Empregare"
-              : "Abrir vagas na Empregare"}
-          </a>
-        ) : null}
+        <LinkDaEmpregare
+          empregare={empregare}
+          className="btn secondary small"
+        />
         {copiado ? <small role="status">{copiado}</small> : null}
       </div>
       {(regra.observacoes_prontas || []).length ? (
@@ -1007,6 +1144,55 @@ function Progresso({ conferencia }) {
   );
 }
 
+/* O ícone e o texto (leitor de tela) de cada estado da etapa. */
+const ESTADOS_DA_ETAPA = {
+  nao_conferido: ["", "não conferido"],
+  pendencia: ["fa-circle-exclamation", "falta completar"],
+  CONFORME: ["fa-check", "conforme"],
+  NAO_CONFORME: ["fa-xmark", "não conforme"],
+  NAO_ENVIADO: ["fa-ban", "não enviado"],
+};
+
+/*
+  As etapas do topo do modo de análise: o nome curto de cada item, na cor do
+  estado; clicar vai ao item. Com a linha de atalhos ao lado.
+*/
+function EtapasDaAnalise({ etapas, ativo, aoIr, comAtalhos }) {
+  return (
+    <div className="avd-ficha-etapas" data-tour="avd-ficha-etapas">
+      <ol aria-label="Itens da ficha">
+        {etapas.map((e) => {
+          const [icone, texto] = ESTADOS_DA_ETAPA[e.estado] || ["", ""];
+          return (
+            <li key={e.codigo}>
+              <button
+                type="button"
+                data-etapa={e.codigo}
+                data-estado={e.estado}
+                aria-current={e.codigo === ativo ? "step" : undefined}
+                onClick={() => aoIr(e.codigo)}
+              >
+                {icone ? (
+                  <i className={`fa-solid ${icone}`} aria-hidden="true" />
+                ) : null}
+                {e.nome}
+                <span className="sr-only"> ({texto})</span>
+              </button>
+            </li>
+          );
+        })}
+      </ol>
+      {comAtalhos ? (
+        <p className="avd-ficha-atalhos" data-tour="avd-ficha-atalhos">
+          <kbd>1</kbd> Conforme · <kbd>2</kbd> Não conforme · <kbd>3</kbd> Não
+          enviado · <kbd>J</kbd>/<kbd>K</kbd> navegar · <kbd>Ctrl+S</kbd> salvar
+          · <kbd>Ctrl+Enter</kbd> concluir
+        </p>
+      ) : null}
+    </div>
+  );
+}
+
 function textoDoEstado(st) {
   if (st.salvando) return "Salvando…";
   if (st.sujo) return "Alteração não salva";
@@ -1032,6 +1218,8 @@ export function ConteudoDaFicha({
   const [ativo, setAtivo] = useState(0);
   const [erroDeConclusao, setErroDeConclusao] = useState("");
   const [tentouConcluir, setTentouConcluir] = useState(false);
+  // "Código copiado" e afins, na lateral (o "Ver na Empregare" do anexo também avisa ali).
+  const [copiado, setCopiado] = useState("");
   const raiz = useRef(null);
   const fichaId = aberta.ficha.id;
 
@@ -1102,6 +1290,13 @@ export function ConteudoDaFicha({
     b.tipo !== "PONTUACAO" && !blocoSeAplica(b, st.lancamento);
   const naoSeAplicam = blocos.filter(agrupado);
   const mudar = loja.mudar;
+  const etapas = etapasDaFicha(regra, st.lancamento, st.pendencias);
+  const empregare = {
+    enderecos: enderecosDaEmpregare(st.dados, ficha),
+    ficha,
+    loja,
+    aoAvisar: setCopiado,
+  };
 
   /* Vai ao bloco (teclas J/K e depois do Conforme): foco e rolagem acompanham. */
   function irPara(indice) {
@@ -1212,6 +1407,16 @@ export function ConteudoDaFicha({
       ) : null}
       <div className="avd-ficha-grade">
         <div className="avd-ficha-blocos" data-tour="avd-ficha-blocos">
+          {etapas.length ? (
+            <EtapasDaAnalise
+              etapas={etapas}
+              ativo={desabilitado ? null : blocos[ativo]?.codigo}
+              comAtalhos={!desabilitado}
+              aoIr={(codigo) =>
+                irPara(blocos.findIndex((b) => b.codigo === codigo))
+              }
+            />
+          ) : null}
           {blocos.map((b, i) =>
             agrupado(b) ? null : (
               <CartaoDoBloco
@@ -1223,6 +1428,7 @@ export function ConteudoDaFicha({
                 mudar={mudar}
                 desabilitado={desabilitado}
                 mostrarTodas={tentouConcluir}
+                empregare={empregare}
               />
             ),
           )}
@@ -1245,6 +1451,7 @@ export function ConteudoDaFicha({
                   mudar={mudar}
                   desabilitado={desabilitado}
                   mostrarTodas={tentouConcluir}
+                  empregare={empregare}
                 />
               ))}
             </details>
@@ -1257,6 +1464,9 @@ export function ConteudoDaFicha({
           ficha={ficha}
           mudar={mudar}
           desabilitado={desabilitado}
+          empregare={empregare}
+          copiado={copiado}
+          setCopiado={setCopiado}
         />
       </div>
       <div
