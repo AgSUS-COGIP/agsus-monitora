@@ -1,12 +1,13 @@
 /*
   Regras puras do chat do MONITORA (src/modulos/chat/), sem DOM e sem React.
 
-  Banco: supabase/migrations/20261002210000_chat.sql e
-  20261005100000_chat_limpar_e_reacoes.sql. O que o banco confere
-  (tamanho do texto, formato do link da tela) é conferido aqui também, para a
-  tela avisar antes de enviar — e o link que CHEGA também passa por
-  `linkDaTela`: a navegação é só dentro do app (view, área, seção e edital),
-  nunca um endereço.
+  Banco: supabase/migrations/20261002210000_chat.sql,
+  20261005100000_chat_limpar_e_reacoes.sql e 20261007210000_chat_v2.sql. O que
+  o banco confere (tamanho do texto, formato do link da tela) é conferido aqui
+  também, para a tela avisar antes de enviar — e o link que CHEGA também passa
+  por `linkDaTela`: a navegação é só dentro do app (view, área, seção, edital
+  e ficha da avaliação documental), nunca um endereço. Da v2: citação,
+  encaminhada, cartões, Visto, busca, fixadas, não lida e status.
 */
 
 import { ABAS_DO_MENU, nomeDaArea } from "./menu-lateral.js";
@@ -28,6 +29,18 @@ export function validarTexto(valor) {
       ok: false,
       erro: `A mensagem passa de ${LIMITE_DO_TEXTO.toLocaleString("pt-BR")} caracteres.`,
     };
+  return { ok: true, erro: "" };
+}
+
+/**
+ * A mensagem pode ir? Texto até o limite; vazio só com anexo ou cartão (a
+ * mesma regra do CHECK CK_MENSAGEM_DSTEXTO).
+ */
+export function podeEnviar(valor, { anexos = 0, link = null } = {}) {
+  const bruto = texto(valor);
+  if (bruto.length > LIMITE_DO_TEXTO) return validarTexto(bruto);
+  if (!bruto.trim() && !(Number(anexos) > 0) && !link)
+    return { ok: false, erro: "Escreva a mensagem." };
   return { ok: true, erro: "" };
 }
 
@@ -169,6 +182,9 @@ export function reconciliarPagina(atuais, recebidas, temMais) {
  */
 export function mensagemDaLinha(linha) {
   if (!linha?.CO_MENSAGEM || !linha?.CO_CONVERSA) return null;
+  const apagada = linha.ST_APAGADA === "S";
+  const quantos = apagada ? 0 : Math.max(0, Number(linha.QT_ANEXO) || 0);
+  const resposta = linha.CO_MENSAGEM_RESPOSTA ?? null;
   return {
     id: linha.CO_MENSAGEM,
     conversa: linha.CO_CONVERSA,
@@ -180,10 +196,33 @@ export function mensagemDaLinha(linha) {
       : [],
     criada_em: linha.DT_CRIACAO,
     editada_em: linha.DT_EDICAO ?? null,
-    apagada: linha.ST_APAGADA === "S",
+    apagada,
+    encaminhada: linha.ST_ENCAMINHADA === "S",
+    /*
+      A linha diz quantos anexos e qual a citada; os dados deles vêm de
+      obter_mensagem_chat (precisaCompletar). Sem anexo ou sem citação, a
+      linha já é a verdade.
+    */
+    qt_anexo: quantos,
+    resposta_id: resposta,
+    ...(quantos ? {} : { anexos: [] }),
+    ...(resposta ? {} : { resposta: null }),
     // As reações vêm por RL_MENSAGEM_REACAO; a apagada fica sem elas.
-    ...(linha.ST_APAGADA === "S" ? { reacoes: [] } : {}),
+    ...(apagada ? { reacoes: [] } : {}),
   };
+}
+
+/**
+ * A mensagem que chegou pelo Realtime (já mesclada com a da tela) ainda não
+ * tem os anexos ou a citação que a linha anuncia: pede obter_mensagem_chat.
+ */
+export function precisaCompletar(mensagem) {
+  if (!mensagem || mensagem.apagada || mensagem.pendente) return false;
+  const quantos = Number(mensagem.qt_anexo) || 0;
+  if (quantos && (mensagem.anexos?.length || 0) !== quantos) return true;
+  if (mensagem.resposta_id && mensagem.resposta?.id !== mensagem.resposta_id)
+    return true;
+  return false;
 }
 
 /**
@@ -319,11 +358,23 @@ export function naoLidasDasMensagens(mensagens, lidaEm, eu) {
   ).length;
 }
 
-/** O total do ícone e da aba: soma das não lidas, fora as silenciadas. */
+/** Não lidas de uma conversa na lista: as do banco ou 1 se a pessoa marcou como não lida. */
+export function naoLidasDaConversa(conversa) {
+  const n = Math.max(0, Number(conversa?.nao_lidas) || 0);
+  return n || (conversa?.marcada_nao_lida ? 1 : 0);
+}
+
+/**
+ * O total do ícone e da aba: soma das não lidas (ou 1 na marcada como não
+ * lida); da silenciada, só as menções a quem está logado.
+ */
 export function totalDeNaoLidas(conversas) {
   return (Array.isArray(conversas) ? conversas : []).reduce(
     (total, c) =>
-      c?.silenciada ? total : total + Math.max(0, Number(c?.nao_lidas) || 0),
+      total +
+      (c?.silenciada
+        ? Math.max(0, Number(c?.mencoes) || 0)
+        : naoLidasDaConversa(c)),
     0,
   );
 }
@@ -354,7 +405,9 @@ export function previaDaUltima(conversa, eu) {
   const ultima = conversa?.ultima;
   if (!ultima) return "";
   if (ultima.apagada) return "Mensagem apagada";
-  const corpo = texto(ultima.texto).replace(/\s+/g, " ").trim();
+  const corpo =
+    texto(ultima.texto).replace(/\s+/g, " ").trim() ||
+    rotuloSemTexto(ultima.anexos, ultima.link);
   if (String(ultima.autor) === String(eu)) return `Você: ${corpo}`;
   if (conversa.tipo === "DIRETA") return corpo;
   const autor = (conversa.participantes || []).find(
@@ -378,13 +431,161 @@ export function filtrarConversas(conversas, busca, eu) {
   );
 }
 
-/** Ordem da lista: a conversa com mensagem mais recente primeiro. */
+/**
+ * Ordem da lista: as fixadas primeiro (a fixada por último no topo), depois a
+ * conversa com mensagem mais recente.
+ */
 export function ordenarConversas(conversas) {
+  const fixada = (c) => (c?.fixada_em ? instante(c.fixada_em) : -Infinity);
   return [...(Array.isArray(conversas) ? conversas : [])].sort(
     (a, b) =>
+      (fixada(b) === fixada(a) ? 0 : fixada(b) > fixada(a) ? 1 : -1) ||
       instante(b.atualizada_em) - instante(a.atualizada_em) ||
       String(a.id).localeCompare(String(b.id)),
   );
+}
+
+/** Mensagem sem texto: "Anexo", "3 anexos" ou "Cartão de tela". */
+export function rotuloSemTexto(anexos, link) {
+  const n = Number(anexos) || 0;
+  if (n === 1) return "Anexo";
+  if (n > 1) return `${n} anexos`;
+  return link ? "Cartão de tela" : "";
+}
+
+// ── Responder e encaminhar ──────────────────────────────────────────────────
+
+/** A citação de uma mensagem inteira (para o "Respondendo a…" do campo). */
+export function citacaoDe(mensagem) {
+  if (!mensagem?.id) return null;
+  return {
+    id: mensagem.id,
+    autor: mensagem.autor,
+    texto: texto(mensagem.texto).slice(0, 160),
+    apagada: Boolean(mensagem.apagada),
+    anexos: Array.isArray(mensagem.anexos)
+      ? mensagem.anexos.length
+      : Number(mensagem.qt_anexo) || 0,
+    link: Boolean(mensagem.link),
+  };
+}
+
+/** O texto de uma linha da citação (resposta do banco ou citacaoDe). */
+export function textoDaCitacao(resposta) {
+  if (!resposta) return "";
+  if (resposta.apagada) return "Mensagem apagada";
+  const corpo = texto(resposta.texto).replace(/\s+/g, " ").trim();
+  if (corpo) return corpo.length > 120 ? `${corpo.slice(0, 119)}…` : corpo;
+  return rotuloSemTexto(resposta.anexos, resposta.link) || "Mensagem";
+}
+
+// ── Visto ───────────────────────────────────────────────────────────────────
+
+/**
+ * Quem já viu a minha mensagem: participantes (fora eu) com `lida_em` depois
+ * do envio. Só a minha, gravada; sem `lida_em` nos participantes (quem não
+ * participa não recebe), devolve null.
+ * `{ total, viram: [nomes], todos }`.
+ */
+export function vistoPor(mensagem, conversa, eu) {
+  if (!mensagem || String(mensagem.autor) !== String(eu)) return null;
+  if (mensagem.pendente || mensagem.falhou || mensagem.apagada) return null;
+  const outros = outrasPessoas(conversa, eu);
+  if (!outros.length || !outros.some((p) => "lida_em" in p)) return null;
+  const enviada = instante(mensagem.criada_em);
+  const viram = outros
+    .filter((p) => p.lida_em && instante(p.lida_em) >= enviada)
+    .map((p) => texto(p.nome) || "Pessoa");
+  return {
+    total: outros.length,
+    viram,
+    todos: viram.length === outros.length,
+  };
+}
+
+/** Atualiza a leitura (`lida_em`) de um participante pela linha do Realtime. */
+export function aplicarLeituraDaLinha(conversa, linha) {
+  if (!conversa || !linha?.CO_USUARIO) return conversa;
+  if (String(linha.CO_CONVERSA) !== String(conversa.id)) return conversa;
+  let mudou = false;
+  const participantes = (conversa.participantes || []).map((p) => {
+    if (String(p.id) !== String(linha.CO_USUARIO) || !("lida_em" in p))
+      return p;
+    const lida = linha.DT_ULTIMA_LEITURA ?? null;
+    if (instante(lida) <= instante(p.lida_em)) return p;
+    mudou = true;
+    return { ...p, lida_em: lida };
+  });
+  return mudou ? { ...conversa, participantes } : conversa;
+}
+
+/** A mensagem menciona quem está logado? */
+export function mencionaMe(mensagem, eu) {
+  return (mensagem?.mencoes || []).some((id) => String(id) === String(eu));
+}
+
+// ── Status (presença) ───────────────────────────────────────────────────────
+
+/** Espelho do CHECK CK_STATUSPRESENCA_TPSTATUS. */
+export const STATUS_DE_PRESENCA = Object.freeze([
+  Object.freeze({ valor: "DISPONIVEL", rotulo: "Disponível" }),
+  Object.freeze({ valor: "OCUPADO", rotulo: "Ocupado" }),
+  Object.freeze({ valor: "AUSENTE", rotulo: "Ausente" }),
+]);
+
+/**
+ * A presença para desenhar: "disponivel" (online), "ocupado" e "ausente"
+ * (online, com o status escolhido) ou "offline".
+ */
+export function presencaDe(pessoa) {
+  if (!pessoa?.online) return "offline";
+  if (pessoa.status === "OCUPADO") return "ocupado";
+  if (pessoa.status === "AUSENTE") return "ausente";
+  return "disponivel";
+}
+
+const ROTULOS_DA_PRESENCA = Object.freeze({
+  disponivel: "Online",
+  ocupado: "Ocupado",
+  ausente: "Ausente",
+  offline: "",
+});
+
+export const rotuloDaPresenca = (pessoa) =>
+  ROTULOS_DA_PRESENCA[presencaDe(pessoa)];
+
+// ── Busca ───────────────────────────────────────────────────────────────────
+
+/** O termo da busca pode ir ao banco? (buscar_mensagens_chat pede 2 a 100.) */
+export function termoDeBuscaValido(termo) {
+  const t = texto(termo).trim();
+  return t.length >= 2 && t.length <= 100;
+}
+
+/**
+ * O trecho do resultado em partes, com o termo destacado (sem diferenciar
+ * maiúsculas e acentos): `[{ tipo: "texto" | "termo", texto }]`.
+ */
+export function partesDoTrecho(trecho, termo) {
+  const bruto = texto(trecho).normalize("NFC");
+  const alvo = semAcento(bruto);
+  const procura = semAcento(termo).trim();
+  if (!bruto) return [];
+  if (!procura || alvo.length !== bruto.length)
+    return [{ tipo: "texto", texto: bruto }];
+  const partes = [];
+  let cursor = 0;
+  for (;;) {
+    const em = alvo.indexOf(procura, cursor);
+    if (em < 0) break;
+    if (em > cursor)
+      partes.push({ tipo: "texto", texto: bruto.slice(cursor, em) });
+    partes.push({ tipo: "termo", texto: bruto.slice(em, em + procura.length) });
+    cursor = em + procura.length;
+  }
+  if (cursor < bruto.length)
+    partes.push({ tipo: "texto", texto: bruto.slice(cursor) });
+  return partes;
 }
 
 // ── Menções ─────────────────────────────────────────────────────────────────
@@ -533,16 +734,18 @@ function rotuloDaView(view) {
 
 /**
  * O link interno de uma tela, conferido: `{ view, area?, secao?, edital?:
- * { id, titulo }, rotulo }` — só views que o app desenha (as do menu e
- * Configurações), área e seção em formato de código, edital com uuid. Qualquer
- * outra coisa (URL, painel externo, campo a mais) → null. Vale para o link que
- * sai (Compartilhar esta tela) e para o que chega (antes de navegar).
+ * { id, titulo }, ficha?: { id?, codigo }, rotulo }` — só views que o app
+ * desenha (as do menu e Configurações), área e seção em formato de código,
+ * edital com uuid, ficha da avaliação documental pelo código do candidato
+ * (só com edital). Qualquer outra coisa (URL, painel externo) → null. Vale
+ * para o link que sai (Compartilhar esta tela / esta ficha) e para o que chega
+ * (antes de navegar). Espelho de private."FC_CHAT_VALIDAR_LINK".
  */
 export function linkDaTela(entrada) {
   if (!entrada || typeof entrada !== "object" || Array.isArray(entrada))
     return null;
   const view = texto(entrada.view).trim();
-  if (!/^[a-z][a-z_]{0,39}$/.test(view) || !rotuloDaView(view)) return null;
+  if (!/^[a-z][a-z_-]{0,39}$/.test(view) || !rotuloDaView(view)) return null;
   const link = { view };
   const area = texto(entrada.area).trim();
   if (area) {
@@ -562,14 +765,22 @@ export function linkDaTela(entrada) {
       titulo: texto(entrada.edital?.titulo).trim().slice(0, 120),
     };
   }
+  if (entrada.ficha != null) {
+    const codigo = texto(entrada.ficha?.codigo).trim();
+    const id = texto(entrada.ficha?.id).trim();
+    if (!link.edital || !/^[0-9A-Za-z._-]{1,30}$/.test(codigo)) return null;
+    if (id && !UUID.test(id)) return null;
+    link.ficha = id ? { id, codigo } : { codigo };
+  }
   link.rotulo = rotuloDoLink(link).slice(0, 200);
   return link;
 }
 
-/** "Classificação · Saúde Indígena · Edital 83/2026". */
+/** "Classificação · Saúde Indígena · Edital 83/2026" (ficha: "Candidato 123 · …"). */
 export function rotuloDoLink(link, rotuloDaSecao = "") {
   if (!link?.view) return "";
-  const partes = [rotuloDaView(link.view) || link.view];
+  const partes = link.ficha ? [`Candidato ${link.ficha.codigo}`] : [];
+  partes.push(rotuloDaView(link.view) || link.view);
   if (link.area) partes.push(nomeDaArea(link.area) || link.area);
   if (link.view === "config" && (rotuloDaSecao || link.secao))
     partes.push(rotuloDaSecao || link.secao);
@@ -577,15 +788,59 @@ export function rotuloDoLink(link, rotuloDaSecao = "") {
   return partes.join(" · ");
 }
 
+/**
+ * O cartão do link (o que a mensagem mostra): `{ tipo: "tela" | "edital" |
+ * "ficha", titulo, detalhe, icone, podeAbrir, link }`. `paginas` é
+ * `paginasPermitidas(perfil)` de quem vê: sem a página, "Abrir" não aparece
+ * (o banco confere de novo ao abrir). Link que não vale → null.
+ */
+export function cartaoDoLink(entrada, paginas = null) {
+  const link = linkDaTela(entrada);
+  if (!link) return null;
+  const tela = rotuloDaView(link.view);
+  const area = link.area ? nomeDaArea(link.area) || link.area : "";
+  const edital = link.edital ? `Edital ${link.edital.titulo || ""}`.trim() : "";
+  const podeAbrir = paginas ? Boolean(paginas[link.view]) : true;
+  if (link.ficha)
+    return {
+      tipo: "ficha",
+      titulo: `Candidato ${link.ficha.codigo}`,
+      detalhe: [tela, area, edital].filter(Boolean).join(" · "),
+      icone: "fa-id-card",
+      podeAbrir,
+      link,
+    };
+  if (link.edital)
+    return {
+      tipo: "edital",
+      titulo: edital,
+      detalhe: [tela, area].filter(Boolean).join(" · "),
+      icone: "fa-file-lines",
+      podeAbrir,
+      link,
+    };
+  return {
+    tipo: "tela",
+    titulo:
+      link.view === "config" && link.secao ? `${tela} · ${link.secao}` : tela,
+    detalhe: area,
+    icone: "fa-display",
+    podeAbrir,
+    link,
+  };
+}
+
 // ── Avisos ──────────────────────────────────────────────────────────────────
 
 /**
- * A mensagem que chegou pede aviso (som ou notificação)? Não: a própria, a de
- * conversa silenciada, a apagada, e a da conversa aberta com a aba à vista.
+ * A mensagem que chegou pede aviso (som ou notificação)? Não: a própria, a
+ * apagada, a da conversa aberta com a aba à vista e a de conversa silenciada
+ * — a não ser que mencione quem está logado (menção sempre avisa).
  */
 export function deveAvisar({ mensagem, eu, conversa, abertaAVista }) {
   if (!mensagem || mensagem.apagada) return false;
   if (String(mensagem.autor) === String(eu)) return false;
-  if (!conversa || conversa.silenciada) return false;
+  if (!conversa) return false;
+  if (conversa.silenciada && !mencionaMe(mensagem, eu)) return false;
   return !abertaAVista;
 }

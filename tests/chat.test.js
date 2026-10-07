@@ -134,6 +134,12 @@ describe("mensagens sem duplicar", () => {
       criada_em: "2026-10-02T10:00:00Z",
       editada_em: null,
       apagada: false,
+      encaminhada: false,
+      // v2: sem anexo nem citação, a linha já é a verdade.
+      qt_anexo: 0,
+      resposta_id: null,
+      anexos: [],
+      resposta: null,
     });
     expect(mensagemDaLinha({ CO_MENSAGEM: "m" })).toBeNull();
   });

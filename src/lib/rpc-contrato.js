@@ -963,10 +963,12 @@ export const CONTRATO_RPC = {
       "p_link_tela",
       "p_mencoes",
       "p_mensagem",
+      "p_resposta",
+      "p_anexos",
     ],
     critica: false,
     resumo:
-      "Envia mensagem (1 a 4.000 caracteres, link interno da tela opcional, menções de participantes); p_mensagem é o id do navegador (reenviar não duplica).",
+      "Envia mensagem (até 4.000 caracteres; vazio só com anexo ou cartão; link interno opcional; menções de participantes); p_mensagem é o id do navegador (reenviar não duplica); p_resposta é a citada (mesma conversa); p_anexos [{caminho, nome}] até 5, já no bucket chat-anexos (v2: 20261007210000_chat_v2.sql).",
   },
   editar_mensagem_chat: {
     argumentos: ["p_mensagem", "p_texto"],
@@ -1030,6 +1032,55 @@ export const CONTRATO_RPC = {
     critica: false,
     resumo:
       "Põe ou tira a reação rápida (👍 ✅ ❤️ 😂 👀 🙏) de quem está logado na mensagem; devolve a mensagem com as reações. 42501 fora da conversa; 22023 emoji fora da lista ou mensagem apagada.",
+  },
+  // ── Chat v2 (20261007210000_chat_v2.sql) ─────────────────────────────────
+  obter_mensagem_chat: {
+    argumentos: ["p_mensagem"],
+    critica: false,
+    resumo:
+      "Uma mensagem no formato da tela (anexos e citação), para completar a linha do Realtime. 42501 sem acesso; o que a pessoa limpou volta nulo.",
+  },
+  encaminhar_mensagem_chat: {
+    argumentos: ["p_mensagem", "p_conversa"],
+    critica: false,
+    resumo:
+      "Encaminha a mensagem (texto, cartão e anexos) para outra conversa, sem menções e sem a origem. 42501 sem ler as duas; 22023 se apagada.",
+  },
+  buscar_mensagens_chat: {
+    argumentos: ["p_termo", "p_limite"],
+    critica: false,
+    resumo:
+      "Procura o termo (2 a 100, sem acento) no texto e no nome dos anexos das conversas de quem pergunta; até 50, com o trecho. 22023 termo curto.",
+  },
+  fixar_conversa_chat: {
+    argumentos: ["p_conversa", "p_fixada"],
+    critica: false,
+    resumo:
+      "Fixa ou solta a conversa no topo da lista de quem está logado (22023 se não acompanha).",
+  },
+  marcar_nao_lida_chat: {
+    argumentos: ["p_conversa"],
+    critica: false,
+    resumo:
+      "Marca a conversa como não lida para quem está logado; ler desmarca (22023 se não acompanha).",
+  },
+  definir_status_chat: {
+    argumentos: ["p_status"],
+    critica: false,
+    resumo:
+      "Status de quem está logado: DISPONIVEL, OCUPADO ou AUSENTE (22023 fora disso).",
+  },
+  preparar_expurgo_anexos_chat: {
+    argumentos: [],
+    critica: false,
+    resumo:
+      "Só administrador global (42501): põe na fila os arquivos nunca anexados (1 dia) e devolve até 100 caminhos do bucket chat-anexos para remover pela API do Storage.",
+  },
+  confirmar_expurgo_anexos_chat: {
+    argumentos: ["p_caminhos"],
+    critica: false,
+    resumo:
+      "Só administrador global (42501): marca como expurgados os caminhos da fila que já saíram do Storage. Devolve {confirmados, pendentes}.",
   },
   // ── Retenção das mensagens do chat (20261005190000_chat_retencao_das_mensagens.sql)
   obter_retencao_chat: {

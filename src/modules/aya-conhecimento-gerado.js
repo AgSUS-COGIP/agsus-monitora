@@ -3424,7 +3424,7 @@ export const VERBETES_AYA = Object.freeze([
       "painel de mensagens",
     ],
     resposta:
-      'O ícone Mensagens (balões de conversa) fica no cabeçalho, ao lado de Pessoas online, com o número de mensagens não lidas. Ele abre um painel à direita, que não bloqueia a tela: dá para continuar trabalhando com ele aberto. O painel lista as conversas, da mais recente para a mais antiga, com a última mensagem, a hora, as não lidas, um "@" quando alguém mencionou você e um ponto verde em quem está online. Há busca por nome da conversa, pessoa ou unidade do edital e o botão "Nova conversa".',
+      'O ícone Mensagens (balões de conversa) fica no cabeçalho, ao lado de Pessoas online, com o número de mensagens não lidas. Ele abre um painel à direita, que não bloqueia a tela: dá para continuar trabalhando com ele aberto. O painel lista as conversas — as fixadas no topo, depois da mais recente para a mais antiga — com a última mensagem, a hora, as não lidas, um "@" quando alguém mencionou você e o ponto de presença (verde, vermelho ou âmbar). A busca do topo procura no nome da conversa, nas pessoas e na unidade do edital e, a partir de 2 letras, também dentro das mensagens. Embaixo ficam "Meu status" e os Avisos.',
     fato: "",
     fonte: "src/modulos/chat/chat.jsx; src/modulos/chat/painel.jsx",
   },
@@ -3474,7 +3474,7 @@ export const VERBETES_AYA = Object.freeze([
       "arroba no chat",
     ],
     resposta:
-      'Enter envia e Shift+Enter quebra a linha. A mensagem tem até 4.000 caracteres; perto do limite aparece a contagem. Digite @ e o começo do nome para mencionar alguém da conversa: escolha a pessoa na lista (setas e Enter, ou clique). A pessoa mencionada vê o "@" na conversa e a menção destacada. Se a rede falhar, a mensagem fica como "Não enviada", com "Tentar de novo"; reenviar não duplica.',
+      'Enter envia e Shift+Enter quebra a linha. A mensagem tem até 4.000 caracteres; perto do limite aparece a contagem. Com anexo ou cartão, o texto pode ficar vazio. Digite @ e o começo do nome para mencionar alguém da conversa: escolha a pessoa na lista (setas e Enter, ou clique). A pessoa mencionada vê o "@" na lista, a menção destacada e a mensagem com uma borda azul, e recebe o aviso mesmo que tenha silenciado a conversa. Se a rede falhar, a mensagem fica como "Não enviada", com "Tentar de novo"; reenviar não duplica (nem sobe o arquivo de novo).',
     fato: "",
     fonte: "src/modulos/chat/conversa.jsx; src/lib/chat.js",
   },
@@ -3488,7 +3488,7 @@ export const VERBETES_AYA = Object.freeze([
       "abrir tela pelo chat",
     ],
     resposta:
-      '"Compartilhar esta tela", embaixo do campo da mensagem, anexa à mensagem o lugar onde você está: a página, a área e, na Classificação, o edital escolhido (em Configurações, a seção). Quem recebe clica no link e vai para a mesma tela, dentro do MONITORA; se não tiver permissão para a página, aparece o aviso de sempre. Não é um endereço da internet: o chat não abre sites externos.',
+      '"Compartilhar esta tela", embaixo do campo da mensagem, anexa à mensagem o lugar onde você está: a página, a área e, na Classificação, o edital escolhido (em Configurações, a seção). A mensagem mostra um cartão com o nome da tela e o botão "Abrir", que leva à mesma tela dentro do MONITORA. Quem não tem a página vê "Sem acesso" no lugar do botão. Não é um endereço da internet: o chat não abre sites externos.',
     fato: "",
     fonte: "src/modulos/chat/ponte.js; src/lib/chat.js",
   },
@@ -3506,7 +3506,7 @@ export const VERBETES_AYA = Object.freeze([
       "tres pontinhos da mensagem",
     ],
     resposta:
-      'Cada mensagem tem o botão "⋯" (três pontinhos) no canto, sempre à vista — também no celular, com um toque. Ele abre as reações rápidas e "Copiar texto"; na sua mensagem, também Editar e Apagar (só quem escreveu edita ou apaga). A mensagem editada mostra "editada" ao lado da hora. Apagar pede confirmação e deixa no lugar "Mensagem apagada" para todos: o texto e as reações somem, mas o registro de que houve uma mensagem fica.',
+      'Cada mensagem tem o botão "⋯" (três pontinhos) no canto, sempre à vista — também no celular, com um toque. Ele abre as reações rápidas, Responder, Encaminhar e "Copiar texto"; na sua mensagem, também Editar e Apagar (só quem escreveu edita ou apaga). A mensagem editada mostra "editada" ao lado da hora. Apagar pede confirmação e deixa no lugar "Mensagem apagada" para todos: o texto, as reações e os anexos somem (ninguém mais baixa o arquivo), mas o registro de que houve uma mensagem fica.',
     fato: "",
     fonte:
       "src/modulos/chat/conversa.jsx; supabase/migrations/20261002210000_chat.sql",
@@ -3562,6 +3562,156 @@ export const VERBETES_AYA = Object.freeze([
   },
   {
     arquivo: "regras-do-chat.md",
+    titulo: "Anexar arquivo",
+    perguntas: [
+      "anexar arquivo no chat",
+      "mandar pdf no chat",
+      "enviar planilha no chat",
+      "enviar imagem no chat",
+      "clipe no chat",
+      "tipos de arquivo do chat",
+      "tamanho maximo do anexo",
+      "arrastar arquivo para o chat",
+    ],
+    resposta:
+      "O clipe, ao lado da carinha, embaixo do campo, escolhe o arquivo; também dá para arrastar o arquivo para o campo. Valem PDF, imagem (PNG, JPG, WEBP, GIF) e planilha (XLSX, XLS, ODS, CSV), de até 10 MB cada, até 5 por mensagem. Os escolhidos aparecem acima do campo (a imagem com miniatura), com um X para tirar; a mensagem pode ir só com o anexo. Na conversa, a imagem aparece em miniatura e o arquivo com o nome e o tamanho: clique para baixar. O arquivo fica guardado de forma privada: só quem participa da conversa baixa, por um link que vale 1 minuto.",
+    fato: "",
+    fonte:
+      "src/modulos/chat/conversa.jsx; src/lib/anexos-do-chat.js; supabase/migrations/20261007210000_chat_v2.sql",
+  },
+  {
+    arquivo: "regras-do-chat.md",
+    titulo: "Colar print no chat",
+    perguntas: [
+      "colar print no chat",
+      "ctrl v imagem no chat",
+      "colar captura de tela",
+      "mandar print",
+      "print screen no chat",
+    ],
+    resposta:
+      'Copie a imagem (a tecla Print Screen, a Ferramenta de Captura ou "Copiar imagem") e cole no campo da mensagem com Ctrl+V: ela vira anexo, com um nome de print com a data e a hora (por exemplo, print-2026-10-07-14h05m09.png). Texto colado continua indo para o campo normalmente.',
+    fato: "",
+    fonte: "src/modulos/chat/conversa.jsx; src/lib/anexos-do-chat.js",
+  },
+  {
+    arquivo: "regras-do-chat.md",
+    titulo: "Responder mensagem",
+    perguntas: [
+      "responder mensagem",
+      "citar mensagem",
+      "responder uma mensagem especifica",
+      "resposta no chat",
+      "ir para a mensagem citada",
+    ],
+    resposta:
+      'No "⋯" da mensagem, "Responder" mostra acima do campo "Respondendo a…" com o começo da mensagem (o X desiste). A resposta vai com a citação; clicar na citação rola a conversa até a mensagem original e a destaca por um instante (se ela for antiga, o chat busca as páginas anteriores). Se a original for apagada pela retenção, a citação some.',
+    fato: "",
+    fonte:
+      "src/modulos/chat/conversa.jsx; src/modulos/chat/estado.js; supabase/migrations/20261007210000_chat_v2.sql",
+  },
+  {
+    arquivo: "regras-do-chat.md",
+    titulo: "Encaminhar mensagem",
+    perguntas: [
+      "encaminhar mensagem",
+      "repassar mensagem",
+      "mandar a mensagem para outra conversa",
+      "encaminhada no chat",
+    ],
+    resposta:
+      'No "⋯" da mensagem, "Encaminhar" abre a lista das suas conversas: escolha a de destino e a mensagem vai para lá com o texto, o cartão e os anexos, marcada como "Encaminhada" — sem as menções e sem dizer de que conversa veio. Mensagem apagada não se encaminha.',
+    fato: "",
+    fonte:
+      "src/modulos/chat/painel.jsx; supabase/migrations/20261007210000_chat_v2.sql",
+  },
+  {
+    arquivo: "regras-do-chat.md",
+    titulo: "Buscar nas mensagens",
+    perguntas: [
+      "buscar mensagem",
+      "procurar texto nas conversas",
+      "pesquisar no chat",
+      "achar mensagem antiga",
+      "buscar arquivo no chat",
+    ],
+    resposta:
+      'Na busca do topo da lista, a partir de 2 letras, aparece "Nas mensagens", com os resultados das suas conversas: a conversa, quem escreveu, quando e o trecho com o termo destacado (também acha pelo nome do anexo). Maiúsculas e acentos não importam. Clique no resultado para abrir a conversa já na mensagem. A busca só olha conversas que você acompanha e o que você não limpou; mensagens apagadas não aparecem.',
+    fato: "",
+    fonte:
+      "src/modulos/chat/painel.jsx; supabase/migrations/20261007210000_chat_v2.sql",
+  },
+  {
+    arquivo: "regras-do-chat.md",
+    titulo: "Visto (lido)",
+    perguntas: [
+      "visto no chat",
+      "mensagem lida",
+      "dois tracinhos",
+      "quem viu a mensagem",
+      "confirmacao de leitura",
+      "sabe se a pessoa leu",
+    ],
+    resposta:
+      'Nas suas mensagens, ao lado da hora: ✓ quer dizer enviada e ✓✓ azul, vista. Na conversa direta, ✓✓ quando a outra pessoa abriu a conversa depois do envio. No grupo, passe o mouse sobre os tracinhos para ver "Visto por" com os nomes; ✓✓ azul quando todos viram. Só quem participa da conversa vê a leitura dos outros: na conversa do edital, quem só tem acesso ao edital e não a acompanha não vê.',
+    fato: "",
+    fonte:
+      "src/modulos/chat/conversa.jsx; src/lib/chat.js; supabase/migrations/20261007210000_chat_v2.sql",
+  },
+  {
+    arquivo: "regras-do-chat.md",
+    titulo: "Cartões e Compartilhar esta ficha",
+    perguntas: [
+      "cartao no chat",
+      "compartilhar esta ficha",
+      "mandar ficha da avaliacao documental",
+      "link da ficha no chat",
+      "botao abrir no chat",
+      "sem acesso no cartao",
+    ],
+    resposta:
+      'Links internos viram cartão na mensagem: a tela, o edital ou a ficha da Avaliação documental (pelo código do candidato), com o botão "Abrir". Na ficha aberta no modo de análise, a lateral tem "Compartilhar esta ficha": o painel de Mensagens abre para você escolher a conversa e o cartão fica pronto no campo — é só escrever (ou não) e enviar. Quem recebe clica em "Abrir" e vai para a Fila do edital com a ficha aberta, se tiver acesso à Avaliação documental e ao edital; sem a página, o cartão mostra "Sem acesso", e o banco confere de novo ao abrir.',
+    fato: "",
+    fonte:
+      "src/modulos/chat/ponte.js; src/modulos/avaliacao-documental/ficha/ficha.jsx; src/lib/chat.js",
+  },
+  {
+    arquivo: "regras-do-chat.md",
+    titulo: "Fixar e marcar como não lida",
+    perguntas: [
+      "fixar conversa",
+      "conversa no topo",
+      "alfinete no chat",
+      "marcar como nao lida",
+      "deixar conversa como nao lida",
+      "soltar do topo",
+    ],
+    resposta:
+      'No menu da conversa (os três pontinhos ao lado do nome), "Fixar no topo" deixa a conversa sempre no alto da lista, com um alfinete (a fixada por último fica primeiro); "Soltar do topo" desfaz. "Marcar como não lida" volta para a lista com a conversa contando 1 não lida, para você lembrar dela; abrir a conversa desmarca. Valem só para você.',
+    fato: "",
+    fonte:
+      "src/modulos/chat/conversa.jsx; supabase/migrations/20261007210000_chat_v2.sql",
+  },
+  {
+    arquivo: "regras-do-chat.md",
+    titulo: "Meu status",
+    perguntas: [
+      "status no chat",
+      "ocupado no chat",
+      "ausente no chat",
+      "disponivel",
+      "ponto vermelho",
+      "ponto amarelo no chat",
+      "mudar meu status",
+    ],
+    resposta:
+      'No fim da lista de conversas, "Meu status" tem Disponível, Ocupado e Ausente. Os outros veem o ponto no seu avatar enquanto você está com o MONITORA aberto: verde (Disponível), vermelho (Ocupado) ou âmbar (Ausente); na conversa direta, aparece também escrito. Fora do MONITORA, não há ponto. O status fica guardado até você mudar.',
+    fato: "",
+    fonte:
+      "src/modulos/chat/painel.jsx; src/modulos/chat/avatar.jsx; supabase/migrations/20261007210000_chat_v2.sql",
+  },
+  {
+    arquivo: "regras-do-chat.md",
     titulo: "Não lidas e avisos",
     perguntas: [
       "mensagens nao lidas",
@@ -3573,7 +3723,7 @@ export const VERBETES_AYA = Object.freeze([
       "avisos do chat",
     ],
     resposta:
-      'O número no ícone Mensagens e na frente do nome da aba, como "(3) MONITORA", soma as mensagens não lidas de todas as conversas, menos as silenciadas. Abrir a conversa marca como lida. No fim da lista, em Avisos, você liga o Som e as Notificações do navegador; os dois começam desligados, e a notificação pede a permissão do navegador. "Silenciar", no menu da conversa, tira a conversa do contador e dos avisos.',
+      'O número no ícone Mensagens e na frente do nome da aba, como "(3) MONITORA", soma as mensagens não lidas de todas as conversas; das silenciadas, só conta as menções a você. Abrir a conversa marca como lida. No fim da lista, em Avisos, você liga o Som e as Notificações do navegador; os dois começam desligados, e a notificação pede a permissão do navegador. "Silenciar", no menu da conversa, tira a conversa do contador e dos avisos — menos quando alguém menciona você com @.',
     fato: "",
     fonte:
       "src/modulos/chat/estado.js; src/modulos/chat/painel.jsx; src/lib/identidade-da-aba.js",
@@ -3591,7 +3741,7 @@ export const VERBETES_AYA = Object.freeze([
       "aviso some sozinho",
     ],
     resposta:
-      'Quando chega mensagem de outra pessoa e você não está com aquela conversa aberta na tela, aparece um aviso no canto inferior direito com quem mandou e o começo do texto; clique nele para abrir a conversa, ou no X para dispensar. Ele some sozinho em alguns segundos (fica enquanto o mouse está em cima) e aparecem no máximo três, um por conversa. Com o MONITORA em outra aba ou minimizado, o aviso vem como notificação do navegador, se você ligou "Notificações do navegador" em Avisos, no fim da lista de conversas: o navegador pede a permissão nesse clique. Suas mensagens, as apagadas e as de conversas silenciadas não geram aviso.',
+      'Quando chega mensagem de outra pessoa e você não está com aquela conversa aberta na tela, aparece um aviso no canto inferior direito com quem mandou e o começo do texto; clique nele para abrir a conversa, ou no X para dispensar. Ele some sozinho em alguns segundos (fica enquanto o mouse está em cima) e aparecem no máximo três, um por conversa. Com o MONITORA em outra aba ou minimizado, o aviso vem como notificação do navegador, se você ligou "Notificações do navegador" em Avisos, no fim da lista de conversas: o navegador pede a permissão nesse clique. Suas mensagens e as apagadas não geram aviso; as de conversas silenciadas também não, a não ser que mencionem você.',
     fato: "",
     fonte:
       "src/modulos/chat/avisos.jsx; src/modulos/chat/estado.js; src/lib/avisos-do-chat.js",
@@ -3610,7 +3760,7 @@ export const VERBETES_AYA = Object.freeze([
       "botao seta para baixo no chat",
     ],
     resposta:
-      'As mensagens chegam na hora, sem recarregar a página, e aparece "está digitando…" quando alguém escreve na conversa aberta. A conversa abre na última mensagem; se você estiver lendo mensagens antigas quando chegar uma nova, aparece o botão "↓ Nova mensagem", que leva ao fim. Se a conexão cair, o painel mostra "Reconectando…" e, ao voltar, busca o que chegou; ao voltar para a aba do navegador, a lista também é relida. O ponto verde indica quem esteve com o MONITORA aberto nos últimos 2 minutos.',
+      'As mensagens chegam na hora, sem recarregar a página, e aparece "está digitando…" quando alguém escreve na conversa aberta. A conversa abre na última mensagem; se você estiver lendo mensagens antigas quando chegar uma nova, aparece o botão "↓ Nova mensagem", que leva ao fim. Se a conexão cair, o painel mostra "Reconectando…" e, ao voltar, busca o que chegou; ao voltar para a aba do navegador, a lista também é relida. O ponto no avatar indica quem esteve com o MONITORA aberto nos últimos 2 minutos (verde, vermelho ou âmbar conforme o status da pessoa).',
     fato: "",
     fonte:
       "src/modulos/chat/estado.js; supabase/migrations/20261002210000_chat.sql",
@@ -3661,7 +3811,7 @@ export const VERBETES_AYA = Object.freeze([
       "guardar para sempre",
     ],
     resposta:
-      'O padrão é "Guardar para sempre". O administrador global pode escolher 30, 90, 180 ou 365 dias, ou outro prazo de 7 a 3.650 dias, e informa o motivo. A tela mostra quantas mensagens o prazo escolhido apagaria; se apagar alguma, pede confirmação ("Isto apaga X mensagens com mais de N dias; não dá para desfazer"). Ao salvar, as mensagens mais antigas que o prazo e as reações delas são apagadas de fato, na hora (dado que passou do prazo deixa de existir, como pede a LGPD); as conversas continuam, sem essas mensagens. Depois, uma limpeza automática roda todo dia às 3h15 de Brasília e aparece em Status das atualizações como "Retenção das mensagens do chat". Quem está com o chat aberto vê as mensagens sumirem sozinhas.',
+      'O padrão é "Guardar para sempre". O administrador global pode escolher 30, 90, 180 ou 365 dias, ou outro prazo de 7 a 3.650 dias, e informa o motivo. A tela mostra quantas mensagens o prazo escolhido apagaria; se apagar alguma, pede confirmação ("Isto apaga X mensagens com mais de N dias; não dá para desfazer"). Ao salvar, as mensagens mais antigas que o prazo, as reações e os anexos delas são apagados de fato, na hora (dado que passou do prazo deixa de existir, como pede a LGPD); as conversas continuam, sem essas mensagens. Depois, uma limpeza automática roda todo dia às 3h15 de Brasília e aparece em Status das atualizações como "Retenção das mensagens do chat". Quem está com o chat aberto vê as mensagens sumirem sozinhas. Os arquivos dos anexos apagados saem do armazenamento quando o administrador global abre esta seção (o arquivo encaminhado só sai quando a última cópia sai).',
     fato: "",
     fonte:
       "src/lib/retencao-do-chat.js; supabase/migrations/20261005190000_chat_retencao_das_mensagens.sql",
@@ -3678,7 +3828,7 @@ export const VERBETES_AYA = Object.freeze([
       "apagar conversas sem participante",
     ],
     resposta:
-      '"Zerar mensagens" apaga TODAS as mensagens e reações do chat, de todas as pessoas, sem volta. Antes, a tela mostra quanto vai ser apagado. Marcando "Apagar também as conversas sem participante ativo", saem ainda os grupos e as conversas de edital que todos deixaram; conversas diretas e as que ainda têm alguém continuam, vazias. Para confirmar, é preciso digitar ZERAR (em maiúsculas) e informar o motivo (de 3 a 500 caracteres). É diferente de "Limpar conversa", que só esconde o histórico para você.',
+      '"Zerar mensagens" apaga TODAS as mensagens, reações e anexos do chat, de todas as pessoas, sem volta. Antes, a tela mostra quanto vai ser apagado. Marcando "Apagar também as conversas sem participante ativo", saem ainda os grupos e as conversas de edital que todos deixaram; conversas diretas e as que ainda têm alguém continuam, vazias. Para confirmar, é preciso digitar ZERAR (em maiúsculas) e informar o motivo (de 3 a 500 caracteres). É diferente de "Limpar conversa", que só esconde o histórico para você.',
     fato: "",
     fonte:
       "src/modulos/configuracoes/mensagens-do-chat.jsx; supabase/migrations/20261005190000_chat_retencao_das_mensagens.sql",
@@ -3694,7 +3844,7 @@ export const VERBETES_AYA = Object.freeze([
       "auditoria do chat",
     ],
     resposta:
-      'Em Configurações › Mensagens (chat), o histórico mostra cada limpeza: o tipo (prazo salvo, limpeza diária ou zerar), quando, quem pediu (ou "Tarefa diária"), quantas mensagens, reações e conversas saíram e o motivo. O histórico nunca guarda o conteúdo das mensagens apagadas.',
+      'Em Configurações › Mensagens (chat), o histórico mostra cada limpeza: o tipo (prazo salvo, limpeza diária ou zerar), quando, quem pediu (ou "Tarefa diária"), quantas mensagens, reações, anexos e conversas saíram e o motivo. O histórico nunca guarda o conteúdo das mensagens apagadas, nem o nome dos arquivos.',
     fato: "",
     fonte: "supabase/migrations/20261005190000_chat_retencao_das_mensagens.sql",
     abrir: "config:mensagens",

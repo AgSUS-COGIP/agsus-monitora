@@ -668,24 +668,242 @@
   font-weight: var(--font-weight-medium);
 }
 
-.chat-msg__link {
-  display: inline-flex;
+/* Cartão do link interno (tela, edital, ficha): título, detalhe e "Abrir". */
+.chat-cartao {
+  display: flex;
   align-items: center;
   gap: var(--space-2);
   max-width: 100%;
   margin-top: var(--space-1);
+  padding: var(--space-2);
+  border: 1px solid var(--color-border-default);
+  border-left: 3px solid var(--color-status-info-solid);
+  border-radius: var(--radius-md);
+  background: var(--surface-card);
+}
+
+.chat-cartao[data-tipo="ficha"] {
+  border-left-color: var(--color-status-success-solid);
+}
+
+.chat-cartao__icone {
+  flex: none;
+  color: var(--color-text-brand);
+}
+
+.chat-cartao__corpo {
+  display: grid;
+  flex: 1;
+  min-width: 0;
+}
+
+.chat-cartao__corpo strong,
+.chat-cartao__corpo small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.chat-cartao__corpo small,
+.chat-cartao__sem-acesso {
+  color: var(--text-secondary);
+  font-size: var(--text-caption);
+}
+
+.chat-cartao .btn {
+  flex: none;
+}
+
+/* Mensagem que menciona você e a destacada pela busca ou pela citação. */
+.chat-msg.is-mencionada {
+  border-color: var(--color-status-info-solid);
+  box-shadow: inset 3px 0 0 var(--color-status-info-solid);
+}
+
+.chat-msg.is-destaque {
+  outline: 2px solid var(--color-border-focus);
+  outline-offset: 2px;
+}
+
+.chat-msg__encaminhada {
+  display: block;
+  margin-bottom: 2px;
+  color: var(--text-secondary);
+  font-size: var(--text-caption);
+  font-style: italic;
+}
+
+/* Citação (Responder): na mensagem rola até a original. */
+.chat-citacao {
+  display: grid;
+  width: 100%;
+  margin: 0 0 var(--space-1);
+  padding: var(--space-1) var(--space-2);
+  border: 0;
+  border-left: 3px solid var(--color-text-brand);
+  border-radius: var(--radius-sm);
+  background: var(--color-bg-subtle);
+  color: inherit;
+  font: inherit;
+  font-size: var(--text-caption);
+  text-align: left;
+  cursor: pointer;
+}
+
+.chat-citacao--fixa {
+  cursor: default;
+}
+
+.chat-citacao strong {
+  color: var(--color-text-brand);
+}
+
+.chat-citacao span {
+  overflow: hidden;
+  color: var(--text-secondary);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Anexos: miniatura da imagem ou arquivo (baixa por URL assinada curta). */
+.chat-anexos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+  margin: var(--space-1) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.chat-anexo {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  max-width: 100%;
   padding: var(--space-1) var(--space-2);
   border: 1px solid var(--color-border-default);
   border-radius: var(--radius-md);
   background: var(--surface-card);
   color: var(--color-text-link);
   font: inherit;
+  font-size: var(--text-caption);
   text-align: left;
   cursor: pointer;
 }
 
-.chat-msg__link:hover {
-  color: var(--color-text-link-hover);
+.chat-anexo span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.chat-anexo:disabled {
+  color: var(--text-secondary);
+  cursor: default;
+}
+
+.chat-anexo--imagem {
+  justify-content: center;
+  width: 140px;
+  height: 100px;
+  padding: 0;
+  overflow: hidden;
+  font-size: 1.5rem;
+}
+
+.chat-anexo--imagem img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Visto: ✓ enviada, ✓✓ vista. */
+.chat-visto {
+  margin-left: var(--space-1);
+  color: var(--text-secondary);
+  letter-spacing: -2px;
+}
+
+.chat-visto.is-vista {
+  color: var(--color-status-info-solid);
+}
+
+/* Presença: verde (disponível), vermelho (ocupado), âmbar (ausente). */
+.chat-avatar__online[data-presenca="ocupado"] {
+  background: var(--color-status-danger-solid);
+}
+
+.chat-avatar__online[data-presenca="ausente"] {
+  background: var(--color-status-warning-solid);
+}
+
+.chat-item__fixada,
+.chat-conversa__fixada {
+  margin-right: var(--space-1);
+  color: var(--text-secondary);
+  font-size: var(--text-caption);
+}
+
+/* Resultados da busca nas mensagens. */
+.chat-busca-resultados {
+  display: grid;
+  gap: var(--space-1);
+}
+
+.chat-resultado__trecho,
+.chat-resultado__anexo {
+  display: block;
+  overflow: hidden;
+  color: var(--text-secondary);
+  font-size: var(--text-caption);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.chat-resultado__autor {
+  color: var(--text-primary);
+}
+
+.chat-busca-resultados mark {
+  padding: 0 1px;
+  border-radius: var(--radius-sm);
+  background: var(--color-status-warning-bg);
+  color: var(--color-status-warning-text);
+}
+
+/* Meu status (lista). */
+.chat-status {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-3);
+  margin-top: auto;
+  padding: var(--space-2) var(--space-3);
+  border-top: 1px solid var(--color-border-subtle);
+}
+
+.chat-status__rotulo {
+  color: var(--text-secondary);
+  font-size: var(--text-caption);
+}
+
+/* "Compartilhar esta ficha": escolha a conversa. */
+.chat-compartilhar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: var(--space-3) var(--space-3) 0;
+  padding: var(--space-2);
+  border-radius: var(--radius-md);
+  background: var(--color-status-info-bg);
+  color: var(--color-status-info-text);
+}
+
+.chat-compartilhar span {
+  display: grid;
+  flex: 1;
+  min-width: 0;
+  font-size: var(--text-caption);
 }
 
 .chat-msg__hora {
@@ -836,6 +1054,8 @@
 .chat-escrita {
   position: relative;
   display: grid;
+  /* minmax(0, 1fr): o rótulo longo do cartão encurta com reticências em vez de alargar o campo. */
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--space-2);
   padding: var(--space-2) var(--space-3) var(--space-3);
   border-top: 1px solid var(--color-border-subtle);
@@ -860,6 +1080,72 @@
 .chat-escrita__link span {
   flex: 1;
   min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.chat-escrita.is-arrastando {
+  outline: 2px dashed var(--color-border-focus);
+  outline-offset: -4px;
+}
+
+/* Respondendo a… e os anexos escolhidos, acima do campo. */
+.chat-escrita__resposta {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-1) var(--space-2);
+  border-left: 3px solid var(--color-text-brand);
+  border-radius: var(--radius-sm);
+  background: var(--color-bg-subtle);
+  font-size: var(--text-caption);
+}
+
+.chat-escrita__resposta span {
+  display: grid;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--text-secondary);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.chat-escrita__resposta strong {
+  color: var(--color-text-brand);
+}
+
+.chat-escrita__anexos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.chat-escrita__anexo {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  max-width: 100%;
+  padding: 2px 2px 2px var(--space-1);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-md);
+  background: var(--surface-card);
+  font-size: var(--text-caption);
+}
+
+.chat-escrita__anexo img {
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-sm);
+  object-fit: cover;
+}
+
+.chat-escrita__anexo span {
+  max-width: 160px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;

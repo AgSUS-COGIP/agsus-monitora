@@ -84,6 +84,13 @@ function Numeros({ dados }) {
         valor={formatNumberBR(dados.reacoes)}
       />
       <Kpi
+        chave="anexos"
+        tom="info"
+        icone="fa-paperclip"
+        rotulo="Anexos"
+        valor={formatNumberBR(dados.anexos)}
+      />
+      <Kpi
         chave="conversas"
         tom="neutro"
         icone="fa-users"
