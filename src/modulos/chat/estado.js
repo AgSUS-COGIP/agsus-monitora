@@ -7,9 +7,17 @@
   listar_pessoas_chat, enviar_mensagem_chat, editar_mensagem_chat,
   apagar_mensagem_chat, marcar_conversa_lida_chat, abrir_conversa_direta_chat,
   criar_grupo_chat, adicionar_participantes_chat, sair_conversa_chat,
-  silenciar_conversa_chat e abrir_conversa_edital_chat; e, da v1.1
+  silenciar_conversa_chat e abrir_conversa_edital_chat; da v1.1
   (20261005100000_chat_limpar_e_reacoes.sql), limpar_conversa_chat e
-  alternar_reacao_chat.
+  alternar_reacao_chat; e da v2 (20261007210000_chat_v2.sql), enviar com
+  citação e anexos, obter_mensagem_chat, encaminhar_mensagem_chat,
+  buscar_mensagens_chat, fixar_conversa_chat, marcar_nao_lida_chat e
+  definir_status_chat.
+
+  Anexos (v2): o arquivo sobe para o bucket privado chat-anexos (caminho
+  <conversa>/<uuid>.<extensão>) e só depois a RPC de envio registra; o que
+  já subiu não sobe de novo ao tentar outra vez. Miniatura e download por URL
+  assinada curta (createSignedUrl, 60 s).
 
   Tempo real (Supabase Realtime, com a RLS do banco):
     - canal "chat-usuario:<eu>": postgres_changes de TB_MENSAGEM (todas as que a
@@ -17,7 +25,10 @@
       da conversa aberta entra na hora (sem duplicar: `mesclarMensagens`); a
       lista é relida logo depois (contagem e prévia certas). O que a pessoa
       limpou (limpa_em) não volta pelo Realtime. Reações (RL_MENSAGEM_REACAO)
-      da conversa aberta entram na mensagem (aplicarReacaoDaLinha). DELETE de
+      da conversa aberta entram na mensagem (aplicarReacaoDaLinha). A linha
+      com anexo ou citação é completada por obter_mensagem_chat. A leitura
+      dos outros participantes da conversa aberta atualiza o Visto
+      (aplicarLeituraDaLinha; a RLS só entrega a quem participa). DELETE de
       TB_MENSAGEM (retenção ou "Zerar mensagens" das Configurações, só com a
       chave): a mensagem sai da tela (tirarMensagens); a releitura da página
       mais nova também tira o que sumiu do banco (reconciliarPagina).
@@ -33,7 +44,9 @@
 */
 
 import {
+  aplicarLeituraDaLinha,
   aplicarReacaoDaLinha,
+  citacaoDe,
   depoisDaLimpeza,
   LIMITE_DO_TEXTO,
   linkDaTela,
@@ -42,13 +55,22 @@ import {
   mesclarMensagens,
   naoLidasDasMensagens,
   ordenarConversas,
+  podeEnviar,
+  precisaCompletar,
   REACOES_RAPIDAS,
   reacoesComAlternancia,
   reconciliarPagina,
+  STATUS_DE_PRESENCA,
+  termoDeBuscaValido,
   tirarMensagens,
   totalDeNaoLidas,
   validarTexto,
 } from "../../lib/chat.js";
+import {
+  BUCKET_DO_CHAT,
+  caminhoDoAnexoDoChat,
+  VALIDADE_DA_URL_DO_ANEXO,
+} from "../../lib/anexos-do-chat.js";
 import {
   comoAvisar,
   empilharAvisos,
@@ -77,10 +99,20 @@ const RPC_SILENCIAR = "silenciar_conversa_chat";
 const RPC_ABRIR_EDITAL = "abrir_conversa_edital_chat";
 const RPC_LIMPAR = "limpar_conversa_chat";
 const RPC_REAGIR = "alternar_reacao_chat";
+const RPC_OBTER_MENSAGEM = "obter_mensagem_chat";
+const RPC_ENCAMINHAR = "encaminhar_mensagem_chat";
+const RPC_BUSCAR = "buscar_mensagens_chat";
+const RPC_FIXAR = "fixar_conversa_chat";
+const RPC_NAO_LIDA = "marcar_nao_lida_chat";
+const RPC_STATUS = "definir_status_chat";
 
 const TEMPO_LIMITE_MS = 30000;
 const DIGITANDO_MS = 4000;
 const RELER_LISTA_MS = 60000;
+/* Quantas páginas antigas buscar para achar a mensagem (busca, citação). */
+const PAGINAS_PARA_ACHAR = 10;
+/* A URL assinada vale 60 s; a miniatura reaproveita por um pouco menos. */
+const GUARDAR_URL_MS = 45000;
 const CHAVE_PREFERENCIAS = "monitora.chat.preferencias";
 
 const ESTADO_INICIAL = Object.freeze({
@@ -105,6 +137,16 @@ const ESTADO_INICIAL = Object.freeze({
   reconectando: false,
   preferencias: { som: false, notificacoes: false },
   avisos: [],
+  // v2
+  resposta: null,
+  destaque: null,
+  busca: { termo: "", resultados: [], carregando: false, erro: "" },
+  meuStatus: "DISPONIVEL",
+  /* paginasPermitidas(perfil) de quem está logado: o "Abrir" dos cartões. */
+  paginas: null,
+  compartilhando: null,
+  linkPendente: null,
+  encaminhando: null,
 });
 
 export function mensagemDoBanco(erro) {
@@ -192,11 +234,33 @@ export function criarEstadoDoChat({
   definirTitulo = (total) => definirNaoLidasDaAba(total, documento),
   tempoLimiteMs = TEMPO_LIMITE_MS,
   agora = () => new Date(),
+  /* Prévia local do anexo antes de subir (imagem): URL do navegador. */
+  criarUrlLocal = (arquivo) => {
+    try {
+      return globalThis.URL?.createObjectURL?.(arquivo) ?? null;
+    } catch {
+      return null;
+    }
+  },
+  liberarUrlLocal = (url) => {
+    try {
+      globalThis.URL?.revokeObjectURL?.(url);
+    } catch {
+      /* sem URL local */
+    }
+  },
 } = {}) {
   let estado = {
     ...ESTADO_INICIAL,
     preferencias: lerPreferencias(armazenamento),
   };
+  /* Arquivos de cada mensagem pendente (id → [{ arquivo, caminho, mime, enviado }]). */
+  const arquivos = new Map();
+  /* URLs assinadas recentes (caminho → { url, ate }) e as mensagens em completação. */
+  const urlsAssinadas = new Map();
+  const completando = new Set();
+  let pedidoDaBusca = 0;
+  let vezDoDestaque = 0;
   const ouvintes = new Set();
   let canalDoUsuario = null;
   let canalDaConversa = null;
@@ -255,8 +319,14 @@ export function criarEstadoDoChat({
         Array.isArray(dados?.conversas) ? dados.conversas : [],
       );
       const aberta = conversas.find((c) => c.id === estado.conversaId);
+      const meuStatus = STATUS_DE_PRESENCA.some(
+        (s) => s.valor === dados?.meu_status,
+      )
+        ? dados.meu_status
+        : estado.meuStatus;
       publicar({
         conversas,
+        meuStatus,
         carregado: true,
         carregandoConversas: false,
         erro: "",
@@ -312,6 +382,8 @@ export function criarEstadoDoChat({
     if (!depoisDaLimpeza(mensagem, limpaEm)) return; // a pessoa limpou
     if (daAberta) {
       publicar({ mensagens: mesclarMensagens(estado.mensagens, [mensagem]) });
+      const naTela = estado.mensagens.find((m) => m.id === mensagem.id);
+      if (precisaCompletar(naTela)) void completarMensagem(mensagem.id);
       if (conversaAVista(mensagem.conversa)) agendarLeitura();
     }
     if (payload.eventType === "INSERT") {
@@ -337,6 +409,26 @@ export function criarEstadoDoChat({
       avisarChegada(mensagem, conversa || estado.conversa, aVista);
     }
     agendarReleitura();
+  }
+
+  /* A linha do Realtime anuncia anexos ou citação: a mensagem inteira vem da RPC. */
+  async function completarMensagem(id) {
+    if (completando.has(id)) return false;
+    completando.add(id);
+    try {
+      const inteira = await rpc(RPC_OBTER_MENSAGEM, { p_mensagem: id });
+      if (inteira?.id && inteira.conversa === estado.conversaId)
+        publicar({
+          mensagens: mesclarMensagens(estado.mensagens, [
+            { ...inteira, qt_anexo: undefined, resposta_id: undefined },
+          ]),
+        });
+      return Boolean(inteira?.id);
+    } catch {
+      return false;
+    } finally {
+      completando.delete(id);
+    }
   }
 
   async function avisarDepoisDeReler(mensagem) {
@@ -394,6 +486,22 @@ export function criarEstadoDoChat({
     return abrirConversa(aviso.conversa);
   }
 
+  /*
+    RL_CONVERSA_PARTICIPANTE (a RLS entrega a própria linha e as das conversas
+    em que a pessoa participa): a própria relê a lista; a de outra pessoa na
+    conversa aberta atualiza o Visto (ou, se não mudou a leitura — alguém
+    entrou ou saiu —, relê a lista).
+  */
+  function aoMudarParticipante(payload) {
+    const linha = payload?.new;
+    if (!linha?.CO_USUARIO || String(linha.CO_USUARIO) === String(estado.eu))
+      return agendarReleitura();
+    if (linha.CO_CONVERSA !== estado.conversaId || !estado.conversa) return;
+    const conversa = aplicarLeituraDaLinha(estado.conversa, linha);
+    if (conversa !== estado.conversa) publicar({ conversa });
+    else agendarReleitura();
+  }
+
   function aoMudarReacao(payload) {
     const linha = payload?.new;
     if (!linha?.CO_CONVERSA || linha.CO_CONVERSA !== estado.conversaId) return;
@@ -434,9 +542,8 @@ export function criarEstadoDoChat({
           event: "*",
           schema: "public",
           table: "RL_CONVERSA_PARTICIPANTE",
-          filter: `CO_USUARIO=eq.${estado.eu}`,
         },
-        () => agendarReleitura(),
+        aoMudarParticipante,
       )
       .on(
         "postgres_changes",
@@ -522,6 +629,10 @@ export function criarEstadoDoChat({
     documento?.removeEventListener?.("visibilitychange", aoMudarVisibilidade);
     pedidoDaLista += 1;
     pedidoDaConversa += 1;
+    pedidoDaBusca += 1;
+    liberarPreviasLocais(estado.mensagens);
+    arquivos.clear();
+    urlsAssinadas.clear();
     if (estado.ligado || estado.conversas.length)
       publicar({ ...ESTADO_INICIAL, preferencias: estado.preferencias });
   }
@@ -546,7 +657,9 @@ export function criarEstadoDoChat({
 
   function voltarParaLista() {
     pedidoDaConversa += 1;
+    clearTimeout(leituraAgendada);
     sairDoCanalDaConversa();
+    liberarPreviasLocais(estado.mensagens);
     publicar({
       visao: "lista",
       conversaId: null,
@@ -555,11 +668,20 @@ export function criarEstadoDoChat({
       temMais: false,
       erroDaConversa: "",
       carregandoMensagens: false,
+      resposta: null,
+      destaque: null,
+      encaminhando: null,
     });
   }
 
   function mostrar(visao) {
     publicar({ visao, pessoas: [] });
+  }
+
+  /* As prévias locais (URL do navegador) das mensagens que saem da tela. */
+  function liberarPreviasLocais(mensagens) {
+    for (const m of mensagens || [])
+      for (const a of m?.anexos || []) if (a?.previa) liberarUrlLocal(a.previa);
   }
 
   // ── Conversa ─────────────────────────────────────────────────────────────
@@ -613,12 +735,15 @@ export function criarEstadoDoChat({
       conversa || estado.conversas.find((c) => c.id === id) || null;
     if (estado.conversaId !== id) {
       sairDoCanalDaConversa();
+      liberarPreviasLocais(estado.mensagens);
       publicar({
         conversaId: id,
         conversa: daLista,
         mensagens: [],
         temMais: false,
         erroDaConversa: "",
+        resposta: null,
+        destaque: null,
       });
       assinarCanalDaConversa(id);
     }
@@ -626,6 +751,13 @@ export function criarEstadoDoChat({
       aberto: true,
       visao: "conversa",
       avisos: estado.avisos.filter((a) => a.conversa !== id),
+      // "Compartilhar esta ficha": o cartão espera no campo desta conversa.
+      ...(estado.compartilhando
+        ? {
+            linkPendente: { conversa: id, link: estado.compartilhando },
+            compartilhando: null,
+          }
+        : {}),
     });
     return carregarMensagens(id);
   }
@@ -687,7 +819,7 @@ export function criarEstadoDoChat({
         conversa?.lida_em ?? estado.conversa?.lida_em,
         estado.eu,
       );
-    if (conversa && !pendentes) return true;
+    if (conversa && !pendentes && !conversa.marcada_nao_lida) return true;
     try {
       const dados = await rpc(RPC_MARCAR_LIDA, {
         p_conversa: id,
@@ -699,6 +831,7 @@ export function criarEstadoDoChat({
           ...daLista,
           nao_lidas: 0,
           mencoes: 0,
+          marcada_nao_lida: false,
           lida_em: dados?.lida_em ?? daLista.lida_em,
           participa: true,
         });
@@ -709,45 +842,114 @@ export function criarEstadoDoChat({
     }
   }
 
-  async function enviar(texto, { link = null, mencoes = [] } = {}) {
+  /**
+   * Envia a mensagem da conversa aberta. `anexos`: os de juntarAnexos
+   * (src/lib/anexos-do-chat.js: `{ arquivo, mime, extensao }`); `resposta`: a
+   * citação (estado.resposta, de citacaoDe).
+   */
+  async function enviar(
+    texto,
+    { link = null, mencoes = [], anexos = [], resposta = null } = {},
+  ) {
     const id = estado.conversaId;
-    const validacao = validarTexto(texto);
+    const linkConferido = link ? linkDaTela(link) : null;
+    const lista = Array.isArray(anexos) ? anexos : [];
+    const validacao = podeEnviar(texto, {
+      anexos: lista.length,
+      link: linkConferido,
+    });
     if (!id || !validacao.ok) {
       if (!validacao.ok) toast(validacao.erro, "warn");
       return false;
     }
-    const linkConferido = link ? linkDaTela(link) : null;
+    const mensagemId = novoId();
+    let paraSubir;
+    try {
+      paraSubir = lista.map((a) => {
+        const anexoId = novoId();
+        return {
+          id: anexoId,
+          arquivo: a.arquivo,
+          mime: a.mime,
+          caminho: caminhoDoAnexoDoChat(id, anexoId, a.extensao),
+          enviado: false,
+        };
+      });
+    } catch (erro) {
+      toast(erro.message, "error");
+      return false;
+    }
+    if (paraSubir.length) arquivos.set(mensagemId, paraSubir);
     const mensagem = {
-      id: novoId(),
+      id: mensagemId,
       conversa: id,
       autor: estado.eu,
-      texto: String(texto).slice(0, LIMITE_DO_TEXTO),
+      texto: String(texto ?? "").slice(0, LIMITE_DO_TEXTO),
       link: linkConferido,
       mencoes,
       criada_em: agora().toISOString(),
       editada_em: null,
       apagada: false,
       pendente: true,
+      resposta: resposta?.id ? resposta : null,
+      anexos: paraSubir.map((p) => ({
+        id: p.id,
+        nome: String(p.arquivo?.name || "arquivo").slice(0, 200),
+        mime: p.mime,
+        bytes: p.arquivo?.size ?? 0,
+        caminho: p.caminho,
+        previa: p.mime.startsWith("image/") ? criarUrlLocal(p.arquivo) : null,
+      })),
     };
-    publicar({ mensagens: mesclarMensagens(estado.mensagens, [mensagem]) });
+    publicar({
+      mensagens: mesclarMensagens(estado.mensagens, [mensagem]),
+      resposta: null,
+    });
     return gravar(mensagem);
+  }
+
+  /* Sobe ao bucket os arquivos da mensagem que ainda não subiram. */
+  async function subirArquivos(mensagemId) {
+    for (const p of arquivos.get(mensagemId) || []) {
+      if (p.enviado) continue;
+      if (!supabase?.storage?.from) throw new Error("Sem conexão com o banco.");
+      const { error } = await comTempoLimite(
+        supabase.storage
+          .from(BUCKET_DO_CHAT)
+          .upload(p.caminho, p.arquivo, { contentType: p.mime, upsert: false }),
+        tempoLimiteMs * 4,
+      );
+      // Já subiu numa tentativa anterior (a resposta é que se perdeu).
+      if (error && !/exist|duplicate/i.test(String(error.message || "")))
+        throw error;
+      p.enviado = true;
+    }
   }
 
   async function gravar(mensagem) {
     try {
+      await subirArquivos(mensagem.id);
       const gravada = await rpc(RPC_ENVIAR, {
         p_conversa: mensagem.conversa,
         p_texto: mensagem.texto,
         p_link_tela: mensagem.link,
         p_mencoes: mensagem.mencoes?.length ? mensagem.mencoes : null,
         p_mensagem: mensagem.id,
+        p_resposta: mensagem.resposta?.id ?? null,
+        p_anexos: mensagem.anexos?.length
+          ? mensagem.anexos.map((a) => ({ caminho: a.caminho, nome: a.nome }))
+          : null,
       });
-      if (estado.conversaId === mensagem.conversa)
+      arquivos.delete(mensagem.id);
+      if (estado.conversaId === mensagem.conversa) {
+        const naTela = estado.mensagens.find((m) => m.id === mensagem.id);
+        liberarPreviasLocais(naTela ? [naTela] : []);
         publicar({
           mensagens: mesclarMensagens(estado.mensagens, [
             { ...gravada, pendente: false, falhou: false },
           ]),
         });
+      }
       agendarReleitura(200);
       return true;
     } catch (erro) {
@@ -774,9 +976,11 @@ export function criarEstadoDoChat({
   }
 
   function descartar(id) {
-    publicar({
-      mensagens: estado.mensagens.filter((m) => !(m.id === id && m.falhou)),
-    });
+    const fora = estado.mensagens.find((m) => m.id === id && m.falhou);
+    if (!fora) return;
+    arquivos.delete(id);
+    liberarPreviasLocais([fora]);
+    publicar({ mensagens: estado.mensagens.filter((m) => m !== fora) });
   }
 
   async function editar(id, texto) {
@@ -852,6 +1056,241 @@ export function criarEstadoDoChat({
       /* sem tempo real: só não avisa */
     }
   }
+
+  // ── Anexos: URL assinada curta ───────────────────────────────────────────
+
+  /**
+   * URL assinada (60 s) do anexo: para a miniatura (`baixar: false`, guardada
+   * por 45 s) ou para baixar com o nome original. A política do bucket decide
+   * quem recebe.
+   */
+  async function urlDoAnexo(anexo, { baixar = false } = {}) {
+    if (!anexo?.caminho || !supabase?.storage?.from) return null;
+    const guardada = urlsAssinadas.get(anexo.caminho);
+    if (!baixar && guardada && guardada.ate > Date.now()) return guardada.url;
+    const { data, error } = await comTempoLimite(
+      supabase.storage
+        .from(BUCKET_DO_CHAT)
+        .createSignedUrl(
+          anexo.caminho,
+          VALIDADE_DA_URL_DO_ANEXO,
+          baixar ? { download: String(anexo.nome || "arquivo") } : undefined,
+        ),
+      tempoLimiteMs,
+    );
+    if (error) throw error;
+    const url = data?.signedUrl || null;
+    if (url && !baixar)
+      urlsAssinadas.set(anexo.caminho, {
+        url,
+        ate: Date.now() + GUARDAR_URL_MS,
+      });
+    return url;
+  }
+
+  async function baixarAnexo(anexo) {
+    try {
+      const url = await urlDoAnexo(anexo, { baixar: true });
+      if (!url) throw new Error("Sem endereço para o arquivo.");
+      const ancora = documento?.createElement?.("a");
+      if (!ancora) return false;
+      ancora.href = url;
+      ancora.rel = "noopener";
+      ancora.click();
+      return true;
+    } catch (erro) {
+      toast(
+        erro?.statusCode === "400" || erro?.status === 400
+          ? "Este arquivo não está mais disponível."
+          : mensagemDoBanco(erro),
+        "error",
+      );
+      return false;
+    }
+  }
+
+  // ── Responder, encaminhar e ir até a mensagem ────────────────────────────
+
+  function responder(id) {
+    const mensagem = estado.mensagens.find((m) => m.id === id);
+    if (!mensagem || mensagem.apagada || mensagem.pendente || mensagem.falhou)
+      return false;
+    publicar({ resposta: citacaoDe(mensagem) });
+    return true;
+  }
+
+  const cancelarResposta = () => publicar({ resposta: null });
+
+  function pedirEncaminhamento(id) {
+    const mensagem = estado.mensagens.find((m) => m.id === id);
+    if (!mensagem || mensagem.apagada || mensagem.pendente || mensagem.falhou)
+      return false;
+    publicar({ encaminhando: citacaoDe(mensagem), visao: "encaminhar" });
+    return true;
+  }
+
+  function cancelarEncaminhamento() {
+    publicar({
+      encaminhando: null,
+      visao: estado.conversaId ? "conversa" : "lista",
+    });
+  }
+
+  async function encaminhar(destino) {
+    const origem = estado.encaminhando;
+    if (!origem?.id || !destino) return false;
+    const gravada = await comAcao("encaminhar", "Encaminhando…", () =>
+      rpc(RPC_ENCAMINHAR, { p_mensagem: origem.id, p_conversa: destino }),
+    );
+    if (!gravada?.id) return false;
+    publicar({ encaminhando: null });
+    agendarReleitura(200);
+    informar("Mensagem encaminhada.");
+    return abrirConversa(destino);
+  }
+
+  /**
+   * Abre a conversa e rola até a mensagem (resultado da busca, citação):
+   * busca páginas mais antigas até achar (no máximo 10). Achou: `destaque`.
+   */
+  async function irParaMensagem(conversaId, mensagemId) {
+    if (!conversaId || !mensagemId) return false;
+    if (estado.conversaId !== conversaId || estado.visao !== "conversa") {
+      const abriu = await abrirConversa(conversaId);
+      if (!abriu) return false;
+    }
+    const tem = () => estado.mensagens.some((m) => m.id === mensagemId);
+    for (let i = 0; i < PAGINAS_PARA_ACHAR && !tem() && estado.temMais; i++)
+      if (!(await carregarAnteriores())) break;
+    if (!tem()) {
+      toast("Esta mensagem não está mais na conversa.", "warn");
+      return false;
+    }
+    vezDoDestaque += 1;
+    publicar({ destaque: { id: mensagemId, vez: vezDoDestaque } });
+    return true;
+  }
+
+  // ── Busca ────────────────────────────────────────────────────────────────
+
+  async function buscar(termo) {
+    const meu = ++pedidoDaBusca;
+    const t = String(termo ?? "").trim();
+    if (!termoDeBuscaValido(t)) {
+      publicar({
+        busca: { termo: t, resultados: [], carregando: false, erro: "" },
+      });
+      return false;
+    }
+    publicar({
+      busca: { ...estado.busca, termo: t, carregando: true, erro: "" },
+    });
+    try {
+      const dados = await rpc(RPC_BUSCAR, { p_termo: t, p_limite: 30 });
+      if (meu !== pedidoDaBusca) return false;
+      publicar({
+        busca: {
+          termo: t,
+          resultados: Array.isArray(dados?.resultados) ? dados.resultados : [],
+          carregando: false,
+          erro: "",
+        },
+      });
+      return true;
+    } catch (erro) {
+      if (meu !== pedidoDaBusca) return false;
+      publicar({
+        busca: {
+          termo: t,
+          resultados: [],
+          carregando: false,
+          erro: mensagemDoBanco(erro),
+        },
+      });
+      return false;
+    }
+  }
+
+  // ── Fixar, não lida, status e compartilhar ───────────────────────────────
+
+  async function fixar(id, fixada) {
+    if (!id) return false;
+    try {
+      const conversa = await rpc(RPC_FIXAR, {
+        p_conversa: id,
+        p_fixada: Boolean(fixada),
+      });
+      if (!conversa?.id) return false;
+      trocarConversaNaLista(conversa);
+      if (estado.conversaId === id)
+        publicar({ conversa: { ...estado.conversa, ...conversa } });
+      return true;
+    } catch (erro) {
+      toast(mensagemDoBanco(erro), "error");
+      return false;
+    }
+  }
+
+  /* Marca como não lida e, se estava aberta, volta para a lista (senão a leitura desmarcaria). */
+  async function marcarNaoLida(id) {
+    if (!id) return false;
+    try {
+      const conversa = await rpc(RPC_NAO_LIDA, { p_conversa: id });
+      if (!conversa?.id) return false;
+      if (estado.conversaId === id) voltarParaLista();
+      trocarConversaNaLista(conversa);
+      return true;
+    } catch (erro) {
+      toast(mensagemDoBanco(erro), "error");
+      return false;
+    }
+  }
+
+  async function definirStatus(status) {
+    if (!STATUS_DE_PRESENCA.some((s) => s.valor === status)) return false;
+    const antes = estado.meuStatus;
+    publicar({ meuStatus: status });
+    try {
+      const dados = await rpc(RPC_STATUS, { p_status: status });
+      if (dados?.status) publicar({ meuStatus: dados.status });
+      return true;
+    } catch (erro) {
+      publicar({ meuStatus: antes });
+      toast(mensagemDoBanco(erro), "error");
+      return false;
+    }
+  }
+
+  /**
+   * "Compartilhar esta ficha" (ou outra tela) de fora do painel: abre a lista
+   * para escolher a conversa; o cartão espera no campo dela (linkPendente).
+   */
+  function compartilhar(link) {
+    const conferido = linkDaTela(link);
+    if (!estado.ligado || !conferido) return false;
+    if (estado.conversaId) voltarParaLista();
+    publicar({ aberto: true, visao: "lista", compartilhando: conferido });
+    if (!estado.carregado) void carregarConversas();
+    return true;
+  }
+
+  const cancelarCompartilhamento = () => publicar({ compartilhando: null });
+
+  /* As páginas que quem está logado abre (chat.jsx, pela sessão do app). */
+  function definirPaginas(paginas) {
+    const valor = paginas && typeof paginas === "object" ? paginas : null;
+    if (JSON.stringify(valor) !== JSON.stringify(estado.paginas))
+      publicar({ paginas: valor });
+  }
+
+  function consumirLinkPendente(conversaId) {
+    const pendente = estado.linkPendente;
+    if (!pendente || pendente.conversa !== conversaId) return null;
+    publicar({ linkPendente: null });
+    return pendente.link;
+  }
+
+  const informar = (mensagem) => toast(mensagem, "success");
 
   // ── Pessoas, grupo e participação ────────────────────────────────────────
 
@@ -1003,12 +1442,30 @@ export function criarEstadoDoChat({
     dispensarAviso: tirarAvisoDaMensagem,
     abrirDoAviso,
     recarregarTudo,
+    // v2
+    urlDoAnexo,
+    baixarAnexo,
+    responder,
+    cancelarResposta,
+    pedirEncaminhamento,
+    cancelarEncaminhamento,
+    encaminhar,
+    irParaMensagem,
+    buscar,
+    fixar,
+    marcarNaoLida,
+    definirStatus,
+    compartilhar,
+    cancelarCompartilhamento,
+    consumirLinkPendente,
+    definirPaginas,
     avisar: (mensagem) => toast(mensagem, "warn"),
-    informar: (mensagem) => toast(mensagem, "success"),
+    informar,
     /** Só para os testes: o que o Realtime entregaria. */
     _aoMudarMensagem: aoMudarMensagem,
     _aoMudarStatus: aoMudarStatus,
     _aoMudarReacao: aoMudarReacao,
+    _aoMudarParticipante: aoMudarParticipante,
     _aoReceberDigitando: aoReceberDigitando,
   };
 }

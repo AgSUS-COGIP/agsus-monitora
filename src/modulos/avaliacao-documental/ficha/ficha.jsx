@@ -43,6 +43,8 @@ import {
   ROTULO_DA_ART,
 } from "../../../lib/avaliacao-documental/tela-da-pre-classificacao.js";
 import { Aviso, Campo, Kv, Selo } from "../../../ui/index.js";
+import { compartilharNoChat } from "../../chat/ponte.js";
+import { usarChatLiberado } from "../../chat/usar-chat-liberado.js";
 import { criarEstadoDaFicha } from "./estado-da-ficha.js";
 
 /*
@@ -834,6 +836,17 @@ function Lateral({
         parecer: ficha.parecer,
       }
     : avaliacao;
+  // "Compartilhar esta ficha": o cartão (edital e candidato pelo código) vai para uma conversa do chat.
+  const comChat = usarChatLiberado();
+  const compartilharFicha = () => {
+    const ok = compartilharNoChat({
+      view: "avaliacao-documental",
+      area: dados.edital?.area || "",
+      edital: { id: dados.edital?.id, titulo: dados.edital?.rotulo || "" },
+      ficha: { id: ficha.id, codigo: String(ficha.codigo ?? "") },
+    });
+    if (!ok) setCopiado("Não foi possível compartilhar esta ficha");
+  };
   // Em análise (falta conferir e nada conferido eliminou): estado neutro, nota parcial.
   const emAnalise = !concluida && st.conferencia?.situacao === "EM_ANALISE";
   const resultado = concluida
@@ -972,6 +985,17 @@ function Lateral({
           empregare={empregare}
           className="btn secondary small"
         />
+        {comChat ? (
+          <button
+            type="button"
+            className="btn secondary small"
+            data-tour="avd-ficha-compartilhar"
+            onClick={compartilharFicha}
+          >
+            <i className="fa-solid fa-comments" aria-hidden="true" />{" "}
+            Compartilhar esta ficha
+          </button>
+        ) : null}
         {copiado ? <small role="status">{copiado}</small> : null}
       </div>
       {(regra.observacoes_prontas || []).length ? (

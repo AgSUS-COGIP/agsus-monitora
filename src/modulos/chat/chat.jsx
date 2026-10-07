@@ -2,13 +2,13 @@ import { lazy, Suspense, useEffect, useSyncExternalStore } from "react";
 import { createPortal } from "react-dom";
 import { montarModulo } from "../../app/montar-modulo.jsx";
 import { FASES, sessaoDoApp } from "../../app/sessao.js";
-import { podeUsarChat } from "../../lib/access-roles.js";
+import { paginasPermitidas, podeUsarChat } from "../../lib/access-roles.js";
 import { totalDeNaoLidas } from "../../lib/chat.js";
 import { importarComRecarga } from "../../lib/importar-com-recarga.js";
 import { getSupabaseClient } from "../../lib/supabaseClient.js";
 import { AvisosDoChat } from "./avisos.jsx";
 import { criarEstadoDoChat } from "./estado.js";
-import { EVENTO_ABRIR_CONVERSA } from "./ponte.js";
+import { EVENTO_ABRIR_CONVERSA, EVENTO_COMPARTILHAR } from "./ponte.js";
 
 /*
   Chat do MONITORA (painel "Mensagens"), módulo do app.
@@ -23,7 +23,7 @@ import { EVENTO_ABRIR_CONVERSA } from "./ponte.js";
 
   De fora, a conversa abre pelo evento EVENTO_ABRIR_CONVERSA (ponte.js) e pelo
   botão "Mensagem" de Pessoas online (`[data-chat-usuario]`, marcação do
-  legado).
+  legado); o cartão de "Compartilhar esta ficha" chega pelo EVENTO_COMPARTILHAR.
 */
 
 // Versão nova publicada com a página aberta: recarrega em vez de quebrar a ilha.
@@ -81,9 +81,10 @@ function usarLigacoes(estado, sessao, documento) {
   useEffect(() => {
     const aplicar = () => {
       const { fase, usuario, perfil } = sessao.obter();
-      if (fase === FASES.CONECTADO && usuario?.id && podeUsarChat(perfil))
+      if (fase === FASES.CONECTADO && usuario?.id && podeUsarChat(perfil)) {
         estado.ligar(usuario.id);
-      else estado.desligar();
+        estado.definirPaginas(paginasPermitidas(perfil));
+      } else estado.desligar();
     };
     aplicar();
     const desassinar = sessao.assinar(aplicar);
@@ -107,10 +108,14 @@ function usarLigacoes(estado, sessao, documento) {
       evento.preventDefault();
       void estado.abrirConversaDireta(botao.getAttribute("data-chat-usuario"));
     };
+    const aoCompartilhar = (evento) =>
+      void estado.compartilhar(evento.detail?.link);
     documento.addEventListener(EVENTO_ABRIR_CONVERSA, aoPedir);
+    documento.addEventListener(EVENTO_COMPARTILHAR, aoCompartilhar);
     documento.addEventListener("click", aoClicar);
     return () => {
       documento.removeEventListener(EVENTO_ABRIR_CONVERSA, aoPedir);
+      documento.removeEventListener(EVENTO_COMPARTILHAR, aoCompartilhar);
       documento.removeEventListener("click", aoClicar);
     };
   }, [estado, documento]);

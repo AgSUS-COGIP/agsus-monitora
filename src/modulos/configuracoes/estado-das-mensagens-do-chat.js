@@ -6,7 +6,15 @@
   supabase/migrations/20261005190000_chat_retencao_das_mensagens.sql e
   devolvem a leitura nova, que substitui a anterior. A tela lê com
   `useSyncExternalStore`. Não importa React.
+
+  Expurgo dos anexos (20261007210000_chat_v2.sql): a retenção e o "Zerar"
+  apagam as linhas dos anexos e põem os arquivos numa fila; o Storage só apaga
+  pela API. Depois de ler (com fila) e de cada ação, a seção pede a fila
+  (preparar_expurgo_anexos_chat), remove os arquivos do bucket chat-anexos
+  (a política de exclusão só aceita o que está na fila) e confirma
+  (confirmar_expurgo_anexos_chat). Falhou: fica para a próxima vez.
 */
+import { BUCKET_DO_CHAT } from "../../lib/anexos-do-chat.js";
 import {
   comTempoLimite,
   ehFalhaDeConexao,
@@ -20,7 +28,11 @@ import {
 const RPC_OBTER = "obter_retencao_chat";
 const RPC_SALVAR = "salvar_retencao_chat";
 const RPC_ZERAR = "zerar_mensagens_chat";
+const RPC_PREPARAR_EXPURGO = "preparar_expurgo_anexos_chat";
+const RPC_CONFIRMAR_EXPURGO = "confirmar_expurgo_anexos_chat";
 const TEMPO_LIMITE_MS = 60000;
+/* Lotes de até 100 caminhos; no máximo 10 por vez (1.000 arquivos). */
+const LOTES_DO_EXPURGO = 10;
 
 export function criarEstadoDasMensagensDoChat({
   supabase = null,
@@ -70,6 +82,59 @@ export function criarEstadoDasMensagensDoChat({
     return normalizarRetencao(resposta.data);
   }
 
+  async function rpcBruto(nome, argumentos) {
+    const banco = cliente();
+    if (!banco) throw new Error("Sem conexão com o banco.");
+    const resposta = await comTempoLimite(
+      banco.rpc(nome, argumentos),
+      tempoLimiteMs,
+    );
+    if (resposta.error) throw resposta.error;
+    return resposta.data;
+  }
+
+  /*
+    Tira do Storage os arquivos da fila (lotes de 100) e confirma. Silencioso:
+    o que não sair fica na fila para a próxima vez. Devolve quantos saíram.
+  */
+  let expurgando = false;
+  async function expurgarAnexos() {
+    const banco = cliente();
+    if (expurgando || !banco?.storage?.from) return 0;
+    expurgando = true;
+    let removidos = 0;
+    try {
+      for (let lote = 0; lote < LOTES_DO_EXPURGO; lote++) {
+        const fila = await rpcBruto(RPC_PREPARAR_EXPURGO);
+        const caminhos = Array.isArray(fila?.caminhos) ? fila.caminhos : [];
+        if (!caminhos.length) break;
+        const { error } = await comTempoLimite(
+          banco.storage.from(BUCKET_DO_CHAT).remove(caminhos),
+          tempoLimiteMs,
+        );
+        if (error) break;
+        const confirmado = await rpcBruto(RPC_CONFIRMAR_EXPURGO, {
+          p_caminhos: caminhos,
+        });
+        const quantos = Number(confirmado?.confirmados) || 0;
+        removidos += quantos;
+        if (estado.dados)
+          publicar({
+            dados: {
+              ...estado.dados,
+              expurgoPendente: Math.max(0, Number(confirmado?.pendentes) || 0),
+            },
+          });
+        if (!quantos || caminhos.length < 100) break;
+      }
+    } catch {
+      /* fica para a próxima vez */
+    } finally {
+      expurgando = false;
+    }
+    return removidos;
+  }
+
   async function carregar() {
     const meu = ++pedido;
     publicar({ status: "loading", erro: "" });
@@ -77,6 +142,7 @@ export function criarEstadoDasMensagensDoChat({
       const dados = await rpc(RPC_OBTER);
       if (meu !== pedido) return false;
       publicar({ status: "ready", dados, erro: "" });
+      if (dados.expurgoPendente > 0) void expurgarAnexos();
       return true;
     } catch (erro) {
       if (meu !== pedido) return false;
@@ -98,6 +164,7 @@ export function criarEstadoDasMensagensDoChat({
     try {
       const dados = await rpc(nome, argumentos);
       publicar({ acao: null, status: "ready", dados, aviso });
+      if (dados.expurgoPendente > 0) void expurgarAnexos();
       return true;
     } catch (erro) {
       const semConfirmacao = erro?.semResposta === true;
@@ -146,6 +213,7 @@ export function criarEstadoDasMensagensDoChat({
     carregar,
     salvarPrazo,
     zerar,
+    expurgarAnexos,
     limparErroDaAcao: () =>
       publicar({ erroDaAcao: "", acaoComErro: null, semConfirmacao: false }),
   };

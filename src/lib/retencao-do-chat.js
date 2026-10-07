@@ -149,6 +149,7 @@ export function oQueOZerarApaga(dados, incluirConversas = false) {
     plural(dados?.mensagens ?? 0, "mensagem", "mensagens"),
     plural(dados?.reacoes ?? 0, "reação", "reações"),
   ];
+  if (dados?.anexos) linhas.push(plural(dados.anexos, "anexo", "anexos"));
   if (incluirConversas)
     linhas.push(
       plural(
@@ -173,6 +174,7 @@ function normalizarLimpeza(item) {
     corte: dataOuNulo(item?.corte),
     mensagens: quantidade(item?.mensagens),
     reacoes: quantidade(item?.reacoes),
+    anexos: quantidade(item?.anexos),
     conversas: quantidade(item?.conversas),
     motivo: textoOuVazio(item?.motivo),
     quem: textoOuVazio(item?.nome) || textoOuVazio(item?.email),
@@ -193,6 +195,9 @@ export function normalizarRetencao(bruto) {
     geradoEm: dataOuNulo(dados.gerado_em),
     mensagens: quantidade(dados.mensagens),
     reacoes: quantidade(dados.reacoes),
+    anexos: quantidade(dados.anexos),
+    /* Arquivos à espera de sair do Storage (20261007210000_chat_v2.sql). */
+    expurgoPendente: quantidade(dados.expurgo_pendente),
     conversas: quantidade(dados.conversas),
     conversasSemParticipante: quantidade(dados.conversas_sem_participante),
     maisAntiga: dataOuNulo(dados.mais_antiga),
@@ -216,10 +221,11 @@ export function rotuloDaLimpeza(item) {
   return item.origem === "AGENDA" ? `${nome} (limpeza diária)` : nome;
 }
 
-/** Contagens da limpeza no histórico: "12 mensagens · 3 reações · 1 conversa". */
+/** Contagens da limpeza no histórico: "12 mensagens · 3 reações · 2 anexos · 1 conversa". */
 export function contagensDaLimpeza(item) {
   const partes = [plural(item.mensagens, "mensagem", "mensagens")];
   if (item.reacoes) partes.push(plural(item.reacoes, "reação", "reações"));
+  if (item.anexos) partes.push(plural(item.anexos, "anexo", "anexos"));
   if (item.conversas)
     partes.push(plural(item.conversas, "conversa", "conversas"));
   return partes.join(" · ");
