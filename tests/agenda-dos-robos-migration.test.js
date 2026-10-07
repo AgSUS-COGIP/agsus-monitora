@@ -111,7 +111,7 @@ describe("migration da agenda dos robôs (20261008140000)", () => {
         `revoke all on function ${assinatura} from public, anon, authenticated, service_role;`,
       );
       expect(MIGRATION).not.toMatch(
-        new RegExp(`grant [^;]*${assinatura.replace(/[().*"]/g, "\\$&")}`),
+        new RegExp(`grant [^;]*${assinatura.replace(/[\\^$.*+?()[\]{}|"]/g, "\\$&")}`),
       );
     }
   });
