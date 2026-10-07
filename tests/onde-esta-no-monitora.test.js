@@ -39,7 +39,8 @@ describe("onde a pessoa está, em Pessoas online", () => {
 
   it("o que vem de quem ainda tem a versão anterior (só o código) vira o nome", () => {
     expect(rotuloDoLocal("analises")).toBe("Painel das análises");
-    expect(rotuloDoLocal("entrevistas")).toBe("Entrevistas");
+    expect(rotuloDoLocal("entrevistas")).toBe("Painel de entrevistas");
+    expect(rotuloDoLocal("conduzir-entrevistas")).toBe("Conduzir entrevistas");
     expect(rotuloDoLocal("Recursos · Projetos")).toBe("Recursos · Projetos");
     expect(rotuloDoLocal("")).toBe("");
   });

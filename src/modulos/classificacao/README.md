@@ -64,8 +64,8 @@ Testes: `tests/lib/publicacao-de-aprovados.test.js`,
 `tests/lista-de-aprovados-da-classificacao-migration.test.js`.
 Agenda das entrevistas: motor em `src/lib/agenda-das-entrevistas.js`, banco em
 `supabase/migrations/20261005120000_agenda_das_entrevistas.sql` (ensaio e rollback com o mesmo
-nome); Entrevistas › Conduzir mostra a agenda do dia (`src/modulos/entrevistas/agenda-do-dia.jsx`).
-A lista `CONVOCACAO` gerada aqui é a única convocação para a entrevista: Entrevistas › Conduzir mostra
+nome); Conduzir entrevistas abre a fila em Hoje pela agenda salva (`src/modulos/entrevistas/fila-do-dia.tsx`).
+A lista `CONVOCACAO` gerada aqui é a única convocação para a entrevista: Conduzir entrevistas › Preparar mostra
 a última gerada e registra para a ficha só quem está nela
 (`supabase/migrations/20261005150000_convocacao_unica_da_entrevista.sql`); o retrato guarda, por
 vaga, as vagas, a origem delas e o limite da convocação (`instantaneoDaLista`).

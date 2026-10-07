@@ -69,6 +69,12 @@ const ESTADO_INICIAL = Object.freeze({
     controlador relê a cada abertura da tela): o marco "vaga pronta".
   */
   comemoracoes: false,
+  /*
+    Agenda dos próximos dias do edital do recorte (Painel): os horários
+    salvos na Classificação › Agenda (`obter_agenda_entrevista`). `itens`
+    nulo enquanto não chegou; sem agenda ou sem acesso, lista vazia.
+  */
+  agenda: Object.freeze({ editalId: "", itens: null, erro: "" }),
 });
 
 function mensagemDaCarga(erro) {
@@ -103,6 +109,7 @@ export function criarEstadoDasEntrevistas({
   let pedido = 0;
   let usuarioDaCarga = "";
   const ouvintes = new Set();
+  const agendas = new Map();
   const copias = criarCacheDePayload({
     armazenamento,
     versao: VERSAO_DA_COPIA,
@@ -148,6 +155,7 @@ export function criarEstadoDasEntrevistas({
   */
   function reiniciar() {
     pedido += 1;
+    agendas.clear();
     usuarioDaCarga = "";
     publicar({ ...ESTADO_INICIAL, comemoracoes: estado.comemoracoes });
   }
@@ -190,9 +198,10 @@ export function criarEstadoDasEntrevistas({
     if (!area) return false;
     const meu = ++pedido;
     const primeira = area !== estado.area || !estado.carregado;
-    if (area !== estado.area)
+    if (area !== estado.area) {
+      agendas.clear();
       publicar({ ...ESTADO_INICIAL, area, comemoracoes: estado.comemoracoes });
-    else publicar({ atualizando: true, erroAoCarregar: "" });
+    } else publicar({ atualizando: true, erroAoCarregar: "" });
     if (!supabase) {
       publicar({
         erroAoCarregar: "Sem conexão com o banco.",
@@ -274,6 +283,38 @@ export function criarEstadoDasEntrevistas({
     publicar({ semEntrevistaAberta: true, gaveta: null });
   const fecharSemEntrevista = () => publicar({ semEntrevistaAberta: false });
 
+  /* A agenda do edital (uma leitura por edital; a troca de área ou de usuário zera). */
+  async function carregarAgenda(editalId) {
+    const id = String(editalId || "");
+    if (!id || !supabase) {
+      publicar({ agenda: ESTADO_INICIAL.agenda });
+      return null;
+    }
+    if (agendas.has(id)) {
+      publicar({ agenda: { editalId: id, itens: agendas.get(id), erro: "" } });
+      return agendas.get(id);
+    }
+    publicar({ agenda: { editalId: id, itens: null, erro: "" } });
+    try {
+      const { data, error } = await comTempoLimite(
+        supabase.rpc("obter_agenda_entrevista", { p_edital: id }),
+        tempoLimiteMs,
+      );
+      if (error) throw error;
+      const itens = Array.isArray(data?.itens) ? data.itens : [];
+      agendas.set(id, itens);
+      if (estado.agenda.editalId === id)
+        publicar({ agenda: { editalId: id, itens, erro: "" } });
+      return itens;
+    } catch (erro) {
+      if (estado.agenda.editalId === id)
+        publicar({
+          agenda: { editalId: id, itens: [], erro: mensagemDaCarga(erro) },
+        });
+      return null;
+    }
+  }
+
   function exportarCsv(entrevistas) {
     const dia = hojeEmBrasilia(new Date(agora()));
     baixar(
@@ -294,6 +335,7 @@ export function criarEstadoDasEntrevistas({
     abrirSemEntrevista,
     fecharSemEntrevista,
     exportarCsv,
+    carregarAgenda,
     reiniciar,
     definirComemoracoes: (ligadas) =>
       publicar({ comemoracoes: ligadas === true }),

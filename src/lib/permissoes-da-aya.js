@@ -73,8 +73,8 @@ export const ACOES_COM_PERMISSAO = Object.freeze([
     "liberar um edital fora da janela da entrevista",
     isAdminGlobal,
     "ser administrador global",
-    "A liberação fica em Entrevistas › Conduzir entrevistas, junto da escolha do edital.",
-    "entrevistas",
+    "A liberação fica em Conduzir entrevistas, junto da escolha do edital.",
+    "conduzir-entrevistas",
   ),
   acao(
     "conduzir-entrevista",
@@ -82,8 +82,8 @@ export const ACOES_COM_PERMISSAO = Object.freeze([
     "conduzir entrevistas (roteiro, convocação e notas)",
     (p) => hasResource(p, "entrevistas", 2),
     "o nível Editor em Entrevistas",
-    "Fica em Entrevistas › Conduzir entrevistas.",
-    "entrevistas",
+    "Fica em Conduzir entrevistas (a fila e o Preparar, com os roteiros).",
+    "conduzir-entrevistas",
   ),
   acao(
     "classificacao",
