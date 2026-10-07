@@ -55,7 +55,7 @@ TAMANHO_DO_LOTE = 500
 ARQUIVO_COM_SESSAO_VIRA_PAGINA = True
 
 # Mesmo formato que o banco aceita (CK_EMPREGANEXO_DSLINK) e que a ficha confere
-# (src/lib/avaliacao-documental/link-do-anexo.ts).
+# (src/lib/avaliacao-documental/anexo-na-empregare.ts).
 LINK_DO_ARQUIVO = re.compile(r"^https://[A-Za-z0-9.-]+(:[0-9]{1,5})?/[^\s\"'<>`\\]*$")
 LINK_DA_PAGINA = re.compile(r"^https://corporate\.empregare\.com/[A-Za-z0-9_.~=&%|+/:?#-]*$")
 TAMANHO_DO_LINK = 1000

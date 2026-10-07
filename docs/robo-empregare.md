@@ -129,11 +129,11 @@ do bloco na aba; confira no log se bate com o "Pergunta N" das colunas do Excel.
 
 **Na ficha**: `obter_ficha_analise` devolve `empregare.anexos` (`pergunta`, `enunciado`, `tipo`,
 `link`, `capturado_em`; dado restrito, só para quem pode ver a ficha). A regra do botão está em
-`src/lib/avaliacao-documental/link-do-anexo.ts`: com o link do arquivo, **Ver documento**; com a
+`src/lib/avaliacao-documental/anexo-na-empregare.ts`: com o link do arquivo, **Ver documento**; com a
 página do questionário ou sem captura, **Abrir na Empregare** e a dica "aba Questionários ›
 Pergunta N" (o candidato; sem ele, a vaga). A ficha casa o anexo pela pergunta da coluna e, sem
-número, pelo enunciado. O componente da ficha só chama `anexosDaEmpregare`, `enderecoDoAnexo` e
-`apresentacaoDoAnexo` (mesma forma de `anexo-na-empregare.ts` do redesenho da ficha).
+número, pelo enunciado. A ficha (`ficha.jsx` e `ficha/empregare.tsx`) só chama `anexosDaEmpregare`,
+`enderecoDoAnexo` e `apresentacaoDoAnexo`.
 
 ## Segredos a cadastrar (uma vez)
 
@@ -258,9 +258,9 @@ computador: rode-os pelo GitHub.
 - `supabase/migrations/20261005170000_robo_empregare.sql`, `20261006080000_robo_empregare_vagas_do_quadro.sql`
   (vagas também do quadro do edital), `20261007160000_link_do_candidato_na_empregare.sql` e
   `20261008160000_anexos_da_empregare.sql` (anexos do questionário), cada uma com `ensaios/` e `rollback/`.
-- `src/lib/avaliacao-documental/link-do-anexo.ts`: o link de cada anexo na ficha.
+- `src/lib/avaliacao-documental/anexo-na-empregare.ts`: o link de cada anexo na ficha.
 - Testes: `tests/python/test_robo_empregare.py`, `tests/python/test_anexos_empregare.py`,
-  `tests/anexos-da-empregare-migration.test.js`, `tests/link-do-anexo.test.js`,
+  `tests/anexos-da-empregare-migration.test.js`, `tests/lib/avaliacao-documental-anexo-na-empregare.test.js`,
   `tests/agenda-dos-robos-migration.test.js`,
   `tests/robo-empregare-migration.test.js`, `tests/robo-empregare-vagas-do-quadro.test.js`,
   `tests/saude-das-cargas.test.js`,

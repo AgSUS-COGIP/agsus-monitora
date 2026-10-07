@@ -17,7 +17,7 @@ const ANTERIOR = ler(
   "supabase/migrations/20261007160000_link_do_candidato_na_empregare.sql",
 );
 const ROBO = ler("scripts/robo-empregare/anexos_empregare.py");
-const TELA = ler("src/lib/avaliacao-documental/link-do-anexo.ts");
+const TELA = ler("src/lib/avaliacao-documental/anexo-na-empregare.ts");
 
 const corpoDaFuncao = (texto, cabeca) => {
   const inicio = texto.indexOf(cabeca);
