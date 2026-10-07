@@ -19,6 +19,7 @@ import {
   mensagemDoMarcoDoAno,
   proximoEstadoDoMarco,
 } from "../../lib/comemoracao.js";
+import { semTreinamento } from "../../lib/edital-de-treinamento.js";
 import { nomeDaArea } from "../../lib/menu-lateral.js";
 import { comemorar } from "../../modules/comemoracao.js";
 import { lerMarcosDaArea } from "./marcos.js";
@@ -57,7 +58,7 @@ export function BoasVindas({ obterPerfil, agora }) {
 
   const nome = primeiroNome(perfil.nome || perfil.email?.split("@")[0]);
   const quantidade = editaisComEtapaNaSemana(
-    linhasDaArea(linhas, areaAtual),
+    semTreinamento(linhasDaArea(linhas, areaAtual)),
     agora(),
   );
   const titulo = [saudacao(agora().getHours()), nome]

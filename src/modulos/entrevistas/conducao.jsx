@@ -28,6 +28,11 @@ import {
   textoDasVagas,
   textoDoLimite,
 } from "../../lib/convocacao-da-entrevista.js";
+import { SeloDeTreinamento } from "../../componentes/selo-de-treinamento.jsx";
+import {
+  editalEscolhido,
+  sufixoDeTreinamento,
+} from "../../lib/edital-de-treinamento.js";
 import { rotuloDoComparecimento } from "../../lib/entrevistas-do-painel.js";
 import {
   pontuacaoMaxima,
@@ -1102,7 +1107,10 @@ export function VisaoDeConducao({ conducao, area, entrevistasDoPainel }) {
         <div className="entrevistas-passo-topo">
           <div>
             <h2 className="ui-titulo" id="entrevistasEditalTitulo">
-              Edital
+              Edital{" "}
+              <SeloDeTreinamento
+                edital={editalEscolhido(editais.lista, e.editalId)}
+              />
             </h2>
           </div>
         </div>
@@ -1129,6 +1137,7 @@ export function VisaoDeConducao({ conducao, area, entrevistasDoPainel }) {
                   {m.unidade ? ` · ${m.unidade}` : ""}
                   {m.comEntrevistas ? " · com entrevistas" : ""}
                   {marcaDoEdital(m) ? ` · ${marcaDoEdital(m)}` : ""}
+                  {sufixoDeTreinamento(m)}
                 </option>
               ))}
             </select>

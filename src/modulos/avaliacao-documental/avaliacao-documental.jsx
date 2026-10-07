@@ -2,7 +2,12 @@ import { useEffect, useState, useSyncExternalStore } from "react";
 import { editaisDaEscolha } from "../../lib/avaliacao-documental/editais.js";
 import { montarModulo } from "../../app/montar-modulo.jsx";
 import { obterDadosDoMonitoramento } from "../../componentes/dados-do-monitoramento.js";
+import { SeloDeTreinamento } from "../../componentes/selo-de-treinamento.jsx";
 import { usarAreaAtual } from "../../componentes/usar-area-atual.js";
+import {
+  editalEscolhido,
+  sufixoDeTreinamento,
+} from "../../lib/edital-de-treinamento.js";
 import {
   PAPEIS_DA_EQUIPE,
   rotuloDe,
@@ -66,6 +71,7 @@ function TelaDaArea({ estado, pre, fila, atualizar, e }) {
   });
   const recarregar = () => void estado.carregar(e.area);
   const papel = e.dados?.papel;
+  const escolhido = editalEscolhido(e.editais, e.editalId);
   // Modo de análise: a ficha aberta ocupa a tela; só a Fila (que a desenha) fica montada.
   const sf = useSyncExternalStore(fila.assinar, fila.obter);
   const emAnalise = visao === "fila" && Boolean(sf.aberta?.ficha || sf.abrindo);
@@ -90,7 +96,9 @@ function TelaDaArea({ estado, pre, fila, atualizar, e }) {
           atualizarDesativado={
             !e.area || e.carregandoEditais || e.carregandoEdital
           }
-        />
+        >
+          <SeloDeTreinamento edital={escolhido} />
+        </TopoDoPainel>
       )}
 
       {e.semAcesso ? (
@@ -135,10 +143,12 @@ function TelaDaArea({ estado, pre, fila, atualizar, e }) {
                     <option key={ed.id} value={ed.id}>
                       {[ed.edital, ed.unidade].filter(Boolean).join(" - ")}
                       {ed.versao_regra ? ` · regra v${ed.versao_regra}` : ""}
+                      {sufixoDeTreinamento(ed)}
                     </option>
                   ))}
                 </select>
               </Campo>
+              <SeloDeTreinamento edital={escolhido} />
               {ocultos || todos ? (
                 <label className="avd-caixa" data-tour="avd-todos-editais">
                   <input

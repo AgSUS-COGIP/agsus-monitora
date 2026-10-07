@@ -231,7 +231,7 @@ describe("CSV dos casos", () => {
     ]);
     const linhas = csv.split("\n");
     expect(linhas[0]).toBe(
-      "Aviso;Código do candidato;Nome;Edital;Vaga;Responsável pela análise;Situação;Data da análise;Motivo;Análises do candidato;Referência",
+      "Aviso;Código do candidato;Nome;Edital;Vaga;Responsável pela análise;Situação;Data da análise;Motivo;Análises do candidato;Vagas na lista de aprovados;Referência",
     );
     expect(linhas[1]).toContain(
       "4512;Maria Fictícia;Edital 101/2026;177979 · Enfermeiro;Ana Analista;Aprovado;01/09/2026",

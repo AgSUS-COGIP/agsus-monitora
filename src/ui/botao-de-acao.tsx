@@ -1,4 +1,22 @@
 import { useSyncExternalStore } from "react";
+import type { ButtonHTMLAttributes } from "react";
+
+export type AcaoEmCurso<Tipo extends string = string> = {
+  tipo: Tipo;
+  rotulo: string;
+};
+
+export type EstadoDaAcao<Tipo extends string = string> = {
+  assinar: (ouvinte: () => void) => () => void;
+  obter: () => { acao: AcaoEmCurso<Tipo> | null };
+};
+
+export type PropriedadesDoBotaoDeAcao<Tipo extends string = string> =
+  ButtonHTMLAttributes<HTMLButtonElement> & {
+    estado: EstadoDaAcao<Tipo>;
+    acao: NoInfer<Tipo>;
+    soIcone?: boolean;
+  };
 
 /*
   Botão de uma ação que escreve no banco. O `estado` é o store da tela
@@ -10,16 +28,16 @@ import { useSyncExternalStore } from "react";
 
   Usado pela Lista de aprovados, Acessos e Módulos e abas.
 */
-export function BotaoDeAcao({
+export function BotaoDeAcao<Tipo extends string>({
   estado,
   acao,
   soIcone = false,
   disabled = false,
   children,
   ...atributos
-}) {
+}: PropriedadesDoBotaoDeAcao<Tipo>) {
   const { acao: emCurso } = useSyncExternalStore(estado.assinar, estado.obter);
-  const minha = emCurso?.tipo === acao;
+  const minha = emCurso !== null && emCurso.tipo === acao;
   return (
     <button
       type="button"

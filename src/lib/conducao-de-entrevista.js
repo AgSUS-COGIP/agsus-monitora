@@ -85,6 +85,7 @@ export function editaisParaConduzir(doMonitoramento, doPainel) {
       id: m.id,
       edital: texto(m.edital),
       unidade: texto(m.unidade),
+      treinamento: m.treinamento === true,
       comEntrevistas: comEntrevistas.has(m.id),
       naJanela: m.na_janela !== false,
       janelaInicio: texto(m.janela_inicio),
