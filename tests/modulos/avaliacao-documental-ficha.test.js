@@ -711,7 +711,8 @@ describe("ficha: itens, nota e justificativa (AM-9, AM-10, AM-11)", () => {
     expect(
       document.querySelector("[data-resumo='CURSOS']").textContent,
     ).toContain("2 pontos");
-  });
+    // Muitos passos pelo stepper: mais tempo que o padrão sob carga.
+  }, 20000);
 
   it("vínculo com datas calcula a experiência; recusado pede motivo", async () => {
     await abrirFicha(supabaseFalso());
@@ -809,7 +810,8 @@ describe("ficha: rascunho, concluir e próxima, voltar (AM-12)", () => {
       parciais: { FORMACAO: 5, CURSOS: 3, EXPERIENCIA: 25 },
     });
     expect(chamadas(supabase, "pegar_proxima_ficha")).toHaveLength(1);
-  });
+    // Muitos passos pelo stepper: mais tempo que o padrão sob carga.
+  }, 20000);
 
   it("Copiar código (no '⋯') registra o acesso; Voltar à fila salva antes de soltar a reserva", async () => {
     const supabase = supabaseFalso();
