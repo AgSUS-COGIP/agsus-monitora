@@ -11,6 +11,9 @@ import { classes } from "./classes.js";
 
 const CONTROLES = ["input", "select", "textarea"];
 
+/**
+ * @param {{ rotulo: import("react").ReactNode, erro?: import("react").ReactNode, dica?: import("react").ReactNode, obrigatorio?: boolean, largo?: boolean, idDoControle?: string, children?: import("react").ReactNode }} props
+ */
 export function Campo({
   rotulo,
   erro,
