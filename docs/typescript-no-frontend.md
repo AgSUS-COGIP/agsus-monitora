@@ -7,8 +7,9 @@ TypeScript. Seleção inclui estado, componentes, filtros, indicadores, gráfico
 e regras puras em `src/lib/selecao-do-painel.ts`. Cronograma inclui estado, calendário,
 filtros, modal do dia, próximas etapas, linha do tempo e regras em
 `src/lib/calendario-editais.ts`. Em Entrevistas, as peças novas do Painel de entrevistas e de
-Conduzir entrevistas (`andamento.tsx`, `conduzir.tsx`, `fila-do-dia.tsx`, `tipos.ts` e as regras
-`src/lib/painel-de-entrevistas.ts` e `src/lib/fila-de-conducao.ts`) já nascem em TypeScript; o estado
+Conduzir entrevistas (`andamento.tsx`, `conduzir.tsx`, `fila-do-dia.tsx`, as peças da ficha de notas — cabeçalho, abas,
+matriz, célula, resultado —, `tipos.ts` e as regras `src/lib/painel-de-entrevistas.ts`,
+`src/lib/fila-de-conducao.ts` e `src/lib/digitacao-de-notas.ts`) já nascem em TypeScript; o estado
 da condução continua JavaScript, lido pelos contratos de `tipos.ts`. O restante segue em
 JavaScript/JSX. Componentes e helpers
 compartilhados consumidos por esses módulos declaram seus contratos em JSDoc.

@@ -3415,12 +3415,33 @@ export const VERBETES_AYA = Object.freeze([
       "lancar notas",
       "comparecimento",
       "resultado recalculado",
+      "faltou na entrevista",
+      "lancar por avaliador",
+      "lancar por competencia",
     ],
     resposta:
-      'Na Fila de Conduzir entrevistas, abra um convocado: a ficha ocupa a tela inteira (modo de análise; fica só o menu lateral), com o topo preso (Voltar à fila, candidato, Anterior e Próximo), as competências à esquerda e a prévia do parecer numa lateral fixa (total, mínimo, a nota de cada competência e os motivos; muda de cor na hora: verde apto, vermelho inapto). Marque Compareceu ou Faltou nos botões grandes do topo. Em cada competência, os avaliadores ficam lado a lado; os botões da escala (0 a 5) preenchem o campo em foco e passam ao próximo, ou digite a nota. Com aspectos, cada avaliador tem um campo por aspecto e a média dele ao lado. Os níveis da escala ficam na lateral e no título de cada botão. No celular, uma competência por vez (abas numeradas). Esc volta à fila; a nota precisa estar na escala do roteiro. A cada gravação o banco recalcula o resultado, que aparece no Painel de entrevistas; toda nota lançada, corrigida ou apagada vai para o histórico. Enter passa para a próxima nota, Ctrl+Enter salva, e há "Salvar e abrir o próximo". O cartão da fila mostra as notas lançadas sobre as esperadas (competências × avaliadores da banca).',
+      'Na Fila de Conduzir entrevistas, abra um convocado: a ficha ocupa a tela inteira (fica só o menu lateral). No cabeçalho: o nome e o código, a vaga, os chips (nota da análise, modalidade, roteiro e aspectos), os detalhes no "i" (modo de lançamento, nota e parecer gravados, nome do roteiro), o comparecimento (Compareceu / Faltou), a banca quando há mais de uma e Anterior / "1 de 15" / Próximo. O lançamento padrão é Por avaliador, como a secretaria passando a limpo a folha de cada avaliador: uma aba por avaliador ("Avaliador · origem", com o check quando está completo) e, nela, a matriz com as competências nas linhas (e o mínimo de cada uma) e os aspectos nas colunas (Conceitua, Propriedade, Profundidade); sem aspectos, uma coluna "Nota". A média da linha aparece num chip: vermelho abaixo do mínimo, verde ok. Completo um avaliador, a ficha passa sozinha ao próximo; com todos completos, o foco vai para "Salvar e abrir o próximo". "Por competência" (para lançar ao vivo) troca as abas pelas competências e as linhas pelos avaliadores; a escolha fica guardada no navegador. Digitar a primeira nota marca Compareceu. Com Faltou, a matriz some e fica a confirmação: se a ausência elimina no roteiro, parecer Inapto e total 0. A lateral mostra o resultado na hora, com as mesmas regras do banco: o total sobre o máximo num anel com a marca do mínimo, a nota da banca em cada competência em barras com a marca do mínimo, o parecer (Apto verde, Inapto vermelho, Sem parecer cinza) com os motivos e "X de Y notas". Os níveis da escala ficam numa linha embaixo da matriz e na dica da célula em foco. No celular, um avaliador por vez, uma competência por linha com as células grandes e o teclado numérico. A cada gravação o banco recalcula o resultado, que aparece no Painel de entrevistas; toda nota lançada, corrigida ou apagada vai para o histórico. O cartão da fila mostra as notas lançadas sobre as esperadas.',
     fato: "",
     fonte:
-      "src/modulos/entrevistas/ficha.jsx; src/modulos/entrevistas/fila-do-dia.tsx; supabase/migrations/20260930220000_entrevistas_roteiros_e_notas.sql; src/lib/conducao-de-entrevista.js",
+      "src/modulos/entrevistas/ficha.jsx; src/modulos/entrevistas/matriz-de-notas.tsx; src/modulos/entrevistas/resultado-da-ficha.tsx; src/modulos/entrevistas/cabecalho-da-ficha.tsx; src/lib/conducao-de-entrevista.js",
+  },
+  {
+    arquivo: "regras-das-entrevistas.md",
+    titulo: "Atalhos da ficha de notas",
+    perguntas: [
+      "atalhos da ficha de notas",
+      "lancar notas pelo teclado",
+      "digitar notas rapido",
+      "nota recusada na ficha",
+      "como apagar uma nota da entrevista",
+      "tab na ficha de notas",
+      "ctrl enter",
+    ],
+    resposta:
+      'A matriz da ficha de notas funciona como uma planilha. Digitar uma nota da escala (de 0 a 5, por exemplo) grava e passa à próxima célula; numa escala com notas que começam igual (0 a 10, ou com meias notas), Enter, Tab ou uma seta confirmam. Enter vai à próxima célula e Shift+Enter à anterior; as setas andam pela matriz; Tab e Shift+Tab seguem a ordem. Backspace apaga a nota; na célula vazia, volta à anterior. Nota fora da escala não entra: a célula fica como estava e aparece o aviso, por exemplo "“7” não está na escala (0 a 5)". Com aspectos, o banco só aceita os aspectos todos lançados (ou todos apagados) para o mesmo avaliador e competência: salvar com algum faltando avisa e abre a aba certa. Ctrl+Enter salva e Esc volta à fila. Os atalhos estão no "?" do rodapé.',
+    fato: "",
+    fonte:
+      "src/modulos/entrevistas/matriz-de-notas.tsx; src/modulos/entrevistas/campo-de-nota.tsx; src/lib/digitacao-de-notas.ts",
   },
   {
     arquivo: "regras-das-entrevistas.md",
