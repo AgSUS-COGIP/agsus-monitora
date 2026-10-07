@@ -4,7 +4,10 @@ Início da migração gradual: 07/10/2026.
 
 O frontend mantém React e Vite. `Aviso`, `BotaoDeAcao` e o módulo Seleção estão em
 TypeScript. Seleção inclui estado, componentes, filtros, indicadores, gráficos, tabela
-e regras puras em `src/lib/selecao-do-painel.ts`. O restante segue em JavaScript/JSX.
+e regras puras em `src/lib/selecao-do-painel.ts`. O assistente da regra da Avaliação documental
+(`src/modulos/avaliacao-documental/assistente/`) já nasceu em TSX, com as regras em
+`src/lib/avaliacao-documental/assistente-da-regra.ts`, `resumo-da-regra.ts`, `comparar-regras.ts`
+e os contratos da regra em `tipos-da-regra.ts`. O restante segue em JavaScript/JSX.
 Os componentes compartilhados consumidos por Seleção declaram seus contratos em JSDoc.
 
 ## Verificação
