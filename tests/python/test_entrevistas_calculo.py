@@ -19,6 +19,18 @@ def _entrada(caso):
     roteiro = dict(DADOS["roteiros"][caso["roteiro"]])
     if "nota_minima_total" in caso:
         roteiro["nota_minima_total"] = caso["nota_minima_total"]
+    if caso.get("aspectos"):
+        # Por competência, uma lista de notas por avaliador, na ordem dos aspectos.
+        avaliacoes = [
+            {
+                "competencia": competencia,
+                "avaliador": f"a{i + 1}",
+                "aspectos": [{"aspecto": a["id"], "nota": n} for a, n in zip(roteiro["aspectos"], notas, strict=True)],
+            }
+            for competencia, por_avaliador in caso["aspectos"].items()
+            for i, notas in enumerate(por_avaliador)
+        ]
+        return roteiro, caso["compareceu"], avaliacoes
     avaliacoes = [
         {"competencia": competencia, "avaliador": f"a{i + 1}", "nota": nota}
         for competencia, notas in caso["notas"].items()
@@ -34,6 +46,7 @@ def _dec(valor):
 class CasosDouradosDoCalculo(unittest.TestCase):
     def test_cada_caso_da_o_mesmo_resultado_do_javascript_e_do_banco(self):
         self.assertGreaterEqual(len(DADOS["casos"]), 10)
+        self.assertGreaterEqual(len([c for c in DADOS["casos"] if c.get("aspectos")]), 3)
         for caso in DADOS["casos"]:
             with self.subTest(caso["nome"]):
                 r = calculo.calcular_entrevista(*_entrada(caso))
@@ -41,6 +54,19 @@ class CasosDouradosDoCalculo(unittest.TestCase):
                 self.assertEqual([c["nota"] for c in r["competencias"]], [_dec(n) for n in esperado["notas"]])
                 self.assertEqual(r["total"], _dec(esperado["total"]))
                 self.assertEqual(r["parecer"], esperado["parecer"])
+
+
+class Aspectos(unittest.TestCase):
+    def test_media_dos_aspectos_so_com_todos(self):
+        aspectos = [{"id": "s1"}, {"id": "s2"}, {"id": "s3"}]
+        self.assertEqual(
+            calculo.media_dos_aspectos(
+                aspectos, [{"aspecto": "s1", "nota": 2}, {"aspecto": "s2", "nota": 2}, {"aspecto": "s3", "nota": 3}]
+            ),
+            Decimal(7) / Decimal(3),
+        )
+        self.assertIsNone(calculo.media_dos_aspectos(aspectos, [{"aspecto": "s1", "nota": 2}]))
+        self.assertIsNone(calculo.media_dos_aspectos([], []))
 
 
 class Numeros(unittest.TestCase):

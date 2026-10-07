@@ -556,3 +556,73 @@ describe("selo PcD", () => {
     ).toEqual(Array(9).fill(false));
   });
 });
+
+describe("ficha com aspectos", async () => {
+  const lib = await import("../src/lib/conducao-de-entrevista.js");
+  const ASPECTOS = [{ id: "s1" }, { id: "s2" }, { id: "s3" }];
+
+  it("mapa por aspecto, ida e volta", () => {
+    const mapa = lib.mapaDasAvaliacoes(
+      [
+        {
+          competencia: "c1",
+          avaliador: "a1",
+          nota: 1.33,
+          aspectos: [
+            { aspecto: "s1", nota: 2 },
+            { aspecto: "s2", nota: 1 },
+            { aspecto: "s3", nota: 1 },
+          ],
+        },
+      ],
+      ASPECTOS,
+    );
+    expect(mapa).toEqual({ "c1|a1|s1": "2", "c1|a1|s2": "1", "c1|a1|s3": "1" });
+    expect(lib.avaliacoesDoMapa(mapa, ASPECTOS)).toEqual([
+      {
+        competencia: "c1",
+        avaliador: "a1",
+        aspectos: [
+          { aspecto: "s1", nota: 2 },
+          { aspecto: "s2", nota: 1 },
+          { aspecto: "s3", nota: 1 },
+        ],
+      },
+    ]);
+  });
+
+  it("alteradas: todos os aspectos, nulo ao apagar; incompleta fica de fora", () => {
+    const original = { "c1|a1|s1": "2", "c1|a1|s2": "1", "c1|a1|s3": "1" };
+    const atual = {
+      "c1|a1|s1": "",
+      "c1|a1|s2": "",
+      "c1|a1|s3": "",
+      "c1|a2|s1": "3",
+      "c2|a1|s1": "4",
+      "c2|a1|s2": "4",
+      "c2|a1|s3": "5",
+    };
+    expect(lib.notasAlteradas(original, atual, ASPECTOS)).toEqual([
+      { competencia: "c1", avaliador: "a1", aspectos: null },
+      {
+        competencia: "c2",
+        avaliador: "a1",
+        aspectos: [
+          { aspecto: "s1", nota: 4 },
+          { aspecto: "s2", nota: 4 },
+          { aspecto: "s3", nota: 5 },
+        ],
+      },
+    ]);
+    expect(lib.aspectosIncompletos(atual, ASPECTOS)).toEqual([
+      { competencia: "c1", avaliador: "a2" },
+    ]);
+  });
+
+  it("média dos aspectos só com todos", () => {
+    expect(
+      lib.mediaDosAspectos(ASPECTOS, { s1: "2", s2: "2", s3: "3" }),
+    ).toBeCloseTo(7 / 3);
+    expect(lib.mediaDosAspectos(ASPECTOS, { s1: "2" })).toBeNull();
+  });
+});
