@@ -75,6 +75,17 @@ até a 10ª posição do cadastro reserva) é regra da lista CONVOCACAO da Class
 - as listas da Fila são a TabelaInfinita (`src/ui/`): colunas por etapa, ordem por coluna, busca,
   "N de M", carregamento contínuo e Exportar CSV (`csvDaFila`, csv-security).
 
+## Inclusão no lote por decisão da coordenação
+
+- na aba Pré-classificação (cada vaga) e na Fila, a coordenação inclui no lote, por decisão e com
+  motivo (sugestão "Critério CORES"), candidatos que a regra deixa fora (eliminados ou abaixo do
+  corte); selo "Decisão: …" nas listas e no topo da ficha; "Revogar decisão" com motivo (o banco
+  recusa com a ficha concluída); contadores "N pela regra + M por decisão"; nos documentos oficiais,
+  o nome com "*" e a nota "Incluído por decisão da coordenação: …";
+- os recálculos mantêm a decisão (job Python e prévia JS, casos dourados); banco em
+  `supabase/migrations/20261007200000_inclusao_no_lote_por_decisao.sql` (`TB_DECISAO_LOTE`,
+  `TH_DECISAO_LOTE`).
+
 A próxima fase traz a revisão (F5).
 
 ## Arquivos
@@ -96,6 +107,9 @@ ficha/estado-da-ficha.js  store da ficha: obter_ficha_analise, rascunho automát
 ficha/ficha.css           estilos da ficha (só tokens)
 estado-da-pre-classificacao.js  store da aba: obter_pre_classificacao, Recalcular,
                           registrar/publicar as listas, Copiar para o SEI e DOCX
+decisao-do-lote.jsx       selo "Decisão: …", "Incluir por decisão da coordenação" e
+                          "Revogar decisão" (Pré-classificação e Fila)
+decisao-no-banco.js       incluir_no_lote_por_decisao / revogar_decisao_lote (uma chamada por vaga)
 campos.jsx                peças de formulário da regra
 avaliacao-documental.css  só tokens
 ```
@@ -132,7 +146,8 @@ avaliacao-documental.css  só tokens
   `tests/modulos/avaliacao-documental-ficha.test.js`, `tests/lib/avaliacao-documental-ficha.test.js`,
   `tests/conteudo-da-ficha-migration.test.js`, `tests/python/test_pontuacao.py`,
   `tests/fichas-fila-reserva-migration.test.js`, `tests/ficha-segue-versao-migration.test.js`,
-  `tests/python/test_distribuicao.py`,
+  `tests/python/test_distribuicao.py`, `tests/lib/avaliacao-documental-decisao-do-lote.test.js`,
+  `tests/inclusao-no-lote-por-decisao-migration.test.js`,
   `tests/modulos/avaliacao-documental-pre-classificacao.test.js`,
   `tests/lib/avaliacao-documental-*.test.js`, `tests/avaliacao-documental-migration.test.js`,
   `tests/pre-classificacao-migration.test.js`, `tests/python/test_pre_classificacao.py` e

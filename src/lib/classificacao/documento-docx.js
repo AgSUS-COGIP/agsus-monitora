@@ -174,6 +174,14 @@ export function corpoXml(doc) {
           }),
         );
       partes.push(tabelaXml(t));
+      // Notas de rodapé da tabela (quem entrou no lote por decisão da coordenação).
+      for (const n of t.notas || [])
+        partes.push(
+          paragrafo(corrida(n, { tamanho: 18 }), {
+            alinhamento: "left",
+            antes: 60,
+          }),
+        );
     }
   }
   partes.push(titulo(2, "Disposições Finais"));

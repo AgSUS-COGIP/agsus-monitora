@@ -13,6 +13,7 @@
     distribuir_fichas(p_edital, p_atribuicoes, p_motivo)
     mandar_fichas_revisao(p_edital, p_fichas, p_motivo)
     abrir_fichas_do_edital(p_edital)
+    incluir_no_lote_por_decisao / revogar_decisao_lote (20261007200000; decisao-no-banco.js)
     salvar_filtro_fila(p_nome, p_filtro) / excluir_filtro_fila(p_filtro)
   "Exportar CSV" baixa a aba aberta (csvDaFila), sem ir ao banco.
   O último filtro usado fica no navegador só por conveniência (try/catch);
@@ -27,6 +28,7 @@ import {
   nomeDoCsvDaFila,
   normalizarFiltro,
 } from "../../lib/avaliacao-documental/fila.js";
+import { decidirNoLote } from "./decisao-no-banco.js";
 import { mensagemDoBanco } from "./estado.js";
 
 const RPC_OBTER_FILA = "obter_fila_avaliacao";
@@ -363,6 +365,20 @@ export function criarEstadoDaFila({
       (r) => `${r?.criadas ?? 0} ficha(s) aberta(s).`,
     );
 
+  /* Inclusão no lote por decisão da coordenação e revogação ([{ codigo, vaga }], motivo). */
+  const incluirPorDecisao = (candidatos, motivo) =>
+    executar(
+      "decisao",
+      () => decidirNoLote(rpc, "incluir", estado.editalId, candidatos, motivo),
+      (r) => r.texto,
+    );
+  const revogarDecisao = (candidatos, motivo) =>
+    executar(
+      "decisao",
+      () => decidirNoLote(rpc, "revogar", estado.editalId, candidatos, motivo),
+      (r) => r.texto,
+    );
+
   async function salvarFiltro(nome) {
     try {
       const filtros = await rpc(RPC_SALVAR_FILTRO, {
@@ -419,6 +435,8 @@ export function criarEstadoDaFila({
     liberarReservas,
     mandarParaRevisao,
     abrirFichasDoLote,
+    incluirPorDecisao,
+    revogarDecisao,
     salvarFiltro,
     excluirFiltro,
     exportarCsv,

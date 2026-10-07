@@ -46,6 +46,7 @@ def rodar(caso, **mudancas):
         refazer=c["refazer"],
         hoje=c["hoje"],
         congelar=c.get("congelar", False),
+        decisoes=c.get("decisoes") or {},
     )
 
 

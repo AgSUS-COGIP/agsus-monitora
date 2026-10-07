@@ -36,6 +36,7 @@ PREFIXO_DO_AVISO_DE_PERGUNTA_AMBIGUA = "PERGUNTA_AMBIGUA:"
 PREFIXO_DO_AVISO_DE_SEM_NIVEL = "SEM_NIVEL:"
 NIVEIS = ("superior", "tecnico", "medio", "fundamental")
 SAIU_DA_EMPREGARE = {"codigo": "SAIU_DA_EMPREGARE", "motivo": "Saiu do arquivo da Empregare"}
+ENTRADA_POR_DECISAO = "DECISAO"
 DESEMPATE_PADRAO = ["IDOSO", "CANDIDATURA"]
 BASES_DA_NOTA = ("DECLARADA", "ART")
 LOTE_PADRAO = {
@@ -514,8 +515,23 @@ def _chave_de_ordem(desempate, hoje):
     return cmp_to_key(comparar)
 
 
+def motivo_da_decisao(decisoes, id_):
+    """O motivo da decisão vigente da coordenação para o candidato ({id: {motivo}}), ou None (motivoDaDecisao do JS)."""
+    motivo = _objeto(_objeto(decisoes).get(id_)).get("motivo")
+    return motivo.strip() if isinstance(motivo, str) and motivo.strip() else None
+
+
+def _pelo_lote_da_regra(ant):
+    """Entrou no lote pela regra (a anterior), e não por decisão da coordenação."""
+    return (
+        bool(ant)
+        and ant.get("situacao") in _NO_LOTE
+        and (ant.get("situacao") == "ANALISADO" or ant.get("entrada") != ENTRADA_POR_DECISAO)
+    )
+
+
 def pre_classificar_vaga(
-    regra, vaga, candidatos, anterior=None, ultimo_lote=0, refazer=False, hoje=None, congelar=False
+    regra, vaga, candidatos, anterior=None, ultimo_lote=0, refazer=False, hoje=None, congelar=False, decisoes=None
 ):
     """
     Pré-classifica os inscritos de uma vaga (mesmo contrato de preClassificarVaga do JS).
@@ -525,9 +541,11 @@ def pre_classificar_vaga(
       candidatos   [{id, codigo, ativo, colunas, nascimento, candidatura}]
       anterior     {id: {situacao, lote, lista_lote, entrada, motivo_entrada, posicao, declarada_congelada}}
       congelar     guarda a declarada completa de quem ainda não a tem congelada (congela_a_declarada)
-    Devolve {"linhas": [...], "resumo": {...}}.
+      decisoes     {id: {motivo}}: as decisões vigentes da coordenação (ficam no lote, entrada DECISAO)
+    Devolve {"linhas": [...], "resumo": {...}} (resumo.no_lote: pela regra; resumo.por_decisao: por decisão).
     """
     anterior = anterior or {}
+    decisoes = decisoes or {}
     provisoria = (regra or {}).get("provisoria") or {}
     lote_da_regra = (regra or {}).get("lote") or {}
     tem_declarada = len(_lista(provisoria.get("nota_declarada"))) > 0
@@ -613,10 +631,22 @@ def pre_classificar_vaga(
             }
         )
 
-    # Provisória: ART decrescente e o desempate da regra.
-    ranqueados = sorted((l for l in linhas if l["situacao"] != "ELIMINADO"), key=_chave_de_ordem(desempate, hoje))
+    # Provisória: ART decrescente e o desempate da regra; depois do último, os
+    # eliminados pela regra que ficam no lote por decisão da coordenação.
+    ordem = _chave_de_ordem(desempate, hoje)
+    ranqueados = sorted((l for l in linhas if l["situacao"] != "ELIMINADO"), key=ordem)
+    eliminados_por_decisao = sorted(
+        (
+            l
+            for l in linhas
+            if l["situacao"] == "ELIMINADO"
+            and l["motivo_codigo"] != SAIU_DA_EMPREGARE["codigo"]
+            and motivo_da_decisao(decisoes, l["id"])
+        ),
+        key=ordem,
+    )
     por_modalidade = {}
-    for i, linha in enumerate(ranqueados):
+    for i, linha in enumerate(ranqueados + eliminados_por_decisao):
         linha["posicao"] = i + 1
         por_modalidade[linha["modalidade"]] = por_modalidade.get(linha["modalidade"], 0) + 1
         linha["posicao_modalidade"] = por_modalidade[linha["modalidade"]]
@@ -648,20 +678,36 @@ def pre_classificar_vaga(
             motivo_entrada=ant.get("motivo_entrada"),
         )
 
-    membros, saidas = [], []
+    # Quem entrou por decisão da coordenação não é do lote da regra (ver as decisões, abaixo).
+    membros, por_decisao, saidas = [], [], []
     for linha in linhas:
         ant = linha["_anterior"]
         if not ant or ant.get("situacao") not in _NO_LOTE:
             continue
         if ant.get("situacao") == "ANALISADO":
             herdar(linha, ant, "ANALISADO")
-            membros.append(linha)
+            (por_decisao if ant.get("entrada") == ENTRADA_POR_DECISAO else membros).append(linha)
+        elif not _pelo_lote_da_regra(ant):
+            continue
+        elif linha["situacao"] == "ELIMINADO" and motivo_da_decisao(decisoes, linha["id"]):
+            # Eliminado pela regra, mas fica no lote por decisão (sem abrir reposição).
+            if linha["motivo_codigo"] == SAIU_DA_EMPREGARE["codigo"]:
+                saidas.append(linha)
         elif linha["situacao"] == "ELIMINADO":
             saidas.append(linha)
         elif not refazer:
             herdar(linha, ant, "NO_LOTE")
             membros.append(linha)
     herdados = list(membros)
+
+    def fixo_por_decisao(linha):
+        """Quem já está no lote por decisão (vigente, ou já analisado) fica por decisão: não entra pela regra nem conta para o tamanho dela."""
+        ant = linha["_anterior"] or {}
+        return ant.get("entrada") == ENTRADA_POR_DECISAO and (
+            ant.get("situacao") == "ANALISADO"
+            or (ant.get("situacao") == "NO_LOTE" and motivo_da_decisao(decisoes, linha["id"]) is not None)
+        )
+
     # Lote pela nota mínima: entram todos com a nota mínima (quem já estava fica).
     nota_minima = t.get("nota_minima")
 
@@ -669,11 +715,11 @@ def pre_classificar_vaga(
         return linha["nota"] is not None and linha["nota"] >= nota_minima
 
     if nota_minima is not None:
-        t["tamanho"] = sum(1 for l in ranqueados if tem_nota_minima(l)) + sum(
+        t["tamanho"] = sum(1 for l in ranqueados if tem_nota_minima(l) and not fixo_por_decisao(l)) + sum(
             1 for m in membros if not tem_nota_minima(m)
         )
         t["descricao"] = f"{t['descricao']} = {t['tamanho']}"
-    inicial = refazer or not any(l["_anterior"] and l["_anterior"].get("situacao") in _NO_LOTE for l in linhas)
+    inicial = refazer or not any(_pelo_lote_da_regra(l["_anterior"]) for l in linhas)
     saidas.sort(
         key=lambda s: (
             s["_anterior"].get("posicao") if s["_anterior"].get("posicao") is not None else math.inf,
@@ -721,6 +767,8 @@ def pre_classificar_vaga(
                     break
                 if linha["situacao"] != "RANQUEADO" or not cabe_na_lista(linha, b):
                     continue
+                if fixo_por_decisao(linha):
+                    continue
                 if nota_minima is not None and not tem_nota_minima(linha):
                     continue
                 entrar(linha, False)
@@ -728,8 +776,38 @@ def pre_classificar_vaga(
             if lote_da_regra.get("inclui_empatados") and ultimo and ultimo["nota"] is not None:
                 nota = ultimo["nota"]
                 for linha in ranqueados:
-                    if linha["situacao"] == "RANQUEADO" and cabe_na_lista(linha, b) and linha["nota"] == nota:
+                    if (
+                        linha["situacao"] == "RANQUEADO"
+                        and cabe_na_lista(linha, b)
+                        and linha["nota"] == nota
+                        and not fixo_por_decisao(linha)
+                    ):
                         entrar(linha, True)
+
+    # Decisões da coordenação: no lote mesmo que a regra elimine ou deixe fora.
+    ultimo_lote_da_vaga = max(1, maior_lote, numero_novo if entraram else 0)
+    for linha in linhas:
+        motivo = motivo_da_decisao(decisoes, linha["id"])
+        if not motivo or linha["situacao"] in ("NO_LOTE", "ANALISADO"):
+            continue
+        if linha["motivo_codigo"] == SAIU_DA_EMPREGARE["codigo"]:
+            avisos.add("DECISAO_SAIU_DA_EMPREGARE")
+            continue
+        ant = linha["_anterior"] or {}
+        estava = ant.get("situacao") == "NO_LOTE" and int(ant.get("lote") or 0) >= 1
+        lista_da_modalidade = linha["modalidade"] if linha["modalidade"] in ordem_das_listas else ordem_das_listas[0]
+        linha.update(
+            situacao="NO_LOTE",
+            motivo_codigo=None,
+            motivo=None,
+            lote=int(ant["lote"]) if estava else ultimo_lote_da_vaga,
+            lista_lote=ant.get("lista_lote")
+            if estava and ant.get("lista_lote") in ordem_das_listas
+            else lista_da_modalidade,
+            entrada=ENTRADA_POR_DECISAO,
+            motivo_entrada=motivo,
+        )
+        por_decisao.append(linha)
 
     if not inicial and saidas and lote_da_regra.get("linha_anda") is False:
         avisos.add("LINHA_PARADA")
@@ -778,6 +856,7 @@ def pre_classificar_vaga(
             "eliminados": sum(1 for l in linhas if l["situacao"] == "ELIMINADO"),
             "ranqueados": len(ranqueados),
             "no_lote": len(membros),
+            "por_decisao": len(por_decisao),
             "tamanho": t["tamanho"],
             "descricao": t["descricao"],
             "por_modalidade": t["por_modalidade"],

@@ -52,8 +52,11 @@ def candidato(i, art, situacao="Ativo"):
 
 
 class BancoFalso:
-    def __init__(self, editais, candidatos=None, falhar_vaga=None, em_andamento=False, distribuicao=None):
+    def __init__(
+        self, editais, candidatos=None, falhar_vaga=None, em_andamento=False, distribuicao=None, decisoes=None
+    ):
         self.editais = editais
+        self.decisoes = decisoes or {}
         self.distribuicao = distribuicao or {"modo": "PEGAR_PROXIMO", "novos": "MENOS_PENDENTES", "a_abrir": []}
         self.candidatos = candidatos or {}
         self.falhar_vaga = falhar_vaga
@@ -65,7 +68,11 @@ class BancoFalso:
         if funcao == "pre_classificacao_ler_editais":
             return {"hoje": "2026-10-06", "nao_encontrados": ["99/2099"], "editais": self.editais}
         if funcao == "pre_classificacao_ler_candidatos":
-            return {"candidatos": self.candidatos.get(corpo["p_vaga"], []), "anterior": {}}
+            return {
+                "candidatos": self.candidatos.get(corpo["p_vaga"], []),
+                "anterior": {},
+                "decisoes": self.decisoes,
+            }
         if funcao == "iniciar_pre_classificacao":
             if self.em_andamento:
                 raise supabase_rpc.ErroDoSupabase(funcao, 400, '{"code":"55P03","message":"Já há uma em andamento"}')
@@ -160,6 +167,22 @@ class Fluxo(unittest.TestCase):
         self.assertEqual((fim["situacao"], fim["inscritos"], fim["no_lote"]), ("PROCESSADO", 3, 2))
         self.assertNotIn("avisos_por_vaga", fim)
         self.assertIn("1 eliminados", saida)
+
+    def test_as_decisoes_da_coordenacao_ficam_no_lote_e_contam_separado(self):
+        # 03 cancelou (a regra elimina), mas a coordenação o incluiu: Critério CORES.
+        decisoes = {CANDIDATOS["179698"][2]["id"]: {"motivo": "Critério CORES"}}
+        banco = BancoFalso([edital_93()], CANDIDATOS, decisoes=decisoes)
+        codigo, saida = rodar(banco, ["--editais", "93/2026"])
+        self.assertEqual(codigo, 0)
+        gravacao = banco.de("gravar_pre_classificacao_vaga")[0]
+        linhas = {
+            l["id"][-2:]: (l["situacao"], l["posicao"], l["entrada"], l["motivo_entrada"]) for l in gravacao["p_linhas"]
+        }
+        self.assertEqual(linhas["03"], ("NO_LOTE", 3, "DECISAO", "Critério CORES"))
+        self.assertEqual(gravacao["p_resumo"]["tamanho"], 2)
+        fim = banco.de("finalizar_pre_classificacao")[0]["p_editais"][0]
+        self.assertEqual((fim["no_lote"], fim["por_decisao"], fim["eliminados"]), (2, 1, 0))
+        self.assertIn("lote: 2 pela regra + 1 por decisão", saida)
 
     def test_edital_que_falha_nao_derruba_os_outros(self):
         fcc = {**edital_93(), "id": EFCC, "rotulo": "FCC", "vagas": [{**edital_93()["vagas"][0], "codigo": "111111"}]}

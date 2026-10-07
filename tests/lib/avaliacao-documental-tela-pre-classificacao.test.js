@@ -87,6 +87,8 @@ describe("tela da pré-classificação", () => {
       eliminados: 1,
       ranqueados: 6,
       noLote: 5,
+      noLotePelaRegra: 5,
+      noLotePorDecisao: 0,
       tamanho: 5,
       divergencias: 1,
       vagasSemPreClassificacao: 1,

@@ -586,3 +586,136 @@ describe("listas PROVISORIA e LOTE (AM-16)", () => {
     expect(botao("Eliminados: DOCX")).toBeTruthy();
   });
 });
+
+describe("inclusão no lote por decisão da coordenação", () => {
+  const COM_DECISAO = (pode = true) => {
+    const base = PRE(regraSalva(2), pode);
+    return {
+      ...base,
+      vagas: [
+        { ...base.vagas[0], no_lote: 3, no_lote_regra: 2, no_lote_decisao: 1 },
+        base.vagas[1],
+      ],
+      candidatos: base.candidatos.map((c) =>
+        c.codigo === "7000005"
+          ? {
+              ...c,
+              situacao: "NO_LOTE",
+              lote: 2,
+              entrada: "DECISAO",
+              motivo_entrada: "Critério CORES",
+              decisao: {
+                motivo: "Critério CORES",
+                por: "Gestora",
+                em: "2026-10-07T12:00:00Z",
+                situacao_regra: "RANQUEADO",
+              },
+            }
+          : c.codigo === "7000009"
+            ? { ...c, motivo_codigo: "CANCELADO" }
+            : c,
+      ),
+    };
+  };
+  const comRespostas = (pre, extras) => {
+    const supabase = supabaseFalso({ pre });
+    const original = supabase.rpc.getMockImplementation();
+    supabase.rpc.mockImplementation(async (nome, args) =>
+      extras[nome] ? extras[nome](args) : original(nome, args),
+    );
+    return supabase;
+  };
+
+  it('mostra o selo "Decisão: Critério CORES" e "N pela regra + M por decisão"; inclui com a sugestão do motivo', async () => {
+    const incluir = vi.fn(() => ({
+      data: { incluidos: 1, fichas_criadas: 1 },
+      error: null,
+    }));
+    const supabase = comRespostas(COM_DECISAO(), {
+      incluir_no_lote_por_decisao: incluir,
+    });
+    await montar(supabase);
+    expect(secao.querySelector(".ui-kpis").textContent).toContain(
+      "2 de 2 pela regra + 1 por decisão",
+    );
+    const vaga = secao.querySelector("[data-vaga='179698']");
+    expect(vaga.querySelector("[data-lote-da-vaga]").textContent).toContain(
+      "Lote: 2 de 2 pela regra + 1 por decisão",
+    );
+    const linha = vaga.querySelector("[data-candidato='7000005']");
+    expect(linha.querySelector(".avd-selo-decisao").textContent).toBe(
+      "Decisão: Critério CORES",
+    );
+    expect(linha.querySelector(".avd-selo-decisao").title).toContain(
+      "Por Gestora",
+    );
+
+    await clicar(vaga.querySelector("[data-acao='incluir-por-decisao']"));
+    const opcoes = [
+      ...document.querySelectorAll(
+        "table[aria-label='Candidatos fora do lote pela regra'] tbody tr",
+      ),
+    ].map((tr) => tr.dataset.candidato);
+    expect(opcoes).toEqual(["7000004", "7000009"]);
+    const motivo = document.querySelector("input[list='avdMotivosDaDecisao']");
+    expect(motivo.value).toBe("Critério CORES");
+    const confirmar = document.querySelector(
+      "[data-acao='confirmar-incluir-por-decisao']",
+    );
+    expect(confirmar.disabled).toBe(true);
+    await clicar(document.querySelector("input[aria-label='Incluir 7000009']"));
+    await clicar(confirmar);
+    await esperar();
+    expect(incluir).toHaveBeenCalledWith({
+      p_edital: "e93",
+      p_codigos: ["7000009"],
+      p_motivo: "Critério CORES",
+      p_vaga: "179698",
+    });
+    expect(toast).toHaveBeenCalledWith(
+      "1 candidato incluído no lote por decisão da coordenação.",
+      "success",
+    );
+  });
+
+  it("revoga com motivo; a ficha concluída o banco recusa e a tela diz por quê", async () => {
+    const revogar = vi.fn(() => ({
+      data: null,
+      error: {
+        code: "22023",
+        message:
+          "O candidato 7000005 já tem a ficha concluída: a decisão não se revoga.",
+      },
+    }));
+    await montar(
+      comRespostas(COM_DECISAO(), { revogar_decisao_lote: revogar }),
+    );
+    const linha = () => secao.querySelector("[data-candidato='7000005']");
+    await clicar(linha().querySelector("[data-acao='abrir-revogar-decisao']"));
+    const campo = linha().querySelector("[data-revogar='7000005'] input");
+    await digitar(campo, "curto");
+    expect(
+      linha().querySelector("[data-acao='revogar-decisao']").disabled,
+    ).toBe(true);
+    await digitar(campo, "Decisão registrada por engano");
+    await clicar(linha().querySelector("[data-acao='revogar-decisao']"));
+    await esperar();
+    expect(revogar).toHaveBeenCalledWith({
+      p_edital: "e93",
+      p_codigos: ["7000005"],
+      p_motivo: "Decisão registrada por engano",
+      p_vaga: "179698",
+    });
+    expect(linha().textContent).toContain("ficha concluída");
+  });
+
+  it("quem só lê vê o selo, mas não inclui nem revoga", async () => {
+    await montar(supabaseFalso({ pode: false, pre: COM_DECISAO(false) }));
+    const vaga = secao.querySelector("[data-vaga='179698']");
+    expect(vaga.querySelector(".avd-selo-decisao")).not.toBeNull();
+    expect(vaga.querySelector("[data-acao='incluir-por-decisao']")).toBeNull();
+    expect(
+      vaga.querySelector("[data-acao='abrir-revogar-decisao']"),
+    ).toBeNull();
+  });
+});

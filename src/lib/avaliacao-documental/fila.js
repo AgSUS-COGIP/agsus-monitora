@@ -62,6 +62,17 @@ export function contadoresDaFila(candidatos) {
   );
 }
 
+/** O lote do edital (ou da vaga) na fila: { pelaRegra, porDecisao } (decisão da coordenação). */
+export function loteDaFila(candidatos, vaga = "") {
+  const noLote = (Array.isArray(candidatos) ? candidatos : []).filter(
+    (c) =>
+      (!vaga || c.vaga === vaga) &&
+      (c.situacao_pre === "NO_LOTE" || c.situacao_pre === "ANALISADO"),
+  );
+  const porDecisao = noLote.filter((c) => c.entrada === "DECISAO").length;
+  return { pelaRegra: noLote.length - porDecisao, porDecisao };
+}
+
 export const FILTRO_INICIAL = Object.freeze({
   etapa: "lote",
   vaga: "",
