@@ -1043,6 +1043,13 @@ export const CONTRATO_RPC = {
     resumo:
       "Registra a lista PROVISORIA ou LOTE (p_lote = só aquela reposição) em TB_LISTA_CLASSIFICACAO, com o retrato montado no banco a partir da pré-classificação. Coordenação do edital ou Editor na Classificação; exige a regra de classificação.",
   },
+  // ── Avaliação documental: lote pela nota declarada e declarada congelada (20261007180000_lote_pela_declarada.sql)
+  descongelar_declarada_pre_classificacao: {
+    argumentos: ["p_edital", "p_motivo", "p_vaga"],
+    critica: false,
+    resumo:
+      "Descongela a nota declarada dos inscritos do edital (ou da vaga p_vaga): apaga o valor congelado e registra no histórico o valor que era, quem pediu e o motivo (10 a 250 caracteres); o próximo recálculo congela de novo com as respostas de agora. Só a coordenação da avaliação do edital; recusa (55P03) com pré-classificação rodando.",
+  },
   // ── Avaliação documental: fila, distribuição e reserva (20261006120000_fichas_fila_e_reserva.sql)
   obter_fila_avaliacao: {
     argumentos: ["p_edital"],

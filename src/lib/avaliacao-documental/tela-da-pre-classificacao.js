@@ -27,6 +27,8 @@ export const AVISOS_DA_VAGA = Object.freeze({
   QUADRO_SEM_MODALIDADES: "Quadro sem vagas por modalidade: o lote saiu geral.",
   ART_AUSENTE:
     "Inscrito sem ART no arquivo: vale a nota recalculada pela regra.",
+  SEM_DECLARADA_COMPLETA:
+    "Inscrito sem nota declarada completa: o lote usou a ART dele. Confira a nota declarada na regra.",
   LINHA_PARADA: "Lugar aberto no lote: a regra não repõe.",
   FORA_DO_LOTE_ACIMA_DO_CORTE: "Fora do lote com nota acima da linha de corte.",
   LOTE_ACIMA_DO_TAMANHO: "Lote maior que o tamanho de agora.",
@@ -189,9 +191,29 @@ export const ROTULO_DA_ART = "Nota declarada (ART)";
 export const ROTULO_CURTO_DA_ART = "Nota declarada";
 export const DICA_DA_ART =
   "ART: Autodeclaração de Requisitos e Títulos — nota calculada pela Empregare a partir das respostas do questionário, antes da conferência dos documentos";
-/* A "nota declarada" da regra (regra.provisoria.nota_declarada) recalcula a ART pelas respostas. */
+/*
+  A "nota declarada" da regra (regra.provisoria.nota_declarada) recalcula a
+  autodeclaração pelas respostas da inscrição. Com a base da nota DECLARADA
+  (item 8.2.6), é ela que faz o corte e a ordem do lote; a ART só compara.
+*/
 export const DICA_DA_RECALCULADA =
-  "A mesma nota recalculada pela regra a partir das respostas do questionário, para conferir a ART";
+  "A nota da autodeclaração recalculada pela regra a partir das respostas da inscrição; congelada depois do fim das inscrições";
+export const DICA_DA_NOTA_DO_LOTE = "Usada no corte e na ordem do lote";
+
+/**
+ * As notas declaradas congeladas do edital: quantas e desde quando (a
+ * primeira data). { quantidade: 0, em: null } sem nenhuma.
+ */
+export function declaradasCongeladas(dados) {
+  const datas = lista(dados?.candidatos)
+    .filter(
+      (c) =>
+        c?.declarada_congelada !== null && c?.declarada_congelada !== undefined,
+    )
+    .map((c) => String(c.congelada_em ?? ""));
+  const validas = datas.filter(Boolean).sort();
+  return { quantidade: datas.length, em: validas[0] ?? null };
+}
 
 /** "24,5" (ou "—"). */
 export function nota(valor) {

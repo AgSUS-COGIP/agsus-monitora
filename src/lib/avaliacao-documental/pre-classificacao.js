@@ -15,13 +15,27 @@
   - eliminação automática pela regra do edital (provisoria.eliminacao_automatica),
     na ordem; quem saiu do arquivo da Empregare e já estava na lista vira
     eliminado ("Saiu do arquivo da Empregare");
-  - ordem: ART decrescente (coluna "NOTA - …" da Empregare, "24,0/30,0");
-    sem ART, a nota declarada recalculada pela regra, com aviso; depois o
-    desempate da regra (provisoria.desempate: IDOSO, EXPERIENCIA_DECLARADA —
-    a faixa respondida em provisoria.pergunta_experiencia, em meses —,
-    MAIOR_IDADE ou MAIS_VELHO, CANDIDATURA) e o código do candidato;
-  - a nota declarada só confere a ART: divergência além da tolerância é aviso,
-    e só conta quando a declarada do candidato está completa (todo item
+  - a nota do corte e da ordem (provisoria.base_da_nota, item 8.2.6 do
+    93/2026: a pontuação AUTODECLARADA na inscrição):
+      DECLARADA (padrão quando a regra tem nota declarada): a nota declarada
+        recalculada pela regra, quando a do candidato está COMPLETA; sem ela,
+        cai para a ART (aviso SEM_DECLARADA_COMPLETA). A ART (que muda quando
+        a equipe ajusta pontos na Empregare) fica só para comparar;
+      ART: a coluna "NOTA - …" da Empregare ("24,0/30,0"); sem ART, a nota
+        declarada recalculada pela regra, com aviso (ART_AUSENTE);
+    depois o desempate da regra (provisoria.desempate: IDOSO,
+    EXPERIENCIA_DECLARADA — a faixa respondida em
+    provisoria.pergunta_experiencia, em meses —, MAIOR_IDADE ou MAIS_VELHO,
+    CANDIDATURA) e o código do candidato;
+  - declarada congelada: com `congelar` (a primeira pré-classificação depois
+    do fim das inscrições do cronograma, ou sem data de fim: congelaADeclarada)
+    a declarada COMPLETA de cada candidato é guardada com as respostas usadas
+    (linha.declarada_congelada; o banco grava em TB_PRE_CLASSIFICACAO) e não se
+    recalcula mais: com anterior[id].declarada_congelada, vale o valor
+    guardado, mesmo que as respostas mudem. A incompleta continua recalculada.
+    A coordenação descongela (com motivo) e recalcula;
+  - divergência ART × declarada além da tolerância é aviso, e só conta
+    quando a declarada do candidato está completa (todo item
     resolvido; ver nota-declarada.js). O item com pontos por nível usa o nível
     da vaga (vaga.nivel, que o job tira do nome do cargo e da regra de
     classificação: nivelDaVaga); sem nível, não soma e vira o aviso
@@ -41,6 +55,7 @@
   - refazer (só antes das fichas): o lote é recortado do zero.
 */
 import { codigosDaModalidade } from "../classificacao/catalogo.js";
+import { dataDeCorteDoCronograma } from "../classificacao/dados.js";
 import { DESEMPATE_PADRAO_DA_PROVISORIA } from "./catalogo.js";
 import {
   calcularNotaDeclarada,
@@ -65,6 +80,49 @@ export const SAIU_DA_EMPREGARE = Object.freeze({
 const ehObjeto = (v) =>
   v !== null && typeof v === "object" && !Array.isArray(v);
 const lista = (v) => (Array.isArray(v) ? v : []);
+const ehNumero = (v) => typeof v === "number" && Number.isFinite(v);
+
+/** "AAAA-MM-DD" do fim das inscrições no cronograma do edital (a etapa de inscrição; com prorrogação, o fim mais tarde), ou null. */
+export const fimDasInscricoes = (cronograma) =>
+  dataDeCorteDoCronograma(lista(cronograma));
+
+/**
+ * Esta pré-classificação congela a nota declarada? Sim depois do fim das
+ * inscrições (hoje > fim) ou, sem data de fim no cronograma, já na primeira.
+ */
+export function congelaADeclarada(hoje, fim) {
+  if (!fim) return true;
+  const dia = /^\d{4}-\d{2}-\d{2}/.exec(String(hoje ?? ""))?.[0];
+  return Boolean(dia) && dia > fim;
+}
+
+/** A declarada congelada lida do anterior ({ total, parciais, sem_mapa, respostas }), ou null. */
+export function declaradaCongelada(valor) {
+  if (!ehObjeto(valor) || !ehNumero(valor.total)) return null;
+  return {
+    total: valor.total,
+    parciais: ehObjeto(valor.parciais) ? valor.parciais : {},
+    sem_mapa: Number.isInteger(valor.sem_mapa) ? valor.sem_mapa : 0,
+    respostas: lista(valor.respostas),
+  };
+}
+
+/** O que se guarda ao congelar a declarada: o total, as parciais e as respostas usadas. */
+function retratoDaDeclarada(declarada) {
+  return {
+    total: declarada.total,
+    parciais: declarada.parciais,
+    sem_mapa: declarada.sem_mapa,
+    respostas: declarada.itens
+      .filter((i) => i.coluna)
+      .map((i) => ({
+        parcial: i.parcial,
+        coluna: i.coluna,
+        resposta: i.resposta,
+        pontos: i.pontos,
+      })),
+  };
+}
 
 /** "24" ou "24,5": o número como a lista publica. */
 export function numeroNoTexto(n) {
@@ -357,10 +415,12 @@ const NO_LOTE = new Set(["NO_LOTE", "ANALISADO"]);
  *   vaga         { codigo, vagas_imediatas, cadastro_reserva, modalidades, nivel }
  *                (nivel: o da vaga, para a nota declarada por nível; null = desconhecido)
  *   candidatos   [{ id, codigo, ativo, colunas, nascimento, candidatura }]
- *   anterior     { [id]: { situacao, lote, lista_lote, entrada, motivo_entrada, posicao } }
+ *   anterior     { [id]: { situacao, lote, lista_lote, entrada, motivo_entrada, posicao,
+ *                  declarada_congelada } } (declarada_congelada: o valor guardado, que não se recalcula)
  *   ultimo_lote  o maior número de lote já usado na vaga
  *   refazer      recorta o lote do zero (só antes das fichas)
  *   hoje         "AAAA-MM-DD" (idade do desempate)
+ *   congelar     guarda a declarada completa de quem ainda não a tem congelada (congelaADeclarada)
  * Devolve { linhas, resumo }.
  */
 export function preClassificarVaga({
@@ -371,10 +431,14 @@ export function preClassificarVaga({
   ultimo_lote: ultimoLote = 0,
   refazer = false,
   hoje,
+  congelar = false,
 }) {
   const provisoria = regra?.provisoria ?? {};
   const loteDaRegra = regra?.lote ?? {};
   const temDeclarada = lista(provisoria.nota_declarada).length > 0;
+  // Corte e ordem pela declarada (padrão com nota declarada) ou pela ART.
+  const pelaDeclarada =
+    temDeclarada && (provisoria.base_da_nota ?? "DECLARADA") === "DECLARADA";
   const tolerancia = provisoria.divergencia_tolerancia ?? 0;
   const desempate = Array.isArray(provisoria.desempate)
     ? provisoria.desempate
@@ -407,15 +471,25 @@ export function preClassificarVaga({
     ))
       avisos.add(aviso);
     const art = artDasColunas(colunas);
-    const declarada = temDeclarada
-      ? calcularNotaDeclarada(regra, colunas, nivel)
+    // A declarada congelada vale como está; senão, recalculada pelas respostas.
+    const guardada = temDeclarada
+      ? declaradaCongelada(ant?.declarada_congelada)
       : null;
+    const declarada = guardada
+      ? { ...guardada, completa: true, itens: [] }
+      : temDeclarada
+        ? calcularNotaDeclarada(regra, colunas, nivel)
+        : null;
+    const congelada =
+      guardada ??
+      (congelar && declarada?.completa ? retratoDaDeclarada(declarada) : null);
     for (const item of declarada?.itens ?? [])
       if (item.nivel_desconhecido)
         avisos.add(
           `${PREFIXO_DO_AVISO_DE_SEM_NIVEL}NOTA_${item.parcial ?? ""}`,
         );
-    const nota = art ?? declarada?.total ?? null;
+    const pelaBase = pelaDeclarada && declarada?.completa === true;
+    const nota = pelaBase ? declarada.total : (art ?? declarada?.total ?? null);
     const colunaDaExperiencia = perguntaDaExperiencia
       ? colunaDaPergunta(colunas, perguntaDaExperiencia)
       : null;
@@ -432,10 +506,19 @@ export function preClassificarVaga({
       motivo: eliminacao?.motivo ?? null,
       art,
       nota,
-      origem_nota: art !== null ? "ART" : declarada ? "DECLARADA" : null,
+      origem_nota: pelaBase
+        ? "DECLARADA"
+        : art !== null
+          ? "ART"
+          : declarada
+            ? "DECLARADA"
+            : null,
       declarada: declarada ? declarada.total : null,
       declarada_parciais: declarada ? declarada.parciais : null,
+      declarada_completa: declarada ? declarada.completa : null,
+      declarada_congelada: congelada,
       sem_mapa: declarada ? declarada.sem_mapa : 0,
+      _fora_da_base: pelaDeclarada && !pelaBase,
       // Só a declarada completa confere a ART (a incompleta não diverge).
       divergente: declarada?.completa
         ? divergeDaArt(art, declarada.total, tolerancia)
@@ -626,9 +709,25 @@ export function preClassificarVaga({
   const semArt = linhas.filter(
     (l) => l.situacao !== "ELIMINADO" && l.art === null,
   ).length;
-  if (semArt) avisos.add("ART_AUSENTE");
+  // Sem ART só pesa para quem a nota não veio da declarada completa.
+  if (
+    linhas.some(
+      (l) =>
+        l.situacao !== "ELIMINADO" &&
+        l.art === null &&
+        !(pelaDeclarada && l.declarada_completa),
+    )
+  )
+    avisos.add("ART_AUSENTE");
+  const pelaArt = linhas.filter(
+    (l) => l.situacao !== "ELIMINADO" && l._fora_da_base,
+  ).length;
+  if (pelaArt) avisos.add("SEM_DECLARADA_COMPLETA");
 
-  for (const l of linhas) delete l._anterior;
+  for (const l of linhas) {
+    delete l._anterior;
+    delete l._fora_da_base;
+  }
   const conta = (f) => linhas.filter(f).length;
   return {
     linhas: linhas.map(
@@ -643,6 +742,9 @@ export function preClassificarVaga({
       descricao: t.descricao,
       por_modalidade: t.por_modalidade,
       art_corte: artCorte,
+      base_da_nota: pelaDeclarada ? "DECLARADA" : "ART",
+      pela_art: pelaArt,
+      congeladas: conta((l) => l.declarada_congelada !== null),
       divergencias: conta((l) => l.divergente),
       sem_art: semArt,
       acima_do_corte: acimaDoCorte,

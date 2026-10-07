@@ -2,7 +2,10 @@ import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import {
   artDasColunas,
+  congelaADeclarada,
+  declaradaCongelada,
   eliminacaoDoCandidato,
+  fimDasInscricoes,
   idadeEm,
   mesesDeclarados,
   modalidadeDoCandidato,
@@ -62,6 +65,7 @@ const rodar = (c) =>
     ultimo_lote: c.ultimo_lote,
     refazer: c.refazer,
     hoje: c.hoje,
+    congelar: c.congelar ?? false,
   });
 
 describe("casos dourados da pré-classificação", () => {
@@ -77,6 +81,19 @@ describe("casos dourados da pré-classificação", () => {
       );
       expect(linhas).toEqual(c.esperado.linhas);
       expect(r.resumo).toEqual(c.esperado.resumo);
+      if (c.esperado.declaradas)
+        expect(
+          Object.fromEntries(
+            r.linhas.map((l) => [
+              l.id,
+              {
+                declarada: l.declarada,
+                art: l.art,
+                congelada: l.declarada_congelada?.total ?? null,
+              },
+            ]),
+          ),
+        ).toEqual(c.esperado.declaradas);
     },
   );
 
@@ -259,6 +276,92 @@ describe("peças da conta", () => {
     expect(idadeEm(null, "2026-10-06")).toBeNull();
     expect(numeroNoTexto(24)).toBe("24");
     expect(numeroNoTexto(18.5)).toBe("18,5");
+  });
+});
+
+describe("base da nota do lote e declarada congelada (os mesmos casos no pytest)", () => {
+  const casoDaBase = CASOS.casos.find((c) =>
+    c.nome.startsWith("base da nota pela declarada"),
+  );
+
+  it("sem base na regra: DECLARADA com nota declarada, ART sem", () => {
+    expect(normalizarRegraAnalise({}).provisoria.base_da_nota).toBe("ART");
+    expect(
+      normalizarRegraAnalise(casoDaBase.regra).provisoria.base_da_nota,
+    ).toBe("DECLARADA");
+    expect(
+      normalizarRegraAnalise({
+        ...casoDaBase.regra,
+        provisoria: { ...casoDaBase.regra.provisoria, base_da_nota: "ART" },
+      }).provisoria.base_da_nota,
+    ).toBe("ART");
+  });
+
+  it("recusa base desconhecida e a declarada sem nota declarada", () => {
+    const com = (provisoria) =>
+      validarRegraAnalise(
+        normalizarRegraAnalise({ ...casoDaBase.regra, provisoria }),
+      ).join(" ");
+    expect(
+      com({ ...casoDaBase.regra.provisoria, base_da_nota: "MAIOR" }),
+    ).toMatch(/Base da nota do lote: DECLARADA ou ART/);
+    expect(
+      com({
+        ...casoDaBase.regra.provisoria,
+        nota_declarada: [],
+        base_da_nota: "DECLARADA",
+      }),
+    ).toMatch(/configure a nota declarada/);
+    expect(com({ ...casoDaBase.regra.provisoria, base_da_nota: "ART" })).toBe(
+      "",
+    );
+  });
+
+  it("com a base ART o mesmo caso volta à ordem pela ART", () => {
+    const r = rodar({
+      ...casoDaBase,
+      regra: {
+        ...casoDaBase.regra,
+        provisoria: { ...casoDaBase.regra.provisoria, base_da_nota: "ART" },
+      },
+    });
+    const porCodigo = Object.fromEntries(r.linhas.map((l) => [l.codigo, l]));
+    expect(porCodigo["2171493"].situacao).toBe("RANQUEADO");
+    expect(porCodigo["7100004"].situacao).toBe("NO_LOTE");
+    expect(r.resumo.base_da_nota).toBe("ART");
+    expect(r.resumo.avisos).not.toContain("SEM_DECLARADA_COMPLETA");
+  });
+
+  it.each(CASOS.congelamento.fim_das_inscricoes)(
+    "fim das inscrições de %j",
+    (cronograma, esperado) =>
+      expect(fimDasInscricoes(cronograma)).toBe(esperado),
+  );
+
+  it.each(CASOS.congelamento.congela)(
+    "congela em %s com fim %s: %s",
+    (hoje, fim, esperado) =>
+      expect(congelaADeclarada(hoje, fim)).toBe(esperado),
+  );
+
+  it("a congelada guarda as respostas usadas e o anterior inválido é ignorado", () => {
+    const c = CASOS.casos.find((x) => x.nome.startsWith("congelamento:"));
+    const linha = rodar(c).linhas.find((l) => l.codigo === "2171493");
+    expect(linha.declarada_congelada.respostas).toHaveLength(3);
+    expect(linha.declarada_congelada.respostas[2]).toEqual({
+      parcial: "EXPERIENCIA",
+      coluna: "Pergunta 5 - Experiência Profissional em atividades compatíveis",
+      resposta: '"1 ano"',
+      pontos: 10,
+    });
+    expect(declaradaCongelada({ total: "20" })).toBeNull();
+    expect(declaradaCongelada(null)).toBeNull();
+    expect(declaradaCongelada({ total: 20 })).toEqual({
+      total: 20,
+      parciais: {},
+      sem_mapa: 0,
+      respostas: [],
+    });
   });
 });
 

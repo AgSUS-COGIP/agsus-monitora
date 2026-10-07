@@ -9,6 +9,9 @@
     registrar_lista_pre_classificacao(p_edital, p_tipo, p_lote)
                                                       PROVISORIA ou LOTE
     publicar_lista_classificacao(p_lista)             marca a lista como publicada
+    descongelar_declarada_pre_classificacao(p_edital, p_motivo, p_vaga)
+                                                      (20261007170000) descongela a
+                                                      nota declarada; depois, Recalcular
   "Recalcular": POST /api/rodar-carga { robo: "pre_classificacao", edital }
   (api/rodar-carga.js confere no banco se quem clicou coordena o edital). O
   resultado do pedido fica na aba (`aviso`): o erro, com o botão de volta; ou
@@ -47,6 +50,7 @@ import { mensagemDoBanco } from "./estado.js";
 const RPC_OBTER_PRE_CLASSIFICACAO = "obter_pre_classificacao";
 const RPC_REGISTRAR_LISTA = "registrar_lista_pre_classificacao";
 const RPC_PUBLICAR_LISTA = "publicar_lista_classificacao";
+const RPC_DESCONGELAR = "descongelar_declarada_pre_classificacao";
 const TEMPO_LIMITE_MS = 45000;
 /* O job leva de segundos a poucos minutos: a aba relê neste intervalo até
    a execução terminar, no máximo pelo tempo limite do workflow. */
@@ -184,6 +188,34 @@ export function criarEstadoDaPreClassificacao({
         "Não foi possível pedir o recálculo.",
       ),
     );
+  }
+
+  /*
+    "Descongelar e recalcular" (coordenação): apaga a nota declarada congelada
+    do edital, com o motivo no histórico, e pede o recálculo, que congela de
+    novo com as respostas de agora.
+  */
+  async function descongelar(motivo) {
+    const editalId = estado.editalId;
+    if (!editalId) return false;
+    let r;
+    try {
+      r = await rpc(RPC_DESCONGELAR, {
+        p_edital: editalId,
+        p_motivo: String(motivo ?? "").trim(),
+        p_vaga: null,
+      });
+    } catch (erro) {
+      toast(`Não foi possível descongelar: ${mensagemDoBanco(erro)}`, "error");
+      return false;
+    }
+    const n = Number(r?.descongeladas) || 0;
+    toast(
+      `${n} ${n === 1 ? "nota declarada descongelada" : "notas declaradas descongeladas"}.`,
+      "success",
+    );
+    if (estado.editalId === editalId) await recalcular();
+    return true;
   }
 
   function recusado(doEdital, motivo) {
@@ -350,6 +382,7 @@ export function criarEstadoDaPreClassificacao({
     },
     carregar,
     recalcular,
+    descongelar,
     registrarLista,
     publicarLista,
     exportar,

@@ -45,6 +45,7 @@ def rodar(caso, **mudancas):
         ultimo_lote=c["ultimo_lote"],
         refazer=c["refazer"],
         hoje=c["hoje"],
+        congelar=c.get("congelar", False),
     )
 
 
@@ -56,6 +57,18 @@ class CasosDouradosDaPreClassificacao(unittest.TestCase):
                 linhas = {l["id"]: {k: l[k] for k in CAMPOS} for l in r["linhas"]}
                 self.assertEqual(linhas, caso["esperado"]["linhas"])
                 self.assertEqual(r["resumo"], caso["esperado"]["resumo"])
+                if "declaradas" in caso["esperado"]:
+                    self.assertEqual(
+                        {
+                            l["id"]: {
+                                "declarada": l["declarada"],
+                                "art": l["art"],
+                                "congelada": (l["declarada_congelada"] or {}).get("total"),
+                            }
+                            for l in r["linhas"]
+                        },
+                        caso["esperado"]["declaradas"],
+                    )
 
     def test_rodar_de_novo_nao_muda_nada(self):
         for caso in PRE["casos"]:
@@ -282,6 +295,62 @@ class NotaDeclaradaPorNivel(unittest.TestCase):
                 },
                 caso["esperado_declarada"],
             )
+
+
+class BaseDaNotaECongelamento(unittest.TestCase):
+    """Os mesmos testes de tests/lib/avaliacao-documental-pre-classificacao.test.js."""
+
+    CASO = next(c for c in PRE["casos"] if c["nome"].startswith("base da nota pela declarada"))
+
+    def _com(self, **provisoria):
+        return {**self.CASO["regra"], "provisoria": {**self.CASO["regra"]["provisoria"], **provisoria}}
+
+    def test_padrao_declarada_com_nota_declarada_e_art_sem(self):
+        self.assertEqual(pc.normalizar_regra({})["provisoria"]["base_da_nota"], "ART")
+        self.assertEqual(pc.normalizar_regra(self.CASO["regra"])["provisoria"]["base_da_nota"], "DECLARADA")
+        self.assertEqual(pc.normalizar_regra(self._com(base_da_nota="ART"))["provisoria"]["base_da_nota"], "ART")
+
+    def test_recusa_base_desconhecida_e_declarada_sem_nota_declarada(self):
+        with self.assertRaisesRegex(ValueError, "Base da nota do lote: DECLARADA ou ART"):
+            pc.normalizar_regra(self._com(base_da_nota="MAIOR"))
+        with self.assertRaisesRegex(ValueError, "configure a nota declarada"):
+            pc.normalizar_regra(self._com(base_da_nota="DECLARADA", nota_declarada=[]))
+        self.assertEqual(pc.erros_da_base_da_nota(self._com(base_da_nota="ART")["provisoria"]), [])
+
+    def test_com_a_base_art_o_mesmo_caso_volta_a_ordem_pela_art(self):
+        r = rodar(self.CASO, regra=self._com(base_da_nota="ART"))
+        por_codigo = {l["codigo"]: l for l in r["linhas"]}
+        self.assertEqual(por_codigo["2171493"]["situacao"], "RANQUEADO")
+        self.assertEqual(por_codigo["7100004"]["situacao"], "NO_LOTE")
+        self.assertEqual(r["resumo"]["base_da_nota"], "ART")
+        self.assertNotIn("SEM_DECLARADA_COMPLETA", r["resumo"]["avisos"])
+
+    def test_fim_das_inscricoes_e_quando_congela(self):
+        for cronograma, esperado in PRE["congelamento"]["fim_das_inscricoes"]:
+            with self.subTest(cronograma):
+                self.assertEqual(pc.fim_das_inscricoes(cronograma), esperado)
+        for hoje, fim, esperado in PRE["congelamento"]["congela"]:
+            with self.subTest((hoje, fim)):
+                self.assertEqual(pc.congela_a_declarada(hoje, fim), esperado)
+
+    def test_a_congelada_guarda_as_respostas_e_o_anterior_invalido_e_ignorado(self):
+        caso = next(c for c in PRE["casos"] if c["nome"].startswith("congelamento:"))
+        linha = next(l for l in rodar(caso)["linhas"] if l["codigo"] == "2171493")
+        self.assertEqual(len(linha["declarada_congelada"]["respostas"]), 3)
+        self.assertEqual(
+            linha["declarada_congelada"]["respostas"][2],
+            {
+                "parcial": "EXPERIENCIA",
+                "coluna": "Pergunta 5 - Experiência Profissional em atividades compatíveis",
+                "resposta": '"1 ano"',
+                "pontos": 10,
+            },
+        )
+        self.assertIsNone(pc.declarada_congelada({"total": "20"}))
+        self.assertIsNone(pc.declarada_congelada(None))
+        self.assertEqual(
+            pc.declarada_congelada({"total": 20}), {"total": 20, "parciais": {}, "sem_mapa": 0, "respostas": []}
+        )
 
 
 if __name__ == "__main__":
