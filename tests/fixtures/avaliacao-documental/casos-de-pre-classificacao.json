@@ -342,6 +342,9 @@
           "tamanho": 4,
           "descricao": "2 × (1 + CR) = 4",
           "por_modalidade": null,
+          "base_da_nota": "ART",
+          "pela_art": 0,
+          "congeladas": 0,
           "art_corte": 18.5,
           "divergencias": 0,
           "sem_art": 0,
@@ -578,6 +581,9 @@
           "tamanho": 2,
           "descricao": "1 × (1 + CR) = 2",
           "por_modalidade": null,
+          "base_da_nota": "ART",
+          "pela_art": 0,
+          "congeladas": 0,
           "art_corte": 22,
           "divergencias": 0,
           "sem_art": 0,
@@ -785,6 +791,9 @@
           "tamanho": 2,
           "descricao": "1 × (1 + CR) = 2",
           "por_modalidade": null,
+          "base_da_nota": "ART",
+          "pela_art": 0,
+          "congeladas": 0,
           "art_corte": 22,
           "divergencias": 0,
           "sem_art": 0,
@@ -992,6 +1001,9 @@
           "tamanho": 4,
           "descricao": "2 × (1 + CR) = 4",
           "por_modalidade": null,
+          "base_da_nota": "ART",
+          "pela_art": 0,
+          "congeladas": 0,
           "art_corte": 20,
           "divergencias": 0,
           "sem_art": 0,
@@ -1048,7 +1060,8 @@
               "teto": null
             }
           ],
-          "divergencia_tolerancia": 1
+          "divergencia_tolerancia": 1,
+          "base_da_nota": "ART"
         },
         "lote": {
           "base": "MULTIPLO_VAGAS",
@@ -1214,6 +1227,9 @@
           "tamanho": 4,
           "descricao": "2 × (1 + CR) = 4",
           "por_modalidade": null,
+          "base_da_nota": "ART",
+          "pela_art": 0,
+          "congeladas": 0,
           "art_corte": 1,
           "divergencias": 2,
           "sem_art": 1,
@@ -1446,6 +1462,9 @@
           "tamanho": 2,
           "descricao": "1 × (1 + CR) = 2",
           "por_modalidade": null,
+          "base_da_nota": "ART",
+          "pela_art": 0,
+          "congeladas": 0,
           "art_corte": 20,
           "divergencias": 0,
           "sem_art": 0,
@@ -1680,6 +1699,9 @@
           "tamanho": 2,
           "descricao": "1 × (1 + CR) = 2",
           "por_modalidade": null,
+          "base_da_nota": "ART",
+          "pela_art": 0,
+          "congeladas": 0,
           "art_corte": 22,
           "divergencias": 0,
           "sem_art": 0,
@@ -1879,6 +1901,9 @@
           "tamanho": 2,
           "descricao": "1 × (1 + CR) = 2",
           "por_modalidade": null,
+          "base_da_nota": "ART",
+          "pela_art": 0,
+          "congeladas": 0,
           "art_corte": 25,
           "divergencias": 0,
           "sem_art": 0,
@@ -2080,6 +2105,9 @@
           "tamanho": 1,
           "descricao": "1 × 1 = 1",
           "por_modalidade": null,
+          "base_da_nota": "ART",
+          "pela_art": 0,
+          "congeladas": 0,
           "art_corte": 29,
           "divergencias": 0,
           "sem_art": 0,
@@ -2294,6 +2322,9 @@
           "tamanho": 2,
           "descricao": "1 × (1 + CR) = 2",
           "por_modalidade": null,
+          "base_da_nota": "ART",
+          "pela_art": 0,
+          "congeladas": 0,
           "art_corte": 20,
           "divergencias": 0,
           "sem_art": 0,
@@ -2570,6 +2601,9 @@
             "AC": 3,
             "PP": 1
           },
+          "base_da_nota": "ART",
+          "pela_art": 0,
+          "congeladas": 0,
           "art_corte": 18,
           "divergencias": 0,
           "sem_art": 0,
@@ -2717,6 +2751,9 @@
           "tamanho": null,
           "descricao": "",
           "por_modalidade": null,
+          "base_da_nota": "ART",
+          "pela_art": 0,
+          "congeladas": 0,
           "art_corte": null,
           "divergencias": 0,
           "sem_art": 0,
@@ -2898,6 +2935,9 @@
           "tamanho": 1,
           "descricao": "1 (definido para a vaga)",
           "por_modalidade": null,
+          "base_da_nota": "ART",
+          "pela_art": 0,
+          "congeladas": 0,
           "art_corte": 24,
           "divergencias": 0,
           "sem_art": 0,
@@ -3105,6 +3145,9 @@
           "tamanho": 3,
           "descricao": "3 (número fixo)",
           "por_modalidade": null,
+          "base_da_nota": "ART",
+          "pela_art": 0,
+          "congeladas": 0,
           "art_corte": 21,
           "divergencias": 0,
           "sem_art": 0,
@@ -3296,6 +3339,9 @@
           "tamanho": 1,
           "descricao": "1 × 1 = 1",
           "por_modalidade": null,
+          "base_da_nota": "ART",
+          "pela_art": 0,
+          "congeladas": 0,
           "art_corte": 28,
           "divergencias": 0,
           "sem_art": 0,
@@ -3443,6 +3489,9 @@
           "tamanho": 4,
           "descricao": "2 × (1 + CR) = 4",
           "por_modalidade": null,
+          "base_da_nota": "ART",
+          "pela_art": 0,
+          "congeladas": 0,
           "art_corte": 22,
           "divergencias": 0,
           "sem_art": 0,
@@ -3665,6 +3714,9 @@
           "tamanho": 3,
           "descricao": "nota ≥ 15 (item 8.2.6) = 3",
           "por_modalidade": null,
+          "base_da_nota": "ART",
+          "pela_art": 0,
+          "congeladas": 0,
           "art_corte": 15,
           "divergencias": 0,
           "sem_art": 1,
@@ -3891,6 +3943,9 @@
           "tamanho": 3,
           "descricao": "nota ≥ 15 (item 8.2.6) = 3",
           "por_modalidade": null,
+          "base_da_nota": "ART",
+          "pela_art": 0,
+          "congeladas": 0,
           "art_corte": 15,
           "divergencias": 0,
           "sem_art": 0,
@@ -4150,6 +4205,9 @@
           "tamanho": 3,
           "descricao": "3 (número fixo)",
           "por_modalidade": null,
+          "base_da_nota": "ART",
+          "pela_art": 0,
+          "congeladas": 0,
           "art_corte": 20,
           "divergencias": 0,
           "sem_art": 0,
@@ -4199,7 +4257,8 @@
             "Selecione sua Experiência Profissional",
             "Marque a pontuação referente a sua experiência profissional",
             "Marque a pontuação referente à experiência profissional"
-          ]
+          ],
+          "base_da_nota": "ART"
         },
         "lote": {
           "base": "FIXO",
@@ -4333,6 +4392,9 @@
           "tamanho": 2,
           "descricao": "2 (número fixo)",
           "por_modalidade": null,
+          "base_da_nota": "ART",
+          "pela_art": 0,
+          "congeladas": 0,
           "art_corte": 20,
           "divergencias": 0,
           "sem_art": 0,
@@ -4437,7 +4499,8 @@
             }
           ],
           "divergencia_tolerancia": 0,
-          "desempate": ["IDOSO", "MAIOR_IDADE"]
+          "desempate": ["IDOSO", "MAIOR_IDADE"],
+          "base_da_nota": "ART"
         },
         "lote": {
           "base": "FIXO",
@@ -4599,6 +4662,9 @@
           "tamanho": 2,
           "descricao": "2 (número fixo)",
           "por_modalidade": null,
+          "base_da_nota": "ART",
+          "pela_art": 0,
+          "congeladas": 0,
           "art_corte": 48,
           "divergencias": 1,
           "sem_art": 0,
@@ -4737,7 +4803,8 @@
             }
           ],
           "divergencia_tolerancia": 0,
-          "desempate": ["IDOSO", "MAIOR_IDADE"]
+          "desempate": ["IDOSO", "MAIOR_IDADE"],
+          "base_da_nota": "ART"
         },
         "lote": {
           "base": "FIXO",
@@ -4899,6 +4966,9 @@
           "tamanho": 2,
           "descricao": "2 (número fixo)",
           "por_modalidade": null,
+          "base_da_nota": "ART",
+          "pela_art": 0,
+          "congeladas": 0,
           "art_corte": 48,
           "divergencias": 0,
           "sem_art": 0,
@@ -4978,7 +5048,8 @@
             "Selecione sua Experiência Profissional",
             "Marque a pontuação referente a sua experiência profissional",
             "Marque a pontuação referente à experiência profissional"
-          ]
+          ],
+          "base_da_nota": "ART"
         },
         "lote": {
           "base": "FIXO",
@@ -5115,6 +5186,9 @@
           "tamanho": 2,
           "descricao": "2 (número fixo)",
           "por_modalidade": null,
+          "base_da_nota": "ART",
+          "pela_art": 0,
+          "congeladas": 0,
           "art_corte": 20,
           "divergencias": 0,
           "sem_art": 0,
@@ -5128,6 +5202,1170 @@
             "PERGUNTA_AMBIGUA:NOTA_ETNICO",
             "PERGUNTA_AMBIGUA:TERMO"
           ]
+        }
+      }
+    },
+    {
+      "nome": "base da nota pela declarada (item 8.2.6 do 93/2026): o corte e a ordem do lote usam a declarada completa; a ART só compara; sem declarada completa, a ART (aviso)",
+      "historia": "AM-4.3, AM-5.1",
+      "regra": {
+        "schema": 1,
+        "titulo_etapa": "Avaliação Documental e de Títulos",
+        "provisoria": {
+          "eliminacao_automatica": [],
+          "nota_declarada": [
+            {
+              "parcial": "FORMACAO",
+              "pergunta": "Formação",
+              "tipo": "OPCAO",
+              "pontos": {
+                "Graduação": 5,
+                "Especialização": 10
+              }
+            },
+            {
+              "parcial": "CURSOS",
+              "pergunta": "Cursos",
+              "tipo": "OPCAO",
+              "pontos": {
+                "Nenhum": 0,
+                "1 curso": 5
+              }
+            },
+            {
+              "parcial": "EXPERIENCIA",
+              "pergunta": "Experiência Profissional",
+              "tipo": "OPCAO",
+              "pontos": {
+                "Não possuo": 0,
+                "6 meses": 5,
+                "1 ano": 10,
+                "4 anos ou mais": 35
+              }
+            }
+          ],
+          "divergencia_tolerancia": 0,
+          "desempate": ["IDOSO", "EXPERIENCIA_DECLARADA", "MAIOR_IDADE"],
+          "pergunta_experiencia": "Experiência Profissional"
+        },
+        "lote": {
+          "base": "NOTA_MINIMA",
+          "nota_minima": 15,
+          "item_edital": "8.2.6",
+          "multiplo": 3,
+          "fixo": null,
+          "inclui_cr": true,
+          "por_modalidade": false,
+          "inclui_empatados": true,
+          "linha_anda": true,
+          "publica_reposicao": false
+        },
+        "blocos": [
+          {
+            "codigo": "MODALIDADE",
+            "titulo": "Sistema de concorrência",
+            "tipo": "REGISTRO",
+            "perguntas": ["Sistema de concorrência"]
+          }
+        ]
+      },
+      "vaga": {
+        "codigo": "180244",
+        "vagas_imediatas": 1,
+        "cadastro_reserva": true,
+        "modalidades": {
+          "Ampla Concorrência": 1
+        },
+        "nivel": "superior"
+      },
+      "candidatos": [
+        {
+          "id": "d01",
+          "codigo": "2171493",
+          "ativo": true,
+          "nascimento": "1985-05-05",
+          "candidatura": "2026-09-21T09:00:00+00:00",
+          "colunas": {
+            "NOTA - Questionário de seleção": "10,0/50,0",
+            "Pergunta 2 - Sistema de concorrência": "\"Ampla concorrência\"",
+            "Pergunta 3 - Formação acadêmica": "\"Graduação\"",
+            "Pergunta 4 - Cursos na área": "\"1 curso\"",
+            "Pergunta 5 - Experiência Profissional em atividades compatíveis": "\"1 ano\""
+          }
+        },
+        {
+          "id": "d02",
+          "codigo": "6893959",
+          "ativo": true,
+          "nascimento": "1990-01-01",
+          "candidatura": "2026-09-22T10:00:00+00:00",
+          "colunas": {
+            "NOTA - Questionário de seleção": "13,0/50,0",
+            "Pergunta 2 - Sistema de concorrência": "\"Ampla concorrência\"",
+            "Pergunta 3 - Formação acadêmica": "\"Graduação\"",
+            "Pergunta 4 - Cursos na área": "\"1 curso\"",
+            "Pergunta 5 - Experiência Profissional em atividades compatíveis": "\"6 meses\""
+          }
+        },
+        {
+          "id": "d03",
+          "codigo": "6946446",
+          "ativo": true,
+          "nascimento": "1985-05-05",
+          "candidatura": "2026-09-22T10:00:00+00:00",
+          "colunas": {
+            "NOTA - Questionário de seleção": "5,0/50,0",
+            "Pergunta 2 - Sistema de concorrência": "\"Ampla concorrência\"",
+            "Pergunta 3 - Formação acadêmica": "\"Graduação\"",
+            "Pergunta 4 - Cursos na área": "\"1 curso\"",
+            "Pergunta 5 - Experiência Profissional em atividades compatíveis": "\"4 anos ou mais\""
+          }
+        },
+        {
+          "id": "d04",
+          "codigo": "7100004",
+          "ativo": true,
+          "nascimento": "1985-05-05",
+          "candidatura": "2026-09-22T10:00:00+00:00",
+          "colunas": {
+            "NOTA - Questionário de seleção": "18,0/50,0",
+            "Pergunta 2 - Sistema de concorrência": "\"Ampla concorrência\"",
+            "Pergunta 3 - Formação acadêmica": "\"Graduação\"",
+            "Pergunta 4 - Cursos na área": "\"Nenhum\"",
+            "Pergunta 5 - Experiência Profissional em atividades compatíveis": "\"6 meses\""
+          }
+        },
+        {
+          "id": "d05",
+          "codigo": "7100005",
+          "ativo": true,
+          "nascimento": "1985-05-05",
+          "candidatura": "2026-09-22T10:00:00+00:00",
+          "colunas": {
+            "NOTA - Questionário de seleção": "16,0/50,0",
+            "Pergunta 2 - Sistema de concorrência": "\"Ampla concorrência\"",
+            "Pergunta 3 - Formação acadêmica": "\"Mestrado\"",
+            "Pergunta 4 - Cursos na área": "\"1 curso\"",
+            "Pergunta 5 - Experiência Profissional em atividades compatíveis": "\"1 ano\""
+          }
+        },
+        {
+          "id": "d06",
+          "codigo": "7100006",
+          "ativo": true,
+          "nascimento": "1970-03-03",
+          "candidatura": "2026-09-22T10:00:00+00:00",
+          "colunas": {
+            "NOTA - Questionário de seleção": "30,0/50,0",
+            "Pergunta 2 - Sistema de concorrência": "\"Ampla concorrência\"",
+            "Pergunta 3 - Formação acadêmica": "\"Especialização\"",
+            "Pergunta 4 - Cursos na área": "\"1 curso\"",
+            "Pergunta 5 - Experiência Profissional em atividades compatíveis": "\"Não possuo\""
+          }
+        }
+      ],
+      "anterior": {},
+      "ultimo_lote": 0,
+      "refazer": false,
+      "hoje": "2026-10-07",
+      "congelar": false,
+      "esperado": {
+        "linhas": {
+          "d01": {
+            "situacao": "NO_LOTE",
+            "motivo_codigo": null,
+            "posicao": 2,
+            "posicao_modalidade": 2,
+            "lote": 1,
+            "lista_lote": "GERAL",
+            "entrada": "INICIAL",
+            "motivo_entrada": "Lote inicial: nota ≥ 15 (item 8.2.6) = 5",
+            "nota": 20.0,
+            "origem_nota": "DECLARADA",
+            "divergente": true,
+            "modalidade": "AC"
+          },
+          "d02": {
+            "situacao": "NO_LOTE",
+            "motivo_codigo": null,
+            "posicao": 4,
+            "posicao_modalidade": 4,
+            "lote": 1,
+            "lista_lote": "GERAL",
+            "entrada": "INICIAL",
+            "motivo_entrada": "Lote inicial: nota ≥ 15 (item 8.2.6) = 5",
+            "nota": 15.0,
+            "origem_nota": "DECLARADA",
+            "divergente": true,
+            "modalidade": "AC"
+          },
+          "d03": {
+            "situacao": "NO_LOTE",
+            "motivo_codigo": null,
+            "posicao": 1,
+            "posicao_modalidade": 1,
+            "lote": 1,
+            "lista_lote": "GERAL",
+            "entrada": "INICIAL",
+            "motivo_entrada": "Lote inicial: nota ≥ 15 (item 8.2.6) = 5",
+            "nota": 45.0,
+            "origem_nota": "DECLARADA",
+            "divergente": true,
+            "modalidade": "AC"
+          },
+          "d04": {
+            "situacao": "RANQUEADO",
+            "motivo_codigo": null,
+            "posicao": 6,
+            "posicao_modalidade": 6,
+            "lote": null,
+            "lista_lote": null,
+            "entrada": null,
+            "motivo_entrada": null,
+            "nota": 10.0,
+            "origem_nota": "DECLARADA",
+            "divergente": true,
+            "modalidade": "AC"
+          },
+          "d05": {
+            "situacao": "NO_LOTE",
+            "motivo_codigo": null,
+            "posicao": 3,
+            "posicao_modalidade": 3,
+            "lote": 1,
+            "lista_lote": "GERAL",
+            "entrada": "INICIAL",
+            "motivo_entrada": "Lote inicial: nota ≥ 15 (item 8.2.6) = 5",
+            "nota": 16.0,
+            "origem_nota": "ART",
+            "divergente": false,
+            "modalidade": "AC"
+          },
+          "d06": {
+            "situacao": "NO_LOTE",
+            "motivo_codigo": null,
+            "posicao": 5,
+            "posicao_modalidade": 5,
+            "lote": 1,
+            "lista_lote": "GERAL",
+            "entrada": "INICIAL",
+            "motivo_entrada": "Lote inicial: nota ≥ 15 (item 8.2.6) = 5",
+            "nota": 15.0,
+            "origem_nota": "DECLARADA",
+            "divergente": true,
+            "modalidade": "AC"
+          }
+        },
+        "declaradas": {
+          "d01": {
+            "declarada": 20.0,
+            "art": 10.0,
+            "congelada": null
+          },
+          "d02": {
+            "declarada": 15.0,
+            "art": 13.0,
+            "congelada": null
+          },
+          "d03": {
+            "declarada": 45.0,
+            "art": 5.0,
+            "congelada": null
+          },
+          "d04": {
+            "declarada": 10.0,
+            "art": 18.0,
+            "congelada": null
+          },
+          "d05": {
+            "declarada": 15.0,
+            "art": 16.0,
+            "congelada": null
+          },
+          "d06": {
+            "declarada": 15.0,
+            "art": 30.0,
+            "congelada": null
+          }
+        },
+        "resumo": {
+          "inscritos": 6,
+          "eliminados": 0,
+          "ranqueados": 6,
+          "no_lote": 5,
+          "tamanho": 5,
+          "descricao": "nota ≥ 15 (item 8.2.6) = 5",
+          "por_modalidade": null,
+          "art_corte": 15.0,
+          "base_da_nota": "DECLARADA",
+          "pela_art": 1,
+          "congeladas": 0,
+          "divergencias": 5,
+          "sem_art": 0,
+          "acima_do_corte": 0,
+          "entraram": 5,
+          "lote_novo": 1,
+          "saidas": [],
+          "avisos": ["SEM_DECLARADA_COMPLETA"]
+        }
+      }
+    },
+    {
+      "nome": "caso real do 93/2026: 2171493 (declarada 20, ART 10) e 6893959 (declarada 15, ART 13) entram no lote; 6946446 (declarada 45, ART 5) continua; quem entrou pela ART continua",
+      "historia": "AM-4.3, AM-5.5",
+      "regra": {
+        "schema": 1,
+        "titulo_etapa": "Avaliação Documental e de Títulos",
+        "provisoria": {
+          "eliminacao_automatica": [],
+          "nota_declarada": [
+            {
+              "parcial": "FORMACAO",
+              "pergunta": "Formação",
+              "tipo": "OPCAO",
+              "pontos": {
+                "Graduação": 5,
+                "Especialização": 10
+              }
+            },
+            {
+              "parcial": "CURSOS",
+              "pergunta": "Cursos",
+              "tipo": "OPCAO",
+              "pontos": {
+                "Nenhum": 0,
+                "1 curso": 5
+              }
+            },
+            {
+              "parcial": "EXPERIENCIA",
+              "pergunta": "Experiência Profissional",
+              "tipo": "OPCAO",
+              "pontos": {
+                "Não possuo": 0,
+                "6 meses": 5,
+                "1 ano": 10,
+                "4 anos ou mais": 35
+              }
+            }
+          ],
+          "divergencia_tolerancia": 0,
+          "desempate": ["IDOSO", "EXPERIENCIA_DECLARADA", "MAIOR_IDADE"],
+          "pergunta_experiencia": "Experiência Profissional"
+        },
+        "lote": {
+          "base": "NOTA_MINIMA",
+          "nota_minima": 15,
+          "item_edital": "8.2.6",
+          "multiplo": 3,
+          "fixo": null,
+          "inclui_cr": true,
+          "por_modalidade": false,
+          "inclui_empatados": true,
+          "linha_anda": true,
+          "publica_reposicao": false
+        },
+        "blocos": [
+          {
+            "codigo": "MODALIDADE",
+            "titulo": "Sistema de concorrência",
+            "tipo": "REGISTRO",
+            "perguntas": ["Sistema de concorrência"]
+          }
+        ]
+      },
+      "vaga": {
+        "codigo": "180244",
+        "vagas_imediatas": 1,
+        "cadastro_reserva": true,
+        "modalidades": {
+          "Ampla Concorrência": 1
+        },
+        "nivel": "superior"
+      },
+      "candidatos": [
+        {
+          "id": "d01",
+          "codigo": "2171493",
+          "ativo": true,
+          "nascimento": "1985-05-05",
+          "candidatura": "2026-09-21T09:00:00+00:00",
+          "colunas": {
+            "NOTA - Questionário de seleção": "10,0/50,0",
+            "Pergunta 2 - Sistema de concorrência": "\"Ampla concorrência\"",
+            "Pergunta 3 - Formação acadêmica": "\"Graduação\"",
+            "Pergunta 4 - Cursos na área": "\"1 curso\"",
+            "Pergunta 5 - Experiência Profissional em atividades compatíveis": "\"1 ano\""
+          }
+        },
+        {
+          "id": "d02",
+          "codigo": "6893959",
+          "ativo": true,
+          "nascimento": "1990-01-01",
+          "candidatura": "2026-09-22T10:00:00+00:00",
+          "colunas": {
+            "NOTA - Questionário de seleção": "13,0/50,0",
+            "Pergunta 2 - Sistema de concorrência": "\"Ampla concorrência\"",
+            "Pergunta 3 - Formação acadêmica": "\"Graduação\"",
+            "Pergunta 4 - Cursos na área": "\"1 curso\"",
+            "Pergunta 5 - Experiência Profissional em atividades compatíveis": "\"6 meses\""
+          }
+        },
+        {
+          "id": "d03",
+          "codigo": "6946446",
+          "ativo": true,
+          "nascimento": "1985-05-05",
+          "candidatura": "2026-09-22T10:00:00+00:00",
+          "colunas": {
+            "NOTA - Questionário de seleção": "5,0/50,0",
+            "Pergunta 2 - Sistema de concorrência": "\"Ampla concorrência\"",
+            "Pergunta 3 - Formação acadêmica": "\"Graduação\"",
+            "Pergunta 4 - Cursos na área": "\"1 curso\"",
+            "Pergunta 5 - Experiência Profissional em atividades compatíveis": "\"4 anos ou mais\""
+          }
+        },
+        {
+          "id": "d04",
+          "codigo": "7100004",
+          "ativo": true,
+          "nascimento": "1985-05-05",
+          "candidatura": "2026-09-22T10:00:00+00:00",
+          "colunas": {
+            "NOTA - Questionário de seleção": "18,0/50,0",
+            "Pergunta 2 - Sistema de concorrência": "\"Ampla concorrência\"",
+            "Pergunta 3 - Formação acadêmica": "\"Graduação\"",
+            "Pergunta 4 - Cursos na área": "\"Nenhum\"",
+            "Pergunta 5 - Experiência Profissional em atividades compatíveis": "\"6 meses\""
+          }
+        }
+      ],
+      "anterior": {
+        "d01": {
+          "situacao": "RANQUEADO",
+          "posicao": 3,
+          "lote": null,
+          "lista_lote": null,
+          "entrada": null,
+          "motivo_entrada": null
+        },
+        "d02": {
+          "situacao": "RANQUEADO",
+          "posicao": 2,
+          "lote": null,
+          "lista_lote": null,
+          "entrada": null,
+          "motivo_entrada": null
+        },
+        "d03": {
+          "situacao": "NO_LOTE",
+          "posicao": 1,
+          "lote": 1,
+          "lista_lote": "GERAL",
+          "entrada": "INICIAL",
+          "motivo_entrada": "Lote inicial: nota ≥ 15 (item 8.2.6) = 2"
+        },
+        "d04": {
+          "situacao": "NO_LOTE",
+          "posicao": 2,
+          "lote": 1,
+          "lista_lote": "GERAL",
+          "entrada": "INICIAL",
+          "motivo_entrada": "Lote inicial: nota ≥ 15 (item 8.2.6) = 2"
+        }
+      },
+      "ultimo_lote": 1,
+      "refazer": false,
+      "hoje": "2026-10-07",
+      "congelar": false,
+      "esperado": {
+        "linhas": {
+          "d01": {
+            "situacao": "NO_LOTE",
+            "motivo_codigo": null,
+            "posicao": 2,
+            "posicao_modalidade": 2,
+            "lote": 2,
+            "lista_lote": "GERAL",
+            "entrada": "AMPLIACAO",
+            "motivo_entrada": "Entrou para completar o lote (nota ≥ 15 (item 8.2.6) = 4)",
+            "nota": 20.0,
+            "origem_nota": "DECLARADA",
+            "divergente": true,
+            "modalidade": "AC"
+          },
+          "d02": {
+            "situacao": "NO_LOTE",
+            "motivo_codigo": null,
+            "posicao": 3,
+            "posicao_modalidade": 3,
+            "lote": 2,
+            "lista_lote": "GERAL",
+            "entrada": "AMPLIACAO",
+            "motivo_entrada": "Entrou para completar o lote (nota ≥ 15 (item 8.2.6) = 4)",
+            "nota": 15.0,
+            "origem_nota": "DECLARADA",
+            "divergente": true,
+            "modalidade": "AC"
+          },
+          "d03": {
+            "situacao": "NO_LOTE",
+            "motivo_codigo": null,
+            "posicao": 1,
+            "posicao_modalidade": 1,
+            "lote": 1,
+            "lista_lote": "GERAL",
+            "entrada": "INICIAL",
+            "motivo_entrada": "Lote inicial: nota ≥ 15 (item 8.2.6) = 2",
+            "nota": 45.0,
+            "origem_nota": "DECLARADA",
+            "divergente": true,
+            "modalidade": "AC"
+          },
+          "d04": {
+            "situacao": "NO_LOTE",
+            "motivo_codigo": null,
+            "posicao": 4,
+            "posicao_modalidade": 4,
+            "lote": 1,
+            "lista_lote": "GERAL",
+            "entrada": "INICIAL",
+            "motivo_entrada": "Lote inicial: nota ≥ 15 (item 8.2.6) = 2",
+            "nota": 10.0,
+            "origem_nota": "DECLARADA",
+            "divergente": true,
+            "modalidade": "AC"
+          }
+        },
+        "declaradas": {
+          "d01": {
+            "declarada": 20.0,
+            "art": 10.0,
+            "congelada": null
+          },
+          "d02": {
+            "declarada": 15.0,
+            "art": 13.0,
+            "congelada": null
+          },
+          "d03": {
+            "declarada": 45.0,
+            "art": 5.0,
+            "congelada": null
+          },
+          "d04": {
+            "declarada": 10.0,
+            "art": 18.0,
+            "congelada": null
+          }
+        },
+        "resumo": {
+          "inscritos": 4,
+          "eliminados": 0,
+          "ranqueados": 4,
+          "no_lote": 4,
+          "tamanho": 4,
+          "descricao": "nota ≥ 15 (item 8.2.6) = 4",
+          "por_modalidade": null,
+          "art_corte": 10.0,
+          "base_da_nota": "DECLARADA",
+          "pela_art": 0,
+          "congeladas": 0,
+          "divergencias": 4,
+          "sem_art": 0,
+          "acima_do_corte": 0,
+          "entraram": 2,
+          "lote_novo": 2,
+          "saidas": [],
+          "avisos": []
+        }
+      }
+    },
+    {
+      "nome": "congelamento: depois do fim das inscrições a declarada completa é guardada com as respostas usadas; a incompleta não congela",
+      "historia": "AM-4.3",
+      "regra": {
+        "schema": 1,
+        "titulo_etapa": "Avaliação Documental e de Títulos",
+        "provisoria": {
+          "eliminacao_automatica": [],
+          "nota_declarada": [
+            {
+              "parcial": "FORMACAO",
+              "pergunta": "Formação",
+              "tipo": "OPCAO",
+              "pontos": {
+                "Graduação": 5,
+                "Especialização": 10
+              }
+            },
+            {
+              "parcial": "CURSOS",
+              "pergunta": "Cursos",
+              "tipo": "OPCAO",
+              "pontos": {
+                "Nenhum": 0,
+                "1 curso": 5
+              }
+            },
+            {
+              "parcial": "EXPERIENCIA",
+              "pergunta": "Experiência Profissional",
+              "tipo": "OPCAO",
+              "pontos": {
+                "Não possuo": 0,
+                "6 meses": 5,
+                "1 ano": 10,
+                "4 anos ou mais": 35
+              }
+            }
+          ],
+          "divergencia_tolerancia": 0,
+          "desempate": ["IDOSO", "EXPERIENCIA_DECLARADA", "MAIOR_IDADE"],
+          "pergunta_experiencia": "Experiência Profissional"
+        },
+        "lote": {
+          "base": "NOTA_MINIMA",
+          "nota_minima": 15,
+          "item_edital": "8.2.6",
+          "multiplo": 3,
+          "fixo": null,
+          "inclui_cr": true,
+          "por_modalidade": false,
+          "inclui_empatados": true,
+          "linha_anda": true,
+          "publica_reposicao": false
+        },
+        "blocos": [
+          {
+            "codigo": "MODALIDADE",
+            "titulo": "Sistema de concorrência",
+            "tipo": "REGISTRO",
+            "perguntas": ["Sistema de concorrência"]
+          }
+        ]
+      },
+      "vaga": {
+        "codigo": "180244",
+        "vagas_imediatas": 1,
+        "cadastro_reserva": true,
+        "modalidades": {
+          "Ampla Concorrência": 1
+        },
+        "nivel": "superior"
+      },
+      "candidatos": [
+        {
+          "id": "d01",
+          "codigo": "2171493",
+          "ativo": true,
+          "nascimento": "1985-05-05",
+          "candidatura": "2026-09-21T09:00:00+00:00",
+          "colunas": {
+            "NOTA - Questionário de seleção": "10,0/50,0",
+            "Pergunta 2 - Sistema de concorrência": "\"Ampla concorrência\"",
+            "Pergunta 3 - Formação acadêmica": "\"Graduação\"",
+            "Pergunta 4 - Cursos na área": "\"1 curso\"",
+            "Pergunta 5 - Experiência Profissional em atividades compatíveis": "\"1 ano\""
+          }
+        },
+        {
+          "id": "d05",
+          "codigo": "7100005",
+          "ativo": true,
+          "nascimento": "1985-05-05",
+          "candidatura": "2026-09-22T10:00:00+00:00",
+          "colunas": {
+            "NOTA - Questionário de seleção": "16,0/50,0",
+            "Pergunta 2 - Sistema de concorrência": "\"Ampla concorrência\"",
+            "Pergunta 3 - Formação acadêmica": "\"Mestrado\"",
+            "Pergunta 4 - Cursos na área": "\"1 curso\"",
+            "Pergunta 5 - Experiência Profissional em atividades compatíveis": "\"1 ano\""
+          }
+        }
+      ],
+      "anterior": {},
+      "ultimo_lote": 0,
+      "refazer": false,
+      "hoje": "2026-10-07",
+      "congelar": true,
+      "esperado": {
+        "linhas": {
+          "d01": {
+            "situacao": "NO_LOTE",
+            "motivo_codigo": null,
+            "posicao": 1,
+            "posicao_modalidade": 1,
+            "lote": 1,
+            "lista_lote": "GERAL",
+            "entrada": "INICIAL",
+            "motivo_entrada": "Lote inicial: nota ≥ 15 (item 8.2.6) = 2",
+            "nota": 20.0,
+            "origem_nota": "DECLARADA",
+            "divergente": true,
+            "modalidade": "AC"
+          },
+          "d05": {
+            "situacao": "NO_LOTE",
+            "motivo_codigo": null,
+            "posicao": 2,
+            "posicao_modalidade": 2,
+            "lote": 1,
+            "lista_lote": "GERAL",
+            "entrada": "INICIAL",
+            "motivo_entrada": "Lote inicial: nota ≥ 15 (item 8.2.6) = 2",
+            "nota": 16.0,
+            "origem_nota": "ART",
+            "divergente": false,
+            "modalidade": "AC"
+          }
+        },
+        "declaradas": {
+          "d01": {
+            "declarada": 20.0,
+            "art": 10.0,
+            "congelada": 20.0
+          },
+          "d05": {
+            "declarada": 15.0,
+            "art": 16.0,
+            "congelada": null
+          }
+        },
+        "resumo": {
+          "inscritos": 2,
+          "eliminados": 0,
+          "ranqueados": 2,
+          "no_lote": 2,
+          "tamanho": 2,
+          "descricao": "nota ≥ 15 (item 8.2.6) = 2",
+          "por_modalidade": null,
+          "art_corte": 16.0,
+          "base_da_nota": "DECLARADA",
+          "pela_art": 1,
+          "congeladas": 1,
+          "divergencias": 1,
+          "sem_art": 0,
+          "acima_do_corte": 0,
+          "entraram": 2,
+          "lote_novo": 1,
+          "saidas": [],
+          "avisos": ["SEM_DECLARADA_COMPLETA"]
+        }
+      }
+    },
+    {
+      "nome": "declarada congelada: as respostas mudaram depois, e a nota do lote continua a guardada",
+      "historia": "AM-4.3",
+      "regra": {
+        "schema": 1,
+        "titulo_etapa": "Avaliação Documental e de Títulos",
+        "provisoria": {
+          "eliminacao_automatica": [],
+          "nota_declarada": [
+            {
+              "parcial": "FORMACAO",
+              "pergunta": "Formação",
+              "tipo": "OPCAO",
+              "pontos": {
+                "Graduação": 5,
+                "Especialização": 10
+              }
+            },
+            {
+              "parcial": "CURSOS",
+              "pergunta": "Cursos",
+              "tipo": "OPCAO",
+              "pontos": {
+                "Nenhum": 0,
+                "1 curso": 5
+              }
+            },
+            {
+              "parcial": "EXPERIENCIA",
+              "pergunta": "Experiência Profissional",
+              "tipo": "OPCAO",
+              "pontos": {
+                "Não possuo": 0,
+                "6 meses": 5,
+                "1 ano": 10,
+                "4 anos ou mais": 35
+              }
+            }
+          ],
+          "divergencia_tolerancia": 0,
+          "desempate": ["IDOSO", "EXPERIENCIA_DECLARADA", "MAIOR_IDADE"],
+          "pergunta_experiencia": "Experiência Profissional"
+        },
+        "lote": {
+          "base": "NOTA_MINIMA",
+          "nota_minima": 15,
+          "item_edital": "8.2.6",
+          "multiplo": 3,
+          "fixo": null,
+          "inclui_cr": true,
+          "por_modalidade": false,
+          "inclui_empatados": true,
+          "linha_anda": true,
+          "publica_reposicao": false
+        },
+        "blocos": [
+          {
+            "codigo": "MODALIDADE",
+            "titulo": "Sistema de concorrência",
+            "tipo": "REGISTRO",
+            "perguntas": ["Sistema de concorrência"]
+          }
+        ]
+      },
+      "vaga": {
+        "codigo": "180244",
+        "vagas_imediatas": 1,
+        "cadastro_reserva": true,
+        "modalidades": {
+          "Ampla Concorrência": 1
+        },
+        "nivel": "superior"
+      },
+      "candidatos": [
+        {
+          "id": "d01",
+          "codigo": "2171493",
+          "ativo": true,
+          "nascimento": "1985-05-05",
+          "candidatura": "2026-09-21T09:00:00+00:00",
+          "colunas": {
+            "NOTA - Questionário de seleção": "10,0/50,0",
+            "Pergunta 2 - Sistema de concorrência": "\"Ampla concorrência\"",
+            "Pergunta 3 - Formação acadêmica": "\"Graduação\"",
+            "Pergunta 4 - Cursos na área": "\"1 curso\"",
+            "Pergunta 5 - Experiência Profissional em atividades compatíveis": "\"4 anos ou mais\""
+          }
+        },
+        {
+          "id": "d02",
+          "codigo": "6893959",
+          "ativo": true,
+          "nascimento": "1990-01-01",
+          "candidatura": "2026-09-22T10:00:00+00:00",
+          "colunas": {
+            "NOTA - Questionário de seleção": "13,0/50,0",
+            "Pergunta 2 - Sistema de concorrência": "\"Ampla concorrência\"",
+            "Pergunta 3 - Formação acadêmica": "\"Graduação\"",
+            "Pergunta 4 - Cursos na área": "\"Nenhum\"",
+            "Pergunta 5 - Experiência Profissional em atividades compatíveis": "\"Não possuo\""
+          }
+        }
+      ],
+      "anterior": {
+        "d01": {
+          "situacao": "RANQUEADO",
+          "posicao": 1,
+          "lote": null,
+          "lista_lote": null,
+          "entrada": null,
+          "motivo_entrada": null,
+          "declarada_congelada": {
+            "total": 20,
+            "parciais": {
+              "FORMACAO": 5,
+              "CURSOS": 5,
+              "EXPERIENCIA": 10
+            },
+            "sem_mapa": 0,
+            "respostas": [
+              {
+                "parcial": "EXPERIENCIA",
+                "coluna": "Pergunta 5 - Experiência Profissional em atividades compatíveis",
+                "resposta": "\"1 ano\"",
+                "pontos": 10
+              }
+            ]
+          }
+        },
+        "d02": {
+          "situacao": "RANQUEADO",
+          "posicao": 2,
+          "lote": null,
+          "lista_lote": null,
+          "entrada": null,
+          "motivo_entrada": null,
+          "declarada_congelada": {
+            "total": 15,
+            "parciais": {
+              "FORMACAO": 5,
+              "CURSOS": 5,
+              "EXPERIENCIA": 5
+            },
+            "sem_mapa": 0,
+            "respostas": [
+              {
+                "parcial": "EXPERIENCIA",
+                "coluna": "Pergunta 5 - Experiência Profissional em atividades compatíveis",
+                "resposta": "\"6 meses\"",
+                "pontos": 5
+              }
+            ]
+          }
+        }
+      },
+      "ultimo_lote": 0,
+      "refazer": false,
+      "hoje": "2026-10-07",
+      "congelar": true,
+      "esperado": {
+        "linhas": {
+          "d01": {
+            "situacao": "NO_LOTE",
+            "motivo_codigo": null,
+            "posicao": 1,
+            "posicao_modalidade": 1,
+            "lote": 1,
+            "lista_lote": "GERAL",
+            "entrada": "INICIAL",
+            "motivo_entrada": "Lote inicial: nota ≥ 15 (item 8.2.6) = 2",
+            "nota": 20,
+            "origem_nota": "DECLARADA",
+            "divergente": true,
+            "modalidade": "AC"
+          },
+          "d02": {
+            "situacao": "NO_LOTE",
+            "motivo_codigo": null,
+            "posicao": 2,
+            "posicao_modalidade": 2,
+            "lote": 1,
+            "lista_lote": "GERAL",
+            "entrada": "INICIAL",
+            "motivo_entrada": "Lote inicial: nota ≥ 15 (item 8.2.6) = 2",
+            "nota": 15,
+            "origem_nota": "DECLARADA",
+            "divergente": true,
+            "modalidade": "AC"
+          }
+        },
+        "declaradas": {
+          "d01": {
+            "declarada": 20,
+            "art": 10.0,
+            "congelada": 20
+          },
+          "d02": {
+            "declarada": 15,
+            "art": 13.0,
+            "congelada": 15
+          }
+        },
+        "resumo": {
+          "inscritos": 2,
+          "eliminados": 0,
+          "ranqueados": 2,
+          "no_lote": 2,
+          "tamanho": 2,
+          "descricao": "nota ≥ 15 (item 8.2.6) = 2",
+          "por_modalidade": null,
+          "art_corte": 15,
+          "base_da_nota": "DECLARADA",
+          "pela_art": 0,
+          "congeladas": 2,
+          "divergencias": 2,
+          "sem_art": 0,
+          "acima_do_corte": 0,
+          "entraram": 2,
+          "lote_novo": 1,
+          "saidas": [],
+          "avisos": []
+        }
+      }
+    },
+    {
+      "nome": "descongelada (com motivo, pela coordenação): o recálculo usa as respostas de agora e congela de novo",
+      "historia": "AM-4.3",
+      "regra": {
+        "schema": 1,
+        "titulo_etapa": "Avaliação Documental e de Títulos",
+        "provisoria": {
+          "eliminacao_automatica": [],
+          "nota_declarada": [
+            {
+              "parcial": "FORMACAO",
+              "pergunta": "Formação",
+              "tipo": "OPCAO",
+              "pontos": {
+                "Graduação": 5,
+                "Especialização": 10
+              }
+            },
+            {
+              "parcial": "CURSOS",
+              "pergunta": "Cursos",
+              "tipo": "OPCAO",
+              "pontos": {
+                "Nenhum": 0,
+                "1 curso": 5
+              }
+            },
+            {
+              "parcial": "EXPERIENCIA",
+              "pergunta": "Experiência Profissional",
+              "tipo": "OPCAO",
+              "pontos": {
+                "Não possuo": 0,
+                "6 meses": 5,
+                "1 ano": 10,
+                "4 anos ou mais": 35
+              }
+            }
+          ],
+          "divergencia_tolerancia": 0,
+          "desempate": ["IDOSO", "EXPERIENCIA_DECLARADA", "MAIOR_IDADE"],
+          "pergunta_experiencia": "Experiência Profissional"
+        },
+        "lote": {
+          "base": "NOTA_MINIMA",
+          "nota_minima": 15,
+          "item_edital": "8.2.6",
+          "multiplo": 3,
+          "fixo": null,
+          "inclui_cr": true,
+          "por_modalidade": false,
+          "inclui_empatados": true,
+          "linha_anda": true,
+          "publica_reposicao": false
+        },
+        "blocos": [
+          {
+            "codigo": "MODALIDADE",
+            "titulo": "Sistema de concorrência",
+            "tipo": "REGISTRO",
+            "perguntas": ["Sistema de concorrência"]
+          }
+        ]
+      },
+      "vaga": {
+        "codigo": "180244",
+        "vagas_imediatas": 1,
+        "cadastro_reserva": true,
+        "modalidades": {
+          "Ampla Concorrência": 1
+        },
+        "nivel": "superior"
+      },
+      "candidatos": [
+        {
+          "id": "d01",
+          "codigo": "2171493",
+          "ativo": true,
+          "nascimento": "1985-05-05",
+          "candidatura": "2026-09-21T09:00:00+00:00",
+          "colunas": {
+            "NOTA - Questionário de seleção": "10,0/50,0",
+            "Pergunta 2 - Sistema de concorrência": "\"Ampla concorrência\"",
+            "Pergunta 3 - Formação acadêmica": "\"Graduação\"",
+            "Pergunta 4 - Cursos na área": "\"1 curso\"",
+            "Pergunta 5 - Experiência Profissional em atividades compatíveis": "\"4 anos ou mais\""
+          }
+        },
+        {
+          "id": "d02",
+          "codigo": "6893959",
+          "ativo": true,
+          "nascimento": "1990-01-01",
+          "candidatura": "2026-09-22T10:00:00+00:00",
+          "colunas": {
+            "NOTA - Questionário de seleção": "13,0/50,0",
+            "Pergunta 2 - Sistema de concorrência": "\"Ampla concorrência\"",
+            "Pergunta 3 - Formação acadêmica": "\"Graduação\"",
+            "Pergunta 4 - Cursos na área": "\"Nenhum\"",
+            "Pergunta 5 - Experiência Profissional em atividades compatíveis": "\"Não possuo\""
+          }
+        }
+      ],
+      "anterior": {
+        "d01": {
+          "situacao": "RANQUEADO",
+          "posicao": 1,
+          "lote": null,
+          "lista_lote": null,
+          "entrada": null,
+          "motivo_entrada": null
+        },
+        "d02": {
+          "situacao": "RANQUEADO",
+          "posicao": 2,
+          "lote": null,
+          "lista_lote": null,
+          "entrada": null,
+          "motivo_entrada": null
+        }
+      },
+      "ultimo_lote": 0,
+      "refazer": false,
+      "hoje": "2026-10-07",
+      "congelar": true,
+      "esperado": {
+        "linhas": {
+          "d01": {
+            "situacao": "NO_LOTE",
+            "motivo_codigo": null,
+            "posicao": 1,
+            "posicao_modalidade": 1,
+            "lote": 1,
+            "lista_lote": "GERAL",
+            "entrada": "INICIAL",
+            "motivo_entrada": "Lote inicial: nota ≥ 15 (item 8.2.6) = 1",
+            "nota": 45.0,
+            "origem_nota": "DECLARADA",
+            "divergente": true,
+            "modalidade": "AC"
+          },
+          "d02": {
+            "situacao": "RANQUEADO",
+            "motivo_codigo": null,
+            "posicao": 2,
+            "posicao_modalidade": 2,
+            "lote": null,
+            "lista_lote": null,
+            "entrada": null,
+            "motivo_entrada": null,
+            "nota": 5.0,
+            "origem_nota": "DECLARADA",
+            "divergente": true,
+            "modalidade": "AC"
+          }
+        },
+        "declaradas": {
+          "d01": {
+            "declarada": 45.0,
+            "art": 10.0,
+            "congelada": 45.0
+          },
+          "d02": {
+            "declarada": 5.0,
+            "art": 13.0,
+            "congelada": 5.0
+          }
+        },
+        "resumo": {
+          "inscritos": 2,
+          "eliminados": 0,
+          "ranqueados": 2,
+          "no_lote": 1,
+          "tamanho": 1,
+          "descricao": "nota ≥ 15 (item 8.2.6) = 1",
+          "por_modalidade": null,
+          "art_corte": 45.0,
+          "base_da_nota": "DECLARADA",
+          "pela_art": 0,
+          "congeladas": 2,
+          "divergencias": 2,
+          "sem_art": 0,
+          "acima_do_corte": 0,
+          "entraram": 1,
+          "lote_novo": 1,
+          "saidas": [],
+          "avisos": []
         }
       }
     }
@@ -5946,6 +7184,74 @@
         "documental": {},
         "esperado": null
       }
+    ]
+  },
+  "congelamento": {
+    "sobre": "fimDasInscricoes/fim_das_inscricoes (a etapa de inscrição do cronograma; com prorrogação, o fim mais tarde) e congelaADeclarada/congela_a_declarada (depois do fim, ou sem data de fim).",
+    "fim_das_inscricoes": [
+      [
+        [
+          {
+            "atividade": "Publicação do Edital",
+            "inicio": "2026-09-16",
+            "fim": "2026-09-16"
+          },
+          {
+            "atividade": "Período de inscrição e envio dos documentos comprobatórios",
+            "inicio": "2026-09-21",
+            "fim": "2026-09-29"
+          },
+          {
+            "atividade": "Resultado das inscrições homologadas",
+            "inicio": "2026-10-02",
+            "fim": "2026-10-02"
+          }
+        ],
+        "2026-09-29"
+      ],
+      [
+        [
+          {
+            "atividade": "Período de inscrição",
+            "inicio": "2026-09-21",
+            "fim": "2026-09-29"
+          },
+          {
+            "atividade": "Prorrogação das inscrições",
+            "inicio": "2026-09-30",
+            "fim": "2026-10-03"
+          }
+        ],
+        "2026-10-03"
+      ],
+      [
+        [
+          {
+            "atividade": "Inscrições",
+            "inicio": "2026-09-21",
+            "fim": null
+          }
+        ],
+        "2026-09-21"
+      ],
+      [
+        [
+          {
+            "atividade": "Publicação do Edital",
+            "inicio": "2026-09-16",
+            "fim": "2026-09-16"
+          }
+        ],
+        null
+      ],
+      [[], null]
+    ],
+    "congela": [
+      ["2026-10-07", "2026-09-29", true],
+      ["2026-09-29", "2026-09-29", false],
+      ["2026-09-25", "2026-09-29", false],
+      ["2026-10-07", null, true],
+      [null, "2026-09-29", false]
     ]
   }
 }

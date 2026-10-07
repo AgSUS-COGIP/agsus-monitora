@@ -725,7 +725,7 @@ export const VERBETES_AYA = Object.freeze([
       "experiencia por nivel",
     ],
     resposta:
-      'Para quem coordena, a aba Regra lista as perguntas da última carga do robô da Empregare nas vagas do edital, com as respostas encontradas e quantas vezes cada uma aparece — respostas que aparecem uma vez só não são mostradas, para não expor texto livre. Dali se liga a pergunta a um bloco ou se cria a pontuação da nota declarada: cada resposta vale pontos (ou meses × pontos por mês), por parcial. Quando a mesma resposta vale pontos diferentes conforme o nível da vaga, marque "Pontos por nível" na pergunta: aparece uma coluna de pontos para Superior, Técnico e Médio (no 93/2026, "1 ano" de experiência vale 5 no nível superior e 4 no técnico e no médio). O nível sai do nome do cargo da vaga ("(Nível Superior)", "Técnico de…") ou da regra de classificação do edital. Essa nota recalculada (na tela, "Nota recalculada" na aba Regra e a coluna "Recalculada" na Pré-classificação) só confere a ART, a "Nota declarada (ART)" do questionário da Empregare; se divergir além da tolerância, vira aviso, e a ordem da Provisória continua pela ART.',
+      'Para quem coordena, a aba Regra lista as perguntas da última carga do robô da Empregare nas vagas do edital, com as respostas encontradas e quantas vezes cada uma aparece — respostas que aparecem uma vez só não são mostradas, para não expor texto livre. Dali se liga a pergunta a um bloco ou se cria a pontuação da nota declarada: cada resposta vale pontos (ou meses × pontos por mês), por parcial. Quando a mesma resposta vale pontos diferentes conforme o nível da vaga, marque "Pontos por nível" na pergunta: aparece uma coluna de pontos para Superior, Técnico e Médio (no 93/2026, "1 ano" de experiência vale 5 no nível superior e 4 no técnico e no médio). O nível sai do nome do cargo da vaga ("(Nível Superior)", "Técnico de…") ou da regra de classificação do edital. Essa nota recalculada (na tela, "Nota recalculada" na aba Regra e a coluna "Recalculada" na Pré-classificação) é a pontuação autodeclarada na inscrição: com a "Nota do corte e da ordem do lote" em "Nota declarada na inscrição" (o padrão quando há nota declarada), é ela que faz o corte e a ordem do lote; a "Nota declarada (ART)" do questionário da Empregare fica para comparar, e a diferença além da tolerância vira aviso.',
     fato: "",
     fonte:
       "src/lib/avaliacao-documental/nota-declarada.js; supabase/migrations/20261006100000_regra_da_analise.sql; supabase/migrations/20261007140000_declarada_por_nivel.sql",
@@ -853,7 +853,7 @@ export const VERBETES_AYA = Object.freeze([
       "aba pre-classificacao",
     ],
     resposta:
-      'A aba Pré-classificação mostra, por vaga, a Lista Geral de Classificação Provisória (item 8.3.1): os inscritos que o robô da Empregare trouxe, em ordem decrescente da ART (a nota do questionário da Empregare, "24,0/30,0"). Quem não tem ART no arquivo entra pela nota declarada recalculada pela regra, com aviso. Empate na ART segue o desempate da regra (por padrão: idoso de 60 anos ou mais, o mais velho primeiro, e depois a candidatura mais antiga) e, por último, o código do candidato, para a ordem nunca variar. A Provisória tem caráter provisório e classificatório e não valida documentos: a conferência é na ficha, na etapa seguinte. Quem calcula é um job Python que roda no GitHub Actions e grava o resultado pronto; a tela só lê.',
+      'A aba Pré-classificação mostra, por vaga, a Lista Geral de Classificação Provisória (item 8.3.1): os inscritos que o robô da Empregare trouxe, em ordem decrescente da nota que a regra manda usar: a nota declarada na inscrição, recalculada pela regra (o padrão quando a regra tem nota declarada; item 8.2.6 do 93/2026), ou a ART (a nota do questionário da Empregare, "24,0/30,0"). Quem não tem a nota da base usa a outra, com aviso. Empate na nota segue o desempate da regra (por padrão: idoso de 60 anos ou mais, o mais velho primeiro, e depois a candidatura mais antiga) e, por último, o código do candidato, para a ordem nunca variar. A Provisória tem caráter provisório e classificatório e não valida documentos: a conferência é na ficha, na etapa seguinte. Quem calcula é um job Python que roda no GitHub Actions e grava o resultado pronto; a tela só lê.',
     fato: "No MONITORA, a Provisória por ART é calculada pelo job Python da pré-classificação (scripts/pre_classificacao/) e gravada em TB_PRE_CLASSIFICACAO; a tela só lê.",
     fonte:
       "python/monitora/avaliacao_documental/pre_classificacao.py; supabase/migrations/20261006110000_pre_classificacao_e_lote.sql",
@@ -891,7 +891,7 @@ export const VERBETES_AYA = Object.freeze([
       "art e declarado",
     ],
     resposta:
-      'ART é a Autodeclaração de Requisitos e Títulos: a nota que a Empregare calcula a partir das respostas do questionário de inscrição, antes de alguém conferir os documentos. Nas telas da Avaliação documental ela aparece como "Nota declarada (ART)" (ou "Nota declarada", com a sigla na dica, nas colunas estreitas): na Fila, no topo da ficha, na lateral da ficha ("mínima 15 · Nota declarada (ART) 13") e na Pré-classificação. É por ela que sai a Provisória. Na ficha, a coluna "Declarado" de cada bloco é a parte da ART daquele bloco (o que a resposta vale pela regra); somadas, dão a nota declarada. O Apurado é o que vale depois da conferência dos documentos.',
+      'ART é a Autodeclaração de Requisitos e Títulos: a nota que a Empregare calcula a partir das respostas do questionário de inscrição, antes de alguém conferir os documentos. Nas telas da Avaliação documental ela aparece como "Nota declarada (ART)" (ou "Nota declarada", com a sigla na dica, nas colunas estreitas): na Fila, no topo da ficha, na lateral da ficha ("mínima 15 · Nota declarada (ART) 13") e na Pré-classificação. A ART muda quando a equipe ajusta pontos na Empregare durante a conferência; por isso, quando a regra tem a nota declarada configurada, o lote sai da nota declarada recalculada pelas respostas da inscrição (e congelada depois do fim das inscrições), e a ART fica para comparar. Na ficha, a coluna "Declarado" de cada bloco é a parte da ART daquele bloco (o que a resposta vale pela regra); somadas, dão a nota declarada. O Apurado é o que vale depois da conferência dos documentos.',
     fato: 'No MONITORA, ART (Autodeclaração de Requisitos e Títulos) é a nota que a Empregare calcula pelo questionário, antes da conferência; a tela a chama de "Nota declarada (ART)".',
     fonte:
       "src/lib/avaliacao-documental/tela-da-pre-classificacao.js (ROTULO_DA_ART, DICA_DA_ART)",
@@ -910,10 +910,51 @@ export const VERBETES_AYA = Object.freeze([
       "nivel da vaga nao identificado",
     ],
     resposta:
-      'A ART (Nota da Autodeclaração de Requisitos e Títulos) é a nota que a Empregare calcula com as respostas do questionário. Se a regra tiver a nota declarada configurada (aba Regra), o sistema recalcula a nota pelas mesmas respostas e compara: diferença acima da tolerância da regra aparece como "diverge" na linha do candidato e no contador "ART × recalculada" (na tabela da vaga, a coluna "Recalculada" ao lado da "Nota declarada (ART)"). Só compara quando a nota declarada do candidato está completa: toda pergunta da nota declarada achada sem ambiguidade, a resposta dada mapeada na regra e, na pergunta com pontos por nível, o nível da vaga conhecido (resposta em branco, ou pergunta que não existe no questionário da vaga, vale zero, como na ART). Faltando um pedaço, não conta divergência. Se o nível da vaga não for identificado, a pergunta por nível fica fora da conta e a vaga mostra o aviso para conferir o cargo ou a regra de classificação. Muitas divergências de uma vez costumam indicar que falta uma pergunta na nota declarada da regra (no 93/2026, a experiência). É só um aviso para a coordenação conferir o questionário ou a regra; a ordem da Provisória continua pela ART.',
+      'A ART (Nota da Autodeclaração de Requisitos e Títulos) é a nota que a Empregare calcula com as respostas do questionário. Se a regra tiver a nota declarada configurada (aba Regra), o sistema recalcula a nota pelas mesmas respostas e compara: diferença acima da tolerância da regra aparece como "diverge" na linha do candidato e no contador "ART × recalculada" (na tabela da vaga, a coluna "Recalculada" ao lado da "Nota declarada (ART)"). Só compara quando a nota declarada do candidato está completa: toda pergunta da nota declarada achada sem ambiguidade, a resposta dada mapeada na regra e, na pergunta com pontos por nível, o nível da vaga conhecido (resposta em branco, ou pergunta que não existe no questionário da vaga, vale zero, como na ART). Faltando um pedaço, não conta divergência. Se o nível da vaga não for identificado, a pergunta por nível fica fora da conta e a vaga mostra o aviso para conferir o cargo ou a regra de classificação. Muitas divergências de uma vez costumam indicar que falta uma pergunta na nota declarada da regra (no 93/2026, a experiência). É só um aviso para a coordenação conferir o questionário ou a regra. A nota que faz o corte e a ordem do lote é a da base da regra (a declarada completa, por padrão quando há nota declarada, ou a ART); veja "Nota do corte e da ordem do lote".',
     fato: "",
     fonte:
       "src/lib/avaliacao-documental/nota-declarada.js; python/monitora/avaliacao_documental/nota_declarada.py; src/lib/avaliacao-documental/pre-classificacao.js",
+    abrir: "avaliacao-documental",
+  },
+  {
+    arquivo: "regras-da-avaliacao-documental.md",
+    titulo: "Nota do corte e da ordem do lote",
+    perguntas: [
+      "base da nota do lote",
+      "nota do corte e da ordem do lote",
+      "lote pela nota declarada",
+      "lote pela art",
+      "por que o lote usa a nota declarada",
+      "candidato com art menor entrou no lote",
+      "art mudou e o candidato saiu do lote",
+      "pontuacao autodeclarada",
+      "sem declarada completa",
+    ],
+    resposta:
+      'Na aba Regra, em "Provisória por ART", o campo "Nota do corte e da ordem do lote" diz qual nota faz o corte (a nota mínima ou a linha de corte) e a ordem do lote: "Nota declarada na inscrição" ou "ART da Empregare". O edital 93/2026 (item 8.2.6) avalia quem tem o mínimo de 15 pontos "de acordo com as pontuações do quadro", isto é, a pontuação autodeclarada na inscrição. A ART da Empregare muda quando a equipe ajusta pontos lá durante a conferência (houve ART que caiu de 45 para 5), e isso tirava do lote quem tinha direito. Com a nota declarada, vale a nota recalculada pela regra a partir das respostas, quando a do candidato está completa (toda pergunta achada sem ambiguidade, a resposta mapeada e o nível da vaga conhecido); a ART fica só para comparar ("diverge"). Sem declarada completa, aquele candidato vai pela ART e a vaga mostra o aviso "Inscrito sem nota declarada completa". Na tabela da vaga, a nota usada aparece em negrito. É o padrão quando a regra tem a nota declarada configurada; sem nota declarada, vale a ART. Quem já está no lote continua: só sai eliminado.',
+    fato: "No MONITORA, quando a regra da avaliação tem nota declarada, o corte e a ordem do lote usam a nota declarada completa do candidato (item 8.2.6); a ART da Empregare fica só para comparar.",
+    fonte:
+      "src/lib/avaliacao-documental/pre-classificacao.js; python/monitora/avaliacao_documental/pre_classificacao.py; supabase/migrations/20261007170000_lote_pela_declarada.sql",
+    abrir: "avaliacao-documental",
+  },
+  {
+    arquivo: "regras-da-avaliacao-documental.md",
+    titulo: "Nota declarada congelada",
+    perguntas: [
+      "nota declarada congelada",
+      "congelar a nota declarada",
+      "cadeado na nota declarada",
+      "descongelar",
+      "descongelar e recalcular",
+      "respostas mudaram depois da inscricao",
+      "nota declarada mudou",
+      "quando a declarada congela",
+    ],
+    resposta:
+      'A nota declarada de cada candidato congela na primeira pré-classificação depois do fim das inscrições do edital (a etapa de inscrição do cronograma; com prorrogação, o fim mais tarde) ou, se o cronograma não tiver essa data, já na primeira. O sistema guarda a nota, as parciais e as respostas usadas e não recalcula mais, mesmo que as respostas mudem na Empregare; os recálculos usam o valor guardado. Só a nota declarada completa congela: a incompleta continua recalculada até ficar completa. Na tabela da vaga, o cadeado ao lado da nota recalculada mostra a data, e a aba diz desde quando as notas estão congeladas. Se for preciso refazer (por exemplo, a regra da nota declarada estava errada), a coordenação do edital clica em "Descongelar", informa o motivo (de 10 a 250 caracteres) e em "Descongelar e recalcular": o valor que era, o motivo e quem pediu ficam no histórico, e o recálculo congela de novo com as respostas de agora. Não dá para descongelar enquanto uma pré-classificação está rodando.',
+    fato: "No MONITORA, a nota declarada congela na primeira pré-classificação depois do fim das inscrições do edital e só muda se a coordenação descongelar, com motivo registrado no histórico.",
+    fonte:
+      "src/lib/avaliacao-documental/pre-classificacao.js; scripts/pre_classificacao/pre_classificacao.py; supabase/migrations/20261007170000_lote_pela_declarada.sql",
     abrir: "avaliacao-documental",
   },
   {
@@ -1025,8 +1066,8 @@ export const VERBETES_AYA = Object.freeze([
       "nota minima para a analise curricular",
     ],
     resposta:
-      'Alguns editais não recortam o lote por "N vezes as vagas": avaliam todos os que alcançam uma nota mínima (o 93/2026, item 8.2.6, avalia quem tem pelo menos 15 pontos). Na aba Regra, o tamanho do lote "Todos com a nota mínima" leva a nota (ao escolher, vem a nota mínima da regra de classificação) e o item do edital. Entram no lote todos os não eliminados com a nota da Provisória (a ART) maior ou igual à mínima; quem chega depois com a nota mínima também entra; quem tem menos não entra no lugar de quem sai. Sem a nota na regra, ninguém entra e a vaga avisa.',
-    fato: "No MONITORA, o lote pela nota mínima põe na avaliação todos os inscritos não eliminados com a ART a partir da nota mínima da regra.",
+      'Alguns editais não recortam o lote por "N vezes as vagas": avaliam todos os que alcançam uma nota mínima (o 93/2026, item 8.2.6, avalia quem tem pelo menos 15 pontos). Na aba Regra, o tamanho do lote "Todos com a nota mínima" leva a nota (ao escolher, vem a nota mínima da regra de classificação) e o item do edital. Entram no lote todos os não eliminados com a nota da Provisória (a nota declarada na inscrição, quando a regra usa a base declarada; senão, a ART) maior ou igual à mínima; quem chega depois com a nota mínima também entra; quem tem menos não entra no lugar de quem sai. Sem a nota na regra, ninguém entra e a vaga avisa.',
+    fato: "No MONITORA, o lote pela nota mínima põe na avaliação todos os inscritos não eliminados com a nota da base da regra (a declarada na inscrição ou a ART) a partir da nota mínima da regra.",
     fonte:
       "src/lib/avaliacao-documental/pre-classificacao.js; python/monitora/avaliacao_documental/pre_classificacao.py",
     abrir: "avaliacao-documental",
@@ -1044,7 +1085,7 @@ export const VERBETES_AYA = Object.freeze([
       "maior idade no desempate",
     ],
     resposta:
-      'Com a mesma ART, a Provisória segue os desempates da regra, na ordem escolhida na aba Regra: 60 anos ou mais (o mais velho primeiro), a maior experiência declarada (a faixa respondida na pergunta da experiência do questionário, achada pelo começo do enunciado, e lida em meses pelo limite de baixo — "6 meses obrigatórios" vale 6, "1 ano e 6 meses" vale 18, "De 1 a 2 anos" vale 12; resposta vazia ("--") ou que não dá para ler fica por último), a maior idade e a candidatura mais antiga. Por último vale sempre o código do candidato. O 93/2026 e o 114/2026 (item 10.1) usam 60 anos ou mais, a experiência declarada (pergunta "Experiência Profissional") e a maior idade; a experiência comprovada entra quando houver a ficha.',
+      'Com a mesma nota (a declarada ou a ART, conforme a base da regra), a Provisória segue os desempates da regra, na ordem escolhida na aba Regra: 60 anos ou mais (o mais velho primeiro), a maior experiência declarada (a faixa respondida na pergunta da experiência do questionário, achada pelo começo do enunciado, e lida em meses pelo limite de baixo — "6 meses obrigatórios" vale 6, "1 ano e 6 meses" vale 18, "De 1 a 2 anos" vale 12; resposta vazia ("--") ou que não dá para ler fica por último), a maior idade e a candidatura mais antiga. Por último vale sempre o código do candidato. O 93/2026 e o 114/2026 (item 10.1) usam 60 anos ou mais, a experiência declarada (pergunta "Experiência Profissional") e a maior idade; a experiência comprovada entra quando houver a ficha.',
     fato: "",
     fonte:
       "src/lib/avaliacao-documental/pre-classificacao.js; python/monitora/avaliacao_documental/pre_classificacao.py",

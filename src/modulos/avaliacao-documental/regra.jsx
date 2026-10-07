@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import {
+  BASES_DA_NOTA_DO_LOTE,
   BASES_DO_LOTE,
   CRITERIOS_DA_DISTRIBUICAO,
   DESEMPATES_DA_PROVISORIA,
@@ -856,7 +857,16 @@ export function Regra({ e, estado }) {
           </h2>
           <EliminacaoAutomatica regra={rascunho} aoMudar={setRascunho} />
           <NotaDeclarada regra={rascunho} aoMudar={setRascunho} />
-          <div className="ui-grade-de-campos">
+          <div
+            className="ui-grade-de-campos"
+            data-tour="avd-regra-base-da-nota"
+          >
+            <Escolha
+              rotulo="Nota do corte e da ordem do lote"
+              valor={rascunho.provisoria.base_da_nota}
+              opcoes={BASES_DA_NOTA_DO_LOTE}
+              aoMudar={(v) => mudar(["provisoria", "base_da_nota"], v)}
+            />
             <CampoNumero
               rotulo="Tolerância da divergência (pontos)"
               valor={rascunho.provisoria.divergencia_tolerancia}

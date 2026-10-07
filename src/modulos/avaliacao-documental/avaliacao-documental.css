@@ -215,6 +215,10 @@
   color: var(--color-status-warning-text);
   white-space: nowrap;
 }
+.avd-congelada {
+  color: var(--text-secondary);
+  font-size: var(--text-caption);
+}
 .avd-eliminados summary {
   cursor: pointer;
   color: var(--text-secondary);

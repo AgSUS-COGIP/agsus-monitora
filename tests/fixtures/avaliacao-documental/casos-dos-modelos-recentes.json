@@ -876,18 +876,22 @@
       "conta": "d05 idoso (60+) primeiro; depois a experiência: d02 66 meses, d04 e d01 18 meses (empate: maior idade, d04 de 1985), d03 6 meses; d06 não finalizou e d07 cancelou",
       "esperado": {
         "posicoes": {
-          "d01": 4,
-          "d02": 2,
-          "d03": 5,
-          "d04": 3,
-          "d05": 1,
+          "d01": 3,
+          "d02": 1,
+          "d03": 4,
+          "d04": 2,
+          "d05": 5,
           "d06": 6,
           "d07": null
         },
         "eliminados": {
           "d07": "CANCELADO"
         },
-        "avisos": ["ART_AUSENTE", "SEM_NIVEL:NOTA_EXPERIENCIA"]
+        "avisos": [
+          "ART_AUSENTE",
+          "SEM_DECLARADA_COMPLETA",
+          "SEM_NIVEL:NOTA_EXPERIENCIA"
+        ]
       }
     },
     {

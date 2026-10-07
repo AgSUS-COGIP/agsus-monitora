@@ -2,7 +2,9 @@ import { useEffect, useState, useSyncExternalStore } from "react";
 import { ordinal } from "../../lib/classificacao/numeros.js";
 import {
   contadoresDaPreClassificacao,
+  declaradasCongeladas,
   DICA_DA_ART,
+  DICA_DA_NOTA_DO_LOTE,
   DICA_DA_RECALCULADA,
   lotesAPublicar,
   nota,
@@ -66,15 +68,33 @@ function LinhaDoInscrito({ c }) {
       <td>{c.nome}</td>
       <td>{c.modalidade}</td>
       <td>
-        {nota(c.art)}
-        {c.origem_nota === "DECLARADA" ? " (recalculada)" : ""}
+        {c.origem_nota === "ART" ? (
+          <strong title={DICA_DA_NOTA_DO_LOTE}>{nota(c.art)}</strong>
+        ) : (
+          nota(c.art)
+        )}
       </td>
       <td>
-        {nota(c.declarada)}
+        {c.origem_nota === "DECLARADA" ? (
+          <strong title={DICA_DA_NOTA_DO_LOTE}>{nota(c.declarada)}</strong>
+        ) : (
+          nota(c.declarada)
+        )}
+        {c.declarada_congelada !== null &&
+        c.declarada_congelada !== undefined ? (
+          <span
+            className="avd-congelada"
+            title={`Congelada em ${quando(c.congelada_em)}`}
+          >
+            {" "}
+            <i className="fa-solid fa-lock" aria-hidden="true" />
+            <span className="sr-only">congelada</span>
+          </span>
+        ) : null}
         {c.divergente ? (
           <span
             className="avd-diverge"
-            title="Diferente da nota declarada (ART) além da tolerância da regra"
+            title="ART diferente da nota declarada recalculada, além da tolerância da regra"
           >
             {" "}
             <i
@@ -374,6 +394,9 @@ export function PreClassificacao({ e, estado, pre }) {
   const [tamanhos, setTamanhos] = useState({});
   const [motivo, setMotivo] = useState("");
   const [erroAoSalvar, setErroAoSalvar] = useState("");
+  const [abrirDescongelar, setAbrirDescongelar] = useState(false);
+  const [motivoDescongelar, setMotivoDescongelar] = useState("");
+  const [descongelando, setDescongelando] = useState(false);
   const versaoDaRegra = e.dados?.regra?.versao ?? 0;
   useEffect(() => {
     void pre.carregar(e.editalId);
@@ -412,6 +435,17 @@ export function PreClassificacao({ e, estado, pre }) {
   const configuracao =
     e.dados?.regra?.configuracao || d.regra?.configuracao || {};
   const mudou = Object.keys(tamanhos).length > 0;
+  const congeladas = declaradasCongeladas(d);
+
+  async function descongelar() {
+    setDescongelando(true);
+    const ok = await pre.descongelar(motivoDescongelar.trim());
+    setDescongelando(false);
+    if (ok) {
+      setAbrirDescongelar(false);
+      setMotivoDescongelar("");
+    }
+  }
 
   async function salvarTamanhos() {
     setErroAoSalvar("");
@@ -489,7 +523,64 @@ export function PreClassificacao({ e, estado, pre }) {
                 : "Recalcular"}
           </button>
         ) : null}
+        {congeladas.quantidade ? (
+          <span className="ui-texto-secundario" data-congeladas>
+            <i className="fa-solid fa-lock" aria-hidden="true" /> Notas
+            declaradas congeladas em {quando(congeladas.em)}
+          </span>
+        ) : null}
+        {d.pode_coordenar && congeladas.quantidade && !abrirDescongelar ? (
+          <button
+            type="button"
+            className="btn secondary small"
+            data-acao="abrir-descongelar"
+            onClick={() => setAbrirDescongelar(true)}
+          >
+            Descongelar
+          </button>
+        ) : null}
       </section>
+
+      {d.pode_coordenar && congeladas.quantidade && abrirDescongelar ? (
+        <section
+          className="ui-card avd-inline"
+          aria-label="Descongelar as notas declaradas"
+        >
+          <label className="ui-campo ui-campo-largo">
+            <span>Motivo para descongelar</span>
+            <input
+              type="text"
+              maxLength={250}
+              value={motivoDescongelar}
+              onChange={(ev) => setMotivoDescongelar(ev.target.value)}
+            />
+          </label>
+          <button
+            type="button"
+            className="btn primary small"
+            data-acao="descongelar"
+            disabled={
+              descongelando ||
+              !conferida ||
+              d.em_andamento ||
+              motivoDescongelar.trim().length < 10
+            }
+            onClick={() => void descongelar()}
+          >
+            {descongelando ? "Descongelando…" : "Descongelar e recalcular"}
+          </button>
+          <button
+            type="button"
+            className="btn secondary small"
+            onClick={() => {
+              setAbrirDescongelar(false);
+              setMotivoDescongelar("");
+            }}
+          >
+            Cancelar
+          </button>
+        </section>
+      ) : null}
 
       {p.aviso ? (
         <Aviso
