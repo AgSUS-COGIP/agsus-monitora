@@ -18,6 +18,7 @@ import {
   TIPOS_DE_LISTA_DA_PRE_CLASSIFICACAO,
 } from "./catalogo.js";
 import { normalizarRegra } from "./regra.js";
+import { ehEditalDeTreinamento } from "../edital-de-treinamento.js";
 
 export const MIME_XLSX =
   "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
@@ -57,6 +58,8 @@ export function instantaneoDaLista(
       id: edital.id ?? null,
       edital: edital.edital ?? "",
       unidade: edital.unidade ?? "",
+      // Só no edital de treinamento (o retrato dos reais não muda).
+      ...(ehEditalDeTreinamento(edital) ? { treinamento: true } : {}),
     },
     regra_versao: versao,
     casas: resultado.casas,
@@ -128,6 +131,7 @@ export function nomeDoArquivo(retrato, lista = "todas") {
     .replace(/[^0-9a-z]+/gi, "-")
     .replace(/^-+|-+$/g, "");
   return [
+    ehEditalDeTreinamento(retrato.edital) ? "treinamento" : "",
     "classificacao",
     tipo,
     lote,

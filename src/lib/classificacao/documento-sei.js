@@ -47,6 +47,10 @@ import { MOTIVOS_DE_ELIMINACAO, PARCIAIS_DA_DOCUMENTAL } from "./catalogo.js";
 import { formatarNota, lerData, ordinal } from "./numeros.js";
 import { documentoDaRegra, normalizarRegra } from "./regra.js";
 import { CABECALHO_PADRAO } from "../cabecalho-dos-documentos.js";
+import {
+  MARCA_SEM_VALOR_OFICIAL,
+  ehEditalDeTreinamento,
+} from "../edital-de-treinamento.js";
 
 export { CABECALHO_PADRAO };
 export const LOCAL_PADRAO = "Brasília";
@@ -839,6 +843,8 @@ function dataEHoraDaAgenda(agenda, analiseId) {
  *   hoje      a data do "Brasília, <data>." do Word quando o gestor não fixa
  *   agenda    na convocação, Map analise_id → { data, inicio } da agenda das
  *             entrevistas salva (agendaPorCandidato); preenche DATA e HORA
+ *   treinamento  edital de treinamento (padrão: o do retrato): o título abre
+ *             com "TREINAMENTO — SEM VALOR OFICIAL" e o nome do arquivo também
  */
 export function documentoOficial(
   retrato,
@@ -848,6 +854,7 @@ export function documentoOficial(
     regra = null,
     hoje = new Date(),
     agenda = null,
+    treinamento = ehEditalDeTreinamento(retrato?.edital),
   } = {},
 ) {
   const r = normalizarRegra(regra);
@@ -907,12 +914,15 @@ export function documentoOficial(
       titulo[0] ||
       "",
   );
+  const nomeDoArquivo = `${emTitulo(tituloPrincipal)} - ${nomeDaListaNoDocumento(retrato, listaEfetiva)}`;
   return {
     chave,
     tipo: retrato.tipo,
     lista: listaEfetiva,
     fase: f,
-    titulo,
+    titulo: treinamento
+      ? [`**${MARCA_SEM_VALOR_OFICIAL}**`, ...titulo]
+      : titulo,
     localData: doc.data
       ? `${local}, ${dataPorExtenso(doc.data)}.`
       : `${local}, na data da assinatura digital.`,
@@ -920,7 +930,8 @@ export function documentoOficial(
     preliminares,
     blocos: tabelasDaLista(retrato, listaEfetiva, agenda),
     finais,
-    nome: `${emTitulo(tituloPrincipal)} - ${nomeDaListaNoDocumento(retrato, listaEfetiva)}`,
+    nome: treinamento ? `TREINAMENTO - ${nomeDoArquivo}` : nomeDoArquivo,
+    treinamento: Boolean(treinamento),
     edital,
     processo: doc.processo,
   };

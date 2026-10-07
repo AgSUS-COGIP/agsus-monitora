@@ -30,6 +30,7 @@ import {
   textoParaSei,
 } from "../../lib/classificacao/documento-sei.js";
 import { gerarDocxOficial } from "../../lib/classificacao/documento-docx.js";
+import { ehEditalDeTreinamento } from "../../lib/edital-de-treinamento.js";
 import { nomeDoArquivo } from "../../lib/classificacao/exportacao.js";
 import { CABECALHO_PADRAO } from "../../lib/cabecalho-dos-documentos.js";
 import { MIME_DOCX } from "../../lib/documento-da-resposta.js";
@@ -340,6 +341,9 @@ export function criarEstadoDaPreClassificacao({
     return documentoOficial(registrado.retrato, {
       lista,
       regra: estado.dados?.regra_classificacao?.configuracao || {},
+      treinamento:
+        Boolean(estado.dados?.edital?.treinamento) ||
+        ehEditalDeTreinamento(registrado.retrato.edital),
     });
   }
 

@@ -32,7 +32,7 @@ function percorrer(dir) {
 // ── Passagem estática ─────────────────────────────────────────────────────
 const usadas = new Map();
 for (const ficheiro of percorrer(RAIZ_FONTE).filter((p) =>
-  /\.(?:js|jsx)$/.test(p),
+  /\.(?:js|jsx|ts|tsx)$/.test(p),
 )) {
   const caminho = relative(".", ficheiro).replaceAll("\\", "/");
   if (caminho === "src/lib/rpc-contrato.js") continue;

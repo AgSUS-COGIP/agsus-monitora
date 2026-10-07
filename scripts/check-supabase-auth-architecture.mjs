@@ -30,7 +30,7 @@ const IGNORAR = new Set([
 
 // O próprio verificador contém os padrões que procura.
 const ESTE_FICHEIRO = "scripts/check-supabase-auth-architecture.mjs";
-const EXTENSOES = new Set([".js", ".mjs", ".ts", ".html"]);
+const EXTENSOES = new Set([".js", ".jsx", ".mjs", ".ts", ".tsx", ".html"]);
 
 const PADROES = [
   [
