@@ -355,26 +355,60 @@ export function podeLancarPor(dados, avaliador) {
   return Boolean(avaliador.perfil) && avaliador.perfil === dados.meu_perfil;
 }
 
+/** Os aspectos do roteiro, em ordem (vazio = uma nota por avaliador). */
+export function aspectosDoRoteiro(roteiro) {
+  return (roteiro?.aspectos || [])
+    .slice()
+    .sort((a, b) => (a.ordem ?? 0) - (b.ordem ?? 0));
+}
+
+/**
+ * Nota do avaliador na competência num roteiro com aspectos: a média dos
+ * aspectos, sem arredondar; nula enquanto falta algum aspecto (o banco só
+ * aceita todos). `notas`: `{ idDoAspecto: nota }` ou `[{ aspecto, nota }]`.
+ */
+export function mediaDosAspectos(aspectos, notas) {
+  if (!aspectos?.length) return null;
+  const mapa = Array.isArray(notas)
+    ? Object.fromEntries(notas.map((n) => [n.aspecto, n.nota]))
+    : notas || {};
+  const valores = aspectos.map((a) => numero(mapa[a.id]));
+  if (valores.some((v) => v === null)) return null;
+  return valores.reduce((s, n) => s + n, 0) / valores.length;
+}
+
 /**
  * Espelho de `private."FC_CALCULAR_ENTREVISTA"`: competência = média das notas
  * lançadas × peso (2 casas); total = soma. APTO: compareceu, total >= mínimo,
  * cada competência >= seu mínimo e nenhuma média eliminatória. Faltou (e a
  * ausência elimina) = INAPTO. Competência sem nota = SEM_PARECER.
+ *
+ * Roteiro com aspectos (`roteiro.aspectos`): a nota do avaliador é a média
+ * dos aspectos (`avaliacoes[].aspectos`, só com todos lançados), o total é a
+ * soma sem arredondar (2 casas no fim) e não há média eliminatória (vale o
+ * mínimo da competência).
  */
 export function calcularEntrevista({ roteiro, compareceu, avaliacoes }) {
-  const eliminatorias = (roteiro?.notas_eliminatorias || [])
-    .map(numero)
-    .filter((n) => n !== null);
+  const aspectos = aspectosDoRoteiro(roteiro);
+  const comAspectos = aspectos.length > 0;
+  const eliminatorias = comAspectos
+    ? []
+    : (roteiro?.notas_eliminatorias || [])
+        .map(numero)
+        .filter((n) => n !== null);
   const competencias = (roteiro?.competencias || [])
     .slice()
     .sort((a, b) => (a.ordem ?? 0) - (b.ordem ?? 0));
   let total = 0;
+  let bruto = 0;
   let falta = false;
   let reprova = false;
   const linhas = competencias.map((c) => {
     const notas = (avaliacoes || [])
       .filter((a) => a.competencia === c.id)
-      .map((a) => numero(a.nota))
+      .map((a) =>
+        comAspectos ? mediaDosAspectos(aspectos, a.aspectos) : numero(a.nota),
+      )
       .filter((n) => n !== null);
     const peso = numero(c.peso) ?? 1;
     const minimo = minimoEmPontos(c);
@@ -395,6 +429,7 @@ export function calcularEntrevista({ roteiro, compareceu, avaliacoes }) {
     const media = notas.reduce((s, n) => s + n, 0) / notas.length;
     const nota = arredondar(media * peso);
     total += nota;
+    bruto += media * peso;
     const abaixoDoMinimo = minimo !== null && nota < minimo;
     const eliminatoria = eliminatorias.includes(arredondar(media));
     if (abaixoDoMinimo || eliminatoria) reprova = true;
@@ -412,7 +447,7 @@ export function calcularEntrevista({ roteiro, compareceu, avaliacoes }) {
   });
   /* As notas têm 2 casas: no numeric do banco a soma é exata; aqui o ponto
      flutuante dá 11,999… no lugar de 12. Arredondada, compara como lá. */
-  const soma = arredondar(total);
+  const soma = arredondar(comAspectos ? bruto : total);
   const minimoTotal = numero(roteiro?.nota_minima_total);
   const totalFinal = compareceu === "N" ? 0 : falta && soma === 0 ? null : soma;
   let parecer;
