@@ -11,21 +11,21 @@ import { pedirFiltro } from "../../app/pedido-de-filtro.js";
 import { usarAreaAtual } from "../../componentes/usar-area-atual.js";
 import { Icone } from "../../componentes/icone.jsx";
 import {
-  casoAbreAnalise,
   casosRestantes,
-  CONFERENCIAS,
   contagemPorModulo,
+  destinoDoCaso,
   diaDoAviso,
   erroDoMotivo,
   filtrarPorModulo,
-  filtroDoCaso,
   juntarPaginasDeCasos,
   LIMITES_DO_MOTIVO,
+  linhaDoVinculo,
   MODULOS_DOS_AVISOS,
   ondeDoCaso,
   quemDoCaso,
   termoDeBusca,
   tomDoSelo,
+  VIEW_DO_MODULO,
 } from "../../lib/avisos-de-conferencia.js";
 import { mensagemDeFalha } from "../../lib/falha-de-rede.js";
 import { getSupabaseClient } from "../../lib/supabaseClient.js";
@@ -46,8 +46,9 @@ import { criarEstadoDosAvisos } from "./estado.js";
   Cada aviso: gravidade, título, onde (edital, área ou vaga), o resumo do job,
   desde quando e os casos — todos, em páginas, com busca por código ou nome e
   CSV (listar_casos_aviso_conferencia). Cada caso mostra quem é (código e
-  nome), onde (edital, vaga, responsável) e o motivo (datas, notas); caso das
-  análises abre o Painel das análises naquela análise. No topo da lista, a
+  nome), onde (edital, vaga, situação, responsável), o motivo (datas, notas)
+  e, no aprovado, as vagas da pessoa; clicar leva à tela do módulo já no caso
+  (análise, aprovado, entrevista; src/lib destinoDoCaso). No topo da lista, a
   busca em todos os avisos. Quem administra o módulo (ou o administrador
   global) ignora com motivo; o ignorado volta sozinho se a quantidade crescer.
   As regras puras: src/lib/avisos-de-conferencia.js.
@@ -68,8 +69,11 @@ function usarComEspera(valor, ms) {
   return atrasado;
 }
 
-/** Leva o Painel das análises ao caso: busca pelo nome e abre a análise. */
-export function abrirCasoNasAnalises(
+/**
+ * Leva a tela do módulo ao caso (destinoDoCaso): o Painel das análises na
+ * análise, a Lista de aprovados nas vagas da pessoa, Entrevistas no candidato.
+ */
+export function abrirCaso(
   caso,
   {
     navegar = true,
@@ -77,9 +81,18 @@ export function abrirCasoNasAnalises(
     ir = (view) => globalThis.window?.navigate?.(view),
   } = {},
 ) {
-  pedir("analises", filtroDoCaso(caso));
-  if (navegar) ir("analises");
+  const destino = destinoDoCaso(caso);
+  if (!destino) return;
+  pedir(destino.view, destino.filtro);
+  if (navegar) ir(destino.view);
 }
+
+const TITULOS_DO_DESTINO = Object.freeze({
+  analises: "Abrir no Painel das análises",
+  approved: "Abrir na Lista de aprovados",
+  entrevistas: "Abrir em Entrevistas",
+  classificacao: "Abrir na Classificação",
+});
 
 /*
   As páginas de casos de um aviso (ou da busca em todos): a primeira quando o
@@ -144,8 +157,7 @@ function usarCasos(estado, { avisoId = null, busca = "" }) {
 }
 
 function ItemDoCaso({ caso, mostrarAviso, aoAbrir }) {
-  const modulo = CONFERENCIAS[caso.conferencia]?.modulo;
-  const abre = Boolean(aoAbrir) && casoAbreAnalise(caso, modulo);
+  const destino = aoAbrir ? destinoDoCaso(caso) : null;
   const onde = ondeDoCaso(caso);
   const conteudo = (
     <>
@@ -173,16 +185,29 @@ function ItemDoCaso({ caso, mostrarAviso, aoAbrir }) {
           ) : null}
         </span>
       ) : null}
+      {caso.vinculos.length ? (
+        <span className="conf-caso__analises">
+          {caso.vinculos.map((v) => (
+            <span key={v.id || linhaDoVinculo(v)}>{linhaDoVinculo(v)}</span>
+          ))}
+          {caso.foraDoAcesso ? (
+            <span>
+              + {caso.foraDoAcesso} {caso.foraDoAcesso === 1 ? "vaga" : "vagas"}{" "}
+              fora do seu acesso
+            </span>
+          ) : null}
+        </span>
+      ) : null}
     </>
   );
   return (
     <li>
-      {abre ? (
+      {destino ? (
         <button
           type="button"
           className="conf-caso conf-caso--clicavel"
           onClick={() => aoAbrir(caso)}
-          title="Abrir no Painel das análises"
+          title={TITULOS_DO_DESTINO[destino.view]}
         >
           {conteudo}
         </button>
@@ -464,7 +489,7 @@ export function ListaDeAvisos({
   estado,
   lista,
   mostrarModulo = false,
-  aoAbrirCaso = abrirCasoNasAnalises,
+  aoAbrirCaso = abrirCaso,
 }) {
   const atual = usarEstado(estado);
   const [verIgnorados, setVerIgnorados] = useState(false);
@@ -621,7 +646,7 @@ export function SeloDeAvisos({
   modulo,
   supabase = getSupabaseClient(),
   estado: externo,
-  aoAbrirCaso = abrirCasoNasAnalises,
+  aoAbrirCaso = abrirCaso,
 }) {
   const { area } = usarAreaAtual();
   const estado = useMemo(
@@ -637,10 +662,12 @@ export function SeloDeAvisos({
   const abertos = atual.lista?.abertos || [];
   if (!abertos.length && !aberta) return null;
   const tom = tomDoSelo(abertos) || "info";
-  // Na própria tela das análises, o caso só recorta a tela (sem navegar).
-  const abrirCaso = (caso) => {
+  // Caso que leva à própria tela só recorta a tela (sem navegar).
+  const abrirNoModulo = (caso) => {
     setAberta(false);
-    aoAbrirCaso(caso, { navegar: modulo !== "analises" });
+    aoAbrirCaso(caso, {
+      navegar: destinoDoCaso(caso)?.view !== VIEW_DO_MODULO[modulo],
+    });
   };
   return (
     <>
@@ -666,7 +693,7 @@ export function SeloDeAvisos({
             <ListaDeAvisos
               estado={estado}
               lista={atual.lista}
-              aoAbrirCaso={abrirCaso}
+              aoAbrirCaso={abrirNoModulo}
             />
           </div>
         </Gaveta>

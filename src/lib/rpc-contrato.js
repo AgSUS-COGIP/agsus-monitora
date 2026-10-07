@@ -630,7 +630,7 @@ export const CONTRATO_RPC = {
     ],
     critica: false,
     resumo:
-      "Casos de um aviso de conferência, ou de todos os avisos que a pessoa vê (com busca), em páginas de até 1000 (20261007120000): código, nome, edital, vaga, responsável e situação da análise (só se for da área e do recorte de quem lê), o motivo e, no candidato em dois editais, as análises dele. Busca por código ou nome, sem acento. Sem CPF. Gaveta dos avisos e CSV.",
+      "Casos de um aviso de conferência, ou de todos os avisos que a pessoa vê (com busca), em páginas de até 1000 (20261007120000; 20261007240000 resolve todos os módulos): tipo e resolução (ok, removido, sem_acesso), código, nome, edital, vaga, situação e datas da análise ou do registro do módulo (aprovado, entrevista, lista, ajuste, vaga), com a permissão daquele módulo; o motivo; as análises do candidato em dois editais e as vagas da pessoa na lista de aprovados. Busca por código, nome ou vaga, sem acento. Referência só quando não é UUID. Sem CPF. Gaveta dos avisos e CSV.",
   },
   ignorar_aviso_conferencia: {
     argumentos: ["p_id", "p_motivo"],

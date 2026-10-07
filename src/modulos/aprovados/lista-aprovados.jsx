@@ -1,5 +1,6 @@
 import { useMemo, useState, useSyncExternalStore } from "react";
 import { montarModulo } from "../../app/montar-modulo.jsx";
+import { usarPedidoDeFiltro } from "../../app/pedido-de-filtro.js";
 import { getSupabaseClient } from "../../lib/supabaseClient.js";
 import {
   canAlterarPorDecisaoJudicial,
@@ -54,6 +55,7 @@ import { SeloDeAvisos } from "../conferencias/avisos-de-conferencia.jsx";
 /** Linhas por página da tabela; tem de ser um dos tamanhos de `Paginacao`. */
 const TAMANHO_PADRAO = 50;
 const FILTROS_INICIAIS = Object.freeze({
+  candidatos: [],
   editalId: [],
   cargo: [],
   modalidade: [],
@@ -253,6 +255,7 @@ export function ListaAprovados({ estado }) {
     [candidatos, opcoesEditais, chaveDosEditais],
   );
   const efetivos = {
+    candidatos: filtros.candidatos,
     editalId: editais,
     cargo: manterSoAsOpcoes(filtros.cargo, opcoes.cargos),
     modalidade: manterSoAsOpcoes(filtros.modalidade, opcoes.modalidades),
@@ -302,6 +305,15 @@ export function ListaAprovados({ estado }) {
     setFiltros(FILTROS_INICIAIS);
     setPagina(1);
   }
+
+  // Caso de um aviso de conferência: a aba Aprovados só com as vagas da pessoa.
+  usarPedidoDeFiltro("approved", carregado, (pedido) => {
+    const ids = (pedido?.candidatos || []).map(String).filter(Boolean);
+    if (!ids.length) return;
+    setAba("aprovados");
+    setFiltros({ ...FILTROS_INICIAIS, candidatos: ids });
+    setPagina(1);
+  });
 
   return (
     <div className="ui-tela aprovados-tela">

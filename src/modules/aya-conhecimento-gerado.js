@@ -2770,6 +2770,28 @@ export const VERBETES_AYA = Object.freeze([
       "src/modulos/conferencias/avisos-de-conferencia.jsx; supabase/migrations/20261007120000_casos_dos_avisos_de_conferencia.sql",
   },
   {
+    arquivo: "regras-das-conferencias.md",
+    titulo:
+      "Casos dos avisos da lista de aprovados, das entrevistas e da classificação",
+    perguntas: [
+      "contratado em duas vagas",
+      "quem foi contratado em duas vagas",
+      "casos do aviso da lista de aprovados",
+      "convocado sem desfecho",
+      "casos do aviso das entrevistas",
+      "nota fora da escala",
+      "registro removido no aviso",
+      "sem acesso no aviso",
+      "referencia no aviso",
+      "abrir o aprovado do aviso",
+    ],
+    resposta:
+      'Os casos de todos os módulos mostram quem é e o que conferir. Na lista de aprovados: o nome, o código do candidato na Empregare (quando há), o edital, a vaga e a situação com a data (por exemplo, "Contratado em 03/02/2026"); no "Contratado em duas vagas" aparecem todas as vagas da pessoa nas listas vigentes, com edital, vaga, situação e data, e quantas ficaram fora do seu acesso. Clicar no caso abre a Lista de aprovados só com as vagas daquela pessoa; "Ver todos" tira o recorte. Nas entrevistas: nome, código, edital, vaga, parecer e nota, e o clique abre Entrevistas já buscando o candidato, com a entrevista aberta. Na classificação aparecem a lista (tipo e data), a vaga (código e nome) ou o candidato do ajuste. Se o registro não existe mais, o caso mostra "Registro removido"; se ele é de uma área ou edital fora do seu acesso, "Sem acesso" — nunca o identificador interno.',
+    fato: "",
+    fonte:
+      "src/lib/avisos-de-conferencia.js; supabase/migrations/20261007240000_casos_dos_avisos_resolvidos.sql",
+  },
+  {
     arquivo: "regras-das-configuracoes.md",
     titulo: "Página inicial nas Configurações",
     perguntas: [

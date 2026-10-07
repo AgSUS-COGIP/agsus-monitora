@@ -82,8 +82,9 @@ com a conta em `monitora.avaliacao_documental`).
 - **Nada de dado pessoal no log nem no resultado.** Leitura para o job devolve id, código, número
   de edital, contagem; quando precisa achar a mesma pessoa em duas listas, vai um hash. O que o job
   grava para a tela também (os avisos de conferência recusam espaço, `@` e 11 dígitos nos
-  exemplos e nos casos); nome, vaga e responsável a RPC da tela busca na hora, com a permissão de
-  quem lê (`listar_casos_aviso_conferencia`, 20261007120000).
+  exemplos e nos casos); cada caso diz o que a referência é (`tipo`: aprovado, entrevista, lista,
+  ajuste, vaga) e nome, vaga, situação e responsável a RPC da tela busca na hora, com a permissão
+  de quem lê naquele módulo (`listar_casos_aviso_conferencia`, 20261007120000 e 20261007240000).
 - **Log de execução no banco** (`TL_…`): início, fim, situação (`EM_ANDAMENTO`, `CONCLUIDA`,
   `PARCIAL`, `FALHOU`), quem disparou e o endereço da execução; a execução esquecida não segura a
   próxima. Entra no **Status das atualizações** (`get_saude_das_cargas` + `src/lib/saude-das-cargas.js`).

@@ -11,10 +11,15 @@
   o vitest e o pytest conferem.
 
   Os casos de cada aviso (todos, não só os 20 exemplos) vêm de
-  `listar_casos_aviso_conferencia` (20261007120000): quem é (código, nome),
-  onde (edital, vaga, responsável), o motivo (datas, notas) e o CSV.
+  `listar_casos_aviso_conferencia` (20261007120000; 20261007240000 resolve
+  também os aprovados, entrevistas, listas, ajustes e vagas): quem é (código,
+  nome), onde (edital, vaga, situação, responsável), o motivo (datas, notas),
+  as vagas da pessoa na lista de aprovados, para onde o caso leva e o CSV.
+  UUID interno nunca aparece: registro que sumiu é "Registro removido" e o
+  que está fora do acesso, "Sem acesso".
 */
 import { sanitizeCsvCell } from "./csv-security.js";
+import { PARECERES } from "./entrevistas-do-painel.js";
 
 export const CONFERENCIAS = Object.freeze({
   ANALISE_APROVADA_ABAIXO_DO_CORTE: Object.freeze({
@@ -270,6 +275,59 @@ const numeroDoCaso = (valor) => {
 const vagaDe = (codigo, nome) =>
   [texto(codigo), texto(nome)].filter(Boolean).join(" · ");
 
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/** A referência só aparece quando é um código (nunca um UUID interno). */
+const referenciaVisivel = (valor) => {
+  const t = texto(valor);
+  return t && !UUID.test(t) ? t : "";
+};
+
+const RESOLUCOES = Object.freeze({
+  removido: "Registro removido",
+  sem_acesso: "Sem acesso",
+});
+
+const TIPOS_DE_LISTA = Object.freeze({
+  FINAL: "Lista final",
+  PRELIMINAR: "Lista preliminar",
+  ENTREVISTA: "Lista da entrevista",
+});
+
+/** "Contratado em 03/02/2026", "Convocado em 01/09/2026" ou só a situação. */
+function situacaoDoAprovado({ status, dataConvocacao, dataContratacao }) {
+  const situacao = texto(status);
+  if (!situacao) return "";
+  const dia =
+    situacao === "Contratado"
+      ? diaDoCaso(dataContratacao)
+      : situacao === "Convocado"
+        ? diaDoCaso(dataConvocacao)
+        : "";
+  return dia ? `${situacao} em ${dia}` : situacao;
+}
+
+function normalizarVinculo(bruto) {
+  const vinculo = {
+    id: texto(bruto?.id) || null,
+    editalId: texto(bruto?.edital_id) || null,
+    edital: texto(bruto?.edital),
+    vaga: vagaDe(bruto?.codigo_vaga, bruto?.nome_vaga),
+    status: texto(bruto?.status),
+    dataConvocacao: texto(bruto?.data_convocacao) || null,
+    dataContratacao: texto(bruto?.data_contratacao) || null,
+  };
+  vinculo.situacao = situacaoDoAprovado(vinculo);
+  return vinculo;
+}
+
+/** Uma vaga da pessoa na lista de aprovados, em uma linha. */
+export const linhaDoVinculo = (vinculo) =>
+  [vinculo?.edital, vinculo?.vaga, vinculo?.situacao]
+    .map(texto)
+    .filter(Boolean)
+    .join(" · ");
+
 function normalizarAnaliseDoCaso(bruto) {
   return {
     id: texto(bruto?.id) || null,
@@ -317,6 +375,37 @@ export function motivoDoCaso(conferencia, detalhe = {}, caso = {}) {
         : `Nota ${numeroDoCaso(d.nota)}`;
     case "ENTREVISTA_HORARIO_DUPLICADO":
       return Number(d.horarios) > 1 ? `${d.horarios} horários` : "";
+    case "APROVADOS_CONTRATADO_DUPLICADO": {
+      const contratos = (caso.vinculos || []).filter(
+        (v) => v.status === "Contratado",
+      ).length;
+      const n = Math.max(contratos, Number(d.vagas) || 0);
+      return n > 1
+        ? `Contratado em ${n} vagas`
+        : "Contratado em mais de uma vaga";
+    }
+    case "APROVADOS_CONVOCADO_SEM_DESFECHO": {
+      const dia = diaDoCaso(d.convocado_em || caso.dataConvocacao);
+      return dia ? `Convocado em ${dia}, sem desfecho` : "";
+    }
+    case "CLASSIFICACAO_LISTA_FINAL_DESATUALIZADA": {
+      const dia = diaDoCaso(caso.lista?.geradaEm);
+      return dia ? `Gerada em ${dia}` : "";
+    }
+    case "CLASSIFICACAO_EMPATE_PENDENTE": {
+      const n = Number(d.pendencias ?? caso.lista?.pendencias) || 0;
+      return n
+        ? `${n} ${n === 1 ? "empate pendente" : "empates pendentes"}`
+        : "";
+    }
+    case "CLASSIFICACAO_AJUSTE_APOS_LISTA": {
+      const dia = diaDoCaso(caso.lista?.aprovadoEm);
+      return dia ? `Ajuste aprovado em ${dia}` : "";
+    }
+    case "CARGA_VARIACAO_BRUSCA":
+      return d.antes !== undefined && d.depois !== undefined
+        ? `De ${numeroDoCaso(d.antes)} para ${numeroDoCaso(d.depois)} candidatos`
+        : "";
     default:
       return "";
   }
@@ -327,27 +416,55 @@ export function normalizarCaso(bruto) {
   const conferencia = texto(bruto?.conferencia);
   const detalhe =
     bruto?.detalhe && typeof bruto.detalhe === "object" ? bruto.detalhe : {};
+  const lista =
+    bruto?.lista && typeof bruto.lista === "object"
+      ? {
+          tipo: texto(bruto.lista.tipo),
+          geradaEm: texto(bruto.lista.gerada_em) || null,
+          aprovadoEm: texto(bruto.lista.aprovado_em) || null,
+          pendencias: Number(bruto.lista.pendencias) || 0,
+        }
+      : null;
+  const nota =
+    bruto?.nota === null || bruto?.nota === undefined || bruto?.nota === ""
+      ? null
+      : Number(bruto.nota);
   const caso = {
     avisoId: texto(bruto?.aviso_id),
     conferencia,
     titulo: tituloDaConferencia(conferencia),
     ordem: Math.max(0, Math.round(Number(bruto?.ordem) || 0)),
+    tipo: texto(bruto?.tipo) || null,
+    resolucao: RESOLUCOES[bruto?.resolucao] ? bruto.resolucao : "ok",
     analiseId: texto(bruto?.analise_id) || null,
+    aprovadoId: texto(bruto?.aprovado_id) || null,
+    entrevistaId: texto(bruto?.entrevista_id) || null,
+    editalId: texto(bruto?.edital_id) || null,
     codigo: texto(bruto?.codigo),
     nome: texto(bruto?.nome),
     edital: texto(bruto?.edital),
+    codigoVaga: texto(bruto?.codigo_vaga),
     vaga: vagaDe(bruto?.codigo_vaga, bruto?.nome_vaga),
     responsavel: texto(bruto?.responsavel),
     status: texto(bruto?.status),
     dataAnalise: texto(bruto?.data_analise) || null,
-    referencia: texto(bruto?.referencia),
+    dataConvocacao: texto(bruto?.data_convocacao) || null,
+    dataContratacao: texto(bruto?.data_contratacao) || null,
+    nota: Number.isFinite(nota) ? nota : null,
+    compareceu: texto(bruto?.compareceu) || null,
+    lista,
+    referencia: referenciaVisivel(bruto?.referencia),
     detalhe,
     analises: (Array.isArray(bruto?.analises) ? bruto.analises : []).map(
       normalizarAnaliseDoCaso,
     ),
+    vinculos: (Array.isArray(bruto?.vinculos) ? bruto.vinculos : []).map(
+      normalizarVinculo,
+    ),
     foraDoAcesso: Math.max(0, Math.round(Number(bruto?.fora_do_acesso) || 0)),
   };
   caso.chave = `${caso.avisoId}:${caso.ordem}`;
+  caso.situacao = situacaoDoCaso(caso);
   caso.motivo = motivoDoCaso(conferencia, detalhe, caso);
   return caso;
 }
@@ -380,20 +497,55 @@ export const casosRestantes = (carregados, total) =>
 export const termoDeBusca = (valor) =>
   texto(valor).replace(/\s+/g, " ").slice(0, 80);
 
-/** Quem é o caso, em uma linha: "177979 · Nome" ou a referência. */
-export function quemDoCaso(caso) {
-  const partes = [caso?.codigo, caso?.nome].map(texto).filter(Boolean);
-  if (partes.length) return partes.join(" · ");
-  return caso?.referencia
-    ? `Referência ${caso.referencia}`
-    : "Sem identificação";
+const TIPOS_DE_VAGA = new Set(["vaga", "vaga_empregare"]);
+
+/**
+ * A situação do registro do caso, em poucas palavras: o aprovado
+ * ("Contratado em 03/02/2026"), a entrevista ("Apto · nota 8,5") ou o ajuste.
+ * "" para as análises (a situação delas vai no CSV).
+ */
+export function situacaoDoCaso(caso) {
+  if (caso?.tipo === "candidato_aprovado") return situacaoDoAprovado(caso);
+  if (caso?.tipo === "entrevista")
+    return [
+      PARECERES.find((p) => p.id === caso.status)?.rotulo || texto(caso.status),
+      caso.nota !== null && caso.nota !== undefined
+        ? `nota ${numeroDoCaso(caso.nota)}`
+        : "",
+      caso.compareceu === "N" ? "não compareceu" : "",
+    ]
+      .filter(Boolean)
+      .join(" · ");
+  if (caso?.tipo === "ajuste_recurso") return texto(caso.status);
+  return "";
 }
 
-/** Edital, vaga e responsável do caso, em uma linha (o que houver). */
+/**
+ * Quem é o caso, em uma linha: "177979 · Nome", a lista ("Lista final ·
+ * Edital 101/2026"), a vaga ("Vaga 177979 · Enfermeiro") ou a referência que
+ * é código. Registro que sumiu: "Registro removido"; fora do acesso: "Sem
+ * acesso". Nunca um UUID.
+ */
+export function quemDoCaso(caso) {
+  const partes = [caso?.codigo, caso?.nome].map(texto).filter(Boolean);
+  const resolucao = RESOLUCOES[caso?.resolucao];
+  if (resolucao)
+    return [texto(caso?.codigo), resolucao].filter(Boolean).join(" · ");
+  if (partes.length) return partes.join(" · ");
+  if (caso?.tipo === "lista_classificacao")
+    return TIPOS_DE_LISTA[caso.lista?.tipo] || "Lista de classificação";
+  if (TIPOS_DE_VAGA.has(caso?.tipo))
+    return caso.vaga ? `Vaga ${caso.vaga}` : "Vaga sem código";
+  const referencia = referenciaVisivel(caso?.referencia);
+  return referencia ? `Referência ${referencia}` : "Sem identificação";
+}
+
+/** Edital, vaga, situação e responsável do caso, em uma linha (o que houver). */
 export function ondeDoCaso(caso) {
   return [
     caso?.edital,
-    caso?.vaga,
+    TIPOS_DE_VAGA.has(caso?.tipo) ? "" : caso?.vaga,
+    caso?.situacao,
     caso?.responsavel ? `Resp. ${caso.responsavel}` : "",
   ]
     .map(texto)
@@ -405,6 +557,56 @@ export function ondeDoCaso(caso) {
 export const casoAbreAnalise = (caso, modulo) =>
   modulo === "analises" &&
   Boolean(caso?.analiseId || caso?.analises?.some((a) => a.id));
+
+/** A tela (view do app) de cada módulo dos avisos. */
+export const VIEW_DO_MODULO = Object.freeze({
+  analises: "analises",
+  entrevistas: "entrevistas",
+  classificacao: "classificacao",
+  aprovados: "approved",
+});
+
+/**
+ * Para onde o caso leva: `{ view, filtro }` (o pedido de filtro da tela, ver
+ * src/app/pedido-de-filtro.js) ou `null` quando não há o que abrir (registro
+ * removido, fora do acesso, cargas).
+ *   análises     o Painel das análises na análise (busca pelo nome);
+ *   aprovados    a Lista de aprovados só com as vagas da pessoa;
+ *   entrevistas  Resultados, buscando o candidato e com a entrevista aberta;
+ *   classificação a tela da Classificação.
+ */
+export function destinoDoCaso(caso) {
+  if (!caso || RESOLUCOES[caso.resolucao]) return null;
+  const modulo = CONFERENCIAS[caso.conferencia]?.modulo;
+  if (modulo === "analises")
+    return casoAbreAnalise(caso, modulo)
+      ? { view: "analises", filtro: filtroDoCaso(caso) }
+      : null;
+  if (modulo === "aprovados") {
+    const candidatos = [
+      ...new Set(
+        [caso.aprovadoId, ...(caso.vinculos || []).map((v) => v.id)].filter(
+          Boolean,
+        ),
+      ),
+    ];
+    return candidatos.length
+      ? { view: "approved", filtro: { candidatos, nome: texto(caso.nome) } }
+      : null;
+  }
+  if (modulo === "entrevistas") {
+    const busca = texto(caso.nome) || texto(caso.codigo);
+    return busca || caso.entrevistaId
+      ? {
+          view: "entrevistas",
+          filtro: { busca, entrevista: caso.entrevistaId || null },
+        }
+      : null;
+  }
+  if (modulo === "classificacao")
+    return caso.editalId ? { view: "classificacao", filtro: {} } : null;
+  return null;
+}
 
 /**
  * O pedido de filtro (src/app/pedido-de-filtro.js) que leva o Painel das
@@ -419,11 +621,11 @@ export function filtroDoCaso(caso) {
 const COLUNAS_DO_CSV_DE_CASOS = Object.freeze([
   ["Aviso", (c) => c.titulo],
   ["Código do candidato", (c) => c.codigo],
-  ["Nome", (c) => c.nome],
+  ["Nome", (c) => c.nome || RESOLUCOES[c.resolucao] || ""],
   ["Edital", (c) => c.edital],
   ["Vaga", (c) => c.vaga],
   ["Responsável pela análise", (c) => c.responsavel],
-  ["Situação", (c) => c.status],
+  ["Situação", (c) => c.situacao || c.status],
   ["Data da análise", (c) => diaDoCaso(c.dataAnalise)],
   ["Motivo", (c) => c.motivo],
   [
@@ -433,7 +635,11 @@ const COLUNAS_DO_CSV_DE_CASOS = Object.freeze([
         .map((a) => [a.edital, a.vaga, a.status].filter(Boolean).join(" · "))
         .join(" | "),
   ],
-  ["Referência", (c) => c.referencia],
+  [
+    "Vagas na lista de aprovados",
+    (c) => c.vinculos.map(linhaDoVinculo).join(" | "),
+  ],
+  ["Referência", (c) => referenciaVisivel(c.referencia)],
 ]);
 
 /** CSV (";") dos casos, com cada célula protegida contra fórmula. */

@@ -3,6 +3,7 @@ import {
   OPCOES_DO_FILTRO_DE_STATUS,
   canAlterarCandidatoSubJudice,
   canEditSubJudice,
+  nomeDosCandidatosFiltrados,
   summarizeApprovedCandidates,
 } from "../../lib/lista-aprovados-rules.js";
 import { formatNumberBR } from "../../lib/formatters.js";
@@ -25,6 +26,7 @@ import {
   NomeDoCandidato,
   NotaDoCandidato,
   Paginacao,
+  plural,
   SeloDeStatus,
 } from "./partes.jsx";
 
@@ -211,6 +213,25 @@ export function AbaAprovados({
         </div>
       </PainelDeFiltros>
 
+      {filtros.candidatos?.length ? (
+        <p className="approved-filtro-do-aviso" data-filtro-do-aviso>
+          <span>
+            {[
+              nomeDosCandidatosFiltrados(candidatos, filtros.candidatos),
+              plural(filtros.candidatos.length, "vaga", "vagas"),
+            ]
+              .filter(Boolean)
+              .join(" · ")}
+          </span>
+          <button
+            type="button"
+            className="btn secondary"
+            onClick={() => aoMudarFiltro("candidatos", [])}
+          >
+            Ver todos
+          </button>
+        </p>
+      ) : null}
       {origens ? (
         <p
           className="status-discreto"
