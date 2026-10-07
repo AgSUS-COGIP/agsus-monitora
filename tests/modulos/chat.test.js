@@ -358,7 +358,7 @@ describe("mensagens", () => {
     ).toContain("Chegou agora");
   });
 
-  it("o menu ⋯ fica à vista em cada mensagem: na própria, Editar e Apagar (com confirmação); na dos outros, só Copiar", async () => {
+  it("o menu ⋯ fica à vista em cada mensagem: na própria, Editar e Apagar (com confirmação); na dos outros, Responder, Encaminhar e Copiar", async () => {
     const supabase = await montar();
     await abrirConversaDireta();
     const minha = document.querySelector('[data-mensagem="m1"]');
@@ -371,7 +371,7 @@ describe("mensagens", () => {
     const itensDeAna = [...deAna.querySelectorAll('[role="menuitem"]')].map(
       (b) => b.textContent.trim(),
     );
-    expect(itensDeAna).toEqual(["Copiar texto"]);
+    expect(itensDeAna).toEqual(["Responder", "Encaminhar", "Copiar texto"]);
     await clicar(mais(deAna));
 
     await clicar(mais(minha));
@@ -616,7 +616,12 @@ describe("limpar conversa", () => {
       ...painel().querySelectorAll('.chat-conversa__menu [role="menuitem"]'),
     ].map((b) => b.textContent.trim());
     // Direta: sem "Sair"; nada de "Apagar conversa".
-    expect(itens).toEqual(["Silenciar", "Limpar conversa"]);
+    expect(itens).toEqual([
+      "Fixar no topo",
+      "Marcar como não lida",
+      "Silenciar",
+      "Limpar conversa",
+    ]);
     await clicar(botao("Limpar conversa", painel()));
     const confirmar = painel().querySelector('[aria-label="Limpar conversa?"]');
     expect(confirmar.textContent).toContain("Limpar o histórico só para você?");
@@ -688,6 +693,8 @@ describe("limpar conversa", () => {
       ...painel().querySelectorAll('.chat-conversa__menu [role="menuitem"]'),
     ].map((b) => b.textContent.trim());
     expect(itens).toEqual([
+      "Fixar no topo",
+      "Marcar como não lida",
       "Silenciar",
       "Adicionar pessoas",
       "Limpar conversa",
