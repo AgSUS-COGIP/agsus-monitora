@@ -79,6 +79,7 @@ import { montarCalendarioEditais } from "./modulos/cronograma/calendario-editais
 import { montarNucleo } from "./modulos/editais/nucleo.jsx";
 import { montarRecursos } from "./modulos/recursos/recursos.jsx";
 import { montarEntrevistas } from "./modulos/entrevistas/entrevistas.jsx";
+import { montarConducaoDeEntrevistas } from "./modulos/entrevistas/conduzir.tsx";
 import { montarAnalises } from "./modulos/analises/analises.jsx";
 import { montarSelecao } from "./modulos/selecao/selecao.tsx";
 import { montarClassificacao } from "./modulos/classificacao/classificacao.jsx";
@@ -186,12 +187,26 @@ window.recursosController = montarRecursos({
 });
 
 /*
-  Entrevistas: módulo de src/modulos/, na própria <section>, como Recursos
-  (área do app, render() a cada abertura, comemorações relidas).
+  Entrevistas, em duas entradas do menu (src/modulos/entrevistas/): o Painel
+  de entrevistas (acompanhar) e Conduzir entrevistas (fazer), cada um na
+  própria <section>, como Recursos (área do app, render() a cada abertura,
+  comemorações relidas). Gravar notas ou convocar em Conduzir relê o painel;
+  as entrevistas do painel, quando já lidas, marcam "com entrevistas" na
+  lista de editais de Conduzir.
 */
 window.entrevistasController = montarEntrevistas({
   toast: window.monitoraToast,
   comemoracoesLigadas: () => situacaoDoSistema().comemoracoes === true,
+});
+window.conduzirEntrevistasController = montarConducaoDeEntrevistas({
+  toast: window.monitoraToast,
+  comemoracoesLigadas: () => situacaoDoSistema().comemoracoes === true,
+  aoMudarResultados: () => {
+    const painel = window.entrevistasController?.estado;
+    if (painel?.obter().area) void painel.carregar();
+  },
+  doPainel: () =>
+    window.entrevistasController?.estado?.obter().dados?.entrevistas || [],
 });
 
 /*

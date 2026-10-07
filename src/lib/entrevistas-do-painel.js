@@ -56,6 +56,23 @@ export const SITUACOES_DA_LIGACAO = Object.freeze([
   Object.freeze({ id: "divergente", rotulo: "Nota divergente" }),
 ]);
 
+/*
+  Andamento da entrevista (pendências do Painel de entrevistas): sem
+  comparecimento registrado, compareceu sem nota e com nota sem parecer.
+*/
+export const ANDAMENTOS = Object.freeze([
+  Object.freeze({ id: "sem_comparecimento", rotulo: "Sem comparecimento" }),
+  Object.freeze({ id: "sem_nota", rotulo: "Compareceu, sem nota" }),
+  Object.freeze({ id: "sem_parecer", rotulo: "Com nota, sem parecer" }),
+]);
+
+/** O andamento pendente da entrevista (um id de `ANDAMENTOS`) ou "". */
+export function andamentoDaEntrevista(e) {
+  if (!e.compareceu) return "sem_comparecimento";
+  if (e.compareceu !== "S" || e.parecer !== "SEM_PARECER") return "";
+  return e.nota === null ? "sem_nota" : "sem_parecer";
+}
+
 export const FAIXAS_DE_NOTA = Object.freeze([
   Object.freeze({ id: "0-5", rotulo: "0 a 5", de: 0, ate: 5 }),
   Object.freeze({ id: "5-10", rotulo: "5 a 10", de: 5, ate: 10 }),
@@ -67,11 +84,13 @@ export const FILTROS_VAZIOS = Object.freeze({
   busca: "",
   unidade: "",
   edital: "",
+  vaga: "",
   cargo: "",
   parecer: "",
   comparecimento: "",
   modalidade: "",
   ligacao: "",
+  andamento: "",
 });
 
 export const rotuloDoParecer = (id) =>
@@ -233,6 +252,7 @@ export function filtrarEntrevistas(entrevistas, filtros = FILTROS_VAZIOS) {
     if (busca && !e.busca.includes(busca)) return false;
     if (filtros.unidade && e.unidade !== filtros.unidade) return false;
     if (filtros.edital && e.edital !== filtros.edital) return false;
+    if (filtros.vaga && e.vaga !== filtros.vaga) return false;
     if (filtros.cargo && e.cargo !== filtros.cargo) return false;
     if (filtros.modalidade && (e.modalidade || "") !== filtros.modalidade)
       return false;
@@ -244,13 +264,15 @@ export function filtrarEntrevistas(entrevistas, filtros = FILTROS_VAZIOS) {
       return false;
     if (filtros.ligacao && !situacoesDaLigacao(e).includes(filtros.ligacao))
       return false;
+    if (filtros.andamento && andamentoDaEntrevista(e) !== filtros.andamento)
+      return false;
     return true;
   });
 }
 
 /*
   Os aprovados na análise sem entrevista seguem os filtros que valem para eles
-  (busca, unidade, edital, cargo e modalidade); parecer, comparecimento e
+  (busca, unidade, edital, vaga, cargo e modalidade); parecer, comparecimento e
   ligação são da entrevista, que eles não têm.
 */
 export function filtrarAprovadosSemEntrevista(
@@ -266,6 +288,7 @@ export function filtrarAprovadosSemEntrevista(
       return false;
     if (filtros.unidade && a.unidade !== filtros.unidade) return false;
     if (filtros.edital && a.edital !== filtros.edital) return false;
+    if (filtros.vaga && a.vaga !== filtros.vaga) return false;
     if (filtros.cargo && a.cargo !== filtros.cargo) return false;
     if (filtros.modalidade && (a.modalidade || "") !== filtros.modalidade)
       return false;
@@ -286,6 +309,7 @@ export function opcoesDosFiltros(entrevistas) {
   return {
     unidades: valoresDistintos(entrevistas, "unidade"),
     editais: valoresDistintos(entrevistas, "edital"),
+    vagas: valoresDistintos(entrevistas, "vaga"),
     cargos: valoresDistintos(entrevistas, "cargo"),
     modalidades: valoresDistintos(entrevistas, "modalidade"),
     pareceres: PARECERES.map((p) => ({ valor: p.id, rotulo: p.rotulo })),
@@ -297,6 +321,7 @@ export function opcoesDosFiltros(entrevistas) {
       valor: s.id,
       rotulo: s.rotulo,
     })),
+    andamentos: ANDAMENTOS.map((a) => ({ valor: a.id, rotulo: a.rotulo })),
   };
 }
 
@@ -456,6 +481,38 @@ export function pendenciasDasEntrevistas(entrevistas, aprovadosSemEntrevista) {
       unidade: ["entrevista", "entrevistas"],
       valor: entrevistas.filter((e) => e.divergente).length,
       severidade: "alta",
+    },
+    {
+      chave: "sem_comparecimento",
+      campo: "andamento",
+      titulo: "Sem comparecimento registrado",
+      subtitulo: "convocados sem Compareceu ou Faltou",
+      unidade: ["entrevista", "entrevistas"],
+      valor: entrevistas.filter(
+        (e) => andamentoDaEntrevista(e) === "sem_comparecimento",
+      ).length,
+      severidade: "media",
+    },
+    {
+      chave: "sem_nota",
+      campo: "andamento",
+      titulo: "Compareceu, sem nota",
+      subtitulo: "a ficha de notas ainda não foi lançada",
+      unidade: ["entrevista", "entrevistas"],
+      valor: entrevistas.filter((e) => andamentoDaEntrevista(e) === "sem_nota")
+        .length,
+      severidade: "alta",
+    },
+    {
+      chave: "sem_parecer",
+      campo: "andamento",
+      titulo: "Com nota, sem parecer",
+      subtitulo: "faltam notas de alguma competência ou avaliador",
+      unidade: ["entrevista", "entrevistas"],
+      valor: entrevistas.filter(
+        (e) => andamentoDaEntrevista(e) === "sem_parecer",
+      ).length,
+      severidade: "media",
     },
   ];
 }

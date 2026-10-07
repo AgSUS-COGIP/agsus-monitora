@@ -9,9 +9,13 @@ filtros, modal do dia, próximas etapas, linha do tempo e regras em
 `src/lib/calendario-editais.ts`. Visão geral inclui estado, filtros, indicadores, tabela,
 gaveta, boas-vindas, leitura dos marcos e regras em `src/lib/visao-geral.ts`. Conferências inclui
 estado, cartão, selos, gaveta, busca e paginação dos casos, CSV, ação de ignorar com motivo,
-navegação e regras em `src/lib/avisos-de-conferencia.ts`. Os mapas
+navegação e regras em `src/lib/avisos-de-conferencia.ts`. Em Entrevistas, as peças novas do Painel e de Conduzir (`andamento.tsx`, `conduzir.tsx`,
+`fila-do-dia.tsx`, `tipos.ts`, `src/lib/painel-de-entrevistas.ts` e `src/lib/fila-de-conducao.ts`)
+já nascem em TypeScript. Os mapas
 continuam em JavaScript, com contratos JSDoc na integração com a tela. Outros módulos
-combinam JavaScript/JSX com migrações pontuais para TypeScript. Componentes e helpers
+combinam JavaScript/JSX com migrações pontuais para TypeScript: a ficha da Avaliação documental
+tem os componentes em `src/modulos/avaliacao-documental/ficha/*.tsx` (contratos em `tipos.ts`) e
+`Popover` está em `src/ui/popover.tsx`. Componentes e helpers
 compartilhados consumidos por esses módulos declaram seus contratos em JSDoc.
 O assistente da regra da Avaliação documental (`src/modulos/avaliacao-documental/assistente/`)
 já nasceu em TSX, com as regras em `src/lib/avaliacao-documental/assistente-da-regra.ts`,

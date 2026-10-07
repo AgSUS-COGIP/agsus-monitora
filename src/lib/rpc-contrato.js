@@ -681,7 +681,7 @@ export const CONTRATO_RPC = {
     argumentos: ["p_edital"],
     critica: false,
     resumo:
-      "Condução da entrevista de um edital: configuração (roteiro, banca, lançamento), a lista de convocação vigente da Classificação com o retrato (lista_convocacao), a regra de convocação vigente da Classificação, banca e convocados com as notas; pode_editar, pode_gerar_lista, admin_global e meu_perfil.",
+      "Condução da entrevista de um edital: configuração (roteiro, banca, lançamento), a lista de convocação vigente da Classificação com o retrato (lista_convocacao), a regra vigente da Classificação (convocação, desempate e empate final — 20261008130000), banca e convocados com as notas; pode_editar, pode_gerar_lista, admin_global e meu_perfil.",
   },
   configurar_entrevista_edital: {
     argumentos: ["p_edital", "p_dados"],

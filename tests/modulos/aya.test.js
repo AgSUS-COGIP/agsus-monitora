@@ -156,9 +156,11 @@ describe("página e área atuais", () => {
     await montar();
     await abrirPainel();
     expect($(".aya-painel").textContent).toContain("parecer jurídico");
-    await act(async () => definirPaginaDaAya("entrevistas", "Entrevistas"));
+    await act(async () =>
+      definirPaginaDaAya("entrevistas", "Painel de entrevistas"),
+    );
     expect($(".aya-painel").textContent).not.toContain("parecer jurídico");
-    expect(textoDe(".aya-painel__pagina")).toBe("Entrevistas · SEDE");
+    expect(textoDe(".aya-painel__pagina")).toBe("Painel de entrevistas · SEDE");
   });
 
   it("a Visão geral segue a área: SEDE sem mapa, Projetos com o mapa", async () => {

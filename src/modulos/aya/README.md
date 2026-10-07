@@ -14,6 +14,16 @@ contexto.js o que a tela já mostra: dados do mapa e da tabela, e estadoDaTela()
 fontes.js   dados ao vivo das perguntas com número: o estado já carregado das
             telas ou as RPCs de leitura que elas já usam (guardadas por 1 min)
 aya.css     só tokens; camada 10042 (acima do cabeçalho, abaixo do parabéns)
+mascote/
+  desenho.tsx   a arara-azul em SVG, em camadas (corpo, cabeça, olho com anel e
+                pálpebra, bico superior/inferior com a faixa amarela, asas, cauda,
+                pés, poleiro); versão simples para ≤32px; retrato (cabeça e peito)
+  mascote.tsx   <Mascote>: estados parada, atenta, falando, pensando, comemorando,
+                dormindo e acenando; piscar e arrepio sorteados (Web Animations),
+                olho que segue o ponteiro (variáveis CSS), sono por inatividade,
+                pausa com a aba oculta; montarMascoteAvulsa() para os fogos
+  estado.ts     o pedido global (evento `aya:estado`) fora do React, com expiração
+  mascote.css   só transform/opacity por data-estado; movimento reduzido: só pisca
 tour/
   tour.jsx      <Tour>: véu com recorte no elemento da vez, balão (Pular/Anterior/Próximo,
                 "Passo 2 de 6"), Esc, setas, foco preso, anúncio ao leitor de tela; pula o
@@ -47,4 +57,12 @@ visíveis; não há endpoint de IA, modelo, serviço local ou túnel. Dúvidas o
 três perguntas em botões e chamado pelo Gmail. Testes: `tests/modulos/aya.test.js`, `tests/aya-paginas.test.js`,
 `tests/aya-respostas-chave.test.js`, `tests/busca-da-aya.test.js`, `tests/termos-da-aya.test.js`,
 `tests/conversa-da-aya.test.js`, `tests/chamado-da-aya.test.js`, `tests/aya-tours.test.js`,
-`tests/modulos/aya-tour.test.js` e `tests/modulos/aya-trilhas.test.js`.
+`tests/modulos/aya-tour.test.js`, `tests/modulos/aya-trilhas.test.js`, `tests/modulos/mascote.test.js`
+e `tests/estado-da-aya.test.js`.
+
+A mascote: a regra dos estados (prioridade, movimento reduzido, comemorações desligadas,
+tempos sorteados) fica em `src/lib/estado-da-aya.ts`. Qualquer tela pede um estado com
+`definirEstadoDaAya("comemorando", 3000)` ou com o evento `aya:estado`
+(`{ detail: { estado, duracaoMs } }`); os fogos (`src/modules/comemoracao.js`) já pedem
+"comemorando". A prévia de cada estado fica em Configurações › Marca › Mascote
+(`src/modulos/configuracoes/cartao-da-mascote.tsx`).

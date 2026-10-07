@@ -22,7 +22,7 @@
   - Nas trilhas, `pagina`: a tela do passo (`recursos`, `config:acessos`);
     o tour navega até ela.
 
-  Tours por aba: a chave é `view:aba` (`entrevistas:conduzir`,
+  Tours por aba: a chave é `view:aba` (`conduzir-entrevistas:preparar`,
   `classificacao:regra`, `approved:convocacao`); sem tour da aba, vale o da
   tela. Em Configurações, `config:<seção>`.
 
@@ -64,9 +64,8 @@ const PASSO_DA_AYA = passo(
 );
 
 const ABA = Object.freeze({
-  conduzir: `${t("entrevistas-visoes")} [data-valor='conduzir']`,
-  roteiros: `${t("entrevistas-visoes")} [data-valor='roteiros']`,
-  resultados: `${t("entrevistas-visoes")} [data-valor='resultados']`,
+  fila: `${t("conduzir-visoes")} [data-valor='fila']`,
+  preparar: `${t("conduzir-visoes")} [data-valor='preparar']`,
   listas: `${t("classificacao-abas")} [data-valor='listas']`,
   agenda: `${t("classificacao-abas")} [data-valor='agenda']`,
   regra: `${t("classificacao-abas")} [data-valor='regra']`,
@@ -310,30 +309,37 @@ const TOURS = Object.freeze({
     ]),
   }),
   entrevistas: Object.freeze({
-    titulo: "Entrevistas · Resultados",
+    titulo: "Painel de entrevistas",
     passos: Object.freeze([
-      passo(
-        t("entrevistas-visoes"),
-        "Três visões",
-        "Resultados (consulta), Conduzir entrevistas e Roteiros. Cada visão tem o próprio tour.",
-      ),
       passo(
         t("entrevistas-filtros"),
         "Filtros",
-        "Recorte por edital, vaga, parecer e comparecimento.",
-        { antes: ABA.resultados },
+        "Recorte por edital, vaga, parecer, comparecimento e andamento.",
       ),
       passo(
         [t("entrevistas-kpis"), "#page-entrevistas .entrevistas-kpis"],
         "Indicadores",
         "Vagas com entrevista, candidatos, compareceram, aptos, inaptos e média das notas.",
-        { antes: ABA.resultados },
+      ),
+      passo(
+        t("entrevistas-andamento"),
+        "Andamento por vaga",
+        "Cada cartão mostra o feito e a barra: verde apto, vermelho inapto, amarelo faltou, azul em andamento.",
+      ),
+      passo(
+        t("entrevistas-agenda-proxima"),
+        "Próximos dias",
+        "Com um edital escolhido, a agenda salva na Classificação; Conduzir leva à fila.",
       ),
       passo(
         t("entrevistas-pendencias"),
         "Pendências",
-        "Como aprovados na análise sem entrevista e notas que não batem com a soma.",
-        { antes: ABA.resultados },
+        "Sem comparecimento, sem nota, sem parecer e o que não bate; cada uma filtra o painel.",
+      ),
+      passo(
+        t("entrevistas-empates"),
+        "Empates",
+        "Mesma nota na mesma vaga: o desempate é feito na Classificação.",
       ),
       passo(
         [
@@ -342,19 +348,52 @@ const TOURS = Object.freeze({
         ],
         "Tabela de resultados",
         "O resultado de cada candidato entrevistado da área atual.",
-        { antes: ABA.resultados },
       ),
       PASSO_DA_AYA,
     ]),
   }),
-  "entrevistas:conduzir": Object.freeze({
-    titulo: "Entrevistas · Conduzir",
+  "conduzir-entrevistas": Object.freeze({
+    titulo: "Conduzir entrevistas · Fila",
     passos: Object.freeze([
       passo(
-        [t("entrevistas-conduzir-seletor-edital"), "#entrevistasEdital"],
-        "Edital da entrevista",
-        "Aparecem os editais dentro da janela da entrevista ou liberados pelo administrador global.",
+        t("conduzir-visoes"),
+        "Fila e Preparar",
+        "A Fila é o trabalho do dia; Preparar tem a configuração, a convocação e os roteiros.",
       ),
+      passo(
+        [t("entrevistas-conduzir-seletor-edital"), "#entrevistasEdital"],
+        "Edital",
+        "Editais na janela da entrevista ou liberados; o último aberto volta sozinho.",
+      ),
+      passo(
+        t("conduzir-contador"),
+        "Hoje",
+        "Quantas das entrevistas de hoje já estão concluídas ou com falta.",
+      ),
+      passo(
+        t("conduzir-recortes"),
+        "Hoje, Próximos, Todos",
+        "Hoje e Próximos seguem a agenda salva na Classificação; Todos traz todos os convocados.",
+        { antes: ABA.fila },
+      ),
+      passo(
+        t("conduzir-situacoes"),
+        "Situações",
+        "Aguardando, em andamento, concluída e faltou; clicar filtra a fila.",
+        { antes: ABA.fila },
+      ),
+      passo(
+        t("conduzir-fila"),
+        "Abrir a ficha",
+        "Clique no cartão para lançar comparecimento e notas; Salvar e abrir o próximo segue a fila.",
+        { antes: ABA.fila },
+      ),
+      PASSO_DA_AYA,
+    ]),
+  }),
+  "conduzir-entrevistas:preparar": Object.freeze({
+    titulo: "Conduzir entrevistas · Preparar",
+    passos: Object.freeze([
       passo(
         t("entrevistas-conduzir-liberacao"),
         "Liberar fora da janela",
@@ -363,8 +402,13 @@ const TOURS = Object.freeze({
       ),
       passo(
         [t("entrevistas-conduzir-configuracao"), "[data-passo='configuracao']"],
-        "Passo 1 · Configuração",
-        "O roteiro preenche a regra de convocação e a banca padrão.",
+        "Configuração",
+        "O roteiro, o modo de lançamento e a banca do edital.",
+      ),
+      passo(
+        t("entrevistas-desempate"),
+        "Desempate",
+        "É o da regra de classificação do edital; muda na Classificação.",
       ),
       passo(
         t("entrevistas-conduzir-vagas"),
@@ -373,7 +417,7 @@ const TOURS = Object.freeze({
       ),
       passo(
         [t("entrevistas-conduzir-convocacao"), "[data-passo='convocacao']"],
-        "Passo 2 · Convocação",
+        "Convocação",
         "A lista de convocação vem da Classificação, na ordem de cada vaga.",
       ),
       passo(
@@ -383,46 +427,14 @@ const TOURS = Object.freeze({
         { exige: editaEntrevistas },
       ),
       passo(
-        t("entrevistas-conduzir-agenda-do-dia"),
-        "Agenda do dia",
-        "Os horários das entrevistas de hoje, gerados na agenda da Classificação.",
-      ),
-      passo(
-        [t("entrevistas-conduzir-ficha"), "[data-passo='ficha']"],
-        "Passo 3 · Ficha de notas",
-        "Abra um convocado para lançar comparecimento e notas; o resultado é recalculado a cada gravação.",
-      ),
-      PASSO_DA_AYA,
-    ]),
-  }),
-  "entrevistas:roteiros": Object.freeze({
-    titulo: "Entrevistas · Roteiros",
-    passos: Object.freeze([
-      passo(
         t("entrevistas-roteiros"),
         "Roteiros",
-        "Modelos reutilizáveis da entrevista: critérios, pontuação e banca.",
+        "Modelos reutilizáveis da entrevista: competências, pontuação e banca.",
       ),
       passo(
         t("entrevistas-roteiros-novo"),
         "Novo roteiro",
-        "Cria um roteiro do zero.",
-        { exige: editaEntrevistas },
-      ),
-      passo(
-        t("entrevistas-roteiros-lista"),
-        "Lista de roteiros",
-        "Editar grava uma versão nova; os editais já configurados continuam na anterior.",
-      ),
-      passo(
-        t("entrevistas-roteiros-pontuacao"),
-        "Pontuação",
-        "Os critérios e a nota máxima de cada um.",
-      ),
-      passo(
-        t("entrevistas-roteiros-salvar"),
-        "Salvar",
-        "Grava a nova versão do roteiro.",
+        "Cria um roteiro do zero; editar grava uma versão nova.",
         { exige: editaEntrevistas },
       ),
       PASSO_DA_AYA,
@@ -826,14 +838,19 @@ const TOURS = Object.freeze({
         "Agrupadas por vaga (com o lote e a linha de corte) quando a vaga é Todas; o cabeçalho ordena e Exportar CSV baixa a etapa. Abrir mostra a ficha em tela cheia.",
       ),
       passo(
-        t("avd-ficha-etapas"),
-        "Etapas da ficha",
-        "Cada item na cor do estado; clique para ir a ele. Ao lado, os atalhos.",
+        t("avd-ficha-topo"),
+        "Cabeçalho da ficha",
+        'O candidato, a vaga e só os chips essenciais; situação, responsável, reserva e regra ficam no "i".',
       ),
       passo(
-        t("avd-ficha-blocos"),
-        "Um cartão por bloco",
-        "O que o candidato declarou e, na mesma linha, Conforme, Não conforme ou Não enviado (teclas 1, 2 e 3); marcado, o cartão recolhe ao passar ao próximo.",
+        t("avd-ficha-etapas"),
+        "Passo a passo",
+        'Um passo por item, com a marca do estado e a barra de progresso; clique para ir a um item. "Ver todos" mostra a lista completa e o "?", os atalhos.',
+      ),
+      passo(
+        t("avd-ficha-decisoes"),
+        "Decida o item",
+        "Conforme, Não conforme ou Não enviado (teclas 1, 2 e 3). Conforme passa sozinho ao próximo; os outros abrem os motivos em chips.",
       ),
       passo(
         t("avd-ficha-itens"),
@@ -842,8 +859,8 @@ const TOURS = Object.freeze({
       ),
       passo(
         t("avd-ficha-nota"),
-        "Nota do bloco",
-        "Declarado, calculado e apurado; dá para ajustar a nota até o teto do bloco.",
+        "Declarado → Apurado",
+        "Ajuste o apurado de meio em meio ponto, até o teto do bloco; o calculado pelos itens fica embaixo.",
       ),
       passo(
         t("avd-ficha-justificativa"),
@@ -851,24 +868,19 @@ const TOURS = Object.freeze({
         "Nota diferente da declarada pede uma justificativa da lista; ela entra no parecer.",
       ),
       passo(
-        t("avd-ficha-comparacao"),
-        "Declarado × apurado",
-        "A nota ao vivo de cada bloco; a diferença aparece destacada, com a justificativa.",
+        t("avd-ficha-lateral"),
+        "Nota",
+        'A nota ao vivo e a composição por bloco; no "⋯", copiar o código, abrir a Empregare e compartilhar.',
       ),
       passo(
-        t("avd-ficha-empregare"),
-        "Empregare",
-        'Abra o candidato na Empregare (ou "Ver na Empregare" ao lado do anexo); sem o link, copie o código e abra a vaga.',
-      ),
-      passo(
-        t("avd-ficha-parecer"),
-        "Parecer",
-        "Sai com tudo conferido, pela regra, a partir dos motivos, das justificativas e da observação; antes, só os motivos já lançados.",
+        t("avd-ficha-conclusao"),
+        "Conclusão",
+        "O resumo dos itens (clique para voltar a um), a nota final, as observações e o parecer, que sai com tudo conferido.",
       ),
       passo(
         t("avd-ficha-barra"),
         "Salvar e concluir",
-        "O rascunho salva sozinho; Concluir e próxima confere o que falta, conclui e abre a próxima.",
+        'O rascunho salva sozinho; Anterior / Próximo e o botão do momento ("Próximo pendente", "Revisar e concluir" e, na Conclusão, "Concluir e próxima").',
       ),
       passo(
         t("avd-ficha-reabrir"),
@@ -1190,20 +1202,26 @@ const TRILHAS = Object.freeze([
         { pagina: "classificacao" },
       ),
       passo(
-        t("entrevistas-visoes"),
-        "6. Entrevistas",
-        "Configure, convoque e lance as notas em Conduzir; consulte em Resultados.",
+        [t("entrevistas-kpis"), "#page-entrevistas .entrevistas-kpis"],
+        "6. Painel de entrevistas",
+        "Acompanhe o andamento por vaga, as pendências e os empates.",
         { pagina: "entrevistas" },
       ),
       passo(
+        t("conduzir-visoes"),
+        "7. Conduzir entrevistas",
+        "Prepare o edital, convoque e lance as notas a partir da fila do dia.",
+        { pagina: "conduzir-entrevistas" },
+      ),
+      passo(
         [t("aprovados-visoes"), "#approvedRows"],
-        "7. Lista de aprovados",
+        "8. Lista de aprovados",
         "A lista vigente de cada edital, a convocação, a carta e o status de cada candidato.",
         { pagina: "approved" },
       ),
       passo(
         [t("selecao-kpis"), "#page-selecao .selecao-kpis"],
-        "8. Seleção",
+        "9. Seleção",
         "O funil de cada vaga, de inscritos a contratados, e a taxa de contratação.",
         { pagina: "selecao" },
       ),
@@ -1212,49 +1230,44 @@ const TRILHAS = Object.freeze([
   Object.freeze({
     id: "conduzir-entrevista",
     titulo: "Conduzir uma entrevista",
-    resumo: "Edital, configuração, convocação, agenda e ficha de notas.",
-    exige: (perfil) => paginasPermitidas(perfil).entrevistas === true,
+    resumo: "Edital, preparar, fila do dia e ficha de notas.",
+    exige: (perfil) =>
+      paginasPermitidas(perfil)["conduzir-entrevistas"] === true,
     passos: Object.freeze([
       passo(
-        ABA.conduzir,
+        t("conduzir-visoes"),
         "Conduzir entrevistas",
-        "A condução fica nesta visão; Resultados é só consulta.",
-        { pagina: "entrevistas" },
+        "A condução tem entrada própria no menu; o Painel de entrevistas é só para acompanhar.",
+        { pagina: "conduzir-entrevistas" },
       ),
       passo(
         [t("entrevistas-conduzir-seletor-edital"), "#entrevistasEdital"],
         "Escolha o edital",
         "Só aparecem editais dentro da janela da entrevista (de 7 dias antes a 15 dias depois) ou liberados.",
-        { pagina: "entrevistas", antes: ABA.conduzir },
+        { pagina: "conduzir-entrevistas" },
       ),
       passo(
         [t("entrevistas-conduzir-configuracao"), "[data-passo='configuracao']"],
-        "Passo 1 · Configuração",
-        "Com o edital escolhido, escolha o roteiro e confira a regra de convocação e a banca.",
-        { pagina: "entrevistas", antes: ABA.conduzir },
+        "Preparar · Configuração",
+        "Escolha o roteiro e confira a regra de convocação, o desempate e a banca.",
+        { pagina: "conduzir-entrevistas", antes: ABA.preparar },
       ),
       passo(
         [t("entrevistas-conduzir-convocacao"), "[data-passo='convocacao']"],
-        "Passo 2 · Convocação",
+        "Preparar · Convocação",
         "A lista de convocação vem da Classificação, na ordem de cada vaga.",
-        { pagina: "entrevistas", antes: ABA.conduzir },
+        { pagina: "conduzir-entrevistas", antes: ABA.preparar },
       ),
       passo(
-        t("entrevistas-conduzir-agenda-do-dia"),
-        "Agenda do dia",
-        "Os horários gerados na agenda da Classificação.",
-        { pagina: "entrevistas", antes: ABA.conduzir },
-      ),
-      passo(
-        [t("entrevistas-conduzir-ficha"), "[data-passo='ficha']"],
-        "Passo 3 · Ficha de notas",
-        "Abra um convocado e lance comparecimento e notas; Ctrl+Enter salva.",
-        { pagina: "entrevistas", antes: ABA.conduzir },
+        t("conduzir-fila"),
+        "Fila do dia",
+        "Abra um cartão e lance comparecimento e notas; Ctrl+Enter salva.",
+        { pagina: "conduzir-entrevistas", antes: ABA.fila },
       ),
       passo(
         null,
         "Resultado",
-        "A cada gravação o resultado é recalculado e aparece em Resultados. Lançar notas exige nível Editor em Entrevistas.",
+        "A cada gravação o resultado é recalculado e aparece no Painel de entrevistas. Lançar notas exige nível Editor em Entrevistas.",
         { pagina: "entrevistas" },
       ),
     ]),
@@ -1409,7 +1422,7 @@ const TRILHAS = Object.freeze([
 
 /* As abas que têm tour próprio, pelo valor que a tela marca. */
 const ABAS_COM_TOUR = Object.freeze({
-  entrevistas: ["conduzir", "roteiros"],
+  "conduzir-entrevistas": ["preparar"],
   classificacao: ["agenda", "regra"],
   approved: ["convocacao"],
   "avaliacao-documental": ["regra", "fila"],

@@ -11,6 +11,14 @@ O que a Aya faz, o que ela não faz e como abrir um chamado ao suporte. Fontes:
 **fato:** A interface do MONITORA não tem textos explicativos: quem explica as telas e as regras é a Aya, no contexto da página e da área atuais.
 **fonte:** comportamento da Aya
 
+## A arara da Aya (mascote)
+
+**perguntas:** quem e a arara | a arara da aya | mascote da aya | mascote do monitora | por que a arara se mexe | a arara esta dormindo | a arara dorme | arara azul | por que a arara pisca | desligar animacao da arara
+**resposta:** Sou eu: uma arara-azul (Anodorhynchus hyacinthinus), a ave azul-cobalto de anel amarelo nos olhos e faixa amarela no bico, que vive no Pantanal e no Cerrado. Eu me mexo para mostrar o que estou fazendo: respiro e pisco quando estou parada; inclino a cabeça e sigo o ponteiro com o olho quando você chega perto ou abre o painel; olho para cima enquanto procuro a resposta; mexo o bico enquanto o texto aparece; bato as asas nas comemorações; aceno uma vez quando você entra; e cochilo depois de alguns minutos sem uso (qualquer clique, tecla ou movimento me acorda). Se o seu sistema pede menos movimento, eu só pisco; se você desligou as comemorações, eu não comemoro. Em Configurações › Marca, o cartão "Mascote" mostra cada estado.
+**fato:** A mascote da Aya é uma arara-azul animada com sete estados: parada, atenta, falando, pensando, comemorando, dormindo e acenando.
+**fonte:** src/modulos/aya/mascote/; src/lib/estado-da-aya.ts
+**abrir:** config:marca
+
 ## Dados e privacidade da Aya
 
 **perguntas:** voce consulta meus dados | a aya ve meus dados | privacidade da aya | a conversa fica guardada
