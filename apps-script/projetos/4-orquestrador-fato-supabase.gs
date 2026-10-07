@@ -25,8 +25,14 @@ const FATO_SUPABASE_ORQ_CFG = {
   FATO_CONTINUATION_HANDLER: 'processarLoteSincronizacaoAnalises',
   FATO_HEARTBEAT_RECOVERY_MINUTES: 8,
   STARTING_RECOVERY_MINUTES: 10,
-  SUCCESS_STATUSES: ['SUCCESS', 'NO_CHANGES']
+  SUCCESS_STATUSES: ['SUCCESS', 'NO_CHANGES'],
+  // [nao-trava] Execucao do Apps Script tem 30 min. Se a FATO ja consumiu isto, o incremental
+  // (ate ~5 min) fica para a proxima verificacao de 5 min, em vez de ser cortado no meio.
+  MAX_ELAPSED_BEFORE_INCREMENTAL_MS: 20 * 60 * 1000
 };
+
+// [nao-trava] Inicio desta execucao do orquestrador (cada execucao recarrega o script).
+let INICIO_EXECUCAO_ORQ_MS_ = 0;
 
 /**
  * Execute UMA VEZ manualmente para instalar o novo gatilho.
@@ -107,6 +113,7 @@ function statusGatilhoFatoESupabase() {
  * Handler do gatilho. Nao execute em paralelo manualmente.
  */
 function orquestrarFatoESupabaseAgendado() {
+  INICIO_EXECUCAO_ORQ_MS_ = Date.now();
   const props = PropertiesService.getScriptProperties();
   let state = lerEstadoFatoSupabase_();
 
@@ -333,6 +340,15 @@ function acompanharIncrementalFatoSupabase_(state) {
           recovered_by_orchestrator: true
         });
       }
+      // [nao-trava] Sync do ciclo em erro (ex.: encerrado por inatividade) ou sumido: nao ha o que
+      // esperar. O ciclo esquece esse sync_id; o incremental descarta o estado local e comeca outro.
+      if (!remote || ['carregado', 'processando'].indexOf(remote.status) === -1) {
+        Logger.log('Orquestrador: sync ' + state.supabase_sync_id + ' nao pode ser retomado (' +
+          (remote ? 'status ' + remote.status : 'nao encontrado') + '); o ciclo segue com um sync novo.');
+        state.supabase_sync_id = null;
+        state.updated_at = new Date().toISOString();
+        salvarEstadoFatoSupabase_(state);
+      }
     } catch (err) {
       Logger.log('Nao foi possivel consultar o sync incremental pelo orquestrador: ' + err.message);
     }
@@ -343,6 +359,22 @@ function acompanharIncrementalFatoSupabase_(state) {
 
 function iniciarOuRetomarIncrementalFatoSupabase_(state, resumeOnly) {
   let result;
+
+  // [nao-trava] A FATO desta execucao demorou: o incremental comeca na proxima verificacao
+  // (5 min), com o prazo inteiro, em vez de estourar os 30 min do Apps Script no meio.
+  const decorridoMs = INICIO_EXECUCAO_ORQ_MS_ ? Date.now() - INICIO_EXECUCAO_ORQ_MS_ : 0;
+  if (decorridoMs > FATO_SUPABASE_ORQ_CFG.MAX_ELAPSED_BEFORE_INCREMENTAL_MS) {
+    state.phase = 'WAIT_INCREMENTAL';
+    state.updated_at = new Date().toISOString();
+    salvarEstadoFatoSupabase_(state);
+    return logResultadoOrq_({
+      ok: false,
+      pending: true,
+      phase: 'WAIT_INCREMENTAL',
+      cycle_id: state.cycle_id,
+      motivo: 'Execucao ja dura ' + Math.round(decorridoMs / 60000) + ' min; o incremental comeca na proxima verificacao.'
+    });
+  }
 
   try {
     result = resumeOnly
