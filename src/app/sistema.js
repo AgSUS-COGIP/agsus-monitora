@@ -17,6 +17,7 @@ import { criarNavegacao } from "./navegacao.js";
 import { criarPaineisExternos } from "./paineis-externos.js";
 import { criarPerfil } from "./perfil.js";
 import { criarPresenca } from "./presenca.js";
+import { instalarMarcosDosEditais } from "./marcos-personalizados.js";
 import { sessaoDoApp } from "./sessao.js";
 
 /*
@@ -231,6 +232,11 @@ export function ligarSistema() {
 
   perfil.aoMudarPerfil((sessao) => paineis.definirLiberados(sessao.painelIds));
   perfil.acompanharSessao();
+  // "Edital chegou a N contratados" (Configurações › Comemorações), a cada carga.
+  instalarMarcosDosEditais({
+    obterUsuario: perfil.obterUsuario,
+    ligadas: () => situacaoDoSistema().comemoracoes,
+  });
   configuracao.acompanharFundoDoAcesso();
   navegacao.acompanharArea();
   presenca.acompanhar();

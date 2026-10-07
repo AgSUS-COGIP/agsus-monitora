@@ -55,6 +55,24 @@ export const INTENSIDADES = Object.freeze({
 export const intensidadeDoShow = (nome) =>
   INTENSIDADES[nome] || INTENSIDADES.cheio;
 
+/* A duração que Configurações › Comemorações pode pedir aos fogos (s). */
+export const DURACAO_MINIMA_DOS_FOGOS_S = 4;
+export const DURACAO_MAXIMA_DOS_FOGOS_S = 15;
+
+/**
+ * A duração do show (s): a pedida (`duracaoMs`, limitada a 4–15 s) ou a da
+ * intensidade. Show mais longo solta proporcionalmente mais estouros comuns.
+ */
+export function duracaoDoShow(intensidade, duracaoMs = null) {
+  const base = intensidadeDoShow(intensidade).duracaoMs / 1000;
+  const pedida = Number(duracaoMs);
+  if (!duracaoMs || !Number.isFinite(pedida)) return base;
+  return Math.min(
+    DURACAO_MAXIMA_DOS_FOGOS_S,
+    Math.max(DURACAO_MINIMA_DOS_FOGOS_S, pedida / 1000),
+  );
+}
+
 /*
   Os formatos: quantas faíscas, força do estouro (fração da velocidade de
   referência), atrito do ar (por segundo), peso da gravidade, vida (s),
@@ -144,6 +162,18 @@ export const FORMATOS = Object.freeze({
     emite: 26,
     dourado: true,
   },
+  /* Camadas: casca por fora e um miolo (pistilo) de outra cor, mais lento. */
+  pistilo: {
+    faiscas: 170,
+    nucleo: 0.3,
+    forca: 1,
+    atrito: 1.7,
+    peso: 0.95,
+    vida: [1.1, 1.5],
+    rastro: 0.7,
+    tamanho: 2,
+    cintila: true,
+  },
   bombaDupla: {
     faiscas: 80,
     forca: 0.55,
@@ -163,6 +193,7 @@ export const FORMATOS_DO_FINAL = Object.freeze([
   "glitter",
   "anel",
   "estalinho",
+  "pistilo",
 ]);
 
 /* Quanto tempo um formato brilha depois do estouro (com o segundo tempo). */
@@ -323,10 +354,12 @@ function planoDoFoguete(
     xAlvo,
     yAlvo,
     cor: dourado ? paleta.dourado : sortear(aleatorio, paleta.cores),
-    // Peônia (às vezes) e bomba dupla de duas cores; crisântemo e kamuro
-    // terminam dourados.
+    // Peônia (às vezes), pistilo e bomba dupla de duas cores; crisântemo e
+    // kamuro terminam dourados.
     cor2:
-      (formato === "peonia" && aleatorio() < 0.45) || formato === "bombaDupla"
+      (formato === "peonia" && aleatorio() < 0.45) ||
+      formato === "bombaDupla" ||
+      formato === "pistilo"
         ? sortear(aleatorio, paleta.cores)
         : null,
     corFinal:
@@ -359,9 +392,15 @@ export function planejarShow({
   aleatorio = Math.random,
   aya = null,
   pontos = [],
+  duracaoMs = null,
 } = {}) {
-  const { explosoes, final, duracaoMs } = intensidadeDoShow(intensidade);
-  const duracao = duracaoMs / 1000;
+  const base = intensidadeDoShow(intensidade);
+  const duracao = duracaoDoShow(intensidade, duracaoMs);
+  const final = base.final;
+  const explosoes = Math.max(
+    base.explosoes,
+    Math.round((base.explosoes * duracao) / (base.duracaoMs / 1000)),
+  );
   const escala = escalaDaTela(largura, altura);
   const contexto = {
     largura,
@@ -641,7 +680,10 @@ export function estourar(
   const inclinacao = entre(aleatorio, 0.25, 0.7);
   const giro = aleatorio() * Math.PI;
   const faiscas = [];
+  // O miolo do pistilo: as primeiras faíscas, mais lentas e da segunda cor.
+  const miolo = formato.nucleo ? Math.round(total * formato.nucleo) : 0;
   for (let i = 0; i < total; i += 1) {
+    const doMiolo = i < miolo;
     const [dx, dy] = direcao(
       plano.formato,
       i,
@@ -650,8 +692,10 @@ export function estourar(
       inclinacao,
       giro,
     );
-    const impulso = velocidade * entre(aleatorio, 0.9, 1.06);
-    const vida = entre(aleatorio, ...formato.vida) * vidaFator;
+    const impulso =
+      velocidade * entre(aleatorio, 0.9, 1.06) * (doMiolo ? 0.42 : 1);
+    const vida =
+      entre(aleatorio, ...formato.vida) * vidaFator * (doMiolo ? 0.8 : 1);
     faiscas.push({
       tipo: "faisca",
       x,
@@ -662,7 +706,11 @@ export function estourar(
       gravidade: GRAVIDADE * escala * formato.peso,
       vida,
       vidaMax: vida,
-      cor: plano.cor2 && i % 2 ? plano.cor2 : plano.cor,
+      cor: doMiolo
+        ? plano.cor2 || plano.cor
+        : plano.cor2 && !miolo && i % 2
+          ? plano.cor2
+          : plano.cor,
       corFinal: plano.corFinal || null,
       tamanho: formato.tamanho * Math.max(0.8, escala),
       rastro: formato.rastro,
@@ -877,6 +925,7 @@ export function criarShow({
   comAya = false,
   forma = null,
   amostrarTexto = null,
+  duracaoMs = null,
 } = {}) {
   const fator = fatorDeFaiscas(largura, altura);
   const aya = comAya ? trajetoDaAya({ largura, altura }) : null;
@@ -888,7 +937,7 @@ export function criarShow({
   });
   return {
     t: 0,
-    duracao: intensidadeDoShow(intensidade).duracaoMs / 1000,
+    duracao: duracaoDoShow(intensidade, duracaoMs),
     escala: escalaDaTela(largura, altura),
     fator,
     paleta,
@@ -904,6 +953,7 @@ export function criarShow({
       aleatorio,
       aya,
       pontos,
+      duracaoMs,
     }),
     proximo: 0,
     foguetes: [],

@@ -70,6 +70,7 @@ export function comemorarAcessoLiberado({
     tituloDosItens: "O que você já pode usar:",
     // O estouro do marco desenha um visto (✓) no céu.
     forma: "check",
+    marco: "acesso-liberado",
     doc,
     janela,
   });

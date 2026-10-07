@@ -205,6 +205,8 @@ export function comemoracaoDasAnalises({
     texto: primeira,
     itens: demais,
     forma: concluidos.length ? "coracao" : "estrela",
+    // O id do catálogo (src/lib/catalogo-de-comemoracoes.ts).
+    marco: concluidos.length ? "edital-concluido" : "fila-zerada",
   };
 }
 
@@ -272,7 +274,7 @@ export function comemoracaoDasEntrevistas({ anterior, situacao }) {
   const prontas = vagasProntas(anterior, situacao);
   if (!prontas.length) return null;
   const [primeira, ...demais] = prontas.map(mensagemDaVagaPronta);
-  return { texto: primeira, itens: demais };
+  return { texto: primeira, itens: demais, marco: "vaga-pronta" };
 }
 
 // ── Marcos do ano ───────────────────────────────────────────────────────────

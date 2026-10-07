@@ -2,7 +2,8 @@
   Marcos da tela de Análises curriculares: edital 100% analisado e fila
   zerada. Chamado pelo estado (estado.js) sempre que as linhas do escopo
   "Ativo" chegam (do servidor ou da cópia do navegador) — Inativo e Todos
-  misturam editais encerrados. A regra (linha de base, transições, frases) é
+  misturam editais encerrados. Também os marcos personalizados "análises no
+  dia" (src/app/marcos-personalizados.js). A regra (linha de base, transições, frases) é
   de src/lib/comemoracao.js; o aviso e os fogos, de src/modules/comemoracao.js.
   `ligadas` é o liga/desliga das comemorações que o app já leu (situação do
   sistema); desligadas, o estado segue guardado em silêncio. Este arquivo não
@@ -16,6 +17,7 @@ import {
   situacaoDosEditais,
 } from "../../lib/comemoracao.js";
 import { avaliarMarco } from "../../modules/comemoracao.js";
+import { avaliarMarcosPersonalizados } from "../../app/marcos-personalizados.js";
 
 export function avaliarMarcosDasAnalises({
   ligadas,
@@ -31,6 +33,14 @@ export function avaliarMarcosDasAnalises({
     if (!lista.length) return null;
     const situacao = situacaoDosEditais(lista);
     const pendentes = pendentesDaFila(lista);
+    // "A área passou de N análises no dia" (Configurações › Comemorações).
+    avaliarMarcosPersonalizados({
+      tipo: "analises-no-dia",
+      linhas: lista,
+      usuarioId,
+      area,
+      ligadas: Boolean(ligadas),
+    });
     return avaliarMarco({
       chave: chaveDoMarco("analises", usuarioId, area),
       atual: { editais: estadoGuardadoDosEditais(situacao), fila: pendentes },
