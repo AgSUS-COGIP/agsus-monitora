@@ -1,3 +1,20 @@
+import type {
+  Acompanhamento,
+  Atalho,
+  CampoDoFiltro,
+  ColunaDaTabela,
+  FiltrosDaVisaoGeral,
+  LinhaDoMonitoramento,
+  LinhaDaVisaoGeral,
+  ListaDoAcompanhamento,
+  EtapaDoAcompanhamento,
+  Ordenacao,
+  Pendencia,
+  Motivo,
+  Indicadores,
+  ChaveDoIndicador,
+  TextosDaVisaoGeral,
+} from "../modulos/visao-geral/tipos.ts";
 /*
   A VISÃO GERAL (página `dashboard`), sem DOM nem rede — as regras que
   moravam em `legacy-app.js` (applyFilters, renderKpis, renderTable,
@@ -47,52 +64,78 @@ import {
   vagasSemContratacao,
 } from "./indicadores-do-monitoramento.js";
 
-const txt = (valor) => String(valor ?? "").trim();
-const low = (valor) => txt(valor).toLowerCase();
-const num = (valor) => {
-  const numero = Number(valor || 0);
+const txt = (valor: unknown) =>
+  typeof valor === "string" || typeof valor === "number"
+    ? String(valor).trim()
+    : "";
+const low = (valor: unknown) => txt(valor).toLowerCase();
+const num = (valor: unknown) => {
+  const numero = Number(
+    typeof valor === "string" || typeof valor === "number" ? valor : 0,
+  );
   return Number.isFinite(numero) ? numero : 0;
 };
-const pct = (parte, total) => (total ? Math.round((parte / total) * 100) : 0);
+const pct = (parte: number, total: number) =>
+  total ? Math.round((parte / total) * 100) : 0;
 
 // ── Filtros ──────────────────────────────────────────────────────────────
 
 /* Os cinco filtros, na ordem da página. `mais`: ficam em "Mais opções". */
-export const CAMPOS_DO_FILTRO = Object.freeze([
+export const CAMPOS_DO_FILTRO: readonly {
+  campo: CampoDoFiltro;
+  rotulo: string;
+  todos: string;
+  mais?: boolean;
+}[] = Object.freeze([
   Object.freeze({ campo: "unidade", rotulo: "Unidade", todos: "Todas" }),
   Object.freeze({ campo: "edital", rotulo: "Edital", todos: "Todos" }),
   Object.freeze({ campo: "status", rotulo: "Status", todos: "Todos" }),
   Object.freeze({ campo: "fase", rotulo: "Fase", todos: "Todas", mais: true }),
   Object.freeze({ campo: "uf", rotulo: "UF", todos: "Todas", mais: true }),
-]);
+] as const);
 export const CAMPOS = Object.freeze(CAMPOS_DO_FILTRO.map((c) => c.campo));
 
-export const rotuloDoCampo = (campo) =>
+export const rotuloDoCampo = (campo: CampoDoFiltro) =>
   CAMPOS_DO_FILTRO.find((c) => c.campo === campo)?.rotulo || campo;
 
 /** `{ unidade: [], edital: [], … }` */
-export function filtrosVazios() {
-  return Object.fromEntries(CAMPOS.map((campo) => [campo, []]));
+export function filtrosVazios(): FiltrosDaVisaoGeral {
+  return { unidade: [], edital: [], status: [], fase: [], uf: [] };
 }
 
 /* Do armazenamento (ou de qualquer origem): só os campos conhecidos, só texto. */
-export function normalizarFiltros(bruto) {
+export function normalizarFiltros(bruto: unknown) {
   const filtros = filtrosVazios();
-  if (!bruto || typeof bruto !== "object") return filtros;
+  const origem = registroDaVisaoGeral(bruto);
   for (const campo of CAMPOS) {
-    if (Array.isArray(bruto[campo]))
-      filtros[campo] = [...new Set(bruto[campo].map(txt).filter(Boolean))];
+    const valores = origem[campo];
+    if (Array.isArray(valores))
+      filtros[campo] = [...new Set(valores.map(txt).filter(Boolean))];
   }
   return filtros;
 }
 
-const comoConjuntos = (filtros) =>
-  Object.fromEntries(CAMPOS.map((c) => [c, new Set(filtros?.[c] || [])]));
-const comoListas = (conjuntos) =>
-  Object.fromEntries(CAMPOS.map((c) => [c, [...(conjuntos[c] || [])]]));
+const comoConjuntos = (filtros?: Partial<FiltrosDaVisaoGeral>) => {
+  const conjuntos = {
+    unidade: new Set<string>(),
+    edital: new Set<string>(),
+    status: new Set<string>(),
+    fase: new Set<string>(),
+    uf: new Set<string>(),
+  };
+  for (const c of CAMPOS) conjuntos[c] = new Set(filtros?.[c] || []);
+  return conjuntos;
+};
+const comoListas = (
+  conjuntos: Record<CampoDoFiltro, Set<string>>,
+): FiltrosDaVisaoGeral => {
+  const filtros = filtrosVazios();
+  for (const c of CAMPOS) filtros[c] = [...conjuntos[c]];
+  return filtros;
+};
 
 /** Quantos campos têm seleção. */
-export const camposAtivos = (filtros) =>
+export const camposAtivos = (filtros?: Partial<FiltrosDaVisaoGeral>) =>
   CAMPOS.filter((campo) => (filtros?.[campo] || []).length).length;
 
 /* A ordem das opções: edital por ano e número, status e fase pelo fluxo. */
@@ -106,7 +149,7 @@ const ORDEM_DO_STATUS = [
 ];
 
 /** Texto sem acento, sem caixa e com espaços colapsados (busca e ordem). */
-export function normalizarTexto(valor) {
+export function normalizarTexto(valor: unknown) {
   return txt(valor)
     .normalize("NFD")
     .replace(/[̀-ͯ]/g, "")
@@ -115,17 +158,17 @@ export function normalizarTexto(valor) {
     .trim();
 }
 
-function posicaoNaLista(valor, lista) {
+function posicaoNaLista(valor: unknown, lista: readonly string[]) {
   const indice = lista.map(normalizarTexto).indexOf(normalizarTexto(valor));
   return indice >= 0 ? indice : 999;
 }
 
-function partesDoEdital(valor) {
+function partesDoEdital(valor: unknown) {
   const achado = txt(valor).match(/^(\d{1,3})\s*\/\s*(\d{4})/);
   return achado ? { numero: Number(achado[1]), ano: Number(achado[2]) } : null;
 }
 
-export function compararValoresDoFiltro(campo, a, b) {
+export function compararValoresDoFiltro(campo: string, a: unknown, b: unknown) {
   if (campo === "edital") {
     const ea = partesDoEdital(a);
     const eb = partesDoEdital(b);
@@ -153,24 +196,28 @@ export function compararValoresDoFiltro(campo, a, b) {
 }
 
 /** As opções de cada filtro: o que as linhas que atendem aos OUTROS filtros têm. */
-export function opcoesDosFiltros(linhas, filtros) {
+export function opcoesDosFiltros(
+  linhas: readonly LinhaDoMonitoramento[],
+  filtros: FiltrosDaVisaoGeral,
+): FiltrosDaVisaoGeral {
   const estado = comoConjuntos(filtros);
-  return Object.fromEntries(
-    CAMPOS.map((campo) => [
-      campo,
-      opcoesDoCampo(linhas, estado, campo, {
-        campos: CAMPOS,
-        comparar: (a, b) => compararValoresDoFiltro(campo, a, b),
-      }),
-    ]),
-  );
+  const opcoes = filtrosVazios();
+  for (const campo of CAMPOS)
+    opcoes[campo] = opcoesDoCampo(linhas, estado, campo, {
+      campos: CAMPOS,
+      comparar: (a: string, b: string) => compararValoresDoFiltro(campo, a, b),
+    });
+  return opcoes;
 }
 
 /*
   Tira, até estabilizar, as seleções que nenhuma opção oferece mais (trocar de
   área ou recarregar os dados). Devolve os mesmos filtros se nada mudou.
 */
-export function podarFiltros(linhas, filtros) {
+export function podarFiltros(
+  linhas: readonly LinhaDoMonitoramento[],
+  filtros: FiltrosDaVisaoGeral,
+) {
   const estado = comoConjuntos(filtros);
   return podarSelecoes(linhas, estado, { campos: CAMPOS })
     ? comoListas(estado)
@@ -185,27 +232,53 @@ export function podarFiltros(linhas, filtros) {
   (ou com o banco sem a função): crítico "parado", agenda completa e as
   pendências de lista ficam de fora.
 */
-export function acompanhamentoDaResposta(resposta) {
-  if (!resposta || typeof resposta !== "object") return null;
-  const etapasPorEdital = new Map();
-  for (const etapa of Array.isArray(resposta.etapas) ? resposta.etapas : []) {
-    const id = txt(etapa?.monitoramento_id);
-    if (!id) continue;
-    if (!etapasPorEdital.has(id)) etapasPorEdital.set(id, []);
-    etapasPorEdital.get(id).push(etapa);
+export function acompanhamentoDaResposta(
+  resposta: unknown,
+): Acompanhamento | null {
+  if (!resposta || typeof resposta !== "object" || Array.isArray(resposta))
+    return null;
+  const origem = registroDaVisaoGeral(resposta);
+  const etapasPorEdital = new Map<string, EtapaDoAcompanhamento[]>();
+  for (const bruto of Array.isArray(origem.etapas) ? origem.etapas : []) {
+    const etapa = registroDaVisaoGeral(bruto);
+    const id = idDoRegistro(etapa.monitoramento_id);
+    if (id === null) continue;
+    const normalizada: EtapaDoAcompanhamento = {
+      monitoramento_id: id,
+      data_inicio: textoOpcional(etapa.data_inicio),
+      data_fim: textoOpcional(etapa.data_fim),
+      atividade: textoOpcional(etapa.atividade),
+      ordem: typeof etapa.ordem === "number" ? etapa.ordem : undefined,
+    };
+    const chave = String(id);
+    const bloco = etapasPorEdital.get(chave) || [];
+    bloco.push(normalizada);
+    etapasPorEdital.set(chave, bloco);
   }
-  const listasPorEdital = new Map();
-  for (const lista of Array.isArray(resposta.listas) ? resposta.listas : []) {
-    const id = txt(lista?.monitoramento_id);
-    if (id) listasPorEdital.set(id, lista);
+  const listasPorEdital = new Map<string, ListaDoAcompanhamento>();
+  for (const bruto of Array.isArray(origem.listas) ? origem.listas : []) {
+    const lista = registroDaVisaoGeral(bruto);
+    const id = idDoRegistro(lista.monitoramento_id);
+    if (id !== null)
+      listasPorEdital.set(String(id), {
+        monitoramento_id: id,
+        aprovados: numeroOpcional(lista.aprovados),
+        com_status: numeroOpcional(lista.com_status),
+        desistentes: numeroOpcional(lista.desistentes),
+      });
   }
   return { etapasPorEdital, listasPorEdital };
 }
 
 /* As pendências pós-resultado de uma linha (códigos de PENDENCIAS_POS_RESULTADO). */
-function pendenciasDaLinha(linha, lista, temListas, limites) {
+function pendenciasDaLinha(
+  linha: LinhaDoMonitoramento,
+  lista: ListaDoAcompanhamento | null,
+  temListas: boolean,
+  limites: { contratacaoMinima: number },
+): Pendencia[] {
   if (ehCancelado(linha) || !temResultado(linha)) return [];
-  const codigos = [];
+  const codigos: Pendencia[] = [];
   if (temListas && !lista) codigos.push("sem_lista");
   if (lista && num(lista.aprovados) > 0 && num(lista.com_status) === 0)
     codigos.push("sem_status");
@@ -225,9 +298,21 @@ function pendenciasDaLinha(linha, lista, temListas, limites) {
  * (pendências) e `desistentes` (da lista vigente). `hoje`: "AAAA-MM-DD".
  */
 export function enriquecerLinhas(
-  linhas,
-  { hoje, acompanhamento = null, limites = LIMITES_DO_CRITICO } = {},
-) {
+  linhas: readonly LinhaDoMonitoramento[],
+  {
+    hoje,
+    acompanhamento = null,
+    limites = LIMITES_DO_CRITICO,
+  }: {
+    hoje?: string;
+    acompanhamento?: Acompanhamento | null;
+    limites?: {
+      diasDoPrazo: number;
+      diasParado: number;
+      contratacaoMinima: number;
+    };
+  } = {},
+): LinhaDaVisaoGeral[] {
   const temListas = Boolean(acompanhamento?.listasPorEdital);
   return (Array.isArray(linhas) ? linhas : []).map((linha) => {
     const id = txt(linha?.id);
@@ -246,7 +331,10 @@ export function enriquecerLinhas(
 
 // ── Atalhos (KPI Críticos e pendências do Pós-resultado) ─────────────────
 
-export const PENDENCIAS_POS_RESULTADO = Object.freeze([
+export const PENDENCIAS_POS_RESULTADO: readonly {
+  codigo: Pendencia;
+  rotulo: string;
+}[] = Object.freeze([
   Object.freeze({ codigo: "sem_lista", rotulo: "Sem lista de aprovados" }),
   Object.freeze({ codigo: "sem_status", rotulo: "Lista sem status" }),
   Object.freeze({
@@ -254,10 +342,10 @@ export const PENDENCIAS_POS_RESULTADO = Object.freeze([
     rotulo: `Contratação abaixo de ${Math.round(LIMITES_DO_CRITICO.contratacaoMinima * 100)}%`,
   }),
   Object.freeze({ codigo: "desistencias", rotulo: "Desistências" }),
-]);
+] as const);
 
 /** O rótulo do atalho no chip do recorte. */
-export function rotuloDoAtalho(atalho) {
+export function rotuloDoAtalho(atalho: string) {
   if (atalho === "criticos") return "Críticos";
   const codigo = txt(atalho).replace(/^pos:/, "");
   return (
@@ -266,11 +354,16 @@ export function rotuloDoAtalho(atalho) {
 }
 
 /** A linha entra no atalho? Sem atalho, sempre. */
-export function linhaAtendeAoAtalho(linha, atalho) {
+export function linhaAtendeAoAtalho(
+  linha: LinhaDoMonitoramento,
+  atalho: Atalho,
+) {
   if (!atalho) return true;
   if (atalho === "criticos") return ehCritica(linha);
   if (atalho.startsWith("pos:"))
-    return (linha?.pos_resultado || []).includes(atalho.slice(4));
+    return (linha?.pos_resultado || []).some(
+      (codigo) => `pos:${codigo}` === atalho,
+    );
   return true;
 }
 
@@ -292,7 +385,7 @@ const CAMPOS_DA_BUSCA = [
   "link_edital",
 ];
 
-export function linhaCasaComBusca(linha, busca) {
+export function linhaCasaComBusca(linha: LinhaDoMonitoramento, busca: string) {
   const termo = normalizarTexto(busca);
   if (!termo) return true;
   return CAMPOS_DA_BUSCA.map((campo) => normalizarTexto(linha?.[campo]))
@@ -301,7 +394,7 @@ export function linhaCasaComBusca(linha, busca) {
 }
 
 /* O valor de uma coluna para ordenar a tabela. */
-export function valorParaOrdenar(linha, campo) {
+export function valorParaOrdenar(linha: LinhaDoMonitoramento, campo: string) {
   if (["vagas_total", "contratados"].includes(campo))
     return num(linha?.[campo]);
   if (campo === "vagas_ociosas") return vagasSemContratacao(linha);
@@ -318,7 +411,10 @@ export function valorParaOrdenar(linha, campo) {
   A fila da Visão geral: os críticos primeiro (pelo motivo mais grave), depois
   quem tem mais vagas sem contratação, depois o edital.
 */
-export function compararPelaAtencao(a, b) {
+export function compararPelaAtencao(
+  a: LinhaDoMonitoramento,
+  b: LinhaDoMonitoramento,
+) {
   const diferenca = gravidade(a?.atencao) - gravidade(b?.atencao);
   if (diferenca) return diferenca;
   const vagas = vagasSemContratacao(b) - vagasSemContratacao(a);
@@ -330,10 +426,10 @@ export function compararPelaAtencao(a, b) {
   Sem ordenação escolhida, a fila da Visão geral. Com ela, a coluna, e a fila
   desempata.
 */
-export function compararLinhas(ordenacao) {
+export function compararLinhas(ordenacao?: Ordenacao) {
   const { campo, direcao } = ordenacao || {};
   if (!campo || !direcao) return compararPelaAtencao;
-  return (a, b) => {
+  return (a: LinhaDoMonitoramento, b: LinhaDoMonitoramento) => {
     const va = valorParaOrdenar(a, campo);
     const vb = valorParaOrdenar(b, campo);
     let resultado =
@@ -349,7 +445,10 @@ export function compararLinhas(ordenacao) {
 }
 
 /** Clicar no cabeçalho: crescente → decrescente → sem ordenação. */
-export function proximaOrdenacao(atual, campo) {
+export function proximaOrdenacao(
+  atual: Ordenacao,
+  campo: ColunaDaTabela,
+): Ordenacao {
   if (atual?.campo !== campo) return { campo, direcao: "asc" };
   if (atual.direcao === "asc") return { campo, direcao: "desc" };
   return { campo: "", direcao: "" };
@@ -361,8 +460,22 @@ export function proximaOrdenacao(atual, campo) {
  * (a do mapa, `dseiKey` do legado). `atalho`: "criticos" ou "pos:<código>".
  */
 export function recortar(
-  linhas,
-  { filtros, busca = "", dsei = "", chaveDsei, ordenacao, atalho = "" } = {},
+  linhas: readonly LinhaDaVisaoGeral[],
+  {
+    filtros,
+    busca = "",
+    dsei = "",
+    chaveDsei,
+    ordenacao,
+    atalho = "",
+  }: {
+    filtros?: FiltrosDaVisaoGeral;
+    busca?: string;
+    dsei?: string;
+    chaveDsei?: (linha: LinhaDoMonitoramento) => string;
+    ordenacao?: Ordenacao;
+    atalho?: Atalho;
+  } = {},
 ) {
   const estado = comoConjuntos(filtros);
   return (Array.isArray(linhas) ? linhas : [])
@@ -389,38 +502,60 @@ export function recortar(
   as imediatas), "Em seleção" e "Cadastro reserva" têm chave nova — o rótulo
   publicado de "Contratações" (imediatas + CR) não vale para elas.
 */
-export const INDICADORES = Object.freeze([
-  Object.freeze(["kpi_vagas_label", "Vagas imediatas", "fa-users", "info"]),
+export const INDICADORES: readonly (readonly [
+  ChaveDoIndicador,
+  string,
+  string,
+  string,
+])[] = Object.freeze([
+  Object.freeze([
+    "kpi_vagas_label",
+    "Vagas imediatas",
+    "fa-users",
+    "info",
+  ] as const),
   Object.freeze([
     "kpi_contratadas_label",
     "Contratadas",
     "fa-circle-check",
     "sucesso",
-  ]),
-  Object.freeze(["kpi_em_selecao_label", "Em seleção", "fa-clock", "destaque"]),
+  ] as const),
+  Object.freeze([
+    "kpi_em_selecao_label",
+    "Em seleção",
+    "fa-clock",
+    "destaque",
+  ] as const),
   Object.freeze([
     "kpi_ociosas_label",
     "Ociosas",
     "fa-circle-exclamation",
     "alerta",
-  ]),
+  ] as const),
   Object.freeze([
     "kpi_cadastro_reserva_label",
     "Cadastro reserva",
     "fa-user-plus",
     "neutro",
-  ]),
-  Object.freeze(["kpi_criticos_label", "Críticos", "fa-fire", "perigo"]),
+  ] as const),
+  Object.freeze([
+    "kpi_criticos_label",
+    "Críticos",
+    "fa-fire",
+    "perigo",
+  ] as const),
   Object.freeze([
     "kpi_inscritos_label",
     "Inscritos",
     "fa-file-lines",
     "destaque",
-  ]),
+  ] as const),
 ]);
 
 /* A chave de cada indicador no objeto de `indicadoresDaVisaoGeral`. */
-export const VALOR_DO_INDICADOR = Object.freeze({
+export const VALOR_DO_INDICADOR: Readonly<
+  Record<ChaveDoIndicador, keyof Indicadores>
+> = Object.freeze({
   kpi_vagas_label: "vagas",
   kpi_contratadas_label: "contratadas",
   kpi_em_selecao_label: "emSelecao",
@@ -431,14 +566,16 @@ export const VALOR_DO_INDICADOR = Object.freeze({
 });
 
 /** Os números da faixa, das linhas do recorte (já enriquecidas). */
-export function indicadoresDaVisaoGeral(linhas) {
+export function indicadoresDaVisaoGeral(
+  linhas: readonly LinhaDoMonitoramento[],
+): Indicadores {
   return indicadoresDoMonitoramento(linhas);
 }
 
 // ── Blocos ───────────────────────────────────────────────────────────────
 
 /** "Fases": as fases do fluxo sempre, as de fora só com edital. */
-export function fasesDosProcessos(linhas) {
+export function fasesDosProcessos(linhas: readonly LinhaDoMonitoramento[]) {
   const contagem = new Map(ORDEM_DAS_FASES.map((fase) => [fase, 0]));
   for (const linha of linhas || []) {
     const fase = linha?.fase || faseDoEdital(linha);
@@ -446,11 +583,11 @@ export function fasesDosProcessos(linhas) {
   }
   const total = linhas?.length || 0;
   return ORDEM_DAS_FASES.filter(
-    (fase) => FASES.includes(fase) || contagem.get(fase) > 0,
+    (fase) => FASES.includes(fase) || (contagem.get(fase) || 0) > 0,
   ).map((fase) => ({
     fase,
-    quantos: contagem.get(fase),
-    pct: pct(contagem.get(fase), total),
+    quantos: contagem.get(fase) || 0,
+    pct: pct(contagem.get(fase) || 0, total),
     tom: tomDaFase(fase),
   }));
 }
@@ -460,7 +597,10 @@ export function fasesDosProcessos(linhas) {
  * `quantos`: editais; em Desistências, `pessoas` é o total de desistentes.
  * Sem o resumo das listas, só "Contratação abaixo de 50%".
  */
-export function posResultado(linhas, { comListas = false } = {}) {
+export function posResultado(
+  linhas: readonly LinhaDoMonitoramento[],
+  { comListas = false } = {},
+) {
   return PENDENCIAS_POS_RESULTADO.filter(
     (p) => comListas || p.codigo === "contratacao_baixa",
   ).map(({ codigo, rotulo }) => {
@@ -480,11 +620,20 @@ export function posResultado(linhas, { comListas = false } = {}) {
 }
 
 /** Só Projetos tem "Processos por projeto" (lá a unidade é o projeto). */
-export const temProcessosPorProjeto = (area) => area === "projetos";
+export const temProcessosPorProjeto = (area: string) => area === "projetos";
 
 /** "Processos por projeto" (Projetos): a unidade é o projeto. */
-export function processosPorProjeto(linhas) {
-  const porProjeto = new Map();
+export function processosPorProjeto(linhas: readonly LinhaDoMonitoramento[]) {
+  const porProjeto = new Map<
+    string,
+    {
+      projeto: string;
+      processos: number;
+      abertos: number;
+      vagas: number;
+      contratadas: number;
+    }
+  >();
   for (const linha of linhas || []) {
     const projeto = txt(linha?.unidade) || "Não informado";
     const item = porProjeto.get(projeto) || {
@@ -512,7 +661,7 @@ export function processosPorProjeto(linhas) {
   O status como a gaveta mostra ("em andamento", "Em Andamento" e
   "Andamento" são um só); vazio é "Cronograma pendente".
 */
-export function statusCanonico(valor) {
+export function statusCanonico(valor: unknown) {
   const chave = normalizarTexto(valor);
   if (chave.includes("conclu")) return "Concluído";
   if (chave.includes("cancel")) return "Cancelado";
@@ -527,7 +676,11 @@ export function statusCanonico(valor) {
 
 // ── Tabela ───────────────────────────────────────────────────────────────
 
-export const COLUNAS_DA_TABELA = Object.freeze([
+export const COLUNAS_DA_TABELA: readonly {
+  campo: ColunaDaTabela;
+  rotulo: string;
+  numero?: boolean;
+}[] = Object.freeze([
   Object.freeze({ campo: "unidade", rotulo: "Unidade" }),
   Object.freeze({ campo: "edital", rotulo: "Edital" }),
   Object.freeze({ campo: "data_inicio", rotulo: "Início" }),
@@ -543,13 +696,13 @@ export const COLUNAS_DA_TABELA = Object.freeze([
   Object.freeze({ campo: "fase", rotulo: "Fase" }),
   Object.freeze({ campo: "atencao", rotulo: "Atenção" }),
   Object.freeze({ campo: "observacoes", rotulo: "Observações" }),
-]);
+] as const);
 export const COLUNAS_PADRAO = Object.freeze(
   COLUNAS_DA_TABELA.map((c) => c.campo),
 );
 
 /* As colunas guardadas: só as conhecidas; nenhuma válida → todas. */
-export function normalizarColunas(bruto) {
+export function normalizarColunas(bruto: unknown) {
   const lista = Array.isArray(bruto)
     ? COLUNAS_PADRAO.filter((campo) => bruto.includes(campo))
     : [];
@@ -557,7 +710,11 @@ export function normalizarColunas(bruto) {
 }
 
 /* Marcar/desmarcar uma coluna; a última visível não sai. */
-export function alternarColuna(colunas, campo, visivel) {
+export function alternarColuna(
+  colunas: readonly ColunaDaTabela[],
+  campo: ColunaDaTabela,
+  visivel: boolean,
+) {
   const proximas = visivel
     ? COLUNAS_PADRAO.filter((c) => c === campo || colunas.includes(c))
     : colunas.filter((c) => c !== campo);
@@ -565,14 +722,17 @@ export function alternarColuna(colunas, campo, visivel) {
 }
 
 /** "AAAA-MM-DD…" → "DD/MM/AAAA"; outro texto fica como está. */
-export function dataCurta(valor) {
+export function dataCurta(valor: unknown) {
   const texto = txt(valor);
   const achado = texto.match(/^(\d{4})-(\d{2})-(\d{2})/);
   return achado ? `${achado[3]}/${achado[2]}/${achado[1]}` : texto;
 }
 
 /* Dias de hoje até a data (local; "AAAA-MM-DD" não vira UTC). */
-export function diasAte(data, hoje = new Date()) {
+export function diasAte(
+  data: string | undefined,
+  hoje: Date | string = new Date(),
+) {
   if (!data) return null;
   const achado = String(data).match(/^(\d{4})-(\d{2})-(\d{2})/);
   let alvo;
@@ -596,8 +756,12 @@ export function diasAte(data, hoje = new Date()) {
         Number(diaDeHoje[2]) - 1,
         Number(diaDeHoje[3]),
       )
-    : new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate());
-  return Math.round((alvo - dia) / 86400000);
+    : new Date(
+        new Date(hoje).getFullYear(),
+        new Date(hoje).getMonth(),
+        new Date(hoje).getDate(),
+      );
+  return Math.round((alvo.getTime() - dia.getTime()) / 86400000);
 }
 
 /*
@@ -606,7 +770,10 @@ export function diasAte(data, hoje = new Date()) {
   nada. Prazo vencido sem concluir não repete aqui: o selo do cronograma diz
   "Etapa atrasada". `{ tom, rotulo, icone }` ou `null`.
 */
-export function prazoDoEdital(linha, hoje = new Date()) {
+export function prazoDoEdital(
+  linha: LinhaDoMonitoramento,
+  hoje: Date | string = new Date(),
+) {
   const status = low(linha?.status);
   if (["cancelado", "cancelada"].includes(status))
     return { tom: "neutro", rotulo: "Processo cancelado", icone: "fa-ban" };
@@ -626,7 +793,10 @@ export function prazoDoEdital(linha, hoje = new Date()) {
   cor da linha na tabela. Atrasada: o fim do cronograma (`data_fim`) passou e
   o edital não concluiu (a mesma regra do crítico).
 */
-export function urgenciaDoCronograma(linha, hoje = new Date()) {
+export function urgenciaDoCronograma(
+  linha: LinhaDoMonitoramento | null,
+  hoje: Date | string = new Date(),
+) {
   if (!linha)
     return { tom: "neutral", rotulo: "Dados operacionais indisponíveis" };
   const status = statusCanonico(linha.status);
@@ -662,7 +832,10 @@ export function urgenciaDoCronograma(linha, hoje = new Date()) {
   O selo do cronograma na célula do edital: some nos concluídos e cancelados
   (o prazo já diz) e "Sem cronograma estruturado" fica curto.
 */
-export function seloDoCronograma(linha, hoje = new Date()) {
+export function seloDoCronograma(
+  linha: LinhaDoMonitoramento,
+  hoje: Date | string = new Date(),
+) {
   const urgencia = urgenciaDoCronograma(linha, hoje);
   if (urgencia.tom === "done") return null;
   if (urgencia.rotulo === "Sem cronograma estruturado")
@@ -675,7 +848,7 @@ export function seloDoCronograma(linha, hoje = new Date()) {
 }
 
 /** A taxa de vagas sem contratação da linha: `{ pct, nivel }` (low, medium, high, critical). */
-export function taxaDeOciosidade(linha) {
+export function taxaDeOciosidade(linha: LinhaDoMonitoramento) {
   const vagas = num(linha?.vagas_total);
   const taxa =
     vagas > 0 ? Math.round((vagasSemContratacao(linha) / vagas) * 100) : 0;
@@ -691,7 +864,7 @@ export function taxaDeOciosidade(linha) {
 }
 
 /* Os tons de chip do Núcleo (`green`…) no tom do `Selo` de src/ui/. */
-const SELO_DO_TOM = {
+const SELO_DO_TOM: Record<string, string> = {
   green: "aprovado",
   red: "reprovado",
   yellow: "pendente",
@@ -699,19 +872,19 @@ const SELO_DO_TOM = {
   cyan: "revisar",
   gray: "neutro",
 };
-export const seloDoStatus = (status) =>
+export const seloDoStatus = (status: unknown) =>
   SELO_DO_TOM[tomDoStatusDoEdital(status)] || "neutro";
-export const seloDoRisco = (risco) =>
+export const seloDoRisco = (risco: unknown) =>
   SELO_DO_TOM[tomDoRisco(risco)] || "neutro";
 /** O tom do `Selo` de um motivo de atenção (perigo → vermelho, alerta → âmbar). */
-export const seloDoMotivo = (motivo) =>
+export const seloDoMotivo = (motivo: Motivo) =>
   motivo?.tom === "perigo" ? "reprovado" : "pendente";
 
 /** Observação longa (mais de 180 caracteres) abre com "Ver mais". */
-export const observacaoLonga = (valor) => txt(valor).length > 180;
+export const observacaoLonga = (valor: unknown) => txt(valor).length > 180;
 
 /** Link do edital só se for http(s). */
-export function linkSeguro(valor) {
+export function linkSeguro(valor: unknown) {
   const texto = txt(valor);
   if (!texto) return "";
   try {
@@ -724,10 +897,14 @@ export function linkSeguro(valor) {
 
 // ── Exportação ───────────────────────────────────────────────────────────
 
-const motivosEmTexto = (linha) =>
+const motivosEmTexto = (linha: LinhaDoMonitoramento) =>
   (linha?.atencao || []).map((m) => m.rotulo).join("; ");
 
-const CAMPOS_DO_CSV = [
+const CAMPOS_DO_CSV: [
+  string,
+  string,
+  ((linha: LinhaDoMonitoramento) => string)?,
+][] = [
   ["unidade", "Unidade"],
   ["uf", "UF"],
   ["edital", "Edital"],
@@ -752,8 +929,8 @@ const CAMPOS_DO_CSV = [
 const BOM = String.fromCharCode(0xfeff);
 
 /** O CSV da tabela (separador `;`, BOM para o Excel, sem fórmula). */
-export function csvDaVisaoGeral(linhas) {
-  const celula = (valor) =>
+export function csvDaVisaoGeral(linhas: readonly LinhaDoMonitoramento[]) {
+  const celula = (valor: unknown) =>
     `"${sanitizeCsvCell(valor)
       .replaceAll('"', '""')
       .replaceAll("\r", " ")
@@ -770,15 +947,15 @@ export function csvDaVisaoGeral(linhas) {
 }
 
 /* "saude-indigena" → "SaudeIndigena" (nome do arquivo). */
-const nomeDaAreaNoArquivo = (area) =>
+const nomeDaAreaNoArquivo = (area: string) =>
   txt(area)
     .split(/[^a-zA-Z0-9]+/)
     .filter(Boolean)
-    .map((parte) => parte[0].toUpperCase() + parte.slice(1))
+    .map((parte) => parte.charAt(0).toUpperCase() + parte.slice(1))
     .join("") || "Monitoramento";
 
 /* O dia é o de Brasília (com o de UTC, quem exportava à noite levava amanhã). */
-export function nomeDoCsv(area, agora = new Date()) {
+export function nomeDoCsv(area: string, agora = new Date()) {
   const dia = hojeEmBrasilia(agora).replaceAll("-", "");
   return `AgSUS_Monitora_${nomeDaAreaNoArquivo(area)}_${dia}.csv`;
 }
@@ -794,10 +971,15 @@ export function resumoDoRelatorio({
   busca = "",
   atalho = "",
   linhas = [],
+}: {
+  filtros?: FiltrosDaVisaoGeral;
+  busca?: string;
+  atalho?: Atalho;
+  linhas?: readonly LinhaDoMonitoramento[];
 } = {}) {
   const ativos = CAMPOS_DO_FILTRO.filter(
     ({ campo }) => (filtros?.[campo] || []).length,
-  ).map(({ campo, rotulo }) => `${rotulo}: ${filtros[campo].join(", ")}`);
+  ).map(({ campo, rotulo }) => `${rotulo}: ${filtros?.[campo].join(", ")}`);
   if (txt(busca)) ativos.push(`Busca: ${txt(busca)}`);
   if (rotuloDoAtalho(atalho)) ativos.push(rotuloDoAtalho(atalho));
   const k = indicadoresDoMonitoramento(linhas);
@@ -821,17 +1003,28 @@ export function resumoDoRelatorio({
   padrão. Título e subtítulo da página (page_title, page_subtitle) são do
   cabeçalho do app (legado). Os títulos dos blocos são fixos.
 */
-export function textosDaVisaoGeral(valor = () => "") {
-  const ler = (chave, padrao) => txt(valor(chave)) || padrao;
+export function textosDaVisaoGeral(
+  valor: (chave: string) => unknown = () => "",
+): TextosDaVisaoGeral {
+  const ler = (chave: string, padrao: string) => txt(valor(chave)) || padrao;
+  const rotulos: Record<ChaveDoIndicador, string> = {
+    kpi_vagas_label: "",
+    kpi_contratadas_label: "",
+    kpi_em_selecao_label: "",
+    kpi_ociosas_label: "",
+    kpi_cadastro_reserva_label: "",
+    kpi_criticos_label: "",
+    kpi_inscritos_label: "",
+  };
+  for (const [chave, padrao] of INDICADORES)
+    rotulos[chave] = ler(chave, padrao);
   return {
     filtros: ler("filter_title", "Refinar resultados"),
     filtrosSubtitulo: txt(valor("filter_subtitle")),
     mostrarFiltros: ler("filter_toggle_show", "Mostrar filtros"),
     ocultarFiltros: ler("filter_toggle_hide", "Ocultar filtros"),
     indicadores: ler("dashboard_section_processos", "Indicadores"),
-    rotulos: Object.fromEntries(
-      INDICADORES.map(([chave, padrao]) => [chave, ler(chave, padrao)]),
-    ),
+    rotulos,
     tabela: ler("details_title", "Processos seletivos"),
     busca: ler(
       "table_search_placeholder",
@@ -840,4 +1033,80 @@ export function textosDaVisaoGeral(valor = () => "") {
     colunas: ler("columns_button_text", "Colunas"),
     colunasTitulo: ler("columns_menu_title", "Colunas visíveis"),
   };
+}
+
+/** Guarda estrutural usada antes de acessar JSON externo. */
+export function registroDaVisaoGeral(valor: unknown): Record<string, unknown> {
+  return valor !== null && typeof valor === "object" && !Array.isArray(valor)
+    ? (valor as Record<string, unknown>)
+    : {};
+}
+const textoOpcional = (valor: unknown) =>
+  typeof valor === "string" ? valor : undefined;
+const numeroOpcional = (valor: unknown) =>
+  (typeof valor === "string" || typeof valor === "number") &&
+  Number.isFinite(Number(valor))
+    ? valor
+    : undefined;
+function idDoRegistro(valor: unknown): string | number | null {
+  if (typeof valor === "string" && valor.trim()) return valor;
+  if (typeof valor === "number" && Number.isFinite(valor)) return valor;
+  return null;
+}
+/** Preserva campos adicionais dos mapas; valida os campos que esta tela consome. */
+export function linhasDaResposta(
+  linhas: readonly unknown[],
+): LinhaDoMonitoramento[] {
+  const resultado: LinhaDoMonitoramento[] = [];
+  for (const bruto of linhas) {
+    if (!bruto || typeof bruto !== "object" || Array.isArray(bruto)) continue;
+    const origem = registroDaVisaoGeral(bruto);
+    const linha: LinhaDoMonitoramento = { ...origem };
+    const id = idDoRegistro(origem.id);
+    linha.id = id === null ? undefined : id;
+    const textos = [
+      "unidade",
+      "edital",
+      "status",
+      "fase",
+      "uf",
+      "processo",
+      "ciclo",
+      "etapa",
+      "responsavel",
+      "cargos",
+      "observacoes",
+      "observacoes_internas",
+      "link_edital",
+      "risco",
+      "CO_AREA",
+      "data_inicio",
+      "data_fim",
+      "cronograma_atividade_atual",
+      "cronograma_proxima_atividade",
+      "cronograma_proxima_data",
+    ] as const;
+    for (const campo of textos)
+      if (campo in origem) linha[campo] = textoOpcional(origem[campo]);
+    const numeros = [
+      "vagas_total",
+      "contratados",
+      "inscritos",
+      "vagas_ociosas",
+      "cronograma_percentual",
+      "cronograma_dias_para_proxima",
+    ] as const;
+    for (const campo of numeros)
+      if (campo in origem) linha[campo] = numeroOpcional(origem[campo]);
+    linha.cronograma_automatico =
+      typeof origem.cronograma_automatico === "boolean"
+        ? origem.cronograma_automatico
+        : undefined;
+    // Estes valores são calculados de novo pelo enriquecimento.
+    delete linha.atencao;
+    delete linha.pos_resultado;
+    delete linha.desistentes;
+    resultado.push(linha);
+  }
+  return resultado;
 }

@@ -55,8 +55,10 @@ describe("a Visão geral não tem mapa legado", () => {
 describe("o legado usa a área atual", () => {
   it("filtros, KPIs, mapa e tabela partem dos editais da área atual", () => {
     // O recorte é do estado da Visão geral (React); os mapas leem dele.
-    const estado = readFileSync("src/modulos/visao-geral/estado.js", "utf8");
-    expect(estado).toContain("linhasDaArea(linhas, areaAtual)");
+    const estado = readFileSync("src/modulos/visao-geral/estado.ts", "utf8");
+    expect(estado).toContain(
+      "linhasDaArea(linhasDaResposta(linhas), areaAtual)",
+    );
     expect(legado).not.toMatch(/rows\.filter\(ehEditalDaSaudeIndigena\)/);
   });
 

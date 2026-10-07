@@ -21,6 +21,9 @@ export function Kv({ rotulo, children }) {
 }
 
 /* A grade de pares rótulo/valor; `className` acrescenta a de quem usa. */
+/**
+ * @param {{className?: string, rotulo?: string, children?: import("react").ReactNode}} props
+ */
 export function GradeDeKv({ className, rotulo, children }) {
   const base = "ui-kv-grade";
   return (
