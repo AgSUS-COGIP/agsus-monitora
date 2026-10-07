@@ -275,6 +275,31 @@ body.access-request-mode .login-cogip {
   display: none !important;
 }
 
+/* Nome da Agência no pé do cartão de acesso: discreto, sobre a cor do painel. */
+.login-instituicao {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin: 22px 0 0;
+  padding-top: 16px;
+  border-top: 1px solid color-mix(in srgb, currentColor 18%, transparent);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.35;
+  text-align: center;
+  opacity: 0.82;
+}
+.login-instituicao img {
+  width: 18px;
+  height: 18px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+body.access-request-mode .login-instituicao {
+  display: none;
+}
+
 /* Rodapé COGIP */
 .login-cogip {
   display: none;
