@@ -359,6 +359,6 @@ lista registrada.
 ### Sempre
 
 - Novas conferências entram no catálogo (`scripts/conferencias/catalogo.py`, o caso dourado e
-  `src/lib/avisos-de-conferencia.js`) com teste nos dois lados.
+  `src/lib/avisos-de-conferencia.ts`) com teste nos dois lados.
 - Toda entrega Python segue os padrões acima: RPC, log sem dado pessoal, testes, ruff, Status das
   atualizações.

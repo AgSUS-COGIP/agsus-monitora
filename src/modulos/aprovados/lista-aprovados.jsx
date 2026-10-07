@@ -31,7 +31,7 @@ import { GavetaDoCandidato } from "./gaveta-do-candidato.jsx";
 import { ModalDaCarta } from "./carta-de-convocacao/modal-da-carta.jsx";
 import { ModelosDaCarta } from "./carta-de-convocacao/modelos-da-carta.jsx";
 import { plural } from "./partes.jsx";
-import { SeloDeAvisos } from "../conferencias/avisos-de-conferencia.jsx";
+import { SeloDeAvisos } from "../conferencias/avisos-de-conferencia.tsx";
 
 /*
   Lista de aprovados (view `approved`), módulo do app — a página

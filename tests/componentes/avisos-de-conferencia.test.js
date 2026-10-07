@@ -16,7 +16,7 @@ import {
 */
 
 const { SeloDeAvisos, CartaoDeAvisos } =
-  await import("../../src/modulos/conferencias/avisos-de-conferencia.jsx");
+  await import("../../src/modulos/conferencias/avisos-de-conferencia.tsx");
 
 const aviso = (extra) => ({
   id: "a1",

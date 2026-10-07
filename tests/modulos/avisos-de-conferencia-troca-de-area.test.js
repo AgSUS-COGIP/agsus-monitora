@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { criarEstadoDosAvisos } from "../../src/modulos/conferencias/estado.js";
+import { criarEstadoDosAvisos } from "../../src/modulos/conferencias/estado.ts";
 
 /*
   O selo de avisos recarrega ao trocar de área. Antes, a lista da área

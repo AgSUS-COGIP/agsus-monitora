@@ -2,12 +2,14 @@
 
 Início da migração gradual: 07/10/2026.
 
-O frontend mantém React e Vite. `Aviso`, `BotaoDeAcao`, Seleção, Cronograma e Visão geral estão em
+O frontend mantém React e Vite. `Aviso`, `BotaoDeAcao`, Seleção, Cronograma, Visão geral e Conferências estão em
 TypeScript. Seleção inclui estado, componentes, filtros, indicadores, gráficos, tabela
 e regras puras em `src/lib/selecao-do-painel.ts`. Cronograma inclui estado, calendário,
 filtros, modal do dia, próximas etapas, linha do tempo e regras em
 `src/lib/calendario-editais.ts`. Visão geral inclui estado, filtros, indicadores, tabela,
-gaveta, boas-vindas, leitura dos marcos e regras em `src/lib/visao-geral.ts`. Os mapas
+gaveta, boas-vindas, leitura dos marcos e regras em `src/lib/visao-geral.ts`. Conferências inclui
+estado, cartão, selos, gaveta, busca e paginação dos casos, CSV, ação de ignorar com motivo,
+navegação e regras em `src/lib/avisos-de-conferencia.ts`. Os mapas
 continuam em JavaScript, com contratos JSDoc na integração com a tela. Outros módulos
 combinam JavaScript/JSX com migrações pontuais para TypeScript. Componentes e helpers
 compartilhados consumidos por esses módulos declaram seus contratos em JSDoc.
@@ -29,7 +31,7 @@ O build já chama `typecheck`, então erros nos arquivos migrados bloqueiam o bu
 `tests/tipos/`. Usa modo estrito, DOM, JSX do React e resolução de módulos do bundler.
 `allowJs` permite importar o código existente; `checkJs` está desligado. Portanto, o compilador
 não verifica todos os consumidores JavaScript nem valida JSON em tempo de execução.
-Seleção, Cronograma e Visão geral verificam objetos e listas nas fronteiras de leitura; limites dessa
+Seleção, Cronograma, Visão geral e Conferências verificam objetos e listas nas fronteiras de leitura; limites dessa
 verificação estão nos READMEs dos módulos.
 
 Lint e formatação incrementais incluem `.ts` e `.tsx`. O ESLint usa o parser TypeScript;
@@ -59,6 +61,9 @@ Cronograma também está migrado; carga, contratos e limites estão em
 
 Visão geral também está migrada; contratos e integração com os mapas estão em
 [../src/modulos/visao-geral/README.md](../src/modulos/visao-geral/README.md).
+
+Conferências também está migrado; contratos, normalização, paginação e limites estão em
+[../src/modulos/conferencias/README.md](../src/modulos/conferencias/README.md).
 
 Escolher um módulo por entrega, levantar os consumidores e manter o comportamento coberto
 pelos testes. Declarar contratos de dados e ações sem `any` ou supressões de erros. Atualizar

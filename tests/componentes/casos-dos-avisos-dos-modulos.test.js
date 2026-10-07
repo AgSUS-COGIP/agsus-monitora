@@ -17,7 +17,7 @@ import { consumirPedidoDeFiltro } from "../../src/app/pedido-de-filtro.js";
 */
 
 const { SeloDeAvisos } =
-  await import("../../src/modulos/conferencias/avisos-de-conferencia.jsx");
+  await import("../../src/modulos/conferencias/avisos-de-conferencia.tsx");
 
 const APROVADO = "b44c58f2-41de-448e-b6c6-88932524fa19";
 const OUTRA_VAGA = "b44c58f2-41de-448e-b6c6-88932524fa20";
