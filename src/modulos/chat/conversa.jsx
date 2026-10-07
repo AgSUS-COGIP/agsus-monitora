@@ -1107,17 +1107,17 @@ export function Conversa({ estado, e }) {
     <div className="chat-conversa">
       <div className="chat-conversa__topo">
         <small data-presenca={presencaDe(participantes[0])}>
+          {e.conversa?.fixada_em ? (
+            <i
+              className="fa-solid fa-thumbtack chat-conversa__fixada"
+              title="Fixada no topo"
+              aria-label="Fixada no topo"
+            />
+          ) : null}
           {e.conversa?.tipo === "DIRETA"
             ? rotuloDaPresenca(participantes[0])
             : `${participantes.length + 1} ${participantes.length ? "pessoas" : "pessoa"}${online ? ` · ${online} online` : ""}`}
         </small>
-        {e.conversa?.fixada_em ? (
-          <i
-            className="fa-solid fa-thumbtack chat-conversa__fixada"
-            title="Fixada no topo"
-            aria-label="Fixada no topo"
-          />
-        ) : null}
         <MenuDaConversa estado={estado} e={e} />
       </div>
       <div className="chat-conversa__corpo">
