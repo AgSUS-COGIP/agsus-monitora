@@ -4,9 +4,11 @@ dados das RPCs de leitura (conferencia_ler_*), saem avisos.
 
 Cada aviso é UM por conferência + escopo (edital, área ou vaga), com a
 quantidade de casos, até 20 exemplos e TODOS os casos (até 5000) SÓ com ids,
-códigos e o dado que motivou o aviso (datas, notas, corte, teto) — nunca nome,
-CPF ou e-mail (o banco também recusa). Nome, edital, vaga e responsável a tela
-busca na análise, com a permissão de quem lê (listar_casos_aviso_conferencia).
+códigos, o tipo da referência (aprovado, entrevista, lista, ajuste, vaga) e o
+dado que motivou o aviso (datas, notas, corte, teto) — nunca nome, CPF ou
+e-mail (o banco também recusa). Nome, edital, vaga e situação a tela busca no
+registro (análise, aprovado, entrevista…), com a permissão de quem lê
+(listar_casos_aviso_conferencia, 20261007240000).
 O resumo é montado aqui, com contagens e números de edital.
 
 Testes: tests/python/test_conferencias.py.
@@ -29,6 +31,10 @@ _ESCOPO_SEGURO = re.compile(r"[^A-Za-z0-9._:/|-]")
 _UUID = re.compile(r"^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$")
 _CHAVE_DO_DETALHE = re.compile(r"^[a-z_]{1,30}$")
 _VALOR_DO_DETALHE = re.compile(r"^[A-Za-z0-9._:/-]{0,40}$")
+# O que a referência do caso identifica (TB_CASO_AVISO_CONFERENCIA.TP_REFERENCIA).
+TIPOS_DE_REFERENCIA = frozenset(
+    {"candidato_aprovado", "entrevista", "lista_classificacao", "ajuste_recurso", "vaga", "vaga_empregare"}
+)
 
 
 # ── Utilidades ──────────────────────────────────────────────────────────────
@@ -104,7 +110,7 @@ def detalhe_seguro(detalhe):
 def caso_seguro(caso):
     """
     O caso como o banco aceita: análise (uuid), código do candidato, outra
-    referência e o detalhe. None se não sobrar nenhum identificador.
+    referência, o tipo dela e o detalhe. None se não sobrar nenhum identificador.
     """
     caso = caso or {}
     analise = str(caso.get("analise") or "").strip()
@@ -117,6 +123,8 @@ def caso_seguro(caso):
             saida[campo] = seguro
     if not saida:
         return None
+    if caso.get("tipo") in TIPOS_DE_REFERENCIA and (saida.get("referencia") or caso["tipo"] == "entrevista"):
+        saida["tipo"] = caso["tipo"]
     detalhe = detalhe_seguro(caso.get("detalhe"))
     if detalhe:
         saida["detalhe"] = detalhe
@@ -177,11 +185,16 @@ class Acumulador:
         return aviso
 
     @staticmethod
-    def acrescentar(aviso, exemplo=None, caso=None):
-        """Mais um exemplo (até 20) e mais um caso (até 5000, sem repetir) no aviso."""
+    def acrescentar_exemplo(aviso, exemplo):
+        """Mais um exemplo (até 20, sem repetir), sem caso."""
         seguro = exemplo_seguro(exemplo) if exemplo is not None else None
         if seguro and seguro not in aviso["exemplos"] and len(aviso["exemplos"]) < MAX_EXEMPLOS:
             aviso["exemplos"].append(seguro)
+
+    @staticmethod
+    def acrescentar(aviso, exemplo=None, caso=None):
+        """Mais um exemplo (até 20) e mais um caso (até 5000, sem repetir) no aviso."""
+        Acumulador.acrescentar_exemplo(aviso, exemplo)
         bruto = caso if caso is not None else ({"referencia": exemplo} if exemplo is not None else None)
         limpo = caso_seguro(bruto) if bruto is not None else None
         if not limpo or len(aviso["casos"]) >= MAX_CASOS:
@@ -408,6 +421,7 @@ def conferir_entrevistas(dados, contexto, acumulador):
                 caso={
                     "analise": entrevista.get("analise"),
                     "referencia": entrevista.get("id"),
+                    "tipo": "entrevista",
                     "detalhe": {"nota": nota, "maxima": numero(competencia.get("maxima"))},
                 },
             )
@@ -472,6 +486,7 @@ def conferir_classificacao(dados, acumulador):
                 edital=edital,
                 area=lista.get("area"),
                 exemplo=lista.get("id"),
+                caso={"referencia": lista.get("id"), "tipo": "lista_classificacao"},
             )
         pendencias = int(numero(lista.get("pendencias")) or 0)
         if pendencias > 0:
@@ -481,13 +496,22 @@ def conferir_classificacao(dados, acumulador):
                 area=lista.get("area"),
                 quantidade=pendencias,
                 exemplo=lista.get("id"),
+                caso={
+                    "referencia": lista.get("id"),
+                    "tipo": "lista_classificacao",
+                    "detalhe": {"pendencias": pendencias},
+                },
             )
             for vaga in lista.get("vagas_pendentes") or []:
-                Acumulador.acrescentar(aviso, vaga)
+                Acumulador.acrescentar(aviso, vaga, {"referencia": vaga, "tipo": "vaga"})
 
     for v in dados.get("vagas_sem_quadro") or []:
         acumulador.anotar(
-            "CLASSIFICACAO_VAGA_SEM_QUADRO", edital=v.get("edital"), area=v.get("area"), exemplo=v.get("vaga")
+            "CLASSIFICACAO_VAGA_SEM_QUADRO",
+            edital=v.get("edital"),
+            area=v.get("area"),
+            exemplo=v.get("vaga"),
+            caso={"referencia": v.get("vaga"), "tipo": "vaga"},
         )
 
     for j in dados.get("ajustes") or []:
@@ -496,7 +520,11 @@ def conferir_classificacao(dados, acumulador):
         gerada = momento((lista or {}).get("gerada_em"))
         if lista and aprovado and gerada and aprovado > gerada:
             acumulador.anotar(
-                "CLASSIFICACAO_AJUSTE_APOS_LISTA", edital=j.get("edital"), area=j.get("area"), exemplo=j.get("id")
+                "CLASSIFICACAO_AJUSTE_APOS_LISTA",
+                edital=j.get("edital"),
+                area=j.get("area"),
+                exemplo=j.get("id"),
+                caso={"referencia": j.get("id"), "tipo": "ajuste_recurso"},
             )
 
 
@@ -520,15 +548,29 @@ def conferir_aprovados(dados, contexto, acumulador, dias_convocado=15):
                 area=c.get("area"),
                 exemplo=c.get("id"),
                 extra={"dias": dias_convocado},
+                caso={
+                    "referencia": c.get("id"),
+                    "tipo": "candidato_aprovado",
+                    "detalhe": {"convocado_em": convocado_em},
+                },
             )
 
+    # Um caso por pessoa em cada área: o vínculo dela naquela área (a tela lista as outras vagas).
     for lista in contratados.values():
-        if len({c.get("id") for c in lista}) < 2:
+        vagas = len({c.get("id") for c in lista})
+        if vagas < 2:
             continue
         for area in sorted({c.get("area") for c in lista if c.get("area")}) or [None]:
-            aviso = acumulador.anotar("APROVADOS_CONTRATADO_DUPLICADO", area=area, exemplo=lista[0].get("id"))
-            for c in lista[1:]:
-                Acumulador.acrescentar(aviso, c.get("id"))
+            principal = next((c for c in lista if c.get("area") == area), lista[0])
+            aviso = acumulador.anotar(
+                "APROVADOS_CONTRATADO_DUPLICADO",
+                area=area,
+                exemplo=principal.get("id"),
+                caso={"referencia": principal.get("id"), "tipo": "candidato_aprovado", "detalhe": {"vagas": vagas}},
+            )
+            for c in lista:
+                if c is not principal:
+                    Acumulador.acrescentar_exemplo(aviso, c.get("id"))
 
     for p in dados.get("pendencias") or []:
         ids = p.get("candidatos") or []
@@ -540,9 +582,10 @@ def conferir_aprovados(dados, contexto, acumulador, dias_convocado=15):
             area=p.get("area"),
             quantidade=len(ids),
             exemplo=ids[0],
+            caso={"referencia": ids[0], "tipo": "candidato_aprovado"},
         )
         for ident in ids[1:]:
-            Acumulador.acrescentar(aviso, ident)
+            Acumulador.acrescentar(aviso, ident, {"referencia": ident, "tipo": "candidato_aprovado"})
 
 
 # ── Cargas ──────────────────────────────────────────────────────────────────
@@ -573,4 +616,5 @@ def conferir_cargas(dados, acumulador):
                 escopo=escopo_de("vaga", codigo),
                 exemplo=codigo,
                 extra={"vaga": codigo, "antes": antes, "depois": depois},
+                caso={"referencia": codigo, "tipo": "vaga_empregare", "detalhe": {"antes": antes, "depois": depois}},
             )

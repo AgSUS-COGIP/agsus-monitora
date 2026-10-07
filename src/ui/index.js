@@ -4,8 +4,8 @@
   ponto de entrada). Guia: docs/arquitetura-react.md, seção "Como usar ui/".
 */
 export { Abas } from "./abas.jsx";
-export { Aviso } from "./aviso.jsx";
-export { BotaoDeAcao } from "./botao-de-acao.jsx";
+export { Aviso } from "./aviso.tsx";
+export { BotaoDeAcao } from "./botao-de-acao.tsx";
 export { Campo } from "./campo.jsx";
 export { CardDeGrafico } from "./card-de-grafico.jsx";
 export { classes } from "./classes.js";

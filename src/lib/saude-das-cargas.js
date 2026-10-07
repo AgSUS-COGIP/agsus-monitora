@@ -20,6 +20,8 @@
                             atrasada depois de 4 h
     Robô da Empregare       sem prazo: só roda pelo "Rodar agora" (decisão de 05/10/2026)
     Conferências            todo dia às 6h (Brasília) · atrasada depois de 26 h
+    Expurgo dos anexos      todo dia às 6h30 (Brasília) · atrasada depois de 26 h
+    do chat                 (20261007250000; parcial conta como falha, como nas conferências)
     Tarefas a cada 2 min    atrasada depois de 15 min
     Tarefas diárias         atrasada depois de 26 h; mensais, depois de 32 dias
 */
@@ -177,6 +179,24 @@ function execucaoDaConferencia(bruta) {
   };
 }
 
+/* Execução do expurgo dos anexos do chat: só contagens (nunca caminho de arquivo). */
+function execucaoDoExpurgo(bruta) {
+  const n = (campo) => inteiro(bruta?.[campo]) ?? 0;
+  const partes = [
+    `${n("confirmados")} arquivos removidos`,
+    `${n("falhas")} ficaram na fila`,
+  ];
+  const pendentes = inteiro(bruta?.pendentes);
+  if (pendentes !== null) partes.push(`${pendentes} na fila ao fim`);
+  const quem = QUEM_DISPAROU[texto(bruta?.disparo)];
+  if (quem) partes.push(`disparo: ${quem}`);
+  const mensagem = texto(bruta?.mensagem);
+  return {
+    ...bruta,
+    mensagem: `${partes.join(" · ")}${mensagem ? `. ${mensagem}` : ""}`,
+  };
+}
+
 /* Execução da pré-classificação: editais, vagas e o lote entram na mensagem. */
 function execucaoDaPreClassificacao(bruta) {
   const n = (campo) => inteiro(bruta?.[campo]) ?? 0;
@@ -324,6 +344,23 @@ export function normalizarSaude(dados, agora = new Date()) {
       ),
     );
 
+  // O expurgo dos anexos do chat só aparece depois da migration 20261007250000 (a chave vem no payload).
+  if (Array.isArray(dados?.expurgo_chat))
+    robos.push(
+      montarCarga(
+        {
+          id: "expurgo_chat",
+          nome: "Expurgo dos anexos do chat",
+          onde: "GitHub Actions · Expurgo dos anexos do chat",
+          esperado: "todo dia às 6h30",
+          prazoMin: PRAZO_DIARIO_MIN,
+          tipo: "conferencia",
+          execucoes: dados.expurgo_chat.map(execucaoDoExpurgo),
+        },
+        agora,
+      ),
+    );
+
   const tarefasDisponiveis = Array.isArray(dados?.tarefas);
   const tarefas = (tarefasDisponiveis ? dados.tarefas : []).map((t) => {
     const nome = texto(t?.nome);
@@ -364,7 +401,7 @@ export function normalizarSaude(dados, agora = new Date()) {
       id: "robos",
       titulo: "Robô da Empregare e conferências",
       descricao:
-        "Candidatos de cada vaga, do Excel exportado da Empregare, quando um administrador pede (Rodar agora); conferências de consistência todo dia às 6h.",
+        "Candidatos de cada vaga, do Excel exportado da Empregare, quando um administrador pede (Rodar agora); conferências de consistência todo dia às 6h; expurgo dos anexos do chat todo dia às 6h30.",
       cargas: robos,
     },
     {
@@ -503,6 +540,10 @@ export function visaoSimples(saude) {
     conferencias: [
       "Conferências de consistência",
       "Confere análises, entrevistas, classificação, aprovados e cargas e lista os avisos abaixo, todo dia às 6h.",
+    ],
+    expurgo_chat: [
+      "Expurgo dos anexos do chat",
+      "Tira do armazenamento os arquivos dos anexos de mensagens já apagadas pela retenção ou pelo Zerar, todo dia às 6h30.",
     ],
     pre_classificacao: [
       "Pré-classificação (Avaliação documental)",

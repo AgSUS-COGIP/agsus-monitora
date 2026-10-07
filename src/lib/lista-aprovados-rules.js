@@ -132,13 +132,20 @@ export function alteracaoJudicial(candidate) {
   };
 }
 
+/*
+  `candidatos` (ids): só aqueles registros — o caso de um aviso de conferência
+  ("Contratado em duas vagas") abre a lista nas vagas da pessoa.
+*/
 export function filterApprovedCandidates(rows, filters = {}) {
   const query = low(filters.query);
+  const candidatoIds = multi(filters.candidatos);
   const editalIds = multi(filters.editalId);
   const cargos = multi(filters.cargo);
   const modalidades = multi(filters.modalidade);
   const statuses = multi(filters.status);
   return (rows || []).filter((row) => {
+    if (candidatoIds.length && !candidatoIds.includes(String(row.candidato_id)))
+      return false;
     if (editalIds.length && !editalIds.includes(String(row.edital_id)))
       return false;
     if (cargos.length && !cargos.includes(text(row.cargo))) return false;
@@ -155,6 +162,15 @@ export function filterApprovedCandidates(rows, filters = {}) {
       row.matricula,
     ].some((value) => low(value).includes(query));
   });
+}
+
+/** O nome da pessoa do caso de aviso (o primeiro dos registros que estão na tela). */
+export function nomeDosCandidatosFiltrados(rows, ids = []) {
+  const procurados = multi(ids);
+  const achado = (rows || []).find((row) =>
+    procurados.includes(String(row.candidato_id)),
+  );
+  return text(achado?.nome);
 }
 
 export function summarizeApprovedCandidates(rows, filters = {}) {

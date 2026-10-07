@@ -924,3 +924,58 @@ Migration `20261001120000_saude_das_cargas.sql` (rollback em `supabase/rollback/
   `src/lib/saude-das-cargas.js`: análises incrementais atrasadas depois de 1 h; entrevistas e
   seleção, de 26 h; tarefas a cada 2 min, de 15 min. A seção é
   `src/componentes/saude-das-cargas/`.
+
+## 16. Edital de treinamento (`ST_TREINAMENTO`) e a exceção à exclusão lógica
+
+Migration `20261007230000_edital_de_treinamento.sql` (ensaio e rollback com o mesmo nome em
+`supabase/ensaios/` e `supabase/rollback/`).
+
+- **Marca:** `TB_MONITORAMENTO_INDIGENA."ST_TREINAMENTO"` (S/N, padrão N,
+  `CK_MONITINDIG_STTREINAMENTO`). A tela não muda a marca; só
+  `private."FC_PREPARAR_EDITAL_TREINAMENTO"(p_area)` cria edital com S (hoje só a Saúde Indígena:
+  "Treinamento – Saúde Indígena (991/2099)", unidade "DSEI Treinamento").
+- **Predicado único** — use estes, nunca `"ST_TREINAMENTO" = S` solto:
+  `private."FC_EH_TREINAMENTO"(marca)`, `private."FC_EDITAL_EH_TREINAMENTO"(id)` e
+  `private."FC_ANALISE_EH_TREINAMENTO"(origem_planilha)` (as análises fictícias têm
+  `origem_planilha = treinamento`; a análise não tem o id do edital). No front:
+  `src/lib/edital-de-treinamento.js` (`ehEditalDeTreinamento`, `semTreinamento`).
+- **Fica fora de:** `VW_MONITORAMENTO_INDIGENA_KPIS`/`_POR_EDITAL`/`_POR_UNIDADE`,
+  `listar_acompanhamento_da_visao_geral`, `VW_ANALISES_DASHBOARD_BASE_TODOS` (painel das análises,
+  `TA_PAINEL_ANALISE`, `obter_marcos_da_area`, `get_analises_dashboard_payload_v2`),
+  `private."FC_MONTAR_ENTREVISTAS_AREA"` (cache do painel de entrevistas e Aya),
+  `private."FC_MONTAR_APROVADOS_AREA"` e o formato antigo de `listar_candidatos_aprovados_compacto`,
+  `conferencia_ler_analises/_entrevistas/_classificacao/_aprovados`, `listar_vagas_empregare`
+  (modo PADRAO) e `pre_classificacao_ler_editais` (padrão e após o robô). Pedido explícito pelo
+  número ou id continua valendo. `finalizar_sync_analises_lotes` não desativa as análises
+  fictícias (não estão na planilha). No front: Visão geral (`estado.js`, boas-vindas), indicadores
+  de Editais e "vigentes" do painel dos robôs.
+- **Aparece, com `treinamento: true` para o selo:** `VW_MONITORAMENTO_INDIGENA_OPERACIONAL` (coluna),
+  `listar_editais_entrevista`, `obter_entrevistas_do_edital`, `listar_editais_avaliacao`,
+  `listar_editais_classificacao`, `FC_DADOS_CLASSIFICACAO_EDITAL`, `obter_pre_classificacao`,
+  `pre_classificacao_ler_editais`, `get_painel_dos_robos`. O documento oficial gerado sai com
+  "TREINAMENTO — SEM VALOR OFICIAL" no título (`documento-sei.js`).
+- **Caches (para quem mexer neles):** o predicado está nas montagens
+  (`FC_MONTAR_ENTREVISTAS_AREA`, `FC_MONTAR_APROVADOS_AREA`) e na view que o painel das análises lê;
+  função de cache nova que ler `TB_ENTREVISTA`, `TB_ANALISE_CURRICULAR`, `TB_LISTA_APROVADO` ou
+  `TB_MONITORAMENTO_INDIGENA` direto tem de aplicar o predicado.
+
+### A exceção: apagar fisicamente só o treinamento
+
+A regra do banco é exclusão lógica, e várias tabelas da avaliação documental têm gatilho que
+proíbe `delete`. **Exceção única:** `public.reiniciar_edital_treinamento(p_edital)` (só admin
+global) chama `private."FC_APAGAR_DADOS_DO_TREINAMENTO"`, que apaga fisicamente os dados do edital
+de treinamento (entrevistas, classificação, avaliação documental, inscrições fictícias, aprovados,
+recursos, conversa, cronograma e as análises de origem `treinamento`) e depois o preparar recria
+os fictícios. Garantias:
+
+1. A função trava a linha do edital e recusa (42501) se `"ST_TREINAMENTO"` não for S — antes de
+   qualquer `delete`; o RPC confere de novo.
+2. Os gatilhos de imutabilidade (`FC_TG_FICHA_IMUTAVEL`, `FC_TG_PRE_CLASSIF_IMUTAVEL`,
+   `FC_TG_REGRA_ANALISE_IMUTAVEL`, `FC_TG_AJUSTE_PONTUACAO_IMUTAVEL`) só deixam apagar quando a
+   transação marcou `agsus.reinicio_treinamento` com o id de um edital de treinamento **e** a linha
+   é desse edital (`private."FC_REINICIO_TREINAMENTO_PERMITE"`).
+3. Vaga da Empregare carregada pelo robô (`CO_SYNC`) ligada ao treinamento: recusa e não apaga.
+4. Análise só sai se for de origem `treinamento`, da área e do número do edital; FK de qualquer
+   registro real para ela aborta tudo.
+5. O ensaio confere que regra real não se apaga nem com a marca, que o reinício recusa edital real
+   e que nenhuma contagem real muda.

@@ -2787,6 +2787,28 @@ export const VERBETES_AYA = Object.freeze([
       "src/modulos/conferencias/avisos-de-conferencia.jsx; supabase/migrations/20261007120000_casos_dos_avisos_de_conferencia.sql",
   },
   {
+    arquivo: "regras-das-conferencias.md",
+    titulo:
+      "Casos dos avisos da lista de aprovados, das entrevistas e da classificação",
+    perguntas: [
+      "contratado em duas vagas",
+      "quem foi contratado em duas vagas",
+      "casos do aviso da lista de aprovados",
+      "convocado sem desfecho",
+      "casos do aviso das entrevistas",
+      "nota fora da escala",
+      "registro removido no aviso",
+      "sem acesso no aviso",
+      "referencia no aviso",
+      "abrir o aprovado do aviso",
+    ],
+    resposta:
+      'Os casos de todos os módulos mostram quem é e o que conferir. Na lista de aprovados: o nome, o código do candidato na Empregare (quando há), o edital, a vaga e a situação com a data (por exemplo, "Contratado em 03/02/2026"); no "Contratado em duas vagas" aparecem todas as vagas da pessoa nas listas vigentes, com edital, vaga, situação e data, e quantas ficaram fora do seu acesso. Clicar no caso abre a Lista de aprovados só com as vagas daquela pessoa; "Ver todos" tira o recorte. Nas entrevistas: nome, código, edital, vaga, parecer e nota, e o clique abre Entrevistas já buscando o candidato, com a entrevista aberta. Na classificação aparecem a lista (tipo e data), a vaga (código e nome) ou o candidato do ajuste. Se o registro não existe mais, o caso mostra "Registro removido"; se ele é de uma área ou edital fora do seu acesso, "Sem acesso" — nunca o identificador interno.',
+    fato: "",
+    fonte:
+      "src/lib/avisos-de-conferencia.js; supabase/migrations/20261007240000_casos_dos_avisos_resolvidos.sql",
+  },
+  {
     arquivo: "regras-das-configuracoes.md",
     titulo: "Página inicial nas Configurações",
     perguntas: [
@@ -3828,10 +3850,10 @@ export const VERBETES_AYA = Object.freeze([
       "guardar para sempre",
     ],
     resposta:
-      'O padrão é "Guardar para sempre". O administrador global pode escolher 30, 90, 180 ou 365 dias, ou outro prazo de 7 a 3.650 dias, e informa o motivo. A tela mostra quantas mensagens o prazo escolhido apagaria; se apagar alguma, pede confirmação ("Isto apaga X mensagens com mais de N dias; não dá para desfazer"). Ao salvar, as mensagens mais antigas que o prazo, as reações e os anexos delas são apagados de fato, na hora (dado que passou do prazo deixa de existir, como pede a LGPD); as conversas continuam, sem essas mensagens. Depois, uma limpeza automática roda todo dia às 3h15 de Brasília e aparece em Status das atualizações como "Retenção das mensagens do chat". Quem está com o chat aberto vê as mensagens sumirem sozinhas. Os arquivos dos anexos apagados saem do armazenamento quando o administrador global abre esta seção (o arquivo encaminhado só sai quando a última cópia sai).',
+      'O padrão é "Guardar para sempre". O administrador global pode escolher 30, 90, 180 ou 365 dias, ou outro prazo de 7 a 3.650 dias, e informa o motivo. A tela mostra quantas mensagens o prazo escolhido apagaria; se apagar alguma, pede confirmação ("Isto apaga X mensagens com mais de N dias; não dá para desfazer"). Ao salvar, as mensagens mais antigas que o prazo, as reações e os anexos delas são apagados de fato, na hora (dado que passou do prazo deixa de existir, como pede a LGPD); as conversas continuam, sem essas mensagens. Depois, uma limpeza automática roda todo dia às 3h15 de Brasília e aparece em Status das atualizações como "Retenção das mensagens do chat". Quem está com o chat aberto vê as mensagens sumirem sozinhas. Os arquivos dos anexos apagados saem do armazenamento sozinhos, todo dia às 6h30 de Brasília (o "Expurgo dos anexos do chat" em Status das atualizações), e também quando o administrador global abre esta seção; o que não sair num dia fica para o seguinte. Enquanto espera, o arquivo já não abre para ninguém. O arquivo encaminhado só sai quando a última cópia sai.',
     fato: "",
     fonte:
-      "src/lib/retencao-do-chat.js; supabase/migrations/20261005190000_chat_retencao_das_mensagens.sql",
+      "src/lib/retencao-do-chat.js; supabase/migrations/20261005190000_chat_retencao_das_mensagens.sql; supabase/migrations/20261007250000_expurgo_diario_dos_anexos_do_chat.sql; .github/workflows/expurgo-anexos-chat.yml",
     abrir: "config:mensagens",
   },
   {
@@ -4309,10 +4331,10 @@ export const VERBETES_AYA = Object.freeze([
       "cargas de dados",
     ],
     resposta:
-      'As análises curriculares chegam pelo Apps Script das planilhas (o envio incremental é esperado a cada 20 minutos e fica "Atrasada" depois de 1 hora; a carga completa não tem prazo). Seleção e Entrevistas carregam pelo GitHub Actions de hora em hora, o dia todo, e ficam atrasadas depois de 4 horas. O robô da Empregare não tem agenda: roda só quando um administrador clica em "Rodar agora", por isso nunca fica "Atrasado". As tarefas do banco que rodam a cada 2 minutos (como o pacote do painel de análises e o das entrevistas) atrasam depois de 15 minutos; as diárias, depois de 26 horas; as mensais, depois de 32 dias. As conferências de consistência rodam todo dia às 6h de Brasília e ficam atrasadas depois de 26 horas. A pré-classificação da Avaliação documental roda no fim de cada carga do robô da Empregare e no Recalcular da coordenação, sem agenda, por isso também nunca fica "Atrasada". A retenção das mensagens do chat roda todo dia às 3h15 de Brasília. Os KPIs dos editais são recalculados no fim de cada carga da Seleção e, de novo, às 10h de Brasília.',
+      'As análises curriculares chegam pelo Apps Script das planilhas (o envio incremental é esperado a cada 20 minutos e fica "Atrasada" depois de 1 hora; a carga completa não tem prazo). Seleção e Entrevistas carregam pelo GitHub Actions de hora em hora, o dia todo, e ficam atrasadas depois de 4 horas. O robô da Empregare não tem agenda: roda só quando um administrador clica em "Rodar agora", por isso nunca fica "Atrasado". As tarefas do banco que rodam a cada 2 minutos (como o pacote do painel de análises e o das entrevistas) atrasam depois de 15 minutos; as diárias, depois de 26 horas; as mensais, depois de 32 dias. As conferências de consistência rodam todo dia às 6h de Brasília e ficam atrasadas depois de 26 horas. A pré-classificação da Avaliação documental roda no fim de cada carga do robô da Empregare e no Recalcular da coordenação, sem agenda, por isso também nunca fica "Atrasada". A retenção das mensagens do chat roda todo dia às 3h15 de Brasília, e o expurgo dos anexos do chat (tira do armazenamento os arquivos das mensagens já apagadas) às 6h30, atrasado depois de 26 horas; "Falhou" nele pode ser execução parcial, com arquivos que ficaram na fila para o dia seguinte. Os KPIs dos editais são recalculados no fim de cada carga da Seleção e, de novo, às 10h de Brasília.',
     fato: "",
     fonte:
-      "src/lib/saude-das-cargas.js; supabase/migrations/20261001120000_saude_das_cargas.sql; supabase/migrations/20261002090000_kpis_depois_da_carga_da_selecao.sql; supabase/migrations/20261002130000_kpis_de_todo_edital_com_fonte.sql; .github/workflows/sincronizar-selecao.yml; .github/workflows/sincronizar-entrevistas.yml; supabase/migrations/20260930235900_kpis_uma_vez_por_dia.sql",
+      "src/lib/saude-das-cargas.js; supabase/migrations/20261001120000_saude_das_cargas.sql; supabase/migrations/20261002090000_kpis_depois_da_carga_da_selecao.sql; supabase/migrations/20261002130000_kpis_de_todo_edital_com_fonte.sql; .github/workflows/sincronizar-selecao.yml; .github/workflows/sincronizar-entrevistas.yml; supabase/migrations/20260930235900_kpis_uma_vez_por_dia.sql; .github/workflows/expurgo-anexos-chat.yml",
   },
   {
     arquivo: "regras-do-status-das-atualizacoes.md",
@@ -4327,10 +4349,11 @@ export const VERBETES_AYA = Object.freeze([
       "rodar o robo da empregare agora",
       "rodar as conferencias agora",
       "rodar a pre-classificacao agora",
+      "rodar o expurgo dos anexos agora",
       "atualizar agora sem esperar",
     ],
     resposta:
-      'Em Configurações › Status das atualizações, o administrador global vê o botão "Rodar agora" nas linhas Robô da Empregare, Conferências de consistência, Pré-classificação (Avaliação documental), Seleção e Entrevistas. Na pré-classificação, o Rodar agora recalcula todos os editais ativos com vagas da Empregare; a coordenação de um edital usa o Recalcular da aba Pré-classificação. O clique pede ao GitHub Actions a execução do workflow daquela carga, em modo normal, e registra quem pediu; para escolher editais, vagas, modo ou limite, use "Opções". O botão fica desabilitado enquanto a carga roda (no GitHub ou no registro do banco) e por 3 minutos depois do pedido, até a execução aparecer. A nova execução entra na lista em alguns minutos; o robô da Empregare pode levar mais de meia hora.',
+      'Em Configurações › Status das atualizações, o administrador global vê o botão "Rodar agora" nas linhas Robô da Empregare, Conferências de consistência, Expurgo dos anexos do chat, Pré-classificação (Avaliação documental), Seleção e Entrevistas. Na pré-classificação, o Rodar agora recalcula todos os editais ativos com vagas da Empregare; a coordenação de um edital usa o Recalcular da aba Pré-classificação. O clique pede ao GitHub Actions a execução do workflow daquela carga, em modo normal, e registra quem pediu; para escolher editais, vagas, modo ou limite, use "Opções". O botão fica desabilitado enquanto a carga roda (no GitHub ou no registro do banco) e por 3 minutos depois do pedido, até a execução aparecer. A nova execução entra na lista em alguns minutos; o robô da Empregare pode levar mais de meia hora.',
     fato: "",
     fonte:
       "src/lib/robos-de-carga.js; api/rodar-carga.js; docs/robo-empregare.md",
@@ -4817,6 +4840,45 @@ export const VERBETES_AYA = Object.freeze([
     fato: "",
     fonte:
       "src/lib/editais-do-nucleo.js; src/modulos/editais/painel-operacional.jsx; supabase/migrations/20260925181000_recorta_dados_por_area.sql",
+    abrir: "nucleo",
+  },
+  {
+    arquivo: "regras-dos-editais.md",
+    titulo: "Edital de treinamento",
+    perguntas: [
+      "edital de treinamento",
+      "treinamento",
+      "selo treinamento",
+      "edital de teste",
+      "como treinar",
+      "testar sem dados reais",
+      "treinar entrevistas",
+      "treinar avaliacao documental",
+      "dsei treinamento",
+    ],
+    resposta:
+      'O edital de treinamento ("Treinamento – Saúde Indígena (991/2099)", unidade fictícia "DSEI Treinamento") serve para praticar sem tocar em dados reais. Ele tem 3 vagas fictícias (Enfermeiro, Técnico de Enfermagem e Agente Indígena de Saúde), 15 candidatos fictícios ("Candidato Teste 01" a "Candidato Teste 15", sem CPF e com e-mail @exemplo.invalid), a janela de entrevista aberta, a lista de convocação pronta, um roteiro de entrevista de exemplo e a regra da avaliação documental copiada de um modelo da Saúde Indígena (na situação Conferir). Ele aparece com o selo Treinamento em Editais, Entrevistas › Conduzir, Avaliação documental e Classificação. Fica fora da Visão geral, dos indicadores, dos painéis (análises, entrevistas e aprovados), das comemorações, das conferências e dos robôs; a pré-classificação só roda para ele quando pedida para ele (em Rodar com opções, marque Mostrar todos e escolha o edital). Documento oficial gerado dele sai com "TREINAMENTO — SEM VALOR OFICIAL" no título. Não rode o robô da Empregare para ele: as vagas são fictícias.',
+    fato: "",
+    fonte:
+      "supabase/migrations/20261007230000_edital_de_treinamento.sql; src/lib/edital-de-treinamento.js",
+    abrir: "nucleo",
+  },
+  {
+    arquivo: "regras-dos-editais.md",
+    titulo: "Reiniciar o edital de treinamento",
+    perguntas: [
+      "reiniciar treinamento",
+      "reiniciar o treinamento",
+      "reiniciar edital de treinamento",
+      "zerar treinamento",
+      "voltar o treinamento ao inicio",
+      "limpar treinamento",
+    ],
+    resposta:
+      "Em Editais, o administrador global vê no edital de treinamento o botão Reiniciar treinamento (setas circulares). Ao clicar, a própria linha pede a confirmação; em Reiniciar, tudo o que foi feito no treinamento (convocações, notas, listas geradas, fichas e pré-classificação, aprovados, recursos, conversa) é apagado e os dados fictícios voltam ao estado inicial, com o cronograma recalculado a partir de hoje. Só o edital de treinamento pode ser reiniciado: o banco recusa qualquer edital real e nada dele é apagado.",
+    fato: "",
+    fonte:
+      "supabase/migrations/20261007230000_edital_de_treinamento.sql; src/modulos/editais/nucleo.jsx",
     abrir: "nucleo",
   },
   {
