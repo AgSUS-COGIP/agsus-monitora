@@ -13,6 +13,10 @@ import { sessaoDoApp } from "./sessao.js";
 import { definirMarcaDaConfiguracao } from "./entrada/marca.js";
 import { estadoDasConfiguracoes } from "../modulos/configuracoes/estado.js";
 import { avisar as avisarPadrao } from "./avisos.js";
+import {
+  CHAVE_DAS_COMEMORACOES,
+  definirConfiguracaoDasComemoracoes,
+} from "../lib/catalogo-de-comemoracoes.ts";
 
 /*
   A configuração do sistema (TB_CONFIGURACAO), sem React: carrega, guarda as
@@ -174,6 +178,8 @@ export function criarConfiguracao({
       carregou = true;
     }
     aplicarNaTela();
+    // Os marcos das comemorações (Configurações › Comemorações) valem para todos.
+    definirConfiguracaoDasComemoracoes(valores[CHAVE_DAS_COMEMORACOES]);
     // As seções de Configurações (React, src/modulos/configuracoes/) leem daqui.
     estado.definirValoresCarregados(valores);
     documento?.body.classList.remove("config-loading");

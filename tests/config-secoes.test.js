@@ -31,6 +31,7 @@ describe("as seções (as sete do SIGAV + Módulos e abas + Status das atualiza�
       "Aparência",
       "Painéis externos",
       "Operação",
+      "Comemorações",
       "Acessos",
       "Módulos e abas",
       "Status das atualizações",
@@ -92,9 +93,9 @@ describe("organizar cria as seções e move os blocos", () => {
 
   beforeEach(montarPagina);
 
-  it("cria as dez seções, com o corpo das seções React vazio", () => {
+  it("cria as onze seções, com o corpo das seções React vazio", () => {
     expect(organizarConfiguracoesEmSecoes(document)).toBe(true);
-    expect(document.querySelectorAll(".config-secao")).toHaveLength(10);
+    expect(document.querySelectorAll(".config-secao")).toHaveLength(11);
     for (const secao of [
       "marca",
       "inicio",
@@ -155,7 +156,7 @@ describe("organizar cria as seções e move os blocos", () => {
   it("não organiza duas vezes", () => {
     expect(organizarConfiguracoesEmSecoes(document)).toBe(true);
     expect(organizarConfiguracoesEmSecoes(document)).toBe(false);
-    expect(document.querySelectorAll(".config-secao")).toHaveLength(10);
+    expect(document.querySelectorAll(".config-secao")).toHaveLength(11);
   });
 });
 

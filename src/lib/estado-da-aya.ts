@@ -43,10 +43,11 @@ export const CHAVE_DO_ACENO = "agsus_monitora_aya_acenou_v1";
 /*
   Preferência pessoal de desligar comemorações (neste navegador): "1" desliga.
   Com ela, a arara não comemora (fica parada) e os pedidos de "comemorando"
-  são ignorados.
+  são ignorados. Fonte única: src/lib/preferencia-de-comemoracoes.js (a
+  mesma que o "Para mim" de Configurações › Comemorações grava).
 */
-export const CHAVE_COMEMORACOES_PESSOAIS =
-  "agsus_monitora_comemoracoes_desligadas";
+import { CHAVE_COMEMORACOES_PESSOAIS } from "./preferencia-de-comemoracoes.js";
+export { CHAVE_COMEMORACOES_PESSOAIS };
 
 export interface PedidoDeEstado {
   estado: EstadoDaMascote;

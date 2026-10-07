@@ -422,7 +422,9 @@ describe("o aviso da comemoração", () => {
   it("o fim do tour (Concluir) celebra: fogos no tour, festa e estrela na trilha", () => {
     const aya = readFileSync("src/modulos/aya/aya.jsx", "utf8");
     expect(aya).toMatch(/motivo === "concluiu"\) celebrarFimDoTour\(tour\)/);
-    expect(aya).toContain('confete: concluido.trilha ? "festa" : "fogos"');
+    expect(aya).toContain(
+      'marco: concluido.trilha ? "fim-da-trilha" : "fim-do-tour"',
+    );
     expect(aya).toContain('forma: concluido.trilha ? "estrela" : null');
   });
 });
