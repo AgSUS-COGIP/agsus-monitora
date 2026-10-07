@@ -2149,7 +2149,7 @@ export const VERBETES_AYA = Object.freeze([
     resposta:
       "A tela de Seleção do MONITORA mostra o funil de cada vaga, a partir da planilha Auditoria carregada de hora em hora no banco. Os sete indicadores são inscritos, aptos, triados, convocados, aprovados, contratados e a taxa de contratação. Ela é só de consulta e mostra a área escolhida no menu. Os quatro filtros (DSEI ou unidade, edital, cargo e vaga) aceitam vários valores, e as opções de cada um seguem os outros já escolhidos. Clicar numa barra do ranking de unidades filtra a tela por aquela unidade; clicar de novo tira o filtro. A busca da tabela vale só para a tabela.",
     fato: "",
-    fonte: "src/modulos/selecao/; src/lib/selecao-do-painel.js",
+    fonte: "src/modulos/selecao/; src/lib/selecao-do-painel.ts",
     abrir: "selecao",
   },
   {
@@ -2180,7 +2180,7 @@ export const VERBETES_AYA = Object.freeze([
       'Na Seleção, os convocados para entrevista vêm das entrevistas registradas no MONITORA quando o edital as tem (a vaga sem nenhuma entrevista fica com 0); quando o edital não tem, vêm da planilha Auditoria, que é o dado antigo. O CSV exportado traz a origem de cada vaga na coluna "Origem dos convocados".',
     fato: "",
     fonte:
-      "supabase/migrations/20261001130000_selecao_aprovados_outras_bancas.sql; src/lib/selecao-do-painel.js",
+      "supabase/migrations/20261001130000_selecao_aprovados_outras_bancas.sql; src/lib/selecao-do-painel.ts",
   },
   {
     arquivo: "regras-da-selecao.md",
@@ -2208,7 +2208,7 @@ export const VERBETES_AYA = Object.freeze([
     resposta:
       'Na Seleção, a taxa de contratação é o número de contratados dividido pelo número de aprovados, em porcentagem. Sem aprovados no recorte, a taxa aparece como 0%. O medidor "Contratados" mostra a mesma conta, com quantos foram contratados de quantos aprovados.',
     fato: "",
-    fonte: "src/lib/selecao-do-painel.js",
+    fonte: "src/lib/selecao-do-painel.ts",
   },
   {
     arquivo: "regras-da-selecao.md",
@@ -2221,7 +2221,7 @@ export const VERBETES_AYA = Object.freeze([
     resposta:
       'Na Seleção, os eliminados antes da análise são a soma de três grupos: os cancelados, os reprovados por não finalizar o questionário e os eliminados por nota. O gráfico "Aptos na análise e eliminados" compara os aptos para análise com o total de eliminados, e "Triados e reprovados na análise" mostra o resultado da análise curricular.',
     fato: "",
-    fonte: "src/lib/selecao-do-painel.js",
+    fonte: "src/lib/selecao-do-painel.ts",
   },
   {
     arquivo: "regras-da-selecao.md",
@@ -2234,7 +2234,7 @@ export const VERBETES_AYA = Object.freeze([
     resposta:
       "Na Seleção, os alertas identificados no recorte são as observações da coluna Observação da planilha Auditoria. Cada observação aparece uma vez, sem diferenciar maiúsculas, com quantas vagas a têm e em quais unidades e editais.",
     fato: "",
-    fonte: "src/lib/selecao-do-painel.js",
+    fonte: "src/lib/selecao-do-painel.ts",
   },
   {
     arquivo: "regras-da-selecao.md",
@@ -2266,7 +2266,7 @@ export const VERBETES_AYA = Object.freeze([
       'A vaga que saiu da planilha Auditoria fica inativa e some da tela; na Saúde Indígena só entram as vagas de DSEI e CASAI (as outras vão para SEDE ou Projetos pelo edital). Aprovados e contratados vêm da lista de aprovados vigente — contratado é Contratado ou Migração, e Convocado não conta —, e sem lista a vaga não soma nenhum dos dois. A carga roda de hora em hora, o dia todo, e o topo mostra "Conferido às …". Confira também os quatro filtros e a barra do ranking de unidades que estiver clicada.',
     fato: "",
     fonte:
-      "supabase/migrations/20261001090000_selecao.sql; supabase/migrations/20261001100000_selecao_area_pelos_editais.sql; src/lib/selecao-do-painel.js; .github/workflows/sincronizar-selecao.yml",
+      "supabase/migrations/20261001090000_selecao.sql; supabase/migrations/20261001100000_selecao_area_pelos_editais.sql; src/lib/selecao-do-painel.ts; .github/workflows/sincronizar-selecao.yml",
     abrir: "selecao",
   },
   {
@@ -2560,7 +2560,7 @@ export const VERBETES_AYA = Object.freeze([
       'No topo de Análises curriculares, Seleção e Entrevistas, "Conferido às 09:32" é a última vez que a carga conferiu os dados (horário de Brasília; se foi em outro dia, aparece a data, como "em 04/10, 13:05"). Nas Análises curriculares, vem junto "última mudança em …": quando os dados mudaram de fato. Se a carga rodou e a planilha não tinha nada novo, o "Conferido" avança e a última mudança fica — os dados não estão parados. Sem registro de conferência, aparece "Atualizado em …". Se suspeitar de carga atrasada ou com falha, o administrador global confere em Configurações › Status das atualizações.',
     fato: "",
     fonte:
-      "src/lib/texto-da-conferencia.js; src/modulos/analises/analises.jsx; src/modulos/selecao/selecao.jsx; src/modulos/entrevistas/entrevistas.jsx",
+      "src/lib/texto-da-conferencia.js; src/modulos/analises/analises.jsx; src/modulos/selecao/selecao.tsx; src/modulos/entrevistas/entrevistas.jsx",
   },
   {
     arquivo: "regras-das-analises.md",
@@ -2768,6 +2768,28 @@ export const VERBETES_AYA = Object.freeze([
     fato: "",
     fonte:
       "src/modulos/conferencias/avisos-de-conferencia.jsx; supabase/migrations/20261007120000_casos_dos_avisos_de_conferencia.sql",
+  },
+  {
+    arquivo: "regras-das-conferencias.md",
+    titulo:
+      "Casos dos avisos da lista de aprovados, das entrevistas e da classificação",
+    perguntas: [
+      "contratado em duas vagas",
+      "quem foi contratado em duas vagas",
+      "casos do aviso da lista de aprovados",
+      "convocado sem desfecho",
+      "casos do aviso das entrevistas",
+      "nota fora da escala",
+      "registro removido no aviso",
+      "sem acesso no aviso",
+      "referencia no aviso",
+      "abrir o aprovado do aviso",
+    ],
+    resposta:
+      'Os casos de todos os módulos mostram quem é e o que conferir. Na lista de aprovados: o nome, o código do candidato na Empregare (quando há), o edital, a vaga e a situação com a data (por exemplo, "Contratado em 03/02/2026"); no "Contratado em duas vagas" aparecem todas as vagas da pessoa nas listas vigentes, com edital, vaga, situação e data, e quantas ficaram fora do seu acesso. Clicar no caso abre a Lista de aprovados só com as vagas daquela pessoa; "Ver todos" tira o recorte. Nas entrevistas: nome, código, edital, vaga, parecer e nota, e o clique abre Entrevistas já buscando o candidato, com a entrevista aberta. Na classificação aparecem a lista (tipo e data), a vaga (código e nome) ou o candidato do ajuste. Se o registro não existe mais, o caso mostra "Registro removido"; se ele é de uma área ou edital fora do seu acesso, "Sem acesso" — nunca o identificador interno.',
+    fato: "",
+    fonte:
+      "src/lib/avisos-de-conferencia.js; supabase/migrations/20261007240000_casos_dos_avisos_resolvidos.sql",
   },
   {
     arquivo: "regras-das-configuracoes.md",
@@ -3831,10 +3853,10 @@ export const VERBETES_AYA = Object.freeze([
       "guardar para sempre",
     ],
     resposta:
-      'O padrão é "Guardar para sempre". O administrador global pode escolher 30, 90, 180 ou 365 dias, ou outro prazo de 7 a 3.650 dias, e informa o motivo. A tela mostra quantas mensagens o prazo escolhido apagaria; se apagar alguma, pede confirmação ("Isto apaga X mensagens com mais de N dias; não dá para desfazer"). Ao salvar, as mensagens mais antigas que o prazo, as reações e os anexos delas são apagados de fato, na hora (dado que passou do prazo deixa de existir, como pede a LGPD); as conversas continuam, sem essas mensagens. Depois, uma limpeza automática roda todo dia às 3h15 de Brasília e aparece em Status das atualizações como "Retenção das mensagens do chat". Quem está com o chat aberto vê as mensagens sumirem sozinhas. Os arquivos dos anexos apagados saem do armazenamento quando o administrador global abre esta seção (o arquivo encaminhado só sai quando a última cópia sai).',
+      'O padrão é "Guardar para sempre". O administrador global pode escolher 30, 90, 180 ou 365 dias, ou outro prazo de 7 a 3.650 dias, e informa o motivo. A tela mostra quantas mensagens o prazo escolhido apagaria; se apagar alguma, pede confirmação ("Isto apaga X mensagens com mais de N dias; não dá para desfazer"). Ao salvar, as mensagens mais antigas que o prazo, as reações e os anexos delas são apagados de fato, na hora (dado que passou do prazo deixa de existir, como pede a LGPD); as conversas continuam, sem essas mensagens. Depois, uma limpeza automática roda todo dia às 3h15 de Brasília e aparece em Status das atualizações como "Retenção das mensagens do chat". Quem está com o chat aberto vê as mensagens sumirem sozinhas. Os arquivos dos anexos apagados saem do armazenamento sozinhos, todo dia às 6h30 de Brasília (o "Expurgo dos anexos do chat" em Status das atualizações), e também quando o administrador global abre esta seção; o que não sair num dia fica para o seguinte. Enquanto espera, o arquivo já não abre para ninguém. O arquivo encaminhado só sai quando a última cópia sai.',
     fato: "",
     fonte:
-      "src/lib/retencao-do-chat.js; supabase/migrations/20261005190000_chat_retencao_das_mensagens.sql",
+      "src/lib/retencao-do-chat.js; supabase/migrations/20261005190000_chat_retencao_das_mensagens.sql; supabase/migrations/20261007250000_expurgo_diario_dos_anexos_do_chat.sql; .github/workflows/expurgo-anexos-chat.yml",
     abrir: "config:mensagens",
   },
   {
@@ -4312,10 +4334,10 @@ export const VERBETES_AYA = Object.freeze([
       "cargas de dados",
     ],
     resposta:
-      'As análises curriculares chegam pelo Apps Script das planilhas (o envio incremental é esperado a cada 20 minutos e fica "Atrasada" depois de 1 hora; a carga completa não tem prazo). Seleção e Entrevistas carregam pelo GitHub Actions de hora em hora, o dia todo, e ficam atrasadas depois de 4 horas. O robô da Empregare não tem agenda: roda só quando um administrador clica em "Rodar agora", por isso nunca fica "Atrasado". As tarefas do banco que rodam a cada 2 minutos (como o pacote do painel de análises e o das entrevistas) atrasam depois de 15 minutos; as diárias, depois de 26 horas; as mensais, depois de 32 dias. As conferências de consistência rodam todo dia às 6h de Brasília e ficam atrasadas depois de 26 horas. A pré-classificação da Avaliação documental roda no fim de cada carga do robô da Empregare e no Recalcular da coordenação, sem agenda, por isso também nunca fica "Atrasada". A retenção das mensagens do chat roda todo dia às 3h15 de Brasília. Os KPIs dos editais são recalculados no fim de cada carga da Seleção e, de novo, às 10h de Brasília.',
+      'As análises curriculares chegam pelo Apps Script das planilhas (o envio incremental é esperado a cada 20 minutos e fica "Atrasada" depois de 1 hora; a carga completa não tem prazo). Seleção e Entrevistas carregam pelo GitHub Actions de hora em hora, o dia todo, e ficam atrasadas depois de 4 horas. O robô da Empregare não tem agenda: roda só quando um administrador clica em "Rodar agora", por isso nunca fica "Atrasado". As tarefas do banco que rodam a cada 2 minutos (como o pacote do painel de análises e o das entrevistas) atrasam depois de 15 minutos; as diárias, depois de 26 horas; as mensais, depois de 32 dias. As conferências de consistência rodam todo dia às 6h de Brasília e ficam atrasadas depois de 26 horas. A pré-classificação da Avaliação documental roda no fim de cada carga do robô da Empregare e no Recalcular da coordenação, sem agenda, por isso também nunca fica "Atrasada". A retenção das mensagens do chat roda todo dia às 3h15 de Brasília, e o expurgo dos anexos do chat (tira do armazenamento os arquivos das mensagens já apagadas) às 6h30, atrasado depois de 26 horas; "Falhou" nele pode ser execução parcial, com arquivos que ficaram na fila para o dia seguinte. Os KPIs dos editais são recalculados no fim de cada carga da Seleção e, de novo, às 10h de Brasília.',
     fato: "",
     fonte:
-      "src/lib/saude-das-cargas.js; supabase/migrations/20261001120000_saude_das_cargas.sql; supabase/migrations/20261002090000_kpis_depois_da_carga_da_selecao.sql; supabase/migrations/20261002130000_kpis_de_todo_edital_com_fonte.sql; .github/workflows/sincronizar-selecao.yml; .github/workflows/sincronizar-entrevistas.yml; supabase/migrations/20260930235900_kpis_uma_vez_por_dia.sql",
+      "src/lib/saude-das-cargas.js; supabase/migrations/20261001120000_saude_das_cargas.sql; supabase/migrations/20261002090000_kpis_depois_da_carga_da_selecao.sql; supabase/migrations/20261002130000_kpis_de_todo_edital_com_fonte.sql; .github/workflows/sincronizar-selecao.yml; .github/workflows/sincronizar-entrevistas.yml; supabase/migrations/20260930235900_kpis_uma_vez_por_dia.sql; .github/workflows/expurgo-anexos-chat.yml",
   },
   {
     arquivo: "regras-do-status-das-atualizacoes.md",
@@ -4330,10 +4352,11 @@ export const VERBETES_AYA = Object.freeze([
       "rodar o robo da empregare agora",
       "rodar as conferencias agora",
       "rodar a pre-classificacao agora",
+      "rodar o expurgo dos anexos agora",
       "atualizar agora sem esperar",
     ],
     resposta:
-      'Em Configurações › Status das atualizações, o administrador global vê o botão "Rodar agora" nas linhas Robô da Empregare, Conferências de consistência, Pré-classificação (Avaliação documental), Seleção e Entrevistas. Na pré-classificação, o Rodar agora recalcula todos os editais ativos com vagas da Empregare; a coordenação de um edital usa o Recalcular da aba Pré-classificação. O clique pede ao GitHub Actions a execução do workflow daquela carga, em modo normal, e registra quem pediu; para escolher editais, vagas, modo ou limite, use "Opções". O botão fica desabilitado enquanto a carga roda (no GitHub ou no registro do banco) e por 3 minutos depois do pedido, até a execução aparecer. A nova execução entra na lista em alguns minutos; o robô da Empregare pode levar mais de meia hora.',
+      'Em Configurações › Status das atualizações, o administrador global vê o botão "Rodar agora" nas linhas Robô da Empregare, Conferências de consistência, Expurgo dos anexos do chat, Pré-classificação (Avaliação documental), Seleção e Entrevistas. Na pré-classificação, o Rodar agora recalcula todos os editais ativos com vagas da Empregare; a coordenação de um edital usa o Recalcular da aba Pré-classificação. O clique pede ao GitHub Actions a execução do workflow daquela carga, em modo normal, e registra quem pediu; para escolher editais, vagas, modo ou limite, use "Opções". O botão fica desabilitado enquanto a carga roda (no GitHub ou no registro do banco) e por 3 minutos depois do pedido, até a execução aparecer. A nova execução entra na lista em alguns minutos; o robô da Empregare pode levar mais de meia hora.',
     fato: "",
     fonte:
       "src/lib/robos-de-carga.js; api/rodar-carga.js; docs/robo-empregare.md",

@@ -150,10 +150,16 @@ function TelaDaArea({ estado, conducao, e, visao, aoTrocarVisao }) {
   const trocarFiltro = (campo, valor) =>
     setFiltros((atuais) => ({ ...atuais, [campo]: valor }));
   const recarregar = () => void estado.carregar(area);
-  // "Abrir" numa resposta com número da Aya: Resultados, já recortado.
+  // "Abrir" numa resposta com número da Aya ou num caso de aviso de
+  // conferência: Resultados, já recortado (e a entrevista do caso aberta).
   usarPedidoDeFiltro("entrevistas", carregado, (pedido) => {
     aoTrocarVisao?.("resultados");
     setFiltros((atuais) => filtrosDeEntrevistas(atuais, pedido, opcoes));
+    if (
+      pedido?.entrevista &&
+      entrevistas.some((x) => x.id === pedido.entrevista)
+    )
+      estado.abrirGaveta(pedido.entrevista);
   });
 
   /* Atualizar relê "Resultados" e, na visão aberta, o que ela mostra. */

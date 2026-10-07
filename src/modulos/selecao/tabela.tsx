@@ -1,10 +1,11 @@
+import type { VagaDaSelecao } from "./tipos.ts";
 import { formatNumberBR } from "../../lib/formatters.js";
 import {
   FILTROS_VAZIOS,
   filtrarVagas,
   formatarQuantidade,
   rotuloDaUnidade,
-} from "../../lib/selecao-do-painel.js";
+} from "../../lib/selecao-do-painel.ts";
 import { TabelaInfinita } from "../../ui/index.js";
 
 /*
@@ -17,7 +18,7 @@ import { TabelaInfinita } from "../../ui/index.js";
 export const MENSAGEM_SEM_VAGAS =
   "Nenhuma vaga carregada para esta área ainda.";
 
-const colunas = (area) => [
+const colunas = (area: string) => [
   {
     rotulo: rotuloDaUnidade(area) === "Nome DSEI" ? "DSEI" : "Unidade",
     largura: "15%",
@@ -33,9 +34,10 @@ const colunas = (area) => [
   { rotulo: "Observação", largura: "14%" },
 ];
 
-const pelaBusca = (vagas, busca) => filtrarVagas(vagas, FILTROS_VAZIOS, busca);
+const pelaBusca = (vagas: readonly VagaDaSelecao[], busca: string) =>
+  filtrarVagas(vagas, FILTROS_VAZIOS, busca);
 
-function LinhaDaVaga({ vaga: v }) {
+function LinhaDaVaga({ vaga: v }: { vaga: VagaDaSelecao }) {
   const n = formatarQuantidade;
   return (
     <tr className="selecao-linha" data-tour="selecao-vaga">
@@ -63,7 +65,17 @@ function LinhaDaVaga({ vaga: v }) {
   );
 }
 
-export function TabelaDeVagas({ vagas, total, carregado, area }) {
+export function TabelaDeVagas({
+  vagas,
+  total,
+  carregado,
+  area,
+}: {
+  vagas: readonly VagaDaSelecao[];
+  total: number;
+  carregado: boolean;
+  area: string;
+}) {
   const daUnidade = rotuloDaUnidade(area) === "Nome DSEI" ? "DSEI" : "unidade";
   return (
     <TabelaInfinita

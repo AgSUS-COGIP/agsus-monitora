@@ -81,6 +81,18 @@ class Casos(unittest.TestCase):
         )
         self.assertEqual(limpo, {"referencia": "x", "detalhe": {"ok": True}})
 
+    def test_tipo_da_referencia_so_conhecido_e_com_referencia(self):
+        self.assertEqual(
+            regras.caso_seguro({"referencia": "c1", "tipo": "candidato_aprovado"}),
+            {"referencia": "c1", "tipo": "candidato_aprovado"},
+        )
+        self.assertEqual(regras.caso_seguro({"referencia": "c1", "tipo": "pessoa"}), {"referencia": "c1"})
+        # Tipo sem referência não vai (só a entrevista, que se acha pela análise).
+        self.assertEqual(regras.caso_seguro({"codigo": "C1", "tipo": "vaga"}), {"codigo": "C1"})
+        self.assertEqual(
+            regras.caso_seguro({"analise": A1, "tipo": "entrevista"}), {"analise": A1, "tipo": "entrevista"}
+        )
+
     def test_todos_os_casos_alem_dos_vinte_exemplos(self):
         ac = regras.Acumulador()
         for i in range(30):
@@ -209,6 +221,10 @@ class Entrevistas(unittest.TestCase):
         self.assertEqual(avisos[("ENTREVISTA_SEM_NOTA_APOS_DATA", f"edital:{E1}")]["exemplos"], [A1])
         fora = avisos[("ENTREVISTA_NOTA_FORA_DA_ESCALA", f"edital:{E1}")]
         self.assertEqual((fora["quantidade"], fora["exemplos"]), (2, ["en2"]))
+        self.assertEqual(
+            fora["casos"],
+            [{"analise": A2, "referencia": "en2", "tipo": "entrevista", "detalhe": {"nota": 12.0, "maxima": 10.0}}],
+        )
         self.assertEqual(avisos[("ENTREVISTA_FORA_DA_CONVOCACAO", f"edital:{E1}")]["exemplos"], [A2])
         self.assertEqual(avisos[("ENTREVISTA_HORARIO_DUPLICADO", f"edital:{E1}")]["exemplos"], [A2])
         self.assertEqual(avisos[("ENTREVISTA_HORARIO_DUPLICADO", "area:saude-indigena")]["exemplos"], ["C1"])
@@ -248,6 +264,26 @@ class Classificacao(unittest.TestCase):
         self.assertEqual(avisos[("CLASSIFICACAO_VAGA_SEM_QUADRO", f"edital:{E1}")]["exemplos"], ["180001"])
         self.assertEqual(avisos[("CLASSIFICACAO_AJUSTE_APOS_LISTA", f"edital:{E2}")]["exemplos"], ["aj1"])
         self.assertNotIn(("CLASSIFICACAO_AJUSTE_APOS_LISTA", f"edital:{E1}"), avisos)
+        # Cada caso diz o que é a referência (a tela resolve nome, edital e vaga).
+        self.assertEqual(
+            avisos[("CLASSIFICACAO_LISTA_FINAL_DESATUALIZADA", f"edital:{E1}")]["casos"],
+            [{"referencia": "lf", "tipo": "lista_classificacao"}],
+        )
+        self.assertEqual(
+            empate["casos"],
+            [
+                {"referencia": "lf", "tipo": "lista_classificacao", "detalhe": {"pendencias": 2}},
+                {"referencia": "177979", "tipo": "vaga"},
+            ],
+        )
+        self.assertEqual(
+            avisos[("CLASSIFICACAO_VAGA_SEM_QUADRO", f"edital:{E1}")]["casos"],
+            [{"referencia": "180001", "tipo": "vaga"}],
+        )
+        self.assertEqual(
+            avisos[("CLASSIFICACAO_AJUSTE_APOS_LISTA", f"edital:{E2}")]["casos"],
+            [{"referencia": "aj1", "tipo": "ajuste_recurso"}],
+        )
 
 
 class Aprovados(unittest.TestCase):
@@ -274,6 +310,34 @@ class Aprovados(unittest.TestCase):
         pend = avisos[("APROVADOS_PENDENCIA_DA_PUBLICACAO", f"edital:{E1}")]
         self.assertEqual((pend["quantidade"], pend["exemplos"]), (2, ["c9", "c8"]))
         self.assertNotIn(("APROVADOS_PENDENCIA_DA_PUBLICACAO", f"edital:{E2}"), avisos)
+        # Casos com o tipo: a tela resolve nome, edital, vaga e situação do aprovado.
+        self.assertEqual(
+            convocado["casos"],
+            [{"referencia": "c4", "tipo": "candidato_aprovado", "detalhe": {"convocado_em": "2026-09-01"}}],
+        )
+        self.assertEqual(
+            pend["casos"],
+            [{"referencia": "c9", "tipo": "candidato_aprovado"}, {"referencia": "c8", "tipo": "candidato_aprovado"}],
+        )
+
+    def test_contratado_em_duas_vagas_um_caso_por_pessoa_e_area(self):
+        p1 = "a" * 64
+        dados = {
+            "candidatos": [
+                {"id": "c1", "edital": E1, "area": "sede", "status": "Contratado", "pessoa": p1},
+                {"id": "c2", "edital": E2, "area": "saude-indigena", "status": "Contratado", "pessoa": p1},
+                {"id": "c3", "edital": E2, "area": "saude-indigena", "status": "Contratado", "pessoa": p1},
+            ],
+        }  # fmt: skip
+        ac = regras.Acumulador({e["id"]: e for e in CONTEXTO["editais"]})
+        regras.conferir_aprovados(dados, CONTEXTO, ac)
+        avisos = _avisos(ac)
+        saude = avisos[("APROVADOS_CONTRATADO_DUPLICADO", "area:saude-indigena")]
+        sede = avisos[("APROVADOS_CONTRATADO_DUPLICADO", "area:sede")]
+        # O caso de cada área é o vínculo da pessoa naquela área; uma pessoa, um caso.
+        self.assertEqual(saude["casos"], [{"referencia": "c2", "tipo": "candidato_aprovado", "detalhe": {"vagas": 3}}])
+        self.assertEqual(sede["casos"], [{"referencia": "c1", "tipo": "candidato_aprovado", "detalhe": {"vagas": 3}}])
+        self.assertEqual((saude["quantidade"], saude["exemplos"]), (1, ["c2", "c1", "c3"]))
 
 
 class Cargas(unittest.TestCase):
@@ -294,6 +358,10 @@ class Cargas(unittest.TestCase):
         self.assertNotIn(("CARGA_VARIACAO_BRUSCA", "vaga:177980"), avisos)
         self.assertIn(("CARGA_VARIACAO_BRUSCA", "vaga:177981"), avisos)
         self.assertNotIn(("CARGA_VARIACAO_BRUSCA", "vaga:177982"), avisos)  # primeira carga
+        self.assertEqual(
+            avisos[("CARGA_VARIACAO_BRUSCA", "vaga:177979")]["casos"],
+            [{"referencia": "177979", "tipo": "vaga_empregare", "detalhe": {"antes": 1200, "depois": 300}}],
+        )
 
 
 class _BancoFalso:

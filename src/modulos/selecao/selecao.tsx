@@ -1,3 +1,10 @@
+import type {
+  CampoDoFiltro,
+  EstadoDaSelecao,
+  OpcoesDaTelaDeSelecao,
+  SnapshotDaSelecao,
+  VagaDaSelecao,
+} from "./tipos.ts";
 import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import { usarPedidoDeFiltro } from "../../app/pedido-de-filtro.js";
 import { filtrosDaSelecao } from "../../lib/filtro-da-aya.js";
@@ -12,11 +19,11 @@ import {
   filtrarVagas,
   observacoesDoRecorte,
   opcoesDosFiltros,
-} from "../../lib/selecao-do-painel.js";
+} from "../../lib/selecao-do-painel.ts";
 import { getSupabaseClient } from "../../lib/supabaseClient.js";
 import { Aviso } from "../../ui/index.js";
 import { textoDaConferencia } from "../../lib/texto-da-conferencia.js";
-import { criarEstadoDaSelecao, MENSAGEM_SEM_ACESSO } from "./estado.js";
+import { criarEstadoDaSelecao, MENSAGEM_SEM_ACESSO } from "./estado.ts";
 import {
   ativosDoRecorte,
   Filtros,
@@ -25,8 +32,8 @@ import {
   Observacoes,
   Recorte,
   Topo,
-} from "./paineis.jsx";
-import { MENSAGEM_SEM_VAGAS, TabelaDeVagas } from "./tabela.jsx";
+} from "./paineis.tsx";
+import { MENSAGEM_SEM_VAGAS, TabelaDeVagas } from "./tabela.tsx";
 
 /*
   A tela de Seleção (view `selecao`), um módulo do app: monta direto na
@@ -53,8 +60,9 @@ import { MENSAGEM_SEM_VAGAS, TabelaDeVagas } from "./tabela.jsx";
 */
 
 const NUMEROS_ZERADOS = calcularIndicadores([]);
+const VAGAS_VAZIAS: readonly VagaDaSelecao[] = Object.freeze([]);
 
-function textoDoStatus(e) {
+function textoDoStatus(e: SnapshotDaSelecao) {
   if (e.semSessao) return "Sessão não localizada";
   if (e.semAcesso) return "Sem acesso";
   if (e.erroAoCarregar && !e.carregado) return "Sem dados";
@@ -70,12 +78,18 @@ function textoDoStatus(e) {
   A tela de uma área. Monta de novo quando a área muda (`key`): filtros e a
   busca da tabela recomeçam, como recomeçavam no antigo quadro.
 */
-function TelaDaArea({ estado, e }) {
+function TelaDaArea({
+  estado,
+  e,
+}: {
+  estado: EstadoDaSelecao;
+  e: SnapshotDaSelecao;
+}) {
   const [filtros, setFiltros] = useState(FILTROS_VAZIOS);
   const escuro = usarTemaEscuro();
   const { carregado, dados, area } = e;
 
-  const vagas = dados?.vagas || [];
+  const vagas = dados?.vagas || VAGAS_VAZIAS;
   const filtradas = useMemo(
     () => filtrarVagas(vagas, filtros),
     [vagas, filtros],
@@ -95,7 +109,7 @@ function TelaDaArea({ estado, e }) {
   const vazio = carregado && !vagas.length;
   const bloqueado = e.semAcesso || e.semSessao;
 
-  const trocarFiltro = (campo, valores) =>
+  const trocarFiltro = (campo: CampoDoFiltro, valores: readonly string[]) =>
     setFiltros((atuais) => ({ ...atuais, [campo]: valores }));
   // "Abrir" numa resposta com número da Aya: a tela abre já recortada.
   usarPedidoDeFiltro("selecao", carregado, (pedido) =>
@@ -104,7 +118,7 @@ function TelaDaArea({ estado, e }) {
     ),
   );
   // Barra do ranking: filtra a unidade; clicar de novo na mesma tira o filtro.
-  const alternarUnidade = (unidade) =>
+  const alternarUnidade = (unidade: string) =>
     setFiltros((atuais) => ({
       ...atuais,
       unidades:
@@ -189,7 +203,7 @@ function TelaDaArea({ estado, e }) {
   );
 }
 
-export function TelaDeSelecao({ estado }) {
+export function TelaDeSelecao({ estado }: { estado: EstadoDaSelecao }) {
   const e = useSyncExternalStore(estado.assinar, estado.obter);
   const { area: areaDoApp } = usarAreaAtual();
 
@@ -219,7 +233,7 @@ export function montarSelecao({
   areaAtual = () => obterDadosDoMonitoramento().areaAtual,
   baixar,
   armazenamento,
-} = {}) {
+}: OpcoesDaTelaDeSelecao = {}) {
   const estado = criarEstadoDaSelecao({
     supabase,
     toast,

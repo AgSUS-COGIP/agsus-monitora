@@ -32,8 +32,14 @@ import {
   normalizarPayload,
   PAINEL_DE_SELECAO,
   payloadMudou,
-} from "../../lib/selecao-do-painel.js";
+} from "../../lib/selecao-do-painel.ts";
 import { armazenamentoDePayload } from "../../modules/cache-de-payload-indexeddb.js";
+import type {
+  EstadoDaSelecao,
+  OpcoesDoEstadoDaSelecao,
+  SnapshotDaSelecao,
+  VagaDaSelecao,
+} from "./tipos.ts";
 
 export const MENSAGEM_SEM_SESSAO =
   "Sessão não localizada. Entre de novo no MONITORA.";
@@ -43,7 +49,7 @@ export const MENSAGEM_SEM_ACESSO = "Sem acesso à Seleção";
 const VERSAO_DA_COPIA = `1:${import.meta.url}`;
 const TEMPO_LIMITE_MS = 30000;
 
-const ESTADO_INICIAL = Object.freeze({
+const ESTADO_INICIAL: SnapshotDaSelecao = Object.freeze({
   area: "",
   dados: null,
   carregado: false,
@@ -55,15 +61,21 @@ const ESTADO_INICIAL = Object.freeze({
   carregadoEm: 0,
 });
 
-function mensagemDaCarga(erro) {
-  if (erro?.code === "PGRST202")
+function codigoDoErro(erro: unknown) {
+  return erro !== null && typeof erro === "object" && "code" in erro
+    ? erro.code
+    : undefined;
+}
+
+function mensagemDaCarga(erro: unknown): string {
+  if (codigoDoErro(erro) === "PGRST202")
     return "A aba Seleção ainda não foi publicada no banco.";
-  if (erro?.code === "42501")
+  if (codigoDoErro(erro) === "42501")
     return "Seu acesso não inclui a seleção desta área.";
   return mensagemDeFalha(erro);
 }
 
-function baixarNoNavegador(conteudo, nome) {
+function baixarNoNavegador(conteudo: string, nome: string) {
   const arquivo = new Blob([conteudo], { type: "text/csv;charset=utf-8" });
   const url = URL.createObjectURL(arquivo);
   const ancora = document.createElement("a");
@@ -80,22 +92,22 @@ export function criarEstadoDaSelecao({
   armazenamento = armazenamentoDePayload,
   agora = () => Date.now(),
   tempoLimiteMs = TEMPO_LIMITE_MS,
-} = {}) {
-  let estado = ESTADO_INICIAL;
+}: OpcoesDoEstadoDaSelecao = {}): EstadoDaSelecao {
+  let estado: SnapshotDaSelecao = ESTADO_INICIAL;
   let pedido = 0;
-  const ouvintes = new Set();
+  const ouvintes = new Set<() => void>();
   const copias = criarCacheDePayload({
     armazenamento,
     versao: VERSAO_DA_COPIA,
     tipo: PAINEL_DE_SELECAO,
   });
 
-  function publicar(mudancas) {
+  function publicar(mudancas: Partial<SnapshotDaSelecao>) {
     estado = { ...estado, ...mudancas };
     for (const ouvinte of ouvintes) ouvinte();
   }
 
-  const mostrar = (payload, extra = {}) =>
+  const mostrar = (payload: unknown, extra: Partial<SnapshotDaSelecao> = {}) =>
     publicar({
       dados: normalizarPayload(payload || {}),
       carregado: true,
@@ -107,11 +119,11 @@ export function criarEstadoDaSelecao({
       ...extra,
     });
 
-  const perderAcesso = (erro) =>
+  const perderAcesso = (erro: unknown) =>
     publicar({
       ...ESTADO_INICIAL,
       area: estado.area,
-      semAcesso: erro?.code === "42501",
+      semAcesso: codigoDoErro(erro) === "42501",
       erroAoCarregar: mensagemDaCarga(erro),
     });
 
@@ -123,7 +135,7 @@ export function criarEstadoDaSelecao({
     pedido += 1;
     publicar(ESTADO_INICIAL);
   }
-  let identidade;
+  let identidade: string | null | undefined;
   supabase?.auth?.onAuthStateChange?.((_evento, sessao) => {
     const atual = sessao?.user?.id || null;
     if (atual === identidade) return;
@@ -133,7 +145,8 @@ export function criarEstadoDaSelecao({
   });
 
   /* O payload da área; lança o erro do banco (ou o de rede/tempo). */
-  async function buscar(area) {
+  async function buscar(area: string): Promise<unknown> {
+    if (!supabase) throw new Error("Sem conexão com o banco.");
     const { data, error } = await comTempoLimite(
       supabase.rpc("get_selecao_da_area", { p_area: area }),
       tempoLimiteMs,
@@ -143,8 +156,8 @@ export function criarEstadoDaSelecao({
   }
 
   /* O id do usuário da sessão; `null` sem sessão. Lança em falha de rede. */
-  async function usuarioDaSessao() {
-    if (!supabase.auth?.getSession) return "";
+  async function usuarioDaSessao(): Promise<string | null> {
+    if (!supabase?.auth?.getSession) return "";
     const { data: sessao } = await comTempoLimite(
       supabase.auth.getSession(),
       tempoLimiteMs,
@@ -158,7 +171,7 @@ export function criarEstadoDaSelecao({
     na mesma área, a tela fica e a releitura corre por trás. Resposta de um
     pedido antigo é ignorada.
   */
-  async function carregar(area = estado.area) {
+  async function carregar(area = estado.area): Promise<boolean> {
     if (!area) return false;
     const meu = ++pedido;
     const primeira = area !== estado.area || !estado.carregado;
@@ -191,12 +204,12 @@ export function criarEstadoDaSelecao({
         const novo = await revalidarPayload({
           guardado,
           buscar: () => buscar(area),
-          guardar: (payload) => copias.guardar(contexto, payload),
+          guardar: (payload: unknown) => copias.guardar(contexto, payload),
           mudou: payloadMudou,
-          aoMudar: (payload) => {
+          aoMudar: (payload: unknown) => {
             if (meu === pedido) mostrar(payload);
           },
-          aoPerderAcesso: (erro) => {
+          aoPerderAcesso: (erro: unknown) => {
             if (meu === pedido) perderAcesso(erro);
           },
           apagarTudo: () => copias.apagarTudo(),
@@ -234,14 +247,14 @@ export function criarEstadoDaSelecao({
     }
   }
 
-  function exportarCsv(vagas) {
+  function exportarCsv(vagas: readonly VagaDaSelecao[]) {
     const dia = hojeEmBrasilia(new Date(agora()));
     baixar(csvDaSelecao(vagas), `selecao-${estado.area}-${dia}.csv`);
   }
 
   return {
     obter: () => estado,
-    assinar(ouvinte) {
+    assinar(ouvinte: () => void) {
       ouvintes.add(ouvinte);
       return () => ouvintes.delete(ouvinte);
     },

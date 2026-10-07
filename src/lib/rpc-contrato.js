@@ -604,7 +604,7 @@ export const CONTRATO_RPC = {
     argumentos: [],
     critica: false,
     resumo:
-      "Últimas 10 execuções de cada carga (análises por origem, entrevistas, seleção, robô da Empregare com vagas pedidas/baixadas/falhas/recusadas e quem disparou — 20261005170000 —, conferências de consistência com avisos novos/abertos/resolvidos — 20261005210000; análises com encerrada_por_inatividade — 20261007170000) e das tarefas agsus_* do pg_cron, para a seção Status das atualizações (só administrador global).",
+      "Últimas 10 execuções de cada carga (análises por origem, entrevistas, seleção, robô da Empregare com vagas pedidas/baixadas/falhas/recusadas e quem disparou — 20261005170000 —, conferências de consistência com avisos novos/abertos/resolvidos — 20261005210000; análises com encerrada_por_inatividade — 20261007170000; expurgo diário dos anexos do chat com lotes/removidos/confirmados/falhas/pendentes — 20261007250000) e das tarefas agsus_* do pg_cron, para a seção Status das atualizações (só administrador global).",
   },
   // ── Painel dos robôs (Status das atualizações, 20261007190000_painel_dos_robos.sql) ──
   get_painel_dos_robos: {
@@ -637,7 +637,7 @@ export const CONTRATO_RPC = {
     ],
     critica: false,
     resumo:
-      "Casos de um aviso de conferência, ou de todos os avisos que a pessoa vê (com busca), em páginas de até 1000 (20261007120000): código, nome, edital, vaga, responsável e situação da análise (só se for da área e do recorte de quem lê), o motivo e, no candidato em dois editais, as análises dele. Busca por código ou nome, sem acento. Sem CPF. Gaveta dos avisos e CSV.",
+      "Casos de um aviso de conferência, ou de todos os avisos que a pessoa vê (com busca), em páginas de até 1000 (20261007120000; 20261007240000 resolve todos os módulos): tipo e resolução (ok, removido, sem_acesso), código, nome, edital, vaga, situação e datas da análise ou do registro do módulo (aprovado, entrevista, lista, ajuste, vaga), com a permissão daquele módulo; o motivo; as análises do candidato em dois editais e as vagas da pessoa na lista de aprovados. Busca por código, nome ou vaga, sem acento. Referência só quando não é UUID. Sem CPF. Gaveta dos avisos e CSV.",
   },
   ignorar_aviso_conferencia: {
     argumentos: ["p_id", "p_motivo"],
@@ -1074,13 +1074,13 @@ export const CONTRATO_RPC = {
     argumentos: [],
     critica: false,
     resumo:
-      "Só administrador global (42501): põe na fila os arquivos nunca anexados (1 dia) e devolve até 100 caminhos do bucket chat-anexos para remover pela API do Storage.",
+      "Só administrador global (42501) — e a service_role do job diário (20261007250000): põe na fila os arquivos nunca anexados (1 dia) e devolve até 100 caminhos do bucket chat-anexos para remover pela API do Storage.",
   },
   confirmar_expurgo_anexos_chat: {
     argumentos: ["p_caminhos"],
     critica: false,
     resumo:
-      "Só administrador global (42501): marca como expurgados os caminhos da fila que já saíram do Storage. Devolve {confirmados, pendentes}.",
+      "Só administrador global (42501) — e a service_role do job diário (20261007250000): marca como expurgados os caminhos da fila que já saíram do Storage. Devolve {confirmados, pendentes}.",
   },
   // ── Retenção das mensagens do chat (20261005190000_chat_retencao_das_mensagens.sql)
   obter_retencao_chat: {

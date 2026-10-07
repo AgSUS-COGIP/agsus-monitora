@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 
 import { criarEstadoDasEntrevistas } from "../../src/modulos/entrevistas/estado.js";
 import { criarEstadoDosRecursos } from "../../src/modulos/recursos/estado.js";
-import { criarEstadoDaSelecao } from "../../src/modulos/selecao/estado.js";
+import { criarEstadoDaSelecao } from "../../src/modulos/selecao/estado.ts";
 
 /*
   O nome do CSV leva o dia de Brasília. Com toISOString o dia era o de UTC:

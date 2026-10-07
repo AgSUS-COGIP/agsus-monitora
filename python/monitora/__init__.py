@@ -8,6 +8,7 @@ Base Python comum do MONITORA (guia: docs/python-no-monitora.md).
     monitora.execucao      disparo, identificador e resumo da execução no Actions
 
 Só biblioteca padrão: o pacote não pesa nas funções da Vercel nem nos jobs.
-Quem importa: scripts/robo-empregare/, scripts/conferencias/ e as funções
+Quem importa: scripts/robo-empregare/, scripts/conferencias/,
+scripts/pre_classificacao/, scripts/expurgo_anexos_chat/ e as funções
 api/*.py que precisarem (sys.path + "includeFiles" no vercel.json).
 """

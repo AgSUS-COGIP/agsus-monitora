@@ -16,7 +16,7 @@ import { linhasDoPayload } from "../../lib/analises-curriculares.js";
 import { parametroDeAreaDaRpc } from "../../lib/area-do-painel-de-analises.js";
 import { normalizarPayload as payloadDasEntrevistas } from "../../lib/entrevistas-do-painel.js";
 import { enriquecerRecursos } from "../../lib/recursos-dos-candidatos.js";
-import { normalizarPayload as payloadDaSelecao } from "../../lib/selecao-do-painel.js";
+import { normalizarPayload as payloadDaSelecao } from "../../lib/selecao-do-painel.ts";
 import { getSupabaseClient } from "../../lib/supabaseClient.js";
 
 const VALIDADE_MS = 60 * 1000;
