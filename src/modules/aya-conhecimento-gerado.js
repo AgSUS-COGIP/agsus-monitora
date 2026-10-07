@@ -2904,7 +2904,7 @@ export const VERBETES_AYA = Object.freeze([
       'Na gaveta dos avisos, o botão com o número de casos abre a lista de todos os casos do aviso, 50 por vez ("Mostrar mais" traz os seguintes). Cada caso mostra o código do candidato na Empregare, o nome, o edital, a vaga, o responsável pela análise e o motivo: por exemplo, a data da análise e a data da inscrição, a nota e a nota mínima, a nota e a soma das parciais, a experiência e o teto. No candidato analisado em dois editais ativos aparecem as análises dele em cada edital, com vaga e situação, e quantas ficaram fora do seu acesso. O campo do aviso busca por código ou nome (sem acento) e "Exportar CSV" baixa todos os casos do aviso. O campo do topo da gaveta procura o candidato em todos os avisos. Clicar num caso das análises abre o Painel das análises já buscando pelo nome e com a análise aberta, para conferir e corrigir na planilha; o aviso some na conferência seguinte, quando o problema não aparecer mais. O nome, a vaga e o responsável só aparecem para quem tem a área e o edital da análise no seu recorte.',
     fato: "",
     fonte:
-      "src/modulos/conferencias/avisos-de-conferencia.jsx; supabase/migrations/20261007120000_casos_dos_avisos_de_conferencia.sql",
+      "src/modulos/conferencias/avisos-de-conferencia.tsx; supabase/migrations/20261007120000_casos_dos_avisos_de_conferencia.sql",
   },
   {
     arquivo: "regras-das-conferencias.md",
@@ -2926,7 +2926,7 @@ export const VERBETES_AYA = Object.freeze([
       'Os casos de todos os módulos mostram quem é e o que conferir. Na lista de aprovados: o nome, o código do candidato na Empregare (quando há), o edital, a vaga e a situação com a data (por exemplo, "Contratado em 03/02/2026"); no "Contratado em duas vagas" aparecem todas as vagas da pessoa nas listas vigentes, com edital, vaga, situação e data, e quantas ficaram fora do seu acesso. Clicar no caso abre a Lista de aprovados só com as vagas daquela pessoa; "Ver todos" tira o recorte. Nas entrevistas: nome, código, edital, vaga, parecer e nota, e o clique abre Entrevistas já buscando o candidato, com a entrevista aberta. Na classificação aparecem a lista (tipo e data), a vaga (código e nome) ou o candidato do ajuste. Se o registro não existe mais, o caso mostra "Registro removido"; se ele é de uma área ou edital fora do seu acesso, "Sem acesso" — nunca o identificador interno.',
     fato: "",
     fonte:
-      "src/lib/avisos-de-conferencia.js; supabase/migrations/20261007240000_casos_dos_avisos_resolvidos.sql",
+      "src/lib/avisos-de-conferencia.ts; supabase/migrations/20261007240000_casos_dos_avisos_resolvidos.sql",
   },
   {
     arquivo: "regras-das-configuracoes.md",

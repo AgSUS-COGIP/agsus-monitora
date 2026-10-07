@@ -31,7 +31,7 @@ import {
 } from "./paineis.jsx";
 import { VisaoDeRoteiros } from "./roteiros.jsx";
 import { MENSAGEM_SEM_ENTREVISTAS, TabelaDeEntrevistas } from "./tabela.jsx";
-import { SeloDeAvisos } from "../conferencias/avisos-de-conferencia.jsx";
+import { SeloDeAvisos } from "../conferencias/avisos-de-conferencia.tsx";
 
 /*
   A tela de Entrevistas (view `entrevistas`), um módulo do app: monta direto

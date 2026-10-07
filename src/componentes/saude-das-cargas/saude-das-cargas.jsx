@@ -14,7 +14,7 @@ import {
   visaoSimples,
 } from "../../lib/saude-das-cargas.js";
 import { getSupabaseClient } from "../../lib/supabaseClient.js";
-import { CartaoDeAvisos } from "../../modulos/conferencias/avisos-de-conferencia.jsx";
+import { CartaoDeAvisos } from "../../modulos/conferencias/avisos-de-conferencia.tsx";
 import { Icone } from "../icone.jsx";
 import { criarEstadoDaSaude } from "./estado.js";
 import { Acompanhamento, UltimasExecucoes } from "./execucoes-dos-robos.jsx";
