@@ -921,7 +921,7 @@ Migration `20261001120000_saude_das_cargas.sql` (rollback em `supabase/rollback/
 - A tela mostra uma linha por aba (análises por área, entrevistas, seleção, tarefas do banco) e uma
   frase no topo; o selo (em dia, atrasada, falhou, em andamento, ainda sem carga — este não pede
   atenção: a SEDE ainda não tem planilha de análise) e os prazos ficam no front, em
-  `src/lib/saude-das-cargas.js`: análises incrementais atrasadas depois de 1 h; entrevistas e
+  `src/lib/saude-das-cargas.ts`: análises incrementais atrasadas depois de 1 h; entrevistas e
   seleção, de 26 h; tarefas a cada 2 min, de 15 min. A seção é
   `src/componentes/saude-das-cargas/`.
 

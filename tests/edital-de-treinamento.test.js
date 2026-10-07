@@ -10,7 +10,7 @@ import {
 import {
   normalizarPainel,
   opcoesDosEditais,
-} from "../src/lib/painel-dos-robos.js";
+} from "../src/lib/painel-dos-robos.ts";
 import { documentoOficial } from "../src/lib/classificacao/documento-sei.js";
 import {
   instantaneoDaLista,

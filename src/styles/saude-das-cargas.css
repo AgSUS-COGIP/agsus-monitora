@@ -264,7 +264,7 @@
   color: var(--text-secondary);
 }
 
-/* ── Rodar com opções (rodar-com-opcoes.jsx) ─────────────────────────── */
+/* ── Rodar com opções (rodar-com-opcoes.tsx) ─────────────────────────── */
 .robos-opcoes__form {
   display: flex;
   flex: 1;
@@ -406,7 +406,7 @@
   }
 }
 
-/* ── Acompanhamento e últimas execuções (execucoes-dos-robos.jsx) ────── */
+/* ── Acompanhamento e últimas execuções (execucoes-dos-robos.tsx) ────── */
 .robos-acompanhamento {
   display: grid;
   gap: var(--space-1-5);

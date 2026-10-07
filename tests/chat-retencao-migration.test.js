@@ -237,7 +237,7 @@ describe("migration da retenção do chat: RPCs e exclusão", () => {
     expect(MIGRATION).toContain(
       `v_comando constant text := 'select private."FC_CHAT_RETENCAO_DIARIA"();';`,
     );
-    expect(ler("src/lib/saude-das-cargas.js")).toContain(
+    expect(ler("src/lib/saude-das-cargas.ts")).toContain(
       "agsus_chat_retencao_diaria:",
     );
   });

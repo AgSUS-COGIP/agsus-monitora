@@ -36,7 +36,7 @@ select cron.alter_job(
 ```
 
 Depois, atualize esta tabela, a lista comentada na migration (para o próximo ambiente) e o
-"esperado" em `src/lib/saude-das-cargas.js`.
+"esperado" em `src/lib/saude-das-cargas.ts`.
 
 ## A chave (token do GitHub)
 
