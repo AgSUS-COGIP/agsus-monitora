@@ -103,22 +103,11 @@ a ativa). Sem nenhum link lido, mostra ainda o tamanho do `page_source` e se ele
 | `SUPABASE_URL`              | já existe (o mesmo das planilhas)                                                                    |
 | `SUPABASE_SERVICE_ROLE_KEY` | já existe (o mesmo das planilhas)                                                                    |
 
-**Vercel** — projeto do MONITORA → Settings → **Environment Variables** (Production):
-
-| Variável                | O que é                                                                                                                                  |
-| ----------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
-| `GITHUB_DISPATCH_TOKEN` | fine-grained token do GitHub **só** com o repositório `AgSUS-COGIP/agsus-monitora` e a permissão **Actions: read and write** (nada mais) |
-
-Para criar o token: GitHub → foto → Settings → Developer settings → Personal access tokens →
-**Fine-grained tokens** → Generate new token → Resource owner **AgSUS-COGIP** → Only select
-repositories: `agsus-monitora` → Repository permissions: **Actions → Read and write** → Generate.
-Cole na Vercel e faça um novo deploy (as variáveis valem a partir do próximo). Anote a validade: ao
-vencer, o botão passa a dizer que o GitHub recusou o pedido. Se a organização exigir aprovação de
-tokens, um dono da organização precisa aprovar.
-
-Sem o token, a tela mostra o estado normalmente e o botão diz "Falta configurar
-GITHUB_DISPATCH_TOKEN na Vercel". O token nunca vai ao navegador: só a função `api/rodar-carga.js`
-o usa.
+**Supabase Vault** — o **Rodar agora** e a agenda pedem a execução pelo banco (RPC
+`disparar_robo`), com uma chave só: o token fine-grained do GitHub cadastrado no Vault com o nome
+`github_disparo_robos` (como criar e trocar: [agenda-dos-robos.md](agenda-dos-robos.md)). A
+variável `GITHUB_DISPATCH_TOKEN` da Vercel não é mais usada e pode ser apagada. A chave nunca vai
+ao navegador.
 
 ## Como rodar
 
@@ -192,7 +181,7 @@ dado de candidato em issue, PR ou log.
 | `Já há uma execução do robô da Empregare em andamento`     | Outra execução está aberta. Espere; uma execução que morreu sem fechar é liberada sozinha depois de 3 h.                                                                                                                          |
 | `… respondeu 404` com `listar_vagas_empregare`             | A migration `20261005170000_robo_empregare.sql` ainda não foi aplicada.                                                                                                                                                           |
 | `… respondeu 401`                                          | A `service_role` do Supabase mudou: atualize `SUPABASE_SERVICE_ROLE_KEY`.                                                                                                                                                         |
-| Botão: "O GitHub recusou o pedido"                         | O `GITHUB_DISPATCH_TOKEN` venceu ou não tem "Actions: read and write" no repositório. Gere outro e atualize na Vercel.                                                                                                            |
+| "A chave de disparo dos robôs expirou ou foi recusada"     | O token do Vault (`github_disparo_robos`) venceu ou não tem "Actions: read and write" no repositório. Gere outro e troque o valor no Vault, com o mesmo nome (docs/agenda-dos-robos.md).                                          |
 
 Situações da execução: **CONCLUIDA** (todas as vagas gravadas), **PARCIAL** (alguma vaga falhou,
 foi recusada ou ficou no meio — o workflow fica vermelho para avisar), **FALHOU** (erro geral ou
@@ -218,13 +207,13 @@ computador: rode-os pelo GitHub.
   `planilha_empregare.py` (leitura do Excel e chave), `requirements.txt` (separado do da raiz,
   para não pesar as funções da Vercel). RPC e mascaramento vêm da base comum `python/monitora/`
   (`supabase_rpc.py`, `mascaramento.py`; guia em `docs/python-no-monitora.md`).
-- `api/rodar-carga.js` e `src/lib/robos-de-carga.js`: o **Rodar agora** (lista fixa robô →
-  workflow, regras do botão).
+- `src/lib/robos-de-carga.js` e a RPC `disparar_robo` (`20261008140000_agenda_dos_robos_pelo_banco.sql`):
+  o **Rodar agora** (lista fixa robô → workflow, opções, quem pode, regras do botão).
 - `src/componentes/saude-das-cargas/` e `src/lib/saude-das-cargas.js`: a tela de status.
 - `supabase/migrations/20261005170000_robo_empregare.sql`, `20261006080000_robo_empregare_vagas_do_quadro.sql`
   e `20261007160000_link_do_candidato_na_empregare.sql`
   (vagas também do quadro do edital), cada uma com `ensaios/` e `rollback/`.
-- Testes: `tests/python/test_robo_empregare.py`, `tests/rodar-carga-api.test.js`,
+- Testes: `tests/python/test_robo_empregare.py`, `tests/agenda-dos-robos-migration.test.js`,
   `tests/robo-empregare-migration.test.js`, `tests/robo-empregare-vagas-do-quadro.test.js`,
   `tests/saude-das-cargas.test.js`,
   `tests/componentes/saude-das-cargas.test.js`.

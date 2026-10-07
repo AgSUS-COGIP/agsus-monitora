@@ -21,6 +21,10 @@ const ANALISES_INCREMENTAL_CFG = {
   STAGING_CHUNK_SIZE: 300,
   RPC_BATCH_SIZE: 250,
   MAX_RUNTIME_MS: 240000,
+  // [sempre-avanca] Depois de ler a planilha (que pode levar minutos), sobra pelo menos isto
+  // para comparar e processar. Sem isso, uma leitura lenta gastava o prazo inteiro e cada
+  // continuacao relia a planilha sem nunca comparar a primeira linha (07/10/2026).
+  MIN_WORK_MS: 4 * 60 * 1000,
   RPC_RESERVE_MS: 45000,
   CONTINUATION_DELAY_MS: 60000,
   CONTINUATION_HANDLER: 'continuarSyncAnalisesCurricularesIncremental',
@@ -66,7 +70,7 @@ function executarSyncAnalisesCurricularesIncremental_(options) {
     return { ok: false, skipped: true, motivo: 'Outra execucao do projeto esta em andamento.' };
   }
 
-  const deadline = Date.now() + ANALISES_INCREMENTAL_CFG.MAX_RUNTIME_MS;
+  let deadline = Date.now() + ANALISES_INCREMENTAL_CFG.MAX_RUNTIME_MS;
 
   try {
     obterConfiguracaoSupabaseAnalises_();
@@ -109,6 +113,7 @@ function executarSyncAnalisesCurricularesIncremental_(options) {
     }
 
     const snapshot = montarSnapshotAnalisesIncremental_();
+    deadline = Math.max(deadline, Date.now() + ANALISES_INCREMENTAL_CFG.MIN_WORK_MS); // [sempre-avanca]
 
     // [nao-trava] Antes de tudo, o banco diz se o sync guardado ainda pode seguir. Se nao pode
     // (erro, inexistente, parado ha mais de 30 min), o estado local sai e um sync novo comeca
@@ -275,9 +280,10 @@ function montarSnapshotAnalisesIncremental_() {
 function compararEEnviarAlteradosAnalisesIncremental_(state, snapshot, deadline) {
   let index = Number(state.compare_index || 0);
   const rows = snapshot.fatoAtivo;
+  let lotesNestaExecucao = 0; // [sempre-avanca] o primeiro lote sai mesmo com o prazo apertado
 
   while (index < rows.length) {
-    if (Date.now() >= deadline - ANALISES_INCREMENTAL_CFG.RPC_RESERVE_MS) {
+    if (lotesNestaExecucao > 0 && Date.now() >= deadline - ANALISES_INCREMENTAL_CFG.RPC_RESERVE_MS) {
       state.compare_index = index;
       salvarEstadoAnalisesIncremental_(state);
       return agendarContinuacaoAnalisesIncremental_(state, 'Comparacao incremental pausada por limite de tempo.');
@@ -312,6 +318,7 @@ function compararEEnviarAlteradosAnalisesIncremental_(state, snapshot, deadline)
     }
 
     index += chunk.length;
+    lotesNestaExecucao++;
     state.compare_index = index;
     state.phase = 'COMPARING';
     marcarProgressoAnalisesIncremental_(state);
@@ -364,7 +371,8 @@ function enviarStagingIdempotenteAnalisesIncremental_(rows) {
 }
 
 function processarLotesAnalisesIncremental_(state, snapshot, deadline) {
-  while (Date.now() < deadline - ANALISES_INCREMENTAL_CFG.RPC_RESERVE_MS) {
+  let lotesProcessados = 0; // [sempre-avanca] o primeiro lote sai mesmo com o prazo apertado
+  while (lotesProcessados === 0 || Date.now() < deadline - ANALISES_INCREMENTAL_CFG.RPC_RESERVE_MS) {
     const remote = consultarSyncAnalisesIncremental_(state.sync_id);
     if (!remote) return pendenciaAnalisesIncremental_(state, 'Log remoto nao encontrado durante processamento.', true);
     if (remote.status === 'processado') return concluirAnalisesIncremental_(state, remote, snapshot);
@@ -411,6 +419,7 @@ function processarLotesAnalisesIncremental_(state, snapshot, deadline) {
     delete state.inFlight;
     state.cursor = Number(result.cursor || 0);
     state.fato_concluido = result.concluido_fato;
+    lotesProcessados++;
     marcarProgressoAnalisesIncremental_(state);
     salvarEstadoAnalisesIncremental_(state);
     Logger.log('Lote incremental confirmado. cursor=' + state.cursor + ', concluido=' + state.fato_concluido);

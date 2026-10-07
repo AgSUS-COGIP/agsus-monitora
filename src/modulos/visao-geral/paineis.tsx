@@ -1,3 +1,10 @@
+import type {
+  CampoDoFiltro,
+  PropsDoPainel,
+  PropsComTextos,
+  PropsDoBloco,
+  SnapshotDaVisaoGeral,
+} from "./tipos.ts";
 import { useState } from "react";
 import { MultiSelectBusca } from "../../componentes/multi-select-busca.jsx";
 import {
@@ -14,7 +21,7 @@ import {
   processosPorProjeto,
   rotuloDoAtalho,
   VALOR_DO_INDICADOR,
-} from "../../lib/visao-geral.js";
+} from "../../lib/visao-geral.ts";
 import {
   ChipDeFiltro,
   ChipsDeFiltro,
@@ -35,18 +42,25 @@ import {
   prazos da semana ficam nas boas-vindas e os críticos no indicador.
 */
 
-const fmt = (valor) => formatNumberBR(valor);
-const plural = (n, um, varios) => `${fmt(n)} ${n === 1 ? um : varios}`;
+const fmt = (valor: number) => formatNumberBR(valor);
+const plural = (n: number, um: string, varios: string) =>
+  `${fmt(n)} ${n === 1 ? um : varios}`;
 
 /* ── Topo ───────────────────────────────────────────────────────────── */
 
-const horaCurta = (tempo) =>
+const horaCurta = (tempo: number) =>
   new Date(tempo).toLocaleTimeString("pt-BR", {
     hour: "2-digit",
     minute: "2-digit",
   });
 
-export function Topo({ e, aoExportar }) {
+export function Topo({
+  e,
+  aoExportar,
+}: {
+  e: SnapshotDaVisaoGeral;
+  aoExportar: () => void;
+}) {
   const status = !e.carregado
     ? "Carregando dados..."
     : e.carregadoEm
@@ -64,7 +78,13 @@ export function Topo({ e, aoExportar }) {
 
 /* ── Filtros ────────────────────────────────────────────────────────── */
 
-function CampoDoFiltro({ campo, rotulo, todos, e, estado }) {
+function CampoDoFiltro({
+  campo,
+  rotulo,
+  todos,
+  e,
+  estado,
+}: PropsDoPainel & { campo: CampoDoFiltro; rotulo: string; todos: string }) {
   const id = `visaoGeralFiltro-${campo}`;
   return (
     <div className="ui-campo">
@@ -91,7 +111,7 @@ function CampoDoFiltro({ campo, rotulo, todos, e, estado }) {
   anos saem dos números, "11/2026"). Outra seleção de editais é "Seleção
   própria".
 */
-function CampoDoAno({ e, estado }) {
+function CampoDoAno({ e, estado }: PropsDoPainel) {
   const editais = e.opcoes.edital;
   const atual = anoDaSelecao(e.filtros.edital, editais);
   return (
@@ -123,10 +143,10 @@ function CampoDoAno({ e, estado }) {
   );
 }
 
-const resumoDosValores = (valores) =>
+const resumoDosValores = (valores: readonly string[]) =>
   valores.length > 2 ? `${valores.length} selecionados` : valores.join(", ");
 
-export function Filtros({ e, estado, textos }) {
+export function Filtros({ e, estado, textos }: PropsComTextos) {
   const extras = CAMPOS_DO_FILTRO.filter((c) => c.mais);
   const extrasAtivos = extras.filter((c) => e.filtros[c.campo].length).length;
   const [maisAberto, setMaisAberto] = useState(extrasAtivos > 0);
@@ -206,7 +226,7 @@ export function Filtros({ e, estado, textos }) {
 
 /* ── Indicadores ────────────────────────────────────────────────────── */
 
-export function Indicadores({ e, estado, textos }) {
+export function Indicadores({ e, estado, textos }: PropsComTextos) {
   return (
     <GradeDeKpis
       tour="visao-geral-kpis"
@@ -240,7 +260,7 @@ export function Indicadores({ e, estado, textos }) {
 
 /* ── Bloco com título e lista ───────────────────────────────────────── */
 
-function Bloco({ id, titulo, className, children }) {
+function Bloco({ id, titulo, className, children }: PropsDoBloco) {
   return (
     <section
       className={`ui-card ui-pilha visao-geral-bloco ${className}`}
@@ -256,7 +276,7 @@ function Bloco({ id, titulo, className, children }) {
 
 /* ── Processos por projeto (Projetos) ───────────────────────────────── */
 
-export function ProcessosPorProjeto({ e, estado }) {
+export function ProcessosPorProjeto({ e, estado }: PropsDoPainel) {
   const projetos = processosPorProjeto(e.filtradas);
   if (!e.carregado || !projetos.length) return null;
   const filtrado = e.filtros.unidade.length === 1 ? e.filtros.unidade[0] : null;
@@ -305,7 +325,7 @@ export function ProcessosPorProjeto({ e, estado }) {
 
 /* ── Fases ──────────────────────────────────────────────────────────── */
 
-export function Fases({ e, estado }) {
+export function Fases({ e, estado }: PropsDoPainel) {
   const fases = fasesDosProcessos(e.filtradas);
   const filtrada = e.filtros.fase.length === 1 ? e.filtros.fase[0] : null;
   return (
@@ -352,7 +372,7 @@ export function Fases({ e, estado }) {
 
 /* ── Pós-resultado ──────────────────────────────────────────────────── */
 
-export function PosResultado({ e, estado }) {
+export function PosResultado({ e, estado }: PropsDoPainel) {
   const itens = posResultado(e.filtradas, { comListas: e.comListas })
     .filter(({ quantos, codigo }) => quantos || e.atalho === `pos:${codigo}`)
     .map(({ codigo, rotulo, quantos, pessoas }) => ({

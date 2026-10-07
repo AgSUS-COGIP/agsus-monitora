@@ -41,7 +41,7 @@ import {
   Topo,
 } from "./paineis.jsx";
 import { MENSAGEM_SEM_ENTREVISTAS, TabelaDeEntrevistas } from "./tabela.jsx";
-import { SeloDeAvisos } from "../conferencias/avisos-de-conferencia.jsx";
+import { SeloDeAvisos } from "../conferencias/avisos-de-conferencia.tsx";
 
 /*
   O PAINEL DE ENTREVISTAS (view `entrevistas`, "acompanhar"; gestão e

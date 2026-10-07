@@ -1,0 +1,383 @@
+/*
+  O movimento da mascote da Aya (mascote.tsx, desenho.tsx): só transform e
+  opacity, por `data-estado` no <svg>. Cada parte gira em volta do próprio
+  pivô, em coordenadas do viewBox (transform-box: view-box). As "-pose"
+  mudam por transição (troca suave de estado); as de dentro, por animação.
+
+  O piscar e o arrepio das penas da cabeça são sorteados e vêm por Web
+  Animations (mascote.tsx). Movimento reduzido: tudo parado, menos o piscar.
+  Aba oculta: animações pausadas.
+*/
+
+.mascote {
+  --olho-x: 0;
+  --olho-y: 0;
+  --mascote-troca: 420ms cubic-bezier(0.3, 0.7, 0.3, 1);
+  display: block;
+  flex: none;
+  overflow: visible;
+  user-select: none;
+}
+
+.mascote * {
+  transform-box: view-box;
+}
+
+/* ---------- Pivôs ---------- */
+
+.mascote__respiro {
+  transform-origin: 120px 166px;
+}
+.mascote__salto {
+  transform-origin: 120px 176px;
+}
+.mascote__cabeca-pose,
+.mascote__cabeca {
+  transform-origin: 124px 80px;
+}
+.mascote__penas-da-cabeca {
+  transform-origin: 114px 40px;
+}
+.mascote__palpebra {
+  transform-origin: 134px 43px;
+  transform: scaleY(0);
+  transition: transform 260ms ease-in-out;
+}
+.mascote[data-versao="simples"] .mascote__palpebra {
+  transform-origin: 14.5px 8.5px;
+}
+.mascote__iris {
+  transform: translate(
+    calc(var(--olho-x) * 1.7px),
+    calc(var(--olho-y) * 1.5px)
+  );
+  transition: transform 160ms ease-out;
+}
+.mascote[data-versao="simples"] .mascote__iris {
+  transform: translate(
+    calc(var(--olho-x) * 0.8px),
+    calc(var(--olho-y) * 0.8px)
+  );
+}
+.mascote__olho-fechado {
+  opacity: 0;
+  transition: opacity 200ms ease;
+}
+.mascote__bico-inferior {
+  transform-origin: 145px 69px;
+  transition: transform 200ms ease-out;
+}
+.mascote__asa-pose,
+.mascote__asa {
+  transform-origin: 118px 88px;
+}
+.mascote__asa-pose {
+  transition: transform var(--mascote-troca);
+}
+.mascote__asa-aberta-pose,
+.mascote__asa-aberta {
+  transform-origin: 145px 110px;
+}
+.mascote__asa-aberta-pose {
+  opacity: 0;
+  transform: rotate(62deg) scale(0.6);
+  transition:
+    transform var(--mascote-troca),
+    opacity 260ms ease;
+}
+.mascote__cabeca-pose {
+  transition: transform var(--mascote-troca);
+}
+.mascote__pena-solta {
+  opacity: 0;
+}
+.mascote__pena-solta:nth-child(1) {
+  transform-origin: 100px 104px;
+}
+.mascote__pena-solta:nth-child(2) {
+  transform-origin: 162px 126px;
+}
+.mascote__pena-solta:nth-child(3) {
+  transform-origin: 124px 88px;
+}
+.mascote__sono {
+  opacity: 0;
+  transition: opacity 400ms ease;
+}
+.mascote__z {
+  fill: var(--brand-primary);
+  font:
+    800 9px/1 system-ui,
+    sans-serif;
+  opacity: 0;
+}
+
+/* ---------- parada: respira, balança a cabeça de leve ---------- */
+
+.mascote[data-estado="parada"] .mascote__respiro,
+.mascote[data-estado="atenta"] .mascote__respiro,
+.mascote[data-estado="pensando"] .mascote__respiro,
+.mascote[data-estado="falando"] .mascote__respiro,
+.mascote[data-estado="acenando"] .mascote__respiro {
+  animation: mascote-respira 3.6s ease-in-out infinite;
+}
+.mascote[data-estado="parada"] .mascote__cabeca {
+  animation: mascote-balanca 6.5s ease-in-out infinite;
+}
+
+/* ---------- atenta: inclina a cabeça; o olho segue o ponteiro ---------- */
+
+.mascote[data-estado="atenta"] .mascote__cabeca-pose {
+  transform: rotate(-9deg);
+}
+
+/* ---------- falando: o bico abre e fecha ---------- */
+
+.mascote[data-estado="falando"] .mascote__bico-inferior {
+  animation: mascote-fala 0.28s ease-in-out infinite alternate;
+}
+.mascote[data-estado="falando"] .mascote__cabeca {
+  animation: mascote-assente 0.56s ease-in-out infinite alternate;
+}
+.mascote[data-estado="falando"] .mascote__cabeca-pose {
+  transform: rotate(-3deg);
+}
+
+/* ---------- pensando: olha para cima; a pena da cabeça balança ---------- */
+
+.mascote[data-estado="pensando"] {
+  --olho-x: 0.35;
+  --olho-y: -1;
+}
+.mascote[data-estado="pensando"] .mascote__cabeca-pose {
+  transform: rotate(-13deg) translateY(-1px);
+}
+.mascote[data-estado="pensando"] .mascote__penas-da-cabeca {
+  animation: mascote-pena-pensa 1.7s ease-in-out infinite;
+}
+
+/* ---------- comemorando: bate as asas, pula, solta penas ---------- */
+
+.mascote[data-estado="comemorando"] .mascote__salto {
+  animation: mascote-pula 0.72s cubic-bezier(0.3, 0, 0.4, 1) infinite;
+}
+.mascote[data-estado="comemorando"] .mascote__asa-pose {
+  transform: rotate(-8deg);
+}
+.mascote[data-estado="comemorando"] .mascote__asa {
+  animation: mascote-bate-asa 0.36s ease-in-out infinite alternate;
+}
+.mascote[data-estado="comemorando"] .mascote__asa-aberta-pose,
+.mascote[data-estado="acenando"] .mascote__asa-aberta-pose {
+  opacity: 1;
+  transform: none;
+}
+.mascote[data-estado="comemorando"] .mascote__asa-aberta {
+  animation: mascote-bate-asa-aberta 0.36s ease-in-out infinite alternate;
+}
+.mascote[data-estado="comemorando"] .mascote__cabeca-pose {
+  transform: rotate(-7deg);
+}
+.mascote[data-estado="comemorando"] .mascote__bico-inferior {
+  transform: rotate(9deg);
+}
+.mascote[data-estado="acenando"] .mascote__bico-inferior {
+  transform: rotate(5deg);
+}
+.mascote[data-estado="comemorando"] .mascote__pena-solta {
+  animation: mascote-pena-cai 2.6s ease-out both;
+  animation-delay: calc(var(--i, 0) * 0.35s + 0.15s);
+}
+.mascote[data-estado="comemorando"] .mascote__pena-solta:nth-child(2) {
+  animation-name: mascote-pena-cai-direita;
+}
+
+/* ---------- dormindo: olhos fechados, cabeça baixa, "z" sutil ---------- */
+
+.mascote[data-estado="dormindo"] .mascote__palpebra {
+  transform: scaleY(1);
+}
+.mascote[data-estado="dormindo"] .mascote__olho-fechado {
+  opacity: 1;
+}
+.mascote[data-estado="dormindo"] .mascote__cabeca-pose {
+  transform: rotate(9deg) translateY(4px);
+}
+.mascote[data-estado="dormindo"] .mascote__respiro {
+  animation: mascote-respira-fundo 5.2s ease-in-out infinite;
+}
+.mascote[data-estado="dormindo"] .mascote__sono {
+  opacity: 1;
+}
+.mascote[data-estado="dormindo"] .mascote__z {
+  animation: mascote-z 3.6s ease-in-out infinite;
+}
+.mascote[data-estado="dormindo"] .mascote__z:nth-child(2) {
+  animation-delay: 1.2s;
+}
+.mascote[data-estado="dormindo"] .mascote__z:nth-child(3) {
+  animation-delay: 2.4s;
+}
+
+/* ---------- acenando: a asa sobe e acena ---------- */
+
+.mascote[data-estado="acenando"] .mascote__asa-aberta {
+  animation: mascote-acena 0.5s ease-in-out infinite alternate;
+}
+.mascote[data-estado="acenando"] .mascote__cabeca-pose {
+  transform: rotate(-6deg);
+}
+
+/* ---------- Quadros ---------- */
+
+@keyframes mascote-respira {
+  0%,
+  100% {
+    transform: scale(1, 1);
+  }
+  50% {
+    transform: scale(1.006, 1.016);
+  }
+}
+@keyframes mascote-respira-fundo {
+  0%,
+  100% {
+    transform: scale(1, 1);
+  }
+  50% {
+    transform: scale(1.012, 1.028);
+  }
+}
+@keyframes mascote-balanca {
+  0%,
+  100% {
+    transform: rotate(0deg);
+  }
+  30% {
+    transform: rotate(2.6deg);
+  }
+  65% {
+    transform: rotate(-1.8deg);
+  }
+}
+@keyframes mascote-fala {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(15deg);
+  }
+}
+@keyframes mascote-assente {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(-2.5deg);
+  }
+}
+@keyframes mascote-pena-pensa {
+  0%,
+  100% {
+    transform: rotate(-7deg);
+  }
+  50% {
+    transform: rotate(9deg) scale(1.06);
+  }
+}
+@keyframes mascote-pula {
+  0%,
+  100% {
+    transform: translateY(0) scale(1.03, 0.97);
+  }
+  15% {
+    transform: translateY(0) scale(0.98, 1.02);
+  }
+  45% {
+    transform: translateY(-15px) scale(1, 1);
+  }
+  80% {
+    transform: translateY(0) scale(1.04, 0.96);
+  }
+}
+@keyframes mascote-bate-asa {
+  from {
+    transform: rotate(4deg);
+  }
+  to {
+    transform: rotate(-34deg);
+  }
+}
+@keyframes mascote-bate-asa-aberta {
+  from {
+    transform: rotate(18deg) scale(0.92);
+  }
+  to {
+    transform: rotate(-26deg) scale(1.04);
+  }
+}
+@keyframes mascote-acena {
+  from {
+    transform: rotate(16deg);
+  }
+  to {
+    transform: rotate(-20deg);
+  }
+}
+@keyframes mascote-pena-cai {
+  0% {
+    opacity: 0;
+    transform: translate(0, 0) rotate(0deg);
+  }
+  12% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-26px, 58px) rotate(-200deg);
+  }
+}
+@keyframes mascote-pena-cai-direita {
+  0% {
+    opacity: 0;
+    transform: translate(0, 0) rotate(0deg);
+  }
+  12% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(22px, 50px) rotate(220deg);
+  }
+}
+@keyframes mascote-z {
+  0% {
+    opacity: 0;
+    transform: translate(0, 4px);
+  }
+  30% {
+    opacity: 0.85;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(6px, -10px);
+  }
+}
+
+/* ---------- Pausa e movimento reduzido (por último: vencem os estados) ---------- */
+
+.mascote[data-pausada="sim"] * {
+  animation-play-state: paused;
+}
+
+.mascote[data-reduzido="sim"][data-estado] * {
+  animation: none;
+  transition: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mascote[data-estado] * {
+    animation: none;
+    transition: none;
+  }
+}

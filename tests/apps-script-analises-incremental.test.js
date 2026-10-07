@@ -412,3 +412,30 @@ describe("orquestrador: não espera retomada impossível", () => {
     expect(r.motivo).toContain("o incremental comeca na proxima verificacao");
   });
 });
+
+describe("leitura lenta da planilha não trava o sync (07/10/2026)", () => {
+  it.each(PLANILHAS)(
+    "%s: depois de ler a planilha sobra prazo e o primeiro lote sempre sai",
+    (p) => {
+      const s = INCREMENTAL[p];
+      expect(s).toMatch(/MIN_WORK_MS: 4 \* 60 \* 1000/);
+      expect(s).toMatch(
+        /const snapshot = montarSnapshotAnalisesIncremental_\(\);\n\s+deadline = Math\.max\(deadline, Date\.now\(\) \+ ANALISES_INCREMENTAL_CFG\.MIN_WORK_MS\)/,
+      );
+      expect(s).toMatch(
+        /if \(lotesNestaExecucao > 0 && Date\.now\(\) >= deadline/,
+      );
+      expect(s).toMatch(
+        /while \(lotesProcessados === 0 \|\| Date\.now\(\) < deadline/,
+      );
+    },
+  );
+  it.each(PLANILHAS)(
+    "%s: o orquestrador deixa o incremental para depois com 15 min de FATO",
+    (p) => {
+      expect(ORQUESTRADOR[p]).toMatch(
+        /MAX_ELAPSED_BEFORE_INCREMENTAL_MS: 15 \* 60 \* 1000/,
+      );
+    },
+  );
+});

@@ -31,6 +31,9 @@ import { usarEscParaVoltar, usarVoltaDoDsei } from "./volta-ao-brasil.js";
   Não busca dados: recebe o `lmap` e o `rede_cnes` (TB_CONFIG_MAPA_SAUDE_INDIG,
   já com as Lotações) e os editais do recorte. Contrato em README.md.
 */
+/**
+ * @param {{lmap: unknown, redeCnes: unknown, linhas?: readonly object[], filtroAtivo?: boolean, dseiSelecionado?: string | null, carregando?: boolean, tema?: string, idDoMapaNacional?: string, idDoMapaDoDsei?: string, aoEscolherDsei?: (dsei: {k: string, n: string}) => void, aoSairDoDsei?: () => void, aoFiltrarPorBusca?: (busca: string) => void, aoEscolherUnidade?: (unidade: unknown) => void, perfil?: object | null, supabase?: import("@supabase/supabase-js").SupabaseClient | null, aoAtualizarMapa?: (configuracao: {lmap?: unknown, rede_cnes?: unknown}) => void}} props
+ */
 export function MapaSaudeIndigena({
   lmap,
   redeCnes,

@@ -14,8 +14,8 @@ import { Icone } from "../icone.jsx";
       andamento e o resultado (por vaga: gravada, candidatos, com link),
       com o link da execução no GitHub (a seção é só do administrador global);
     - UltimasExecucoes: as 8 últimas, com os parâmetros usados e quem pediu.
-  Dados de get_painel_dos_robos (src/lib/painel-dos-robos.js) e do GET de
-  /api/rodar-carga (a última execução no GitHub).
+  Dados de get_painel_dos_robos (src/lib/painel-dos-robos.js) e da situação
+  do pedido no banco (situacao_do_disparo_robo: aceito, recusado, sem chave).
 */
 
 const numeroOuTraco = (n) =>
@@ -97,7 +97,7 @@ export function ResultadoPorVaga({ porVaga }) {
 
 const TEXTO_DA_ETAPA = Object.freeze({
   aguardando: "Pedido enviado. Aguardando o GitHub.",
-  github: "Na fila ou rodando no GitHub.",
+  github: "Aceito pelo GitHub. Na fila ou rodando.",
   rodando: "Rodando.",
   terminou: "Terminou.",
 });
@@ -109,18 +109,14 @@ export function Acompanhamento({ robo, atual, estado }) {
     robo: robo.id,
     pedido,
     execucoes: atual.painel?.dados?.execucoes?.[robo.id] || [],
-    github: atual.disparo?.robos?.[robo.id] || null,
   });
   if (!situacao) return null;
   const { etapa, execucao, url } = situacao;
   let frase = TEXTO_DA_ETAPA[etapa] || "";
-  if (etapa === "terminou_no_github")
+  if (etapa === "recusado") frase = situacao.texto;
+  if (etapa === "github" && situacao.semRegistro)
     frase =
-      situacao.conclusao === "success"
-        ? situacao.semRegistro
-          ? "Terminou no GitHub. O resultado deste modo fica no resumo da execução."
-          : "Terminou no GitHub."
-        : `Terminou no GitHub com falha (${situacao.conclusao || "sem conclusão"}).`;
+      "Aceito pelo GitHub. O resultado deste modo fica no resumo da execução.";
   return (
     <div
       className={`robos-acompanhamento robos-acompanhamento--${etapa}`}
@@ -131,9 +127,11 @@ export function Acompanhamento({ robo, atual, estado }) {
       <div className="robos-acompanhamento__topo">
         <Icone
           nome={
-            etapa === "terminou" || etapa === "terminou_no_github"
+            etapa === "terminou" || (etapa === "github" && situacao.semRegistro)
               ? "circle-check"
-              : "refresh-cw"
+              : etapa === "recusado"
+                ? "circle-alert"
+                : "refresh-cw"
           }
           tamanho={14}
         />

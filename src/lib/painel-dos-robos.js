@@ -13,7 +13,7 @@
     - as execuções normalizadas (parâmetros, quem pediu, resultado, por vaga)
       e o acompanhamento depois do pedido.
   A lista branca e a validação dos parâmetros são de src/lib/robos-de-carga.js
-  (as mesmas da função api/rodar-carga.js).
+  (as mesmas de disparar_robo, no banco).
 */
 import { editalVigente } from "./avaliacao-documental/editais.js";
 import {
@@ -421,21 +421,17 @@ const FOLGA_MS = 2 * 60000;
 
 /**
  * O acompanhamento de um pedido feito nesta tela:
- *   pedido     { em: Date, modo } — o último pedido do robô
+ *   pedido     { em: Date, modo, disparo } — o último pedido do robô;
+ *              `disparo` é a situação do pedido no banco (situacaoDoPedido de
+ *              src/lib/robos-de-carga.js: PEDIDO, ACEITO, FALHOU, SEM_TOKEN)
  *   execucoes  as execuções normalizadas do banco (pode ser [])
- *   github     disparo.robos[id] da função ({ rodando, execucao, ultima })
- * Devolve { etapa, execucao, url } — etapa: "aguardando" (o GitHub ainda
- * não mostrou), "github" (na fila ou rodando, sem registro no banco),
- * "rodando" (o banco registrou), "terminou" (o banco fechou) ou
- * "terminou_no_github" (o GitHub terminou sem registro no banco, como no
- * modo seco).
+ * Devolve { etapa, execucao, url } — etapa: "aguardando" (o GitHub ainda não
+ * respondeu), "recusado" (o GitHub não aceitou ou falta a chave; `texto` diz
+ * o que fazer), "github" (aceito, sem registro no banco ainda; `semRegistro`
+ * nos modos seco e fumaça, cujo resultado fica só no resumo do GitHub),
+ * "rodando" (o banco registrou) ou "terminou" (o banco fechou).
  */
-export function acompanhamentoDoPedido({
-  robo,
-  pedido,
-  execucoes = [],
-  github = null,
-}) {
+export function acompanhamentoDoPedido({ robo, pedido, execucoes = [] }) {
   if (!pedido?.em) return null;
   const desde = pedido.em.getTime() - FOLGA_MS;
   const doBanco = lista(execucoes).find(
@@ -444,27 +440,28 @@ export function acompanhamentoDoPedido({
       e.inicio.getTime() >= desde &&
       (e.disparo === "MONITORA" || !e.disparo),
   );
-  const ultima = github?.ultima;
-  const criada = data(ultima?.criada);
-  const doGithub = criada && criada.getTime() >= desde ? ultima : null;
-  const url = doBanco?.execucao || doGithub?.url || github?.execucao || null;
   if (doBanco)
     return {
       etapa: doBanco.situacao === "EM_ANDAMENTO" ? "rodando" : "terminou",
       execucao: doBanco,
-      url,
+      url: doBanco.execucao || null,
     };
-  if (doGithub && doGithub.situacao === "completed")
+  const disparo = pedido.disparo;
+  if (disparo?.aviso)
     return {
-      etapa: "terminou_no_github",
+      etapa: "recusado",
       execucao: null,
-      url,
-      conclusao: doGithub.conclusao,
+      url: null,
+      texto: disparo.aviso.texto,
+    };
+  if (disparo?.aceito)
+    return {
+      etapa: "github",
+      execucao: null,
+      url: null,
       semRegistro:
         Boolean(roboDeCarga(robo)) &&
         (pedido.modo === "seco" || pedido.modo === "fumaca"),
     };
-  if (doGithub || github?.rodando)
-    return { etapa: "github", execucao: null, url };
   return { etapa: "aguardando", execucao: null, url: null };
 }

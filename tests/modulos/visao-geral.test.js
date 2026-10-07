@@ -45,11 +45,11 @@ vi.mock("../../src/lib/chartjs-global.js", () => ({
 }));
 
 const { montarVisaoGeral } =
-  await import("../../src/modulos/visao-geral/visao-geral.jsx");
+  await import("../../src/modulos/visao-geral/visao-geral.tsx");
 const { criarCarregadorDeMunicipios } =
   await import("../../src/modulos/mapa-de-projetos/carregador.js");
 const { criarEstadoDaVisaoGeral, CHAVE_DAS_COLUNAS, CHAVE_DOS_FILTROS } =
-  await import("../../src/modulos/visao-geral/estado.js");
+  await import("../../src/modulos/visao-geral/estado.ts");
 
 const ETAPA_PERIGOSA = `"');alert(1);('" <img src=x onerror=alert(1)> d'água`;
 

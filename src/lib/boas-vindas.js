@@ -2,7 +2,7 @@
   Mensagem de boas-vindas da Visão geral: saudação pelo primeiro nome e uma
   informação do dia tirada dos próprios editais — nada de frase genérica.
 
-  Funções puras; o componente fica em `src/modulos/visao-geral/boas-vindas.jsx`.
+  Funções puras; o componente fica em `src/modulos/visao-geral/boas-vindas.tsx`.
 */
 
 const texto = (valor) => String(valor ?? "").trim();
