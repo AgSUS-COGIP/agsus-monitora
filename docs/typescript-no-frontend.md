@@ -9,7 +9,9 @@ filtros, modal do dia, próximas etapas, linha do tempo e regras em
 `src/lib/calendario-editais.ts`. Visão geral inclui estado, filtros, indicadores, tabela,
 gaveta, boas-vindas, leitura dos marcos e regras em `src/lib/visao-geral.ts`. Os mapas
 continuam em JavaScript, com contratos JSDoc na integração com a tela. Outros módulos
-combinam JavaScript/JSX com migrações pontuais para TypeScript. Componentes e helpers
+combinam JavaScript/JSX com migrações pontuais para TypeScript: a ficha da Avaliação documental
+tem os componentes em `src/modulos/avaliacao-documental/ficha/*.tsx` (contratos em `tipos.ts`) e
+`Popover` está em `src/ui/popover.tsx`. Componentes e helpers
 compartilhados consumidos por esses módulos declaram seus contratos em JSDoc.
 
 ## Verificação
