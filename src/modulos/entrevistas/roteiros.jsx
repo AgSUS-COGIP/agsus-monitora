@@ -28,6 +28,7 @@ import {
   Segmentado,
   Selo,
 } from "../../ui/index.js";
+import { AspectosDoRoteiro } from "./aspectos-do-roteiro.tsx";
 import {
   BotaoDeLinha,
   ComposicaoDaBanca,
@@ -68,6 +69,12 @@ function CartaoDoRoteiro({ roteiro, podeEditar, aoAbrir }) {
         {r.minimo !== null ? ` · mín. ${numeroBR(r.minimo)}` : ""}
         {r.grupo ? " · com avaliação em grupo" : ""}
       </p>
+      {r.aspectos.length ? (
+        <p className="entrevistas-cartao-linha">
+          <i className="fa-solid fa-layer-group" aria-hidden="true" /> Aspectos:{" "}
+          {r.aspectos.join(" · ")}
+        </p>
+      ) : null}
       <p className="entrevistas-cartao-linha">
         <i className="fa-solid fa-folder-open" aria-hidden="true" />{" "}
         {r.emUso
@@ -751,6 +758,15 @@ export function EditorDeRoteiro({
             />
           </SecaoDoFormulario>
 
+          <SecaoDoFormulario titulo="Aspectos" icone="fa-layer-group">
+            <AspectosDoRoteiro
+              valor={r.aspectos}
+              erros={errosVisiveis}
+              somenteLeitura={somenteLeitura}
+              aoMudar={(aspectos) => mudar({ aspectos })}
+            />
+          </SecaoDoFormulario>
+
           <SecaoDoFormulario titulo="Competências" icone="fa-list-check">
             {errosVisiveis.competencias ? (
               <small className="entrevistas-erro-campo" role="alert">
@@ -824,13 +840,20 @@ export function EditorDeRoteiro({
                   onChange={(e) => mudar({ nota_minima_total: e.target.value })}
                 />
               </Campo>
-              <NotasEliminatorias
-                valor={r.notas_eliminatorias}
-                somenteLeitura={somenteLeitura}
-                aoMudar={(notas_eliminatorias) =>
-                  mudar({ notas_eliminatorias })
-                }
-              />
+              {r.aspectos.length ? (
+                <p className="entrevistas-vazio-linha">
+                  Com aspectos, elimina quem fica abaixo do mínimo de uma
+                  competência.
+                </p>
+              ) : (
+                <NotasEliminatorias
+                  valor={r.notas_eliminatorias}
+                  somenteLeitura={somenteLeitura}
+                  aoMudar={(notas_eliminatorias) =>
+                    mudar({ notas_eliminatorias })
+                  }
+                />
+              )}
             </div>
             <label className="entrevistas-marcar">
               <input
@@ -892,6 +915,7 @@ export function EditorDeRoteiro({
           <span className="entrevistas-rodape-resumo">
             {rotuloDaEscala(r.escala)} · {r.competencias.length}{" "}
             {r.competencias.length === 1 ? "competência" : "competências"}
+            {r.aspectos.length ? ` · ${r.aspectos.length} aspectos` : ""}
           </span>
           <button type="button" className="btn secondary" onClick={aoFechar}>
             {somenteLeitura ? "Fechar" : "Cancelar"}

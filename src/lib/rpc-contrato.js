@@ -662,7 +662,7 @@ export const CONTRATO_RPC = {
     argumentos: ["p_dados"],
     critica: false,
     resumo:
-      "Cria um roteiro ou a versão seguinte de um roteiro (p_dados.origem); os editais que usam a anterior continuam nela. entrevistas >= editor.",
+      "Cria um roteiro ou a versão seguinte de um roteiro (p_dados.origem; p_dados.aspectos opcional); os editais que usam a anterior continuam nela. entrevistas >= editor.",
   },
   obter_entrevistas_do_edital: {
     argumentos: ["p_edital"],
@@ -716,7 +716,7 @@ export const CONTRATO_RPC = {
     argumentos: ["p_entrevista", "p_dados"],
     critica: false,
     resumo:
-      "Lança/corrige notas e comparecimento de um convocado (22023 fora da escala; 42501 no modo AVALIADOR para nota de outro) e recalcula o resultado. Devolve o payload do edital.",
+      "Lança/corrige notas (roteiro com aspectos: todos os aspectos de cada avaliador) e comparecimento de um convocado (22023 fora da escala ou aspecto faltando; 42501 no modo AVALIADOR para nota de outro) e recalcula o resultado. Devolve o payload do edital.",
   },
 
   // ── Recursos dos candidatos (aba Recursos, 20260929120000_recursos.sql) ──

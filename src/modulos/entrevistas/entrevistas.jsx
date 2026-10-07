@@ -136,6 +136,10 @@ function TelaDaArea({ estado, conducao, e, visao, aoTrocarVisao }) {
   const vazio = carregado && !entrevistas.length;
   const bloqueado = e.semAcesso || e.semSessao;
   const comVisoes = Boolean(area) && !bloqueado;
+  // Modo de análise: a ficha de notas aberta ocupa a tela (some o topo).
+  const sc = useSyncExternalStore(conducao.assinar, conducao.obter);
+  const emAnalise =
+    comVisoes && visao === "conduzir" && Boolean(sc.fichaAberta && sc.edital);
 
   // KPI, pendência e fatia de gráfico: clicar de novo tira o filtro.
   const alternarFiltro = (campo, valor) =>
@@ -163,19 +167,25 @@ function TelaDaArea({ estado, conducao, e, visao, aoTrocarVisao }) {
   }
 
   return (
-    <div className="ui-tela entrevistas-tela" data-tour="entrevistas-tela">
-      <Topo
-        status={textoDoStatus(e)}
-        aoAtualizar={atualizar}
-        atualizarDesativado={!area || e.atualizando || e.semSessao}
-        aoExportar={() => estado.exportarCsv(filtradas)}
-        exportarDesativado={!carregado || !filtradas.length}
-        visoes={comVisoes ? VISOES : null}
-        visao={visao}
-        aoTrocarVisao={aoTrocarVisao}
-      >
-        <SeloDeAvisos modulo="entrevistas" />
-      </Topo>
+    <div
+      className="ui-tela entrevistas-tela"
+      data-tour="entrevistas-tela"
+      data-modo={emAnalise ? "analise" : undefined}
+    >
+      {emAnalise ? null : (
+        <Topo
+          status={textoDoStatus(e)}
+          aoAtualizar={atualizar}
+          atualizarDesativado={!area || e.atualizando || e.semSessao}
+          aoExportar={() => estado.exportarCsv(filtradas)}
+          exportarDesativado={!carregado || !filtradas.length}
+          visoes={comVisoes ? VISOES : null}
+          visao={visao}
+          aoTrocarVisao={aoTrocarVisao}
+        >
+          <SeloDeAvisos modulo="entrevistas" />
+        </Topo>
+      )}
 
       {e.semSessao ? (
         <Aviso tom="warning" papel="alert">

@@ -304,3 +304,46 @@ describe("rascunho, validação e gravação", () => {
     expect(moverItem(["a", "b"], 0, -1)).toEqual(["a", "b"]);
   });
 });
+
+describe("aspectos do roteiro", async () => {
+  const lib = await import("../src/lib/roteiro-de-entrevista.js");
+
+  it("rascunho, validação e o que vai ao banco", () => {
+    const r = lib.rascunhoDoRoteiro({
+      id: "r1",
+      nome: "Roteiro",
+      escala: "FAIXA",
+      passo: 1,
+      competencias: [{ id: "c1", ordem: 1, nome: "Uma", nota_maxima: 5 }],
+      notas_eliminatorias: [0],
+      aspectos: [
+        { id: "s2", ordem: 2, nome: "Propriedade" },
+        { id: "s1", ordem: 1, nome: "Conceitua" },
+      ],
+    });
+    expect(r.aspectos.map((a) => a.nome)).toEqual(["Conceitua", "Propriedade"]);
+    expect(lib.errosDoRoteiro(r)).toEqual({});
+    const dados = lib.dadosDoRoteiroParaSalvar(r);
+    expect(dados.aspectos).toEqual([
+      { nome: "Conceitua" },
+      { nome: "Propriedade" },
+    ]);
+    expect(dados.notas_eliminatorias).toEqual([]);
+    const repetido = {
+      ...r,
+      aspectos: [...r.aspectos, lib.novoAspecto("conceitua")],
+    };
+    expect(Object.values(lib.errosDoRoteiro(repetido))).toContain(
+      "Dois aspectos com o mesmo nome.",
+    );
+    expect(lib.MODELO_DE_ASPECTOS).toEqual([
+      "Conceitua",
+      "Propriedade",
+      "Profundidade",
+    ]);
+    expect(lib.resumoDoRoteiro(r).aspectos).toEqual([
+      "Conceitua",
+      "Propriedade",
+    ]);
+  });
+});

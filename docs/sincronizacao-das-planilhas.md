@@ -8,10 +8,10 @@ Guia para quem opera as cargas das planilhas no dia a dia, inclusive na ausênci
 Duas abas do MONITORA vêm de planilhas do Google Drive. De hora em hora, o GitHub Actions lê cada
 planilha e grava no banco, o dia todo. As duas cargas funcionam do mesmo jeito e usam as mesmas credenciais.
 
-| Aba do MONITORA | Planilha (aba) | Workflow no Actions | Tabelas |
-|---|---|---|---|
+| Aba do MONITORA | Planilha (aba)                           | Workflow no Actions         | Tabelas                                                         |
+| --------------- | ---------------------------------------- | --------------------------- | --------------------------------------------------------------- |
 | **Entrevistas** | "[dash] entrevistados" (`Entrevistados`) | **Sincronizar entrevistas** | `TB_ENTREVISTA`, `TB_ENTREVISTA_NOTA`, log `TL_SYNC_ENTREVISTA` |
-| **Seleção** | "Auditoria" (`Resultado`) | **Sincronizar seleção** | `TB_SELECAO_VAGA`, log `TL_SYNC_SELECAO` |
+| **Seleção**     | "Auditoria" (`Resultado`)                | **Sincronizar seleção**     | `TB_SELECAO_VAGA`, log `TL_SYNC_SELECAO`                        |
 
 ```
 Entrevistas
@@ -28,14 +28,22 @@ O cruzamento das entrevistas continua no Apps Script porque as pastas das planil
 são da conta `dados.recursoshumanos`. Este guia cobre só as cargas para o banco. Os candidatos
 da Empregare vêm por um robô à parte, com guia próprio: **`docs/robo-empregare.md`**.
 
+### Aspectos da entrevista (Conceitua, Propriedade, Profundidade)
+
+A carga lê só a aba consolidada **Entrevistados** (a nota de cada competência, os pares
+"Critério N" / "Nota N"), não as notas por avaliador nem os aspectos das planilhas de vaga. A nota
+por aspecto existe só nas entrevistas conduzidas no MONITORA (roteiro com aspectos, migration
+`20261008100000_aspectos_da_entrevista.sql`). Se um dia a carga precisar das notas por avaliador,
+o cruzamento do Apps Script é que teria de levá-las à aba.
+
 ### O que a Seleção calcula (e não lê da planilha)
 
 - **Convocados para entrevista**: se o edital tem entrevistas no MONITORA (`TB_ENTREVISTA`, vindas
   da planilha ou conduzidas no sistema), vale a contagem de lá — vaga sem nenhuma entrevista fica
   com **0**. Edital sem nenhuma entrevista no MONITORA usa a coluna V da Auditoria (o dado antigo).
 - **Aprovados, contratados e não contratados** (colunas W, X e Y da Auditoria, que **não** são
-  lidas): da lista de aprovados vigente do edital. Contratados = status *Contratado* ou
-  *Migração*; não contratados = aprovados − contratados. Edital sem lista importada mostra "—".
+  lidas): da lista de aprovados vigente do edital. Contratados = status _Contratado_ ou
+  _Migração_; não contratados = aprovados − contratados. Edital sem lista importada mostra "—".
 - **Área**: DSEI e CASAI são sempre Saúde Indígena (edital procurado entre os da Saúde Indígena).
   As outras unidades nunca são: o edital é procurado entre os da SEDE e de Projetos, e a área é a
   dele; sem edital, a da unidade em `TA_UNIDADE_AREA`, senão SEDE
@@ -54,10 +62,10 @@ Vercel (ver `docs/robo-empregare.md`); o botão fica desabilitado enquanto a car
 1. GitHub → repositório → aba **Actions** → **Sincronizar entrevistas** ou **Sincronizar seleção**.
 2. **Run workflow** → escolha o modo → **Run workflow** (`disparado_por` fica em branco).
 
-| Modo | Quando usar |
-|---|---|
-| `normal` | o de sempre: lê a planilha e grava |
-| `seco` | só confere se a planilha está legível; não grava nada |
+| Modo     | Quando usar                                                                        |
+| -------- | ---------------------------------------------------------------------------------- |
+| `normal` | o de sempre: lê a planilha e grava                                                 |
+| `seco`   | só confere se a planilha está legível; não grava nada                              |
 | `forcar` | a carga foi **recusada** e você já conferiu que a planilha está certa (ver abaixo) |
 
 Ao terminar, abra a execução: o resumo mostra quantas linhas foram lidas e gravadas, quantas
@@ -79,14 +87,14 @@ ficaram sem edital e quantas saíram da planilha.
 
 ## Quando fica vermelho
 
-| Mensagem no log | O que fazer |
-|---|---|
+| Mensagem no log                                                  | O que fazer                                                                                                                                                                                               |
+| ---------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `Carga … RECUSADA: a planilha trouxe X … e o banco tem Y ativas` | A aba veio com menos da metade das linhas de antes. Abra a planilha: se a aba estiver vazia ou quebrada, conserte (ou espere o cruzamento refazer) e rode `normal`. Se a redução for real, rode `forcar`. |
-| `Sem acesso à planilha (403/404)` | A planilha deixou de estar compartilhada com a conta de serviço. Compartilhe como **Leitor** com `credenciais-pyhton@credencial-437411.iam.gserviceaccount.com`. |
-| `Google recusou a conta de serviço` | A chave do Google foi apagada ou trocada. Gere uma nova (abaixo) e atualize o secret. |
-| `Coluna obrigatória não encontrada` | Alguém renomeou ou apagou uma coluna. Entrevistados: DSEI, Edital, Vaga, Nome. Resultado: Vaga, Edital, Inscritos. Volte o cabeçalho. |
-| `… respondeu 401` | A `service_role` do Supabase mudou. Atualize o secret `SUPABASE_SERVICE_ROLE_KEY`. |
-| `… respondeu 404` com `sincronizar_selecao` | A migration da Seleção ainda não foi aplicada no banco. |
+| `Sem acesso à planilha (403/404)`                                | A planilha deixou de estar compartilhada com a conta de serviço. Compartilhe como **Leitor** com `credenciais-pyhton@credencial-437411.iam.gserviceaccount.com`.                                          |
+| `Google recusou a conta de serviço`                              | A chave do Google foi apagada ou trocada. Gere uma nova (abaixo) e atualize o secret.                                                                                                                     |
+| `Coluna obrigatória não encontrada`                              | Alguém renomeou ou apagou uma coluna. Entrevistados: DSEI, Edital, Vaga, Nome. Resultado: Vaga, Edital, Inscritos. Volte o cabeçalho.                                                                     |
+| `… respondeu 401`                                                | A `service_role` do Supabase mudou. Atualize o secret `SUPABASE_SERVICE_ROLE_KEY`.                                                                                                                        |
+| `… respondeu 404` com `sincronizar_selecao`                      | A migration da Seleção ainda não foi aplicada no banco.                                                                                                                                                   |
 
 ## Onde ficam as credenciais
 
@@ -94,11 +102,11 @@ Só nos **secrets do repositório** (Settings → Secrets and variables → Acti
 duas cargas. O GitHub não mostra o valor depois de salvo, nem nos logs. Ninguém precisa do arquivo
 no computador.
 
-| Secret | O que é |
-|---|---|
+| Secret                        | O que é                                                                                 |
+| ----------------------------- | --------------------------------------------------------------------------------------- |
 | `GOOGLE_SERVICE_ACCOUNT_JSON` | conteúdo do JSON da conta de serviço `credenciais-pyhton` (projeto `credencial-437411`) |
-| `SUPABASE_URL` | `https://gnudtaxhjfgtvwkwpsel.supabase.co` |
-| `SUPABASE_SERVICE_ROLE_KEY` | chave service_role (Supabase → Project Settings → API) |
+| `SUPABASE_URL`                | `https://gnudtaxhjfgtvwkwpsel.supabase.co`                                              |
+| `SUPABASE_SERVICE_ROLE_KEY`   | chave service_role (Supabase → Project Settings → API)                                  |
 
 Para trocar um secret: clique no nome → **Update secret** → cole o novo valor. Precisa ser
 administrador do repositório.

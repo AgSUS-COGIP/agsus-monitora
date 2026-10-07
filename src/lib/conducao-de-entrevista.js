@@ -275,20 +275,61 @@ export function dadosDaConfiguracaoParaSalvar(r) {
 
 /* ── Ficha de notas ────────────────────────────────────────────────── */
 
-export const chaveDaNota = (competencia, avaliador) =>
-  `${competencia}|${avaliador}`;
+/**
+ * Chave de uma nota da ficha: `competência|avaliador` e, em roteiro com
+ * aspectos, `competência|avaliador|aspecto`.
+ */
+export const chaveDaNota = (competencia, avaliador, aspecto) =>
+  aspecto
+    ? `${competencia}|${avaliador}|${aspecto}`
+    : `${competencia}|${avaliador}`;
 
-/** `avaliacoes` do convocado → `{ "competência|avaliador": "nota" }`. */
-export function mapaDasAvaliacoes(avaliacoes) {
+/**
+ * `avaliacoes` do convocado → `{ chave: "nota" }`. Com `aspectos` (os do
+ * roteiro), uma chave por aspecto (`avaliacoes[].aspectos`).
+ */
+export function mapaDasAvaliacoes(avaliacoes, aspectos = []) {
   const mapa = {};
   for (const a of avaliacoes || []) {
+    if (aspectos?.length) {
+      for (const n of a?.aspectos || []) {
+        if (n?.nota === null || n?.nota === undefined) continue;
+        mapa[chaveDaNota(a.competencia, a.avaliador, n.aspecto)] =
+          textoDoNumero(n.nota);
+      }
+      continue;
+    }
     if (a?.nota === null || a?.nota === undefined) continue;
     mapa[chaveDaNota(a.competencia, a.avaliador)] = textoDoNumero(a.nota);
   }
   return mapa;
 }
 
-export function avaliacoesDoMapa(mapa) {
+/* As notas do mapa agrupadas por competência|avaliador (com aspectos). */
+function gruposDosAspectos(mapa) {
+  const grupos = new Map();
+  for (const [chave, valor] of Object.entries(mapa || {})) {
+    const [competencia, avaliador, aspecto] = chave.split("|");
+    if (!aspecto) continue;
+    const id = `${competencia}|${avaliador}`;
+    if (!grupos.has(id)) grupos.set(id, { competencia, avaliador, notas: {} });
+    grupos.get(id).notas[aspecto] = valor;
+  }
+  return grupos;
+}
+
+/** As avaliações do mapa, no formato de `calcularEntrevista`. */
+export function avaliacoesDoMapa(mapa, aspectos = []) {
+  if (aspectos?.length) {
+    return [...gruposDosAspectos(mapa).values()].map((g) => ({
+      competencia: g.competencia,
+      avaliador: g.avaliador,
+      aspectos: aspectos.map((a) => ({
+        aspecto: a.id,
+        nota: numero(g.notas[a.id]),
+      })),
+    }));
+  }
   return Object.entries(mapa || {})
     .map(([chave, valor]) => {
       const [competencia, avaliador] = chave.split("|");
@@ -297,8 +338,51 @@ export function avaliacoesDoMapa(mapa) {
     .filter((a) => a.nota !== null);
 }
 
-/** Só o que mudou, no formato de `lancar_notas_entrevista` (null apaga). */
-export function notasAlteradas(original, atual) {
+/**
+ * Com aspectos: as notas de avaliador começadas e não terminadas (algum
+ * aspecto preenchido e outro vazio), `[{ competencia, avaliador }]`. O banco
+ * só aceita todos os aspectos (ou nenhum).
+ */
+export function aspectosIncompletos(mapa, aspectos = []) {
+  if (!aspectos?.length) return [];
+  return [...gruposDosAspectos(mapa).values()]
+    .filter((g) => {
+      const preenchidos = aspectos.filter(
+        (a) => numero(g.notas[a.id]) !== null,
+      ).length;
+      return preenchidos > 0 && preenchidos < aspectos.length;
+    })
+    .map(({ competencia, avaliador }) => ({ competencia, avaliador }));
+}
+
+/**
+ * Só o que mudou, no formato de `lancar_notas_entrevista` (null apaga). Com
+ * aspectos: `{ competencia, avaliador, aspectos: [{ aspecto, nota }] }` com
+ * todos os aspectos, ou `aspectos: null` quando todos ficaram vazios; a nota
+ * começada e não terminada fica de fora (ver `aspectosIncompletos`).
+ */
+export function notasAlteradas(original, atual, aspectos = []) {
+  if (aspectos?.length) {
+    const antes = gruposDosAspectos(original);
+    const depois = gruposDosAspectos(atual);
+    const notas = [];
+    for (const id of new Set([...antes.keys(), ...depois.keys()])) {
+      const [competencia, avaliador] = id.split("|");
+      const valores = (g) => aspectos.map((a) => numero(g?.notas[a.id]));
+      const a = valores(antes.get(id));
+      const d = valores(depois.get(id));
+      if (a.every((n, i) => n === d[i])) continue;
+      if (d.every((n) => n === null))
+        notas.push({ competencia, avaliador, aspectos: null });
+      else if (d.every((n) => n !== null))
+        notas.push({
+          competencia,
+          avaliador,
+          aspectos: aspectos.map((x, i) => ({ aspecto: x.id, nota: d[i] })),
+        });
+    }
+    return notas;
+  }
   const chaves = new Set([
     ...Object.keys(original || {}),
     ...Object.keys(atual || {}),
