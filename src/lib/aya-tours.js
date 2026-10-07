@@ -784,6 +784,39 @@ const TOURS = Object.freeze({
       PASSO_DA_AYA,
     ]),
   }),
+  "avaliacao-documental:regra": Object.freeze({
+    titulo: "Avaliação documental · Regra",
+    passos: Object.freeze([
+      passo(
+        t("avd-regra-modo"),
+        "Assistente ou modo avançado",
+        "O assistente monta a regra em cinco passos; o modo avançado mostra o formulário inteiro. Os dois mexem no mesmo rascunho.",
+        {
+          antes: `${t("avd-visoes")} [data-valor='regra']`,
+          exige: coordenaAvaliacao,
+        },
+      ),
+      passo(
+        t("avd-assistente-passos"),
+        "Os cinco passos",
+        "Ponto de partida, o que vale e o que elimina, perguntas da Empregare, nota mínima e desempate, testar e salvar.",
+        { exige: coordenaAvaliacao },
+      ),
+      passo(
+        t("avd-assistente-partida"),
+        "Ponto de partida",
+        "Continue da versão vigente, copie a regra conferida de outro edital da área, use um modelo ou comece do zero.",
+        { exige: coordenaAvaliacao },
+      ),
+      passo(
+        t("avd-regra-conferir"),
+        "Dupla conferência",
+        "Quem salvou a versão não a marca como conferida: outra pessoa da coordenação confere.",
+        { exige: coordenaAvaliacao },
+      ),
+      PASSO_DA_AYA,
+    ]),
+  }),
   "avaliacao-documental:fila": Object.freeze({
     titulo: "Avaliação documental · Fila",
     passos: Object.freeze([
@@ -1418,7 +1451,7 @@ const ABAS_COM_TOUR = Object.freeze({
   "conduzir-entrevistas": ["preparar"],
   classificacao: ["agenda", "regra"],
   approved: ["convocacao"],
-  "avaliacao-documental": ["fila"],
+  "avaliacao-documental": ["regra", "fila"],
 });
 
 function normalizarAba(aba) {
