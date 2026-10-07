@@ -49,6 +49,7 @@ com a conta em `monitora.avaliacao_documental`).
 | `monitora.avaliacao_documental.nota_declarada`    | a ART lida da Empregare e a nota declarada pela regra (cópia fiel de `nota-declarada.js`)                                  |
 | `monitora.avaliacao_documental.pre_classificacao` | eliminação automática, Provisória por ART, tamanho do lote e "a linha anda" (cópia fiel de `pre-classificacao.js`)         |
 | `monitora.avaliacao_documental.distribuicao`      | distribuição das fichas (menor carga, limites) e as fichas novas da distribuição inicial (cópia fiel de `distribuicao.js`) |
+| `monitora.entrevistas.calculo`                    | nota por competência, total e parecer da entrevista (a regra de `FC_CALCULAR_ENTREVISTA` e de `calcularEntrevista`)        |
 
 ### Importar a base
 
@@ -176,6 +177,85 @@ menos pendentes (`distribuicao.atribuicoes_dos_novos`); o banco valida cada atri
   `tests/python/test_pre_classificacao.py` e `tests/python/test_distribuicao.py`.
 - **Log público:** contagens, códigos de vaga e de aviso e números de edital. O resultado por edital
   que vai ao banco é recusado se tiver `@` ou 11 dígitos seguidos.
+
+## Carga do banco: o que saiu do Postgres e o que vai para o Python (07/10/2026)
+
+Pedido do usuário: _"temos que parar de sobrecarregar o banco; os cálculos da entrevista, de
+análises etc. têm que ser em Python"_. Medição real em `pg_stat_statements` (banco no ar desde
+02/10/2026 01:22, ~5,5 dias):
+
+| O quê                                                | Chamadas | Média    | Total   |
+| ---------------------------------------------------- | -------- | -------- | ------- |
+| tarefa `agsus_aprovados_cache_por_area` (2 em 2 min) | 3.951    | 1.042 ms | 4.118 s |
+| `realtime.list_changes` (Realtime lendo o WAL)       | 327.849  | 9 ms     | 3.107 s |
+| tarefa `agsus_entrevistas_cache_do_painel`           | 3.953    | 686 ms   | 2.711 s |
+| tarefa `agsus_analises_cache_do_painel`              | 3.952    | 613 ms   | 2.422 s |
+| `finalizar_sync_analises_incremental`                | 1.153    | 1.457 ms | 1.680 s |
+| `comparar_analises_incremental_v2`                   | 12.283   | 107 ms   | 1.319 s |
+| `obter_marcos_da_area` (Visão geral)                 | 426      | 2.957 ms | 1.260 s |
+| `get_monitoramento_dashboard_payload` (sem uso)      | 426      | 711 ms   | 303 s   |
+
+WAL gerado no período: 4,5 GB — 1,8 GB do manifesto da comparação das análises, ~2 GB dos três
+caches (JSON grande reescrito a cada remontagem). O banco está numa instância pequena: com o
+banco ocioso, ler 3.400 linhas já em memória levou 300 ms (CPU estrangulada); a carga contínua das
+tarefas deixava todo o resto lento.
+
+### Feito nesta entrega (o banco só guarda e serve)
+
+- **Caches só quando muda** (`20261007220000_caches_so_quando_muda.sql`, ver
+  `docs/banco-de-dados.md` 6.5): gatilhos por comando marcam a área em `TL_ALTERACAO_CACHE`; as
+  três tarefas só remontam a área marcada. Ensaio: sem mudança, **1.042/686/613 ms → 8/0,5/0,6
+  ms** por execução; cada pacote igual ao cálculo completo antes e depois de mudanças. Estimativa:
+  ~1.700 s/dia de tarefas → ~200–300 s/dia (remontagens só com mudança de verdade; a das
+  Entrevistas continua de hora em hora, porque a carga horária regrava todas as linhas).
+- **Marcos da Visão geral** lidos do pacote do painel de análises: **3,7 s → 1 ms**.
+- **Lista de aprovados**: a versão vem da marca, não de uma soma sobre todos os candidatos:
+  **105–1.936 ms → 23–47 ms** por área; com a versão que ainda vale, **20 ms → 1–2 ms**.
+- **Sem WAL** para os três caches e as tabelas de passagem do sync das análises (`UNLOGGED`):
+  ~3,5 dos 4,5 GB. É isso que pesa no `realtime.list_changes` — ele decodifica todo o WAL, mesmo
+  o das tabelas fora da publicação. O sync deixa de regravar os editais iguais.
+- **Seis índices sem nenhuma leitura** em 5,5 dias saem (`20261007220200_indices_sem_uso.sql`):
+  cada linha que o sync grava em `TB_ANALISE_CURRICULAR` mexia em 19 índices.
+- **`get_monitoramento_dashboard_payload` sai** (`20261007220100`): ninguém no código chama desde
+  #305; as chamadas eram de abas com o bundle antigo, que já tratava o erro.
+- **Realtime**: fora do chat (outro módulo), a tela assina só `TB_MONITORAMENTO_INDIGENA` (a
+  releitura quando um edital muda, que o usuário vê) — nada a cortar ali. O custo do Realtime é a
+  leitura do WAL a cada ~1,5 s, que caiu com o item acima.
+- **Cálculo da entrevista em Python** (`monitora.entrevistas.calculo`, Decimal): os 15 casos
+  dourados de `tests/fixtures/entrevistas/casos-de-calculo.json` passam no vitest
+  (`calcularEntrevista`, a prévia da tela), no pytest e na própria `FC_CALCULAR_ENTREVISTA`
+  (ensaio begin…rollback, um roteiro, uma entrevista e as avaliações fictícias por caso).
+
+### Próximas entregas (plano, em ordem de ganho)
+
+1. **Instantâneo dos painéis montado em Python** (aprovados, entrevistas, análises). Com as
+   marcas, o banco só remonta o que mudou; o passo seguinte é o job ler as linhas por RPC (sem
+   cadastro além do que o painel mostra), montar o JSON e gravar o instantâneo pronto por RPC de
+   gravação (`service_role`), com o banco conferindo forma e tamanho. **Por que não agora:** a
+   leitura que pesa (a `VW_ANALISES_DASHBOARD_BASE_TODOS`, 25 mil linhas) continua no banco e o
+   instantâneo de 4–8 MB iria e voltaria pela rede; o ganho só aparece com a montagem
+   **incremental por edital** (o job lê só as linhas dos editais marcados e troca só a parte
+   deles no instantâneo). Pré-requisitos: a marca guardar o edital (hoje é por área), o
+   instantâneo dividido por edital e o disparo ao fim de cada sync das análises (que vem do Apps
+   Script, não do Actions — usar um `repository_dispatch` pelo `api/rodar-carga.js` ou um job
+   agendado que só roda com marca). Estimativa: 5–7 dias; risco médio (latência entre o sync e o
+   painel, hoje ≤ 2 min).
+2. **Sincronizações das Entrevistas e da Seleção em Python** (hoje `scripts/sincronizar-*.mjs`).
+   Mesmas RPCs de gravação; leitura da planilha pela conta de serviço do Google (JWT RS256 —
+   precisa de `google-auth` ou `cryptography` no `requirements.txt` do job, a base `monitora` é só
+   biblioteca padrão); as regras de `src/lib/entrevistas-da-planilha.js` e
+   `src/lib/selecao-da-planilha.js` portadas com casos dourados compartilhados. Não alivia o banco
+   (o custo é das RPCs), mas junta as cargas no mesmo lugar dos outros jobs. Junto: a carga das
+   Entrevistas passar a gravar só a linha que mudou (hoje regrava as ~3.400 linhas e o `CO_SYNC` a
+   cada hora, o que remonta o pacote e gera WAL). Estimativa: 3–4 dias; risco baixo.
+3. **Recálculo em lote das entrevistas** com `monitora.entrevistas.calculo`: um job que, quando um
+   roteiro muda (ou pelo Rodar agora), recalcula as entrevistas do edital e grava pela RPC que já
+   valida (`lancar_notas_entrevista` ou uma de lote, `service_role`), e uma conferência diária
+   (nota/parecer gravados × recalculados) no catálogo das conferências. O banco fica só com a
+   validação e a gravação. Estimativa: 2–3 dias; risco baixo (a regra já tem os casos dourados).
+4. **`finalizar_sync_analises_incremental`** (1,5 s por sync): medir de novo depois do
+   `UNLOGGED` e dos índices; se continuar alto, a detecção de duplicados e de ausentes pode ir
+   para o Apps Script/Python, que já tem a planilha inteira na mão.
 
 ## Roteiro das próximas entregas Python
 
