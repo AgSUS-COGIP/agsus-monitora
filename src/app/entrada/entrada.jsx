@@ -137,9 +137,6 @@ export function TelaDeEntrada({ sessao, marca, pedido }) {
           ) : null}
         </div>
         <p className="login-instituicao" id="loginInstituicao">
-          {identidade.logoUrl ? (
-            <img src={identidade.logoUrl} alt="" aria-hidden="true" />
-          ) : null}
           <span>{INSTITUICAO}</span>
         </p>
         <Rodape rodape={identidade.rodape} />
