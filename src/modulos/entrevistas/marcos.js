@@ -6,7 +6,8 @@
   `ligadas` é o liga/desliga das comemorações do app (a situação do sistema
   que o app leu na entrada; o controlador relê a cada abertura da tela). A
   regra (linha de base, transição, frase) é de src/lib/comemoracao.js; o
-  aviso e fogos pequenos, de src/modules/comemoracao.js. Este arquivo não
+  aviso e o efeito (o do marco "vaga-pronta" em Configurações ›
+  Comemorações; padrão: fogos suaves), de src/modules/comemoracao.js. Este arquivo não
   importa React.
 */
 import {
@@ -31,7 +32,6 @@ export function avaliarMarcosDasEntrevistas({
       chave: chaveDoMarco("vagas", usuarioId, area),
       atual: estadoGuardadoDasVagas(situacao),
       ligadas: ligadas === true,
-      confete: "pequeno",
       decidir: (anterior) => comemoracaoDasEntrevistas({ anterior, situacao }),
     });
   } catch (erro) {

@@ -156,7 +156,7 @@ export function MarcosDoAno({
       // Os fogos do marco: o número desenhado no céu e o agradecimento à equipe.
       comemorar({
         texto: agradecimentoDoMarco(marco),
-        confete: "festa",
+        marco: "marco-do-ano",
         forma: formaDoMarco(novo),
       });
     })().catch((erro) => console.warn("Marcos do ano indisponíveis:", erro));

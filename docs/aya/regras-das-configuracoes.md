@@ -127,3 +127,24 @@ publicação no histórico de Operação, de onde uma versão pode ser restaurad
 **resposta:** Enquanto o sistema carrega, a tela de entrada mostra um cartão provisório com as mesmas peças do cartão de verdade — a marca, a saudação padrão e o botão do Google, ainda sem ação —, por isso a troca não pisca nem muda de tamanho. Quando o sistema termina de carregar, entram a saudação e o botão configurados em Configurações › Tela de acesso.
 **fonte:** index.html; src/styles/platform-shell.css
 **abrir:** config:acesso
+
+## Comemorações
+
+**perguntas:** comemoracoes | o que sao as comemoracoes | secao comemoracoes | configurar comemoracoes | confete | fogos | fogos de artificio | serpentina | chuva de estrelas | baloes | coracoes | marcos do ano | som da comemoracao | pular comemoracao | arara nos fogos | efeito da comemoracao | intensidade da comemoracao | nao quero ver comemoracoes
+**resposta:** As comemorações celebram o processo e a equipe, nunca uma pessoa (não há ranking): edital todo analisado e fila de análises zerada, vaga pronta para o resultado final nas Entrevistas, marcos do ano da área (1.000, 2.500, 5.000, 7.500 e 10.000 análises concluídas, depois a cada 5.000), acesso liberado ou reativado e o fim de um tour ou de uma trilha comigo. Em Configurações › Comemorações, quem edita as configurações escolhe, para cada marco: ligado ou desligado, o efeito (Fogos, Confete, Serpentina, Chuva de estrelas, Corações, Balões, Aya comemorando ou Combinado), a intensidade (Suave, Normal ou Festa), a duração (de 2 a 15 segundos; em branco, automática), o som (desligado por padrão), uma mensagem própria e quem vê. Por enquanto só quem fez vê: "Toda a área online" depende de um aviso em tempo real que o MONITORA ainda não tem. Nos fogos, a tela escurece de leve, eu atravesso voando e o último estouro desenha o marco no céu (o número, um coração, uma estrela ou um visto). O aviso no topo tem "Pular" e o botão de som; o som só toca depois de você interagir com a página. Com movimento reduzido no aparelho, só o aviso. Cada marco aparece uma vez por pessoa. As mudanças valem depois de "Salvar alterações", com motivo, e ficam no histórico de Operação. Para não ver comemorações neste navegador, desmarque "Mostrar comemorações para mim". O liga/desliga geral, para todos, fica em Módulos e abas › Sistema inteiro.
+**fonte:** src/lib/catalogo-de-comemoracoes.ts; src/lib/motor-de-efeitos.js; src/lib/comemoracao.js; src/lib/fogos.js; src/modulos/configuracoes/comemoracoes.tsx
+**abrir:** config:comemoracoes
+
+## Testar uma comemoração
+
+**perguntas:** testar uma comemoracao | como testar uma comemoracao | testar comemoracao | botao testar | palco de testes | previa da comemoracao | ver o efeito antes
+**resposta:** Em Configurações › Comemorações, o botão Testar de cada marco solta a comemoração com as opções que estão na tela, mesmo antes de salvar. No Palco de testes, escolha o efeito, a intensidade, a duração e o som e clique em Soltar para ver na hora. Testar não grava nada nem aparece para outras pessoas, e funciona mesmo com as comemorações desligadas para você; com movimento reduzido no aparelho, aparece só o aviso.
+**fonte:** src/modulos/configuracoes/comemoracoes.tsx; src/modulos/configuracoes/palco-de-testes.tsx
+**abrir:** config:comemoracoes
+
+## Marco personalizado de comemoração
+
+**perguntas:** marco personalizado | como criar um marco personalizado | comemorar contratados do edital | meta de analises no dia | criar comemoracao
+**resposta:** Em Configurações › Comemorações › Marcos personalizados, Adicionar marco cria uma comemoração com nome e meta: "Edital chegou a N contratados" (soma os contratados das linhas daquele edital no monitoramento) ou "Área passou de N análises no dia" (conta as análises concluídas hoje na tela de Análises curriculares da área). Como os outros marcos, comemora quando a pessoa vê o número cruzar a meta, uma vez, e tem efeito, intensidade, duração, som e mensagem próprios. Vale depois de "Salvar alterações".
+**fonte:** src/lib/catalogo-de-comemoracoes.ts; src/app/marcos-personalizados.js
+**abrir:** config:comemoracoes

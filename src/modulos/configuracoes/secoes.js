@@ -4,7 +4,8 @@
   aberta e as permissões de cada perfil.
 
   O conteúdo é todo React: as seções que publicam pela barra fixa (Marca,
-  Página inicial, Tela de acesso, Aparência, Painéis externos e Operação)
+  Página inicial, Tela de acesso, Aparência, Painéis externos, Operação e
+  Comemorações)
   e Mensagens (chat), que salva sozinha, entram por portal no corpo da
   própria seção (src/modulos/configuracoes/configuracoes.jsx); Acessos, Módulos e abas
   e Status das atualizações são ilhas próprias, cujos blocos do index.html
@@ -56,6 +57,14 @@ export const SECOES = Object.freeze([
     icone: "fa-sliders",
     iconeDoMenu: "sliders-horizontal",
     descricao: "Versão, atualização em tempo real e histórico de publicações.",
+  },
+  {
+    id: "comemoracoes",
+    rotulo: "Comemorações",
+    icone: "fa-star",
+    iconeDoMenu: "party-popper",
+    descricao:
+      "Os marcos comemorados, o efeito de cada um e o palco para testar.",
   },
   {
     id: "acessos",

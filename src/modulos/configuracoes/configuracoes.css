@@ -1363,3 +1363,106 @@ body:not(.sidebar-collapsed) .config-barra {
     flex: 1 1 180px;
   }
 }
+
+/* ── Comemorações (comemoracoes.tsx, palco-de-testes.tsx) ─────────────── */
+
+.comemoracoes-lista {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.comemoracoes-marco {
+  display: grid;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  background: var(--surface-card);
+}
+
+.comemoracoes-marco[data-ligado="false"] {
+  background: var(--surface-raised);
+}
+
+.comemoracoes-marco__topo {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.comemoracoes-marco__acoes {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.comemoracoes-chave {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-width: 0;
+  cursor: pointer;
+}
+
+.comemoracoes-chave input {
+  flex: 0 0 auto;
+  width: 18px;
+  height: 18px;
+  accent-color: var(--brand-primary);
+}
+
+.comemoracoes-chave span {
+  display: grid;
+  min-width: 0;
+}
+
+.comemoracoes-chave strong {
+  color: var(--text-primary);
+  font-size: var(--text-body);
+  font-weight: var(--font-weight-medium);
+}
+
+.comemoracoes-chave small {
+  color: var(--text-secondary);
+  font-size: var(--text-caption);
+}
+
+.comemoracoes-caixa {
+  display: inline-flex;
+  align-items: center;
+  align-self: end;
+  gap: var(--space-2);
+  min-height: 36px;
+  color: var(--text-primary);
+  font-size: var(--text-body);
+  cursor: pointer;
+}
+
+.comemoracoes-caixa input {
+  accent-color: var(--brand-primary);
+}
+
+.comemoracoes-testar {
+  flex: 0 0 auto;
+}
+
+.comemoracoes-palco {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: var(--space-3) var(--space-4);
+  align-items: end;
+}
+
+.comemoracoes-palco input[type="range"] {
+  width: 100%;
+  accent-color: var(--brand-primary);
+}
+
+.comemoracoes-palco__soltar {
+  justify-self: start;
+}

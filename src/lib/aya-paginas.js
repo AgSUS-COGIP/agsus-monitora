@@ -245,6 +245,16 @@ export const SECOES_DA_AYA = Object.freeze({
       sug("Pessoas online", "O que mostra Pessoas online?"),
     ],
   }),
+  comemoracoes: Object.freeze({
+    nome: "Comemorações",
+    intro:
+      "Posso explicar os marcos comemorados, os efeitos, como testar uma comemoração e os marcos personalizados.",
+    sugestoes: [
+      sug("O que são", "O que são as comemorações?"),
+      sug("Testar", "Como testar uma comemoração?"),
+      sug("Personalizado", "Como criar um marco personalizado?"),
+    ],
+  }),
   acessos: Object.freeze({
     nome: "Acessos",
     intro:

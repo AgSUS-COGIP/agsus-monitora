@@ -3131,6 +3131,72 @@ export const VERBETES_AYA = Object.freeze([
     abrir: "config:acesso",
   },
   {
+    arquivo: "regras-das-configuracoes.md",
+    titulo: "Comemorações",
+    perguntas: [
+      "comemoracoes",
+      "o que sao as comemoracoes",
+      "secao comemoracoes",
+      "configurar comemoracoes",
+      "confete",
+      "fogos",
+      "fogos de artificio",
+      "serpentina",
+      "chuva de estrelas",
+      "baloes",
+      "coracoes",
+      "marcos do ano",
+      "som da comemoracao",
+      "pular comemoracao",
+      "arara nos fogos",
+      "efeito da comemoracao",
+      "intensidade da comemoracao",
+      "nao quero ver comemoracoes",
+    ],
+    resposta:
+      'As comemorações celebram o processo e a equipe, nunca uma pessoa (não há ranking): edital todo analisado e fila de análises zerada, vaga pronta para o resultado final nas Entrevistas, marcos do ano da área (1.000, 2.500, 5.000, 7.500 e 10.000 análises concluídas, depois a cada 5.000), acesso liberado ou reativado e o fim de um tour ou de uma trilha comigo. Em Configurações › Comemorações, quem edita as configurações escolhe, para cada marco: ligado ou desligado, o efeito (Fogos, Confete, Serpentina, Chuva de estrelas, Corações, Balões, Aya comemorando ou Combinado), a intensidade (Suave, Normal ou Festa), a duração (de 2 a 15 segundos; em branco, automática), o som (desligado por padrão), uma mensagem própria e quem vê. Por enquanto só quem fez vê: "Toda a área online" depende de um aviso em tempo real que o MONITORA ainda não tem. Nos fogos, a tela escurece de leve, eu atravesso voando e o último estouro desenha o marco no céu (o número, um coração, uma estrela ou um visto). O aviso no topo tem "Pular" e o botão de som; o som só toca depois de você interagir com a página. Com movimento reduzido no aparelho, só o aviso. Cada marco aparece uma vez por pessoa. As mudanças valem depois de "Salvar alterações", com motivo, e ficam no histórico de Operação. Para não ver comemorações neste navegador, desmarque "Mostrar comemorações para mim". O liga/desliga geral, para todos, fica em Módulos e abas › Sistema inteiro.',
+    fato: "",
+    fonte:
+      "src/lib/catalogo-de-comemoracoes.ts; src/lib/motor-de-efeitos.js; src/lib/comemoracao.js; src/lib/fogos.js; src/modulos/configuracoes/comemoracoes.tsx",
+    abrir: "config:comemoracoes",
+  },
+  {
+    arquivo: "regras-das-configuracoes.md",
+    titulo: "Testar uma comemoração",
+    perguntas: [
+      "testar uma comemoracao",
+      "como testar uma comemoracao",
+      "testar comemoracao",
+      "botao testar",
+      "palco de testes",
+      "previa da comemoracao",
+      "ver o efeito antes",
+    ],
+    resposta:
+      "Em Configurações › Comemorações, o botão Testar de cada marco solta a comemoração com as opções que estão na tela, mesmo antes de salvar. No Palco de testes, escolha o efeito, a intensidade, a duração e o som e clique em Soltar para ver na hora. Testar não grava nada nem aparece para outras pessoas, e funciona mesmo com as comemorações desligadas para você; com movimento reduzido no aparelho, aparece só o aviso.",
+    fato: "",
+    fonte:
+      "src/modulos/configuracoes/comemoracoes.tsx; src/modulos/configuracoes/palco-de-testes.tsx",
+    abrir: "config:comemoracoes",
+  },
+  {
+    arquivo: "regras-das-configuracoes.md",
+    titulo: "Marco personalizado de comemoração",
+    perguntas: [
+      "marco personalizado",
+      "como criar um marco personalizado",
+      "comemorar contratados do edital",
+      "meta de analises no dia",
+      "criar comemoracao",
+    ],
+    resposta:
+      'Em Configurações › Comemorações › Marcos personalizados, Adicionar marco cria uma comemoração com nome e meta: "Edital chegou a N contratados" (soma os contratados das linhas daquele edital no monitoramento) ou "Área passou de N análises no dia" (conta as análises concluídas hoje na tela de Análises curriculares da área). Como os outros marcos, comemora quando a pessoa vê o número cruzar a meta, uma vez, e tem efeito, intensidade, duração, som e mensagem próprios. Vale depois de "Salvar alterações".',
+    fato: "",
+    fonte:
+      "src/lib/catalogo-de-comemoracoes.ts; src/app/marcos-personalizados.js",
+    abrir: "config:comemoracoes",
+  },
+  {
     arquivo: "regras-das-entrevistas.md",
     titulo: "Tela de Entrevistas",
     perguntas: [
@@ -5108,23 +5174,18 @@ export const VERBETES_AYA = Object.freeze([
   },
   {
     arquivo: "regras-dos-modulos-e-abas.md",
-    titulo: "Comemorações",
+    titulo: "Ligar e desligar as comemorações",
     perguntas: [
-      "comemoracoes",
-      "confete",
-      "fogos",
-      "fogos de artificio",
-      "marcos do ano",
-      "o que sao as comemoracoes",
-      "som da comemoracao",
-      "pular comemoracao",
-      "arara nos fogos",
+      "desligar comemoracoes",
+      "ligar comemoracoes",
+      "comemoracoes desligadas",
+      "desligar os fogos para todos",
     ],
     resposta:
-      'As comemorações celebram o processo e a equipe, nunca uma pessoa (não há ranking): edital todo analisado e fila de análises zerada, vaga pronta para o resultado final nas Entrevistas, marcos do ano da área (1.000, 2.500, 5.000, 7.500 e 10.000 análises concluídas, depois a cada 5.000) e acesso liberado ou reativado. São fogos de artifício por 5 a 6 segundos: a tela escurece de leve, eu (a arara azul) atravesso voando e solto o primeiro foguete, e o último estouro desenha o marco no céu — o número no marco do ano ("1.000 análises concluídas em 2026. Obrigado, equipe de Projetos!"), um coração no edital todo analisado, uma estrela na fila zerada e um visto no acesso liberado. O aviso no topo tem "Pular" (encerra os fogos na hora) e um botão de som, desligado por padrão: ligado, os estalos só tocam depois de você interagir com a página, e a escolha fica guardada neste navegador. Com movimento reduzido, só o aviso. Cada marco aparece uma vez por pessoa. Liga e desliga em Módulos e abas › Sistema inteiro; desligado, ninguém vê.',
+      "O liga/desliga geral das comemorações fica em Configurações › Módulos e abas › Sistema inteiro, com o administrador global: desligado, ninguém vê comemoração nenhuma. Cada marco, o efeito de cada um e os marcos personalizados ficam em Configurações › Comemorações.",
     fato: "",
     fonte:
-      "src/lib/comemoracao.js; src/lib/fogos.js; src/lib/fogos-cena.js; src/lib/fogos-formas.js; supabase/migrations/20260930150000_comemoracoes_e_marcos.sql",
+      "src/lib/comemoracao.js; supabase/migrations/20260930150000_comemoracoes_e_marcos.sql",
   },
   {
     arquivo: "regras-dos-recursos.md",

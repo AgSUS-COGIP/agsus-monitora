@@ -28,6 +28,13 @@ import {
   CABECALHO_PADRAO,
   CHAVE_DO_CABECALHO,
 } from "./cabecalho-dos-documentos.js";
+import {
+  alteracoesDasComemoracoes,
+  CHAVE_DAS_COMEMORACOES,
+  errosDaConfiguracao,
+  normalizarConfiguracao,
+  serializarConfiguracao,
+} from "./catalogo-de-comemoracoes.ts";
 
 const txt = (valor) => String(valor ?? "").trim();
 
@@ -62,8 +69,9 @@ const texto = (chave, descricao, rotulo, extra = {}) =>
 
   `tipo`: "texto-longo" (várias linhas), "url" (http/https; vazio passa), "inteiro" (minimo..maximo), "email",
   "dominio" (agenciasus.org.br), "url-de-acesso" (caminho do site ou https),
-  "booleano"/"opcoes" (lista `opcoes`), "cor" (seletor) e "gerenciado" (sem
-  campo de texto: a seção escolhe o valor por botões — imagens).
+  "booleano"/"opcoes" (lista `opcoes`), "cor" (seletor), "gerenciado" (sem
+  campo de texto: a seção escolhe o valor por botões — imagens) e
+  "comemoracoes" (o JSON dos marcos, editado pela seção Comemorações).
   `obrigatorio` recusa vazio. `erro` é a mensagem dos tipos sem mensagem
   própria.
 
@@ -311,6 +319,19 @@ export const CAMPOS_DAS_SECOES = Object.freeze({
       normalizar: (valor) => txt(valor),
     },
   ]),
+
+  /* Os marcos das comemorações (src/lib/catalogo-de-comemoracoes.ts); vazio = padrão. */
+  comemoracoes: Object.freeze([
+    {
+      chave: CHAVE_DAS_COMEMORACOES,
+      descricao: "Comemorações: marcos, efeitos e marcos personalizados",
+      rotulo: "Comemorações",
+      tipo: "comemoracoes",
+      erro: "Revise os marcos personalizados em Comemorações.",
+      normalizar: (valor) =>
+        serializarConfiguracao(normalizarConfiguracao(valor)),
+    },
+  ]),
 });
 
 export const CHAVES_DAS_SECOES = Object.freeze(
@@ -385,6 +406,8 @@ const VALIDACAO_POR_TIPO = Object.freeze({
   inteiro: inteiroValido,
   dominio: dominioValido,
   "url-de-acesso": isValidAccessAssetUrl,
+  comemoracoes: (valor) =>
+    errosDaConfiguracao(normalizarConfiguracao(valor)).length === 0,
 });
 
 /** Erros dos campos: Map chave → mensagem. */
@@ -431,6 +454,15 @@ export function buildChanges(snapshot, configRows, panels) {
   configRows.forEach((row) => {
     const previous = configMap.get(row.chave);
     if (txt(previous?.valor) === txt(row.valor)) return;
+    // Os marcos das comemorações: campo a campo, não o JSON inteiro.
+    if (row.chave === CHAVE_DAS_COMEMORACOES) {
+      const detalhes = alteracoesDasComemoracoes(previous?.valor, row.valor);
+      if (detalhes.length) {
+        for (const item of detalhes)
+          changes.push({ entity: "Configuração", ...item });
+        return;
+      }
+    }
     changes.push({
       entity: "Configuração",
       label: row.descricao || row.chave,
