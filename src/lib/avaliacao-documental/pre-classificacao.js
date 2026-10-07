@@ -52,7 +52,14 @@
   - "a linha anda": quem está no lote só sai eliminado; com linha_anda, o
     lugar aberto vai para o próximo da Provisória, num lote novo (reposição),
     com o motivo; ANALISADO (já tem ficha) nunca muda;
-  - refazer (só antes das fichas): o lote é recortado do zero.
+  - refazer (só antes das fichas): o lote é recortado do zero;
+  - decisão da coordenação (decisoes[id] = { motivo }, de TB_DECISAO_LOTE):
+    quem a regra elimina (menos quem saiu da Empregare) ou deixa fora do lote
+    fica no lote com a entrada DECISAO e o motivo da decisão, no lote em que
+    já estava (ou no último da vaga), sem contar para o tamanho do lote pela
+    regra, sem ocupar lugar nem abrir reposição e fora da linha de corte; o
+    eliminado ganha posição depois do último da Provisória. Revogada a
+    decisão, o candidato volta ao que a regra diz.
 */
 import { codigosDaModalidade } from "../classificacao/catalogo.js";
 import { dataDeCorteDoCronograma } from "../classificacao/dados.js";
@@ -72,6 +79,7 @@ export const PREFIXO_DA_ART = "NOTA - ";
 export const PREFIXO_DO_AVISO_DE_PERGUNTA_AMBIGUA = "PERGUNTA_AMBIGUA:";
 export const PREFIXO_DO_AVISO_DE_SEM_NIVEL = "SEM_NIVEL:";
 const NIVEIS_DA_VAGA = new Set(["superior", "tecnico", "medio", "fundamental"]);
+export const ENTRADA_POR_DECISAO = "DECISAO";
 export const SAIU_DA_EMPREGARE = Object.freeze({
   codigo: "SAIU_DA_EMPREGARE",
   motivo: "Saiu do arquivo da Empregare",
@@ -409,6 +417,18 @@ function comparador(desempate, hoje) {
 
 const NO_LOTE = new Set(["NO_LOTE", "ANALISADO"]);
 
+/** O motivo da decisão vigente da coordenação para o candidato ({ [id]: { motivo } }), ou null. */
+export function motivoDaDecisao(decisoes, id) {
+  const motivo = ehObjeto(decisoes) ? decisoes[id]?.motivo : null;
+  return typeof motivo === "string" && motivo.trim() ? motivo.trim() : null;
+}
+
+/** Entrou no lote pela regra (a anterior), e não por decisão da coordenação. */
+const peloLoteDaRegra = (ant) =>
+  Boolean(ant) &&
+  NO_LOTE.has(ant.situacao) &&
+  (ant.situacao === "ANALISADO" || ant.entrada !== ENTRADA_POR_DECISAO);
+
 /**
  * Pré-classifica os inscritos de uma vaga.
  *   regra        a regra do edital, já normalizada (normalizarRegraAnalise)
@@ -421,7 +441,8 @@ const NO_LOTE = new Set(["NO_LOTE", "ANALISADO"]);
  *   refazer      recorta o lote do zero (só antes das fichas)
  *   hoje         "AAAA-MM-DD" (idade do desempate)
  *   congelar     guarda a declarada completa de quem ainda não a tem congelada (congelaADeclarada)
- * Devolve { linhas, resumo }.
+ *   decisoes     { [id]: { motivo } }: as decisões vigentes da coordenação (ficam no lote, entrada DECISAO)
+ * Devolve { linhas, resumo } (resumo.no_lote: pela regra; resumo.por_decisao: por decisão).
  */
 export function preClassificarVaga({
   regra,
@@ -432,6 +453,7 @@ export function preClassificarVaga({
   refazer = false,
   hoje,
   congelar = false,
+  decisoes = {},
 }) {
   const provisoria = regra?.provisoria ?? {};
   const loteDaRegra = regra?.lote ?? {};
@@ -534,12 +556,22 @@ export function preClassificarVaga({
     });
   }
 
-  // Provisória: ART decrescente e o desempate da regra.
+  // Provisória: ART decrescente e o desempate da regra; depois do último, os
+  // eliminados pela regra que ficam no lote por decisão da coordenação.
+  const ordem = comparador(desempate, hoje);
   const ranqueados = linhas
     .filter((l) => l.situacao !== "ELIMINADO")
-    .sort(comparador(desempate, hoje));
+    .sort(ordem);
+  const eliminadosPorDecisao = linhas
+    .filter(
+      (l) =>
+        l.situacao === "ELIMINADO" &&
+        l.motivo_codigo !== SAIU_DA_EMPREGARE.codigo &&
+        motivoDaDecisao(decisoes, l.id),
+    )
+    .sort(ordem);
   const porModalidade = {};
-  ranqueados.forEach((l, i) => {
+  [...ranqueados, ...eliminadosPorDecisao].forEach((l, i) => {
     l.posicao = i + 1;
     porModalidade[l.modalidade] = (porModalidade[l.modalidade] ?? 0) + 1;
     l.posicao_modalidade = porModalidade[l.modalidade];
@@ -558,8 +590,10 @@ export function preClassificarVaga({
   const listaDoMembro = (l) =>
     ordemDasListas.includes(l.lista_lote) ? l.lista_lote : ordemDasListas[0];
 
-  // Quem já estava no lote e continua (ANALISADO nunca sai).
+  // Quem já estava no lote e continua (ANALISADO nunca sai). Quem entrou por
+  // decisão da coordenação não é do lote da regra (ver as decisões, abaixo).
   const membros = [];
+  const porDecisao = [];
   const saidas = [];
   for (const l of linhas) {
     const ant = l._anterior;
@@ -572,7 +606,12 @@ export function preClassificarVaga({
         entrada: ant.entrada ?? null,
         motivo_entrada: ant.motivo_entrada ?? null,
       });
-      membros.push(l);
+      (ant.entrada === ENTRADA_POR_DECISAO ? porDecisao : membros).push(l);
+    } else if (!peloLoteDaRegra(ant)) {
+      continue;
+    } else if (l.situacao === "ELIMINADO" && motivoDaDecisao(decisoes, l.id)) {
+      // Eliminado pela regra, mas fica no lote por decisão (sem abrir reposição).
+      if (l.motivo_codigo === SAIU_DA_EMPREGARE.codigo) saidas.push(l);
     } else if (l.situacao === "ELIMINADO") {
       saidas.push(l);
     } else if (!refazer) {
@@ -587,18 +626,23 @@ export function preClassificarVaga({
     }
   }
   const herdados = [...membros];
+  // Quem já está no lote por decisão (vigente, ou já analisado) fica por
+  // decisão: não entra pela regra nem conta para o tamanho dela.
+  const fixoPorDecisao = (l) =>
+    l._anterior?.entrada === ENTRADA_POR_DECISAO &&
+    (l._anterior.situacao === "ANALISADO" ||
+      (l._anterior.situacao === "NO_LOTE" &&
+        motivoDaDecisao(decisoes, l.id) !== null));
   // Lote pela nota mínima: entram todos com a nota mínima (quem já estava fica).
   const notaMinima = t.nota_minima ?? null;
   const temNotaMinima = (l) => l.nota !== null && l.nota >= notaMinima;
   if (notaMinima !== null) {
     t.tamanho =
-      ranqueados.filter(temNotaMinima).length +
+      ranqueados.filter((l) => temNotaMinima(l) && !fixoPorDecisao(l)).length +
       membros.filter((m) => !temNotaMinima(m)).length;
     t.descricao = `${t.descricao} = ${t.tamanho}`;
   }
-  const inicial =
-    refazer ||
-    !linhas.some((l) => l._anterior && NO_LOTE.has(l._anterior.situacao));
+  const inicial = refazer || !linhas.some((l) => peloLoteDaRegra(l._anterior));
   saidas.sort(
     (a, b) =>
       (a._anterior.posicao ?? Infinity) - (b._anterior.posicao ?? Infinity) ||
@@ -657,6 +701,7 @@ export function preClassificarVaga({
       for (const l of ranqueados) {
         if (ocupados >= tamanho) break;
         if (l.situacao !== "RANQUEADO" || !cabeNaLista(l, b)) continue;
+        if (fixoPorDecisao(l)) continue;
         if (notaMinima !== null && !temNotaMinima(l)) continue;
         entrar(l, false);
         ocupados += 1;
@@ -667,11 +712,42 @@ export function preClassificarVaga({
           if (
             l.situacao === "RANQUEADO" &&
             cabeNaLista(l, b) &&
-            l.nota === nota
+            l.nota === nota &&
+            !fixoPorDecisao(l)
           )
             entrar(l, true);
       }
     }
+  }
+
+  // Decisões da coordenação: no lote mesmo que a regra elimine ou deixe fora.
+  const ultimoLoteDaVaga = Math.max(1, maiorLote, entraram ? numeroNovo : 0);
+  for (const l of linhas) {
+    const motivo = motivoDaDecisao(decisoes, l.id);
+    if (!motivo || l.situacao === "NO_LOTE" || l.situacao === "ANALISADO")
+      continue;
+    if (l.motivo_codigo === SAIU_DA_EMPREGARE.codigo) {
+      avisos.add("DECISAO_SAIU_DA_EMPREGARE");
+      continue;
+    }
+    const ant = l._anterior;
+    const estava = ant?.situacao === "NO_LOTE" && Number(ant.lote) >= 1;
+    const listaDaModalidade = ordemDasListas.includes(l.modalidade)
+      ? l.modalidade
+      : ordemDasListas[0];
+    Object.assign(l, {
+      situacao: "NO_LOTE",
+      motivo_codigo: null,
+      motivo: null,
+      lote: estava ? Number(ant.lote) : ultimoLoteDaVaga,
+      lista_lote:
+        estava && ordemDasListas.includes(ant.lista_lote)
+          ? ant.lista_lote
+          : listaDaModalidade,
+      entrada: ENTRADA_POR_DECISAO,
+      motivo_entrada: motivo,
+    });
+    porDecisao.push(l);
   }
 
   if (!inicial && saidas.length && loteDaRegra.linha_anda === false)
@@ -738,6 +814,7 @@ export function preClassificarVaga({
       eliminados: conta((l) => l.situacao === "ELIMINADO"),
       ranqueados: ranqueados.length,
       no_lote: membros.length,
+      por_decisao: porDecisao.length,
       tamanho: t.tamanho,
       descricao: t.descricao,
       por_modalidade: t.por_modalidade,

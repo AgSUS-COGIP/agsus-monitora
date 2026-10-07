@@ -8,7 +8,9 @@ Provisória (eliminação automática, ordem pela base da nota da regra — a no
 declarada completa, item 8.2.6, ou a ART — com o desempate da regra) e o lote
 de convocação ("a linha anda"); depois do fim das inscrições do cronograma do
 edital, congela a nota declarada completa de cada inscrito (o banco guarda e
-não deixa mudar até a coordenação descongelar)
+não deixa mudar até a coordenação descongelar); mantém no lote, com a entrada
+DECISAO, quem a coordenação incluiu por decisão (TB_DECISAO_LOTE), mesmo que
+a regra o elimine ou o deixe abaixo do corte
 com python/monitora/avaliacao_documental/, e GRAVA O RESULTADO PRONTO
 (gravar_pre_classificacao_vaga). O banco valida e serve; a tela só lê.
 Migration: supabase/migrations/20261006110000_pre_classificacao_e_lote.sql.
@@ -167,6 +169,7 @@ def processar_edital(chamar, edital, hoje, refazer, gravar):
         "eliminados": 0,
         "ranqueados": 0,
         "no_lote": 0,
+        "por_decisao": 0,
         "divergencias": 0,
         "pela_art": 0,
         "congeladas": 0,
@@ -203,20 +206,31 @@ def processar_edital(chamar, edital, hoje, refazer, gravar):
             refazer=refazer,
             hoje=hoje,
             congelar=congelar,
+            decisoes=lidos.get("decisoes") or {},
         )
         resumo = r["resumo"]
         if gravar is not None:
             gravar(vaga["codigo"], r)
-        for chave in ("inscritos", "eliminados", "ranqueados", "no_lote", "divergencias", "pela_art", "congeladas"):
+        for chave in (
+            "inscritos",
+            "eliminados",
+            "ranqueados",
+            "no_lote",
+            "por_decisao",
+            "divergencias",
+            "pela_art",
+            "congeladas",
+        ):
             resultado[chave] += int(resumo[chave] or 0)
         avisos.update(resumo["avisos"])
         log.info(
-            "Edital %s · vaga %s: %s inscritos, %s eliminados, %s no lote (tamanho %s).",
+            "Edital %s · vaga %s: %s inscritos, %s eliminados, %s no lote pela regra + %s por decisão (tamanho %s).",
             resultado["rotulo"],
             vaga["codigo"],
             resumo["inscritos"],
             resumo["eliminados"],
             resumo["no_lote"],
+            resumo["por_decisao"],
             resumo["tamanho"] if resumo["tamanho"] is not None else "sem quadro",
         )
     resultado["avisos"] = sorted(set(resultado["avisos"]) | set(avisos))
@@ -281,9 +295,12 @@ def linha_do_resumo(r):
         else (" · nota do lote: ART" if r.get("base_da_nota") else "")
     )
     texto_congeladas = f" · {r['congeladas']} declarada(s) congelada(s)" if r.get("congeladas") else ""
+    texto_lote = f"{r['no_lote']} no lote"
+    if r.get("por_decisao"):
+        texto_lote = f"lote: {r['no_lote']} pela regra + {r['por_decisao']} por decisão"
     return (
         f"{prefixo}{r['vagas']} vaga(s) · {r['inscritos']} inscritos · {r['eliminados']} eliminados · "
-        f"{r['ranqueados']} na Provisória · {r['no_lote']} no lote · {r['divergencias']} divergência(s) ART × declarada"
+        f"{r['ranqueados']} na Provisória · {texto_lote} · {r['divergencias']} divergência(s) ART × declarada"
         f"{texto_base}{texto_congeladas}{texto_fichas}{texto_avisos}."
     )
 
