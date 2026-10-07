@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   blocoSeAplica,
   calcularFicha,
+  composicaoDaNota,
   conferenciaDaFicha,
   declaradaDaFicha,
   divergenciaDoBloco,
@@ -15,8 +16,11 @@ import {
   nomeCurtoDoBloco,
   nomeDaEtapa,
   opcoesDeJustificativa,
+  PASSO_DA_CONCLUSAO,
+  passosDaFicha,
   pendenciasDaFicha,
   previaDoParecer,
+  proximoPassoPendente,
   respostasDoBloco,
   resumoParaGravar,
   situacaoDaTecla,
@@ -692,5 +696,127 @@ describe("modo de análise: etapas, prévia do parecer e anexos", () => {
     expect(ehAnexo(" anexo ")).toBe(true);
     expect(ehAnexo("Especialização")).toBe(false);
     expect(ehAnexo("")).toBe(false);
+  });
+});
+
+describe("modo foco: passos, próximo pendente e composição da nota", () => {
+  const nova = () =>
+    lancamentoInicial({
+      regra: REGRA,
+      respostas: RESPOSTAS,
+      modalidade: "AC",
+      cargo: "Engenheiro de Segurança do Trabalho",
+      documental: DOCUMENTAL,
+    });
+  const declarada = declaradaDaFicha(REGRA, RESPOSTAS);
+  const pendencias = (lanc) =>
+    pendenciasDaFicha(
+      REGRA,
+      lanc,
+      calcularFicha(REGRA, lanc, DOCUMENTAL),
+      declarada,
+    );
+
+  it("as etapas e, no fim, a Conclusão (pronta só sem pendência)", () => {
+    const lanc = nova();
+    const passos = passosDaFicha(REGRA, lanc, pendencias(lanc));
+    expect(passos.map((p) => p.codigo)).toEqual([
+      "IDENTIDADE",
+      "ESCOLARIDADE",
+      "REGISTRO_CONSELHO",
+      "FORMACAO",
+      "CURSOS",
+      "EXPERIENCIA",
+      PASSO_DA_CONCLUSAO,
+    ]);
+    expect(passos.at(-1)).toEqual({
+      codigo: "CONCLUSAO",
+      nome: "Conclusão",
+      estado: "nao_conferido",
+    });
+    expect(passosDaFicha(REGRA, lanc, []).at(-1).estado).toBe("pronta");
+  });
+
+  it("o critério étnico fica nos passos mesmo antes de valer (é nele que se marca Indígena)", () => {
+    const regra = structuredClone(REGRA);
+    regra.blocos.push({
+      codigo: "ETNICO",
+      titulo: "Critério étnico",
+      tipo: "PONTUACAO",
+      perguntas: [],
+      indigena: 8,
+      aldeia: 6,
+      teto: 14,
+    });
+    const lanc = { ...nova(), indigena: false };
+    const etnico = passosDaFicha(regra, lanc, []).find(
+      (p) => p.codigo === "ETNICO",
+    );
+    expect(etnico).toEqual({
+      codigo: "ETNICO",
+      nome: "Critério étnico",
+      estado: "opcional",
+    });
+    const comIndigena = passosDaFicha(regra, { ...lanc, indigena: true }, []);
+    expect(comIndigena.find((p) => p.codigo === "ETNICO").estado).toBe(
+      "nao_conferido",
+    );
+  });
+
+  it("depois de decidir, vai ao próximo que pede algo; volta ao começo; com tudo resolvido, à Conclusão", () => {
+    const passos = [
+      { codigo: "A", estado: "CONFORME" },
+      { codigo: "B", estado: "nao_conferido" },
+      { codigo: "C", estado: "NAO_CONFORME" },
+      { codigo: "D", estado: "pendencia" },
+      { codigo: "E", estado: "opcional" },
+      { codigo: PASSO_DA_CONCLUSAO, estado: "nao_conferido" },
+    ];
+    expect(proximoPassoPendente(passos, "A")).toBe("B");
+    expect(proximoPassoPendente(passos, "B")).toBe("D");
+    expect(proximoPassoPendente(passos, "D")).toBe("B");
+    expect(proximoPassoPendente(passos, null)).toBe("B");
+    expect(
+      proximoPassoPendente(
+        passos.map((p) => ({ ...p, estado: "CONFORME" })),
+        "A",
+      ),
+    ).toBe(PASSO_DA_CONCLUSAO);
+  });
+
+  it("a composição: apurado só depois de conferir, declarado, teto no nível e a diferença", () => {
+    const lanc = nova();
+    const av0 = calcularFicha(REGRA, lanc, DOCUMENTAL);
+    expect(composicaoDaNota(REGRA, lanc, av0, declarada)).toEqual([
+      {
+        bloco: "FORMACAO",
+        parcial: "FORMACAO",
+        rotulo: "Formação Acadêmica",
+        apurado: null,
+        declarado: 5,
+        teto: 10,
+        divergente: false,
+      },
+      {
+        bloco: "CURSOS",
+        parcial: "CURSOS",
+        rotulo: "Cursos de Aperfeiçoamento",
+        apurado: null,
+        declarado: 5,
+        teto: 5,
+        divergente: false,
+      },
+      expect.objectContaining({
+        bloco: "EXPERIENCIA",
+        apurado: null,
+        teto: 35,
+      }),
+    ]);
+    lanc.blocos.FORMACAO = { situacao: "CONFORME" };
+    const av1 = calcularFicha(REGRA, lanc, DOCUMENTAL);
+    expect(composicaoDaNota(REGRA, lanc, av1, declarada)[0]).toMatchObject({
+      apurado: 0,
+      divergente: true,
+    });
   });
 });
