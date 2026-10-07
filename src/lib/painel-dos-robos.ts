@@ -533,11 +533,11 @@ export function acompanhamentoDoPedido({
 }: {
   robo: string;
   pedido: PedidoDoRobo | null | undefined;
-  execucoes?: readonly ExecucaoDoRobo[];
+  execucoes?: readonly ExecucaoDoRobo[] | null;
 }): EtapaDoPedido | null {
   if (!pedido?.em) return null;
   const desde = pedido.em.getTime() - FOLGA_MS;
-  const doBanco = execucoes.find(
+  const doBanco = lista(execucoes).find(
     (e) =>
       e.inicio &&
       e.inicio.getTime() >= desde &&

@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import { normalizarSaude, visaoSimples } from "../src/lib/saude-das-cargas.ts";
 import {
+  acompanhamentoDoPedido,
   normalizarPainel,
   normalizarVagas,
 } from "../src/lib/painel-dos-robos.ts";
@@ -9,6 +10,15 @@ import { criarEstadoDaSaude } from "../src/componentes/saude-das-cargas/estado.t
 import { situacaoDoPedido } from "../src/lib/robos-de-carga.js";
 
 describe("fronteiras do Status das atualizações", () => {
+  it("mantém o acompanhamento quando o histórico ainda não existe", () => {
+    expect(
+      acompanhamentoDoPedido({
+        robo: "empregare",
+        pedido: { em: new Date("2026-10-07T12:00:00Z"), modo: "normal" },
+        execucoes: null,
+      }),
+    ).toMatchObject({ etapa: "aguardando", execucao: null, url: null });
+  });
   it.each([null, [], "inválido"])(
     "normaliza respostas fora do formato: %s",
     (entrada) => {
