@@ -15,11 +15,7 @@ const TOM_DO_SELO = {
 };
 
 /**
- * @param {object} p
- * @param {"aprovado" | "reprovado" | "pendente" | "revisar" | "neutro"} [p.tom]
- * @param {string} [p.titulo]
- * @param {string} [p.className]
- * @param {import("react").ReactNode} [p.children]
+ * @param {{tom?: string, titulo?: string, className?: string, children?: import("react").ReactNode}} props
  */
 export function Selo({ tom = "neutro", titulo, className, children }) {
   return (

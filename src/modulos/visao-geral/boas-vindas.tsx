@@ -1,3 +1,4 @@
+import type { PropsDasBoasVindas, PropsDosMarcos } from "./tipos.ts";
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import {
   assinarDadosDoMonitoramento,
@@ -22,7 +23,8 @@ import {
 import { semTreinamento } from "../../lib/edital-de-treinamento.js";
 import { nomeDaArea } from "../../lib/menu-lateral.js";
 import { comemorar } from "../../modules/comemoracao.js";
-import { lerMarcosDaArea } from "./marcos.js";
+import { lerMarcosDaArea } from "./marcos.ts";
+import { linhasDaResposta } from "../../lib/visao-geral.ts";
 
 /*
   O topo da Visão geral (a mesma página nas três áreas), antes do resto:
@@ -42,23 +44,25 @@ import { lerMarcosDaArea } from "./marcos.js";
 */
 
 /* Abre o Cronograma da área pelo item do menu (troca a área e a tela). */
-function abrirCronogramaDaArea(area) {
+function abrirCronogramaDaArea(area: string) {
   document
-    .querySelector(`.menu-item[data-view="calendario"][data-area="${area}"]`)
+    .querySelector<HTMLElement>(
+      `.menu-item[data-view="calendario"][data-area="${area}"]`,
+    )
     ?.click();
 }
 
 const usarDados = () =>
   useSyncExternalStore(assinarDadosDoMonitoramento, obterDadosDoMonitoramento);
 
-export function BoasVindas({ obterPerfil, agora }) {
+export function BoasVindas({ obterPerfil, agora }: PropsDasBoasVindas) {
   const { linhas, carregado, areaAtual } = usarDados();
   const perfil = obterPerfil();
   if (!perfil || !carregado) return null;
 
   const nome = primeiroNome(perfil.nome || perfil.email?.split("@")[0]);
   const quantidade = editaisComEtapaNaSemana(
-    semTreinamento(linhasDaArea(linhas, areaAtual)),
+    semTreinamento(linhasDaArea(linhasDaResposta(linhas), areaAtual)),
     agora(),
   );
   const titulo = [saudacao(agora().getHours()), nome]
@@ -95,10 +99,13 @@ export function MarcosDoAno({
   supabase,
   comemoracoesLigadas,
   armazenamento = globalThis.window?.localStorage,
-}) {
+}: PropsDosMarcos) {
   const { carregado, areaAtual } = usarDados();
-  const [mensagem, setMensagem] = useState(null);
-  const consultadas = useRef(new Set());
+  const [mensagem, setMensagem] = useState<{
+    area: string;
+    texto: string;
+  } | null>(null);
+  const consultadas = useRef(new Set<string>());
   const montado = useRef(false);
   const perfil = obterPerfil();
   const usuarioId = String(perfil?.user_id || perfil?.id || "").trim();

@@ -100,6 +100,9 @@ function usarLugares(carregador, area, carregadoEm) {
   );
 }
 
+/**
+ * @param {{area?: string, carregador: ReturnType<typeof import("./carregador.js").criarCarregadorDeMunicipios>, carregadoEm?: number, linhas?: readonly object[], filtroAtivo?: boolean, tema?: string, idDoMapa?: string, perfil?: object | null, supabase?: import("@supabase/supabase-js").SupabaseClient | null}} props
+ */
 export function MapaDeProjetos({
   area = "projetos",
   carregador,
