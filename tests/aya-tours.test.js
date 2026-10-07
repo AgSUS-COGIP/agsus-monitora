@@ -173,23 +173,23 @@ describe("tours das telas", () => {
       for (const nome of readdirSync(pasta)) {
         const caminho = join(pasta, nome);
         if (statSync(caminho).isDirectory()) varrer(caminho);
-        else if (caminho.endsWith(".jsx")) arquivos.push(caminho);
+        else if (/\.[jt]sx$/.test(caminho)) arquivos.push(caminho);
       }
     };
     varrer("src/modulos");
     varrer("src/componentes");
-    const jsx = arquivos.map((a) => readFileSync(a, "utf8")).join("\n");
+    const componentes = arquivos.map((a) => readFileSync(a, "utf8")).join("\n");
     // O atributo vem escrito (data-tour="x"), pela prop dos componentes de
     // src/ui (tour="x") ou montado num modelo (data-tour={`prefixo-${…}`}).
     const prefixos = [
-      ...jsx.matchAll(/data-tour"?[=:]\s*\{?`([a-z-]+)\$\{/g),
+      ...componentes.matchAll(/data-tour"?[=:]\s*\{?`([a-z-]+)\$\{/g),
     ].map((m) => m[1]);
     for (const id of new Set(usados))
       expect(
-        jsx.includes(`data-tour="${id}"`) ||
-          jsx.includes(`tour="${id}"`) ||
-          jsx.includes(`"data-tour": "${id}"`) ||
-          jsx.includes(`? "${id}"`) ||
+        componentes.includes(`data-tour="${id}"`) ||
+          componentes.includes(`tour="${id}"`) ||
+          componentes.includes(`"data-tour": "${id}"`) ||
+          componentes.includes(`? "${id}"`) ||
           prefixos.some((prefixo) => id.startsWith(prefixo)),
         id,
       ).toBe(true);
