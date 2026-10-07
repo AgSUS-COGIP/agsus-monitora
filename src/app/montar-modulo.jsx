@@ -13,6 +13,9 @@ import { ErrorBoundary } from "./ErrorBoundary.jsx";
  *
  * Devolve `{ raiz, desmontar }`. A `raiz` (do React) continua exposta nos
  * controladores porque os testes desmontam por ela (`controlador.raiz.unmount()`).
+ * @param {import("react-dom/client").Container} elemento
+ * @param {import("react").ReactNode} componente
+ * @param {{ flushSync?: boolean, nome?: string }} [opcoes]
  */
 export function montarModulo(
   elemento,

@@ -2,9 +2,10 @@
 
 Início da migração gradual: 07/10/2026.
 
-O frontend mantém React e Vite. Os componentes `src/ui/aviso.tsx` e
-`src/ui/botao-de-acao.tsx` são os primeiros componentes com tipos; o restante segue em
-JavaScript/JSX. Não há mudança nas telas, regras de acesso ou chamadas ao banco nesta entrega.
+O frontend mantém React e Vite. `Aviso`, `BotaoDeAcao` e o módulo Seleção estão em
+TypeScript. Seleção inclui estado, componentes, filtros, indicadores, gráficos, tabela
+e regras puras em `src/lib/selecao-do-painel.ts`. O restante segue em JavaScript/JSX.
+Os componentes compartilhados consumidos por Seleção declaram seus contratos em JSDoc.
 
 ## Verificação
 
@@ -18,9 +19,10 @@ npm run typecheck:frontend
 O build já chama `typecheck`, então erros nos arquivos migrados bloqueiam o build e o CI.
 `tsconfig.frontend.json` inclui os arquivos TypeScript de `src/` e os casos de contrato em
 `tests/tipos/`. Usa modo estrito, DOM, JSX do React e resolução de módulos do bundler.
-`allowJs` permite importar o código existente; `checkJs` está desligado. Portanto, esta etapa
-não verifica os contratos de todos os consumidores JavaScript nem valida respostas de API
-em tempo de execução.
+`allowJs` permite importar o código existente; `checkJs` está desligado. Portanto, o compilador
+não verifica todos os consumidores JavaScript nem valida JSON em tempo de execução.
+Seleção faz a verificação de objetos e listas no normalizador; limites dessa verificação
+estão no README do módulo.
 
 Lint e formatação incrementais incluem `.ts` e `.tsx`. O ESLint usa o parser TypeScript;
 nomes e redeclarações nesses arquivos são verificados pelo compilador. Tipos do React e o
@@ -40,6 +42,10 @@ existentes de `tests/ui/ui.test.js` continuam conferindo a renderização, os r�
 atributos acessíveis e o bloqueio do botão durante ações.
 
 ## Próximas migrações
+
+Seleção está migrada em `src/modulos/selecao/`, com contratos em `tipos.ts`.
+O escopo e as limitações estão em
+[../src/modulos/selecao/README.md](../src/modulos/selecao/README.md).
 
 Escolher um módulo por entrega, levantar os consumidores e manter o comportamento coberto
 pelos testes. Declarar contratos de dados e ações sem `any` ou supressões de erros. Atualizar

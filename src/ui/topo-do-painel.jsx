@@ -10,6 +10,7 @@
 
 /**
  * Sem `aoExportar`, o botão Exportar não aparece.
+ * @param {{ status: import("react").ReactNode, aoAtualizar: () => void, atualizarDesativado?: boolean, aoExportar?: () => void, exportarDesativado?: boolean, visoes?: import("react").ReactNode, idDaAtualizacao?: string, tour?: string, children?: import("react").ReactNode }} props
  */
 export function TopoDoPainel({
   visoes = null,

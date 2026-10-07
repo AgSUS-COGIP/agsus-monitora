@@ -8,6 +8,9 @@ import { classes } from "./classes.js";
 
   Marcação: `.ui-card.ui-card-de-grafico` > `.ui-grafico[data-altura]`.
 */
+/**
+ * @param {{ titulo: string, className?: string, altura?: string, carregando?: boolean, elemento?: "article" | "section", tour?: string, children?: import("react").ReactNode }} props
+ */
 export function CardDeGrafico({
   titulo,
   className,
