@@ -934,7 +934,7 @@ export const VERBETES_AYA = Object.freeze([
       'Na aba Regra, em "Provisória por ART", o campo "Nota do corte e da ordem do lote" diz qual nota faz o corte (a nota mínima ou a linha de corte) e a ordem do lote: "Nota declarada na inscrição" ou "ART da Empregare". O edital 93/2026 (item 8.2.6) avalia quem tem o mínimo de 15 pontos "de acordo com as pontuações do quadro", isto é, a pontuação autodeclarada na inscrição. A ART da Empregare muda quando a equipe ajusta pontos lá durante a conferência (houve ART que caiu de 45 para 5), e isso tirava do lote quem tinha direito. Com a nota declarada, vale a nota recalculada pela regra a partir das respostas, quando a do candidato está completa (toda pergunta achada sem ambiguidade, a resposta mapeada e o nível da vaga conhecido); a ART fica só para comparar ("diverge"). Sem declarada completa, aquele candidato vai pela ART e a vaga mostra o aviso "Inscrito sem nota declarada completa". Na tabela da vaga, a nota usada aparece em negrito. É o padrão quando a regra tem a nota declarada configurada; sem nota declarada, vale a ART. Quem já está no lote continua: só sai eliminado.',
     fato: "No MONITORA, quando a regra da avaliação tem nota declarada, o corte e a ordem do lote usam a nota declarada completa do candidato (item 8.2.6); a ART da Empregare fica só para comparar.",
     fonte:
-      "src/lib/avaliacao-documental/pre-classificacao.js; python/monitora/avaliacao_documental/pre_classificacao.py; supabase/migrations/20261007170000_lote_pela_declarada.sql",
+      "src/lib/avaliacao-documental/pre-classificacao.js; python/monitora/avaliacao_documental/pre_classificacao.py; supabase/migrations/20261007180000_lote_pela_declarada.sql",
     abrir: "avaliacao-documental",
   },
   {
@@ -954,7 +954,7 @@ export const VERBETES_AYA = Object.freeze([
       'A nota declarada de cada candidato congela na primeira pré-classificação depois do fim das inscrições do edital (a etapa de inscrição do cronograma; com prorrogação, o fim mais tarde) ou, se o cronograma não tiver essa data, já na primeira. O sistema guarda a nota, as parciais e as respostas usadas e não recalcula mais, mesmo que as respostas mudem na Empregare; os recálculos usam o valor guardado. Só a nota declarada completa congela: a incompleta continua recalculada até ficar completa. Na tabela da vaga, o cadeado ao lado da nota recalculada mostra a data, e a aba diz desde quando as notas estão congeladas. Se for preciso refazer (por exemplo, a regra da nota declarada estava errada), a coordenação do edital clica em "Descongelar", informa o motivo (de 10 a 250 caracteres) e em "Descongelar e recalcular": o valor que era, o motivo e quem pediu ficam no histórico, e o recálculo congela de novo com as respostas de agora. Não dá para descongelar enquanto uma pré-classificação está rodando.',
     fato: "No MONITORA, a nota declarada congela na primeira pré-classificação depois do fim das inscrições do edital e só muda se a coordenação descongelar, com motivo registrado no histórico.",
     fonte:
-      "src/lib/avaliacao-documental/pre-classificacao.js; scripts/pre_classificacao/pre_classificacao.py; supabase/migrations/20261007170000_lote_pela_declarada.sql",
+      "src/lib/avaliacao-documental/pre-classificacao.js; scripts/pre_classificacao/pre_classificacao.py; supabase/migrations/20261007180000_lote_pela_declarada.sql",
     abrir: "avaliacao-documental",
   },
   {

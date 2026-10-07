@@ -1,5 +1,5 @@
 /*
-  ENSAIO de 20261007170000_lote_pela_declarada.sql — begin … rollback.
+  ENSAIO de 20261007180000_lote_pela_declarada.sql — begin … rollback.
 
   Como rodar: cole o arquivo inteiro no SQL Editor do Supabase (papel postgres)
   e execute. Ele abre uma transação, aplica o corpo da migration (copiado sem

@@ -1,16 +1,89 @@
--- ROLLBACK de supabase/migrations/20261007170000_lote_pela_declarada.sql
--- Volta FC_VALIDAR_REGRA_ANALISE e pre_classificacao_ler_editais aos corpos de
--- 20261007140000_declarada_por_nivel.sql; FC_LINHAS_PRE_CLASSIF,
--- pre_classificacao_ler_candidatos, gravar_pre_classificacao_vaga e
--- obter_pre_classificacao aos de 20261006110000_pre_classificacao_e_lote.sql; apaga
--- descongelar_declarada_pre_classificacao e as colunas da declarada congelada.
--- ATENÇÃO: os valores congelados se perdem (o job, de volta à versão anterior, recalcula
--- a declarada a cada execução e volta a ordenar pela ART). Regras salvas com
--- provisoria.base_da_nota continuam lá (a validação antiga ignora a chave). O histórico
--- não se apaga: se já houver registro de descongelamento (sem execução), CO_EXECUCAO
--- continua aceitando nulo e CO_USUARIO fica (o bloco abaixo avisa).
+/*
+  AVALIAÇÃO DOCUMENTAL: O LOTE PELA NOTA DECLARADA (ITEM 8.2.6) E A DECLARADA CONGELADA
+
+  Decisão do usuário (07/10/2026), seguindo o edital 93/2026, item 8.2.6
+  ("serão avaliados… apenas os candidatos que obtiverem o mínimo de 15 pontos,
+  de acordo com as pontuações do quadro" = a pontuação AUTODECLARADA na
+  inscrição): a ART (coluna "NOTA - <questionário>" da Empregare) muda quando a
+  equipe ajusta pontos na Empregare durante a conferência (6946446: ART 45 → 5;
+  2171493 declarou 20 e está com ART 10) e tirava do lote quem tinha direito.
+
+    1. provisoria.base_da_nota ("DECLARADA" | "ART") na regra: com DECLARADA
+       (o padrão quando a regra tem nota declarada), o corte e a ordem do lote
+       usam a nota declarada COMPLETA do candidato; a ART fica só para comparar
+       (divergência). Sem declarada completa, cai para a ART, com o aviso
+       SEM_DECLARADA_COMPLETA. A conta é do job Python e da prévia em JS
+       (python/monitora/avaliacao_documental/pre_classificacao.py e
+       src/lib/avaliacao-documental/pre-classificacao.js, os mesmos casos
+       dourados); FC_VALIDAR_REGRA_ANALISE confere a opção (o resto igual a
+       20261007140000);
+    2. a declarada congelada: o job guarda a nota declarada completa (e as
+       respostas usadas) de cada inscrito na primeira pré-classificação depois
+       do fim das inscrições do cronograma do edital (ou na primeira, sem
+       data) e não a recalcula mais, mesmo que as respostas mudem. Colunas
+       novas em TB_PRE_CLASSIFICACAO (VL_/DS_DECLARADA_CONGELADA e
+       DT_CONGELAMENTO_DECLARADA); pre_classificacao_ler_candidatos devolve a
+       congelada no anterior; pre_classificacao_ler_editais devolve o
+       cronograma; gravar_pre_classificacao_vaga guarda a congelada nova e
+       recusa mudar a guardada (o resto igual a 20261006110000);
+    3. descongelar_declarada_pre_classificacao(p_edital, p_motivo, p_vaga):
+       a coordenação descongela, com motivo registrado no histórico
+       (TH_PRE_CLASSIFICACAO ganha CO_USUARIO e aceita registro sem execução),
+       e recalcula;
+    4. obter_pre_classificacao devolve, por inscrito, se a declarada está
+       completa, o valor congelado e quando.
+  Quem já está no lote continua (só sai eliminado: a trava de
+  gravar_pre_classificacao_vaga não muda). A eliminação automática da regra
+  (ex.: QUESTIONARIO) não muda.
+
+  PRÉ-REQUISITO: 20261007140000 aplicada.
+  Ensaio: supabase/ensaios/20261007180000_lote_pela_declarada.sql
+  Rollback: supabase/rollback/20261007180000_lote_pela_declarada.sql
+*/
 begin;
 
+-- 0. Pré-requisito ----------------------------------------------------------------------
+do $$
+begin
+  if to_regprocedure('private."FC_JSON_MAPA_DECLARADA_OK"(jsonb,numeric)') is null then
+    raise exception 'Aplique 20261007140000_declarada_por_nivel.sql antes.';
+  end if;
+  if to_regclass('public."TB_PRE_CLASSIFICACAO"') is null
+     or to_regprocedure('private."FC_EXIGIR_COORD_AVALIACAO"(uuid)') is null then
+    raise exception 'Aplique 20261006110000_pre_classificacao_e_lote.sql antes.';
+  end if;
+end;
+$$;
+
+-- 1. A declarada congelada de cada inscrito ---------------------------------------------
+alter table public."TB_PRE_CLASSIFICACAO"
+  add column "VL_DECLARADA_CONGELADA" numeric(8,4),
+  add column "DS_DECLARADA_CONGELADA" jsonb,
+  add column "DT_CONGELAMENTO_DECLARADA" timestamptz;
+alter table public."TB_PRE_CLASSIFICACAO"
+  add constraint "CK_PRECLASSIF_DECLCONGELADA" check (
+    ("VL_DECLARADA_CONGELADA" is null) = ("DS_DECLARADA_CONGELADA" is null)
+    and ("VL_DECLARADA_CONGELADA" is null) = ("DT_CONGELAMENTO_DECLARADA" is null)
+    and ("VL_DECLARADA_CONGELADA" is null or "VL_DECLARADA_CONGELADA" between 0 and 1000)
+    and ("DS_DECLARADA_CONGELADA" is null or jsonb_typeof("DS_DECLARADA_CONGELADA") = 'object'));
+comment on column public."TB_PRE_CLASSIFICACAO"."VL_DECLARADA_CONGELADA" is
+  'Nota declarada (autodeclaração da inscrição, recalculada pela regra) congelada na primeira pré-classificação depois do fim das inscrições do cronograma (ou na primeira, sem data): não se recalcula mais, mesmo que as respostas mudem; com a base da nota DECLARADA, é ela que faz o corte e a ordem do lote. Nula enquanto não congelou (ou depois de descongelada). Só a declarada completa congela.';
+comment on column public."TB_PRE_CLASSIFICACAO"."DS_DECLARADA_CONGELADA" is
+  'O que foi congelado ({"parciais": {...}, "sem_mapa": n, "respostas": [{"parcial", "coluna", "resposta", "pontos"}], "versao_regra": n}): as respostas usadas e a versão da regra.';
+comment on column public."TB_PRE_CLASSIFICACAO"."DT_CONGELAMENTO_DECLARADA" is 'Quando a nota declarada foi congelada.';
+comment on constraint "CK_PRECLASSIF_DECLCONGELADA" on public."TB_PRE_CLASSIFICACAO" is
+  'Declarada congelada: valor, detalhe (objeto json) e data juntos, ou nenhum; valor de 0 a 1.000.';
+
+-- 2. Histórico: o descongelamento pela tela (sem execução do job) ---------------------------
+alter table public."TH_PRE_CLASSIFICACAO" alter column "CO_EXECUCAO" drop not null;
+alter table public."TH_PRE_CLASSIFICACAO" add column "CO_USUARIO" uuid;
+alter table public."TH_PRE_CLASSIFICACAO"
+  add constraint "CK_THPRECLASSIF_ORIGEM" check ("CO_EXECUCAO" is not null or "CO_USUARIO" is not null);
+comment on column public."TH_PRE_CLASSIFICACAO"."CO_EXECUCAO" is 'Execução do job; nula no registro feito pela tela (descongelar a declarada).';
+comment on column public."TH_PRE_CLASSIFICACAO"."CO_USUARIO" is 'Usuário do MONITORA (auth.users.id) que registrou pela tela (descongelar a declarada, com o motivo); nulo nas gravações do job.';
+comment on constraint "CK_THPRECLASSIF_ORIGEM" on public."TH_PRE_CLASSIFICACAO" is 'Todo registro vem de uma execução do job ou de um usuário.';
+
+-- 3. Validação da regra: a base da nota do lote ---------------------------------------------
 create or replace function private."FC_VALIDAR_REGRA_ANALISE"(p_regra jsonb)
 returns void
 language plpgsql
@@ -126,6 +199,15 @@ begin
   end loop;
   if not private."FC_JSON_NUMERO_ENTRE"(v_obj -> 'divergencia_tolerancia', 0, 30) then
     raise exception 'Tolerância da divergência entre 0 e 30 pontos.' using errcode = '22023';
+  end if;
+  -- A nota do corte e da ordem do lote (sem ela: DECLARADA com nota declarada, senão ART).
+  if coalesce(jsonb_typeof(v_obj -> 'base_da_nota'), 'null') <> 'null' then
+    if jsonb_typeof(v_obj -> 'base_da_nota') <> 'string' or (v_obj ->> 'base_da_nota') not in ('DECLARADA', 'ART') then
+      raise exception 'Base da nota do lote: DECLARADA ou ART.' using errcode = '22023';
+    end if;
+    if v_obj ->> 'base_da_nota' = 'DECLARADA' and jsonb_array_length(v_lista) = 0 then
+      raise exception 'Base da nota do lote pela declarada: configure a nota declarada.' using errcode = '22023';
+    end if;
   end if;
 
   -- Lote.
@@ -247,15 +329,17 @@ begin
 end;
 $function$;
 comment on function private."FC_VALIDAR_REGRA_ANALISE"(jsonb) is
-  'Confere a configuração de uma regra da avaliação documental (22023 com a mensagem do primeiro erro). As mesmas regras de validarRegraAnalise() em src/lib/avaliacao-documental/regra.js; o lote aceita a base NOTA_MINIMA (com nota_minima e item_edital) desde 20261006120500; a pergunta da nota declarada pode ser uma lista de alternativas desde 20261007100000; o item da nota declarada pode ter pontos_por_nivel (OPCAO e OPCOES_SOMADAS) desde 20261007140000.';
+  'Confere a configuração de uma regra da avaliação documental (22023 com a mensagem do primeiro erro). As mesmas regras de validarRegraAnalise() em src/lib/avaliacao-documental/regra.js; o lote aceita a base NOTA_MINIMA (com nota_minima e item_edital) desde 20261006120500; a pergunta da nota declarada pode ser uma lista de alternativas desde 20261007100000; o item da nota declarada pode ter pontos_por_nivel (OPCAO e OPCOES_SOMADAS) desde 20261007140000; provisoria.base_da_nota (DECLARADA ou ART; DECLARADA exige nota declarada) desde 20261007170000.';
 revoke all on function private."FC_VALIDAR_REGRA_ANALISE"(jsonb) from public, anon, authenticated;
 
+-- 4. As linhas do job: a declarada completa e a congelada -----------------------------------
 drop function private."FC_LINHAS_PRE_CLASSIF"(jsonb);
 create function private."FC_LINHAS_PRE_CLASSIF"(p_linhas jsonb)
 returns table (
   id uuid, situacao text, motivo_codigo text, motivo text, art numeric, nota numeric, origem_nota text,
   declarada numeric, declarada_parciais jsonb, sem_mapa integer, divergente boolean, modalidade text,
-  posicao integer, posicao_modalidade integer, lote integer, lista_lote text, entrada text, motivo_entrada text)
+  posicao integer, posicao_modalidade integer, lote integer, lista_lote text, entrada text, motivo_entrada text,
+  declarada_completa boolean, declarada_congelada jsonb)
 language sql
 immutable
 set search_path to ''
@@ -265,12 +349,15 @@ as $function$
          (l ->> 'declarada')::numeric, case when jsonb_typeof(l -> 'declarada_parciais') = 'object' then l -> 'declarada_parciais' end,
          coalesce((l ->> 'sem_mapa')::integer, 0), coalesce((l ->> 'divergente')::boolean, false),
          coalesce(l ->> 'modalidade', 'AC'), (l ->> 'posicao')::integer, (l ->> 'posicao_modalidade')::integer,
-         (l ->> 'lote')::integer, l ->> 'lista_lote', l ->> 'entrada', l ->> 'motivo_entrada'
+         (l ->> 'lote')::integer, l ->> 'lista_lote', l ->> 'entrada', l ->> 'motivo_entrada',
+         (l ->> 'declarada_completa')::boolean,
+         case when jsonb_typeof(l -> 'declarada_congelada') = 'object' then l -> 'declarada_congelada' end
     from jsonb_array_elements(p_linhas) l;
 $function$;
-comment on function private."FC_LINHAS_PRE_CLASSIF"(jsonb) is 'As linhas da pré-classificação de uma vaga enviadas pelo job (lista json) como tabela tipada; tipo inválido levanta erro de conversão.';
+comment on function private."FC_LINHAS_PRE_CLASSIF"(jsonb) is 'As linhas da pré-classificação de uma vaga enviadas pelo job (lista json) como tabela tipada (com a declarada completa e a declarada congelada desde 20261007170000); tipo inválido levanta erro de conversão.';
 revoke all on function private."FC_LINHAS_PRE_CLASSIF"(jsonb) from public, anon, authenticated;
 
+-- 5. Leitura do job: a declarada congelada no anterior e o cronograma do edital -------------
 create or replace function public.pre_classificacao_ler_candidatos(p_edital uuid, p_vaga text)
 returns jsonb
 language plpgsql
@@ -303,14 +390,17 @@ begin
     'anterior', coalesce((
       select jsonb_object_agg(a."CO_EMPREGARE_CANDIDATO", jsonb_build_object(
                'situacao', a."TP_SITUACAO", 'posicao', a."NU_POSICAO", 'lote', a."NU_LOTE",
-               'lista_lote', a."CO_LISTA_LOTE", 'entrada', a."TP_ENTRADA_LOTE", 'motivo_entrada', a."DS_MOTIVO_ENTRADA"))
+               'lista_lote', a."CO_LISTA_LOTE", 'entrada', a."TP_ENTRADA_LOTE", 'motivo_entrada', a."DS_MOTIVO_ENTRADA",
+               -- A declarada congelada não se recalcula (o job usa o valor guardado).
+               'declarada_congelada', case when a."VL_DECLARADA_CONGELADA" is not null
+                                           then a."DS_DECLARADA_CONGELADA" || jsonb_build_object('total', a."VL_DECLARADA_CONGELADA") end))
         from public."TB_PRE_CLASSIFICACAO" a
        where a."CO_MONITORAMENTO" = p_edital and a."CO_VAGA" = p_vaga), '{}'::jsonb)
   );
 end;
 $function$;
 comment on function public.pre_classificacao_ler_candidatos(uuid, text) is
-  'Pré-classificação (job Python): os inscritos de uma vaga do edital (id, código, ativo, nascimento, data da candidatura e as colunas do questionário e do processo SEM as do cadastro — nome, e-mail, CPF, telefone, endereço) e a situação anterior de cada um (situação, posição, lote, lista e entrada). Só service_role.';
+  'Pré-classificação (job Python): os inscritos de uma vaga do edital (id, código, ativo, nascimento, data da candidatura e as colunas do questionário e do processo SEM as do cadastro — nome, e-mail, CPF, telefone, endereço) e a situação anterior de cada um (situação, posição, lote, lista, entrada e, desde 20261007170000, a nota declarada congelada, que o job usa sem recalcular). Só service_role.';
 
 create or replace function public.pre_classificacao_ler_editais(p_editais text[] default null, p_apos_robo boolean default false)
 returns jsonb
@@ -374,6 +464,11 @@ begin
                              on h."CO_REGRA_ANALISE" = r."CO_REGRA_ANALISE" and h."NU_VERSAO" = r."NU_VERSAO_VIGENTE"
                           where r."CO_MONITORAMENTO" = m.id),
                'documental', private."FC_DOCUMENTAL_DO_EDITAL"(m.id),
+               -- O cronograma: o job congela a declarada depois do fim das inscrições.
+               'cronograma', coalesce((
+                 select jsonb_agg(jsonb_build_object('atividade', c.atividade, 'inicio', c.data_inicio, 'fim', c.data_fim)
+                        order by c.ordem)
+                   from public."TB_CRONOGRAMA_MONIT_INDIG" c where c.monitoramento_id = m.id), '[]'::jsonb),
                'refazer_permitido', not exists (select 1 from public."TB_PRE_CLASSIFICACAO" a
                                                  where a."CO_MONITORAMENTO" = m.id and a."TP_SITUACAO" = 'ANALISADO'),
                'vagas', coalesce((
@@ -399,8 +494,9 @@ begin
 end;
 $function$;
 comment on function public.pre_classificacao_ler_editais(text[], boolean) is
-  'Pré-classificação (job Python): os editais a processar — os pedidos (id, número ou nome), os da última carga fechada do robô (p_apos_robo) ou, sem filtro, os ativos com vagas da Empregare — com a regra vigente (versão, situação e configuração), o que a regra de classificação diz do nível da vaga e da nota mínima (FC_DOCUMENTAL_DO_EDITAL, desde 20261007140000), se o lote ainda pode ser refeito e as vagas (cargo do quadro, carga, último lote, linha do quadro com vagas imediatas, cadastro reserva e modalidades). Sem dado pessoal. Só service_role.';
+  'Pré-classificação (job Python): os editais a processar — os pedidos (id, número ou nome), os da última carga fechada do robô (p_apos_robo) ou, sem filtro, os ativos com vagas da Empregare — com a regra vigente (versão, situação e configuração), o que a regra de classificação diz do nível da vaga e da nota mínima (FC_DOCUMENTAL_DO_EDITAL, desde 20261007140000), o cronograma (atividade, início e fim de cada etapa, para o job achar o fim das inscrições e congelar a nota declarada, desde 20261007170000), se o lote ainda pode ser refeito e as vagas (cargo do quadro, carga, último lote, linha do quadro com vagas imediatas, cadastro reserva e modalidades). Sem dado pessoal. Só service_role.';
 
+-- 6. Gravação: guarda a declarada congelada e não deixa mudar --------------------------------
 create or replace function public.gravar_pre_classificacao_vaga(
   p_execucao text, p_edital uuid, p_vaga text, p_versao_regra integer, p_resumo jsonb, p_linhas jsonb)
 returns jsonb
@@ -478,6 +574,16 @@ begin
                      or t.modalidade !~ '^[A-Z]{2,10}$'
                      or abs(coalesce(t.art, 0)) > 1000 or abs(coalesce(t.nota, 0)) > 1000 or abs(coalesce(t.declarada, 0)) > 1000
                      or t.sem_mapa not between 0 and 100) then 'nota, origem ou modalidade inválida'
+    -- A declarada congelada: completa, com o total igual à declarada da linha.
+    when exists (select 1 from private."FC_LINHAS_PRE_CLASSIF"(p_linhas) t
+                  where t.declarada_congelada is not null
+                    and (jsonb_typeof(t.declarada_congelada -> 'total') is distinct from 'number'
+                         or (t.declarada_congelada ->> 'total')::numeric not between 0 and 1000
+                         or (t.declarada_congelada ->> 'total')::numeric is distinct from t.declarada
+                         or t.declarada_completa is not true
+                         or jsonb_typeof(coalesce(t.declarada_congelada -> 'respostas', '[]'::jsonb)) <> 'array'
+                         or jsonb_array_length(coalesce(t.declarada_congelada -> 'respostas', '[]'::jsonb)) > 20
+                         or length(t.declarada_congelada::text) > 20000)) then 'declarada congelada inválida'
     else null end
     into v_erro;
   if v_erro is not null then
@@ -489,6 +595,15 @@ begin
     into v_ant
     from public."TB_PRE_CLASSIFICACAO" a
    where a."CO_MONITORAMENTO" = p_edital and a."CO_VAGA" = p_vaga;
+
+  -- A declarada congelada não muda: só a coordenação descongela (descongelar_declarada_pre_classificacao).
+  if exists (select 1 from private."FC_LINHAS_PRE_CLASSIF"(p_linhas) t
+               join public."TB_PRE_CLASSIFICACAO" a
+                 on a."CO_MONITORAMENTO" = p_edital and a."CO_EMPREGARE_CANDIDATO" = t.id
+              where a."VL_DECLARADA_CONGELADA" is not null and t.declarada is not null
+                and t.declarada is distinct from a."VL_DECLARADA_CONGELADA") then
+    raise exception 'Resultado da vaga % recusado: a nota declarada congelada não muda (descongele antes)', p_vaga using errcode = '22023';
+  end if;
 
   -- Quem tem ficha (ANALISADO) não muda; ANALISADO só vem do banco (fase F3).
   if exists (select 1 from private."FC_LINHAS_PRE_CLASSIF"(p_linhas) t
@@ -512,15 +627,20 @@ begin
      "CO_MOTIVO_ELIMINACAO", "DS_MOTIVO_ELIMINACAO", "VL_ART", "VL_NOTA_ORDEM", "TP_ORIGEM_NOTA",
      "VL_NOTA_DECLARADA", "DS_NOTA_DECLARADA", "ST_DIVERGENTE", "NO_MODALIDADE", "NU_POSICAO",
      "NU_POSICAO_MODALIDADE", "NU_LOTE", "CO_LISTA_LOTE", "TP_ENTRADA_LOTE", "DS_MOTIVO_ENTRADA",
-     "DT_ENTRADA_LOTE", "CO_EXECUCAO")
+     "DT_ENTRADA_LOTE", "CO_EXECUCAO", "VL_DECLARADA_CONGELADA", "DS_DECLARADA_CONGELADA", "DT_CONGELAMENTO_DECLARADA")
   select p_edital, t.id, p_vaga, p_versao_regra, t.situacao,
          t.motivo_codigo, left(btrim(t.motivo), 200), t.art, t.nota, t.origem_nota,
          t.declarada,
          case when t.declarada is null then null
-              else jsonb_build_object('parciais', coalesce(t.declarada_parciais, '{}'::jsonb), 'sem_mapa', t.sem_mapa) end,
+              else jsonb_build_object('parciais', coalesce(t.declarada_parciais, '{}'::jsonb), 'sem_mapa', t.sem_mapa,
+                                      'completa', t.declarada_completa) end,
          case when t.divergente then 'S' else 'N' end, t.modalidade, t.posicao,
          t.posicao_modalidade, t.lote, t.lista_lote, t.entrada, nullif(left(btrim(t.motivo_entrada), 300), ''),
-         case when t.lote is not null then now() end, p_execucao
+         case when t.lote is not null then now() end, p_execucao,
+         (t.declarada_congelada ->> 'total')::numeric,
+         case when t.declarada_congelada is not null
+              then (t.declarada_congelada - 'total') || jsonb_build_object('versao_regra', p_versao_regra) end,
+         case when t.declarada_congelada is not null then now() end
     from private."FC_LINHAS_PRE_CLASSIF"(p_linhas) t
   on conflict ("CO_MONITORAMENTO", "CO_EMPREGARE_CANDIDATO") do update set
     "NU_VERSAO_REGRA" = excluded."NU_VERSAO_REGRA",
@@ -545,6 +665,12 @@ begin
                              when a."NU_LOTE" is not distinct from excluded."NU_LOTE" then a."DT_ENTRADA_LOTE"
                              else now() end,
     "CO_EXECUCAO" = excluded."CO_EXECUCAO",
+    -- A congelada fica como estava; só entra quando ainda não há.
+    "VL_DECLARADA_CONGELADA" = coalesce(a."VL_DECLARADA_CONGELADA", excluded."VL_DECLARADA_CONGELADA"),
+    "DS_DECLARADA_CONGELADA" = case when a."VL_DECLARADA_CONGELADA" is not null then a."DS_DECLARADA_CONGELADA"
+                                    else excluded."DS_DECLARADA_CONGELADA" end,
+    "DT_CONGELAMENTO_DECLARADA" = case when a."VL_DECLARADA_CONGELADA" is not null then a."DT_CONGELAMENTO_DECLARADA"
+                                       else excluded."DT_CONGELAMENTO_DECLARADA" end,
     "DT_ATUALIZACAO" = now();
 
   -- Histórico: entrada na lista, troca de situação ou de lote (com o motivo).
@@ -616,8 +742,59 @@ begin
 end;
 $function$;
 comment on function public.gravar_pre_classificacao_vaga(text, uuid, text, integer, jsonb, jsonb) is
-  'Grava a pré-classificação PRONTA de uma vaga (calculada pelo job Python): confere a regra vigente e conferida (40001), que os inscritos são da vaga, que nenhum já gravado falta, a forma (eliminado com motivo, posições de 1 a N, lote com número, lista e entrada), que quem tem ficha não muda e que quem está no lote só sai eliminado (salvo execução que refaz o lote); grava o histórico das mudanças com o motivo e o resumo da vaga (contagens feitas no banco; quadro lido no banco). 22023 com o motivo da recusa. Só service_role.';
+  'Grava a pré-classificação PRONTA de uma vaga (calculada pelo job Python): confere a regra vigente e conferida (40001), que os inscritos são da vaga, que nenhum já gravado falta, a forma (eliminado com motivo, posições de 1 a N, lote com número, lista e entrada), que quem tem ficha não muda, que quem está no lote só sai eliminado (salvo execução que refaz o lote) e, desde 20261007170000, que a nota declarada congelada não muda (guarda a congelada nova, completa, com as respostas usadas, a versão da regra e a data); grava o histórico das mudanças com o motivo e o resumo da vaga (contagens feitas no banco; quadro lido no banco). 22023 com o motivo da recusa. Só service_role.';
 
+-- 7. Descongelar e recalcular (coordenação, com motivo) ------------------------------------
+create function public.descongelar_declarada_pre_classificacao(p_edital uuid, p_motivo text, p_vaga text default null)
+returns json
+language plpgsql
+security definer
+set search_path to ''
+as $function$
+declare
+  v_motivo text := btrim(coalesce(p_motivo, ''));
+  v_qt integer;
+begin
+  perform private."FC_EXIGIR_COORD_AVALIACAO"(p_edital);
+  if length(v_motivo) not between 10 and 250 then
+    raise exception 'Diga o motivo (de 10 a 250 caracteres).' using errcode = '22023';
+  end if;
+  if p_vaga is not null and not exists (select 1 from public."TB_EMPREGARE_VAGA" v
+                                         where v."CO_VAGA" = p_vaga and v."CO_MONITORAMENTO" = p_edital) then
+    raise exception 'A vaga % não é do edital', p_vaga using errcode = '22023';
+  end if;
+  if exists (select 1 from public."TL_PRE_CLASSIFICACAO" t
+              where t."TP_SITUACAO" = 'EM_ANDAMENTO' and t."DT_INICIO" > now() - interval '1 hour') then
+    raise exception 'Há uma pré-classificação rodando: descongele quando ela terminar.' using errcode = '55P03';
+  end if;
+
+  -- O histórico primeiro (a situação e o lote de agora, com o motivo e quem pediu).
+  insert into public."TH_PRE_CLASSIFICACAO"
+    ("CO_EXECUCAO", "CO_USUARIO", "CO_MONITORAMENTO", "CO_EMPREGARE_CANDIDATO", "CO_VAGA", "TP_SITUACAO_ANTERIOR",
+     "TP_SITUACAO", "NU_LOTE_ANTERIOR", "NU_LOTE", "NU_POSICAO", "DS_MOTIVO")
+  select null, (select auth.uid()), a."CO_MONITORAMENTO", a."CO_EMPREGARE_CANDIDATO", a."CO_VAGA", a."TP_SITUACAO",
+         a."TP_SITUACAO", a."NU_LOTE", a."NU_LOTE", a."NU_POSICAO",
+         left('Nota declarada descongelada (era ' || trim_scale(a."VL_DECLARADA_CONGELADA") || '): ' || v_motivo, 300)
+    from public."TB_PRE_CLASSIFICACAO" a
+   where a."CO_MONITORAMENTO" = p_edital and a."VL_DECLARADA_CONGELADA" is not null
+     and (p_vaga is null or a."CO_VAGA" = p_vaga);
+  get diagnostics v_qt = row_count;
+
+  update public."TB_PRE_CLASSIFICACAO" a set
+    "VL_DECLARADA_CONGELADA" = null, "DS_DECLARADA_CONGELADA" = null, "DT_CONGELAMENTO_DECLARADA" = null,
+    "DT_ATUALIZACAO" = now()
+   where a."CO_MONITORAMENTO" = p_edital and a."VL_DECLARADA_CONGELADA" is not null
+     and (p_vaga is null or a."CO_VAGA" = p_vaga);
+
+  return json_build_object('descongeladas', v_qt);
+end;
+$function$;
+comment on function public.descongelar_declarada_pre_classificacao(uuid, text, text) is
+  'Descongela a nota declarada dos inscritos do edital (ou de uma vaga): apaga o valor congelado e grava no histórico (TH_PRE_CLASSIFICACAO, com o usuário e o motivo, de 10 a 250 caracteres) o valor que era; o próximo recálculo usa as respostas de agora e congela de novo. Só a coordenação da avaliação do edital (FC_EXIGIR_COORD_AVALIACAO); recusa (55P03) com pré-classificação rodando. Devolve quantos foram descongelados.';
+revoke all on function public.descongelar_declarada_pre_classificacao(uuid, text, text) from public, anon;
+grant execute on function public.descongelar_declarada_pre_classificacao(uuid, text, text) to authenticated;
+
+-- 8. Tela: a declarada congelada de cada inscrito ---------------------------------------------
 create or replace function public.obter_pre_classificacao(p_edital uuid)
 returns json
 language plpgsql
@@ -685,6 +862,8 @@ begin
                'situacao', a."TP_SITUACAO", 'motivo_codigo', a."CO_MOTIVO_ELIMINACAO", 'motivo', a."DS_MOTIVO_ELIMINACAO",
                'art', a."VL_ART", 'nota', a."VL_NOTA_ORDEM", 'origem_nota', a."TP_ORIGEM_NOTA",
                'declarada', a."VL_NOTA_DECLARADA", 'divergente', a."ST_DIVERGENTE" = 'S', 'modalidade', a."NO_MODALIDADE",
+               'declarada_completa', (a."DS_NOTA_DECLARADA" ->> 'completa')::boolean,
+               'declarada_congelada', a."VL_DECLARADA_CONGELADA", 'congelada_em', a."DT_CONGELAMENTO_DECLARADA",
                'posicao', a."NU_POSICAO", 'posicao_modalidade', a."NU_POSICAO_MODALIDADE",
                'lote', a."NU_LOTE", 'lista_lote', a."CO_LISTA_LOTE", 'entrada', a."TP_ENTRADA_LOTE",
                'motivo_entrada', a."DS_MOTIVO_ENTRADA", 'entrada_em', a."DT_ENTRADA_LOTE")
@@ -702,29 +881,8 @@ begin
 end;
 $function$;
 comment on function public.obter_pre_classificacao(uuid) is
-  'A pré-classificação do edital para a aba Pré-classificação (json): regra vigente, regra de classificação (textos do documento), última execução do job que tratou o edital, se há execução em andamento, cada vaga da Empregare com o resumo (quadro, tamanho do lote, linha de corte, divergências, avisos), os inscritos (código, nome, situação, motivo, ART, nota declarada, posição, lote e motivo da entrada; sem CPF nem contato) e as listas PROVISORIA e LOTE registradas. Exige avaliacao_documental >= leitor, a área e o recorte da coordenação.';
+  'A pré-classificação do edital para a aba Pré-classificação (json): regra vigente, regra de classificação (textos do documento), última execução do job que tratou o edital, se há execução em andamento, cada vaga da Empregare com o resumo (quadro, tamanho do lote, linha de corte, divergências, avisos), os inscritos (código, nome, situação, motivo, ART, nota declarada — completa ou não, congelada e quando, desde 20261007170000 —, posição, lote e motivo da entrada; sem CPF nem contato) e as listas PROVISORIA e LOTE registradas. Exige avaliacao_documental >= leitor, a área e o recorte da coordenação.';
 revoke all on function public.obter_pre_classificacao(uuid) from public, anon;
 grant execute on function public.obter_pre_classificacao(uuid) to authenticated;
-
-drop function public.descongelar_declarada_pre_classificacao(uuid, text, text);
-
-alter table public."TB_PRE_CLASSIFICACAO" drop constraint "CK_PRECLASSIF_DECLCONGELADA";
-alter table public."TB_PRE_CLASSIFICACAO"
-  drop column "VL_DECLARADA_CONGELADA",
-  drop column "DS_DECLARADA_CONGELADA",
-  drop column "DT_CONGELAMENTO_DECLARADA";
-
-do $$
-begin
-  if exists (select 1 from public."TH_PRE_CLASSIFICACAO" h where h."CO_EXECUCAO" is null) then
-    raise notice 'Há descongelamentos no histórico (imutável): CO_EXECUCAO continua aceitando nulo e CO_USUARIO fica.';
-  else
-    alter table public."TH_PRE_CLASSIFICACAO" drop constraint "CK_THPRECLASSIF_ORIGEM";
-    alter table public."TH_PRE_CLASSIFICACAO" drop column "CO_USUARIO";
-    alter table public."TH_PRE_CLASSIFICACAO" alter column "CO_EXECUCAO" set not null;
-    comment on column public."TH_PRE_CLASSIFICACAO"."CO_EXECUCAO" is 'Execução do job.';
-  end if;
-end;
-$$;
 
 commit;

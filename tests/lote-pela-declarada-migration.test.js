@@ -11,7 +11,7 @@ import { CONTRATO_RPC } from "../src/lib/rpc-contrato.js";
   da coordenação, rollback com os corpos de antes e ensaio com o mesmo corpo.
 */
 const ler = (arquivo) => readFileSync(arquivo, "utf8").replace(/\r\n/g, "\n");
-const NOME = "20261007170000_lote_pela_declarada.sql";
+const NOME = "20261007180000_lote_pela_declarada.sql";
 const MIGRATION = ler(`supabase/migrations/${NOME}`);
 const ROLLBACK = ler(`supabase/rollback/${NOME}`);
 const ENSAIO = ler(`supabase/ensaios/${NOME}`);
