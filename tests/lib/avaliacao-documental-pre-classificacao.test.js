@@ -66,6 +66,7 @@ const rodar = (c) =>
     refazer: c.refazer,
     hoje: c.hoje,
     congelar: c.congelar ?? false,
+    decisoes: c.decisoes ?? {},
   });
 
 describe("casos dourados da pré-classificação", () => {

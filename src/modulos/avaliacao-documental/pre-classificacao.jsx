@@ -6,8 +6,10 @@ import {
   DICA_DA_ART,
   DICA_DA_NOTA_DO_LOTE,
   DICA_DA_RECALCULADA,
+  loteDaVaga,
   lotesAPublicar,
   nota,
+  podeIncluirPorDecisao,
   regraComTamanhos,
   ROTULO_DA_ART,
   ROTULOS_DA_SITUACAO,
@@ -15,10 +17,16 @@ import {
   tamanhoDefinido,
   tamanhoSugerido,
   textoDoAviso,
+  textoDoLote,
   vagasDaTela,
 } from "../../lib/avaliacao-documental/tela-da-pre-classificacao.js";
 import { ESPERA_DO_PEDIDO_MIN } from "../../lib/robos-de-carga.js";
 import { Aviso, GradeDeKpis, Kpi, Selo } from "../../ui/index.js";
+import {
+  IncluirPorDecisao,
+  RevogarDecisao,
+  SeloDaDecisao,
+} from "./decisao-do-lote.jsx";
 import { chaveDaLista } from "./estado-da-pre-classificacao.js";
 
 /*
@@ -27,7 +35,10 @@ import { chaveDaLista } from "./estado-da-pre-classificacao.js";
   (scripts/pre_classificacao/). A tela só lê; "Recalcular" (coordenação) pede
   o job; os tamanhos do lote por vaga viram versão nova da regra; as listas
   PROVISORIA e LOTE são registradas no banco e exportadas pelo gerador da
-  Classificação. Explicações: docs/aya/regras-da-avaliacao-documental.md.
+  Classificação. A coordenação inclui no lote por decisão (ex.: "Critério
+  CORES") quem a regra deixa fora, e revoga (decisao-do-lote.jsx); o lote
+  mostra "N pela regra + M por decisão". Explicações:
+  docs/aya/regras-da-avaliacao-documental.md.
 */
 
 const SITUACAO_DA_EXECUCAO = {
@@ -60,7 +71,7 @@ function cabecalhoDaVaga(v) {
     .join(" - ");
 }
 
-function LinhaDoInscrito({ c }) {
+function LinhaDoInscrito({ c, podeCoordenar, pre }) {
   return (
     <tr data-candidato={c.codigo} data-situacao={c.situacao}>
       <td>{c.posicao ? ordinal(c.posicao) : "—"}</td>
@@ -112,7 +123,14 @@ function LinhaDoInscrito({ c }) {
         >
           {ROTULOS_DA_SITUACAO[c.situacao]}
           {c.lote ? ` · lote ${c.lote}` : ""}
-        </Selo>
+        </Selo>{" "}
+        <SeloDaDecisao c={c} />
+        {podeCoordenar ? (
+          <RevogarDecisao
+            c={c}
+            aoRevogar={(motivo) => pre.revogarDecisao([c], motivo)}
+          />
+        ) : null}
       </td>
     </tr>
   );
@@ -124,20 +142,23 @@ function VagaDaPre({
   podeCoordenar,
   tamanho,
   aoMudarTamanho,
+  pre,
 }) {
+  const [incluindo, setIncluindo] = useState(false);
   const definido = tamanhoDefinido(configuracao, v.codigo);
   const sugerido = tamanhoSugerido(configuracao, v);
   const processada = v.inscritos !== null && v.inscritos !== undefined;
+  const lote = loteDaVaga(v, v.lote);
+  const foraDoLote = [...v.fora, ...v.eliminados]
+    .filter(podeIncluirPorDecisao)
+    .map((c) => ({ ...c, nota: c.nota ?? c.art }));
   return (
     <article className="ui-card avd-vaga" data-vaga={v.codigo}>
       <h3 className="ui-titulo">{cabecalhoDaVaga(v)}</h3>
       <div className="avd-inline ui-texto-secundario">
         {processada ? (
-          <span>
-            Lote: {v.no_lote}
-            {v.tamanho !== null && v.tamanho !== undefined
-              ? ` de ${v.tamanho}`
-              : ""}
+          <span data-lote-da-vaga>
+            {textoDoLote(lote.pelaRegra, lote.porDecisao, v.tamanho)}
             {v.descricao ? ` (${v.descricao})` : ""}
             {v.art_corte !== null && v.art_corte !== undefined
               ? ` · linha de corte ${nota(v.art_corte)}`
@@ -168,7 +189,27 @@ function VagaDaPre({
             </span>
           </label>
         ) : null}
+        {podeCoordenar && processada ? (
+          <button
+            type="button"
+            className="btn secondary small"
+            data-acao="incluir-por-decisao"
+            disabled={!foraDoLote.length}
+            onClick={() => setIncluindo(true)}
+          >
+            Incluir por decisão da coordenação
+          </button>
+        ) : null}
       </div>
+      {incluindo ? (
+        <IncluirPorDecisao
+          candidatos={foraDoLote}
+          aoIncluir={(escolhidos, motivo) =>
+            pre.incluirPorDecisao(escolhidos, motivo)
+          }
+          aoFechar={() => setIncluindo(false)}
+        />
+      ) : null}
       {(v.avisos || []).length ? (
         <ul className="avd-lista-simples" aria-label="Avisos da vaga">
           {v.avisos.map((a) => (
@@ -196,7 +237,12 @@ function VagaDaPre({
             </thead>
             <tbody>
               {v.lote.map((c) => (
-                <LinhaDoInscrito key={c.id} c={c} />
+                <LinhaDoInscrito
+                  key={c.id}
+                  c={c}
+                  podeCoordenar={podeCoordenar}
+                  pre={pre}
+                />
               ))}
               {v.lote.length && v.fora.length ? (
                 <tr className="avd-linha-de-corte">
@@ -485,9 +531,15 @@ export function PreClassificacao({ e, estado, pre }) {
           icone="fa-user-check"
           rotulo="Lote (aptos para análise)"
           valor={
-            cont.tamanho === null
-              ? cont.noLote
-              : `${cont.noLote} de ${cont.tamanho}`
+            cont.noLotePorDecisao
+              ? textoDoLote(
+                  cont.noLotePelaRegra,
+                  cont.noLotePorDecisao,
+                  cont.tamanho,
+                ).replace(/^Lote: /, "")
+              : cont.tamanho === null
+                ? cont.noLote
+                : `${cont.noLote} de ${cont.tamanho}`
           }
         />
         <Kpi
@@ -614,6 +666,7 @@ export function PreClassificacao({ e, estado, pre }) {
             configuracao={configuracao}
             podeCoordenar={d.pode_coordenar}
             tamanho={tamanhos[v.codigo]}
+            pre={pre}
             aoMudarTamanho={(codigo, valor) =>
               setTamanhos((t) => ({ ...t, [codigo]: valor }))
             }

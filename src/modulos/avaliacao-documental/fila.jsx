@@ -18,6 +18,7 @@ import {
   filtrarFila,
   filtroEhInicial,
   FILTRO_INICIAL,
+  loteDaFila,
   ordenarFila,
   planoDeDistribuicao,
   proximaOrdem,
@@ -31,7 +32,9 @@ import { tomDoResultado } from "../../lib/avaliacao-documental/ficha.js";
 import {
   DICA_DA_ART,
   nota,
+  podeIncluirPorDecisao,
   ROTULO_DA_ART,
+  textoDoLote,
 } from "../../lib/avaliacao-documental/tela-da-pre-classificacao.js";
 import {
   Abas,
@@ -41,18 +44,33 @@ import {
   Selo,
   TabelaInfinita,
 } from "../../ui/index.js";
+import {
+  IncluirPorDecisao,
+  RevogarDecisao,
+  SeloDaDecisao,
+} from "./decisao-do-lote.jsx";
 import { ConteudoDaFicha } from "./ficha/ficha.jsx";
 
 /*
   Aba Fila (fase F3): as etapas com contadores no topo (clicáveis como filtro),
   os filtros e os filtros salvos, "Pegar próximo" e "Minhas fichas" para o
   analista, as ações em lote da coordenação (distribuir, redistribuir, liberar
-  reservas e mandar para revisão, com confirmação e motivo) e a ficha aberta
+  reservas e mandar para revisão, com confirmação e motivo), a inclusão no
+  lote por decisão da coordenação (selo "Decisão: …" na lista e no topo da
+  ficha, com "Revogar decisão": decisao-do-lote.jsx) e a ficha aberta
   com a reserva; o conteúdo da análise (F4) é ficha/ficha.jsx. Explicações:
   docs/aya/regras-da-avaliacao-documental.md.
 */
 
 function SituacaoDaLinha({ c }) {
+  return (
+    <>
+      <SituacaoNaFila c={c} /> <SeloDaDecisao c={c} />
+    </>
+  );
+}
+
+function SituacaoNaFila({ c }) {
   const texto = textoDaSituacaoNaFila(c);
   if (c.ficha?.situacao === "CONCLUIDA" && c.ficha.resultado)
     return <Selo tom={tomDoResultado(c.ficha.resultado)}>{texto}</Selo>;
@@ -402,6 +420,8 @@ function ModoDeAnalise({
     );
 
   const situacao = SITUACOES_DA_FICHA[f.situacao] || {};
+  // O inscrito da fila (entrada no lote e a decisão da coordenação).
+  const inscrito = (dados.candidatos || []).find((c) => c.ficha?.id === f.id);
   const reservaDeOutro =
     reservaVigente(f.reserva) && f.reserva.usuario !== dados.eu;
   const posicao = navegaveis.findIndex((c) => c.ficha.id === f.id);
@@ -435,6 +455,21 @@ function ModoDeAnalise({
             Candidato {f.codigo}
             {f.nome ? <span> · {f.nome}</span> : null}
           </h2>
+          {inscrito ? (
+            <span className="avd-inline">
+              <SeloDaDecisao c={inscrito} />
+              {dados.pode_coordenar ? (
+                <RevogarDecisao
+                  c={inscrito}
+                  aoRevogar={async (motivo) => {
+                    const r = await fila.revogarDecisao([inscrito], motivo);
+                    if (r.ok) await fila.abrir(f.id);
+                    return r;
+                  }}
+                />
+              ) : null}
+            </span>
+          ) : null}
         </div>
         <dl className="avd-analise-dados" aria-label="Cabeçalho da ficha">
           <div>
@@ -736,6 +771,7 @@ export function Fila({ e, fila }) {
   const st = useSyncExternalStore(fila.assinar, fila.obter);
   const [selecao, setSelecao] = useState(() => new Set());
   const [acao, setAcao] = useState(null);
+  const [incluindo, setIncluindo] = useState(false);
   const [busca, setBusca] = useState(st.filtro.busca);
   // A ordem da tabela fica aqui: Anterior / Próxima da ficha seguem a mesma.
   const [ordem, setOrdem] = useState({ chave: "", sentido: "" });
@@ -778,6 +814,18 @@ export function Fila({ e, fila }) {
   const livres = candidatos.filter(
     (c) => c.ficha?.situacao === "PENDENTE" && !c.ficha.responsavel,
   );
+  const lote = loteDaFila(candidatos, st.filtro.vaga);
+  const foraDoLote = candidatos
+    .filter(
+      (c) =>
+        (!st.filtro.vaga || c.vaga === st.filtro.vaga) &&
+        podeIncluirPorDecisao(c),
+    )
+    .map((c) => ({
+      ...c,
+      situacao: c.situacao_pre,
+      motivo: c.motivo_eliminacao,
+    }));
 
   if (st.erro && !dados)
     return (
@@ -929,6 +977,23 @@ export function Fila({ e, fila }) {
               Abrir fichas do lote ({dados.sem_ficha})
             </button>
           ) : null}
+          {coordena ? (
+            <button
+              type="button"
+              className="btn secondary"
+              data-acao="incluir-por-decisao"
+              data-tour="avd-fila-incluir-por-decisao"
+              disabled={!foraDoLote.length || Boolean(st.acao)}
+              onClick={() => setIncluindo(true)}
+            >
+              Incluir por decisão da coordenação
+            </button>
+          ) : null}
+          {lote.pelaRegra || lote.porDecisao ? (
+            <span className="ui-texto-secundario" data-lote-da-fila>
+              {textoDoLote(lote.pelaRegra, lote.porDecisao)}
+            </span>
+          ) : null}
           {coordena && livres.length ? (
             <button
               type="button"
@@ -1006,6 +1071,15 @@ export function Fila({ e, fila }) {
         }}
       />
 
+      {incluindo ? (
+        <IncluirPorDecisao
+          candidatos={foraDoLote}
+          aoIncluir={(escolhidos, motivo) =>
+            fila.incluirPorDecisao(escolhidos, motivo)
+          }
+          aoFechar={() => setIncluindo(false)}
+        />
+      ) : null}
       {acao ? (
         <AcaoEmLote
           key={`${acao.tipo}:${acao.fichas.length}`}

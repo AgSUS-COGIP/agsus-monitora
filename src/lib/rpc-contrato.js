@@ -1114,6 +1114,19 @@ export const CONTRATO_RPC = {
     resumo:
       "Descongela a nota declarada dos inscritos do edital (ou da vaga p_vaga): apaga o valor congelado e registra no histórico o valor que era, quem pediu e o motivo (10 a 250 caracteres); o próximo recálculo congela de novo com as respostas de agora. Só a coordenação da avaliação do edital; recusa (55P03) com pré-classificação rodando.",
   },
+  // ── Avaliação documental: inclusão no lote por decisão (20261007200000_inclusao_no_lote_por_decisao.sql)
+  incluir_no_lote_por_decisao: {
+    argumentos: ["p_edital", "p_codigos", "p_motivo", "p_vaga"],
+    critica: false,
+    resumo:
+      'A coordenação inclui no lote, por decisão, candidatos que a regra deixa fora (eliminados ou abaixo do corte), pelos códigos da Empregare (1 a 200; p_vaga opcional), com motivo de 5 a 250 caracteres (ex.: "Critério CORES"): entrada DECISAO, no último lote da vaga, ficha aberta; os recálculos mantêm até a revogação. Recusa quem já está no lote, saiu da Empregare ou já tem decisão; 55P03 com pré-classificação rodando.',
+  },
+  revogar_decisao_lote: {
+    argumentos: ["p_edital", "p_codigos", "p_motivo", "p_vaga"],
+    critica: false,
+    resumo:
+      "A coordenação revoga decisões de lote (exclusão lógica, motivo de 10 a 250 caracteres, histórico): quem entrou por decisão volta à situação da regra e a ficha não concluída fica fora do lote. Recusa sem decisão vigente ou com a ficha concluída; 55P03 com pré-classificação rodando.",
+  },
   // ── Avaliação documental: fila, distribuição e reserva (20261006120000_fichas_fila_e_reserva.sql)
   obter_fila_avaliacao: {
     argumentos: ["p_edital"],

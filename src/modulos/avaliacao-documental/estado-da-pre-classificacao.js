@@ -12,6 +12,9 @@
     descongelar_declarada_pre_classificacao(p_edital, p_motivo, p_vaga)
                                                       (20261007170000) descongela a
                                                       nota declarada; depois, Recalcular
+    incluir_no_lote_por_decisao / revogar_decisao_lote  (20261007200000, decisao-no-banco.js)
+                                                      a coordenação inclui no lote por
+                                                      decisão ou revoga, com motivo
   "Recalcular": POST /api/rodar-carga { robo: "pre_classificacao", edital }
   (api/rodar-carga.js confere no banco se quem clicou coordena o edital). O
   resultado do pedido fica na aba (`aviso`): o erro, com o botão de volta; ou
@@ -45,6 +48,7 @@ import {
   imprimirPagina,
   logoEmPng,
 } from "../classificacao/documento-no-navegador.js";
+import { decidirNoLote } from "./decisao-no-banco.js";
 import { mensagemDoBanco } from "./estado.js";
 
 const RPC_OBTER_PRE_CLASSIFICACAO = "obter_pre_classificacao";
@@ -218,6 +222,24 @@ export function criarEstadoDaPreClassificacao({
     return true;
   }
 
+  /*
+    "Incluir por decisão da coordenação" e "Revogar decisão": candidatos
+    [{ codigo, vaga }] e o motivo. O banco põe (ou tira) do lote na hora e
+    abre (ou tira do lote) a ficha; a aba relê. Devolve { ok, erro }.
+  */
+  async function decidir(acao, candidatos, motivo) {
+    const editalId = estado.editalId;
+    if (!editalId) return { ok: false, erro: "Escolha o edital." };
+    try {
+      const r = await decidirNoLote(rpc, acao, editalId, candidatos, motivo);
+      toast(r.texto, "success");
+      if (estado.editalId === editalId) await carregar(editalId);
+      return { ok: true, quantidade: r.quantidade };
+    } catch (erro) {
+      return { ok: false, erro: mensagemDoBanco(erro) };
+    }
+  }
+
   function recusado(doEdital, motivo) {
     const texto = `Recálculo não pedido: ${motivo}`;
     doEdital({ pedidoEm: null, aviso: { tom: "danger", texto } });
@@ -383,6 +405,10 @@ export function criarEstadoDaPreClassificacao({
     carregar,
     recalcular,
     descongelar,
+    incluirPorDecisao: (candidatos, motivo) =>
+      decidir("incluir", candidatos, motivo),
+    revogarDecisao: (candidatos, motivo) =>
+      decidir("revogar", candidatos, motivo),
     registrarLista,
     publicarLista,
     exportar,
