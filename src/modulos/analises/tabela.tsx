@@ -1,8 +1,9 @@
+import type { LinhaDaAnalise } from "./tipos.ts";
 import { mensagemDeAreaSemAnalises } from "../../lib/area-do-painel-de-analises.js";
 import {
   filtrarPelaBuscaDaFila,
   tomDoStatus,
-} from "../../lib/analises-curriculares.js";
+} from "../../lib/analises-curriculares.ts";
 import { formatNumberBR } from "../../lib/formatters.js";
 import { Selo, TabelaInfinita } from "../../ui/index.js";
 
@@ -24,7 +25,8 @@ const COLUNAS = [
   { rotulo: "Ações", largura: "9%" },
 ];
 
-const ou = (valor, padrao = "-") => String(valor ?? "").trim() || padrao;
+const ou = (valor: unknown, padrao = "-") =>
+  String(valor ?? "").trim() || padrao;
 
 export function TabelaDeAnalises({
   linhas,
@@ -34,6 +36,14 @@ export function TabelaDeAnalises({
   busca,
   aoBuscar,
   aoAbrir,
+}: {
+  linhas: readonly LinhaDaAnalise[];
+  total: number;
+  carregado: boolean;
+  area: string;
+  busca: string;
+  aoBuscar(valor: string): void;
+  aoAbrir(chave: string): void;
 }) {
   return (
     <TabelaInfinita

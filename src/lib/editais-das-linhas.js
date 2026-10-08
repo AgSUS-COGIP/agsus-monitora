@@ -15,7 +15,7 @@
 
   Uma função com coerção de tipo e regra de mesclagem precisa de lint e de
   teste; aqui ela tem. Quem usa: a tela de Análises curriculares
-  (src/modulos/analises/estado.js), quando o payload vem sem `editais[]`.
+  (src/modulos/analises/estado.ts), quando o payload vem sem `editais[]`.
 */
 
 const VALORES_DE_ATIVO = ["sim", "s", "ativo", "1", "true", "x"];

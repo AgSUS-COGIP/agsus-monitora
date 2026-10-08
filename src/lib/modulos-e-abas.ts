@@ -1,3 +1,13 @@
+import type {
+  AlvoDosModulos,
+  CampoDosModulos,
+  ArvoreDosModulos,
+  RegistroDoCampo,
+  CamposDosModulos,
+  EstadoDoModulo,
+  AlvoDoHistorico,
+  HistoricoDosModulos,
+} from "../modulos/modulos/tipos.ts";
 /*
   Configurações › Módulos e abas, sem DOM: o rascunho das alterações e o que
   vai para `salvar_situacao_modulos(p_alteracoes, p_motivo)`.
@@ -31,15 +41,15 @@ export const LIMITE_DA_MENSAGEM = 500;
 export const MOTIVO_MINIMO = 3;
 export const MOTIVO_MAXIMO = 500;
 
-const texto = (valor) => String(valor ?? "").trim();
-const sn = (booleano) => (booleano ? "S" : "N");
-const situacaoDe = (valor) =>
+const texto = (valor: unknown) => String(valor ?? "").trim();
+const sn = (booleano: boolean) => (booleano ? "S" : "N");
+const situacaoDe = (valor: unknown) =>
   texto(valor).toUpperCase() === "MANUTENCAO" ? "MANUTENCAO" : "ATIVA";
 
-export const temAtivo = (alvo) => alvo?.escopo !== "sistema";
-export const temMensagem = (alvo) => alvo?.escopo !== "painel";
+export const temAtivo = (alvo: AlvoDosModulos) => alvo?.escopo !== "sistema";
+export const temMensagem = (alvo: AlvoDosModulos) => alvo?.escopo !== "painel";
 
-export function chaveDoCampo(alvo, campo) {
+export function chaveDoCampo(alvo: AlvoDosModulos, campo: CampoDosModulos) {
   return [
     alvo.escopo,
     alvo.area || "",
@@ -50,11 +60,17 @@ export function chaveDoCampo(alvo, campo) {
 }
 
 /** Os valores lidos, por chave: `Map<chave, { alvo, campo, valor }>`. */
-export function originaisDaArvore(arvore) {
-  const originais = new Map();
-  const guardar = (alvo, campo, valor) =>
-    originais.set(chaveDoCampo(alvo, campo), { alvo, campo, valor });
-  const guardarManutencao = (alvo, linha) => {
+export function originaisDaArvore(arvore: ArvoreDosModulos | null) {
+  const originais = new Map<string, RegistroDoCampo>();
+  const guardar = (
+    alvo: AlvoDosModulos,
+    campo: CampoDosModulos,
+    valor: string,
+  ) => originais.set(chaveDoCampo(alvo, campo), { alvo, campo, valor });
+  const guardarManutencao = (
+    alvo: AlvoDosModulos,
+    linha?: ArvoreDosModulos["sistema"],
+  ) => {
     guardar(alvo, "situacao", situacaoDe(linha?.situacao));
     guardar(alvo, "mensagem", texto(linha?.mensagem));
     guardar(alvo, "previsao", dataDaPrevisao(linha?.previsao) || "");
@@ -69,11 +85,11 @@ export function originaisDaArvore(arvore) {
     sn(arvore.sistema?.comemoracoes !== false),
   );
   for (const area of arvore.areas || []) {
-    const alvo = { escopo: "area", area: area.co_area };
+    const alvo: AlvoDosModulos = { escopo: "area", area: area.co_area };
     guardar(alvo, "ativo", sn(area.ativo !== false));
     guardarManutencao(alvo, area);
     for (const aba of area.abas || []) {
-      const naArea = {
+      const naArea: AlvoDosModulos = {
         escopo: "aba_area",
         area: area.co_area,
         aba: aba.co_aba,
@@ -83,13 +99,13 @@ export function originaisDaArvore(arvore) {
     }
   }
   for (const aba of arvore.abas || []) {
-    const alvo = { escopo: "aba", aba: aba.co_aba };
+    const alvo: AlvoDosModulos = { escopo: "aba", aba: aba.co_aba };
     guardar(alvo, "ativo", sn(aba.ativo !== false));
     guardarManutencao(alvo, aba);
     guardar(alvo, "beta", sn(aba.beta === true));
   }
   for (const painel of arvore.paineis || []) {
-    const alvo = { escopo: "painel", painel: painel.id };
+    const alvo: AlvoDosModulos = { escopo: "painel", painel: painel.id };
     guardar(alvo, "ativo", sn(painel.ativo !== false));
     guardar(alvo, "situacao", painel.em_manutencao ? "MANUTENCAO" : "ATIVA");
   }
@@ -97,17 +113,28 @@ export function originaisDaArvore(arvore) {
 }
 
 /** O valor em vigor na tela: o do rascunho, se houver; senão, o lido. */
-export function valorDoCampo(rascunho, originais, alvo, campo) {
+export function valorDoCampo(
+  rascunho: CamposDosModulos,
+  originais: CamposDosModulos,
+  alvo: AlvoDosModulos,
+  campo: CampoDosModulos,
+) {
   const chave = chaveDoCampo(alvo, campo);
-  if (rascunho.has(chave)) return rascunho.get(chave).valor;
+  if (rascunho.has(chave)) return rascunho.get(chave)?.valor ?? "";
   return originais.get(chave)?.valor ?? "";
 }
 
-const comparavel = (campo, valor) =>
+const comparavel = (campo: CampoDosModulos, valor: string) =>
   campo === "mensagem" || campo === "previsao" ? texto(valor) : valor;
 
 /** Novo rascunho com o campo alterado (ou sem ele, se voltou ao lido). */
-export function registrarCampo(rascunho, originais, alvo, campo, valor) {
+export function registrarCampo(
+  rascunho: CamposDosModulos,
+  originais: CamposDosModulos,
+  alvo: AlvoDosModulos,
+  campo: CampoDosModulos,
+  valor: string,
+) {
   const chave = chaveDoCampo(alvo, campo);
   const proximo = new Map(rascunho);
   const original = originais.get(chave)?.valor ?? "";
@@ -119,7 +146,11 @@ export function registrarCampo(rascunho, originais, alvo, campo, valor) {
 }
 
 /** 'ativa' | 'manutencao' | 'desativada', do que está em vigor na tela. */
-export function estadoDoAlvo(rascunho, originais, alvo) {
+export function estadoDoAlvo(
+  rascunho: CamposDosModulos,
+  originais: CamposDosModulos,
+  alvo: AlvoDosModulos,
+): EstadoDoModulo {
   if (
     temAtivo(alvo) &&
     valorDoCampo(rascunho, originais, alvo, "ativo") === "N"
@@ -134,7 +165,12 @@ export function estadoDoAlvo(rascunho, originais, alvo) {
   Muda o estado de três posições. Desativar não mexe na situação (volta a
   que foi lida): quem reativa encontra a manutenção como estava.
 */
-export function registrarEstado(rascunho, originais, alvo, estado) {
+export function registrarEstado(
+  rascunho: CamposDosModulos,
+  originais: CamposDosModulos,
+  alvo: AlvoDosModulos,
+  estado: EstadoDoModulo,
+) {
   if (!ESTADOS.includes(estado)) return rascunho;
   if (estado === "desativada" && !temAtivo(alvo)) return rascunho;
   let proximo = rascunho;
@@ -155,10 +191,11 @@ export function registrarEstado(rascunho, originais, alvo, estado) {
   return registrarCampo(proximo, originais, alvo, "situacao", situacao);
 }
 
-export const contarPendencias = (rascunho) => rascunho?.size || 0;
+export const contarPendencias = (rascunho: CamposDosModulos | null) =>
+  rascunho?.size || 0;
 
 /** Os itens de `p_alteracoes`, na ordem em que foram feitos. */
-export function alteracoesDoRascunho(rascunho) {
+export function alteracoesDoRascunho(rascunho: CamposDosModulos) {
   return [...rascunho.values()].map(({ alvo, campo, valor }) => ({
     escopo: alvo.escopo,
     ...(alvo.area ? { area: alvo.area } : {}),
@@ -170,7 +207,11 @@ export function alteracoesDoRascunho(rascunho) {
 }
 
 /** Problemas que o banco recusaria; lista vazia = pode salvar. */
-export function problemasDoRascunho(arvore, rascunho, originais) {
+export function problemasDoRascunho(
+  arvore: ArvoreDosModulos | null,
+  rascunho: CamposDosModulos,
+  originais: CamposDosModulos,
+) {
   const problemas = [];
   const areas = arvore?.areas || [];
   const ativas = areas.filter(
@@ -195,14 +236,14 @@ export function problemasDoRascunho(arvore, rascunho, originais) {
   return [...new Set(problemas)];
 }
 
-export function motivoValido(motivo) {
+export function motivoValido(motivo: unknown) {
   const tamanho = texto(motivo).length;
   return tamanho >= MOTIVO_MINIMO && tamanho <= MOTIVO_MAXIMO;
 }
 
 // ── Textos para a revisão e o histórico ─────────────────────────────────────
 
-function nomes(arvore) {
+function nomes(arvore: ArvoreDosModulos | null) {
   const areas = new Map(
     (arvore?.areas || []).map((a) => [a.co_area, a.no_area]),
   );
@@ -211,14 +252,18 @@ function nomes(arvore) {
     (arvore?.paineis || []).map((p) => [String(p.id), p.titulo]),
   );
   return {
-    area: (id) => areas.get(id) || id || "",
-    aba: (id) => abas.get(id) || id || "",
-    painel: (id) => paineis.get(String(id)) || "painel removido",
+    area: (id?: string | null) => areas.get(id ?? "") || id || "",
+    aba: (id?: string | null) => abas.get(id ?? "") || id || "",
+    painel: (id?: string | null) =>
+      paineis.get(String(id)) || "painel removido",
   };
 }
 
 /** Onde a alteração vale, em português. */
-export function ondeDoAlvo(arvore, alvo) {
+export function ondeDoAlvo(
+  arvore: ArvoreDosModulos | null,
+  alvo: AlvoDoHistorico,
+) {
   const n = nomes(arvore);
   switch (alvo?.escopo) {
     case "sistema":
@@ -236,7 +281,7 @@ export function ondeDoAlvo(arvore, alvo) {
   }
 }
 
-const ROTULO_DO_CAMPO = Object.freeze({
+const ROTULO_DO_CAMPO: Readonly<Record<string, string>> = Object.freeze({
   ativo: "Ativo",
   situacao: "Situação",
   mensagem: "Mensagem",
@@ -245,7 +290,7 @@ const ROTULO_DO_CAMPO = Object.freeze({
   comemoracoes: "Comemorações",
 });
 
-export function valorLegivel(campo, valor) {
+export function valorLegivel(campo: string, valor: unknown) {
   const v = texto(valor);
   switch (campo) {
     case "ativo":
@@ -266,7 +311,11 @@ export function valorLegivel(campo, valor) {
 }
 
 /** Uma linha da revisão: onde, o campo, de → para. */
-export function resumoDoRascunho(arvore, rascunho, originais) {
+export function resumoDoRascunho(
+  arvore: ArvoreDosModulos | null,
+  rascunho: CamposDosModulos,
+  originais: CamposDosModulos,
+) {
   return [...rascunho.values()].map(({ alvo, campo, valor }) => ({
     chave: chaveDoCampo(alvo, campo),
     onde: ondeDoAlvo(arvore, alvo),
@@ -280,15 +329,18 @@ export function resumoDoRascunho(arvore, rascunho, originais) {
 }
 
 /** `2026-09-30T14:05:00Z` → `30/09/2026 11:05` (no fuso de quem vê). */
-export function formatarQuando(valor) {
-  const data = new Date(valor);
+export function formatarQuando(valor: unknown) {
+  const data = new Date(texto(valor));
   if (Number.isNaN(data.getTime())) return "";
-  const dois = (n) => String(n).padStart(2, "0");
+  const dois = (n: number) => String(n).padStart(2, "0");
   return `${dois(data.getDate())}/${dois(data.getMonth() + 1)}/${data.getFullYear()} ${dois(data.getHours())}:${dois(data.getMinutes())}`;
 }
 
 /** Uma linha do histórico, em português. */
-export function linhaDoHistorico(arvore, registro) {
+export function linhaDoHistorico(
+  arvore: ArvoreDosModulos | null,
+  registro: HistoricoDosModulos,
+) {
   const alvo = {
     escopo: registro?.escopo,
     area: registro?.area,

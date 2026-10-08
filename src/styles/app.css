@@ -268,6 +268,9 @@ body.access-request-mode .login-card h1 {
 body.access-request-mode #googleLoginBtn {
   display: none !important;
 }
+body.access-request-mode .login-form > .google-login-btn--reservado {
+  display: none;
+}
 body.access-request-mode .login-form {
   gap: 0;
 }
@@ -275,16 +278,45 @@ body.access-request-mode .login-cogip {
   display: none !important;
 }
 
-/* Nome da Agência no pé do cartão de acesso: discreto, sobre a cor do painel. */
-.login-instituicao {
-  margin: 22px 0 0;
-  padding-top: 16px;
-  border-top: 1px solid color-mix(in srgb, currentColor 18%, transparent);
-  font-size: 12px;
-  font-weight: 600;
-  line-height: 1.35;
+/*
+  Nome da Agência no pé do cartão de acesso, como no SIGAV: divisória fina
+  translúcida, o escudo verde-água em traço e o texto pequeno translúcido,
+  sobre a cor do painel. Altura de linha fixa (20px): o pé não muda de altura
+  quando a fonte troca.
+*/
+.login-card .login-instituicao {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin: 36px 0 0;
+  padding-top: 20px;
+  border-top: 1px solid color-mix(in srgb, currentColor 20%, transparent);
+  color: color-mix(in srgb, currentColor 72%, transparent);
+  font-size: clamp(9.5px, 3vw, 12px);
+  font-weight: 500;
+  line-height: 20px;
   text-align: center;
-  opacity: 0.82;
+}
+/*
+  O nome da Agência é fixo (`INSTITUICAO`, também no cartão provisório do
+  index.html) e fica numa linha só: a fonte encolhe no celular estreito e, no
+  limite, o nome termina em reticências — nunca quebra nem empurra o cartão.
+*/
+.login-card .login-instituicao > span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.login-instituicao-icone {
+  flex: none;
+  width: 16px;
+  height: 16px;
+  color: var(--color-success-600);
+}
+.login-screen.login-panel-dark .login-instituicao-icone {
+  color: #8ff3d0;
 }
 body.access-request-mode .login-instituicao {
   display: none;
@@ -711,7 +743,7 @@ textarea:focus-visible,
   font-weight: 900;
   font-size: 14px;
   cursor: pointer;
-  display: none;
+  display: flex;
   align-items: center;
   justify-content: center;
   gap: 9px;
@@ -1458,7 +1490,7 @@ tr:hover td {
 }
 
 .access-account-actions .google-login-btn {
-  display: flex !important;
+  display: flex;
   margin: 0;
 }
 

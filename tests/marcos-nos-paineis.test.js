@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { avaliarMarcosDasAnalises } from "../src/modulos/analises/marcos.js";
+import { avaliarMarcosDasAnalises } from "../src/modulos/analises/marcos.ts";
 
 /*
   Onde os marcos aparecem: o aviso de edital concluído / fila zerada na tela

@@ -1,8 +1,8 @@
 import { describe, expect, it, vi } from "vitest";
-import { criarConsultasDasAnalises } from "../../src/modulos/analises/consultas.js";
+import { criarConsultasDasAnalises } from "../../src/modulos/analises/consultas.ts";
 
 /*
-  As consultas de Análises curriculares (src/modulos/analises/consultas.js):
+  As consultas de Análises curriculares (src/modulos/analises/consultas.ts):
   a lista por escopo com a cópia do navegador e a revalidação por trás,
   "Todos" com os três pacotes, o detalhamento e os pareceres guardados até o
   "Atualizar". No lugar dos testes do antigo transporte consolidado e dos

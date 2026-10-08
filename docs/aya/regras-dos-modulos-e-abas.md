@@ -1,15 +1,15 @@
 # Regras de Módulos e abas
 
 Configurações › Módulos e abas: ativar, desativar e pôr em manutenção o sistema, as áreas, as abas
-e os painéis; selo BETA; comemorações. Fontes: `src/modulos/modulos/modulos.jsx`,
-`src/lib/situacao-dos-modulos.js`, `src/lib/modulos-e-abas.js`, `src/lib/access-roles.js` e a
+e os painéis; selo BETA; comemorações. Fontes: `src/modulos/modulos/modulos.tsx`,
+`src/lib/situacao-dos-modulos.js`, `src/lib/modulos-e-abas.ts`, `src/lib/access-roles.js` e a
 migration `20260930140000_modulos_e_manutencao.sql`.
 
 ## Seção Módulos e abas
 
 **perguntas:** secao modulos e abas | modulos e abas | para que serve modulos e abas | para que serve a secao modulos e abas
 **resposta:** Em Configurações › Módulos e abas (só o administrador global), dá para pôr o sistema inteiro em manutenção, ativar, desativar ou pôr em manutenção cada área, cada aba (em todas as áreas ou só numa) e cada painel externo, e ligar o selo BETA de uma aba. Nada grava na hora: as mudanças vão juntas em "Revisar e salvar", com motivo (3 a 500 caracteres). O histórico mostra as 50 últimas mudanças. Pelo menos uma área precisa ficar ativa.
-**fonte:** src/modulos/modulos/modulos.jsx; supabase/migrations/20260930140000_modulos_e_manutencao.sql
+**fonte:** src/modulos/modulos/modulos.tsx; supabase/migrations/20260930140000_modulos_e_manutencao.sql
 **abrir:** config:modulos
 
 ## Manutenção
@@ -28,7 +28,7 @@ migration `20260930140000_modulos_e_manutencao.sql`.
 
 **perguntas:** o que e o selo beta | selo beta | aba beta | beta
 **resposta:** O selo BETA aparece ao lado do nome da aba no menu e marca uma aba ainda em teste. É ligado por aba, em Configurações › Módulos e abas, pelo administrador global, e vale em todas as áreas.
-**fonte:** src/lib/menu-lateral.js; src/lib/modulos-e-abas.js
+**fonte:** src/lib/menu-lateral.js; src/lib/modulos-e-abas.ts
 
 ## Ligar e desligar as comemorações
 

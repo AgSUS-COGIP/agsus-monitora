@@ -1,19 +1,9 @@
 /*
   As contas do "Painel de entrevistas" (src/modulos/entrevistas/), sem React:
-  o andamento de cada edital e de cada vaga, os candidatos empatados na nota
-  da entrevista e a agenda dos próximos dias. Lê as entrevistas já
+  o edital do recorte (o da agenda dos próximos dias), os candidatos
+  empatados na nota da entrevista e a agenda. Lê as entrevistas já
   normalizadas por src/lib/entrevistas-do-painel.js (payload de
   `get_entrevistas_da_area`, que deixa o edital de treinamento de fora).
-
-  Andamento (cada entrevista conta uma vez, nesta ordem):
-    faltou     comparecimento "N";
-    apto       parecer APTO;
-    inapto     parecer INAPTO;
-    andamento  compareceu, ainda sem parecer;
-    o resto    aguardando (sem comparecimento nem parecer).
-  Os números do cartão seguem os KPIs: convocados (todas as entrevistas do
-  recorte), entrevistados (compareceram), faltaram, aptos, inaptos e sem
-  parecer.
 
   Empate: duas ou mais entrevistas do mesmo edital e da mesma vaga com a
   mesma nota (quem compareceu e tem nota). O desempate não é daqui: é o da
@@ -33,35 +23,9 @@ export type EntrevistaDoPainel = {
   compareceu?: string | null;
 };
 
-export type Numeros = {
-  convocados: number;
-  entrevistados: number;
-  faltaram: number;
-  aptos: number;
-  inaptos: number;
-  semParecer: number;
-  /** As partes da barra, exclusivas (somam `convocados`). */
-  barra: {
-    apto: number;
-    inapto: number;
-    faltou: number;
-    andamento: number;
-    aguardando: number;
-  };
-};
-
-export type AndamentoDaVaga = {
-  vaga: string;
-  cargo: string;
-  numeros: Numeros;
-};
-
-export type AndamentoDoEdital = {
+export type EditalDoRecorte = {
   edital: string;
   editalId: string | null;
-  unidade: string;
-  numeros: Numeros;
-  vagas: AndamentoDaVaga[];
 };
 
 export type GrupoEmpatado = {
@@ -78,41 +42,6 @@ const texto = (valor: unknown) => String(valor ?? "").trim();
 const comparar = (a: string, b: string) =>
   a.localeCompare(b, "pt-BR", { numeric: true, sensitivity: "base" });
 
-export function numerosDasEntrevistas(
-  entrevistas: readonly EntrevistaDoPainel[],
-): Numeros {
-  const n: Numeros = {
-    convocados: entrevistas.length,
-    entrevistados: 0,
-    faltaram: 0,
-    aptos: 0,
-    inaptos: 0,
-    semParecer: 0,
-    barra: { apto: 0, inapto: 0, faltou: 0, andamento: 0, aguardando: 0 },
-  };
-  for (const e of entrevistas) {
-    const parecer = texto(e.parecer).toUpperCase();
-    if (e.compareceu === "S") n.entrevistados += 1;
-    if (e.compareceu === "N") n.faltaram += 1;
-    if (parecer === "APTO") n.aptos += 1;
-    else if (parecer === "INAPTO") n.inaptos += 1;
-    else n.semParecer += 1;
-    if (e.compareceu === "N") n.barra.faltou += 1;
-    else if (parecer === "APTO") n.barra.apto += 1;
-    else if (parecer === "INAPTO") n.barra.inapto += 1;
-    else if (e.compareceu === "S") n.barra.andamento += 1;
-    else n.barra.aguardando += 1;
-  }
-  return n;
-}
-
-/** Percentual feito (com parecer ou falta) do total, de 0 a 100, inteiro. */
-export function percentualFeito(n: Numeros): number {
-  if (!n.convocados) return 0;
-  const feitas = n.barra.apto + n.barra.inapto + n.barra.faltou;
-  return Math.round((feitas / n.convocados) * 100);
-}
-
 function agrupar<T>(itens: readonly T[], chave: (item: T) => string) {
   const grupos = new Map<string, T[]>();
   for (const item of itens) {
@@ -124,32 +53,22 @@ function agrupar<T>(itens: readonly T[], chave: (item: T) => string) {
   return grupos;
 }
 
-/** Um cartão por edital, com as vagas dele, na ordem do edital e da vaga. */
-export function andamentoPorEdital(
+/** O edital do recorte: o filtrado ou, havendo um só nas entrevistas, ele. */
+export function editalDoRecorte(
   entrevistas: readonly EntrevistaDoPainel[],
-): AndamentoDoEdital[] {
-  const porEdital = agrupar(
-    entrevistas,
-    (e) => texto(e.edital) || "Sem edital",
-  );
-  return [...porEdital.entries()]
-    .map(([edital, lista]) => {
-      const porVaga = agrupar(lista, (e) => texto(e.vaga) || "—");
-      return {
-        edital,
-        editalId: lista.find((e) => e.edital_id)?.edital_id ?? null,
-        unidade: texto(lista.find((e) => texto(e.unidade))?.unidade),
-        numeros: numerosDasEntrevistas(lista),
-        vagas: [...porVaga.entries()]
-          .map(([vaga, daVaga]) => ({
-            vaga,
-            cargo: texto(daVaga.find((e) => texto(e.cargo))?.cargo),
-            numeros: numerosDasEntrevistas(daVaga),
-          }))
-          .sort((a, b) => comparar(a.vaga, b.vaga)),
-      };
-    })
-    .sort((a, b) => comparar(a.edital, b.edital));
+  edital: string,
+): EditalDoRecorte | null {
+  const nome = texto(edital);
+  const doEdital = nome
+    ? entrevistas.filter((e) => texto(e.edital) === nome)
+    : entrevistas;
+  if (!doEdital.length) return null;
+  const unico = texto(doEdital[0]?.edital);
+  if (!nome && doEdital.some((e) => texto(e.edital) !== unico)) return null;
+  return {
+    edital: unico,
+    editalId: doEdital.find((e) => e.edital_id)?.edital_id ?? null,
+  };
 }
 
 /** Os grupos empatados na nota da entrevista (mesmo edital, mesma vaga, mesma nota). */

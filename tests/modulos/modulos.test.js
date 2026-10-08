@@ -1,6 +1,6 @@
 import { act } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { montarModulos } from "../../src/modulos/modulos/modulos.jsx";
+import { montarModulos } from "../../src/modulos/modulos/modulos.tsx";
 import { clicar, digitar, esperar } from "../componentes/interacoes.js";
 
 /*
@@ -136,6 +136,31 @@ const salvarChamadas = (supabase) =>
   );
 
 describe("Configurações › Módulos e abas", () => {
+  it("exibe a falha da releitura sem remover a árvore nem as alterações pendentes", async () => {
+    const { supabase } = await montar({ perfil: ADMIN });
+    const consoleErro = vi.spyOn(console, "error").mockImplementation(() => {});
+    try {
+      await act(async () => {
+        controlador.estado.mudarCampo(
+          { escopo: "area", area: "sede" },
+          "mensagem",
+          "Ajuste",
+        );
+        supabase.rpc.mockResolvedValueOnce({
+          data: { areas: {} },
+          error: null,
+        });
+        await controlador.estado.carregar();
+      });
+      expect(document.body.textContent).toContain(
+        "Resposta de módulos e abas inválida",
+      );
+      expect(grupo("Situação do sistema inteiro")).not.toBeNull();
+      expect(controlador.estado.temAlteracoesPendentes()).toBe(true);
+    } finally {
+      consoleErro.mockRestore();
+    }
+  });
   it("quem não é admin global não carrega nem vê a árvore", async () => {
     const { supabase } = await montar({ perfil: EDITOR });
     expect(supabase.rpc).not.toHaveBeenCalled();
