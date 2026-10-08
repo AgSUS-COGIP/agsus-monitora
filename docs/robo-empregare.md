@@ -101,15 +101,23 @@ conferido; por isso há dois passos (`scripts/robo-empregare/anexos_empregare.py
 
 1. **Sondar** (modo `sondar`, só leitura, sem Supabase): com `vagas` = **um** código e `limite` =
    **1 a 3** candidatos (acima de 3 vira 3), o robô busca a vaga (só lê o link "Processo
-   Seletivo"; não exporta), lê a lista de candidatos, abre a página de detalhes de cada um, clica
-   na aba Questionários e, se houver, abre a visão imprimir. O log traz **só a estrutura**: as abas
-   da página (só nomes conhecidos), como é a aba Questionários (tag, âncora, classes), o painel,
+   Seletivo"; não exporta), lê a lista de candidatos e abre a página de detalhes de cada um. Lá,
+   descreve **cada aba** (href, `data-target`, `aria-controls` com ids mascarados, `title`,
+   `aria-label`, tooltip e classe do ícone — o rótulo pode ser só ícone), clica nas que trocam de
+   painel e resume o painel (perguntas, "Pergunta N", arquivos, `data-url`, `data-arquivo`);
+   escolhe a de Questionários (href/título com "question"/"formulário", ícone típico ou o painel
+   com "Pergunta N"), lê essa aba e, se houver, a visão imprimir. Também lista os elementos com
+   `data-url`/`data-arquivo` (nomes dos atributos e padrão mascarado do valor; nome de arquivo
+   solto vira só a extensão) e testa cada link com **GET de 1 byte** (`Range: bytes=0-0`) sem
+   cookies e com a sessão do navegador (status, content-type, se redirecionou para o login) e
+   abrindo-o no navegador (caminho final mascarado, tipo, visualizador de PDF, download só pela
+   extensão). O log traz **só a estrutura**: as abas, o painel,
    quantas perguntas (por classe e por "Pergunta N"), as contagens de seletores, as classes com
    pergunta/resposta/anexo e, por arquivo, o número da pergunta, o enunciado (texto do edital;
    só aparece se parecer enunciado — pede anexo, documento, comprovante…; senão só o tamanho), o
    **padrão** do link (`https://<host>/<palavras>/<MASCARADO>`, com a extensão e os nomes dos
    parâmetros), se é assinado/expira (parâmetros `X-Amz-Signature`, `Expires`, `token`…) e o status
-   de um **HEAD sem cookies** (e, na mesma origem, com a sessão do navegador). Nunca nome, CPF,
+   desses testes. Nunca nome, CPF,
    e-mail, nome de arquivo nem URL completa.
 2. **Capturar** (`anexos` marcado no Run workflow, modo `normal`/`forcar`; opcional até
    validarmos): depois dos links dos candidatos, para cada candidato com link de detalhe, lê a aba

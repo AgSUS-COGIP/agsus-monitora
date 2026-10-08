@@ -11,7 +11,7 @@ arquivos ficam na página de detalhes, aba Questionários (ou na visão
     quantas perguntas, por anexo o enunciado (texto do edital, não é dado
     pessoal; só sai se parecer enunciado) e o PADRÃO do link do arquivo com
     tudo que pareça token/id/nome de arquivo trocado por <MASCARADO>, se o link
-    é assinado/expira e o status de um HEAD sem cookies. Nunca nome, CPF,
+    é assinado/expira e o status de um GET sem cookies. Nunca nome, CPF,
     e-mail, nome de arquivo nem URL completa.
   - CAPTURAR (modo normal com --anexos, opcional até validarmos): por
     candidato com link de detalhe, guarda por pergunta de anexo o link do
@@ -81,9 +81,15 @@ return Array.from(document.querySelectorAll('.nav a, .nav-tabs a, [role="tab"], 
 JS_ABRIR_QUESTIONARIOS = (
     JS_VISIVEL
     + """
+const sinal = function (el) {
+  const ic = el.querySelector('i[class*="fa"], span[class*="fa"]');
+  return [texto(el), el.getAttribute('href'), el.getAttribute('data-target'), el.getAttribute('data-bs-target'),
+    el.getAttribute('aria-controls'), el.getAttribute('title'), el.getAttribute('aria-label'),
+    el.getAttribute('data-original-title'), el.getAttribute('data-bs-original-title'), ic ? ic.className : '']
+    .join(' ');
+};
 const alvos = Array.from(document.querySelectorAll('a, button, [role="tab"], li')).filter(function (el) {
-  const t = texto(el);
-  return visivel(el) && t.length < 60 && /question[aá]rio/i.test(t);
+  return visivel(el) && texto(el).length < 60 && /question[aá]rio|questionnaire|formul[aá]rio/i.test(sinal(el));
 });
 alvos.sort(function (a, b) { return texto(a).length - texto(b).length; });
 const aba = alvos.find(function (e) { return e.matches('a, button, [role="tab"]'); }) || alvos[0];
@@ -206,6 +212,7 @@ painel.querySelectorAll('a, button, [data-url], [data-href], [data-arquivo], [da
       const valores = atr === 'onclick' ? (bruto.match(reUrl) || []) : [bruto];
       valores.forEach(function (v) {{
         if (/^(javascript:|#|mailto:|tel:)/i.test(v)) {{ return; }}
+        if (!/^https?:/i.test(v) && v.indexOf('/') < 0) {{ return; }}  // nome de arquivo solto: não é link
         if (!reArq.test(v) && !el.hasAttribute('download')) {{ return; }}
         const href = absoluto(v);
         if (!href || vistos.has(href) || arquivos.length >= maximo) {{ return; }}
@@ -418,6 +425,12 @@ def _ancora_ou_mascara(valor):
 # ── Teste do link sem cookies ───────────────────────────────────────────────
 
 
+def _tipo_de_conteudo(valor):
+    """'application/pdf; charset=…' → 'application/pdf' (só o tipo, para o log)."""
+    tipo = str(valor or "").split(";")[0].strip().lower()
+    return tipo if re.fullmatch(r"[a-z0-9.+-]{1,40}/[a-z0-9.+-]{1,60}", tipo) else ("?" if tipo else "")
+
+
 class _SemRedirecionar(urllib.request.HTTPRedirectHandler):
     def redirect_request(self, *_args, **_kwargs):
         return None
@@ -425,22 +438,25 @@ class _SemRedirecionar(urllib.request.HTTPRedirectHandler):
 
 def testar_sem_cookies(endereco, abrir=None, tempo=TEMPO_DO_HEAD):
     """
-    HEAD sem cookies nem sessão, sem seguir redirecionamento. Devolve
-    {"status": int|None, "destino": padrão do Location ou None, "erro": nome}.
-    HEAD recusado (405/501) tenta um GET de 1 byte.
+    GET de 1 byte (Range: bytes=0-0) sem cookies nem sessão, sem seguir
+    redirecionamento e sem ler o corpo. Devolve {"status": int|None, "tipo":
+    content-type, "destino": padrão do Location ou None, "erro": nome}. GET
+    recusado (405/416/501) tenta um HEAD.
     """
     if not str(endereco or "").startswith(("http://", "https://")):
         return {"status": None, "destino": None, "erro": "sem http"}
     abrir = abrir or urllib.request.build_opener(_SemRedirecionar).open
-    for metodo, cabecalhos in (("HEAD", {}), ("GET", {"Range": "bytes=0-0"})):
+    for metodo, cabecalhos in (("GET", {"Range": "bytes=0-0"}), ("HEAD", {})):
         pedido = urllib.request.Request(
             endereco, method=metodo, headers={"User-Agent": "Mozilla/5.0 (robo MONITORA)", **cabecalhos}
         )
         try:
             with abrir(pedido, timeout=tempo) as resposta:
-                return {"status": resposta.status, "destino": None, "erro": None}
+                cabecalho = getattr(resposta, "headers", None)
+                tipo = _tipo_de_conteudo(cabecalho.get("Content-Type") if cabecalho else "")
+                return {"status": resposta.status, "tipo": tipo, "destino": None, "erro": None}
         except urllib.error.HTTPError as erro:
-            if metodo == "HEAD" and erro.code in (405, 501):
+            if metodo == "GET" and erro.code in (405, 416, 501):
                 continue
             local = erro.headers.get("Location") if erro.headers else None
             destino = padrao_do_link(urljoin(endereco, local)) if local else None
@@ -453,7 +469,7 @@ def testar_sem_cookies(endereco, abrir=None, tempo=TEMPO_DO_HEAD):
 def classificar_link(endereco, teste):
     """
     {"assinado": bool, "publico": bool, "exige_sessao": bool, "texto": "..."} a
-    partir dos parâmetros do link e do HEAD sem cookies.
+    partir dos parâmetros do link e do GET sem cookies.
     """
     assinado = bool(parametros_de_assinatura(endereco))
     status = (teste or {}).get("status")
@@ -656,7 +672,7 @@ def linhas_da_leitura(rotulo, leitura, testes):
         )
         linhas.append(
             f"{rotulo}, arquivo {i}: link {padrao_do_link(href)} · assinado/expira: "
-            f"{'sim (' + ', '.join(_palavras(assinatura, 6)) + ')' if assinatura else 'não'} · HEAD sem cookies: "
+            f"{'sim (' + ', '.join(_palavras(assinatura, 6)) + ')' if assinatura else 'não'} · GET sem cookies: "
             f"{sem.get('status') or sem.get('erro') or '?'}"
             + (f" → {sem['destino']}" if sem.get("destino") else "")
             + f" · HEAD com sessão: {t.get('com_sessao', '?')} · leitura: {classe['texto']}"
@@ -719,28 +735,425 @@ def _testar_arquivos(driver, leitura, testar=testar_sem_cookies):
     return testes
 
 
-def sondar_candidato(portal, rotulo, detalhe, testar=testar_sem_cookies):
-    """Linhas de log da estrutura de um candidato (aba e, se houver, visão imprimir). Nunca levanta."""
-    linhas = []
+# ── Sondagem 2: as abas uma a uma, os atributos dos arquivos e o acesso ─────
+
+# As abas da página do candidato com tudo que as identifica (o rótulo pode ser só
+# ícone/tooltip). Guarda os elementos em window.__abasMonitora para clicar pelo índice.
+JS_DESCREVER_ABAS = (
+    JS_VISIVEL
+    + """
+const todas = Array.from(document.querySelectorAll(
+  '.nav a, .nav-tabs a, [role="tab"], [data-toggle="tab"], [data-bs-toggle="tab"], [data-toggle="pill"], ul.nav li > a, .nav button'
+)).filter(visivel);
+const abas = Array.from(new Set(todas)).slice(0, 40);
+window.__abasMonitora = abas;
+return abas.map(function (a, i) {
+  const ic = a.querySelector('i[class*="fa"], span[class*="fa"], i[class*="icon"], span[class*="glyphicon"]');
+  const li = a.closest('li');
+  return {
+    i: i,
+    tag: a.tagName.toLowerCase(),
+    texto: texto(a).slice(0, 40),
+    href: a.getAttribute('href') || '',
+    alvo: a.getAttribute('data-target') || a.getAttribute('data-bs-target') || '',
+    controla: a.getAttribute('aria-controls') || '',
+    titulo: a.getAttribute('title') || (li && li.getAttribute('title')) || '',
+    rotulo: a.getAttribute('aria-label') || '',
+    dica: a.getAttribute('data-original-title') || a.getAttribute('data-bs-original-title') || a.getAttribute('data-title') || '',
+    icone: ic ? String(ic.className) : '',
+    toggle: a.getAttribute('data-toggle') || a.getAttribute('data-bs-toggle') || '',
+    ativa: a.classList.contains('active') || (li !== null && li.classList.contains('active'))
+  };
+});
+"""
+)
+
+JS_CLICAR_ABA = """
+const a = (window.__abasMonitora || [])[arguments[0]];
+if (!a) { return false; }
+a.scrollIntoView({block: 'center'});
+a.click();
+return true;
+"""
+
+# O painel ativo depois do clique: contagens só (perguntas, arquivos, data-url…).
+JS_RESUMO_DO_PAINEL = (
+    JS_VISIVEL
+    + f"""
+const reArq = {_RE_ARQUIVO_JS};
+const panes = Array.from(document.querySelectorAll('.tab-pane.active, .tab-pane.show, .tab-pane.in')).filter(visivel);
+panes.sort(function (a, b) {{ return texto(b).length - texto(a).length; }});
+const p = panes[0] || document.body;
+const q = function (s) {{ try {{ return p.querySelectorAll(s).length; }} catch (e) {{ return -1; }} }};
+const arquivos = Array.from(p.querySelectorAll('a[href], [data-url], [data-arquivo], [data-href]')).filter(function (el) {{
+  return reArq.test([el.getAttribute('href'), el.getAttribute('data-url'), el.getAttribute('data-arquivo'),
+    el.getAttribute('data-href')].join(' '));
+}}).length;
+return {{
+  painel: p === document.body ? 'body' : p.tagName.toLowerCase() + (p.id ? '#' + p.id : '')
+    + Array.from(p.classList).slice(0, 4).map(function (c) {{ return '.' + c; }}).join(''),
+  texto: texto(p).length,
+  perguntas: q('[class*="pergunta" i]') + q('[class*="question" i]'),
+  por_texto: (texto(p).match(/pergunta\\s*\\d{{1,3}}/gi) || []).length,
+  arquivos: arquivos,
+  data_url: q('[data-url]'),
+  data_arquivo: q('[data-arquivo]'),
+  tabelas: q('table'),
+  paineis: q('.panel, .card')
+}};
+"""
+)
+
+# Os elementos com data-url/data-arquivo (o link real pode estar aí e vir por XHR):
+# nomes dos atributos e valores crus (o Python só loga o padrão mascarado).
+JS_ATRIBUTOS_DE_ARQUIVO = """
+const els = Array.from(document.querySelectorAll('[data-url], [data-arquivo], [data-file], [data-href], [data-download]')).slice(0, 12);
+return els.map(function (el) {
+  const pane = el.closest('.tab-pane');
+  const atributos = Array.from(el.attributes)
+    .filter(function (a) { return /^(data-|href$|onclick$|src$|target$|download$)/i.test(a.name); })
+    .map(function (a) {
+      let abs = '';
+      if (/^(https?:|\\/)/i.test(a.value) || (a.value.indexOf('/') > 0 && !/\\s/.test(a.value))) {
+        try { abs = new URL(a.value, location.href).href; } catch (e) { abs = ''; }
+      }
+      return [a.name, a.value.slice(0, 600), abs];
+    });
+  return {
+    tag: el.tagName.toLowerCase(),
+    classes: Array.from(el.classList).slice(0, 6),
+    aba: pane && pane.id ? pane.id : '',
+    atributos: atributos
+  };
+});
+"""
+
+# GET de 1 byte com a sessão do navegador (mesma origem); só status, tipo e se foi ao login.
+JS_GET_COM_SESSAO = """
+const pronto = arguments[arguments.length - 1];
+const ctl = new AbortController();
+fetch(arguments[0], {method: 'GET', credentials: 'include', headers: {'Range': 'bytes=0-0'}, signal: ctl.signal})
+  .then(function (r) {
+    const disp = r.headers.get('content-disposition') || '';
+    let login = false;
+    try { login = /login|entrar|signin|acesso/i.test(new URL(r.url).pathname); } catch (e) { login = false; }
+    const info = {status: r.status, tipo: r.headers.get('content-type') || '',
+      disposicao: /attachment/i.test(disp) ? 'attachment' : (/inline/i.test(disp) ? 'inline' : ''),
+      redirecionou: r.redirected, login: login};
+    try { ctl.abort(); } catch (e) {}
+    pronto(info);
+  })
+  .catch(function (e) { pronto({erro: String((e && e.name) || 'erro')}); });
+"""
+
+ICONES_DE_QUESTIONARIO = re.compile(
+    r"(?i)\bfa-(list-alt|question|question-circle|clipboard|clipboard-list|clipboard-check|check-square-o|"
+    r"check-square|tasks|list-ul|list-ol|wpforms|pencil-square-o|edit)\b"
+)
+_SINAL_DE_QUESTIONARIO = re.compile(r"(?i)question|formul")
+_PALAVRAS_DE_INTERFACE = re.compile(
+    r"(?i)^(question|formul|anex|document|arquiv|curr[ií]c|hist[oó]r|mensag|avalia|test|entrevist|coment|"
+    r"dado|perfil|compet|experi|forma[cç]|observa|etapa|vaga|candidat|resumo|informa|contato|endere|"
+    r"agenda|tarefa|nota|parecer|v[ií]deo|foto|imprim|baixar|download|enviar|ver|abrir)"
+)
+
+
+def pontuar_aba(desc):
+    """3: href/alvo/título/rótulo fala de questionário ou formulário; 2: ícone típico; 0: nada."""
+    textos = [desc.get(k) or "" for k in ("texto", "href", "alvo", "controla", "titulo", "rotulo", "dica")]
+    if any(_SINAL_DE_QUESTIONARIO.search(t) for t in textos):
+        return 3
+    if ICONES_DE_QUESTIONARIO.search(desc.get("icone") or ""):
+        return 2
+    return 0
+
+
+def _rotulo_seguro(texto):
+    """Rótulo/título de interface só se for nome conhecido ou palavra de interface; senão 'outra (N letras)'."""
+    t = re.sub(r"\s+", " ", str(texto or "")).strip()
+    if not t:
+        return ""
+    conhecido = nome_da_aba(t)
+    if conhecido != "outra":
+        return conhecido
+    if len(t) <= 40 and re.fullmatch(r"[A-Za-zÀ-ÿ ()0-9]+", t) and _PALAVRAS_DE_INTERFACE.match(t):
+        return mascarar(t)
+    return f"outra ({len(t)} letras)"
+
+
+def _alvo_seguro(valor):
+    """'#tabQuestionario' fica; id com dígitos longos ou outro caminho vira padrão mascarado."""
+    v = str(valor or "").strip()
+    if not v:
+        return "—"
+    if v.startswith("#") or ANCORA.match(v):
+        return _ancora_ou_mascara(v)
+    if v.lower().startswith("javascript:"):
+        return "javascript:"
+    return padrao_do_link(v)
+
+
+def _icone_seguro(classes):
+    return " ".join(c for c in str(classes or "").split() if re.fullmatch(r"(fa|glyphicon|icon)[a-z0-9-]{0,40}", c))
+
+
+def navega_para_fora(desc):
+    """A aba é um link para outra página (não troca painel): não clicar na sondagem."""
+    href = str(desc.get("href") or "").strip()
+    if desc.get("toggle") or desc.get("alvo") or desc.get("controla"):
+        return False
+    return bool(href) and not href.startswith("#") and not href.lower().startswith("javascript:")
+
+
+def linha_da_aba_descrita(rotulo, desc, resumo=None):
+    """Uma linha segura por aba: href/alvo/aria-controls (ids mascarados), títulos, ícone e o painel."""
+    partes = [
+        f"{rotulo}: aba {desc.get('i')} ({_palavra(desc.get('tag'))}{', ativa' if desc.get('ativa') else ''})",
+        f"texto {_rotulo_seguro(desc.get('texto')) or '—'}",
+        f"href {_alvo_seguro(desc.get('href'))}",
+        f"alvo {_alvo_seguro(desc.get('alvo'))}",
+        f"aria-controls {_alvo_seguro(desc.get('controla'))}",
+        f"title {_rotulo_seguro(desc.get('titulo')) or '—'}",
+        f"aria-label {_rotulo_seguro(desc.get('rotulo')) or '—'}",
+        f"tooltip {_rotulo_seguro(desc.get('dica')) or '—'}",
+        f"ícone {_icone_seguro(desc.get('icone')) or '—'}",
+        f"toggle {_palavra(desc.get('toggle')) if desc.get('toggle') else '—'}",
+        f"pontos {pontuar_aba(desc)}",
+    ]
+    if resumo is not None:
+        if resumo.get("erro"):
+            partes.append(f"clique: {resumo['erro']}")
+        else:
+            partes.append(
+                f"painel {_descricao_segura(resumo.get('painel'))} (texto {resumo.get('texto', '?')} car.; "
+                f"perguntas {resumo.get('perguntas', '?')}; «Pergunta N» {resumo.get('por_texto', '?')}; "
+                f"arquivos {resumo.get('arquivos', '?')}; data-url {resumo.get('data_url', '?')}; "
+                f"data-arquivo {resumo.get('data_arquivo', '?')}; tabelas {resumo.get('tabelas', '?')}; "
+                f".panel/.card {resumo.get('paineis', '?')})"
+            )
+    return mascarar(" · ".join(partes))
+
+
+def descrever_valor(nome, valor, absoluto=""):
+    """O valor de um atributo para o log: padrão de link, nome de arquivo (só extensão), número ou tamanho."""
+    v = str(valor or "").strip()
+    if not v:
+        return "<vazio>"
+    if nome.lower() == "onclick":
+        urls = re.findall(r"(https?://[^\s'\"<>)]+|/[A-Za-z0-9_\-/.%~+|?=&]{3,})", v)
+        return f"função {_nome_da_funcao(v)}" + (
+            f", links: {', '.join(padrao_do_link(u) for u in urls[:3])}" if urls else ""
+        )
+    if absoluto or v.lower().startswith(("http://", "https://", "/")):
+        tipo = "absoluto" if v.lower().startswith("http") else ("caminho" if v.startswith("/") else "relativo")
+        return f"{tipo} {padrao_do_link(absoluto or v)}"
+    extensao = _EXTENSAO.search(v)
+    if extensao:
+        return f"<nome de arquivo, extensão .{extensao.group(1).lower()}, {len(v)} caracteres>"
+    if re.fullmatch(r"\d{1,30}", v):
+        return f"<número, {len(v)} dígitos>"
+    if re.fullmatch(r"[a-z][a-z_-]{0,20}", v):
+        return v
+    return f"<texto, {len(v)} caracteres>"
+
+
+def linhas_dos_atributos(rotulo, elementos):
+    """Uma linha por elemento com data-url/data-arquivo: tag, classes, aba, nomes dos atributos e padrão dos valores."""
+    linhas = [mascarar(f"{rotulo}: elementos com data-url/data-arquivo: {len(elementos or [])}")]
+    for i, el in enumerate((elementos or [])[:12], 1):
+        atributos = []
+        for item in el.get("atributos") or []:
+            nome, valor, absoluto = (list(item) + ["", "", ""])[:3]
+            nome = str(nome)
+            if not re.fullmatch(r"[a-z][a-z0-9-]{0,40}", nome):
+                nome = MASCARA
+            atributos.append(f"{nome}={descrever_valor(nome, valor, absoluto)}")
+        linhas.append(
+            mascarar(
+                f"{rotulo}: elemento {i}: {_palavra(el.get('tag'))}"
+                f"{''.join('.' + c for c in _palavras(el.get('classes'), 6))}"
+                f" (aba {_ancora_ou_mascara(el.get('aba'))}) · " + " · ".join(atributos)
+            )
+        )
+    return linhas
+
+
+def links_dos_atributos(elementos, maximo=3):
+    """Os valores absolutos (data-url, data-href…) que dá para testar."""
+    saida = []
+    for el in elementos or []:
+        for item in el.get("atributos") or []:
+            nome, _valor, absoluto = (list(item) + ["", "", ""])[:3]
+            if absoluto and str(absoluto).startswith(("http://", "https://")) and absoluto not in saida:
+                saida.append(absoluto)
+    return saida[:maximo]
+
+
+def get_com_sessao(driver, endereco):
+    """GET de 1 byte com a sessão do navegador (só mesma origem): {status, tipo, disposicao, redirecionou, login}."""
+    if not str(endereco or "").startswith(URL_BASE + "/"):
+        return {"erro": "outra origem"}
     try:
-        abas, aba, apareceu = abrir_questionario_do_candidato(portal, detalhe)
-        linhas += linhas_da_aba(rotulo, abas, aba, apareceu)
-        leitura = ler_questionario(portal.driver)
-        linhas += linhas_da_leitura(f"{rotulo} (aba)", leitura, _testar_arquivos(portal.driver, leitura, testar))
+        driver.set_script_timeout(TEMPO_DO_HEAD)
+        return driver.execute_async_script(JS_GET_COM_SESSAO, endereco) or {}
+    except Exception as erro:
+        return {"erro": type(erro).__name__}
+
+
+def abrir_no_navegador(portal, endereco, espera=4):
+    """
+    Abre o link na janela do robô e vê no que deu: o caminho final (padrão), se
+    foi ao login, o content-type do documento e se baixou arquivo (só a extensão).
+    """
+    import os
+
+    d = portal.driver
+    pasta = getattr(portal, "pasta", None)
+    antes = set(os.listdir(pasta)) if pasta and os.path.isdir(pasta) else set()
+    try:
+        d.get(endereco)
+    except Exception as erro:
+        return {"erro": type(erro).__name__}
+    time.sleep(espera)
+    try:
+        info = (
+            d.execute_script(
+                "return {tipo: document.contentType || '', caminho: location.href, "
+                "login: /login|entrar|signin|acesso/i.test(location.pathname), "
+                "pdf: !!document.querySelector('embed[type=\"application/pdf\"], pdf-viewer')};"
+            )
+            or {}
+        )
+    except Exception as erro:
+        info = {"erro": type(erro).__name__}
+    novos = (set(os.listdir(pasta)) - antes) if pasta and os.path.isdir(pasta) else set()
+    extensoes = sorted({(_EXTENSAO.search(n).group(1).lower() if _EXTENSAO.search(n) else "?") for n in novos})
+    info["download"] = extensoes
+    return info
+
+
+def linha_do_acesso(rotulo, i, endereco, sessao, aberto):
+    """Status do GET com sessão e o resultado de abrir no navegador, sem a URL."""
+    s = sessao or {}
+    a = aberto or {}
+    partes = [f"{rotulo}, acesso {i}: link {padrao_do_link(endereco)}"]
+    if s.get("erro"):
+        partes.append(f"GET com sessão: {s['erro']}")
+    else:
+        partes.append(
+            f"GET com sessão: {s.get('status', '?')} {_tipo_de_conteudo(s.get('tipo')) or '—'}"
+            f"{' (' + s['disposicao'] + ')' if s.get('disposicao') else ''}"
+            f"; redirecionou {'sim' if s.get('redirecionou') else 'não'}; login {'sim' if s.get('login') else 'não'}"
+        )
+    if aberto is not None:
+        if a.get("erro"):
+            partes.append(f"abrir: {a['erro']}")
+        else:
+            partes.append(
+                f"abrir: {padrao_do_link(a.get('caminho'))} · tipo {_tipo_de_conteudo(a.get('tipo')) or '—'}"
+                f" · visualizador de PDF {'sim' if a.get('pdf') else 'não'}"
+                f" · login {'sim' if a.get('login') else 'não'}"
+                f" · download {', '.join('.' + e for e in a.get('download') or []) or 'não'}"
+            )
+    return mascarar(" · ".join(partes))
+
+
+def varrer_abas(portal, rotulo, espera=1.5):
+    """
+    Descreve cada aba da página e, nas que trocam de painel, clica e resume o
+    painel. Devolve (linhas, descrições, índice da melhor aba ou None).
+    """
+    d = portal.driver
+    descricoes = d.execute_script(JS_DESCREVER_ABAS) or []
+    linhas = [mascarar(f"{rotulo}: abas encontradas {len(descricoes)}")]
+    resumos = {}
+    for desc in descricoes[:25]:
+        resumo = None
+        if not navega_para_fora(desc):
+            try:
+                if d.execute_script(JS_CLICAR_ABA, desc.get("i")):
+                    time.sleep(espera)
+                    resumo = d.execute_script(JS_RESUMO_DO_PAINEL) or {}
+                    resumos[desc.get("i")] = resumo
+            except Exception as erro:
+                resumo = {"erro": type(erro).__name__}
+        linhas.append(linha_da_aba_descrita(rotulo, desc, resumo))
+    melhor = escolher_aba(descricoes, resumos)
+    linhas.append(
+        mascarar(f"{rotulo}: aba escolhida para o questionário: {melhor if melhor is not None else 'nenhuma'}")
+    )
+    return linhas, descricoes, melhor
+
+
+def escolher_aba(descricoes, resumos):
+    """A aba com mais pontos (href/título/ícone); empate ou nada: a de painel com mais perguntas/arquivos."""
+
+    def peso(desc):
+        r = resumos.get(desc.get("i")) or {}
+        conteudo = (r.get("por_texto") or 0) * 10 + (r.get("perguntas") or 0) * 3 + (r.get("arquivos") or 0)
+        return (pontuar_aba(desc), conteudo)
+
+    candidatas = [d for d in descricoes if pontuar_aba(d) > 0 or (resumos.get(d.get("i")) or {}).get("por_texto")]
+    if not candidatas:
+        return None
+    return max(candidatas, key=peso).get("i")
+
+
+def sondar_candidato(portal, rotulo, detalhe, testar=testar_sem_cookies):
+    """
+    Linhas de log da estrutura de um candidato: todas as abas (clica nas que
+    trocam de painel), a leitura da aba escolhida (e da visão imprimir), os
+    atributos data-url/data-arquivo e o acesso aos links (GET de 1 byte sem
+    cookies e com sessão; por fim abre o primeiro no navegador). Nunca levanta.
+    """
+    linhas = []
+    d = portal.driver
+    try:
+        portal._voltar_para_a_janela()
+        d.get(detalhe)
+        time.sleep(ESPERA_DA_PAGINA)
+        varredura, _descricoes, melhor = varrer_abas(portal, rotulo)
+        linhas += varredura
+        if melhor is not None:
+            d.execute_script(JS_CLICAR_ABA, melhor)
+            _esperar_questionario(d)
+            time.sleep(1)
+        leitura = ler_questionario(d)
+        linhas += linhas_da_leitura(
+            f"{rotulo} (aba {melhor if melhor is not None else 'ativa'})", leitura, _testar_arquivos(d, leitura, testar)
+        )
+        elementos = d.execute_script(JS_ATRIBUTOS_DE_ARQUIVO) or []
+        linhas += linhas_dos_atributos(rotulo, elementos)
+        alvos = []
+        for href in [a.get("href") for a in (leitura.get("arquivos") or [])[:3]] + links_dos_atributos(elementos):
+            if href and href not in alvos:
+                alvos.append(href)
+        acessos = [(href, get_com_sessao(d, href)) for href in alvos[:5]]
         imprimir = next(iter(leitura.get("imprimir") or []), None)
         if imprimir:
             sem = testar(imprimir)
             linhas.append(
                 mascarar(
-                    f"{rotulo}: visão imprimir {padrao_do_link(imprimir)} · HEAD sem cookies: "
+                    f"{rotulo}: visão imprimir {padrao_do_link(imprimir)} · GET sem cookies: "
                     f"{sem.get('status') or sem.get('erro') or '?'}"
                     + (f" → {sem['destino']}" if sem.get("destino") else "")
                 )
             )
-            portal.driver.get(imprimir)
+            d.get(imprimir)
             time.sleep(ESPERA_DA_PAGINA)
-            vista = ler_questionario(portal.driver)
-            linhas += linhas_da_leitura(f"{rotulo} (imprimir)", vista, _testar_arquivos(portal.driver, vista, testar))
+            vista = ler_questionario(d)
+            linhas += linhas_da_leitura(f"{rotulo} (imprimir)", vista, _testar_arquivos(d, vista, testar))
+        for i, (href, sessao) in enumerate(acessos, 1):
+            sem = testar(href)
+            aberto = abrir_no_navegador(portal, href) if i <= 2 else None
+            linhas.append(linha_do_acesso(rotulo, i, href, sessao, aberto))
+            linhas.append(
+                mascarar(
+                    f"{rotulo}, acesso {i}: GET sem cookies: {sem.get('status') or sem.get('erro') or '?'} "
+                    f"{sem.get('tipo') or ''}".rstrip()
+                    + (f" → {sem['destino']}" if sem.get("destino") else "")
+                )
+            )
     except Exception as erro:
         linhas.append(f"{rotulo}: a sondagem parou ({resumo_do_erro(erro)}).")
     return linhas

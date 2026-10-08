@@ -96,6 +96,64 @@ def _sem_proibidos(teste, texto):
         teste.assertNotIn(proibido, texto, proibido)
 
 
+ABAS = [
+    {"i": 0, "tag": "a", "texto": "", "href": "#tabCurriculo", "icone": "fa fa-user", "ativa": True, "toggle": "tab"},
+    {
+        "i": 1,
+        "tag": "a",
+        "texto": "",
+        "href": "#tab77777777",
+        "titulo": "Maria Ficticia",
+        "icone": "fa fa-comments Maria77",
+        "toggle": "tab",
+    },
+    {
+        "i": 2,
+        "tag": "a",
+        "texto": "",
+        "href": "#tabQuestionario",
+        "titulo": "Questionários",
+        "icone": "fa fa-list-alt",
+        "toggle": "tab",
+    },
+    {"i": 3, "tag": "a", "texto": "Vagas", "href": "/empresa/vagas/candidaturas/Vfict77|", "icone": ""},
+]
+RESUMO_CURRICULO = {"painel": "div#tabCurriculo.tab-pane.active", "texto": 900, "perguntas": 0, "por_texto": 0}
+RESUMO_QUESTIONARIO = {
+    "painel": "div#tabQuestionario.tab-pane.active",
+    "texto": 3000,
+    "perguntas": 6,
+    "por_texto": 6,
+    "arquivos": 2,
+    "data_url": 2,
+    "data_arquivo": 2,
+    "tabelas": 0,
+    "paineis": 6,
+}
+ATRIBUTOS = [
+    {
+        "tag": "div",
+        "classes": ["btn-arquivo", "x77777777"],
+        "aba": "tabQuestionario",
+        "atributos": [
+            [
+                "data-url",
+                "/empresa/curriculo/arquivo?id=8f3a9c7e2d",
+                nav.URL_BASE + "/empresa/curriculo/arquivo?id=8f3a9c7e2d",
+            ],
+            ["data-arquivo", "Maria_Ficticia_Souza_RG.pdf", ""],
+            ["data-toggle", "modal", ""],
+        ],
+    },
+    {
+        "tag": "a",
+        "classes": [],
+        "aba": "",
+        "atributos": [["onclick", "baixar('Joana Ficticia', 'https://x.invalid/a/77777777')", ""]],
+    },
+]
+
+
 class PadraoDoLink(unittest.TestCase):
     def test_mascara_ids_tokens_e_nome_de_arquivo(self):
         padrao = anexos.padrao_do_link(ARQUIVO_ASSINADO)
@@ -123,8 +181,9 @@ class PadraoDoLink(unittest.TestCase):
 
 class TesteSemCookies(unittest.TestCase):
     class _Resposta:
-        def __init__(self, status):
+        def __init__(self, status, tipo="application/pdf; charset=binary"):
             self.status = status
+            self.headers = {"Content-Type": tipo}
 
         def __enter__(self):
             return self
@@ -140,7 +199,8 @@ class TesteSemCookies(unittest.TestCase):
 
     def test_status_e_redirecionamento_mascarado(self):
         def abrir(pedido, timeout):
-            self.assertEqual(pedido.get_method(), "HEAD")
+            self.assertEqual(pedido.get_method(), "GET")
+            self.assertEqual(pedido.get_header("Range"), "bytes=0-0")
             self.assertIsNone(pedido.get_header("Cookie"))
             raise self._erro(302, "/empresa/login?returnUrl=%2Fx%3FtokenCandidato%3DTKfict123")
 
@@ -149,17 +209,18 @@ class TesteSemCookies(unittest.TestCase):
         self.assertEqual(r["destino"], "https://corporate.empregare.com/empresa/login?returnUrl=<MASCARADO>")
         self.assertTrue(anexos.classificar_link(DETALHE, r)["exige_sessao"])
 
-    def test_head_recusado_tenta_get_de_um_byte(self):
+    def test_get_de_um_byte_e_head_se_recusado(self):
         metodos = []
 
         def abrir(pedido, timeout):
             metodos.append((pedido.get_method(), pedido.get_header("Range")))
-            if pedido.get_method() == "HEAD":
-                raise self._erro(405)
-            return self._Resposta(206)
+            if pedido.get_method() == "GET":
+                raise self._erro(416)
+            return self._Resposta(200)
 
         r = anexos.testar_sem_cookies(ARQUIVO_PUBLICO, abrir)
-        self.assertEqual(metodos, [("HEAD", None), ("GET", "bytes=0-0")])
+        self.assertEqual(metodos, [("GET", "bytes=0-0"), ("HEAD", None)])
+        self.assertEqual(r["tipo"], "application/pdf")
         self.assertEqual(anexos.classificar_link(ARQUIVO_PUBLICO, r)["texto"], "público")
 
     def test_publico_assinado_e_sem_resposta(self):
@@ -188,11 +249,11 @@ class Sondagem(unittest.TestCase):
             "classes: pergunta, resposta-anexo\n",
             "link imprimir https://corporate.empregare.com/empresa/questionarios/imprimir/<MASCARADO>",
             "arquivo 1: pergunta 4 (bloco 4) · enunciado «Pergunta 4 - Anexe o documento de identificação com foto»",
-            "HEAD sem cookies: 200",
+            "GET sem cookies: 200",
             "leitura: público",
             "arquivo 2: pergunta ? (bloco 5) · enunciado (texto que não parece enunciado",
             "assinado/expira: sim (X-Amz-Expires, X-Amz-Signature, X-Amz-Credential)",
-            "HEAD sem cookies: 403",
+            "GET sem cookies: 403",
             "leitura: exige sessão (ou a assinatura expirou)",
         ):
             self.assertIn(esperado, texto)
@@ -230,6 +291,7 @@ class Sondagem(unittest.TestCase):
 
     def test_sondar_candidato_com_navegador_falso_nao_vaza_nada(self):
         visitadas = []
+        cliques = []
 
         class Troca:
             def frame(self, _f):
@@ -245,14 +307,21 @@ class Sondagem(unittest.TestCase):
                 visitadas.append(url)
 
             def execute_script(self, js, *args):
-                if js == anexos.JS_ABAS_DO_CANDIDATO:
-                    return ["Currículo", "Questionários", "Maria Ficticia"]
-                if js == anexos.JS_ABRIR_QUESTIONARIOS:
-                    return {"achou": True, "total": 1, "tag": "a", "href": "#questionarios"}
+                if js == anexos.JS_DESCREVER_ABAS:
+                    return ABAS
+                if js == anexos.JS_CLICAR_ABA:
+                    cliques.append(args[0])
+                    return True
+                if js == anexos.JS_RESUMO_DO_PAINEL:
+                    return RESUMO_QUESTIONARIO if cliques[-1] == 2 else RESUMO_CURRICULO
                 if js == anexos.JS_CONTAR_QUESTIONARIO:
                     return 3
                 if js == anexos.JS_LER_QUESTIONARIO:
                     return _leitura()
+                if js == anexos.JS_ATRIBUTOS_DE_ARQUIVO:
+                    return ATRIBUTOS
+                if "document.contentType" in js:
+                    return {"tipo": "application/pdf", "caminho": ARQUIVO_PUBLICO, "login": False, "pdf": True}
                 raise AssertionError("JS inesperado")
 
             def find_elements(self, *_a):
@@ -261,11 +330,14 @@ class Sondagem(unittest.TestCase):
             def set_script_timeout(self, _s):
                 pass
 
-            def execute_async_script(self, _js, url):
+            def execute_async_script(self, js, url):
+                if js == anexos.JS_GET_COM_SESSAO:
+                    return {"status": 206, "tipo": "application/pdf", "disposicao": "inline", "redirecionou": False}
                 return 200
 
         class PortalFalso:
             driver = DriverFalso()
+            pasta = None
 
             def _voltar_para_a_janela(self):
                 return 1
@@ -274,17 +346,33 @@ class Sondagem(unittest.TestCase):
 
         def testar(href):
             testados.append(href)
-            return {"status": 403, "destino": None, "erro": None}
+            return {"status": 403, "tipo": "text/html", "destino": None, "erro": None}
 
         with mock.patch.object(anexos.time, "sleep"):
             linhas = anexos.sondar_candidato(PortalFalso(), "Candidato 1/1", DETALHE, testar)
         texto = "\n".join(linhas)
-        self.assertEqual(visitadas, [DETALHE, IMPRIMIR])
-        self.assertIn("Candidato 1/1 (aba): perguntas por classe 6", texto)
+        # Clica só nas abas que trocam de painel (a 3 leva a outra página) e volta na escolhida.
+        self.assertEqual(cliques, [0, 1, 2, 2])
+        self.assertIn("aba escolhida para o questionário: 2", texto)
+        self.assertIn("aba 2 (a) · texto — · href #tabQuestionario", texto)
+        self.assertIn("ícone fa fa-list-alt", texto)
+        self.assertIn("title Questionários", texto)
+        self.assertIn("pontos 3", texto)
+        self.assertIn("«Pergunta N» 6; arquivos 2; data-url 2", texto)
+        self.assertIn("aba 1 (a) · texto — · href <MASCARADO>", texto)
+        self.assertIn("title outra (14 letras)", texto)
+        self.assertIn("Candidato 1/1 (aba 2): perguntas por classe 6", texto)
         self.assertIn("Candidato 1/1 (imprimir): perguntas por classe 6", texto)
+        self.assertIn("elementos com data-url/data-arquivo: 2", texto)
         self.assertIn(
-            "visão imprimir https://corporate.empregare.com/empresa/questionarios/imprimir/<MASCARADO>", texto
+            "data-url=caminho https://corporate.empregare.com/empresa/curriculo/arquivo?id=<MASCARADO>", texto
         )
+        self.assertIn("data-arquivo=<nome de arquivo, extensão .pdf", texto)
+        self.assertIn("data-toggle=modal", texto)
+        self.assertIn("GET com sessão: 206 application/pdf (inline); redirecionou não; login não", texto)
+        self.assertIn("visualizador de PDF sim · login não · download não", texto)
+        self.assertIn("GET sem cookies: 403 text/html", texto)
+        self.assertEqual(visitadas[:2], [DETALHE, IMPRIMIR])
         self.assertIn(IMPRIMIR, testados)
         _sem_proibidos(self, texto)
 
@@ -309,6 +397,43 @@ class Sondagem(unittest.TestCase):
         with mock.patch.object(anexos, "sondar_candidato", lambda _p, rotulo, _l: sondados.append(rotulo) or []):
             anexos.sondar(PortalComVaga(), "177979", 50, logs.append)
         self.assertEqual(sondados, ["Candidato 1/3", "Candidato 2/3", "Candidato 3/3"])
+
+
+class SondagemDasAbas(unittest.TestCase):
+    def test_pontos_e_escolha_da_aba(self):
+        self.assertEqual([anexos.pontuar_aba(a) for a in ABAS], [0, 0, 3, 0])
+        self.assertEqual(anexos.pontuar_aba({"icone": "fa fa-clipboard"}), 2)
+        self.assertTrue(anexos.navega_para_fora(ABAS[3]))
+        self.assertFalse(anexos.navega_para_fora(ABAS[0]))
+        self.assertEqual(anexos.escolher_aba(ABAS, {}), 2)
+        # Sem sinal no href/título/ícone: a aba cujo painel tem "Pergunta N".
+        sem_sinal = [dict(a, titulo="", href=f"#tab{a['i']}", icone="") for a in ABAS[:3]]
+        self.assertEqual(anexos.escolher_aba(sem_sinal, {1: {"por_texto": 4}}), 1)
+        self.assertIsNone(anexos.escolher_aba(sem_sinal, {}))
+
+    def test_valores_dos_atributos_sem_dado_pessoal(self):
+        linhas = anexos.linhas_dos_atributos("C", ATRIBUTOS)
+        texto = "\n".join(linhas)
+        self.assertIn("elemento 1: div.btn-arquivo (aba tabQuestionario)", texto)
+        self.assertIn("onclick=função baixar, links: https://x.invalid/a/<MASCARADO>", texto)
+        self.assertEqual(anexos.descrever_valor("data-id", "123456789"), "<número, 9 dígitos>")
+        self.assertEqual(anexos.descrever_valor("data-x", "Maria Souza"), "<texto, 11 caracteres>")
+        self.assertEqual(
+            anexos.links_dos_atributos(ATRIBUTOS), [nav.URL_BASE + "/empresa/curriculo/arquivo?id=8f3a9c7e2d"]
+        )
+        _sem_proibidos(self, texto)
+
+    def test_acesso_sem_url_e_get_so_na_mesma_origem(self):
+        linha = anexos.linha_do_acesso(
+            "C",
+            1,
+            ARQUIVO_ASSINADO,
+            {"status": 302, "tipo": "text/html", "redirecionou": True, "login": True},
+            {"erro": "TimeoutException"},
+        )
+        self.assertIn("GET com sessão: 302 text/html; redirecionou sim; login sim · abrir: TimeoutException", linha)
+        _sem_proibidos(self, linha)
+        self.assertEqual(anexos.get_com_sessao(object(), ARQUIVO_PUBLICO), {"erro": "outra origem"})
 
 
 class CapturaPorPergunta(unittest.TestCase):
