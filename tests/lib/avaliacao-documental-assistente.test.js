@@ -408,7 +408,7 @@ describe("resumo de uma página", () => {
         "Maior idade",
       ],
     });
-    expect(resumo.subtitulo).toBe("Edital 93/2026 · versão 7");
+    expect(resumo.subtitulo).toBe("Edital 93/2026 · Versão 7");
     const texto = textoDoResumo(resumo);
     expect(texto).toContain(
       "- Documento de identificação oficial com foto (item 6.5): não enviado ou não conforme elimina.",

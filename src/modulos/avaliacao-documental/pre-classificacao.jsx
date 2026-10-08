@@ -20,6 +20,7 @@ import {
   textoDoLote,
   vagasDaTela,
 } from "../../lib/avaliacao-documental/tela-da-pre-classificacao.js";
+import { rotuloDaVersaoNaLista } from "../../lib/nome-da-versao.ts";
 import { ESPERA_DO_PEDIDO_MIN } from "../../lib/robos-de-carga.js";
 import { Aviso, GradeDeKpis, Kpi, Selo } from "../../ui/index.js";
 import {
@@ -558,7 +559,9 @@ export function PreClassificacao({ e, estado, pre }) {
           {ultima
             ? `Pré-classificação de ${quando(ultima.fim || ultima.inicio)} · ${SITUACAO_DA_EXECUCAO[ultima.situacao] || ultima.situacao}`
             : "Ainda sem pré-classificação"}
-          {d.regra ? ` · regra v${d.regra.versao}` : ""}
+          {d.regra
+            ? ` · regra: ${rotuloDaVersaoNaLista(e.dados?.regra?.versoes, d.regra.versao)}`
+            : ""}
         </span>
         {d.pode_coordenar ? (
           <button

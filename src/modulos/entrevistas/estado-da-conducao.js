@@ -43,12 +43,14 @@ import {
 } from "../../lib/conducao-de-entrevista.js";
 import { classificarEdital } from "../../lib/classificacao/ajustes.js";
 import { convocacaoDoEdital } from "../../lib/classificacao/convocacao-do-edital.js";
+import { rotuloDaVersao } from "../../lib/nome-da-versao.ts";
 
 const TEMPO_LIMITE_MS = 30000;
 
 /* As RPCs (src/lib/rpc-contrato.js); chamadas por `rpc()`, com tempo limite. */
 const RPC_LISTAR_ROTEIROS = "listar_roteiros_entrevista";
 const RPC_SALVAR_ROTEIRO = "salvar_roteiro_entrevista";
+const RPC_RENOMEAR_ROTEIRO = "renomear_versao_roteiro_entrevista";
 const RPC_OBTER_EDITAL = "obter_entrevistas_do_edital";
 const RPC_CONFIGURAR = "configurar_entrevista_edital";
 const RPC_CONVOCAR = "convocar_para_entrevista";
@@ -216,11 +218,25 @@ export function criarEstadoDaConducao({
       });
       toast(
         dados.origem
-          ? `Roteiro salvo: versão ${roteiro?.versao ?? ""}.`
+          ? `Roteiro salvo: ${rotuloDaVersao({ versao: roteiro?.versao, nome: roteiro?.nome_versao })}.`
           : "Roteiro criado.",
         "ok",
       );
       publicar({ podeEditar: true });
+      await carregarRoteiros();
+      return { ok: true, roteiro };
+    });
+  }
+
+  /** Troca só o nome de uma versão do roteiro (null tira o nome): `{ ok }` ou `{ erro }`. */
+  function renomearRoteiro(roteiroId, nome, motivo) {
+    return executar("roteiro", "Trocando o nome…", async () => {
+      const roteiro = await rpc(RPC_RENOMEAR_ROTEIRO, {
+        p_roteiro: roteiroId,
+        p_nome: nome || null,
+        p_motivo: motivo,
+      });
+      toast("Nome da versão trocado.", "ok");
       await carregarRoteiros();
       return { ok: true, roteiro };
     });
@@ -455,6 +471,7 @@ export function criarEstadoDaConducao({
     trocarArea,
     carregarRoteiros,
     salvarRoteiro,
+    renomearRoteiro,
     carregarEditais,
     liberarEdital,
     abrirEdital,

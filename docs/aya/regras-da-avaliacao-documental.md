@@ -357,3 +357,11 @@ os modelos em `supabase/correcoes/20261006-modelos-da-regra-da-analise.sql` e o 
 **resposta:** O analista vê, na Fila e na ficha, só as vagas que analisa na equipe do edital; a coordenação e a revisão veem todas; quem só lê a Avaliação documental vê a ficha concluída. Grava só quem está com a reserva da ficha em análise. A ficha recebe da Empregare apenas as respostas das perguntas que a regra liga aos blocos e à nota declarada — nunca CPF, e-mail, telefone ou outra resposta —, e copiar o código ou abrir a Empregare fica registrado.
 **fonte:** supabase/migrations/20261007130000_conteudo_da_ficha.sql (FC_EXIGIR_VER_FICHA, FC_RESPOSTAS_DA_FICHA, registrar_acesso_ficha)
 **abrir:** avaliacao-documental
+
+## Nome da versão da regra
+
+**perguntas:** nome da versao | nome da regra | dar nome a regra | escolher o nome da regra | renomear a regra | renomear versao | trocar o nome da versao | v1 v2 da regra | o que e versao 7 | nome desta versao
+**resposta:** Cada versão da regra pode ter um nome (de 3 a 80 caracteres), em vez de só o número. Ao salvar (no assistente ou no modo avançado), o campo "Nome desta versão" já vem com uma sugestão — o edital e o começo do motivo, por exemplo "Regra do edital 93/2026 – decisão CORES" — que dá para editar ou apagar (vazio grava sem nome). A tela mostra o nome em destaque e o número discreto ("Decisão CORES · v7") no cabeçalho, no seletor de editais, nas versões, em comparar versões, na pré-classificação, na fila e na ficha; sem nome, aparece "Versão 7". Para trocar o nome de uma versão já salva, use "Renomear" no cabeçalho ou na lista de versões: pede o novo nome e o motivo (10 a 500 caracteres), muda só o nome — o conteúdo, o hash e a situação (Conferida ou não) continuam iguais — e a troca fica no histórico ("nome trocado", com de, para, quem e quando). Renomeia quem pode mudar a regra: a coordenação do edital; o administrador global pode tudo. O número da versão continua sendo o que as fichas e listas guardam.
+**fato:** No MONITORA, o nome da versão da regra é opcional, fica na versão (NO_VERSAO) e pode ser trocado com motivo sem mudar o conteúdo nem o hash.
+**fonte:** src/lib/nome-da-versao.ts; src/ui/nome-da-versao.tsx; supabase/migrations/20261008180000_nome_das_versoes_das_regras.sql (salvar_regra_analise, renomear_versao_regra_analise)
+**abrir:** avaliacao-documental

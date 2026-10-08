@@ -14,6 +14,7 @@ import { SeloDeTreinamento } from "../../componentes/selo-de-treinamento.jsx";
 import { sufixoDeTreinamento } from "../../lib/edital-de-treinamento.js";
 import { classificarEdital } from "../../lib/classificacao/ajustes.js";
 import { dataDeCorteDoCronograma } from "../../lib/classificacao/dados.js";
+import { rotuloDaVersao } from "../../lib/nome-da-versao.ts";
 import { getSupabaseClient } from "../../lib/supabaseClient.js";
 import { Aviso, Campo, Segmentado, TopoDoPainel } from "../../ui/index.js";
 import { abrirConversaDoEdital, definirEditalDaTela } from "../chat/ponte.js";
@@ -54,7 +55,7 @@ function textoDoStatus(e) {
   if (!e.carregado && e.carregandoEditais) return "Carregando editais...";
   if (e.carregandoEdital) return "Carregando o edital...";
   const regra = e.dados?.regra;
-  if (regra) return `Regra v${regra.versao}`;
+  if (regra) return `Regra: ${rotuloDaVersao(regra)}`;
   return e.dados ? "Sem regra" : "";
 }
 
@@ -177,7 +178,9 @@ function TelaDaArea({ estado, agenda, e }) {
                     {ed.candidatos
                       ? ` (${ed.candidatos.toLocaleString("pt-BR")})`
                       : ""}
-                    {ed.versao_regra ? ` · regra v${ed.versao_regra}` : ""}
+                    {ed.versao_regra
+                      ? ` · ${rotuloDaVersao({ versao: ed.versao_regra, nome: ed.nome_regra })}`
+                      : ""}
                     {sufixoDeTreinamento(ed)}
                   </option>
                 ))}
