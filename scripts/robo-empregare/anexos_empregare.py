@@ -1,29 +1,25 @@
 """
-Os ANEXOS do questionário de cada candidato na Empregare (aba Questionários).
+As RESPOSTAS do questionário de cada candidato na Empregare (e os anexos).
 
-A exportação da Empregare não traz o link dos arquivos anexados (só "Sim"/"--"),
-e o link de detalhes do candidato (DS_LINK_DETALHE) abre o currículo. Os
-arquivos ficam na página de detalhes, aba Questionários (ou na visão
-"imprimir", /empresa/questionarios/imprimir/<id>|). Este módulo:
+A exportação da Empregare não traz o link dos anexos (só "Sim"/"--"), e o
+arquivo fica num storage com assinatura que EXPIRA (sondagem de 08/10/2026:
+storage.empregare.com/anexocurriculo/<arquivo>?…&se=…&sig=…): o link do
+arquivo não pode ser guardado. O estável é o identificador da RESPOSTA do
+candidato ao questionário da vaga: o `data-resposta` do item dele na lista de
+candidaturas, que abre a visão de respostas com os anexos
+(/empresa/questionarios/imprimir/<id>|; exige o login da Empregare, que os
+analistas têm).
 
-  - SONDAR (modo `sondar` do workflow, só leitura): abre 1 a 3 candidatos de
-    uma vaga e escreve no log só a ESTRUTURA da aba Questionários: seletores,
-    quantas perguntas, por anexo o enunciado (texto do edital, não é dado
-    pessoal; só sai se parecer enunciado) e o PADRÃO do link do arquivo com
-    tudo que pareça token/id/nome de arquivo trocado por <MASCARADO>, se o link
-    é assinado/expira e o status de um GET sem cookies. Nunca nome, CPF,
-    e-mail, nome de arquivo nem URL completa.
-  - CAPTURAR (modo normal com --anexos, opcional até validarmos): por
-    candidato com link de detalhe, guarda por pergunta de anexo o link do
-    arquivo; se o arquivo exigir sessão ou expirar, o link da página do
-    questionário com âncora. Grava em TB_EMPREGARE_ANEXO pela RPC
-    gravar_anexos_empregare (migration 20261008160000_anexos_da_empregare.sql).
-    Os links levam tokens: no log, só contagens.
-
-A leitura da página é genérica (o formato da aba ainda não foi conferido):
-procura a aba pelo texto "Questionário", o painel pelo id/classe e os links de
-arquivo por href/data-url/onclick com cara de arquivo (download, .pdf…). Quando
-o log do `sondar` mostrar a estrutura real, ajuste os JS_… e os seletores aqui.
+  - CAPTURAR (modo normal com --anexos): a lista de candidaturas que o robô já
+    lê (navegador_empregare.ler_respostas_do_html) dá o identificador de cada
+    candidato; gravar_respostas grava pela RPC gravar_respostas_empregare
+    (migration 20261008160000_respostas_do_questionario_na_empregare.sql). No
+    log, só contagens.
+  - SONDAR (modo `sondar`, só leitura): a estrutura das abas do candidato,
+    dos clicáveis de questionário/respostas, da visão imprimir de cada
+    resposta e o acesso aos links, com tudo que pareça token/id/nome de
+    arquivo trocado por <MASCARADO>. Nunca nome, CPF, e-mail, nome de arquivo
+    nem URL completa.
 
 Testes: tests/python/test_anexos_empregare.py. Guia: docs/robo-empregare.md.
 """
@@ -45,20 +41,8 @@ ESPERA_DA_PAGINA = 2  # segundos depois de abrir a página do candidato
 TEMPO_DO_HEAD = 15
 LIMITE_DA_SONDAGEM = 3  # candidatos
 ANEXOS_POR_CANDIDATO_NO_LOG = 10
-ORCAMENTO_DOS_ANEXOS = 30 * 60  # segundos na execução inteira (o workflow tem 120 min)
-TEMPO_LIMITE_DOS_ANEXOS = 10 * 60  # segundos por vaga
-DIAS_DE_VALIDADE = 7  # candidato com anexos capturados há menos que isso vai para o fim da fila
-TAMANHO_DO_LOTE = 500
+TAMANHO_DO_LOTE = 5000
 
-# Arquivo que pede login (sem cookies dá 401/403 ou manda para o login) vira o
-# link da página do questionário: o mesmo tratamento do link que expira.
-ARQUIVO_COM_SESSAO_VIRA_PAGINA = True
-
-# Mesmo formato que o banco aceita (CK_EMPREGANEXO_DSLINK) e que a ficha confere
-# (src/lib/avaliacao-documental/anexo-na-empregare.ts).
-LINK_DO_ARQUIVO = re.compile(r"^https://[A-Za-z0-9.-]+(:[0-9]{1,5})?/[^\s\"'<>`\\]*$")
-LINK_DA_PAGINA = re.compile(r"^https://corporate\.empregare\.com/[A-Za-z0-9_.~=&%|+/:?#-]*$")
-TAMANHO_DO_LINK = 1000
 ANCORA = re.compile(r"^[A-Za-z][A-Za-z0-9_-]{0,60}$")
 
 # ── JavaScript (só estrutura; o Python mascara tudo antes do log) ───────────
@@ -67,48 +51,6 @@ JS_VISIVEL = """
 const visivel = function (el) { return !!(el && (el.offsetParent || el.getClientRects().length)); };
 const texto = function (el) { return (el ? (el.innerText || el.textContent || '') : '').replace(/\\s+/g, ' ').trim(); };
 """
-
-# Rótulos das abas da página do candidato (o Python reduz a nomes conhecidos).
-JS_ABAS_DO_CANDIDATO = (
-    JS_VISIVEL
-    + """
-return Array.from(document.querySelectorAll('.nav a, .nav-tabs a, [role="tab"], .tabs a, ul.nav li > a, .nav button'))
-  .filter(visivel).map(function (a) { return texto(a).slice(0, 40); }).slice(0, 30);
-"""
-)
-
-# Clica na aba Questionários. Devolve como ela é (tag, href, alvo, classes) sem texto livre.
-JS_ABRIR_QUESTIONARIOS = (
-    JS_VISIVEL
-    + """
-const sinal = function (el) {
-  const ic = el.querySelector('i[class*="fa"], span[class*="fa"]');
-  return [texto(el), el.getAttribute('href'), el.getAttribute('data-target'), el.getAttribute('data-bs-target'),
-    el.getAttribute('aria-controls'), el.getAttribute('title'), el.getAttribute('aria-label'),
-    el.getAttribute('data-original-title'), el.getAttribute('data-bs-original-title'), ic ? ic.className : '']
-    .join(' ');
-};
-const alvos = Array.from(document.querySelectorAll('a, button, [role="tab"], li')).filter(function (el) {
-  return visivel(el) && texto(el).length < 60 && /question[aá]rio|questionnaire|formul[aá]rio/i.test(sinal(el));
-});
-alvos.sort(function (a, b) { return texto(a).length - texto(b).length; });
-const aba = alvos.find(function (e) { return e.matches('a, button, [role="tab"]'); }) || alvos[0];
-if (!aba) { return {achou: false, total: 0}; }
-const info = {
-  achou: true,
-  total: alvos.length,
-  tag: aba.tagName.toLowerCase(),
-  href: aba.getAttribute('href') || '',
-  alvo: aba.getAttribute('data-target') || aba.getAttribute('data-bs-target') || aba.getAttribute('aria-controls') || '',
-  classes: String(aba.className || ''),
-  id: aba.id || '',
-  onclick: (aba.getAttribute('onclick') || '').slice(0, 200)
-};
-aba.scrollIntoView({block: 'center'});
-aba.click();
-return info;
-"""
-)
 
 _RE_ARQUIVO_JS = (
     "/download|arquivo|anexo|upload|\\/files?\\/|\\.(pdf|jpe?g|png|gif|bmp|tiff?|docx?|odt|xlsx?|zip|rar|heic|webp)"
@@ -490,71 +432,6 @@ def classificar_link(endereco, teste):
     return {"assinado": assinado, "publico": publico, "exige_sessao": bool(exige_sessao), "texto": texto}
 
 
-# ── O que vai para o banco ──────────────────────────────────────────────────
-
-
-def link_do_arquivo(endereco):
-    """Link do arquivo no formato que o banco aceita, ou None."""
-    t = str(endereco or "").strip()
-    return t if len(t) <= TAMANHO_DO_LINK and LINK_DO_ARQUIVO.match(t) else None
-
-
-def link_da_pagina(detalhe, imprimir=None, ancora=None, aba=None):
-    """
-    O link da página do questionário: a visão "imprimir" se houver; senão a
-    página de detalhes. Com a âncora da pergunta (id do bloco) ou da aba.
-    """
-    marca = next((a for a in (ancora, str(aba or "").lstrip("#")) if a and ANCORA.match(a)), None)
-    for base in (imprimir, detalhe):
-        t = str(base or "").strip().split("#")[0]
-        if not t:
-            continue
-        candidato = t + (f"#{marca}" if marca else "")
-        if len(candidato) <= TAMANHO_DO_LINK and LINK_DA_PAGINA.match(candidato):
-            return candidato
-    return None
-
-
-def anexos_do_candidato(leitura, detalhe, classificar):
-    """
-    Da leitura da aba (JS_LER_QUESTIONARIO) para as linhas do banco, uma por
-    pergunta: [{"pergunta", "enunciado", "tipo", "link"}]. `classificar(href)`
-    → classificar_link(...). Sem número de pergunta (nem no texto nem pela
-    ordem do bloco), o arquivo fica de fora. Vale o primeiro arquivo de cada
-    pergunta. Devolve (linhas, sem_numero).
-    """
-    imprimir = next(iter((leitura or {}).get("imprimir") or []), None)
-    linhas = {}
-    sem_numero = 0
-    for a in (leitura or {}).get("arquivos") or []:
-        numero = numero_da_pergunta(a.get("enunciado")) or a.get("ordem")
-        if not isinstance(numero, int) or not 1 <= numero <= 999:
-            sem_numero += 1
-            continue
-        if numero in linhas:
-            continue
-        href = a.get("href")
-        arquivo = link_do_arquivo(href)
-        tipo, link = "ARQUIVO", arquivo
-        if arquivo:
-            c = classificar(arquivo)
-            serve = not c["assinado"] and (c["publico"] or (c["exige_sessao"] and not ARQUIVO_COM_SESSAO_VIRA_PAGINA))
-            if not serve:
-                tipo, link = "QUESTIONARIO", None
-        if not link:
-            tipo = "QUESTIONARIO"
-            link = link_da_pagina(detalhe, imprimir, a.get("ancora"), (leitura or {}).get("aba"))
-        if not link:
-            continue
-        linhas[numero] = {
-            "pergunta": numero,
-            "enunciado": limpar_enunciado(a.get("enunciado")) or None,
-            "tipo": tipo,
-            "link": link,
-        }
-    return [linhas[n] for n in sorted(linhas)], sem_numero
-
-
 def em_lotes(lista, tamanho=TAMANHO_DO_LOTE):
     for i in range(0, len(lista), tamanho):
         yield lista[i : i + tamanho]
@@ -602,22 +479,6 @@ def ler_questionario(driver, maximo=50):
     return leitura
 
 
-def abrir_questionario_do_candidato(portal, detalhe):
-    """Abre a página de detalhes, clica na aba Questionários e espera. Devolve (abas, aba, apareceu)."""
-    d = portal.driver
-    portal._voltar_para_a_janela()
-    d.get(detalhe)
-    time.sleep(ESPERA_DA_PAGINA)
-    try:
-        abas = d.execute_script(JS_ABAS_DO_CANDIDATO) or []
-    except Exception:
-        abas = []
-    aba = d.execute_script(JS_ABRIR_QUESTIONARIOS) or {"achou": False}
-    apareceu = _esperar_questionario(d)
-    time.sleep(1)
-    return abas, aba, apareceu
-
-
 def testar_com_sessao(driver, endereco):
     """HEAD com a sessão do navegador, só na mesma origem (outra origem: CORS)."""
     if not str(endereco or "").startswith(URL_BASE + "/"):
@@ -653,6 +514,7 @@ def linhas_da_leitura(rotulo, leitura, testes):
         f"links «imprimir» {len(leitura.get('imprimir') or [])}; iframes {len(leitura.get('iframes') or [])}",
         f"{rotulo}: seletores com resultado: {seletores or 'nenhum'}",
         f"{rotulo}: classes: {', '.join(_palavras(leitura.get('classes'))) or '—'}",
+        f"{rotulo}: anexos por pergunta/bloco: {anexos_por_pergunta(arquivos) or '—'}",
     ]
     for href in (leitura.get("imprimir") or [])[:2]:
         linhas.append(f"{rotulo}: link imprimir {padrao_do_link(href)}")
@@ -701,25 +563,6 @@ def _descricao_segura(descricao):
         else:
             saida.append(p if re.fullmatch(r"[A-Za-z][A-Za-z_-]{0,40}", p) else MASCARA)
     return "".join(saida)[:160]
-
-
-def linhas_da_aba(rotulo, abas, aba, apareceu):
-    """As abas da página (só nomes conhecidos) e como é a aba Questionários."""
-    nomes = [nome_da_aba(a) for a in abas or []]
-    if not (aba or {}).get("achou"):
-        descricao = "NÃO achei a aba Questionários"
-    else:
-        descricao = (
-            f"aba Questionários: {_palavra(aba.get('tag'))} (candidatas {aba.get('total')}), "
-            f"href {padrao_do_link(aba['href']) if aba.get('href') and not aba['href'].startswith('#') else _ancora_ou_mascara(aba.get('href'))}, "
-            f"alvo {_ancora_ou_mascara(aba.get('alvo'))}, id {_ancora_ou_mascara(aba.get('id'))}, "
-            f"classes {' '.join(_palavras(str(aba.get('classes') or '').split(), 8)) or '—'}, "
-            f"onclick {_nome_da_funcao(aba.get('onclick'))}"
-        )
-    return [
-        mascarar(f"{rotulo}: abas da página {len(nomes)} [{', '.join(nomes[:15])}]"),
-        mascarar(f"{rotulo}: {descricao}; conteúdo apareceu: {'sim' if apareceu else 'não (esperei)'}"),
-    ]
 
 
 def _nome_da_funcao(onclick):
@@ -1191,7 +1034,7 @@ def pontuar_clicavel(item):
     """2: fala de questionário/respostas/formulário/imprimir; 1: ícone típico; 0: nada."""
     valores = [item.get("texto"), item.get("titulo"), item.get("href"), item.get("onclick")]
     valores += [f"{a[0]}={a[1]}" for a in item.get("atributos") or [] if len(a) >= 2]
-    if any(_SINAL_DE_RESPOSTAS.search(str(v or "")) for v in valores):
+    if any(_SINAL_DE_RESPOSTAS.search(str(v or "")) for v in valores + [item.get("icone")]):
         return 2
     if ICONES_DE_RESPOSTAS.search(item.get("icone") or ""):
         return 1
@@ -1221,6 +1064,8 @@ def abre_modal(item):
         or atributos.get("data-target", "").startswith("#")
         or bool(item.get("onclick"))
         or (str(item.get("href") or "").startswith("#") and len(str(item.get("href"))) > 1)
+        or str(item.get("href") or "").lower().startswith("javascript")
+        or "abrir-" in str(item.get("icone") or "")
     )
 
 
@@ -1316,6 +1161,9 @@ def explorar_respostas(portal, rotulo, itens, testar, acessos, voltar_para, maxi
                 portal, f"{rotulo} › modal do clicável {item.get('i')}", testar, acessos, ".modal.in, .modal.show"
             )
             linhas += novas
+            linhas.append(
+                linha_das_ancoras(f"{rotulo} › modal do clicável {item.get('i')}", d.execute_script(JS_ANCORAS))
+            )
             sub, _ = listar_clicaveis(d, f"{rotulo} › modal do clicável {item.get('i')}", "painel", maximo=15)
             linhas += sub
             d.execute_script(JS_FECHAR_MODAL)
@@ -1392,6 +1240,80 @@ def linhas_dos_acessos(portal, rotulo, acessos, testar, abrir=2):
     return linhas
 
 
+# Âncoras da página/modal: quantos ids e os padrões (dígitos viram <n>).
+JS_ANCORAS = (
+    JS_VISIVEL
+    + """
+const modais = Array.from(document.querySelectorAll('.modal.in, .modal.show')).filter(visivel);
+const raiz = modais[0] || document.body;
+const ids = Array.from(raiz.querySelectorAll('[id], a[name]')).map(function (e) { return e.id || e.getAttribute('name') || ''; });
+const padroes = {};
+ids.forEach(function (i) { const p = i.replace(/[0-9]+/g, '<n>'); padroes[p] = (padroes[p] || 0) + 1; });
+return {total: ids.length, padroes: Object.keys(padroes).map(function (k) { return [k, padroes[k]]; })
+  .sort(function (a, b) { return b[1] - a[1]; }).slice(0, 15)};
+"""
+)
+
+
+def linha_das_ancoras(rotulo, ancoras):
+    """'âncoras: 40 ids; padrões: pergunta-<n> (12), …' (padrão fora do formato vira <MASCARADO>)."""
+    a = ancoras or {}
+    padroes = []
+    for item in a.get("padroes") or []:
+        nome, n = (list(item) + ["", 0])[:2]
+        nome = str(nome)
+        if not re.fullmatch(r"[A-Za-z<>_-]{1,60}", nome) or re.search(r"<n>.*<n>.*<n>", nome):
+            nome = MASCARA
+        padroes.append(f"{nome} ({n})")
+    return mascarar(f"{rotulo}: âncoras: {a.get('total', '?')} ids; padrões: {', '.join(padroes) or '—'}")
+
+
+def anexos_por_pergunta(arquivos):
+    """'4: 1, 5: 2, ?: 1' — quantos arquivos por número de pergunta (ou bloco)."""
+    contagem = {}
+    for a in arquivos or []:
+        chave = numero_da_pergunta(a.get("enunciado")) or a.get("ordem") or "?"
+        contagem[chave] = contagem.get(chave, 0) + 1
+    return ", ".join(f"{k}: {n}" for k, n in sorted(contagem.items(), key=lambda kv: (str(kv[0]) == "?", str(kv[0]))))
+
+
+def respostas_do_item(itens):
+    """Os data-resposta (só dígitos) dos clicáveis do item do candidato, na ordem, sem repetir."""
+    vistos = []
+    for item in itens or []:
+        for a in item.get("atributos") or []:
+            if len(a) >= 2 and str(a[0]).lower() == "data-resposta" and RESPOSTA.match(str(a[1]).strip()):
+                if str(a[1]).strip() not in vistos:
+                    vistos.append(str(a[1]).strip())
+    return vistos
+
+
+def sondar_visao_de_respostas(portal, rotulo, resposta, testar, acessos, voltar):
+    """Abre /empresa/questionarios/imprimir/<id>| (só leitura) e analisa; testa o acesso sem cookies e com sessão."""
+    d = portal.driver
+    url = link_das_respostas(resposta)
+    sem = testar(url)
+    sessao = get_com_sessao(d, url)
+    linhas = [
+        mascarar(
+            f"{rotulo}: visão de respostas {padrao_do_link(url)} · GET sem cookies: "
+            f"{sem.get('status') or sem.get('erro') or '?'} {sem.get('tipo') or ''}".rstrip()
+            + (f" → {sem['destino']}" if sem.get("destino") else "")
+            + f" · GET com sessão: {sessao.get('status', sessao.get('erro', '?'))} {_tipo_de_conteudo(sessao.get('tipo'))}"
+            + f"; login {'sim' if sessao.get('login') else 'não'}"
+        )
+    ]
+    d.get(url)
+    time.sleep(ESPERA_DA_PAGINA)
+    novas, _ = analisar_conteudo(portal, f"{rotulo} › visão de respostas", testar, acessos)
+    linhas += novas
+    linhas.append(linha_das_ancoras(f"{rotulo} › visão de respostas", d.execute_script(JS_ANCORAS)))
+    sub, _ = listar_clicaveis(d, f"{rotulo} › visão de respostas", "body", so_relevantes=True, maximo=15)
+    linhas += sub
+    voltar()
+    return linhas
+
+
 def sondar_pela_vaga(portal, ident, codigo_vaga, codigos_dos_candidatos, testar=testar_sem_cookies):
     """
     Alternativa pela vaga: nas candidaturas (?m=0), os clicáveis de
@@ -1418,7 +1340,11 @@ def sondar_pela_vaga(portal, ident, codigo_vaga, codigos_dos_candidatos, testar=
             sub = f"{rotulo} candidato {n}"
             itens_linhas, itens = listar_clicaveis(d, sub, f"pessoa:{cod}", codigo_vaga, maximo=30)
             linhas += itens_linhas
+            respostas = respostas_do_item(itens)
+            linhas.append(mascarar(f"{sub}: data-resposta distintos no item: {len(respostas)}"))
             linhas += explorar_respostas(portal, sub, itens, testar, acessos, voltar, maximo=2)
+            if respostas:
+                linhas += sondar_visao_de_respostas(portal, sub, respostas[0], testar, acessos, voltar)
         linhas += linhas_dos_acessos(portal, rotulo, acessos, testar, abrir=1)
     except Exception as erro:
         linhas.append(f"{rotulo}: a sondagem parou ({resumo_do_erro(erro)}).")
@@ -1456,111 +1382,41 @@ def sondar(portal, codigo, limite, registrar):
     ]
 
 
-# ── Captura (modo normal com --anexos) ──────────────────────────────────────
+# ── Respostas do questionário (modo normal com --anexos) ────────────────────
+
+RESPOSTA = re.compile(r"^[0-9]{1,20}$")
 
 
-def ordenar_para_capturar(candidatos, ja_capturados):
-    """Os que não têm anexo capturado há pouco vêm primeiro (a fila anda entre execuções)."""
-    ja = set(ja_capturados or [])
-    itens = list((candidatos or {}).items())
-    return [c for c in itens if c[0] not in ja] + [c for c in itens if c[0] in ja]
+def link_das_respostas(resposta):
+    """A visão de respostas do questionário (com os anexos) da resposta; None fora do formato."""
+    r = str(resposta or "").strip()
+    return f"{URL_BASE}/empresa/questionarios/imprimir/{r}|" if RESPOSTA.match(r) else None
 
 
-def capturar_anexos(portal, codigo, candidatos, ja_capturados, registrar, prazo, testar=testar_sem_cookies):
+def gravar_respostas(config, sync, codigo, respostas, chamar, registrar):
     """
-    Lê a aba Questionários de cada candidato com link de detalhe, até o
-    `prazo` (monotonic). Devolve {código do candidato: [linhas]} só com quem
-    tem algum anexo. No log, só contagens. Nunca levanta. Volta para Vagas Anunciadas.
-    """
-    capturados = {}
-    lidos = sem_aba = falhas = sem_numero = 0
-    tipos = {"ARQUIVO": 0, "QUESTIONARIO": 0}
-    cache = {}
-
-    def classificar(href):
-        u = urlsplit(href)
-        chave = (u.hostname, u.path.split("/")[1] if "/" in u.path else "")
-        if chave not in cache:
-            cache[chave] = testar(href)
-        return classificar_link(href, cache[chave])
-
-    fila = ordenar_para_capturar(candidatos, ja_capturados)
-    esgotou = False
-    for cod, detalhe in fila:
-        if time.monotonic() >= prazo:
-            esgotou = True
-            break
-        try:
-            _abas, aba, _apareceu = abrir_questionario_do_candidato(portal, detalhe)
-            if not aba.get("achou"):
-                sem_aba += 1
-                continue
-            leitura = ler_questionario(portal.driver)
-            leitura["aba"] = aba.get("alvo") or (aba.get("href") if str(aba.get("href", "")).startswith("#") else "")
-            linhas, sem = anexos_do_candidato(leitura, detalhe, classificar)
-            lidos += 1
-            sem_numero += sem
-            if linhas:
-                capturados[cod] = linhas
-                for linha in linhas:
-                    tipos[linha["tipo"]] += 1
-        except Exception:
-            falhas += 1
-    try:
-        portal.abrir_vagas_anunciadas()
-    except Exception:
-        pass
-    registrar(
-        f"Vaga {codigo}: anexos lidos de {lidos} de {len(fila)} candidato(s) com link · "
-        f"{len(capturados)} com anexo · links: {tipos['ARQUIVO']} do arquivo, {tipos['QUESTIONARIO']} da página"
-        + (f" · {sem_aba} sem aba Questionários" if sem_aba else "")
-        + (f" · {sem_numero} arquivo(s) sem número de pergunta" if sem_numero else "")
-        + (f" · {falhas} falha(s)" if falhas else "")
-        + (" · tempo esgotado (o resto na próxima execução)" if esgotou else "")
-        + "."
-    )
-    return capturados
-
-
-def anexos_capturados(config, codigo, chamar):
-    """
-    Códigos dos candidatos da vaga com anexo capturado há menos de
-    DIAS_DE_VALIDADE dias. None se o banco não tem a migration (404).
+    Grava os identificadores das respostas da vaga ({código do candidato:
+    resposta}) por gravar_respostas_empregare. Falha não derruba a vaga: só
+    avisa. Devolve quantos o banco gravou. No log, só contagens.
     """
     from monitora import supabase_rpc
 
-    try:
-        r = chamar(config, "anexos_capturados_empregare", {"p_vaga": codigo, "p_dias": DIAS_DE_VALIDADE})
-    except supabase_rpc.ErroDoSupabase as erro:
-        if getattr(erro, "status", None) == 404:
-            return None
-        raise
-    return [str(c) for c in (r or {}).get("candidatos") or []]
-
-
-def gravar_anexos(config, sync, codigo, capturados, chamar, registrar):
-    """
-    Grava os anexos da vaga (gravar_anexos_empregare, em lotes). Falha não
-    derruba a vaga: só avisa. Devolve quantos o banco gravou.
-    """
-    from monitora import supabase_rpc
-
-    itens = [dict(linha, codigo=cod) for cod, linhas in sorted((capturados or {}).items()) for linha in linhas]
+    itens = [{"codigo": c, "resposta": r} for c, r in sorted((respostas or {}).items()) if RESPOSTA.match(str(r))]
     if not itens:
         return 0
-    gravados = 0
+    gravadas = 0
     try:
         for lote in em_lotes(itens):
-            r = chamar(config, "gravar_anexos_empregare", {"p_sync": sync, "p_vaga": codigo, "p_anexos": lote})
-            gravados += int((r or {}).get("gravados") or 0)
+            r = chamar(config, "gravar_respostas_empregare", {"p_sync": sync, "p_vaga": codigo, "p_respostas": lote})
+            gravadas += int((r or {}).get("gravadas") or 0)
     except supabase_rpc.ErroDoSupabase as erro:
         if getattr(erro, "status", None) == 404:
-            registrar("O banco ainda não guarda os anexos (falta a migration 20261008160000).")
+            registrar("O banco ainda não guarda as respostas do questionário (falta a migration 20261008160000).")
         else:
-            registrar(f"Vaga {codigo}: o banco recusou os anexos ({erro}).")
-        return gravados
+            registrar(f"Vaga {codigo}: o banco recusou as respostas do questionário ({erro}).")
+        return gravadas
     except Exception as erro:
-        registrar(f"Vaga {codigo}: a gravação dos anexos falhou ({resumo_do_erro(erro)}).")
-        return gravados
-    registrar(f"Vaga {codigo}: {gravados} link(s) de anexo gravado(s).")
-    return gravados
+        registrar(f"Vaga {codigo}: a gravação das respostas do questionário falhou ({resumo_do_erro(erro)}).")
+        return gravadas
+    registrar(f"Vaga {codigo}: {gravadas} resposta(s) de questionário gravada(s).")
+    return gravadas

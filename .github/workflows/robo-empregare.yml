@@ -14,8 +14,8 @@ name: Robô da Empregare
 # Modo "sondar" (só pelo Run workflow): só leitura, abre 1 a 3 candidatos da
 # vaga informada em "vagas" (limite = candidatos) e escreve no log só a
 # estrutura da aba Questionários, com os links mascarados. Não usa o Supabase.
-# "anexos" (opcional até validarmos): no modo normal/forcar, guarda também o
-# link de cada anexo do questionário (scripts/robo-empregare/anexos_empregare.py).
+# "anexos" (opcional até validarmos): no modo normal/forcar, guarda também a
+# resposta do questionário de cada candidato (scripts/robo-empregare/anexos_empregare.py).
 # Ao fim de uma carga normal ou forçada, o passo "Pré-classificar" recalcula a
 # pré-classificação da Avaliação documental dos editais carregados
 # (scripts/pre_classificacao/; ver pre-classificacao.yml).
@@ -60,7 +60,7 @@ on:
         required: false
         default: "60"
       anexos:
-        description: "Também guarda o link de cada anexo do questionário (modo normal/forcar; opcional até validarmos)"
+        description: "Também guarda a resposta do questionário de cada candidato, que abre as respostas e os anexos na ficha (modo normal/forcar; opcional até validarmos)"
         type: boolean
         required: false
         default: false

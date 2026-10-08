@@ -1,8 +1,8 @@
 """
-Testes dos anexos do questionário da Empregare (scripts/robo-empregare/anexos_empregare.py):
+Testes das respostas do questionário da Empregare (scripts/robo-empregare/anexos_empregare.py):
 o modo sondar só escreve estrutura mascarada (nada de nome, CPF, e-mail, nome de
-arquivo nem URL completa), a captura grava um link por pergunta e, sem link de
-arquivo utilizável, fica a página do questionário (e a ficha mantém o fallback).
+arquivo nem URL completa), não clica no que pode mudar algo e abre a visão de
+respostas pelo data-resposta; a captura lê o data-resposta da lista e grava por candidato.
 Dados e links fictícios; nada fala com a Empregare nem com o Supabase.
 
     python -m pytest tests/python/test_anexos_empregare.py
@@ -204,6 +204,19 @@ CLICAVEIS = [
         "bloco_da_vaga": False,
     },
 ]
+RESPOSTA_DO_CANDIDATO = {
+    "i": 1,
+    "tag": "a",
+    "visivel": True,
+    "texto": "",
+    "titulo": "",
+    "href": "javascript:",
+    "abs": "",
+    "onclick": "",
+    "icone": "fa fa-file-text-o",
+    "atributos": [["data-resposta", "7654321", ""], ["data-modo-resposta", "1", ""]],
+    "bloco_da_vaga": False,
+}
 IMPRIMIR_DO_CANDIDATO = {
     "i": 0,
     "tag": "a",
@@ -327,33 +340,6 @@ class Sondagem(unittest.TestCase):
     def test_classes_com_nome_e_digitos_nao_passam(self):
         self.assertEqual(anexos._palavras(["pergunta", "x77777777", "Maria Souza"]), ["pergunta"])
 
-    def test_aba_e_abas_da_pagina(self):
-        linhas = anexos.linhas_da_aba(
-            "Candidato 1/1",
-            ["Currículo", "Questionários (3)", "Maria Ficticia", "Histórico"],
-            {
-                "achou": True,
-                "total": 2,
-                "tag": "a",
-                "href": "#questionarios",
-                "alvo": "#tab-q",
-                "id": "aba-77777777",
-                "classes": "nav-link active Maria77",
-                "onclick": "abrirAba('TKfict123')",
-            },
-            True,
-        )
-        texto = "\n".join(linhas)
-        self.assertIn("abas da página 4 [Currículo, Questionários (3), outra, Histórico]", texto)
-        self.assertIn("href #questionarios, alvo #tab-q", texto)
-        self.assertIn("classes nav-link active", texto)
-        self.assertIn("onclick abrirAba", texto)
-        self.assertIn("conteúdo apareceu: sim", texto)
-        _sem_proibidos(self, texto)
-        self.assertNotIn("77777777", texto)
-        nao = anexos.linhas_da_aba("C", [], {"achou": False}, False)
-        self.assertIn("NÃO achei a aba Questionários", nao[1])
-
     def test_sondar_candidato_com_navegador_falso_nao_vaza_nada(self):
         visitadas = []
         abas_clicadas = []
@@ -395,6 +381,8 @@ class Sondagem(unittest.TestCase):
                     return True
                 if js == anexos.JS_FECHAR_MODAL:
                     return 1
+                if js == anexos.JS_ANCORAS:
+                    return {"total": 3, "padroes": [["pergunta-<n>", 3]]}
                 if "document.contentType" in js:
                     return {"tipo": "application/pdf", "caminho": ARQUIVO_PUBLICO, "login": False, "pdf": True}
                 raise AssertionError("JS inesperado")
@@ -451,6 +439,7 @@ class Sondagem(unittest.TestCase):
     def test_sondar_pela_vaga_abre_o_imprimir_do_candidato(self):
         visitadas = []
         raizes = []
+        clicados = []
 
         class DriverFalso:
             class switch_to:  # noqa: N801
@@ -470,7 +459,14 @@ class Sondagem(unittest.TestCase):
                     raizes.append(args[0])
                     if args[0] == "body":
                         return {"raiz": True, "itens": [dict(CLICAVEIS[1], i=0)]}
-                    return {"raiz": True, "itens": [IMPRIMIR_DO_CANDIDATO]}
+                    return {"raiz": True, "itens": [IMPRIMIR_DO_CANDIDATO, RESPOSTA_DO_CANDIDATO]}
+                if js == anexos.JS_CLICAR_CLICAVEL:
+                    clicados.append(args[0])
+                    return True
+                if js == anexos.JS_FECHAR_MODAL:
+                    return 1
+                if js == anexos.JS_ANCORAS:
+                    return {"total": 14, "padroes": [["pergunta-<n>", 12], ["Maria77777", 1], ["modal", 1]]}
                 if js == anexos.JS_LER_QUESTIONARIO:
                     return _leitura()
                 if js == anexos.JS_ATRIBUTOS_DE_ARQUIVO:
@@ -507,8 +503,18 @@ class Sondagem(unittest.TestCase):
                 PortalFalso(), "Vfict|", "179698", ["7000001", "x y"], testar=lambda _h: {"status": 302}
             )
         texto = "\n".join(linhas)
-        self.assertEqual(raizes, ["body", "pessoa:7000001"])
+        self.assertEqual(raizes[:2], ["body", "pessoa:7000001"])
         self.assertIn(IMPRIMIR, visitadas)
+        # O clique no a[data-resposta] (modal) e a visão de respostas pelo data-resposta.
+        self.assertEqual(clicados, [1])
+        self.assertIn(nav.URL_BASE + "/empresa/questionarios/imprimir/7654321|", visitadas)
+        self.assertIn("data-resposta distintos no item: 1", texto)
+        self.assertIn(
+            "visão de respostas https://corporate.empregare.com/empresa/questionarios/imprimir/<MASCARADO>", texto
+        )
+        self.assertIn("âncoras: 14 ids; padrões: pergunta-<n> (12), <MASCARADO> (1), modal (1)", texto)
+        self.assertIn("anexos por pergunta/bloco: 4: 1, 5: 1", texto)
+        self.assertNotIn("7654321", texto)
         self.assertIn("Vaga 179698 (candidaturas) página: clicáveis 1, relevantes 1", texto)
         self.assertIn("nenhum clicável de questionário/respostas", texto)
         self.assertIn("Vaga 179698 (candidaturas) candidato 1 › clicável 0: perguntas por classe 6", texto)
@@ -599,119 +605,76 @@ class SondagemDasAbas(unittest.TestCase):
         self.assertEqual(anexos.get_com_sessao(object(), ARQUIVO_PUBLICO), {"erro": "outra origem"})
 
 
-class CapturaPorPergunta(unittest.TestCase):
-    def test_arquivo_publico_vira_link_do_arquivo_e_assinado_vira_pagina(self):
-        def classificar(href):
-            return anexos.classificar_link(href, {"status": 200})
+class RespostasDoQuestionario(unittest.TestCase):
+    LISTA = """
+    <div class="curriculo-append"><div class="list-group candidatura-group" id="curriculo-pagina-1">
+      <div class="curriculo-list-item"><ul><li data-pessoa-id="7000001">Pessoa Fictícia Um</li></ul>
+        <a class="link-curriculo" href="/empresa/curriculo/detalhes?tokenCandidato=TKfict123">ver</a>
+        <a href="javascript:" data-resposta="7654321" data-modo-resposta="1"></a>
+        <a href="javascript:" data-resposta="7654321" data-modo-resposta="2"></a></div>
+      <div class="curriculo-list-item"><ul><li data-pessoa-id="7000002">Pessoa Fictícia Dois</li></ul>
+        <a href="javascript:" data-resposta="111" ></a><a href="javascript:" data-resposta="222"></a></div>
+      <div class="curriculo-list-item"><ul><li data-pessoa-id="7000003">Sem resposta</li></ul>
+        <a href="javascript:" data-resposta="12a"></a></div>
+    </div></div>
+    """
 
-        linhas, sem_numero = anexos.anexos_do_candidato(dict(_leitura(), aba="#questionarios"), DETALHE, classificar)
-        self.assertEqual(sem_numero, 0)
-        self.assertEqual([(l["pergunta"], l["tipo"]) for l in linhas], [(4, "ARQUIVO"), (5, "QUESTIONARIO")])
-        self.assertEqual(linhas[0]["link"], ARQUIVO_PUBLICO)
-        self.assertEqual(linhas[0]["enunciado"], "Pergunta 4 - Anexe o documento de identificação com foto")
-        # Assinado (expira): a visão imprimir com a âncora da aba (o bloco não tem id).
-        self.assertEqual(linhas[1]["link"], IMPRIMIR + "#questionarios")
+    def test_le_o_data_resposta_de_cada_candidato(self):
+        respostas, ambiguos = nav.ler_respostas_do_html(self.LISTA)
+        self.assertEqual(respostas, {"7000001": "7654321", "7000002": "111"})
+        self.assertEqual(ambiguos, 1)
 
-    def test_arquivo_que_exige_sessao_vira_pagina_com_ancora_da_pergunta(self):
-        leitura = dict(_leitura(), imprimir=[])
-        linhas, _ = anexos.anexos_do_candidato(
-            leitura, DETALHE, lambda href: anexos.classificar_link(href, {"status": 401})
-        )
-        self.assertEqual(linhas[0], {**linhas[0], "tipo": "QUESTIONARIO", "link": DETALHE + "#pergunta-4"})
-        for linha in linhas:
-            self.assertTrue(anexos.LINK_DA_PAGINA.match(linha["link"]))
-
-    def test_sem_numero_fica_de_fora_e_vale_o_primeiro_da_pergunta(self):
-        leitura = {
-            "arquivos": [
-                {"href": ARQUIVO_PUBLICO, "enunciado": "Anexe o diploma", "ordem": None},
-                {"href": ARQUIVO_PUBLICO + "?2", "enunciado": "Pergunta 7 - Anexe", "ordem": None},
-                {"href": ARQUIVO_PUBLICO + "?3", "enunciado": "7) Anexe outro", "ordem": None},
-                {"href": "javascript:void(0)", "enunciado": "Pergunta 8 - Anexe", "ordem": None},
-            ]
-        }
-        linhas, sem_numero = anexos.anexos_do_candidato(
-            leitura, None, lambda href: anexos.classificar_link(href, {"status": 200})
-        )
-        self.assertEqual(sem_numero, 1)
-        self.assertEqual([(l["pergunta"], l["link"]) for l in linhas], [(7, ARQUIVO_PUBLICO + "?2")])
-
-    def test_fila_poe_os_ja_capturados_no_fim(self):
+    def test_link_das_respostas(self):
         self.assertEqual(
-            [c for c, _ in anexos.ordenar_para_capturar({"1": "a", "2": "b", "3": "c"}, ["1"])], ["2", "3", "1"]
+            anexos.link_das_respostas("7654321"), nav.URL_BASE + "/empresa/questionarios/imprimir/7654321|"
         )
+        self.assertIsNone(anexos.link_das_respostas("12a"))
+        self.assertIsNone(anexos.link_das_respostas(""))
 
-    def test_capturar_anexos_conta_sem_vazar_e_volta_para_vagas(self):
-        logs = []
-
-        class PortalFalso:
-            voltou = 0
-            driver = object()
-
-            def abrir_vagas_anunciadas(self):
-                PortalFalso.voltou += 1
-
-        def abrir(_portal, detalhe):
-            if "SEMABA" in detalhe:
-                return [], {"achou": False}, False
-            return [], {"achou": True, "alvo": "#questionarios"}, True
-
-        with (
-            mock.patch.object(anexos, "abrir_questionario_do_candidato", abrir),
-            mock.patch.object(anexos, "ler_questionario", lambda _d: _leitura()),
-        ):
-            capturados = anexos.capturar_anexos(
-                PortalFalso(),
-                "177979",
-                {"7000001": DETALHE, "7000002": DETALHE + "SEMABA"},
-                [],
-                logs.append,
-                prazo=float("inf"),
-                testar=lambda _h: {"status": 200},
-            )
-        self.assertEqual(list(capturados), ["7000001"])
-        self.assertEqual(PortalFalso.voltou, 1)
-        self.assertEqual(
-            logs,
-            [
-                "Vaga 177979: anexos lidos de 1 de 2 candidato(s) com link · 1 com anexo · links: 1 do arquivo, "
-                "1 da página · 1 sem aba Questionários."
-            ],
-        )
-
-    def test_grava_por_pergunta_em_lotes_e_404_so_avisa(self):
+    def test_grava_em_lotes_so_contagens_e_404_so_avisa(self):
         chamadas = []
 
         def chamar(_config, funcao, corpo):
             chamadas.append((funcao, corpo))
-            return {"gravados": len(corpo["p_anexos"])}
+            return {"gravadas": len(corpo["p_respostas"])}
 
         logs = []
-        capturados = {
-            "7000001": [{"pergunta": 4, "enunciado": "Anexe", "tipo": "ARQUIVO", "link": ARQUIVO_PUBLICO}],
-            "7000002": [
-                {"pergunta": 4, "enunciado": None, "tipo": "QUESTIONARIO", "link": IMPRIMIR},
-                {"pergunta": 5, "enunciado": None, "tipo": "QUESTIONARIO", "link": IMPRIMIR},
-            ],
-        }
-        self.assertEqual(anexos.gravar_anexos({}, "gh-x", "177979", capturados, chamar, logs.append), 3)
-        funcao, corpo = chamadas[0]
-        self.assertEqual(funcao, "gravar_anexos_empregare")
+        respostas = {"7000002": "111", "7000001": "7654321", "7000009": "x"}
+        self.assertEqual(anexos.gravar_respostas({}, "gh-x", "177979", respostas, chamar, logs.append), 2)
+        self.assertEqual(chamadas[0][0], "gravar_respostas_empregare")
         self.assertEqual(
-            [(i["codigo"], i["pergunta"]) for i in corpo["p_anexos"]], [("7000001", 4), ("7000002", 4), ("7000002", 5)]
+            chamadas[0][1]["p_respostas"],
+            [{"codigo": "7000001", "resposta": "7654321"}, {"codigo": "7000002", "resposta": "111"}],
         )
-        self.assertEqual(logs, ["Vaga 177979: 3 link(s) de anexo gravado(s)."])
+        self.assertEqual(logs, ["Vaga 177979: 2 resposta(s) de questionário gravada(s)."])
 
         def sem_migration(_config, funcao, _corpo):
             raise supabase_rpc.ErroDoSupabase(funcao, 404, "not found")
 
         logs.clear()
-        self.assertEqual(anexos.gravar_anexos({}, "gh-x", "177979", capturados, sem_migration, logs.append), 0)
+        self.assertEqual(anexos.gravar_respostas({}, "gh-x", "177979", respostas, sem_migration, logs.append), 0)
         self.assertIn("falta a migration 20261008160000", logs[0])
-        self.assertEqual(anexos.gravar_anexos({}, "gh-x", "177979", {}, chamar, logs.append), 0)
+        self.assertEqual(anexos.gravar_respostas({}, "gh-x", "177979", {}, chamar, logs.append), 0)
+
+    def test_portal_junta_as_respostas_da_lista(self):
+        class DriverFalso:
+            page_source = RespostasDoQuestionario.LISTA
+
+            def execute_script(self, js, *args):
+                return 3 if js == nav.JS_CONTAR_LINKS else None
+
+        antigos = (nav.ESPERA_POR_MAIS, nav.INTERVALO_DA_LISTA)
+        nav.ESPERA_POR_MAIS, nav.INTERVALO_DA_LISTA = 0.01, 0.01
+        try:
+            portal = nav.PortalEmpregare("pasta-falsa", lambda _m: None)
+            portal.driver = DriverFalso()
+            portal._carregar_e_ler_pagina(prazo=10**12)
+        finally:
+            nav.ESPERA_POR_MAIS, nav.INTERVALO_DA_LISTA = antigos
+        self.assertEqual(portal.respostas, {"7000001": "7654321", "7000002": "111"})
 
 
-class RoboComAnexos(unittest.TestCase):
+class RoboComRespostas(unittest.TestCase):
     def setUp(self):
         sys.modules.pop("robo_empregare", None)
         import robo_empregare
@@ -728,64 +691,31 @@ class RoboComAnexos(unittest.TestCase):
         self.assertFalse(args.anexos)
         self.assertTrue(self.robo.argumentos(["--anexos"]).anexos)
 
-    def test_banco_sem_migration_desliga_a_captura(self):
-        def chamar(_config, funcao, _corpo):
-            raise supabase_rpc.ErroDoSupabase(funcao, 404, "not found")
-
-        saida = []
-        with mock.patch.object(self.robo, "registrar", saida.append):
-            captura = self.robo.CapturaDeAnexos({}, chamar)
-            enderecos = {"vaga_interno": "V|", "candidatos": {"1": DETALHE}}
-            captura.da_vaga(object(), "177979", enderecos)
-        self.assertTrue(captura.desligada)
-        self.assertNotIn("anexos", enderecos)
-        self.assertIn("falta a migration 20261008160000", saida[0])
-
-    def test_captura_poe_os_anexos_nos_enderecos(self):
-        def chamar(_config, funcao, corpo):
-            self.assertEqual(funcao, "anexos_capturados_empregare")
-            return {"candidatos": ["2"]}
-
-        recebido = {}
-
-        def capturar(_portal, codigo, candidatos, ja, _registrar, prazo):
-            recebido.update(codigo=codigo, ja=ja, candidatos=candidatos)
-            return {"1": [{"pergunta": 4, "tipo": "ARQUIVO", "link": ARQUIVO_PUBLICO}]}
-
-        enderecos = {"vaga_interno": "V|", "candidatos": {"1": DETALHE, "2": DETALHE}}
-        with mock.patch.object(self.robo.anexos, "capturar_anexos", capturar):
-            self.robo.CapturaDeAnexos({}, chamar).da_vaga(object(), "177979", enderecos)
-        self.assertEqual(recebido["ja"], ["2"])
-        self.assertEqual(list(enderecos["anexos"]), ["1"])
-
-    def test_gravar_vaga_grava_anexos_depois_de_fechar_e_sem_anexos_nao_chama(self):
+    def test_gravar_vaga_grava_respostas_depois_de_fechar_e_sem_elas_nao_chama(self):
         chamadas = []
 
         def chamar(_config, funcao, corpo):
             chamadas.append(funcao)
             if funcao == "fechar_vaga_empregare":
                 return {"situacao": "GRAVADA", "ativos": 1, "desativadas": 0}
-            if funcao == "gravar_anexos_empregare":
-                return {"gravados": 1}
+            if funcao == "gravar_respostas_empregare":
+                return {"gravadas": 1}
             return {"situacao": "EM_CARGA"}
 
         lido = {"linhas": [{"codigo": "1", "chave": "cod:1"}], "colunas": ["Nome"], "sem_chave": 0, "repetidas": 0}
-        enderecos = {
-            "vaga_interno": "Vfict|",
-            "candidatos": {"1": DETALHE},
-            "anexos": {"1": [{"pergunta": 4, "enunciado": None, "tipo": "ARQUIVO", "link": ARQUIVO_PUBLICO}]},
-        }
+        enderecos = {"vaga_interno": "Vfict|", "candidatos": {"1": DETALHE}, "respostas": {"1": "7654321"}}
         saida = []
         with (
             mock.patch.object(self.robo, "ler_planilha", lambda _c, _v: lido),
             mock.patch.object(self.robo, "registrar", saida.append),
         ):
             self.robo.gravar_vaga({}, "gh-x", "177979", "x.xlsx", chamar, enderecos=enderecos)
-            self.assertEqual(chamadas, ["gravar_lote_empregare", "fechar_vaga_empregare", "gravar_anexos_empregare"])
+            self.assertEqual(chamadas, ["gravar_lote_empregare", "fechar_vaga_empregare", "gravar_respostas_empregare"])
             chamadas.clear()
-            self.robo.gravar_vaga({}, "gh-x", "177979", "x.xlsx", chamar, enderecos=dict(enderecos, anexos={}))
+            self.robo.gravar_vaga({}, "gh-x", "177979", "x.xlsx", chamar, enderecos=dict(enderecos, respostas={}))
             self.assertEqual(chamadas, ["gravar_lote_empregare", "fechar_vaga_empregare"])
         _sem_proibidos(self, "\n".join(saida))
+        self.assertNotIn("7654321", "\n".join(saida))
 
 
 if __name__ == "__main__":

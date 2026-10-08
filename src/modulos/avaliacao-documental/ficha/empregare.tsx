@@ -81,8 +81,8 @@ export function LinkDaEmpregare({
 }
 
 /**
- * O anexo declarado: "Ver documento" com o link do arquivo capturado pelo
- * robô; senão "Abrir na Empregare" e a dica de onde achar o arquivo
+ * O anexo declarado: "Ver respostas e anexos na Empregare" com a visão de
+ * respostas do questionário; senão "Abrir na Empregare" e a dica de onde achar o arquivo
  * (anexo-na-empregare.ts monta o endereço, o rótulo e a dica).
  */
 export function LinkDoAnexo({

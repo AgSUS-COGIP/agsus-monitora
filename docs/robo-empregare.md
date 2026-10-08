@@ -92,12 +92,15 @@ links de detalhe, `#curriculo-pagina-1` e iframes, e as abas de etapa (só nomes
 a ativa). Sem nenhum link lido, mostra ainda o tamanho do `page_source` e se ele contém
 `curriculo-list-item` e `link-curriculo`.
 
-### Anexos do questionário (migration `20261008160000_anexos_da_empregare.sql`)
+### Respostas do questionário e anexos (migration `20261008160000_respostas_do_questionario_na_empregare.sql`)
 
 A exportação não traz o link dos anexos (só "Sim"/"--") e o link de detalhes abre o currículo, não
-o documento. Os arquivos ficam na página de detalhes do candidato, aba **Questionários** (ou na
-visão "imprimir", `/empresa/questionarios/imprimir/<id>|`). O formato dessa aba ainda não foi
-conferido; por isso há dois passos (`scripts/robo-empregare/anexos_empregare.py`):
+o documento. As sondagens de 08/10/2026 mostraram que o arquivo fica num storage com assinatura que
+**expira** (`storage.empregare.com/anexocurriculo/…?…&se=…&sig=…`): o link do arquivo não pode ser
+guardado. O estável é o identificador da **resposta** do candidato ao questionário da vaga — o
+`data-resposta` do item dele na lista de candidaturas —, que abre a visão de respostas com os
+anexos, `/empresa/questionarios/imprimir/<id>|` (exige o login da Empregare, que os analistas
+têm). Há dois passos (`scripts/robo-empregare/anexos_empregare.py`):
 
 1. **Sondar** (modo `sondar`, só leitura, sem Supabase): com `vagas` = **um** código e `limite` =
    **1 a 3** candidatos (acima de 3 vira 3), o robô busca a vaga (só lê o link "Processo
@@ -111,7 +114,7 @@ conferido; por isso há dois passos (`scripts/robo-empregare/anexos_empregare.py
    nos clicáveis de questionário/respostas/formulário/imprimir que não sejam perigosos (nada de
    reprovar, mover, enviar, salvar…), abre o link da mesma origem (só leitura) ou o modal e analisa
    como a aba. Depois, **pela vaga**: nas candidaturas (`?m=0`), os clicáveis de questionário/
-   imprimir da página e do item de cada candidato sondado, abrindo-os do mesmo jeito. Cada link de
+   imprimir da página e do item de cada candidato sondado, abrindo-os do mesmo jeito; com o `data-resposta` do item, abre a visão de respostas (`/empresa/questionarios/imprimir/<id>|`), testa o acesso sem cookies e com sessão e conta as âncoras (padrões de id, dígitos como `<n>`) e os anexos por pergunta. Cada link de
    arquivo é testado com **GET de 1 byte** (`Range: bytes=0-0`) sem cookies e com a sessão do
    navegador (status, content-type, se redirecionou para o login) e aberto no navegador (caminho
    final mascarado, tipo, visualizador de PDF, download só pela extensão). O log traz **só a estrutura**: as abas, o painel,
@@ -123,28 +126,24 @@ conferido; por isso há dois passos (`scripts/robo-empregare/anexos_empregare.py
    desses testes. Nunca nome, CPF,
    e-mail, nome de arquivo nem URL completa.
 2. **Capturar** (`anexos` marcado no Run workflow, modo `normal`/`forcar`; opcional até
-   validarmos): depois dos links dos candidatos, para cada candidato com link de detalhe, lê a aba
-   Questionários e guarda por pergunta de anexo **um** link em `TB_EMPREGARE_ANEXO`
-   (`gravar_anexos_empregare`, depois de fechar a vaga): o do arquivo (`ARQUIVO`) se for público
-   e sem validade; se exigir sessão ou expirar, o da página do questionário (`QUESTIONARIO`: a
-   visão imprimir ou a página de detalhes, com a âncora da pergunta ou da aba). Até 10 min por vaga
-   e 30 min por execução; quem já tem anexo capturado há menos de 7 dias vai para o fim da fila
-   (`anexos_capturados_empregare`), então as execuções seguintes completam. O candidato relido
-   fica só com as perguntas lidas agora. No log, só contagens (`anexos lidos de N…`, `N link(s)
-de anexo gravado(s)`). Banco sem a migration: avisa e segue sem anexos.
+   validarmos): a lista de candidaturas que o robô já lê para os links de detalhe traz o
+   `data-resposta` de cada candidato (`ler_respostas_do_html` em `navegador_empregare.py`; item com
+   mais de um identificador fica com o primeiro). Depois de fechar a vaga, o robô grava em
+   `TB_EMPREGARE_CANDIDATO.CO_RESPOSTA_QUESTIONARIO` (`gravar_respostas_empregare`, só candidatos da
+   vaga, só dígitos). Não abre página nenhuma a mais. No log, só contagens (`N resposta(s) de
+questionário gravada(s)`). Banco sem a migration: avisa e segue.
 
-Depois do log do `sondar`, ajuste em `anexos_empregare.py` os `JS_…` (aba, painel, links de
-arquivo) e, se o link de arquivo com sessão servir para quem está logado na Empregare, troque
-`ARQUIVO_COM_SESSAO_VIRA_PAGINA`. A pergunta é o número do "Pergunta N" do enunciado ou a ordem
-do bloco na aba; confira no log se bate com o "Pergunta N" das colunas do Excel.
+Confira no log do `sondar` (linha "visão de respostas") se `/empresa/questionarios/imprimir/<id>|`
+abre com o `data-resposta` e se a página tem âncora por pergunta; se tiver, a âncora entra no
+link (a ficha já aceita `#…`).
 
-**Na ficha**: `obter_ficha_analise` devolve `empregare.anexos` (`pergunta`, `enunciado`, `tipo`,
-`link`, `capturado_em`; dado restrito, só para quem pode ver a ficha). A regra do botão está em
-`src/lib/avaliacao-documental/anexo-na-empregare.ts`: com o link do arquivo, **Ver documento**; com a
-página do questionário ou sem captura, **Abrir na Empregare** e a dica "aba Questionários ›
-Pergunta N" (o candidato; sem ele, a vaga). A ficha casa o anexo pela pergunta da coluna e, sem
-número, pelo enunciado. A ficha (`ficha.jsx` e `ficha/empregare.tsx`) só chama `anexosDaEmpregare`,
-`enderecoDoAnexo` e `apresentacaoDoAnexo`.
+**Na ficha**: `obter_ficha_analise` devolve em `empregare` o `resposta_questionario`, o
+`resposta_capturada_em` e o `link_respostas` (dado restrito, só para quem pode ver a ficha). A regra
+do botão está em `src/lib/avaliacao-documental/anexo-na-empregare.ts`: com o link das respostas,
+**Ver respostas e anexos na Empregare** e a dica da pergunta ("Pergunta 4 — Anexe o documento…");
+sem ele, **Abrir na Empregare** e a dica de antes (o candidato; sem ele, a vaga). A ficha
+(`ficha.jsx` e `ficha/empregare.tsx`) só chama `linkDasRespostas`, `enderecoDoAnexo` e
+`apresentacaoDoAnexo`.
 
 ## Segredos a cadastrar (uma vez)
 
@@ -189,7 +188,7 @@ pré-classificação e as conferências têm a mesma gaveta, com os campos que a
 | `editais` | opcional: números separados por vírgula                                                                                                                                                                                                                                                                                                      |
 | `vagas`   | opcional: códigos separados por vírgula                                                                                                                                                                                                                                                                                                      |
 | `limite`  | máximo de vagas (padrão 60); no `sondar`, candidatos (1 a 3)                                                                                                                                                                                                                                                                                 |
-| `anexos`  | também guarda o link de cada anexo do questionário (modo `normal`/`forcar`; opcional até validarmos)                                                                                                                                                                                                                                         |
+| `anexos`  | também guarda a resposta do questionário de cada candidato, que abre respostas e anexos na ficha (modo `normal`/`forcar`; opcional até validarmos)                                                                                                                                                                                           |
 
 **Sem agenda automática** (decisão de 05/10/2026): o robô só roda quando um administrador clica em
 "Rodar agora" ou alguém dispara pelo GitHub. Uma execução por vez (as outras esperam na fila); tempo limite de 2 h.
@@ -268,10 +267,10 @@ computador: rode-os pelo GitHub.
 - `src/componentes/saude-das-cargas/` e `src/lib/saude-das-cargas.ts`: a tela de status.
 - `supabase/migrations/20261005170000_robo_empregare.sql`, `20261006080000_robo_empregare_vagas_do_quadro.sql`
   (vagas também do quadro do edital), `20261007160000_link_do_candidato_na_empregare.sql` e
-  `20261008160000_anexos_da_empregare.sql` (anexos do questionário), cada uma com `ensaios/` e `rollback/`.
+  `20261008160000_respostas_do_questionario_na_empregare.sql` (respostas do questionário), cada uma com `ensaios/` e `rollback/`.
 - `src/lib/avaliacao-documental/anexo-na-empregare.ts`: o link de cada anexo na ficha.
 - Testes: `tests/python/test_robo_empregare.py`, `tests/python/test_anexos_empregare.py`,
-  `tests/anexos-da-empregare-migration.test.js`, `tests/lib/avaliacao-documental-anexo-na-empregare.test.js`,
+  `tests/respostas-do-questionario-migration.test.js`, `tests/lib/avaliacao-documental-anexo-na-empregare.test.js`,
   `tests/agenda-dos-robos-migration.test.js`,
   `tests/robo-empregare-migration.test.js`, `tests/robo-empregare-vagas-do-quadro.test.js`,
   `tests/saude-das-cargas.test.js`,

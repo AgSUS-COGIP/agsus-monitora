@@ -382,6 +382,36 @@ def ler_lista_de_candidatos(html):
     return candidatos, descartados
 
 
+def ler_respostas_do_html(html):
+    """
+    O identificador da resposta ao questionário de cada candidato da lista de
+    candidaturas: {código: resposta}, do data-resposta (só dígitos) dos links
+    do item (div.curriculo-list-item com o data-pessoa-id). Item com mais de um
+    identificador distinto fica com o primeiro. Devolve (mapa, ambíguos).
+    Abre /empresa/questionarios/imprimir/<id>| (migration 20261008160000).
+    """
+    arvore = _Arvore()
+    arvore.feed(str(html or ""))
+    arvore.close()
+    respostas = {}
+    ambiguos = 0
+    for item in (n for n in _descendentes(arvore.raiz) if "curriculo-list-item" in _classes(n)):
+        dentro = list(_descendentes(item))
+        codigos = {c for c in (_codigo_do_no(n) for n in [item, *dentro]) if c}
+        if len(codigos) != 1:
+            continue
+        codigo = next(iter(codigos))
+        ids = []
+        for n in dentro:
+            valor = (n["attrs"].get("data-resposta") or "").strip()
+            if re.fullmatch(r"[0-9]{1,20}", valor) and valor not in ids:
+                ids.append(valor)
+        if ids and _CODIGO_DO_CANDIDATO.match(codigo):
+            respostas[codigo] = ids[0]
+            ambiguos += len(ids) > 1
+    return respostas, ambiguos
+
+
 def ler_candidatos_do_html(html):
     """
     Candidatos da lista de candidaturas: [{"codigo", "link"}], na ordem da página
@@ -579,6 +609,7 @@ class PortalEmpregare:
         self.descartados = 0  # links fora do formato na última lista lida (só contagem)
         self.janela = None  # janela do login (pedir a exportação pode abrir outra)
         self.diagnostico = {}  # da última página de candidaturas aberta (só contagens)
+        self.respostas = {}  # código do candidato → identificador da resposta ao questionário (última lista lida)
 
     def __enter__(self):
         self.driver = self._iniciar()
@@ -827,10 +858,11 @@ class PortalEmpregare:
             return None
         candidatos = {}
         self.descartados = 0
+        self.respostas = {}
         restante = ORCAMENTO_DOS_LINKS - self.tempo_em_links
         if restante <= 0:
             self.registrar(f"Vaga {codigo}: tempo dos links esgotado nesta execução; só o identificador da vaga.")
-            return {"vaga_interno": ident, "candidatos": candidatos}
+            return {"vaga_interno": ident, "candidatos": candidatos, "respostas": {}}
         inicio = time.monotonic()
         try:
             prazo = inicio + min(TEMPO_LIMITE_DA_LISTA, restante)
@@ -857,7 +889,7 @@ class PortalEmpregare:
                 self.abrir_vagas_anunciadas()
             except Exception:
                 pass
-        return {"vaga_interno": ident, "candidatos": candidatos}
+        return {"vaga_interno": ident, "candidatos": candidatos, "respostas": dict(self.respostas)}
 
     def _esperar_a_lista(self):
         """Espera o AJAX trazer a 1ª página (.curriculo-list-item a.link-curriculo). False se não veio."""
@@ -926,8 +958,10 @@ class PortalEmpregare:
             espera=ESPERA_POR_MAIS,
             intervalo=INTERVALO_DA_LISTA,
         )
-        candidatos, descartados = ler_lista_de_candidatos(self.driver.page_source)
+        fonte = self.driver.page_source
+        candidatos, descartados = ler_lista_de_candidatos(fonte)
         self.descartados = max(self.descartados, descartados)
+        self.respostas.update(ler_respostas_do_html(fonte)[0])
         return candidatos
 
     def _proxima_pagina(self):
