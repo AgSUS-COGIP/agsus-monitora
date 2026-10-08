@@ -35,7 +35,7 @@
 .shell-confirm-backdrop {
   position: absolute;
   inset: 0;
-  background: rgba(15, 23, 42, 0.48);
+  background: var(--color-bg-overlay);
   backdrop-filter: blur(2px);
 }
 
@@ -44,11 +44,11 @@
   width: min(430px, calc(100vw - 32px));
   margin: min(22vh, 180px) auto 0;
   padding: 22px;
-  border: 1px solid #dbe4ee;
+  border: 1px solid var(--border-subtle);
   border-radius: 18px;
-  background: #fff;
-  color: #142238;
-  box-shadow: 0 30px 80px -30px rgba(15, 23, 42, 0.65);
+  background: var(--surface-card);
+  color: var(--text-primary);
+  box-shadow: var(--shadow-overlay);
 }
 
 .shell-confirm-icon {
@@ -58,8 +58,8 @@
   place-items: center;
   margin-bottom: 14px;
   border-radius: 12px;
-  background: #fff0f1;
-  color: #c9323d;
+  background: var(--state-danger-soft);
+  color: var(--state-danger);
 }
 
 .shell-confirm-dialog h2 {
@@ -70,7 +70,7 @@
 
 .shell-confirm-dialog p {
   margin: 8px 0 0;
-  color: #607287;
+  color: var(--text-secondary);
   font-size: 13px;
   line-height: 1.55;
 }
@@ -78,10 +78,10 @@
 .shell-confirm-warning {
   margin-top: 12px !important;
   padding: 10px 12px;
-  border: 1px solid #f0c66e;
+  border: 1px solid color-mix(in srgb, var(--state-warning) 40%, transparent);
   border-radius: 10px;
-  background: #fff8e8;
-  color: #8a5b00 !important;
+  background: var(--state-warning-soft);
+  color: var(--state-warning) !important;
   font-weight: 700;
 }
 
@@ -103,22 +103,22 @@
 }
 
 .shell-confirm-cancel {
-  border: 1px solid #dbe4ee;
-  background: #fff;
-  color: #40546b;
+  border: 1px solid var(--border-subtle);
+  background: var(--surface-raised);
+  color: var(--text-primary);
 }
 
 .shell-confirm-submit {
-  border: 1px solid #c9323d;
-  background: #c9323d;
-  color: #fff;
+  border: 1px solid var(--color-action-danger);
+  background: var(--color-action-danger);
+  color: var(--color-text-inverse);
 }
 
 .shell-signout-busy {
   display: grid;
   place-items: center;
   padding: 20px;
-  background: rgba(15, 23, 42, 0.24);
+  background: color-mix(in srgb, var(--color-bg-overlay) 60%, transparent);
   backdrop-filter: blur(2px);
   cursor: wait;
 }
@@ -129,20 +129,20 @@
   justify-items: center;
   gap: 8px;
   padding: 22px;
-  border: 1px solid #dbe4ee;
+  border: 1px solid var(--border-subtle);
   border-radius: 18px;
-  background: rgba(255, 255, 255, 0.97);
-  color: #142238;
+  background: var(--surface-card);
+  color: var(--text-primary);
   text-align: center;
-  box-shadow: 0 24px 70px -30px rgba(15, 23, 42, 0.65);
+  box-shadow: var(--shadow-overlay);
 }
 
 .shell-signout-spinner {
   width: 34px;
   height: 34px;
   margin-bottom: 4px;
-  border: 3px solid #dbe4ee;
-  border-top-color: #2563eb;
+  border: 3px solid var(--border-subtle);
+  border-top-color: var(--brand-primary);
   border-radius: 50%;
   animation: shell-spin 0.8s linear infinite;
 }
@@ -164,23 +164,23 @@
 
 /* Presenca: estados reconheciveis em vez de sincronizacao indefinida. */
 .online-presence[data-presence-state="loading"] .online-presence-dot {
-  background: #94a3b8;
-  box-shadow: 0 0 0 3px rgba(148, 163, 184, 0.14);
+  background: var(--color-status-neutral-solid);
+  box-shadow: 0 0 0 3px var(--state-neutral-soft);
 }
 
 .online-presence[data-presence-state="error"] .online-presence-dot {
-  background: #e19a14;
-  box-shadow: 0 0 0 3px rgba(225, 154, 20, 0.15);
+  background: var(--color-status-warning-solid);
+  box-shadow: 0 0 0 3px var(--state-warning-soft);
 }
 
 .online-presence[data-presence-state="offline"] .online-presence-dot {
-  background: #dc3f49;
-  box-shadow: 0 0 0 3px rgba(220, 63, 73, 0.14);
+  background: var(--color-status-danger-solid);
+  box-shadow: 0 0 0 3px var(--state-danger-soft);
 }
 
 .online-presence[data-presence-state="error"] .online-presence-button,
 .online-presence[data-presence-state="offline"] .online-presence-button {
-  color: #6b7280;
+  color: var(--text-secondary);
 }
 
 .online-presence-list > p {
@@ -285,24 +285,6 @@ html[data-theme="dark"] textarea {
 html[data-theme="dark"] input::placeholder,
 html[data-theme="dark"] textarea::placeholder {
   color: #8799aa !important;
-}
-
-html[data-theme="dark"] .shell-confirm-dialog,
-html[data-theme="dark"] .shell-signout-card {
-  border-color: var(--ux-dark-border);
-  background: var(--ux-dark-surface);
-  color: var(--ux-dark-text);
-}
-
-html[data-theme="dark"] .shell-confirm-dialog p,
-html[data-theme="dark"] .shell-signout-card span {
-  color: var(--ux-dark-muted);
-}
-
-html[data-theme="dark"] .shell-confirm-cancel {
-  border-color: var(--ux-dark-border);
-  background: var(--ux-dark-surface-soft);
-  color: var(--ux-dark-text);
 }
 
 /* Textos auxiliares do app que herdavam tons do tema claro. */

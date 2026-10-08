@@ -36,10 +36,10 @@
 
   table.mobile-card-table tr {
     overflow: hidden;
-    border: 1px solid rgba(12, 63, 103, 0.12);
+    border: 1px solid var(--border-subtle);
     border-radius: 16px;
-    background: #fff;
-    box-shadow: 0 6px 20px rgba(10, 42, 68, 0.08);
+    background: var(--surface-card);
+    box-shadow: var(--shadow-sm);
   }
 
   table.mobile-card-table td {
@@ -51,7 +51,7 @@
     min-height: 0;
     padding: 10px 12px !important;
     border: 0;
-    border-bottom: 1px solid rgba(12, 63, 103, 0.08);
+    border-bottom: 1px solid var(--border-subtle);
     background: transparent !important;
     white-space: normal;
     overflow-wrap: anywhere;
@@ -63,7 +63,7 @@
 
   table.mobile-card-table td::before {
     content: attr(data-mobile-label);
-    color: #4f6c83;
+    color: var(--text-secondary);
     font-size: 0.72rem;
     font-weight: 800;
     line-height: 1.35;

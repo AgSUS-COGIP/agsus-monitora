@@ -35,11 +35,11 @@
     box-shadow 0.15s ease;
 }
 .multi-select-trigger:hover {
-  border-color: rgba(13, 110, 253, 0.45);
+  border-color: color-mix(in srgb, var(--brand-primary) 45%, transparent);
 }
 .multi-select-trigger[aria-expanded="true"] {
-  border-color: var(--blue);
-  box-shadow: 0 0 0 4px rgba(13, 110, 253, 0.15);
+  border-color: var(--brand-primary);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--focus-ring) 15%, transparent);
 }
 .multi-select-trigger .fa-chevron-down {
   margin-left: auto;
@@ -69,8 +69,8 @@
   min-width: 22px;
   height: 22px;
   border-radius: 999px;
-  background: rgba(13, 110, 253, 0.12);
-  color: var(--blue);
+  background: var(--state-info-soft);
+  color: var(--state-info);
   font-size: 12px;
   font-weight: 900;
   padding: 0 7px;
@@ -106,7 +106,7 @@
   border: 1px solid var(--line);
   border-radius: 16px;
   background: var(--card);
-  box-shadow: 0 24px 60px rgba(13, 35, 58, 0.22);
+  box-shadow: var(--shadow-overlay);
   padding: 10px;
   gap: 8px;
 }
@@ -139,7 +139,7 @@
 .multi-select-link {
   border: 0;
   background: transparent;
-  color: var(--blue);
+  color: var(--state-info);
   font-size: 12px;
   font-weight: 900;
   padding: 4px 2px;
@@ -179,7 +179,7 @@
   height: 16px;
   min-height: 16px;
   margin-top: 1px;
-  accent-color: var(--blue);
+  accent-color: var(--brand-primary);
   flex: 0 0 auto;
   cursor: pointer;
 }

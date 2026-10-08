@@ -110,7 +110,6 @@ export function criarPaineisExternos({
     if (icone) {
       const tile = documento.createElement("div");
       tile.style.fontSize = "58px";
-      tile.style.color = "#555";
       const i = documento.createElement("i");
       i.className = `fa-solid ${icone}`;
       tile.append(i);
