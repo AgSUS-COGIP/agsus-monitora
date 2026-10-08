@@ -139,7 +139,7 @@
   background: var(--surface-raised);
 }
 .cal-celula.fora-do-mes .cal-numero {
-  color: var(--color-text-disabled);
+  color: var(--text-secondary);
 }
 .cal-celula.hoje {
   border-color: var(--brand-primary);

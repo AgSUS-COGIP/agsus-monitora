@@ -288,11 +288,13 @@ html[data-theme="dark"] textarea::placeholder {
 }
 
 /* Textos auxiliares do app que herdavam tons do tema claro. */
+/* Fora de botão: `.btn.small` é tamanho, não texto auxiliar (pintava texto
+   claro sobre o primário claro). */
 html[data-theme="dark"] .app .muted,
 html[data-theme="dark"] .app .hint,
-html[data-theme="dark"] .app .small,
-html[data-theme="dark"] .app small {
-  color: #edf5ff !important;
+html[data-theme="dark"] .app .small:not(.btn),
+html[data-theme="dark"] .app small:not(.btn *) {
+  color: var(--text-secondary) !important;
 }
 
 @media (max-width: 640px) {
