@@ -114,24 +114,24 @@ function ensureSessionUi() {
         align-items: center;
         gap: 7px;
         padding: 8px 11px;
-        border: 1px solid rgba(15, 23, 42, .16);
+        border: 1px solid var(--border-subtle);
         border-radius: 999px;
-        background: rgba(255, 255, 255, .96);
-        color: #0f172a;
-        box-shadow: 0 8px 24px rgba(15, 23, 42, .14);
+        background: var(--surface-card);
+        color: var(--text-primary);
+        box-shadow: var(--shadow-raised);
         font: 700 12px/1.2 var(--font-sans, "Geist", system-ui, sans-serif);
         backdrop-filter: blur(10px);
       }
       #agsusSessionTimer[hidden] { display: none !important; }
       #agsusSessionTimer[data-level="warning"] {
-        border-color: #d97706;
-        color: #92400e;
-        background: rgba(255, 251, 235, .98);
+        border-color: var(--state-warning);
+        color: var(--state-warning);
+        background-image: linear-gradient(var(--state-warning-soft), var(--state-warning-soft));
       }
       #agsusSessionTimer[data-level="critical"] {
-        border-color: #dc2626;
-        color: #991b1b;
-        background: rgba(254, 242, 242, .98);
+        border-color: var(--state-danger);
+        color: var(--state-danger);
+        background-image: linear-gradient(var(--state-danger-soft), var(--state-danger-soft));
       }
       #agsusSessionNotice {
         position: fixed;
@@ -142,17 +142,18 @@ function ensureSessionUi() {
         transform: translateX(-50%);
         padding: 12px 16px;
         border-radius: 12px;
-        background: #fffbeb;
-        color: #78350f;
-        border: 1px solid #f59e0b;
-        box-shadow: 0 12px 32px rgba(15, 23, 42, .2);
+        background-color: var(--surface-card);
+        background-image: linear-gradient(var(--state-warning-soft), var(--state-warning-soft));
+        color: var(--state-warning);
+        border: 1px solid var(--state-warning);
+        box-shadow: var(--shadow-overlay);
         font: 700 14px/1.4 var(--font-sans, "Geist", system-ui, sans-serif);
         text-align: center;
       }
       #agsusSessionNotice[data-level="critical"] {
-        background: #fef2f2;
-        color: #991b1b;
-        border-color: #ef4444;
+        background-image: linear-gradient(var(--state-danger-soft), var(--state-danger-soft));
+        color: var(--state-danger);
+        border-color: var(--state-danger);
       }
       #agsusSessionNotice[hidden] { display: none !important; }
     `;

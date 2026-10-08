@@ -24,10 +24,20 @@ const definidos = (texto) =>
   new Set([...texto.matchAll(/^\s*(--[\w-]+):/gm)].map(([, nome]) => nome));
 const doEscuro = definidos(escuro);
 
-function valorEscuro(nome) {
-  const achado = escuro.match(new RegExp(`${nome}:\\s*(#[0-9a-f]{6})`, "i"));
-  expect(achado, `${nome} sem hex no escuro`).not.toBeNull();
-  return achado[1];
+// Valor final no escuro: segue as referências var(--x) (o escuro aponta os
+// apelidos para os --color-*, que também ganharam valor escuro), caindo no
+// :root quando o escuro não redefine o token.
+function valorEscuro(nome, visitados = new Set()) {
+  expect(visitados.has(nome), `${nome}: referência circular`).toBe(false);
+  visitados.add(nome);
+  const padrao = new RegExp(`(?:^|\\s)${nome}:\\s*([^;]+);`, "m");
+  const valor = (escuro.match(padrao) || claro.match(padrao))?.[1]?.trim();
+  expect(valor, `${nome} sem valor no escuro`).toBeTruthy();
+  const hex = valor.match(/^#[0-9a-f]{6}$/i);
+  if (hex) return hex[0];
+  const ref = valor.match(/^var\((--[\w-]+)\)$/);
+  expect(ref, `${nome} sem hex no escuro`).not.toBeNull();
+  return valorEscuro(ref[1], visitados);
 }
 
 function luminancia(hex) {

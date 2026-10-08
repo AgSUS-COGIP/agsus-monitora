@@ -70,7 +70,7 @@ html[data-esqueleto-barra="aberta"] .esqueleto-da-entrada {
   color: var(--text-secondary);
 }
 body.sidebar-theme-dark .esqueleto-da-entrada__barra {
-  color: var(--text-inverse);
+  color: var(--cor-do-texto-sobre-escuro);
 }
 html[data-theme="dark"] .esqueleto-da-entrada__barra {
   background: var(--surface-card);

@@ -1,0 +1,405 @@
+{
+  "leia": "Lista de exceções de cor literal: tests/cores-so-por-token.test.js. Só encolhe; cada arquivo tem o motivo.",
+  "motivos": {
+    "src/app/entrada/icones-da-entrada.tsx": "marca: as quatro cores do G do Google",
+    "src/app/moldura.js": "impressão: cabeçalho do relatório impresso, sempre em papel branco",
+    "src/lib/access-branding.js": "valor padrão gravado da cor do painel da tela de acesso (configuração, não tema)",
+    "src/lib/avaliacao-documental/anexo-na-empregare.ts": "falso positivo: entidade HTML (&#160;), não é cor",
+    "src/lib/avaliacao-documental/resumo-da-regra.ts": "documento gerado para impressão/arquivo: papel branco, texto preto",
+    "src/lib/classificacao/documento-sei.js": "documento no padrão do SEI: papel branco, texto preto, bordas e faixas do modelo",
+    "src/lib/contraste.js": "regra de contraste: as duas cores de texto sobre cor configurada (barra, painel de acesso)",
+    "src/lib/documento-da-resposta.js": "documento gerado para impressão/arquivo: papel branco, texto preto",
+    "src/lib/fogos.js": "efeito de comemoração (canvas): cores do fogo de artifício",
+    "src/lib/mapa-saude-indigena/formas.ts": "mapa: cores de domínio das camadas e marcadores (iguais nos dois temas)",
+    "src/lib/marca-da-barra-lateral.js": "valor padrão gravado da cor da barra lateral (configuração, não tema)",
+    "src/lib/motor-de-efeitos.js": "efeito de comemoração (canvas): corações e brilho",
+    "src/lib/tema-do-painel.js": "reserva dos gráficos quando o CSS não carregou (testes); a tela lê os tokens",
+    "src/modules/comemoracao.js": "efeito de comemoração (canvas, legado)",
+    "src/modules/indigenous-territories-layer.js": "mapa: cores de domínio das Terras Indígenas (tests/cor-da-terra-indigena.test.js)",
+    "src/modulos/analises/paineis.tsx": "monta rgba() a partir de um token lido em tempo de execução (não é cor fixa)",
+    "src/modulos/aya/mascote/contornos.ts": "marca: desenho da mascote AYA",
+    "src/modulos/aya/mascote/desenho.tsx": "marca: desenho da mascote AYA",
+    "src/modulos/classificacao/documento-no-navegador.js": "documento: fundo branco do papel ao rasterizar a prévia",
+    "src/modulos/configuracoes/partes.jsx": "valor padrão gravado da cor do painel da tela de acesso (configuração, não tema)",
+    "src/modulos/mapa-saude-indigena/leaflet.js": "mapa: contorno branco dos marcadores sobre a base do mapa",
+    "src/modulos/mapa-saude-indigena/legenda.tsx": "mapa: legenda com o mesmo contorno dos marcadores",
+    "src/modulos/mapa-saude-indigena/mapa-saude-indigena.css": "mapa: sombra do marcador sobre a base do mapa",
+    "src/modulos/selecao/paineis.tsx": "reserva de cor dos rótulos do gráfico quando o token não é lido (a tela lê os tokens); módulo em migração pelo Codex",
+    "src/styles/app.css": "tela de acesso (paleta própria, igual nos dois temas), impressão, sombras/véus de modal e dívida: valores escuros de [data-theme=dark] legados (DESIGN.md seção 8, fase 5)",
+    "src/styles/barra-lateral.css": "selos fixos do trilho (beta lilás, manutenção âmbar com ícone escuro: 8,9:1) sobre qualquer cor de barra",
+    "src/styles/comemoracao.css": "palco escuro fixo da comemoração (fogos) e brilho",
+    "src/styles/google-profile-photo.css": "véu e sombra da foto do Google, sobre a própria foto",
+    "src/styles/indigenous-territories-layer.css": "mapa: controles e dicas sobre a base do mapa, par de cores fixo",
+    "src/styles/loading-experience.css": "véu escuro fixo atrás do carregador",
+    "src/styles/mobile-app.css": "sombras e véu da gaveta no celular",
+    "src/styles/nielsen-shell-ux.css": "dívida: valores escuros de [data-theme=dark] legados e as cores --ux-dark-* (DESIGN.md seção 8, fase 5)",
+    "src/styles/platform-shell.css": "tela de acesso (paleta própria sobre a cor configurada do painel) e dívida: valores escuros de [data-theme=dark] legados",
+    "src/styles/post157-interface-tuning.css": "reserva antes do branding: fundo da tela de acesso e cor padrão da barra (configuração)",
+    "src/styles/visual-polish.css": "mapa (fundo do Leaflet antes do mosaico) e texto da tela de acesso",
+    "src/ui/grafico.jsx": "reserva de cor do gráfico quando o token não é lido (a tela lê os tokens)"
+  },
+  "cores": {
+    "src/app/entrada/icones-da-entrada.tsx": {
+      "#ea4335": 1,
+      "#4285f4": 1,
+      "#fbbc05": 1,
+      "#34a853": 1
+    },
+    "src/app/moldura.js": {
+      "#003b70": 2,
+      "#555": 1,
+      "#222": 1,
+      "#a3322b": 1,
+      "#444": 1
+    },
+    "src/lib/access-branding.js": {
+      "#c296eb": 1
+    },
+    "src/lib/avaliacao-documental/anexo-na-empregare.ts": {
+      "#160": 2
+    },
+    "src/lib/avaliacao-documental/resumo-da-regra.ts": {
+      "#000": 1
+    },
+    "src/lib/classificacao/documento-sei.js": {
+      "#000000": 1,
+      "#d9d9d9": 1,
+      "#fff": 1,
+      "#000": 1,
+      "#e6e6e6": 1,
+      "#999": 2,
+      "#666": 1
+    },
+    "src/lib/contraste.js": {
+      "#f7fbff": 1,
+      "#102a43": 1
+    },
+    "src/lib/documento-da-resposta.js": {
+      "#000": 1
+    },
+    "src/lib/fogos.js": {
+      "#ffd23f": 1,
+      "#ffb627": 1,
+      "#fff6dc": 1,
+      "#59f2c8": 1,
+      "#4fdcff": 1,
+      "#ff7a59": 1,
+      "#c38cff": 1,
+      "#9aa6bd": 1,
+      "#c9d2e3": 1
+    },
+    "src/lib/mapa-saude-indigena/formas.ts": {
+      "#1f2937": 1,
+      "#e49a1b": 1,
+      "#d92d3a": 1,
+      "#6d28d9": 1,
+      "#0d8192": 1,
+      "#0b8f58": 1,
+      "#f2b705": 1,
+      "#5b9bd5": 1,
+      "#1f6f4a": 1,
+      "#7b2ff7": 1,
+      "#4a6b80": 2,
+      "#0d3b66": 1,
+      "#5b7fa6": 1,
+      "#0d6f7b": 1,
+      "#7798ad": 1,
+      "#dce9ee": 1,
+      "#c2410c": 1,
+      "#2f6fb0": 1
+    },
+    "src/lib/marca-da-barra-lateral.js": {
+      "#ffffff": 1
+    },
+    "src/lib/motor-de-efeitos.js": {
+      "#ff4d6d": 1,
+      "#ff758f": 1,
+      "#ff8fab": 1,
+      "#e5383b": 1,
+      "#ffffff": 1
+    },
+    "src/lib/tema-do-painel.js": {
+      "#dbe8f5": 1,
+      "#526780": 1,
+      "#2ca25f": 1,
+      "#e45757": 1,
+      "#e2a400": 1,
+      "#2f74c0": 1,
+      "#0f5db7": 1,
+      "#0f1c2e": 1,
+      "#fff": 1,
+      "rgba(255,255,255,.08)": 1,
+      "rgba(7,59,121,.09)": 1
+    },
+    "src/modules/comemoracao.js": {
+      "#fff": 1,
+      "rgba(255,255,255,1)": 1,
+      "rgba(255,255,255,0.55)": 1,
+      "rgba(255,255,255,0)": 1,
+      "rgba(0,0,0,${alfadorastro(dt)": 1
+    },
+    "src/modules/indigenous-territories-layer.js": {
+      "#7a4a1f": 1,
+      "#d6b07a": 1,
+      "#c8520f": 1,
+      "#0b5fa5": 2,
+      "#38bdf8": 2,
+      "#2563eb": 1,
+      "#60a5fa": 1
+    },
+    "src/modulos/analises/paineis.tsx": {
+      "rgba(${r},${g},${b},${alfa})": 1
+    },
+    "src/modulos/aya/mascote/contornos.ts": {
+      "#011646": 1,
+      "#032163": 1,
+      "#052b7c": 1,
+      "#06318f": 1,
+      "#073dac": 1,
+      "#0c4bc4": 1,
+      "#1b60d7": 1,
+      "#222025": 1,
+      "#3e3c40": 1,
+      "#6d696e": 1
+    },
+    "src/modulos/aya/mascote/desenho.tsx": {
+      "#ffd84a": 1,
+      "#f9bc06": 1,
+      "#d98f00": 1,
+      "#3f80ea": 1,
+      "#010f38": 1,
+      "#8a5526": 1,
+      "#4a2a12": 1,
+      "#1c0f06": 1,
+      "#b07d4b": 1,
+      "#8a5a2e": 1,
+      "#4e3018": 3,
+      "#0b1f3d": 2,
+      "#6b4423": 1,
+      "#2f8a4a": 1,
+      "#3fa35c": 1,
+      "#7a4a00": 1,
+      "#0d0703": 1,
+      "#ffffff": 2,
+      "#5a3400": 1,
+      "#2a1512": 1,
+      "#2a1608": 1
+    },
+    "src/modulos/classificacao/documento-no-navegador.js": {
+      "#ffffff": 1
+    },
+    "src/modulos/configuracoes/partes.jsx": {
+      "#c296eb": 1
+    },
+    "src/modulos/mapa-saude-indigena/leaflet.js": {
+      "#ffffff": 1
+    },
+    "src/modulos/mapa-saude-indigena/legenda.tsx": {
+      "#ffffff": 1
+    },
+    "src/modulos/mapa-saude-indigena/mapa-saude-indigena.css": {
+      "rgb(153560/35%)": 1
+    },
+    "src/modulos/selecao/paineis.tsx": {
+      "#20324a": 3,
+      "#526780": 1,
+      "#edf4fa": 1
+    },
+    "src/styles/app.css": {
+      "#9bb4cc": 1,
+      "#ffffff": 1,
+      "#526780": 1,
+      "#65758d": 1,
+      "#8ff3d0": 1,
+      "#eef2f8": 1,
+      "#60758f": 1,
+      "#9fb3c8": 1,
+      "#fff": 6,
+      "#f8fbff": 2,
+      "#4285f4": 1,
+      "#0f1a2e": 1,
+      "#17253d": 1,
+      "#253a56": 1,
+      "#1d2f48": 1,
+      "#4db8ff": 1,
+      "#00cfff": 1,
+      "#2ad98a": 1,
+      "#ffd166": 1,
+      "#ff6b6b": 1,
+      "#e2eaf4": 1,
+      "#111f36": 1,
+      "#1e3050": 2,
+      "#111f33": 1,
+      "#29405d": 1,
+      "#c8d6e5": 1,
+      "#1a2d47": 1,
+      "#b8d0e8": 1,
+      "#d0e4f5": 1,
+      "#7dd3fc": 1,
+      "#7a9bbf": 1,
+      "#16283f": 2,
+      "#31506f": 1,
+      "#e2ecf6": 2,
+      "#8399b1": 2,
+      "#ccc": 1,
+      "#cfe5f8": 1,
+      "#475569": 1,
+      "#0f172a": 1,
+      "#334155": 4,
+      "#bfeccd": 1,
+      "#effaf3": 1,
+      "#0b6b42": 1,
+      "#f3cf54": 1,
+      "#fff9df": 1,
+      "#684600": 1,
+      "#b9d8f2": 1,
+      "#eef6ff": 1,
+      "#0b3f6b": 2,
+      "#ffb8bf": 1,
+      "#fff1f2": 1,
+      "#8a0612": 1,
+      "#b00020": 1,
+      "#f1f5f9": 1,
+      "#132030": 1,
+      "rgba(0,0,0,0.55)": 2,
+      "rgba(255,255,255,0.08)": 1,
+      "rgba(2,8,23,0.52)": 1,
+      "rgba(15,35,60,0.06)": 1,
+      "rgba(0,0,0,0.18)": 1,
+      "rgba(14,167,107,0.14)": 1,
+      "rgba(14,167,107,0.05)": 1,
+      "rgba(0,0,0,0.45)": 1,
+      "rgba(0,0,0,0.28)": 1,
+      "rgba(0,0,0,0.35)": 1,
+      "rgba(0,168,214,0.12)": 1,
+      "rgba(255,255,255,0.75)": 1,
+      "rgba(0,0,0,0.32)": 1
+    },
+    "src/styles/barra-lateral.css": {
+      "#a78bfa": 1,
+      "#fbbf24": 1,
+      "#422006": 1
+    },
+    "src/styles/comemoracao.css": {
+      "rgba(0,0,0,0.45)": 1,
+      "rgb(113161/0.55)": 1,
+      "rgb(51430/0.72)": 1,
+      "rgb(000/0.38)": 1,
+      "rgb(000/0.58)": 1,
+      "rgb(25521490/0.55)": 1
+    },
+    "src/styles/google-profile-photo.css": {
+      "rgba(255,255,255,0.08)": 1,
+      "rgba(0,0,0,0.16)": 1
+    },
+    "src/styles/indigenous-territories-layer.css": {
+      "#0f172a": 1,
+      "#fff": 4,
+      "#0b3c35": 1,
+      "rgba(255,255,255,0.94)": 1,
+      "rgba(15,23,42,0.14)": 1,
+      "rgba(15,23,42,0.16)": 1,
+      "rgba(15,23,42,0.9)": 2,
+      "rgba(255,255,255,0.35)": 1,
+      "rgba(15,23,42,0.2)": 1,
+      "rgba(255,255,255,0.95)": 1,
+      "rgba(0,0,0,0.95)": 2,
+      "rgba(0,0,0,0.9)": 1,
+      "rgba(11,95,165,0.94)": 2
+    },
+    "src/styles/loading-experience.css": {
+      "rgba(0,168,214,0.16)": 1,
+      "rgba(11,143,88,0.14)": 1,
+      "rgba(3,20,42,0.78)": 1,
+      "rgba(255,255,255,0.65)": 1
+    },
+    "src/styles/mobile-app.css": {
+      "rgba(15,35,60,0.24)": 1,
+      "rgba(5,22,40,0.48)": 1,
+      "rgba(15,35,60,0.07)": 1
+    },
+    "src/styles/nielsen-shell-ux.css": {
+      "#071421": 1,
+      "#0e1e2e": 1,
+      "#14283a": 1,
+      "#294158": 1,
+      "#edf4fa": 1,
+      "#a8b8c8": 1,
+      "#172c40": 1,
+      "#0b1424": 2,
+      "#111f33": 1,
+      "#16283f": 1,
+      "#29405d": 1,
+      "#102436": 1,
+      "#8799aa": 1,
+      "#edf5ff": 1,
+      "rgba(10,27,42,0.96)": 1
+    },
+    "src/styles/platform-shell.css": {
+      "#c296eb": 1,
+      "#ffffff": 2,
+      "#132030": 1,
+      "#102a43": 3,
+      "#59f2c8": 1,
+      "#f7fbff": 1,
+      "#8ff3d0": 1,
+      "#fff8e6": 1,
+      "#f1c75b": 1,
+      "#7c3b08": 1,
+      "#f1f5f9": 1,
+      "#17253d": 1,
+      "#253a56": 3,
+      "#b8d0e8": 1,
+      "#e2eaf4": 2,
+      "#1a2d47": 2,
+      "#2a2008": 1,
+      "#5c4506": 1,
+      "#fbbf24": 1,
+      "#2b1114": 1,
+      "#5c1a22": 1,
+      "#fca5a5": 1,
+      "rgba(255,255,255,0.34)": 1,
+      "rgba(35,12,54,0.3)": 1,
+      "rgba(0,59,112,0.22)": 1,
+      "rgba(16,80,70,0.22)": 1,
+      "rgba(247,251,255,0.82)": 1,
+      "rgba(255,255,255,0.35)": 1,
+      "rgba(15,23,42,0.16)": 1,
+      "rgba(15,23,42,0.12)": 1,
+      "rgba(15,23,42,0.28)": 1,
+      "rgba(15,23,42,0.2)": 1
+    },
+    "src/styles/post157-interface-tuning.css": {
+      "#eef4f8": 1,
+      "#ffffff": 2
+    },
+    "src/styles/visual-polish.css": {
+      "#b7dce7": 1,
+      "#60758f": 1
+    },
+    "src/ui/grafico.jsx": {
+      "#94a3b8": 1
+    }
+  },
+  "primitivos": {
+    "src/modulos/configuracoes/configuracoes.css": [
+      "--color-blue-200",
+      "--color-blue-900",
+      "--color-blue-950"
+    ],
+    "src/modulos/mapa-saude-indigena/mapa-saude-indigena.css": [
+      "--color-blue-600",
+      "--color-neutral-0"
+    ],
+    "src/styles/app.css": [
+      "--color-blue-400",
+      "--color-blue-600",
+      "--color-blue-800",
+      "--color-danger-600",
+      "--color-success-600",
+      "--color-warning-600"
+    ],
+    "src/styles/barra-lateral.css": ["--color-warning-600"],
+    "src/styles/platform-shell.css": ["--color-blue-800", "--color-neutral-800"]
+  }
+}

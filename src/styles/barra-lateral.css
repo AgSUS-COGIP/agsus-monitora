@@ -303,7 +303,7 @@
     padding: 0 var(--space-3);
     border-radius: var(--radius-md);
     background: var(--menu-pilula-fundo);
-    color: var(--text-inverse);
+    color: var(--menu-pilula-texto);
     font-size: var(--text-sm);
     font-weight: 600;
     line-height: var(--menu-pilula-altura);
@@ -667,7 +667,7 @@
     padding: var(--space-1) var(--space-3);
     border-radius: var(--radius-md);
     background: var(--menu-pilula-fundo);
-    color: var(--text-inverse);
+    color: var(--menu-pilula-texto);
     font-size: var(--text-sm);
     font-weight: 600;
     line-height: 1.4;
@@ -707,10 +707,14 @@
   display: inline-grid;
   flex: 0 0 auto;
   place-items: center;
+  color: var(--state-warning);
+}
+/* Barra configurada escura: o âmbar clareado (o do estado sumia no escuro). */
+body.sidebar-theme-dark .menu-manutencao {
   color: color-mix(
     in srgb,
     var(--color-warning-600) 55%,
-    var(--color-neutral-0)
+    var(--cor-do-texto-sobre-escuro)
   );
 }
 

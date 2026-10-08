@@ -36,7 +36,7 @@ body.mobile-app .app .top {
 
 @media (max-width: 900px) {
   body {
-    background: #f4f7fb;
+    background: var(--surface-raised);
     padding-top: var(--mobile-safe-top);
     padding-bottom: var(--mobile-safe-bottom);
   }

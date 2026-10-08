@@ -14,6 +14,13 @@
   Importado antes de qualquer outro CSS em `src/main.js` e nos painéis do
   quadro (`src/entrevistas|selecao/main.jsx`). As camadas (`--z-*`) continuam em `app.css`.
 */
+/*
+  A tela de acesso tem paleta própria, clara nos dois temas (o painel é a cor
+  configurada; DESIGN.md seção 5): o primeiro seletor devolve a ela os valores
+  claros quando a página está no escuro (sem isto, o aviso de erro do login
+  saía rosa-claro sobre rosa-claro, 1,91:1).
+*/
+.login-screen,
 :root {
   /* ---------- Primitivos: azul institucional ---------- */
   --color-blue-50: #f2f6fc;
@@ -299,6 +306,12 @@
   --etapa-verde: #22c55e;
   --etapa-azul-escuro: #2563eb;
 
+  /* Cores que não mudam com o tema (de propósito): a folha de uma prévia de
+     documento é papel, branca nos dois temas; e o texto sobre a barra lateral
+     com cor configurada escura (`body.sidebar-theme-dark`) é branco seja
+     qual for o tema da página. */
+  --cor-da-folha: var(--color-neutral-0);
+  --cor-do-texto-sobre-escuro: var(--color-neutral-0);
   /* Chat (src/modulos/chat/chat.css): os tokens --color-* não mudam no tema
      escuro; estes mudam (valores do escuro no bloco [data-theme="dark"]).
      Antes o balão próprio usava --color-bg-selected e ficava claro no
@@ -319,33 +332,116 @@
   --chat-primario-texto: var(--color-text-inverse);
 }
 
+/*
+  Tema escuro: os tokens semânticos oficiais ganham o valor escuro aqui, e os
+  nomes do MONITORA (que no claro apontam para eles) os acompanham. Assim, quem
+  usa token — oficial ou do MONITORA — muda de cor sem regra própria
+  (DESIGN.md, seção 5). Antes só os nomes do MONITORA tinham valor escuro: um
+  componente com `--color-bg-selected` ou `--color-text-brand` ficava claro no
+  escuro (fundo quase branco com texto claro). Os primitivos (`--color-blue-*`,
+  `--color-neutral-*`…) não mudam: são cor fixa, não papel.
+
+  Contraste medido sobre --color-bg-canvas escuro (#0e1e2e), entre parênteses.
+  `--color-text-inverse` é o texto sobre preenchimento forte (primário,
+  sucesso, perigo, neutro sólido): no escuro esses preenchimentos clareiam, e o
+  texto escurece (#071421 sobre #70cfff: 10,66).
+*/
 html[data-theme="dark"] {
+  /* ---------- Fundo ---------- */
+  --color-bg-canvas: #0e1e2e;
+  --color-bg-subtle: #14283a;
+  --color-bg-muted: #1a3146;
+  --color-bg-selected: #16344d;
+  --color-bg-raised: #14283a;
+  --color-bg-inverse: #edf4fa;
+  --color-bg-overlay: rgb(0 0 0 / 0.55);
+
+  /* ---------- Texto ---------- */
+  --color-text-primary: #edf4fa; /* 15,21 */
+  --color-text-secondary: #a8b8c8; /* 8,33 */
+  --color-text-tertiary: #8ea1b4; /* 6,36 */
+  --color-text-disabled: #6a829a; /* 4,24 */
+  --color-text-inverse: #071421;
+  --color-text-brand: #b5e5ff; /* 12,56 */
+  --color-text-link: #70cfff; /* 9,69 */
+  --color-text-link-hover: #b5e5ff;
+
+  /* ---------- Borda ---------- */
+  --color-border-subtle: #294158;
+  --color-border-default: #3a5672;
+  --color-border-input: #6a829a; /* 4,24 */
+  --color-border-focus: #7dd3fc;
+  --color-border-danger: #ff6b76;
+
+  /* ---------- Ação ---------- */
+  --color-action-primary: #70cfff;
+  --color-action-primary-hover: #b5e5ff;
+  --color-action-primary-pressed: #d6f0ff;
+  --color-action-secondary: #16344d;
+  --color-action-secondary-hover: #1d415f;
+  --color-action-secondary-text: #b5e5ff; /* 9,57 sobre o secundário */
+  --color-action-ghost-hover: #1a3146;
+  --color-action-ghost-text: #c8d6e5; /* 11,42 */
+  --color-action-danger: #ff6b76; /* texto inverso: 6,73 */
+  --color-action-danger-hover: #ff8f97;
+  --color-focus-ring: #7dd3fc;
+
+  /* ---------- Status ---------- */
+  --color-status-success-bg: rgba(41, 179, 106, 0.16);
+  --color-status-success-text: #45d08a; /* 4,92 no suave sobre hover */
+  --color-status-success-solid: #29b36a;
+  --color-status-warning-bg: rgba(242, 183, 5, 0.16);
+  --color-status-warning-text: #f2b705; /* 9,29 */
+  --color-status-warning-solid: #f2b705;
+  --color-status-danger-bg: rgba(255, 107, 118, 0.16);
+  --color-status-danger-text: #ff8a93; /* 4,55 no suave sobre hover */
+  --color-status-danger-solid: #ff6b76;
+  --color-status-info-bg: rgba(112, 207, 255, 0.16);
+  --color-status-info-text: #70cfff;
+  --color-status-info-solid: #70cfff;
+  --color-status-neutral-bg: rgba(168, 184, 200, 0.14);
+  --color-status-neutral-text: #a8b8c8;
+  --color-status-neutral-solid: #a8b8c8;
+
+  /* ---------- Gráficos ---------- */
+  --color-chart-1: #4f8ff0;
+  --color-chart-2: #1a9fc8;
+  --color-chart-3: #b5e5ff;
+  --color-chart-4: #2bb3b9;
+  --color-chart-5: #8ea1b4;
+  --color-chart-context: #6a829a;
+  --color-chart-grid: #294158;
+  --color-chart-axis: #3a5672;
+  --color-chart-positive: #29b36a;
+  --color-chart-negative: #ff6b76;
+
   --shadow-card: none;
   --shadow-raised: 0 1px 2px rgba(0, 0, 0, 0.38);
   --shadow-overlay: 0 24px 64px -16px rgba(0, 0, 0, 0.6);
 
-  --brand-primary: #70cfff; /* 9,69 */
-  --brand-primary-strong: #b5e5ff;
+  /* ---------- Nomes do MONITORA ---------- */
+  --brand-primary: var(--color-action-primary);
+  --brand-primary-strong: var(--color-action-primary-hover);
   --brand-accent: #4fdcff;
   --surface-page: #071421;
-  --surface-card: #0e1e2e;
-  --surface-raised: #14283a;
-  --surface-hover: #1a3146;
-  --text-primary: #edf4fa; /* 15,21 */
-  --text-secondary: #a8b8c8; /* 8,33 */
-  --border-subtle: #294158;
-  --border-control: #6a829a;
-  --focus-ring: #7dd3fc;
-  --state-success: #29b36a;
-  --state-success-soft: rgba(41, 179, 106, 0.16);
-  --state-warning: #f2b705;
-  --state-warning-soft: rgba(242, 183, 5, 0.16);
-  --state-danger: #ff6b76;
-  --state-danger-soft: rgba(255, 107, 118, 0.16);
-  --state-info: #70cfff;
-  --state-info-soft: rgba(112, 207, 255, 0.16);
-  --state-neutral: #a8b8c8;
-  --state-neutral-soft: rgba(168, 184, 200, 0.14);
+  --surface-card: var(--color-bg-canvas);
+  --surface-raised: var(--color-bg-subtle);
+  --surface-hover: var(--color-bg-muted);
+  --text-primary: var(--color-text-primary);
+  --text-secondary: var(--color-text-secondary);
+  --border-subtle: var(--color-border-subtle);
+  --border-control: var(--color-border-input);
+  --focus-ring: var(--color-focus-ring);
+  --state-success: var(--color-status-success-text);
+  --state-success-soft: var(--color-status-success-bg);
+  --state-warning: var(--color-status-warning-text);
+  --state-warning-soft: var(--color-status-warning-bg);
+  --state-danger: var(--color-status-danger-text);
+  --state-danger-soft: var(--color-status-danger-bg);
+  --state-info: var(--color-status-info-text);
+  --state-info-soft: var(--color-status-info-bg);
+  --state-neutral: var(--color-status-neutral-text);
+  --state-neutral-soft: var(--color-status-neutral-bg);
   --series-1: #4f8ff0;
   --series-2: #d95f2b;
   --series-3: #1a9fc8;

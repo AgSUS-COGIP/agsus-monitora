@@ -195,8 +195,9 @@
 .convocacao-linha-imediata td {
   background: color-mix(in srgb, var(--state-success-soft) 45%, transparent);
 }
+/* Fora da fila: texto secundário, não opacidade (opacidade derrubava o contraste dos selos). */
 .convocacao-linha-fora td {
-  opacity: 0.62;
+  color: var(--text-secondary);
 }
 .convocacao-modalidade {
   display: flex;

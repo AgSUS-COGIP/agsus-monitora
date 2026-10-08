@@ -386,6 +386,7 @@ body.sidebar-theme-dark .app .side-logo {
   --menu-flutuante-texto: var(--slate);
   --menu-flutuante-borda: var(--platform-border);
   --menu-pilula-fundo: var(--slate);
+  --menu-pilula-texto: var(--cor-do-texto-sobre-escuro);
   display: flex;
   flex-direction: column;
   padding: 0;
@@ -394,9 +395,13 @@ body.sidebar-theme-dark .app .side-logo {
   border-right: 1px solid var(--menu-borda);
 }
 body.sidebar-theme-dark .sidebar {
-  --menu-texto: var(--text-inverse);
-  --menu-texto-suave: color-mix(in srgb, var(--text-inverse) 80%, transparent);
-  --menu-realce: var(--text-inverse);
+  --menu-texto: var(--cor-do-texto-sobre-escuro);
+  --menu-texto-suave: color-mix(
+    in srgb,
+    var(--cor-do-texto-sobre-escuro) 80%,
+    transparent
+  );
+  --menu-realce: var(--cor-do-texto-sobre-escuro);
 }
 /* O tema escuro da página vale sobre a cor configurada: vem depois, empata e vence. */
 html[data-theme="dark"] .sidebar {
@@ -405,6 +410,7 @@ html[data-theme="dark"] .sidebar {
   --menu-realce: var(--ux-dark-text);
   --menu-flutuante-texto: var(--ux-dark-text);
   --menu-pilula-fundo: var(--ux-dark-surface-soft);
+  --menu-pilula-texto: var(--ux-dark-text);
   background: var(--ux-dark-surface);
 }
 .side-brand {
@@ -473,8 +479,8 @@ html[data-theme="dark"] .sidebar {
   margin-top: 6px;
   padding: 3px 8px;
   border-radius: 999px;
-  background: #e6f6ef;
-  color: #067044;
+  background: var(--state-success-soft);
+  color: var(--state-success);
   font-size: 9px;
   font-weight: 900;
   letter-spacing: 0.05em;
@@ -516,26 +522,26 @@ html[data-theme="dark"] .sidebar {
   padding: 0 12px;
   border: 1px solid var(--platform-border);
   border-radius: 12px;
-  background: #fff;
-  color: #475569;
+  background: var(--surface-card);
+  color: var(--text-secondary);
   font: inherit;
   font-size: 12px;
   font-weight: 800;
   cursor: pointer;
 }
 .online-presence-button:hover {
-  background: #f8fafc;
-  color: var(--color-blue-800);
+  background: var(--surface-hover);
+  color: var(--color-text-brand);
 }
 .online-presence-dot {
   width: 9px;
   height: 9px;
   border-radius: 50%;
-  background: #cbd5e1;
+  background: var(--color-status-neutral-solid);
 }
 .online-presence-dot.is-online {
-  background: #10b981;
-  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.14);
+  background: var(--color-status-success-solid);
+  box-shadow: 0 0 0 3px var(--state-success-soft);
 }
 .online-presence-popover {
   position: absolute;
@@ -546,8 +552,8 @@ html[data-theme="dark"] .sidebar {
   overflow: hidden;
   border: 1px solid var(--platform-border);
   border-radius: 18px;
-  background: #fff;
-  box-shadow: 0 24px 60px -28px rgba(15, 23, 42, 0.55);
+  background: var(--surface-card);
+  box-shadow: var(--shadow-overlay);
 }
 .online-presence-heading {
   padding: 13px 16px;
@@ -558,7 +564,7 @@ html[data-theme="dark"] .sidebar {
   display: block;
 }
 .online-presence-heading strong {
-  color: #0f172a;
+  color: var(--text-primary);
   font-size: 14px;
 }
 .online-presence-heading small {
@@ -586,7 +592,7 @@ html[data-theme="dark"] .sidebar {
   border-radius: 12px;
 }
 .online-presence-person:hover {
-  background: #f8fafc;
+  background: var(--surface-hover);
 }
 /*
   No celular o botão fica à esquerda do cabeçalho: a lista abre presa ao
@@ -615,7 +621,7 @@ html[data-theme="dark"] .sidebar {
   white-space: nowrap;
 }
 .online-presence-person strong {
-  color: #0f172a;
+  color: var(--text-primary);
   font-size: 13px;
 }
 .online-presence-person small {
@@ -631,8 +637,8 @@ html[data-theme="dark"] .sidebar {
   display: grid;
   place-items: center;
   border-radius: 12px;
-  background: #eaf4ff;
-  color: var(--color-blue-800);
+  background: var(--state-info-soft);
+  color: var(--color-text-brand);
   font-size: 11px;
   font-weight: 900;
 }
@@ -648,9 +654,9 @@ html[data-theme="dark"] .sidebar {
   bottom: -2px;
   width: 13px;
   height: 13px;
-  border: 2px solid #fff;
+  border: 2px solid var(--surface-card);
   border-radius: 50%;
-  background: #10b981;
+  background: var(--color-status-success-solid);
 }
 
 /* Perfil no cabeçalho, no mesmo padrão de navegação do SIGAV. */
@@ -671,12 +677,12 @@ html[data-theme="dark"] .sidebar {
   padding: 4px 10px 4px 5px;
   border: 1px solid var(--platform-border);
   border-radius: 14px;
-  background: #fff;
-  color: #0f172a;
+  background: var(--surface-card);
+  color: var(--text-primary);
   cursor: pointer;
 }
 .top-user-button:hover {
-  background: #f8fafc;
+  background: var(--surface-hover);
 }
 .top-user-avatar {
   width: 32px;
@@ -686,8 +692,8 @@ html[data-theme="dark"] .sidebar {
   place-items: center;
   overflow: hidden;
   border-radius: 10px;
-  background: #eaf4ff;
-  color: #075ea8;
+  background: var(--state-info-soft);
+  color: var(--state-info);
 }
 .top-user-avatar img {
   width: 100%;
@@ -702,7 +708,7 @@ html[data-theme="dark"] .sidebar {
   display: block;
   max-width: 130px;
   overflow: hidden;
-  color: #0f172a;
+  color: var(--text-primary);
   font-size: 11px;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -711,11 +717,11 @@ html[data-theme="dark"] .sidebar {
   margin: 1px 0 0;
   padding: 0;
   background: transparent;
-  color: #067044;
+  color: var(--state-success);
   font-size: 8px;
 }
 .top-user-chevron {
-  color: #94a3b8;
+  color: var(--text-secondary);
   font-size: 9px;
   transition: transform 0.2s ease;
 }
@@ -731,8 +737,8 @@ html[data-theme="dark"] .sidebar {
   padding: 15px;
   border: 1px solid var(--platform-border);
   border-radius: 16px;
-  background: #fff;
-  box-shadow: 0 24px 60px -28px rgba(15, 23, 42, 0.55);
+  background: var(--surface-card);
+  box-shadow: var(--shadow-overlay);
 }
 .top-user-popover > strong,
 .top-user-popover > small,
@@ -743,7 +749,7 @@ html[data-theme="dark"] .sidebar {
   white-space: nowrap;
 }
 .top-user-popover > strong {
-  color: #0f172a;
+  color: var(--text-primary);
   font-size: 14px;
 }
 .top-user-popover > small {
@@ -753,7 +759,7 @@ html[data-theme="dark"] .sidebar {
 }
 .top-user-popover > span {
   margin-top: 8px;
-  color: #067044;
+  color: var(--state-success);
   font-size: 10px;
   font-weight: 900;
   text-transform: uppercase;
