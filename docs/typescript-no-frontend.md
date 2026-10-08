@@ -2,7 +2,7 @@
 
 Início da migração gradual: 07/10/2026.
 
-O frontend mantém React e Vite. `Aviso`, `BotaoDeAcao`, Seleção, Cronograma, Visão geral, Conferências, Status das atualizações e Análises curriculares estão em
+O frontend mantém React e Vite. `Aviso`, `BotaoDeAcao`, Seleção, Cronograma, Visão geral, Conferências, Status das atualizações, Análises curriculares, Módulos e abas, barra lateral, Busca global e os dados compartilhados do monitoramento estão em
 TypeScript. Seleção inclui estado, componentes, filtros, indicadores, gráficos, tabela
 e regras puras em `src/lib/selecao-do-painel.ts`. Cronograma inclui estado, calendário,
 filtros, modal do dia, próximas etapas, linha do tempo e regras em
@@ -14,8 +14,10 @@ saúde das cargas, agenda, histórico, acompanhamento, formulário de opções, 
 `src/lib/saude-das-cargas.ts` e `src/lib/painel-dos-robos.ts`. A validação das opções em
 `src/lib/robos-de-carga.js` continua compartilhada com a Avaliação documental, com contratos JSDoc.
 Em Entrevistas, as peças novas do Painel e de Conduzir (`agenda-e-empates.tsx`, `conduzir.tsx`,
-`fila-do-dia.tsx`, as peças da ficha de notas — cabeçalho, abas, matriz, célula, resultado —, `tipos.ts`,
-`src/lib/painel-de-entrevistas.ts`, `src/lib/fila-de-conducao.ts` e `src/lib/digitacao-de-notas.ts`)
+`fila-do-dia.tsx`, as peças da ficha de notas — cabeçalho, abas, matriz, célula, resultado —, o resumo das
+regras e as competências de cada membro da banca (`resumo-das-regras.tsx`, `competencias-do-membro.tsx`), `tipos.ts`,
+`src/lib/painel-de-entrevistas.ts`, `src/lib/fila-de-conducao.ts`, `src/lib/digitacao-de-notas.ts` e
+`src/lib/resumo-da-entrevista.ts`)
 já nascem em TypeScript. Os mapas
 continuam em JavaScript, com contratos JSDoc na integração com a tela. Outros módulos
 combinam JavaScript/JSX com migrações pontuais para TypeScript: a ficha da Avaliação documental
@@ -82,6 +84,19 @@ Análises curriculares também está migrado: estado, consultas, marcos, filtros
 indicadores, gráficos, tabela, gaveta e regras em `src/lib/analises-curriculares.ts`.
 Contratos e limites estão em
 [../src/modulos/analises/README.md](../src/modulos/analises/README.md).
+
+Módulos e abas também está migrado: tela de Configurações, estado, revisão, histórico e
+regras do rascunho em `src/lib/modulos-e-abas.ts`. Contratos, validação da resposta e limites
+estão em [../src/modulos/modulos/README.md](../src/modulos/modulos/README.md).
+
+A barra lateral também está migrada: estado, menu por área, seletor, painéis flutuantes,
+rodapé, recolhimento e hooks, com as regras em `src/lib/menu-lateral.ts`. Contratos e limites
+estão em [../src/componentes/barra-lateral/README.md](../src/componentes/barra-lateral/README.md).
+
+A Busca global também está migrada: painel, atalhos, realce, seleção, montagem e regras
+em `src/lib/busca-global.ts`. Inclui o snapshot compartilhado do monitoramento, validação
+das linhas e unidades e o hook de área atual. Contratos e limites estão em
+[../src/componentes/busca-global/README.md](../src/componentes/busca-global/README.md).
 
 Escolher um módulo por entrega, levantar os consumidores e manter o comportamento coberto
 pelos testes. Declarar contratos de dados e ações sem `any` ou supressões de erros. Atualizar

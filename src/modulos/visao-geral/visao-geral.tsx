@@ -45,7 +45,7 @@ import { TabelaDeProcessos } from "./tabela.tsx";
   `<section id="page-dashboard">` do index.html. O legado continua dono da
   navegação (classe `.active`, título do cabeçalho por área com
   `cabecalhoDaVisaoGeral`, permissão `ind`) e da carga das linhas
-  (`loadData` → dados-do-monitoramento.js); a tela lê o estado
+  (`loadData` → dados-do-monitoramento.ts); a tela lê o estado
   (`estado.ts`); do banco, só os marcos do ano, o mapa de Projetos e o
   acompanhamento da área (etapas do cronograma e resumo das listas, pedido
   pelo estado com o cliente da tela).

@@ -17,7 +17,7 @@ import {
   posicaoDoPainelFlutuante,
   proximoFlutuante,
   recortarArvorePorArea,
-} from "../src/lib/menu-lateral.js";
+} from "../src/lib/menu-lateral.ts";
 import { SECOES } from "../src/modulos/configuracoes/secoes.js";
 import { NOMES_DE_ICONES } from "../src/modules/icones.js";
 

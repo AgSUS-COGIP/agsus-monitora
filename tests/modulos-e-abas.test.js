@@ -10,7 +10,7 @@ import {
   registrarEstado,
   resumoDoRascunho,
   valorDoCampo,
-} from "../src/lib/modulos-e-abas.js";
+} from "../src/lib/modulos-e-abas.ts";
 
 /*
   Rascunho de Configurações › Módulos e abas: guarda só o que difere do lido,

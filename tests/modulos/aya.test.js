@@ -4,7 +4,7 @@ import {
   definirAreaAtual,
   definirAreasDoUsuario,
   redefinirDadosDoMonitoramento,
-} from "../../src/componentes/dados-do-monitoramento.js";
+} from "../../src/componentes/dados-do-monitoramento.ts";
 import { clicar, digitar, teclar } from "../componentes/interacoes.js";
 
 /*
@@ -86,11 +86,11 @@ afterEach(async () => {
 });
 
 describe("abrir e fechar", () => {
-  it("começa fechada, com a arara e o selo Beta", async () => {
+  it("começa fechada, só com a arara (sem o ponto Beta)", async () => {
     await montar();
     expect($(".aya-painel")).toBeNull();
     expect($(".aya-arara")).not.toBeNull();
-    expect(textoDe(".aya-arara")).toContain("Beta");
+    expect($(".aya-arara .aya-selo-beta")).toBeNull();
   });
 
   it("abre com a saudação e a mensagem da página, sem sugestões", async () => {

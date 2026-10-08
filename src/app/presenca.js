@@ -4,7 +4,7 @@ import {
   normalizeOnlinePresenceList,
   ondeEstaNoMonitora,
 } from "../lib/online-presence.js";
-import { obterDadosDoMonitoramento } from "../componentes/dados-do-monitoramento.js";
+import { obterDadosDoMonitoramento } from "../componentes/dados-do-monitoramento.ts";
 import {
   SECOES,
   secaoAtualDeConfiguracao,

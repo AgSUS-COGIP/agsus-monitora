@@ -7,7 +7,7 @@ import {
 } from "react";
 import { RESPONSAVEIS_DE_EDITAL } from "../../lib/responsavel-do-edital.js";
 import { canMoveEditalBetweenAreas } from "../../lib/access-roles.js";
-import { AREAS_DO_SISTEMA, nomeDaArea } from "../../lib/menu-lateral.js";
+import { AREAS_DO_SISTEMA, nomeDaArea } from "../../lib/menu-lateral.ts";
 import {
   NOVA_UNIDADE,
   areaDaUnidade,
@@ -39,7 +39,7 @@ import {
   areaDaLinha,
   assinarDadosDoMonitoramento,
   obterDadosDoMonitoramento,
-} from "../../componentes/dados-do-monitoramento.js";
+} from "../../componentes/dados-do-monitoramento.ts";
 import { Aviso, Campo, Modal } from "../../ui/index.js";
 import { EditorDeCronograma } from "./editor-de-cronograma.jsx";
 import { ImportarAnexos } from "./importar-anexos.jsx";

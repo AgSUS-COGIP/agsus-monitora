@@ -12,6 +12,8 @@
     salvar_regra_analise(...)                   versão nova (motivo da 2ª em diante)
     conferir_regra_analise(...)                 outra pessoa da coordenação
                                                 conferiu (dupla conferência)
+    renomear_versao_regra_analise(...)          troca só o nome de uma versão
+                                                (20261008180000)
     obter_apoio_regra_analise(p_edital)         o que o assistente lê: colunas
                                                 de pergunta por vaga, regras
                                                 conferidas da área e a regra
@@ -41,6 +43,7 @@ const RPC_OBTER_REGRA = "obter_regra_analise";
 const RPC_COPIAR_MODELO = "copiar_modelo_regra_analise";
 const RPC_SALVAR_REGRA = "salvar_regra_analise";
 const RPC_CONFERIR_REGRA = "conferir_regra_analise";
+const RPC_RENOMEAR_VERSAO = "renomear_versao_regra_analise";
 const RPC_OBTER_APOIO = "obter_apoio_regra_analise";
 const RPC_SALVAR_CLASSIFICACAO = "salvar_regra_classificacao";
 const RPC_OBTER_EQUIPE = "obter_equipe_edital";
@@ -231,7 +234,12 @@ export function criarEstadoDaAvaliacao({
     publicar({
       editais: estado.editais.map((e) =>
         e.id === editalId
-          ? { ...e, versao_regra: regra.versao, situacao_regra: regra.situacao }
+          ? {
+              ...e,
+              versao_regra: regra.versao,
+              nome_regra: regra.nome ?? null,
+              situacao_regra: regra.situacao,
+            }
           : e,
       ),
     });
@@ -280,7 +288,8 @@ export function criarEstadoDaAvaliacao({
         { p_edital: estado.editalId, p_modelo: modelo },
         "Regra criada a partir do modelo. Confira antes de usar.",
       ),
-    salvarRegra: (configuracao, motivo) =>
+    /* O nome só vai quando preenchido: sem ele, a chamada é a de antes. */
+    salvarRegra: (configuracao, motivo, nome = null) =>
       gravarRegra(
         RPC_SALVAR_REGRA,
         {
@@ -288,8 +297,21 @@ export function criarEstadoDaAvaliacao({
           p_configuracao: configuracao,
           p_versao_atual: estado.dados?.regra?.versao ?? 0,
           p_motivo: motivo || null,
+          ...(nome ? { p_nome: nome } : {}),
         },
         "Regra salva como versão nova.",
+      ),
+    /* Troca só o nome de uma versão (null tira o nome); conteúdo e hash ficam. */
+    renomearVersao: (versao, nome, motivo) =>
+      gravarRegra(
+        RPC_RENOMEAR_VERSAO,
+        {
+          p_edital: estado.editalId,
+          p_versao: versao,
+          p_nome: nome || null,
+          p_motivo: motivo,
+        },
+        "Nome da versão trocado.",
       ),
     conferirRegra: () =>
       gravarRegra(
@@ -323,6 +345,7 @@ export function criarEstadoDaAvaliacao({
                     regra: regra
                       ? {
                           versao: regra.versao,
+                          nome: regra.nome ?? null,
                           configuracao: regra.configuracao,
                           atualizado_em: regra.atualizado_em,
                           por: regra.por,

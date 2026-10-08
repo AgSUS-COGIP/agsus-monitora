@@ -1,15 +1,15 @@
 import { act, createElement } from "react";
 import { createRoot } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { montarArvoreDoMenu } from "../../src/lib/menu-lateral.js";
+import { montarArvoreDoMenu } from "../../src/lib/menu-lateral.ts";
 import { EVENTO_MENU_ATUALIZADO } from "../../src/lib/eventos-da-barra-lateral.js";
 import { SECOES } from "../../src/modulos/configuracoes/secoes.js";
-import { montarBarraLateral } from "../../src/componentes/barra-lateral/barra-lateral.jsx";
+import { montarBarraLateral } from "../../src/componentes/barra-lateral/barra-lateral.tsx";
 import {
   atualizarMenuLateral,
   marcarItemAtivoNoMenu,
   redefinirBarraLateral,
-} from "../../src/componentes/barra-lateral/estado.js";
+} from "../../src/componentes/barra-lateral/estado.ts";
 import {
   definirAreaAtual,
   redefinirDadosDoMonitoramento,

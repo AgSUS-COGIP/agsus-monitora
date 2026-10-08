@@ -1,5 +1,8 @@
+import type { KeyboardEvent } from "react";
+import type { ResultadoDaBusca, OpcoesDaBusca } from "./tipos.ts";
+
 /*
-  Busca global (Ctrl+K / Cmd+K), React. Lógica pura em src/lib/busca-global.js.
+  Busca global (Ctrl+K / Cmd+K), React. Lógica pura em src/lib/busca-global.ts.
 
   O que o legado fazia e continua aqui:
   - Ctrl+K / Cmd+K em qualquer tela abre (só com usuário conectado) e, aberta, fecha.
@@ -34,14 +37,14 @@ import {
   seloDoRisco,
   subtituloDoResultado,
   tituloDoResultado,
-} from "../../lib/busca-global.js";
+} from "../../lib/busca-global.ts";
 import {
   assinarDadosDoMonitoramento,
   obterDadosDoMonitoramento,
-} from "../dados-do-monitoramento.js";
-import { Modal } from "../modal.jsx";
+} from "../dados-do-monitoramento.ts";
+import { Modal } from "../../ui/modal.jsx";
 
-function Realce({ valor, termo }) {
+function Realce({ valor, termo }: { valor: string; termo: string }) {
   return partesRealcadas(valor, termo).map((parte, i) =>
     parte.realce ? (
       <mark key={i} className="search-result-realce">
@@ -53,7 +56,13 @@ function Realce({ valor, termo }) {
   );
 }
 
-function PainelDaBusca({ aoFechar, aoEscolher }) {
+function PainelDaBusca({
+  aoFechar,
+  aoEscolher,
+}: {
+  aoFechar: () => void;
+  aoEscolher: OpcoesDaBusca["aoEscolher"];
+}) {
   const { linhas } = useSyncExternalStore(
     assinarDadosDoMonitoramento,
     obterDadosDoMonitoramento,
@@ -63,7 +72,7 @@ function PainelDaBusca({ aoFechar, aoEscolher }) {
   const rolarAteEscolhido = useRef(false);
   const base = useId();
   const idDaLista = `${base}-resultados`;
-  const idDoItem = (i) => `${base}-resultado-${i}`;
+  const idDoItem = (i: number) => `${base}-resultado-${i}`;
   const resultados = buscarLinhas(linhas, termo);
 
   // Só as setas rolam a lista: com o mouse, o item já está à vista.
@@ -75,12 +84,12 @@ function PainelDaBusca({ aoFechar, aoEscolher }) {
       ?.scrollIntoView?.({ block: "nearest" });
   });
 
-  function escolher(linha) {
+  function escolher(linha: ResultadoDaBusca) {
     aoFechar();
     aoEscolher(linha);
   }
 
-  function aoTeclar(evento) {
+  function aoTeclar(evento: KeyboardEvent<HTMLInputElement>) {
     if (evento.key === "ArrowDown" || evento.key === "ArrowUp") {
       evento.preventDefault();
       rolarAteEscolhido.current = true;
@@ -176,7 +185,7 @@ function PainelDaBusca({ aoFechar, aoEscolher }) {
 }
 
 /* Trava a rolagem da página enquanto a busca está aberta. */
-function useRolagemTravada(ativa) {
+function useRolagemTravada(ativa: boolean) {
   useEffect(() => {
     if (!ativa) return undefined;
     document.body.style.overflow = "hidden";
@@ -186,12 +195,12 @@ function useRolagemTravada(ativa) {
   }, [ativa]);
 }
 
-export function BuscaGlobal({ estaConectado, aoEscolher }) {
+export function BuscaGlobal({ estaConectado, aoEscolher }: OpcoesDaBusca) {
   const [aberta, setAberta] = useState(false);
   useRolagemTravada(aberta);
 
   useEffect(() => {
-    function aoTeclar(evento) {
+    function aoTeclar(evento: globalThis.KeyboardEvent) {
       if (!ehAtalhoDaBusca(evento)) return;
       evento.preventDefault();
       setAberta((atual) => (atual ? false : Boolean(estaConectado())));
@@ -207,7 +216,7 @@ export function BuscaGlobal({ estaConectado, aoEscolher }) {
 }
 
 /* O legado é dono dos filtros e da navegação: recebe o id da linha por evento. */
-function avisarEscolha(linha) {
+function avisarEscolha(linha: ResultadoDaBusca) {
   document.dispatchEvent(
     new CustomEvent(EVENTO_ESCOLHA_DA_BUSCA, { detail: { id: linha?.id } }),
   );
@@ -217,7 +226,7 @@ export function montarBuscaGlobal({
   raizDaTela = document.getElementById("buscaGlobalApp"),
   estaConectado = () => false,
   aoEscolher = avisarEscolha,
-} = {}) {
+}: Partial<OpcoesDaBusca> & { raizDaTela?: HTMLElement | null } = {}) {
   if (!raizDaTela) return { raiz: null };
   const { raiz } = montarModulo(
     raizDaTela,

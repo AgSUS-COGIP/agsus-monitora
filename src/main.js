@@ -73,7 +73,7 @@ import { initPwaLifecycle } from "./modules/pwa-lifecycle.js";
 import { initConnectivityStatus } from "./modules/connectivity-status.js";
 import { initGoogleProfilePhoto } from "./modules/google-profile-photo.js";
 import { initNielsenShellUx } from "./modules/nielsen-shell-ux.js";
-import { montarBarraLateral } from "./componentes/barra-lateral/barra-lateral.jsx";
+import { montarBarraLateral } from "./componentes/barra-lateral/barra-lateral.tsx";
 import { montarListaAprovados } from "./modulos/aprovados/lista-aprovados.jsx";
 import { montarCalendarioEditais } from "./modulos/cronograma/calendario-editais.tsx";
 import { montarNucleo } from "./modulos/editais/nucleo.jsx";
@@ -87,9 +87,9 @@ import { montarAvaliacaoDocumental } from "./modulos/avaliacao-documental/avalia
 import { montarVisaoGeral } from "./modulos/visao-geral/visao-geral.tsx";
 import { situacaoDoSistema } from "./modules/situacao-dos-modulos.js";
 import { montarAcessos } from "./modulos/acessos/acessos.jsx";
-import { montarModulos } from "./modulos/modulos/modulos.jsx";
+import { montarModulos } from "./modulos/modulos/modulos.tsx";
 import { montarSaudeDasCargas } from "./componentes/saude-das-cargas/saude-das-cargas.tsx";
-import { montarBuscaGlobal } from "./componentes/busca-global/busca-global.jsx";
+import { montarBuscaGlobal } from "./componentes/busca-global/busca-global.tsx";
 import { montarEntrada } from "./app/entrada/entrada.jsx";
 import { sessaoDoApp } from "./app/sessao.js";
 

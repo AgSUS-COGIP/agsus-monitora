@@ -1,6 +1,7 @@
 import { useEffect, useRef, useSyncExternalStore } from "react";
 import { Campo, classes } from "../../ui/index.js";
 import { TEXTO_DO_CONVITE } from "../../lib/solicitacao-de-acesso.js";
+import { MarcaDoGoogle } from "./icones-da-entrada.tsx";
 import { visaoDoPedido } from "./pedido-de-acesso.js";
 
 /*
@@ -221,7 +222,7 @@ export function CartaoDoPedido({ pedido, sessao }) {
           className="google-login-btn"
           onClick={() => void sessao.entrarComGoogle()}
         >
-          <span className="gmark">G</span>
+          <MarcaDoGoogle />
           <span>Usar outra conta Google</span>
         </button>
         <button

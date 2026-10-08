@@ -18,6 +18,8 @@
   só aparece em Todos.
 */
 
+import { competenciasDoAvaliador } from "./conducao-de-entrevista.js";
+
 export type Situacao = "aguardando" | "em_andamento" | "concluida" | "faltou";
 export type Recorte = "hoje" | "proximos" | "todos";
 
@@ -46,6 +48,8 @@ export type Avaliador = {
   id: string;
   banca?: number | string | null;
   ativo?: boolean;
+  /** As competências que o membro avalia (nulo ou vazio = todas). */
+  competencias?: string[] | null;
 };
 
 export type ItemDaAgendaNoBanco = {
@@ -122,7 +126,8 @@ export function iniciais(nome: unknown): string {
 
 /**
  * Notas lançadas (pares competência × avaliador com nota; com aspectos,
- * conta o par uma vez) e esperadas (competências × avaliadores da ficha).
+ * conta o par uma vez) e esperadas: de cada avaliador da ficha, só as
+ * competências que ele avalia (todas, por padrão).
  */
 export function progressoDoConvocado(
   convocado: Convocado,
@@ -143,19 +148,17 @@ export function progressoDoConvocado(
       Number(a.banca) === Number(convocado.banca)
     );
   });
-  const ids = new Set(daFicha.map((a) => a.id));
-  const comps = new Set((competencias || []).map((c) => c.id));
+  const devidas = new Set<string>();
+  for (const a of daFicha)
+    for (const c of competenciasDoAvaliador(a, competencias) as string[])
+      devidas.add(`${c}|${a.id}`);
   const pares = new Set(
     (convocado.avaliacoes || [])
-      .filter(
-        (a) =>
-          temNota(a.nota) &&
-          ids.has(texto(a.avaliador)) &&
-          comps.has(texto(a.competencia)),
-      )
-      .map((a) => `${a.competencia}|${a.avaliador}`),
+      .filter((a) => temNota(a.nota))
+      .map((a) => `${texto(a.competencia)}|${texto(a.avaliador)}`)
+      .filter((par) => devidas.has(par)),
   );
-  return { lancadas: pares.size, esperadas: ids.size * comps.size };
+  return { lancadas: pares.size, esperadas: devidas.size };
 }
 
 export function situacaoDoConvocado(

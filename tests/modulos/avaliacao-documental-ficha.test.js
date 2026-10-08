@@ -4,7 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   definirAreaAtual,
   redefinirDadosDoMonitoramento,
-} from "../../src/componentes/dados-do-monitoramento.js";
+} from "../../src/componentes/dados-do-monitoramento.ts";
 import { montarAvaliacaoDocumental } from "../../src/modulos/avaliacao-documental/avaliacao-documental.jsx";
 import { criarEstadoDaFicha } from "../../src/modulos/avaliacao-documental/ficha/estado-da-ficha.js";
 import {
@@ -571,7 +571,7 @@ describe("ficha: modo foco, um item por vez (AM-7)", () => {
     expect(info).toContain("SituaçãoEm análise");
     expect(info).toContain("ResponsávelAna");
     expect(info).toMatch(/ReservaCom você até \d{2}:\d{2}/);
-    expect(info).toContain("Regrav4");
+    expect(info).toContain("RegraVersão 4");
     // Reserva com folga: sem aviso no cabeçalho.
     expect(document.querySelector(".avd-chip-alerta")).toBeNull();
   });

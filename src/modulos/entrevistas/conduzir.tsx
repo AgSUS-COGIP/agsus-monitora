@@ -7,8 +7,8 @@ import {
   useSyncExternalStore,
 } from "react";
 import { montarModulo } from "../../app/montar-modulo.jsx";
-import { obterDadosDoMonitoramento } from "../../componentes/dados-do-monitoramento.js";
-import { usarAreaAtual } from "../../componentes/usar-area-atual.js";
+import { obterDadosDoMonitoramento } from "../../componentes/dados-do-monitoramento.ts";
+import { usarAreaAtual } from "../../componentes/usar-area-atual.ts";
 import {
   contadorDoDia,
   contagemDosRecortes,
@@ -137,6 +137,11 @@ function TelaDeConducao({
     recorte: Recorte;
   } | null>(null);
   const [vaga, setVaga] = useState("");
+  // O "Editar" de "Como a nota é calculada" (Preparar) abre o roteiro do edital no editor.
+  const [pedidoDeRoteiro, setPedidoDeRoteiro] = useState<{
+    roteiro: unknown;
+    vez: number;
+  } | null>(null);
   const [situacao, setSituacao] = useState<Situacao | "">("");
   // O recorte vale para o edital em que foi escolhido; outro edital abre no inicial.
   const recorte =
@@ -303,8 +308,18 @@ function TelaDeConducao({
         ) : null
       ) : (
         <>
-          <PrepararEdital conducao={conducao} e={e} />
-          <VisaoDeRoteiros conducao={conducao} area={e.area} />
+          <PrepararEdital
+            conducao={conducao}
+            e={e}
+            aoEditarRoteiro={(roteiro: unknown) =>
+              setPedidoDeRoteiro((p) => ({ roteiro, vez: (p?.vez ?? 0) + 1 }))
+            }
+          />
+          <VisaoDeRoteiros
+            conducao={conducao}
+            area={e.area}
+            pedido={pedidoDeRoteiro}
+          />
         </>
       )}
       {visao === "fila" &&

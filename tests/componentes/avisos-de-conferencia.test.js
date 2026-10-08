@@ -6,7 +6,7 @@ import {
   definirAreaAtual,
   definirAreasDoUsuario,
   redefinirDadosDoMonitoramento,
-} from "../../src/componentes/dados-do-monitoramento.js";
+} from "../../src/componentes/dados-do-monitoramento.ts";
 
 /*
   Avisos de conferência (React, src/modulos/conferencias/): o selo de cada

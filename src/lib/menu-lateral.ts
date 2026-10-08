@@ -1,3 +1,14 @@
+import type {
+  AbaDoCatalogo,
+  AreaDoCatalogo,
+  ArvoreDoMenu,
+  ItemDoMenu,
+  OpcoesDoMenu,
+  EstadoFlutuante,
+  EventoFlutuante,
+  PosicaoDoFlutuante,
+} from "../componentes/barra-lateral/tipos.ts";
+
 /*
   O menu lateral organizado em grupos.
 
@@ -7,7 +18,7 @@
   o usuário tem (`profile.areas`, de `obter_contexto_monitora`): Saúde
   Indígena, SEDE e Projetos. Cada área repete as mesmas páginas — Editais,
   Cronograma, Lista de aprovados, Análises curriculares —, e a página abre
-  recortada pela área escolhida (a "área atual", em `src/componentes/dados-do-monitoramento.js`).
+  recortada pela área escolhida (a "área atual", em `src/componentes/dados-do-monitoramento.ts`).
   Abaixo delas ficam Painéis (os externos, que não têm área) e
   Administração. Com a barra recolhida, cada página da área atual vira um
   ícone (link direto), e Painéis e Administração, um ícone só cada.
@@ -117,9 +128,14 @@ export const AREAS_DO_MENU = Object.freeze([
   manutenção (`src/lib/situacao-dos-modulos.js`). O catálogo do código nunca
   o tem.
 */
-const congelarArea = ({ manutencao, ...area }) =>
+const congelarArea = ({ manutencao, ...area }: AreaDoCatalogo) =>
   Object.freeze({ ...area, ...(manutencao ? { manutencao } : {}) });
-const congelarAba = ({ areas, beta, manutencao, ...aba }) =>
+const congelarAba = ({
+  areas,
+  beta,
+  manutencao,
+  ...aba
+}: AbaDoCatalogo): AbaDoCatalogo =>
   Object.freeze({
     ...aba,
     // Só a aba beta (ou em manutenção) leva o campo: as outras ficam iguais às do banco.
@@ -257,8 +273,14 @@ export const ABAS_DO_MENU = Object.freeze(
 /* A área de quem ainda recebe o contexto antigo, sem `profile.areas`. */
 const AREAS_PADRAO = Object.freeze(["saude-indigena"]);
 
-const texto = (valor) => String(valor ?? "").trim();
-const numero = (valor) => {
+const texto = (valor: unknown) =>
+  typeof valor === "string" ? valor.trim() : "";
+const registro = (valor: unknown): Record<string, unknown> | null =>
+  valor && typeof valor === "object" && !Array.isArray(valor)
+    ? (valor as Record<string, unknown>)
+    : null;
+const numero = (valor: unknown) => {
+  if (typeof valor !== "number" && typeof valor !== "string") return null;
   const n = Number(valor);
   return valor !== null && valor !== "" && Number.isFinite(n) ? n : null;
 };
@@ -269,7 +291,7 @@ const numero = (valor) => {
   caixa; nulo = sem selo). Sem nenhum desses campos (banco anterior à
   migration de Módulos e abas), vale o da mesma aba em `ABAS_DO_MENU`.
 */
-function seloBeta(linha, id) {
+function seloBeta(linha: Record<string, unknown>, id: string) {
   if (typeof linha.st_beta === "boolean") return linha.st_beta;
   if (typeof linha.beta === "boolean") return linha.beta;
   if (Object.hasOwn(linha, "ds_selo")) {
@@ -284,26 +306,33 @@ function seloBeta(linha, id) {
   sem código, também. Resposta que não é lista, ou que fica vazia, devolve
   `null`: quem chama usa `ABAS_DO_MENU`, e o menu continua o de sempre.
 */
-export function abasDoCatalogo(dados) {
+export function abasDoCatalogo(
+  dados: unknown,
+): readonly AbaDoCatalogo[] | null {
   if (!Array.isArray(dados)) return null;
-  const abas = [];
-  for (const linha of dados) {
+  const abas: AbaDoCatalogo[] = [];
+  for (const bruto of dados) {
+    const linha = registro(bruto);
+    if (!linha) continue;
     const id = texto(linha?.co_aba);
     const rotulo = texto(linha?.no_aba);
     const view = texto(linha?.co_view);
     if (!id || !rotulo || !view) continue;
     const areas = (Array.isArray(linha.areas) ? linha.areas : [])
-      .map((item) => ({
-        area: texto(item?.co_area),
-        ordem: numero(item?.nu_ordem),
-        view: texto(item?.co_view) || null,
-        icone: texto(item?.ds_icone) || null,
-        manutencao: manutencaoDaLinha(
-          item?.tp_situacao,
-          item?.ds_mensagem,
-          item?.dt_previsao,
-        ),
-      }))
+      .map((bruto: unknown) => {
+        const item = registro(bruto);
+        return {
+          area: texto(item?.co_area),
+          ordem: numero(item?.nu_ordem),
+          view: texto(item?.co_view) || null,
+          icone: texto(item?.ds_icone) || null,
+          manutencao: manutencaoDaLinha(
+            texto(item?.tp_situacao),
+            texto(item?.ds_mensagem),
+            texto(item?.dt_previsao),
+          ),
+        };
+      })
       .filter((item) => item.area);
     abas.push(
       congelarAba({
@@ -316,9 +345,9 @@ export function abasDoCatalogo(dados) {
         tipo: texto(linha.tp_aba) || "nativa",
         beta: seloBeta(linha, id),
         manutencao: manutencaoDaLinha(
-          linha.tp_situacao,
-          linha.ds_mensagem,
-          linha.dt_previsao,
+          texto(linha.tp_situacao),
+          texto(linha.ds_mensagem),
+          texto(linha.dt_previsao),
         ),
         areas,
       }),
@@ -334,7 +363,10 @@ export function abasDoCatalogo(dados) {
   todas as áreas, que vale primeiro, ou só nesta), `manutencao`; as outras,
   nem os campos.
 */
-export function paginasDaArea(abas, area) {
+export function paginasDaArea(
+  abas: readonly AbaDoCatalogo[],
+  area: string,
+): ItemDoMenu[] {
   return abas
     .flatMap((aba) => {
       const naArea = aba.areas.find((item) => item.area === area);
@@ -361,7 +393,7 @@ export function paginasDaArea(abas, area) {
 }
 
 /* As áreas do usuário, só as conhecidas e na ordem do catálogo. */
-export function areasDoUsuario(areas) {
+export function areasDoUsuario(areas: unknown) {
   const recebidas = new Set((Array.isArray(areas) ? areas : []).map(texto));
   const conhecidas = AREAS_DO_SISTEMA.map((area) => area.id).filter((id) =>
     recebidas.has(id),
@@ -369,7 +401,7 @@ export function areasDoUsuario(areas) {
   return conhecidas.length ? conhecidas : [...AREAS_PADRAO];
 }
 
-export function nomeDaArea(id) {
+export function nomeDaArea(id: string | null | undefined) {
   return AREAS_DO_SISTEMA.find((area) => area.id === id)?.rotulo ?? "";
 }
 
@@ -384,16 +416,6 @@ export function nomeDaArea(id) {
   sai do menu, e o grupo da área em manutenção leva `manutencao`. Sem ela,
   todas as áreas valem como ativas.
 */
-/**
- * @param {{
- *   permitidas?: Readonly<Record<string, boolean>>,
- *   paineis?: readonly { codigo?: string, titulo?: string }[],
- *   secoesDeConfiguracao?: readonly { id: string, rotulo: string, iconeDoMenu?: string }[],
- *   areas?: readonly string[],
- *   abas?: readonly object[],
- *   situacao?: object,
- * }} [opcoes]
- */
 export function montarArvoreDoMenu({
   permitidas = {},
   paineis = [],
@@ -401,13 +423,13 @@ export function montarArvoreDoMenu({
   areas,
   abas,
   situacao,
-} = {}) {
+}: OpcoesDoMenu = {}): ArvoreDoMenu {
   const catalogo = Array.isArray(abas) && abas.length ? abas : ABAS_DO_MENU;
   const doUsuario = new Set(
     filtrarAreasAtivas(areasDoUsuario(areas), situacao),
   );
-  const doSistema = new Set(AREAS_DO_SISTEMA.map((area) => area.id));
-  const itensPorArea = new Map(
+  const doSistema = new Set<string>(AREAS_DO_SISTEMA.map((area) => area.id));
+  const itensPorArea = new Map<string, ItemDoMenu[]>(
     AREAS_DO_MENU.filter(
       (area) => !doSistema.has(area.id) || doUsuario.has(area.id),
     ).map((area) => [area.id, []]),
@@ -425,7 +447,7 @@ export function montarArvoreDoMenu({
   for (const painel of paineis) {
     const codigo = texto(painel?.codigo);
     if (!codigo) continue;
-    itensPorArea.get(AREA_DOS_PAINEIS).push({
+    itensPorArea.get(AREA_DOS_PAINEIS)?.push({
       view: `panel:${codigo}`,
       rotulo: texto(painel.titulo) || codigo,
       icone: ICONE_DOS_PAINEIS,
@@ -434,7 +456,7 @@ export function montarArvoreDoMenu({
 
   if (permitidas.config) {
     for (const secao of secoesDeConfiguracao) {
-      itensPorArea.get(AREA_DAS_CONFIGURACOES).push({
+      itensPorArea.get(AREA_DAS_CONFIGURACOES)?.push({
         view: "config",
         secao: secao.id,
         rotulo: secao.rotulo,
@@ -449,7 +471,7 @@ export function montarArvoreDoMenu({
       return {
         ...area,
         ...(manutencao ? { manutencao } : {}),
-        itens: itensPorArea.get(area.id),
+        itens: itensPorArea.get(area.id) ?? [],
       };
     })
     .filter((area) => area.itens.length > 0);
@@ -463,14 +485,20 @@ export function montarArvoreDoMenu({
   (Configurações ainda sem seção escolhida), o primeiro daquela view. Devolve
   o grupo junto, ou `null` quando a página não está no menu.
 */
-export function itemAtivoDaArvore(arvore = [], view, secao, area) {
-  const candidatos = [];
+export function itemAtivoDaArvore(
+  arvore: ArvoreDoMenu = [],
+  view?: string | null,
+  secao?: string | null,
+  area?: string | null,
+) {
+  const candidatos: { area: string; item: ItemDoMenu }[] = [];
   for (const grupo of arvore) {
     for (const item of grupo.itens) {
       if (item.view === view) candidatos.push({ area: grupo.id, item });
     }
   }
-  const secaoBate = ({ item }) => !item.secao || item.secao === secao;
+  const secaoBate = ({ item }: { item: ItemDoMenu }) =>
+    !item.secao || item.secao === secao;
   return (
     candidatos.find((c) => c.item.area === area && secaoBate(c)) ||
     candidatos.find(secaoBate) ||
@@ -489,9 +517,9 @@ export function itemAtivoDaArvore(arvore = [], view, secao, area) {
   do desenho, e mora aqui para ser testável sem React. As páginas de cada área
   são as que a árvore traz: o seletor não conhece nenhuma view pelo nome.
 */
-const IDS_DAS_AREAS = new Set(AREAS_DO_SISTEMA.map((area) => area.id));
+const IDS_DAS_AREAS = new Set<string>(AREAS_DO_SISTEMA.map((area) => area.id));
 
-export function ehAreaDoSistema(id) {
+export function ehAreaDoSistema(id: unknown) {
   return IDS_DAS_AREAS.has(texto(id));
 }
 
@@ -500,7 +528,10 @@ export function ehAreaDoSistema(id) {
   área atual (ou o primeiro, se a atual não está entre eles). `demais`:
   Painéis e Administração. `comSeletor`: mais de uma área.
 */
-export function recortarArvorePorArea(arvore = [], areaAtual) {
+export function recortarArvorePorArea(
+  arvore: ArvoreDoMenu = [],
+  areaAtual?: string | null,
+) {
   const areas = arvore.filter((grupo) => ehAreaDoSistema(grupo.id));
   const demais = arvore.filter((grupo) => !ehAreaDoSistema(grupo.id));
   const grupoAtual =
@@ -513,7 +544,11 @@ export function recortarArvorePorArea(arvore = [], areaAtual) {
   Editais da SEDE para Editais de Projetos); senão, a primeira página dela.
   Devolve o item, ou `null` se a área não tem nenhuma página.
 */
-export function destinoAoTrocarDeArea(arvore = [], area, viewAtual) {
+export function destinoAoTrocarDeArea(
+  arvore: ArvoreDoMenu = [],
+  area: string,
+  viewAtual?: string | null,
+) {
   const grupo = arvore.find((g) => g.id === texto(area));
   if (!grupo?.itens.length) return null;
   return (
@@ -527,7 +562,10 @@ export function destinoAoTrocarDeArea(arvore = [], area, viewAtual) {
 */
 const FOLGA_DE_SUBPIXEL = 1;
 
-export function navegacaoTransborda(alturaDoConteudo, alturaDisponivel) {
+export function navegacaoTransborda(
+  alturaDoConteudo: number,
+  alturaDisponivel: number,
+) {
   return (
     Number(alturaDoConteudo) - Number(alturaDisponivel) > FOLGA_DE_SUBPIXEL
   );
@@ -538,7 +576,7 @@ export function navegacaoTransborda(alturaDoConteudo, alturaDisponivel) {
   assim, uma área nova no catálogo já aparece aberta, sem depender de ninguém
   ter aberto antes.
 */
-export function areaAberta(fechadas, area) {
+export function areaAberta(fechadas: ReadonlySet<string>, area: string) {
   return !fechadas.has(area);
 }
 
@@ -552,7 +590,9 @@ export function iconesDoCatalogo() {
       ...AREAS_DO_MENU.map((area) => area.icone),
       ...ABAS_DO_MENU.flatMap((aba) => [
         aba.icone,
-        ...aba.areas.map((area) => area.icone).filter(Boolean),
+        ...aba.areas
+          .map((area) => area.icone)
+          .filter((icone): icone is string => Boolean(icone)),
       ]),
       ICONE_DOS_PAINEIS,
       ICONE_DAS_CONFIGURACOES,
@@ -574,7 +614,7 @@ export function posicaoDoPainelFlutuante({
   alturaDaJanela,
   alturaDaPilula = ALTURA_DA_PILULA,
   margem = 8,
-}) {
+}: PosicaoDoFlutuante) {
   const centrado = topoDoGatilho + (alturaDoGatilho - alturaDaPilula) / 2;
   const limite = alturaDaJanela - margem - alturaDoPainel;
   return Math.round(Math.max(margem, Math.min(centrado, limite)));
@@ -597,15 +637,18 @@ export function posicaoDoPainelFlutuante({
     escolhido). Ela não reabre enquanto o foco ou o ponteiro não saírem dela
     — senão devolver o foco ao ícone reabriria o painel na mesma hora.
 */
-export const FLUTUANTE_FECHADO = Object.freeze({
+export const FLUTUANTE_FECHADO: EstadoFlutuante = Object.freeze({
   aberta: null,
   origem: null,
   suprimida: null,
 });
 
-export function proximoFlutuante(estado, evento) {
+export function proximoFlutuante(
+  estado: EstadoFlutuante | null,
+  evento: EventoFlutuante,
+): EstadoFlutuante {
   const atual = estado || FLUTUANTE_FECHADO;
-  const area = evento?.area ?? null;
+  const area = evento && "area" in evento ? evento.area : null;
 
   switch (evento?.tipo) {
     case "apontar":

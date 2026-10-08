@@ -8,7 +8,7 @@ import { compactarCandidatos } from "./candidatos-compactos-falsos.js";
 import {
   publicarLinhasDoMonitoramento,
   redefinirDadosDoMonitoramento,
-} from "../../src/componentes/dados-do-monitoramento.js";
+} from "../../src/componentes/dados-do-monitoramento.ts";
 
 /*
   A tela só mostra os editais da área atual (a padrão é a Saúde Indígena); os

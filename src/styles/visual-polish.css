@@ -35,18 +35,6 @@
   overflow: clip;
 }
 
-#googleLoginBtn {
-  display: flex !important;
-  min-height: 50px;
-  justify-content: center;
-  font-size: 15px;
-  font-weight: 900;
-}
-
-body.access-request-mode #googleLoginBtn {
-  display: none !important;
-}
-
 #googleLoginBtn + #accessRequestCard::before {
   content: "Use sua conta Google corporativa. Acesso liberado somente após aprovação do perfil.";
   display: block;

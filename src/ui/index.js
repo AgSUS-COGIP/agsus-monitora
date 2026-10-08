@@ -24,6 +24,12 @@ export { ListaDePendencias } from "./lista-de-pendencias.jsx";
 export { MaisOpcoes } from "./mais-opcoes.jsx";
 export { MenuDeAcoes } from "./menu-de-acoes.jsx";
 export { Modal } from "./modal.jsx";
+export {
+  CampoNomeDaVersao,
+  NomeDaVersao,
+  nomeDoCampo,
+  RenomearVersao,
+} from "./nome-da-versao.tsx";
 export { Popover } from "./popover.tsx";
 export {
   ChipDeFiltro,

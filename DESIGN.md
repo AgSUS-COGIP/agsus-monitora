@@ -166,7 +166,7 @@ guarda essa ordem.
 
 Media query não aceita `var()`, então os valores são constantes documentadas:
 **420px** (celular pequeno) · **640px** (celular) · **900px** (tablet; a barra lateral
-vira gaveta — contrato com `src/componentes/barra-lateral/usar-ambiente.js`) · **1220px** (desktop estreito).
+vira gaveta — contrato com `src/componentes/barra-lateral/usar-ambiente.ts`) · **1220px** (desktop estreito).
 Os valores de hoje (560, 680, 700, 720, 820, 1180) migram para o mais próximo quando a regra for tocada.
 
 ---
@@ -271,7 +271,7 @@ não os troca por skeleton: a tela fica e a barra do cabeçalho corre (`marcarAt
 alimenta por estado externo e eventos (ver `src/componentes/CLAUDE.md`). **Organizada em áreas** —
 um grupo por área do usuário (Saúde Indígena, SEDE, Projetos), cada um com Editais, Cronograma e
 Lista de aprovados (a Saúde Indígena também com Visão geral e Análises), depois Painéis e
-Administração (`src/lib/menu-lateral.js`; área nova é uma entrada no catálogo). O item escolhido
+Administração (`src/lib/menu-lateral.ts`; área nova é uma entrada no catálogo). O item escolhido
 define a área atual, que recorta as páginas; só o item da área atual fica ativo. Os painéis externos
 que não são de área entram em Painéis; as seções de Configurações são as páginas de Administração.
 
@@ -284,7 +284,7 @@ que não são de área entram em Painéis; as seções de Configurações são a
 - **Recolhida:** trilho de ícones de 36px. O painel da área vira um flutuante ao lado do trilho,
   com a pílula do nome em cima. Abre por clique, Enter/Espaço ou ponteiro (só com hover) e fecha
   por `Esc`, clique fora, foco saindo ou item escolhido — um por vez. O estado mora no JS
-  (`src/componentes/barra-lateral/menu-de-areas.jsx`), não em `:hover`.
+  (`src/componentes/barra-lateral/menu-de-areas.tsx`), não em `:hover`.
 - **Rodapé:** seletor Claro/Escuro (único controle de tema do app), Sair e versão. Recolhida,
   o tema vira um botão que alterna e o Sair vira ícone.
 - **Alça de recolher:** círculo de 24px na borda direita, na altura da marca, metade para fora; a

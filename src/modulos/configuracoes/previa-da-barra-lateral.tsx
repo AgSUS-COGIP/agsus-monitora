@@ -1,10 +1,11 @@
 import { useSyncExternalStore } from "react";
 import { usarTemaEscuro } from "../../app/tema.js";
-import { PecasDaBarraLateral } from "../../componentes/barra-lateral/barra-lateral.jsx";
+import { PecasDaBarraLateral } from "../../componentes/barra-lateral/barra-lateral.tsx";
 import {
   assinarBarraLateral,
   obterEstadoDaBarraLateral,
-} from "../../componentes/barra-lateral/estado.js";
+} from "../../componentes/barra-lateral/estado.ts";
+import type { ArvoreDoMenu } from "../../componentes/barra-lateral/tipos.ts";
 import { needsLightForeground } from "../../lib/access-branding.js";
 import {
   corDaBarraSegura,
@@ -14,7 +15,7 @@ import {
   ABAS_DO_MENU,
   AREAS_DO_SISTEMA,
   montarArvoreDoMenu,
-} from "../../lib/menu-lateral.js";
+} from "../../lib/menu-lateral.ts";
 import { MolduraDaPrevia } from "./moldura-da-previa.tsx";
 import { SECOES } from "./secoes.js";
 
@@ -38,15 +39,12 @@ type Versao = { rotulo: string; valor: string };
 const ATIVO_REPRESENTATIVO = Object.freeze({ view: "config", secao: "marca" });
 const OPCOES = Object.freeze({ navegar: () => {} });
 
-let arvoreRepresentativa: readonly object[] | null = null;
+let arvoreRepresentativa: ArvoreDoMenu | null = null;
 /* Todas as abas do catálogo nas três áreas, com Administração. */
-function menuRepresentativo(): readonly object[] {
+function menuRepresentativo(): ArvoreDoMenu {
   arvoreRepresentativa ||= montarArvoreDoMenu({
     permitidas: Object.fromEntries([
-      ...ABAS_DO_MENU.map((aba) => [
-        "view" in aba ? String(aba.view) : "",
-        true,
-      ]),
+      ...ABAS_DO_MENU.map((aba) => [aba.view, true]),
       ["config", true],
     ]),
     areas: AREAS_DO_SISTEMA.map((area) => area.id),

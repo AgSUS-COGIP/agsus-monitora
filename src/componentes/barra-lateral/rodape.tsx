@@ -1,3 +1,6 @@
+import type { ReactNode } from "react";
+import type { PreviaDaBarraLateral } from "./tipos.ts";
+import { alternarTemaPelaJanela } from "./integracao.ts";
 import { Icone } from "../icone.jsx";
 import {
   deveAlternarTema,
@@ -9,7 +12,7 @@ import { temaEscuro, usarTemaEscuro } from "../../app/tema.js";
 
 /*
   Rodapé da barra, de cima para baixo: o seletor Claro/Escuro (único controle
-  de tema do app), o botão de recolher (`alca`, de `alca-de-recolher.jsx`; na
+  de tema do app), o botão de recolher (`alca`, de `alca-de-recolher.tsx`; na
   gaveta do celular ele mora no cabeçalho e não vem), o Sair (único logout —
   `nielsen-shell-ux.js` tira o do menu do perfil) e a versão. Recolhida, o CSS
   troca os dois segmentos por um botão que alterna e deixa o recolher e o Sair
@@ -25,12 +28,18 @@ import { temaEscuro, usarTemaEscuro } from "../../app/tema.js";
   Com `previa` (Configurações › Marca), o tema é o da prévia e a versão vem
   escrita pelo React, porque ali não há legado escrevendo nos ids.
 */
-export function Rodape({ alca = null, previa = null }) {
+export function Rodape({
+  alca = null,
+  previa = null,
+}: {
+  alca?: ReactNode;
+  previa?: PreviaDaBarraLateral | null;
+}) {
   const escuroDoApp = usarTemaEscuro();
   const escuro = previa ? previa.escuro : escuroDoApp;
   const tema = themeControlState(escuro);
-  const pedirTema = (pedido) => {
-    if (deveAlternarTema(pedido, temaEscuro())) window.toggleDarkMode?.();
+  const pedirTema = (pedido: string) => {
+    if (deveAlternarTema(pedido, temaEscuro())) alternarTemaPelaJanela();
   };
 
   return (
@@ -56,7 +65,7 @@ export function Rodape({ alca = null, previa = null }) {
           className="side-tema__alternar"
           aria-label={tema.label}
           data-dica={`Alternar para tema ${escuro ? "claro" : "escuro"}`}
-          onClick={() => window.toggleDarkMode?.()}
+          onClick={() => alternarTemaPelaJanela()}
         >
           <Icone nome={tema.icon} />
         </button>

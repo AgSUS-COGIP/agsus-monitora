@@ -1,7 +1,7 @@
 import { existsSync, readFileSync } from "node:fs";
 import { act } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { montarArvoreDoMenu } from "../../src/lib/menu-lateral.js";
+import { montarArvoreDoMenu } from "../../src/lib/menu-lateral.ts";
 import {
   avisar,
   EVENTO_BARRA_ALTERNADA,
@@ -10,17 +10,17 @@ import {
 } from "../../src/lib/eventos-da-barra-lateral.js";
 import { SECOES } from "../../src/modulos/configuracoes/secoes.js";
 import { performExplicitLogout } from "../../src/modules/nielsen-shell-ux.js";
-import { montarBarraLateral } from "../../src/componentes/barra-lateral/barra-lateral.jsx";
+import { montarBarraLateral } from "../../src/componentes/barra-lateral/barra-lateral.tsx";
 import {
   atualizarMenuLateral,
   marcarItemAtivoNoMenu,
   redefinirBarraLateral,
-} from "../../src/componentes/barra-lateral/estado.js";
+} from "../../src/componentes/barra-lateral/estado.ts";
 import {
   definirAreaAtual,
   obterDadosDoMonitoramento,
   redefinirDadosDoMonitoramento,
-} from "../../src/componentes/dados-do-monitoramento.js";
+} from "../../src/componentes/dados-do-monitoramento.ts";
 
 vi.mock("../../src/modules/nielsen-shell-ux.js", async (original) => ({
   ...(await original()),
@@ -1122,7 +1122,7 @@ describe("contrato de CSS e ligação no arranque", () => {
 
   it("o main.js monta a barra antes do branding e importa o CSS dela", () => {
     expect(main).toContain(
-      'import { montarBarraLateral } from "./componentes/barra-lateral/barra-lateral.jsx"',
+      'import { montarBarraLateral } from "./componentes/barra-lateral/barra-lateral.tsx"',
     );
     expect(main).toContain('import "./styles/barra-lateral.css"');
     expect(main.indexOf("montarBarraLateral();")).toBeGreaterThan(-1);

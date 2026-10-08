@@ -33,7 +33,13 @@ const RPCS = {
   listar_editais_classificacao: { args: ["p_area"], minimo: 1 },
   obter_classificacao_do_edital: { args: ["p_edital"], minimo: 1 },
   salvar_regra_classificacao: {
-    args: ["p_edital", "p_configuracao", "p_versao_atual", "p_motivo"],
+    args: [
+      "p_edital",
+      "p_configuracao",
+      "p_versao_atual",
+      "p_motivo",
+      "p_nome",
+    ],
     minimo: 2,
   },
   registrar_lista_classificacao: {

@@ -1,3 +1,4 @@
+import { alternarBarraPelaJanela } from "./integracao.ts";
 import { useState } from "react";
 import { createPortal } from "react-dom";
 import { Icone } from "../icone.jsx";
@@ -29,7 +30,7 @@ import { Icone } from "../icone.jsx";
   com o padrão de texto só para leitor de tela e aparece na dica (`data-dica`,
   desenhada pelo CSS do trilho).
 */
-export function AlcaDeRecolher({ recolhida }) {
+export function AlcaDeRecolher({ recolhida }: { recolhida: boolean }) {
   const rotulo = recolhida ? "Expandir menu" : "Recolher menu";
   return (
     <button
@@ -40,7 +41,7 @@ export function AlcaDeRecolher({ recolhida }) {
       aria-label={rotulo}
       aria-expanded={!recolhida}
       data-dica={rotulo}
-      onClick={() => window.toggleSidebar?.()}
+      onClick={alternarBarraPelaJanela}
     >
       <Icone nome="panel-left" />
       <span className="side-recolher__rotulo">{rotulo}</span>
@@ -52,7 +53,7 @@ export function AlcaDeRecolher({ recolhida }) {
   Até 900px: no `.title-row` do cabeçalho (legado), abre e fecha a gaveta.
   Aqui `sidebar-collapsed` quer dizer gaveta fechada.
 */
-export function AlcaNoCabecalho({ recolhida }) {
+export function AlcaNoCabecalho({ recolhida }: { recolhida: boolean }) {
   const [destino] = useState(() =>
     document.querySelector("#appScreen .main > header.top .title-row"),
   );
@@ -67,7 +68,7 @@ export function AlcaNoCabecalho({ recolhida }) {
       title={rotulo}
       aria-label={rotulo}
       aria-expanded={!recolhida}
-      onClick={() => window.toggleSidebar?.()}
+      onClick={alternarBarraPelaJanela}
     >
       <Icone nome="menu" tamanho={20} />
     </button>,

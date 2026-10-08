@@ -11,7 +11,7 @@ import {
 import {
   definirAreaAtual,
   redefinirDadosDoMonitoramento,
-} from "../../src/componentes/dados-do-monitoramento.js";
+} from "../../src/componentes/dados-do-monitoramento.ts";
 
 /* A moldura do app (src/app/moldura.js): barra, tema, tela cheia e PDF. */
 

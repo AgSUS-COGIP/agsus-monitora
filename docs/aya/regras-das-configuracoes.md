@@ -29,13 +29,13 @@ publicação no histórico de Operação, de onde uma versão pode ser restaurad
 ## Tela de acesso nas Configurações
 
 **perguntas:** configurar tela de acesso | o que a secao tela de acesso define | para que serve tela de acesso | para que serve a secao tela de acesso | configurar tela de login | saudacao do login | saudacao da tela de acesso | slogan do login
-**resposta:** Em Configurações, a seção Tela de acesso define a saudação (o título grande do cartão de entrada) e o botão Entrar com Google: se ele aparece, o texto dele e o domínio sugerido. Também define quais domínios de e-mail podem entrar. O slogan "Monitoramento de Processos Seletivos" é fixo. A arte de fundo, o logo e a cor do cartão ficam na seção Aparência. A prévia ao lado mostra a tela como ela vai ficar.
+**resposta:** Em Configurações, a seção Tela de acesso define a saudação (o título grande do cartão de entrada) e o botão do Google: se ele aparece, o texto dele (vazio, fica "Entrar com Google") e o domínio sugerido. Também define quais domínios de e-mail podem entrar. São fixos o slogan "Monitoramento de Processos Seletivos", a linha "Acesse com sua conta institucional." acima do botão e o rodapé com o nome da Agência. A arte de fundo, o logo e a cor do cartão ficam na seção Aparência. A prévia ao lado mostra a tela como ela vai ficar.
 **fonte:** interface do MONITORA
 
 ## Login com Google desligado
 
 **perguntas:** desligar login google | o que acontece se desligar o login google | login google inativo | desativar google | botao do google sumiu
-**resposta:** Com o Login Google em Inativo, o botão Entrar com Google some da tela de entrada. Como esse é o acesso institucional principal, as pessoas podem ficar sem conseguir entrar; por isso, ao salvar a desativação, o sistema pede confirmação antes de publicar.
+**resposta:** Com o Login Google em Inativo, o botão Entrar com Google some da tela de entrada (o espaço dele fica vazio). Como esse é o acesso institucional principal, as pessoas podem ficar sem conseguir entrar; por isso, ao salvar a desativação, o sistema pede confirmação antes de publicar.
 **fonte:** interface do MONITORA
 
 ## Domínio sugerido no login Google

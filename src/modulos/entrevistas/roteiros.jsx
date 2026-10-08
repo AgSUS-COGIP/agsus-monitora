@@ -19,14 +19,23 @@ import {
   TIPOS_DE_MINIMO,
 } from "../../lib/roteiro-de-entrevista.js";
 import {
+  erroDoNomeDaVersao,
+  nomeParaGravar,
+  rotuloDaVersao,
+  sugerirNomeDaVersao,
+} from "../../lib/nome-da-versao.ts";
+import {
   Aviso,
   Campo,
+  CampoNomeDaVersao,
   Carregando,
   EstadoVazio,
   Gaveta,
+  NomeDaVersao,
+  nomeDoCampo,
+  RenomearVersao,
   Secao,
   Segmentado,
-  Selo,
 } from "../../ui/index.js";
 import { AspectosDoRoteiro } from "./aspectos-do-roteiro.tsx";
 import { DesempateDaClassificacao } from "./conducao.jsx";
@@ -56,7 +65,7 @@ import {
   banco decide (42501 vira aviso).
 */
 
-function CartaoDoRoteiro({ roteiro, podeEditar, aoAbrir }) {
+function CartaoDoRoteiro({ roteiro, podeEditar, aoAbrir, aoRenomear }) {
   const r = resumoDoRoteiro(roteiro);
   return (
     <article className="ui-card entrevistas-cartao" data-roteiro={roteiro.id}>
@@ -70,7 +79,11 @@ function CartaoDoRoteiro({ roteiro, podeEditar, aoAbrir }) {
           </span>
           <h3>{roteiro.nome}</h3>
         </div>
-        <Selo titulo="Versão do roteiro">v{r.versao}</Selo>
+        <NomeDaVersao
+          versao={r.versao}
+          nome={roteiro.nome_versao}
+          trocas={roteiro.renomeacoes}
+        />
       </div>
       <p className="entrevistas-cartao-linha">
         {r.competencias} {r.competencias === 1 ? "competência" : "competências"}{" "}
@@ -116,6 +129,15 @@ function CartaoDoRoteiro({ roteiro, podeEditar, aoAbrir }) {
             >
               <i className="fa-solid fa-copy" aria-hidden="true" /> Duplicar
             </button>
+            {aoRenomear ? (
+              <RenomearVersao
+                versao={r.versao}
+                nome={roteiro.nome_versao}
+                aoRenomear={(nome, motivo) =>
+                  aoRenomear(roteiro.id, nome, motivo)
+                }
+              />
+            ) : null}
           </>
         )}
       </div>
@@ -123,10 +145,24 @@ function CartaoDoRoteiro({ roteiro, podeEditar, aoAbrir }) {
   );
 }
 
-export function VisaoDeRoteiros({ conducao, area }) {
+/**
+ * `pedido` ({ roteiro, vez }): abrir este roteiro no editor (o "Editar" do
+ * resumo das regras em Preparar); cada pedido novo tem outra `vez`.
+ * @param {{ conducao: any, area: string, pedido?: { roteiro: unknown, vez: number } | null }} props
+ */
+export function VisaoDeRoteiros({ conducao, area, pedido = null }) {
   const e = useSyncExternalStore(conducao.assinar, conducao.obter);
   const [aberto, setAberto] = useState(null);
   const { roteiros, podeEditar } = e;
+
+  useEffect(() => {
+    if (!pedido?.roteiro) return;
+    setAberto({
+      roteiro: pedido.roteiro,
+      modo: podeEditar === false ? "ver" : "editar",
+    });
+    // Só a cada pedido novo.
+  }, [pedido?.vez]);
 
   useEffect(() => {
     const { carregado, carregando } = conducao.obter().roteiros;
@@ -186,6 +222,14 @@ export function VisaoDeRoteiros({ conducao, area }) {
               roteiro={r}
               podeEditar={podeEditar}
               aoAbrir={(roteiro, modo) => setAberto({ roteiro, modo })}
+              aoRenomear={async (id, nome, motivo) => {
+                const resultado = await conducao.renomearRoteiro(
+                  id,
+                  nome,
+                  motivo,
+                );
+                return { ok: Boolean(resultado?.ok), erro: resultado?.erro };
+              }}
             />
           ))
         ) : roteiros.carregado && !roteiros.erro ? (
@@ -585,6 +629,14 @@ export function EditorDeRoteiro({
   );
   const [tentou, setTentou] = useState(false);
   const [erroDoBanco, setErroDoBanco] = useState("");
+  const [nomeDaVersao, setNomeDaVersao] = useState(null);
+  const [hoje] = useState(() => new Date());
+  const sugestaoDoNome = sugerirNomeDaVersao({
+    tipo: "roteiro",
+    roteiro: r.nome,
+    data: hoje,
+  });
+  const nomeEscolhido = nomeDoCampo(nomeDaVersao, sugestaoDoNome);
   const erros = useMemo(() => errosDoRoteiro(r), [r]);
   const errosVisiveis = tentou ? erros : {};
   const quantosErros = Object.keys(erros).length;
@@ -600,7 +652,7 @@ export function EditorDeRoteiro({
     modo === "editar"
       ? `Roteiro · versão ${r.versao} → salvar grava a versão ${r.versao + 1}`
       : modo === "ver"
-        ? `Roteiro · versão ${roteiro?.versao ?? 1}`
+        ? `Roteiro · ${rotuloDaVersao({ versao: roteiro?.versao ?? 1, nome: roteiro?.nome_versao })}`
         : "Roteiro de entrevista";
   const opcoesDeArea = [...new Set([area, roteiro?.area].filter(Boolean))].map(
     (valor) => ({ valor, rotulo: rotuloDaAreaDoPainel(valor) }),
@@ -610,9 +662,13 @@ export function EditorDeRoteiro({
     evento.preventDefault();
     if (somenteLeitura) return;
     setTentou(true);
-    if (quantosErros) return;
+    if (quantosErros || erroDoNomeDaVersao(nomeEscolhido)) return;
     setErroDoBanco("");
-    const resultado = await aoSalvar(dadosDoRoteiroParaSalvar(r));
+    const nome = nomeParaGravar(nomeEscolhido);
+    const resultado = await aoSalvar({
+      ...dadosDoRoteiroParaSalvar(r),
+      ...(nome ? { nome_versao: nome } : {}),
+    });
     if (resultado?.erro) setErroDoBanco(resultado.erro);
   }
 
@@ -643,6 +699,14 @@ export function EditorDeRoteiro({
         noValidate
       >
         <div className="ui-gaveta-corpo">
+          {somenteLeitura ? null : (
+            <CampoNomeDaVersao
+              valor={nomeDaVersao}
+              sugestao={sugestaoDoNome}
+              aoMudar={setNomeDaVersao}
+              mostrarErro={tentou}
+            />
+          )}
           {modo === "editar" && roteiro?.editais_em_uso ? (
             <Aviso tom="info">
               {roteiro.editais_em_uso === 1

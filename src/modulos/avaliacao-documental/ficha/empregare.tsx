@@ -81,9 +81,9 @@ export function LinkDaEmpregare({
 }
 
 /**
- * O anexo declarado: "Abrir na Empregare" e a dica de onde achar o arquivo
- * (anexo-na-empregare.ts monta o endereço e a dica; troca-se lá pelo link
- * direto do arquivo).
+ * O anexo declarado: "Ver documento" com o link Visualizar Arquivo da pergunta;
+ * senão "Ver respostas na Empregare" ou "Abrir na Empregare" e a dica de onde achar o arquivo
+ * (anexo-na-empregare.ts monta o endereço, o rótulo e a dica).
  */
 export function LinkDoAnexo({
   empregare,
@@ -94,7 +94,7 @@ export function LinkDoAnexo({
 }) {
   const endereco = enderecoDoAnexo(empregare.enderecos, coluna);
   if (!endereco) return null;
-  const { rotulo, dica } = apresentacaoDoAnexo(coluna);
+  const { rotulo, dica } = apresentacaoDoAnexo(coluna, endereco);
   return (
     <span className="avd-ficha-anexo">
       <a
@@ -103,7 +103,7 @@ export function LinkDoAnexo({
         target="_blank"
         rel="noopener noreferrer"
         onClick={() => {
-          if (endereco.destino !== "candidato")
+          if (endereco.destino === "vaga" || endereco.destino === "vagas")
             void copiarParaABusca(empregare);
           void empregare.loja.registrarAcesso("ABRIR_EMPREGARE");
         }}

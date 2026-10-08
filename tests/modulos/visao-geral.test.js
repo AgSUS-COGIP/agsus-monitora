@@ -6,7 +6,7 @@ import {
   definirAreaAtual,
   publicarLinhasDoMonitoramento,
   redefinirDadosDoMonitoramento,
-} from "../../src/componentes/dados-do-monitoramento.js";
+} from "../../src/componentes/dados-do-monitoramento.ts";
 import {
   clicar,
   digitar,
@@ -18,7 +18,7 @@ import { criarLeafletFalso } from "./leaflet-falso.js";
 /*
   A Visão geral como módulo do app (src/modulos/visao-geral/): monta na
   própria `#page-dashboard`, lê as linhas que o legado publica
-  (dados-do-monitoramento.js) recortadas pela área atual; do banco, só os
+  (dados-do-monitoramento.ts) recortadas pela área atual; do banco, só os
   marcos do ano, os lugares do mapa de Projetos e o acompanhamento da área
   (etapas do cronograma e resumo das listas). Os mapas
   da área são React: Saúde Indígena e Projetos; a SEDE não tem.

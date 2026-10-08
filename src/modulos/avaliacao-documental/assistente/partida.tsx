@@ -8,6 +8,7 @@ import type {
   RegraDeOutroEdital,
   RegraSalva,
 } from "../../../lib/avaliacao-documental/tipos-da-regra.ts";
+import { rotuloDaVersao } from "../../../lib/nome-da-versao.ts";
 import { Aviso } from "../../../ui/index.js";
 
 /*
@@ -30,7 +31,7 @@ type Props = {
 };
 
 const rotuloDoEdital = (r: RegraDeOutroEdital) =>
-  [r.numero ? `Edital ${r.numero}` : r.edital, r.unidade, `regra v${r.versao}`]
+  [r.numero ? `Edital ${r.numero}` : r.edital, r.unidade, rotuloDaVersao(r)]
     .filter(Boolean)
     .join(" · ");
 
@@ -121,7 +122,7 @@ export function PassoPartida({
         {regraSalva
           ? opcao(
               "vigente",
-              `Continuar da versão vigente (v${regraSalva.versao})`,
+              `Continuar da versão vigente (${rotuloDaVersao(regraSalva)})`,
               "fa-code-branch",
             )
           : null}

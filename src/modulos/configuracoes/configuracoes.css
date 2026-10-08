@@ -1688,15 +1688,6 @@ body:not(.sidebar-collapsed) .config-barra {
   gap: var(--space-4);
   padding-bottom: var(--space-2);
 }
-.cartao-da-mascote__tamanhos .aya-retrato {
-  width: 64px;
-  height: 64px;
-}
-.cartao-da-mascote__tamanhos .cartao-da-mascote__retrato-pequeno {
-  width: 46px;
-  height: 46px;
-  padding: 2px;
-}
 .cartao-da-mascote__estados {
   flex-wrap: wrap;
   margin-top: var(--space-3);

@@ -19,7 +19,7 @@ import {
   proximasEtapas,
   FILTROS_VAZIOS,
 } from "../../src/lib/calendario-editais.ts";
-import { soDosEditais } from "../../src/componentes/dados-do-monitoramento.js";
+import { soDosEditais } from "../../src/componentes/dados-do-monitoramento.ts";
 
 declare const clienteReal: SupabaseClient;
 const cliente: ClienteDoCalendario = clienteReal;

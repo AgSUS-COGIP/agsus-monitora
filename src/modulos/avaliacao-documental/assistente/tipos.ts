@@ -15,6 +15,7 @@ import type {
 
 export type RegraDeClassificacaoSalva = {
   versao: number;
+  nome?: string | null;
   configuracao: unknown;
   atualizado_em?: string;
   por?: string | null;
@@ -71,6 +72,8 @@ export type EstadoDaRegra = {
   salvarRegra: (
     configuracao: unknown,
     motivo: string,
+    /** Nome desta versão (null = sem nome). */
+    nome?: string | null,
   ) => Promise<ResultadoDaGravacao>;
   salvarRegraClassificacao: (
     configuracao: unknown,
@@ -78,4 +81,9 @@ export type EstadoDaRegra = {
     motivo: string,
   ) => Promise<ResultadoDaGravacao>;
   conferirRegra: () => Promise<ResultadoDaGravacao>;
+  renomearVersao?: (
+    versao: number,
+    nome: string | null,
+    motivo: string,
+  ) => Promise<ResultadoDaGravacao>;
 };

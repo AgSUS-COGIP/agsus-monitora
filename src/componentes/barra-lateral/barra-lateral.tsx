@@ -1,11 +1,17 @@
 import { useEffect, useState, useSyncExternalStore } from "react";
 import { montarModulo } from "../../app/montar-modulo.jsx";
 import { LOGO_PADRAO_DA_BARRA } from "../../lib/marca-da-barra-lateral.js";
-import { AlcaDeRecolher, AlcaNoCabecalho } from "./alca-de-recolher.jsx";
-import { assinarBarraLateral, obterEstadoDaBarraLateral } from "./estado.js";
-import { Navegacao } from "./menu-de-areas.jsx";
-import { Rodape } from "./rodape.jsx";
-import { usarBarraRecolhida, usarGaveta } from "./usar-ambiente.js";
+import { AlcaDeRecolher, AlcaNoCabecalho } from "./alca-de-recolher.tsx";
+import { assinarBarraLateral, obterEstadoDaBarraLateral } from "./estado.ts";
+import { Navegacao } from "./menu-de-areas.tsx";
+import { Rodape } from "./rodape.tsx";
+import type {
+  ArvoreDoMenu,
+  ItemAtivoDoMenu,
+  OpcoesDaBarraLateral,
+  PreviaDaBarraLateral,
+} from "./tipos.ts";
+import { usarBarraRecolhida, usarGaveta } from "./usar-ambiente.ts";
 
 /*
   A barra lateral, em React — o primeiro pedaço do front a migrar.
@@ -13,9 +19,9 @@ import { usarBarraRecolhida, usarGaveta } from "./usar-ambiente.js";
   O React é dono de tudo dentro de `<aside class="sidebar">`: marca, menu de
   áreas e rodapé (com o botão de recolher). O resto do sistema fala com ela sem tocar
   no DOM dela:
-  - o legado empurra a árvore e a página ativa para `estado.js`;
+  - o legado empurra a árvore e a página ativa para `estado.ts`;
   - a classe de `body` que recolhe a barra, o tema de `html` e a largura
-    chegam por `usar-ambiente.js`, avisados por evento;
+    chegam por `usar-ambiente.ts`, avisados por evento;
   - duas folhas continuam do legado, e o React só as cria: o `src` da logo
     (`sidebar-branding.js`) e o texto da versão (`applyConfigToUi`).
 
@@ -32,7 +38,7 @@ import { usarBarraRecolhida, usarGaveta } from "./usar-ambiente.js";
   Na prévia, a logo é a do rascunho, com a volta para a padrão se o endereço
   não carregar (o que `sidebar-branding.js` faz na barra de verdade).
 */
-function usarLogoDaPrevia(logo) {
+function usarLogoDaPrevia(logo: string | undefined) {
   const [falhou, definirFalhou] = useState("");
   if (logo === undefined) return { src: LOGO_PADRAO_DA_BARRA };
   return {
@@ -41,7 +47,7 @@ function usarLogoDaPrevia(logo) {
   };
 }
 
-function Marca({ logo }) {
+function Marca({ logo }: { logo?: string }) {
   const imagem = usarLogoDaPrevia(logo);
   return (
     <div className="side-brand" data-tour="barra-marca">
@@ -67,11 +73,14 @@ function Marca({ logo }) {
   a altura dela vem daqui: ao apontar ou focar um controle com dica, grava o
   centro dele em `--dica-topo`. Um ouvinte só, delegado no documento.
 */
-function usarDicasDoTrilho(trilho) {
+function usarDicasDoTrilho(trilho: boolean) {
   useEffect(() => {
     if (!trilho) return undefined;
-    const posicionar = (evento) => {
-      const alvo = evento.target?.closest?.(".sidebar [data-dica]");
+    const posicionar = (evento: Event) => {
+      const alvo =
+        evento.target instanceof Element
+          ? evento.target.closest<HTMLElement>(".sidebar [data-dica]")
+          : null;
       if (!alvo) return;
       const caixa = alvo.getBoundingClientRect();
       alvo.style.setProperty(
@@ -88,21 +97,7 @@ function usarDicasDoTrilho(trilho) {
   }, [trilho]);
 }
 
-/**
- * As peças da barra (marca, menu e rodapé), as mesmas na barra de verdade e
- * na prévia de Configurações.
- * @typedef {{ rotulo: string, valor: string }} VersaoDaPrevia
- * @typedef {{ logo: string, escuro: boolean, versao: VersaoDaPrevia }} Previa
- * @param {{
- *   arvore: readonly object[],
- *   ativo: { view: string | null, secao: string | null },
- *   opcoes: object,
- *   trilho: boolean,
- *   recolhida: boolean,
- *   gaveta: boolean,
- *   previa?: Previa | null,
- * }} props
- */
+/** As peças da barra (marca, menu e rodapé), as mesmas na barra e na prévia. */
 export function PecasDaBarraLateral({
   arvore,
   ativo,
@@ -111,6 +106,14 @@ export function PecasDaBarraLateral({
   recolhida,
   gaveta,
   previa = null,
+}: {
+  arvore: ArvoreDoMenu;
+  ativo: ItemAtivoDoMenu;
+  opcoes: OpcoesDaBarraLateral;
+  trilho: boolean;
+  recolhida: boolean;
+  gaveta: boolean;
+  previa?: PreviaDaBarraLateral | null;
 }) {
   return (
     <>
@@ -158,7 +161,7 @@ export function BarraLateral() {
   o legado — encontra `#sideLogo`, `#sidebarVersion` e `#nav` no DOM.
 */
 export function montarBarraLateral(
-  aside = document.querySelector("#appScreen .sidebar"),
+  aside: Element | null = document.querySelector("#appScreen .sidebar"),
 ) {
   if (!aside) return null;
   return montarModulo(aside, <BarraLateral />, {

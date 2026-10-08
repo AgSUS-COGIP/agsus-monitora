@@ -1,3 +1,35 @@
+import type {
+  RefObject,
+  Dispatch,
+  PointerEvent,
+  FocusEvent,
+  KeyboardEvent,
+} from "react";
+import type {
+  GrupoDoMenu,
+  ItemDoMenu as Item,
+  ArvoreDoMenu,
+  ManutencaoDoMenu,
+  ItemAtivoDoMenu,
+  OpcoesDaBarraLateral,
+  EventoFlutuante,
+} from "./tipos.ts";
+import { navegarPelaJanela } from "./integracao.ts";
+type Espera = RefObject<number>;
+type Despachar = Dispatch<EventoFlutuante>;
+type Gatilho = {
+  id: string;
+  trilho: boolean;
+  flutuante: boolean;
+  despachar: Despachar;
+  espera: Espera;
+  soNoClique?: boolean;
+};
+type EscolherItem = (
+  item: Item,
+  area: string,
+  cabecalho?: RefObject<HTMLButtonElement | null>,
+) => void;
 import {
   useEffect,
   useLayoutEffect,
@@ -18,7 +50,7 @@ import {
   posicaoDoPainelFlutuante,
   proximoFlutuante,
   recortarArvorePorArea,
-} from "../../lib/menu-lateral.js";
+} from "../../lib/menu-lateral.ts";
 import {
   avisar,
   EVENTO_MENU_ATUALIZADO,
@@ -27,13 +59,13 @@ import {
   assinarDadosDoMonitoramento,
   definirAreaAtual,
   obterDadosDoMonitoramento,
-} from "../dados-do-monitoramento.js";
+} from "../dados-do-monitoramento.ts";
 import { dicaDaManutencao } from "../../lib/situacao-dos-modulos.js";
-import { marcarItemAtivoNoMenu } from "./estado.js";
+import { marcarItemAtivoNoMenu } from "./estado.ts";
 
 /*
   O menu em áreas. O catálogo, a árvore e o estado do painel flutuante são
-  lógica pura, em `src/lib/menu-lateral.js`; aqui fica o desenho.
+  lógica pura, em `src/lib/menu-lateral.ts`; aqui fica o desenho.
 
   - Com mais de uma área, o topo é o SELETOR DE ÁREA ("Área: Projetos", com o
     ícone da área e a bolinha da cor dela) e, abaixo dele, só as páginas da
@@ -58,28 +90,28 @@ import { marcarItemAtivoNoMenu } from "./estado.js";
   menu inferior do celular, pelos ganchos do mapa (`[data-view="dashboard"]`)
   e pelos testes de ponta a ponta. As opções do seletor não têm `data-view`:
   não são páginas.
-
-  Com `previa` (a prévia de Configurações › Marca), o menu é o mesmo, mas não
-  grava as áreas fechadas nem avisa `EVENTO_MENU_ATUALIZADO`: quem espelha o
-  menu é a barra de verdade.
 */
 
 const CHAVE_AREAS_FECHADAS = "agsus_monitora_menu_areas_fechadas_v1";
 const ESPERA_AO_SAIR = 150;
 const ID_DO_SELETOR = "seletor-de-area";
 
-function lerAreasFechadas() {
+function lerAreasFechadas(): Set<string> {
   try {
-    const salvo = JSON.parse(
+    const salvo: unknown = JSON.parse(
       window.localStorage.getItem(CHAVE_AREAS_FECHADAS) || "[]",
     );
-    return new Set(Array.isArray(salvo) ? salvo.map(String) : []);
+    return new Set(
+      Array.isArray(salvo)
+        ? salvo.filter((id): id is string => typeof id === "string")
+        : [],
+    );
   } catch {
     return new Set();
   }
 }
 
-function gravarAreasFechadas(fechadas) {
+function gravarAreasFechadas(fechadas: ReadonlySet<string>) {
   try {
     window.localStorage.setItem(
       CHAVE_AREAS_FECHADAS,
@@ -91,21 +123,24 @@ function gravarAreasFechadas(fechadas) {
 }
 
 const temHover = () => window.matchMedia?.("(hover: hover)").matches ?? true;
-const classes = (...lista) => lista.filter(Boolean).join(" ");
+const classes = (...lista: (string | boolean | null | undefined)[]) =>
+  lista.filter(Boolean).join(" ");
 
 /*
   Os itens chamam `window.navigate` na hora do clique, como fazia o `onclick`
   inline: quem a procura na janela na hora pega sempre a versão atual do
   legado, mesmo que ela seja trocada depois da montagem.
 */
-const navegarPelaJanela = (view) => window.navigate?.(view);
-const paginaAtivaPadrao = (view) =>
+const paginaAtivaPadrao = (view: string) =>
   Boolean(
     document.getElementById(`page-${view}`)?.classList.contains("active"),
   );
 
 /* Recolhida, a navegação só rola quando transborda (ver `platform-shell.css`). */
-function usarTransbordo(refNavegacao, refNav) {
+function usarTransbordo(
+  refNavegacao: RefObject<HTMLDivElement | null>,
+  refNav: RefObject<HTMLElement | null>,
+) {
   const [transborda, definirTransborda] = useState(false);
   useLayoutEffect(() => {
     const navegacao = refNavegacao.current;
@@ -137,14 +172,20 @@ function usarGatilhoFlutuante({
   despachar,
   espera,
   soNoClique = false,
-}) {
-  const refSecao = useRef(null);
-  const refCabecalho = useRef(null);
-  const refPainel = useRef(null);
+}: Gatilho) {
+  const refSecao = useRef<HTMLElement>(null);
+  const refCabecalho = useRef<HTMLButtonElement>(null);
+  const refPainel = useRef<HTMLDivElement>(null);
 
   // Aberto no trilho: o painel se alinha ao ícone e fica dentro da janela.
   useLayoutEffect(() => {
-    if (!flutuante || !refCabecalho.current) return;
+    if (
+      !flutuante ||
+      !refCabecalho.current ||
+      !refPainel.current ||
+      !refSecao.current
+    )
+      return;
     const caixa = refCabecalho.current.getBoundingClientRect();
     const topo = posicaoDoPainelFlutuante({
       topoDoGatilho: caixa.top,
@@ -156,14 +197,14 @@ function usarGatilhoFlutuante({
   }, [flutuante]);
 
   const eventos = {
-    onPointerEnter(evento) {
+    onPointerEnter(evento: PointerEvent<HTMLElement>) {
       if (!trilho || soNoClique) return;
       if (evento.pointerType === "touch" || !temHover()) return;
       window.clearTimeout(espera.current);
       despachar({ tipo: "apontar", area: id });
     },
     /* Sair com o ponteiro espera um instante: o caminho em diagonal até o painel raspa fora da área. */
-    onPointerLeave(evento) {
+    onPointerLeave(evento: PointerEvent<HTMLElement>) {
       if (evento.pointerType === "touch") return;
       window.clearTimeout(espera.current);
       espera.current = window.setTimeout(
@@ -174,13 +215,13 @@ function usarGatilhoFlutuante({
     onFocus() {
       if (trilho && !soNoClique) despachar({ tipo: "focar", area: id });
     },
-    onBlur(evento) {
+    onBlur(evento: FocusEvent<HTMLElement>) {
       if (refSecao.current?.contains(evento.relatedTarget)) return;
       despachar({ tipo: "desfocar", area: id });
     },
   };
 
-  const dispensarPorEsc = (evento) => {
+  const dispensarPorEsc = (evento: KeyboardEvent<HTMLElement>) => {
     if (evento.key !== "Escape" || !trilho || !flutuante) return false;
     evento.preventDefault();
     despachar({ tipo: "dispensar", area: id });
@@ -206,7 +247,11 @@ function usarGatilhoFlutuante({
   nome, com a mensagem e a previsão na dica (`title`). A página continua no
   menu: quem abre vê a tela de manutenção (o administrador global entra).
 */
-function IndicadorDeManutencao({ manutencao }) {
+function IndicadorDeManutencao({
+  manutencao,
+}: {
+  manutencao?: ManutencaoDoMenu | null;
+}) {
   if (!manutencao) return null;
   const dica = dicaDaManutencao(manutencao);
   return (
@@ -216,7 +261,17 @@ function IndicadorDeManutencao({ manutencao }) {
   );
 }
 
-function ItemDoMenu({ item, ativo, direto = false, aoEscolher }) {
+function ItemDoMenu({
+  item,
+  ativo,
+  direto = false,
+  aoEscolher,
+}: {
+  item: Item;
+  ativo: boolean;
+  direto?: boolean;
+  aoEscolher: () => void;
+}) {
   const dica = [
     item.rotulo,
     item.beta ? "BETA" : "",
@@ -265,6 +320,19 @@ function Area({
   espera,
   aoAlternar,
   aoEscolher,
+}: {
+  area: GrupoDoMenu;
+  aberta: boolean;
+  atual: boolean;
+  semCabecalho?: boolean;
+  direto?: boolean;
+  itemAtivo: Item | null;
+  trilho: boolean;
+  flutuante: boolean;
+  despachar: Despachar;
+  espera: Espera;
+  aoAlternar: (id: string) => void;
+  aoEscolher: EscolherItem;
 }) {
   const { refSecao, refCabecalho, refPainel, eventos, dispensarPorEsc } =
     usarGatilhoFlutuante({
@@ -359,6 +427,14 @@ function SeletorDeArea({
   despachar,
   espera,
   aoTrocar,
+}: {
+  areas: readonly GrupoDoMenu[];
+  atual: GrupoDoMenu;
+  trilho: boolean;
+  flutuante: boolean;
+  despachar: Despachar;
+  espera: Espera;
+  aoTrocar: (id: string) => void;
 }) {
   const [aberto, definirAberto] = useState(false);
   const { refSecao, refCabecalho, refPainel, eventos, dispensarPorEsc } =
@@ -381,7 +457,7 @@ function SeletorDeArea({
     else definirAberto((valor) => !valor);
   };
 
-  const aoTeclar = (evento) => {
+  const aoTeclar = (evento: KeyboardEvent<HTMLElement>) => {
     if (dispensarPorEsc(evento)) return;
     if (evento.key === "Escape" && aberto) {
       evento.preventDefault();
@@ -390,7 +466,7 @@ function SeletorDeArea({
     }
   };
 
-  const escolher = (id) => {
+  const escolher = (id: string) => {
     definirAberto(false);
     if (trilho) {
       despachar({ tipo: "dispensar", area: ID_DO_SELETOR });
@@ -475,9 +551,26 @@ function SeletorDeArea({
   );
 }
 
-export function Navegacao({ arvore, ativo, opcoes, trilho, previa = false }) {
-  const refNavegacao = useRef(null);
-  const refNav = useRef(null);
+/*
+  Com `previa` (a prévia de Configurações › Marca), o menu é o mesmo, mas não
+  grava as áreas fechadas nem avisa `EVENTO_MENU_ATUALIZADO`: quem espelha o
+  menu é a barra de verdade.
+*/
+export function Navegacao({
+  arvore,
+  ativo,
+  opcoes,
+  trilho,
+  previa = false,
+}: {
+  arvore: ArvoreDoMenu;
+  ativo: ItemAtivoDoMenu;
+  opcoes: OpcoesDaBarraLateral;
+  trilho: boolean;
+  previa?: boolean;
+}) {
+  const refNavegacao = useRef<HTMLDivElement>(null);
+  const refNav = useRef<HTMLElement>(null);
   const espera = useRef(0);
   const transborda = usarTransbordo(refNavegacao, refNav);
   const [fechadas, definirFechadas] = useState(lerAreasFechadas);
@@ -499,7 +592,7 @@ export function Navegacao({ arvore, ativo, opcoes, trilho, previa = false }) {
   );
   const areaAtiva = itemAtivo?.area ?? null;
 
-  const guardarFechadas = (proximas) => {
+  const guardarFechadas = (proximas: Set<string>) => {
     if (!previa) gravarAreasFechadas(proximas);
     definirFechadas(proximas);
   };
@@ -538,8 +631,12 @@ export function Navegacao({ arvore, ativo, opcoes, trilho, previa = false }) {
   useEffect(() => {
     if (!flutuante.aberta) return undefined;
     const fechar = () => despachar({ tipo: "fechar" });
-    const aoApertar = (evento) => {
-      if (!refNav.current?.contains(evento.target)) fechar();
+    const aoApertar = (evento: Event) => {
+      if (
+        !(evento.target instanceof Node) ||
+        !refNav.current?.contains(evento.target)
+      )
+        fechar();
     };
     const navegacao = refNavegacao.current;
     document.addEventListener("pointerdown", aoApertar, true);
@@ -554,14 +651,14 @@ export function Navegacao({ arvore, ativo, opcoes, trilho, previa = false }) {
 
   useEffect(() => () => window.clearTimeout(espera.current), []);
 
-  const alternarArea = (id) => {
+  const alternarArea = (id: string) => {
     const proximas = new Set(fechadas);
     if (proximas.has(id)) proximas.delete(id);
     else proximas.add(id);
     guardarFechadas(proximas);
   };
 
-  const escolher = (item, area, refCabecalho) => {
+  const escolher: EscolherItem = (item, area, refCabecalho) => {
     const navegar = opcoes.navegar ?? navegarPelaJanela;
     const paginaAtiva = opcoes.paginaAtiva ?? paginaAtivaPadrao;
     // A área vem antes da navegação: a página abre já recortada por ela.
@@ -594,13 +691,16 @@ export function Navegacao({ arvore, ativo, opcoes, trilho, previa = false }) {
     Trocar de área: a área vem antes da navegação (a página abre recortada),
     e a página é a mesma, se a área nova a tem, ou a primeira dela.
   */
-  const trocarDeArea = (id) => {
+  const trocarDeArea = (id: string) => {
     const destino = destinoAoTrocarDeArea(arvore, id, ativo.view);
     definirAreaAtual(id);
     if (destino) (opcoes.navegar ?? navegarPelaJanela)(destino.view);
   };
 
-  const desenharArea = (area, extras = {}) => (
+  const desenharArea = (
+    area: GrupoDoMenu,
+    extras: { direto?: boolean; semCabecalho?: boolean } = {},
+  ) => (
     <Area
       key={area.id}
       area={area}
@@ -624,7 +724,7 @@ export function Navegacao({ arvore, ativo, opcoes, trilho, previa = false }) {
     acordeão.
   */
   const conteudo = () => {
-    if (!recorte.comSeletor) {
+    if (!recorte.comSeletor || !recorte.grupoAtual) {
       return arvore.map((area) =>
         desenharArea(area, { direto: trilho && ehAreaDoSistema(area.id) }),
       );

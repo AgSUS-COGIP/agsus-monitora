@@ -4,7 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   definirAreaAtual,
   redefinirDadosDoMonitoramento,
-} from "../../src/componentes/dados-do-monitoramento.js";
+} from "../../src/componentes/dados-do-monitoramento.ts";
 import { montarAvaliacaoDocumental } from "../../src/modulos/avaliacao-documental/avaliacao-documental.jsx";
 import {
   clicar,
@@ -206,7 +206,7 @@ describe("assistente da regra", () => {
       chamada[1].p_configuracao.blocos.some((b) => b.tipo === "CURSOS"),
     ).toBe(false);
     expect(chamada[1].p_configuracao.edital_rotulo).toBe("Edital 93/2026");
-    expect(secao.textContent).toContain("Regra v1");
+    expect(secao.textContent).toContain("Versão 1");
   }, 20000);
 
   it("perguntas da Empregare: liga pelo enunciado e mostra a cor de cada uma", async () => {
