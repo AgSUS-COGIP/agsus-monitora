@@ -385,37 +385,46 @@ def ler_lista_de_candidatos(html):
 def ler_respostas_do_html(html):
     """
     As respostas aos questionários de cada candidato da lista de candidaturas:
-    {código: {"token": tokenCandidato, "respostas": [id, …]}}. O id vem do
-    data-resposta dos a.progress-link do item (só dígitos, sem repetir; modo 3,
-    entrevista virtual, fica de fora) e o token do data-tokenCandidato do item.
-    Abre GetRespostaDetails/<id>?token=<token> (anexos_empregare.py). Devolve
-    (mapa, sem_token). Tokens: nunca no log.
+    {código: {"pessoa": data-id do item, "respostas": [{"id", "token", "vaga"}]}}.
+    Como o front da Empregare (chunk 8152, questionarioResposta.detalhes): o id
+    é o data-resposta do a.progress-link, o token é o data-token do link (sem
+    ele, o data-tokenCandidato do item) e "vaga" o data-vagaTitulo. Modo 3
+    (entrevista virtual) fica de fora. Abre GetRespostaDetails/<id>?token=<token>
+    (anexos_empregare.py). Devolve (mapa, sem_token). Tokens: nunca no log.
     """
     arvore = _Arvore()
     arvore.feed(str(html or ""))
     arvore.close()
     respostas = {}
     sem_token = 0
+    token_ok = re.compile(r"[A-Za-z0-9_.~=%|+/-]{1,200}")
     for item in (n for n in _descendentes(arvore.raiz) if "curriculo-list-item" in _classes(n)):
         dentro = list(_descendentes(item))
         codigos = {c for c in (_codigo_do_no(n) for n in [item, *dentro]) if c}
         if len(codigos) != 1:
             continue
         codigo = next(iter(codigos))
-        ids = []
-        token = ""
+        do_item = ""
+        pessoa = ""
         for n in [item, *dentro]:
-            token = token or (n["attrs"].get("data-tokencandidato") or "").strip()
+            do_item = do_item or (n["attrs"].get("data-tokencandidato") or "").strip()
+            if not pessoa and "list-group-item" in _classes(n):
+                pessoa = (n["attrs"].get("data-id") or "").strip()
+        lidas = []
+        faltou_token = False
+        for n in dentro:
             valor = (n["attrs"].get("data-resposta") or "").strip()
             modo = (n["attrs"].get("data-modo-resposta") or "").strip()
-            if re.fullmatch(r"[0-9]{1,20}", valor) and modo != "3" and valor not in ids:
-                ids.append(valor)
-        if not ids or not _CODIGO_DO_CANDIDATO.match(codigo):
-            continue
-        if not re.fullmatch(r"[A-Za-z0-9_.~=%|+/-]{1,200}", token):
-            sem_token += 1
-            continue
-        respostas[codigo] = {"token": token, "respostas": ids}
+            if not re.fullmatch(r"[0-9]{1,20}", valor) or modo == "3" or any(r["id"] == valor for r in lidas):
+                continue
+            token = (n["attrs"].get("data-token") or "").strip() or do_item
+            if not token_ok.fullmatch(token):
+                faltou_token = True
+                continue
+            lidas.append({"id": valor, "token": token, "vaga": (n["attrs"].get("data-vagatitulo") or "").strip()[:300]})
+        sem_token += faltou_token and not lidas
+        if lidas and _CODIGO_DO_CANDIDATO.match(codigo):
+            respostas[codigo] = {"pessoa": pessoa if token_ok.fullmatch(pessoa or "-") else "", "respostas": lidas}
     return respostas, sem_token
 
 
@@ -616,7 +625,7 @@ class PortalEmpregare:
         self.descartados = 0  # links fora do formato na última lista lida (só contagem)
         self.janela = None  # janela do login (pedir a exportação pode abrir outra)
         self.diagnostico = {}  # da última página de candidaturas aberta (só contagens)
-        self.respostas = {}  # código do candidato → {token, respostas} dos questionários (última lista lida)
+        self.respostas = {}  # código do candidato → {pessoa, respostas} dos questionários (última lista lida)
 
     def __enter__(self):
         self.driver = self._iniciar()

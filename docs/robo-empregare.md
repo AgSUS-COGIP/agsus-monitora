@@ -95,16 +95,23 @@ a ativa). Sem nenhum link lido, mostra ainda o tamanho do `page_source` e se ele
 ### Anexos do questionário (migration `20261008160000_anexos_do_questionario_na_empregare.sql`)
 
 A exportação não traz o link dos anexos (só "Sim"/"--") e o link de detalhes abre o currículo, não
-o documento. O caminho real (investigado em 08/10/2026, só leitura): na lista de candidaturas, cada
-candidato tem um `a.progress-link[data-resposta]` por questionário (`data-modo-resposta` 3 é a
-entrevista virtual por IA: fica de fora) e o item tem `data-tokenCandidato`. O clique faz o GET XHR
-`/Company/VacancyTests/GetRespostaDetails/<respostaID>?token=<tokenCandidato>`, cujo HTML (o painel
-lateral de respostas) traz, por pergunta, o enunciado e, por anexo, o botão **Visualizar Arquivo**
-(`/Company/VacancyTests/GetViewerLogArquivo?arquivo=…&token=…&questionarioRespostaID=…&perguntaID=…`:
-estável, abre o visualizador da Empregare com login e **registra a visualização**) e o link de
-impressão das respostas (`/Company/VacancyTests/PrintResult?respostaID=…&pessoa=…&vaga=…`). O
-arquivo em si fica num storage com assinatura que expira: esse link nunca é guardado. No painel há
-ações perigosas (Zerar Tentativas, Excluir Respostas, compartilhar): o robô nunca clica nelas.
+o documento. O caminho real (investigado em 08/10/2026, só leitura, e conferido no front da
+Empregare, chunk 8152 — `questionarioResposta.detalhes`): na lista de candidaturas, cada candidato tem
+um `a.progress-link[data-resposta]` por questionário (com `data-token` e `data-vagaTitulo`;
+`data-modo-resposta` 3 é a entrevista virtual por IA: fica de fora) e o item tem `data-id` (a pessoa)
+e `data-tokenCandidato`. O clique faz o GET XHR
+`/Company/VacancyTests/GetRespostaDetails/<respostaID>?token=<token>`, que devolve **JSON**:
+`{sucesso, questionario: {id, totalPerguntas, respostas: [{PerguntaID, Ordem, Pergunta, TipoResposta,
+Resposta, RespostaID…}]}}`. No anexo (`TipoResposta` 4) `Resposta` é o nome do arquivo (0 = "Não se
+aplica", 1 = "Não possuo este documento"), e o front monta:
+
+- **Visualizar Arquivo**: `/Company/VacancyTests/GetViewerLogArquivo?arquivo=<Resposta>&nome=Case&token=<token>&questionarioRespostaID=<RespostaID>&perguntaID=<PerguntaID>`
+  (estável, abre o visualizador com o login da Empregare e **registra a visualização**);
+- **impressão**: `/Company/VacancyTests/PrintResult?respostaID=<questionario.id>&pessoa=<data-id>&vaga=<título da vaga>`.
+
+A `Ordem` bate com o "Pergunta N" da exportação. O arquivo em si fica num storage com assinatura
+que expira: esse link nunca é guardado. No painel da Empregare há ações perigosas (Zerar
+Tentativas, Excluir Respostas, compartilhar): o robô nunca clica nelas.
 
 Há dois passos (`scripts/robo-empregare/anexos_empregare.py`):
 
@@ -113,27 +120,28 @@ Há dois passos (`scripts/robo-empregare/anexos_empregare.py`):
    Seletivo"; não exporta), lê a lista e, para cada candidato sondado: as abas da página de detalhes
    (só href `#…` com `data-toggle=tab`; nunca o menu do site), os clicáveis de `#tabInscricoes`,
    `#tabAnexos` e `#tabCurriculo` (sem clicar no que for perigoso) e, **pela vaga**, o GET de
-   `GetRespostaDetails` de cada resposta com a sessão do Chrome: status, tamanho, perguntas
-   (classe e «Pergunta N»), anexos e em quantas perguntas (perguntaIDs distintos), quantos com
-   enunciado, se há impressão, links fora do formato e quantos botões perigosos (nenhum clicado),
-   mais o padrão mascarado do 1º anexo e da impressão. **Nenhum arquivo é aberto.** Nunca nome,
+   `GetRespostaDetails` de cada resposta com a sessão do Chrome: status, se é JSON, `sucesso`,
+   `totalPerguntas`, respostas por `TipoResposta`, anexos (tipo 4 com arquivo) e em quantas
+   perguntas, a **Ordem** de cada anexo («Pergunta N») com o enunciado, links fora do formato, se há
+   impressão e o padrão mascarado do link do anexo e da impressão. **Nenhum arquivo é aberto.** Nunca nome,
    CPF, e-mail, nome de arquivo, token nem URL completa no log.
 2. **Capturar** (`anexos` marcado no Run workflow, modo `normal`/`forcar`; opcional até
    validarmos): a lista de candidaturas que o robô já lê dá, por candidato, o token e as respostas
    (`ler_respostas_do_html` em `navegador_empregare.py`). Para cada resposta, o mesmo GET com a
-   sessão (6 por vez, `fetch` na página; até 10 min por vaga e 30 por execução); o HTML é lido
-   (`ler_detalhes_da_resposta`) e cada anexo ganha a coluna do Excel cujo enunciado casa
+   sessão (6 por vez, `fetch` na página; até 10 min por vaga e 30 por execução); o JSON é lido
+   (`ler_detalhes_da_resposta`), os links são montados como o front e cada anexo ganha a coluna do
+   Excel: a "Pergunta <Ordem>" se o enunciado confirma, senão a de enunciado igual
    (`coluna_da_pergunta`: sem acento, minúsculo, espaços simples, sem "Pergunta N - ", como
-   `nota-declarada.js`). Depois de fechar a vaga, grava por `gravar_anexos_empregare`:
+   `nota-declarada.js`). O nome do arquivo só vai no link, nunca no log. Depois de fechar a vaga, grava por `gravar_anexos_empregare`:
    `TB_EMPREGARE_RESPOSTA` (resposta, link de impressão, contagens) e `TB_EMPREGARE_ANEXO`
-   (pergunta × arquivo: link Visualizar Arquivo, tipo `ARQUIVO_EMPREGARE`, enunciado, coluna). A
+   (pergunta × arquivo: link Visualizar Arquivo, tipo `ARQUIVO_EMPREGARE`, Ordem, enunciado, coluna). A
    resposta relida fica só com os anexos lidos agora. No log, só contagens (`respostas de
 questionário lidas N de M · K anexo(s)`, `N de M anexo(s) casados com a coluna do Excel`).
    Banco sem a migration: avisa e segue.
 
 **Na ficha**: `obter_ficha_analise` devolve em `empregare` as `respostas` (`resposta`,
-`link_impressao`, contagens) e os `anexos` (`resposta`, `pergunta`, `arquivo`, `enunciado`, `coluna`,
-`tipo`, `link`) — dado restrito, só para quem pode ver a ficha. A regra do botão está em
+`link_impressao`, contagens) e os `anexos` (`resposta`, `pergunta`, `arquivo`, `ordem`, `enunciado`,
+`coluna`, `tipo`, `link`) — dado restrito, só para quem pode ver a ficha. A regra do botão está em
 `src/lib/avaliacao-documental/anexo-na-empregare.ts`: anexo da coluna (pela coluna casada; sem ela,
 pelo enunciado) → **Ver documento** (abre o visualizador da Empregare logada; com dois ou mais
 arquivos, a dica diz quantos); sem ele, a impressão → **Ver respostas na Empregare** e a dica da

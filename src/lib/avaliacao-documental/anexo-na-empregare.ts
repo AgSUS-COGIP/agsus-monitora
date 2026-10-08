@@ -4,11 +4,11 @@
   (ficha.jsx e ficha/empregare.tsx) não monta link nenhum.
 
   O robô (scripts/robo-empregare/anexos_empregare.py, com --anexos) lê o
-  painel de respostas de cada questionário (GetRespostaDetails) e grava
+  JSON das respostas de cada questionário (GetRespostaDetails) e grava
   (migration 20261008160000): por anexo, o link "Visualizar Arquivo"
   (/Company/VacancyTests/GetViewerLogArquivo?…, abre o visualizador da
-  Empregare com login, não expira) com o enunciado e a coluna do Excel
-  casada; por resposta, o link de impressão (/Company/VacancyTests/PrintResult?…).
+  Empregare com login, não expira) com a Ordem, o enunciado e a coluna do
+  Excel casada (pela Ordem, confirmada pelo enunciado); por resposta, o link de impressão (/Company/VacancyTests/PrintResult?…).
   obter_ficha_analise devolve em `empregare.anexos` e `empregare.respostas`.
 
     enderecos.anexos = anexosDaEmpregare(dados.empregare);        // ficha.jsx
@@ -27,6 +27,8 @@ export type AnexoDaEmpregare = {
   resposta: string;
   pergunta: string;
   arquivo: number;
+  /** A Ordem da pergunta no questionário (o "Pergunta N" da exportação), ou null. */
+  ordem: number | null;
   enunciado: string;
   coluna: string;
   link: string;
@@ -97,6 +99,7 @@ export function anexosDaEmpregare(empregare: unknown): AnexoDaEmpregare[] {
       resposta: String(item.resposta ?? ""),
       pergunta,
       arquivo: Number(item.arquivo) || 1,
+      ordem: Number.isInteger(item.ordem) ? (item.ordem as number) : null,
       enunciado: limpar(item.enunciado),
       coluna: limpar(item.coluna),
       link,

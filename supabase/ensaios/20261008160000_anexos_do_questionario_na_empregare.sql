@@ -77,6 +77,7 @@ create table public."TB_EMPREGARE_ANEXO" (
   "CO_EMPREGARE_RESPOSTA" uuid not null,
   "CO_PERGUNTA_EMPREGARE" varchar(20) not null,
   "NU_ARQUIVO" smallint not null default 1,
+  "NU_ORDEM" smallint,
   "DS_ENUNCIADO" varchar(2000),
   "DS_COLUNA" varchar(1000),
   "TP_LINK" varchar(20) not null default 'ARQUIVO_EMPREGARE',
@@ -88,6 +89,7 @@ create table public."TB_EMPREGARE_ANEXO" (
     references public."TB_EMPREGARE_RESPOSTA" ("CO_EMPREGARE_RESPOSTA") on delete cascade,
   constraint "CK_EMPREGANEXO_COPERGUNTA" check ("CO_PERGUNTA_EMPREGARE" ~ '^[0-9]{1,20}$'),
   constraint "CK_EMPREGANEXO_NUARQUIVO" check ("NU_ARQUIVO" between 1 and 50),
+  constraint "CK_EMPREGANEXO_NUORDEM" check ("NU_ORDEM" is null or "NU_ORDEM" between 1 and 999),
   constraint "CK_EMPREGANEXO_TPLINK" check ("TP_LINK" in ('ARQUIVO_EMPREGARE')),
   constraint "CK_EMPREGANEXO_DSLINK" check ("DS_LINK" ~ '^https://corporate\.empregare\.com/Company/VacancyTests/GetViewerLogArquivo\?[A-Za-z0-9_.~=&%|+/:-]+$')
 );
@@ -96,8 +98,9 @@ comment on column public."TB_EMPREGARE_ANEXO"."CO_EMPREGARE_ANEXO" is 'Identific
 comment on column public."TB_EMPREGARE_ANEXO"."CO_EMPREGARE_RESPOSTA" is 'Resposta do questionário (TB_EMPREGARE_RESPOSTA).';
 comment on column public."TB_EMPREGARE_ANEXO"."CO_PERGUNTA_EMPREGARE" is 'Identificador da pergunta na Empregare (perguntaID do link).';
 comment on column public."TB_EMPREGARE_ANEXO"."NU_ARQUIVO" is 'Ordem do arquivo na pergunta (1, 2…).';
+comment on column public."TB_EMPREGARE_ANEXO"."NU_ORDEM" is 'Ordem da pergunta no questionário (bate com o "Pergunta N" da exportação).';
 comment on column public."TB_EMPREGARE_ANEXO"."DS_ENUNCIADO" is 'Enunciado da pergunta como o HTML mostra (texto do edital), sem nome de arquivo.';
-comment on column public."TB_EMPREGARE_ANEXO"."DS_COLUNA" is 'Coluna do Excel da exportação ("Pergunta N - enunciado") casada pelo enunciado; nula se não casou.';
+comment on column public."TB_EMPREGARE_ANEXO"."DS_COLUNA" is 'Coluna do Excel da exportação ("Pergunta N - enunciado") casada pela Ordem e confirmada pelo enunciado (ou só pelo enunciado); nula se não casou.';
 comment on column public."TB_EMPREGARE_ANEXO"."TP_LINK" is 'ARQUIVO_EMPREGARE: abre o visualizador da Empregare com login (não expira).';
 comment on column public."TB_EMPREGARE_ANEXO"."DS_LINK" is 'Link Visualizar Arquivo (/Company/VacancyTests/GetViewerLogArquivo?…). DADO RESTRITO.';
 comment on column public."TB_EMPREGARE_ANEXO"."DT_CAPTURA" is 'Quando o robô leu pela última vez.';
@@ -159,14 +162,16 @@ begin
     -- A resposta relida fica só com os anexos lidos agora.
     delete from public."TB_EMPREGARE_ANEXO" a where a."CO_EMPREGARE_RESPOSTA" = v_resp;
     insert into public."TB_EMPREGARE_ANEXO" (
-      "CO_EMPREGARE_RESPOSTA", "CO_PERGUNTA_EMPREGARE", "NU_ARQUIVO", "DS_ENUNCIADO", "DS_COLUNA", "DS_LINK", "DT_CAPTURA")
+      "CO_EMPREGARE_RESPOSTA", "CO_PERGUNTA_EMPREGARE", "NU_ARQUIVO", "NU_ORDEM", "DS_ENUNCIADO", "DS_COLUNA", "DS_LINK",
+      "DT_CAPTURA")
     select distinct on (an.pergunta, an.arquivo)
            v_resp, an.pergunta, an.arquivo::smallint,
+           case when an.ordem between 1 and 999 then an.ordem::smallint end,
            nullif(left(btrim(regexp_replace(an.enunciado, '\s+', ' ', 'g')), 2000), ''),
            nullif(left(btrim(an.coluna), 1000), ''),
            an.link, now()
       from jsonb_to_recordset(coalesce(v_r -> 'anexos', '[]'::jsonb))
-           as an(pergunta text, arquivo integer, enunciado text, coluna text, link text)
+           as an(pergunta text, arquivo integer, ordem integer, enunciado text, coluna text, link text)
      where an.pergunta ~ '^[0-9]{1,20}$'
        and an.arquivo between 1 and 50
        and length(an.link) <= 1500
@@ -182,7 +187,7 @@ begin
 end;
 $function$;
 comment on function public.gravar_anexos_empregare(text, text, jsonb) is
-  'Recebe (até 500 por lote) as respostas de questionário dos candidatos de uma vaga, lidas pelo robô da Empregare em GetRespostaDetails: [{codigo, resposta, impressao, perguntas, anexos: [{pergunta, arquivo, enunciado, coluna, link}]}]. Faz upsert em TB_EMPREGARE_RESPOSTA e troca os anexos da resposta em TB_EMPREGARE_ANEXO. Só candidatos da vaga; link fora do formato fica de fora. Só service_role, com a execução em andamento.';
+  'Recebe (até 500 por lote) as respostas de questionário dos candidatos de uma vaga, lidas pelo robô da Empregare em GetRespostaDetails: [{codigo, resposta, impressao, perguntas, anexos: [{pergunta, arquivo, ordem, enunciado, coluna, link}]}]. Faz upsert em TB_EMPREGARE_RESPOSTA e troca os anexos da resposta em TB_EMPREGARE_ANEXO. Só candidatos da vaga; link fora do formato fica de fora. Só service_role, com a execução em andamento.';
 revoke all on function public.gravar_anexos_empregare(text, text, jsonb) from public, anon, authenticated;
 grant execute on function public.gravar_anexos_empregare(text, text, jsonb) to service_role;
 
@@ -246,7 +251,8 @@ begin
                            'anexos', coalesce((
                              select json_agg(json_build_object('resposta', r."CO_RESPOSTA_QUESTIONARIO",
                                                                'pergunta', a."CO_PERGUNTA_EMPREGARE",
-                                                               'arquivo', a."NU_ARQUIVO", 'enunciado', a."DS_ENUNCIADO",
+                                                               'arquivo', a."NU_ARQUIVO", 'ordem', a."NU_ORDEM",
+                                                               'enunciado', a."DS_ENUNCIADO",
                                                                'coluna', a."DS_COLUNA", 'tipo', a."TP_LINK",
                                                                'link', a."DS_LINK")
                                              order by r."CO_RESPOSTA_QUESTIONARIO", a."CO_PERGUNTA_EMPREGARE", a."NU_ARQUIVO")
@@ -269,7 +275,7 @@ begin
 end;
 $function$;
 comment on function public.obter_ficha_analise(uuid) is
-  'A ficha para analisar (json): o cabeçalho (sem CPF nem contato), o lançamento e o resultado gravados, a regra com que é analisada (a vigente; a da conclusão, se concluída — AM-2.3), a nota mínima e os níveis da regra de classificação, a nota declarada e a ART da pré-classificação, as respostas da Empregare SÓ das perguntas que a regra liga, os links da Empregare capturados pelo robô (empregare: link_candidato da página de detalhes, vaga_interno e link_vaga das candidaturas, respostas [{resposta, link_impressao, perguntas, anexos, capturado_em}] e anexos [{resposta, pergunta, arquivo, enunciado, coluna, tipo, link}] do questionário; dado restrito, só aqui), o histórico (até 200, com as alterações) e se quem chama pode editar (reserva vigente, em análise) ou reabrir (coordenação, concluída). Vê: coordenação e revisão; o analista, só nas vagas dele; o leitor, só concluída.';
+  'A ficha para analisar (json): o cabeçalho (sem CPF nem contato), o lançamento e o resultado gravados, a regra com que é analisada (a vigente; a da conclusão, se concluída — AM-2.3), a nota mínima e os níveis da regra de classificação, a nota declarada e a ART da pré-classificação, as respostas da Empregare SÓ das perguntas que a regra liga, os links da Empregare capturados pelo robô (empregare: link_candidato da página de detalhes, vaga_interno e link_vaga das candidaturas, respostas [{resposta, link_impressao, perguntas, anexos, capturado_em}] e anexos [{resposta, pergunta, arquivo, ordem, enunciado, coluna, tipo, link}] do questionário; dado restrito, só aqui), o histórico (até 200, com as alterações) e se quem chama pode editar (reserva vigente, em análise) ou reabrir (coordenação, concluída). Vê: coordenação e revisão; o analista, só nas vagas dele; o leitor, só concluída.';
 revoke all on function public.obter_ficha_analise(uuid) from public, anon;
 grant execute on function public.obter_ficha_analise(uuid) to authenticated;
 
@@ -325,7 +331,7 @@ begin
   v := public.gravar_anexos_empregare('gh-ensaio-anexo-0001', '99999502', jsonb_build_array(
     jsonb_build_object('codigo', 'ENSAIOA1', 'resposta', '9900001', 'impressao', c_imp, 'perguntas', 25,
       'anexos', jsonb_build_array(
-        jsonb_build_object('pergunta', '501', 'arquivo', 1, 'enunciado', '  Anexe   o RG ', 'coluna', 'Pergunta 4 - Anexe o RG', 'link', c_arq1),
+        jsonb_build_object('pergunta', '501', 'arquivo', 1, 'ordem', 4, 'enunciado', '  Anexe   o RG ', 'coluna', 'Pergunta 4 - Anexe o RG', 'link', c_arq1),
         jsonb_build_object('pergunta', '502', 'arquivo', 1, 'enunciado', 'Anexe o diploma', 'link', c_arq2),
         jsonb_build_object('pergunta', '503', 'arquivo', 1, 'link', 'https://storage.empregare.com/anexocurriculo/x.pdf?se=1&sig=y'),
         jsonb_build_object('pergunta', 'x', 'arquivo', 1, 'link', c_arq1))),
@@ -379,8 +385,8 @@ begin
   insert into public."TB_EMPREGARE_RESPOSTA" ("CO_EMPREGARE_CANDIDATO", "CO_RESPOSTA_QUESTIONARIO", "DS_LINK_IMPRESSAO", "QT_PERGUNTA", "QT_ANEXO")
   values (v_cand, '9988776', 'https://corporate.empregare.com/Company/VacancyTests/PrintResult?respostaID=9988776&pessoa=ENSAIOpsF&vaga=Ensaio', 25, 1)
   returning "CO_EMPREGARE_RESPOSTA" into v_resp;
-  insert into public."TB_EMPREGARE_ANEXO" ("CO_EMPREGARE_RESPOSTA", "CO_PERGUNTA_EMPREGARE", "NU_ARQUIVO", "DS_ENUNCIADO", "DS_COLUNA", "DS_LINK")
-  values (v_resp, '701', 1, 'Anexe o comprovante', 'Pergunta 7 - Anexe o comprovante',
+  insert into public."TB_EMPREGARE_ANEXO" ("CO_EMPREGARE_RESPOSTA", "CO_PERGUNTA_EMPREGARE", "NU_ARQUIVO", "NU_ORDEM", "DS_ENUNCIADO", "DS_COLUNA", "DS_LINK")
+  values (v_resp, '701', 1, 7, 'Anexe o comprovante', 'Pergunta 7 - Anexe o comprovante',
           'https://corporate.empregare.com/Company/VacancyTests/GetViewerLogArquivo?arquivo=ENSAIOaF.pdf&token=ENSAIOtkF&questionarioRespostaID=9988776&perguntaID=701');
 
   insert into auth.users (id, instance_id, aud, role, email) values
@@ -421,6 +427,7 @@ begin
   v := public.obter_ficha_analise(v_ficha);
   if json_array_length(v -> 'empregare' -> 'anexos') <> 1
      or v -> 'empregare' -> 'anexos' -> 0 ->> 'coluna' is distinct from 'Pergunta 7 - Anexe o comprovante'
+     or (v -> 'empregare' -> 'anexos' -> 0 ->> 'ordem')::int is distinct from 7
      or v -> 'empregare' -> 'anexos' -> 0 ->> 'tipo' is distinct from 'ARQUIVO_EMPREGARE'
      or v -> 'empregare' -> 'anexos' -> 0 ->> 'link' !~ 'GetViewerLogArquivo'
      or json_array_length(v -> 'empregare' -> 'respostas') <> 1

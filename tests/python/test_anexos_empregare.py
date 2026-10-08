@@ -2,13 +2,14 @@
 Testes dos anexos do questionário da Empregare (scripts/robo-empregare/anexos_empregare.py):
 o modo sondar só escreve estrutura mascarada (nada de nome, CPF, e-mail, nome de
 arquivo, token nem URL completa) e não clica no que pode mudar algo; a captura lê
-o HTML de GetRespostaDetails (fixture SINTÉTICA abaixo), casa o enunciado com a
+o JSON de GetRespostaDetails (fixture SINTÉTICA abaixo), casa o enunciado com a
 coluna do Excel e grava por resposta × pergunta, sem abrir os arquivos.
 Dados e links fictícios; nada fala com a Empregare nem com o Supabase.
 
     python -m pytest tests/python/test_anexos_empregare.py
 """
 
+import json
 import pathlib
 import sys
 import unittest
@@ -56,6 +57,8 @@ PROIBIDOS = (
     "PSfict99",
     "7654321",
     "8f3a9c7e2d",
+    "aaaa.pdf",
+    "bbbb",
 )
 
 
@@ -239,12 +242,12 @@ IMPRIMIR_DO_CANDIDATO = {
 
 LISTA_DA_VAGA = """
 <div class="curriculo-append"><div class="list-group candidatura-group" id="curriculo-pagina-1">
-  <div class="list-group-item curriculo-list-item" data-tokenCandidato="TKfict123">
+  <div class="list-group-item curriculo-list-item" data-id="PSfict99" data-tokenCandidato="TKfict123">
     <ul><li data-pessoa-id="7000001">Pessoa Fictícia Um</li></ul>
     <a class="link-curriculo" href="/empresa/curriculo/detalhes?tokenCandidato=TKfict123">ver</a>
-    <a class="progress-link" href="javascript:" data-resposta="7654321" data-modo-resposta="1"></a>
+    <a class="progress-link" href="javascript:" data-resposta="7654321" data-modo-resposta="1" data-token="TKfict123" data-vagaTitulo="Vaga Fictícia"></a>
     <a class="progress-link" href="javascript:" data-resposta="7654322" data-modo-resposta="2"></a>
-    <a class="progress-link" href="javascript:" data-resposta="7654323" data-modo-resposta="3"></a></div>
+    <a class="progress-link" href="javascript:" data-resposta="7654323" data-modo-resposta="3" data-token="TKfict123"></a></div>
   <div class="list-group-item curriculo-list-item">
     <ul><li data-pessoa-id="7000002">Pessoa Fictícia Dois</li></ul>
     <a class="progress-link" href="javascript:" data-resposta="111" data-modo-resposta="1"></a></div>
@@ -254,21 +257,69 @@ LISTA_DA_VAGA = """
 </div></div>
 """
 
-# HTML SINTÉTICO no formato do painel de GetRespostaDetails (nada real).
-DETALHES = """
-<div id="container-resposta-questionario">
-  <a class="btn btn-default" href="/Company/VacancyTests/PrintResult?respostaID=7654321&amp;pessoa=PSfict99&amp;vaga=Vaga%20Fict%C3%ADcia">Imprimir</a>
-  <a href="#" class="btn">Zerar Tentativas</a> <a href="#">Excluir Respostas</a> <a href="#">WhatsApp</a>
-  <div class="pergunta-item"><h5>Pergunta 1 - Nome completo</h5><p>Maria Ficticia Souza</p></div>
-  <div class="pergunta-item"><h5>Pergunta 4 - Anexe o documento de identificação com foto (RG ou CNH)</h5>
-    <a class="btn" href="/Company/VacancyTests/GetViewerLogArquivo?arquivo=123-8f3a9c7e2d.pdf&amp;nome=RG Maria Ficticia&amp;token=TKfict123&amp;questionarioRespostaID=7654321&amp;perguntaID=501">Visualizar Arquivo</a></div>
-  <div class="pergunta-item"><h5>Pergunta 6 - Anexe o diploma de graduação</h5>
-    <a href="/Company/VacancyTests/GetViewerLogArquivo?arquivo=1-a.pdf&amp;token=TKfict123&amp;questionarioRespostaID=7654321&amp;perguntaID=502">Visualizar Arquivo</a>
-    <a href="/Company/VacancyTests/GetViewerLogArquivo?arquivo=2-b.pdf&amp;token=TKfict123&amp;questionarioRespostaID=7654321&amp;perguntaID=502">Visualizar Arquivo</a></div>
-  <div class="pergunta-item"><h5>Pergunta 7 - Anexe o comprovante</h5>
-    <a href="/Company/VacancyTests/GetViewerLogArquivo?arquivo=x.pdf&amp;token=TKfict123">Visualizar Arquivo</a></div>
-</div>
-"""
+# JSON SINTÉTICO no formato de GetRespostaDetails (só chaves e tipos reais; nada real).
+DETALHES = json.dumps(
+    {
+        "sucesso": True,
+        "questionario": {
+            "id": 7654321,
+            "questionarioID": 1,
+            "vagaID": 179698,
+            "titulo": "Questionário fictício",
+            "totalPerguntas": 6,
+            "respostas": [
+                {
+                    "PerguntaID": 500,
+                    "Ordem": 1,
+                    "Pergunta": "Nome completo",
+                    "TipoResposta": 5,
+                    "Resposta": "Maria Ficticia Souza",
+                    "RespostaID": 9001,
+                },
+                {
+                    "PerguntaID": 501,
+                    "Ordem": 4,
+                    "Pergunta": "<p>Anexe o documento de identificação&nbsp;com foto<br>(RG ou CNH)</p>",
+                    "TipoResposta": 4,
+                    "Resposta": "123-8f3a9c7e2d.pdf",
+                    "RespostaID": 9002,
+                },
+                {
+                    "PerguntaID": 502,
+                    "Ordem": 6,
+                    "Pergunta": "Anexe o diploma de graduação",
+                    "TipoResposta": 4,
+                    "Resposta": "1-aaaa.pdf; 2-bbbb.pdf",
+                    "RespostaID": 9003,
+                },
+                {
+                    "PerguntaID": 503,
+                    "Ordem": 7,
+                    "Pergunta": "Anexe o comprovante",
+                    "TipoResposta": 4,
+                    "Resposta": "1",
+                    "RespostaID": 9004,
+                },
+                {
+                    "PerguntaID": 504,
+                    "Ordem": 8,
+                    "Pergunta": "Anexe a carteira",
+                    "TipoResposta": 4,
+                    "Resposta": 'nome "ruim".pdf',
+                    "RespostaID": 9005,
+                },
+                {
+                    "PerguntaID": 505,
+                    "Ordem": 9,
+                    "Pergunta": "Escolha",
+                    "TipoResposta": 1,
+                    "Resposta": "Sim",
+                    "RespostaID": 9006,
+                },
+            ],
+        },
+    }
+)
 COLUNAS = [
     "Nome",
     "Pergunta 1 - Nome completo",
@@ -553,12 +604,13 @@ class Sondagem(unittest.TestCase):
         )
         self.assertEqual(visitadas, [])
         for esperado in (
-            "respostas de questionário (modo ≠ 3) 2; token do candidato sim; itens sem token na lista 1",
-            "resposta 1: GET com sessão 200",
-            "perguntas por classe 4, «Pergunta N» 4; anexos 3 em 2 pergunta(s) (perguntaID distintos); por pergunta: 2, 1",
-            "com enunciado 3 (parecem enunciado 3); impressão sim; fora do formato 1; botões perigosos 3 (nenhum clicado)",
-            "1º anexo https://corporate.empregare.com/Company/VacancyTests/GetViewerLogArquivo?arquivo=<MASCARADO>",
-            "arquivo não aberto (registra visualização)",
+            "respostas de questionário (modo ≠ 3) 2; pessoa sim; título da vaga no link sim; itens sem token na lista 1",
+            "resposta 1: GET com sessão 200; JSON sim; sucesso sim; totalPerguntas 6; respostas 6; tipos 1: 1, 4: 4, 5: 1",
+            "anexos 3 (tipo 4 com arquivo) em 2 pergunta(s); Ordens dos anexos: 4, 6",
+            "fora do formato 1; impressão sim",
+            "anexo da Ordem 4 (arquivo 1) · «Pergunta 4» · enunciado «Anexe o documento de identificação com foto (RG ou CNH)»",
+            "anexo da Ordem 6 (arquivo 2)",
+            "padrão do link https://corporate.empregare.com/Company/VacancyTests/GetViewerLogArquivo?arquivo=<MASCARADO>",
             "impressão https://corporate.empregare.com/Company/VacancyTests/PrintResult?respostaID=<MASCARADO>",
         ):
             self.assertIn(esperado, texto)
@@ -652,38 +704,58 @@ class SondagemDasAbas(unittest.TestCase):
 class DetalhesDaResposta(unittest.TestCase):
     def test_le_token_e_respostas_da_lista_sem_modo_3(self):
         respostas, sem_token = nav.ler_respostas_do_html(LISTA_DA_VAGA)
-        self.assertEqual(respostas, {"7000001": {"token": "TKfict123", "respostas": ["7654321", "7654322"]}})
+        self.assertEqual(
+            respostas,
+            {
+                "7000001": {
+                    "pessoa": "PSfict99",
+                    "respostas": [
+                        {"id": "7654321", "token": "TKfict123", "vaga": "Vaga Fictícia"},
+                        {"id": "7654322", "token": "TKfict123", "vaga": ""},
+                    ],
+                }
+            },
+        )
         self.assertEqual(sem_token, 1)
 
-    def test_le_perguntas_anexos_e_impressao_do_html(self):
-        lido = anexos.ler_detalhes_da_resposta(DETALHES)
+    def test_le_os_anexos_do_json_como_o_front_monta_os_links(self):
+        lido = anexos.ler_detalhes_da_resposta(DETALHES, "TKfict123", "PSfict99", "Vaga Fictícia")
+        self.assertTrue(lido["sucesso"] and lido["json"])
+        self.assertEqual((lido["perguntas"], lido["respostas"], lido["fora_do_formato"]), (6, 6, 1))
+        self.assertEqual(lido["tipos"], {"1": 1, "4": 4, "5": 1})
         self.assertEqual(
-            (lido["perguntas"], lido["por_texto"], lido["fora_do_formato"], lido["perigosos"]), (4, 4, 1, 3)
+            [(a["pergunta"], a["ordem"], a["arquivo"]) for a in lido["anexos"]],
+            [("501", 4, 1), ("502", 6, 1), ("502", 6, 2)],
+        )
+        self.assertEqual(lido["anexos"][0]["enunciado"], "Anexe o documento de identificação com foto (RG ou CNH)")
+        self.assertEqual(
+            lido["anexos"][0]["link"],
+            nav.URL_BASE
+            + "/Company/VacancyTests/GetViewerLogArquivo?arquivo=123-8f3a9c7e2d.pdf&nome=Case&token=TKfict123"
+            "&questionarioRespostaID=9002&perguntaID=501",
         )
         self.assertEqual(
             lido["impressao"],
             nav.URL_BASE
             + "/Company/VacancyTests/PrintResult?respostaID=7654321&pessoa=PSfict99&vaga=Vaga%20Fict%C3%ADcia",
         )
-        self.assertEqual([(a["pergunta"], a["arquivo"]) for a in lido["anexos"]], [("501", 1), ("502", 1), ("502", 2)])
-        self.assertEqual(
-            lido["anexos"][0]["enunciado"], "Pergunta 4 - Anexe o documento de identificação com foto (RG ou CNH)"
-        )
-        self.assertIn("nome=RG%20Maria%20Ficticia", lido["anexos"][0]["link"])
         for a in lido["anexos"]:
             self.assertTrue(anexos.LINK_DO_ARQUIVO.match(a["link"]))
-        self.assertEqual(anexos.ler_detalhes_da_resposta("")["anexos"], [])
+        self.assertFalse(anexos.ler_detalhes_da_resposta("<html>")["json"])
+        self.assertIsNone(anexos.ler_detalhes_da_resposta(DETALHES, "TKfict123")["impressao"])
+        self.assertEqual(anexos.ler_detalhes_da_resposta(DETALHES, "")["anexos"], [])
 
-    def test_casa_o_enunciado_com_a_coluna_do_excel(self):
-        lido = anexos.ler_detalhes_da_resposta(DETALHES)
+    def test_casa_pela_ordem_e_confirma_pelo_enunciado(self):
+        lido = anexos.ler_detalhes_da_resposta(DETALHES, "TKfict123")
         self.assertEqual(
-            [anexos.coluna_da_pergunta(a["enunciado"], COLUNAS) for a in lido["anexos"]],
+            [anexos.coluna_da_pergunta(a["enunciado"], COLUNAS, a["ordem"]) for a in lido["anexos"]],
             [COLUNAS[2], COLUNAS[3], COLUNAS[3]],
         )
+        # A Ordem aponta para outra pergunta: vale o enunciado.
+        self.assertEqual(anexos.coluna_da_pergunta("Anexe o diploma de graduação", COLUNAS, 4), COLUNAS[3])
         self.assertEqual(anexos.coluna_da_pergunta("ANEXE O DIPLOMA DE GRADUACAO", COLUNAS), COLUNAS[3])
-        self.assertEqual(anexos.coluna_da_pergunta("Anexe o documento de identificação", COLUNAS), COLUNAS[2])
         self.assertIsNone(anexos.coluna_da_pergunta("Anexe", COLUNAS))
-        self.assertIsNone(anexos.coluna_da_pergunta("Outra pergunta qualquer sem coluna", COLUNAS))
+        self.assertIsNone(anexos.coluna_da_pergunta("Outra pergunta qualquer sem coluna", COLUNAS, 9))
         self.assertIsNone(anexos.coluna_da_pergunta("Anexe o diploma", COLUNAS + ["Pergunta 9 - Anexe o diploma"] * 2))
 
     def test_captura_por_get_com_sessao_e_log_so_com_contagens(self):
@@ -700,7 +772,8 @@ class DetalhesDaResposta(unittest.TestCase):
         self.assertEqual(
             logs,
             [
-                "Vaga 179698: respostas de questionário lidas 2 de 2 (1 candidato(s)) · 6 anexo(s) · 2 link(s) fora do formato."
+                "Vaga 179698: respostas de questionário lidas 2 de 2 (1 candidato(s)) · 6 anexo(s) · "
+                "1 sem link de impressão · 2 link(s) fora do formato."
             ],
         )
 
@@ -726,7 +799,7 @@ class DetalhesDaResposta(unittest.TestCase):
                 "anexos": sum(len(r["anexos"]) for r in corpo["p_respostas"]),
             }
 
-        lido = anexos.ler_detalhes_da_resposta(DETALHES)
+        lido = anexos.ler_detalhes_da_resposta(DETALHES, "TKfict123", "PSfict99", "Vaga Fictícia")
         capturados = {
             "7000001": [
                 {"resposta": "7654321", "impressao": lido["impressao"], "perguntas": 4, "anexos": lido["anexos"]}
@@ -752,7 +825,7 @@ class DetalhesDaResposta(unittest.TestCase):
         self.assertEqual(anexos.gravar_anexos({}, "gh-x", "179698", {}, COLUNAS, chamar, logs.append), 0)
 
     def test_nunca_testa_nem_abre_o_link_do_arquivo(self):
-        link = anexos.ler_detalhes_da_resposta(DETALHES)["anexos"][0]["link"]
+        link = anexos.ler_detalhes_da_resposta(DETALHES, "TKfict123")["anexos"][0]["link"]
         self.assertTrue(anexos.registra_visualizacao(link))
         acessos = anexos._Acessos()
         acessos.guardar(object(), [link])
@@ -764,7 +837,9 @@ class DetalhesDaResposta(unittest.TestCase):
 
         texto = mascarar(
             "/Company/VacancyTests/GetRespostaDetails/7654321?token=TKfict123 "
-            + anexos.ler_detalhes_da_resposta(DETALHES)["anexos"][0]["link"]
+            + anexos.ler_detalhes_da_resposta(DETALHES, "TKfict123", "PSfict99", "Vaga")["anexos"][0]["link"]
+            + " "
+            + anexos.ler_detalhes_da_resposta(DETALHES, "TKfict123", "PSfict99", "Vaga")["impressao"]
         )
         _sem_proibidos(self, texto)
 
@@ -803,7 +878,7 @@ class RoboComAnexos(unittest.TestCase):
             "sem_chave": 0,
             "repetidas": 0,
         }
-        lido = anexos.ler_detalhes_da_resposta(DETALHES)
+        lido = anexos.ler_detalhes_da_resposta(DETALHES, "TKfict123", "PSfict99", "Vaga Fictícia")
         enderecos = {
             "vaga_interno": "Vfict|",
             "candidatos": {"7000001": DETALHE},

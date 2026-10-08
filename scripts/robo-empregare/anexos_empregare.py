@@ -2,38 +2,45 @@
 Os ANEXOS do questionário de cada candidato na Empregare.
 
 A exportação da Empregare não traz o link dos anexos (só "Sim"/"--"). O
-caminho real (investigado em 08/10/2026, só leitura): na lista de
+caminho real (investigado em 08/10/2026, só leitura, e conferido no front
+da Empregare, chunk 8152 — questionarioResposta.detalhes): na lista de
 candidaturas, cada candidato tem a.progress-link[data-resposta] (um por
-questionário; data-modo-resposta 3 é a entrevista virtual, fora) e o item tem
+questionário; data-modo-resposta 3 é a entrevista virtual, fora), com
+data-token e data-vagaTitulo; o item tem data-id (a pessoa) e
 data-tokenCandidato. O clique faz GET XHR
-/Company/VacancyTests/GetRespostaDetails/<respostaID>?token=<tokenCandidato>,
-cujo HTML traz, por pergunta, o enunciado e, por anexo, o botão "Visualizar
-Arquivo" (/Company/VacancyTests/GetViewerLogArquivo?arquivo=…&token=…&
-questionarioRespostaID=…&perguntaID=…; estável, abre com o login da
-Empregare e REGISTRA a visualização) e o link de impressão
-(/Company/VacancyTests/PrintResult?respostaID=…&pessoa=…&vaga=…).
+/Company/VacancyTests/GetRespostaDetails/<respostaID>?token=<token>, que
+devolve JSON: {sucesso, questionario: {id, totalPerguntas, respostas:
+[{PerguntaID, Ordem, Pergunta, TipoResposta, Resposta, RespostaID…}]}}. No
+anexo (TipoResposta 4), Resposta é o nome do arquivo, e o front monta:
+  - "Visualizar Arquivo": /Company/VacancyTests/GetViewerLogArquivo?arquivo=
+    <Resposta>&nome=Case&token=<token>&questionarioRespostaID=<RespostaID>&
+    perguntaID=<PerguntaID> (estável, abre com login e REGISTRA a visualização);
+  - impressão: /Company/VacancyTests/PrintResult?respostaID=<questionario.id>&
+    pessoa=<data-id>&vaga=<título da vaga>.
+A Ordem bate com o "Pergunta N" da exportação.
 
-  - CAPTURAR (modo normal com --anexos): para cada candidato e resposta da
-    lista, o mesmo GET com a sessão do Chrome (fetch na página); lê o HTML
-    (ler_detalhes_da_resposta), casa o enunciado com a coluna "Pergunta N -
-    enunciado" do Excel e grava por gravar_anexos_empregare (migration
-    20261008160000_anexos_do_questionario_na_empregare.sql). O robô NUNCA
-    abre os arquivos: só guarda os links. No log, só contagens.
+  - CAPTURAR (modo normal com --anexos): para cada candidato e resposta, o GET
+    com a sessão do Chrome (fetch na página); lê o JSON
+    (ler_detalhes_da_resposta), monta os links, casa com a coluna do Excel
+    pela Ordem (confirmada pelo enunciado) e grava por gravar_anexos_empregare
+    (migration 20261008160000_anexos_do_questionario_na_empregare.sql). O robô
+    NUNCA abre os arquivos e nunca loga o nome deles. No log, só contagens.
   - SONDAR (modo `sondar`, só leitura): a estrutura das abas e dos clicáveis
-    do candidato e o GET de GetRespostaDetails (status, perguntas, anexos,
-    perguntaIDs, enunciados), tudo contado ou com o padrão mascarado. Nunca
-    nome, CPF, e-mail, nome de arquivo, token nem URL completa; nunca clica em
-    "Zerar Tentativas", "Excluir Respostas" nem compartilhar.
+    do candidato e o GET de GetRespostaDetails (status, respostas, tipos,
+    anexos, Ordens), tudo contado ou com o padrão mascarado. Nunca nome, CPF,
+    e-mail, nome de arquivo, token nem URL completa; nunca clica em "Zerar
+    Tentativas", "Excluir Respostas" nem compartilhar.
 
-Testes: tests/python/test_anexos_empregare.py (HTML sintético). Guia: docs/robo-empregare.md.
+Testes: tests/python/test_anexos_empregare.py (JSON sintético). Guia: docs/robo-empregare.md.
 """
 
+import json
 import re
 import time
 import unicodedata
 import urllib.error
 import urllib.request
-from html.parser import HTMLParser
+from html import unescape as html_unescape
 from urllib.parse import parse_qsl, quote, unquote, urljoin, urlsplit
 
 from monitora.mascaramento import mascarar, resumo_do_erro
@@ -1402,159 +1409,120 @@ def link_absoluto(href):
     return quote(absoluto, safe=":/?&=%|+~._-")
 
 
-class _ArvoreComTexto(HTMLParser):
-    """Árvore do HTML com o texto (tag, atributos, filhos, pai; texto como nó "#texto")."""
-
-    SEM_FIM = {"area", "base", "br", "col", "embed", "hr", "img", "input", "link", "meta", "source", "track", "wbr"}
-
-    def __init__(self):
-        super().__init__(convert_charrefs=True)
-        self.raiz = {"tag": "#raiz", "attrs": {}, "filhos": [], "pai": None}
-        self.atual = self.raiz
-
-    def handle_starttag(self, tag, attrs):
-        no = {"tag": tag, "attrs": {k: (v or "") for k, v in attrs}, "filhos": [], "pai": self.atual}
-        self.atual["filhos"].append(no)
-        if tag not in self.SEM_FIM:
-            self.atual = no
-
-    def handle_startendtag(self, tag, attrs):
-        self.atual["filhos"].append(
-            {"tag": tag, "attrs": {k: (v or "") for k, v in attrs}, "filhos": [], "pai": self.atual}
-        )
-
-    def handle_endtag(self, tag):
-        no = self.atual
-        while no is not None and no["tag"] != tag:
-            no = no["pai"]
-        if no is not None and no["pai"] is not None:
-            self.atual = no["pai"]
-
-    def handle_data(self, data):
-        self.atual["filhos"].append({"tag": "#texto", "texto": data, "filhos": [], "pai": self.atual, "attrs": {}})
+TIPO_ANEXO = 4  # TipoResposta do anexo no JSON (1 escolha única, 3 vídeo, 5 curta, 8 caixa, 9 múltipla)
+_SEM_ARQUIVO = {"", "0", "1"}  # 0 "Não se aplica", 1 "Não possuo este documento" (o front mostra texto)
+_ARQUIVO = re.compile(r"^[A-Za-z0-9 _.()~+=-]{1,300}$")
 
 
-def _nos(no):
-    pilha = list(reversed(no["filhos"]))
-    while pilha:
-        atual = pilha.pop()
-        yield atual
-        pilha.extend(reversed(atual["filhos"]))
+def _limpar_html(texto):
+    """O enunciado sem tags e entidades, com espaços simples (o JSON pode trazer HTML/quebras)."""
+    t = re.sub(r"<[^>]{0,500}>", " ", str(texto or ""))
+    t = html_unescape(t).replace("\xa0", " ")
+    return re.sub(r"\s+", " ", t).strip()
 
 
-def _texto(no, sem_links=False):
-    partes = []
-    pilha = [no]
-    while pilha:
-        atual = pilha.pop()
-        if atual["tag"] == "#texto":
-            partes.append(atual["texto"])
-            continue
-        if atual["tag"] in ("script", "style") or (sem_links and atual["tag"] in ("a", "button")):
-            continue
-        pilha.extend(reversed(atual["filhos"]))
-    return re.sub(r"\s+", " ", "".join(partes)).strip()
+def arquivos_da_resposta(item):
+    """Os nomes de arquivo da resposta de anexo (como o front: 0/1 e "Resposta não informada" não são arquivo)."""
+    if str(item.get("AlternativaID") or "") == "1":
+        return []
+    bruto = str(item.get("Resposta") if item.get("Resposta") is not None else "").strip()
+    if bruto in _SEM_ARQUIVO or "resposta não informada" in bruto.lower():
+        return []
+    return [a.strip() for a in re.split(r"[,;|]", bruto) if a.strip()]
 
 
-def _classes_do_no(no):
-    return (no["attrs"].get("class") or "").lower()
+def link_do_arquivo(arquivo, token, resposta_id, pergunta_id):
+    """O "Visualizar Arquivo" como o front monta (chunk 8152): nome=Case, questionarioRespostaID = RespostaID da pergunta."""
+    consulta = (
+        f"arquivo={quote(str(arquivo), safe='._-')}&nome=Case&token={quote(str(token), safe='._-~')}"
+        f"&questionarioRespostaID={resposta_id}&perguntaID={pergunta_id}"
+    )
+    link = f"{URL_BASE}/Company/VacancyTests/GetViewerLogArquivo?{consulta}"
+    return link if len(link) <= TAMANHO_DO_LINK and LINK_DO_ARQUIVO.match(link) else None
 
 
-_CABECA = {"h1", "h2", "h3", "h4", "h5", "h6", "label", "legend", "dt", "th", "strong", "b"}
+def link_da_impressao(questionario_id, pessoa, vaga):
+    """A impressão das respostas como o front monta: respostaID = id do questionário respondido, pessoa, vaga (título)."""
+    if not RESPOSTA.match(str(questionario_id or "")) or not TOKEN.match(str(pessoa or "")) or not vaga:
+        return None
+    link = (
+        f"{URL_BASE}/Company/VacancyTests/PrintResult?respostaID={questionario_id}"
+        f"&pessoa={quote(str(pessoa), safe='._-~')}&vaga={quote(str(vaga), safe='')}"
+    )
+    return link if len(link) <= TAMANHO_DO_LINK and LINK_DA_IMPRESSAO.match(link) else None
 
 
-def _enunciado_do_link(link, raiz):
-    """O enunciado da pergunta do link: o bloco mais próximo com texto (sem links) e, nele, a cabeça."""
-    bloco = link["pai"]
-    for _ in range(12):
-        if bloco is None or bloco is raiz:
-            break
-        if len(_texto(bloco, sem_links=True)) >= 12:
-            break
-        bloco = bloco["pai"]
-    if bloco is None:
-        return ""
-    contem = set()
-    p = link
-    while p is not None:
-        contem.add(id(p))
-        p = p["pai"]
-    for no in _nos(bloco):
-        if no["tag"] == "#texto" or id(no) in contem:
-            continue
-        cabeca = no["tag"] in _CABECA or re.search(r"pergunta|titulo|enunciado|question", _classes_do_no(no))
-        if cabeca:
-            texto = _texto(no, sem_links=True)
-            if len(texto) >= 5:
-                return texto[:2000]
-    return _texto(bloco, sem_links=True)[:2000]
-
-
-def ler_detalhes_da_resposta(html):
+def ler_detalhes_da_resposta(texto, token="", pessoa="", vaga=""):
     """
-    O HTML de GetRespostaDetails: {"perguntas": n, "por_texto": n de "Pergunta N",
-    "impressao": link do PrintResult ou None, "anexos": [{"pergunta": perguntaID,
-    "arquivo": ordem do arquivo na pergunta, "enunciado", "link"}], "fora_do_formato": n,
-    "perigosos": n de botões perigosos (zerar, excluir, compartilhar)}. Nada é aberto.
+    O JSON de GetRespostaDetails ({sucesso, questionario: {id, totalPerguntas,
+    respostas: [{PerguntaID, Ordem, Pergunta, TipoResposta, Resposta, RespostaID,
+    AlternativaID…}]}}): {"sucesso", "perguntas", "respostas", "tipos": {tipo: n},
+    "impressao", "anexos": [{"pergunta": PerguntaID, "ordem": Ordem, "arquivo": n,
+    "enunciado", "link"}], "fora_do_formato"}. Nada é aberto; o nome do arquivo só
+    vai no link (nunca no log).
     """
-    arvore = _ArvoreComTexto()
-    arvore.feed(str(html or "")[:TAMANHO_DO_HTML])
-    arvore.close()
-    raiz = arvore.raiz
-    nos = [n for n in _nos(raiz) if n["tag"] != "#texto"]
-    blocos = [n for n in nos if re.search(r"pergunta|question", _classes_do_no(n))]
-    folhas = [b for b in blocos if not any(o is not b and _desce_de(o, b) for o in blocos)]
-    impressao = None
+    vazio = {
+        "sucesso": False,
+        "perguntas": 0,
+        "respostas": 0,
+        "tipos": {},
+        "impressao": None,
+        "anexos": [],
+        "fora_do_formato": 0,
+        "json": False,
+    }
+    try:
+        dados = json.loads(str(texto or "")[:TAMANHO_DO_HTML])
+    except ValueError:
+        return vazio
+    if not isinstance(dados, dict):
+        return vazio
+    q = dados.get("questionario") if isinstance(dados.get("questionario"), dict) else {}
+    itens = [r for r in (q.get("respostas") or []) if isinstance(r, dict)]
+    tipos = {}
     anexos = []
     fora = 0
-    por_pergunta = {}
-    perigosos = 0
-    for n in nos:
-        if n["tag"] not in ("a", "button"):
+    for r in itens:
+        tipo = r.get("TipoResposta")
+        tipos[str(tipo)] = tipos.get(str(tipo), 0) + 1
+        if str(tipo) != str(TIPO_ANEXO):
             continue
-        href = n["attrs"].get("href") or n["attrs"].get("data-href") or n["attrs"].get("data-url") or ""
-        if _PERIGOSO.search(_texto(n) + " " + (n["attrs"].get("title") or "")) and not registra_visualizacao(href):
-            perigosos += 1
-        if "/company/vacancytests/printresult" in href.lower() and impressao is None:
-            link = link_absoluto(href)
-            impressao = link if link and len(link) <= TAMANHO_DO_LINK and LINK_DA_IMPRESSAO.match(link) else None
-            fora += impressao is None
-            continue
-        if not registra_visualizacao(href):
-            continue
-        link = link_absoluto(href)
-        consulta = dict(parse_qsl(urlsplit(link or "").query))
-        pergunta = (consulta.get("perguntaID") or "").strip()
-        if not link or len(link) > TAMANHO_DO_LINK or not LINK_DO_ARQUIVO.match(link) or not RESPOSTA.match(pergunta):
-            fora += 1
-            continue
-        por_pergunta[pergunta] = por_pergunta.get(pergunta, 0) + 1
-        anexos.append(
-            {
-                "pergunta": pergunta,
-                "arquivo": por_pergunta[pergunta],
-                "enunciado": limpar_enunciado(_enunciado_do_link(n, raiz)) or None,
-                "link": link,
-            }
-        )
-    texto = _texto(raiz)
+        pergunta = str(r.get("PerguntaID") or "")
+        resposta_id = str(r.get("RespostaID") or "")
+        ordem = r.get("Ordem")
+        ordem = int(ordem) if isinstance(ordem, int) or str(ordem or "").isdigit() else None
+        for n, arquivo in enumerate(arquivos_da_resposta(r), 1):
+            link = (
+                link_do_arquivo(arquivo, token, resposta_id, pergunta)
+                if RESPOSTA.match(pergunta)
+                and RESPOSTA.match(resposta_id)
+                and _ARQUIVO.match(arquivo)
+                and TOKEN.match(str(token or ""))
+                else None
+            )
+            if not link:
+                fora += 1
+                continue
+            anexos.append(
+                {
+                    "pergunta": pergunta,
+                    "ordem": ordem if ordem is not None and 1 <= ordem <= 999 else None,
+                    "arquivo": n,
+                    "enunciado": limpar_enunciado(_limpar_html(r.get("Pergunta"))) or None,
+                    "link": link,
+                }
+            )
+    total = q.get("totalPerguntas")
     return {
-        "perguntas": len(folhas),
-        "por_texto": len(re.findall(r"(?i)pergunta\s*\d{1,3}", texto)),
-        "impressao": impressao,
+        "sucesso": bool(dados.get("sucesso")),
+        "perguntas": total if isinstance(total, int) else len(itens),
+        "respostas": len(itens),
+        "tipos": tipos,
+        "impressao": link_da_impressao(q.get("id"), pessoa, vaga),
         "anexos": anexos,
         "fora_do_formato": fora,
-        "perigosos": perigosos,
+        "json": True,
     }
-
-
-def _desce_de(no, ancestral):
-    p = no["pai"]
-    while p is not None:
-        if p is ancestral:
-            return True
-        p = p["pai"]
-    return False
 
 
 def normalizar_texto(valor):
@@ -1567,12 +1535,24 @@ def normalizar_texto(valor):
 _PREFIXO_DA_PERGUNTA = re.compile(r"^pergunta ?[0-9]+ ?[-–—] ?")
 
 
-def coluna_da_pergunta(enunciado, colunas):
+def _confirma(alvo, nome):
+    return nome == alvo or (len(alvo) >= 20 and len(nome) >= 20 and (nome.startswith(alvo) or alvo.startswith(nome)))
+
+
+def coluna_da_pergunta(enunciado, colunas, ordem=None):
     """
-    A coluna do Excel ("Pergunta N - enunciado") do enunciado lido: igual sem o
-    prefixo; senão uma começando pela outra (20+ letras). Ambígua ou nenhuma → None.
+    A coluna do Excel ("Pergunta N - enunciado") da pergunta: a "Pergunta <Ordem>"
+    se o enunciado confirma (igual sem o prefixo, ou um começando pelo outro com
+    20+ letras); senão pelo enunciado em todas. Ambígua ou nenhuma → None.
     """
     alvo = _PREFIXO_DA_PERGUNTA.sub("", normalizar_texto(enunciado))
+    if ordem is not None:
+        for c in colunas or []:
+            nome = normalizar_texto(c)
+            if re.match(rf"^pergunta ?{int(ordem)} ?[-–—]", nome) and _confirma(
+                alvo, _PREFIXO_DA_PERGUNTA.sub("", nome)
+            ):
+                return c
     if len(alvo) < 5:
         return None
     nomes = [(c, _PREFIXO_DA_PERGUNTA.sub("", normalizar_texto(c))) for c in colunas or [] if c]
@@ -1588,7 +1568,7 @@ def coluna_da_pergunta(enunciado, colunas):
 
 
 def buscar_detalhes(driver, pedidos):
-    """GETs de GetRespostaDetails com a sessão (pedidos: [(resposta, token)]). Devolve a lista de respostas do JS."""
+    """GETs de GetRespostaDetails (JSON) com a sessão (pedidos: [(resposta, token)]). Devolve a lista do JS."""
     caminhos = [CAMINHO_DOS_DETALHES.format(r, quote(t, safe="")) for r, t in pedidos]
     driver.set_script_timeout(120)
     return driver.execute_async_script(JS_BUSCAR_DETALHES, caminhos) or []
@@ -1596,15 +1576,15 @@ def buscar_detalhes(driver, pedidos):
 
 def capturar_anexos(portal, codigo, respostas, registrar, prazo, agora=time.monotonic):
     """
-    Para cada candidato ({código: {"token", "respostas"}}) e resposta, o GET de
+    Para cada candidato ({código: {"pessoa", "respostas": [{"id", "token", "vaga"}]}}) e resposta, o GET de
     GetRespostaDetails com a sessão; devolve {código: [{"resposta", "impressao",
     "perguntas", "anexos"}]}. No log, só contagens. Nunca levanta.
     """
     pedidos = [
-        (cod, r, dados.get("token") or "")
+        (cod, r, dados.get("pessoa") or "")
         for cod, dados in (respostas or {}).items()
         for r in dados.get("respostas") or []
-        if RESPOSTA.match(str(r)) and TOKEN.match(str(dados.get("token") or ""))
+        if RESPOSTA.match(str(r.get("id"))) and TOKEN.match(str(r.get("token") or ""))
     ]
     capturados = {}
     lidas = falhas = anexos = sem_impressao = fora = 0
@@ -1615,15 +1595,19 @@ def capturar_anexos(portal, codigo, respostas, registrar, prazo, agora=time.mono
             break
         lote = pedidos[i : i + PEDIDOS_POR_VEZ]
         try:
-            resultados = buscar_detalhes(portal.driver, [(r, t) for _c, r, t in lote])
+            resultados = buscar_detalhes(portal.driver, [(r["id"], r["token"]) for _c, r, _p in lote])
         except Exception:
             falhas += len(lote)
             continue
-        for (cod, resposta, _t), res in zip(lote, list(resultados) + [{}] * len(lote), strict=False):
+        for (cod, r, pessoa), res in zip(lote, list(resultados) + [{}] * len(lote), strict=False):
             if (res or {}).get("status") != 200 or (res or {}).get("login"):
                 falhas += 1
                 continue
-            lido = ler_detalhes_da_resposta(res.get("html"))
+            lido = ler_detalhes_da_resposta(res.get("html"), r["token"], pessoa, r.get("vaga"))
+            if not lido["sucesso"]:
+                falhas += 1
+                continue
+            resposta = r["id"]
             lidas += 1
             anexos += len(lido["anexos"])
             sem_impressao += lido["impressao"] is None
@@ -1662,7 +1646,7 @@ def gravar_anexos(config, sync, codigo, capturados, colunas, chamar, registrar):
         for r in respostas:
             anexos = []
             for a in r.get("anexos") or []:
-                coluna = coluna_da_pergunta(a.get("enunciado"), colunas)
+                coluna = coluna_da_pergunta(a.get("enunciado"), colunas, a.get("ordem"))
                 casados += coluna is not None
                 anexos.append(dict(a, coluna=coluna))
             itens.append(
@@ -1700,8 +1684,9 @@ def gravar_anexos(config, sync, codigo, capturados, colunas, chamar, registrar):
 
 def sondar_detalhes(driver, rotulo, codigo_do_candidato):
     """
-    Sondar: o GET de GetRespostaDetails de cada resposta do candidato (modo ≠ 3),
-    com a sessão. Só contagens e padrões mascarados; nenhum arquivo é aberto.
+    Sondar: o GET de GetRespostaDetails (JSON) de cada resposta do candidato
+    (modo ≠ 3), com a sessão. Só contagens, Ordens e padrões mascarados; nenhum
+    arquivo é aberto e o nome do arquivo nunca vai ao log.
     """
     from navegador_empregare import ler_respostas_do_html
 
@@ -1711,44 +1696,47 @@ def sondar_detalhes(driver, rotulo, codigo_do_candidato):
         return [mascarar(f"{rotulo}: sem o HTML da lista ({type(erro).__name__})")]
     respostas, sem_token = ler_respostas_do_html(fonte)
     dados = respostas.get(str(codigo_do_candidato)) or {}
+    lista = dados.get("respostas") or []
     linhas = [
         mascarar(
-            f"{rotulo}: respostas de questionário (modo ≠ 3) {len(dados.get('respostas') or [])}; "
-            f"token do candidato {'sim' if dados.get('token') else 'não'}; itens sem token na lista {sem_token}"
+            f"{rotulo}: respostas de questionário (modo ≠ 3) {len(lista)}; pessoa {'sim' if dados.get('pessoa') else 'não'}; "
+            f"título da vaga no link {'sim' if any(r.get('vaga') for r in lista) else 'não'}; itens sem token na lista {sem_token}"
         )
     ]
-    if not dados:
+    if not lista:
         return linhas
-    pedidos = [(r, dados["token"]) for r in dados["respostas"][:3]]
     try:
-        resultados = buscar_detalhes(driver, pedidos)
+        resultados = buscar_detalhes(driver, [(r["id"], r["token"]) for r in lista[:3]])
     except Exception as erro:
         return linhas + [mascarar(f"{rotulo}: GetRespostaDetails falhou ({type(erro).__name__})")]
-    for i, res in enumerate(resultados, 1):
+    for i, (r, res) in enumerate(zip(lista[:3], resultados, strict=False), 1):
         res = res or {}
-        lido = ler_detalhes_da_resposta(res.get("html") or "")
-        perguntas = {a["pergunta"] for a in lido["anexos"]}
-        com_enunciado = sum(1 for a in lido["anexos"] if a.get("enunciado"))
+        lido = ler_detalhes_da_resposta(res.get("html") or "", r["token"], dados.get("pessoa"), r.get("vaga"))
+        ordens = sorted({a["ordem"] for a in lido["anexos"] if a.get("ordem")})
         parecem = sum(1 for a in lido["anexos"] if _PARECE_ENUNCIADO.search(a.get("enunciado") or ""))
+        tipos = ", ".join(f"{t}: {n}" for t, n in sorted(lido["tipos"].items()))
         linhas.append(
             mascarar(
                 f"{rotulo}, resposta {i}: GET com sessão {res.get('status') or res.get('erro') or '?'}"
-                f"{' (login!)' if res.get('login') else ''}; HTML {len(res.get('html') or '')} car.; "
-                f"perguntas por classe {lido['perguntas']}, «Pergunta N» {lido['por_texto']}; anexos {len(lido['anexos'])} "
-                f"em {len(perguntas)} pergunta(s) (perguntaID distintos); por pergunta: "
-                f"{', '.join(str(n) for n in sorted(_contar(lido['anexos']).values(), reverse=True)) or '—'}; "
-                f"com enunciado {com_enunciado} (parecem enunciado {parecem}); "
-                f"impressão {'sim' if lido['impressao'] else 'não'}; fora do formato {lido['fora_do_formato']}; "
-                f"botões perigosos {lido['perigosos']} (nenhum clicado)"
+                f"{' (login!)' if res.get('login') else ''}; JSON {'sim' if lido['json'] else 'não'}; "
+                f"sucesso {'sim' if lido['sucesso'] else 'não'}; totalPerguntas {lido['perguntas']}; "
+                f"respostas {lido['respostas']}; tipos {tipos or '—'}; anexos {len(lido['anexos'])} "
+                f"(tipo {TIPO_ANEXO} com arquivo) em {len({a['pergunta'] for a in lido['anexos']})} pergunta(s); "
+                f"Ordens dos anexos: {', '.join(str(o) for o in ordens) or '—'}; enunciados que parecem enunciado "
+                f"{parecem}; fora do formato {lido['fora_do_formato']}; impressão {'sim' if lido['impressao'] else 'não'}"
             )
         )
-        if lido["anexos"]:
-            a = lido["anexos"][0]
+        for a in lido["anexos"][:15]:
             linhas.append(
                 mascarar(
-                    f"{rotulo}, resposta {i}: 1º anexo {padrao_do_link(a['link'])} · enunciado "
-                    f"{enunciado_para_o_log(a.get('enunciado'))} · arquivo não aberto (registra visualização)"
+                    f"{rotulo}, resposta {i}: anexo da Ordem {a.get('ordem') or '?'} (arquivo {a['arquivo']}) · "
+                    f"«Pergunta {a.get('ordem') or '?'}» · enunciado {enunciado_para_o_log(a.get('enunciado'))} · "
+                    "arquivo não aberto"
                 )
+            )
+        if lido["anexos"]:
+            linhas.append(
+                mascarar(f"{rotulo}, resposta {i}: padrão do link {padrao_do_link(lido['anexos'][0]['link'])}")
             )
         if lido["impressao"]:
             linhas.append(mascarar(f"{rotulo}, resposta {i}: impressão {padrao_do_link(lido['impressao'])}"))

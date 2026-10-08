@@ -5,13 +5,14 @@
   candidato (DS_LINK_DETALHE, migration 20261007160000), não o documento. A
   exportação não traz o link dos anexos. O caminho real (investigado em
   08/10/2026, só leitura): na lista de candidaturas, cada candidato tem
-  data-resposta (um por questionário) e data-tokenCandidato; o GET
-  /Company/VacancyTests/GetRespostaDetails/<respostaID>?token=<token> traz, por
-  pergunta, o enunciado e, por anexo, o "Visualizar Arquivo"
+  data-resposta (um por questionário) e o token; o GET
+  /Company/VacancyTests/GetRespostaDetails/<respostaID>?token=<token> devolve um
+  JSON com as respostas (PerguntaID, Ordem, Pergunta, TipoResposta; no anexo,
+  tipo 4, o nome do arquivo). O robô (scripts/robo-empregare/, com --anexos)
+  monta, como o front da Empregare, o "Visualizar Arquivo"
   (/Company/VacancyTests/GetViewerLogArquivo?…&questionarioRespostaID=…&perguntaID=…;
   estável, abre com o login da Empregare) e a impressão das respostas
-  (/Company/VacancyTests/PrintResult?…). O robô (scripts/robo-empregare/, com
-  --anexos) lê esse HTML e grava aqui; nunca abre os arquivos.
+  (/Company/VacancyTests/PrintResult?…) e grava aqui; nunca abre os arquivos.
 
   O QUE ENTRA
     TB_EMPREGARE_RESPOSTA     uma resposta de questionário por candidato (link de impressão)
@@ -79,6 +80,7 @@ create table public."TB_EMPREGARE_ANEXO" (
   "CO_EMPREGARE_RESPOSTA" uuid not null,
   "CO_PERGUNTA_EMPREGARE" varchar(20) not null,
   "NU_ARQUIVO" smallint not null default 1,
+  "NU_ORDEM" smallint,
   "DS_ENUNCIADO" varchar(2000),
   "DS_COLUNA" varchar(1000),
   "TP_LINK" varchar(20) not null default 'ARQUIVO_EMPREGARE',
@@ -90,6 +92,7 @@ create table public."TB_EMPREGARE_ANEXO" (
     references public."TB_EMPREGARE_RESPOSTA" ("CO_EMPREGARE_RESPOSTA") on delete cascade,
   constraint "CK_EMPREGANEXO_COPERGUNTA" check ("CO_PERGUNTA_EMPREGARE" ~ '^[0-9]{1,20}$'),
   constraint "CK_EMPREGANEXO_NUARQUIVO" check ("NU_ARQUIVO" between 1 and 50),
+  constraint "CK_EMPREGANEXO_NUORDEM" check ("NU_ORDEM" is null or "NU_ORDEM" between 1 and 999),
   constraint "CK_EMPREGANEXO_TPLINK" check ("TP_LINK" in ('ARQUIVO_EMPREGARE')),
   constraint "CK_EMPREGANEXO_DSLINK" check ("DS_LINK" ~ '^https://corporate\.empregare\.com/Company/VacancyTests/GetViewerLogArquivo\?[A-Za-z0-9_.~=&%|+/:-]+$')
 );
@@ -98,8 +101,9 @@ comment on column public."TB_EMPREGARE_ANEXO"."CO_EMPREGARE_ANEXO" is 'Identific
 comment on column public."TB_EMPREGARE_ANEXO"."CO_EMPREGARE_RESPOSTA" is 'Resposta do questionário (TB_EMPREGARE_RESPOSTA).';
 comment on column public."TB_EMPREGARE_ANEXO"."CO_PERGUNTA_EMPREGARE" is 'Identificador da pergunta na Empregare (perguntaID do link).';
 comment on column public."TB_EMPREGARE_ANEXO"."NU_ARQUIVO" is 'Ordem do arquivo na pergunta (1, 2…).';
+comment on column public."TB_EMPREGARE_ANEXO"."NU_ORDEM" is 'Ordem da pergunta no questionário (bate com o "Pergunta N" da exportação).';
 comment on column public."TB_EMPREGARE_ANEXO"."DS_ENUNCIADO" is 'Enunciado da pergunta como o HTML mostra (texto do edital), sem nome de arquivo.';
-comment on column public."TB_EMPREGARE_ANEXO"."DS_COLUNA" is 'Coluna do Excel da exportação ("Pergunta N - enunciado") casada pelo enunciado; nula se não casou.';
+comment on column public."TB_EMPREGARE_ANEXO"."DS_COLUNA" is 'Coluna do Excel da exportação ("Pergunta N - enunciado") casada pela Ordem e confirmada pelo enunciado (ou só pelo enunciado); nula se não casou.';
 comment on column public."TB_EMPREGARE_ANEXO"."TP_LINK" is 'ARQUIVO_EMPREGARE: abre o visualizador da Empregare com login (não expira).';
 comment on column public."TB_EMPREGARE_ANEXO"."DS_LINK" is 'Link Visualizar Arquivo (/Company/VacancyTests/GetViewerLogArquivo?…). DADO RESTRITO.';
 comment on column public."TB_EMPREGARE_ANEXO"."DT_CAPTURA" is 'Quando o robô leu pela última vez.';
@@ -161,14 +165,16 @@ begin
     -- A resposta relida fica só com os anexos lidos agora.
     delete from public."TB_EMPREGARE_ANEXO" a where a."CO_EMPREGARE_RESPOSTA" = v_resp;
     insert into public."TB_EMPREGARE_ANEXO" (
-      "CO_EMPREGARE_RESPOSTA", "CO_PERGUNTA_EMPREGARE", "NU_ARQUIVO", "DS_ENUNCIADO", "DS_COLUNA", "DS_LINK", "DT_CAPTURA")
+      "CO_EMPREGARE_RESPOSTA", "CO_PERGUNTA_EMPREGARE", "NU_ARQUIVO", "NU_ORDEM", "DS_ENUNCIADO", "DS_COLUNA", "DS_LINK",
+      "DT_CAPTURA")
     select distinct on (an.pergunta, an.arquivo)
            v_resp, an.pergunta, an.arquivo::smallint,
+           case when an.ordem between 1 and 999 then an.ordem::smallint end,
            nullif(left(btrim(regexp_replace(an.enunciado, '\s+', ' ', 'g')), 2000), ''),
            nullif(left(btrim(an.coluna), 1000), ''),
            an.link, now()
       from jsonb_to_recordset(coalesce(v_r -> 'anexos', '[]'::jsonb))
-           as an(pergunta text, arquivo integer, enunciado text, coluna text, link text)
+           as an(pergunta text, arquivo integer, ordem integer, enunciado text, coluna text, link text)
      where an.pergunta ~ '^[0-9]{1,20}$'
        and an.arquivo between 1 and 50
        and length(an.link) <= 1500
@@ -184,7 +190,7 @@ begin
 end;
 $function$;
 comment on function public.gravar_anexos_empregare(text, text, jsonb) is
-  'Recebe (até 500 por lote) as respostas de questionário dos candidatos de uma vaga, lidas pelo robô da Empregare em GetRespostaDetails: [{codigo, resposta, impressao, perguntas, anexos: [{pergunta, arquivo, enunciado, coluna, link}]}]. Faz upsert em TB_EMPREGARE_RESPOSTA e troca os anexos da resposta em TB_EMPREGARE_ANEXO. Só candidatos da vaga; link fora do formato fica de fora. Só service_role, com a execução em andamento.';
+  'Recebe (até 500 por lote) as respostas de questionário dos candidatos de uma vaga, lidas pelo robô da Empregare em GetRespostaDetails: [{codigo, resposta, impressao, perguntas, anexos: [{pergunta, arquivo, ordem, enunciado, coluna, link}]}]. Faz upsert em TB_EMPREGARE_RESPOSTA e troca os anexos da resposta em TB_EMPREGARE_ANEXO. Só candidatos da vaga; link fora do formato fica de fora. Só service_role, com a execução em andamento.';
 revoke all on function public.gravar_anexos_empregare(text, text, jsonb) from public, anon, authenticated;
 grant execute on function public.gravar_anexos_empregare(text, text, jsonb) to service_role;
 
@@ -248,7 +254,8 @@ begin
                            'anexos', coalesce((
                              select json_agg(json_build_object('resposta', r."CO_RESPOSTA_QUESTIONARIO",
                                                                'pergunta', a."CO_PERGUNTA_EMPREGARE",
-                                                               'arquivo', a."NU_ARQUIVO", 'enunciado', a."DS_ENUNCIADO",
+                                                               'arquivo', a."NU_ARQUIVO", 'ordem', a."NU_ORDEM",
+                                                               'enunciado', a."DS_ENUNCIADO",
                                                                'coluna', a."DS_COLUNA", 'tipo', a."TP_LINK",
                                                                'link', a."DS_LINK")
                                              order by r."CO_RESPOSTA_QUESTIONARIO", a."CO_PERGUNTA_EMPREGARE", a."NU_ARQUIVO")
@@ -271,7 +278,7 @@ begin
 end;
 $function$;
 comment on function public.obter_ficha_analise(uuid) is
-  'A ficha para analisar (json): o cabeçalho (sem CPF nem contato), o lançamento e o resultado gravados, a regra com que é analisada (a vigente; a da conclusão, se concluída — AM-2.3), a nota mínima e os níveis da regra de classificação, a nota declarada e a ART da pré-classificação, as respostas da Empregare SÓ das perguntas que a regra liga, os links da Empregare capturados pelo robô (empregare: link_candidato da página de detalhes, vaga_interno e link_vaga das candidaturas, respostas [{resposta, link_impressao, perguntas, anexos, capturado_em}] e anexos [{resposta, pergunta, arquivo, enunciado, coluna, tipo, link}] do questionário; dado restrito, só aqui), o histórico (até 200, com as alterações) e se quem chama pode editar (reserva vigente, em análise) ou reabrir (coordenação, concluída). Vê: coordenação e revisão; o analista, só nas vagas dele; o leitor, só concluída.';
+  'A ficha para analisar (json): o cabeçalho (sem CPF nem contato), o lançamento e o resultado gravados, a regra com que é analisada (a vigente; a da conclusão, se concluída — AM-2.3), a nota mínima e os níveis da regra de classificação, a nota declarada e a ART da pré-classificação, as respostas da Empregare SÓ das perguntas que a regra liga, os links da Empregare capturados pelo robô (empregare: link_candidato da página de detalhes, vaga_interno e link_vaga das candidaturas, respostas [{resposta, link_impressao, perguntas, anexos, capturado_em}] e anexos [{resposta, pergunta, arquivo, ordem, enunciado, coluna, tipo, link}] do questionário; dado restrito, só aqui), o histórico (até 200, com as alterações) e se quem chama pode editar (reserva vigente, em análise) ou reabrir (coordenação, concluída). Vê: coordenação e revisão; o analista, só nas vagas dele; o leitor, só concluída.';
 revoke all on function public.obter_ficha_analise(uuid) from public, anon;
 grant execute on function public.obter_ficha_analise(uuid) to authenticated;
 
