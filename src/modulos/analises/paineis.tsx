@@ -1,3 +1,20 @@
+import type { Dispatch, SetStateAction } from "react";
+import type {
+  CampoDoFiltro,
+  FiltroDaAnalise,
+  FiltrosDasAnalises,
+  PeriodoDasAnalises,
+  ChipDasAnalises,
+  MudarFiltroDasAnalises,
+  RegistroDaAnalise,
+  PendenciaDaAnalise,
+  DiaDasAnalises,
+} from "./tipos.ts";
+import {
+  calcularKpis,
+  normalizarEscopo,
+  opcoesDosFiltros,
+} from "../../lib/analises-curriculares.ts";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { MultiSelectBusca } from "../../componentes/multi-select-busca.jsx";
 import {
@@ -14,7 +31,7 @@ import {
   STATUS_DO_GRAFICO,
   temPeriodo,
   tendenciaDiaria,
-} from "../../lib/analises-curriculares.js";
+} from "../../lib/analises-curriculares.ts";
 import { formatNumberBR } from "../../lib/formatters.js";
 import { paletaDoPainel } from "../../lib/tema-do-painel.js";
 import {
@@ -40,16 +57,26 @@ import {
   pendências prioritárias, que também filtram.
 */
 
-const truncar = (valor, limite) => {
+const truncar = (valor: unknown, limite: number) => {
   const texto = String(valor ?? "").trim();
   return texto.length > limite ? `${texto.slice(0, limite - 1)}…` : texto;
 };
 
 /* ── Filtros ────────────────────────────────────────────────────────── */
 
-const idDoFiltro = (campo) => `analises-filtro-${campo}`;
+const idDoFiltro = (campo: CampoDoFiltro) => `analises-filtro-${campo}`;
 
-function CampoDeFiltro({ filtro, opcoes, selecionados, aoMudar }) {
+function CampoDeFiltro({
+  filtro,
+  opcoes,
+  selecionados,
+  aoMudar,
+}: {
+  filtro: FiltroDaAnalise;
+  opcoes: { value: string; label: string }[];
+  selecionados: readonly string[];
+  aoMudar: MudarFiltroDasAnalises;
+}) {
   return (
     <Campo rotulo={filtro.rotulo} idDoControle={idDoFiltro(filtro.campo)}>
       <MultiSelectBusca
@@ -85,13 +112,28 @@ export function Filtros({
   periodo,
   aoPeriodo,
   chips,
+}: {
+  escopo: string;
+  aoEscopo(valor: string): void;
+  filtros: FiltrosDasAnalises;
+  opcoes: ReturnType<typeof opcoesDosFiltros>;
+  busca: string;
+  aoBuscar(valor: string): void;
+  aoMudar: MudarFiltroDasAnalises;
+  aoLimpar(): void;
+  podeLimpar: boolean;
+  carregado: boolean;
+  comMunicipio: boolean;
+  periodo: PeriodoDasAnalises;
+  aoPeriodo: Dispatch<SetStateAction<PeriodoDasAnalises>>;
+  chips: readonly ChipDasAnalises[];
 }) {
   const [maisOpcoes, setMaisOpcoes] = useState(false);
   const { inicio, fim } = normalizarPeriodo(periodo);
   const comData = temPeriodo(periodo) ? 1 : 0;
-  const mudarPeriodo = (ponta, valor) =>
+  const mudarPeriodo = (ponta: keyof PeriodoDasAnalises, valor: string) =>
     aoPeriodo((atual) => normalizarPeriodo({ ...atual, [ponta]: valor }));
-  const campos = (avancado) =>
+  const campos = (avancado: boolean) =>
     FILTROS.filter(
       (filtro) =>
         Boolean(filtro.avancado) === avancado &&
@@ -100,7 +142,7 @@ export function Filtros({
       <CampoDeFiltro
         key={filtro.campo}
         filtro={filtro}
-        opcoes={opcoes[filtro.campo]}
+        opcoes={opcoes[filtro.campo] ?? []}
         selecionados={filtros[filtro.campo]}
         aoMudar={aoMudar}
       />
@@ -123,7 +165,9 @@ export function Filtros({
             data-tour="analises-escopo"
             value={escopo}
             disabled={!carregado}
-            onChange={(evento) => aoEscopo(evento.target.value)}
+            onChange={(evento) =>
+              aoEscopo(normalizarEscopo(evento.target.value))
+            }
           >
             {ESCOPOS.map(({ valor, rotulo }) => (
               <option key={valor} value={valor}>
@@ -200,8 +244,20 @@ export function chipsDosFiltros({
   aoKpi,
   aoResponsavel,
   aoTirarData,
+}: {
+  escopo: string;
+  filtros: FiltrosDasAnalises;
+  kpi: string;
+  responsavel: string;
+  periodo: PeriodoDasAnalises;
+  aoTirarEscopo(): void;
+  aoMudar: MudarFiltroDasAnalises;
+  aoBuscar(valor: string): void;
+  aoKpi(valor: string): void;
+  aoResponsavel(valor: string): void;
+  aoTirarData(): void;
 }) {
-  const chips = [];
+  const chips: ChipDasAnalises[] = [];
   if (escopo !== "ativo")
     chips.push({
       chave: "escopo",
@@ -230,7 +286,7 @@ export function chipsDosFiltros({
     chips.push({
       chave: "kpi",
       rotulo: "KPI",
-      valor: ROTULO_DO_KPI[kpi],
+      valor: ROTULO_DO_KPI[kpi] ?? kpi,
       aoTirar: () => aoKpi(""),
     });
   if (responsavel)
@@ -258,14 +314,24 @@ const KPIS = [
   ["revisar", "k-purple", "fa-magnifying-glass"],
   ["aprovado", "k-green", "fa-circle-check"],
   ["reprovado", "k-red", "fa-circle-xmark"],
-];
+] as const;
 
 /*
   Total (volta a mostrar todos), os cinco que filtram por status (clicar de
   novo tira o filtro) e a taxa de conclusão.
 */
-export function Indicadores({ kpis, carregado, kpi, aoKpi }) {
-  const valor = (numero) => formatNumberBR(numero);
+export function Indicadores({
+  kpis,
+  carregado,
+  kpi,
+  aoKpi,
+}: {
+  kpis: ReturnType<typeof calcularKpis>;
+  carregado: boolean;
+  kpi: string;
+  aoKpi(valor: string): void;
+}) {
+  const valor = (numero: number) => formatNumberBR(numero);
   return (
     <GradeDeKpis
       tour="analises-kpis"
@@ -312,19 +378,20 @@ export function Indicadores({ kpis, carregado, kpi, aoKpi }) {
 /* ── Gráficos e pendências ──────────────────────────────────────────── */
 
 /* As cores dos tokens do app (com a paleta dos painéis de reserva). */
-const paleta = (escuro) => paletaDosGraficos(escuro, paletaDoPainel(escuro));
+const paleta = (escuro: boolean) =>
+  paletaDosGraficos(escuro, paletaDoPainel(escuro));
 
 /* #rrggbb → rgba com transparência (o preenchimento da linha); outro formato, transparente. */
-function translucido(cor, alfa) {
+function translucido(cor: string, alfa: number) {
   const hex = String(cor || "")
     .trim()
     .match(/^#([0-9a-f]{6})$/i);
   if (!hex) return "transparent";
-  const [r, g, b] = [0, 2, 4].map((i) => parseInt(hex[1].slice(i, i + 2), 16));
+  const [r, g, b] = [0, 2, 4].map((i) => parseInt(hex[1]!.slice(i, i + 2), 16));
   return `rgba(${r}, ${g}, ${b}, ${alfa})`;
 }
 
-const CORES_DO_STATUS = (p) => ({
+const CORES_DO_STATUS = (p: ReturnType<typeof paleta>) => ({
   Pendente: p.warn,
   Revisar: p.review,
   Aprovado: p.ok,
@@ -347,6 +414,19 @@ export function Graficos({
   periodo,
   aoClicarNoDia,
   escuro,
+}: {
+  linhas: readonly RegistroDaAnalise[];
+  linhasPorData?: readonly RegistroDaAnalise[];
+  pendencias: readonly (PendenciaDaAnalise & {
+    ativo: boolean;
+    aoClicar(): void;
+  })[];
+  carregado: boolean;
+  responsavel: string;
+  aoResponsavel(valor: string): void;
+  periodo: PeriodoDasAnalises;
+  aoClicarNoDia(dia: string, opcoes: { estender: boolean }): void;
+  escuro: boolean;
 }) {
   const porResponsavel = useMemo(
     () => analisesPorResponsavel(linhas),
@@ -406,9 +486,10 @@ export function Graficos({
                     tooltip: {
                       callbacks: {
                         title: (itens) =>
-                          porResponsavel[itens[0].dataIndex]?.rotulo || "",
+                          porResponsavel[itens[0]?.dataIndex ?? -1]?.rotulo ||
+                          "",
                         afterBody: (itens) => [
-                          `Total: ${formatNumberBR(porResponsavel[itens[0].dataIndex]?.total || 0)}`,
+                          `Total: ${formatNumberBR(porResponsavel[itens[0]?.dataIndex ?? -1]?.total || 0)}`,
                         ],
                       },
                     },
@@ -427,7 +508,7 @@ export function Graficos({
                     },
                   },
                   onClick: (_, elementos) => {
-                    const item = porResponsavel[elementos[0]?.index];
+                    const item = porResponsavel[elementos[0]?.index ?? -1];
                     if (!item) return;
                     const atual = clique.current;
                     atual.aoResponsavel(
@@ -461,10 +542,10 @@ export function Graficos({
           dependencias={[porDia, tema, periodo]}
           montar={() => {
             const p = paleta(escuro);
-            const marcado = (dia) => dia.fora || dia.futuras;
-            const escolhido = (dia) =>
+            const marcado = (dia: DiaDasAnalises) => dia.fora || dia.futuras;
+            const escolhido = (dia: DiaDasAnalises) =>
               comData && diaNoPeriodo(dia.chave, periodo);
-            const raio = (dia) => (marcado(dia) ? 5 : 3);
+            const raio = (dia: DiaDasAnalises) => (marcado(dia) ? 5 : 3);
             return {
               data: {
                 labels: porDia.map((dia) => dia.rotulo),
@@ -502,10 +583,14 @@ export function Graficos({
                 // O dia mais perto do clique na horizontal (não exige acertar o ponto).
                 interaction: { mode: "index", intersect: false },
                 onClick: (evento, elementos) => {
-                  const dia = porDia[elementos[0]?.index];
+                  const dia = porDia[elementos[0]?.index ?? -1];
                   if (!dia?.chave) return;
                   clique.current.aoClicarNoDia?.(dia.chave, {
-                    estender: Boolean(evento?.native?.shiftKey),
+                    estender: Boolean(
+                      evento?.native &&
+                      "shiftKey" in evento.native &&
+                      evento.native.shiftKey,
+                    ),
                   });
                 },
                 onHover: (evento, elementos, grafico) => {
@@ -520,7 +605,7 @@ export function Graficos({
                       label: (item) =>
                         `${formatNumberBR(item.parsed.y)} análise(s)`,
                       afterBody: (itens) => {
-                        const dia = porDia[itens[0].dataIndex];
+                        const dia = porDia[itens[0]?.dataIndex ?? -1];
                         if (!dia) return [];
                         return [
                           ...(dia.fora

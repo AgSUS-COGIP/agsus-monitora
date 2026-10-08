@@ -4,8 +4,7 @@ Duas entradas do menu, com o mesmo recurso de permissão (`entrevistas`), como o
 ao lado da Avaliação documental (acompanhar × fazer):
 
 - **Painel de entrevistas** (view `entrevistas`, `#page-entrevistas`, `montarEntrevistas()` →
-  `window.entrevistasController`): só leitura, para gestão e coordenação — filtros, KPIs, andamento
-  por edital e por vaga em cartões (barra nas cores da Avaliação documental), agenda dos próximos
+  `window.entrevistasController`): só leitura, para gestão e coordenação — filtros, KPIs, agenda dos próximos
   dias (com um edital), gráficos, pendências (inclusive sem comparecimento, sem nota e sem parecer),
   empatados na nota da entrevista com o aviso "o desempate é feito na Classificação", tabela,
   exportação e a gaveta do candidato. O edital de treinamento fica fora (o cache do painel,
@@ -41,8 +40,7 @@ só leitura, com o botão para onde se mudam (Editais, Lista de aprovados, Class
 entrevistas.jsx         Painel de entrevistas: <TelaDeEntrevistas> e montarEntrevistas()
 estado.js               store do painel: carga da área (cópia guardada), gaveta, CSV, agenda do
                         edital do recorte (obter_agenda_entrevista), comemorações
-andamento.tsx           andamento por edital e vaga (cartões e barra), agenda dos próximos dias,
-                        aviso dos empatados
+agenda-e-empates.tsx    agenda dos próximos dias (com um edital no recorte) e aviso dos empatados
 paineis.jsx             topo (status, ações), filtros, KPIs, recorte, gráficos, pendências
 tabela.jsx              tabela de resultados (TabelaInfinita), selo do parecer e do empate
 gaveta.jsx              detalhe da entrevista (caminho do candidato, critérios) e aprovados sem entrevista
@@ -72,8 +70,8 @@ marcos.js               marco "vaga pronta" (comemoração)
 entrevistas.css         só o que é destas telas (tokens); o resto vem de src/ui/
 ```
 
-Regras puras em `src/lib/` (`entrevistas-do-painel.js`, `painel-de-entrevistas.ts` — andamento,
-empates, agenda dos próximos dias —, `fila-de-conducao.ts` — fila, situações, recortes, contador —,
+Regras puras em `src/lib/` (`entrevistas-do-painel.js`, `painel-de-entrevistas.ts` — edital do
+recorte, empates, agenda dos próximos dias —, `fila-de-conducao.ts` — fila, situações, recortes, contador —,
 `conducao-de-entrevista.js`,
 `convocacao-da-entrevista.js` — a lista da Classificação por vaga, quem está na ficha, avisos —,
 `roteiro-de-entrevista.js`, `digitacao-de-notas.ts` — a digitação da matriz —, `comemoracao.js`). Testes: `tests/modulos/entrevistas.test.js` (painel), `tests/modulos/conduzir-entrevistas.test.js`,

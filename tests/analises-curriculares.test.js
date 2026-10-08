@@ -36,7 +36,7 @@ import {
   ultimaAtualizacao,
   urlSegura,
   validacaoDaJanela,
-} from "../src/lib/analises-curriculares.js";
+} from "../src/lib/analises-curriculares.ts";
 import { urlDaPlanilhaGoogle } from "../src/lib/planilhas.js";
 
 /*

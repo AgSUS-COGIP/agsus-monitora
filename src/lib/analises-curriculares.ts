@@ -1,3 +1,16 @@
+import type {
+  RegistroDaAnalise,
+  EscopoDasAnalises,
+  CampoDoFiltro,
+  FiltrosDasAnalises,
+  FiltroDaAnalise,
+  PeriodoDasAnalises,
+  RecorteDasAnalises,
+  PendenciaDaAnalise,
+  CargaDoResponsavel,
+  DiaDasAnalises,
+  PayloadDasAnalises,
+} from "../modulos/analises/tipos.ts";
 /*
   Regras da tela de Análises curriculares (src/modulos/analises/), sem React
   e sem banco: das linhas da lista enxuta (get_analises_dashboard_payload_v2)
@@ -27,16 +40,23 @@ import { municipioUfDaLinha } from "./textos-do-painel-de-analises.js";
 
 export const SEM_RESPONSAVEL = "Sem responsável";
 
-const texto = (valor) => String(valor ?? "").trim();
+const texto = (valor: unknown) =>
+  typeof valor === "string" ||
+  typeof valor === "number" ||
+  typeof valor === "boolean"
+    ? String(valor).trim()
+    : "";
 
 /** Sem acento e sem caixa: quem busca "joao" acha "João". */
-export const normalizar = (valor) =>
+export const normalizar = (valor: unknown) =>
   texto(valor).toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
 
-const contar = (linhas, teste) =>
-  linhas.reduce((total, linha) => total + (teste(linha) ? 1 : 0), 0);
+const contar = (
+  linhas: readonly RegistroDaAnalise[],
+  teste: (linha: RegistroDaAnalise) => unknown,
+) => linhas.reduce((total, linha) => total + (teste(linha) ? 1 : 0), 0);
 
-const comparar = (a, b) =>
+const comparar = (a: unknown, b: unknown) =>
   String(a ?? "").localeCompare(String(b ?? ""), "pt-BR", { numeric: true });
 
 /* ── Situação do processo (o escopo que a RPC devolve) ─────────────── */
@@ -48,19 +68,22 @@ export const ESCOPOS = Object.freeze([
   Object.freeze({ valor: "todos", rotulo: "Todos" }),
 ]);
 
-export function normalizarEscopo(valor) {
+export function normalizarEscopo(valor: unknown): EscopoDasAnalises {
   const escopo = texto(valor).toLowerCase();
-  return ESCOPOS.some((item) => item.valor === escopo) ? escopo : ESCOPO_PADRAO;
+  return ESCOPOS.find((item) => item.valor === escopo)?.valor ?? ESCOPO_PADRAO;
 }
 
-export function rotuloDoEscopo(valor) {
-  return ESCOPOS.find((item) => item.valor === normalizarEscopo(valor)).rotulo;
+export function rotuloDoEscopo(valor: unknown) {
+  return (
+    ESCOPOS.find((item) => item.valor === normalizarEscopo(valor))?.rotulo ??
+    "Ativo"
+  );
 }
 
 /* ── Linhas do payload ─────────────────────────────────────────────── */
 
 /* Responsável em branco vira "Sem responsável" (filtro, gráfico e pendência). */
-export function normalizarLinha(linha) {
+export function normalizarLinha(linha: RegistroDaAnalise): RegistroDaAnalise {
   if (!linha || typeof linha !== "object") return linha;
   if (texto(linha.responsavel_analise)) return linha;
   return {
@@ -70,7 +93,7 @@ export function normalizarLinha(linha) {
   };
 }
 
-export const semResponsavel = (linha) =>
+export const semResponsavel = (linha: RegistroDaAnalise) =>
   linha?.responsavel_ausente === true ||
   normalizar(linha?.responsavel_analise) === normalizar(SEM_RESPONSAVEL);
 
@@ -78,18 +101,17 @@ export const semResponsavel = (linha) =>
  * As linhas do payload (colunas + arrays) como objetos, pelo nome da coluna,
  * com o que o envelope manda uma vez só (grupo, situação do edital).
  */
-export function linhasDoPayload(payload) {
-  if (
-    !payload ||
-    !Array.isArray(payload.columns) ||
-    !Array.isArray(payload.rows)
-  )
-    throw new Error("Payload de Análises inválido.");
+export function linhasDoPayload(entrada: unknown): RegistroDaAnalise[] {
+  const payload = normalizarPayloadDasAnalises(entrada);
   const colunas = payload.columns;
   return payload.rows.map((valores) => {
-    const linha = {};
+    const linha: RegistroDaAnalise = {};
     colunas.forEach((coluna, indice) => {
-      linha[coluna] = Array.isArray(valores) ? valores[indice] : null;
+      const valor = valores[indice];
+      linha[coluna] =
+        valor == null || ["string", "number", "boolean"].includes(typeof valor)
+          ? (valor ?? null)
+          : null;
     });
     return normalizarLinha(completarLinhaPeloEnvelope(linha, payload));
   });
@@ -101,13 +123,23 @@ export function linhasDoPayload(payload) {
   dd/mm/aaaa, aaaa-mm-dd ou data e hora ISO. Outro formato fica sem data (não
   adivinha mês/dia trocados).
 */
-export function dataDaPlanilha(valor) {
+export function dataDaPlanilha(valor: unknown) {
   const bruto = texto(valor);
   if (!bruto) return null;
   let partes = bruto.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
-  if (partes) return new Date(+partes[3], +partes[2] - 1, +partes[1]);
+  if (partes)
+    return new Date(
+      Number(partes[3]),
+      Number(partes[2]) - 1,
+      Number(partes[1]),
+    );
   partes = bruto.match(/^(\d{4})-(\d{2})-(\d{2})$/);
-  if (partes) return new Date(+partes[1], +partes[2] - 1, +partes[3]);
+  if (partes)
+    return new Date(
+      Number(partes[1]),
+      Number(partes[2]) - 1,
+      Number(partes[3]),
+    );
   if (/^\d{4}-\d{2}-\d{2}[T ]/.test(bruto)) {
     const data = new Date(bruto);
     return Number.isNaN(data.getTime()) ? null : data;
@@ -116,12 +148,12 @@ export function dataDaPlanilha(valor) {
 }
 
 /* A data em dd/mm/aaaa; sem formato conhecido, o texto como veio. */
-export function formatarData(valor) {
+export function formatarData(valor: unknown) {
   const data = dataDaPlanilha(valor);
   return data ? data.toLocaleDateString("pt-BR") : texto(valor);
 }
 
-export function formatarDataHora(valor) {
+export function formatarDataHora(valor: unknown) {
   const data = dataDaPlanilha(valor);
   return data
     ? data.toLocaleString("pt-BR", {
@@ -136,9 +168,9 @@ export function formatarDataHora(valor) {
 
 /* ── Janela oficial do edital e validação da data ──────────────────── */
 
-const chaveDoEdital = (grupo, unidade, edital) =>
+const chaveDoEdital = (grupo: unknown, unidade: unknown, edital: unknown) =>
   [normalizar(grupo), normalizar(unidade), normalizar(edital)].join("|");
-const editalAtivo = (edital) =>
+const editalAtivo = (edital: RegistroDaAnalise) =>
   edital?.ativo === true ||
   ["sim", "s", "ativo", "1", "true", "x"].includes(normalizar(edital?.ativo));
 
@@ -147,22 +179,27 @@ const editalAtivo = (edital) =>
   edital; senão unidade + edital, se só um; senão o único ativo com esse
   número; senão o único com esse número. `match` diz qual regra casou.
 */
-export function editalDaLinha(linha, editais) {
+export function editalDaLinha(
+  linha: RegistroDaAnalise,
+  editais: readonly RegistroDaAnalise[],
+) {
   return buscaDeEditais(editais)(linha);
 }
 
 /* A mesma regra, com os editais indexados uma vez (para muitas linhas). */
-function buscaDeEditais(editais) {
-  const porChave = new Map();
-  const porNumero = new Map();
+function buscaDeEditais(editais: readonly RegistroDaAnalise[]) {
+  const porChave = new Map<string, RegistroDaAnalise>();
+  const porNumero = new Map<string, RegistroDaAnalise[]>();
   for (const e of Array.isArray(editais) ? editais : []) {
     const chave = chaveDoEdital(e.grupo, e.unidade, e.edital);
     if (!porChave.has(chave)) porChave.set(chave, e);
     const numero = normalizar(e.edital);
     if (!porNumero.has(numero)) porNumero.set(numero, []);
-    porNumero.get(numero).push(e);
+    porNumero.get(numero)?.push(e);
   }
-  return (linha) => {
+  return (
+    linha: RegistroDaAnalise,
+  ): (RegistroDaAnalise & { match: string }) | null => {
     const exato = porChave.get(
       chaveDoEdital(linha.grupo, linha.unidade, linha.edital),
     );
@@ -184,23 +221,27 @@ function buscaDeEditais(editais) {
 }
 
 /* Rótulo curto (filtro e chip) e a descrição (gaveta) de cada validação. */
-export const VALIDACOES = Object.freeze({
+export const VALIDACOES: Readonly<Record<string, string>> = Object.freeze({
   DENTRO_PERIODO: "Dentro do período",
   FORA_PERIODO: "Fora do período",
   SEM_DATA: "Sem data de análise",
   SEM_JANELA: "Sem janela configurada",
   DATA_FUTURA: "Data no futuro",
 });
-export const DESCRICAO_DA_VALIDACAO = Object.freeze({
-  DENTRO_PERIODO: "Dentro do período configurado",
-  FORA_PERIODO: "Fora do período configurado",
-  SEM_DATA: "Sem data de análise informada",
-  SEM_JANELA: "Sem janela configurada no edital",
-  DATA_FUTURA: "Data de análise no futuro (corrija na planilha)",
-});
+export const DESCRICAO_DA_VALIDACAO: Readonly<Record<string, string>> =
+  Object.freeze({
+    DENTRO_PERIODO: "Dentro do período configurado",
+    FORA_PERIODO: "Fora do período configurado",
+    SEM_DATA: "Sem data de análise informada",
+    SEM_JANELA: "Sem janela configurada no edital",
+    DATA_FUTURA: "Data de análise no futuro (corrija na planilha)",
+  });
 
 /** A data da análise contra a janela oficial do edital. */
-export function validacaoDaJanela(linha, agora = new Date()) {
+export function validacaoDaJanela(
+  linha: RegistroDaAnalise,
+  agora = new Date(),
+) {
   const analise = dataDaPlanilha(linha?.data_analise);
   const inicio = dataDaPlanilha(linha?.data_inicio_analise);
   const fim = dataDaPlanilha(linha?.data_fim_analise);
@@ -218,12 +259,13 @@ export function validacaoDaJanela(linha, agora = new Date()) {
 }
 
 /* Os índices da busca geral (inclui o parecer, quando já veio) e da fila. */
-export function comIndicesDeBusca(linha) {
+export function comIndicesDeBusca<T extends RegistroDaAnalise>(linha: T) {
   return indexar({ ...linha });
 }
 
-function indexar(linha) {
-  const juntar = (campos) => normalizar(campos.map((c) => linha[c]).join(" "));
+function indexar<T extends RegistroDaAnalise>(linha: T) {
+  const juntar = (campos: readonly string[]) =>
+    normalizar(campos.map((c) => linha[c]).join(" "));
   return Object.assign(linha, {
     __busca: juntar([
       "grupo",
@@ -261,13 +303,24 @@ function indexar(linha) {
  * posição). Devolve linhas novas; as de entrada não mudam.
  */
 export function prepararLinhas(
-  linhas,
-  { editais = [], area, agora = new Date() } = {},
+  linhas: readonly RegistroDaAnalise[],
+  {
+    editais = [],
+    area,
+    agora = new Date(),
+  }: {
+    editais?: readonly RegistroDaAnalise[];
+    area?: string;
+    agora?: Date;
+  } = {},
 ) {
   const saudeIndigena = ehAreaSaudeIndigena(area);
   const editalDe = buscaDeEditais(editais);
   return (Array.isArray(linhas) ? linhas : []).map((original, indice) => {
-    const linha = { ...original };
+    const linha: RegistroDaAnalise & { __chave: string } = {
+      ...original,
+      __chave: "",
+    };
     linha.__chave =
       texto(linha.id) || texto(linha.chave_natural) || `linha-${indice}`;
     const edital = editalDe(linha);
@@ -287,13 +340,15 @@ export function prepararLinhas(
 
 /* ── Filtros ───────────────────────────────────────────────────────── */
 
-const um = (campo) => (linha) => [texto(linha[campo])];
+const um = (campo: string) => (linha: RegistroDaAnalise) => [
+  texto(linha[campo]),
+];
 
 /*
   Os filtros de seleção múltipla, na ordem da tela. `avancado`: atrás do "Mais
   opções". `rotuloDoValor`: o que a opção mostra (o valor é o do dado).
 */
-export const FILTROS = Object.freeze([
+export const FILTROS: readonly FiltroDaAnalise[] = Object.freeze([
   {
     campo: "unidade",
     rotulo: "Unidade",
@@ -357,31 +412,43 @@ export const FILTROS = Object.freeze([
 
 const FILTRO = Object.fromEntries(
   FILTROS.map((filtro) => [filtro.campo, filtro]),
-);
+) as Record<CampoDoFiltro, FiltroDaAnalise>;
 
-export const FILTROS_VAZIOS = Object.freeze({
-  ...Object.fromEntries(FILTROS.map(({ campo }) => [campo, Object.freeze([])])),
+export const FILTROS_VAZIOS: FiltrosDasAnalises = Object.freeze({
+  unidade: [],
+  municipio: [],
+  edital: [],
+  vaga: [],
+  status: [],
+  responsavel: [],
+  categoria: [],
+  modalidade: [],
+  validacao: [],
   busca: "",
 });
 
-export function rotuloDoValor(campo, valor) {
+export function rotuloDoValor(campo: CampoDoFiltro, valor: string) {
   return FILTRO[campo]?.rotuloDoValor?.(valor) ?? valor;
 }
 
-const valoresDe = (campo, linha) =>
+const valoresDe = (campo: CampoDoFiltro, linha: RegistroDaAnalise) =>
   FILTRO[campo].valores(linha).map(texto).filter(Boolean);
 
 /* Seleção de cada filtro como conjunto normalizado (vazio = sem filtro). */
-function conjuntos(filtros) {
+function conjuntos(filtros?: Partial<FiltrosDasAnalises>) {
   return Object.fromEntries(
     FILTROS.map(({ campo }) => [
       campo,
       new Set((filtros?.[campo] || []).map(normalizar)),
     ]),
-  );
+  ) as Record<CampoDoFiltro, Set<string>>;
 }
 
-function passaNoFiltro(linha, campo, selecao) {
+function passaNoFiltro(
+  linha: RegistroDaAnalise,
+  campo: CampoDoFiltro,
+  selecao: Set<string>,
+) {
   if (!selecao.size) return true;
   return valoresDe(campo, linha).some((valor) =>
     selecao.has(normalizar(valor)),
@@ -389,7 +456,10 @@ function passaNoFiltro(linha, campo, selecao) {
 }
 
 /** As linhas que passam em todos os filtros e na busca geral. */
-export function filtrarLinhas(linhas, filtros) {
+export function filtrarLinhas<T extends RegistroDaAnalise>(
+  linhas: readonly T[],
+  filtros?: Partial<FiltrosDasAnalises>,
+) {
   const selecoes = conjuntos(filtros);
   const busca = normalizar(filtros?.busca);
   return (linhas || []).filter(
@@ -406,11 +476,14 @@ export function filtrarLinhas(linhas, filtros) {
  * as de um filtro saem das linhas que passam nos outros (sem contar ele
  * mesmo, nem a busca), em ordem de rótulo, sem repetir.
  */
-export function opcoesDosFiltros(linhas, filtros) {
+export function opcoesDosFiltros(
+  linhas: readonly RegistroDaAnalise[],
+  filtros?: Partial<FiltrosDasAnalises>,
+) {
   const selecoes = conjuntos(filtros);
   const vistos = Object.fromEntries(
-    FILTROS.map(({ campo }) => [campo, new Map()]),
-  );
+    FILTROS.map(({ campo }) => [campo, new Map<string, string>()]),
+  ) as Record<CampoDoFiltro, Map<string, string>>;
   for (const linha of linhas || []) {
     const passa = Object.fromEntries(
       FILTROS.map(({ campo }) => [
@@ -444,19 +517,22 @@ export function opcoesDosFiltros(linhas, filtros) {
   o que ainda existe nas linhas, na grafia de agora. Devolve o mesmo objeto se
   nada mudou.
 */
-export function apararSelecao(filtros, linhas) {
+export function apararSelecao(
+  filtros: FiltrosDasAnalises,
+  linhas: readonly RegistroDaAnalise[],
+) {
   let mudou = false;
   const proximo = { ...filtros };
   for (const { campo } of FILTROS) {
     const selecao = filtros[campo] || [];
     if (!selecao.length) continue;
-    const existentes = new Map();
+    const existentes = new Map<string, string>();
     for (const linha of linhas || [])
       for (const valor of valoresDe(campo, linha))
         existentes.set(normalizar(valor), valor);
     const aparada = selecao
       .map((valor) => existentes.get(normalizar(valor)))
-      .filter(Boolean);
+      .filter((valor): valor is string => valor !== undefined);
     if (
       aparada.length !== selecao.length ||
       aparada.some((valor, i) => valor !== selecao[i])
@@ -469,7 +545,10 @@ export function apararSelecao(filtros, linhas) {
 }
 
 /** Quantos filtros estão em uso (a busca conta um). */
-export function quantosFiltros(filtros, { soAvancados = false } = {}) {
+export function quantosFiltros(
+  filtros: Partial<FiltrosDasAnalises>,
+  { soAvancados = false } = {},
+) {
   const usados = FILTROS.filter(
     ({ campo, avancado }) =>
       (!soAvancados || avancado) && (filtros?.[campo] || []).length,
@@ -478,7 +557,10 @@ export function quantosFiltros(filtros, { soAvancados = false } = {}) {
 }
 
 /* O filtro Município/UF só existe onde as linhas trazem município (Projetos e SEDE). */
-export function temMunicipio(linhas, area) {
+export function temMunicipio(
+  linhas: readonly RegistroDaAnalise[],
+  area: string,
+) {
   return (
     !ehAreaSaudeIndigena(area) &&
     (linhas || []).some((l) => texto(l.municipio_uf))
@@ -487,14 +569,15 @@ export function temMunicipio(linhas, area) {
 
 /* ── KPIs e o recorte visual (KPI e barra do gráfico) ──────────────── */
 
-export const STATUS_DO_KPI = Object.freeze({
-  analisado: Object.freeze(["Revisar", "Aprovado", "Reprovado"]),
-  pendente: Object.freeze(["Pendente"]),
-  revisar: Object.freeze(["Revisar"]),
-  aprovado: Object.freeze(["Aprovado"]),
-  reprovado: Object.freeze(["Reprovado"]),
-});
-export const ROTULO_DO_KPI = Object.freeze({
+export const STATUS_DO_KPI: Readonly<Record<string, readonly string[]>> =
+  Object.freeze({
+    analisado: Object.freeze(["Revisar", "Aprovado", "Reprovado"]),
+    pendente: Object.freeze(["Pendente"]),
+    revisar: Object.freeze(["Revisar"]),
+    aprovado: Object.freeze(["Aprovado"]),
+    reprovado: Object.freeze(["Reprovado"]),
+  });
+export const ROTULO_DO_KPI: Readonly<Record<string, string>> = Object.freeze({
   total: "Total de aptos p/ análise",
   analisado: "Análises realizadas",
   pendente: "Pendentes",
@@ -504,7 +587,10 @@ export const ROTULO_DO_KPI = Object.freeze({
 });
 
 /** O recorte dos KPIs (status) e da barra clicada no gráfico (responsável). */
-export function recorteVisual(linhas, { kpi = "", responsavel = "" } = {}) {
+export function recorteVisual<T extends RegistroDaAnalise>(
+  linhas: readonly T[],
+  { kpi = "", responsavel = "" } = {},
+) {
   const status = STATUS_DO_KPI[kpi] || [];
   return (linhas || []).filter(
     (linha) =>
@@ -513,9 +599,9 @@ export function recorteVisual(linhas, { kpi = "", responsavel = "" } = {}) {
   );
 }
 
-export function calcularKpis(linhas) {
+export function calcularKpis(linhas: readonly RegistroDaAnalise[]) {
   const lista = linhas || [];
-  const de = (status) =>
+  const de = (status: string) =>
     contar(lista, (l) => texto(l.status_consolidado) === status);
   const pendente = de("Pendente");
   const revisar = de("Revisar");
@@ -540,11 +626,14 @@ export const STATUS_DO_GRAFICO = Object.freeze([
   "Revisar",
   "Aprovado",
   "Reprovado",
-]);
+] as const);
 
 /* Carga por responsável, empilhada por status (status desconhecido conta como Pendente). */
-export function analisesPorResponsavel(linhas, limite = 12) {
-  const porRotulo = new Map();
+export function analisesPorResponsavel(
+  linhas: readonly RegistroDaAnalise[],
+  limite = 12,
+) {
+  const porRotulo = new Map<string, CargaDoResponsavel>();
   for (const linha of linhas || []) {
     const rotulo = texto(linha.responsavel_analise) || SEM_RESPONSAVEL;
     if (!porRotulo.has(rotulo))
@@ -556,9 +645,11 @@ export function analisesPorResponsavel(linhas, limite = 12) {
         Reprovado: 0,
         total: 0,
       });
-    const item = porRotulo.get(rotulo);
+    const item = porRotulo.get(rotulo)!;
     const status = texto(linha.status_consolidado);
-    item[STATUS_DO_GRAFICO.includes(status) ? status : "Pendente"] += 1;
+    const campo =
+      STATUS_DO_GRAFICO.find((valor) => valor === status) ?? "Pendente";
+    item[campo] += 1;
     item.total += 1;
   }
   return [...porRotulo.values()]
@@ -573,8 +664,8 @@ export function analisesPorResponsavel(linhas, limite = 12) {
 */
 const STATUS_COM_DECISAO = new Set(["Aprovado", "Reprovado", "Revisar"]);
 
-export function tendenciaDiaria(linhas) {
-  const porDia = new Map();
+export function tendenciaDiaria(linhas: readonly RegistroDaAnalise[]) {
+  const porDia = new Map<string, DiaDasAnalises>();
   for (const linha of linhas || []) {
     if (!STATUS_COM_DECISAO.has(texto(linha.status_consolidado))) continue;
     const rotulo = formatarData(linha.data_analise);
@@ -588,7 +679,7 @@ export function tendenciaDiaria(linhas) {
         data: dataDaPlanilha(linha.data_analise),
         chave: chaveDoDia(linha.data_analise),
       });
-    const dia = porDia.get(rotulo);
+    const dia = porDia.get(rotulo)!;
     dia.valor += 1;
     if (linha.data_validacao_status === "FORA_PERIODO") dia.fora += 1;
     if (linha.data_validacao_status === "DATA_FUTURA") dia.futuras += 1;
@@ -600,7 +691,7 @@ export function tendenciaDiaria(linhas) {
 
 /* ── Filtro por data (o dia clicado em "Análises por data") ────────── */
 
-const doisDigitos = (numero) => String(numero).padStart(2, "0");
+const doisDigitos = (numero: number) => String(numero).padStart(2, "0");
 const CHAVE_DO_DIA = /^\d{4}-\d{2}-\d{2}$/;
 
 /**
@@ -609,18 +700,23 @@ const CHAVE_DO_DIA = /^\d{4}-\d{2}-\d{2}$/;
  * `<input type="date">`, então o clique no gráfico e o campo falam a mesma
  * língua.
  */
-export function chaveDoDia(valor) {
+export function chaveDoDia(valor: unknown) {
   const data = dataDaPlanilha(valor);
   if (!data) return "";
   return `${data.getFullYear()}-${doisDigitos(data.getMonth() + 1)}-${doisDigitos(data.getDate())}`;
 }
 
 /** Sem filtro de data. */
-export const PERIODO_VAZIO = Object.freeze({ inicio: "", fim: "" });
+export const PERIODO_VAZIO: PeriodoDasAnalises = Object.freeze({
+  inicio: "",
+  fim: "",
+});
 
 /** Só chaves válidas, com início ≤ fim (trocados, desvira). */
-export function normalizarPeriodo(periodo) {
-  const valida = (chave) =>
+export function normalizarPeriodo(
+  periodo?: Partial<PeriodoDasAnalises> | null,
+) {
+  const valida = (chave: unknown) =>
     CHAVE_DO_DIA.test(texto(chave)) ? texto(chave) : "";
   const inicio = valida(periodo?.inicio);
   const fim = valida(periodo?.fim);
@@ -628,13 +724,16 @@ export function normalizarPeriodo(periodo) {
   return { inicio, fim };
 }
 
-export function temPeriodo(periodo) {
+export function temPeriodo(periodo?: Partial<PeriodoDasAnalises> | null) {
   const { inicio, fim } = normalizarPeriodo(periodo);
   return Boolean(inicio || fim);
 }
 
 /** O dia (chave) está dentro do período? As pontas contam; sem período, sim. */
-export function diaNoPeriodo(chave, periodo) {
+export function diaNoPeriodo(
+  chave: string,
+  periodo: Partial<PeriodoDasAnalises>,
+) {
   const { inicio, fim } = normalizarPeriodo(periodo);
   if (!inicio && !fim) return true;
   if (!chave) return false;
@@ -645,7 +744,10 @@ export function diaNoPeriodo(chave, periodo) {
  * As linhas cuja data da análise cai no período — o mesmo campo do gráfico.
  * Com período, a linha sem data sai; sem período, todas ficam (mesmo array).
  */
-export function filtrarPorPeriodo(linhas, periodo) {
+export function filtrarPorPeriodo<T extends RegistroDaAnalise>(
+  linhas: readonly T[],
+  periodo: Partial<PeriodoDasAnalises>,
+) {
   const lista = linhas || [];
   if (!temPeriodo(periodo)) return lista;
   return lista.filter((linha) =>
@@ -658,7 +760,11 @@ export function filtrarPorPeriodo(linhas, periodo) {
  * novo tira o filtro. `estender` (Shift + clique): do início do período atual
  * até o dia clicado, em qualquer ordem.
  */
-export function periodoDoClique(atual, dia, { estender = false } = {}) {
+export function periodoDoClique(
+  atual: PeriodoDasAnalises,
+  dia: string,
+  { estender = false } = {},
+) {
   if (!CHAVE_DO_DIA.test(texto(dia))) return normalizarPeriodo(atual);
   const { inicio, fim } = normalizarPeriodo(atual);
   if (estender && (inicio || fim))
@@ -667,13 +773,13 @@ export function periodoDoClique(atual, dia, { estender = false } = {}) {
   return { inicio: dia, fim: dia };
 }
 
-const dataDaChave = (chave) => {
+const dataDaChave = (chave: string) => {
   const [ano, mes, dia] = chave.split("-");
   return `${dia}/${mes}/${ano}`;
 };
 
 /** "28/09/2026", "01/09/2026 a 15/09/2026", "a partir de …" ou "até …"; "" sem período. */
-export function rotuloDoPeriodo(periodo) {
+export function rotuloDoPeriodo(periodo: Partial<PeriodoDasAnalises>) {
   const { inicio, fim } = normalizarPeriodo(periodo);
   if (inicio && fim)
     return inicio === fim
@@ -686,17 +792,21 @@ export function rotuloDoPeriodo(periodo) {
 
 /* ── Pendências prioritárias ───────────────────────────────────────── */
 
-const n = (valor) => valor.toLocaleString("pt-BR");
+const n = (valor: number) => valor.toLocaleString("pt-BR");
 
 /*
   O que pede ação no recorte, da mais grave para a menos (até 8). Cada uma
   tem um atalho que filtra a tela: `{ tipo: "kpi" | "validacao" |
   "responsavel", valor }`.
 */
-export function pendenciasPrioritarias(linhas) {
+export function pendenciasPrioritarias(
+  linhas: readonly RegistroDaAnalise[],
+): PendenciaDaAnalise[] {
   const lista = linhas || [];
-  const status = (s) => contar(lista, (l) => texto(l.status_consolidado) === s);
-  const validacao = (v) => contar(lista, (l) => l.data_validacao_status === v);
+  const status = (s: string) =>
+    contar(lista, (l) => texto(l.status_consolidado) === s);
+  const validacao = (v: string) =>
+    contar(lista, (l) => l.data_validacao_status === v);
   const futura = validacao("DATA_FUTURA");
   const fora = validacao("FORA_PERIODO");
   const semResp = contar(lista, semResponsavel);
@@ -706,7 +816,7 @@ export function pendenciasPrioritarias(linhas) {
     lista,
     (l) => texto(l.etapa) && !texto(l.data_analise),
   );
-  const itens = [
+  const itens: (0 | PendenciaDaAnalise)[] = [
     futura && {
       chave: "data-futura",
       titulo: "Data de análise no futuro",
@@ -750,7 +860,9 @@ export function pendenciasPrioritarias(linhas) {
       atalho: { tipo: "validacao", valor: "SEM_DATA" },
     },
   ];
-  return itens.filter(Boolean).slice(0, 8);
+  return itens
+    .filter((item): item is PendenciaDaAnalise => Boolean(item))
+    .slice(0, 8);
 }
 
 /* ── Recorte ativo ─────────────────────────────────────────────────── */
@@ -765,7 +877,7 @@ export function descricaoDoRecorte({
   kpi = "",
   responsavel = "",
   periodo = PERIODO_VAZIO,
-}) {
+}: RecorteDasAnalises) {
   const partes = [`Situação do processo: ${rotuloDoEscopo(escopo)}`];
   for (const { campo, rotulo } of FILTROS) {
     const valores = filtros?.[campo] || [];
@@ -774,7 +886,7 @@ export function descricaoDoRecorte({
         `${rotulo}: ${valores.map((v) => rotuloDoValor(campo, v)).join(", ")}`,
       );
   }
-  if (texto(filtros?.busca)) partes.push(`Busca: ${texto(filtros.busca)}`);
+  if (texto(filtros?.busca)) partes.push(`Busca: ${texto(filtros?.busca)}`);
   if (STATUS_DO_KPI[kpi]) partes.push(`KPI: ${ROTULO_DO_KPI[kpi]}`);
   if (responsavel) partes.push(`Responsável no gráfico: ${responsavel}`);
   if (temPeriodo(periodo)) partes.push(`Data: ${rotuloDoPeriodo(periodo)}`);
@@ -782,9 +894,9 @@ export function descricaoDoRecorte({
 }
 
 /* As marcas do recorte: a janela oficial, as análises fora dela e as sem janela. */
-export function marcasDoRecorte(linhas) {
+export function marcasDoRecorte(linhas: readonly RegistroDaAnalise[]) {
   const lista = linhas || [];
-  const janelas = new Map();
+  const janelas = new Map<string, { inicio: string; fim: string }>();
   for (const linha of lista) {
     const inicio = formatarData(linha.data_inicio_analise);
     const fim = formatarData(linha.data_fim_analise);
@@ -797,7 +909,7 @@ export function marcasDoRecorte(linhas) {
   );
   const marcas = [];
   if (janelas.size === 1) {
-    const [{ inicio, fim }] = janelas.values();
+    const { inicio, fim } = janelas.values().next().value!;
     marcas.push({
       chave: "janela",
       icone: "fa-calendar-days",
@@ -829,7 +941,10 @@ export function marcasDoRecorte(linhas) {
 /* ── Fila ──────────────────────────────────────────────────────────── */
 
 /** A busca da fila (só a tabela; inclui etapa e o parecer, quando já veio). */
-export function filtrarPelaBuscaDaFila(linhas, busca) {
+export function filtrarPelaBuscaDaFila<T extends RegistroDaAnalise>(
+  linhas: readonly T[],
+  busca: string,
+) {
   const termo = normalizar(busca);
   if (!termo) return linhas;
   return linhas.filter((linha) =>
@@ -837,7 +952,7 @@ export function filtrarPelaBuscaDaFila(linhas, busca) {
   );
 }
 
-export const TOM_DO_STATUS = Object.freeze({
+export const TOM_DO_STATUS: Readonly<Record<string, string>> = Object.freeze({
   aprovado: "aprovado",
   reprovado: "reprovado",
   revisar: "revisar",
@@ -845,12 +960,15 @@ export const TOM_DO_STATUS = Object.freeze({
 });
 
 /** Tom do selo de status (Selo de src/ui/). */
-export function tomDoStatus(status) {
+export function tomDoStatus(status: unknown) {
   return TOM_DO_STATUS[normalizar(status)] || "neutro";
 }
 
 /** A hora do dado mais novo: das linhas (updated_at) ou do envelope. */
-export function ultimaAtualizacao(linhas, payload) {
+export function ultimaAtualizacao(
+  linhas: readonly RegistroDaAnalise[],
+  payload?: RegistroDaAnalise | null,
+) {
   const datas = (linhas || [])
     .map((l) => l.updated_at || l.ultima_atualizacao)
     .filter(Boolean);
@@ -860,7 +978,7 @@ export function ultimaAtualizacao(linhas, payload) {
     datas
       .map((valor) => ({ valor, data: dataDaPlanilha(valor) }))
       .filter((item) => item.data)
-      .sort((a, b) => a.data - b.data)
+      .sort((a, b) => (a.data?.getTime() ?? 0) - (b.data?.getTime() ?? 0))
       .pop()?.valor ?? null
   );
 }
@@ -868,10 +986,10 @@ export function ultimaAtualizacao(linhas, payload) {
 /* ── Detalhe da gaveta ─────────────────────────────────────────────── */
 
 const VAZIOS = new Set(["", "-", "--", "não informado", "sem informação"]);
-const temValor = (valor) => !VAZIOS.has(texto(valor).toLowerCase());
+const temValor = (valor: unknown) => !VAZIOS.has(texto(valor).toLowerCase());
 
 /** Link http(s) absoluto, ou "" (nada de `javascript:` nem caminho relativo). */
-export function urlSegura(valor) {
+export function urlSegura(valor: unknown) {
   const bruto = texto(valor);
   if (!bruto) return "";
   try {
@@ -884,15 +1002,22 @@ export function urlSegura(valor) {
   }
 }
 
-const par = (rotulo, valor) => [rotulo, texto(valor)];
-const soComValor = (pares) => pares.filter(([, valor]) => temValor(valor));
+const par = (rotulo: string, valor: unknown): [string, string] => [
+  rotulo,
+  texto(valor),
+];
+const soComValor = (pares: [string, string][]) =>
+  pares.filter(([, valor]) => temValor(valor));
 
 /**
  * O que a gaveta mostra de uma linha (já com o detalhamento, se veio):
  * título, status, responsável, contexto, links e as seções de pares
  * rótulo/valor. Pares sem valor saem; seção vazia sai.
  */
-export function detalheDaAnalise(linha, area) {
+export function detalheDaAnalise(
+  linha: RegistroDaAnalise | null,
+  area: string,
+) {
   const l = linha || {};
   const inicio = formatarData(l.data_inicio_analise);
   const fim = formatarData(l.data_fim_analise);
@@ -918,7 +1043,7 @@ export function detalheDaAnalise(linha, area) {
         par("Data da análise", formatarData(l.data_analise)),
         par(
           "Validação",
-          DESCRICAO_DA_VALIDACAO[l.data_validacao_status] ||
+          DESCRICAO_DA_VALIDACAO[texto(l.data_validacao_status)] ||
             l.data_validacao_status,
         ),
         par(
@@ -992,9 +1117,12 @@ export const COLUNAS_DO_CSV = Object.freeze([
   Indígena. Quebra de linha, `;` e aspas saem da célula; célula que começa
   como fórmula ganha um apóstrofo (csv-security.js).
 */
-export function csvDasAnalises(linhas, area) {
+export function csvDasAnalises(
+  linhas: readonly RegistroDaAnalise[],
+  area: string,
+) {
   const colunas = colunasDoCsvDeAnalises(COLUNAS_DO_CSV, area);
-  const celula = (valor) =>
+  const celula = (valor: unknown) =>
     sanitizeCsvCell(
       String(valor ?? "")
         .replace(/[\r\n;]/g, " ")
@@ -1006,4 +1134,42 @@ export function csvDasAnalises(linhas, area) {
       colunas.map((c) => celula(linha[c])).join(";"),
     ),
   ].join("\n");
+}
+
+/** Valida o envelope antes de interpretar dados externos ou persistidos no navegador. */
+export function normalizarPayloadDasAnalises(
+  entrada: unknown,
+): PayloadDasAnalises {
+  if (!entrada || typeof entrada !== "object" || Array.isArray(entrada))
+    throw new Error("Payload de Análises inválido.");
+  const dados = entrada as Record<string, unknown>;
+  if (
+    !Array.isArray(dados.columns) ||
+    !dados.columns.every(
+      (coluna): coluna is string =>
+        typeof coluna === "string" &&
+        coluna !== "__proto__" &&
+        coluna !== "constructor" &&
+        coluna !== "prototype",
+    ) ||
+    !Array.isArray(dados.rows) ||
+    !dados.rows.every((linha): linha is unknown[] => Array.isArray(linha))
+  )
+    throw new Error("Payload de Análises inválido.");
+  const { editais, ...envelope } = dados;
+  return {
+    ...envelope,
+    columns: dados.columns,
+    rows: dados.rows,
+    ...(Array.isArray(editais)
+      ? {
+          editais: editais.filter(
+            (edital): edital is RegistroDaAnalise =>
+              Boolean(edital) &&
+              typeof edital === "object" &&
+              !Array.isArray(edital),
+          ),
+        }
+      : {}),
+  };
 }

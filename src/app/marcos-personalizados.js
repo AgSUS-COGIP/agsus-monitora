@@ -19,7 +19,7 @@ import { comemorar as comemorarPadrao } from "../modules/comemoracao.js";
     - "edital-contratados": as linhas do monitoramento (carga da entrada e
       Realtime) — `instalarMarcosDosEditais`, ligado em src/main.js;
     - "analises-no-dia": as linhas da tela de Análises curriculares, a cada
-      carga dela (src/modulos/analises/marcos.js).
+      carga dela (src/modulos/analises/marcos.ts).
 
   Mesma regra dos outros marcos (src/lib/comemoracao.js): linha de base em
   silêncio na primeira leitura, comemora a TRANSIÇÃO vista por esta pessoa

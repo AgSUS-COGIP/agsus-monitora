@@ -1,3 +1,10 @@
+import type {
+  SnapshotDasAnalises,
+  DependenciasDasAnalises,
+  EstadoDasAnalises,
+  LeituraDasAnalises,
+  DetalheDaAnalise,
+} from "./tipos.ts";
 /*
   Estado da tela de Análises curriculares (`#page-analises`), fora do React:
   as linhas da área atual do app no escopo escolhido ("Situação do processo"),
@@ -22,7 +29,7 @@ import {
   normalizarEscopo,
   comIndicesDeBusca,
   prepararLinhas,
-} from "../../lib/analises-curriculares.js";
+} from "../../lib/analises-curriculares.ts";
 import {
   nomeDoCsvDeAnalises,
   rotuloDaAreaDoPainel,
@@ -38,8 +45,8 @@ import {
   linhaSemParecer,
   mesclarTextos,
 } from "../../lib/textos-do-painel-de-analises.js";
-import { criarConsultasDasAnalises } from "./consultas.js";
-import { avaliarMarcosDasAnalises } from "./marcos.js";
+import { criarConsultasDasAnalises } from "./consultas.ts";
+import { avaliarMarcosDasAnalises } from "./marcos.ts";
 
 export const MENSAGEM_SEM_SESSAO =
   "Sessão não localizada. Entre de novo no MONITORA.";
@@ -48,7 +55,7 @@ export const MENSAGEM_SEM_ACESSO = "Sem acesso ao Painel das análises.";
 /* Reabrir a tela na mesma área depois disto relê por trás. */
 export const VALIDADE_DA_CARGA_MS = 5 * 60 * 1000;
 
-const ESTADO_INICIAL = Object.freeze({
+const ESTADO_INICIAL: SnapshotDasAnalises = Object.freeze({
   area: "",
   escopo: ESCOPO_PADRAO,
   linhas: [],
@@ -61,6 +68,7 @@ const ESTADO_INICIAL = Object.freeze({
   /** As linhas na tela vieram da cópia do navegador (revalidando). */
   daCopia: false,
   carregadoEm: 0,
+  conferidoEm: null,
   /** Chave (`__chave`) do registro aberto na gaveta, ou `null`. */
   gaveta: null,
   /** chave → `{ situacao: "carregando" | "pronto" | "erro", dados }`. */
@@ -69,15 +77,16 @@ const ESTADO_INICIAL = Object.freeze({
   textos: "",
 });
 
-function mensagemDaCarga(erro) {
-  if (erro?.code === "PGRST202")
+function mensagemDaCarga(erro: unknown) {
+  const codigo = codigoDoErro(erro);
+  if (codigo === "PGRST202")
     return "A lista de análises ainda não foi publicada no banco.";
-  if (erro?.code === "42501") return MENSAGEM_SEM_ACESSO;
-  if (erro?.code === "22023") return "Área sem análises configuradas.";
+  if (codigo === "42501") return MENSAGEM_SEM_ACESSO;
+  if (codigo === "22023") return "Área sem análises configuradas.";
   return mensagemDeFalha(erro);
 }
 
-function baixarNoNavegador(conteudo, nome) {
+function baixarNoNavegador(conteudo: string, nome: string) {
   // O BOM faz o Excel abrir em UTF-8.
   const arquivo = new Blob(["﻿" + conteudo], {
     type: "text/csv;charset=utf-8;",
@@ -109,20 +118,20 @@ function limparCacheAntigo() {
 
 export function criarEstadoDasAnalises({
   supabase = null,
-  toast = (mensagem) => console.info(mensagem),
+  toast = (mensagem: string) => console.info(mensagem),
   baixar = baixarNoNavegador,
   consultas = supabase ? criarConsultasDasAnalises({ supabase }) : null,
   comemoracoesLigadas = () => false,
   avaliarMarcos = avaliarMarcosDasAnalises,
   agora = () => Date.now(),
-} = {}) {
+}: DependenciasDasAnalises = {}): EstadoDasAnalises {
   let estado = ESTADO_INICIAL;
   let pedido = 0;
   let usuarioDaCarga = "";
   let cacheAntigoLimpo = false;
-  const ouvintes = new Set();
+  const ouvintes = new Set<() => void>();
 
-  function publicar(mudancas) {
+  function publicar(mudancas: Partial<SnapshotDasAnalises>) {
     estado = { ...estado, ...mudancas };
     for (const ouvinte of ouvintes) ouvinte();
   }
@@ -136,7 +145,7 @@ export function criarEstadoDasAnalises({
     consultas?.esquecer();
     publicar({ ...ESTADO_INICIAL, detalhes: new Map() });
   }
-  let identidade;
+  let identidade: string | null | undefined;
   supabase?.auth?.onAuthStateChange?.((_evento, sessao) => {
     const atual = sessao?.user?.id || null;
     if (atual === identidade) return;
@@ -144,7 +153,10 @@ export function criarEstadoDasAnalises({
     identidade = atual;
   });
 
-  function mostrar({ payload, linhas }, extra = {}) {
+  function mostrar(
+    { payload, linhas }: LeituraDasAnalises,
+    extra: Partial<SnapshotDasAnalises> = {},
+  ) {
     const editais =
       Array.isArray(payload?.editais) && payload.editais.length
         ? payload.editais
@@ -171,20 +183,21 @@ export function criarEstadoDasAnalises({
     });
   }
 
-  function perderAcesso(erro) {
+  function perderAcesso(erro: unknown) {
+    const codigo = codigoDoErro(erro);
     publicar({
       ...ESTADO_INICIAL,
       area: estado.area,
       escopo: estado.escopo,
       detalhes: new Map(),
-      semAcesso: erro?.code === "42501",
+      semAcesso: codigo === "42501",
       erroAoCarregar: mensagemDaCarga(erro),
     });
   }
 
   /* O id do usuário da sessão; `null` sem sessão. */
   async function usuarioDaSessao() {
-    if (!supabase.auth?.getSession) return "";
+    if (!supabase?.auth?.getSession) return "";
     const { data: sessao } = await supabase.auth.getSession();
     if (!sessao?.session) return null;
     return String(sessao.session.user?.id ?? "");
@@ -195,7 +208,10 @@ export function criarEstadoDasAnalises({
    * "Ativo"). Outro escopo: as linhas saem (skeleton). O mesmo: relê por trás.
    * Resposta de um pedido antigo é ignorada.
    */
-  async function carregar(area = estado.area, opcoes = {}) {
+  async function carregar(
+    area = estado.area,
+    opcoes: { escopo?: string; forcarRede?: boolean } = {},
+  ) {
     if (!area) return false;
     const outraArea = area !== estado.area;
     const escopo = normalizarEscopo(
@@ -295,7 +311,7 @@ export function criarEstadoDasAnalises({
     carrega; a mesma área carregada há mais de 5 minutos relê por trás; senão
     fica como está (o quadro antigo também não recarregava ao voltar).
   */
-  function abrir(area) {
+  function abrir(area: string) {
     if (!area) return Promise.resolve(false);
     if (area !== estado.area || (!estado.carregado && !estado.atualizando))
       return carregar(area);
@@ -318,7 +334,7 @@ export function criarEstadoDasAnalises({
     return ok;
   }
 
-  const trocarEscopo = (escopo) => carregar(estado.area, { escopo });
+  const trocarEscopo = (escopo: string) => carregar(estado.area, { escopo });
 
   /*
     Os pareceres (e o link do PDF e a experiência) de todas as linhas, em
@@ -327,6 +343,7 @@ export function criarEstadoDasAnalises({
   */
   async function garantirTextos() {
     if (!haLinhasSemParecer(estado.linhas)) return true;
+    if (!consultas) return false;
     if (estado.textos === "carregando") return false;
     const meu = pedido;
     const { area, escopo } = estado;
@@ -346,7 +363,9 @@ export function criarEstadoDasAnalises({
   }
 
   /** CSV do recorte: `selecionar(linhas)` refaz o recorte com as linhas completas. */
-  async function exportarCsv(selecionar) {
+  async function exportarCsv(
+    selecionar: Parameters<EstadoDasAnalises["exportarCsv"]>[0],
+  ) {
     if (haLinhasSemParecer(selecionar(estado.linhas))) {
       toast("Preparando o CSV com os pareceres...", "info");
       if (!(await garantirTextos())) {
@@ -369,7 +388,7 @@ export function criarEstadoDasAnalises({
     return true;
   }
 
-  function definirDetalhe(id, valor) {
+  function definirDetalhe(id: string, valor: DetalheDaAnalise) {
     const detalhes = new Map(estado.detalhes);
     detalhes.set(id, valor);
     publicar({ detalhes });
@@ -379,10 +398,14 @@ export function criarEstadoDasAnalises({
     Abre a gaveta. A lista enxuta não traz pontuações, links, datas nem o
     parecer: o detalhamento vem do servidor (uma vez por registro).
   */
-  async function abrirDetalhe(chave) {
+  async function abrirDetalhe(chave: string) {
     publicar({ gaveta: chave });
     const linha = estado.linhas.find((l) => l.__chave === chave);
-    if (!linha?.id || (!linhaSemDetalhe(linha) && !linhaSemParecer(linha)))
+    if (
+      !consultas ||
+      !linha?.id ||
+      (!linhaSemDetalhe(linha) && !linhaSemParecer(linha))
+    )
       return;
     if (estado.detalhes.get(chave)?.situacao === "pronto") return;
     const meu = pedido;
@@ -402,7 +425,7 @@ export function criarEstadoDasAnalises({
 
   return {
     obter: () => estado,
-    assinar(ouvinte) {
+    assinar(ouvinte: () => void) {
       ouvintes.add(ouvinte);
       return () => ouvintes.delete(ouvinte);
     },
@@ -415,4 +438,8 @@ export function criarEstadoDasAnalises({
     abrirDetalhe,
     fecharDetalhe: () => publicar({ gaveta: null }),
   };
+}
+
+function codigoDoErro(erro: unknown): unknown {
+  return erro && typeof erro === "object" && "code" in erro ? erro.code : null;
 }

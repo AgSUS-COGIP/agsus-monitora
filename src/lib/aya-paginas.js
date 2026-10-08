@@ -134,10 +134,9 @@ const PAGINAS = Object.freeze({
   entrevistas: {
     nome: "Painel de entrevistas",
     intro: () =>
-      "Posso explicar o andamento por vaga, as pendências, os empates e de onde vêm os números.",
+      "Posso explicar os indicadores, as pendências, os empates e de onde vêm os números.",
     sugestoes: () => [
       sug("Painel", "Para que serve o Painel de entrevistas?"),
-      sug("Andamento", "Como é contado o andamento por vaga?"),
       sug("Empate", "Quem desempata a nota da entrevista?"),
       sug("Pendências", "Quais são as pendências das entrevistas?"),
       sug("Carga", "Quando as entrevistas são atualizadas?"),

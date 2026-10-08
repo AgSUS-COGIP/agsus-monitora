@@ -19,11 +19,9 @@ import {
   vagasDaFila,
 } from "../src/lib/fila-de-conducao.ts";
 import {
-  andamentoPorEdital,
+  editalDoRecorte,
   gruposEmpatados,
   mapaDeEmpates,
-  numerosDasEntrevistas,
-  percentualFeito,
   proximosDiasDaAgenda,
 } from "../src/lib/painel-de-entrevistas.ts";
 import {
@@ -36,7 +34,7 @@ import { bloqueioDaTela } from "../src/lib/navegacao.js";
 
 /*
   O painel (acompanhar) e Conduzir entrevistas (fazer), sem React: a fila do
-  dia (situações, recortes, contador), o andamento por edital e vaga, os
+  dia (situações, recortes, contador), o edital do recorte, os
   empates na nota da entrevista, a agenda dos próximos dias, as pendências de
   andamento, o desempate da Classificação e os links antigos.
 */
@@ -273,36 +271,19 @@ const painel = [
 ];
 
 describe("Painel de entrevistas", () => {
-  it("números e barra: faltou conta antes do parecer; feito é apto, inapto ou falta", () => {
-    const n = numerosDasEntrevistas(
-      painel.filter((e) => e.edital === "100/2026" && e.vaga === "V1"),
-    );
-    expect(n).toMatchObject({
-      convocados: 6,
-      entrevistados: 5,
-      faltaram: 1,
-      aptos: 2,
-      inaptos: 2,
-      semParecer: 2,
-      barra: { apto: 2, inapto: 1, faltou: 1, andamento: 2, aguardando: 0 },
+  it("edital do recorte: o filtrado ou, havendo um só, ele", () => {
+    expect(editalDoRecorte(painel, "100/2026")).toEqual({
+      edital: "100/2026",
+      editalId: "m1",
     });
-    expect(percentualFeito(n)).toBe(67);
-  });
-
-  it("andamento por edital, com as vagas", () => {
-    const editais = andamentoPorEdital(painel);
+    expect(editalDoRecorte(painel, "")).toBeNull();
     expect(
-      editais.map((e) => [e.edital, e.editalId, e.numeros.convocados]),
-    ).toEqual([
-      ["83/2026", "m2", 1],
-      ["100/2026", "m1", 7],
-    ]);
-    expect(
-      editais[1].vagas.map((v) => [v.vaga, v.cargo, v.numeros.convocados]),
-    ).toEqual([
-      ["V1", "Enfermeiro", 6],
-      ["V2", "Enfermeiro", 1],
-    ]);
+      editalDoRecorte(
+        painel.filter((e) => e.edital === "83/2026"),
+        "",
+      ),
+    ).toEqual({ edital: "83/2026", editalId: "m2" });
+    expect(editalDoRecorte(painel, "999/2026")).toBeNull();
   });
 
   it("empate: mesma nota no mesmo edital e na mesma vaga, só de quem compareceu", () => {

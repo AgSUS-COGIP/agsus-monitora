@@ -1,7 +1,7 @@
 # Histórias de usuário — Análises curriculares
 
 Tela `Análises curriculares` (`src/modulos/analises/`), regras em
-`src/lib/analises-curriculares.js`. Cada critério de aceite tem um teste com o mesmo código
+`src/lib/analises-curriculares.ts`. Cada critério de aceite tem um teste com o mesmo código
 (`AC-n.m`) em `tests/analises-curriculares.test.js` (regra) ou `tests/modulos/analises.test.js`
 (tela).
 
