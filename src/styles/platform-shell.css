@@ -331,17 +331,14 @@ body.sidebar-theme-dark .app .side-logo {
   height: 20px;
 }
 /*
-  Enquanto não se sabe o texto do botão (sem marca guardada, à espera da
-  configuração), o conteúdo fica invisível — o botão já ocupa o lugar — e
-  entra com fade. Mostrar o padrão e trocar pelo configurado fazia o rótulo
-  pular. O cartão provisório do index.html nasce assim.
+  O botão nunca fica vazio: o "G" e o texto padrão ("Entrar com Google")
+  aparecem desde o cartão provisório do index.html; se a configuração trouxer
+  outro texto, ele entra com um fade curto (o botão tem tamanho fixo, nada pula).
+  Esconder o conteúdo até a configuração chegar dava a impressão de que o botão
+  sumia ao recarregar (08/10).
 */
 .login-screen .google-login-btn[data-texto] > * {
   transition: opacity 0.2s ease;
-}
-.login-screen .google-login-btn[data-texto="pendente"] > * {
-  visibility: hidden;
-  opacity: 0;
 }
 /* O botão do cartão provisório (aria-hidden, sem id): sem clique. */
 .login-screen .login-card[aria-hidden="true"] .google-login-btn {
