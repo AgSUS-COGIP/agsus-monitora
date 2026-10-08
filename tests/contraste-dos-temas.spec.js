@@ -43,6 +43,7 @@ async function aplicarTema(page, { escuro, barra }) {
 const VITRINE = `
   <section class="card" data-vitrine>
     <button class="btn" data-peca="botão primário">Salvar</button>
+    <button class="btn primary small" data-peca="botão primário pequeno">Registrar</button>
     <button class="btn secondary" data-peca="botão secundário">Filtrar</button>
     <button class="btn red" data-peca="botão vermelho">Excluir</button>
     <button class="btn ghost" data-peca="botão fantasma">Cancelar</button>
@@ -192,4 +193,28 @@ test.describe("contraste nos dois temas", () => {
       expect(ilegiveis).toEqual([]);
     });
   }
+
+  /*
+    A tela de acesso tem paleta própria, clara nos dois temas: o aviso de erro
+    dela não pode herdar os tokens escuros (saía rosa-claro sobre rosa-claro).
+  */
+  test("aviso da tela de acesso legível com a página no escuro", async ({
+    page,
+  }) => {
+    await page.goto("/", { waitUntil: "domcontentloaded" });
+    await page.evaluate(() => {
+      document.documentElement.setAttribute("data-theme", "dark");
+      const cartao = document.querySelector("#loginScreen .login-card");
+      cartao.insertAdjacentHTML(
+        "beforeend",
+        '<div class="alert error" data-peca="erro do login">Falhou</div>' +
+          '<div class="alert warn" data-peca="atenção do login">Atenção</div>',
+      );
+    });
+    const medidas = await medirPecas(page, "#loginScreen [data-peca]");
+    expect(medidas.length).toBe(2);
+    expect(medidas.filter((m) => m.razao < TEXTO).map((m) => m.peca)).toEqual(
+      [],
+    );
+  });
 });
