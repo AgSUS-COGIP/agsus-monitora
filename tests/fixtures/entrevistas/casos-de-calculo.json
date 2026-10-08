@@ -1,5 +1,5 @@
 {
-  "descricao": "Casos dourados do cálculo da entrevista (nota por competência = média das notas lançadas × peso, 2 casas; total = soma; parecer APTO/INAPTO/SEM_PARECER). A mesma regra de private.\"FC_CALCULAR_ENTREVISTA\" (banco), calcularEntrevista (src/lib/conducao-de-entrevista.js, a prévia da tela) e monitora.entrevistas.calculo (Python, recálculo em lote). Conferidos por tests/entrevistas-calculo-dourado.test.js e tests/python/test_entrevistas_calculo.py. Roteiro com aspectos (caso.aspectos: por competência, uma lista de notas por avaliador, na ordem dos aspectos): nota do avaliador = média dos aspectos (só com todos lançados), total = soma sem arredondar (2 casas no fim), sem notas eliminatórias; o ensaio supabase/ensaios/20261008100000_aspectos_da_entrevista.sql roda os mesmos casos no banco. Dados fictícios.",
+  "descricao": "Casos dourados do cálculo da entrevista (nota por competência = média das notas lançadas × peso, 2 casas; total = soma; parecer APTO/INAPTO/SEM_PARECER). A mesma regra de private.\"FC_CALCULAR_ENTREVISTA\" (banco), calcularEntrevista (src/lib/conducao-de-entrevista.js, a prévia da tela) e monitora.entrevistas.calculo (Python, recálculo em lote). Conferidos por tests/entrevistas-calculo-dourado.test.js e tests/python/test_entrevistas_calculo.py. Roteiro com aspectos (caso.aspectos: por competência, uma lista de notas por avaliador, na ordem dos aspectos): nota do avaliador = média dos aspectos (só com todos lançados), total = soma sem arredondar (2 casas no fim), sem notas eliminatórias; o ensaio supabase/ensaios/20261008100000_aspectos_da_entrevista.sql roda os mesmos casos no banco. Dados fictícios. Avaliador por competência (caso.atribuicoes: {avaliador: [competências]}, a1, a2… pela posição na lista; null na lista = sem nota daquele avaliador): a média da competência é só de quem a avalia e a nota de quem não a avalia não conta; o ensaio supabase/ensaios/20261008170000_avaliador_por_competencia.sql roda esses casos no banco.",
   "roteiros": {
     "niveis": {
       "escala": "NIVEIS",
@@ -664,6 +664,87 @@
       "esperado": {
         "notas": [2, 3, 3, 2],
         "total": 10,
+        "parecer": "APTO"
+      }
+    },
+    {
+      "nome": "avaliador com 1 competência: a2 só avalia c2; as outras ficam com a nota de a1",
+      "roteiro": "niveis",
+      "compareceu": "S",
+      "atribuicoes": {
+        "a2": ["c2"]
+      },
+      "notas": {
+        "c1": [4],
+        "c2": [3, 5],
+        "c3": [3],
+        "c4": [2]
+      },
+      "esperado": {
+        "notas": [4, 4, 3, 2],
+        "total": 13,
+        "parecer": "APTO"
+      }
+    },
+    {
+      "nome": "a nota de quem não avalia a competência não conta (sem a restrição, 0 e 1 eliminariam)",
+      "roteiro": "niveis",
+      "compareceu": "S",
+      "atribuicoes": {
+        "a2": ["c2"]
+      },
+      "notas": {
+        "c1": [4, 1],
+        "c2": [3, 5],
+        "c3": [3, 0],
+        "c4": [2, 0]
+      },
+      "esperado": {
+        "notas": [4, 4, 3, 2],
+        "total": 13,
+        "parecer": "APTO"
+      }
+    },
+    {
+      "nome": "competências com 2 avaliadores (c2 com 1): média só de quem avalia; c4 1,5 abaixo do mínimo",
+      "roteiro": "niveis",
+      "compareceu": "S",
+      "atribuicoes": {
+        "a1": ["c1", "c2", "c3"],
+        "a2": ["c3", "c4"],
+        "a3": ["c1", "c4"]
+      },
+      "notas": {
+        "c1": [2, null, 4],
+        "c2": [5],
+        "c3": [3, 4],
+        "c4": [null, 1, 2]
+      },
+      "esperado": {
+        "notas": [3, 5, 3.5, 1.5],
+        "total": 13,
+        "parecer": "INAPTO"
+      }
+    },
+    {
+      "nome": "aspectos: a2 só avalia c2 — c2 = média de 2 e 4,33 = 3,17; final 12,17",
+      "roteiro": "aspectos_si",
+      "compareceu": "S",
+      "atribuicoes": {
+        "a2": ["c2"]
+      },
+      "aspectos": {
+        "c1": [[3, 3, 3]],
+        "c2": [
+          [2, 2, 2],
+          [4, 4, 5]
+        ],
+        "c3": [[3, 3, 3]],
+        "c4": [[3, 3, 3]]
+      },
+      "esperado": {
+        "notas": [3, 3.17, 3, 3],
+        "total": 12.17,
         "parecer": "APTO"
       }
     }

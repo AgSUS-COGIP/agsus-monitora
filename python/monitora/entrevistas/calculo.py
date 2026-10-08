@@ -13,6 +13,10 @@ calcularEntrevista (src/lib/conducao-de-entrevista.js, a prévia da tela).
   aspectos (só com todos lançados), sem arredondar; o total é a soma das
   competências sem arredondar, 2 casas no fim; não há média eliminatória (vale o
   mínimo da competência).
+- Avaliador por competência (atribuicoes: {avaliador: [competências]}): a média
+  da competência é só de quem a avalia; a nota de quem não a avalia não conta (o
+  banco nem a aceita). Sem a chave, ou sem competência do roteiro na lista, o
+  avaliador avalia todas (private."FC_AVALIADOR_AVALIA").
 - Parecer: faltou e a ausência elimina = INAPTO; não compareceu ou falta =
   SEM_PARECER; abaixo de um mínimo, média eliminatória ou total abaixo do mínimo
   total = INAPTO; senão APTO.
@@ -79,12 +83,18 @@ def media_dos_aspectos(aspectos: list[dict], notas) -> Decimal | None:
     return sum(valores, Decimal(0)) / len(valores)
 
 
-def calcular_entrevista(roteiro: dict, compareceu: str | None, avaliacoes: list[dict]) -> dict:
+def calcular_entrevista(
+    roteiro: dict,
+    compareceu: str | None,
+    avaliacoes: list[dict],
+    atribuicoes: dict | None = None,
+) -> dict:
     """
     roteiro: {competencias: [{id, ordem, nome, nota_maxima, peso, minimo, tipo_minimo}],
               notas_eliminatorias: [...], nota_minima_total, ausencia_elimina}
     avaliacoes: [{competencia, avaliador, nota}] (só as lançadas); com aspectos,
                 [{competencia, avaliador, aspectos: [{aspecto, nota}]}]
+    atribuicoes: {avaliador: [competências]} de quem não avalia todas (opcional)
 
     Devolve {competencias: [{id, nota, media, quantidade, minimo, abaixo_do_minimo,
     eliminatoria}], total, parecer, falta}. Notas como Decimal (ou None).
@@ -98,13 +108,22 @@ def calcular_entrevista(roteiro: dict, compareceu: str | None, avaliacoes: list[
         else [n for n in (numero(x) for x in roteiro.get("notas_eliminatorias") or []) if n is not None]
     )
     competencias = sorted(roteiro.get("competencias") or [], key=lambda c: c.get("ordem") or 0)
+    do_roteiro = {c.get("id") for c in competencias}
+
+    def conta(avaliacao: dict) -> bool:
+        lista = (atribuicoes or {}).get(avaliacao.get("avaliador"))
+        if lista is None:
+            return True
+        delas = [c for c in lista if c in do_roteiro]
+        return not delas or avaliacao.get("competencia") in delas
+
     total = Decimal(0)
     bruto = Decimal(0)
     falta = False
     reprova = False
     linhas = []
     for c in competencias:
-        da_competencia = [a for a in avaliacoes or [] if a.get("competencia") == c.get("id")]
+        da_competencia = [a for a in avaliacoes or [] if a.get("competencia") == c.get("id") and conta(a)]
         if com_aspectos:
             brutas = (media_dos_aspectos(aspectos, a.get("aspectos")) for a in da_competencia)
         else:

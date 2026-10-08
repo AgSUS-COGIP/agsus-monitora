@@ -624,8 +624,15 @@ describe("a tela de Conduzir entrevistas", () => {
     };
     await montar(supabaseDaConducao({ edital }));
     await abrirEdital();
+    // Em linguagem simples no resumo; os critérios técnicos em "Ver detalhes".
+    expect(
+      document.querySelector('.entrevistas-regras [data-bloco="desempate"]')
+        .textContent,
+    ).toContain(
+      "Se a nota final empatar, vale, nesta ordem: 1º 60 anos ou mais na data de corte; 2º maior pontuação na entrevista. Se ainda empatar: sorteio registrado.",
+    );
     const bloco = document.querySelector(
-      '[data-passo="configuracao"] [data-bloco="desempate-da-classificacao"]',
+      '.entrevistas-regras-detalhes [data-bloco="desempate-da-classificacao"]',
     );
     expect(
       [...bloco.querySelectorAll("li")].map((li) => li.textContent),
@@ -818,10 +825,38 @@ describe("Preparar, roteiros e ficha", () => {
     expect(chamadas(supabase, "obter_entrevistas_do_edital")).toHaveLength(2);
   });
 
-  it("passo 1: regra e vagas da Classificação só para ler, com o caminho de onde se mudam; sem digitar vagas", async () => {
+  it("regras da entrevista: resumo simples com Editar; regra e vagas técnicas em Ver detalhes; sem digitar vagas", async () => {
     await montar(supabaseDaConducao());
     await abrirEdital();
-    const passo = document.querySelector('[data-passo="configuracao"]');
+    const regras = document.querySelector(".entrevistas-regras");
+    const bloco = (id) => regras.querySelector(`[data-bloco="${id}"]`);
+    expect(bloco("convocacao").textContent).toContain(
+      "Até 1 pessoa por vaga imediata; nas vagas só de cadastro reserva, até a 1ª posição; quem empatar com o último chamado também entra.",
+    );
+    expect(
+      [...bloco("convocacao").querySelectorAll("tbody td")].map(
+        (td) => td.textContent,
+      ),
+    ).toEqual(["EnfermeiroV1", "2", "até a 2ª"]);
+    expect(bloco("nota").textContent).toContain(
+      "Cada avaliador dá uma nota de 0 a 5 em cada uma das 2 competências.",
+    );
+    expect(bloco("nota").textContent).toContain(
+      "Abaixo de 2 em qualquer competência ou com média 0 ou 1 em alguma competência ou abaixo de 4 no total, o candidato fica inapto.",
+    );
+    expect(bloco("banca").textContent).toContain(
+      "Banca 1 — Ana (AgSUS) avalia todas as competências; Beto (CONDISI) avalia todas as competências.",
+    );
+    // "Editar" de quem avalia abre a configuração; o da nota abre o roteiro do edital.
+    await clicar(bloco("banca").querySelector('[data-ir-para="configuracao"]'));
+    expect(
+      document.querySelector('[data-passo="configuracao"] form'),
+    ).not.toBeNull();
+    await clicar(bloco("nota").querySelector('[data-ir-para="roteiro"]'));
+    expect(
+      document.getElementById("entrevistasEditorDeRoteiro"),
+    ).not.toBeNull();
+    const passo = regras.querySelector(".entrevistas-regras-detalhes");
     expect(passo.textContent).toContain(
       "Classificação, regra v2: 1× as vagas imediatas · até a 1ª no cadastro reserva",
     );
@@ -841,15 +876,88 @@ describe("Preparar, roteiros e ficha", () => {
     expect(
       passo.querySelector('[data-ir-para="classificacao"]').textContent,
     ).toBe("Regra na Classificação");
+    const configuracao = document.querySelector('[data-passo="configuracao"]');
+    expect(
+      configuracao.querySelector('input[aria-label^="Vagas imediatas"]'),
+    ).toBeNull();
+    expect(configuracao.textContent).not.toContain(
+      "Múltiplo das vagas imediatas",
+    );
+  });
+
+  it("avaliador por competência: a configuração grava só estas, valida a cobertura e a ficha mostra só o atribuído", async () => {
+    const supabase = supabaseDaConducao();
+    await montar(supabase);
+    await abrirEdital();
+    const passo = document.querySelector('[data-passo="configuracao"]');
     await clicar(
       [...passo.querySelectorAll("button")].find((b) =>
         b.textContent.includes("Editar configuração"),
       ),
     );
+    const membros = passo.querySelectorAll(".entrevistas-linha-membro");
+    // Beto: só "Habilidade interpessoal".
+    await clicar(membros[1].querySelector('button[data-valor="algumas"]'));
+    await clicar(
+      [...membros[1].querySelectorAll("label")]
+        .find((l) => l.textContent.includes("Habilidade interpessoal"))
+        .querySelector("input"),
+    );
+    // Ana só em "Políticas públicas" cobre tudo (Beto avalia a outra); desmarcar deixa sem ninguém.
+    await clicar(membros[0].querySelector('button[data-valor="algumas"]'));
+    await clicar(
+      [...membros[0].querySelectorAll("label")]
+        .find((l) => l.textContent.includes("Políticas públicas"))
+        .querySelector("input"),
+    );
+    expect(passo.textContent).not.toContain("ninguém avalia");
+    await clicar(
+      [...membros[0].querySelectorAll("label")]
+        .find((l) => l.textContent.includes("Políticas públicas"))
+        .querySelector("input"),
+    );
+    expect(passo.textContent).toContain(
+      "Banca 1: ninguém avalia “Políticas públicas”.",
+    );
+    await clicar(passo.querySelector('button[type="submit"]'));
+    expect(chamadas(supabase, "configurar_entrevista_edital")).toHaveLength(0);
+    await clicar(membros[0].querySelector('button[data-valor="todas"]'));
+    await clicar(passo.querySelector('button[type="submit"]'));
+    await esperar();
+    const [[, argumentos]] = chamadas(supabase, "configurar_entrevista_edital");
+    expect(argumentos.p_dados.avaliadores.map((a) => a.competencias)).toEqual([
+      null,
+      ["c2"],
+    ]);
+  });
+
+  it("ficha com avaliador por competência: esmaece o que não é dele, conta só o atribuído e calcula só com quem avalia", async () => {
+    const edital = {
+      ...EDITAL,
+      avaliadores: [
+        EDITAL.avaliadores[0],
+        { ...EDITAL.avaliadores[1], competencias: ["c2"] },
+      ],
+    };
+    await montar(supabaseDaConducao({ edital }));
+    const ficha = await abrirAFicha();
     expect(
-      passo.querySelector('input[aria-label^="Vagas imediatas"]'),
-    ).toBeNull();
-    expect(passo.textContent).not.toContain("Múltiplo das vagas imediatas");
+      [...ficha.querySelectorAll('[role="tab"]')].map((t) => t.textContent),
+    ).toEqual(["AnaAgSUS0/2", "BetoCONDISI0/1"]);
+    await clicar(ficha.querySelector('[role="tab"][data-aba="a2"]'));
+    const linhas = ficha.querySelectorAll(".entrevistas-matriz-linha");
+    expect(linhas[0].dataset.atribuida).toBe("nao");
+    expect(linhas[0].textContent).toContain("avaliada por Ana");
+    expect(notas(ficha)).toHaveLength(1);
+    expect(ficha.textContent).toContain("0 de 3 notas");
+    // Por competência: em "Políticas públicas", só a Ana.
+    await clicar(ficha.querySelector('button[data-valor="competencia"]'));
+    await clicar(ficha.querySelector('[role="tab"][data-aba="c1"]'));
+    expect(
+      [...ficha.querySelectorAll(".entrevistas-matriz-titulo span")].map(
+        (s) => s.textContent,
+      ),
+    ).toEqual(["Ana"]);
   });
 
   it("sem lista gerada: o cálculo atual com aviso e atalho para gerar; não convoca", async () => {

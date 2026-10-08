@@ -123,10 +123,24 @@ function CartaoDoRoteiro({ roteiro, podeEditar, aoAbrir }) {
   );
 }
 
-export function VisaoDeRoteiros({ conducao, area }) {
+/**
+ * `pedido` ({ roteiro, vez }): abrir este roteiro no editor (o "Editar" do
+ * resumo das regras em Preparar); cada pedido novo tem outra `vez`.
+ * @param {{ conducao: any, area: string, pedido?: { roteiro: unknown, vez: number } | null }} props
+ */
+export function VisaoDeRoteiros({ conducao, area, pedido = null }) {
   const e = useSyncExternalStore(conducao.assinar, conducao.obter);
   const [aberto, setAberto] = useState(null);
   const { roteiros, podeEditar } = e;
+
+  useEffect(() => {
+    if (!pedido?.roteiro) return;
+    setAberto({
+      roteiro: pedido.roteiro,
+      modo: podeEditar === false ? "ver" : "editar",
+    });
+    // Só a cada pedido novo.
+  }, [pedido?.vez]);
 
   useEffect(() => {
     const { carregado, carregando } = conducao.obter().roteiros;
