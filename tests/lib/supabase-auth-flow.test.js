@@ -84,7 +84,7 @@ describe("fluxo de autenticação Supabase", () => {
     // A barra lateral e o botão de recolher são React; o index.html só tem o <aside>.
     expect(html).toContain('<aside class="sidebar"');
     expect(
-      source("src/componentes/barra-lateral/alca-de-recolher.jsx"),
+      source("src/componentes/barra-lateral/alca-de-recolher.tsx"),
     ).toContain('id="globalSidebarToggle"');
     expect(html).toContain('id="topUserMenu"');
   });

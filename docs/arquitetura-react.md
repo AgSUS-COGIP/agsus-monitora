@@ -59,7 +59,7 @@ gera conflito com quem está trabalhando em paralelo.
 | `src/componentes/saude-das-cargas/` (Status das atualizações)                                                    | `src/modulos/`                                            | ao tocar   |
 | Editais, Cronograma e Lista de aprovados                                                                         | `src/modulos/editais/`, `cronograma/`, `aprovados/`       | concluído  |
 | `src/modules/map-*`, `health-*`, `indigenous-*`, (o dashboard já saiu do legado)                                 | `src/modulos/visao-geral/`                                | 5          |
-| `src/main.js`, `index.html`, `src/componentes/barra-lateral/`, `dados-do-monitoramento.js`, `usar-area-atual.js` | `src/app/` (entrada, layout, área atual)                  | 6          |
+| `src/main.js`, `index.html`, `src/componentes/barra-lateral/`, `dados-do-monitoramento.ts`, `usar-area-atual.ts` | `src/app/` (entrada, layout, área atual)                  | 6          |
 | `auth-storage.js`, `sidebar-branding.js` (o login e o `legacy-app.js` já estão em `src/app/`)                    | `src/lib/` e barra lateral                                | 6          |
 | `src/modules/aya-*` (IA, base e memória; o painel já é `src/modulos/aya/`)                                       | `src/app/` (Aya no layout)                                | 7          |
 | `src/lib/`                                                                                                       | fica                                                      | —          |
@@ -279,7 +279,7 @@ Ficou para depois (ainda em `src/modules/` ou no `index.html`):
 1. **Layout em React**: `#appScreen` (cabeçalho, barra lateral, conteúdo) ainda é marcação do
    `index.html` com `onclick` (`refreshData`, `exportPDF`, `toggleSidebar`…); as telas ainda são
    `<section class="page">` com `.active`. `src/componentes/barra-lateral/`,
-   `dados-do-monitoramento.js` e `usar-area-atual.js` mudam para `src/app/` junto.
+   `dados-do-monitoramento.ts` e `usar-area-atual.ts` mudam para `src/app/` junto.
 2. **Rotas**: sem endereço por tela (hash/history); a tela guardada continua no localStorage.
 3. `nielsen-shell-ux.js` (diálogo de saída por `insertAdjacentHTML` e os estados do seletor de
    tema), `mobile-bottom-navigation.js`, `mobile-app-experience.js`, `visual-polish.js`,

@@ -1,4 +1,8 @@
 import {
+  anexosDaEmpregare,
+  impressaoDasRespostas,
+} from "../../../lib/avaliacao-documental/anexo-na-empregare.ts";
+import {
   useCallback,
   useEffect,
   useMemo,
@@ -31,6 +35,7 @@ import {
   DICA_DA_ART,
   ROTULO_DA_ART,
 } from "../../../lib/avaliacao-documental/tela-da-pre-classificacao.js";
+import { rotuloDaVersaoNaLista } from "../../../lib/nome-da-versao.ts";
 import { Aviso, Campo } from "../../../ui/index.js";
 import { compartilharNoChat } from "../../chat/ponte.js";
 import { usarChatLiberado } from "../../chat/usar-chat-liberado.js";
@@ -100,6 +105,8 @@ function enderecosDaEmpregare(dados, ficha) {
     candidato: enderecoDoCandidatoNaEmpregare(empregare.link_candidato),
     vaga,
     vagaDireta: Boolean(vaga?.includes("/candidaturas/")),
+    anexos: anexosDaEmpregare(empregare),
+    impressao: impressaoDasRespostas(empregare),
   };
 }
 
@@ -158,6 +165,7 @@ export function ConteudoDaFicha({
   fila,
   aberta,
   filtroVaga,
+  versoes = null,
   aoFechar,
   registrarAntesDeFechar,
   topo,
@@ -625,13 +633,14 @@ export function ConteudoDaFicha({
       ) : null}
       {st.dados.regra.versao !== st.dados.regra.vigente ? (
         <Aviso>
-          Analisada pela regra v{st.dados.regra.versao}; a vigente é a v
-          {st.dados.regra.vigente}.
+          Analisada pela regra{" "}
+          {rotuloDaVersaoNaLista(versoes, st.dados.regra.versao)}; a vigente é a{" "}
+          {rotuloDaVersaoNaLista(versoes, st.dados.regra.vigente)}.
         </Aviso>
       ) : st.dados.regra.situacao !== "CONFERIDA" && !concluida ? (
         <Aviso tom="warning">
-          A regra v{st.dados.regra.versao} ainda não foi conferida: dá para
-          salvar o rascunho, não para concluir.
+          A regra {rotuloDaVersaoNaLista(versoes, st.dados.regra.versao)} ainda
+          não foi conferida: dá para salvar o rascunho, não para concluir.
         </Aviso>
       ) : null}
       <div className="avd-ficha-grade">

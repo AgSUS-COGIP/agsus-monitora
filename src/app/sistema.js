@@ -1,4 +1,4 @@
-import { EVENTO_ESCOLHA_DA_BUSCA } from "../lib/busca-global.js";
+import { EVENTO_ESCOLHA_DA_BUSCA } from "../lib/busca-global.ts";
 import { codigoDoPainel } from "../lib/navegacao.js";
 import { apagarCacheDePayload } from "../modules/cache-de-payload-indexeddb.js";
 import { comemorarAcessoLiberado } from "../modules/comemoracao-do-acesso.js";

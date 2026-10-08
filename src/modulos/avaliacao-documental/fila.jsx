@@ -8,6 +8,7 @@ import {
 } from "react";
 import { ordinal } from "../../lib/classificacao/numeros.js";
 import { formatNumberBR } from "../../lib/formatters.js";
+import { rotuloDaVersaoNaLista } from "../../lib/nome-da-versao.ts";
 import {
   acoesDaSelecao,
   agruparPorVaga,
@@ -353,6 +354,7 @@ function ModoDeAnalise({
   dados,
   filtroVaga,
   navegaveis,
+  versoes,
 }) {
   const f = aberta?.ficha;
   const raiz = useRef(null);
@@ -460,7 +462,12 @@ function ModoDeAnalise({
       { rotulo: "Responsável", valor: f.responsavel_nome || "—" },
       { rotulo: "Reserva", valor: textoDaReserva(f.reserva, dados.eu) || "—" },
       ...(f.versao_regra
-        ? [{ rotulo: "Regra", valor: `v${f.versao_regra}` }]
+        ? [
+            {
+              rotulo: "Regra",
+              valor: rotuloDaVersaoNaLista(versoes, f.versao_regra),
+            },
+          ]
         : []),
       ...(f.motivo_saida
         ? [{ rotulo: "Saiu do lote", valor: f.motivo_saida }]
@@ -508,6 +515,7 @@ function ModoDeAnalise({
         fila={fila}
         aberta={aberta}
         filtroVaga={filtroVaga}
+        versoes={versoes}
         aoFechar={voltar}
         registrarAntesDeFechar={registrarAntesDeFechar}
         topo={topo}
@@ -1037,6 +1045,7 @@ export function Fila({ e, fila }) {
         dados={dados}
         filtroVaga={st.filtro.vaga}
         navegaveis={navegaveis}
+        versoes={e.dados?.regra?.versoes}
       />
     );
 

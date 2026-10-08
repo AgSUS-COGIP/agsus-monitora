@@ -4,7 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   definirAreaAtual,
   redefinirDadosDoMonitoramento,
-} from "../../src/componentes/dados-do-monitoramento.js";
+} from "../../src/componentes/dados-do-monitoramento.ts";
 import { montarAvaliacaoDocumental } from "../../src/modulos/avaliacao-documental/avaliacao-documental.jsx";
 import { comecoDoEnunciado } from "../../src/lib/avaliacao-documental/nota-declarada.js";
 import {
@@ -199,7 +199,7 @@ describe("regra da avaliação (AM-2)", () => {
       p_edital: "e93",
       p_modelo: "PROJ26-CURRICULAR",
     });
-    expect(secao.textContent).toContain("Regra v1");
+    expect(secao.textContent).toContain("Versão 1");
     expect(secao.textContent).toContain("Conferir");
     expect(secao.querySelectorAll(".avd-bloco").length).toBe(
       PROJ.blocos.length,
@@ -236,7 +236,7 @@ describe("regra da avaliação (AM-2)", () => {
     expect(chamada[1].p_configuracao.titulo_etapa).toBe(
       "Avaliação Documental e de Títulos — 93/2026",
     );
-    expect(secao.textContent).toContain("Regra v2");
+    expect(secao.textContent).toContain("Versão 2");
     // O formulário do PROJ26 inteiro (com as cotas PI e PQ) passa dos 5 s sob carga.
   }, 20000);
 
@@ -291,18 +291,18 @@ describe("regra da avaliação (AM-2)", () => {
     );
     await clicar(secao.querySelector("[data-acao='salvar-regra']"));
     await esperar();
-    expect(resumo()).toContain("Regra v2");
+    expect(resumo()).toContain("Versão 2");
 
     await act(async () => soltar());
     await esperar();
-    expect(resumo()).toContain("Regra v2");
+    expect(resumo()).toContain("Versão 2");
     expect(resumo()).toContain("Conferir");
     expect(secao.querySelector("[data-acao='conferir-regra']")).not.toBeNull();
     expect(
       secao.querySelector("[data-acao='salvar-regra']").textContent,
     ).toContain("versão 3");
     expect(secao.querySelector("[data-status-da-carga]").textContent).toBe(
-      "Regra v2 · Conferir",
+      "Versão 2 · Conferir",
     );
   }, 20000);
 

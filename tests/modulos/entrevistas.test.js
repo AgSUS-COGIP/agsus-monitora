@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   definirAreaAtual,
   redefinirDadosDoMonitoramento,
-} from "../../src/componentes/dados-do-monitoramento.js";
+} from "../../src/componentes/dados-do-monitoramento.ts";
 import { EVENTO_TEMA_ALTERADO } from "../../src/lib/eventos-da-barra-lateral.js";
 import {
   clicar,
@@ -144,7 +144,7 @@ const baixar = vi.fn();
 /*
   Como o app monta: o módulo nasce na `<section id="page-entrevistas">`
   (vazia, sem pedir nada ao banco) e o legado chama `render()` ao navegar
-  para a tela. A área é a área atual do app (dados-do-monitoramento.js).
+  para a tela. A área é a área atual do app (dados-do-monitoramento.ts).
 */
 async function montar(supabase, { abrir = true, ...opcoes } = {}) {
   secao = document.createElement("section");

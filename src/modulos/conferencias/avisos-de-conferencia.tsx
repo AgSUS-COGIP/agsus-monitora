@@ -20,7 +20,7 @@ import {
   useSyncExternalStore,
 } from "react";
 import { pedirFiltro } from "../../app/pedido-de-filtro.js";
-import { usarAreaAtual } from "../../componentes/usar-area-atual.js";
+import { usarAreaAtual } from "../../componentes/usar-area-atual.ts";
 import { Icone } from "../../componentes/icone.jsx";
 import {
   casosRestantes,

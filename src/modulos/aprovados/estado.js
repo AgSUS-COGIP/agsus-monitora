@@ -25,7 +25,7 @@
   dela mostra o rótulo e os outros ficam desativados até terminar.
 
   Os candidatos vêm só da área atual do menu (`areaAtual`, de
-  `dados-do-monitoramento.js`): trocar de área e abrir a página busca os da
+  `dados-do-monitoramento.ts`): trocar de área e abrir a página busca os da
   área nova. A primeira abertura de uma área mostra a cópia guardada no
   navegador (IndexedDB, regras em `lib/cache-de-payload.js`) e pergunta ao
   banco, por trás, se a `versao` dela ainda vale — o banco calcula a versão dos
@@ -51,7 +51,7 @@ import {
   revalidarPayload,
 } from "../../lib/cache-de-payload.js";
 import { armazenamentoDePayload } from "../../modules/cache-de-payload-indexeddb.js";
-import { obterDadosDoMonitoramento } from "../../componentes/dados-do-monitoramento.js";
+import { obterDadosDoMonitoramento } from "../../componentes/dados-do-monitoramento.ts";
 import {
   canAlterarPorDecisaoJudicial,
   canChangeCandidateStatus,

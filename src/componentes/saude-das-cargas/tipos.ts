@@ -113,6 +113,8 @@ export interface OpcoesDoRobo {
   editais: string | null;
   vagas: boolean;
   limite: { min: number; max: number; padrao: number } | null;
+  /** Aceita "anexos" (guardar os links dos anexos do questionário; robô da Empregare). */
+  anexos?: boolean;
 }
 export interface RoboDeCarga {
   readonly id: string;
@@ -126,6 +128,8 @@ export interface OpcoesConferidas {
   editais: string[];
   vagas: string[];
   limite: number | null;
+  /** Só aparece quando marcado. */
+  anexos?: true;
 }
 export type ResultadoDasOpcoes =
   | { opcoes: OpcoesConferidas; erro?: never; texto?: never }
@@ -142,6 +146,7 @@ export interface InputsDoPedido {
   editais?: string[];
   vagas?: string[];
   limite?: string;
+  anexos?: boolean;
 }
 export interface SituacaoDoPedido {
   situacao: string;

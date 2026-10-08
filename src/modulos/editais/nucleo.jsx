@@ -25,7 +25,7 @@ import {
   tomDoStatusDoEdital,
 } from "../../lib/editais-do-nucleo.js";
 import { formatNumberBR } from "../../lib/formatters.js";
-import { usarAreaAtual } from "../../componentes/usar-area-atual.js";
+import { usarAreaAtual } from "../../componentes/usar-area-atual.ts";
 import { Selo, TabelaInfinita, TopoDoPainel } from "../../ui/index.js";
 import { abrirConversaDoEdital } from "../chat/ponte.js";
 import { usarChatLiberado } from "../chat/usar-chat-liberado.js";
@@ -41,7 +41,7 @@ import { ModalLinhaDoTempo } from "./modal-linha-do-tempo.jsx";
   O React é dono de tudo dentro da `<section>`; o legado só troca a classe
   `.active` dela e chama `render()` do controlador
   (`window.nucleoController`) ao abrir a página. As linhas são as mesmas do
-  mapa, carregadas pelo legado e publicadas em `dados-do-monitoramento.js`.
+  mapa, carregadas pelo legado e publicadas em `dados-do-monitoramento.ts`.
 
   Padrão das telas de src/modulos/: topo com a data do resumo, Atualizar e
   "Novo edital"; os indicadores (KPIs que filtram); a tabela de carregamento

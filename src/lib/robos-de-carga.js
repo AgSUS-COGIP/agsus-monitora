@@ -79,7 +79,10 @@ export function editalDoPedido(valor) {
   disparar_robo, no banco. Os modos são os `options` do input `modo` de
   cada workflow; `editais` diz o
   formato aceito ("numero" = 93/2026; "numero_ou_id" = 93/2026 ou o id do
-  edital); `vagas`, códigos da Empregare; `limite`, máximo de vagas.
+  edital); `vagas`, códigos da Empregare; `limite`, máximo de vagas;
+  `anexos`, aceita "Guardar links dos anexos do questionário" (só nos modos
+  normal e forcar). O modo sondar pede uma única vaga, sem editais, e limite
+  de 1 a 3 candidatos (20261008190000).
 */
 /** @type {Readonly<Record<string, import("../componentes/saude-das-cargas/tipos.ts").OpcoesDoRobo>>} */
 export const OPCOES_DOS_ROBOS = Object.freeze({
@@ -108,10 +111,17 @@ export const OPCOES_DOS_ROBOS = Object.freeze({
         explicacao:
           "Grava mesmo se o arquivo vier com menos da metade dos candidatos ativos.",
       },
+      {
+        valor: "sondar",
+        rotulo: "Sondar",
+        explicacao:
+          "Só lê a estrutura das respostas do questionário de 1 a 3 candidatos de uma vaga (diagnóstico); não grava nada.",
+      },
     ]),
     editais: "numero",
     vagas: true,
     limite: Object.freeze({ min: 1, max: 500, padrao: 60 }),
+    anexos: true,
   }),
   pre_classificacao: Object.freeze({
     modos: Object.freeze([
@@ -161,7 +171,10 @@ export const MAXIMO_DE_EDITAIS = 100;
 export const MAXIMO_DE_VAGAS = 500;
 const NUMERO_DO_EDITAL = /^\d{1,4}\/\d{4}$/;
 const CODIGO_DE_VAGA = /^\d{1,20}$/;
-const CHAVES_DAS_OPCOES = ["modo", "editais", "vagas", "limite"];
+const CHAVES_DAS_OPCOES = ["modo", "editais", "vagas", "limite", "anexos"];
+/* Os modos em que o robô da Empregare guarda os links dos anexos. */
+export const MODOS_COM_ANEXOS = Object.freeze(["normal", "forcar"]);
+export const LIMITE_DA_SONDAGEM = 3;
 
 /**
  * Códigos de vaga colados (vírgula, ponto e vírgula, espaço ou linha):
@@ -211,6 +224,8 @@ export function validarOpcoes(robo, bruto) {
       valor === null ||
       valor === undefined ||
       valor === "" ||
+      valor === false ||
+      valor === "false" ||
       (Array.isArray(valor) && !valor.length);
     if (
       !CHAVES_DAS_OPCOES.includes(chave) ||
@@ -280,7 +295,37 @@ export function validarOpcoes(robo, bruto) {
     limite = numero;
   }
 
-  return { opcoes: { modo, editais, vagas, limite } };
+  if (modo === "sondar") {
+    if (vagas.length !== 1 || editais.length)
+      return {
+        erro: "sondar_uma_vaga",
+        texto: "O modo Sondar pede um único código de vaga (sem editais).",
+      };
+    if (limite !== null && limite > LIMITE_DA_SONDAGEM)
+      return {
+        erro: "limite_invalido",
+        texto: `No modo Sondar, o limite é de 1 a ${LIMITE_DA_SONDAGEM} candidatos.`,
+      };
+  }
+
+  const anexos =
+    Boolean(aceitas.anexos) &&
+    (bruto.anexos === true || bruto.anexos === "true");
+  if (anexos && !MODOS_COM_ANEXOS.includes(modo))
+    return {
+      erro: "anexos_no_modo",
+      texto: "Guardar os links dos anexos só nos modos Normal e Forçar.",
+    };
+
+  return {
+    opcoes: {
+      modo,
+      editais,
+      vagas,
+      limite,
+      ...(anexos ? { anexos: true } : {}),
+    },
+  };
 }
 
 /** @param {unknown} id @returns {import("../componentes/saude-das-cargas/tipos.ts").RoboDeCarga | null} */
@@ -331,7 +376,7 @@ const CHAVE_RECUSADA = new Set([401, 403, 404]);
 
 /**
  * O que vai em p_inputs de disparar_robo: as opções já conferidas por
- * validarOpcoes (modo, editais, vagas, limite) ou, no Recalcular da
+ * validarOpcoes (modo, editais, vagas, limite, anexos) ou, no Recalcular da
  * coordenação, só o edital. Sem nada, {} (o banco usa o modo normal).
  */
 /** @param {{ opcoes?: import("../componentes/saude-das-cargas/tipos.ts").OpcoesConferidas | null, edital?: string }} [pedido] @returns {import("../componentes/saude-das-cargas/tipos.ts").InputsDoPedido} */
@@ -341,6 +386,7 @@ export function inputsDoPedido({ opcoes = null, edital = "" } = {}) {
   if (opcoes?.editais?.length) inputs.editais = [...opcoes.editais];
   if (opcoes?.vagas?.length) inputs.vagas = [...opcoes.vagas];
   if (opcoes?.limite) inputs.limite = String(opcoes.limite);
+  if (opcoes?.anexos) inputs.anexos = true;
   // O banco confere o id (e se quem pede coordena o edital).
   const id = String(edital ?? "").trim();
   if (!opcoes && id) inputs.editais = [id];

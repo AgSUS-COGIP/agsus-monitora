@@ -713,7 +713,7 @@ class CapturaDosCandidatos(unittest.TestCase):
         portal = PortalFalso([HTML_DA_LISTA], falha=RuntimeError("Message: timeout em tokenCandidato=TKfict01"))
         portal.ids_das_vagas["180231"] = "Ab1cD2eF3g|"
         r = portal.capturar_candidatos("180231")
-        self.assertEqual(r, {"vaga_interno": "Ab1cD2eF3g|", "candidatos": {}})
+        self.assertEqual(r, {"vaga_interno": "Ab1cD2eF3g|", "candidatos": {}, "respostas": {}})
         self.assertEqual(portal.voltou, 1)
         self.assertIn("não consegui ler a lista de candidatos", portal.logs[-2])
         self.assertIn("diagnóstico da lista", portal.logs[-1])
@@ -729,7 +729,9 @@ class CapturaDosCandidatos(unittest.TestCase):
         portal = PortalFalso([HTML_DA_LISTA])
         portal.ids_das_vagas["180231"] = "Ab1cD2eF3g|"
         portal.tempo_em_links = nav.ORCAMENTO_DOS_LINKS
-        self.assertEqual(portal.capturar_candidatos("180231"), {"vaga_interno": "Ab1cD2eF3g|", "candidatos": {}})
+        self.assertEqual(
+            portal.capturar_candidatos("180231"), {"vaga_interno": "Ab1cD2eF3g|", "candidatos": {}, "respostas": {}}
+        )
         self.assertEqual(portal.abertas, [])
 
     def test_guardar_id_nunca_derruba_a_exportacao(self):
@@ -834,7 +836,12 @@ class FluxoDeUmaVaga(unittest.TestCase):
             return {"situacao": "GRAVADA" if funcao == "fechar_vaga_empregare" else "EM_CARGA"}
 
         situacao = self.robo.gravar_vaga(
-            {}, "gh-x", "177979", self.caminho, chamar, enderecos={"vaga_interno": "Ab1cD2eF3g|", "candidatos": {}}
+            {},
+            "gh-x",
+            "177979",
+            self.caminho,
+            chamar,
+            enderecos={"vaga_interno": "Ab1cD2eF3g|", "candidatos": {}, "respostas": {}},
         )
         self.assertEqual(situacao, "GRAVADA")
         fechamentos = [c for f, c in chamadas if f == "fechar_vaga_empregare"]

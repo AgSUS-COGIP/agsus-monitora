@@ -382,6 +382,52 @@ def ler_lista_de_candidatos(html):
     return candidatos, descartados
 
 
+def ler_respostas_do_html(html):
+    """
+    As respostas aos questionários de cada candidato da lista de candidaturas:
+    {código: {"pessoa": data-id do item, "respostas": [{"id", "token", "vaga"}]}}.
+    Como o front da Empregare (chunk 8152, questionarioResposta.detalhes): o id
+    é o data-resposta do a.progress-link, o token é o data-token do link (sem
+    ele, o data-tokenCandidato do item) e "vaga" o data-vagaTitulo. Modo 3
+    (entrevista virtual) fica de fora. Abre GetRespostaDetails/<id>?token=<token>
+    (anexos_empregare.py). Devolve (mapa, sem_token). Tokens: nunca no log.
+    """
+    arvore = _Arvore()
+    arvore.feed(str(html or ""))
+    arvore.close()
+    respostas = {}
+    sem_token = 0
+    token_ok = re.compile(r"[A-Za-z0-9_.~=%|+/-]{1,200}")
+    for item in (n for n in _descendentes(arvore.raiz) if "curriculo-list-item" in _classes(n)):
+        dentro = list(_descendentes(item))
+        codigos = {c for c in (_codigo_do_no(n) for n in [item, *dentro]) if c}
+        if len(codigos) != 1:
+            continue
+        codigo = next(iter(codigos))
+        do_item = ""
+        pessoa = ""
+        for n in [item, *dentro]:
+            do_item = do_item or (n["attrs"].get("data-tokencandidato") or "").strip()
+            if not pessoa and "list-group-item" in _classes(n):
+                pessoa = (n["attrs"].get("data-id") or "").strip()
+        lidas = []
+        faltou_token = False
+        for n in dentro:
+            valor = (n["attrs"].get("data-resposta") or "").strip()
+            modo = (n["attrs"].get("data-modo-resposta") or "").strip()
+            if not re.fullmatch(r"[0-9]{1,20}", valor) or modo == "3" or any(r["id"] == valor for r in lidas):
+                continue
+            token = (n["attrs"].get("data-token") or "").strip() or do_item
+            if not token_ok.fullmatch(token):
+                faltou_token = True
+                continue
+            lidas.append({"id": valor, "token": token, "vaga": (n["attrs"].get("data-vagatitulo") or "").strip()[:300]})
+        sem_token += faltou_token and not lidas
+        if lidas and _CODIGO_DO_CANDIDATO.match(codigo):
+            respostas[codigo] = {"pessoa": pessoa if token_ok.fullmatch(pessoa or "-") else "", "respostas": lidas}
+    return respostas, sem_token
+
+
 def ler_candidatos_do_html(html):
     """
     Candidatos da lista de candidaturas: [{"codigo", "link"}], na ordem da página
@@ -579,6 +625,7 @@ class PortalEmpregare:
         self.descartados = 0  # links fora do formato na última lista lida (só contagem)
         self.janela = None  # janela do login (pedir a exportação pode abrir outra)
         self.diagnostico = {}  # da última página de candidaturas aberta (só contagens)
+        self.respostas = {}  # código do candidato → {pessoa, respostas} dos questionários (última lista lida)
 
     def __enter__(self):
         self.driver = self._iniciar()
@@ -714,31 +761,50 @@ class PortalEmpregare:
                 select.select_by_value(opcao.get_attribute("value"))
                 break
 
-    def exportar_vaga(self, codigo):
-        """Pede a exportação "Candidatos da vaga (Excel)" da vaga. True se pediu."""
-        from selenium.common.exceptions import TimeoutException
+    def _buscar_processo(self, codigo):
+        """Busca a vaga em Vagas Anunciadas e devolve o link "Processo Seletivo" (guarda o identificador interno)."""
         from selenium.webdriver.common.by import By
         from selenium.webdriver.common.keys import Keys
         from selenium.webdriver.support import expected_conditions as EC
 
         presente = EC.presence_of_element_located
-        try:
-            busca = self._esperar(20).until(presente((By.ID, "Palavras")))
-            busca.send_keys(Keys.CONTROL + "a")
-            busca.send_keys(Keys.DELETE)
-            busca.send_keys(str(codigo))
-            busca.send_keys(Keys.ENTER)
-            time.sleep(3)
-
-            processo = self._esperar(20).until(
-                presente(
-                    (
-                        By.XPATH,
-                        '//a[contains(@href,"/empresa/vagas/candidaturas/") and contains(.,"Processo Seletivo")]',
-                    )
+        busca = self._esperar(20).until(presente((By.ID, "Palavras")))
+        busca.send_keys(Keys.CONTROL + "a")
+        busca.send_keys(Keys.DELETE)
+        busca.send_keys(str(codigo))
+        busca.send_keys(Keys.ENTER)
+        time.sleep(3)
+        processo = self._esperar(20).until(
+            presente(
+                (
+                    By.XPATH,
+                    '//a[contains(@href,"/empresa/vagas/candidaturas/") and contains(.,"Processo Seletivo")]',
                 )
             )
-            self._guardar_id_da_vaga(codigo, lambda: processo.get_attribute("href"))
+        )
+        self._guardar_id_da_vaga(codigo, lambda: processo.get_attribute("href"))
+        return processo
+
+    def localizar_vaga(self, codigo):
+        """
+        Só leitura (modo sondar): busca a vaga e lê o identificador interno do
+        link "Processo Seletivo", sem clicar nem exportar. Devolve o identificador ou None.
+        """
+        try:
+            self._buscar_processo(codigo)
+        except Exception as erro:
+            self.registrar(f"Vaga {codigo}: não achei o Processo Seletivo ({resumo_do_erro(erro)}).")
+        return self.ids_das_vagas.get(str(codigo))
+
+    def exportar_vaga(self, codigo):
+        """Pede a exportação "Candidatos da vaga (Excel)" da vaga. True se pediu."""
+        from selenium.common.exceptions import TimeoutException
+        from selenium.webdriver.common.by import By
+        from selenium.webdriver.support import expected_conditions as EC
+
+        presente = EC.presence_of_element_located
+        try:
+            processo = self._buscar_processo(codigo)
             self.clicar(processo)
             time.sleep(3)
             if str(codigo) not in self.ids_das_vagas:
@@ -808,10 +874,11 @@ class PortalEmpregare:
             return None
         candidatos = {}
         self.descartados = 0
+        self.respostas = {}
         restante = ORCAMENTO_DOS_LINKS - self.tempo_em_links
         if restante <= 0:
             self.registrar(f"Vaga {codigo}: tempo dos links esgotado nesta execução; só o identificador da vaga.")
-            return {"vaga_interno": ident, "candidatos": candidatos}
+            return {"vaga_interno": ident, "candidatos": candidatos, "respostas": {}}
         inicio = time.monotonic()
         try:
             prazo = inicio + min(TEMPO_LIMITE_DA_LISTA, restante)
@@ -838,7 +905,7 @@ class PortalEmpregare:
                 self.abrir_vagas_anunciadas()
             except Exception:
                 pass
-        return {"vaga_interno": ident, "candidatos": candidatos}
+        return {"vaga_interno": ident, "candidatos": candidatos, "respostas": dict(self.respostas)}
 
     def _esperar_a_lista(self):
         """Espera o AJAX trazer a 1ª página (.curriculo-list-item a.link-curriculo). False se não veio."""
@@ -907,8 +974,10 @@ class PortalEmpregare:
             espera=ESPERA_POR_MAIS,
             intervalo=INTERVALO_DA_LISTA,
         )
-        candidatos, descartados = ler_lista_de_candidatos(self.driver.page_source)
+        fonte = self.driver.page_source
+        candidatos, descartados = ler_lista_de_candidatos(fonte)
         self.descartados = max(self.descartados, descartados)
+        self.respostas.update(ler_respostas_do_html(fonte)[0])
         return candidatos
 
     def _proxima_pagina(self):

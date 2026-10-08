@@ -6,7 +6,7 @@ import { compactarPorArea } from "./candidatos-compactos-falsos.js";
 import {
   publicarLinhasDoMonitoramento,
   redefinirDadosDoMonitoramento,
-} from "../../src/componentes/dados-do-monitoramento.js";
+} from "../../src/componentes/dados-do-monitoramento.ts";
 
 /*
   O status Convocado e a carta de convocação na Lista de aprovados, pelas

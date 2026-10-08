@@ -15,7 +15,7 @@
     a sugestão nunca cair no "não sei".
 
   As views são as do legado (`currentView`: `dashboard`, `nucleo`…), na ordem
-  do menu (`ABAS_DO_MENU` em menu-lateral.js); as seções, as de
+  do menu (`ABAS_DO_MENU` em menu-lateral.ts); as seções, as de
   `src/modulos/configuracoes/secoes.js`.
 
   `ACOES_DA_AYA` são os botões que uma resposta pode trazer ("Abrir Recursos",

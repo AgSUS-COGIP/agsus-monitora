@@ -17,7 +17,12 @@ import {
   validarRegra,
 } from "../../../lib/classificacao/regra.js";
 import { CATALOGO_DE_CRITERIOS } from "../../../lib/classificacao/catalogo.js";
+import {
+  nomeParaGravar,
+  sugerirNomeDaVersao,
+} from "../../../lib/nome-da-versao.ts";
 import { Aviso } from "../../../ui/index.js";
+import { nomeDoCampo } from "../../../ui/nome-da-versao.tsx";
 import { Previa } from "../previa.jsx";
 import { PassoCardapio } from "./cardapio.tsx";
 import {
@@ -97,6 +102,7 @@ export function AssistenteDaRegra({
   );
   const [guardados, setGuardados] = useState<Guardados>({});
   const [motivo, setMotivo] = useState("");
+  const [nome, setNome] = useState<string | null>(null);
   const [erroDoBanco, setErroDoBanco] = useState("");
 
   useEffect(() => {
@@ -185,6 +191,14 @@ export function AssistenteDaRegra({
     [aoMudarRascunho],
   );
 
+  const sugestao = sugerirNomeDaVersao({
+    tipo: "regra",
+    edital: dados?.edital?.numero,
+    motivo:
+      motivo.trim() ||
+      (regraSalva ? "" : motivoDoPontoDePartida(ponto ?? { tipo: "zero" })),
+  });
+
   async function salvar() {
     setErroDoBanco("");
     if (!rascunho) return;
@@ -205,7 +219,12 @@ export function AssistenteDaRegra({
       }
     }
     if (mudouRegra) {
-      const r = await estado.salvarRegra(rascunho, texto);
+      const r = await estado.salvarRegra(
+        rascunho,
+        texto,
+        nomeParaGravar(nomeDoCampo(nome, sugestao)),
+      );
+      if (r.ok) setNome(null);
       if (!r.ok)
         setErroDoBanco(
           mudouClassificacao
@@ -219,6 +238,7 @@ export function AssistenteDaRegra({
   const contexto = {
     edital: editalRotulo,
     versao: regraSalva && !mudouRegra ? regraSalva.versao : null,
+    nome: regraSalva && !mudouRegra ? (regraSalva.nome ?? null) : null,
     notaMinima,
     notaMinimaPorNivel,
     desempateDaClassificacao: (classificacao?.desempate ?? []).map(
@@ -359,6 +379,10 @@ export function AssistenteDaRegra({
               erros={erros}
               motivo={motivo}
               aoMudarMotivo={setMotivo}
+              pedeNome={mudouRegra}
+              nome={nome}
+              sugestaoDoNome={sugestao}
+              aoMudarNome={setNome}
               motivoObrigatorio={Boolean(regraSalva) || mudouClassificacao}
               salvaClassificacao={mudouClassificacao}
               podeSalvar={mudouRegra || mudouClassificacao}
@@ -370,6 +394,7 @@ export function AssistenteDaRegra({
                 setClassificacao(classificacaoOriginal);
                 setGuardados({});
                 setMotivo("");
+                setNome(null);
                 setErroDoBanco("");
                 setPasso(0);
               }}

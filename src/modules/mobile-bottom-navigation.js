@@ -4,7 +4,7 @@ import {
   EVENTO_BARRA_ALTERNADA,
   EVENTO_MENU_ATUALIZADO,
 } from "../lib/eventos-da-barra-lateral.js";
-import { obterDadosDoMonitoramento } from "../componentes/dados-do-monitoramento.js";
+import { obterDadosDoMonitoramento } from "../componentes/dados-do-monitoramento.ts";
 
 /*
   Menu inferior do celular: as quatro primeiras páginas do menu lateral e um

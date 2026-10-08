@@ -303,6 +303,13 @@
   color: var(--text-secondary);
   font-size: var(--text-caption);
 }
+.robos-opcoes__marcar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1-5);
+  color: var(--text-primary);
+  font-size: var(--text-body-sm);
+}
 .robos-opcoes__codigos,
 .robos-opcoes__sugestoes ul {
   display: flex;

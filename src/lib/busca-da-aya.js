@@ -30,7 +30,7 @@ import {
   officialSourcesForQuestion,
 } from "../modules/aya-knowledge.js";
 import { paginaDaAya } from "./aya-paginas.js";
-import { nomeDaArea } from "./menu-lateral.js";
+import { nomeDaArea } from "./menu-lateral.ts";
 import { contextualAyaAnswer, resolverReferencia } from "./contexto-da-aya.js";
 import {
   EXPRESSOES,

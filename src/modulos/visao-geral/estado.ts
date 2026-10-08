@@ -21,7 +21,7 @@ import type {
   arquivo (ele não importa React).
 
   As linhas são as que o legado carrega e publica em
-  `dados-do-monitoramento.js` (loadData), recortadas pela área atual e
+  `dados-do-monitoramento.ts` (loadData), recortadas pela área atual e
   enriquecidas (`enriquecerLinhas`: fase, motivos de atenção, pendências
   pós-resultado). O único pedido ao banco daqui é o acompanhamento da área
   (`listar_acompanhamento_da_visao_geral`: etapas do cronograma e resumo das
@@ -44,7 +44,7 @@ import {
   assinarDadosDoMonitoramento,
   linhasDaArea,
   obterDadosDoMonitoramento,
-} from "../../componentes/dados-do-monitoramento.js";
+} from "../../componentes/dados-do-monitoramento.ts";
 import { hojeEmBrasilia } from "../../lib/cronograma-do-edital.js";
 import { semTreinamento } from "../../lib/edital-de-treinamento.js";
 import { chaveDoDsei } from "../../lib/mapa-saude-indigena/chaves.js";

@@ -5,7 +5,7 @@
   MANUTENCAO (migration `20260930140000_modulos_e_manutencao.sql`):
     - o sistema inteiro e cada área: `obter_situacao_do_sistema()`;
     - cada aba (em todas as áreas) e cada aba numa área: `listar_abas_do_menu()`
-      (o catálogo chega ao menu por `abasDoCatalogo`, em `menu-lateral.js`,
+      (o catálogo chega ao menu por `abasDoCatalogo`, em `menu-lateral.ts`,
       já com `manutencao` na aba e na área dela).
   Área desativada some do menu; aba desativada nem chega no catálogo.
 

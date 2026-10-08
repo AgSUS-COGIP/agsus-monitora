@@ -34,8 +34,8 @@ import {
   unidadesDasEtapas,
 } from "../../lib/calendario-editais.ts";
 import { formatarDataHora } from "../../lib/cronograma-do-edital.js";
-import { soDosEditais } from "../../componentes/dados-do-monitoramento.js";
-import { usarAreaAtual } from "../../componentes/usar-area-atual.js";
+import { soDosEditais } from "../../componentes/dados-do-monitoramento.ts";
+import { usarAreaAtual } from "../../componentes/usar-area-atual.ts";
 import {
   BlocosEsqueleto,
   Campo,
