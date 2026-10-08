@@ -5,7 +5,7 @@ import { BRASIL_BOUNDS, boundsDoGeoJson } from "../src/lib/brasil-bounds.js";
 import {
   chaveDoDsei,
   temCoordenada,
-} from "../src/lib/mapa-saude-indigena/chaves.js";
+} from "../src/lib/mapa-saude-indigena/chaves.ts";
 import {
   BR_OUTLINE,
   UF_GEO,
@@ -33,7 +33,7 @@ import {
   textoDosVinculosExternos,
   tiposDoTerritorio,
   visiveis,
-} from "../src/lib/mapa-saude-indigena/mapa-do-dsei.js";
+} from "../src/lib/mapa-saude-indigena/mapa-do-dsei.ts";
 import {
   bolhasDosDsei,
   casaisNacionais,
@@ -42,7 +42,7 @@ import {
   enquadramentoNacional,
   popupDaCasaiNacional,
   territoriosPorVagas,
-} from "../src/lib/mapa-saude-indigena/mapa-nacional.js";
+} from "../src/lib/mapa-saude-indigena/mapa-nacional.ts";
 
 /*
   O mapa da Saúde Indígena sem Leaflet (src/lib/mapa-saude-indigena/): as

@@ -92,8 +92,8 @@ export interface RegistroDoDsei {
   type: ReturnType<typeof tipoDaUnidade>;
   origens?: string[];
   nomes?: Record<string, string>;
-  vinculo?: string;
-  ufAdministrativa?: string;
+  vinculo?: "normal" | "externo" | "indeterminado";
+  ufAdministrativa?: string | null;
 }
 export interface CaixaDaTerra {
   oeste: number;

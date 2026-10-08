@@ -9,18 +9,18 @@ import {
 import { leafletDoMapa } from "./tipos-do-leaflet.ts";
 import { useCallback, useMemo, useRef } from "react";
 import { usarTemaEscuro } from "../../app/tema.js";
-import { chaveDoDsei } from "../../lib/mapa-saude-indigena/chaves.js";
+import { chaveDoDsei } from "../../lib/mapa-saude-indigena/chaves.ts";
 import {
   bolhasDosDsei,
   casaisNacionais,
   contarPorDsei,
   enquadramentoNacional,
   territoriosPorVagas,
-} from "../../lib/mapa-saude-indigena/mapa-nacional.js";
+} from "../../lib/mapa-saude-indigena/mapa-nacional.ts";
 import {
   registrosDoDsei,
   resumoDaRede,
-} from "../../lib/mapa-saude-indigena/mapa-do-dsei.js";
+} from "../../lib/mapa-saude-indigena/mapa-do-dsei.ts";
 import { classes } from "../../ui/index.js";
 import { obterLeaflet } from "./leaflet.js";
 import { MapaDoDsei } from "./mapa-do-dsei.tsx";

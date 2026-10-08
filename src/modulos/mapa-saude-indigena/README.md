@@ -178,14 +178,19 @@ o tipo das camadas próprias de cada mapa. A legenda das Terras Indígenas descr
 a ponte opcional com a camada existente: sem ela, os controles ficam desabilitados;
 os ouvintes são retirados ao desmontar.
 
-As telas principal, nacional e por DSEI estão em TSX. A fábrica e as operações
-do Leaflet (`leaflet.js`) e as regras geográficas de contagens, reconciliação e
-apresentação permanecem em JavaScript, com contratos JSDoc na integração. A fábrica declara em JSDoc o
+As telas principal, nacional e por DSEI estão em TSX. As regras de contagens, bolhas,
+CASAIs, unidades, vínculos, resumos e enquadramentos também estão em TypeScript:
+`src/lib/mapa-saude-indigena/chaves.ts`, `mapa-nacional.ts` e `mapa-do-dsei.ts`.
+A fábrica e as operações do Leaflet (`leaflet.js`), a conversão de UF e a
+reconciliação compartilhada permanecem em JavaScript, com contratos JSDoc na integração. A fábrica declara em JSDoc o
 resultado utilizado pelo painel; essa anotação não valida dados externos nem
 cobre toda a API do Leaflet. Esta entrega não muda contratos de RPC ou dados
 geográficos. Ciclo de vida, StrictMode, legendas, Escape, foco, tela cheia e modo de
 edição são cobertos pelos testes dos dois mapas; contratos adicionais estão em
-`tests/tipos/base-dos-mapas.tsx`.
+`tests/tipos/base-dos-mapas.tsx` e `tests/tipos/regras-geograficas.tsx`.
+A fronteira da reconciliação está em `src/lib/tipos-da-reconciliacao.ts`: mantém as
+chaves CNES numéricas ou textuais e preserva os campos de apresentação ao unir
+estabelecimentos repetidos. A anotação não valida o JavaScript internamente.
 
 O adaptador do editor e as regras específicas de coordenadas estão em TypeScript.
 O catálogo editável recebe dados externos como `unknown`, ignora entradas inválidas

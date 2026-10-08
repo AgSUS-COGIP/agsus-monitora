@@ -8,14 +8,14 @@ import {
   popupDoRegistro,
   registroDaSede,
   registrosDoDsei,
-} from "../src/lib/mapa-saude-indigena/mapa-do-dsei.js";
+} from "../src/lib/mapa-saude-indigena/mapa-do-dsei.ts";
 import {
   bolhasDosDsei,
   casaisNacionais,
   dicaDaBolha,
   dicaDaCasaiNacional,
   popupDaCasaiNacional,
-} from "../src/lib/mapa-saude-indigena/mapa-nacional.js";
+} from "../src/lib/mapa-saude-indigena/mapa-nacional.ts";
 
 /*
   O BANCO É A ÚNICA FONTE DE COORDENADA DO MAPA DA SAÚDE INDÍGENA

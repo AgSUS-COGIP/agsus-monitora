@@ -11,6 +11,17 @@
   mapa só conta. Com filtro ativo, só aparecem os DSEIs e as CASAIs nacionais
   que têm edital no recorte.
 */
+import type { LinhaDoMonitoramento } from "../../componentes/tipos-do-monitoramento.ts";
+import type { CoordenadasDoMapa } from "../tipos-do-mapa.ts";
+import type {
+  BolhaDoDsei,
+  ContagemDoDsei,
+  DseiDoMapa,
+  EstabelecimentoCompacto,
+  TerritorioDoMapa,
+  CasaiNacionalDoMapa,
+  EnquadramentoDoMapa,
+} from "./tipos.ts";
 import { enquadramentoDoRecorte } from "../enquadramento-do-brasil.js";
 import { OPACIDADE_DA_BOLHA, raioDaBolha } from "../mapa-render.js";
 import { siglaDaUf } from "../uf-ibge.js";
@@ -21,15 +32,19 @@ import {
   plural,
   temCoordenada,
   texto,
-} from "./chaves.js";
-import { CORES_DO_MAPA } from "./formas.js";
+} from "./chaves.ts";
+import { CORES_DO_MAPA } from "./formas.ts";
 
 /* Editais, vagas e ociosas por DSEI (chave de `chaveDoDsei`). */
-/** @param {readonly import("../../componentes/tipos-do-monitoramento.ts").LinhaDoMonitoramento[]} linhas
- * @returns {Map<string, import("./tipos.ts").ContagemDoDsei>} */
-export function contarPorDsei(linhas) {
-  const contagens = new Map();
-  for (const linha of Array.isArray(linhas) ? linhas : []) {
+
+export function contarPorDsei(
+  linhas: readonly LinhaDoMonitoramento[],
+): Map<string, ContagemDoDsei> {
+  const contagens = new Map<string, ContagemDoDsei>();
+  const lista: readonly LinhaDoMonitoramento[] = Array.isArray(linhas)
+    ? linhas
+    : [];
+  for (const linha of lista) {
     const chave = chaveDoDsei(linha?.unidade);
     if (!chave) continue;
     const atual = contagens.get(chave) || { editais: 0, vagas: 0, ociosas: 0 };
@@ -48,14 +63,17 @@ const VAZIO = Object.freeze({ editais: 0, vagas: 0, ociosas: 0 });
   menor fique por cima e as duas continuem clicáveis onde se sobrepõem (o
   leque, `leque-de-marcadores.js`, separa as que caem no mesmo pixel).
 */
-/** @param {{ dseis?: import("./tipos.ts").DseiDoMapa[], contagens?: Map<string, import("./tipos.ts").ContagemDoDsei>, filtroAtivo?: boolean }} opcoes
- * @returns {import("./tipos.ts").BolhaDoDsei[]} */
+
 export function bolhasDosDsei({
   dseis = [],
   contagens = new Map(),
   filtroAtivo = false,
-} = {}) {
-  const lista = Array.isArray(dseis) ? dseis : [];
+}: {
+  dseis?: readonly DseiDoMapa[];
+  contagens?: ReadonlyMap<string, ContagemDoDsei>;
+  filtroAtivo?: boolean;
+} = {}): BolhaDoDsei[] {
+  const lista: readonly DseiDoMapa[] = Array.isArray(dseis) ? dseis : [];
   const populacaoMaxima = Math.max(0, ...lista.map((d) => numero(d?.pop))) || 1;
 
   return lista
@@ -96,10 +114,12 @@ export function bolhasDosDsei({
   (desempate pela população). A barra é o preenchimento, (vagas − ociosas) ÷
   vagas: acima de 80% ok, acima de 40% atenção, o resto crítico.
 */
-/** @param {import("./tipos.ts").BolhaDoDsei[]} bolhas
- * @returns {import("./tipos.ts").TerritorioDoMapa[]} */
-export function territoriosPorVagas(bolhas) {
-  return [...(Array.isArray(bolhas) ? bolhas : [])]
+
+export function territoriosPorVagas(
+  bolhas: readonly BolhaDoDsei[],
+): TerritorioDoMapa[] {
+  const lista: readonly BolhaDoDsei[] = Array.isArray(bolhas) ? bolhas : [];
+  return [...lista]
     .sort(
       (a, b) => b.vagas - a.vagas || numero(b.dsei?.pop) - numero(a.dsei?.pop),
     )
@@ -129,14 +149,20 @@ export function territoriosPorVagas(bolhas) {
   de verdade, não da lista fixa do `lmap`. O clique filtra a página pela busca
   "CASAI <cidade>", como antes.
 */
-/** @param {{ nac?: import("./tipos.ts").EstabelecimentoCompacto[], contagens?: Map<string, import("./tipos.ts").ContagemDoDsei>, filtroAtivo?: boolean }} opcoes
- * @returns {import("./tipos.ts").CasaiNacionalDoMapa[]} */
+
 export function casaisNacionais({
   nac = [],
   contagens = new Map(),
   filtroAtivo = false,
-} = {}) {
-  return (Array.isArray(nac) ? nac : [])
+}: {
+  nac?: readonly EstabelecimentoCompacto[];
+  contagens?: ReadonlyMap<string, ContagemDoDsei>;
+  filtroAtivo?: boolean;
+} = {}): CasaiNacionalDoMapa[] {
+  const lista: readonly EstabelecimentoCompacto[] = Array.isArray(nac)
+    ? nac
+    : [];
+  return lista
     .filter((a) => Array.isArray(a) && temCoordenada(a[2], a[3]))
     .map((a) => {
       const nome = texto(a[0]);
@@ -161,22 +187,31 @@ export function casaisNacionais({
   (`enquadramentoDoRecorte`, src/lib/enquadramento-do-brasil.js) com os DSEIs
   e as CASAIs que sobraram. Sem filtro, o Brasil; um ponto só, zoom 7 nele.
 */
-/** @param {{ bolhas?: import("./tipos.ts").BolhaDoDsei[], casais?: import("./tipos.ts").CasaiNacionalDoMapa[], filtroAtivo?: boolean }} opcoes
- * @returns {import("./tipos.ts").EnquadramentoDoMapa} */
+
 export function enquadramentoNacional({
   bolhas = [],
   casais = [],
   filtroAtivo = false,
-} = {}) {
+}: {
+  bolhas?: readonly BolhaDoDsei[];
+  casais?: readonly CasaiNacionalDoMapa[];
+  filtroAtivo?: boolean;
+} = {}): EnquadramentoDoMapa {
   return enquadramentoDoRecorte({
-    pontos: [...bolhas, ...casais].map((p) => [p.lat, p.lon]),
+    pontos: [...bolhas, ...casais].map((p): CoordenadasDoMapa => [
+      p.lat,
+      p.lon,
+    ]),
     filtroAtivo,
   });
 }
 
 /* Texto da dica (tooltip) da bolha do DSEI. */
-export function dicaDaBolha(bolha, resumoDaRede = []) {
-  const d = bolha?.dsei || {};
+export function dicaDaBolha(
+  bolha: BolhaDoDsei,
+  resumoDaRede: readonly string[] = [],
+) {
+  const d: Partial<DseiDoMapa> = bolha?.dsei || {};
   const linhas = [
     `População do DSEI: ${formatarNumero(d.pop)} indígenas`,
     ...resumoDaRede,
@@ -191,7 +226,7 @@ export function dicaDaBolha(bolha, resumoDaRede = []) {
   return { titulo: `DSEI ${texto(d.n)}`, linhas };
 }
 
-export function dicaDaCasaiNacional(casai) {
+export function dicaDaCasaiNacional(casai: CasaiNacionalDoMapa) {
   return {
     titulo: casai.nome,
     linhas: [
@@ -201,7 +236,7 @@ export function dicaDaCasaiNacional(casai) {
   };
 }
 
-export function popupDaCasaiNacional(casai) {
+export function popupDaCasaiNacional(casai: CasaiNacionalDoMapa) {
   return {
     titulo: casai.nome,
     linhas: [
