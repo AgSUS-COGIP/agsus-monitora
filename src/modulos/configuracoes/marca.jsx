@@ -1,22 +1,25 @@
 import { useSyncExternalStore } from "react";
-import { corDoTextoPara } from "../../lib/contraste.js";
+import {
+  CHAVE_DA_COR_DA_BARRA,
+  CHAVE_DO_LOGO_DA_BARRA,
+} from "../../lib/marca-da-barra-lateral.js";
 import { camposDaSecao } from "../../lib/publicacao-de-configuracoes.js";
-import { Icone } from "../../componentes/icone.jsx";
 import { CartaoDaMascote } from "./cartao-da-mascote.tsx";
-import { CampoDaSecao, Grupo, Imagem, Previa } from "./partes.jsx";
+import { CampoDaSecao, Grupo, Previa } from "./partes.jsx";
+import { PreviaDaBarraLateral } from "./previa-da-barra-lateral.tsx";
+import { SECOES } from "./secoes.js";
 
 /*
-  Configurações › Marca: a equipe responsável (pé da barra lateral), o
-  rodapé e o cabeçalho da agência nos documentos oficiais (Classificação),
-  com a prévia da barra lateral ao lado, e a mascote da Aya em cada estado
-  (cartao-da-mascote.tsx), para conferir. Os valores são do rascunho
-  de `estado.js` e vão na publicação da barra fixa.
+  Configurações › Marca: a equipe responsável e o rodapé (que aparecem no pé
+  do cartão da tela de acesso, `src/app/entrada/entrada.jsx`), o cabeçalho
+  da agência nos documentos oficiais (Classificação), a prévia da barra
+  lateral ao lado e a mascote da Aya em cada estado (cartao-da-mascote.tsx),
+  para conferir. Os valores são do rascunho de `estado.js` e vão na
+  publicação da barra fixa.
 
-  A cor e o logo da barra são os da seção Aparência (com o rascunho, se
-  houver).
+  A prévia é a barra de verdade (previa-da-barra-lateral.tsx); a cor e o
+  logo dela são os da seção Aparência (com o rascunho, se houver).
 */
-
-const txt = (valor) => String(valor ?? "").trim();
 
 const CAMPOS = camposDaSecao("marca");
 const PREFIXO = "configMarca";
@@ -45,76 +48,29 @@ const GRUPOS = Object.freeze([
   },
 ]);
 
-function iniciais(nome) {
-  const partes = txt(nome).split(/\s+/).filter(Boolean);
-  return (
-    (
-      (partes[0]?.[0] || "") + (partes.length > 1 ? partes.at(-1)[0] : "")
-    ).toUpperCase() || "?"
-  );
-}
-
 function PreviaDaMarca({ estado }) {
-  const fundo = txt(estado.valor("ui_sidebar_background_color")) || "#ffffff";
-  const titulo = txt(estado.valor("app_title")) || "MONITORA";
-  const equipe = txt(estado.valor("cogip_nome")) || "Nome da equipe";
-  const funcao = txt(estado.valor("cogip_funcao")) || "Função / área";
-  const departamento = txt(estado.valor("cogip_dept"));
-  const rodape = txt(estado.valor("footer_text")) || "Rodapé das páginas";
   return (
     <Previa rotulo="Prévia da barra lateral">
-      <div className="previa-marca">
-        <div
-          className="previa-marca__barra"
-          style={{ background: fundo, color: corDoTextoPara(fundo) }}
-        >
-          <div className="previa-marca__topo">
-            <Imagem
-              url={estado.valor("ui_sidebar_logo_url")}
-              alt=""
-              className="previa-marca__logo"
-              reserva={
-                <span className="previa-marca__logo-reserva">
-                  <Icone nome="layout-dashboard" tamanho={18} />
-                </span>
-              }
-            />
-            <strong>{titulo}</strong>
-          </div>
-          <ul className="previa-marca__menu" aria-hidden="true">
-            {["Visão geral", "Editais", "Lista de aprovados"].map(
-              (item, indice) => (
-                <li key={item} className={indice === 0 ? "ativo" : ""}>
-                  {item}
-                </li>
-              ),
-            )}
-          </ul>
-          <div className="previa-marca__equipe">
-            <Imagem
-              url={estado.valor("cogip_logo_url")}
-              alt={`Logo de ${equipe}`}
-              className="previa-marca__avatar"
-              reserva={
-                <span className="previa-marca__avatar">{iniciais(equipe)}</span>
-              }
-            />
-            <div>
-              <strong>{equipe}</strong>
-              <small>{funcao}</small>
-              {departamento ? <small>{departamento}</small> : null}
-            </div>
-          </div>
-        </div>
-        <p className="previa-marca__rodape">{rodape}</p>
-      </div>
+      <PreviaDaBarraLateral
+        logo={estado.valor(CHAVE_DO_LOGO_DA_BARRA)}
+        cor={estado.valor(CHAVE_DA_COR_DA_BARRA)}
+        versao={{
+          rotulo: estado.valor("sidebar_version_label"),
+          valor: estado.valor("app_version_current"),
+        }}
+      />
     </Previa>
   );
 }
 
 export function SecaoMarca({ estado }) {
   // Assina o estado: cada tecla redesenha campos e prévia.
-  useSyncExternalStore(estado.assinar, estado.obter);
+  const { secao } = useSyncExternalStore(estado.assinar, estado.obter);
+  /*
+    A prévia (um quadro com o CSS do app inteiro) só existe com a Marca
+    aberta; sem seção escolhida ainda, a aberta é a primeira, a Marca.
+  */
+  const aberta = (secao || SECOES[0].id) === "marca";
   return (
     <div
       className="config-secao-react config-secao-react--com-previa"
@@ -136,7 +92,7 @@ export function SecaoMarca({ estado }) {
         ))}
         <CartaoDaMascote />
       </div>
-      <PreviaDaMarca estado={estado} />
+      {aberta ? <PreviaDaMarca estado={estado} /> : null}
     </div>
   );
 }

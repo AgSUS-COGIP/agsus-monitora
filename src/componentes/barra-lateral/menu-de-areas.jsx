@@ -58,6 +58,10 @@ import { marcarItemAtivoNoMenu } from "./estado.js";
   menu inferior do celular, pelos ganchos do mapa (`[data-view="dashboard"]`)
   e pelos testes de ponta a ponta. As opções do seletor não têm `data-view`:
   não são páginas.
+
+  Com `previa` (a prévia de Configurações › Marca), o menu é o mesmo, mas não
+  grava as áreas fechadas nem avisa `EVENTO_MENU_ATUALIZADO`: quem espelha o
+  menu é a barra de verdade.
 */
 
 const CHAVE_AREAS_FECHADAS = "agsus_monitora_menu_areas_fechadas_v1";
@@ -471,7 +475,7 @@ function SeletorDeArea({
   );
 }
 
-export function Navegacao({ arvore, ativo, opcoes, trilho }) {
+export function Navegacao({ arvore, ativo, opcoes, trilho, previa = false }) {
   const refNavegacao = useRef(null);
   const refNav = useRef(null);
   const espera = useRef(0);
@@ -496,7 +500,7 @@ export function Navegacao({ arvore, ativo, opcoes, trilho }) {
   const areaAtiva = itemAtivo?.area ?? null;
 
   const guardarFechadas = (proximas) => {
-    gravarAreasFechadas(proximas);
+    if (!previa) gravarAreasFechadas(proximas);
     definirFechadas(proximas);
   };
 
@@ -518,12 +522,13 @@ export function Navegacao({ arvore, ativo, opcoes, trilho }) {
   */
   const secaoAtiva = itemAtivo?.item.secao ?? null;
   useEffect(() => {
+    if (previa) return;
     avisar(EVENTO_MENU_ATUALIZADO, {
       view: ativo.view,
       secao: secaoAtiva,
       area: areaAtual,
     });
-  }, [arvore, ativo, secaoAtiva, areaAtual]);
+  }, [arvore, ativo, secaoAtiva, areaAtual, previa]);
 
   useEffect(() => {
     if (!trilho) despachar({ tipo: "fechar" });

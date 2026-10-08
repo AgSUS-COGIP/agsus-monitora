@@ -384,6 +384,16 @@ export function nomeDaArea(id) {
   sai do menu, e o grupo da área em manutenção leva `manutencao`. Sem ela,
   todas as áreas valem como ativas.
 */
+/**
+ * @param {{
+ *   permitidas?: Readonly<Record<string, boolean>>,
+ *   paineis?: readonly { codigo?: string, titulo?: string }[],
+ *   secoesDeConfiguracao?: readonly { id: string, rotulo: string, iconeDoMenu?: string }[],
+ *   areas?: readonly string[],
+ *   abas?: readonly object[],
+ *   situacao?: object,
+ * }} [opcoes]
+ */
 export function montarArvoreDoMenu({
   permitidas = {},
   paineis = [],

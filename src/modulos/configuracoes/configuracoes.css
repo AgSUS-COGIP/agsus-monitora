@@ -392,98 +392,30 @@ body:not(.sidebar-collapsed) .config-barra {
 
 /* ── Prévias ──────────────────────────────────────────────────────────── */
 
-/* Marca: barra lateral + rodapé */
-.previa-marca {
-  display: grid;
-  gap: var(--space-3);
-}
-.previa-marca__barra {
-  display: grid;
-  gap: var(--space-4);
-  padding: var(--space-4);
+/*
+  Marca: a barra lateral de verdade, num quadro com a largura de desktop
+  (as media queries da barra valem acima de 900px), reduzida e recortada na
+  largura da barra (token `--sidebar-width`). Sem ponteiro: é só para ver.
+*/
+.previa-barra {
+  --previa-barra-escala: 0.8;
+  --previa-barra-altura: 720px;
+  width: calc(var(--sidebar-width) * var(--previa-barra-escala));
+  height: calc(var(--previa-barra-altura) * var(--previa-barra-escala));
+  margin-inline: auto;
+  overflow: hidden;
+  border: 1px solid var(--border-subtle);
   border-radius: var(--radius-md);
   box-shadow: var(--shadow-sm);
 }
-.previa-marca__topo,
-.previa-marca__equipe {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-  min-width: 0;
-}
-.previa-marca__topo strong {
-  font-size: var(--text-body);
-  font-weight: var(--font-weight-medium);
-}
-.previa-marca__logo {
-  width: 28px;
-  height: 28px;
-  object-fit: contain;
-}
-.previa-marca__logo-reserva {
-  display: grid;
-  place-items: center;
-  width: 28px;
-  height: 28px;
-  border-radius: var(--radius-md);
-  background: var(--state-info-soft);
-  color: var(--brand-primary);
-}
-.previa-marca__menu {
-  display: grid;
-  gap: var(--space-1);
-  margin: 0;
-  padding: 0;
-  font-size: var(--text-body-sm);
-  list-style: none;
-}
-.previa-marca__menu li {
-  padding: var(--space-1-5) var(--space-2);
-  border-radius: var(--radius-md);
-  opacity: 0.8;
-}
-.previa-marca__menu li.ativo {
-  background: color-mix(in srgb, currentColor 10%, transparent);
-  font-weight: var(--font-weight-medium);
-  opacity: 1;
-}
-.previa-marca__equipe {
-  padding-top: var(--space-3);
-  border-top: 1px solid color-mix(in srgb, currentColor 14%, transparent);
-}
-.previa-marca__equipe > div {
-  display: grid;
-  min-width: 0;
-}
-.previa-marca__equipe strong {
-  font-size: var(--text-body-sm);
-  font-weight: var(--font-weight-medium);
-}
-.previa-marca__equipe small {
-  overflow: hidden;
-  font-size: var(--text-caption);
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  opacity: 0.8;
-}
-.previa-marca__avatar {
-  display: grid;
-  flex: 0 0 32px;
-  place-items: center;
-  width: 32px;
-  height: 32px;
-  border-radius: var(--radius-full);
-  background: color-mix(in srgb, var(--color-chart-4) 16%, var(--surface-card));
-  color: var(--color-chart-4);
-  font-size: var(--text-caption);
-  font-weight: var(--font-weight-medium);
-  object-fit: cover;
-}
-.previa-marca__rodape {
-  margin: 0;
-  color: var(--text-secondary);
-  font-size: var(--text-caption);
-  text-align: center;
+.previa-barra__quadro {
+  display: block;
+  width: 1280px;
+  height: var(--previa-barra-altura);
+  border: 0;
+  transform: scale(var(--previa-barra-escala));
+  transform-origin: 0 0;
+  pointer-events: none;
 }
 
 /* Página inicial */
