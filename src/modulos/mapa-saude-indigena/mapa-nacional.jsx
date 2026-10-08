@@ -32,7 +32,7 @@ import {
 } from "./painel-do-mapa.tsx";
 import { usarUltimo } from "./usar-ultimo.ts";
 import { podeEditarCoordenadas } from "../../lib/access-roles.js";
-import { EditorDeCoordenadas } from "./editor-de-coordenadas.jsx";
+import { EditorDeCoordenadas } from "./editor-de-coordenadas.tsx";
 import {
   PainelDoEditor,
   usarModoDeEdicao,

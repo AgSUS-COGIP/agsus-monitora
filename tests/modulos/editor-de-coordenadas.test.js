@@ -1,7 +1,7 @@
 import { act, createElement } from "react";
 import { createRoot } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { EditorDeCoordenadas } from "../../src/modulos/mapa-saude-indigena/editor-de-coordenadas.jsx";
+import { EditorDeCoordenadas } from "../../src/modulos/mapa-saude-indigena/editor-de-coordenadas.tsx";
 import { MapaSaudeIndigena } from "../../src/modulos/mapa-saude-indigena/mapa-saude-indigena.jsx";
 import { clicar, digitar } from "../componentes/interacoes.js";
 import { criarLeafletFalso } from "./leaflet-falso.js";

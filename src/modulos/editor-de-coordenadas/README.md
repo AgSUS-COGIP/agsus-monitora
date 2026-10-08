@@ -11,8 +11,9 @@ O tipo genérico preserva os campos próprios do ponto em toda a integração.
 
 `src/lib/editor-de-coordenadas.ts` reúne as regras comuns de validação, ordenação,
 distância, sugestões repetidas, histórico e folga do enquadramento. As regras
-específicas de cada mapa permanecem em JavaScript, com contratos JSDoc na
-integração de Projetos. O adaptador da Saúde Indígena também permanece JSX.
+específicas dos dois mapas e seus adaptadores também estão em TypeScript.
+Os alvos de Saúde Indígena declaram fonte, tipo, DSEI, índice, código e nome;
+a leitura de dados externos preserva os índices originais usados pelo banco.
 
 As respostas das RPCs entram como dados externos: pendências precisam ser listas
 de registros, candidatos precisam de fonte e posições escalares, e textos da tela
