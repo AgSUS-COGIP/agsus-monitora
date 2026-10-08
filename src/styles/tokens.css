@@ -16,12 +16,12 @@
 */
 /*
   A tela de acesso tem paleta própria, clara nos dois temas (o painel é a cor
-  configurada; DESIGN.md seção 5): o segundo seletor devolve a ela os valores
+  configurada; DESIGN.md seção 5): o primeiro seletor devolve a ela os valores
   claros quando a página está no escuro (sem isto, o aviso de erro do login
   saía rosa-claro sobre rosa-claro, 1,91:1).
 */
-:root,
-html[data-theme="dark"] .login-screen {
+.login-screen,
+:root {
   /* ---------- Primitivos: azul institucional ---------- */
   --color-blue-50: #f2f6fc;
   --color-blue-100: #e3ecf8;
