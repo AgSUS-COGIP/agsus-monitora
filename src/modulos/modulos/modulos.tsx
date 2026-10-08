@@ -1,3 +1,16 @@
+import type { ReactNode } from "react";
+import type {
+  EstadoDosModulos,
+  SnapshotDosModulos,
+  ArvoreDosModulos,
+  AlvoDosModulos,
+  CampoDosModulos,
+  EstadoDoModulo,
+  DependenciasDosModulos,
+} from "./tipos.ts";
+type ValorDoCampo = (alvo: AlvoDosModulos, campo: CampoDosModulos) => string;
+type SituacaoDoAlvo = (alvo: AlvoDosModulos) => EstadoDoModulo;
+type OpcaoDeEstado = { valor: EstadoDoModulo; rotulo: string };
 import { useEffect, useState, useSyncExternalStore } from "react";
 import { montarModulo } from "../../app/montar-modulo.jsx";
 import { getSupabaseClient } from "../../lib/supabaseClient.js";
@@ -11,8 +24,8 @@ import {
   problemasDoRascunho,
   resumoDoRascunho,
   valorDoCampo,
-} from "../../lib/modulos-e-abas.js";
-import { criarEstadoDosModulos } from "./estado.js";
+} from "../../lib/modulos-e-abas.ts";
+import { criarEstadoDosModulos } from "./estado.ts";
 import {
   Aviso,
   BlocosEsqueleto,
@@ -38,31 +51,31 @@ import { Icone } from "../../componentes/icone.jsx";
     Painéis externos      Ativo / Em manutenção / Desativado
     Histórico             as 50 últimas mudanças
 
-  Nada grava na hora: as mudanças se acumulam no rascunho (`estado.js`) e
+  Nada grava na hora: as mudanças se acumulam no rascunho (`estado.ts`) e
   vão juntas em "Revisar e salvar", com motivo — como em Acessos.
 */
 
-const OPCOES = Object.freeze([
+const OPCOES: readonly OpcaoDeEstado[] = Object.freeze([
   { valor: "ativa", rotulo: "Ativa" },
   { valor: "manutencao", rotulo: "Em manutenção" },
   { valor: "desativada", rotulo: "Desativada" },
 ]);
-const OPCOES_DO_SISTEMA = Object.freeze([
+const OPCOES_DO_SISTEMA: readonly OpcaoDeEstado[] = Object.freeze([
   { valor: "ativa", rotulo: "Ativo" },
   { valor: "manutencao", rotulo: "Em manutenção" },
 ]);
-const OPCOES_DO_PAINEL = Object.freeze([
+const OPCOES_DO_PAINEL: readonly OpcaoDeEstado[] = Object.freeze([
   { valor: "ativa", rotulo: "Ativo" },
   { valor: "manutencao", rotulo: "Em manutenção" },
   { valor: "desativada", rotulo: "Desativado" },
 ]);
 
-const idDoAlvo = (alvo) =>
+const idDoAlvo = (alvo: AlvoDosModulos) =>
   ["modulos", alvo.escopo, alvo.area, alvo.aba, alvo.painel]
     .filter(Boolean)
     .join("-");
 
-function SeloDoEstado({ estado }) {
+function SeloDoEstado({ estado }: { estado: EstadoDoModulo }) {
   if (estado === "ativa") return null;
   return estado === "manutencao" ? (
     <Selo tom="pendente" className="modulos-selo">
@@ -74,7 +87,15 @@ function SeloDoEstado({ estado }) {
 }
 
 /** Mensagem e previsão de volta, só quando o alvo está em manutenção. */
-function CamposDaManutencao({ estado: estadoDaTela, alvo, valor }) {
+function CamposDaManutencao({
+  estado: estadoDaTela,
+  alvo,
+  valor,
+}: {
+  estado: EstadoDosModulos;
+  alvo: AlvoDosModulos;
+  valor: ValorDoCampo;
+}) {
   const id = idDoAlvo(alvo);
   const mensagem = valor(alvo, "mensagem");
   return (
@@ -118,6 +139,15 @@ function LinhaDoItem({
   situacao,
   extra = null,
   comCampos = true,
+}: {
+  estado: EstadoDosModulos;
+  alvo: AlvoDosModulos;
+  titulo: string;
+  opcoes?: readonly OpcaoDeEstado[];
+  valor: ValorDoCampo;
+  situacao: SituacaoDoAlvo;
+  extra?: ReactNode;
+  comCampos?: boolean;
 }) {
   const atual = situacao(alvo);
   return (
@@ -147,7 +177,17 @@ function LinhaDoItem({
   );
 }
 
-function Cartao({ titulo, icone, controles = null, children }) {
+function Cartao({
+  titulo,
+  icone,
+  controles = null,
+  children,
+}: {
+  titulo: string;
+  icone: string;
+  controles?: ReactNode;
+  children: ReactNode;
+}) {
   return (
     <section className="ui-card modulos-cartao">
       <header className="modulos-cartao__cabecalho">
@@ -166,7 +206,13 @@ function Cartao({ titulo, icone, controles = null, children }) {
   );
 }
 
-function BarraDeRevisao({ estado, atual }) {
+function BarraDeRevisao({
+  estado,
+  atual,
+}: {
+  estado: EstadoDosModulos;
+  atual: SnapshotDosModulos;
+}) {
   const [revisando, setRevisando] = useState(false);
   const [motivo, setMotivo] = useState("");
   const [tentou, setTentou] = useState(false);
@@ -288,7 +334,7 @@ function BarraDeRevisao({ estado, atual }) {
   );
 }
 
-function Historico({ arvore }) {
+function Historico({ arvore }: { arvore: ArvoreDosModulos }) {
   const registros = (arvore?.historico || []).slice(0, 50);
   return (
     <Cartao titulo="Histórico" icone="rotate-ccw">
@@ -318,7 +364,7 @@ function Historico({ arvore }) {
   );
 }
 
-export function ModulosEAbas({ estado }) {
+export function ModulosEAbas({ estado }: { estado: EstadoDosModulos }) {
   const atual = useSyncExternalStore(estado.assinar, estado.obter);
   const { arvore, rascunho, originais } = atual;
 
@@ -354,16 +400,25 @@ export function ModulosEAbas({ estado }) {
       </div>
     );
 
-  const valor = (alvo, campo) => valorDoCampo(rascunho, originais, alvo, campo);
-  const situacao = (alvo) => estadoDoAlvo(rascunho, originais, alvo);
+  const valor: ValorDoCampo = (alvo, campo) =>
+    valorDoCampo(rascunho, originais, alvo, campo);
+  const situacao: SituacaoDoAlvo = (alvo) =>
+    estadoDoAlvo(rascunho, originais, alvo);
   const nomeDaAba = new Map(
     (arvore.abas || []).map((aba) => [aba.co_aba, aba.no_aba]),
   );
-  const sistema = { escopo: "sistema" };
+  const sistema: AlvoDosModulos = { escopo: "sistema" };
   const estadoDoSistema = situacao(sistema);
 
   return (
     <div className="modulos-tela" data-tour="config-modulos">
+      {atual.erro ? (
+        <ErroAoCarregar
+          oQue="módulos e abas"
+          mensagem={atual.erro}
+          aoTentar={() => void estado.carregar()}
+        />
+      ) : null}
       {atual.aviso ? (
         <Aviso
           tom={atual.aviso.tom === "danger" ? "danger" : "warning"}
@@ -408,7 +463,7 @@ export function ModulosEAbas({ estado }) {
       </Cartao>
 
       {(arvore.areas || []).map((area) => {
-        const alvo = { escopo: "area", area: area.co_area };
+        const alvo: AlvoDosModulos = { escopo: "area", area: area.co_area };
         const estadoDaArea = situacao(alvo);
         return (
           <Cartao
@@ -435,7 +490,7 @@ export function ModulosEAbas({ estado }) {
                 className="modulos-lista"
                 aria-label={`Abas de ${area.no_area || area.co_area}`}
               >
-                {area.abas.map((aba) => (
+                {(area.abas ?? []).map((aba) => (
                   <LinhaDoItem
                     key={aba.co_aba}
                     estado={estado}
@@ -464,7 +519,7 @@ export function ModulosEAbas({ estado }) {
           data-tour="config-modulos-abas"
         >
           {(arvore.abas || []).map((aba) => {
-            const alvo = { escopo: "aba", aba: aba.co_aba };
+            const alvo: AlvoDosModulos = { escopo: "aba", aba: aba.co_aba };
             const beta = valor(alvo, "beta") === "S";
             return (
               <LinhaDoItem
@@ -503,7 +558,7 @@ export function ModulosEAbas({ estado }) {
             aria-label="Painéis externos"
             data-tour="config-modulos-paineis"
           >
-            {arvore.paineis.map((painel) => (
+            {(arvore.paineis ?? []).map((painel) => (
               <LinhaDoItem
                 key={painel.id}
                 estado={estado}
@@ -534,7 +589,7 @@ export function montarModulos({
   toast,
   getProfile,
   confirmar,
-} = {}) {
+}: DependenciasDosModulos & { raizDaTela?: HTMLElement | null } = {}) {
   const estado = criarEstadoDosModulos({
     supabase,
     toast,
