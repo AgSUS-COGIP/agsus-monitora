@@ -17,6 +17,7 @@ import {
   ordinal,
 } from "../../lib/classificacao/numeros.js";
 import { normalizarRegra } from "../../lib/classificacao/regra.js";
+import { rotuloDaVersaoNaLista } from "../../lib/nome-da-versao.ts";
 import { conferirSorteio } from "../../lib/classificacao/sorteio.js";
 import { DocumentoDoSei } from "./documento.jsx";
 import { ModalDePublicacaoDeAprovados } from "./publicar-aprovados.jsx";
@@ -835,9 +836,9 @@ function Acoes({
       {ultima ? (
         <p className="status-discreto" data-geracao={ultima.id}>
           Gerada em {dataHora(ultima.gerada_em)}
-          {ultima.por ? ` por ${ultima.por}` : ""} · regra v
-          {ultima.versao_regra} · SHA-256{" "}
-          {String(ultima.hash || "").slice(0, 12)}…
+          {ultima.por ? ` por ${ultima.por}` : ""} · regra:{" "}
+          {rotuloDaVersaoNaLista(dados?.regra?.versoes, ultima.versao_regra)} ·
+          SHA-256 {String(ultima.hash || "").slice(0, 12)}…
           {ultima.publicada ? " · publicada" : ""}
         </p>
       ) : null}

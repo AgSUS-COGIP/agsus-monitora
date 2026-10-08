@@ -162,7 +162,7 @@ describe("organizar cria as seções e move os blocos", () => {
 
 /*
   As seções são as páginas da área Administração do menu lateral
-  (`src/lib/menu-lateral.js`). O menu navega até Configurações e chama
+  (`src/lib/menu-lateral.ts`). O menu navega até Configurações e chama
   `abrirSecaoDeConfiguracao`; quem marca o item ativo é o próprio menu, testado
   em `tests/componentes/barra-lateral.test.js`.
 */

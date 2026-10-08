@@ -14,7 +14,12 @@ import type {
   RegraAnalise,
   RegraSalva,
 } from "../../../lib/avaliacao-documental/tipos-da-regra.ts";
+import {
+  erroDoNomeDaVersao,
+  rotuloDaVersao,
+} from "../../../lib/nome-da-versao.ts";
 import { Aviso, Campo, Selo } from "../../../ui/index.js";
+import { CampoNomeDaVersao, nomeDoCampo } from "../../../ui/nome-da-versao.tsx";
 import {
   copiarParaAreaDeTransferencia,
   imprimirPagina,
@@ -137,7 +142,7 @@ export function ComparacaoDeVersoes({
     ...(rascunho ? [{ valor: NOVA, rotulo: "Nova (este rascunho)" }] : []),
     ...versoes.map((v) => ({
       valor: String(v.versao),
-      rotulo: `v${v.versao}${v.versao === regraSalva?.versao ? " (vigente)" : ""}`,
+      rotulo: `${rotuloDaVersao(v)}${v.versao === regraSalva?.versao ? " (vigente)" : ""}`,
     })),
   ];
   const seletor = (
@@ -212,11 +217,20 @@ export function BarraDeSalvar({
   erroDoBanco,
   aoSalvar,
   aoDescartar,
+  pedeNome = false,
+  nome = null,
+  sugestaoDoNome = "",
+  aoMudarNome,
 }: {
   versaoNova: number;
   erros: string[];
   motivo: string;
   aoMudarMotivo: (m: string) => void;
+  /** Mostra "Nome desta versão" (só quando a regra muda: versão nova). */
+  pedeNome?: boolean;
+  nome?: string | null;
+  sugestaoDoNome?: string;
+  aoMudarNome?: (n: string | null) => void;
   motivoObrigatorio: boolean;
   salvaClassificacao: boolean;
   podeSalvar: boolean;
@@ -227,6 +241,8 @@ export function BarraDeSalvar({
 }) {
   const [tentou, setTentou] = useState(false);
   const motivoCurto = motivoObrigatorio && motivo.trim().length < 10;
+  const nomeRuim =
+    pedeNome && Boolean(erroDoNomeDaVersao(nomeDoCampo(nome, sugestaoDoNome)));
   return (
     <section
       className="ui-card ui-barra-de-salvar avd-ast-salvar"
@@ -257,6 +273,14 @@ export function BarraDeSalvar({
           onChange={(ev) => aoMudarMotivo(ev.target.value)}
         />
       </Campo>
+      {pedeNome && aoMudarNome ? (
+        <CampoNomeDaVersao
+          valor={nome}
+          sugestao={sugestaoDoNome}
+          aoMudar={aoMudarNome}
+          mostrarErro={tentou}
+        />
+      ) : null}
       {salvaClassificacao ? (
         <p className="avd-ast-nota" data-salva-classificacao="sim">
           <i className="fa-solid fa-link" aria-hidden="true" /> Também salva a
@@ -279,7 +303,7 @@ export function BarraDeSalvar({
           disabled={!podeSalvar || salvando || erros.length > 0}
           onClick={() => {
             setTentou(true);
-            if (!motivoCurto) aoSalvar();
+            if (!motivoCurto && !nomeRuim) aoSalvar();
           }}
         >
           <i className="fa-solid fa-floppy-disk" aria-hidden="true" /> Salvar

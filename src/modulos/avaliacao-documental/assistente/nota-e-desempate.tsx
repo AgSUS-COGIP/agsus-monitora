@@ -12,6 +12,7 @@ import {
   DIRECOES,
   NIVEIS,
 } from "../../../lib/classificacao/catalogo.js";
+import { rotuloDaVersao } from "../../../lib/nome-da-versao.ts";
 import { Aviso } from "../../../ui/index.js";
 import { CampoNumero } from "../campos.jsx";
 import { ListaOrdenavel } from "./lista-ordenavel.tsx";
@@ -199,7 +200,7 @@ export function PassoNotaEDesempate({
           Nota mínima e desempate da classificação
           {classificacao?.regra ? (
             <span className="avd-ast-contagem">
-              regra de classificação v{classificacao.regra.versao}
+              regra de classificação: {rotuloDaVersao(classificacao.regra)}
             </span>
           ) : null}
         </h3>

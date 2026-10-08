@@ -8,14 +8,14 @@ import {
   expect,
   it,
 } from "vitest";
-import { montarArvoreDoMenu } from "../../src/lib/menu-lateral.js";
+import { montarArvoreDoMenu } from "../../src/lib/menu-lateral.ts";
 import { SECOES } from "../../src/modulos/configuracoes/secoes.js";
-import { montarBarraLateral } from "../../src/componentes/barra-lateral/barra-lateral.jsx";
+import { montarBarraLateral } from "../../src/componentes/barra-lateral/barra-lateral.tsx";
 import {
   atualizarMenuLateral,
   marcarItemAtivoNoMenu,
   redefinirBarraLateral,
-} from "../../src/componentes/barra-lateral/estado.js";
+} from "../../src/componentes/barra-lateral/estado.ts";
 import {
   collectPrimaryItems,
   initMobileBottomNavigation,
@@ -26,7 +26,7 @@ import {
   definirAreaAtual,
   obterDadosDoMonitoramento,
   redefinirDadosDoMonitoramento,
-} from "../../src/componentes/dados-do-monitoramento.js";
+} from "../../src/componentes/dados-do-monitoramento.ts";
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true;
 

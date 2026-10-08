@@ -1,9 +1,9 @@
 import { useEffect, useState, useSyncExternalStore } from "react";
 import { editaisDaEscolha } from "../../lib/avaliacao-documental/editais.js";
 import { montarModulo } from "../../app/montar-modulo.jsx";
-import { obterDadosDoMonitoramento } from "../../componentes/dados-do-monitoramento.js";
+import { obterDadosDoMonitoramento } from "../../componentes/dados-do-monitoramento.ts";
 import { SeloDeTreinamento } from "../../componentes/selo-de-treinamento.jsx";
-import { usarAreaAtual } from "../../componentes/usar-area-atual.js";
+import { usarAreaAtual } from "../../componentes/usar-area-atual.ts";
 import {
   editalEscolhido,
   sufixoDeTreinamento,
@@ -13,6 +13,7 @@ import {
   rotuloDe,
   SITUACOES_DA_REGRA,
 } from "../../lib/avaliacao-documental/catalogo.js";
+import { rotuloDaVersao } from "../../lib/nome-da-versao.ts";
 import { getSupabaseClient } from "../../lib/supabaseClient.js";
 import { Aviso, Campo, Segmentado, TopoDoPainel } from "../../ui/index.js";
 import { CHAVE_DO_CABECALHO } from "../../lib/cabecalho-dos-documentos.js";
@@ -58,7 +59,7 @@ function textoDoStatus(e) {
   if (e.carregandoEdital) return "Carregando o edital...";
   const regra = e.dados?.regra;
   if (regra)
-    return `Regra v${regra.versao} · ${rotuloDe(SITUACOES_DA_REGRA, regra.situacao)}`;
+    return `${rotuloDaVersao(regra)} · ${rotuloDe(SITUACOES_DA_REGRA, regra.situacao)}`;
   return e.dados ? "Sem regra" : "";
 }
 
@@ -142,7 +143,9 @@ function TelaDaArea({ estado, pre, fila, atualizar, e }) {
                   {editais.map((ed) => (
                     <option key={ed.id} value={ed.id}>
                       {[ed.edital, ed.unidade].filter(Boolean).join(" - ")}
-                      {ed.versao_regra ? ` · regra v${ed.versao_regra}` : ""}
+                      {ed.versao_regra
+                        ? ` · ${rotuloDaVersao({ versao: ed.versao_regra, nome: ed.nome_regra })}`
+                        : ""}
                       {sufixoDeTreinamento(ed)}
                     </option>
                   ))}

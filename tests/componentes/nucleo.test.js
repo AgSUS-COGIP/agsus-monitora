@@ -6,7 +6,7 @@ import {
   publicarLinhasDoMonitoramento,
   publicarUnidadesDoCatalogo,
   redefinirDadosDoMonitoramento,
-} from "../../src/componentes/dados-do-monitoramento.js";
+} from "../../src/componentes/dados-do-monitoramento.ts";
 import { UNIDADES_CORES } from "../../src/lib/responsavel-do-edital.js";
 import { clicar, digitar, escolher, esperar, teclar } from "./interacoes.js";
 

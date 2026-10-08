@@ -7,8 +7,8 @@ import {
   useSyncExternalStore,
 } from "react";
 import { montarModulo } from "../../app/montar-modulo.jsx";
-import { obterDadosDoMonitoramento } from "../../componentes/dados-do-monitoramento.js";
-import { usarAreaAtual } from "../../componentes/usar-area-atual.js";
+import { obterDadosDoMonitoramento } from "../../componentes/dados-do-monitoramento.ts";
+import { usarAreaAtual } from "../../componentes/usar-area-atual.ts";
 import {
   contadorDoDia,
   contagemDosRecortes,

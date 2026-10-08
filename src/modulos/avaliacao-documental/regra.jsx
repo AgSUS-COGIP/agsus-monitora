@@ -21,10 +21,19 @@ import {
 } from "../../lib/avaliacao-documental/regra.js";
 import { comecoDoEnunciado } from "../../lib/avaliacao-documental/nota-declarada.js";
 import {
+  erroDoNomeDaVersao,
+  nomeParaGravar,
+  sugerirNomeDaVersao,
+} from "../../lib/nome-da-versao.ts";
+import {
   Aviso,
   Campo,
+  CampoNomeDaVersao,
   EstadoVazio,
   Modal,
+  NomeDaVersao,
+  nomeDoCampo,
+  RenomearVersao,
   Segmentado,
   Selo,
 } from "../../ui/index.js";
@@ -632,7 +641,7 @@ function ObservacoesProntas({ regra, aoMudar }) {
   );
 }
 
-function Versoes({ regra, podeUsar, aoUsar }) {
+function Versoes({ regra, podeUsar, aoUsar, aoRenomear }) {
   if (!regra?.versoes?.length) return null;
   return (
     <section className="ui-card" aria-labelledby="avdVersoes">
@@ -642,7 +651,12 @@ function Versoes({ regra, podeUsar, aoUsar }) {
       <ol className="avd-versoes" reversed>
         {regra.versoes.map((v) => (
           <li key={v.versao} data-versao={v.versao}>
-            <strong>v{v.versao}</strong> · {dataHora(v.em)} · {v.por || "—"}
+            <NomeDaVersao
+              versao={v.versao}
+              nome={v.nome}
+              trocas={v.renomeacoes}
+            />{" "}
+            · {dataHora(v.em)} · {v.por || "—"}
             {v.motivo ? (
               <span className="ui-texto-secundario"> — {v.motivo}</span>
             ) : null}
@@ -654,6 +668,15 @@ function Versoes({ regra, podeUsar, aoUsar }) {
               >
                 Levar ao formulário
               </button>
+            ) : null}
+            {aoRenomear ? (
+              <RenomearVersao
+                versao={v.versao}
+                nome={v.nome}
+                aoRenomear={(nome, motivo) =>
+                  aoRenomear(v.versao, nome, motivo)
+                }
+              />
             ) : null}
           </li>
         ))}
@@ -725,7 +748,7 @@ function CabecalhoDaRegra({ regraSalva, leitura, mudou, e, estado, aoErro }) {
       className="ui-card avd-resumo-da-regra"
       aria-label="Situação da regra"
     >
-      <strong>Regra v{regraSalva.versao}</strong>
+      <NomeDaVersao versao={regraSalva.versao} nome={regraSalva.nome} />
       <Selo tom={regraSalva.situacao === "CONFERIDA" ? "aprovado" : "pendente"}>
         {rotuloDe(SITUACOES_DA_REGRA, regraSalva.situacao)}
       </Selo>
@@ -738,6 +761,16 @@ function CabecalhoDaRegra({ regraSalva, leitura, mudou, e, estado, aoErro }) {
           ? ` · conferida por ${regraSalva.conferida_por}`
           : ""}
       </span>
+      {leitura || !estado.renomearVersao ? null : (
+        <RenomearVersao
+          versao={regraSalva.versao}
+          nome={regraSalva.nome}
+          desabilitado={e.salvando}
+          aoRenomear={(nome, motivo) =>
+            estado.renomearVersao(regraSalva.versao, nome, motivo)
+          }
+        />
+      )}
       {!leitura && regraSalva.situacao !== "CONFERIDA" ? (
         <>
           <button
@@ -780,6 +813,7 @@ export function Regra({ e, estado }) {
   );
   const [rascunho, setRascunho] = useState(inicial);
   const [motivo, setMotivo] = useState("");
+  const [nome, setNome] = useState(null);
   const [tentou, setTentou] = useState(false);
   const [erroDoBanco, setErroDoBanco] = useState("");
   const [aldeiasAbertas, setAldeiasAbertas] = useState(false);
@@ -849,6 +883,7 @@ export function Regra({ e, estado }) {
           regra={regraSalva}
           podeUsar
           aoUsar={(config) => setRascunho(normalizarRegraAnalise(config))}
+          aoRenomear={estado.renomearVersao}
         />
       </div>
     );
@@ -856,6 +891,13 @@ export function Regra({ e, estado }) {
   const erros = validarRegraAnalise(rascunho);
   const mudou = !regrasIguais(rascunho, inicial);
   const motivoCurto = motivo.trim().length < 10;
+  const sugestao = sugerirNomeDaVersao({
+    tipo: "regra",
+    edital: dados.edital?.numero,
+    motivo,
+  });
+  const nomeEscolhido = nomeDoCampo(nome, sugestao);
+  const nomeRuim = Boolean(erroDoNomeDaVersao(nomeEscolhido));
   const mudar = (caminho, valor) =>
     setRascunho(comValor(rascunho, caminho, valor));
   const temEtnico = rascunho.blocos.some((b) => b.tipo === "PONTUACAO");
@@ -864,10 +906,15 @@ export function Regra({ e, estado }) {
   async function salvar(ev) {
     ev.preventDefault();
     setTentou(true);
-    if (erros.length || motivoCurto) return;
-    const r = await estado.salvarRegra(rascunho, motivo.trim());
+    if (erros.length || motivoCurto || nomeRuim) return;
+    const r = await estado.salvarRegra(
+      rascunho,
+      motivo.trim(),
+      nomeParaGravar(nomeEscolhido),
+    );
     if (r.ok) {
       setMotivo("");
+      setNome(null);
       setTentou(false);
       setErroDoBanco("");
     } else setErroDoBanco(r.erro);
@@ -1261,6 +1308,12 @@ export function Regra({ e, estado }) {
               onChange={(ev) => setMotivo(ev.target.value)}
             />
           </Campo>
+          <CampoNomeDaVersao
+            valor={nome}
+            sugestao={sugestao}
+            aoMudar={setNome}
+            mostrarErro={tentou}
+          />
           <div className="ui-acoes">
             <button
               type="button"
@@ -1289,6 +1342,7 @@ export function Regra({ e, estado }) {
           regra={rascunho}
           contexto={{
             versao: regraSalva.versao,
+            nome: regraSalva.nome ?? null,
             notaMinima: dados.nota_minima?.nota_minima ?? null,
             notaMinimaPorNivel: dados.nota_minima?.nota_minima_por_nivel ?? {},
           }}
@@ -1303,6 +1357,7 @@ export function Regra({ e, estado }) {
         regra={regraSalva}
         podeUsar={!leitura}
         aoUsar={(config) => setRascunho(normalizarRegraAnalise(config))}
+        aoRenomear={leitura ? null : estado.renomearVersao}
       />
       {aldeiasAbertas ? (
         <CarregarAldeias

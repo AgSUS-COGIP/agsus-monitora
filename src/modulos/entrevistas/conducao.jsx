@@ -31,6 +31,7 @@ import {
   editalEscolhido,
   sufixoDeTreinamento,
 } from "../../lib/edital-de-treinamento.js";
+import { rotuloDaVersao } from "../../lib/nome-da-versao.ts";
 import { textoDaPontuacao } from "../../lib/roteiro-de-entrevista.js";
 import {
   Aviso,
@@ -249,7 +250,13 @@ function ResumoDaConfiguracao({ dados }) {
       <div>
         <dt>Roteiro</dt>
         <dd>
-          {cfg.roteiro?.nome} <small>v{cfg.roteiro?.versao}</small>
+          {cfg.roteiro?.nome}{" "}
+          <small>
+            {rotuloDaVersao({
+              versao: cfg.roteiro?.versao,
+              nome: cfg.roteiro?.nome_versao,
+            })}
+          </small>
           <small>{textoDaPontuacao(cfg.roteiro)}</small>
         </dd>
       </div>
@@ -352,7 +359,8 @@ function FormularioDeConfiguracao({
             <option value="">Escolha…</option>
             {opcoes.map((x) => (
               <option key={x.id} value={x.id}>
-                {x.nome} (v{x.versao})
+                {x.nome} (
+                {rotuloDaVersao({ versao: x.versao, nome: x.nome_versao })})
                 {x.ativo === false ? " — versão anterior" : ""}
               </option>
             ))}

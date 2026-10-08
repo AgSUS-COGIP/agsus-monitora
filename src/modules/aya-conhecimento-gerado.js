@@ -1587,6 +1587,28 @@ export const VERBETES_AYA = Object.freeze([
     abrir: "avaliacao-documental",
   },
   {
+    arquivo: "regras-da-avaliacao-documental.md",
+    titulo: "Nome da versão da regra",
+    perguntas: [
+      "nome da versao",
+      "nome da regra",
+      "dar nome a regra",
+      "escolher o nome da regra",
+      "renomear a regra",
+      "renomear versao",
+      "trocar o nome da versao",
+      "v1 v2 da regra",
+      "o que e versao 7",
+      "nome desta versao",
+    ],
+    resposta:
+      'Cada versão da regra pode ter um nome (de 3 a 80 caracteres), em vez de só o número. Ao salvar (no assistente ou no modo avançado), o campo "Nome desta versão" já vem com uma sugestão — o edital e o começo do motivo, por exemplo "Regra do edital 93/2026 – decisão CORES" — que dá para editar ou apagar (vazio grava sem nome). A tela mostra o nome em destaque e o número discreto ("Decisão CORES · v7") no cabeçalho, no seletor de editais, nas versões, em comparar versões, na pré-classificação, na fila e na ficha; sem nome, aparece "Versão 7". Para trocar o nome de uma versão já salva, use "Renomear" no cabeçalho ou na lista de versões: pede o novo nome e o motivo (10 a 500 caracteres), muda só o nome — o conteúdo, o hash e a situação (Conferida ou não) continuam iguais — e a troca fica no histórico ("nome trocado", com de, para, quem e quando). Renomeia quem pode mudar a regra: a coordenação do edital; o administrador global pode tudo. O número da versão continua sendo o que as fichas e listas guardam.',
+    fato: "No MONITORA, o nome da versão da regra é opcional, fica na versão (NO_VERSAO) e pode ser trocado com motivo sem mudar o conteúdo nem o hash.",
+    fonte:
+      "src/lib/nome-da-versao.ts; src/ui/nome-da-versao.tsx; supabase/migrations/20261008180000_nome_das_versoes_das_regras.sql (salvar_regra_analise, renomear_versao_regra_analise)",
+    abrir: "avaliacao-documental",
+  },
+  {
     arquivo: "regras-da-classificacao.md",
     titulo: "Tela de Classificação",
     perguntas: [
@@ -2008,6 +2030,24 @@ export const VERBETES_AYA = Object.freeze([
     fato: "",
     fonte:
       "src/lib/classificacao/catalogo.js (COMPONENTES_DA_NOTA); supabase/correcoes/20261002-regras-de-classificacao-todos-os-editais.sql (importacao.em_aberto)",
+    abrir: "classificacao",
+  },
+  {
+    arquivo: "regras-da-classificacao.md",
+    titulo: "Nome da versão da regra de classificação",
+    perguntas: [
+      "nome da versao da classificacao",
+      "nome da regra de classificacao",
+      "renomear a regra de classificacao",
+      "trocar o nome da versao da classificacao",
+      "regra v2 da classificacao",
+      "nome desta versao classificacao",
+    ],
+    resposta:
+      'A regra de classificação também pode ter um nome por versão (3 a 80 caracteres). Ao salvar na aba Regra da Classificação, o campo "Nome desta versão" vem com a sugestão — "Classificação do edital 93/2026" mais o começo do motivo — editável (vazio grava sem nome). O seletor de editais, a barra do topo, a lista de versões e a linha da lista gerada mostram o nome em destaque e o número discreto ("Decisão CORES · v3"); sem nome, "Versão 3". "Renomear", em cada versão, troca só o nome, com motivo de 10 a 500 caracteres; a configuração não muda e a troca fica no histórico. Renomeia quem tem Editor na Classificação (e o administrador global).',
+    fato: "No MONITORA, a versão da regra de classificação tem nome opcional, trocável com motivo sem mudar a configuração.",
+    fonte:
+      "src/lib/nome-da-versao.ts; supabase/migrations/20261008180000_nome_das_versoes_das_regras.sql (salvar_regra_classificacao, renomear_versao_regra_classificacao)",
     abrir: "classificacao",
   },
   {
@@ -2848,7 +2888,7 @@ export const VERBETES_AYA = Object.freeze([
       "O MONITORA tem três áreas: Saúde Indígena, SEDE e Projetos. Cada área repete as mesmas páginas (Visão geral, Editais, Cronograma, Painel das análises, Avaliação documental, Recursos, Entrevistas, Classificação, Lista de aprovados e Seleção), e cada página mostra só os registros da área atual, a escolhida no menu. O que muda é o bloco do mapa da Visão geral: DSEIs e CASAIs na Saúde Indígena, os locais das vagas dos projetos em Projetos, e nenhum mapa na SEDE. A área do edital é calculada pelo banco a partir da unidade e do responsável: SEDE, Escritório Distrital e Regional e CCE ficam na SEDE; Caminhoneiros, Saúde nas Fronteiras, MFC e Rio Doce, em Projetos; as demais, na Saúde Indígena.",
     fato: "O MONITORA tem três áreas (Saúde Indígena, SEDE e Projetos); cada página mostra só a área atual escolhida no menu, e só a Visão geral da Saúde Indígena fala de DSEIs e CASAIs.",
     fonte:
-      "src/lib/menu-lateral.js; supabase/migrations/20260925170000_areas_do_sistema.sql",
+      "src/lib/menu-lateral.ts; supabase/migrations/20260925170000_areas_do_sistema.sql",
   },
   {
     arquivo: "regras-das-areas.md",
@@ -2865,7 +2905,7 @@ export const VERBETES_AYA = Object.freeze([
       'Quem tem mais de uma área vê o seletor "Área" no topo da barra lateral; abaixo dele ficam só as páginas da área escolhida. Trocar de área abre a mesma página na área nova (ou a primeira página dela, se não tiver essa). Com a barra recolhida, o seletor vira o ícone da área atual. A área escolhida fica guardada na aba do navegador: recarregar volta a ela, e uma aba nova começa na primeira área da pessoa. Quem tem uma área só não vê seletor. O administrador global vê todas as áreas; os demais veem as áreas liberadas para eles em Configurações › Acessos (com coordenação, só a área dela).',
     fato: "",
     fonte:
-      "src/componentes/barra-lateral/menu-de-areas.jsx; src/componentes/dados-do-monitoramento.js; supabase/migrations/20260925180000_areas_do_usuario.sql",
+      "src/componentes/barra-lateral/menu-de-areas.tsx; src/componentes/dados-do-monitoramento.ts; supabase/migrations/20260925180000_areas_do_usuario.sql",
   },
   {
     arquivo: "regras-das-areas.md",
@@ -2881,7 +2921,7 @@ export const VERBETES_AYA = Object.freeze([
       "O menu de cada área segue as etapas do processo seletivo: Visão geral, Editais, Cronograma, Painel das análises, Avaliação documental, Recursos, Entrevistas, Classificação, Lista de aprovados e Seleção. Abaixo das áreas fica Administração (as seções de Configurações). O grupo Painéis só aparece quando há painel externo ativo liberado para a pessoa. O selo BETA ao lado do nome marca a aba ainda em teste.",
     fato: "O menu segue as etapas do processo seletivo: Visão geral, Editais, Cronograma, Painel das análises, Avaliação documental, Recursos, Entrevistas, Classificação, Lista de aprovados e Seleção.",
     fonte:
-      "supabase/migrations/20261001160000_ordem_do_menu_por_etapa.sql; supabase/migrations/20261006090000_avaliacao_documental_permissao_e_menu.sql; src/lib/menu-lateral.js",
+      "supabase/migrations/20261001160000_ordem_do_menu_por_etapa.sql; supabase/migrations/20261006090000_avaliacao_documental_permissao_e_menu.sql; src/lib/menu-lateral.ts",
   },
   {
     arquivo: "regras-das-areas.md",
@@ -3878,6 +3918,23 @@ export const VERBETES_AYA = Object.freeze([
     abrir: "config:acessos",
   },
   {
+    arquivo: "regras-das-entrevistas.md",
+    titulo: "Nome da versão do roteiro de entrevista",
+    perguntas: [
+      "nome da versao do roteiro",
+      "renomear o roteiro",
+      "renomear versao do roteiro",
+      "roteiro v2",
+      "trocar o nome da versao do roteiro",
+      "nome desta versao roteiro",
+    ],
+    resposta:
+      'Além do nome do roteiro, cada versão dele pode ter um nome próprio (3 a 80 caracteres). Ao salvar o roteiro (Conduzir entrevistas › Preparar › Roteiros), o campo "Nome desta versão" vem com a sugestão — o nome do roteiro e a data — editável (vazio grava sem nome). O cartão do roteiro, o resumo do edital, a escolha do roteiro e a ficha de notas mostram o nome da versão em destaque e o número discreto ("Banca por competência · v2"); sem nome, "Versão 2". "Renomear", no cartão, troca só o nome, com motivo de 10 a 500 caracteres: as competências, a escala e os editais que usam a versão não mudam, e a troca fica no histórico. Renomeia quem tem Editor em Entrevistas, na área do roteiro.',
+    fato: "No MONITORA, a versão do roteiro de entrevista tem nome opcional (NO_VERSAO), trocável com motivo sem mudar o roteiro.",
+    fonte:
+      "src/lib/nome-da-versao.ts; supabase/migrations/20261008180000_nome_das_versoes_das_regras.sql (salvar_roteiro_entrevista, renomear_versao_roteiro_entrevista)",
+  },
+  {
     arquivo: "regras-do-chat.md",
     titulo: "O que é o chat",
     perguntas: [
@@ -4709,7 +4766,7 @@ export const VERBETES_AYA = Object.freeze([
       "Ctrl+K (ou Cmd+K) abre a busca global, com usuário conectado. Ela procura em edital, unidade, etapa, status, UF, risco, ciclo, responsável e observações e mostra até 12 resultados. Escolher um resultado limpa os filtros, filtra a unidade e o edital, abre o painel e destaca a linha na tabela; sem permissão, aparece um aviso. Quem não é administrador global só encontra editais das suas áreas.",
     fato: "",
     fonte:
-      "src/lib/busca-global.js; src/componentes/busca-global/busca-global.jsx; src/lib/responsavel-do-edital.js",
+      "src/lib/busca-global.ts; src/componentes/busca-global/busca-global.tsx; src/lib/responsavel-do-edital.js",
   },
   {
     arquivo: "regras-do-sistema.md",
@@ -5509,7 +5566,7 @@ export const VERBETES_AYA = Object.freeze([
       "Desativada, a área (ou a aba, ou o painel) some do menu de todos. Pelo menos uma área precisa continuar ativa.",
     fato: "",
     fonte:
-      "supabase/migrations/20260930140000_modulos_e_manutencao.sql; src/lib/menu-lateral.js",
+      "supabase/migrations/20260930140000_modulos_e_manutencao.sql; src/lib/menu-lateral.ts",
   },
   {
     arquivo: "regras-dos-modulos-e-abas.md",
@@ -5518,7 +5575,7 @@ export const VERBETES_AYA = Object.freeze([
     resposta:
       "O selo BETA aparece ao lado do nome da aba no menu e marca uma aba ainda em teste. É ligado por aba, em Configurações › Módulos e abas, pelo administrador global, e vale em todas as áreas.",
     fato: "",
-    fonte: "src/lib/menu-lateral.js; src/lib/modulos-e-abas.ts",
+    fonte: "src/lib/menu-lateral.ts; src/lib/modulos-e-abas.ts",
   },
   {
     arquivo: "regras-dos-modulos-e-abas.md",

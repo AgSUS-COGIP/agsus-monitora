@@ -9,7 +9,7 @@ import {
   obterDadosDoMonitoramento,
   redefinirDadosDoMonitoramento,
   soDosEditais,
-} from "../../src/componentes/dados-do-monitoramento.js";
+} from "../../src/componentes/dados-do-monitoramento.ts";
 import { resumoDasLinhas } from "../../src/lib/editais-do-nucleo.js";
 import { COLUNAS_DO_MONITORAMENTO } from "../../src/app/carga.js";
 

@@ -5,11 +5,11 @@ import {
   definirAreaAtual,
   definirAreasDoUsuario,
   redefinirDadosDoMonitoramento,
-} from "../../src/componentes/dados-do-monitoramento.js";
+} from "../../src/componentes/dados-do-monitoramento.ts";
 import {
   obterEstadoDaBarraLateral,
   redefinirBarraLateral,
-} from "../../src/componentes/barra-lateral/estado.js";
+} from "../../src/componentes/barra-lateral/estado.ts";
 import {
   obterPaginaDaAya,
   redefinirPaginaDaAya,

@@ -211,7 +211,7 @@ A ligação com a análise de hoje já existe: os candidatos da vaga carregada q
 
 ## 4. Dois módulos: Painel das análises e Avaliação documental
 
-O **painel** e o **trabalho** ficam separados no menu (`src/lib/menu-lateral.js`), nas três áreas:
+O **painel** e o **trabalho** ficam separados no menu (`src/lib/menu-lateral.ts`), nas três áreas:
 
 | Menu (rótulo) | Rota / view | Recurso de permissão | Para quê |
 |---|---|---|---|

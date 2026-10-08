@@ -4,7 +4,7 @@ import {
   AREAS_DO_SISTEMA,
   areasDoUsuario,
   nomeDaArea,
-} from "./menu-lateral.js";
+} from "./menu-lateral.ts";
 import { LEVELS, RESOURCES } from "./permissoes-recursos.js";
 
 /*

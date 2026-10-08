@@ -56,7 +56,7 @@ import {
   trilhasDoPerfil,
 } from "../../lib/aya-tours.js";
 import { montarChamado, pedeSuporte } from "../../lib/chamado-da-aya.js";
-import { nomeDaArea } from "../../lib/menu-lateral.js";
+import { nomeDaArea } from "../../lib/menu-lateral.ts";
 import { abrirSecaoDeConfiguracao } from "../configuracoes/secoes.js";
 import { collectAyaPageContext, estadoDaTela } from "./contexto.js";
 import { responderAya } from "../../lib/busca-da-aya.js";
@@ -995,9 +995,6 @@ export function Aya({
         >
           <span className="aya-figura">
             <Mascote tamanho={ALTURA_DA_ARARA} acenarAoEntrar janela={janela} />
-            <span className="aya-selo-beta" aria-hidden="true">
-              Beta
-            </span>
           </span>
           <span className="aya-arara__etiqueta" aria-hidden="true">
             Fale com a Aya

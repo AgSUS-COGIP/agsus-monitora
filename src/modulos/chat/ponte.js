@@ -20,7 +20,7 @@
 
 import { fichaPeloCodigo } from "../../lib/avaliacao-documental/fila.js";
 import { linkDaTela } from "../../lib/chat.js";
-import { definirAreaAtual } from "../../componentes/dados-do-monitoramento.js";
+import { definirAreaAtual } from "../../componentes/dados-do-monitoramento.ts";
 import { abrirSecaoDeConfiguracao } from "../configuracoes/secoes.js";
 import { obterPaginaDaAya } from "../aya/estado.js";
 

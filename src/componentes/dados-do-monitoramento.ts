@@ -1,3 +1,13 @@
+import type {
+  LinhaDoMonitoramento,
+  SnapshotDoMonitoramento,
+} from "./tipos-do-monitoramento.ts";
+import {
+  identificacaoDoMonitoramento,
+  normalizarLinhasDoMonitoramento,
+  normalizarUnidadesDoCatalogo,
+} from "../lib/linhas-do-monitoramento.ts";
+
 /*
   Os dados de monitoramento que o app carrega, para os componentes React.
 
@@ -25,7 +35,7 @@ import {
 */
 const CHAVE_AREA_ATUAL = "agsus_monitora_area_atual_v1";
 
-const ESTADO_INICIAL = Object.freeze({
+const ESTADO_INICIAL: SnapshotDoMonitoramento = Object.freeze({
   linhas: Object.freeze([]),
   unidades: Object.freeze([]),
   /** Falso até a primeira carga: "ainda não chegou" não é "não há editais". */
@@ -35,7 +45,8 @@ const ESTADO_INICIAL = Object.freeze({
   areaAtual: AREA_SAUDE_INDIGENA,
 });
 
-const texto = (valor) => String(valor ?? "").trim();
+const texto = (valor: unknown) =>
+  typeof valor === "string" ? valor.trim() : "";
 
 function lerAreaGuardada() {
   try {
@@ -45,7 +56,7 @@ function lerAreaGuardada() {
   }
 }
 
-function guardarArea(area) {
+function guardarArea(area: string) {
   try {
     window.sessionStorage.setItem(CHAVE_AREA_ATUAL, area);
   } catch {
@@ -53,18 +64,18 @@ function guardarArea(area) {
   }
 }
 
-let estado = {
+let estado: SnapshotDoMonitoramento = {
   ...ESTADO_INICIAL,
   areaAtual: lerAreaGuardada() || ESTADO_INICIAL.areaAtual,
 };
-const ouvintes = new Set();
+const ouvintes = new Set<() => void>();
 
-function publicar(mudancas) {
+function publicar(mudancas: Partial<SnapshotDoMonitoramento>) {
   estado = { ...estado, ...mudancas };
   for (const ouvinte of ouvintes) ouvinte();
 }
 
-export function assinarDadosDoMonitoramento(ouvinte) {
+export function assinarDadosDoMonitoramento(ouvinte: () => void) {
   ouvintes.add(ouvinte);
   return () => ouvintes.delete(ouvinte);
 }
@@ -73,8 +84,11 @@ export function obterDadosDoMonitoramento() {
   return estado;
 }
 
-export function publicarLinhasDoMonitoramento(linhas) {
-  publicar({ linhas: Array.isArray(linhas) ? linhas : [], carregado: true });
+export function publicarLinhasDoMonitoramento(linhas: unknown) {
+  publicar({
+    linhas: normalizarLinhasDoMonitoramento(linhas),
+    carregado: true,
+  });
 }
 
 /*
@@ -86,26 +100,26 @@ export function esquecerLinhasDoMonitoramento() {
   publicar({ linhas: ESTADO_INICIAL.linhas, carregado: false });
 }
 
-export function publicarUnidadesDoCatalogo(unidades) {
-  publicar({ unidades: Array.isArray(unidades) ? unidades : [] });
+export function publicarUnidadesDoCatalogo(unidades: unknown) {
+  publicar({ unidades: normalizarUnidadesDoCatalogo(unidades) });
 }
 
 /*
   As áreas do usuário (já normalizadas por `areasDoUsuario`, de
-  `menu-lateral.js`). A área atual continua a mesma se o usuário a tem; senão,
+  `menu-lateral.ts`). A área atual continua a mesma se o usuário a tem; senão,
   vira a primeira dele — é o padrão de quem acabou de entrar.
 */
-export function definirAreasDoUsuario(areas) {
+export function definirAreasDoUsuario(areas: unknown) {
   const lista = (Array.isArray(areas) ? areas : []).map(texto).filter(Boolean);
   const proximas = lista.length ? lista : [AREA_SAUDE_INDIGENA];
   const areaAtual = proximas.includes(estado.areaAtual)
     ? estado.areaAtual
-    : proximas[0];
+    : (proximas[0] ?? AREA_SAUDE_INDIGENA);
   guardarArea(areaAtual);
   publicar({ areas: proximas, areaAtual });
 }
 
-export function definirAreaAtual(area) {
+export function definirAreaAtual(area: string) {
   const proxima = texto(area);
   if (!proxima || proxima === estado.areaAtual) return;
   guardarArea(proxima);
@@ -118,20 +132,30 @@ export function definirAreaAtual(area) {
   local de `ehEditalDaSaudeIndigena`; qualquer outra fica fora de todas as
   áreas, em vez de aparecer na área errada.
 */
-export function areaDaLinha(linha) {
+export function areaDaLinha(linha: LinhaDoMonitoramento | null | undefined) {
   if (linha?.CO_AREA) return texto(linha.CO_AREA);
   return ehEditalDaSaudeIndigena(linha) ? AREA_SAUDE_INDIGENA : "";
 }
 
-export function linhasDaArea(linhas, area) {
+export function linhasDaArea<T extends LinhaDoMonitoramento>(
+  linhas: readonly T[] | null | undefined,
+  area: string,
+): T[] {
   return (Array.isArray(linhas) ? linhas : []).filter(
     (linha) => areaDaLinha(linha) === area,
   );
 }
 
 /* Os ids dos editais das linhas, em texto: o banco devolve número ou uuid. */
-export function idsDasLinhas(linhas) {
-  return new Set((linhas || []).map((linha) => String(linha?.id)));
+export function idsDasLinhas(
+  linhas: readonly LinhaDoMonitoramento[] | null | undefined,
+) {
+  return new Set(
+    (linhas || []).flatMap((linha) => {
+      const id = identificacaoDoMonitoramento(linha?.id);
+      return id === undefined ? [] : [String(id)];
+    }),
+  );
 }
 
 /*
@@ -145,9 +169,16 @@ export function idsDasLinhas(linhas) {
  * @param {keyof T} [campo]
  * @returns {T[]}
  */
-export function soDosEditais(itens, ids, campo = "edital_id") {
-  return (Array.isArray(itens) ? itens : []).filter((item) =>
-    ids.has(String(item?.[campo])),
+export function soDosEditais<T extends object>(
+  itens: readonly T[] | null | undefined,
+  ids: ReadonlySet<string>,
+  campo: keyof T = "edital_id" as keyof T,
+): T[] {
+  const lista: readonly T[] = Array.isArray(itens) ? itens : [];
+  return lista.filter(
+    (item) =>
+      identificacaoDoMonitoramento(item?.[campo]) !== undefined &&
+      ids.has(String(item?.[campo])),
   );
 }
 

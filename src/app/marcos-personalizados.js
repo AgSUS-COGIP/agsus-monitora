@@ -9,7 +9,7 @@ import {
 import {
   assinarDadosDoMonitoramento,
   obterDadosDoMonitoramento,
-} from "../componentes/dados-do-monitoramento.js";
+} from "../componentes/dados-do-monitoramento.ts";
 import { comemorar as comemorarPadrao } from "../modules/comemoracao.js";
 
 /*

@@ -46,7 +46,13 @@ const RPCS = {
     porteiro: 'FC_EXIGIR_AVALIACAO_EDITAL"(p_edital, 1)',
   },
   salvar_regra_analise: {
-    args: ["p_edital", "p_configuracao", "p_versao_atual", "p_motivo"],
+    args: [
+      "p_edital",
+      "p_configuracao",
+      "p_versao_atual",
+      "p_motivo",
+      "p_nome",
+    ],
     porteiro: 'FC_EXIGIR_COORD_AVALIACAO"(p_edital)',
   },
   copiar_modelo_regra_analise: {
