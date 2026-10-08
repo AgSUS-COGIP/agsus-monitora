@@ -2725,3 +2725,102 @@ pre.entrevistas-parecer-pronto-texto {
   place-items: center;
   min-height: 200px;
 }
+
+/* ── Ficha: observação do avaliador e justificativa da banca (textos-da-ficha.tsx) ── */
+.entrevistas-observacao,
+.entrevistas-justificativa {
+  display: grid;
+  gap: var(--space-1);
+}
+.entrevistas-observacao {
+  margin-top: var(--space-3);
+}
+.entrevistas-observacoes {
+  display: grid;
+  gap: var(--space-2);
+  margin-top: var(--space-3);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--border-subtle);
+}
+.entrevistas-observacoes small {
+  color: var(--text-secondary);
+  font-weight: var(--font-weight-regular);
+}
+.entrevistas-observacoes .entrevistas-observacao {
+  margin-top: 0;
+}
+/* Vence o `label` de app.css (caixa alta, 900). */
+label.entrevistas-rotulo-do-texto {
+  margin: 0;
+  color: var(--text-primary);
+  font-size: var(--text-body-sm);
+  font-weight: var(--font-weight-medium);
+  letter-spacing: 0;
+  text-transform: none;
+}
+.entrevistas-rotulo-do-texto span {
+  color: var(--text-secondary);
+  font-weight: var(--font-weight-regular);
+}
+textarea.entrevistas-texto-da-ficha {
+  width: 100%;
+  min-height: 40px;
+  max-height: 40vh;
+  padding: var(--space-2) var(--space-3);
+  overflow-y: auto;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  background: var(--surface-card);
+  color: var(--text-primary);
+  font: inherit;
+  font-size: var(--text-body-sm);
+  line-height: 1.5;
+  resize: none;
+}
+textarea.entrevistas-texto-da-ficha:focus-visible {
+  border-color: var(--brand-primary);
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 1px;
+}
+textarea.entrevistas-texto-da-ficha[aria-invalid="true"] {
+  border-color: var(--state-danger);
+}
+textarea.entrevistas-texto-da-ficha:disabled {
+  background: var(--surface-raised);
+  color: var(--text-secondary);
+}
+.entrevistas-contagem-do-texto {
+  min-height: 1em;
+  color: var(--text-secondary);
+  font-size: var(--text-caption);
+}
+.entrevistas-contagem-do-texto:empty {
+  display: none;
+}
+.entrevistas-justificativa[data-obrigatoria="sim"] {
+  border-left: 4px solid var(--state-warning);
+}
+.entrevistas-justificativa[data-falta="sim"] {
+  border-left-color: var(--state-danger);
+}
+.entrevistas-justificativa[data-falta="sim"] .entrevistas-contagem-do-texto {
+  color: var(--state-danger);
+}
+.entrevistas-falta-para-salvar {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-1) var(--space-2);
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: var(--state-warning-soft);
+  color: var(--state-warning);
+  font: inherit;
+  font-size: var(--text-caption);
+  font-weight: var(--font-weight-semibold);
+  cursor: pointer;
+}
+.entrevistas-falta-para-salvar:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}

@@ -350,6 +350,9 @@ async function abrirAFicha(id = "e1") {
 
 /* A ficha: as células editáveis, as colunas da matriz, a aba escolhida. */
 const notas = (ficha) => [...ficha.querySelectorAll("input.entrevistas-nota")];
+/* A justificativa da banca (obrigatória para Inapto e Faltou). */
+const justificativa = (ficha) =>
+  ficha.querySelector(".entrevistas-justificativa textarea");
 const colunas = (ficha) =>
   [...ficha.querySelectorAll(".entrevistas-matriz-coluna")].map(
     (c) => c.textContent,
@@ -556,6 +559,7 @@ describe("a tela de Conduzir entrevistas", () => {
     await clicar(
       ficha.querySelector('.entrevistas-comparecimento button[data-valor="N"]'),
     );
+    await digitar(justificativa(ficha), "Não compareceu.");
     const proximo = [...ficha.querySelectorAll("button")].find((b) =>
       b.textContent.includes("Salvar e abrir o próximo"),
     );
@@ -609,6 +613,10 @@ describe("a tela de Conduzir entrevistas", () => {
       document
         .getElementById("entrevistasFichaDoCandidato")
         .querySelector('.entrevistas-comparecimento button[data-valor="N"]'),
+    );
+    await digitar(
+      justificativa(document.getElementById("entrevistasFichaDoCandidato")),
+      "Não compareceu.",
     );
     await clicar(
       document
@@ -1254,12 +1262,25 @@ describe("Preparar, roteiros e ficha", () => {
       ),
     ).not.toBeNull();
 
+    // Inapto: a justificativa da banca é obrigatória (o rodapé avisa; salvar não chama o banco).
+    expect(
+      ficha.querySelector('[data-acao="ir-para-justificativa"]').textContent,
+    ).toContain("Falta a justificativa da banca");
+    await clicar(ficha.querySelector('button[type="submit"]'));
+    expect(chamadas(supabase, "lancar_notas_entrevista")).toHaveLength(0);
+    expect(ficha.textContent).toContain(
+      "Escreva a justificativa da banca: ela é obrigatória para Inapto.",
+    );
+    expect(document.activeElement).toBe(justificativa(ficha));
+    await digitar(justificativa(ficha), "  Abaixo do mínimo.  ");
     await clicar(ficha.querySelector('button[type="submit"]'));
     await esperar();
     expect(ficha.textContent).toContain("Dado inválido: Nota 7 fora da faixa.");
     const [[, argumentos]] = chamadas(supabase, "lancar_notas_entrevista");
     expect(argumentos.p_entrevista).toBe("e1");
     expect(argumentos.p_dados.compareceu).toBe("S");
+    expect(argumentos.p_dados.justificativa).toBe("Abaixo do mínimo.");
+    expect(argumentos.p_dados).not.toHaveProperty("observacoes");
     expect(argumentos.p_dados.notas).toHaveLength(4);
     expect(argumentos.p_dados.notas).toContainEqual({
       competencia: "c1",
@@ -1329,11 +1350,20 @@ describe("Preparar, roteiros e ficha", () => {
         (li) => li.textContent,
       ),
     ).toEqual(["Faltou: a ausência elimina neste roteiro."]);
+    // Faltou pede a justificativa da banca.
+    expect(
+      ficha.querySelector(".entrevistas-justificativa").dataset.obrigatoria,
+    ).toBe("sim");
+    await clicar(ficha.querySelector('button[type="submit"]'));
+    expect(chamadas(supabase, "lancar_notas_entrevista")).toHaveLength(0);
+    expect(ficha.textContent).toContain("obrigatória para Faltou");
+    await digitar(justificativa(ficha), "Não compareceu no horário.");
     await clicar(ficha.querySelector('button[type="submit"]'));
     await esperar();
     expect(chamadas(supabase, "lancar_notas_entrevista")[0][1].p_dados).toEqual(
       {
         notas: [],
+        justificativa: "Não compareceu no horário.",
         compareceu: "N",
         banca: 1,
       },
@@ -1852,5 +1882,76 @@ describe("entrevistas mais claras: fila, Preparar em passos e parecer pronto", (
       if (original) Object.defineProperty(navigator, "clipboard", original);
       else delete navigator.clipboard;
     }
+  });
+});
+
+describe("observação do avaliador e justificativa da banca", () => {
+  it("observação embaixo da matriz de cada avaliador e junto do nome por competência; grava só o que mudou", async () => {
+    const edital = {
+      ...EDITAL,
+      convocados: [
+        {
+          ...EDITAL.convocados[0],
+          observacoes: [{ avaliador: "a2", texto: "Beto: boa escuta." }],
+        },
+      ],
+    };
+    const supabase = supabaseDaConducao({ edital });
+    await montar(supabase);
+    const ficha = await abrirAFicha();
+    const observacao = () =>
+      ficha.querySelector(".entrevistas-observacao textarea");
+    // Aba da Ana: o campo dela, vazio; o "(opcional)" no rótulo.
+    expect(abaAtiva()).toContain("Ana");
+    expect(observacao().value).toBe("");
+    expect(
+      ficha.querySelector(".entrevistas-observacao label").textContent,
+    ).toBe("Observação do avaliador (opcional)");
+    await digitar(observacao(), "Ana: respostas objetivas.");
+    // Aba do Beto: o texto gravado dele.
+    await clicar(ficha.querySelector('[role="tab"][data-aba="a2"]'));
+    expect(observacao().value).toBe("Beto: boa escuta.");
+    // Por competência: um campo por avaliador, com o nome.
+    await clicar(ficha.querySelector('button[data-valor="competencia"]'));
+    expect(
+      [...ficha.querySelectorAll(".entrevistas-observacoes label")].map(
+        (l) => l.textContent,
+      ),
+    ).toEqual(["Ana", "Beto"]);
+    await clicar(ficha.querySelector('button[type="submit"]'));
+    await esperar();
+    const [[, argumentos]] = chamadas(supabase, "lancar_notas_entrevista");
+    expect(argumentos.p_dados.observacoes).toEqual([
+      { avaliador: "a1", texto: "Ana: respostas objetivas." },
+    ]);
+    expect(argumentos.p_dados).not.toHaveProperty("justificativa");
+  });
+
+  it("Apto: justificativa opcional; o parecer pronto leva a justificativa", async () => {
+    const dados = {
+      ...EDITAL,
+      convocados: [
+        {
+          ...EDITAL.convocados[0],
+          compareceu: "S",
+          parecer: "APTO",
+          nota: 8,
+          avaliacoes: todasAsNotas,
+          justificativa: "Domínio do SasiSUS.",
+        },
+      ],
+    };
+    await montar(supabaseDaConducao({ edital: dados }));
+    const ficha = await abrirAFicha();
+    expect(
+      ficha.querySelector(".entrevistas-justificativa label").textContent,
+    ).toBe("Justificativa da banca (opcional para Apto)");
+    expect(justificativa(ficha).value).toBe("Domínio do SasiSUS.");
+    expect(
+      ficha.querySelector('[data-acao="ir-para-justificativa"]'),
+    ).toBeNull();
+    expect(
+      ficha.querySelector(".entrevistas-parecer-pronto pre").textContent,
+    ).toContain("Justificativa da banca: Domínio do SasiSUS.");
   });
 });

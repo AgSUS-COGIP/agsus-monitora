@@ -1,7 +1,8 @@
 /*
   O parecer da entrevista em TEXTO PRONTO, para copiar (SEI, e-mail), como a
   ficha da Avaliação documental faz: quem, onde, o roteiro e a banca, a nota
-  de cada competência com o mínimo, o total e o parecer com o motivo. Sem DOM;
+  de cada competência com o mínimo, o total, o parecer com o motivo e a
+  justificativa da banca. Sem DOM;
   as notas e o parecer vêm de `calcularEntrevista` (as mesmas regras do
   banco) — nada é recalculado aqui.
 */
@@ -30,6 +31,8 @@ export type EntradaDoParecer = {
   motivos: string[];
   faltou: boolean;
   ausenciaElimina?: boolean;
+  /** Justificativa da banca (obrigatória para INAPTO e Faltou). */
+  justificativa?: string | null;
 };
 
 const texto = (valor: unknown) => String(valor ?? "").trim();
@@ -42,6 +45,11 @@ const PARECER: Record<string, string> = {
   APTO: "APTO",
   INAPTO: "INAPTO",
 };
+
+const justificativa = (e: EntradaDoParecer) =>
+  texto(e.justificativa)
+    ? ["", `Justificativa da banca: ${texto(e.justificativa)}`]
+    : [];
 
 /** O parecer está pronto para copiar: compareceu (ou faltou) e tem parecer. */
 export function parecerPronto(parecer: string, pendencia: string): boolean {
@@ -81,6 +89,7 @@ export function textoDoParecerDaEntrevista(e: EntradaDoParecer): string {
         ? `Parecer: ${PARECER[e.parecer] || e.parecer} — neste roteiro a ausência não elimina; total 0.`
         : `Parecer: ${PARECER[e.parecer] || e.parecer} — a ausência elimina neste roteiro.`,
     );
+    linhas.push(...justificativa(e));
     return linhas.join("\n");
   }
 
@@ -103,5 +112,6 @@ export function textoDoParecerDaEntrevista(e: EntradaDoParecer): string {
         ? e.motivos.map((m) => m.replace(/\.$/, "")).join("; ") + "."
         : "não atingiu os mínimos do roteiro.";
   linhas.push(`Parecer: ${PARECER[e.parecer] || e.parecer} — ${motivo}`);
+  linhas.push(...justificativa(e));
   return linhas.join("\n");
 }

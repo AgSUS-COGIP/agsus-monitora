@@ -40,6 +40,10 @@ import {
 } from "../../lib/parecer-da-entrevista.ts";
 import { rotuloDaVersao } from "../../lib/nome-da-versao.ts";
 import { ParecerPronto } from "./parecer-pronto.tsx";
+import {
+  JustificativaDaBanca,
+  ObservacaoDoAvaliador,
+} from "./textos-da-ficha.tsx";
 import { numeroBR, ResultadoDaFicha } from "./resultado-da-ficha.tsx";
 
 /*
@@ -113,12 +117,26 @@ function guardarModo(modo) {
 function estadoInicial(dados, convocado, aspectos) {
   const bancas = bancasDoEdital(dados.avaliadores);
   const mapa = mapaDasAvaliacoes(convocado.avaliacoes, aspectos);
+  const observacoes = Object.fromEntries(
+    (convocado.observacoes || []).map((o) => [o.avaliador, o.texto || ""]),
+  );
   return {
     compareceu: convocado.compareceu || null,
     banca: convocado.banca ?? (bancas.length === 1 ? bancas[0] : null),
     original: mapa,
     mapa,
+    observacoesOriginais: observacoes,
+    observacoes,
+    justificativaOriginal: convocado.justificativa || "",
+    justificativa: convocado.justificativa || "",
   };
+}
+
+/* As observações que mudaram (texto sem espaços nas pontas; vazio = apagar). */
+function observacoesAlteradas(originais, atuais) {
+  return [...new Set([...Object.keys(originais), ...Object.keys(atuais)])]
+    .filter((id) => (originais[id] || "").trim() !== (atuais[id] || "").trim())
+    .map((id) => ({ avaliador: id, texto: (atuais[id] || "").trim() || null }));
 }
 
 const vazio = (valor) => (valor ?? "") === "";
@@ -269,8 +287,31 @@ export function FichaDoCandidato({
   const proximo = posicao >= 0 ? lista[posicao + 1] || null : null;
   const maxima = pontuacaoMaxima(competencias);
   const modoAvaliador = dados.configuracao?.lancamento === "AVALIADOR";
-  const sujo = alteradas.length > 0 || mudouComparecimento || mudouBanca;
+  const obsAlteradas = observacoesAlteradas(
+    f.observacoesOriginais,
+    f.observacoes,
+  );
+  const mudouJustificativa =
+    f.justificativa.trim() !== f.justificativaOriginal.trim();
+  const sujo =
+    alteradas.length > 0 ||
+    mudouComparecimento ||
+    mudouBanca ||
+    obsAlteradas.length > 0 ||
+    mudouJustificativa;
   const faltou = f.compareceu === "N";
+  const [tentouSalvar, setTentouSalvar] = useState(false);
+  const campoDaJustificativa = useRef(null);
+  // A mesma regra do banco (lancar_notas_entrevista): Inapto ou Faltou pedem a justificativa.
+  const justificativaObrigatoria = faltou || resultado.parecer === "INAPTO";
+  const motivoDaJustificativa = faltou ? "Faltou" : "Inapto";
+  const faltaJustificativa =
+    justificativaObrigatoria && !f.justificativa.trim();
+  const mudarObservacao = (avaliador, texto) =>
+    setF((atual) => ({
+      ...atual,
+      observacoes: { ...atual.observacoes, [avaliador]: texto },
+    }));
   const mostrarBanca =
     bancas.length > 1 ||
     (convocado.banca !== null &&
@@ -529,6 +570,7 @@ export function FichaDoCandidato({
 
   async function salvar({ abrirProximo = false } = {}) {
     setErro("");
+    setTentouSalvar(true);
     if (invalidas) {
       setErro("Há notas fora da escala do roteiro; corrija antes de salvar.");
       return;
@@ -542,12 +584,21 @@ export function FichaDoCandidato({
       );
       return;
     }
+    if (faltaJustificativa) {
+      setErro(
+        `Escreva a justificativa da banca: ela é obrigatória para ${motivoDaJustificativa}.`,
+      );
+      campoDaJustificativa.current?.focus();
+      return;
+    }
     if (!sujo) {
       if (abrirProximo && proximo) aoAbrir(proximo.id);
       else setErro("Nada mudou nesta ficha.");
       return;
     }
     const p = { notas: alteradas };
+    if (obsAlteradas.length) p.observacoes = obsAlteradas;
+    if (mudouJustificativa) p.justificativa = f.justificativa.trim() || null;
     if (mudouComparecimento || mudouBanca) {
       if (f.compareceu) p.compareceu = f.compareceu;
       if (f.banca !== null) p.banca = Number(f.banca);
@@ -752,6 +803,49 @@ export function FichaDoCandidato({
                     </Aviso>
                   ) : null}
                   <LegendaDaEscala niveis={niveis} destaque={destaque} />
+                  {modo === "avaliador" && ativa
+                    ? (() => {
+                        const a = avaliadores.find((x) => x.id === ativa.id);
+                        return a ? (
+                          <ObservacaoDoAvaliador
+                            key={a.id}
+                            nome={a.nome}
+                            valor={f.observacoes[a.id] || ""}
+                            editavel={
+                              Boolean(dados.pode_editar) &&
+                              podeLancarPor(dados, a) &&
+                              !salvando
+                            }
+                            aoMudar={(texto) => mudarObservacao(a.id, texto)}
+                          />
+                        ) : null;
+                      })()
+                    : null}
+                  {modo === "competencia" ? (
+                    <div
+                      className="entrevistas-observacoes"
+                      aria-label="Observações dos avaliadores"
+                    >
+                      <h4 className="entrevistas-subtitulo">
+                        Observações dos avaliadores{" "}
+                        <small>(opcionais, sobre a entrevista toda)</small>
+                      </h4>
+                      {avaliadores.map((a) => (
+                        <ObservacaoDoAvaliador
+                          key={a.id}
+                          nome={a.nome}
+                          comNome
+                          valor={f.observacoes[a.id] || ""}
+                          editavel={
+                            Boolean(dados.pode_editar) &&
+                            podeLancarPor(dados, a) &&
+                            !salvando
+                          }
+                          aoMudar={(texto) => mudarObservacao(a.id, texto)}
+                        />
+                      ))}
+                    </div>
+                  ) : null}
                 </div>
               </div>
             ) : roteiro && !faltou ? (
@@ -759,6 +853,19 @@ export function FichaDoCandidato({
                 Nenhum membro na banca {f.banca ?? ""}. Cadastre a banca na
                 configuração.
               </Aviso>
+            ) : null}
+            {roteiro ? (
+              <JustificativaDaBanca
+                valor={f.justificativa}
+                obrigatoria={justificativaObrigatoria}
+                motivo={motivoDaJustificativa}
+                editavel={Boolean(dados.pode_editar) && !salvando}
+                mostrarErro={tentouSalvar}
+                campoRef={campoDaJustificativa}
+                aoMudar={(justificativa) =>
+                  setF((atual) => ({ ...atual, justificativa }))
+                }
+              />
             ) : null}
             {roteiro && parecerPronto(resultado.parecer, pendencia) ? (
               <ParecerPronto
@@ -792,6 +899,7 @@ export function FichaDoCandidato({
                   motivos: motivosDoParecer(resultado, f.compareceu, roteiro),
                   faltou,
                   ausenciaElimina: roteiro.ausencia_elimina !== false,
+                  justificativa: f.justificativa,
                 })}
                 sujo={sujo}
                 copiar={copiar}
@@ -842,6 +950,19 @@ export function FichaDoCandidato({
               <span className="entrevistas-analise-erro" role="alert">
                 {erro}
               </span>
+            ) : faltaJustificativa ? (
+              <button
+                type="button"
+                className="entrevistas-falta-para-salvar"
+                data-acao="ir-para-justificativa"
+                onClick={() => campoDaJustificativa.current?.focus()}
+              >
+                <i
+                  className="fa-solid fa-circle-exclamation"
+                  aria-hidden="true"
+                />{" "}
+                Falta a justificativa da banca
+              </button>
             ) : null}
             <Atalhos />
             <button

@@ -376,5 +376,15 @@ describe("parecer da entrevista em texto pronto", () => {
       "Parecer: INAPTO — a ausência elimina neste roteiro.",
     );
     expect(falta).not.toContain("Notas por competência");
+    expect(
+      textoDoParecerDaEntrevista({
+        ...base,
+        parecer: "INAPTO",
+        faltou: true,
+        justificativa: "  Não compareceu no horário.  ",
+      })
+        .split("\n")
+        .slice(-2),
+    ).toEqual(["", "Justificativa da banca: Não compareceu no horário."]);
   });
 });

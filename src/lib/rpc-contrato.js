@@ -687,7 +687,7 @@ export const CONTRATO_RPC = {
     argumentos: ["p_edital"],
     critica: false,
     resumo:
-      "Condução da entrevista de um edital: configuração (roteiro, banca, lançamento), a lista de convocação vigente da Classificação com o retrato (lista_convocacao), a regra vigente da Classificação (convocação, desempate e empate final — 20261008130000), banca (avaliadores[].competencias: as que cada membro avalia, nulo = todas — 20261008170000) e convocados com as notas; pode_editar, pode_gerar_lista, admin_global e meu_perfil.",
+      "Condução da entrevista de um edital: configuração (roteiro, banca, lançamento), a lista de convocação vigente da Classificação com o retrato (lista_convocacao), a regra vigente da Classificação (convocação, desempate e empate final — 20261008130000), banca (avaliadores[].competencias: as que cada membro avalia, nulo = todas — 20261008170000) e convocados com as notas, a justificativa da banca e as observações dos avaliadores (20261008220000); pode_editar, pode_gerar_lista, admin_global e meu_perfil.",
   },
   configurar_entrevista_edital: {
     argumentos: ["p_edital", "p_dados"],
@@ -735,7 +735,7 @@ export const CONTRATO_RPC = {
     argumentos: ["p_entrevista", "p_dados"],
     critica: false,
     resumo:
-      "Lança/corrige notas (roteiro com aspectos: todos os aspectos de cada avaliador) e comparecimento de um convocado (22023 fora da escala ou aspecto faltando; 23514 avaliador em competência que não é dele; 42501 no modo AVALIADOR para nota de outro) e recalcula o resultado. Devolve o payload do edital.",
+      "Lança/corrige notas (roteiro com aspectos: todos os aspectos de cada avaliador), comparecimento, observações dos avaliadores (observacoes, opcional) e a justificativa da banca (justificativa, opcional) de um convocado (22023 fora da escala, aspecto faltando ou texto longo; 23514 avaliador em competência que não é dele ou INAPTO/Faltou sem justificativa; 42501 no modo AVALIADOR para nota ou observação de outro) e recalcula o resultado. Devolve o payload do edital.",
   },
 
   // ── Recursos dos candidatos (aba Recursos, 20260929120000_recursos.sql) ──

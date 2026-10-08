@@ -421,6 +421,11 @@ const TOURS = Object.freeze({
         "Total, mínimo, competências e o parecer com os motivos, pelas regras do banco.",
       ),
       passo(
+        t("entrevistas-ficha-justificativa"),
+        "Justificativa da banca",
+        "Obrigatória para Inapto e Faltou; entra no parecer. A observação de cada avaliador, opcional, fica embaixo da matriz dele.",
+      ),
+      passo(
         t("entrevistas-ficha-parecer-pronto"),
         "Parecer pronto",
         "Com tudo lançado, o parecer sai em texto pronto; Copiar parecer leva para o SEI ou o e-mail.",
