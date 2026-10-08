@@ -87,7 +87,7 @@ import { montarAvaliacaoDocumental } from "./modulos/avaliacao-documental/avalia
 import { montarVisaoGeral } from "./modulos/visao-geral/visao-geral.tsx";
 import { situacaoDoSistema } from "./modules/situacao-dos-modulos.js";
 import { montarAcessos } from "./modulos/acessos/acessos.jsx";
-import { montarModulos } from "./modulos/modulos/modulos.jsx";
+import { montarModulos } from "./modulos/modulos/modulos.tsx";
 import { montarSaudeDasCargas } from "./componentes/saude-das-cargas/saude-das-cargas.tsx";
 import { montarBuscaGlobal } from "./componentes/busca-global/busca-global.jsx";
 import { montarEntrada } from "./app/entrada/entrada.jsx";
