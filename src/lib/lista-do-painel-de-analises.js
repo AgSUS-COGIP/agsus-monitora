@@ -8,7 +8,7 @@
   - `grupo` e `edital_status` vêm uma vez no envelope, não em cada linha;
   - a janela oficial (data_inicio/fim_analise) sai de `editais[]`: o
     tela casa a linha com o edital quando a linha vem sem janela
-    (`editalDaLinha` de analises-curriculares.js), com uma regra que cobre a
+    (`editalDaLinha` de analises-curriculares.ts), com uma regra que cobre a
     da view;
   - "tem PDF?" vem como `tem_pdf`; o link, no detalhe e no CSV;
   - pontuações, experiências, links e datas ficam no detalhamento

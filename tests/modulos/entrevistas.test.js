@@ -19,7 +19,7 @@ import {
   abre a tela (`render()`), segue o tema do app, usa o aviso global e os
   componentes de src/ui/ (classes .ui-*). "Resultados": KPIs, filtro, gaveta
   com o caminho do candidato (sem HTML vindo dos dados), lista dos aprovados
-  sem entrevista, estado vazio e sem acesso; o andamento por edital e vaga, a
+  sem entrevista, estado vazio e sem acesso; a
   agenda dos próximos dias, os empates e as pendências de andamento.
   "Conduzir entrevistas" (o fazer) é outra tela: conduzir-entrevistas.test.js.
 */
@@ -292,11 +292,10 @@ describe("Resultados", () => {
 });
 
 /*
-  O painel "vivo": andamento por edital e vaga, a agenda dos próximos dias do
-  edital do recorte, os empatados na nota da entrevista (o desempate é na
+  O painel "vivo": a agenda dos próximos dias do edital do recorte, os empatados na nota da entrevista (o desempate é na
   Classificação) e as pendências de andamento.
 */
-describe("andamento, agenda e empates", () => {
+describe("agenda, empates e pendências", () => {
   const hoje = new Intl.DateTimeFormat("en-CA", {
     timeZone: "America/Sao_Paulo",
     year: "numeric",
@@ -338,7 +337,7 @@ describe("andamento, agenda e empates", () => {
     },
   });
 
-  it("um edital só: o resumo dele, um cartão por vaga e a agenda dos próximos dias", async () => {
+  it("um edital só: a agenda dos próximos dias dele, sem o andamento em cartões", async () => {
     const supabase = supabaseDoEdital({
       itens: [
         {
@@ -351,24 +350,8 @@ describe("andamento, agenda e empates", () => {
       ],
     });
     await montar(supabase);
-    const andamento = secao.querySelector(".entrevistas-andamento");
-    expect(andamento.querySelector("h2").textContent).toBe(
-      "Edital Edital 01/2026",
-    );
-    expect(
-      [...andamento.querySelectorAll("[data-cartao]")].map((c) => [
-        c.dataset.cartao,
-        c.querySelector(".entrevistas-andamento-percentual").textContent,
-      ]),
-    ).toEqual([
-      ["vaga:V1", "50%"],
-      ["vaga:V2", "100%"],
-    ]);
-    expect(
-      andamento.querySelector(
-        '[data-cartao="vaga:V1"] [data-numero="convocados"] dd',
-      ).textContent,
-    ).toBe("4");
+    expect(secao.querySelector(".entrevistas-andamento")).toBeNull();
+    expect(secao.querySelector("[data-cartao]")).toBeNull();
     // A agenda do edital do recorte (m1).
     expect(chamadas(supabase, "obter_agenda_entrevista")[0][1]).toEqual({
       p_edital: EDITAL_ID,
@@ -377,11 +360,6 @@ describe("andamento, agenda e empates", () => {
     expect(agenda.querySelector('[data-hoje="sim"]').textContent).toContain(
       "Candidato x4",
     );
-    // Clicar na vaga recorta o painel (de novo, tira).
-    await clicar(andamento.querySelector('[data-cartao="vaga:V2"]'));
-    expect(linhasDaTabela()).toHaveLength(1);
-    await clicar(secao.querySelector('[data-cartao="vaga:V2"]'));
-    expect(linhasDaTabela()).toHaveLength(5);
   });
 
   it("empatados na nota: selo na tabela e o aviso que leva à Classificação no edital", async () => {
@@ -421,26 +399,12 @@ describe("andamento, agenda e empates", () => {
     expect(linhasDaTabela()[0].textContent).toContain("Candidato x3");
   });
 
-  it("vários editais: um cartão por edital; escolher um mostra as vagas", async () => {
+  it("vários editais: sem agenda até escolher um edital no filtro", async () => {
     await montar(supabaseFalso({ data: PAYLOAD, error: null }));
-    const andamento = secao.querySelector(".entrevistas-andamento");
-    expect(andamento.querySelector("h2").textContent).toBe(
-      "Andamento por edital",
-    );
-    expect(
-      [...andamento.querySelectorAll("[data-cartao]")].map(
-        (c) => c.dataset.cartao,
-      ),
-    ).toEqual(["edital:Edital 01/2026", "edital:Edital 02/2026"]);
+    expect(secao.querySelector(".entrevistas-andamento")).toBeNull();
     expect(secao.querySelector(".entrevistas-agenda-proxima")).toBeNull();
-    await clicar(
-      andamento.querySelector('[data-cartao="edital:Edital 02/2026"]'),
-    );
-    expect(
-      [...secao.querySelectorAll(".entrevistas-andamento [data-cartao]")].map(
-        (c) => c.dataset.cartao,
-      ),
-    ).toEqual(["vaga:V2"]);
+    await escolher(document.getElementById("filtro-edital"), "Edital 01/2026");
+    expect(secao.querySelector(".entrevistas-agenda-proxima")).not.toBeNull();
   });
 });
 

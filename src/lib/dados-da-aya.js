@@ -13,7 +13,7 @@
   Status das atualizações, o administrador global. O banco confere de novo
   em cada RPC; erro de acesso vira "sem acesso", nunca o dado.
 */
-import { calcularKpis } from "./analises-curriculares.js";
+import { calcularKpis } from "./analises-curriculares.ts";
 import { isAdminGlobal, paginasPermitidas } from "./access-roles.js";
 import { calcularIndicadores as indicadoresDasEntrevistas } from "./entrevistas-do-painel.js";
 import { calcularIndicadores as indicadoresDosRecursos } from "./recursos-dos-candidatos.js";

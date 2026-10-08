@@ -17,7 +17,7 @@ duas entradas, em `src/modulos/entrevistas/conduzir.tsx`, `src/lib/fila-de-condu
 ## Painel de entrevistas
 
 **perguntas:** painel de entrevistas | tela de entrevistas | tela entrevistas | aba entrevistas | para que serve entrevistas | para que serve a tela de entrevistas | para que serve o painel de entrevistas | onde acompanho as entrevistas | entrevistas resultados
-**resposta:** O Painel de entrevistas é para acompanhar (gestão e coordenação), como o Painel das análises ao lado da Avaliação documental; fazer é em Conduzir entrevistas, outra entrada do menu. O painel mostra, da área atual: os indicadores, o andamento por edital e por vaga em cartões (convocados, entrevistados, faltaram, aptos, inaptos e sem parecer, com a barra), a agenda dos próximos dias quando há um edital escolhido, os gráficos, as pendências (sem comparecimento, sem nota, sem parecer, aprovados sem entrevista, sem análise, sem edital e nota divergente), os empatados na nota da entrevista, a tabela e a exportação em CSV. Só leitura. O edital de treinamento não entra no painel. Quem tem Leitor em Entrevistas vê o painel e Conduzir entrevistas; escrever exige Editor.
+**resposta:** O Painel de entrevistas é para acompanhar (gestão e coordenação), como o Painel das análises ao lado da Avaliação documental; fazer é em Conduzir entrevistas, outra entrada do menu. O painel mostra, da área atual: os filtros, os indicadores, a agenda dos próximos dias quando há um edital escolhido, os gráficos, as pendências (sem comparecimento, sem nota, sem parecer, aprovados sem entrevista, sem análise, sem edital e nota divergente), os empatados na nota da entrevista, a tabela e a exportação em CSV. Só leitura. O edital de treinamento não entra no painel. Quem tem Leitor em Entrevistas vê o painel e Conduzir entrevistas; escrever exige Editor.
 **fato:** O Painel de entrevistas acompanha; Conduzir entrevistas faz (fila do dia, ficha de notas, Preparar e roteiros). As duas usam o recurso Entrevistas.
 **fonte:** src/modulos/entrevistas/entrevistas.jsx; src/modulos/entrevistas/andamento.tsx; src/lib/painel-de-entrevistas.ts
 **abrir:** entrevistas
@@ -36,13 +36,6 @@ duas entradas, em `src/modulos/entrevistas/conduzir.tsx`, `src/lib/fila-de-condu
 **resposta:** Em Conduzir entrevistas › Preparar ficam a configuração do edital (roteiro, modo de lançamento, composição e membros da banca, e, só para ler, a regra de convocação, o desempate e as vagas da Classificação) e a convocação (a lista de convocação da Classificação, por vaga). Abaixo, os roteiros de entrevista da área. Quem não tem Editor vê tudo, sem os botões. Edital ainda não configurado mostra o aviso na Fila, com o atalho para Preparar.
 **fonte:** src/modulos/entrevistas/conducao.jsx; src/modulos/entrevistas/conduzir.tsx
 **abrir:** conduzir-entrevistas
-
-## Andamento por vaga no painel
-
-**perguntas:** andamento por vaga | como e contado o andamento por vaga | barra de andamento | percentual feito | cartoes por vaga | andamento do edital
-**resposta:** No Painel de entrevistas, cada cartão (de edital ou, com um edital escolhido, de vaga) mostra o percentual feito e uma barra: verde apto, vermelho inapto, amarelo faltou, azul em andamento (compareceu, sem parecer) e o fundo cinza é quem aguarda. Feito é apto, inapto ou faltou. Os números são convocados (todas as entrevistas do recorte), entrevistados (compareceram), faltaram, aptos, inaptos e sem parecer. Clicar num edital mostra as vagas dele; clicar numa vaga recorta o painel por ela (de novo, tira).
-**fonte:** src/lib/painel-de-entrevistas.ts; src/modulos/entrevistas/andamento.tsx
-**abrir:** entrevistas
 
 ## Empate na nota da entrevista
 

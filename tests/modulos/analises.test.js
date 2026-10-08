@@ -45,9 +45,9 @@ vi.mock("../../src/lib/chartjs-global.js", () => ({
 }));
 
 const { montarAnalises } =
-  await import("../../src/modulos/analises/analises.jsx");
+  await import("../../src/modulos/analises/analises.tsx");
 const { criarConsultasDasAnalises } =
-  await import("../../src/modulos/analises/consultas.js");
+  await import("../../src/modulos/analises/consultas.ts");
 
 const COLUNAS = [
   "id",
