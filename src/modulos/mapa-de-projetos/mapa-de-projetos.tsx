@@ -24,7 +24,7 @@ import {
   projetosDosMunicipios,
 } from "../../lib/visao-geral-da-area.ts";
 import { classes } from "../../ui/index.js";
-import { LegendaFlutuante } from "../mapa-saude-indigena/legenda.jsx";
+import { LegendaFlutuante } from "../mapa-saude-indigena/legenda.tsx";
 import {
   criarLeque,
   enquadrar,
@@ -38,9 +38,9 @@ import {
   classesDoPainel,
   propsDoEditor,
   usarMapaDoBrasil,
-} from "../mapa-saude-indigena/painel-do-mapa.jsx";
-import { usarTelaCheia } from "../mapa-saude-indigena/tela-cheia.jsx";
-import { usarUltimo } from "../mapa-saude-indigena/usar-ultimo.js";
+} from "../mapa-saude-indigena/painel-do-mapa.tsx";
+import { usarTelaCheia } from "../mapa-saude-indigena/tela-cheia.tsx";
+import { usarUltimo } from "../mapa-saude-indigena/usar-ultimo.ts";
 import { balaoDoLugar } from "./balao.ts";
 import { ESCOLHA_INICIAL } from "./carregador.ts";
 import { EditorDeCoordenadasDosProjetos } from "./editor-de-coordenadas.tsx";

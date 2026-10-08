@@ -16,8 +16,8 @@ import { classes } from "../../ui/index.js";
 import { obterLeaflet } from "./leaflet.js";
 import { MapaDoDsei } from "./mapa-do-dsei.jsx";
 import { MapaNacional } from "./mapa-nacional.jsx";
-import { usarTelaCheia } from "./tela-cheia.jsx";
-import { usarEscParaVoltar, usarVoltaDoDsei } from "./volta-ao-brasil.js";
+import { usarTelaCheia } from "./tela-cheia.tsx";
+import { usarEscParaVoltar, usarVoltaDoDsei } from "./volta-ao-brasil.ts";
 
 /*
   MAPA DA SAÚDE INDÍGENA (React)

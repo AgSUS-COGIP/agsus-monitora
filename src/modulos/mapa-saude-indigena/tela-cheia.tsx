@@ -1,3 +1,4 @@
+import type { ReactElement } from "react";
 import { useEffect, useState } from "react";
 
 /*
@@ -31,14 +32,14 @@ export function travarRolagemDaPagina() {
   volta-ao-brasil.js, ou o modo de edição de coordenadas) não sai — o
   seguinte sai. O CSS é o `.mapa-si--tela-cheia` (mapa-saude-indigena.css).
 */
-/** @returns {[boolean, import('react').ReactElement]} */
-export function usarTelaCheia() {
+
+export function usarTelaCheia(): [boolean, ReactElement] {
   const [telaCheia, definirTelaCheia] = useState(false);
 
   useEffect(() => {
     if (!telaCheia) return undefined;
     const soltar = travarRolagemDaPagina();
-    const aoTeclar = (evento) => {
+    const aoTeclar = (evento: KeyboardEvent) => {
       if (evento.key !== "Escape" || evento.defaultPrevented) return;
       evento.preventDefault();
       definirTelaCheia(false);
