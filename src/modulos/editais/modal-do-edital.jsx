@@ -39,7 +39,7 @@ import {
   areaDaLinha,
   assinarDadosDoMonitoramento,
   obterDadosDoMonitoramento,
-} from "../../componentes/dados-do-monitoramento.js";
+} from "../../componentes/dados-do-monitoramento.ts";
 import { Aviso, Campo, Modal } from "../../ui/index.js";
 import { EditorDeCronograma } from "./editor-de-cronograma.jsx";
 import { ImportarAnexos } from "./importar-anexos.jsx";

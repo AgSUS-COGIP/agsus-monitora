@@ -20,7 +20,7 @@ import {
   definirAreaAtual,
   obterDadosDoMonitoramento,
   redefinirDadosDoMonitoramento,
-} from "../../src/componentes/dados-do-monitoramento.js";
+} from "../../src/componentes/dados-do-monitoramento.ts";
 
 vi.mock("../../src/modules/nielsen-shell-ux.js", async (original) => ({
   ...(await original()),

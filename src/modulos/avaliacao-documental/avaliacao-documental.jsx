@@ -1,9 +1,9 @@
 import { useEffect, useState, useSyncExternalStore } from "react";
 import { editaisDaEscolha } from "../../lib/avaliacao-documental/editais.js";
 import { montarModulo } from "../../app/montar-modulo.jsx";
-import { obterDadosDoMonitoramento } from "../../componentes/dados-do-monitoramento.js";
+import { obterDadosDoMonitoramento } from "../../componentes/dados-do-monitoramento.ts";
 import { SeloDeTreinamento } from "../../componentes/selo-de-treinamento.jsx";
-import { usarAreaAtual } from "../../componentes/usar-area-atual.js";
+import { usarAreaAtual } from "../../componentes/usar-area-atual.ts";
 import {
   editalEscolhido,
   sufixoDeTreinamento,

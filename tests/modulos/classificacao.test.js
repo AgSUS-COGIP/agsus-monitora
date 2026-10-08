@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   definirAreaAtual,
   redefinirDadosDoMonitoramento,
-} from "../../src/componentes/dados-do-monitoramento.js";
+} from "../../src/componentes/dados-do-monitoramento.ts";
 import { montarClassificacao } from "../../src/modulos/classificacao/classificacao.jsx";
 import { ordemDoSorteio } from "../../src/lib/classificacao/sorteio.js";
 import {

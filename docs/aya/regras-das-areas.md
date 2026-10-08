@@ -1,7 +1,7 @@
 # Regras das áreas e do menu
 
 As três áreas do sistema (Saúde Indígena, SEDE e Projetos), a área atual e a ordem do menu. Fontes:
-`src/lib/menu-lateral.ts`, `src/componentes/dados-do-monitoramento.js`,
+`src/lib/menu-lateral.ts`, `src/componentes/dados-do-monitoramento.ts`,
 `src/componentes/barra-lateral/menu-de-areas.tsx` e as migrations
 `20260925170000_areas_do_sistema.sql`, `20260925180000_areas_do_usuario.sql`,
 `20260925181000_recorta_dados_por_area.sql` e `20261001160000_ordem_do_menu_por_etapa.sql`.
@@ -17,7 +17,7 @@ As três áreas do sistema (Saúde Indígena, SEDE e Projetos), a área atual e 
 
 **perguntas:** trocar de area | como mudo de area | como trocar de area | seletor de area | mudar de area | nao vejo a area
 **resposta:** Quem tem mais de uma área vê o seletor "Área" no topo da barra lateral; abaixo dele ficam só as páginas da área escolhida. Trocar de área abre a mesma página na área nova (ou a primeira página dela, se não tiver essa). Com a barra recolhida, o seletor vira o ícone da área atual. A área escolhida fica guardada na aba do navegador: recarregar volta a ela, e uma aba nova começa na primeira área da pessoa. Quem tem uma área só não vê seletor. O administrador global vê todas as áreas; os demais veem as áreas liberadas para eles em Configurações › Acessos (com coordenação, só a área dela).
-**fonte:** src/componentes/barra-lateral/menu-de-areas.tsx; src/componentes/dados-do-monitoramento.js; supabase/migrations/20260925180000_areas_do_usuario.sql
+**fonte:** src/componentes/barra-lateral/menu-de-areas.tsx; src/componentes/dados-do-monitoramento.ts; supabase/migrations/20260925180000_areas_do_usuario.sql
 
 ## Ordem do menu
 

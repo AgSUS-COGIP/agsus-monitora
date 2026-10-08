@@ -9,7 +9,7 @@ import {
   subtituloDoResultado,
   textoDaBusca,
   tituloDoResultado,
-} from "../src/lib/busca-global.js";
+} from "../src/lib/busca-global.ts";
 
 const linha = (extra) => ({
   id: 1,
@@ -22,6 +22,31 @@ const linha = (extra) => ({
 });
 
 describe("buscarLinhas", () => {
+  it("descarta resultados sem id e entradas malformadas, aceitando id zero", () => {
+    expect(
+      buscarLinhas(
+        [
+          null,
+          linha({ id: undefined }),
+          linha({ id: {} }),
+          linha({ unidade: {} }),
+          linha({ id: 0 }),
+        ],
+        "xavante",
+      ).map((l) => l.id),
+    ).toEqual([0]);
+    expect(buscarLinhas([linha()], "xavante", 0)).toEqual([]);
+    expect(buscarLinhas([linha()], "xavante", Infinity)).toEqual([]);
+  });
+
+  it("para de ler a fonte quando alcança o limite", () => {
+    const posteriores = {
+      get id() {
+        throw new Error("Não deveria ler além do limite");
+      },
+    };
+    expect(buscarLinhas([linha(), posteriores], "xavante", 1)).toHaveLength(1);
+  });
   it("termo vazio ou só espaços não lista nada", () => {
     expect(buscarLinhas([linha()], "")).toEqual([]);
     expect(buscarLinhas([linha()], "   ")).toEqual([]);
@@ -87,6 +112,13 @@ describe("textos do resultado", () => {
 });
 
 describe("partesRealcadas", () => {
+  it("preserva espaços e índices do realce nas pontas", () => {
+    expect(partesRealcadas("  Saúde  ", "saude")).toEqual([
+      { texto: "  ", realce: false },
+      { texto: "Saúde", realce: true },
+      { texto: "  ", realce: false },
+    ]);
+  });
   it("marca todas as ocorrências, sem diferenciar maiúsculas", () => {
     expect(partesRealcadas("Dsei dsei X", " DSEI ")).toEqual([
       { texto: "Dsei", realce: true },
@@ -114,6 +146,7 @@ describe("proximoIndice", () => {
     expect(proximoIndice(0, "ArrowUp", 3)).toBe(0);
     expect(proximoIndice(-1, "ArrowUp", 3)).toBe(0);
     expect(proximoIndice(-1, "ArrowDown", 0)).toBe(-1);
+    expect(proximoIndice(-1, "ArrowUp", 0)).toBe(-1);
     expect(proximoIndice(1, "Enter", 3)).toBe(1);
   });
 });

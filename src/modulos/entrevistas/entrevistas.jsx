@@ -3,8 +3,8 @@ import { usarPedidoDeFiltro } from "../../app/pedido-de-filtro.js";
 import { filtrosDeEntrevistas } from "../../lib/filtro-da-aya.js";
 import { montarModulo } from "../../app/montar-modulo.jsx";
 import { usarTemaEscuro } from "../../app/tema.js";
-import { obterDadosDoMonitoramento } from "../../componentes/dados-do-monitoramento.js";
-import { usarAreaAtual } from "../../componentes/usar-area-atual.js";
+import { obterDadosDoMonitoramento } from "../../componentes/dados-do-monitoramento.ts";
+import { usarAreaAtual } from "../../componentes/usar-area-atual.ts";
 import {
   calcularIndicadores,
   dataHoraBR,
@@ -59,7 +59,7 @@ import { SeloDeAvisos } from "../conferencias/avisos-de-conferencia.tsx";
   na Classificação), a tabela, a exportação e a gaveta com o caminho do
   candidato. O edital de treinamento fica fora (o cache do painel não o lê).
 
-  - Área: a área atual do app (menu lateral → dados-do-monitoramento.js). Cada
+  - Área: a área atual do app (menu lateral → dados-do-monitoramento.ts). Cada
     abertura carrega a área de agora; trocar de área com a tela aberta
     recarrega (filtros, busca e gaveta recomeçam).
   - Sessão: o cliente Supabase único do app. Tema: o do app

@@ -2,7 +2,7 @@
 
 Início da migração gradual: 07/10/2026.
 
-O frontend mantém React e Vite. `Aviso`, `BotaoDeAcao`, Seleção, Cronograma, Visão geral, Conferências, Status das atualizações, Análises curriculares, Módulos e abas e a barra lateral estão em
+O frontend mantém React e Vite. `Aviso`, `BotaoDeAcao`, Seleção, Cronograma, Visão geral, Conferências, Status das atualizações, Análises curriculares, Módulos e abas, barra lateral, Busca global e os dados compartilhados do monitoramento estão em
 TypeScript. Seleção inclui estado, componentes, filtros, indicadores, gráficos, tabela
 e regras puras em `src/lib/selecao-do-painel.ts`. Cronograma inclui estado, calendário,
 filtros, modal do dia, próximas etapas, linha do tempo e regras em
@@ -89,6 +89,11 @@ estão em [../src/modulos/modulos/README.md](../src/modulos/modulos/README.md).
 A barra lateral também está migrada: estado, menu por área, seletor, painéis flutuantes,
 rodapé, recolhimento e hooks, com as regras em `src/lib/menu-lateral.ts`. Contratos e limites
 estão em [../src/componentes/barra-lateral/README.md](../src/componentes/barra-lateral/README.md).
+
+A Busca global também está migrada: painel, atalhos, realce, seleção, montagem e regras
+em `src/lib/busca-global.ts`. Inclui o snapshot compartilhado do monitoramento, validação
+das linhas e unidades e o hook de área atual. Contratos e limites estão em
+[../src/componentes/busca-global/README.md](../src/componentes/busca-global/README.md).
 
 Escolher um módulo por entrega, levantar os consumidores e manter o comportamento coberto
 pelos testes. Declarar contratos de dados e ações sem `any` ou supressões de erros. Atualizar

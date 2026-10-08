@@ -5,8 +5,8 @@ O que vale em todas as telas: Pessoas online, atualização do sistema e busca g
 `supabase/migrations/20261005151618_presenca_para_gestor.sql` (admin global e Gestor ativos),
 `supabase/migrations/20261005200000_foto_do_google_no_perfil.sql` (foto do perfil),
 `src/app/navegacao.js` (`navigate`), `src/componentes/pessoas-online/`,
-`src/modules/pwa-lifecycle.js`, `src/lib/busca-global.js` e
-`src/componentes/busca-global/busca-global.jsx`.
+`src/modules/pwa-lifecycle.js`, `src/lib/busca-global.ts` e
+`src/componentes/busca-global/busca-global.tsx`.
 
 ## Pessoas online
 
@@ -24,7 +24,7 @@ O que vale em todas as telas: Pessoas online, atualização do sistema e busca g
 
 **perguntas:** busca global | ctrl k | como buscar um edital | atalho de busca
 **resposta:** Ctrl+K (ou Cmd+K) abre a busca global, com usuário conectado. Ela procura em edital, unidade, etapa, status, UF, risco, ciclo, responsável e observações e mostra até 12 resultados. Escolher um resultado limpa os filtros, filtra a unidade e o edital, abre o painel e destaca a linha na tabela; sem permissão, aparece um aviso. Quem não é administrador global só encontra editais das suas áreas.
-**fonte:** src/lib/busca-global.js; src/componentes/busca-global/busca-global.jsx; src/lib/responsavel-do-edital.js
+**fonte:** src/lib/busca-global.ts; src/componentes/busca-global/busca-global.tsx; src/lib/responsavel-do-edital.js
 
 ## Foto do perfil
 

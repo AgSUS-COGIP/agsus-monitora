@@ -2,7 +2,7 @@
   Estado da página "Editais" (Equipe Núcleo), fora do React: o resumo dos
   cronogramas, o filtro do painel operacional, qual modal está aberto e as
   ações que vão ao banco. As linhas e o catálogo de unidades não moram aqui:
-  são do legado (`dados-do-monitoramento.js`). Este arquivo não importa React.
+  são do legado (`dados-do-monitoramento.ts`). Este arquivo não importa React.
 
   O resumo alimenta duas coisas — os indicadores e a lista de "copiar
   cronograma" — com UMA carga (`resumo.js`). Trocar de usuário na mesma aba

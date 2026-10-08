@@ -13,7 +13,7 @@ import {
   assinarDadosDoMonitoramento,
   linhasDaArea,
   obterDadosDoMonitoramento,
-} from "../../componentes/dados-do-monitoramento.js";
+} from "../../componentes/dados-do-monitoramento.ts";
 import { MultiSelectBusca } from "../../componentes/multi-select-busca.jsx";
 import { BlocosEsqueleto, BotaoDeAcao, Campo } from "../../ui/index.js";
 import { CampoMotivo, ListaMestre, motivoValido } from "./partes.jsx";

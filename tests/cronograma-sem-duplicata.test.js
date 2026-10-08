@@ -42,7 +42,7 @@ function colunasDoSelect(fonte) {
   quando uma SEGUNDA leitura completa da mesma view voltava
   (`health-status-details.js`, que saiu com a Visão geral em React). Hoje há uma
   leitura só: a da carga principal, que a Visão geral lê de
-  dados-do-monitoramento.js.
+  dados-do-monitoramento.ts.
 */
 describe("uma leitura só do monitoramento", () => {
   it("a requisição principal traz as seis colunas de cronograma", () => {

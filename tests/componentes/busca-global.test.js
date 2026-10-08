@@ -5,8 +5,8 @@ import { clicar, digitar, teclar } from "./interacoes.js";
 import {
   publicarLinhasDoMonitoramento,
   redefinirDadosDoMonitoramento,
-} from "../../src/componentes/dados-do-monitoramento.js";
-import { EVENTO_ESCOLHA_DA_BUSCA } from "../../src/lib/busca-global.js";
+} from "../../src/componentes/dados-do-monitoramento.ts";
+import { EVENTO_ESCOLHA_DA_BUSCA } from "../../src/lib/busca-global.ts";
 
 /*
   Busca global (React): Ctrl+K abre só com usuário conectado, Esc e o fundo
@@ -15,7 +15,7 @@ import { EVENTO_ESCOLHA_DA_BUSCA } from "../../src/lib/busca-global.js";
 */
 
 const { montarBuscaGlobal } =
-  await import("../../src/componentes/busca-global/busca-global.jsx");
+  await import("../../src/componentes/busca-global/busca-global.tsx");
 
 const LINHAS = [
   {

@@ -35,7 +35,7 @@ import {
   esquecerLinhasDoMonitoramento,
   publicarLinhasDoMonitoramento,
   publicarUnidadesDoCatalogo,
-} from "../componentes/dados-do-monitoramento.js";
+} from "../componentes/dados-do-monitoramento.ts";
 import { estadoDaVisaoGeral } from "../modulos/visao-geral/estado.ts";
 import { avisar as avisarPadrao } from "./avisos.js";
 
@@ -50,7 +50,7 @@ import { avisar as avisarPadrao } from "./avisos.js";
   consultas sem tela de carregamento. O Realtime do monitoramento relê as
   linhas quando a tabela muda.
 
-  As linhas e as unidades vão para src/componentes/dados-do-monitoramento.js
+  As linhas e as unidades vão para src/componentes/dados-do-monitoramento.ts
   (as telas React assinam lá); o mapa da Saúde Indígena, para o estado da
   Visão geral.
 */

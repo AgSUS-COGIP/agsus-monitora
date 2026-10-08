@@ -31,7 +31,7 @@ import {
   assinarDadosDoMonitoramento,
   definirAreasDoUsuario,
   obterDadosDoMonitoramento,
-} from "../componentes/dados-do-monitoramento.js";
+} from "../componentes/dados-do-monitoramento.ts";
 import {
   atualizarMenuLateral,
   marcarItemAtivoNoMenu,

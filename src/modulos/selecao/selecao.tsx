@@ -10,8 +10,8 @@ import { usarPedidoDeFiltro } from "../../app/pedido-de-filtro.js";
 import { filtrosDaSelecao } from "../../lib/filtro-da-aya.js";
 import { montarModulo } from "../../app/montar-modulo.jsx";
 import { usarTemaEscuro } from "../../app/tema.js";
-import { obterDadosDoMonitoramento } from "../../componentes/dados-do-monitoramento.js";
-import { usarAreaAtual } from "../../componentes/usar-area-atual.js";
+import { obterDadosDoMonitoramento } from "../../componentes/dados-do-monitoramento.ts";
+import { usarAreaAtual } from "../../componentes/usar-area-atual.ts";
 import {
   calcularIndicadores,
   dataHoraBR,
@@ -47,7 +47,7 @@ import { MENSAGEM_SEM_VAGAS, TabelaDeVagas } from "./tabela.tsx";
   vaga), sete KPIs, o recorte, cinco gráficos (o ranking de unidades filtra
   ao clicar), os alertas da coluna Observação e a base operacional. Só leitura.
 
-  - Área: a área atual do app (menu lateral → dados-do-monitoramento.js). Cada
+  - Área: a área atual do app (menu lateral → dados-do-monitoramento.ts). Cada
     abertura carrega a área de agora; trocar de área com a tela aberta
     recarrega (filtros e a busca da tabela recomeçam).
   - Sessão: o cliente Supabase único do app. Tema: o do app

@@ -5,7 +5,7 @@ import {
 } from "../lib/eventos-da-barra-lateral.js";
 import { nomeDaArea } from "../lib/menu-lateral.ts";
 import { resumoDoRelatorio } from "../lib/visao-geral.ts";
-import { obterDadosDoMonitoramento } from "../componentes/dados-do-monitoramento.js";
+import { obterDadosDoMonitoramento } from "../componentes/dados-do-monitoramento.ts";
 import { estadoDaVisaoGeral } from "../modulos/visao-geral/estado.ts";
 import { avisar as avisarPadrao } from "./avisos.js";
 

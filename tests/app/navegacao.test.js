@@ -5,7 +5,7 @@ import {
   definirAreaAtual,
   definirAreasDoUsuario,
   redefinirDadosDoMonitoramento,
-} from "../../src/componentes/dados-do-monitoramento.js";
+} from "../../src/componentes/dados-do-monitoramento.ts";
 import {
   obterEstadoDaBarraLateral,
   redefinirBarraLateral,
