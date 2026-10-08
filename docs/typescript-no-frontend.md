@@ -117,3 +117,9 @@ os imports quando o arquivo mudar de extensão. Para dados externos, acrescentar
 em tempo de execução quando necessária: uma anotação TypeScript não valida JSON recebido.
 
 Manter o servidor com seu `tsconfig.json`; configurações de DOM e JSX pertencem ao frontend.
+
+As regras de coordenadas dos dois mapas e o adaptador do editor da Saúde Indígena
+também estão migrados. Os contratos dos alvos indígenas estão em
+`src/lib/tipos-das-coordenadas-do-mapa.ts`; o catálogo editável valida entradas
+externas sem alterar os índices conferidos pelo banco. A tela principal da
+Saúde Indígena ainda permanece em JavaScript.

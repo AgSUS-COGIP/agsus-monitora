@@ -19,10 +19,10 @@ Leaflet). "Voltar à lista", "Coordenadas" ou Esc voltam ao layout de sempre
 "Só pendentes", com as pendências da auditoria), "Conferido", as sugestões de
 posição e o histórico com "Desfazer" — RPCs de
 `supabase/migrations/20261002160000_conferir_coordenadas_mapa.sql`, regras em
-`src/lib/coordenadas-do-mapa.js`, testes em `tests/coordenadas-do-mapa.test.js` e
+`src/lib/coordenadas-do-mapa.ts`, testes em `tests/coordenadas-do-mapa.test.js` e
 `tests/modulos/editor-de-coordenadas.test.js`. O editor, a fila, as sugestões e o histórico
 são comuns aos dois mapas (`src/modulos/editor-de-coordenadas/`, regras comuns em
-`src/lib/editor-de-coordenadas.ts`); aqui fica só `editor-de-coordenadas.jsx`, que liga o
+`src/lib/editor-de-coordenadas.ts`); aqui fica só `editor-de-coordenadas.tsx`, que liga o
 editor comum aos pontos, às regras e às RPCs deste mapa. O de Projetos faz o mesmo em
 `src/modulos/mapa-de-projetos/editor-de-coordenadas.tsx`.
 
@@ -45,7 +45,7 @@ tela-cheia.tsx            usarTelaCheia: estado, botão "Tela cheia"/"Sair da te
                           travarRolagemDaPagina (contada: tela cheia e modo de edição)
 volta-ao-brasil.ts        usarVoltaDoDsei (a saída do DSEI, venha de onde vier) e usarEscParaVoltar
 usar-ultimo.ts            ref com a última função do pai (ouvintes do Leaflet sem redesenhar)
-editor-de-coordenadas.jsx o editor comum (só admin global) com os pontos do lmap/rede_cnes e as RPCs
+editor-de-coordenadas.tsx o editor comum (só admin global) com os pontos do lmap/rede_cnes e as RPCs
                           *_coordenada_mapa_saude_indigena (FONTE_DA_SAUDE_INDIGENA)
 mapa-saude-indigena.css   só o que é deste bloco (tokens); card/título/vazio de src/ui/
 ```
@@ -185,3 +185,9 @@ cobre toda a API do Leaflet. Esta entrega não muda contratos de RPC ou dados
 geográficos. Ciclo de vida, StrictMode, legendas, Escape, foco, tela cheia e modo de
 edição são cobertos pelos testes dos dois mapas; contratos adicionais estão em
 `tests/tipos/base-dos-mapas.tsx`.
+
+O adaptador do editor e as regras específicas de coordenadas estão em TypeScript.
+O catálogo editável recebe dados externos como `unknown`, ignora entradas inválidas
+e preserva os índices, nomes e códigos usados para conferir o alvo no banco.
+Posições vazias ou inválidas permanecem nulas. A exibição principal do mapa e o
+conteúdo geográfico completo continuam em JavaScript.

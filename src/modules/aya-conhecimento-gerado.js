@@ -4664,7 +4664,7 @@ export const VERBETES_AYA = Object.freeze([
       'O administrador global e o Gestor podem usar "Coordenadas" no mapa da Saúde Indígena, no Brasil ou dentro de um DSEI. O mapa entra no modo de edição (veja "Modo de edição das coordenadas"): busque pelo nome, CNES, município ou DSEI e clique no ponto — o mapa enquadra o ponto e a sugestão mais provável na parte que o editor não cobre e aparece um pin de prévia. Para ajustar a posição, digite latitude e longitude ou arraste o pin de prévia; a posição atual só muda depois de confirmar. Confira a posição atual e a prévia, informe o motivo e a fonte da correção, clique em "Salvar coordenada" e depois em "Confirmar correção". "Desfazer prévia" volta à posição atual sem salvar. Se outra pessoa já mudou o ponto, atualize o mapa antes de tentar novamente. Essa opção não aparece para os demais perfis.',
     fato: "",
     fonte:
-      "src/modulos/mapa-saude-indigena/editor-de-coordenadas.jsx; supabase/migrations/20261002160000_conferir_coordenadas_mapa.sql",
+      "src/modulos/mapa-saude-indigena/editor-de-coordenadas.tsx; supabase/migrations/20261002160000_conferir_coordenadas_mapa.sql",
   },
   {
     arquivo: "regras-do-mapa-saude-indigena.md",
@@ -4706,7 +4706,7 @@ export const VERBETES_AYA = Object.freeze([
       'A auditoria das coordenadas de 01 e 02/10/2026 não conseguiu confirmar 248 pontos com duas fontes independentes: 92 polos base e 156 UBSI/postos (a auditoria conta 93 + 156 = 249 porque o posto Aldeia Linha 10, de Porto Velho, entrou nas duas rodadas). No editor de coordenadas, "Só pendentes" vem ligado e mostra só esses pontos, ordenados por DSEI, com a contagem ("N pendentes"). Para cada um, confira a posição com o DSEI ou com as fontes sugeridas e clique em "Conferido" — a posição pode continuar a mesma (às vezes já está certa) ou ser ajustada antes. É preciso informar o motivo e confirmar. Depois de conferido, o ponto sai de "Só pendentes"; desligando o filtro, ele aparece com o selo "Conferido". O mapa público não mostra "em validação": a situação só aparece no editor. A fila separa as pendências por gravidade, com a contagem de cada uma e o provável erro primeiro: Provável erro (o ponto está na sede do município, num ponto coletor, na posição do nome do município ou numa aldeia de mesmo nome fora do DSEI, ou a aldeia sugerida mais perto está a mais de 10 km), Revisar (aldeia sugerida entre 2 e 10 km, ou só o CNES), Sem sugestão (nenhuma posição candidata: buscar a aldeia à mão) e Só confirmar (há aldeia sugerida a até 2 km: a posição bate e falta só o Conferido). O CNES não serve de régua porque quase sempre é a própria posição atual. Ao escolher um ponto, as sugestões aparecem no mapa (aldeias em laranja, CNES em azul) e a mais provável fica ligada à posição atual por uma linha tracejada; clicar numa sugestão do mapa ou em Usar esta preenche a prévia.',
     fato: "",
     fonte:
-      "src/lib/coordenadas-do-mapa.js; supabase/migrations/20261002160000_conferir_coordenadas_mapa.sql; supabase/correcoes/20261002-pendencias-das-coordenadas-do-mapa.sql",
+      "src/lib/coordenadas-do-mapa.ts; supabase/migrations/20261002160000_conferir_coordenadas_mapa.sql; supabase/correcoes/20261002-pendencias-das-coordenadas-do-mapa.sql",
   },
   {
     arquivo: "regras-do-mapa-saude-indigena.md",
@@ -4724,7 +4724,7 @@ export const VERBETES_AYA = Object.freeze([
       'Ao escolher um ponto pendente, o editor mostra por que a auditoria não o confirmou e as posições candidatas: primeiro a do cadastro CNES (DATASUS), depois aldeias e lugares com o mesmo nome (IBGE, Funai, OpenStreetMap, PDSI) e, quando conhecida, a sede do município, cada uma com a distância até a posição atual. "Usar esta" só leva a posição para a prévia (o pin se move); nada é gravado até "Salvar coordenada" ou "Conferido" serem confirmados. Candidato não é prova: confira com o DSEI quando as fontes divergirem.',
     fato: "",
     fonte:
-      "src/lib/coordenadas-do-mapa.js; src/modulos/editor-de-coordenadas/sugestoes-do-ponto.tsx",
+      "src/lib/coordenadas-do-mapa.ts; src/modulos/editor-de-coordenadas/sugestoes-do-ponto.tsx",
   },
   {
     arquivo: "regras-do-mapa-saude-indigena.md",
@@ -5508,7 +5508,7 @@ export const VERBETES_AYA = Object.freeze([
       'A fila do editor de Projetos começa em "Só pendentes": são os lugares cuja posição ainda não foi conferida pelo administrador global ou por um Gestor. Na carga inicial, todo município aparece porque o ponto é só a sede do município (o edital diz o município, não o endereço), e todo lugar só com UF aparece porque o ponto é o centro do estado. Também ficam pendentes o lugar sem coordenada, o município cujo nome, código ou UF não batem, o mesmo município com coordenadas diferentes e o ponto fora do Brasil. A gravidade compara a posição com a referência do lugar (a sede do município pelo IBGE ou o centro da UF): "Provável erro" quando falta a coordenada, o motivo já é um erro ou a referência está a mais de 10 km; "Revisar" quando ela está entre 2 e 10 km, ou quando a lotação é um escritório e o edital só diz a UF; "Só confirmar" quando a posição é a da referência; e "Sem sugestão" quando não há posição candidata. As sugestões são a sede do município (IBGE), o centro da UF, a sede do DSEI do mapa da Saúde Indígena (para escritório distrital) e os outros lugares das vagas na mesma UF.',
     fato: "",
     fonte:
-      "src/lib/coordenadas-dos-projetos.js; src/lib/editor-de-coordenadas.ts; supabase/correcoes/20261002-pendencias-das-coordenadas-dos-projetos.sql",
+      "src/lib/coordenadas-dos-projetos.ts; src/lib/editor-de-coordenadas.ts; supabase/correcoes/20261002-pendencias-das-coordenadas-dos-projetos.sql",
   },
   {
     arquivo: "regras-dos-mapas.md",

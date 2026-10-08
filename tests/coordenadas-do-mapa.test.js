@@ -5,7 +5,7 @@ import {
   gravidadeDaPendencia,
   pontosEditaveisDoMapa,
   sugestoesDaPendencia,
-} from "../src/lib/coordenadas-do-mapa.js";
+} from "../src/lib/coordenadas-do-mapa.ts";
 import {
   correcaoDesfazivel,
   folgaDoEnquadramento,
@@ -363,6 +363,75 @@ describe("folga do enquadramento no modo de edição", () => {
     expect(folgaDoEnquadramento(mapa, null, { base: 30 })).toEqual({
       paddingTopLeft: [62, 62],
       paddingBottomRight: [30, 30],
+    });
+  });
+});
+
+describe("dados externos do catálogo editável", () => {
+  it("ignora contêineres inválidos", () => {
+    for (const valor of [
+      null,
+      false,
+      42,
+      "texto",
+      [],
+      { dsei: {}, casai: true, rede: [], nac: {} },
+    ]) {
+      expect(pontosEditaveisDoMapa(valor, valor)).toEqual([]);
+    }
+  });
+  it("mantém os índices da fonte depois de entradas inválidas", () => {
+    const pontos = pontosEditaveisDoMapa(
+      {
+        dsei: [
+          null,
+          {
+            k: "A",
+            n: "Distrito A",
+            polos: [
+              false,
+              { n: " Polo A ", cod: "001", lat: "-12", lon: "-50" },
+            ],
+          },
+        ],
+        casai: [null, { n: "CASAI A" }],
+      },
+      {
+        rede: {
+          A: {
+            u: [{}, ["Unidade A", "0002", [], {}]],
+            c: [false, ["CASAI B", 3, null, " "]],
+          },
+        },
+        nac: [false, ["Nacional A", "004", true, false]],
+      },
+    );
+    expect(pontos.map((p) => [p.alvo.tipo, p.alvo.indice])).toEqual([
+      ["sede", 1],
+      ["polo", 1],
+      ["u", 1],
+      ["c", 1],
+      ["casai", 1],
+      ["nac", 1],
+    ]);
+    expect(pontos[1]).toMatchObject({
+      latitude: -12,
+      longitude: -50,
+      alvo: { nome: " Polo A ", codigo: "001" },
+    });
+    expect(JSON.parse(pontos[1].id)).toEqual(pontos[1].alvo);
+    for (const ponto of pontos.filter((p) => p.alvo.tipo !== "polo"))
+      expect([ponto.latitude, ponto.longitude]).toEqual([null, null]);
+  });
+  it("descarta candidatos inválidos e motivos herdados do protótipo", () => {
+    const pendencia = {
+      candidatos: [null, { f: "FUNAI", n: {}, lat: [], lon: {} }],
+      motivo_tipo: "constructor",
+    };
+    expect(sugestoesDaPendencia(pendencia, null)).toEqual([]);
+    expect(gravidadeDaPendencia(pendencia, null)).toMatchObject({
+      nivel: "sem",
+      resumo: "nenhuma posição candidata",
     });
   });
 });
