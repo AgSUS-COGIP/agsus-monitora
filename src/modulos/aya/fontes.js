@@ -12,7 +12,7 @@
   indicador mostra. Senão, uma chamada e a resposta fica guardada por um
   minuto, para a pergunta seguinte não chamar de novo.
 */
-import { linhasDoPayload } from "../../lib/analises-curriculares.js";
+import { linhasDoPayload } from "../../lib/analises-curriculares.ts";
 import { parametroDeAreaDaRpc } from "../../lib/area-do-painel-de-analises.js";
 import { normalizarPayload as payloadDasEntrevistas } from "../../lib/entrevistas-do-painel.js";
 import { enriquecerRecursos } from "../../lib/recursos-dos-candidatos.js";

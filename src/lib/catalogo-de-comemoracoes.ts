@@ -18,7 +18,7 @@
 */
 
 import { analisePendente } from "./comemoracao.js";
-import { chaveDoDia } from "./analises-curriculares.js";
+import { chaveDoDia } from "./analises-curriculares.ts";
 import {
   DURACAO_MAXIMA_MS,
   DURACAO_MINIMA_MS,
@@ -121,7 +121,7 @@ export const CATALOGO_DE_MARCOS: readonly MarcoDoCatalogo[] = Object.freeze([
     id: "edital-concluido",
     rotulo: "Edital 100% analisado",
     grupo: "Análises",
-    onde: "src/modulos/analises/marcos.js",
+    onde: "src/modulos/analises/marcos.ts",
     forma: "coracao",
     padrao: opcoes("fogos", "normal"),
   },
@@ -129,7 +129,7 @@ export const CATALOGO_DE_MARCOS: readonly MarcoDoCatalogo[] = Object.freeze([
     id: "fila-zerada",
     rotulo: "Fila de análises zerada",
     grupo: "Análises",
-    onde: "src/modulos/analises/marcos.js",
+    onde: "src/modulos/analises/marcos.ts",
     forma: "estrela",
     padrao: opcoes("fogos", "normal"),
   },

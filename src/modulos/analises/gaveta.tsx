@@ -1,7 +1,12 @@
+import type {
+  LinhaDaAnalise,
+  RegistroDaAnalise,
+  DetalheDaAnalise,
+} from "./tipos.ts";
 import {
   detalheDaAnalise,
   tomDoStatus,
-} from "../../lib/analises-curriculares.js";
+} from "../../lib/analises-curriculares.ts";
 import { mesclarDetalhe } from "../../lib/lista-do-painel-de-analises.js";
 import { linhaSemParecer } from "../../lib/textos-do-painel-de-analises.js";
 import { Gaveta, GradeDeKv, Kv, Secao, Selo } from "../../ui/index.js";
@@ -31,7 +36,7 @@ function SecoesEsqueleto() {
 }
 
 /* O parecer (texto da planilha, como texto). Sem parecer no banco, a seção some. */
-function Parecer({ linha }) {
+function Parecer({ linha }: { linha: RegistroDaAnalise }) {
   const texto = String(linha.analise ?? "").trim();
   if (!texto) return null;
   return (
@@ -51,10 +56,16 @@ export function GavetaDaAnalise({
   area,
   aoFechar,
   aoTentarDeNovo,
+}: {
+  linha: LinhaDaAnalise;
+  detalhe?: DetalheDaAnalise;
+  area: string;
+  aoFechar(): void;
+  aoTentarDeNovo(): void;
 }) {
   const situacao = detalhe?.situacao;
   const completa = { ...linha };
-  if (situacao === "pronto") {
+  if (detalhe?.situacao === "pronto") {
     mesclarDetalhe(completa, detalhe.dados);
     // Sem parecer no banco: o detalhe não manda a chave, e a seção some.
     if (linhaSemParecer(completa)) completa.analise = null;

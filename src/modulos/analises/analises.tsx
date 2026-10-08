@@ -1,3 +1,10 @@
+import type {
+  EstadoDasAnalises,
+  SnapshotDasAnalises,
+  DependenciasDasAnalises,
+  CampoDoFiltro,
+  PendenciaDaAnalise,
+} from "./tipos.ts";
 import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import { usarPedidoDeFiltro } from "../../app/pedido-de-filtro.js";
 import { filtrosDasAnalises } from "../../lib/filtro-da-aya.js";
@@ -25,7 +32,7 @@ import {
   temMunicipio,
   temPeriodo,
   ultimaAtualizacao,
-} from "../../lib/analises-curriculares.js";
+} from "../../lib/analises-curriculares.ts";
 import { getLoadingStage } from "../../lib/loading-copy.js";
 import { textoDaConferencia } from "../../lib/texto-da-conferencia.js";
 import { getSupabaseClient } from "../../lib/supabaseClient.js";
@@ -38,10 +45,10 @@ import {
   MarcasDoRecorte,
   TopoDoPainel,
 } from "../../ui/index.js";
-import { criarEstadoDasAnalises } from "./estado.js";
-import { GavetaDaAnalise } from "./gaveta.jsx";
-import { chipsDosFiltros, Filtros, Graficos, Indicadores } from "./paineis.jsx";
-import { TabelaDeAnalises } from "./tabela.jsx";
+import { criarEstadoDasAnalises } from "./estado.ts";
+import { GavetaDaAnalise } from "./gaveta.tsx";
+import { chipsDosFiltros, Filtros, Graficos, Indicadores } from "./paineis.tsx";
+import { TabelaDeAnalises } from "./tabela.tsx";
 import { SeloDeAvisos } from "../conferencias/avisos-de-conferencia.tsx";
 
 /*
@@ -59,7 +66,7 @@ import { SeloDeAvisos } from "../conferencias/avisos-de-conferencia.tsx";
     fila; demora vira aviso discreto (12 s) e depois "Tentar novamente" (25 s).
 
   O que é só da tela — filtros, busca, KPI, responsável e data escolhidos nos
-  gráficos — é estado do componente; os dados e as ações moram em estado.js.
+  gráficos — é estado do componente; os dados e as ações moram em estado.ts.
 
   A data (o dia clicado em "Análises por data", ou o período dos campos de
   "Mais opções") recorta KPIs, carga por responsável, pendências e fila; o
@@ -70,7 +77,7 @@ const ESPERA_DA_BUSCA_MS = 180;
 const MARCOS_DE_DEMORA_MS = [12_000, 25_000];
 const KPIS_ZERADOS = calcularKpis([]);
 
-function textoDoStatus(e) {
+function textoDoStatus(e: SnapshotDasAnalises) {
   if (e.semSessao) return "Sessão não localizada";
   if (e.semAcesso) return "Sem acesso";
   if (e.erroAoCarregar && !e.carregado) return "Sem dados";
@@ -84,8 +91,10 @@ function textoDoStatus(e) {
 }
 
 /* Quanto tempo a primeira carga está levando: `null`, ou a etapa de demora. */
-function usarDemora(carregando) {
-  const [etapa, setEtapa] = useState(null);
+function usarDemora(carregando: boolean) {
+  const [etapa, setEtapa] = useState<ReturnType<typeof getLoadingStage> | null>(
+    null,
+  );
   useEffect(() => {
     setEtapa(null);
     if (!carregando) return undefined;
@@ -98,7 +107,7 @@ function usarDemora(carregando) {
 }
 
 /* O valor depois de `ms` sem mudar (a busca geral não filtra a cada tecla). */
-function usarComEspera(valor, ms) {
+function usarComEspera(valor: string, ms: number) {
   const [atrasado, setAtrasado] = useState(valor);
   useEffect(() => {
     const espera = setTimeout(() => setAtrasado(valor), ms);
@@ -107,7 +116,15 @@ function usarComEspera(valor, ms) {
   return atrasado;
 }
 
-function AvisoDaTela({ e, demora, aoTentarDeNovo }) {
+function AvisoDaTela({
+  e,
+  demora,
+  aoTentarDeNovo,
+}: {
+  e: SnapshotDasAnalises;
+  demora: ReturnType<typeof usarDemora>;
+  aoTentarDeNovo(): void;
+}) {
   if (e.semSessao || e.semAcesso)
     return (
       <Aviso tom="warning" papel="alert">
@@ -146,16 +163,22 @@ function AvisoDaTela({ e, demora, aoTentarDeNovo }) {
 }
 
 /* Liga/desliga um único valor num filtro de seleção múltipla (o atalho das pendências). */
-const soEsse = (selecao, valor) =>
+const soEsse = (selecao: readonly string[], valor: string) =>
   selecao.length === 1 && selecao[0] === valor ? [] : [valor];
-const soEsseAtivo = (selecao, valor) =>
+const soEsseAtivo = (selecao: readonly string[], valor: string) =>
   selecao.length === 1 && selecao[0] === valor;
 
 /*
   A tela de uma área. Monta de novo quando a área muda (`key`): filtros,
   busca, KPI e o responsável do gráfico recomeçam.
 */
-function TelaDaArea({ estado, e }) {
+function TelaDaArea({
+  estado,
+  e,
+}: {
+  estado: EstadoDasAnalises;
+  e: SnapshotDasAnalises;
+}) {
   const escuro = usarTemaEscuro();
   const [filtros, setFiltros] = useState(FILTROS_VAZIOS);
   const [buscaDigitada, setBuscaDigitada] = useState("");
@@ -191,15 +214,19 @@ function TelaDaArea({ estado, e }) {
     de um aviso de conferência traz também a busca (o nome) e a análise a
     abrir na gaveta.
   */
-  const [analiseDoAviso, setAnaliseDoAviso] = useState(null);
-  usarPedidoDeFiltro("analises", carregado, (pedido) => {
-    const proximo = filtrosDasAnalises(filtros, pedido, linhas, kpi);
-    setFiltros(proximo.filtros);
-    setKpi(proximo.kpi);
-    if (proximo.filtros.busca !== filtros.busca)
-      setBuscaDigitada(proximo.filtros.busca);
-    if (pedido.analise) setAnaliseDoAviso(String(pedido.analise));
-  });
+  const [analiseDoAviso, setAnaliseDoAviso] = useState<string | null>(null);
+  usarPedidoDeFiltro(
+    "analises",
+    carregado,
+    (pedido: Record<string, unknown>) => {
+      const proximo = filtrosDasAnalises(filtros, pedido, linhas, kpi);
+      setFiltros(proximo.filtros);
+      setKpi(proximo.kpi);
+      if (proximo.filtros.busca !== filtros.busca)
+        setBuscaDigitada(proximo.filtros.busca);
+      if (pedido.analise) setAnaliseDoAviso(String(pedido.analise));
+    },
+  );
 
   /* A análise do caso: abre na gaveta; fora do escopo atual, procura em "Todos". */
   useEffect(() => {
@@ -240,7 +267,7 @@ function TelaDaArea({ estado, e }) {
     [recorteSemData, periodo],
   );
   const comData = temPeriodo(periodo);
-  const clicarNoDia = (dia, opcoes) =>
+  const clicarNoDia = (dia: string, opcoes: { estender: boolean }) =>
     setPeriodo((atual) => periodoDoClique(atual, dia, opcoes));
   const tirarData = () => setPeriodo(PERIODO_VAZIO);
   const kpis = useMemo(
@@ -249,14 +276,14 @@ function TelaDaArea({ estado, e }) {
   );
   const marcas = useMemo(() => marcasDoRecorte(recorte), [recorte]);
 
-  const mudarFiltro = (campo, valores) =>
+  const mudarFiltro = (campo: CampoDoFiltro, valores: readonly string[]) =>
     setFiltros((atuais) => ({ ...atuais, [campo]: valores }));
-  const buscar = (texto) => {
+  const buscar = (texto: string) => {
     setBuscaDigitada(texto);
     if (!texto) setFiltros((atuais) => ({ ...atuais, busca: "" }));
   };
 
-  function aplicarAtalho({ tipo, valor }) {
+  function aplicarAtalho({ tipo, valor }: PendenciaDaAnalise["atalho"]) {
     if (tipo === "kpi") setKpi((atual) => (atual === valor ? "" : valor));
     if (tipo === "validacao")
       setFiltros((atuais) => ({
@@ -269,7 +296,7 @@ function TelaDaArea({ estado, e }) {
         responsavel: soEsse(atuais.responsavel, valor),
       }));
   }
-  const atalhoAtivo = ({ tipo, valor }) =>
+  const atalhoAtivo = ({ tipo, valor }: PendenciaDaAnalise["atalho"]) =>
     (tipo === "kpi" && kpi === valor) ||
     (tipo === "validacao" && soEsseAtivo(filtros.validacao, valor)) ||
     (tipo === "responsavel" && soEsseAtivo(filtros.responsavel, valor));
@@ -409,7 +436,7 @@ function TelaDaArea({ estado, e }) {
   );
 }
 
-export function TelaDeAnalises({ estado }) {
+export function TelaDeAnalises({ estado }: { estado: EstadoDasAnalises }) {
   const e = useSyncExternalStore(estado.assinar, estado.obter);
   const { area: areaDoApp } = usarAreaAtual();
 
@@ -439,6 +466,9 @@ export function montarAnalises({
   areaAtual = () => obterDadosDoMonitoramento().areaAtual,
   baixar,
   consultas,
+}: DependenciasDasAnalises & {
+  secao?: HTMLElement | null;
+  areaAtual?(): unknown;
 } = {}) {
   const estado = criarEstadoDasAnalises({
     supabase,
