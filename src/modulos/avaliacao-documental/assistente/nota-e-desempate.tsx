@@ -2,20 +2,20 @@ import {
   comDesempateDaProvisoria,
   perguntaSugeridaDaParcial,
 } from "../../../lib/avaliacao-documental/assistente-da-regra.ts";
-import { DESEMPATES_DA_PROVISORIA } from "../../../lib/avaliacao-documental/catalogo.js";
+import {
+  CRITERIOS_DA_CLASSIFICACAO,
+  CRITERIOS_DA_PROVISORIA,
+} from "../../../lib/avaliacao-documental/catalogo-de-desempate.ts";
 import type {
   DesempateDaProvisoria,
   RegraAnalise,
 } from "../../../lib/avaliacao-documental/tipos-da-regra.ts";
-import {
-  CATALOGO_DE_CRITERIOS,
-  DIRECOES,
-  NIVEIS,
-} from "../../../lib/classificacao/catalogo.js";
+import { DIRECOES, NIVEIS } from "../../../lib/classificacao/catalogo.js";
 import { rotuloDaVersao } from "../../../lib/nome-da-versao.ts";
 import { Aviso } from "../../../ui/index.js";
 import { CampoNumero } from "../campos.jsx";
 import { ListaOrdenavel } from "./lista-ordenavel.tsx";
+import { SeletorDeCriterios } from "./seletor-de-criterios.tsx";
 import type { ApoioDaRegra, NotaMinimaDaClassificacao } from "./tipos.ts";
 
 /*
@@ -23,7 +23,10 @@ import type { ApoioDaRegra, NotaMinimaDaClassificacao } from "./tipos.ts";
   critérios de desempate são da regra de CLASSIFICAÇÃO do edital (gravados
   pelo salvar_regra_classificacao, com a permissão da Classificação); o
   desempate da Provisória (a lista do lote) é da regra da avaliação.
-  Arrastar ou as setas mudam a ordem.
+  Arrastar ou as setas mudam a ordem; "Acrescentar critério" abre o catálogo
+  inteiro de cada lista, em grupos e com busca. Quem lê a Classificação sem
+  ser Editor vê a nota mínima e o desempate sem controles (antes via um
+  seletor desabilitado, que parecia vazio).
 */
 
 export type CriterioDaClassificacao = { criterio: string; direcao: string };
@@ -44,20 +47,18 @@ type Props = {
   notaMinimaAtual: NotaMinimaDaClassificacao;
 };
 
-type CriterioDoCatalogo = { codigo: string; nome: string; direcao: string };
-const CRITERIOS =
-  CATALOGO_DE_CRITERIOS as unknown as ReadonlyArray<CriterioDoCatalogo>;
-const NOME_DO_CRITERIO = new Map(CRITERIOS.map((c) => [c.codigo, c.nome]));
+const NOME_DO_CRITERIO = new Map(
+  CRITERIOS_DA_CLASSIFICACAO.map((c) => [c.codigo, c.nome]),
+);
 const DIRECOES_DA_TELA = DIRECOES as unknown as ReadonlyArray<
   readonly [string, string]
 >;
 const NIVEIS_DA_TELA = NIVEIS as unknown as ReadonlyArray<
   readonly [string, string]
 >;
-const DESEMPATES = DESEMPATES_DA_PROVISORIA as unknown as ReadonlyArray<
-  readonly [DesempateDaProvisoria, string]
->;
-const ROTULO_DO_DESEMPATE = new Map(DESEMPATES);
+const ROTULO_DO_DESEMPATE = new Map(
+  CRITERIOS_DA_PROVISORIA.map((c) => [c.codigo, c.nome]),
+);
 
 function NotaMinimaEDesempate({
   rascunho,
@@ -70,10 +71,14 @@ function NotaMinimaEDesempate({
 }) {
   const doc = rascunho.documental;
   const porNivel = doc.nota_minima_por_nivel ?? {};
-  const escolhidos = new Set(rascunho.desempate.map((d) => d.criterio));
-  const disponiveis = CRITERIOS.filter((c) => !escolhidos.has(c.codigo));
   return (
     <fieldset className="avd-ast-fieldset" disabled={!podeEditar}>
+      {!podeEditar ? (
+        <Aviso tom="info">
+          Seu acesso à Classificação é de leitura: a nota mínima e o desempate
+          mudam com Editor na Classificação.
+        </Aviso>
+      ) : null}
       <div className="avd-linha" data-tour="avd-assistente-nota-minima">
         <CampoNumero
           rotulo="Nota mínima (pontos)"
@@ -134,31 +139,25 @@ function NotaMinimaEDesempate({
           </div>
         )}
       />
-      {disponiveis.length ? (
-        <label className="avd-ast-escolha">
-          <span>Acrescentar critério</span>
-          <select
-            value=""
-            onChange={(ev) => {
-              const c = CRITERIOS.find((x) => x.codigo === ev.target.value);
-              if (c)
-                aoMudar({
-                  ...rascunho,
-                  desempate: [
-                    ...rascunho.desempate,
-                    { criterio: c.codigo, direcao: c.direcao },
-                  ],
-                });
-            }}
-          >
-            <option value="">Escolha…</option>
-            {disponiveis.map((c) => (
-              <option key={c.codigo} value={c.codigo}>
-                {c.nome}
-              </option>
-            ))}
-          </select>
-        </label>
+      {podeEditar ? (
+        <SeletorDeCriterios
+          catalogo={CRITERIOS_DA_CLASSIFICACAO}
+          usados={rascunho.desempate.map((d) => d.criterio)}
+          daLista="da classificação"
+          tour="avd-assistente-catalogo-de-desempate"
+          aoEscolher={(c) =>
+            aoMudar({
+              ...rascunho,
+              desempate: [
+                ...rascunho.desempate,
+                {
+                  criterio: c.codigo,
+                  direcao: c.direcao ?? "MAIOR_PRIMEIRO",
+                },
+              ],
+            })
+          }
+        />
       ) : null}
     </fieldset>
   );
@@ -173,7 +172,6 @@ export function PassoNotaEDesempate({
   notaMinimaAtual,
 }: Props) {
   const desempate = regra.provisoria.desempate ?? [];
-  const faltam = DESEMPATES.filter(([d]) => !desempate.includes(d));
   const mudarDesempate = (lista: DesempateDaProvisoria[]) => {
     let nova = comDesempateDaProvisoria(regra, lista);
     // A experiência declarada precisa da pergunta: a da nota declarada ou a do bloco.
@@ -242,25 +240,14 @@ export function PassoNotaEDesempate({
           aoMudar={mudarDesempate}
           conteudo={(d) => <span>{ROTULO_DO_DESEMPATE.get(d) ?? d}</span>}
         />
-        {faltam.length ? (
-          <label className="avd-ast-escolha">
-            <span>Acrescentar critério</span>
-            <select
-              value=""
-              onChange={(ev) => {
-                const d = ev.target.value as DesempateDaProvisoria;
-                if (d) mudarDesempate([...desempate, d]);
-              }}
-            >
-              <option value="">Escolha…</option>
-              {faltam.map(([v, r]) => (
-                <option key={v} value={v}>
-                  {r}
-                </option>
-              ))}
-            </select>
-          </label>
-        ) : null}
+        <SeletorDeCriterios
+          catalogo={CRITERIOS_DA_PROVISORIA}
+          usados={desempate}
+          daLista="da Provisória"
+          aoEscolher={(c) =>
+            mudarDesempate([...desempate, c.codigo as DesempateDaProvisoria])
+          }
+        />
       </section>
     </div>
   );

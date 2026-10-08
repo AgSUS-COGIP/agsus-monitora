@@ -35,7 +35,9 @@ tem os componentes em `src/modulos/avaliacao-documental/ficha/*.tsx` (contratos 
 compartilhados consumidos por esses módulos declaram seus contratos em JSDoc.
 O assistente da regra da Avaliação documental (`src/modulos/avaliacao-documental/assistente/`)
 já nasceu em TSX, com as regras em `src/lib/avaliacao-documental/assistente-da-regra.ts`,
-`resumo-da-regra.ts`, `comparar-regras.ts` e os contratos em `tipos-da-regra.ts`.
+`resumo-da-regra.ts`, `comparar-regras.ts`, `catalogo-de-desempate.ts`, `pendencias-do-salvar.ts` e os
+contratos em `tipos-da-regra.ts`; a prévia "Testar com um candidato fictício" está em `previa.tsx`.
+Na ficha, o Apurado de partida e o efeito da decisão nele estão em `apurado-da-ficha.ts`.
 
 ## Verificação
 

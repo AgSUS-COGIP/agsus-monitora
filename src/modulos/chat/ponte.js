@@ -109,10 +109,13 @@ export function irParaLink(
   janela.navigate(link.view);
   if (link.view === "config" && link.secao)
     abrirSecaoDeConfiguracao(documento, link.secao);
+  // As telas carregam sob demanda (src/app/tela-sob-demanda.js): espera montar.
+  const pronta = (controle) =>
+    Promise.resolve(controle?.carregar?.()).then(() => controle);
   if (link.edital && link.view === "classificacao")
-    void janela.classificacaoController?.estado
-      ?.escolherEdital?.(link.edital.id)
-      ?.catch?.(() => {});
+    void pronta(janela.classificacaoController)
+      .then((controle) => controle?.estado?.escolherEdital?.(link.edital.id))
+      .catch(() => {});
   if (link.edital && link.view === "conduzir-entrevistas")
     void Promise.resolve(
       janela.conduzirEntrevistasController?.abrirEdital?.(link.edital.id),
@@ -128,6 +131,7 @@ export function irParaLink(
   recebe o aviso do próprio módulo (o banco recusa).
 */
 async function abrirNaAvaliacaoDocumental(link, janela) {
+  await janela.avaliacaoDocumentalController?.carregar?.();
   const controle = janela.avaliacaoDocumentalController;
   if (!controle?.estado || !controle?.fila) return false;
   controle.estado.mudarVisao?.("fila");
