@@ -1,8 +1,12 @@
 import { readFileSync } from "node:fs";
 import { act } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { DEFAULT_ACCESS_BRANDING } from "../../src/lib/access-branding.js";
 import {
+  ACCESS_INSTRUCTION,
+  DEFAULT_ACCESS_BRANDING,
+} from "../../src/lib/access-branding.js";
+import {
+  INSTITUICAO,
   SLOGAN,
   ligarEntradaAPagina,
   montarEntrada,
@@ -127,6 +131,33 @@ describe("cartão provisório do index.html", () => {
     );
     expect(provisorio).toContain(`<span>${TEXTO_DO_BOTAO}</span>`);
     expect(provisorio).toContain(SLOGAN);
+    expect(provisorio).toContain(ACCESS_INSTRUCTION);
+    expect(provisorio).toContain(INSTITUICAO);
+  });
+
+  /*
+    Slogan, nome da Agência e texto do botão ficam numa linha só, em qualquer
+    largura (fonte que encolhe e, no limite, reticências): quebrar em duas
+    linhas mudava a altura do cartão.
+  */
+  it("slogan, nome da Agência e texto do botão nunca quebram linha", () => {
+    const css =
+      readFileSync("src/styles/app.css", "utf8") +
+      readFileSync("src/styles/platform-shell.css", "utf8");
+    const regra = (seletor) => {
+      const inicio = css.lastIndexOf(`${seletor} {`);
+      expect(inicio, seletor).toBeGreaterThan(-1);
+      return css.slice(inicio, css.indexOf("}", inicio));
+    };
+    for (const seletor of [
+      ".login-card .login-subtitle",
+      ".login-card .login-instituicao > span",
+      ".login-screen .google-login-btn > span",
+    ]) {
+      expect(regra(seletor)).toContain("white-space: nowrap");
+      expect(regra(seletor)).toContain("text-overflow: ellipsis");
+    }
+    expect(regra(".login-screen .google-login-btn")).toContain("height: 56px");
   });
 
   it("o botão provisório é inerte (sem clique nem foco)", () => {
@@ -134,6 +165,29 @@ describe("cartão provisório do index.html", () => {
     expect(botao).toMatch(/^<button[^>]*\bdisabled\b/);
     expect(botao).toMatch(/^<button[^>]*tabindex="-1"/);
     expect(botao).not.toContain("id=");
+  });
+
+  /*
+    A mesma árvore, peça por peça: tag, classes, medidas reservadas (width e
+    height do logo e dos ícones) e o estado do texto do botão. Uma peça a mais
+    ou a menos de um lado é o cartão mudando de altura ao recarregar.
+  */
+  it("tem a mesma árvore e as mesmas medidas do cartão do React", async () => {
+    const assinatura = (elemento) => ({
+      tag: elemento.tagName.toLowerCase(),
+      classes: elemento.getAttribute("class") || "",
+      medidas: ["width", "height", "viewBox", "data-texto"]
+        .map((nome) => elemento.getAttribute(nome))
+        .join("|"),
+      filhos: [...elemento.children].map(assinatura),
+    });
+    const pagina = new DOMParser().parseFromString(provisorio, "text/html");
+    const doIndice = assinatura(pagina.querySelector(".login-outer"));
+    await montar();
+    const doReact = assinatura(
+      document.querySelector("#telaDeEntrada .login-outer"),
+    );
+    expect(doReact).toEqual(doIndice);
   });
 });
 
@@ -194,19 +248,60 @@ describe("tela de acesso", () => {
     expect(document.querySelector(".login-cogip")).toBeNull();
   });
 
-  it("logo que não carrega some", async () => {
+  it("logo que não carrega some sem sair do lugar (tamanho reservado)", async () => {
     await montar();
+    expect($("loginLogo").getAttribute("width")).toBe("52");
+    expect($("loginLogo").getAttribute("height")).toBe("52");
     await act(async () => $("loginLogo").dispatchEvent(new Event("error")));
-    expect($("loginLogo").hidden).toBe(true);
+    expect($("loginLogo").hidden).toBe(false);
+    expect($("loginLogo").hasAttribute("data-falhou")).toBe(true);
   });
 
-  it("Google desligado nas configurações: sem botão", async () => {
-    await montar({
-      sessao: sessaoFalsa({
+  it("Google desligado nas configurações: sem botão, mas o lugar fica", async () => {
+    const sessao = sessaoFalsa();
+    await montar({ sessao });
+    expect($("googleLoginBtn")).not.toBeNull();
+    await act(async () =>
+      sessao.definir({
         configuracao: configuracaoDaEntrada({ auth_google_enabled: "false" }),
       }),
-    });
+    );
     expect($("googleLoginBtn")).toBeNull();
+    const reservado = document.querySelector(".google-login-btn--reservado");
+    expect(reservado.classList.contains("google-login-btn")).toBe(true);
+    expect(reservado.getAttribute("aria-hidden")).toBe("true");
+  });
+
+  it("o texto do botão só aparece quando a marca é conhecida", async () => {
+    const marca = criarMarcaDaEntrada();
+    await montar({ marca });
+    expect($("googleLoginBtn").dataset.texto).toBe("pendente");
+    await act(async () =>
+      marca.definir({ textoDoBotao: "Entrar com a AgSUS", resolvida: true }),
+    );
+    expect($("googleLoginBtn").dataset.texto).toBe("pronto");
+    expect($("googleLoginText").textContent).toBe("Entrar com a AgSUS");
+  });
+
+  it("o texto da configuração já basta para mostrar o botão", async () => {
+    await montar({
+      sessao: sessaoFalsa({
+        configuracao: configuracaoDaEntrada({
+          auth_google_button_text: "Da configuração",
+        }),
+      }),
+    });
+    expect($("googleLoginBtn").dataset.texto).toBe("pronto");
+  });
+
+  it("a linha de apoio e o rodapé institucional com o escudo", async () => {
+    await montar();
+    expect($("loginApoio").textContent).toBe(ACCESS_INSTRUCTION);
+    expect($("loginInstituicao").textContent).toBe(INSTITUICAO);
+    expect(
+      $("loginInstituicao").querySelector("svg.login-instituicao-icone"),
+    ).not.toBeNull();
+    expect($("googleLoginBtn").querySelector("svg.gmark")).not.toBeNull();
   });
 
   it("o botão chama a sessão e fica ocupado enquanto entra", async () => {

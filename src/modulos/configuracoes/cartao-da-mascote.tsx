@@ -6,7 +6,7 @@ import {
   ESTADOS_DA_MASCOTE,
   type EstadoDaMascote,
 } from "../../lib/estado-da-aya.ts";
-import { Mascote } from "../aya/mascote/mascote.tsx";
+import { ALTURA_DA_ARARA, Mascote } from "../aya/mascote/mascote.tsx";
 
 /*
   Configurações › Marca › Mascote: a arara da Aya em cada estado, para o
@@ -52,18 +52,13 @@ export function CartaoDaMascote() {
       <div className="cartao-da-mascote__palco">
         <Mascote
           estado={estado}
-          tamanho={176}
+          tamanho={220}
           rotulo={`Aya, ${ROTULOS[estado].toLowerCase()}`}
         />
         <div className="cartao-da-mascote__tamanhos" aria-hidden="true">
-          <span className="aya-retrato">
-            <Mascote estado={estado} enquadramento="retrato" tamanho={58} />
-          </span>
-          <span className="aya-retrato cartao-da-mascote__retrato-pequeno">
-            <Mascote estado={estado} enquadramento="retrato" tamanho={42} />
-          </span>
+          <Mascote estado={estado} tamanho={ALTURA_DA_ARARA} />
+          <Mascote estado={estado} tamanho={56} />
           <Mascote estado={estado} tamanho={32} />
-          <Mascote estado={estado} tamanho={20} />
         </div>
       </div>
       <Segmentado

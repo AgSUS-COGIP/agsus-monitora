@@ -26,61 +26,49 @@
 /* ---------- Pivôs ---------- */
 
 .mascote__respiro {
-  transform-origin: 120px 166px;
+  transform-origin: 100px 172px;
 }
 .mascote__salto {
-  transform-origin: 120px 176px;
+  transform-origin: 100px 178px;
 }
 .mascote__cabeca-pose,
 .mascote__cabeca {
-  transform-origin: 124px 80px;
+  transform-origin: 97px 60px;
 }
 .mascote__penas-da-cabeca {
-  transform-origin: 114px 40px;
+  transform-origin: 88px 34px;
 }
 .mascote__palpebra {
-  transform-origin: 134px 43px;
+  transform-origin: 102.8px 25.2px;
   transform: scaleY(0);
   transition: transform 260ms ease-in-out;
 }
-.mascote[data-versao="simples"] .mascote__palpebra {
-  transform-origin: 14.5px 8.5px;
-}
 .mascote__iris {
-  transform: translate(
-    calc(var(--olho-x) * 1.7px),
-    calc(var(--olho-y) * 1.5px)
-  );
+  transform: translate(calc(var(--olho-x) * 1.1px), calc(var(--olho-y) * 1px));
   transition: transform 160ms ease-out;
-}
-.mascote[data-versao="simples"] .mascote__iris {
-  transform: translate(
-    calc(var(--olho-x) * 0.8px),
-    calc(var(--olho-y) * 0.8px)
-  );
 }
 .mascote__olho-fechado {
   opacity: 0;
   transition: opacity 200ms ease;
 }
 .mascote__bico-inferior {
-  transform-origin: 145px 69px;
+  transform-origin: 108px 39px;
   transition: transform 200ms ease-out;
 }
 .mascote__asa-pose,
 .mascote__asa {
-  transform-origin: 118px 88px;
+  transform-origin: 90px 66px;
 }
 .mascote__asa-pose {
   transition: transform var(--mascote-troca);
 }
 .mascote__asa-aberta-pose,
 .mascote__asa-aberta {
-  transform-origin: 145px 110px;
+  transform-origin: 127px 86px;
 }
 .mascote__asa-aberta-pose {
   opacity: 0;
-  transform: rotate(62deg) scale(0.6);
+  transform: rotate(50deg) scale(0.55);
   transition:
     transform var(--mascote-troca),
     opacity 260ms ease;
@@ -92,13 +80,13 @@
   opacity: 0;
 }
 .mascote__pena-solta:nth-child(1) {
-  transform-origin: 100px 104px;
+  transform-origin: 74px 100px;
 }
 .mascote__pena-solta:nth-child(2) {
-  transform-origin: 162px 126px;
+  transform-origin: 132px 118px;
 }
 .mascote__pena-solta:nth-child(3) {
-  transform-origin: 124px 88px;
+  transform-origin: 100px 84px;
 }
 .mascote__sono {
   opacity: 0;
@@ -162,7 +150,7 @@
   animation: mascote-pula 0.72s cubic-bezier(0.3, 0, 0.4, 1) infinite;
 }
 .mascote[data-estado="comemorando"] .mascote__asa-pose {
-  transform: rotate(-8deg);
+  transform: rotate(-3deg);
 }
 .mascote[data-estado="comemorando"] .mascote__asa {
   animation: mascote-bate-asa 0.36s ease-in-out infinite alternate;
@@ -294,7 +282,7 @@
     transform: translateY(0) scale(0.98, 1.02);
   }
   45% {
-    transform: translateY(-15px) scale(1, 1);
+    transform: translateY(-14px) scale(1, 1);
   }
   80% {
     transform: translateY(0) scale(1.04, 0.96);
@@ -302,10 +290,10 @@
 }
 @keyframes mascote-bate-asa {
   from {
-    transform: rotate(4deg);
+    transform: rotate(2deg);
   }
   to {
-    transform: rotate(-34deg);
+    transform: rotate(-9deg);
   }
 }
 @keyframes mascote-bate-asa-aberta {

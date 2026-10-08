@@ -512,7 +512,7 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'Sou eu: uma arara-azul (Anodorhynchus hyacinthinus), a ave azul-cobalto de anel amarelo nos olhos e faixa amarela no bico, que vive no Pantanal e no Cerrado. Eu me mexo para mostrar o que estou fazendo: respiro e pisco quando estou parada; inclino a cabeça e sigo o ponteiro com o olho quando você chega perto ou abre o painel; olho para cima enquanto procuro a resposta; mexo o bico enquanto o texto aparece; bato as asas nas comemorações; aceno uma vez quando você entra; e cochilo depois de alguns minutos sem uso (qualquer clique, tecla ou movimento me acorda). Se o seu sistema pede menos movimento, eu só pisco; se você desligou as comemorações, eu não comemoro. Em Configurações › Marca, o cartão "Mascote" mostra cada estado.',
-    fato: "A mascote da Aya é uma arara-azul animada com sete estados: parada, atenta, falando, pensando, comemorando, dormindo e acenando.",
+    fato: "A mascote da Aya é uma arara-azul-grande de corpo inteiro, em pé num poleiro, desenhada a partir da ilustração da Aya e animada em sete estados: parada, atenta, falando, pensando, comemorando, dormindo e acenando.",
     fonte: "src/modulos/aya/mascote/; src/lib/estado-da-aya.ts",
     abrir: "config:marca",
   },
@@ -3110,7 +3110,7 @@ export const VERBETES_AYA = Object.freeze([
       "slogan do login",
     ],
     resposta:
-      'Em Configurações, a seção Tela de acesso define a saudação (o título grande do cartão de entrada) e o botão Entrar com Google: se ele aparece, o texto dele e o domínio sugerido. Também define quais domínios de e-mail podem entrar. O slogan "Monitoramento de Processos Seletivos" é fixo. A arte de fundo, o logo e a cor do cartão ficam na seção Aparência. A prévia ao lado mostra a tela como ela vai ficar.',
+      'Em Configurações, a seção Tela de acesso define a saudação (o título grande do cartão de entrada) e o botão do Google: se ele aparece, o texto dele (vazio, fica "Entrar com Google") e o domínio sugerido. Também define quais domínios de e-mail podem entrar. São fixos o slogan "Monitoramento de Processos Seletivos", a linha "Acesse com sua conta institucional." acima do botão e o rodapé com o nome da Agência. A arte de fundo, o logo e a cor do cartão ficam na seção Aparência. A prévia ao lado mostra a tela como ela vai ficar.',
     fato: "",
     fonte: "interface do MONITORA",
   },
@@ -3125,7 +3125,7 @@ export const VERBETES_AYA = Object.freeze([
       "botao do google sumiu",
     ],
     resposta:
-      "Com o Login Google em Inativo, o botão Entrar com Google some da tela de entrada. Como esse é o acesso institucional principal, as pessoas podem ficar sem conseguir entrar; por isso, ao salvar a desativação, o sistema pede confirmação antes de publicar.",
+      "Com o Login Google em Inativo, o botão Entrar com Google some da tela de entrada (o espaço dele fica vazio). Como esse é o acesso institucional principal, as pessoas podem ficar sem conseguir entrar; por isso, ao salvar a desativação, o sistema pede confirmação antes de publicar.",
     fato: "",
     fonte: "interface do MONITORA",
   },
@@ -5488,7 +5488,7 @@ export const VERBETES_AYA = Object.freeze([
       'Em Configurações › Módulos e abas (só o administrador global), dá para pôr o sistema inteiro em manutenção, ativar, desativar ou pôr em manutenção cada área, cada aba (em todas as áreas ou só numa) e cada painel externo, e ligar o selo BETA de uma aba. Nada grava na hora: as mudanças vão juntas em "Revisar e salvar", com motivo (3 a 500 caracteres). O histórico mostra as 50 últimas mudanças. Pelo menos uma área precisa ficar ativa.',
     fato: "",
     fonte:
-      "src/modulos/modulos/modulos.jsx; supabase/migrations/20260930140000_modulos_e_manutencao.sql",
+      "src/modulos/modulos/modulos.tsx; supabase/migrations/20260930140000_modulos_e_manutencao.sql",
     abrir: "config:modulos",
   },
   {
@@ -5530,7 +5530,7 @@ export const VERBETES_AYA = Object.freeze([
     resposta:
       "O selo BETA aparece ao lado do nome da aba no menu e marca uma aba ainda em teste. É ligado por aba, em Configurações › Módulos e abas, pelo administrador global, e vale em todas as áreas.",
     fato: "",
-    fonte: "src/lib/menu-lateral.js; src/lib/modulos-e-abas.js",
+    fonte: "src/lib/menu-lateral.js; src/lib/modulos-e-abas.ts",
   },
   {
     arquivo: "regras-dos-modulos-e-abas.md",
