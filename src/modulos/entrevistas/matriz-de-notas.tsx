@@ -22,6 +22,10 @@ import { animar, CelulaDeNota, type OpcaoDeNota } from "./campo-de-nota.tsx";
   vazia desta matriz ou, com tudo preenchido, chama `aoFim` (a ficha passa
   ao próximo avaliador ou ao Salvar).
 
+  Linha sem células (`aviso`, avaliador por competência): a competência que
+  não é deste avaliador aparece esmaecida, com "avaliada por …"; a digitação
+  passa direto por ela.
+
   Cada linha mostra a média dela num chip (vermelho abaixo do mínimo, verde
   ok) quando há aspectos. `focarAoMontar` foca a primeira célula vazia
   editável quando a matriz aparece ou quando passa a verdadeiro (ao abrir a
@@ -54,6 +58,8 @@ export type LinhaDaMatriz = {
   media: number | null;
   abaixoDoMinimo: boolean;
   incompleta: boolean;
+  /** Linha que não é para lançar ("avaliada por …"): sem células, esmaecida. */
+  aviso?: string;
 };
 
 export type PropriedadesDaMatriz = {
@@ -186,13 +192,20 @@ export function MatrizDeNotas({
           className={classes(
             "entrevistas-matriz-linha",
             linha.incompleta && "is-incompleta",
+            linha.aviso && "is-nao-atribuida",
           )}
           data-linha={linha.id}
+          data-atribuida={linha.aviso ? "nao" : undefined}
         >
           <div className="entrevistas-matriz-titulo" title={linha.descricao}>
             <span>{linha.titulo}</span>
             {linha.detalhe ? <small>{linha.detalhe}</small> : null}
           </div>
+          {linha.aviso ? (
+            <span className="entrevistas-matriz-nao-atribuida">
+              {linha.aviso}
+            </span>
+          ) : null}
           {linha.celulas.map((celula, j) => (
             <CelulaDeNota
               key={celula.chave}
@@ -228,7 +241,7 @@ export function MatrizDeNotas({
               aoFocar={() => aoFocar?.(celula.chave)}
             />
           ))}
-          {mostrarMedia ? (
+          {mostrarMedia && !linha.aviso ? (
             <span
               className="entrevistas-matriz-media"
               data-situacao={

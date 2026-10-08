@@ -14,10 +14,14 @@ saúde das cargas, agenda, histórico, acompanhamento, formulário de opções, 
 `src/lib/saude-das-cargas.ts` e `src/lib/painel-dos-robos.ts`. A validação das opções em
 `src/lib/robos-de-carga.js` continua compartilhada com a Avaliação documental, com contratos JSDoc.
 Em Entrevistas, as peças novas do Painel e de Conduzir (`agenda-e-empates.tsx`, `conduzir.tsx`,
-`fila-do-dia.tsx`, as peças da ficha de notas — cabeçalho, abas, matriz, célula, resultado —, `tipos.ts`,
-`src/lib/painel-de-entrevistas.ts`, `src/lib/fila-de-conducao.ts` e `src/lib/digitacao-de-notas.ts`)
-já nascem em TypeScript. Os mapas
-continuam em JavaScript, com contratos JSDoc na integração com a tela. Outros módulos
+`fila-do-dia.tsx`, as peças da ficha de notas — cabeçalho, abas, matriz, célula, resultado —, o resumo das
+regras e as competências de cada membro da banca (`resumo-das-regras.tsx`, `competencias-do-membro.tsx`), `tipos.ts`,
+`src/lib/painel-de-entrevistas.ts`, `src/lib/fila-de-conducao.ts`, `src/lib/digitacao-de-notas.ts` e
+`src/lib/resumo-da-entrevista.ts`)
+já nascem em TypeScript. O Mapa de Projetos está em TypeScript, incluindo carregador,
+cache, mapa, lista, balões, integração do editor e regras em `src/lib/visao-geral-da-area.ts`.
+O mapa da Saúde Indígena e as peças comuns de Leaflet e edição continuam em JavaScript,
+com contratos JSDoc na integração. Outros módulos
 combinam JavaScript/JSX com migrações pontuais para TypeScript: a ficha da Avaliação documental
 tem os componentes em `src/modulos/avaliacao-documental/ficha/*.tsx` (contratos em `tipos.ts`) e
 `Popover` está em `src/ui/popover.tsx`. Componentes e helpers
@@ -94,6 +98,10 @@ A Busca global também está migrada: painel, atalhos, realce, seleção, montag
 em `src/lib/busca-global.ts`. Inclui o snapshot compartilhado do monitoramento, validação
 das linhas e unidades e o hook de área atual. Contratos e limites estão em
 [../src/componentes/busca-global/README.md](../src/componentes/busca-global/README.md).
+
+O Mapa de Projetos também está migrado; contratos, normalização dos municípios e limites
+da integração com as peças comuns estão em
+[../src/modulos/mapa-de-projetos/README.md](../src/modulos/mapa-de-projetos/README.md).
 
 Escolher um módulo por entrega, levantar os consumidores e manter o comportamento coberto
 pelos testes. Declarar contratos de dados e ações sem `any` ou supressões de erros. Atualizar

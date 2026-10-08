@@ -1,7 +1,13 @@
 import { describe, expect, it } from "vitest";
 import {
   aplicarRoteiroNaConfiguracao,
+  atribuicoesDaBanca,
+  avaliaACompetencia,
+  avaliadoresDaCompetencia,
   avaliadoresDaFicha,
+  avaliaTodas,
+  competenciasDoAvaliador,
+  competenciasSemAvaliador,
   calcularEntrevista,
   completarMembrosPelaComposicao,
   dadosDaConfiguracaoParaSalvar,
@@ -422,10 +428,142 @@ describe("configuração do edital", () => {
       banca: NIVEIS.banca_padrao,
       lancamento: "AVALIADOR",
       avaliadores: [
-        { id: "a1", nome: "Ana", origem: "AgSUS", banca: 1, perfil: null },
-        { nome: "Bia", origem: "CONDISI", banca: 2, perfil: null },
+        {
+          id: "a1",
+          nome: "Ana",
+          origem: "AgSUS",
+          banca: 1,
+          perfil: null,
+          competencias: null,
+        },
+        {
+          nome: "Bia",
+          origem: "CONDISI",
+          banca: 2,
+          perfil: null,
+          competencias: null,
+        },
       ],
     });
+  });
+});
+
+describe("avaliador por competência", () => {
+  const COMPS = NIVEIS.competencias;
+  const ANA = { id: "a1", nome: "Ana", banca: 1, competencias: null };
+  const DSEI = { id: "a2", nome: "Davi", banca: 1, competencias: ["c2"] };
+
+  it("sem lista avalia todas; com lista, só as dela (na ordem do roteiro)", () => {
+    expect(competenciasDoAvaliador(ANA, COMPS)).toEqual([
+      "c1",
+      "c2",
+      "c3",
+      "c4",
+    ]);
+    expect(
+      competenciasDoAvaliador({ competencias: ["c4", "c1"] }, COMPS),
+    ).toEqual(["c1", "c4"]);
+    expect(avaliaTodas(ANA, COMPS)).toBe(true);
+    expect(avaliaTodas(DSEI, COMPS)).toBe(false);
+    expect(avaliaACompetencia(DSEI, "c2", COMPS)).toBe(true);
+    expect(avaliaACompetencia(DSEI, "c1", COMPS)).toBe(false);
+    // Lista de outro roteiro (nenhuma competência deste): conta como todas.
+    expect(avaliaTodas({ competencias: ["x9"] }, COMPS)).toBe(true);
+    expect(
+      avaliadoresDaCompetencia([ANA, DSEI], "c1", COMPS).map((a) => a.id),
+    ).toEqual(["a1"]);
+    expect(atribuicoesDaBanca([ANA, DSEI], COMPS)).toEqual({ a2: ["c2"] });
+  });
+
+  it("cada competência precisa de alguém em cada banca", () => {
+    expect(competenciasSemAvaliador([ANA, DSEI], COMPS)).toEqual([]);
+    const faltas = competenciasSemAvaliador(
+      [
+        { ...ANA, competencias: ["c1"] },
+        DSEI,
+        { id: "a3", banca: 2, competencias: null },
+        { id: "a4", banca: 1, ativo: false },
+      ],
+      COMPS,
+    );
+    expect(faltas.map((f) => `${f.banca}:${f.competencia.id}`)).toEqual([
+      "1:c3",
+      "1:c4",
+    ]);
+  });
+
+  it("a configuração valida, normaliza 'todas' e o roteiro novo zera as escolhas", () => {
+    const base = {
+      roteiro: "r1",
+      banca: [],
+      lancamento: "SECRETARIA",
+      avaliadores: [
+        { ...ANA, chave: "k1", origem: "AgSUS", perfil: "", banca: "1" },
+        { ...DSEI, chave: "k2", origem: "DSEI", perfil: "", banca: "1" },
+      ],
+    };
+    expect(errosDaConfiguracao(base, NIVEIS)).toEqual({});
+    const semNinguem = {
+      ...base,
+      avaliadores: [
+        { ...base.avaliadores[0], competencias: ["c1"] },
+        { ...base.avaliadores[1], competencias: [] },
+      ],
+    };
+    const erros = errosDaConfiguracao(semNinguem, NIVEIS);
+    expect(erros["avaliador.k2.competencias"]).toBeTruthy();
+    expect(erros.cobertura).toContain("Banca 1: ninguém avalia “C2”.");
+    const todas = {
+      ...base,
+      avaliadores: [
+        { ...base.avaliadores[1], competencias: ["c1", "c2", "c3", "c4"] },
+      ],
+    };
+    expect(
+      dadosDaConfiguracaoParaSalvar(todas, NIVEIS).avaliadores[0].competencias,
+    ).toBeNull();
+    expect(
+      dadosDaConfiguracaoParaSalvar(base, NIVEIS).avaliadores.map(
+        (a) => a.competencias,
+      ),
+    ).toEqual([null, ["c2"]]);
+    expect(
+      rascunhoDaConfiguracao({
+        avaliadores: [{ ...DSEI, origem: "DSEI", ativo: true }],
+      }).avaliadores[0].competencias,
+    ).toEqual(["c2"]);
+    const outro = aplicarRoteiroNaConfiguracao(base, { ...NIVEIS, id: "r9" });
+    expect(outro.avaliadores.map((a) => a.competencias)).toEqual([null, null]);
+    const mesmo = aplicarRoteiroNaConfiguracao(base, NIVEIS);
+    expect(mesmo.avaliadores[1].competencias).toEqual(["c2"]);
+  });
+
+  it("cálculo: só a nota de quem avalia conta; o progresso conta só o atribuído", () => {
+    const avaliacoes = [
+      ...notas({ c1: [4, 0], c2: [3, 5], c3: [3, 1], c4: [2, 0] }),
+    ];
+    const sem = calcularEntrevista({
+      roteiro: NIVEIS,
+      compareceu: "S",
+      avaliacoes,
+    });
+    expect(sem.parecer).toBe("INAPTO");
+    const com = calcularEntrevista({
+      roteiro: NIVEIS,
+      compareceu: "S",
+      avaliacoes,
+      atribuicoes: atribuicoesDaBanca([ANA, DSEI], COMPS),
+    });
+    expect(com.competencias.map((c) => c.nota)).toEqual([4, 4, 3, 2]);
+    expect(com.competencias.map((c) => c.quantidade)).toEqual([1, 2, 1, 1]);
+    expect(com.parecer).toBe("APTO");
+    expect(
+      progressoDasNotas(
+        { avaliacoes: notas({ c1: [4, 0], c2: [3] }) },
+        [ANA, DSEI],
+        COMPS,
+      ),
+    ).toEqual({ lancadas: 2, esperadas: 5 });
   });
 });
 

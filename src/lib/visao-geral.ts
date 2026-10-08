@@ -22,7 +22,7 @@ import type {
 
   Saúde Indígena, SEDE e Projetos abrem a mesma página, com os editais da
   área atual (`CO_AREA`, `linhasDaArea`). O que muda por área é o bloco do
-  mapa (`visao-geral-da-area.js`) e, em Projetos, "Processos por projeto"; o
+  mapa (`visao-geral-da-area.ts`) e, em Projetos, "Processos por projeto"; o
   resto mora aqui.
 
   Cada linha ganha, antes do recorte (`enriquecerLinhas`), a fase calculada

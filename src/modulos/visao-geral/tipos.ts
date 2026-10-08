@@ -245,7 +245,7 @@ export type PropsDoBloco = {
   children?: ReactNode;
 };
 export type CarregadorDeMunicipios = ReturnType<
-  typeof import("../mapa-de-projetos/carregador.js").criarCarregadorDeMunicipios
+  typeof import("../mapa-de-projetos/carregador.ts").criarCarregadorDeMunicipios
 >;
 export type PropsDaTela = {
   estado: EstadoDaVisaoGeral;

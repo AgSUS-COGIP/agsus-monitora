@@ -2,6 +2,8 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import {
   aspectosDoRoteiro,
   aspectosIncompletos,
+  atribuicoesDaBanca,
+  avaliaACompetencia,
   avaliacoesDoMapa,
   avaliadoresDaFicha,
   bancasDoEdital,
@@ -16,6 +18,7 @@ import {
   rotuloDoLancamento,
 } from "../../lib/conducao-de-entrevista.js";
 import { textoDaEscala } from "../../lib/digitacao-de-notas.ts";
+import { listaBr } from "../../lib/resumo-da-entrevista.ts";
 import {
   lerNumero,
   maximoDaCompetencia,
@@ -61,6 +64,13 @@ import { numeroBR, ResultadoDaFicha } from "./resultado-da-ficha.tsx";
 
   Lançamento "Cada avaliador lança a sua": só as notas do membro ligado ao
   perfil ficam abertas (o administrador global lança por todos).
+
+  Avaliador por competência (a configuração da banca diz quais competências
+  cada membro avalia; padrão: todas): na aba do avaliador, as competências
+  que não são dele aparecem esmaecidas ("avaliada por …"), sem células; no
+  modo por competência, só os avaliadores dela. Contadores ("3/12", "faltam N
+  notas") e a digitação contam só as células atribuídas; a prévia faz a
+  média só de quem avalia (o banco recusa a nota fora da competência).
 
   Teclado: dígitos lançam e avançam; Enter/setas andam; Ctrl+Enter salva;
   Esc volta à lista. Celular: um avaliador por vez, uma competência por
@@ -205,14 +215,20 @@ export function FichaDoCandidato({
   );
   const bancas = bancasDoEdital(dados.avaliadores);
   const avaliadores = avaliadoresDaFicha(dados.avaliadores, convocado, f.banca);
+  const avalia = (a, c) => avaliaACompetencia(a, c.id, competencias);
+  const atribuicoes = useMemo(
+    () => atribuicoesDaBanca(dados.avaliadores, competencias),
+    [dados.avaliadores, competencias],
+  );
   const resultado = useMemo(
     () =>
       calcularEntrevista({
         roteiro,
         compareceu: f.compareceu,
         avaliacoes: avaliacoesDoMapa(f.mapa, aspectos),
+        atribuicoes,
       }),
-    [roteiro, f.compareceu, f.mapa, aspectos],
+    [roteiro, f.compareceu, f.mapa, aspectos, atribuicoes],
   );
   const motivos = motivosCurtos(
     motivosDoParecer(resultado, f.compareceu, roteiro),
@@ -280,10 +296,15 @@ export function FichaDoCandidato({
     preenchidas: pares.filter(([c, chave]) => valida(c, chave)).length,
     total: pares.length,
   });
+  // Só as células atribuídas: as competências que o avaliador avalia.
   const paresDoAvaliador = (a) =>
-    competencias.flatMap((c) => chavesDe(c, a).map((x) => [c, x.chave]));
+    competencias
+      .filter((c) => avalia(a, c))
+      .flatMap((c) => chavesDe(c, a).map((x) => [c, x.chave]));
   const paresDaCompetencia = (c) =>
-    avaliadores.flatMap((a) => chavesDe(c, a).map((x) => [c, x.chave]));
+    avaliadores
+      .filter((a) => avalia(a, c))
+      .flatMap((a) => chavesDe(c, a).map((x) => [c, x.chave]));
   const progresso = contar(avaliadores.flatMap(paresDoAvaliador));
 
   const abas =
@@ -303,7 +324,9 @@ export function FichaDoCandidato({
           titulo: `${i + 1}. ${c.nome}`,
           ...contar(paresDaCompetencia(c)),
           pendente: incompletas.some((x) => x.competencia === c.id),
-          editavel: avaliadores.some((a) => podeLancarPor(dados, a)),
+          editavel: avaliadores.some(
+            (a) => avalia(a, c) && podeLancarPor(dados, a),
+          ),
         }));
   const abaPadrao =
     abas.find((x) => x.editavel && x.preenchidas < x.total) ||
@@ -349,6 +372,13 @@ export function FichaDoCandidato({
     : modo === "avaliador"
       ? competencias.map((c, i) => {
           const a = avaliadores.find((x) => x.id === ativa.id);
+          if (a && !avalia(a, c))
+            return linhaNaoAtribuida({
+              id: c.id,
+              titulo: `${i + 1}. ${c.nome}`,
+              c,
+              a,
+            });
           return linhaDaMatriz({
             id: c.id,
             titulo: `${i + 1}. ${c.nome}`,
@@ -358,18 +388,23 @@ export function FichaDoCandidato({
             a,
           });
         })
-      : avaliadores.map((a) => {
-          const c = competencias.find((x) => x.id === ativa.id);
-          return linhaDaMatriz({
-            id: a.id,
-            titulo: a.nome,
-            detalhe: [a.origem, a.ativo === false ? "saiu da banca" : ""]
-              .filter(Boolean)
-              .join(" · "),
-            c,
-            a,
+      : avaliadores
+          .filter((a) => {
+            const c = competencias.find((x) => x.id === ativa.id);
+            return !c || avalia(a, c);
+          })
+          .map((a) => {
+            const c = competencias.find((x) => x.id === ativa.id);
+            return linhaDaMatriz({
+              id: a.id,
+              titulo: a.nome,
+              detalhe: [a.origem, a.ativo === false ? "saiu da banca" : ""]
+                .filter(Boolean)
+                .join(" · "),
+              c,
+              a,
+            });
           });
-        });
 
   function detalheDaCompetencia(c) {
     const minimo = minimoEmPontos(c);
@@ -381,6 +416,25 @@ export function FichaDoCandidato({
     ]
       .filter(Boolean)
       .join(" · ");
+  }
+
+  /* A competência que não é deste avaliador: esmaecida, sem células, com quem a avalia. */
+  function linhaNaoAtribuida({ id, titulo, c, a }) {
+    const outros = avaliadores
+      .filter((x) => x.id !== a.id && avalia(x, c))
+      .map((x) => x.nome);
+    return {
+      id,
+      titulo,
+      ...escalaDe(c),
+      media: null,
+      abaixoDoMinimo: false,
+      incompleta: false,
+      celulas: [],
+      aviso: outros.length
+        ? `avaliada por ${listaBr(outros)}`
+        : "ninguém desta banca avalia",
+    };
   }
 
   function linhaDaMatriz({ id, titulo, detalhe, descricao, c, a }) {
@@ -680,6 +734,12 @@ export function FichaDoCandidato({
                     aoFim={() => setPedidoDeAvanco((n) => n + 1)}
                     aoFocar={setEmFoco}
                   />
+                  {modo === "competencia" && ativa && !linhas.length ? (
+                    <Aviso tom="warning">
+                      Ninguém desta banca avalia esta competência. Ajuste na
+                      configuração da banca.
+                    </Aviso>
+                  ) : null}
                   <LegendaDaEscala niveis={niveis} destaque={destaque} />
                 </div>
               </div>

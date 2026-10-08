@@ -687,13 +687,13 @@ export const CONTRATO_RPC = {
     argumentos: ["p_edital"],
     critica: false,
     resumo:
-      "Condução da entrevista de um edital: configuração (roteiro, banca, lançamento), a lista de convocação vigente da Classificação com o retrato (lista_convocacao), a regra vigente da Classificação (convocação, desempate e empate final — 20261008130000), banca e convocados com as notas; pode_editar, pode_gerar_lista, admin_global e meu_perfil.",
+      "Condução da entrevista de um edital: configuração (roteiro, banca, lançamento), a lista de convocação vigente da Classificação com o retrato (lista_convocacao), a regra vigente da Classificação (convocação, desempate e empate final — 20261008130000), banca (avaliadores[].competencias: as que cada membro avalia, nulo = todas — 20261008170000) e convocados com as notas; pode_editar, pode_gerar_lista, admin_global e meu_perfil.",
   },
   configurar_entrevista_edital: {
     argumentos: ["p_edital", "p_dados"],
     critica: false,
     resumo:
-      "Grava roteiro, composição da banca, modo de lançamento e membros da banca do edital (23514 se trocar o roteiro com notas); convocação e vagas são as da Classificação. Devolve o payload do edital.",
+      "Grava roteiro, composição da banca, modo de lançamento e membros da banca do edital, com as competências de cada um (avaliadores[].competencias: nulo = todas, lista = só estas; 22023 lista vazia, competência de fora ou banca com competência sem avaliador; 23514 tirar competência de quem já deu nota ou trocar o roteiro com notas); convocação e vagas são as da Classificação. Devolve o payload do edital.",
   },
   convocar_para_entrevista: {
     argumentos: ["p_edital", "p_lista", "p_analises"],
@@ -735,7 +735,7 @@ export const CONTRATO_RPC = {
     argumentos: ["p_entrevista", "p_dados"],
     critica: false,
     resumo:
-      "Lança/corrige notas (roteiro com aspectos: todos os aspectos de cada avaliador) e comparecimento de um convocado (22023 fora da escala ou aspecto faltando; 42501 no modo AVALIADOR para nota de outro) e recalcula o resultado. Devolve o payload do edital.",
+      "Lança/corrige notas (roteiro com aspectos: todos os aspectos de cada avaliador) e comparecimento de um convocado (22023 fora da escala ou aspecto faltando; 23514 avaliador em competência que não é dele; 42501 no modo AVALIADOR para nota de outro) e recalcula o resultado. Devolve o payload do edital.",
   },
 
   // ── Recursos dos candidatos (aba Recursos, 20260929120000_recursos.sql) ──

@@ -33,8 +33,16 @@ A convocação é uma só: a lista CONVOCACAO da Classificação (a última gera
 `convocar_para_entrevista(p_edital, p_lista, p_analises)` registra para a ficha só quem está nela
 (migration `20261005150000_convocacao_unica_da_entrevista.sql`). Sem lista gerada, o cálculo atual
 do motor (`obter_classificacao_do_edital`, só para ver) e o atalho para gerar na Classificação.
-Vagas imediatas e regra de convocação não se configuram aqui: Preparar › Configuração mostra as da Classificação,
-só leitura, com o botão para onde se mudam (Editais, Lista de aprovados, Classificação).
+Vagas imediatas e regra de convocação não se configuram aqui: o resumo "Regras da entrevista" (topo de
+Preparar) mostra as da Classificação em linguagem simples, com a tabelinha por vaga e, em "Ver detalhes",
+de onde vêm as vagas e o botão para onde se mudam (Editais, Lista de aprovados, Classificação).
+
+**Avaliador por competência** (migration `20261008170000`): cada membro da banca avalia todas as
+competências (padrão; sem vínculo) ou só as marcadas (`TB_ENTREVISTA_AVALIADOR_COMPETENCIA`,
+`avaliadores[].competencias`). A configuração valida (cada competência com alguém em cada banca), o
+lançamento recusa nota fora da competência do avaliador e o cálculo (banco, `calcularEntrevista`,
+Python) faz a média só de quem avalia; a ficha esmaece o que não é do avaliador e os contadores contam
+só as células atribuídas.
 
 ```
 entrevistas.jsx         Painel de entrevistas: <TelaDeEntrevistas> e montarEntrevistas()
@@ -49,8 +57,11 @@ conduzir.tsx            Conduzir entrevistas: <TelaDeConducao>, visões Fila/Pre
 fila-do-dia.tsx         a fila em cartões (avatar, horário, situação, notas), recortes e situações
 tipos.ts                contratos da tela nova com o estado da condução (JS)
 estado-da-conducao.js   store da condução e dos roteiros: editais, edital aberto, escritas (RPC), uma por vez
-conducao.jsx            SeletorDoEdital, PrepararEdital (configuração e convocação; regra, desempate e
-                        vagas da Classificação só leitura), DesempateDaClassificacao, liberação (admin global)
+conducao.jsx            SeletorDoEdital, PrepararEdital (resumo das regras, configuração e convocação; os
+                        detalhes da Classificação em "Ver detalhes"), DesempateDaClassificacao, liberação
+resumo-das-regras.tsx   "Regras da entrevista": quem é chamado (tabelinha por vaga), como a nota é calculada,
+                        quem avalia e o desempate, cada bloco com o "Editar" para onde se muda
+competencias-do-membro.tsx  "Competências que avalia" de cada membro (Todas / Só estas)
 ficha.jsx               ficha de notas em modo de análise (tela inteira, como a da Avaliação documental):
                         o estado, a gravação e o fluxo; por avaliador (padrão: uma aba por avaliador) ou
                         por competência (lembrado no navegador); componente independente (dados,
@@ -74,7 +85,9 @@ Regras puras em `src/lib/` (`entrevistas-do-painel.js`, `painel-de-entrevistas.t
 recorte, empates, agenda dos próximos dias —, `fila-de-conducao.ts` — fila, situações, recortes, contador —,
 `conducao-de-entrevista.js`,
 `convocacao-da-entrevista.js` — a lista da Classificação por vaga, quem está na ficha, avisos —,
-`roteiro-de-entrevista.js`, `digitacao-de-notas.ts` — a digitação da matriz —, `comemoracao.js`). Testes: `tests/modulos/entrevistas.test.js` (painel), `tests/modulos/conduzir-entrevistas.test.js`,
+`roteiro-de-entrevista.js`, `digitacao-de-notas.ts` — a digitação da matriz —, `resumo-da-entrevista.ts` — as
+regras em linguagem simples —, `comemoracao.js`). Testes: `tests/modulos/entrevistas.test.js` (painel), `tests/modulos/conduzir-entrevistas.test.js`,
 `tests/painel-e-conducao-de-entrevistas.test.js`, `tests/digitacao-de-notas.test.js`,
 `tests/convocacao-da-entrevista.test.js`, `tests/conducao-de-entrevista.test.js` e
-`tests/convocacao-unica-da-entrevista-migration.test.js`.
+`tests/convocacao-unica-da-entrevista-migration.test.js`, `tests/resumo-da-entrevista.test.js` e
+`tests/avaliador-por-competencia-migration.test.js`.

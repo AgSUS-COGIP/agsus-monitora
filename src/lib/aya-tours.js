@@ -422,19 +422,14 @@ const TOURS = Object.freeze({
         { exige: isAdminGlobal },
       ),
       passo(
+        t("entrevistas-conduzir-regras"),
+        "Regras da entrevista",
+        "Quem é chamado, como a nota é calculada, quem avalia e o desempate, em linguagem simples; o Editar de cada bloco leva aonde se muda.",
+      ),
+      passo(
         [t("entrevistas-conduzir-configuracao"), "[data-passo='configuracao']"],
         "Configuração",
-        "O roteiro, o modo de lançamento e a banca do edital.",
-      ),
-      passo(
-        t("entrevistas-desempate"),
-        "Desempate",
-        "É o da regra de classificação do edital; muda na Classificação.",
-      ),
-      passo(
-        t("entrevistas-conduzir-vagas"),
-        "Vagas",
-        "As vagas do edital, com o quadro de vagas.",
+        "O roteiro, o modo de lançamento e a banca do edital, com as competências que cada membro avalia.",
       ),
       passo(
         [t("entrevistas-conduzir-convocacao"), "[data-passo='convocacao']"],
@@ -1270,7 +1265,7 @@ const TRILHAS = Object.freeze([
       passo(
         [t("entrevistas-conduzir-configuracao"), "[data-passo='configuracao']"],
         "Preparar · Configuração",
-        "Escolha o roteiro e confira a regra de convocação, o desempate e a banca.",
+        "Escolha o roteiro e a banca (com as competências de cada membro); as regras ficam resumidas logo acima.",
         { pagina: "conduzir-entrevistas", antes: ABA.preparar },
       ),
       passo(

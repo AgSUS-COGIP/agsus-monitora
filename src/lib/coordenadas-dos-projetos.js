@@ -8,7 +8,7 @@ import {
   listaDeSugestoes,
   nivelDaGravidade,
 } from "./editor-de-coordenadas.js";
-import { rotuloDoLugar } from "./visao-geral-da-area.js";
+import { rotuloDoLugar } from "./visao-geral-da-area.ts";
 
 /*
   COORDENADAS DO MAPA DE PROJETOS — as regras deste mapa no editor

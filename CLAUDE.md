@@ -5,6 +5,7 @@ Vite + React + Supabase (RPC) + servidor web em TypeScript (`server/`). O front 
 tela por tela, para **um único app React** (rotas por área, visual único em `src/ui/`); o alvo, as
 regras e a ordem estão em **`docs/arquitetura-react.md`** — leia antes de criar ou migrar tela.
 Front com migração gradual para TypeScript/TSX: Seleção, Cronograma, Visão geral, Conferências, Status das atualizações, Análises curriculares, Módulos e abas, barra lateral, Busca global, dados compartilhados do monitoramento e componentes de `src/ui/`;
+O Mapa de Projetos também está em TypeScript, incluindo sua carga, lista, balões e integração do editor;
 guia em `docs/typescript-no-frontend.md`. O servidor também é TypeScript. **Português** em nomes
 de arquivo, funções e commits.
 
