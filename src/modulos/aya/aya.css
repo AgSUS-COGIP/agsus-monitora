@@ -46,7 +46,7 @@
 
 /*
   A arara inteira, em pé no poleiro com a sombra no chão (mascote/): sem
-  recorte nem aro (pedido de 08/10). O selo Beta fica no alto, à direita.
+  recorte nem aro (pedido de 08/10)..
 */
 .aya-figura {
   position: relative;
@@ -75,23 +75,12 @@
 }
 
 /*
-  Fechada, a Aya fica só a arara (ALTURA_DA_ARARA em mascote/mascote.tsx); o
+  Fechada, a Aya fica só a arara (ALTURA_DA_ARARA em mascote/mascote.tsx); a
   selo Beta vira um ponto e a etiqueta "Fale com a Aya" sai (o nome e a dica
   ficam no aria-label e no title do botão).
 */
 .aya-arara .aya-arara__etiqueta {
   display: none;
-}
-
-.aya-arara .aya-selo-beta {
-  top: 14px;
-  right: 16px;
-  width: 12px;
-  height: 12px;
-  padding: 0;
-  overflow: hidden;
-  color: transparent;
-  font-size: 0;
 }
 
 .aya-arara:hover .aya-figura,
@@ -535,8 +524,8 @@
 @media (max-width: 600px) {
   /* No celular a arara do canto encolhe (inteira, sem cobrir o conteúdo). */
   .aya-arara .mascote {
-    width: 66px;
-    height: 66px;
+    width: 46px;
+    height: 46px;
   }
 
   .aya-painel {
