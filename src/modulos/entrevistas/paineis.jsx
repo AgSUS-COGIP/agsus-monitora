@@ -30,8 +30,8 @@ import {
   (o status discreto da carga, Atualizar e Exportar — o título e a área estão
   no cabeçalho do app), "Refinar resultados", os KPIs em card compacto (os
   que filtram são botões), o recorte ativo, os gráficos Chart.js e as
-  pendências. O andamento por edital e vaga, a agenda e os empates ficam em
-  andamento.tsx.
+  pendências. A agenda dos próximos dias e os empates ficam em
+  agenda-e-empates.tsx.
 */
 
 const truncar = (valor, limite) => {

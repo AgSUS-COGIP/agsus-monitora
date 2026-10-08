@@ -19,17 +19,12 @@ import { Aviso } from "../../ui/index.js";
 import { textoDaConferencia } from "../../lib/texto-da-conferencia.js";
 import { hojeEmBrasilia } from "../../lib/fila-de-conducao.ts";
 import {
-  andamentoPorEdital,
+  editalDoRecorte,
   gruposEmpatados,
   mapaDeEmpates,
 } from "../../lib/painel-de-entrevistas.ts";
 import { irParaLink } from "../chat/ponte.js";
-import {
-  AgendaDosProximosDias,
-  AndamentoDasEntrevistas,
-  AvisoDeEmpates,
-  editalDoRecorte,
-} from "./andamento.tsx";
+import { AgendaDosProximosDias, AvisoDeEmpates } from "./agenda-e-empates.tsx";
 import { criarEstadoDasEntrevistas, MENSAGEM_SEM_ACESSO } from "./estado.js";
 import { GavetaDaEntrevista, GavetaDosSemEntrevista } from "./gaveta.jsx";
 import {
@@ -57,11 +52,10 @@ import { SeloDeAvisos } from "../conferencias/avisos-de-conferencia.tsx";
 
   O que mostra: os dados da planilha de entrevistas, carregada no banco pela
   sincronização (`sincronizar_entrevistas`), e os das entrevistas conduzidas
-  no sistema (a mesma TB_ENTREVISTA); a última carga, os filtros, os KPIs, o
-  andamento por edital e por vaga (cartões com a barra), a agenda dos
-  próximos dias (com um edital), os gráficos, as pendências (aprovados sem
-  entrevista, sem análise, sem edital, nota divergente, sem comparecimento,
-  sem nota e sem parecer), os empatados na nota da entrevista (o desempate é
+  no sistema (a mesma TB_ENTREVISTA); a última carga, os filtros, os KPIs, a
+  agenda dos próximos dias (com um edital), os gráficos, as pendências
+  (aprovados sem entrevista, sem análise, sem edital, nota divergente, sem
+  comparecimento, sem nota e sem parecer), os empatados na nota da entrevista (o desempate é
   na Classificação), a tabela, a exportação e a gaveta com o caminho do
   candidato. O edital de treinamento fica fora (o cache do painel não o lê).
 
@@ -74,10 +68,10 @@ import { SeloDeAvisos } from "../conferencias/avisos-de-conferencia.tsx";
   - Comemorações: o liga/desliga do app, relido a cada abertura (marco "vaga
     pronta", marcos.js).
 
-  Sem tela de carregamento: antes da primeira carga, os KPIs, o andamento, os
-  gráficos, as pendências e a tabela são o skeleton deles; falha na primeira
-  carga vira um aviso com "Tentar novamente". Sem permissão no banco
-  (42501), "Sem acesso às Entrevistas".
+  Sem tela de carregamento: antes da primeira carga, os KPIs, os gráficos, as
+  pendências e a tabela são o skeleton deles; falha na primeira carga vira
+  um aviso com "Tentar novamente". Sem permissão no banco (42501), "Sem
+  acesso às Entrevistas".
 
   Links antigos para as visões "Conduzir entrevistas" e "Roteiros" desta
   tela vão para a tela nova (src/lib/navegacao.js, `destinoDaTela`).
@@ -113,11 +107,6 @@ function TelaDaArea({ estado, e }) {
     () => filtrarEntrevistas(entrevistas, filtros),
     [entrevistas, filtros],
   );
-  // O andamento mostra todas as vagas do edital, mesmo com uma escolhida.
-  const semVaga = useMemo(
-    () => filtrarEntrevistas(entrevistas, { ...filtros, vaga: "" }),
-    [entrevistas, filtros],
-  );
   const aprovadosFiltrados = useMemo(
     () => filtrarAprovadosSemEntrevista(aprovados, filtros),
     [aprovados, filtros],
@@ -137,8 +126,8 @@ function TelaDaArea({ estado, e }) {
   const grupos = useMemo(() => gruposEmpatados(filtradas), [filtradas]);
   const empates = useMemo(() => mapaDeEmpates(grupos), [grupos]);
   const doRecorte = useMemo(
-    () => editalDoRecorte(andamentoPorEdital(semVaga), filtros.edital),
-    [semVaga, filtros.edital],
+    () => editalDoRecorte(filtradas, filtros.edital),
+    [filtradas, filtros.edital],
   );
   const editalId = doRecorte?.editalId || "";
   const ativos = filtrosAtivos(filtros, opcoes);
@@ -240,16 +229,6 @@ function TelaDaArea({ estado, e }) {
             aoAbrirSemEntrevista={estado.abrirSemEntrevista}
           />
           <Recorte ativos={ativos} />
-          <AndamentoDasEntrevistas
-            entrevistas={semVaga}
-            carregado={carregado}
-            edital={filtros.edital}
-            vaga={filtros.vaga}
-            aoEscolherEdital={(edital) =>
-              setFiltros((atuais) => ({ ...atuais, edital, vaga: "" }))
-            }
-            aoEscolherVaga={(vaga) => trocarFiltro("vaga", vaga)}
-          />
           {editalId ? (
             <AgendaDosProximosDias
               itens={agenda}
