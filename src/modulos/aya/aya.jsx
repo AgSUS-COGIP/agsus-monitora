@@ -995,9 +995,6 @@ export function Aya({
         >
           <span className="aya-figura">
             <Mascote tamanho={ALTURA_DA_ARARA} acenarAoEntrar janela={janela} />
-            <span className="aya-selo-beta" aria-hidden="true">
-              Beta
-            </span>
           </span>
           <span className="aya-arara__etiqueta" aria-hidden="true">
             Fale com a Aya

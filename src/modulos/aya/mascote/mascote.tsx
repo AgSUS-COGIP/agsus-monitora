@@ -76,7 +76,7 @@ import "./mascote.css";
 /* Abaixo disto (px), a versão simples (contornos chapados). */
 export const TAMANHO_DA_VERSAO_SIMPLES = 40;
 /* A arara do canto (botão da Aya), em pé no poleiro: px de altura. */
-export const ALTURA_DA_ARARA = 84;
+export const ALTURA_DA_ARARA = 56;
 const PISCADA_MS = 170;
 
 export interface PropsDaMascote {
