@@ -388,6 +388,32 @@ const TOURS = Object.freeze({
         "Clique no cartão para lançar comparecimento e notas; Salvar e abrir o próximo segue a fila.",
         { antes: ABA.fila },
       ),
+      // Com a ficha de notas aberta (sem ela, os passos abaixo são pulados).
+      passo(
+        t("entrevistas-ficha-comparecimento"),
+        "Comparecimento",
+        "Compareceu ou Faltou. Com Faltou, a matriz some e fica o efeito no parecer.",
+      ),
+      passo(
+        t("entrevistas-ficha-abas"),
+        "Um avaliador por aba",
+        "Passe a limpo a folha de cada avaliador; completa, a ficha vai sozinha ao próximo.",
+      ),
+      passo(
+        t("entrevistas-ficha-matriz"),
+        "Matriz de notas",
+        "Digite a nota e a célula avança; setas e Enter andam. O chip mostra a média da linha.",
+      ),
+      passo(
+        t("entrevistas-ficha-modo"),
+        "Por avaliador ou competência",
+        "Por competência serve para lançar ao vivo; a escolha fica guardada.",
+      ),
+      passo(
+        t("entrevistas-ficha-previa"),
+        "Resultado na hora",
+        "Total, mínimo, competências e o parecer com os motivos, pelas regras do banco.",
+      ),
       PASSO_DA_AYA,
     ]),
   }),

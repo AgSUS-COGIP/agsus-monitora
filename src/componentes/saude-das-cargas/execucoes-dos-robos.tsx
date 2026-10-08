@@ -1,11 +1,12 @@
+import type { ExecucaoDoRobo, ResultadoDaVaga, PropsDoRobo } from "./tipos.ts";
 import { Fragment } from "react";
 import { formatNumberBR } from "../../lib/formatters.js";
 import {
   acompanhamentoDoPedido,
   SITUACOES_DA_EXECUCAO,
   SITUACOES_DA_VAGA,
-} from "../../lib/painel-dos-robos.js";
-import { dataHora } from "../../lib/saude-das-cargas.js";
+} from "../../lib/painel-dos-robos.ts";
+import { dataHora } from "../../lib/saude-das-cargas.ts";
 import { Icone } from "../icone.jsx";
 
 /*
@@ -14,20 +15,22 @@ import { Icone } from "../icone.jsx";
       andamento e o resultado (por vaga: gravada, candidatos, com link),
       com o link da execução no GitHub (a seção é só do administrador global);
     - UltimasExecucoes: as 8 últimas, com os parâmetros usados e quem pediu.
-  Dados de get_painel_dos_robos (src/lib/painel-dos-robos.js) e da situação
+  Dados de get_painel_dos_robos (src/lib/painel-dos-robos.ts) e da situação
   do pedido no banco (situacao_do_disparo_robo: aceito, recusado, sem chave).
 */
 
-const numeroOuTraco = (n) =>
+const numeroOuTraco = (n: number | null | undefined) =>
   n === null || n === undefined ? "—" : formatNumberBR(n);
 
-function SeloDaExecucao({ situacao }) {
-  const s =
-    SITUACOES_DA_EXECUCAO[situacao] || SITUACOES_DA_EXECUCAO.EM_ANDAMENTO;
+function SeloDaExecucao({ situacao }: { situacao: string }) {
+  const s = (Object.hasOwn(SITUACOES_DA_EXECUCAO, situacao)
+    ? SITUACOES_DA_EXECUCAO[situacao]
+    : null) ||
+    SITUACOES_DA_EXECUCAO.EM_ANDAMENTO || { rotulo: "Rodando", tom: "info" };
   return <span className={`saude-selo saude-selo--${s.tom}`}>{s.rotulo}</span>;
 }
 
-function LinkDoGithub({ url }) {
+function LinkDoGithub({ url }: { url: string | null }) {
   if (!url) return null;
   return (
     <a
@@ -44,7 +47,11 @@ function LinkDoGithub({ url }) {
 }
 
 /** Uma linha por vaga da execução: situação, candidatos no arquivo, ativos, com link. */
-export function ResultadoPorVaga({ porVaga }) {
+export function ResultadoPorVaga({
+  porVaga,
+}: {
+  porVaga: readonly ResultadoDaVaga[] | null;
+}) {
   if (!porVaga?.length) return null;
   return (
     <div className="saude-historico robos-por-vaga">
@@ -66,7 +73,9 @@ export function ResultadoPorVaga({ porVaga }) {
         </thead>
         <tbody>
           {porVaga.map((v) => {
-            const s = SITUACOES_DA_VAGA[v.situacao] || {
+            const s = (Object.hasOwn(SITUACOES_DA_VAGA, v.situacao)
+              ? SITUACOES_DA_VAGA[v.situacao]
+              : null) || {
               rotulo: v.situacao,
               tom: "neutro",
             };
@@ -95,7 +104,7 @@ export function ResultadoPorVaga({ porVaga }) {
   );
 }
 
-const TEXTO_DA_ETAPA = Object.freeze({
+const TEXTO_DA_ETAPA: Readonly<Record<string, string>> = Object.freeze({
   aguardando: "Pedido enviado. Aguardando o GitHub.",
   github: "Aceito pelo GitHub. Na fila ou rodando.",
   rodando: "Rodando.",
@@ -103,14 +112,14 @@ const TEXTO_DA_ETAPA = Object.freeze({
 });
 
 /** O último pedido desta tela para o robô, enquanto a pessoa não o dispensa. */
-export function Acompanhamento({ robo, atual, estado }) {
+export function Acompanhamento({ robo, atual, estado }: PropsDoRobo) {
   const pedido = atual.acompanhamentos?.[robo.id];
   const situacao = acompanhamentoDoPedido({
     robo: robo.id,
     pedido,
     execucoes: atual.painel?.dados?.execucoes?.[robo.id] || [],
   });
-  if (!situacao) return null;
+  if (!situacao || !pedido) return null;
   const { etapa, execucao, url } = situacao;
   let frase = TEXTO_DA_ETAPA[etapa] || "";
   if (etapa === "recusado") frase = situacao.texto;
@@ -169,7 +178,11 @@ export function Acompanhamento({ robo, atual, estado }) {
 }
 
 /** As últimas execuções do robô, com parâmetros e quem pediu. */
-export function UltimasExecucoes({ execucoes }) {
+export function UltimasExecucoes({
+  execucoes,
+}: {
+  execucoes: readonly ExecucaoDoRobo[] | null;
+}) {
   if (!execucoes?.length)
     return <p className="saude-parte__vazio">Nenhuma execução registrada.</p>;
   return (

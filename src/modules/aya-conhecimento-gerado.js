@@ -3311,6 +3311,72 @@ export const VERBETES_AYA = Object.freeze([
     abrir: "config:acesso",
   },
   {
+    arquivo: "regras-das-configuracoes.md",
+    titulo: "Comemorações",
+    perguntas: [
+      "comemoracoes",
+      "o que sao as comemoracoes",
+      "secao comemoracoes",
+      "configurar comemoracoes",
+      "confete",
+      "fogos",
+      "fogos de artificio",
+      "serpentina",
+      "chuva de estrelas",
+      "baloes",
+      "coracoes",
+      "marcos do ano",
+      "som da comemoracao",
+      "pular comemoracao",
+      "arara nos fogos",
+      "efeito da comemoracao",
+      "intensidade da comemoracao",
+      "nao quero ver comemoracoes",
+    ],
+    resposta:
+      'As comemorações celebram o processo e a equipe, nunca uma pessoa (não há ranking): edital todo analisado e fila de análises zerada, vaga pronta para o resultado final nas Entrevistas, marcos do ano da área (1.000, 2.500, 5.000, 7.500 e 10.000 análises concluídas, depois a cada 5.000), acesso liberado ou reativado e o fim de um tour ou de uma trilha comigo. Em Configurações › Comemorações, quem edita as configurações escolhe, para cada marco: ligado ou desligado, o efeito (Fogos, Confete, Serpentina, Chuva de estrelas, Corações, Balões, Aya comemorando ou Combinado), a intensidade (Suave, Normal ou Festa), a duração (de 2 a 15 segundos; em branco, automática), o som (desligado por padrão), uma mensagem própria e quem vê. Por enquanto só quem fez vê: "Toda a área online" depende de um aviso em tempo real que o MONITORA ainda não tem. Nos fogos, a tela escurece de leve, eu atravesso voando e o último estouro desenha o marco no céu (o número, um coração, uma estrela ou um visto). O aviso no topo tem "Pular" e o botão de som; o som só toca depois de você interagir com a página. Com movimento reduzido no aparelho, só o aviso. Cada marco aparece uma vez por pessoa. As mudanças valem depois de "Salvar alterações", com motivo, e ficam no histórico de Operação. Para não ver comemorações neste navegador, desligue "Para mim", na linha do título de Configurações › Comemorações. O liga/desliga geral, para todos, fica em Módulos e abas › Sistema inteiro.',
+    fato: "",
+    fonte:
+      "src/lib/catalogo-de-comemoracoes.ts; src/lib/motor-de-efeitos.js; src/lib/comemoracao.js; src/lib/fogos.js; src/modulos/configuracoes/comemoracoes.tsx",
+    abrir: "config:comemoracoes",
+  },
+  {
+    arquivo: "regras-das-configuracoes.md",
+    titulo: "Testar uma comemoração",
+    perguntas: [
+      "testar uma comemoracao",
+      "como testar uma comemoracao",
+      "testar comemoracao",
+      "botao testar",
+      "palco de testes",
+      "previa da comemoracao",
+      "ver o efeito antes",
+    ],
+    resposta:
+      "Em Configurações › Comemorações, o botão Testar de cada marco solta a comemoração com as opções que estão na tela, mesmo antes de salvar. No Palco de testes, escolha o efeito, a intensidade, a duração e o som e clique em Soltar para ver na hora. Testar não grava nada nem aparece para outras pessoas, e funciona mesmo com as comemorações desligadas para você; com movimento reduzido no aparelho, aparece só o aviso.",
+    fato: "",
+    fonte:
+      "src/modulos/configuracoes/comemoracoes.tsx; src/modulos/configuracoes/palco-de-testes.tsx",
+    abrir: "config:comemoracoes",
+  },
+  {
+    arquivo: "regras-das-configuracoes.md",
+    titulo: "Marco personalizado de comemoração",
+    perguntas: [
+      "marco personalizado",
+      "como criar um marco personalizado",
+      "comemorar contratados do edital",
+      "meta de analises no dia",
+      "criar comemoracao",
+    ],
+    resposta:
+      'Em Configurações › Comemorações › Marcos personalizados, Adicionar marco cria uma comemoração com nome e meta: "Edital chegou a N contratados" (soma os contratados das linhas daquele edital no monitoramento) ou "Área passou de N análises no dia" (conta as análises concluídas hoje na tela de Análises curriculares da área). Como os outros marcos, comemora quando a pessoa vê o número cruzar a meta, uma vez, e tem efeito, intensidade, duração, som e mensagem próprios. Vale depois de "Salvar alterações".',
+    fato: "",
+    fonte:
+      "src/lib/catalogo-de-comemoracoes.ts; src/app/marcos-personalizados.js",
+    abrir: "config:comemoracoes",
+  },
+  {
     arquivo: "regras-das-entrevistas.md",
     titulo: "Painel de entrevistas",
     perguntas: [
@@ -3597,12 +3663,33 @@ export const VERBETES_AYA = Object.freeze([
       "lancar notas",
       "comparecimento",
       "resultado recalculado",
+      "faltou na entrevista",
+      "lancar por avaliador",
+      "lancar por competencia",
     ],
     resposta:
-      'Na Fila de Conduzir entrevistas, abra um convocado: a ficha ocupa a tela inteira (modo de análise; fica só o menu lateral), com o topo preso (Voltar à fila, candidato, Anterior e Próximo), as competências à esquerda e a prévia do parecer numa lateral fixa (total, mínimo, a nota de cada competência e os motivos; muda de cor na hora: verde apto, vermelho inapto). Marque Compareceu ou Faltou nos botões grandes do topo. Em cada competência, os avaliadores ficam lado a lado; os botões da escala (0 a 5) preenchem o campo em foco e passam ao próximo, ou digite a nota. Com aspectos, cada avaliador tem um campo por aspecto e a média dele ao lado. Os níveis da escala ficam na lateral e no título de cada botão. No celular, uma competência por vez (abas numeradas). Esc volta à fila; a nota precisa estar na escala do roteiro. A cada gravação o banco recalcula o resultado, que aparece no Painel de entrevistas; toda nota lançada, corrigida ou apagada vai para o histórico. Enter passa para a próxima nota, Ctrl+Enter salva, e há "Salvar e abrir o próximo". O cartão da fila mostra as notas lançadas sobre as esperadas (competências × avaliadores da banca).',
+      'Na Fila de Conduzir entrevistas, abra um convocado: a ficha ocupa a tela inteira (fica só o menu lateral). No cabeçalho: o nome e o código, a vaga, os chips (nota da análise, modalidade, roteiro e aspectos), os detalhes no "i" (modo de lançamento, nota e parecer gravados, nome do roteiro), o comparecimento (Compareceu / Faltou), a banca quando há mais de uma e Anterior / "1 de 15" / Próximo. O lançamento padrão é Por avaliador, como a secretaria passando a limpo a folha de cada avaliador: uma aba por avaliador ("Avaliador · origem", com o check quando está completo) e, nela, a matriz com as competências nas linhas (e o mínimo de cada uma) e os aspectos nas colunas (Conceitua, Propriedade, Profundidade); sem aspectos, uma coluna "Nota". A média da linha aparece num chip: vermelho abaixo do mínimo, verde ok. Completo um avaliador, a ficha passa sozinha ao próximo; com todos completos, o foco vai para "Salvar e abrir o próximo". "Por competência" (para lançar ao vivo) troca as abas pelas competências e as linhas pelos avaliadores; a escolha fica guardada no navegador. Digitar a primeira nota marca Compareceu. Com Faltou, a matriz some e fica a confirmação: se a ausência elimina no roteiro, parecer Inapto e total 0. A lateral mostra o resultado na hora, com as mesmas regras do banco: o total sobre o máximo num anel com a marca do mínimo, a nota da banca em cada competência em barras com a marca do mínimo, o parecer (Apto verde, Inapto vermelho, Sem parecer cinza) com os motivos e "X de Y notas". Os níveis da escala ficam numa linha embaixo da matriz e na dica da célula em foco. No celular, um avaliador por vez, uma competência por linha com as células grandes e o teclado numérico. A cada gravação o banco recalcula o resultado, que aparece no Painel de entrevistas; toda nota lançada, corrigida ou apagada vai para o histórico. O cartão da fila mostra as notas lançadas sobre as esperadas.',
     fato: "",
     fonte:
-      "src/modulos/entrevistas/ficha.jsx; src/modulos/entrevistas/fila-do-dia.tsx; supabase/migrations/20260930220000_entrevistas_roteiros_e_notas.sql; src/lib/conducao-de-entrevista.js",
+      "src/modulos/entrevistas/ficha.jsx; src/modulos/entrevistas/matriz-de-notas.tsx; src/modulos/entrevistas/resultado-da-ficha.tsx; src/modulos/entrevistas/cabecalho-da-ficha.tsx; src/lib/conducao-de-entrevista.js",
+  },
+  {
+    arquivo: "regras-das-entrevistas.md",
+    titulo: "Atalhos da ficha de notas",
+    perguntas: [
+      "atalhos da ficha de notas",
+      "lancar notas pelo teclado",
+      "digitar notas rapido",
+      "nota recusada na ficha",
+      "como apagar uma nota da entrevista",
+      "tab na ficha de notas",
+      "ctrl enter",
+    ],
+    resposta:
+      'A matriz da ficha de notas funciona como uma planilha. Digitar uma nota da escala (de 0 a 5, por exemplo) grava e passa à próxima célula; numa escala com notas que começam igual (0 a 10, ou com meias notas), Enter, Tab ou uma seta confirmam. Enter vai à próxima célula e Shift+Enter à anterior; as setas andam pela matriz; Tab e Shift+Tab seguem a ordem. Backspace apaga a nota; na célula vazia, volta à anterior. Nota fora da escala não entra: a célula fica como estava e aparece o aviso, por exemplo "“7” não está na escala (0 a 5)". Com aspectos, o banco só aceita os aspectos todos lançados (ou todos apagados) para o mesmo avaliador e competência: salvar com algum faltando avisa e abre a aba certa. Ctrl+Enter salva e Esc volta à fila. Os atalhos estão no "?" do rodapé.',
+    fato: "",
+    fonte:
+      "src/modulos/entrevistas/matriz-de-notas.tsx; src/modulos/entrevistas/campo-de-nota.tsx; src/lib/digitacao-de-notas.ts",
   },
   {
     arquivo: "regras-das-entrevistas.md",
@@ -4629,7 +4716,7 @@ export const VERBETES_AYA = Object.freeze([
       'Em Configurações › Status das atualizações (só o administrador global) aparece, para cada carga de dados, a última execução e um selo: "Falhou" (a execução terminada mais recente deu erro), "Em andamento", "Atrasada" (a última que deu certo passou do prazo), "Em dia" ou "Ainda sem carga". Mostra as 10 últimas execuções de cada uma.',
     fato: "",
     fonte:
-      "src/lib/saude-das-cargas.js; supabase/migrations/20261001120000_saude_das_cargas.sql",
+      "src/lib/saude-das-cargas.ts; supabase/migrations/20261001120000_saude_das_cargas.sql",
     abrir: "config:cargas",
   },
   {
@@ -4646,7 +4733,7 @@ export const VERBETES_AYA = Object.freeze([
       'As análises curriculares chegam pelo Apps Script das planilhas (o envio incremental é esperado a cada 20 minutos e fica "Atrasada" depois de 1 hora; a carga completa não tem prazo). Entrevistas carregam pelo GitHub Actions de hora em hora, o dia todo, e ficam atrasadas depois de 4 horas; a Seleção carrega às 8h10, 13h10 e 18h10 de Brasília e fica atrasada depois de 15 horas (a noite sem carga é esperada). Quem marca esses horários é o banco (Agenda dos robôs), não o GitHub. O robô da Empregare não tem agenda: roda só quando um administrador clica em "Rodar agora", por isso nunca fica "Atrasado". As tarefas do banco que rodam a cada 2 minutos (como o pacote do painel de análises e o das entrevistas) atrasam depois de 15 minutos; as diárias, depois de 26 horas; as mensais, depois de 32 dias. As conferências de consistência rodam todo dia às 6h de Brasília e ficam atrasadas depois de 26 horas. A pré-classificação da Avaliação documental roda no fim de cada carga do robô da Empregare e no Recalcular da coordenação, sem agenda, por isso também nunca fica "Atrasada". A retenção das mensagens do chat roda todo dia às 3h15 de Brasília, e o expurgo dos anexos do chat (tira do armazenamento os arquivos das mensagens já apagadas) às 6h30, atrasado depois de 26 horas; "Falhou" nele pode ser execução parcial, com arquivos que ficaram na fila para o dia seguinte. Os KPIs dos editais são recalculados no fim de cada carga da Seleção e, de novo, às 10h de Brasília.',
     fato: "",
     fonte:
-      "src/lib/saude-das-cargas.js; supabase/migrations/20261001120000_saude_das_cargas.sql; supabase/migrations/20261002090000_kpis_depois_da_carga_da_selecao.sql; supabase/migrations/20261002130000_kpis_de_todo_edital_com_fonte.sql; .github/workflows/sincronizar-selecao.yml; .github/workflows/sincronizar-entrevistas.yml; supabase/migrations/20260930235900_kpis_uma_vez_por_dia.sql; .github/workflows/expurgo-anexos-chat.yml; docs/agenda-dos-robos.md",
+      "src/lib/saude-das-cargas.ts; supabase/migrations/20261001120000_saude_das_cargas.sql; supabase/migrations/20261002090000_kpis_depois_da_carga_da_selecao.sql; supabase/migrations/20261002130000_kpis_de_todo_edital_com_fonte.sql; .github/workflows/sincronizar-selecao.yml; .github/workflows/sincronizar-entrevistas.yml; supabase/migrations/20260930235900_kpis_uma_vez_por_dia.sql; .github/workflows/expurgo-anexos-chat.yml; docs/agenda-dos-robos.md",
   },
   {
     arquivo: "regras-do-status-das-atualizacoes.md",
@@ -4670,7 +4757,7 @@ export const VERBETES_AYA = Object.freeze([
       'O agendamento do próprio GitHub atrasava ou pulava as cargas (as de hora em hora chegaram a rodar só a cada 5 a 8 horas). Por isso o banco do MONITORA passou a ser o único agendador (e também quem atende o "Rodar agora", com a mesma chave): na hora marcada, ele pede ao GitHub a execução de Entrevistas (de hora em hora), Seleção (3 vezes ao dia: 8h10, 13h10 e 18h10), Conferências (6h) e Expurgo dos anexos do chat (6h30). A linha "Agenda dos robôs" do Status das atualizações mostra o último pedido aceito e as falhas das últimas 24 horas. "Sem chave no Vault" quer dizer que falta o token do GitHub no Supabase: nada é pedido e as cargas param de rodar sozinhas. "Falhou" com HTTP 401 quer dizer chave inválida ou expirada (403 ou 404: sem permissão no repositório). Para resolver, gere um novo token fine-grained (Actions: read and write, só o repositório agsus-monitora) e, no Supabase (Integrations › Vault › Secrets), troque o valor do segredo github_disparo_robos, com o mesmo nome. O próximo horário já usa a chave nova; para não esperar, use o "Rodar agora" de cada carga.',
     fato: "",
     fonte:
-      "docs/agenda-dos-robos.md; supabase/migrations/20261008140000_agenda_dos_robos_pelo_banco.sql; src/lib/saude-das-cargas.js",
+      "docs/agenda-dos-robos.md; supabase/migrations/20261008140000_agenda_dos_robos_pelo_banco.sql; src/lib/saude-das-cargas.ts",
     abrir: "config:cargas",
   },
   {
@@ -4723,7 +4810,7 @@ export const VERBETES_AYA = Object.freeze([
       'Em Configurações › Status das atualizações, o administrador global tem o botão "Opções" nas linhas Robô da Empregare, Pré-classificação e Conferências de consistência. Ele abre uma gaveta para rodar com escolhas: editais (com busca e filtro por área; aparecem só os vigentes, e "Mostrar todos" traz os encerrados e cancelados), códigos de vaga da Empregare (cole a lista separada por vírgula, espaço ou linha; só dígitos — o que tiver letra é recusado; ao escolher o edital aparecem as vagas conhecidas dele com o cargo, e "Adicionar todas" põe todas), modo e limite de vagas (de 1 a 500; padrão 60). No robô da Empregare, os modos são: Normal (exporta, baixa e grava), Seco (só lista as vagas que exportaria, sem entrar na Empregare), Fumaça (só testa o login) e Forçar (grava mesmo se o arquivo vier com menos da metade dos candidatos). Na pré-classificação: Normal, Seco (calcula sem gravar) e Refazer lote (recorta o lote do zero, só antes das fichas). Nas conferências: Normal e Seco. Com códigos de vaga, o robô roda só os códigos; o edital escolhido serve para as sugestões. Antes de confirmar, "Vai rodar" mostra a prévia, como "5 vagas do 93/2026: 179698, 180231…", e avisa quando o limite corta (ficam as vagas nunca carregadas ou carregadas há mais tempo). Depois do pedido, a linha acompanha: "Pedido enviado. Aguardando o GitHub", depois "Rodando" e o resultado por vaga (gravada, candidatos no arquivo, ativos e quantos com link da Empregare), com o link da execução no GitHub. O modo seco e o fumaça não gravam no banco: o resultado fica no resumo da execução no GitHub. Em "Detalhes", o robô da Empregare e a pré-classificação mostram as 8 últimas execuções com quem pediu, os parâmetros usados e o resultado. A coordenação de um edital continua usando o Recalcular da aba Pré-classificação.',
     fato: "",
     fonte:
-      "src/lib/robos-de-carga.js; src/lib/painel-dos-robos.js; supabase/migrations/20261008140000_agenda_dos_robos_pelo_banco.sql; supabase/migrations/20261007190000_painel_dos_robos.sql; docs/robo-empregare.md",
+      "src/lib/robos-de-carga.js; src/lib/painel-dos-robos.ts; supabase/migrations/20261008140000_agenda_dos_robos_pelo_banco.sql; supabase/migrations/20261007190000_painel_dos_robos.sql; docs/robo-empregare.md",
     abrir: "config:cargas",
   },
   {
@@ -4797,7 +4884,7 @@ export const VERBETES_AYA = Object.freeze([
       'Veja as últimas execuções da linha e a mensagem da que falhou. Uma carga recusada (planilha com menos da metade das linhas, ou vaga da Empregare com menos da metade dos candidatos) não mudou nada: os dados de antes continuam na tela. Em Seleção, Entrevistas e no robô da Empregare, depois de corrigir a causa, o administrador global pode usar "Rodar agora"; as análises não têm esse botão, porque o envio sai do Apps Script de cada planilha. Atrasada quer dizer que a última execução que deu certo passou do prazo da carga.',
     fato: "",
     fonte:
-      "src/lib/saude-das-cargas.js; src/lib/robos-de-carga.js; docs/sincronizacao-das-planilhas.md",
+      "src/lib/saude-das-cargas.ts; src/lib/robos-de-carga.js; docs/sincronizacao-das-planilhas.md",
     abrir: "config:cargas",
   },
   {
@@ -5408,23 +5495,18 @@ export const VERBETES_AYA = Object.freeze([
   },
   {
     arquivo: "regras-dos-modulos-e-abas.md",
-    titulo: "Comemorações",
+    titulo: "Ligar e desligar as comemorações",
     perguntas: [
-      "comemoracoes",
-      "confete",
-      "fogos",
-      "fogos de artificio",
-      "marcos do ano",
-      "o que sao as comemoracoes",
-      "som da comemoracao",
-      "pular comemoracao",
-      "arara nos fogos",
+      "desligar comemoracoes",
+      "ligar comemoracoes",
+      "comemoracoes desligadas",
+      "desligar os fogos para todos",
     ],
     resposta:
-      'As comemorações celebram o processo e a equipe, nunca uma pessoa (não há ranking): edital todo analisado e fila de análises zerada, vaga pronta para o resultado final nas Entrevistas, marcos do ano da área (1.000, 2.500, 5.000, 7.500 e 10.000 análises concluídas, depois a cada 5.000) e acesso liberado ou reativado. São fogos de artifício por 5 a 6 segundos: a tela escurece de leve, eu (a arara azul) atravesso voando e solto o primeiro foguete, e o último estouro desenha o marco no céu — o número no marco do ano ("1.000 análises concluídas em 2026. Obrigado, equipe de Projetos!"), um coração no edital todo analisado, uma estrela na fila zerada e um visto no acesso liberado. O aviso no topo tem "Pular" (encerra os fogos na hora) e um botão de som, desligado por padrão: ligado, os estalos só tocam depois de você interagir com a página, e a escolha fica guardada neste navegador. Com movimento reduzido, só o aviso. Cada marco aparece uma vez por pessoa. Liga e desliga em Módulos e abas › Sistema inteiro; desligado, ninguém vê.',
+      "O liga/desliga geral das comemorações fica em Configurações › Módulos e abas › Sistema inteiro, com o administrador global: desligado, ninguém vê comemoração nenhuma. Cada marco, o efeito de cada um e os marcos personalizados ficam em Configurações › Comemorações.",
     fato: "",
     fonte:
-      "src/lib/comemoracao.js; src/lib/fogos.js; src/lib/fogos-cena.js; src/lib/fogos-formas.js; supabase/migrations/20260930150000_comemoracoes_e_marcos.sql",
+      "src/lib/comemoracao.js; supabase/migrations/20260930150000_comemoracoes_e_marcos.sql",
   },
   {
     arquivo: "regras-dos-recursos.md",

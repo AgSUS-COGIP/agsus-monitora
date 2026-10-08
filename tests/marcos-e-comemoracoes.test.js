@@ -192,6 +192,7 @@ describe("edital concluído e fila zerada", () => {
       texto: "Fila de análises zerada! Obrigado, equipe da Saúde Indígena. 🎉",
       itens: [],
       forma: "estrela",
+      marco: "fila-zerada",
     });
   });
 });

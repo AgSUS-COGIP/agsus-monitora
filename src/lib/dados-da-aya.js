@@ -21,7 +21,7 @@ import {
   normalizarSaude,
   SITUACOES,
   visaoSimples,
-} from "./saude-das-cargas.js";
+} from "./saude-das-cargas.ts";
 import { calcularIndicadores as indicadoresDaSelecao } from "./selecao-do-painel.ts";
 import {
   acaoDaIntencao,

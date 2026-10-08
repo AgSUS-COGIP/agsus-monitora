@@ -21,6 +21,7 @@ import {
   Modal,
 } from "../../ui/index.js";
 import { SecaoAparencia } from "./aparencia.jsx";
+import { InterruptorPessoal, SecaoComemoracoes } from "./comemoracoes.tsx";
 import { estadoDasConfiguracoes, SECOES_COM_SALVAR_PROPRIO } from "./estado.js";
 import { criarEstadoDasMensagensDoChat } from "./estado-das-mensagens-do-chat.js";
 import { criarImagensDaAparencia } from "./imagens.js";
@@ -44,7 +45,7 @@ import { SecaoTelaDeAcesso } from "./tela-de-acesso.jsx";
     Histórico       publicações auditadas, na seção Operação
 
   As seções (Marca, Página inicial, Tela de acesso, Aparência, Painéis
-  externos e Operação) entram por portal no corpo da própria seção
+  externos, Operação e Comemorações) entram por portal no corpo da própria seção
   (`.config-secao__corpo`, criado por secoes.js). O estado é de
   `estado.js`; as imagens da Aparência, de `imagens.js`. Mensagens (chat),
   só do administrador global, também entra por portal, mas salva sozinha
@@ -79,6 +80,8 @@ function Cabecalho({ estado }) {
         <div className="config-cabecalho__texto">
           <h2>{secao.rotulo}</h2>
         </div>
+        {/* Comemorações: a preferência deste navegador fica no título. */}
+        {secao.id === "comemoracoes" ? <InterruptorPessoal /> : null}
         {comSalvar && estado.temAlteracoes() ? (
           <span className="config-cabecalho__pendente">
             <span className="config-cabecalho__ponto" aria-hidden="true" />
@@ -564,6 +567,7 @@ const SECOES_NO_PORTAL = Object.freeze([
   ["acesso", SecaoTelaDeAcesso],
   ["aparencia", SecaoAparencia],
   ["recursos", SecaoPaineisExternos],
+  ["comemoracoes", SecaoComemoracoes],
 ]);
 
 function Configuracoes({ estado, imagens, mensagensDoChat, alvos }) {

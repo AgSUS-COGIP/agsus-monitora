@@ -7,7 +7,9 @@ Módulos e abas…). Aqui fica só a moldura: barra lateral, busca global (Ctrl+
 atualizações e os dados compartilhados do monitoramento. Toda tela monta por
 `montarModulo` (`src/app/`) e usa os componentes visuais de
 `src/ui/`; as pastas daqui mudam para `src/modulos/<nome>/` módulo a módulo. JavaScript com JSX
-(`.jsx`), sem TypeScript. Nomes em português, arquivo em kebab-case, componente em PascalCase.
+(`.jsx`) e migração gradual para TypeScript (`.tsx`); Status das atualizações já está
+migrado em `saude-das-cargas/`, com contratos em `tipos.ts`. Nomes em português,
+arquivo em kebab-case, componente em PascalCase.
 
 ## Mapa
 

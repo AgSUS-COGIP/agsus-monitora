@@ -2,15 +2,20 @@
 
 Início da migração gradual: 07/10/2026.
 
-O frontend mantém React e Vite. `Aviso`, `BotaoDeAcao`, Seleção, Cronograma, Visão geral e Conferências estão em
+O frontend mantém React e Vite. `Aviso`, `BotaoDeAcao`, Seleção, Cronograma, Visão geral, Conferências e Status das atualizações estão em
 TypeScript. Seleção inclui estado, componentes, filtros, indicadores, gráficos, tabela
 e regras puras em `src/lib/selecao-do-painel.ts`. Cronograma inclui estado, calendário,
 filtros, modal do dia, próximas etapas, linha do tempo e regras em
 `src/lib/calendario-editais.ts`. Visão geral inclui estado, filtros, indicadores, tabela,
 gaveta, boas-vindas, leitura dos marcos e regras em `src/lib/visao-geral.ts`. Conferências inclui
 estado, cartão, selos, gaveta, busca e paginação dos casos, CSV, ação de ignorar com motivo,
-navegação e regras em `src/lib/avisos-de-conferencia.ts`. Em Entrevistas, as peças novas do Painel e de Conduzir (`andamento.tsx`, `conduzir.tsx`,
-`fila-do-dia.tsx`, `tipos.ts`, `src/lib/painel-de-entrevistas.ts` e `src/lib/fila-de-conducao.ts`)
+navegação e regras em `src/lib/avisos-de-conferencia.ts`. Status das atualizações inclui
+saúde das cargas, agenda, histórico, acompanhamento, formulário de opções, estado e regras em
+`src/lib/saude-das-cargas.ts` e `src/lib/painel-dos-robos.ts`. A validação das opções em
+`src/lib/robos-de-carga.js` continua compartilhada com a Avaliação documental, com contratos JSDoc.
+Em Entrevistas, as peças novas do Painel e de Conduzir (`andamento.tsx`, `conduzir.tsx`,
+`fila-do-dia.tsx`, as peças da ficha de notas — cabeçalho, abas, matriz, célula, resultado —, `tipos.ts`,
+`src/lib/painel-de-entrevistas.ts`, `src/lib/fila-de-conducao.ts` e `src/lib/digitacao-de-notas.ts`)
 já nascem em TypeScript. Os mapas
 continuam em JavaScript, com contratos JSDoc na integração com a tela. Outros módulos
 combinam JavaScript/JSX com migrações pontuais para TypeScript: a ficha da Avaliação documental
@@ -35,7 +40,7 @@ O build já chama `typecheck`, então erros nos arquivos migrados bloqueiam o bu
 `tests/tipos/`. Usa modo estrito, DOM, JSX do React e resolução de módulos do bundler.
 `allowJs` permite importar o código existente; `checkJs` está desligado. Portanto, o compilador
 não verifica todos os consumidores JavaScript nem valida JSON em tempo de execução.
-Seleção, Cronograma, Visão geral e Conferências verificam objetos e listas nas fronteiras de leitura; limites dessa
+Os módulos migrados verificam objetos e listas nas fronteiras de leitura; limites dessa
 verificação estão nos READMEs dos módulos.
 
 Lint e formatação incrementais incluem `.ts` e `.tsx`. O ESLint usa o parser TypeScript;
@@ -68,6 +73,9 @@ Visão geral também está migrada; contratos e integração com os mapas estão
 
 Conferências também está migrado; contratos, normalização, paginação e limites estão em
 [../src/modulos/conferencias/README.md](../src/modulos/conferencias/README.md).
+
+Status das atualizações também está migrado; contratos e limites estão em
+[../src/componentes/saude-das-cargas/README.md](../src/componentes/saude-das-cargas/README.md).
 
 Escolher um módulo por entrega, levantar os consumidores e manter o comportamento coberto
 pelos testes. Declarar contratos de dados e ações sem `any` ou supressões de erros. Atualizar

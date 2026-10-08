@@ -4,15 +4,25 @@ import {
 } from "../lib/comemoracao.js";
 import {
   alfaDoRastro,
-  avancarShow,
   brilhoDaParticula,
   corDaParticula,
-  criarShow,
   fatorDeSaida,
-  INTENSIDADES,
   paletaDosFogos,
-  showAcabou,
 } from "../lib/fogos.js";
+import {
+  avancarCena,
+  cenaAcabou,
+  criarCena,
+  desenharParticulasDoMotor,
+  efeitoChamaAya,
+  normalizarDuracao,
+  DURACAO_PADRAO_MS,
+} from "../lib/motor-de-efeitos.js";
+import {
+  comemoracoesPessoaisLigadas,
+  decidirComemoracao,
+  duracaoMsDasOpcoes,
+} from "../lib/catalogo-de-comemoracoes.ts";
 import {
   guardarSom,
   opacidadeDoVeu,
@@ -21,18 +31,35 @@ import {
   somDoEstouro,
   somLigado,
 } from "../lib/fogos-cena.js";
-import { definirEstadoDaAya } from "../lib/estado-da-aya.ts";
+import {
+  definirEstadoDaAya,
+  EVENTO_ESTADO_DA_AYA,
+} from "../lib/estado-da-aya.ts";
 import { montarMascoteAvulsa } from "../modulos/aya/mascote/mascote.tsx";
 import { criarIcone } from "./icones.js";
 import "../styles/comemoracao.css";
 
 /*
-  O desenho das comemorações, sem biblioteca: um véu escuro suave, fogos de
-  artifício num <canvas> (luz somada, halos e fumaça) por 5–6 s, a Aya (arara
-  azul) atravessando a tela e soltando o primeiro foguete, o marco desenhado
-  no céu pelo último estouro e um aviso no topo (role="status") com "Pular",
-  o botão de som (desligado por padrão) e o ×. Com prefers-reduced-motion, só
-  o aviso. O roteiro e a física são de src/lib/fogos.js; a cena (voo, véu,
+  O desenho das comemorações, sem biblioteca: o efeito escolhido (fogos,
+  confete, serpentina, chuva de estrelas, corações, balões, a Aya comemorando
+  ou o combinado — src/lib/motor-de-efeitos.js) num <canvas>, um véu escuro
+  suave quando há fogos ou estrelas, e um aviso no topo (role="status") com
+  "Pular", o botão de som (desligado por padrão) e o ×. Os fogos: luz
+  somada, halos e fumaça por 5–6 s (ou a duração configurada), a Aya (arara
+  azul) atravessando a tela e soltando o primeiro foguete e o marco desenhado
+  no céu pelo último estouro. Com prefers-reduced-motion, só o aviso.
+
+  Cada comemoração de marco passa `marco` (id do catálogo de
+  src/lib/catalogo-de-comemoracoes.ts): Configurações › Comemorações decide
+  se aparece, o efeito, a intensidade, a duração, o som e a mensagem; a
+  preferência pessoal (neste navegador) também desliga. `teste: true` (botão
+  Testar e Palco de testes) passa por cima das duas e não grava nada.
+
+  "Aya comemorando" não desenha a arara aqui: avisa a mascote pelo evento
+  `aya:estado` na janela (detail: { estado: "comemorando", duracaoMs }) e,
+  ao terminar, `{ estado: "parada" }` — a mascote decide como reage.
+
+  O roteiro e a física dos fogos são de src/lib/fogos.js; a cena (voo, véu,
   som), de src/lib/fogos-cena.js; a regra de quando comemorar, de
   src/lib/comemoracao.js. Quem usa: o acesso liberado
   (comemoracao-do-acesso.js), o painel de análises, a tela de Entrevistas
@@ -44,6 +71,7 @@ export const TEMPO_DO_AVISO_MS = 12000;
 /* Densidade de pixels no canvas: nítido em tela retina, sem passar de 2x. */
 const DPR_MAXIMO = 2;
 
+/** @param {Window | undefined} [janela] */
 export function semMovimento(janela = globalThis.window) {
   try {
     return Boolean(
@@ -187,6 +215,20 @@ function desenhar(contexto, show, { largura, altura, dt, halo }) {
     contexto.drawImage(imagem, p.x - raio, p.y - raio, 2 * raio, 2 * raio);
   });
 }
+
+/**
+ * Um quadro de uma cena inteira (fogos + motor) num contexto só, limpo a
+ * cada quadro: a prévia do Palco de testes (Configurações › Comemorações).
+ */
+export function desenharPrevia(contexto, cena, { largura, altura, dt, halo }) {
+  contexto.globalCompositeOperation = "source-over";
+  contexto.clearRect?.(0, 0, largura, altura);
+  if (cena.show) desenhar(contexto, cena.show, { largura, altura, dt, halo });
+  contexto.globalCompositeOperation = "source-over";
+  desenharParticulasDoMotor(contexto, cena);
+}
+
+export { criarHalos, paletaDoTema };
 
 /*
   O texto do marco em pixels: escrito num canvas fora da tela (fillText) e
@@ -354,14 +396,18 @@ function sintetizar(audio, { tipo, volume }) {
  * escolha fica neste navegador). Só toca depois de a pessoa interagir com a
  * página; o AudioContext só nasce quando vai tocar.
  */
-export function criarSom(janela = globalThis.window) {
+export function criarSom(
+  janela = globalThis.window,
+  { ligadoPorPadrao = false } = {},
+) {
   let armazenamento = null;
   try {
     armazenamento = janela?.localStorage || null;
   } catch {
     armazenamento = null;
   }
-  let ligado = somLigado(armazenamento);
+  // O marco configurado com som começa ligado (sem guardar a escolha).
+  let ligado = ligadoPorPadrao === true || somLigado(armazenamento);
   let interagiu = janela?.navigator?.userActivation?.hasBeenActive === true;
   let audio = null;
   const contexto = () => {
@@ -410,24 +456,55 @@ export function criarSom(janela = globalThis.window) {
   };
 }
 
-// ── Fogos ───────────────────────────────────────────────────────────────────
+// ── Efeitos ─────────────────────────────────────────────────────────────────
+
+/*
+  A mascote (src/modulos/aya/mascote/) comemora pelo evento global
+  `aya:estado` (definirEstadoDaAya, src/lib/estado-da-aya.ts): em toda
+  comemoração, com a duração do efeito; "parada" ao terminar.
+*/
+export const EVENTO_DA_AYA = EVENTO_ESTADO_DA_AYA;
+function avisarAya(janela, estado, duracaoMs) {
+  try {
+    definirEstadoDaAya(estado, duracaoMs, janela);
+  } catch {
+    /* sem mascote ou sem eventos: nada a fazer */
+  }
+}
+
+function criarCanvas(doc, classe) {
+  const canvas = doc.createElement("canvas");
+  canvas.className = classe;
+  canvas.setAttribute("aria-hidden", "true");
+  let contexto = null;
+  try {
+    contexto = canvas.getContext?.("2d") || null;
+  } catch {
+    contexto = null;
+  }
+  return { canvas, contexto };
+}
 
 /**
- * Fogos de artifício por 5–6 s: "pequeno", "cheio" (padrão), "fogos" (fim
- * de um tour) ou "festa" (fim de uma trilha, marco do ano). `forma` é o
- * marco no céu ("coracao", "estrela", "check" ou { tipo: "numero", texto });
- * `comAya` põe a Aya voando; `som` (de criarSom) toca os estouros;
- * `aoTerminar` é chamado quando tudo some (fim ou `parar`); `aleatorio`
- * fixa o sorteio (testes). Véu, canvas e
- * Aya sem clique, nítidos no devicePixelRatio, pausam com a aba oculta e se
- * removem ao fim. Não faz nada sem canvas 2D, sem requestAnimationFrame ou
- * com menos movimento (devolve false); senão, devolve `{ parar }`.
+ * Solta um efeito: `efeito` ("fogos" — padrão —, "confete", "serpentina",
+ * "estrelas", "coracoes", "baloes", "aya" ou "combinado"), `intensidade`
+ * ("suave", "normal", "festa"; aceita os nomes antigos dos fogos: "pequeno",
+ * "cheio", "fogos") e `duracaoMs` (vazia: a padrão do efeito). `forma` é o
+ * marco no céu dos fogos ("coracao", "estrela", "check" ou { tipo: "numero",
+ * texto }); `comAya` põe a Aya voando nos fogos; `som` (de criarSom) toca
+ * os estouros; `aoTerminar` é chamado quando tudo some (fim ou `parar`);
+ * `aleatorio` fixa o sorteio (testes). Véu e canvas sem clique, nítidos no
+ * devicePixelRatio, pausam com a aba oculta e se removem ao fim. Não faz
+ * nada sem canvas 2D, sem requestAnimationFrame ou com menos movimento
+ * (devolve false); senão, devolve `{ parar }`.
  */
 export function soltarFogos(
   doc = globalThis.document,
   janela = globalThis.window,
   {
+    efeito = "fogos",
     intensidade = "cheio",
+    duracaoMs = null,
     forma = null,
     comAya = true,
     som = null,
@@ -436,49 +513,76 @@ export function soltarFogos(
   } = {},
 ) {
   if (!doc?.body || semMovimento(janela)) return false;
-  const canvas = doc.createElement("canvas");
-  canvas.className = "comemoracao__fogos";
-  canvas.setAttribute("aria-hidden", "true");
-  let contexto = null;
-  try {
-    contexto = canvas.getContext?.("2d") || null;
-  } catch {
-    contexto = null;
+  if (!janela?.requestAnimationFrame) return false;
+  const chamaAya = efeitoChamaAya(efeito);
+  // Só a Aya: nada a desenhar; o evento e um relógio para o fim.
+  if (efeito === "aya") {
+    const duracao = normalizarDuracao(duracaoMs) ?? DURACAO_PADRAO_MS;
+    let parado = false;
+    const parar = () => {
+      if (parado) return;
+      parado = true;
+      avisarAya(janela, "parada");
+      aoTerminar?.();
+    };
+    avisarAya(janela, "comemorando", duracao);
+    setTimeout(parar, duracao);
+    return { parar };
   }
-  if (!contexto || !janela?.requestAnimationFrame) return false;
-  const veu = doc.createElement("div");
-  veu.className = "comemoracao__veu";
-  veu.setAttribute("aria-hidden", "true");
-  veu.style.opacity = "0";
-  doc.body.append(veu, canvas);
+  const fogos = criarCanvas(doc, "comemoracao__fogos");
+  if (!fogos.contexto) return false;
   const largura = janela.innerWidth || 800;
   const altura = janela.innerHeight || 600;
-  const dpr = Math.min(DPR_MAXIMO, Math.max(1, janela.devicePixelRatio || 1));
-  canvas.width = Math.round(largura * dpr);
-  canvas.height = Math.round(altura * dpr);
-  contexto.setTransform?.(dpr, 0, 0, dpr, 0, 0);
-  const show = criarShow({
+  const cena = criarCena({
+    efeito,
+    intensidade,
+    duracaoMs,
     largura,
     altura,
-    intensidade: INTENSIDADES[intensidade] ? intensidade : "cheio",
     paleta: paletaDoTema(doc, janela),
-    comAya: comAya !== false,
+    // Com a mascote comemorando, a arara voando dos fogos fica de fora.
+    comAya: comAya !== false && !chamaAya,
     forma,
     aleatorio,
     amostrarTexto: (texto) => amostrarTexto(doc, janela, texto),
   });
-  const aya = show.aya ? criarAya(doc, show.aya) : null;
+  const show = cena.show;
+  // Os fogos apagam o quadro anterior aos poucos (rastro); o motor limpa
+  // tudo a cada quadro: um canvas para cada, quando há os dois.
+  const motor = cena.lotes.length
+    ? show
+      ? criarCanvas(doc, "comemoracao__fogos comemoracao__motor")
+      : fogos
+    : null;
+  if (motor && !motor.contexto) return false;
+  const veu = cena.comVeu ? doc.createElement("div") : null;
+  if (veu) {
+    veu.className = "comemoracao__veu";
+    veu.setAttribute("aria-hidden", "true");
+    veu.style.opacity = "0";
+    doc.body.append(veu);
+  }
+  const telas = [fogos, ...(motor && motor !== fogos ? [motor] : [])];
+  const dpr = Math.min(DPR_MAXIMO, Math.max(1, janela.devicePixelRatio || 1));
+  for (const { canvas, contexto } of telas) {
+    doc.body.append(canvas);
+    canvas.width = Math.round(largura * dpr);
+    canvas.height = Math.round(altura * dpr);
+    contexto.setTransform?.(dpr, 0, 0, dpr, 0, 0);
+  }
+  const aya = show?.aya ? criarAya(doc, show.aya) : null;
   if (aya) doc.body.append(aya);
-  // A arara do canto (e a do painel) comemora junto, pelo evento global.
-  definirEstadoDaAya("comemorando", undefined, janela);
   const halo = criarHalos(doc);
+  // A arara do canto (e a do painel) comemora junto, pelo evento global.
+  avisarAya(janela, "comemorando", Math.round(cena.duracao * 1000));
   let parado = false;
   const parar = () => {
     if (parado) return;
     parado = true;
-    canvas.remove();
-    veu.remove();
+    for (const { canvas } of telas) canvas.remove();
+    veu?.remove();
     tirarAya(aya);
+    avisarAya(janela, "parada");
     aoTerminar?.();
   };
   let anterior = null;
@@ -487,13 +591,17 @@ export function soltarFogos(
     // Aba oculta: não avança (o navegador também segura os quadros).
     const dt = anterior === null || doc.hidden ? 0 : (agora - anterior) / 1000;
     anterior = agora;
-    avancarShow(show, dt);
-    desenhar(contexto, show, { largura, altura, dt, halo });
-    veu.style.opacity = String(opacidadeDoVeu(show.t, show.duracao));
+    avancarCena(cena, dt);
+    if (show) desenhar(fogos.contexto, show, { largura, altura, dt, halo });
+    if (motor) {
+      motor.contexto.clearRect?.(0, 0, largura, altura);
+      desenharParticulasDoMotor(motor.contexto, cena);
+    }
+    if (veu) veu.style.opacity = String(opacidadeDoVeu(cena.t, cena.duracao));
     if (aya) moverAya(aya, show.aya, show.t);
-    for (const evento of show.eventos.splice(0))
+    for (const evento of cena.eventos.splice(0))
       som?.tocar?.(somDoEstouro(evento));
-    if (showAcabou(show)) parar();
+    if (cenaAcabou(cena)) parar();
     else janela.requestAnimationFrame(quadro);
   };
   janela.requestAnimationFrame(quadro);
@@ -579,15 +687,85 @@ function marcarSom(botao, ligado) {
   );
 }
 
+function armazenamentoDa(janela) {
+  try {
+    return janela?.localStorage || null;
+  } catch {
+    return null;
+  }
+}
+
 /**
- * Aviso + fogos. `confete` (o nome ficou) é a intensidade: "pequeno",
- * "cheio", "fogos", "festa" ou false (só o aviso); `forma`, o marco no céu.
- * Com fogos, o aviso ganha "Pular" (some quando o show acaba) e o botão de
- * som; o × também encerra o show. Sem fogos quando a pessoa pediu menos
- * movimento. Devolve o aviso (ou null).
+ * O que soltar: com `marco`, a configuração dele (ou nada, se desligado —
+ * no marco ou na preferência pessoal); sem `marco`, o pedido direto
+ * (`efeito`/`intensidade`/`duracaoMs`, ou `confete`, o nome antigo da
+ * intensidade dos fogos: "pequeno", "cheio", "fogos", "festa" ou false).
+ */
+export function planoDaComemoracao({
+  marco = "",
+  teste = false,
+  confete = "cheio",
+  efeito = null,
+  intensidade = null,
+  duracaoMs = null,
+  som = false,
+  janela = globalThis.window,
+} = {}) {
+  if (marco) {
+    const { mostrar, opcoes } = decidirComemoracao({
+      marco,
+      teste,
+      pessoal: comemoracoesPessoaisLigadas(armazenamentoDa(janela)),
+    });
+    if (!mostrar) return null;
+    if (opcoes && !(teste && efeito))
+      return {
+        efeito: opcoes.efeito,
+        intensidade: opcoes.intensidade,
+        duracaoMs: duracaoMsDasOpcoes(opcoes),
+        som: opcoes.som,
+        mensagem: opcoes.mensagem,
+      };
+  } else if (!teste && !comemoracoesPessoaisLigadas(armazenamentoDa(janela)))
+    return null;
+  if (efeito)
+    return {
+      efeito,
+      intensidade: intensidade || "normal",
+      duracaoMs,
+      som: som === true,
+      mensagem: "",
+    };
+  return confete
+    ? {
+        efeito: "fogos",
+        intensidade: confete === true ? "cheio" : confete,
+        duracaoMs: null,
+        som: false,
+        mensagem: "",
+      }
+    : {
+        efeito: null,
+        intensidade: null,
+        duracaoMs: null,
+        som: false,
+        mensagem: "",
+      };
+}
+
+/**
+ * Aviso + efeito. Com `marco` (id do catálogo ou de um personalizado), a
+ * configuração de Configurações › Comemorações decide; desligado, nada
+ * aparece (devolve null). `teste` ignora a configuração e a preferência
+ * pessoal, e `efeito`/`intensidade`/`duracaoMs`/`som` escolhem na hora
+ * (Palco de testes). `confete` (nome antigo) é a intensidade dos fogos de
+ * quem não passa marco ("pequeno", "cheio", "fogos", "festa" ou false: só o
+ * aviso); `forma`, o marco no céu. Com efeito, o aviso ganha "Pular" (some
+ * quando o efeito acaba) e o botão de som; o × também encerra. Sem efeito
+ * quando a pessoa pediu menos movimento. Devolve o aviso (ou null).
  */
 /**
- * @param {{texto?: string, itens?: readonly string[], tituloDosItens?: string, forma?: {tipo: string, texto: string} | null, confete?: string | boolean, doc?: Document, janela?: Window, aleatorio?: () => number}} [opcoes]
+ * @param {{texto?: string, itens?: readonly string[], tituloDosItens?: string, forma?: string | {tipo: string, texto: string} | null, confete?: string | boolean, marco?: string, teste?: boolean, efeito?: string | null, intensidade?: string | null, duracaoMs?: number | null, som?: boolean, doc?: Document, janela?: Window, aleatorio?: () => number}} [opcoes]
  */
 export function comemorar({
   texto,
@@ -595,12 +773,32 @@ export function comemorar({
   tituloDosItens = "",
   confete = "cheio",
   forma = null,
+  marco = "",
+  teste = false,
+  efeito = null,
+  intensidade = null,
+  duracaoMs = null,
+  som: comSom = false,
   doc = globalThis.document,
   janela = globalThis.window,
   aleatorio,
 } = {}) {
-  const animar = Boolean(confete) && !semMovimento(janela);
-  const som = animar ? criarSom(janela) : null;
+  const plano = planoDaComemoracao({
+    marco,
+    teste,
+    confete,
+    efeito,
+    intensidade,
+    duracaoMs,
+    som: comSom,
+    janela,
+  });
+  if (!plano) return null;
+  if (plano.mensagem) texto = plano.mensagem;
+  const animar = Boolean(plano.efeito) && !semMovimento(janela);
+  const som = animar
+    ? criarSom(janela, { ligadoPorPadrao: plano.som === true })
+    : null;
   let fogos = null;
   const aviso = mostrarAviso(doc, {
     texto,
@@ -626,7 +824,9 @@ export function comemorar({
   pular.addEventListener("click", () => fogos?.parar?.());
   acoes.append(botaoSom, pular);
   fogos = soltarFogos(doc, janela, {
-    intensidade: confete,
+    efeito: plano.efeito,
+    intensidade: plano.intensidade,
+    duracaoMs: plano.duracaoMs,
     forma,
     som,
     aoTerminar: () => pular.remove(),
@@ -662,9 +862,10 @@ export function esquecerComemoracoesDoPainel() {
 
 /**
  * Um tipo de marco num painel: troca o estado guardado (linha de base na
- * primeira vez) e, se `decidir(anterior)` devolver `{ texto, itens, forma }`
- * e as comemorações estiverem ligadas, comemora. O estado é guardado mesmo
- * desligado, para que religar não traga o que aconteceu no meio.
+ * primeira vez) e, se `decidir(anterior)` devolver `{ texto, itens, forma,
+ * marco }` e as comemorações estiverem ligadas, comemora (`marco` é o id
+ * do catálogo: a configuração dele decide o efeito). O estado é guardado
+ * mesmo desligado, para que religar não traga o que aconteceu no meio.
  */
 export function avaliarMarco({
   armazenamento = globalThis.window?.localStorage,

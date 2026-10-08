@@ -89,7 +89,7 @@ com a conta em `monitora.avaliacao_documental`) e o expurgo diário dos anexos d
   de quem lê naquele módulo (`listar_casos_aviso_conferencia`, 20261007120000 e 20261007240000).
 - **Log de execução no banco** (`TL_…`): início, fim, situação (`EM_ANDAMENTO`, `CONCLUIDA`,
   `PARCIAL`, `FALHOU`), quem disparou e o endereço da execução; a execução esquecida não segura a
-  próxima. Entra no **Status das atualizações** (`get_saude_das_cargas` + `src/lib/saude-das-cargas.js`).
+  próxima. Entra no **Status das atualizações** (`get_saude_das_cargas` + `src/lib/saude-das-cargas.ts`).
 - **Rodar agora:** o workflow aceita `workflow_dispatch` com `modo` e `disparado_por`; o robô entra
   na lista fixa `ROBOS_DE_CARGA` de `src/lib/robos-de-carga.js` (id = id da linha do Status) e
   nas listas fixas de `disparar_robo` e `FC_DISPARAR_ROBO` (o banco pede ao GitHub com a chave do
@@ -119,7 +119,7 @@ leem: o vitest (`tests/*.test.js`) e o pytest (`tests/python/test_*.py`). Exempl
    se tiver agenda, o workflow entra na lista fixa de `FC_DISPARAR_ROBO` e ganha uma tarefa
    `agsus_robo_*` no pg_cron ([agenda-dos-robos.md](agenda-dos-robos.md)) — `concurrency`, `timeout-minutes`, secrets por `env`. Cabeçalho dizendo que o log é
    público.
-4. Robô em `ROBOS_DE_CARGA` (`src/lib/robos-de-carga.js`) e a linha em `src/lib/saude-das-cargas.js`.
+4. Robô em `ROBOS_DE_CARGA` (`src/lib/robos-de-carga.js`) e a linha em `src/lib/saude-das-cargas.ts`.
 5. `tests/python/test_<job>.py`; verbete da Aya em `docs/aya/`; guia de operação em `docs/`.
 
 ## Como criar uma função `api/*.py` nova

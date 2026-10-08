@@ -10,7 +10,7 @@ import {
   PRAZO_MENSAL_MIN,
   textoDaIdade,
   visaoSimples,
-} from "../src/lib/saude-das-cargas.js";
+} from "../src/lib/saude-das-cargas.ts";
 
 /* "Agora" fixo: 01/10/2026 12:00 UTC. */
 const AGORA = new Date("2026-10-01T12:00:00Z");

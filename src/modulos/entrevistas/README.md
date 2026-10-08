@@ -54,11 +54,17 @@ estado-da-conducao.js   store da condução e dos roteiros: editais, edital aber
 conducao.jsx            SeletorDoEdital, PrepararEdital (configuração e convocação; regra, desempate e
                         vagas da Classificação só leitura), DesempateDaClassificacao, liberação (admin global)
 ficha.jsx               ficha de notas em modo de análise (tela inteira, como a da Avaliação documental):
-                        topo preso, competências com os avaliadores lado a lado (aspectos: um campo por
-                        aspecto e a média), prévia do parecer na lateral, barra presa; componente
-                        independente (dados, convocado, convocados, aoSalvar, aoAbrir, aoFechar).
-                        Enter avança, Ctrl+Enter salva, Esc volta; celular: uma competência por vez
-campo-de-nota.tsx       campo compacto da nota e os botões da escala (0 a 5)
+                        o estado, a gravação e o fluxo; por avaliador (padrão: uma aba por avaliador) ou
+                        por competência (lembrado no navegador); componente independente (dados,
+                        convocado, convocados, aoSalvar, aoAbrir, aoFechar)
+cabecalho-da-ficha.tsx  cabeçalho enxuto: nome, vaga, chips, detalhes no "i", comparecimento, banca,
+                        Anterior / "1 de 15" / Próximo
+abas-da-ficha.tsx       abas dos avaliadores (ou competências), com o check ao completar
+matriz-de-notas.tsx     a matriz competências × aspectos (ou "Nota") com o fluxo de planilha (dígito
+                        avança, setas/Enter, Backspace volta, fora da escala recusa) e o chip da média
+campo-de-nota.tsx       a célula grande da matriz (dica do nível em foco, pulso ao preencher)
+resultado-da-ficha.tsx  a lateral viva: total no anel com o mínimo, barras por competência, parecer e
+                        motivos, "X de Y notas"
 aspectos-do-roteiro.tsx aspectos do roteiro no editor (e o modelo Conceitua · Propriedade · Profundidade)
 roteiros.jsx            cartões dos roteiros e o editor (gaveta), com versões; desempate só leitura
 partes.jsx              composição da banca, botão de linha
@@ -70,7 +76,7 @@ Regras puras em `src/lib/` (`entrevistas-do-painel.js`, `painel-de-entrevistas.t
 empates, agenda dos próximos dias —, `fila-de-conducao.ts` — fila, situações, recortes, contador —,
 `conducao-de-entrevista.js`,
 `convocacao-da-entrevista.js` — a lista da Classificação por vaga, quem está na ficha, avisos —,
-`roteiro-de-entrevista.js`, `comemoracao.js`). Testes: `tests/modulos/entrevistas.test.js` (painel), `tests/modulos/conduzir-entrevistas.test.js`,
-`tests/painel-e-conducao-de-entrevistas.test.js`,
+`roteiro-de-entrevista.js`, `digitacao-de-notas.ts` — a digitação da matriz —, `comemoracao.js`). Testes: `tests/modulos/entrevistas.test.js` (painel), `tests/modulos/conduzir-entrevistas.test.js`,
+`tests/painel-e-conducao-de-entrevistas.test.js`, `tests/digitacao-de-notas.test.js`,
 `tests/convocacao-da-entrevista.test.js`, `tests/conducao-de-entrevista.test.js` e
 `tests/convocacao-unica-da-entrevista-migration.test.js`.

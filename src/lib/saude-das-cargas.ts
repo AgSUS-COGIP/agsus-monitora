@@ -1,3 +1,10 @@
+import type {
+  Carga,
+  SaudeNormalizada,
+  SituacaoDaCarga,
+  ExecucaoDaCarga,
+  LinhaDaSaude,
+} from "../componentes/saude-das-cargas/tipos.ts";
 /*
   Status das atualizações (Configurações › Status das atualizações, só administrador global),
   sem React e sem banco: o que chega de `get_saude_das_cargas`
@@ -52,14 +59,14 @@ export const SITUACOES = Object.freeze({
   nunca: Object.freeze({ rotulo: "Ainda sem carga", tom: "neutro", ordem: 3 }),
 });
 
-const NOMES_DAS_AREAS = Object.freeze({
+const NOMES_DAS_AREAS: Readonly<Record<string, string>> = Object.freeze({
   "saude-indigena": "Saúde Indígena",
   sede: "SEDE",
   projetos: "Projetos",
 });
 
 /* As tarefas agendadas do banco (pg_cron), com nome de gente. */
-const TAREFAS = Object.freeze({
+const TAREFAS: Readonly<Record<string, string>> = Object.freeze({
   agsus_analises_cache_do_painel: "Painel de análises (pacote pronto)",
   agsus_aprovados_cache_por_area: "Lista de aprovados (pacote por área)",
   agsus_entrevistas_cache_do_painel: "Painel de entrevistas (pacote pronto)",
@@ -75,7 +82,7 @@ const TAREFAS = Object.freeze({
 });
 
 /* Os workflows que o banco pede ao GitHub (lista fixa de FC_DISPARAR_ROBO). */
-const NOMES_DOS_WORKFLOWS = Object.freeze({
+const NOMES_DOS_WORKFLOWS: Readonly<Record<string, string>> = Object.freeze({
   "sincronizar-entrevistas.yml": "Entrevistas",
   "sincronizar-selecao.yml": "Seleção",
   "conferencias.yml": "Conferências",
@@ -94,21 +101,51 @@ const ESTADOS = Object.freeze({
   disparo: { ok: ["ACEITO"], falha: ["FALHOU", "SEM_TOKEN"] },
 });
 
-const texto = (valor) => String(valor ?? "").trim();
-
-const data = (valor) => {
-  if (!valor) return null;
+const registro = (valor: unknown): Record<string, unknown> =>
+  valor !== null && typeof valor === "object" && !Array.isArray(valor)
+    ? (valor as Record<string, unknown>)
+    : {};
+const registros = (valor: unknown): Record<string, unknown>[] =>
+  (Array.isArray(valor) ? valor : [])
+    .filter(
+      (v: unknown) => v !== null && typeof v === "object" && !Array.isArray(v),
+    )
+    .map(registro);
+const rotulo = (
+  mapa: Readonly<Record<string, string>>,
+  chave: string,
+): string => (Object.hasOwn(mapa, chave) ? (mapa[chave] ?? "") : "");
+const texto = (valor: unknown): string =>
+  typeof valor === "string" ||
+  typeof valor === "number" ||
+  typeof valor === "boolean"
+    ? String(valor).trim()
+    : "";
+const data = (valor: unknown): Date | null => {
+  if (
+    !(
+      typeof valor === "string" ||
+      typeof valor === "number" ||
+      valor instanceof Date
+    ) ||
+    !valor
+  )
+    return null;
   const d = new Date(valor);
   return Number.isNaN(d.getTime()) ? null : d;
 };
-
-const inteiro = (valor) => {
+const inteiro = (valor: unknown) => {
   if (valor === null || valor === undefined || valor === "") return null;
+  if (typeof valor !== "string" && typeof valor !== "number") return null;
   const n = Number(valor);
   return Number.isFinite(n) ? Math.round(n) : null;
 };
 
-function normalizarExecucao(bruta, tipo) {
+function normalizarExecucao(
+  entrada: unknown,
+  tipo: keyof typeof ESTADOS,
+): ExecucaoDaCarga {
+  const bruta = registro(entrada);
   const situacaoBruta = texto(bruta?.situacao);
   const regra = ESTADOS[tipo];
   const situacao = regra.ok.includes(situacaoBruta)
@@ -129,10 +166,10 @@ function normalizarExecucao(bruta, tipo) {
 }
 
 /** O prazo (min) de uma tarefa do pg_cron pela agenda dela; `null` sem regra. */
-export function prazoDaAgenda(agenda) {
+export function prazoDaAgenda(agenda: unknown) {
   const partes = texto(agenda).split(/\s+/);
   if (partes.length !== 5) return null;
-  const [minuto, hora, dia] = partes;
+  const [minuto = "", hora = "", dia = ""] = partes;
   if (hora === "*" && dia === "*" && /^(\*|\d+-\d+)\/\d+$|^\*$/.test(minuto))
     return PRAZO_FREQUENTE_MIN;
   if (dia === "*" && /^\d+$/.test(hora)) return PRAZO_DIARIO_MIN;
@@ -141,7 +178,15 @@ export function prazoDaAgenda(agenda) {
 }
 
 /** O selo de uma carga pelas execuções (mais recente primeiro) e o prazo. */
-export function situacaoDaCarga(execucoes, prazoMin, agora = new Date()) {
+export function situacaoDaCarga(
+  execucoes: readonly ExecucaoDaCarga[],
+  prazoMin: number | null,
+  agora = new Date(),
+): {
+  situacao: SituacaoDaCarga;
+  ultimaOk: ExecucaoDaCarga | null;
+  idadeMin: number | null;
+} {
   if (!execucoes.length)
     return { situacao: "nunca", ultimaOk: null, idadeMin: null };
   const ultimaTerminada = execucoes.find((e) => e.situacao !== "andamento");
@@ -153,12 +198,12 @@ export function situacaoDaCarga(execucoes, prazoMin, agora = new Date()) {
   if (ultimaTerminada?.situacao === "falha")
     return { situacao: "falhou", ultimaOk, idadeMin };
   if (!ultimaOk) return { situacao: "em_andamento", ultimaOk, idadeMin };
-  if (prazoMin && idadeMin > prazoMin)
+  if (prazoMin && idadeMin !== null && idadeMin > prazoMin)
     return { situacao: "atrasada", ultimaOk, idadeMin };
   return { situacao: "em_dia", ultimaOk, idadeMin };
 }
 
-const QUEM_DISPAROU = Object.freeze({
+const QUEM_DISPAROU: Readonly<Record<string, string>> = Object.freeze({
   AGENDA: "agenda",
   MONITORA: "Rodar agora",
   GITHUB: "GitHub",
@@ -166,15 +211,16 @@ const QUEM_DISPAROU = Object.freeze({
 });
 
 /* Execução do robô da Empregare: as contagens de vagas entram na mensagem. */
-function execucaoDoRobo(bruta) {
-  const n = (campo) => inteiro(bruta?.[campo]) ?? 0;
+function execucaoDoRobo(entrada: unknown) {
+  const bruta = registro(entrada);
+  const n = (campo: string) => inteiro(bruta?.[campo]) ?? 0;
   const partes = [
     `${n("vagas_pedidas")} vagas pedidas`,
     `${n("vagas_baixadas")} baixadas`,
     `${n("vagas_falha")} com falha`,
     `${n("vagas_recusadas")} recusadas`,
   ];
-  const quem = QUEM_DISPAROU[texto(bruta?.disparo)];
+  const quem = rotulo(QUEM_DISPAROU, texto(bruta?.disparo));
   if (quem) partes.push(`disparo: ${quem}`);
   const mensagem = texto(bruta?.mensagem);
   return {
@@ -184,8 +230,9 @@ function execucaoDoRobo(bruta) {
 }
 
 /* Execução das conferências: os avisos entram na mensagem. */
-function execucaoDaConferencia(bruta) {
-  const n = (campo) => inteiro(bruta?.[campo]) ?? 0;
+function execucaoDaConferencia(entrada: unknown) {
+  const bruta = registro(entrada);
+  const n = (campo: string) => inteiro(bruta?.[campo]) ?? 0;
   const partes = [
     `${n("novos")} avisos novos`,
     `${n("abertos")} abertos`,
@@ -193,7 +240,7 @@ function execucaoDaConferencia(bruta) {
   ];
   const falhas = Array.isArray(bruta?.falhas) ? bruta.falhas.length : 0;
   if (falhas) partes.push(`${falhas} conferências falharam`);
-  const quem = QUEM_DISPAROU[texto(bruta?.disparo)];
+  const quem = rotulo(QUEM_DISPAROU, texto(bruta?.disparo));
   if (quem) partes.push(`disparo: ${quem}`);
   const mensagem = texto(bruta?.mensagem);
   return {
@@ -203,15 +250,16 @@ function execucaoDaConferencia(bruta) {
 }
 
 /* Execução do expurgo dos anexos do chat: só contagens (nunca caminho de arquivo). */
-function execucaoDoExpurgo(bruta) {
-  const n = (campo) => inteiro(bruta?.[campo]) ?? 0;
+function execucaoDoExpurgo(entrada: unknown) {
+  const bruta = registro(entrada);
+  const n = (campo: string) => inteiro(bruta?.[campo]) ?? 0;
   const partes = [
     `${n("confirmados")} arquivos removidos`,
     `${n("falhas")} ficaram na fila`,
   ];
   const pendentes = inteiro(bruta?.pendentes);
   if (pendentes !== null) partes.push(`${pendentes} na fila ao fim`);
-  const quem = QUEM_DISPAROU[texto(bruta?.disparo)];
+  const quem = rotulo(QUEM_DISPAROU, texto(bruta?.disparo));
   if (quem) partes.push(`disparo: ${quem}`);
   const mensagem = texto(bruta?.mensagem);
   return {
@@ -221,15 +269,16 @@ function execucaoDoExpurgo(bruta) {
 }
 
 /* Execução da pré-classificação: editais, vagas e o lote entram na mensagem. */
-function execucaoDaPreClassificacao(bruta) {
-  const n = (campo) => inteiro(bruta?.[campo]) ?? 0;
+function execucaoDaPreClassificacao(entrada: unknown) {
+  const bruta = registro(entrada);
+  const n = (campo: string) => inteiro(bruta?.[campo]) ?? 0;
   const partes = [
     `${n("editais")} editais`,
     `${n("vagas")} vagas`,
     `${n("lote")} no lote`,
   ];
   if (bruta?.refazer) partes.push("lote refeito");
-  const quem = QUEM_DISPAROU[texto(bruta?.disparo)];
+  const quem = rotulo(QUEM_DISPAROU, texto(bruta?.disparo));
   if (quem) partes.push(`disparo: ${quem}`);
   const mensagem = texto(bruta?.mensagem);
   return {
@@ -239,10 +288,11 @@ function execucaoDaPreClassificacao(bruta) {
 }
 
 /* Pedido da agenda ao GitHub: o robô e o código HTTP entram na mensagem. */
-function execucaoDoDisparo(bruta) {
+function execucaoDoDisparo(entrada: unknown) {
+  const bruta = registro(entrada);
   const workflow = texto(bruta?.workflow);
   const http = inteiro(bruta?.http);
-  const partes = [NOMES_DOS_WORKFLOWS[workflow] || workflow || "Robô"];
+  const partes = [rotulo(NOMES_DOS_WORKFLOWS, workflow) || workflow || "Robô"];
   if (texto(bruta?.origem) === "MONITORA") partes.push("Rodar agora");
   if (http !== null) partes.push(`HTTP ${http}`);
   const mensagem = texto(bruta?.mensagem);
@@ -256,7 +306,8 @@ function execucaoDoDisparo(bruta) {
   recusado é falha e, sem pedido aceito há mais de 2 h, atrasada (a conta usa
   o último aceito do banco, que pode ser anterior aos 20 pedidos da lista).
 */
-function montarAgenda(bruta, agora) {
+function montarAgenda(entrada: unknown, agora: Date): Carga {
+  const bruta = registro(entrada);
   const carga = montarCarga(
     {
       id: "agenda_dos_robos",
@@ -265,9 +316,7 @@ function montarAgenda(bruta, agora) {
       esperado: "Entrevistas de hora em hora; Seleção às 8h10, 13h10 e 18h10",
       prazoMin: PRAZO_AGENDA_DOS_ROBOS_MIN,
       tipo: "disparo",
-      execucoes: (Array.isArray(bruta?.disparos) ? bruta.disparos : []).map(
-        execucaoDoDisparo,
-      ),
+      execucoes: registros(bruta.disparos).map(execucaoDoDisparo),
     },
     agora,
   );
@@ -287,7 +336,10 @@ function montarAgenda(bruta, agora) {
   if (chaveCadastrada === false || ultimaFechada?.situacao === "falha")
     situacao = "falhou";
   else if (ultimoAceito)
-    situacao = idadeMin > PRAZO_AGENDA_DOS_ROBOS_MIN ? "atrasada" : "em_dia";
+    situacao =
+      idadeMin !== null && idadeMin > PRAZO_AGENDA_DOS_ROBOS_MIN
+        ? "atrasada"
+        : "em_dia";
   return {
     ...carga,
     situacao,
@@ -305,10 +357,26 @@ function montarAgenda(bruta, agora) {
 }
 
 function montarCarga(
-  { id, nome, onde, esperado, prazoMin, tipo, execucoes },
-  agora,
-) {
-  const lista = (Array.isArray(execucoes) ? execucoes : [])
+  {
+    id,
+    nome,
+    onde,
+    esperado,
+    prazoMin,
+    tipo,
+    execucoes,
+  }: {
+    id: string;
+    nome: string;
+    onde: string;
+    esperado: string;
+    prazoMin: number | null;
+    tipo: keyof typeof ESTADOS;
+    execucoes: unknown;
+  },
+  agora: Date,
+): Carga {
+  const lista = registros(execucoes)
     .map((e) => normalizarExecucao(e, tipo))
     .sort((a, b) => (b.inicio?.getTime() ?? 0) - (a.inicio?.getTime() ?? 0));
   const { situacao, ultimaOk, idadeMin } = situacaoDaCarga(
@@ -332,27 +400,31 @@ function montarCarga(
 }
 
 /** O payload de `get_saude_das_cargas` em grupos de cargas, com o resumo. */
-export function normalizarSaude(dados, agora = new Date()) {
-  const analises = (Array.isArray(dados?.analises) ? dados.analises : []).map(
-    (o) => {
-      const incremental = texto(o?.tipo).toUpperCase() === "INCREMENTAL";
-      const area =
-        NOMES_DAS_AREAS[texto(o?.area)] || texto(o?.planilha) || texto(o?.area);
-      const carga = montarCarga(
-        {
-          id: `analises:${texto(o?.origem)}`,
-          nome: `${area} · ${incremental ? "incremental" : "carga completa"}`,
-          onde: "Apps Script da planilha de análises",
-          esperado: incremental ? "a cada 20 min" : "quando alguém pede",
-          prazoMin: incremental ? PRAZO_ANALISES_MIN : null,
-          tipo: "analise",
-          execucoes: o?.execucoes,
-        },
-        agora,
-      );
-      return { ...carga, area: texto(o?.area), incremental };
-    },
-  );
+export function normalizarSaude(
+  entrada: unknown,
+  agora = new Date(),
+): SaudeNormalizada {
+  const dados = registro(entrada);
+  const analises = registros(dados.analises).map((o) => {
+    const incremental = texto(o?.tipo).toUpperCase() === "INCREMENTAL";
+    const area =
+      rotulo(NOMES_DAS_AREAS, texto(o?.area)) ||
+      texto(o?.planilha) ||
+      texto(o?.area);
+    const carga = montarCarga(
+      {
+        id: `analises:${texto(o?.origem)}`,
+        nome: `${area} · ${incremental ? "incremental" : "carga completa"}`,
+        onde: "Apps Script da planilha de análises",
+        esperado: incremental ? "a cada 20 min" : "quando alguém pede",
+        prazoMin: incremental ? PRAZO_ANALISES_MIN : null,
+        tipo: "analise",
+        execucoes: o?.execucoes,
+      },
+      agora,
+    );
+    return { ...carga, area: texto(o?.area), incremental };
+  });
 
   const planilhas = [
     montarCarga(
@@ -392,7 +464,7 @@ export function normalizarSaude(dados, agora = new Date()) {
             esperado: "quando um administrador pede",
             prazoMin: null,
             tipo: "robo",
-            execucoes: dados.empregare.map(execucaoDoRobo),
+            execucoes: registros(dados.empregare).map(execucaoDoRobo),
           },
           agora,
         ),
@@ -410,7 +482,7 @@ export function normalizarSaude(dados, agora = new Date()) {
           esperado: "todo dia às 6h",
           prazoMin: PRAZO_DIARIO_MIN,
           tipo: "conferencia",
-          execucoes: dados.conferencias.map(execucaoDaConferencia),
+          execucoes: registros(dados.conferencias).map(execucaoDaConferencia),
         },
         agora,
       ),
@@ -427,7 +499,9 @@ export function normalizarSaude(dados, agora = new Date()) {
           esperado: "no fim do robô da Empregare e no Recalcular",
           prazoMin: null,
           tipo: "conferencia",
-          execucoes: dados.pre_classificacao.map(execucaoDaPreClassificacao),
+          execucoes: registros(dados.pre_classificacao).map(
+            execucaoDaPreClassificacao,
+          ),
         },
         agora,
       ),
@@ -444,7 +518,7 @@ export function normalizarSaude(dados, agora = new Date()) {
           esperado: "todo dia às 6h30",
           prazoMin: PRAZO_DIARIO_MIN,
           tipo: "conferencia",
-          execucoes: dados.expurgo_chat.map(execucaoDoExpurgo),
+          execucoes: registros(dados.expurgo_chat).map(execucaoDoExpurgo),
         },
         agora,
       ),
@@ -452,19 +526,21 @@ export function normalizarSaude(dados, agora = new Date()) {
 
   // A agenda só aparece depois da migration 20261008140000 (a chave vem no payload).
   const agenda =
-    dados?.agenda_dos_robos && typeof dados.agenda_dos_robos === "object"
+    dados?.agenda_dos_robos &&
+    typeof dados.agenda_dos_robos === "object" &&
+    !Array.isArray(dados.agenda_dos_robos)
       ? [montarAgenda(dados.agenda_dos_robos, agora)]
       : [];
 
   const tarefasDisponiveis = Array.isArray(dados?.tarefas);
-  const tarefas = (tarefasDisponiveis ? dados.tarefas : []).map((t) => {
+  const tarefas = registros(dados.tarefas).map((t) => {
     const nome = texto(t?.nome);
     const ativa = t?.ativa !== false;
     return {
       ...montarCarga(
         {
           id: `tarefa:${nome}`,
-          nome: TAREFAS[nome] || nome,
+          nome: rotulo(TAREFAS, nome) || nome,
           onde: `Banco (pg_cron) · ${nome}`,
           esperado: texto(t?.agenda),
           prazoMin: ativa ? prazoDaAgenda(t?.agenda) : null,
@@ -518,7 +594,7 @@ export function normalizarSaude(dados, agora = new Date()) {
 
   const todas = grupos.flatMap((g) => g.cargas);
   const resumo = Object.fromEntries(Object.keys(SITUACOES).map((s) => [s, 0]));
-  for (const c of todas) resumo[c.situacao] += 1;
+  for (const c of todas) resumo[c.situacao] = (resumo[c.situacao] ?? 0) + 1;
 
   return {
     geradoEm: data(dados?.gerado_em),
@@ -529,7 +605,7 @@ export function normalizarSaude(dados, agora = new Date()) {
 }
 
 /** "há 5 min", "há 3 h", "há 2 dias"; "—" sem data. */
-export function textoDaIdade(minutos) {
+export function textoDaIdade(minutos: number | null | undefined) {
   if (minutos === null || minutos === undefined) return "—";
   if (minutos < 1) return "agora há pouco";
   if (minutos < 60) return `há ${minutos} min`;
@@ -539,11 +615,12 @@ export function textoDaIdade(minutos) {
 }
 
 /** "dd/mm/aaaa hh:mm" no fuso de quem usa; "—" sem data. */
-export function dataHora(valor) {
+export function dataHora(valor: unknown) {
   if (!valor) return "—";
-  const d = valor instanceof Date ? valor : new Date(valor);
+  const d = data(valor);
+  if (!d) return "—";
   if (Number.isNaN(d.getTime())) return "—";
-  const dois = (n) => String(n).padStart(2, "0");
+  const dois = (n: number) => String(n).padStart(2, "0");
   return `${dois(d.getDate())}/${dois(d.getMonth() + 1)}/${d.getFullYear()} ${dois(d.getHours())}:${dois(d.getMinutes())}`;
 }
 
@@ -559,7 +636,7 @@ export function dataHora(valor) {
   carga" (ex.: a SEDE, que ainda não tem planilha de análise) não pede atenção:
   só falha e atraso entram no aviso do topo.
 */
-const GRAVIDADE = Object.freeze([
+const GRAVIDADE: readonly SituacaoDaCarga[] = Object.freeze([
   "falhou",
   "atrasada",
   "em_andamento",
@@ -567,13 +644,25 @@ const GRAVIDADE = Object.freeze([
   "em_dia",
 ]);
 
-const pior = (situacoes) =>
+const pior = (situacoes: SituacaoDaCarga[]) =>
   GRAVIDADE.find((s) => situacoes.includes(s)) || "em_dia";
 
-const refDaCarga = (c) =>
+const refDaCarga = (c: Carga) =>
   c.ultimaOk ? ((c.ultimaOk.fim || c.ultimaOk.inicio)?.getTime() ?? 0) : 0;
 
-function juntar({ id, titulo, explicacao, partes, situacoesQueContam }) {
+function juntar({
+  id,
+  titulo,
+  explicacao,
+  partes,
+  situacoesQueContam,
+}: {
+  id: string;
+  titulo: string;
+  explicacao: string;
+  partes: Carga[];
+  situacoesQueContam: SituacaoDaCarga[];
+}): LinhaDaSaude {
   const situacao = partes.length ? pior(situacoesQueContam) : "nunca";
   const maisRecente = [...partes].sort(
     (a, b) => refDaCarga(b) - refDaCarga(a),
@@ -590,7 +679,11 @@ function juntar({ id, titulo, explicacao, partes, situacoesQueContam }) {
     idadeMin: maisRecente?.ultimaOk ? maisRecente.idadeMin : null,
     emAndamento: partes.some((p) => p.emAndamento),
     erro: erro
-      ? { quando: erro.inicio, mensagem: erro.mensagem, parte: falha.nome }
+      ? {
+          quando: erro.inicio,
+          mensagem: erro.mensagem,
+          parte: falha?.nome ?? "",
+        }
       : null,
     partes,
   };
@@ -598,16 +691,23 @@ function juntar({ id, titulo, explicacao, partes, situacoesQueContam }) {
 
 const ORDEM_DAS_AREAS = ["saude-indigena", "sede", "projetos"];
 
-export function visaoSimples(saude) {
+export function visaoSimples(saude: SaudeNormalizada): {
+  linhas: LinhaDaSaude[];
+  atencao: LinhaDaSaude[];
+} {
   const porId = Object.fromEntries(saude.grupos.map((g) => [g.id, g]));
   const analises = porId.analises?.cargas || [];
-  const areas = [...new Set(analises.map((c) => c.area))].sort(
-    (a, b) => ORDEM_DAS_AREAS.indexOf(a) - ORDEM_DAS_AREAS.indexOf(b),
-  );
+  const areas = [
+    ...new Set(
+      analises
+        .map((c) => c.area)
+        .filter((area): area is string => typeof area === "string"),
+    ),
+  ].sort((a, b) => ORDEM_DAS_AREAS.indexOf(a) - ORDEM_DAS_AREAS.indexOf(b));
 
   const linhas = areas.map((area) => {
     const partes = analises.filter((c) => c.area === area);
-    const nome = NOMES_DAS_AREAS[area] || area;
+    const nome = rotulo(NOMES_DAS_AREAS, area) || area;
     return juntar({
       id: `analises:${area}`,
       titulo: `Análises curriculares · ${nome}`,
@@ -634,7 +734,7 @@ export function visaoSimples(saude) {
     );
   }
 
-  const TEXTOS_DOS_ROBOS = {
+  const TEXTOS_DOS_ROBOS: Record<string, readonly [string, string]> = {
     empregare: [
       "Robô da Empregare",
       "Traz os candidatos de cada vaga dos editais em curso a partir da Empregare, quando um administrador clica em Rodar agora.",
@@ -653,8 +753,8 @@ export function visaoSimples(saude) {
     ],
   };
   for (const carga of porId.robos?.cargas || []) {
-    const [titulo, explicacao] =
-      TEXTOS_DOS_ROBOS[carga.id] || TEXTOS_DOS_ROBOS.empregare;
+    const [titulo, explicacao] = TEXTOS_DOS_ROBOS[carga.id] ||
+      TEXTOS_DOS_ROBOS.empregare || [carga.nome, ""];
     linhas.push(
       juntar({
         id: carga.id,
@@ -667,6 +767,7 @@ export function visaoSimples(saude) {
   }
 
   for (const carga of porId.agenda?.cargas || []) {
+    if (!carga.agenda) continue;
     const linha = juntar({
       id: carga.id,
       titulo: "Agenda dos robôs",

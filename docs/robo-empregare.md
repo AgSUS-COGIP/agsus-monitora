@@ -265,7 +265,7 @@ computador: rode-os pelo GitHub.
   (`supabase_rpc.py`, `mascaramento.py`; guia em `docs/python-no-monitora.md`).
 - `src/lib/robos-de-carga.js` e a RPC `disparar_robo` (`20261008140000_agenda_dos_robos_pelo_banco.sql`):
   o **Rodar agora** (lista fixa robô → workflow, opções, quem pode, regras do botão).
-- `src/componentes/saude-das-cargas/` e `src/lib/saude-das-cargas.js`: a tela de status.
+- `src/componentes/saude-das-cargas/` e `src/lib/saude-das-cargas.ts`: a tela de status.
 - `supabase/migrations/20261005170000_robo_empregare.sql`, `20261006080000_robo_empregare_vagas_do_quadro.sql`
   (vagas também do quadro do edital), `20261007160000_link_do_candidato_na_empregare.sql` e
   `20261008160000_anexos_da_empregare.sql` (anexos do questionário), cada uma com `ensaios/` e `rollback/`.
