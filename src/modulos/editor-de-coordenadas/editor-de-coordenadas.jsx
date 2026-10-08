@@ -91,6 +91,11 @@ function usarLista(ultimos, ativo, nome, argumentos, chave, erroPadrao) {
 */
 const FOLGA_PADRAO = Object.freeze({ padding: [48, 48] });
 
+/**
+ * @template {object} P
+ * @template {object} D
+ * @param {{L: unknown, mapa: import('../../lib/tipos-do-mapa.ts').MapaNacional | null, pontos: readonly P[], fonte: object, perfil?: object | null, supabase?: import('@supabase/supabase-js').SupabaseClient | null, aoAtualizarMapa: (data: D, ponto: P) => void, aoFechar?: () => void, areaLivre?: () => unknown, versaoDaArea?: number, botaoDeRecolher?: import('react').ReactNode}} props
+ */
 export function EditorDeCoordenadas({
   L,
   mapa,

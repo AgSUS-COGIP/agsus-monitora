@@ -24,7 +24,7 @@ posição e o histórico com "Desfazer" — RPCs de
 são comuns aos dois mapas (`src/modulos/editor-de-coordenadas/`, regras comuns em
 `src/lib/editor-de-coordenadas.js`); aqui fica só `editor-de-coordenadas.jsx`, que liga o
 editor comum aos pontos, às regras e às RPCs deste mapa. O de Projetos faz o mesmo em
-`src/modulos/mapa-de-projetos/editor-de-coordenadas.jsx`.
+`src/modulos/mapa-de-projetos/editor-de-coordenadas.tsx`.
 
 ```
 mapa-saude-indigena.jsx   <MapaSaudeIndigena>: estado da tela (tela cheia), contas memorizadas,

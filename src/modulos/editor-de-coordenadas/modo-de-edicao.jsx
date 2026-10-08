@@ -34,6 +34,7 @@ import { CAMPOS_E_JANELAS } from "../mapa-saude-indigena/volta-ao-brasil.js";
   muda quando o painel recolhe ou abre, para o editor trazer o pin de volta à
   área livre.
 */
+/** @param {{mapa?: import('../../lib/tipos-do-mapa.ts').MapaNacional | null, permitido?: boolean, pegar?: () => void}} [opcoes] */
 export function usarModoDeEdicao({ mapa, permitido = true, pegar } = {}) {
   const [editando, definirEditando] = useState(false);
   const [recolhido, definirRecolhido] = useState(false);

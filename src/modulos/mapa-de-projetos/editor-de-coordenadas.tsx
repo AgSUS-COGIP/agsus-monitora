@@ -1,3 +1,7 @@
+import type {
+  PontoEditavelDoProjeto,
+  PropsDoEditorDeProjetos,
+} from "./tipos.ts";
 import { useMemo } from "react";
 import {
   chaveDaPendenciaDoLugar,
@@ -36,7 +40,19 @@ export const FONTE_DE_PROJETOS = Object.freeze({
   sugestoes: sugestoesDoLugar,
   gravidade: gravidadeDoLugar,
   pendenteSemPendencia: REGRAS_DA_FILA_DOS_PROJETOS.pendenteSemPendencia,
-  argumentosDoSalvar: ({ ponto, latitude, longitude, motivo, conferir }) => ({
+  argumentosDoSalvar: ({
+    ponto,
+    latitude,
+    longitude,
+    motivo,
+    conferir,
+  }: {
+    ponto: PontoEditavelDoProjeto;
+    latitude: number;
+    longitude: number;
+    motivo: string;
+    conferir: boolean;
+  }) => ({
     p_lugar: ponto.alvo.lugar,
     p_latitude: latitude,
     p_longitude: longitude,
@@ -45,7 +61,7 @@ export const FONTE_DE_PROJETOS = Object.freeze({
     p_motivo: motivo,
     p_conferido: conferir,
   }),
-  argumentosDoHistorico: (ponto, limite) => ({
+  argumentosDoHistorico: (ponto: PontoEditavelDoProjeto, limite: number) => ({
     p_lugar: ponto.alvo.lugar,
     p_limite: limite,
   }),
@@ -53,13 +69,16 @@ export const FONTE_DE_PROJETOS = Object.freeze({
     busca: "Lugar, município, UF, projeto ou edital",
     lista: "Lugares do mapa",
   }),
-  detalheDoItem: (item) =>
+  detalheDoItem: (item: PontoEditavelDoProjeto) =>
     [item.nivel === "uf" ? "" : item.uf, item.localidade]
       .filter(Boolean)
       .join(" · "),
 });
 
-export function EditorDeCoordenadasDosProjetos({ municipios, ...resto }) {
+export function EditorDeCoordenadasDosProjetos({
+  municipios,
+  ...resto
+}: PropsDoEditorDeProjetos) {
   const pontos = useMemo(
     () => pontosEditaveisDosProjetos(municipios),
     [municipios],

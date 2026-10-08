@@ -22,7 +22,7 @@ import {
   resumoDoLugar,
   rotuloDoLugar,
   textoDasVagas,
-} from "../src/lib/visao-geral-da-area.js";
+} from "../src/lib/visao-geral-da-area.ts";
 import {
   RAIO_MAXIMO,
   RAIO_MINIMO,
@@ -62,7 +62,7 @@ describe("uma Visão geral para as três áreas", () => {
     for (const valor of Object.values(textos))
       expect(html).not.toContain(valor);
     const componente = readFileSync(
-      "src/modulos/mapa-de-projetos/mapa-de-projetos.jsx",
+      "src/modulos/mapa-de-projetos/mapa-de-projetos.tsx",
       "utf8",
     );
     expect(componente).toContain("TEXTOS_DO_MAPA[MAPA_DOS_MUNICIPIOS]");

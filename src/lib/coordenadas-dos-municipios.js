@@ -141,6 +141,8 @@ const POR_CODIGO = new Map(LUGARES.map((lugar) => [lugar.ibge, lugar]));
 /**
  * { municipio, uf, ibge, latitude, longitude } do "Município/UF" — ou do
  * código do IBGE, que manda quando vem —, ou null.
+ * @param {string} municipioUf
+ * @param {number | null} [codigoIbge]
  */
 export function coordenadasDoMunicipio(municipioUf, codigoIbge = null) {
   const porCodigo = POR_CODIGO.get(Number(codigoIbge));

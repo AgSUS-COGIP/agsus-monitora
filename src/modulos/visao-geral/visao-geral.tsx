@@ -20,9 +20,9 @@ import {
   MAPA_DOS_DSEIS,
   MAPA_DOS_MUNICIPIOS,
   mapaDaVisaoGeral,
-} from "../../lib/visao-geral-da-area.js";
-import { criarCarregadorDeMunicipios } from "../mapa-de-projetos/carregador.js";
-import { MapaDeProjetos } from "../mapa-de-projetos/mapa-de-projetos.jsx";
+} from "../../lib/visao-geral-da-area.ts";
+import { criarCarregadorDeMunicipios } from "../mapa-de-projetos/carregador.ts";
+import { MapaDeProjetos } from "../mapa-de-projetos/mapa-de-projetos.tsx";
 import { MapaSaudeIndigena } from "../mapa-saude-indigena/mapa-saude-indigena.jsx";
 import { BoasVindas, MarcosDoAno } from "./boas-vindas.tsx";
 import {

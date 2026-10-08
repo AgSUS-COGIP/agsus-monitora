@@ -88,7 +88,7 @@ export const AREAS_DO_MENU = Object.freeze([
   A Visão geral é a mesma página (`dashboard`) nas três áreas, recortada pela
   área atual; o que muda é o bloco do mapa — DSEIs na Saúde Indígena,
   municípios das vagas em Projetos, nenhum na SEDE
-  (`src/lib/visao-geral-da-area.js`). O ícone da página aparece no menu
+  (`src/lib/visao-geral-da-area.ts`). O ícone da página aparece no menu
   inferior do celular e no trilho da barra recolhida.
 
   Análises curriculares era um painel externo (`TB_PAINEL_EXTERNO`, código

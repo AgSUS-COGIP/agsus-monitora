@@ -14,7 +14,7 @@ import {
 import {
   municipiosDaResposta,
   pontosDosMunicipios,
-} from "../src/lib/visao-geral-da-area.js";
+} from "../src/lib/visao-geral-da-area.ts";
 
 /*
   As regras do editor de coordenadas no mapa de Projetos
