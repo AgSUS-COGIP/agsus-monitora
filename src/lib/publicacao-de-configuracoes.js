@@ -189,7 +189,7 @@ export const CAMPOS_DAS_SECOES = Object.freeze({
       "auth_google_button_text",
       "Texto do botão de autenticação Google",
       "Texto do botão",
-      { placeholder: "Entrar com sua conta institucional" },
+      { placeholder: DEFAULT_ACCESS_BRANDING.buttonText },
     ),
     texto(
       "auth_google_domain_hint",

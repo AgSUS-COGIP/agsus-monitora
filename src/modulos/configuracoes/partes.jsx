@@ -139,7 +139,7 @@ export function AvisoDeContraste({ cor, modo, comBotao = false }) {
         <strong>{DEFAULT_ACCESS_BRANDING.greeting}</strong>
         {comBotao ? (
           <span className="config-contraste__botao">
-            Entrar com sua conta institucional
+            {DEFAULT_ACCESS_BRANDING.buttonText}
           </span>
         ) : null}
       </div>
@@ -221,7 +221,7 @@ export function PreviaDoAcesso({ estado }) {
                 G
               </span>
               {txt(estado.valor("auth_google_button_text")) ||
-                "Entrar com sua conta institucional"}
+                DEFAULT_ACCESS_BRANDING.buttonText}
             </span>
           ) : (
             <small className="previa-acesso__desligado">

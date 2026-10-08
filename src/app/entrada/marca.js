@@ -54,6 +54,12 @@ export const MARCA_INICIAL = Object.freeze({
   saudacao: DEFAULT_ACCESS_BRANDING.greeting,
   textoDoBotao: "",
   rodape: RODAPE_VAZIO,
+  /*
+    Já se sabe qual é a marca (havia cópia guardada, a busca pública terminou
+    ou a configuração chegou)? Até lá a tela não mostra o texto do botão:
+    mostrar o padrão e trocar pelo configurado fazia o rótulo pular.
+  */
+  resolvida: false,
 });
 
 /** `url("…")` seguro: aspas e barras invertidas quebrariam a declaração CSS. */
@@ -137,7 +143,9 @@ export function aplicarMarcaGuardadaNoArranque(
   documento = globalThis.document,
   estado = marcaDaEntrada,
 ) {
-  return aplicarMarcaNaTela(lerMarcaGuardada(), documento, estado);
+  const guardada = lerMarcaGuardada();
+  if (guardada) estado.definir({ resolvida: true });
+  return aplicarMarcaNaTela(guardada, documento, estado);
 }
 
 /**
@@ -149,6 +157,8 @@ export async function atualizarMarcaComBrandingPublico(
   estado = marcaDaEntrada,
 ) {
   const marca = await buscarMarcaPublica();
+  /* Respondeu ou falhou, a espera acabou: a tela mostra o que tiver. */
+  if (!estado.obter().resolvida) estado.definir({ resolvida: true });
   if (!marca) return false;
 
   /*
@@ -224,6 +234,7 @@ export function definirMarcaDaConfiguracao(
     versao: valor("cogip_versao"),
     departamento: valor("cogip_dept") || valor("footer_text"),
   };
+  parcial.resolvida = true;
   estado.definir(parcial);
 
   /*

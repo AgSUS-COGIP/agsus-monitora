@@ -1,30 +1,50 @@
 import { useEffect, useState, useSyncExternalStore } from "react";
 import { montarModulo } from "../montar-modulo.jsx";
 import { classes } from "../../ui/index.js";
+import { ACCESS_INSTRUCTION } from "../../lib/access-branding.js";
 import {
   FASES,
   TEXTO_DO_BOTAO,
   TEXTO_DO_BOTAO_OCUPADO,
   sessaoDoApp,
 } from "../sessao.js";
+import {
+  IconeDeEscudo,
+  IconeDoMonitora,
+  MarcaDoGoogle,
+} from "./icones-da-entrada.tsx";
 import { marcaDaEntrada } from "./marca.js";
 import { CartaoDoPedido } from "./pedido-de-acesso.jsx";
 import { criarPedidoDeAcesso } from "./pedido-de-acesso.js";
 
 /*
-  A tela de acesso do MONITORA: marca (logo, saudação, slogan), mensagens,
-  o botão do Google e, para quem entrou sem perfil ativo, o pedido de acesso.
+  A tela de acesso do MONITORA: marca (logo, slogan, saudação), a linha de
+  apoio, mensagens, o botão do Google, o rodapé institucional e, para quem
+  entrou sem perfil ativo, o pedido de acesso. Linguagem visual da tela do
+  SIGAV (botão branco largo com o "G" colorido, divisória fina, escudo no
+  rodapé), com a marca do MONITORA.
+
   Monta dentro do `#loginScreen` do index.html, que continua sendo do
   documento: o script do <head> pinta nele a arte e a cor guardadas antes do
   primeiro quadro, e `ligarEntradaAPagina` o mostra e esconde pela fase da
   sessão. Ids e classes são os de antes (o CSS da tela de acesso e os testes
   de ponta a ponta leem #loginScreen, #googleLoginBtn, #loginMsg…).
+
+  SEM SALTO AO RECARREGAR. O cartão provisório do index.html tem a mesma
+  estrutura e as mesmas medidas deste (tests/app/entrada.test.js compara as
+  duas árvores), e nada aqui muda de tamanho quando a configuração chega:
+  logo e ícones têm largura e altura fixas, o botão nunca sai do layout
+  (Google desligado vira um espaço reservado do mesmo tamanho) e o conteúdo
+  do botão só aparece, com fade, quando já se sabe o texto.
 */
 
 export const SLOGAN = "Monitoramento de Processos Seletivos";
 export const INSTITUICAO = "Agência Brasileira de Apoio à Gestão do SUS";
 
-/** O logo some se a imagem falhar (e volta se o endereço mudar). */
+/**
+ * O logo fica invisível se a imagem falhar (e volta se o endereço mudar),
+ * sem sair do lugar: o lockup não muda de tamanho.
+ */
 function LogoDaInstituicao({ url }) {
   const [falhou, definirFalhou] = useState(false);
   useEffect(() => definirFalhou(false), [url]);
@@ -33,7 +53,9 @@ function LogoDaInstituicao({ url }) {
       id="loginLogo"
       src={url}
       alt=""
-      hidden={falhou || undefined}
+      width="52"
+      height="52"
+      data-falhou={falhou || undefined}
       onError={() => definirFalhou(true)}
     />
   );
@@ -82,6 +104,10 @@ export function TelaDeEntrada({ sessao, marca, pedido }) {
   const textoDoBotao = estado.entrando
     ? TEXTO_DO_BOTAO_OCUPADO
     : configuracao.textoDoBotao || identidade.textoDoBotao || TEXTO_DO_BOTAO;
+  const textoConhecido =
+    identidade.resolvida ||
+    Boolean(configuracao.textoDoBotao) ||
+    estado.entrando;
 
   return (
     <div className="login-outer">
@@ -93,7 +119,7 @@ export function TelaDeEntrada({ sessao, marca, pedido }) {
           </div>
           <span className="login-brand-divider" aria-hidden="true" />
           <div className="login-product-mark">
-            <i className="fa-solid fa-chart-line" aria-hidden="true" />
+            <IconeDoMonitora />
             <strong id="loginTitle">MONITORA</strong>
           </div>
         </div>
@@ -101,6 +127,9 @@ export function TelaDeEntrada({ sessao, marca, pedido }) {
           {SLOGAN}
         </p>
         <h1 id="loginGreeting">{identidade.saudacao}</h1>
+        <p className="login-apoio" id="loginApoio">
+          {ACCESS_INSTRUCTION}
+        </p>
         {estado.erroDeConfiguracao ? (
           <div id="configMsg" className="alert error" role="alert">
             {estado.erroDeConfiguracao}
@@ -124,19 +153,27 @@ export function TelaDeEntrada({ sessao, marca, pedido }) {
               id="googleLoginBtn"
               type="button"
               className="google-login-btn"
+              data-texto={textoConhecido ? "pronto" : "pendente"}
               disabled={estado.entrando}
               aria-busy={estado.entrando || undefined}
               onClick={() => void sessao.entrarComGoogle()}
             >
-              <span className="gmark">G</span>
+              <MarcaDoGoogle />
               <span id="googleLoginText">{textoDoBotao}</span>
             </button>
-          ) : null}
+          ) : (
+            /* Google desligado: o lugar do botão fica, vazio (sem salto). */
+            <div
+              className="google-login-btn google-login-btn--reservado"
+              aria-hidden="true"
+            />
+          )}
           {semAcesso ? (
             <CartaoDoPedido pedido={pedido} sessao={sessao} />
           ) : null}
         </div>
         <p className="login-instituicao" id="loginInstituicao">
+          <IconeDeEscudo />
           <span>{INSTITUICAO}</span>
         </p>
         <Rodape rodape={identidade.rodape} />

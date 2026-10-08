@@ -32,6 +32,7 @@ import {
   openLoginPopup,
   startMobileGoogleOAuth,
 } from "../lib/auth-flow.js";
+import { DEFAULT_ACCESS_BRANDING } from "../lib/access-branding.js";
 import { hasSupabaseEnv } from "../lib/env.js";
 import {
   SAIDA_DESCONHECIDA,
@@ -68,7 +69,7 @@ export const FASES = Object.freeze({
   CONECTADO: "conectado",
 });
 
-export const TEXTO_DO_BOTAO = "Entrar com sua conta institucional";
+export const TEXTO_DO_BOTAO = DEFAULT_ACCESS_BRANDING.buttonText;
 export const TEXTO_DO_BOTAO_OCUPADO = "Entrando no sistema...";
 
 export const MENSAGENS = Object.freeze({
