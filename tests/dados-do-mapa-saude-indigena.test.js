@@ -9,6 +9,28 @@ import { leafletDoMapa } from "../src/modulos/mapa-saude-indigena/tipos-do-leafl
 import { criarLeafletFalso } from "./modulos/leaflet-falso.js";
 
 describe("entrada geográfica da Saúde Indígena", () => {
+  it("preserva códigos CNES e UF numéricos como texto utilizável", () => {
+    const distrito = configuracaoDoMapa({
+      dsei: [
+        {
+          k: "A",
+          n: "Distrito A",
+          sede_cnes: 123,
+          sedeuf: 27,
+          polos: [{ n: "Polo A", cnes: 456, uf: 27, lat: -12, lon: -50 }],
+        },
+      ],
+    }).dsei[0];
+    expect(distrito).toMatchObject({
+      sede_cnes: "123",
+      sedeuf: "27",
+      polos: [{ cnes: "456", uf: "27" }],
+    });
+    const rede = redeCnesDoMapa({
+      rede: { A: { u: [["UBSI A", 789, -12, -50, 12, 27]] } },
+    });
+    expect(rede.rede.A.u[0]).toEqual(["UBSI A", 789, -12, -50, "12", 27]);
+  });
   it("trata contêineres inválidos como listas vazias", () => {
     for (const valor of [
       null,

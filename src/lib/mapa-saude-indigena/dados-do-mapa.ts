@@ -12,7 +12,11 @@ const registro = (valor: unknown): valor is Record<string, unknown> =>
 const lista = (valor: unknown): unknown[] =>
   Array.isArray(valor) ? valor : [];
 const texto = (valor: unknown): string =>
-  typeof valor === "string" ? valor : "";
+  typeof valor === "string"
+    ? valor
+    : typeof valor === "number" && Number.isFinite(valor)
+      ? String(valor)
+      : "";
 const textos = (valor: unknown): string[] =>
   lista(valor).filter((item): item is string => typeof item === "string");
 const posicao = (valor: unknown): valor is number | string | null =>
