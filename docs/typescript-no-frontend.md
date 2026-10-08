@@ -15,9 +15,12 @@ saúde das cargas, agenda, histórico, acompanhamento, formulário de opções, 
 `src/lib/robos-de-carga.js` continua compartilhada com a Avaliação documental, com contratos JSDoc.
 Em Entrevistas, as peças novas do Painel e de Conduzir (`agenda-e-empates.tsx`, `conduzir.tsx`,
 `fila-do-dia.tsx`, as peças da ficha de notas — cabeçalho, abas, matriz, célula, resultado —, o resumo das
-regras e as competências de cada membro da banca (`resumo-das-regras.tsx`, `competencias-do-membro.tsx`), `tipos.ts`,
-`src/lib/painel-de-entrevistas.ts`, `src/lib/fila-de-conducao.ts`, `src/lib/digitacao-de-notas.ts` e
-`src/lib/resumo-da-entrevista.ts`)
+regras e as competências de cada membro da banca (`resumo-das-regras.tsx`, `competencias-do-membro.tsx`), o seletor do
+edital, Preparar em passos, a configuração do edital, o parecer pronto e as seções do editor do roteiro
+(`seletor-do-edital.tsx`, `preparar.tsx`, `configuracao-do-edital.tsx`, `parecer-pronto.tsx`, `secoes-do-roteiro.tsx`), `tipos.ts`,
+`src/lib/painel-de-entrevistas.ts`, `src/lib/fila-de-conducao.ts`, `src/lib/digitacao-de-notas.ts`,
+`src/lib/resumo-da-entrevista.ts`, `src/lib/passos-do-preparar.ts`, `src/lib/pendencias-do-roteiro.ts` e
+`src/lib/parecer-da-entrevista.ts`)
 já nascem em TypeScript. O Mapa de Projetos está em TypeScript, incluindo carregador,
 cache, mapa, lista, balões, integração do editor e regras em `src/lib/visao-geral-da-area.ts`.
 O editor compartilhado pelos dois mapas também está em TypeScript: fila, sugestões, histórico,

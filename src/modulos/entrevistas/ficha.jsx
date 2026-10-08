@@ -34,6 +34,12 @@ import { AbasDaFicha } from "./abas-da-ficha.tsx";
 import { CabecalhoDaFicha } from "./cabecalho-da-ficha.tsx";
 import { nivelDaNota } from "./campo-de-nota.tsx";
 import { MatrizDeNotas } from "./matriz-de-notas.tsx";
+import {
+  parecerPronto,
+  textoDoParecerDaEntrevista,
+} from "../../lib/parecer-da-entrevista.ts";
+import { rotuloDaVersao } from "../../lib/nome-da-versao.ts";
+import { ParecerPronto } from "./parecer-pronto.tsx";
 import { numeroBR, ResultadoDaFicha } from "./resultado-da-ficha.tsx";
 
 /*
@@ -45,8 +51,12 @@ import { numeroBR, ResultadoDaFicha } from "./resultado-da-ficha.tsx";
 
   Componente independente: recebe o payload do edital (`dados`: roteiro,
   banca, permissões), o convocado, a lista para anterior/próximo
-  (`convocados`) e as ações (`aoSalvar`, `aoAbrir`, `aoFechar`); não depende
-  da tela em volta.
+  (`convocados`) e as ações (`aoSalvar`, `aoAbrir`, `aoFechar`; `copiar`
+  troca a área de transferência nos testes); não depende da tela em volta.
+
+  Com tudo lançado (ou com a falta marcada), o parecer aparece em texto
+  pronto embaixo da matriz, com "Copiar parecer" (parecer-pronto.tsx), como
+  na ficha da Avaliação documental.
 
   O lançamento normal é a secretaria passando a limpo a folha de cada
   avaliador: o modo padrão é POR AVALIADOR — uma aba por avaliador e, nela,
@@ -185,6 +195,7 @@ export function FichaDoCandidato({
   aoSalvar,
   aoAbrir,
   aoFechar,
+  copiar = undefined,
 }) {
   const roteiro = dados.configuracao?.roteiro || null;
   const aspectos = useMemo(() => aspectosDoRoteiro(roteiro), [roteiro]);
@@ -748,6 +759,43 @@ export function FichaDoCandidato({
                 Nenhum membro na banca {f.banca ?? ""}. Cadastre a banca na
                 configuração.
               </Aviso>
+            ) : null}
+            {roteiro && parecerPronto(resultado.parecer, pendencia) ? (
+              <ParecerPronto
+                texto={textoDoParecerDaEntrevista({
+                  candidato: convocado.candidato,
+                  codigo: convocado.codigo,
+                  edital: dados.edital?.edital,
+                  vaga: convocado.vaga,
+                  cargo: nomeDoCargo(convocado.cargo),
+                  roteiro: roteiro.nome,
+                  versao: rotuloDaVersao({
+                    versao: roteiro.versao,
+                    nome: roteiro.nome_versao,
+                  }),
+                  avaliadores,
+                  competencias: competencias.map((c) => {
+                    const linha = resultado.competencias.find(
+                      (x) => x.id === c.id,
+                    );
+                    return {
+                      nome: c.nome,
+                      nota: linha?.nota ?? null,
+                      maximo: maximoDaCompetencia(c) ?? 0,
+                      minimo: linha?.minimo ?? null,
+                    };
+                  }),
+                  total: resultado.total,
+                  maxima,
+                  minimoTotal: resultado.minimoTotal,
+                  parecer: resultado.parecer,
+                  motivos: motivosDoParecer(resultado, f.compareceu, roteiro),
+                  faltou,
+                  ausenciaElimina: roteiro.ausencia_elimina !== false,
+                })}
+                sujo={sujo}
+                copiar={copiar}
+              />
             ) : null}
           </div>
           {roteiro ? (

@@ -37,6 +37,7 @@ export type Convocado = {
   codigo?: string | null;
   vaga?: string | null;
   cargo?: string | null;
+  modalidade?: string | null;
   banca?: number | null;
   compareceu?: string | null;
   nota?: number | null;
@@ -112,16 +113,32 @@ export function hojeEmBrasilia(agora: Date = new Date()): string {
   }).format(agora);
 }
 
-/** "Ana Lúcia Terena" → "AT"; "Bruno" → "BR"; vazio → "?". */
+const PARTICULAS = /^(da|de|do|das|dos|di|du|del|e|y)$/i;
+
+/**
+ * As iniciais do avatar: a primeira letra do primeiro e do último NOME,
+ * sem números, códigos nem partículas ("Ana Lúcia Terena" → "AT";
+ * "Candidato Teste 03" → "CT"; "Maria das Dores" → "MD"; "Bruno" → "BR").
+ * Sem nenhuma palavra com letra, as duas primeiras letras ou dígitos do
+ * texto; vazio → "?".
+ */
 export function iniciais(nome: unknown): string {
-  const partes = texto(nome)
-    .split(/\s+/)
-    .filter((p) => p && !/^(da|de|do|das|dos|e)$/i.test(p));
-  if (!partes.length) return "?";
+  const bruto = texto(nome);
+  const partes = bruto
+    .split(/[\s\-–—_.,;/()]+/)
+    // Palavra com número (código, "03", "2º") não é nome.
+    .filter((p) => !/\p{N}/u.test(p))
+    .map((p) => p.replace(/[^\p{L}'’]/gu, ""))
+    .filter((p) => /\p{L}/u.test(p) && !PARTICULAS.test(p));
+  if (!partes.length) {
+    const resto = bruto.replace(/[^\p{L}\p{N}]/gu, "");
+    return resto ? resto.slice(0, 2).toUpperCase() : "?";
+  }
   const primeira = partes[0] ?? "";
-  if (partes.length === 1) return primeira.slice(0, 2).toUpperCase();
+  if (partes.length === 1)
+    return [...primeira].slice(0, 2).join("").toUpperCase();
   const ultima = partes[partes.length - 1] ?? "";
-  return `${primeira.charAt(0)}${ultima.charAt(0)}`.toUpperCase();
+  return `${[...primeira][0] ?? ""}${[...ultima][0] ?? ""}`.toUpperCase();
 }
 
 /**
@@ -181,7 +198,7 @@ export function situacaoDoConvocado(
 const compararTexto = (a: string, b: string) =>
   a.localeCompare(b, "pt-BR", { sensitivity: "base" });
 
-/** Por dia e horário (quem tem horário primeiro), depois banca e nome. */
+/** Por dia e horário (quem tem horário primeiro), depois pelo nome. */
 export function ordenarFila(itens: ItemDaFila[]): ItemDaFila[] {
   return [...itens].sort((a, b) => {
     const comA = a.data ? 0 : 1;
@@ -190,7 +207,6 @@ export function ordenarFila(itens: ItemDaFila[]): ItemDaFila[] {
       comA - comB ||
       compararTexto(a.data || "", b.data || "") ||
       compararTexto(a.inicio || "", b.inicio || "") ||
-      (a.banca ?? 0) - (b.banca ?? 0) ||
       compararTexto(a.nome, b.nome)
     );
   });
@@ -255,6 +271,58 @@ export function recorteInicial(fila: ItemDaFila[], hoje: string): Recorte {
   if (contagem.hoje) return "hoje";
   if (contagem.proximos) return "proximos";
   return "todos";
+}
+
+/** Sem acento e em minúsculas, para a busca. */
+export function semAcento(valor: unknown): string {
+  return texto(valor).normalize("NFD").replace(/\p{M}/gu, "").toLowerCase();
+}
+
+/**
+ * A busca da fila: cada palavra digitada aparece no nome, no código do
+ * candidato ou no código da vaga (sem acento, sem diferença de maiúsculas).
+ */
+export function buscarNaFila(itens: ItemDaFila[], busca: string): ItemDaFila[] {
+  const termos = semAcento(busca).split(/\s+/).filter(Boolean);
+  if (!termos.length) return itens;
+  return itens.filter((i) => {
+    const alvo = semAcento(`${i.nome} ${i.convocado.codigo ?? ""} ${i.vaga}`);
+    return termos.every((t) => alvo.includes(t));
+  });
+}
+
+export type GrupoDaVaga = {
+  vaga: string;
+  cargo: string;
+  itens: ItemDaFila[];
+};
+
+/**
+ * Os cartões por vaga (cabeçalho "código · cargo" com a contagem), as vagas
+ * em ordem de código; dentro de cada uma, a ordem da fila (horário, nome).
+ * Sem código de vaga, o grupo "Sem vaga" fica no fim.
+ */
+export function agruparPorVaga(itens: ItemDaFila[]): GrupoDaVaga[] {
+  const grupos = new Map<string, GrupoDaVaga>();
+  for (const item of itens) {
+    const chave = item.vaga || "";
+    let grupo = grupos.get(chave);
+    if (!grupo) {
+      grupo = { vaga: chave, cargo: texto(item.convocado.cargo), itens: [] };
+      grupos.set(chave, grupo);
+    }
+    grupo.itens.push(item);
+  }
+  return [...grupos.values()].sort(
+    (a, b) =>
+      (a.vaga ? 0 : 1) - (b.vaga ? 0 : 1) ||
+      a.vaga.localeCompare(b.vaga, "pt-BR", { numeric: true }),
+  );
+}
+
+/** A ordem do "Salvar e abrir o próximo": a da tela (vaga a vaga). */
+export function ordemDaTela(itens: ItemDaFila[]): ItemDaFila[] {
+  return agruparPorVaga(itens).flatMap((g) => g.itens);
 }
 
 export function recortarFila(

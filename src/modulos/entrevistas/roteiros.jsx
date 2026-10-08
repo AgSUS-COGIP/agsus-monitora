@@ -34,10 +34,16 @@ import {
   NomeDaVersao,
   nomeDoCampo,
   RenomearVersao,
-  Secao,
   Segmentado,
 } from "../../ui/index.js";
+import {
+  errosPorSecao,
+  pendenciasDoRoteiro,
+  SECOES_DO_ROTEIRO,
+} from "../../lib/pendencias-do-roteiro.ts";
+import { frasesDaEliminacao } from "../../lib/resumo-da-entrevista.ts";
 import { AspectosDoRoteiro } from "./aspectos-do-roteiro.tsx";
+import { PendenciasDoRoteiro, SecaoRecolhivel } from "./secoes-do-roteiro.tsx";
 import { DesempateDaClassificacao } from "./conducao.jsx";
 import {
   BotaoDeLinha,
@@ -148,9 +154,16 @@ function CartaoDoRoteiro({ roteiro, podeEditar, aoAbrir, aoRenomear }) {
 /**
  * `pedido` ({ roteiro, vez }): abrir este roteiro no editor (o "Editar" do
  * resumo das regras em Preparar); cada pedido novo tem outra `vez`.
- * @param {{ conducao: any, area: string, pedido?: { roteiro: unknown, vez: number } | null }} props
+ * `embutido`: dentro do passo 1 de Preparar (sem cartão próprio; o
+ * "Atualizar" do topo relê a lista).
+ * @param {{ conducao: any, area: string, pedido?: { roteiro: unknown, vez: number } | null, embutido?: boolean }} props
  */
-export function VisaoDeRoteiros({ conducao, area, pedido = null }) {
+export function VisaoDeRoteiros({
+  conducao,
+  area,
+  pedido = null,
+  embutido = false,
+}) {
   const e = useSyncExternalStore(conducao.assinar, conducao.obter);
   const [aberto, setAberto] = useState(null);
   const { roteiros, podeEditar } = e;
@@ -171,29 +184,36 @@ export function VisaoDeRoteiros({ conducao, area, pedido = null }) {
 
   return (
     <section
-      className="ui-card entrevistas-passo"
+      className={
+        embutido ? "entrevistas-roteiros-da-area" : "ui-card entrevistas-passo"
+      }
       aria-labelledby="entrevistasRoteirosTitulo"
       data-tour="entrevistas-roteiros"
     >
       <div className="entrevistas-passo-topo">
         <div>
-          <h2 className="ui-titulo" id="entrevistasRoteirosTitulo">
-            Roteiros de entrevista
+          <h2
+            className={embutido ? "entrevistas-subtitulo" : "ui-titulo"}
+            id="entrevistasRoteirosTitulo"
+          >
+            Roteiros da área
           </h2>
         </div>
         <div className="ui-acoes">
-          <button
-            type="button"
-            className="btn secondary"
-            disabled={roteiros.carregando}
-            onClick={() => void conducao.carregarRoteiros(area)}
-          >
-            <i className="fa-solid fa-rotate" aria-hidden="true" /> Recarregar
-          </button>
+          {embutido ? null : (
+            <button
+              type="button"
+              className="btn secondary"
+              disabled={roteiros.carregando}
+              onClick={() => void conducao.carregarRoteiros(area)}
+            >
+              <i className="fa-solid fa-rotate" aria-hidden="true" /> Recarregar
+            </button>
+          )}
           {podeEditar === false ? null : (
             <button
               type="button"
-              className="btn"
+              className={embutido ? "btn secondary small" : "btn"}
               id="entrevistasNovoRoteiro"
               data-tour="entrevistas-roteiros-novo"
               onClick={() => setAberto({ roteiro: null, modo: "novo" })}
@@ -205,7 +225,15 @@ export function VisaoDeRoteiros({ conducao, area, pedido = null }) {
       </div>
       {roteiros.erro ? (
         <Aviso tom="danger" papel="alert">
-          Não foi possível carregar os roteiros: {roteiros.erro}
+          Não foi possível carregar os roteiros: {roteiros.erro}{" "}
+          <button
+            type="button"
+            className="btn secondary small"
+            disabled={roteiros.carregando}
+            onClick={() => void conducao.carregarRoteiros(area)}
+          >
+            Tentar novamente
+          </button>
         </Aviso>
       ) : null}
       <div
@@ -602,14 +630,6 @@ function NotasEliminatorias({ valor, aoMudar, somenteLeitura }) {
   );
 }
 
-function SecaoDoFormulario({ titulo, icone, children }) {
-  return (
-    <Secao icone={icone} titulo={titulo}>
-      <div className="entrevistas-secao-corpo">{children}</div>
-    </Secao>
-  );
-}
-
 export function EditorDeRoteiro({
   roteiro,
   modo,
@@ -641,6 +661,57 @@ export function EditorDeRoteiro({
   const errosVisiveis = tentou ? erros : {};
   const quantosErros = Object.keys(erros).length;
   const mudar = (mudancas) => setR((atual) => ({ ...atual, ...mudancas }));
+  const erroDoNome = somenteLeitura ? "" : erroDoNomeDaVersao(nomeEscolhido);
+  const pendencias = useMemo(
+    () => [
+      ...(erroDoNome
+        ? [{ chave: "nome_versao", secao: "identificacao", texto: erroDoNome }]
+        : []),
+      ...pendenciasDoRoteiro(erros, r),
+    ],
+    [erros, r, erroDoNome],
+  );
+  const porSecao = errosPorSecao(pendencias);
+  const eliminacao = useMemo(() => frasesDaEliminacao(r), [r]);
+  /* Seções abertas: ao criar, Identificação e Competências; ao editar ou ver, Competências. */
+  const [abertas, setAbertas] = useState(
+    () =>
+      new Set(
+        modo === "novo" || modo === "duplicar"
+          ? ["identificacao", "competencias"]
+          : ["competencias"],
+      ),
+  );
+  const alternar = (id, aberta) =>
+    setAbertas((atual) => {
+      const nova = new Set(atual);
+      if (aberta) nova.add(id);
+      else nova.delete(id);
+      return nova;
+    });
+  const secao = (id) => {
+    const s = SECOES_DO_ROTEIRO.find((x) => x.id === id);
+    return {
+      id,
+      titulo: s.titulo,
+      icone: s.icone,
+      erros: tentou ? porSecao[id] : 0,
+      aberta: abertas.has(id),
+      aoAlternar: alternar,
+    };
+  };
+  function irASecao(id) {
+    alternar(id, true);
+    globalThis.requestAnimationFrame?.(() => {
+      const el = document.querySelector(
+        `#entrevistasEditorDeRoteiro [data-secao="${id}"]`,
+      );
+      el?.scrollIntoView?.({ behavior: "smooth", block: "start" });
+      el?.querySelector?.(
+        ".entrevistas-secao-corpo input, .entrevistas-secao-corpo select, .entrevistas-secao-corpo textarea",
+      )?.focus?.();
+    });
+  }
 
   const titulo =
     modo === "novo"
@@ -662,7 +733,13 @@ export function EditorDeRoteiro({
     evento.preventDefault();
     if (somenteLeitura) return;
     setTentou(true);
-    if (quantosErros || erroDoNomeDaVersao(nomeEscolhido)) return;
+    if (quantosErros || erroDoNome) {
+      // Abre as seções com o que falta.
+      setAbertas(
+        (atual) => new Set([...atual, ...pendencias.map((x) => x.secao)]),
+      );
+      return;
+    }
     setErroDoBanco("");
     const nome = nomeParaGravar(nomeEscolhido);
     const resultado = await aoSalvar({
@@ -714,219 +791,260 @@ export function EditorDeRoteiro({
                 : `${roteiro.editais_em_uso} editais usam esta versão e continuam nela.`}
             </Aviso>
           ) : null}
-          <SecaoDoFormulario titulo="Identificação" icone="fa-file-lines">
-            <div className="entrevistas-grade">
-              <Campo rotulo="Nome" obrigatorio erro={errosVisiveis.nome} largo>
-                <input
-                  type="text"
-                  value={r.nome}
-                  disabled={somenteLeitura}
-                  data-foco-inicial
-                  onChange={(e) => mudar({ nome: e.target.value })}
-                />
-              </Campo>
-              <Campo rotulo="Etapa no edital" erro={errosVisiveis.etapa}>
-                <input
-                  type="text"
-                  value={r.etapa}
-                  placeholder="Entrevista"
-                  disabled={somenteLeitura}
-                  onChange={(e) => mudar({ etapa: e.target.value })}
-                />
-              </Campo>
-              <Campo rotulo="Área">
-                <select
-                  value={r.area}
-                  disabled={somenteLeitura}
-                  onChange={(e) => mudar({ area: e.target.value })}
+          <div className="entrevistas-secoes-do-roteiro">
+            <SecaoRecolhivel
+              {...secao("identificacao")}
+              resumo={r.nome || "Sem nome"}
+            >
+              <div className="entrevistas-grade">
+                <Campo
+                  rotulo="Nome"
+                  obrigatorio
+                  erro={errosVisiveis.nome}
+                  largo
                 >
-                  {opcoesDeArea.map((o) => (
-                    <option key={o.valor} value={o.valor}>
-                      {o.rotulo}
-                    </option>
-                  ))}
-                  <option value="">Qualquer área</option>
-                </select>
-              </Campo>
-              <Campo rotulo="Descrição" erro={errosVisiveis.descricao} largo>
-                <textarea
-                  rows={2}
-                  value={r.descricao}
-                  disabled={somenteLeitura}
-                  placeholder="Referência ao edital, observações"
-                  onChange={(e) => mudar({ descricao: e.target.value })}
-                />
-              </Campo>
-            </div>
-          </SecaoDoFormulario>
+                  <input
+                    type="text"
+                    value={r.nome}
+                    disabled={somenteLeitura}
+                    data-foco-inicial
+                    onChange={(e) => mudar({ nome: e.target.value })}
+                  />
+                </Campo>
+                <Campo rotulo="Etapa no edital" erro={errosVisiveis.etapa}>
+                  <input
+                    type="text"
+                    value={r.etapa}
+                    placeholder="Entrevista"
+                    disabled={somenteLeitura}
+                    onChange={(e) => mudar({ etapa: e.target.value })}
+                  />
+                </Campo>
+                <Campo rotulo="Área">
+                  <select
+                    value={r.area}
+                    disabled={somenteLeitura}
+                    onChange={(e) => mudar({ area: e.target.value })}
+                  >
+                    {opcoesDeArea.map((o) => (
+                      <option key={o.valor} value={o.valor}>
+                        {o.rotulo}
+                      </option>
+                    ))}
+                    <option value="">Qualquer área</option>
+                  </select>
+                </Campo>
+                <Campo rotulo="Descrição" erro={errosVisiveis.descricao} largo>
+                  <textarea
+                    rows={2}
+                    value={r.descricao}
+                    disabled={somenteLeitura}
+                    placeholder="Referência ao edital, observações"
+                    onChange={(e) => mudar({ descricao: e.target.value })}
+                  />
+                </Campo>
+              </div>
+            </SecaoRecolhivel>
 
-          <SecaoDoFormulario titulo="Escala das notas" icone="fa-sliders">
-            <EscalaDoRoteiro
-              r={r}
-              mudar={mudar}
-              erros={errosVisiveis}
-              somenteLeitura={somenteLeitura}
-            />
-          </SecaoDoFormulario>
-
-          <SecaoDoFormulario titulo="Aspectos" icone="fa-layer-group">
-            <AspectosDoRoteiro
-              valor={r.aspectos}
-              erros={errosVisiveis}
-              somenteLeitura={somenteLeitura}
-              aoMudar={(aspectos) => mudar({ aspectos })}
-            />
-          </SecaoDoFormulario>
-
-          <SecaoDoFormulario titulo="Competências" icone="fa-list-check">
-            {errosVisiveis.competencias ? (
-              <small className="entrevistas-erro-campo" role="alert">
-                {errosVisiveis.competencias}
-              </small>
-            ) : null}
-            <ol className="entrevistas-competencias">
-              {r.competencias.map((c, indice) => (
-                <Competencia
-                  key={c.chave}
-                  c={c}
-                  indice={indice}
-                  total={r.competencias.length}
-                  erros={errosVisiveis}
-                  somenteLeitura={somenteLeitura}
-                  mudar={(campo, valor) =>
+            <SecaoRecolhivel
+              {...secao("competencias")}
+              resumo={`${r.competencias.length} ${r.competencias.length === 1 ? "competência" : "competências"}${r.aspectos.length ? ` · ${r.aspectos.length} aspectos` : " · uma nota por competência"}`}
+            >
+              <h4 className="entrevistas-subtitulo">Aspectos</h4>
+              <AspectosDoRoteiro
+                valor={r.aspectos}
+                erros={errosVisiveis}
+                somenteLeitura={somenteLeitura}
+                aoMudar={(aspectos) => mudar({ aspectos })}
+              />
+              <h4 className="entrevistas-subtitulo">Competências</h4>
+              {errosVisiveis.competencias ? (
+                <small className="entrevistas-erro-campo" role="alert">
+                  {errosVisiveis.competencias}
+                </small>
+              ) : null}
+              <ol className="entrevistas-competencias">
+                {r.competencias.map((c, indice) => (
+                  <Competencia
+                    key={c.chave}
+                    c={c}
+                    indice={indice}
+                    total={r.competencias.length}
+                    erros={errosVisiveis}
+                    somenteLeitura={somenteLeitura}
+                    mudar={(campo, valor) =>
+                      mudar({
+                        competencias: trocarNaLista(
+                          r.competencias,
+                          c.chave,
+                          campo,
+                          valor,
+                        ),
+                      })
+                    }
+                    mover={(passo) =>
+                      mudar({
+                        competencias: moverItem(r.competencias, indice, passo),
+                      })
+                    }
+                    remover={() =>
+                      mudar({
+                        competencias: r.competencias.filter(
+                          (x) => x.chave !== c.chave,
+                        ),
+                      })
+                    }
+                  />
+                ))}
+              </ol>
+              {somenteLeitura ? null : (
+                <button
+                  type="button"
+                  className="btn secondary small"
+                  disabled={r.competencias.length >= LIMITE_DE_COMPETENCIAS}
+                  onClick={() =>
                     mudar({
-                      competencias: trocarNaLista(
-                        r.competencias,
-                        c.chave,
-                        campo,
-                        valor,
-                      ),
+                      competencias: [...r.competencias, novaCompetencia()],
                     })
                   }
-                  mover={(passo) =>
-                    mudar({
-                      competencias: moverItem(r.competencias, indice, passo),
-                    })
-                  }
-                  remover={() =>
-                    mudar({
-                      competencias: r.competencias.filter(
-                        (x) => x.chave !== c.chave,
-                      ),
-                    })
-                  }
-                />
-              ))}
-            </ol>
-            {somenteLeitura ? null : (
-              <button
-                type="button"
-                className="btn secondary small"
-                disabled={r.competencias.length >= LIMITE_DE_COMPETENCIAS}
-                onClick={() =>
-                  mudar({
-                    competencias: [...r.competencias, novaCompetencia()],
-                  })
-                }
-              >
-                <i className="fa-solid fa-plus" aria-hidden="true" />{" "}
-                Competência
-              </button>
-            )}
-          </SecaoDoFormulario>
-
-          <SecaoDoFormulario titulo="Aprovação" icone="fa-user-check">
-            <div className="entrevistas-grade">
-              <Campo
-                rotulo="Nota mínima total"
-                dica="Vazio = sem mínimo total"
-                erro={errosVisiveis.nota_minima_total}
-              >
-                <input
-                  type="number"
-                  min="0"
-                  step="0.5"
-                  value={r.nota_minima_total}
-                  disabled={somenteLeitura}
-                  onChange={(e) => mudar({ nota_minima_total: e.target.value })}
-                />
-              </Campo>
-              {r.aspectos.length ? (
-                <p className="entrevistas-vazio-linha">
-                  Com aspectos, elimina quem fica abaixo do mínimo de uma
-                  competência.
-                </p>
-              ) : (
-                <NotasEliminatorias
-                  valor={r.notas_eliminatorias}
-                  somenteLeitura={somenteLeitura}
-                  aoMudar={(notas_eliminatorias) =>
-                    mudar({ notas_eliminatorias })
-                  }
-                />
+                >
+                  <i className="fa-solid fa-plus" aria-hidden="true" />{" "}
+                  Competência
+                </button>
               )}
-            </div>
-            <label className="entrevistas-marcar">
-              <input
-                type="checkbox"
-                checked={r.ausencia_elimina}
-                disabled={somenteLeitura}
-                onChange={(e) => mudar({ ausencia_elimina: e.target.checked })}
+            </SecaoRecolhivel>
+
+            <SecaoRecolhivel
+              {...secao("escala")}
+              resumo={rotuloDaEscala(r.escala)}
+            >
+              <EscalaDoRoteiro
+                r={r}
+                mudar={mudar}
+                erros={errosVisiveis}
+                somenteLeitura={somenteLeitura}
               />
-              <span>Faltar à entrevista elimina o candidato</span>
-            </label>
-          </SecaoDoFormulario>
+            </SecaoRecolhivel>
 
-          <SecaoDoFormulario
-            titulo="Resultado e desempate"
-            icone="fa-ranking-star"
-          >
-            <label className="entrevistas-marcar">
-              <input
-                type="checkbox"
-                checked={r.soma_analise}
-                disabled={somenteLeitura}
-                onChange={(e) => mudar({ soma_analise: e.target.checked })}
+            <SecaoRecolhivel
+              {...secao("aprovacao")}
+              resumo={eliminacao[0] || ""}
+            >
+              {eliminacao.length ? (
+                <ul
+                  className="entrevistas-frases-da-eliminacao"
+                  aria-label="Como fica a regra"
+                  data-tour="entrevistas-roteiros-eliminacao"
+                >
+                  {eliminacao.map((f) => (
+                    <li key={f}>{f}</li>
+                  ))}
+                </ul>
+              ) : null}
+              <div className="entrevistas-grade">
+                <Campo
+                  rotulo="Nota mínima total"
+                  dica="Vazio = sem mínimo total"
+                  erro={errosVisiveis.nota_minima_total}
+                >
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.5"
+                    value={r.nota_minima_total}
+                    disabled={somenteLeitura}
+                    onChange={(e) =>
+                      mudar({ nota_minima_total: e.target.value })
+                    }
+                  />
+                </Campo>
+                {r.aspectos.length ? (
+                  <p className="entrevistas-vazio-linha">
+                    O mínimo de cada competência fica em Competências e
+                    aspectos.
+                  </p>
+                ) : (
+                  <NotasEliminatorias
+                    valor={r.notas_eliminatorias}
+                    somenteLeitura={somenteLeitura}
+                    aoMudar={(notas_eliminatorias) =>
+                      mudar({ notas_eliminatorias })
+                    }
+                  />
+                )}
+              </div>
+              <label className="entrevistas-marcar">
+                <input
+                  type="checkbox"
+                  checked={r.ausencia_elimina}
+                  disabled={somenteLeitura}
+                  onChange={(e) =>
+                    mudar({ ausencia_elimina: e.target.checked })
+                  }
+                />
+                <span>Faltar à entrevista elimina o candidato</span>
+              </label>
+            </SecaoRecolhivel>
+
+            <SecaoRecolhivel
+              {...secao("resultado")}
+              resumo={
+                r.soma_analise
+                  ? "Nota final = análise curricular + entrevista"
+                  : "Nota final = entrevista"
+              }
+            >
+              <label className="entrevistas-marcar">
+                <input
+                  type="checkbox"
+                  checked={r.soma_analise}
+                  disabled={somenteLeitura}
+                  onChange={(e) => mudar({ soma_analise: e.target.checked })}
+                />
+                <span>Nota final = análise curricular + entrevista</span>
+              </label>
+              {/* O desempate é o da regra de classificação do edital (uma
+                  fonte só); o texto livre antigo do roteiro segue gravado. */}
+              <DesempateDaClassificacao
+                regra={regraDaClassificacao}
+                edital={edital}
               />
-              <span>Nota final = análise curricular + entrevista</span>
-            </label>
-            {/* O desempate é o da regra de classificação do edital (uma
-                fonte só); o texto livre antigo do roteiro segue gravado. */}
-            <DesempateDaClassificacao
-              regra={regraDaClassificacao}
-              edital={edital}
-            />
-          </SecaoDoFormulario>
+            </SecaoRecolhivel>
 
-          <SecaoDoFormulario titulo="Banca padrão" icone="fa-users">
-            <ComposicaoDaBanca
-              valor={r.banca}
-              erros={errosVisiveis}
-              somenteLeitura={somenteLeitura}
-              aoMudar={(banca) => mudar({ banca })}
-            />
-          </SecaoDoFormulario>
-
-          {tentou && quantosErros ? (
-            <Aviso tom="danger" papel="alert">
-              Confira{" "}
-              {quantosErros === 1
-                ? "o campo marcado"
-                : `os ${quantosErros} campos marcados`}{" "}
-              antes de salvar.
-            </Aviso>
-          ) : null}
+            <SecaoRecolhivel
+              {...secao("banca")}
+              resumo={
+                r.banca.length
+                  ? r.banca
+                      .map((b) => `${b.quantidade}× ${b.origem || "?"}`)
+                      .join(" · ")
+                  : "Sem composição padrão"
+              }
+            >
+              <ComposicaoDaBanca
+                valor={r.banca}
+                erros={errosVisiveis}
+                somenteLeitura={somenteLeitura}
+                aoMudar={(banca) => mudar({ banca })}
+              />
+            </SecaoRecolhivel>
+          </div>
           {erroDoBanco ? (
             <Aviso tom="danger" papel="alert">
               {erroDoBanco}
             </Aviso>
           ) : null}
         </div>
-        <div className="ui-gaveta-rodape">
+        <div className="ui-gaveta-rodape entrevistas-rodape-do-roteiro">
+          {somenteLeitura ? null : (
+            <PendenciasDoRoteiro
+              pendencias={pendencias}
+              destacar={tentou}
+              aoIr={irASecao}
+            />
+          )}
           <span className="entrevistas-rodape-resumo">
-            {rotuloDaEscala(r.escala)} · {r.competencias.length}{" "}
-            {r.competencias.length === 1 ? "competência" : "competências"}
-            {r.aspectos.length ? ` · ${r.aspectos.length} aspectos` : ""}
+            {textoDaPontuacao(r)}
           </span>
           <button type="button" className="btn secondary" onClick={aoFechar}>
             {somenteLeitura ? "Fechar" : "Cancelar"}

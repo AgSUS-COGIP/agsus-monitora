@@ -24,6 +24,8 @@ import {
 
 const { montarConducaoDeEntrevistas } =
   await import("../../src/modulos/entrevistas/conduzir.tsx");
+// Preparar baixa sob demanda (lazy): já carregado aqui, o import da tela resolve na hora.
+await import("../../src/modulos/entrevistas/preparar.tsx");
 
 let secao;
 let tela;
@@ -308,7 +310,35 @@ const chamadas = (supabase, nome) =>
 async function abrirEdital() {
   await clicar(visao("preparar"));
   await esperar();
+  await preparado();
 }
+
+/* Preparar baixa sob demanda (lazy): espera os passos aparecerem. */
+async function preparado() {
+  for (
+    let i = 0;
+    i < 100 && !document.querySelector(".entrevistas-passos");
+    i++
+  )
+    await esperar(() => new Promise((resolver) => setTimeout(resolver, 10)));
+}
+
+/* Preparar: os passos (Roteiro, Banca, Convocação, Agenda) e o corpo do atual. */
+const botaoDoPasso = (id) =>
+  document.querySelector(`.entrevistas-passos button[data-passo="${id}"]`);
+const corpoDoPasso = () =>
+  document.querySelector(".entrevistas-preparar-corpo");
+async function abrirPasso(id) {
+  await preparado();
+  await clicar(botaoDoPasso(id));
+  await esperar();
+  return corpoDoPasso();
+}
+const convocacao = () => document.querySelector(".entrevistas-convocacao");
+const salvarConfiguracao = () =>
+  document.querySelector('[data-acao="salvar-configuracao"]');
+const editarConfiguracao = () =>
+  document.querySelector('[data-acao="editar-configuracao"]');
 
 /* A ficha do primeiro cartão da fila (sem agenda, a fila abre em Todos). */
 async function abrirAFicha(id = "e1") {
@@ -409,7 +439,8 @@ describe("a tela de Conduzir entrevistas", () => {
       secao.querySelector(".entrevistas-fila-recortes [aria-checked=true]")
         .textContent,
     ).toBe("Todos (1)");
-    expect(secao.querySelector(".entrevistas-avatar").textContent).toBe("C1");
+    // As iniciais ignoram números: "Candidato 1" → "CA".
+    expect(secao.querySelector(".entrevistas-avatar").textContent).toBe("CA");
     expect(
       guardado.mapa.get("agsus:conduzir-entrevistas:edital:saude-indigena"),
     ).toBe("m1");
@@ -475,8 +506,12 @@ describe("a tela de Conduzir entrevistas", () => {
       secao.querySelector(".entrevistas-fila-recortes [data-valor='proximos']"),
     );
     expect(cartoes()).toEqual([["e5", "aguardando"]]);
-    expect(secao.querySelector(".entrevistas-fila-dia").textContent).toContain(
+    // Fora de Hoje, o dia fica no cartão; o cabeçalho é o da vaga.
+    expect(secao.querySelector(".entrevistas-fila-hora").textContent).toContain(
       "Amanhã",
+    );
+    expect(secao.querySelector(".entrevistas-fila-vaga").textContent).toBe(
+      "V1 · Enfermeiro1",
     );
   });
 
@@ -592,10 +627,14 @@ describe("a tela de Conduzir entrevistas", () => {
     await esperar();
     expect(visao("preparar").getAttribute("aria-checked")).toBe("true");
     expect(document.activeElement).toBe(visao("preparar"));
+    await preparado();
     expect(
-      document.querySelector('[data-passo="configuracao"]'),
-    ).not.toBeNull();
-    expect(naTela("Roteiros de entrevista")).toBe(true);
+      [...document.querySelectorAll(".entrevistas-passos button")].map(
+        (b) => b.dataset.passo,
+      ),
+    ).toEqual(["roteiro", "banca", "convocacao", "agenda"]);
+    await abrirPasso("roteiro");
+    expect(naTela("Roteiros da área")).toBe(true);
   });
 
   it("links antigos: a visão Roteiros vira Preparar; link com edital abre o edital na Fila", async () => {
@@ -603,6 +642,7 @@ describe("a tela de Conduzir entrevistas", () => {
     await montar(supabase);
     await act(async () => tela.abrirVisao("roteiros"));
     expect(visao("preparar").getAttribute("aria-checked")).toBe("true");
+    await abrirPasso("roteiro");
     expect(document.querySelector('[data-roteiro="r1"]')).not.toBeNull();
     await act(async () => tela.abrirVisao("conduzir"));
     expect(visao("fila").getAttribute("aria-checked")).toBe("true");
@@ -642,6 +682,7 @@ describe("a tela de Conduzir entrevistas", () => {
       "Sorteio registrado",
     ]);
     // No editor do roteiro: os mesmos critérios, sem campo de texto, com o atalho.
+    await abrirPasso("roteiro");
     const editar = [
       ...document.querySelectorAll('[data-roteiro="r1"] button'),
     ].find((b) => b.textContent.includes("Editar"));
@@ -664,6 +705,7 @@ describe("a tela de Conduzir entrevistas", () => {
     const supabase = supabaseDaConducao();
     await montar(supabase);
     await abrirEdital();
+    await abrirPasso("roteiro");
     await clicar(
       [...document.querySelectorAll('[data-roteiro="r1"] button')].find((b) =>
         b.textContent.includes("Editar"),
@@ -710,15 +752,25 @@ describe("a tela de Conduzir entrevistas", () => {
     await montar(
       supabaseDaConducao({ edital: { ...EDITAL, configuracao: null } }),
     );
-    expect(naTela("A entrevista deste edital ainda não foi configurada.")).toBe(
-      true,
-    );
+    expect(
+      naTela(
+        "A entrevista deste edital ainda não foi preparada (roteiro e banca).",
+      ),
+    ).toBe(true);
     await clicar(
       [...document.querySelectorAll(".ui-aviso button")].find(
         (b) => b.textContent === "Preparar",
       ),
     );
     expect(visao("preparar").getAttribute("aria-checked")).toBe("true");
+    // Sem configuração, Preparar abre no passo 1, já com o roteiro para escolher.
+    expect(corpoDoPasso().dataset.passoAtual).toBe("roteiro");
+    expect(
+      document.querySelector('[data-campo="roteiro-do-edital"]'),
+    ).not.toBeNull();
+    expect(corpoDoPasso().textContent).toContain(
+      "Escolha o roteiro da entrevista.",
+    );
   });
 });
 
@@ -728,6 +780,7 @@ describe("Preparar, roteiros e ficha", () => {
     await montar(supabase);
     await clicar(visao("preparar"));
     await esperar();
+    await abrirPasso("roteiro");
     const editar = [
       ...document.querySelectorAll('[data-roteiro="r1"] button'),
     ].find((b) => b.textContent.includes("Editar (cria versão 2)"));
@@ -760,10 +813,20 @@ describe("Preparar, roteiros e ficha", () => {
     await montar(supabase);
     await clicar(visao("preparar"));
     await esperar();
+    await abrirPasso("roteiro");
     await clicar(document.getElementById("entrevistasNovoRoteiro"));
     const editor = document.getElementById("entrevistasEditorDeRoteiro");
     await clicar(editor.querySelector('button[type="submit"]'));
     expect(editor.textContent).toContain("Nome do roteiro: de 3 a 150");
+    // A lista do que falta, perto do Salvar, abre a seção do erro.
+    const pendencias = editor.querySelector(
+      ".entrevistas-pendencias-do-roteiro",
+    );
+    expect(pendencias.getAttribute("role")).toBe("alert");
+    expect(pendencias.textContent).toContain("Faltam");
+    expect(editor.querySelector('[data-secao="identificacao"]').open).toBe(
+      true,
+    );
     expect(chamadas(supabase, "salvar_roteiro_entrevista")).toHaveLength(0);
   });
 
@@ -776,7 +839,8 @@ describe("Preparar, roteiros e ficha", () => {
     });
     // Com a lista registrada, o cálculo da Classificação nem é pedido.
     expect(chamadas(supabase, "obter_classificacao_do_edital")).toHaveLength(0);
-    const passo = document.querySelector('[data-passo="convocacao"]');
+    await abrirPasso("convocacao");
+    const passo = convocacao();
     expect(passo.dataset.fonte).toBe("LISTA");
     expect(passo.textContent).toContain(
       "Lista de convocação da Classificação · gerada em 05/10/2026, 10:30 por Gestora · regra v2",
@@ -789,6 +853,10 @@ describe("Preparar, roteiros e ficha", () => {
     ]);
     expect(passo.textContent).toContain(
       "2 vagas imediatas · até a 2ª (1 × 2 vaga(s))",
+    );
+    // O passo diz o que falta: 1 da lista ainda não convocado.
+    expect(corpoDoPasso().textContent).toContain(
+      "1 candidato da lista ainda não foi convocado.",
     );
     expect(passo.textContent).not.toContain("Candidato 3");
     expect(passo.textContent).not.toContain("Além da regra");
@@ -816,6 +884,7 @@ describe("Preparar, roteiros e ficha", () => {
     });
     await montar(supabase);
     await abrirEdital();
+    await abrirPasso("convocacao");
     await clicar(document.getElementById("entrevistasConvocar"));
     await esperar();
     expect(toast).toHaveBeenCalledWith(
@@ -849,9 +918,10 @@ describe("Preparar, roteiros e ficha", () => {
     );
     // "Editar" de quem avalia abre a configuração; o da nota abre o roteiro do edital.
     await clicar(bloco("banca").querySelector('[data-ir-para="configuracao"]'));
+    expect(corpoDoPasso().dataset.passoAtual).toBe("banca");
     expect(
-      document.querySelector('[data-passo="configuracao"] form'),
-    ).not.toBeNull();
+      corpoDoPasso().querySelectorAll(".entrevistas-linha-membro"),
+    ).toHaveLength(2);
     await clicar(bloco("nota").querySelector('[data-ir-para="roteiro"]'));
     expect(
       document.getElementById("entrevistasEditorDeRoteiro"),
@@ -876,7 +946,7 @@ describe("Preparar, roteiros e ficha", () => {
     expect(
       passo.querySelector('[data-ir-para="classificacao"]').textContent,
     ).toBe("Regra na Classificação");
-    const configuracao = document.querySelector('[data-passo="configuracao"]');
+    const configuracao = corpoDoPasso();
     expect(
       configuracao.querySelector('input[aria-label^="Vagas imediatas"]'),
     ).toBeNull();
@@ -889,12 +959,8 @@ describe("Preparar, roteiros e ficha", () => {
     const supabase = supabaseDaConducao();
     await montar(supabase);
     await abrirEdital();
-    const passo = document.querySelector('[data-passo="configuracao"]');
-    await clicar(
-      [...passo.querySelectorAll("button")].find((b) =>
-        b.textContent.includes("Editar configuração"),
-      ),
-    );
+    const passo = await abrirPasso("banca");
+    await clicar(editarConfiguracao());
     const membros = passo.querySelectorAll(".entrevistas-linha-membro");
     // Beto: só "Habilidade interpessoal".
     await clicar(membros[1].querySelector('button[data-valor="algumas"]'));
@@ -919,10 +985,14 @@ describe("Preparar, roteiros e ficha", () => {
     expect(passo.textContent).toContain(
       "Banca 1: ninguém avalia “Políticas públicas”.",
     );
-    await clicar(passo.querySelector('button[type="submit"]'));
+    await clicar(salvarConfiguracao());
     expect(chamadas(supabase, "configurar_entrevista_edital")).toHaveLength(0);
+    // O que falta fica na lista perto do Salvar.
+    expect(
+      passo.querySelector(".entrevistas-pendencias").textContent,
+    ).toContain("Banca 1: ninguém avalia “Políticas públicas”.");
     await clicar(membros[0].querySelector('button[data-valor="todas"]'));
-    await clicar(passo.querySelector('button[type="submit"]'));
+    await clicar(salvarConfiguracao());
     await esperar();
     const [[, argumentos]] = chamadas(supabase, "configurar_entrevista_edital");
     expect(argumentos.p_dados.avaliadores.map((a) => a.competencias)).toEqual([
@@ -1019,7 +1089,8 @@ describe("Preparar, roteiros e ficha", () => {
       expect(chamadas(supabase, "obter_classificacao_do_edital")[0][1]).toEqual(
         { p_edital: "m1" },
       );
-      const passo = document.querySelector('[data-passo="convocacao"]');
+      await abrirPasso("convocacao");
+      const passo = convocacao();
       expect(passo.dataset.fonte).toBe("CALCULO");
       expect(passo.textContent).toContain(
         "Lista ainda não gerada na Classificação",
@@ -1055,7 +1126,8 @@ describe("Preparar, roteiros e ficha", () => {
     });
     await montar(supabase);
     await abrirEdital();
-    const passo = document.querySelector('[data-passo="convocacao"]');
+    await abrirPasso("convocacao");
+    const passo = convocacao();
     expect(passo.dataset.fonte).toBe("NENHUMA");
     expect(passo.textContent).toContain(
       "Lista ainda não gerada na Classificação.",
@@ -1075,15 +1147,13 @@ describe("Preparar, roteiros e ficha", () => {
     const supabase = supabaseDaConducao();
     await montar(supabase);
     await abrirEdital();
-    const passo = document.querySelector('[data-passo="configuracao"]');
-    expect(passo.textContent).toContain("Saúde Indígena 2026");
-    await clicar(
-      [...passo.querySelectorAll("button")].find((b) =>
-        b.textContent.includes("Editar configuração"),
-      ),
+    expect((await abrirPasso("roteiro")).textContent).toContain(
+      "Saúde Indígena 2026",
     );
+    const passo = await abrirPasso("banca");
+    await clicar(editarConfiguracao());
     await clicar(passo.querySelector('button[data-valor="AVALIADOR"]'));
-    await clicar(passo.querySelector('button[type="submit"]'));
+    await clicar(salvarConfiguracao());
     await esperar();
     const [[, argumentos]] = chamadas(supabase, "configurar_entrevista_edital");
     expect(argumentos.p_edital).toBe("m1");
@@ -1312,14 +1382,16 @@ describe("Preparar, roteiros e ficha", () => {
     await montar(supabase);
     await clicar(visao("preparar"));
     await esperar();
-    expect(naTela("Roteiros indisponíveis")).toBe(true);
+    await abrirPasso("roteiro");
+    expect(naTela("Não foi possível carregar os roteiros")).toBe(true);
     expect(chamadas(supabase, "listar_roteiros_entrevista")).toHaveLength(1);
     await clicar(visao("fila"));
     await esperar();
     await clicar(visao("preparar"));
     await esperar();
+    await abrirPasso("roteiro");
     expect(chamadas(supabase, "listar_roteiros_entrevista")).toHaveLength(1);
-    expect(naTela("Roteiros indisponíveis")).toBe(true);
+    expect(naTela("Não foi possível carregar os roteiros")).toBe(true);
   });
 
   it("modo AVALIADOR: só as notas do avaliador ligado ao perfil ficam abertas", async () => {
@@ -1377,8 +1449,9 @@ describe("Preparar, roteiros e ficha", () => {
     });
     await montar(supabase);
     const seletor = document.getElementById("entrevistasEdital");
-    expect(seletor.querySelectorAll("option")).toHaveLength(2);
-    await clicar(document.querySelector(".entrevistas-todos input"));
+    // O edital e, dentro do seletor, "mostrar também os concluídos".
+    expect(seletor.querySelectorAll("option")).toHaveLength(3);
+    await escolher(seletor, "__mostrar-todos__");
     await esperar();
     expect(chamadas(supabase, "listar_editais_entrevista").at(-1)[1]).toEqual({
       p_area: expect.any(String),
@@ -1409,6 +1482,7 @@ describe("Preparar, roteiros e ficha", () => {
     const edital = { ...EDITAL, pode_editar: false };
     await montar(supabaseDaConducao({ edital }));
     await abrirEdital();
+    await abrirPasso("convocacao");
     expect(document.getElementById("entrevistasConvocar")).toBeNull();
     // Sem selo "Somente consulta": quem só lê não vê os controles de edição.
     expect(naTela("Somente consulta")).toBe(false);
@@ -1418,6 +1492,8 @@ describe("Preparar, roteiros e ficha", () => {
     await clicar(ficha.querySelector('[data-acao="voltar-a-lista"]'));
     await clicar(visao("preparar"));
     await esperar();
+    expect(editarConfiguracao()).toBeNull();
+    await abrirPasso("roteiro");
     expect(document.getElementById("entrevistasNovoRoteiro")).toBeNull();
     expect(document.querySelector('[data-roteiro="r1"]').textContent).toContain(
       "Ver",
@@ -1606,6 +1682,7 @@ describe("aspectos da entrevista (roteiro com Conceitua · Propriedade · Profun
     await montar(supabase);
     await clicar(visao("preparar"));
     await esperar();
+    await abrirPasso("roteiro");
     const editar = [
       ...document.querySelectorAll('[data-roteiro="r1"] button'),
     ].find((b) => b.textContent.includes("Editar (cria versão 2)"));
@@ -1613,8 +1690,9 @@ describe("aspectos da entrevista (roteiro com Conceitua · Propriedade · Profun
     const editor = document.getElementById("entrevistasEditorDeRoteiro");
     await clicar(editor.querySelector('[data-acao="modelo-de-aspectos"]'));
     // Com aspectos, as médias eliminatórias saem (vale o mínimo da competência).
+    await clicar(editor.querySelector('[data-secao="aprovacao"] summary'));
     expect(editor.textContent).toContain(
-      "Com aspectos, elimina quem fica abaixo do mínimo",
+      "O mínimo de cada competência fica em Competências e aspectos.",
     );
     await clicar(editor.querySelector('button[type="submit"]'));
     await esperar();
@@ -1625,5 +1703,154 @@ describe("aspectos da entrevista (roteiro com Conceitua · Propriedade · Profun
       { nome: "Profundidade" },
     ]);
     expect(p_dados.notas_eliminatorias).toEqual([]);
+  });
+});
+
+describe("entrevistas mais claras: fila, Preparar em passos e parecer pronto", () => {
+  it("fila: cartões por vaga, busca por nome ou código e estado vazio da busca", async () => {
+    const edital = {
+      ...EDITAL_DO_DIA,
+      convocados: [
+        ...EDITAL_DO_DIA.convocados,
+        convocado(6, {
+          candidato: "Maria das Dores",
+          codigo: "43015",
+          vaga: "V2",
+          cargo: "Técnico de enfermagem",
+        }),
+      ],
+    };
+    await montar(
+      supabaseDaConducao({
+        edital,
+        respostas: {
+          obter_agenda_entrevista: () => ({
+            data: {
+              ...AGENDA_DO_DIA,
+              itens: [
+                ...AGENDA_DO_DIA.itens,
+                { analise_id: "an6", data: HOJE, inicio: "07:30", banca: 2 },
+              ],
+            },
+            error: null,
+          }),
+        },
+      }),
+    );
+    expect(
+      [...secao.querySelectorAll(".entrevistas-fila-vaga")].map(
+        (h) => h.textContent,
+      ),
+    ).toEqual(["V1 · Enfermeiro4", "V2 · Técnico de enfermagem1"]);
+    // O cartão: iniciais do nome, código, horário e banca; sem "—" nem "0/2" sem nota.
+    const cartao = secao.querySelector('[data-convocado="e6"]');
+    expect(cartao.querySelector(".entrevistas-avatar").textContent).toBe("MD");
+    expect(cartao.textContent).toContain("Cód. 43015");
+    expect(cartao.querySelector(".entrevistas-fila-hora").textContent).toBe(
+      "07:30Banca 2",
+    );
+    expect(cartao.textContent).not.toContain("—");
+    expect(cartao.querySelector(".entrevistas-fila-notas")).toBeNull();
+    const busca = secao.querySelector('[data-campo="fila-busca"]');
+    await digitar(busca, "dores");
+    expect(cartoes()).toEqual([["e6", "aguardando"]]);
+    await digitar(busca, "43015");
+    expect(cartoes()).toEqual([["e6", "aguardando"]]);
+    await digitar(busca, "ninguém assim");
+    expect(cartoes()).toEqual([]);
+    expect(naTela("Ninguém encontrado para “ninguém assim”.")).toBe(true);
+    await clicar(
+      [...secao.querySelectorAll("button")].find(
+        (b) => b.textContent === "Limpar busca",
+      ),
+    );
+    expect(cartoes()).toHaveLength(5);
+  });
+
+  it("Preparar: quatro passos com o estado e o que falta; abre no primeiro pendente", async () => {
+    await montar(supabaseDaConducao());
+    await abrirEdital();
+    const estados = () =>
+      [...document.querySelectorAll(".entrevistas-passos li")].map((li) => [
+        li.dataset.passo,
+        li.dataset.estado,
+      ]);
+    // Roteiro e banca prontos; falta convocar o 2º da lista e montar a agenda.
+    expect(estados()).toEqual([
+      ["roteiro", "feito"],
+      ["banca", "feito"],
+      ["convocacao", "atual"],
+      ["agenda", "pendente"],
+    ]);
+    expect(
+      document.querySelector(".entrevistas-preparar-andamento").textContent,
+    ).toBe("2 de 4 prontos");
+    expect(
+      corpoDoPasso().querySelector(".entrevistas-o-que-falta").textContent,
+    ).toContain("1 candidato da lista ainda não foi convocado.");
+    // Passo 3: a frase simples de quem é chamado e a tabela das vagas.
+    expect(corpoDoPasso().textContent).toContain(
+      "Até 1 pessoa por vaga imediata",
+    );
+    const agenda = await abrirPasso("agenda");
+    expect(agenda.textContent).toContain(
+      "Monte a agenda na Classificação (dia, horário e banca de cada candidato).",
+    );
+    expect(agenda.textContent).toContain(
+      "Nenhum horário salvo para este edital.",
+    );
+    const banca = await abrirPasso("banca");
+    expect(banca.textContent).toContain("Banca 1");
+    expect(banca.textContent).toContain("Avalia todas as competências");
+    // Editar a banca: a lista do que falta fica perto do Salvar.
+    await clicar(editarConfiguracao());
+    const nome = banca.querySelector(".entrevistas-linha-membro input");
+    await digitar(nome, "A");
+    expect(
+      banca.querySelector(".entrevistas-pendencias").textContent,
+    ).toContain("Membro 1 (A): Nome do avaliador: de 2 a 150 caracteres.");
+  });
+
+  it("ficha: com tudo lançado, o parecer em texto pronto com Copiar parecer", async () => {
+    const writeText = vi.fn(async () => {});
+    const original = Object.getOwnPropertyDescriptor(navigator, "clipboard");
+    Object.defineProperty(navigator, "clipboard", {
+      configurable: true,
+      value: { writeText },
+    });
+    try {
+      const dados = {
+        ...EDITAL,
+        convocados: [
+          {
+            ...EDITAL.convocados[0],
+            compareceu: "S",
+            parecer: "APTO",
+            nota: 8,
+            avaliacoes: todasAsNotas,
+          },
+        ],
+      };
+      await montar(supabaseDaConducao({ edital: dados }));
+      const ficha = await abrirAFicha();
+      const parecer = ficha.querySelector(".entrevistas-parecer-pronto");
+      expect(parecer).not.toBeNull();
+      const texto = parecer.querySelector("pre").textContent;
+      expect(texto).toContain("Parecer da entrevista — Candidato 1 (cód. K1)");
+      expect(texto).toContain("Edital 100/2026 · Vaga V1 · Enfermeiro");
+      expect(texto).toContain("1. Políticas públicas: 4 de 5 (mínimo 2)");
+      expect(texto).toContain("Total: 8 de 10 (mínimo 4)");
+      expect(texto).toContain("Parecer: APTO");
+      await clicar(parecer.querySelector('[data-acao="copiar-parecer"]'));
+      await esperar();
+      expect(writeText).toHaveBeenCalledWith(texto);
+      expect(parecer.textContent).toContain("Parecer copiado.");
+      // Apagar uma nota tira o parecer pronto (volta a faltar nota).
+      await digitar(notas(ficha)[0], "");
+      expect(ficha.querySelector(".entrevistas-parecer-pronto")).toBeNull();
+    } finally {
+      if (original) Object.defineProperty(navigator, "clipboard", original);
+      else delete navigator.clipboard;
+    }
   });
 });

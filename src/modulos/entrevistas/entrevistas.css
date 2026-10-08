@@ -243,8 +243,7 @@ html[data-theme="dark"] .entrevistas-link a {
   font-weight: var(--font-weight-medium);
 }
 /* Vence o `label` de app.css (caixa alta, 900): rótulo em sentence case. */
-label.entrevistas-marcar,
-label.entrevistas-todos {
+label.entrevistas-marcar {
   display: flex;
   align-items: center;
   gap: var(--space-2);
@@ -254,9 +253,6 @@ label.entrevistas-todos {
   letter-spacing: 0;
   text-transform: none;
   cursor: pointer;
-}
-label.entrevistas-todos {
-  color: var(--text-secondary);
 }
 .entrevistas-grade {
   display: grid;
@@ -387,39 +383,6 @@ label.entrevistas-todos {
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   align-items: end;
   gap: var(--space-3);
-}
-.entrevistas-botao-alinhado {
-  justify-self: start;
-  min-height: 40px;
-}
-.entrevistas-resumo {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
-  gap: var(--space-2);
-  margin: 0;
-}
-.entrevistas-resumo > div {
-  padding: var(--space-2) var(--space-3);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-md);
-  background: var(--surface-raised);
-}
-.entrevistas-resumo dt {
-  color: var(--text-secondary);
-  font-size: var(--text-caption);
-  font-weight: var(--font-weight-medium);
-}
-.entrevistas-resumo dd {
-  display: grid;
-  gap: var(--space-0-5);
-  margin: var(--space-1) 0 0;
-  color: var(--text-primary);
-  font-size: var(--text-body-sm);
-  font-weight: var(--font-weight-semibold);
-}
-.entrevistas-resumo dd small {
-  color: var(--text-secondary);
-  font-weight: var(--font-weight-regular);
 }
 
 /* Administrador global: liberação de um edital fora da janela. */
@@ -1801,20 +1764,6 @@ table.entrevistas-tabela {
   > span {
   background: var(--state-success);
 }
-.entrevistas-seletor-do-edital .entrevistas-filtros {
-  grid-template-columns: minmax(0, 1fr) auto;
-}
-@media (max-width: 640px) {
-  .entrevistas-seletor-do-edital .entrevistas-filtros {
-    grid-template-columns: minmax(0, 1fr);
-  }
-}
-.entrevistas-seletor-acoes {
-  display: inline-flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--space-2);
-}
 .entrevistas-fila {
   display: grid;
   gap: var(--space-3);
@@ -1825,9 +1774,6 @@ table.entrevistas-tabela {
   align-items: end;
   justify-content: space-between;
   gap: var(--space-2) var(--space-3);
-}
-.entrevistas-fila-controles .ui-campo {
-  min-width: 180px;
 }
 .entrevistas-fila-resumo {
   display: flex;
@@ -1885,19 +1831,6 @@ table.entrevistas-tabela {
 .entrevistas-fila-grupo {
   display: grid;
   gap: var(--space-2);
-}
-.entrevistas-fila-dia {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-  margin: var(--space-1) 0 0;
-  color: var(--text-primary);
-  font-size: var(--text-body);
-  font-weight: var(--font-weight-semibold);
-}
-.entrevistas-fila-dia span {
-  color: var(--text-secondary);
-  font-weight: var(--font-weight-regular);
 }
 .entrevistas-fila-lista {
   display: grid;
@@ -2172,4 +2105,623 @@ table.entrevistas-tabela {
   .entrevistas-matriz-nao-atribuida {
     grid-column: 1 / -1;
   }
+}
+
+/* ── Conduzir: o edital, compacto (seletor-do-edital.tsx) ───────────── */
+.entrevistas-seletor-do-edital {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-3);
+  padding: var(--space-2) var(--space-3);
+}
+/* Vence o `label` de app.css (caixa alta, 900). */
+label.entrevistas-seletor-campo {
+  display: flex;
+  flex: 0 1 640px;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: min(100%, 280px);
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--text-body-sm);
+  font-weight: var(--font-weight-medium);
+  letter-spacing: 0;
+  text-transform: none;
+}
+.entrevistas-seletor-campo select {
+  flex: 1 1 auto;
+  min-width: 0;
+  max-width: 640px;
+  min-height: 36px;
+}
+.entrevistas-seletor-marca,
+.entrevistas-seletor-carregando {
+  color: var(--text-secondary);
+  font-size: var(--text-caption);
+}
+
+/* ── Fila: busca, vaga e nota ──────────────────────────────────────── */
+label.entrevistas-fila-busca {
+  position: relative;
+  display: flex;
+  flex: 0 1 300px;
+  align-items: center;
+  margin: 0;
+  letter-spacing: 0;
+  text-transform: none;
+}
+.entrevistas-fila-busca i {
+  position: absolute;
+  left: var(--space-3);
+  color: var(--text-secondary);
+  font-size: var(--text-caption);
+  pointer-events: none;
+}
+.entrevistas-fila-busca input {
+  width: 100%;
+  min-height: 38px;
+  padding-left: calc(var(--space-3) * 2 + 8px);
+}
+.entrevistas-fila-controles {
+  align-items: center;
+}
+.entrevistas-fila-vaga {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-2);
+  margin: var(--space-2) 0 0;
+  padding-bottom: var(--space-1);
+  border-bottom: 1px solid var(--border-subtle);
+  color: var(--text-primary);
+  font-size: var(--text-body-sm);
+  font-weight: var(--font-weight-semibold);
+}
+.entrevistas-fila-vaga-codigo {
+  font-variant-numeric: tabular-nums;
+}
+.entrevistas-fila-vaga-contagem {
+  min-width: 24px;
+  padding: 0 var(--space-2);
+  border-radius: var(--radius-pill);
+  background: var(--surface-raised);
+  color: var(--text-secondary);
+  font-size: var(--text-caption);
+  font-weight: var(--font-weight-medium);
+  text-align: center;
+}
+.entrevistas-fila-nota {
+  color: var(--text-primary);
+  font-size: var(--text-caption);
+  font-weight: var(--font-weight-semibold);
+  font-variant-numeric: tabular-nums;
+}
+.entrevistas-fila-cartao:not(:has(.entrevistas-fila-hora)) {
+  grid-template-areas:
+    "avatar corpo corpo"
+    "avatar situacao situacao";
+}
+.entrevistas-carregando {
+  display: grid;
+  gap: var(--space-2);
+}
+
+/* ── Preparar em passos (preparar.tsx), no desenho do assistente da regra ── */
+.entrevistas-preparar {
+  display: grid;
+  gap: var(--space-4);
+}
+.entrevistas-preparar-topo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-3);
+}
+.entrevistas-preparar-andamento,
+.entrevistas-chip-alerta {
+  display: inline-flex;
+  align-items: center;
+  padding: var(--space-0-5) var(--space-2);
+  border-radius: var(--radius-pill);
+  background: var(--state-info-soft);
+  color: var(--state-info);
+  font-size: var(--text-caption);
+  font-weight: var(--font-weight-semibold);
+  white-space: nowrap;
+}
+.entrevistas-preparar-andamento[data-completo="sim"] {
+  background: var(--state-success-soft);
+  color: var(--state-success);
+}
+.entrevistas-chip-alerta {
+  background: var(--state-warning-soft);
+  color: var(--state-warning);
+}
+.entrevistas-passos ol {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.entrevistas-passos li {
+  position: relative;
+}
+.entrevistas-passos li + li::before {
+  position: absolute;
+  top: 18px;
+  right: calc(50% + 22px);
+  left: calc(-50% + 22px);
+  height: 2px;
+  border-radius: var(--radius-pill);
+  background: var(--border-subtle);
+  content: "";
+}
+.entrevistas-passos button {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-1);
+  width: 100%;
+  padding: var(--space-1);
+  border: 0;
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--text-secondary);
+  font: inherit;
+  font-size: var(--text-caption);
+  text-align: center;
+  cursor: pointer;
+}
+.entrevistas-passos button:hover {
+  background: var(--surface-hover);
+}
+.entrevistas-passos button:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+.entrevistas-passo-numero {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border: 2px solid var(--state-warning);
+  border-radius: var(--radius-full);
+  background: var(--surface-card);
+  color: var(--state-warning);
+  font-size: var(--text-body-sm);
+  font-weight: var(--font-weight-semibold);
+}
+.entrevistas-passos [data-estado="feito"] .entrevistas-passo-numero {
+  border-color: var(--state-success);
+  background: var(--state-success);
+  color: var(--text-inverse);
+}
+.entrevistas-passos [data-estado="atual"] .entrevistas-passo-numero {
+  border-color: var(--brand-primary);
+  color: var(--brand-primary);
+  box-shadow: 0 0 0 4px var(--state-info-soft);
+}
+.entrevistas-passo-rotulo {
+  color: var(--text-primary);
+  font-size: var(--text-body-sm);
+  font-weight: var(--font-weight-semibold);
+}
+.entrevistas-passo-resumo {
+  overflow: hidden;
+  max-width: 100%;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.entrevistas-passos [data-estado="pendente"] .entrevistas-passo-resumo {
+  color: var(--state-warning);
+}
+.entrevistas-preparar-corpo {
+  display: grid;
+  gap: var(--space-3);
+  min-width: 0;
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--border-subtle);
+  animation: entrevistas-passo-entra 0.2s ease;
+  scroll-margin-top: var(--space-6);
+}
+@keyframes entrevistas-passo-entra {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.entrevistas-preparar-titulo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+.entrevistas-preparar-titulo h3 {
+  margin: 0;
+  color: var(--text-primary);
+  font-size: var(--text-h4);
+}
+.entrevistas-preparar-titulo h3 i {
+  color: var(--brand-primary);
+}
+.entrevistas-o-que-falta,
+.entrevistas-pendencias {
+  display: grid;
+  gap: var(--space-1);
+  padding: var(--space-2) var(--space-3);
+  border-left: 4px solid var(--state-warning);
+  border-radius: var(--radius-md);
+  background: var(--state-warning-soft);
+  color: var(--text-primary);
+  font-size: var(--text-body-sm);
+}
+.entrevistas-o-que-falta ul,
+.entrevistas-pendencias ul {
+  display: grid;
+  gap: var(--space-0-5);
+  margin: 0;
+  padding-left: var(--space-5);
+}
+.entrevistas-pendencias[data-destaque="sim"] {
+  border-left-color: var(--state-danger);
+  background: var(--state-danger-soft);
+}
+.entrevistas-pendencias strong i {
+  color: var(--state-warning);
+}
+.entrevistas-pendencias[data-destaque="sim"] strong i {
+  color: var(--state-danger);
+}
+.entrevistas-link {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  text-decoration: underline;
+  text-decoration-color: var(--border-subtle);
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+.entrevistas-link:hover {
+  color: var(--brand-primary);
+}
+.entrevistas-link:focus-visible {
+  border-radius: var(--radius-sm);
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+.entrevistas-pronto-para-salvar {
+  margin: 0;
+  color: var(--state-success);
+  font-size: var(--text-body-sm);
+  font-weight: var(--font-weight-medium);
+}
+.entrevistas-barra-da-configuracao {
+  display: grid;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  background: var(--surface-raised);
+}
+.entrevistas-acoes-esquerda {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+.entrevistas-acoes-esquerda:empty {
+  display: none;
+}
+.entrevistas-preparar-navegacao {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+.entrevistas-roteiro-escolhido,
+.entrevistas-banca {
+  display: grid;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  background: var(--surface-raised);
+}
+.entrevistas-roteiro-escolhido-topo {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+}
+.entrevistas-roteiro-escolhido-topo i {
+  margin-top: var(--space-1);
+  color: var(--brand-primary);
+}
+.entrevistas-roteiro-escolhido-topo div {
+  display: grid;
+}
+.entrevistas-roteiro-escolhido-topo span,
+.entrevistas-banca small,
+.entrevistas-roteiro-escolhido dt {
+  color: var(--text-secondary);
+  font-size: var(--text-caption);
+}
+.entrevistas-roteiro-escolhido-itens {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: var(--space-2) var(--space-4);
+  margin: 0;
+}
+.entrevistas-roteiro-escolhido dd {
+  margin: var(--space-0-5) 0 0;
+  font-size: var(--text-body-sm);
+}
+.entrevistas-roteiro-escolhido ol {
+  margin: 0;
+  padding-left: var(--space-5);
+}
+.entrevistas-bancas {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: var(--space-2);
+}
+.entrevistas-banca h4 {
+  margin: 0;
+  font-size: var(--text-body);
+}
+.entrevistas-banca ul {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: var(--text-body-sm);
+}
+.entrevistas-banca small {
+  display: block;
+}
+.entrevistas-banca-lancamento {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--text-body-sm);
+}
+.entrevistas-quem-e-chamado,
+.entrevistas-convocacao,
+.entrevistas-agenda-do-edital {
+  display: grid;
+  gap: var(--space-3);
+}
+.entrevistas-agenda-dia-bloco {
+  display: grid;
+  gap: var(--space-1);
+}
+.entrevistas-agenda-dia-bloco h4 {
+  margin: 0;
+  font-size: var(--text-body);
+}
+.entrevistas-agenda-dia-bloco h4 small {
+  color: var(--text-secondary);
+  font-weight: var(--font-weight-regular);
+}
+.entrevistas-agenda-do-edital td .ui-texto-secundario {
+  display: block;
+}
+.entrevistas-roteiros-da-area {
+  display: grid;
+  gap: var(--space-3);
+  padding-top: var(--space-3);
+  border-top: 1px dashed var(--border-subtle);
+}
+
+@media (max-width: 720px) {
+  .entrevistas-passos {
+    padding-bottom: var(--space-1);
+  }
+  .entrevistas-passos ol {
+    gap: var(--space-1);
+  }
+  .entrevistas-passo-resumo {
+    display: none;
+  }
+  .entrevistas-passo-rotulo {
+    font-size: var(--text-caption);
+  }
+  label.entrevistas-fila-busca {
+    flex: 1 1 100%;
+  }
+  .entrevistas-preparar-navegacao .btn {
+    flex: 1 1 0;
+    justify-content: center;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .entrevistas-preparar-corpo {
+    animation: none;
+  }
+}
+
+/* ── Editor do roteiro: seções recolhíveis e o que falta (secoes-do-roteiro.tsx) ── */
+.entrevistas-secoes-do-roteiro {
+  display: grid;
+  gap: var(--space-2);
+}
+.entrevistas-secao-do-roteiro {
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  background: var(--surface-card);
+}
+.entrevistas-secao-do-roteiro[data-com-erro="sim"] {
+  border-color: var(--state-danger);
+}
+.entrevistas-secao-do-roteiro > summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1) var(--space-2);
+  padding: var(--space-3);
+  border-radius: var(--radius-md);
+  color: var(--text-primary);
+  list-style: none;
+  cursor: pointer;
+}
+.entrevistas-secao-do-roteiro > summary::-webkit-details-marker {
+  display: none;
+}
+.entrevistas-secao-do-roteiro > summary::after {
+  margin-left: auto;
+  color: var(--text-secondary);
+  content: "▾";
+  transition: transform 0.15s ease;
+}
+.entrevistas-secao-do-roteiro:not([open]) > summary::after {
+  transform: rotate(-90deg);
+}
+.entrevistas-secao-do-roteiro > summary:hover {
+  background: var(--surface-hover);
+}
+.entrevistas-secao-do-roteiro > summary:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+.entrevistas-secao-do-roteiro > summary > i {
+  color: var(--brand-primary);
+}
+.entrevistas-secao-do-roteiro-titulo {
+  font-size: var(--text-body);
+  font-weight: var(--font-weight-semibold);
+}
+.entrevistas-secao-do-roteiro-resumo {
+  flex: 1 1 200px;
+  overflow: hidden;
+  min-width: 0;
+  color: var(--text-secondary);
+  font-size: var(--text-caption);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.entrevistas-secao-do-roteiro[open] .entrevistas-secao-do-roteiro-resumo {
+  display: none;
+}
+.entrevistas-secao-do-roteiro-erros {
+  padding: 0 var(--space-2);
+  border-radius: var(--radius-pill);
+  background: var(--state-danger-soft);
+  color: var(--state-danger);
+  font-size: var(--text-caption);
+  font-weight: var(--font-weight-semibold);
+}
+.entrevistas-secao-do-roteiro > .entrevistas-secao-corpo {
+  padding: 0 var(--space-3) var(--space-3);
+}
+.entrevistas-frases-da-eliminacao {
+  display: grid;
+  gap: var(--space-1);
+  margin: 0;
+  padding: var(--space-2) var(--space-3);
+  border-left: 4px solid var(--state-info);
+  border-radius: var(--radius-md);
+  background: var(--state-info-soft);
+  color: var(--text-primary);
+  font-size: var(--text-body-sm);
+  list-style: none;
+}
+.entrevistas-rodape-do-roteiro {
+  flex-wrap: wrap;
+}
+.entrevistas-rodape-do-roteiro > .entrevistas-pendencias,
+.entrevistas-rodape-do-roteiro > .entrevistas-pronto-para-salvar {
+  flex: 1 1 100%;
+}
+.entrevistas-pendencias-do-roteiro {
+  max-height: 9.5rem;
+  overflow-y: auto;
+}
+.entrevistas-pendencias-mais {
+  color: var(--text-secondary);
+  list-style: none;
+}
+
+/* ── Ficha: o parecer em texto pronto (parecer-pronto.tsx) ─────────── */
+.entrevistas-parecer-pronto {
+  display: grid;
+  gap: var(--space-2);
+}
+.entrevistas-parecer-pronto-topo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+.entrevistas-parecer-pronto-topo h3 {
+  margin: 0 auto 0 0;
+  color: var(--text-primary);
+  font-size: var(--text-body);
+  font-weight: var(--font-weight-semibold);
+}
+.entrevistas-parcial {
+  color: var(--text-secondary);
+  font-size: var(--text-caption);
+  font-weight: var(--font-weight-regular);
+}
+.entrevistas-parecer-pronto-aviso {
+  color: var(--state-success);
+  font-size: var(--text-caption);
+}
+.entrevistas-parecer-pronto-aviso:empty {
+  display: none;
+}
+pre.entrevistas-parecer-pronto-texto {
+  margin: 0;
+  padding: var(--space-3);
+  overflow-x: auto;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  background: var(--surface-raised);
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: var(--text-body-sm);
+  line-height: 1.55;
+  white-space: pre-wrap;
+}
+
+.entrevistas-regras-topo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+.entrevistas-regras-blocos[hidden] {
+  display: none;
+}
+.entrevistas-secoes-do-roteiro {
+  grid-template-columns: minmax(0, 1fr);
+}
+.entrevistas-secao-do-roteiro {
+  min-width: 0;
+}
+@media (max-width: 720px) {
+  .entrevistas-rodape-do-roteiro .entrevistas-rodape-resumo {
+    display: none;
+  }
+}
+.entrevistas-secao-do-roteiro > summary {
+  flex-wrap: nowrap;
+}
+.entrevistas-secao-do-roteiro-resumo {
+  flex-basis: 0;
+}
+.entrevistas-grafico-vazio {
+  display: grid;
+  place-items: center;
+  min-height: 200px;
 }

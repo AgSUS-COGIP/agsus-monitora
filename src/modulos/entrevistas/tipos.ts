@@ -23,6 +23,24 @@ export type EditalDaLista = {
   edital: string;
   unidade: string;
   treinamento: boolean;
+  comEntrevistas?: boolean;
+  naJanela?: boolean;
+  janelaInicio?: string;
+  janelaFim?: string;
+  liberadoAte?: string;
+  motivoLiberacao?: string;
+  visivelPor?: string;
+  pendentes?: number;
+};
+
+export type RoteiroDoEdital = {
+  id: string;
+  nome?: string;
+  versao?: number;
+  nome_versao?: string | null;
+  competencias?: { id: string; nome: string; ordem?: number | null }[] | null;
+  aspectos?: { id: string; nome?: string; ordem?: number | null }[] | null;
+  [campo: string]: unknown;
 };
 
 export type DadosDoEdital = {
@@ -33,10 +51,21 @@ export type DadosDoEdital = {
     treinamento?: boolean;
   } | null;
   pode_editar?: boolean;
+  pode_gerar_lista?: boolean;
+  admin_global?: boolean;
+  meu_perfil?: string | null;
   configuracao: {
-    roteiro?: { competencias?: { id: string }[] | null } | null;
+    roteiro?: RoteiroDoEdital | null;
+    lancamento?: string | null;
+    banca?: { origem: string; quantidade: number }[] | null;
   } | null;
-  regra_classificacao?: unknown;
+  regra_classificacao?: {
+    versao?: number;
+    convocacao?: unknown;
+    desempate?: unknown;
+    empate_final?: unknown;
+  } | null;
+  lista_convocacao?: unknown;
   avaliadores: Avaliador[];
   convocados: Convocado[];
 };
@@ -72,4 +101,19 @@ export type EstadoDaConducaoComAcoes = {
   recarregarEdital: () => Promise<boolean>;
   lancarNotas: (entrevista: string, dados: unknown) => Promise<Resultado>;
   abrirFicha: (id: string | null) => void;
+  configurar: (dados: unknown) => Promise<Resultado>;
+  convocar: (analises: string[]) => Promise<Resultado>;
+  desconvocar: (entrevista: string, motivo: string) => Promise<Resultado>;
+  salvarRoteiro: (dados: unknown) => Promise<Resultado>;
+  renomearRoteiro: (
+    roteiro: string,
+    nome: string,
+    motivo: string,
+  ) => Promise<Resultado>;
+  liberarEdital: (
+    id: string,
+    ate: string | null,
+    motivo: string,
+    doPainel?: unknown[],
+  ) => Promise<Resultado>;
 };

@@ -1,5 +1,7 @@
 import type { EstadoDaConducao, EstadoDaConducaoComAcoes } from "./tipos.ts";
 import {
+  lazy,
+  Suspense,
   useEffect,
   useMemo,
   useRef,
@@ -10,16 +12,18 @@ import { montarModulo } from "../../app/montar-modulo.jsx";
 import { obterDadosDoMonitoramento } from "../../componentes/dados-do-monitoramento.ts";
 import { usarAreaAtual } from "../../componentes/usar-area-atual.ts";
 import {
+  buscarNaFila,
   contadorDoDia,
   contagemDosRecortes,
   hojeEmBrasilia,
   montarFila,
+  ordemDaTela,
   recortarFila,
   recorteInicial,
-  vagasDaFila,
   type Recorte,
   type Situacao,
 } from "../../lib/fila-de-conducao.ts";
+import { importarComRecarga } from "../../lib/importar-com-recarga.js";
 import { getSupabaseClient } from "../../lib/supabaseClient.js";
 import { comemorar } from "../../modules/comemoracao.js";
 import {
@@ -28,11 +32,10 @@ import {
   Segmentado,
   TopoDoPainel,
 } from "../../ui/index.js";
-import { PrepararEdital, SeletorDoEdital } from "./conducao.jsx";
 import { criarEstadoDaConducao } from "./estado-da-conducao.js";
 import { FichaDoCandidato } from "./ficha.jsx";
 import { FilaDoDia } from "./fila-do-dia.tsx";
-import { VisaoDeRoteiros } from "./roteiros.jsx";
+import { SeletorDoEdital } from "./seletor-do-edital.tsx";
 
 /*
   CONDUZIR ENTREVISTAS (view `conduzir-entrevistas`, "fazer"; secretaria e
@@ -46,22 +49,31 @@ import { VisaoDeRoteiros } from "./roteiros.jsx";
   Duas visões no topo:
   - Fila (a primeira): abre em Hoje — a fila do dia pela agenda salva na
     Classificação › Agenda; sem entrevista hoje, Próximos; sem agenda, Todos
-    —, com Hoje / Próximos / Todos, a vaga e as situações (fila-do-dia.tsx).
+    —, com Hoje / Próximos / Todos, a busca por nome ou código, as situações
+    e os cartões agrupados por vaga (fila-do-dia.tsx).
     O contador "7 de 12 hoje" fica no topo; clicar no cartão abre a ficha de
     notas em tela cheia (ficha.jsx), com "Salvar e abrir o próximo" na ordem
-    da fila visível. Concluir o dia (todas as de hoje concluídas ou com
+    da tela (vaga a vaga). Concluir o dia (todas as de hoje concluídas ou com
     falta) solta os fogos (src/modules/comemoracao.js, com o liga/desliga das
     comemorações do app), uma vez, na passagem.
-  - Preparar: a configuração e a convocação do edital (conducao.jsx) e os
-    roteiros de entrevista da área (roteiros.jsx) — a configuração do gestor,
-    como Regra e Equipe ficam na própria tela da Avaliação documental. Quem
-    só lê vê tudo sem os botões.
+  - Preparar: o resumo das regras e os passos Roteiro, Banca, Convocação e
+    Agenda (preparar.tsx) — a configuração do gestor, como Regra e Equipe
+    ficam na própria tela da Avaliação documental. Quem só lê vê tudo sem os
+    botões.
 
-  O edital: o seletor vale para as duas visões; abre sozinho o último
+  O edital: o seletor compacto logo abaixo do topo (seletor-do-edital.tsx)
+  vale para as duas visões; abre sozinho o último
   aberto na área (guardado no navegador, só conveniência) ou, com um edital
   só na lista, ele. Edital de treinamento aparece com o selo (o banco manda
   a marca). Área = a atual do app; trocar de área recomeça.
 */
+
+/* Preparar (passos, configuração, convocação e roteiros) só baixa ao abrir a visão. */
+const PrepararEdital = lazy(
+  importarComRecarga(() =>
+    import("./preparar.tsx").then((m) => ({ default: m.PrepararEdital })),
+  ),
+);
 
 const VISOES = Object.freeze([
   Object.freeze({ valor: "fila", rotulo: "Fila", icone: "fa-list-check" }),
@@ -130,18 +142,12 @@ function TelaDeConducao({
   );
   const contagem = useMemo(() => contagemDosRecortes(fila, hoje), [fila, hoje]);
   const contador = useMemo(() => contadorDoDia(fila, hoje), [fila, hoje]);
-  const vagas = useMemo(() => vagasDaFila(fila), [fila]);
   const editalId = dados?.edital?.id || "";
   const [escolha, setEscolha] = useState<{
     edital: string;
     recorte: Recorte;
   } | null>(null);
-  const [vaga, setVaga] = useState("");
-  // O "Editar" de "Como a nota é calculada" (Preparar) abre o roteiro do edital no editor.
-  const [pedidoDeRoteiro, setPedidoDeRoteiro] = useState<{
-    roteiro: unknown;
-    vez: number;
-  } | null>(null);
+  const [busca, setBusca] = useState("");
   const [situacao, setSituacao] = useState<Situacao | "">("");
   // O recorte vale para o edital em que foi escolhido; outro edital abre no inicial.
   const recorte =
@@ -149,12 +155,16 @@ function TelaDeConducao({
       ? escolha.recorte
       : recorteInicial(fila, hoje);
   const itens = useMemo(
-    () => recortarFila(fila, { recorte, vaga, hoje }),
-    [fila, recorte, vaga, hoje],
+    () => recortarFila(fila, { recorte, hoje }),
+    [fila, recorte, hoje],
   );
-  const visiveis = situacao
-    ? itens.filter((i) => i.situacao === situacao)
-    : itens;
+  // A ordem da tela (vaga a vaga, com a busca e a situação): a do "próximo".
+  const naTela = useMemo(() => {
+    const buscados = buscarNaFila(itens, busca);
+    return ordemDaTela(
+      situacao ? buscados.filter((i) => i.situacao === situacao) : buscados,
+    );
+  }, [itens, busca, situacao]);
 
   /* Trocou a área com a tela aberta: recomeça na nova. */
   useEffect(() => {
@@ -164,9 +174,9 @@ function TelaDeConducao({
     }
   }, [conducao, e.area, areaDoApp, doPainel]);
 
-  /* Outro edital: vaga e situação recomeçam. */
+  /* Outro edital: busca e situação recomeçam. */
   useEffect(() => {
-    setVaga("");
+    setBusca("");
     setSituacao("");
   }, [editalId]);
 
@@ -201,8 +211,8 @@ function TelaDeConducao({
     ? dados?.convocados.find((c) => c.id === e.fichaAberta) || null
     : null;
   if (dados && convocado) {
-    // A ordem do "próximo" é a da fila visível (sem ela, a do edital).
-    const daFila = visiveis.map((i) => i.convocado);
+    // A ordem do "próximo" é a da fila na tela (sem ela, a do edital).
+    const daFila = naTela.map((i) => i.convocado);
     const lista = daFila.some((c) => c.id === convocado.id)
       ? daFila
       : dados.convocados;
@@ -276,13 +286,30 @@ function TelaDeConducao({
         ) : null}
       </TopoDoPainel>
 
-      <SeletorDoEdital
-        conducao={conducao}
-        e={e}
-        area={e.area}
-        doPainel={doPainel()}
-      />
+      <SeletorDoEdital conducao={conducao} e={e} doPainel={doPainel()} />
 
+      {visao === "fila" &&
+      dados &&
+      !dados.configuracao &&
+      !e.carregandoEdital ? (
+        <Aviso tom="info">
+          A entrevista deste edital ainda não foi preparada (roteiro e banca).{" "}
+          <button
+            type="button"
+            className="btn secondary small"
+            onClick={() => visoes.definir("preparar")}
+          >
+            Preparar
+          </button>
+        </Aviso>
+      ) : null}
+      {e.carregandoEdital && !dados ? (
+        <div className="ui-card entrevistas-carregando" aria-busy="true">
+          <div className="ui-esqueleto-linha" />
+          <div className="ui-esqueleto-linha" />
+          <div className="ui-esqueleto-linha" />
+        </div>
+      ) : null}
       {visao === "fila" ? (
         !e.editalId && e.editais.lista.length ? (
           <EstadoVazio className="ui-card entrevistas-sem-edital">
@@ -298,45 +325,29 @@ function TelaDeConducao({
               setEscolha({ edital: editalId, recorte: r });
               setSituacao("");
             }}
-            vagas={vagas}
-            vaga={vaga}
-            aoMudarVaga={setVaga}
+            busca={busca}
+            aoMudarBusca={setBusca}
             situacao={situacao}
             aoMudarSituacao={setSituacao}
             aoAbrir={(id) => conducao.abrirFicha(id)}
           />
         ) : null
+      ) : !e.editalId && e.editais.lista.length ? (
+        <EstadoVazio className="ui-card entrevistas-sem-edital">
+          Escolha o edital para preparar a entrevista.
+        </EstadoVazio>
       ) : (
-        <>
-          <PrepararEdital
-            conducao={conducao}
-            e={e}
-            aoEditarRoteiro={(roteiro: unknown) =>
-              setPedidoDeRoteiro((p) => ({ roteiro, vez: (p?.vez ?? 0) + 1 }))
-            }
-          />
-          <VisaoDeRoteiros
-            conducao={conducao}
-            area={e.area}
-            pedido={pedidoDeRoteiro}
-          />
-        </>
+        <Suspense
+          fallback={
+            <div className="ui-card entrevistas-carregando" aria-busy="true">
+              <div className="ui-esqueleto-linha" />
+              <div className="ui-esqueleto-linha" />
+            </div>
+          }
+        >
+          <PrepararEdital conducao={conducao} e={e} />
+        </Suspense>
       )}
-      {visao === "fila" &&
-      dados &&
-      !dados.configuracao &&
-      !e.carregandoEdital ? (
-        <Aviso tom="info">
-          A entrevista deste edital ainda não foi configurada.{" "}
-          <button
-            type="button"
-            className="btn secondary small"
-            onClick={() => visoes.definir("preparar")}
-          >
-            Preparar
-          </button>
-        </Aviso>
-      ) : null}
     </div>
   );
 }
