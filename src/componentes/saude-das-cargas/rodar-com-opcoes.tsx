@@ -17,6 +17,7 @@ import {
   OPCOES_DOS_ROBOS,
   separarCodigos,
   validarOpcoes,
+  MODOS_COM_ANEXOS,
 } from "../../lib/robos-de-carga.js";
 import { Aviso, Campo, Gaveta, Segmentado } from "../../ui/index.js";
 import { Icone } from "../icone.jsx";
@@ -257,6 +258,7 @@ export function RodarComOpcoes({
   const [textoDasVagas, setTextoDasVagas] = useState("");
   const [modo, setModo] = useState("normal");
   const [limite, setLimite] = useState("");
+  const [anexos, setAnexos] = useState(false);
   const [enviando, setEnviando] = useState(false);
 
   const { codigos, invalidos } = useMemo(
@@ -275,6 +277,7 @@ export function RodarComOpcoes({
       : {}),
     ...(aceitas.vagas ? { vagas: codigos } : {}),
     ...(aceitas.limite ? { limite } : {}),
+    ...(aceitas.anexos && MODOS_COM_ANEXOS.includes(modo) ? { anexos } : {}),
   };
   const conferido = validarOpcoes(robo, pedidoBruto);
   const erroDasVagas = invalidos.length
@@ -425,6 +428,17 @@ export function RodarComOpcoes({
                 />
               </Campo>
             </div>
+          ) : null}
+
+          {aceitas.anexos && MODOS_COM_ANEXOS.includes(modo) ? (
+            <label className="robos-opcoes__marcar">
+              <input
+                type="checkbox"
+                checked={anexos}
+                onChange={(e) => setAnexos(e.target.checked)}
+              />{" "}
+              Guardar links dos anexos do questionário
+            </label>
           ) : null}
 
           <section

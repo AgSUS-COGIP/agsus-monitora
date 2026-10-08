@@ -177,7 +177,7 @@ e não dispara o que já está rodando. O botão volta a ficar livre quando a ex
 mesmos campos do Run workflow, sem ir ao GitHub: **editais** (seleção com busca, por área; só os
 vigentes, salvo "Mostrar todos"), **códigos de vaga** (lista colada, separada por vírgula, espaço ou
 linha; só dígitos; com sugestões das vagas conhecidas do edital e o cargo de cada uma —
-`listar_vagas_dos_robos`), **modo** (com a explicação de cada um) e **limite**, e a **prévia** do
+`listar_vagas_dos_robos`), **modo** (com a explicação de cada um; `sondar` pede um único código de vaga, sem editais, e limite de 1 a 3), **limite**, a caixa **Guardar links dos anexos do questionário** (só nos modos Normal e Forçar; vai ao workflow como `anexos`) e a **prévia** do
 que vai rodar ("5 vagas do 93/2026: 179698, 180231…"). A função valida tudo de novo pela lista
 branca do robô (`validarOpcoes` em `src/lib/robos-de-carga.js`) e recusa com 400 o que não couber.
 Depois do pedido, a linha acompanha a execução (aguardando o GitHub → rodando → resultado por vaga:
@@ -271,7 +271,7 @@ computador: rode-os pelo GitHub.
 - `src/componentes/saude-das-cargas/` e `src/lib/saude-das-cargas.ts`: a tela de status.
 - `supabase/migrations/20261005170000_robo_empregare.sql`, `20261006080000_robo_empregare_vagas_do_quadro.sql`
   (vagas também do quadro do edital), `20261007160000_link_do_candidato_na_empregare.sql` e
-  `20261008160000_anexos_do_questionario_na_empregare.sql` (anexos do questionário), cada uma com `ensaios/` e `rollback/`.
+  `20261008160000_anexos_do_questionario_na_empregare.sql` (anexos do questionário), cada uma com `ensaios/` e `rollback/`; o disparo pelo banco aceita o modo `sondar` e a opção `anexos` desde `20261008190000_sondar_e_anexos_no_disparo_dos_robos.sql`.
 - `src/lib/avaliacao-documental/anexo-na-empregare.ts`: o link de cada anexo na ficha.
 - Testes: `tests/python/test_robo_empregare.py`, `tests/python/test_anexos_empregare.py`,
   `tests/anexos-do-questionario-migration.test.js`, `tests/lib/avaliacao-documental-anexo-na-empregare.test.js`,

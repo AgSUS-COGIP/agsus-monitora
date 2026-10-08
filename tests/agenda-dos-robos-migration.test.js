@@ -16,6 +16,12 @@ const MIGRATION = ler(`supabase/migrations/${NOME}`);
 const ROLLBACK = ler(`supabase/rollback/${NOME}`);
 const ENSAIO = ler(`supabase/ensaios/${NOME}`);
 const WORKFLOWS = ROBOS_DE_CARGA.map((r) => r.workflow);
+/* A definição mais recente de disparar_robo e FC_DISPARAR_ROBO (modo sondar e
+   input anexos do robô da Empregare; recriadas da definição viva do banco). */
+const NOME_DA_LISTA = "20261008190000_sondar_e_anexos_no_disparo_dos_robos.sql";
+const LISTA = ler(`supabase/migrations/${NOME_DA_LISTA}`);
+const LISTA_ROLLBACK = ler(`supabase/rollback/${NOME_DA_LISTA}`);
+const LISTA_ENSAIO = ler(`supabase/ensaios/${NOME_DA_LISTA}`);
 
 const corpoDaFuncao = (texto, cabeca) => {
   const inicio = texto.indexOf(cabeca);
@@ -231,7 +237,10 @@ describe("migration da agenda dos robôs (20261008140000)", () => {
   });
 });
 
-const RPC = corpoDaFuncao(MIGRATION, "create function public.disparar_robo(");
+const RPC = corpoDaFuncao(
+  LISTA,
+  "create or replace function public.disparar_robo(",
+);
 const SITUACAO = corpoDaFuncao(
   MIGRATION,
   "create function public.situacao_do_disparo_robo(",
@@ -285,6 +294,8 @@ describe("Rodar agora pelo banco: disparar_robo (substitui api/rodar-carga.js)",
       expect(bloco, id).toContain(`'modos', jsonb_build_array(${modos})`);
       if (aceitas.editais)
         expect(bloco, id).toContain(`'editais', '${aceitas.editais}'`);
+      if (aceitas.anexos) expect(bloco, id).toContain("'anexos', true");
+      else expect(bloco, id).not.toContain("'anexos', true");
     }
     for (const trecho of [
       String.raw`'^\d{1,4}/\d{4}$'`,
@@ -326,4 +337,90 @@ describe("workflows: o banco é o único agendador", () => {
       expect(yml).toMatch(/^ {6}disparado_por:/m);
     },
   );
+});
+
+const corpoSemCabeca = (texto, cabeca) => {
+  const corpo = corpoDaFuncao(texto, cabeca);
+  return corpo
+    .slice(corpo.indexOf("$function$") + "$function$".length)
+    .replace(/\s+/g, " ")
+    .trim();
+};
+
+describe("modo sondar e input anexos no disparo (20261008190000)", () => {
+  const FC = corpoDaFuncao(
+    LISTA,
+    'create or replace function private."FC_DISPARAR_ROBO"',
+  );
+
+  it("o workflow do robô da Empregare aceita anexos; os outros não", () => {
+    expect(FC).toContain(
+      "'robo-empregare.yml', jsonb_build_array('modo', 'editais', 'vagas', 'limite', 'anexos')",
+    );
+    expect(FC.match(/'anexos'/g)).toHaveLength(1);
+    const yml = ler(".github/workflows/robo-empregare.yml");
+    expect(yml).toMatch(
+      /^ {6}anexos:\n {8}description: .*\n {8}type: boolean/m,
+    );
+    expect(yml).toMatch(/^ {10}- sondar$/m);
+  });
+
+  it("sondar pede uma única vaga, sem editais, e limite de 1 a 3; anexos só no normal e forcar", () => {
+    for (const trecho of [
+      "if v_modo = 'sondar' then",
+      "if cardinality(v_vagas) <> 1 or cardinality(v_editais) > 0 then",
+      "if v_limite is not null and v_limite > 3 then",
+      "if v_anexos and v_modo not in ('normal', 'forcar') then",
+      "v_in -> 'anexos' in ('true'::jsonb, '\"true\"'::jsonb)",
+      "jsonb_build_object('anexos', case when v_anexos then 'true' else 'false' end)",
+      "if v_chave not in ('modo', 'editais', 'vagas', 'limite', 'anexos')",
+    ])
+      expect(RPC).toContain(trecho);
+  });
+
+  it("o resto das duas funções é o de 20261008140000 (rollback volta a ele) e as permissões seguem", () => {
+    expect(
+      corpoSemCabeca(
+        LISTA_ROLLBACK,
+        "create or replace function public.disparar_robo(",
+      ),
+    ).toBe(corpoSemCabeca(MIGRATION, "create function public.disparar_robo("));
+    expect(
+      corpoSemCabeca(
+        LISTA_ROLLBACK,
+        'create or replace function private."FC_DISPARAR_ROBO"',
+      ),
+    ).toBe(
+      corpoSemCabeca(MIGRATION, 'create function private."FC_DISPARAR_ROBO"'),
+    );
+    for (const texto of [LISTA, LISTA_ROLLBACK]) {
+      expect(texto).toContain(
+        'revoke all on function private."FC_DISPARAR_ROBO"(text, jsonb, uuid) from public, anon, authenticated, service_role;',
+      );
+      expect(texto).toContain(
+        "revoke all on function public.disparar_robo(text, jsonb) from public, anon;",
+      );
+      expect(texto).toContain(
+        "grant execute on function public.disparar_robo(text, jsonb) to authenticated;",
+      );
+    }
+  });
+
+  it("o ensaio aplica o mesmo corpo, nunca dispara HTTP e termina em rollback", () => {
+    const corpo = LISTA.slice(
+      LISTA.indexOf("\nbegin;\n") + "\nbegin;\n".length,
+      LISTA.lastIndexOf("\ncommit;"),
+    ).trim();
+    const noEnsaio = LISTA_ENSAIO.slice(
+      LISTA_ENSAIO.indexOf("-- ═══ CORPO DA MIGRATION (início) ═══") +
+        "-- ═══ CORPO DA MIGRATION (início) ═══".length,
+      LISTA_ENSAIO.indexOf("-- ═══ CORPO DA MIGRATION (fim) ═══"),
+    ).trim();
+    expect(noEnsaio).toBe(corpo);
+    expect(LISTA_ENSAIO).toContain(
+      "set_config('agsus.segredo_disparo_robos', 'github_disparo_robos_ausente_no_ensaio', true)",
+    );
+    expect(LISTA_ENSAIO.trimEnd().endsWith("rollback;")).toBe(true);
+    expect(LISTA_ENSAIO).not.toMatch(/^\s*commit\s*;/im);
+  });
 });
