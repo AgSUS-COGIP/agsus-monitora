@@ -108,6 +108,12 @@ export const OPCOES_DOS_ROBOS = Object.freeze({
         explicacao:
           "Grava mesmo se o arquivo vier com menos da metade dos candidatos ativos.",
       },
+      {
+        valor: "sondar",
+        rotulo: "Sondar",
+        explicacao:
+          "Só lê a estrutura das respostas do questionário de 1 a 3 candidatos de uma vaga (diagnóstico); não grava nada.",
+      },
     ]),
     editais: "numero",
     vagas: true,
