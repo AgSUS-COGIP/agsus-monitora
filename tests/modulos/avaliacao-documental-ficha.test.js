@@ -571,7 +571,7 @@ describe("ficha: modo foco, um item por vez (AM-7)", () => {
     expect(info).toContain("SituaçãoEm análise");
     expect(info).toContain("ResponsávelAna");
     expect(info).toMatch(/ReservaCom você até \d{2}:\d{2}/);
-    expect(info).toContain("Regrav4");
+    expect(info).toContain("RegraVersão 4");
     // Reserva com folga: sem aviso no cabeçalho.
     expect(document.querySelector(".avd-chip-alerta")).toBeNull();
   });

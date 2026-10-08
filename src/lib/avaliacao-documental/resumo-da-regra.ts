@@ -11,6 +11,7 @@ import {
   TITULOS_ACADEMICOS,
   rotuloDe,
 } from "./catalogo.js";
+import { rotuloDaVersao } from "../nome-da-versao.ts";
 import { baseDaNota, textoDaPergunta } from "./regra.js";
 import type {
   Bloco,
@@ -32,6 +33,8 @@ export type ResumoDaRegra = {
 export type ContextoDoResumo = {
   edital?: string;
   versao?: number | null;
+  /** Nome da versão (o resumo mostra "Nome · v7"; sem nome, "Versão 7"). */
+  nome?: string | null;
   /** Nota mínima da regra de classificação. */
   notaMinima?: number | null;
   notaMinimaPorNivel?: Partial<Record<Nivel, number | null>>;
@@ -275,7 +278,9 @@ export function resumoDaRegra(
     titulo: `Regra da ${regra.titulo_etapa}`,
     subtitulo: [
       regra.edital_rotulo || contexto.edital || "",
-      contexto.versao ? `versão ${contexto.versao}` : "",
+      contexto.versao
+        ? rotuloDaVersao({ versao: contexto.versao, nome: contexto.nome })
+        : "",
     ]
       .filter(Boolean)
       .join(" · "),

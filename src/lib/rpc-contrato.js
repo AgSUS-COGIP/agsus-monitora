@@ -675,7 +675,13 @@ export const CONTRATO_RPC = {
     argumentos: ["p_dados"],
     critica: false,
     resumo:
-      "Cria um roteiro ou a versão seguinte de um roteiro (p_dados.origem; p_dados.aspectos opcional); os editais que usam a anterior continuam nela. entrevistas >= editor.",
+      "Cria um roteiro ou a versão seguinte de um roteiro (p_dados.origem; p_dados.aspectos e p_dados.nome_versao — o nome da versão, 3 a 80 — opcionais); os editais que usam a anterior continuam nela. entrevistas >= editor.",
+  },
+  renomear_versao_roteiro_entrevista: {
+    argumentos: ["p_roteiro", "p_nome", "p_motivo"],
+    critica: false,
+    resumo:
+      "Troca só o nome de uma versão do roteiro (p_roteiro = id da versão; p_nome vazio tira; motivo de 10 a 500; histórico em TH_NOME_VERSAO_REGRA); competências e editais não mudam. Devolve o roteiro. entrevistas >= editor e a área do roteiro.",
   },
   obter_entrevistas_do_edital: {
     argumentos: ["p_edital"],
@@ -891,10 +897,22 @@ export const CONTRATO_RPC = {
       "O que o motor de classificação precisa: regra vigente e versões, catálogo, cronograma, quadro de vagas, análises (sem CPF), entrevistas ligadas por CO_ANALISE_CURRICULAR, listas geradas, desempates e os ajustes da pontuação aprovados em recurso (ajustes, ajustes_mudaram_em).",
   },
   salvar_regra_classificacao: {
-    argumentos: ["p_edital", "p_configuracao", "p_versao_atual", "p_motivo"],
+    argumentos: [
+      "p_edital",
+      "p_configuracao",
+      "p_versao_atual",
+      "p_motivo",
+      "p_nome",
+    ],
     critica: false,
     resumo:
-      "Salva a regra do edital como versão nova (40001 se a versão aberta não é a vigente; motivo obrigatório da 2ª em diante). Editor.",
+      "Salva a regra do edital como versão nova (40001 se a versão aberta não é a vigente; motivo obrigatório da 2ª em diante; p_nome opcional, 3 a 80: o nome da versão). Editor.",
+  },
+  renomear_versao_regra_classificacao: {
+    argumentos: ["p_edital", "p_versao", "p_nome", "p_motivo"],
+    critica: false,
+    resumo:
+      "Troca só o nome de uma versão da regra de classificação (p_nome vazio tira; motivo de 10 a 500; histórico em TH_NOME_VERSAO_REGRA); a configuração não muda. Devolve a regra. Editor.",
   },
   registrar_lista_classificacao: {
     argumentos: ["p_edital", "p_tipo", "p_versao", "p_resultado"],
@@ -1266,10 +1284,22 @@ export const CONTRATO_RPC = {
       "Regra da avaliação do edital (vigente e versões), modelos, nota mínima da regra de classificação, aldeias do DSEI e, só para a coordenação, as perguntas e respostas da última carga da Empregare (só as que aparecem 2+ vezes). Leitor.",
   },
   salvar_regra_analise: {
-    argumentos: ["p_edital", "p_configuracao", "p_versao_atual", "p_motivo"],
+    argumentos: [
+      "p_edital",
+      "p_configuracao",
+      "p_versao_atual",
+      "p_motivo",
+      "p_nome",
+    ],
     critica: false,
     resumo:
-      "Salva a regra como versão nova (40001 se a versão aberta não é a vigente; motivo de 10 a 2.000 da 2ª em diante) e volta para Conferir; devolve as fichas concluídas com versão anterior (nenhuma nota muda). Só a coordenação do edital.",
+      "Salva a regra como versão nova (40001 se a versão aberta não é a vigente; motivo de 10 a 2.000 da 2ª em diante) e volta para Conferir; devolve as fichas concluídas com versão anterior (nenhuma nota muda). p_nome (opcional, 3 a 80): o nome da versão (20261008180000). Só a coordenação do edital.",
+  },
+  renomear_versao_regra_analise: {
+    argumentos: ["p_edital", "p_versao", "p_nome", "p_motivo"],
+    critica: false,
+    resumo:
+      "Troca só o nome de uma versão da regra (p_nome vazio tira; motivo de 10 a 500; histórico em TH_NOME_VERSAO_REGRA); configuração, hash e situação não mudam. Devolve { regra }. Só a coordenação do edital (e o administrador global).",
   },
   copiar_modelo_regra_analise: {
     argumentos: ["p_edital", "p_modelo"],

@@ -1,3 +1,4 @@
+import { rotuloDaVersao } from "../../lib/nome-da-versao.ts";
 import { Popover } from "../../ui/popover.tsx";
 import { Segmentado } from "../../ui/index.js";
 import { numeroBR } from "./resultado-da-ficha.tsx";
@@ -20,7 +21,12 @@ export type PropriedadesDoCabecalho = {
   cargo?: string;
   modalidade?: string | null;
   notaDaAnalise?: number | null;
-  roteiro: { nome?: string; versao?: number } | null;
+  roteiro: {
+    nome?: string;
+    versao?: number;
+    /** Nome da versão do roteiro (20261008180000). */
+    nome_versao?: string | null;
+  } | null;
   aspectos: number;
   lancamento: string;
   gravado: { nota: number | null; parecer: string };
@@ -72,7 +78,7 @@ export function CabecalhoDaFicha(p: PropriedadesDoCabecalho) {
       ? {
           chave: "roteiro",
           rotulo: "Roteiro",
-          valor: `v${p.roteiro.versao ?? "—"}${p.aspectos ? ` · ${p.aspectos} aspectos` : ""}`,
+          valor: `${rotuloDaVersao({ versao: p.roteiro.versao, nome: p.roteiro.nome_versao }) || "—"}${p.aspectos ? ` · ${p.aspectos} aspectos` : ""}`,
         }
       : null,
   ].filter((c): c is { chave: string; rotulo: string; valor: string } =>

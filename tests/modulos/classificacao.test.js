@@ -269,7 +269,7 @@ describe("tela de Classificação", () => {
     const opcoes = [...seletorDoEdital().options].map((o) => o.textContent);
     expect(opcoes).toEqual([
       "Escolha o edital",
-      "83/2026 - DSEI Xingu (4) · regra v2",
+      "83/2026 - DSEI Xingu (4) · Versão 2",
       "100/2026 - CASAI",
     ]);
     expect(secao.querySelector(".classificacao-vaga")).toBeNull();
@@ -380,7 +380,7 @@ describe("tela de Classificação", () => {
       /codigo"\s*:\s*"10|nascimento|cpf/i,
     );
     expect(secao.querySelector("[data-geracao='l1']").textContent).toContain(
-      "regra v2",
+      "regra: Versão 2",
     );
 
     await clicar(secao.querySelector("[data-exportar='docx']"));
@@ -604,7 +604,12 @@ describe("tela de Classificação", () => {
       "IDOSO_60",
       "INDIGENA_COMPROVADO",
     ]);
-    expect(toast).toHaveBeenCalledWith("Regra salva (versão 3).", "success");
+    // "Nome desta versão": a sugestão (edital + começo do motivo) vai junto.
+    expect(chamada[1].p_nome).toMatch(/ – 60\+ é o primeiro critério/);
+    expect(toast).toHaveBeenCalledWith(
+      expect.stringMatching(/^Regra salva \((.+ · v3|Versão 3)\)\.$/),
+      "success",
+    );
   });
 
   it("Regra: digitar tecla a tecla não come a vírgula nem o espaço (números e listas)", async () => {
