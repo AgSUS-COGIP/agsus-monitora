@@ -1,6 +1,7 @@
+import type { MarcoDasAnalises } from "./tipos.ts";
 /*
   Marcos da tela de Análises curriculares: edital 100% analisado e fila
-  zerada. Chamado pelo estado (estado.js) sempre que as linhas do escopo
+  zerada. Chamado pelo estado (estado.ts) sempre que as linhas do escopo
   "Ativo" chegam (do servidor ou da cópia do navegador) — Inativo e Todos
   misturam editais encerrados. Também os marcos personalizados "análises no
   dia" (src/app/marcos-personalizados.js). A regra (linha de base, transições, frases) é
@@ -26,7 +27,7 @@ export function avaliarMarcosDasAnalises({
   nomeDaArea,
   escopo,
   linhas,
-}) {
+}: MarcoDasAnalises) {
   try {
     if (escopo !== "ativo" || !usuarioId || !area) return null;
     const lista = Array.isArray(linhas) ? linhas : [];
@@ -45,7 +46,7 @@ export function avaliarMarcosDasAnalises({
       chave: chaveDoMarco("analises", usuarioId, area),
       atual: { editais: estadoGuardadoDosEditais(situacao), fila: pendentes },
       ligadas: Boolean(ligadas),
-      decidir: (anterior) =>
+      decidir: (anterior: { editais?: unknown; fila?: unknown } | null) =>
         comemoracaoDasAnalises({
           anteriorEditais: anterior?.editais,
           anteriorFila: anterior?.fila,

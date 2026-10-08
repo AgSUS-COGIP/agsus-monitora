@@ -2687,7 +2687,7 @@ export const VERBETES_AYA = Object.freeze([
     resposta:
       'O Painel das análises (antes chamado Análises curriculares) é a tela de leitura da avaliação documental: mostra a análise curricular dos candidatos da área atual, vinda das planilhas de análise: indicadores (Total de aptos p/ análise, Análises realizadas, Pendentes, Em revisão, Aprovados e Reprovados), pendências prioritárias, carga por responsável, evolução diária e a lista. Os filtros são Unidade, Município/UF (só em SEDE e Projetos), Edital, Código da vaga, Status e Responsável, e em "Mais opções" Categoria, Modalidade e Validação da janela; as opções de cada filtro seguem os outros. A taxa de conclusão é aprovados mais reprovados sobre o total.',
     fato: "",
-    fonte: "src/lib/analises-curriculares.js; src/modulos/analises/",
+    fonte: "src/lib/analises-curriculares.ts; src/modulos/analises/",
     abrir: "analises",
   },
   {
@@ -2708,7 +2708,7 @@ export const VERBETES_AYA = Object.freeze([
       "O gráfico Análises por data conta só as análises com decisão (Aprovado, Reprovado ou Revisar) pela data da análise; pendente com data não entra. Nas Análises curriculares, clicar num dia do gráfico Análises por data filtra a tela por aquele dia, pela data da análise: os indicadores, a carga por responsável, as pendências prioritárias, a fila e o CSV passam a mostrar só as análises daquele dia. O filtro aparece como o chip Data no Recorte ativo e nos filtros aplicados, e o ponto escolhido fica destacado; o gráfico continua com todos os dias. Clicar de novo no mesmo dia, no x do chip ou em Limpar tudo tira o filtro; outro dia troca. Shift + clique em outro dia escolhe o intervalo entre os dois. Sem mouse, o mesmo filtro está em Refinar resultados › Mais opções, nos campos Data da análise: de e até. Análise sem data de análise sai do recorte enquanto houver filtro de data.",
     fato: "",
     fonte:
-      "src/lib/analises-curriculares.js; src/modulos/analises/paineis.jsx; docs/historias-de-usuario/analises-curriculares.md",
+      "src/lib/analises-curriculares.ts; src/modulos/analises/paineis.tsx; docs/historias-de-usuario/analises-curriculares.md",
     abrir: "analises",
   },
   {
@@ -2725,7 +2725,7 @@ export const VERBETES_AYA = Object.freeze([
       "Nas Análises curriculares, o campo Situação do processo começa em Ativo. Ativo são as análises ativas de editais ativos; Inativo são as análises de editais encerrados (inativos); Todos junta os dois e as análises desativadas de editais ainda ativos. Só o Ativo fica pronto num cache do banco, remontado a cada 2 minutos; Inativo e Todos são montados na hora do pedido.",
     fato: "",
     fonte:
-      "src/lib/analises-curriculares.js; supabase/migrations/20260929150000_analises_lista_enxuta.sql; supabase/migrations/20260930234000_cache_sem_atropelo.sql",
+      "src/lib/analises-curriculares.ts; supabase/migrations/20260929150000_analises_lista_enxuta.sql; supabase/migrations/20260930234000_cache_sem_atropelo.sql",
   },
   {
     arquivo: "regras-das-analises.md",
@@ -2741,7 +2741,7 @@ export const VERBETES_AYA = Object.freeze([
     resposta:
       "Nas Análises curriculares, as pendências prioritárias aparecem da mais grave para a menos grave (até 8): Data no futuro, Data fora do período e Sem responsável; depois Pendentes, Em revisão e Etapa sem data. Cada uma tem um atalho que aplica o filtro. A data da análise é comparada com a janela do edital: Dentro do período, Fora do período, Sem data de análise, Sem janela configurada ou Data no futuro (data depois de hoje, um dado a corrigir na planilha). No gráfico de evolução diária, os dias com análise fora do período ou no futuro ficam em vermelho.",
     fato: "",
-    fonte: "src/lib/analises-curriculares.js; src/lib/data-de-analise.js",
+    fonte: "src/lib/analises-curriculares.ts; src/lib/data-de-analise.js",
   },
   {
     arquivo: "regras-das-analises.md",
@@ -2777,7 +2777,7 @@ export const VERBETES_AYA = Object.freeze([
       'No topo de Análises curriculares, Seleção e Entrevistas, "Conferido às 09:32" é a última vez que a carga conferiu os dados (horário de Brasília; se foi em outro dia, aparece a data, como "em 04/10, 13:05"). Nas Análises curriculares, vem junto "última mudança em …": quando os dados mudaram de fato. Se a carga rodou e a planilha não tinha nada novo, o "Conferido" avança e a última mudança fica — os dados não estão parados. Sem registro de conferência, aparece "Atualizado em …". Se suspeitar de carga atrasada ou com falha, o administrador global confere em Configurações › Status das atualizações.',
     fato: "",
     fonte:
-      "src/lib/texto-da-conferencia.js; src/modulos/analises/analises.jsx; src/modulos/selecao/selecao.tsx; src/modulos/entrevistas/entrevistas.jsx",
+      "src/lib/texto-da-conferencia.js; src/modulos/analises/analises.tsx; src/modulos/selecao/selecao.tsx; src/modulos/entrevistas/entrevistas.jsx",
   },
   {
     arquivo: "regras-das-analises.md",
@@ -2811,7 +2811,7 @@ export const VERBETES_AYA = Object.freeze([
       'Confira primeiro o recorte: a Situação do processo começa em Ativo (editais encerrados ficam em Inativo), os filtros e o filtro de data (chip Data) recortam todos os números, e a tela é só da área atual. O envio das planilhas é esperado a cada 20 minutos e o Ativo vem de um pacote remontado a cada 2 minutos, então uma mudança recente pode demorar um pouco; o "Conferido às" do topo diz quando a carga conferiu. Quem saiu da planilha é desativado no MONITORA, e o mesmo candidato repetido na mesma vaga e edital conta uma vez só (o registro mais recente).',
     fato: "",
     fonte:
-      "src/lib/analises-curriculares.js; supabase/migrations/20261001140000_incremental_remove_ausentes.sql; supabase/migrations/20260930100000_analises_sem_registro_fantasma.sql",
+      "src/lib/analises-curriculares.ts; supabase/migrations/20261001140000_incremental_remove_ausentes.sql; supabase/migrations/20260930100000_analises_sem_registro_fantasma.sql",
     abrir: "analises",
   },
   {
@@ -3391,7 +3391,7 @@ export const VERBETES_AYA = Object.freeze([
       "entrevistas resultados",
     ],
     resposta:
-      "O Painel de entrevistas é para acompanhar (gestão e coordenação), como o Painel das análises ao lado da Avaliação documental; fazer é em Conduzir entrevistas, outra entrada do menu. O painel mostra, da área atual: os indicadores, o andamento por edital e por vaga em cartões (convocados, entrevistados, faltaram, aptos, inaptos e sem parecer, com a barra), a agenda dos próximos dias quando há um edital escolhido, os gráficos, as pendências (sem comparecimento, sem nota, sem parecer, aprovados sem entrevista, sem análise, sem edital e nota divergente), os empatados na nota da entrevista, a tabela e a exportação em CSV. Só leitura. O edital de treinamento não entra no painel. Quem tem Leitor em Entrevistas vê o painel e Conduzir entrevistas; escrever exige Editor.",
+      "O Painel de entrevistas é para acompanhar (gestão e coordenação), como o Painel das análises ao lado da Avaliação documental; fazer é em Conduzir entrevistas, outra entrada do menu. O painel mostra, da área atual: os filtros, os indicadores, a agenda dos próximos dias quando há um edital escolhido, os gráficos, as pendências (sem comparecimento, sem nota, sem parecer, aprovados sem entrevista, sem análise, sem edital e nota divergente), os empatados na nota da entrevista, a tabela e a exportação em CSV. Só leitura. O edital de treinamento não entra no painel. Quem tem Leitor em Entrevistas vê o painel e Conduzir entrevistas; escrever exige Editor.",
     fato: "O Painel de entrevistas acompanha; Conduzir entrevistas faz (fila do dia, ficha de notas, Preparar e roteiros). As duas usam o recurso Entrevistas.",
     fonte:
       "src/modulos/entrevistas/entrevistas.jsx; src/modulos/entrevistas/andamento.tsx; src/lib/painel-de-entrevistas.ts",
@@ -3436,24 +3436,6 @@ export const VERBETES_AYA = Object.freeze([
     fonte:
       "src/modulos/entrevistas/conducao.jsx; src/modulos/entrevistas/conduzir.tsx",
     abrir: "conduzir-entrevistas",
-  },
-  {
-    arquivo: "regras-das-entrevistas.md",
-    titulo: "Andamento por vaga no painel",
-    perguntas: [
-      "andamento por vaga",
-      "como e contado o andamento por vaga",
-      "barra de andamento",
-      "percentual feito",
-      "cartoes por vaga",
-      "andamento do edital",
-    ],
-    resposta:
-      "No Painel de entrevistas, cada cartão (de edital ou, com um edital escolhido, de vaga) mostra o percentual feito e uma barra: verde apto, vermelho inapto, amarelo faltou, azul em andamento (compareceu, sem parecer) e o fundo cinza é quem aguarda. Feito é apto, inapto ou faltou. Os números são convocados (todas as entrevistas do recorte), entrevistados (compareceram), faltaram, aptos, inaptos e sem parecer. Clicar num edital mostra as vagas dele; clicar numa vaga recorta o painel por ela (de novo, tira).",
-    fato: "",
-    fonte:
-      "src/lib/painel-de-entrevistas.ts; src/modulos/entrevistas/andamento.tsx",
-    abrir: "entrevistas",
   },
   {
     arquivo: "regras-das-entrevistas.md",
