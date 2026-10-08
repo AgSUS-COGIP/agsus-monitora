@@ -1,6 +1,9 @@
 /*
   Chat (src/modulos/chat/): o ícone "Mensagens" do cabeçalho e o painel
-  lateral. Só tokens (src/styles/tokens.css); o tema escuro vem deles.
+  lateral. Só tokens que mudam no tema escuro (src/styles/tokens.css): os
+  aliases (--surface-*, --text-*, --border-*, --state-*, --focus-ring) e os
+  --chat-* (balão próprio, selecionado, destaque, link, cores fortes). Nada de
+  --color-* aqui: eles ficam claros no escuro (tests/chat-tema-escuro.test.js).
 
   Camada do painel: 10043 — acima da Aya (aya.css, 10042: a arara não cobre o
   campo de escrita) e do cabeçalho (.top 10030), abaixo do aviso de parabéns
@@ -23,7 +26,7 @@
   min-width: 40px;
   min-height: 40px;
   padding: 0 var(--space-3);
-  border: 1px solid var(--color-border-default);
+  border: 1px solid var(--chat-borda);
   border-radius: var(--radius-lg);
   background: var(--surface-card);
   color: var(--text-secondary);
@@ -34,7 +37,7 @@
 .chat-botao:hover,
 .chat-botao.is-aberto {
   background: var(--surface-hover);
-  color: var(--color-text-brand);
+  color: var(--chat-destaque);
 }
 
 .chat-botao:focus-visible,
@@ -52,8 +55,8 @@
   padding: 0 var(--space-1);
   border: 2px solid var(--surface-card);
   border-radius: var(--radius-full);
-  background: var(--color-action-danger);
-  color: var(--color-text-inverse);
+  background: var(--chat-contador-fundo);
+  color: var(--chat-contador-texto);
   font-size: var(--text-caption);
   font-weight: var(--font-weight-semibold);
   line-height: 16px;
@@ -71,7 +74,7 @@
   display: flex;
   flex-direction: column;
   width: min(400px, 100vw);
-  border-left: 1px solid var(--color-border-default);
+  border-left: 1px solid var(--chat-borda);
   background: var(--surface-card);
   box-shadow: var(--shadow-overlay);
   color: var(--text-primary);
@@ -85,8 +88,8 @@
 }
 
 .chat-painel .btn.danger {
-  background: var(--color-action-danger);
-  color: var(--color-text-inverse);
+  background: var(--chat-contador-fundo);
+  color: var(--chat-contador-texto);
 }
 
 .chat-painel__topo {
@@ -95,7 +98,7 @@
   gap: var(--space-2);
   min-height: var(--header-height);
   padding: 0 var(--space-3);
-  border-bottom: 1px solid var(--color-border-subtle);
+  border-bottom: 1px solid var(--border-subtle);
 }
 
 .chat-painel__topo h2 {
@@ -110,7 +113,7 @@
 }
 
 .chat-painel__reconectando {
-  color: var(--color-status-warning-text);
+  color: var(--state-warning);
   font-size: var(--text-caption);
 }
 
@@ -135,7 +138,7 @@
 
 .chat-erro {
   margin: var(--space-2) var(--space-3);
-  color: var(--color-status-danger-text);
+  color: var(--state-danger);
 }
 
 /* ---------- Avatar ---------- */
@@ -149,8 +152,8 @@
   width: 36px;
   height: 36px;
   border-radius: var(--radius-full);
-  background: var(--color-bg-selected);
-  color: var(--color-text-brand);
+  background: var(--chat-selecionado);
+  color: var(--chat-destaque);
   font-size: var(--text-caption);
   font-weight: var(--font-weight-semibold);
 }
@@ -170,7 +173,7 @@
   height: 11px;
   border: 2px solid var(--surface-card);
   border-radius: var(--radius-full);
-  background: var(--color-status-success-solid);
+  background: var(--chat-sucesso-forte);
 }
 
 /* ---------- Avisos de mensagem nova (avisos.jsx) ----------
@@ -206,7 +209,7 @@
   align-items: flex-start;
   gap: var(--space-1);
   padding: var(--space-1);
-  border: 1px solid var(--color-border-default);
+  border: 1px solid var(--chat-borda);
   border-radius: var(--radius-lg);
   background: var(--surface-card);
   box-shadow: var(--shadow-overlay);
@@ -307,7 +310,7 @@
   width: 100%;
   min-height: 36px;
   padding: var(--space-2);
-  border: 1px solid var(--color-border-input);
+  border: 1px solid var(--border-control);
   border-radius: var(--radius-md);
   background: var(--surface-card);
   color: var(--text-primary);
@@ -427,13 +430,13 @@
 }
 
 .chat-item__mencao {
-  background: var(--color-status-info-bg);
-  color: var(--color-status-info-text);
+  background: var(--state-info-soft);
+  color: var(--state-info);
 }
 
 .chat-item__contador {
-  background: var(--color-action-primary);
-  color: var(--color-text-inverse);
+  background: var(--chat-primario-fundo);
+  color: var(--chat-primario-texto);
 }
 
 .chat-preferencias {
@@ -443,7 +446,7 @@
   margin: 0;
   padding: var(--space-3);
   border: 0;
-  border-top: 1px solid var(--color-border-subtle);
+  border-top: 1px solid var(--border-subtle);
   color: var(--text-secondary);
 }
 
@@ -487,8 +490,8 @@
   gap: var(--space-1);
   padding: 2px var(--space-1) 2px var(--space-2);
   border-radius: var(--radius-pill);
-  background: var(--color-bg-selected);
-  color: var(--color-text-brand);
+  background: var(--chat-selecionado);
+  color: var(--chat-destaque);
 }
 
 .chat-escolhidas button {
@@ -534,7 +537,7 @@
   display: grid;
   min-width: 200px;
   padding: var(--space-1);
-  border: 1px solid var(--color-border-default);
+  border: 1px solid var(--chat-borda);
   border-radius: var(--radius-lg);
   background: var(--surface-raised);
   box-shadow: var(--shadow-md);
@@ -584,11 +587,11 @@
   align-items: center;
   gap: var(--space-1);
   padding: var(--space-1) var(--space-3);
-  border: 1px solid var(--color-border-default);
+  border: 1px solid var(--chat-borda);
   border-radius: var(--radius-pill);
   background: var(--surface-raised);
   box-shadow: var(--shadow-md);
-  color: var(--color-text-link);
+  color: var(--chat-link);
   font: inherit;
   font-size: var(--text-caption);
   transform: translateX(-50%);
@@ -600,7 +603,7 @@
   min-height: 0;
   padding: var(--space-2) var(--space-3);
   overflow-y: auto;
-  background: var(--color-bg-subtle);
+  background: var(--surface-raised);
 }
 
 .chat-conversa__anteriores {
@@ -626,19 +629,21 @@
   justify-self: start;
   max-width: 85%;
   padding: var(--space-2) var(--space-3);
-  border: 1px solid var(--color-border-subtle);
+  border: 1px solid var(--border-subtle);
   border-radius: var(--radius-lg);
   background: var(--surface-card);
+  color: var(--text-primary);
 }
 
 .chat-msg.is-minha {
   justify-self: end;
   border-color: transparent;
-  background: var(--color-bg-selected);
+  background: var(--chat-balao-meu-fundo);
+  color: var(--chat-balao-meu-texto);
 }
 
 .chat-msg.is-falhou {
-  border-color: var(--color-border-danger);
+  border-color: var(--chat-perigo-forte);
 }
 
 .chat-msg.is-apagada .chat-msg__texto {
@@ -649,7 +654,7 @@
 .chat-msg__autor {
   display: block;
   margin-bottom: 2px;
-  color: var(--color-text-brand);
+  color: var(--chat-destaque);
   font-size: var(--text-caption);
   font-weight: var(--font-weight-semibold);
 }
@@ -663,8 +668,8 @@
 .chat-mencao {
   padding: 0 2px;
   border-radius: var(--radius-sm);
-  background: var(--color-status-info-bg);
-  color: var(--color-status-info-text);
+  background: var(--state-info-soft);
+  color: var(--state-info);
   font-weight: var(--font-weight-medium);
 }
 
@@ -676,19 +681,19 @@
   max-width: 100%;
   margin-top: var(--space-1);
   padding: var(--space-2);
-  border: 1px solid var(--color-border-default);
-  border-left: 3px solid var(--color-status-info-solid);
+  border: 1px solid var(--chat-borda);
+  border-left: 3px solid var(--chat-info-forte);
   border-radius: var(--radius-md);
   background: var(--surface-card);
 }
 
 .chat-cartao[data-tipo="ficha"] {
-  border-left-color: var(--color-status-success-solid);
+  border-left-color: var(--chat-sucesso-forte);
 }
 
 .chat-cartao__icone {
   flex: none;
-  color: var(--color-text-brand);
+  color: var(--chat-destaque);
 }
 
 .chat-cartao__corpo {
@@ -716,12 +721,12 @@
 
 /* Mensagem que menciona você e a destacada pela busca ou pela citação. */
 .chat-msg.is-mencionada {
-  border-color: var(--color-status-info-solid);
-  box-shadow: inset 3px 0 0 var(--color-status-info-solid);
+  border-color: var(--chat-info-forte);
+  box-shadow: inset 3px 0 0 var(--chat-info-forte);
 }
 
 .chat-msg.is-destaque {
-  outline: 2px solid var(--color-border-focus);
+  outline: 2px solid var(--focus-ring);
   outline-offset: 2px;
 }
 
@@ -740,9 +745,9 @@
   margin: 0 0 var(--space-1);
   padding: var(--space-1) var(--space-2);
   border: 0;
-  border-left: 3px solid var(--color-text-brand);
+  border-left: 3px solid var(--chat-destaque);
   border-radius: var(--radius-sm);
-  background: var(--color-bg-subtle);
+  background: var(--surface-raised);
   color: inherit;
   font: inherit;
   font-size: var(--text-caption);
@@ -755,7 +760,7 @@
 }
 
 .chat-citacao strong {
-  color: var(--color-text-brand);
+  color: var(--chat-destaque);
 }
 
 .chat-citacao span {
@@ -781,10 +786,10 @@
   gap: var(--space-2);
   max-width: 100%;
   padding: var(--space-1) var(--space-2);
-  border: 1px solid var(--color-border-default);
+  border: 1px solid var(--chat-borda);
   border-radius: var(--radius-md);
   background: var(--surface-card);
-  color: var(--color-text-link);
+  color: var(--chat-link);
   font: inherit;
   font-size: var(--text-caption);
   text-align: left;
@@ -825,16 +830,16 @@
 }
 
 .chat-visto.is-vista {
-  color: var(--color-status-info-solid);
+  color: var(--chat-info-forte);
 }
 
 /* Presença: verde (disponível), vermelho (ocupado), âmbar (ausente). */
 .chat-avatar__online[data-presenca="ocupado"] {
-  background: var(--color-status-danger-solid);
+  background: var(--chat-perigo-forte);
 }
 
 .chat-avatar__online[data-presenca="ausente"] {
-  background: var(--color-status-warning-solid);
+  background: var(--chat-aviso-forte);
 }
 
 .chat-item__fixada,
@@ -867,8 +872,8 @@
 .chat-busca-resultados mark {
   padding: 0 1px;
   border-radius: var(--radius-sm);
-  background: var(--color-status-warning-bg);
-  color: var(--color-status-warning-text);
+  background: var(--state-warning-soft);
+  color: var(--state-warning);
 }
 
 /* Meu status (lista). */
@@ -879,7 +884,7 @@
   gap: var(--space-2) var(--space-3);
   margin-top: auto;
   padding: var(--space-2) var(--space-3);
-  border-top: 1px solid var(--color-border-subtle);
+  border-top: 1px solid var(--border-subtle);
 }
 
 .chat-status__rotulo {
@@ -895,8 +900,8 @@
   margin: var(--space-3) var(--space-3) 0;
   padding: var(--space-2);
   border-radius: var(--radius-md);
-  background: var(--color-status-info-bg);
-  color: var(--color-status-info-text);
+  background: var(--state-info-soft);
+  color: var(--state-info);
 }
 
 .chat-compartilhar span {
@@ -944,7 +949,7 @@
   display: grid;
   min-width: 200px;
   padding: var(--space-1);
-  border: 1px solid var(--color-border-default);
+  border: 1px solid var(--chat-borda);
   border-radius: var(--radius-lg);
   background: var(--surface-raised);
   box-shadow: var(--shadow-md);
@@ -975,7 +980,7 @@
 }
 
 .chat-msg__menu .is-perigo {
-  color: var(--color-status-danger-text);
+  color: var(--state-danger);
 }
 
 .chat-msg__reagir {
@@ -984,7 +989,7 @@
   gap: 2px;
   padding-bottom: var(--space-1);
   margin-bottom: var(--space-1);
-  border-bottom: 1px solid var(--color-border-subtle);
+  border-bottom: 1px solid var(--border-subtle);
 }
 
 .chat-msg__reagir button {
@@ -1000,7 +1005,7 @@
 
 .chat-msg__reagir button:hover,
 .chat-msg__reagir [aria-pressed="true"] {
-  background: var(--color-bg-selected);
+  background: var(--chat-selecionado);
 }
 
 /* Reações postas: o emoji, a contagem e quem reagiu (title). */
@@ -1017,7 +1022,7 @@
   gap: 4px;
   min-height: 24px;
   padding: 0 var(--space-2);
-  border: 1px solid var(--color-border-subtle);
+  border: 1px solid var(--border-subtle);
   border-radius: var(--radius-pill);
   background: var(--surface-card);
   color: var(--text-primary);
@@ -1027,8 +1032,8 @@
 }
 
 .chat-reacao.is-minha {
-  border-color: var(--color-border-focus);
-  background: var(--color-bg-selected);
+  border-color: var(--focus-ring);
+  background: var(--chat-selecionado);
 }
 
 .chat-reacao__total {
@@ -1058,7 +1063,7 @@
   grid-template-columns: minmax(0, 1fr);
   gap: var(--space-2);
   padding: var(--space-2) var(--space-3) var(--space-3);
-  border-top: 1px solid var(--color-border-subtle);
+  border-top: 1px solid var(--border-subtle);
 }
 
 .chat-escrita__campo {
@@ -1073,8 +1078,8 @@
   gap: var(--space-2);
   padding: var(--space-1) var(--space-2);
   border-radius: var(--radius-md);
-  background: var(--color-bg-selected);
-  color: var(--color-text-brand);
+  background: var(--chat-selecionado);
+  color: var(--chat-destaque);
 }
 
 .chat-escrita__link span {
@@ -1086,7 +1091,7 @@
 }
 
 .chat-escrita.is-arrastando {
-  outline: 2px dashed var(--color-border-focus);
+  outline: 2px dashed var(--focus-ring);
   outline-offset: -4px;
 }
 
@@ -1096,9 +1101,9 @@
   align-items: center;
   gap: var(--space-2);
   padding: var(--space-1) var(--space-2);
-  border-left: 3px solid var(--color-text-brand);
+  border-left: 3px solid var(--chat-destaque);
   border-radius: var(--radius-sm);
-  background: var(--color-bg-subtle);
+  background: var(--surface-raised);
   font-size: var(--text-caption);
 }
 
@@ -1113,7 +1118,7 @@
 }
 
 .chat-escrita__resposta strong {
-  color: var(--color-text-brand);
+  color: var(--chat-destaque);
 }
 
 .chat-escrita__anexos {
@@ -1131,7 +1136,7 @@
   gap: var(--space-1);
   max-width: 100%;
   padding: 2px 2px 2px var(--space-1);
-  border: 1px solid var(--color-border-default);
+  border: 1px solid var(--chat-borda);
   border-radius: var(--radius-md);
   background: var(--surface-card);
   font-size: var(--text-caption);
@@ -1173,7 +1178,7 @@
   display: grid;
   min-width: 220px;
   padding: var(--space-1);
-  border: 1px solid var(--color-border-default);
+  border: 1px solid var(--chat-borda);
   border-radius: var(--radius-lg);
   background: var(--surface-raised);
   box-shadow: var(--shadow-md);
@@ -1192,7 +1197,7 @@
   display: grid;
   gap: var(--space-2);
   padding: var(--space-2);
-  border: 1px solid var(--color-border-default);
+  border: 1px solid var(--chat-borda);
   border-radius: var(--radius-lg);
   background: var(--surface-raised);
   box-shadow: var(--shadow-md);
@@ -1214,7 +1219,7 @@
 }
 
 .chat-emojis__abas [aria-selected="true"] {
-  background: var(--color-bg-selected);
+  background: var(--chat-selecionado);
 }
 
 .chat-emojis__grade {
@@ -1259,10 +1264,10 @@
   margin-left: auto;
   min-height: 28px;
   padding: 0 var(--space-2);
-  border: 1px solid var(--color-border-default);
+  border: 1px solid var(--chat-borda);
   border-radius: var(--radius-md);
   background: var(--surface-card);
-  color: var(--color-text-link);
+  color: var(--chat-link);
   font: inherit;
   font-size: var(--text-caption);
   cursor: pointer;
