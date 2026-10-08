@@ -97,26 +97,34 @@ def _sem_proibidos(teste, texto):
 
 
 ABAS = [
-    {"i": 0, "tag": "a", "texto": "", "href": "#tabCurriculo", "icone": "fa fa-user", "ativa": True, "toggle": "tab"},
+    {
+        "i": 0,
+        "tag": "a",
+        "texto": "",
+        "href": "#tabCurriculo",
+        "icone": "fa fa-file-text-o",
+        "ativa": True,
+        "toggle": "tab",
+    },
     {
         "i": 1,
         "tag": "a",
-        "texto": "",
-        "href": "#tab77777777",
+        "texto": "Anexos",
+        "href": "#tabAnexos",
         "titulo": "Maria Ficticia",
-        "icone": "fa fa-comments Maria77",
+        "icone": "fa fa-paperclip Maria77",
         "toggle": "tab",
     },
     {
         "i": 2,
         "tag": "a",
         "texto": "",
-        "href": "#tabQuestionario",
+        "href": "#tabInscricoes",
         "titulo": "Questionários",
-        "icone": "fa fa-list-alt",
+        "icone": "fa fa-tag",
         "toggle": "tab",
     },
-    {"i": 3, "tag": "a", "texto": "Vagas", "href": "/empresa/vagas/candidaturas/Vfict77|", "icone": ""},
+    {"i": 3, "tag": "a", "texto": "Histórico", "href": "#tabHistorico", "icone": "fa fa-history", "toggle": "tab"},
 ]
 RESUMO_CURRICULO = {"painel": "div#tabCurriculo.tab-pane.active", "texto": 900, "perguntas": 0, "por_texto": 0}
 RESUMO_QUESTIONARIO = {
@@ -152,6 +160,63 @@ ATRIBUTOS = [
         "atributos": [["onclick", "baixar('Joana Ficticia', 'https://x.invalid/a/77777777')", ""]],
     },
 ]
+
+
+RESPOSTAS = nav.URL_BASE + "/empresa/questionarios/respostas?id=8f3a9c7e2d"
+CLICAVEIS = [
+    {
+        "i": 0,
+        "tag": "a",
+        "visivel": True,
+        "texto": "Ver respostas",
+        "titulo": "",
+        "href": "#",
+        "abs": "",
+        "onclick": "",
+        "icone": "bi bi-file-earmark-text",
+        "atributos": [["data-url", "/empresa/questionarios/respostas?id=8f3a9c7e2d", RESPOSTAS]],
+        "bloco_da_vaga": True,
+    },
+    {
+        "i": 1,
+        "tag": "button",
+        "visivel": True,
+        "texto": "Reprovar Maria Ficticia",
+        "titulo": "Reprovar no questionário",
+        "href": "",
+        "abs": "",
+        "onclick": "reprovar('TKfict123')",
+        "icone": "fa fa-times",
+        "atributos": [],
+        "bloco_da_vaga": True,
+    },
+    {
+        "i": 2,
+        "tag": "a",
+        "visivel": True,
+        "texto": "Questionário",
+        "titulo": "",
+        "href": "#modalQuestionario",
+        "abs": "",
+        "onclick": "",
+        "icone": "fa fa-list-alt",
+        "atributos": [["data-toggle", "modal", ""]],
+        "bloco_da_vaga": False,
+    },
+]
+IMPRIMIR_DO_CANDIDATO = {
+    "i": 0,
+    "tag": "a",
+    "visivel": True,
+    "texto": "Imprimir",
+    "titulo": "",
+    "href": "/empresa/questionarios/imprimir/QSTfictAbc9|",
+    "abs": IMPRIMIR,
+    "onclick": "",
+    "icone": "fa fa-print",
+    "atributos": [],
+    "bloco_da_vaga": False,
+}
 
 
 class PadraoDoLink(unittest.TestCase):
@@ -291,7 +356,9 @@ class Sondagem(unittest.TestCase):
 
     def test_sondar_candidato_com_navegador_falso_nao_vaza_nada(self):
         visitadas = []
-        cliques = []
+        abas_clicadas = []
+        clicaveis_clicados = []
+        raizes = []
 
         class Troca:
             def frame(self, _f):
@@ -310,16 +377,24 @@ class Sondagem(unittest.TestCase):
                 if js == anexos.JS_DESCREVER_ABAS:
                     return ABAS
                 if js == anexos.JS_CLICAR_ABA:
-                    cliques.append(args[0])
+                    abas_clicadas.append(args[0])
                     return True
                 if js == anexos.JS_RESUMO_DO_PAINEL:
-                    return RESUMO_QUESTIONARIO if cliques[-1] == 2 else RESUMO_CURRICULO
+                    return RESUMO_QUESTIONARIO if abas_clicadas[-1] == 2 else RESUMO_CURRICULO
                 if js == anexos.JS_CONTAR_QUESTIONARIO:
                     return 3
                 if js == anexos.JS_LER_QUESTIONARIO:
                     return _leitura()
                 if js == anexos.JS_ATRIBUTOS_DE_ARQUIVO:
                     return ATRIBUTOS
+                if js == anexos.JS_CLICAVEIS:
+                    raizes.append(args[0])
+                    return {"raiz": True, "itens": CLICAVEIS if args[0] == "#tabInscricoes" else []}
+                if js == anexos.JS_CLICAR_CLICAVEL:
+                    clicaveis_clicados.append(args[0])
+                    return True
+                if js == anexos.JS_FECHAR_MODAL:
+                    return 1
                 if "document.contentType" in js:
                     return {"tipo": "application/pdf", "caminho": ARQUIVO_PUBLICO, "login": False, "pdf": True}
                 raise AssertionError("JS inesperado")
@@ -342,38 +417,102 @@ class Sondagem(unittest.TestCase):
             def _voltar_para_a_janela(self):
                 return 1
 
-        testados = []
-
         def testar(href):
-            testados.append(href)
             return {"status": 403, "tipo": "text/html", "destino": None, "erro": None}
 
         with mock.patch.object(anexos.time, "sleep"):
-            linhas = anexos.sondar_candidato(PortalFalso(), "Candidato 1/1", DETALHE, testar)
+            linhas = anexos.sondar_candidato(PortalFalso(), "Candidato 1/1", DETALHE, testar, codigo_vaga="179698")
         texto = "\n".join(linhas)
-        # Clica só nas abas que trocam de painel (a 3 leva a outra página) e volta na escolhida.
-        self.assertEqual(cliques, [0, 1, 2, 2])
-        self.assertIn("aba escolhida para o questionário: 2", texto)
-        self.assertIn("aba 2 (a) · texto — · href #tabQuestionario", texto)
-        self.assertIn("ícone fa fa-list-alt", texto)
-        self.assertIn("title Questionários", texto)
-        self.assertIn("pontos 3", texto)
-        self.assertIn("«Pergunta N» 6; arquivos 2; data-url 2", texto)
-        self.assertIn("aba 1 (a) · texto — · href <MASCARADO>", texto)
-        self.assertIn("title outra (14 letras)", texto)
-        self.assertIn("Candidato 1/1 (aba 2): perguntas por classe 6", texto)
-        self.assertIn("Candidato 1/1 (imprimir): perguntas por classe 6", texto)
-        self.assertIn("elementos com data-url/data-arquivo: 2", texto)
-        self.assertIn(
-            "data-url=caminho https://corporate.empregare.com/empresa/curriculo/arquivo?id=<MASCARADO>", texto
-        )
-        self.assertIn("data-arquivo=<nome de arquivo, extensão .pdf", texto)
-        self.assertIn("data-toggle=modal", texto)
-        self.assertIn("GET com sessão: 206 application/pdf (inline); redirecionou não; login não", texto)
-        self.assertIn("visualizador de PDF sim · login não · download não", texto)
-        self.assertIn("GET sem cookies: 403 text/html", texto)
-        self.assertEqual(visitadas[:2], [DETALHE, IMPRIMIR])
-        self.assertIn(IMPRIMIR, testados)
+        # Varre as 4 abas do candidato, depois detalha #tabInscricoes, #tabAnexos e #tabCurriculo.
+        self.assertEqual(abas_clicadas[:4], [0, 1, 2, 3])
+        self.assertEqual(raizes, ["#tabInscricoes", "painel", "#tabAnexos", "#tabCurriculo"])
+        # Abre o link de respostas (mesma origem) e o modal do questionário; nunca o "Reprovar".
+        self.assertIn(RESPOSTAS, visitadas)
+        self.assertEqual(clicaveis_clicados, [2])
+        self.assertNotIn(1, clicaveis_clicados)
+        for esperado in (
+            "Candidato 1/1 #tabInscricoes: clicáveis 3",
+            "clicável 0 a · texto Ver respostas",
+            "data-url=caminho https://corporate.empregare.com/empresa/questionarios/respostas?id=<MASCARADO>",
+            "bloco da vaga sim",
+            "clicável 1 button · texto outra",
+            "(perigoso: não clico)",
+            "ícone bi bi-file-earmark-text",
+            "abrindo o clicável 0 (https://corporate.empregare.com/empresa/questionarios/respostas?id=<MASCARADO>)",
+            "Candidato 1/1 #tabInscricoes › clicável 0: perguntas por classe 6",
+            "Candidato 1/1 #tabInscricoes › modal do clicável 2: perguntas por classe 6",
+            "Candidato 1/1 #tabAnexos: elementos com data-url/data-arquivo: 2",
+            "GET com sessão: 206 application/pdf (inline); redirecionou não; login não",
+            "GET sem cookies: 403 text/html",
+        ):
+            self.assertIn(esperado, texto)
+        _sem_proibidos(self, texto)
+
+    def test_sondar_pela_vaga_abre_o_imprimir_do_candidato(self):
+        visitadas = []
+        raizes = []
+
+        class DriverFalso:
+            class switch_to:  # noqa: N801
+                @staticmethod
+                def frame(_f):
+                    pass
+
+                @staticmethod
+                def default_content():
+                    pass
+
+            def get(self, url):
+                visitadas.append(url)
+
+            def execute_script(self, js, *args):
+                if js == anexos.JS_CLICAVEIS:
+                    raizes.append(args[0])
+                    if args[0] == "body":
+                        return {"raiz": True, "itens": [dict(CLICAVEIS[1], i=0)]}
+                    return {"raiz": True, "itens": [IMPRIMIR_DO_CANDIDATO]}
+                if js == anexos.JS_LER_QUESTIONARIO:
+                    return _leitura()
+                if js == anexos.JS_ATRIBUTOS_DE_ARQUIVO:
+                    return []
+                if js == anexos.JS_CONTAR_QUESTIONARIO:
+                    return 1
+                if "document.contentType" in js:
+                    return {"tipo": "text/html", "caminho": IMPRIMIR, "login": False, "pdf": False}
+                raise AssertionError("JS inesperado")
+
+            def find_elements(self, *_a):
+                return []
+
+            def set_script_timeout(self, _s):
+                pass
+
+            def execute_async_script(self, _js, _url):
+                return {"status": 200, "tipo": "application/pdf"}
+
+        class PortalFalso:
+            driver = DriverFalso()
+            pasta = None
+            abertas = 0
+            voltou = 0
+
+            def _abrir_candidaturas(self, _ident):
+                PortalFalso.abertas += 1
+
+            def abrir_vagas_anunciadas(self):
+                PortalFalso.voltou += 1
+
+        with mock.patch.object(anexos.time, "sleep"):
+            linhas = anexos.sondar_pela_vaga(
+                PortalFalso(), "Vfict|", "179698", ["7000001", "x y"], testar=lambda _h: {"status": 302}
+            )
+        texto = "\n".join(linhas)
+        self.assertEqual(raizes, ["body", "pessoa:7000001"])
+        self.assertIn(IMPRIMIR, visitadas)
+        self.assertIn("Vaga 179698 (candidaturas) página: clicáveis 1, relevantes 1", texto)
+        self.assertIn("nenhum clicável de questionário/respostas", texto)
+        self.assertIn("Vaga 179698 (candidaturas) candidato 1 › clicável 0: perguntas por classe 6", texto)
+        self.assertEqual(PortalFalso.voltou, 1)
         _sem_proibidos(self, texto)
 
     def test_sondar_sem_vaga_e_com_limite_maximo(self):
@@ -394,22 +533,46 @@ class Sondagem(unittest.TestCase):
                 return {"vaga_interno": "Vfict|", "candidatos": {str(i): DETALHE for i in range(1, 10)}}
 
         sondados = []
-        with mock.patch.object(anexos, "sondar_candidato", lambda _p, rotulo, _l: sondados.append(rotulo) or []):
+        pela_vaga = []
+        with (
+            mock.patch.object(
+                anexos, "sondar_candidato", lambda _p, rotulo, _l, codigo_vaga="": sondados.append(rotulo) or []
+            ),
+            mock.patch.object(
+                anexos,
+                "sondar_pela_vaga",
+                lambda _p, ident, vaga, codigos: pela_vaga.append((ident, vaga, codigos)) or [],
+            ),
+        ):
             anexos.sondar(PortalComVaga(), "177979", 50, logs.append)
         self.assertEqual(sondados, ["Candidato 1/3", "Candidato 2/3", "Candidato 3/3"])
+        self.assertEqual(pela_vaga, [("Vfict|", "177979", ["1", "2", "3"])])
 
 
 class SondagemDasAbas(unittest.TestCase):
     def test_pontos_e_escolha_da_aba(self):
         self.assertEqual([anexos.pontuar_aba(a) for a in ABAS], [0, 0, 3, 0])
         self.assertEqual(anexos.pontuar_aba({"icone": "fa fa-clipboard"}), 2)
-        self.assertTrue(anexos.navega_para_fora(ABAS[3]))
+        self.assertTrue(anexos.navega_para_fora({"href": "/empresa/vagas"}))
         self.assertFalse(anexos.navega_para_fora(ABAS[0]))
         self.assertEqual(anexos.escolher_aba(ABAS, {}), 2)
         # Sem sinal no href/título/ícone: a aba cujo painel tem "Pergunta N".
         sem_sinal = [dict(a, titulo="", href=f"#tab{a['i']}", icone="") for a in ABAS[:3]]
         self.assertEqual(anexos.escolher_aba(sem_sinal, {1: {"por_texto": 4}}), 1)
         self.assertIsNone(anexos.escolher_aba(sem_sinal, {}))
+
+    def test_clicaveis_pontos_perigo_e_destino(self):
+        self.assertEqual([anexos.pontuar_clicavel(c) for c in CLICAVEIS], [2, 2, 2])
+        self.assertEqual([anexos.perigoso(c) for c in CLICAVEIS], [False, True, False])
+        self.assertEqual(anexos.url_do_clicavel(CLICAVEIS[0]), RESPOSTAS)
+        self.assertIsNone(anexos.url_do_clicavel(CLICAVEIS[2]))
+        self.assertTrue(anexos.abre_modal(CLICAVEIS[2]))
+        self.assertIsNone(anexos.url_do_clicavel({"abs": "https://outro.invalid/empresa/x"}))
+        self.assertIsNone(anexos.url_do_clicavel({"abs": nav.URL_BASE + "/empresa/logout"}))
+        self.assertEqual(anexos.pontuar_clicavel({"icone": "bi bi-download"}), 1)
+        linha = anexos.linha_do_clicavel("C", CLICAVEIS[1])
+        self.assertIn("onclick função reprovar", linha)
+        _sem_proibidos(self, linha)
 
     def test_valores_dos_atributos_sem_dado_pessoal(self):
         linhas = anexos.linhas_dos_atributos("C", ATRIBUTOS)

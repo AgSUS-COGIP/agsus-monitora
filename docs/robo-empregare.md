@@ -101,17 +101,20 @@ conferido; por isso há dois passos (`scripts/robo-empregare/anexos_empregare.py
 
 1. **Sondar** (modo `sondar`, só leitura, sem Supabase): com `vagas` = **um** código e `limite` =
    **1 a 3** candidatos (acima de 3 vira 3), o robô busca a vaga (só lê o link "Processo
-   Seletivo"; não exporta), lê a lista de candidatos e abre a página de detalhes de cada um. Lá,
-   descreve **cada aba** (href, `data-target`, `aria-controls` com ids mascarados, `title`,
-   `aria-label`, tooltip e classe do ícone — o rótulo pode ser só ícone), clica nas que trocam de
-   painel e resume o painel (perguntas, "Pergunta N", arquivos, `data-url`, `data-arquivo`);
-   escolhe a de Questionários (href/título com "question"/"formulário", ícone típico ou o painel
-   com "Pergunta N"), lê essa aba e, se houver, a visão imprimir. Também lista os elementos com
-   `data-url`/`data-arquivo` (nomes dos atributos e padrão mascarado do valor; nome de arquivo
-   solto vira só a extensão) e testa cada link com **GET de 1 byte** (`Range: bytes=0-0`) sem
-   cookies e com a sessão do navegador (status, content-type, se redirecionou para o login) e
-   abrindo-o no navegador (caminho final mascarado, tipo, visualizador de PDF, download só pela
-   extensão). O log traz **só a estrutura**: as abas, o painel,
+   Seletivo"; não exporta), lê a lista de candidatos e abre a página de detalhes de cada um. A
+   página **não tem aba Questionários** (sondagem de 08/10): as abas do candidato são `#tabCurriculo`,
+   `#tabAnexos`, `#tabInscricoes` e `#tabHistorico`. O robô considera só abas com href `#…` e
+   `data-toggle=tab` (nunca o menu do site), descreve cada uma (href, `title`, tooltip, ícone; ids
+   mascarados) e resume o painel. Em `#tabInscricoes`, `#tabAnexos` e `#tabCurriculo` lista os
+   **clicáveis** (texto só se for rótulo de interface, href/`data-*` com padrão mascarado, onclick
+   pelo nome da função, ícone, se o bloco cita a vaga) e os elementos `data-url`/`data-arquivo`;
+   nos clicáveis de questionário/respostas/formulário/imprimir que não sejam perigosos (nada de
+   reprovar, mover, enviar, salvar…), abre o link da mesma origem (só leitura) ou o modal e analisa
+   como a aba. Depois, **pela vaga**: nas candidaturas (`?m=0`), os clicáveis de questionário/
+   imprimir da página e do item de cada candidato sondado, abrindo-os do mesmo jeito. Cada link de
+   arquivo é testado com **GET de 1 byte** (`Range: bytes=0-0`) sem cookies e com a sessão do
+   navegador (status, content-type, se redirecionou para o login) e aberto no navegador (caminho
+   final mascarado, tipo, visualizador de PDF, download só pela extensão). O log traz **só a estrutura**: as abas, o painel,
    quantas perguntas (por classe e por "Pergunta N"), as contagens de seletores, as classes com
    pergunta/resposta/anexo e, por arquivo, o número da pergunta, o enunciado (texto do edital;
    só aparece se parecer enunciado — pede anexo, documento, comprovante…; senão só o tamanho), o

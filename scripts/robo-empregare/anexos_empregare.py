@@ -150,7 +150,8 @@ candidatosAPainel.sort(function (a, b) {{
   const qb = /question/i.test(b.id + ' ' + b.className) ? 1 : 0;
   return (qb - qa) || (texto(b).length - texto(a).length);
 }});
-const painel = candidatosAPainel[0] || document.body;
+const modais = Array.from(document.querySelectorAll('.modal.in, .modal.show')).filter(visivel);
+const painel = modais[0] || candidatosAPainel[0] || document.body;
 
 const todosBlocos = Array.from(painel.querySelectorAll(
   '[class*="pergunta" i], [class*="question" i]:not([class*="questionario" i]):not([class*="questionnaire" i])'
@@ -742,9 +743,10 @@ def _testar_arquivos(driver, leitura, testar=testar_sem_cookies):
 JS_DESCREVER_ABAS = (
     JS_VISIVEL
     + """
-const todas = Array.from(document.querySelectorAll(
-  '.nav a, .nav-tabs a, [role="tab"], [data-toggle="tab"], [data-bs-toggle="tab"], [data-toggle="pill"], ul.nav li > a, .nav button'
-)).filter(visivel);
+const todas = Array.from(document.querySelectorAll('[data-toggle="tab"], [data-bs-toggle="tab"]')).filter(function (a) {
+  const alvo = a.getAttribute('href') || a.getAttribute('data-target') || a.getAttribute('data-bs-target') || '';
+  return visivel(a) && alvo.charAt(0) === '#';
+});
 const abas = Array.from(new Set(todas)).slice(0, 40);
 window.__abasMonitora = abas;
 return abas.map(function (a, i) {
@@ -807,7 +809,8 @@ return {{
 # Os elementos com data-url/data-arquivo (o link real pode estar aí e vir por XHR):
 # nomes dos atributos e valores crus (o Python só loga o padrão mascarado).
 JS_ATRIBUTOS_DE_ARQUIVO = """
-const els = Array.from(document.querySelectorAll('[data-url], [data-arquivo], [data-file], [data-href], [data-download]')).slice(0, 12);
+const raiz = (arguments[0] && document.querySelector(arguments[0])) || document;
+const els = Array.from(raiz.querySelectorAll('[data-url], [data-arquivo], [data-file], [data-href], [data-download]')).slice(0, 12);
 return els.map(function (el) {
   const pane = el.closest('.tab-pane');
   const atributos = Array.from(el.attributes)
@@ -894,7 +897,7 @@ def _alvo_seguro(valor):
 
 
 def _icone_seguro(classes):
-    return " ".join(c for c in str(classes or "").split() if re.fullmatch(r"(fa|glyphicon|icon)[a-z0-9-]{0,40}", c))
+    return " ".join(c for c in str(classes or "").split() if re.fullmatch(r"(fa|bi|glyphicon|icon)[a-z0-9-]{0,40}", c))
 
 
 def navega_para_fora(desc):
@@ -1099,63 +1102,331 @@ def escolher_aba(descricoes, resumos):
     return max(candidatas, key=peso).get("i")
 
 
-def sondar_candidato(portal, rotulo, detalhe, testar=testar_sem_cookies):
+# ── Sondagem 3: o que dá para clicar num painel, modais de respostas e a vaga ─
+
+# Elementos clicáveis de uma raiz: seletor, "pessoa:<código>" (o item do candidato na
+# lista de candidaturas), "painel" (aba ativa ou modal aberto). arguments[1]: código da
+# vaga (marca o bloco que o cita). Guarda em window.__clicaveisMonitora para clicar.
+JS_CLICAVEIS = (
+    JS_VISIVEL
+    + """
+const pedido = String(arguments[0] || 'painel');
+const codigo = String(arguments[1] || '');
+let raiz = null;
+if (pedido.indexOf('pessoa:') === 0) {
+  const el = document.querySelector('[data-pessoa-id="' + pedido.slice(7) + '"]');
+  raiz = el ? (el.closest('.curriculo-list-item') || el) : null;
+} else if (pedido === 'painel') {
+  const modais = Array.from(document.querySelectorAll('.modal.in, .modal.show')).filter(visivel);
+  const panes = Array.from(document.querySelectorAll('.tab-pane.active, .tab-pane.show, .tab-pane.in')).filter(visivel);
+  panes.sort(function (a, b) { return texto(b).length - texto(a).length; });
+  raiz = modais[0] || panes[0] || null;
+} else {
+  raiz = document.querySelector(pedido);
+}
+if (!raiz) { window.__clicaveisMonitora = []; return {raiz: false, itens: []}; }
+const els = Array.from(new Set(Array.from(raiz.querySelectorAll(
+  'a, button, [onclick], [data-url], [data-toggle="modal"], [data-bs-toggle="modal"], [role="button"]'
+)))).slice(0, 400);
+window.__clicaveisMonitora = els;
+const absoluto = function (u) { try { return new URL(u, location.href).href; } catch (e) { return ''; } };
+return {raiz: true, itens: els.map(function (el, i) {
+  const ic = el.querySelector('i, span[class*="bi-"], span[class*="fa"]');
+  let bloco = false;
+  if (codigo) {
+    let p = el;
+    for (let k = 0; p && k < 8; k++) { if (texto(p).indexOf(codigo) >= 0) { bloco = true; break; } p = p.parentElement; }
+  }
+  const href = el.getAttribute('href') || '';
+  return {
+    i: i,
+    tag: el.tagName.toLowerCase(),
+    visivel: visivel(el),
+    texto: texto(el).slice(0, 60),
+    titulo: el.getAttribute('title') || el.getAttribute('data-original-title') || el.getAttribute('aria-label') || '',
+    href: href,
+    abs: href && !/^(#|javascript:)/i.test(href) ? absoluto(href) : '',
+    onclick: (el.getAttribute('onclick') || '').slice(0, 300),
+    icone: (ic ? String(ic.className) : '') + ' ' + String(el.className || ''),
+    atributos: Array.from(el.attributes).filter(function (a) { return /^data-/i.test(a.name); }).map(function (a) {
+      const abs = /^(https?:|\\/)/i.test(a.value) ? absoluto(a.value) : '';
+      return [a.name, a.value.slice(0, 600), abs];
+    }),
+    bloco_da_vaga: bloco
+  };
+})};
+"""
+)
+
+JS_CLICAR_CLICAVEL = """
+const el = (window.__clicaveisMonitora || [])[arguments[0]];
+if (!el) { return false; }
+el.scrollIntoView({block: 'center'});
+el.click();
+return true;
+"""
+
+JS_FECHAR_MODAL = """
+const m = Array.from(document.querySelectorAll('.modal.in, .modal.show'));
+m.forEach(function (x) {
+  const b = x.querySelector('[data-dismiss="modal"], [data-bs-dismiss="modal"], .close, .btn-close');
+  if (b) { b.click(); }
+});
+return m.length;
+"""
+
+_SINAL_DE_RESPOSTAS = re.compile(r"(?i)question|respost|formul|imprim|visualiz")
+ICONES_DE_RESPOSTAS = re.compile(
+    r"(?i)\b(bi-file-earmark-text|bi-download|bi-eye|bi-printer|fa-list-alt|fa-eye|fa-print|fa-download|"
+    r"fa-file-text|fa-file-text-o|fa-question-circle|fa-clipboard)\b"
+)
+# Nunca clicar no que pode mudar algo na Empregare.
+_PERIGOSO = re.compile(
+    r"(?i)reprov|aprov|exclu|remov|mover|enviar|salvar|desclass|contrat|arquivar|cancel|apagar|delet|"
+    r"transfer|agendar|convidar|bloque|marcar|avaliar|classific|alterar|editar|incluir|adicionar|sair|logout"
+)
+
+
+def pontuar_clicavel(item):
+    """2: fala de questionário/respostas/formulário/imprimir; 1: ícone típico; 0: nada."""
+    valores = [item.get("texto"), item.get("titulo"), item.get("href"), item.get("onclick")]
+    valores += [f"{a[0]}={a[1]}" for a in item.get("atributos") or [] if len(a) >= 2]
+    if any(_SINAL_DE_RESPOSTAS.search(str(v or "")) for v in valores):
+        return 2
+    if ICONES_DE_RESPOSTAS.search(item.get("icone") or ""):
+        return 1
+    return 0
+
+
+def perigoso(item):
+    valores = [str(item.get(k) or "") for k in ("texto", "titulo", "onclick", "href")]
+    valores += [f"{a[0]}={a[1]}" for a in item.get("atributos") or [] if len(a) >= 2]
+    return bool(_PERIGOSO.search(" ".join(valores)))
+
+
+def url_do_clicavel(item):
+    """URL da mesma origem (área da empresa) para abrir só para ler: href ou data-url/data-href."""
+    candidatos = [item.get("abs")] + [a[2] for a in item.get("atributos") or [] if len(a) >= 3]
+    for u in candidatos:
+        if u and str(u).startswith(URL_BASE + "/empresa/") and not re.search(r"(?i)logout|sair", str(u)):
+            return u
+    return None
+
+
+def abre_modal(item):
+    atributos = {str(a[0]).lower(): str(a[1]) for a in item.get("atributos") or [] if len(a) >= 2}
+    return (
+        atributos.get("data-toggle") == "modal"
+        or atributos.get("data-bs-toggle") == "modal"
+        or atributos.get("data-target", "").startswith("#")
+        or bool(item.get("onclick"))
+        or (str(item.get("href") or "").startswith("#") and len(str(item.get("href"))) > 1)
+    )
+
+
+def linha_do_clicavel(rotulo, item):
+    """Um elemento clicável para o log: tag, rótulo/título (só interface), href/data-* mascarados, onclick, ícone."""
+    atributos = []
+    for a in (item.get("atributos") or [])[:8]:
+        nome, valor, absoluto = (list(a) + ["", "", ""])[:3]
+        nome = str(nome) if re.fullmatch(r"[a-z][a-z0-9-]{0,40}", str(nome)) else MASCARA
+        atributos.append(f"{nome}={descrever_valor(nome, valor, absoluto)}")
+    partes = [
+        f"{rotulo}: clicável {item.get('i')} {_palavra(item.get('tag'))}{'' if item.get('visivel') else ' (oculto)'}",
+        f"texto {_rotulo_seguro(item.get('texto')) or '—'}",
+        f"title {_rotulo_seguro(item.get('titulo')) or '—'}",
+        f"href {_alvo_seguro(item.get('href'))}",
+        f"onclick {descrever_valor('onclick', item.get('onclick')) if item.get('onclick') else '—'}",
+        f"ícone {_icone_seguro(item.get('icone')) or '—'}",
+        f"bloco da vaga {'sim' if item.get('bloco_da_vaga') else 'não'}",
+        f"pontos {pontuar_clicavel(item)}{' (perigoso: não clico)' if perigoso(item) else ''}",
+    ]
+    if atributos:
+        partes.append(" ".join(atributos))
+    return mascarar(" · ".join(partes))
+
+
+def listar_clicaveis(driver, rotulo, raiz="painel", codigo_vaga="", so_relevantes=False, maximo=25):
+    """Linhas dos clicáveis da raiz e os itens (para escolher o que abrir)."""
+    r = driver.execute_script(JS_CLICAVEIS, raiz, codigo_vaga) or {}
+    itens = r.get("itens") or []
+    if not r.get("raiz"):
+        return [mascarar(f"{rotulo}: (raiz não encontrada)")], []
+    mostrar = [i for i in itens if pontuar_clicavel(i) > 0] if so_relevantes else itens
+    linhas = [mascarar(f"{rotulo}: clicáveis {len(itens)}" + (f", relevantes {len(mostrar)}" if so_relevantes else ""))]
+    linhas += [linha_do_clicavel(rotulo, i) for i in mostrar[:maximo]]
+    return linhas, itens
+
+
+class _Acessos:
+    """Links a testar no fim (GET com sessão já feito na página; abrir no navegador navega)."""
+
+    def __init__(self):
+        self.vistos = []
+        self.resultados = []
+
+    def guardar(self, driver, hrefs):
+        for href in hrefs:
+            if href and href not in self.vistos and len(self.vistos) < 8:
+                self.vistos.append(href)
+                self.resultados.append((href, get_com_sessao(driver, href)))
+
+
+def analisar_conteudo(portal, rotulo, testar, acessos, raiz_dos_atributos=None):
+    """A leitura do painel/modal/página como antes, os atributos de arquivo e os links para testar."""
+    d = portal.driver
+    leitura = ler_questionario(d)
+    linhas = linhas_da_leitura(rotulo, leitura, _testar_arquivos(d, leitura, testar))
+    elementos = d.execute_script(JS_ATRIBUTOS_DE_ARQUIVO, raiz_dos_atributos) or []
+    linhas += linhas_dos_atributos(rotulo, elementos)
+    acessos.guardar(d, [a.get("href") for a in (leitura.get("arquivos") or [])[:3]] + links_dos_atributos(elementos))
+    return linhas, leitura
+
+
+def explorar_respostas(portal, rotulo, itens, testar, acessos, voltar_para, maximo=3):
     """
-    Linhas de log da estrutura de um candidato: todas as abas (clica nas que
-    trocam de painel), a leitura da aba escolhida (e da visão imprimir), os
-    atributos data-url/data-arquivo e o acesso aos links (GET de 1 byte sem
-    cookies e com sessão; por fim abre o primeiro no navegador). Nunca levanta.
+    Nos clicáveis relevantes (questionário/respostas/imprimir) e não perigosos:
+    abre o link da mesma origem (só leitura) ou o modal, analisa e volta.
+    """
+    d = portal.driver
+    linhas = []
+    feitos = 0
+    relevantes = sorted(
+        [i for i in itens if pontuar_clicavel(i) > 0 and not perigoso(i)],
+        key=lambda i: (-int(bool(i.get("bloco_da_vaga"))), -pontuar_clicavel(i)),
+    )
+    for item in relevantes:
+        if feitos >= maximo:
+            break
+        url = url_do_clicavel(item)
+        if url:
+            feitos += 1
+            linhas.append(mascarar(f"{rotulo}: abrindo o clicável {item.get('i')} ({padrao_do_link(url)})"))
+            d.get(url)
+            time.sleep(ESPERA_DA_PAGINA)
+            novas, _ = analisar_conteudo(portal, f"{rotulo} › clicável {item.get('i')}", testar, acessos)
+            linhas += novas
+            voltar_para()
+        elif abre_modal(item) and item.get("visivel"):
+            feitos += 1
+            if not d.execute_script(JS_CLICAR_CLICAVEL, item.get("i")):
+                continue
+            time.sleep(ESPERA_DA_PAGINA)
+            novas, _ = analisar_conteudo(
+                portal, f"{rotulo} › modal do clicável {item.get('i')}", testar, acessos, ".modal.in, .modal.show"
+            )
+            linhas += novas
+            sub, _ = listar_clicaveis(d, f"{rotulo} › modal do clicável {item.get('i')}", "painel", maximo=15)
+            linhas += sub
+            d.execute_script(JS_FECHAR_MODAL)
+            time.sleep(1)
+    if not relevantes:
+        linhas.append(mascarar(f"{rotulo}: nenhum clicável de questionário/respostas"))
+    return linhas
+
+
+ABAS_DETALHADAS = ("tabInscricoes", "tabAnexos", "tabCurriculo")
+
+
+def sondar_candidato(portal, rotulo, detalhe, testar=testar_sem_cookies, codigo_vaga=""):
+    """
+    Linhas de log da estrutura de um candidato: as abas da página (só as do
+    candidato: href "#…" com data-toggle=tab), o painel de cada uma; em
+    #tabInscricoes, #tabAnexos e #tabCurriculo, os clicáveis, os atributos de
+    arquivo e, nos clicáveis de questionário/respostas, o link (mesma origem)
+    ou o modal aberto e analisado. No fim, o acesso aos links (GET de 1 byte
+    sem cookies e com sessão; abre os dois primeiros no navegador). Nunca levanta.
     """
     linhas = []
     d = portal.driver
+    acessos = _Acessos()
+
+    def voltar():
+        d.get(detalhe)
+        time.sleep(ESPERA_DA_PAGINA)
+        d.execute_script(JS_DESCREVER_ABAS)
+
     try:
         portal._voltar_para_a_janela()
         d.get(detalhe)
         time.sleep(ESPERA_DA_PAGINA)
-        varredura, _descricoes, melhor = varrer_abas(portal, rotulo)
+        varredura, descricoes, _melhor = varrer_abas(portal, rotulo)
         linhas += varredura
-        if melhor is not None:
-            d.execute_script(JS_CLICAR_ABA, melhor)
-            _esperar_questionario(d)
-            time.sleep(1)
-        leitura = ler_questionario(d)
-        linhas += linhas_da_leitura(
-            f"{rotulo} (aba {melhor if melhor is not None else 'ativa'})", leitura, _testar_arquivos(d, leitura, testar)
-        )
-        elementos = d.execute_script(JS_ATRIBUTOS_DE_ARQUIVO) or []
-        linhas += linhas_dos_atributos(rotulo, elementos)
-        alvos = []
-        for href in [a.get("href") for a in (leitura.get("arquivos") or [])[:3]] + links_dos_atributos(elementos):
-            if href and href not in alvos:
-                alvos.append(href)
-        acessos = [(href, get_com_sessao(d, href)) for href in alvos[:5]]
-        imprimir = next(iter(leitura.get("imprimir") or []), None)
-        if imprimir:
-            sem = testar(imprimir)
-            linhas.append(
-                mascarar(
-                    f"{rotulo}: visão imprimir {padrao_do_link(imprimir)} · GET sem cookies: "
-                    f"{sem.get('status') or sem.get('erro') or '?'}"
-                    + (f" → {sem['destino']}" if sem.get("destino") else "")
-                )
-            )
-            d.get(imprimir)
-            time.sleep(ESPERA_DA_PAGINA)
-            vista = ler_questionario(d)
-            linhas += linhas_da_leitura(f"{rotulo} (imprimir)", vista, _testar_arquivos(d, vista, testar))
-        for i, (href, sessao) in enumerate(acessos, 1):
-            sem = testar(href)
-            aberto = abrir_no_navegador(portal, href) if i <= 2 else None
-            linhas.append(linha_do_acesso(rotulo, i, href, sessao, aberto))
-            linhas.append(
-                mascarar(
-                    f"{rotulo}, acesso {i}: GET sem cookies: {sem.get('status') or sem.get('erro') or '?'} "
-                    f"{sem.get('tipo') or ''}".rstrip()
-                    + (f" → {sem['destino']}" if sem.get("destino") else "")
-                )
-            )
+        for nome in ABAS_DETALHADAS:
+            desc = next((x for x in descricoes if str(x.get("href") or x.get("alvo") or "") == f"#{nome}"), None)
+            if desc is None:
+                linhas.append(mascarar(f"{rotulo}: aba #{nome} não encontrada"))
+                continue
+            d.execute_script(JS_DESCREVER_ABAS)
+            d.execute_script(JS_CLICAR_ABA, desc.get("i"))
+            time.sleep(1.5)
+            sub = f"{rotulo} #{nome}"
+            novas, _ = analisar_conteudo(portal, sub, testar, acessos, f"#{nome}")
+            linhas += novas
+            clicaveis, itens = listar_clicaveis(d, sub, f"#{nome}", codigo_vaga)
+            linhas += clicaveis
+            if nome == "tabInscricoes":
+                linhas += explorar_respostas(portal, sub, itens, testar, acessos, voltar)
+                voltar()
+        linhas += linhas_dos_acessos(portal, rotulo, acessos, testar)
     except Exception as erro:
         linhas.append(f"{rotulo}: a sondagem parou ({resumo_do_erro(erro)}).")
+    return linhas
+
+
+def linhas_dos_acessos(portal, rotulo, acessos, testar, abrir=2):
+    linhas = []
+    for i, (href, sessao) in enumerate(acessos.resultados, 1):
+        sem = testar(href)
+        aberto = abrir_no_navegador(portal, href) if i <= abrir else None
+        linhas.append(linha_do_acesso(rotulo, i, href, sessao, aberto))
+        linhas.append(
+            mascarar(
+                f"{rotulo}, acesso {i}: GET sem cookies: {sem.get('status') or sem.get('erro') or '?'} "
+                f"{sem.get('tipo') or ''}".rstrip()
+                + (f" → {sem['destino']}" if sem.get("destino") else "")
+            )
+        )
+    if not acessos.resultados:
+        linhas.append(mascarar(f"{rotulo}: nenhum link de arquivo para testar"))
+    return linhas
+
+
+def sondar_pela_vaga(portal, ident, codigo_vaga, codigos_dos_candidatos, testar=testar_sem_cookies):
+    """
+    Alternativa pela vaga: nas candidaturas (?m=0), os clicáveis de
+    questionário/imprimir/respostas da página e do item de cada candidato; abre
+    (mesma origem, só leitura) os de questionário/imprimir e analisa.
+    """
+    d = portal.driver
+    linhas = []
+    acessos = _Acessos()
+    rotulo = f"Vaga {codigo_vaga} (candidaturas)"
+    try:
+        portal._abrir_candidaturas(ident)
+
+        def voltar():
+            portal._abrir_candidaturas(ident)
+
+        topo, itens = listar_clicaveis(d, f"{rotulo} página", "body", codigo_vaga, so_relevantes=True)
+        linhas += topo
+        linhas += explorar_respostas(portal, f"{rotulo} página", itens, testar, acessos, voltar, maximo=2)
+        for n, cod in enumerate(codigos_dos_candidatos, 1):
+            if not re.fullmatch(r"[A-Za-z0-9._-]{1,60}", str(cod)):
+                continue
+            voltar()
+            sub = f"{rotulo} candidato {n}"
+            itens_linhas, itens = listar_clicaveis(d, sub, f"pessoa:{cod}", codigo_vaga, maximo=30)
+            linhas += itens_linhas
+            linhas += explorar_respostas(portal, sub, itens, testar, acessos, voltar, maximo=2)
+        linhas += linhas_dos_acessos(portal, rotulo, acessos, testar, abrir=1)
+    except Exception as erro:
+        linhas.append(f"{rotulo}: a sondagem parou ({resumo_do_erro(erro)}).")
+    finally:
+        try:
+            portal.abrir_vagas_anunciadas()
+        except Exception:
+            pass
     return linhas
 
 
@@ -1171,11 +1442,14 @@ def sondar(portal, codigo, limite, registrar):
         registrar(f"Sondagem: não achei a vaga {codigo} em Vagas Anunciadas (ou o link Processo Seletivo).")
         return [f"Sondagem da vaga {codigo}: vaga não encontrada. Nada foi gravado."]
     enderecos = portal.capturar_candidatos(codigo) or {}
-    links = list((enderecos.get("candidatos") or {}).values())[:limite]
+    escolhidos = list((enderecos.get("candidatos") or {}).items())[:limite]
+    links = [link for _cod, link in escolhidos]
     registrar(f"Sondagem da vaga {codigo}: {len(links)} candidato(s) sondado(s) (limite {limite}).")
     for i, link in enumerate(links, 1):
-        for linha in sondar_candidato(portal, f"Candidato {i}/{len(links)}", link):
+        for linha in sondar_candidato(portal, f"Candidato {i}/{len(links)}", link, codigo_vaga=str(codigo)):
             registrar(linha)
+    for linha in sondar_pela_vaga(portal, ident, str(codigo), [cod for cod, _link in escolhidos]):
+        registrar(linha)
     return [
         f"Sondagem da vaga {codigo}: {len(links)} candidato(s) sondado(s). Só leitura: nada foi exportado nem gravado.",
         "A estrutura (seletores, perguntas, padrão dos links mascarado e status sem cookies) está no log do passo.",
