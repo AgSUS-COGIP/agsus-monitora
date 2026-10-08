@@ -74,23 +74,14 @@ import { initConnectivityStatus } from "./modules/connectivity-status.js";
 import { initGoogleProfilePhoto } from "./modules/google-profile-photo.js";
 import { initNielsenShellUx } from "./modules/nielsen-shell-ux.js";
 import { montarBarraLateral } from "./componentes/barra-lateral/barra-lateral.tsx";
-import { montarListaAprovados } from "./modulos/aprovados/lista-aprovados.jsx";
-import { montarCalendarioEditais } from "./modulos/cronograma/calendario-editais.tsx";
 import { montarNucleo } from "./modulos/editais/nucleo.jsx";
-import { montarRecursos } from "./modulos/recursos/recursos.jsx";
-import { montarEntrevistas } from "./modulos/entrevistas/entrevistas.jsx";
-import { montarConducaoDeEntrevistas } from "./modulos/entrevistas/conduzir.tsx";
-import { montarAnalises } from "./modulos/analises/analises.tsx";
-import { montarSelecao } from "./modulos/selecao/selecao.tsx";
-import { montarClassificacao } from "./modulos/classificacao/classificacao.jsx";
-import { montarAvaliacaoDocumental } from "./modulos/avaliacao-documental/avaliacao-documental.jsx";
 import { montarVisaoGeral } from "./modulos/visao-geral/visao-geral.tsx";
 import { situacaoDoSistema } from "./modules/situacao-dos-modulos.js";
-import { montarAcessos } from "./modulos/acessos/acessos.jsx";
-import { montarModulos } from "./modulos/modulos/modulos.tsx";
-import { montarSaudeDasCargas } from "./componentes/saude-das-cargas/saude-das-cargas.tsx";
 import { montarBuscaGlobal } from "./componentes/busca-global/busca-global.tsx";
 import { montarEntrada } from "./app/entrada/entrada.jsx";
+import { telaSobDemanda } from "./app/tela-sob-demanda.js";
+import { TELAS_REACT } from "./app/navegacao.js";
+import { registrarPreCarga } from "./lib/carga-de-telas.js";
 import { sessaoDoApp } from "./app/sessao.js";
 
 import { montarAya } from "./modulos/aya/aya.jsx";
@@ -165,15 +156,35 @@ window.nucleoController = montarNucleo({
   getProfile: window.getMonitoraProfile,
 });
 
+/*
+  Daqui para baixo, as telas que não abrem na entrada carregam sob demanda
+  (src/app/tela-sob-demanda.js): o código baixa na primeira abertura (ou ao
+  passar o mouse no item do menu) e o controlador em window mantém o mesmo
+  contrato (render(), abrirVisao()…). A Visão geral e o casco ficam no
+  pacote principal.
+*/
+const comemoracoesLigadas = () => situacaoDoSistema().comemoracoes === true;
+
 // Sem loader de tela cheia: skeleton na carga, e cada ação mostra o estado no botão.
-window.aprovadosController = montarListaAprovados({
-  toast: window.monitoraToast,
-  getProfile: window.getMonitoraProfile,
+window.aprovadosController = telaSobDemanda({
+  secao: "page-approved",
+  metodos: ["render", "openImportModal"],
+  carregar: () =>
+    import("./modulos/aprovados/lista-aprovados.jsx").then((m) =>
+      m.montarListaAprovados({
+        toast: window.monitoraToast,
+        getProfile: window.getMonitoraProfile,
+      }),
+    ),
 });
 
 // Sem loader de tela cheia: a grade mostra "Carregando…" por conta própria.
-window.calendarioEditaisController = montarCalendarioEditais({
-  toast: window.monitoraToast,
+window.calendarioEditaisController = telaSobDemanda({
+  secao: "page-calendario",
+  carregar: () =>
+    import("./modulos/cronograma/calendario-editais.tsx").then((m) =>
+      m.montarCalendarioEditais({ toast: window.monitoraToast }),
+    ),
 });
 
 /*
@@ -181,9 +192,12 @@ window.calendarioEditaisController = montarCalendarioEditais({
   área é a atual do app; `render()` recarrega a cada abertura (permissões do
   banco e comemorações relidas).
 */
-window.recursosController = montarRecursos({
-  toast: window.monitoraToast,
-  comemoracoesLigadas: () => situacaoDoSistema().comemoracoes === true,
+window.recursosController = telaSobDemanda({
+  secao: "page-recursos",
+  carregar: () =>
+    import("./modulos/recursos/recursos.jsx").then((m) =>
+      m.montarRecursos({ toast: window.monitoraToast, comemoracoesLigadas }),
+    ),
 });
 
 /*
@@ -194,19 +208,31 @@ window.recursosController = montarRecursos({
   as entrevistas do painel, quando já lidas, marcam "com entrevistas" na
   lista de editais de Conduzir.
 */
-window.entrevistasController = montarEntrevistas({
-  toast: window.monitoraToast,
-  comemoracoesLigadas: () => situacaoDoSistema().comemoracoes === true,
+window.entrevistasController = telaSobDemanda({
+  secao: "page-entrevistas",
+  metodos: ["render", "abrirVisao"],
+  carregar: () =>
+    import("./modulos/entrevistas/entrevistas.jsx").then((m) =>
+      m.montarEntrevistas({ toast: window.monitoraToast, comemoracoesLigadas }),
+    ),
 });
-window.conduzirEntrevistasController = montarConducaoDeEntrevistas({
-  toast: window.monitoraToast,
-  comemoracoesLigadas: () => situacaoDoSistema().comemoracoes === true,
-  aoMudarResultados: () => {
-    const painel = window.entrevistasController?.estado;
-    if (painel?.obter().area) void painel.carregar();
-  },
-  doPainel: () =>
-    window.entrevistasController?.estado?.obter().dados?.entrevistas || [],
+window.conduzirEntrevistasController = telaSobDemanda({
+  secao: "page-conduzir-entrevistas",
+  metodos: ["render", "abrirVisao", "abrirEdital"],
+  carregar: () =>
+    import("./modulos/entrevistas/conduzir.tsx").then((m) =>
+      m.montarConducaoDeEntrevistas({
+        toast: window.monitoraToast,
+        comemoracoesLigadas,
+        aoMudarResultados: () => {
+          const painel = window.entrevistasController?.estado;
+          if (painel?.obter().area) void painel.carregar();
+        },
+        doPainel: () =>
+          window.entrevistasController?.estado?.obter().dados?.entrevistas ||
+          [],
+      }),
+    ),
 });
 
 /*
@@ -214,24 +240,40 @@ window.conduzirEntrevistasController = montarConducaoDeEntrevistas({
   é a atual do app; `render()` carrega na primeira abertura (e relê por trás
   se a carga tiver mais de 5 minutos).
 */
-window.analisesController = montarAnalises({
-  toast: window.monitoraToast,
-  comemoracoesLigadas: () => situacaoDoSistema().comemoracoes === true,
+window.analisesController = telaSobDemanda({
+  secao: "page-analises",
+  metodos: ["render", "abrirVisao"],
+  carregar: () =>
+    import("./modulos/analises/analises.tsx").then((m) =>
+      m.montarAnalises({ toast: window.monitoraToast, comemoracoesLigadas }),
+    ),
 });
 
 /*
   Seleção: módulo de src/modulos/, na própria <section>, como Recursos e
   Entrevistas (área do app, render() a cada abertura). Só leitura.
 */
-window.selecaoController = montarSelecao({ toast: window.monitoraToast });
+window.selecaoController = telaSobDemanda({
+  secao: "page-selecao",
+  metodos: ["render", "abrirVisao"],
+  carregar: () =>
+    import("./modulos/selecao/selecao.tsx").then((m) =>
+      m.montarSelecao({ toast: window.monitoraToast }),
+    ),
+});
 
 /*
   Classificação: módulo de src/modulos/, na própria <section> (área do app,
   render() a cada abertura). A regra é de cada edital; a conta, do motor puro
   (src/lib/classificacao/).
 */
-window.classificacaoController = montarClassificacao({
-  toast: window.monitoraToast,
+window.classificacaoController = telaSobDemanda({
+  secao: "page-classificacao",
+  metodos: ["render", "abrirVisao"],
+  carregar: () =>
+    import("./modulos/classificacao/classificacao.jsx").then((m) =>
+      m.montarClassificacao({ toast: window.monitoraToast }),
+    ),
 });
 
 /*
@@ -239,26 +281,63 @@ window.classificacaoController = montarClassificacao({
   app, render() a cada abertura). A regra é de cada edital; a conta da prévia,
   da lib pura (src/lib/avaliacao-documental/).
 */
-window.avaliacaoDocumentalController = montarAvaliacaoDocumental({
-  toast: window.monitoraToast,
+window.avaliacaoDocumentalController = telaSobDemanda({
+  secao: "page-avaliacao-documental",
+  metodos: ["render", "abrirVisao"],
+  carregar: () =>
+    import("./modulos/avaliacao-documental/avaliacao-documental.jsx").then(
+      (m) => m.montarAvaliacaoDocumental({ toast: window.monitoraToast }),
+    ),
 });
 
 // Configurações › Acessos: abre pela seção (configuracoes/secoes.js → render()).
-window.acessosController = montarAcessos({
-  toast: window.monitoraToast,
-  getProfile: window.getMonitoraProfile,
-  secoesDeConfiguracao: SECOES,
+window.acessosController = telaSobDemanda({
+  secao: "acessosApp",
+  padroes: { confirmarSaida: () => true },
+  carregar: () =>
+    import("./modulos/acessos/acessos.jsx").then((m) =>
+      m.montarAcessos({
+        toast: window.monitoraToast,
+        getProfile: window.getMonitoraProfile,
+        secoesDeConfiguracao: SECOES,
+      }),
+    ),
 });
 
 // Configurações › Módulos e abas (só admin global): abre pela seção (configuracoes/secoes.js → render()).
-window.modulosController = montarModulos({
-  toast: window.monitoraToast,
-  getProfile: window.getMonitoraProfile,
+window.modulosController = telaSobDemanda({
+  secao: "modulosApp",
+  padroes: { confirmarSaida: () => true },
+  carregar: () =>
+    import("./modulos/modulos/modulos.tsx").then((m) =>
+      m.montarModulos({
+        toast: window.monitoraToast,
+        getProfile: window.getMonitoraProfile,
+      }),
+    ),
 });
 
 // Configurações › Status das atualizações (só admin global): relê a cada abertura da seção.
-window.saudeDasCargasController = montarSaudeDasCargas({
-  getProfile: window.getMonitoraProfile,
+window.saudeDasCargasController = telaSobDemanda({
+  secao: "saudeDasCargasApp",
+  padroes: { confirmarSaida: () => true },
+  carregar: () =>
+    import("./componentes/saude-das-cargas/saude-das-cargas.tsx").then((m) =>
+      m.montarSaudeDasCargas({ getProfile: window.getMonitoraProfile }),
+    ),
+});
+
+// Mouse ou foco no item do menu: a tela começa a baixar antes do clique.
+registrarPreCarga((view, secao) => {
+  const daSecao = {
+    acessos: window.acessosController,
+    modulos: window.modulosController,
+    cargas: window.saudeDasCargasController,
+  }[secao ?? ""];
+  const daTela = Object.hasOwn(TELAS_REACT, view)
+    ? TELAS_REACT[view](() => "", window)[2]
+    : null;
+  void Promise.resolve((daSecao ?? daTela)?.carregar?.()).catch(() => {});
 });
 
 /*

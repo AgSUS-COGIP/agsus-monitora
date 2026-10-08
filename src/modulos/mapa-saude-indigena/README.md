@@ -19,19 +19,19 @@ Leaflet). "Voltar à lista", "Coordenadas" ou Esc voltam ao layout de sempre
 "Só pendentes", com as pendências da auditoria), "Conferido", as sugestões de
 posição e o histórico com "Desfazer" — RPCs de
 `supabase/migrations/20261002160000_conferir_coordenadas_mapa.sql`, regras em
-`src/lib/coordenadas-do-mapa.js`, testes em `tests/coordenadas-do-mapa.test.js` e
+`src/lib/coordenadas-do-mapa.ts`, testes em `tests/coordenadas-do-mapa.test.js` e
 `tests/modulos/editor-de-coordenadas.test.js`. O editor, a fila, as sugestões e o histórico
 são comuns aos dois mapas (`src/modulos/editor-de-coordenadas/`, regras comuns em
-`src/lib/editor-de-coordenadas.ts`); aqui fica só `editor-de-coordenadas.jsx`, que liga o
+`src/lib/editor-de-coordenadas.ts`); aqui fica só `editor-de-coordenadas.tsx`, que liga o
 editor comum aos pontos, às regras e às RPCs deste mapa. O de Projetos faz o mesmo em
 `src/modulos/mapa-de-projetos/editor-de-coordenadas.tsx`.
 
 ```
-mapa-saude-indigena.jsx   <MapaSaudeIndigena>: estado da tela (tela cheia), contas memorizadas,
+mapa-saude-indigena.tsx   <MapaSaudeIndigena>: estado da tela (tela cheia), contas memorizadas,
                           um mapa principal de cada vez
-mapa-nacional.jsx         visão nacional: bolhas dos DSEIs, CASAIs nacionais, leque, enquadramento,
+mapa-nacional.tsx         visão nacional: bolhas dos DSEIs, CASAIs nacionais, leque, enquadramento,
                           "Territórios por vagas", Brasil/Tela cheia, legenda flutuante
-mapa-do-dsei.jsx          território do DSEI: unidades (agrupamento por proximidade + leque), sede,
+mapa-do-dsei.tsx          território do DSEI: unidades (agrupamento por proximidade + leque), sede,
                           vínculos externos, filtros por tipo, lista de unidades, Terras Indígenas e povos
 legenda.tsx               <Forma>, <LegendaFlutuante> (recolhível; também a de Projetos), legenda
                           nacional, legenda do DSEI, fases das terras
@@ -45,7 +45,7 @@ tela-cheia.tsx            usarTelaCheia: estado, botão "Tela cheia"/"Sair da te
                           travarRolagemDaPagina (contada: tela cheia e modo de edição)
 volta-ao-brasil.ts        usarVoltaDoDsei (a saída do DSEI, venha de onde vier) e usarEscParaVoltar
 usar-ultimo.ts            ref com a última função do pai (ouvintes do Leaflet sem redesenhar)
-editor-de-coordenadas.jsx o editor comum (só admin global) com os pontos do lmap/rede_cnes e as RPCs
+editor-de-coordenadas.tsx o editor comum (só admin global) com os pontos do lmap/rede_cnes e as RPCs
                           *_coordenada_mapa_saude_indigena (FONTE_DA_SAUDE_INDIGENA)
 mapa-saude-indigena.css   só o que é deste bloco (tokens); card/título/vazio de src/ui/
 ```
@@ -178,10 +178,35 @@ o tipo das camadas próprias de cada mapa. A legenda das Terras Indígenas descr
 a ponte opcional com a camada existente: sem ela, os controles ficam desabilitados;
 os ouvintes são retirados ao desmontar.
 
-A fábrica e as operações do Leaflet (`leaflet.js`), as telas nacional/DSEI e os
-dados geográficos ainda permanecem em JavaScript. A fábrica declara em JSDoc o
+As telas principal, nacional e por DSEI estão em TSX. As regras de contagens, bolhas,
+CASAIs, unidades, vínculos, resumos e enquadramentos também estão em TypeScript:
+`src/lib/mapa-saude-indigena/chaves.ts`, `mapa-nacional.ts` e `mapa-do-dsei.ts`.
+A fábrica e as operações do Leaflet (`leaflet.js`), a conversão de UF e a
+reconciliação compartilhada permanecem em JavaScript, com contratos JSDoc na integração. A fábrica declara em JSDoc o
 resultado utilizado pelo painel; essa anotação não valida dados externos nem
 cobre toda a API do Leaflet. Esta entrega não muda contratos de RPC ou dados
 geográficos. Ciclo de vida, StrictMode, legendas, Escape, foco, tela cheia e modo de
 edição são cobertos pelos testes dos dois mapas; contratos adicionais estão em
-`tests/tipos/base-dos-mapas.tsx`.
+`tests/tipos/base-dos-mapas.tsx` e `tests/tipos/regras-geograficas.tsx`.
+A fronteira da reconciliação está em `src/lib/tipos-da-reconciliacao.ts`: mantém as
+chaves CNES numéricas ou textuais e preserva os campos de apresentação ao unir
+estabelecimentos repetidos. A anotação não valida o JavaScript internamente.
+
+O adaptador do editor e as regras específicas de coordenadas estão em TypeScript.
+O catálogo editável recebe dados externos como `unknown`, ignora entradas inválidas
+e preserva os índices, nomes e códigos usados para conferir o alvo no banco.
+Posições vazias ou inválidas permanecem nulas.
+
+Os contratos de distritos, polos, registros, CASAIs, Terras Indígenas e callbacks
+estão em `src/lib/mapa-saude-indigena/tipos.ts`. `dados-do-mapa.ts` valida os dados
+externos para a exibição: ignora registros inválidos, recusa posições não escalares
+e desabilita o enquadramento de terras com caixa inválida. Polos sem posição válida
+não são convertidos em pontos na coordenada zero.
+
+A edição recebe `lmap` e `rede_cnes` originais, sem compactação de listas, nas duas
+visões. `tipos-do-leaflet.ts` declara a API mínima utilizada e verifica a presença
+dos métodos no namespace, sem alterá-lo; não valida os retornos internos do Leaflet.
+Testes de dados em `tests/dados-do-mapa-saude-indigena.test.js`, interações em
+`tests/modulos/mapa-saude-indigena.test.js`, identidade da edição em
+`tests/modulos/editor-de-coordenadas.test.js` e contratos em
+`tests/tipos/mapa-saude-indigena.tsx`.

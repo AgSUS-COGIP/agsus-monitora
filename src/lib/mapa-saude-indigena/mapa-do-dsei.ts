@@ -1,3 +1,12 @@
+import type { CoordenadasDoMapa } from "../tipos-do-mapa.ts";
+import type {
+  DseiDoMapa,
+  RedeCnesDoMapa,
+  RegistroDoDsei,
+  EstabelecimentoCompacto,
+  TerraDoMapa,
+  LinhaDaTerra,
+} from "./tipos.ts";
 /*
   O MAPA DE UM DSEI (MODO DETALHADO), SEM LEAFLET
 
@@ -30,11 +39,11 @@ import {
   VINCULO_INDETERMINADO,
   classificarVinculoTerritorial,
 } from "../uf-ibge.js";
-import { formatarNumero, temCoordenada, texto } from "./chaves.js";
-import { TIPO_CASAI, TIPO_POLO, TIPO_SEDE, tipoDaUnidade } from "./formas.js";
+import { formatarNumero, temCoordenada, texto } from "./chaves.ts";
+import { TIPO_CASAI, TIPO_POLO, TIPO_SEDE, tipoDaUnidade } from "./formas.ts";
 
 /* Estabelecimento compacto do `rede_cnes`: [nome, cnes, lat, lon, município, uf]. */
-export function abrirEstabelecimento(a) {
+export function abrirEstabelecimento(a: EstabelecimentoCompacto) {
   return {
     n: a?.[0],
     cnes: a?.[1],
@@ -46,7 +55,11 @@ export function abrirEstabelecimento(a) {
 }
 
 /* Os pontos de saúde de um DSEI, sem repetição e só com coordenada. */
-export function registrosDoDsei(dsei, redeCnes) {
+
+export function registrosDoDsei(
+  dsei: DseiDoMapa,
+  redeCnes: RedeCnesDoMapa,
+): RegistroDoDsei[] {
   if (!dsei?.k) return [];
   const rede = redeCnes?.rede?.[dsei.k] || { u: [], c: [] };
 
@@ -73,16 +86,18 @@ export function registrosDoDsei(dsei, redeCnes) {
 
   const { reconciliados, estabelecimentosUsados } = reconciliarDsei({
     dseiChave: dsei.k,
-    polos: (dsei.polos || []).map((p) => ({
-      nome: p.n,
-      cnes: p.cnes || "",
-      // Posição do polo: a do lmap, sem substituição.
-      lat: Number(p.lat),
-      lon: Number(p.lon),
-      uf: p.uf,
-      cod: p.cod ?? null,
-      tipo: "polo",
-    })),
+    polos: (dsei.polos || [])
+      .filter((p) => temCoordenada(p.lat, p.lon))
+      .map((p) => ({
+        nome: p.n,
+        cnes: p.cnes || "",
+        // Posição do polo: a do lmap, sem substituição.
+        lat: Number(p.lat),
+        lon: Number(p.lon),
+        uf: p.uf,
+        cod: p.cod ?? null,
+        tipo: "polo",
+      })),
     estabelecimentos: unicos,
   });
 
@@ -101,7 +116,7 @@ export function registrosDoDsei(dsei, redeCnes) {
   // Polos que a reconciliação não casou continuam a existir.
   const unidos = new Set(reconciliados.map((u) => u.nomes?.lmap));
   const polosSoltos = (dsei.polos || [])
-    .filter((p) => !unidos.has(p.n))
+    .filter((p) => !unidos.has(p.n) && temCoordenada(p.lat, p.lon))
     .map((p) => ({
       name: p.n,
       cnes: "",
@@ -127,9 +142,14 @@ export function registrosDoDsei(dsei, redeCnes) {
       origens: ["rede_cnes"],
     }));
 
-  const vistos = new Set();
-  return [...unificados, ...polosSoltos, ...soltos]
-    .filter((r) => {
+  type Candidato = Omit<RegistroDoDsei, "id" | "lat" | "lon"> & {
+    lat: number | string | null;
+    lon: number | string | null;
+  };
+  const candidatos: Candidato[] = [...unificados, ...polosSoltos, ...soltos];
+  const vistos = new Set<string>();
+  return candidatos
+    .filter((r): r is Candidato & { lat: number; lon: number } => {
       const chave = [r.name, r.lat, r.lon].join("|");
       if (vistos.has(chave)) return false;
       vistos.add(chave);
@@ -147,7 +167,11 @@ export function registrosDoDsei(dsei, redeCnes) {
   linha pontilhada até a sede); sem UF utilizável = indeterminado, que conta
   como local (sem prova, não se afirma que está fora).
 */
-export function classificarRegistros(registros, dsei) {
+
+export function classificarRegistros(
+  registros: readonly RegistroDoDsei[],
+  dsei: DseiDoMapa,
+): RegistroDoDsei[] {
   const ufs = dsei?.ufs || (dsei?.sedeuf ? [dsei.sedeuf] : []);
   return (registros || []).map((registro) => {
     const r = classificarVinculoTerritorial(registro.uf, ufs);
@@ -155,15 +179,19 @@ export function classificarRegistros(registros, dsei) {
   });
 }
 
-export const registrosExternos = (registros) =>
+export const registrosExternos = (registros: readonly RegistroDoDsei[]) =>
   (registros || []).filter((r) => r.vinculo === VINCULO_EXTERNO);
 
-export const registrosLocais = (registros) =>
+export const registrosLocais = (registros: readonly RegistroDoDsei[]) =>
   (registros || []).filter((r) => r.vinculo !== VINCULO_EXTERNO);
 
 /* Os tipos que o território tem, do mais frequente ao menos (os chips). */
-export function tiposDoTerritorio(registros) {
-  const mapa = new Map();
+
+export function tiposDoTerritorio(registros: readonly RegistroDoDsei[]) {
+  const mapa = new Map<
+    string,
+    { tipo: RegistroDoDsei["type"]; quantidade: number }
+  >();
   for (const r of registros || []) {
     const atual = mapa.get(r.type.key);
     if (atual) atual.quantidade += 1;
@@ -173,15 +201,21 @@ export function tiposDoTerritorio(registros) {
 }
 
 /* Guarda os tipos OCULTOS: um tipo novo aparece por inteiro, não escondido. */
-export const visiveis = (registros, ocultos) =>
-  (registros || []).filter((r) => !ocultos?.has?.(r.type.key));
+
+export const visiveis = (
+  registros: readonly RegistroDoDsei[],
+  ocultos: ReadonlySet<string>,
+) => (registros || []).filter((r) => !ocultos?.has?.(r.type.key));
 
 /*
   Duas perguntas, duas linhas: quantos polos o distrito TEM (lotações/lmap) e
   quantos pontos o mapa MOSTRA (contados de `registrosDoDsei`, o mesmo que se
   desenha, para não divergirem).
 */
-export function resumoDaRede(dsei, registros) {
+export function resumoDaRede(
+  dsei: DseiDoMapa,
+  registros: readonly RegistroDoDsei[],
+) {
   if (!dsei?.k) return ["Sem unidades cadastradas"];
   const conta = { polo: 0, casai: 0, outros: 0 };
   for (const r of registros || []) {
@@ -194,11 +228,12 @@ export function resumoDaRede(dsei, registros) {
   const polos = (dsei.polos || []).length;
   if (polos) linhas.push(`Polos base: ${polos}`);
   if (total) {
-    const noMapa = [
+    const contagens: [string, number][] = [
       ["polos", conta.polo],
       ["unidades", conta.outros],
       ["CASAIs", conta.casai],
-    ]
+    ];
+    const noMapa = contagens
       .filter(([, n]) => n > 0)
       .map(([rotulo, n]) => `${n} ${rotulo}`)
       .join(", ");
@@ -210,7 +245,8 @@ export function resumoDaRede(dsei, registros) {
 }
 
 /* A sede como registro (não entra nos totais nem nos filtros por tipo). */
-export function registroDaSede(dsei) {
+
+export function registroDaSede(dsei: DseiDoMapa): RegistroDoDsei | null {
   if (!dsei || !temCoordenada(dsei.lat, dsei.lon)) return null;
   return {
     id: `sede|${dsei.k}`,
@@ -229,11 +265,15 @@ export function registroDaSede(dsei) {
   a 773 km encolheria o distrito até ficar ilegível) e "completo" (com as
   externas). Nenhum é recalculado a partir do que está na tela.
 */
-export function limitesDoDsei(dsei, classificados) {
-  const sede = temCoordenada(dsei?.lat, dsei?.lon)
+
+export function limitesDoDsei(
+  dsei: DseiDoMapa,
+  classificados: readonly RegistroDoDsei[],
+) {
+  const sede: CoordenadasDoMapa[] = temCoordenada(dsei?.lat, dsei?.lon)
     ? [[Number(dsei.lat), Number(dsei.lon)]]
     : [];
-  const ponto = (r) => [r.lat, r.lon];
+  const ponto = (r: RegistroDoDsei): CoordenadasDoMapa => [r.lat, r.lon];
   return {
     territorio: [...sede, ...registrosLocais(classificados).map(ponto)],
     completo: [...sede, ...(classificados || []).map(ponto)],
@@ -241,7 +281,10 @@ export function limitesDoDsei(dsei, classificados) {
 }
 
 /* Pontos que a camada de Terras Indígenas usa para recortar as terras do DSEI. */
-export function pontosDoDistrito(dsei, registros) {
+export function pontosDoDistrito(
+  dsei: DseiDoMapa,
+  registros: readonly RegistroDoDsei[],
+) {
   return [
     ...(temCoordenada(dsei?.lat, dsei?.lon)
       ? [{ lat: Number(dsei.lat), lon: Number(dsei.lon) }]
@@ -252,7 +295,7 @@ export function pontosDoDistrito(dsei, registros) {
   ];
 }
 
-export function textoDosVinculosExternos(quantidade) {
+export function textoDosVinculosExternos(quantidade: number) {
   if (!quantidade) return "";
   return quantidade === 1
     ? "1 vínculo fora da área"
@@ -263,7 +306,7 @@ export function textoDosVinculosExternos(quantidade) {
   O popup diz o que a unidade é: nome, tipo, município/UF e CNES. Nada sobre
   a procedência da coordenada — isso a Aya explica (docs/aya/).
 */
-export function popupDoRegistro(registro) {
+export function popupDoRegistro(registro: RegistroDoDsei) {
   return {
     titulo: registro.type?.label || "",
     linhas: [
@@ -275,7 +318,7 @@ export function popupDoRegistro(registro) {
 }
 
 /* A dica identifica: tipo, DSEI, UF e, se provado, que está fora da área. */
-export function dicaDoRegistro(registro, dsei) {
+export function dicaDoRegistro(registro: RegistroDoDsei, dsei: DseiDoMapa) {
   const linhas = [`Vinculado ao DSEI ${texto(dsei?.n)}`];
   if (registro.ufAdministrativa)
     linhas.push(`Localização: ${registro.ufAdministrativa}`);
@@ -290,7 +333,7 @@ export function dicaDoRegistro(registro, dsei) {
 }
 
 /* Endereço e origem do ponto da sede (correção das sedes dos DSEI). */
-export function popupDaSede(dsei) {
+export function popupDaSede(dsei: DseiDoMapa) {
   return {
     titulo: `Sede do DSEI ${texto(dsei?.n)}`,
     linhas: [
@@ -304,7 +347,8 @@ export function popupDaSede(dsei) {
 }
 
 /* A linha da lista "Terras Indígenas e povos". */
-export function linhaDaTerra(terra) {
+
+export function linhaDaTerra(terra: TerraDoMapa): LinhaDaTerra {
   const c = terra?.caixa;
   return {
     nome: texto(terra?.nome),

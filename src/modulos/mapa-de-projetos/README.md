@@ -11,7 +11,7 @@ lista.tsx              "Municípios por vagas" (ListaDoMapa comum, linhas no for
                        vagas"), filtro "Projeto" e "Agrupar por projeto"
 balao.ts               dica e popup do lugar em DOM seguro (projeto, edital, vagas, lotações, contagens)
 editor-de-coordenadas.tsx  "Coordenadas" (admin global e Gestor): o editor comum com os lugares das vagas,
-                       as regras de src/lib/coordenadas-dos-projetos.js e as RPCs *_coordenada_mapa_projetos
+                       as regras de src/lib/coordenadas-dos-projetos.ts e as RPCs *_coordenada_mapa_projetos
                        (migration 20261002190000)
 carregador.ts          RPC listar_municipios_das_vagas_da_area, um pedido por área, cache de 5 min, e a
                        escolha da lista (sobrevive à troca de área)
@@ -95,7 +95,8 @@ O editor compartilhado e o modo de edição estão em TypeScript (contratos e li
 `../editor-de-coordenadas/README.md`). O painel, a lista, os controles, a legenda, a tela cheia e os hooks compartilhados
 também estão em TypeScript. A fábrica do Leaflet segue em JavaScript, com contratos
 JSDoc nas integrações utilizadas aqui. As regras de correção em
-`src/lib/coordenadas-dos-projetos.js` também seguem compartilhadas em JavaScript.
+`src/lib/coordenadas-dos-projetos.ts` estão em TypeScript, incluindo sugestões,
+gravidade, fila e aplicação de correções no mapa e no cache.
 O contrato mínimo do mapa fica em `src/lib/tipos-do-mapa.ts`; ele não cobre toda
 a API do Leaflet. As permissões e RPCs de gravação continuam as mesmas.
 

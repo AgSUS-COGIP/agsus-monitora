@@ -5,6 +5,7 @@ import type {
   FocusEvent,
   KeyboardEvent,
 } from "react";
+import { preCarregarTela } from "../../lib/carga-de-telas.js";
 import type {
   GrupoDoMenu,
   ItemDoMenu as Item,
@@ -297,6 +298,8 @@ function ItemDoMenu({
         data-dica={direto ? dica : undefined}
         aria-current={ativo ? "page" : undefined}
         onClick={aoEscolher}
+        onPointerEnter={() => preCarregarTela(item.view, item.secao)}
+        onFocus={() => preCarregarTela(item.view, item.secao)}
       >
         <Icone nome={item.icone} className="menu-item__icone" />
         <span className="menu-item__rotulo">{item.rotulo}</span>

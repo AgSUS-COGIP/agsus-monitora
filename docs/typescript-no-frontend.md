@@ -15,15 +15,20 @@ saúde das cargas, agenda, histórico, acompanhamento, formulário de opções, 
 `src/lib/robos-de-carga.js` continua compartilhada com a Avaliação documental, com contratos JSDoc.
 Em Entrevistas, as peças novas do Painel e de Conduzir (`agenda-e-empates.tsx`, `conduzir.tsx`,
 `fila-do-dia.tsx`, as peças da ficha de notas — cabeçalho, abas, matriz, célula, resultado —, o resumo das
-regras e as competências de cada membro da banca (`resumo-das-regras.tsx`, `competencias-do-membro.tsx`), `tipos.ts`,
-`src/lib/painel-de-entrevistas.ts`, `src/lib/fila-de-conducao.ts`, `src/lib/digitacao-de-notas.ts` e
-`src/lib/resumo-da-entrevista.ts`)
+regras e as competências de cada membro da banca (`resumo-das-regras.tsx`, `competencias-do-membro.tsx`), o seletor do
+edital, Preparar em passos, a configuração do edital, o parecer pronto e as seções do editor do roteiro
+(`seletor-do-edital.tsx`, `preparar.tsx`, `configuracao-do-edital.tsx`, `parecer-pronto.tsx`, `secoes-do-roteiro.tsx`), `tipos.ts`,
+`src/lib/painel-de-entrevistas.ts`, `src/lib/fila-de-conducao.ts`, `src/lib/digitacao-de-notas.ts`,
+`src/lib/resumo-da-entrevista.ts`, `src/lib/passos-do-preparar.ts`, `src/lib/pendencias-do-roteiro.ts` e
+`src/lib/parecer-da-entrevista.ts`)
 já nascem em TypeScript. O Mapa de Projetos está em TypeScript, incluindo carregador,
 cache, mapa, lista, balões, integração do editor e regras em `src/lib/visao-geral-da-area.ts`.
 O editor compartilhado pelos dois mapas também está em TypeScript: fila, sugestões, histórico,
-prévia, gravação, modo de edição e regras em `src/lib/editor-de-coordenadas.ts`. O mapa da
-Saúde Indígena e as peças comuns de criação do Leaflet continuam em JavaScript, com contratos
-JSDoc na integração. Painel, lista, legenda, tela cheia, retorno ao Brasil e hooks dos
+prévia, gravação, modo de edição e regras em `src/lib/editor-de-coordenadas.ts`. As telas principal, nacional e por DSEI da Saúde Indígena também estão em TSX.
+As regras nacionais e distritais de contagens, bolhas, CASAIs, unidades, vínculos,
+resumos e enquadramento estão em `src/lib/mapa-saude-indigena/chaves.ts`, `mapa-nacional.ts`
+e `mapa-do-dsei.ts`. As peças comuns de criação do Leaflet e a reconciliação compartilhada
+permanecem em JavaScript, com contratos JSDoc na integração. Painel, lista, legenda, tela cheia, retorno ao Brasil e hooks dos
 mapas já estão em TypeScript, com contratos em `tipos-do-painel.ts`; formas e cores
 em `src/lib/mapa-saude-indigena/formas.ts`. Outros módulos
 combinam JavaScript/JSX com migrações pontuais para TypeScript: a ficha da Avaliação documental
@@ -33,7 +38,9 @@ tem os componentes em `src/modulos/avaliacao-documental/ficha/*.tsx` (contratos 
 compartilhados consumidos por esses módulos declaram seus contratos em JSDoc.
 O assistente da regra da Avaliação documental (`src/modulos/avaliacao-documental/assistente/`)
 já nasceu em TSX, com as regras em `src/lib/avaliacao-documental/assistente-da-regra.ts`,
-`resumo-da-regra.ts`, `comparar-regras.ts` e os contratos em `tipos-da-regra.ts`.
+`resumo-da-regra.ts`, `comparar-regras.ts`, `catalogo-de-desempate.ts`, `pendencias-do-salvar.ts` e os
+contratos em `tipos-da-regra.ts`; a prévia "Testar com um candidato fictício" está em `previa.tsx`.
+Na ficha, o Apurado de partida e o efeito da decisão nele estão em `apurado-da-ficha.ts`.
 
 ## Verificação
 
@@ -117,3 +124,9 @@ os imports quando o arquivo mudar de extensão. Para dados externos, acrescentar
 em tempo de execução quando necessária: uma anotação TypeScript não valida JSON recebido.
 
 Manter o servidor com seu `tsconfig.json`; configurações de DOM e JSX pertencem ao frontend.
+
+As regras de coordenadas dos dois mapas e o adaptador do editor da Saúde Indígena
+também estão migrados. Os contratos dos alvos indígenas estão em
+`src/lib/tipos-das-coordenadas-do-mapa.ts`; o catálogo editável valida entradas
+externas sem alterar os índices conferidos pelo banco. As telas recebem a entrada geográfica validada por `dados-do-mapa.ts`; a edição conserva
+os dados originais para preservar os alvos usados pelo banco.

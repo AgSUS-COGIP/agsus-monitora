@@ -15,6 +15,10 @@ export interface CandidatoDaPendencia {
   lon: number | string;
 }
 export interface PendenciaDoEditor {
+  fonte?: unknown;
+  tipo?: unknown;
+  dsei?: unknown;
+  codigo?: unknown;
   [campo: string]: unknown;
   conferido?: boolean;
   motivo?: string;

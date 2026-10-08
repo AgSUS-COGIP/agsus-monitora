@@ -125,12 +125,13 @@ export function areaDoModelo(codigo: string): string | null {
 
 export type GrupoDoCartao = "eliminatorios" | "pontos" | "cotas" | "inscricao";
 
+/* "Na inscrição" vem primeiro: o que elimina antes da análise (inscrição cancelada, questionário, Empregare, termo, pontos mínimos). */
 export const GRUPOS_DO_CARDAPIO: ReadonlyArray<[GrupoDoCartao, string]> =
   Object.freeze([
+    ["inscricao", "Na inscrição"],
     ["eliminatorios", "Requisitos que eliminam"],
     ["pontos", "O que vale ponto"],
     ["cotas", "Cotas"],
-    ["inscricao", "Na inscrição"],
   ]);
 
 type DefinicaoDoBloco = {

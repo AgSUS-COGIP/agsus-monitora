@@ -6,7 +6,7 @@ import {
 import {
   registroDaSede,
   registrosDoDsei,
-} from "../src/lib/mapa-saude-indigena/mapa-do-dsei.js";
+} from "../src/lib/mapa-saude-indigena/mapa-do-dsei.ts";
 
 /*
   A SEDE DO DSEI NÃO TINHA FORMA NENHUMA

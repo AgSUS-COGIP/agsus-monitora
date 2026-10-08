@@ -627,18 +627,73 @@ describe("ficha: Conclusão e parecer (sem resultado antes da hora)", () => {
       cartao("FORMACAO").querySelector("input[data-divergente]"),
     ).toBeNull();
     await conforme("FORMACAO");
-    expect(parte("FORMACAO").dataset.divergente).toBe("sim");
-    expect(
-      parte("FORMACAO").querySelector(".avd-ficha-parte-valor").textContent,
-    ).toBe("0 / 10");
-    // Títulos ainda sem item: o Conforme não avança (é a hora de lançar o comprovado).
-    await esperarAvanco();
-    expect(cartao("FORMACAO")).not.toBeNull();
-    await clicar(botao("Adicionar título", cartao("FORMACAO")));
+    // Conforme sem itens confirma o declarado (valor explícito): sem divergência.
     expect(parte("FORMACAO").dataset.divergente).toBeUndefined();
     expect(
       parte("FORMACAO").querySelector(".avd-ficha-parte-valor").textContent,
     ).toBe("5 / 10");
+    // Títulos ainda sem item: o Conforme não avança (é a hora de lançar o comprovado).
+    await esperarAvanco();
+    expect(cartao("FORMACAO")).not.toBeNull();
+    // Um apurado abaixo do declarado diverge.
+    await clicar(
+      cartao("FORMACAO").querySelector("[aria-label='Diminuir meio ponto']"),
+    );
+    expect(parte("FORMACAO").dataset.divergente).toBe("sim");
+    expect(cartao("FORMACAO").textContent).toContain(
+      "Por que o apurado é menor que o declarado?",
+    );
+  });
+
+  it("o apurado começa com o declarado e a decisão mexe nele (AM-10)", async () => {
+    const supabase = supabaseFalso();
+    await abrirFicha(supabase);
+    await irAo("CURSOS");
+    const apurado = () =>
+      cartao("CURSOS").querySelector("[data-tour='avd-ficha-nota'] input");
+    const resumo = () =>
+      cartao("CURSOS").querySelector(".avd-ficha-pontos-resumo");
+    // Antes de decidir: preenchido com o declarado e a frase de conferência.
+    expect(apurado().value).toBe("3");
+    expect(cartao("CURSOS").textContent).toContain(
+      "Confira o documento: se comprova os pontos declarados, marque Conforme",
+    );
+    expect(resumo().textContent).toMatch(/Declarado\s*3\s*→\s*Apurado\s*3/);
+    expect(resumo().dataset.diferenca).toBe("nenhuma");
+    // Não conforme zera, com aviso.
+    await clicar(cartao("CURSOS").querySelector("[data-valor='NAO_CONFORME']"));
+    expect(apurado().value).toBe("0");
+    expect(cartao("CURSOS").textContent).toContain("Apurado zerado");
+    expect(resumo().textContent).toContain("−3");
+    // De volta ao Conforme: o declarado de novo, gravado explícito.
+    await conforme("CURSOS");
+    expect(apurado().value).toBe("3");
+    expect(cartao("CURSOS").textContent).not.toContain("Apurado zerado");
+    await teclar(raiz(), "s", { ctrlKey: true });
+    await esperar();
+    const gravado = chamadas(supabase, "salvar_rascunho_ficha").at(-1);
+    expect(gravado.p_lancamento.blocos.CURSOS.nota_ajustada).toBe(3);
+    // O primeiro curso lançado devolve o apurado ao calculado.
+    await clicar(botao("Adicionar curso", cartao("CURSOS")));
+    await digitar(
+      cartao("CURSOS").querySelector("input[aria-label='Carga horária']"),
+      "40",
+    );
+    expect(apurado().value).toBe("1");
+    expect(resumo().dataset.diferenca).toBe("menor");
+  });
+
+  it("tecla 3 (Não enviado) também zera o apurado", async () => {
+    await abrirFicha(supabaseFalso());
+    await irAo("CURSOS");
+    await teclar(raiz(), "3");
+    expect(
+      cartao("CURSOS").querySelector("[data-tour='avd-ficha-nota'] input")
+        .value,
+    ).toBe("0");
+    expect(cartao("CURSOS").textContent).toContain(
+      "o documento não foi enviado",
+    );
   });
 });
 
@@ -726,7 +781,9 @@ describe("ficha: itens, nota e justificativa (AM-9, AM-10, AM-11)", () => {
       cartao("EXPERIENCIA").querySelector("input[aria-label='Fim']"),
       "2022-12-31",
     );
-    expect(cartao("EXPERIENCIA").textContent).toMatch(/Calculado\s*25/);
+    expect(cartao("EXPERIENCIA").textContent).toMatch(
+      /Calculado pelos itens\s*25/,
+    );
     await clicar(
       cartao("EXPERIENCIA").querySelector(".avd-ficha-aceito input"),
     );

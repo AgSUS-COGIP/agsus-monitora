@@ -12,12 +12,15 @@ ao lado da Avaliação documental (acompanhar × fazer):
 - **Conduzir entrevistas** (view `conduzir-entrevistas`, `#page-conduzir-entrevistas`,
   `montarConducaoDeEntrevistas()` → `window.conduzirEntrevistasController`): o fazer, para secretaria
   e avaliadores. Visões no topo: **Fila** (abre em Hoje pela agenda salva na Classificação › Agenda;
-  sem entrevista hoje, Próximos; sem agenda, Todos; vaga e situações — aguardando, em andamento,
+  sem entrevista hoje, Próximos; sem agenda, Todos; cartões agrupados por vaga, em ordem de
+  horário e nome, com a busca por nome ou código e as situações — aguardando, em andamento,
   concluída, faltou —; o contador "X de Y hoje" no topo; o cartão abre a ficha em tela cheia, com
-  "Salvar e abrir o próximo" na ordem da fila; concluir o dia comemora uma vez) e **Preparar**
-  (configuração e convocação do edital e os **roteiros** da área — a configuração do gestor, como
-  Regra e Equipe ficam na própria tela da Avaliação documental). O último edital aberto na área
-  fica no navegador (só conveniência); com um só na lista, ele abre sozinho.
+  "Salvar e abrir o próximo" na ordem da tela; concluir o dia comemora uma vez) e **Preparar**
+  (o resumo das regras e os passos Roteiro, Banca, Convocação e Agenda, cada um com o estado e o
+  que falta; os **roteiros** da área ficam no passo 1 — a configuração do gestor, como Regra e
+  Equipe ficam na própria tela da Avaliação documental). O edital fica num seletor compacto
+  abaixo do topo (com "mostrar também os concluídos" dentro dele, para o administrador global); o
+  último aberto na área fica no navegador (só conveniência); com um só na lista, ele abre sozinho.
 
 Links antigos (`entrevistas:conduzir`, `entrevistas:roteiros`) vão para Conduzir entrevistas
 (`destinoDaTela`, `src/lib/navegacao.js`; o controlador tem `abrirVisao` e `abrirEdital`).
@@ -54,11 +57,18 @@ tabela.jsx              tabela de resultados (TabelaInfinita), selo do parecer e
 gaveta.jsx              detalhe da entrevista (caminho do candidato, critérios) e aprovados sem entrevista
 conduzir.tsx            Conduzir entrevistas: <TelaDeConducao>, visões Fila/Preparar, contador do dia,
                         comemoração, montarConducaoDeEntrevistas() (render, abrirVisao, abrirEdital)
-fila-do-dia.tsx         a fila em cartões (avatar, horário, situação, notas), recortes e situações
+seletor-do-edital.tsx   o edital compacto abaixo do topo, selo Treinamento, "mostrar também os concluídos"
+                        (administrador global) dentro do seletor, liberação e erros com "Tentar novamente"
+fila-do-dia.tsx         a fila em cartões por vaga (iniciais, código, horário e banca, situação, notas só
+                        quando há), recortes, busca e situações, estados vazios
 tipos.ts                contratos da tela nova com o estado da condução (JS)
 estado-da-conducao.js   store da condução e dos roteiros: editais, edital aberto, escritas (RPC), uma por vez
-conducao.jsx            SeletorDoEdital, PrepararEdital (resumo das regras, configuração e convocação; os
-                        detalhes da Classificação em "Ver detalhes"), DesempateDaClassificacao, liberação
+preparar.tsx            Preparar em passos: Roteiro, Banca, Convocação, Agenda (estado e o que falta, de
+                        src/lib/passos-do-preparar.ts), o resumo das regras no topo
+configuracao-do-edital.tsx  os campos do roteiro (passo 1) e da banca (passo 2) sobre um rascunho só e a
+                        barra "Salvar configuração" com a lista do que falta
+conducao.jsx            BotaoIrPara, ConvocacaoDaClassificacao ("Ver detalhes"), DesempateDaClassificacao,
+                        ListaDeConvocacao (passo 3) e LiberacaoDoEdital
 resumo-das-regras.tsx   "Regras da entrevista": quem é chamado (tabelinha por vaga), como a nota é calculada,
                         quem avalia e o desempate, cada bloco com o "Editar" para onde se muda
 competencias-do-membro.tsx  "Competências que avalia" de cada membro (Todas / Só estas)
@@ -74,8 +84,14 @@ matriz-de-notas.tsx     a matriz competências × aspectos (ou "Nota") com o flu
 campo-de-nota.tsx       a célula grande da matriz (dica do nível em foco, pulso ao preencher)
 resultado-da-ficha.tsx  a lateral viva: total no anel com o mínimo, barras por competência, parecer e
                         motivos, "X de Y notas"
+textos-da-ficha.tsx     observação do avaliador (opcional, por avaliador) e justificativa da banca
+                        (obrigatória para Inapto e Faltou; o banco recusa sem ela — 20261008220000)
+parecer-pronto.tsx      o parecer em texto pronto (src/lib/parecer-da-entrevista.ts) com "Copiar parecer",
+                        embaixo da matriz, com tudo lançado
 aspectos-do-roteiro.tsx aspectos do roteiro no editor (e o modelo Conceitua · Propriedade · Profundidade)
 roteiros.jsx            cartões dos roteiros e o editor (gaveta), com versões; desempate só leitura
+secoes-do-roteiro.tsx   as seções recolhíveis do editor e a lista do que falta perto do Salvar
+                        (src/lib/pendencias-do-roteiro.ts)
 partes.jsx              composição da banca, botão de linha
 marcos.js               marco "vaga pronta" (comemoração)
 entrevistas.css         só o que é destas telas (tokens); o resto vem de src/ui/
@@ -86,8 +102,10 @@ recorte, empates, agenda dos próximos dias —, `fila-de-conducao.ts` — fila,
 `conducao-de-entrevista.js`,
 `convocacao-da-entrevista.js` — a lista da Classificação por vaga, quem está na ficha, avisos —,
 `roteiro-de-entrevista.js`, `digitacao-de-notas.ts` — a digitação da matriz —, `resumo-da-entrevista.ts` — as
-regras em linguagem simples —, `comemoracao.js`). Testes: `tests/modulos/entrevistas.test.js` (painel), `tests/modulos/conduzir-entrevistas.test.js`,
+regras em linguagem simples —, `passos-do-preparar.ts` — os passos de Preparar e a agenda por dia —,
+`pendencias-do-roteiro.ts` — as seções e o que falta no editor —, `parecer-da-entrevista.ts` — o parecer em
+texto pronto —, `comemoracao.js`). Testes: `tests/modulos/entrevistas.test.js` (painel), `tests/modulos/conduzir-entrevistas.test.js`,
 `tests/painel-e-conducao-de-entrevistas.test.js`, `tests/digitacao-de-notas.test.js`,
 `tests/convocacao-da-entrevista.test.js`, `tests/conducao-de-entrevista.test.js` e
 `tests/convocacao-unica-da-entrevista-migration.test.js`, `tests/resumo-da-entrevista.test.js` e
-`tests/avaliador-por-competencia-migration.test.js`.
+`tests/avaliador-por-competencia-migration.test.js` e `tests/preparar-e-fila-de-entrevistas.test.js`.

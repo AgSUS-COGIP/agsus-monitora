@@ -1,8 +1,8 @@
 import { act, createElement } from "react";
 import { createRoot } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { EditorDeCoordenadas } from "../../src/modulos/mapa-saude-indigena/editor-de-coordenadas.jsx";
-import { MapaSaudeIndigena } from "../../src/modulos/mapa-saude-indigena/mapa-saude-indigena.jsx";
+import { EditorDeCoordenadas } from "../../src/modulos/mapa-saude-indigena/editor-de-coordenadas.tsx";
+import { MapaSaudeIndigena } from "../../src/modulos/mapa-saude-indigena/mapa-saude-indigena.tsx";
 import { clicar, digitar } from "../componentes/interacoes.js";
 import { criarLeafletFalso } from "./leaflet-falso.js";
 
@@ -541,3 +541,44 @@ describe("entrada do editor no mapa", () => {
     expect(botao("Coordenadas")).toBeUndefined();
   });
 });
+
+it.each([null, "A"])(
+  "preserva o índice original do CNES ao editar pela visão %s",
+  async (dseiSelecionado) => {
+    globalThis.L = leaflet.L;
+    const original = { rede: { A: { u: [null, ...redeCnes.rede.A.u] } } };
+    respostas[RPC_PENDENCIAS] = () => ({ data: [], error: null });
+    await act(async () =>
+      raiz.render(
+        createElement(MapaSaudeIndigena, {
+          lmap,
+          redeCnes: original,
+          perfil: admin,
+          supabase: props.supabase,
+          dseiSelecionado,
+        }),
+      ),
+    );
+    const painel = dseiSelecionado
+      ? host.querySelector(".mapa-si-painel--dsei")
+      : host.querySelector(".mapa-si-painel--nacional");
+    await clicar(
+      [...painel.querySelectorAll("button")].find(
+        (b) => b.textContent === "Coordenadas",
+      ),
+    );
+    await esperar();
+    await clicar(caixaPendentes());
+    await escolher("Unidade CNES · UBSI C");
+    const alvo = chamadas(RPC_HISTORICO).at(-1)[1].p_alvo;
+    expect(alvo).toMatchObject({
+      fonte: "rede_cnes",
+      tipo: "u",
+      dsei: "A",
+      indice: 1,
+      codigo: "123",
+      nome: "UBSI C",
+    });
+    expect(original.rede.A.u[0]).toBeNull();
+  },
+);

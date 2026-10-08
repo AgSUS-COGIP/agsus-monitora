@@ -312,6 +312,24 @@
      qual for o tema da página. */
   --cor-da-folha: var(--color-neutral-0);
   --cor-do-texto-sobre-escuro: var(--color-neutral-0);
+  /* Chat (src/modulos/chat/chat.css): os tokens --color-* não mudam no tema
+     escuro; estes mudam (valores do escuro no bloco [data-theme="dark"]).
+     Antes o balão próprio usava --color-bg-selected e ficava claro no
+     escuro, com o texto claro por cima (tests/chat-tema-escuro.test.js). */
+  --chat-balao-meu-fundo: var(--color-bg-selected);
+  --chat-balao-meu-texto: var(--color-text-primary);
+  --chat-selecionado: var(--color-bg-selected);
+  --chat-borda: var(--color-border-default);
+  --chat-destaque: var(--color-text-brand);
+  --chat-link: var(--color-text-link);
+  --chat-info-forte: var(--color-status-info-solid);
+  --chat-sucesso-forte: var(--color-status-success-solid);
+  --chat-aviso-forte: var(--color-status-warning-solid);
+  --chat-perigo-forte: var(--color-status-danger-solid);
+  --chat-contador-fundo: var(--color-action-danger);
+  --chat-contador-texto: var(--color-text-inverse);
+  --chat-primario-fundo: var(--color-action-primary);
+  --chat-primario-texto: var(--color-text-inverse);
 }
 
 /*
@@ -430,4 +448,20 @@ html[data-theme="dark"] {
   --series-4: #8e6cf2;
   --series-5: #d55181;
   --series-6: #a8861a;
+
+  /* Chat: contraste AA sobre --surface-card e o balão próprio escuros. */
+  --chat-balao-meu-fundo: #173a5c;
+  --chat-balao-meu-texto: #edf4fa;
+  --chat-selecionado: #1b3d5e;
+  --chat-borda: #35506a;
+  --chat-destaque: #70cfff;
+  --chat-link: #8fd8ff;
+  --chat-info-forte: #70cfff;
+  --chat-sucesso-forte: #29b36a;
+  --chat-aviso-forte: #f2b705;
+  --chat-perigo-forte: #ff6b76;
+  --chat-contador-fundo: #ff6b76;
+  --chat-contador-texto: #071421;
+  --chat-primario-fundo: #70cfff;
+  --chat-primario-texto: #071421;
 }

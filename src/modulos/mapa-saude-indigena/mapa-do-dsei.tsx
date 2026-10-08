@@ -1,9 +1,25 @@
+import type {
+  PropsDoMapaDoDsei,
+  RegistroDoDsei,
+  TerraDoMapa,
+  LinhaDaTerra,
+} from "../../lib/mapa-saude-indigena/tipos.ts";
+import {
+  terrasDoMapa,
+  redeCnesDoMapa,
+} from "../../lib/mapa-saude-indigena/dados-do-mapa.ts";
+import type { MapaDoPainel } from "./tipos-do-painel.ts";
+import type {
+  CamadaDoMapa,
+  PosicaoDoLeaflet,
+  LimitesDoLeaflet,
+} from "./tipos-do-leaflet.ts";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   agruparPorProximidadeNaTela,
   posicoesSpiderfy,
 } from "../../lib/mapa-render.js";
-import { formatarNumero } from "../../lib/mapa-saude-indigena/chaves.js";
+import { formatarNumero } from "../../lib/mapa-saude-indigena/chaves.ts";
 import {
   CORES_DO_MAPA,
   ESTILO_DA_LINHA_DE_VINCULO,
@@ -23,7 +39,7 @@ import {
   textoDosVinculosExternos,
   tiposDoTerritorio,
   visiveis,
-} from "../../lib/mapa-saude-indigena/mapa-do-dsei.js";
+} from "../../lib/mapa-saude-indigena/mapa-do-dsei.ts";
 import { EstadoVazio, classes } from "../../ui/index.js";
 import { Forma, LegendaDoDsei } from "./legenda.tsx";
 import {
@@ -38,7 +54,7 @@ import {
 } from "./leaflet.js";
 import { usarUltimo } from "./usar-ultimo.ts";
 import { podeEditarCoordenadas } from "../../lib/access-roles.js";
-import { EditorDeCoordenadas } from "./editor-de-coordenadas.jsx";
+import { EditorDeCoordenadas } from "./editor-de-coordenadas.tsx";
 import {
   BotaoDeRecolher,
   PainelDoEditor,
@@ -54,7 +70,7 @@ const OPCOES_DO_ENQUADRAMENTO = Object.freeze({
   O território de um DSEI: o mapa à esquerda, à direita as unidades (com os
   filtros por tipo) e as Terras Indígenas e povos. Monta uma vez por DSEI
   (`key` no pai): trocar de distrito começa sem tipo escondido. "Voltar ao
-  Brasil", no topo, pede a saída ao pai (o Esc faz o mesmo; volta-ao-brasil.js).
+  Brasil", no topo, pede a saída ao pai (o Esc faz o mesmo; volta-ao-brasil.ts).
 */
 export function MapaDoDsei({
   L,
@@ -69,22 +85,23 @@ export function MapaDoDsei({
   perfil,
   supabase,
   aoAtualizarMapa,
-}) {
-  const refDoMapa = useRef(null);
-  const [mapa, definirMapa] = useState(null);
-  const camada = useRef(null);
-  const escopo = useRef("territorio");
+}: PropsDoMapaDoDsei) {
+  const refDoMapa = useRef<HTMLDivElement | null>(null);
+  const [mapa, definirMapa] = useState<MapaDoPainel | null>(null);
+  const camada = useRef<CamadaDoMapa | null>(null);
+  const escopo = useRef<"territorio" | "completo">("territorio");
   const [comExternos, definirComExternos] = useState(false);
-  const [ocultos, definirOcultos] = useState(() => new Set());
-  const [terras, definirTerras] = useState([]);
+  const [ocultos, definirOcultos] = useState(() => new Set<string>());
+  const [terras, definirTerras] = useState<TerraDoMapa[]>([]);
   const podeEditar = podeEditarCoordenadas(perfil);
   const modo = usarModoDeEdicao({ mapa, permitido: podeEditar });
   const idDoPainel = `${idDoMapa}-painel-lateral`;
   const chamadas = usarUltimo({ aoEscolherUnidade });
 
+  const rede = useMemo(() => redeCnesDoMapa(redeCnes), [redeCnes]);
   const classificados = useMemo(
-    () => classificarRegistros(registrosDoDsei(dsei, redeCnes), dsei),
-    [dsei, redeCnes],
+    () => classificarRegistros(registrosDoDsei(dsei, rede), dsei),
+    [dsei, rede],
   );
   const externos = useMemo(
     () => registrosExternos(classificados),
@@ -103,10 +120,15 @@ export function MapaDoDsei({
     [dsei, classificados],
   );
 
-  const enquadrar = (alvo, qual, { animar = false } = {}) => {
-    if (!alvo) return;
+  const enquadrar = (
+    alvo: MapaDoPainel | null,
+    qual: "territorio" | "completo",
+    { animar = false } = {},
+  ) => {
+    if (!L || !alvo) return;
     const pontos = limites[qual]?.length ? limites[qual] : limites.territorio;
-    if (!pontos.length) return;
+    const primeiro = pontos[0];
+    if (!primeiro) return;
     escopo.current = qual;
     const oficial =
       qual === "territorio" ? alvo.__agsusDseiCoverageBounds : null;
@@ -115,7 +137,7 @@ export function MapaDoDsei({
     try {
       alvo.fitBounds(caixa, { ...OPCOES_DO_ENQUADRAMENTO, animate: animar });
     } catch {
-      alvo.setView(pontos[0], 7);
+      alvo.setView(primeiro, 7, { animate: false });
     }
   };
   const ultimoEnquadrar = usarUltimo(enquadrar);
@@ -124,7 +146,7 @@ export function MapaDoDsei({
   useEffect(() => {
     const elemento = refDoMapa.current;
     if (!L || !elemento) return undefined;
-    const novo = criarMapa(L, elemento);
+    const novo: MapaDoPainel = criarMapa(L, elemento);
     adicionarFundo(L, novo, elemento);
     // Aberto com a página escondida, reenquadra quando ela aparecer.
     const pararDeObservar = observarTamanho(novo, elemento, {
@@ -140,14 +162,14 @@ export function MapaDoDsei({
       distrito (a Funai deixou de publicar a abrangência) e devolve a lista que
       sobrou; quando a abrangência oficial chega, ela enquadra o território.
     */
-    novo.__agsusAoMudarTerras = (lista) =>
-      definirTerras(Array.isArray(lista) ? lista : []);
+    novo.__agsusAoMudarTerras = (lista: unknown) =>
+      definirTerras(terrasDoMapa(lista));
     novo.__agsusSetDseiCoverage?.(
       dsei.n,
       pontosDoDistrito(dsei, classificados),
       dsei.ufs || [],
     );
-    const aoChegarAbrangencia = (evento) => {
+    const aoChegarAbrangencia = (evento?: { bounds?: LimitesDoLeaflet }) => {
       if (escopo.current !== "territorio") return;
       if (evento?.bounds?.isValid?.() !== true) return;
       try {
@@ -196,10 +218,13 @@ export function MapaDoDsei({
     Reagrupa a cada zoom, porque a proximidade é em pixels.
   */
   useEffect(() => {
-    if (!mapa || !camada.current) return undefined;
+    if (!L || !mapa || !camada.current) return undefined;
     const unidades = camada.current;
     const sede = registroDaSede(dsei);
-    const marcadorDe = (registro, posicao) => {
+    const marcadorDe = (
+      registro: RegistroDoDsei,
+      posicao?: PosicaoDoLeaflet,
+    ) => {
       const marcador = L.marker(posicao || [registro.lat, registro.lon], {
         icon: iconeDoRegistro(L, document, registro),
         keyboard: true,
@@ -236,15 +261,18 @@ export function MapaDoDsei({
           );
         }
       }
-      agruparPorProximidadeNaTela(mostrados, (r) =>
+      agruparPorProximidadeNaTela(mostrados, (r: RegistroDoDsei) =>
         mapa.latLngToLayerPoint([r.lat, r.lon]),
       ).forEach((grupo) => {
         if (grupo.registros.length === 1) {
-          unidades.addLayer(marcadorDe(grupo.registros[0]));
+          const registro = grupo.registros[0];
+          if (registro) unidades.addLayer(marcadorDe(registro));
           return;
         }
         const centro = mapa.latLngToLayerPoint([grupo.lat, grupo.lon]);
         posicoesSpiderfy(grupo.registros.length).forEach((pos, i) => {
+          const registro = grupo.registros[i];
+          if (!registro) return;
           const destino = mapa.layerPointToLatLng(
             centro.add(L.point(pos.x, pos.y)),
           );
@@ -256,13 +284,15 @@ export function MapaDoDsei({
               interactive: false,
             }),
           );
-          unidades.addLayer(marcadorDe(grupo.registros[i], destino));
+          unidades.addLayer(marcadorDe(registro, destino));
         });
       });
     };
     desenhar();
     mapa.on("zoomend", desenhar);
-    return () => mapa.off("zoomend", desenhar);
+    return () => {
+      mapa.off("zoomend", desenhar);
+    };
   }, [L, mapa, dsei, mostrados, externos, ocultos]);
 
   // Tela cheia muda o tamanho: remede.
@@ -278,7 +308,7 @@ export function MapaDoDsei({
     enquadrar(mapa, proximo ? "completo" : "territorio", { animar: true });
   };
 
-  const alternarTipo = (chave) =>
+  const alternarTipo = (chave: string) =>
     definirOcultos((atual) => {
       const novo = new Set(atual);
       if (novo.has(chave)) novo.delete(chave);
@@ -286,7 +316,7 @@ export function MapaDoDsei({
       return novo;
     });
 
-  const irParaUnidade = (registro) => {
+  const irParaUnidade = (registro: RegistroDoDsei) => {
     if (mapa) {
       mapa.flyTo([registro.lat, registro.lon], Math.max(mapa.getZoom(), 11), {
         duration: 0.45,
@@ -295,7 +325,7 @@ export function MapaDoDsei({
     chamadas.current.aoEscolherUnidade?.(registro);
   };
 
-  const irParaTerra = (terra) => {
+  const irParaTerra = (terra: LinhaDaTerra) => {
     if (!terra.caixa) return;
     mapa?.__agsusEnquadrarTerra?.(terra.nome, terra.caixa);
   };

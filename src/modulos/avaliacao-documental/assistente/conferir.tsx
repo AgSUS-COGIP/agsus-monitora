@@ -10,16 +10,14 @@ import {
   textoDoResumo,
   type ContextoDoResumo,
 } from "../../../lib/avaliacao-documental/resumo-da-regra.ts";
+import type { PendenciaDoSalvar } from "../../../lib/avaliacao-documental/pendencias-do-salvar.ts";
 import type {
   RegraAnalise,
   RegraSalva,
 } from "../../../lib/avaliacao-documental/tipos-da-regra.ts";
-import {
-  erroDoNomeDaVersao,
-  rotuloDaVersao,
-} from "../../../lib/nome-da-versao.ts";
+import { rotuloDaVersao } from "../../../lib/nome-da-versao.ts";
 import { Aviso, Campo, Selo } from "../../../ui/index.js";
-import { CampoNomeDaVersao, nomeDoCampo } from "../../../ui/nome-da-versao.tsx";
+import { CampoNomeDaVersao } from "../../../ui/nome-da-versao.tsx";
 import {
   copiarParaAreaDeTransferencia,
   imprimirPagina,
@@ -28,9 +26,10 @@ import {
 /*
   Passo 5: testar e conferir. O resumo de uma página em linguagem simples
   (com "Copiar para o SEI" e imprimir), a comparação entre versões (a vigente
-  e a nova, ou duas do histórico) e o salvar: versão nova com motivo, pelo
-  salvar_regra_analise de sempre. A prévia com candidato fictício (previa.jsx)
-  fica junto, na tela do assistente.
+  e a nova, ou duas do histórico) e o salvar: versão nova com nome e motivo,
+  pelo salvar_regra_analise de sempre. Ao lado do botão, a lista do que falta
+  (pendencias-do-salvar.ts), cada item leva ao passo e ao campo. A prévia com
+  candidato fictício (previa.tsx) fica junto, na tela do assistente.
 */
 
 export type FerramentasDoDocumento = {
@@ -205,14 +204,59 @@ export function ComparacaoDeVersoes({
   );
 }
 
+function ListaDoQueFalta({
+  pendencias,
+  aoIrPara,
+}: {
+  pendencias: PendenciaDoSalvar[];
+  aoIrPara: (p: PendenciaDoSalvar) => void;
+}) {
+  const impedem = pendencias.filter((p) => p.impede);
+  const conferir = pendencias.filter((p) => !p.impede);
+  const item = (p: PendenciaDoSalvar) => (
+    <li key={p.texto}>
+      <button
+        type="button"
+        className="avd-ast-falta-item"
+        data-passo-alvo={p.passo}
+        onClick={() => aoIrPara(p)}
+      >
+        <i
+          className={`fa-solid ${p.impede ? "fa-circle-exclamation" : "fa-circle-info"}`}
+          aria-hidden="true"
+        />
+        <span>{p.texto}</span>
+        <i className="fa-solid fa-arrow-right" aria-hidden="true" />
+      </button>
+    </li>
+  );
+  return (
+    <div className="avd-ast-falta" data-tour="avd-assistente-o-que-falta">
+      {impedem.length ? (
+        <div role="status" data-impede="sim">
+          <h4>Para salvar, falta</h4>
+          <ul>{impedem.slice(0, 12).map(item)}</ul>
+        </div>
+      ) : null}
+      {conferir.length ? (
+        <div data-impede="nao">
+          <h4>Confira também</h4>
+          <ul>{conferir.slice(0, 12).map(item)}</ul>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
 export function BarraDeSalvar({
   versaoNova,
-  erros,
+  pendencias,
+  aoIrPara,
   motivo,
   aoMudarMotivo,
   motivoObrigatorio,
   salvaClassificacao,
-  podeSalvar,
+  podeDescartar,
   salvando,
   erroDoBanco,
   aoSalvar,
@@ -223,7 +267,9 @@ export function BarraDeSalvar({
   aoMudarNome,
 }: {
   versaoNova: number;
-  erros: string[];
+  /** O que falta (pendenciasDoSalvar): os que impedem desabilitam o botão. */
+  pendencias: PendenciaDoSalvar[];
+  aoIrPara: (p: PendenciaDoSalvar) => void;
   motivo: string;
   aoMudarMotivo: (m: string) => void;
   /** Mostra "Nome desta versão" (só quando a regra muda: versão nova). */
@@ -233,82 +279,72 @@ export function BarraDeSalvar({
   aoMudarNome?: (n: string | null) => void;
   motivoObrigatorio: boolean;
   salvaClassificacao: boolean;
-  podeSalvar: boolean;
+  /** Há alteração para descartar. */
+  podeDescartar: boolean;
   salvando: boolean;
   erroDoBanco: string;
   aoSalvar: () => void;
   aoDescartar: () => void;
 }) {
-  const [tentou, setTentou] = useState(false);
-  const motivoCurto = motivoObrigatorio && motivo.trim().length < 10;
-  const nomeRuim =
-    pedeNome && Boolean(erroDoNomeDaVersao(nomeDoCampo(nome, sugestaoDoNome)));
+  const impede = pendencias.some((p) => p.impede);
   return (
-    <section
-      className="ui-card ui-barra-de-salvar avd-ast-salvar"
-      aria-label="Salvar a regra"
-    >
-      {erros.length ? (
-        <Aviso tom="danger" papel="alert">
-          <ul>
-            {erros.slice(0, 10).map((e) => (
-              <li key={e}>{e}</li>
-            ))}
-          </ul>
-        </Aviso>
-      ) : null}
+    <section className="ui-card avd-ast-salvar" aria-label="Salvar a regra">
       {erroDoBanco ? (
         <Aviso tom="danger" papel="alert">
           {erroDoBanco}
         </Aviso>
       ) : null}
-      <Campo
-        rotulo="Motivo da alteração"
-        obrigatorio={motivoObrigatorio}
-        erro={tentou && motivoCurto ? "De 10 a 2.000 caracteres." : undefined}
-      >
-        <input
-          value={motivo}
-          maxLength={2000}
-          onChange={(ev) => aoMudarMotivo(ev.target.value)}
-        />
-      </Campo>
-      {pedeNome && aoMudarNome ? (
-        <CampoNomeDaVersao
-          valor={nome}
-          sugestao={sugestaoDoNome}
-          aoMudar={aoMudarNome}
-          mostrarErro={tentou}
-        />
-      ) : null}
+      <div className="avd-ast-salvar-campos">
+        {pedeNome && aoMudarNome ? (
+          <div data-campo="nome">
+            <CampoNomeDaVersao
+              valor={nome}
+              sugestao={sugestaoDoNome}
+              aoMudar={aoMudarNome}
+              mostrarErro
+            />
+          </div>
+        ) : null}
+        <div data-campo="motivo">
+          <Campo rotulo="Motivo da alteração" obrigatorio={motivoObrigatorio}>
+            <input
+              value={motivo}
+              maxLength={2000}
+              onChange={(ev) => aoMudarMotivo(ev.target.value)}
+            />
+          </Campo>
+        </div>
+      </div>
       {salvaClassificacao ? (
         <p className="avd-ast-nota" data-salva-classificacao="sim">
           <i className="fa-solid fa-link" aria-hidden="true" /> Também salva a
           nota mínima e o desempate na regra de classificação.
         </p>
       ) : null}
-      <div className="ui-acoes">
-        <button
-          type="button"
-          className="btn secondary"
-          disabled={!podeSalvar || salvando}
-          onClick={aoDescartar}
-        >
-          Descartar
-        </button>
-        <button
-          type="button"
-          className="btn"
-          data-acao="salvar-assistente"
-          disabled={!podeSalvar || salvando || erros.length > 0}
-          onClick={() => {
-            setTentou(true);
-            if (!motivoCurto && !nomeRuim) aoSalvar();
-          }}
-        >
-          <i className="fa-solid fa-floppy-disk" aria-hidden="true" /> Salvar
-          como versão {versaoNova}
-        </button>
+      <div className="avd-ast-salvar-rodape">
+        {pendencias.length ? (
+          <ListaDoQueFalta pendencias={pendencias} aoIrPara={aoIrPara} />
+        ) : null}
+        <div className="ui-acoes">
+          <button
+            type="button"
+            className="btn secondary"
+            disabled={!podeDescartar || salvando}
+            onClick={aoDescartar}
+          >
+            Descartar
+          </button>
+          <button
+            type="button"
+            className="btn"
+            data-acao="salvar-assistente"
+            disabled={salvando || impede}
+            onClick={aoSalvar}
+          >
+            <i className="fa-solid fa-floppy-disk" aria-hidden="true" /> Salvar
+            como versão {versaoNova}
+          </button>
+        </div>
       </div>
     </section>
   );

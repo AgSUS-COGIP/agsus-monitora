@@ -10,7 +10,9 @@
     fechada), o passo é pulado na direção em que a pessoa ia.
   - Passo de trilha tem `pagina`: o tour pede a troca de tela (`irPara`) e
     espera o elemento aparecer por alguns instantes, olhando de tempos em
-    tempos (sem MutationObserver); se não aparecer, pula.
+    tempos (sem MutationObserver); se não aparecer, pula. Enquanto a tela
+    ainda baixa (telas sob demanda, src/lib/carga-de-telas.js), a espera não
+    se esgota.
   - O elemento destacado continua clicável (o véu são quatro faixas em volta
     do recorte); o resto da página não recebe clique enquanto o tour corre.
   - Teclado: Esc sai, ← e → navegam, Tab fica preso no balão. O leitor de
@@ -38,6 +40,7 @@ import {
   posicaoDoBalao,
   rotuloDoPasso,
 } from "../../../lib/aya-tours.js";
+import { haTelaCarregando } from "../../../lib/carga-de-telas.js";
 
 const FOCAVEIS =
   'button:not([disabled]), a[href], [tabindex]:not([tabindex="-1"])';
@@ -108,6 +111,7 @@ export function Tour({
   documento = globalThis.document,
   visivel = elementoVisivel,
   espera = 1600,
+  carregando = haTelaCarregando,
 }) {
   const total = passos.length;
   // `pedido`: o índice desejado e a direção (1 avança, -1 volta) para pular ausentes.
@@ -206,7 +210,7 @@ export function Tour({
         preparar();
         const achado = acharAlvo(passo, documento, visivel);
         if (achado) aceitar(achado);
-        else if (Date.now() >= limite) pular();
+        else if (Date.now() >= limite && !carregando()) pular();
         else temporizador = janela.setTimeout(procurar, INTERVALO_DA_PROCURA);
       };
       temporizador = janela.setTimeout(procurar, INTERVALO_DA_PROCURA);

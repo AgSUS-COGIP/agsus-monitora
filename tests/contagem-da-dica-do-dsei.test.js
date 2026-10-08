@@ -99,6 +99,6 @@ describe("o polo que o CNES também cadastra", () => {
 /*
   As duas linhas da dica ("Polos base: N" e "No mapa: N pontos (…)") são do
   mapa da Saúde Indígena em React: `resumoDaRede` em
-  src/lib/mapa-saude-indigena/mapa-do-dsei.js, testada em
+  src/lib/mapa-saude-indigena/mapa-do-dsei.ts, testada em
   tests/mapa-saude-indigena.test.js com as Lotações reais.
 */

@@ -1,3 +1,18 @@
+import type {
+  AlvoDaCoordenadaIndigena,
+  PontoEditavelIndigena,
+} from "./tipos-das-coordenadas-do-mapa.ts";
+import type {
+  PendenciaDoEditor,
+  OpcoesDaFila,
+  RegrasDaFila,
+  ItemDaFila,
+  GravidadeDoPonto,
+} from "./tipos-do-editor-de-coordenadas.ts";
+import {
+  pendenciasDoEditor,
+  registroDoEditor,
+} from "./respostas-do-editor-de-coordenadas.ts";
 import { coordenadasDoMunicipio } from "./coordenadas-dos-municipios.js";
 import {
   filaDoEditor,
@@ -17,73 +32,113 @@ import {
 
 /* Identidade da fonte, sem reconciliação por nome: índice + nome + código são
    conferidos novamente pelo banco antes de gravar. */
-export function pontosEditaveisDoMapa(lmap, redeCnes, chaveDsei) {
-  const pontos = [];
-  const incluir = (alvo, nome, latitude, longitude, localidade = "") => {
+const texto = (valor: unknown) =>
+  typeof valor === "string" || typeof valor === "number" ? String(valor) : "";
+const lista = (valor: unknown): unknown[] =>
+  Array.isArray(valor) ? valor : [];
+const registro = (valor: unknown): Record<string, unknown> =>
+  registroDoEditor(valor) ? valor : {};
+const posicao = (valor: unknown): number | null => {
+  if (
+    (typeof valor !== "number" && typeof valor !== "string") ||
+    String(valor).trim() === ""
+  )
+    return null;
+  const numero = Number(valor);
+  return Number.isFinite(numero) ? numero : null;
+};
+
+export function pontosEditaveisDoMapa(
+  lmap: unknown,
+  redeCnes: unknown,
+  chaveDsei?: string | null,
+): PontoEditavelIndigena[] {
+  const pontos: PontoEditavelIndigena[] = [];
+  const incluir = (
+    alvo: AlvoDaCoordenadaIndigena,
+    nome: string,
+    latitude: unknown,
+    longitude: unknown,
+    localidade = "",
+  ) => {
+    if (!alvo.nome.trim()) return;
     pontos.push({
       id: JSON.stringify(alvo),
       alvo,
       nome,
       localidade,
-      latitude: latitude == null ? null : Number(latitude),
-      longitude: longitude == null ? null : Number(longitude),
+      latitude: posicao(latitude),
+      longitude: posicao(longitude),
     });
   };
-  (lmap?.dsei || []).forEach((dsei, indice) => {
-    if (chaveDsei && dsei.k !== chaveDsei) return;
+  // Iterar a lista original preserva o índice que o banco confere ao gravar.
+  lista(registro(lmap).dsei).forEach((valor, indice) => {
+    const dsei = registro(valor);
+    if (
+      typeof dsei.k !== "string" ||
+      !dsei.k ||
+      (chaveDsei && dsei.k !== chaveDsei)
+    )
+      return;
+    const chave = dsei.k;
     incluir(
       {
         fonte: "lmap",
         tipo: "sede",
-        dsei: dsei.k,
+        dsei: chave,
         indice,
         codigo: null,
-        nome: dsei.n,
+        nome: texto(dsei.n),
       },
-      `Sede · ${dsei.n}`,
+      `Sede · ${texto(dsei.n)}`,
       dsei.lat,
       dsei.lon,
     );
-    (dsei.polos || []).forEach((polo, i) =>
+    lista(dsei.polos).forEach((valorDoPolo, i) => {
+      const polo = registro(valorDoPolo);
       incluir(
         {
           fonte: "lmap",
           tipo: "polo",
-          dsei: dsei.k,
+          dsei: chave,
           indice: i,
-          codigo: polo.cod == null ? null : String(polo.cod),
-          nome: polo.n,
+          codigo: polo.cod == null ? null : texto(polo.cod),
+          nome: texto(polo.n),
         },
-        `Polo · ${polo.n}`,
+        `Polo · ${texto(polo.n)}`,
         polo.lat,
         polo.lon,
-        polo.uf || "",
-      ),
-    );
+        texto(polo.uf),
+      );
+    });
   });
-  Object.entries(redeCnes?.rede || {}).forEach(([dsei, rede]) => {
+  Object.entries(registro(registro(redeCnes).rede)).forEach(([dsei, valor]) => {
     if (chaveDsei && dsei !== chaveDsei) return;
-    for (const tipo of ["u", "c"]) {
-      (rede[tipo] || []).forEach((ponto, indice) =>
+    const rede = registro(valor);
+    for (const tipo of ["u", "c"] as const) {
+      lista(rede[tipo]).forEach((valorDoPonto, indice) => {
+        if (!Array.isArray(valorDoPonto)) return;
+        const ponto: unknown[] = valorDoPonto;
         incluir(
           {
             fonte: "rede_cnes",
             tipo,
             dsei,
             indice,
-            codigo: ponto[1] == null ? null : String(ponto[1]),
-            nome: ponto[0],
+            codigo: ponto[1] == null ? null : texto(ponto[1]),
+            nome: texto(ponto[0]),
           },
-          `${tipo === "c" ? "CASAI" : tipo === "p" ? "Polo CNES" : "Unidade CNES"} · ${ponto[0]}`,
+          `${tipo === "c" ? "CASAI" : "Unidade CNES"} · ${texto(ponto[0])}`,
           ponto[2],
           ponto[3],
-          [ponto[4], ponto[5]].filter(Boolean).join(" · "),
-        ),
-      );
+          [texto(ponto[4]), texto(ponto[5])].filter(Boolean).join(" · "),
+        );
+      });
     }
   });
   if (!chaveDsei) {
-    (lmap?.casai || []).forEach((ponto, indice) =>
+    lista(registro(lmap).casai).forEach((valor, indice) => {
+      const ponto = registro(valor);
       incluir(
         {
           fonte: "lmap",
@@ -91,30 +146,32 @@ export function pontosEditaveisDoMapa(lmap, redeCnes, chaveDsei) {
           dsei: null,
           indice,
           codigo: null,
-          nome: ponto.n,
+          nome: texto(ponto.n),
         },
-        `CASAI · ${ponto.n}`,
+        `CASAI · ${texto(ponto.n)}`,
         ponto.lat,
         ponto.lon,
-        ponto.cidade || "",
-      ),
-    );
-    (redeCnes?.nac || []).forEach((ponto, indice) =>
+        texto(ponto.cidade),
+      );
+    });
+    lista(registro(redeCnes).nac).forEach((valor, indice) => {
+      if (!Array.isArray(valor)) return;
+      const ponto: unknown[] = valor;
       incluir(
         {
           fonte: "rede_cnes",
           tipo: "nac",
           dsei: null,
           indice,
-          codigo: ponto[1] == null ? null : String(ponto[1]),
-          nome: ponto[0],
+          codigo: ponto[1] == null ? null : texto(ponto[1]),
+          nome: texto(ponto[0]),
         },
-        `CASAI nacional CNES · ${ponto[0]}`,
+        `CASAI nacional CNES · ${texto(ponto[0])}`,
         ponto[2],
         ponto[3],
-        ponto[4] || "",
-      ),
-    );
+        texto(ponto[4]),
+      );
+    });
   }
   return pontos;
 }
@@ -129,10 +186,19 @@ export function pontosEditaveisDoMapa(lmap, redeCnes, chaveDsei) {
 */
 
 /** Chave que liga a pendência ao alvo do ponto (fonte|tipo|dsei|codigo). */
-export const chaveDaPendencia = ({ fonte, tipo, dsei, codigo } = {}) =>
-  [fonte, tipo, dsei ?? "", codigo ?? ""].join("|");
+export const chaveDaPendencia = ({
+  fonte,
+  tipo,
+  dsei,
+  codigo,
+}: {
+  fonte?: unknown;
+  tipo?: unknown;
+  dsei?: unknown;
+  codigo?: unknown;
+} = {}) => [fonte, tipo, dsei, codigo].map(texto).join("|");
 
-const comparar = (a, b) => {
+const comparar = (a: PontoEditavelIndigena, b: PontoEditavelIndigena) => {
   const dseiA = a.alvo?.dsei || "";
   const dseiB = b.alvo?.dsei || "";
   if (!dseiA !== !dseiB) return dseiA ? -1 : 1;
@@ -157,22 +223,28 @@ const GRUPOS_DA_FONTE = Object.freeze({
  * município (quando a tabela de municípios a conhece); dentro de cada grupo,
  * da mais perto para a mais longe. Posição repetida da mesma fonte sai.
  */
-export function sugestoesDaPendencia(pendencia, ponto) {
+export function sugestoesDaPendencia(
+  pendencia: PendenciaDoEditor | null,
+  ponto: PontoEditavelIndigena | null,
+) {
   if (!pendencia) return [];
-  const candidatos = (pendencia.candidatos || []).map((c) => ({
-    fonte: c.f,
-    nome: c.n,
-    terra: c.ti,
-    latitude: c.lat,
-    longitude: c.lon,
-  }));
-  const municipio = coordenadasDoMunicipio(pendencia.municipio);
+  const candidatos = (pendenciasDoEditor([pendencia])[0]?.candidatos || []).map(
+    (c) => ({
+      fonte: c.f,
+      nome: c.n,
+      terra: c.ti,
+      latitude: c.lat,
+      longitude: c.lon,
+    }),
+  );
+  const municipio = coordenadasDoMunicipio(texto(pendencia.municipio));
   if (municipio)
     candidatos.push({
       fonte: "MUNICIPIO",
       nome: `${municipio.municipio}/${municipio.uf}`,
-      latitude: municipio.latitude,
-      longitude: municipio.longitude,
+      terra: undefined,
+      latitude: Number(municipio.latitude),
+      longitude: Number(municipio.longitude),
     });
   return listaDeSugestoes(candidatos, ponto, GRUPOS_DA_FONTE);
 }
@@ -184,7 +256,7 @@ export function sugestoesDaPendencia(pendencia, ponto) {
   sede do município, ponto coletor, posição do nome do município ou aldeia
   homônima fora do DSEI já são "erro". Sem aldeia sugerida, "revisar".
 */
-const MOTIVOS_DE_ERRO = Object.freeze({
+const MOTIVOS_DE_ERRO: Readonly<Record<string, string>> = Object.freeze({
   SEDE_MUNICIPAL: "Na sede do município",
   PONTO_COLETOR: "Em ponto coletor",
   NOME_MUNICIPIO: "Na posição do nome do município",
@@ -198,7 +270,10 @@ const FONTES_DE_ALDEIA = new Set(["IBGE", "FUNAI", "OSM", "PDSI"]);
  * Koiupanká a 18 km (Funai)") e a sugestão mais provável (a aldeia mais
  * perto; sem aldeia, a primeira sugestão), ou null.
  */
-export function gravidadeDaPendencia(pendencia, ponto) {
+export function gravidadeDaPendencia(
+  pendencia: PendenciaDoEditor | null,
+  ponto: PontoEditavelIndigena | null,
+): GravidadeDoPonto | null {
   if (!pendencia) return null;
   const sugestoes = sugestoesDaPendencia(pendencia, ponto);
   const aldeias = sugestoes
@@ -206,7 +281,7 @@ export function gravidadeDaPendencia(pendencia, ponto) {
     .sort((a, b) => (a.distanciaKm ?? Infinity) - (b.distanciaKm ?? Infinity));
   const melhor = aldeias[0] || sugestoes[0] || null;
   const km = aldeias[0]?.distanciaKm;
-  const motivoDeErro = MOTIVOS_DE_ERRO[pendencia.motivo_tipo] || "";
+  const motivoDeErro = rotuloDoMotivo(MOTIVOS_DE_ERRO, pendencia.motivo_tipo);
   const nivel = nivelDaGravidade({
     temSugestao: sugestoes.length > 0,
     motivoDeErro,
@@ -225,26 +300,39 @@ export function gravidadeDaPendencia(pendencia, ponto) {
 }
 
 /** As regras deste mapa para a fila comum (`filaDoEditor`). */
-export const REGRAS_DA_FILA = Object.freeze({
-  chaveDoPonto: (ponto) => chaveDaPendencia(ponto.alvo),
-  chaveDaPendencia,
-  gravidade: gravidadeDaPendencia,
-  textoDeBusca: (item) =>
-    [
-      item.nome,
-      item.alvo?.codigo,
-      item.localidade,
-      item.alvo?.dsei,
-      item.pendencia?.municipio,
-    ]
-      .filter(Boolean)
-      .join(" "),
-  comparar,
-});
+export const REGRAS_DA_FILA: RegrasDaFila<PontoEditavelIndigena> =
+  Object.freeze({
+    chaveDoPonto: (ponto: PontoEditavelIndigena) =>
+      chaveDaPendencia(ponto.alvo),
+    chaveDaPendencia,
+    gravidade: gravidadeDaPendencia,
+    textoDeBusca: (item: ItemDaFila<PontoEditavelIndigena>) =>
+      [
+        item.nome,
+        item.alvo?.codigo,
+        item.localidade,
+        item.alvo?.dsei,
+        item.pendencia?.municipio,
+      ]
+        .filter(Boolean)
+        .join(" "),
+    comparar,
+  });
 
 /**
  * A fila do editor deste mapa: busca por nome, CNES/código, município e
  * DSEI; em Só pendentes, o provável erro primeiro; depois DSEI e nome.
  */
-export const filaDeCoordenadas = (pontos, pendencias, opcoes) =>
-  filaDoEditor(pontos, pendencias, opcoes, REGRAS_DA_FILA);
+export const filaDeCoordenadas = (
+  pontos: readonly PontoEditavelIndigena[],
+  pendencias: readonly PendenciaDoEditor[],
+  opcoes?: OpcoesDaFila,
+) => filaDoEditor(pontos, pendencias, opcoes, REGRAS_DA_FILA);
+
+function rotuloDoMotivo(
+  motivos: Readonly<Record<string, string>>,
+  chave: unknown,
+): string {
+  const rotulo = motivos[texto(chave)];
+  return typeof rotulo === "string" ? rotulo : "";
+}

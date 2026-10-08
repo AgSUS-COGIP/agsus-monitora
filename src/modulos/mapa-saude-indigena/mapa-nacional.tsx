@@ -1,13 +1,20 @@
+import type {
+  PropsDaVisaoNacional,
+  TerritorioDoMapa,
+  DseiDoMapa,
+} from "../../lib/mapa-saude-indigena/tipos.ts";
+import type { MapaDoPainel } from "./tipos-do-painel.ts";
+import type { LequeDoMapa } from "./tipos-do-leaflet.ts";
 import { useEffect, useReducer, useRef } from "react";
 import {
   dicaDaBolha,
   dicaDaCasaiNacional,
   popupDaCasaiNacional,
-} from "../../lib/mapa-saude-indigena/mapa-nacional.js";
+} from "../../lib/mapa-saude-indigena/mapa-nacional.ts";
 import {
   formatarNumero,
   plural,
-} from "../../lib/mapa-saude-indigena/chaves.js";
+} from "../../lib/mapa-saude-indigena/chaves.ts";
 import { EVENTO_DAS_TERRAS } from "../../modules/indigenous-territories-layer.js";
 import { classes } from "../../ui/index.js";
 import { LegendaNacional } from "./legenda.tsx";
@@ -32,7 +39,7 @@ import {
 } from "./painel-do-mapa.tsx";
 import { usarUltimo } from "./usar-ultimo.ts";
 import { podeEditarCoordenadas } from "../../lib/access-roles.js";
-import { EditorDeCoordenadas } from "./editor-de-coordenadas.jsx";
+import { EditorDeCoordenadas } from "./editor-de-coordenadas.tsx";
 import {
   PainelDoEditor,
   usarModoDeEdicao,
@@ -45,17 +52,25 @@ import {
 const ZOOM_DE_PARTIDA_DA_VOLTA = 7;
 
 /* Redesenha quando a camada de Terras Indígenas avisa que mudou. */
-export function usarAvisosDasTerras(mapa) {
+export function usarAvisosDasTerras(mapa: MapaDoPainel | null) {
   const [vez, avisar] = useReducer((n) => n + 1, 0);
   useEffect(() => {
     if (!mapa?.on) return undefined;
     mapa.on(EVENTO_DAS_TERRAS, avisar);
-    return () => mapa.off?.(EVENTO_DAS_TERRAS, avisar);
+    return () => {
+      mapa.off?.(EVENTO_DAS_TERRAS, avisar);
+    };
   }, [mapa]);
   return vez;
 }
 
-function LinhaDoTerritorio({ territorio, aoEscolher }) {
+function LinhaDoTerritorio({
+  territorio,
+  aoEscolher,
+}: {
+  territorio: TerritorioDoMapa;
+  aoEscolher(dsei: DseiDoMapa): void;
+}) {
   const { dsei, vagas, preenchidas, situacao, posicao, detalhe } = territorio;
   return (
     <li>
@@ -99,7 +114,7 @@ function LinhaDoTerritorio({ territorio, aoEscolher }) {
   A visão nacional: o mapa na proporção que o Brasil preenche e, ao lado, os
   territórios por vagas (a mesma porta de entrada que a bolha). O painel, o
   topo, a moldura, a lista, o leque e o enquadramento são os comuns aos dois
-  mapas nacionais (painel-do-mapa.jsx, leaflet.js); o de Projetos usa os
+  mapas nacionais (painel-do-mapa.tsx, leaflet.js); o de Projetos usa os
   mesmos.
 */
 export function MapaNacional({
@@ -122,21 +137,22 @@ export function MapaNacional({
   acoes,
   aoEscolherDsei,
   aoFiltrarPorBusca,
-}) {
+}: PropsDaVisaoNacional) {
   const podeEditar = podeEditarCoordenadas(perfil);
-  const refDaLista = useRef(null);
+  const refDaLista = useRef<HTMLElement | null>(null);
   // Enquanto voa de volta ao Brasil, o "apareceu" do ResizeObserver não salta.
-  const voando = useRef(null);
+  const voando = useRef<(() => void) | null>(null);
   const { refDoMapa, mapa, camadas, ultimoEnquadramento, aparecimentos } =
     usarMapaDoBrasil(L, {
       emVoo: voando,
       visivel,
       telaCheia,
       aoCriar: (novo) => {
+        if (!L) throw new Error("Mapa indisponível.");
         const dsei = L.layerGroup().addTo(novo);
         const casai = L.layerGroup().addTo(novo);
         novo.__agsusSuspenderCamadasIndigenas?.(false);
-        const leque = criarLeque(L, novo, dsei);
+        const leque: LequeDoMapa = criarLeque(L, novo, dsei);
         return {
           dsei,
           casai,
@@ -162,7 +178,7 @@ export function MapaNacional({
 
   // Bolhas dos DSEIs e CASAIs nacionais.
   useEffect(() => {
-    if (!mapa || !camadas.current) return;
+    if (!L || !mapa || !camadas.current) return;
     const { dsei, casai, leque } = camadas.current;
     dsei.clearLayers();
     casai.clearLayers();
@@ -224,11 +240,11 @@ export function MapaNacional({
       if (voar) {
         voando.current?.();
         mapa.stop?.();
-        if (volta.partida)
+        if (volta?.partida)
           mapa.setView(volta.partida, ZOOM_DE_PARTIDA_DA_VOLTA, {
             animate: false,
           });
-        let prazo = 0;
+        let prazo: ReturnType<typeof setTimeout> | undefined;
         const pousar = () => {
           clearTimeout(prazo);
           mapa.off("moveend", pousar);
@@ -268,7 +284,9 @@ export function MapaNacional({
     if (voltaDoDsei.vez === voltaFocada.current) return;
     voltaFocada.current = voltaDoDsei.vez;
     const linha = [
-      ...(refDaLista.current?.querySelectorAll(".mapa-si-territorio") || []),
+      ...(refDaLista.current?.querySelectorAll<HTMLButtonElement>(
+        ".mapa-si-territorio",
+      ) || []),
     ].find((botao) => botao.dataset.dsei === voltaDoDsei.k);
     const alvo = linha || refDoMapa.current;
     alvo?.focus?.({ preventScroll: true });

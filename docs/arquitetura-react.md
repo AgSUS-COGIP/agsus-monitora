@@ -120,6 +120,19 @@ A área vem de `usarAreaAtual()`/`obterDadosDoMonitoramento()`, o tema de `usarT
 (`src/app/tema.js`), o aviso de `window.monitoraToast` (passado na montagem). O título e a área
 ficam no cabeçalho do app (`navegacao.definirTitulo`); a tela não repete.
 
+## Telas sob demanda (fora do pacote principal)
+
+A Visão geral e o casco (menu, cabeçalho, sessão, Aya) ficam no pacote principal. As demais telas
+de página inteira (Avaliação documental, Classificação, Entrevistas, Recursos, Lista de aprovados,
+Cronograma, Análises, Seleção) e as seções Acessos, Módulos e abas e Status das atualizações
+baixam na primeira abertura: em `src/main.js`, `window.<tela>Controller = telaSobDemanda({ secao,
+metodos, padroes, carregar: () => import("…").then((m) => m.montarX(…)) })`
+(`src/app/tela-sob-demanda.js`). O controlador mantém o contrato (`render()`, `abrirVisao()`…;
+`estado` só depois da carga, `carregar()` para esperar), a seção mostra "Carregando…" enquanto
+baixa, o item do menu pré-carrega no mouse/foco (`src/lib/carga-de-telas.js`) e o tour da Aya
+espera a carga. A base de verbetes da Aya baixa ao abrir o painel. Tela nova de página inteira
+entra assim, não com import estático em `main.js`.
+
 ## Como usar `ui/`
 
 Importe do índice: `import { Kpi, GradeDeKpis, Aviso } from "../../ui/index.js";`. O `ui.css` é

@@ -151,7 +151,7 @@ describe("telas operacionais: aparece, com a marca", () => {
 
   it("as três telas mostram o selo no seletor e no topo", () => {
     for (const arquivo of [
-      "src/modulos/entrevistas/conducao.jsx",
+      "src/modulos/entrevistas/seletor-do-edital.tsx",
       "src/modulos/avaliacao-documental/avaliacao-documental.jsx",
       "src/modulos/classificacao/classificacao.jsx",
     ]) {

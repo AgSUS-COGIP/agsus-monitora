@@ -242,6 +242,73 @@ function escalaDoRoteiro(
   return `(${partes.slice(0, -1).join("; ")} ou ${partes[partes.length - 1]})`;
 }
 
+/* O que deixa inapto e a ausência, em frases sem ponto (frasesDaNota e frasesDaEliminacao). */
+function eliminacao(
+  roteiro: RoteiroDoResumo,
+  competencias: CompetenciaDoResumo[],
+  comAspectos: boolean,
+): string[] {
+  const saida: string[] = [];
+  const inapto: string[] = [];
+  const minimos = competencias.map((c) => minimoEmPontos(c) as number | null);
+  const comMinimo = minimos.filter((m): m is number => m !== null);
+  if (comMinimo.length) {
+    const iguais = new Set(comMinimo).size === 1;
+    if (iguais && comMinimo.length === competencias.length)
+      inapto.push(
+        `abaixo de ${numeroBr(comMinimo[0] ?? 0)} em qualquer competência`,
+      );
+    else
+      inapto.push(
+        `abaixo do mínimo da competência (${competencias
+          .map((c, i) => {
+            const m = minimos[i];
+            return m === null || m === undefined
+              ? ""
+              : `${texto(c.nome)}: ${numeroBr(m)}`;
+          })
+          .filter(Boolean)
+          .join("; ")})`,
+      );
+  }
+  const eliminatorias = comAspectos
+    ? []
+    : (roteiro.notas_eliminatorias || [])
+        .map(numero)
+        .filter((n): n is number => n !== null);
+  if (eliminatorias.length)
+    inapto.push(
+      `com média ${listaBr(eliminatorias.map(numeroBr)).replace(/ e ([^ ]+)$/, " ou $1")} em alguma competência`,
+    );
+  const total = numero(roteiro.nota_minima_total);
+  if (total !== null) inapto.push(`abaixo de ${numeroBr(total)} no total`);
+  if (inapto.length)
+    saida.push(`${inapto.join(" ou ")}, o candidato fica inapto`);
+  saida.push(
+    roteiro.ausencia_elimina === false
+      ? "quem falta fica com nota 0, sem ser eliminado"
+      : "quem falta é eliminado",
+  );
+  return saida;
+}
+
+/**
+ * Só o que elimina, em frases simples para o editor do roteiro: "Abaixo de 2
+ * em qualquer competência ou abaixo de 8 no total, o candidato fica inapto."
+ * e "Quem falta é eliminado.".
+ */
+export function frasesDaEliminacao(
+  roteiro: RoteiroDoResumo | null | undefined,
+): string[] {
+  const competencias = competenciasEmOrdem(roteiro);
+  if (!roteiro) return [];
+  return eliminacao(
+    roteiro,
+    competencias,
+    Boolean(roteiro.aspectos?.length),
+  ).map((f) => comPonto(maiuscula(f)));
+}
+
 /**
  * As frases de "Como a nota é calculada": o que cada avaliador dá, a média,
  * o que deixa inapto e a ausência. `porCompetencia`: há avaliador que não
@@ -281,46 +348,7 @@ export function frasesDaNota(
     }; a nota final é a soma das competências, até ${numeroBr(pontuacaoMaxima(competencias))} pontos`,
   );
 
-  const inapto: string[] = [];
-  const minimos = competencias.map((c) => minimoEmPontos(c) as number | null);
-  const comMinimo = minimos.filter((m): m is number => m !== null);
-  if (comMinimo.length) {
-    const iguais = new Set(comMinimo).size === 1;
-    if (iguais && comMinimo.length === competencias.length)
-      inapto.push(
-        `abaixo de ${numeroBr(comMinimo[0] ?? 0)} em qualquer competência`,
-      );
-    else
-      inapto.push(
-        `abaixo do mínimo da competência (${competencias
-          .map((c, i) => {
-            const m = minimos[i];
-            return m === null || m === undefined
-              ? ""
-              : `${texto(c.nome)}: ${numeroBr(m)}`;
-          })
-          .filter(Boolean)
-          .join("; ")})`,
-      );
-  }
-  const eliminatorias = aspectos.length
-    ? []
-    : (roteiro.notas_eliminatorias || [])
-        .map(numero)
-        .filter((n): n is number => n !== null);
-  if (eliminatorias.length)
-    inapto.push(
-      `com média ${listaBr(eliminatorias.map(numeroBr)).replace(/ e ([^ ]+)$/, " ou $1")} em alguma competência`,
-    );
-  const total = numero(roteiro.nota_minima_total);
-  if (total !== null) inapto.push(`abaixo de ${numeroBr(total)} no total`);
-  if (inapto.length)
-    frases.push(`${inapto.join(" ou ")}, o candidato fica inapto`);
-  frases.push(
-    roteiro.ausencia_elimina === false
-      ? "quem falta fica com nota 0, sem ser eliminado"
-      : "quem falta é eliminado",
-  );
+  frases.push(...eliminacao(roteiro, competencias, aspectos.length > 0));
   return frases.map((f) => comPonto(maiuscula(f)));
 }
 

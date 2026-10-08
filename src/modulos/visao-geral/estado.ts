@@ -47,7 +47,7 @@ import {
 } from "../../componentes/dados-do-monitoramento.ts";
 import { hojeEmBrasilia } from "../../lib/cronograma-do-edital.js";
 import { semTreinamento } from "../../lib/edital-de-treinamento.js";
-import { chaveDoDsei } from "../../lib/mapa-saude-indigena/chaves.js";
+import { chaveDoDsei } from "../../lib/mapa-saude-indigena/chaves.ts";
 import {
   acompanhamentoDaResposta,
   CAMPOS,

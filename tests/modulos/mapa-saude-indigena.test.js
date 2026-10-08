@@ -4,7 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { EVENTO_TEMA_ALTERADO } from "../../src/lib/eventos-da-barra-lateral.js";
 import { CORES_DO_MAPA } from "../../src/lib/mapa-saude-indigena/formas.ts";
 import { EVENTO_DAS_TERRAS } from "../../src/modules/indigenous-territories-layer.js";
-import { MapaSaudeIndigena } from "../../src/modulos/mapa-saude-indigena/mapa-saude-indigena.jsx";
+import { MapaSaudeIndigena } from "../../src/modulos/mapa-saude-indigena/mapa-saude-indigena.tsx";
 import { clicar, teclar } from "../componentes/interacoes.js";
 import { criarLeafletFalso } from "./leaflet-falso.js";
 
@@ -781,4 +781,16 @@ describe("dicas e popups dentro do mapa", () => {
     const [casai] = leaflet.desenhadas(mapaVivo("map"), "marker");
     expect(casai.opcoesDoPopup).toMatchObject({ autoPan: true });
   });
+});
+
+it("abre o mapa com dados geográficos inválidos sem derrubar a tela", async () => {
+  await montar({
+    lmap: {
+      dsei: [null, { k: "A", n: "Distrito A", lat: [], lon: {}, polos: {} }],
+    },
+    redeCnes: { rede: [], nac: {} },
+    dseiSelecionado: "A",
+  });
+  expect(host.querySelector(".mapa-si-painel--dsei")).not.toBeNull();
+  expect(host.textContent).toContain("Nenhuma unidade georreferenciada.");
 });
