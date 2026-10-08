@@ -73,13 +73,42 @@ const limpar = (texto: unknown) =>
     .replace(/&nbsp;|&#160;/gi, " ")
     .replace(/\s+/g, " ")
     .trim();
-/* Como normalizarTexto de nota-declarada.js, sem o "Pergunta N - " do começo. */
-const comparavel = (texto: unknown) =>
-  limpar(texto)
+/*
+  O enunciado para casar (a mesma regra de chave_do_enunciado no robô): sem
+  "Pergunta N - ", tags, entidades, acentos, caixa e TUDO que não for letra ou
+  dígito — "Nível Superior: (frente" e "Nivel Superior:(frente" dão a mesma
+  chave. Casam iguais ou um prefixo do outro no tamanho do menor, com pelo
+  menos MINIMO_DO_PREFIXO caracteres (a coluna do Excel vem truncada).
+*/
+export const MINIMO_DO_PREFIXO = 20;
+const ENTIDADES: Record<string, string> = {
+  nbsp: " ",
+  amp: "&",
+  lt: "<",
+  gt: ">",
+  quot: '"',
+  "#39": "'",
+  "#160": " ",
+};
+export function chaveDoEnunciado(texto: unknown): string {
+  return String(texto ?? "")
+    .replace(/<[^>]{0,500}>/g, " ")
+    .replace(
+      /&(nbsp|amp|lt|gt|quot|#39|#160);/gi,
+      (_, e: string) => ENTIDADES[e.toLowerCase()] ?? " ",
+    )
+    .replace(/^\s*pergunta\s*[0-9]+\s*[-–—]\s*/i, "")
     .normalize("NFD")
     .replace(/[̀-ͯ]/g, "")
     .toLowerCase()
-    .replace(/^pergunta ?[0-9]+ ?[-–—] ?/, "");
+    .replace(/[^a-z0-9]/g, "");
+}
+export function enunciadosCasam(a: string, b: string): boolean {
+  if (!a || !b) return false;
+  const menor = Math.min(a.length, b.length);
+  if (a === b) return menor >= 5;
+  return menor >= MINIMO_DO_PREFIXO && a.slice(0, menor) === b.slice(0, menor);
+}
 
 const linkValido = (padrao: RegExp, link: unknown) => {
   const texto = String(link ?? "").trim();
@@ -134,8 +163,9 @@ export function enunciadoCompleto(coluna: unknown): string {
 }
 
 /**
- * Os anexos da coluna: os da coluna do Excel que o robô casou; sem ela, os de
- * enunciado igual — ou um começando pelo outro, com 20+ letras — numa única pergunta.
+ * Os anexos da coluna: os da coluna do Excel que o robô casou; sem ela, os da
+ * Ordem = N de "Pergunta N" com o enunciado confirmando (enunciadosCasam); senão
+ * os de enunciado que casa, numa única pergunta.
  */
 export function anexosDaColuna(
   anexos: readonly AnexoDaEmpregare[] | undefined,
@@ -145,20 +175,19 @@ export function anexosDaColuna(
   const alvo = limpar(coluna);
   const pelaColuna = anexos.filter((a) => a.coluna && a.coluna === alvo);
   if (pelaColuna.length) return pelaColuna;
-  const enunciado = comparavel(coluna);
-  if (enunciado.length < 5) return [];
-  const casa = (a: AnexoDaEmpregare) => {
-    const e = comparavel(a.enunciado);
-    if (e === enunciado) return true;
-    return (
-      e.length >= 20 &&
-      enunciado.length >= 20 &&
-      (e.startsWith(enunciado) || enunciado.startsWith(e))
-    );
-  };
+  const chave = chaveDoEnunciado(coluna);
+  if (!chave) return [];
+  const casa = (a: AnexoDaEmpregare) =>
+    enunciadosCasam(chave, chaveDoEnunciado(a.enunciado));
+  const umaPergunta = (lista: AnexoDaEmpregare[]) =>
+    new Set(lista.map((a) => `${a.resposta}:${a.pergunta}`)).size === 1;
+  const n = Number(PERGUNTA.exec(alvo)?.[1]);
+  if (n) {
+    const pelaOrdem = anexos.filter((a) => a.ordem === n && casa(a));
+    if (pelaOrdem.length && umaPergunta(pelaOrdem)) return pelaOrdem;
+  }
   const achados = anexos.filter(casa);
-  const perguntas = new Set(achados.map((a) => `${a.resposta}:${a.pergunta}`));
-  return perguntas.size === 1 ? achados : [];
+  return umaPergunta(achados) ? achados : [];
 }
 
 /**

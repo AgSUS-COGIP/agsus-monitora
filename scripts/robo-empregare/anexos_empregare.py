@@ -1384,7 +1384,14 @@ const caminhos = arguments[0] || [];
 Promise.all(caminhos.map(function (c) {
   return fetch(c, {method: 'GET', credentials: 'include', headers: {'X-Requested-With': 'XMLHttpRequest'}})
     .then(function (r) {
-      return r.text().then(function (t) {
+      return r.arrayBuffer().then(function (buf) {
+        const m = /charset=([^;]+)/i.exec(r.headers.get('content-type') || '');
+        let t;
+        try {
+          t = new TextDecoder(m ? m[1].trim() : 'utf-8', {fatal: true}).decode(buf);
+        } catch (e) {
+          try { t = new TextDecoder('windows-1252').decode(buf); } catch (e2) { t = new TextDecoder('utf-8').decode(buf); }
+        }
         let login = false;
         try { login = /login|entrar|signin/i.test(new URL(r.url).pathname); } catch (e) { login = false; }
         return {status: r.status, html: t.slice(0, 3000000), login: login};
@@ -1414,9 +1421,25 @@ _SEM_ARQUIVO = {"", "0", "1"}  # 0 "Não se aplica", 1 "Não possuo este documen
 _ARQUIVO = re.compile(r"^[A-Za-z0-9 _.()~+=-]{1,300}$")
 
 
+# UTF-8 lido como Latin-1: um caractere de início (Â…ô) seguido de 1 a 3 de continuação (–¿).
+_MOJIBAKE = re.compile("[Â-ô][-¿]{1,3}")
+
+
+def _desfazer(m):
+    try:
+        return m.group(0).encode("latin-1").decode("utf-8")
+    except (UnicodeEncodeError, UnicodeDecodeError):
+        return m.group(0)
+
+
+def consertar_acentos(texto):
+    """Trechos de UTF-8 lidos como Latin-1 ("NÃ­vel" → "Nível", "Ã s" → "às"); o resto fica igual."""
+    return _MOJIBAKE.sub(_desfazer, str(texto or ""))
+
+
 def _limpar_html(texto):
     """O enunciado sem tags e entidades, com espaços simples (o JSON pode trazer HTML/quebras)."""
-    t = re.sub(r"<[^>]{0,500}>", " ", str(texto or ""))
+    t = re.sub(r"<[^>]{0,500}>", " ", consertar_acentos(texto))
     t = html_unescape(t).replace("\xa0", " ")
     return re.sub(r"\s+", " ", t).strip()
 
@@ -1525,46 +1548,55 @@ def ler_detalhes_da_resposta(texto, token="", pessoa="", vaga=""):
     }
 
 
-def normalizar_texto(valor):
-    """Como normalizarTexto de nota-declarada.js: sem acento, minúsculo, espaços simples (&nbsp; vira espaço)."""
-    t = re.sub(r"&nbsp;|&#160;", " ", str(valor or ""), flags=re.I)
+_PREFIXO_DA_PERGUNTA = re.compile(r"^\s*pergunta\s*([0-9]+)\s*[-–—]\s*", re.I)
+MINIMO_DO_PREFIXO = 20  # letras e dígitos
+
+
+def chave_do_enunciado(valor):
+    """
+    O enunciado para casar: sem "Pergunta N - ", entidades e tags, acentos,
+    caixa e TUDO que não for letra ou dígito ("Nível Superior: (frente" e
+    "Nivel Superior:(frente" dão a mesma chave). A mesma regra de chaveDoEnunciado
+    em src/lib/avaliacao-documental/anexo-na-empregare.ts.
+    """
+    t = html_unescape(re.sub(r"<[^>]{0,500}>", " ", consertar_acentos(valor)))
+    t = _PREFIXO_DA_PERGUNTA.sub("", t)
     t = "".join(c for c in unicodedata.normalize("NFD", t) if not unicodedata.combining(c))
-    return re.sub(r"\s+", " ", t.lower()).strip()
+    return re.sub(r"[^a-z0-9]", "", t.lower())
 
 
-_PREFIXO_DA_PERGUNTA = re.compile(r"^pergunta ?[0-9]+ ?[-–—] ?")
+def enunciados_casam(a, b):
+    """Iguais, ou um prefixo do outro no tamanho do menor, com pelo menos MINIMO_DO_PREFIXO caracteres."""
+    if not a or not b:
+        return False
+    menor = min(len(a), len(b))
+    if a == b:
+        return menor >= 5
+    return menor >= MINIMO_DO_PREFIXO and a[:menor] == b[:menor]
 
 
-def _confirma(alvo, nome):
-    return nome == alvo or (len(alvo) >= 20 and len(nome) >= 20 and (nome.startswith(alvo) or alvo.startswith(nome)))
+def numero_da_coluna(coluna):
+    """O N de "Pergunta N - …", ou None."""
+    m = _PREFIXO_DA_PERGUNTA.match(html_unescape(str(coluna or "")))
+    return int(m.group(1)) if m else None
 
 
 def coluna_da_pergunta(enunciado, colunas, ordem=None):
     """
     A coluna do Excel ("Pergunta N - enunciado") da pergunta: a "Pergunta <Ordem>"
-    se o enunciado confirma (igual sem o prefixo, ou um começando pelo outro com
-    20+ letras); senão pelo enunciado em todas. Ambígua ou nenhuma → None.
+    se o enunciado confirma (enunciados_casam: a coluna pode vir truncada, com
+    espaço ou pontuação diferente); senão a única coluna cujo enunciado casa.
+    Ambígua ou nenhuma → None.
     """
-    alvo = _PREFIXO_DA_PERGUNTA.sub("", normalizar_texto(enunciado))
+    alvo = chave_do_enunciado(enunciado)
+    if not alvo:
+        return None
     if ordem is not None:
         for c in colunas or []:
-            nome = normalizar_texto(c)
-            if re.match(rf"^pergunta ?{int(ordem)} ?[-–—]", nome) and _confirma(
-                alvo, _PREFIXO_DA_PERGUNTA.sub("", nome)
-            ):
+            if numero_da_coluna(c) == int(ordem) and enunciados_casam(alvo, chave_do_enunciado(c)):
                 return c
-    if len(alvo) < 5:
-        return None
-    nomes = [(c, _PREFIXO_DA_PERGUNTA.sub("", normalizar_texto(c))) for c in colunas or [] if c]
-    iguais = [c for c, n in nomes if n == alvo]
-    if len(iguais) == 1:
-        return iguais[0]
-    if iguais:
-        return None
-    if len(alvo) < 20:
-        return None
-    parecidas = [c for c, n in nomes if len(n) >= 20 and (n.startswith(alvo) or alvo.startswith(n))]
-    return parecidas[0] if len(parecidas) == 1 else None
+    casadas = [c for c in colunas or [] if c and enunciados_casam(alvo, chave_do_enunciado(c))]
+    return casadas[0] if len(casadas) == 1 else None
 
 
 def buscar_detalhes(driver, pedidos):
