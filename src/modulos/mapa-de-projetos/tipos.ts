@@ -1,3 +1,7 @@
+import type {
+  FolgaDoEditor,
+  PontoDoEditor,
+} from "../../lib/tipos-do-editor-de-coordenadas.ts";
 import type { ReactNode } from "react";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { LinhaDoMonitoramento } from "../../componentes/tipos-do-monitoramento.ts";
@@ -87,7 +91,7 @@ export interface PropsDaLista {
   aoMudarEscolha(mudanca: Partial<EscolhaDoMapa>): void;
   aoEscolher(ponto: PontoDoMunicipio): void;
 }
-export interface PontoEditavelDoProjeto {
+export interface PontoEditavelDoProjeto extends PontoDoEditor {
   alvo: { lugar: string };
   latitude: number | null;
   longitude: number | null;
@@ -110,7 +114,7 @@ export interface PropsDoEditorDeProjetos {
   supabase?: SupabaseClient | null;
   aoAtualizarMapa(data: CorrecaoDoLugar, ponto: PontoEditavelDoProjeto): void;
   aoFechar?: () => void;
-  areaLivre?: () => unknown;
+  areaLivre?: () => FolgaDoEditor;
   versaoDaArea?: number;
   botaoDeRecolher?: ReactNode;
 }

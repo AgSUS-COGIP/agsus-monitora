@@ -20,8 +20,10 @@ regras e as competências de cada membro da banca (`resumo-das-regras.tsx`, `com
 `src/lib/resumo-da-entrevista.ts`)
 já nascem em TypeScript. O Mapa de Projetos está em TypeScript, incluindo carregador,
 cache, mapa, lista, balões, integração do editor e regras em `src/lib/visao-geral-da-area.ts`.
-O mapa da Saúde Indígena e as peças comuns de Leaflet e edição continuam em JavaScript,
-com contratos JSDoc na integração. Outros módulos
+O editor compartilhado pelos dois mapas também está em TypeScript: fila, sugestões, histórico,
+prévia, gravação, modo de edição e regras em `src/lib/editor-de-coordenadas.ts`. O mapa da
+Saúde Indígena e as peças comuns de criação do Leaflet continuam em JavaScript, com contratos
+JSDoc na integração. Outros módulos
 combinam JavaScript/JSX com migrações pontuais para TypeScript: a ficha da Avaliação documental
 tem os componentes em `src/modulos/avaliacao-documental/ficha/*.tsx` (contratos em `tipos.ts`) e
 `Popover` está em `src/ui/popover.tsx`. Componentes e helpers
@@ -102,6 +104,9 @@ das linhas e unidades e o hook de área atual. Contratos e limites estão em
 O Mapa de Projetos também está migrado; contratos, normalização dos municípios e limites
 da integração com as peças comuns estão em
 [../src/modulos/mapa-de-projetos/README.md](../src/modulos/mapa-de-projetos/README.md).
+
+O editor de coordenadas também está migrado; contratos e limites estão em
+[../src/modulos/editor-de-coordenadas/README.md](../src/modulos/editor-de-coordenadas/README.md).
 
 Escolher um módulo por entrega, levantar os consumidores e manter o comportamento coberto
 pelos testes. Declarar contratos de dados e ações sem `any` ou supressões de erros. Atualizar

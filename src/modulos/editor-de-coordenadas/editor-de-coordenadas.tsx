@@ -1,3 +1,27 @@
+import type { Dispatch, RefObject, SetStateAction } from "react";
+import type {
+  AlteracaoDoPonto,
+  PontoDoEditor,
+  SugestaoDoEditor,
+  FiltroDeGravidade,
+  FolgaDoEditor,
+} from "../../lib/tipos-do-editor-de-coordenadas.ts";
+import type { CoordenadasDoMapa } from "../../lib/tipos-do-mapa.ts";
+import type { SupabaseClient } from "@supabase/supabase-js";
+import type {
+  PropsDoEditor,
+  PinDoEditor,
+  CorrecaoDoEditor,
+  AcaoDoEditor,
+  ArgumentosDaRpc,
+} from "./tipos.ts";
+import { eLeafletDoEditor, eMapaDoEditor } from "./leaflet-do-editor.ts";
+import {
+  registroDoEditor,
+  pendenciasDoEditor,
+  historicoDoEditor,
+  correcaoDoEditor,
+} from "../../lib/respostas-do-editor-de-coordenadas.ts";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { podeEditarCoordenadas } from "../../lib/access-roles.js";
 import {
@@ -5,25 +29,42 @@ import {
   formatarDistancia,
   lerCoordenada,
   validarCorrecaoDoMapa,
-} from "../../lib/editor-de-coordenadas.js";
+} from "../../lib/editor-de-coordenadas.ts";
 import { CORES_DO_MAPA } from "../../lib/mapa-saude-indigena/formas.js";
 import { Aviso, Campo, Selo, classes } from "../../ui/index.js";
 import { usarUltimo } from "../mapa-saude-indigena/usar-ultimo.js";
-import { FilaDeCoordenadas } from "./fila-de-coordenadas.jsx";
-import { HistoricoDoPonto } from "./historico-do-ponto.jsx";
-import { SugestoesDoPonto } from "./sugestoes-do-ponto.jsx";
+import { FilaDeCoordenadas } from "./fila-de-coordenadas.tsx";
+import { HistoricoDoPonto } from "./historico-do-ponto.tsx";
+import { SugestoesDoPonto } from "./sugestoes-do-ponto.tsx";
 
 export const LIMITE_DO_HISTORICO = 5;
 
 /* Sugestões desenhadas em azul (posição oficial); as outras, em laranja. */
 const FONTES_EM_AZUL = new Set(["CNES", "MUNICIPIO", "UF"]);
 
-const textoDaPosicao = (valor) => (valor == null ? "" : String(valor));
-const mensagemDoErro = (erro, reserva) => erro?.message || reserva;
+const textoDaPosicao = (valor: number | null | undefined) =>
+  valor == null ? "" : String(valor);
+const mensagemDoErro = (erro: unknown, reserva: string) =>
+  registroDoEditor(erro) && typeof erro.message === "string"
+    ? erro.message || reserva
+    : reserva;
 
 /* Lê uma RPC de lista (pendências, histórico) com o estado de carga. */
-function usarLista(ultimos, ativo, nome, argumentos, chave, erroPadrao) {
-  const [estado, definirEstado] = useState(() => ({
+interface EstadoDaLista<T> {
+  lista: T[];
+  carregando: boolean;
+  erro: string;
+}
+function usarLista<T>(
+  ultimos: RefObject<{ supabase?: SupabaseClient | null }>,
+  ativo: boolean,
+  nome: string,
+  argumentos: (() => ArgumentosDaRpc) | null,
+  chave: string,
+  erroPadrao: string,
+  normalizar: (valor: unknown) => T[],
+): [EstadoDaLista<T>, Dispatch<SetStateAction<EstadoDaLista<T>>>] {
+  const [estado, definirEstado] = useState<EstadoDaLista<T>>(() => ({
     lista: [],
     carregando: Boolean(ativo),
     erro: "",
@@ -45,7 +86,7 @@ function usarLista(ultimos, ativo, nome, argumentos, chave, erroPadrao) {
         if (resposta?.error) throw resposta.error;
         if (vivo)
           definirEstado({
-            lista: Array.isArray(resposta?.data) ? resposta.data : [],
+            lista: normalizar(resposta?.data),
             carregando: false,
             erro: "",
           });
@@ -62,7 +103,7 @@ function usarLista(ultimos, ativo, nome, argumentos, chave, erroPadrao) {
       vivo = false;
     };
     // `argumentos` é derivado de `chave` (só ela dispara nova leitura).
-  }, [ativo, nome, chave, ultimos, erroPadrao]);
+  }, [ativo, nome, chave, ultimos, erroPadrao, normalizar]);
   return [estado, definirEstado];
 }
 
@@ -83,22 +124,19 @@ function usarLista(ultimos, ativo, nome, argumentos, chave, erroPadrao) {
     `argumentosDoHistorico(ponto, limite)`;
   - `textos`: { busca, lista } e `detalheDoItem(item)` para a fila.
 
-  No modo de edição (modo-de-edicao.jsx) o editor flutua sobre o mapa:
+  No modo de edição (modo-de-edicao.tsx) o editor flutua sobre o mapa:
   `areaLivre()` devolve os paddings do Leaflet que descontam o painel (o
   enquadramento do ponto e da sugestão cai na parte visível), `versaoDaArea`
   muda quando o painel recolhe ou abre (o pin volta para a área livre) e
   `botaoDeRecolher` vai no topo, ao lado de "Voltar à lista".
 */
-const FOLGA_PADRAO = Object.freeze({ padding: [48, 48] });
+const FOLGA_PADRAO: FolgaDoEditor = Object.freeze({
+  padding: [48, 48] as [number, number],
+});
 
-/**
- * @template {object} P
- * @template {object} D
- * @param {{L: unknown, mapa: import('../../lib/tipos-do-mapa.ts').MapaNacional | null, pontos: readonly P[], fonte: object, perfil?: object | null, supabase?: import('@supabase/supabase-js').SupabaseClient | null, aoAtualizarMapa: (data: D, ponto: P) => void, aoFechar?: () => void, areaLivre?: () => unknown, versaoDaArea?: number, botaoDeRecolher?: import('react').ReactNode}} props
- */
-export function EditorDeCoordenadas({
-  L,
-  mapa,
+export function EditorDeCoordenadas<P extends PontoDoEditor>({
+  L: recebidoL,
+  mapa: recebidoMapa,
   pontos,
   fonte,
   perfil,
@@ -108,7 +146,9 @@ export function EditorDeCoordenadas({
   areaLivre,
   versaoDaArea = 0,
   botaoDeRecolher = null,
-}) {
+}: PropsDoEditor<P>) {
+  const L = eLeafletDoEditor(recebidoL) ? recebidoL : null;
+  const mapa = eMapaDoEditor(recebidoMapa) ? recebidoMapa : null;
   const permitido = podeEditarCoordenadas(perfil);
   const ultimos = usarUltimo({
     permitido,
@@ -125,10 +165,11 @@ export function EditorDeCoordenadas({
     null,
     "pendencias",
     "Não foi possível carregar as pendências.",
+    pendenciasDoEditor,
   );
   const [busca, definirBusca] = useState("");
   const [soPendentes, definirSoPendentes] = useState(true);
-  const [gravidade, definirGravidade] = useState("");
+  const [gravidade, definirGravidade] = useState<FiltroDeGravidade>("");
   const fila = useMemo(
     () =>
       fonte.fila(pontos, pendencias.lista, {
@@ -164,11 +205,13 @@ export function EditorDeCoordenadas({
   const [versaoDoHistorico, definirVersaoDoHistorico] = useState(0);
   const [historico] = usarLista(
     ultimos,
-    permitido && Boolean(id),
+    permitido && Boolean(ponto),
     fonte.rpc.historico,
-    () => fonte.argumentosDoHistorico(ponto, LIMITE_DO_HISTORICO),
+    () =>
+      ponto ? fonte.argumentosDoHistorico(ponto, LIMITE_DO_HISTORICO) : {},
     `${id}#${versaoDoHistorico}`,
     "Não foi possível carregar o histórico.",
+    historicoDoEditor,
   );
   const [latitude, definirLatitude] = useState("");
   const [longitude, definirLongitude] = useState("");
@@ -176,8 +219,8 @@ export function EditorDeCoordenadas({
   const [erro, definirErro] = useState("");
   const [mensagem, definirMensagem] = useState("");
   const [salvando, definirSalvando] = useState(false);
-  const [confirmando, definirConfirmando] = useState(null);
-  const marcador = useRef(null);
+  const [confirmando, definirConfirmando] = useState<AcaoDoEditor | null>(null);
+  const marcador = useRef<PinDoEditor | null>(null);
   const montado = useRef(true);
   const latitudeNumero = lerCoordenada(latitude);
   const longitudeNumero = lerCoordenada(longitude);
@@ -204,8 +247,11 @@ export function EditorDeCoordenadas({
   useEffect(() => {
     if (!permitido || !mapa || !L || !ponto) return undefined;
     const posicao =
-      Number.isFinite(ponto.latitude) && Number.isFinite(ponto.longitude)
-        ? [ponto.latitude, ponto.longitude]
+      ponto.latitude != null &&
+      ponto.longitude != null &&
+      Number.isFinite(ponto.latitude) &&
+      Number.isFinite(ponto.longitude)
+        ? ([ponto.latitude, ponto.longitude] as CoordenadasDoMapa)
         : mapa.getCenter();
     const pin = L.marker(posicao, {
       draggable: true,
@@ -244,12 +290,15 @@ export function EditorDeCoordenadas({
   */
   useEffect(() => {
     if (!permitido || !mapa || !L || !ponto) return undefined;
-    const atual =
-      Number.isFinite(ponto.latitude) && Number.isFinite(ponto.longitude)
+    const atual: CoordenadasDoMapa | null =
+      ponto.latitude != null &&
+      ponto.longitude != null &&
+      Number.isFinite(ponto.latitude) &&
+      Number.isFinite(ponto.longitude)
         ? [ponto.latitude, ponto.longitude]
         : null;
     const camada = L.layerGroup().addTo(mapa);
-    let melhor = null;
+    let melhor: SugestaoDoEditor | null = null;
     for (const s of sugestoes) {
       const destaque = s.id === idDaMelhor;
       if (destaque) melhor = s;
@@ -282,7 +331,7 @@ export function EditorDeCoordenadas({
       camada.addLayer(circulo);
     }
     if (atual && melhor) {
-      const destino = [melhor.latitude, melhor.longitude];
+      const destino: CoordenadasDoMapa = [melhor.latitude, melhor.longitude];
       camada.addLayer(
         L.polyline([atual, destino], {
           color: CORES_DO_MAPA.traco,
@@ -331,11 +380,11 @@ export function EditorDeCoordenadas({
     definirErro("");
     definirMensagem("");
   };
-  const editar = (definir, valor) => {
+  const editar = (definir: Dispatch<SetStateAction<string>>, valor: string) => {
     definir(valor);
     limparAvisos();
   };
-  const usarSugestao = (sugestao) => {
+  const usarSugestao = (sugestao: SugestaoDoEditor) => {
     definirLatitude(sugestao.latitude.toFixed(6));
     definirLongitude(sugestao.longitude.toFixed(6));
     limparAvisos();
@@ -345,24 +394,28 @@ export function EditorDeCoordenadas({
     definirLongitude(textoDaPosicao(ponto?.longitude));
     limparAvisos();
   };
-  const aplicarResposta = (data, alvo) => {
+  const aplicarResposta = (data: CorrecaoDoEditor, alvo: P) => {
     ultimos.current.aoAtualizarMapa?.(data, alvo);
     if (typeof data?.conferido === "boolean") {
+      const conferido = data.conferido;
       const { chaveDoPonto, chaveDaPendencia } = ultimos.current.fonte;
       const chave = chaveDoPonto(alvo);
       definirPendencias((atual) => ({
         ...atual,
         lista: atual.lista.map((p) =>
-          chaveDaPendencia(p) === chave
-            ? { ...p, conferido: data.conferido }
-            : p,
+          chaveDaPendencia(p) === chave ? { ...p, conferido } : p,
         ),
       }));
     }
     definirVersaoDoHistorico((v) => v + 1);
   };
-  const chamar = async (nome, argumentos, sucesso) => {
+  const chamar = async (
+    nome: string,
+    argumentos: ArgumentosDaRpc,
+    sucesso: string,
+  ) => {
     const alvo = ponto;
+    if (!alvo) return;
     definirSalvando(true);
     definirErro("");
     try {
@@ -374,7 +427,9 @@ export function EditorDeCoordenadas({
       );
       if (error) throw error;
       if (!ultimos.current.permitido) return;
-      aplicarResposta(data, alvo);
+      const resposta = correcaoDoEditor(data);
+      if (!resposta) throw new Error("Resposta inválida ao salvar coordenada.");
+      aplicarResposta(resposta, alvo);
       if (!montado.current) return;
       definirConfirmando(null);
       definirMotivo("");
@@ -388,7 +443,7 @@ export function EditorDeCoordenadas({
       if (montado.current) definirSalvando(false);
     }
   };
-  const enviar = async (acao) => {
+  const enviar = async (acao: AcaoDoEditor) => {
     if (salvando || !ponto || !ultimos.current.permitido) return;
     const falha = validarCorrecaoDoMapa(
       latitudeNumero,
@@ -420,7 +475,10 @@ export function EditorDeCoordenadas({
       conferir ? "Ponto conferido." : "Coordenada salva.",
     );
   };
-  const desfazerAlteracao = async (alteracao, motivoDoDesfazer) => {
+  const desfazerAlteracao = async (
+    alteracao: AlteracaoDoPonto,
+    motivoDoDesfazer: string,
+  ) => {
     if (salvando || !ponto || !alteracao || !ultimos.current.permitido) return;
     await chamar(
       fonte.rpc.desfazer,
@@ -428,8 +486,11 @@ export function EditorDeCoordenadas({
       "Alteração desfeita.",
     );
   };
-  const textoDoBotao = (acao, rotulo, confirmacao) =>
-    confirmando === acao ? (salvando ? "Salvando…" : confirmacao) : rotulo;
+  const textoDoBotao = (
+    acao: AcaoDoEditor,
+    rotulo: string,
+    confirmacao: string,
+  ) => (confirmando === acao ? (salvando ? "Salvando…" : confirmacao) : rotulo);
 
   return (
     <form

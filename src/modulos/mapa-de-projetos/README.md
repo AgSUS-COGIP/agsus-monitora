@@ -91,8 +91,9 @@ valores `unknown`. A normalização não audita nomes geográficos nem garante u
 posição dentro do Brasil. Coordenada ausente continua permitindo a referência local
 para respostas antigas; coordenada nula do banco mantém o lugar sem ponto.
 
-As peças comuns de Leaflet, modo de edição e editor seguem em JavaScript, com
-contratos JSDoc nas integrações utilizadas aqui. As regras de correção em
+O editor compartilhado e o modo de edição estão em TypeScript (contratos e limites em
+`../editor-de-coordenadas/README.md`). As peças comuns de criação do Leaflet seguem em
+JavaScript, com contratos JSDoc nas integrações utilizadas aqui. As regras de correção em
 `src/lib/coordenadas-dos-projetos.js` também seguem compartilhadas em JavaScript.
 O contrato mínimo do mapa fica em `src/lib/tipos-do-mapa.ts`; ele não cobre toda
 a API do Leaflet. As permissões e RPCs de gravação continuam as mesmas.

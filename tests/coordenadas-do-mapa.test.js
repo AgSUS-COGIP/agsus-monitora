@@ -14,7 +14,7 @@ import {
   rotuloDaAcao,
   textoDePendentes,
   validarCorrecaoDoMapa,
-} from "../src/lib/editor-de-coordenadas.js";
+} from "../src/lib/editor-de-coordenadas.ts";
 
 describe("coordenadas do mapa", () => {
   it("separa pontos de mesmo nome pelo endereço exato da fonte e preserva posição sem coordenada", () => {

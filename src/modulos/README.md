@@ -19,3 +19,7 @@ peça, não uma tela: o mapa da Visão geral da Saúde Indígena, ligado em `vis
 desfazer) comum aos mapas da Saúde Indígena e de Projetos. `chat/` (Mensagens) também não é
 tela: o ícone do cabeçalho e o painel lateral de conversas.
 Guia completo, com o mapa de hoje → alvo: `docs/arquitetura-react.md`.
+
+`editor-de-coordenadas/` está em TypeScript: editor compartilhado pelos mapas de Projetos e
+Saúde Indígena, com fila, sugestões, histórico, modo de edição e regras comuns. Contratos e
+limites no README do módulo.
