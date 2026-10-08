@@ -46,6 +46,9 @@ export function abrirEstabelecimento(a) {
 }
 
 /* Os pontos de saúde de um DSEI, sem repetição e só com coordenada. */
+/** @param {import("./tipos.ts").DseiDoMapa} dsei
+ * @param {import("./tipos.ts").RedeCnesDoMapa} redeCnes
+ * @returns {import("./tipos.ts").RegistroDoDsei[]} */
 export function registrosDoDsei(dsei, redeCnes) {
   if (!dsei?.k) return [];
   const rede = redeCnes?.rede?.[dsei.k] || { u: [], c: [] };
@@ -73,16 +76,18 @@ export function registrosDoDsei(dsei, redeCnes) {
 
   const { reconciliados, estabelecimentosUsados } = reconciliarDsei({
     dseiChave: dsei.k,
-    polos: (dsei.polos || []).map((p) => ({
-      nome: p.n,
-      cnes: p.cnes || "",
-      // Posição do polo: a do lmap, sem substituição.
-      lat: Number(p.lat),
-      lon: Number(p.lon),
-      uf: p.uf,
-      cod: p.cod ?? null,
-      tipo: "polo",
-    })),
+    polos: (dsei.polos || [])
+      .filter((p) => temCoordenada(p.lat, p.lon))
+      .map((p) => ({
+        nome: p.n,
+        cnes: p.cnes || "",
+        // Posição do polo: a do lmap, sem substituição.
+        lat: Number(p.lat),
+        lon: Number(p.lon),
+        uf: p.uf,
+        cod: p.cod ?? null,
+        tipo: "polo",
+      })),
     estabelecimentos: unicos,
   });
 
@@ -101,7 +106,7 @@ export function registrosDoDsei(dsei, redeCnes) {
   // Polos que a reconciliação não casou continuam a existir.
   const unidos = new Set(reconciliados.map((u) => u.nomes?.lmap));
   const polosSoltos = (dsei.polos || [])
-    .filter((p) => !unidos.has(p.n))
+    .filter((p) => !unidos.has(p.n) && temCoordenada(p.lat, p.lon))
     .map((p) => ({
       name: p.n,
       cnes: "",
@@ -147,6 +152,9 @@ export function registrosDoDsei(dsei, redeCnes) {
   linha pontilhada até a sede); sem UF utilizável = indeterminado, que conta
   como local (sem prova, não se afirma que está fora).
 */
+/** @param {import("./tipos.ts").RegistroDoDsei[]} registros
+ * @param {import("./tipos.ts").DseiDoMapa} dsei
+ * @returns {import("./tipos.ts").RegistroDoDsei[]} */
 export function classificarRegistros(registros, dsei) {
   const ufs = dsei?.ufs || (dsei?.sedeuf ? [dsei.sedeuf] : []);
   return (registros || []).map((registro) => {
@@ -155,13 +163,19 @@ export function classificarRegistros(registros, dsei) {
   });
 }
 
+/** @param {import("./tipos.ts").RegistroDoDsei[]} registros
+ * @returns {import("./tipos.ts").RegistroDoDsei[]} */
 export const registrosExternos = (registros) =>
   (registros || []).filter((r) => r.vinculo === VINCULO_EXTERNO);
 
+/** @param {import("./tipos.ts").RegistroDoDsei[]} registros
+ * @returns {import("./tipos.ts").RegistroDoDsei[]} */
 export const registrosLocais = (registros) =>
   (registros || []).filter((r) => r.vinculo !== VINCULO_EXTERNO);
 
 /* Os tipos que o território tem, do mais frequente ao menos (os chips). */
+/** @param {import("./tipos.ts").RegistroDoDsei[]} registros
+ * @returns {{ tipo: import("./tipos.ts").RegistroDoDsei["type"], quantidade: number }[]} */
 export function tiposDoTerritorio(registros) {
   const mapa = new Map();
   for (const r of registros || []) {
@@ -173,6 +187,9 @@ export function tiposDoTerritorio(registros) {
 }
 
 /* Guarda os tipos OCULTOS: um tipo novo aparece por inteiro, não escondido. */
+/** @param {import("./tipos.ts").RegistroDoDsei[]} registros
+ * @param {Set<string>} ocultos
+ * @returns {import("./tipos.ts").RegistroDoDsei[]} */
 export const visiveis = (registros, ocultos) =>
   (registros || []).filter((r) => !ocultos?.has?.(r.type.key));
 
@@ -210,6 +227,8 @@ export function resumoDaRede(dsei, registros) {
 }
 
 /* A sede como registro (não entra nos totais nem nos filtros por tipo). */
+/** @param {import("./tipos.ts").DseiDoMapa} dsei
+ * @returns {import("./tipos.ts").RegistroDoDsei | null} */
 export function registroDaSede(dsei) {
   if (!dsei || !temCoordenada(dsei.lat, dsei.lon)) return null;
   return {
@@ -229,6 +248,9 @@ export function registroDaSede(dsei) {
   a 773 km encolheria o distrito até ficar ilegível) e "completo" (com as
   externas). Nenhum é recalculado a partir do que está na tela.
 */
+/** @param {import("./tipos.ts").DseiDoMapa} dsei
+ * @param {import("./tipos.ts").RegistroDoDsei[]} classificados
+ * @returns {{ territorio: import("../tipos-do-mapa.ts").CoordenadasDoMapa[], completo: import("../tipos-do-mapa.ts").CoordenadasDoMapa[] }} */
 export function limitesDoDsei(dsei, classificados) {
   const sede = temCoordenada(dsei?.lat, dsei?.lon)
     ? [[Number(dsei.lat), Number(dsei.lon)]]
@@ -304,6 +326,8 @@ export function popupDaSede(dsei) {
 }
 
 /* A linha da lista "Terras Indígenas e povos". */
+/** @param {import("./tipos.ts").TerraDoMapa} terra
+ * @returns {import("./tipos.ts").LinhaDaTerra} */
 export function linhaDaTerra(terra) {
   const c = terra?.caixa;
   return {

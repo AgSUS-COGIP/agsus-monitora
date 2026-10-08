@@ -26,4 +26,6 @@ limites no README do módulo.
 
 A base compartilhada dos mapas em `mapa-saude-indigena/` (painel, legenda, tela
 cheia, retorno ao Brasil e hooks) está em TypeScript; contratos em `tipos-do-painel.ts`.
-As telas nacional/DSEI e a fábrica Leaflet continuam em JavaScript.
+As telas principal, nacional e por DSEI da Saúde Indígena estão em TSX, com contratos
+e validação da entrada geográfica. A fábrica Leaflet e as regras geográficas de
+reconciliação, contagens e apresentação continuam em JavaScript.

@@ -1,3 +1,12 @@
+import type {
+  PropsDoMapaSaudeIndigena,
+  DseiDoMapa,
+} from "../../lib/mapa-saude-indigena/tipos.ts";
+import {
+  configuracaoDoMapa,
+  redeCnesDoMapa,
+} from "../../lib/mapa-saude-indigena/dados-do-mapa.ts";
+import { leafletDoMapa } from "./tipos-do-leaflet.ts";
 import { useCallback, useMemo, useRef } from "react";
 import { usarTemaEscuro } from "../../app/tema.js";
 import { chaveDoDsei } from "../../lib/mapa-saude-indigena/chaves.js";
@@ -14,8 +23,8 @@ import {
 } from "../../lib/mapa-saude-indigena/mapa-do-dsei.js";
 import { classes } from "../../ui/index.js";
 import { obterLeaflet } from "./leaflet.js";
-import { MapaDoDsei } from "./mapa-do-dsei.jsx";
-import { MapaNacional } from "./mapa-nacional.jsx";
+import { MapaDoDsei } from "./mapa-do-dsei.tsx";
+import { MapaNacional } from "./mapa-nacional.tsx";
 import { usarTelaCheia } from "./tela-cheia.tsx";
 import { usarEscParaVoltar, usarVoltaDoDsei } from "./volta-ao-brasil.ts";
 
@@ -31,9 +40,6 @@ import { usarEscParaVoltar, usarVoltaDoDsei } from "./volta-ao-brasil.ts";
   Não busca dados: recebe o `lmap` e o `rede_cnes` (TB_CONFIG_MAPA_SAUDE_INDIG,
   já com as Lotações) e os editais do recorte. Contrato em README.md.
 */
-/**
- * @param {{lmap: unknown, redeCnes: unknown, linhas?: readonly object[], filtroAtivo?: boolean, dseiSelecionado?: string | null, carregando?: boolean, tema?: string, idDoMapaNacional?: string, idDoMapaDoDsei?: string, aoEscolherDsei?: (dsei: {k: string, n: string}) => void, aoSairDoDsei?: () => void, aoFiltrarPorBusca?: (busca: string) => void, aoEscolherUnidade?: (unidade: unknown) => void, perfil?: object | null, supabase?: import("@supabase/supabase-js").SupabaseClient | null, aoAtualizarMapa?: (configuracao: {lmap?: unknown, rede_cnes?: unknown}) => void}} props
- */
 export function MapaSaudeIndigena({
   lmap,
   redeCnes,
@@ -51,17 +57,16 @@ export function MapaSaudeIndigena({
   perfil,
   supabase,
   aoAtualizarMapa,
-}) {
+}: PropsDoMapaSaudeIndigena) {
   const escuroDoApp = usarTemaEscuro();
   const escuro = tema ? tema === "escuro" : escuroDoApp;
-  const L = obterLeaflet();
+  const L = leafletDoMapa(obterLeaflet());
+  const configuracao = useMemo(() => configuracaoDoMapa(lmap), [lmap]);
+  const rede = useMemo(() => redeCnesDoMapa(redeCnes), [redeCnes]);
   const [telaCheia, botaoDeTelaCheia] = usarTelaCheia();
-  const regiao = useRef(null);
+  const regiao = useRef<HTMLDivElement | null>(null);
 
-  const dseis = useMemo(
-    () => (Array.isArray(lmap?.dsei) ? lmap.dsei : []),
-    [lmap],
-  );
+  const dseis = useMemo(() => configuracao.dsei, [configuracao]);
   const dsei = useMemo(() => {
     const chave = chaveDoDsei(dseiSelecionado);
     return chave ? dseis.find((d) => chaveDoDsei(d.k) === chave) || null : null;
@@ -85,8 +90,8 @@ export function MapaSaudeIndigena({
     [dseis, contagens, filtroAtivo],
   );
   const casais = useMemo(
-    () => casaisNacionais({ nac: redeCnes?.nac, contagens, filtroAtivo }),
-    [redeCnes, contagens, filtroAtivo],
+    () => casaisNacionais({ nac: rede.nac, contagens, filtroAtivo }),
+    [rede, contagens, filtroAtivo],
   );
   const territorios = useMemo(() => territoriosPorVagas(bolhas), [bolhas]);
   const enquadramento = useMemo(
@@ -98,14 +103,14 @@ export function MapaSaudeIndigena({
     O resumo da dica conta o que o mapa do DSEI desenha (mesma função): fica
     guardado por DSEI até chegarem dados novos (11 ms para os 34, medido).
   */
-  const resumos = useMemo(() => new Map(), [dseis, redeCnes]);
+  const resumos = useMemo(() => new Map<string, string[]>(), [dseis, rede]);
   const resumoDaRedeDoDsei = useCallback(
-    (d) => {
+    (d: DseiDoMapa) => {
       if (!resumos.has(d.k))
-        resumos.set(d.k, resumoDaRede(d, registrosDoDsei(d, redeCnes)));
-      return resumos.get(d.k);
+        resumos.set(d.k, resumoDaRede(d, registrosDoDsei(d, rede)));
+      return resumos.get(d.k) || [];
     },
-    [resumos, redeCnes],
+    [resumos, rede],
   );
 
   return (

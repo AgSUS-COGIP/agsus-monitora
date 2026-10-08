@@ -8,11 +8,11 @@ import {
 
 const guard = readFileSync("src/modules/map-guard.js", "utf8");
 const nacional = readFileSync(
-  "src/modulos/mapa-saude-indigena/mapa-nacional.jsx",
+  "src/modulos/mapa-saude-indigena/mapa-nacional.tsx",
   "utf8",
 );
 const doDsei = readFileSync(
-  "src/modulos/mapa-saude-indigena/mapa-do-dsei.jsx",
+  "src/modulos/mapa-saude-indigena/mapa-do-dsei.tsx",
   "utf8",
 );
 const cssDoModulo = readFileSync(

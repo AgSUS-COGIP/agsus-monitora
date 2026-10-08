@@ -21,9 +21,9 @@ regras e as competências de cada membro da banca (`resumo-das-regras.tsx`, `com
 já nascem em TypeScript. O Mapa de Projetos está em TypeScript, incluindo carregador,
 cache, mapa, lista, balões, integração do editor e regras em `src/lib/visao-geral-da-area.ts`.
 O editor compartilhado pelos dois mapas também está em TypeScript: fila, sugestões, histórico,
-prévia, gravação, modo de edição e regras em `src/lib/editor-de-coordenadas.ts`. O mapa da
-Saúde Indígena e as peças comuns de criação do Leaflet continuam em JavaScript, com contratos
-JSDoc na integração. Painel, lista, legenda, tela cheia, retorno ao Brasil e hooks dos
+prévia, gravação, modo de edição e regras em `src/lib/editor-de-coordenadas.ts`. As telas principal, nacional e por DSEI da Saúde Indígena também estão em TSX.
+As peças comuns de criação do Leaflet e as regras geográficas de reconciliação, contagens
+e apresentação permanecem em JavaScript, com contratos JSDoc na integração. Painel, lista, legenda, tela cheia, retorno ao Brasil e hooks dos
 mapas já estão em TypeScript, com contratos em `tipos-do-painel.ts`; formas e cores
 em `src/lib/mapa-saude-indigena/formas.ts`. Outros módulos
 combinam JavaScript/JSX com migrações pontuais para TypeScript: a ficha da Avaliação documental
@@ -123,5 +123,5 @@ Manter o servidor com seu `tsconfig.json`; configurações de DOM e JSX pertence
 As regras de coordenadas dos dois mapas e o adaptador do editor da Saúde Indígena
 também estão migrados. Os contratos dos alvos indígenas estão em
 `src/lib/tipos-das-coordenadas-do-mapa.ts`; o catálogo editável valida entradas
-externas sem alterar os índices conferidos pelo banco. A tela principal da
-Saúde Indígena ainda permanece em JavaScript.
+externas sem alterar os índices conferidos pelo banco. As telas recebem a entrada geográfica validada por `dados-do-mapa.ts`; a edição conserva
+os dados originais para preservar os alvos usados pelo banco.
