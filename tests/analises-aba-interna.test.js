@@ -76,9 +76,11 @@ describe("o legado trata Análises como página", () => {
       TELAS_REACT.analises(() => "", { analisesController: controlador }),
     ).toEqual(["Painel das análises", "", controlador]);
     expect(ler("src/app/navegacao.js")).not.toContain("abrirPaginaDoPainel");
-    expect(ler("src/main.js")).toContain(
-      "window.analisesController = montarAnalises({",
-    );
+    // Sob demanda (src/app/tela-sob-demanda.js): o módulo baixa na abertura.
+    const main = ler("src/main.js");
+    expect(main).toContain("window.analisesController = telaSobDemanda({");
+    expect(main).toContain('import("./modulos/analises/analises.tsx")');
+    expect(main).toContain("m.montarAnalises({");
   });
 
   it("os painéis carregados perdem o antigo de análises", () => {

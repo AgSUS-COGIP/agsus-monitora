@@ -7,6 +7,9 @@ regras e a ordem estão em **`docs/arquitetura-react.md`** — leia antes de cri
 Front com migração gradual para TypeScript/TSX: Seleção, Cronograma, Visão geral, Conferências, Status das atualizações, Análises curriculares, Módulos e abas, barra lateral, Busca global, dados compartilhados do monitoramento e componentes de `src/ui/`;
 O Mapa de Projetos também está em TypeScript, incluindo sua carga, lista, balões e integração do editor;
 o editor compartilhado pelos dois mapas também está em TypeScript (fila, sugestões, histórico, modo de edição e regras comuns);
+a base compartilhada dos mapas (painel, legenda, tela cheia, retorno ao Brasil e hooks) também está em TypeScript;
+as telas principal, nacional e por DSEI da Saúde Indígena também estão em TSX, com dados de entrada validados;
+as regras nacionais e distritais estão em TypeScript, com contratos JSDoc na fronteira da reconciliação compartilhada;
 guia em `docs/typescript-no-frontend.md`. O servidor também é TypeScript. **Português** em nomes
 de arquivo, funções e commits.
 

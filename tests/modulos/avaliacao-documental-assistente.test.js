@@ -6,6 +6,8 @@ import {
   redefinirDadosDoMonitoramento,
 } from "../../src/componentes/dados-do-monitoramento.ts";
 import { montarAvaliacaoDocumental } from "../../src/modulos/avaliacao-documental/avaliacao-documental.jsx";
+import { DESEMPATES_DA_PROVISORIA } from "../../src/lib/avaliacao-documental/catalogo.js";
+import { CATALOGO_DE_CRITERIOS } from "../../src/lib/classificacao/catalogo.js";
 import {
   clicar,
   digitar,
@@ -269,6 +271,123 @@ describe("assistente da regra", () => {
       supabase.rpc.mock.calls.some(([nome]) => nome === "salvar_regra_analise"),
     ).toBe(false);
   }, 20000);
+
+  it("passo 2: o grupo Na inscrição vem no topo", async () => {
+    await montar(supabaseFalso({ regra: regraSalva(1) }));
+    await clicar(passo("cardapio"));
+    const grupos = [
+      ...secao.querySelectorAll(".avd-ast-passo > .avd-ast-grupo"),
+    ];
+    expect(grupos[0].getAttribute("aria-label")).toBe("Na inscrição");
+    expect(grupos.map((g) => g.getAttribute("aria-label"))).toEqual(
+      expect.arrayContaining(["Requisitos que eliminam", "O que vale ponto"]),
+    );
+  });
+
+  it("passo 4: o catálogo inteiro de desempate, em grupos, marca os usados e acrescenta", async () => {
+    await montar(supabaseFalso({ regra: regraSalva(1) }));
+    await clicar(passo("nota"));
+    const [daClassificacao, daProvisoria] = secao.querySelectorAll(
+      "[data-acao='acrescentar-criterio']",
+    );
+    await clicar(daClassificacao);
+    const painel = secao.querySelector(".avd-ast-catalogo-painel");
+    const itens = painel.querySelectorAll("[data-criterio]");
+    expect(itens.length).toBe(CATALOGO_DE_CRITERIOS.length);
+    expect(
+      [...painel.querySelectorAll("[data-grupo]")].map((g) => g.dataset.grupo),
+    ).toEqual(["legal", "pontuacao", "experiencia", "idade", "outros"]);
+    const idoso = painel.querySelector("[data-criterio='IDOSO_60']");
+    expect(idoso.disabled).toBe(true);
+    expect(idoso.textContent).toContain("1º na lista");
+    await clicar(painel.querySelector("[data-criterio='PCD']"));
+    const lista = secao.querySelector("[data-tour='avd-assistente-desempate']");
+    expect(lista.textContent).toContain("Ser pessoa com deficiência");
+    // Busca sem acento.
+    await digitar(painel.querySelector("input[type='search']"), "saude");
+    expect(
+      [...painel.querySelectorAll("[data-criterio]")].map(
+        (b) => b.dataset.criterio,
+      ),
+    ).toEqual(["EXP_SAUDE_INDIGENA", "EXP_SAUDE_DIGITAL"]);
+    // A Provisória mostra o catálogo dela inteiro.
+    await clicar(daProvisoria);
+    const paineis = secao.querySelectorAll(".avd-ast-catalogo-painel");
+    expect(
+      paineis[paineis.length - 1].querySelectorAll("[data-criterio]").length,
+    ).toBe(DESEMPATES_DA_PROVISORIA.length);
+  });
+
+  it("passo 4: quem só lê a Classificação vê o aviso, sem seletor vazio", async () => {
+    await montar(
+      supabaseFalso({
+        regra: regraSalva(1),
+        apoio: {
+          classificacao: {
+            pode_ler: true,
+            pode_editar: false,
+            regra: { versao: 3, configuracao: CLASSIFICACAO },
+          },
+        },
+      }),
+    );
+    await clicar(passo("nota"));
+    const grupo = secao.querySelector("[aria-label='Regra de classificação']");
+    expect(grupo.textContent).toContain(
+      "Seu acesso à Classificação é de leitura",
+    );
+    expect(
+      grupo.querySelector("[data-acao='acrescentar-criterio']"),
+    ).toBeNull();
+  });
+
+  it("passo 5: Salvar diz o que falta e cada item leva ao passo e ao campo", async () => {
+    await montar(supabaseFalso({ regra: regraSalva(2) }));
+    await clicar(passo("conferir"));
+    const salvar = () => secao.querySelector("[data-acao='salvar-assistente']");
+    // Ordem: resumo, comparar, testar (fechado) e salvar.
+    const ordem = [
+      ...secao.querySelectorAll(
+        ".avd-ast-resumo, .avd-ast-comparar, .avd-previa, .avd-ast-salvar",
+      ),
+    ].map((s) => s.classList[1]);
+    expect(ordem).toEqual([
+      "avd-ast-resumo",
+      "avd-ast-comparar",
+      "avd-previa",
+      "avd-ast-salvar",
+    ]);
+    expect(secao.querySelector(".avd-previa-corpo")).toBeNull();
+    expect(salvar().disabled).toBe(true);
+    const falta = () => secao.querySelector("[data-impede='sim']");
+    expect(falta().textContent).toContain(
+      "Nenhuma mudança em relação à versão vigente",
+    );
+    await clicar(falta().querySelector("button"));
+    expect(passo("cardapio").getAttribute("aria-current")).toBe("step");
+    // Mudou a nota mínima: falta o motivo, que leva ao campo.
+    await clicar(passo("nota"));
+    await digitar(
+      secao.querySelector("[data-tour='avd-assistente-nota-minima'] input"),
+      "16",
+    );
+    await clicar(passo("conferir"));
+    expect(salvar().disabled).toBe(true);
+    expect(falta().textContent).toContain(
+      "Escreva o motivo da alteração (mín. 10 caracteres)",
+    );
+    await clicar(falta().querySelector("button"));
+    await esperar(() => new Promise((r) => requestAnimationFrame(r)));
+    expect(document.activeElement).toBe(
+      secao.querySelector("[data-campo='motivo'] input"),
+    );
+    await digitar(
+      secao.querySelector("[data-campo='motivo'] input"),
+      "Nota mínima do edital retificado",
+    );
+    expect(falta()).toBeNull();
+    expect(salvar().disabled).toBe(false);
+  });
 
   it("resumo de uma página e Copiar para o SEI", async () => {
     const writeText = vi.fn(async () => {});

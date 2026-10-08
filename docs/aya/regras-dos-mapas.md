@@ -2,7 +2,7 @@
 
 O mapa da Visão geral em cada área: DSEIs e CASAIs na Saúde Indígena, os locais das vagas em
 Projetos, nenhum na SEDE; e a auditoria das coordenadas. Fontes: `src/lib/visao-geral-da-area.ts`,
-`src/modulos/mapa-de-projetos/`, `src/lib/mapa-saude-indigena/mapa-do-dsei.js`,
+`src/modulos/mapa-de-projetos/`, `src/lib/mapa-saude-indigena/mapa-do-dsei.ts`,
 `docs/auditoria-oficial-das-coordenadas-2026-10-01.md` e a migration
 `20261001180000_locais_das_vagas_dos_projetos.sql`.
 
@@ -40,7 +40,7 @@ Projetos, nenhum na SEDE; e a auditoria das coordenadas. Fontes: `src/lib/visao-
 
 **perguntas:** lugares pendentes de projetos | gravidade dos lugares de projetos | sede do municipio ou endereco | sugestoes do lugar de projetos | lugar duvidoso no mapa de projetos
 **resposta:** A fila do editor de Projetos começa em "Só pendentes": são os lugares cuja posição ainda não foi conferida pelo administrador global ou por um Gestor. Na carga inicial, todo município aparece porque o ponto é só a sede do município (o edital diz o município, não o endereço), e todo lugar só com UF aparece porque o ponto é o centro do estado. Também ficam pendentes o lugar sem coordenada, o município cujo nome, código ou UF não batem, o mesmo município com coordenadas diferentes e o ponto fora do Brasil. A gravidade compara a posição com a referência do lugar (a sede do município pelo IBGE ou o centro da UF): "Provável erro" quando falta a coordenada, o motivo já é um erro ou a referência está a mais de 10 km; "Revisar" quando ela está entre 2 e 10 km, ou quando a lotação é um escritório e o edital só diz a UF; "Só confirmar" quando a posição é a da referência; e "Sem sugestão" quando não há posição candidata. As sugestões são a sede do município (IBGE), o centro da UF, a sede do DSEI do mapa da Saúde Indígena (para escritório distrital) e os outros lugares das vagas na mesma UF.
-**fonte:** src/lib/coordenadas-dos-projetos.js; src/lib/editor-de-coordenadas.ts; supabase/correcoes/20261002-pendencias-das-coordenadas-dos-projetos.sql
+**fonte:** src/lib/coordenadas-dos-projetos.ts; src/lib/editor-de-coordenadas.ts; supabase/correcoes/20261002-pendencias-das-coordenadas-dos-projetos.sql
 
 ## Mapa da Saúde Indígena
 
@@ -52,4 +52,4 @@ Projetos, nenhum na SEDE; e a auditoria das coordenadas. Fontes: `src/lib/visao-
 
 **perguntas:** de onde vem as coordenadas do mapa | coordenadas do mapa | auditoria das coordenadas | ponto errado no mapa | planilha de lotacoes no mapa
 **resposta:** No mapa da Saúde Indígena, toda coordenada vem do banco do MONITORA: os polos base e as sedes dos DSEIs do cadastro do mapa (lmap) e os estabelecimentos (UBSI, CASAI e demais unidades) do cadastro do CNES guardado no banco (rede_cnes). O mapa desenha exatamente o que está gravado; nada é recalculado na tela. Essas coordenadas foram auditadas em 01 e 02/10/2026 contra fontes oficiais: CNES (Ministério da Saúde), malhas municipais e Localidades Indígenas do Censo 2022 do IBGE, aldeias e terras indígenas da Funai, PDSI 2024–2027 de cada DSEI e OpenStreetMap. Em três rodadas, sempre com duas fontes independentes concordando, foram corrigidos no banco 162 polos e 2 CASAIs, com backup antes de cada rodada. 93 polos ainda aguardam confirmação do DSEI (só uma fonte, fontes que discordam ou nenhum homônimo oficial); eles aparecem na posição gravada no banco, sem aviso no popup. A planilha "Lotações, Meios de Acesso/Polo Base" não entra mais no mapa: ela tem erros e não há versão corrigida; os pontos que só existiam nela estão listados em docs/pontos-so-na-planilha-de-lotacoes.md para inclusão manual no banco, se a área confirmar. Para corrigir um ponto, a correção é feita no banco.
-**fonte:** docs/auditoria-oficial-das-coordenadas-2026-10-01.md; docs/pontos-so-na-planilha-de-lotacoes.md; src/lib/mapa-saude-indigena/mapa-do-dsei.js
+**fonte:** docs/auditoria-oficial-das-coordenadas-2026-10-01.md; docs/pontos-so-na-planilha-de-lotacoes.md; src/lib/mapa-saude-indigena/mapa-do-dsei.ts

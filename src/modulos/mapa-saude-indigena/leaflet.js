@@ -26,7 +26,7 @@ import {
   CORES_DO_MAPA,
   DESENHO_DAS_FORMAS,
   formaDoTipo,
-} from "../../lib/mapa-saude-indigena/formas.js";
+} from "../../lib/mapa-saude-indigena/formas.ts";
 import { BR_OUTLINE, UF_GEO } from "../../lib/mapa-saude-indigena/contornos.js";
 import {
   manterDicasDentroDoMapa,
@@ -276,6 +276,7 @@ const GESTOS = ["pointerdown", "touchstart", "wheel", "keydown"];
   acompanhar, e `pegar()` conta como gesto (a lista que leva a um ponto).
   `parar()` e o `mapa.remove()` desfazem tudo.
 */
+/** @param {unknown} L @param {HTMLElement} elemento @param {{aoReenquadrar?: () => void}} [opcoes] @returns {import("./tipos-do-painel.ts").MapaCriadoDoBrasil} */
 export function criarMapaDoBrasil(L, elemento, { aoReenquadrar } = {}) {
   const mapa = criarMapa(L, elemento);
   enquadrarNoBrasil(L, mapa);
@@ -367,6 +368,7 @@ function corDoTraco() {
   `adicionar(marcador, lat, lon)` registra a bolha; `limpar()` esquece as
   bolhas e os traços (o app limpa a camada); `parar()` desliga o `zoomend`.
 */
+/** @returns {import("./tipos-do-leaflet.ts").LequeDoMapa} */
 export function criarLeque(L, mapa, camada) {
   const marcadores = [];
   const tracos = [];
@@ -428,6 +430,9 @@ export function criarLeque(L, mapa, camada) {
 }
 
 /* Conteúdo de popup ou dica: { titulo, linhas, nota } em nós de texto. */
+/** @param {Document} documento
+ * @param {{ titulo?: string, linhas?: string[], nota?: string }} conteudo
+ * @returns {HTMLDivElement} */
 export function conteudoEmElemento(documento, { titulo, linhas = [], nota }) {
   const caixa = documento.createElement("div");
   caixa.className = "mapa-si-balao";

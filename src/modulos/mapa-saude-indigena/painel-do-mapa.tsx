@@ -1,12 +1,21 @@
+import type { ReactNode, RefObject } from "react";
+import type { ModoDeEdicao } from "../editor-de-coordenadas/modo-de-edicao.tsx";
+import type {
+  ControleDoEnquadramento,
+  MapaDoPainel,
+  OpcoesDoPainel,
+  PropsDaListaDoMapa,
+  PropsDoTopoDoMapa,
+} from "./tipos-do-painel.ts";
 import { useEffect, useReducer, useRef, useState } from "react";
 import { EstadoVazio, classes } from "../../ui/index.js";
 import { BotaoDeRecolher } from "../editor-de-coordenadas/modo-de-edicao.tsx";
 import { criarMapaDoBrasil, remedir, voltarAoBrasil } from "./leaflet.js";
-import { usarUltimo } from "./usar-ultimo.js";
+import { usarUltimo } from "./usar-ultimo.ts";
 
 /*
   O PAINEL DO MAPA NACIONAL, comum aos mapas da Visão geral: o da Saúde
-  Indígena (mapa-nacional.jsx) e o de Projetos (src/modulos/mapa-de-projetos/).
+  Indígena (mapa-nacional.tsx) e o de Projetos (src/modulos/mapa-de-projetos/).
   As regras são as mesmas; muda só o que vai no mapa e na lista.
 
   - `usarMapaDoBrasil`: cria o mapa uma vez (`criarMapaDoBrasil`: Brasil,
@@ -29,19 +38,13 @@ import { usarUltimo } from "./usar-ultimo.js";
   junto do `pegar`/`soltar` do `criarMapaDoBrasil`. `emVoo` (ref) suspende o
   reenquadramento enquanto o mapa voa.
 */
-/**
- * @template {object} T
- * @param {unknown} L
- * @param {{aoCriar: (mapa: import('../../lib/tipos-do-mapa.ts').MapaNacional) => T, emVoo?: import('react').RefObject<boolean>, visivel?: boolean, telaCheia?: boolean}} opcoes
- * @returns {{refDoMapa: import('react').RefObject<HTMLDivElement | null>, mapa: import('../../lib/tipos-do-mapa.ts').MapaNacional | null, camadas: import('react').RefObject<(T & {pegar: () => void, soltar: () => void}) | null>, ultimoEnquadramento: import('react').RefObject<string>, aparecimentos: number}}
- */
-export function usarMapaDoBrasil(
-  L,
-  { aoCriar, emVoo, visivel = true, telaCheia = false } = {},
+export function usarMapaDoBrasil<T extends object>(
+  L: unknown,
+  { aoCriar, emVoo, visivel = true, telaCheia = false }: OpcoesDoPainel<T>,
 ) {
-  const refDoMapa = useRef(null);
-  const [mapa, definirMapa] = useState(null);
-  const camadas = useRef(null);
+  const refDoMapa = useRef<HTMLDivElement | null>(null);
+  const [mapa, definirMapa] = useState<MapaDoPainel | null>(null);
+  const camadas = useRef<(T & ControleDoEnquadramento) | null>(null);
   const ultimoEnquadramento = useRef("");
   // Quantas vezes o enquadramento teve de ser refeito (apareceu, mudou de tamanho).
   const [aparecimentos, aparecer] = useReducer((n) => n + 1, 0);
@@ -68,13 +71,13 @@ export function usarMapaDoBrasil(
         aparecer();
       },
     });
-    const doPai = chamadas.current.aoCriar?.(novo) || {};
+    const doPai = chamadas.current.aoCriar(novo);
     camadas.current = { ...doPai, pegar, soltar };
     ultimoEnquadramento.current = "";
     definirMapa(novo);
     return () => {
       parar();
-      doPai.parar?.();
+      if ("parar" in doPai && typeof doPai.parar === "function") doPai.parar();
       novo.remove();
       camadas.current = null;
       definirMapa(null);
@@ -103,7 +106,7 @@ export function TopoDoMapa({
   modo,
   idDoPainel,
   acoes,
-}) {
+}: PropsDoTopoDoMapa) {
   return (
     <header className="mapa-si-painel__topo">
       <div className="mapa-si-painel__titulos">
@@ -149,7 +152,19 @@ export function TopoDoMapa({
   );
 }
 
-export function MolduraDoMapa({ L, refDoMapa, idDoMapa, rotulo, children }) {
+export function MolduraDoMapa({
+  L,
+  refDoMapa,
+  idDoMapa,
+  rotulo,
+  children,
+}: {
+  L: unknown;
+  refDoMapa: RefObject<HTMLDivElement | null>;
+  idDoMapa: string;
+  rotulo: string;
+  children?: ReactNode;
+}) {
   return (
     <div className="mapa-si-moldura">
       {L ? (
@@ -175,9 +190,6 @@ export function MolduraDoMapa({ L, refDoMapa, idDoMapa, rotulo, children }) {
   `idDoTitulo` nomeia a lista. `vazio` aparece quando não carrega e não há
   `children`; `antes` vem entre o topo e os itens (os filtros de Projetos).
 */
-/**
- * @param {{refDaLista?: import('react').RefObject<HTMLElement | null>, id: string, idDoTitulo: string, titulo: string, total: number, carregando: boolean, vazio: string, antes?: import('react').ReactNode, children?: import('react').ReactNode}} props
- */
 export function ListaDoMapa({
   refDaLista,
   id,
@@ -188,7 +200,7 @@ export function ListaDoMapa({
   vazio,
   antes = null,
   children,
-}) {
+}: PropsDaListaDoMapa) {
   return (
     <aside
       ref={refDaLista}
@@ -211,7 +223,7 @@ export function ListaDoMapa({
 }
 
 /* O que o editor de coordenadas de cada mapa recebe do modo de edição. */
-export function propsDoEditor(modo, idDoPainel) {
+export function propsDoEditor(modo: ModoDeEdicao, idDoPainel: string) {
   return {
     aoFechar: modo.fechar,
     areaLivre: modo.areaLivre,
@@ -223,7 +235,7 @@ export function propsDoEditor(modo, idDoPainel) {
 }
 
 /* As classes do painel nacional (o modo de edição o leva à tela inteira). */
-export const classesDoPainel = (modo) =>
+export const classesDoPainel = (modo: Pick<ModoDeEdicao, "editando">) =>
   classes(
     "ui-card mapa-si-painel mapa-si-painel--nacional",
     modo.editando && "mapa-si-painel--editando",

@@ -11,14 +11,14 @@ import {
   pontosEditaveisDosProjetos,
   REGRAS_DA_FILA_DOS_PROJETOS,
   sugestoesDoLugar,
-} from "../../lib/coordenadas-dos-projetos.js";
+} from "../../lib/coordenadas-dos-projetos.ts";
 import { EditorDeCoordenadas } from "../editor-de-coordenadas/editor-de-coordenadas.tsx";
 
 /*
   O editor de coordenadas do mapa de Projetos: o editor comum
   (src/modulos/editor-de-coordenadas/) com os lugares das vagas (a chave
   `lugar` e a coordenada do banco que a RPC do mapa devolve), as regras deste
-  mapa (src/lib/coordenadas-dos-projetos.js) e as RPCs
+  mapa (src/lib/coordenadas-dos-projetos.ts) e as RPCs
   `*_coordenada_mapa_projetos` (migration 20261002190000). A gravação devolve
   { lugar, latitude, longitude, conferido }, que o mapa aplica por
   `aoAtualizarMapa(data, ponto)`.
@@ -85,6 +85,10 @@ export function EditorDeCoordenadasDosProjetos({
     [municipios],
   );
   return (
-    <EditorDeCoordenadas pontos={pontos} fonte={FONTE_DE_PROJETOS} {...resto} />
+    <EditorDeCoordenadas<PontoEditavelDoProjeto>
+      pontos={pontos}
+      fonte={FONTE_DE_PROJETOS}
+      {...resto}
+    />
   );
 }

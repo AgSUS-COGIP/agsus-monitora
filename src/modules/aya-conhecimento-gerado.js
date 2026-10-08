@@ -713,7 +713,7 @@ export const VERBETES_AYA = Object.freeze([
       "assistente ou modo avancado",
     ],
     resposta:
-      'Na aba Regra, quem coordena o edital escolhe "Assistente" (o padrão) ou "Modo avançado"; os dois mexem no mesmo rascunho, e a escolha fica lembrada neste navegador. O assistente ("Nova regra" ou "Editar regra") tem cinco passos, e dá para ir e voltar entre eles: 1) Ponto de partida: continuar da versão vigente, copiar a regra conferida de outro edital da mesma área (aparece o número, a unidade e a versão), usar um modelo ou começar do zero — sempre uma cópia independente, que não muda a origem; 2) O que vale e o que elimina: um cardápio de cartões com caixa — requisitos que eliminam (identidade, formação exigida, conselho de classe e outros documentos, com o item do edital e os motivos), titulação (pontos por título e por nível, vale o maior ou somam, teto), cursos (faixas de horas, pontos, teto, por nível), experiência (mínimo exigido, por mês ou por período, só além do mínimo, teto, por nível), critério étnico (indígena e aldeia; só na Saúde Indígena), as cotas, as eliminações da inscrição (inscrição cancelada, questionário não finalizado, reprovado na Empregare, termo recusado) e o corte por pontos mínimos com a nota usada (declarada na inscrição ou ART). Marcado, o cartão abre só os seus campos, já com valores sugeridos (do ponto de partida, dos modelos e das regras da área); desmarcado, some da regra, e marcar de novo traz de volta o que estava; 3) Perguntas da Empregare; 4) Nota mínima e desempate; 5) Testar e salvar: o candidato fictício, o resumo, a comparação de versões e o salvar, que cria a versão nova com o motivo (na primeira versão, o motivo diz de onde ela veio). O que o assistente não mostra (distribuição, revisão, textos do parecer, observações prontas) continua no modo avançado e não muda.',
+      'Na aba Regra, quem coordena o edital escolhe "Assistente" (o padrão) ou "Modo avançado"; os dois mexem no mesmo rascunho, e a escolha fica lembrada neste navegador. O assistente ("Nova regra" ou "Editar regra") tem cinco passos, e dá para ir e voltar entre eles: 1) Ponto de partida: continuar da versão vigente, copiar a regra conferida de outro edital da mesma área (aparece o número, a unidade e a versão), usar um modelo ou começar do zero — sempre uma cópia independente, que não muda a origem; 2) O que vale e o que elimina: um cardápio de cartões com caixa, começando pelo grupo "Na inscrição" (inscrição cancelada, questionário não finalizado, reprovado na Empregare, termo recusado e o corte por pontos mínimos, que eliminam antes de qualquer análise) e seguindo com os requisitos que eliminam (identidade, formação exigida, conselho de classe e outros documentos, com o item do edital e os motivos), titulação (pontos por título e por nível, vale o maior ou somam, teto), cursos (faixas de horas, pontos, teto, por nível), experiência (mínimo exigido, por mês ou por período, só além do mínimo, teto, por nível), critério étnico (indígena e aldeia; só na Saúde Indígena), e as cotas; o corte por pontos mínimos diz a nota usada (declarada na inscrição ou ART). Marcado, o cartão abre só os seus campos, já com valores sugeridos (do ponto de partida, dos modelos e das regras da área); desmarcado, some da regra, e marcar de novo traz de volta o que estava; 3) Perguntas da Empregare; 4) Nota mínima e desempate; 5) Testar e salvar, nesta ordem: o resumo, a comparação de versões, o "Testar com um candidato fictício" (fechado até abrir) e, por último, o nome da versão, o motivo e o salvar, que cria a versão nova (na primeira versão, o motivo diz de onde ela veio). Ao lado do botão aparece o que falta para salvar. O que o assistente não mostra (distribuição, revisão, textos do parecer, observações prontas) continua no modo avançado e não muda.',
     fato: "No MONITORA, o assistente da regra da avaliação documental tem cinco passos (ponto de partida, cardápio do que vale e do que elimina, perguntas da Empregare, nota mínima e desempate, testar e salvar) e grava o mesmo formato de regra do modo avançado.",
     fonte:
       "src/modulos/avaliacao-documental/assistente/; src/lib/avaliacao-documental/assistente-da-regra.ts",
@@ -750,12 +750,37 @@ export const VERBETES_AYA = Object.freeze([
       "ordenar o desempate no assistente",
       "mudar a nota minima pela regra da avaliacao",
       "regra de classificacao no assistente",
+      "acrescentar criterio de desempate",
+      "criterios de desempate disponiveis",
+      "catalogo de desempate",
+      "lista de desempate vazia",
+      "nao consigo acrescentar criterio",
     ],
     resposta:
-      "No passo 4 do assistente ficam juntos a nota mínima e o desempate. A nota mínima (e a por nível, quando diferente) e os critérios de desempate da classificação são da regra de classificação do edital: o assistente mostra e, para quem tem Editor na Classificação, grava pelo mesmo caminho da aba Classificação, como versão nova dela, com o mesmo motivo (até 500 caracteres); sem a permissão, aparecem só para ler. Sem regra de classificação no edital, crie-a primeiro na Classificação. Embaixo, o desempate da lista do lote (Provisória), que é da regra da avaliação. Nas duas listas, arraste o critério ou use as setas para mudar a ordem, troque a direção e acrescente ou tire critérios. Ao salvar, a regra de classificação é gravada antes; se ela recusar, nada é salvo.",
+      'No passo 4 do assistente ficam juntos a nota mínima e o desempate. A nota mínima (e a por nível, quando diferente) e os critérios de desempate da classificação são da regra de classificação do edital: o assistente mostra e, para quem tem Editor na Classificação, grava pelo mesmo caminho da aba Classificação, como versão nova dela, com o mesmo motivo (até 500 caracteres); sem Editor na Classificação, aparecem só para ler, com um aviso (antes, o "Acrescentar critério" aparecia vazio). Sem regra de classificação no edital, crie-a primeiro na Classificação. Embaixo, o desempate da lista do lote (Provisória), que é da regra da avaliação. Nas duas listas, arraste o critério ou use as setas para mudar a ordem, troque a direção (na classificação) e tire critérios. "Acrescentar critério" abre o catálogo inteiro da lista em grupos (Prioridade legal, Pontuação, Experiência, Idade, Outros), com busca; os já usados aparecem com a posição ("2º na lista"). A Provisória tem catálogo próprio, menor: é o que a conta do lote sabe calcular. Ao salvar, a regra de classificação é gravada antes; se ela recusar, nada é salvo.',
     fato: "",
     fonte:
-      "src/modulos/avaliacao-documental/assistente/nota-e-desempate.tsx; supabase/migrations/20261002150000_classificacao.sql (salvar_regra_classificacao)",
+      "src/modulos/avaliacao-documental/assistente/nota-e-desempate.tsx; src/modulos/avaliacao-documental/assistente/seletor-de-criterios.tsx; src/lib/avaliacao-documental/catalogo-de-desempate.ts; src/lib/classificacao/catalogo.js; supabase/migrations/20261002150000_classificacao.sql (salvar_regra_classificacao)",
+    abrir: "avaliacao-documental",
+  },
+  {
+    arquivo: "regras-da-avaliacao-documental.md",
+    titulo: "O que falta para salvar a regra",
+    perguntas: [
+      "salvar desabilitado",
+      "botao salvar cinza",
+      "por que nao consigo salvar a regra",
+      "salvar como versao desabilitado",
+      "o que falta para salvar",
+      "nenhuma mudanca em relacao a versao vigente",
+      "pergunta sem ligacao com a empregare",
+      "requisito sem item do edital",
+    ],
+    resposta:
+      'No passo 5 do assistente, ao lado do "Salvar como versão N", aparece o que falta. "Para salvar, falta" (o botão fica desabilitado): nenhuma mudança em relação à vigente, o motivo com menos de 10 caracteres, o nome da versão fora de 3 a 80 caracteres e os erros da regra ou da classificação. "Confira também" (não impede): pergunta sem ligação com a Empregare e requisito sem item do edital. Clicar num item leva ao passo e ao campo.',
+    fato: "",
+    fonte:
+      "src/lib/avaliacao-documental/pendencias-do-salvar.ts; src/modulos/avaliacao-documental/assistente/conferir.tsx",
     abrir: "avaliacao-documental",
   },
   {
@@ -883,10 +908,10 @@ export const VERBETES_AYA = Object.freeze([
       "candidato ficticio",
     ],
     resposta:
-      'No fim da aba Regra, "Testar com um candidato fictício" calcula na hora, sobre o formulário (mesmo sem salvar), a nota, as parciais, a situação (Apto, Inapto por requisito, Inapto por nota mínima) e o parecer de um candidato inventado: nível da vaga, modalidade, indígena e aldeia, a situação e o motivo de cada bloco, títulos, cursos, vínculos e observações prontas. Nada é gravado. A nota mínima vem da regra de classificação do edital; sem ela, dá para digitar uma só para a prévia. A conta oficial, em lote, para a Provisória e o lote é feita pela base Python e confere com os mesmos casos de teste.',
+      'No modo avançado (no fim da aba Regra) e no passo 5 do assistente (fechado até abrir), "Testar com um candidato fictício" calcula na hora, sobre o formulário (mesmo sem salvar), a nota, as parciais, a situação (Apto, Inapto por requisito, Inapto por nota mínima) e o parecer de um candidato inventado: nível da vaga, modalidade, indígena e aldeia, a situação e o motivo de cada bloco, títulos, cursos, vínculos e observações prontas. Entradas à esquerda, resultado preso à direita (em tela estreita, em cima). Nada é gravado. A nota mínima vem da regra de classificação do edital; sem ela, dá para digitar uma só para a prévia. A conta oficial, em lote, para a Provisória e o lote é feita pela base Python e confere com os mesmos casos de teste.',
     fato: "",
     fonte:
-      "src/modulos/avaliacao-documental/previa.jsx; tests/fixtures/avaliacao-documental/casos-de-pontuacao.json",
+      "src/modulos/avaliacao-documental/previa.tsx; tests/fixtures/avaliacao-documental/casos-de-pontuacao.json",
     abrir: "avaliacao-documental",
   },
   {
@@ -1427,7 +1452,7 @@ export const VERBETES_AYA = Object.freeze([
       "motivo em chips",
     ],
     resposta:
-      'A ficha abre no MODO FOCO: um item por vez, no centro. Cada item mostra o que se pede (o título do bloco e o enunciado curto da pergunta, com "ver texto completo"), a resposta do candidato na Empregare em destaque ("Anexo", "4 anos ou mais", "Especialização"…), o "Abrir na Empregare" e as três decisões em botões grandes: Conforme (verde), Não conforme (vermelho) e Não enviado (cinza) — as teclas 1, 2 e 3 aparecem ao passar o mouse. Conforme marca com o ✓ e passa sozinho, com uma animação curta, ao próximo item que ainda pede algo; Não conforme e Não enviado ficam no item e abrem os motivos padronizados em chips (marque um ou mais). Nos itens que pontuam (titulação, cursos, experiência), primeiro vem a lista compacta de títulos, cursos ou vínculos com "+ Adicionar", depois o bloco "Declarado → Apurado" com − e + de meio em meio ponto (até o teto do bloco) e o "Calculado" pelos itens; a decisão vem por último, e o Conforme num item ainda sem item lançado não avança, para você lançar o comprovado. O stepper do alto mostra cada item com a marca do estado — número quando falta conferir, ✓ verde Conforme, ✕ vermelho Não conforme, ⊘ cinza Não enviado, ! âmbar quando falta completar (motivo, justificativa…) — e a barra enche a cada item conferido ("4 de 6 itens conferidos"); clique num passo para ir a ele. "Ver todos" troca para a lista completa, com todos os itens em cartões compactos (a resposta e as decisões na mesma linha) e a Conclusão no fim; "Um por vez" volta ao foco, e a escolha fica lembrada neste navegador. A lateral mostra só a nota (o número grande, "parcial" enquanto falta conferir), o mínimo, o resultado e a composição por bloco em barras finas (o traço na barra é o declarado; "—" antes de conferir; âmbar quando difere da declarada). Enquanto falta conferir algum item, o resultado fica neutro — "Em análise · 2 de 4 requisitos conferidos" (os requisitos são os blocos que podem eliminar) —, porque a conta trata o bloco não marcado como Conforme e a experiência sem vínculo como abaixo do mínimo; o Inapto só aparece quando um item conferido elimina, e Apto ou Inapto pela nota mínima só com tudo conferido. Cotas e blocos que não valem para o candidato não viram passo: aparecem na Conclusão ("Não se aplicam: …"). Sem resposta na Empregare, o item sugere "Não enviado". Copiar o código, abrir o candidato na Empregare e compartilhar no chat ficam no "⋯" da nota.',
+      'A ficha abre no MODO FOCO: um item por vez, no centro. Cada item mostra o que se pede (o título do bloco e o enunciado curto da pergunta, com "ver texto completo"), a resposta do candidato na Empregare em destaque ("Anexo", "4 anos ou mais", "Especialização"…), o "Abrir na Empregare" e as três decisões em botões grandes: Conforme (verde), Não conforme (vermelho) e Não enviado (cinza) — as teclas 1, 2 e 3 aparecem ao passar o mouse. Conforme marca com o ✓ e passa sozinho, com uma animação curta, ao próximo item que ainda pede algo; Não conforme e Não enviado ficam no item e abrem os motivos padronizados em chips (marque um ou mais). Nos itens que pontuam (titulação, cursos, experiência), primeiro vem a lista compacta de títulos, cursos ou vínculos com "+ Adicionar", depois o bloco "Declarado → Apurado" com − e + de meio em meio ponto (até o teto do bloco) e o "Calculado pelos itens"; o Apurado já começa preenchido (com o Declarado, ou com o Calculado quando há itens lançados); a decisão vem por último, e o Conforme num item ainda sem item lançado não avança, para você lançar o comprovado. O stepper do alto mostra cada item com a marca do estado — número quando falta conferir, ✓ verde Conforme, ✕ vermelho Não conforme, ⊘ cinza Não enviado, ! âmbar quando falta completar (motivo, justificativa…) — e a barra enche a cada item conferido ("4 de 6 itens conferidos"); clique num passo para ir a ele. "Ver todos" troca para a lista completa, com todos os itens em cartões compactos (a resposta e as decisões na mesma linha) e a Conclusão no fim; "Um por vez" volta ao foco, e a escolha fica lembrada neste navegador. A lateral mostra só a nota (o número grande, "parcial" enquanto falta conferir), o mínimo, o resultado e a composição por bloco em barras finas (o traço na barra é o declarado; "—" antes de conferir; âmbar quando difere da declarada). Enquanto falta conferir algum item, o resultado fica neutro — "Em análise · 2 de 4 requisitos conferidos" (os requisitos são os blocos que podem eliminar) —, porque a conta trata o bloco não marcado como Conforme e a experiência sem vínculo como abaixo do mínimo; o Inapto só aparece quando um item conferido elimina, e Apto ou Inapto pela nota mínima só com tudo conferido. Cotas e blocos que não valem para o candidato não viram passo: aparecem na Conclusão ("Não se aplicam: …"). Sem resposta na Empregare, o item sugere "Não enviado". Copiar o código, abrir o candidato na Empregare e compartilhar no chat ficam no "⋯" da nota.',
     fato: "No MONITORA, a ficha de análise mostra um item por vez, com as decisões em botões grandes e o progresso no alto, e calcula a nota pela regra do edital enquanto o analista confere.",
     fonte:
       "src/modulos/avaliacao-documental/ficha/ficha.jsx; src/modulos/avaliacao-documental/ficha/item-da-ficha.tsx; src/modulos/avaliacao-documental/ficha/progresso-da-ficha.tsx; src/lib/avaliacao-documental/ficha.js (passosDaFicha, proximoPassoPendente, composicaoDaNota); src/lib/avaliacao-documental/pontuacao.js",
@@ -1488,15 +1513,20 @@ export const VERBETES_AYA = Object.freeze([
       "nota diminuida",
       "por que pede justificativa",
       "declarado apurado",
+      "apurado zerado",
+      "apurado vem preenchido",
+      "declarado 3 apurado 0",
+      "conforme com apurado zero",
+      "apurado menor que o declarado",
       "nivel da vaga",
       "mudar o nivel da vaga",
       "nivel da vaga travado",
     ],
     resposta:
-      'Em cada item que pontua aparece "Declarado → Apurado": o Declarado é o que a resposta da Empregare vale pela nota declarada da regra, o Apurado é a nota que vale (com − e + de meio em meio ponto) e, embaixo, o Calculado pelos itens lançados. O analista pode ajustar o Apurado para menos ou para mais, até o teto do bloco no nível da vaga; "Usar o calculado" volta à conta. Toda nota apurada diferente da declarada pede justificativa: um motivo do bloco ou uma observação pronta da regra (ex.: "Nota de experiência diminuída", "Nota de cursos diminuída", "Experiência anterior à diplomação não é computada") e, se quiser, um complemento. As justificativas aparecem em chips. Sem justificativa, o item avisa, fica com o ! âmbar no stepper e a ficha não conclui. Na lateral, a barra do bloco fica âmbar; a justificativa entra no parecer. Quem é inapto por requisito não precisa justificar as notas. Bloco sem pergunta mapeada na nota declarada mostra "—" e não pede justificativa. Na pergunta com pontos por nível (a experiência do 93/2026), o Declarado é o do nível da vaga na ficha. O nível vem da vaga e aparece na linha da vaga, no cabeçalho, só para leitura para o analista; a coordenação do edital pode mudá-lo no "⋯" da nota, com o aviso de que isso muda os pontos declarados.',
+      'Em cada item que pontua aparece "Declarado → Apurado": o Declarado é o que a resposta da Empregare vale pela nota declarada da regra, o Apurado é a nota que vale (com − e + de meio em meio ponto) e, embaixo, o Calculado pelos itens lançados. O Apurado começa preenchido com o Declarado (ou com o Calculado, se já há itens lançados): se o documento comprova os pontos, marque Conforme (o valor é gravado); se comprova menos, ajuste o Apurado e diga por quê. Não conforme e Não enviado zeram o Apurado, com aviso; voltar para Conforme devolve o valor. "Declarado 3 → Apurado 3" mostra a diferença quando houver. O analista pode ajustar o Apurado para menos ou para mais, até o teto do bloco no nível da vaga; "Usar o calculado" volta à conta. Toda nota apurada diferente da declarada pede justificativa: um motivo do bloco ou uma observação pronta da regra (ex.: "Nota de experiência diminuída", "Nota de cursos diminuída", "Experiência anterior à diplomação não é computada") e, se quiser, um complemento. As justificativas aparecem em chips. Sem justificativa, o item avisa, fica com o ! âmbar no stepper e a ficha não conclui. Na lateral, a barra do bloco fica âmbar; a justificativa entra no parecer. Quem é inapto por requisito não precisa justificar as notas. Bloco sem pergunta mapeada na nota declarada mostra "—" e não pede justificativa. Na pergunta com pontos por nível (a experiência do 93/2026), o Declarado é o do nível da vaga na ficha. O nível vem da vaga e aparece na linha da vaga, no cabeçalho, só para leitura para o analista; a coordenação do edital pode mudá-lo no "⋯" da nota, com o aviso de que isso muda os pontos declarados.',
     fato: "No MONITORA, nota apurada diferente da declarada na ficha exige justificativa padronizada, que vai para o parecer e para o histórico.",
     fonte:
-      "src/lib/avaliacao-documental/ficha.js (pendenciasDaFicha, divergenciaDoBloco); supabase/migrations/20261007130000_conteudo_da_ficha.sql (FC_PENDENCIAS_FICHA)",
+      "src/lib/avaliacao-documental/ficha.js (pendenciasDaFicha, divergenciaDoBloco); src/lib/avaliacao-documental/apurado-da-ficha.ts; supabase/migrations/20261007130000_conteudo_da_ficha.sql (FC_PENDENCIAS_FICHA)",
     abrir: "avaliacao-documental",
   },
   {
@@ -3274,12 +3304,31 @@ export const VERBETES_AYA = Object.freeze([
       "nome da equipe",
       "logo da equipe",
       "texto do rodape",
+      "onde aparece a equipe responsavel",
     ],
     resposta:
-      'Em Configurações › Marca ficam o nome da equipe, a função ou área, o texto institucional e o logo da equipe (endereço https:// ou /caminho de PNG, JPG, WEBP ou SVG), que aparecem no pé da barra lateral, o texto do rodapé e, em "Documentos oficiais", o cabeçalho da agência (uma linha por linha do timbrado: nome, endereço e site) usado no Word e na prévia "Como fica no SEI" da Classificação. A prévia mostra a barra lateral; a cor e o logo da barra ficam em Aparência. Vale depois de "Salvar alterações".',
+      'Em Configurações › Marca ficam o nome da equipe, a função ou área, o texto institucional e o logo da equipe (endereço https:// ou /caminho de PNG, JPG, WEBP ou SVG), que aparecem no pé do cartão da tela de acesso, o texto do rodapé (que entra no lugar do texto institucional quando ele está vazio) e, em "Documentos oficiais", o cabeçalho da agência (uma linha por linha do timbrado: nome, endereço e site) usado no Word e na prévia "Como fica no SEI" da Classificação. A barra lateral não mostra a equipe. Vale depois de "Salvar alterações".',
     fato: "",
     fonte:
-      "src/modulos/configuracoes/marca.jsx; src/lib/publicacao-de-configuracoes.js",
+      "src/modulos/configuracoes/marca.jsx; src/lib/publicacao-de-configuracoes.js; src/app/entrada/marca.js",
+    abrir: "config:marca",
+  },
+  {
+    arquivo: "regras-das-configuracoes.md",
+    titulo: "Prévia da barra lateral",
+    perguntas: [
+      "previa da barra lateral",
+      "a previa nao bate com a barra",
+      "previa diferente da barra",
+      "como fica a barra lateral",
+      "ver a cor da barra antes de salvar",
+      "previa do menu",
+    ],
+    resposta:
+      "A prévia ao lado da seção Marca é a própria barra lateral, em miniatura e sem clique: a logo MONITORA, o seletor de área, os seus itens de menu com os selos BETA, Administração e o rodapé com Claro/Escuro, Recolher menu, Sair e a versão. Ela usa a cor e o logo escolhidos em Aparência antes de salvar e segue o tema claro ou escuro do sistema; para ver o outro tema, troque no rodapé da barra. Se a barra mudar, a prévia muda junto.",
+    fato: "",
+    fonte:
+      "src/modulos/configuracoes/previa-da-barra-lateral.tsx; src/componentes/barra-lateral/barra-lateral.jsx",
     abrir: "config:marca",
   },
   {
@@ -4613,7 +4662,7 @@ export const VERBETES_AYA = Object.freeze([
       'No MONITORA, o popup de cada ponto do mapa do DSEI traz só o que a unidade é: tipo, nome, município e UF e o código CNES (quando há). Não há mais frases como "Localização em validação", "Fontes discordam" ou "validada": elas vinham de uma validação de 22/09/2026 anterior à auditoria oficial e foram retiradas em 02/10/2026. Toda coordenada vem do banco (lmap para polos e sedes, rede_cnes para os estabelecimentos), auditada em 01 e 02/10/2026 contra fontes oficiais (CNES, IBGE, Funai, PDSI e OpenStreetMap); os pontos que a auditoria não confirmou (92 polos e 156 UBSI/postos) ficam numa fila de conferência que só o administrador global e o Gestor veem, no editor de coordenadas; o popup não mostra essa situação. Se um ponto parecer errado, a correção é feita pelo editor, que grava no banco.',
     fato: "",
     fonte:
-      "docs/auditoria-oficial-das-coordenadas-2026-10-01.md; src/lib/mapa-saude-indigena/mapa-do-dsei.js",
+      "docs/auditoria-oficial-das-coordenadas-2026-10-01.md; src/lib/mapa-saude-indigena/mapa-do-dsei.ts",
   },
   {
     arquivo: "regras-do-mapa-saude-indigena.md",
@@ -4676,7 +4725,7 @@ export const VERBETES_AYA = Object.freeze([
       'O administrador global e o Gestor podem usar "Coordenadas" no mapa da Saúde Indígena, no Brasil ou dentro de um DSEI. O mapa entra no modo de edição (veja "Modo de edição das coordenadas"): busque pelo nome, CNES, município ou DSEI e clique no ponto — o mapa enquadra o ponto e a sugestão mais provável na parte que o editor não cobre e aparece um pin de prévia. Para ajustar a posição, digite latitude e longitude ou arraste o pin de prévia; a posição atual só muda depois de confirmar. Confira a posição atual e a prévia, informe o motivo e a fonte da correção, clique em "Salvar coordenada" e depois em "Confirmar correção". "Desfazer prévia" volta à posição atual sem salvar. Se outra pessoa já mudou o ponto, atualize o mapa antes de tentar novamente. Essa opção não aparece para os demais perfis.',
     fato: "",
     fonte:
-      "src/modulos/mapa-saude-indigena/editor-de-coordenadas.jsx; supabase/migrations/20261002160000_conferir_coordenadas_mapa.sql",
+      "src/modulos/mapa-saude-indigena/editor-de-coordenadas.tsx; supabase/migrations/20261002160000_conferir_coordenadas_mapa.sql",
   },
   {
     arquivo: "regras-do-mapa-saude-indigena.md",
@@ -4718,7 +4767,7 @@ export const VERBETES_AYA = Object.freeze([
       'A auditoria das coordenadas de 01 e 02/10/2026 não conseguiu confirmar 248 pontos com duas fontes independentes: 92 polos base e 156 UBSI/postos (a auditoria conta 93 + 156 = 249 porque o posto Aldeia Linha 10, de Porto Velho, entrou nas duas rodadas). No editor de coordenadas, "Só pendentes" vem ligado e mostra só esses pontos, ordenados por DSEI, com a contagem ("N pendentes"). Para cada um, confira a posição com o DSEI ou com as fontes sugeridas e clique em "Conferido" — a posição pode continuar a mesma (às vezes já está certa) ou ser ajustada antes. É preciso informar o motivo e confirmar. Depois de conferido, o ponto sai de "Só pendentes"; desligando o filtro, ele aparece com o selo "Conferido". O mapa público não mostra "em validação": a situação só aparece no editor. A fila separa as pendências por gravidade, com a contagem de cada uma e o provável erro primeiro: Provável erro (o ponto está na sede do município, num ponto coletor, na posição do nome do município ou numa aldeia de mesmo nome fora do DSEI, ou a aldeia sugerida mais perto está a mais de 10 km), Revisar (aldeia sugerida entre 2 e 10 km, ou só o CNES), Sem sugestão (nenhuma posição candidata: buscar a aldeia à mão) e Só confirmar (há aldeia sugerida a até 2 km: a posição bate e falta só o Conferido). O CNES não serve de régua porque quase sempre é a própria posição atual. Ao escolher um ponto, as sugestões aparecem no mapa (aldeias em laranja, CNES em azul) e a mais provável fica ligada à posição atual por uma linha tracejada; clicar numa sugestão do mapa ou em Usar esta preenche a prévia.',
     fato: "",
     fonte:
-      "src/lib/coordenadas-do-mapa.js; supabase/migrations/20261002160000_conferir_coordenadas_mapa.sql; supabase/correcoes/20261002-pendencias-das-coordenadas-do-mapa.sql",
+      "src/lib/coordenadas-do-mapa.ts; supabase/migrations/20261002160000_conferir_coordenadas_mapa.sql; supabase/correcoes/20261002-pendencias-das-coordenadas-do-mapa.sql",
   },
   {
     arquivo: "regras-do-mapa-saude-indigena.md",
@@ -4736,7 +4785,7 @@ export const VERBETES_AYA = Object.freeze([
       'Ao escolher um ponto pendente, o editor mostra por que a auditoria não o confirmou e as posições candidatas: primeiro a do cadastro CNES (DATASUS), depois aldeias e lugares com o mesmo nome (IBGE, Funai, OpenStreetMap, PDSI) e, quando conhecida, a sede do município, cada uma com a distância até a posição atual. "Usar esta" só leva a posição para a prévia (o pin se move); nada é gravado até "Salvar coordenada" ou "Conferido" serem confirmados. Candidato não é prova: confira com o DSEI quando as fontes divergirem.',
     fato: "",
     fonte:
-      "src/lib/coordenadas-do-mapa.js; src/modulos/editor-de-coordenadas/sugestoes-do-ponto.tsx",
+      "src/lib/coordenadas-do-mapa.ts; src/modulos/editor-de-coordenadas/sugestoes-do-ponto.tsx",
   },
   {
     arquivo: "regras-do-mapa-saude-indigena.md",
@@ -5520,7 +5569,7 @@ export const VERBETES_AYA = Object.freeze([
       'A fila do editor de Projetos começa em "Só pendentes": são os lugares cuja posição ainda não foi conferida pelo administrador global ou por um Gestor. Na carga inicial, todo município aparece porque o ponto é só a sede do município (o edital diz o município, não o endereço), e todo lugar só com UF aparece porque o ponto é o centro do estado. Também ficam pendentes o lugar sem coordenada, o município cujo nome, código ou UF não batem, o mesmo município com coordenadas diferentes e o ponto fora do Brasil. A gravidade compara a posição com a referência do lugar (a sede do município pelo IBGE ou o centro da UF): "Provável erro" quando falta a coordenada, o motivo já é um erro ou a referência está a mais de 10 km; "Revisar" quando ela está entre 2 e 10 km, ou quando a lotação é um escritório e o edital só diz a UF; "Só confirmar" quando a posição é a da referência; e "Sem sugestão" quando não há posição candidata. As sugestões são a sede do município (IBGE), o centro da UF, a sede do DSEI do mapa da Saúde Indígena (para escritório distrital) e os outros lugares das vagas na mesma UF.',
     fato: "",
     fonte:
-      "src/lib/coordenadas-dos-projetos.js; src/lib/editor-de-coordenadas.ts; supabase/correcoes/20261002-pendencias-das-coordenadas-dos-projetos.sql",
+      "src/lib/coordenadas-dos-projetos.ts; src/lib/editor-de-coordenadas.ts; supabase/correcoes/20261002-pendencias-das-coordenadas-dos-projetos.sql",
   },
   {
     arquivo: "regras-dos-mapas.md",
@@ -5549,7 +5598,7 @@ export const VERBETES_AYA = Object.freeze([
       'No mapa da Saúde Indígena, toda coordenada vem do banco do MONITORA: os polos base e as sedes dos DSEIs do cadastro do mapa (lmap) e os estabelecimentos (UBSI, CASAI e demais unidades) do cadastro do CNES guardado no banco (rede_cnes). O mapa desenha exatamente o que está gravado; nada é recalculado na tela. Essas coordenadas foram auditadas em 01 e 02/10/2026 contra fontes oficiais: CNES (Ministério da Saúde), malhas municipais e Localidades Indígenas do Censo 2022 do IBGE, aldeias e terras indígenas da Funai, PDSI 2024–2027 de cada DSEI e OpenStreetMap. Em três rodadas, sempre com duas fontes independentes concordando, foram corrigidos no banco 162 polos e 2 CASAIs, com backup antes de cada rodada. 93 polos ainda aguardam confirmação do DSEI (só uma fonte, fontes que discordam ou nenhum homônimo oficial); eles aparecem na posição gravada no banco, sem aviso no popup. A planilha "Lotações, Meios de Acesso/Polo Base" não entra mais no mapa: ela tem erros e não há versão corrigida; os pontos que só existiam nela estão listados em docs/pontos-so-na-planilha-de-lotacoes.md para inclusão manual no banco, se a área confirmar. Para corrigir um ponto, a correção é feita no banco.',
     fato: "",
     fonte:
-      "docs/auditoria-oficial-das-coordenadas-2026-10-01.md; docs/pontos-so-na-planilha-de-lotacoes.md; src/lib/mapa-saude-indigena/mapa-do-dsei.js",
+      "docs/auditoria-oficial-das-coordenadas-2026-10-01.md; docs/pontos-so-na-planilha-de-lotacoes.md; src/lib/mapa-saude-indigena/mapa-do-dsei.ts",
   },
   {
     arquivo: "regras-dos-modulos-e-abas.md",

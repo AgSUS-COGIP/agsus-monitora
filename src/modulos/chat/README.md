@@ -20,7 +20,7 @@ estado.js              store sem React: RPCs, Storage (anexos), Realtime, não l
 ponte.js               sem React: abrir conversa de fora (evento), compartilhar cartão (evento),
                        link da tela atual, irParaLink (inclusive a ficha da avaliação documental)
 usar-chat-liberado.js  hook: a pessoa conectada pode usar (botões "Conversa" e "Compartilhar esta ficha")
-chat.css               só tokens
+chat.css               só tokens que mudam no escuro (aliases e --chat-* de tokens.css)
 ```
 
 - Abrir de fora: `abrirConversaDoEdital({ id, titulo })` e `abrirConversaDireta(usuario)` (ponte.js)
@@ -72,12 +72,16 @@ chat.css               só tokens
   atualizações) e também quando a seção é aberta (`expurgarAnexos`). No painel, o DELETE do Realtime (só a chave) tira a mensagem (`tirarMensagens`) e a
   releitura da página mais nova tira o que sumiu do banco (`reconciliarPagina`).
 
+- Tema escuro: `chat.css` não usa `--color-*` (ficam claros no escuro) nem cor literal; o balão próprio
+  é `--chat-balao-meu-fundo`/`--chat-balao-meu-texto` e os demais `--chat-*` têm valor escuro em
+  `src/styles/tokens.css` (`tests/chat-tema-escuro.test.js`, com contraste AA).
+
 Regras puras: `src/lib/chat.js`, `src/lib/anexos-do-chat.js`, `src/lib/avisos-do-chat.js` e
 `src/lib/emojis-do-chat.js`. Banco: `supabase/migrations/20261002210000_chat.sql`,
 `20261005100000_chat_limpar_e_reacoes.sql`, `20261005190000_chat_retencao_das_mensagens.sql` e
 `20261007210000_chat_v2.sql` e `20261007250000_expurgo_diario_dos_anexos_do_chat.sql` (ensaios em `supabase/ensaios/`, rollbacks em `supabase/rollback/`).
 Explicações: `docs/aya/regras-do-chat.md`.
-Testes: `tests/chat.test.js`, `tests/avisos-do-chat.test.js`, `tests/chat-limpar-e-reacoes.test.js`, `tests/emojis-do-chat.test.js`,
+Testes: `tests/chat.test.js`, `tests/chat-tema-escuro.test.js`, `tests/avisos-do-chat.test.js`, `tests/chat-limpar-e-reacoes.test.js`, `tests/emojis-do-chat.test.js`,
 `tests/modulos/chat.test.js`, `tests/modulos/chat-estado-limpar-e-reacoes.test.js`,
 `tests/chat-migration.test.js`, `tests/chat-limpar-e-reacoes-migration.test.js`;
 retenção: `tests/retencao-do-chat.test.js`, `tests/chat-retencao-migration.test.js`,

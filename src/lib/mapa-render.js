@@ -133,6 +133,11 @@ export function agruparCoincidentes(registros, casas = 5) {
 */
 export const SOBREPOSICAO_EM_PIXELS = 14;
 
+/** @template {{lat: number, lon: number}} T
+ * @param {readonly T[]} registros
+ * @param {(registro: T) => {x: number, y: number}} projetar
+ * @param {number} [toleranciaPx]
+ * @returns {{chave: string, lat: number, lon: number, registros: T[]}[]} */
 export function agruparPorProximidadeNaTela(
   registros,
   projetar,

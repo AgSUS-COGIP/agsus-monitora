@@ -382,6 +382,12 @@ describe("regra da avaliação (AM-2)", () => {
     await montar(supabase);
     const previa = secao.querySelector(".avd-previa");
     await clicar(botao("Abrir", previa));
+    // O corpo da prévia carrega ao abrir (lazy).
+    await esperar(
+      () =>
+        import("../../src/modulos/avaliacao-documental/corpo-da-previa.tsx"),
+    );
+    await esperar();
     const chamadas = supabase.rpc.mock.calls.length;
     expect(previa.querySelector("[data-resultado]").dataset.resultado).toBe(
       "INAPTO_REQUISITO",

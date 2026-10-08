@@ -262,10 +262,9 @@ function registrarReconciliacao({
  *
  * @param {object} entrada
  * @param {string} entrada.dseiChave
- * @param {Array}  entrada.polos            registos do `lmap`
- * @param {Array}  entrada.estabelecimentos registos do `rede_cnes`
- * @returns {{reconciliados: Array, ambiguos: Array, rejeitados: Array,
- *            polosSemPar: Array, estabelecimentosUsados: Set<string>}}
+ * @param {readonly import("./tipos-da-reconciliacao.ts").UnidadeDaReconciliacao[]} entrada.polos registos do `lmap`
+ * @param {readonly import("./tipos-da-reconciliacao.ts").UnidadeDaReconciliacao[]} entrada.estabelecimentos registos do `rede_cnes`
+ * @returns {import("./tipos-da-reconciliacao.ts").ResultadoDaReconciliacao}
  */
 export function reconciliarDsei({
   dseiChave,
@@ -519,6 +518,11 @@ function preferido(a, b) {
   return a;
 }
 
+/**
+ * @template {import("./tipos-da-reconciliacao.ts").UnidadeDaReconciliacao} T
+ * @param {readonly T[]} [estabelecimentos]
+ * @returns {{estabelecimentos: (T & {cnes_absorvidos?: string[]})[], unidos: {mantido: T, absorvidos: T[]}[]}}
+ */
 export function unirEstabelecimentosRepetidos(estabelecimentos = []) {
   const lista = Array.isArray(estabelecimentos) ? estabelecimentos : [];
   const grupos = new Map();

@@ -4,15 +4,15 @@ import {
   FORMAS,
   TIPOS_DA_LEGENDA,
   formaDoTipo,
-} from "../src/lib/mapa-saude-indigena/formas.js";
+} from "../src/lib/mapa-saude-indigena/formas.ts";
 
 const guard = readFileSync("src/modules/map-guard.js", "utf8");
 const nacional = readFileSync(
-  "src/modulos/mapa-saude-indigena/mapa-nacional.jsx",
+  "src/modulos/mapa-saude-indigena/mapa-nacional.tsx",
   "utf8",
 );
 const doDsei = readFileSync(
-  "src/modulos/mapa-saude-indigena/mapa-do-dsei.jsx",
+  "src/modulos/mapa-saude-indigena/mapa-do-dsei.tsx",
   "utf8",
 );
 const cssDoModulo = readFileSync(
@@ -29,7 +29,7 @@ const projetosJsx = readFileSync(
 );
 // A moldura, o topo e a lista comuns aos dois mapas nacionais.
 const painelComum = readFileSync(
-  "src/modulos/mapa-saude-indigena/painel-do-mapa.jsx",
+  "src/modulos/mapa-saude-indigena/painel-do-mapa.tsx",
   "utf8",
 );
 

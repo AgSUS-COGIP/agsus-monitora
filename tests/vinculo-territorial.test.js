@@ -12,7 +12,7 @@ import {
   ESTILO_DA_LINHA_DE_VINCULO as ESTILO_DA_LINHA,
   TEXTO_DA_LINHA_DE_VINCULO as TOOLTIP_DA_LINHA,
   formaDoTipo,
-} from "../src/lib/mapa-saude-indigena/formas.js";
+} from "../src/lib/mapa-saude-indigena/formas.ts";
 import {
   classificarRegistros,
   dicaDoRegistro,
@@ -20,7 +20,7 @@ import {
   registrosExternos,
   registrosLocais,
   textoDosVinculosExternos as textoDoChip,
-} from "../src/lib/mapa-saude-indigena/mapa-do-dsei.js";
+} from "../src/lib/mapa-saude-indigena/mapa-do-dsei.ts";
 
 /*
   As regras do vínculo territorial no mapa do DSEI (src/modulos/mapa-saude-indigena/,

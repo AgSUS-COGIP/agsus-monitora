@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-import { popupDaSede } from "../src/lib/mapa-saude-indigena/mapa-do-dsei.js";
+import { popupDaSede } from "../src/lib/mapa-saude-indigena/mapa-do-dsei.ts";
 import {
   SEDES_DOCUMENTADAS,
   afinidadeComODsei,

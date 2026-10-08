@@ -42,7 +42,7 @@ import { usarChatLiberado } from "../../chat/usar-chat-liberado.js";
 import { CabecalhoDaFicha } from "./cabecalho-da-ficha.tsx";
 import { ConclusaoDaFicha } from "./conclusao-da-ficha.tsx";
 import { copiar } from "./empregare.tsx";
-import { ItemDaFicha } from "./item-da-ficha.tsx";
+import { decidirNoLancamento, ItemDaFicha } from "./item-da-ficha.tsx";
 import { MaisAcoesDaFicha } from "./mais-acoes-da-ficha.tsx";
 import { ProgressoDaFicha } from "./progresso-da-ficha.tsx";
 import { ResumoDaNota } from "./resumo-da-nota.tsx";
@@ -434,20 +434,9 @@ export function ConteudoDaFicha({
     avanco.current = setTimeout(() => irPara(proximo), ESPERA_PARA_AVANCAR_MS);
   }
 
-  function decidir(codigo, situacao) {
-    mudar((l) => {
-      const atualDoBloco = l.blocos?.[codigo] || {};
-      l.blocos = {
-        ...l.blocos,
-        [codigo]: {
-          ...atualDoBloco,
-          situacao,
-          motivos: situacao === "CONFORME" ? [] : atualDoBloco.motivos || [],
-        },
-      };
-      return l;
-    });
-    depoisDeDecidir(codigo, situacao);
+  function decidir(bloco, situacao) {
+    decidirNoLancamento(loja.obter(), bloco, mudar, situacao);
+    depoisDeDecidir(bloco.codigo, situacao);
   }
 
   async function concluirEProxima() {
@@ -491,7 +480,7 @@ export function ConteudoDaFicha({
     if (!situacao || !bloco || !itens.some((p) => p.codigo === atual)) return;
     if (bloco.tipo === "REGISTRO" || !blocoSeAplica(bloco, lancamento)) return;
     ev.preventDefault();
-    decidir(bloco.codigo, situacao);
+    decidir(bloco, situacao);
   }
 
   teclar.current = aoTeclar;

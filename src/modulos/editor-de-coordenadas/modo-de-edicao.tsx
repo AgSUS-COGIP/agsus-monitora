@@ -10,9 +10,9 @@ import {
 import { folgaDoEnquadramento } from "../../lib/editor-de-coordenadas.ts";
 import { classes } from "../../ui/index.js";
 import { remedir } from "../mapa-saude-indigena/leaflet.js";
-import { travarRolagemDaPagina } from "../mapa-saude-indigena/tela-cheia.jsx";
-import { usarUltimo } from "../mapa-saude-indigena/usar-ultimo.js";
-import { CAMPOS_E_JANELAS } from "../mapa-saude-indigena/volta-ao-brasil.js";
+import { travarRolagemDaPagina } from "../mapa-saude-indigena/tela-cheia.tsx";
+import { usarUltimo } from "../mapa-saude-indigena/usar-ultimo.ts";
+import { CAMPOS_E_JANELAS } from "../mapa-saude-indigena/volta-ao-brasil.ts";
 
 /*
   O MODO DE EDIÇÃO DE COORDENADAS, comum aos mapas da Visão geral (Saúde

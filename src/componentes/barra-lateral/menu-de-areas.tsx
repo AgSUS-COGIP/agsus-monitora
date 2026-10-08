@@ -5,6 +5,7 @@ import type {
   FocusEvent,
   KeyboardEvent,
 } from "react";
+import { preCarregarTela } from "../../lib/carga-de-telas.js";
 import type {
   GrupoDoMenu,
   ItemDoMenu as Item,
@@ -297,6 +298,8 @@ function ItemDoMenu({
         data-dica={direto ? dica : undefined}
         aria-current={ativo ? "page" : undefined}
         onClick={aoEscolher}
+        onPointerEnter={() => preCarregarTela(item.view, item.secao)}
+        onFocus={() => preCarregarTela(item.view, item.secao)}
       >
         <Icone nome={item.icone} className="menu-item__icone" />
         <span className="menu-item__rotulo">{item.rotulo}</span>
@@ -551,16 +554,23 @@ function SeletorDeArea({
   );
 }
 
+/*
+  Com `previa` (a prévia de Configurações › Marca), o menu é o mesmo, mas não
+  grava as áreas fechadas nem avisa `EVENTO_MENU_ATUALIZADO`: quem espelha o
+  menu é a barra de verdade.
+*/
 export function Navegacao({
   arvore,
   ativo,
   opcoes,
   trilho,
+  previa = false,
 }: {
   arvore: ArvoreDoMenu;
   ativo: ItemAtivoDoMenu;
   opcoes: OpcoesDaBarraLateral;
   trilho: boolean;
+  previa?: boolean;
 }) {
   const refNavegacao = useRef<HTMLDivElement>(null);
   const refNav = useRef<HTMLElement>(null);
@@ -586,7 +596,7 @@ export function Navegacao({
   const areaAtiva = itemAtivo?.area ?? null;
 
   const guardarFechadas = (proximas: Set<string>) => {
-    gravarAreasFechadas(proximas);
+    if (!previa) gravarAreasFechadas(proximas);
     definirFechadas(proximas);
   };
 
@@ -608,12 +618,13 @@ export function Navegacao({
   */
   const secaoAtiva = itemAtivo?.item.secao ?? null;
   useEffect(() => {
+    if (previa) return;
     avisar(EVENTO_MENU_ATUALIZADO, {
       view: ativo.view,
       secao: secaoAtiva,
       area: areaAtual,
     });
-  }, [arvore, ativo, secaoAtiva, areaAtual]);
+  }, [arvore, ativo, secaoAtiva, areaAtual, previa]);
 
   useEffect(() => {
     if (!trilho) despachar({ tipo: "fechar" });

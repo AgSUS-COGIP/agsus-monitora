@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   alternarCartao,
   motivoDoPontoDePartida,
@@ -11,6 +11,10 @@ import {
   regrasIguais,
   validarRegraAnalise,
 } from "../../../lib/avaliacao-documental/regra.js";
+import {
+  pendenciasDoSalvar,
+  type PendenciaDoSalvar,
+} from "../../../lib/avaliacao-documental/pendencias-do-salvar.ts";
 import type { RegraAnalise } from "../../../lib/avaliacao-documental/tipos-da-regra.ts";
 import {
   normalizarRegra,
@@ -18,12 +22,13 @@ import {
 } from "../../../lib/classificacao/regra.js";
 import { CATALOGO_DE_CRITERIOS } from "../../../lib/classificacao/catalogo.js";
 import {
+  erroDoNomeDaVersao,
   nomeParaGravar,
   sugerirNomeDaVersao,
 } from "../../../lib/nome-da-versao.ts";
 import { Aviso } from "../../../ui/index.js";
 import { nomeDoCampo } from "../../../ui/nome-da-versao.tsx";
-import { Previa } from "../previa.jsx";
+import { Previa } from "../previa.tsx";
 import { PassoCardapio } from "./cardapio.tsx";
 import {
   BarraDeSalvar,
@@ -44,7 +49,9 @@ import type { EstadoDaRegra, SnapshotDaAvaliacao } from "./tipos.ts";
   mesmo rascunho que o modo avançado edita (o JSON de regra.js). Salvar cria a
   versão nova com motivo (salvar_regra_analise) e, se a nota mínima ou o
   desempate da classificação mudaram, grava a regra de classificação antes
-  (salvar_regra_classificacao, com a permissão dela).
+  (salvar_regra_classificacao, com a permissão dela). O passo 5 segue a ordem
+  Resumo → Comparar versões → Testar (recolhido) → Nome, motivo e Salvar, com
+  a lista do que falta ao lado do botão (cada item leva ao passo e ao campo).
 */
 
 const PASSOS = [
@@ -104,6 +111,24 @@ export function AssistenteDaRegra({
   const [motivo, setMotivo] = useState("");
   const [nome, setNome] = useState<string | null>(null);
   const [erroDoBanco, setErroDoBanco] = useState("");
+  const [alvo, setAlvo] = useState<string | null>(null);
+  const corpo = useRef<HTMLDivElement>(null);
+
+  // Depois de "ir para" uma pendência: rola até o campo e foca.
+  useEffect(() => {
+    if (!alvo) return;
+    const quadro = requestAnimationFrame(() => {
+      const el = corpo.current?.querySelector<HTMLElement>(alvo);
+      setAlvo(null);
+      if (!el) return;
+      el.scrollIntoView?.({ block: "center", behavior: "smooth" });
+      const campo = el.matches("input, select, textarea, button")
+        ? el
+        : el.querySelector<HTMLElement>("input, select, textarea, button");
+      campo?.focus({ preventScroll: true });
+    });
+    return () => cancelAnimationFrame(quadro);
+  }, [alvo, passo]);
 
   useEffect(() => {
     void estado.carregarApoio();
@@ -234,6 +259,25 @@ export function AssistenteDaRegra({
     }
   }
 
+  const motivoObrigatorio = Boolean(regraSalva) || mudouClassificacao;
+  const pendencias = pendenciasDoSalvar({
+    regra: rascunho,
+    erros,
+    mudou: mudouRegra || mudouClassificacao,
+    temVigente: Boolean(regraSalva),
+    motivo,
+    motivoObrigatorio,
+    erroDoNome: mudouRegra
+      ? erroDoNomeDaVersao(nomeDoCampo(nome, sugestao))
+      : "",
+    vagas: apoio?.perguntas_por_vaga ?? [],
+  });
+  const irPara = (p: PendenciaDoSalvar) => {
+    const i = PASSOS.findIndex((x) => x.id === p.passo);
+    if (i >= 0) setPasso(i);
+    if (p.alvo) setAlvo(p.alvo);
+  };
+
   const passoAtual = PASSOS[passo] ?? PASSOS[0];
   const contexto = {
     edital: editalRotulo,
@@ -307,7 +351,11 @@ export function AssistenteDaRegra({
         </Aviso>
       ) : null}
 
-      <div className="avd-ast-corpo" data-passo-atual={passoAtual.id}>
+      <div
+        className="avd-ast-corpo"
+        data-passo-atual={passoAtual.id}
+        ref={corpo}
+      >
         <h3 className="avd-ast-titulo-do-passo">
           <i className={`fa-solid ${passoAtual.icone}`} aria-hidden="true" />{" "}
           {passo + 1}. {passoAtual.rotulo}
@@ -360,13 +408,6 @@ export function AssistenteDaRegra({
         ) : null}
         {passo === 4 && rascunho ? (
           <div className="avd-ast-passo">
-            <Previa
-              regra={rascunho}
-              notaMinima={{
-                nota_minima: notaMinima,
-                nota_minima_por_nivel: notaMinimaPorNivel,
-              }}
-            />
             <ResumoDaRegra
               regra={rascunho}
               contexto={contexto}
@@ -374,18 +415,26 @@ export function AssistenteDaRegra({
               imprimir={imprimir}
             />
             <ComparacaoDeVersoes regraSalva={regraSalva} rascunho={rascunho} />
+            <Previa
+              regra={rascunho}
+              notaMinima={{
+                nota_minima: notaMinima,
+                nota_minima_por_nivel: notaMinimaPorNivel,
+              }}
+            />
             <BarraDeSalvar
               versaoNova={(regraSalva?.versao ?? 0) + 1}
-              erros={erros}
+              pendencias={pendencias}
+              aoIrPara={irPara}
               motivo={motivo}
               aoMudarMotivo={setMotivo}
               pedeNome={mudouRegra}
               nome={nome}
               sugestaoDoNome={sugestao}
               aoMudarNome={setNome}
-              motivoObrigatorio={Boolean(regraSalva) || mudouClassificacao}
+              motivoObrigatorio={motivoObrigatorio}
               salvaClassificacao={mudouClassificacao}
-              podeSalvar={mudouRegra || mudouClassificacao}
+              podeDescartar={mudouRegra || mudouClassificacao}
               salvando={e.salvando}
               erroDoBanco={erroDoBanco}
               aoSalvar={() => void salvar()}

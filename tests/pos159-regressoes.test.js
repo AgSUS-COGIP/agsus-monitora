@@ -6,6 +6,7 @@ import {
   linhasDasSecoes,
   normalizarValoresCarregados,
 } from "../src/lib/publicacao-de-configuracoes.js";
+import { LOGO_PADRAO_DA_BARRA } from "../src/lib/marca-da-barra-lateral.js";
 
 const app = fonteDoApp();
 const governance = readFileSync("src/modulos/configuracoes/estado.js", "utf8");
@@ -120,8 +121,12 @@ describe("a logo da barra lateral é o <img> real", () => {
       marca,
       barraLateral.indexOf(">", barraLateral.indexOf("/>", marca)),
     );
-    expect(tag).toContain('src="/assets/agsus-logo.webp"');
-    expect(tag).not.toContain("postimg.cc");
+    // O `src` vem de `usarLogoDaPrevia`: fora da prévia, a logo local padrão.
+    expect(LOGO_PADRAO_DA_BARRA).toBe("/assets/agsus-logo.webp");
+    expect(barraLateral).toMatch(
+      /logo === undefined\) return \{ src: LOGO_PADRAO_DA_BARRA \}/,
+    );
+    expect(barraLateral).not.toContain("postimg.cc");
     expect(tag).not.toMatch(/onerror/i);
   });
 

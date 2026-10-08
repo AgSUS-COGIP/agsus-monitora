@@ -5,7 +5,7 @@ import {
   gravidadeDoLugar,
   pontosEditaveisDosProjetos,
   sugestoesDoLugar,
-} from "../src/lib/coordenadas-dos-projetos.js";
+} from "../src/lib/coordenadas-dos-projetos.ts";
 import {
   filaDoEditor,
   listaDeSugestoes,
@@ -18,7 +18,7 @@ import {
 
 /*
   As regras do editor de coordenadas no mapa de Projetos
-  (src/lib/coordenadas-dos-projetos.js) e as partes comuns aos dois mapas
+  (src/lib/coordenadas-dos-projetos.ts) e as partes comuns aos dois mapas
   que elas usam (src/lib/editor-de-coordenadas.js).
 */
 
@@ -366,4 +366,26 @@ describe("partes comuns do editor", () => {
     expect(fila.itens.map((i) => i.id)).toEqual(["2", "1"]);
     expect(fila.porGravidade.revisar).toBe(2);
   });
+});
+
+it("não trata nomes herdados do protótipo como motivo de erro", () => {
+  const ponto = {
+    id: "desconhecido/XX",
+    nome: "Desconhecido/XX",
+    alvo: { lugar: "desconhecido/XX" },
+    nivel: "municipio",
+    uf: "XX",
+    localidade: "",
+    latitude: -12,
+    longitude: -50,
+  };
+  expect(
+    gravidadeDoLugar(
+      {
+        motivo_tipo: "constructor",
+        candidatos: [null, { f: "IBGE", lat: [], lon: {} }],
+      },
+      ponto,
+    ),
+  ).toMatchObject({ nivel: "sem", resumo: "nenhuma posição candidata" });
 });

@@ -5,7 +5,7 @@ import { BRASIL_BOUNDS, boundsDoGeoJson } from "../src/lib/brasil-bounds.js";
 import {
   chaveDoDsei,
   temCoordenada,
-} from "../src/lib/mapa-saude-indigena/chaves.js";
+} from "../src/lib/mapa-saude-indigena/chaves.ts";
 import {
   BR_OUTLINE,
   UF_GEO,
@@ -13,9 +13,10 @@ import {
 import {
   CORES_DO_MAPA,
   FORMAS,
+  formaDoTipo,
   TIPOS_DA_LEGENDA,
   tipoDaUnidade,
-} from "../src/lib/mapa-saude-indigena/formas.js";
+} from "../src/lib/mapa-saude-indigena/formas.ts";
 import {
   classificarRegistros,
   dicaDoRegistro,
@@ -32,7 +33,7 @@ import {
   textoDosVinculosExternos,
   tiposDoTerritorio,
   visiveis,
-} from "../src/lib/mapa-saude-indigena/mapa-do-dsei.js";
+} from "../src/lib/mapa-saude-indigena/mapa-do-dsei.ts";
 import {
   bolhasDosDsei,
   casaisNacionais,
@@ -41,7 +42,7 @@ import {
   enquadramentoNacional,
   popupDaCasaiNacional,
   territoriosPorVagas,
-} from "../src/lib/mapa-saude-indigena/mapa-nacional.js";
+} from "../src/lib/mapa-saude-indigena/mapa-nacional.ts";
 
 /*
   O mapa da Saúde Indígena sem Leaflet (src/lib/mapa-saude-indigena/): as
@@ -327,6 +328,19 @@ describe("pontos de um DSEI", () => {
 });
 
 describe("formas, cores e contornos (a cópia única, desde que o legado saiu)", () => {
+  it("tipos desconhecidos ou herdados do protótipo usam a forma de unidade", () => {
+    for (const tipo of [
+      null,
+      {},
+      "desconhecido",
+      "__proto__",
+      "constructor",
+      "toString",
+    ]) {
+      expect(formaDoTipo(tipo)).toBe(FORMAS.unit);
+    }
+    expect(formaDoTipo("sede")).toBe(FORMAS.sede);
+  });
   it("cada tipo tem a sua forma e a sua cor, na ordem da legenda", () => {
     expect([...TIPOS_DA_LEGENDA]).toEqual([
       "sede",

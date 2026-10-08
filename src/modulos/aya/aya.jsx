@@ -59,7 +59,6 @@ import { montarChamado, pedeSuporte } from "../../lib/chamado-da-aya.js";
 import { nomeDaArea } from "../../lib/menu-lateral.ts";
 import { abrirSecaoDeConfiguracao } from "../configuracoes/secoes.js";
 import { collectAyaPageContext, estadoDaTela } from "./contexto.js";
-import { responderAya } from "../../lib/busca-da-aya.js";
 import { responderComDados } from "../../lib/dados-da-aya.js";
 import { isAdminGlobal } from "../../lib/access-roles.js";
 import {
@@ -163,6 +162,17 @@ function guardarSemResposta(janela, item) {
   verbetes, com a aba e o edital da tela e o perfil de quem pergunta.
 */
 let fontesPadrao = null;
+/*
+  A base de verbetes (busca-da-aya.js e src/modules/aya-conhecimento-gerado.js,
+  ~100 KB gzip) baixa na primeira pergunta ou ao abrir o painel
+  (preCarregarBase), fora do pacote principal.
+*/
+let buscaDaBase = null;
+const preCarregarBase = () =>
+  (buscaDaBase ??= import("../../lib/busca-da-aya.js").catch((erro) => {
+    buscaDaBase = null;
+    throw erro;
+  }));
 async function perguntarPadrao(opcoes) {
   const tela = estadoDaTela(opcoes.doc);
   fontesPadrao ||= criarFontesDaAya();
@@ -173,6 +183,7 @@ async function perguntarPadrao(opcoes) {
     buscar: fontesPadrao.buscar,
   });
   if (comDados) return comDados;
+  const { responderAya } = await preCarregarBase();
   return responderAya({
     ...opcoes,
     aba: tela.aba,
@@ -775,6 +786,8 @@ export function Aya({
   useEffect(() => {
     if (aberta) {
       refCampo.current?.focus();
+      // A base de verbetes baixa enquanto a pessoa digita.
+      preCarregarBase().catch(() => {});
       return;
     }
     if (devolverFocoAArara.current) {

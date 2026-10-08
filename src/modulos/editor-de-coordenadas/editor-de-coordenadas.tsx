@@ -30,9 +30,9 @@ import {
   lerCoordenada,
   validarCorrecaoDoMapa,
 } from "../../lib/editor-de-coordenadas.ts";
-import { CORES_DO_MAPA } from "../../lib/mapa-saude-indigena/formas.js";
+import { CORES_DO_MAPA } from "../../lib/mapa-saude-indigena/formas.ts";
 import { Aviso, Campo, Selo, classes } from "../../ui/index.js";
-import { usarUltimo } from "../mapa-saude-indigena/usar-ultimo.js";
+import { usarUltimo } from "../mapa-saude-indigena/usar-ultimo.ts";
 import { FilaDeCoordenadas } from "./fila-de-coordenadas.tsx";
 import { HistoricoDoPonto } from "./historico-do-ponto.tsx";
 import { SugestoesDoPonto } from "./sugestoes-do-ponto.tsx";

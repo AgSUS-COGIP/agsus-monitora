@@ -7,7 +7,7 @@ import {
   textoDasVagas,
 } from "../../lib/visao-geral-da-area.ts";
 import { Campo, EstadoVazio, classes } from "../../ui/index.js";
-import { ListaDoMapa } from "../mapa-saude-indigena/painel-do-mapa.jsx";
+import { ListaDoMapa } from "../mapa-saude-indigena/painel-do-mapa.tsx";
 
 /*
   A lista "Municípios por vagas", ao lado do mapa de Projetos: o mesmo

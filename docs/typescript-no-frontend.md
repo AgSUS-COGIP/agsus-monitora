@@ -24,16 +24,23 @@ edital, Preparar em passos, a configuração do edital, o parecer pronto e as se
 já nascem em TypeScript. O Mapa de Projetos está em TypeScript, incluindo carregador,
 cache, mapa, lista, balões, integração do editor e regras em `src/lib/visao-geral-da-area.ts`.
 O editor compartilhado pelos dois mapas também está em TypeScript: fila, sugestões, histórico,
-prévia, gravação, modo de edição e regras em `src/lib/editor-de-coordenadas.ts`. O mapa da
-Saúde Indígena e as peças comuns de criação do Leaflet continuam em JavaScript, com contratos
-JSDoc na integração. Outros módulos
+prévia, gravação, modo de edição e regras em `src/lib/editor-de-coordenadas.ts`. As telas principal, nacional e por DSEI da Saúde Indígena também estão em TSX.
+As regras nacionais e distritais de contagens, bolhas, CASAIs, unidades, vínculos,
+resumos e enquadramento estão em `src/lib/mapa-saude-indigena/chaves.ts`, `mapa-nacional.ts`
+e `mapa-do-dsei.ts`. As peças comuns de criação do Leaflet e a reconciliação compartilhada
+permanecem em JavaScript, com contratos JSDoc na integração. Painel, lista, legenda, tela cheia, retorno ao Brasil e hooks dos
+mapas já estão em TypeScript, com contratos em `tipos-do-painel.ts`; formas e cores
+em `src/lib/mapa-saude-indigena/formas.ts`. Outros módulos
 combinam JavaScript/JSX com migrações pontuais para TypeScript: a ficha da Avaliação documental
 tem os componentes em `src/modulos/avaliacao-documental/ficha/*.tsx` (contratos em `tipos.ts`) e
-`Popover` está em `src/ui/popover.tsx`. Componentes e helpers
+`Popover` está em `src/ui/popover.tsx`. Em Configurações › Marca, a prévia da barra lateral
+(`previa-da-barra-lateral.tsx`) e o quadro das prévias (`moldura-da-previa.tsx`) são TSX. Componentes e helpers
 compartilhados consumidos por esses módulos declaram seus contratos em JSDoc.
 O assistente da regra da Avaliação documental (`src/modulos/avaliacao-documental/assistente/`)
 já nasceu em TSX, com as regras em `src/lib/avaliacao-documental/assistente-da-regra.ts`,
-`resumo-da-regra.ts`, `comparar-regras.ts` e os contratos em `tipos-da-regra.ts`.
+`resumo-da-regra.ts`, `comparar-regras.ts`, `catalogo-de-desempate.ts`, `pendencias-do-salvar.ts` e os
+contratos em `tipos-da-regra.ts`; a prévia "Testar com um candidato fictício" está em `previa.tsx`.
+Na ficha, o Apurado de partida e o efeito da decisão nele estão em `apurado-da-ficha.ts`.
 
 ## Verificação
 
@@ -117,3 +124,9 @@ os imports quando o arquivo mudar de extensão. Para dados externos, acrescentar
 em tempo de execução quando necessária: uma anotação TypeScript não valida JSON recebido.
 
 Manter o servidor com seu `tsconfig.json`; configurações de DOM e JSX pertencem ao frontend.
+
+As regras de coordenadas dos dois mapas e o adaptador do editor da Saúde Indígena
+também estão migrados. Os contratos dos alvos indígenas estão em
+`src/lib/tipos-das-coordenadas-do-mapa.ts`; o catálogo editável valida entradas
+externas sem alterar os índices conferidos pelo banco. As telas recebem a entrada geográfica validada por `dados-do-mapa.ts`; a edição conserva
+os dados originais para preservar os alvos usados pelo banco.
