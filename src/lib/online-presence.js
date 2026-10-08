@@ -1,4 +1,4 @@
-import { ABAS_DO_MENU, nomeDaArea } from "./menu-lateral.js";
+import { ABAS_DO_MENU, nomeDaArea } from "./menu-lateral.ts";
 import { rotuloDoPerfil } from "./access-roles.js";
 
 function text(value) {

@@ -7,7 +7,7 @@ import {
   areasDoUsuario,
   montarArvoreDoMenu,
   nomeDaArea,
-} from "../lib/menu-lateral.js";
+} from "../lib/menu-lateral.ts";
 import {
   isAdminGlobal,
   paginasPermitidas,
@@ -35,7 +35,7 @@ import {
 import {
   atualizarMenuLateral,
   marcarItemAtivoNoMenu,
-} from "../componentes/barra-lateral/estado.js";
+} from "../componentes/barra-lateral/estado.ts";
 import {
   abrirSecaoDeConfiguracao,
   definirSecoesPermitidas,

@@ -6,7 +6,7 @@ import {
   abasDoCatalogo,
   montarArvoreDoMenu,
   paginasDaArea,
-} from "../src/lib/menu-lateral.js";
+} from "../src/lib/menu-lateral.ts";
 import { RESOURCES } from "../src/lib/permissoes-recursos.js";
 import { CONTRATO_RPC } from "../src/lib/rpc-contrato.js";
 import {

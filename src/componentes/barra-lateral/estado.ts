@@ -1,3 +1,9 @@
+import type {
+  ArvoreDoMenu,
+  OpcoesDaBarraLateral,
+  SnapshotDaBarraLateral,
+} from "./tipos.ts";
+
 /*
   Estado da barra lateral, fora do React.
 
@@ -11,21 +17,21 @@
 
 const ATIVO_VAZIO = Object.freeze({ view: null, secao: null });
 
-const ESTADO_INICIAL = Object.freeze({
+const ESTADO_INICIAL: SnapshotDaBarraLateral = Object.freeze({
   arvore: Object.freeze([]),
   ativo: ATIVO_VAZIO,
   opcoes: Object.freeze({}),
 });
 
 let estado = ESTADO_INICIAL;
-const ouvintes = new Set();
+const ouvintes = new Set<() => void>();
 
-function publicar(proximo) {
+function publicar(proximo: SnapshotDaBarraLateral) {
   estado = proximo;
   for (const ouvinte of ouvintes) ouvinte();
 }
 
-export function assinarBarraLateral(ouvinte) {
+export function assinarBarraLateral(ouvinte: () => void) {
   ouvintes.add(ouvinte);
   return () => ouvintes.delete(ouvinte);
 }
@@ -35,17 +41,23 @@ export function obterEstadoDaBarraLateral() {
 }
 
 /*
-  `arvore` vem de `montarArvoreDoMenu` (`src/lib/menu-lateral.js`). Opções:
+  `arvore` vem de `montarArvoreDoMenu` (`src/lib/menu-lateral.ts`). Opções:
   - `navegar(view)`: padrão, `window.navigate` resolvido no clique;
   - `paginaAtiva(view)`: padrão, `#page-<view>` com `.active`;
   - `aoAbrirSecao(view, secao)`: depois de abrir um item com seção;
   - `textoVazio`: aviso quando o perfil não tem nenhuma área.
 */
-export function atualizarMenuLateral(arvore = [], opcoes = {}) {
+export function atualizarMenuLateral(
+  arvore: ArvoreDoMenu = [],
+  opcoes: OpcoesDaBarraLateral = {},
+) {
   publicar({ ...estado, arvore, opcoes });
 }
 
-export function marcarItemAtivoNoMenu(view, secao = null) {
+export function marcarItemAtivoNoMenu(
+  view: string | null,
+  secao: string | null = null,
+) {
   const proximo = { view: view ?? null, secao: secao ?? null };
   if (
     estado.ativo.view === proximo.view &&

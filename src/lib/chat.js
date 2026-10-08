@@ -10,7 +10,7 @@
   encaminhada, cartões, Visto, busca, fixadas, não lida e status.
 */
 
-import { ABAS_DO_MENU, nomeDaArea } from "./menu-lateral.js";
+import { ABAS_DO_MENU, nomeDaArea } from "./menu-lateral.ts";
 
 export const LIMITE_DO_TEXTO = 4000;
 /** Quantas mensagens por página (listar_mensagens_chat aceita até 100). */

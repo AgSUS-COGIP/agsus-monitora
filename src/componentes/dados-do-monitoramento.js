@@ -92,7 +92,7 @@ export function publicarUnidadesDoCatalogo(unidades) {
 
 /*
   As áreas do usuário (já normalizadas por `areasDoUsuario`, de
-  `menu-lateral.js`). A área atual continua a mesma se o usuário a tem; senão,
+  `menu-lateral.ts`). A área atual continua a mesma se o usuário a tem; senão,
   vira a primeira dele — é o padrão de quem acabou de entrar.
 */
 export function definirAreasDoUsuario(areas) {

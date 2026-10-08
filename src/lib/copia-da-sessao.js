@@ -29,7 +29,7 @@ const PARTES_SIMPLES = Object.freeze(["config", "paineis", "mapa", "unidades"]);
 
 /*
   Partes que podem faltar sem invalidar a cópia: `abas` (o catálogo de abas do
-  menu) tem reserva no código (`ABAS_DO_MENU`, em `menu-lateral.js`), com o
+  menu) tem reserva no código (`ABAS_DO_MENU`, em `menu-lateral.ts`), com o
   mesmo menu. Falhou ou a função ainda não existe no banco, a parte fica `null`.
 */
 const PARTES_OPCIONAIS = Object.freeze(["abas"]);
