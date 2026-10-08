@@ -13,7 +13,7 @@ navegação e regras em `src/lib/avisos-de-conferencia.ts`. Status das atualiza�
 saúde das cargas, agenda, histórico, acompanhamento, formulário de opções, estado e regras em
 `src/lib/saude-das-cargas.ts` e `src/lib/painel-dos-robos.ts`. A validação das opções em
 `src/lib/robos-de-carga.js` continua compartilhada com a Avaliação documental, com contratos JSDoc.
-Em Entrevistas, as peças novas do Painel e de Conduzir (`andamento.tsx`, `conduzir.tsx`,
+Em Entrevistas, as peças novas do Painel e de Conduzir (`agenda-e-empates.tsx`, `conduzir.tsx`,
 `fila-do-dia.tsx`, as peças da ficha de notas — cabeçalho, abas, matriz, célula, resultado —, `tipos.ts`,
 `src/lib/painel-de-entrevistas.ts`, `src/lib/fila-de-conducao.ts` e `src/lib/digitacao-de-notas.ts`)
 já nascem em TypeScript. Os mapas

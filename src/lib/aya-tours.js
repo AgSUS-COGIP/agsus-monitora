@@ -322,11 +322,6 @@ const TOURS = Object.freeze({
         "Vagas com entrevista, candidatos, compareceram, aptos, inaptos e média das notas.",
       ),
       passo(
-        t("entrevistas-andamento"),
-        "Andamento por vaga",
-        "Cada cartão mostra o feito e a barra: verde apto, vermelho inapto, amarelo faltou, azul em andamento.",
-      ),
-      passo(
         t("entrevistas-agenda-proxima"),
         "Próximos dias",
         "Com um edital escolhido, a agenda salva na Classificação; Conduzir leva à fila.",
@@ -1230,7 +1225,7 @@ const TRILHAS = Object.freeze([
       passo(
         [t("entrevistas-kpis"), "#page-entrevistas .entrevistas-kpis"],
         "6. Painel de entrevistas",
-        "Acompanhe o andamento por vaga, as pendências e os empates.",
+        "Acompanhe os indicadores, as pendências e os empates.",
         { pagina: "entrevistas" },
       ),
       passo(
