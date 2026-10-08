@@ -21,7 +21,7 @@ import type {
   `corrigirCoordenada(lugar, latitude, longitude)`: o editor de coordenadas
   gravou a posição de um lugar; o cache passa a ter a nova (sem novo pedido).
 */
-import { aplicarCoordenada } from "../../lib/coordenadas-dos-projetos.js";
+import { aplicarCoordenada } from "../../lib/coordenadas-dos-projetos.ts";
 import { exigirSessao } from "../../lib/sessao.js";
 import { municipiosDaResposta } from "../../lib/visao-geral-da-area.ts";
 

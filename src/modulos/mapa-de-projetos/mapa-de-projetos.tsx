@@ -12,7 +12,7 @@ import type { MapaNacional, MarcadorDoMapa } from "../../lib/tipos-do-mapa.ts";
 import { useEffect, useMemo, useState } from "react";
 import { usarTemaEscuro } from "../../app/tema.js";
 import { podeEditarCoordenadas } from "../../lib/access-roles.js";
-import { aplicarCoordenada } from "../../lib/coordenadas-dos-projetos.js";
+import { aplicarCoordenada } from "../../lib/coordenadas-dos-projetos.ts";
 import { enquadramentoDoRecorte } from "../../lib/enquadramento-do-brasil.js";
 import { OPACIDADE_DA_BOLHA } from "../../lib/mapa-render.js";
 import {
@@ -77,7 +77,7 @@ import { CorDoProjeto, ListaDeMunicipios } from "./lista.tsx";
   As coordenadas vêm do banco (public."TB_COORDENADA_LOCAL_VAGA", na resposta da
   RPC). O administrador global e o Gestor veem "Coordenadas": o editor comum
   (src/modulos/editor-de-coordenadas/, aqui com as regras de
-  src/lib/coordenadas-dos-projetos.js) toma o lugar da lista; o que ele grava
+  src/lib/coordenadas-dos-projetos.ts) toma o lugar da lista; o que ele grava
   vale na hora no mapa e no cache do carregador.
 */
 
