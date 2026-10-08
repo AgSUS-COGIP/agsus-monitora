@@ -1,3 +1,4 @@
+import type { MetodosDoMapaIndigena } from "./tipos-do-leaflet.ts";
 import type { ReactNode, RefObject } from "react";
 import type {
   CoordenadasDoMapa,
@@ -5,7 +6,7 @@ import type {
 } from "../../lib/tipos-do-mapa.ts";
 import type { ModoDeEdicao } from "../editor-de-coordenadas/modo-de-edicao.tsx";
 
-export interface MapaDoPainel extends MapaNacional {
+export interface MapaDoPainel extends MapaNacional, MetodosDoMapaIndigena {
   remove(): void;
 }
 export interface ControleDoEnquadramento {
@@ -18,7 +19,7 @@ export interface MapaCriadoDoBrasil extends ControleDoEnquadramento {
 }
 export interface OpcoesDoPainel<T extends object> {
   aoCriar(mapa: MapaDoPainel): T;
-  emVoo?: RefObject<boolean>;
+  emVoo?: RefObject<boolean | (() => void) | null>;
   visivel?: boolean;
   telaCheia?: boolean;
 }

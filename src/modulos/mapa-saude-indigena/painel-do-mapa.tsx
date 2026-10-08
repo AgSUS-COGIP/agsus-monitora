@@ -15,7 +15,7 @@ import { usarUltimo } from "./usar-ultimo.ts";
 
 /*
   O PAINEL DO MAPA NACIONAL, comum aos mapas da Visão geral: o da Saúde
-  Indígena (mapa-nacional.jsx) e o de Projetos (src/modulos/mapa-de-projetos/).
+  Indígena (mapa-nacional.tsx) e o de Projetos (src/modulos/mapa-de-projetos/).
   As regras são as mesmas; muda só o que vai no mapa e na lista.
 
   - `usarMapaDoBrasil`: cria o mapa uma vez (`criarMapaDoBrasil`: Brasil,

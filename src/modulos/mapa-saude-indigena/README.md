@@ -27,11 +27,11 @@ editor comum aos pontos, às regras e às RPCs deste mapa. O de Projetos faz o m
 `src/modulos/mapa-de-projetos/editor-de-coordenadas.tsx`.
 
 ```
-mapa-saude-indigena.jsx   <MapaSaudeIndigena>: estado da tela (tela cheia), contas memorizadas,
+mapa-saude-indigena.tsx   <MapaSaudeIndigena>: estado da tela (tela cheia), contas memorizadas,
                           um mapa principal de cada vez
-mapa-nacional.jsx         visão nacional: bolhas dos DSEIs, CASAIs nacionais, leque, enquadramento,
+mapa-nacional.tsx         visão nacional: bolhas dos DSEIs, CASAIs nacionais, leque, enquadramento,
                           "Territórios por vagas", Brasil/Tela cheia, legenda flutuante
-mapa-do-dsei.jsx          território do DSEI: unidades (agrupamento por proximidade + leque), sede,
+mapa-do-dsei.tsx          território do DSEI: unidades (agrupamento por proximidade + leque), sede,
                           vínculos externos, filtros por tipo, lista de unidades, Terras Indígenas e povos
 legenda.tsx               <Forma>, <LegendaFlutuante> (recolhível; também a de Projetos), legenda
                           nacional, legenda do DSEI, fases das terras
@@ -178,8 +178,9 @@ o tipo das camadas próprias de cada mapa. A legenda das Terras Indígenas descr
 a ponte opcional com a camada existente: sem ela, os controles ficam desabilitados;
 os ouvintes são retirados ao desmontar.
 
-A fábrica e as operações do Leaflet (`leaflet.js`), as telas nacional/DSEI e os
-dados geográficos ainda permanecem em JavaScript. A fábrica declara em JSDoc o
+As telas principal, nacional e por DSEI estão em TSX. A fábrica e as operações
+do Leaflet (`leaflet.js`) e as regras geográficas de contagens, reconciliação e
+apresentação permanecem em JavaScript, com contratos JSDoc na integração. A fábrica declara em JSDoc o
 resultado utilizado pelo painel; essa anotação não valida dados externos nem
 cobre toda a API do Leaflet. Esta entrega não muda contratos de RPC ou dados
 geográficos. Ciclo de vida, StrictMode, legendas, Escape, foco, tela cheia e modo de
@@ -189,5 +190,18 @@ edição são cobertos pelos testes dos dois mapas; contratos adicionais estão 
 O adaptador do editor e as regras específicas de coordenadas estão em TypeScript.
 O catálogo editável recebe dados externos como `unknown`, ignora entradas inválidas
 e preserva os índices, nomes e códigos usados para conferir o alvo no banco.
-Posições vazias ou inválidas permanecem nulas. A exibição principal do mapa e o
-conteúdo geográfico completo continuam em JavaScript.
+Posições vazias ou inválidas permanecem nulas.
+
+Os contratos de distritos, polos, registros, CASAIs, Terras Indígenas e callbacks
+estão em `src/lib/mapa-saude-indigena/tipos.ts`. `dados-do-mapa.ts` valida os dados
+externos para a exibição: ignora registros inválidos, recusa posições não escalares
+e desabilita o enquadramento de terras com caixa inválida. Polos sem posição válida
+não são convertidos em pontos na coordenada zero.
+
+A edição recebe `lmap` e `rede_cnes` originais, sem compactação de listas, nas duas
+visões. `tipos-do-leaflet.ts` declara a API mínima utilizada e verifica a presença
+dos métodos no namespace, sem alterá-lo; não valida os retornos internos do Leaflet.
+Testes de dados em `tests/dados-do-mapa-saude-indigena.test.js`, interações em
+`tests/modulos/mapa-saude-indigena.test.js`, identidade da edição em
+`tests/modulos/editor-de-coordenadas.test.js` e contratos em
+`tests/tipos/mapa-saude-indigena.tsx`.
