@@ -25,6 +25,8 @@ import {
 import { CORES_DO_MAPA } from "./formas.js";
 
 /* Editais, vagas e ociosas por DSEI (chave de `chaveDoDsei`). */
+/** @param {readonly import("../../componentes/tipos-do-monitoramento.ts").LinhaDoMonitoramento[]} linhas
+ * @returns {Map<string, import("./tipos.ts").ContagemDoDsei>} */
 export function contarPorDsei(linhas) {
   const contagens = new Map();
   for (const linha of Array.isArray(linhas) ? linhas : []) {
@@ -46,6 +48,8 @@ const VAZIO = Object.freeze({ editais: 0, vagas: 0, ociosas: 0 });
   menor fique por cima e as duas continuem clicáveis onde se sobrepõem (o
   leque, `leque-de-marcadores.js`, separa as que caem no mesmo pixel).
 */
+/** @param {{ dseis?: import("./tipos.ts").DseiDoMapa[], contagens?: Map<string, import("./tipos.ts").ContagemDoDsei>, filtroAtivo?: boolean }} opcoes
+ * @returns {import("./tipos.ts").BolhaDoDsei[]} */
 export function bolhasDosDsei({
   dseis = [],
   contagens = new Map(),
@@ -92,6 +96,8 @@ export function bolhasDosDsei({
   (desempate pela população). A barra é o preenchimento, (vagas − ociosas) ÷
   vagas: acima de 80% ok, acima de 40% atenção, o resto crítico.
 */
+/** @param {import("./tipos.ts").BolhaDoDsei[]} bolhas
+ * @returns {import("./tipos.ts").TerritorioDoMapa[]} */
 export function territoriosPorVagas(bolhas) {
   return [...(Array.isArray(bolhas) ? bolhas : [])]
     .sort(
@@ -123,6 +129,8 @@ export function territoriosPorVagas(bolhas) {
   de verdade, não da lista fixa do `lmap`. O clique filtra a página pela busca
   "CASAI <cidade>", como antes.
 */
+/** @param {{ nac?: import("./tipos.ts").EstabelecimentoCompacto[], contagens?: Map<string, import("./tipos.ts").ContagemDoDsei>, filtroAtivo?: boolean }} opcoes
+ * @returns {import("./tipos.ts").CasaiNacionalDoMapa[]} */
 export function casaisNacionais({
   nac = [],
   contagens = new Map(),
@@ -153,6 +161,8 @@ export function casaisNacionais({
   (`enquadramentoDoRecorte`, src/lib/enquadramento-do-brasil.js) com os DSEIs
   e as CASAIs que sobraram. Sem filtro, o Brasil; um ponto só, zoom 7 nele.
 */
+/** @param {{ bolhas?: import("./tipos.ts").BolhaDoDsei[], casais?: import("./tipos.ts").CasaiNacionalDoMapa[], filtroAtivo?: boolean }} opcoes
+ * @returns {import("./tipos.ts").EnquadramentoDoMapa} */
 export function enquadramentoNacional({
   bolhas = [],
   casais = [],

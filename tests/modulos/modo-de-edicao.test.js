@@ -6,7 +6,7 @@ import {
   criarCarregadorDeMunicipios,
 } from "../../src/modulos/mapa-de-projetos/carregador.ts";
 import { MapaDeProjetos } from "../../src/modulos/mapa-de-projetos/mapa-de-projetos.tsx";
-import { MapaSaudeIndigena } from "../../src/modulos/mapa-saude-indigena/mapa-saude-indigena.jsx";
+import { MapaSaudeIndigena } from "../../src/modulos/mapa-saude-indigena/mapa-saude-indigena.tsx";
 import { clicar, esperar, teclar } from "../componentes/interacoes.js";
 import { criarLeafletFalso } from "./leaflet-falso.js";
 

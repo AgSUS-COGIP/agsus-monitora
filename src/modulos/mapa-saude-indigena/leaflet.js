@@ -368,6 +368,7 @@ function corDoTraco() {
   `adicionar(marcador, lat, lon)` registra a bolha; `limpar()` esquece as
   bolhas e os traços (o app limpa a camada); `parar()` desliga o `zoomend`.
 */
+/** @returns {import("./tipos-do-leaflet.ts").LequeDoMapa} */
 export function criarLeque(L, mapa, camada) {
   const marcadores = [];
   const tracos = [];
@@ -429,6 +430,9 @@ export function criarLeque(L, mapa, camada) {
 }
 
 /* Conteúdo de popup ou dica: { titulo, linhas, nota } em nós de texto. */
+/** @param {Document} documento
+ * @param {{ titulo?: string, linhas?: string[], nota?: string }} conteudo
+ * @returns {HTMLDivElement} */
 export function conteudoEmElemento(documento, { titulo, linhas = [], nota }) {
   const caixa = documento.createElement("div");
   caixa.className = "mapa-si-balao";

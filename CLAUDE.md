@@ -8,6 +8,7 @@ Front com migração gradual para TypeScript/TSX: Seleção, Cronograma, Visão 
 O Mapa de Projetos também está em TypeScript, incluindo sua carga, lista, balões e integração do editor;
 o editor compartilhado pelos dois mapas também está em TypeScript (fila, sugestões, histórico, modo de edição e regras comuns);
 a base compartilhada dos mapas (painel, legenda, tela cheia, retorno ao Brasil e hooks) também está em TypeScript;
+as telas principal, nacional e por DSEI da Saúde Indígena também estão em TSX, com dados de entrada validados;
 guia em `docs/typescript-no-frontend.md`. O servidor também é TypeScript. **Português** em nomes
 de arquivo, funções e commits.
 

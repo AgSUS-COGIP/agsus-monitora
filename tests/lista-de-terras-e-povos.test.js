@@ -148,7 +148,7 @@ describe("contra o catálogo compilado", () => {
 describe("o painel está ligado", () => {
   // O mapa do DSEI em React (src/modulos/mapa-saude-indigena/).
   const doDsei = readFileSync(
-    "src/modulos/mapa-saude-indigena/mapa-do-dsei.jsx",
+    "src/modulos/mapa-saude-indigena/mapa-do-dsei.tsx",
     "utf8",
   );
   const camada = readFileSync(
@@ -164,7 +164,7 @@ describe("o painel está ligado", () => {
     expect(camada).toContain(
       "__agsusAoMudarTerras?.(resumoDasTerras(doDistritoInteiro))",
     );
-    expect(doDsei).toContain("novo.__agsusAoMudarTerras = (lista) =>");
+    expect(doDsei).toContain("novo.__agsusAoMudarTerras =");
   });
 
   /*
