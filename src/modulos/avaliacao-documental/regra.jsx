@@ -51,7 +51,7 @@ import {
   comValor,
   Escolha,
 } from "./campos.jsx";
-import { Previa } from "./previa.jsx";
+import { Previa } from "./previa.tsx";
 
 /*
   Aba "Regra" da Avaliação documental: a regra da avaliação do edital, que a

@@ -106,16 +106,20 @@ A aba Regra abre no **assistente** (`assistente/`, em TSX, contratos em `assiste
 1. ponto de partida (`partida.tsx`): versão vigente, regra conferida de outro edital da área,
    modelo ou do zero — sempre cópia independente;
 2. cardápio (`cardapio.tsx`): cartões que ligam ou desligam um bloco, uma eliminação automática ou
-   o corte por pontos mínimos, com valores sugeridos das fontes (nenhum peso no código);
+   o corte por pontos mínimos, com valores sugeridos das fontes (nenhum peso no código); o grupo
+   "Na inscrição" vem primeiro (`GRUPOS_DO_CARDAPIO`);
 3. perguntas da Empregare (`perguntas.tsx`): as colunas de cada vaga
    (`obter_apoio_regra_analise`), ligação automática pelo enunciado, verde/amarelo/vermelho com a
    regra de `nota-declarada.js`, e a nota declarada;
-4. nota mínima e desempate (`nota-e-desempate.tsx`, `lista-ordenavel.tsx`): a regra de
-   classificação (gravada por `salvar_regra_classificacao`, com a permissão dela) e o desempate da
-   Provisória;
-5. testar e salvar (`conferir.tsx`): `previa.jsx`, o resumo de uma página
-   (`resumo-da-regra.ts`, "Copiar para o SEI" e imprimir), a comparação de versões
-   (`comparar-regras.ts`) e o salvar com motivo.
+4. nota mínima e desempate (`nota-e-desempate.tsx`, `lista-ordenavel.tsx`,
+   `seletor-de-criterios.tsx`): a regra de classificação (gravada por
+   `salvar_regra_classificacao`, com a permissão dela; sem Editor, só leitura com aviso) e o
+   desempate da Provisória; "Acrescentar critério" abre o catálogo inteiro de cada lista, em grupos
+   e com busca (`src/lib/avaliacao-documental/catalogo-de-desempate.ts`);
+5. testar e salvar (`conferir.tsx`), nesta ordem: o resumo de uma página (`resumo-da-regra.ts`,
+   "Copiar para o SEI" e imprimir), a comparação de versões (`comparar-regras.ts`), `previa.tsx`
+   (fechada) e nome + motivo + salvar, com a lista do que falta ao lado do botão
+   (`pendencias-do-salvar.ts`; cada item leva ao passo e ao campo).
 
 "Conferida" é dupla conferência: quem salvou a versão não confere (o banco recusa em
 `conferir_regra_analise`; o administrador global pode), e a regra vigente diz à tela
@@ -130,7 +134,8 @@ avaliacao-documental.jsx  tela e montarAvaliacaoDocumental() (na #page-avaliacao
 estado.js                 store sem React: editais, regra, equipe e as gravações (RPCs)
 regra.jsx                 aba Regra: formulário, perguntas da carga, versões, aldeias
 blocos.jsx                os blocos da ficha na regra
-previa.jsx                "Testar com um candidato fictício"
+previa.tsx                "Testar com um candidato fictício" (entradas à esquerda, resultado preso
+                          à direita; uma coluna em largura estreita)
 equipe.jsx                aba Equipe
 pre-classificacao.jsx     aba Pré-classificação (contadores, vagas, listas oficiais)
 fila.jsx                  aba Fila (etapas, filtros, ações em lote, ficha aberta)
@@ -138,7 +143,8 @@ estado-da-fila.js         store da aba: obter_fila_avaliacao, Pegar próximo, re
                           (renovação e liberação), distribuição, revisão, filtros salvos
 ficha/ficha.jsx           conteúdo da ficha aberta: modo foco / lista, passos, teclas, rodapé
 ficha/*.tsx               cabeçalho, stepper, item, Conclusão, nota, "⋯", rodapé e links da
-                          Empregare (contratos em ficha/tipos.ts)
+                          Empregare (contratos em ficha/tipos.ts); o Apurado de partida e o
+                          efeito da decisão nele em src/lib/avaliacao-documental/apurado-da-ficha.ts
 ficha/estado-da-ficha.js  store da ficha: obter_ficha_analise, rascunho automático,
                           concluir_ficha, reabrir_ficha, registrar_acesso_ficha
 ficha/ficha.css           estilos da ficha (só tokens)

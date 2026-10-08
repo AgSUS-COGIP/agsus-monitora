@@ -15,6 +15,13 @@ import {
   textoDaNota,
   titulosDoNivel,
 } from "../../../lib/avaliacao-documental/ficha.js";
+import {
+  apuradoDoBloco,
+  apuradoZeradoPelaDecisao,
+  blocoComDecisao,
+  comItensLancados,
+  temItensLancados,
+} from "../../../lib/avaliacao-documental/apurado-da-ficha.ts";
 import { tetoDoBloco } from "../../../lib/avaliacao-documental/pontuacao.js";
 import { Selo } from "../../../ui/index.js";
 import { LinkDaEmpregare, LinkDoAnexo } from "./empregare.tsx";
@@ -36,8 +43,11 @@ import type {
   que se pede, a resposta do candidato em destaque (com "Abrir na Empregare" e
   onde achar o anexo), as três decisões grandes (teclas 1, 2 e 3 no title),
   os motivos em chips, e nos blocos que pontuam "Declarado → Apurado" e a
-  lista compacta de títulos, cursos ou vínculos. No modo lista, o mesmo em
-  cartão compacto. A gravação é a do estado da ficha (mudar).
+  lista compacta de títulos, cursos ou vínculos. O Apurado começa preenchido
+  (com o Declarado, ou com o Calculado quando há itens lançados) e a decisão
+  mexe nele (apurado-da-ficha.ts): Conforme confirma, Não conforme e Não
+  enviado zeram. No modo lista, o mesmo em cartão compacto. A gravação é a
+  do estado da ficha (mudar).
 */
 
 type ChaveDosItens = "titulos" | "cursos" | "vinculos";
@@ -80,6 +90,33 @@ const alterarBloco = (mudar: Mudar, codigo: string, campos: Lancado) =>
     };
     return l;
   });
+
+/**
+ * Grava uma decisão (botões ou teclas 1, 2 e 3): a situação, os motivos e,
+ * nos blocos que pontuam, o Apurado (blocoComDecisao).
+ */
+export function decidirNoLancamento(
+  st: Pick<EstadoDaFicha, "avaliacao" | "declarada">,
+  bloco: Bloco,
+  mudar: Mudar,
+  situacao: Situacao | null,
+) {
+  const calculado =
+    st.avaliacao.calculados?.[PARCIAL_DO_TIPO[bloco.tipo] ?? ""] ?? 0;
+  mudar((l) => {
+    l.blocos = {
+      ...l.blocos,
+      [bloco.codigo]: blocoComDecisao({
+        bloco,
+        lancamento: l,
+        situacao,
+        declarada: st.declarada,
+        calculado,
+      }) as Lancado,
+    };
+    return l;
+  });
+}
 
 /* ── A resposta declarada ─────────────────────────────────────────────── */
 
@@ -275,14 +312,22 @@ const ROTULO_DO_NOVO: Record<ChaveDosItens, string> = {
 function Itens({
   bloco,
   lancamento,
-  mudar,
+  declarada,
+  mudar: mudarDoEstado,
   desabilitado,
 }: {
   bloco: Bloco;
   lancamento: Lancamento;
+  declarada: EstadoDaFicha["declarada"];
   mudar: Mudar;
   desabilitado: boolean;
 }) {
+  // O primeiro item lançado devolve o Apurado ao Calculado (comItensLancados).
+  const mudar: Mudar = (transformar) =>
+    mudarDoEstado((l) => {
+      const tinhaItens = temItensLancados(bloco, l);
+      return comItensLancados(bloco, { tinhaItens }, transformar(l), declarada);
+    });
   const chave = BLOCOS_COM_ITENS[bloco.tipo];
   if (!chave) return null;
   const itens = (lancamento[chave] || []) as ItemLancado[];
@@ -510,32 +555,45 @@ function Pontos({
   const regra = st.dados.regra.configuracao;
   const parcial = PARCIAL_DO_TIPO[bloco.tipo] ?? "";
   const calculado = avaliacao.calculados?.[parcial] ?? 0;
-  const apurado = avaliacao.parciais?.[parcial] ?? 0;
   const decl = declarada?.parciais?.[parcial];
   const teto = tetoDoBloco(bloco, lancamento.nivel) as number | null;
   const ajuste =
     typeof lancado.nota_ajustada === "number" ? lancado.nota_ajustada : null;
-  const valor = ajuste ?? apurado;
+  // Conferido: o que a conta dá (o efeito do bloco vale). Antes: o de partida.
+  const valor = conferido
+    ? (ajuste ?? avaliacao.parciais?.[parcial] ?? 0)
+    : apuradoDoBloco({ bloco, lancamento, declarada, calculado }).valor;
+  const diferenca = typeof decl === "number" ? valor - decl : null;
+  const temDiferenca = diferenca !== null && Math.abs(diferenca) >= 0.005;
+  const zerado = apuradoZeradoPelaDecisao(lancado);
   // A diferença para a declarada só conta depois de o item ser conferido.
   const divergencia = conferido
     ? divergenciaDoBloco(bloco, avaliacao, declarada)
     : null;
   const opcoes = opcoesDeJustificativa(regra, bloco) as Opcao[];
+  const menorQueODeclarado =
+    lancado.situacao === "CONFORME" && temDiferenca && (diferenca ?? 0) < 0;
+  // Zerado pela decisão: o motivo do Não conforme/Não enviado já justifica.
   const mostrarJustificativa =
-    Boolean(divergencia) ||
-    ajuste !== null ||
-    (lancado.justificativas || []).length > 0;
+    (!zerado && Boolean(divergencia)) ||
+    (lancado.justificativas || []).length > 0 ||
+    (ajuste !== null && ajuste !== calculado && ajuste !== decl);
   const definir = (v: number | null) => {
     const limitado =
       v === null ? null : Math.max(0, teto !== null ? Math.min(teto, v) : v);
-    alterarBloco(mudar, bloco.codigo, {
-      nota_ajustada:
-        limitado === null || limitado === calculado ? null : limitado,
-    });
+    // Valor explícito: vazio, na regra, quer dizer "segue o cálculo dos itens".
+    alterarBloco(mudar, bloco.codigo, { nota_ajustada: limitado });
   };
   const idDoApurado = `avdApurado-${bloco.codigo}`;
+  const porQue = "Por que o apurado é menor que o declarado?";
   return (
     <div className="avd-ficha-pontos" data-tour="avd-ficha-nota">
+      {!conferido && typeof decl === "number" && !desabilitado ? (
+        <p className="avd-ficha-pontos-guia">
+          Confira o documento: se comprova os pontos declarados, marque
+          Conforme; se comprova menos, ajuste o Apurado.
+        </p>
+      ) : null}
       <div className="avd-ficha-pontos-linha">
         <div className="avd-ficha-pontos-caixa">
           <span className="avd-ficha-rotulo">Declarado</span>
@@ -588,9 +646,35 @@ function Pontos({
           </div>
         </div>
       </div>
+      {typeof decl === "number" ? (
+        <p
+          className="avd-ficha-pontos-resumo"
+          data-diferenca={
+            !temDiferenca ? "nenhuma" : (diferenca ?? 0) < 0 ? "menor" : "maior"
+          }
+        >
+          Declarado <strong>{textoDaNota(decl)}</strong> → Apurado{" "}
+          <strong>{textoDaNota(valor)}</strong>
+          {temDiferenca ? (
+            <span className="avd-ficha-pontos-diferenca">
+              {(diferenca ?? 0) > 0 ? "+" : "−"}
+              {textoDaNota(Math.abs(diferenca ?? 0))}
+            </span>
+          ) : null}
+        </p>
+      ) : null}
+      {zerado ? (
+        <p className="avd-ficha-pontos-aviso" role="status">
+          <i className="fa-solid fa-circle-info" aria-hidden="true" /> Apurado
+          zerado:{" "}
+          {lancado.situacao === "NAO_ENVIADO"
+            ? "o documento não foi enviado."
+            : "o documento não está conforme."}
+        </p>
+      ) : null}
       <p className="avd-ficha-calculado">
-        Calculado <strong>{textoDaNota(calculado)}</strong>
-        {ajuste !== null && !desabilitado ? (
+        Calculado pelos itens <strong>{textoDaNota(calculado)}</strong>
+        {ajuste !== null && ajuste !== calculado && !desabilitado ? (
           <button
             type="button"
             className="avd-ficha-link"
@@ -609,7 +693,7 @@ function Pontos({
         >
           {opcoes.length ? (
             <Chips
-              rotulo="Justificativa da nota"
+              rotulo={menorQueODeclarado ? porQue : "Justificativa da nota"}
               opcoes={opcoes}
               marcados={lancado.justificativas || []}
               desabilitado={desabilitado}
@@ -622,7 +706,9 @@ function Pontos({
             <span className="avd-ficha-rotulo">
               {opcoes.length
                 ? "Complemento (opcional)"
-                : "Justificativa da nota"}
+                : menorQueODeclarado
+                  ? `${porQue} (10 caracteres ou mais)`
+                  : "Justificativa da nota"}
             </span>
             <input
               value={lancado.justificativa_livre || ""}
@@ -794,6 +880,7 @@ export function ItemDaFicha({
               <Itens
                 bloco={bloco}
                 lancamento={lancamento}
+                declarada={st.declarada}
                 mudar={mudar}
                 desabilitado={desabilitado}
               />
@@ -815,12 +902,7 @@ export function ItemDaFicha({
               desabilitado={desabilitado}
               compacto={!foco}
               aoMudar={(nova) => {
-                alterarBloco(mudar, bloco.codigo, {
-                  situacao: nova,
-                  motivos: PEDEM_MOTIVO.includes(nova ?? "")
-                    ? lancado.motivos || []
-                    : [],
-                });
+                decidirNoLancamento(st, bloco, mudar, nova);
                 aoDecidir?.(bloco.codigo, nova);
               }}
             />

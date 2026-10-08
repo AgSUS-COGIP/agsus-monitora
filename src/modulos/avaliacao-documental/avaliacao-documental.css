@@ -125,10 +125,20 @@
   border: 1px dashed var(--border-subtle);
   border-radius: var(--radius-md, 8px);
 }
+/*
+  "Testar com um candidato fictício": duas colunas que não se sobrepõem
+  (entradas à esquerda, em seções; resultado preso à direita, com fundo
+  próprio). Abaixo de 760px de largura do cartão, uma coluna com o resultado
+  em cima.
+*/
+.avd-previa {
+  container-type: inline-size;
+}
 .avd-previa-corpo {
   display: grid;
-  grid-template-columns: minmax(0, 3fr) minmax(260px, 2fr);
+  grid-template-columns: minmax(0, 1fr) minmax(260px, 340px);
   gap: var(--space-4);
+  align-items: start;
   margin-top: var(--space-3);
 }
 .avd-previa-entrada {
@@ -136,12 +146,97 @@
   gap: var(--space-3);
   min-width: 0;
 }
+.avd-previa-entrada select,
+.avd-previa-entrada input:not([type="checkbox"]) {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+}
+.avd-previa-secao {
+  display: grid;
+  gap: var(--space-2);
+  min-width: 0;
+  margin: 0;
+  padding: var(--space-3);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md, 8px);
+}
+.avd-previa-secao > legend {
+  padding: 0 var(--space-1);
+  color: var(--text-primary);
+  font-size: var(--text-body-sm);
+  font-weight: var(--font-weight-semibold, 600);
+}
+.avd-previa-campos {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 180px), 1fr));
+  gap: var(--space-2) var(--space-3);
+}
+.avd-previa-blocos {
+  display: grid;
+  gap: var(--space-1-5);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.avd-previa-bloco {
+  display: grid;
+  grid-template-columns: minmax(0, 1.3fr) minmax(0, 150px) minmax(0, 1fr);
+  gap: var(--space-2);
+  align-items: center;
+  padding-bottom: var(--space-1-5);
+  border-bottom: 1px solid var(--border-subtle);
+}
+.avd-previa-bloco:last-child {
+  padding-bottom: 0;
+  border-bottom: 0;
+}
+.avd-previa-bloco-titulo {
+  min-width: 0;
+  color: var(--text-primary);
+  font-size: var(--text-body-sm);
+  overflow-wrap: anywhere;
+}
+.avd-previa-linha {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  align-items: end;
+}
+.avd-previa-linha > .ui-campo {
+  flex: 1 1 140px;
+  min-width: 0;
+}
 .avd-previa-resultado {
   position: sticky;
   top: var(--space-3);
+  z-index: 1;
   display: grid;
   gap: var(--space-3);
-  align-self: start;
+  min-width: 0;
+  padding: var(--space-3);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md, 8px);
+  background: var(--surface-card);
+}
+.avd-previa-rotulo {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--text-caption);
+}
+@container (max-width: 760px) {
+  .avd-previa-corpo {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .avd-previa-resultado {
+    position: static;
+    order: -1;
+  }
+}
+@container (max-width: 520px) {
+  .avd-previa-bloco {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
 .avd-nota {
   display: flex;
@@ -182,14 +277,6 @@
 }
 .avd-nivel {
   align-self: center;
-}
-@media (max-width: 900px) {
-  .avd-previa-corpo {
-    grid-template-columns: minmax(0, 1fr);
-  }
-  .avd-previa-resultado {
-    position: static;
-  }
 }
 
 /* Aba Pré-classificação (fase F2). */
@@ -937,8 +1024,155 @@
 .avd-ast-criterio span {
   flex: 1 1 200px;
 }
+/* "Acrescentar critério": o catálogo inteiro, em grupos, com busca. */
+.avd-ast-catalogo {
+  display: grid;
+  gap: var(--space-2);
+  justify-items: start;
+}
+.avd-ast-catalogo > .btn .avd-ast-contagem {
+  margin-left: var(--space-1);
+}
+.avd-ast-catalogo-painel {
+  display: grid;
+  gap: var(--space-3);
+  width: 100%;
+  padding: var(--space-3);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  background: var(--surface-muted, var(--surface-card));
+}
+.avd-ast-catalogo-busca {
+  width: min(100%, 360px);
+}
+.avd-ast-catalogo-grupo {
+  display: grid;
+  gap: var(--space-1);
+}
+.avd-ast-catalogo-grupo h5 {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--text-caption);
+  font-weight: var(--font-weight-semibold, 600);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.avd-ast-catalogo-grupo ul {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr));
+  gap: var(--space-1-5);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.avd-ast-catalogo-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  width: 100%;
+  min-height: 40px;
+  padding: var(--space-1-5) var(--space-2);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  background: var(--surface-card);
+  color: var(--text-primary);
+  font: inherit;
+  font-size: var(--text-body-sm);
+  text-align: left;
+  cursor: pointer;
+}
+.avd-ast-catalogo-item:hover:not(:disabled) {
+  border-color: var(--brand-primary);
+}
+.avd-ast-catalogo-item i {
+  color: var(--brand-primary);
+}
+.avd-ast-catalogo-item span:first-of-type {
+  flex: 1 1 auto;
+}
+.avd-ast-catalogo-item[data-usado="sim"] {
+  cursor: default;
+  color: var(--text-secondary);
+}
+.avd-ast-catalogo-posicao {
+  flex: none;
+  color: var(--text-secondary);
+  font-size: var(--text-caption);
+}
 
 /* Passo 5: resumo, comparação e salvar. */
+.avd-ast-salvar {
+  display: grid;
+  gap: var(--space-3);
+}
+.avd-ast-salvar-campos {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr));
+  gap: var(--space-3);
+}
+.avd-ast-salvar-rodape {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  align-items: flex-end;
+  justify-content: space-between;
+}
+.avd-ast-salvar-rodape > .ui-acoes {
+  margin-left: auto;
+}
+.avd-ast-falta {
+  display: grid;
+  flex: 1 1 320px;
+  gap: var(--space-2);
+  min-width: 0;
+}
+.avd-ast-falta h4 {
+  margin: 0 0 var(--space-1);
+  color: var(--text-secondary);
+  font-size: var(--text-caption);
+  font-weight: var(--font-weight-semibold, 600);
+}
+.avd-ast-falta ul {
+  display: grid;
+  gap: var(--space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.avd-ast-falta-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  width: auto;
+  max-width: 100%;
+  padding: var(--space-1) var(--space-2);
+  border: 0;
+  border-radius: var(--radius-sm, 6px);
+  background: transparent;
+  color: var(--text-primary);
+  font: inherit;
+  font-size: var(--text-body-sm);
+  text-align: left;
+  cursor: pointer;
+}
+.avd-ast-falta-item:hover,
+.avd-ast-falta-item:focus-visible {
+  background: var(--surface-muted, var(--surface-card));
+}
+.avd-ast-falta-item span {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.avd-ast-falta [data-impede="sim"] .avd-ast-falta-item > i:first-child {
+  color: var(--state-danger);
+}
+.avd-ast-falta [data-impede="nao"] .avd-ast-falta-item > i:first-child {
+  color: var(--text-secondary);
+}
+.avd-ast-falta-item > i:last-child {
+  color: var(--text-secondary);
+  font-size: var(--text-caption);
+}
 .avd-ast-resumo,
 .avd-ast-comparar {
   display: grid;
