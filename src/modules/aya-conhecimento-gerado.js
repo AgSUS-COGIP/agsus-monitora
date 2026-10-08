@@ -512,7 +512,7 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'Sou eu: uma arara-azul (Anodorhynchus hyacinthinus), a ave azul-cobalto de anel amarelo nos olhos e faixa amarela no bico, que vive no Pantanal e no Cerrado. Eu me mexo para mostrar o que estou fazendo: respiro e pisco quando estou parada; inclino a cabeça e sigo o ponteiro com o olho quando você chega perto ou abre o painel; olho para cima enquanto procuro a resposta; mexo o bico enquanto o texto aparece; bato as asas nas comemorações; aceno uma vez quando você entra; e cochilo depois de alguns minutos sem uso (qualquer clique, tecla ou movimento me acorda). Se o seu sistema pede menos movimento, eu só pisco; se você desligou as comemorações, eu não comemoro. Em Configurações › Marca, o cartão "Mascote" mostra cada estado.',
-    fato: "A mascote da Aya é uma arara-azul animada com sete estados: parada, atenta, falando, pensando, comemorando, dormindo e acenando.",
+    fato: "A mascote da Aya é uma arara-azul-grande de corpo inteiro, em pé num poleiro, desenhada a partir da ilustração da Aya e animada em sete estados: parada, atenta, falando, pensando, comemorando, dormindo e acenando.",
     fonte: "src/modulos/aya/mascote/; src/lib/estado-da-aya.ts",
     abrir: "config:marca",
   },
@@ -1587,6 +1587,28 @@ export const VERBETES_AYA = Object.freeze([
     abrir: "avaliacao-documental",
   },
   {
+    arquivo: "regras-da-avaliacao-documental.md",
+    titulo: "Nome da versão da regra",
+    perguntas: [
+      "nome da versao",
+      "nome da regra",
+      "dar nome a regra",
+      "escolher o nome da regra",
+      "renomear a regra",
+      "renomear versao",
+      "trocar o nome da versao",
+      "v1 v2 da regra",
+      "o que e versao 7",
+      "nome desta versao",
+    ],
+    resposta:
+      'Cada versão da regra pode ter um nome (de 3 a 80 caracteres), em vez de só o número. Ao salvar (no assistente ou no modo avançado), o campo "Nome desta versão" já vem com uma sugestão — o edital e o começo do motivo, por exemplo "Regra do edital 93/2026 – decisão CORES" — que dá para editar ou apagar (vazio grava sem nome). A tela mostra o nome em destaque e o número discreto ("Decisão CORES · v7") no cabeçalho, no seletor de editais, nas versões, em comparar versões, na pré-classificação, na fila e na ficha; sem nome, aparece "Versão 7". Para trocar o nome de uma versão já salva, use "Renomear" no cabeçalho ou na lista de versões: pede o novo nome e o motivo (10 a 500 caracteres), muda só o nome — o conteúdo, o hash e a situação (Conferida ou não) continuam iguais — e a troca fica no histórico ("nome trocado", com de, para, quem e quando). Renomeia quem pode mudar a regra: a coordenação do edital; o administrador global pode tudo. O número da versão continua sendo o que as fichas e listas guardam.',
+    fato: "No MONITORA, o nome da versão da regra é opcional, fica na versão (NO_VERSAO) e pode ser trocado com motivo sem mudar o conteúdo nem o hash.",
+    fonte:
+      "src/lib/nome-da-versao.ts; src/ui/nome-da-versao.tsx; supabase/migrations/20261008180000_nome_das_versoes_das_regras.sql (salvar_regra_analise, renomear_versao_regra_analise)",
+    abrir: "avaliacao-documental",
+  },
+  {
     arquivo: "regras-da-classificacao.md",
     titulo: "Tela de Classificação",
     perguntas: [
@@ -2008,6 +2030,24 @@ export const VERBETES_AYA = Object.freeze([
     fato: "",
     fonte:
       "src/lib/classificacao/catalogo.js (COMPONENTES_DA_NOTA); supabase/correcoes/20261002-regras-de-classificacao-todos-os-editais.sql (importacao.em_aberto)",
+    abrir: "classificacao",
+  },
+  {
+    arquivo: "regras-da-classificacao.md",
+    titulo: "Nome da versão da regra de classificação",
+    perguntas: [
+      "nome da versao da classificacao",
+      "nome da regra de classificacao",
+      "renomear a regra de classificacao",
+      "trocar o nome da versao da classificacao",
+      "regra v2 da classificacao",
+      "nome desta versao classificacao",
+    ],
+    resposta:
+      'A regra de classificação também pode ter um nome por versão (3 a 80 caracteres). Ao salvar na aba Regra da Classificação, o campo "Nome desta versão" vem com a sugestão — "Classificação do edital 93/2026" mais o começo do motivo — editável (vazio grava sem nome). O seletor de editais, a barra do topo, a lista de versões e a linha da lista gerada mostram o nome em destaque e o número discreto ("Decisão CORES · v3"); sem nome, "Versão 3". "Renomear", em cada versão, troca só o nome, com motivo de 10 a 500 caracteres; a configuração não muda e a troca fica no histórico. Renomeia quem tem Editor na Classificação (e o administrador global).',
+    fato: "No MONITORA, a versão da regra de classificação tem nome opcional, trocável com motivo sem mudar a configuração.",
+    fonte:
+      "src/lib/nome-da-versao.ts; supabase/migrations/20261008180000_nome_das_versoes_das_regras.sql (salvar_regra_classificacao, renomear_versao_regra_classificacao)",
     abrir: "classificacao",
   },
   {
@@ -3070,7 +3110,7 @@ export const VERBETES_AYA = Object.freeze([
       "slogan do login",
     ],
     resposta:
-      'Em Configurações, a seção Tela de acesso define a saudação (o título grande do cartão de entrada) e o botão Entrar com Google: se ele aparece, o texto dele e o domínio sugerido. Também define quais domínios de e-mail podem entrar. O slogan "Monitoramento de Processos Seletivos" é fixo. A arte de fundo, o logo e a cor do cartão ficam na seção Aparência. A prévia ao lado mostra a tela como ela vai ficar.',
+      'Em Configurações, a seção Tela de acesso define a saudação (o título grande do cartão de entrada) e o botão do Google: se ele aparece, o texto dele (vazio, fica "Entrar com Google") e o domínio sugerido. Também define quais domínios de e-mail podem entrar. São fixos o slogan "Monitoramento de Processos Seletivos", a linha "Acesse com sua conta institucional." acima do botão e o rodapé com o nome da Agência. A arte de fundo, o logo e a cor do cartão ficam na seção Aparência. A prévia ao lado mostra a tela como ela vai ficar.',
     fato: "",
     fonte: "interface do MONITORA",
   },
@@ -3085,7 +3125,7 @@ export const VERBETES_AYA = Object.freeze([
       "botao do google sumiu",
     ],
     resposta:
-      "Com o Login Google em Inativo, o botão Entrar com Google some da tela de entrada. Como esse é o acesso institucional principal, as pessoas podem ficar sem conseguir entrar; por isso, ao salvar a desativação, o sistema pede confirmação antes de publicar.",
+      "Com o Login Google em Inativo, o botão Entrar com Google some da tela de entrada (o espaço dele fica vazio). Como esse é o acesso institucional principal, as pessoas podem ficar sem conseguir entrar; por isso, ao salvar a desativação, o sistema pede confirmação antes de publicar.",
     fato: "",
     fonte: "interface do MONITORA",
   },
@@ -3831,6 +3871,23 @@ export const VERBETES_AYA = Object.freeze([
     fonte:
       "src/modulos/entrevistas/conduzir.tsx; src/lib/access-roles.js; supabase/migrations/20260930220000_entrevistas_roteiros_e_notas.sql",
     abrir: "config:acessos",
+  },
+  {
+    arquivo: "regras-das-entrevistas.md",
+    titulo: "Nome da versão do roteiro de entrevista",
+    perguntas: [
+      "nome da versao do roteiro",
+      "renomear o roteiro",
+      "renomear versao do roteiro",
+      "roteiro v2",
+      "trocar o nome da versao do roteiro",
+      "nome desta versao roteiro",
+    ],
+    resposta:
+      'Além do nome do roteiro, cada versão dele pode ter um nome próprio (3 a 80 caracteres). Ao salvar o roteiro (Conduzir entrevistas › Preparar › Roteiros), o campo "Nome desta versão" vem com a sugestão — o nome do roteiro e a data — editável (vazio grava sem nome). O cartão do roteiro, o resumo do edital, a escolha do roteiro e a ficha de notas mostram o nome da versão em destaque e o número discreto ("Banca por competência · v2"); sem nome, "Versão 2". "Renomear", no cartão, troca só o nome, com motivo de 10 a 500 caracteres: as competências, a escala e os editais que usam a versão não mudam, e a troca fica no histórico. Renomeia quem tem Editor em Entrevistas, na área do roteiro.',
+    fato: "No MONITORA, a versão do roteiro de entrevista tem nome opcional (NO_VERSAO), trocável com motivo sem mudar o roteiro.",
+    fonte:
+      "src/lib/nome-da-versao.ts; supabase/migrations/20261008180000_nome_das_versoes_das_regras.sql (salvar_roteiro_entrevista, renomear_versao_roteiro_entrevista)",
   },
   {
     arquivo: "regras-do-chat.md",
@@ -5431,7 +5488,7 @@ export const VERBETES_AYA = Object.freeze([
       'Em Configurações › Módulos e abas (só o administrador global), dá para pôr o sistema inteiro em manutenção, ativar, desativar ou pôr em manutenção cada área, cada aba (em todas as áreas ou só numa) e cada painel externo, e ligar o selo BETA de uma aba. Nada grava na hora: as mudanças vão juntas em "Revisar e salvar", com motivo (3 a 500 caracteres). O histórico mostra as 50 últimas mudanças. Pelo menos uma área precisa ficar ativa.',
     fato: "",
     fonte:
-      "src/modulos/modulos/modulos.jsx; supabase/migrations/20260930140000_modulos_e_manutencao.sql",
+      "src/modulos/modulos/modulos.tsx; supabase/migrations/20260930140000_modulos_e_manutencao.sql",
     abrir: "config:modulos",
   },
   {
@@ -5473,7 +5530,7 @@ export const VERBETES_AYA = Object.freeze([
     resposta:
       "O selo BETA aparece ao lado do nome da aba no menu e marca uma aba ainda em teste. É ligado por aba, em Configurações › Módulos e abas, pelo administrador global, e vale em todas as áreas.",
     fato: "",
-    fonte: "src/lib/menu-lateral.js; src/lib/modulos-e-abas.js",
+    fonte: "src/lib/menu-lateral.js; src/lib/modulos-e-abas.ts",
   },
   {
     arquivo: "regras-dos-modulos-e-abas.md",

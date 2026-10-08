@@ -1262,3 +1262,23 @@ th[aria-sort="descending"] .ui-ordenar i {
     animation: none;
   }
 }
+
+/* Nome da versão de uma regra (nome-da-versao.tsx): o nome em destaque, o número discreto. */
+.ui-nome-da-versao {
+  display: inline-flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+  min-width: 0;
+}
+.ui-nome-da-versao-numero {
+  color: var(--text-secondary);
+  font-size: var(--text-body-sm);
+  font-weight: 400;
+  white-space: nowrap;
+}
+.ui-nome-da-versao-trocas {
+  white-space: nowrap;
+  color: var(--text-secondary);
+  font-size: var(--text-body-sm);
+}

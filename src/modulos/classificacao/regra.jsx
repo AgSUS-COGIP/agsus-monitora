@@ -18,7 +18,20 @@ import {
   REGRA_VAZIA,
   validarRegra,
 } from "../../lib/classificacao/regra.js";
-import { Aviso, Campo, Segmentado } from "../../ui/index.js";
+import {
+  erroDoNomeDaVersao,
+  nomeParaGravar,
+  sugerirNomeDaVersao,
+} from "../../lib/nome-da-versao.ts";
+import {
+  Aviso,
+  Campo,
+  CampoNomeDaVersao,
+  NomeDaVersao,
+  nomeDoCampo,
+  RenomearVersao,
+  Segmentado,
+} from "../../ui/index.js";
 
 /*
   A aba "Regra" da Classificação: o formulário da regra do edital, decidida
@@ -467,7 +480,7 @@ function Modalidades({ modalidades, aoMudar, desabilitado }) {
   );
 }
 
-function Versoes({ regra, podeEditar, aoUsar }) {
+function Versoes({ regra, podeEditar, aoUsar, aoRenomear }) {
   const versoes = regra?.versoes || [];
   if (!versoes.length) return null;
   return (
@@ -482,7 +495,12 @@ function Versoes({ regra, podeEditar, aoUsar }) {
       <ol reversed className="classificacao-versoes-lista">
         {versoes.map((v) => (
           <li key={v.versao} data-versao={v.versao}>
-            <b>v{v.versao}</b> ·{" "}
+            <NomeDaVersao
+              versao={v.versao}
+              nome={v.nome}
+              trocas={v.renomeacoes}
+            />{" "}
+            ·{" "}
             {new Date(v.em).toLocaleString("pt-BR", {
               timeZone: "America/Sao_Paulo",
               dateStyle: "short",
@@ -498,6 +516,15 @@ function Versoes({ regra, podeEditar, aoUsar }) {
               >
                 Usar no formulário
               </button>
+            ) : null}
+            {podeEditar && aoRenomear ? (
+              <RenomearVersao
+                versao={v.versao}
+                nome={v.nome}
+                aoRenomear={(nome, motivo) =>
+                  aoRenomear(v.versao, nome, motivo)
+                }
+              />
             ) : null}
           </li>
         ))}
@@ -515,6 +542,7 @@ export function Regra({ estado, e, dataDeCorte }) {
   );
   const [rascunho, setRascunho] = useState(inicial);
   const [motivo, setMotivo] = useState("");
+  const [nome, setNome] = useState(null);
   const [tentou, setTentou] = useState(false);
   const ids = {
     motivo: useId(),
@@ -527,6 +555,13 @@ export function Regra({ estado, e, dataDeCorte }) {
   const mudou =
     JSON.stringify(normalizarRegra(rascunho)) !== JSON.stringify(inicial);
   const exigeMotivo = Boolean(regraSalva);
+  const sugestao = sugerirNomeDaVersao({
+    tipo: "classificacao",
+    edital: dados?.edital?.numero,
+    motivo,
+  });
+  const nomeEscolhido = nomeDoCampo(nome, sugestao);
+  const nomeRuim = Boolean(erroDoNomeDaVersao(nomeEscolhido));
 
   const mudar = (caminho, valor) =>
     setRascunho((atual) => {
@@ -540,9 +575,17 @@ export function Regra({ estado, e, dataDeCorte }) {
   async function salvar(evento) {
     evento.preventDefault();
     setTentou(true);
-    if (erros.length || (exigeMotivo && motivo.trim().length < 3)) return;
-    if (await estado.salvarRegra(rascunho, motivo.trim())) {
+    if (erros.length || (exigeMotivo && motivo.trim().length < 3) || nomeRuim)
+      return;
+    if (
+      await estado.salvarRegra(
+        rascunho,
+        motivo.trim(),
+        nomeParaGravar(nomeEscolhido),
+      )
+    ) {
       setMotivo("");
+      setNome(null);
       setTentou(false);
     }
   }
@@ -1046,6 +1089,12 @@ export function Regra({ estado, e, dataDeCorte }) {
               />
             </Campo>
           ) : null}
+          <CampoNomeDaVersao
+            valor={nome}
+            sugestao={sugestao}
+            aoMudar={setNome}
+            mostrarErro={tentou}
+          />
           <div className="ui-acoes">
             <button
               type="button"
@@ -1074,6 +1123,7 @@ export function Regra({ estado, e, dataDeCorte }) {
         regra={regraSalva}
         podeEditar={!leitura}
         aoUsar={(config) => setRascunho(normalizarRegra(config))}
+        aoRenomear={estado.renomearVersao}
       />
     </form>
   );

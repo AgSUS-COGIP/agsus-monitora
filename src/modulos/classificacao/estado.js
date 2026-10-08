@@ -58,6 +58,7 @@ import {
 } from "./documento-no-navegador.js";
 import { convocacaoDoEdital } from "../../lib/classificacao/convocacao-do-edital.js";
 import { normalizarRegra } from "../../lib/classificacao/regra.js";
+import { rotuloDaVersao } from "../../lib/nome-da-versao.ts";
 import {
   comTempoLimite,
   ehFalhaDeConexao,
@@ -68,6 +69,7 @@ import {
 const RPC_LISTAR_EDITAIS = "listar_editais_classificacao";
 const RPC_OBTER_EDITAL = "obter_classificacao_do_edital";
 const RPC_SALVAR_REGRA = "salvar_regra_classificacao";
+const RPC_RENOMEAR_VERSAO = "renomear_versao_regra_classificacao";
 const RPC_REGISTRAR_LISTA = "registrar_lista_classificacao";
 const RPC_PUBLICAR_LISTA = "publicar_lista_classificacao";
 const RPC_OBTER_LISTA = "obter_lista_classificacao";
@@ -268,7 +270,28 @@ export function criarEstadoDaClassificacao({
   };
 
   /* Salva a regra (nova versão). Devolve true/false; erro vira aviso. */
-  async function salvarRegra(configuracao, motivo = "") {
+  /* A regra nova (ou renomeada) volta para a tela e para o seletor de editais. */
+  function receberRegra(edital, regra) {
+    mudarDados(edital, (d) => ({ ...d, regra }));
+    if (regra)
+      publicar({
+        editais: estado.editais.map((ed) =>
+          ed.id === edital
+            ? {
+                ...ed,
+                versao_regra: regra.versao,
+                nome_regra: regra.nome ?? null,
+              }
+            : ed,
+        ),
+      });
+  }
+
+  /*
+    Salva a regra (nova versão). Devolve true/false; erro vira aviso. O nome
+    da versão só vai quando preenchido (sem ele, a chamada é a de antes).
+  */
+  async function salvarRegra(configuracao, motivo = "", nome = null) {
     if (!estado.editalId || estado.salvando) return false;
     const edital = estado.editalId;
     publicar({ salvando: true });
@@ -278,10 +301,11 @@ export function criarEstadoDaClassificacao({
         p_configuracao: normalizarRegra(configuracao),
         p_versao_atual: estado.dados?.regra?.versao ?? 0,
         p_motivo: motivo || null,
+        ...(nome ? { p_nome: nome } : {}),
       });
-      mudarDados(edital, (d) => ({ ...d, regra }));
+      receberRegra(edital, regra);
       publicar({ salvando: false });
-      toast(`Regra salva (versão ${regra?.versao ?? "—"}).`, "success");
+      toast(`Regra salva (${rotuloDaVersao(regra) || "—"}).`, "success");
       return true;
     } catch (erro) {
       publicar({ salvando: false });
@@ -290,6 +314,25 @@ export function criarEstadoDaClassificacao({
         "error",
       );
       return false;
+    }
+  }
+
+  /* Troca só o nome de uma versão (null tira o nome). Devolve { ok, erro }. */
+  async function renomearVersao(versao, nome, motivo) {
+    if (!estado.editalId) return { ok: false, erro: "Escolha o edital." };
+    const edital = estado.editalId;
+    try {
+      const regra = await rpc(RPC_RENOMEAR_VERSAO, {
+        p_edital: edital,
+        p_versao: versao,
+        p_nome: nome || null,
+        p_motivo: motivo,
+      });
+      receberRegra(edital, regra);
+      toast("Nome da versão trocado.", "success");
+      return { ok: true };
+    } catch (erro) {
+      return { ok: false, erro: mensagemDoBanco(erro) };
     }
   }
 
@@ -582,6 +625,7 @@ export function criarEstadoDaClassificacao({
     carregar,
     escolherEdital,
     salvarRegra,
+    renomearVersao,
     gerarLista,
     publicarLista,
     obterLista,

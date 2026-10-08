@@ -187,8 +187,19 @@ export type RegraAnalise = {
 };
 
 /** A regra salva como obter_regra_analise devolve (FC_REGRA_ANALISE_JSON). */
+/** Uma troca do nome de uma versão (TH_NOME_VERSAO_REGRA, 20261008180000). */
+export type TrocaDoNome = {
+  em: string;
+  por: string | null;
+  de: string | null;
+  para: string | null;
+  motivo: string;
+};
 export type VersaoDaRegra = {
   versao: number;
+  /** Nome da versão (3 a 80; null = sem nome: a tela mostra "Versão N"). */
+  nome?: string | null;
+  renomeacoes?: TrocaDoNome[];
   em: string;
   por: string | null;
   motivo: string | null;
@@ -196,6 +207,7 @@ export type VersaoDaRegra = {
 };
 export type RegraSalva = {
   versao: number;
+  nome?: string | null;
   situacao: "CONFERIR" | "CONFERIDA";
   modelo_origem: string | null;
   configuracao: RegraAnalise;
@@ -230,6 +242,7 @@ export type RegraDeOutroEdital = {
   numero: string | null;
   unidade: string | null;
   versao: number;
+  nome?: string | null;
   conferida_em: string | null;
   configuracao: RegraAnalise;
 };

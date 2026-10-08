@@ -73,7 +73,14 @@ describe("fluxo de autenticação Supabase", () => {
   it("mantém o cabeçalho sem horário e a barra sem identificação repetida", () => {
     const html = source("index.html");
     expect(html).not.toContain('id="updatedPill"');
-    expect(html).not.toContain("Agência Brasileira de Apoio à Gestão do SUS");
+    // O nome da Agência fica só no rodapé da tela de acesso (#loginScreen).
+    const inicioDoLogin = html.indexOf('id="loginScreen"');
+    const foraDoLogin =
+      html.slice(0, inicioDoLogin) +
+      html.slice(html.indexOf("</section>", inicioDoLogin));
+    expect(foraDoLogin).not.toContain(
+      "Agência Brasileira de Apoio à Gestão do SUS",
+    );
     // A barra lateral e o botão de recolher são React; o index.html só tem o <aside>.
     expect(html).toContain('<aside class="sidebar"');
     expect(

@@ -47,6 +47,15 @@
   display: none;
 }
 /*
+  Arte nova que chega da configuração (outra no lugar da guardada) entra com
+  fade cruzado em vez de trocar de um quadro para o outro.
+*/
+.login-screen,
+.login-screen::before,
+.login-screen::after {
+  transition: background-image 0.35s ease;
+}
+/*
   Tela mais larga que a arte (notebook, janela baixa): o "cover" cortava em
   cima e embaixo (o logo da AgSUS sumia). Aqui a arte aparece inteira à
   direita e o resto é a própria arte desfocada, sem faixa de cor solta.
@@ -84,15 +93,23 @@
   background: var(--login-panel-color, #c296eb);
   box-shadow: 0 30px 90px rgba(35, 12, 54, 0.3);
   backdrop-filter: blur(8px);
+  transition: background-color 0.35s ease;
 }
 .login-stripe {
   display: none;
 }
-/* O cartão tem a cor do painel (a mesma do `.login-outer`); sem ela, branco. */
+/*
+  O cartão tem a cor do painel (a mesma do `.login-outer`); sem ela, branco.
+  Com a cor guardada ela já vem no primeiro quadro (script do <head>); sem
+  cópia guardada, a cor que chega da configuração entra com transição.
+*/
 .login-card {
   padding: clamp(32px, 4vh, 46px) clamp(30px, 3vw, 42px);
   background: var(--login-panel-color, #ffffff);
   color: #132030;
+  transition:
+    background-color 0.35s ease,
+    color 0.35s ease;
 }
 .login-brand-lockup {
   display: flex;
@@ -111,6 +128,10 @@
   height: 52px;
   object-fit: contain;
 }
+/* Logo que não carregou: some sem sair do lugar (o lockup não encolhe). */
+.login-organization-mark img[data-falhou] {
+  visibility: hidden;
+}
 .login-organization-mark strong {
   color: var(--color-blue-800);
   font-size: 18px;
@@ -128,27 +149,55 @@
   gap: 10px;
   color: #102a43;
 }
-.login-product-mark i {
+.login-product-icon {
+  flex: none;
+  width: 30px;
+  height: 30px;
   color: #59f2c8;
-  font-size: 30px;
   filter: drop-shadow(0 4px 10px rgba(16, 80, 70, 0.22));
 }
 .login-product-mark strong {
   font-size: 25px;
   font-weight: 900;
+  line-height: 1;
   letter-spacing: 0.015em;
 }
+/*
+  Tipografia e respiros da tela de acesso do SIGAV: saudação, a linha de
+  apoio logo abaixo e o botão. Alturas de linha explícitas, para a troca da
+  fonte (Geist chega depois) não mudar a altura do cartão.
+*/
 .login-card h1 {
-  margin: 26px 0 30px;
+  margin: 20px 0 0;
   color: #102a43;
-  font-size: 25px;
+  font-size: 24px;
+  line-height: 32px;
   letter-spacing: -0.025em;
 }
+/*
+  O slogan é fixo e fica numa linha só, em qualquer largura: a fonte encolhe
+  no celular estreito (13px → 11.5px em 320px) e, no limite, termina em
+  reticências — nunca quebra nem muda a altura do cartão.
+*/
 .login-card .login-subtitle {
-  margin: 0 0 6px;
+  margin: 0;
+  overflow: hidden;
   color: #102a43;
-  font-size: 13px;
+  font-size: clamp(11.5px, 3.6vw, 13px);
   font-weight: 800;
+  line-height: 20px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.login-card .login-apoio {
+  margin: 6px 0 0;
+  color: var(--color-neutral-800);
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 24px;
+}
+.login-card .google-only-login {
+  margin-top: 28px;
 }
 
 /*
@@ -197,7 +246,7 @@ body.sidebar-theme-dark .app .side-logo {
   filter: brightness(0) invert(0.96);
 }
 
-#loginScreen.login-panel-dark .login-product-mark i {
+#loginScreen.login-panel-dark .login-product-icon {
   color: #8ff3d0;
 }
 
@@ -214,65 +263,99 @@ body.sidebar-theme-dark .app .side-logo {
 }
 
 /*
-  O botão de acesso, claro como no SIGAV (`bg-white text-[var(--color-blue-800)]
-  shadow-lg hover:bg-slate-100`). Vale para os dois botões da tela de acesso:
-  o principal e o de trocar de conta.
+  O botão de acesso, como no SIGAV: branco, largo, cantos bem arredondados,
+  sombra suave (`shadow-lg`) e o "G" do Google nas quatro cores antes do
+  texto. Vale para os dois botões da tela de acesso: o principal e o de
+  trocar de conta.
 
   Medido contra os painéis em uso:
 
-    branco sobre #c090eb (atual)   2.49:1
-    branco sobre #c898eb (SIGAV)   2.30:1
+    branco sobre #c090eb (claro)   2.49:1
     branco sobre #6c009e (escuro)  9.85:1
     texto var(--color-blue-800) sobre branco    11.29:1
 
-  O preenchimento branco fica abaixo do mínimo de 3:1 num painel claro — é assim
-  no SIGAV também. A WCAG pede que a **borda do componente** seja perceptível:
-  a borda var(--color-blue-800) dá 4.53:1 contra o painel atual e 4.92:1 contra
-  o do SIGAV. O SIGAV não tem essa borda e se apoia só na sombra; ela é a única
-  diferença deliberada. Num painel escuro o branco sozinho já dá 9.85:1.
+  Num painel escuro o branco sozinho já passa de 3:1 e o botão fica sem
+  borda, como no SIGAV. Num painel claro o preenchimento branco fica abaixo
+  de 3:1, e a WCAG pede que a **borda do componente** seja perceptível: ali
+  entra a borda var(--color-blue-800) (4.53:1 contra o painel claro).
+
+  ALTURA FIXA. O botão tem 56px sempre, e o texto não quebra linha (texto
+  configurado longo demais termina em reticências): o cartão não muda de
+  altura por causa do rótulo.
 */
-#loginScreen .google-login-btn {
-  min-height: 62px;
+.login-screen .google-login-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  height: 56px;
+  min-height: 56px;
+  min-width: 0;
+  max-width: 100%;
+  margin: 0;
+  padding: 0 20px;
   border: 1px solid var(--color-blue-800);
-  border-radius: 16px;
+  border-radius: 14px;
   background: #ffffff;
   color: var(--color-blue-800);
-  box-shadow: 0 12px 26px -14px rgba(15, 23, 42, 0.5);
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 20px;
+  box-shadow:
+    0 10px 15px -3px rgba(15, 23, 42, 0.16),
+    0 4px 6px -4px rgba(15, 23, 42, 0.12);
   transition:
     transform 0.18s ease,
     background 0.18s ease,
     box-shadow 0.18s ease;
 }
-#loginScreen .google-login-btn:hover {
+.login-screen.login-panel-dark .google-login-btn {
+  border-color: transparent;
+  box-shadow:
+    0 10px 15px -3px rgba(15, 23, 42, 0.28),
+    0 4px 6px -4px rgba(15, 23, 42, 0.2);
+}
+.login-screen .google-login-btn:hover {
   background: #f1f5f9;
-  transform: translateY(-2px);
+  transform: translateY(-1px);
+}
+.login-screen .google-login-btn > span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.login-screen .google-login-btn .gmark {
+  flex: none;
+  width: 20px;
+  height: 20px;
 }
 /*
-  O botão do cartão provisório do index.html (aria-hidden, sem id): mesmo
-  tamanho do #googleLoginBtn, que aparece por regra de id (visual-polish.css),
-  para o cartão não crescer quando o React monta. Sem clique.
+  Enquanto não se sabe o texto do botão (sem marca guardada, à espera da
+  configuração), o conteúdo fica invisível — o botão já ocupa o lugar — e
+  entra com fade. Mostrar o padrão e trocar pelo configurado fazia o rótulo
+  pular. O cartão provisório do index.html nasce assim.
 */
-#loginScreen .login-card[aria-hidden="true"] .google-login-btn {
-  display: flex;
-  justify-content: center;
-  font-size: 15px;
-  font-weight: 900;
+.login-screen .google-login-btn[data-texto] > * {
+  transition: opacity 0.2s ease;
+}
+.login-screen .google-login-btn[data-texto="pendente"] > * {
+  visibility: hidden;
+  opacity: 0;
+}
+/* O botão do cartão provisório (aria-hidden, sem id): sem clique. */
+.login-screen .login-card[aria-hidden="true"] .google-login-btn {
   pointer-events: none;
+}
+/* Login Google desligado: o lugar do botão fica, vazio. */
+.login-screen .google-login-btn--reservado {
+  visibility: hidden;
+  box-shadow: none;
 }
 #loginScreen #googleLoginBtn:disabled {
   cursor: wait;
   opacity: 0.72;
   transform: none;
-}
-/* Sobre um botão branco o disco branco do "G" sumiria: fica só o anel. */
-#loginScreen .google-login-btn .gmark {
-  display: grid;
-  width: 32px;
-  height: 32px;
-  place-items: center;
-  border-radius: 999px;
-  background: #ffffff;
-  box-shadow: inset 0 0 0 1px #dadce0;
 }
 
 /* Shell e navegação lateral */

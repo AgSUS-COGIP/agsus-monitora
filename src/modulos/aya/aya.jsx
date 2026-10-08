@@ -86,7 +86,7 @@ import {
   salvarPassoDaTrilha,
 } from "./tour/progresso.js";
 import { acharAlvo, Tour } from "./tour/tour.jsx";
-import { Mascote } from "./mascote/mascote.tsx";
+import { ALTURA_DA_ARARA, Mascote } from "./mascote/mascote.tsx";
 
 /* As mesmas chaves do painel antigo: quem fechou a Aya ou moveu a arara continua assim. */
 export const CHAVE_OCULTA = "agsus_monitora_arara_oculta_v1";
@@ -546,7 +546,7 @@ const configuracaoPublicada = (chave) =>
   estadoDasConfiguracoes.obter().valores?.get?.(chave) ?? "";
 
 /*
-  O balão da oferta fica junto da arara compacta (46px): em cima dela, ou
+  O balão da oferta fica junto da arara (ALTURA_DA_ARARA): em cima dela, ou
   embaixo quando ela foi arrastada para o alto da tela (o cabeçalho).
 */
 function estiloDaOferta(posicao) {
@@ -554,7 +554,7 @@ function estiloDaOferta(posicao) {
   const emCima = posicao.top > 150;
   return {
     left: `${Math.max(MARGEM, posicao.left - 234)}px`,
-    top: `${emCima ? posicao.top - 130 : posicao.top + 56}px`,
+    top: `${emCima ? posicao.top - 130 : posicao.top + ALTURA_DA_ARARA + 8}px`,
     right: "auto",
     bottom: "auto",
   };
@@ -993,16 +993,8 @@ export function Aya({
           }}
           {...manipuladores}
         >
-          <span className="aya-retrato">
-            <Mascote
-              enquadramento="retrato"
-              tamanho={42}
-              acenarAoEntrar
-              janela={janela}
-            />
-            <span className="aya-selo-beta" aria-hidden="true">
-              Beta
-            </span>
+          <span className="aya-figura">
+            <Mascote tamanho={ALTURA_DA_ARARA} acenarAoEntrar janela={janela} />
           </span>
           <span className="aya-arara__etiqueta" aria-hidden="true">
             Fale com a Aya
@@ -1058,10 +1050,9 @@ export function Aya({
               Aya, assistente do MONITORA
             </h2>
             <div className="aya-apresentacao">
-              <span className="aya-avatar aya-retrato">
+              <span className="aya-avatar aya-figura">
                 <Mascote
-                  enquadramento="retrato"
-                  tamanho={58}
+                  tamanho={72}
                   proprio={estadoDoPainel}
                   momentoInicial={ATENTA_AO_ABRIR}
                   janela={janela}
