@@ -4,13 +4,13 @@
 
   A consulta sai junto com as outras da entrada (`iniciarConsultas` em
   src/app/carga.js) e vai na cópia da sessão. Quem monta a árvore é
-  `montarArvoreDoMenu` (`src/lib/menu-lateral.js`), que recebe `abasDoMenu()`.
+  `montarArvoreDoMenu` (`src/lib/menu-lateral.ts`), que recebe `abasDoMenu()`.
 
   Sem catálogo — função ainda não publicada no banco, erro de rede, resposta
   vazia ou estranha —, vale `ABAS_DO_MENU`, o mesmo catálogo no código: o menu
   fica igual. Por isso a falha não interrompe a entrada nem invalida a cópia.
 */
-import { ABAS_DO_MENU, abasDoCatalogo } from "../lib/menu-lateral.js";
+import { ABAS_DO_MENU, abasDoCatalogo } from "../lib/menu-lateral.ts";
 
 const RPC_LISTAR_ABAS_DO_MENU = "listar_abas_do_menu";
 

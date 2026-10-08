@@ -25,7 +25,7 @@ import {
 } from "./coordenadas-dos-municipios.js";
 import { numeroDoEdital } from "./anexos-do-edital.js";
 import { raioDaBolha } from "./mapa-render.js";
-import { nomeDaArea } from "./menu-lateral.js";
+import { nomeDaArea } from "./menu-lateral.ts";
 import { AREA_SAUDE_INDIGENA } from "./responsavel-do-edital.js";
 
 const num = (valor) => {

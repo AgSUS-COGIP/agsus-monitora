@@ -22,13 +22,13 @@ migration `20260930140000_modulos_e_manutencao.sql`.
 
 **perguntas:** o que acontece quando uma area e desativada | area desativada | aba desativada | desativar aba
 **resposta:** Desativada, a área (ou a aba, ou o painel) some do menu de todos. Pelo menos uma área precisa continuar ativa.
-**fonte:** supabase/migrations/20260930140000_modulos_e_manutencao.sql; src/lib/menu-lateral.js
+**fonte:** supabase/migrations/20260930140000_modulos_e_manutencao.sql; src/lib/menu-lateral.ts
 
 ## Selo BETA
 
 **perguntas:** o que e o selo beta | selo beta | aba beta | beta
 **resposta:** O selo BETA aparece ao lado do nome da aba no menu e marca uma aba ainda em teste. É ligado por aba, em Configurações › Módulos e abas, pelo administrador global, e vale em todas as áreas.
-**fonte:** src/lib/menu-lateral.js; src/lib/modulos-e-abas.ts
+**fonte:** src/lib/menu-lateral.ts; src/lib/modulos-e-abas.ts
 
 ## Ligar e desligar as comemorações
 

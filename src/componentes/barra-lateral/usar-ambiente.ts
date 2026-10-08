@@ -11,8 +11,11 @@ import { EVENTO_BARRA_ALTERNADA } from "../../lib/eventos-da-barra-lateral.js";
 /* O corte da gaveta: o mesmo de `SIDEBAR_MOBILE_BREAKPOINT` e do CSS (900px). */
 export const LARGURA_DE_GAVETA = 900;
 
-function assinarEventos(doDocumento, daJanela) {
-  return (avisar) => {
+function assinarEventos(
+  doDocumento: readonly string[],
+  daJanela: readonly string[],
+) {
+  return (avisar: () => void) => {
     for (const nome of doDocumento) document.addEventListener(nome, avisar);
     for (const nome of daJanela) window.addEventListener(nome, avisar);
     return () => {

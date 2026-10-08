@@ -17,7 +17,7 @@ import {
   ABAS_DO_MENU,
   montarArvoreDoMenu,
   paginasDaArea,
-} from "../src/lib/menu-lateral.js";
+} from "../src/lib/menu-lateral.ts";
 import { secaoDeConfiguracaoPermitida } from "../src/lib/access-roles.js";
 import {
   aplicarManutencaoNaNavegacao,

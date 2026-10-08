@@ -7,7 +7,7 @@ import {
 } from "react";
 import { RESPONSAVEIS_DE_EDITAL } from "../../lib/responsavel-do-edital.js";
 import { canMoveEditalBetweenAreas } from "../../lib/access-roles.js";
-import { AREAS_DO_SISTEMA, nomeDaArea } from "../../lib/menu-lateral.js";
+import { AREAS_DO_SISTEMA, nomeDaArea } from "../../lib/menu-lateral.ts";
 import {
   NOVA_UNIDADE,
   areaDaUnidade,

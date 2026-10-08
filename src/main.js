@@ -73,7 +73,7 @@ import { initPwaLifecycle } from "./modules/pwa-lifecycle.js";
 import { initConnectivityStatus } from "./modules/connectivity-status.js";
 import { initGoogleProfilePhoto } from "./modules/google-profile-photo.js";
 import { initNielsenShellUx } from "./modules/nielsen-shell-ux.js";
-import { montarBarraLateral } from "./componentes/barra-lateral/barra-lateral.jsx";
+import { montarBarraLateral } from "./componentes/barra-lateral/barra-lateral.tsx";
 import { montarListaAprovados } from "./modulos/aprovados/lista-aprovados.jsx";
 import { montarCalendarioEditais } from "./modulos/cronograma/calendario-editais.tsx";
 import { montarNucleo } from "./modulos/editais/nucleo.jsx";

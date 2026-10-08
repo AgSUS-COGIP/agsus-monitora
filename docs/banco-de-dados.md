@@ -681,7 +681,7 @@ virarem aba, entram com `TP_ABA = 'externa'`).
 O front (`src/modules/catalogo-de-abas.js`) pede a função junto com as outras
 consultas da entrada e guarda a resposta na cópia da sessão (parte opcional
 `abas`). Sem a função (PostgREST `PGRST202`), com erro ou resposta vazia, usa
-`ABAS_DO_MENU` (`src/lib/menu-lateral.js`), o mesmo catálogo no código — por
+`ABAS_DO_MENU` (`src/lib/menu-lateral.ts`), o mesmo catálogo no código — por
 isso o front pode ir antes da migration. `tests/catalogo-de-abas.test.js`
 confere que o seed é `ABAS_DO_MENU`, que a resposta capturada no ensaio
 (`tests/fixtures/listar-abas-do-menu.json`) é a que o seed produz e que a árvore

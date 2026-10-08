@@ -1,3 +1,5 @@
+import type { ReactNode } from "react";
+import { alternarTemaPelaJanela } from "./integracao.ts";
 import { Icone } from "../icone.jsx";
 import {
   deveAlternarTema,
@@ -9,7 +11,7 @@ import { temaEscuro, usarTemaEscuro } from "../../app/tema.js";
 
 /*
   Rodapé da barra, de cima para baixo: o seletor Claro/Escuro (único controle
-  de tema do app), o botão de recolher (`alca`, de `alca-de-recolher.jsx`; na
+  de tema do app), o botão de recolher (`alca`, de `alca-de-recolher.tsx`; na
   gaveta do celular ele mora no cabeçalho e não vem), o Sair (único logout —
   `nielsen-shell-ux.js` tira o do menu do perfil) e a versão. Recolhida, o CSS
   troca os dois segmentos por um botão que alterna e deixa o recolher e o Sair
@@ -22,11 +24,11 @@ import { temaEscuro, usarTemaEscuro } from "../../app/tema.js";
   a chama.
   O Sair abre a confirmação de `nielsen-shell-ux.js` antes de encerrar.
 */
-export function Rodape({ alca = null }) {
+export function Rodape({ alca = null }: { alca?: ReactNode }) {
   const escuro = usarTemaEscuro();
   const tema = themeControlState(escuro);
-  const pedirTema = (pedido) => {
-    if (deveAlternarTema(pedido, temaEscuro())) window.toggleDarkMode?.();
+  const pedirTema = (pedido: string) => {
+    if (deveAlternarTema(pedido, temaEscuro())) alternarTemaPelaJanela();
   };
 
   return (
@@ -52,7 +54,7 @@ export function Rodape({ alca = null }) {
           className="side-tema__alternar"
           aria-label={tema.label}
           data-dica={`Alternar para tema ${escuro ? "claro" : "escuro"}`}
-          onClick={() => window.toggleDarkMode?.()}
+          onClick={() => alternarTemaPelaJanela()}
         >
           <Icone nome={tema.icon} />
         </button>
