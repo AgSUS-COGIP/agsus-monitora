@@ -152,12 +152,16 @@ describe("tela de acesso sem repetição", () => {
   const html = readFileSync("index.html", "utf8");
 
   /*
-    A instrução ("Acesse com sua conta institucional.") e o rodapé de segurança
-    repetiam o botão. Ficam logo, saudação e botão.
+    Como no SIGAV: uma linha de apoio fixa acima do botão ("Acesse com sua
+    conta institucional.", `ACCESS_INSTRUCTION`) e o rodapé institucional com o
+    escudo. Sem campo de configuração para a linha de apoio e sem os antigos
+    blocos de descrição e de aviso de segurança.
   */
-  it("não tem instrução nem rodapé de segurança, nem campo para a instrução", () => {
+  it("linha de apoio constante, sem campo para ela nem os blocos antigos", () => {
     expect(tela).toContain('id="loginGreeting"');
     expect(tela).toContain('id="googleLoginText"');
+    expect(tela).toContain("{ACCESS_INSTRUCTION}");
+    expect(html).toContain("Acesse com sua conta institucional.");
     for (const fonte of [tela, html]) {
       expect(fonte).not.toContain("loginDescription");
       expect(fonte).not.toContain("loginSecurity");

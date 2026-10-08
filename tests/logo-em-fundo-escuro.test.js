@@ -107,7 +107,7 @@ describe("a marca acompanha o contraste da barra lateral", () => {
   garante isso aqui.
 */
 describe("o botão de acesso é claro, como no SIGAV", () => {
-  const regra = shell.slice(shell.indexOf("#loginScreen .google-login-btn {"));
+  const regra = shell.slice(shell.indexOf(".login-screen .google-login-btn {"));
 
   const canal = (h) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16));
   const linear = (v) => {
@@ -131,7 +131,7 @@ describe("o botão de acesso é claro, como no SIGAV", () => {
 
   it("o hover é o slate-100 do SIGAV", () => {
     const hover = shell.slice(
-      shell.indexOf("#loginScreen .google-login-btn:hover {"),
+      shell.indexOf(".login-screen .google-login-btn:hover {"),
     );
     expect(hover).toContain("background: #f1f5f9");
     // O texto é escuro; o hover clareia, então continua legível.
@@ -161,19 +161,27 @@ describe("o botão de acesso é claro, como no SIGAV", () => {
     expect(contraste("#ffffff", "#6c009e")).toBeGreaterThan(7);
   });
 
-  it("o disco branco do G ganha anel para não sumir", () => {
-    const gmark = shell.slice(
-      shell.indexOf("#loginScreen .google-login-btn .gmark {"),
+  /* O "G" é o do Google nas quatro cores, em SVG de tamanho fixo. */
+  it("o G é o do Google, colorido, com 20px", () => {
+    const icones = readFileSync(
+      "src/app/entrada/icones-da-entrada.tsx",
+      "utf8",
     );
-    expect(gmark).toContain("box-shadow: inset 0 0 0 1px #dadce0");
+    for (const cor of ["#EA4335", "#4285F4", "#FBBC05", "#34A853"])
+      expect(icones).toContain(`fill="${cor}"`);
+    const gmark = shell.slice(
+      shell.indexOf(".login-screen .google-login-btn .gmark {"),
+    );
+    expect(gmark).toContain("width: 20px");
+    expect(gmark).toContain("height: 20px");
   });
 
   /*
-    Escopado ao `#loginScreen`: a regra vale para o botão principal e para o de
-    trocar de conta, e não escapa para outras telas.
+    Escopado à `.login-screen`: a regra vale para o botão principal e para o
+    de trocar de conta, e não escapa para outras telas.
   */
   it("vale só na tela de acesso", () => {
-    expect(regra).toContain("#loginScreen .google-login-btn");
+    expect(regra).toContain(".login-screen .google-login-btn");
     expect(shell).not.toMatch(/^\.google-login-btn\s*\{/m);
   });
 });
