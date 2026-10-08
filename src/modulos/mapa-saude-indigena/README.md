@@ -10,7 +10,7 @@ Os controles ficam no cabeçalho, acima do mapa e da lista lateral. Em tela chei
 o painel cobre o shell, mantém o botão "Sair da tela cheia" visível e bloqueia a
 rolagem da página até sair (pelo botão ou Esc). O editor de coordenadas, restrito
 ao administrador global e ao Gestor, abre o **modo de edição**
-(`src/modulos/editor-de-coordenadas/modo-de-edicao.jsx`): o painel cobre a página como a
+(`src/modulos/editor-de-coordenadas/modo-de-edicao.tsx`): o painel cobre a página como a
 tela cheia, o mapa ocupa o corpo inteiro e o editor flutua à direita (no celular, numa
 folha embaixo, com o mapa em ≥ 55% da altura), recolhível ("Recolher editor" deixa uma
 faixa); o enquadramento do ponto desconta o painel (`folgaDoEnquadramento`, paddings do
@@ -22,9 +22,9 @@ posição e o histórico com "Desfazer" — RPCs de
 `src/lib/coordenadas-do-mapa.js`, testes em `tests/coordenadas-do-mapa.test.js` e
 `tests/modulos/editor-de-coordenadas.test.js`. O editor, a fila, as sugestões e o histórico
 são comuns aos dois mapas (`src/modulos/editor-de-coordenadas/`, regras comuns em
-`src/lib/editor-de-coordenadas.js`); aqui fica só `editor-de-coordenadas.jsx`, que liga o
+`src/lib/editor-de-coordenadas.ts`); aqui fica só `editor-de-coordenadas.jsx`, que liga o
 editor comum aos pontos, às regras e às RPCs deste mapa. O de Projetos faz o mesmo em
-`src/modulos/mapa-de-projetos/editor-de-coordenadas.jsx`.
+`src/modulos/mapa-de-projetos/editor-de-coordenadas.tsx`.
 
 ```
 mapa-saude-indigena.jsx   <MapaSaudeIndigena>: estado da tela (tela cheia), contas memorizadas,

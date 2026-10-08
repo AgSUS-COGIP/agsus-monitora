@@ -23,7 +23,7 @@ Supabase; um servidor web pequeno, em TypeScript, entrega as páginas. Detalhes 
 - Vitest e Playwright nos testes do front; Ruff e pytest nas verificações de Python
 
 Seleção, Cronograma, Visão geral, Conferências, Status das atualizações, Análises curriculares, Módulos e abas, barra lateral e Busca global já usam TypeScript no estado, nos componentes e nas regras das telas. Os dados compartilhados do monitoramento e o recorte por área também estão tipados. A migração
-continua por módulo; contratos e comandos de verificação estão em
+continua por módulo. O Mapa de Projetos também está em TypeScript, incluindo carregamento, cache, lista, filtros, balões e integração do editor de coordenadas. O editor compartilhado pelos dois mapas também está em TypeScript, incluindo fila, sugestões, histórico, modo de edição e regras comuns; contratos e comandos de verificação estão em
 [docs/typescript-no-frontend.md](docs/typescript-no-frontend.md).
 
 ## Áreas e módulos

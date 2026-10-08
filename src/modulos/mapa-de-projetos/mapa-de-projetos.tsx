@@ -1,3 +1,14 @@
+import type {
+  CarregadorDeMunicipios,
+  ResultadoDosMunicipios,
+  EscolhaDoMapa,
+  MunicipioDoMapa,
+  PontoDoMunicipio,
+  PropsDoMapaDeProjetos,
+  CorrecaoDoLugar,
+  PontoEditavelDoProjeto,
+} from "./tipos.ts";
+import type { MapaNacional, MarcadorDoMapa } from "../../lib/tipos-do-mapa.ts";
 import { useEffect, useMemo, useState } from "react";
 import { usarTemaEscuro } from "../../app/tema.js";
 import { podeEditarCoordenadas } from "../../lib/access-roles.js";
@@ -11,7 +22,7 @@ import {
   plural,
   pontosDosMunicipios,
   projetosDosMunicipios,
-} from "../../lib/visao-geral-da-area.js";
+} from "../../lib/visao-geral-da-area.ts";
 import { classes } from "../../ui/index.js";
 import { LegendaFlutuante } from "../mapa-saude-indigena/legenda.jsx";
 import {
@@ -30,14 +41,14 @@ import {
 } from "../mapa-saude-indigena/painel-do-mapa.jsx";
 import { usarTelaCheia } from "../mapa-saude-indigena/tela-cheia.jsx";
 import { usarUltimo } from "../mapa-saude-indigena/usar-ultimo.js";
-import { balaoDoLugar } from "./balao.js";
-import { ESCOLHA_INICIAL } from "./carregador.js";
-import { EditorDeCoordenadasDosProjetos } from "./editor-de-coordenadas.jsx";
+import { balaoDoLugar } from "./balao.ts";
+import { ESCOLHA_INICIAL } from "./carregador.ts";
+import { EditorDeCoordenadasDosProjetos } from "./editor-de-coordenadas.tsx";
 import {
   PainelDoEditor,
   usarModoDeEdicao,
-} from "../editor-de-coordenadas/modo-de-edicao.jsx";
-import { CorDoProjeto, ListaDeMunicipios } from "./lista.jsx";
+} from "../editor-de-coordenadas/modo-de-edicao.tsx";
+import { CorDoProjeto, ListaDeMunicipios } from "./lista.tsx";
 
 /*
   MAPA DE PROJETOS (React)
@@ -50,7 +61,7 @@ import { CorDoProjeto, ListaDeMunicipios } from "./lista.jsx";
   os projetos — município, ou o meio do estado quando o edital só diz a UF —,
   na cor do projeto, com o tamanho pelas vagas (a regra da bolha do DSEI), e a
   lista "Municípios por vagas", com filtro e agrupamento por projeto. Lógica
-  pura em src/lib/visao-geral-da-area.js.
+  pura em src/lib/visao-geral-da-area.ts.
 
   Os filtros da Visão geral valem aqui como na Saúde Indígena: com recorte
   (`filtroAtivo`), só os lugares com algum edital das `linhas` recortadas
@@ -79,9 +90,16 @@ const ZOOM_DO_LUGAR = 7;
   Os lugares da área: `null` enquanto carrega. O cache fresco responde já
   (recarga sem piscar o "carregando"); senão, o último resultado desta área.
 */
-function usarLugares(carregador, area, carregadoEm) {
+function usarLugares(
+  carregador: CarregadorDeMunicipios,
+  area: string,
+  carregadoEm: number,
+) {
   const pronto = Boolean(carregador && area && carregadoEm);
-  const [lidos, definirLidos] = useState({ area: "", resultado: null });
+  const [lidos, definirLidos] = useState<{
+    area: string;
+    resultado: ResultadoDosMunicipios | null;
+  }>({ area: "", resultado: null });
 
   useEffect(() => {
     if (!pronto) return undefined;
@@ -101,7 +119,7 @@ function usarLugares(carregador, area, carregadoEm) {
 }
 
 /**
- * @param {{area?: string, carregador: ReturnType<typeof import("./carregador.js").criarCarregadorDeMunicipios>, carregadoEm?: number, linhas?: readonly object[], filtroAtivo?: boolean, tema?: string, idDoMapa?: string, perfil?: object | null, supabase?: import("@supabase/supabase-js").SupabaseClient | null}} props
+ * @param {{area?: string, carregador: ReturnType<typeof import("./carregador.ts").criarCarregadorDeMunicipios>, carregadoEm?: number, linhas?: readonly object[], filtroAtivo?: boolean, tema?: string, idDoMapa?: string, perfil?: object | null, supabase?: import("@supabase/supabase-js").SupabaseClient | null}} props
  */
 export function MapaDeProjetos({
   area = "projetos",
@@ -113,7 +131,7 @@ export function MapaDeProjetos({
   idDoMapa = "mapaDosProjetos",
   perfil,
   supabase,
-}) {
+}: PropsDoMapaDeProjetos) {
   const escuroDoApp = usarTemaEscuro();
   const escuro = tema ? tema === "escuro" : escuroDoApp;
   const L = obterLeaflet();
@@ -122,9 +140,11 @@ export function MapaDeProjetos({
   const carregando = !resultado;
   const podeEditar = podeEditarCoordenadas(perfil);
   // O que o editor gravou nesta montagem, por cima do que o carregador leu.
-  const [corrigidas, definirCorrigidas] = useState([]);
+  const [corrigidas, definirCorrigidas] = useState<
+    { lugar: string; latitude: number; longitude: number }[]
+  >([]);
   const lidos = resultado?.municipios;
-  const municipios = useMemo(
+  const municipios = useMemo<readonly MunicipioDoMapa[] | undefined>(
     () =>
       corrigidas.reduce(
         (lista, c) =>
@@ -141,7 +161,7 @@ export function MapaDeProjetos({
   const [escolhaGuardada, definirEscolha] = useState(
     () => carregador?.obterEscolha?.() ?? ESCOLHA_INICIAL,
   );
-  const mudarEscolha = (mudanca) => {
+  const mudarEscolha = (mudanca: Partial<EscolhaDoMapa>) => {
     carregador?.guardarEscolha?.(mudanca);
     definirEscolha((atual) => ({ ...atual, ...mudanca }));
   };
@@ -164,9 +184,9 @@ export function MapaDeProjetos({
   const enquadramento = useMemo(
     () =>
       enquadramentoDoRecorte({
-        pontos: pontos
-          .filter((ponto) => ponto.coordenadas)
-          .map((ponto) => ponto.coordenadas),
+        pontos: pontos.flatMap((ponto) =>
+          ponto.coordenadas ? [ponto.coordenadas] : [],
+        ),
         filtroAtivo: filtroAtivo || Boolean(escolha.projeto),
       }),
     [pontos, filtroAtivo, escolha.projeto],
@@ -176,13 +196,13 @@ export function MapaDeProjetos({
   const { refDoMapa, mapa, camadas, ultimoEnquadramento, aparecimentos } =
     usarMapaDoBrasil(L, {
       telaCheia,
-      aoCriar: (novo) => {
+      aoCriar: (novo: MapaNacional) => {
         const lugares = L.layerGroup().addTo(novo);
         const leque = criarLeque(L, novo, lugares);
         return {
           lugares,
           leque,
-          marcadores: new Map(),
+          marcadores: new Map<string, MarcadorDoMapa>(),
           parar: leque.parar,
         };
       },
@@ -200,7 +220,7 @@ export function MapaDeProjetos({
     const { lugares, leque } = camadas.current;
     lugares.clearLayers();
     leque.limpar();
-    const marcadores = new Map();
+    const marcadores = new Map<string, MarcadorDoMapa>();
     for (const ponto of pontos) {
       if (!ponto.coordenadas) continue;
       const marcador = L.circleMarker(ponto.coordenadas, {
@@ -255,7 +275,10 @@ export function MapaDeProjetos({
   ]);
 
   const chamadas = usarUltimo({
-    aoAtualizarCoordenada: (data, ponto) => {
+    aoAtualizarCoordenada: (
+      data: CorrecaoDoLugar,
+      ponto: PontoEditavelDoProjeto,
+    ) => {
       const lugar = data?.lugar || ponto?.alvo?.lugar;
       const latitude = Number(data?.latitude);
       const longitude = Number(data?.longitude);
@@ -269,9 +292,9 @@ export function MapaDeProjetos({
     },
     // A lista leva ao ponto: aproxima e abre o popup (Projetos não tem o
     // nível do DSEI; o popup é o detalhe do lugar).
-    aoEscolher: (ponto) => {
+    aoEscolher: (ponto: PontoDoMunicipio) => {
       const marcador = camadas.current?.marcadores.get(ponto?.chave);
-      if (!mapa || !marcador) return;
+      if (!mapa || !marcador || !camadas.current || !ponto.coordenadas) return;
       camadas.current.pegar();
       mapa.setView(ponto.coordenadas, Math.max(mapa.getZoom(), ZOOM_DO_LUGAR), {
         animate: true,
@@ -349,9 +372,10 @@ export function MapaDeProjetos({
                 municipios={municipios}
                 perfil={perfil}
                 supabase={supabase}
-                aoAtualizarMapa={(data, ponto) =>
-                  chamadas.current.aoAtualizarCoordenada(data, ponto)
-                }
+                aoAtualizarMapa={(
+                  data: CorrecaoDoLugar,
+                  ponto: PontoEditavelDoProjeto,
+                ) => chamadas.current.aoAtualizarCoordenada(data, ponto)}
                 {...propsDoEditor(modo, idDoPainel)}
               />
             </PainelDoEditor>
@@ -368,7 +392,9 @@ export function MapaDeProjetos({
               projetos={projetos}
               escolha={escolha}
               aoMudarEscolha={mudarEscolha}
-              aoEscolher={(ponto) => chamadas.current.aoEscolher(ponto)}
+              aoEscolher={(ponto: PontoDoMunicipio) =>
+                chamadas.current.aoEscolher(ponto)
+              }
             />
           )}
         </div>

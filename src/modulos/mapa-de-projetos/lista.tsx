@@ -1,10 +1,11 @@
+import type { PontoDoMunicipio, PropsDaLista } from "./tipos.ts";
 import {
   gruposPorProjeto,
   plural,
   resultadoDoMunicipio,
   temCandidatosPorLugar,
   textoDasVagas,
-} from "../../lib/visao-geral-da-area.js";
+} from "../../lib/visao-geral-da-area.ts";
 import { Campo, EstadoVazio, classes } from "../../ui/index.js";
 import { ListaDoMapa } from "../mapa-saude-indigena/painel-do-mapa.jsx";
 
@@ -15,9 +16,9 @@ import { ListaDoMapa } from "../mapa-saude-indigena/painel-do-mapa.jsx";
   por projeto e "Agrupar por projeto" no alto (só com dois ou mais projetos).
 */
 
-const fmt = (valor) => Number(valor || 0).toLocaleString("pt-BR");
+const fmt = (valor: number) => Number(valor || 0).toLocaleString("pt-BR");
 
-export function CorDoProjeto({ serie }) {
+export function CorDoProjeto({ serie }: { serie: number }) {
   return (
     <span
       className={`mapa-projeto__cor mapa-projeto__cor--${serie || 0}`}
@@ -37,7 +38,17 @@ export function CorDoProjeto({ serie }) {
   percentual escrito ao lado não deixa a leitura só na cor. Sem coordenada,
   sem clique.
 */
-function LinhaDoLugar({ ponto, posicao, aoEscolher, mostrarProjetos = true }) {
+function LinhaDoLugar({
+  ponto,
+  posicao,
+  aoEscolher,
+  mostrarProjetos = true,
+}: {
+  ponto: PontoDoMunicipio;
+  posicao: number;
+  aoEscolher: PropsDaLista["aoEscolher"];
+  mostrarProjetos?: boolean;
+}) {
   const { candidatos, aprovados, reprovados } = ponto;
   const comCandidatos = temCandidatosPorLugar(ponto);
   const vagasPublicadas = textoDasVagas({
@@ -128,7 +139,11 @@ function LinhaDoLugar({ ponto, posicao, aoEscolher, mostrarProjetos = true }) {
   );
 }
 
-function Filtros({ projetos, escolha, aoMudarEscolha }) {
+function Filtros({
+  projetos,
+  escolha,
+  aoMudarEscolha,
+}: Pick<PropsDaLista, "projetos" | "escolha" | "aoMudarEscolha">) {
   return (
     <div className="mapa-projetos__filtros">
       <Campo rotulo="Projeto">
@@ -163,7 +178,15 @@ function Filtros({ projetos, escolha, aoMudarEscolha }) {
   );
 }
 
-function Itens({ pontos, agrupar, filtrado, aoEscolher }) {
+function Itens({
+  pontos,
+  agrupar,
+  filtrado,
+  aoEscolher,
+}: Pick<PropsDaLista, "pontos" | "aoEscolher"> & {
+  agrupar: boolean;
+  filtrado: boolean;
+}) {
   if (!agrupar) {
     return (
       <ol className="mapa-si-lista__itens">
@@ -223,7 +246,7 @@ export function ListaDeMunicipios({
   escolha,
   aoMudarEscolha,
   aoEscolher,
-}) {
+}: PropsDaLista) {
   let corpo = null;
   if (indisponivel)
     corpo = (

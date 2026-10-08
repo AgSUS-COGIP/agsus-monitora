@@ -10,11 +10,11 @@ import {
   filaDoEditor,
   listaDeSugestoes,
   nivelDaGravidade,
-} from "../src/lib/editor-de-coordenadas.js";
+} from "../src/lib/editor-de-coordenadas.ts";
 import {
   municipiosDaResposta,
   pontosDosMunicipios,
-} from "../src/lib/visao-geral-da-area.js";
+} from "../src/lib/visao-geral-da-area.ts";
 
 /*
   As regras do editor de coordenadas no mapa de Projetos

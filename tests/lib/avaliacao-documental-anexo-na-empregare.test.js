@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
   anexosDaColuna,
+  chaveDoEnunciado,
+  enunciadosCasam,
   anexosDaEmpregare,
   apresentacaoDoAnexo,
   enderecoDoAnexo,
@@ -210,5 +212,74 @@ describe("anexos capturados pelo robô (empregare.anexos e respostas)", () => {
     expect(apresentacaoDoAnexo(coluna, semNada).rotulo).toBe(
       "Abrir na Empregare",
     );
+  });
+});
+
+describe("casamento do enunciado sem a coluna gravada (texto do edital)", () => {
+  const anexo = (ordem, pergunta, enunciado) => ({
+    resposta: "9900001",
+    pergunta,
+    arquivo: 1,
+    ordem,
+    enunciado,
+    coluna: "",
+    link: ARQ(pergunta, `a${pergunta}`),
+  });
+  const ANEXOS = [
+    anexo(
+      6,
+      "601",
+      "Anexe a comprovação de Nível Superior: (frente e verso do diploma ou declaração)",
+    ),
+    anexo(
+      11,
+      "611",
+      "Experiência profissional: anexe a comprovação (carteira de trabalho, contrato)",
+    ),
+    anexo(
+      12,
+      "612",
+      "Experiência profissional: anexe a comprovação de tempo de serviço na área",
+    ),
+  ];
+
+  it("a chave tira acento, caixa, espaço e pontuação; prefixo no tamanho do menor", () => {
+    expect(chaveDoEnunciado("Pergunta 6 - Nível Superior:(frente&nbsp;e")).toBe(
+      chaveDoEnunciado("NIVEL  superior: (frente e"),
+    );
+    expect(
+      enunciadosCasam(
+        "anexeacomprovacaodenivel",
+        "anexeacomprovacaodenivelsuperior",
+      ),
+    ).toBe(true);
+    expect(enunciadosCasam("anexeorg", "anexeorgecpf")).toBe(false);
+  });
+
+  it("coluna do Excel truncada e com pontuação diferente casa pela Ordem", () => {
+    expect(
+      anexosDaColuna(
+        ANEXOS,
+        "Pergunta 6 - Anexe a comprovação de Nível Superior:(frente e",
+      ).map((a) => a.pergunta),
+    ).toEqual(["601"]);
+    expect(
+      anexosDaColuna(
+        ANEXOS,
+        "Pergunta 11 - Experiência profissional: anexe a comprovação",
+      ).map((a) => a.pergunta),
+    ).toEqual(["611"]);
+  });
+
+  it("sem a Ordem certa, só casa quando é uma única pergunta", () => {
+    expect(
+      anexosDaColuna(ANEXOS, "Experiência profissional: anexe a comprovação"),
+    ).toEqual([]);
+    expect(
+      anexosDaColuna(
+        ANEXOS,
+        "Anexe a comprovação de Nível Superior:(frente e",
+      ).map((a) => a.pergunta),
+    ).toEqual(["601"]);
   });
 });

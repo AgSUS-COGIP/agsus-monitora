@@ -43,7 +43,7 @@ import {
   BotaoDeRecolher,
   PainelDoEditor,
   usarModoDeEdicao,
-} from "../editor-de-coordenadas/modo-de-edicao.jsx";
+} from "../editor-de-coordenadas/modo-de-edicao.tsx";
 
 const OPCOES_DO_ENQUADRAMENTO = Object.freeze({
   padding: [34, 34],

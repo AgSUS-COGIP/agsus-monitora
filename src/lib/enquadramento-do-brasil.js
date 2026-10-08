@@ -20,7 +20,7 @@ import { RAIO_MAXIMO as RAIO_DA_BOLHA } from "./mapa-render.js";
 
 /*
   O maior ponto dos mapas: o raio da bolha do DSEI e o traço dela. O ponto de
-  Projetos não passa do raio da bolha (src/lib/visao-geral-da-area.js; o
+  Projetos não passa do raio da bolha (src/lib/visao-geral-da-area.ts; o
   teste confere).
 */
 export const TRACO_MAXIMO = 3;
@@ -118,6 +118,7 @@ export function sobraNaMoldura({
 export const ZOOM_DO_PONTO = 7;
 export const OPCOES_DA_CAIXA = Object.freeze({ padding: [60, 60], maxZoom: 7 });
 
+/** @param {{pontos?: readonly (readonly [number, number])[], filtroAtivo?: boolean}} [opcoes] */
 export function enquadramentoDoRecorte({
   pontos = [],
   filtroAtivo = false,

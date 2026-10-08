@@ -844,6 +844,77 @@ class DetalhesDaResposta(unittest.TestCase):
         _sem_proibidos(self, texto)
 
 
+class CasamentoComAColuna(unittest.TestCase):
+    """Enunciados do edital (texto público, sem dado pessoal) como o JSON e o Excel trazem."""
+
+    COLUNAS_DO_EXCEL = [
+        "Nome",
+        "Pergunta 4 - Anexe o documento de identificação com foto (RG, CNH ou carteira de classe)",
+        "Pergunta 6 - Anexe a comprovação de Nível Superior:(frente e",
+        "Pergunta 7 - Anexe a comprovação de Nível Técnico:(frente e verso do",
+        "Pergunta 9 - Anexe o registro no conselho de classe",
+        "Pergunta 10 - Anexe o registro profissional&nbsp;ativo no conselho",
+        "Pergunta 11 - Experiência profissional: anexe a comprovação",
+        "Pergunta 12 - Experiência profissional: anexe a comprovação de tempo",
+        "Pergunta 16 - Anexe os certificados de cursos (carga horária mínima",
+        "Pergunta 18 - Autodeclaração (Pretos/Pardos): anexe o documento",
+    ]
+
+    def test_coluna_truncada_e_com_pontuacao_diferente_casa_pela_ordem(self):
+        casos = [
+            (6, "Anexe a comprovação de Nível Superior: (frente e verso do diploma ou declaração)", 2),
+            (7, "Anexe a comprovação de Nível Técnico: (frente e verso do certificado)", 3),
+            (10, "Anexe o registro profissional ativo no conselho de classe da categoria", 5),
+            (11, "Experiência profissional: anexe a comprovação (carteira de trabalho, contrato)", 6),
+            (12, "Experiência profissional: anexe a comprovação de tempo de serviço na área", 7),
+            (16, "Anexe os certificados de cursos (carga horária mínima de 40 horas)", 8),
+            (18, "Autodeclaração (Pretos/Pardos): anexe o documento assinado", 9),
+        ]
+        for ordem, enunciado, indice in casos:
+            self.assertEqual(
+                anexos.coluna_da_pergunta(enunciado, self.COLUNAS_DO_EXCEL, ordem),
+                self.COLUNAS_DO_EXCEL[indice],
+                enunciado,
+            )
+
+    def test_sem_ordem_casa_so_quando_e_unica(self):
+        self.assertEqual(
+            anexos.coluna_da_pergunta("Anexe a comprovação de Nível Superior: (frente e verso)", self.COLUNAS_DO_EXCEL),
+            self.COLUNAS_DO_EXCEL[2],
+        )
+        # "Experiência profissional: anexe a comprovação" é prefixo das colunas 11 e 12: ambígua.
+        self.assertIsNone(
+            anexos.coluna_da_pergunta("Experiência profissional: anexe a comprovação", self.COLUNAS_DO_EXCEL)
+        )
+        # A Ordem desempata.
+        self.assertEqual(
+            anexos.coluna_da_pergunta("Experiência profissional: anexe a comprovação", self.COLUNAS_DO_EXCEL, 11),
+            self.COLUNAS_DO_EXCEL[6],
+        )
+
+    def test_ordem_que_nao_confirma_e_prefixo_curto_nao_casam(self):
+        self.assertIsNone(anexos.coluna_da_pergunta("Anexe o RG", self.COLUNAS_DO_EXCEL, 4))
+        self.assertIsNone(anexos.coluna_da_pergunta("Outra pergunta qualquer do edital", self.COLUNAS_DO_EXCEL, 6))
+
+    def test_chave_e_acentos(self):
+        self.assertEqual(
+            anexos.chave_do_enunciado("Pergunta 6 - Nível Superior:(frente&nbsp;e"),
+            anexos.chave_do_enunciado("NIVEL  superior: (frente e"),
+        )
+        self.assertEqual(anexos.chave_do_enunciado("Pergunta 6 - Nível Superior"), "nivelsuperior")
+        # UTF-8 lido como Latin-1 (com o \xad e o \xa0 que o Latin-1 dá a "í" e "à").
+        self.assertEqual(anexos.consertar_acentos("NÃ­vel Superior Ã s vagas"), "Nível Superior às vagas")
+        self.assertEqual(anexos.consertar_acentos("Nível já certo"), "Nível já certo")
+        dados = json.loads(DETALHES)
+        dados["questionario"]["respostas"][1]["Pergunta"] = "Anexe a comprovação de NÃ­vel Superior"
+        lido = anexos.ler_detalhes_da_resposta(json.dumps(dados), "TKfict123")
+        self.assertEqual(lido["anexos"][0]["enunciado"], "Anexe a comprovação de Nível Superior")
+
+    def test_o_fetch_decodifica_pelo_charset(self):
+        self.assertIn("new TextDecoder(m ? m[1].trim() : 'utf-8', {fatal: true})", anexos.JS_BUSCAR_DETALHES)
+        self.assertIn("new TextDecoder('windows-1252')", anexos.JS_BUSCAR_DETALHES)
+
+
 class RoboComAnexos(unittest.TestCase):
     def setUp(self):
         sys.modules.pop("robo_empregare", None)

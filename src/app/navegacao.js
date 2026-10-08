@@ -25,7 +25,7 @@ import {
   telaPermitida,
 } from "../lib/navegacao.js";
 import { definirPaginaDaAba } from "../lib/identidade-da-aba.js";
-import { cabecalhoDaVisaoGeral } from "../lib/visao-geral-da-area.js";
+import { cabecalhoDaVisaoGeral } from "../lib/visao-geral-da-area.ts";
 import { erroAmigavel } from "../lib/erro-amigavel.js";
 import {
   assinarDadosDoMonitoramento,

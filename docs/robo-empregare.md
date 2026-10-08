@@ -130,9 +130,15 @@ Há dois passos (`scripts/robo-empregare/anexos_empregare.py`):
    (`ler_respostas_do_html` em `navegador_empregare.py`). Para cada resposta, o mesmo GET com a
    sessão (6 por vez, `fetch` na página; até 10 min por vaga e 30 por execução); o JSON é lido
    (`ler_detalhes_da_resposta`), os links são montados como o front e cada anexo ganha a coluna do
-   Excel: a "Pergunta <Ordem>" se o enunciado confirma, senão a de enunciado igual
-   (`coluna_da_pergunta`: sem acento, minúsculo, espaços simples, sem "Pergunta N - ", como
-   `nota-declarada.js`). O nome do arquivo só vai no link, nunca no log. Depois de fechar a vaga, grava por `gravar_anexos_empregare`:
+   Excel: a "Pergunta <Ordem>" se o enunciado confirma, senão a única de enunciado que casa
+   (`coluna_da_pergunta`). Para casar, o enunciado vira uma chave só com letras e dígitos (sem
+   "Pergunta N - ", tags, entidades, acentos, caixa, espaços e pontuação: "Nível Superior: (frente"
+   e "Nivel Superior:(frente" dão a mesma) e as chaves casam como prefixo no tamanho da menor,
+   com 20+ caracteres — a coluna do Excel vem truncada. A ficha usa a mesma regra
+   (`chaveDoEnunciado` em `anexo-na-empregare.ts`) quando a coluna não foi gravada. O JSON é
+   decodificado pelo charset da resposta (sem ele, UTF-8; se não for UTF-8 válido, windows-1252)
+   e trechos de UTF-8 lidos como Latin-1 ("NÃ­vel") são consertados antes de gravar. O nome do
+   arquivo só vai no link, nunca no log. Depois de fechar a vaga, grava por `gravar_anexos_empregare`:
    `TB_EMPREGARE_RESPOSTA` (resposta, link de impressão, contagens) e `TB_EMPREGARE_ANEXO`
    (pergunta × arquivo: link Visualizar Arquivo, tipo `ARQUIVO_EMPREGARE`, Ordem, enunciado, coluna). A
    resposta relida fica só com os anexos lidos agora. No log, só contagens (`respostas de

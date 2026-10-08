@@ -130,6 +130,45 @@ const contagem = () =>
   host.querySelector(".mapa-si-coordenadas__contagem").textContent;
 const chamadas = (nome) =>
   props.supabase.rpc.mock.calls.filter(([n]) => n === nome);
+
+describe("editor de coordenadas: respostas malformadas", () => {
+  it("descarta pendências sem registro e candidatos sem posição sem derrubar o editor", async () => {
+    respostas[RPC_PENDENCIAS] = () => ({
+      data: [null, [], { ...pendenciaDoPoloA(), motivo: {}, candidatos: {} }],
+      error: null,
+    });
+    await renderizar();
+    await escolher("Polo · Polo A");
+    expect(host.querySelector('[aria-label="Correção"]')).not.toBeNull();
+    expect(host.textContent).toContain("Sem posição candidata.");
+  });
+  it("não oferece desfazer uma alteração antiga quando a mais recente é inválida", async () => {
+    respostas[RPC_HISTORICO] = () => ({
+      data: [null, ...historicoDoPoloA()],
+      error: null,
+    });
+    await renderizar();
+    await escolher("Polo · Polo A");
+    expect(host.textContent).toContain("Sem alterações.");
+    expect(botao("Desfazer última alteração")).toBeUndefined();
+  });
+  it("exibe erro e não atualiza o mapa quando a gravação devolve uma resposta inválida", async () => {
+    respostas[RPC_SALVAR] = () => ({ data: { latitude: [] }, error: null });
+    await renderizar();
+    await escolher("Polo · Polo A");
+    await digitar(latitude(), "-12");
+    await digitar(motivo(), "Ajuste conforme fonte oficial");
+    await clicar(botao("Salvar coordenada"));
+    await clicar(botao("Confirmar correção"));
+    await esperar();
+    expect(chamadas(RPC_SALVAR)).toHaveLength(1);
+    expect(props.aoAtualizarMapa).not.toHaveBeenCalled();
+    expect(host.querySelector('[role="alert"]').textContent).toContain(
+      "Resposta inválida ao salvar coordenada.",
+    );
+    expect(host.textContent).not.toContain("Coordenada salva.");
+  });
+});
 const campoDeTexto = (rotulo) =>
   [...host.querySelectorAll("textarea")].find(
     (t) =>

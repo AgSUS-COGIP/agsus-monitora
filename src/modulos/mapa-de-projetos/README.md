@@ -5,15 +5,15 @@ vagas" ao lado). Tem **as mesmas regras do mapa da Saúde Indígena** (`src/modu
 e usa as mesmas peças: o que muda é o que vai no mapa e na lista.
 
 ```
-mapa-de-projetos.jsx   <MapaDeProjetos area carregador carregadoEm linhas filtroAtivo>: um ponto por lugar
+mapa-de-projetos.tsx   <MapaDeProjetos area carregador carregadoEm linhas filtroAtivo>: um ponto por lugar
                        na cor do projeto, montado com as peças comuns (painel-do-mapa.jsx, leaflet.js)
-lista.jsx              "Municípios por vagas" (ListaDoMapa comum, linhas no formato de "Territórios por
+lista.tsx              "Municípios por vagas" (ListaDoMapa comum, linhas no formato de "Territórios por
                        vagas"), filtro "Projeto" e "Agrupar por projeto"
-balao.js               dica e popup do lugar em DOM seguro (projeto, edital, vagas, lotações, contagens)
-editor-de-coordenadas.jsx  "Coordenadas" (admin global e Gestor): o editor comum com os lugares das vagas,
+balao.ts               dica e popup do lugar em DOM seguro (projeto, edital, vagas, lotações, contagens)
+editor-de-coordenadas.tsx  "Coordenadas" (admin global e Gestor): o editor comum com os lugares das vagas,
                        as regras de src/lib/coordenadas-dos-projetos.js e as RPCs *_coordenada_mapa_projetos
                        (migration 20261002190000)
-carregador.js          RPC listar_municipios_das_vagas_da_area, um pedido por área, cache de 5 min, e a
+carregador.ts          RPC listar_municipios_das_vagas_da_area, um pedido por área, cache de 5 min, e a
                        escolha da lista (sobrevive à troca de área)
 mapa-de-projetos.css   cores dos projetos (--series-1…6), filtro e grupos; o resto é o .mapa-si-*
 ```
@@ -63,7 +63,7 @@ mapa-de-projetos.css   cores dos projetos (--series-1…6), filtro e grupos; o r
 `visao-geral.jsx`: `<MapaDeProjetos area={e.area} carregador={…} carregadoEm={e.carregadoEm}
 linhas={e.filtradas} filtroAtivo={e.temRecorte}>`. O carregador é criado por `montarVisaoGeral` (um
 por montagem). O pedido só sai depois da primeira carga da página (`carregadoEm`, com sessão);
-Atualizar dados pede de novo e o cache decide. Lógica pura em `src/lib/visao-geral-da-area.js`
+Atualizar dados pede de novo e o cache decide. Lógica pura em `src/lib/visao-geral-da-area.ts`
 (projetos, recorte, pontos, grupos, resumo do popup) e `src/lib/coordenadas-dos-municipios.js`.
 
 Testes: `tests/visao-geral-da-area.test.js` (regras e recorte), `tests/enquadramento-do-brasil.test.js`
@@ -76,3 +76,29 @@ O que saiu do legado: `src/modules/municipios-da-visao-geral.js`, o bloco
 `desenharMunicipiosNoMapa`, `scheduleMapResize` e o carregador do `legacy-app.js`,
 `health-map-workspace.css`, `health-reference-kpis.css` e os `#mapaDosProjetos` de `app.css` e
 `mobile-app.css`.
+
+## TypeScript e fronteiras
+
+O módulo está em TypeScript: mapa, lista, balões, carregador com cache e escolha,
+e integração do editor. Os contratos estão em `tipos.ts`; as regras de recorte,
+projetos, pontos e resumo estão em `src/lib/visao-geral-da-area.ts`.
+
+A resposta da RPC entra como `unknown`. A normalização verifica listas e registros,
+aceita nomes em texto e números finitos ou textos numéricos, aplica valores padrão
+e descarta linhas sem município nem UF. Objetos e listas não viram nomes ou números.
+Editais, lotações e projetos são normalizados; `origens` permanece uma lista de
+valores `unknown`. A normalização não audita nomes geográficos nem garante uma
+posição dentro do Brasil. Coordenada ausente continua permitindo a referência local
+para respostas antigas; coordenada nula do banco mantém o lugar sem ponto.
+
+O editor compartilhado e o modo de edição estão em TypeScript (contratos e limites em
+`../editor-de-coordenadas/README.md`). As peças comuns de criação do Leaflet seguem em
+JavaScript, com contratos JSDoc nas integrações utilizadas aqui. As regras de correção em
+`src/lib/coordenadas-dos-projetos.js` também seguem compartilhadas em JavaScript.
+O contrato mínimo do mapa fica em `src/lib/tipos-do-mapa.ts`; ele não cobre toda
+a API do Leaflet. As permissões e RPCs de gravação continuam as mesmas.
+
+`tests/tipos/mapa-de-projetos.tsx` verifica contratos e rejeições esperadas no
+typecheck. `tests/municipios-da-resposta.test.js` cobre dados malformados e a
+distinção entre coordenada antiga, nula e cadastrada, além dos testes de interação
+e regras já listados acima.

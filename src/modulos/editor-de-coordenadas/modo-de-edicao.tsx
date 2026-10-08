@@ -1,3 +1,5 @@
+import type { ReactNode } from "react";
+import type { MapaNacional } from "../../lib/tipos-do-mapa.ts";
 import {
   useCallback,
   useEffect,
@@ -5,7 +7,7 @@ import {
   useRef,
   useState,
 } from "react";
-import { folgaDoEnquadramento } from "../../lib/editor-de-coordenadas.js";
+import { folgaDoEnquadramento } from "../../lib/editor-de-coordenadas.ts";
 import { classes } from "../../ui/index.js";
 import { remedir } from "../mapa-saude-indigena/leaflet.js";
 import { travarRolagemDaPagina } from "../mapa-saude-indigena/tela-cheia.jsx";
@@ -34,11 +36,19 @@ import { CAMPOS_E_JANELAS } from "../mapa-saude-indigena/volta-ao-brasil.js";
   muda quando o painel recolhe ou abre, para o editor trazer o pin de volta à
   área livre.
 */
-export function usarModoDeEdicao({ mapa, permitido = true, pegar } = {}) {
+export function usarModoDeEdicao({
+  mapa,
+  permitido = true,
+  pegar,
+}: {
+  mapa?: MapaNacional | null;
+  permitido?: boolean;
+  pegar?: () => void;
+} = {}) {
   const [editando, definirEditando] = useState(false);
   const [recolhido, definirRecolhido] = useState(false);
   const [versaoDaArea, definirVersaoDaArea] = useState(0);
-  const refDoPainel = useRef(null);
+  const refDoPainel = useRef<HTMLElement | null>(null);
   const chamadas = usarUltimo({ pegar });
 
   // Sem permissão (ou com o mapa escondido) o modo sai junto.
@@ -65,11 +75,14 @@ export function usarModoDeEdicao({ mapa, permitido = true, pegar } = {}) {
     if (!ativo) return undefined;
     chamadas.current.pegar?.();
     const soltar = travarRolagemDaPagina();
-    const aoTeclar = (evento) => {
+    const aoTeclar = (evento: KeyboardEvent) => {
       if (evento.key !== "Escape" || evento.defaultPrevented) return;
       if (evento.altKey || evento.ctrlKey || evento.metaKey || evento.shiftKey)
         return;
-      if (evento.target?.closest?.(CAMPOS_E_JANELAS)) {
+      if (
+        evento.target instanceof Element &&
+        evento.target.closest(CAMPOS_E_JANELAS)
+      ) {
         /*
           Num campo do editor o Esc é do campo (a busca limpa): não chega à
           tela cheia nem à volta do DSEI, que tirariam o painel do lugar.
@@ -118,7 +131,15 @@ export function usarModoDeEdicao({ mapa, permitido = true, pegar } = {}) {
 }
 
 /* O botão que recolhe e abre o painel do editor (no topo do editor e na faixa). */
-export function BotaoDeRecolher({ modo, idDoConteudo }) {
+export type ModoDeEdicao = ReturnType<typeof usarModoDeEdicao>;
+
+export function BotaoDeRecolher({
+  modo,
+  idDoConteudo,
+}: {
+  modo: ModoDeEdicao;
+  idDoConteudo: string;
+}) {
   return (
     <button
       type="button"
@@ -137,7 +158,17 @@ export function BotaoDeRecolher({ modo, idDoConteudo }) {
   editor"; o conteúdo fica montado e escondido. O botão de recolher do painel
   aberto vai no topo do editor (`botaoDeRecolher` do EditorDeCoordenadas).
 */
-export function PainelDoEditor({ id, rotulo, modo, children }) {
+export function PainelDoEditor({
+  id,
+  rotulo,
+  modo,
+  children,
+}: {
+  id: string;
+  rotulo: string;
+  modo: ModoDeEdicao;
+  children: ReactNode;
+}) {
   const idDoConteudo = `${id}-conteudo`;
   return (
     <aside

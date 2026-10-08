@@ -6,7 +6,7 @@ import {
   pontosEditaveisDoMapa,
   sugestoesDaPendencia,
 } from "../../lib/coordenadas-do-mapa.js";
-import { EditorDeCoordenadas as EditorComum } from "../editor-de-coordenadas/editor-de-coordenadas.jsx";
+import { EditorDeCoordenadas as EditorComum } from "../editor-de-coordenadas/editor-de-coordenadas.tsx";
 
 /*
   O editor de coordenadas do mapa da Saúde Indígena: o editor comum

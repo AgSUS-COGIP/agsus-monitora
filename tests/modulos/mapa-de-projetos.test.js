@@ -7,8 +7,8 @@ import {
   CACHE_TTL_MS,
   RPC_DOS_MUNICIPIOS,
   criarCarregadorDeMunicipios,
-} from "../../src/modulos/mapa-de-projetos/carregador.js";
-import { MapaDeProjetos } from "../../src/modulos/mapa-de-projetos/mapa-de-projetos.jsx";
+} from "../../src/modulos/mapa-de-projetos/carregador.ts";
+import { MapaDeProjetos } from "../../src/modulos/mapa-de-projetos/mapa-de-projetos.tsx";
 import {
   clicar,
   escolher,
@@ -866,10 +866,10 @@ describe("tela cheia e tema", () => {
 describe("fonte", () => {
   const pasta = "src/modulos/mapa-de-projetos/";
   const arquivos = [
-    "mapa-de-projetos.jsx",
-    "lista.jsx",
-    "balao.js",
-    "carregador.js",
+    "mapa-de-projetos.tsx",
+    "lista.tsx",
+    "balao.ts",
+    "carregador.ts",
   ].map((nome) => readFileSync(pasta + nome, "utf8"));
 
   it("sem HTML em string nem MutationObserver", () => {
