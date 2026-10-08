@@ -1,10 +1,10 @@
 import { useEffect, useSyncExternalStore } from "react";
 import { montarModulo } from "../../app/montar-modulo.jsx";
-import { AlcaDeRecolher, AlcaNoCabecalho } from "./alca-de-recolher.jsx";
-import { assinarBarraLateral, obterEstadoDaBarraLateral } from "./estado.js";
-import { Navegacao } from "./menu-de-areas.jsx";
-import { Rodape } from "./rodape.jsx";
-import { usarBarraRecolhida, usarGaveta } from "./usar-ambiente.js";
+import { AlcaDeRecolher, AlcaNoCabecalho } from "./alca-de-recolher.tsx";
+import { assinarBarraLateral, obterEstadoDaBarraLateral } from "./estado.ts";
+import { Navegacao } from "./menu-de-areas.tsx";
+import { Rodape } from "./rodape.tsx";
+import { usarBarraRecolhida, usarGaveta } from "./usar-ambiente.ts";
 
 /*
   A barra lateral, em React — o primeiro pedaço do front a migrar.
@@ -12,9 +12,9 @@ import { usarBarraRecolhida, usarGaveta } from "./usar-ambiente.js";
   O React é dono de tudo dentro de `<aside class="sidebar">`: marca, menu de
   áreas e rodapé (com o botão de recolher). O resto do sistema fala com ela sem tocar
   no DOM dela:
-  - o legado empurra a árvore e a página ativa para `estado.js`;
+  - o legado empurra a árvore e a página ativa para `estado.ts`;
   - a classe de `body` que recolhe a barra, o tema de `html` e a largura
-    chegam por `usar-ambiente.js`, avisados por evento;
+    chegam por `usar-ambiente.ts`, avisados por evento;
   - duas folhas continuam do legado, e o React só as cria: o `src` da logo
     (`sidebar-branding.js`) e o texto da versão (`applyConfigToUi`).
 
@@ -52,11 +52,14 @@ function Marca() {
   a altura dela vem daqui: ao apontar ou focar um controle com dica, grava o
   centro dele em `--dica-topo`. Um ouvinte só, delegado no documento.
 */
-function usarDicasDoTrilho(trilho) {
+function usarDicasDoTrilho(trilho: boolean) {
   useEffect(() => {
     if (!trilho) return undefined;
-    const posicionar = (evento) => {
-      const alvo = evento.target?.closest?.(".sidebar [data-dica]");
+    const posicionar = (evento: Event) => {
+      const alvo =
+        evento.target instanceof Element
+          ? evento.target.closest<HTMLElement>(".sidebar [data-dica]")
+          : null;
       if (!alvo) return;
       const caixa = alvo.getBoundingClientRect();
       alvo.style.setProperty(
@@ -103,7 +106,7 @@ export function BarraLateral() {
   o legado — encontra `#sideLogo`, `#sidebarVersion` e `#nav` no DOM.
 */
 export function montarBarraLateral(
-  aside = document.querySelector("#appScreen .sidebar"),
+  aside: Element | null = document.querySelector("#appScreen .sidebar"),
 ) {
   if (!aside) return null;
   return montarModulo(aside, <BarraLateral />, {

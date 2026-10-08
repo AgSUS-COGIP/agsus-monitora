@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-import { ABAS_DO_MENU } from "../src/lib/menu-lateral.js";
+import { ABAS_DO_MENU } from "../src/lib/menu-lateral.ts";
 import { RESOURCES } from "../src/lib/permissoes-recursos.js";
 import { CONTRATO_RPC } from "../src/lib/rpc-contrato.js";
 import { ORIGENS_DO_RECURSO } from "../src/lib/prazo-do-recurso.js";

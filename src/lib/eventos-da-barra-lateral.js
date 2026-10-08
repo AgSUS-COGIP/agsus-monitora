@@ -3,7 +3,7 @@
   (`src/componentes/barra-lateral/`).
 
   O legado não mexe no DOM da barra. Ele empurra dados para o estado dela
-  (`src/componentes/barra-lateral/estado.js`) e avisa, por estes eventos em
+  (`src/componentes/barra-lateral/estado.ts`) e avisa, por estes eventos em
   `document`, o que a barra não tem como perceber sozinha — nenhum
   `MutationObserver` observa classe de `body` ou atributo de `html`.
 */

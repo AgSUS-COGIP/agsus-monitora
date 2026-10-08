@@ -5,7 +5,7 @@ import {
   linhasDaArea,
   obterDadosDoMonitoramento,
 } from "./dados-do-monitoramento.js";
-import { nomeDaArea } from "../lib/menu-lateral.js";
+import { nomeDaArea } from "../lib/menu-lateral.ts";
 
 /*
   A área atual e o recorte dela, para as telas de Editais, Cronograma e Lista

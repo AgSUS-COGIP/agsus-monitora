@@ -180,7 +180,7 @@ export function definirSecoesPermitidas(documento, ids) {
 
 /*
   As seções são as páginas da área Administração do menu lateral
-  (`src/lib/menu-lateral.js`). O menu navega até Configurações e chama esta
+  (`src/lib/menu-lateral.ts`). O menu navega até Configurações e chama esta
   função com a seção escolhida; quem marca o item ativo é o próprio menu.
 */
 export function secaoAtualDeConfiguracao(documento = globalThis.document) {

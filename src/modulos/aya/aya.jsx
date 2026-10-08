@@ -56,7 +56,7 @@ import {
   trilhasDoPerfil,
 } from "../../lib/aya-tours.js";
 import { montarChamado, pedeSuporte } from "../../lib/chamado-da-aya.js";
-import { nomeDaArea } from "../../lib/menu-lateral.js";
+import { nomeDaArea } from "../../lib/menu-lateral.ts";
 import { abrirSecaoDeConfiguracao } from "../configuracoes/secoes.js";
 import { collectAyaPageContext, estadoDaTela } from "./contexto.js";
 import { responderAya } from "../../lib/busca-da-aya.js";

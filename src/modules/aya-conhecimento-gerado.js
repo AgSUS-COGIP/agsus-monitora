@@ -2848,7 +2848,7 @@ export const VERBETES_AYA = Object.freeze([
       "O MONITORA tem três áreas: Saúde Indígena, SEDE e Projetos. Cada área repete as mesmas páginas (Visão geral, Editais, Cronograma, Painel das análises, Avaliação documental, Recursos, Entrevistas, Classificação, Lista de aprovados e Seleção), e cada página mostra só os registros da área atual, a escolhida no menu. O que muda é o bloco do mapa da Visão geral: DSEIs e CASAIs na Saúde Indígena, os locais das vagas dos projetos em Projetos, e nenhum mapa na SEDE. A área do edital é calculada pelo banco a partir da unidade e do responsável: SEDE, Escritório Distrital e Regional e CCE ficam na SEDE; Caminhoneiros, Saúde nas Fronteiras, MFC e Rio Doce, em Projetos; as demais, na Saúde Indígena.",
     fato: "O MONITORA tem três áreas (Saúde Indígena, SEDE e Projetos); cada página mostra só a área atual escolhida no menu, e só a Visão geral da Saúde Indígena fala de DSEIs e CASAIs.",
     fonte:
-      "src/lib/menu-lateral.js; supabase/migrations/20260925170000_areas_do_sistema.sql",
+      "src/lib/menu-lateral.ts; supabase/migrations/20260925170000_areas_do_sistema.sql",
   },
   {
     arquivo: "regras-das-areas.md",
@@ -2865,7 +2865,7 @@ export const VERBETES_AYA = Object.freeze([
       'Quem tem mais de uma área vê o seletor "Área" no topo da barra lateral; abaixo dele ficam só as páginas da área escolhida. Trocar de área abre a mesma página na área nova (ou a primeira página dela, se não tiver essa). Com a barra recolhida, o seletor vira o ícone da área atual. A área escolhida fica guardada na aba do navegador: recarregar volta a ela, e uma aba nova começa na primeira área da pessoa. Quem tem uma área só não vê seletor. O administrador global vê todas as áreas; os demais veem as áreas liberadas para eles em Configurações › Acessos (com coordenação, só a área dela).',
     fato: "",
     fonte:
-      "src/componentes/barra-lateral/menu-de-areas.jsx; src/componentes/dados-do-monitoramento.js; supabase/migrations/20260925180000_areas_do_usuario.sql",
+      "src/componentes/barra-lateral/menu-de-areas.tsx; src/componentes/dados-do-monitoramento.js; supabase/migrations/20260925180000_areas_do_usuario.sql",
   },
   {
     arquivo: "regras-das-areas.md",
@@ -2881,7 +2881,7 @@ export const VERBETES_AYA = Object.freeze([
       "O menu de cada área segue as etapas do processo seletivo: Visão geral, Editais, Cronograma, Painel das análises, Avaliação documental, Recursos, Entrevistas, Classificação, Lista de aprovados e Seleção. Abaixo das áreas fica Administração (as seções de Configurações). O grupo Painéis só aparece quando há painel externo ativo liberado para a pessoa. O selo BETA ao lado do nome marca a aba ainda em teste.",
     fato: "O menu segue as etapas do processo seletivo: Visão geral, Editais, Cronograma, Painel das análises, Avaliação documental, Recursos, Entrevistas, Classificação, Lista de aprovados e Seleção.",
     fonte:
-      "supabase/migrations/20261001160000_ordem_do_menu_por_etapa.sql; supabase/migrations/20261006090000_avaliacao_documental_permissao_e_menu.sql; src/lib/menu-lateral.js",
+      "supabase/migrations/20261001160000_ordem_do_menu_por_etapa.sql; supabase/migrations/20261006090000_avaliacao_documental_permissao_e_menu.sql; src/lib/menu-lateral.ts",
   },
   {
     arquivo: "regras-das-areas.md",
@@ -5464,7 +5464,7 @@ export const VERBETES_AYA = Object.freeze([
       "Desativada, a área (ou a aba, ou o painel) some do menu de todos. Pelo menos uma área precisa continuar ativa.",
     fato: "",
     fonte:
-      "supabase/migrations/20260930140000_modulos_e_manutencao.sql; src/lib/menu-lateral.js",
+      "supabase/migrations/20260930140000_modulos_e_manutencao.sql; src/lib/menu-lateral.ts",
   },
   {
     arquivo: "regras-dos-modulos-e-abas.md",
@@ -5473,7 +5473,7 @@ export const VERBETES_AYA = Object.freeze([
     resposta:
       "O selo BETA aparece ao lado do nome da aba no menu e marca uma aba ainda em teste. É ligado por aba, em Configurações › Módulos e abas, pelo administrador global, e vale em todas as áreas.",
     fato: "",
-    fonte: "src/lib/menu-lateral.js; src/lib/modulos-e-abas.ts",
+    fonte: "src/lib/menu-lateral.ts; src/lib/modulos-e-abas.ts",
   },
   {
     arquivo: "regras-dos-modulos-e-abas.md",

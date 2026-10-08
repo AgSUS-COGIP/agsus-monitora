@@ -21,7 +21,7 @@ import {
   proximoEstadoDoMarco,
 } from "../../lib/comemoracao.js";
 import { semTreinamento } from "../../lib/edital-de-treinamento.js";
-import { nomeDaArea } from "../../lib/menu-lateral.js";
+import { nomeDaArea } from "../../lib/menu-lateral.ts";
 import { comemorar } from "../../modules/comemoracao.js";
 import { lerMarcosDaArea } from "./marcos.ts";
 import { linhasDaResposta } from "../../lib/visao-geral.ts";

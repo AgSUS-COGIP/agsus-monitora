@@ -72,7 +72,7 @@
 /* ── Menu em áreas ────────────────────────────────────────────────────────── */
 
 .menu-lateral {
-  /* Tem de bater com ALTURA_DA_PILULA em src/lib/menu-lateral.js. */
+  /* Tem de bater com ALTURA_DA_PILULA em src/lib/menu-lateral.ts. */
   --menu-pilula-altura: 28px;
   --menu-icone: 18px;
   display: grid;

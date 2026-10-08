@@ -9,7 +9,7 @@ let logoutRunning = false;
 
 /*
   Tema: o seletor Claro/Escuro mora no rodapé da barra lateral, junto do Sair
-  (`src/componentes/barra-lateral/rodape.jsx`). É o único controle de tema — o
+  (`src/componentes/barra-lateral/rodape.tsx`). É o único controle de tema — o
   botão que ficava no cabeçalho saiu. Daqui saem o estado e a regra que o
   rodapé usa; o tema em si (aplicar, alternar, outra aba) é de src/app/moldura.js.
 */

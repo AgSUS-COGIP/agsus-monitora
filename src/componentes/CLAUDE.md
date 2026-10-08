@@ -8,7 +8,8 @@ atualizações e os dados compartilhados do monitoramento. Toda tela monta por
 `montarModulo` (`src/app/`) e usa os componentes visuais de
 `src/ui/`; as pastas daqui mudam para `src/modulos/<nome>/` módulo a módulo. JavaScript com JSX
 (`.jsx`) e migração gradual para TypeScript (`.tsx`); Status das atualizações já está
-migrado em `saude-das-cargas/`, com contratos em `tipos.ts`. Nomes em português,
+migrado em `saude-das-cargas/`; a barra lateral também está em TypeScript. Contratos e
+limites estão nos READMEs das pastas e em seus `tipos.ts`. Nomes em português,
 arquivo em kebab-case, componente em PascalCase.
 
 ## Mapa
@@ -24,15 +25,15 @@ dados-do-monitoramento.js    linhas de TB_MONITORAMENTO_INDIGENA e catálogo TD_
 usar-area-atual.js           hook: a área atual, as linhas dela e os ids dos editais (Editais,
                              Cronograma e Lista de aprovados recortam por eles)
 barra-lateral/
-  barra-lateral.jsx          <BarraLateral> e montarBarraLateral() (chamada em src/main.js)
-  estado.js                  estado externo da barra (sem React): o legado empurra, a barra lê
-  menu-de-areas.jsx          áreas (acordeão; recolhida, painel flutuante) e itens
-  alca-de-recolher.jsx       o botão único de recolher: na marca (> 900px) ou no cabeçalho (portal)
-  rodape.jsx                 seletor Claro/Escuro, Sair e versão
-  usar-ambiente.js           hooks do que o legado controla: classe de body e largura (o tema é src/app/tema.js)
+  barra-lateral.tsx          <BarraLateral> e montarBarraLateral() (chamada em src/main.js)
+  estado.ts                  estado externo da barra (sem React): o legado empurra, a barra lê
+  menu-de-areas.tsx          áreas (acordeão; recolhida, painel flutuante) e itens
+  alca-de-recolher.tsx       o botão único de recolher: na marca (> 900px) ou no cabeçalho (portal)
+  rodape.tsx                 seletor Claro/Escuro, Sair e versão
+  usar-ambiente.ts           hooks do que o legado controla: classe de body e largura (o tema é src/app/tema.js)
 ```
 
-Lógica pura fica em `src/lib/`: `menu-lateral.js` (barra). CSS: `src/styles/barra-lateral.css`,
+Lógica pura fica em `src/lib/`: `menu-lateral.ts` (barra). CSS: `src/styles/barra-lateral.css`,
 `platform-shell.css` (barra) e `multi-select-busca.css`. Editais, Cronograma e Lista de aprovados
 moram em `src/modulos/editais/`, `cronograma/` e `aprovados/` (componentes, CSS e testes lá).
 
@@ -48,7 +49,7 @@ moram em `src/modulos/editais/`, `cronograma/` e `aprovados/` (componentes, CSS 
   `dados-do-monitoramento.js`: o legado publica, o componente assina. O Núcleo não relê a view.
 
 - **Nunca pelo DOM do componente.** O legado empurra dados para o estado externo
-  (`barra-lateral/estado.js`: `atualizarMenuLateral`, `marcarItemAtivoNoMenu`) e o componente lê com
+  (`barra-lateral/estado.ts`: `atualizarMenuLateral`, `marcarItemAtivoNoMenu`) e o componente lê com
   `useSyncExternalStore`. O arquivo de estado não importa React, então o legado pode importá-lo.
 - **O que o componente não percebe sozinho chega por evento** em `document`
   (`src/lib/eventos-da-barra-lateral.js`): barra recolhida/expandida, tema trocado. Nada de
