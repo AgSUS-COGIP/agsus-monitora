@@ -8,7 +8,7 @@ import {
   CORES_DO_MAPA,
   ESTILO_DA_LINHA_DE_VINCULO,
   TEXTO_DA_LINHA_DE_VINCULO,
-} from "../../lib/mapa-saude-indigena/formas.js";
+} from "../../lib/mapa-saude-indigena/formas.ts";
 import {
   classificarRegistros,
   dicaDoRegistro,
@@ -25,7 +25,7 @@ import {
   visiveis,
 } from "../../lib/mapa-saude-indigena/mapa-do-dsei.js";
 import { EstadoVazio, classes } from "../../ui/index.js";
-import { Forma, LegendaDoDsei } from "./legenda.jsx";
+import { Forma, LegendaDoDsei } from "./legenda.tsx";
 import {
   adicionarFundo,
   conteudoEmElemento,
@@ -36,7 +36,7 @@ import {
   observarTamanho,
   remedir,
 } from "./leaflet.js";
-import { usarUltimo } from "./usar-ultimo.js";
+import { usarUltimo } from "./usar-ultimo.ts";
 import { podeEditarCoordenadas } from "../../lib/access-roles.js";
 import { EditorDeCoordenadas } from "./editor-de-coordenadas.jsx";
 import {

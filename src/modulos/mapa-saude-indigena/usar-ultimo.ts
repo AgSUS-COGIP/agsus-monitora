@@ -5,8 +5,8 @@ import { useLayoutEffect, useRef } from "react";
   criado uma vez e chama a função da renderização atual, sem redesenhar o mapa
   a cada nova função que o pai passa.
 */
-/** @template T @param {T} valor @returns {import('react').RefObject<T>} */
-export function usarUltimo(valor) {
+
+export function usarUltimo<T>(valor: T) {
   const ref = useRef(valor);
   useLayoutEffect(() => {
     ref.current = valor;

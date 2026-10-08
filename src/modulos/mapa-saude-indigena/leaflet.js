@@ -26,7 +26,7 @@ import {
   CORES_DO_MAPA,
   DESENHO_DAS_FORMAS,
   formaDoTipo,
-} from "../../lib/mapa-saude-indigena/formas.js";
+} from "../../lib/mapa-saude-indigena/formas.ts";
 import { BR_OUTLINE, UF_GEO } from "../../lib/mapa-saude-indigena/contornos.js";
 import {
   manterDicasDentroDoMapa,
@@ -276,6 +276,7 @@ const GESTOS = ["pointerdown", "touchstart", "wheel", "keydown"];
   acompanhar, e `pegar()` conta como gesto (a lista que leva a um ponto).
   `parar()` e o `mapa.remove()` desfazem tudo.
 */
+/** @param {unknown} L @param {HTMLElement} elemento @param {{aoReenquadrar?: () => void}} [opcoes] @returns {import("./tipos-do-painel.ts").MapaCriadoDoBrasil} */
 export function criarMapaDoBrasil(L, elemento, { aoReenquadrar } = {}) {
   const mapa = criarMapa(L, elemento);
   enquadrarNoBrasil(L, mapa);

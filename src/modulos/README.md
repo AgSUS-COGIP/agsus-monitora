@@ -23,3 +23,7 @@ Guia completo, com o mapa de hoje → alvo: `docs/arquitetura-react.md`.
 `editor-de-coordenadas/` está em TypeScript: editor compartilhado pelos mapas de Projetos e
 Saúde Indígena, com fila, sugestões, histórico, modo de edição e regras comuns. Contratos e
 limites no README do módulo.
+
+A base compartilhada dos mapas em `mapa-saude-indigena/` (painel, legenda, tela
+cheia, retorno ao Brasil e hooks) está em TypeScript; contratos em `tipos-do-painel.ts`.
+As telas nacional/DSEI e a fábrica Leaflet continuam em JavaScript.

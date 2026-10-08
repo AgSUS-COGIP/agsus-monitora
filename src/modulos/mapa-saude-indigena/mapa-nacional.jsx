@@ -10,7 +10,7 @@ import {
 } from "../../lib/mapa-saude-indigena/chaves.js";
 import { EVENTO_DAS_TERRAS } from "../../modules/indigenous-territories-layer.js";
 import { classes } from "../../ui/index.js";
-import { LegendaNacional } from "./legenda.jsx";
+import { LegendaNacional } from "./legenda.tsx";
 import {
   DURACAO_DA_VOLTA_AO_BRASIL,
   conteudoEmElemento,
@@ -29,8 +29,8 @@ import {
   classesDoPainel,
   propsDoEditor,
   usarMapaDoBrasil,
-} from "./painel-do-mapa.jsx";
-import { usarUltimo } from "./usar-ultimo.js";
+} from "./painel-do-mapa.tsx";
+import { usarUltimo } from "./usar-ultimo.ts";
 import { podeEditarCoordenadas } from "../../lib/access-roles.js";
 import { EditorDeCoordenadas } from "./editor-de-coordenadas.jsx";
 import {

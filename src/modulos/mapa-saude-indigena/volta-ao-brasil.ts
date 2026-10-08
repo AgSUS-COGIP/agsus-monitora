@@ -1,6 +1,8 @@
+import type { RefObject } from "react";
+import type { DistritoDaVolta, VoltaDoDsei } from "./tipos-do-painel.ts";
 import { useEffect, useState } from "react";
 import { temCoordenada } from "../../lib/mapa-saude-indigena/chaves.js";
-import { usarUltimo } from "./usar-ultimo.js";
+import { usarUltimo } from "./usar-ultimo.ts";
 
 /*
   A VOLTA DE UM DSEI AO BRASIL
@@ -20,9 +22,11 @@ import { usarUltimo } from "./usar-ultimo.js";
   Esc só volta com o foco no mapa ou em lugar nenhum (o `body`): na tabela, num
   campo, numa janela ou no painel da Aya ele não mexe no recorte da página.
 */
-export function usarVoltaDoDsei(dsei) {
+export function usarVoltaDoDsei(
+  dsei: DistritoDaVolta | null,
+): [VoltaDoDsei | null, () => void] {
   const [aberto, definirAberto] = useState(dsei);
-  const [volta, definirVolta] = useState(null);
+  const [volta, definirVolta] = useState<VoltaDoDsei | null>(null);
   const [pedida, definirPedida] = useState(false);
 
   // Derivado durante a renderização: a volta chega junto com o mapa nacional.
@@ -46,22 +50,40 @@ export function usarVoltaDoDsei(dsei) {
 export const CAMPOS_E_JANELAS =
   'input, textarea, select, [contenteditable="true"], [role="dialog"], [aria-modal="true"], dialog';
 
-function escVoltaAoBrasil(evento, regiao, telaCheia) {
+function escVoltaAoBrasil(
+  evento: KeyboardEvent,
+  regiao: HTMLElement | null,
+  telaCheia: boolean,
+) {
   if (evento.key !== "Escape" || evento.defaultPrevented) return false;
   if (evento.altKey || evento.ctrlKey || evento.metaKey || evento.shiftKey)
     return false;
-  if (evento.target?.closest?.(CAMPOS_E_JANELAS)) return false;
+  if (
+    evento.target instanceof Element &&
+    evento.target.closest(CAMPOS_E_JANELAS)
+  )
+    return false;
   if (document.querySelector('[aria-modal="true"], dialog[open]')) return false;
   if (telaCheia) return true;
   const ativo = document.activeElement;
   return !ativo || ativo === document.body || Boolean(regiao?.contains(ativo));
 }
 
-export function usarEscParaVoltar({ ativo, regiao, telaCheia, aoVoltar }) {
+export function usarEscParaVoltar({
+  ativo,
+  regiao,
+  telaCheia,
+  aoVoltar,
+}: {
+  ativo: boolean;
+  regiao: RefObject<HTMLElement | null>;
+  telaCheia: boolean;
+  aoVoltar?: () => void;
+}) {
   const chamada = usarUltimo(aoVoltar);
   useEffect(() => {
     if (!ativo) return undefined;
-    const aoTeclar = (evento) => {
+    const aoTeclar = (evento: KeyboardEvent) => {
       if (!escVoltaAoBrasil(evento, regiao.current, telaCheia)) return;
       evento.preventDefault();
       chamada.current?.();

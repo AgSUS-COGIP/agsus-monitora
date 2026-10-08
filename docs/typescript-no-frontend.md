@@ -23,7 +23,9 @@ cache, mapa, lista, balões, integração do editor e regras em `src/lib/visao-g
 O editor compartilhado pelos dois mapas também está em TypeScript: fila, sugestões, histórico,
 prévia, gravação, modo de edição e regras em `src/lib/editor-de-coordenadas.ts`. O mapa da
 Saúde Indígena e as peças comuns de criação do Leaflet continuam em JavaScript, com contratos
-JSDoc na integração. Outros módulos
+JSDoc na integração. Painel, lista, legenda, tela cheia, retorno ao Brasil e hooks dos
+mapas já estão em TypeScript, com contratos em `tipos-do-painel.ts`; formas e cores
+em `src/lib/mapa-saude-indigena/formas.ts`. Outros módulos
 combinam JavaScript/JSX com migrações pontuais para TypeScript: a ficha da Avaliação documental
 tem os componentes em `src/modulos/avaliacao-documental/ficha/*.tsx` (contratos em `tipos.ts`) e
 `Popover` está em `src/ui/popover.tsx`. Componentes e helpers
