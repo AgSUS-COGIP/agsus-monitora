@@ -15,9 +15,12 @@ fontes.js   dados ao vivo das perguntas com número: o estado já carregado das
             telas ou as RPCs de leitura que elas já usam (guardadas por 1 min)
 aya.css     só tokens; camada 10042 (acima do cabeçalho, abaixo do parabéns)
 mascote/
-  desenho.tsx   a arara-azul em SVG, em camadas (corpo, cabeça, olho com anel e
-                pálpebra, bico superior/inferior com a faixa amarela, asas, cauda,
-                pés, poleiro); versão simples para ≤32px; retrato (cabeça e peito)
+  desenho.tsx   a arara-azul de corpo inteiro em SVG, em camadas (cauda, asa aberta,
+                corpo, pés, asa fechada, coxa, cabeça, olho com anel e pálpebra,
+                boca, bico inferior e superior, poleiro com sombra); cada parte
+                recorta um conjunto único de tons; abaixo de 40px, versão chapada
+  contornos.ts  os contornos e as faixas de luz, traçados da ilustração de
+                referência (public/assets/arara-azul-monitora.png): só dados
   mascote.tsx   <Mascote>: estados parada, atenta, falando, pensando, comemorando,
                 dormindo e acenando; piscar e arrepio sorteados (Web Animations),
                 olho que segue o ponteiro (variáveis CSS), sono por inatividade,

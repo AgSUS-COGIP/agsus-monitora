@@ -45,34 +45,14 @@
 }
 
 /*
-  Visual da referência (Bel, EV.G): retrato redondo grande com aro em degradê
-  da marca, o rosto preenchendo o círculo, selo Beta no canto de cima por fora
-  do rosto e a etiqueta "Fale com a Aya" embaixo (pedido de 02/10).
+  A arara inteira, em pé no poleiro com a sombra no chão (mascote/): sem
+  recorte nem aro (pedido de 08/10). O selo Beta fica no alto, à direita.
 */
-.aya-retrato {
+.aya-figura {
   position: relative;
   display: block;
-  width: 76px;
-  height: 76px;
-  padding: 3px;
-  border-radius: var(--radius-full);
-  background: linear-gradient(
-    135deg,
-    var(--brand-accent),
-    var(--brand-primary)
-  );
-  box-shadow: var(--shadow-overlay);
-}
-
-/* A arara viva (mascote/), recortada no círculo: cabeça e peito. */
-.aya-retrato .mascote {
-  box-sizing: border-box;
-  width: 100%;
-  height: 100%;
-  overflow: hidden;
-  border: 2px solid var(--surface-card);
-  border-radius: var(--radius-full);
-  background: var(--surface-raised);
+  line-height: 0;
+  transition: transform var(--duration-fast, 120ms) var(--ease-standard, ease);
 }
 
 .aya-arara__etiqueta {
@@ -95,28 +75,17 @@
 }
 
 /*
-  Fechada, a Aya fica compacta: só o retrato de 46px, que cabe no cabeçalho do
-  app quando a pessoa a arrasta para lá; o selo Beta vira um ponto e a etiqueta
-  "Fale com a Aya" sai (o nome e a dica ficam no aria-label e no title do
-  botão). O retrato grande continua no cabeçalho do painel (pedido de 02/10).
+  Fechada, a Aya fica só a arara (ALTURA_DA_ARARA em mascote/mascote.tsx); o
+  selo Beta vira um ponto e a etiqueta "Fale com a Aya" sai (o nome e a dica
+  ficam no aria-label e no title do botão).
 */
-.aya-arara .aya-retrato {
-  width: 46px;
-  height: 46px;
-  padding: 2px;
-}
-
-.aya-arara .aya-retrato .mascote {
-  border-width: 1.5px;
-}
-
 .aya-arara .aya-arara__etiqueta {
   display: none;
 }
 
 .aya-arara .aya-selo-beta {
-  top: -1px;
-  right: -1px;
+  top: 14px;
+  right: 16px;
   width: 12px;
   height: 12px;
   padding: 0;
@@ -125,16 +94,12 @@
   font-size: 0;
 }
 
-.aya-arara:hover .aya-retrato,
-.aya-arara:focus-visible .aya-retrato {
-  transform: scale(1.06);
+.aya-arara:hover .aya-figura,
+.aya-arara:focus-visible .aya-figura {
+  transform: translateY(-2px);
 }
 
-.aya-retrato {
-  transition: transform var(--duration-fast, 120ms) var(--ease-standard, ease);
-}
-
-/* No canto de cima do retrato, por fora do rosto (como na Bel). */
+/* No canto de cima da arara. */
 .aya-selo-beta {
   position: absolute;
   top: -4px;
@@ -184,7 +149,7 @@
 }
 
 /*
-  Cabeçalho limpo (pedido de 02/10): retrato com aro em degradê, o nome sem
+  Cabeçalho limpo (pedido de 02/10): a arara inteira (08/10), o nome sem
   caixa em volta, o selo Beta ao lado do nome (fora do rosto), a tela atual
   embaixo (quebra a linha em vez de cortar) e uma linha separando da conversa.
 */
@@ -209,10 +174,9 @@
   gap: 12px;
 }
 
-.aya-avatar.aya-retrato {
+.aya-avatar.aya-figura {
   flex: none;
-  width: 64px;
-  height: 64px;
+  margin: -6px 0 -4px -6px;
 }
 
 .aya-apresentacao__textos {
@@ -569,6 +533,12 @@
 /* ---------- Celular: o painel ocupa a tela ---------- */
 
 @media (max-width: 600px) {
+  /* No celular a arara do canto encolhe (inteira, sem cobrir o conteúdo). */
+  .aya-arara .mascote {
+    width: 66px;
+    height: 66px;
+  }
+
   .aya-painel {
     inset: 0;
     width: 100vw;

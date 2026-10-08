@@ -1,251 +1,138 @@
 /*
-  O desenho da Aya: uma arara-azul (Anodorhynchus hyacinthinus) em SVG, em
-  camadas que as animações movem por transform/opacity (mascote.css). Cores
-  da ilustração (não da interface): o azul-cobalto do corpo, o amarelo do
-  anel do olho e da faixa na base do bico, o bico cinza-grafite e o poleiro.
+  O desenho da Aya: a arara-azul-grande (Anodorhynchus hyacinthinus) de corpo
+  inteiro, fiel à ilustração de referência (public/assets/arara-azul-monitora.png)
+  em anatomia, proporção, cor e luz. Os contornos e as faixas de luz vêm de
+  contornos.ts (traçados da referência); aqui fica a composição em camadas que
+  as animações movem (mascote.css): cauda, asa aberta (só no aceno e na
+  comemoração), corpo, pés, asa fechada, coxa, cabeça com as penas da nuca,
+  olho (anel, íris, pálpebra), boca, bico inferior e superior, e o poleiro
+  com a sombra de contato.
 
-  Duas versões: `DesenhoCompleto` (viewBox 0 0 200 200, com corpo, asas,
-  cauda, pés e poleiro opcional; o retrato recorta a cabeça e o peito) e
-  `DesenhoSimples` (≤32px: cabeça, olho e bico, sem textura).
+  Cada parte é o recorte (clipPath) do seu contorno sobre UM conjunto de tons
+  compartilhado — por isso as emendas entre cabeça, corpo e asas não aparecem.
+  Abaixo de 40px, `DesenhoSimples`: os mesmos contornos em cor chapada, sem
+  tons nem filtro.
 
-  Os ids dos gradientes levam o prefixo de cada instância (várias araras na
-  mesma página não dividem gradiente).
+  Os ids levam o prefixo de cada instância (várias araras na mesma página).
+  Vem num pedaço próprio do bundle (import dinâmico em mascote.tsx): os
+  contornos pesam ~60 KB e não precisam atrasar a primeira tela.
 */
 
-export const VIEWBOX_DO_CORPO = "0 0 200 200";
-export const VIEWBOX_DO_RETRATO = "88 16 96 96";
-export const VIEWBOX_SIMPLES = "0 0 32 32";
+import { CONTORNOS, CORES_DOS_TONS, TONS } from "./contornos.ts";
 
-const AZUL = Object.freeze({
-  brilho: "#6f95ff",
-  claro: "#3d6cf5",
-  medio: "#2350dc",
-  base: "#1b3fc2",
-  escuro: "#132c93",
-  fundo: "#0c1d68",
-});
+type Parte = keyof typeof CONTORNOS;
+
 const AMARELO = Object.freeze({
-  claro: "#ffe27a",
-  base: "#ffc928",
-  escuro: "#e59a00",
+  claro: "#ffd84a",
+  base: "#f9bc06",
+  escuro: "#d98f00",
 });
-const BICO = Object.freeze({
-  brilho: "#8d939f",
-  base: "#4a4f5a",
-  escuro: "#23262d",
-});
+const AZUL = CORES_DOS_TONS.azul;
+const CINZA = CORES_DOS_TONS.cinza;
 
-/** Uma pena alongada da raiz à ponta, com largura no meio (asa aberta, penas soltas). */
-function pena(
-  [x1, y1]: readonly [number, number],
-  [x2, y2]: readonly [number, number],
-  largura: number,
-) {
-  const dx = x2 - x1;
-  const dy = y2 - y1;
-  const comprimento = Math.hypot(dx, dy) || 1;
-  const nx = (-dy / comprimento) * largura;
-  const ny = (dx / comprimento) * largura;
-  const ponto = (t: number, lado: number) =>
-    `${(x1 + dx * t + nx * lado).toFixed(1)} ${(y1 + dy * t + ny * lado).toFixed(1)}`;
-  return [
-    `M ${x1} ${y1}`,
-    `C ${ponto(0.25, 0.9)} ${ponto(0.75, 0.8)} ${ponto(0.97, 0.18)}`,
-    `Q ${x2} ${y2} ${ponto(0.97, -0.18)}`,
-    `C ${ponto(0.75, -0.8)} ${ponto(0.25, -0.9)} ${x1} ${y1}`,
-    "Z",
-  ].join(" ");
+/* O olho (da referência): centro do anel, raio da íris, pálpebra. */
+const OLHO = Object.freeze({ x: 102.8, y: 29.3 });
+
+/** Uma pena alongada da raiz à ponta (penas soltas da comemoração). */
+function pena(x: number, y: number, giro: number, comprimento: number) {
+  const r = (giro * Math.PI) / 180;
+  const dx = Math.cos(r) * comprimento;
+  const dy = Math.sin(r) * comprimento;
+  const nx = -dy * 0.22;
+  const ny = dx * 0.22;
+  const f = (v: number) => v.toFixed(1);
+  return `M${f(x)} ${f(y)}Q${f(x + dx / 2 + nx)} ${f(y + dy / 2 + ny)} ${f(x + dx)} ${f(y + dy)}Q${f(x + dx / 2 - nx)} ${f(y + dy / 2 - ny)} ${f(x)} ${f(y)}Z`;
 }
 
-/* A asa de trás, aberta (aceno e comemoração): rêmiges em leque, da mais alta à mais baixa. */
-const RAIZ_DA_ASA: readonly [number, number] = [145, 110];
-const grau = (g: number) => (g * Math.PI) / 180;
-const leque = (
-  angulos: readonly number[],
-  comprimentos: readonly number[],
-  largura: number,
-  recuo: number,
-) =>
-  angulos.map((angulo, i) => {
-    const comprimento = comprimentos[i] ?? 50;
-    const raiz: [number, number] = [
-      RAIZ_DA_ASA[0] + recuo * Math.cos(grau(angulo)),
-      RAIZ_DA_ASA[1] + recuo * Math.sin(grau(angulo)),
-    ];
-    const ponta: [number, number] = [
-      Number(
-        (RAIZ_DA_ASA[0] + comprimento * Math.cos(grau(angulo))).toFixed(1),
-      ),
-      Number(
-        (RAIZ_DA_ASA[1] + comprimento * Math.sin(grau(angulo))).toFixed(1),
-      ),
-    ];
-    return { d: pena(raiz, ponta, largura), raiz, ponta, i };
-  });
-const REMIGES = leque(
-  [-64, -53, -42, -31, -20, -9, 2],
-  [68, 70, 68, 64, 59, 53, 46],
-  6.4,
-  10,
-);
-const SECUNDARIAS = leque([-58, -44, -30, -16, -2], [44, 46, 44, 40, 33], 7, 6);
-
-/* As penas que se soltam na comemoração (posição inicial). */
 const PENAS_SOLTAS = Object.freeze([
-  { x: 96, y: 104, giro: -30 },
-  { x: 158, y: 124, giro: 20 },
-  { x: 120, y: 92, giro: -60 },
+  { x: 74, y: 100, giro: 120 },
+  { x: 132, y: 118, giro: 60 },
+  { x: 100, y: 84, giro: 150 },
 ]);
 
-function Gradientes({ p }: { p: string }) {
+function Recortes({ p }: { p: string }) {
+  const partes: Parte[] = [
+    "cauda",
+    "asaAberta",
+    "corpo",
+    "asa",
+    "coxa",
+    "cabeca",
+    "bicoSuperior",
+    "bicoInferior",
+    "pes",
+  ];
   return (
-    <defs>
-      <radialGradient id={`${p}-corpo`} cx="0.62" cy="0.34" r="0.78">
-        <stop offset="0" stopColor={AZUL.brilho} />
-        <stop offset="0.35" stopColor={AZUL.claro} />
-        <stop offset="0.72" stopColor={AZUL.base} />
-        <stop offset="1" stopColor={AZUL.fundo} />
-      </radialGradient>
-      <radialGradient id={`${p}-cabeca`} cx="0.6" cy="0.32" r="0.75">
-        <stop offset="0" stopColor={AZUL.brilho} />
-        <stop offset="0.4" stopColor={AZUL.claro} />
-        <stop offset="0.85" stopColor={AZUL.base} />
-        <stop offset="1" stopColor={AZUL.escuro} />
-      </radialGradient>
-      <linearGradient id={`${p}-asa`} x1="0.2" y1="0" x2="0.55" y2="1">
-        <stop offset="0" stopColor={AZUL.claro} />
-        <stop offset="0.45" stopColor={AZUL.medio} />
-        <stop offset="1" stopColor={AZUL.fundo} />
-      </linearGradient>
-      <linearGradient id={`${p}-asa-aberta`} x1="0" y1="1" x2="1" y2="0">
-        <stop offset="0" stopColor={AZUL.escuro} />
-        <stop offset="0.5" stopColor={AZUL.medio} />
-        <stop offset="1" stopColor={AZUL.claro} />
-      </linearGradient>
-      <linearGradient id={`${p}-coberteiras`} x1="0.3" y1="0" x2="0.6" y2="1">
-        <stop offset="0" stopColor={AZUL.brilho} />
-        <stop offset="0.5" stopColor={AZUL.claro} />
-        <stop offset="1" stopColor={AZUL.medio} />
-      </linearGradient>
-      <linearGradient id={`${p}-primarias`} x1="0.8" y1="0" x2="0.2" y2="1">
-        <stop offset="0" stopColor={AZUL.medio} />
-        <stop offset="1" stopColor={AZUL.fundo} />
-      </linearGradient>
-      <linearGradient id={`${p}-cauda`} x1="1" y1="0" x2="0" y2="1">
-        <stop offset="0" stopColor={AZUL.medio} />
-        <stop offset="1" stopColor={AZUL.fundo} />
-      </linearGradient>
-      <radialGradient id={`${p}-anel`} cx="0.4" cy="0.35" r="0.7">
+    <>
+      {partes.map((parte) => (
+        <clipPath key={parte} id={`${p}-c-${parte}`}>
+          <path d={CONTORNOS[parte]} />
+        </clipPath>
+      ))}
+    </>
+  );
+}
+
+function Tons({ p }: { p: string }) {
+  return (
+    <>
+      <filter id={`${p}-suave`} x="-5%" y="-5%" width="110%" height="110%">
+        <feGaussianBlur stdDeviation="0.55" />
+      </filter>
+      <g id={`${p}-ta`} filter={`url(#${p}-suave)`}>
+        {TONS.azul.map((d, i) => (
+          <path key={i} d={d} fill={AZUL[i]} />
+        ))}
+      </g>
+      <g id={`${p}-tp`}>
+        <use href={`#${p}-ta`} />
+        <path d={TONS.penas[0]} fill="#3f80ea" opacity="0.42" />
+        <path d={TONS.penas[1]} fill="#010f38" opacity="0.32" />
+      </g>
+      <g id={`${p}-te`} filter={`url(#${p}-suave)`}>
+        {TONS.cinza.map((d, i) => (
+          <path key={i} d={d} fill={CINZA[i]} />
+        ))}
+      </g>
+      <radialGradient id={`${p}-anel`} cx="0.42" cy="0.38" r="0.62">
         <stop offset="0" stopColor={AMARELO.claro} />
-        <stop offset="0.6" stopColor={AMARELO.base} />
+        <stop offset="0.65" stopColor={AMARELO.base} />
         <stop offset="1" stopColor={AMARELO.escuro} />
       </radialGradient>
-      <linearGradient id={`${p}-faixa`} x1="0" y1="0" x2="1" y2="1">
-        <stop offset="0" stopColor={AMARELO.claro} />
-        <stop offset="1" stopColor={AMARELO.escuro} />
-      </linearGradient>
-      <radialGradient id={`${p}-iris`} cx="0.45" cy="0.4" r="0.6">
-        <stop offset="0" stopColor="#7a4a22" />
-        <stop offset="0.7" stopColor="#3d2310" />
+      <radialGradient id={`${p}-iris`} cx="0.42" cy="0.38" r="0.6">
+        <stop offset="0" stopColor="#8a5526" />
+        <stop offset="0.6" stopColor="#4a2a12" />
         <stop offset="1" stopColor="#1c0f06" />
       </radialGradient>
-      <linearGradient id={`${p}-bico`} x1="0" y1="0" x2="0.9" y2="1">
-        <stop offset="0" stopColor={BICO.brilho} />
-        <stop offset="0.35" stopColor={BICO.base} />
-        <stop offset="1" stopColor={BICO.escuro} />
-      </linearGradient>
-      <linearGradient id={`${p}-bico-inferior`} x1="0" y1="0" x2="0.6" y2="1">
-        <stop offset="0" stopColor={BICO.base} />
-        <stop offset="1" stopColor={BICO.escuro} />
-      </linearGradient>
-      <linearGradient id={`${p}-pe`} x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0" stopColor="#5a5f6a" />
-        <stop offset="1" stopColor="#2a2d34" />
-      </linearGradient>
       <linearGradient id={`${p}-galho`} x1="0" y1="0" x2="0" y2="1">
         <stop offset="0" stopColor="#b07d4b" />
         <stop offset="0.45" stopColor="#8a5a2e" />
         <stop offset="1" stopColor="#4e3018" />
       </linearGradient>
       <radialGradient id={`${p}-sombra`} cx="0.5" cy="0.5" r="0.5">
-        <stop offset="0" stopColor="#0b1f3d" stopOpacity="0.35" />
+        <stop offset="0" stopColor="#0b1f3d" stopOpacity="0.4" />
         <stop offset="1" stopColor="#0b1f3d" stopOpacity="0" />
       </radialGradient>
-      <clipPath id={`${p}-olho`}>
-        <ellipse cx="134" cy="50" rx="6.5" ry="6.1" />
+      <clipPath id={`${p}-c-olho`}>
+        <ellipse cx={OLHO.x} cy={OLHO.y} rx="3.9" ry="3.8" />
       </clipPath>
-    </defs>
+    </>
   );
 }
 
-function Cauda({ p }: { p: string }) {
+/** Uma parte: o contorno dela recortando os tons compartilhados. */
+function Parte({
+  p,
+  parte,
+  tons = "tp",
+}: {
+  p: string;
+  parte: Parte;
+  tons?: "tp" | "te";
+}) {
   return (
-    <g className="mascote__cauda">
-      <path
-        d="M 98 140 C 88 162 68 184 40 198 C 47 200 56 199 63 195 C 86 182 104 166 116 148 Z"
-        fill={`url(#${p}-cauda)`}
-      />
-      <path
-        d="M 104 146 C 96 164 82 182 60 196 C 66 196 71 194 75 191 C 92 180 106 164 114 150 Z"
-        fill={AZUL.medio}
-        opacity="0.75"
-      />
-      <path
-        d="M 103 150 C 92 168 76 184 52 197"
-        fill="none"
-        stroke={AZUL.fundo}
-        strokeWidth="0.8"
-        opacity="0.55"
-      />
-    </g>
-  );
-}
-
-function AsaAberta({ p }: { p: string }) {
-  return (
-    <g className="mascote__asa-aberta">
-      {REMIGES.map(({ d, i }) => (
-        <path
-          key={i}
-          d={d}
-          fill={`url(#${p}-asa-aberta)`}
-          stroke={AZUL.fundo}
-          strokeWidth="0.6"
-          strokeOpacity="0.6"
-        />
-      ))}
-      {REMIGES.map(({ raiz, ponta, i }) => (
-        <path
-          key={`raque-${i}`}
-          d={`M ${raiz[0].toFixed(1)} ${raiz[1].toFixed(1)} L ${(ponta[0] * 0.92 + raiz[0] * 0.08).toFixed(1)} ${(ponta[1] * 0.92 + raiz[1] * 0.08).toFixed(1)}`}
-          stroke={AZUL.fundo}
-          strokeWidth="0.55"
-          opacity="0.5"
-        />
-      ))}
-      {SECUNDARIAS.map(({ d, i }) => (
-        <path
-          key={`sec-${i}`}
-          d={d}
-          fill={AZUL.medio}
-          stroke={AZUL.fundo}
-          strokeWidth="0.5"
-          strokeOpacity="0.5"
-        />
-      ))}
-      {/* Coberteiras: a parte de cima, mais clara, em escamas. */}
-      <path
-        d="M 140 118 C 138 100 148 84 162 78 C 170 76 174 82 172 90 C 170 102 160 114 148 120 C 144 122 141 121 140 118 Z"
-        fill={`url(#${p}-coberteiras)`}
-      />
-      <path
-        d="M 148 110 q 5 -1 8 -6 M 154 102 q 5 -2 8 -7 M 160 94 q 4 -2 7 -7 M 146 100 q 4 -3 6 -8"
-        fill="none"
-        stroke={AZUL.escuro}
-        strokeWidth="0.7"
-        strokeLinecap="round"
-        opacity="0.5"
-      />
+    <g clipPath={`url(#${p}-c-${parte})`}>
+      <use href={`#${p}-${tons}`} />
     </g>
   );
 }
@@ -253,159 +140,47 @@ function AsaAberta({ p }: { p: string }) {
 function Poleiro({ p }: { p: string }) {
   return (
     <g className="mascote__poleiro">
-      <ellipse cx="120" cy="168" rx="34" ry="5" fill={`url(#${p}-sombra)`} />
       <path
-        d="M 4 176 C 60 170 140 167 198 170 L 198 182 C 140 179 60 181 4 188 Z"
+        d="M22 174C70 170 140 169 196 171L196 182C140 180 70 181 22 186Z"
         fill={`url(#${p}-galho)`}
       />
       <path
-        d="M 18 178 q 14 -2 26 -1 M 64 175 q 18 -2 30 -1 M 150 174 q 16 0 28 1 M 30 184 q 14 -2 24 -2"
+        d="M34 177q14-2 26-1M70 175q18-1 30-1M148 174q16 0 28 1M44 183q14-2 24-2"
         fill="none"
         stroke="#4e3018"
         strokeWidth="0.9"
         strokeLinecap="round"
-        opacity="0.55"
+        opacity="0.5"
       />
       <path
-        d="M 196 169 C 198 172 198 179 196 182"
+        d="M194 171C196 174 196 179 194 182"
         stroke="#4e3018"
         strokeWidth="1"
         fill="none"
       />
-      {/* Um raminho com duas folhas na ponta esquerda. */}
       <path
-        d="M 28 177 C 22 168 18 162 12 158"
+        d="M30 178C25 170 22 165 17 161"
         stroke="#6b4423"
         strokeWidth="1.6"
         fill="none"
         strokeLinecap="round"
       />
       <path
-        d="M 16 161 C 6 160 2 152 4 146 C 12 148 17 154 16 161 Z"
+        d="M20 164C10 163 7 156 8 150C16 152 21 158 20 164Z"
         fill="#2f8a4a"
       />
       <path
-        d="M 20 165 C 22 156 30 152 36 153 C 34 160 28 165 20 165 Z"
+        d="M24 168C26 160 33 156 39 157C37 163 31 168 24 168Z"
         fill="#3fa35c"
       />
-      <path
-        d="M 16 161 C 11 156 7 151 5 147"
-        stroke="#1f6636"
-        strokeWidth="0.6"
-        fill="none"
-      />
-    </g>
-  );
-}
-
-function Corpo({ p }: { p: string }) {
-  return (
-    <g className="mascote__corpo">
-      <path
-        d="M 138 80 C 158 90 162 120 152 140 C 144 156 128 165 111 163 C 94 161 84 145 85 122 C 86 102 96 86 108 80 C 117 76 129 76 138 80 Z"
-        fill={`url(#${p}-corpo)`}
-      />
-      {/* Penas do peito: escamas discretas. */}
-      <path
-        d="M 140 100 q 4 3 8 0 M 134 110 q 4 3 8 0 M 144 112 q 4 3 7 0 M 138 122 q 4 3 8 0 M 130 130 q 4 3 8 0 M 142 132 q 3 3 6 0 M 126 142 q 4 3 8 0 M 136 144 q 3 2 6 0 M 118 152 q 4 3 8 0"
-        fill="none"
-        stroke={AZUL.escuro}
-        strokeWidth="0.8"
-        strokeLinecap="round"
-        opacity="0.32"
-      />
-      <path
-        d="M 149 96 C 155 108 155 122 149 134"
-        fill="none"
-        stroke={AZUL.brilho}
-        strokeWidth="2.2"
-        strokeLinecap="round"
-        opacity="0.35"
-      />
-    </g>
-  );
-}
-
-function Pes({ p }: { p: string }) {
-  const dedos = (x: number) => (
-    <g key={x}>
-      <path
-        d={`M ${x - 3} 152 L ${x - 3} 168 L ${x + 4} 168 L ${x + 4} 152 Z`}
-        fill={`url(#${p}-pe)`}
-      />
-      <path
-        d={`M ${x - 2} 168 C ${x - 7} 168 ${x - 9} 172 ${x - 8} 177 M ${x + 2} 168 C ${x + 7} 167 ${x + 10} 171 ${x + 9} 177 M ${x} 169 C ${x} 173 ${x + 1} 176 ${x + 2} 179`}
-        stroke={`url(#${p}-pe)`}
-        strokeWidth="4"
-        strokeLinecap="round"
-        fill="none"
-      />
-      <path
-        d={`M ${x - 8.5} 176 l -0.5 3 M ${x + 9.5} 176 l 0.3 3 M ${x + 2.2} 178.5 l 0.3 2.6`}
-        stroke="#14161a"
-        strokeWidth="1.6"
-        strokeLinecap="round"
-      />
-      <path
-        d={`M ${x - 2} 156 h 5 M ${x - 2} 160 h 5 M ${x - 2} 164 h 5`}
-        stroke="#1b1d22"
-        strokeWidth="0.5"
-        opacity="0.6"
-      />
-    </g>
-  );
-  return <g className="mascote__pes">{[110, 128].map(dedos)}</g>;
-}
-
-function AsaFechada({ p }: { p: string }) {
-  return (
-    <g className="mascote__asa">
-      {/* Rêmiges primárias (as mais longas, sobre a cauda). */}
-      <path
-        d="M 118 120 C 114 142 104 164 88 184 C 86 186 83 185 84 182 C 90 162 96 140 98 120 Z"
-        fill={`url(#${p}-primarias)`}
-      />
-      <path
-        d="M 112 132 C 106 152 98 168 88 181 M 106 130 C 100 150 94 164 87 176"
-        fill="none"
-        stroke={AZUL.fundo}
-        strokeWidth="0.8"
-        strokeLinecap="round"
-        opacity="0.6"
-      />
-      {/* Secundárias. */}
-      <path
-        d="M 128 106 C 127 130 118 152 102 170 C 99 172 96 170 97 167 C 103 148 101 128 97 110 Z"
-        fill={`url(#${p}-asa)`}
-      />
-      <path
-        d="M 122 124 C 118 140 112 154 103 166 M 115 122 C 112 138 106 152 99 163"
-        fill="none"
-        stroke={AZUL.fundo}
-        strokeWidth="0.8"
-        strokeLinecap="round"
-        opacity="0.5"
-      />
-      {/* Coberteiras: o "ombro", mais claro, com a borda em escamas. */}
-      <path
-        d="M 120 86 C 132 92 136 110 130 124 C 128 128 125 130 122 129 C 118 133 112 133 108 130 C 104 132 99 129 97 125 C 94 108 100 90 120 86 Z"
-        fill={`url(#${p}-coberteiras)`}
-      />
-      <path
-        d="M 98 124 q 5 5 10 5 q 5 2 13 -1 q 5 0 8 -4 M 101 112 q 5 4 10 3 q 6 1 11 -2 M 104 100 q 5 4 10 2 q 5 0 9 -3"
-        fill="none"
-        stroke={AZUL.fundo}
-        strokeWidth="0.8"
-        strokeLinecap="round"
-        opacity="0.42"
-      />
-      <path
-        d="M 112 90 C 104 98 101 108 100 118"
-        fill="none"
-        stroke={AZUL.brilho}
-        strokeWidth="1.6"
-        strokeLinecap="round"
-        opacity="0.45"
+      {/* Sombra de contato sob os pés. */}
+      <ellipse
+        className="mascote__sombra"
+        cx="103"
+        cy="173"
+        rx="30"
+        ry="3.6"
+        fill={`url(#${p}-sombra)`}
       />
     </g>
   );
@@ -414,102 +189,63 @@ function AsaFechada({ p }: { p: string }) {
 function Olho({ p }: { p: string }) {
   return (
     <g className="mascote__olho">
-      <ellipse cx="134" cy="50" rx="7.4" ry="7" fill={`url(#${p}-anel)`} />
+      <path d={CONTORNOS.anel} fill={`url(#${p}-anel)`} />
       <ellipse
-        cx="134"
-        cy="50"
-        rx="7.4"
-        ry="7"
+        cx={OLHO.x}
+        cy={OLHO.y}
+        rx="4.05"
+        ry="3.95"
         fill="none"
-        stroke={AMARELO.escuro}
-        strokeWidth="0.6"
+        stroke="#7a4a00"
+        strokeWidth="0.45"
+        opacity="0.7"
       />
-      <g clipPath={`url(#${p}-olho)`}>
+      <g clipPath={`url(#${p}-c-olho)`}>
         <g className="mascote__iris">
-          <circle cx="134.5" cy="50" r="3.9" fill={`url(#${p}-iris)`} />
-          <circle cx="134.5" cy="50" r="2.05" fill="#0d0703" />
-          <circle cx="136" cy="48.3" r="1.2" fill="#ffffff" />
-          <circle cx="133.1" cy="51.6" r="0.5" fill="#ffffff" opacity="0.8" />
+          <circle
+            cx={OLHO.x + 0.2}
+            cy={OLHO.y + 0.1}
+            r="3.4"
+            fill={`url(#${p}-iris)`}
+          />
+          <circle cx={OLHO.x + 0.2} cy={OLHO.y + 0.1} r="1.85" fill="#0d0703" />
+          <circle
+            cx={OLHO.x + 0.95}
+            cy={OLHO.y - 1.25}
+            r="0.85"
+            fill="#ffffff"
+          />
+          <circle
+            cx={OLHO.x - 0.9}
+            cy={OLHO.y + 1.2}
+            r="0.35"
+            fill="#ffffff"
+            opacity="0.7"
+          />
         </g>
         <g className="mascote__palpebra">
-          <rect x="126" y="43" width="16" height="14" fill={AMARELO.base} />
+          <rect
+            x={OLHO.x - 4.2}
+            y={OLHO.y - 4.1}
+            width="8.4"
+            height="8.4"
+            fill={AMARELO.base}
+          />
+          <path
+            d={`M${OLHO.x - 4.2} ${OLHO.y + 4.2}h8.4`}
+            stroke={AMARELO.escuro}
+            strokeWidth="0.7"
+          />
         </g>
       </g>
       <path
         className="mascote__olho-fechado"
-        d="M 128.6 50.4 Q 134 54.4 139.4 50.4"
+        d={`M${OLHO.x - 3} ${OLHO.y + 0.3}Q${OLHO.x} ${OLHO.y + 2.5} ${OLHO.x + 3} ${OLHO.y + 0.3}`}
         fill="none"
-        stroke="#6b4300"
-        strokeWidth="1.1"
+        stroke="#5a3400"
+        strokeWidth="0.75"
         strokeLinecap="round"
       />
-    </g>
-  );
-}
-
-function Bico({ p }: { p: string }) {
-  return (
-    <g className="mascote__bico">
-      <path
-        className="mascote__boca"
-        d="M 146 69.5 C 151 69.5 157 70.5 160.5 72.5 C 162.5 76 162.5 81 160 85 C 154 86 149 83 145 79 Z"
-        fill="#2b1210"
-      />
-      <ellipse
-        className="mascote__lingua"
-        cx="151"
-        cy="74.5"
-        rx="4.4"
-        ry="2.2"
-        fill="#6a2b2a"
-      />
-      <g className="mascote__bico-inferior">
-        <path
-          d="M 145 69 C 151 69 157 70 160.5 72.5 C 163 76 163 82 160 86 C 157 89 151 89.5 147.5 87.5 C 144.5 86 143 83 143 80 C 142.8 76 143.2 72 145 69 Z"
-          fill={`url(#${p}-bico-inferior)`}
-        />
-        <path
-          d="M 147.5 84.5 C 151 86.5 155.5 86 158.5 83"
-          fill="none"
-          stroke={BICO.brilho}
-          strokeWidth="0.8"
-          opacity="0.45"
-        />
-        {/* A faixa amarela na base do bico inferior (a "risada" da arara-azul). */}
-        <path
-          d="M 142.5 65.5 C 137.5 72 138.5 82 145.5 88.5 C 147 88 147.5 86.8 147 85.8 C 143 80.5 142.8 73.5 146 68.5 Z"
-          fill={`url(#${p}-faixa)`}
-        />
-      </g>
-      <g className="mascote__bico-superior">
-        <path
-          d="M 147 44 C 158 39 171 45 174 58 C 176 70 171 81 163 88 C 161.5 89 160.5 87.5 161.5 86 C 164 80 163 74 159 71 C 155 68.5 150 68.5 146 69.5 C 144 61 144 51 147 44 Z"
-          fill={`url(#${p}-bico)`}
-        />
-        <path
-          d="M 150.5 46 C 159 44.5 167 49.5 170 58"
-          fill="none"
-          stroke="#c9ced6"
-          strokeWidth="1.8"
-          strokeLinecap="round"
-          opacity="0.42"
-        />
-        <path
-          d="M 159 71 C 162.5 74 164 80 161.5 86"
-          fill="none"
-          stroke="#14161a"
-          strokeWidth="0.7"
-          opacity="0.55"
-        />
-        <path
-          d="M 151.5 54 q 2.6 -0.6 4.5 0.8"
-          fill="none"
-          stroke="#14161a"
-          strokeWidth="0.8"
-          strokeLinecap="round"
-          opacity="0.45"
-        />
-      </g>
     </g>
   );
 }
@@ -518,43 +254,33 @@ function Cabeca({ p }: { p: string }) {
   return (
     <g className="mascote__cabeca-pose">
       <g className="mascote__cabeca">
+        {/* Penas da nuca: arrepiam às vezes. */}
         <g className="mascote__penas-da-cabeca">
           <path
-            d="M 104 46 C 100 40 101 34 105 31 C 107 36 110 39 114 41 Z"
-            fill={AZUL.medio}
+            d="M86 35C82.5 33 80.5 30 81 27C83.5 29 86 30.5 89 31.5Z"
+            fill={AZUL[3]}
           />
           <path
-            d="M 110 39 C 108 32 111 27 116 25 C 116 30 118 34 121 36 Z"
-            fill={AZUL.claro}
+            d="M90.5 29C88.5 26.5 88 23.5 89.5 21C91.5 23.5 93 25.5 95.5 26.5Z"
+            fill={AZUL[4]}
           />
           <path
-            d="M 118 35 C 117 29 121 24 126 23 C 125 28 126 31 128 34 Z"
-            fill={AZUL.medio}
+            d="M83 43C79.5 42 77.5 39.5 77.5 37C80 38.5 82.5 39.5 85.5 39.5Z"
+            fill={AZUL[2]}
           />
         </g>
-        <path
-          d="M 98 64 C 96 42 112 28 128 28 C 143 28 153 38 153 52 C 153 66 147 78 134 82 C 117 86 99 80 98 64 Z"
-          fill={`url(#${p}-cabeca)`}
-        />
-        {/* Penas da face e da nuca, sutis. */}
-        <path
-          d="M 106 54 q 3 3 7 1 M 108 64 q 3 3 7 1 M 117 73 q 3 2 6 0 M 113 43 q 3 2 6 0 M 124 62 q 3 2 6 0"
-          fill="none"
-          stroke={AZUL.escuro}
-          strokeWidth="0.7"
-          strokeLinecap="round"
-          opacity="0.32"
-        />
-        <path
-          d="M 113 34 C 124 30 138 32 145 38"
-          fill="none"
-          stroke={AZUL.brilho}
-          strokeWidth="2"
-          strokeLinecap="round"
-          opacity="0.45"
-        />
+        <Parte p={p} parte="cabeca" />
+        <path d={CONTORNOS.faixa} fill={`url(#${p}-anel)`} />
         <Olho p={p} />
-        <Bico p={p} />
+        <g className="mascote__bico">
+          <path className="mascote__boca" d={CONTORNOS.boca} fill="#2a1512" />
+          <g className="mascote__bico-inferior">
+            <Parte p={p} parte="bicoInferior" tons="te" />
+          </g>
+          <g className="mascote__bico-superior">
+            <Parte p={p} parte="bicoSuperior" tons="te" />
+          </g>
+        </g>
       </g>
     </g>
   );
@@ -570,28 +296,18 @@ function Extras() {
             className="mascote__pena-solta"
             style={{ ["--i" as string]: i }}
           >
-            <path
-              d={pena(
-                [x, y],
-                [
-                  x + 16 * Math.cos((giro * Math.PI) / 180),
-                  y + 16 * Math.sin((giro * Math.PI) / 180),
-                ],
-                3.6,
-              )}
-              fill={i === 1 ? AZUL.claro : AZUL.medio}
-            />
+            <path d={pena(x, y, giro, 14)} fill={AZUL[i === 1 ? 6 : 4]} />
           </g>
         ))}
       </g>
       <g className="mascote__sono" aria-hidden="true">
-        <text className="mascote__z" x="158" y="36">
+        <text className="mascote__z" x="122" y="18">
           z
         </text>
-        <text className="mascote__z" x="166" y="28">
+        <text className="mascote__z" x="130" y="10">
           z
         </text>
-        <text className="mascote__z" x="174" y="20">
+        <text className="mascote__z" x="138" y="4">
           Z
         </text>
       </g>
@@ -608,23 +324,36 @@ export function DesenhoCompleto({
 }) {
   return (
     <>
-      <Gradientes p={p} />
-      <g className="mascote__salto">
-        <g className="mascote__respiro">
-          <Cauda p={p} />
-          <g className="mascote__asa-aberta-pose">
-            <AsaAberta p={p} />
-          </g>
-        </g>
-        {poleiro ? null : <Pes p={p} />}
-      </g>
+      <defs>
+        <Recortes p={p} />
+        <Tons p={p} />
+      </defs>
       {poleiro ? <Poleiro p={p} /> : null}
       <g className="mascote__salto">
-        {poleiro ? <Pes p={p} /> : null}
         <g className="mascote__respiro">
-          <Corpo p={p} />
+          <g className="mascote__cauda">
+            <Parte p={p} parte="cauda" />
+          </g>
+          <g className="mascote__asa-aberta-pose">
+            <g className="mascote__asa-aberta">
+              <Parte p={p} parte="asaAberta" />
+            </g>
+          </g>
+          <g className="mascote__corpo">
+            <Parte p={p} parte="corpo" />
+          </g>
+        </g>
+        <g className="mascote__pes">
+          <Parte p={p} parte="pes" tons="te" />
+        </g>
+        <g className="mascote__respiro">
           <g className="mascote__asa-pose">
-            <AsaFechada p={p} />
+            <g className="mascote__asa">
+              <Parte p={p} parte="asa" />
+            </g>
+          </g>
+          <g className="mascote__coxa">
+            <Parte p={p} parte="coxa" />
           </g>
           <Cabeca p={p} />
         </g>
@@ -634,62 +363,54 @@ export function DesenhoCompleto({
   );
 }
 
-/* ≤32px: cabeça de perfil, anel amarelo, olho (que pisca) e o bico com a faixa. */
+/* Abaixo de 40px: os mesmos contornos, chapados (sem tons nem filtro). */
 export function DesenhoSimples({ p }: { p: string }) {
+  const azul = `url(#${p}-s-azul)`;
   return (
     <>
       <defs>
-        <radialGradient id={`${p}-s-cabeca`} cx="0.45" cy="0.35" r="0.7">
-          <stop offset="0" stopColor={AZUL.claro} />
-          <stop offset="1" stopColor={AZUL.base} />
-        </radialGradient>
-        <clipPath id={`${p}-s-olho`}>
-          <circle cx="14.5" cy="12.5" r="3.4" />
+        <linearGradient id={`${p}-s-azul`} x1="0.7" y1="0.1" x2="0.2" y2="1">
+          <stop offset="0" stopColor={AZUL[6]} />
+          <stop offset="0.55" stopColor={AZUL[4]} />
+          <stop offset="1" stopColor={AZUL[1]} />
+        </linearGradient>
+        <clipPath id={`${p}-c-olho`}>
+          <ellipse cx={OLHO.x} cy={OLHO.y} rx="3.9" ry="3.8" />
         </clipPath>
       </defs>
-      <path
-        d="M 4 18 C 3 9 9 3 16 3 C 22 3 25 8 25 13 C 25 21 19 28 12 28 C 7 28 4 24 4 18 Z"
-        fill={`url(#${p}-s-cabeca)`}
-      />
-      <path d="M 7 6 C 6 3 8 1 10 1 C 10 3 11 5 12 6 Z" fill={AZUL.medio} />
-      <path
-        d="M 20.5 14 C 19 17 19.5 21 22 23.5 C 21.5 20 21.5 17 22.5 15 Z"
-        fill={AMARELO.base}
-      />
-      <path
-        d="M 22 15 C 25 16 27.5 18 28 21 C 27 24 24.5 25 22.5 24 C 21.5 21 21.5 18 22 15 Z"
-        fill={BICO.escuro}
-      />
-      <path
-        d="M 21 9 C 26 7.5 30.5 11 31 16 C 31.3 20 30 23 28 25 C 27.5 22 26.5 19 24.5 17.5 C 23 16.5 21.5 16.5 20.5 16.5 C 20 14 20 11 21 9 Z"
-        fill={BICO.base}
-      />
-      <path
-        d="M 22 10 C 25 9.5 28 11.5 29 14"
-        fill="none"
-        stroke={BICO.brilho}
-        strokeWidth="0.8"
-        strokeLinecap="round"
-        opacity="0.6"
-      />
-      <circle cx="14.5" cy="12.5" r="3.9" fill={AMARELO.base} />
-      <g clipPath={`url(#${p}-s-olho)`}>
-        <g className="mascote__iris">
-          <circle cx="14.8" cy="12.5" r="2" fill="#2a1608" />
-          <circle cx="15.6" cy="11.7" r="0.7" fill="#ffffff" />
+      <g className="mascote__salto">
+        <path d={CONTORNOS.cauda} fill={AZUL[2]} />
+        <g className="mascote__asa-aberta-pose">
+          <g className="mascote__asa-aberta">
+            <path d={CONTORNOS.asaAberta} fill={AZUL[3]} />
+          </g>
         </g>
-        <g className="mascote__palpebra">
-          <rect x="10.5" y="8.5" width="8" height="8" fill={AMARELO.base} />
+        <path d={CONTORNOS.corpo} fill={azul} />
+        <path d={CONTORNOS.pes} fill={CINZA[0]} />
+        <path d={CONTORNOS.asa} fill={AZUL[3]} />
+        <path d={CONTORNOS.coxa} fill={azul} />
+        <g className="mascote__cabeca-pose">
+          <path d={CONTORNOS.cabeca} fill={AZUL[5]} />
+          <path d={CONTORNOS.faixa} fill={AMARELO.base} />
+          <path d={CONTORNOS.anel} fill={AMARELO.base} />
+          <g clipPath={`url(#${p}-c-olho)`}>
+            <g className="mascote__iris">
+              <circle cx={OLHO.x} cy={OLHO.y} r="2.6" fill="#2a1608" />
+            </g>
+            <g className="mascote__palpebra">
+              <rect
+                x={OLHO.x - 4.2}
+                y={OLHO.y - 4.1}
+                width="8.4"
+                height="8.4"
+                fill={AMARELO.base}
+              />
+            </g>
+          </g>
+          <path d={CONTORNOS.bicoInferior} fill={CINZA[0]} />
+          <path d={CONTORNOS.bicoSuperior} fill={CINZA[1]} />
         </g>
       </g>
-      <path
-        className="mascote__olho-fechado"
-        d="M 11.8 12.8 Q 14.5 15 17.2 12.8"
-        fill="none"
-        stroke="#6b4300"
-        strokeWidth="0.9"
-        strokeLinecap="round"
-      />
     </>
   );
 }

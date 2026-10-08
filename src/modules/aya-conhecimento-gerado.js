@@ -512,7 +512,7 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'Sou eu: uma arara-azul (Anodorhynchus hyacinthinus), a ave azul-cobalto de anel amarelo nos olhos e faixa amarela no bico, que vive no Pantanal e no Cerrado. Eu me mexo para mostrar o que estou fazendo: respiro e pisco quando estou parada; inclino a cabeça e sigo o ponteiro com o olho quando você chega perto ou abre o painel; olho para cima enquanto procuro a resposta; mexo o bico enquanto o texto aparece; bato as asas nas comemorações; aceno uma vez quando você entra; e cochilo depois de alguns minutos sem uso (qualquer clique, tecla ou movimento me acorda). Se o seu sistema pede menos movimento, eu só pisco; se você desligou as comemorações, eu não comemoro. Em Configurações › Marca, o cartão "Mascote" mostra cada estado.',
-    fato: "A mascote da Aya é uma arara-azul animada com sete estados: parada, atenta, falando, pensando, comemorando, dormindo e acenando.",
+    fato: "A mascote da Aya é uma arara-azul-grande de corpo inteiro, em pé num poleiro, desenhada a partir da ilustração da Aya e animada em sete estados: parada, atenta, falando, pensando, comemorando, dormindo e acenando.",
     fonte: "src/modulos/aya/mascote/; src/lib/estado-da-aya.ts",
     abrir: "config:marca",
   },

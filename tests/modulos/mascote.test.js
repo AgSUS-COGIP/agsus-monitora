@@ -15,8 +15,10 @@ import {
   aceno uma vez por sessão, sono por inatividade e pausa com a aba oculta.
 */
 
-const { Mascote, TAMANHO_DA_VERSAO_SIMPLES } =
+const { Mascote, TAMANHO_DA_VERSAO_SIMPLES, carregarDesenhoDaMascote } =
   await import("../../src/modulos/aya/mascote/mascote.tsx");
+// O desenho vem num pedaço próprio (import dinâmico): carregado antes dos testes.
+await carregarDesenhoDaMascote();
 const { reiniciarPedidoDaAya } =
   await import("../../src/modulos/aya/mascote/estado.ts");
 const { CartaoDaMascote } =
@@ -67,6 +69,12 @@ afterEach(async () => {
 });
 
 describe("desenho", () => {
+  it("o svg já nasce no tamanho final, antes do desenho chegar", async () => {
+    await montar({ tamanho: 84 });
+    expect(svg().getAttribute("width")).toBe("84");
+    expect(svg().getAttribute("height")).toBe("84");
+  });
+
   it("decorativa por padrão; com rótulo vira imagem com nome", async () => {
     await montar();
     expect(svg().getAttribute("aria-hidden")).toBe("true");
@@ -89,14 +97,46 @@ describe("desenho", () => {
     expect(svg().getAttribute("aria-label")).toBe("Aya");
   });
 
-  it("até 32px usa a versão simples; retrato recorta a cabeça", async () => {
-    await montar({ tamanho: TAMANHO_DA_VERSAO_SIMPLES });
-    expect(svg().getAttribute("data-versao")).toBe("simples");
-    expect(svg().querySelector(".mascote__cauda")).toBeNull();
-    expect(svg().querySelector(".mascote__palpebra")).not.toBeNull();
-    await montar({ enquadramento: "retrato", tamanho: 46 });
+  it("sempre de corpo inteiro; abaixo de 40px, a versão simples (também inteira)", async () => {
+    await montar({ tamanho: 84 });
     expect(svg().getAttribute("data-versao")).toBe("completa");
+    expect(svg().getAttribute("viewBox")).toBe("0 0 200 190");
+    await montar({ tamanho: TAMANHO_DA_VERSAO_SIMPLES - 1 });
+    expect(svg().getAttribute("data-versao")).toBe("simples");
+    expect(svg().getAttribute("viewBox")).toBe("0 0 200 190");
+    expect(svg().querySelector(".mascote__palpebra")).not.toBeNull();
+    expect(svg().querySelector(".mascote__asa-aberta")).not.toBeNull();
+    await montar({ tamanho: TAMANHO_DA_VERSAO_SIMPLES });
+    expect(svg().getAttribute("data-versao")).toBe("completa");
+    // Os fogos voam sem poleiro.
+    await montar({ poleiro: false });
     expect(svg().querySelector(".mascote__poleiro")).toBeNull();
+  });
+
+  it("cada parte recorta os mesmos tons (sem emenda entre cabeça, corpo e asas)", async () => {
+    await montar();
+    const recortes = [...svg().querySelectorAll("clipPath")].map((c) =>
+      c.id.replace(/^.*-c-/, ""),
+    );
+    expect(recortes).toEqual(
+      expect.arrayContaining([
+        "cauda",
+        "asaAberta",
+        "corpo",
+        "asa",
+        "coxa",
+        "cabeca",
+        "bicoSuperior",
+        "bicoInferior",
+        "pes",
+      ]),
+    );
+    const usos = [...svg().querySelectorAll("use")].map((u) =>
+      u.getAttribute("href"),
+    );
+    expect(
+      new Set(usos.map((h) => h.replace(/^#.*-/, ""))).size,
+    ).toBeLessThanOrEqual(3);
   });
 
   it("gradientes com prefixo próprio em cada arara", async () => {
