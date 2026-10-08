@@ -10,7 +10,7 @@ import {
   filaDoEditor,
   listaDeSugestoes,
   nivelDaGravidade,
-} from "../src/lib/editor-de-coordenadas.js";
+} from "../src/lib/editor-de-coordenadas.ts";
 import {
   municipiosDaResposta,
   pontosDosMunicipios,

@@ -1,7 +1,14 @@
+import type { ReactNode } from "react";
+import type {
+  PontoDoEditor,
+  ItemDaFila,
+  NivelDeGravidade,
+  FiltroDeGravidade,
+} from "../../lib/tipos-do-editor-de-coordenadas.ts";
 import {
   GRAVIDADES,
   textoDePendentes,
-} from "../../lib/editor-de-coordenadas.js";
+} from "../../lib/editor-de-coordenadas.ts";
 import { Aviso, Carregando, EstadoVazio, Selo } from "../../ui/index.js";
 
 /* Quantos itens a lista desenha de uma vez (a visão nacional tem milhares). */
@@ -18,7 +25,7 @@ export const LIMITE_DA_FILA = 200;
   painel do modo de edição: busca e "Só pendentes" numa linha, a contagem e
   os níveis na seguinte, e a lista enche o que sobra do painel.
 */
-export function FilaDeCoordenadas({
+export function FilaDeCoordenadas<P extends PontoDoEditor>({
   itens,
   pendentes,
   porGravidade = {},
@@ -36,6 +43,24 @@ export function FilaDeCoordenadas({
   aoAlternarPendentes,
   aoFiltrarGravidade,
   aoEscolher,
+}: {
+  itens: readonly ItemDaFila<P>[];
+  pendentes: number;
+  porGravidade?: Partial<Record<NivelDeGravidade, number>>;
+  gravidade?: FiltroDeGravidade;
+  busca: string;
+  soPendentes: boolean;
+  escolhido: string;
+  placeholder?: string;
+  rotuloDaLista?: string;
+  detalheDoItem?(item: P): ReactNode;
+  carregando?: boolean;
+  erro?: string;
+  desabilitado?: boolean;
+  aoBuscar(busca: string): void;
+  aoAlternarPendentes(ativo: boolean): void;
+  aoFiltrarGravidade?(nivel: FiltroDeGravidade): void;
+  aoEscolher(id: string): void;
 }) {
   const mostrados = itens.slice(0, LIMITE_DA_FILA);
   return (
@@ -70,7 +95,7 @@ export function FilaDeCoordenadas({
             role="group"
             aria-label="Filtrar por gravidade"
           >
-            {Object.entries(GRAVIDADES).map(([nivel, info]) => (
+            {(Object.keys(GRAVIDADES) as NivelDeGravidade[]).map((nivel) => (
               <button
                 key={nivel}
                 type="button"
@@ -82,7 +107,7 @@ export function FilaDeCoordenadas({
                   aoFiltrarGravidade?.(gravidade === nivel ? "" : nivel)
                 }
               >
-                {info.rotulo} <b>{porGravidade[nivel] || 0}</b>
+                {GRAVIDADES[nivel].rotulo} <b>{porGravidade[nivel] || 0}</b>
               </button>
             ))}
           </div>

@@ -1,3 +1,16 @@
+import type {
+  AlteracaoDoPonto,
+  FilaDoEditor,
+  FolgaDoEditor,
+  GravidadeDoPonto,
+  ItemDaFila,
+  NivelDeGravidade,
+  OpcoesDaFila,
+  PendenciaDoEditor,
+  RegrasDaFila,
+  RetanguloDoEditor,
+  SugestaoDoEditor,
+} from "./tipos-do-editor-de-coordenadas.ts";
 import { distanciaKm } from "./reconciliacao-unidades.js";
 
 /*
@@ -17,7 +30,7 @@ import { distanciaKm } from "./reconciliacao-unidades.js";
   nas `regras` de cada mapa.
 */
 
-export function lerCoordenada(valor) {
+export function lerCoordenada(valor: unknown) {
   const texto = String(valor ?? "")
     .trim()
     .replace(",", ".");
@@ -32,7 +45,7 @@ export const LIMITES_DO_BRASIL = Object.freeze({
   longitudeMaxima: -32,
 });
 
-export const dentroDoBrasil = (latitude, longitude) =>
+export const dentroDoBrasil = (latitude: number, longitude: number) =>
   Number.isFinite(latitude) &&
   Number.isFinite(longitude) &&
   latitude >= LIMITES_DO_BRASIL.latitudeMinima &&
@@ -40,7 +53,11 @@ export const dentroDoBrasil = (latitude, longitude) =>
   longitude >= LIMITES_DO_BRASIL.longitudeMinima &&
   longitude <= LIMITES_DO_BRASIL.longitudeMaxima;
 
-export function validarCorrecaoDoMapa(latitude, longitude, motivo) {
+export function validarCorrecaoDoMapa(
+  latitude: number,
+  longitude: number,
+  motivo: unknown,
+) {
   if (!Number.isFinite(latitude) || !Number.isFinite(longitude))
     return "Informe latitude e longitude válidas.";
   if (!dentroDoBrasil(latitude, longitude))
@@ -50,18 +67,20 @@ export function validarCorrecaoDoMapa(latitude, longitude, motivo) {
   return "";
 }
 
-export const formatarCoordenada = (valor) =>
-  Number.isFinite(valor) ? valor.toFixed(6) : "Sem coordenada";
+export const formatarCoordenada = (valor: number | null | undefined) =>
+  typeof valor === "number" && Number.isFinite(valor)
+    ? valor.toFixed(6)
+    : "Sem coordenada";
 
 /** "350 m", "4,2 km", "73 km" ou "—" sem posição atual. */
-export function formatarDistancia(km) {
-  if (!Number.isFinite(km)) return "—";
+export function formatarDistancia(km: number | null | undefined) {
+  if (typeof km !== "number" || !Number.isFinite(km)) return "—";
   if (km < 1) return `${Math.round(km * 1000)} m`;
   return `${km.toFixed(km < 10 ? 1 : 0).replace(".", ",")} km`;
 }
 
 /** Sem acento, sem caixa e sem espaço nas pontas (busca e comparação de nomes). */
-export const textoComparavel = (valor) =>
+export const textoComparavel = (valor: unknown) =>
   String(valor ?? "")
     .normalize("NFD")
     .replace(/[̀-ͯ]/g, "")
@@ -69,7 +88,7 @@ export const textoComparavel = (valor) =>
     .trim();
 
 /** Uma pendência por linha da contagem: "1 pendente", "N pendentes". */
-export const textoDePendentes = (n) =>
+export const textoDePendentes = (n: number) =>
   `${n} ${n === 1 ? "pendente" : "pendentes"}`;
 
 /*
@@ -88,7 +107,7 @@ export const GRAVIDADES = Object.freeze({
   revisar: { ordem: 1, rotulo: "Revisar", tom: "pendente" },
   sem: { ordem: 2, rotulo: "Sem sugestão", tom: "neutro" },
   confirmar: { ordem: 3, rotulo: "Só confirmar", tom: "revisar" },
-});
+} as const);
 
 /**
  * O nível da régua: "erro", "confirmar", "revisar" ou "sem" (sem sugestão).
@@ -100,15 +119,26 @@ export function nivelDaGravidade({
   motivoDeErro,
   km,
   revisar = false,
-}) {
+}: {
+  temSugestao: boolean;
+  motivoDeErro?: unknown;
+  km?: number | null;
+  revisar?: boolean;
+}): NivelDeGravidade {
   if (!temSugestao) return "sem";
-  if (motivoDeErro || km > LIMITES_DA_GRAVIDADE.erroKm) return "erro";
-  if (!revisar && Number.isFinite(km) && km <= LIMITES_DA_GRAVIDADE.certoKm)
+  if (motivoDeErro || (km != null && km > LIMITES_DA_GRAVIDADE.erroKm))
+    return "erro";
+  if (
+    !revisar &&
+    km != null &&
+    Number.isFinite(km) &&
+    km <= LIMITES_DA_GRAVIDADE.certoKm
+  )
     return "confirmar";
   return "revisar";
 }
 
-const ordemDaGravidade = (item) =>
+const ordemDaGravidade = (item: { gravidade: GravidadeDoPonto | null }) =>
   item.gravidade ? GRAVIDADES[item.gravidade.nivel].ordem : 9;
 
 /**
@@ -124,17 +154,17 @@ const ordemDaGravidade = (item) =>
  * Um ponto sem pendência pode ser pendente mesmo assim, quando
  * `regras.pendenteSemPendencia(ponto)` diz (Projetos: lugar sem coordenada).
  */
-export function filaDoEditor(
-  pontos,
-  pendencias,
-  { busca = "", soPendentes = true, gravidade = "" } = {},
-  regras,
-) {
+export function filaDoEditor<P>(
+  pontos: readonly P[] | null | undefined,
+  pendencias: readonly PendenciaDoEditor[] | null | undefined,
+  { busca = "", soPendentes = true, gravidade = "" }: OpcoesDaFila = {},
+  regras: RegrasDaFila<P>,
+): FilaDoEditor<P> {
   const porChave = new Map(
     (pendencias || []).map((p) => [regras.chaveDaPendencia(p), p]),
   );
   const termos = textoComparavel(busca).split(/\s+/).filter(Boolean);
-  const todos = (pontos || []).map((ponto) => {
+  const todos: ItemDaFila<P>[] = (pontos || []).map((ponto) => {
     const pendencia = porChave.get(regras.chaveDoPonto(ponto)) || null;
     const pendente = pendencia
       ? !pendencia.conferido
@@ -180,8 +210,28 @@ export function filaDoEditor(
  * mesma fonte na mesma posição (até 50 m) ou com o mesmo nome a menos de
  * 1 km — sai (fica a primeira); posição inválida também.
  */
-export function listaDeSugestoes(candidatos, ponto, grupos) {
-  const aceitas = [];
+export function listaDeSugestoes(
+  candidatos:
+    | readonly {
+        fonte: string;
+        nome?: string;
+        terra?: string;
+        latitude: number | string;
+        longitude: number | string;
+      }[]
+    | null
+    | undefined,
+  ponto:
+    { latitude: number | null; longitude: number | null } | null | undefined,
+  grupos: Readonly<Record<string, { ordem: number; rotulo: string }>>,
+): SugestaoDoEditor[] {
+  const aceitas: {
+    fonte: string;
+    nome: string;
+    terra: string;
+    latitude: number;
+    longitude: number;
+  }[] = [];
   return (candidatos || [])
     .map((c) => ({
       fonte: grupos[c.fonte] ? c.fonte : "OUTRA",
@@ -202,8 +252,9 @@ export function listaDeSugestoes(candidatos, ponto, grupos) {
           c.longitude,
         );
         return (
-          km < 0.05 ||
-          (textoComparavel(a.nome) === textoComparavel(c.nome) && km < 1)
+          km != null &&
+          (km < 0.05 ||
+            (textoComparavel(a.nome) === textoComparavel(c.nome) && km < 1))
         );
       });
       if (repetida) return false;
@@ -228,19 +279,21 @@ export function listaDeSugestoes(candidatos, ponto, grupos) {
     );
 }
 
-const ACOES = Object.freeze({
+const ACOES: Readonly<Record<string, string>> = Object.freeze({
   CORRECAO: "Correção",
   CONFERENCIA: "Conferido",
   DESFAZER: "Desfeito",
 });
-export const rotuloDaAcao = (acao) => ACOES[acao] || "Alteração";
+export const rotuloDaAcao = (acao: string) => ACOES[acao] || "Alteração";
 
 /**
  * A alteração que o "Desfazer" volta: a mais recente do ponto, se não for um
  * desfazer, ainda não tiver sido desfeita e o ponto tinha posição antes.
  * O banco confere de novo (só a última, uma vez só).
  */
-export function correcaoDesfazivel(historico) {
+export function correcaoDesfazivel<T extends AlteracaoDoPonto>(
+  historico: readonly T[] | null | undefined,
+): T | null {
   const ultima = historico?.[0];
   if (
     !ultima ||
@@ -270,12 +323,15 @@ export const FOLGA_DO_PIN = 32;
 export const AREA_LIVRE_MINIMA = 120;
 
 export function folgaDoEnquadramento(
-  mapa,
-  painel,
-  { base = FOLGA_DO_ENQUADRAMENTO, minimo = AREA_LIVRE_MINIMA } = {},
-) {
+  mapa: RetanguloDoEditor | null | undefined,
+  painel: RetanguloDoEditor | null | undefined,
+  {
+    base = FOLGA_DO_ENQUADRAMENTO,
+    minimo = AREA_LIVRE_MINIMA,
+  }: { base?: number; minimo?: number } = {},
+): FolgaDoEditor {
   const topo = base + FOLGA_DO_PIN;
-  const soBase = {
+  const soBase: FolgaDoEditor = {
     paddingTopLeft: [topo, topo],
     paddingBottomRight: [base, base],
   };

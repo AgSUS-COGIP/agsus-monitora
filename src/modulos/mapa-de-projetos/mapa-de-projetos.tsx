@@ -47,7 +47,7 @@ import { EditorDeCoordenadasDosProjetos } from "./editor-de-coordenadas.tsx";
 import {
   PainelDoEditor,
   usarModoDeEdicao,
-} from "../editor-de-coordenadas/modo-de-edicao.jsx";
+} from "../editor-de-coordenadas/modo-de-edicao.tsx";
 import { CorDoProjeto, ListaDeMunicipios } from "./lista.tsx";
 
 /*

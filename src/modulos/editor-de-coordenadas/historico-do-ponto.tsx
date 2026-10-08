@@ -1,18 +1,22 @@
+import type { AlteracaoDoPonto } from "../../lib/tipos-do-editor-de-coordenadas.ts";
 import { useEffect, useState } from "react";
 import {
   correcaoDesfazivel,
   formatarCoordenada,
   rotuloDaAcao,
-} from "../../lib/editor-de-coordenadas.js";
+} from "../../lib/editor-de-coordenadas.ts";
 import { Aviso, Campo, Carregando, EstadoVazio } from "../../ui/index.js";
 
-const quando = (valor) => {
-  const data = new Date(valor);
+const quando = (valor: string | undefined) => {
+  const data = new Date(valor ?? "");
   return Number.isNaN(data.getTime())
     ? ""
     : data.toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" });
 };
-const posicao = (latitude, longitude) =>
+const posicao = (
+  latitude: number | null | undefined,
+  longitude: number | null | undefined,
+) =>
   latitude == null || longitude == null
     ? "Sem coordenada"
     : `${formatarCoordenada(latitude)}, ${formatarCoordenada(longitude)}`;
@@ -28,6 +32,12 @@ export function HistoricoDoPonto({
   erro,
   desabilitado,
   aoDesfazer,
+}: {
+  historico: readonly AlteracaoDoPonto[];
+  carregando?: boolean;
+  erro?: string;
+  desabilitado?: boolean;
+  aoDesfazer(alteracao: AlteracaoDoPonto, motivo: string): void | Promise<void>;
 }) {
   const [aberto, definirAberto] = useState(false);
   const [motivo, definirMotivo] = useState("");
@@ -41,6 +51,7 @@ export function HistoricoDoPonto({
   }, [idDesfazivel]);
 
   const confirmar = async () => {
+    if (!desfazivel || desabilitado) return;
     if (motivo.trim().length < 10) {
       definirFalha("Descreva o motivo (mínimo de 10 caracteres).");
       return;

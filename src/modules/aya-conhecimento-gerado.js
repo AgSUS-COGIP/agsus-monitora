@@ -4663,7 +4663,7 @@ export const VERBETES_AYA = Object.freeze([
       'No MONITORA, "Coordenadas" (nos mapas da Saúde Indígena e de Projetos) leva o mapa para a tela inteira, como a tela cheia: o mapa ocupa quase tudo e o editor fica num painel à direita, com rolagem própria; no celular, o mapa fica em cima e o editor numa folha embaixo. "Recolher editor" deixa só uma faixa estreita para ver e arrastar o pin com o mapa inteiro — o ponto escolhido, a prévia e o motivo continuam lá — e "Abrir editor" volta. Ao escolher um ponto, o mapa enquadra o ponto e a sugestão na parte visível, sem escondê-los atrás do painel. No painel, a busca e "Só pendentes" ficam numa linha, a contagem e os níveis de gravidade na seguinte, e a lista ocupa o resto; com um ponto escolhido, Sugestões, Correção e Histórico são seções que abrem e fecham pelo título (o Histórico começa fechado, com a contagem). Para sair, use "Voltar à lista", o botão "Coordenadas" ou Esc (num campo, o Esc fica com o campo); o mapa volta ao tamanho de sempre da Visão geral. Se o mapa estava em tela cheia, ele continua em tela cheia depois de sair do editor.',
     fato: "",
     fonte:
-      "src/modulos/editor-de-coordenadas/modo-de-edicao.jsx; src/modulos/editor-de-coordenadas/editor-de-coordenadas.jsx",
+      "src/modulos/editor-de-coordenadas/modo-de-edicao.tsx; src/modulos/editor-de-coordenadas/editor-de-coordenadas.tsx",
   },
   {
     arquivo: "regras-do-mapa-saude-indigena.md",
@@ -4705,7 +4705,7 @@ export const VERBETES_AYA = Object.freeze([
       'Ao escolher um ponto pendente, o editor mostra por que a auditoria não o confirmou e as posições candidatas: primeiro a do cadastro CNES (DATASUS), depois aldeias e lugares com o mesmo nome (IBGE, Funai, OpenStreetMap, PDSI) e, quando conhecida, a sede do município, cada uma com a distância até a posição atual. "Usar esta" só leva a posição para a prévia (o pin se move); nada é gravado até "Salvar coordenada" ou "Conferido" serem confirmados. Candidato não é prova: confira com o DSEI quando as fontes divergirem.',
     fato: "",
     fonte:
-      "src/lib/coordenadas-do-mapa.js; src/modulos/editor-de-coordenadas/sugestoes-do-ponto.jsx",
+      "src/lib/coordenadas-do-mapa.js; src/modulos/editor-de-coordenadas/sugestoes-do-ponto.tsx",
   },
   {
     arquivo: "regras-do-mapa-saude-indigena.md",
@@ -4721,7 +4721,7 @@ export const VERBETES_AYA = Object.freeze([
       'Na seção Histórico, abaixo da Correção (fechada de início; clique no título para abrir), o editor mostra as últimas alterações do ponto: o tipo (Correção, Conferido ou Desfeito), quem fez, quando, a posição de antes e a de depois e o motivo. "Desfazer última alteração" volta a mais recente — a posição e, se for o caso, a conferência —, pede um motivo e grava isso como uma alteração nova: o histórico nunca é apagado. Só a última alteração de cada ponto pode ser desfeita, uma vez só; um desfazer não se desfaz (corrija a posição de novo).',
     fato: "",
     fonte:
-      "src/modulos/editor-de-coordenadas/historico-do-ponto.jsx; supabase/migrations/20261002160000_conferir_coordenadas_mapa.sql",
+      "src/modulos/editor-de-coordenadas/historico-do-ponto.tsx; supabase/migrations/20261002160000_conferir_coordenadas_mapa.sql",
   },
   {
     arquivo: "regras-do-sistema.md",
@@ -5473,7 +5473,7 @@ export const VERBETES_AYA = Object.freeze([
       'No mapa de Projetos, o administrador global e o Gestor veem o botão "Coordenadas", que leva o mapa para a tela inteira com o editor num painel à direita (no celular, embaixo), como no mapa da Saúde Indígena: "Recolher editor" deixa só uma faixa, e "Voltar à lista", o próprio "Coordenadas" ou Esc saem e devolvem a lista "Municípios por vagas". Busque pelo lugar, município, UF, projeto, edital ou lotação e escolha um item: o mapa enquadra o lugar e a sugestão na parte que o painel não cobre e aparece um pin de prévia. Para mudar a posição, digite latitude e longitude, arraste o pin ou use uma sugestão ("Usar esta" ou um clique no círculo dela no mapa). Depois informe o motivo e a fonte e clique em "Salvar coordenada" e em "Confirmar correção". Se a posição já estiver certa, "Conferido" (com confirmação) tira o lugar da fila sem mudar a posição. A seção Histórico (fechada de início; abre pelo título) mostra quem mudou, quando e de onde para onde, e "Desfazer última alteração" volta a mais recente, com motivo. Se outra pessoa mudou o lugar antes, atualize a página e tente de novo. O mapa já mostra a posição nova assim que ela é gravada.',
     fato: "",
     fonte:
-      "src/modulos/mapa-de-projetos/editor-de-coordenadas.tsx; src/modulos/editor-de-coordenadas/editor-de-coordenadas.jsx; supabase/migrations/20261002190000_coordenadas_mapa_projetos.sql",
+      "src/modulos/mapa-de-projetos/editor-de-coordenadas.tsx; src/modulos/editor-de-coordenadas/editor-de-coordenadas.tsx; supabase/migrations/20261002190000_coordenadas_mapa_projetos.sql",
   },
   {
     arquivo: "regras-dos-mapas.md",
@@ -5489,7 +5489,7 @@ export const VERBETES_AYA = Object.freeze([
       'A fila do editor de Projetos começa em "Só pendentes": são os lugares cuja posição ainda não foi conferida pelo administrador global ou por um Gestor. Na carga inicial, todo município aparece porque o ponto é só a sede do município (o edital diz o município, não o endereço), e todo lugar só com UF aparece porque o ponto é o centro do estado. Também ficam pendentes o lugar sem coordenada, o município cujo nome, código ou UF não batem, o mesmo município com coordenadas diferentes e o ponto fora do Brasil. A gravidade compara a posição com a referência do lugar (a sede do município pelo IBGE ou o centro da UF): "Provável erro" quando falta a coordenada, o motivo já é um erro ou a referência está a mais de 10 km; "Revisar" quando ela está entre 2 e 10 km, ou quando a lotação é um escritório e o edital só diz a UF; "Só confirmar" quando a posição é a da referência; e "Sem sugestão" quando não há posição candidata. As sugestões são a sede do município (IBGE), o centro da UF, a sede do DSEI do mapa da Saúde Indígena (para escritório distrital) e os outros lugares das vagas na mesma UF.',
     fato: "",
     fonte:
-      "src/lib/coordenadas-dos-projetos.js; src/lib/editor-de-coordenadas.js; supabase/correcoes/20261002-pendencias-das-coordenadas-dos-projetos.sql",
+      "src/lib/coordenadas-dos-projetos.js; src/lib/editor-de-coordenadas.ts; supabase/correcoes/20261002-pendencias-das-coordenadas-dos-projetos.sql",
   },
   {
     arquivo: "regras-dos-mapas.md",

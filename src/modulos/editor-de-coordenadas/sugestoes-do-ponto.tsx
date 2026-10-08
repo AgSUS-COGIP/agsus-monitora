@@ -1,7 +1,11 @@
+import type {
+  SugestaoDoEditor,
+  GravidadeDoPonto,
+} from "../../lib/tipos-do-editor-de-coordenadas.ts";
 import {
   formatarDistancia,
   GRAVIDADES,
-} from "../../lib/editor-de-coordenadas.js";
+} from "../../lib/editor-de-coordenadas.ts";
 import { EstadoVazio, Selo } from "../../ui/index.js";
 
 /*
@@ -19,10 +23,16 @@ export function SugestoesDoPonto({
   gravidade,
   desabilitado,
   aoUsar,
+}: {
+  sugestoes: readonly SugestaoDoEditor[];
+  motivo?: string;
+  gravidade?: GravidadeDoPonto | null;
+  desabilitado?: boolean;
+  aoUsar(sugestao: SugestaoDoEditor): void;
 }) {
   const idDaMelhor = gravidade?.melhor?.id || "";
   const ordenadas = [...(sugestoes || [])].sort(
-    (a, b) => (b.id === idDaMelhor) - (a.id === idDaMelhor),
+    (a, b) => Number(b.id === idDaMelhor) - Number(a.id === idDaMelhor),
   );
   return (
     <details

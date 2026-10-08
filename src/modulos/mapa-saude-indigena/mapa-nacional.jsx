@@ -36,7 +36,7 @@ import { EditorDeCoordenadas } from "./editor-de-coordenadas.jsx";
 import {
   PainelDoEditor,
   usarModoDeEdicao,
-} from "../editor-de-coordenadas/modo-de-edicao.jsx";
+} from "../editor-de-coordenadas/modo-de-edicao.tsx";
 
 /*
   A volta de um DSEI parte da sede, no zoom em que o mapa do distrito costuma

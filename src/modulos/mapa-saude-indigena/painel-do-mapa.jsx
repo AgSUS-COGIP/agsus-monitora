@@ -1,6 +1,6 @@
 import { useEffect, useReducer, useRef, useState } from "react";
 import { EstadoVazio, classes } from "../../ui/index.js";
-import { BotaoDeRecolher } from "../editor-de-coordenadas/modo-de-edicao.jsx";
+import { BotaoDeRecolher } from "../editor-de-coordenadas/modo-de-edicao.tsx";
 import { criarMapaDoBrasil, remedir, voltarAoBrasil } from "./leaflet.js";
 import { usarUltimo } from "./usar-ultimo.js";
 

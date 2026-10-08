@@ -4,13 +4,13 @@ import {
   formatarDistancia,
   listaDeSugestoes,
   nivelDaGravidade,
-} from "./editor-de-coordenadas.js";
+} from "./editor-de-coordenadas.ts";
 
 /*
   COORDENADAS DO MAPA DA SAÚDE INDÍGENA — as regras deste mapa no editor
 
   As regras comuns (leitura, validação, fila, sugestões, gravidade,
-  histórico) estão em `editor-de-coordenadas.js`, que serve também ao mapa
+  histórico) estão em `editor-de-coordenadas.ts`, que serve também ao mapa
   de Projetos. Aqui: os pontos editáveis (lmap e rede_cnes), a ligação com a
   pendência, as fontes das sugestões e os motivos de erro da auditoria.
 */

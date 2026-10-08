@@ -3,6 +3,7 @@ import type {
   PropsDoEditorDeProjetos,
 } from "./tipos.ts";
 import { useMemo } from "react";
+import type { FonteDoEditor } from "../editor-de-coordenadas/tipos.ts";
 import {
   chaveDaPendenciaDoLugar,
   filaDeCoordenadasDosProjetos,
@@ -11,7 +12,7 @@ import {
   REGRAS_DA_FILA_DOS_PROJETOS,
   sugestoesDoLugar,
 } from "../../lib/coordenadas-dos-projetos.js";
-import { EditorDeCoordenadas } from "../editor-de-coordenadas/editor-de-coordenadas.jsx";
+import { EditorDeCoordenadas } from "../editor-de-coordenadas/editor-de-coordenadas.tsx";
 
 /*
   O editor de coordenadas do mapa de Projetos: o editor comum
@@ -73,7 +74,7 @@ export const FONTE_DE_PROJETOS = Object.freeze({
     [item.nivel === "uf" ? "" : item.uf, item.localidade]
       .filter(Boolean)
       .join(" · "),
-});
+} satisfies FonteDoEditor<PontoEditavelDoProjeto>);
 
 export function EditorDeCoordenadasDosProjetos({
   municipios,

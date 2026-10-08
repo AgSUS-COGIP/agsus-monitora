@@ -7,7 +7,7 @@ import {
   formatarDistancia,
   listaDeSugestoes,
   nivelDaGravidade,
-} from "./editor-de-coordenadas.js";
+} from "./editor-de-coordenadas.ts";
 import { rotuloDoLugar } from "./visao-geral-da-area.ts";
 
 /*
@@ -18,7 +18,7 @@ import { rotuloDoLugar } from "./visao-geral-da-area.ts";
   `listar_municipios_das_vagas_da_area` devolve em `lugar` ('seropedica/RJ',
   'uf:PA') e a coordenada gravada no banco (public."TB_COORDENADA_LOCAL_VAGA",
   migration 20261002190000). As regras comuns (leitura, validação, fila,
-  sugestões, gravidade, histórico) estão em `editor-de-coordenadas.js`; aqui
+  sugestões, gravidade, histórico) estão em `editor-de-coordenadas.ts`; aqui
   ficam os pontos editáveis, a ligação com a pendência
   (`listar_pendencias_coordenada_mapa_projetos`, pela chave do lugar), as
   fontes das sugestões e a régua da gravidade.
@@ -32,6 +32,7 @@ const texto = (valor) => String(valor ?? "").trim();
  * lugar ainda não tem); a busca leva município, UF, projetos, editais e
  * lotações.
  */
+/** @param {readonly import("../modulos/mapa-de-projetos/tipos.ts").MunicipioDoMapa[] | null | undefined} municipios @returns {import("../modulos/mapa-de-projetos/tipos.ts").PontoEditavelDoProjeto[]} */
 export function pontosEditaveisDosProjetos(municipios) {
   return (Array.isArray(municipios) ? municipios : [])
     .filter((lugar) => texto(lugar?.lugar))
@@ -210,6 +211,7 @@ export const REGRAS_DA_FILA_DOS_PROJETOS = Object.freeze({
  * projeto, edital e lotação; em Só pendentes, o provável erro primeiro;
  * depois UF e nome. Lugar sem coordenada conta como pendente.
  */
+/** @param {readonly import("../modulos/mapa-de-projetos/tipos.ts").PontoEditavelDoProjeto[]} pontos @param {readonly import("./tipos-do-editor-de-coordenadas.ts").PendenciaDoEditor[]} pendencias @param {import("./tipos-do-editor-de-coordenadas.ts").OpcoesDaFila} opcoes @returns {import("./tipos-do-editor-de-coordenadas.ts").FilaDoEditor<import("../modulos/mapa-de-projetos/tipos.ts").PontoEditavelDoProjeto>} */
 export const filaDeCoordenadasDosProjetos = (pontos, pendencias, opcoes) =>
   filaDoEditor(pontos, pendencias, opcoes, REGRAS_DA_FILA_DOS_PROJETOS);
 
