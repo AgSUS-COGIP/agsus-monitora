@@ -19,8 +19,10 @@ def _entrada(caso):
     roteiro = dict(DADOS["roteiros"][caso["roteiro"]])
     if "nota_minima_total" in caso:
         roteiro["nota_minima_total"] = caso["nota_minima_total"]
+    atribuicoes = caso.get("atribuicoes")
     if caso.get("aspectos"):
-        # Por competência, uma lista de notas por avaliador, na ordem dos aspectos.
+        # Por competência, uma lista de notas por avaliador, na ordem dos aspectos
+        # (a posição é o avaliador; None = sem nota dele).
         avaliacoes = [
             {
                 "competencia": competencia,
@@ -29,14 +31,16 @@ def _entrada(caso):
             }
             for competencia, por_avaliador in caso["aspectos"].items()
             for i, notas in enumerate(por_avaliador)
+            if notas is not None
         ]
-        return roteiro, caso["compareceu"], avaliacoes
+        return roteiro, caso["compareceu"], avaliacoes, atribuicoes
     avaliacoes = [
         {"competencia": competencia, "avaliador": f"a{i + 1}", "nota": nota}
         for competencia, notas in caso["notas"].items()
         for i, nota in enumerate(notas)
+        if nota is not None
     ]
-    return roteiro, caso["compareceu"], avaliacoes
+    return roteiro, caso["compareceu"], avaliacoes, atribuicoes
 
 
 def _dec(valor):
@@ -47,6 +51,7 @@ class CasosDouradosDoCalculo(unittest.TestCase):
     def test_cada_caso_da_o_mesmo_resultado_do_javascript_e_do_banco(self):
         self.assertGreaterEqual(len(DADOS["casos"]), 10)
         self.assertGreaterEqual(len([c for c in DADOS["casos"] if c.get("aspectos")]), 3)
+        self.assertGreaterEqual(len([c for c in DADOS["casos"] if c.get("atribuicoes")]), 3)
         for caso in DADOS["casos"]:
             with self.subTest(caso["nome"]):
                 r = calculo.calcular_entrevista(*_entrada(caso))
@@ -54,6 +59,20 @@ class CasosDouradosDoCalculo(unittest.TestCase):
                 self.assertEqual([c["nota"] for c in r["competencias"]], [_dec(n) for n in esperado["notas"]])
                 self.assertEqual(r["total"], _dec(esperado["total"]))
                 self.assertEqual(r["parecer"], esperado["parecer"])
+
+
+class AvaliadorPorCompetencia(unittest.TestCase):
+    def test_lista_sem_competencia_do_roteiro_conta_como_todas(self):
+        roteiro = DADOS["roteiros"]["niveis"]
+        avaliacoes = [
+            {"competencia": c, "avaliador": a, "nota": 3} for c in ("c1", "c2", "c3", "c4") for a in ("a1", "a2")
+        ]
+        avaliacoes[0]["nota"] = 5  # c1 de a1
+        r = calculo.calcular_entrevista(roteiro, "S", avaliacoes, {"a2": ["outro-roteiro"]})
+        self.assertEqual(r["competencias"][0]["nota"], Decimal(4))
+        r = calculo.calcular_entrevista(roteiro, "S", avaliacoes, {"a2": ["c2"]})
+        self.assertEqual(r["competencias"][0]["nota"], Decimal(5))
+        self.assertEqual(r["competencias"][0]["quantidade"], 1)
 
 
 class Aspectos(unittest.TestCase):

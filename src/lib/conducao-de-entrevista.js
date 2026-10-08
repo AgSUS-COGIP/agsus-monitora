@@ -168,7 +168,95 @@ export function novoAvaliador(origem = "", banca = "1") {
     origem,
     banca: String(banca),
     perfil: "",
+    competencias: null,
   };
+}
+
+/* ── Quem avalia cada competência ──────────────────────────────────── */
+
+/*
+  Cada membro da banca avalia todas as competências do roteiro (o padrão) ou
+  só algumas (`avaliador.competencias`: os ids; nulo ou vazio = todas). Ex.:
+  o colaborador do DSEI que avalia só "Trabalho em equipe". Vale só o que é
+  do roteiro do edital: uma lista sem nenhuma competência dele (de outro
+  roteiro) conta como todas — a mesma leitura do banco
+  (private."FC_AVALIADOR_AVALIA", migration 20261008170000).
+*/
+
+const idsDasCompetencias = (competencias) =>
+  (competencias || [])
+    .map((c) => (c && typeof c === "object" ? c.id : c))
+    .filter(Boolean)
+    .map(String);
+
+/** As competências (ids, na ordem do roteiro) que o membro avalia. */
+export function competenciasDoAvaliador(avaliador, competencias) {
+  const ids = idsDasCompetencias(competencias);
+  const escolhidas = new Set(
+    Array.isArray(avaliador?.competencias)
+      ? avaliador.competencias.map(String)
+      : [],
+  );
+  const delas = ids.filter((id) => escolhidas.has(id));
+  return delas.length ? delas : ids;
+}
+
+/** O membro avalia todas as competências do roteiro? */
+export function avaliaTodas(avaliador, competencias) {
+  return (
+    competenciasDoAvaliador(avaliador, competencias).length ===
+    idsDasCompetencias(competencias).length
+  );
+}
+
+/** O membro avalia esta competência? */
+export function avaliaACompetencia(avaliador, competencia, competencias) {
+  return competenciasDoAvaliador(avaliador, competencias).includes(
+    String(competencia),
+  );
+}
+
+/** Os membros (da lista dada) que avaliam a competência. */
+export function avaliadoresDaCompetencia(
+  avaliadores,
+  competencia,
+  competencias,
+) {
+  return (avaliadores || []).filter((a) =>
+    avaliaACompetencia(a, competencia, competencias),
+  );
+}
+
+/**
+ * As restrições da banca no formato de `calcularEntrevista`:
+ * `{ idDoAvaliador: [competências] }`, só de quem não avalia todas.
+ */
+export function atribuicoesDaBanca(avaliadores, competencias) {
+  const atribuicoes = {};
+  for (const a of avaliadores || [])
+    if (a?.id && !avaliaTodas(a, competencias))
+      atribuicoes[a.id] = competenciasDoAvaliador(a, competencias);
+  return atribuicoes;
+}
+
+/**
+ * Em cada banca com membros ativos, as competências que ninguém avalia:
+ * `[{ banca, competencia }]` (competência = o objeto do roteiro).
+ */
+export function competenciasSemAvaliador(avaliadores, competencias) {
+  const porBanca = new Map();
+  for (const a of avaliadores || []) {
+    if (a?.ativo === false) continue;
+    const banca = Number(lerNumero(a?.banca)) || 1;
+    if (!porBanca.has(banca)) porBanca.set(banca, []);
+    porBanca.get(banca).push(a);
+  }
+  const faltas = [];
+  for (const [banca, membros] of [...porBanca].sort((x, y) => x[0] - y[0]))
+    for (const c of competencias || [])
+      if (!membros.some((a) => avaliaACompetencia(a, c.id, competencias)))
+        faltas.push({ banca, competencia: c });
+  return faltas;
 }
 
 /** O rascunho do formulário de configuração, a partir do payload do edital. */
@@ -187,20 +275,30 @@ export function rascunhoDaConfiguracao(dados) {
         origem: texto(a.origem),
         banca: textoDoNumero(a.banca ?? 1),
         perfil: a.perfil || "",
+        competencias:
+          Array.isArray(a.competencias) && a.competencias.length
+            ? a.competencias.map(String)
+            : null,
       })),
   };
 }
 
 /**
  * Escolher o roteiro pré-preenche a composição da banca com o padrão dele (a
- * pessoa pode mudar depois).
+ * pessoa pode mudar depois). Outro roteiro tem outras competências: cada
+ * membro volta a avaliar todas.
  */
 export function aplicarRoteiroNaConfiguracao(rascunho, roteiro) {
-  if (!roteiro) return { ...rascunho, roteiro: "" };
+  const outro = (roteiro?.id || "") !== rascunho.roteiro;
+  const avaliadores = outro
+    ? (rascunho.avaliadores || []).map((a) => ({ ...a, competencias: null }))
+    : rascunho.avaliadores;
+  if (!roteiro) return { ...rascunho, roteiro: "", avaliadores };
   return {
     ...rascunho,
     roteiro: roteiro.id,
     banca: bancaParaRascunho(roteiro.banca_padrao),
+    avaliadores,
   };
 }
 
@@ -224,7 +322,12 @@ export function completarMembrosPelaComposicao(avaliadores, composicao) {
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
-export function errosDaConfiguracao(r) {
+/**
+ * Os erros do formulário. Com o roteiro escolhido (`roteiro`), também: o
+ * membro que avalia "só estas" sem nenhuma marcada e, em cada banca, a
+ * competência que ninguém avalia (`cobertura`).
+ */
+export function errosDaConfiguracao(r, roteiro = null) {
   const erros = {};
   if (!r?.roteiro) erros.roteiro = "Escolha o roteiro da entrevista.";
   Object.assign(erros, errosDaBanca(r?.banca));
@@ -247,15 +350,31 @@ export function errosDaConfiguracao(r) {
       erros[`${p}.banca`] = "Banca: número inteiro de 1 a 20.";
     if (texto(a.perfil) && !UUID.test(texto(a.perfil)))
       erros[`${p}.perfil`] = "Perfil do MONITORA: identificador inválido.";
+    if (Array.isArray(a.competencias) && !a.competencias.length)
+      erros[`${p}.competencias`] = "Marque ao menos uma competência.";
+  }
+  const competencias = roteiro?.competencias || [];
+  if (competencias.length) {
+    const faltas = competenciasSemAvaliador(
+      (r?.avaliadores || []).filter(
+        (a) => !Array.isArray(a.competencias) || a.competencias.length,
+      ),
+      competencias,
+    );
+    if (faltas.length)
+      erros.cobertura = faltas
+        .map((f) => `Banca ${f.banca}: ninguém avalia “${f.competencia.nome}”.`)
+        .join(" ");
   }
   return erros;
 }
 
 /**
  * O `p_dados` de `configurar_entrevista_edital`: sem regra de convocação nem
- * vagas imediatas (as da Classificação valem).
+ * vagas imediatas (as da Classificação valem). `competencias` de cada membro:
+ * nulo = todas (também quando todas estão marcadas, com o `roteiro`).
  */
-export function dadosDaConfiguracaoParaSalvar(r) {
+export function dadosDaConfiguracaoParaSalvar(r, roteiro = null) {
   return {
     roteiro: r.roteiro,
     banca: bancaDoRascunho(r.banca),
@@ -266,6 +385,15 @@ export function dadosDaConfiguracaoParaSalvar(r) {
         origem: texto(a.origem),
         banca: numero(a.banca) ?? 1,
         perfil: texto(a.perfil) || null,
+        competencias:
+          Array.isArray(a.competencias) &&
+          a.competencias.length &&
+          !(
+            roteiro?.competencias?.length &&
+            avaliaTodas(a, roteiro.competencias)
+          )
+            ? a.competencias.map(String)
+            : null,
       };
       if (a.id) membro.id = a.id;
       return membro;
@@ -471,8 +599,19 @@ export function mediaDosAspectos(aspectos, notas) {
  * dos aspectos (`avaliacoes[].aspectos`, só com todos lançados), o total é a
  * soma sem arredondar (2 casas no fim) e não há média eliminatória (vale o
  * mínimo da competência).
+ *
+ * Avaliador por competência (`atribuicoes`, de `atribuicoesDaBanca`:
+ * `{ idDoAvaliador: [competências] }`): a média da competência é só dos
+ * avaliadores que a avaliam; a nota de quem não a avalia não conta (o banco
+ * nem a aceita). Sem a chave (ou sem competência do roteiro na lista), o
+ * avaliador avalia todas.
  */
-export function calcularEntrevista({ roteiro, compareceu, avaliacoes }) {
+export function calcularEntrevista({
+  roteiro,
+  compareceu,
+  avaliacoes,
+  atribuicoes = null,
+}) {
   const aspectos = aspectosDoRoteiro(roteiro);
   const comAspectos = aspectos.length > 0;
   const eliminatorias = comAspectos
@@ -487,9 +626,17 @@ export function calcularEntrevista({ roteiro, compareceu, avaliacoes }) {
   let bruto = 0;
   let falta = false;
   let reprova = false;
+  const conta = (a) => {
+    const lista = atribuicoes?.[a.avaliador];
+    if (!Array.isArray(lista)) return true;
+    const doRoteiro = lista.filter((id) =>
+      competencias.some((c) => c.id === id),
+    );
+    return !doRoteiro.length || doRoteiro.includes(a.competencia);
+  };
   const linhas = competencias.map((c) => {
     const notas = (avaliacoes || [])
-      .filter((a) => a.competencia === c.id)
+      .filter((a) => a.competencia === c.id && conta(a))
       .map((a) =>
         comAspectos ? mediaDosAspectos(aspectos, a.aspectos) : numero(a.nota),
       )
@@ -583,18 +730,22 @@ export function motivosDoParecer(resultado, compareceu, roteiro) {
   return motivos;
 }
 
-/** Notas lançadas / esperadas (competências × avaliadores da banca). */
+/**
+ * Notas lançadas / esperadas: de cada avaliador da banca, só as
+ * competências que ele avalia (todas, por padrão).
+ */
 export function progressoDasNotas(convocado, avaliadores, competencias) {
-  const ids = new Set((avaliadores || []).map((a) => a.id));
-  const comps = new Set((competencias || []).map((c) => c.id));
+  const devidas = new Set();
+  for (const a of avaliadores || [])
+    for (const c of competenciasDoAvaliador(a, competencias))
+      devidas.add(`${c}|${a.id}`);
   const lancadas = (convocado?.avaliacoes || []).filter(
     (a) =>
-      ids.has(a.avaliador) &&
-      comps.has(a.competencia) &&
+      devidas.has(`${a.competencia}|${a.avaliador}`) &&
       a.nota !== null &&
       a.nota !== undefined,
   ).length;
-  return { lancadas, esperadas: ids.size * comps.size };
+  return { lancadas, esperadas: devidas.size };
 }
 
 export const FILTROS_DA_FICHA = Object.freeze({

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   aplicarRoteiroNaConfiguracao,
   bancasDoEdital,
@@ -43,12 +43,14 @@ import {
   Selo,
 } from "../../ui/index.js";
 import { irParaLink } from "../chat/ponte.js";
+import { CompetenciasDoMembro } from "./competencias-do-membro.tsx";
 import {
   BotaoDeLinha,
   ComposicaoDaBanca,
   numeroBR,
   trocarNaLista,
 } from "./partes.jsx";
+import { ResumoDasRegras } from "./resumo-das-regras.tsx";
 
 /*
   As partes de "Conduzir entrevistas" (conduzir.tsx) que preparam o edital:
@@ -58,10 +60,16 @@ import {
     liberação fora da janela e "Mostrar todos os editais da área"
     (administrador global) e os avisos de carga.
   - PrepararEdital ("Preparar"), em cartões (`.ui-card`):
+    0. Regras da entrevista (resumo-das-regras.tsx): quem é chamado, como a
+       nota é calculada, quem avalia e o desempate em linguagem simples, cada
+       bloco com o "Editar" que leva aonde se muda (Classificação, roteiro,
+       configuração, convocação). Os detalhes técnicos (a regra de convocação
+       em uma linha, de onde vêm as vagas, os critérios de desempate) ficam
+       em "Ver detalhes".
     1. Configuração: o roteiro (a versão exata; pré-preenche a banca com o
        padrão dele), a composição da banca, o modo de lançamento e os membros
-       da banca. Abaixo, só leitura, a regra de convocação, o desempate e as
-       vagas da Classificação, com o caminho de onde se mudam.
+       da banca, com as competências que cada um avalia (todas, por padrão,
+       ou só algumas — avaliador por competência).
     2. Convocação: a lista de convocação da Classificação (a última gerada;
        sem ela, o cálculo atual, sem convocar), por vaga, na ordem dela;
        "Convocar selecionados" registra os da lista para a ficha e
@@ -283,9 +291,6 @@ function FormularioDeConfiguracao({
   const [r, setR] = useState(() => rascunhoDaConfiguracao(dados));
   const [tentou, setTentou] = useState(false);
   const [erroDoBanco, setErroDoBanco] = useState("");
-  const erros = useMemo(() => errosDaConfiguracao(r), [r]);
-  const visiveis = tentou ? erros : {};
-  const quantos = Object.keys(erros).length;
   const mudar = (mudancas) => setR((atual) => ({ ...atual, ...mudancas }));
 
   /* O roteiro atual do edital pode ser uma versão que já saiu da lista. */
@@ -296,6 +301,20 @@ function FormularioDeConfiguracao({
     return lista;
   }, [roteiros, dados.configuracao]);
   const escolhido = opcoes.find((x) => x.id === r.roteiro) || null;
+  const competencias = useMemo(
+    () =>
+      (escolhido?.competencias || [])
+        .slice()
+        .sort((a, b) => (a.ordem ?? 0) - (b.ordem ?? 0))
+        .map((c) => ({ id: c.id, nome: c.nome })),
+    [escolhido],
+  );
+  const erros = useMemo(
+    () => errosDaConfiguracao(r, escolhido),
+    [r, escolhido],
+  );
+  const visiveis = tentou ? erros : {};
+  const quantos = Object.keys(erros).length;
   const temNotas = dados.convocados.some((c) => c.avaliacoes?.length);
 
   async function salvar(evento) {
@@ -303,7 +322,9 @@ function FormularioDeConfiguracao({
     setTentou(true);
     if (quantos) return;
     setErroDoBanco("");
-    const resultado = await aoSalvar(dadosDaConfiguracaoParaSalvar(r));
+    const resultado = await aoSalvar(
+      dadosDaConfiguracaoParaSalvar(r, escolhido),
+    );
     if (resultado?.erro) setErroDoBanco(resultado.erro);
   }
 
@@ -443,6 +464,15 @@ function FormularioDeConfiguracao({
                       }
                     />
                   </span>
+                  {competencias.length ? (
+                    <CompetenciasDoMembro
+                      nome={a.nome}
+                      competencias={competencias}
+                      valor={a.competencias ?? null}
+                      erro={visiveis[`${p}.competencias`]}
+                      aoMudar={(valor) => trocar("competencias", valor)}
+                    />
+                  ) : null}
                 </li>
               );
             })}
@@ -450,6 +480,11 @@ function FormularioDeConfiguracao({
         ) : (
           <p className="entrevistas-vazio-linha">Nenhum membro cadastrado.</p>
         )}
+        {erros.cobertura ? (
+          <Aviso tom="warning" papel="alert">
+            {erros.cobertura}
+          </Aviso>
+        ) : null}
         <datalist id="entrevistasOrigens">
           {[...new Set(r.banca.map((b) => b.origem).filter(Boolean))].map(
             (o) => (
@@ -515,14 +550,22 @@ function FormularioDeConfiguracao({
   );
 }
 
-function PassoDeConfiguracao({ dados, grupos, roteiros, salvando, aoSalvar }) {
+function PassoDeConfiguracao({
+  dados,
+  roteiros,
+  salvando,
+  aoSalvar,
+  editando,
+  setEditando,
+  refDaSecao,
+}) {
   const configurado = Boolean(dados.configuracao);
-  const [editando, setEditando] = useState(!configurado && dados.pode_editar);
   useEffect(() => {
     if (!configurado && dados.pode_editar) setEditando(true);
-  }, [configurado, dados.pode_editar]);
+  }, [configurado, dados.pode_editar, setEditando]);
   return (
     <section
+      ref={refDaSecao}
       className="ui-card entrevistas-passo"
       data-passo="configuracao"
       data-tour="entrevistas-conduzir-configuracao"
@@ -544,11 +587,7 @@ function PassoDeConfiguracao({ dados, grupos, roteiros, salvando, aoSalvar }) {
           dados={dados}
           roteiros={roteiros}
           salvando={salvando}
-          aoSalvar={async (p) => {
-            const resultado = await aoSalvar(p);
-            if (resultado?.ok) setEditando(false);
-            return resultado;
-          }}
+          aoSalvar={aoSalvar}
           aoCancelar={configurado ? () => setEditando(false) : null}
         />
       ) : configurado ? (
@@ -573,7 +612,6 @@ function PassoDeConfiguracao({ dados, grupos, roteiros, salvando, aoSalvar }) {
           A entrevista deste edital ainda não foi configurada.
         </p>
       )}
-      <ConvocacaoDaClassificacao dados={dados} grupos={grupos} />
     </section>
   );
 }
@@ -638,6 +676,7 @@ function ModalDeDesconvocar({ convocado, salvando, aoConfirmar, aoFechar }) {
 }
 
 function PassoDeConvocacao({
+  refDaSecao,
   dados,
   fonte,
   grupos,
@@ -682,6 +721,7 @@ function PassoDeConvocacao({
 
   return (
     <section
+      ref={refDaSecao}
       className="ui-card entrevistas-passo"
       data-passo="convocacao"
       data-tour="entrevistas-conduzir-convocacao"
@@ -1058,13 +1098,39 @@ export function SeletorDoEdital({ conducao, e, area, doPainel = [] }) {
 
 /* ── Preparar ──────────────────────────────────────────────────────── */
 
+/* O que o resumo das regras mostra, a partir do payload do edital e da convocação. */
+function entradaDoResumo(dados, fonte, grupos) {
+  const regra = dados.regra_classificacao || null;
+  return {
+    temRegra: Boolean(regra),
+    convocacao: regra?.convocacao || null,
+    vagas: grupos.filter((g) => g.candidatos.length || g.total !== null),
+    roteiro: dados.configuracao?.roteiro || null,
+    avaliadores: dados.avaliadores || [],
+    lancamento: dados.configuracao?.lancamento || null,
+    desempate: criteriosDeDesempate(regra),
+    empateFinal: textoDoEmpateFinal(regra),
+    convocados: fonte?.tipo === "LISTA" ? resumoDaConvocacao(grupos) : null,
+  };
+}
+
+const rolarAte = (el) =>
+  el?.scrollIntoView?.({ behavior: "smooth", block: "start" });
+
 /**
- * "Preparar" o edital aberto: configuração (passo 1) e convocação (passo 2).
- * `e` é o estado da condução; o edital aberto é `e.edital`.
- * @param {{ conducao: object, e: object }} props
+ * "Preparar" o edital aberto: o resumo das regras, a configuração (passo 1) e
+ * a convocação (passo 2). `e` é o estado da condução; o edital aberto é
+ * `e.edital`. `aoEditarRoteiro(roteiro)`: o "Editar" de "Como a nota é
+ * calculada" abre o roteiro do edital no editor (roteiros.jsx).
+ * @param {{ conducao: object, e: object, aoEditarRoteiro?: (roteiro: object) => void }} props
  */
-export function PrepararEdital({ conducao, e }) {
+export function PrepararEdital({ conducao, e, aoEditarRoteiro }) {
   const dados = e.edital;
+  const [editando, setEditando] = useState(() =>
+    Boolean(dados && !dados.configuracao && dados.pode_editar),
+  );
+  const refConfiguracao = useRef(null);
+  const refConvocacao = useRef(null);
   /* A convocação é a lista da Classificação (sem ela, o cálculo atual, só para ver). */
   const fonte = useMemo(
     () => (dados ? fonteDaConvocacao(dados, e.calculo?.resultado) : null),
@@ -1074,20 +1140,63 @@ export function PrepararEdital({ conducao, e }) {
     () => (fonte ? gruposDaConvocacao(fonte.resultado, dados.convocados) : []),
     [fonte, dados],
   );
+  const entrada = useMemo(
+    () => (dados ? entradaDoResumo(dados, fonte, grupos) : null),
+    [dados, fonte, grupos],
+  );
+  const editalId = dados?.edital?.id;
+  /* Outro edital: o formulário fecha (abre sozinho se o edital não está configurado). */
+  useEffect(() => setEditando(false), [editalId]);
   const acao = e.acao?.tipo || "";
   if (!dados || e.carregandoEdital) return null;
+  const roteiro = dados.configuracao?.roteiro || null;
+
+  function ir(destino) {
+    if (destino === "classificacao")
+      irParaLink({
+        view: "classificacao",
+        edital: { id: dados.edital?.id, titulo: dados.edital?.edital || "" },
+      });
+    else if (destino === "roteiro" && roteiro) aoEditarRoteiro?.(roteiro);
+    else if (destino === "convocacao") rolarAte(refConvocacao.current);
+    else {
+      setEditando(true);
+      rolarAte(refConfiguracao.current);
+    }
+  }
+  function podeIr(destino) {
+    if (destino === "classificacao") return Boolean(dados.pode_gerar_lista);
+    if (destino === "convocacao") return true;
+    if (destino === "roteiro") return Boolean(aoEditarRoteiro && roteiro);
+    return Boolean(dados.pode_editar);
+  }
+
   return (
     <>
+      <ResumoDasRegras
+        key={`regras-${dados.edital?.id}`}
+        entrada={entrada}
+        aoIr={ir}
+        podeIr={podeIr}
+        detalhes={<ConvocacaoDaClassificacao dados={dados} grupos={grupos} />}
+      />
       <PassoDeConfiguracao
         key={`cfg-${dados.edital?.id}`}
+        refDaSecao={refConfiguracao}
         dados={dados}
-        grupos={grupos}
         roteiros={e.roteiros.lista}
         salvando={acao === "configurar"}
-        aoSalvar={conducao.configurar}
+        aoSalvar={async (p) => {
+          const resultado = await conducao.configurar(p);
+          if (resultado?.ok) setEditando(false);
+          return resultado;
+        }}
+        editando={editando}
+        setEditando={setEditando}
       />
       <PassoDeConvocacao
         key={`conv-${dados.edital?.id}`}
+        refDaSecao={refConvocacao}
         dados={dados}
         fonte={fonte}
         grupos={grupos}

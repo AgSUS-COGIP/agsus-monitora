@@ -3471,10 +3471,55 @@ export const VERBETES_AYA = Object.freeze([
       "onde ficou a convocacao",
     ],
     resposta:
-      "Em Conduzir entrevistas › Preparar ficam a configuração do edital (roteiro, modo de lançamento, composição e membros da banca, e, só para ler, a regra de convocação, o desempate e as vagas da Classificação) e a convocação (a lista de convocação da Classificação, por vaga). Abaixo, os roteiros de entrevista da área. Quem não tem Editor vê tudo, sem os botões. Edital ainda não configurado mostra o aviso na Fila, com o atalho para Preparar.",
+      "Em Conduzir entrevistas › Preparar ficam, em cima, as Regras da entrevista (o resumo em linguagem simples: quem é chamado, como a nota é calculada, quem avalia e o desempate, cada um com o botão Editar), depois a configuração do edital (roteiro, modo de lançamento, composição e membros da banca, com as competências que cada membro avalia) e a convocação (a lista de convocação da Classificação, por vaga). Abaixo, os roteiros de entrevista da área. Quem não tem Editor vê tudo, sem os botões. Edital ainda não configurado mostra o aviso na Fila, com o atalho para Preparar.",
     fato: "",
     fonte:
       "src/modulos/entrevistas/conducao.jsx; src/modulos/entrevistas/conduzir.tsx",
+    abrir: "conduzir-entrevistas",
+  },
+  {
+    arquivo: "regras-das-entrevistas.md",
+    titulo: "Resumo das regras da entrevista",
+    perguntas: [
+      "regras da entrevista",
+      "resumo das regras da entrevista",
+      "as regras estao confusas",
+      "quem e chamado para a entrevista",
+      "quantos sao chamados por vaga",
+      "como a nota da entrevista e calculada em resumo",
+      "quem avalia na entrevista",
+      "chama ate",
+      "ver detalhes da regra da entrevista",
+      "onde mudo a regra da entrevista",
+    ],
+    resposta:
+      'Em Conduzir entrevistas › Preparar, o bloco "Regras da entrevista" explica o edital em linguagem simples, montado com os dados reais da regra de classificação, do roteiro e da banca. "Quem é chamado para a entrevista": quantas pessoas por vaga imediata (e as exceções por cargo, como "Enfermeiro: 6 pessoas"), até que posição nas vagas só de cadastro reserva e se quem empata com o último chamado entra, com a tabelinha por vaga (vagas imediatas e até que posição chama) e quantos da lista já estão na ficha. "Como a nota é calculada": quantas notas cada avaliador dá (os aspectos) e em que escala, a média, o que deixa inapto (mínimo por competência, mínimo total) e o que acontece com quem falta. "Quem avalia": cada banca com os membros e as competências de cada um. "Desempate": os critérios da Classificação, na ordem. Cada bloco tem o botão Editar que leva aonde aquilo muda: Classificação (convocação e desempate), o roteiro (a nota), a configuração (banca); "Ver convocação" desce até a convocação. Os detalhes técnicos (a regra em uma linha, de onde vêm as vagas) ficam em "Ver detalhes". Quem não pode mudar não vê o Editar.',
+    fato: "O resumo das regras da entrevista sai da regra de classificação, do roteiro e da banca do edital; para mudar, use o Editar de cada bloco.",
+    fonte:
+      "src/lib/resumo-da-entrevista.ts; src/modulos/entrevistas/resumo-das-regras.tsx; src/modulos/entrevistas/conducao.jsx",
+    abrir: "conduzir-entrevistas",
+  },
+  {
+    arquivo: "regras-das-entrevistas.md",
+    titulo: "Avaliador por competência",
+    perguntas: [
+      "avaliador por competencia",
+      "avaliador que avalia so uma competencia",
+      "avaliador avalia apenas trabalho em equipe",
+      "competencia avaliada por 2 pessoas",
+      "competencias que avalia",
+      "so estas",
+      "todas as competencias",
+      "nao avalia neste edital",
+      "avaliada por",
+      "ninguem avalia esta competencia",
+      "faltam notas avaliador por competencia",
+    ],
+    resposta:
+      'Na configuração do edital (Conduzir entrevistas › Preparar › Editar configuração), cada membro da banca tem "Competências que avalia": Todas (o padrão) ou "Só estas", marcando as competências dele — por exemplo, o colaborador do DSEI que avalia só "Trabalho em equipe". Cada competência precisa de ao menos um avaliador em cada banca ("Na banca 1, ninguém avalia …" impede salvar), e não dá para tirar de alguém uma competência em que ele já deu nota (apague as notas antes). A nota da competência é a média só dos avaliadores que a avaliam. Na ficha de notas, na aba do avaliador, as competências que não são dele aparecem esmaecidas, com "avaliada por …", e a digitação passa direto por elas; no modo Por competência, só aparecem os avaliadores daquela competência. Os contadores ("0/3", "faltam N notas", "X de Y notas") contam só o que cada um deve lançar. O banco recusa a nota de um avaliador numa competência que não é dele ("… não avalia … neste edital"). Edital sem essa configuração continua igual: todos avaliam todas. No edital de treinamento, o Avaliador Teste 2 (DSEI) avalia só "Trabalho em equipe" (depois do reinício, se ele já tinha nota em outra competência).',
+    fato: "Cada membro da banca avalia todas as competências (padrão) ou só as marcadas; a média da competência é só de quem a avalia, e o banco recusa nota fora da competência do avaliador.",
+    fonte:
+      "supabase/migrations/20261008170000_avaliador_por_competencia.sql; src/lib/conducao-de-entrevista.js; src/modulos/entrevistas/competencias-do-membro.tsx; src/modulos/entrevistas/ficha.jsx; python/monitora/entrevistas/calculo.py",
     abrir: "conduzir-entrevistas",
   },
   {
@@ -3670,7 +3715,7 @@ export const VERBETES_AYA = Object.freeze([
       "de onde vem o numero de vagas da entrevista",
     ],
     resposta:
-      'As vagas imediatas não se digitam na entrevista. A configuração (Conduzir entrevistas › Preparar) mostra, só para ler, a regra de convocação da Classificação (versão vigente) e, por vaga, as vagas, até que posição se convoca e de onde vêm as vagas, com o botão para a tela onde se mudam: o quadro de vagas do edital (Editais), a configuração da convocação (Lista de aprovados) ou os percentuais da regra (Classificação). Vaga sem quadro aparece como "sem quadro de vagas": cadastre o quadro no edital. A regra de convocação (múltiplo, posição do cadastro reserva, exceções por cargo) muda em Classificação › Regra. O que a entrevista guardava antes (vagas digitadas e regra própria) ficou no banco, sem uso.',
+      'As vagas imediatas não se digitam na entrevista. Em Conduzir entrevistas › Preparar, o resumo das regras mostra a tabelinha por vaga (vagas imediatas e até que posição chama) e, em "Ver detalhes", a regra de convocação da Classificação (versão vigente) e, por vaga, as vagas, até que posição se convoca e de onde vêm as vagas, com o botão para a tela onde se mudam: o quadro de vagas do edital (Editais), a configuração da convocação (Lista de aprovados) ou os percentuais da regra (Classificação). Vaga sem quadro aparece como "sem quadro de vagas": cadastre o quadro no edital. A regra de convocação (múltiplo, posição do cadastro reserva, exceções por cargo) muda em Classificação › Regra. O que a entrevista guardava antes (vagas digitadas e regra própria) ficou no banco, sem uso.',
     fato: "",
     fonte:
       "src/modulos/entrevistas/conducao.jsx; src/lib/convocacao-da-entrevista.js; src/lib/classificacao/vagas.js",
@@ -3690,7 +3735,7 @@ export const VERBETES_AYA = Object.freeze([
       "lancar por competencia",
     ],
     resposta:
-      'Na Fila de Conduzir entrevistas, abra um convocado: a ficha ocupa a tela inteira (fica só o menu lateral). No cabeçalho: o nome e o código, a vaga, os chips (nota da análise, modalidade, roteiro e aspectos), os detalhes no "i" (modo de lançamento, nota e parecer gravados, nome do roteiro), o comparecimento (Compareceu / Faltou), a banca quando há mais de uma e Anterior / "1 de 15" / Próximo. O lançamento padrão é Por avaliador, como a secretaria passando a limpo a folha de cada avaliador: uma aba por avaliador ("Avaliador · origem", com o check quando está completo) e, nela, a matriz com as competências nas linhas (e o mínimo de cada uma) e os aspectos nas colunas (Conceitua, Propriedade, Profundidade); sem aspectos, uma coluna "Nota". A média da linha aparece num chip: vermelho abaixo do mínimo, verde ok. Completo um avaliador, a ficha passa sozinha ao próximo; com todos completos, o foco vai para "Salvar e abrir o próximo". "Por competência" (para lançar ao vivo) troca as abas pelas competências e as linhas pelos avaliadores; a escolha fica guardada no navegador. Digitar a primeira nota marca Compareceu. Com Faltou, a matriz some e fica a confirmação: se a ausência elimina no roteiro, parecer Inapto e total 0. A lateral mostra o resultado na hora, com as mesmas regras do banco: o total sobre o máximo num anel com a marca do mínimo, a nota da banca em cada competência em barras com a marca do mínimo, o parecer (Apto verde, Inapto vermelho, Sem parecer cinza) com os motivos e "X de Y notas". Os níveis da escala ficam numa linha embaixo da matriz e na dica da célula em foco. No celular, um avaliador por vez, uma competência por linha com as células grandes e o teclado numérico. A cada gravação o banco recalcula o resultado, que aparece no Painel de entrevistas; toda nota lançada, corrigida ou apagada vai para o histórico. O cartão da fila mostra as notas lançadas sobre as esperadas.',
+      'Na Fila de Conduzir entrevistas, abra um convocado: a ficha ocupa a tela inteira (fica só o menu lateral). No cabeçalho: o nome e o código, a vaga, os chips (nota da análise, modalidade, roteiro e aspectos), os detalhes no "i" (modo de lançamento, nota e parecer gravados, nome do roteiro), o comparecimento (Compareceu / Faltou), a banca quando há mais de uma e Anterior / "1 de 15" / Próximo. O lançamento padrão é Por avaliador, como a secretaria passando a limpo a folha de cada avaliador: uma aba por avaliador ("Avaliador · origem", com o check quando está completo) e, nela, a matriz com as competências nas linhas (e o mínimo de cada uma) e os aspectos nas colunas (Conceitua, Propriedade, Profundidade); sem aspectos, uma coluna "Nota". A média da linha aparece num chip: vermelho abaixo do mínimo, verde ok. Com avaliador por competência, as competências que não são do avaliador aparecem esmaecidas ("avaliada por …") e não contam nas notas que faltam. Completo um avaliador, a ficha passa sozinha ao próximo; com todos completos, o foco vai para "Salvar e abrir o próximo". "Por competência" (para lançar ao vivo) troca as abas pelas competências e as linhas pelos avaliadores; a escolha fica guardada no navegador. Digitar a primeira nota marca Compareceu. Com Faltou, a matriz some e fica a confirmação: se a ausência elimina no roteiro, parecer Inapto e total 0. A lateral mostra o resultado na hora, com as mesmas regras do banco: o total sobre o máximo num anel com a marca do mínimo, a nota da banca em cada competência em barras com a marca do mínimo, o parecer (Apto verde, Inapto vermelho, Sem parecer cinza) com os motivos e "X de Y notas". Os níveis da escala ficam numa linha embaixo da matriz e na dica da célula em foco. No celular, um avaliador por vez, uma competência por linha com as células grandes e o teclado numérico. A cada gravação o banco recalcula o resultado, que aparece no Painel de entrevistas; toda nota lançada, corrigida ou apagada vai para o histórico. O cartão da fila mostra as notas lançadas sobre as esperadas.',
     fato: "",
     fonte:
       "src/modulos/entrevistas/ficha.jsx; src/modulos/entrevistas/matriz-de-notas.tsx; src/modulos/entrevistas/resultado-da-ficha.tsx; src/modulos/entrevistas/cabecalho-da-ficha.tsx; src/lib/conducao-de-entrevista.js",
