@@ -6,7 +6,7 @@ jobs só imprimem contagens, códigos (vaga, edital, ids) e números de edital.
 Toda mensagem passa por `mascarar` antes de sair (inclusive as de erro do
 Selenium e do Supabase, que podem trazer trecho de página ou de resposta):
 e-mails, CPFs, telefones, tokens JWT, tokens dos links da Empregare
-(tokenCandidato, candidatura, id e o identificador interno da vaga) e os
+(tokenCandidato, token, pessoa, arquivo, nome, respostaID, perguntaID, candidatura, id, vaga e o identificador interno da vaga) e os
 valores das variáveis secretas viram marcadores. O logging de `monitora.registro` aplica isto em todo registro.
 
 Testes: tests/python/test_monitora.py e tests/python/test_robo_empregare.py.
@@ -24,7 +24,12 @@ _JWT = re.compile(r"eyJ[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}")
 # vaga da Empregare têm até 7 dígitos e passam.
 _DIGITOS_LONGOS = re.compile(r"(?<!\d)\d{10,}(?!\d)")
 # Links da área logada da Empregare: tokens do candidato e identificadores internos.
-_TOKEN_EMPREGARE = re.compile(r"(?i)\b(tokenCandidato|candidatura|id)=[^&\s\"'<>]+")
+_TOKEN_EMPREGARE = re.compile(
+    r"(?i)\b(tokenCandidato|candidatura|id|token|pessoa|arquivo|nome|respostaID|questionarioRespostaID|perguntaID|vaga)"
+    r"=[^&\s\"'<>]+"
+)
+# GetRespostaDetails/<respostaID>: o identificador da resposta no caminho.
+_RESPOSTA_EMPREGARE = re.compile(r"(?i)(/GetRespostaDetails/)[^/?#\s\"'<>]+")
 _VAGA_EMPREGARE = re.compile(r"(/empresa/vagas/candidaturas/)[^/?#\s\"'<>]+")
 _LIMITE = 600
 
@@ -51,6 +56,7 @@ def mascarar(texto, credenciais=None):
     t = _JWT.sub("<token>", t)
     t = _TOKEN_EMPREGARE.sub(r"\1=<token>", t)
     t = _VAGA_EMPREGARE.sub(r"\1<id>", t)
+    t = _RESPOSTA_EMPREGARE.sub(r"\1<id>", t)
     t = _EMAIL.sub("<e-mail>", t)
     t = _CPF.sub("<cpf>", t)
     t = _TELEFONE.sub("<telefone>", t)

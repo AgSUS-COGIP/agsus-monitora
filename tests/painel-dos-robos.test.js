@@ -596,3 +596,59 @@ describe("acompanhamento do pedido", () => {
     );
   });
 });
+
+describe("robô da Empregare: modo Sondar e Guardar links dos anexos", () => {
+  it("sondar pede um único código de vaga, sem editais, e limite de 1 a 3", () => {
+    expect(
+      validarOpcoes(EMPREGARE, {
+        modo: "sondar",
+        vagas: "179698",
+        limite: "2",
+      }),
+    ).toEqual({
+      opcoes: { modo: "sondar", editais: [], vagas: ["179698"], limite: 2 },
+    });
+    for (const bruto of [
+      { modo: "sondar" },
+      { modo: "sondar", vagas: "179698 180231" },
+      { modo: "sondar", vagas: "179698", editais: ["93/2026"] },
+    ])
+      expect(validarOpcoes(EMPREGARE, bruto).erro).toBe("sondar_uma_vaga");
+    expect(
+      validarOpcoes(EMPREGARE, {
+        modo: "sondar",
+        vagas: "179698",
+        limite: "4",
+      }),
+    ).toMatchObject({ erro: "limite_invalido" });
+  });
+
+  it("anexos só no robô da Empregare e nos modos Normal e Forçar; vai ao banco como booleano", () => {
+    expect(OPCOES_DOS_ROBOS.empregare.anexos).toBe(true);
+    const conferido = validarOpcoes(EMPREGARE, {
+      modo: "forcar",
+      anexos: true,
+    });
+    expect(conferido.opcoes).toEqual({
+      modo: "forcar",
+      editais: [],
+      vagas: [],
+      limite: null,
+      anexos: true,
+    });
+    expect(inputsDoPedido({ opcoes: conferido.opcoes })).toEqual({
+      modo: "forcar",
+      anexos: true,
+    });
+    expect(validarOpcoes(EMPREGARE, { modo: "seco", anexos: true }).erro).toBe(
+      "anexos_no_modo",
+    );
+    expect(
+      validarOpcoes(EMPREGARE, { modo: "normal", anexos: false }).opcoes,
+    ).toEqual({ modo: "normal", editais: [], vagas: [], limite: null });
+    expect(validarOpcoes(CONFERENCIAS, { anexos: true }).erro).toBe(
+      "opcao_nao_aceita",
+    );
+    expect(validarOpcoes(CONFERENCIAS, { anexos: false }).erro).toBeUndefined();
+  });
+});
