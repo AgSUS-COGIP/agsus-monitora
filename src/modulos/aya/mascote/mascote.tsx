@@ -1,5 +1,6 @@
 /*
-  A mascote da Aya: a arara-azul viva. Desenho em desenho.tsx; movimento em
+  A mascote da Aya: a arara-azul viva, sempre de corpo inteiro. Desenho em
+  desenho.tsx (fiel à ilustração de referência); movimento em
   mascote.css (transform/opacity, por `data-estado`) e, para o que é sorteado
   (piscar a cada 3–7 s, arrepiar as penas da cabeça), Web Animations direto
   no elemento — nada disso passa pelo React a cada quadro.
@@ -38,17 +39,44 @@ import {
   DURACAO_PADRAO_MS,
   type EstadoDaMascote,
 } from "../../../lib/estado-da-aya.ts";
-import {
-  DesenhoCompleto,
-  DesenhoSimples,
-  VIEWBOX_DO_CORPO,
-  VIEWBOX_DO_RETRATO,
-  VIEWBOX_SIMPLES,
-} from "./desenho.tsx";
+/* Começa em 0 0: os pivôs do CSS (transform-box: view-box) contam da origem. */
+export const VIEWBOX = "0 0 200 190";
+
+/*
+  O desenho (desenho.tsx + contornos.ts, ~60 KB) vem num pedaço próprio do
+  bundle, carregado na primeira arara montada. Até chegar, o <svg> já ocupa
+  o tamanho final (sem pulo de layout), vazio.
+*/
+type ModuloDoDesenho = typeof import("./desenho.tsx");
+let desenho: ModuloDoDesenho | null = null;
+let carregamento: Promise<ModuloDoDesenho> | null = null;
+const ouvintesDoDesenho = new Set<() => void>();
+
+/** Carrega o desenho (uma vez); os testes e a prévia podem esperar por ele. */
+export function carregarDesenhoDaMascote() {
+  carregamento ??= import("./desenho.tsx").then((modulo) => {
+    desenho = modulo;
+    for (const ouvinte of [...ouvintesDoDesenho]) ouvinte();
+    return modulo;
+  });
+  return carregamento;
+}
+
+function assinarDesenho(ouvinte: () => void) {
+  ouvintesDoDesenho.add(ouvinte);
+  void carregarDesenhoDaMascote().catch(() => {
+    /* sem o pedaço (rede): a arara fica vazia, nada quebra */
+  });
+  return () => ouvintesDoDesenho.delete(ouvinte);
+}
+const obterDesenho = () => desenho;
 import { assinarPedidoDaAya, obterPedidoDaAya } from "./estado.ts";
 import "./mascote.css";
 
-export const TAMANHO_DA_VERSAO_SIMPLES = 32;
+/* Abaixo disto (px), a versão simples (contornos chapados). */
+export const TAMANHO_DA_VERSAO_SIMPLES = 40;
+/* A arara do canto (botão da Aya), em pé no poleiro: px de altura. */
+export const ALTURA_DA_ARARA = 84;
 const PISCADA_MS = 170;
 
 export interface PropsDaMascote {
@@ -56,10 +84,9 @@ export interface PropsDaMascote {
   estado?: EstadoDaMascote | null;
   /** O que o painel da Aya está fazendo: "falando", "pensando"… */
   proprio?: EstadoDaMascote | null;
-  /** Largura em px (a altura acompanha). ≤32px usa a versão simples. */
+  /** Lado em px (a arara inteira cabe no quadrado). Abaixo de 40px, versão simples. */
   tamanho?: number;
-  /** "corpo" (inteira) ou "retrato" (cabeça e peito, para o círculo). */
-  enquadramento?: "corpo" | "retrato";
+  /** Em pé no poleiro, com a sombra de contato (padrão: sim; os fogos voam sem). */
   poleiro?: boolean;
   /** Ouve o evento global `aya:estado` (padrão: sim). */
   ouvirAya?: boolean;
@@ -123,7 +150,6 @@ export function Mascote({
   estado: fixo = null,
   proprio = null,
   tamanho = 64,
-  enquadramento = "corpo",
   poleiro = true,
   ouvirAya = true,
   atencao = true,
@@ -137,7 +163,12 @@ export function Mascote({
 }: PropsDaMascote) {
   const prefixo = `arara${useId().replace(/[^a-zA-Z0-9]/g, "")}`;
   const refRaiz = useRef<SVGSVGElement | null>(null);
-  const simples = tamanho <= TAMANHO_DA_VERSAO_SIMPLES;
+  const simples = tamanho < TAMANHO_DA_VERSAO_SIMPLES;
+  const modulo = useSyncExternalStore(
+    assinarDesenho,
+    obterDesenho,
+    obterDesenho,
+  );
   const livre = !fixo;
 
   const global = useSyncExternalStore(
@@ -376,11 +407,7 @@ export function Mascote({
     return () => documento.removeEventListener("visibilitychange", marcar);
   }, [janela]);
 
-  const viewBox = simples
-    ? VIEWBOX_SIMPLES
-    : enquadramento === "retrato"
-      ? VIEWBOX_DO_RETRATO
-      : VIEWBOX_DO_CORPO;
+  const viewBox = VIEWBOX;
   const classes = ["mascote", className].filter(Boolean).join(" ");
   return (
     <svg
@@ -392,7 +419,6 @@ export function Mascote({
       data-estado={visivel}
       data-pedido={pedido}
       data-versao={simples ? "simples" : "completa"}
-      data-enquadramento={enquadramento}
       data-reduzido={reduzido ? "sim" : undefined}
       role={rotulo ? "img" : undefined}
       aria-label={rotulo || undefined}
@@ -400,13 +426,10 @@ export function Mascote({
       focusable="false"
       xmlns="http://www.w3.org/2000/svg"
     >
-      {simples ? (
-        <DesenhoSimples p={prefixo} />
+      {!modulo ? null : simples ? (
+        <modulo.DesenhoSimples p={prefixo} />
       ) : (
-        <DesenhoCompleto
-          p={prefixo}
-          poleiro={poleiro && enquadramento === "corpo"}
-        />
+        <modulo.DesenhoCompleto p={prefixo} poleiro={poleiro} />
       )}
     </svg>
   );
