@@ -73,7 +73,8 @@ export function historicoDoEditor(valor: unknown): AlteracaoDoPonto[] {
       (item: unknown) =>
         !registroDoEditor(item) ||
         (typeof item.id !== "string" && typeof item.id !== "number") ||
-        typeof item.acao !== "string",
+        typeof item.acao !== "string" ||
+        (item.desfeito != null && typeof item.desfeito !== "boolean"),
     )
   )
     return [];

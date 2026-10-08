@@ -70,6 +70,7 @@ describe("respostas externas do editor de coordenadas", () => {
     expect(
       correcaoDesfazivel(historicoDoEditor([{ ...item, desfeito: true }])),
     ).toBeNull();
+    expect(historicoDoEditor([{ ...item, desfeito: "sim" }])).toEqual([]);
   });
   it("não promove uma alteração antiga quando a mais recente é malformada", () => {
     expect(

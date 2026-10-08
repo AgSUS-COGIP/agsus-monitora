@@ -16,7 +16,8 @@ integração de Projetos. O adaptador da Saúde Indígena também permanece JSX.
 
 As respostas das RPCs entram como dados externos: pendências precisam ser listas
 de registros, candidatos precisam de fonte e posições escalares, e textos da tela
-não aceitam objetos. Histórico com entrada sem identidade ou ação é rejeitado
+não aceitam objetos. Histórico com entrada sem identidade ou ação, ou com flag de
+desfazer em tipo inválido, é rejeitado
 inteiro, para não tornar uma alteração antiga a última disponível para desfazer.
 Coordenada anterior inválida impede desfazer na interface. Gravação precisa devolver
 um registro com os campos escalares de posição e conferência nos tipos esperados.
