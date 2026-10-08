@@ -1,3 +1,9 @@
+import type { SupabaseClient } from "@supabase/supabase-js";
+import type {
+  CarregadorDeMunicipios,
+  EscolhaDoMapa,
+  ResultadoDosMunicipios,
+} from "./tipos.ts";
 /*
   A CARGA DOS LUGARES DAS VAGAS (mapa de Projetos), sem React.
 
@@ -17,12 +23,15 @@
 */
 import { aplicarCoordenada } from "../../lib/coordenadas-dos-projetos.js";
 import { exigirSessao } from "../../lib/sessao.js";
-import { municipiosDaResposta } from "../../lib/visao-geral-da-area.js";
+import { municipiosDaResposta } from "../../lib/visao-geral-da-area.ts";
 
 export const RPC_DOS_MUNICIPIOS = "listar_municipios_das_vagas_da_area";
 export const CACHE_TTL_MS = 5 * 60_000;
 
-export const ESCOLHA_INICIAL = Object.freeze({ projeto: "", agrupar: false });
+export const ESCOLHA_INICIAL: EscolhaDoMapa = Object.freeze({
+  projeto: "",
+  agrupar: false,
+});
 
 /**
  * @param {{obterSupabase?: () => import("@supabase/supabase-js").SupabaseClient | null, relogio?: () => number}} [opcoes]
@@ -30,19 +39,25 @@ export const ESCOLHA_INICIAL = Object.freeze({ projeto: "", agrupar: false });
 export function criarCarregadorDeMunicipios({
   obterSupabase = () => null,
   relogio = () => Date.now(),
-} = {}) {
-  const guardados = new Map();
-  const emVoo = new Map();
+}: {
+  obterSupabase?: () => SupabaseClient | null;
+  relogio?: () => number;
+} = {}): CarregadorDeMunicipios {
+  const guardados = new Map<
+    string,
+    { em: number; resultado: ResultadoDosMunicipios }
+  >();
+  const emVoo = new Map<string, Promise<ResultadoDosMunicipios>>();
   let escolha = ESCOLHA_INICIAL;
 
-  const emCache = (area) => {
+  const emCache = (area: string) => {
     const guardado = guardados.get(area);
     return guardado && relogio() - guardado.em < CACHE_TTL_MS
       ? guardado.resultado
       : null;
   };
 
-  async function buscar(area) {
+  async function buscar(area: string): Promise<ResultadoDosMunicipios> {
     const supabase = obterSupabase();
     if (!supabase)
       return { municipios: [], indisponivel: false, erro: "Sem conexão." };
@@ -65,7 +80,13 @@ export function criarCarregadorDeMunicipios({
       return {
         municipios: [],
         indisponivel: false,
-        erro: erro?.message || "Não foi possível carregar os municípios.",
+        erro:
+          erro &&
+          typeof erro === "object" &&
+          "message" in erro &&
+          typeof erro.message === "string"
+            ? erro.message
+            : "Não foi possível carregar os municípios.",
       };
     }
   }
@@ -75,13 +96,11 @@ export function criarCarregadorDeMunicipios({
     carregar(area) {
       const guardado = emCache(area);
       if (guardado) return Promise.resolve(guardado);
-      if (!emVoo.has(area)) {
-        emVoo.set(
-          area,
-          buscar(area).finally(() => emVoo.delete(area)),
-        );
-      }
-      return emVoo.get(area);
+      const pendente = emVoo.get(area);
+      if (pendente) return pendente;
+      const promessa = buscar(area).finally(() => emVoo.delete(area));
+      emVoo.set(area, promessa);
+      return promessa;
     },
     corrigirCoordenada(lugar, latitude, longitude) {
       for (const [area, guardado] of guardados)

@@ -31,6 +31,7 @@ export function travarRolagemDaPagina() {
   volta-ao-brasil.js, ou o modo de edição de coordenadas) não sai — o
   seguinte sai. O CSS é o `.mapa-si--tela-cheia` (mapa-saude-indigena.css).
 */
+/** @returns {[boolean, import('react').ReactElement]} */
 export function usarTelaCheia() {
   const [telaCheia, definirTelaCheia] = useState(false);
 

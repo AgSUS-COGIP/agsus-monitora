@@ -4,8 +4,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   RPC_DOS_MUNICIPIOS,
   criarCarregadorDeMunicipios,
-} from "../../src/modulos/mapa-de-projetos/carregador.js";
-import { MapaDeProjetos } from "../../src/modulos/mapa-de-projetos/mapa-de-projetos.jsx";
+} from "../../src/modulos/mapa-de-projetos/carregador.ts";
+import { MapaDeProjetos } from "../../src/modulos/mapa-de-projetos/mapa-de-projetos.tsx";
 import { clicar, digitar, esperar } from "../componentes/interacoes.js";
 import { criarLeafletFalso } from "./leaflet-falso.js";
 

@@ -1,3 +1,11 @@
+import type {
+  MunicipioDoMapa,
+  PontoDoMunicipio,
+  ProjetoDoMapa,
+  ProjetoComLugares,
+  EditalDoLugar,
+} from "../modulos/mapa-de-projetos/tipos.ts";
+import type { LinhaDoMonitoramento } from "../componentes/tipos-do-monitoramento.ts";
 /*
   A Visão geral de cada área, sem DOM nem rede.
 
@@ -28,23 +36,34 @@ import { raioDaBolha } from "./mapa-render.js";
 import { nomeDaArea } from "./menu-lateral.ts";
 import { AREA_SAUDE_INDIGENA } from "./responsavel-do-edital.js";
 
-const num = (valor) => {
+const num = (valor: unknown) => {
+  if (typeof valor !== "number" && typeof valor !== "string") return 0;
   const numero = Number(valor || 0);
   return Number.isFinite(numero) ? numero : 0;
 };
-const texto = (valor) => String(valor ?? "").trim();
-const fmtNumero = (valor) => num(valor).toLocaleString("pt-BR");
+const texto = (valor: unknown) =>
+  typeof valor === "string" || typeof valor === "number"
+    ? String(valor).trim()
+    : "";
+const registro = (valor: unknown): Record<string, unknown> =>
+  valor && typeof valor === "object" && !Array.isArray(valor)
+    ? (valor as Record<string, unknown>)
+    : {};
+const listaValida = <T>(
+  valor: readonly T[] | null | undefined,
+): readonly T[] => (Array.isArray(valor) ? valor : []);
+const fmtNumero = (valor: unknown) => num(valor).toLocaleString("pt-BR");
 
 export const MAPA_DOS_DSEIS = "dsei";
 export const MAPA_DOS_MUNICIPIOS = "municipios";
 
-const MAPA_POR_AREA = Object.freeze({
+const MAPA_POR_AREA: Readonly<Record<string, string>> = Object.freeze({
   [AREA_SAUDE_INDIGENA]: MAPA_DOS_DSEIS,
   projetos: MAPA_DOS_MUNICIPIOS,
 });
 
 /** O mapa da Visão geral da área: `"dsei"`, `"municipios"` ou `""` (sem mapa). */
-export function mapaDaVisaoGeral(area) {
+export function mapaDaVisaoGeral(area: string) {
   return MAPA_POR_AREA[texto(area)] ?? "";
 }
 
@@ -54,7 +73,7 @@ export function mapaDaVisaoGeral(area) {
   DSEI/CASAI"); as outras áreas dizem o nome delas.
 */
 export function cabecalhoDaVisaoGeral(
-  area,
+  area: string,
   { titulo = "", subtitulo = "" } = {},
 ) {
   if (texto(area) === AREA_SAUDE_INDIGENA) return { titulo, subtitulo };
@@ -79,7 +98,7 @@ export const TEXTOS_DO_MAPA = Object.freeze({
   }),
 });
 
-export const plural = (total, um, varios) =>
+export const plural = (total: unknown, um: string, varios: string) =>
   `${num(total).toLocaleString("pt-BR")} ${num(total) === 1 ? um : varios}`;
 
 // ── Projetos ─────────────────────────────────────────────────────────────
@@ -109,11 +128,11 @@ export const PROJETOS_DO_MAPA = Object.freeze([
   Object.freeze({ serie: 6, nome: "CCE", palavra: "cce" }),
 ]);
 
-const semAcento = (valor) =>
+const semAcento = (valor: unknown) =>
   texto(valor).normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
 
 /** { nome, serie } do projeto (unidade do edital). */
-export function projetoDoMapa(unidade) {
+export function projetoDoMapa(unidade: unknown): ProjetoDoMapa {
   const chave = semAcento(unidade);
   const conhecido = chave
     ? PROJETOS_DO_MAPA.find((projeto) =>
@@ -124,13 +143,17 @@ export function projetoDoMapa(unidade) {
   return { nome: texto(unidade) || "Sem projeto", serie: 0 };
 }
 
-const ordemDoProjeto = (a, b) =>
+const ordemDoProjeto = (a: ProjetoDoMapa, b: ProjetoDoMapa) =>
   (a.serie || 99) - (b.serie || 99) || a.nome.localeCompare(b.nome, "pt-BR");
 
 // ── Municípios ───────────────────────────────────────────────────────────
 
-const numeroOuNulo = (valor) => {
-  if (valor === null || valor === undefined || valor === "") return null;
+const numeroOuNulo = (valor: unknown) => {
+  if (
+    (typeof valor !== "number" && typeof valor !== "string") ||
+    texto(valor) === ""
+  )
+    return null;
   const numero = Number(valor);
   return Number.isFinite(numero) ? numero : null;
 };
@@ -149,7 +172,7 @@ const numeroOuNulo = (valor) => {
   quando a resposta não traz o campo (banco antes da migration: o mapa usa a
   tabela de src/lib/coordenadas-dos-municipios.js — tirar depois de aplicada).
 */
-const coordenadaDaLinha = (linha) => {
+const coordenadaDaLinha = (linha: Record<string, unknown>) => {
   if (!linha || !Object.hasOwn(linha, "latitude")) return undefined;
   const latitude = numeroOuNulo(linha.latitude);
   const longitude = numeroOuNulo(linha.longitude);
@@ -157,14 +180,16 @@ const coordenadaDaLinha = (linha) => {
   return { latitude, longitude, origem: texto(linha.coordenada_origem) };
 };
 
-export function municipiosDaResposta(dados) {
+export function municipiosDaResposta(dados: unknown): MunicipioDoMapa[] {
   return (Array.isArray(dados) ? dados : [])
-    .map((linha) => {
+    .map((valor: unknown): MunicipioDoMapa => {
+      const linha = registro(valor);
       const uf = texto(linha?.uf).toUpperCase();
       const municipioUf = texto(linha?.municipio_uf);
       const nivel = !municipioUf && uf ? "uf" : "municipio";
       const editais = (Array.isArray(linha?.editais) ? linha.editais : [])
-        .map((edital) => {
+        .map((valor: unknown): EditalDoLugar => {
+          const edital = registro(valor);
           const projeto = projetoDoMapa(edital?.projeto);
           return {
             id: texto(edital?.id),
@@ -186,7 +211,7 @@ export function municipiosDaResposta(dados) {
               { serie: b.serie, nome: b.projeto },
             ) || a.edital.localeCompare(b.edital, "pt-BR"),
         );
-      const projetos = new Map();
+      const projetos = new Map<string, ProjetoDoMapa>();
       for (const nome of Array.isArray(linha?.projetos) ? linha.projetos : [])
         projetos.set(projetoDoMapa(nome).nome, projetoDoMapa(nome));
       for (const edital of editais)
@@ -219,7 +244,9 @@ export function municipiosDaResposta(dados) {
   O nome do lugar: "Seropédica/RJ", ou "Pará (estado)" quando o edital só diz
   a UF.
 */
-export function rotuloDoLugar(lugar) {
+export function rotuloDoLugar(
+  lugar: Pick<MunicipioDoMapa, "nivel" | "municipioUf" | "uf">,
+) {
   if (lugar?.nivel !== "uf") return texto(lugar?.municipioUf);
   const nome = coordenadasDaUf(lugar.uf)?.nome || lugar.uf;
   return `${nome} (estado)`;
@@ -229,7 +256,10 @@ export function rotuloDoLugar(lugar) {
   As vagas publicadas, por extenso: "4 vagas + cadastro reserva",
   "Cadastro reserva" ou "" quando o edital não diz.
 */
-export function textoDasVagas({ vagas = null, cadastroReserva = false } = {}) {
+export function textoDasVagas({
+  vagas = null,
+  cadastroReserva = false,
+}: { vagas?: number | null; cadastroReserva?: boolean } = {}) {
   const imediatas = num(vagas) > 0 ? plural(vagas, "vaga", "vagas") : "";
   if (imediatas && cadastroReserva) return `${imediatas} + cadastro reserva`;
   if (imediatas) return imediatas;
@@ -240,9 +270,11 @@ export function textoDasVagas({ vagas = null, cadastroReserva = false } = {}) {
   Os projetos presentes, na ordem das séries, com quantos lugares cada um tem
   — a legenda do mapa e as opções do filtro.
 */
-export function projetosDosMunicipios(municipios) {
-  const porNome = new Map();
-  for (const lugar of Array.isArray(municipios) ? municipios : []) {
+export function projetosDosMunicipios(
+  municipios: readonly MunicipioDoMapa[] | null | undefined,
+): ProjetoComLugares[] {
+  const porNome = new Map<string, ProjetoComLugares>();
+  for (const lugar of listaValida(municipios)) {
     for (const projeto of lugar.projetos) {
       const atual = porNome.get(projeto.nome) ?? { ...projeto, lugares: 0 };
       atual.lugares += 1;
@@ -256,7 +288,10 @@ export function projetosDosMunicipios(municipios) {
   O resultado das análises do município: a parte aprovada entre as já
   decididas (aprovados + reprovados). Sem nenhuma decidida, sem barra.
 */
-export function resultadoDoMunicipio({ aprovados = 0, reprovados = 0 } = {}) {
+export function resultadoDoMunicipio({
+  aprovados = 0,
+  reprovados = 0,
+}: { aprovados?: number; reprovados?: number } = {}) {
   const decididos = num(aprovados) + num(reprovados);
   if (!decididos) return null;
   return { pct: Math.round((num(aprovados) / decididos) * 100), decididos };
@@ -269,19 +304,26 @@ export function resultadoDoMunicipio({ aprovados = 0, reprovados = 0 } = {}) {
   análises) passa de zero. Sem isso, "0 candidatos" seria um zero falso: a
   lista e o popup não mostram a linha.
 */
-export const temCandidatosPorLugar = (lugar) => num(lugar?.vagas) > 0;
+export const temCandidatosPorLugar = (
+  lugar: { vagas?: number } | null | undefined,
+) => num(lugar?.vagas) > 0;
 
 /* O tamanho do lugar: as vagas publicadas ou, se forem mais, as das análises. */
-const tamanhoDoLugar = (lugar) => Math.max(num(lugar.vagasEdital), lugar.vagas);
+const tamanhoDoLugar = (
+  lugar: Pick<MunicipioDoMapa, "vagasEdital" | "vagas">,
+) => Math.max(num(lugar.vagasEdital), lugar.vagas);
 
-const comPadroes = (lugar) => ({
-  projetos: [],
-  editais: [],
-  nivel: "municipio",
-  vagasEdital: null,
-  vagas: 0,
-  ...lugar,
-});
+const comPadroes = (lugar: MunicipioDoMapa): MunicipioDoMapa =>
+  Object.assign(
+    {
+      projetos: [],
+      editais: [],
+      nivel: "municipio",
+      vagasEdital: null,
+      vagas: 0,
+    },
+    lugar,
+  );
 
 /*
   Os lugares no recorte da Visão geral (filtros, busca e atalho — os mesmos
@@ -292,18 +334,21 @@ const comPadroes = (lugar) => ({
   `CO_MONITORAMENTO`) ou pelo número ("23/2025"), porque a RPC guarda um id
   por número de edital. As contagens das análises são do lugar e ficam.
 */
-export function lugaresDoRecorte(municipios, linhas) {
-  const ids = new Set();
-  const numeros = new Set();
-  for (const linha of Array.isArray(linhas) ? linhas : []) {
+export function lugaresDoRecorte(
+  municipios: readonly MunicipioDoMapa[] | null | undefined,
+  linhas: readonly LinhaDoMonitoramento[] | null | undefined,
+): MunicipioDoMapa[] {
+  const ids = new Set<string>();
+  const numeros = new Set<string>();
+  for (const linha of listaValida(linhas)) {
     if (texto(linha?.id)) ids.add(texto(linha.id));
     const numero = numeroDoEdital(linha?.edital);
     if (numero) numeros.add(numero);
   }
-  const doRecorte = (edital) =>
+  const doRecorte = (edital: EditalDoLugar) =>
     (texto(edital?.id) && ids.has(texto(edital.id))) ||
     numeros.has(numeroDoEdital(edital?.edital));
-  return (Array.isArray(municipios) ? municipios : [])
+  return listaValida(municipios)
     .map((lugar) => {
       const completo = comPadroes(lugar);
       const editais = completo.editais.filter(doRecorte);
@@ -326,7 +371,7 @@ export function lugaresDoRecorte(municipios, linhas) {
         cadastroReserva: editais.some((edital) => edital.cadastroReserva),
       };
     })
-    .filter(Boolean);
+    .filter((lugar): lugar is MunicipioDoMapa => lugar !== null);
 }
 
 /*
@@ -342,18 +387,21 @@ export function lugaresDoRecorte(municipios, linhas) {
   de quem fica, como filtrar não muda a bolha do DSEI (a população).
 */
 export function pontosDosMunicipios(
-  municipios,
-  { projeto = "", todos = municipios } = {},
-) {
+  municipios: readonly MunicipioDoMapa[] | null | undefined,
+  {
+    projeto = "",
+    todos = municipios,
+  }: { projeto?: string; todos?: readonly MunicipioDoMapa[] | null } = {},
+): PontoDoMunicipio[] {
   const filtro = texto(projeto);
   const escala = new Map(
-    (Array.isArray(todos) ? todos : []).map((lugar) => [
+    listaValida(todos).map((lugar) => [
       lugar?.chave,
       tamanhoDoLugar(comPadroes(lugar)),
     ]),
   );
   const maior = Math.max(0, ...escala.values());
-  const lista = (Array.isArray(municipios) ? municipios : [])
+  const lista = listaValida(municipios)
     .map(comPadroes)
     .filter(
       (lugar) => !filtro || lugar.projetos.some((item) => item.nome === filtro),
@@ -369,7 +417,7 @@ export function pontosDosMunicipios(
         b.candidatos - a.candidatos ||
         a.rotulo.localeCompare(b.rotulo, "pt-BR"),
     );
-  return lista.map((item) => {
+  return lista.map((item): PontoDoMunicipio => {
     const lugar =
       item.coordenada !== undefined
         ? item.coordenada
@@ -397,9 +445,14 @@ export function pontosDosMunicipios(
   com os pontos dele (na ordem que vieram). Lugar de dois projetos aparece nos
   dois grupos.
 */
-export function gruposPorProjeto(pontos) {
-  const grupos = new Map();
-  for (const ponto of Array.isArray(pontos) ? pontos : []) {
+export function gruposPorProjeto(
+  pontos: readonly PontoDoMunicipio[] | null | undefined,
+) {
+  const grupos = new Map<
+    string,
+    ProjetoDoMapa & { pontos: PontoDoMunicipio[] }
+  >();
+  for (const ponto of listaValida(pontos)) {
     const projetos = ponto.projetos?.length
       ? ponto.projetos
       : [{ nome: "Sem projeto", serie: 0 }];
@@ -416,7 +469,7 @@ export function gruposPorProjeto(pontos) {
   O que o popup do lugar mostra, sem DOM: título, uma linha por edital
   (projeto, edital, vagas publicadas, lotações) e as contagens das análises.
 */
-export function resumoDoLugar(ponto) {
+export function resumoDoLugar(ponto: MunicipioDoMapa) {
   const editais = (ponto?.editais ?? []).map((edital) => ({
     projeto: edital.projeto,
     serie: edital.serie,

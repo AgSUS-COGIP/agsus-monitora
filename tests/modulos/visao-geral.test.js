@@ -47,7 +47,7 @@ vi.mock("../../src/lib/chartjs-global.js", () => ({
 const { montarVisaoGeral } =
   await import("../../src/modulos/visao-geral/visao-geral.tsx");
 const { criarCarregadorDeMunicipios } =
-  await import("../../src/modulos/mapa-de-projetos/carregador.js");
+  await import("../../src/modulos/mapa-de-projetos/carregador.ts");
 const { criarEstadoDaVisaoGeral, CHAVE_DAS_COLUNAS, CHAVE_DOS_FILTROS } =
   await import("../../src/modulos/visao-geral/estado.ts");
 

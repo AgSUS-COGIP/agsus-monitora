@@ -29,6 +29,12 @@ import { usarUltimo } from "./usar-ultimo.js";
   junto do `pegar`/`soltar` do `criarMapaDoBrasil`. `emVoo` (ref) suspende o
   reenquadramento enquanto o mapa voa.
 */
+/**
+ * @template {object} T
+ * @param {unknown} L
+ * @param {{aoCriar: (mapa: import('../../lib/tipos-do-mapa.ts').MapaNacional) => T, emVoo?: import('react').RefObject<boolean>, visivel?: boolean, telaCheia?: boolean}} opcoes
+ * @returns {{refDoMapa: import('react').RefObject<HTMLDivElement | null>, mapa: import('../../lib/tipos-do-mapa.ts').MapaNacional | null, camadas: import('react').RefObject<(T & {pegar: () => void, soltar: () => void}) | null>, ultimoEnquadramento: import('react').RefObject<string>, aparecimentos: number}}
+ */
 export function usarMapaDoBrasil(
   L,
   { aoCriar, emVoo, visivel = true, telaCheia = false } = {},
@@ -169,6 +175,9 @@ export function MolduraDoMapa({ L, refDoMapa, idDoMapa, rotulo, children }) {
   `idDoTitulo` nomeia a lista. `vazio` aparece quando não carrega e não há
   `children`; `antes` vem entre o topo e os itens (os filtros de Projetos).
 */
+/**
+ * @param {{refDaLista?: import('react').RefObject<HTMLElement | null>, id: string, idDoTitulo: string, titulo: string, total: number, carregando: boolean, vazio: string, antes?: import('react').ReactNode, children?: import('react').ReactNode}} props
+ */
 export function ListaDoMapa({
   refDaLista,
   id,

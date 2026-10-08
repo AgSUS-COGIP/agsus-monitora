@@ -24,7 +24,7 @@ const css = readFileSync(
   "utf8",
 );
 const projetosJsx = readFileSync(
-  "src/modulos/mapa-de-projetos/mapa-de-projetos.jsx",
+  "src/modulos/mapa-de-projetos/mapa-de-projetos.tsx",
   "utf8",
 );
 // A moldura, o topo e a lista comuns aos dois mapas nacionais.
