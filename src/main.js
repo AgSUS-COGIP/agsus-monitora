@@ -89,7 +89,7 @@ import { situacaoDoSistema } from "./modules/situacao-dos-modulos.js";
 import { montarAcessos } from "./modulos/acessos/acessos.jsx";
 import { montarModulos } from "./modulos/modulos/modulos.tsx";
 import { montarSaudeDasCargas } from "./componentes/saude-das-cargas/saude-das-cargas.tsx";
-import { montarBuscaGlobal } from "./componentes/busca-global/busca-global.jsx";
+import { montarBuscaGlobal } from "./componentes/busca-global/busca-global.tsx";
 import { montarEntrada } from "./app/entrada/entrada.jsx";
 import { sessaoDoApp } from "./app/sessao.js";
 

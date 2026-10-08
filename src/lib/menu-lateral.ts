@@ -18,7 +18,7 @@ import type {
   o usuário tem (`profile.areas`, de `obter_contexto_monitora`): Saúde
   Indígena, SEDE e Projetos. Cada área repete as mesmas páginas — Editais,
   Cronograma, Lista de aprovados, Análises curriculares —, e a página abre
-  recortada pela área escolhida (a "área atual", em `src/componentes/dados-do-monitoramento.js`).
+  recortada pela área escolhida (a "área atual", em `src/componentes/dados-do-monitoramento.ts`).
   Abaixo delas ficam Painéis (os externos, que não têm área) e
   Administração. Com a barra recolhida, cada página da área atual vira um
   ícone (link direto), e Painéis e Administração, um ícone só cada.

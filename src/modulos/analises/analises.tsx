@@ -10,8 +10,8 @@ import { usarPedidoDeFiltro } from "../../app/pedido-de-filtro.js";
 import { filtrosDasAnalises } from "../../lib/filtro-da-aya.js";
 import { montarModulo } from "../../app/montar-modulo.jsx";
 import { usarTemaEscuro } from "../../app/tema.js";
-import { obterDadosDoMonitoramento } from "../../componentes/dados-do-monitoramento.js";
-import { usarAreaAtual } from "../../componentes/usar-area-atual.js";
+import { obterDadosDoMonitoramento } from "../../componentes/dados-do-monitoramento.ts";
+import { usarAreaAtual } from "../../componentes/usar-area-atual.ts";
 import {
   apararSelecao,
   calcularKpis,
@@ -57,7 +57,7 @@ import { SeloDeAvisos } from "../conferencias/avisos-de-conferencia.tsx";
   legado continua dono da classe `.active` da seção e chama `render()` do
   controlador ao navegar (tabela `TELAS_REACT` do `navigate`).
 
-  - Área: a atual do app (menu lateral → dados-do-monitoramento.js); trocar de
+  - Área: a atual do app (menu lateral → dados-do-monitoramento.ts); trocar de
     área com a tela aberta recarrega, e filtros, busca e gaveta recomeçam.
   - Sessão: o cliente Supabase único do app. Tema: o do app (os gráficos
     acompanham). Tela cheia: a do app. Aviso (toast): o do app.

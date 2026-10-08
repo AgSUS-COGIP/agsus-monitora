@@ -15,7 +15,7 @@ monitoramento continuam em `src/app/`.
 
 ## Dados e carregamento
 
-As linhas vêm do store compartilhado de `dados-do-monitoramento.js`. A tela valida
+As linhas vêm do store compartilhado de `dados-do-monitoramento.ts`. A tela valida
 os campos que utiliza, aplica o recorte da área e exclui o edital de treinamento.
 Campos adicionais são preservados para os mapas. Indicadores, tabela, mapas e CSV
 usam o mesmo recorte; as regras de críticos e provimento continuam nos helpers existentes.

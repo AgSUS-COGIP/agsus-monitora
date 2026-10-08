@@ -7,9 +7,9 @@ import {
 } from "react";
 import { montarModulo } from "../../app/montar-modulo.jsx";
 import { estadoDasConfiguracoes } from "../configuracoes/estado.js";
-import { obterDadosDoMonitoramento } from "../../componentes/dados-do-monitoramento.js";
+import { obterDadosDoMonitoramento } from "../../componentes/dados-do-monitoramento.ts";
 import { CHAVE_DO_CABECALHO } from "../../lib/cabecalho-dos-documentos.js";
-import { usarAreaAtual } from "../../componentes/usar-area-atual.js";
+import { usarAreaAtual } from "../../componentes/usar-area-atual.ts";
 import { SeloDeTreinamento } from "../../componentes/selo-de-treinamento.jsx";
 import { sufixoDeTreinamento } from "../../lib/edital-de-treinamento.js";
 import { classificarEdital } from "../../lib/classificacao/ajustes.js";

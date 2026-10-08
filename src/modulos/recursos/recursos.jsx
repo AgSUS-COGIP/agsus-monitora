@@ -3,8 +3,8 @@ import { usarPedidoDeFiltro } from "../../app/pedido-de-filtro.js";
 import { filtrosDeRecursos } from "../../lib/filtro-da-aya.js";
 import { montarModulo } from "../../app/montar-modulo.jsx";
 import { usarTemaEscuro } from "../../app/tema.js";
-import { obterDadosDoMonitoramento } from "../../componentes/dados-do-monitoramento.js";
-import { usarAreaAtual } from "../../componentes/usar-area-atual.js";
+import { obterDadosDoMonitoramento } from "../../componentes/dados-do-monitoramento.ts";
+import { usarAreaAtual } from "../../componentes/usar-area-atual.ts";
 import {
   calcularIndicadores,
   diaEmBrasilia,
@@ -38,7 +38,7 @@ import { TabelaDeRecursos } from "./tabela.jsx";
   Cronograma e Lista de aprovados. O legado continua dono da classe `.active`
   da seção e chama `render()` do controlador ao navegar.
 
-  - Área: a área atual do app (menu lateral → dados-do-monitoramento.js). Cada
+  - Área: a área atual do app (menu lateral → dados-do-monitoramento.ts). Cada
     abertura carrega a área de agora; trocar de área com a tela aberta
     recarrega (e o que era da outra área sai: filtros, busca, gaveta).
   - Sessão: o cliente Supabase único do app (src/lib/supabaseClient.js).

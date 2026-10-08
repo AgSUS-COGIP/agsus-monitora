@@ -4,7 +4,7 @@
 
   Sem React: `definirTitulo` da navegação (src/app/navegacao.js) chama
   `definirPaginaDaAya` a cada navegação; a área vem de
-  `dados-do-monitoramento.js` (trocar de área no menu avisa aqui) e a seção,
+  `dados-do-monitoramento.ts` (trocar de área no menu avisa aqui) e a seção,
   do evento que `configuracoes/secoes.js` dispara ao abrir cada seção. O componente
   lê com `useSyncExternalStore(assinarPaginaDaAya, obterPaginaDaAya)`.
 */
@@ -12,7 +12,7 @@
 import {
   assinarDadosDoMonitoramento,
   obterDadosDoMonitoramento,
-} from "../../componentes/dados-do-monitoramento.js";
+} from "../../componentes/dados-do-monitoramento.ts";
 import {
   EVENTO_SECAO_ABERTA,
   secaoAtualDeConfiguracao,

@@ -8,7 +8,7 @@ import {
 import {
   obterDadosDoMonitoramento,
   redefinirDadosDoMonitoramento,
-} from "../../src/componentes/dados-do-monitoramento.js";
+} from "../../src/componentes/dados-do-monitoramento.ts";
 
 /*
   A carga dos dados (src/app/carga.js): consultas em paralelo na entrada,

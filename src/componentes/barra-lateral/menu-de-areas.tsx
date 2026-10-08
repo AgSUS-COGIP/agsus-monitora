@@ -59,7 +59,7 @@ import {
   assinarDadosDoMonitoramento,
   definirAreaAtual,
   obterDadosDoMonitoramento,
-} from "../dados-do-monitoramento.js";
+} from "../dados-do-monitoramento.ts";
 import { dicaDaManutencao } from "../../lib/situacao-dos-modulos.js";
 import { marcarItemAtivoNoMenu } from "./estado.ts";
 

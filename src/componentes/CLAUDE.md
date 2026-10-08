@@ -8,7 +8,7 @@ atualizações e os dados compartilhados do monitoramento. Toda tela monta por
 `montarModulo` (`src/app/`) e usa os componentes visuais de
 `src/ui/`; as pastas daqui mudam para `src/modulos/<nome>/` módulo a módulo. JavaScript com JSX
 (`.jsx`) e migração gradual para TypeScript (`.tsx`); Status das atualizações já está
-migrado em `saude-das-cargas/`; a barra lateral também está em TypeScript. Contratos e
+migrado em `saude-das-cargas/`; barra lateral, Busca global, dados compartilhados e hook de área atual também estão em TypeScript. Contratos e
 limites estão nos READMEs das pastas e em seus `tipos.ts`. Nomes em português,
 arquivo em kebab-case, componente em PascalCase.
 
@@ -19,10 +19,10 @@ icone.jsx                    <Icone nome="…"> — Lucide, do mesmo registro de
 modal.jsx                    só reexporta o <Modal> de src/ui/modal.jsx (importe de src/ui/ no código novo)
 busca-global/                busca Ctrl+K (montarBuscaGlobal); a escolha vai ao legado por evento
 multi-select-busca.jsx       <MultiSelectBusca>: seleção múltipla com busca, controlada (o único do app)
-dados-do-monitoramento.js    linhas de TB_MONITORAMENTO_INDIGENA e catálogo TD_UNIDADE que o legado
+dados-do-monitoramento.ts    linhas de TB_MONITORAMENTO_INDIGENA e catálogo TD_UNIDADE que o legado
                              carrega e publica aqui (loadData / loadUnidades), e a área atual
                              (definida pelo menu; linhasDaArea, soDosEditais); sem React
-usar-area-atual.js           hook: a área atual, as linhas dela e os ids dos editais (Editais,
+usar-area-atual.ts           hook: a área atual, as linhas dela e os ids dos editais (Editais,
                              Cronograma e Lista de aprovados recortam por eles)
 barra-lateral/
   barra-lateral.tsx          <BarraLateral> e montarBarraLateral() (chamada em src/main.js)
@@ -33,7 +33,8 @@ barra-lateral/
   usar-ambiente.ts           hooks do que o legado controla: classe de body e largura (o tema é src/app/tema.js)
 ```
 
-Lógica pura fica em `src/lib/`: `menu-lateral.ts` (barra). CSS: `src/styles/barra-lateral.css`,
+Lógica pura fica em `src/lib/`: `menu-lateral.ts` (barra), `busca-global.ts` (busca) e
+`linhas-do-monitoramento.ts` (validação dos dados compartilhados). CSS: `src/styles/barra-lateral.css`,
 `platform-shell.css` (barra) e `multi-select-busca.css`. Editais, Cronograma e Lista de aprovados
 moram em `src/modulos/editais/`, `cronograma/` e `aprovados/` (componentes, CSS e testes lá).
 
@@ -46,7 +47,7 @@ moram em `src/modulos/editais/`, `cronograma/` e `aprovados/` (componentes, CSS 
   é só da tela (filtros, página, aba, rascunho) é estado do componente e sobrevive a trocar de página.
 - **O perfil é relido a cada `render()`**: as permissões mudam sem aviso do legado.
 - **Dado que o legado carrega e o React lê** (linhas do monitoramento, unidades) passa por
-  `dados-do-monitoramento.js`: o legado publica, o componente assina. O Núcleo não relê a view.
+  `dados-do-monitoramento.ts`: o legado publica, o componente assina. O Núcleo não relê a view.
 
 - **Nunca pelo DOM do componente.** O legado empurra dados para o estado externo
   (`barra-lateral/estado.ts`: `atualizarMenuLateral`, `marcarItemAtivoNoMenu`) e o componente lê com

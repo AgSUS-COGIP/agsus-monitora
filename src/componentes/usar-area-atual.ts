@@ -1,10 +1,11 @@
+import type { AreaAtualDoMonitoramento } from "./tipos-do-monitoramento.ts";
 import { useMemo, useSyncExternalStore } from "react";
 import {
   assinarDadosDoMonitoramento,
   idsDasLinhas,
   linhasDaArea,
   obterDadosDoMonitoramento,
-} from "./dados-do-monitoramento.js";
+} from "./dados-do-monitoramento.ts";
 import { nomeDaArea } from "../lib/menu-lateral.ts";
 
 /*
@@ -12,7 +13,7 @@ import { nomeDaArea } from "../lib/menu-lateral.ts";
   de aprovados. `linhas` são os editais da área; `ids`, os ids deles — é por
   eles que o cronograma e as listas, que não trazem a área, são recortados.
 */
-export function usarAreaAtual() {
+export function usarAreaAtual(): AreaAtualDoMonitoramento {
   const { linhas, carregado, areaAtual } = useSyncExternalStore(
     assinarDadosDoMonitoramento,
     obterDadosDoMonitoramento,

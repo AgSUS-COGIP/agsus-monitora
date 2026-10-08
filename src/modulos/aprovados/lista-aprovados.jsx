@@ -19,8 +19,8 @@ import {
 } from "../../lib/lista-aprovados-rules.js";
 import { PLANILHAS } from "../../lib/planilhas.js";
 import { formatarDataHora } from "../../lib/cronograma-do-edital.js";
-import { soDosEditais } from "../../componentes/dados-do-monitoramento.js";
-import { usarAreaAtual } from "../../componentes/usar-area-atual.js";
+import { soDosEditais } from "../../componentes/dados-do-monitoramento.ts";
+import { usarAreaAtual } from "../../componentes/usar-area-atual.ts";
 import { classes, ErroAoCarregar, TopoDoPainel } from "../../ui/index.js";
 import { AbaAprovados } from "./aba-aprovados.jsx";
 import { AbaConvocacao } from "./aba-convocacao.jsx";
