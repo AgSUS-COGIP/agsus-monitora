@@ -4,7 +4,7 @@ App de monitoramento: mapas da saúde indígena, editais, análises e lista de a
 Vite + React + Supabase (RPC) + servidor web em TypeScript (`server/`). O front está migrando,
 tela por tela, para **um único app React** (rotas por área, visual único em `src/ui/`); o alvo, as
 regras e a ordem estão em **`docs/arquitetura-react.md`** — leia antes de criar ou migrar tela.
-Front com migração gradual para TypeScript/TSX: Seleção, Cronograma, Visão geral, Conferências, Status das atualizações e componentes de `src/ui/`;
+Front com migração gradual para TypeScript/TSX: Seleção, Cronograma, Visão geral, Conferências, Status das atualizações, Análises curriculares e componentes de `src/ui/`;
 guia em `docs/typescript-no-frontend.md`. O servidor também é TypeScript. **Português** em nomes
 de arquivo, funções e commits.
 
@@ -69,7 +69,7 @@ docs/                   decisões, auditorias e base de conhecimento da AYA    �
 | **Entrevistas** (módulo do app, sem iframe: montarEntrevistas na `#page-entrevistas`, área e tema do app)                                         | `src/modulos/entrevistas/`; o legado abre por `window.entrevistasController`. `src/ui/no-quadro.jsx` fica enquanto a Seleção estiver no iframe                                                                                                                                                                           |
 | **Planilhas** (links, modelo, bucket)                                                                                                             | **`src/lib/planilhas.js`** — único lugar com endereço de planilha                                                                                                                                                                                                                                                        |
 | Visual / CSS                                                                                                                                      | **`DESIGN.md` (seção 0 primeiro)**, `src/styles/tokens.css`, `src/styles/CLAUDE.md`                                                                                                                                                                                                                                      |
-| **Análises curriculares** (módulo do app, sem iframe: montarAnalises na `#page-analises`)                                                         | `src/modulos/analises/`, `src/lib/analises-curriculares.js`                                                                                                                                                                                                                                                              |
+| **Análises curriculares** (módulo do app, sem iframe: montarAnalises na `#page-analises`)                                                         | `src/modulos/analises/`, `src/lib/analises-curriculares.ts`                                                                                                                                                                                                                                                              |
 
 ## Não ler por inteiro (grep -n → sed -n 'A,Bp')
 

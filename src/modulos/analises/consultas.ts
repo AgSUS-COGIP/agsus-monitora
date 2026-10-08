@@ -1,3 +1,11 @@
+import type {
+  ClienteDasAnalises,
+  OpcoesDeCarga,
+  LeituraDasAnalises,
+  ResultadoDasAnalises,
+  RegistroDaAnalise,
+  ConsultasDasAnalises,
+} from "./tipos.ts";
 /*
   As consultas da tela de Análises curriculares, todas por RPC (contrato em
   src/lib/rpc-contrato.js). Este arquivo não importa React.
@@ -18,7 +26,10 @@
   - `esquecer()`: o "Atualizar" e a troca de usuário descartam o guardado.
 */
 import { parametroDeAreaDaRpc } from "../../lib/area-do-painel-de-analises.js";
-import { linhasDoPayload } from "../../lib/analises-curriculares.js";
+import {
+  linhasDoPayload,
+  normalizarPayloadDasAnalises,
+} from "../../lib/analises-curriculares.ts";
 import {
   criarCacheDoPainel,
   revalidarPayload,
@@ -42,19 +53,31 @@ const RPC_CONFERENCIA = "obter_ultima_conferencia";
 const VERSAO_DA_COPIA = `1:${import.meta.url}`;
 const TEMPO_LIMITE_MS = 30000;
 
-const primeiro = (data) => (Array.isArray(data) ? data[0] : data);
+const primeiro = (data: unknown) => (Array.isArray(data) ? data[0] : data);
 
 export function criarConsultasDasAnalises({
   supabase,
   armazenamento = armazenamentoDePayload,
   versao = VERSAO_DA_COPIA,
   tempoLimiteMs = TEMPO_LIMITE_MS,
-} = {}) {
+}: {
+  supabase?: ClienteDasAnalises;
+  armazenamento?: typeof armazenamentoDePayload;
+  versao?: string;
+  tempoLimiteMs?: number;
+} = {}): ConsultasDasAnalises {
   const copias = criarCacheDoPainel({ armazenamento, versao });
-  const detalhes = new Map();
-  const textosGuardados = new Map();
+  const detalhes = new Map<string, Promise<RegistroDaAnalise | null>>();
+  const textosGuardados = new Map<
+    string,
+    Promise<Map<string, RegistroDaAnalise>>
+  >();
 
-  async function chamar(nome, argumentos) {
+  async function chamar(
+    nome: Parameters<ClienteDasAnalises["rpc"]>[0],
+    argumentos?: Record<string, unknown>,
+  ) {
+    if (!supabase) throw new Error("Sem conexão com o banco.");
     const { data, error } = await comTempoLimite(
       supabase.rpc(nome, argumentos),
       tempoLimiteMs,
@@ -66,19 +89,22 @@ export function criarConsultasDasAnalises({
   /** true/false; `null` se o porteiro não respondeu (a lista decide). */
   async function podeLer() {
     try {
-      return Boolean(primeiro(await chamar(RPC_PORTEIRO)));
+      const resposta = primeiro(await chamar(RPC_PORTEIRO));
+      return typeof resposta === "boolean" ? resposta : null;
     } catch (erro) {
       console.warn("Não foi possível conferir o acesso às análises:", erro);
       return null;
     }
   }
 
-  const buscarPacote = async (area, escopo) =>
-    primeiro(
-      await chamar(RPC_LISTA, {
-        p_scope: escopo,
-        ...parametroDeAreaDaRpc(area),
-      }),
+  const buscarPacote = async (area: string, escopo: string) =>
+    normalizarPayloadDasAnalises(
+      primeiro(
+        await chamar(RPC_LISTA, {
+          p_scope: escopo,
+          ...parametroDeAreaDaRpc(area),
+        }),
+      ),
     );
 
   async function carregarPacote({
@@ -88,18 +114,28 @@ export function criarConsultasDasAnalises({
     forcarRede,
     aoMudar,
     aoPerderAcesso,
-  }) {
+  }: OpcoesDeCarga): Promise<ResultadoDasAnalises> {
     const contexto = { usuarioId, area, escopo };
-    const guardado = forcarRede ? null : await copias.ler(contexto);
+    const copia = forcarRede ? null : await copias.ler(contexto);
+    let guardado = null;
+    if (copia) {
+      try {
+        guardado = normalizarPayloadDasAnalises(copia);
+      } catch {
+        await copias.apagarTudo();
+      }
+    }
     if (guardado) {
       const revalidacao = revalidarPayload({
         guardado,
         buscar: () => buscarPacote(area, escopo),
-        guardar: (novo) => copias.guardar(contexto, novo),
+        guardar: (novo: unknown) => copias.guardar(contexto, novo),
         apagarTudo: () => copias.apagarTudo(),
-        aoMudar: (novo) =>
-          aoMudar?.({ payload: novo, linhas: linhasDoPayload(novo) }),
-        aoPerderAcesso: (erro) => aoPerderAcesso?.(erro),
+        aoMudar: (novo: unknown) => {
+          const payload = normalizarPayloadDasAnalises(novo);
+          aoMudar?.({ payload, linhas: linhasDoPayload(payload) });
+        },
+        aoPerderAcesso: (erro: unknown) => aoPerderAcesso?.(erro),
       });
       return {
         payload: guardado,
@@ -119,14 +155,19 @@ export function criarConsultasDasAnalises({
     junção com o mais novo e chama `aoMudar` de fora; o primeiro acesso
     perdido avisa uma vez só. Falha de um pacote rejeita tudo.
   */
-  async function carregarTodos(opcoes) {
+  async function carregarTodos(
+    opcoes: OpcoesDeCarga,
+  ): Promise<ResultadoDasAnalises> {
     const partes = partesDoEscopo("todos");
-    const atuais = new Array(partes.length);
+    const atuais: (LeituraDasAnalises | undefined)[] = new Array(partes.length);
     let pronto = false;
     let semAcesso = false;
     const juntar = () => {
       const linhas = juntarPartesDoPainel(atuais);
-      return { payload: envelopeDeTodos(atuais, linhas.length), linhas };
+      return {
+        payload: envelopeDeTodos(atuais, linhas.length),
+        linhas,
+      };
     };
     const resultados = await Promise.all(
       partes.map((escopo, indice) =>
@@ -160,39 +201,46 @@ export function criarConsultasDasAnalises({
    * O escopo ('ativo', 'inativo' ou 'todos') da área: `{ payload, linhas,
    * daCopia, revalidacao }`. Erro da RPC (sem cópia) é lançado.
    */
-  function carregarEscopo(opcoes) {
+  function carregarEscopo(opcoes: OpcoesDeCarga) {
     return opcoes.escopo === "todos"
       ? carregarTodos(opcoes)
       : carregarPacote(opcoes);
   }
 
   /** O detalhamento da linha (objeto ou null). Rejeita se a consulta falhar. */
-  function detalhe(id) {
+  function detalhe(id: unknown): Promise<RegistroDaAnalise | null> {
     const chave = String(id ?? "").trim();
     if (!chave) return Promise.resolve(null);
     if (!detalhes.has(chave)) {
       const promessa = chamar(RPC_DETALHE, { p_id: chave }).then((data) => {
         const dados = primeiro(data);
-        return dados && typeof dados === "object" ? dados : null;
+        return dados && typeof dados === "object" && !Array.isArray(dados)
+          ? (dados as RegistroDaAnalise)
+          : null;
       });
       detalhes.set(chave, promessa);
       promessa.catch(() => detalhes.delete(chave));
     }
-    return detalhes.get(chave);
+    return detalhes.get(chave)!;
   }
 
   /** Map(id → { analise, link_pdf, … }) de todas as linhas da área no escopo. */
-  function textos(area, escopo) {
+  function textos(
+    area: string,
+    escopo: string,
+  ): Promise<Map<string, RegistroDaAnalise>> {
     const chave = `${area}|${escopo}`;
     if (!textosGuardados.has(chave)) {
       const promessa = chamar(RPC_TEXTOS, {
         p_scope: escopo,
         ...parametroDeAreaDaRpc(area),
-      }).then((data) => mapaDosTextos(primeiro(data)));
+      }).then((data) =>
+        mapaDosTextos(normalizarPayloadDasAnalises(primeiro(data))),
+      );
       textosGuardados.set(chave, promessa);
       promessa.catch(() => textosGuardados.delete(chave));
     }
-    return textosGuardados.get(chave);
+    return textosGuardados.get(chave)!;
   }
 
   function esquecer() {
@@ -201,14 +249,13 @@ export function criarConsultasDasAnalises({
   }
 
   /** Quando a última carga das análises da área terminou bem (mesmo sem mudanças); null se não der. */
-  async function ultimaConferencia(area) {
+  async function ultimaConferencia(area: string): Promise<string | null> {
     try {
-      return (
-        (await chamar(RPC_CONFERENCIA, {
-          p_fonte: "analises",
-          p_area: area || null,
-        })) ?? null
-      );
+      const data = await chamar(RPC_CONFERENCIA, {
+        p_fonte: "analises",
+        p_area: area || null,
+      });
+      return typeof data === "string" ? data : null;
     } catch (erro) {
       console.warn(
         "Não foi possível ler a última conferência das análises:",
