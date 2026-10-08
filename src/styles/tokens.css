@@ -14,7 +14,14 @@
   Importado antes de qualquer outro CSS em `src/main.js` e nos painéis do
   quadro (`src/entrevistas|selecao/main.jsx`). As camadas (`--z-*`) continuam em `app.css`.
 */
-:root {
+/*
+  A tela de acesso tem paleta própria, clara nos dois temas (o painel é a cor
+  configurada; DESIGN.md seção 5): o segundo seletor devolve a ela os valores
+  claros quando a página está no escuro (sem isto, o aviso de erro do login
+  saía rosa-claro sobre rosa-claro, 1,91:1).
+*/
+:root,
+html[data-theme="dark"] .login-screen {
   /* ---------- Primitivos: azul institucional ---------- */
   --color-blue-50: #f2f6fc;
   --color-blue-100: #e3ecf8;
