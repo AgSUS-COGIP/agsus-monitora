@@ -72,6 +72,11 @@ const ABA = Object.freeze({
   aprovados: "[data-approved-tab='aprovados']",
   convocacao: "[data-approved-tab='convocacao']",
   pendentes: `${t("acessos-situacao")} [data-valor='pendentes']`,
+  /* Os passos de Conduzir entrevistas › Preparar. */
+  roteiro: `${t("entrevistas-preparar-passos")} button[data-passo='roteiro']`,
+  banca: `${t("entrevistas-preparar-passos")} button[data-passo='banca']`,
+  convocar: `${t("entrevistas-preparar-passos")} button[data-passo='convocacao']`,
+  agendaDoEdital: `${t("entrevistas-preparar-passos")} button[data-passo='agenda']`,
 });
 
 const PUBLICAR = passo(
@@ -353,12 +358,12 @@ const TOURS = Object.freeze({
       passo(
         t("conduzir-visoes"),
         "Fila e Preparar",
-        "A Fila é o trabalho do dia; Preparar tem a configuração, a convocação e os roteiros.",
+        "A Fila é o trabalho do dia; Preparar guia em quatro passos: roteiro, banca, convocação e agenda.",
       ),
       passo(
         [t("entrevistas-conduzir-seletor-edital"), "#entrevistasEdital"],
         "Edital",
-        "Editais na janela da entrevista ou liberados; o último aberto volta sozinho.",
+        "Editais na janela da entrevista ou liberados; o último aberto volta sozinho. O selo Treinamento aparece ao lado.",
       ),
       passo(
         t("conduzir-contador"),
@@ -372,6 +377,12 @@ const TOURS = Object.freeze({
         { antes: ABA.fila },
       ),
       passo(
+        t("conduzir-busca"),
+        "Buscar",
+        "Ache o candidato pelo nome ou pelo código; Esc limpa.",
+        { antes: ABA.fila },
+      ),
+      passo(
         t("conduzir-situacoes"),
         "Situações",
         "Aguardando, em andamento, concluída e faltou; clicar filtra a fila.",
@@ -380,7 +391,7 @@ const TOURS = Object.freeze({
       passo(
         t("conduzir-fila"),
         "Abrir a ficha",
-        "Clique no cartão para lançar comparecimento e notas; Salvar e abrir o próximo segue a fila.",
+        "Os cartões ficam agrupados por vaga, em ordem de horário. Clique para lançar comparecimento e notas; Salvar e abrir o próximo segue a ordem da tela.",
         { antes: ABA.fila },
       ),
       // Com a ficha de notas aberta (sem ela, os passos abaixo são pulados).
@@ -409,6 +420,16 @@ const TOURS = Object.freeze({
         "Resultado na hora",
         "Total, mínimo, competências e o parecer com os motivos, pelas regras do banco.",
       ),
+      passo(
+        t("entrevistas-ficha-justificativa"),
+        "Justificativa da banca",
+        "Obrigatória para Inapto e Faltou; entra no parecer. A observação de cada avaliador, opcional, fica embaixo da matriz dele.",
+      ),
+      passo(
+        t("entrevistas-ficha-parecer-pronto"),
+        "Parecer pronto",
+        "Com tudo lançado, o parecer sai em texto pronto; Copiar parecer leva para o SEI ou o e-mail.",
+      ),
       PASSO_DA_AYA,
     ]),
   }),
@@ -427,31 +448,45 @@ const TOURS = Object.freeze({
         "Quem é chamado, como a nota é calculada, quem avalia e o desempate, em linguagem simples; o Editar de cada bloco leva aonde se muda.",
       ),
       passo(
-        [t("entrevistas-conduzir-configuracao"), "[data-passo='configuracao']"],
-        "Configuração",
-        "O roteiro, o modo de lançamento e a banca do edital, com as competências que cada membro avalia.",
+        t("entrevistas-preparar-passos"),
+        "Quatro passos",
+        "Roteiro, banca, convocação e agenda. O check verde é passo pronto; o que falta aparece em cada um, e Preparar abre no primeiro pendente.",
       ),
       passo(
-        [t("entrevistas-conduzir-convocacao"), "[data-passo='convocacao']"],
-        "Convocação",
-        "A lista de convocação vem da Classificação, na ordem de cada vaga.",
+        t("entrevistas-roteiros"),
+        "1. Roteiro",
+        "O roteiro do edital (a versão com nome) e os roteiros da área: editar grava uma versão nova; Duplicar cria outro.",
+        { antes: ABA.roteiro },
+      ),
+      passo(
+        t("entrevistas-roteiros-novo"),
+        "Novo roteiro",
+        "Cria um roteiro do zero, em seções; a lista do que falta fica ao lado do Salvar.",
+        { exige: editaEntrevistas, antes: ABA.roteiro },
+      ),
+      passo(
+        t("entrevistas-conduzir-editar-configuracao"),
+        "2. Banca",
+        "Membros, origem, banca nº e as competências que cada um avalia. Salvar configuração grava roteiro e banca juntos.",
+        { exige: editaEntrevistas, antes: ABA.banca },
+      ),
+      passo(
+        t("entrevistas-conduzir-convocacao"),
+        "3. Convocação",
+        "Quem é chamado, em linguagem simples, e a lista de convocação da Classificação, na ordem de cada vaga.",
+        { antes: ABA.convocar },
       ),
       passo(
         t("entrevistas-conduzir-convocar"),
         "Convocar",
         "Confirma a convocação dos candidatos marcados.",
-        { exige: editaEntrevistas },
+        { exige: editaEntrevistas, antes: ABA.convocar },
       ),
       passo(
-        t("entrevistas-roteiros"),
-        "Roteiros",
-        "Modelos reutilizáveis da entrevista: competências, pontuação e banca.",
-      ),
-      passo(
-        t("entrevistas-roteiros-novo"),
-        "Novo roteiro",
-        "Cria um roteiro do zero; editar grava uma versão nova.",
-        { exige: editaEntrevistas },
+        t("entrevistas-preparar"),
+        "4. Agenda",
+        "Dia, horário e banca de cada convocado, montados na Classificação › Agenda; aqui só se confere.",
+        { antes: ABA.agendaDoEdital },
       ),
       PASSO_DA_AYA,
     ]),
@@ -1263,16 +1298,16 @@ const TRILHAS = Object.freeze([
         { pagina: "conduzir-entrevistas" },
       ),
       passo(
-        [t("entrevistas-conduzir-configuracao"), "[data-passo='configuracao']"],
-        "Preparar · Configuração",
-        "Escolha o roteiro e a banca (com as competências de cada membro); as regras ficam resumidas logo acima.",
+        t("entrevistas-preparar-passos"),
+        "Preparar em passos",
+        "Roteiro, banca, convocação e agenda, cada um com o que falta; as regras ficam resumidas logo acima.",
         { pagina: "conduzir-entrevistas", antes: ABA.preparar },
       ),
       passo(
-        [t("entrevistas-conduzir-convocacao"), "[data-passo='convocacao']"],
+        t("entrevistas-conduzir-convocacao"),
         "Preparar · Convocação",
         "A lista de convocação vem da Classificação, na ordem de cada vaga.",
-        { pagina: "conduzir-entrevistas", antes: ABA.preparar },
+        { pagina: "conduzir-entrevistas", antes: ABA.convocar },
       ),
       passo(
         t("conduzir-fila"),

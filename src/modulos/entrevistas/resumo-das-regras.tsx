@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import type { ReactNode } from "react";
 import {
   resumoDasRegrasDaEntrevista,
@@ -36,7 +36,7 @@ const ICONES: Record<BlocoDoResumo["id"], string> = {
   desempate: "fa-scale-balanced",
 };
 
-function TabelaDasVagas({ bloco }: { bloco: BlocoDoResumo }) {
+export function TabelaDasVagas({ bloco }: { bloco: BlocoDoResumo }) {
   if (!bloco.vagas?.length) return null;
   return (
     <div className="entrevistas-tabela-rolagem">
@@ -74,16 +74,39 @@ export function ResumoDasRegras({
   detalhes,
 }: PropriedadesDoResumo) {
   const blocos = useMemo(() => resumoDasRegrasDaEntrevista(entrada), [entrada]);
+  // No celular o resumo começa recolhido, para os passos de Preparar aparecerem logo.
+  const [aberto, setAberto] = useState(
+    () => globalThis.matchMedia?.("(max-width: 720px)").matches !== true,
+  );
   return (
     <section
       className="ui-card entrevistas-passo entrevistas-regras"
       aria-labelledby="entrevistasRegrasTitulo"
       data-tour="entrevistas-conduzir-regras"
     >
-      <h2 className="ui-titulo" id="entrevistasRegrasTitulo">
-        Regras da entrevista
-      </h2>
-      <div className="entrevistas-regras-blocos">
+      <div className="entrevistas-regras-topo">
+        <h2 className="ui-titulo" id="entrevistasRegrasTitulo">
+          Regras da entrevista
+        </h2>
+        <button
+          type="button"
+          className="btn ghost small"
+          aria-expanded={aberto}
+          aria-controls="entrevistasRegrasBlocos"
+          onClick={() => setAberto(!aberto)}
+        >
+          <i
+            className={`fa-solid ${aberto ? "fa-chevron-up" : "fa-chevron-down"}`}
+            aria-hidden="true"
+          />{" "}
+          {aberto ? "Ocultar" : "Mostrar"}
+        </button>
+      </div>
+      <div
+        className="entrevistas-regras-blocos"
+        id="entrevistasRegrasBlocos"
+        hidden={!aberto}
+      >
         {blocos.map((bloco) => {
           const acoes = bloco.acoes.filter((a) => podeIr(a.destino));
           return (
@@ -136,7 +159,7 @@ export function ResumoDasRegras({
           );
         })}
       </div>
-      {detalhes ? (
+      {detalhes && aberto ? (
         <details className="entrevistas-regras-detalhes">
           <summary>Ver detalhes</summary>
           {detalhes}

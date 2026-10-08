@@ -3499,9 +3499,13 @@ export const VERBETES_AYA = Object.freeze([
       "7 de 12 hoje",
       "contador do dia",
       "hoje proximos todos",
+      "buscar candidato na fila",
+      "fila por vaga",
+      "iniciais do avatar",
+      "mostrar editais concluidos",
     ],
     resposta:
-      'Conduzir entrevistas é a tela de fazer (secretaria e avaliadores), com entrada própria no menu. Escolha o edital (abre sozinho o último aberto na área ou, se houver um só, ele). A Fila abre em Hoje: os convocados com horário hoje na agenda salva na Classificação, em cartões com as iniciais, o horário, a banca e a situação — Aguardando (cinza), Em andamento (azul), Concluída (verde) e Faltou (amarelo), as cores da Avaliação documental. Sem entrevista hoje, abre em Próximos; sem agenda, em Todos. Dá para trocar entre Hoje, Próximos e Todos, escolher a vaga e clicar numa situação para filtrar. O topo mostra "X de Y hoje" (concluídas e faltas entre as de hoje). Clicar no cartão abre a ficha de notas em tela cheia; "Salvar e abrir o próximo" segue a ordem da fila. Ao concluir todas as de hoje, há uma comemoração (se as comemorações estiverem ligadas). Preparar, no topo, tem a configuração, a convocação e os roteiros.',
+      'Conduzir entrevistas é a tela de fazer (secretaria e avaliadores), com entrada própria no menu. O edital fica num seletor compacto logo abaixo do topo, com o selo Treinamento ao lado (abre sozinho o último aberto na área ou, se houver um só, ele); o administrador global tem, dentro do próprio seletor, "Mostrar também os concluídos e fora da janela". Para reler, use Atualizar no topo. A Fila abre em Hoje: os convocados com horário hoje na agenda salva na Classificação, em cartões agrupados por vaga (código · cargo, com a contagem), em ordem de horário e depois de nome. Cada cartão traz as iniciais do primeiro e do último nome (números e "de/da/dos" não entram), o código, o horário e a banca (quando há agenda) e a situação — Aguardando (cinza), Em andamento (azul, com "3 de 6" notas), Concluída (verde, com a nota) e Faltou (amarelo), as cores da Avaliação documental. Sem entrevista hoje, abre em Próximos (o cartão mostra o dia, como "Amanhã"); sem agenda, em Todos. Dá para trocar entre Hoje, Próximos e Todos, buscar pelo nome ou código (Esc limpa) e clicar numa situação para filtrar. O topo mostra "X de Y hoje" (concluídas e faltas entre as de hoje). Clicar no cartão abre a ficha de notas em tela cheia; "Salvar e abrir o próximo" segue a ordem da tela, vaga a vaga. Ao concluir todas as de hoje, há uma comemoração (se as comemorações estiverem ligadas). Preparar, no topo, guia a preparação em quatro passos.',
     fato: "A fila de Conduzir entrevistas abre em Hoje, pela agenda salva na Classificação; concluída é quem tem parecer ou todas as notas, faltou é quem tem Faltou marcado.",
     fonte:
       "src/modulos/entrevistas/conduzir.tsx; src/modulos/entrevistas/fila-do-dia.tsx; src/lib/fila-de-conducao.ts",
@@ -3518,12 +3522,16 @@ export const VERBETES_AYA = Object.freeze([
       "configuracao da entrevista",
       "onde ficou o passo 1",
       "onde ficou a convocacao",
+      "passos do preparar",
+      "o que falta para preparar a entrevista",
+      "3 de 4 prontos",
+      "agenda no preparar",
     ],
     resposta:
-      "Em Conduzir entrevistas › Preparar ficam, em cima, as Regras da entrevista (o resumo em linguagem simples: quem é chamado, como a nota é calculada, quem avalia e o desempate, cada um com o botão Editar), depois a configuração do edital (roteiro, modo de lançamento, composição e membros da banca, com as competências que cada membro avalia) e a convocação (a lista de convocação da Classificação, por vaga). Abaixo, os roteiros de entrevista da área. Quem não tem Editor vê tudo, sem os botões. Edital ainda não configurado mostra o aviso na Fila, com o atalho para Preparar.",
-    fato: "",
+      'Em Conduzir entrevistas › Preparar ficam, em cima, as Regras da entrevista (o resumo em linguagem simples: quem é chamado, como a nota é calculada, quem avalia e o desempate, cada um com o botão Editar) e, embaixo, "Preparar a entrevista" em quatro passos, como o assistente da regra da Avaliação documental: 1 Roteiro (o roteiro do edital, a versão com nome, a pontuação e as competências; logo abaixo, os roteiros da área), 2 Banca (o modo de lançamento e cada banca com os membros e as competências que cada um avalia), 3 Convocação (quem é chamado, em linguagem simples, a tabela das vagas e a lista de convocação da Classificação para convocar) e 4 Agenda (dia, horário e banca de cada convocado, montados na Classificação › Agenda; aqui só se confere, com o botão para a Classificação). Cada passo tem o check verde quando está pronto e "O que falta" quando não está (por exemplo "Escolha o roteiro da entrevista.", "Banca 1: ninguém avalia …", "1 candidato da lista ainda não foi convocado.", "2 convocados ainda estão sem horário."); o contador "3 de 4 prontos" fica no título, e Preparar abre no primeiro passo pendente. Os passos 1 e 2 editam a mesma configuração: "Trocar o roteiro" ou "Editar a banca" abrem os campos, e "Salvar configuração" grava os dois juntos, com a lista do que falta para salvar ao lado (clicar num item leva ao passo dele). Quem não tem Editor vê tudo, sem os botões. Edital ainda não preparado mostra o aviso na Fila, com o atalho para Preparar.',
+    fato: "Preparar a entrevista tem quatro passos (Roteiro, Banca, Convocação e Agenda), cada um com o estado e o que falta; a agenda é montada na Classificação.",
     fonte:
-      "src/modulos/entrevistas/conducao.jsx; src/modulos/entrevistas/conduzir.tsx",
+      "src/modulos/entrevistas/preparar.tsx; src/modulos/entrevistas/configuracao-do-edital.tsx; src/lib/passos-do-preparar.ts; src/modulos/entrevistas/conduzir.tsx",
     abrir: "conduzir-entrevistas",
   },
   {
@@ -3651,7 +3659,7 @@ export const VERBETES_AYA = Object.freeze([
       "onde edito o roteiro",
     ],
     resposta:
-      'Os roteiros ficam em Conduzir entrevistas › Preparar, na configuração do gestor (ao lado da configuração do edital, como a Regra fica na Avaliação documental). O roteiro é um modelo reutilizável da entrevista: competências (1 a 20, cada uma com nota máxima, peso e mínimo), escala, regra de aprovação e banca padrão; serve a vários editais. O desempate não é do roteiro: é o da regra de classificação do edital, mostrado só para ler. Quem é convocado sai da lista de convocação da Classificação. Editar grava uma versão nova: os editais que já usam a anterior continuam nela, e a nova vale para as próximas configurações. "Duplicar" cria um roteiro novo, na versão 1. Roteiro sem área serve para qualquer área.',
+      'Os roteiros ficam em Conduzir entrevistas › Preparar, no passo 1 (Roteiro), em "Roteiros da área" (a configuração do gestor, como a Regra fica na Avaliação documental). O editor abre ao lado, em seções que abrem e fecham: Identificação, Competências e aspectos, Escala e níveis, Aprovação, eliminação e ausência (com as frases simples do que elimina, como "Abaixo de 2 em qualquer competência ou abaixo de 8 no total, o candidato fica inapto." e "Quem falta é eliminado."), Resultado e desempate (o desempate só para ler, da Classificação) e Banca padrão. Perto do Salvar fica a lista do que falta ("Competência 2 (Escuta): Nota máxima: maior que 0 e até 100."); clicar num item abre a seção dele, e tentar salvar com pendência marca as seções em vermelho. O nome da versão fica no alto do editor. O roteiro é um modelo reutilizável da entrevista: competências (1 a 20, cada uma com nota máxima, peso e mínimo), escala, regra de aprovação e banca padrão; serve a vários editais. O desempate não é do roteiro: é o da regra de classificação do edital, mostrado só para ler. Quem é convocado sai da lista de convocação da Classificação. Editar grava uma versão nova: os editais que já usam a anterior continuam nela, e a nova vale para as próximas configurações. "Duplicar" cria um roteiro novo, na versão 1. Roteiro sem área serve para qualquer área.',
     fato: "",
     fonte:
       "supabase/migrations/20260930220000_entrevistas_roteiros_e_notas.sql; src/lib/roteiro-de-entrevista.js; src/modulos/entrevistas/roteiros.jsx",
@@ -3782,12 +3790,35 @@ export const VERBETES_AYA = Object.freeze([
       "faltou na entrevista",
       "lancar por avaliador",
       "lancar por competencia",
+      "copiar parecer da entrevista",
+      "parecer pronto",
+      "texto do parecer",
     ],
     resposta:
-      'Na Fila de Conduzir entrevistas, abra um convocado: a ficha ocupa a tela inteira (fica só o menu lateral). No cabeçalho: o nome e o código, a vaga, os chips (nota da análise, modalidade, roteiro e aspectos), os detalhes no "i" (modo de lançamento, nota e parecer gravados, nome do roteiro), o comparecimento (Compareceu / Faltou), a banca quando há mais de uma e Anterior / "1 de 15" / Próximo. O lançamento padrão é Por avaliador, como a secretaria passando a limpo a folha de cada avaliador: uma aba por avaliador ("Avaliador · origem", com o check quando está completo) e, nela, a matriz com as competências nas linhas (e o mínimo de cada uma) e os aspectos nas colunas (Conceitua, Propriedade, Profundidade); sem aspectos, uma coluna "Nota". A média da linha aparece num chip: vermelho abaixo do mínimo, verde ok. Com avaliador por competência, as competências que não são do avaliador aparecem esmaecidas ("avaliada por …") e não contam nas notas que faltam. Completo um avaliador, a ficha passa sozinha ao próximo; com todos completos, o foco vai para "Salvar e abrir o próximo". "Por competência" (para lançar ao vivo) troca as abas pelas competências e as linhas pelos avaliadores; a escolha fica guardada no navegador. Digitar a primeira nota marca Compareceu. Com Faltou, a matriz some e fica a confirmação: se a ausência elimina no roteiro, parecer Inapto e total 0. A lateral mostra o resultado na hora, com as mesmas regras do banco: o total sobre o máximo num anel com a marca do mínimo, a nota da banca em cada competência em barras com a marca do mínimo, o parecer (Apto verde, Inapto vermelho, Sem parecer cinza) com os motivos e "X de Y notas". Os níveis da escala ficam numa linha embaixo da matriz e na dica da célula em foco. No celular, um avaliador por vez, uma competência por linha com as células grandes e o teclado numérico. A cada gravação o banco recalcula o resultado, que aparece no Painel de entrevistas; toda nota lançada, corrigida ou apagada vai para o histórico. O cartão da fila mostra as notas lançadas sobre as esperadas.',
+      'Na Fila de Conduzir entrevistas, abra um convocado: a ficha ocupa a tela inteira (fica só o menu lateral). No cabeçalho: o nome e o código, a vaga, os chips (nota da análise, modalidade, roteiro e aspectos), os detalhes no "i" (modo de lançamento, nota e parecer gravados, nome do roteiro), o comparecimento (Compareceu / Faltou), a banca quando há mais de uma e Anterior / "1 de 15" / Próximo. O lançamento padrão é Por avaliador, como a secretaria passando a limpo a folha de cada avaliador: uma aba por avaliador ("Avaliador · origem", com o check quando está completo) e, nela, a matriz com as competências nas linhas (e o mínimo de cada uma) e os aspectos nas colunas (Conceitua, Propriedade, Profundidade); sem aspectos, uma coluna "Nota". A média da linha aparece num chip: vermelho abaixo do mínimo, verde ok. Com avaliador por competência, as competências que não são do avaliador aparecem esmaecidas ("avaliada por …") e não contam nas notas que faltam. Completo um avaliador, a ficha passa sozinha ao próximo; com todos completos, o foco vai para "Salvar e abrir o próximo". "Por competência" (para lançar ao vivo) troca as abas pelas competências e as linhas pelos avaliadores; a escolha fica guardada no navegador. Digitar a primeira nota marca Compareceu. Com Faltou, a matriz some e fica a confirmação: se a ausência elimina no roteiro, parecer Inapto e total 0. A lateral mostra o resultado na hora, com as mesmas regras do banco: o total sobre o máximo num anel com a marca do mínimo, a nota da banca em cada competência em barras com a marca do mínimo, o parecer (Apto verde, Inapto vermelho, Sem parecer cinza) com os motivos e "X de Y notas". Os níveis da escala ficam numa linha embaixo da matriz e na dica da célula em foco. Com tudo lançado (ou com Faltou marcado), o parecer aparece em texto pronto embaixo da matriz — quem, edital e vaga, o roteiro, a banca, a nota de cada competência com o mínimo, o total e o parecer com o motivo — com "Copiar parecer", como na ficha da Avaliação documental; com alterações sem salvar, ele diz que é a prévia. A ficha tem a observação de cada avaliador e a justificativa da banca (veja "Observação do avaliador e justificativa da banca"). No celular, um avaliador por vez, uma competência por linha com as células grandes e o teclado numérico. A cada gravação o banco recalcula o resultado, que aparece no Painel de entrevistas; toda nota lançada, corrigida ou apagada vai para o histórico. O cartão da fila mostra as notas lançadas sobre as esperadas enquanto a entrevista está em andamento.',
     fato: "",
     fonte:
-      "src/modulos/entrevistas/ficha.jsx; src/modulos/entrevistas/matriz-de-notas.tsx; src/modulos/entrevistas/resultado-da-ficha.tsx; src/modulos/entrevistas/cabecalho-da-ficha.tsx; src/lib/conducao-de-entrevista.js",
+      "src/modulos/entrevistas/ficha.jsx; src/modulos/entrevistas/parecer-pronto.tsx; src/lib/parecer-da-entrevista.ts; src/modulos/entrevistas/matriz-de-notas.tsx; src/modulos/entrevistas/resultado-da-ficha.tsx; src/modulos/entrevistas/cabecalho-da-ficha.tsx; src/lib/conducao-de-entrevista.js",
+  },
+  {
+    arquivo: "regras-das-entrevistas.md",
+    titulo: "Observação do avaliador e justificativa da banca",
+    perguntas: [
+      "observacao do avaliador",
+      "onde escrevo a observacao",
+      "justificativa da banca",
+      "justificativa obrigatoria",
+      "por que nao salva inapto",
+      "faltou pede justificativa",
+      "observacao por competencia",
+      "comentario do avaliador",
+    ],
+    resposta:
+      'Na ficha de notas há dois textos. A "Observação do avaliador" é opcional, uma por avaliador na entrevista (até 1.000 caracteres, numa linha que cresce): fica embaixo da matriz de notas dele, no lançamento Por avaliador, ou junto do nome de cada avaliador, em "Observações dos avaliadores", no Por competência. Não há observação por competência. No modo "Cada avaliador lança a sua", cada um escreve só a própria. A "Justificativa da banca" é uma por entrevista (até 4.000 caracteres): opcional quando o parecer é Apto e obrigatória quando é Inapto ou quando o candidato faltou. Sem ela, o rodapé mostra "Falta a justificativa da banca" (clicar leva ao campo) e o Salvar não grava; o banco também recusa ("Escreva a justificativa da banca: ela é obrigatória quando o parecer é Inapto" ou "… quando o candidato falta"). A regra vale para cada gravação nova: as entrevistas gravadas antes continuam como estão e a carga da planilha não muda. A justificativa entra no parecer pronto e no "Copiar parecer". Toda mudança dos dois textos vai para o histórico da entrevista, com quem e quando.',
+    fato: "No MONITORA, a justificativa da banca é obrigatória para Inapto e Faltou (em gravação nova); a observação do avaliador é opcional, uma por avaliador.",
+    fonte:
+      "src/modulos/entrevistas/textos-da-ficha.tsx; src/modulos/entrevistas/ficha.jsx; supabase/migrations/20261008220000_observacao_e_justificativa_da_entrevista.sql",
+    abrir: "conduzir-entrevistas",
   },
   {
     arquivo: "regras-das-entrevistas.md",
@@ -3941,7 +3972,7 @@ export const VERBETES_AYA = Object.freeze([
       "agenda dos proximos dias",
     ],
     resposta:
-      'A agenda é montada e ajustada na Classificação, visão Agenda. Em Conduzir entrevistas, a Fila usa a agenda salva: Hoje são os convocados com horário hoje (Brasília), Próximos os dos dias seguintes, por dia, e Todos inclui quem não tem horário. No Painel de entrevistas, com um edital escolhido, a "Agenda dos próximos dias" mostra até cinco dias com entrevista, um por coluna, com o botão Conduzir. Sem agenda salva, a Fila abre em Todos.',
+      'A agenda é montada e ajustada na Classificação, visão Agenda. Em Conduzir entrevistas, a Fila usa a agenda salva: Hoje são os convocados com horário hoje (Brasília), Próximos os dos dias seguintes (o cartão mostra o dia) e Todos inclui quem não tem horário; Preparar › Agenda mostra a agenda do edital por dia e quem ainda está sem horário. No Painel de entrevistas, com um edital escolhido, a "Agenda dos próximos dias" mostra até cinco dias com entrevista, um por coluna, com o botão Conduzir. Sem agenda salva, a Fila abre em Todos.',
     fato: "",
     fonte:
       "src/modulos/entrevistas/fila-do-dia.tsx; src/modulos/entrevistas/andamento.tsx; src/lib/fila-de-conducao.ts",

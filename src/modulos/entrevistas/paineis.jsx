@@ -15,6 +15,7 @@ import {
   CardDeGrafico,
   ChipDeFiltro,
   ChipsDeFiltro,
+  EstadoVazio,
   Grafico,
   GradeDeKpis,
   Kpi,
@@ -222,8 +223,9 @@ export function Indicadores({
 
 /* ── Recorte ativo ──────────────────────────────────────────────────── */
 
+/* Sem filtro, a linha não aparece (os KPIs já são do recorte todo). */
 export function Recorte({ ativos }) {
-  return <LinhaDoRecorte ativos={ativos} />;
+  return ativos.length ? <LinhaDoRecorte ativos={ativos} /> : null;
 }
 
 /* ── Pendências ─────────────────────────────────────────────────────── */
@@ -483,41 +485,47 @@ export function Graficos({
           altura="short"
           carregando={carregando}
         >
-          <Grafico
-            id="chartCriterios"
-            tipo="bar"
-            rotulo="Média das notas por critério da entrevista"
-            dependencias={[porCriterio, tema]}
-            montar={() => {
-              const p = paleta(escuro);
-              return {
-                data: {
-                  labels: porCriterio.map((c) => truncar(c.rotulo, 26)),
-                  datasets: [
-                    {
-                      label: "Média",
-                      data: porCriterio.map((c) =>
-                        c.media === null ? 0 : Number(c.media.toFixed(2)),
-                      ),
-                      backgroundColor: p.blue,
-                      borderRadius: 6,
-                    },
-                  ],
-                },
-                options: opcoesDeBarras(p, {
-                  deitado: true,
-                  maximo: 5,
-                  decimais: true,
-                  dica: {
-                    title: (itens) =>
-                      porCriterio[itens[0].dataIndex]?.texto || "",
-                    label: (item) =>
-                      `Média ${formatarNota(item.parsed.x)} · ${formatNumberBR(porCriterio[item.dataIndex]?.quantidade || 0)} nota(s)`,
+          {carregado && !porCriterio.length ? (
+            <EstadoVazio className="entrevistas-grafico-vazio">
+              Sem notas por critério neste recorte.
+            </EstadoVazio>
+          ) : (
+            <Grafico
+              id="chartCriterios"
+              tipo="bar"
+              rotulo="Média das notas por critério da entrevista"
+              dependencias={[porCriterio, tema]}
+              montar={() => {
+                const p = paleta(escuro);
+                return {
+                  data: {
+                    labels: porCriterio.map((c) => truncar(c.rotulo, 26)),
+                    datasets: [
+                      {
+                        label: "Média",
+                        data: porCriterio.map((c) =>
+                          c.media === null ? 0 : Number(c.media.toFixed(2)),
+                        ),
+                        backgroundColor: p.blue,
+                        borderRadius: 6,
+                      },
+                    ],
                   },
-                }),
-              };
-            }}
-          />
+                  options: opcoesDeBarras(p, {
+                    deitado: true,
+                    maximo: 5,
+                    decimais: true,
+                    dica: {
+                      title: (itens) =>
+                        porCriterio[itens[0].dataIndex]?.texto || "",
+                      label: (item) =>
+                        `Média ${formatarNota(item.parsed.x)} · ${formatNumberBR(porCriterio[item.dataIndex]?.quantidade || 0)} nota(s)`,
+                    },
+                  }),
+                };
+              }}
+            />
+          )}
         </CardDeGrafico>
         <CardDeGrafico
           titulo="Top unidades por entrevistados"
