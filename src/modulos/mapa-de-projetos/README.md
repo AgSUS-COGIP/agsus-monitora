@@ -6,12 +6,12 @@ e usa as mesmas peças: o que muda é o que vai no mapa e na lista.
 
 ```
 mapa-de-projetos.tsx   <MapaDeProjetos area carregador carregadoEm linhas filtroAtivo>: um ponto por lugar
-                       na cor do projeto, montado com as peças comuns (painel-do-mapa.jsx, leaflet.js)
+                       na cor do projeto, montado com as peças comuns (painel-do-mapa.tsx, leaflet.js)
 lista.tsx              "Municípios por vagas" (ListaDoMapa comum, linhas no formato de "Territórios por
                        vagas"), filtro "Projeto" e "Agrupar por projeto"
 balao.ts               dica e popup do lugar em DOM seguro (projeto, edital, vagas, lotações, contagens)
 editor-de-coordenadas.tsx  "Coordenadas" (admin global e Gestor): o editor comum com os lugares das vagas,
-                       as regras de src/lib/coordenadas-dos-projetos.js e as RPCs *_coordenada_mapa_projetos
+                       as regras de src/lib/coordenadas-dos-projetos.ts e as RPCs *_coordenada_mapa_projetos
                        (migration 20261002190000)
 carregador.ts          RPC listar_municipios_das_vagas_da_area, um pedido por área, cache de 5 min, e a
                        escolha da lista (sobrevive à troca de área)
@@ -22,19 +22,19 @@ mapa-de-projetos.css   cores dos projetos (--series-1…6), filtro e grupos; o r
 
 | Regra                                                                                      | Como é (nos dois mapas)                                                                                           | Onde                                                              |
 | ------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------- |
-| Criação, Brasil inicial, fundo com recurso, contornos UF/BR, observador de tamanho         | `usarMapaDoBrasil` → `criarMapaDoBrasil`                                                                          | `mapa-saude-indigena/painel-do-mapa.jsx`, `leaflet.js`            |
+| Criação, Brasil inicial, fundo com recurso, contornos UF/BR, observador de tamanho         | `usarMapaDoBrasil` → `criarMapaDoBrasil`                                                                          | `mapa-saude-indigena/painel-do-mapa.tsx`, `leaflet.js`            |
 | Limites, zoom mín./máx., viscosidade, teclado, régua                                       | `criarMapa` (minZoom 4, maxZoom 18, zoomSnap 0,25) + `map-guard.js` / `map-zoom-range.js` globais                 | `leaflet.js`, `src/modules/`                                      |
 | Enquadramento                                                                              | `enquadramentoDoRecorte`: sem filtro o Brasil; com filtro, zoom 7 num ponto só ou a caixa (padding 60, maxZoom 7) | `src/lib/enquadramento-do-brasil.js`, `enquadrar` em `leaflet.js` |
 | Reenquadrar ao aparecer / mudar de tamanho até a pessoa mexer; "Brasil" volta a acompanhar | `pegar`/`soltar`                                                                                                  | `criarMapaDoBrasil`                                               |
-| Topo: título, contagem, "Coordenadas", "Brasil", "Tela cheia"                              | `TopoDoMapa`                                                                                                      | `painel-do-mapa.jsx`                                              |
-| Tela cheia (Esc sai) e modo de edição de coordenadas                                       | `usarTelaCheia`, `usarModoDeEdicao`                                                                               | `tela-cheia.jsx`, `editor-de-coordenadas/`                        |
+| Topo: título, contagem, "Coordenadas", "Brasil", "Tela cheia"                              | `TopoDoMapa`                                                                                                      | `painel-do-mapa.tsx`                                              |
+| Tela cheia (Esc sai) e modo de edição de coordenadas                                       | `usarTelaCheia`, `usarModoDeEdicao`                                                                               | `tela-cheia.tsx`, `editor-de-coordenadas/`                        |
 | Mapa/Satélite                                                                              | `map-base-layer-switcher.js` (ids `map`, `detailMap`, `mapaDosProjetos`)                                          | `src/modules/`                                                    |
 | Tamanho da bolha                                                                           | `raioDaBolha` (raiz do valor, 5 a 15 px), escala do conjunto inteiro: filtrar não muda o tamanho                  | `src/lib/mapa-render.js`                                          |
 | Opacidade                                                                                  | `OPACIDADE_DA_BOLHA` (0,7)                                                                                        | `src/lib/mapa-render.js`                                          |
 | Bolhas no mesmo pixel                                                                      | leque com traço até o ponto real (`criarLeque`)                                                                   | `leaflet.js`                                                      |
 | Dica e popup                                                                               | `ligarDicaEPopup` + `manterDicasDentroDoMapa`/`opcoesDoPopup`                                                     | `leaflet.js`, `src/lib/dica-dentro-do-mapa.js`                    |
-| Legenda                                                                                    | `LegendaFlutuante` (começa recolhida)                                                                             | `legenda.jsx`                                                     |
-| Lista lateral: total, esqueleto, vazio em uma linha; id `<mapa>-painel-lateral`            | `ListaDoMapa`                                                                                                     | `painel-do-mapa.jsx`                                              |
+| Legenda                                                                                    | `LegendaFlutuante` (começa recolhida)                                                                             | `legenda.tsx`                                                     |
+| Lista lateral: total, esqueleto, vazio em uma linha; id `<mapa>-painel-lateral`            | `ListaDoMapa`                                                                                                     | `painel-do-mapa.tsx`                                              |
 | Filtros da Visão geral                                                                     | as linhas recortadas e `temRecorte` da página                                                                     | `visao-geral.jsx`                                                 |
 | Celular, tema escuro                                                                       | o CSS `.mapa-si-*`                                                                                                | `mapa-saude-indigena.css`                                         |
 
@@ -92,9 +92,11 @@ posição dentro do Brasil. Coordenada ausente continua permitindo a referência
 para respostas antigas; coordenada nula do banco mantém o lugar sem ponto.
 
 O editor compartilhado e o modo de edição estão em TypeScript (contratos e limites em
-`../editor-de-coordenadas/README.md`). As peças comuns de criação do Leaflet seguem em
-JavaScript, com contratos JSDoc nas integrações utilizadas aqui. As regras de correção em
-`src/lib/coordenadas-dos-projetos.js` também seguem compartilhadas em JavaScript.
+`../editor-de-coordenadas/README.md`). O painel, a lista, os controles, a legenda, a tela cheia e os hooks compartilhados
+também estão em TypeScript. A fábrica do Leaflet segue em JavaScript, com contratos
+JSDoc nas integrações utilizadas aqui. As regras de correção em
+`src/lib/coordenadas-dos-projetos.ts` estão em TypeScript, incluindo sugestões,
+gravidade, fila e aplicação de correções no mapa e no cache.
 O contrato mínimo do mapa fica em `src/lib/tipos-do-mapa.ts`; ele não cobre toda
 a API do Leaflet. As permissões e RPCs de gravação continuam as mesmas.
 

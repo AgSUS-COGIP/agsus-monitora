@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   DESENHO_DAS_FORMAS,
   formaDoTipo,
-} from "../src/lib/mapa-saude-indigena/formas.js";
+} from "../src/lib/mapa-saude-indigena/formas.ts";
 import {
   registroDaSede,
   registrosDoDsei,

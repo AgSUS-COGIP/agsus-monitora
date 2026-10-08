@@ -23,10 +23,13 @@ cache, mapa, lista, balões, integração do editor e regras em `src/lib/visao-g
 O editor compartilhado pelos dois mapas também está em TypeScript: fila, sugestões, histórico,
 prévia, gravação, modo de edição e regras em `src/lib/editor-de-coordenadas.ts`. O mapa da
 Saúde Indígena e as peças comuns de criação do Leaflet continuam em JavaScript, com contratos
-JSDoc na integração. Outros módulos
+JSDoc na integração. Painel, lista, legenda, tela cheia, retorno ao Brasil e hooks dos
+mapas já estão em TypeScript, com contratos em `tipos-do-painel.ts`; formas e cores
+em `src/lib/mapa-saude-indigena/formas.ts`. Outros módulos
 combinam JavaScript/JSX com migrações pontuais para TypeScript: a ficha da Avaliação documental
 tem os componentes em `src/modulos/avaliacao-documental/ficha/*.tsx` (contratos em `tipos.ts`) e
-`Popover` está em `src/ui/popover.tsx`. Componentes e helpers
+`Popover` está em `src/ui/popover.tsx`. Em Configurações › Marca, a prévia da barra lateral
+(`previa-da-barra-lateral.tsx`) e o quadro das prévias (`moldura-da-previa.tsx`) são TSX. Componentes e helpers
 compartilhados consumidos por esses módulos declaram seus contratos em JSDoc.
 O assistente da regra da Avaliação documental (`src/modulos/avaliacao-documental/assistente/`)
 já nasceu em TSX, com as regras em `src/lib/avaliacao-documental/assistente-da-regra.ts`,
@@ -116,3 +119,9 @@ os imports quando o arquivo mudar de extensão. Para dados externos, acrescentar
 em tempo de execução quando necessária: uma anotação TypeScript não valida JSON recebido.
 
 Manter o servidor com seu `tsconfig.json`; configurações de DOM e JSX pertencem ao frontend.
+
+As regras de coordenadas dos dois mapas e o adaptador do editor da Saúde Indígena
+também estão migrados. Os contratos dos alvos indígenas estão em
+`src/lib/tipos-das-coordenadas-do-mapa.ts`; o catálogo editável valida entradas
+externas sem alterar os índices conferidos pelo banco. A tela principal da
+Saúde Indígena ainda permanece em JavaScript.

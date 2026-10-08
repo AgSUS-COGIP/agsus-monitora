@@ -97,3 +97,9 @@ export interface PosicaoDoFlutuante {
   alturaDaPilula?: number;
   margem?: number;
 }
+/** O que a prévia de Configurações › Marca passa à barra (rascunho, não o legado). */
+export interface PreviaDaBarraLateral {
+  readonly logo: string;
+  readonly escuro: boolean;
+  readonly versao: { readonly rotulo: string; readonly valor: string };
+}

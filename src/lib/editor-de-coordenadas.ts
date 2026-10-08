@@ -17,9 +17,9 @@ import { distanciaKm } from "./reconciliacao-unidades.js";
   O EDITOR DE COORDENADAS DOS MAPAS — regras comuns, sem DOM
 
   Serve aos dois mapas com editor (administrador global e Gestor):
-  - Saúde Indígena: sedes, polos, UBSI e CASAIs (`coordenadas-do-mapa.js`,
+  - Saúde Indígena: sedes, polos, UBSI e CASAIs (`coordenadas-do-mapa.ts`,
     RPCs `*_coordenada_mapa_saude_indigena`);
-  - Projetos: os lugares das vagas (`coordenadas-dos-projetos.js`, RPCs
+  - Projetos: os lugares das vagas (`coordenadas-dos-projetos.ts`, RPCs
     `*_coordenada_mapa_projetos`).
 
   Aqui ficam a leitura e a validação da coordenada, a fila (busca, "Só

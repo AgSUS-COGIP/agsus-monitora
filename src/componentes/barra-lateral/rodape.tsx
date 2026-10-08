@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import type { PreviaDaBarraLateral } from "./tipos.ts";
 import { alternarTemaPelaJanela } from "./integracao.ts";
 import { Icone } from "../icone.jsx";
 import {
@@ -23,9 +24,19 @@ import { temaEscuro, usarTemaEscuro } from "../../app/tema.js";
   espelho `body.dark-mode`). Ela inverte o tema, então o segmento já ativo não
   a chama.
   O Sair abre a confirmação de `nielsen-shell-ux.js` antes de encerrar.
+
+  Com `previa` (Configurações › Marca), o tema é o da prévia e a versão vem
+  escrita pelo React, porque ali não há legado escrevendo nos ids.
 */
-export function Rodape({ alca = null }: { alca?: ReactNode }) {
-  const escuro = usarTemaEscuro();
+export function Rodape({
+  alca = null,
+  previa = null,
+}: {
+  alca?: ReactNode;
+  previa?: PreviaDaBarraLateral | null;
+}) {
+  const escuroDoApp = usarTemaEscuro();
+  const escuro = previa ? previa.escuro : escuroDoApp;
   const tema = themeControlState(escuro);
   const pedirTema = (pedido: string) => {
     if (deveAlternarTema(pedido, temaEscuro())) alternarTemaPelaJanela();
@@ -74,11 +85,11 @@ export function Rodape({ alca = null }: { alca?: ReactNode }) {
       </button>
       {/*
         O texto da versão é do legado: `applyConfigToUi` o escreve pelos ids.
-        O React cria os dois nós vazios e nunca põe filhos neles.
+        O React cria os dois nós vazios e nunca põe filhos neles (só na prévia).
       */}
       <div className="side-version">
-        <span id="sidebarVersionLabel" />
-        <b id="sidebarVersion" />
+        <span id="sidebarVersionLabel">{previa?.versao.rotulo}</span>
+        <b id="sidebarVersion">{previa?.versao.valor}</b>
       </div>
     </div>
   );

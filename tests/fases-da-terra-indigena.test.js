@@ -321,7 +321,7 @@ describe("contra o catálogo real", () => {
 */
 describe("a legenda descreve as três", () => {
   const legenda = readFileSync(
-    "src/modulos/mapa-saude-indigena/legenda.jsx",
+    "src/modulos/mapa-saude-indigena/legenda.tsx",
     "utf8",
   );
 

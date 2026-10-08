@@ -22,7 +22,7 @@
   e centros por supabase/correcoes/20261002-pendencias-das-coordenadas-dos-projetos.sql
   e corrigida no editor de coordenadas). Esta tabela fica como referência:
   a sugestão "Sede do município (IBGE)"/"Centro da UF" do editor
-  (src/lib/coordenadas-dos-projetos.js), o mapa da Saúde Indígena
+  (src/lib/coordenadas-dos-projetos.ts), o mapa da Saúde Indígena
   (sede do município das pendências) e o mapa enquanto a RPC não traz a
   coordenada do banco. Município novo nas vagas: acrescente uma linha aqui e
   na carga (o teste da migration confere que as duas são iguais).

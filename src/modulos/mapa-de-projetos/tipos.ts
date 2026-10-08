@@ -92,6 +92,10 @@ export interface PropsDaLista {
   aoEscolher(ponto: PontoDoMunicipio): void;
 }
 export interface PontoEditavelDoProjeto extends PontoDoEditor {
+  municipioUf?: string;
+  codigoIbge?: number | null;
+  editais?: readonly string[];
+  lotacoes?: readonly string[];
   alvo: { lugar: string };
   latitude: number | null;
   longitude: number | null;

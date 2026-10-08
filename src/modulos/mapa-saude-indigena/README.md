@@ -3,7 +3,7 @@
 O mapa da Visão geral da área Saúde Indígena em React (Etapa 5, a parte "mapas"), ligado na Visão
 geral (`src/modulos/visao-geral/`) e lendo o estado dela. O legado não desenha mais mapa nenhum: o
 de Projetos é o módulo irmão `src/modulos/mapa-de-projetos/` (ver "Projetos/SEDE"), com as
-mesmas regras: reaproveita daqui o painel do mapa nacional (`painel-do-mapa.jsx`), `leaflet.js`
+mesmas regras: reaproveita daqui o painel do mapa nacional (`painel-do-mapa.tsx`), `leaflet.js`
 (leque, enquadramento), a legenda flutuante, a tela cheia e o CSS `.mapa-si-*`.
 
 Os controles ficam no cabeçalho, acima do mapa e da lista lateral. Em tela cheia,
@@ -19,10 +19,10 @@ Leaflet). "Voltar à lista", "Coordenadas" ou Esc voltam ao layout de sempre
 "Só pendentes", com as pendências da auditoria), "Conferido", as sugestões de
 posição e o histórico com "Desfazer" — RPCs de
 `supabase/migrations/20261002160000_conferir_coordenadas_mapa.sql`, regras em
-`src/lib/coordenadas-do-mapa.js`, testes em `tests/coordenadas-do-mapa.test.js` e
+`src/lib/coordenadas-do-mapa.ts`, testes em `tests/coordenadas-do-mapa.test.js` e
 `tests/modulos/editor-de-coordenadas.test.js`. O editor, a fila, as sugestões e o histórico
 são comuns aos dois mapas (`src/modulos/editor-de-coordenadas/`, regras comuns em
-`src/lib/editor-de-coordenadas.ts`); aqui fica só `editor-de-coordenadas.jsx`, que liga o
+`src/lib/editor-de-coordenadas.ts`); aqui fica só `editor-de-coordenadas.tsx`, que liga o
 editor comum aos pontos, às regras e às RPCs deste mapa. O de Projetos faz o mesmo em
 `src/modulos/mapa-de-projetos/editor-de-coordenadas.tsx`.
 
@@ -33,19 +33,19 @@ mapa-nacional.jsx         visão nacional: bolhas dos DSEIs, CASAIs nacionais, l
                           "Territórios por vagas", Brasil/Tela cheia, legenda flutuante
 mapa-do-dsei.jsx          território do DSEI: unidades (agrupamento por proximidade + leque), sede,
                           vínculos externos, filtros por tipo, lista de unidades, Terras Indígenas e povos
-legenda.jsx               <Forma>, <LegendaFlutuante> (recolhível; também a de Projetos), legenda
+legenda.tsx               <Forma>, <LegendaFlutuante> (recolhível; também a de Projetos), legenda
                           nacional, legenda do DSEI, fases das terras
 leaflet.js                fábrica do mapa (criarMapa, criarMapaDoBrasil), Brasil, fundo com recurso,
                           contornos, enquadrar (regra do recorte), criarLeque, ícones/popup/dica em DOM
                           seguro (os dois mapas)
-painel-do-mapa.jsx        peças do mapa nacional comuns a este e ao de Projetos: usarMapaDoBrasil,
+painel-do-mapa.tsx        peças do mapa nacional comuns a este e ao de Projetos: usarMapaDoBrasil,
                           TopoDoMapa (Coordenadas, Brasil, Tela cheia), MolduraDoMapa, ListaDoMapa,
                           propsDoEditor
-tela-cheia.jsx            usarTelaCheia: estado, botão "Tela cheia"/"Sair da tela cheia" e Esc (os dois mapas);
+tela-cheia.tsx            usarTelaCheia: estado, botão "Tela cheia"/"Sair da tela cheia" e Esc (os dois mapas);
                           travarRolagemDaPagina (contada: tela cheia e modo de edição)
-volta-ao-brasil.js        usarVoltaDoDsei (a saída do DSEI, venha de onde vier) e usarEscParaVoltar
-usar-ultimo.js            ref com a última função do pai (ouvintes do Leaflet sem redesenhar)
-editor-de-coordenadas.jsx o editor comum (só admin global) com os pontos do lmap/rede_cnes e as RPCs
+volta-ao-brasil.ts        usarVoltaDoDsei (a saída do DSEI, venha de onde vier) e usarEscParaVoltar
+usar-ultimo.ts            ref com a última função do pai (ouvintes do Leaflet sem redesenhar)
+editor-de-coordenadas.tsx o editor comum (só admin global) com os pontos do lmap/rede_cnes e as RPCs
                           *_coordenada_mapa_saude_indigena (FONTE_DA_SAUDE_INDIGENA)
 mapa-saude-indigena.css   só o que é deste bloco (tokens); card/título/vazio de src/ui/
 ```
@@ -100,8 +100,8 @@ para qualquer mapa. Ganchos da camada de terras usados (todos opcionais): `__ags
 **Projetos/SEDE.** Este componente é só da Saúde Indígena. Em Projetos a Visão geral mostra
 `<MapaDeProjetos>` (`src/modulos/mapa-de-projetos/`); na SEDE, nenhum mapa.
 
-Ele tem as mesmas regras deste e usa as mesmas peças (`painel-do-mapa.jsx`, `leaflet.js`,
-`legenda.jsx`, `tela-cheia.jsx`, o CSS `.mapa-si-*`); a tabela das regras lado a lado e as
+Ele tem as mesmas regras deste e usa as mesmas peças (`painel-do-mapa.tsx`, `leaflet.js`,
+`legenda.tsx`, `tela-cheia.tsx`, o CSS `.mapa-si-*`); a tabela das regras lado a lado e as
 diferenças de propósito estão em `src/modulos/mapa-de-projetos/README.md`.
 
 **Dicas e popups.** `criarMapa` liga `manterDicasDentroDoMapa` (`src/lib/dica-dentro-do-mapa.js`,
@@ -168,3 +168,26 @@ ResizeObserver não reenquadra por cima.
   em quartos até o país caber (`src/lib/enquadramento-do-brasil.js`, usado pelo `map-guard`); os
   mapas React têm `enquadramentoProprio` (o guarda não reenquadra por cima) e reenquadram ao
   mudar de tamanho até a pessoa mexer (`criarMapaDoBrasil`). A legenda começa recolhida.
+
+## Base compartilhada em TypeScript
+
+Painel, lista lateral, controles, legenda, tela cheia, retorno ao Brasil e o hook
+`usarUltimo` estão em TypeScript. Os contratos estão em `tipos-do-painel.ts`;
+formas e cores estão em `src/lib/mapa-saude-indigena/formas.ts`. O painel preserva
+o tipo das camadas próprias de cada mapa. A legenda das Terras Indígenas descreve
+a ponte opcional com a camada existente: sem ela, os controles ficam desabilitados;
+os ouvintes são retirados ao desmontar.
+
+A fábrica e as operações do Leaflet (`leaflet.js`), as telas nacional/DSEI e os
+dados geográficos ainda permanecem em JavaScript. A fábrica declara em JSDoc o
+resultado utilizado pelo painel; essa anotação não valida dados externos nem
+cobre toda a API do Leaflet. Esta entrega não muda contratos de RPC ou dados
+geográficos. Ciclo de vida, StrictMode, legendas, Escape, foco, tela cheia e modo de
+edição são cobertos pelos testes dos dois mapas; contratos adicionais estão em
+`tests/tipos/base-dos-mapas.tsx`.
+
+O adaptador do editor e as regras específicas de coordenadas estão em TypeScript.
+O catálogo editável recebe dados externos como `unknown`, ignora entradas inválidas
+e preserva os índices, nomes e códigos usados para conferir o alvo no banco.
+Posições vazias ou inválidas permanecem nulas. A exibição principal do mapa e o
+conteúdo geográfico completo continuam em JavaScript.

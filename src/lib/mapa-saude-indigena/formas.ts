@@ -17,19 +17,27 @@
 
 export const FORMAS = Object.freeze({
   sede: Object.freeze({
-    forma: "estrela",
+    forma: "estrela" as const,
     rotulo: "Sede do DSEI",
     cor: "#1f2937",
   }),
   polo: Object.freeze({
-    forma: "circulo",
+    forma: "circulo" as const,
     rotulo: "Polo base",
     cor: "#e49a1b",
   }),
-  casai: Object.freeze({ forma: "casa", rotulo: "CASAI", cor: "#d92d3a" }),
-  ubsi: Object.freeze({ forma: "cruz", rotulo: "UBSI", cor: "#6d28d9" }),
+  casai: Object.freeze({
+    forma: "casa" as const,
+    rotulo: "CASAI",
+    cor: "#d92d3a",
+  }),
+  ubsi: Object.freeze({
+    forma: "cruz" as const,
+    rotulo: "UBSI",
+    cor: "#6d28d9",
+  }),
   unit: Object.freeze({
-    forma: "losango",
+    forma: "losango" as const,
     rotulo: "Unidade de saúde",
     cor: "#0d8192",
   }),
@@ -44,8 +52,11 @@ export const TIPOS_DA_LEGENDA = Object.freeze([
   "unit",
 ]);
 
-export function formaDoTipo(chave) {
-  return FORMAS[chave] || FORMAS.unit;
+export type TipoDaForma = keyof typeof FORMAS;
+export function formaDoTipo(chave: unknown) {
+  return typeof chave === "string" && Object.hasOwn(FORMAS, chave)
+    ? FORMAS[chave as TipoDaForma]
+    : FORMAS.unit;
 }
 
 /* Desenho de cada forma: `circulo` é círculo; as outras, um caminho. */
@@ -58,7 +69,7 @@ export const DESENHO_DAS_FORMAS = Object.freeze({
   losango: "M9 2.4 15.6 9 9 15.6 2.4 9Z",
 });
 
-const tipo = (key, label) =>
+const tipo = (key: TipoDaForma, label: string) =>
   Object.freeze({ key, label, color: formaDoTipo(key).cor });
 
 export const TIPO_SEDE = tipo("sede", "Sede do DSEI");
@@ -68,7 +79,7 @@ export const TIPO_UBSI = tipo("ubsi", "UBSI");
 export const TIPO_UNIDADE = tipo("unit", "Unidade");
 
 /* O tipo pelo nome do estabelecimento (o `detailUnitType` do legado). */
-export function tipoDaUnidade(nome) {
+export function tipoDaUnidade(nome: unknown) {
   const normalizado = String(nome ?? "").toUpperCase();
   if (/CASAI|CASA DE SAUDE|CASA DE SAÚDE/.test(normalizado)) return TIPO_CASAI;
   if (/POLO/.test(normalizado)) return TIPO_POLO;

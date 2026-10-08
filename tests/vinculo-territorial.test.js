@@ -12,7 +12,7 @@ import {
   ESTILO_DA_LINHA_DE_VINCULO as ESTILO_DA_LINHA,
   TEXTO_DA_LINHA_DE_VINCULO as TOOLTIP_DA_LINHA,
   formaDoTipo,
-} from "../src/lib/mapa-saude-indigena/formas.js";
+} from "../src/lib/mapa-saude-indigena/formas.ts";
 import {
   classificarRegistros,
   dicaDoRegistro,

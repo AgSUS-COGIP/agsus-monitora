@@ -1,3 +1,5 @@
+import type { CSSProperties, ReactNode, SVGProps } from "react";
+import type { MapaDasTerras } from "./tipos-do-painel.ts";
 import { useEffect, useId, useReducer, useState } from "react";
 import { Icone } from "../../componentes/icone.jsx";
 import {
@@ -9,13 +11,24 @@ import {
   DESENHO_DAS_FORMAS,
   TIPOS_DA_LEGENDA,
   formaDoTipo,
-} from "../../lib/mapa-saude-indigena/formas.js";
+} from "../../lib/mapa-saude-indigena/formas.ts";
 
 /* A forma de um tipo (sede, polo, CASAI, UBSI, unidade) em SVG, decorativa. */
-export function Forma({ tipo, cor, tamanho = 14 }) {
+export function Forma({
+  tipo,
+  cor,
+  tamanho = 14,
+}: {
+  tipo: string;
+  cor?: string;
+  tamanho?: number;
+}) {
   const { forma, cor: corDoTipo } = formaDoTipo(tipo);
   const desenho = DESENHO_DAS_FORMAS[forma];
-  const props = {
+  const props: Pick<
+    SVGProps<SVGElement>,
+    "fill" | "stroke" | "strokeWidth" | "strokeLinejoin"
+  > = {
     fill: cor || corDoTipo,
     stroke: "#ffffff",
     strokeWidth: 1.6,
@@ -41,7 +54,7 @@ export function Forma({ tipo, cor, tamanho = 14 }) {
 }
 
 /* Mesma regra da legenda antiga: sem a camada instalada, a fase fica ligada. */
-const faseVisivel = (mapa, fase) =>
+const faseVisivel = (mapa: MapaDasTerras | null, fase: string) =>
   typeof mapa?.__agsusFaseDaTerraVisivel === "function"
     ? mapa.__agsusFaseDaTerraVisivel(fase) !== false
     : true;
@@ -51,12 +64,14 @@ const faseVisivel = (mapa, fase) =>
   camada (`indigenous-territories-layer.js`). O estado vem da camada: quando
   ela avisa (`agsus:terras-mudaram`), a legenda se redesenha.
 */
-export function LegendaDasTerras({ mapa }) {
+export function LegendaDasTerras({ mapa }: { mapa: MapaDasTerras | null }) {
   const [, atualizar] = useReducer((n) => n + 1, 0);
   useEffect(() => {
     if (!mapa?.on) return undefined;
     mapa.on(EVENTO_DAS_TERRAS, atualizar);
-    return () => mapa.off?.(EVENTO_DAS_TERRAS, atualizar);
+    return () => {
+      mapa.off?.(EVENTO_DAS_TERRAS, atualizar);
+    };
   }, [mapa]);
   const interativa = typeof mapa?.__agsusAlternarFaseDaTerra === "function";
   return (
@@ -72,7 +87,7 @@ export function LegendaDasTerras({ mapa }) {
           aria-pressed={faseVisivel(mapa, fase)}
           disabled={!interativa}
           onClick={() => {
-            mapa.__agsusAlternarFaseDaTerra(fase);
+            mapa?.__agsusAlternarFaseDaTerra?.(fase);
             atualizar();
           }}
         >
@@ -87,11 +102,14 @@ export function LegendaDasTerras({ mapa }) {
   );
 }
 
-export function Amostra({ tipo, cor }) {
+export function Amostra({ tipo, cor }: { tipo: string; cor?: string }) {
+  const estilo: CSSProperties & { "--mapa-si-amostra"?: string } = cor
+    ? { "--mapa-si-amostra": cor }
+    : {};
   return (
     <i
       className={`mapa-si-amostra mapa-si-amostra--${tipo}`}
-      style={cor ? { "--mapa-si-amostra": cor } : undefined}
+      style={cor ? estilo : undefined}
       aria-hidden="true"
     />
   );
@@ -103,7 +121,7 @@ export function Amostra({ tipo, cor }) {
   Sul e do Sudeste no enquadramento do Brasil. Usada pelos mapas nacionais da
   Saúde Indígena e de Projetos.
 */
-export function LegendaFlutuante({ children }) {
+export function LegendaFlutuante({ children }: { children: ReactNode }) {
   const [aberta, definirAberta] = useState(false);
   const idDoCorpo = useId();
   return (
@@ -129,7 +147,13 @@ export function LegendaFlutuante({ children }) {
   Legenda do mapa nacional da Saúde Indígena: as cores da bolha, a
   abrangência, a CASAI nacional e as terras.
 */
-export function LegendaNacional({ mapa, temAbrangencia }) {
+export function LegendaNacional({
+  mapa,
+  temAbrangencia,
+}: {
+  mapa: MapaDasTerras | null;
+  temAbrangencia?: boolean;
+}) {
   return (
     <LegendaFlutuante>
       <span className="mapa-si-legenda__item">
@@ -156,7 +180,7 @@ export function LegendaNacional({ mapa, temAbrangencia }) {
 }
 
 /* Legenda do mapa do DSEI: as cinco formas, a linha do vínculo e as terras. */
-export function LegendaDoDsei({ mapa }) {
+export function LegendaDoDsei({ mapa }: { mapa: MapaDasTerras | null }) {
   return (
     <footer
       className="mapa-si-legenda mapa-si-legenda--rodape"

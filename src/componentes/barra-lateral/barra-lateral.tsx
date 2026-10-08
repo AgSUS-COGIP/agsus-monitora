@@ -1,9 +1,16 @@
-import { useEffect, useSyncExternalStore } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 import { montarModulo } from "../../app/montar-modulo.jsx";
+import { LOGO_PADRAO_DA_BARRA } from "../../lib/marca-da-barra-lateral.js";
 import { AlcaDeRecolher, AlcaNoCabecalho } from "./alca-de-recolher.tsx";
 import { assinarBarraLateral, obterEstadoDaBarraLateral } from "./estado.ts";
 import { Navegacao } from "./menu-de-areas.tsx";
 import { Rodape } from "./rodape.tsx";
+import type {
+  ArvoreDoMenu,
+  ItemAtivoDoMenu,
+  OpcoesDaBarraLateral,
+  PreviaDaBarraLateral,
+} from "./tipos.ts";
 import { usarBarraRecolhida, usarGaveta } from "./usar-ambiente.ts";
 
 /*
@@ -20,23 +27,37 @@ import { usarBarraRecolhida, usarGaveta } from "./usar-ambiente.ts";
 
   As classes CSS e os ids são os de antes (`platform-shell.css`,
   `barra-lateral.css`), então o visual não depende de onde a barra é montada.
+
+  A prévia de Configurações › Marca (`previa-da-barra-lateral.tsx`) desenha
+  estas mesmas peças (`PecasDaBarraLateral`) com `previa`: logo, cor, tema e
+  versão vêm do rascunho, não do legado, e nada grava nem avisa ninguém.
+  Mudou a barra, mudou a prévia (`tests/componentes/previa-da-barra-lateral.test.js`).
 */
 
-function Marca() {
+/*
+  Na prévia, a logo é a do rascunho, com a volta para a padrão se o endereço
+  não carregar (o que `sidebar-branding.js` faz na barra de verdade).
+*/
+function usarLogoDaPrevia(logo: string | undefined) {
+  const [falhou, definirFalhou] = useState("");
+  if (logo === undefined) return { src: LOGO_PADRAO_DA_BARRA };
+  return {
+    src: falhou === logo ? LOGO_PADRAO_DA_BARRA : logo,
+    onError: () => definirFalhou(logo),
+  };
+}
+
+function Marca({ logo }: { logo?: string }) {
+  const imagem = usarLogoDaPrevia(logo);
   return (
     <div className="side-brand" data-tour="barra-marca">
       <span className="side-logo-wrap">
         {/*
           O `src` é de `sidebar-branding.js`, dono único da logo (com a volta
           para a padrão no `onerror`). O React cria o <img> uma vez, com a logo
-          local, e não mexe mais no `src`: a prop nunca muda.
+          local, e não mexe mais no `src`: a prop nunca muda (só na prévia).
         */}
-        <img
-          id="sideLogo"
-          className="side-logo"
-          src="/assets/agsus-logo.webp"
-          alt="AgSUS"
-        />
+        <img id="sideLogo" className="side-logo" alt="AgSUS" {...imagem} />
       </span>
       <span className="side-brand-copy">
         <strong>MONITORA</strong>
@@ -76,6 +97,43 @@ function usarDicasDoTrilho(trilho: boolean) {
   }, [trilho]);
 }
 
+/** As peças da barra (marca, menu e rodapé), as mesmas na barra e na prévia. */
+export function PecasDaBarraLateral({
+  arvore,
+  ativo,
+  opcoes,
+  trilho,
+  recolhida,
+  gaveta,
+  previa = null,
+}: {
+  arvore: ArvoreDoMenu;
+  ativo: ItemAtivoDoMenu;
+  opcoes: OpcoesDaBarraLateral;
+  trilho: boolean;
+  recolhida: boolean;
+  gaveta: boolean;
+  previa?: PreviaDaBarraLateral | null;
+}) {
+  return (
+    <>
+      <Marca logo={previa?.logo} />
+      <Navegacao
+        arvore={arvore}
+        ativo={ativo}
+        opcoes={opcoes}
+        trilho={trilho}
+        previa={Boolean(previa)}
+      />
+      <Rodape
+        previa={previa}
+        alca={gaveta ? null : <AlcaDeRecolher recolhida={recolhida} />}
+      />
+      {gaveta ? <AlcaNoCabecalho recolhida={recolhida} /> : null}
+    </>
+  );
+}
+
 export function BarraLateral() {
   const { arvore, ativo, opcoes } = useSyncExternalStore(
     assinarBarraLateral,
@@ -87,17 +145,14 @@ export function BarraLateral() {
   usarDicasDoTrilho(trilho);
 
   return (
-    <>
-      <Marca />
-      <Navegacao
-        arvore={arvore}
-        ativo={ativo}
-        opcoes={opcoes}
-        trilho={trilho}
-      />
-      <Rodape alca={gaveta ? null : <AlcaDeRecolher recolhida={recolhida} />} />
-      {gaveta ? <AlcaNoCabecalho recolhida={recolhida} /> : null}
-    </>
+    <PecasDaBarraLateral
+      arvore={arvore}
+      ativo={ativo}
+      opcoes={opcoes}
+      trilho={trilho}
+      recolhida={recolhida}
+      gaveta={gaveta}
+    />
   );
 }
 
