@@ -20,7 +20,7 @@ import {
   registrosExternos,
   registrosLocais,
   textoDosVinculosExternos as textoDoChip,
-} from "../src/lib/mapa-saude-indigena/mapa-do-dsei.js";
+} from "../src/lib/mapa-saude-indigena/mapa-do-dsei.ts";
 
 /*
   As regras do vínculo territorial no mapa do DSEI (src/modulos/mapa-saude-indigena/,

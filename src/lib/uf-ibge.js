@@ -58,6 +58,8 @@ const SIGLAS = Object.freeze(new Set(Object.values(UF_POR_CODIGO_IBGE)));
   ou sigla. Devolve `null` para qualquer coisa que não seja uma UF reconhecível
   — e `null` significa "não classificar", nunca "está fora".
 */
+/** @param {unknown} valor
+ * @returns {string | null} */
 export function siglaDaUf(valor) {
   if (valor === null || valor === undefined) return null;
 
@@ -87,6 +89,9 @@ export const VINCULO_INDETERMINADO = "indeterminado";
   unidade ou sem abrangência declarada no DSEI, não há como afirmar que algo
   está fora. Afirmar assim mesmo desenharia uma relação que ninguém verificou.
 */
+/** @param {unknown} ufDaUnidade
+ * @param {readonly string[]} ufsDoDsei
+ * @returns {{vinculo: "normal" | "externo" | "indeterminado", uf: string | null, ufsDoDsei: string[]}} */
 export function classificarVinculoTerritorial(ufDaUnidade, ufsDoDsei) {
   const sigla = siglaDaUf(ufDaUnidade);
   if (!sigla) {

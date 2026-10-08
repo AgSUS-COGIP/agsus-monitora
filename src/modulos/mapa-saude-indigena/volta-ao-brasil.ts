@@ -1,7 +1,7 @@
 import type { RefObject } from "react";
 import type { DistritoDaVolta, VoltaDoDsei } from "./tipos-do-painel.ts";
 import { useEffect, useState } from "react";
-import { temCoordenada } from "../../lib/mapa-saude-indigena/chaves.js";
+import { temCoordenada } from "../../lib/mapa-saude-indigena/chaves.ts";
 import { usarUltimo } from "./usar-ultimo.ts";
 
 /*

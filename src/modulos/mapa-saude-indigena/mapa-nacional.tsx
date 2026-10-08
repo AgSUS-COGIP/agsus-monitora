@@ -10,11 +10,11 @@ import {
   dicaDaBolha,
   dicaDaCasaiNacional,
   popupDaCasaiNacional,
-} from "../../lib/mapa-saude-indigena/mapa-nacional.js";
+} from "../../lib/mapa-saude-indigena/mapa-nacional.ts";
 import {
   formatarNumero,
   plural,
-} from "../../lib/mapa-saude-indigena/chaves.js";
+} from "../../lib/mapa-saude-indigena/chaves.ts";
 import { EVENTO_DAS_TERRAS } from "../../modules/indigenous-territories-layer.js";
 import { classes } from "../../ui/index.js";
 import { LegendaNacional } from "./legenda.tsx";

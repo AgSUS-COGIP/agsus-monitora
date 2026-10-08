@@ -19,7 +19,7 @@ import {
   agruparPorProximidadeNaTela,
   posicoesSpiderfy,
 } from "../../lib/mapa-render.js";
-import { formatarNumero } from "../../lib/mapa-saude-indigena/chaves.js";
+import { formatarNumero } from "../../lib/mapa-saude-indigena/chaves.ts";
 import {
   CORES_DO_MAPA,
   ESTILO_DA_LINHA_DE_VINCULO,
@@ -39,7 +39,7 @@ import {
   textoDosVinculosExternos,
   tiposDoTerritorio,
   visiveis,
-} from "../../lib/mapa-saude-indigena/mapa-do-dsei.js";
+} from "../../lib/mapa-saude-indigena/mapa-do-dsei.ts";
 import { EstadoVazio, classes } from "../../ui/index.js";
 import { Forma, LegendaDoDsei } from "./legenda.tsx";
 import {

@@ -8,14 +8,14 @@
   bolha e que o DSEI escolhido no mapa recorta a tabela.
 */
 
-export const texto = (valor) => String(valor ?? "").trim();
+export const texto = (valor: unknown) => String(valor ?? "").trim();
 
-export const numero = (valor) => {
+export const numero = (valor: unknown) => {
   const n = Number(valor);
   return Number.isFinite(n) ? n : 0;
 };
 
-export function chaveDoDsei(nome) {
+export function chaveDoDsei(nome: unknown) {
   return texto(nome)
     .toUpperCase()
     .normalize("NFD")
@@ -30,7 +30,7 @@ export function chaveDoDsei(nome) {
 }
 
 /** Coordenada utilizável: as duas partes numéricas e finitas. */
-export function temCoordenada(lat, lon) {
+export function temCoordenada(lat: unknown, lon: unknown) {
   return (
     lat !== null &&
     lat !== undefined &&
@@ -43,7 +43,8 @@ export function temCoordenada(lat, lon) {
   );
 }
 
-export const formatarNumero = (valor) => numero(valor).toLocaleString("pt-BR");
+export const formatarNumero = (valor: unknown) =>
+  numero(valor).toLocaleString("pt-BR");
 
-export const plural = (quantidade, um, varios) =>
+export const plural = (quantidade: number, um: string, varios: string) =>
   `${formatarNumero(quantidade)} ${quantidade === 1 ? um : varios}`;

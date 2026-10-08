@@ -9,6 +9,7 @@ O Mapa de Projetos também está em TypeScript, incluindo sua carga, lista, bal�
 o editor compartilhado pelos dois mapas também está em TypeScript (fila, sugestões, histórico, modo de edição e regras comuns);
 a base compartilhada dos mapas (painel, legenda, tela cheia, retorno ao Brasil e hooks) também está em TypeScript;
 as telas principal, nacional e por DSEI da Saúde Indígena também estão em TSX, com dados de entrada validados;
+as regras nacionais e distritais estão em TypeScript, com contratos JSDoc na fronteira da reconciliação compartilhada;
 guia em `docs/typescript-no-frontend.md`. O servidor também é TypeScript. **Português** em nomes
 de arquivo, funções e commits.
 
