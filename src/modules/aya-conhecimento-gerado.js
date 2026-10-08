@@ -3274,12 +3274,31 @@ export const VERBETES_AYA = Object.freeze([
       "nome da equipe",
       "logo da equipe",
       "texto do rodape",
+      "onde aparece a equipe responsavel",
     ],
     resposta:
-      'Em Configurações › Marca ficam o nome da equipe, a função ou área, o texto institucional e o logo da equipe (endereço https:// ou /caminho de PNG, JPG, WEBP ou SVG), que aparecem no pé da barra lateral, o texto do rodapé e, em "Documentos oficiais", o cabeçalho da agência (uma linha por linha do timbrado: nome, endereço e site) usado no Word e na prévia "Como fica no SEI" da Classificação. A prévia mostra a barra lateral; a cor e o logo da barra ficam em Aparência. Vale depois de "Salvar alterações".',
+      'Em Configurações › Marca ficam o nome da equipe, a função ou área, o texto institucional e o logo da equipe (endereço https:// ou /caminho de PNG, JPG, WEBP ou SVG), que aparecem no pé do cartão da tela de acesso, o texto do rodapé (que entra no lugar do texto institucional quando ele está vazio) e, em "Documentos oficiais", o cabeçalho da agência (uma linha por linha do timbrado: nome, endereço e site) usado no Word e na prévia "Como fica no SEI" da Classificação. A barra lateral não mostra a equipe. Vale depois de "Salvar alterações".',
     fato: "",
     fonte:
-      "src/modulos/configuracoes/marca.jsx; src/lib/publicacao-de-configuracoes.js",
+      "src/modulos/configuracoes/marca.jsx; src/lib/publicacao-de-configuracoes.js; src/app/entrada/marca.js",
+    abrir: "config:marca",
+  },
+  {
+    arquivo: "regras-das-configuracoes.md",
+    titulo: "Prévia da barra lateral",
+    perguntas: [
+      "previa da barra lateral",
+      "a previa nao bate com a barra",
+      "previa diferente da barra",
+      "como fica a barra lateral",
+      "ver a cor da barra antes de salvar",
+      "previa do menu",
+    ],
+    resposta:
+      "A prévia ao lado da seção Marca é a própria barra lateral, em miniatura e sem clique: a logo MONITORA, o seletor de área, os seus itens de menu com os selos BETA, Administração e o rodapé com Claro/Escuro, Recolher menu, Sair e a versão. Ela usa a cor e o logo escolhidos em Aparência antes de salvar e segue o tema claro ou escuro do sistema; para ver o outro tema, troque no rodapé da barra. Se a barra mudar, a prévia muda junto.",
+    fato: "",
+    fonte:
+      "src/modulos/configuracoes/previa-da-barra-lateral.tsx; src/componentes/barra-lateral/barra-lateral.jsx",
     abrir: "config:marca",
   },
   {

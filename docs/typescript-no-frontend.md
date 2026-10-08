@@ -26,7 +26,8 @@ Saúde Indígena e as peças comuns de criação do Leaflet continuam em JavaScr
 JSDoc na integração. Outros módulos
 combinam JavaScript/JSX com migrações pontuais para TypeScript: a ficha da Avaliação documental
 tem os componentes em `src/modulos/avaliacao-documental/ficha/*.tsx` (contratos em `tipos.ts`) e
-`Popover` está em `src/ui/popover.tsx`. Componentes e helpers
+`Popover` está em `src/ui/popover.tsx`. Em Configurações › Marca, a prévia da barra lateral
+(`previa-da-barra-lateral.tsx`) e o quadro das prévias (`moldura-da-previa.tsx`) são TSX. Componentes e helpers
 compartilhados consumidos por esses módulos declaram seus contratos em JSDoc.
 O assistente da regra da Avaliação documental (`src/modulos/avaliacao-documental/assistente/`)
 já nasceu em TSX, com as regras em `src/lib/avaliacao-documental/assistente-da-regra.ts`,
