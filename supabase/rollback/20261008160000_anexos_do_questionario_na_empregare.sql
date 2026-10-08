@@ -1,8 +1,7 @@
--- ROLLBACK de supabase/migrations/20261008160000_respostas_do_questionario_na_empregare.sql
+-- ROLLBACK de supabase/migrations/20261008160000_anexos_do_questionario_na_empregare.sql
 -- Volta obter_ficha_analise ao corpo de 20261007160000_link_do_candidato_na_empregare.sql
--- (sem as respostas em "empregare"), apaga a RPC do robô e as colunas da resposta. Os
--- identificadores capturados se perdem (o robô recaptura com --anexos). Candidatos e vagas
--- não são apagados.
+-- (sem respostas e anexos em "empregare"), apaga a RPC do robô e as tabelas. Os links
+-- capturados se perdem (o robô relê com --anexos). Candidatos e vagas não são apagados.
 begin;
 
 create or replace function public.obter_ficha_analise(p_ficha uuid)
@@ -73,10 +72,8 @@ comment on function public.obter_ficha_analise(uuid) is
 revoke all on function public.obter_ficha_analise(uuid) from public, anon;
 grant execute on function public.obter_ficha_analise(uuid) to authenticated;
 
-drop function if exists public.gravar_respostas_empregare(text, text, jsonb);
-alter table public."TB_EMPREGARE_CANDIDATO"
-  drop constraint if exists "CK_EMPREGCAND_CORESPOSTAQUEST",
-  drop column if exists "DT_CAPTURA_RESPOSTA",
-  drop column if exists "CO_RESPOSTA_QUESTIONARIO";
+drop function if exists public.gravar_anexos_empregare(text, text, jsonb);
+drop table if exists public."TB_EMPREGARE_ANEXO";
+drop table if exists public."TB_EMPREGARE_RESPOSTA";
 
 commit;

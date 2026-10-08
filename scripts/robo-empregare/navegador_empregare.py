@@ -384,17 +384,18 @@ def ler_lista_de_candidatos(html):
 
 def ler_respostas_do_html(html):
     """
-    O identificador da resposta ao questionário de cada candidato da lista de
-    candidaturas: {código: resposta}, do data-resposta (só dígitos) dos links
-    do item (div.curriculo-list-item com o data-pessoa-id). Item com mais de um
-    identificador distinto fica com o primeiro. Devolve (mapa, ambíguos).
-    Abre /empresa/questionarios/imprimir/<id>| (migration 20261008160000).
+    As respostas aos questionários de cada candidato da lista de candidaturas:
+    {código: {"token": tokenCandidato, "respostas": [id, …]}}. O id vem do
+    data-resposta dos a.progress-link do item (só dígitos, sem repetir; modo 3,
+    entrevista virtual, fica de fora) e o token do data-tokenCandidato do item.
+    Abre GetRespostaDetails/<id>?token=<token> (anexos_empregare.py). Devolve
+    (mapa, sem_token). Tokens: nunca no log.
     """
     arvore = _Arvore()
     arvore.feed(str(html or ""))
     arvore.close()
     respostas = {}
-    ambiguos = 0
+    sem_token = 0
     for item in (n for n in _descendentes(arvore.raiz) if "curriculo-list-item" in _classes(n)):
         dentro = list(_descendentes(item))
         codigos = {c for c in (_codigo_do_no(n) for n in [item, *dentro]) if c}
@@ -402,14 +403,20 @@ def ler_respostas_do_html(html):
             continue
         codigo = next(iter(codigos))
         ids = []
-        for n in dentro:
+        token = ""
+        for n in [item, *dentro]:
+            token = token or (n["attrs"].get("data-tokencandidato") or "").strip()
             valor = (n["attrs"].get("data-resposta") or "").strip()
-            if re.fullmatch(r"[0-9]{1,20}", valor) and valor not in ids:
+            modo = (n["attrs"].get("data-modo-resposta") or "").strip()
+            if re.fullmatch(r"[0-9]{1,20}", valor) and modo != "3" and valor not in ids:
                 ids.append(valor)
-        if ids and _CODIGO_DO_CANDIDATO.match(codigo):
-            respostas[codigo] = ids[0]
-            ambiguos += len(ids) > 1
-    return respostas, ambiguos
+        if not ids or not _CODIGO_DO_CANDIDATO.match(codigo):
+            continue
+        if not re.fullmatch(r"[A-Za-z0-9_.~=%|+/-]{1,200}", token):
+            sem_token += 1
+            continue
+        respostas[codigo] = {"token": token, "respostas": ids}
+    return respostas, sem_token
 
 
 def ler_candidatos_do_html(html):
@@ -609,7 +616,7 @@ class PortalEmpregare:
         self.descartados = 0  # links fora do formato na última lista lida (só contagem)
         self.janela = None  # janela do login (pedir a exportação pode abrir outra)
         self.diagnostico = {}  # da última página de candidaturas aberta (só contagens)
-        self.respostas = {}  # código do candidato → identificador da resposta ao questionário (última lista lida)
+        self.respostas = {}  # código do candidato → {token, respostas} dos questionários (última lista lida)
 
     def __enter__(self):
         self.driver = self._iniciar()

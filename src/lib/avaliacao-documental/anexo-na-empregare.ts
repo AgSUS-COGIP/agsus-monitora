@@ -3,44 +3,67 @@
   do anexo, o rótulo e a dica de onde achar o arquivo. Única fonte: a ficha
   (ficha.jsx e ficha/empregare.tsx) não monta link nenhum.
 
-  O link do arquivo não pode ser guardado: fica num storage com assinatura que
-  expira (sondagem de 08/10/2026). O robô (scripts/robo-empregare/, com
-  --anexos) guarda o identificador da RESPOSTA do candidato ao questionário da
-  vaga (migration 20261008160000), e obter_ficha_analise devolve em
-  `empregare.link_respostas` a visão de respostas com os anexos
-  (/empresa/questionarios/imprimir/<id>|; abre com o login da Empregare).
+  O robô (scripts/robo-empregare/anexos_empregare.py, com --anexos) lê o
+  painel de respostas de cada questionário (GetRespostaDetails) e grava
+  (migration 20261008160000): por anexo, o link "Visualizar Arquivo"
+  (/Company/VacancyTests/GetViewerLogArquivo?…, abre o visualizador da
+  Empregare com login, não expira) com o enunciado e a coluna do Excel
+  casada; por resposta, o link de impressão (/Company/VacancyTests/PrintResult?…).
+  obter_ficha_analise devolve em `empregare.anexos` e `empregare.respostas`.
 
-    enderecos.respostas = linkDasRespostas(dados.empregare);      // ficha.jsx
+    enderecos.anexos = anexosDaEmpregare(dados.empregare);        // ficha.jsx
+    enderecos.impressao = impressaoDasRespostas(dados.empregare);
     const endereco = enderecoDoAnexo(enderecos, coluna);           // { href, destino } | null
     const { rotulo, dica } = apresentacaoDoAnexo(coluna, endereco);
-  destino "respostas" → "Ver respostas e anexos na Empregare" e a dica da
-  pergunta; sem o identificador, o candidato (o currículo) ou a vaga / a
-  lista de vagas, com a dica de antes.
+  destino "arquivo" → "Ver documento" (sem dica; "2 arquivos nesta pergunta" com mais de um
+  arquivo); "respostas" → "Ver respostas na Empregare" e a dica da pergunta;
+  sem nada capturado, o candidato (o currículo) ou a vaga / a lista de vagas,
+  com a dica de antes.
   Sem DOM e sem estado. Testes: tests/lib/avaliacao-documental-anexo-na-empregare.test.js.
 */
 
-/** Os endereços que a ficha já resolveu (ficha.js) e o da visão de respostas. */
+/** Um anexo capturado (obter_ficha_analise → empregare.anexos). */
+export type AnexoDaEmpregare = {
+  resposta: string;
+  pergunta: string;
+  arquivo: number;
+  enunciado: string;
+  coluna: string;
+  link: string;
+};
+
+/** Os endereços que a ficha já resolveu (ficha.js), os anexos e a impressão das respostas. */
 export type EnderecosDaEmpregare = {
   candidato: string | null;
   vaga: string | null;
   vagaDireta: boolean;
-  respostas?: string | null;
+  anexos?: readonly AnexoDaEmpregare[];
+  impressao?: string | null;
 };
 
 /** Para onde o link leva. */
-export type DestinoNaEmpregare = "respostas" | "candidato" | "vaga" | "vagas";
+export type DestinoNaEmpregare =
+  "arquivo" | "respostas" | "candidato" | "vaga" | "vagas";
 
-export type EnderecoDoAnexo = { href: string; destino: DestinoNaEmpregare };
+export type EnderecoDoAnexo = {
+  href: string;
+  destino: DestinoNaEmpregare;
+  /** Os outros arquivos da mesma pergunta (só no destino "arquivo"). */
+  outros?: readonly string[];
+};
 
 export type ApresentacaoDoAnexo = {
   rotulo: string;
-  /** Onde achar o arquivo depois de abrir. */
+  /** Onde achar o arquivo depois de abrir (vazio quando o link já é o arquivo). */
   dica: string;
 };
 
-/* O mesmo formato que obter_ficha_analise monta (e uma âncora opcional, para o futuro). */
-const LINK_DAS_RESPOSTAS =
-  /^https:\/\/corporate\.empregare\.com\/empresa\/questionarios\/imprimir\/[0-9]{1,20}\|(#[A-Za-z][A-Za-z0-9_-]{0,60})?$/;
+/* Os mesmos formatos que o banco aceita (CK_EMPREGANEXO_DSLINK, CK_EMPREGRESP_DSLINKIMPRESSAO) e o robô confere. */
+const LINK_DO_ARQUIVO =
+  /^https:\/\/corporate\.empregare\.com\/Company\/VacancyTests\/GetViewerLogArquivo\?[A-Za-z0-9_.~=&%|+/:-]+$/;
+const LINK_DA_IMPRESSAO =
+  /^https:\/\/corporate\.empregare\.com\/Company\/VacancyTests\/PrintResult\?[A-Za-z0-9_.~=&%|+/:-]+$/;
+const TAMANHO_DO_LINK = 1500;
 
 const PERGUNTA = /^\s*pergunta ?([0-9]+) ?[-–—] ?(.*)$/i;
 const limpar = (texto: unknown) =>
@@ -48,14 +71,50 @@ const limpar = (texto: unknown) =>
     .replace(/&nbsp;|&#160;/gi, " ")
     .replace(/\s+/g, " ")
     .trim();
+/* Como normalizarTexto de nota-declarada.js, sem o "Pergunta N - " do começo. */
+const comparavel = (texto: unknown) =>
+  limpar(texto)
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .toLowerCase()
+    .replace(/^pergunta ?[0-9]+ ?[-–—] ?/, "");
 
-/** O link da visão de respostas da RPC (empregare.link_respostas), só no formato esperado. */
-export function linkDasRespostas(empregare: unknown): string | null {
-  const texto = String(
-    (empregare as { link_respostas?: unknown } | null | undefined)
-      ?.link_respostas ?? "",
-  ).trim();
-  return LINK_DAS_RESPOSTAS.test(texto) ? texto : null;
+const linkValido = (padrao: RegExp, link: unknown) => {
+  const texto = String(link ?? "").trim();
+  return texto.length <= TAMANHO_DO_LINK && padrao.test(texto) ? texto : null;
+};
+
+/** Os anexos da RPC (empregare.anexos), validados; o resto fica de fora. */
+export function anexosDaEmpregare(empregare: unknown): AnexoDaEmpregare[] {
+  const bruto = (empregare as { anexos?: unknown } | null | undefined)?.anexos;
+  if (!Array.isArray(bruto)) return [];
+  const saida: AnexoDaEmpregare[] = [];
+  for (const item of bruto as Record<string, unknown>[]) {
+    const link = linkValido(LINK_DO_ARQUIVO, item?.link);
+    const pergunta = String(item?.pergunta ?? "");
+    if (!link || !/^[0-9]{1,20}$/.test(pergunta)) continue;
+    saida.push({
+      resposta: String(item.resposta ?? ""),
+      pergunta,
+      arquivo: Number(item.arquivo) || 1,
+      enunciado: limpar(item.enunciado),
+      coluna: limpar(item.coluna),
+      link,
+    });
+  }
+  return saida;
+}
+
+/** O link de impressão da primeira resposta com ele (empregare.respostas), ou null. */
+export function impressaoDasRespostas(empregare: unknown): string | null {
+  const bruto = (empregare as { respostas?: unknown } | null | undefined)
+    ?.respostas;
+  if (!Array.isArray(bruto)) return null;
+  for (const item of bruto as Record<string, unknown>[]) {
+    const link = linkValido(LINK_DA_IMPRESSAO, item?.link_impressao);
+    if (link) return link;
+  }
+  return null;
 }
 
 /** "Pergunta 4" pelo nome da coluna da Empregare ("Pergunta 4 - Anexe…"); null sem número. */
@@ -72,16 +131,54 @@ export function enunciadoCompleto(coluna: unknown): string {
 }
 
 /**
- * O endereço do anexo: a visão de respostas do questionário (com os anexos);
- * sem ela, o candidato (o currículo) e, sem ele, as candidaturas da vaga ou a
- * lista de vagas.
+ * Os anexos da coluna: os da coluna do Excel que o robô casou; sem ela, os de
+ * enunciado igual — ou um começando pelo outro, com 20+ letras — numa única pergunta.
+ */
+export function anexosDaColuna(
+  anexos: readonly AnexoDaEmpregare[] | undefined,
+  coluna: unknown,
+): AnexoDaEmpregare[] {
+  if (!anexos?.length) return [];
+  const alvo = limpar(coluna);
+  const pelaColuna = anexos.filter((a) => a.coluna && a.coluna === alvo);
+  if (pelaColuna.length) return pelaColuna;
+  const enunciado = comparavel(coluna);
+  if (enunciado.length < 5) return [];
+  const casa = (a: AnexoDaEmpregare) => {
+    const e = comparavel(a.enunciado);
+    if (e === enunciado) return true;
+    return (
+      e.length >= 20 &&
+      enunciado.length >= 20 &&
+      (e.startsWith(enunciado) || enunciado.startsWith(e))
+    );
+  };
+  const achados = anexos.filter(casa);
+  const perguntas = new Set(achados.map((a) => `${a.resposta}:${a.pergunta}`));
+  return perguntas.size === 1 ? achados : [];
+}
+
+/**
+ * O endereço do anexo: o "Visualizar Arquivo" da pergunta; sem ele, a
+ * impressão das respostas; sem ela, o candidato (o currículo) e, sem ele, as
+ * candidaturas da vaga ou a lista de vagas.
  */
 export function enderecoDoAnexo(
   enderecos: EnderecosDaEmpregare,
-  _coluna?: unknown,
+  coluna?: unknown,
 ): EnderecoDoAnexo | null {
-  if (enderecos.respostas)
-    return { href: enderecos.respostas, destino: "respostas" };
+  const arquivos = anexosDaColuna(enderecos.anexos, coluna).sort(
+    (a, b) => a.arquivo - b.arquivo,
+  );
+  const [primeiro, ...outros] = arquivos;
+  if (primeiro)
+    return {
+      href: primeiro.link,
+      destino: "arquivo",
+      outros: outros.map((a) => a.link),
+    };
+  if (enderecos.impressao)
+    return { href: enderecos.impressao, destino: "respostas" };
   if (enderecos.candidato)
     return { href: enderecos.candidato, destino: "candidato" };
   if (enderecos.vaga)
@@ -101,21 +198,29 @@ function curto(texto: string, maximo = 60): string {
 }
 
 /**
- * Rótulo e dica do anexo. Com a visão de respostas: "Ver respostas e anexos
- * na Empregare" e "Pergunta 4 — Anexe o documento…". Sem ela: "Abrir na
- * Empregare" e "Na Empregare: aba Questionários › Pergunta 4 — …".
+ * Rótulo e dica do anexo. Com o link do arquivo: "Ver documento" (sem dica;
+ * "2 arquivos nesta pergunta" com mais de um). Com a impressão: "Ver
+ * respostas na Empregare" e "Pergunta 4 — Anexe o documento…". Senão: "Abrir
+ * na Empregare" e "Na Empregare: aba Questionários › Pergunta 4 — …".
  */
 export function apresentacaoDoAnexo(
   coluna: unknown,
   endereco?: EnderecoDoAnexo | null,
 ): ApresentacaoDoAnexo {
+  if (endereco?.destino === "arquivo") {
+    const total = 1 + (endereco.outros?.length ?? 0);
+    return {
+      rotulo: "Ver documento",
+      dica: total > 1 ? `${total} arquivos nesta pergunta` : "",
+    };
+  }
   const numero = numeroDaPergunta(coluna);
   const enunciado = curto(
     enunciadoCompleto(coluna).split(/[?:(]/)[0]?.trim() ?? "",
   );
   const pergunta = [numero, enunciado].filter(Boolean).join(" — ");
   if (endereco?.destino === "respostas")
-    return { rotulo: "Ver respostas e anexos na Empregare", dica: pergunta };
+    return { rotulo: "Ver respostas na Empregare", dica: pergunta };
   return {
     rotulo: "Abrir na Empregare",
     dica: pergunta

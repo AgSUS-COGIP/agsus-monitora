@@ -1,9 +1,11 @@
 import { describe, expect, it } from "vitest";
 import {
+  anexosDaColuna,
+  anexosDaEmpregare,
   apresentacaoDoAnexo,
   enderecoDoAnexo,
   enunciadoCompleto,
-  linkDasRespostas,
+  impressaoDasRespostas,
   numeroDaPergunta,
 } from "../../src/lib/avaliacao-documental/anexo-na-empregare.ts";
 
@@ -77,56 +79,135 @@ describe("anexo na Empregare", () => {
 });
 
 /*
-  A visão de respostas do questionário (com os anexos), pelo identificador da
-  resposta que o robô captura: "Ver respostas e anexos na Empregare" e a dica
-  da pergunta; sem ela, o fallback de antes. Identificadores fictícios.
+  Os anexos capturados pelo robô (GetRespostaDetails; links fictícios): o
+  "Visualizar Arquivo" da pergunta vira "Ver documento"; sem ele, a impressão
+  das respostas ("Ver respostas na Empregare"); sem ela, o fallback de antes.
 */
-const RESPOSTAS =
-  "https://corporate.empregare.com/empresa/questionarios/imprimir/9988776|";
+const ARQ = (pergunta, arquivo) =>
+  `https://corporate.empregare.com/Company/VacancyTests/GetViewerLogArquivo?arquivo=${arquivo}.pdf&token=TKfict&questionarioRespostaID=9900001&perguntaID=${pergunta}`;
+const IMPRESSAO =
+  "https://corporate.empregare.com/Company/VacancyTests/PrintResult?respostaID=9900001&pessoa=PSfict&vaga=Vaga%20Ficticia";
 const VAGA =
   "https://corporate.empregare.com/empresa/vagas/candidaturas/Vfict|";
+const COLUNA_6 = "Pergunta 6 - Anexe o diploma de graduação";
+const DA_RPC = {
+  respostas: [
+    { resposta: "9900002", link_impressao: "javascript:alert(1)" },
+    { resposta: "9900001", link_impressao: IMPRESSAO },
+  ],
+  anexos: [
+    {
+      resposta: "9900001",
+      pergunta: "501",
+      arquivo: 1,
+      enunciado:
+        "Pergunta 4 - Anexe o documento de identificação com foto (RG ou CNH)",
+      coluna: COLUNA,
+      link: ARQ(501, "a"),
+    },
+    {
+      resposta: "9900001",
+      pergunta: "502",
+      arquivo: 2,
+      enunciado: "Anexe o diploma de graduação",
+      coluna: "",
+      link: ARQ(502, "c"),
+    },
+    {
+      resposta: "9900001",
+      pergunta: "502",
+      arquivo: 1,
+      enunciado: "Anexe o diploma de graduação",
+      coluna: "",
+      link: ARQ(502, "b"),
+    },
+    {
+      resposta: "9900001",
+      pergunta: "503",
+      arquivo: 1,
+      link: "https://storage.empregare.com/anexocurriculo/x.pdf?se=1&sig=y",
+    },
+    { resposta: "9900001", pergunta: "x", arquivo: 1, link: ARQ(504, "d") },
+  ],
+};
 
-describe("visão de respostas do questionário (empregare.link_respostas)", () => {
-  it("aceita só o link da visão de respostas", () => {
-    expect(linkDasRespostas({ link_respostas: RESPOSTAS })).toBe(RESPOSTAS);
+describe("anexos capturados pelo robô (empregare.anexos e respostas)", () => {
+  it("valida o que veio da RPC: só Visualizar Arquivo e PrintResult da Empregare", () => {
     expect(
-      linkDasRespostas({ link_respostas: `${RESPOSTAS}#pergunta-4` }),
-    ).toBe(`${RESPOSTAS}#pergunta-4`);
-    for (const ruim of [
-      "https://corporate.empregare.com/empresa/questionarios/imprimir/12a|",
-      "https://outro.invalid/empresa/questionarios/imprimir/1|",
-      "javascript:alert(1)",
-      "https://storage.empregare.com/anexocurriculo/x.pdf?se=1&sig=y",
-      "",
-    ])
-      expect(linkDasRespostas({ link_respostas: ruim })).toBeNull();
-    expect(linkDasRespostas(null)).toBeNull();
+      anexosDaEmpregare(DA_RPC).map((a) => [a.pergunta, a.arquivo]),
+    ).toEqual([
+      ["501", 1],
+      ["502", 2],
+      ["502", 1],
+    ]);
+    expect(impressaoDasRespostas(DA_RPC)).toBe(IMPRESSAO);
+    expect(anexosDaEmpregare(null)).toEqual([]);
+    expect(impressaoDasRespostas({ respostas: "x" })).toBeNull();
   });
 
-  it("com a visão de respostas: o botão abre direto e a dica diz a pergunta", () => {
-    const endereco = enderecoDoAnexo(
+  it("com o link da pergunta (pela coluna casada): 'Ver documento', sem dica", () => {
+    const enderecos = {
+      candidato: CANDIDATO,
+      vaga: VAGA,
+      vagaDireta: true,
+      anexos: anexosDaEmpregare(DA_RPC),
+      impressao: impressaoDasRespostas(DA_RPC),
+    };
+    const endereco = enderecoDoAnexo(enderecos, COLUNA);
+    expect(endereco).toEqual({
+      href: ARQ(501, "a"),
+      destino: "arquivo",
+      outros: [],
+    });
+    expect(apresentacaoDoAnexo(COLUNA, endereco)).toEqual({
+      rotulo: "Ver documento",
+      dica: "",
+    });
+  });
+
+  it("sem coluna casada, pelo enunciado; com dois arquivos, abre o primeiro e diz quantos são", () => {
+    const enderecos = {
+      candidato: CANDIDATO,
+      vaga: VAGA,
+      vagaDireta: true,
+      anexos: anexosDaEmpregare(DA_RPC),
+    };
+    const endereco = enderecoDoAnexo(enderecos, COLUNA_6);
+    expect(endereco).toEqual({
+      href: ARQ(502, "b"),
+      destino: "arquivo",
+      outros: [ARQ(502, "c")],
+    });
+    expect(apresentacaoDoAnexo(COLUNA_6, endereco)).toEqual({
+      rotulo: "Ver documento",
+      dica: "2 arquivos nesta pergunta",
+    });
+    expect(anexosDaColuna(enderecos.anexos, "Anexe")).toEqual([]);
+  });
+
+  it("sem o link da pergunta: a impressão das respostas; sem ela, o candidato", () => {
+    const coluna = "Pergunta 9 - Anexe o comprovante de residência";
+    const comImpressao = enderecoDoAnexo(
       {
         candidato: CANDIDATO,
         vaga: VAGA,
         vagaDireta: true,
-        respostas: RESPOSTAS,
+        anexos: anexosDaEmpregare(DA_RPC),
+        impressao: IMPRESSAO,
       },
-      COLUNA,
+      coluna,
     );
-    expect(endereco).toEqual({ href: RESPOSTAS, destino: "respostas" });
-    expect(apresentacaoDoAnexo(COLUNA, endereco)).toEqual({
-      rotulo: "Ver respostas e anexos na Empregare",
-      dica: "Pergunta 4 — Anexe o documento de identificação com foto",
+    expect(comImpressao).toEqual({ href: IMPRESSAO, destino: "respostas" });
+    expect(apresentacaoDoAnexo(coluna, comImpressao)).toEqual({
+      rotulo: "Ver respostas na Empregare",
+      dica: "Pergunta 9 — Anexe o comprovante de residência",
     });
-  });
-
-  it("sem a visão de respostas: o candidato, como antes", () => {
-    const endereco = enderecoDoAnexo(
-      { candidato: CANDIDATO, vaga: VAGA, vagaDireta: true, respostas: null },
-      COLUNA,
+    const semNada = enderecoDoAnexo(
+      { candidato: CANDIDATO, vaga: VAGA, vagaDireta: true },
+      coluna,
     );
-    expect(endereco).toEqual({ href: CANDIDATO, destino: "candidato" });
-    expect(apresentacaoDoAnexo(COLUNA, endereco).rotulo).toBe(
+    expect(semNada).toEqual({ href: CANDIDATO, destino: "candidato" });
+    expect(apresentacaoDoAnexo(coluna, semNada).rotulo).toBe(
       "Abrir na Empregare",
     );
   });

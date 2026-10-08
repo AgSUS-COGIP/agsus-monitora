@@ -1,34 +1,40 @@
 """
-As RESPOSTAS do questionário de cada candidato na Empregare (e os anexos).
+Os ANEXOS do questionário de cada candidato na Empregare.
 
-A exportação da Empregare não traz o link dos anexos (só "Sim"/"--"), e o
-arquivo fica num storage com assinatura que EXPIRA (sondagem de 08/10/2026:
-storage.empregare.com/anexocurriculo/<arquivo>?…&se=…&sig=…): o link do
-arquivo não pode ser guardado. O estável é o identificador da RESPOSTA do
-candidato ao questionário da vaga: o `data-resposta` do item dele na lista de
-candidaturas, que abre a visão de respostas com os anexos
-(/empresa/questionarios/imprimir/<id>|; exige o login da Empregare, que os
-analistas têm).
+A exportação da Empregare não traz o link dos anexos (só "Sim"/"--"). O
+caminho real (investigado em 08/10/2026, só leitura): na lista de
+candidaturas, cada candidato tem a.progress-link[data-resposta] (um por
+questionário; data-modo-resposta 3 é a entrevista virtual, fora) e o item tem
+data-tokenCandidato. O clique faz GET XHR
+/Company/VacancyTests/GetRespostaDetails/<respostaID>?token=<tokenCandidato>,
+cujo HTML traz, por pergunta, o enunciado e, por anexo, o botão "Visualizar
+Arquivo" (/Company/VacancyTests/GetViewerLogArquivo?arquivo=…&token=…&
+questionarioRespostaID=…&perguntaID=…; estável, abre com o login da
+Empregare e REGISTRA a visualização) e o link de impressão
+(/Company/VacancyTests/PrintResult?respostaID=…&pessoa=…&vaga=…).
 
-  - CAPTURAR (modo normal com --anexos): a lista de candidaturas que o robô já
-    lê (navegador_empregare.ler_respostas_do_html) dá o identificador de cada
-    candidato; gravar_respostas grava pela RPC gravar_respostas_empregare
-    (migration 20261008160000_respostas_do_questionario_na_empregare.sql). No
-    log, só contagens.
-  - SONDAR (modo `sondar`, só leitura): a estrutura das abas do candidato,
-    dos clicáveis de questionário/respostas, da visão imprimir de cada
-    resposta e o acesso aos links, com tudo que pareça token/id/nome de
-    arquivo trocado por <MASCARADO>. Nunca nome, CPF, e-mail, nome de arquivo
-    nem URL completa.
+  - CAPTURAR (modo normal com --anexos): para cada candidato e resposta da
+    lista, o mesmo GET com a sessão do Chrome (fetch na página); lê o HTML
+    (ler_detalhes_da_resposta), casa o enunciado com a coluna "Pergunta N -
+    enunciado" do Excel e grava por gravar_anexos_empregare (migration
+    20261008160000_anexos_do_questionario_na_empregare.sql). O robô NUNCA
+    abre os arquivos: só guarda os links. No log, só contagens.
+  - SONDAR (modo `sondar`, só leitura): a estrutura das abas e dos clicáveis
+    do candidato e o GET de GetRespostaDetails (status, perguntas, anexos,
+    perguntaIDs, enunciados), tudo contado ou com o padrão mascarado. Nunca
+    nome, CPF, e-mail, nome de arquivo, token nem URL completa; nunca clica em
+    "Zerar Tentativas", "Excluir Respostas" nem compartilhar.
 
-Testes: tests/python/test_anexos_empregare.py. Guia: docs/robo-empregare.md.
+Testes: tests/python/test_anexos_empregare.py (HTML sintético). Guia: docs/robo-empregare.md.
 """
 
 import re
 import time
+import unicodedata
 import urllib.error
 import urllib.request
-from urllib.parse import parse_qsl, unquote, urljoin, urlsplit
+from html.parser import HTMLParser
+from urllib.parse import parse_qsl, quote, unquote, urljoin, urlsplit
 
 from monitora.mascaramento import mascarar, resumo_do_erro
 
@@ -41,7 +47,7 @@ ESPERA_DA_PAGINA = 2  # segundos depois de abrir a página do candidato
 TEMPO_DO_HEAD = 15
 LIMITE_DA_SONDAGEM = 3  # candidatos
 ANEXOS_POR_CANDIDATO_NO_LOG = 10
-TAMANHO_DO_LOTE = 5000
+TAMANHO_DO_LOTE = 200  # respostas por chamada da RPC
 
 ANCORA = re.compile(r"^[A-Za-z][A-Za-z0-9_-]{0,60}$")
 
@@ -574,7 +580,7 @@ def _testar_arquivos(driver, leitura, testar=testar_sem_cookies):
     testes = {}
     for a in ((leitura or {}).get("arquivos") or [])[:ANEXOS_POR_CANDIDATO_NO_LOG]:
         href = a.get("href")
-        if href and href not in testes:
+        if href and href not in testes and not registra_visualizacao(href):
             testes[href] = {"sem_cookies": testar(href), "com_sessao": testar_com_sessao(driver, href)}
     return testes
 
@@ -1026,7 +1032,8 @@ ICONES_DE_RESPOSTAS = re.compile(
 # Nunca clicar no que pode mudar algo na Empregare.
 _PERIGOSO = re.compile(
     r"(?i)reprov|aprov|exclu|remov|mover|enviar|salvar|desclass|contrat|arquivar|cancel|apagar|delet|"
-    r"transfer|agendar|convidar|bloque|marcar|avaliar|classific|alterar|editar|incluir|adicionar|sair|logout"
+    r"transfer|agendar|convidar|bloque|marcar|avaliar|classific|alterar|editar|incluir|adicionar|sair|logout|"
+    r"zerar|resetar|limpar|compartilh|whatsapp|copiar|e-mail|email|GetViewerLogArquivo"
 )
 
 
@@ -1112,6 +1119,8 @@ class _Acessos:
 
     def guardar(self, driver, hrefs):
         for href in hrefs:
+            if registra_visualizacao(href):
+                continue
             if href and href not in self.vistos and len(self.vistos) < 8:
                 self.vistos.append(href)
                 self.resultados.append((href, get_com_sessao(driver, href)))
@@ -1277,48 +1286,12 @@ def anexos_por_pergunta(arquivos):
     return ", ".join(f"{k}: {n}" for k, n in sorted(contagem.items(), key=lambda kv: (str(kv[0]) == "?", str(kv[0]))))
 
 
-def respostas_do_item(itens):
-    """Os data-resposta (só dígitos) dos clicáveis do item do candidato, na ordem, sem repetir."""
-    vistos = []
-    for item in itens or []:
-        for a in item.get("atributos") or []:
-            if len(a) >= 2 and str(a[0]).lower() == "data-resposta" and RESPOSTA.match(str(a[1]).strip()):
-                if str(a[1]).strip() not in vistos:
-                    vistos.append(str(a[1]).strip())
-    return vistos
-
-
-def sondar_visao_de_respostas(portal, rotulo, resposta, testar, acessos, voltar):
-    """Abre /empresa/questionarios/imprimir/<id>| (só leitura) e analisa; testa o acesso sem cookies e com sessão."""
-    d = portal.driver
-    url = link_das_respostas(resposta)
-    sem = testar(url)
-    sessao = get_com_sessao(d, url)
-    linhas = [
-        mascarar(
-            f"{rotulo}: visão de respostas {padrao_do_link(url)} · GET sem cookies: "
-            f"{sem.get('status') or sem.get('erro') or '?'} {sem.get('tipo') or ''}".rstrip()
-            + (f" → {sem['destino']}" if sem.get("destino") else "")
-            + f" · GET com sessão: {sessao.get('status', sessao.get('erro', '?'))} {_tipo_de_conteudo(sessao.get('tipo'))}"
-            + f"; login {'sim' if sessao.get('login') else 'não'}"
-        )
-    ]
-    d.get(url)
-    time.sleep(ESPERA_DA_PAGINA)
-    novas, _ = analisar_conteudo(portal, f"{rotulo} › visão de respostas", testar, acessos)
-    linhas += novas
-    linhas.append(linha_das_ancoras(f"{rotulo} › visão de respostas", d.execute_script(JS_ANCORAS)))
-    sub, _ = listar_clicaveis(d, f"{rotulo} › visão de respostas", "body", so_relevantes=True, maximo=15)
-    linhas += sub
-    voltar()
-    return linhas
-
-
 def sondar_pela_vaga(portal, ident, codigo_vaga, codigos_dos_candidatos, testar=testar_sem_cookies):
     """
-    Alternativa pela vaga: nas candidaturas (?m=0), os clicáveis de
-    questionário/imprimir/respostas da página e do item de cada candidato; abre
-    (mesma origem, só leitura) os de questionário/imprimir e analisa.
+    Pela vaga: nas candidaturas (?m=0), os clicáveis de questionário da
+    página (abre os da mesma origem, só leitura) e, de cada candidato sondado,
+    os clicáveis do item (sem clicar) e o GET de GetRespostaDetails de cada
+    resposta (sondar_detalhes).
     """
     d = portal.driver
     linhas = []
@@ -1338,13 +1311,9 @@ def sondar_pela_vaga(portal, ident, codigo_vaga, codigos_dos_candidatos, testar=
                 continue
             voltar()
             sub = f"{rotulo} candidato {n}"
-            itens_linhas, itens = listar_clicaveis(d, sub, f"pessoa:{cod}", codigo_vaga, maximo=30)
+            itens_linhas, _itens = listar_clicaveis(d, sub, f"pessoa:{cod}", codigo_vaga, maximo=30)
             linhas += itens_linhas
-            respostas = respostas_do_item(itens)
-            linhas.append(mascarar(f"{sub}: data-resposta distintos no item: {len(respostas)}"))
-            linhas += explorar_respostas(portal, sub, itens, testar, acessos, voltar, maximo=2)
-            if respostas:
-                linhas += sondar_visao_de_respostas(portal, sub, respostas[0], testar, acessos, voltar)
+            linhas += sondar_detalhes(d, sub, cod)
         linhas += linhas_dos_acessos(portal, rotulo, acessos, testar, abrir=1)
     except Exception as erro:
         linhas.append(f"{rotulo}: a sondagem parou ({resumo_do_erro(erro)}).")
@@ -1382,41 +1351,412 @@ def sondar(portal, codigo, limite, registrar):
     ]
 
 
-# ── Respostas do questionário (modo normal com --anexos) ────────────────────
+# ── Detalhes da resposta (GetRespostaDetails): leitura e captura ──────────
 
+CAMINHO_DOS_DETALHES = "/Company/VacancyTests/GetRespostaDetails/{}?token={}"
 RESPOSTA = re.compile(r"^[0-9]{1,20}$")
+TOKEN = re.compile(r"^[A-Za-z0-9_.~=%|+/-]{1,200}$")
+# Os mesmos formatos que o banco aceita (CK_EMPREGANEXO_DSLINK, CK_EMPREGRESP_DSLINKIMPRESSAO)
+# e que a ficha confere (src/lib/avaliacao-documental/anexo-na-empregare.ts).
+LINK_DO_ARQUIVO = re.compile(
+    r"^https://corporate\.empregare\.com/Company/VacancyTests/GetViewerLogArquivo\?[A-Za-z0-9_.~=&%|+/:-]+$"
+)
+LINK_DA_IMPRESSAO = re.compile(
+    r"^https://corporate\.empregare\.com/Company/VacancyTests/PrintResult\?[A-Za-z0-9_.~=&%|+/:-]+$"
+)
+TAMANHO_DO_LINK = 1500
+ORCAMENTO_DOS_ANEXOS = 30 * 60  # segundos na execução inteira (o workflow tem 120 min)
+TEMPO_LIMITE_DOS_ANEXOS = 10 * 60  # segundos por vaga
+PEDIDOS_POR_VEZ = 6  # GETs em paralelo na página
+TAMANHO_DO_HTML = 3_000_000  # caracteres por resposta
+
+# GETs de GetRespostaDetails com a sessão do Chrome (mesma origem). arguments[0]: caminhos.
+JS_BUSCAR_DETALHES = """
+const pronto = arguments[arguments.length - 1];
+const caminhos = arguments[0] || [];
+Promise.all(caminhos.map(function (c) {
+  return fetch(c, {method: 'GET', credentials: 'include', headers: {'X-Requested-With': 'XMLHttpRequest'}})
+    .then(function (r) {
+      return r.text().then(function (t) {
+        let login = false;
+        try { login = /login|entrar|signin/i.test(new URL(r.url).pathname); } catch (e) { login = false; }
+        return {status: r.status, html: t.slice(0, 3000000), login: login};
+      });
+    })
+    .catch(function (e) { return {status: null, html: '', erro: String((e && e.name) || 'erro')}; });
+})).then(pronto);
+"""
 
 
-def link_das_respostas(resposta):
-    """A visão de respostas do questionário (com os anexos) da resposta; None fora do formato."""
-    r = str(resposta or "").strip()
-    return f"{URL_BASE}/empresa/questionarios/imprimir/{r}|" if RESPOSTA.match(r) else None
+def registra_visualizacao(endereco):
+    """O link "Visualizar Arquivo" registra a visualização: o robô nunca abre nem testa."""
+    return "getviewerlogarquivo" in str(endereco or "").lower()
 
 
-def gravar_respostas(config, sync, codigo, respostas, chamar, registrar):
+def link_absoluto(href):
+    """Link absoluto da Empregare com os caracteres fora do formato codificados (espaço, acento…)."""
+    texto = str(href or "").strip().replace("&amp;", "&")
+    if not texto or texto.lower().startswith(("javascript:", "#", "mailto:")):
+        return None
+    absoluto = urljoin(URL_BASE + "/", texto).split("#")[0]
+    return quote(absoluto, safe=":/?&=%|+~._-")
+
+
+class _ArvoreComTexto(HTMLParser):
+    """Árvore do HTML com o texto (tag, atributos, filhos, pai; texto como nó "#texto")."""
+
+    SEM_FIM = {"area", "base", "br", "col", "embed", "hr", "img", "input", "link", "meta", "source", "track", "wbr"}
+
+    def __init__(self):
+        super().__init__(convert_charrefs=True)
+        self.raiz = {"tag": "#raiz", "attrs": {}, "filhos": [], "pai": None}
+        self.atual = self.raiz
+
+    def handle_starttag(self, tag, attrs):
+        no = {"tag": tag, "attrs": {k: (v or "") for k, v in attrs}, "filhos": [], "pai": self.atual}
+        self.atual["filhos"].append(no)
+        if tag not in self.SEM_FIM:
+            self.atual = no
+
+    def handle_startendtag(self, tag, attrs):
+        self.atual["filhos"].append(
+            {"tag": tag, "attrs": {k: (v or "") for k, v in attrs}, "filhos": [], "pai": self.atual}
+        )
+
+    def handle_endtag(self, tag):
+        no = self.atual
+        while no is not None and no["tag"] != tag:
+            no = no["pai"]
+        if no is not None and no["pai"] is not None:
+            self.atual = no["pai"]
+
+    def handle_data(self, data):
+        self.atual["filhos"].append({"tag": "#texto", "texto": data, "filhos": [], "pai": self.atual, "attrs": {}})
+
+
+def _nos(no):
+    pilha = list(reversed(no["filhos"]))
+    while pilha:
+        atual = pilha.pop()
+        yield atual
+        pilha.extend(reversed(atual["filhos"]))
+
+
+def _texto(no, sem_links=False):
+    partes = []
+    pilha = [no]
+    while pilha:
+        atual = pilha.pop()
+        if atual["tag"] == "#texto":
+            partes.append(atual["texto"])
+            continue
+        if atual["tag"] in ("script", "style") or (sem_links and atual["tag"] in ("a", "button")):
+            continue
+        pilha.extend(reversed(atual["filhos"]))
+    return re.sub(r"\s+", " ", "".join(partes)).strip()
+
+
+def _classes_do_no(no):
+    return (no["attrs"].get("class") or "").lower()
+
+
+_CABECA = {"h1", "h2", "h3", "h4", "h5", "h6", "label", "legend", "dt", "th", "strong", "b"}
+
+
+def _enunciado_do_link(link, raiz):
+    """O enunciado da pergunta do link: o bloco mais próximo com texto (sem links) e, nele, a cabeça."""
+    bloco = link["pai"]
+    for _ in range(12):
+        if bloco is None or bloco is raiz:
+            break
+        if len(_texto(bloco, sem_links=True)) >= 12:
+            break
+        bloco = bloco["pai"]
+    if bloco is None:
+        return ""
+    contem = set()
+    p = link
+    while p is not None:
+        contem.add(id(p))
+        p = p["pai"]
+    for no in _nos(bloco):
+        if no["tag"] == "#texto" or id(no) in contem:
+            continue
+        cabeca = no["tag"] in _CABECA or re.search(r"pergunta|titulo|enunciado|question", _classes_do_no(no))
+        if cabeca:
+            texto = _texto(no, sem_links=True)
+            if len(texto) >= 5:
+                return texto[:2000]
+    return _texto(bloco, sem_links=True)[:2000]
+
+
+def ler_detalhes_da_resposta(html):
     """
-    Grava os identificadores das respostas da vaga ({código do candidato:
-    resposta}) por gravar_respostas_empregare. Falha não derruba a vaga: só
-    avisa. Devolve quantos o banco gravou. No log, só contagens.
+    O HTML de GetRespostaDetails: {"perguntas": n, "por_texto": n de "Pergunta N",
+    "impressao": link do PrintResult ou None, "anexos": [{"pergunta": perguntaID,
+    "arquivo": ordem do arquivo na pergunta, "enunciado", "link"}], "fora_do_formato": n,
+    "perigosos": n de botões perigosos (zerar, excluir, compartilhar)}. Nada é aberto.
+    """
+    arvore = _ArvoreComTexto()
+    arvore.feed(str(html or "")[:TAMANHO_DO_HTML])
+    arvore.close()
+    raiz = arvore.raiz
+    nos = [n for n in _nos(raiz) if n["tag"] != "#texto"]
+    blocos = [n for n in nos if re.search(r"pergunta|question", _classes_do_no(n))]
+    folhas = [b for b in blocos if not any(o is not b and _desce_de(o, b) for o in blocos)]
+    impressao = None
+    anexos = []
+    fora = 0
+    por_pergunta = {}
+    perigosos = 0
+    for n in nos:
+        if n["tag"] not in ("a", "button"):
+            continue
+        href = n["attrs"].get("href") or n["attrs"].get("data-href") or n["attrs"].get("data-url") or ""
+        if _PERIGOSO.search(_texto(n) + " " + (n["attrs"].get("title") or "")) and not registra_visualizacao(href):
+            perigosos += 1
+        if "/company/vacancytests/printresult" in href.lower() and impressao is None:
+            link = link_absoluto(href)
+            impressao = link if link and len(link) <= TAMANHO_DO_LINK and LINK_DA_IMPRESSAO.match(link) else None
+            fora += impressao is None
+            continue
+        if not registra_visualizacao(href):
+            continue
+        link = link_absoluto(href)
+        consulta = dict(parse_qsl(urlsplit(link or "").query))
+        pergunta = (consulta.get("perguntaID") or "").strip()
+        if not link or len(link) > TAMANHO_DO_LINK or not LINK_DO_ARQUIVO.match(link) or not RESPOSTA.match(pergunta):
+            fora += 1
+            continue
+        por_pergunta[pergunta] = por_pergunta.get(pergunta, 0) + 1
+        anexos.append(
+            {
+                "pergunta": pergunta,
+                "arquivo": por_pergunta[pergunta],
+                "enunciado": limpar_enunciado(_enunciado_do_link(n, raiz)) or None,
+                "link": link,
+            }
+        )
+    texto = _texto(raiz)
+    return {
+        "perguntas": len(folhas),
+        "por_texto": len(re.findall(r"(?i)pergunta\s*\d{1,3}", texto)),
+        "impressao": impressao,
+        "anexos": anexos,
+        "fora_do_formato": fora,
+        "perigosos": perigosos,
+    }
+
+
+def _desce_de(no, ancestral):
+    p = no["pai"]
+    while p is not None:
+        if p is ancestral:
+            return True
+        p = p["pai"]
+    return False
+
+
+def normalizar_texto(valor):
+    """Como normalizarTexto de nota-declarada.js: sem acento, minúsculo, espaços simples (&nbsp; vira espaço)."""
+    t = re.sub(r"&nbsp;|&#160;", " ", str(valor or ""), flags=re.I)
+    t = "".join(c for c in unicodedata.normalize("NFD", t) if not unicodedata.combining(c))
+    return re.sub(r"\s+", " ", t.lower()).strip()
+
+
+_PREFIXO_DA_PERGUNTA = re.compile(r"^pergunta ?[0-9]+ ?[-–—] ?")
+
+
+def coluna_da_pergunta(enunciado, colunas):
+    """
+    A coluna do Excel ("Pergunta N - enunciado") do enunciado lido: igual sem o
+    prefixo; senão uma começando pela outra (20+ letras). Ambígua ou nenhuma → None.
+    """
+    alvo = _PREFIXO_DA_PERGUNTA.sub("", normalizar_texto(enunciado))
+    if len(alvo) < 5:
+        return None
+    nomes = [(c, _PREFIXO_DA_PERGUNTA.sub("", normalizar_texto(c))) for c in colunas or [] if c]
+    iguais = [c for c, n in nomes if n == alvo]
+    if len(iguais) == 1:
+        return iguais[0]
+    if iguais:
+        return None
+    if len(alvo) < 20:
+        return None
+    parecidas = [c for c, n in nomes if len(n) >= 20 and (n.startswith(alvo) or alvo.startswith(n))]
+    return parecidas[0] if len(parecidas) == 1 else None
+
+
+def buscar_detalhes(driver, pedidos):
+    """GETs de GetRespostaDetails com a sessão (pedidos: [(resposta, token)]). Devolve a lista de respostas do JS."""
+    caminhos = [CAMINHO_DOS_DETALHES.format(r, quote(t, safe="")) for r, t in pedidos]
+    driver.set_script_timeout(120)
+    return driver.execute_async_script(JS_BUSCAR_DETALHES, caminhos) or []
+
+
+def capturar_anexos(portal, codigo, respostas, registrar, prazo, agora=time.monotonic):
+    """
+    Para cada candidato ({código: {"token", "respostas"}}) e resposta, o GET de
+    GetRespostaDetails com a sessão; devolve {código: [{"resposta", "impressao",
+    "perguntas", "anexos"}]}. No log, só contagens. Nunca levanta.
+    """
+    pedidos = [
+        (cod, r, dados.get("token") or "")
+        for cod, dados in (respostas or {}).items()
+        for r in dados.get("respostas") or []
+        if RESPOSTA.match(str(r)) and TOKEN.match(str(dados.get("token") or ""))
+    ]
+    capturados = {}
+    lidas = falhas = anexos = sem_impressao = fora = 0
+    esgotou = False
+    for i in range(0, len(pedidos), PEDIDOS_POR_VEZ):
+        if agora() >= prazo:
+            esgotou = True
+            break
+        lote = pedidos[i : i + PEDIDOS_POR_VEZ]
+        try:
+            resultados = buscar_detalhes(portal.driver, [(r, t) for _c, r, t in lote])
+        except Exception:
+            falhas += len(lote)
+            continue
+        for (cod, resposta, _t), res in zip(lote, list(resultados) + [{}] * len(lote), strict=False):
+            if (res or {}).get("status") != 200 or (res or {}).get("login"):
+                falhas += 1
+                continue
+            lido = ler_detalhes_da_resposta(res.get("html"))
+            lidas += 1
+            anexos += len(lido["anexos"])
+            sem_impressao += lido["impressao"] is None
+            fora += lido["fora_do_formato"]
+            capturados.setdefault(cod, []).append(
+                {
+                    "resposta": resposta,
+                    "impressao": lido["impressao"],
+                    "perguntas": lido["perguntas"],
+                    "anexos": lido["anexos"],
+                }
+            )
+    registrar(
+        f"Vaga {codigo}: respostas de questionário lidas {lidas} de {len(pedidos)} "
+        f"({len(capturados)} candidato(s)) · {anexos} anexo(s)"
+        + (f" · {falhas} falha(s)" if falhas else "")
+        + (f" · {sem_impressao} sem link de impressão" if sem_impressao else "")
+        + (f" · {fora} link(s) fora do formato" if fora else "")
+        + (" · tempo esgotado (o resto na próxima execução)" if esgotou else "")
+        + "."
+    )
+    return capturados
+
+
+def gravar_anexos(config, sync, codigo, capturados, colunas, chamar, registrar):
+    """
+    Grava as respostas e os anexos da vaga (gravar_anexos_empregare, em lotes),
+    com a coluna do Excel de cada anexo. Falha não derruba a vaga: só avisa.
+    Devolve quantos anexos o banco gravou. No log, só contagens.
     """
     from monitora import supabase_rpc
 
-    itens = [{"codigo": c, "resposta": r} for c, r in sorted((respostas or {}).items()) if RESPOSTA.match(str(r))]
+    itens = []
+    casados = 0
+    for cod, respostas in sorted((capturados or {}).items()):
+        for r in respostas:
+            anexos = []
+            for a in r.get("anexos") or []:
+                coluna = coluna_da_pergunta(a.get("enunciado"), colunas)
+                casados += coluna is not None
+                anexos.append(dict(a, coluna=coluna))
+            itens.append(
+                {
+                    "codigo": cod,
+                    "resposta": r.get("resposta"),
+                    "impressao": r.get("impressao"),
+                    "perguntas": r.get("perguntas"),
+                    "anexos": anexos,
+                }
+            )
     if not itens:
         return 0
-    gravadas = 0
+    gravados = 0
+    total = sum(len(i["anexos"]) for i in itens)
     try:
         for lote in em_lotes(itens):
-            r = chamar(config, "gravar_respostas_empregare", {"p_sync": sync, "p_vaga": codigo, "p_respostas": lote})
-            gravadas += int((r or {}).get("gravadas") or 0)
+            r = chamar(config, "gravar_anexos_empregare", {"p_sync": sync, "p_vaga": codigo, "p_respostas": lote})
+            gravados += int((r or {}).get("anexos") or 0)
     except supabase_rpc.ErroDoSupabase as erro:
         if getattr(erro, "status", None) == 404:
-            registrar("O banco ainda não guarda as respostas do questionário (falta a migration 20261008160000).")
+            registrar("O banco ainda não guarda os anexos do questionário (falta a migration 20261008160000).")
         else:
-            registrar(f"Vaga {codigo}: o banco recusou as respostas do questionário ({erro}).")
-        return gravadas
+            registrar(f"Vaga {codigo}: o banco recusou os anexos do questionário ({erro}).")
+        return gravados
     except Exception as erro:
-        registrar(f"Vaga {codigo}: a gravação das respostas do questionário falhou ({resumo_do_erro(erro)}).")
-        return gravadas
-    registrar(f"Vaga {codigo}: {gravadas} resposta(s) de questionário gravada(s).")
-    return gravadas
+        registrar(f"Vaga {codigo}: a gravação dos anexos do questionário falhou ({resumo_do_erro(erro)}).")
+        return gravados
+    registrar(
+        f"Vaga {codigo}: {len(itens)} resposta(s) e {gravados} anexo(s) gravados · "
+        f"{casados} de {total} anexo(s) casados com a coluna do Excel."
+    )
+    return gravados
+
+
+def sondar_detalhes(driver, rotulo, codigo_do_candidato):
+    """
+    Sondar: o GET de GetRespostaDetails de cada resposta do candidato (modo ≠ 3),
+    com a sessão. Só contagens e padrões mascarados; nenhum arquivo é aberto.
+    """
+    from navegador_empregare import ler_respostas_do_html
+
+    try:
+        fonte = driver.page_source or ""
+    except Exception as erro:
+        return [mascarar(f"{rotulo}: sem o HTML da lista ({type(erro).__name__})")]
+    respostas, sem_token = ler_respostas_do_html(fonte)
+    dados = respostas.get(str(codigo_do_candidato)) or {}
+    linhas = [
+        mascarar(
+            f"{rotulo}: respostas de questionário (modo ≠ 3) {len(dados.get('respostas') or [])}; "
+            f"token do candidato {'sim' if dados.get('token') else 'não'}; itens sem token na lista {sem_token}"
+        )
+    ]
+    if not dados:
+        return linhas
+    pedidos = [(r, dados["token"]) for r in dados["respostas"][:3]]
+    try:
+        resultados = buscar_detalhes(driver, pedidos)
+    except Exception as erro:
+        return linhas + [mascarar(f"{rotulo}: GetRespostaDetails falhou ({type(erro).__name__})")]
+    for i, res in enumerate(resultados, 1):
+        res = res or {}
+        lido = ler_detalhes_da_resposta(res.get("html") or "")
+        perguntas = {a["pergunta"] for a in lido["anexos"]}
+        com_enunciado = sum(1 for a in lido["anexos"] if a.get("enunciado"))
+        parecem = sum(1 for a in lido["anexos"] if _PARECE_ENUNCIADO.search(a.get("enunciado") or ""))
+        linhas.append(
+            mascarar(
+                f"{rotulo}, resposta {i}: GET com sessão {res.get('status') or res.get('erro') or '?'}"
+                f"{' (login!)' if res.get('login') else ''}; HTML {len(res.get('html') or '')} car.; "
+                f"perguntas por classe {lido['perguntas']}, «Pergunta N» {lido['por_texto']}; anexos {len(lido['anexos'])} "
+                f"em {len(perguntas)} pergunta(s) (perguntaID distintos); por pergunta: "
+                f"{', '.join(str(n) for n in sorted(_contar(lido['anexos']).values(), reverse=True)) or '—'}; "
+                f"com enunciado {com_enunciado} (parecem enunciado {parecem}); "
+                f"impressão {'sim' if lido['impressao'] else 'não'}; fora do formato {lido['fora_do_formato']}; "
+                f"botões perigosos {lido['perigosos']} (nenhum clicado)"
+            )
+        )
+        if lido["anexos"]:
+            a = lido["anexos"][0]
+            linhas.append(
+                mascarar(
+                    f"{rotulo}, resposta {i}: 1º anexo {padrao_do_link(a['link'])} · enunciado "
+                    f"{enunciado_para_o_log(a.get('enunciado'))} · arquivo não aberto (registra visualização)"
+                )
+            )
+        if lido["impressao"]:
+            linhas.append(mascarar(f"{rotulo}, resposta {i}: impressão {padrao_do_link(lido['impressao'])}"))
+    return linhas
+
+
+def _contar(anexos):
+    contagem = {}
+    for a in anexos:
+        contagem[a["pergunta"]] = contagem.get(a["pergunta"], 0) + 1
+    return contagem

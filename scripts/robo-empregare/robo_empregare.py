@@ -25,8 +25,9 @@ Uso
       anexos, status sem cookies); não exporta, não grava, não usa o Supabase
   python scripts/robo-empregare/robo_empregare.py [--editais 80/2026,81/2026]
       [--vagas 177979,177980] [--limite 60] [--forcar] [--anexos] [--disparado-por agenda|<uuid>]
-      --anexos: também guarda a resposta do questionário de cada candidato
-      (abre as respostas e os anexos na ficha; anexos_empregare.py, migration 20261008160000)
+      --anexos: também guarda o link de cada anexo do questionário (e o de
+      impressão das respostas), lidos de GetRespostaDetails; anexos_empregare.py,
+      migration 20261008160000
 
 Variáveis: EMPREGARE_EMAIL, EMPREGARE_SENHA, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY.
 O log é público (repositório público): só contagens, códigos de vaga e números
@@ -75,7 +76,7 @@ def argumentos(lista=None):
     p.add_argument("--fumaca", action="store_true", help="só entra na Empregare e abre a Central")
     p.add_argument("--forcar", action="store_true", help="aceita arquivo com menos da metade dos candidatos")
     p.add_argument("--sondar", action="store_true", help="só lê a estrutura da aba Questionários (1 a 3 candidatos)")
-    p.add_argument("--anexos", action="store_true", help="também guarda a resposta do questionário de cada candidato")
+    p.add_argument("--anexos", action="store_true", help="também guarda o link de cada anexo do questionário")
     p.add_argument("--editais", default="", help="números de edital: 80/2026,81/2026")
     p.add_argument("--vagas", default="", help="códigos de vaga: 177979,177980")
     p.add_argument("--limite", type=int, default=LIMITE_PADRAO, help="máximo de vagas (1 a 500)")
@@ -211,8 +212,8 @@ def gravar_vaga(config, sync, codigo, caminho, chamar=supabase_rpc.chamar, ender
         registrar(
             f"Vaga {codigo}: gravada · {detalhes} · {fim.get('ativos')} ativos · {fim.get('desativadas')} saíram."
         )
-        if (enderecos or {}).get("respostas"):
-            anexos.gravar_respostas(config, sync, codigo, enderecos["respostas"], chamar, registrar)
+        if (enderecos or {}).get("anexos"):
+            anexos.gravar_anexos(config, sync, codigo, enderecos["anexos"], lido["colunas"], chamar, registrar)
     elif situacao == "RECUSADA":
         registrar(f"Vaga {codigo}: RECUSADA pela trava · {detalhes} (menos da metade dos ativos; nada mudou).")
     return situacao
@@ -352,15 +353,24 @@ def principal(args):
                 desde = datetime.now(FUSO).replace(tzinfo=None)
                 pedidas = []
                 enderecos = {}
+                gasto_em_anexos = 0.0
                 for v in vagas:
                     registrar(f"Vaga {v['vaga']} (edital {v.get('edital') or '—'}): pedindo a exportação.")
                     if portal.exportar_vaga(v["vaga"]):
                         pedidas.append(v["vaga"])
                         # Enquanto a Empregare gera o arquivo: os links da vaga e dos candidatos.
                         enderecos[v["vaga"]] = portal.capturar_candidatos(v["vaga"])
-                        # --anexos: grava também a resposta do questionário de cada candidato.
-                        if not args.anexos and enderecos[v["vaga"]]:
-                            enderecos[v["vaga"]].pop("respostas", None)
+                        # --anexos: os anexos do questionário (GetRespostaDetails de cada resposta).
+                        respostas = (enderecos[v["vaga"]] or {}).pop("respostas", None)
+                        if args.anexos and respostas and gasto_em_anexos < anexos.ORCAMENTO_DOS_ANEXOS:
+                            inicio = time.monotonic()
+                            prazo = inicio + min(
+                                anexos.TEMPO_LIMITE_DOS_ANEXOS, anexos.ORCAMENTO_DOS_ANEXOS - gasto_em_anexos
+                            )
+                            enderecos[v["vaga"]]["anexos"] = anexos.capturar_anexos(
+                                portal, v["vaga"], respostas, registrar, prazo
+                            )
+                            gasto_em_anexos += time.monotonic() - inicio
                     else:
                         falhas += 1
                 if pedidas:

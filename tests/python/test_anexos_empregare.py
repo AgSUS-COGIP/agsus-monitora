@@ -1,8 +1,9 @@
 """
-Testes das respostas do questionário da Empregare (scripts/robo-empregare/anexos_empregare.py):
+Testes dos anexos do questionário da Empregare (scripts/robo-empregare/anexos_empregare.py):
 o modo sondar só escreve estrutura mascarada (nada de nome, CPF, e-mail, nome de
-arquivo nem URL completa), não clica no que pode mudar algo e abre a visão de
-respostas pelo data-resposta; a captura lê o data-resposta da lista e grava por candidato.
+arquivo, token nem URL completa) e não clica no que pode mudar algo; a captura lê
+o HTML de GetRespostaDetails (fixture SINTÉTICA abaixo), casa o enunciado com a
+coluna do Excel e grava por resposta × pergunta, sem abrir os arquivos.
 Dados e links fictícios; nada fala com a Empregare nem com o Supabase.
 
     python -m pytest tests/python/test_anexos_empregare.py
@@ -51,6 +52,10 @@ PROIBIDOS = (
     "pessoa@exemplo.invalid",
     "arquivos.exemplo.invalid/anexos/8f",
     "_RG.pdf",
+    "TKfict456",
+    "PSfict99",
+    "7654321",
+    "8f3a9c7e2d",
 )
 
 
@@ -230,6 +235,63 @@ IMPRIMIR_DO_CANDIDATO = {
     "atributos": [],
     "bloco_da_vaga": False,
 }
+
+
+LISTA_DA_VAGA = """
+<div class="curriculo-append"><div class="list-group candidatura-group" id="curriculo-pagina-1">
+  <div class="list-group-item curriculo-list-item" data-tokenCandidato="TKfict123">
+    <ul><li data-pessoa-id="7000001">Pessoa Fictícia Um</li></ul>
+    <a class="link-curriculo" href="/empresa/curriculo/detalhes?tokenCandidato=TKfict123">ver</a>
+    <a class="progress-link" href="javascript:" data-resposta="7654321" data-modo-resposta="1"></a>
+    <a class="progress-link" href="javascript:" data-resposta="7654322" data-modo-resposta="2"></a>
+    <a class="progress-link" href="javascript:" data-resposta="7654323" data-modo-resposta="3"></a></div>
+  <div class="list-group-item curriculo-list-item">
+    <ul><li data-pessoa-id="7000002">Pessoa Fictícia Dois</li></ul>
+    <a class="progress-link" href="javascript:" data-resposta="111" data-modo-resposta="1"></a></div>
+  <div class="list-group-item curriculo-list-item" data-tokenCandidato="TKfict456">
+    <ul><li data-pessoa-id="7000003">Sem resposta</li></ul>
+    <a class="progress-link" href="javascript:" data-resposta="12a"></a></div>
+</div></div>
+"""
+
+# HTML SINTÉTICO no formato do painel de GetRespostaDetails (nada real).
+DETALHES = """
+<div id="container-resposta-questionario">
+  <a class="btn btn-default" href="/Company/VacancyTests/PrintResult?respostaID=7654321&amp;pessoa=PSfict99&amp;vaga=Vaga%20Fict%C3%ADcia">Imprimir</a>
+  <a href="#" class="btn">Zerar Tentativas</a> <a href="#">Excluir Respostas</a> <a href="#">WhatsApp</a>
+  <div class="pergunta-item"><h5>Pergunta 1 - Nome completo</h5><p>Maria Ficticia Souza</p></div>
+  <div class="pergunta-item"><h5>Pergunta 4 - Anexe o documento de identificação com foto (RG ou CNH)</h5>
+    <a class="btn" href="/Company/VacancyTests/GetViewerLogArquivo?arquivo=123-8f3a9c7e2d.pdf&amp;nome=RG Maria Ficticia&amp;token=TKfict123&amp;questionarioRespostaID=7654321&amp;perguntaID=501">Visualizar Arquivo</a></div>
+  <div class="pergunta-item"><h5>Pergunta 6 - Anexe o diploma de graduação</h5>
+    <a href="/Company/VacancyTests/GetViewerLogArquivo?arquivo=1-a.pdf&amp;token=TKfict123&amp;questionarioRespostaID=7654321&amp;perguntaID=502">Visualizar Arquivo</a>
+    <a href="/Company/VacancyTests/GetViewerLogArquivo?arquivo=2-b.pdf&amp;token=TKfict123&amp;questionarioRespostaID=7654321&amp;perguntaID=502">Visualizar Arquivo</a></div>
+  <div class="pergunta-item"><h5>Pergunta 7 - Anexe o comprovante</h5>
+    <a href="/Company/VacancyTests/GetViewerLogArquivo?arquivo=x.pdf&amp;token=TKfict123">Visualizar Arquivo</a></div>
+</div>
+"""
+COLUNAS = [
+    "Nome",
+    "Pergunta 1 - Nome completo",
+    "Pergunta 4 - Anexe o documento de identificação com foto (RG ou CNH)",
+    "Pergunta 6 - Anexe o diploma de graduação",
+]
+
+
+class _DriverDosDetalhes:
+    """O fetch de GetRespostaDetails com a sessão: devolve o HTML sintético e guarda os caminhos pedidos."""
+
+    def __init__(self, fonte=LISTA_DA_VAGA, status=200):
+        self.page_source = fonte
+        self.status = status
+        self.caminhos = []
+
+    def set_script_timeout(self, _s):
+        pass
+
+    def execute_async_script(self, js, caminhos):
+        assert js == anexos.JS_BUSCAR_DETALHES
+        self.caminhos += caminhos
+        return [{"status": self.status, "html": DETALHES, "login": False} for _ in caminhos]
 
 
 class PadraoDoLink(unittest.TestCase):
@@ -436,12 +498,11 @@ class Sondagem(unittest.TestCase):
             self.assertIn(esperado, texto)
         _sem_proibidos(self, texto)
 
-    def test_sondar_pela_vaga_abre_o_imprimir_do_candidato(self):
+    def test_sondar_pela_vaga_le_os_detalhes_das_respostas_sem_abrir_arquivo(self):
         visitadas = []
         raizes = []
-        clicados = []
 
-        class DriverFalso:
+        class DriverFalso(_DriverDosDetalhes):
             class switch_to:  # noqa: N801
                 @staticmethod
                 def frame(_f):
@@ -459,41 +520,19 @@ class Sondagem(unittest.TestCase):
                     raizes.append(args[0])
                     if args[0] == "body":
                         return {"raiz": True, "itens": [dict(CLICAVEIS[1], i=0)]}
-                    return {"raiz": True, "itens": [IMPRIMIR_DO_CANDIDATO, RESPOSTA_DO_CANDIDATO]}
-                if js == anexos.JS_CLICAR_CLICAVEL:
-                    clicados.append(args[0])
-                    return True
-                if js == anexos.JS_FECHAR_MODAL:
-                    return 1
-                if js == anexos.JS_ANCORAS:
-                    return {"total": 14, "padroes": [["pergunta-<n>", 12], ["Maria77777", 1], ["modal", 1]]}
-                if js == anexos.JS_LER_QUESTIONARIO:
-                    return _leitura()
-                if js == anexos.JS_ATRIBUTOS_DE_ARQUIVO:
-                    return []
-                if js == anexos.JS_CONTAR_QUESTIONARIO:
-                    return 1
-                if "document.contentType" in js:
-                    return {"tipo": "text/html", "caminho": IMPRIMIR, "login": False, "pdf": False}
+                    return {"raiz": True, "itens": [RESPOSTA_DO_CANDIDATO]}
                 raise AssertionError("JS inesperado")
 
             def find_elements(self, *_a):
                 return []
 
-            def set_script_timeout(self, _s):
-                pass
-
-            def execute_async_script(self, _js, _url):
-                return {"status": 200, "tipo": "application/pdf"}
-
         class PortalFalso:
             driver = DriverFalso()
             pasta = None
-            abertas = 0
             voltou = 0
 
             def _abrir_candidaturas(self, _ident):
-                PortalFalso.abertas += 1
+                pass
 
             def abrir_vagas_anunciadas(self):
                 PortalFalso.voltou += 1
@@ -503,21 +542,26 @@ class Sondagem(unittest.TestCase):
                 PortalFalso(), "Vfict|", "179698", ["7000001", "x y"], testar=lambda _h: {"status": 302}
             )
         texto = "\n".join(linhas)
-        self.assertEqual(raizes[:2], ["body", "pessoa:7000001"])
-        self.assertIn(IMPRIMIR, visitadas)
-        # O clique no a[data-resposta] (modal) e a visão de respostas pelo data-resposta.
-        self.assertEqual(clicados, [1])
-        self.assertIn(nav.URL_BASE + "/empresa/questionarios/imprimir/7654321|", visitadas)
-        self.assertIn("data-resposta distintos no item: 1", texto)
-        self.assertIn(
-            "visão de respostas https://corporate.empregare.com/empresa/questionarios/imprimir/<MASCARADO>", texto
+        self.assertEqual(raizes, ["body", "pessoa:7000001"])
+        # Só os GETs das duas respostas (a de modo 3 fica de fora); nenhuma página nem arquivo aberto.
+        self.assertEqual(
+            PortalFalso.driver.caminhos,
+            [
+                "/Company/VacancyTests/GetRespostaDetails/7654321?token=TKfict123",
+                "/Company/VacancyTests/GetRespostaDetails/7654322?token=TKfict123",
+            ],
         )
-        self.assertIn("âncoras: 14 ids; padrões: pergunta-<n> (12), <MASCARADO> (1), modal (1)", texto)
-        self.assertIn("anexos por pergunta/bloco: 4: 1, 5: 1", texto)
-        self.assertNotIn("7654321", texto)
-        self.assertIn("Vaga 179698 (candidaturas) página: clicáveis 1, relevantes 1", texto)
-        self.assertIn("nenhum clicável de questionário/respostas", texto)
-        self.assertIn("Vaga 179698 (candidaturas) candidato 1 › clicável 0: perguntas por classe 6", texto)
+        self.assertEqual(visitadas, [])
+        for esperado in (
+            "respostas de questionário (modo ≠ 3) 2; token do candidato sim; itens sem token na lista 1",
+            "resposta 1: GET com sessão 200",
+            "perguntas por classe 4, «Pergunta N» 4; anexos 3 em 2 pergunta(s) (perguntaID distintos); por pergunta: 2, 1",
+            "com enunciado 3 (parecem enunciado 3); impressão sim; fora do formato 1; botões perigosos 3 (nenhum clicado)",
+            "1º anexo https://corporate.empregare.com/Company/VacancyTests/GetViewerLogArquivo?arquivo=<MASCARADO>",
+            "arquivo não aberto (registra visualização)",
+            "impressão https://corporate.empregare.com/Company/VacancyTests/PrintResult?respostaID=<MASCARADO>",
+        ):
+            self.assertIn(esperado, texto)
         self.assertEqual(PortalFalso.voltou, 1)
         _sem_proibidos(self, texto)
 
@@ -605,76 +649,127 @@ class SondagemDasAbas(unittest.TestCase):
         self.assertEqual(anexos.get_com_sessao(object(), ARQUIVO_PUBLICO), {"erro": "outra origem"})
 
 
-class RespostasDoQuestionario(unittest.TestCase):
-    LISTA = """
-    <div class="curriculo-append"><div class="list-group candidatura-group" id="curriculo-pagina-1">
-      <div class="curriculo-list-item"><ul><li data-pessoa-id="7000001">Pessoa Fictícia Um</li></ul>
-        <a class="link-curriculo" href="/empresa/curriculo/detalhes?tokenCandidato=TKfict123">ver</a>
-        <a href="javascript:" data-resposta="7654321" data-modo-resposta="1"></a>
-        <a href="javascript:" data-resposta="7654321" data-modo-resposta="2"></a></div>
-      <div class="curriculo-list-item"><ul><li data-pessoa-id="7000002">Pessoa Fictícia Dois</li></ul>
-        <a href="javascript:" data-resposta="111" ></a><a href="javascript:" data-resposta="222"></a></div>
-      <div class="curriculo-list-item"><ul><li data-pessoa-id="7000003">Sem resposta</li></ul>
-        <a href="javascript:" data-resposta="12a"></a></div>
-    </div></div>
-    """
+class DetalhesDaResposta(unittest.TestCase):
+    def test_le_token_e_respostas_da_lista_sem_modo_3(self):
+        respostas, sem_token = nav.ler_respostas_do_html(LISTA_DA_VAGA)
+        self.assertEqual(respostas, {"7000001": {"token": "TKfict123", "respostas": ["7654321", "7654322"]}})
+        self.assertEqual(sem_token, 1)
 
-    def test_le_o_data_resposta_de_cada_candidato(self):
-        respostas, ambiguos = nav.ler_respostas_do_html(self.LISTA)
-        self.assertEqual(respostas, {"7000001": "7654321", "7000002": "111"})
-        self.assertEqual(ambiguos, 1)
-
-    def test_link_das_respostas(self):
+    def test_le_perguntas_anexos_e_impressao_do_html(self):
+        lido = anexos.ler_detalhes_da_resposta(DETALHES)
         self.assertEqual(
-            anexos.link_das_respostas("7654321"), nav.URL_BASE + "/empresa/questionarios/imprimir/7654321|"
+            (lido["perguntas"], lido["por_texto"], lido["fora_do_formato"], lido["perigosos"]), (4, 4, 1, 3)
         )
-        self.assertIsNone(anexos.link_das_respostas("12a"))
-        self.assertIsNone(anexos.link_das_respostas(""))
+        self.assertEqual(
+            lido["impressao"],
+            nav.URL_BASE
+            + "/Company/VacancyTests/PrintResult?respostaID=7654321&pessoa=PSfict99&vaga=Vaga%20Fict%C3%ADcia",
+        )
+        self.assertEqual([(a["pergunta"], a["arquivo"]) for a in lido["anexos"]], [("501", 1), ("502", 1), ("502", 2)])
+        self.assertEqual(
+            lido["anexos"][0]["enunciado"], "Pergunta 4 - Anexe o documento de identificação com foto (RG ou CNH)"
+        )
+        self.assertIn("nome=RG%20Maria%20Ficticia", lido["anexos"][0]["link"])
+        for a in lido["anexos"]:
+            self.assertTrue(anexos.LINK_DO_ARQUIVO.match(a["link"]))
+        self.assertEqual(anexos.ler_detalhes_da_resposta("")["anexos"], [])
 
-    def test_grava_em_lotes_so_contagens_e_404_so_avisa(self):
+    def test_casa_o_enunciado_com_a_coluna_do_excel(self):
+        lido = anexos.ler_detalhes_da_resposta(DETALHES)
+        self.assertEqual(
+            [anexos.coluna_da_pergunta(a["enunciado"], COLUNAS) for a in lido["anexos"]],
+            [COLUNAS[2], COLUNAS[3], COLUNAS[3]],
+        )
+        self.assertEqual(anexos.coluna_da_pergunta("ANEXE O DIPLOMA DE GRADUACAO", COLUNAS), COLUNAS[3])
+        self.assertEqual(anexos.coluna_da_pergunta("Anexe o documento de identificação", COLUNAS), COLUNAS[2])
+        self.assertIsNone(anexos.coluna_da_pergunta("Anexe", COLUNAS))
+        self.assertIsNone(anexos.coluna_da_pergunta("Outra pergunta qualquer sem coluna", COLUNAS))
+        self.assertIsNone(anexos.coluna_da_pergunta("Anexe o diploma", COLUNAS + ["Pergunta 9 - Anexe o diploma"] * 2))
+
+    def test_captura_por_get_com_sessao_e_log_so_com_contagens(self):
+        logs = []
+
+        class PortalFalso:
+            driver = _DriverDosDetalhes()
+
+        respostas = nav.ler_respostas_do_html(LISTA_DA_VAGA)[0]
+        capturados = anexos.capturar_anexos(PortalFalso(), "179698", respostas, logs.append, prazo=float("inf"))
+        self.assertEqual(list(capturados), ["7000001"])
+        self.assertEqual([r["resposta"] for r in capturados["7000001"]], ["7654321", "7654322"])
+        self.assertEqual(len(capturados["7000001"][0]["anexos"]), 3)
+        self.assertEqual(
+            logs,
+            [
+                "Vaga 179698: respostas de questionário lidas 2 de 2 (1 candidato(s)) · 6 anexo(s) · 2 link(s) fora do formato."
+            ],
+        )
+
+    def test_captura_com_falha_e_tempo_esgotado(self):
+        logs = []
+
+        class PortalFalso:
+            driver = _DriverDosDetalhes(status=302)
+
+        respostas = nav.ler_respostas_do_html(LISTA_DA_VAGA)[0]
+        self.assertEqual(anexos.capturar_anexos(PortalFalso(), "1", respostas, logs.append, prazo=float("inf")), {})
+        self.assertIn("2 falha(s)", logs[-1])
+        self.assertEqual(anexos.capturar_anexos(PortalFalso(), "1", respostas, logs.append, prazo=0), {})
+        self.assertIn("tempo esgotado", logs[-1])
+
+    def test_grava_com_a_coluna_em_lotes_e_404_so_avisa(self):
         chamadas = []
 
         def chamar(_config, funcao, corpo):
             chamadas.append((funcao, corpo))
-            return {"gravadas": len(corpo["p_respostas"])}
+            return {
+                "respostas": len(corpo["p_respostas"]),
+                "anexos": sum(len(r["anexos"]) for r in corpo["p_respostas"]),
+            }
 
+        lido = anexos.ler_detalhes_da_resposta(DETALHES)
+        capturados = {
+            "7000001": [
+                {"resposta": "7654321", "impressao": lido["impressao"], "perguntas": 4, "anexos": lido["anexos"]}
+            ]
+        }
         logs = []
-        respostas = {"7000002": "111", "7000001": "7654321", "7000009": "x"}
-        self.assertEqual(anexos.gravar_respostas({}, "gh-x", "177979", respostas, chamar, logs.append), 2)
-        self.assertEqual(chamadas[0][0], "gravar_respostas_empregare")
+        self.assertEqual(anexos.gravar_anexos({}, "gh-x", "179698", capturados, COLUNAS, chamar, logs.append), 3)
+        funcao, corpo = chamadas[0]
+        self.assertEqual(funcao, "gravar_anexos_empregare")
+        item = corpo["p_respostas"][0]
+        self.assertEqual((item["codigo"], item["resposta"], item["perguntas"]), ("7000001", "7654321", 4))
+        self.assertEqual([a["coluna"] for a in item["anexos"]], [COLUNAS[2], COLUNAS[3], COLUNAS[3]])
         self.assertEqual(
-            chamadas[0][1]["p_respostas"],
-            [{"codigo": "7000001", "resposta": "7654321"}, {"codigo": "7000002", "resposta": "111"}],
+            logs, ["Vaga 179698: 1 resposta(s) e 3 anexo(s) gravados · 3 de 3 anexo(s) casados com a coluna do Excel."]
         )
-        self.assertEqual(logs, ["Vaga 177979: 2 resposta(s) de questionário gravada(s)."])
 
         def sem_migration(_config, funcao, _corpo):
             raise supabase_rpc.ErroDoSupabase(funcao, 404, "not found")
 
         logs.clear()
-        self.assertEqual(anexos.gravar_respostas({}, "gh-x", "177979", respostas, sem_migration, logs.append), 0)
+        self.assertEqual(anexos.gravar_anexos({}, "gh-x", "179698", capturados, COLUNAS, sem_migration, logs.append), 0)
         self.assertIn("falta a migration 20261008160000", logs[0])
-        self.assertEqual(anexos.gravar_respostas({}, "gh-x", "177979", {}, chamar, logs.append), 0)
+        self.assertEqual(anexos.gravar_anexos({}, "gh-x", "179698", {}, COLUNAS, chamar, logs.append), 0)
 
-    def test_portal_junta_as_respostas_da_lista(self):
-        class DriverFalso:
-            page_source = RespostasDoQuestionario.LISTA
+    def test_nunca_testa_nem_abre_o_link_do_arquivo(self):
+        link = anexos.ler_detalhes_da_resposta(DETALHES)["anexos"][0]["link"]
+        self.assertTrue(anexos.registra_visualizacao(link))
+        acessos = anexos._Acessos()
+        acessos.guardar(object(), [link])
+        self.assertEqual(acessos.resultados, [])
+        self.assertTrue(anexos.perigoso({"href": link}))
 
-            def execute_script(self, js, *args):
-                return 3 if js == nav.JS_CONTAR_LINKS else None
+    def test_mascaramento_dos_parametros_da_empregare(self):
+        from monitora.mascaramento import mascarar
 
-        antigos = (nav.ESPERA_POR_MAIS, nav.INTERVALO_DA_LISTA)
-        nav.ESPERA_POR_MAIS, nav.INTERVALO_DA_LISTA = 0.01, 0.01
-        try:
-            portal = nav.PortalEmpregare("pasta-falsa", lambda _m: None)
-            portal.driver = DriverFalso()
-            portal._carregar_e_ler_pagina(prazo=10**12)
-        finally:
-            nav.ESPERA_POR_MAIS, nav.INTERVALO_DA_LISTA = antigos
-        self.assertEqual(portal.respostas, {"7000001": "7654321", "7000002": "111"})
+        texto = mascarar(
+            "/Company/VacancyTests/GetRespostaDetails/7654321?token=TKfict123 "
+            + anexos.ler_detalhes_da_resposta(DETALHES)["anexos"][0]["link"]
+        )
+        _sem_proibidos(self, texto)
 
 
-class RoboComRespostas(unittest.TestCase):
+class RoboComAnexos(unittest.TestCase):
     def setUp(self):
         sys.modules.pop("robo_empregare", None)
         import robo_empregare
@@ -691,31 +786,47 @@ class RoboComRespostas(unittest.TestCase):
         self.assertFalse(args.anexos)
         self.assertTrue(self.robo.argumentos(["--anexos"]).anexos)
 
-    def test_gravar_vaga_grava_respostas_depois_de_fechar_e_sem_elas_nao_chama(self):
+    def test_gravar_vaga_grava_anexos_com_as_colunas_e_sem_eles_nao_chama(self):
         chamadas = []
 
         def chamar(_config, funcao, corpo):
-            chamadas.append(funcao)
+            chamadas.append((funcao, corpo))
             if funcao == "fechar_vaga_empregare":
                 return {"situacao": "GRAVADA", "ativos": 1, "desativadas": 0}
-            if funcao == "gravar_respostas_empregare":
-                return {"gravadas": 1}
+            if funcao == "gravar_anexos_empregare":
+                return {"respostas": 1, "anexos": 3}
             return {"situacao": "EM_CARGA"}
 
-        lido = {"linhas": [{"codigo": "1", "chave": "cod:1"}], "colunas": ["Nome"], "sem_chave": 0, "repetidas": 0}
-        enderecos = {"vaga_interno": "Vfict|", "candidatos": {"1": DETALHE}, "respostas": {"1": "7654321"}}
+        lido_excel = {
+            "linhas": [{"codigo": "7000001", "chave": "cod:7000001"}],
+            "colunas": COLUNAS,
+            "sem_chave": 0,
+            "repetidas": 0,
+        }
+        lido = anexos.ler_detalhes_da_resposta(DETALHES)
+        enderecos = {
+            "vaga_interno": "Vfict|",
+            "candidatos": {"7000001": DETALHE},
+            "anexos": {
+                "7000001": [
+                    {"resposta": "7654321", "impressao": lido["impressao"], "perguntas": 4, "anexos": lido["anexos"]}
+                ]
+            },
+        }
         saida = []
         with (
-            mock.patch.object(self.robo, "ler_planilha", lambda _c, _v: lido),
+            mock.patch.object(self.robo, "ler_planilha", lambda _c, _v: lido_excel),
             mock.patch.object(self.robo, "registrar", saida.append),
         ):
-            self.robo.gravar_vaga({}, "gh-x", "177979", "x.xlsx", chamar, enderecos=enderecos)
-            self.assertEqual(chamadas, ["gravar_lote_empregare", "fechar_vaga_empregare", "gravar_respostas_empregare"])
+            self.robo.gravar_vaga({}, "gh-x", "179698", "x.xlsx", chamar, enderecos=enderecos)
+            self.assertEqual(
+                [f for f, _ in chamadas], ["gravar_lote_empregare", "fechar_vaga_empregare", "gravar_anexos_empregare"]
+            )
+            self.assertEqual(chamadas[-1][1]["p_respostas"][0]["anexos"][0]["coluna"], COLUNAS[2])
             chamadas.clear()
-            self.robo.gravar_vaga({}, "gh-x", "177979", "x.xlsx", chamar, enderecos=dict(enderecos, respostas={}))
-            self.assertEqual(chamadas, ["gravar_lote_empregare", "fechar_vaga_empregare"])
+            self.robo.gravar_vaga({}, "gh-x", "179698", "x.xlsx", chamar, enderecos=dict(enderecos, anexos={}))
+            self.assertEqual([f for f, _ in chamadas], ["gravar_lote_empregare", "fechar_vaga_empregare"])
         _sem_proibidos(self, "\n".join(saida))
-        self.assertNotIn("7654321", "\n".join(saida))
 
 
 if __name__ == "__main__":

@@ -1,4 +1,7 @@
-import { linkDasRespostas } from "../../../lib/avaliacao-documental/anexo-na-empregare.ts";
+import {
+  anexosDaEmpregare,
+  impressaoDasRespostas,
+} from "../../../lib/avaliacao-documental/anexo-na-empregare.ts";
 import {
   useCallback,
   useEffect,
@@ -101,7 +104,8 @@ function enderecosDaEmpregare(dados, ficha) {
     candidato: enderecoDoCandidatoNaEmpregare(empregare.link_candidato),
     vaga,
     vagaDireta: Boolean(vaga?.includes("/candidaturas/")),
-    respostas: linkDasRespostas(empregare),
+    anexos: anexosDaEmpregare(empregare),
+    impressao: impressaoDasRespostas(empregare),
   };
 }
 
