@@ -58,8 +58,9 @@ os cálculos em JavaScript por JSDoc. O editor (`roteiros.tsx`) e a composição
 (`partes.tsx`) também estão migrados: cartões, criação, edição, duplicação, leitura,
 renomeação, seções, níveis e salvamento. Os contratos do rascunho e dos dados enviados
 ao banco estão em `src/lib/tipos-do-roteiro-de-entrevista.ts`; os de abertura e ações,
-em `tipos-do-editor-de-roteiro.ts`. O estado da condução e os auxiliares do roteiro
-continuam em JavaScript. Os limites de validação estão no README de Entrevistas.
+em `tipos-do-editor-de-roteiro.ts`. O estado da condução também está em TypeScript, incluindo ações, cliente RPC,
+normalização dos campos usados na tela e proteção contra gravações obsoletas após
+troca de área ou sessão. Os auxiliares do roteiro continuam em JavaScript. Os limites de validação estão no README de Entrevistas.
 
 ## Verificação
 

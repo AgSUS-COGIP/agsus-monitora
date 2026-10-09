@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { criarEstadoDaConducao } from "../../src/modulos/entrevistas/estado-da-conducao.js";
+import { criarEstadoDaConducao } from "../../src/modulos/entrevistas/estado-da-conducao.ts";
 
 /*
   Trocar de área com a lista ainda carregando: a resposta da área antiga

@@ -1,3 +1,27 @@
+import type {
+  DadosDaConfiguracaoDaEntrevista,
+  DadosDoEdital,
+  EstadoDaConducao,
+  EstadoDaConducaoComAcoes,
+  Resultado,
+  TipoDaAcaoDaConducao,
+} from "./tipos.ts";
+import type { PayloadDasNotas } from "./tipos-da-ficha.ts";
+import type { DadosDoRoteiroParaSalvar } from "../../lib/tipos-do-roteiro-de-entrevista.ts";
+import type {
+  OpcoesDoEstadoDaConducao,
+  RpcDaConducao,
+} from "./tipos-do-estado-da-conducao.ts";
+import {
+  objetoDaConducao,
+  registrosDaConducao,
+  roteirosDaConducao,
+  ehRoteiroDaConducao,
+  dadosDoEditalDaConducao,
+  agendaDaConducao,
+  codigoDaFalhaDaConducao,
+} from "../../lib/dados-da-conducao.ts";
+class RespostaObsoletaDaConducao extends Error {}
 /*
   Estado das visões "Conduzir entrevistas" e "Roteiros" da tela de
   Entrevistas, fora do React (como estado.js, o da visão "Resultados"): os
@@ -78,7 +102,7 @@ const EDITAIS_VAZIOS = Object.freeze({
   todos: false,
 });
 
-const ESTADO_INICIAL = Object.freeze({
+const ESTADO_INICIAL: EstadoDaConducao = Object.freeze({
   area: "",
   roteiros: LISTA_VAZIA,
   editais: EDITAIS_VAZIOS,
@@ -102,7 +126,7 @@ const ESTADO_INICIAL = Object.freeze({
   fichaAberta: null,
 });
 
-export function mensagemDe(erro) {
+export function mensagemDe(erro: unknown) {
   return ehFalhaDeConexao(erro)
     ? mensagemDeFalha(erro)
     : mensagemDoErroDaEntrevista(erro);
@@ -113,48 +137,71 @@ export function criarEstadoDaConducao({
   toast = (mensagem) => console.info(mensagem),
   aoMudarResultados = () => {},
   tempoLimiteMs = TEMPO_LIMITE_MS,
-} = {}) {
+}: OpcoesDoEstadoDaConducao = {}): EstadoDaConducaoComAcoes {
   let estado = ESTADO_INICIAL;
   let pedidoDoEdital = 0;
   /* Cada carga de lista leva um número; a troca de área ou de usuário também
      avança, para a resposta de uma carga antiga não cair sobre a tela nova. */
   let pedidoDosRoteiros = 0;
   let pedidoDosEditais = 0;
-  const ouvintes = new Set();
+  let geracaoDaConducao = 0;
+  const ouvintes = new Set<() => void>();
 
-  function publicar(mudancas) {
+  function publicar(mudancas: Partial<EstadoDaConducao>) {
     estado = { ...estado, ...mudancas };
     for (const ouvinte of ouvintes) ouvinte();
   }
 
-  async function rpc(nome, argumentos) {
+  async function rpc(
+    nome: RpcDaConducao,
+    argumentos?: Record<string, unknown>,
+  ): Promise<unknown> {
     if (!supabase) throw new Error("Sem conexão com o banco.");
+    const geracao = geracaoDaConducao;
     const { data, error } = await comTempoLimite(
       supabase.rpc(nome, argumentos),
       tempoLimiteMs,
     );
+    if (geracao !== geracaoDaConducao)
+      throw new RespostaObsoletaDaConducao(
+        "A área ou sessão mudou. Repita a ação na tela atual.",
+      );
     if (error) throw error;
     return data;
   }
 
-  async function executar(tipo, rotulo, fazer) {
+  async function executar(
+    tipo: TipoDaAcaoDaConducao,
+    rotulo: string,
+    fazer: () => Promise<Resultado>,
+  ): Promise<Resultado> {
     if (estado.acao) return { erro: "Aguarde a gravação em curso." };
+    const geracao = geracaoDaConducao;
     publicar({ acao: { tipo, rotulo } });
     try {
-      return await fazer();
+      const resultado = await fazer();
+      return geracao === geracaoDaConducao
+        ? resultado
+        : { erro: "A área ou sessão mudou. Repita a ação na tela atual." };
     } catch (erro) {
+      if (
+        geracao !== geracaoDaConducao ||
+        erro instanceof RespostaObsoletaDaConducao
+      )
+        return { erro: "A área ou sessão mudou. Repita a ação na tela atual." };
       const mensagem = mensagemDe(erro);
-      if (erro?.code === "42501" && tipo === "roteiro")
+      if (codigoDaFalhaDaConducao(erro) === "42501" && tipo === "roteiro")
         publicar({ podeEditar: false });
       toast(mensagem, "error");
-      return { erro: mensagem, codigo: erro?.code || "" };
+      return { erro: mensagem, codigo: codigoDaFalhaDaConducao(erro) || "" };
     } finally {
-      publicar({ acao: null });
+      if (geracao === geracaoDaConducao) publicar({ acao: null });
     }
   }
 
-  function trocarArea(area) {
+  function trocarArea(area: string) {
     if (area && area !== estado.area) {
+      geracaoDaConducao += 1;
       pedidoDoEdital += 1;
       pedidoDosRoteiros += 1;
       pedidoDosEditais += 1;
@@ -162,12 +209,13 @@ export function criarEstadoDaConducao({
     }
   }
 
-  let identidade;
+  let identidade: string | null | undefined;
   supabase?.auth?.onAuthStateChange?.((_evento, sessao) => {
     const atual = sessao?.user?.id || null;
     if (atual === identidade) return;
     // O primeiro aviso da página só registra quem é; não há o que limpar.
     if (identidade !== undefined || !atual) {
+      geracaoDaConducao += 1;
       pedidoDoEdital += 1;
       pedidoDosRoteiros += 1;
       pedidoDosEditais += 1;
@@ -187,7 +235,7 @@ export function criarEstadoDaConducao({
       if (meu !== pedidoDosRoteiros) return false;
       publicar({
         roteiros: {
-          lista: Array.isArray(lista) ? lista : [],
+          lista: roteirosDaConducao(lista),
           carregando: false,
           carregado: true,
           erro: "",
@@ -211,11 +259,12 @@ export function criarEstadoDaConducao({
   }
 
   /** `{ ok, roteiro }` ou `{ erro }`. */
-  function salvarRoteiro(dados) {
+  function salvarRoteiro(dados: DadosDoRoteiroParaSalvar) {
     return executar("roteiro", "Salvando o roteiro…", async () => {
-      const roteiro = await rpc(RPC_SALVAR_ROTEIRO, {
+      const resposta = await rpc(RPC_SALVAR_ROTEIRO, {
         p_dados: dados,
       });
+      const roteiro = ehRoteiroDaConducao(resposta) ? resposta : null;
       toast(
         dados.origem
           ? `Roteiro salvo: ${rotuloDaVersao({ versao: roteiro?.versao, nome: roteiro?.nome_versao })}.`
@@ -229,13 +278,18 @@ export function criarEstadoDaConducao({
   }
 
   /** Troca só o nome de uma versão do roteiro (null tira o nome): `{ ok }` ou `{ erro }`. */
-  function renomearRoteiro(roteiroId, nome, motivo) {
+  function renomearRoteiro(
+    roteiroId: string,
+    nome: string | null,
+    motivo: string,
+  ) {
     return executar("roteiro", "Trocando o nome…", async () => {
-      const roteiro = await rpc(RPC_RENOMEAR_ROTEIRO, {
+      const resposta = await rpc(RPC_RENOMEAR_ROTEIRO, {
         p_roteiro: roteiroId,
         p_nome: nome || null,
         p_motivo: motivo,
       });
+      const roteiro = ehRoteiroDaConducao(resposta) ? resposta : null;
       toast("Nome da versão trocado.", "ok");
       await carregarRoteiros();
       return { ok: true, roteiro };
@@ -247,20 +301,27 @@ export function criarEstadoDaConducao({
   /** `doPainel`: as entrevistas da visão "Resultados" (com `edital_id`). */
   async function carregarEditais(
     area = estado.area,
-    doPainel = [],
+    doPainel: unknown[] = [],
     { todos = estado.editais.todos } = {},
   ) {
     trocarArea(area);
     const meu = ++pedidoDosEditais;
     publicar({ editais: { ...estado.editais, carregando: true, erro: "" } });
     try {
-      const dados = await rpc(RPC_LISTAR_EDITAIS, {
-        p_area: area,
-        p_todos: Boolean(todos),
-      });
+      const dados = objetoDaConducao(
+        await rpc(RPC_LISTAR_EDITAIS, {
+          p_area: area,
+          p_todos: Boolean(todos),
+        }),
+      );
       if (meu !== pedidoDosEditais) return [];
-      const admin = Boolean(dados?.admin_global);
-      const lista = editaisParaConduzir(dados?.editais || [], doPainel);
+      const admin = dados?.admin_global === true;
+      const lista = editaisParaConduzir(
+        registrosDaConducao(dados?.editais).filter(
+          (e) => typeof e.id === "string" && e.id.trim(),
+        ),
+        doPainel,
+      );
       publicar({
         editais: {
           lista,
@@ -286,7 +347,12 @@ export function criarEstadoDaConducao({
   }
 
   /** Administrador global: libera o edital até `ate` (ou encerra, com `ate` vazio). */
-  function liberarEdital(id, ate, motivo, doPainel = []) {
+  function liberarEdital(
+    id: string,
+    ate: string | null,
+    motivo: string,
+    doPainel: unknown[] = [],
+  ) {
     return executar("liberar", ate ? "Liberando…" : "Encerrando…", async () => {
       await rpc(RPC_LIBERAR_EDITAL, {
         p_edital: id,
@@ -302,7 +368,7 @@ export function criarEstadoDaConducao({
     });
   }
 
-  function mostrarEdital(dados) {
+  function mostrarEdital(dados: DadosDoEdital | null) {
     publicar({
       edital: dados || null,
       carregandoEdital: false,
@@ -311,7 +377,7 @@ export function criarEstadoDaConducao({
     });
   }
 
-  async function abrirEdital(id) {
+  async function abrirEdital(id: string) {
     const meu = ++pedidoDoEdital;
     const mesmo = id && estado.edital?.edital?.id === id;
     publicar({
@@ -325,16 +391,19 @@ export function criarEstadoDaConducao({
     });
     if (!id) return false;
     try {
-      const [dados, agenda] = await Promise.all([
+      const [resposta, agenda] = await Promise.all([
         rpc(RPC_OBTER_EDITAL, { p_edital: id }),
         rpc(RPC_OBTER_AGENDA, { p_edital: id }).catch(() => null),
       ]);
       if (meu !== pedidoDoEdital) return false;
+      const dados = dadosDoEditalDaConducao(resposta);
+      if (!dados)
+        throw new Error("A resposta do edital de entrevistas é inválida.");
       const calculo = dados?.lista_convocacao
         ? null
         : await calcularConvocacao(id);
       if (meu !== pedidoDoEdital) return false;
-      publicar({ agenda: agenda || null, calculo });
+      publicar({ agenda: agendaDaConducao(agenda), calculo });
       mostrarEdital(dados);
       return true;
     } catch (erro) {
@@ -351,13 +420,16 @@ export function criarEstadoDaConducao({
     motor, mesma regra, mesmas vagas). Sem a configuração da convocação do
     edital, segue com a regra, como na Classificação.
   */
-  async function calcularConvocacao(id) {
+  async function calcularConvocacao(
+    id: string,
+  ): Promise<NonNullable<EstadoDaConducao["calculo"]>> {
     try {
-      const [dados, configuracoes, modelos] = await Promise.all([
+      const [resposta, configuracoes, modelos] = await Promise.all([
         rpc(RPC_OBTER_CLASSIFICACAO, { p_edital: id }),
         rpc(RPC_CONFIGURACAO_CONVOCACAO).catch(() => null),
         rpc(RPC_MODELOS_CONVOCACAO).catch(() => null),
       ]);
+      const dados = objetoDaConducao(resposta);
       if (!dados?.regra)
         return { erro: "O edital ainda não tem regra de classificação." };
       const convocacao =
@@ -370,7 +442,7 @@ export function criarEstadoDaConducao({
     } catch (erro) {
       return {
         erro:
-          erro?.code === "42501"
+          codigoDaFalhaDaConducao(erro) === "42501"
             ? "Seu acesso não inclui a Classificação deste edital."
             : mensagemDe(erro),
       };
@@ -381,13 +453,13 @@ export function criarEstadoDaConducao({
     Resposta de escrita: o payload novo entra na tela (se o edital é o mesmo)
     e vence a leitura que ainda estiver em curso, feita antes da gravação.
   */
-  function aplicar(dados, editalId) {
+  function aplicar(dados: unknown, editalId: string) {
     if (editalId !== estado.editalId) return;
     pedidoDoEdital += 1;
-    mostrarEdital(dados);
+    mostrarEdital(dadosDoEditalDaConducao(dados));
   }
 
-  function configurar(dados) {
+  function configurar(dados: DadosDaConfiguracaoDaEntrevista) {
     const editalId = estado.editalId;
     return executar("configurar", "Salvando a configuração…", async () => {
       const novo = await rpc(RPC_CONFIGURAR, {
@@ -401,7 +473,7 @@ export function criarEstadoDaConducao({
   }
 
   /* Os da lista vigente da Classificação (o banco recusa quem está fora dela). */
-  function convocar(analises) {
+  function convocar(analises: string[]) {
     const editalId = estado.editalId;
     const lista = estado.edital?.lista_convocacao?.lista?.id || null;
     return executar("convocar", "Convocando…", async () => {
@@ -409,15 +481,18 @@ export function criarEstadoDaConducao({
         throw new Error(
           "Gere a lista de convocação na Classificação antes de convocar",
         );
-      const resposta = await rpc(RPC_CONVOCAR, {
-        p_edital: editalId,
-        p_lista: lista,
-        p_analises: analises,
-      }).catch((erro) => {
-        // A Classificação gerou outra lista: a tela relê a vigente.
-        if (erro?.code === "40001") void abrirEdital(editalId);
-        throw erro;
-      });
+      const resposta = objetoDaConducao(
+        await rpc(RPC_CONVOCAR, {
+          p_edital: editalId,
+          p_lista: lista,
+          p_analises: analises,
+        }).catch((erro) => {
+          // A Classificação gerou outra lista: a tela relê a vigente.
+          if (codigoDaFalhaDaConducao(erro) === "40001")
+            void abrirEdital(editalId);
+          throw erro;
+        }),
+      );
       aplicar(resposta?.dados, editalId);
       const quantos = Number(resposta?.convocados) || 0;
       toast(
@@ -429,7 +504,7 @@ export function criarEstadoDaConducao({
     });
   }
 
-  function desconvocar(entrevista, motivo) {
+  function desconvocar(entrevista: string, motivo: string) {
     const editalId = estado.editalId;
     return executar("desconvocar", "Desconvocando…", async () => {
       const novo = await rpc(RPC_DESCONVOCAR, {
@@ -443,7 +518,7 @@ export function criarEstadoDaConducao({
     });
   }
 
-  function lancarNotas(entrevista, dados) {
+  function lancarNotas(entrevista: string, dados: PayloadDasNotas) {
     const editalId = estado.editalId;
     return executar("notas", "Salvando as notas…", async () => {
       const novo = await rpc(RPC_LANCAR_NOTAS, {
@@ -453,20 +528,20 @@ export function criarEstadoDaConducao({
       aplicar(novo, editalId);
       toast("Notas salvas; o resultado foi recalculado.", "ok");
       aoMudarResultados();
-      return { ok: true, dados: novo };
+      return { ok: true, dados: dadosDoEditalDaConducao(novo) };
     });
   }
 
   /** Abre (id do convocado) ou fecha (null) a ficha de notas. */
-  function abrirFicha(id) {
+  function abrirFicha(id: string | null) {
     publicar({ fichaAberta: id || null });
   }
 
   return {
     obter: () => estado,
-    assinar(ouvinte) {
+    assinar(ouvinte: () => void) {
       ouvintes.add(ouvinte);
-      return () => ouvintes.delete(ouvinte);
+      return () => void ouvintes.delete(ouvinte);
     },
     trocarArea,
     carregarRoteiros,

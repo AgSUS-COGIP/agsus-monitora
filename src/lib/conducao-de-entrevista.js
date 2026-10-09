@@ -74,6 +74,7 @@ export function mensagemDoErroDaEntrevista(erro) {
  * marcados com `comEntrevistas` quando o painel "Resultados" já tem
  * entrevistas deles. O painel não acrescenta edital: o que está fora da janela
  * fica fora. Do mais novo para o mais antigo.
+ * @returns {import("../modulos/entrevistas/tipos.ts").EditalDaLista[]}
  */
 export function editaisParaConduzir(doMonitoramento, doPainel) {
   const comEntrevistas = new Set(
@@ -374,6 +375,9 @@ export function errosDaConfiguracao(r, roteiro = null) {
  * O `p_dados` de `configurar_entrevista_edital`: sem regra de convocação nem
  * vagas imediatas (as da Classificação valem). `competencias` de cada membro:
  * nulo = todas (também quando todas estão marcadas, com o `roteiro`).
+ * @param {import("../modulos/entrevistas/configuracao-do-edital.tsx").RascunhoDaConfiguracao} r
+ * @param {import("./tipos-do-roteiro-de-entrevista.ts").RoteiroDeEntrevista | null} [roteiro]
+ * @returns {import("../modulos/entrevistas/tipos.ts").DadosDaConfiguracaoDaEntrevista}
  */
 export function dadosDaConfiguracaoParaSalvar(r, roteiro = null) {
   return {

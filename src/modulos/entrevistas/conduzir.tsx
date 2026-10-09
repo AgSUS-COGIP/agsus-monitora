@@ -1,3 +1,4 @@
+import type { ClienteDaConducao } from "./tipos-do-estado-da-conducao.ts";
 import type { EstadoDaConducao, EstadoDaConducaoComAcoes } from "./tipos.ts";
 import {
   lazy,
@@ -32,7 +33,7 @@ import {
   Segmentado,
   TopoDoPainel,
 } from "../../ui/index.js";
-import { criarEstadoDaConducao } from "./estado-da-conducao.js";
+import { criarEstadoDaConducao } from "./estado-da-conducao.ts";
 import { FichaDoCandidato } from "./ficha.tsx";
 import { FilaDoDia } from "./fila-do-dia.tsx";
 import { SeletorDoEdital } from "./seletor-do-edital.tsx";
@@ -372,7 +373,7 @@ export function montarConducaoDeEntrevistas({
   armazenamento = () => globalThis.localStorage,
 }: {
   secao?: HTMLElement | null;
-  supabase?: unknown;
+  supabase?: ClienteDaConducao | null;
   toast?: (mensagem: string, tom?: string) => void;
   comemoracoesLigadas?: () => boolean;
   areaAtual?: () => string | null | undefined;
@@ -386,9 +387,7 @@ export function montarConducaoDeEntrevistas({
     supabase,
     toast,
     aoMudarResultados,
-  } as Parameters<
-    typeof criarEstadoDaConducao
-  >[0]) as unknown as EstadoDaConducaoComAcoes;
+  });
   const visoes = criarVisao();
   const raiz = secao
     ? montarModulo(
