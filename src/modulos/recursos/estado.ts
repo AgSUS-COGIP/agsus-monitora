@@ -1009,7 +1009,7 @@ export function criarEstadoDosRecursos({
       }
       toast("Modelo arquivado.", "ok");
       await carregarModelos();
-      void carregar();
+      if (vigente()) void carregar();
       return true;
     });
   }

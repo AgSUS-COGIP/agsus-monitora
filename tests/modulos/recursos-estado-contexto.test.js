@@ -20,6 +20,50 @@ const dados = {
 };
 
 describe("Recursos após trocar área ou sessão", () => {
+  it.each(["salvar", "arquivar"])(
+    "não recarrega a área nova ao terminar a releitura do modelo (%s)",
+    async (acao) => {
+      const leitura = adiar();
+      const supabase = {
+        rpc: vi.fn((nome) =>
+          nome === "listar_modelos_resposta_recurso"
+            ? leitura.promessa
+            : Promise.resolve({ data: { recursos: [] }, error: null }),
+        ),
+      };
+      const e = criarEstadoDosRecursos({ supabase });
+      await e.carregar("a");
+      const gravacao =
+        acao === "arquivar"
+          ? e.arquivarModelo("m1", "Substituído")
+          : e.salvarModelo({
+              nome: "Modelo",
+              situacao: "DEFERIDO",
+              origem: "entrevista",
+              area: "a",
+              corpo: "Texto",
+            });
+      await vi.waitFor(() =>
+        expect(
+          supabase.rpc.mock.calls.some(
+            ([nome]) => nome === "listar_modelos_resposta_recurso",
+          ),
+        ).toBe(true),
+      );
+      await e.carregar("b");
+      const antes = supabase.rpc.mock.calls.filter(
+        ([nome]) => nome === "get_recursos_da_area",
+      ).length;
+      leitura.resolver({ data: { modelos: [] }, error: null });
+      expect(await gravacao).toBeNull();
+      expect(e.obter().modelosAdmin).toBeNull();
+      expect(
+        supabase.rpc.mock.calls.filter(
+          ([nome]) => nome === "get_recursos_da_area",
+        ),
+      ).toHaveLength(antes);
+    },
+  );
   it("um pedido antigo de ajuste não bloqueia nem libera o pedido da nova área", async () => {
     const antiga = adiar();
     const nova = adiar();
