@@ -212,7 +212,7 @@ window.entrevistasController = telaSobDemanda({
   secao: "page-entrevistas",
   metodos: ["render", "abrirVisao"],
   carregar: () =>
-    import("./modulos/entrevistas/entrevistas.jsx").then((m) =>
+    import("./modulos/entrevistas/entrevistas.tsx").then((m) =>
       m.montarEntrevistas({ toast: window.monitoraToast, comemoracoesLigadas }),
     ),
 });

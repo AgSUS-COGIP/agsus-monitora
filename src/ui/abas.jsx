@@ -18,6 +18,16 @@ import { classes } from "./classes.js";
   Lista de aprovados (listas do edital e sub judice) e pelas etapas da fila
   da Avaliação documental.
 */
+/**
+ * @param {object} p
+ * @param {string} p.rotulo
+ * @param {ReadonlyArray<{ id: string, rotulo: import("react").ReactNode, icone?: string, contagem?: number | string, idDaAba?: string, idDoPainel?: string, dados?: Record<string, string> }>} p.abas
+ * @param {string} p.ativa
+ * @param {(id: string) => void} p.aoEscolher
+ * @param {boolean} [p.compactas]
+ * @param {string} [p.className]
+ * @param {string} [p.tour]
+ */
 export function Abas({
   rotulo,
   abas,

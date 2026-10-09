@@ -4,7 +4,7 @@ import {
   FILTROS_VAZIOS,
   filtrarEntrevistas,
   pendenciasDasEntrevistas,
-} from "../src/lib/entrevistas-do-painel.js";
+} from "../src/lib/entrevistas-do-painel.ts";
 import {
   contadorDoDia,
   contagemDosRecortes,
@@ -40,6 +40,31 @@ import { bloqueioDaTela } from "../src/lib/navegacao.js";
 */
 
 const HOJE = "2026-10-07";
+
+it("IDs externos inválidos não viram destinos da agenda ou do desempate", () => {
+  const entrevistas = [
+    {
+      id: "e1",
+      edital: "93/2026",
+      edital_id: { id: "externo" },
+      vaga: "V1",
+      nota: 12,
+      compareceu: "S",
+    },
+    {
+      id: "e2",
+      edital: "93/2026",
+      edital_id: 7,
+      vaga: "V1",
+      nota: 12,
+      compareceu: "S",
+    },
+  ];
+  expect(editalDoRecorte(entrevistas, "").editalId).toBeNull();
+  expect(gruposEmpatados(entrevistas)[0].editalId).toBeNull();
+  entrevistas[1].edital_id = "edital-real";
+  expect(editalDoRecorte(entrevistas, "").editalId).toBe("edital-real");
+});
 const comp = [{ id: "c1" }, { id: "c2" }];
 const avaliadores = [
   { id: "a1", banca: 1, ativo: true },
