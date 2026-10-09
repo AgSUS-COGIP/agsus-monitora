@@ -52,6 +52,11 @@ já nasceu em TSX, com as regras em `src/lib/avaliacao-documental/assistente-da-
 contratos em `tipos-da-regra.ts`; a prévia "Testar com um candidato fictício" está em `previa.tsx`.
 Na ficha, o Apurado de partida e o efeito da decisão nele estão em `apurado-da-ficha.ts`.
 
+A ficha de notas de Conduzir entrevistas está em `src/modulos/entrevistas/ficha.tsx`,
+com contratos do estado local e do salvamento em `tipos-da-ficha.ts`. A integração preserva
+os cálculos em JavaScript por JSDoc; o estado da condução e o editor de roteiros ainda
+aguardam migração. Os limites de validação estão no README de Entrevistas.
+
 ## Verificação
 
 `npm run typecheck` verifica o servidor e o frontend. Também é possível rodar cada um:
