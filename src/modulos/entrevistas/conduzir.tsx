@@ -33,7 +33,7 @@ import {
   TopoDoPainel,
 } from "../../ui/index.js";
 import { criarEstadoDaConducao } from "./estado-da-conducao.js";
-import { FichaDoCandidato } from "./ficha.jsx";
+import { FichaDoCandidato } from "./ficha.tsx";
 import { FilaDoDia } from "./fila-do-dia.tsx";
 import { SeletorDoEdital } from "./seletor-do-edital.tsx";
 import "./entrevistas.css";
@@ -53,7 +53,7 @@ import "./entrevistas.css";
     —, com Hoje / Próximos / Todos, a busca por nome ou código, as situações
     e os cartões agrupados por vaga (fila-do-dia.tsx).
     O contador "7 de 12 hoje" fica no topo; clicar no cartão abre a ficha de
-    notas em tela cheia (ficha.jsx), com "Salvar e abrir o próximo" na ordem
+    notas em tela cheia (ficha.tsx), com "Salvar e abrir o próximo" na ordem
     da tela (vaga a vaga). Concluir o dia (todas as de hoje concluídas ou com
     falta) solta os fogos (src/modules/comemoracao.js, com o liga/desliga das
     comemorações do app), uma vez, na passagem.
@@ -232,7 +232,7 @@ function TelaDeConducao({
             convocado={convocado}
             convocados={lista}
             salvando={e.acao?.tipo === "notas"}
-            aoSalvar={(p: unknown) => conducao.lancarNotas(convocado.id, p)}
+            aoSalvar={(p) => conducao.lancarNotas(convocado.id, p)}
             aoAbrir={(id: string) => conducao.abrirFicha(id)}
             aoFechar={() => conducao.abrirFicha(null)}
           />

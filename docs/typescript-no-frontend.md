@@ -21,14 +21,24 @@ edital, Preparar em passos, a configuração do edital, o parecer pronto e as se
 `src/lib/painel-de-entrevistas.ts`, `src/lib/fila-de-conducao.ts`, `src/lib/digitacao-de-notas.ts`,
 `src/lib/resumo-da-entrevista.ts`, `src/lib/passos-do-preparar.ts`, `src/lib/pendencias-do-roteiro.ts` e
 `src/lib/parecer-da-entrevista.ts`)
-já nascem em TypeScript. O Mapa de Projetos está em TypeScript, incluindo carregador,
+já nascem em TypeScript. A apresentação dos resultados do Painel de entrevistas foi migrada:
+`paineis.tsx` (filtros, indicadores, recorte, gráficos e pendências), `tabela.tsx` e `gaveta.tsx`,
+com contratos em `tipos-do-painel.ts`. A entrada `entrevistas.tsx`, o estado em `estado.ts` e as regras de leitura, filtros,
+indicadores, gráficos e CSV em `src/lib/entrevistas-do-painel.ts` também estão migrados.
+O normalizador recebe `unknown`, verifica objetos e listas e tipa notas e vínculos ausentes.
+A agenda também passa por normalização; respostas anteriores à troca de área ou de sessão
+não voltam ao cache. O cliente só declara as duas RPCs de leitura consumidas pelo painel. Identificadores externos preservados do JSON
+continuam como `unknown`, e notas e vínculos ausentes são anuláveis. Os casos compilados
+estão em `tests/tipos/painel-de-entrevistas.tsx`. O Mapa de Projetos está em TypeScript, incluindo carregador,
 cache, mapa, lista, balões, integração do editor e regras em `src/lib/visao-geral-da-area.ts`.
 O editor compartilhado pelos dois mapas também está em TypeScript: fila, sugestões, histórico,
 prévia, gravação, modo de edição e regras em `src/lib/editor-de-coordenadas.ts`. As telas principal, nacional e por DSEI da Saúde Indígena também estão em TSX.
 As regras nacionais e distritais de contagens, bolhas, CASAIs, unidades, vínculos,
 resumos e enquadramento estão em `src/lib/mapa-saude-indigena/chaves.ts`, `mapa-nacional.ts`
-e `mapa-do-dsei.ts`. As peças comuns de criação do Leaflet e a reconciliação compartilhada
-permanecem em JavaScript, com contratos JSDoc na integração. Painel, lista, legenda, tela cheia, retorno ao Brasil e hooks dos
+e `mapa-do-dsei.ts`. A integração comum com o Leaflet também está em TypeScript (`leaflet.ts`), incluindo
+criação, fundo com recurso, tamanho, contornos, enquadramento, leque, ícones e balões.
+A reconciliação, as guardas globais e o recuo dos tiles permanecem em JavaScript,
+com contratos JSDoc na integração. Painel, lista, legenda, tela cheia, retorno ao Brasil e hooks dos
 mapas já estão em TypeScript, com contratos em `tipos-do-painel.ts`; formas e cores
 em `src/lib/mapa-saude-indigena/formas.ts`. Outros módulos
 combinam JavaScript/JSX com migrações pontuais para TypeScript: a ficha da Avaliação documental
@@ -41,6 +51,11 @@ já nasceu em TSX, com as regras em `src/lib/avaliacao-documental/assistente-da-
 `resumo-da-regra.ts`, `comparar-regras.ts`, `catalogo-de-desempate.ts`, `pendencias-do-salvar.ts` e os
 contratos em `tipos-da-regra.ts`; a prévia "Testar com um candidato fictício" está em `previa.tsx`.
 Na ficha, o Apurado de partida e o efeito da decisão nele estão em `apurado-da-ficha.ts`.
+
+A ficha de notas de Conduzir entrevistas está em `src/modulos/entrevistas/ficha.tsx`,
+com contratos do estado local e do salvamento em `tipos-da-ficha.ts`. A integração preserva
+os cálculos em JavaScript por JSDoc; o estado da condução e o editor de roteiros ainda
+aguardam migração. Os limites de validação estão no README de Entrevistas.
 
 ## Verificação
 

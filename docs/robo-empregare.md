@@ -34,10 +34,17 @@ A lista vem do MONITORA (RPC `listar_vagas_empregare`), de duas fontes (desde a 
    são os do edital do quadro.
 2. **Seleção** (segunda fonte, editais antigos): `TB_SELECAO_VAGA.CO_VAGA`, da planilha Auditoria.
 
-O mesmo código nas duas fontes entra **uma vez**, ligado ao edital do quadro. Cada vaga da lista
-diz a origem (`quadro`, `selecao` ou `pedida`), e o log da execução mostra a contagem por origem.
-Edital sem quadro e fora da Seleção não entra sozinho: salve o quadro de vagas do edital (no formulário do
-edital, pelo PDF de anexos) ou rode pelo **Opções** (ou pelo GitHub) com os códigos.
+3. **Vagas já ligadas ao edital** (desde `20261009140000_acompanhamento_das_inscricoes.sql`):
+   `TB_EMPREGARE_VAGA.CO_MONITORAMENTO` preenchido por uma carga anterior ou por correção de dados.
+   É o caminho do edital **em inscrição**, que ainda não tem análise (de onde o quadro tira o
+   código) nem Seleção — ex.: `supabase/correcoes/20261009-edital-114-vagas-da-empregare.sql`.
+
+O mesmo código em mais de uma fonte entra **uma vez** (quadro, depois Seleção, depois ligada). Cada
+vaga da lista diz a origem (`quadro`, `selecao`, `ligada` ou `pedida`), e o log da execução mostra
+a contagem por origem. Edital sem quadro, fora da Seleção e sem vaga ligada não entra sozinho: salve
+o quadro de vagas do edital (no formulário do edital, pelo PDF de anexos), ligue os códigos ao
+edital ou rode pelo **Opções** (ou pelo GitHub) com os códigos. Uma vaga pedida que já está ligada
+a um edital mantém a ligação (a gravação nunca apaga o edital da vaga).
 
 | Pedido                              | Vagas                                                                                                                                                 |
 | ----------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -201,7 +208,8 @@ pré-classificação e as conferências têm a mesma gaveta, com os campos que a
 | `anexos`  | também guarda o link Visualizar Arquivo de cada anexo do questionário e o da impressão das respostas (modo `normal`/`forcar`; opcional até validarmos)                                                                                                                                                                                       |
 
 **Sem agenda automática** (decisão de 05/10/2026): o robô só roda quando um administrador clica em
-"Rodar agora" ou alguém dispara pelo GitHub. Uma execução por vez (as outras esperam na fila); tempo limite de 2 h.
+"Rodar agora" ou alguém dispara pelo GitHub. Exceção: a **agenda das inscrições** de um edital
+(ex.: 114/2026, 7h e 13h até 15/10/2026), que desliga sozinha (docs/agenda-dos-robos.md). Uma execução por vez (as outras esperam na fila); tempo limite de 2 h.
 
 ### Teste de fumaça (depois de cadastrar os segredos)
 

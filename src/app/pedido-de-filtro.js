@@ -45,7 +45,7 @@ const obterVersao = () => versao;
  * carregados), chama `aplicar(filtro)` uma vez.
  * @param {string} view
  * @param {boolean} pronta
- * @param {(filtro: { edital?: string, metrica?: string, busca?: string }) => void} aplicar
+ * @param {(filtro: { edital?: string, metrica?: string, busca?: string, entrevista?: string }) => void} aplicar
  */
 export function usarPedidoDeFiltro(view, pronta, aplicar) {
   const atual = useSyncExternalStore(assinar, obterVersao, obterVersao);

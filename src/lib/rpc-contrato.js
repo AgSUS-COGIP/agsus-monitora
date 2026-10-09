@@ -949,6 +949,13 @@ export const CONTRATO_RPC = {
     resumo:
       "Registra o empate final de um grupo: sorteio (semente do servidor ou informada, reprodutível) ou decisão manual com justificativa. Editor.",
   },
+  // 20261009130000_hora_de_nascimento_na_classificacao.sql
+  salvar_hora_nascimento_candidato: {
+    argumentos: ["p_edital", "p_analise", "p_hora"],
+    critica: false,
+    resumo:
+      "Grava, troca ou tira (p_hora vazio = 23:59:59) a hora de nascimento da certidão de um candidato, para o desempate por maior idade entre quem nasceu no mesmo dia (93/2026, 6.11.5 e 6.11.6); histórico em TH_HORA_NASCIMENTO_CANDIDATO. Classificação editor.",
+  },
   // ── Agenda das entrevistas (20261005120000_agenda_das_entrevistas.sql) ───
   obter_agenda_entrevista: {
     argumentos: ["p_edital"],
@@ -1139,6 +1146,13 @@ export const CONTRATO_RPC = {
     resumo:
       "Pré-classificação gravada pelo job Python: regra, última execução, vagas (quadro, tamanho do lote, linha de corte, avisos), inscritos (código, nome, situação, ART, nota declarada, posição, lote e motivo; sem CPF nem contato) e as listas PROVISORIA/LOTE registradas. Leitor da Avaliação documental.",
   },
+  // ── Avaliação documental: acompanhamento das inscrições (20261009140000_acompanhamento_das_inscricoes.sql)
+  obter_acompanhamento_inscricoes: {
+    argumentos: ["p_edital"],
+    critica: false,
+    resumo:
+      "Cartão Inscrições da Pré-classificação: cronograma, vagas da Empregare do edital (código e cargo) e os retratos diários dos últimos 60 dias (inscritos, finalizaram o questionário, aptos pela regra, eliminados; só contagens). Leitor da Avaliação documental.",
+  },
   registrar_lista_pre_classificacao: {
     argumentos: ["p_edital", "p_tipo", "p_lote"],
     critica: false,
@@ -1263,6 +1277,13 @@ export const CONTRATO_RPC = {
     critica: false,
     resumo:
       "A coordenação reabre uma ficha concluída (volta a Em análise com o mesmo responsável), com motivo de 10 a 2.000.",
+  },
+  // ── Reiniciar as fichas do edital (20261009160000_reiniciar_fichas_do_edital.sql)
+  reiniciar_fichas_do_edital: {
+    argumentos: ["p_edital", "p_motivo"],
+    critica: false,
+    resumo:
+      "Só admin global (42501): volta ao início as fichas do lote do edital (PENDENTE, sem responsável, reserva nem conteúdo; versão + 1), com motivo de 10 a 2.000 e histórico REINICIAR por ficha; FORA_LOTE fica; nada se apaga.",
   },
   registrar_acesso_ficha: {
     argumentos: ["p_ficha", "p_tipo"],

@@ -290,6 +290,7 @@ export function montarAvaliacaoDocumental({
   toast,
   areaAtual = () => obterDadosDoMonitoramento().areaAtual,
   agendar,
+  getProfile = () => null,
   cabecalho = () =>
     estadoDasConfiguracoes.obter().valores?.get?.(CHAVE_DO_CABECALHO) || "",
 } = {}) {
@@ -300,7 +301,7 @@ export function montarAvaliacaoDocumental({
     cabecalho,
     ...(agendar ? { agendar } : {}),
   });
-  const fila = criarEstadoDaFila({ supabase, toast });
+  const fila = criarEstadoDaFila({ supabase, toast, getProfile });
   const atualizar = criarAtualizacao({ estado, pre, fila });
   const raiz = secao
     ? montarModulo(

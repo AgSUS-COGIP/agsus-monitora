@@ -27,7 +27,7 @@ import type {
   que está fora do acesso, "Sem acesso".
 */
 import { sanitizeCsvCell } from "./csv-security.js";
-import { PARECERES } from "./entrevistas-do-painel.js";
+import { PARECERES } from "./entrevistas-do-painel.ts";
 
 export const CONFERENCIAS: Readonly<
   Record<

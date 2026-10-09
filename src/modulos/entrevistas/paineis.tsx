@@ -1,3 +1,15 @@
+import type { ComponentProps } from "react";
+import type { ChartOptions, TooltipCallbacks } from "chart.js";
+import type {
+  CampoDoFiltro,
+  FiltrosDoPainel,
+  OpcoesDosFiltros,
+  ListaDoFiltro,
+  FiltroAtivo,
+  PropsDosIndicadores,
+  PropsDasPendencias,
+  PropsDosGraficos,
+} from "./tipos-do-painel.ts";
 import { useEffect, useMemo, useRef } from "react";
 import { formatNumberBR } from "../../lib/formatters.js";
 import {
@@ -8,7 +20,7 @@ import {
   formatarNota,
   mediaPorCriterio,
   topUnidades,
-} from "../../lib/entrevistas-do-painel.js";
+} from "../../lib/entrevistas-do-painel.ts";
 import { paletaDoPainel } from "../../lib/tema-do-painel.js";
 import {
   Campo,
@@ -26,6 +38,18 @@ import {
   TopoDoPainel,
 } from "../../ui/index.js";
 
+interface Paleta {
+  text: string;
+  grid: string;
+  surface: string;
+  ok: string;
+  bad: string;
+  neutro: string;
+  review: string;
+  warn: string;
+  blue: string;
+}
+
 /*
   Os blocos do Painel de entrevistas, com os componentes de src/ui/: o topo
   (o status discreto da carga, Atualizar e Exportar — o título e a área estão
@@ -35,20 +59,25 @@ import {
   agenda-e-empates.tsx.
 */
 
-const truncar = (valor, limite) => {
+const truncar = (valor: unknown, limite: number) => {
   const texto = String(valor ?? "").trim();
   return texto.length > limite ? `${texto.slice(0, limite - 1)}…` : texto;
 };
 
 /* ── Topo ───────────────────────────────────────────────────────────── */
 
-export function Topo(props) {
+export function Topo(props: ComponentProps<typeof TopoDoPainel>) {
   return <TopoDoPainel {...props} />;
 }
 
 /* ── Filtros ────────────────────────────────────────────────────────── */
 
-export const CAMPOS_DO_FILTRO = [
+export const CAMPOS_DO_FILTRO: readonly [
+  Exclude<CampoDoFiltro, "busca">,
+  string,
+  ListaDoFiltro,
+  string,
+][] = [
   ["unidade", "Unidade (DSEI)", "unidades", "Todas as unidades"],
   ["edital", "Edital", "editais", "Todos os editais"],
   ["vaga", "Vaga", "vagas", "Todas as vagas"],
@@ -60,24 +89,42 @@ export const CAMPOS_DO_FILTRO = [
   ["andamento", "Andamento", "andamentos", "Todos"],
 ];
 
-const rotuloDoValor = (opcoes, lista, valor) =>
-  opcoes[lista].find((o) => o.valor === valor)?.rotulo || valor;
+const rotuloDoValor = (
+  opcoes: OpcoesDosFiltros,
+  lista: ListaDoFiltro,
+  valor: string,
+) => opcoes[lista].find((o) => o.valor === valor)?.rotulo || valor;
 
 /** Os filtros ativos, como o recorte os descreve: `[campo, rótulo, valor]`. */
-export function filtrosAtivos(filtros, opcoes) {
-  const ativos = CAMPOS_DO_FILTRO.filter(([campo]) => filtros[campo]).map(
-    ([campo, rotulo, lista]) => [
-      campo,
-      rotulo,
-      rotuloDoValor(opcoes, lista, filtros[campo]),
-    ],
-  );
+export function filtrosAtivos(
+  filtros: FiltrosDoPainel,
+  opcoes: OpcoesDosFiltros,
+): FiltroAtivo[] {
+  const ativos: FiltroAtivo[] = CAMPOS_DO_FILTRO.filter(
+    ([campo]) => filtros[campo],
+  ).map(([campo, rotulo, lista]) => [
+    campo,
+    rotulo,
+    rotuloDoValor(opcoes, lista, filtros[campo]),
+  ]);
   if (String(filtros.busca || "").trim())
     ativos.push(["busca", "Busca", filtros.busca.trim()]);
   return ativos;
 }
 
-export function Filtros({ filtros, opcoes, carregado, aoMudar, aoLimpar }) {
+export function Filtros({
+  filtros,
+  opcoes,
+  carregado,
+  aoMudar,
+  aoLimpar,
+}: {
+  filtros: FiltrosDoPainel;
+  opcoes: OpcoesDosFiltros;
+  carregado: boolean;
+  aoMudar(campo: CampoDoFiltro, valor: string): void;
+  aoLimpar(): void;
+}) {
   const ativos = filtrosAtivos(filtros, opcoes);
 
   return (
@@ -140,15 +187,15 @@ export function Indicadores({
   filtros,
   aoFiltrar,
   aoAbrirSemEntrevista,
-}) {
-  const filtro = (campo, valor) =>
+}: PropsDosIndicadores) {
+  const filtro = (campo: CampoDoFiltro, valor: string) =>
     carregado
       ? {
           ativo: filtros[campo] === valor,
           aoClicar: () => aoFiltrar(campo, valor),
         }
       : {};
-  const n = (valor) => formatNumberBR(valor);
+  const n = (valor: number) => formatNumberBR(valor);
   const carregando = !carregado;
   return (
     <GradeDeKpis
@@ -224,14 +271,17 @@ export function Indicadores({
 /* ── Recorte ativo ──────────────────────────────────────────────────── */
 
 /* Sem filtro, a linha não aparece (os KPIs já são do recorte todo). */
-export function Recorte({ ativos }) {
+export function Recorte({ ativos }: { ativos: readonly FiltroAtivo[] }) {
   return ativos.length ? <LinhaDoRecorte ativos={ativos} /> : null;
 }
 
 /* ── Pendências ─────────────────────────────────────────────────────── */
 
 /* Severidade → tom da borda do item: alta em vermelho; média e baixa em âmbar. */
-const TOM_DA_SEVERIDADE = { alta: "perigo", media: "alerta", baixa: "alerta" };
+const TOM_DA_SEVERIDADE: Record<
+  "alta" | "media" | "baixa",
+  "perigo" | "alerta"
+> = { alta: "perigo", media: "alerta", baixa: "alerta" };
 
 function Pendencias({
   pendencias,
@@ -239,7 +289,7 @@ function Pendencias({
   filtros,
   aoFiltrar,
   aoAbrirSemEntrevista,
-}) {
+}: PropsDasPendencias) {
   const itens = pendencias
     .filter((p) => p.valor > 0)
     .map((p) => {
@@ -270,9 +320,21 @@ function Pendencias({
 /* ── Gráficos ───────────────────────────────────────────────────────── */
 
 function opcoesDeBarras(
-  p,
-  { deitado = false, aoClicar, dica, maximo, decimais = false } = {},
-) {
+  p: Paleta,
+  {
+    deitado = false,
+    aoClicar,
+    dica,
+    maximo,
+    decimais = false,
+  }: {
+    deitado?: boolean;
+    aoClicar?: (indice: number) => void;
+    dica?: Partial<Pick<TooltipCallbacks<"bar">, "title" | "label">>;
+    maximo?: number;
+    decimais?: boolean;
+  } = {},
+): ChartOptions<"bar"> {
   const categorias = {
     ticks: { color: p.text, maxRotation: 0, autoSkip: false },
     grid: { display: false },
@@ -298,13 +360,17 @@ function opcoesDeBarras(
       : { x: categorias, y: valores },
     onClick: aoClicar
       ? (_, elementos) => {
-          if (elementos.length) aoClicar(elementos[0].index);
+          const primeiro = elementos[0];
+          if (primeiro) aoClicar(primeiro.index);
         }
       : undefined,
   };
 }
 
-function opcoesDeRosca(p, { aoClicar } = {}) {
+function opcoesDeRosca(
+  p: Paleta,
+  { aoClicar }: { aoClicar?: (indice: number) => void } = {},
+): ChartOptions<"doughnut"> {
   return {
     responsive: true,
     maintainAspectRatio: false,
@@ -318,14 +384,16 @@ function opcoesDeRosca(p, { aoClicar } = {}) {
     },
     onClick: aoClicar
       ? (_, elementos) => {
-          if (elementos.length) aoClicar(elementos[0].index);
+          const primeiro = elementos[0];
+          if (primeiro) aoClicar(primeiro.index);
         }
       : undefined,
   };
 }
 
 /* As cores dos tokens do app (com a paleta dos painéis de reserva). */
-const paleta = (escuro) => paletaDosGraficos(escuro, paletaDoPainel(escuro));
+const paleta = (escuro: boolean) =>
+  paletaDosGraficos(escuro, paletaDoPainel(escuro));
 
 export function Graficos({
   entrevistas,
@@ -336,7 +404,7 @@ export function Graficos({
   aoFiltrar,
   aoAbrirSemEntrevista,
   escuro,
-}) {
+}: PropsDosGraficos) {
   const pareceres = useMemo(
     () => contagemPorParecer(entrevistas),
     [entrevistas],
@@ -517,7 +585,7 @@ export function Graficos({
                     decimais: true,
                     dica: {
                       title: (itens) =>
-                        porCriterio[itens[0].dataIndex]?.texto || "",
+                        porCriterio[itens[0]?.dataIndex ?? -1]?.texto || "",
                       label: (item) =>
                         `Média ${formatarNota(item.parsed.x)} · ${formatNumberBR(porCriterio[item.dataIndex]?.quantidade || 0)} nota(s)`,
                     },
@@ -555,7 +623,7 @@ export function Graficos({
                   deitado: true,
                   dica: {
                     title: (itens) =>
-                      unidades[itens[0].dataIndex]?.rotulo || "",
+                      unidades[itens[0]?.dataIndex ?? -1]?.rotulo || "",
                   },
                   aoClicar: (indice) =>
                     unidades[indice] &&

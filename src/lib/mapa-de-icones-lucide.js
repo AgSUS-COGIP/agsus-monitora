@@ -11,6 +11,7 @@
   `tests/icones-lucide.test.js` falha se algum `fa-…` usado não estiver no mapa.
 */
 export const FA_PARA_LUCIDE = Object.freeze({
+  "fa-align-left": "TextAlignStart",
   "fa-arrow-down": "ArrowDown",
   "fa-arrow-down-1-9": "ArrowDown01",
   "fa-arrow-left": "ArrowLeft",
@@ -18,6 +19,7 @@ export const FA_PARA_LUCIDE = Object.freeze({
   "fa-arrow-right-from-bracket": "LogOut",
   "fa-arrow-up": "ArrowUp",
   "fa-arrow-up-right-from-square": "ExternalLink",
+  "fa-arrows-left-right": "MoveHorizontal",
   "fa-ban": "Ban",
   "fa-bars": "Menu",
   "fa-bell": "Bell",
@@ -89,6 +91,11 @@ export const FA_PARA_LUCIDE = Object.freeze({
   "fa-list-ol": "ListOrdered",
   "fa-lock": "Lock",
   "fa-magnifying-glass": "Search",
+  "fa-map-location-dot": "MapPinned",
+  "fa-microphone": "Mic",
+  "fa-minus": "Minus",
+  "fa-moon": "Moon",
+  "fa-mountain-sun": "MountainSnow",
   "fa-paper-plane": "Send",
   "fa-paperclip": "Paperclip",
   "fa-pen": "Pen",

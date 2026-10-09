@@ -18,6 +18,7 @@
   coisas se separarem — é o que impede a constante de envelhecer em silêncio.
 */
 
+/** @type {readonly [readonly [number, number], readonly [number, number]]} */
 export const BRASIL_BOUNDS = Object.freeze([
   Object.freeze([-33.75, -73.99]),
   Object.freeze([5.27, -32.42]),

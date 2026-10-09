@@ -46,7 +46,7 @@ vi.mock("../../src/lib/chartjs-global.js", () => ({
 }));
 
 const { montarEntrevistas } =
-  await import("../../src/modulos/entrevistas/entrevistas.jsx");
+  await import("../../src/modulos/entrevistas/entrevistas.tsx");
 
 const PAYLOAD = {
   schema_version: 1,
@@ -410,7 +410,7 @@ describe("agenda, empates e pendências", () => {
 
 describe("cópia guardada (stale-while-revalidate)", async () => {
   const { criarEstadoDasEntrevistas } =
-    await import("../../src/modulos/entrevistas/estado.js");
+    await import("../../src/modulos/entrevistas/estado.ts");
 
   it("guarda na primeira carga e abre da cópia na seguinte, revalidando", async () => {
     const armazenamento = memoria();
@@ -617,6 +617,8 @@ describe("a tela dentro do app", () => {
       (g) => g.canvas.id === "chartParecer" && g.canvas.isConnected,
     );
     expect(parecer.config.type).toBe("doughnut");
+    await act(async () => parecer.options.onClick(null, []));
+    expect(linhasDaTabela()).toHaveLength(2);
     const indice = parecer.data.labels.indexOf("Inapto");
     await act(async () => parecer.options.onClick(null, [{ index: indice }]));
     expect(linhasDaTabela()).toHaveLength(1);
@@ -625,6 +627,15 @@ describe("a tela dentro do app", () => {
         .querySelector('.entrevistas-kpis [data-kpi="inaptos"]')
         .classList.contains("is-ativo"),
     ).toBe(true);
+  });
+  it("os tooltips dos critérios e das unidades aceitam a ausência de pontos", async () => {
+    await montar(supabaseFalso({ data: PAYLOAD, error: null }));
+    for (const id of ["chartCriterios", "chartUnidades"]) {
+      const grafico = graficos.find(
+        (g) => g.canvas.id === id && g.canvas.isConnected,
+      );
+      expect(grafico.options.plugins.tooltip.callbacks.title([])).toBe("");
+    }
   });
 });
 

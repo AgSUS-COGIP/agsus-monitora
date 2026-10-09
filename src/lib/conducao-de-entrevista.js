@@ -15,7 +15,7 @@
   em Python (`monitora.entrevistas.calculo`, recálculo em lote) e os casos
   dourados dos três lados: `tests/fixtures/entrevistas/casos-de-calculo.json`.
 */
-import { normalizarBusca } from "./entrevistas-do-painel.js";
+import { normalizarBusca } from "./entrevistas-do-painel.ts";
 import {
   arredondar,
   bancaDoRascunho,
@@ -230,6 +230,7 @@ export function avaliadoresDaCompetencia(
 /**
  * As restrições da banca no formato de `calcularEntrevista`:
  * `{ idDoAvaliador: [competências] }`, só de quem não avalia todas.
+ * @returns {Record<string, string[]>}
  */
 export function atribuicoesDaBanca(avaliadores, competencias) {
   const atribuicoes = {};
@@ -406,6 +407,7 @@ export function dadosDaConfiguracaoParaSalvar(r, roteiro = null) {
 /**
  * Chave de uma nota da ficha: `competência|avaliador` e, em roteiro com
  * aspectos, `competência|avaliador|aspecto`.
+ * @returns {string}
  */
 export const chaveDaNota = (competencia, avaliador, aspecto) =>
   aspecto
@@ -415,6 +417,7 @@ export const chaveDaNota = (competencia, avaliador, aspecto) =>
 /**
  * `avaliacoes` do convocado → `{ chave: "nota" }`. Com `aspectos` (os do
  * roteiro), uma chave por aspecto (`avaliacoes[].aspectos`).
+ * @returns {Record<string, string>}
  */
 export function mapaDasAvaliacoes(avaliacoes, aspectos = []) {
   const mapa = {};
@@ -446,7 +449,12 @@ function gruposDosAspectos(mapa) {
   return grupos;
 }
 
-/** As avaliações do mapa, no formato de `calcularEntrevista`. */
+/**
+ * As avaliações do mapa, no formato de `calcularEntrevista`.
+ * @param {Record<string, string>} mapa
+ * @param {import("../modulos/entrevistas/tipos-da-ficha.ts").AspectoDaFicha[]} aspectos
+ * @returns {import("./fila-de-conducao.ts").Avaliacao[]}
+ */
 export function avaliacoesDoMapa(mapa, aspectos = []) {
   if (aspectos?.length) {
     return [...gruposDosAspectos(mapa).values()].map((g) => ({
@@ -470,6 +478,7 @@ export function avaliacoesDoMapa(mapa, aspectos = []) {
  * Com aspectos: as notas de avaliador começadas e não terminadas (algum
  * aspecto preenchido e outro vazio), `[{ competencia, avaliador }]`. O banco
  * só aceita todos os aspectos (ou nenhum).
+ * @returns {{ competencia: string; avaliador: string }[]}
  */
 export function aspectosIncompletos(mapa, aspectos = []) {
   if (!aspectos?.length) return [];
@@ -488,6 +497,11 @@ export function aspectosIncompletos(mapa, aspectos = []) {
  * aspectos: `{ competencia, avaliador, aspectos: [{ aspecto, nota }] }` com
  * todos os aspectos, ou `aspectos: null` quando todos ficaram vazios; a nota
  * começada e não terminada fica de fora (ver `aspectosIncompletos`).
+ * As chaves são criadas pela ficha com `chaveDaNota`.
+ * @param {Record<string, string>} original
+ * @param {Record<string, string>} atual
+ * @param {import("../modulos/entrevistas/tipos-da-ficha.ts").AspectoDaFicha[]} aspectos
+ * @returns {import("../modulos/entrevistas/tipos-da-ficha.ts").NotaParaSalvar[]}
  */
 export function notasAlteradas(original, atual, aspectos = []) {
   if (aspectos?.length) {
@@ -526,7 +540,10 @@ export function notasAlteradas(original, atual, aspectos = []) {
   return notas;
 }
 
-/** As bancas com membros ativos, em ordem. */
+/**
+ * As bancas com membros ativos, em ordem.
+ * @returns {number[]}
+ */
 export function bancasDoEdital(avaliadores) {
   return [
     ...new Set(
@@ -540,6 +557,7 @@ export function bancasDoEdital(avaliadores) {
 /**
  * Os avaliadores da ficha: os ativos da banca (todos, se a banca não foi
  * definida) e quem já deu nota ao candidato (mesmo que tenha saído da banca).
+ * @returns {import("./fila-de-conducao.ts").Avaliador[]}
  */
 export function avaliadoresDaFicha(avaliadores, convocado, banca) {
   const comNota = new Set(
@@ -558,6 +576,7 @@ export function avaliadoresDaFicha(avaliadores, convocado, banca) {
  * Quem pode lançar a nota deste avaliador: editor das entrevistas e, no modo
  * AVALIADOR, só o membro ligado ao próprio perfil (o administrador global
  * lança por qualquer um). Membro que saiu da banca não recebe nota.
+ * @returns {boolean}
  */
 export function podeLancarPor(dados, avaliador) {
   if (!dados?.pode_editar || !avaliador || avaliador.ativo === false)
@@ -567,7 +586,10 @@ export function podeLancarPor(dados, avaliador) {
   return Boolean(avaliador.perfil) && avaliador.perfil === dados.meu_perfil;
 }
 
-/** Os aspectos do roteiro, em ordem (vazio = uma nota por avaliador). */
+/**
+ * Os aspectos do roteiro, em ordem (vazio = uma nota por avaliador).
+ * @returns {import("../modulos/entrevistas/tipos-da-ficha.ts").AspectoDaFicha[]}
+ */
 export function aspectosDoRoteiro(roteiro) {
   return (roteiro?.aspectos || [])
     .slice()
@@ -578,6 +600,7 @@ export function aspectosDoRoteiro(roteiro) {
  * Nota do avaliador na competência num roteiro com aspectos: a média dos
  * aspectos, sem arredondar; nula enquanto falta algum aspecto (o banco só
  * aceita todos). `notas`: `{ idDoAspecto: nota }` ou `[{ aspecto, nota }]`.
+ * @returns {number | null}
  */
 export function mediaDosAspectos(aspectos, notas) {
   if (!aspectos?.length) return null;
@@ -605,6 +628,8 @@ export function mediaDosAspectos(aspectos, notas) {
  * avaliadores que a avaliam; a nota de quem não a avalia não conta (o banco
  * nem a aceita). Sem a chave (ou sem competência do roteiro na lista), o
  * avaliador avalia todas.
+ * @param {{ roteiro: import("../modulos/entrevistas/tipos.ts").RoteiroDoEdital | null, compareceu: import("../modulos/entrevistas/cabecalho-da-ficha.tsx").Comparecimento, avaliacoes: import("./fila-de-conducao.ts").Avaliacao[], atribuicoes?: Record<string, string[]> | null }} dados
+ * @returns {import("../modulos/entrevistas/tipos-da-ficha.ts").ResultadoDoCalculoDaFicha}
  */
 export function calcularEntrevista({
   roteiro,
@@ -702,7 +727,10 @@ export function calcularEntrevista({
   };
 }
 
-/** Os motivos do parecer, em frases curtas, para a ficha. */
+/**
+ * Os motivos do parecer, em frases curtas, para a ficha.
+ * @returns {string[]}
+ */
 export function motivosDoParecer(resultado, compareceu, roteiro) {
   const motivos = [];
   if (compareceu === "N")

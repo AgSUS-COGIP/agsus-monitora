@@ -1,3 +1,10 @@
+import type {
+  EstadoDasEntrevistas,
+  OpcoesDoEstadoDasEntrevistas,
+  SnapshotDasEntrevistas,
+  EntrevistaDoPainel,
+} from "./tipos-do-painel.ts";
+import type { ItemDaAgenda } from "../../lib/painel-de-entrevistas.ts";
 /*
   Estado da tela de Entrevistas (`#page-entrevistas`, visão "Resultados"),
   fora do React: o que o banco devolve para a área atual do app, a entrevista
@@ -35,9 +42,10 @@ import {
 import {
   csvDasEntrevistas,
   normalizarPayload,
+  normalizarAgendaDoPainel,
   PAINEL_DE_ENTREVISTAS,
   payloadMudou,
-} from "../../lib/entrevistas-do-painel.js";
+} from "../../lib/entrevistas-do-painel.ts";
 import { armazenamentoDePayload } from "../../modules/cache-de-payload-indexeddb.js";
 import { avaliarMarcosDasEntrevistas } from "./marcos.js";
 
@@ -49,7 +57,7 @@ export const MENSAGEM_SEM_ACESSO = "Sem acesso às Entrevistas";
 const VERSAO_DA_COPIA = `1:${import.meta.url}`;
 const TEMPO_LIMITE_MS = 30000;
 
-const ESTADO_INICIAL = Object.freeze({
+const ESTADO_INICIAL: SnapshotDasEntrevistas = Object.freeze({
   area: "",
   dados: null,
   carregado: false,
@@ -77,15 +85,21 @@ const ESTADO_INICIAL = Object.freeze({
   agenda: Object.freeze({ editalId: "", itens: null, erro: "" }),
 });
 
-function mensagemDaCarga(erro) {
-  if (erro?.code === "PGRST202")
+function codigoDoErro(erro: unknown) {
+  return typeof erro === "object" && erro !== null && "code" in erro
+    ? erro.code
+    : undefined;
+}
+
+function mensagemDaCarga(erro: unknown) {
+  if (codigoDoErro(erro) === "PGRST202")
     return "A aba Entrevistas ainda não foi publicada no banco.";
-  if (erro?.code === "42501")
+  if (codigoDoErro(erro) === "42501")
     return "Seu acesso não inclui as entrevistas desta área.";
   return mensagemDeFalha(erro);
 }
 
-function baixarNoNavegador(conteudo, nome) {
+function baixarNoNavegador(conteudo: string, nome: string) {
   const arquivo = new Blob([conteudo], { type: "text/csv;charset=utf-8" });
   const url = URL.createObjectURL(arquivo);
   const ancora = document.createElement("a");
@@ -104,24 +118,28 @@ export function criarEstadoDasEntrevistas({
   tempoLimiteMs = TEMPO_LIMITE_MS,
   /* Vaga pronta para o resultado final (marcos.js); troque nos testes. */
   avaliarMarcos = avaliarMarcosDasEntrevistas,
-} = {}) {
-  let estado = ESTADO_INICIAL;
+}: OpcoesDoEstadoDasEntrevistas = {}): EstadoDasEntrevistas {
+  let estado: SnapshotDasEntrevistas = ESTADO_INICIAL;
   let pedido = 0;
   let usuarioDaCarga = "";
-  const ouvintes = new Set();
-  const agendas = new Map();
+  const ouvintes = new Set<() => void>();
+  const agendas = new Map<string, ItemDaAgenda[]>();
+  let geracaoDasAgendas = 0;
   const copias = criarCacheDePayload({
     armazenamento,
     versao: VERSAO_DA_COPIA,
     tipo: PAINEL_DE_ENTREVISTAS,
   });
 
-  function publicar(mudancas) {
+  function publicar(mudancas: Partial<SnapshotDasEntrevistas>) {
     estado = { ...estado, ...mudancas };
     for (const ouvinte of ouvintes) ouvinte();
   }
 
-  function mostrar(payload, extra = {}) {
+  function mostrar(
+    payload: unknown,
+    extra: Partial<SnapshotDasEntrevistas> = {},
+  ) {
     publicar({
       dados: normalizarPayload(payload || {}),
       carregado: true,
@@ -140,12 +158,12 @@ export function criarEstadoDasEntrevistas({
     });
   }
 
-  const perderAcesso = (erro) =>
+  const perderAcesso = (erro: unknown) =>
     publicar({
       ...ESTADO_INICIAL,
       area: estado.area,
       comemoracoes: estado.comemoracoes,
-      semAcesso: erro?.code === "42501",
+      semAcesso: codigoDoErro(erro) === "42501",
       erroAoCarregar: mensagemDaCarga(erro),
     });
 
@@ -156,10 +174,11 @@ export function criarEstadoDasEntrevistas({
   function reiniciar() {
     pedido += 1;
     agendas.clear();
+    geracaoDasAgendas += 1;
     usuarioDaCarga = "";
     publicar({ ...ESTADO_INICIAL, comemoracoes: estado.comemoracoes });
   }
-  let identidade;
+  let identidade: string | null | undefined;
   supabase?.auth?.onAuthStateChange?.((_evento, sessao) => {
     const atual = sessao?.user?.id || null;
     if (atual === identidade) return;
@@ -169,7 +188,8 @@ export function criarEstadoDasEntrevistas({
   });
 
   /* O payload da área; lança o erro do banco (ou o de rede/tempo). */
-  async function buscar(area) {
+  async function buscar(area: string): Promise<unknown> {
+    if (!supabase) throw new Error("Sem conexão com o banco.");
     const { data, error } = await comTempoLimite(
       supabase.rpc("get_entrevistas_da_area", { p_area: area }),
       tempoLimiteMs,
@@ -179,8 +199,8 @@ export function criarEstadoDasEntrevistas({
   }
 
   /* O id do usuário da sessão; `null` sem sessão. Lança em falha de rede. */
-  async function usuarioDaSessao() {
-    if (!supabase.auth?.getSession) return "";
+  async function usuarioDaSessao(): Promise<string | null> {
+    if (!supabase?.auth?.getSession) return "";
     const { data: sessao } = await comTempoLimite(
       supabase.auth.getSession(),
       tempoLimiteMs,
@@ -200,6 +220,7 @@ export function criarEstadoDasEntrevistas({
     const primeira = area !== estado.area || !estado.carregado;
     if (area !== estado.area) {
       agendas.clear();
+      geracaoDasAgendas += 1;
       publicar({ ...ESTADO_INICIAL, area, comemoracoes: estado.comemoracoes });
     } else publicar({ atualizando: true, erroAoCarregar: "" });
     if (!supabase) {
@@ -230,12 +251,12 @@ export function criarEstadoDasEntrevistas({
         const novo = await revalidarPayload({
           guardado,
           buscar: () => buscar(area),
-          guardar: (payload) => copias.guardar(contexto, payload),
+          guardar: (payload: unknown) => copias.guardar(contexto, payload),
           mudou: payloadMudou,
-          aoMudar: (payload) => {
+          aoMudar: (payload: unknown) => {
             if (meu === pedido) mostrar(payload);
           },
-          aoPerderAcesso: (erro) => {
+          aoPerderAcesso: (erro: unknown) => {
             if (meu === pedido) perderAcesso(erro);
           },
           apagarTudo: () => copias.apagarTudo(),
@@ -276,7 +297,7 @@ export function criarEstadoDasEntrevistas({
     }
   }
 
-  const abrirGaveta = (id) =>
+  const abrirGaveta = (id: string) =>
     publicar({ gaveta: id, semEntrevistaAberta: false });
   const fecharGaveta = () => publicar({ gaveta: null });
   const abrirSemEntrevista = () =>
@@ -284,16 +305,20 @@ export function criarEstadoDasEntrevistas({
   const fecharSemEntrevista = () => publicar({ semEntrevistaAberta: false });
 
   /* A agenda do edital (uma leitura por edital; a troca de área ou de usuário zera). */
-  async function carregarAgenda(editalId) {
+  async function carregarAgenda(
+    editalId: string,
+  ): Promise<ItemDaAgenda[] | null> {
     const id = String(editalId || "");
     if (!id || !supabase) {
       publicar({ agenda: ESTADO_INICIAL.agenda });
       return null;
     }
-    if (agendas.has(id)) {
-      publicar({ agenda: { editalId: id, itens: agendas.get(id), erro: "" } });
-      return agendas.get(id);
+    const guardada = agendas.get(id);
+    if (guardada) {
+      publicar({ agenda: { editalId: id, itens: guardada, erro: "" } });
+      return guardada;
     }
+    const geracao = geracaoDasAgendas;
     publicar({ agenda: { editalId: id, itens: null, erro: "" } });
     try {
       const { data, error } = await comTempoLimite(
@@ -301,13 +326,14 @@ export function criarEstadoDasEntrevistas({
         tempoLimiteMs,
       );
       if (error) throw error;
-      const itens = Array.isArray(data?.itens) ? data.itens : [];
+      if (geracao !== geracaoDasAgendas) return null;
+      const itens = normalizarAgendaDoPainel(data);
       agendas.set(id, itens);
-      if (estado.agenda.editalId === id)
+      if (geracao === geracaoDasAgendas && estado.agenda.editalId === id)
         publicar({ agenda: { editalId: id, itens, erro: "" } });
       return itens;
     } catch (erro) {
-      if (estado.agenda.editalId === id)
+      if (geracao === geracaoDasAgendas && estado.agenda.editalId === id)
         publicar({
           agenda: { editalId: id, itens: [], erro: mensagemDaCarga(erro) },
         });
@@ -315,7 +341,7 @@ export function criarEstadoDasEntrevistas({
     }
   }
 
-  function exportarCsv(entrevistas) {
+  function exportarCsv(entrevistas: readonly EntrevistaDoPainel[]) {
     const dia = hojeEmBrasilia(new Date(agora()));
     baixar(
       csvDasEntrevistas(entrevistas),
@@ -325,7 +351,7 @@ export function criarEstadoDasEntrevistas({
 
   return {
     obter: () => estado,
-    assinar(ouvinte) {
+    assinar(ouvinte: () => void) {
       ouvintes.add(ouvinte);
       return () => ouvintes.delete(ouvinte);
     },
@@ -337,7 +363,7 @@ export function criarEstadoDasEntrevistas({
     exportarCsv,
     carregarAgenda,
     reiniciar,
-    definirComemoracoes: (ligadas) =>
+    definirComemoracoes: (ligadas: boolean) =>
       publicar({ comemoracoes: ligadas === true }),
   };
 }

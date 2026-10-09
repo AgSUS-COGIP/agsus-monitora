@@ -266,7 +266,7 @@ describe("as cores dos marcadores se separam do mapa", () => {
 describe("o mapa não inventa coordenadas", () => {
   // O leque dos mapas nacionais (Saúde Indígena e Projetos) mora no leaflet.js comum.
   const comum = readFileSync(
-    "src/modulos/mapa-saude-indigena/leaflet.js",
+    "src/modulos/mapa-saude-indigena/leaflet.ts",
     "utf8",
   );
   const codigo =

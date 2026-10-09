@@ -22,7 +22,7 @@ import {
   resumoDaRede,
 } from "../../lib/mapa-saude-indigena/mapa-do-dsei.ts";
 import { classes } from "../../ui/index.js";
-import { obterLeaflet } from "./leaflet.js";
+import { obterLeaflet } from "./leaflet.ts";
 import { MapaDoDsei } from "./mapa-do-dsei.tsx";
 import { MapaNacional } from "./mapa-nacional.tsx";
 import { usarTelaCheia } from "./tela-cheia.tsx";

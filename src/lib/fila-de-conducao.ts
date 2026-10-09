@@ -27,11 +27,15 @@ export type Avaliacao = {
   competencia?: string | null;
   avaliador?: string | null;
   aspecto?: string | null;
+  aspectos?: { aspecto: string; nota: number | string | null }[] | null;
   nota?: number | string | null;
 };
 
 export type Convocado = {
   id: string;
+  nota_analise?: number | null;
+  justificativa?: string | null;
+  observacoes?: { avaliador: string; texto?: string | null }[] | null;
   analise_id?: string | null;
   candidato?: string | null;
   codigo?: string | null;
@@ -47,6 +51,9 @@ export type Convocado = {
 
 export type Avaliador = {
   id: string;
+  nome?: string | null;
+  origem?: string | null;
+  perfil?: string | null;
   banca?: number | string | null;
   ativo?: boolean;
   /** As competências que o membro avalia (nulo ou vazio = todas). */

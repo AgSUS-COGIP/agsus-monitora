@@ -199,19 +199,35 @@ def fim_das_inscricoes(cronograma):
     """
     "AAAA-MM-DD" do fim das inscrições no cronograma do edital
     (dataDeCorteDoCronograma do JS): a etapa de inscrição (sem resultado,
-    recurso, homologação ou deferimento no nome); com prorrogação, o fim mais
+    recurso, homologação, deferimento ou validação no nome — "Validação das
+    inscrições" é a etapa seguinte, dos Projetos); com prorrogação, o fim mais
     tarde; sem fim, o início. None sem etapa de inscrição.
     """
-    corte = None
+    return janela_das_inscricoes(cronograma)[1]
+
+
+def etapas_de_inscricao(cronograma):
+    """As etapas de inscrição do cronograma (etapasDeInscricao do JS)."""
+    etapas = []
     for etapa in _lista(cronograma):
         etapa = _objeto(etapa)
         nome = _sem_acento(etapa.get("atividade"))
-        if not re.search(r"inscri", nome) or re.search(r"resultado|recurso|homolog|deferid", nome):
-            continue
-        fim = next((str(etapa.get(k))[:10] for k in ("fim", "inicio") if _data_valida(etapa.get(k))), None)
-        if fim and (corte is None or fim > corte):
-            corte = fim
-    return corte
+        if re.search(r"inscri", nome) and not re.search(r"resultado|recurso|homolog|deferid|valida", nome):
+            etapas.append(etapa)
+    return etapas
+
+
+def janela_das_inscricoes(cronograma):
+    """("AAAA-MM-DD" do início, do fim) das inscrições: o início mais cedo e o fim mais tarde (sem fim, o início)."""
+    inicio = fim = None
+    for etapa in etapas_de_inscricao(cronograma):
+        comeco = str(etapa.get("inicio"))[:10] if _data_valida(etapa.get("inicio")) else None
+        termino = next((str(etapa.get(k))[:10] for k in ("fim", "inicio") if _data_valida(etapa.get(k))), None)
+        if comeco and (inicio is None or comeco < inicio):
+            inicio = comeco
+        if termino and (fim is None or termino > fim):
+            fim = termino
+    return inicio, fim
 
 
 def _data_valida(valor):

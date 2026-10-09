@@ -28,7 +28,7 @@ import {
   podeFlutuar,
   podeVoar,
   remedir,
-} from "./leaflet.js";
+} from "./leaflet.ts";
 import {
   ListaDoMapa,
   MolduraDoMapa,
@@ -47,7 +47,7 @@ import {
 
 /*
   A volta de um DSEI parte da sede, no zoom em que o mapa do distrito costuma
-  estar, e voa até o enquadramento do recorte (`enquadrar`, leaflet.js).
+  estar, e voa até o enquadramento do recorte (`enquadrar`, leaflet.ts).
 */
 const ZOOM_DE_PARTIDA_DA_VOLTA = 7;
 
@@ -114,7 +114,7 @@ function LinhaDoTerritorio({
   A visão nacional: o mapa na proporção que o Brasil preenche e, ao lado, os
   territórios por vagas (a mesma porta de entrada que a bolha). O painel, o
   topo, a moldura, a lista, o leque e o enquadramento são os comuns aos dois
-  mapas nacionais (painel-do-mapa.tsx, leaflet.js); o de Projetos usa os
+  mapas nacionais (painel-do-mapa.tsx, leaflet.ts); o de Projetos usa os
   mesmos.
 */
 export function MapaNacional({
@@ -226,7 +226,7 @@ export function MapaNacional({
     (prefers-reduced-motion), salta direto, sem animação.
   */
   useEffect(() => {
-    if (!mapa || !camadas.current || !visivel) return;
+    if (!L || !mapa || !camadas.current || !visivel) return;
     const volta =
       voltaDoDsei && voltaDoDsei.vez !== voltaEnquadrada.current
         ? voltaDoDsei

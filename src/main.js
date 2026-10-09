@@ -207,7 +207,7 @@ window.entrevistasController = telaSobDemanda({
   secao: "page-entrevistas",
   metodos: ["render", "abrirVisao"],
   carregar: () =>
-    import("./modulos/entrevistas/entrevistas.jsx").then((m) =>
+    import("./modulos/entrevistas/entrevistas.tsx").then((m) =>
       m.montarEntrevistas({ toast: window.monitoraToast, comemoracoesLigadas }),
     ),
 });
@@ -281,7 +281,11 @@ window.avaliacaoDocumentalController = telaSobDemanda({
   metodos: ["render", "abrirVisao"],
   carregar: () =>
     import("./modulos/avaliacao-documental/avaliacao-documental.jsx").then(
-      (m) => m.montarAvaliacaoDocumental({ toast: window.monitoraToast }),
+      (m) =>
+        m.montarAvaliacaoDocumental({
+          toast: window.monitoraToast,
+          getProfile: window.getMonitoraProfile,
+        }),
     ),
 });
 

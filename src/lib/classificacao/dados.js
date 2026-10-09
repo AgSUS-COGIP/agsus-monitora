@@ -10,26 +10,47 @@
 import { semAcento } from "./catalogo.js";
 import { lerData, numeroBR } from "./numeros.js";
 
+/**
+ * As etapas de inscrição do cronograma: "inscri" no nome, sem resultado,
+ * recurso, homologação, deferimento ou validação ("Validação das inscrições"
+ * é a etapa seguinte, dos Projetos). Mesma regra de etapas_de_inscricao
+ * (python/monitora/avaliacao_documental/pre_classificacao.py).
+ */
+export function etapasDeInscricao(cronograma = []) {
+  return (Array.isArray(cronograma) ? cronograma : []).filter((etapa) => {
+    const nome = semAcento(etapa?.atividade);
+    return (
+      /inscri/.test(nome) &&
+      !/resultado|recurso|homolog|deferid|valida/.test(nome)
+    );
+  });
+}
+
+const dia = (valor) => (lerData(valor) ? String(valor).slice(0, 10) : null);
+
+/** { inicio, fim } ("AAAA-MM-DD" ou null) das inscrições: o início mais cedo e o fim mais tarde (sem fim, o início). */
+export function janelaDasInscricoes(cronograma = []) {
+  let inicio = null;
+  let fim = null;
+  for (const etapa of etapasDeInscricao(cronograma)) {
+    const comeco = dia(etapa?.inicio);
+    const termino = dia(etapa?.fim) || comeco;
+    if (comeco && (!inicio || comeco < inicio)) inicio = comeco;
+    if (termino && (!fim || termino > fim)) fim = termino;
+  }
+  return { inicio, fim };
+}
+
 /** "AAAA-MM-DD" do fim das inscrições, ou null. */
 export function dataDeCorteDoCronograma(cronograma = []) {
-  let corte = null;
-  for (const etapa of cronograma || []) {
-    const nome = semAcento(etapa?.atividade);
-    if (!/inscri/.test(nome) || /resultado|recurso|homolog|deferid/.test(nome))
-      continue;
-    const fim = lerData(etapa?.fim)
-      ? String(etapa.fim).slice(0, 10)
-      : lerData(etapa?.inicio)
-        ? String(etapa.inicio).slice(0, 10)
-        : null;
-    if (fim && (!corte || fim > corte)) corte = fim;
-  }
-  return corte;
+  return janelaDasInscricoes(cronograma || []).fim;
 }
 
 export const ROTULOS_DOS_AVISOS = Object.freeze({
   EMPATE_PENDENTE: "Empate aguardando sorteio ou decisão",
   SEM_DATA_CORTE: "Sem data de corte da idade",
+  HORA_DE_NASCIMENTO: "Empate decidido pela hora de nascimento",
+  PARCIAIS_DIFERENTES_DA_NOTA: "Parciais que não somam a nota documental",
   NUMERO_INVALIDO: "Número inválido",
   ENTREVISTA_SEM_ANALISE: "Entrevista sem análise ligada",
   CONVOCADO_SEM_ENTREVISTA: "Convocado sem entrevista lançada",

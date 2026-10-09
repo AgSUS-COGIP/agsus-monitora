@@ -1,3 +1,5 @@
+import type { CompetenciaDaFicha, PayloadDasNotas } from "./tipos-da-ficha.ts";
+
 import type {
   Avaliador,
   Convocado,
@@ -38,8 +40,10 @@ export type RoteiroDoEdital = {
   nome?: string;
   versao?: number;
   nome_versao?: string | null;
-  competencias?: { id: string; nome: string; ordem?: number | null }[] | null;
+  competencias?: CompetenciaDaFicha[] | null;
   aspectos?: { id: string; nome?: string; ordem?: number | null }[] | null;
+  escala?: string | null;
+  ausencia_elimina?: boolean;
   [campo: string]: unknown;
 };
 
@@ -99,7 +103,10 @@ export type EstadoDaConducaoComAcoes = {
   ) => Promise<EditalDaLista[]>;
   abrirEdital: (id: string) => Promise<boolean>;
   recarregarEdital: () => Promise<boolean>;
-  lancarNotas: (entrevista: string, dados: unknown) => Promise<Resultado>;
+  lancarNotas: (
+    entrevista: string,
+    dados: PayloadDasNotas,
+  ) => Promise<Resultado>;
   abrirFicha: (id: string | null) => void;
   configurar: (dados: unknown) => Promise<Resultado>;
   convocar: (analises: string[]) => Promise<Resultado>;

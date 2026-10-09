@@ -6,6 +6,9 @@
   RPCs (supabase/migrations/20261006110000_pre_classificacao_e_lote.sql;
   contrato em src/lib/rpc-contrato.js):
     obter_pre_classificacao(p_edital)                 o resultado gravado
+    obter_acompanhamento_inscricoes(p_edital)         (20261009140000) os retratos diários
+                                                      das inscrições, para o cartão
+                                                      "Inscrições" (falha não impede a aba)
     registrar_lista_pre_classificacao(p_edital, p_tipo, p_lote)
                                                       PROVISORIA ou LOTE
     publicar_lista_classificacao(p_lista)             marca a lista como publicada
@@ -56,6 +59,7 @@ import { decidirNoLote } from "./decisao-no-banco.js";
 import { mensagemDoBanco } from "./estado.js";
 
 const RPC_OBTER_PRE_CLASSIFICACAO = "obter_pre_classificacao";
+const RPC_OBTER_INSCRICOES = "obter_acompanhamento_inscricoes";
 const RPC_REGISTRAR_LISTA = "registrar_lista_pre_classificacao";
 const RPC_PUBLICAR_LISTA = "publicar_lista_classificacao";
 const RPC_DESCONGELAR = "descongelar_declarada_pre_classificacao";
@@ -71,6 +75,7 @@ const LIMITE_DO_ACOMPANHAMENTO_MS =
 const INICIAL = Object.freeze({
   editalId: "",
   dados: null,
+  inscricoes: null,
   carregando: false,
   erro: "",
   pedidoEm: null,
@@ -130,11 +135,13 @@ export function criarEstadoDaPreClassificacao({
         : { carregando: true, erro: "" },
     );
     try {
-      const dados = await rpc(RPC_OBTER_PRE_CLASSIFICACAO, {
-        p_edital: editalId,
-      });
+      const [dados, inscricoes] = await Promise.all([
+        rpc(RPC_OBTER_PRE_CLASSIFICACAO, { p_edital: editalId }),
+        // O cartão "Inscrições" é extra: banco sem a migration ou falha = sem cartão.
+        rpc(RPC_OBTER_INSCRICOES, { p_edital: editalId }).catch(() => null),
+      ]);
       if (meu !== pedido) return false;
-      publicar({ dados, carregando: false, erro: "" });
+      publicar({ dados, inscricoes, carregando: false, erro: "" });
       return true;
     } catch (erro) {
       if (meu !== pedido) return false;
