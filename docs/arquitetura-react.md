@@ -301,4 +301,4 @@ Ficou para depois (ainda em `src/modules/` ou no `index.html`):
 4. O CSS da tela de acesso espalhado (`app.css`, `platform-shell.css`,
    `post-152-regression-fixes.css`, `visual-polish.css`, `mobile-app.css`) consolidado em
    `src/app/entrada/entrada.css`; `auth-storage.js` → `src/lib/`, `sidebar-branding.js` → barra
-   lateral; o CSS morto de `body.sidebar-locked` (`app.css`).
+   lateral.
