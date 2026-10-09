@@ -137,6 +137,18 @@ A aba Regra abre no **assistente** (`assistente/`, em TSX, contratos em `assiste
 aceite (refazer a v7 do 93/2026 a partir do PROJ26) está em
 `tests/lib/avaliacao-documental-assistente.test.js`.
 
+
+## Dono da avaliação: planilha ou MONITORA
+
+Ao lado de "Avaliação:" (`origem-da-analise.tsx`), a coordenação da avaliação do edital (e o
+admin global) troca o dono com confirmação e motivo (RPC `definir_origem_analise`, migration
+`20261009200000_fichas_no_painel_das_analises.sql`). Com MONITORA, um gatilho em
+`TB_FICHA_ANALISE` publica cada ficha em `TB_ANALISE_CURRICULAR` (`TP_ORIGEM_REGISTRO` MONITORA):
+Pendente, Em análise, Revisar, Aprovado/Triados ou Reprovado, com responsável, data, parciais, nota
+e parecer. O Painel das análises e a Classificação leem essas linhas sem código especial; a
+sincronização da planilha ignora as linhas e os editais MONITORA. Edital que a planilha já decidiu
+não vira MONITORA por aqui (a virada com adoção é da F8).
+
 ## Arquivos
 
 ```
