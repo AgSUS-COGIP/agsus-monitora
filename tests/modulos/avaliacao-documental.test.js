@@ -85,6 +85,13 @@ const PERGUNTAS_DA_CARGA = (pode) => ({
           outras: 1,
           distintas: 2,
         },
+        {
+          coluna: "Pergunta 9 - Informe seu CPF",
+          respostas: [],
+          outras: 3,
+          distintas: 3,
+          dado_pessoal: true,
+        },
       ]
     : [],
 });
@@ -435,6 +442,13 @@ describe("regra da avaliação (AM-2)", () => {
     expect(pedidos).toEqual([
       ["obter_perguntas_carga_analise", { p_edital: "e93" }],
     ]);
+    // Pergunta que pede dado pessoal aparece sem respostas, com o aviso.
+    const cpf = secao.querySelector(
+      "[data-pergunta='Pergunta 9 - Informe seu CPF']",
+    );
+    expect(cpf.querySelector("[data-dado-pessoal]").textContent).toBe(
+      "Dado pessoal — não resumido",
+    );
   });
 });
 

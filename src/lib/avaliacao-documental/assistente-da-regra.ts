@@ -1053,6 +1053,21 @@ export function respostasDaPergunta(
   return [...porChave.values()].sort((a, b) => b.quantidade - a.quantidade);
 }
 
+/** Alguma coluna da carga que casa com a pergunta pede dado pessoal (respostas não resumidas)? */
+export function perguntaComDadoPessoal(
+  pergunta: Pergunta | null | undefined,
+  perguntasDaCarga: ReadonlyArray<PerguntaDaCarga>,
+): boolean {
+  if (!temTexto(pergunta)) return false;
+  const colunas = new Set(
+    colunasDaPergunta(
+      Object.fromEntries(perguntasDaCarga.map((p) => [p.coluna, ""])),
+      pergunta,
+    ) as string[],
+  );
+  return perguntasDaCarga.some((p) => p.dado_pessoal && colunas.has(p.coluna));
+}
+
 /** A pergunta sugerida para a nota declarada de uma parcial: a do bloco que não é anexo. */
 export function perguntaSugeridaDaParcial(
   regra: RegraAnalise,

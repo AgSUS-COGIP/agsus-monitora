@@ -18,6 +18,8 @@ import resumo_das_perguntas  # noqa: E402
 from monitora import supabase_rpc  # noqa: E402
 from monitora.avaliacao_documental.perguntas_da_carga import (  # noqa: E402
     eh_coluna_de_pergunta,
+    parece_dado_pessoal,
+    pede_dado_pessoal,
     resumir_perguntas,
     texto_da_resposta,
 )
@@ -83,6 +85,75 @@ class ContaDoResumo(unittest.TestCase):
                 {"coluna": P5, "respostas": [{"valor": "PcD", "quantidade": 2}], "outras": 0, "distintas": 1},
             ],
         )
+
+
+class DadoPessoalForaDoResumo(unittest.TestCase):
+    PEDEM = [
+        "Pergunta 2 - Para fins de identificação de seu cadastro, favor nos informe seu CPF:Ex: 000.000.000-00",
+        "Pergunta 3 - Informe sua data de nascimento (dd/mm/aaaa)",
+        "Pergunta 4 - Número do RG",
+        "Pergunta 5 - Seu e-mail para contato",
+        "Pergunta 6 - Telefone / celular (WhatsApp)",
+        "Pergunta 7 - Endereço completo",
+        "Pergunta 8 - CEP",
+        "Pergunta 9 - Nome da mãe",
+        "Pergunta 10 - Número do PIS/NIS",
+        "Pergunta 11 - Matrícula no conselho de classe",
+        "Pergunta 12 - EMAIL",
+    ]
+    NAO_PEDEM = [
+        "Pergunta 1 - Sistema de concorrência",
+        "Pergunta 13 - Experiência Profissional em atividades compatíveis com o cargo",
+        "Pergunta 14 - Candidatos concorrendo às vagas destinadas a Pretos ou Pardos, grave um vídeo",
+        "Pergunta 15 - Possui curso de pós-graduação (especialização)?",
+    ]
+
+    def test_enunciados_que_pedem_dado_pessoal(self):
+        for coluna in self.PEDEM:
+            self.assertTrue(pede_dado_pessoal(coluna), coluna)
+        for coluna in self.NAO_PEDEM:
+            self.assertFalse(pede_dado_pessoal(coluna), coluna)
+
+    def test_pergunta_de_dado_pessoal_entra_sem_respostas_e_marcada(self):
+        cpf = self.PEDEM[0]
+        linhas = [{cpf: "--"}, {cpf: "--"}, {cpf: "000.000.001-91"}, {cpf: "000.000.001-91"}, {cpf: "x"}]
+        [p] = resumir_perguntas([cpf], linhas)
+        self.assertEqual(p, {"coluna": cpf, "respostas": [], "outras": 3, "distintas": 3, "dado_pessoal": True})
+        self.assertNotIn("000.000.001-91", str(p))
+
+    def test_respostas_com_cara_de_dado_pessoal_viram_outras(self):
+        for valor in [
+            "00000000191",
+            "000.000.001-91",
+            "000000001-91",
+            "pessoa.ficticia@exemplo.invalid",
+            "(61) 99999-0000",
+            "+55 61 3333-0000",
+            "61999990000",
+            "99999-0000",
+            "70000-000",
+            "70.000-000",
+            "70000000",
+        ]:
+            self.assertTrue(parece_dado_pessoal(valor), valor)
+        for valor in ["Ampla concorrência", "2 anos e 6 meses", "10 pontos", "--", "2026", "1", "Sim"]:
+            self.assertFalse(parece_dado_pessoal(valor), valor)
+
+        p5 = "Pergunta 5 - Sistema de concorrência"
+        linhas = [
+            {p5: "Ampla concorrência"},
+            {p5: "Ampla concorrência"},
+            {p5: "00000000191"},
+            {p5: "00000000191"},  # repetido, mas é CPF: não sai
+            {p5: "pessoa.ficticia@exemplo.invalid"},
+            {p5: "pessoa.ficticia@exemplo.invalid"},
+            {p5: "Única"},
+        ]
+        [p] = resumir_perguntas([p5], linhas)
+        self.assertEqual(p["respostas"], [{"valor": "Ampla concorrência", "quantidade": 2}])
+        self.assertEqual((p["outras"], p["distintas"]), (3, 4))
+        self.assertNotIn("dado_pessoal", p)
+        self.assertNotIn("00000000191", str(p))
 
 
 class PassoDoRobo(unittest.TestCase):

@@ -240,14 +240,20 @@ function Perguntas({ e, estado, regra, aoMudar }) {
                 Pontuar na nota declarada
               </button>
             </div>
-            <span className="ui-texto-secundario">
-              {p.respostas
-                .map((r) => `${r.valor} (${r.quantidade})`)
-                .join(" · ")}
-              {p.outras
-                ? `${p.respostas.length ? " · " : ""}${p.outras} resposta(s) única(s)`
-                : ""}
-            </span>
+            {p.dado_pessoal ? (
+              <span className="ui-texto-secundario" data-dado-pessoal="sim">
+                Dado pessoal — não resumido
+              </span>
+            ) : (
+              <span className="ui-texto-secundario">
+                {p.respostas
+                  .map((r) => `${r.valor} (${r.quantidade})`)
+                  .join(" · ")}
+                {p.outras
+                  ? `${p.respostas.length ? " · " : ""}${p.outras} resposta(s) fora do resumo (únicas ou com cara de dado pessoal)`
+                  : ""}
+              </span>
+            )}
           </li>
         ))}
       </ul>
