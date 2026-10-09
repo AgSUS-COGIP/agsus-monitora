@@ -9,10 +9,14 @@
   (/Company/VacancyTests/GetViewerLogArquivo?…, abre o visualizador da
   Empregare com login, não expira) com a Ordem, o enunciado e a coluna do
   Excel casada (pela Ordem, confirmada pelo enunciado); por resposta, o link de impressão (/Company/VacancyTests/PrintResult?…).
-  obter_ficha_analise devolve em `empregare.anexos` e `empregare.respostas`.
+  obter_ficha_analise devolve em `empregare.anexos` e `empregare.respostas` só os
+  da resposta vigente (a mais nova com pergunta lida — 20261009210000); quem
+  respondeu o questionário mais de uma vez tem as outras em
+  `empregare.envios_anteriores`, cada uma com os arquivos.
 
     enderecos.anexos = anexosDaEmpregare(dados.empregare);        // ficha.jsx
     enderecos.impressao = impressaoDasRespostas(dados.empregare);
+    enderecos.anteriores = enviosAnterioresDaEmpregare(dados.empregare);
     const endereco = enderecoDoAnexo(enderecos, coluna);           // { href, destino } | null
     const { rotulo, dica } = apresentacaoDoAnexo(coluna, endereco);
   destino "arquivo" → "Ver documento" (sem dica; "2 arquivos nesta pergunta" com mais de um
@@ -34,13 +38,24 @@ export type AnexoDaEmpregare = {
   link: string;
 };
 
+/** Um envio anterior do questionário (obter_ficha_analise → empregare.envios_anteriores). */
+export type EnvioAnterior = {
+  resposta: string;
+  /** A impressão das respostas desse envio, ou null. */
+  impressao: string | null;
+  arquivos: AnexoDaEmpregare[];
+};
+
 /** Os endereços que a ficha já resolveu (ficha.js), os anexos e a impressão das respostas. */
 export type EnderecosDaEmpregare = {
   candidato: string | null;
   vaga: string | null;
   vagaDireta: boolean;
+  /** Só os da resposta vigente do questionário. */
   anexos?: readonly AnexoDaEmpregare[];
   impressao?: string | null;
+  /** As outras respostas ao questionário, da mais nova para a mais antiga. */
+  anteriores?: readonly EnvioAnterior[];
 };
 
 /** Para onde o link leva. */
@@ -115,9 +130,8 @@ const linkValido = (padrao: RegExp, link: unknown) => {
   return texto.length <= TAMANHO_DO_LINK && padrao.test(texto) ? texto : null;
 };
 
-/** Os anexos da RPC (empregare.anexos), validados; o resto fica de fora. */
-export function anexosDaEmpregare(empregare: unknown): AnexoDaEmpregare[] {
-  const bruto = (empregare as { anexos?: unknown } | null | undefined)?.anexos;
+/** Uma lista de anexos da RPC, validados; o resto fica de fora. */
+function anexosValidos(bruto: unknown, resposta?: string): AnexoDaEmpregare[] {
   if (!Array.isArray(bruto)) return [];
   const saida: AnexoDaEmpregare[] = [];
   for (const item of bruto as Record<string, unknown>[]) {
@@ -125,13 +139,41 @@ export function anexosDaEmpregare(empregare: unknown): AnexoDaEmpregare[] {
     const pergunta = String(item?.pergunta ?? "");
     if (!link || !/^[0-9]{1,20}$/.test(pergunta)) continue;
     saida.push({
-      resposta: String(item.resposta ?? ""),
+      resposta: resposta ?? String(item.resposta ?? ""),
       pergunta,
       arquivo: Number(item.arquivo) || 1,
       ordem: Number.isInteger(item.ordem) ? (item.ordem as number) : null,
       enunciado: limpar(item.enunciado),
       coluna: limpar(item.coluna),
       link,
+    });
+  }
+  return saida;
+}
+
+/** Os anexos da resposta vigente (empregare.anexos), validados; o resto fica de fora. */
+export function anexosDaEmpregare(empregare: unknown): AnexoDaEmpregare[] {
+  return anexosValidos(
+    (empregare as { anexos?: unknown } | null | undefined)?.anexos,
+  );
+}
+
+/** Os envios anteriores do questionário (empregare.envios_anteriores), validados, na ordem da RPC. */
+export function enviosAnterioresDaEmpregare(
+  empregare: unknown,
+): EnvioAnterior[] {
+  const bruto = (
+    empregare as { envios_anteriores?: unknown } | null | undefined
+  )?.envios_anteriores;
+  if (!Array.isArray(bruto)) return [];
+  const saida: EnvioAnterior[] = [];
+  for (const item of bruto as Record<string, unknown>[]) {
+    const resposta = String(item?.resposta ?? "");
+    if (!/^[0-9]{1,20}$/.test(resposta)) continue;
+    saida.push({
+      resposta,
+      impressao: linkValido(LINK_DA_IMPRESSAO, item.link_impressao),
+      arquivos: anexosValidos(item.arquivos, resposta),
     });
   }
   return saida;

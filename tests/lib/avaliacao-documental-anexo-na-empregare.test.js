@@ -7,6 +7,7 @@ import {
   apresentacaoDoAnexo,
   enderecoDoAnexo,
   enunciadoCompleto,
+  enviosAnterioresDaEmpregare,
   impressaoDasRespostas,
   numeroDaPergunta,
 } from "../../src/lib/avaliacao-documental/anexo-na-empregare.ts";
@@ -281,5 +282,53 @@ describe("casamento do enunciado sem a coluna gravada (texto do edital)", () => 
         "Anexe a comprovação de Nível Superior:(frente e",
       ).map((a) => a.pergunta),
     ).toEqual(["601"]);
+  });
+});
+
+describe("envios anteriores do questionário (empregare.envios_anteriores)", () => {
+  it("valida cada envio e os arquivos dele; a resposta vem do envio", () => {
+    const envios = enviosAnterioresDaEmpregare({
+      envios_anteriores: [
+        {
+          resposta: "7995988",
+          link_impressao: IMPRESSAO,
+          perguntas: 25,
+          arquivos: [
+            {
+              pergunta: "179828",
+              arquivo: 1,
+              ordem: 4,
+              enunciado: "Anexe o documento de identificação com foto",
+              coluna:
+                "Pergunta 4 - Anexe o documento de identificação com foto",
+              link: ARQ(179828, "rg"),
+            },
+            { pergunta: "179829", arquivo: 1, link: "https://exemplo.com/x" },
+          ],
+        },
+        { resposta: "x", arquivos: [] },
+        { resposta: "7990000", link_impressao: "javascript:alert(1)" },
+      ],
+    });
+    expect(envios).toEqual([
+      {
+        resposta: "7995988",
+        impressao: IMPRESSAO,
+        arquivos: [
+          {
+            resposta: "7995988",
+            pergunta: "179828",
+            arquivo: 1,
+            ordem: 4,
+            enunciado: "Anexe o documento de identificação com foto",
+            coluna: "Pergunta 4 - Anexe o documento de identificação com foto",
+            link: ARQ(179828, "rg"),
+          },
+        ],
+      },
+      { resposta: "7990000", impressao: null, arquivos: [] },
+    ]);
+    expect(enviosAnterioresDaEmpregare(null)).toEqual([]);
+    expect(enviosAnterioresDaEmpregare({ envios_anteriores: {} })).toEqual([]);
   });
 });
