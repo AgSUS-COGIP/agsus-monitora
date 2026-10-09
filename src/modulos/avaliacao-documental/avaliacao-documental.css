@@ -1218,6 +1218,50 @@
   justify-content: space-between;
   gap: var(--space-2);
 }
+/* Passo 5: a ação principal (salvar, concluir, fechar) presa ao pé, sempre à vista. */
+.avd-ast-navegacao[data-fixa="sim"] {
+  position: sticky;
+  bottom: var(--recuo-da-navegacao-inferior, 0px);
+  z-index: var(--z-sticky, 100);
+  padding: var(--space-3) 0;
+  border-top: 1px solid var(--border-subtle);
+  background: var(--surface-card);
+}
+/* Passo 5: o cartão de estado no topo (sem mudanças, pronto, salvo). */
+.avd-ast-estado {
+  display: grid;
+  gap: var(--space-2);
+  border-left: 4px solid var(--brand-primary);
+}
+.avd-ast-estado[data-modo="sem-mudancas"],
+.avd-ast-estado[data-modo="concluido"],
+.avd-ast-estado[data-modo="salvo"] {
+  border-left-color: var(--state-success, var(--brand-primary));
+}
+.avd-ast-estado-titulo {
+  margin: 0;
+  color: var(--text-primary);
+  font-size: var(--text-body);
+  font-weight: var(--font-weight-semibold, 600);
+}
+.avd-ast-estado-titulo i {
+  color: var(--brand-primary);
+}
+.avd-ast-estado-texto {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--text-body-sm);
+}
+.avd-ast-estado-faltam {
+  display: grid;
+  gap: var(--space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.avd-ast-estado-faltam .avd-ast-falta-item > i:first-child {
+  color: var(--state-danger);
+}
 
 @media (max-width: 720px) {
   .avd-ast-passos {
@@ -1253,4 +1297,10 @@
   .avd-ast-legenda .btn {
     margin-left: 0;
   }
+}
+
+/* Assistente fechado (passo 5 › Fechar): o resumo da regra e "Abrir o assistente". */
+.avd-ast-fechado {
+  display: grid;
+  gap: var(--space-3);
 }

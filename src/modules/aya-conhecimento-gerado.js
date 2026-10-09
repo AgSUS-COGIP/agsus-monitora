@@ -713,7 +713,7 @@ export const VERBETES_AYA = Object.freeze([
       "assistente ou modo avancado",
     ],
     resposta:
-      'Na aba Regra, quem coordena o edital escolhe "Assistente" (o padrão) ou "Modo avançado"; os dois mexem no mesmo rascunho, e a escolha fica lembrada neste navegador. O assistente ("Nova regra" ou "Editar regra") tem cinco passos, e dá para ir e voltar entre eles: 1) Ponto de partida: continuar da versão vigente, copiar a regra conferida de outro edital da mesma área (aparece o número, a unidade e a versão), usar um modelo ou começar do zero — sempre uma cópia independente, que não muda a origem; 2) O que vale e o que elimina: um cardápio de cartões com caixa, começando pelo grupo "Na inscrição" (inscrição cancelada, questionário não finalizado, reprovado na Empregare, termo recusado e o corte por pontos mínimos, que eliminam antes de qualquer análise) e seguindo com os requisitos que eliminam (identidade, formação exigida, conselho de classe e outros documentos, com o item do edital e os motivos), titulação (pontos por título e por nível, vale o maior ou somam, teto), cursos (faixas de horas, pontos, teto, por nível), experiência (mínimo exigido, por mês ou por período, só além do mínimo, teto, por nível), critério étnico (indígena e aldeia; só na Saúde Indígena), e as cotas; o corte por pontos mínimos diz a nota usada (declarada na inscrição ou ART). Marcado, o cartão abre só os seus campos, já com valores sugeridos (do ponto de partida, dos modelos e das regras da área); desmarcado, some da regra, e marcar de novo traz de volta o que estava; 3) Perguntas da Empregare; 4) Nota mínima e desempate; 5) Testar e salvar, nesta ordem: o resumo, a comparação de versões, o "Testar com um candidato fictício" (fechado até abrir) e, por último, o nome da versão, o motivo e o salvar, que cria a versão nova (na primeira versão, o motivo diz de onde ela veio). Ao lado do botão aparece o que falta para salvar. O que o assistente não mostra (distribuição, revisão, textos do parecer, observações prontas) continua no modo avançado e não muda.',
+      'Na aba Regra, quem coordena o edital escolhe "Assistente" (o padrão) ou "Modo avançado"; os dois mexem no mesmo rascunho, e a escolha fica lembrada neste navegador. O assistente ("Nova regra" ou "Editar regra") tem cinco passos, e dá para ir e voltar entre eles: 1) Ponto de partida: continuar da versão vigente, copiar a regra conferida de outro edital da mesma área (aparece o número, a unidade e a versão), usar um modelo ou começar do zero — sempre uma cópia independente, que não muda a origem; 2) O que vale e o que elimina: um cardápio de cartões com caixa, começando pelo grupo "Na inscrição" (inscrição cancelada, questionário não finalizado, reprovado na Empregare, termo recusado e o corte por pontos mínimos, que eliminam antes de qualquer análise) e seguindo com os requisitos que eliminam (identidade, formação exigida, conselho de classe e outros documentos, com o item do edital e os motivos), titulação (pontos por título e por nível, vale o maior ou somam, teto), cursos (faixas de horas, pontos, teto, por nível), experiência (mínimo exigido, por mês ou por período, só além do mínimo, teto, por nível), critério étnico (indígena e aldeia; só na Saúde Indígena), e as cotas; o corte por pontos mínimos diz a nota usada (declarada na inscrição ou ART). Marcado, o cartão abre só os seus campos, já com valores sugeridos (do ponto de partida, dos modelos e das regras da área); desmarcado, some da regra, e marcar de novo traz de volta o que estava; 3) Perguntas da Empregare; 4) Nota mínima e desempate; 5) Testar e salvar: no topo, um cartão diz em que pé está (sem mudanças, pronto para salvar com o que falta, ou salvo); depois o resumo, a comparação de versões, o "Testar com um candidato fictício" (fechado até abrir) e o nome da versão e o motivo. O botão principal fica preso ao pé e diz o que vai acontecer ("Salvar como Versão 2", "Concluir sem mudanças" ou "Fechar o assistente"); salvar cria a versão nova (na primeira versão, o motivo diz de onde ela veio). O que o assistente não mostra (distribuição, revisão, textos do parecer, observações prontas) continua no modo avançado e não muda.',
     fato: "No MONITORA, o assistente da regra da avaliação documental tem cinco passos (ponto de partida, cardápio do que vale e do que elimina, perguntas da Empregare, nota mínima e desempate, testar e salvar) e grava o mesmo formato de regra do modo avançado.",
     fonte:
       "src/modulos/avaliacao-documental/assistente/; src/lib/avaliacao-documental/assistente-da-regra.ts",
@@ -765,6 +765,29 @@ export const VERBETES_AYA = Object.freeze([
   },
   {
     arquivo: "regras-da-avaliacao-documental.md",
+    titulo: "Concluir o assistente (passo 5)",
+    perguntas: [
+      "passo 5 travado",
+      "nao consigo finalizar o assistente",
+      "fica travado no 5",
+      "concluir o assistente",
+      "concluir sem mudancas",
+      "fechar o assistente",
+      "regra conferida no assistente",
+      "nao mudei nada no assistente",
+      "depois de salvar a regra",
+      "marcar como conferida no assistente",
+      "abrir o assistente de novo",
+    ],
+    resposta:
+      'O passo 5 sempre tem uma saída, no botão preso ao pé do assistente. Sem nenhuma mudança, o cartão do topo diz "Sem mudanças — a Versão 1 continua valendo (Conferida)": "Concluir sem mudanças" marca o passo 5 com ✓ e nada é gravado; "Fechar o assistente" volta ao resumo da regra (com "Abrir o assistente") e "Voltar ao passo 2" leva ao cardápio. Com mudanças, o cartão diz "Pronto para salvar como Versão N" e o que falta; cada item leva ao campo. Depois de salvar, o assistente fica no passo 5 com ✓ e a confirmação "Versão N salva": quem pode conferir (outra pessoa da coordenação do edital, ou o administrador global) marca como conferida ali mesmo; quem salvou a versão vê que outra pessoa precisa conferir (dupla conferência). Atenção: abrir o passo 3 pode ligar sozinho perguntas da Empregare que estavam sem ligação, e isso já conta como mudança.',
+    fato: "",
+    fonte:
+      "src/modulos/avaliacao-documental/assistente/estado-do-passo-5.tsx; src/modulos/avaliacao-documental/assistente/assistente.tsx",
+    abrir: "avaliacao-documental",
+  },
+  {
+    arquivo: "regras-da-avaliacao-documental.md",
     titulo: "O que falta para salvar a regra",
     perguntas: [
       "salvar desabilitado",
@@ -777,7 +800,7 @@ export const VERBETES_AYA = Object.freeze([
       "requisito sem item do edital",
     ],
     resposta:
-      'No passo 5 do assistente, ao lado do "Salvar como versão N", aparece o que falta. "Para salvar, falta" (o botão fica desabilitado): nenhuma mudança em relação à vigente, o motivo com menos de 10 caracteres, o nome da versão fora de 3 a 80 caracteres e os erros da regra ou da classificação. "Confira também" (não impede): pergunta sem ligação com a Empregare e requisito sem item do edital. Clicar num item leva ao passo e ao campo.',
+      'No passo 5 do assistente, o cartão do topo lista o que falta para "Salvar como Versão N" (o botão, preso ao pé, fica desabilitado até resolver): o motivo com menos de 10 caracteres, o nome da versão fora de 3 a 80 caracteres e os erros da regra ou da classificação. Perto do motivo, "Confira também" (não impede): pergunta sem ligação com a Empregare e requisito sem item do edital. Clicar num item leva ao passo e ao campo. Sem nenhuma mudança não há o que salvar: o botão vira "Concluir sem mudanças".',
     fato: "",
     fonte:
       "src/lib/avaliacao-documental/pendencias-do-salvar.ts; src/modulos/avaliacao-documental/assistente/conferir.tsx",

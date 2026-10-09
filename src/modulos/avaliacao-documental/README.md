@@ -119,7 +119,10 @@ A aba Regra abre no **assistente** (`assistente/`, em TSX, contratos em `assiste
 5. testar e salvar (`conferir.tsx`), nesta ordem: o resumo de uma página (`resumo-da-regra.ts`,
    "Copiar para o SEI" e imprimir), a comparação de versões (`comparar-regras.ts`), `previa.tsx`
    (fechada) e nome + motivo + salvar, com a lista do que falta ao lado do botão
-   (`pendencias-do-salvar.ts`; cada item leva ao passo e ao campo).
+   (`pendencias-do-salvar.ts`; cada item leva ao passo e ao campo). No topo, o cartão de estado
+   (`estado-do-passo-5.tsx`: sem mudanças, pronto, salvo — com "Marcar como conferida" quando
+   pode) e, preso ao pé, o botão do que vai acontecer (salvar, concluir sem mudanças ou fechar).
+   A aba remonta a cada versão; `regraSalvaAgora` (estado.js) faz o assistente voltar ao passo 5.
 
 "Conferida" é dupla conferência: quem salvou a versão não confere (o banco recusa em
 `conferir_regra_analise`; o administrador global pode), e a regra vigente diz à tela
