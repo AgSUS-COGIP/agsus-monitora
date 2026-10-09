@@ -461,11 +461,18 @@ describe("tela de Classificação", () => {
     const modal = document.getElementById("classificacaoDocumento");
     const previa = () =>
       modal.querySelector("iframe.classificacao-documento-previa");
-    expect(previa().getAttribute("sandbox")).toBe("");
+    // Sem script na prévia: só o mesmo origem, para medir a altura da folha.
+    expect(previa().getAttribute("sandbox")).toBe("allow-same-origin");
     expect(previa().getAttribute("srcdoc")).toContain(
       "RESULTADO FINAL - PROCESSO SELETIVO",
     );
     expect(previa().getAttribute("srcdoc")).toContain("AGÊNCIA DE TESTE");
+    // Painel recolhível com as abas "Dados" | "Textos".
+    const textosDoModelo = () =>
+      modal
+        .querySelector("[data-campo-documento='finais']")
+        .closest("[role='tabpanel']");
+    expect(textosDoModelo().hidden).toBe(true);
     await digitar(
       modal.querySelector("[data-campo-documento='processo']"),
       "AGSUS.016954/2026-81",
@@ -473,6 +480,13 @@ describe("tela de Classificação", () => {
     expect(previa().getAttribute("srcdoc")).toContain(
       "SEI AGSUS.016954/2026-81",
     );
+    await clicar(modal.querySelector(".ui-abas [data-aba='textos']"));
+    expect(textosDoModelo().hidden).toBe(false);
+    expect(
+      modal
+        .querySelector("[data-campo-documento='processo']")
+        .closest("[role='tabpanel']").hidden,
+    ).toBe(true);
     const finais = modal.querySelector("[data-campo-documento='finais']");
     await digitar(finais, "Texto final do edital.");
     expect(previa().getAttribute("srcdoc")).toContain(
@@ -508,6 +522,69 @@ describe("tela de Classificação", () => {
     expect(
       chamada[1].p_configuracao.documento.modelos.FINAL_FINAL,
     ).not.toHaveProperty("preliminares");
+  });
+
+  it("Como fica no SEI: folha A4 com zoom, painel recolhível, tela cheia e rodapé fixo; Esc fecha", async () => {
+    await montar(supabaseFalso());
+    await abrirEdital();
+    await clicar(secao.querySelector("[data-acao='gerar']"));
+    await esperar();
+    await clicar(secao.querySelector("[data-acao='ver-documento']"));
+    await esperar();
+    const modal = document.getElementById("classificacaoDocumento");
+    const cartao = modal.querySelector(".classificacao-documento");
+    const escala = () =>
+      modal.querySelector(".classificacao-documento-escala").textContent;
+    const folha = () =>
+      modal.querySelector("iframe.classificacao-documento-previa");
+    // A folha tem a largura de uma A4 e começa ajustada (sem largura medida, 100%).
+    expect(folha().style.width).toBe("794px");
+    expect(escala()).toBe("100%");
+    expect(
+      modal
+        .querySelector("[data-acao='zoom-ajustar']")
+        .getAttribute("aria-pressed"),
+    ).toBe("true");
+    await clicar(modal.querySelector("[data-acao='zoom-mais']"));
+    expect(escala()).toBe("110%");
+    expect(folha().style.transform).toBe("scale(1.1)");
+    await clicar(modal.querySelector("[data-acao='zoom-menos']"));
+    await clicar(modal.querySelector("[data-acao='zoom-menos']"));
+    expect(escala()).toBe("90%");
+    expect(
+      modal
+        .querySelector("[data-acao='zoom-ajustar']")
+        .getAttribute("aria-pressed"),
+    ).toBe("false");
+    await clicar(modal.querySelector("[data-acao='zoom-ajustar']"));
+    expect(escala()).toBe("100%");
+
+    // O painel dos textos recolhe; a prévia fica com a largura toda.
+    const painel = modal.querySelector(".classificacao-documento-painel");
+    await clicar(modal.querySelector("[data-acao='alternar-painel']"));
+    expect(painel.hidden).toBe(true);
+    expect(
+      modal
+        .querySelector(".classificacao-documento-corpo")
+        .classList.contains("is-sem-painel"),
+    ).toBe(true);
+    await clicar(modal.querySelector("[data-acao='alternar-painel']"));
+    expect(painel.hidden).toBe(false);
+
+    await clicar(modal.querySelector("[data-acao='tela-cheia']"));
+    expect(cartao.classList.contains("is-tela-cheia")).toBe(true);
+    await clicar(modal.querySelector("[data-acao='tela-cheia']"));
+    expect(cartao.classList.contains("is-tela-cheia")).toBe(false);
+
+    // Restaurar e Salvar ficam no rodapé, fora da área que rola.
+    const rodape = modal.querySelector(".classificacao-documento-rodape");
+    expect(rodape.querySelector("[data-acao='restaurar-textos']")).toBeTruthy();
+    expect(rodape.querySelector("[data-acao='salvar-textos']")).toBeTruthy();
+    expect(rodape.querySelector("[data-acao='copiar-sei']")).toBeTruthy();
+
+    document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" }));
+    await esperar();
+    expect(document.getElementById("classificacaoDocumento")).toBeNull();
   });
 
   it("sem geração, exportar fica desligado; leitor não vê Gerar", async () => {

@@ -1,3 +1,18 @@
+import type { Avaliador, Convocado } from "../../lib/fila-de-conducao.ts";
+import type { DadosDoEdital } from "./tipos.ts";
+import type { Comparecimento } from "./cabecalho-da-ficha.tsx";
+import type { OpcaoDeNota } from "./campo-de-nota.tsx";
+import type { AbaDaFicha } from "./abas-da-ficha.tsx";
+import type { LinhaDaMatriz } from "./matriz-de-notas.tsx";
+import type {
+  AspectoDaFicha,
+  CompetenciaDaFicha,
+  DadosDaLinha,
+  EstadoLocalDaFicha,
+  ModoDaFicha,
+  PayloadDasNotas,
+  PropriedadesDaFicha,
+} from "./tipos-da-ficha.ts";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   aspectosDoRoteiro,
@@ -92,12 +107,12 @@ import { numeroBR, ResultadoDaFicha } from "./resultado-da-ficha.tsx";
 */
 
 const CHAVE_DO_MODO = "monitora.entrevistas.ficha-de-notas.modo";
-const MODOS = [
+const MODOS: { valor: ModoDaFicha; rotulo: string }[] = [
   { valor: "avaliador", rotulo: "Por avaliador" },
   { valor: "competencia", rotulo: "Por competência" },
 ];
 
-function lerModo() {
+function lerModo(): ModoDaFicha {
   try {
     return globalThis.localStorage?.getItem(CHAVE_DO_MODO) === "competencia"
       ? "competencia"
@@ -106,7 +121,7 @@ function lerModo() {
     return "avaliador";
   }
 }
-function guardarModo(modo) {
+function guardarModo(modo: ModoDaFicha) {
   try {
     globalThis.localStorage?.setItem(CHAVE_DO_MODO, modo);
   } catch {
@@ -114,15 +129,23 @@ function guardarModo(modo) {
   }
 }
 
-function estadoInicial(dados, convocado, aspectos) {
+function estadoInicial(
+  dados: DadosDoEdital,
+  convocado: Convocado,
+  aspectos: AspectoDaFicha[],
+): EstadoLocalDaFicha {
   const bancas = bancasDoEdital(dados.avaliadores);
   const mapa = mapaDasAvaliacoes(convocado.avaliacoes, aspectos);
   const observacoes = Object.fromEntries(
     (convocado.observacoes || []).map((o) => [o.avaliador, o.texto || ""]),
   );
   return {
-    compareceu: convocado.compareceu || null,
-    banca: convocado.banca ?? (bancas.length === 1 ? bancas[0] : null),
+    compareceu:
+      convocado.compareceu === "S" || convocado.compareceu === "N"
+        ? convocado.compareceu
+        : null,
+    banca:
+      convocado.banca ?? (bancas.length === 1 ? (bancas[0] ?? null) : null),
     original: mapa,
     mapa,
     observacoesOriginais: observacoes,
@@ -133,14 +156,17 @@ function estadoInicial(dados, convocado, aspectos) {
 }
 
 /* As observações que mudaram (texto sem espaços nas pontas; vazio = apagar). */
-function observacoesAlteradas(originais, atuais) {
+function observacoesAlteradas(
+  originais: Record<string, string>,
+  atuais: Record<string, string>,
+) {
   return [...new Set([...Object.keys(originais), ...Object.keys(atuais)])]
     .filter((id) => (originais[id] || "").trim() !== (atuais[id] || "").trim())
     .map((id) => ({ avaliador: id, texto: (atuais[id] || "").trim() || null }));
 }
 
-const vazio = (valor) => (valor ?? "") === "";
-const horaCurta = (data) =>
+const vazio = (valor: unknown) => (valor ?? "") === "";
+const horaCurta = (data: Date) =>
   data.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
 
 /*
@@ -148,17 +174,23 @@ const horaCurta = (data) =>
   competências sem nota não importam); várias competências sem nota viram
   uma frase só.
 */
-function motivosCurtos(motivos, compareceu) {
+function motivosCurtos(motivos: string[], compareceu: Comparecimento) {
   if (compareceu === "N") return motivos.slice(0, 1);
   const semNota = motivos.filter((m) => m.startsWith("Sem nota em "));
   if (semNota.length < 2) return motivos;
-  const primeiro = motivos.indexOf(semNota[0]);
+  const primeiro = motivos.indexOf(semNota[0] ?? "");
   const resto = motivos.filter((m) => !semNota.includes(m));
   resto.splice(primeiro, 0, `Sem nota em ${semNota.length} competências.`);
   return resto;
 }
 
-function LegendaDaEscala({ niveis, destaque }) {
+function LegendaDaEscala({
+  niveis,
+  destaque,
+}: {
+  niveis: readonly OpcaoDeNota[];
+  destaque?: number;
+}) {
   if (!niveis.length) return null;
   return (
     <p className="entrevistas-legenda" aria-label="Níveis da escala">
@@ -214,18 +246,18 @@ export function FichaDoCandidato({
   aoAbrir,
   aoFechar,
   copiar = undefined,
-}) {
+}: PropriedadesDaFicha) {
   const roteiro = dados.configuracao?.roteiro || null;
   const aspectos = useMemo(() => aspectosDoRoteiro(roteiro), [roteiro]);
   const [f, setF] = useState(() => estadoInicial(dados, convocado, aspectos));
   const [erro, setErro] = useState("");
   const [modo, setModo] = useState(lerModo);
-  const [aba, setAba] = useState(null);
-  const [emFoco, setEmFoco] = useState(null);
-  const [salvoEm, setSalvoEm] = useState(null);
+  const [aba, setAba] = useState<string | null>(null);
+  const [emFoco, setEmFoco] = useState<string | null>(null);
+  const [salvoEm, setSalvoEm] = useState<Date | null>(null);
   const [pedidoDeAvanco, setPedidoDeAvanco] = useState(0);
-  const [focarNaAba, setFocarNaAba] = useState(null);
-  const principal = useRef(null);
+  const [focarNaAba, setFocarNaAba] = useState<string | null>(null);
+  const principal = useRef<HTMLButtonElement | null>(null);
 
   /* O payload novo (depois de salvar ou recarregar) é a verdade: a ficha recomeça dele. */
   useEffect(() => {
@@ -244,7 +276,8 @@ export function FichaDoCandidato({
   );
   const bancas = bancasDoEdital(dados.avaliadores);
   const avaliadores = avaliadoresDaFicha(dados.avaliadores, convocado, f.banca);
-  const avalia = (a, c) => avaliaACompetencia(a, c.id, competencias);
+  const avalia = (a: Avaliador, c: CompetenciaDaFicha) =>
+    avaliaACompetencia(a, c.id, competencias);
   const atribuicoes = useMemo(
     () => atribuicoesDaBanca(dados.avaliadores, competencias),
     [dados.avaliadores, competencias],
@@ -271,8 +304,9 @@ export function FichaDoCandidato({
     (chave) => lerNumero(f.original[chave]) !== lerNumero(f.mapa[chave]),
   ).length;
   const incompletas = aspectosIncompletos(f.mapa, aspectos);
-  const mudouComparecimento =
-    f.compareceu && f.compareceu !== (convocado.compareceu || null);
+  const mudouComparecimento = Boolean(
+    f.compareceu && f.compareceu !== (convocado.compareceu || null),
+  );
   const mudouBanca =
     f.banca !== null && Number(f.banca) !== Number(convocado.banca ?? NaN);
   const invalidas = Object.entries(f.mapa).filter(([chave, valor]) => {
@@ -283,7 +317,7 @@ export function FichaDoCandidato({
   const algumEditavel = avaliadores.some((a) => podeLancarPor(dados, a));
   const lista = convocados?.length ? convocados : dados.convocados || [];
   const posicao = lista.findIndex((c) => c.id === convocado.id);
-  const anterior = posicao > 0 ? lista[posicao - 1] : null;
+  const anterior = posicao > 0 ? (lista[posicao - 1] ?? null) : null;
   const proximo = posicao >= 0 ? lista[posicao + 1] || null : null;
   const maxima = pontuacaoMaxima(competencias);
   const modoAvaliador = dados.configuracao?.lancamento === "AVALIADOR";
@@ -301,13 +335,13 @@ export function FichaDoCandidato({
     mudouJustificativa;
   const faltou = f.compareceu === "N";
   const [tentouSalvar, setTentouSalvar] = useState(false);
-  const campoDaJustificativa = useRef(null);
+  const campoDaJustificativa = useRef<HTMLTextAreaElement | null>(null);
   // A mesma regra do banco (lancar_notas_entrevista): Inapto ou Faltou pedem a justificativa.
   const justificativaObrigatoria = faltou || resultado.parecer === "INAPTO";
   const motivoDaJustificativa = faltou ? "Faltou" : "Inapto";
   const faltaJustificativa =
     justificativaObrigatoria && !f.justificativa.trim();
-  const mudarObservacao = (avaliador, texto) =>
+  const mudarObservacao = (avaliador: string, texto: string) =>
     setF((atual) => ({
       ...atual,
       observacoes: { ...atual.observacoes, [avaliador]: texto },
@@ -319,51 +353,57 @@ export function FichaDoCandidato({
       !bancas.includes(Number(convocado.banca)));
 
   /* As células de uma competência × avaliador (uma por aspecto, ou uma só). */
-  const chavesDe = (c, a) =>
+  const chavesDe = (c: CompetenciaDaFicha, a: Avaliador) =>
     aspectos.length
       ? aspectos.map((x) => ({
           chave: chaveDaNota(c.id, a.id, x.id),
-          nome: x.nome,
+          nome: x.nome || "",
         }))
       : [{ chave: chaveDaNota(c.id, a.id), nome: "" }];
-  const valida = (c, chave) =>
+  const valida = (c: CompetenciaDaFicha, chave: string) =>
     !vazio(f.mapa[chave]) && notaNaEscala(roteiro, c, f.mapa[chave]);
   const escalaDe = useMemo(() => {
-    const porMaximo = new Map();
-    return (c) => {
+    const porMaximo = new Map<
+      string,
+      Pick<LinhaDaMatriz, "opcoes" | "escala" | "decimal">
+    >();
+    return (c: CompetenciaDaFicha) => {
       const chave = String(c.nota_maxima);
-      if (!porMaximo.has(chave)) {
-        const opcoes = opcoesDaEscala(roteiro, c.nota_maxima);
-        porMaximo.set(chave, {
-          opcoes,
-          escala: textoDaEscala(opcoes.map((o) => o.valor)),
-          decimal: opcoes.some((o) => !Number.isInteger(o.valor)),
-        });
-      }
-      return porMaximo.get(chave);
+      const existente = porMaximo.get(chave);
+      if (existente) return existente;
+      const opcoes = opcoesDaEscala(roteiro, c.nota_maxima);
+      const escala = {
+        opcoes,
+        escala: textoDaEscala(opcoes.map((o) => o.valor)),
+        decimal: opcoes.some((o) => !Number.isInteger(o.valor)),
+      };
+      porMaximo.set(chave, escala);
+      return escala;
     };
   }, [roteiro]);
 
-  const contar = (pares) => ({
+  const contar = (
+    pares: readonly (readonly [CompetenciaDaFicha, string])[],
+  ) => ({
     preenchidas: pares.filter(([c, chave]) => valida(c, chave)).length,
     total: pares.length,
   });
   // Só as células atribuídas: as competências que o avaliador avalia.
-  const paresDoAvaliador = (a) =>
+  const paresDoAvaliador = (a: Avaliador) =>
     competencias
       .filter((c) => avalia(a, c))
-      .flatMap((c) => chavesDe(c, a).map((x) => [c, x.chave]));
-  const paresDaCompetencia = (c) =>
+      .flatMap((c) => chavesDe(c, a).map((x) => [c, x.chave] as const));
+  const paresDaCompetencia = (c: CompetenciaDaFicha) =>
     avaliadores
       .filter((a) => avalia(a, c))
-      .flatMap((a) => chavesDe(c, a).map((x) => [c, x.chave]));
+      .flatMap((a) => chavesDe(c, a).map((x) => [c, x.chave] as const));
   const progresso = contar(avaliadores.flatMap(paresDoAvaliador));
 
-  const abas =
+  const abas: (AbaDaFicha & { editavel: boolean })[] =
     modo === "avaliador"
       ? avaliadores.map((a) => ({
           id: a.id,
-          titulo: a.nome,
+          titulo: a.nome || "",
           detalhe: [a.origem, a.ativo === false ? "saiu da banca" : ""]
             .filter(Boolean)
             .join(" · "),
@@ -406,7 +446,8 @@ export function FichaDoCandidato({
     const i = atuais.findIndex((x) => x.id === ativa?.id);
     const atual = atuais[i];
     if (!atual || atual.preenchidas < atual.total) return undefined;
-    const falta = (x) => x.editavel && x.preenchidas < x.total;
+    const falta = (x: (typeof abas)[number]) =>
+      x.editavel && x.preenchidas < x.total;
     const seguinte =
       atuais.slice(i + 1).find(falta) || atuais.slice(0, i).find(falta);
     const t = setTimeout(() => {
@@ -422,8 +463,9 @@ export function FichaDoCandidato({
   const linhas = !ativa
     ? []
     : modo === "avaliador"
-      ? competencias.map((c, i) => {
+      ? competencias.flatMap((c, i) => {
           const a = avaliadores.find((x) => x.id === ativa.id);
+          if (!a) return [];
           if (a && !avalia(a, c))
             return linhaNaoAtribuida({
               id: c.id,
@@ -445,11 +487,12 @@ export function FichaDoCandidato({
             const c = competencias.find((x) => x.id === ativa.id);
             return !c || avalia(a, c);
           })
-          .map((a) => {
+          .flatMap((a) => {
             const c = competencias.find((x) => x.id === ativa.id);
+            if (!c) return [];
             return linhaDaMatriz({
               id: a.id,
-              titulo: a.nome,
+              titulo: a.nome || "",
               detalhe: [a.origem, a.ativo === false ? "saiu da banca" : ""]
                 .filter(Boolean)
                 .join(" · "),
@@ -458,7 +501,8 @@ export function FichaDoCandidato({
             });
           });
 
-  function detalheDaCompetencia(c) {
+  function detalheDaCompetencia(c: CompetenciaDaFicha | undefined) {
+    if (!c) return "";
     const minimo = minimoEmPontos(c);
     const peso = rotuloDoPeso(c.peso);
     return [
@@ -471,10 +515,15 @@ export function FichaDoCandidato({
   }
 
   /* A competência que não é deste avaliador: esmaecida, sem células, com quem a avalia. */
-  function linhaNaoAtribuida({ id, titulo, c, a }) {
+  function linhaNaoAtribuida({
+    id,
+    titulo,
+    c,
+    a,
+  }: DadosDaLinha): LinhaDaMatriz {
     const outros = avaliadores
       .filter((x) => x.id !== a.id && avalia(x, c))
-      .map((x) => x.nome);
+      .map((x) => x.nome || "");
     return {
       id,
       titulo,
@@ -489,7 +538,14 @@ export function FichaDoCandidato({
     };
   }
 
-  function linhaDaMatriz({ id, titulo, detalhe, descricao, c, a }) {
+  function linhaDaMatriz({
+    id,
+    titulo,
+    detalhe,
+    descricao,
+    c,
+    a,
+  }: DadosDaLinha): LinhaDaMatriz {
     const editavel = podeLancarPor(dados, a);
     const campos = chavesDe(c, a);
     const media = aspectos.length
@@ -530,14 +586,14 @@ export function FichaDoCandidato({
     };
   }
 
-  const mudarNota = (chave, valor) =>
+  const mudarNota = (chave: string, valor: string) =>
     setF((atual) => ({
       ...atual,
       compareceu: atual.compareceu || (vazio(valor) ? null : "S"),
       mapa: { ...atual.mapa, [chave]: valor },
     }));
 
-  function trocarModo(novo) {
+  function trocarModo(novo: ModoDaFicha) {
     setModo(novo);
     setAba(null);
     guardarModo(novo);
@@ -552,13 +608,13 @@ export function FichaDoCandidato({
   const voltar = () => {
     if (podeSair()) aoFechar();
   };
-  const ir = (alvo) => {
+  const ir = (alvo: Convocado | null) => {
     if (alvo && podeSair()) aoAbrir(alvo.id);
   };
   const voltarRef = useRef(voltar);
   voltarRef.current = voltar;
   useEffect(() => {
-    const aoTeclar = (ev) => {
+    const aoTeclar = (ev: KeyboardEvent) => {
       if (ev.key !== "Escape" || ev.defaultPrevented) return;
       if (document.querySelector(".modal.show, .ui-gaveta")) return;
       ev.preventDefault();
@@ -575,10 +631,11 @@ export function FichaDoCandidato({
       setErro("Há notas fora da escala do roteiro; corrija antes de salvar.");
       return;
     }
-    if (incompletas.length && !faltou) {
-      const c = competencias.find((x) => x.id === incompletas[0].competencia);
-      const a = avaliadores.find((x) => x.id === incompletas[0].avaliador);
-      setAba(modo === "avaliador" ? a?.id : c?.id);
+    const incompleta = incompletas[0];
+    if (incompleta && !faltou) {
+      const c = competencias.find((x) => x.id === incompleta.competencia);
+      const a = avaliadores.find((x) => x.id === incompleta.avaliador);
+      setAba((modo === "avaliador" ? a?.id : c?.id) ?? null);
       setErro(
         `Complete os ${aspectos.length} aspectos de ${a?.nome || "um avaliador"} em “${c?.nome || ""}” (ou apague todos).`,
       );
@@ -596,7 +653,7 @@ export function FichaDoCandidato({
       else setErro("Nada mudou nesta ficha.");
       return;
     }
-    const p = { notas: alteradas };
+    const p: PayloadDasNotas = { notas: alteradas };
     if (obsAlteradas.length) p.observacoes = obsAlteradas;
     if (mudouJustificativa) p.justificativa = f.justificativa.trim() || null;
     if (mudouComparecimento || mudouBanca) {
@@ -664,7 +721,7 @@ export function FichaDoCandidato({
       data-tour="entrevistas-ficha"
     >
       <CabecalhoDaFicha
-        candidato={convocado.candidato}
+        candidato={convocado.candidato || ""}
         codigo={convocado.codigo}
         vaga={convocado.vaga}
         cargo={nomeDoCargo(convocado.cargo)}
@@ -673,7 +730,10 @@ export function FichaDoCandidato({
         roteiro={roteiro}
         aspectos={aspectos.length}
         lancamento={rotuloDoLancamento(dados.configuracao?.lancamento)}
-        gravado={{ nota: convocado.nota ?? null, parecer: convocado.parecer }}
+        gravado={{
+          nota: convocado.nota ?? null,
+          parecer: convocado.parecer || "SEM_PARECER",
+        }}
         compareceu={f.compareceu}
         podeEditar={Boolean(dados.pode_editar)}
         salvando={salvando}
@@ -765,7 +825,7 @@ export function FichaDoCandidato({
                   role="tabpanel"
                   className="entrevistas-folha-corpo"
                 >
-                  {competenciaAtiva ? (
+                  {competenciaAtiva && ativa ? (
                     <div className="entrevistas-folha-titulo">
                       <h3>{ativa.titulo}</h3>
                       <p className="entrevistas-folha-resumo">
@@ -785,13 +845,16 @@ export function FichaDoCandidato({
                     rotulo={`Notas · ${ativa?.titulo || ""}`}
                     colunas={
                       aspectos.length
-                        ? aspectos.map((x) => ({ id: x.id, nome: x.nome }))
+                        ? aspectos.map((x) => ({
+                            id: x.id,
+                            nome: x.nome || "",
+                          }))
                         : [{ id: "nota", nome: "Nota" }]
                     }
                     linhas={linhas}
                     mostrarMedia={aspectos.length > 0}
                     desabilitado={salvando}
-                    focarAoMontar={Boolean(ativa) && focarNaAba === ativa.id}
+                    focarAoMontar={Boolean(ativa && focarNaAba === ativa.id)}
                     aoMudar={mudarNota}
                     aoFim={() => setPedidoDeAvanco((n) => n + 1)}
                     aoFocar={setEmFoco}
@@ -809,7 +872,7 @@ export function FichaDoCandidato({
                         return a ? (
                           <ObservacaoDoAvaliador
                             key={a.id}
-                            nome={a.nome}
+                            nome={a.nome || ""}
                             valor={f.observacoes[a.id] || ""}
                             editavel={
                               Boolean(dados.pode_editar) &&
@@ -833,7 +896,7 @@ export function FichaDoCandidato({
                       {avaliadores.map((a) => (
                         <ObservacaoDoAvaliador
                           key={a.id}
-                          nome={a.nome}
+                          nome={a.nome || ""}
                           comNome
                           valor={f.observacoes[a.id] || ""}
                           editavel={
@@ -870,7 +933,7 @@ export function FichaDoCandidato({
             {roteiro && parecerPronto(resultado.parecer, pendencia) ? (
               <ParecerPronto
                 texto={textoDoParecerDaEntrevista({
-                  candidato: convocado.candidato,
+                  candidato: convocado.candidato || "",
                   codigo: convocado.codigo,
                   edital: dados.edital?.edital,
                   vaga: convocado.vaga,

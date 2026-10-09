@@ -1201,13 +1201,15 @@ export const VERBETES_AYA = Object.freeze([
       "quem e o criterio cores no treinamento",
       "regra do 93 no treinamento",
       "regra do treinamento saude indigena",
+      "treinamento saude indigena avaliacao documental",
+      "candidato teste 21",
       "treinamento com regra real",
     ],
     resposta:
-      'O edital "Treinamento – Projetos (992/2099)" tem a regra conferida do Edital 93/2026 (versão 7: corte e ordem pela nota declarada, mínimo de 15 pontos do item 8.2.6, eliminação de quem cancelou e de quem não finalizou o questionário, pontos das perguntas por nível da vaga). É uma cópia: editar a regra no treino grava uma versão do treino e o 93/2026 não muda. A pré-classificação já foi rodada pelo mesmo cálculo do robô (11 eliminados, 8 na Provisória abaixo de 15 e 21 no lote, com 21 fichas pendentes, sem analista: distribua pela Fila). Casos dos candidatos: P01, P09, P18, P25 e P32 bem acima do corte; P07 e P31 com exatamente 15 (entram); P36 com 14 (fica fora); P03, P13, P14, P22, P27, P28 e P37 abaixo de 15; P04 e P20 com a ART alterada depois (a nota declarada vale e a divergência aparece); P21 com uma resposta de experiência fora do mapa da regra (a nota vem da ART); P24 sem ART (vale a declarada); P11 e P12 empatados com 24 (o P12, idoso, fica na frente); P33 e P40 empatados com 24 e a mesma experiência (o mais velho na frente); P34 e P35 empatados com 20 (quem declarou mais experiência na frente); P10 marcado como reprovado na Empregare, que não elimina; P05, P15, P16, P23, P29, P38 e P39 com o questionário Pendente, Em andamento ou nem começado (eliminados); P06, P17 e P30 cancelados; e o P08, o caso do "Critério CORES": questionário em andamento e nota declarada 38, eliminado pela regra, para a coordenação incluir no lote por decisão. No "Treinamento – Saúde Indígena (991/2099)", a regra é a do Edital 111/2026 (DSEI Parintins), porque nenhum edital da Saúde Indígena tem regra conferida no MONITORA ainda; ela já tem as perguntas do questionário da Saúde Indígena ligadas e fica em Conferir, para praticar a conferência.',
+      'O edital "Treinamento – Projetos (992/2099)" tem a regra conferida do Edital 93/2026 (versão 7: corte e ordem pela nota declarada, mínimo de 15 pontos do item 8.2.6, eliminação de quem cancelou e de quem não finalizou o questionário, pontos das perguntas por nível da vaga). É uma cópia: editar a regra no treino grava uma versão do treino e o 93/2026 não muda. A pré-classificação já foi rodada pelo mesmo cálculo do robô (11 eliminados, 8 na Provisória abaixo de 15 e 21 no lote, com 21 fichas pendentes, sem analista: distribua pela Fila). Casos dos candidatos: P01, P09, P18, P25 e P32 bem acima do corte; P07 e P31 com exatamente 15 (entram); P36 com 14 (fica fora); P03, P13, P14, P22, P27, P28 e P37 abaixo de 15; P04 e P20 com a ART alterada depois (a nota declarada vale e a divergência aparece); P21 com uma resposta de experiência fora do mapa da regra (a nota vem da ART); P24 sem ART (vale a declarada); P11 e P12 empatados com 24 (o P12, idoso, fica na frente); P33 e P40 empatados com 24 e a mesma experiência (o mais velho na frente); P34 e P35 empatados com 20 (quem declarou mais experiência na frente); P10 marcado como reprovado na Empregare, que não elimina; P05, P15, P16, P23, P29, P38 e P39 com o questionário Pendente, Em andamento ou nem começado (eliminados); P06, P17 e P30 cancelados; e o P08, o caso do "Critério CORES": questionário em andamento e nota declarada 38, eliminado pela regra, para a coordenação incluir no lote por decisão. No "Treinamento – Saúde Indígena (991/2099)", a regra é a do Edital 111/2026 (DSEI Parintins), já conferida e com o nome de versão "SI26-PARINTINS — Edital 111/2026", com as perguntas do questionário da Saúde Indígena ligadas (lote de 5 vezes as vagas mais o cadastro reserva, nota pela ART, o mais velho na frente no empate). A pré-classificação já foi rodada pelo mesmo cálculo do robô sobre 30 candidatos: 24 no lote (24 fichas pendentes), 2 abaixo da linha de corte do lote e 4 eliminados. Casos: 21 (indígena que mora em aldeia, 28 pontos) em primeiro no Agente Indígena de Saúde; 20 (indígena com aldeia) em primeiro no Técnico de Enfermagem; 22 e 29 indígenas sem aldeia (o 13 também, na ampla); 23 indígena com aldeia concorrendo na ampla; 24 e 30 não indígenas; 16 pretos ou pardos, 18 PcD e 28 quilombola (as cotas aparecem na ficha); 28 e 30 empatados com 8,4 (o 30, mais velho, na frente); 25 e 26 abaixo da linha de corte do lote do Agente Indígena de Saúde (5 × 2 vagas); 17 cancelado; 19 com o questionário pendente e 15 em andamento (eliminados); 27 reprovado na Empregare (eliminado pela regra da Saúde Indígena).',
     fato: "",
     fonte:
-      "supabase/migrations/20261008110000_treinamento_avaliacao_documental.sql; scripts/pre_classificacao/gerar_treinamento.py; tests/fixtures/avaliacao-documental/treinamento-projetos.json",
+      "supabase/migrations/20261008110000_treinamento_avaliacao_documental.sql; scripts/pre_classificacao/gerar_treinamento.py; tests/fixtures/avaliacao-documental/treinamento-projetos.json; supabase/migrations/20261009120000_treinamentos_completos.sql; tests/fixtures/avaliacao-documental/treinamento-saude-indigena.json",
     abrir: "avaliacao-documental",
   },
   {
@@ -1227,6 +1229,28 @@ export const VERBETES_AYA = Object.freeze([
     fato: "",
     fonte:
       "scripts/pre_classificacao/pre_classificacao.py; .github/workflows/pre-classificacao.yml; supabase/migrations/20261008140000_agenda_dos_robos_pelo_banco.sql",
+    abrir: "avaliacao-documental",
+  },
+  {
+    arquivo: "regras-da-avaliacao-documental.md",
+    titulo: "Acompanhar inscrições",
+    perguntas: [
+      "acompanhar inscricoes",
+      "quantos inscritos",
+      "quantos aptos para analise",
+      "evolucao das inscricoes",
+      "cartao inscricoes",
+      "inscritos por vaga",
+      "hoje +n",
+      "grafico das inscricoes",
+      "finalizaram o questionario",
+      "inscricoes do 114/2026",
+    ],
+    resposta:
+      'Durante as inscrições do edital (da véspera do início a 3 dias depois do fim, pelo cronograma), a aba Pré-classificação mostra no topo o cartão "Inscrições": inscritos (candidatos ativos na Empregare), quantos finalizaram o questionário, quantos estão aptos para análise pela regra e quantos foram eliminados, um mini-gráfico diário de inscritos e aptos até o fim das inscrições e, em "Por vaga", inscritos, aptos e "hoje +N" (quantos entraram hoje). Os números vêm de um retrato gravado a cada pré-classificação (no fim de cada carga do robô da Empregare): um por vaga e por dia, só contagens. Aptos pela regra: no lote pela nota mínima, os não eliminados com a nota da Provisória a partir da mínima; nos outros lotes, os do lote mais os acima da linha de corte. Com a regra ainda não conferida, os aptos são uma prévia (selo "prévia"); sem regra, só inscritos e finalizados. Sem carga ainda, o cartão diz "Aguardando a primeira carga da Empregare". A "Validação das inscrições" dos editais de Projetos não conta como período de inscrição. Para o 114/2026 o banco pede o robô da Empregare às 7h e às 13h até 15/10/2026.',
+    fato: "No MONITORA, o cartão Inscrições da Pré-classificação mostra, durante as inscrições, inscritos, finalizados, aptos pela regra e eliminados, com a evolução diária, a partir do retrato gravado a cada pré-classificação.",
+    fonte:
+      "src/modulos/avaliacao-documental/inscricoes-do-edital.tsx; src/lib/avaliacao-documental/acompanhamento-das-inscricoes.ts; python/monitora/avaliacao_documental/retrato_das_inscricoes.py; supabase/migrations/20261009140000_acompanhamento_das_inscricoes.sql",
     abrir: "avaliacao-documental",
   },
   {
@@ -1892,7 +1916,26 @@ export const VERBETES_AYA = Object.freeze([
       'Em "Como fica no SEI" aparecem a prévia (o timbrado simulado, o texto e as tabelas como ficam no SEI) e os textos que o gestor ajusta antes de copiar ou baixar: número do edital, processo SEI (vai no rodapé do Word), unidade por extenso (ex.: "Distrito Sanitário Especial Indígena Xingu (DSEI Xingu)"), autoridade do item 1.1 (ex.: "por intermédio da Diretoria de Atenção Integral à Saúde, no uso das atribuições que lhe foram conferidas pela Designação nº 28/2026/PRES/AgSUS"), local e data (vazia = "na data da assinatura digital"), o título e as disposições preliminares e finais do modelo daquela lista. Cada linha é um item; ">" no começo vira subitem (1.3.1) e ">>" sub-subitem (1.3.3.1); **texto** fica em negrito; campos entre chaves são trocados pelo do edital ({edital}, {unidade}, {fase}, {notas_minimas}…). Os padrões vêm das publicações do 83/2026 e do 100/2026; as notas mínimas do 1.3 vêm da regra. "Salvar no edital" grava na regra (nova versão, motivo "Textos do documento oficial (SEI)"), sem mudar a classificação; "Restaurar o padrão" volta ao texto das publicações.',
     fato: "",
     fonte:
-      "src/modulos/classificacao/documento.jsx; src/lib/classificacao/regra.js",
+      "src/modulos/classificacao/documento.tsx; src/lib/classificacao/regra.js",
+    abrir: "classificacao",
+  },
+  {
+    arquivo: "regras-da-classificacao.md",
+    titulo: 'Prévia "Como fica no SEI" (tela grande, zoom e abas)',
+    perguntas: [
+      "previa do sei pequena",
+      "como aumentar a previa do sei",
+      "zoom da previa do sei",
+      "tela cheia como fica no sei",
+      "ocultar textos da previa",
+      "abas dados e textos",
+      "previa no celular",
+    ],
+    resposta:
+      '"Como fica no SEI" abre quase na tela toda, com a folha A4 inteira no centro. Ela começa em "Ajustar" (a folha cabe na largura); − e + mudam o zoom de 50% a 200%, e "Ajustar" volta a caber. O botão de tela cheia, no topo, usa a tela inteira; Esc ou o X fecham. Os textos ficam num painel à esquerda, em duas abas: "Dados" (número do edital, processo SEI, unidade, autoridade do 1.1, local e data) e "Textos" (título e disposições preliminares e finais); "Ocultar textos" recolhe o painel e a folha cresce, "Editar textos" traz de volta. A prévia muda enquanto você digita. No celular fica uma coluna: os textos em cima e a prévia embaixo. "Restaurar o padrão" e "Salvar no edital" ficam no rodapé, junto de "Baixar DOCX" e "Copiar para o SEI", sempre à vista.',
+    fato: "",
+    fonte:
+      "src/modulos/classificacao/documento.tsx; src/lib/classificacao/escala-da-previa.ts",
     abrir: "classificacao",
   },
   {
@@ -2101,6 +2144,44 @@ export const VERBETES_AYA = Object.freeze([
     fato: "No MONITORA, a versão da regra de classificação tem nome opcional, trocável com motivo sem mudar a configuração.",
     fonte:
       "src/lib/nome-da-versao.ts; supabase/migrations/20261008180000_nome_das_versoes_das_regras.sql (salvar_regra_classificacao, renomear_versao_regra_classificacao)",
+    abrir: "classificacao",
+  },
+  {
+    arquivo: "regras-da-classificacao.md",
+    titulo: "Hora de nascimento no desempate",
+    perguntas: [
+      "hora de nascimento",
+      "hora de nascimento no desempate",
+      "certidao de nascimento no desempate",
+      "23h59min59s",
+      "23:59:59",
+      "empate na maior idade",
+      "nasceram no mesmo dia",
+      "onde informo a hora de nascimento",
+    ],
+    resposta:
+      'Quando o empate chega ao critério "maior idade" e as pessoas nasceram no mesmo dia, decide a hora de nascimento da certidão enviada na inscrição: quem nasceu mais cedo é mais velho e fica à frente (edital 93/2026, itens 6.11.5 e 6.11.6). Sem certidão, vale 23h59min59s — a pessoa fica como a mais nova daquele dia. A planilha da análise curricular e a Empregare não trazem a hora; quem informa é o analista, na Classificação: abra o candidato na lista e use "Hora de nascimento (certidão)". O campo só aparece para quem está nesse empate (ou já tem hora), e a tela avisa "Empate decidido pela hora de nascimento". "Sem certidão" tira a hora e volta a valer 23h59min59s. Cada mudança fica no histórico (quem, quando, antes e depois); gere a lista de novo depois de informar. Se ainda assim empatar (mesmo dia e mesma hora, ou as duas sem certidão), vale o empate final da regra.',
+    fato: "Na maior idade, entre quem nasceu no mesmo dia, vale a hora da certidão; sem certidão, 23h59min59s.",
+    fonte:
+      "src/lib/classificacao/numeros.js; src/lib/classificacao/motor.js; src/modulos/classificacao/hora-de-nascimento.tsx; supabase/migrations/20261009130000_hora_de_nascimento_na_classificacao.sql",
+    abrir: "classificacao",
+  },
+  {
+    arquivo: "regras-da-classificacao.md",
+    titulo: "Desempate na lista preliminar (edital 93/2026)",
+    perguntas: [
+      "desempate na lista preliminar",
+      "empatados na mesma posicao na preliminar",
+      "classificacao preliminar do 93",
+      "desempate do edital 93",
+      "avaliacao documental 93 empate",
+      "por que todos ficaram em primeiro",
+    ],
+    resposta:
+      'Na lista "Avaliação documental — resultado preliminar", o empate na nota segue a regra do edital: "mesma posição" ou "critérios da regra". No 93/2026, cuja análise documental foi feita pela planilha, a lista deixava os empatados na mesma posição — na vaga de Enfermeiro do Trabalho, 8 pessoas com 45 pontos ficavam todas em 1º. O edital manda listar os aprovados pela ordem de classificação (8.2.10.10) e desempatar pelo item 10.1: a) 60 anos ou mais na data de corte (fim das inscrições, 29/09/2026); b) maior tempo de experiência profissional comprovado (os dias da planilha, o mesmo cálculo para todos); c) maior idade, com a hora da certidão. A correção da regra do 93 passa a preliminar para "critérios da regra" (nova versão, com o motivo). A ordem também muda quem entra no limite da convocação (5 × as vagas). Reprovado na planilha sai com o motivo "não habilitado" e, se a nota também ficou abaixo de 15 (8.2.6), a justificativa diz os dois. A lista publica a nota e as parciais (formação, cursos, experiência) lado a lado; quando as colunas de pontuação da planilha não somam a nota — no 93 a nota segue o barema e as colunas não —, a tela avisa "Parciais que não somam a nota documental" por vaga: confira a planilha antes de publicar (a ordem segue a nota).',
+    fato: "No 93/2026, a lista preliminar desempata pelo item 10.1 (60+, tempo de experiência, maior idade com a hora da certidão).",
+    fonte:
+      "supabase/correcoes/20261009-classificacao-93-desempate-e-quadro.sql; tests/classificacao-93-desempate.test.js",
     abrir: "classificacao",
   },
   {
@@ -2870,7 +2951,7 @@ export const VERBETES_AYA = Object.freeze([
       'No topo de Análises curriculares, Seleção e Entrevistas, "Conferido às 09:32" é a última vez que a carga conferiu os dados (horário de Brasília; se foi em outro dia, aparece a data, como "em 04/10, 13:05"). Nas Análises curriculares, vem junto "última mudança em …": quando os dados mudaram de fato. Se a carga rodou e a planilha não tinha nada novo, o "Conferido" avança e a última mudança fica — os dados não estão parados. Sem registro de conferência, aparece "Atualizado em …". Se suspeitar de carga atrasada ou com falha, o administrador global confere em Configurações › Status das atualizações.',
     fato: "",
     fonte:
-      "src/lib/texto-da-conferencia.js; src/modulos/analises/analises.tsx; src/modulos/selecao/selecao.tsx; src/modulos/entrevistas/entrevistas.jsx",
+      "src/lib/texto-da-conferencia.js; src/modulos/analises/analises.tsx; src/modulos/selecao/selecao.tsx; src/modulos/entrevistas/entrevistas.tsx",
   },
   {
     arquivo: "regras-das-analises.md",
@@ -3506,7 +3587,7 @@ export const VERBETES_AYA = Object.freeze([
       "O Painel de entrevistas é para acompanhar (gestão e coordenação), como o Painel das análises ao lado da Avaliação documental; fazer é em Conduzir entrevistas, outra entrada do menu. O painel mostra, da área atual: os filtros, os indicadores, a agenda dos próximos dias quando há um edital escolhido, os gráficos, as pendências (sem comparecimento, sem nota, sem parecer, aprovados sem entrevista, sem análise, sem edital e nota divergente), os empatados na nota da entrevista, a tabela e a exportação em CSV. Só leitura. O edital de treinamento não entra no painel. Quem tem Leitor em Entrevistas vê o painel e Conduzir entrevistas; escrever exige Editor.",
     fato: "O Painel de entrevistas acompanha; Conduzir entrevistas faz (fila do dia, ficha de notas, Preparar e roteiros). As duas usam o recurso Entrevistas.",
     fonte:
-      "src/modulos/entrevistas/entrevistas.jsx; src/modulos/entrevistas/andamento.tsx; src/lib/painel-de-entrevistas.ts",
+      "src/modulos/entrevistas/entrevistas.tsx; src/modulos/entrevistas/andamento.tsx; src/lib/painel-de-entrevistas.ts",
     abrir: "entrevistas",
   },
   {
@@ -3599,7 +3680,7 @@ export const VERBETES_AYA = Object.freeze([
       'Na configuração do edital (Conduzir entrevistas › Preparar › Editar configuração), cada membro da banca tem "Competências que avalia": Todas (o padrão) ou "Só estas", marcando as competências dele — por exemplo, o colaborador do DSEI que avalia só "Trabalho em equipe". Cada competência precisa de ao menos um avaliador em cada banca ("Na banca 1, ninguém avalia …" impede salvar), e não dá para tirar de alguém uma competência em que ele já deu nota (apague as notas antes). A nota da competência é a média só dos avaliadores que a avaliam. Na ficha de notas, na aba do avaliador, as competências que não são dele aparecem esmaecidas, com "avaliada por …", e a digitação passa direto por elas; no modo Por competência, só aparecem os avaliadores daquela competência. Os contadores ("0/3", "faltam N notas", "X de Y notas") contam só o que cada um deve lançar. O banco recusa a nota de um avaliador numa competência que não é dele ("… não avalia … neste edital"). Edital sem essa configuração continua igual: todos avaliam todas. No edital de treinamento, o Avaliador Teste 2 (DSEI) avalia só "Trabalho em equipe" (depois do reinício, se ele já tinha nota em outra competência).',
     fato: "Cada membro da banca avalia todas as competências (padrão) ou só as marcadas; a média da competência é só de quem a avalia, e o banco recusa nota fora da competência do avaliador.",
     fonte:
-      "supabase/migrations/20261008170000_avaliador_por_competencia.sql; src/lib/conducao-de-entrevista.js; src/modulos/entrevistas/competencias-do-membro.tsx; src/modulos/entrevistas/ficha.jsx; python/monitora/entrevistas/calculo.py",
+      "supabase/migrations/20261008170000_avaliador_por_competencia.sql; src/lib/conducao-de-entrevista.js; src/modulos/entrevistas/competencias-do-membro.tsx; src/modulos/entrevistas/ficha.tsx; python/monitora/entrevistas/calculo.py",
     abrir: "conduzir-entrevistas",
   },
   {
@@ -3821,7 +3902,7 @@ export const VERBETES_AYA = Object.freeze([
       'Na Fila de Conduzir entrevistas, abra um convocado: a ficha ocupa a tela inteira (fica só o menu lateral). No cabeçalho: o nome e o código, a vaga, os chips (nota da análise, modalidade, roteiro e aspectos), os detalhes no "i" (modo de lançamento, nota e parecer gravados, nome do roteiro), o comparecimento (Compareceu / Faltou), a banca quando há mais de uma e Anterior / "1 de 15" / Próximo. O lançamento padrão é Por avaliador, como a secretaria passando a limpo a folha de cada avaliador: uma aba por avaliador ("Avaliador · origem", com o check quando está completo) e, nela, a matriz com as competências nas linhas (e o mínimo de cada uma) e os aspectos nas colunas (Conceitua, Propriedade, Profundidade); sem aspectos, uma coluna "Nota". A média da linha aparece num chip: vermelho abaixo do mínimo, verde ok. Com avaliador por competência, as competências que não são do avaliador aparecem esmaecidas ("avaliada por …") e não contam nas notas que faltam. Completo um avaliador, a ficha passa sozinha ao próximo; com todos completos, o foco vai para "Salvar e abrir o próximo". "Por competência" (para lançar ao vivo) troca as abas pelas competências e as linhas pelos avaliadores; a escolha fica guardada no navegador. Digitar a primeira nota marca Compareceu. Com Faltou, a matriz some e fica a confirmação: se a ausência elimina no roteiro, parecer Inapto e total 0. A lateral mostra o resultado na hora, com as mesmas regras do banco: o total sobre o máximo num anel com a marca do mínimo, a nota da banca em cada competência em barras com a marca do mínimo, o parecer (Apto verde, Inapto vermelho, Sem parecer cinza) com os motivos e "X de Y notas". Os níveis da escala ficam numa linha embaixo da matriz e na dica da célula em foco. Com tudo lançado (ou com Faltou marcado), o parecer aparece em texto pronto embaixo da matriz — quem, edital e vaga, o roteiro, a banca, a nota de cada competência com o mínimo, o total e o parecer com o motivo — com "Copiar parecer", como na ficha da Avaliação documental; com alterações sem salvar, ele diz que é a prévia. A ficha tem a observação de cada avaliador e a justificativa da banca (veja "Observação do avaliador e justificativa da banca"). No celular, um avaliador por vez, uma competência por linha com as células grandes e o teclado numérico. A cada gravação o banco recalcula o resultado, que aparece no Painel de entrevistas; toda nota lançada, corrigida ou apagada vai para o histórico. O cartão da fila mostra as notas lançadas sobre as esperadas enquanto a entrevista está em andamento.',
     fato: "",
     fonte:
-      "src/modulos/entrevistas/ficha.jsx; src/modulos/entrevistas/parecer-pronto.tsx; src/lib/parecer-da-entrevista.ts; src/modulos/entrevistas/matriz-de-notas.tsx; src/modulos/entrevistas/resultado-da-ficha.tsx; src/modulos/entrevistas/cabecalho-da-ficha.tsx; src/lib/conducao-de-entrevista.js",
+      "src/modulos/entrevistas/ficha.tsx; src/modulos/entrevistas/parecer-pronto.tsx; src/lib/parecer-da-entrevista.ts; src/modulos/entrevistas/matriz-de-notas.tsx; src/modulos/entrevistas/resultado-da-ficha.tsx; src/modulos/entrevistas/cabecalho-da-ficha.tsx; src/lib/conducao-de-entrevista.js",
   },
   {
     arquivo: "regras-das-entrevistas.md",
@@ -3840,7 +3921,7 @@ export const VERBETES_AYA = Object.freeze([
       'Na ficha de notas há dois textos. A "Observação do avaliador" é opcional, uma por avaliador na entrevista (até 1.000 caracteres, numa linha que cresce): fica embaixo da matriz de notas dele, no lançamento Por avaliador, ou junto do nome de cada avaliador, em "Observações dos avaliadores", no Por competência. Não há observação por competência. No modo "Cada avaliador lança a sua", cada um escreve só a própria. A "Justificativa da banca" é uma por entrevista (até 4.000 caracteres): opcional quando o parecer é Apto e obrigatória quando é Inapto ou quando o candidato faltou. Sem ela, o rodapé mostra "Falta a justificativa da banca" (clicar leva ao campo) e o Salvar não grava; o banco também recusa ("Escreva a justificativa da banca: ela é obrigatória quando o parecer é Inapto" ou "… quando o candidato falta"). A regra vale para cada gravação nova: as entrevistas gravadas antes continuam como estão e a carga da planilha não muda. A justificativa entra no parecer pronto e no "Copiar parecer". Toda mudança dos dois textos vai para o histórico da entrevista, com quem e quando.',
     fato: "No MONITORA, a justificativa da banca é obrigatória para Inapto e Faltou (em gravação nova); a observação do avaliador é opcional, uma por avaliador.",
     fonte:
-      "src/modulos/entrevistas/textos-da-ficha.tsx; src/modulos/entrevistas/ficha.jsx; supabase/migrations/20261008220000_observacao_e_justificativa_da_entrevista.sql",
+      "src/modulos/entrevistas/textos-da-ficha.tsx; src/modulos/entrevistas/ficha.tsx; supabase/migrations/20261008220000_observacao_e_justificativa_da_entrevista.sql",
     abrir: "conduzir-entrevistas",
   },
   {
@@ -3880,7 +3961,7 @@ export const VERBETES_AYA = Object.freeze([
       "Os resultados ficam no Painel de entrevistas, só de consulta (a condução é em Conduzir entrevistas). Indicadores: Vagas com entrevista, Candidatos, Compareceram, Aptos, Inaptos, Média das notas (de quem compareceu) e Aprovados na análise sem entrevista; clicar em Compareceram, Aptos ou Inaptos filtra a tela. Pendências: sem comparecimento registrado, compareceu sem nota, com nota sem parecer, aprovados sem entrevista (só nas vagas que já têm entrevista), entrevista sem análise ligada, sem edital cadastrado e nota divergente (total diferente da soma dos critérios); cada uma filtra o painel. A nota total vai de 0 a 20 e cada critério, em geral, de 0 a 5. A ligação com a análise curricular é pelo código do candidato e da vaga e, na falta, pelo nome.",
     fato: "",
     fonte:
-      "src/modulos/entrevistas/paineis.tsx; src/lib/entrevistas-do-painel.js; supabase/migrations/20260929235000_entrevistas.sql",
+      "src/modulos/entrevistas/paineis.tsx; src/lib/entrevistas-do-painel.ts; supabase/migrations/20260929235000_entrevistas.sql",
     abrir: "entrevistas",
   },
   {
@@ -5472,12 +5553,16 @@ export const VERBETES_AYA = Object.freeze([
       "treinamento projetos",
       "992/2099",
       "991/2099",
+      "treinamento entrevista projetos",
+      "treinamento avaliacao documental saude indigena",
+      "apresentar o treinamento",
+      "demonstrar o treinamento",
     ],
     resposta:
-      'Há dois editais de treinamento, para praticar sem tocar em dados reais. "Treinamento – Saúde Indígena (991/2099)" (unidade fictícia "DSEI Treinamento"): 3 vagas fictícias (Enfermeiro, Técnico de Enfermagem e Agente Indígena de Saúde), 15 candidatos fictícios ("Candidato Teste 01" a "15"), a janela de entrevista aberta, a lista de convocação pronta, um roteiro de entrevista de exemplo e a regra da avaliação documental do Edital 111/2026 (DSEI Parintins), com as perguntas do questionário da Saúde Indígena já ligadas, na situação Conferir. "Treinamento – Projetos (992/2099)" (unidade "Escritório Treinamento"): espelho do Edital 93/2026, com as mesmas 5 vagas e cargos (códigos fictícios 990992001 a 990992005), o cronograma com as inscrições encerradas e a análise curricular em andamento, a regra conferida do 93/2026 (versão 7) copiada, 40 candidatos fictícios ("Candidato Teste P01" a "P40") com o questionário no formato da Empregare, a pré-classificação já rodada e 21 fichas pendentes para os analistas. Nos dois, nenhum candidato tem CPF e os e-mails são @exemplo.invalid. Eles aparecem com o selo Treinamento em Editais, Conduzir entrevistas, Avaliação documental e Classificação. Ficam fora da Visão geral, dos indicadores, dos painéis (análises, entrevistas e aprovados), das comemorações, das conferências, dos robôs, do painel dos robôs e do Status das atualizações; a pré-classificação só roda para eles quando pedida para eles (em Rodar com opções, marque Mostrar todos e escolha o edital). Documento oficial gerado deles sai com "TREINAMENTO — SEM VALOR OFICIAL" no título. Não rode o robô da Empregare para eles: as vagas são fictícias.',
+      'Há dois editais de treinamento, para praticar sem tocar em dados reais, e cada um tem as duas etapas prontas para demonstrar: a avaliação documental e a entrevista. "Treinamento – Saúde Indígena (991/2099)" (unidade fictícia "DSEI Treinamento"): 3 vagas fictícias (Enfermeiro, Técnico de Enfermagem e Agente Indígena de Saúde) e 30 candidatos fictícios ("Candidato Teste 01" a "30"). Avaliação documental: a regra do Edital 111/2026 (DSEI Parintins) já conferida, com o nome de versão "SI26-PARINTINS — Edital 111/2026" e as perguntas do questionário da Saúde Indígena ligadas, a pré-classificação rodada pelo mesmo cálculo do robô e 24 fichas pendentes no lote para "Pegar próximo" (entre na Equipe como analista antes). Entrevista: os 15 primeiros convocados, o roteiro de exemplo com aspectos (Conceitua, Propriedade, Profundidade), banca AgSUS e DSEI com o Avaliador Teste 2 avaliando só "Trabalho em equipe", lançamento pela secretaria e a agenda com 6 entrevistas hoje. "Treinamento – Projetos (992/2099)" (unidade "Escritório Treinamento"): espelho do Edital 93/2026, com as mesmas 5 vagas e cargos (códigos fictícios 990992001 a 990992005) e 40 candidatos fictícios ("Candidato Teste P01" a "P40") com o questionário no formato da Empregare. Avaliação documental: a regra conferida do 93/2026 (versão 7) copiada, a pré-classificação já rodada e 21 fichas pendentes. Entrevista: o roteiro "Treinamento — Entrevista Projetos (exemplo)", copiado do modelo do SESMT (4 competências de 0 a 2, apto com 5 pontos e metade em cada; o estudo de caso é em grupo; sem aspectos), lançamento pela secretaria, banca CDHO / AgSUS, SSO / AgSUS e CONDISI com o Avaliador Teste P3 avaliando só "Habilidade intercultural", a lista de convocação gerada dos 21 do lote, os 21 convocados e a agenda com 6 entrevistas hoje; a janela da entrevista fica liberada, porque no cronograma do 93/2026 ela vem depois da análise. A agenda é montada a partir do dia em que o treinamento foi preparado ou reiniciado: para a fila "Hoje" de Conduzir entrevistas ter itens no dia da apresentação, reinicie o treinamento nesse dia. Nos dois, nenhum candidato tem CPF e os e-mails são @exemplo.invalid. Eles aparecem com o selo Treinamento em Editais, Conduzir entrevistas, Avaliação documental e Classificação. Ficam fora da Visão geral, dos indicadores, dos painéis (análises, entrevistas e aprovados), das comemorações, das conferências, dos robôs, do painel dos robôs e do Status das atualizações; a pré-classificação só roda para eles quando pedida para eles (em Rodar com opções, marque Mostrar todos e escolha o edital). Documento oficial gerado deles sai com "TREINAMENTO — SEM VALOR OFICIAL" no título. Não rode o robô da Empregare para eles: as vagas são fictícias.',
     fato: "",
     fonte:
-      "supabase/migrations/20261007230000_edital_de_treinamento.sql; supabase/migrations/20261008110000_treinamento_avaliacao_documental.sql; src/lib/edital-de-treinamento.js",
+      "supabase/migrations/20261007230000_edital_de_treinamento.sql; supabase/migrations/20261008110000_treinamento_avaliacao_documental.sql; supabase/migrations/20261009120000_treinamentos_completos.sql; src/lib/edital-de-treinamento.js",
     abrir: "nucleo",
   },
   {
@@ -5492,10 +5577,10 @@ export const VERBETES_AYA = Object.freeze([
       "limpar treinamento",
     ],
     resposta:
-      "Em Editais, o administrador global vê nos editais de treinamento (Saúde Indígena e Projetos) o botão Reiniciar treinamento (setas circulares). Ao clicar, a própria linha pede a confirmação; em Reiniciar, tudo o que foi feito naquele treinamento (convocações, notas, listas geradas, fichas e pré-classificação, decisões de lote, aprovados, recursos, conversa) é apagado e os dados fictícios voltam ao estado inicial, com o cronograma recalculado a partir de hoje. No de Projetos, a pré-classificação e as 21 fichas pendentes voltam prontas. Só os editais de treinamento podem ser reiniciados: o banco recusa qualquer edital real, e também recusa se uma vaga do treinamento tiver vindo do robô da Empregare; nesses casos nada é apagado.",
+      "Em Editais, o administrador global vê nos editais de treinamento (Saúde Indígena e Projetos) o botão Reiniciar treinamento (setas circulares). Ao clicar, a própria linha pede a confirmação; em Reiniciar, tudo o que foi feito naquele treinamento (convocações, notas, listas geradas, fichas e pré-classificação, decisões de lote, aprovados, recursos, conversa) é apagado e os dados fictícios voltam ao estado inicial, com o cronograma recalculado a partir de hoje. Nos dois voltam prontas as duas etapas: a avaliação documental (regra conferida, pré-classificação e fichas pendentes: 24 na Saúde Indígena, 21 em Projetos) e a entrevista (roteiro, banca, convocados e a agenda com 6 entrevistas no dia do reinício). Só os editais de treinamento podem ser reiniciados: o banco recusa qualquer edital real, e também recusa se uma vaga do treinamento tiver vindo do robô da Empregare; nesses casos nada é apagado.",
     fato: "",
     fonte:
-      "supabase/migrations/20261008110000_treinamento_avaliacao_documental.sql; src/modulos/editais/nucleo.jsx",
+      "supabase/migrations/20261009120000_treinamentos_completos.sql; src/modulos/editais/nucleo.jsx",
     abrir: "nucleo",
   },
   {

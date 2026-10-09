@@ -24,8 +24,45 @@ em `supabase/ensaios/` e `supabase/rollback/`).
 | `agsus_robo_conferencias`            | `0 9 * * *`         | 6h                          | `conferencias.yml`            |
 | `agsus_robo_expurgo_anexos_chat`     | `30 9 * * *`        | 6h30                        | `expurgo-anexos-chat.yml`     |
 | `agsus_robo_conferir_disparos`       | `*/5 * * * *`       | a cada 5 min (lê respostas) | —                             |
+| `agsus_robo_inscricoes_114_2026`     | `0 10,16 * * *`     | 7h e 13h, até 15/10/2026    | `robo-empregare.yml`          |
 
-Robô da Empregare e pré-classificação estão na lista fixa da função, mas não têm agenda.
+Robô da Empregare e pré-classificação estão na lista fixa da função; fora a agenda das inscrições
+(abaixo), não têm agenda.
+
+## Agenda das inscrições (robô da Empregare + pré-classificação)
+
+Durante as inscrições de um edital, a coordenação acompanha inscritos e aptos no cartão
+**Inscrições** da aba Pré-classificação (Aya: "Acompanhar inscrições"). Para os números andarem
+sozinhos, uma tarefa do pg_cron pede o **robô da Empregare** do edital (`editais` = o número, modo
+`normal`); no fim da carga, o próprio workflow roda a **pré-classificação** dos editais carregados
+(`--apos-robo`), que grava o retrato diário das inscrições. Uma tarefa só faz as duas coisas.
+
+A tarefa chama `private."FC_AGENDA_DAS_INSCRICOES"(tarefa, editais, até)`: até a data `até`
+(Brasília) pede o robô por `FC_DISPARAR_ROBO`; no primeiro horário depois dela, **desliga a
+própria tarefa** (`cron.unschedule`) e não pede nada. Migration:
+`supabase/migrations/20261009140000_acompanhamento_das_inscricoes.sql` (ensaio e rollback em
+`supabase/ensaios/` e `supabase/rollback/`).
+
+| Tarefa                           | Editais    | Agenda (UTC)    | Brasília | Até        | Desliga em |
+| -------------------------------- | ---------- | --------------- | -------- | ---------- | ---------- |
+| `agsus_robo_inscricoes_114_2026` | `114/2026` | `0 10,16 * * *` | 7h e 13h | 15/10/2026 | 16/10, 7h  |
+
+O robô só acha as vagas de um edital em inscrição se elas estiverem **ligadas ao edital** em
+`TB_EMPREGARE_VAGA` (origem `ligada` em `listar_vagas_empregare`): o edital ainda não tem análise
+curricular (de onde o quadro tira o código da vaga) nem Seleção. Ligue os códigos uma vez (para o
+114/2026: `supabase/correcoes/20261009-edital-114-vagas-da-empregare.sql`) ou rode o robô uma vez
+com `vagas` = os códigos depois de ligá-los.
+
+**Outro edital** (SQL Editor, papel postgres; troque nome, edital e data):
+
+```sql
+select cron.schedule('agsus_robo_inscricoes_120_2026', '0 10,16 * * *',
+  $$select private."FC_AGENDA_DAS_INSCRICOES"('agsus_robo_inscricoes_120_2026', '120/2026', date '2026-11-30');$$);
+```
+
+O nome tem de começar por `agsus_robo_inscricoes_` (a função recusa outro). Para parar antes:
+`select cron.unschedule('agsus_robo_inscricoes_114_2026');`. Mudou o horário? Atualize esta tabela
+e o "esperado" em `src/lib/saude-das-cargas.ts`.
 
 **Mudar um horário** (SQL Editor do Supabase):
 

@@ -15,6 +15,14 @@ com python/monitora/avaliacao_documental/, e GRAVA O RESULTADO PRONTO
 (gravar_pre_classificacao_vaga). O banco valida e serve; a tela só lê.
 Migration: supabase/migrations/20261006110000_pre_classificacao_e_lote.sql.
 
+Durante as inscrições do cronograma (da véspera do início a 3 dias depois do
+fim), grava também o RETRATO das inscrições de cada vaga — inscritos,
+finalizaram o questionário, aptos para análise pela regra, eliminados; só
+contagens — para o cartão "Inscrições" da aba (gravar_retrato_inscricoes,
+20261009140000_acompanhamento_das_inscricoes.sql). Com a regra ainda não
+conferida, os aptos vêm de uma prévia (nada da classificação é gravado); sem
+regra, só inscritos e finalizados.
+
 Roda pelo GitHub Actions (.github/workflows/pre-classificacao.yml): pelo
 "Recalcular" da aba Pré-classificação e pelo "Rodar agora" das Configurações
 (RPC disparar_robo), pelo "Run workflow" e, sozinho, no fim do robô da
@@ -57,6 +65,7 @@ from monitora.avaliacao_documental.pre_classificacao import (  # noqa: E402
     normalizar_regra,
     pre_classificar_vaga,
 )
+from monitora.avaliacao_documental.retrato_das_inscricoes import retrata_hoje, retrato_da_vaga  # noqa: E402
 from monitora.mascaramento import resumo_do_erro  # noqa: E402
 from monitora.registro import registro  # noqa: E402
 
@@ -154,10 +163,12 @@ def situacao_da_regra(edital):
     return None
 
 
-def processar_edital(chamar, edital, hoje, refazer, gravar):
+def processar_edital(chamar, edital, hoje, refazer, gravar, retratar=False):
     """
     Pré-classifica as vagas de um edital. gravar = função (vaga, resultado) ou
     None (modo seco). Devolve o resultado do edital (só códigos e contagens).
+    retratar: monta também o retrato das inscrições de cada vaga
+    (resultado["retrato"]), mesmo sem regra conferida (prévia, sem gravar).
     """
     vagas = edital.get("vagas") or []
     resultado = {
@@ -176,14 +187,26 @@ def processar_edital(chamar, edital, hoje, refazer, gravar):
         "avisos": [],
     }
     situacao = situacao_da_regra(edital)
+    # Regra não conferida no modo normal: a classificação não é gravada, mas o
+    # retrato das inscrições leva os aptos de uma prévia.
+    so_retrato = False
     if situacao and (gravar is not None or situacao == "SEM_REGRA"):
         resultado["situacao"] = situacao
         resultado["inscritos"] = sum(int(v.get("candidatos_ativos") or 0) for v in vagas)
-        return resultado
+        if not retratar or not vagas:
+            return resultado
+        if situacao == "SEM_REGRA":
+            resultado["retrato"] = [
+                retrato_da_vaga(vaga["codigo"], ler_candidatos(chamar, edital, vaga).get("candidatos") or [])
+                for vaga in vagas
+            ]
+            return resultado
+        so_retrato = True
+        gravar = None
     if not vagas:
         resultado["situacao"] = "SEM_VAGAS"
         return resultado
-    if situacao == "REGRA_NAO_CONFERIDA":
+    if situacao == "REGRA_NAO_CONFERIDA" and not so_retrato:
         resultado["situacao"] = "PREVIA"
     if refazer and not edital.get("refazer_permitido", True):
         refazer = False
@@ -192,11 +215,13 @@ def processar_edital(chamar, edital, hoje, refazer, gravar):
     regra = normalizar_regra(edital["regra"].get("configuracao"))
     # A declarada congela na primeira pré-classificação depois do fim das inscrições (ou já, sem data).
     congelar = congela_a_declarada(hoje, fim_das_inscricoes(edital.get("cronograma")))
-    resultado["base_da_nota"] = regra["provisoria"]["base_da_nota"]
-    resultado["congelar"] = congelar
+    retratos = []
+    if not so_retrato:
+        resultado["base_da_nota"] = regra["provisoria"]["base_da_nota"]
+        resultado["congelar"] = congelar
     avisos = Counter()
     for vaga in vagas:
-        lidos = chamar("pre_classificacao_ler_candidatos", {"p_edital": edital["id"], "p_vaga": vaga["codigo"]}) or {}
+        lidos = ler_candidatos(chamar, edital, vaga)
         r = pre_classificar_vaga(
             regra,
             dados_da_vaga(vaga, edital.get("documental")),
@@ -209,6 +234,12 @@ def processar_edital(chamar, edital, hoje, refazer, gravar):
             decisoes=lidos.get("decisoes") or {},
         )
         resumo = r["resumo"]
+        if retratar:
+            retratos.append(
+                retrato_da_vaga(vaga["codigo"], lidos.get("candidatos") or [], regra, r, previa=situacao is not None)
+            )
+        if so_retrato:
+            continue
         if gravar is not None:
             gravar(vaga["codigo"], r)
         for chave in (
@@ -233,9 +264,40 @@ def processar_edital(chamar, edital, hoje, refazer, gravar):
             resumo["por_decisao"],
             resumo["tamanho"] if resumo["tamanho"] is not None else "sem quadro",
         )
+    if retratar:
+        resultado["retrato"] = retratos
+    if so_retrato:
+        return resultado
     resultado["avisos"] = sorted(set(resultado["avisos"]) | set(avisos))
     resultado["avisos_por_vaga"] = dict(sorted(avisos.items()))
     return resultado
+
+
+def ler_candidatos(chamar, edital, vaga):
+    return chamar("pre_classificacao_ler_candidatos", {"p_edital": edital["id"], "p_vaga": vaga["codigo"]}) or {}
+
+
+def gravar_retrato(chamar, id_execucao, resultado):
+    """
+    Grava o retrato das inscrições do edital (gravar_retrato_inscricoes). Uma
+    falha (ex.: banco sem a migration) só vira aviso: a pré-classificação segue.
+    Devolve quantas vagas foram retratadas.
+    """
+    retrato = resultado.get("retrato") or []
+    if not retrato:
+        return 0
+    try:
+        r = (
+            chamar(
+                "gravar_retrato_inscricoes",
+                {"p_execucao": id_execucao, "p_edital": resultado["edital"], "p_vagas": retrato},
+            )
+            or {}
+        )
+    except Exception as erro:
+        log.warning("Retrato das inscrições de %s não gravado: %s", resultado.get("rotulo"), resumo_do_erro(erro)[:200])
+        return 0
+    return int(r.get("vagas") or 0)
 
 
 def abrir_fichas(chamar, id_execucao, edital_id):
@@ -273,7 +335,8 @@ def linha_do_resumo(r):
     rotulo = r.get("rotulo") or r["edital"]
     if r["situacao"] in EXPLICACOES and r["situacao"] != "PREVIA":
         extra = f" ({r['inscritos']} inscritos em {r['vagas']} vaga(s) aguardam)" if r.get("inscritos") else ""
-        return f"{rotulo}: {EXPLICACOES[r['situacao']]}{extra}."
+        retrato = f" Retrato das inscrições: {r['retratadas']} vaga(s)." if r.get("retratadas") else ""
+        return f"{rotulo}: {EXPLICACOES[r['situacao']]}{extra}.{retrato}"
     if r["situacao"] == "FALHOU":
         return f"{rotulo}: FALHOU — {r.get('mensagem') or 'erro'}."
     prefixo = f"{rotulo}: {EXPLICACOES['PREVIA']} — " if r["situacao"] == "PREVIA" else f"{rotulo}: "
@@ -296,18 +359,19 @@ def linha_do_resumo(r):
     )
     texto_congeladas = f" · {r['congeladas']} declarada(s) congelada(s)" if r.get("congeladas") else ""
     texto_lote = f"{r['no_lote']} no lote"
+    texto_retrato = f" · retrato das inscrições: {r['retratadas']} vaga(s)" if r.get("retratadas") else ""
     if r.get("por_decisao"):
         texto_lote = f"lote: {r['no_lote']} pela regra + {r['por_decisao']} por decisão"
     return (
         f"{prefixo}{r['vagas']} vaga(s) · {r['inscritos']} inscritos · {r['eliminados']} eliminados · "
         f"{r['ranqueados']} na Provisória · {texto_lote} · {r['divergencias']} divergência(s) ART × declarada"
-        f"{texto_base}{texto_congeladas}{texto_fichas}{texto_avisos}."
+        f"{texto_base}{texto_congeladas}{texto_fichas}{texto_avisos}{texto_retrato}."
     )
 
 
 def para_o_banco(r):
-    """O resultado do edital que vai ao log do banco (sem os avisos por vaga)."""
-    return {k: v for k, v in r.items() if k != "avisos_por_vaga"}
+    """O resultado do edital que vai ao log do banco (sem os avisos por vaga nem o retrato)."""
+    return {k: v for k, v in r.items() if k not in ("avisos_por_vaga", "retrato")}
 
 
 def principal(args, configuracao=None, chamar_rpc=None):
@@ -392,9 +456,17 @@ def principal(args, configuracao=None, chamar_rpc=None):
                 )
 
             try:
-                resultado = processar_edital(chamar, edital, hoje, args.refazer_lote, gravar)
+                resultado = processar_edital(
+                    chamar,
+                    edital,
+                    hoje,
+                    args.refazer_lote,
+                    gravar,
+                    retratar=retrata_hoje(hoje, edital.get("cronograma")),
+                )
                 if resultado["situacao"] == "PROCESSADO":
                     resultado.update(abrir_fichas(chamar, id_execucao, edital["id"]))
+                resultado["retratadas"] = gravar_retrato(chamar, id_execucao, resultado)
                 resultados.append(resultado)
             except Exception as erro:
                 mensagem = resumo_do_erro(erro)[:300]

@@ -35,7 +35,11 @@ estado-da-agenda.js  store da agenda (obter_agenda_entrevista, salvar_regra_agen
                    documento da convocação (agendaDoDocumento)
 regra.jsx          visão "Regra": formulário (critérios ordenáveis do catálogo, empate final,
                    modalidades, convocação, rodapé) e versões
-documento.jsx      "Como fica no SEI": prévia (iframe sem script) e textos do edital
+documento.tsx      "Como fica no SEI": quase tela cheia (ou tela cheia), folha A4 com zoom
+                   (escala em src/lib/classificacao/escala-da-previa.ts), painel recolhível
+                   com as abas Dados | Textos e rodapé fixo; no celular, uma coluna
+hora-de-nascimento.tsx  hora da certidão na gaveta do candidato, só quando o empate chega
+                   à maior idade no mesmo dia (sem certidão = 23:59:59)
 documento-no-navegador.js  área de transferência (HTML + texto), logo em PNG, impressão
 classificacao.css  só o que é desta tela (tokens)
 ```
@@ -49,7 +53,11 @@ timbrado —, `dados.js`). Os textos do documento ajustados pelo gestor ficam na
 (`documento_cabecalho`, `src/lib/cabecalho-dos-documentos.js`). Banco:
 `supabase/migrations/20261002150000_classificacao.sql` (+ `20261002150500_liga_aba_classificacao.sql`),
 `20261002170000_classificacao_lista_da_entrevista.sql` (lista ENTREVISTA e critérios novos do
-catálogo). Regras dos editais: `supabase/correcoes/20261002-regras-de-classificacao-83-e-100.sql` e
+catálogo), `20261009130000_hora_de_nascimento_na_classificacao.sql` (hora da certidão para a maior
+idade: `TB_HORA_NASCIMENTO_CANDIDATO`, `salvar_hora_nascimento_candidato`; ensaio e rollback com o
+mesmo nome). Auditoria do 93/2026 (desempate do 10.1 na preliminar, quadro do 4.1):
+`supabase/correcoes/20261009-classificacao-93-desempate-e-quadro.sql` e
+`tests/classificacao-93-desempate.test.js`. Regras dos editais: `supabase/correcoes/20261002-regras-de-classificacao-83-e-100.sql` e
 `supabase/correcoes/20261002-regras-de-classificacao-todos-os-editais.sql` (131 editais lidos dos PDFs
 oficiais, 13 modelos; aplicar depois da migration 20261002170000, rodando antes o ensaio
 `supabase/ensaios/20261002-regras-de-classificacao-todos-os-editais.sql`).

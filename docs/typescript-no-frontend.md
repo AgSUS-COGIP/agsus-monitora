@@ -23,9 +23,11 @@ edital, Preparar em passos, a configuração do edital, o parecer pronto e as se
 `src/lib/parecer-da-entrevista.ts`)
 já nascem em TypeScript. A apresentação dos resultados do Painel de entrevistas foi migrada:
 `paineis.tsx` (filtros, indicadores, recorte, gráficos e pendências), `tabela.tsx` e `gaveta.tsx`,
-com contratos em `tipos-do-painel.ts`. A entrada `entrevistas.jsx`, o estado e a normalização
-em `src/lib/entrevistas-do-painel.js` permanecem em JavaScript; as agregações consumidas
-pelos componentes declaram contratos JSDoc. Identificadores externos preservados do JSON
+com contratos em `tipos-do-painel.ts`. A entrada `entrevistas.tsx`, o estado em `estado.ts` e as regras de leitura, filtros,
+indicadores, gráficos e CSV em `src/lib/entrevistas-do-painel.ts` também estão migrados.
+O normalizador recebe `unknown`, verifica objetos e listas e tipa notas e vínculos ausentes.
+A agenda também passa por normalização; respostas anteriores à troca de área ou de sessão
+não voltam ao cache. O cliente só declara as duas RPCs de leitura consumidas pelo painel. Identificadores externos preservados do JSON
 continuam como `unknown`, e notas e vínculos ausentes são anuláveis. Os casos compilados
 estão em `tests/tipos/painel-de-entrevistas.tsx`. O Mapa de Projetos está em TypeScript, incluindo carregador,
 cache, mapa, lista, balões, integração do editor e regras em `src/lib/visao-geral-da-area.ts`.
@@ -49,6 +51,11 @@ já nasceu em TSX, com as regras em `src/lib/avaliacao-documental/assistente-da-
 `resumo-da-regra.ts`, `comparar-regras.ts`, `catalogo-de-desempate.ts`, `pendencias-do-salvar.ts` e os
 contratos em `tipos-da-regra.ts`; a prévia "Testar com um candidato fictício" está em `previa.tsx`.
 Na ficha, o Apurado de partida e o efeito da decisão nele estão em `apurado-da-ficha.ts`.
+
+A ficha de notas de Conduzir entrevistas está em `src/modulos/entrevistas/ficha.tsx`,
+com contratos do estado local e do salvamento em `tipos-da-ficha.ts`. A integração preserva
+os cálculos em JavaScript por JSDoc; o estado da condução e o editor de roteiros ainda
+aguardam migração. Os limites de validação estão no README de Entrevistas.
 
 ## Verificação
 

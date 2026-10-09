@@ -2,7 +2,7 @@
   As contas do "Painel de entrevistas" (src/modulos/entrevistas/), sem React:
   o edital do recorte (o da agenda dos próximos dias), os candidatos
   empatados na nota da entrevista e a agenda. Lê as entrevistas já
-  normalizadas por src/lib/entrevistas-do-painel.js (payload de
+  normalizadas por src/lib/entrevistas-do-painel.ts (payload de
   `get_entrevistas_da_area`, que deixa o edital de treinamento de fora).
 
   Empate: duas ou mais entrevistas do mesmo edital e da mesma vaga com a
@@ -12,7 +12,7 @@
 
 export type EntrevistaDoPainel = {
   id: string;
-  edital_id?: string | null;
+  edital_id?: unknown;
   edital?: string;
   unidade?: string;
   vaga?: string;
@@ -42,6 +42,14 @@ const texto = (valor: unknown) => String(valor ?? "").trim();
 const comparar = (a: string, b: string) =>
   a.localeCompare(b, "pt-BR", { numeric: true, sensitivity: "base" });
 
+/* IDs preservados do JSON só viram destinos de navegação quando são texto. */
+function idDoEdital(entrevistas: readonly EntrevistaDoPainel[]): string | null {
+  const id = entrevistas.find(
+    (e) => typeof e.edital_id === "string" && e.edital_id,
+  )?.edital_id;
+  return typeof id === "string" ? id : null;
+}
+
 function agrupar<T>(itens: readonly T[], chave: (item: T) => string) {
   const grupos = new Map<string, T[]>();
   for (const item of itens) {
@@ -67,7 +75,7 @@ export function editalDoRecorte(
   if (!nome && doEdital.some((e) => texto(e.edital) !== unico)) return null;
   return {
     edital: unico,
-    editalId: doEdital.find((e) => e.edital_id)?.edital_id ?? null,
+    editalId: idDoEdital(doEdital),
   };
 }
 
@@ -93,7 +101,7 @@ export function gruposEmpatados(
       return {
         chave,
         edital: texto(primeira.edital),
-        editalId: lista.find((e) => e.edital_id)?.edital_id ?? null,
+        editalId: idDoEdital(lista),
         vaga: texto(primeira.vaga),
         nota: Number(primeira.nota),
         ids: lista.map((e) => e.id),

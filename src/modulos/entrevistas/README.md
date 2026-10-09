@@ -48,8 +48,8 @@ Python) faz a média só de quem avalia; a ficha esmaece o que não é do avalia
 só as células atribuídas.
 
 ```
-entrevistas.jsx         Painel de entrevistas: <TelaDeEntrevistas> e montarEntrevistas()
-estado.js               store do painel: carga da área (cópia guardada), gaveta, CSV, agenda do
+entrevistas.tsx         Painel de entrevistas: <TelaDeEntrevistas> e montarEntrevistas()
+estado.ts               store do painel: carga da área (cópia guardada), gaveta, CSV, agenda do
                         edital do recorte (obter_agenda_entrevista), comemorações
 agenda-e-empates.tsx    agenda dos próximos dias (com um edital no recorte) e aviso dos empatados
 paineis.tsx             topo (status, ações), filtros, KPIs, recorte, gráficos, pendências
@@ -61,6 +61,7 @@ seletor-do-edital.tsx   o edital compacto abaixo do topo, selo Treinamento, "mos
                         (administrador global) dentro do seletor, liberação e erros com "Tentar novamente"
 fila-do-dia.tsx         a fila em cartões por vaga (iniciais, código, horário e banca, situação, notas só
                         quando há), recortes, busca e situações, estados vazios
+tipos-da-ficha.ts       contratos do estado local da ficha, do cálculo e das notas para salvar
 tipos.ts                contratos da tela nova com o estado da condução (JS)
 estado-da-conducao.js   store da condução e dos roteiros: editais, edital aberto, escritas (RPC), uma por vez
 preparar.tsx            Preparar em passos: Roteiro, Banca, Convocação, Agenda (estado e o que falta, de
@@ -72,7 +73,7 @@ conducao.jsx            BotaoIrPara, ConvocacaoDaClassificacao ("Ver detalhes"),
 resumo-das-regras.tsx   "Regras da entrevista": quem é chamado (tabelinha por vaga), como a nota é calculada,
                         quem avalia e o desempate, cada bloco com o "Editar" para onde se muda
 competencias-do-membro.tsx  "Competências que avalia" de cada membro (Todas / Só estas)
-ficha.jsx               ficha de notas em modo de análise (tela inteira, como a da Avaliação documental):
+ficha.tsx               ficha de notas em modo de análise (tela inteira, como a da Avaliação documental):
                         o estado, a gravação e o fluxo; por avaliador (padrão: uma aba por avaliador) ou
                         por competência (lembrado no navegador); componente independente (dados,
                         convocado, convocados, aoSalvar, aoAbrir, aoFechar)
@@ -100,20 +101,34 @@ entrevistas.css         só o que é destas telas (tokens); o resto vem de src/u
 A apresentação dos resultados está em TypeScript: filtros, KPIs, recorte, gráficos, pendências,
 tabela e gavetas. `tipos-do-painel.ts` declara os contratos de entrevistas, filtros, critérios,
 indicadores, pendências e aprovados sem entrevista. As notas e análises ausentes são anuláveis;
-IDs externos preservados pelo normalizador ficam como `unknown`. A entrada `entrevistas.jsx`,
-o estado e a normalização dos resultados em `entrevistas-do-painel.js` permanecem em
-JavaScript; os helpers consumidos pelos componentes têm contratos JSDoc. Isso não valida
-todo JSON nem todos os consumidores JavaScript. `tests/tipos/painel-de-entrevistas.tsx`
+IDs externos preservados pelo normalizador ficam como `unknown`. A entrada `entrevistas.tsx`,
+o estado em `estado.ts` e a normalização dos resultados em `entrevistas-do-painel.ts` também
+estão migrados. O normalizador recebe `unknown`, verifica objetos e listas e mantém os IDs
+e timestamps preservados como `unknown`. A agenda aceita apenas objetos e campos usados
+pela apresentação; destinos de agenda e desempate exigem um ID textual do edital. Respostas
+de agenda anteriores à troca de área ou de sessão são descartadas, inclusive para o mesmo
+edital. O cliente declara apenas `get_entrevistas_da_area` e `obter_agenda_entrevista`,
+compatíveis com o cliente único do app. O snapshot é somente leitura no compilador; dados
+aninhados não são congelados. Os componentes de Conduzir e Roteiros ainda combinam TSX e JSX.
+A ficha de notas (`ficha.tsx`) também está em TypeScript: estado local, modos de lançamento,
+permissões, matriz, progresso, atalhos, observações, justificativa, prévia e salvamento.
+`tipos-da-ficha.ts` distingue notas diretas de notas por aspectos e declara os campos enviados
+ao salvar (valores numéricos; `null` apaga). Os auxiliares de cálculo e de roteiro continuam
+em JavaScript, com contratos JSDoc para a integração. O estado da condução ainda recebe o
+payload do banco sem validação completa em tempo de execução; estes tipos não validam JSON.
+`tests/tipos/ficha-de-entrevistas.tsx` confere o contrato da ficha e rejeita notas textuais,
+notas que misturam os dois formatos e códigos de comparecimento inválidos.
+Isso não verifica todos os consumidores JavaScript nem valida o JSON inteiro. `tests/tipos/painel-de-entrevistas.tsx`
 confere usos e rejeições do compilador; o teste do módulo verifica a apresentação integrada.
 
-Regras puras em `src/lib/` (`entrevistas-do-painel.js`, `painel-de-entrevistas.ts` — edital do
+Regras puras em `src/lib/` (`entrevistas-do-painel.ts`, `painel-de-entrevistas.ts` — edital do
 recorte, empates, agenda dos próximos dias —, `fila-de-conducao.ts` — fila, situações, recortes, contador —,
 `conducao-de-entrevista.js`,
 `convocacao-da-entrevista.js` — a lista da Classificação por vaga, quem está na ficha, avisos —,
 `roteiro-de-entrevista.js`, `digitacao-de-notas.ts` — a digitação da matriz —, `resumo-da-entrevista.ts` — as
 regras em linguagem simples —, `passos-do-preparar.ts` — os passos de Preparar e a agenda por dia —,
 `pendencias-do-roteiro.ts` — as seções e o que falta no editor —, `parecer-da-entrevista.ts` — o parecer em
-texto pronto —, `comemoracao.js`). Testes: `tests/modulos/entrevistas.test.js` (painel), `tests/modulos/conduzir-entrevistas.test.js`,
+texto pronto —, `comemoracao.js`). Testes: `tests/modulos/entrevistas.test.js` (painel), `tests/modulos/agenda-do-painel-de-entrevistas.test.js` (respostas antigas da agenda), `tests/modulos/conduzir-entrevistas.test.js`,
 `tests/painel-e-conducao-de-entrevistas.test.js`, `tests/digitacao-de-notas.test.js`,
 `tests/convocacao-da-entrevista.test.js`, `tests/conducao-de-entrevista.test.js` e
 `tests/convocacao-unica-da-entrevista-migration.test.js`, `tests/resumo-da-entrevista.test.js` e

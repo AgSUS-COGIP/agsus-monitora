@@ -14,15 +14,35 @@
 import { sanitizeCsvCell } from "./csv-security.js";
 import { formatNumberBR } from "./formatters.js";
 
-const texto = (valor) => String(valor ?? "").trim();
+import type {
+  EntrevistaDoPainel,
+  AprovadoSemEntrevista,
+  CriterioDoPainel,
+  FiltrosDoPainel,
+  OpcoesDosFiltros,
+  DadosDoPainel,
+  IndicadoresDoPainel,
+  PendenciaDoPainel,
+  GrupoDosSemEntrevista,
+} from "../modulos/entrevistas/tipos-do-painel.ts";
+import type { ItemDaAgenda } from "./painel-de-entrevistas.ts";
 
-const numero = (valor) => {
+function registro(valor: unknown): Record<string, unknown> {
+  return typeof valor === "object" && valor !== null && !Array.isArray(valor)
+    ? (valor as Record<string, unknown>)
+    : {};
+}
+const lista = (valor: unknown): readonly unknown[] =>
+  Array.isArray(valor) ? valor : [];
+const texto = (valor: unknown) => String(valor ?? "").trim();
+
+const numero = (valor: unknown) => {
   if (valor === null || valor === undefined || valor === "") return null;
   const n = Number(valor);
   return Number.isFinite(n) ? n : null;
 };
 
-export function normalizarBusca(valor) {
+export function normalizarBusca(valor: unknown) {
   return String(valor ?? "")
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")
@@ -67,7 +87,7 @@ export const ANDAMENTOS = Object.freeze([
 ]);
 
 /** O andamento pendente da entrevista (um id de `ANDAMENTOS`) ou "". */
-export function andamentoDaEntrevista(e) {
+export function andamentoDaEntrevista(e: EntrevistaDoPainel) {
   if (!e.compareceu) return "sem_comparecimento";
   if (e.compareceu !== "S" || e.parecer !== "SEM_PARECER") return "";
   return e.nota === null ? "sem_nota" : "sem_parecer";
@@ -80,7 +100,7 @@ export const FAIXAS_DE_NOTA = Object.freeze([
   Object.freeze({ id: "15-20", rotulo: "15 a 20", de: 15, ate: 20 }),
 ]);
 
-export const FILTROS_VAZIOS = Object.freeze({
+export const FILTROS_VAZIOS: FiltrosDoPainel = Object.freeze({
   busca: "",
   unidade: "",
   edital: "",
@@ -93,54 +113,61 @@ export const FILTROS_VAZIOS = Object.freeze({
   andamento: "",
 });
 
-export const rotuloDoParecer = (id) =>
+export const rotuloDoParecer = (id: string) =>
   PARECERES.find((p) => p.id === id)?.rotulo || "Sem parecer";
-export const badgeDoParecer = (id) =>
+export const badgeDoParecer = (id: string) =>
   PARECERES.find((p) => p.id === id)?.badge || "neutro";
-export const rotuloDoComparecimento = (valor) =>
+export const rotuloDoComparecimento = (valor: string | null) =>
   COMPARECIMENTOS.find((c) => c.id === (valor || "NI"))?.rotulo ||
   "Não informado";
 
 /** "HABILIDADE TÉCNICA (Conhecimentos…)" → "HABILIDADE TÉCNICA". */
-export function rotuloCurtoDoCriterio(criterio) {
+export function rotuloCurtoDoCriterio(criterio: unknown) {
   const completo = texto(criterio);
   const corte = completo.indexOf(" (");
   return (corte > 0 ? completo.slice(0, corte) : completo).trim();
 }
 
-function normalizarParecer(valor) {
+function normalizarParecer(valor: unknown) {
   const id = texto(valor).toUpperCase();
   return PARECERES.some((p) => p.id === id) ? id : "SEM_PARECER";
 }
 
-function normalizarComparecimento(valor) {
+function normalizarComparecimento(valor: unknown) {
   const id = texto(valor).toUpperCase();
   return id === "S" || id === "N" ? id : null;
 }
 
-const arredondar = (valor, casas = 2) => {
+const arredondar = (valor: number, casas = 2) => {
   const fator = 10 ** casas;
   return Math.round(valor * fator) / fator;
 };
 
 /** Nota total diferente da soma das notas por critério (com notas lançadas). */
-export function notaDivergente(nota, notas) {
+export function notaDivergente(
+  nota: number | null,
+  notas: readonly { nota: number }[],
+) {
   if (nota === null || !notas.length) return false;
   const soma = notas.reduce((total, n) => total + n.nota, 0);
   return Math.abs(nota - soma) > TOLERANCIA_DA_SOMA;
 }
 
-function normalizarCriterios(lista) {
-  return (Array.isArray(lista) ? lista : []).map((criterio, indice) => ({
+function normalizarCriterios(valor: unknown): CriterioDoPainel[] {
+  return lista(valor).map((criterio, indice) => ({
     indice,
     texto: texto(criterio),
     curto: rotuloCurtoDoCriterio(criterio) || `Critério ${indice + 1}`,
   }));
 }
 
-function normalizarEntrevista(bruta, criterios) {
+function normalizarEntrevista(
+  valor: unknown,
+  criterios: readonly CriterioDoPainel[],
+): EntrevistaDoPainel {
+  const bruta = registro(valor);
   const nota = numero(bruta?.nota);
-  const notas = (Array.isArray(bruta?.notas) ? bruta.notas : [])
+  const notas = lista(bruta.notas)
     .map((par) => {
       const indice = Number(Array.isArray(par) ? par[0] : NaN);
       const valor = numero(Array.isArray(par) ? par[1] : null);
@@ -153,22 +180,24 @@ function normalizarEntrevista(bruta, criterios) {
         nota: valor,
       };
     })
-    .filter(Boolean);
+    .filter((nota): nota is NonNullable<typeof nota> => nota !== null);
   const somaDasNotas = notas.length
     ? arredondar(notas.reduce((total, n) => total + n.nota, 0))
     : null;
+  const dadosDaAnalise = registro(bruta.analise);
   const analise = bruta?.analise
     ? {
-        id: bruta.analise.id ?? null,
-        ligacao: texto(bruta.analise.ligacao) || null,
-        nota: numero(bruta.analise.nota),
-        resultado: texto(bruta.analise.resultado),
-        etapa: texto(bruta.analise.etapa),
-        responsavel: texto(bruta.analise.responsavel),
-        ativo: bruta.analise.ativo !== false,
+        id: dadosDaAnalise.id ?? null,
+        ligacao: texto(dadosDaAnalise.ligacao) || null,
+        nota: numero(dadosDaAnalise.nota),
+        resultado: texto(dadosDaAnalise.resultado),
+        etapa: texto(dadosDaAnalise.etapa),
+        responsavel: texto(dadosDaAnalise.responsavel),
+        ativo: dadosDaAnalise.ativo !== false,
       }
     : null;
-  const entrevista = {
+  const entrevista: EntrevistaDoPainel = {
+    busca: "",
     id: texto(bruta?.id),
     edital_id: bruta?.edital_id ?? null,
     edital: texto(bruta?.edital) || texto(bruta?.edital_planilha),
@@ -195,7 +224,8 @@ function normalizarEntrevista(bruta, criterios) {
   return entrevista;
 }
 
-function normalizarAprovado(bruto) {
+function normalizarAprovado(valor: unknown): AprovadoSemEntrevista {
+  const bruto = registro(valor);
   return {
     analise_id: bruto?.analise_id ?? null,
     candidato: texto(bruto?.candidato),
@@ -210,9 +240,10 @@ function normalizarAprovado(bruto) {
 }
 
 /** O payload de `get_entrevistas_da_area` no formato do painel. */
-export function normalizarPayload(dados) {
+export function normalizarPayload(valor: unknown): DadosDoPainel {
+  const dados = registro(valor);
   const criterios = normalizarCriterios(dados?.criterios);
-  const carga = dados?.ultima_carga;
+  const carga = dados.ultima_carga ? registro(dados.ultima_carga) : null;
   return {
     area: texto(dados?.area),
     geradoEm: dados?.gerado_em || null,
@@ -226,19 +257,18 @@ export function normalizarPayload(dados) {
         }
       : null,
     criterios,
-    entrevistas: (Array.isArray(dados?.entrevistas) ? dados.entrevistas : [])
+    entrevistas: lista(dados.entrevistas)
       .map((e) => normalizarEntrevista(e, criterios))
       .filter((e) => e.id || e.candidato),
-    aprovadosSemEntrevista: (Array.isArray(dados?.aprovados_sem_entrevista)
-      ? dados.aprovados_sem_entrevista
-      : []
-    ).map(normalizarAprovado),
+    aprovadosSemEntrevista: lista(dados.aprovados_sem_entrevista).map(
+      normalizarAprovado,
+    ),
   };
 }
 
 /* ── Filtros ────────────────────────────────────────────────────────── */
 
-export function situacoesDaLigacao(entrevista) {
+export function situacoesDaLigacao(entrevista: EntrevistaDoPainel) {
   const lista = [];
   lista.push(entrevista.analise ? "ligado" : "sem_analise");
   if (entrevista.semEdital) lista.push("sem_edital");
@@ -246,12 +276,10 @@ export function situacoesDaLigacao(entrevista) {
   return lista;
 }
 
-/**
- * @param {readonly import("../modulos/entrevistas/tipos-do-painel.ts").EntrevistaDoPainel[]} entrevistas
- * @param {import("../modulos/entrevistas/tipos-do-painel.ts").FiltrosDoPainel} [filtros]
- * @returns {import("../modulos/entrevistas/tipos-do-painel.ts").EntrevistaDoPainel[]}
- */
-export function filtrarEntrevistas(entrevistas, filtros = FILTROS_VAZIOS) {
+export function filtrarEntrevistas(
+  entrevistas: readonly EntrevistaDoPainel[],
+  filtros: FiltrosDoPainel = FILTROS_VAZIOS,
+) {
   const busca = normalizarBusca(filtros.busca);
   return entrevistas.filter((e) => {
     if (busca && !e.busca.includes(busca)) return false;
@@ -281,8 +309,8 @@ export function filtrarEntrevistas(entrevistas, filtros = FILTROS_VAZIOS) {
   ligação são da entrevista, que eles não têm.
 */
 export function filtrarAprovadosSemEntrevista(
-  aprovados,
-  filtros = FILTROS_VAZIOS,
+  aprovados: readonly AprovadoSemEntrevista[],
+  filtros: FiltrosDoPainel = FILTROS_VAZIOS,
 ) {
   const busca = normalizarBusca(filtros.busca);
   return aprovados.filter((a) => {
@@ -301,16 +329,21 @@ export function filtrarAprovadosSemEntrevista(
   });
 }
 
-const ordenarPt = (a, b) =>
+const ordenarPt = (a: string, b: string) =>
   a.localeCompare(b, "pt-BR", { sensitivity: "base" });
 
-function valoresDistintos(lista, campo) {
+function valoresDistintos(
+  lista: readonly EntrevistaDoPainel[],
+  campo: keyof EntrevistaDoPainel,
+) {
   return [...new Set(lista.map((item) => texto(item[campo])).filter(Boolean))]
     .sort(ordenarPt)
     .map((valor) => ({ valor, rotulo: valor }));
 }
 
-export function opcoesDosFiltros(entrevistas) {
+export function opcoesDosFiltros(
+  entrevistas: readonly EntrevistaDoPainel[],
+): OpcoesDosFiltros {
   return {
     unidades: valoresDistintos(entrevistas, "unidade"),
     editais: valoresDistintos(entrevistas, "edital"),
@@ -332,19 +365,22 @@ export function opcoesDosFiltros(entrevistas) {
 
 /* ── KPIs ───────────────────────────────────────────────────────────── */
 
-const chaveDoCandidato = (e) =>
+const chaveDoCandidato = (e: EntrevistaDoPainel) =>
   e.codigo ? `codigo:${e.codigo}` : `nome:${normalizarBusca(e.candidato)}`;
 
 /** Média das notas finais de quem compareceu; `null` sem nenhuma nota. */
-export function mediaDasNotas(entrevistas) {
+export function mediaDasNotas(entrevistas: readonly EntrevistaDoPainel[]) {
   const notas = entrevistas
     .filter((e) => e.compareceu === "S" && e.nota !== null)
-    .map((e) => e.nota);
+    .flatMap((e) => (e.nota === null ? [] : [e.nota]));
   if (!notas.length) return null;
   return notas.reduce((total, n) => total + n, 0) / notas.length;
 }
 
-export function calcularIndicadores(entrevistas, aprovadosSemEntrevista = []) {
+export function calcularIndicadores(
+  entrevistas: readonly EntrevistaDoPainel[],
+  aprovadosSemEntrevista: readonly AprovadoSemEntrevista[] = [],
+): IndicadoresDoPainel {
   return {
     vagas: new Set(entrevistas.map((e) => e.vaga).filter(Boolean)).size,
     candidatos: new Set(entrevistas.map(chaveDoCandidato)).size,
@@ -357,7 +393,7 @@ export function calcularIndicadores(entrevistas, aprovadosSemEntrevista = []) {
 }
 
 /** Número com duas casas, em pt-BR; "—" sem valor. */
-export function formatarNota(valor, casas = 2) {
+export function formatarNota(valor: unknown, casas = 2) {
   if (valor === null || valor === undefined || !Number.isFinite(Number(valor)))
     return "—";
   return formatNumberBR(Number(valor), {
@@ -368,11 +404,7 @@ export function formatarNota(valor, casas = 2) {
 
 /* ── Gráficos ───────────────────────────────────────────────────────── */
 
-/**
- * @param {readonly import("../modulos/entrevistas/tipos-do-painel.ts").EntrevistaDoPainel[]} entrevistas
- * @returns {{id: string, rotulo: string, valor: number}[]}
- */
-export function contagemPorParecer(entrevistas) {
+export function contagemPorParecer(entrevistas: readonly EntrevistaDoPainel[]) {
   return PARECERES.map((p) => ({
     id: p.id,
     rotulo: p.rotulo,
@@ -380,11 +412,9 @@ export function contagemPorParecer(entrevistas) {
   }));
 }
 
-/**
- * @param {readonly import("../modulos/entrevistas/tipos-do-painel.ts").EntrevistaDoPainel[]} entrevistas
- * @returns {{id: string, rotulo: string, valor: number}[]}
- */
-export function contagemPorComparecimento(entrevistas) {
+export function contagemPorComparecimento(
+  entrevistas: readonly EntrevistaDoPainel[],
+) {
   return COMPARECIMENTOS.map((c) => ({
     id: c.id,
     rotulo: c.rotulo,
@@ -393,11 +423,7 @@ export function contagemPorComparecimento(entrevistas) {
 }
 
 /* Faixas da nota final entre quem compareceu: a última inclui o 20. */
-/**
- * @param {readonly import("../modulos/entrevistas/tipos-do-painel.ts").EntrevistaDoPainel[]} entrevistas
- * @returns {{id: string, rotulo: string, valor: number}[]}
- */
-export function faixasDeNota(entrevistas) {
+export function faixasDeNota(entrevistas: readonly EntrevistaDoPainel[]) {
   const contagem = FAIXAS_DE_NOTA.map((f) => ({ ...f, valor: 0 }));
   for (const e of entrevistas) {
     if (e.compareceu !== "S" || e.nota === null) continue;
@@ -405,18 +431,17 @@ export function faixasDeNota(entrevistas) {
     const indice = contagem.findIndex(
       (f, i) => nota >= f.de && (nota < f.ate || i === contagem.length - 1),
     );
-    if (indice >= 0) contagem[indice].valor += 1;
+    const faixa = contagem[indice];
+    if (faixa) faixa.valor += 1;
   }
   return contagem;
 }
 
 /* Média de cada critério entre as notas lançadas (a ordem é a do payload). */
-/**
- * @param {readonly import("../modulos/entrevistas/tipos-do-painel.ts").EntrevistaDoPainel[]} entrevistas
- * @param {readonly import("../modulos/entrevistas/tipos-do-painel.ts").CriterioDoPainel[]} criterios
- * @returns {{indice: number, rotulo: string, texto: string, quantidade: number, media: number | null}[]}
- */
-export function mediaPorCriterio(entrevistas, criterios) {
+export function mediaPorCriterio(
+  entrevistas: readonly EntrevistaDoPainel[],
+  criterios: readonly CriterioDoPainel[],
+) {
   return criterios
     .map((c) => {
       const notas = entrevistas.flatMap((e) =>
@@ -435,12 +460,11 @@ export function mediaPorCriterio(entrevistas, criterios) {
     .filter((c) => c.quantidade > 0);
 }
 
-/**
- * @param {readonly import("../modulos/entrevistas/tipos-do-painel.ts").EntrevistaDoPainel[]} entrevistas
- * @returns {{rotulo: string, valor: number}[]}
- */
-export function topUnidades(entrevistas, limite = 10) {
-  const contagem = new Map();
+export function topUnidades(
+  entrevistas: readonly EntrevistaDoPainel[],
+  limite = 10,
+) {
+  const contagem = new Map<string, number>();
   for (const e of entrevistas) {
     const unidade = e.unidade || "Sem unidade";
     contagem.set(unidade, (contagem.get(unidade) || 0) + 1);
@@ -454,12 +478,10 @@ export function topUnidades(entrevistas, limite = 10) {
 /* ── Pendências ─────────────────────────────────────────────────────── */
 
 /** Aprovados sem entrevista agrupados por edital e vaga. */
-/**
- * @param {readonly import("../modulos/entrevistas/tipos-do-painel.ts").AprovadoSemEntrevista[]} aprovados
- * @returns {import("../modulos/entrevistas/tipos-do-painel.ts").GrupoDosSemEntrevista[]}
- */
-export function agruparAprovadosSemEntrevista(aprovados) {
-  const grupos = new Map();
+export function agruparAprovadosSemEntrevista(
+  aprovados: readonly AprovadoSemEntrevista[],
+) {
+  const grupos = new Map<string, GrupoDosSemEntrevista>();
   for (const a of aprovados) {
     const chave = `${a.edital}\u0000${a.vaga}`;
     if (!grupos.has(chave))
@@ -471,14 +493,17 @@ export function agruparAprovadosSemEntrevista(aprovados) {
         unidade: a.unidade,
         candidatos: [],
       });
-    grupos.get(chave).candidatos.push(a);
+    grupos.get(chave)?.candidatos.push(a);
   }
   return [...grupos.values()].sort(
     (a, b) => ordenarPt(a.edital, b.edital) || ordenarPt(a.vaga, b.vaga),
   );
 }
 
-export function pendenciasDasEntrevistas(entrevistas, aprovadosSemEntrevista) {
+export function pendenciasDasEntrevistas(
+  entrevistas: readonly EntrevistaDoPainel[],
+  aprovadosSemEntrevista: readonly AprovadoSemEntrevista[],
+): PendenciaDoPainel[] {
   return [
     {
       chave: "sem_entrevista",
@@ -550,15 +575,24 @@ export function pendenciasDasEntrevistas(entrevistas, aprovadosSemEntrevista) {
 /* ── Datas e CSV ────────────────────────────────────────────────────── */
 
 /** "dd/mm/aaaa hh:mm" no fuso de quem usa; "" sem data válida. */
-export function dataHoraBR(valor) {
+export function dataHoraBR(valor: unknown) {
   if (!valor) return "";
-  const data = new Date(valor);
+  const data = new Date(
+    valor instanceof Date
+      ? valor.getTime()
+      : typeof valor === "string" || typeof valor === "number"
+        ? valor
+        : NaN,
+  );
   if (Number.isNaN(data.getTime())) return "";
-  const dois = (n) => String(n).padStart(2, "0");
+  const dois = (n: number) => String(n).padStart(2, "0");
   return `${dois(data.getDate())}/${dois(data.getMonth() + 1)}/${data.getFullYear()} ${dois(data.getHours())}:${dois(data.getMinutes())}`;
 }
 
-const COLUNAS_DO_CSV = Object.freeze([
+const COLUNAS_DO_CSV: readonly (readonly [
+  string,
+  (e: EntrevistaDoPainel) => string,
+])[] = Object.freeze([
   ["Candidato", (e) => e.candidato],
   ["Código", (e) => e.codigo || ""],
   ["Unidade", (e) => e.unidade],
@@ -582,8 +616,8 @@ const COLUNAS_DO_CSV = Object.freeze([
 ]);
 
 /** CSV com `;` (Excel pt-BR), BOM e células protegidas contra fórmula. */
-export function csvDasEntrevistas(entrevistas) {
-  const celula = (valor) => {
+export function csvDasEntrevistas(entrevistas: readonly EntrevistaDoPainel[]) {
+  const celula = (valor: unknown) => {
     const seguro = sanitizeCsvCell(valor ?? "");
     return /[";\n\r]/.test(seguro) ? `"${seguro.replace(/"/g, '""')}"` : seguro;
   };
@@ -606,14 +640,40 @@ export function csvDasEntrevistas(entrevistas) {
 */
 export const PAINEL_DE_ENTREVISTAS = Object.freeze({
   nome: "painel de entrevistas",
-  chave: ({ area }) => `entrevistas:${String(area ?? "").trim()}`,
-  esquema: (payload) => payload?.schema_version,
+  chave: ({ area }: { area?: unknown }) =>
+    `entrevistas:${String(area ?? "").trim()}`,
+  esquema: (payload: unknown) => registro(payload).schema_version,
   esquemas: Object.freeze([1]),
-  valido: (payload) => Array.isArray(payload?.entrevistas),
+  valido: (payload: unknown) => Array.isArray(registro(payload).entrevistas),
 });
 
 /* O payload mudou? `gerado_em` muda a cada leitura e não conta. */
-export function payloadMudou(anterior, novo) {
-  const semData = (payload) => JSON.stringify({ ...payload, gerado_em: null });
+export function payloadMudou(anterior: unknown, novo: unknown) {
+  const semData = (payload: unknown) =>
+    JSON.stringify({ ...registro(payload), gerado_em: null });
   return !anterior || !novo || semData(anterior) !== semData(novo);
+}
+
+/** Agenda externa: somente objetos e campos usados pela apresentação. */
+export function normalizarAgendaDoPainel(valor: unknown): ItemDaAgenda[] {
+  const dados = registro(valor);
+  return lista(dados.itens)
+    .filter(
+      (item) =>
+        typeof item === "object" && item !== null && !Array.isArray(item),
+    )
+    .map((item) => {
+      const dado = registro(item);
+      const campo = (nome: string) =>
+        typeof dado[nome] === "string" ? dado[nome] : null;
+      return {
+        analise_id: campo("analise_id"),
+        nome: campo("nome"),
+        vaga: campo("vaga"),
+        cargo: campo("cargo"),
+        data: campo("data"),
+        inicio: campo("inicio"),
+        banca: numero(dado.banca),
+      };
+    });
 }
