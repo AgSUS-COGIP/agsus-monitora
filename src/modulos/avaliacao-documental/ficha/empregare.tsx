@@ -1,6 +1,7 @@
 import {
   apresentacaoDoAnexo,
   enderecoDoAnexo,
+  numeroDaPergunta,
 } from "../../../lib/avaliacao-documental/anexo-na-empregare.ts";
 import type { ContextoDaEmpregare } from "./tipos.ts";
 
@@ -112,5 +113,70 @@ export function LinkDoAnexo({
       </a>
       {dica ? <small className="avd-ficha-dica-anexo">{dica}</small> : null}
     </span>
+  );
+}
+
+/**
+ * Os envios anteriores do questionário (quem respondeu mais de uma vez): a
+ * ficha usa só a resposta vigente; aqui, recolhidos, os arquivos de cada envio
+ * anterior para o avaliador conferir se precisar. Sem envio anterior, nada.
+ */
+export function EnviosAnteriores({
+  empregare,
+}: {
+  empregare: ContextoDaEmpregare;
+}) {
+  const anteriores = empregare.enderecos.anteriores ?? [];
+  if (!anteriores.length) return null;
+  const abrir = () => void empregare.loja.registrarAcesso("ABRIR_EMPREGARE");
+  return (
+    <details className="avd-ficha-envios" data-tour="avd-ficha-envios">
+      <summary>
+        O candidato enviou o questionário {anteriores.length + 1} vezes — ver
+        envios anteriores
+      </summary>
+      {anteriores.map((envio, i) => (
+        <section key={envio.resposta} className="avd-ficha-envio">
+          <p
+            className="avd-ficha-envio-titulo"
+            title={`Resposta ${envio.resposta} na Empregare`}
+          >
+            {anteriores.length - i}º envio
+            {envio.impressao ? (
+              <a
+                href={envio.impressao}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={abrir}
+              >
+                ver respostas
+              </a>
+            ) : null}
+          </p>
+          {envio.arquivos.length ? (
+            <ul>
+              {envio.arquivos.map((a) => (
+                <li key={`${a.pergunta}:${a.arquivo}`}>
+                  <a
+                    href={a.link}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={abrir}
+                    title={a.enunciado || a.coluna}
+                  >
+                    {numeroDaPergunta(a.coluna) ??
+                      (a.ordem ? `Pergunta ${a.ordem}` : "Arquivo")}
+                    {a.arquivo > 1 ? ` (arquivo ${a.arquivo})` : ""}
+                  </a>
+                  <span>{a.enunciado}</span>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="avd-ficha-envio-vazio">Sem arquivos neste envio.</p>
+          )}
+        </section>
+      ))}
+    </details>
   );
 }

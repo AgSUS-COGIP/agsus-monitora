@@ -1544,4 +1544,68 @@ describe("ficha: o que o candidato informou (respostas, arquivos e linhas sugeri
     );
     expect(linha().querySelector(".avd-ficha-da-resposta")).toBeNull();
   });
+
+  it("só a resposta vigente no item; os envios anteriores recolhidos na lateral, com os arquivos", async () => {
+    const ficha = fichaDoBanco();
+    const link = (resposta, arquivo) =>
+      `https://corporate.empregare.com/Company/VacancyTests/GetViewerLogArquivo?arquivo=${arquivo}&nome=Case&token=TK&questionarioRespostaID=${resposta}`;
+    const coluna = "Pergunta 4 - Anexe o documento de identificação com foto";
+    ficha.empregare = {
+      anexos: [
+        {
+          resposta: "8019889",
+          pergunta: "183219",
+          arquivo: 1,
+          ordem: 4,
+          enunciado: "Anexe o documento de identificação com foto",
+          coluna,
+          link: link("8019889", "RG%20novo.pdf"),
+        },
+      ],
+      envios_anteriores: [
+        {
+          resposta: "7995988",
+          perguntas: 25,
+          arquivos: [
+            {
+              pergunta: "179828",
+              arquivo: 1,
+              ordem: 4,
+              enunciado: "Anexe o documento de identificação com foto",
+              coluna,
+              link: link("7995988", "RG%20antigo.pdf"),
+            },
+          ],
+        },
+      ],
+    };
+    const supabase = supabaseFalso(ficha);
+    await abrirFicha(supabase);
+    expect(
+      [...cartao("IDENTIDADE").querySelectorAll(".avd-ficha-arquivo")].map(
+        (a) => a.textContent,
+      ),
+    ).toEqual(["RG novo.pdf"]);
+    const envios = document.querySelector(
+      ".avd-ficha-lateral .avd-ficha-envios",
+    );
+    expect(envios.open).toBe(false);
+    expect(envios.querySelector("summary").textContent).toBe(
+      "O candidato enviou o questionário 2 vezes — ver envios anteriores",
+    );
+    const anterior = envios.querySelector(".avd-ficha-envio li a");
+    expect(anterior.textContent).toBe("Pergunta 4");
+    expect(anterior.getAttribute("href")).toBe(
+      link("7995988", "RG%20antigo.pdf"),
+    );
+    await clicar(anterior);
+    expect(chamadas(supabase, "registrar_acesso_ficha").at(-1)).toMatchObject({
+      p_tipo: "ABRIR_EMPREGARE",
+    });
+  });
+
+  it("sem envio anterior, nada de envios na lateral", async () => {
+    await abrirFicha(supabaseFalso(fichaDoBanco()));
+    expect(document.querySelector(".avd-ficha-envios")).toBeNull();
+  });
 });

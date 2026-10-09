@@ -1544,6 +1544,28 @@ export const VERBETES_AYA = Object.freeze([
   },
   {
     arquivo: "regras-da-avaliacao-documental.md",
+    titulo: "Candidato que enviou o questionário mais de uma vez",
+    perguntas: [
+      "dois arquivos no mesmo item",
+      "arquivo repetido na ficha",
+      "documento aparece duas vezes",
+      "enviou o questionario duas vezes",
+      "questionario retificado",
+      "envios anteriores",
+      "resposta antiga do candidato",
+      "qual resposta vale",
+      "resposta vigente",
+      "arquivos do envio anterior",
+    ],
+    resposta:
+      'Quando o questionário da vaga é retificado, a Empregare abre uma resposta nova e o candidato pode ter respondido mais de uma vez. A ficha usa só a resposta vigente — a mais recente, a mesma que vem na exportação da Empregare —: as respostas, os arquivos de cada item e as sugestões são dela, sem arquivo repetido. As anteriores ficam na lateral, recolhidas, em "O candidato enviou o questionário N vezes — ver envios anteriores": cada envio com o link das respostas e os arquivos (Pergunta 4, Pergunta 6…), para conferir se precisar. Se o candidato não respondeu o questionário novo, os itens ficam sem arquivo e os documentos antigos aparecem só nos envios anteriores. Todo acesso fica registrado.',
+    fato: "",
+    fonte:
+      "supabase/migrations/20261009210000_ficha_com_a_resposta_vigente.sql (FC_RESPOSTA_VIGENTE_EMPREGARE, obter_ficha_analise); src/lib/avaliacao-documental/anexo-na-empregare.ts (enviosAnterioresDaEmpregare); src/modulos/avaliacao-documental/ficha/empregare.tsx (EnviosAnteriores)",
+    abrir: "avaliacao-documental",
+  },
+  {
+    arquivo: "regras-da-avaliacao-documental.md",
     titulo: "Atalhos da ficha",
     perguntas: [
       "atalhos da ficha",

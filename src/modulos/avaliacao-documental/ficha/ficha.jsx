@@ -1,5 +1,6 @@
 import {
   anexosDaEmpregare,
+  enviosAnterioresDaEmpregare,
   impressaoDasRespostas,
 } from "../../../lib/avaliacao-documental/anexo-na-empregare.ts";
 import {
@@ -46,7 +47,7 @@ import { compartilharNoChat } from "../../chat/ponte.js";
 import { usarChatLiberado } from "../../chat/usar-chat-liberado.js";
 import { CabecalhoDaFicha } from "./cabecalho-da-ficha.tsx";
 import { ConclusaoDaFicha } from "./conclusao-da-ficha.tsx";
-import { copiar } from "./empregare.tsx";
+import { copiar, EnviosAnteriores } from "./empregare.tsx";
 import { blocoEditaNota } from "../../../lib/avaliacao-documental/apurado-da-ficha.ts";
 import {
   contextoDaEscolha,
@@ -126,6 +127,7 @@ function enderecosDaEmpregare(dados, ficha) {
     vagaDireta: Boolean(vaga?.includes("/candidaturas/")),
     anexos: anexosDaEmpregare(empregare),
     impressao: impressaoDasRespostas(empregare),
+    anteriores: enviosAnterioresDaEmpregare(empregare),
   };
 }
 
@@ -722,6 +724,7 @@ export function ConteudoDaFicha({
             data-tour="avd-ficha-lateral"
           >
             <ResumoDaNota {...nota} acoes={maisAcoes} />
+            <EnviosAnteriores empregare={empregare} />
           </aside>
         )}
       </div>

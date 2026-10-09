@@ -7,6 +7,10 @@ resumo_das_perguntas.py) lê as respostas cruas de cada vaga pela RPC
 ler_respostas_pergunta_vaga, resume aqui e grava pronto por
 gravar_resumo_pergunta_edital (migration 20261009180000). A tela só lê
 (obter_perguntas_carga_analise); nenhuma conta no banco nem no navegador.
+As respostas são as da exportação (DS_COLUNA_ORIGINAL, uma linha por
+candidato), que já é a resposta vigente do questionário — a mais recente,
+a mesma que a ficha mostra (20261009210000) — mesmo de quem respondeu mais
+de uma vez.
 
 Regra de privacidade (a mesma de antes, quando o banco contava na hora):
   - só as colunas "Pergunta N ..." (começo sem diferença de caixa);
