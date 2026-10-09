@@ -37,6 +37,7 @@ import {
 } from "./paineis.jsx";
 import { MENSAGEM_SEM_ENTREVISTAS, TabelaDeEntrevistas } from "./tabela.jsx";
 import { SeloDeAvisos } from "../conferencias/avisos-de-conferencia.tsx";
+import "./entrevistas.css";
 
 /*
   O PAINEL DE ENTREVISTAS (view `entrevistas`, "acompanhar"; gestão e

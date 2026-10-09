@@ -36,6 +36,7 @@ import { criarEstadoDaConducao } from "./estado-da-conducao.js";
 import { FichaDoCandidato } from "./ficha.jsx";
 import { FilaDoDia } from "./fila-do-dia.tsx";
 import { SeletorDoEdital } from "./seletor-do-edital.tsx";
+import "./entrevistas.css";
 
 /*
   CONDUZIR ENTREVISTAS (view `conduzir-entrevistas`, "fazer"; secretaria e

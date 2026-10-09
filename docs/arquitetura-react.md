@@ -136,7 +136,9 @@ entra assim, não com import estático em `main.js`.
 
 Importe do índice: `import { Kpi, GradeDeKpis, Aviso } from "../../ui/index.js";`. O `ui.css` é
 importado uma vez no ponto de entrada (`src/main.js`); o CSS próprio de um módulo de
-`src/modulos/` entra no `src/main.js` logo depois.
+`src/modulos/` aberto sob demanda é importado pelo ponto de entrada da tela (baixa junto com o código,
+num CSS à parte); só fica no `src/main.js`, logo depois do `ui.css`, o CSS de módulo cujas classes
+aparecem fora da própria tela.
 
 Os componentes emitem só classes `.ui-*` (prefixo para não colidir com `.panel`,
 `.kpi`, `.card`… de `app.css`) e nenhum id fixo. Peças de layout em CSS, sem componente:

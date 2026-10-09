@@ -27,7 +27,9 @@ import "./styles/multi-select-busca.css";
 import "./styles/carregamento.css";
 import "./styles/manutencao.css";
 import "./styles/saude-das-cargas.css";
-// Componentes de src/ui/ e, depois, o CSS próprio de cada módulo de src/modulos/.
+// Componentes de src/ui/ e, depois, o CSS dos módulos que aparecem fora da própria tela. O CSS
+// de uma tela sob demanda (Entrevistas, Recursos, Classificação, Avaliação documental, Convocação
+// e carta) entra pelo ponto de entrada dela e baixa junto com o código.
 import "./ui/ui.css";
 import "./modulos/configuracoes/configuracoes.css";
 import "./modulos/acessos/acessos.css";
@@ -35,14 +37,7 @@ import "./modulos/modulos/modulos.css";
 import "./modulos/editais/editais.css";
 import "./modulos/cronograma/cronograma.css";
 import "./modulos/aprovados/aprovados.css";
-import "./modulos/aprovados/convocacao.css";
-import "./modulos/aprovados/carta-de-convocacao/carta.css";
-import "./modulos/recursos/recursos.css";
-import "./modulos/entrevistas/entrevistas.css";
 import "./modulos/selecao/selecao.css";
-import "./modulos/classificacao/classificacao.css";
-import "./modulos/avaliacao-documental/avaliacao-documental.css";
-import "./modulos/avaliacao-documental/ficha/ficha.css";
 import "./modulos/conferencias/conferencias.css";
 import "./modulos/visao-geral/visao-geral.css";
 import "./modulos/aya/aya.css";
