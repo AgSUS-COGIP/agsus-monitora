@@ -1139,6 +1139,13 @@ export const CONTRATO_RPC = {
     resumo:
       "Pré-classificação gravada pelo job Python: regra, última execução, vagas (quadro, tamanho do lote, linha de corte, avisos), inscritos (código, nome, situação, ART, nota declarada, posição, lote e motivo; sem CPF nem contato) e as listas PROVISORIA/LOTE registradas. Leitor da Avaliação documental.",
   },
+  // ── Avaliação documental: acompanhamento das inscrições (20261009140000_acompanhamento_das_inscricoes.sql)
+  obter_acompanhamento_inscricoes: {
+    argumentos: ["p_edital"],
+    critica: false,
+    resumo:
+      "Cartão Inscrições da Pré-classificação: cronograma, vagas da Empregare do edital (código e cargo) e os retratos diários dos últimos 60 dias (inscritos, finalizaram o questionário, aptos pela regra, eliminados; só contagens). Leitor da Avaliação documental.",
+  },
   registrar_lista_pre_classificacao: {
     argumentos: ["p_edital", "p_tipo", "p_lote"],
     critica: false,

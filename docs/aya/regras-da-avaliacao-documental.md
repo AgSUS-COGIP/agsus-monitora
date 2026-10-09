@@ -228,6 +228,14 @@ os modelos em `supabase/correcoes/20261006-modelos-da-regra-da-analise.sql` e o 
 **fonte:** scripts/pre_classificacao/pre_classificacao.py; .github/workflows/pre-classificacao.yml; supabase/migrations/20261008140000_agenda_dos_robos_pelo_banco.sql
 **abrir:** avaliacao-documental
 
+## Acompanhar inscrições
+
+**perguntas:** acompanhar inscricoes | quantos inscritos | quantos aptos para analise | evolucao das inscricoes | cartao inscricoes | inscritos por vaga | hoje +n | grafico das inscricoes | finalizaram o questionario | inscricoes do 114/2026
+**resposta:** Durante as inscrições do edital (da véspera do início a 3 dias depois do fim, pelo cronograma), a aba Pré-classificação mostra no topo o cartão "Inscrições": inscritos (candidatos ativos na Empregare), quantos finalizaram o questionário, quantos estão aptos para análise pela regra e quantos foram eliminados, um mini-gráfico diário de inscritos e aptos até o fim das inscrições e, em "Por vaga", inscritos, aptos e "hoje +N" (quantos entraram hoje). Os números vêm de um retrato gravado a cada pré-classificação (no fim de cada carga do robô da Empregare): um por vaga e por dia, só contagens. Aptos pela regra: no lote pela nota mínima, os não eliminados com a nota da Provisória a partir da mínima; nos outros lotes, os do lote mais os acima da linha de corte. Com a regra ainda não conferida, os aptos são uma prévia (selo "prévia"); sem regra, só inscritos e finalizados. Sem carga ainda, o cartão diz "Aguardando a primeira carga da Empregare". A "Validação das inscrições" dos editais de Projetos não conta como período de inscrição. Para o 114/2026 o banco pede o robô da Empregare às 7h e às 13h até 15/10/2026.
+**fato:** No MONITORA, o cartão Inscrições da Pré-classificação mostra, durante as inscrições, inscritos, finalizados, aptos pela regra e eliminados, com a evolução diária, a partir do retrato gravado a cada pré-classificação.
+**fonte:** src/modulos/avaliacao-documental/inscricoes-do-edital.tsx; src/lib/avaliacao-documental/acompanhamento-das-inscricoes.ts; python/monitora/avaliacao_documental/retrato_das_inscricoes.py; supabase/migrations/20261009140000_acompanhamento_das_inscricoes.sql
+**abrir:** avaliacao-documental
+
 ## Listas Provisória e Lote de convocação
 
 **perguntas:** lista provisoria oficial | lote de convocacao oficial | registrar a lista provisoria | publicar o lote | copiar para o sei a provisoria | baixar docx da provisoria | publicar cada reposicao | lista lote

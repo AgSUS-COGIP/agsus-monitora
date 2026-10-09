@@ -1,3 +1,7 @@
+import type {
+  EntrevistaDoPainel,
+  AprovadoSemEntrevista,
+} from "./tipos-do-painel.ts";
 import { formatNumberBR } from "../../lib/formatters.js";
 import {
   agruparAprovadosSemEntrevista,
@@ -8,7 +12,7 @@ import {
   rotuloDoParecer,
 } from "../../lib/entrevistas-do-painel.js";
 import { EstadoVazio, Gaveta, GradeDeKv, Kv, Secao } from "../../ui/index.js";
-import { SeloDoParecer } from "./tabela.jsx";
+import { SeloDoParecer } from "./tabela.tsx";
 
 /*
   Gavetas da visão "Resultados" (a Gaveta de src/ui/, encostada à direita): o
@@ -18,13 +22,13 @@ import { SeloDoParecer } from "./tabela.jsx";
   nada de HTML vindo dos dados.
 */
 
-const ROTULO_DA_LIGACAO = {
+const ROTULO_DA_LIGACAO: Record<string, string> = {
   codigo: "pelo código do candidato",
   nome: "pelo nome do candidato",
 };
 
 /* Só http(s): o link vem da planilha. */
-function linkSeguro(valor) {
+function linkSeguro(valor: unknown) {
   try {
     const url = new URL(String(valor ?? ""));
     return url.protocol === "https:" || url.protocol === "http:"
@@ -35,7 +39,7 @@ function linkSeguro(valor) {
   }
 }
 
-function Caminho({ entrevista: e }) {
+function Caminho({ entrevista: e }: { entrevista: EntrevistaDoPainel }) {
   const etapas = [
     {
       chave: "analise",
@@ -74,7 +78,7 @@ function Caminho({ entrevista: e }) {
   );
 }
 
-function BarraDoCriterio({ nota }) {
+function BarraDoCriterio({ nota }: { nota: number }) {
   const parte = Math.max(0, Math.min(1, nota / NOTA_MAXIMA_DO_CRITERIO));
   return (
     <span className="entrevistas-barra" aria-hidden="true">
@@ -83,7 +87,13 @@ function BarraDoCriterio({ nota }) {
   );
 }
 
-export function GavetaDaEntrevista({ entrevista: e, aoFechar }) {
+export function GavetaDaEntrevista({
+  entrevista: e,
+  aoFechar,
+}: {
+  entrevista: EntrevistaDoPainel;
+  aoFechar(): void;
+}) {
   const link = linkSeguro(e.link);
   return (
     <Gaveta
@@ -145,7 +155,9 @@ export function GavetaDaEntrevista({ entrevista: e, aoFechar }) {
               <Kv rotulo="Etapa">{e.analise.etapa}</Kv>
               <Kv rotulo="Responsável">{e.analise.responsavel}</Kv>
               <Kv rotulo="Ligação">
-                {ROTULO_DA_LIGACAO[e.analise.ligacao] || e.analise.ligacao}
+                {e.analise.ligacao
+                  ? ROTULO_DA_LIGACAO[e.analise.ligacao] || e.analise.ligacao
+                  : null}
               </Kv>
               {e.analise.ativo ? null : (
                 <Kv rotulo="Situação">Análise inativa</Kv>
@@ -216,7 +228,13 @@ export function GavetaDaEntrevista({ entrevista: e, aoFechar }) {
   );
 }
 
-export function GavetaDosSemEntrevista({ aprovados, aoFechar }) {
+export function GavetaDosSemEntrevista({
+  aprovados,
+  aoFechar,
+}: {
+  aprovados: readonly AprovadoSemEntrevista[];
+  aoFechar(): void;
+}) {
   const grupos = agruparAprovadosSemEntrevista(aprovados);
   return (
     <Gaveta
@@ -253,7 +271,14 @@ export function GavetaDosSemEntrevista({ aprovados, aoFechar }) {
               </p>
               <ul className="entrevistas-sem-entrevista">
                 {g.candidatos.map((a, indice) => (
-                  <li key={a.analise_id ?? `${g.chave}-${indice}`}>
+                  <li
+                    key={
+                      typeof a.analise_id === "string" ||
+                      typeof a.analise_id === "number"
+                        ? a.analise_id
+                        : `${g.chave}-${indice}`
+                    }
+                  >
                     <span>
                       <strong>{a.candidato}</strong>
                       <small>

@@ -1208,6 +1208,28 @@ export const VERBETES_AYA = Object.freeze([
   },
   {
     arquivo: "regras-da-avaliacao-documental.md",
+    titulo: "Acompanhar inscrições",
+    perguntas: [
+      "acompanhar inscricoes",
+      "quantos inscritos",
+      "quantos aptos para analise",
+      "evolucao das inscricoes",
+      "cartao inscricoes",
+      "inscritos por vaga",
+      "hoje +n",
+      "grafico das inscricoes",
+      "finalizaram o questionario",
+      "inscricoes do 114/2026",
+    ],
+    resposta:
+      'Durante as inscrições do edital (da véspera do início a 3 dias depois do fim, pelo cronograma), a aba Pré-classificação mostra no topo o cartão "Inscrições": inscritos (candidatos ativos na Empregare), quantos finalizaram o questionário, quantos estão aptos para análise pela regra e quantos foram eliminados, um mini-gráfico diário de inscritos e aptos até o fim das inscrições e, em "Por vaga", inscritos, aptos e "hoje +N" (quantos entraram hoje). Os números vêm de um retrato gravado a cada pré-classificação (no fim de cada carga do robô da Empregare): um por vaga e por dia, só contagens. Aptos pela regra: no lote pela nota mínima, os não eliminados com a nota da Provisória a partir da mínima; nos outros lotes, os do lote mais os acima da linha de corte. Com a regra ainda não conferida, os aptos são uma prévia (selo "prévia"); sem regra, só inscritos e finalizados. Sem carga ainda, o cartão diz "Aguardando a primeira carga da Empregare". A "Validação das inscrições" dos editais de Projetos não conta como período de inscrição. Para o 114/2026 o banco pede o robô da Empregare às 7h e às 13h até 15/10/2026.',
+    fato: "No MONITORA, o cartão Inscrições da Pré-classificação mostra, durante as inscrições, inscritos, finalizados, aptos pela regra e eliminados, com a evolução diária, a partir do retrato gravado a cada pré-classificação.",
+    fonte:
+      "src/modulos/avaliacao-documental/inscricoes-do-edital.tsx; src/lib/avaliacao-documental/acompanhamento-das-inscricoes.ts; python/monitora/avaliacao_documental/retrato_das_inscricoes.py; supabase/migrations/20261009140000_acompanhamento_das_inscricoes.sql",
+    abrir: "avaliacao-documental",
+  },
+  {
+    arquivo: "regras-da-avaliacao-documental.md",
     titulo: "Listas Provisória e Lote de convocação",
     perguntas: [
       "lista provisoria oficial",
@@ -3886,7 +3908,7 @@ export const VERBETES_AYA = Object.freeze([
       "Os resultados ficam no Painel de entrevistas, só de consulta (a condução é em Conduzir entrevistas). Indicadores: Vagas com entrevista, Candidatos, Compareceram, Aptos, Inaptos, Média das notas (de quem compareceu) e Aprovados na análise sem entrevista; clicar em Compareceram, Aptos ou Inaptos filtra a tela. Pendências: sem comparecimento registrado, compareceu sem nota, com nota sem parecer, aprovados sem entrevista (só nas vagas que já têm entrevista), entrevista sem análise ligada, sem edital cadastrado e nota divergente (total diferente da soma dos critérios); cada uma filtra o painel. A nota total vai de 0 a 20 e cada critério, em geral, de 0 a 5. A ligação com a análise curricular é pelo código do candidato e da vaga e, na falta, pelo nome.",
     fato: "",
     fonte:
-      "src/modulos/entrevistas/paineis.jsx; src/lib/entrevistas-do-painel.js; supabase/migrations/20260929235000_entrevistas.sql",
+      "src/modulos/entrevistas/paineis.tsx; src/lib/entrevistas-do-painel.js; supabase/migrations/20260929235000_entrevistas.sql",
     abrir: "entrevistas",
   },
   {

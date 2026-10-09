@@ -1,3 +1,7 @@
+import type {
+  EntrevistaDoPainel,
+  AnaliseDaEntrevista,
+} from "./tipos-do-painel.ts";
 import { formatNumberBR } from "../../lib/formatters.js";
 import {
   badgeDoParecer,
@@ -31,11 +35,15 @@ const COLUNAS = [
 export const MENSAGEM_SEM_ENTREVISTAS =
   "Nenhuma entrevista carregada para esta área ainda.";
 
-export function SeloDoParecer({ parecer }) {
+export function SeloDoParecer({ parecer }: { parecer: string }) {
   return <Selo tom={badgeDoParecer(parecer)}>{rotuloDoParecer(parecer)}</Selo>;
 }
 
-export function ResumoDaAnalise({ analise }) {
+export function ResumoDaAnalise({
+  analise,
+}: {
+  analise: AnaliseDaEntrevista | null;
+}) {
   if (!analise) return <Selo>Sem análise</Selo>;
   return (
     <div>
@@ -45,10 +53,18 @@ export function ResumoDaAnalise({ analise }) {
   );
 }
 
-const pelaBusca = (entrevistas, busca) =>
+const pelaBusca = (entrevistas: readonly EntrevistaDoPainel[], busca: string) =>
   filtrarEntrevistas(entrevistas, { ...FILTROS_VAZIOS, busca });
 
-function LinhaDaEntrevista({ entrevista: e, empatados, aoAbrir }) {
+function LinhaDaEntrevista({
+  entrevista: e,
+  empatados,
+  aoAbrir,
+}: {
+  entrevista: EntrevistaDoPainel;
+  empatados: number;
+  aoAbrir(id: string): void;
+}) {
   return (
     <tr
       className="entrevistas-linha"
@@ -118,6 +134,12 @@ export function TabelaDeEntrevistas({
   carregado,
   empates = null,
   aoAbrir,
+}: {
+  entrevistas: readonly EntrevistaDoPainel[];
+  total: number;
+  carregado: boolean;
+  empates?: ReadonlyMap<string, number> | null;
+  aoAbrir(id: string): void;
 }) {
   return (
     <TabelaInfinita
