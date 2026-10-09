@@ -24,8 +24,18 @@ import {
   rotuloDoZoom,
   tamanhoEscalado,
 } from "../../lib/classificacao/escala-da-previa.ts";
+import {
+  colunasDisponiveis,
+  colunasEscolhidas,
+  colunasParaGuardar,
+  ehOPadrao,
+} from "../../lib/classificacao/colunas-do-documento.js";
 import { documentoDaRegra } from "../../lib/classificacao/regra.js";
 import { Abas, Campo, classes, Modal } from "../../ui/index.js";
+import {
+  ColunasDoDocumento,
+  type ColunaDisponivel,
+} from "./colunas-do-documento.tsx";
 
 /*
   "Como fica no SEI": o documento oficial da lista registrada. O modal ocupa
@@ -33,12 +43,15 @@ import { Abas, Campo, classes, Modal } from "../../ui/index.js";
   a PRÉVIA é o centro: a folha A4 inteira (iframe sem script, as classes do
   SEI imitadas), em escala que cabe na largura ("Ajustar") ou no zoom − / +.
   Os textos do edital que o gestor ajusta antes de copiar ficam num painel
-  recolhível à esquerda, em duas abas: "Dados" (número do edital, processo
-  SEI, unidade, autoridade do 1.1, local e data) e "Textos" (título e
-  disposições preliminares e finais do modelo desta lista). No celular, uma
-  coluna: o painel em cima e a prévia embaixo. Rodapé fixo: "Restaurar o
-  padrão" e "Salvar no edital" (grava os textos na regra, nova versão) à
-  esquerda; "Baixar DOCX" e "Copiar para o SEI" (usam o rascunho) à direita.
+  recolhível à esquerda, em três abas: "Dados" (número do edital, processo
+  SEI, unidade, autoridade do 1.1, local e data), "Textos" (título e
+  disposições preliminares e finais do modelo desta lista) e "Colunas" (as
+  colunas da tabela de cada vaga e a ordem delas, por publicação —
+  colunas-do-documento.tsx). No celular, uma coluna: o painel em cima e a
+  prévia embaixo. Rodapé fixo: "Restaurar o padrão" (na aba Colunas, as
+  colunas; nas outras, os textos do modelo) e "Salvar no edital" (grava
+  textos e colunas na regra, nova versão) à esquerda; "Baixar DOCX" e
+  "Copiar para o SEI" (usam o rascunho) à direita.
 */
 
 type Textos = { titulo: string; preliminares: string; finais: string };
@@ -50,6 +63,7 @@ type Documento = {
   local: string;
   data: string | null;
   modelos: Record<string, Partial<Textos>>;
+  colunas: Record<string, string[]>;
 };
 type CampoDoEdital = "edital" | "processo" | "unidade" | "autoridade" | "local";
 type Fase = "PRELIMINAR" | "FINAL" | null;
@@ -57,6 +71,9 @@ type Registrado = {
   retrato: {
     tipo: string;
     edital?: { edital?: string; unidade?: string };
+    modalidades?: unknown[];
+    parciais?: string[];
+    vagas?: unknown[];
   };
 };
 type DocumentoDaLista = { nome?: string } | null;
@@ -104,6 +121,7 @@ const PADROES = MODELOS_PADRAO as unknown as Record<
 const ABAS = [
   { id: "dados", rotulo: "Dados", icone: "fa-id-card" },
   { id: "textos", rotulo: "Textos", icone: "fa-align-left" },
+  { id: "colunas", rotulo: "Colunas", icone: "fa-table-columns" },
 ];
 
 function rascunhoInicial(documento: Documento, chave: string): Documento {
@@ -116,8 +134,13 @@ function rascunhoInicial(documento: Documento, chave: string): Documento {
   };
 }
 
-/* Só fica gravado o modelo que difere do padrão das publicações. */
+/* Só fica gravado o modelo (e as colunas) que difere do padrão das publicações. */
 export function documentoParaSalvar(rascunho: Documento): Documento {
+  const colunas = Object.fromEntries(
+    Object.entries(rascunho.colunas || {}).filter(
+      ([chave, ids]) => !ehOPadrao(ids, chave),
+    ),
+  );
   const modelos: Record<string, Partial<Textos>> = {};
   for (const [chave, textos] of Object.entries(rascunho.modelos || {})) {
     const padrao = PADROES[chave];
@@ -128,7 +151,7 @@ export function documentoParaSalvar(rascunho: Documento): Documento {
     );
     if (Object.keys(proprio).length) modelos[chave] = proprio;
   }
-  return { ...rascunho, modelos };
+  return { ...rascunho, modelos, colunas };
 }
 
 /* A largura da "mesa" da prévia, para o "Ajustar" (ResizeObserver). */
@@ -273,6 +296,14 @@ export function DocumentoDoSei({
     unidade: unidadeDoEdital(registrado.retrato.edital?.unidade).nome,
   };
   const textos: Partial<Textos> = rascunho.modelos[chave] || {};
+  const disponiveis = colunasDisponiveis(registrado.retrato, lista) as
+    ColunaDisponivel[] | null;
+  const guardadas = rascunho.colunas?.[chave];
+  const escolhidas = colunasEscolhidas(
+    disponiveis,
+    guardadas,
+    chave,
+  ) as string[];
   const paraUsar = documentoParaSalvar(rascunho);
   const mudou =
     JSON.stringify(paraUsar) !== JSON.stringify(documentoParaSalvar(salvo));
@@ -294,14 +325,35 @@ export function DocumentoDoSei({
         [chave]: { ...r.modelos[chave], [campo]: valor },
       },
     }));
-  const restaurar = () =>
+  const mudarColunas = (novas: string[]) =>
     setRascunho((r) => ({
       ...r,
-      modelos: {
-        ...r.modelos,
-        [chave]: textosDoModelo({ modelos: {} }, chave) as Textos,
+      colunas: {
+        ...r.colunas,
+        [chave]: colunasParaGuardar(
+          novas,
+          disponiveis,
+          r.colunas?.[chave],
+          chave,
+        ) as string[],
       },
     }));
+  const restaurarColunas = () =>
+    setRascunho((r) => {
+      const colunas = { ...r.colunas };
+      delete colunas[chave];
+      return { ...r, colunas };
+    });
+  const restaurar = () =>
+    aba === "colunas"
+      ? restaurarColunas()
+      : setRascunho((r) => ({
+          ...r,
+          modelos: {
+            ...r.modelos,
+            [chave]: textosDoModelo({ modelos: {} }, chave) as Textos,
+          },
+        }));
 
   async function salvar() {
     setSalvando(true);
@@ -339,7 +391,7 @@ export function DocumentoDoSei({
             onClick={() => setPainelAberto((v) => !v)}
           >
             <i className="fa-solid fa-table-columns" aria-hidden="true" />{" "}
-            {painelAberto ? "Ocultar textos" : "Editar textos"}
+            {painelAberto ? "Ocultar painel" : "Textos e colunas"}
           </button>
           <button
             type="button"
@@ -380,7 +432,7 @@ export function DocumentoDoSei({
           hidden={!painelAberto}
         >
           <Abas
-            rotulo="Textos do documento"
+            rotulo="Ajustes do documento"
             compactas
             abas={ABAS.map((a) => ({
               ...a,
@@ -457,6 +509,18 @@ export function DocumentoDoSei({
                 />
               </Campo>
             </div>
+            <div
+              id={`${id}-colunas`}
+              role="tabpanel"
+              aria-labelledby={`${id}-aba-colunas`}
+              hidden={aba !== "colunas"}
+            >
+              <ColunasDoDocumento
+                disponiveis={disponiveis}
+                escolhidas={escolhidas}
+                aoMudar={mudarColunas}
+              />
+            </div>
           </form>
         </aside>
         <FolhaDaPrevia pagina={pagina} nome={doc?.nome || ""} />
@@ -468,6 +532,11 @@ export function DocumentoDoSei({
             type="button"
             className="btn secondary small"
             data-acao="restaurar-textos"
+            title={
+              aba === "colunas"
+                ? "Volta às colunas padrão desta publicação"
+                : "Volta aos textos padrão desta publicação"
+            }
             onClick={restaurar}
           >
             Restaurar o padrão
