@@ -81,6 +81,8 @@ class BancoFalso:
             if corpo["p_vaga"] == self.falhar_vaga:
                 raise supabase_rpc.ErroDoSupabase(funcao, 400, '{"code":"22023","message":"posição inválida"}')
             return {"inscritos": len(corpo["p_linhas"]), "mudancas": 0}
+        if funcao == "gravar_sugestoes_da_ficha":
+            return {"candidatos": len(corpo["p_sugestoes"])}
         if funcao == "pre_classificacao_ler_distribuicao":
             return self.distribuicao
         if funcao == "abrir_fichas_pre_classificacao":
@@ -258,6 +260,36 @@ class Fluxo(unittest.TestCase):
         self.assertEqual((superior["nivel"], superior["vagas_imediatas"]), ("superior", None))
         self.assertIsNone(job.dados_da_vaga({"codigo": "1", "cargo": "Engenheiro"}, {})["nivel"])
         self.assertEqual(job.dados_da_vaga({"codigo": "1", "cargo": None}, {"nivel_padrao": "medio"})["nivel"], "medio")
+
+    def test_grava_as_sugestoes_da_ficha_pelas_respostas(self):
+        regra = {
+            **REGRA,
+            "blocos": [{"codigo": "CURSOS", "tipo": "CURSOS", "perguntas": ["Informe os cursos"]}],
+        }
+        edital = {**edital_93(), "regra": {"versao": 3, "situacao": "CONFERIDA", "configuracao": regra}}
+        com_curso = candidato(1, "24,0/30,0")
+        com_curso["colunas"]["Pergunta 15 - Informe os cursos (nome e carga horária)"] = '"NR-10 120h"'
+        banco = BancoFalso([edital], {"179698": [com_curso, candidato(2, "22,0/30,0")]})
+        codigo, saida = rodar(banco, ["--editais", "93/2026"])
+        self.assertEqual(codigo, 0)
+        [gravacao] = banco.de("gravar_sugestoes_da_ficha")
+        self.assertEqual(gravacao["p_vaga"], "179698")
+        self.assertEqual(
+            gravacao["p_sugestoes"],
+            [
+                {
+                    "id": com_curso["id"],
+                    "blocos": {"CURSOS": [{"nome": "NR-10", "horas": 120, "aceito": True, "da_resposta": True}]},
+                }
+            ],
+        )
+        self.assertIn("sugestões da ficha: 1 candidato(s)", saida)
+        self.assertNotIn("sugestoes", banco.de("finalizar_pre_classificacao")[0]["p_editais"][0])
+
+    def test_sem_bloco_de_itens_nao_grava_sugestoes(self):
+        banco = BancoFalso([edital_93()], CANDIDATOS)
+        rodar(banco, ["--editais", "93/2026"])
+        self.assertEqual(banco.de("gravar_sugestoes_da_ficha"), [])
 
     def test_o_resumo_nao_tem_dado_pessoal(self):
         banco = BancoFalso([edital_93()], CANDIDATOS)

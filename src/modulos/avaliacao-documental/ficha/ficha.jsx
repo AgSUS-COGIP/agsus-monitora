@@ -11,6 +11,7 @@ import {
   useSyncExternalStore,
 } from "react";
 import {
+  BLOCOS_COM_ITENS,
   blocoSeAplica,
   composicaoDaNota,
   enderecoDaVagaNaEmpregare,
@@ -20,7 +21,7 @@ import {
   passosDaFicha,
   previaDoParecer,
   proximoPassoPendente,
-  situacaoDaTecla,
+  escolhaDaTecla,
   textoDaSituacaoDaConferencia,
   textoDoResultado,
   textoDoSalvo,
@@ -46,7 +47,12 @@ import { usarChatLiberado } from "../../chat/usar-chat-liberado.js";
 import { CabecalhoDaFicha } from "./cabecalho-da-ficha.tsx";
 import { ConclusaoDaFicha } from "./conclusao-da-ficha.tsx";
 import { copiar } from "./empregare.tsx";
-import { decidirNoLancamento, ItemDaFicha } from "./item-da-ficha.tsx";
+import { blocoEditaNota } from "../../../lib/avaliacao-documental/apurado-da-ficha.ts";
+import {
+  contextoDaEscolha,
+  decidirNoLancamento,
+  ItemDaFicha,
+} from "./item-da-ficha.tsx";
 import { MaisAcoesDaFicha } from "./mais-acoes-da-ficha.tsx";
 import { ProgressoDaFicha } from "./progresso-da-ficha.tsx";
 import { ResumoDaNota } from "./resumo-da-nota.tsx";
@@ -58,8 +64,8 @@ import { criarEstadoDaFicha } from "./estado-da-ficha.js";
   - no alto, o cabeçalho enxuto (cabecalho-da-ficha.tsx) e o stepper com a
     barra de progresso (progresso-da-ficha.tsx);
   - MODO FOCO (padrão): um item por vez, largo (item-da-ficha.tsx). Conforme
-    sem pendência avança sozinho ao próximo item que pede algo; Não conforme e
-    Não enviado abrem os motivos em chips. A etapa final, Conclusão
+    sem pendência avança sozinho ao próximo item que pede algo; Não confere
+    abre os motivos; Editar nota, os itens e o passador. A etapa final, Conclusão
     (conclusao-da-ficha.tsx), tem o resumo, a nota final, as observações e o
     parecer. "Ver todos" troca para a lista completa, e a escolha fica
     lembrada no navegador;
@@ -76,6 +82,15 @@ const passoResolvido = (passo) =>
   !passo ||
   passo.codigo === PASSO_DA_CONCLUSAO ||
   !["nao_conferido", "pendencia"].includes(passo.estado);
+
+/* Quantos títulos, cursos ou vínculos o bloco tem (a escolha pode abrir uma linha). */
+function contarItens(estado, codigo) {
+  const bloco = estado.dados?.regra?.configuracao?.blocos?.find(
+    (b) => b.codigo === codigo,
+  );
+  const chave = bloco ? BLOCOS_COM_ITENS[bloco.tipo] : null;
+  return chave ? (estado.lancamento?.[chave] || []).length : 0;
+}
 
 const CHAVE_DO_MODO = "monitora.avaliacao-documental.ficha-modo";
 const ESPERA_PARA_AVANCAR_MS = 420;
@@ -431,13 +446,17 @@ export function ConteudoDaFicha({
     />
   );
 
-  /* Depois de uma decisão: Conforme sem pendência avança (no foco) ao próximo que pede algo. */
-  function depoisDeDecidir(codigo, situacao) {
-    if (situacao !== "CONFORME" || modo !== "foco") return;
+  /*
+    Depois de uma escolha: Confere sem pendência avança (no foco) ao próximo
+    que pede algo. A linha que a escolha acabou de abrir segura o item, para
+    o avaliador ver o registro (o título já vem da resposta).
+  */
+  function depoisDeDecidir(codigo, escolha, itensAntes = null) {
+    if (escolha !== "CONFERE" || modo !== "foco") return;
     const agora = loja.obter();
     if (agora.pendencias.some((p) => p.bloco === codigo)) return;
-    // Com Declarado > 0 e nenhum título, curso ou vínculo registrado, a
-    // pendência "Registre … comprovado" segura o item (faltaDoComprovado).
+    if (itensAntes !== null && itensAntes !== contarItens(agora, codigo))
+      return;
     const proximo = proximoPassoPendente(
       passosDaFicha(
         agora.dados.regra.configuracao,
@@ -450,9 +469,10 @@ export function ConteudoDaFicha({
     avanco.current = setTimeout(() => irPara(proximo), ESPERA_PARA_AVANCAR_MS);
   }
 
-  function decidir(bloco, situacao) {
-    decidirNoLancamento(bloco, mudar, situacao);
-    depoisDeDecidir(bloco.codigo, situacao);
+  function decidir(bloco, escolha) {
+    const antes = contarItens(loja.obter(), bloco.codigo);
+    decidirNoLancamento(bloco, mudar, escolha, contextoDaEscolha(st, bloco));
+    depoisDeDecidir(bloco.codigo, escolha, antes);
   }
 
   async function concluirEProxima() {
@@ -491,12 +511,13 @@ export function ConteudoDaFicha({
       return;
     }
     if (desabilitado) return;
-    const situacao = situacaoDaTecla(ev.key);
+    const escolha = escolhaDaTecla(ev.key);
     const bloco = blocos.find((b) => b.codigo === atual);
-    if (!situacao || !bloco || !itens.some((p) => p.codigo === atual)) return;
+    if (!escolha || !bloco || !itens.some((p) => p.codigo === atual)) return;
     if (bloco.tipo === "REGISTRO" || !blocoSeAplica(bloco, lancamento)) return;
+    if (escolha === "EDITAR" && !blocoEditaNota(bloco)) return;
     ev.preventDefault();
-    decidir(bloco, situacao);
+    decidir(bloco, escolha);
   }
 
   teclar.current = aoTeclar;

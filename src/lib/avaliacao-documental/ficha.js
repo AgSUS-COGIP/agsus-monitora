@@ -47,16 +47,25 @@ const objeto = (v) =>
   v !== null && typeof v === "object" && !Array.isArray(v) ? v : {};
 const DIFERENCA = 1e-4;
 
-/** Situações que o analista marca (atalhos 1, 2 e 3). */
-export const SITUACOES_DA_FICHA = Object.freeze([
-  ["CONFORME", "Conforme", "1"],
-  ["NAO_CONFORME", "Não conforme", "2"],
-  ["NAO_ENVIADO", "Não enviado", "3"],
+/**
+ * As escolhas de cada item, lado a lado (atalhos 1, 2 e 3): [código, rótulo,
+ * tecla]. Sobre as situações que o banco conhece (apurado-da-ficha.ts):
+ * Confere = CONFORME com a pontuação declarada; Não confere = NAO_CONFORME
+ * (ou NAO_ENVIADO, "não enviou"); Editar nota = CONFORME com a pontuação
+ * pelos itens registrados (só nos blocos que pontuam).
+ */
+export const ESCOLHAS_DA_FICHA = Object.freeze([
+  ["CONFERE", "Confere", "1"],
+  ["NAO_CONFERE", "Não confere", "2"],
+  ["EDITAR", "Editar nota", "3"],
 ]);
 
-/** Situação pela tecla (1, 2, 3); null para as outras. */
-export function situacaoDaTecla(tecla) {
-  return SITUACOES_DA_FICHA.find(([, , t]) => t === tecla)?.[0] ?? null;
+/** A pergunta de cada item, acima das escolhas. */
+export const PERGUNTA_DA_DECISAO = "O documento confere com o declarado?";
+
+/** Escolha pela tecla (1, 2, 3); null para as outras. */
+export function escolhaDaTecla(tecla) {
+  return ESCOLHAS_DA_FICHA.find(([, , t]) => t === tecla)?.[0] ?? null;
 }
 
 /** Tipos de bloco que lançam itens (mini formulário). */
@@ -281,15 +290,15 @@ export function itemCompleto(chave, item) {
   return true;
 }
 
-const ITEM_NO_SINGULAR = {
-  titulos: "o título",
-  cursos: "o curso",
-  vinculos: "o vínculo",
+const FALTA_DO_COMPROVADO = {
+  titulos: "Registre ao menos um título.",
+  cursos: "Registre ao menos um curso com carga horária.",
+  vinculos: "Registre ao menos um vínculo com início e fim.",
 };
 
 /**
- * Com Declarado acima de 0, o Conforme pede ao menos um título, curso ou
- * vínculo completo e aceito. Devolve o texto da falta (ou null).
+ * Com Declarado acima de 0, o Confere e o Editar nota (CONFORME) pedem ao
+ * menos um título, curso ou vínculo completo e aceito. Devolve o texto da falta (ou null).
  */
 export function faltaDoComprovado(bloco, lancamento, declarada) {
   const chave = BLOCOS_COM_ITENS[bloco?.tipo];
@@ -299,9 +308,7 @@ export function faltaDoComprovado(bloco, lancamento, declarada) {
   const algum = lista(lancamento?.[chave]).some(
     (i) => i && i.aceito !== false && itemCompleto(chave, i),
   );
-  return algum
-    ? null
-    : `Registre ${ITEM_NO_SINGULAR[chave]} comprovado (ou marque Não conforme ou Não enviado).`;
+  return algum ? null : FALTA_DO_COMPROVADO[chave];
 }
 
 const ZERAM_O_BLOCO = ["NAO_CONFORME", "NAO_ENVIADO"];
@@ -340,6 +347,51 @@ export function lancamentoParaGravar(regraEntrada, lancamento) {
 export const blocoConferido = (lancamento, bloco) =>
   Boolean(objeto(objeto(lancamento?.blocos)[bloco?.codigo]).situacao);
 
+/*
+  A ordem das faltas de um item: a mais útil para o próximo passo primeiro
+  (decidir, dizer o motivo, registrar o comprovado, completar a linha…).
+*/
+const ORDEM_DAS_FALTAS = [
+  "situacao",
+  "motivo",
+  "comprovado",
+  "horas",
+  "datas",
+  "item",
+  "minimo",
+  "justificativa",
+  "nota",
+];
+
+/**
+ * A única mensagem do item (a falta mais útil, pelas pendências da ficha) ou
+ * null. Sem `comSituacao`, a falta da decisão não conta (ela só aparece
+ * depois de tentar concluir).
+ */
+export function mensagemDoBloco(
+  pendencias,
+  codigo,
+  { comSituacao = false } = {},
+) {
+  const doBloco = lista(pendencias).filter(
+    (p) => p.bloco === codigo && (comSituacao || p.tipo !== "situacao"),
+  );
+  if (!doBloco.length) return null;
+  const ordem = (p) => {
+    const i = ORDEM_DAS_FALTAS.indexOf(p.tipo);
+    return i < 0 ? ORDEM_DAS_FALTAS.length : i;
+  };
+  return [...doBloco].sort((a, b) => ordem(a) - ordem(b))[0].texto;
+}
+
+/**
+ * O item está conferido: tem decisão e nada falta nele (pelas pendências da
+ * ficha). É a regra do contador "X de 6 conferidos" e das marcas do stepper.
+ */
+export const itemConferido = (bloco, lancamento, pendencias = []) =>
+  blocoConferido(lancamento, bloco) &&
+  !mensagemDoBloco(pendencias, bloco?.codigo);
+
 /**
  * O que falta para concluir, bloco a bloco: [{ bloco, tipo, texto }]. Vazio =
  * pode concluir. O banco confere o mesmo em concluir_ficha. `tipo`: situacao,
@@ -366,7 +418,12 @@ export function pendenciasDaFicha(
     const falta = (tipo, texto) =>
       pendencias.push({ bloco: bloco.codigo, tipo, texto });
     if (!l.situacao)
-      falta("situacao", "Marque Conforme, Não conforme ou Não enviado.");
+      falta(
+        "situacao",
+        PARCIAL_DO_TIPO[bloco.tipo]
+          ? "Escolha Confere, Não confere ou Editar nota."
+          : "Escolha Confere ou Não confere.",
+      );
     if (
       ["NAO_CONFORME", "NAO_ENVIADO"].includes(l.situacao) &&
       !lista(l.motivos).length &&
@@ -386,11 +443,11 @@ export function pendenciasDaFicha(
         (i) => !zerado || itemCompleto(chave, i),
       );
       if (itens.some((i) => i && i.aceito === false && !i.motivo))
-        falta("item", "Item recusado sem motivo.");
+        falta("item", "Escolha o motivo da recusa do item.");
       if (chave === "vinculos" && itens.some((v) => v && !datasValidas(v)))
-        falta("datas", "Vínculo com data de início ou fim inválida.");
+        falta("datas", "Confira o início e o fim do vínculo.");
       if (chave === "cursos" && itens.some((c) => c && !(Number(c.horas) > 0)))
-        falta("horas", "Curso sem carga horária.");
+        falta("horas", "Informe a carga horária do curso.");
       // Já eliminado por outro bloco (efeito Elimina): não pede o registro.
       const comprovado =
         l.situacao === "CONFORME" && !eliminadoPorBloco
@@ -413,11 +470,11 @@ export function pendenciasDaFicha(
         const mes = (n) => `${n} ${Number(n) === 1 ? "mês" : "meses"}`;
         falta(
           "minimo",
-          `Experiência mínima de ${mes(bloco.minimo_meses)} não comprovada (comprovado ${mes(meses)}): lance os vínculos que comprovam ou marque Não conforme.`,
+          `Experiência mínima de ${mes(bloco.minimo_meses)} não comprovada (comprovado ${mes(meses)}): registre os vínculos que comprovam ou escolha Não confere.`,
         );
       }
     }
-    // Com Não conforme/Não enviado, o motivo do bloco já justifica o zero.
+    // Com Não confere, o motivo do bloco já justifica o zero.
     if (
       l.situacao === "CONFORME" &&
       avaliacao?.resultado !== "INAPTO_REQUISITO" &&
@@ -426,7 +483,7 @@ export function pendenciasDaFicha(
     )
       falta(
         "justificativa",
-        "Nota diferente da declarada: escolha a justificativa.",
+        "Pontuação diferente da declarada: escolha a justificativa.",
       );
     const ajuste = l.nota_ajustada;
     const teto = tetoDoBloco(bloco, lancamento?.nivel);
@@ -434,7 +491,7 @@ export function pendenciasDaFicha(
       typeof ajuste === "number" &&
       (ajuste < 0 || (teto !== null && ajuste > teto))
     )
-      falta("nota", `Nota ajustada de 0 a ${teto}.`);
+      falta("nota", `Ajuste a pontuação entre 0 e ${teto}.`);
   }
   return pendencias;
 }
@@ -495,6 +552,9 @@ export function conferenciaDaFicha(
     (b) => pedeSituacao(b) && blocoSeAplica(b, lancamento),
   );
   const conferido = (b) => blocoConferido(lancamento, b);
+  // Conta como conferido o item com decisão e sem falta: a mesma regra das
+  // marcas do stepper (etapasDaFicha), para o contador não contradizer o "!".
+  const semFalta = (b) => itemConferido(b, lancamento, pendencias);
   const requisitos = itens.filter(blocoEhRequisito);
   const efeitos = Object.fromEntries(
     lista(avaliacao?.blocos).map((b) => [b.codigo, b.efeito]),
@@ -507,7 +567,7 @@ export function conferenciaDaFicha(
           blocoEhRequisito(b) &&
           Boolean(avaliacao?.experiencia?.abaixo_do_minimo))),
   );
-  const conferidos = itens.filter(conferido).length;
+  const conferidos = itens.filter(semFalta).length;
   const situacao = eliminou
     ? "INAPTO_REQUISITO"
     : conferidos < itens.length
@@ -538,7 +598,7 @@ export function conferenciaDaFicha(
     conferidos,
     requisitos: {
       total: requisitos.length,
-      conferidos: requisitos.filter(conferido).length,
+      conferidos: requisitos.filter(semFalta).length,
     },
     situacao,
     faltam,
@@ -557,9 +617,9 @@ export function textoDaSituacaoDaConferencia(conferencia) {
     : `Em análise · ${textoDoProgresso(conferencia)}`;
 }
 
-/** "4 de 7 itens conferidos". */
+/** "4 de 7 conferidos". */
 export const textoDoProgresso = ({ conferidos, total }) =>
-  `${conferidos} de ${total} ${total === 1 ? "item conferido" : "itens conferidos"}`;
+  `${conferidos} de ${total} ${total === 1 ? "conferido" : "conferidos"}`;
 
 /** O resumo da conta que vai para o banco (TB_FICHA_ANALISE."DS_RESULTADO"). */
 export function resumoParaGravar(avaliacao, declarada) {
@@ -728,9 +788,9 @@ export function nomeDaEtapa(bloco) {
 
 /**
  * As etapas do topo do modo de análise, uma por item que pede situação e se
- * aplica: { codigo, nome, estado }. estado: "nao_conferido", "pendencia"
- * (marcado, mas falta motivo, justificativa…), "CONFORME", "NAO_CONFORME"
- * ou "NAO_ENVIADO".
+ * aplica: { codigo, nome, estado, motivo }. estado: "nao_conferido",
+ * "pendencia" (decidido, mas falta algo: o motivo diz o quê, a mesma mensagem
+ * do item), "CONFORME", "NAO_CONFORME" ou "NAO_ENVIADO".
  */
 export function etapasDaFicha(regraEntrada, lancamento, pendencias = []) {
   const regra = normalizarRegraAnalise(regraEntrada);
@@ -738,13 +798,12 @@ export function etapasDaFicha(regraEntrada, lancamento, pendencias = []) {
     .filter((b) => pedeSituacao(b) && blocoSeAplica(b, lancamento))
     .map((b) => {
       const situacao = objeto(objeto(lancamento?.blocos)[b.codigo]).situacao;
-      const falta = lista(pendencias).some(
-        (p) => p.bloco === b.codigo && p.tipo !== "situacao",
-      );
+      const motivo = situacao ? mensagemDoBloco(pendencias, b.codigo) : null;
       return {
         codigo: b.codigo,
         nome: nomeDaEtapa(b),
-        estado: !situacao ? "nao_conferido" : falta ? "pendencia" : situacao,
+        estado: !situacao ? "nao_conferido" : motivo ? "pendencia" : situacao,
+        motivo,
       };
     });
 }

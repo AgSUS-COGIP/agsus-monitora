@@ -23,6 +23,12 @@ contagens — para o cartão "Inscrições" da aba (gravar_retrato_inscricoes,
 conferida, os aptos vêm de uma prévia (nada da classificação é gravado); sem
 regra, só inscritos e finalizados.
 
+Grava também, por vaga, as SUGESTÕES DA FICHA: as linhas de título, curso
+e vínculo que as respostas de cada inscrito já dão
+(python/monitora/avaliacao_documental/sugestoes_da_ficha.py →
+gravar_sugestoes_da_ficha, 20261009190000_sugestoes_da_ficha.sql), para a
+ficha vir pronta para conferir. Falha só vira aviso.
+
 Roda pelo GitHub Actions (.github/workflows/pre-classificacao.yml): pelo
 "Recalcular" da aba Pré-classificação e pelo "Rodar agora" das Configurações
 (RPC disparar_robo), pelo "Run workflow" e, sozinho, no fim do robô da
@@ -66,6 +72,10 @@ from monitora.avaliacao_documental.pre_classificacao import (  # noqa: E402
     pre_classificar_vaga,
 )
 from monitora.avaliacao_documental.retrato_das_inscricoes import retrata_hoje, retrato_da_vaga  # noqa: E402
+from monitora.avaliacao_documental.sugestoes_da_ficha import (  # noqa: E402
+    ITENS_DO_TIPO,
+    sugestoes_da_vaga,
+)
 from monitora.mascaramento import resumo_do_erro  # noqa: E402
 from monitora.registro import registro  # noqa: E402
 
@@ -163,10 +173,13 @@ def situacao_da_regra(edital):
     return None
 
 
-def processar_edital(chamar, edital, hoje, refazer, gravar, retratar=False):
+def processar_edital(chamar, edital, hoje, refazer, gravar, retratar=False, gravar_sugestoes=None):
     """
     Pré-classifica as vagas de um edital. gravar = função (vaga, resultado) ou
     None (modo seco). Devolve o resultado do edital (só códigos e contagens).
+    gravar_sugestoes = função (vaga, sugestoes) ou None: as linhas que as
+    respostas de cada candidato já dão para a ficha (sugestoes_da_ficha.py);
+    devolve quantos candidatos ficaram com sugestão.
     retratar: monta também o retrato das inscrições de cada vaga
     (resultado["retrato"]), mesmo sem regra conferida (prévia, sem gravar).
     """
@@ -184,6 +197,7 @@ def processar_edital(chamar, edital, hoje, refazer, gravar, retratar=False):
         "divergencias": 0,
         "pela_art": 0,
         "congeladas": 0,
+        "sugestoes": 0,
         "avisos": [],
     }
     situacao = situacao_da_regra(edital)
@@ -242,6 +256,11 @@ def processar_edital(chamar, edital, hoje, refazer, gravar, retratar=False):
             continue
         if gravar is not None:
             gravar(vaga["codigo"], r)
+        if gravar_sugestoes is not None and tem_blocos_com_itens(regra):
+            nivel = dados_da_vaga(vaga, edital.get("documental"))["nivel"]
+            resultado["sugestoes"] += gravar_sugestoes(
+                vaga["codigo"], sugestoes_da_vaga(regra, lidos.get("candidatos") or [], nivel)
+            )
         for chave in (
             "inscritos",
             "eliminados",
@@ -271,6 +290,11 @@ def processar_edital(chamar, edital, hoje, refazer, gravar, retratar=False):
     resultado["avisos"] = sorted(set(resultado["avisos"]) | set(avisos))
     resultado["avisos_por_vaga"] = dict(sorted(avisos.items()))
     return resultado
+
+
+def tem_blocos_com_itens(regra):
+    """A regra tem bloco de títulos, cursos ou vínculos (onde a ficha registra itens)?"""
+    return any(b.get("tipo") in ITENS_DO_TIPO for b in regra.get("blocos") or [])
 
 
 def ler_candidatos(chamar, edital, vaga):
@@ -360,6 +384,7 @@ def linha_do_resumo(r):
     texto_congeladas = f" · {r['congeladas']} declarada(s) congelada(s)" if r.get("congeladas") else ""
     texto_lote = f"{r['no_lote']} no lote"
     texto_retrato = f" · retrato das inscrições: {r['retratadas']} vaga(s)" if r.get("retratadas") else ""
+    texto_retrato += f" · sugestões da ficha: {r['sugestoes']} candidato(s)" if r.get("sugestoes") else ""
     if r.get("por_decisao"):
         texto_lote = f"lote: {r['no_lote']} pela regra + {r['por_decisao']} por decisão"
     return (
@@ -371,7 +396,7 @@ def linha_do_resumo(r):
 
 def para_o_banco(r):
     """O resultado do edital que vai ao log do banco (sem os avisos por vaga nem o retrato)."""
-    return {k: v for k, v in r.items() if k not in ("avisos_por_vaga", "retrato")}
+    return {k: v for k, v in r.items() if k not in ("avisos_por_vaga", "retrato", "sugestoes")}
 
 
 def principal(args, configuracao=None, chamar_rpc=None):
@@ -455,6 +480,26 @@ def principal(args, configuracao=None, chamar_rpc=None):
                     },
                 )
 
+            def gravar_sugestoes(codigo, sugestoes, edital=edital):
+                """As sugestões da ficha (gravar_sugestoes_da_ficha); falha só vira aviso."""
+                try:
+                    r = (
+                        chamar(
+                            "gravar_sugestoes_da_ficha",
+                            {
+                                "p_execucao": id_execucao,
+                                "p_edital": edital["id"],
+                                "p_vaga": codigo,
+                                "p_sugestoes": sugestoes,
+                            },
+                        )
+                        or {}
+                    )
+                except Exception as erro:
+                    log.warning("Sugestões da ficha da vaga %s não gravadas: %s", codigo, resumo_do_erro(erro)[:200])
+                    return 0
+                return int(r.get("candidatos") or 0)
+
             try:
                 resultado = processar_edital(
                     chamar,
@@ -463,6 +508,7 @@ def principal(args, configuracao=None, chamar_rpc=None):
                     args.refazer_lote,
                     gravar,
                     retratar=retrata_hoje(hoje, edital.get("cronograma")),
+                    gravar_sugestoes=gravar_sugestoes,
                 )
                 if resultado["situacao"] == "PROCESSADO":
                     resultado.update(abrir_fichas(chamar, id_execucao, edital["id"]))

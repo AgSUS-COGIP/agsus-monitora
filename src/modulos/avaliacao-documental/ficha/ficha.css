@@ -581,7 +581,7 @@
 }
 .avd-ficha-cartao[data-modo="lista"]
   .avd-ficha-cartao-corpo
-  > .avd-ficha-decisoes {
+  > .avd-ficha-decidir {
   grid-row: 1;
   grid-column: 2;
 }
@@ -596,6 +596,56 @@
 .avd-ficha-respostas {
   display: grid;
   gap: var(--space-3);
+}
+/* "O que o candidato informou": o rótulo do bloco das respostas. */
+.avd-ficha-informou {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--text-caption);
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+/* Os arquivos da pergunta de anexo: um link direto por arquivo, com o nome. */
+.avd-ficha-arquivos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.avd-ficha-arquivo {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1-5);
+  max-width: 100%;
+  min-height: 36px;
+  padding: var(--space-1) var(--space-3);
+  border: 1px solid var(--border-control);
+  border-radius: var(--radius-md);
+  background: var(--surface-raised);
+  color: var(--text-primary);
+  font-size: var(--text-body-sm);
+  font-weight: var(--font-weight-medium);
+  text-decoration: none;
+}
+.avd-ficha-arquivo > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.avd-ficha-arquivo > i {
+  flex: none;
+  color: var(--text-secondary);
+}
+.avd-ficha-arquivo:hover {
+  border-color: var(--brand-primary);
+  background: var(--surface-hover);
+}
+.avd-ficha-arquivo:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
 }
 .avd-ficha-respostas > .avd-ficha-ver-candidato {
   justify-self: start;
@@ -682,20 +732,25 @@
   color: var(--text-secondary);
   font-size: var(--text-caption);
 }
-.avd-ficha-sugestao {
-  display: flex;
-  align-items: center;
-  gap: var(--space-1-5);
-  margin: 0;
-  color: var(--text-secondary);
-  font-size: var(--text-caption);
+/* A pergunta e as escolhas lado a lado (Confere · Não confere · Editar
+   nota): grandes, com cor; o atalho aparece no hover e no foco do teclado. */
+.avd-ficha-decidir {
+  display: grid;
+  gap: var(--space-2);
 }
-
-/* As três decisões: grandes, com cor; o atalho aparece no hover e no foco do teclado. */
+.avd-ficha-decidir-pergunta {
+  margin: 0;
+  color: var(--text-primary);
+  font-size: var(--text-body);
+  font-weight: var(--font-weight-semibold);
+}
 .avd-ficha-decisoes {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: var(--space-3);
+}
+.avd-ficha-decisoes[data-opcoes="2"] {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 .avd-ficha-decisao {
   --tom: var(--state-success);
@@ -720,13 +775,13 @@
     border-color var(--duration-fast, 120ms) var(--ease-standard),
     transform var(--duration-fast, 120ms) var(--ease-standard);
 }
-.avd-ficha-decisao[data-valor="NAO_CONFORME"] {
+.avd-ficha-decisao[data-valor="NAO_CONFERE"] {
   --tom: var(--state-danger);
   --tom-suave: var(--state-danger-soft);
 }
-.avd-ficha-decisao[data-valor="NAO_ENVIADO"] {
-  --tom: var(--state-neutral);
-  --tom-suave: var(--state-neutral-soft);
+.avd-ficha-decisao[data-valor="EDITAR"] {
+  --tom: var(--state-info);
+  --tom-suave: var(--state-info-soft);
 }
 .avd-ficha-decisao-icone {
   display: grid;
@@ -889,11 +944,12 @@
   font-size: var(--text-body-sm);
 }
 
-/* Pontuação: itens e "Declarado → Apurado". */
-.avd-ficha-apuracao {
+/* Não confere: os motivos, o "não enviou" e a observação. */
+.avd-ficha-nao-confere {
   display: grid;
-  gap: var(--space-4);
+  gap: var(--space-3);
 }
+/* Títulos, cursos e vínculos. */
 .avd-ficha-itens {
   display: grid;
   gap: var(--space-2);
@@ -921,10 +977,10 @@
   min-width: 0;
   min-height: 34px;
 }
-.avd-ficha-item > .avd-ficha-item-curto {
+.avd-ficha-item > input.avd-ficha-item-curto {
   flex: 0 1 96px;
 }
-.avd-ficha-item > .avd-ficha-item-data {
+.avd-ficha-item > input.avd-ficha-item-data {
   flex: 0 1 150px;
 }
 .avd-ficha-item > .avd-ficha-item-motivo {
@@ -933,6 +989,18 @@
 .avd-ficha-item[data-aceito="false"] > input:not([type="checkbox"]) {
   color: var(--text-secondary);
   text-decoration: line-through;
+}
+/* A linha que veio da resposta do candidato (para conferir). */
+.avd-ficha-da-resposta {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: 0 var(--space-2);
+  border-radius: var(--radius-pill, 999px);
+  background: var(--state-info-soft);
+  color: var(--text-primary);
+  font-size: var(--text-caption);
+  white-space: nowrap;
 }
 .avd-ficha-aceito {
   display: inline-flex;
@@ -959,6 +1027,12 @@
   background: var(--state-danger-soft);
   color: var(--state-danger);
 }
+.avd-ficha-itens-pe {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-4);
+}
 .avd-ficha-adicionar {
   display: inline-flex;
   align-items: center;
@@ -979,34 +1053,45 @@
   border-style: solid;
   background: var(--surface-hover);
 }
-.avd-ficha-pontos {
-  display: grid;
-  gap: var(--space-3);
-  padding: var(--space-4);
-  border-radius: var(--radius-lg);
-  background: var(--surface-raised);
-}
-.avd-ficha-pontos-linha {
+/* O resumo numa linha: "Pontuação: 3 de 5 · declarou 5 −2". */
+.avd-ficha-resultado {
   display: flex;
   flex-wrap: wrap;
-  align-items: flex-end;
-  gap: var(--space-3) var(--space-5);
+  align-items: center;
+  gap: var(--space-1) var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-lg);
+  background: var(--surface-raised);
+  color: var(--text-secondary);
+  font-size: var(--text-body);
 }
-.avd-ficha-pontos-caixa {
-  display: grid;
-  gap: var(--space-1);
-}
-.avd-ficha-pontos-numero {
-  min-height: 36px;
+.avd-ficha-resultado-rotulo {
   color: var(--text-primary);
-  font-size: var(--text-metric-sm);
+  font-weight: var(--font-weight-medium);
+}
+.avd-ficha-resultado-valor {
+  color: var(--text-primary);
+  font-size: var(--text-h4);
   font-weight: var(--font-weight-semibold);
-  line-height: 36px;
   font-variant-numeric: tabular-nums;
 }
-.avd-ficha-pontos-seta {
-  margin-bottom: 10px;
-  color: var(--text-secondary);
+.avd-ficha-resultado-teto {
+  color: var(--text-primary);
+}
+.avd-ficha-resultado-diferenca {
+  padding: 0 var(--space-2);
+  border-radius: var(--radius-pill, 999px);
+  background: var(--state-warning-soft);
+  color: var(--text-primary);
+  font-size: var(--text-caption);
+  font-weight: var(--font-weight-semibold);
+  font-variant-numeric: tabular-nums;
+}
+.avd-ficha-resultado[data-diferenca="menor"] .avd-ficha-resultado-diferenca {
+  background: var(--state-danger-soft);
+}
+.avd-ficha-resultado > .avd-ficha-link {
+  margin-left: auto;
 }
 .avd-ficha-passador {
   display: inline-flex;
@@ -1015,10 +1100,6 @@
   border: 1px solid var(--border-control);
   border-radius: var(--radius-md);
   background: var(--surface-card);
-}
-.avd-ficha-pontos-caixa[data-divergente] .avd-ficha-passador {
-  border-color: var(--state-warning);
-  box-shadow: 0 0 0 1px var(--state-warning);
 }
 .avd-ficha-passador button {
   width: 34px;
@@ -1056,53 +1137,6 @@
   margin: 0;
   appearance: none;
 }
-.avd-ficha-calculado {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  gap: var(--space-1) var(--space-2);
-  margin: 0;
-  color: var(--text-secondary);
-  font-size: var(--text-caption);
-}
-.avd-ficha-calculado strong {
-  color: var(--text-primary);
-}
-/* Declarado → Apurado: o destaque e a diferença. */
-.avd-ficha-pontos-resumo {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  gap: var(--space-1) var(--space-1-5);
-  margin: 0;
-  color: var(--text-secondary);
-  font-size: var(--text-body);
-}
-.avd-ficha-pontos-resumo strong {
-  color: var(--text-primary);
-  font-weight: var(--font-weight-semibold);
-  font-variant-numeric: tabular-nums;
-}
-.avd-ficha-pontos-diferenca {
-  padding: 0 var(--space-2);
-  border-radius: var(--radius-pill, 999px);
-  background: var(--state-warning-soft);
-  color: var(--text-primary);
-  font-size: var(--text-caption);
-  font-weight: var(--font-weight-semibold);
-  font-variant-numeric: tabular-nums;
-}
-.avd-ficha-pontos-resumo[data-diferenca="menor"] .avd-ficha-pontos-diferenca {
-  background: var(--state-danger-soft);
-}
-.avd-ficha-pontos-aviso {
-  margin: 0;
-  color: var(--text-primary);
-  font-size: var(--text-caption);
-}
-.avd-ficha-pontos-aviso i {
-  color: var(--text-secondary);
-}
 .avd-ficha-justificativa {
   display: grid;
   gap: var(--space-3);
@@ -1110,17 +1144,22 @@
   border-radius: var(--radius-md);
   background: var(--state-warning-soft);
 }
-.avd-ficha-pendencias {
-  display: grid;
-  gap: var(--space-1);
+/* A única mensagem do item: a falta mais útil ou a dica do momento. */
+.avd-ficha-mensagem {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-1) var(--space-2);
   margin: 0;
-  padding: 0;
   color: var(--text-primary);
-  font-size: var(--text-caption);
-  list-style: none;
+  font-size: var(--text-body-sm);
 }
-.avd-ficha-pendencias i {
+.avd-ficha-mensagem > i {
+  align-self: center;
   color: var(--state-warning);
+}
+.avd-ficha-mensagem[data-tom="dica"] > i {
+  color: var(--state-info);
 }
 
 /* Lateral: só a nota, o mínimo, a composição e o "⋯". */
@@ -1289,12 +1328,7 @@
 .avd-ficha-outras-justificativas[open] > summary {
   margin-bottom: var(--space-2);
 }
-/* O que falta na linha do item, no próprio campo ("Informe as horas"). */
-.avd-ficha-campo-erro {
-  align-self: center;
-  color: var(--state-danger);
-  font-size: var(--text-caption);
-}
+/* O campo que falta na linha (a mensagem do item diz o quê). */
 .avd-ficha-item input[aria-invalid="true"] {
   border-color: var(--state-danger);
 }
@@ -1743,7 +1777,7 @@
   }
   .avd-ficha-cartao[data-modo="lista"]
     .avd-ficha-cartao-corpo
-    > .avd-ficha-decisoes {
+    > .avd-ficha-decidir {
     grid-row: auto;
     grid-column: 1 / -1;
   }

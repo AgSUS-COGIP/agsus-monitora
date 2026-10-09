@@ -900,23 +900,23 @@ const TOURS = Object.freeze({
       ),
       passo(
         t("avd-ficha-decisoes"),
-        "Decida o item",
-        "Conforme, Não conforme ou Não enviado (teclas 1, 2 e 3). Conforme passa sozinho ao próximo; os outros abrem os motivos em chips.",
+        "O documento confere?",
+        "Confere aceita o declarado, Não confere pede o motivo e Editar nota (nos itens que pontuam) é para registrar o que foi comprovado (teclas 1, 2 e 3).",
       ),
       passo(
         t("avd-ficha-itens"),
         "Títulos, cursos e vínculos",
-        "Lance os itens comprovados; os pontos são calculados na hora pela regra.",
+        "No Confere e no Editar nota, a primeira linha já vem aberta: registre o que o documento comprova.",
       ),
       passo(
         t("avd-ficha-nota"),
-        "Declarado → Apurado",
-        "Ajuste o apurado de meio em meio ponto, até o teto do bloco; o calculado pelos itens fica embaixo.",
+        "Pontuação",
+        "Um só resumo: a pontuação e o declarado. No Editar nota, ajuste de meio em meio ponto ou use o calculado.",
       ),
       passo(
         t("avd-ficha-justificativa"),
         "Justificativa",
-        "Nota diferente da declarada pede uma justificativa da lista; ela entra no parecer.",
+        "Pontuação diferente da declarada pede uma justificativa da lista; ela entra no parecer.",
       ),
       passo(
         t("avd-ficha-lateral"),

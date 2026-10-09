@@ -1,20 +1,27 @@
 /*
-  O "Apurado" dos itens que pontuam na ficha (Formação, Cursos, Experiência,
-  critério étnico): de onde ele vem e o que a decisão faz com ele. Só a
-  interação; a conta continua a de pontuacao.js (nota_ajustada por cima do
-  que os itens lançados dão) e o banco confere o mesmo.
+  A decisão de cada item da ficha e o "Apurado" dos itens que pontuam
+  (Titulação, Cursos, Experiência, critério étnico). Só a interação; a conta
+  continua a de pontuacao.js (nota_ajustada por cima do que os itens
+  lançados dão) e o banco confere o mesmo (FC_PENDENCIAS_FICHA).
 
-  - Vem do CALCULADO pelos itens registrados (títulos, cursos, vínculos); o
-    Declarado não preenche mais o Apurado: o analista registra o que o
-    documento comprova. Ajuste à mão (nota_ajustada) fica por cima, com
-    justificativa.
-  - Não conforme e Não enviado zeram o Apurado (nota_ajustada = 0) e tiram
-    as justificativas da nota (o motivo do bloco já explica o zero). Voltar
-    para Conforme (ou desmarcar) devolve o Calculado.
-  - Com Declarado acima de 0, o Conforme pede ao menos um item completo e
-    aceito (faltaDoComprovado, em ficha.js).
+  Três escolhas lado a lado, sobre as situações que o banco já conhece:
+  - CONFERE (situacao CONFORME): aceita o que o candidato declarou; nos
+    blocos que pontuam, a pontuação fica igual ao declarado
+    (nota_ajustada = declarado). Com Declarado acima de 0, o registro
+    continua exigido (faltaDoComprovado, em ficha.js): a primeira linha já
+    abre, com o título da resposta pré-escolhido.
+  - NAO_CONFERE (situacao NAO_CONFORME, ou NAO_ENVIADO quando o candidato
+    não enviou o documento): só o motivo; pontuação 0 (nota_ajustada = 0) e
+    sem justificativa da nota.
+  - EDITAR (situacao CONFORME com edita_nota = true; só nos blocos que
+    pontuam): o analista registra o que comprovou e a pontuação vem do
+    calculado pelos itens; o ajuste fino (nota_ajustada) fica por cima e,
+    diferente do declarado, pede justificativa. "Usar o calculado" volta.
+  Rascunhos sem edita_nota (antes desta tela): o Apurado igual ao declarado
+  (inclusive o Declarado gravado como ajuste) é Confere; diferente, Editar.
 */
-import { BLOCOS_COM_ITENS } from "./ficha.js";
+import { BLOCOS_COM_ITENS, titulosDoNivel } from "./ficha.js";
+import { itensSugeridos } from "./respostas-do-candidato.ts";
 import { PARCIAL_DO_TIPO } from "./catalogo.js";
 import { notaAjustada } from "./pontuacao.js";
 
@@ -26,6 +33,7 @@ type BlocoLancado = {
   nota_ajustada?: number | null;
   justificativas?: string[];
   justificativa_livre?: string;
+  edita_nota?: boolean;
 } & Record<string, unknown>;
 type LancamentoDaFicha = {
   nivel?: string | null;
@@ -34,6 +42,7 @@ type LancamentoDaFicha = {
 type Declarada = { parciais?: Record<string, number | undefined> } | null;
 
 export type OrigemDoApurado = "ajustado" | "calculado";
+export type Escolha = "CONFERE" | "NAO_CONFERE" | "EDITAR";
 
 const ZERAM: ReadonlyArray<string> = ["NAO_CONFORME", "NAO_ENVIADO"];
 const PARCIAL = PARCIAL_DO_TIPO as Readonly<Record<string, string | undefined>>;
@@ -188,15 +197,217 @@ export function tituloDaResposta(
   return achados[0]?.codigo ?? null;
 }
 
-/** Declarado acima de 0 e nenhum item: o cartão já abre com uma linha. */
+type Item = Record<string, unknown>;
+type BlocoComItens = BlocoQuePontua & {
+  categorias?: { codigo: string }[];
+} & Record<string, unknown>;
+
+/**
+ * A linha nova da lista do bloco: o título que a resposta indica (ou o
+ * primeiro do nível), o curso sem horas, o vínculo sem datas.
+ */
+export function novoItemDoBloco(
+  bloco: BlocoComItens,
+  nivel: string | null | undefined,
+  respostas: string[],
+): Item | null {
+  const chave = ITENS[bloco.tipo];
+  if (chave === "titulos") {
+    const titulos = titulosDoNivel(bloco, nivel) as {
+      codigo: string;
+      rotulo: string;
+    }[];
+    return {
+      titulo:
+        tituloDaResposta(titulos, respostas) ||
+        titulos[0]?.codigo ||
+        "ESPECIALIZACAO",
+      nome: "",
+      aceito: true,
+    };
+  }
+  if (chave === "cursos") return { nome: "", horas: "", aceito: true };
+  if (chave === "vinculos")
+    return {
+      empregador: "",
+      categoria: bloco.categorias?.[0]?.codigo,
+      inicio: "",
+      fim: "",
+      aceito: true,
+    };
+  return null;
+}
+
+/**
+ * Confere (com Declarado acima de 0) ou Editar nota, e nenhum item: a lista
+ * já abre com uma linha.
+ */
 export function abreComLinhaNova(
   bloco: BlocoQuePontua,
   lancamento: LancamentoDaFicha,
   declarada: Declarada,
 ): boolean {
   if (!ITENS[bloco.tipo] || temItensLancados(bloco, lancamento)) return false;
-  if (ZERAM.includes(String(lancamento.blocos?.[bloco.codigo]?.situacao ?? "")))
-    return false;
+  const lancado = lancamento.blocos?.[bloco.codigo];
+  if (lancado?.situacao !== "CONFORME") return false;
+  if (lancado.edita_nota === true) return true;
   const decl = declaradoDoBloco(bloco, declarada);
   return decl !== null && decl > 0;
+}
+
+/**
+ * As primeiras linhas da lista: as que o job Python tirou das respostas do
+ * candidato (`sugestoes` da ficha, marcadas `da_resposta`); sem elas, uma
+ * linha vazia (o título já vem com o nível da resposta).
+ */
+export function linhasDasRespostas(
+  bloco: BlocoComItens,
+  nivel: string | null | undefined,
+  respostas: string[],
+  sugestoes?: unknown,
+): Item[] {
+  const sugeridos = itensSugeridos(sugestoes, bloco);
+  if (sugeridos.length) return sugeridos;
+  const vazia = novoItemDoBloco(bloco, nivel, respostas);
+  return vazia ? [vazia] : [];
+}
+
+/** O lançamento com as primeiras linhas abertas, quando abreComLinhaNova. */
+export function comLinhaAberta<T extends LancamentoDaFicha>(
+  bloco: BlocoComItens,
+  lancamento: T,
+  declarada: Declarada,
+  respostas: string[],
+  sugestoes?: unknown,
+): T {
+  const chave = ITENS[bloco.tipo];
+  if (!chave || !abreComLinhaNova(bloco, lancamento, declarada))
+    return lancamento;
+  const linhas = linhasDasRespostas(
+    bloco,
+    lancamento.nivel,
+    respostas,
+    sugestoes,
+  );
+  return linhas.length ? { ...lancamento, [chave]: linhas } : lancamento;
+}
+
+/** A escolha oferece "Editar nota"? Só nos blocos que pontuam. */
+export const blocoEditaNota = (bloco: BlocoQuePontua) =>
+  parcialDoBloco(bloco) !== null;
+
+/**
+ * A escolha marcada no bloco (null sem decisão). Sem edita_nota gravado
+ * (rascunhos de antes), o Apurado igual ao declarado é Confere e diferente
+ * é Editar; `calculado` é o que os itens dão.
+ */
+export function escolhaDoBloco(
+  bloco: BlocoQuePontua,
+  lancado: BlocoLancado | undefined,
+  declarada: Declarada,
+  calculado: number | null | undefined,
+): Escolha | null {
+  const situacao = lancado?.situacao;
+  if (!situacao) return null;
+  if (ZERAM.includes(situacao)) return "NAO_CONFERE";
+  if (!blocoEditaNota(bloco)) return "CONFERE";
+  if (typeof lancado?.edita_nota === "boolean")
+    return lancado.edita_nota ? "EDITAR" : "CONFERE";
+  const decl = declaradoDoBloco(bloco, declarada);
+  if (decl === null) return "CONFERE";
+  const apurado = notaAjustada(lancado) ?? calculado ?? 0;
+  return Math.abs(Number(apurado) - decl) > 1e-4 ? "EDITAR" : "CONFERE";
+}
+
+/**
+ * O bloco lançado depois de uma escolha (null desmarca). `naoEnviou`: no
+ * Não confere, o candidato não enviou o documento (NAO_ENVIADO).
+ */
+export function blocoComEscolha({
+  bloco,
+  lancamento,
+  escolha,
+  declarada,
+  naoEnviou = false,
+}: {
+  bloco: BlocoQuePontua;
+  lancamento: LancamentoDaFicha;
+  escolha: Escolha | null;
+  declarada: Declarada;
+  naoEnviou?: boolean;
+}): BlocoLancado {
+  const atual: BlocoLancado = lancamento.blocos?.[bloco.codigo] ?? {};
+  if (escolha === "NAO_CONFERE")
+    return blocoComDecisao({
+      bloco,
+      lancamento,
+      situacao: naoEnviou ? "NAO_ENVIADO" : "NAO_CONFORME",
+    });
+  if (escolha === null) {
+    // Desmarcar: sem escolha, sem ajuste (a prévia volta a ser o calculado).
+    const { edita_nota: _escolha, ...semEscolha } = blocoComDecisao({
+      bloco,
+      lancamento,
+      situacao: null,
+    });
+    return blocoEditaNota(bloco)
+      ? {
+          ...semEscolha,
+          nota_ajustada: null,
+          justificativas: [],
+          justificativa_livre: "",
+        }
+      : semEscolha;
+  }
+  const novo = blocoComDecisao({ bloco, lancamento, situacao: "CONFORME" });
+  if (!blocoEditaNota(bloco)) return novo;
+  if (escolha === "CONFERE")
+    return {
+      ...novo,
+      edita_nota: false,
+      nota_ajustada: declaradoDoBloco(bloco, declarada),
+      justificativas: [],
+      justificativa_livre: "",
+    };
+  // Editar: a pontuação vem do calculado (o ajuste de quem já editava fica).
+  const jaEditava = atual.situacao === "CONFORME" && atual.edita_nota === true;
+  return {
+    ...novo,
+    edita_nota: true,
+    nota_ajustada: jaEditava ? (notaAjustada(atual) as number | null) : null,
+  };
+}
+
+/**
+ * O lançamento depois de uma escolha (botões ou teclas 1, 2 e 3): o bloco
+ * (blocoComEscolha) e, no Confere ou no Editar sem nada registrado, a
+ * primeira linha da lista já aberta.
+ */
+export function lancamentoComEscolha<T extends LancamentoDaFicha>(entrada: {
+  bloco: BlocoComItens;
+  lancamento: T;
+  escolha: Escolha | null;
+  declarada: Declarada;
+  respostas: string[];
+  naoEnviou?: boolean;
+  /** As sugestões da ficha (obter_ficha_analise → sugestoes). */
+  sugestoes?: unknown;
+}): T {
+  const { bloco, lancamento } = entrada;
+  const decidido: T = {
+    ...lancamento,
+    blocos: {
+      ...lancamento.blocos,
+      [bloco.codigo]: blocoComEscolha(entrada),
+    },
+  };
+  return entrada.escolha === "CONFERE" || entrada.escolha === "EDITAR"
+    ? comLinhaAberta(
+        bloco,
+        decidido,
+        entrada.declarada,
+        entrada.respostas,
+        entrada.sugestoes,
+      )
+    : decidido;
 }
