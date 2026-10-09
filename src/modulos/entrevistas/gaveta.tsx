@@ -10,7 +10,7 @@ import {
   NOTA_MAXIMA_DO_CRITERIO,
   rotuloDoComparecimento,
   rotuloDoParecer,
-} from "../../lib/entrevistas-do-painel.js";
+} from "../../lib/entrevistas-do-painel.ts";
 import { EstadoVazio, Gaveta, GradeDeKv, Kv, Secao } from "../../ui/index.js";
 import { SeloDoParecer } from "./tabela.tsx";
 

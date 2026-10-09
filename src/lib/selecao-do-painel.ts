@@ -15,7 +15,7 @@
   aprovados vigente (nulos, "—", sem lista).
 */
 import { sanitizeCsvCell } from "./csv-security.js";
-import { dataHoraBR, normalizarBusca } from "./entrevistas-do-painel.js";
+import { dataHoraBR, normalizarBusca } from "./entrevistas-do-painel.ts";
 import { formatNumberBR } from "./formatters.js";
 
 import type {

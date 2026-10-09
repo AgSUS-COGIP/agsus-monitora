@@ -2871,7 +2871,7 @@ export const VERBETES_AYA = Object.freeze([
       'No topo de Análises curriculares, Seleção e Entrevistas, "Conferido às 09:32" é a última vez que a carga conferiu os dados (horário de Brasília; se foi em outro dia, aparece a data, como "em 04/10, 13:05"). Nas Análises curriculares, vem junto "última mudança em …": quando os dados mudaram de fato. Se a carga rodou e a planilha não tinha nada novo, o "Conferido" avança e a última mudança fica — os dados não estão parados. Sem registro de conferência, aparece "Atualizado em …". Se suspeitar de carga atrasada ou com falha, o administrador global confere em Configurações › Status das atualizações.',
     fato: "",
     fonte:
-      "src/lib/texto-da-conferencia.js; src/modulos/analises/analises.tsx; src/modulos/selecao/selecao.tsx; src/modulos/entrevistas/entrevistas.jsx",
+      "src/lib/texto-da-conferencia.js; src/modulos/analises/analises.tsx; src/modulos/selecao/selecao.tsx; src/modulos/entrevistas/entrevistas.tsx",
   },
   {
     arquivo: "regras-das-analises.md",
@@ -3507,7 +3507,7 @@ export const VERBETES_AYA = Object.freeze([
       "O Painel de entrevistas é para acompanhar (gestão e coordenação), como o Painel das análises ao lado da Avaliação documental; fazer é em Conduzir entrevistas, outra entrada do menu. O painel mostra, da área atual: os filtros, os indicadores, a agenda dos próximos dias quando há um edital escolhido, os gráficos, as pendências (sem comparecimento, sem nota, sem parecer, aprovados sem entrevista, sem análise, sem edital e nota divergente), os empatados na nota da entrevista, a tabela e a exportação em CSV. Só leitura. O edital de treinamento não entra no painel. Quem tem Leitor em Entrevistas vê o painel e Conduzir entrevistas; escrever exige Editor.",
     fato: "O Painel de entrevistas acompanha; Conduzir entrevistas faz (fila do dia, ficha de notas, Preparar e roteiros). As duas usam o recurso Entrevistas.",
     fonte:
-      "src/modulos/entrevistas/entrevistas.jsx; src/modulos/entrevistas/andamento.tsx; src/lib/painel-de-entrevistas.ts",
+      "src/modulos/entrevistas/entrevistas.tsx; src/modulos/entrevistas/andamento.tsx; src/lib/painel-de-entrevistas.ts",
     abrir: "entrevistas",
   },
   {
@@ -3881,7 +3881,7 @@ export const VERBETES_AYA = Object.freeze([
       "Os resultados ficam no Painel de entrevistas, só de consulta (a condução é em Conduzir entrevistas). Indicadores: Vagas com entrevista, Candidatos, Compareceram, Aptos, Inaptos, Média das notas (de quem compareceu) e Aprovados na análise sem entrevista; clicar em Compareceram, Aptos ou Inaptos filtra a tela. Pendências: sem comparecimento registrado, compareceu sem nota, com nota sem parecer, aprovados sem entrevista (só nas vagas que já têm entrevista), entrevista sem análise ligada, sem edital cadastrado e nota divergente (total diferente da soma dos critérios); cada uma filtra o painel. A nota total vai de 0 a 20 e cada critério, em geral, de 0 a 5. A ligação com a análise curricular é pelo código do candidato e da vaga e, na falta, pelo nome.",
     fato: "",
     fonte:
-      "src/modulos/entrevistas/paineis.tsx; src/lib/entrevistas-do-painel.js; supabase/migrations/20260929235000_entrevistas.sql",
+      "src/modulos/entrevistas/paineis.tsx; src/lib/entrevistas-do-painel.ts; supabase/migrations/20260929235000_entrevistas.sql",
     abrir: "entrevistas",
   },
   {

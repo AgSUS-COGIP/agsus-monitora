@@ -20,7 +20,7 @@ import {
   formatarNota,
   mediaPorCriterio,
   topUnidades,
-} from "../../lib/entrevistas-do-painel.js";
+} from "../../lib/entrevistas-do-painel.ts";
 import { paletaDoPainel } from "../../lib/tema-do-painel.js";
 import {
   Campo,

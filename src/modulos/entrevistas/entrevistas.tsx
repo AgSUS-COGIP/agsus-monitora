@@ -1,3 +1,10 @@
+import type {
+  EstadoDasEntrevistas,
+  SnapshotDasEntrevistas,
+  FiltrosDoPainel,
+  CampoDoFiltro,
+  OpcoesDaTelaDeEntrevistas,
+} from "./tipos-do-painel.ts";
 import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import { usarPedidoDeFiltro } from "../../app/pedido-de-filtro.js";
 import { filtrosDeEntrevistas } from "../../lib/filtro-da-aya.js";
@@ -13,7 +20,7 @@ import {
   filtrarEntrevistas,
   opcoesDosFiltros,
   pendenciasDasEntrevistas,
-} from "../../lib/entrevistas-do-painel.js";
+} from "../../lib/entrevistas-do-painel.ts";
 import { getSupabaseClient } from "../../lib/supabaseClient.js";
 import { Aviso } from "../../ui/index.js";
 import { textoDaConferencia } from "../../lib/texto-da-conferencia.js";
@@ -25,7 +32,7 @@ import {
 } from "../../lib/painel-de-entrevistas.ts";
 import { irParaLink } from "../chat/ponte.js";
 import { AgendaDosProximosDias, AvisoDeEmpates } from "./agenda-e-empates.tsx";
-import { criarEstadoDasEntrevistas, MENSAGEM_SEM_ACESSO } from "./estado.js";
+import { criarEstadoDasEntrevistas, MENSAGEM_SEM_ACESSO } from "./estado.ts";
 import { GavetaDaEntrevista, GavetaDosSemEntrevista } from "./gaveta.tsx";
 import {
   Filtros,
@@ -79,7 +86,7 @@ import { SeloDeAvisos } from "../conferencias/avisos-de-conferencia.tsx";
 
 const NUMEROS_ZERADOS = calcularIndicadores([]);
 
-function textoDoStatus(e) {
+function textoDoStatus(e: SnapshotDasEntrevistas) {
   if (e.semSessao) return "Sessão não localizada";
   if (e.semAcesso) return "Sem acesso";
   if (e.erroAoCarregar && !e.carregado) return "Sem dados";
@@ -95,8 +102,14 @@ function textoDoStatus(e) {
   A tela de uma área. Monta de novo quando a área muda (`key`): filtros e a
   busca da tabela recomeçam, como recomeçavam no antigo quadro.
 */
-function TelaDaArea({ estado, e }) {
-  const [filtros, setFiltros] = useState(FILTROS_VAZIOS);
+function TelaDaArea({
+  estado,
+  e,
+}: {
+  estado: EstadoDasEntrevistas;
+  e: SnapshotDasEntrevistas;
+}) {
+  const [filtros, setFiltros] = useState<FiltrosDoPainel>(FILTROS_VAZIOS);
   const escuro = usarTemaEscuro();
   const { carregado, dados, area } = e;
 
@@ -142,12 +155,12 @@ function TelaDaArea({ estado, e }) {
   const agenda = e.agenda?.editalId === editalId ? e.agenda.itens : null;
 
   // KPI, pendência e fatia de gráfico: clicar de novo tira o filtro.
-  const alternarFiltro = (campo, valor) =>
+  const alternarFiltro = (campo: CampoDoFiltro, valor: string) =>
     setFiltros((atuais) => ({
       ...atuais,
       [campo]: atuais[campo] === valor ? "" : valor,
     }));
-  const trocarFiltro = (campo, valor) =>
+  const trocarFiltro = (campo: CampoDoFiltro, valor: string) =>
     setFiltros((atuais) => ({ ...atuais, [campo]: valor }));
   const recarregar = () => void estado.carregar(area);
   // "Abrir" numa resposta com número da Aya ou num caso de aviso de
@@ -162,7 +175,7 @@ function TelaDaArea({ estado, e }) {
   });
 
   /* Outra tela, já no edital do recorte (ou no `id` pedido). */
-  const irCom = (view, id = editalId) =>
+  const irCom = (view: string, id = editalId) =>
     irParaLink({
       view,
       ...(id ? { edital: { id, titulo: doRecorte?.edital || "" } } : {}),
@@ -277,7 +290,11 @@ function TelaDaArea({ estado, e }) {
   );
 }
 
-export function TelaDeEntrevistas({ estado }) {
+export function TelaDeEntrevistas({
+  estado,
+}: {
+  estado: EstadoDasEntrevistas;
+}) {
   const e = useSyncExternalStore(estado.assinar, estado.obter);
   const { area: areaDoApp } = usarAreaAtual();
 
@@ -308,7 +325,7 @@ export function montarEntrevistas({
   areaAtual = () => obterDadosDoMonitoramento().areaAtual,
   baixar,
   armazenamento,
-} = {}) {
+}: OpcoesDaTelaDeEntrevistas = {}) {
   const estado = criarEstadoDasEntrevistas({
     supabase,
     toast,

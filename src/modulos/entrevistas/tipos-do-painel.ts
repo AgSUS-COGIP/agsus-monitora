@@ -118,3 +118,102 @@ export interface PropsDosGraficos extends PropsDasPendencias {
   criterios: readonly CriterioDoPainel[];
   escuro: boolean;
 }
+
+export interface DadosDoPainel {
+  area: string;
+  geradoEm: unknown;
+  ultimaCarga: {
+    em: unknown;
+    linhas: number | null;
+    ligadasAnalise: number | null;
+    semAnalise: number | null;
+    semEdital: number | null;
+  } | null;
+  criterios: CriterioDoPainel[];
+  entrevistas: EntrevistaDoPainel[];
+  aprovadosSemEntrevista: AprovadoSemEntrevista[];
+}
+export type SnapshotDasEntrevistas = Readonly<{
+  area: string;
+  dados: DadosDoPainel | null;
+  carregado: boolean;
+  erroAoCarregar: string;
+  semSessao: boolean;
+  semAcesso: boolean;
+  atualizando: boolean;
+  daCopia: boolean;
+  carregadoEm: number;
+  gaveta: string | null;
+  semEntrevistaAberta: boolean;
+  comemoracoes: boolean;
+  agenda: Readonly<{
+    editalId: string;
+    itens: import("../../lib/painel-de-entrevistas.ts").ItemDaAgenda[] | null;
+    erro: string;
+  }>;
+}>;
+type SessaoDoPainel = { user?: { id?: string } } | null;
+export interface ClienteDoPainel {
+  rpc(
+    nome: "get_entrevistas_da_area",
+    argumentos: { p_area: string },
+  ): PromiseLike<{ data: unknown; error: unknown }>;
+  rpc(
+    nome: "obter_agenda_entrevista",
+    argumentos: { p_edital: string },
+  ): PromiseLike<{ data: unknown; error: unknown }>;
+  auth?: {
+    getSession?: () => PromiseLike<{
+      data: { session: SessaoDoPainel } | null;
+    }>;
+    onAuthStateChange?: (
+      ouvinte: (evento: string, sessao: SessaoDoPainel) => void,
+    ) => unknown;
+  };
+}
+export interface ArmazenamentoDoPainel {
+  ler(chave: string): unknown | PromiseLike<unknown>;
+  guardar(chave: string, valor: unknown): unknown | PromiseLike<unknown>;
+  apagarTudo(): unknown | PromiseLike<unknown>;
+}
+export interface OpcoesDoEstadoDasEntrevistas {
+  supabase?: ClienteDoPainel | null;
+  toast?: (mensagem: string, tom?: "warn" | "error") => void;
+  baixar?: (conteudo: string, nome: string) => void;
+  armazenamento?: ArmazenamentoDoPainel;
+  agora?: () => number;
+  tempoLimiteMs?: number;
+  avaliarMarcos?:
+    | ((contexto: {
+        usuarioId: string;
+        area: string;
+        dados: DadosDoPainel | null;
+        ligadas: boolean;
+      }) => unknown)
+    | null;
+}
+export interface EstadoDasEntrevistas {
+  obter(): SnapshotDasEntrevistas;
+  assinar(ouvinte: () => void): () => void;
+  carregar(area?: string): Promise<boolean>;
+  abrirGaveta(id: string): void;
+  fecharGaveta(): void;
+  abrirSemEntrevista(): void;
+  fecharSemEntrevista(): void;
+  exportarCsv(entrevistas: readonly EntrevistaDoPainel[]): void;
+  carregarAgenda(
+    editalId: string,
+  ): Promise<
+    import("../../lib/painel-de-entrevistas.ts").ItemDaAgenda[] | null
+  >;
+  reiniciar(): void;
+  definirComemoracoes(ligadas: boolean): void;
+}
+export type OpcoesDaTelaDeEntrevistas = Pick<
+  OpcoesDoEstadoDasEntrevistas,
+  "supabase" | "toast" | "baixar" | "armazenamento"
+> & {
+  secao?: HTMLElement | null;
+  areaAtual?: () => unknown;
+  comemoracoesLigadas?: () => boolean;
+};
