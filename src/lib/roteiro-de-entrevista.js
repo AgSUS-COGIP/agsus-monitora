@@ -152,6 +152,7 @@ export function textoDaPontuacao(roteiro) {
 /**
  * As notas aceitas numa competência, na escala do roteiro (o mesmo que
  * `lancar_notas_entrevista` confere): `[{ valor, rotulo, descricao }]`.
+ * @returns {import("../modulos/entrevistas/campo-de-nota.tsx").OpcaoDeNota[]}
  */
 export function opcoesDaEscala(roteiro, notaMaxima) {
   const maximo = lerNumero(notaMaxima);

@@ -2,7 +2,7 @@ import { useId, useLayoutEffect, useRef } from "react";
 import type { Ref, RefObject } from "react";
 
 /*
-  Os textos da ficha de notas (ficha.jsx), gravados por lancar_notas_entrevista
+  Os textos da ficha de notas (ficha.tsx), gravados por lancar_notas_entrevista
   (migration 20261008220000):
 
   - ObservacaoDoAvaliador: opcional, uma por avaliador na entrevista (nunca

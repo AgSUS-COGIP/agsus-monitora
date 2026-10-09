@@ -10,7 +10,7 @@ import { classes } from "../../ui/classes.js";
 import { animar, CelulaDeNota, type OpcaoDeNota } from "./campo-de-nota.tsx";
 
 /*
-  A matriz da ficha de notas (ficha.jsx), como a folha de papel que a
+  A matriz da ficha de notas (ficha.tsx), como a folha de papel que a
   secretaria passa a limpo: linhas (as competências de um avaliador, ou os
   avaliadores de uma competência) × colunas (os aspectos do roteiro —
   Conceitua · Propriedade · Profundidade — ou uma coluna "Nota").
