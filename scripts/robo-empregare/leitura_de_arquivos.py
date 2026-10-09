@@ -16,6 +16,8 @@ Uso (o workflow .github/workflows/leitura-de-arquivos.yml faz isso):
   python scripts/robo-empregare/leitura_de_arquivos.py --editais 93/2026 --sondar --limite 3
       só a estrutura do visualizador de até 3 anexos no log (não lê nem grava)
   --forcar  relê também o que já foi lido nesta versão (até o limite; não é retomável)
+  --so-relidos  só relê o que já foi lido (versão antiga ou erro; com --forcar, tudo o já lido);
+            nunca lê anexo novo (o já lido com versão antiga vem primeiro sempre)
 
 Orçamento: ORCAMENTO_MINUTOS (padrão 100; o job tem 120). Ao esgotar, grava o
 que leu e para: a execução seguinte continua de onde parou (o banco sabe o
@@ -94,6 +96,12 @@ def argumentos(lista=None):
     p.add_argument("--editais", default=os.environ.get("EDITAIS", ""), help="93/2026, ids ou nomes, por vírgula")
     p.add_argument("--limite", type=int, default=int(os.environ.get("LIMITE") or LIMITE_PADRAO))
     p.add_argument("--forcar", action="store_true", default=os.environ.get("FORCAR") == "sim")
+    p.add_argument(
+        "--so-relidos",
+        action="store_true",
+        default=os.environ.get("SO_RELIDOS") == "sim",
+        help="só relê o que já foi lido (nunca anexo novo)",
+    )
     p.add_argument("--seco", action="store_true", help="só conta o que falta ler")
     p.add_argument("--sondar", action="store_true", help="só a estrutura do visualizador de até 3 anexos")
     args = p.parse_args(lista)
@@ -248,20 +256,17 @@ def principal(args, configuracao=None, chamar=supabase_rpc.chamar, portal_de=Non
     config = configuracao if configuracao is not None else supabase_rpc.configuracao(GUIA)
     sal = secrets.token_urlsafe(32)
     limite = min(args.limite, LIMITE_DA_SONDAGEM) if args.sondar else args.limite
-    lista = (
-        chamar(
-            config,
-            "listar_anexos_para_leitura",
-            {
-                "p_editais": args.editais or None,
-                "p_versao": VERSAO_DO_EXTRATOR,
-                "p_forcar": bool(args.forcar),
-                "p_limite": limite,
-                "p_sal": sal,
-            },
-        )
-        or {}
-    )
+    pedido = {
+        "p_editais": args.editais or None,
+        "p_versao": VERSAO_DO_EXTRATOR,
+        "p_forcar": bool(args.forcar),
+        "p_limite": limite,
+        "p_sal": sal,
+    }
+    if args.so_relidos:
+        # Só quando pedido: sem ele, a chamada vale também para a RPC antiga (sem p_so_relidos).
+        pedido["p_so_relidos"] = True
+    lista = chamar(config, "listar_anexos_para_leitura", pedido) or {}
     anexos = lista.get("anexos") or []
     log.info(
         "%s anexo(s) a ler nesta execução (de %s pendentes, %s no total).",

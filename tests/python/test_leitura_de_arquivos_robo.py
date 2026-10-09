@@ -252,6 +252,15 @@ def test_fluxo_le_grava_em_lote_sem_dado_pessoal(monkeypatch, ambiente, caplog, 
     listar = banco.chamadas[0][1]
     assert listar["p_editais"] == ["93/2026"] and listar["p_versao"] == VERSAO_DO_EXTRATOR
     assert len(listar["p_sal"]) >= 16
+    assert "p_so_relidos" not in listar  # só vai quando pedido (vale para a RPC antiga)
+
+
+def test_so_relidos_pela_linha_de_comando_e_pelo_workflow(monkeypatch):
+    monkeypatch.delenv("SO_RELIDOS", raising=False)
+    assert robo.argumentos(["--so-relidos"]).so_relidos is True
+    assert robo.argumentos([]).so_relidos is False
+    monkeypatch.setenv("SO_RELIDOS", "sim")
+    assert robo.argumentos([]).so_relidos is True
 
 
 def test_erro_de_download_vira_leitura_com_erro_e_saida_parcial(monkeypatch, ambiente):
