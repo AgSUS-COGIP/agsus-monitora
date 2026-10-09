@@ -12,7 +12,7 @@ import {
   RASCUNHO_VAZIO,
   rascunhoDoRecurso,
   recursoDuplicado,
-} from "../../lib/recursos-dos-candidatos.js";
+} from "../../lib/recursos-dos-candidatos.ts";
 import {
   Aviso,
   Campo,
@@ -22,7 +22,7 @@ import {
   TopoDaGaveta,
   usarClassesDaGaveta,
 } from "../../ui/index.js";
-import { nota } from "./partes.jsx";
+import { nota } from "./partes.ts";
 
 /*
   Cadastro e edição de recurso, numa gaveta (src/ui/, `usarClassesDaGaveta`),

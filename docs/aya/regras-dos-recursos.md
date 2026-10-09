@@ -4,8 +4,8 @@ A tela de Recursos mostra só rótulos, números e botões; o porquê das regras
 fica aqui, para a Aya explicar. Textos que saíram da tela em 01/10/2026
 (subtítulos das pendências, a dica "Aprovar exige a decisão" e os KPIs que
 viraram filtro) estão registrados nestes verbetes. Fontes:
-`src/modulos/recursos/`, `src/lib/recursos-dos-candidatos.js`,
-`src/lib/prazo-do-recurso.js` e as migrations `20260929120000_recursos.sql`,
+`src/modulos/recursos/`, `src/lib/recursos-dos-candidatos.ts`,
+`src/lib/prazo-do-recurso.ts` e as migrations `20260929120000_recursos.sql`,
 `20260929230000_recursos_modelos_anexos_respostas.sql`,
 `20260929190200_recorte_por_coordenacao_nos_recursos.sql` e
 `20261001170000_recursos_parecer_juridico.sql` e
@@ -23,7 +23,7 @@ viraram filtro) estão registrados nestes verbetes. Fontes:
 **perguntas:** parecer juridico | fluxo do recurso | como funciona o fluxo do parecer juridico | fluxo do parecer juridico | em analise juridica | enviar para parecer | situacoes do recurso
 **resposta:** No MONITORA, o recurso nasce Registrado: quem edita Recursos cadastra os dados, anexa documentos e escreve o rascunho da resposta, e então o envia para parecer jurídico (Em análise jurídica). Só quem tem a permissão "Parecer jurídico (Recursos)" decide: defere, defere parcialmente ou indefere, sempre com o texto do parecer (10 a 20.000 caracteres), ou devolve para ajuste com um comentário. Quem decidiu, quando e o parecer ficam gravados, e cada passo vai para o histórico do recurso.
 **fato:** No MONITORA, o recurso vai de Registrado a Em análise jurídica e só quem tem a permissão Parecer jurídico decide (Deferido, Deferido parcialmente ou Indeferido); o nível Administrador de Recursos não decide.
-**fonte:** supabase/migrations/20261001170000_recursos_parecer_juridico.sql; src/lib/recursos-dos-candidatos.js
+**fonte:** supabase/migrations/20261001170000_recursos_parecer_juridico.sql; src/lib/recursos-dos-candidatos.ts
 
 ## Quem pode decidir um recurso
 
@@ -36,7 +36,7 @@ viraram filtro) estão registrados nestes verbetes. Fontes:
 
 **perguntas:** aguardando parecer | o que é aguardando parecer | kpi aguardando parecer
 **resposta:** No MONITORA, "Aguardando parecer" conta os recursos Em análise jurídica: já enviados ao jurídico e ainda sem decisão. Clicar no indicador filtra a tela por eles. Quem não tem o parecer jurídico vê "Aguardando parecer jurídico" no lugar dos botões de decisão.
-**fonte:** src/modulos/recursos/paineis.jsx; src/lib/recursos-dos-candidatos.js
+**fonte:** src/modulos/recursos/paineis.jsx; src/lib/recursos-dos-candidatos.ts
 
 ## Deferido parcialmente
 
@@ -66,19 +66,19 @@ viraram filtro) estão registrados nestes verbetes. Fontes:
 
 **perguntas:** de onde vem o prazo do recurso | prazo do recurso | prazo estimado | prazo vencido
 **resposta:** O prazo do recurso vem do cronograma do edital: é o fim da atividade de resposta aos recursos daquela origem (análise curricular, entrevista ou resultado final); havendo mais de uma, vale a mais tardia. Sem atividade de resposta, usa o fim do prazo de abertura dos recursos (o prazo estimado, com asterisco). Sem nenhuma das duas, entra a pendência "Prazo não encontrado no cronograma". "Prazo vencido" é o recurso sem resposta enviada com o prazo já passado; "vencendo" é o que vence hoje ou nos próximos dois dias.
-**fonte:** src/lib/prazo-do-recurso.js; src/lib/recursos-dos-candidatos.js
+**fonte:** src/lib/prazo-do-recurso.ts; src/lib/recursos-dos-candidatos.ts
 
 ## Indicadores da aba Recursos
 
 **perguntas:** indicadores dos recursos | quais sao os indicadores dos recursos | kpis dos recursos | onde está o total de recursos | taxa de conclusão dos recursos | sem processo sei
 **resposta:** No MONITORA, a aba Recursos tem quatro indicadores: Aguardando parecer, Prazo vencido, Deferidos (com os parcialmente) e Indeferidos; cada um filtra a tela. O total está na contagem da fila; a taxa de decisão, no recorte ("% decididos"); sem processo SEI, sem resposta, respostas em revisão, aprovadas ou devolvidas, mudança de nota, prazo vencendo e registrados sem envio estão nas Pendências prioritárias e nos gráficos.
-**fonte:** src/modulos/recursos/paineis.jsx; src/lib/recursos-dos-candidatos.js
+**fonte:** src/modulos/recursos/paineis.jsx; src/lib/recursos-dos-candidatos.ts
 
 ## Pendências da aba Recursos
 
 **perguntas:** pendências dos recursos | prazo não encontrado no cronograma | candidato fora das análises | mudança de nota ou classificação | nota mudou
 **resposta:** No MONITORA, "Prazo não encontrado no cronograma" quer dizer que o cronograma do edital não traz o prazo de recurso daquela origem; "Candidato fora das análises" é o recurso cadastrado com os dados digitados, que vale conferir; "Mudança de nota ou classificação" junta a nota mudou (a nota atual da análise difere da guardada no cadastro do recurso) e a classificação mudada pelo ajuste da pontuação aprovado, para conferir no resultado final; "Prazo vence em até 2 dias" é o recurso sem resposta cujo prazo vence hoje ou nos próximos dois dias; "Devolvidos pelo jurídico" são os que voltaram para ajuste.
-**fonte:** src/lib/recursos-dos-candidatos.js; supabase/migrations/20260929120000_recursos.sql
+**fonte:** src/lib/recursos-dos-candidatos.ts; supabase/migrations/20260929120000_recursos.sql
 
 ## Anexos e modelos de resposta
 
@@ -105,7 +105,7 @@ viraram filtro) estão registrados nestes verbetes. Fontes:
 
 **perguntas:** o recurso mudou a classificacao | caixa mudou a classificacao | classificacao mudou | marcar que mudou a classificacao
 **resposta:** No MONITORA, "O recurso mudou a classificação" deixou de ser uma caixa marcada à mão: é marcada automaticamente quando o ajuste da pontuação aprovado muda a posição ou a situação do candidato (pela prévia calculada na aprovação) e desmarcada quando esse ajuste é cancelado. Os recursos marcados à mão antes dessa mudança continuam como estavam. A marca alimenta a pendência "Mudança de nota ou classificação", o filtro e o CSV.
-**fonte:** supabase/migrations/20261005130000_recurso_ajusta_pontuacao.sql; src/lib/recursos-dos-candidatos.js
+**fonte:** supabase/migrations/20261005130000_recurso_ajusta_pontuacao.sql; src/lib/recursos-dos-candidatos.ts
 **abrir:** recursos
 
 ## Registrar um recurso

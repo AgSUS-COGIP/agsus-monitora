@@ -5913,7 +5913,7 @@ export const VERBETES_AYA = Object.freeze([
       'No MONITORA, o recurso nasce Registrado: quem edita Recursos cadastra os dados, anexa documentos e escreve o rascunho da resposta, e então o envia para parecer jurídico (Em análise jurídica). Só quem tem a permissão "Parecer jurídico (Recursos)" decide: defere, defere parcialmente ou indefere, sempre com o texto do parecer (10 a 20.000 caracteres), ou devolve para ajuste com um comentário. Quem decidiu, quando e o parecer ficam gravados, e cada passo vai para o histórico do recurso.',
     fato: "No MONITORA, o recurso vai de Registrado a Em análise jurídica e só quem tem a permissão Parecer jurídico decide (Deferido, Deferido parcialmente ou Indeferido); o nível Administrador de Recursos não decide.",
     fonte:
-      "supabase/migrations/20261001170000_recursos_parecer_juridico.sql; src/lib/recursos-dos-candidatos.js",
+      "supabase/migrations/20261001170000_recursos_parecer_juridico.sql; src/lib/recursos-dos-candidatos.ts",
   },
   {
     arquivo: "regras-dos-recursos.md",
@@ -5948,7 +5948,7 @@ export const VERBETES_AYA = Object.freeze([
       'No MONITORA, "Aguardando parecer" conta os recursos Em análise jurídica: já enviados ao jurídico e ainda sem decisão. Clicar no indicador filtra a tela por eles. Quem não tem o parecer jurídico vê "Aguardando parecer jurídico" no lugar dos botões de decisão.',
     fato: "",
     fonte:
-      "src/modulos/recursos/paineis.jsx; src/lib/recursos-dos-candidatos.js",
+      "src/modulos/recursos/paineis.jsx; src/lib/recursos-dos-candidatos.ts",
   },
   {
     arquivo: "regras-dos-recursos.md",
@@ -6018,7 +6018,7 @@ export const VERBETES_AYA = Object.freeze([
     resposta:
       'O prazo do recurso vem do cronograma do edital: é o fim da atividade de resposta aos recursos daquela origem (análise curricular, entrevista ou resultado final); havendo mais de uma, vale a mais tardia. Sem atividade de resposta, usa o fim do prazo de abertura dos recursos (o prazo estimado, com asterisco). Sem nenhuma das duas, entra a pendência "Prazo não encontrado no cronograma". "Prazo vencido" é o recurso sem resposta enviada com o prazo já passado; "vencendo" é o que vence hoje ou nos próximos dois dias.',
     fato: "",
-    fonte: "src/lib/prazo-do-recurso.js; src/lib/recursos-dos-candidatos.js",
+    fonte: "src/lib/prazo-do-recurso.ts; src/lib/recursos-dos-candidatos.ts",
   },
   {
     arquivo: "regras-dos-recursos.md",
@@ -6035,7 +6035,7 @@ export const VERBETES_AYA = Object.freeze([
       'No MONITORA, a aba Recursos tem quatro indicadores: Aguardando parecer, Prazo vencido, Deferidos (com os parcialmente) e Indeferidos; cada um filtra a tela. O total está na contagem da fila; a taxa de decisão, no recorte ("% decididos"); sem processo SEI, sem resposta, respostas em revisão, aprovadas ou devolvidas, mudança de nota, prazo vencendo e registrados sem envio estão nas Pendências prioritárias e nos gráficos.',
     fato: "",
     fonte:
-      "src/modulos/recursos/paineis.jsx; src/lib/recursos-dos-candidatos.js",
+      "src/modulos/recursos/paineis.jsx; src/lib/recursos-dos-candidatos.ts",
   },
   {
     arquivo: "regras-dos-recursos.md",
@@ -6051,7 +6051,7 @@ export const VERBETES_AYA = Object.freeze([
       'No MONITORA, "Prazo não encontrado no cronograma" quer dizer que o cronograma do edital não traz o prazo de recurso daquela origem; "Candidato fora das análises" é o recurso cadastrado com os dados digitados, que vale conferir; "Mudança de nota ou classificação" junta a nota mudou (a nota atual da análise difere da guardada no cadastro do recurso) e a classificação mudada pelo ajuste da pontuação aprovado, para conferir no resultado final; "Prazo vence em até 2 dias" é o recurso sem resposta cujo prazo vence hoje ou nos próximos dois dias; "Devolvidos pelo jurídico" são os que voltaram para ajuste.',
     fato: "",
     fonte:
-      "src/lib/recursos-dos-candidatos.js; supabase/migrations/20260929120000_recursos.sql",
+      "src/lib/recursos-dos-candidatos.ts; supabase/migrations/20260929120000_recursos.sql",
   },
   {
     arquivo: "regras-dos-recursos.md",
@@ -6120,7 +6120,7 @@ export const VERBETES_AYA = Object.freeze([
       'No MONITORA, "O recurso mudou a classificação" deixou de ser uma caixa marcada à mão: é marcada automaticamente quando o ajuste da pontuação aprovado muda a posição ou a situação do candidato (pela prévia calculada na aprovação) e desmarcada quando esse ajuste é cancelado. Os recursos marcados à mão antes dessa mudança continuam como estavam. A marca alimenta a pendência "Mudança de nota ou classificação", o filtro e o CSV.',
     fato: "",
     fonte:
-      "supabase/migrations/20261005130000_recurso_ajusta_pontuacao.sql; src/lib/recursos-dos-candidatos.js",
+      "supabase/migrations/20261005130000_recurso_ajusta_pontuacao.sql; src/lib/recursos-dos-candidatos.ts",
     abrir: "recursos",
   },
   {

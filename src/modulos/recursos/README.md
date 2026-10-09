@@ -21,7 +21,7 @@ partes.jsx      dataHora e nota
 recursos.css    só o que é desta tela (tokens); o resto vem de src/ui/
 ```
 
-Regras puras em `src/lib/` (`recursos-dos-candidatos.js`, `prazo-do-recurso.js`,
+Regras puras em `src/lib/` (`recursos-dos-candidatos.ts`, `prazo-do-recurso.ts`,
 `resposta-do-recurso.js`, `parecer-do-recurso.js`, `anexos-do-recurso.js`,
 `modelos-de-resposta.js`, `documento-da-resposta.js`). Testes: `tests/modulos/recursos*.test.js`.
 
@@ -33,3 +33,18 @@ Ajuste da pontuação (`20261005130000_recurso_ajusta_pontuacao.sql`): propor e 
 parecer jurídico; aprovar exige o recurso deferido; reabrir/indeferir/devolver/excluir cancela
 (gatilho). A conta da prévia é a da Classificação (`src/lib/classificacao/ajustes.js`); a nota
 da planilha nunca muda. "O recurso mudou a classificação" é automática (aprovação do ajuste).
+
+## TypeScript no painel
+
+O topo, filtros, indicadores, recorte, pendências, gráficos e fila estão em TSX.
+As regras compartilhadas de enriquecimento, busca, indicadores, duplicidade, formulário e CSV
+estão em `src/lib/recursos-dos-candidatos.ts`; leitura do cronograma e prazo em
+`src/lib/prazo-do-recurso.ts`. Os contratos ficam em `src/lib/tipos-dos-recursos.ts`:
+dados do recurso, cálculos, etapas, origens, filtros e rascunho. O enriquecimento preserva os
+campos adicionais da entrada. Prazo e dias restantes podem ser nulos; os gráficos protegem
+callbacks sem elemento e dicas vazias. Os testes de compilação ficam em
+`tests/tipos/painel-de-recursos.tsx`.
+
+A entrada, o estado, a gaveta e os formulários continuam em JavaScript/JSX. Estes contratos
+não substituem validação do JSON recebido pelo estado; essa fronteira ainda será migrada.
+As permissões, RPCs, Storage e transições jurídicas permanecem com as regras existentes.

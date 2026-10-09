@@ -11,8 +11,8 @@ import {
   podeEditarTexto,
 } from "../../lib/resposta-do-recurso.js";
 import { Aviso, Kv, Secao } from "../../ui/index.js";
-import { dataHora } from "./partes.jsx";
-import { SeloDaResposta } from "./tabela.jsx";
+import { dataHora } from "./partes.ts";
+import { SeloDaResposta } from "./tabela.tsx";
 
 /*
   "Resposta ao candidato", na gaveta do recurso: escolher o modelo (os da

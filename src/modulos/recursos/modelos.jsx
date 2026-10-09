@@ -10,9 +10,9 @@ import {
   rotuloDaSituacao,
   SITUACOES,
   situacaoDecidida,
-} from "../../lib/recursos-dos-candidatos.js";
+} from "../../lib/recursos-dos-candidatos.ts";
 import { Aviso, Carregando, Gaveta, Secao } from "../../ui/index.js";
-import { dataHora } from "./partes.jsx";
+import { dataHora } from "./partes.ts";
 
 /*
   "Modelos de resposta" (só para quem administra Recursos, nível admin), na

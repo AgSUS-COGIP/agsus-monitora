@@ -320,6 +320,20 @@ describe("a tela dentro do app", () => {
       "chartSituacao",
     ]);
   });
+
+  it("dicas e clique sem elemento no gráfico não alteram o recorte", async () => {
+    await montar(supabaseFalso());
+    const grafico = graficos.find(
+      (g) => g.canvas.id === "chartAnalista" && g.canvas.isConnected,
+    );
+    const dicas = grafico.options.plugins.tooltip.callbacks;
+    expect(dicas.title([])).toBe("");
+    expect(dicas.afterBody([])).toEqual(["Total: 0"]);
+    await act(async () => grafico.options.onClick({}, []));
+    expect(document.getElementById("filtro-analista").value).toBe("");
+    expect(dicas.title([{ dataIndex: 0 }])).toBe("Carla");
+    expect(dicas.afterBody([{ dataIndex: 0 }])).toEqual(["Total: 1"]);
+  });
 });
 
 describe("tema do app", () => {

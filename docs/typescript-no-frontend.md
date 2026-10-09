@@ -156,3 +156,10 @@ também estão migrados. Os contratos dos alvos indígenas estão em
 `src/lib/tipos-das-coordenadas-do-mapa.ts`; o catálogo editável valida entradas
 externas sem alterar os índices conferidos pelo banco. As telas recebem a entrada geográfica validada por `dados-do-mapa.ts`; a edição conserva
 os dados originais para preservar os alvos usados pelo banco.
+
+O painel de Recursos também está migrado: filtros, indicadores, gráficos, recorte e fila,
+com regras de prazos, enriquecimento, busca e CSV em TypeScript. Os contratos incluem etapas,
+filtros, rascunho e os campos calculados; usos válidos e rejeições estão em
+`tests/tipos/painel-de-recursos.tsx`. Estado, entrada, gaveta e formulários ainda estão em
+JavaScript/JSX; contratos e limites em
+[../src/modulos/recursos/README.md](../src/modulos/recursos/README.md).

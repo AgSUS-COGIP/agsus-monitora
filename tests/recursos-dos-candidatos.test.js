@@ -18,7 +18,7 @@ import {
   recursoDuplicado,
   recursosPorAnalista,
   recursosPorSituacao,
-} from "../src/lib/recursos-dos-candidatos.js";
+} from "../src/lib/recursos-dos-candidatos.ts";
 
 /*
   A aba Recursos sem DOM: o que se calcula de cada recurso, os indicadores e

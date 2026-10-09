@@ -4,7 +4,7 @@ import {
   ETAPAS,
   rotuloDaOrigem,
   rotuloDaSituacao,
-} from "../../lib/recursos-dos-candidatos.js";
+} from "../../lib/recursos-dos-candidatos.ts";
 import { rotuloDoEstado } from "../../lib/resposta-do-recurso.js";
 import {
   Aviso,
@@ -17,9 +17,9 @@ import {
 import { SecaoDoAjuste } from "./ajuste.jsx";
 import { SecaoDeAnexos } from "./anexos.jsx";
 import { SecaoDoParecer } from "./parecer.jsx";
-import { dataHora, nota } from "./partes.jsx";
+import { dataHora, nota } from "./partes.ts";
 import { SecaoDaResposta } from "./resposta.jsx";
-import { detalheDoPrazo, MarcaForaDasAnalises } from "./tabela.jsx";
+import { detalheDoPrazo, MarcaForaDasAnalises } from "./tabela.tsx";
 
 /*
   Gaveta de detalhe do recurso (Gaveta, src/ui/): o topo com o resumo em

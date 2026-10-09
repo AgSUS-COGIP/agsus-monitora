@@ -6,7 +6,7 @@ import { formatNumberBR } from "../../lib/formatters.js";
   src/ui/ (Secao, Kv).
 */
 
-export const dataHora = (valor) =>
+export const dataHora = (valor: string | number | Date | null | undefined) =>
   valor
     ? new Date(valor).toLocaleString("pt-BR", {
         day: "2-digit",
@@ -17,7 +17,7 @@ export const dataHora = (valor) =>
       })
     : "";
 
-export const nota = (valor) =>
+export const nota = (valor: string | number | null | undefined) =>
   valor === null || valor === undefined || valor === ""
     ? "—"
     : formatNumberBR(Number(valor), { maximumFractionDigits: 2 });

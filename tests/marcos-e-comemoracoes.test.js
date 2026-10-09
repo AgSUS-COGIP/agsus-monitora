@@ -21,8 +21,8 @@ import {
   situacaoDosEditais,
   trocarEstadoGuardado,
 } from "../src/lib/comemoracao.js";
-import { decididoNoPrazo } from "../src/lib/prazo-do-recurso.js";
-import { enriquecerRecurso } from "../src/lib/recursos-dos-candidatos.js";
+import { decididoNoPrazo } from "../src/lib/prazo-do-recurso.ts";
+import { enriquecerRecurso } from "../src/lib/recursos-dos-candidatos.ts";
 import { normalizarSituacaoDoSistema } from "../src/lib/situacao-dos-modulos.js";
 import {
   avaliarMarco,

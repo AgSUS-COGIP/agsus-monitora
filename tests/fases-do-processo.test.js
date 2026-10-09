@@ -9,7 +9,7 @@ import {
 
 /*
   As fases fixas da Visão geral, lidas do texto livre do cronograma. Os textos
-  são variantes reais (analise.md e prazo-do-recurso.js): SI com 15 valores,
+  são variantes reais (analise.md e prazo-do-recurso.ts): SI com 15 valores,
   Projetos com 12 para 12 editais, SEDE com duplicados por espaço final e um
   "zzzzz".
 */
