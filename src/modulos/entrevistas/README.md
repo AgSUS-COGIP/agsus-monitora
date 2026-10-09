@@ -52,9 +52,9 @@ entrevistas.jsx         Painel de entrevistas: <TelaDeEntrevistas> e montarEntre
 estado.js               store do painel: carga da área (cópia guardada), gaveta, CSV, agenda do
                         edital do recorte (obter_agenda_entrevista), comemorações
 agenda-e-empates.tsx    agenda dos próximos dias (com um edital no recorte) e aviso dos empatados
-paineis.jsx             topo (status, ações), filtros, KPIs, recorte, gráficos, pendências
-tabela.jsx              tabela de resultados (TabelaInfinita), selo do parecer e do empate
-gaveta.jsx              detalhe da entrevista (caminho do candidato, critérios) e aprovados sem entrevista
+paineis.tsx             topo (status, ações), filtros, KPIs, recorte, gráficos, pendências
+tabela.tsx              tabela de resultados (TabelaInfinita), selo do parecer e do empate
+gaveta.tsx              detalhe da entrevista (caminho do candidato, critérios) e aprovados sem entrevista
 conduzir.tsx            Conduzir entrevistas: <TelaDeConducao>, visões Fila/Preparar, contador do dia,
                         comemoração, montarConducaoDeEntrevistas() (render, abrirVisao, abrirEdital)
 seletor-do-edital.tsx   o edital compacto abaixo do topo, selo Treinamento, "mostrar também os concluídos"
@@ -96,6 +96,15 @@ partes.jsx              composição da banca, botão de linha
 marcos.js               marco "vaga pronta" (comemoração)
 entrevistas.css         só o que é destas telas (tokens); o resto vem de src/ui/
 ```
+
+A apresentação dos resultados está em TypeScript: filtros, KPIs, recorte, gráficos, pendências,
+tabela e gavetas. `tipos-do-painel.ts` declara os contratos de entrevistas, filtros, critérios,
+indicadores, pendências e aprovados sem entrevista. As notas e análises ausentes são anuláveis;
+IDs externos preservados pelo normalizador ficam como `unknown`. A entrada `entrevistas.jsx`,
+o estado e a normalização dos resultados em `entrevistas-do-painel.js` permanecem em
+JavaScript; os helpers consumidos pelos componentes têm contratos JSDoc. Isso não valida
+todo JSON nem todos os consumidores JavaScript. `tests/tipos/painel-de-entrevistas.tsx`
+confere usos e rejeições do compilador; o teste do módulo verifica a apresentação integrada.
 
 Regras puras em `src/lib/` (`entrevistas-do-painel.js`, `painel-de-entrevistas.ts` — edital do
 recorte, empates, agenda dos próximos dias —, `fila-de-conducao.ts` — fila, situações, recortes, contador —,
