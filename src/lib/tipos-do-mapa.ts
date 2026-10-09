@@ -1,6 +1,7 @@
 /** Contratos mínimos usados pela integração dos módulos TS com o Leaflet do app. */
 export type CoordenadasDoMapa = [latitude: number, longitude: number];
 export interface MapaNacional {
+  invalidateSize?(opcoes?: object): unknown;
   getZoom(): number;
   setView(
     coordenadas: CoordenadasDoMapa,

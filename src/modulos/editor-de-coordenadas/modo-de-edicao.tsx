@@ -9,7 +9,7 @@ import {
 } from "react";
 import { folgaDoEnquadramento } from "../../lib/editor-de-coordenadas.ts";
 import { classes } from "../../ui/index.js";
-import { remedir } from "../mapa-saude-indigena/leaflet.js";
+import { remedir } from "../mapa-saude-indigena/leaflet.ts";
 import { travarRolagemDaPagina } from "../mapa-saude-indigena/tela-cheia.tsx";
 import { usarUltimo } from "../mapa-saude-indigena/usar-ultimo.ts";
 import { CAMPOS_E_JANELAS } from "../mapa-saude-indigena/volta-ao-brasil.ts";

@@ -21,7 +21,7 @@
     "src/modulos/aya/mascote/desenho.tsx": "marca: desenho da mascote AYA",
     "src/modulos/classificacao/documento-no-navegador.js": "documento: fundo branco do papel ao rasterizar a prévia",
     "src/modulos/configuracoes/partes.jsx": "valor padrão gravado da cor do painel da tela de acesso (configuração, não tema)",
-    "src/modulos/mapa-saude-indigena/leaflet.js": "mapa: contorno branco dos marcadores sobre a base do mapa",
+    "src/modulos/mapa-saude-indigena/leaflet.ts": "mapa: contorno branco dos marcadores sobre a base do mapa",
     "src/modulos/mapa-saude-indigena/legenda.tsx": "mapa: legenda com o mesmo contorno dos marcadores",
     "src/modulos/mapa-saude-indigena/mapa-saude-indigena.css": "mapa: sombra do marcador sobre a base do mapa",
     "src/modulos/selecao/paineis.tsx": "reserva de cor dos rótulos do gráfico quando o token não é lido (a tela lê os tokens); módulo em migração pelo Codex",
@@ -191,7 +191,7 @@
     "src/modulos/configuracoes/partes.jsx": {
       "#c296eb": 1
     },
-    "src/modulos/mapa-saude-indigena/leaflet.js": {
+    "src/modulos/mapa-saude-indigena/leaflet.ts": {
       "#ffffff": 1
     },
     "src/modulos/mapa-saude-indigena/legenda.tsx": {

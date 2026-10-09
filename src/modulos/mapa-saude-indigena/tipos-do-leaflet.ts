@@ -14,14 +14,29 @@ export interface PosicaoDoLeaflet {
   lat: number;
   lng: number;
 }
-export interface MarcadorIndigena {
+export interface CamadaLeaflet {
+  addTo(alvo: MapaNacional | CamadaDoMapa): CamadaLeaflet;
+}
+export interface CamadaDeFundo extends CamadaLeaflet {
+  on?(evento: string, ouvinte: () => void): unknown;
+  addTo(alvo: MapaNacional | CamadaDoMapa): CamadaDeFundo;
+}
+export interface MarcadorIndigena extends CamadaLeaflet {
+  bindPopup(conteudo: HTMLElement, opcoes?: object): MarcadorIndigena;
   bindTooltip(conteudo: HTMLElement, opcoes?: object): MarcadorIndigena;
   on(evento: string, ouvinte: () => void): MarcadorIndigena;
+  closeTooltip(): unknown;
+  isPopupOpen?(): boolean;
+  openPopup?(): void;
+  setLatLng(posicao: CoordenadasDoMapa | PosicaoDoLeaflet): unknown;
+  bringToFront?(): void;
 }
-export interface CamadaDoMapa {
+export interface CamadaDoMapa extends CamadaLeaflet {
   addTo(mapa: MapaNacional): CamadaDoMapa;
   clearLayers(): void;
-  addLayer(marcador: MarcadorIndigena): unknown;
+  addLayer(camada: CamadaLeaflet): unknown;
+  removeLayer(camada: CamadaLeaflet): unknown;
+  hasLayer(camada: CamadaLeaflet): boolean;
 }
 export interface MetodosDoMapaIndigena {
   on(
@@ -34,6 +49,9 @@ export interface MetodosDoMapaIndigena {
   ): unknown;
   stop?(): void;
   fitBounds(limites: LimitesDoLeaflet, opcoes?: object): unknown;
+  flyToBounds(limites: LimitesDoLeaflet, opcoes?: object): unknown;
+  invalidateSize(opcoes?: object): unknown;
+  removeLayer(camada: CamadaLeaflet): unknown;
   flyTo(coordenadas: CoordenadasDoMapa, zoom: number, opcoes?: object): unknown;
   latLngToLayerPoint(coordenadas: CoordenadasDoMapa): PontoNaTela;
   layerPointToLatLng(ponto: PontoNaTela): PosicaoDoLeaflet;
@@ -50,6 +68,17 @@ export interface MetodosDoMapaIndigena {
 }
 /** Apenas os métodos usados pelas telas; o namespace original não é alterado. */
 export interface LeafletDoMapa {
+  tileLayer(url: string, opcoes?: object): CamadaDeFundo;
+  TileLayer?: {
+    extend(opcoes: object): new (url: string, opcoes: object) => CamadaDeFundo;
+  };
+  geoJSON?(dados: unknown, opcoes?: object): CamadaLeaflet;
+  divIcon(opcoes: {
+    className: string;
+    html: HTMLElement;
+    iconSize: CoordenadasDoMapa;
+    iconAnchor: CoordenadasDoMapa;
+  }): object;
   map(
     elemento: HTMLElement,
     opcoes?: object,
@@ -66,6 +95,10 @@ export interface LeafletDoMapa {
   ): MarcadorIndigena;
   point(x: number, y: number): PontoNaTela;
   latLngBounds(pontos: CoordenadasDoMapa[]): LimitesDoLeaflet;
+  latLngBounds(
+    sulOeste: readonly [number, number],
+    norteLeste: readonly [number, number],
+  ): LimitesDoLeaflet;
 }
 
 export function leafletDoMapa(valor: unknown): LeafletDoMapa | null {
@@ -78,6 +111,8 @@ export function leafletDoMapa(valor: unknown): LeafletDoMapa | null {
     "polyline",
     "point",
     "latLngBounds",
+    "tileLayer",
+    "divIcon",
   ];
   return metodos.every(
     (chave) =>

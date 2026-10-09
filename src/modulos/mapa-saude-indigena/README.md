@@ -3,7 +3,7 @@
 O mapa da Visão geral da área Saúde Indígena em React (Etapa 5, a parte "mapas"), ligado na Visão
 geral (`src/modulos/visao-geral/`) e lendo o estado dela. O legado não desenha mais mapa nenhum: o
 de Projetos é o módulo irmão `src/modulos/mapa-de-projetos/` (ver "Projetos/SEDE"), com as
-mesmas regras: reaproveita daqui o painel do mapa nacional (`painel-do-mapa.tsx`), `leaflet.js`
+mesmas regras: reaproveita daqui o painel do mapa nacional (`painel-do-mapa.tsx`), `leaflet.ts`
 (leque, enquadramento), a legenda flutuante, a tela cheia e o CSS `.mapa-si-*`.
 
 Os controles ficam no cabeçalho, acima do mapa e da lista lateral. Em tela cheia,
@@ -35,7 +35,7 @@ mapa-do-dsei.tsx          território do DSEI: unidades (agrupamento por proximi
                           vínculos externos, filtros por tipo, lista de unidades, Terras Indígenas e povos
 legenda.tsx               <Forma>, <LegendaFlutuante> (recolhível; também a de Projetos), legenda
                           nacional, legenda do DSEI, fases das terras
-leaflet.js                fábrica do mapa (criarMapa, criarMapaDoBrasil), Brasil, fundo com recurso,
+leaflet.ts                fábrica do mapa (criarMapa, criarMapaDoBrasil), Brasil, fundo com recurso,
                           contornos, enquadrar (regra do recorte), criarLeque, ícones/popup/dica em DOM
                           seguro (os dois mapas)
 painel-do-mapa.tsx        peças do mapa nacional comuns a este e ao de Projetos: usarMapaDoBrasil,
@@ -100,7 +100,7 @@ para qualquer mapa. Ganchos da camada de terras usados (todos opcionais): `__ags
 **Projetos/SEDE.** Este componente é só da Saúde Indígena. Em Projetos a Visão geral mostra
 `<MapaDeProjetos>` (`src/modulos/mapa-de-projetos/`); na SEDE, nenhum mapa.
 
-Ele tem as mesmas regras deste e usa as mesmas peças (`painel-do-mapa.tsx`, `leaflet.js`,
+Ele tem as mesmas regras deste e usa as mesmas peças (`painel-do-mapa.tsx`, `leaflet.ts`,
 `legenda.tsx`, `tela-cheia.tsx`, o CSS `.mapa-si-*`); a tabela das regras lado a lado e as
 diferenças de propósito estão em `src/modulos/mapa-de-projetos/README.md`.
 
@@ -181,13 +181,17 @@ os ouvintes são retirados ao desmontar.
 As telas principal, nacional e por DSEI estão em TSX. As regras de contagens, bolhas,
 CASAIs, unidades, vínculos, resumos e enquadramentos também estão em TypeScript:
 `src/lib/mapa-saude-indigena/chaves.ts`, `mapa-nacional.ts` e `mapa-do-dsei.ts`.
-A fábrica e as operações do Leaflet (`leaflet.js`), a conversão de UF e a
-reconciliação compartilhada permanecem em JavaScript, com contratos JSDoc na integração. A fábrica declara em JSDoc o
-resultado utilizado pelo painel; essa anotação não valida dados externos nem
-cobre toda a API do Leaflet. Esta entrega não muda contratos de RPC ou dados
+A integração do Leaflet está em `leaflet.ts`, com contratos em `tipos-do-leaflet.ts`:
+criação, fundo com recurso, tamanho, contornos, enquadramento, leque, ícones e balões.
+`obterLeaflet` valida as fábricas essenciais e preserva o namespace original;
+contornos continuam opcionais. Os contratos cobrem os métodos usados pelo app,
+sem substituir a API completa do Leaflet. A conversão de UF, a reconciliação
+compartilhada, as guardas globais e o recuo de tiles permanecem em JavaScript,
+com contratos JSDoc na integração. Esta entrega não muda contratos de RPC ou dados
 geográficos. Ciclo de vida, StrictMode, legendas, Escape, foco, tela cheia e modo de
 edição são cobertos pelos testes dos dois mapas; contratos adicionais estão em
-`tests/tipos/base-dos-mapas.tsx` e `tests/tipos/regras-geograficas.tsx`.
+`tests/tipos/base-dos-mapas.tsx`, `tests/tipos/regras-geograficas.tsx` e
+`tests/tipos/integracao-do-leaflet.tsx`.
 A fronteira da reconciliação está em `src/lib/tipos-da-reconciliacao.ts`: mantém as
 chaves CNES numéricas ou textuais e preserva os campos de apresentação ao unir
 estabelecimentos repetidos. A anotação não valida o JavaScript internamente.

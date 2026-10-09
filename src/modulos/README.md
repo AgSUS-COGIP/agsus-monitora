@@ -28,5 +28,6 @@ A base compartilhada dos mapas em `mapa-saude-indigena/` (painel, legenda, tela
 cheia, retorno ao Brasil e hooks) está em TypeScript; contratos em `tipos-do-painel.ts`.
 As telas principal, nacional e por DSEI da Saúde Indígena estão em TSX, com contratos
 e validação da entrada geográfica. Contagens, bolhas, CASAIs, unidades, vínculos e
-enquadramentos estão em `src/lib/mapa-saude-indigena/*.ts`. A fábrica Leaflet e a
-reconciliação compartilhada continuam em JavaScript, com contratos JSDoc.
+enquadramentos estão em `src/lib/mapa-saude-indigena/*.ts`. A integração compartilhada com o Leaflet também está em TypeScript (`leaflet.ts`),
+com contratos em `tipos-do-leaflet.ts`. A reconciliação, as guardas globais e o
+recuo dos tiles continuam em JavaScript, com contratos JSDoc.
