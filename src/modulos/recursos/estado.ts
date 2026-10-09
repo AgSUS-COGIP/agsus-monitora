@@ -1,3 +1,28 @@
+import type {
+  OpcoesDoEstadoDosRecursos,
+  SnapshotDosRecursos,
+  RpcDosRecursos,
+  RegistroDosRecursos,
+  ErroDosRecursos,
+  AcaoDoParecer,
+  AcaoDaResposta,
+} from "./tipos-do-estado.ts";
+import type {
+  DadosDoRecurso,
+  IdentificadorDoRecurso as Id,
+  RecursoDoPainel,
+  OrigemDoRecurso,
+  EtapaDoRecurso,
+} from "../../lib/tipos-dos-recursos.ts";
+import {
+  normalizarDadosDosRecursos,
+  normalizarDetalheDoRecurso,
+  normalizarCandidatosDosRecursos,
+  objetoDosRecursos,
+  metadadosDaRpcDosRecursos,
+} from "../../lib/dados-dos-recursos.ts";
+import { dadosParaSalvar } from "../../lib/recursos-dos-candidatos.ts";
+type DocumentoDaResposta = { id: Id; texto_final: string; revisao?: number };
 /*
   Estado da tela de Recursos (`#page-recursos`), fora do React: o que o banco
   devolve para a área atual do app, o recurso aberto na gaveta
@@ -43,7 +68,7 @@ import { dadosDoModelo } from "../../lib/modelos-de-resposta.js";
 export const MENSAGEM_SEM_SESSAO =
   "Sessão não localizada. Entre de novo no MONITORA.";
 
-const ESTADO_INICIAL = Object.freeze({
+const ESTADO_INICIAL: Readonly<SnapshotDosRecursos> = Object.freeze({
   area: "",
   dados: null,
   carregado: false,
@@ -75,10 +100,10 @@ const ESTADO_INICIAL = Object.freeze({
   comemoracoes: false,
 });
 
-const mensagemDe = (erro) =>
-  String(erro?.message || erro || "erro desconhecido");
+const mensagemDe = (erro: unknown) =>
+  String(objetoDosRecursos(erro).message || erro || "erro desconhecido");
 
-function mensagemDaCarga(erro) {
+function mensagemDaCarga(erro: ErroDosRecursos | null) {
   if (erro?.code === "PGRST202")
     return "A aba Recursos ainda não foi publicada no banco.";
   if (erro?.code === "42501")
@@ -86,7 +111,7 @@ function mensagemDaCarga(erro) {
   return mensagemDe(erro);
 }
 
-function baixarNoNavegador(conteudo, nome) {
+function baixarNoNavegador(conteudo: string, nome: string) {
   const arquivo = new Blob([conteudo], { type: "text/csv;charset=utf-8" });
   const url = URL.createObjectURL(arquivo);
   const ancora = document.createElement("a");
@@ -96,7 +121,7 @@ function baixarNoNavegador(conteudo, nome) {
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
-function baixarBlobNoNavegador(arquivo, nome) {
+function baixarBlobNoNavegador(arquivo: Blob, nome: string) {
   const url = URL.createObjectURL(arquivo);
   const ancora = document.createElement("a");
   ancora.href = url;
@@ -110,7 +135,7 @@ function baixarBlobNoNavegador(arquivo, nome) {
   navegador baixa sem sair da tela. Sem aba nova: depois das esperas do banco
   o clique já não conta como da pessoa, e o bloqueador de pop-up barraria.
 */
-function baixarPeloEndereco(url) {
+function baixarPeloEndereco(url: string) {
   const ancora = document.createElement("a");
   ancora.href = url;
   ancora.rel = "noopener noreferrer";
@@ -121,15 +146,19 @@ function baixarPeloEndereco(url) {
   Impressão (e "Salvar como PDF") por um iframe escondido: a página é montada
   com elementos e texto (documento-da-resposta.js), sem HTML.
 */
-function imprimirNoNavegador(texto, titulo) {
+function imprimirNoNavegador(texto: string, titulo: string) {
   const quadro = document.createElement("iframe");
   quadro.setAttribute("aria-hidden", "true");
   quadro.tabIndex = -1;
   quadro.style.cssText =
     "position:fixed;right:0;bottom:0;width:0;height:0;border:0;visibility:hidden";
   document.body.append(quadro);
-  montarPaginaDeImpressao(quadro.contentDocument, texto, { titulo });
   const janela = quadro.contentWindow;
+  if (!janela || !quadro.contentDocument) {
+    quadro.remove();
+    return;
+  }
+  montarPaginaDeImpressao(quadro.contentDocument, texto, { titulo });
   janela.addEventListener?.(
     "afterprint",
     () => setTimeout(() => quadro.remove(), 500),
@@ -144,39 +173,51 @@ function novoUuid() {
   if (globalThis.crypto?.randomUUID) return globalThis.crypto.randomUUID();
   const bytes = new Uint8Array(16);
   globalThis.crypto.getRandomValues(bytes);
-  bytes[6] = (bytes[6] & 0x0f) | 0x40;
-  bytes[8] = (bytes[8] & 0x3f) | 0x80;
+  bytes[6] = (bytes[6]! & 0x0f) | 0x40;
+  bytes[8] = (bytes[8]! & 0x3f) | 0x80;
   const hex = [...bytes].map((b) => b.toString(16).padStart(2, "0")).join("");
   return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
 }
 
 export function criarEstadoDosRecursos({
   supabase = null,
-  toast = (mensagem) => console.info(mensagem),
+  toast = (mensagem: string) => console.info(mensagem),
   baixar = baixarNoNavegador,
   baixarArquivo = baixarBlobNoNavegador,
   abrirUrl = baixarPeloEndereco,
   imprimir = imprimirNoNavegador,
   novoId = novoUuid,
   agora = () => Date.now(),
-} = {}) {
-  let estado = ESTADO_INICIAL;
+}: OpcoesDoEstadoDosRecursos = {}) {
+  let estado: SnapshotDosRecursos = ESTADO_INICIAL;
+  let geracao = 0;
   let aberturas = 0;
   let pedido = 0;
-  const ouvintes = new Set();
+  const ouvintes = new Set<() => void>();
+  const ajustesPedidos = new Set<Id>();
 
-  function publicar(mudancas) {
+  function publicar(mudancas: Partial<SnapshotDosRecursos>) {
     estado = { ...estado, ...mudancas };
     for (const ouvinte of ouvintes) ouvinte();
   }
 
-  async function executar(tipo, rotulo, fazer) {
+  async function executar<T>(
+    tipo: string,
+    rotulo: string,
+    fazer: (vigente: () => boolean) => Promise<T>,
+  ) {
     if (estado.acao) return null;
+    const minhaGeracao = geracao;
+    const vigente = () => minhaGeracao === geracao;
     publicar({ acao: { tipo, rotulo } });
     try {
-      return await fazer();
+      const resultado = await fazer(vigente);
+      return vigente() ? resultado : null;
+    } catch (erro) {
+      if (!vigente()) return null;
+      throw erro;
     } finally {
-      publicar({ acao: null });
+      if (vigente()) publicar({ acao: null });
     }
   }
 
@@ -186,6 +227,8 @@ export function criarEstadoDosRecursos({
   */
   function reiniciar() {
     pedido += 1;
+    geracao += 1;
+    ajustesPedidos.clear();
     publicar({
       ...ESTADO_INICIAL,
       detalhes: new Map(),
@@ -193,7 +236,7 @@ export function criarEstadoDosRecursos({
       previas: new Map(),
     });
   }
-  let identidade;
+  let identidade: string | null | undefined;
   supabase?.auth?.onAuthStateChange?.((_evento, sessao) => {
     const atual = sessao?.user?.id || null;
     if (atual === identidade) return;
@@ -201,6 +244,32 @@ export function criarEstadoDosRecursos({
     if (identidade !== undefined || !atual) reiniciar();
     identidade = atual;
   });
+
+  function cliente() {
+    if (!supabase) throw new Error("Sem conexão com o banco.");
+    return supabase;
+  }
+  function storage() {
+    const armazenamento = cliente().storage;
+    if (!armazenamento) throw new Error("Sem conexão com o Storage.");
+    return armazenamento;
+  }
+  async function rpc(
+    nome: RpcDosRecursos,
+    argumentos?: Record<string, unknown>,
+  ) {
+    const { data, error } = await cliente().rpc(nome, argumentos);
+    const bruto = objetoDosRecursos(error);
+    const erro: ErroDosRecursos | null = error
+      ? {
+          message: mensagemDe(error),
+          code: typeof bruto.code === "string" ? bruto.code : undefined,
+          hint: typeof bruto.hint === "string" ? bruto.hint : undefined,
+        }
+      : null;
+    return { data: metadadosDaRpcDosRecursos(data), error: erro, bruto: data };
+  }
+  const banco = { rpc };
 
   // ── Leitura ─────────────────────────────────────────────────────────────
 
@@ -215,6 +284,8 @@ export function criarEstadoDosRecursos({
     if (!area) return false;
     const meu = ++pedido;
     if (area !== estado.area) {
+      geracao += 1;
+      ajustesPedidos.clear();
       publicar({
         ...ESTADO_INICIAL,
         area,
@@ -246,7 +317,7 @@ export function criarEstadoDosRecursos({
         return false;
       }
     }
-    const { data, error } = await supabase.rpc("get_recursos_da_area", {
+    const { data, error } = await banco.rpc("get_recursos_da_area", {
       p_area: area,
     });
     if (meu !== pedido) return false;
@@ -258,16 +329,13 @@ export function criarEstadoDosRecursos({
       } else publicar({ erroAoCarregar: mensagem, atualizando: false });
       return false;
     }
-    const abertos = [estado.gaveta, estado.formulario?.id].filter(Boolean);
-    const soDosAbertos = (mapa) =>
+    const abertos = [estado.gaveta, estado.formulario?.id].filter(
+      (id): id is Id => id !== null && id !== undefined,
+    );
+    const soDosAbertos = <T>(mapa: Map<Id, T>) =>
       new Map([...mapa].filter(([id]) => abertos.includes(id)));
     publicar({
-      dados: data || {
-        recursos: [],
-        cronogramas: [],
-        origens: [],
-        editais: [],
-      },
+      dados: normalizarDadosDosRecursos(data),
       carregado: true,
       erroAoCarregar: "",
       atualizando: false,
@@ -284,23 +352,27 @@ export function criarEstadoDosRecursos({
     return true;
   }
 
-  async function carregarDetalhe(id) {
-    const { data, error } = await supabase.rpc(
-      "get_recurso_candidato_detalhe",
-      { p_id: id },
-    );
+  async function carregarDetalhe(id: Id) {
+    const minhaGeracao = geracao;
+    const { data, error } = await banco.rpc("get_recurso_candidato_detalhe", {
+      p_id: id,
+    });
+    if (minhaGeracao !== geracao) return null;
     const detalhes = new Map(estado.detalhes);
-    detalhes.set(id, error ? { erro: mensagemDe(error) } : data || {});
+    detalhes.set(
+      id,
+      error ? { erro: mensagemDe(error) } : normalizarDetalheDoRecurso(data),
+    );
     publicar({ detalhes });
   }
 
   /* Sem o detalhe, ou com a leitura anterior em erro, pede de novo. */
-  function garantirDetalhe(id) {
+  function garantirDetalhe(id: Id) {
     const detalhe = estado.detalhes.get(id);
     if (!detalhe || detalhe.erro) void carregarDetalhe(id);
   }
 
-  function abrirGaveta(id) {
+  function abrirGaveta(id: Id) {
     publicar({ gaveta: id });
     garantirDetalhe(id);
   }
@@ -312,7 +384,7 @@ export function criarEstadoDosRecursos({
     publicar({ formulario: { modo: "novo", id: null, abertura: aberturas } });
   }
 
-  function abrirEdicao(id) {
+  function abrirEdicao(id: Id) {
     aberturas += 1;
     publicar({ formulario: { modo: "edicao", id, abertura: aberturas } });
     garantirDetalhe(id);
@@ -321,13 +393,13 @@ export function criarEstadoDosRecursos({
   const fecharFormulario = () => publicar({ formulario: null });
 
   /** Candidatos das análises do edital; lança se o banco recusar. */
-  async function buscarCandidatos(editalId, busca) {
-    const { data, error } = await supabase.rpc("buscar_candidatos_recurso", {
+  async function buscarCandidatos(editalId: Id, busca: string) {
+    const { data, error } = await cliente().rpc("buscar_candidatos_recurso", {
       p_edital_id: editalId,
       p_busca: busca,
     });
     if (error) throw new Error(mensagemDe(error));
-    return Array.isArray(data) ? data : [];
+    return normalizarCandidatosDosRecursos(data);
   }
 
   // ── Escrita ─────────────────────────────────────────────────────────────
@@ -336,12 +408,13 @@ export function criarEstadoDosRecursos({
     `{ ok: true, id }`, `{ duplicado: nº }` (o banco achou outro em análise e
     a pessoa ainda não confirmou) ou `{ erro }`.
   */
-  function salvar(dados) {
-    const edicao = Boolean(dados.id);
-    return executar("salvar", "Salvando…", async () => {
-      const { data, error } = await supabase.rpc("salvar_recurso_candidato", {
+  function salvar(dados: ReturnType<typeof dadosParaSalvar>) {
+    const edicao = "id" in dados && Boolean(dados.id);
+    return executar("salvar", "Salvando…", async (vigente) => {
+      const { data, error } = await banco.rpc("salvar_recurso_candidato", {
         p_dados: dados,
       });
+      if (!vigente()) return null;
       if (error) {
         if (error.code === "23505") {
           const numero = Number(String(error.hint || "").split(":")[1]);
@@ -367,13 +440,19 @@ export function criarEstadoDosRecursos({
   }
 
   /* A etapa entra na tela assim que o banco confirma; o histórico é relido. */
-  function marcarEtapa(id, etapa, campo, feita) {
-    return executar(`etapa:${id}:${etapa}`, "Salvando…", async () => {
-      const { data, error } = await supabase.rpc("marcar_etapa_recurso", {
+  function marcarEtapa<E extends EtapaDoRecurso>(
+    id: Id,
+    etapa: E,
+    campo: `${NoInfer<E>}_em`,
+    feita: boolean,
+  ) {
+    return executar(`etapa:${id}:${etapa}`, "Salvando…", async (vigente) => {
+      const { data, error } = await banco.rpc("marcar_etapa_recurso", {
         p_id: id,
         p_etapa: etapa,
         p_feita: feita,
       });
+      if (!vigente()) return null;
       if (error) {
         toast(`Não foi possível marcar a etapa: ${mensagemDe(error)}`, "error");
         return false;
@@ -395,12 +474,13 @@ export function criarEstadoDosRecursos({
     });
   }
 
-  function excluir(id, motivo) {
-    return executar("excluir", "Excluindo…", async () => {
-      const { error } = await supabase.rpc("excluir_recurso_candidato", {
+  function excluir(id: Id, motivo: string) {
+    return executar("excluir", "Excluindo…", async (vigente) => {
+      const { error } = await banco.rpc("excluir_recurso_candidato", {
         p_id: id,
         p_motivo: motivo,
       });
+      if (!vigente()) return null;
       if (error) {
         toast(`Não foi possível excluir: ${mensagemDe(error)}`, "error");
         return false;
@@ -428,14 +508,19 @@ export function criarEstadoDosRecursos({
     pode (recursos_parecer) e a revisão; a aba é relida inteira (situação,
     KPIs e o detalhe da gaveta).
   */
-  function transicionarRecurso(recurso, acao, texto = "") {
-    return executar(`parecer:${acao}`, "Salvando…", async () => {
-      const { error } = await supabase.rpc("transicionar_recurso_candidato", {
+  function transicionarRecurso(
+    recurso: DadosDoRecurso,
+    acao: AcaoDoParecer,
+    texto = "",
+  ) {
+    return executar(`parecer:${acao}`, "Salvando…", async (vigente) => {
+      const { error } = await banco.rpc("transicionar_recurso_candidato", {
         p_id: recurso.id,
         p_acao: acao,
         p_revisao: recurso.revisao,
         p_texto: String(texto || "").trim() || null,
       });
+      if (!vigente()) return null;
       if (error) {
         const mensagem =
           error.code === "40001"
@@ -452,25 +537,28 @@ export function criarEstadoDosRecursos({
 
   // ── Ajuste da pontuação (20261005130000) ──────────────────────────────
 
-  function guardarAjustes(id, valor) {
+  function guardarAjustes(id: Id, valor: RegistroDosRecursos) {
     const ajustes = new Map(estado.ajustes);
     ajustes.set(id, valor);
     publicar({ ajustes });
   }
 
   /* As versões do ajuste do recurso (e quem pode propor/aprovar); um pedido por vez. */
-  const ajustesPedidos = new Set();
-  async function carregarAjustes(id) {
+  async function carregarAjustes(id: Id) {
+    const minhaGeracao = geracao;
     if (ajustesPedidos.has(id)) return;
     ajustesPedidos.add(id);
     try {
-      const { data, error } = await supabase.rpc(
+      const { data, error } = await banco.rpc(
         "obter_ajustes_pontuacao_recurso",
-        { p_recurso: id },
+        {
+          p_recurso: id,
+        },
       );
+      if (minhaGeracao !== geracao) return null;
       guardarAjustes(id, error ? { erro: mensagemDe(error) } : data || {});
     } finally {
-      ajustesPedidos.delete(id);
+      if (minhaGeracao === geracao) ajustesPedidos.delete(id);
     }
   }
 
@@ -478,10 +566,12 @@ export function criarEstadoDosRecursos({
     Lê os dados da prévia. `manter` (a releitura da aba): uma falha deixa os
     dados que já estavam na tela.
   */
-  async function lerDadosDaPrevia(id, { manter = false } = {}) {
-    const { data, error } = await supabase.rpc("obter_dados_previa_ajuste", {
+  async function lerDadosDaPrevia(id: Id, { manter = false } = {}) {
+    const minhaGeracao = geracao;
+    const { data, error } = await banco.rpc("obter_dados_previa_ajuste", {
       p_recurso: id,
     });
+    if (minhaGeracao !== geracao) return null;
     const guardado = estado.previas.get(id);
     if (error && manter && guardado && !guardado.erro) return null;
     const previas = new Map(estado.previas);
@@ -495,7 +585,7 @@ export function criarEstadoDosRecursos({
     jurídico lê). Guardado por recurso (o aberto é relido a cada carga da
     aba); `forcar` relê (a aprovação recalcula com os dados de agora).
   */
-  async function carregarDadosDaPrevia(id, { forcar = false } = {}) {
+  async function carregarDadosDaPrevia(id: Id, { forcar = false } = {}) {
     const guardado = estado.previas.get(id);
     if (guardado && !guardado.erro && !forcar) return guardado;
     if (guardado) {
@@ -518,9 +608,14 @@ export function criarEstadoDosRecursos({
     e a situação do recurso. Aprovar e cancelar mudam o recurso (a marca
     "mudou a classificação" e a revisão): a aba é relida inteira.
   */
-  function escreverAjuste(recurso, acao, chamar) {
-    return executar(`ajuste:${acao}`, "Salvando…", async () => {
+  function escreverAjuste(
+    recurso: DadosDoRecurso,
+    acao: "propor" | "aprovar" | "cancelar",
+    chamar: () => ReturnType<typeof banco.rpc>,
+  ) {
+    return executar(`ajuste:${acao}`, "Salvando…", async (vigente) => {
       const { data, error } = await chamar();
+      if (!vigente()) return null;
       if (error) {
         toast(`Não foi possível concluir: ${mensagemDe(error)}`, "error");
         return false;
@@ -534,29 +629,40 @@ export function criarEstadoDosRecursos({
     });
   }
 
-  const proporAjuste = (recurso, dados) =>
+  const proporAjuste = (recurso: DadosDoRecurso, dados: RegistroDosRecursos) =>
     escreverAjuste(recurso, "propor", () =>
-      supabase.rpc("propor_ajuste_pontuacao", {
+      banco.rpc("propor_ajuste_pontuacao", {
         p_recurso: recurso.id,
         p_dados: dados,
       }),
     );
-  const aprovarAjuste = (recurso, ajusteId, previa) =>
+  const aprovarAjuste = (
+    recurso: DadosDoRecurso,
+    ajusteId: Id,
+    previa: RegistroDosRecursos,
+  ) =>
     escreverAjuste(recurso, "aprovar", () =>
-      supabase.rpc("aprovar_ajuste_pontuacao", {
+      banco.rpc("aprovar_ajuste_pontuacao", {
         p_ajuste: ajusteId,
         p_previa: previa,
       }),
     );
-  const cancelarAjuste = (recurso, ajusteId, motivo) =>
+  const cancelarAjuste = (
+    recurso: DadosDoRecurso,
+    ajusteId: Id,
+    motivo: string,
+  ) =>
     escreverAjuste(recurso, "cancelar", () =>
-      supabase.rpc("cancelar_ajuste_pontuacao", {
+      banco.rpc("cancelar_ajuste_pontuacao", {
         p_ajuste: ajusteId,
         p_motivo: String(motivo || "").trim(),
       }),
     );
 
-  function exportarCsv(recursos, origens) {
+  function exportarCsv(
+    recursos: readonly RecursoDoPainel[],
+    origens: readonly OrigemDoRecurso[],
+  ) {
     const dia = hojeEmBrasilia(new Date(agora()));
     baixar(
       csvDosRecursos(recursos, origens),
@@ -567,7 +673,10 @@ export function criarEstadoDosRecursos({
   // ── Resposta ao candidato (20260929230000) ─────────────────────────────
 
   /* O que a resposta ou um anexo muda no recurso, direto na lista da aba. */
-  function atualizarRecursoNaLista(id, mudar) {
+  function atualizarRecursoNaLista(
+    id: Id,
+    mudar: (recurso: DadosDoRecurso) => Partial<DadosDoRecurso>,
+  ) {
     if (!estado.dados) return;
     const recursos = estado.dados.recursos.map((r) =>
       r.id === id ? { ...r, ...mudar(r) } : r,
@@ -575,17 +684,18 @@ export function criarEstadoDosRecursos({
     publicar({ dados: { ...estado.dados, recursos } });
   }
 
-  const mensagemDaEscrita = (erro) =>
+  const mensagemDaEscrita = (erro: ErroDosRecursos | null) =>
     erro?.code === "40001"
       ? "Outra pessoa alterou esta resposta. Recarregue e tente de novo."
       : mensagemDe(erro);
 
   /** Rascunho da resposta: `{ ok, id, revisao }` ou `{ erro }`. */
-  function salvarResposta(recursoId, dados) {
-    return executar("resposta:salvar", "Salvando…", async () => {
-      const { data, error } = await supabase.rpc("salvar_resposta_recurso", {
+  function salvarResposta(recursoId: Id, dados: RegistroDosRecursos) {
+    return executar("resposta:salvar", "Salvando…", async (vigente) => {
+      const { data, error } = await banco.rpc("salvar_resposta_recurso", {
         p_dados: { recurso_id: recursoId, ...dados },
       });
+      if (!vigente()) return null;
       if (error) {
         const mensagem = mensagemDaEscrita(error);
         toast(`Não foi possível salvar a resposta: ${mensagem}`, "error");
@@ -613,17 +723,20 @@ export function criarEstadoDosRecursos({
     enviada também marca a etapa do recurso (e muda a revisão dele): a aba é
     relida inteira.
   */
-  function transicionarResposta(recursoId, resposta, acao, comentario = "") {
-    return executar(`resposta:${acao}`, "Salvando…", async () => {
-      const { data, error } = await supabase.rpc(
-        "transicionar_resposta_recurso",
-        {
-          p_resposta_id: resposta.id,
-          p_acao: acao,
-          p_revisao: resposta.revisao,
-          p_comentario: String(comentario || "").trim() || null,
-        },
-      );
+  function transicionarResposta(
+    recursoId: Id,
+    resposta: Pick<DocumentoDaResposta, "id" | "revisao">,
+    acao: AcaoDaResposta,
+    comentario = "",
+  ) {
+    return executar(`resposta:${acao}`, "Salvando…", async (vigente) => {
+      const { data, error } = await banco.rpc("transicionar_resposta_recurso", {
+        p_resposta_id: resposta.id,
+        p_acao: acao,
+        p_revisao: resposta.revisao,
+        p_comentario: String(comentario || "").trim() || null,
+      });
+      if (!vigente()) return null;
       if (error) {
         toast(
           `Não foi possível concluir: ${mensagemDaEscrita(error)}`,
@@ -645,24 +758,32 @@ export function criarEstadoDosRecursos({
 
   // ── Anexos ──────────────────────────────────────────────────────────────
 
-  const somarAnexos = (id, quantos) =>
+  const somarAnexos = (id: Id, quantos: number) =>
     atualizarRecursoNaLista(id, (r) => ({
       qt_anexos: Math.max(0, (Number(r.qt_anexos) || 0) + quantos),
     }));
 
   /* Envia ao bucket (caminho da área e do recurso) e registra no banco. */
-  async function enviarERegistrar(recursoId, arquivo, tipo, mime, respostaId) {
+  async function enviarERegistrar(
+    recursoId: Id,
+    arquivo: File,
+    tipo: string,
+    mime: string,
+    respostaId: Id | null,
+    vigente: () => boolean,
+  ) {
     const caminho = caminhoDoAnexo(
       estado.area,
       recursoId,
       novoId(),
       arquivo.name,
     );
-    const envio = await supabase.storage
+    const envio = await storage()
       .from(BUCKET_DOS_ANEXOS)
       .upload(caminho, arquivo, { contentType: mime, upsert: false });
+    if (!vigente()) return;
     if (envio.error) throw new Error(mensagemDe(envio.error));
-    const { error } = await supabase.rpc("registrar_anexo_recurso", {
+    const { error } = await banco.rpc("registrar_anexo_recurso", {
       p_recurso_id: recursoId,
       p_tipo: tipo,
       p_nome: arquivo.name,
@@ -672,19 +793,22 @@ export function criarEstadoDosRecursos({
     if (error) throw new Error(mensagemDe(error));
   }
 
-  function enviarAnexo(recursoId, arquivo, tipo) {
+  function enviarAnexo(recursoId: Id, arquivo: File, tipo: string) {
     const validacao = validarArquivoDoAnexo(arquivo);
-    if (validacao.erro) {
-      toast(validacao.erro, "warn");
+    const mime = validacao.mime;
+    if (validacao.erro || !mime) {
+      toast(validacao.erro || "Tipo de arquivo não aceito.", "warn");
       return Promise.resolve(false);
     }
-    return executar("anexo:enviar", "Enviando…", async () => {
+    return executar("anexo:enviar", "Enviando…", async (vigente) => {
       try {
-        await enviarERegistrar(recursoId, arquivo, tipo, validacao.mime, null);
+        await enviarERegistrar(recursoId, arquivo, tipo, mime, null, vigente);
       } catch (erro) {
+        if (!vigente()) return null;
         toast(`Não foi possível anexar: ${mensagemDe(erro)}`, "error");
         return false;
       }
+      if (!vigente()) return null;
       toast("Arquivo anexado.", "ok");
       somarAnexos(recursoId, 1);
       await carregarDetalhe(recursoId);
@@ -692,21 +816,26 @@ export function criarEstadoDosRecursos({
     });
   }
 
-  function arquivarAnexo(recursoId, anexoId, motivo) {
-    return executar(`anexo:arquivar:${anexoId}`, "Arquivando…", async () => {
-      const { data, error } = await supabase.rpc("arquivar_anexo_recurso", {
-        p_anexo_id: anexoId,
-        p_motivo: motivo,
-      });
-      if (error) {
-        toast(`Não foi possível arquivar: ${mensagemDe(error)}`, "error");
-        return false;
-      }
-      toast("Anexo arquivado. O arquivo continua guardado.", "ok");
-      if (data?.alterou !== false) somarAnexos(recursoId, -1);
-      await carregarDetalhe(recursoId);
-      return true;
-    });
+  function arquivarAnexo(recursoId: Id, anexoId: Id, motivo: string) {
+    return executar(
+      `anexo:arquivar:${anexoId}`,
+      "Arquivando…",
+      async (vigente) => {
+        const { data, error } = await banco.rpc("arquivar_anexo_recurso", {
+          p_anexo_id: anexoId,
+          p_motivo: motivo,
+        });
+        if (!vigente()) return null;
+        if (error) {
+          toast(`Não foi possível arquivar: ${mensagemDe(error)}`, "error");
+          return false;
+        }
+        toast("Anexo arquivado. O arquivo continua guardado.", "ok");
+        if (data?.alterou !== false) somarAnexos(recursoId, -1);
+        await carregarDetalhe(recursoId);
+        return true;
+      },
+    );
   }
 
   /*
@@ -714,12 +843,15 @@ export function criarEstadoDosRecursos({
     gerar a URL assinada (a política de leitura procura esse registro), que
     vale 60 segundos.
   */
-  function baixarAnexo(anexo) {
-    return executar(`anexo:baixar:${anexo.id}`, "Abrindo…", async () => {
-      const { data, error } = await supabase.rpc(
+  function baixarAnexo(anexo: { id: Id }) {
+    return executar(`anexo:baixar:${anexo.id}`, "Abrindo…", async (vigente) => {
+      const { data, error } = await banco.rpc(
         "registrar_download_anexo_recurso",
-        { p_anexo_id: anexo.id },
+        {
+          p_anexo_id: anexo.id,
+        },
       );
+      if (!vigente()) return null;
       if (error || !data?.caminho) {
         toast(
           `Não foi possível baixar: ${mensagemDe(error || "anexo sem caminho")}`,
@@ -727,11 +859,12 @@ export function criarEstadoDosRecursos({
         );
         return false;
       }
-      const assinada = await supabase.storage
+      const assinada = await storage()
         .from(BUCKET_DOS_ANEXOS)
         .createSignedUrl(data.caminho, VALIDADE_DO_DOWNLOAD, {
           download: data.nome || true,
         });
+      if (!vigente()) return null;
       if (assinada.error || !assinada.data?.signedUrl) {
         toast(
           `Não foi possível baixar: ${mensagemDe(assinada.error || "sem endereço")}`,
@@ -746,20 +879,26 @@ export function criarEstadoDosRecursos({
 
   // ── Documento da resposta ──────────────────────────────────────────────
 
-  const tituloDoDocumento = (recurso) =>
+  const tituloDoDocumento = (recurso: DadosDoRecurso) =>
     `Resposta ao recurso nº ${recurso.nu ?? ""}`.trim();
-  const docxDaResposta = (recurso, resposta) =>
+  const docxDaResposta = (
+    recurso: DadosDoRecurso,
+    resposta: DocumentoDaResposta,
+  ) =>
     gerarDocx(resposta.texto_final, {
       titulo: tituloDoDocumento(recurso),
       quando: new Date(agora()),
     });
 
   /** Página de impressão: o navegador imprime ou salva em PDF. */
-  function imprimirResposta(recurso, resposta) {
+  function imprimirResposta(
+    recurso: DadosDoRecurso,
+    resposta: DocumentoDaResposta,
+  ) {
     imprimir(resposta.texto_final, nomeDoDocumento(recurso));
   }
 
-  function baixarDocx(recurso, resposta) {
+  function baixarDocx(recurso: DadosDoRecurso, resposta: DocumentoDaResposta) {
     baixarArquivo(
       new Blob([docxDaResposta(recurso, resposta)], { type: MIME_DOCX }),
       `${nomeDoDocumento(recurso)}.docx`,
@@ -767,8 +906,8 @@ export function criarEstadoDosRecursos({
   }
 
   /** O .docx da resposta vira anexo do recurso (tipo "resposta"). */
-  function anexarDocx(recurso, resposta) {
-    return executar("anexo:documento", "Anexando…", async () => {
+  function anexarDocx(recurso: DadosDoRecurso, resposta: DocumentoDaResposta) {
+    return executar("anexo:documento", "Anexando…", async (vigente) => {
       const arquivo = new File(
         [docxDaResposta(recurso, resposta)],
         `${nomeDoDocumento(recurso)}.docx`,
@@ -781,14 +920,17 @@ export function criarEstadoDosRecursos({
           "resposta",
           MIME_DOCX,
           resposta.id,
+          vigente,
         );
       } catch (erro) {
+        if (!vigente()) return null;
         toast(
           `Não foi possível anexar o documento: ${mensagemDe(erro)}`,
           "error",
         );
         return false;
       }
+      if (!vigente()) return null;
       toast("Documento da resposta anexado ao recurso.", "ok");
       somarAnexos(recurso.id, 1);
       await carregarDetalhe(recurso.id);
@@ -799,9 +941,9 @@ export function criarEstadoDosRecursos({
   // ── Modelos de resposta (administração) ────────────────────────────────
 
   async function carregarModelos() {
-    const { data, error } = await supabase.rpc(
-      "listar_modelos_resposta_recurso",
-    );
+    const minhaGeracao = geracao;
+    const { data, error } = await banco.rpc("listar_modelos_resposta_recurso");
+    if (minhaGeracao !== geracao) return null;
     publicar({
       modelosAdmin: error
         ? { erro: mensagemDe(error) }
@@ -817,12 +959,23 @@ export function criarEstadoDosRecursos({
   const fecharModelos = () => publicar({ modelosAbertos: false });
 
   /* Salvar cria a versão seguinte; a aba é relida (os modelos da gaveta). */
-  function salvarModelo(rascunho) {
-    return executar("modelo:salvar", "Salvando…", async () => {
-      const { data, error } = await supabase.rpc(
+  function salvarModelo(rascunho: {
+    id?: Id | null;
+    versao?: number | null;
+    nome: string;
+    situacao: string;
+    origem: string;
+    area: string;
+    corpo: string;
+  }) {
+    return executar("modelo:salvar", "Salvando…", async (vigente) => {
+      const { data, error } = await banco.rpc(
         "salvar_modelo_resposta_recurso",
-        { p_dados: dadosDoModelo(rascunho) },
+        {
+          p_dados: dadosDoModelo(rascunho),
+        },
       );
+      if (!vigente()) return null;
       if (error) {
         const mensagem =
           error.code === "40001"
@@ -838,24 +991,25 @@ export function criarEstadoDosRecursos({
         "ok",
       );
       await carregarModelos();
-      void carregar();
+      if (vigente()) void carregar();
       return { ok: true, id: data?.id, versao: data?.versao };
     });
   }
 
-  function arquivarModelo(id, motivo) {
-    return executar(`modelo:arquivar:${id}`, "Arquivando…", async () => {
-      const { error } = await supabase.rpc("arquivar_modelo_resposta_recurso", {
+  function arquivarModelo(id: Id, motivo: string) {
+    return executar(`modelo:arquivar:${id}`, "Arquivando…", async (vigente) => {
+      const { error } = await banco.rpc("arquivar_modelo_resposta_recurso", {
         p_modelo_id: id,
         p_motivo: motivo,
       });
+      if (!vigente()) return null;
       if (error) {
         toast(`Não foi possível arquivar: ${mensagemDe(error)}`, "error");
         return false;
       }
       toast("Modelo arquivado.", "ok");
       await carregarModelos();
-      void carregar();
+      if (vigente()) void carregar();
       return true;
     });
   }
@@ -880,7 +1034,7 @@ export function criarEstadoDosRecursos({
     carregarModelos,
     salvarModelo,
     arquivarModelo,
-    assinar(ouvinte) {
+    assinar(ouvinte: () => void) {
       ouvintes.add(ouvinte);
       return () => ouvintes.delete(ouvinte);
     },
@@ -898,7 +1052,7 @@ export function criarEstadoDosRecursos({
     excluir,
     exportarCsv,
     reiniciar,
-    definirComemoracoes: (ligadas) =>
+    definirComemoracoes: (ligadas: boolean) =>
       publicar({ comemoracoes: ligadas === true }),
   };
 }
