@@ -6,7 +6,8 @@ Cada tela do MONITORA mora aqui: `<nome>/<nome>.jsx` ou `.tsx` (componente e
 `src/ui/`; as regras puras, de `src/lib/`.
 
 Já aqui: `recursos/` (Recursos dos candidatos, o modelo de tela de página inteira),
-`entrevistas/` (Entrevistas: resultados, condução e roteiros, com as visões no topo),
+`entrevistas/` (Entrevistas: resultados, condução e roteiros, com as visões no topo;
+apresentação dos resultados em TSX, contratos em `tipos-do-painel.ts`),
 `avaliacao-documental/` (Avaliação documental: regra, equipe, pré-classificação e fila), `analises/`
 (Análises curriculares), `selecao/` (Seleção: funil por vaga, só leitura), `classificacao/`
 (Classificação: regra por edital, listas, sorteio e exportação), `aprovados/` (Lista de
