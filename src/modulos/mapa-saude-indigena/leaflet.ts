@@ -13,6 +13,29 @@
   Tudo o que entra no mapa é montado com a API do DOM (`textContent`,
   `createElementNS`): popups, dicas e ícones, sem `innerHTML`.
 */
+import type {
+  CoordenadasDoMapa,
+  MapaNacional,
+} from "../../lib/tipos-do-mapa.ts";
+import type {
+  RegistroDoDsei,
+  EnquadramentoDoMapa,
+} from "../../lib/mapa-saude-indigena/tipos.ts";
+import type { MapaDoPainel, MapaCriadoDoBrasil } from "./tipos-do-painel.ts";
+import type {
+  LeafletDoMapa,
+  CamadaDeFundo,
+  CamadaDoMapa,
+  CamadaLeaflet,
+  MarcadorIndigena,
+  LequeDoMapa,
+} from "./tipos-do-leaflet.ts";
+import { leafletDoMapa } from "./tipos-do-leaflet.ts";
+export interface ConteudoDoBalao {
+  titulo?: string;
+  linhas?: readonly string[];
+  nota?: string;
+}
 import { BRASIL_BOUNDS } from "../../lib/brasil-bounds.js";
 import {
   FOLGA_DO_BRASIL,
@@ -34,8 +57,7 @@ import {
 } from "../../lib/dica-dentro-do-mapa.js";
 
 export function obterLeaflet() {
-  const L = globalThis.L;
-  return L && typeof L.map === "function" ? L : null;
+  return leafletDoMapa(Reflect.get(globalThis, "L"));
 }
 
 /* Dica (tooltip) só onde há ponteiro que flutua; no toque, o popup basta. */
@@ -60,7 +82,7 @@ export function prefereMenosMovimento() {
   Toda dica e todo popup do mapa ficam dentro dele (`manterDicasDentroDoMapa`:
   direção que cabe, largura relativa ao mapa); o `remove` desfaz o ouvinte.
 */
-export function criarMapa(L, elemento) {
+export function criarMapa(L: LeafletDoMapa, elemento: HTMLElement) {
   const mapa = L.map(elemento, {
     zoomControl: true,
     scrollWheelZoom: true,
@@ -97,12 +119,17 @@ const FUNDOS = Object.freeze([
   },
 ]);
 
-export function adicionarFundo(L, mapa, elemento) {
+export function adicionarFundo(
+  L: LeafletDoMapa,
+  mapa: MapaDoPainel,
+  elemento: HTMLElement,
+) {
   let indice = 0;
   let falhas = 0;
-  let camada = null;
+  let camada: CamadaDeFundo;
   const montar = () => {
     const fundo = FUNDOS[indice];
+    if (!fundo) throw new Error("Fundo do mapa indisponível");
     const opcoes = {
       ...fundo.opcoes,
       crossOrigin: true,
@@ -142,9 +169,12 @@ export function adicionarFundo(L, mapa, elemento) {
   `aoMudarDeTamanho`.
 */
 export function observarTamanho(
-  mapa,
-  elemento,
-  { aoAparecer, aoMudarDeTamanho } = {},
+  mapa: MapaDoPainel,
+  elemento: HTMLElement,
+  {
+    aoAparecer,
+    aoMudarDeTamanho,
+  }: { aoAparecer?: () => void; aoMudarDeTamanho?: () => void } = {},
 ) {
   if (typeof ResizeObserver === "undefined") return () => {};
   const temTamanho = () =>
@@ -181,7 +211,9 @@ export function observarTamanho(
   };
 }
 
-export function remedir(mapa) {
+export function remedir(
+  mapa: Pick<MapaNacional, "invalidateSize"> | null | undefined,
+) {
   try {
     mapa?.invalidateSize?.({ animate: false });
   } catch {
@@ -190,7 +222,7 @@ export function remedir(mapa) {
 }
 
 /* O Brasil pelo contorno real (`BRASIL_BOUNDS`), como o `map-guard`. */
-export function limitesDoBrasil(L) {
+export function limitesDoBrasil(L: LeafletDoMapa) {
   return L.latLngBounds(BRASIL_BOUNDS[0], BRASIL_BOUNDS[1]);
 }
 
@@ -199,7 +231,7 @@ export function limitesDoBrasil(L) {
   src/lib/enquadramento-do-brasil.js); numa moldura baixa o `map-guard` deixa
   o zoom descer, em quartos, até caber — o norte não sai cortado.
 */
-export function enquadrarNoBrasil(L, mapa) {
+export function enquadrarNoBrasil(L: LeafletDoMapa, mapa: MapaDoPainel) {
   mapa.fitBounds(limitesDoBrasil(L), {
     padding: [FOLGA_DO_BRASIL, FOLGA_DO_BRASIL],
     animate: false,
@@ -214,13 +246,13 @@ export function enquadrarNoBrasil(L, mapa) {
 */
 export const DURACAO_DA_VOLTA_AO_BRASIL = 0.8;
 
-export function podeVoar(mapa) {
+export function podeVoar(mapa: Pick<MapaDoPainel, "flyToBounds"> | null) {
   return typeof mapa?.flyToBounds === "function" && !prefereMenosMovimento();
 }
 
 export function voarAoBrasil(
-  L,
-  mapa,
+  L: LeafletDoMapa,
+  mapa: MapaDoPainel,
   { duracao = DURACAO_DA_VOLTA_AO_BRASIL } = {},
 ) {
   mapa.flyToBounds(limitesDoBrasil(L), {
@@ -236,10 +268,16 @@ export function voarAoBrasil(
   nacionais: um ponto em ZOOM_DO_PONTO, a caixa com OPCOES_DA_CAIXA ou o
   Brasil. Com `voar` (a volta de um DSEI), anima em DURACAO_DA_VOLTA_AO_BRASIL.
 */
-export function enquadrar(L, mapa, enquadramento, { voar = false } = {}) {
+export function enquadrar(
+  L: LeafletDoMapa,
+  mapa: MapaDoPainel,
+  enquadramento: EnquadramentoDoMapa,
+  { voar = false } = {},
+) {
   const duracao = { duration: DURACAO_DA_VOLTA_AO_BRASIL };
   if (enquadramento?.modo === "ponto") {
     const [ponto] = enquadramento.pontos;
+    if (!ponto) return;
     if (voar) mapa.flyTo(ponto, ZOOM_DO_PONTO, duracao);
     else mapa.setView(ponto, ZOOM_DO_PONTO, { animate: false });
   } else if (enquadramento?.modo === "caixa") {
@@ -251,7 +289,10 @@ export function enquadrar(L, mapa, enquadramento, { voar = false } = {}) {
 }
 
 /* O botão "Brasil": para a animação e volta ao país inteiro. */
-export function voltarAoBrasil(L, mapa) {
+export function voltarAoBrasil(
+  L: LeafletDoMapa | null,
+  mapa: MapaDoPainel | null,
+) {
   if (!L || !mapa) return;
   try {
     mapa.stop?.();
@@ -276,8 +317,12 @@ const GESTOS = ["pointerdown", "touchstart", "wheel", "keydown"];
   acompanhar, e `pegar()` conta como gesto (a lista que leva a um ponto).
   `parar()` e o `mapa.remove()` desfazem tudo.
 */
-/** @param {unknown} L @param {HTMLElement} elemento @param {{aoReenquadrar?: () => void}} [opcoes] @returns {import("./tipos-do-painel.ts").MapaCriadoDoBrasil} */
-export function criarMapaDoBrasil(L, elemento, { aoReenquadrar } = {}) {
+
+export function criarMapaDoBrasil(
+  L: LeafletDoMapa,
+  elemento: HTMLElement,
+  { aoReenquadrar }: { aoReenquadrar?: () => void } = {},
+): MapaCriadoDoBrasil {
   const mapa = criarMapa(L, elemento);
   enquadrarNoBrasil(L, mapa);
   adicionarFundo(L, mapa, elemento);
@@ -308,10 +353,14 @@ export function criarMapaDoBrasil(L, elemento, { aoReenquadrar } = {}) {
 }
 
 /* Contorno do Brasil e divisas das UFs: referência, sem clique. */
-export function desenharContornos(L, camada, variante = "nacional") {
+export function desenharContornos(
+  L: LeafletDoMapa,
+  camada: CamadaDoMapa,
+  variante = "nacional",
+) {
   const nacional = variante === "nacional";
   try {
-    L.geoJSON(UF_GEO, {
+    L.geoJSON?.(UF_GEO, {
       style: nacional
         ? {
             color: CORES_DO_MAPA.divisasDasUfs,
@@ -329,7 +378,7 @@ export function desenharContornos(L, camada, variante = "nacional") {
             interactive: false,
           },
     }).addTo(camada);
-    L.geoJSON(BR_OUTLINE, {
+    L.geoJSON?.(BR_OUTLINE, {
       style: {
         color: nacional
           ? CORES_DO_MAPA.contornoDoBrasil
@@ -368,10 +417,15 @@ function corDoTraco() {
   `adicionar(marcador, lat, lon)` registra a bolha; `limpar()` esquece as
   bolhas e os traços (o app limpa a camada); `parar()` desliga o `zoomend`.
 */
-/** @returns {import("./tipos-do-leaflet.ts").LequeDoMapa} */
-export function criarLeque(L, mapa, camada) {
-  const marcadores = [];
-  const tracos = [];
+
+export function criarLeque(
+  L: LeafletDoMapa,
+  mapa: MapaDoPainel,
+  camada: CamadaDoMapa,
+): LequeDoMapa {
+  const marcadores: { marcador: MarcadorIndigena; lat: number; lon: number }[] =
+    [];
+  const tracos: CamadaLeaflet[] = [];
   const aplicar = () => {
     tracos.forEach((traco) => camada.removeLayer(traco));
     tracos.length = 0;
@@ -384,13 +438,16 @@ export function criarLeque(L, mapa, camada) {
     );
     const cor = corDoTraco();
     calcularLeque(pontos).forEach((desvio, i) => {
-      const { marcador, lat, lon } = vivos[i];
+      const vivo = vivos[i];
+      const ponto = pontos[i];
+      if (!vivo || !ponto) return;
+      const { marcador, lat, lon } = vivo;
       if (!desvio.emLeque) {
         marcador.setLatLng([lat, lon]);
         return;
       }
       const destino = mapa.layerPointToLatLng(
-        pontos[i].add(L.point(desvio.dx, desvio.dy)),
+        ponto.add(L.point(desvio.dx, desvio.dy)),
       );
       marcador.setLatLng(destino);
       tracos.push(
@@ -415,7 +472,7 @@ export function criarLeque(L, mapa, camada) {
   };
   mapa.on("zoomend", aplicar);
   return {
-    adicionar(marcador, lat, lon) {
+    adicionar(marcador: MarcadorIndigena, lat: number, lon: number) {
       marcadores.push({ marcador, lat, lon });
     },
     limpar() {
@@ -430,10 +487,11 @@ export function criarLeque(L, mapa, camada) {
 }
 
 /* Conteúdo de popup ou dica: { titulo, linhas, nota } em nós de texto. */
-/** @param {Document} documento
- * @param {{ titulo?: string, linhas?: string[], nota?: string }} conteudo
- * @returns {HTMLDivElement} */
-export function conteudoEmElemento(documento, { titulo, linhas = [], nota }) {
+
+export function conteudoEmElemento(
+  documento: Document,
+  { titulo, linhas = [], nota }: ConteudoDoBalao,
+) {
   const caixa = documento.createElement("div");
   caixa.className = "mapa-si-balao";
   if (titulo) {
@@ -460,7 +518,7 @@ export function conteudoEmElemento(documento, { titulo, linhas = [], nota }) {
 const SVG = "http://www.w3.org/2000/svg";
 
 /* A forma do tipo em SVG (18×18), para o ícone do Leaflet. */
-export function svgDoTipo(documento, chave, cor) {
+export function svgDoTipo(documento: Document, chave: string, cor?: string) {
   const { forma, cor: corDoTipo } = formaDoTipo(chave);
   const svg = documento.createElementNS(SVG, "svg");
   svg.setAttribute("viewBox", "0 0 18 18");
@@ -484,7 +542,11 @@ export function svgDoTipo(documento, chave, cor) {
   return svg;
 }
 
-export function iconeDoRegistro(L, documento, registro) {
+export function iconeDoRegistro(
+  L: LeafletDoMapa,
+  documento: Document,
+  registro: Pick<RegistroDoDsei, "vinculo" | "type">,
+) {
   const caixa = documento.createElement("span");
   caixa.className = [
     "mapa-si-marcador",
@@ -502,7 +564,7 @@ export function iconeDoRegistro(L, documento, registro) {
 }
 
 /* Losango roxo da CASAI nacional. */
-export function iconeDaCasaiNacional(L, documento) {
+export function iconeDaCasaiNacional(L: LeafletDoMapa, documento: Document) {
   const losango = documento.createElement("span");
   losango.className = "mapa-si-casai-nacional";
   losango.style.background = CORES_DO_MAPA.casaiNacional;
@@ -520,9 +582,19 @@ export function iconeDaCasaiNacional(L, documento) {
   baixo do cursor). `dica` e `popup` são `{ titulo, linhas, nota }` ou um
   elemento já montado (cada um o seu: um nó não fica em dois lugares).
 */
-export function ligarDicaEPopup(marcador, documento, { dica, popup }) {
-  const emElemento = (conteudo) =>
-    conteudo?.nodeType ? conteudo : conteudoEmElemento(documento, conteudo);
+export function ligarDicaEPopup(
+  marcador: MarcadorIndigena,
+  documento: Document,
+  {
+    dica,
+    popup,
+  }: {
+    dica?: ConteudoDoBalao | HTMLElement | null;
+    popup?: ConteudoDoBalao | HTMLElement | null;
+  },
+) {
+  const emElemento = (conteudo: ConteudoDoBalao | HTMLElement) =>
+    "nodeType" in conteudo ? conteudo : conteudoEmElemento(documento, conteudo);
   if (popup) marcador.bindPopup(emElemento(popup), opcoesDoPopup());
   if (dica && podeFlutuar()) {
     marcador.bindTooltip(emElemento(dica), {
