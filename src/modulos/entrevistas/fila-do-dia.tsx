@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { nomeDoCargo } from "../../lib/conducao-de-entrevista.js";
+import { nomeDoCargo } from "../../lib/conducao-de-entrevista.ts";
 import {
   agruparPorVaga,
   buscarNaFila,

@@ -18,7 +18,7 @@
   só aparece em Todos.
 */
 
-import { competenciasDoAvaliador } from "./conducao-de-entrevista.js";
+import { competenciasDoAvaliador } from "./conducao-de-entrevista.ts";
 
 export type Situacao = "aguardando" | "em_andamento" | "concluida" | "faltou";
 export type Recorte = "hoje" | "proximos" | "todos";

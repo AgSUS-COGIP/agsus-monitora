@@ -6,7 +6,7 @@ import { Segmentado } from "../../ui/index.js";
   (conducao.jsx): "Todas" (o padrão; grava nulo) ou "Só estas" com uma caixa
   por competência do roteiro escolhido. Ex.: o colaborador do DSEI que avalia
   só "Trabalho em equipe". A regra (ao menos uma marcada; cada competência
-  com alguém na banca) é de src/lib/conducao-de-entrevista.js e do banco.
+  com alguém na banca) é de src/lib/conducao-de-entrevista.ts e do banco.
 */
 
 export type CompetenciaDoMembro = { id: string; nome: string };

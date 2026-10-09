@@ -1,3 +1,30 @@
+import type {
+  CompetenciaDoRascunho,
+  NivelDoRascunho,
+  BancaDoRascunho,
+  RascunhoDoRoteiro,
+  DadosDoRoteiroParaSalvar,
+  RoteiroDeEntrevista,
+  ConvocacaoDoRoteiro,
+  ResumoDoRoteiro,
+  ModoDoEditorDeRoteiro,
+} from "./tipos-do-roteiro-de-entrevista.ts";
+import type { CompetenciaDaFicha } from "../modulos/entrevistas/tipos-da-ficha.ts";
+import type { OpcaoDeNota } from "../modulos/entrevistas/campo-de-nota.tsx";
+type NumerosDaCompetencia = Pick<
+  CompetenciaDaFicha,
+  "nota_maxima" | "peso" | "minimo" | "tipo_minimo"
+>;
+type EscalaDoRoteiro = Pick<
+  RoteiroDeEntrevista,
+  "escala" | "passo" | "niveis"
+> & { notas_permitidas?: unknown[] | null };
+type PontuacaoDoRoteiro = {
+  competencias?: NumerosDaCompetencia[] | null;
+  nota_minima_total?: number | string | null;
+};
+const numeroFinito = (n: number | null): n is number =>
+  n !== null && Number.isFinite(n);
 /*
   Roteiro de entrevista (modelo reutilizável por edital), sem React e sem
   banco: o rascunho do formulário "Roteiros" do painel de entrevistas, a
@@ -16,7 +43,7 @@
 
   A regra de convocação e a composição da banca têm o mesmo formato no roteiro
   (padrão) e na configuração do edital; os conversores delas moram aqui e
-  src/lib/conducao-de-entrevista.js os reaproveita.
+  src/lib/conducao-de-entrevista.ts os reaproveita.
 */
 
 export const ESCALAS = Object.freeze([
@@ -52,13 +79,13 @@ export const MODELO_DE_ASPECTOS = Object.freeze([
 
 export const novoAspecto = (nome = "") => ({ chave: novaChave(), nome });
 
-export const rotuloDaEscala = (valor) =>
+export const rotuloDaEscala = (valor?: string | null) =>
   ESCALAS.find((e) => e.valor === valor)?.rotulo || valor || "—";
 
-const texto = (valor) => String(valor ?? "").trim();
+const texto = (valor: unknown) => String(valor ?? "").trim();
 
 /** "1,5" ou "1.5" → 1.5; vazio → null; o que não é número → NaN. */
-export function lerNumero(valor) {
+export function lerNumero(valor: unknown): number | null {
   if (valor === null || valor === undefined) return null;
   if (typeof valor === "number") return Number.isFinite(valor) ? valor : NaN;
   const bruto = texto(valor).replace(/\s+/g, "");
@@ -71,19 +98,19 @@ export function lerNumero(valor) {
 }
 
 /** O número como texto de campo (vazio para nulo). */
-export const textoDoNumero = (valor) =>
+export const textoDoNumero = (valor: unknown) =>
   valor === null || valor === undefined || valor === ""
     ? ""
     : String(Number(valor));
 
 /* Arredonda como o `round(numeric, 2)` do PostgreSQL (metade para longe do zero). */
-export function arredondar(valor, casas = 2) {
+export function arredondar(valor: number, casas = 2) {
   const fator = 10 ** casas;
   const sinal = valor < 0 ? -1 : 1;
   return (sinal * Math.round(Math.abs(valor) * fator + 1e-9)) / fator;
 }
 
-const ehInteiro = (n) => Number.isInteger(n);
+const ehInteiro = (n: number) => Number.isInteger(n);
 
 let contador = 0;
 /** Chave estável de uma linha do rascunho (lista do React). */
@@ -92,7 +119,7 @@ export const novaChave = () => `k${++contador}`;
 /* ── Peso, mínimo e pontuação ──────────────────────────────────────── */
 
 /** 1,5 → "+50%"; 0,5 → "−50%"; 1 → "". */
-export function rotuloDoPeso(peso) {
+export function rotuloDoPeso(peso: unknown) {
   const p = lerNumero(peso);
   if (p === null || Number.isNaN(p) || p <= 0 || p === 1) return "";
   const diferenca = arredondar((p - 1) * 100, 0);
@@ -100,10 +127,10 @@ export function rotuloDoPeso(peso) {
 }
 
 /** Nota máxima da competência na ficha (nota máxima × peso). */
-export function maximoDaCompetencia(competencia) {
+export function maximoDaCompetencia(competencia?: NumerosDaCompetencia | null) {
   const maxima = lerNumero(competencia?.nota_maxima);
   const peso = lerNumero(competencia?.peso) ?? 1;
-  if (!Number.isFinite(maxima) || !Number.isFinite(peso)) return null;
+  if (!numeroFinito(maxima) || !Number.isFinite(peso)) return null;
   return arredondar(maxima * peso);
 }
 
@@ -113,20 +140,20 @@ export function maximoDaCompetencia(competencia) {
  * 1,084: a nota 1,08 fica abaixo); as 2 casas são só da exibição. O
  * arredondamento a 10 casas tira apenas o ruído do ponto flutuante.
  */
-export function minimoEmPontos(competencia) {
+export function minimoEmPontos(competencia?: NumerosDaCompetencia | null) {
   const minimo = lerNumero(competencia?.minimo);
   if (minimo === null || Number.isNaN(minimo)) return null;
   if (competencia?.tipo_minimo === "PERCENTUAL") {
     const maxima = lerNumero(competencia?.nota_maxima);
     const peso = lerNumero(competencia?.peso) ?? 1;
-    if (!Number.isFinite(maxima) || !Number.isFinite(peso)) return null;
+    if (!numeroFinito(maxima) || !Number.isFinite(peso)) return null;
     return arredondar((maxima * peso * minimo) / 100, 10);
   }
   return minimo;
 }
 
 /** Soma de nota máxima × peso das competências. */
-export function pontuacaoMaxima(competencias) {
+export function pontuacaoMaxima(competencias?: NumerosDaCompetencia[] | null) {
   return arredondar(
     (competencias || []).reduce(
       (total, c) => total + (maximoDaCompetencia(c) ?? 0),
@@ -136,10 +163,10 @@ export function pontuacaoMaxima(competencias) {
 }
 
 /** A linha de prévia do roteiro: "Pontuação máxima 20 · mínimo 8". */
-export function textoDaPontuacao(roteiro) {
+export function textoDaPontuacao(roteiro?: PontuacaoDoRoteiro | null) {
   const maxima = pontuacaoMaxima(roteiro?.competencias);
   const minimo = lerNumero(roteiro?.nota_minima_total);
-  const fmt = (n) => String(n).replace(".", ",");
+  const fmt = (n: number) => String(n).replace(".", ",");
   return `Pontuação máxima ${fmt(maxima)} · ${
     minimo === null || Number.isNaN(minimo)
       ? "sem mínimo total"
@@ -154,10 +181,13 @@ export function textoDaPontuacao(roteiro) {
  * `lancar_notas_entrevista` confere): `[{ valor, rotulo, descricao }]`.
  * @returns {import("../modulos/entrevistas/campo-de-nota.tsx").OpcaoDeNota[]}
  */
-export function opcoesDaEscala(roteiro, notaMaxima) {
+export function opcoesDaEscala(
+  roteiro: EscalaDoRoteiro | null | undefined,
+  notaMaxima: unknown,
+): OpcaoDeNota[] {
   const maximo = lerNumero(notaMaxima);
-  const cabe = (n) =>
-    Number.isFinite(n) && n >= 0 && (!Number.isFinite(maximo) || n <= maximo);
+  const cabe = (n: number | null): n is number =>
+    numeroFinito(n) && n >= 0 && (!numeroFinito(maximo) || n <= maximo);
   if (roteiro?.escala === "NIVEIS") {
     return (roteiro.niveis || [])
       .map((n) => ({
@@ -165,19 +195,21 @@ export function opcoesDaEscala(roteiro, notaMaxima) {
         rotulo: texto(n.nome),
         descricao: texto(n.descricao),
       }))
-      .filter((n) => cabe(n.valor))
+      .filter((n): n is OpcaoDeNota => cabe(n.valor))
       .sort((a, b) => a.valor - b.valor);
   }
   if (roteiro?.escala === "LISTA") {
-    const vistas = new Set();
+    const vistas = new Set<number>();
     return (roteiro.notas_permitidas || [])
       .map(lerNumero)
-      .filter((n) => cabe(n) && !vistas.has(n) && vistas.add(n))
+      .filter(
+        (n): n is number => cabe(n) && !vistas.has(n) && Boolean(vistas.add(n)),
+      )
       .sort((a, b) => a - b)
       .map((valor) => ({ valor, rotulo: "", descricao: "" }));
   }
   const passo = lerNumero(roteiro?.passo) || 0.5;
-  if (!Number.isFinite(maximo) || passo <= 0) return [];
+  if (!numeroFinito(maximo) || passo <= 0) return [];
   const quantos = Math.min(1000, Math.floor(maximo / passo + 1e-9));
   return Array.from({ length: quantos + 1 }, (_, i) => ({
     valor: arredondar(i * passo),
@@ -187,11 +219,15 @@ export function opcoesDaEscala(roteiro, notaMaxima) {
 }
 
 /** A nota cabe na escala do roteiro (espelho da validação do banco). */
-export function notaNaEscala(roteiro, competencia, nota) {
+export function notaNaEscala(
+  roteiro: EscalaDoRoteiro | null | undefined,
+  competencia: NumerosDaCompetencia | null | undefined,
+  nota: unknown,
+) {
   const n = lerNumero(nota);
   const maximo = lerNumero(competencia?.nota_maxima);
   if (n === null || Number.isNaN(n) || n < 0) return false;
-  if (Number.isFinite(maximo) && n > maximo) return false;
+  if (numeroFinito(maximo) && n > maximo) return false;
   if (roteiro?.escala === "FAIXA" || !roteiro?.escala) {
     const passo = lerNumero(roteiro?.passo) || 0.5;
     const razao = n / passo;
@@ -208,7 +244,9 @@ export function notaNaEscala(roteiro, competencia, nota) {
   versão nova do roteiro leva o que estava gravado, sem mudar.
 */
 
-export function convocacaoParaRascunho(convocacao) {
+export function convocacaoParaRascunho(
+  convocacao?: ConvocacaoDoRoteiro | null,
+): RascunhoDoRoteiro["convocacao"] {
   const c = convocacao || {};
   return {
     multiplo_imediatas: textoDoNumero(c.multiplo_imediatas),
@@ -222,12 +260,14 @@ export function convocacaoParaRascunho(convocacao) {
   };
 }
 
-const numeroOuNulo = (valor) => {
+const numeroOuNulo = (valor: unknown) => {
   const n = lerNumero(valor);
   return n === null || Number.isNaN(n) ? null : n;
 };
 
-export function convocacaoDoRascunho(rascunho) {
+export function convocacaoDoRascunho(
+  rascunho?: Partial<RascunhoDoRoteiro["convocacao"]> | null,
+): DadosDoRoteiroParaSalvar["convocacao_padrao"] {
   const r = rascunho || {};
   return {
     multiplo_imediatas: numeroOuNulo(r.multiplo_imediatas),
@@ -242,14 +282,25 @@ export function convocacaoDoRascunho(rascunho) {
   };
 }
 
-function conferirQuantidade(erros, chave, valor, { minimo, maximo, rotulo }) {
+function conferirQuantidade(
+  erros: Record<string, string>,
+  chave: string,
+  valor: unknown,
+  {
+    minimo,
+    maximo,
+    rotulo,
+  }: { minimo: number; maximo: number; rotulo: string },
+) {
   const n = lerNumero(valor);
   if (n === null) return;
   if (Number.isNaN(n) || !ehInteiro(n) || n < minimo || n > maximo)
     erros[chave] = `${rotulo}: número inteiro de ${minimo} a ${maximo}.`;
 }
 
-export function bancaParaRascunho(banca) {
+export function bancaParaRascunho(
+  banca?: RoteiroDeEntrevista["banca_padrao"],
+): BancaDoRascunho[] {
   return (Array.isArray(banca) ? banca : []).map((b) => ({
     chave: novaChave(),
     origem: texto(b?.origem),
@@ -257,7 +308,9 @@ export function bancaParaRascunho(banca) {
   }));
 }
 
-export function bancaDoRascunho(linhas) {
+export function bancaDoRascunho(
+  linhas?: BancaDoRascunho[] | null,
+): DadosDoRoteiroParaSalvar["banca_padrao"] {
   return (linhas || [])
     .filter((b) => texto(b.origem))
     .map((b) => ({
@@ -267,14 +320,17 @@ export function bancaDoRascunho(linhas) {
 }
 
 /** @returns {import("./tipos-do-roteiro-de-entrevista.ts").BancaDoRascunho} */
-export const novaOrigemDaBanca = () => ({
+export const novaOrigemDaBanca = (): BancaDoRascunho => ({
   chave: novaChave(),
   origem: "",
   quantidade: "1",
 });
 
-export function errosDaBanca(linhas, prefixo = "banca") {
-  const erros = {};
+export function errosDaBanca(
+  linhas?: BancaDoRascunho[] | null,
+  prefixo = "banca",
+): Record<string, string> {
+  const erros: Record<string, string> = {};
   for (const b of linhas || []) {
     const origem = texto(b.origem);
     if (origem.length < 2 || origem.length > 80)
@@ -296,7 +352,7 @@ export function errosDaBanca(linhas, prefixo = "banca") {
 /* ── Rascunho do roteiro ───────────────────────────────────────────── */
 
 /** @returns {import("./tipos-do-roteiro-de-entrevista.ts").CompetenciaDoRascunho} */
-export function novaCompetencia() {
+export function novaCompetencia(): CompetenciaDoRascunho {
   return {
     chave: novaChave(),
     nome: "",
@@ -313,7 +369,7 @@ export function novaCompetencia() {
  * @param {number | string} nota
  * @returns {import("./tipos-do-roteiro-de-entrevista.ts").NivelDoRascunho}
  */
-export const novoNivel = (nota = "") => ({
+export const novoNivel = (nota: number | string = ""): NivelDoRascunho => ({
   chave: novaChave(),
   nota: textoDoNumero(nota),
   nome: "",
@@ -330,9 +386,12 @@ export const novoNivel = (nota = "") => ({
  * @returns {import("./tipos-do-roteiro-de-entrevista.ts").RascunhoDoRoteiro}
  */
 export function rascunhoDoRoteiro(
-  roteiro = null,
-  { modo = "editar", area = "" } = {},
-) {
+  roteiro: RoteiroDeEntrevista | null = null,
+  {
+    modo = "editar",
+    area = "",
+  }: { modo?: ModoDoEditorDeRoteiro; area?: string } = {},
+): RascunhoDoRoteiro {
   if (!roteiro) {
     return {
       origem: null,
@@ -395,7 +454,7 @@ export function rascunhoDoRoteiro(
     nota_minima_total: textoDoNumero(roteiro.nota_minima_total),
     notas_eliminatorias: (roteiro.notas_eliminatorias || [])
       .map(lerNumero)
-      .filter(Number.isFinite),
+      .filter(numeroFinito),
     ausencia_elimina: roteiro.ausencia_elimina !== false,
     desempate: (roteiro.desempate || []).map(texto).filter(Boolean),
     soma_analise: roteiro.soma_analise !== false,
@@ -405,11 +464,11 @@ export function rascunhoDoRoteiro(
 }
 
 /** "0; 1; 2,5" → [0, 1, 2.5] (o que não é número fica de fora). */
-export function lerListaDeNotas(valor) {
+export function lerListaDeNotas(valor: unknown): number[] {
   return texto(valor)
     .split(/[;\s]+/)
     .map(lerNumero)
-    .filter((n) => Number.isFinite(n));
+    .filter((n) => numeroFinito(n));
 }
 
 /**
@@ -420,11 +479,11 @@ export function lerListaDeNotas(valor) {
  * @param {number} passo
  * @returns {T[]}
  */
-export function moverItem(lista, indice, passo) {
+export function moverItem<T>(lista: T[], indice: number, passo: number): T[] {
   const destino = indice + passo;
   if (destino < 0 || destino >= lista.length) return lista;
   const nova = lista.slice();
-  [nova[indice], nova[destino]] = [nova[destino], nova[indice]];
+  [nova[indice], nova[destino]] = [nova[destino]!, nova[indice]!];
   return nova;
 }
 
@@ -434,8 +493,8 @@ export function moverItem(lista, indice, passo) {
  * @param {import("./tipos-do-roteiro-de-entrevista.ts").RascunhoDoRoteiro} r
  * @returns {Record<string, string>}
  */
-export function errosDoRoteiro(r) {
-  const erros = {};
+export function errosDoRoteiro(r: RascunhoDoRoteiro): Record<string, string> {
+  const erros: Record<string, string> = {};
   const nome = texto(r?.nome);
   if (nome.length < 3 || nome.length > 150)
     erros.nome = "Nome do roteiro: de 3 a 150 caracteres.";
@@ -538,8 +597,10 @@ export function errosDoRoteiro(r) {
  * @param {import("./tipos-do-roteiro-de-entrevista.ts").RascunhoDoRoteiro} r
  * @returns {import("./tipos-do-roteiro-de-entrevista.ts").DadosDoRoteiroParaSalvar}
  */
-export function dadosDoRoteiroParaSalvar(r) {
-  const dados = {
+export function dadosDoRoteiroParaSalvar(
+  r: RascunhoDoRoteiro,
+): DadosDoRoteiroParaSalvar {
+  const dados: DadosDoRoteiroParaSalvar = {
     nome: texto(r.nome),
     descricao: texto(r.descricao) || null,
     etapa: texto(r.etapa) || "Entrevista",
@@ -556,7 +617,7 @@ export function dadosDoRoteiroParaSalvar(r) {
               nome: texto(n.nome),
               descricao: texto(n.descricao) || null,
             }))
-            .sort((a, b) => a.nota - b.nota)
+            .sort((a, b) => (a.nota ?? 0) - (b.nota ?? 0))
         : [],
     competencias: (r.competencias || []).map((c) => ({
       nome: texto(c.nome),
@@ -587,7 +648,9 @@ export function dadosDoRoteiroParaSalvar(r) {
  * Linha de resumo do roteiro na lista: competências, escala e pontuação.
  * @returns {import("./tipos-do-roteiro-de-entrevista.ts").ResumoDoRoteiro}
  */
-export function resumoDoRoteiro(roteiro) {
+export function resumoDoRoteiro(
+  roteiro?: RoteiroDeEntrevista | null,
+): ResumoDoRoteiro {
   const competencias = roteiro?.competencias || [];
   return {
     competencias: competencias.length,

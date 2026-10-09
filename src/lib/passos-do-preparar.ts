@@ -6,7 +6,7 @@
   agenda do edital por dia (a montada na Classificação › Agenda), só para ler.
 
   Nada aqui decide regra: o que falta na banca vem de `errosDaConfiguracao`
-  (src/lib/conducao-de-entrevista.js), a convocação de
+  (src/lib/conducao-de-entrevista.ts), a convocação de
   src/lib/convocacao-da-entrevista.js e a agenda de `obter_agenda_entrevista`.
 */
 

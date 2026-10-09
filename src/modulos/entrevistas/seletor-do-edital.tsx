@@ -1,5 +1,5 @@
 import { SeloDeTreinamento } from "../../componentes/selo-de-treinamento.jsx";
-import { marcaDoEdital } from "../../lib/conducao-de-entrevista.js";
+import { marcaDoEdital } from "../../lib/conducao-de-entrevista.ts";
 import {
   editalEscolhido,
   sufixoDeTreinamento,

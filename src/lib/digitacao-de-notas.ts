@@ -15,7 +15,7 @@
     decide: passar ao próximo avaliador, focar o Salvar).
 
   Não muda a regra da nota: a validação final continua sendo `notaNaEscala`
-  (src/lib/roteiro-de-entrevista.js) e a do banco.
+  (src/lib/roteiro-de-entrevista.ts) e a do banco.
 */
 
 export type EstadoDaDigitacao = "vazia" | "completa" | "parcial" | "recusada";

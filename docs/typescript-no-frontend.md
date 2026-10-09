@@ -53,14 +53,15 @@ contratos em `tipos-da-regra.ts`; a prévia "Testar com um candidato fictício" 
 Na ficha, o Apurado de partida e o efeito da decisão nele estão em `apurado-da-ficha.ts`.
 
 A ficha de notas de Conduzir entrevistas está em `src/modulos/entrevistas/ficha.tsx`,
-com contratos do estado local e do salvamento em `tipos-da-ficha.ts`. A integração preserva
-os cálculos em JavaScript por JSDoc. O editor (`roteiros.tsx`) e a composição da banca
+com contratos do estado local e do salvamento em `tipos-da-ficha.ts`. As regras de cálculo e de configuração em
+`src/lib/conducao-de-entrevista.ts` também estão tipadas. O editor (`roteiros.tsx`) e a composição da banca
 (`partes.tsx`) também estão migrados: cartões, criação, edição, duplicação, leitura,
 renomeação, seções, níveis e salvamento. Os contratos do rascunho e dos dados enviados
 ao banco estão em `src/lib/tipos-do-roteiro-de-entrevista.ts`; os de abertura e ações,
 em `tipos-do-editor-de-roteiro.ts`. O estado da condução também está em TypeScript, incluindo ações, cliente RPC,
 normalização dos campos usados na tela e proteção contra gravações obsoletas após
-troca de área ou sessão. Os auxiliares do roteiro continuam em JavaScript. Os limites de validação estão no README de Entrevistas.
+troca de área ou sessão. `src/lib/roteiro-de-entrevista.ts` também está migrado: escalas, pesos, mínimos,
+conversão do rascunho, validação e dados enviados ao banco. Os limites de validação estão no README de Entrevistas.
 
 ## Verificação
 
