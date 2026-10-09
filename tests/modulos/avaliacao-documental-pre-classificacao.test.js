@@ -190,7 +190,6 @@ function supabaseFalso({
       modelos: [],
       nota_minima: { nota_minima: 15 },
       aldeias: { quantidade: 0 },
-      perguntas: [],
       fichas_concluidas: 0,
     }),
     obter_equipe_edital: () => ({

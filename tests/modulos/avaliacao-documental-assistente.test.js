@@ -97,7 +97,6 @@ function supabaseFalso({
       nota_minima: { nota_minima: 15, nota_minima_por_nivel: {} },
       aldeias: { quantidade: 0 },
       pode_carregar_aldeias: false,
-      perguntas: [],
       fichas_concluidas: 0,
     }),
     obter_equipe_edital: () => ({

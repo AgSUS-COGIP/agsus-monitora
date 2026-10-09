@@ -146,6 +146,12 @@ export function AssistenteDaRegra({
     void estado.carregarApoio();
   }, [estado, e.editalId]);
 
+  // As respostas da carga: só quando o passo das perguntas abre.
+  const noPassoDasPerguntas = PASSOS[passo]?.id === "perguntas";
+  useEffect(() => {
+    if (noPassoDasPerguntas) void estado.carregarPerguntas();
+  }, [estado, e.editalId, noPassoDasPerguntas]);
+
   const regraDaClassificacao = apoio?.classificacao?.regra ?? null;
   const classificacaoOriginal = useMemo(
     () =>
@@ -395,6 +401,19 @@ export function AssistenteDaRegra({
           </button>
         </Aviso>
       ) : null}
+      {noPassoDasPerguntas && e.erroDasPerguntas ? (
+        <Aviso tom="warning" papel="alert">
+          Não foi possível ler as respostas da última carga:{" "}
+          {e.erroDasPerguntas}{" "}
+          <button
+            type="button"
+            className="btn secondary small"
+            onClick={() => void estado.carregarPerguntas({ recarregar: true })}
+          >
+            Tentar novamente
+          </button>
+        </Aviso>
+      ) : null}
 
       <div
         className="avd-ast-corpo"
@@ -436,8 +455,8 @@ export function AssistenteDaRegra({
           <PassoPerguntas
             regra={rascunho}
             vagas={apoio?.perguntas_por_vaga ?? []}
-            perguntasDaCarga={dados?.perguntas ?? []}
-            carregando={e.carregandoApoio}
+            perguntasDaCarga={e.perguntasDaCarga ?? []}
+            carregando={e.carregandoApoio || Boolean(e.carregandoPerguntas)}
             aoMudar={mudar}
           />
         ) : null}

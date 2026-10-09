@@ -152,6 +152,21 @@ Há dois passos (`scripts/robo-empregare/anexos_empregare.py`):
 questionário lidas N de M · K anexo(s)`, `N de M anexo(s) casados com a coluna do Excel`).
    Banco sem a migration: avisa e segue.
 
+**Resumo das perguntas da carga** (migration `20261009180000_resumo_das_perguntas_da_carga.sql`):
+depois de fechar a execução, o robô recalcula **em Python** o resumo das perguntas dos editais cuja carga
+mudou (`resumo_das_perguntas.py`; a conta e a regra de privacidade em
+`python/monitora/avaliacao_documental/perguntas_da_carga.py`): lê os pendentes
+(`listar_resumos_pergunta_pendentes`), as respostas cruas de cada vaga (`ler_respostas_pergunta_vaga`) e
+grava pronto (`gravar_resumo_pergunta_edital`, que confere o formato, a privacidade e a assinatura das
+vagas; carga que mudou no meio = 40001, fica para a próxima). Só colunas "Pergunta N", respostas que
+aparecem 2+ vezes (até 30, 200 caracteres); as únicas viram "outras". A Avaliação documental lê pronto
+(`obter_perguntas_carga_analise`). O log mostra `Resumo das perguntas da carga: N edital(is)
+recalculado(s).`; uma falha aqui não muda a saída do robô e a tela fica com o resumo anterior. Pendente
+é todo edital com carga sem resumo ou com a assinatura mudada: a primeira carga depois da migration já
+resume os editais carregados antes. Para recalcular sem entrar na Empregare (com a service_role):
+`python scripts/robo-empregare/robo_empregare.py --resumir-perguntas [--editais 114/2026] [--forcar]`
+(`--forcar`: todos os editais com carga, mesmo os em dia).
+
 **Na ficha**: `obter_ficha_analise` devolve em `empregare` as `respostas` (`resposta`,
 `link_impressao`, contagens) e os `anexos` (`resposta`, `pergunta`, `arquivo`, `ordem`, `enunciado`,
 `coluna`, `tipo`, `link`) — dado restrito, só para quem pode ver a ficha. A regra do botão está em

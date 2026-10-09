@@ -28,6 +28,10 @@ Uso
       --anexos: também guarda o link de cada anexo do questionário (e o de
       impressão das respostas), lidos de GetRespostaDetails; anexos_empregare.py,
       migration 20261008160000
+  python scripts/robo-empregare/robo_empregare.py --resumir-perguntas [--editais 114/2026] [--forcar]
+      só recalcula o resumo das perguntas da carga (resumo_das_perguntas.py)
+      dos editais cuja carga mudou (--forcar: de todos com carga); não entra
+      na Empregare. A carga normal faz isso sozinha no fim.
 
 Variáveis: EMPREGARE_EMAIL, EMPREGARE_SENHA, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY.
 O log é público (repositório público): só contagens, códigos de vaga e números
@@ -51,6 +55,7 @@ sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[2] / "python"))
 
 import anexos_empregare as anexos  # noqa: E402
 import navegador_empregare as nav  # noqa: E402
+import resumo_das_perguntas  # noqa: E402
 from planilha_empregare import em_lotes, ler_planilha  # noqa: E402
 
 from monitora import execucao, supabase_rpc  # noqa: E402
@@ -77,6 +82,11 @@ def argumentos(lista=None):
     p.add_argument("--forcar", action="store_true", help="aceita arquivo com menos da metade dos candidatos")
     p.add_argument("--sondar", action="store_true", help="só lê a estrutura da aba Questionários (1 a 3 candidatos)")
     p.add_argument("--anexos", action="store_true", help="também guarda o link de cada anexo do questionário")
+    p.add_argument(
+        "--resumir-perguntas",
+        action="store_true",
+        help="só recalcula o resumo das perguntas da carga (sem entrar na Empregare)",
+    )
     p.add_argument("--editais", default="", help="números de edital: 80/2026,81/2026")
     p.add_argument("--vagas", default="", help="códigos de vaga: 177979,177980")
     p.add_argument("--limite", type=int, default=LIMITE_PADRAO, help="máximo de vagas (1 a 500)")
@@ -265,6 +275,27 @@ def baixar_e_gravar(portal, config, sync, pedidas, pasta, desde, dormir=time.sle
     return baixadas, falhas + len(pendentes)
 
 
+# ── Resumo das perguntas da carga ───────────────────────────────────────────
+
+
+def resumir_perguntas(config, editais=None, forcar=False, chamar=supabase_rpc.chamar):
+    """
+    Recalcula o resumo das perguntas dos editais cuja carga mudou (Python:
+    resumo_das_perguntas.py). Nunca derruba a execução: devolve a linha do
+    resumo final e se houve falha. Banco sem a migration 20261009180000: avisa.
+    """
+    try:
+        feitos, falhas = resumo_das_perguntas.resumir_editais(config, registrar, chamar, editais, forcar)
+    except supabase_rpc.ErroDoSupabase as erro:
+        if getattr(erro, "status", None) == 404:
+            return "Resumo das perguntas: o banco ainda não tem a migration 20261009180000.", False
+        return f"Resumo das perguntas NÃO atualizado ({erro}); a tela segue com o anterior.", True
+    except Exception as erro:
+        return f"Resumo das perguntas NÃO atualizado ({resumo_do_erro(erro)}); a tela segue com o anterior.", True
+    linha = f"Resumo das perguntas da carga: {feitos} edital(is) recalculado(s)"
+    return (linha + (f", {falhas} com falha." if falhas else ".")), bool(falhas)
+
+
 # ── Execução ────────────────────────────────────────────────────────────────
 
 
@@ -306,6 +337,10 @@ def principal(args):
         return sondar(args)
 
     config = supabase_rpc.configuracao(GUIA)
+    if args.resumir_perguntas:
+        linha, falhou = resumir_perguntas(config, args.editais, args.forcar)
+        resumir([linha])
+        return 2 if falhou else 0
     lista = supabase_rpc.chamar(
         config,
         "listar_vagas_empregare",
@@ -408,11 +443,14 @@ def principal(args):
         or {}
     )
     situacao = fim.get("situacao", "FALHOU")
+    # Depois de fechar: o resumo das perguntas dos editais cuja carga mudou (não muda a saída).
+    linha_do_resumo, _ = resumir_perguntas(config)
     resumir(
         [
             f"Execução {sync}: {situacao}.",
             f"Vagas pedidas: {len(vagas)} · baixadas: {baixadas} · com falha: {falhas} · recusadas pela trava: {fim.get('recusadas', 0)}.",
             f"Candidatos gravados: {fim.get('linhas', 0)} · saíram (inativos): {fim.get('desativadas', 0)}.",
+            linha_do_resumo,
             f"Códigos: {lista_de_codigos(vagas) or '—'}",
         ]
     )
