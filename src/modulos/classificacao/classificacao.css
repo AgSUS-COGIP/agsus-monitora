@@ -231,42 +231,157 @@
 
 /* ── Documento oficial ("Como fica no SEI") ─────────────────────────── */
 
-.classificacao-documento {
-  width: min(1280px, 96vw);
-  max-height: 94vh;
-  overflow: auto;
+/*
+  Quase a tela toda (tela cheia no botão do topo): topo, corpo (painel dos
+  textos recolhível + a prévia) e o rodapé fixo com as ações. A rolagem é do
+  painel e da "mesa" da prévia, nunca do cartão.
+*/
+.modal.classificacao-documento-fundo {
+  padding: var(--space-3);
+}
+.modal.classificacao-documento-fundo:has(.is-tela-cheia) {
+  padding: 0;
+}
+.modal-card.classificacao-documento {
+  width: min(1680px, 100%);
+  height: calc(100dvh - 2 * var(--space-3));
+  max-height: none;
+  overflow: hidden;
+  padding: 0;
   display: grid;
-  gap: var(--space-3);
+  grid-template-rows: auto minmax(0, 1fr) auto;
+}
+.modal-card.classificacao-documento.is-tela-cheia {
+  width: 100vw;
+  height: 100dvh;
+  border: 0;
+  border-radius: 0;
+}
+.classificacao-documento-topo,
+.classificacao-documento-rodape {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2) var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  background: var(--surface-card);
+}
+.classificacao-documento-topo {
+  border-bottom: 1px solid var(--border-subtle);
+}
+.classificacao-documento-rodape {
+  border-top: 1px solid var(--border-subtle);
+}
+.classificacao-documento-topo h2 {
+  margin: 0;
+  font-size: var(--text-h3);
+}
+.classificacao-documento-topo p {
+  margin: 0;
+}
+.classificacao-documento-janela {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
 }
 .classificacao-documento-corpo {
   display: grid;
-  gap: var(--space-3);
+  grid-template-columns: minmax(320px, 400px) minmax(0, 1fr);
+  min-height: 0;
 }
-.classificacao-documento-textos {
+.classificacao-documento-corpo.is-sem-painel {
+  grid-template-columns: minmax(0, 1fr);
+}
+.classificacao-documento-painel {
+  display: grid;
+  align-content: start;
+  gap: var(--space-3);
+  min-height: 0;
+  overflow: auto;
+  padding: var(--space-3) var(--space-4);
+  border-right: 1px solid var(--border-subtle);
+}
+.classificacao-documento-painel[hidden],
+.classificacao-documento-textos [hidden] {
+  display: none;
+}
+.classificacao-documento-textos,
+.classificacao-documento-textos-do-modelo {
   display: grid;
   gap: var(--space-2);
   align-content: start;
 }
 .classificacao-documento-textos textarea {
   width: 100%;
-  font-size: 0.85rem;
+  font-size: var(--text-body-sm);
+}
+/* A prévia: barra do zoom e a "mesa" cinza onde fica a folha A4. */
+.classificacao-documento-previa-area {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  min-width: 0;
+  min-height: 0;
+  background: var(--surface-raised);
+}
+.classificacao-documento-zoom {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  padding: var(--space-2);
+  border-bottom: 1px solid var(--border-subtle);
+}
+.classificacao-documento-escala {
+  min-width: 5ch;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+.classificacao-documento-mesa {
+  min-height: 0;
+  overflow: auto;
+}
+/* A folha da prévia é papel: fica branca também no tema escuro. */
+.classificacao-documento-folha {
+  position: relative;
+  margin: var(--space-4) auto;
+  overflow: hidden;
+  background: var(--cor-da-folha);
+  box-shadow: var(--shadow-overlay);
+}
+.classificacao-documento-previa {
+  display: block;
+  border: 0;
+  background: var(--cor-da-folha);
+  transform-origin: top left;
+}
+/* Celular: uma coluna — os textos em cima, a prévia embaixo. */
+@media (max-width: 900px) {
+  .classificacao-documento-corpo,
+  .classificacao-documento-corpo.is-sem-painel {
+    grid-template-columns: minmax(0, 1fr);
+    align-content: start;
+    overflow: auto;
+  }
+  .classificacao-documento-painel {
+    min-height: auto;
+    overflow: visible;
+    border-right: 0;
+    border-bottom: 1px solid var(--border-subtle);
+  }
+  .classificacao-documento-previa-area {
+    min-height: 70dvh;
+  }
 }
 /* Nota alterada por ajuste aprovado em recurso. */
 .classificacao-marca-recurso {
   white-space: nowrap;
 }
-/* A folha da prévia é papel: fica branca também no tema escuro. */
-.classificacao-documento-previa {
-  width: 100%;
-  min-height: 60vh;
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-md);
-  background: var(--cor-da-folha);
-}
-@media (min-width: 1100px) {
-  .classificacao-documento-corpo {
-    grid-template-columns: minmax(320px, 2fr) 3fr;
-  }
+/* Hora de nascimento da certidão (gaveta do candidato). */
+.classificacao-hora {
+  display: grid;
+  gap: var(--space-2);
+  max-width: 280px;
 }
 
 /* ── Agenda das entrevistas (agenda.jsx) ────────────────────────────── */

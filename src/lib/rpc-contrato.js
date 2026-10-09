@@ -949,6 +949,13 @@ export const CONTRATO_RPC = {
     resumo:
       "Registra o empate final de um grupo: sorteio (semente do servidor ou informada, reprodutível) ou decisão manual com justificativa. Editor.",
   },
+  // 20261009130000_hora_de_nascimento_na_classificacao.sql
+  salvar_hora_nascimento_candidato: {
+    argumentos: ["p_edital", "p_analise", "p_hora"],
+    critica: false,
+    resumo:
+      "Grava, troca ou tira (p_hora vazio = 23:59:59) a hora de nascimento da certidão de um candidato, para o desempate por maior idade entre quem nasceu no mesmo dia (93/2026, 6.11.5 e 6.11.6); histórico em TH_HORA_NASCIMENTO_CANDIDATO. Classificação editor.",
+  },
   // ── Agenda das entrevistas (20261005120000_agenda_das_entrevistas.sql) ───
   obter_agenda_entrevista: {
     argumentos: ["p_edital"],
