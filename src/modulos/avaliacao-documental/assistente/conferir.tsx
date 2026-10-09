@@ -249,7 +249,6 @@ function ListaDoQueFalta({
 }
 
 export function BarraDeSalvar({
-  versaoNova,
   pendencias,
   aoIrPara,
   motivo,
@@ -259,15 +258,13 @@ export function BarraDeSalvar({
   podeDescartar,
   salvando,
   erroDoBanco,
-  aoSalvar,
   aoDescartar,
   pedeNome = false,
   nome = null,
   sugestaoDoNome = "",
   aoMudarNome,
 }: {
-  versaoNova: number;
-  /** O que falta (pendenciasDoSalvar): os que impedem desabilitam o botão. */
+  /** O que falta (pendenciasDoSalvar) e o que conferir, perto dos campos. */
   pendencias: PendenciaDoSalvar[];
   aoIrPara: (p: PendenciaDoSalvar) => void;
   motivo: string;
@@ -283,10 +280,9 @@ export function BarraDeSalvar({
   podeDescartar: boolean;
   salvando: boolean;
   erroDoBanco: string;
-  aoSalvar: () => void;
   aoDescartar: () => void;
 }) {
-  const impede = pendencias.some((p) => p.impede);
+  // O "Salvar como Versão N" fica na barra fixa do assistente (sempre à vista).
   return (
     <section className="ui-card avd-ast-salvar" aria-label="Salvar a regra">
       {erroDoBanco ? (
@@ -333,16 +329,6 @@ export function BarraDeSalvar({
             onClick={aoDescartar}
           >
             Descartar
-          </button>
-          <button
-            type="button"
-            className="btn"
-            data-acao="salvar-assistente"
-            disabled={salvando || impede}
-            onClick={aoSalvar}
-          >
-            <i className="fa-solid fa-floppy-disk" aria-hidden="true" /> Salvar
-            como versão {versaoNova}
           </button>
         </div>
       </div>

@@ -63,6 +63,8 @@ export type SnapshotDaAvaliacao = {
   apoio: ApoioDaRegra | null;
   carregandoApoio: boolean;
   erroDoApoio: string;
+  /** A versão que o assistente acabou de salvar (a aba remonta a cada versão). */
+  regraSalvaAgora?: { editalId: string; versao: number } | null;
 };
 
 export type ResultadoDaGravacao = { ok: boolean; erro?: string };
@@ -81,6 +83,7 @@ export type EstadoDaRegra = {
     motivo: string,
   ) => Promise<ResultadoDaGravacao>;
   conferirRegra: () => Promise<ResultadoDaGravacao>;
+  esquecerRegraSalvaAgora?: () => void;
   renomearVersao?: (
     versao: number,
     nome: string | null,
