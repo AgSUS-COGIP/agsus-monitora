@@ -67,7 +67,7 @@ const PAGINAS_DO_ARQUIVO = Object.freeze({
   "regras-do-cronograma.md": ["calendario"],
   "regras-das-analises.md": ["analises"],
   "regras-da-avaliacao-documental.md": ["avaliacao-documental"],
-  "regras-dos-recursos.md": ["recursos"],
+  "regras-dos-recursos.md": ["recursos", "analisar-recursos"],
   "regras-das-entrevistas.md": ["entrevistas", "conduzir-entrevistas"],
   "regras-da-classificacao.md": ["classificacao"],
   "regras-da-lista-de-aprovados.md": ["approved"],

@@ -276,12 +276,14 @@ describe("menu: selo BETA e manutenção vêm do banco", () => {
   it("st_beta do banco vale sobre o do código", () => {
     const abas = abasDoCatalogo([
       linha("editais", "nucleo", { st_beta: true }),
-      linha("recursos", "recursos", { st_beta: false }),
+      linha("analisar-recursos", "analisar-recursos", { st_beta: false }),
     ]);
     expect(abas.find((a) => a.id === "editais").beta).toBe(true);
-    expect(abas.find((a) => a.id === "recursos").beta).toBeUndefined();
-    // Sem catálogo, o código continua valendo (Recursos é beta ali).
-    expect(ABAS_DO_MENU.find((a) => a.id === "recursos").beta).toBe(true);
+    expect(abas.find((a) => a.id === "analisar-recursos").beta).toBeUndefined();
+    // Sem catálogo, o código continua valendo (Analisar recursos é beta ali).
+    expect(ABAS_DO_MENU.find((a) => a.id === "analisar-recursos").beta).toBe(
+      true,
+    );
   });
 
   it("aba ativa não ganha o campo manutencao; em manutenção, ganha", () => {

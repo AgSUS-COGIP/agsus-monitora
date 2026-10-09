@@ -3186,7 +3186,7 @@ export const VERBETES_AYA = Object.freeze([
       "area atual",
     ],
     resposta:
-      "O MONITORA tem três áreas: Saúde Indígena, SEDE e Projetos. Cada área repete as mesmas páginas (Visão geral, Editais, Cronograma, Painel das análises, Avaliação documental, Recursos, Entrevistas, Classificação, Lista de aprovados e Seleção), e cada página mostra só os registros da área atual, a escolhida no menu. O que muda é o bloco do mapa da Visão geral: DSEIs e CASAIs na Saúde Indígena, os locais das vagas dos projetos em Projetos, e nenhum mapa na SEDE. A área do edital é calculada pelo banco a partir da unidade e do responsável: SEDE, Escritório Distrital e Regional e CCE ficam na SEDE; Caminhoneiros, Saúde nas Fronteiras, MFC e Rio Doce, em Projetos; as demais, na Saúde Indígena.",
+      "O MONITORA tem três áreas: Saúde Indígena, SEDE e Projetos. Cada área repete as mesmas páginas (Visão geral, Editais, Cronograma, Painel das análises, Avaliação documental, Painel de recursos, Analisar recursos, Painel de entrevistas, Conduzir entrevistas, Classificação, Lista de aprovados e Seleção), e cada página mostra só os registros da área atual, a escolhida no menu. O que muda é o bloco do mapa da Visão geral: DSEIs e CASAIs na Saúde Indígena, os locais das vagas dos projetos em Projetos, e nenhum mapa na SEDE. A área do edital é calculada pelo banco a partir da unidade e do responsável: SEDE, Escritório Distrital e Regional e CCE ficam na SEDE; Caminhoneiros, Saúde nas Fronteiras, MFC e Rio Doce, em Projetos; as demais, na Saúde Indígena.",
     fato: "O MONITORA tem três áreas (Saúde Indígena, SEDE e Projetos); cada página mostra só a área atual escolhida no menu, e só a Visão geral da Saúde Indígena fala de DSEIs e CASAIs.",
     fonte:
       "src/lib/menu-lateral.ts; supabase/migrations/20260925170000_areas_do_sistema.sql",
@@ -3219,10 +3219,10 @@ export const VERBETES_AYA = Object.freeze([
       "menu lateral",
     ],
     resposta:
-      "O menu de cada área segue as etapas do processo seletivo: Visão geral, Editais, Cronograma, Painel das análises, Avaliação documental, Recursos, Entrevistas, Classificação, Lista de aprovados e Seleção. Abaixo das áreas fica Administração (as seções de Configurações). O grupo Painéis só aparece quando há painel externo ativo liberado para a pessoa. O selo BETA ao lado do nome marca a aba ainda em teste.",
-    fato: "O menu segue as etapas do processo seletivo: Visão geral, Editais, Cronograma, Painel das análises, Avaliação documental, Recursos, Entrevistas, Classificação, Lista de aprovados e Seleção.",
+      "O menu de cada área segue as etapas do processo seletivo: Visão geral, Editais, Cronograma, Painel das análises, Avaliação documental, Painel de recursos, Analisar recursos, Painel de entrevistas, Conduzir entrevistas, Classificação, Lista de aprovados e Seleção. Abaixo das áreas fica Administração (as seções de Configurações). O grupo Painéis só aparece quando há painel externo ativo liberado para a pessoa. O selo BETA ao lado do nome marca a aba ainda em teste.",
+    fato: "O menu segue as etapas do processo seletivo: Visão geral, Editais, Cronograma, Painel das análises, Avaliação documental, Painel de recursos, Analisar recursos, Painel de entrevistas, Conduzir entrevistas, Classificação, Lista de aprovados e Seleção.",
     fonte:
-      "supabase/migrations/20261001160000_ordem_do_menu_por_etapa.sql; supabase/migrations/20261006090000_avaliacao_documental_permissao_e_menu.sql; src/lib/menu-lateral.ts",
+      "supabase/migrations/20261001160000_ordem_do_menu_por_etapa.sql; supabase/migrations/20261006090000_avaliacao_documental_permissao_e_menu.sql; supabase/migrations/20261008130000_conduzir_entrevistas_no_menu.sql; supabase/migrations/20261009230000_analisar_recursos_no_menu.sql; src/lib/menu-lateral.ts",
   },
   {
     arquivo: "regras-das-areas.md",
@@ -5949,21 +5949,44 @@ export const VERBETES_AYA = Object.freeze([
   },
   {
     arquivo: "regras-dos-recursos.md",
-    titulo: "Tela de Recursos",
+    titulo: "Painel de recursos",
     perguntas: [
+      "painel de recursos",
       "tela de recursos",
       "tela recursos",
       "aba recursos",
       "para que serve recursos",
       "para que serve a tela de recursos",
+      "para que serve o painel de recursos",
       "recursos dos candidatos",
+      "acompanhar os recursos",
     ],
     resposta:
-      "Recursos acompanha os recursos dos candidatos da área atual, do registro à resposta enviada: indicadores, pendências prioritárias, gráficos, a fila e o detalhe de cada recurso (dados, anexos, etapas, parecer e resposta). Leitor vê; Editor registra, anexa, escreve a resposta e envia para o parecer jurídico; quem tem a permissão Parecer jurídico decide. Quem está numa coordenação vê só os recursos dos editais dela. As origens ativas são análise curricular, entrevista e resultado final; um segundo recurso sem decisão para o mesmo candidato, edital e origem gera um aviso e só é gravado com confirmação.",
-    fato: "",
+      'O Painel de recursos é para acompanhar os recursos dos candidatos da área atual, do registro à resposta enviada: os filtros, os quatro indicadores, o recorte, os gráficos, as pendências prioritárias, a fila e a exportação em CSV. Só leitura: clicar num recurso abre o detalhe para ler (dados, parecer, ajuste, etapas, resposta, anexos e histórico), sem nenhum botão de ação. Fazer é em Analisar recursos, outra entrada do menu: quem pode analisar tem no topo "Analisar", que abre Analisar recursos com os mesmos filtros, e, no detalhe, "Analisar este recurso", que abre o mesmo recurso lá. Quem tem Leitor em Recursos vê só o painel. Quem está numa coordenação vê só os recursos dos editais dela.',
+    fato: "O Painel de recursos acompanha (só leitura); Analisar recursos faz (registrar, enviar ao parecer, decidir, responder, ajustar a pontuação). As duas usam o recurso Recursos.",
     fonte:
-      "src/modulos/recursos/; supabase/migrations/20260929120000_recursos.sql; supabase/migrations/20260929190200_recorte_por_coordenacao_nos_recursos.sql; supabase/migrations/20261001170000_recursos_parecer_juridico.sql",
+      "src/modulos/recursos/recursos.tsx; supabase/migrations/20261009230000_analisar_recursos_no_menu.sql; supabase/migrations/20260929190200_recorte_por_coordenacao_nos_recursos.sql",
     abrir: "recursos",
+  },
+  {
+    arquivo: "regras-dos-recursos.md",
+    titulo: "Analisar recursos",
+    perguntas: [
+      "analisar recursos",
+      "analisar um recurso",
+      "onde analiso o recurso",
+      "onde decido o recurso",
+      "onde fica a fila de recursos para analisar",
+      "painel ou analisar recursos",
+      "diferença entre painel de recursos e analisar recursos",
+      "nao vejo analisar recursos",
+    ],
+    resposta:
+      'Analisar recursos é a tela de fazer, com entrada própria no menu (selo BETA). Tem no topo Atualizar, "Ver no painel" (volta ao Painel de recursos com os mesmos filtros), Modelos de resposta (para o Administrador de Recursos) e Novo recurso (para quem tem Editor em Recursos); embaixo, os filtros e a fila. "Abrir" (ou clicar na linha) abre a gaveta do recurso com as ações: editar e excluir, marcar as etapas, enviar para o parecer jurídico, decidir (deferir, deferir parcialmente, indeferir, devolver, reabrir), o ajuste da pontuação, a resposta ao candidato e os anexos. Vê a entrada quem tem Editor em Recursos ou a permissão "Parecer jurídico (Recursos)"; quem só tem Leitor fica com o Painel de recursos. O banco confere cada ação. As origens ativas são análise curricular, entrevista e resultado final; um segundo recurso sem decisão para o mesmo candidato, edital e origem gera um aviso e só é gravado com confirmação.',
+    fato: "Analisar recursos aparece para quem tem Editor em Recursos ou o Parecer jurídico; o Painel de recursos, para todo mundo que vê Recursos.",
+    fonte:
+      "src/modulos/recursos/recursos.tsx; src/lib/access-roles.js (canAnalisarRecursos); supabase/migrations/20261009230000_analisar_recursos_no_menu.sql; supabase/migrations/20261001170000_recursos_parecer_juridico.sql",
+    abrir: "analisar-recursos",
   },
   {
     arquivo: "regras-dos-recursos.md",
@@ -6013,7 +6036,7 @@ export const VERBETES_AYA = Object.freeze([
       "kpi aguardando parecer",
     ],
     resposta:
-      'No MONITORA, "Aguardando parecer" conta os recursos Em análise jurídica: já enviados ao jurídico e ainda sem decisão. Clicar no indicador filtra a tela por eles. Quem não tem o parecer jurídico vê "Aguardando parecer jurídico" no lugar dos botões de decisão.',
+      'No MONITORA, "Aguardando parecer" conta os recursos Em análise jurídica: já enviados ao jurídico e ainda sem decisão. Clicar no indicador filtra a tela por eles. No detalhe, quem não tem o parecer jurídico (e todos no Painel de recursos) vê "Aguardando parecer jurídico" no lugar dos botões de decisão.',
     fato: "",
     fonte:
       "src/modulos/recursos/paineis.tsx; src/lib/recursos-dos-candidatos.ts",
@@ -6090,7 +6113,7 @@ export const VERBETES_AYA = Object.freeze([
   },
   {
     arquivo: "regras-dos-recursos.md",
-    titulo: "Indicadores da aba Recursos",
+    titulo: "Indicadores do Painel de recursos",
     perguntas: [
       "indicadores dos recursos",
       "quais sao os indicadores dos recursos",
@@ -6100,14 +6123,14 @@ export const VERBETES_AYA = Object.freeze([
       "sem processo sei",
     ],
     resposta:
-      'No MONITORA, a aba Recursos tem quatro indicadores: Aguardando parecer, Prazo vencido, Deferidos (com os parcialmente) e Indeferidos; cada um filtra a tela. O total está na contagem da fila; a taxa de decisão, no recorte ("% decididos"); sem processo SEI, sem resposta, respostas em revisão, aprovadas ou devolvidas, mudança de nota, prazo vencendo e registrados sem envio estão nas Pendências prioritárias e nos gráficos.',
+      'No MONITORA, o Painel de recursos tem quatro indicadores: Aguardando parecer, Prazo vencido, Deferidos (com os parcialmente) e Indeferidos; cada um filtra a tela. O total está na contagem da fila; a taxa de decisão, no recorte ("% decididos"); sem processo SEI, sem resposta, respostas em revisão, aprovadas ou devolvidas, mudança de nota, prazo vencendo e registrados sem envio estão nas Pendências prioritárias e nos gráficos.',
     fato: "",
     fonte:
       "src/modulos/recursos/paineis.tsx; src/lib/recursos-dos-candidatos.ts",
   },
   {
     arquivo: "regras-dos-recursos.md",
-    titulo: "Pendências da aba Recursos",
+    titulo: "Pendências do Painel de recursos",
     perguntas: [
       "pendências dos recursos",
       "prazo não encontrado no cronograma",
@@ -6151,11 +6174,11 @@ export const VERBETES_AYA = Object.freeze([
       "corrigir a nota do candidato",
     ],
     resposta:
-      'Sim. No recurso deferido (total ou parcialmente), a seção "Ajuste da pontuação" da gaveta mostra os componentes da nota que a regra de classificação do edital tem — pertencimento étnico, formação, cursos, experiência, nota documental, entrevista ou cada competência, ART — com o valor atual (da análise ou da entrevista) e um campo para o novo valor e a justificativa; a nota documental (e a da entrevista, quando há competências) é a soma das diferenças. Escreva a justificativa geral ou a de cada componente alterado. Antes de confirmar, a prévia mostra a nova nota, a nova posição do candidato e quem muda de lugar por causa dele, calculadas pelo motor da Classificação na lista da etapa do recurso (documental, entrevista ou resultado final). Propor é de quem decide o recurso (Parecer jurídico); pode-se propor já em análise jurídica. A nota da planilha nunca é sobrescrita: cada proposta é uma versão guardada com quem propôs, quando e os valores antes e depois.',
+      'Sim. Em Analisar recursos, no recurso deferido (total ou parcialmente), a seção "Ajuste da pontuação" da gaveta mostra os componentes da nota que a regra de classificação do edital tem — pertencimento étnico, formação, cursos, experiência, nota documental, entrevista ou cada competência, ART — com o valor atual (da análise ou da entrevista) e um campo para o novo valor e a justificativa; a nota documental (e a da entrevista, quando há competências) é a soma das diferenças. Escreva a justificativa geral ou a de cada componente alterado. Antes de confirmar, a prévia mostra a nova nota, a nova posição do candidato e quem muda de lugar por causa dele, calculadas pelo motor da Classificação na lista da etapa do recurso (documental, entrevista ou resultado final). Propor é de quem decide o recurso (Parecer jurídico); pode-se propor já em análise jurídica. A nota da planilha nunca é sobrescrita: cada proposta é uma versão guardada com quem propôs, quando e os valores antes e depois.',
     fato: "No MONITORA, o ajuste da pontuação do recurso deferido fica em tabela própria, em versões (proposto, aprovado, cancelado); a nota da análise curricular nunca é sobrescrita e só o ajuste aprovado vale na Classificação.",
     fonte:
       "src/modulos/recursos/ajuste.jsx; src/lib/classificacao/ajustes.js; supabase/migrations/20261005130000_recurso_ajusta_pontuacao.sql",
-    abrir: "recursos",
+    abrir: "analisar-recursos",
   },
   {
     arquivo: "regras-dos-recursos.md",
@@ -6173,7 +6196,7 @@ export const VERBETES_AYA = Object.freeze([
       "No MONITORA, o ajuste proposto ainda não vale. Aprova quem aprova a resposta hoje (Parecer jurídico) e só com o recurso deferido, total ou parcialmente: ao aprovar, a prévia é recalculada com os dados de agora e gravada junto, e o ajuste passa a valer na Classificação (o aprovado anterior do mesmo recurso, se houver, fica como versão cancelada). Cancelar pede motivo. Reabrir a decisão, indeferir, devolver para ajuste ou excluir o recurso cancela o ajuste proposto e o aprovado automaticamente, e tudo fica no histórico do recurso.",
     fato: "",
     fonte: "supabase/migrations/20261005130000_recurso_ajusta_pontuacao.sql",
-    abrir: "recursos",
+    abrir: "analisar-recursos",
   },
   {
     arquivo: "regras-dos-recursos.md",
@@ -6203,11 +6226,11 @@ export const VERBETES_AYA = Object.freeze([
       "candidato nao encontrado no recurso",
     ],
     resposta:
-      'Em Recursos, "Novo recurso" (para quem tem Editor em Recursos) abre o cadastro: escolha o edital (só os da área atual), a origem e o candidato, buscado nas análises curriculares daquele edital; cargo, vaga, código, nota atual e resultado vêm sozinhos, e o analista vem preenchido com o responsável pela análise. "Não encontrei o candidato" permite digitar o nome, e o recurso fica marcado como fora das análises. O recurso nasce Registrado; depois, anexe os documentos, escreva a resposta e envie para o parecer jurídico. Na edição, edital e candidato não mudam: para isso, exclua e cadastre de novo.',
+      'Em Analisar recursos, "Novo recurso" (para quem tem Editor em Recursos) abre o cadastro: escolha o edital (só os da área atual), a origem e o candidato, buscado nas análises curriculares daquele edital; cargo, vaga, código, nota atual e resultado vêm sozinhos, e o analista vem preenchido com o responsável pela análise. "Não encontrei o candidato" permite digitar o nome, e o recurso fica marcado como fora das análises. O recurso nasce Registrado; depois, anexe os documentos, escreva a resposta e envie para o parecer jurídico. Na edição, edital e candidato não mudam: para isso, exclua e cadastre de novo.',
     fato: "",
     fonte:
       "src/modulos/recursos/formulario.tsx; supabase/migrations/20261001170000_recursos_parecer_juridico.sql",
-    abrir: "recursos",
+    abrir: "analisar-recursos",
   },
   {
     arquivo: "regras-dos-recursos.md",
@@ -6219,10 +6242,10 @@ export const VERBETES_AYA = Object.freeze([
       "sumiu o ajuste da pontuacao",
     ],
     resposta:
-      'A seção "Ajuste da pontuação" da gaveta só aparece quando o recurso é de um candidato das análises (recurso "fora das análises" não tem) e o edital tem regra de classificação salva. Propor é de quem tem a permissão "Parecer jurídico (Recursos)", com o recurso em análise jurídica ou já deferido (total ou parcialmente); quem não pode propor só vê a seção se já houver versões do ajuste. Indeferir, devolver, reabrir ou excluir o recurso cancela o ajuste.',
+      'A seção "Ajuste da pontuação" da gaveta (em Analisar recursos; no Painel de recursos, só para ler) só aparece quando o recurso é de um candidato das análises (recurso "fora das análises" não tem) e o edital tem regra de classificação salva. Propor é de quem tem a permissão "Parecer jurídico (Recursos)", com o recurso em análise jurídica ou já deferido (total ou parcialmente); quem não pode propor só vê a seção se já houver versões do ajuste. Indeferir, devolver, reabrir ou excluir o recurso cancela o ajuste.',
     fato: "",
     fonte:
       "src/modulos/recursos/ajuste.jsx; supabase/migrations/20261005130000_recurso_ajusta_pontuacao.sql",
-    abrir: "recursos",
+    abrir: "analisar-recursos",
   },
 ]);

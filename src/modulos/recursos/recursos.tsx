@@ -6,9 +6,11 @@ import type {
 import type {
   RecursoDoPainel,
   CampoDoFiltroDosRecursos,
+  FiltrosDosRecursos,
+  IdentificadorDoRecurso,
 } from "../../lib/tipos-dos-recursos.ts";
 import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
-import { usarPedidoDeFiltro } from "../../app/pedido-de-filtro.js";
+import { pedirFiltro, usarPedidoDeFiltro } from "../../app/pedido-de-filtro.js";
 import { filtrosDeRecursos } from "../../lib/filtro-da-aya.js";
 import { montarModulo } from "../../app/montar-modulo.jsx";
 import { usarTemaEscuro } from "../../app/tema.js";
@@ -26,6 +28,7 @@ import {
 } from "../../lib/recursos-dos-candidatos.ts";
 import { getSupabaseClient } from "../../lib/supabaseClient.js";
 import { Aviso } from "../../ui/index.js";
+import { irParaLink } from "../chat/ponte.js";
 import { criarEstadoDosRecursos } from "./estado.ts";
 import { FormularioDoRecurso } from "./formulario.tsx";
 import { GavetaDoRecurso } from "./gaveta.tsx";
@@ -43,10 +46,21 @@ import { TabelaDeRecursos } from "./tabela.tsx";
 import "./recursos.css";
 
 /*
-  A tela de Recursos dos candidatos (view `recursos`), um módulo do app:
-  monta direto na `<section id="page-recursos">` do index.html, como Editais,
-  Cronograma e Lista de aprovados. O legado continua dono da classe `.active`
-  da seção e chama `render()` do controlador ao navegar.
+  Recursos dos candidatos, em duas entradas do menu (como Entrevistas):
+  - Painel de recursos (view `recursos`, `modo` "painel"): acompanhar, só
+    leitura — status, exportação, filtros, os quatro KPIs, recorte, gráficos,
+    pendências e a fila; a linha abre o detalhe só para ler. Quem analisa tem
+    "Analisar" (Analisar recursos com os mesmos filtros) e, no detalhe,
+    "Analisar este recurso".
+  - Analisar recursos (view `analisar-recursos`, `modo` "analise"): fazer —
+    Novo recurso, Modelos de resposta, filtros e a fila; a linha abre a gaveta
+    com as ações (etapas, parecer, decisão, ajuste da pontuação, resposta,
+    anexos, editar e excluir). "Ver no painel" volta com os mesmos filtros.
+  Cada uma tem o próprio estado (carga, gaveta), na própria `<section>`
+  (`#page-recursos` e `#page-analisar-recursos`) do index.html. O legado
+  continua dono da classe `.active` da seção e chama `render()` do
+  controlador ao navegar. Os atalhos entre as duas deixam o pedido
+  (`pedirFiltro`: os filtros e o recurso a abrir) e navegam (`irParaLink`).
 
   - Área: a área atual do app (menu lateral → dados-do-monitoramento.ts). Cada
     abertura carrega a área de agora; trocar de área com a tela aberta
@@ -66,6 +80,33 @@ import "./recursos.css";
 */
 
 const NUMEROS_ZERADOS = calcularIndicadores([]);
+
+export type ModoDosRecursos = "painel" | "analise";
+export const VIEW_DO_PAINEL = "recursos";
+export const VIEW_DA_ANALISE = "analisar-recursos";
+
+/* O pedido de um atalho entre as duas telas: os filtros e o recurso a abrir. */
+type PedidoEntreTelas = {
+  filtros?: Partial<FiltrosDosRecursos>;
+  recurso?: IdentificadorDoRecurso;
+};
+
+/* Só os campos de filtro conhecidos, em texto (o pedido vem de outra tela). */
+function filtrosDoPedido(pedido: PedidoEntreTelas): FiltrosDosRecursos {
+  const recebidos = pedido.filtros || {};
+  const proximos = { ...FILTROS_VAZIOS };
+  for (const campo of Object.keys(proximos) as CampoDoFiltroDosRecursos[]) {
+    const valor = recebidos[campo];
+    if (typeof valor === "string") proximos[campo] = valor;
+  }
+  return proximos;
+}
+
+/** Vai para a outra tela de Recursos, com os filtros (e o recurso aberto). */
+export function irParaRecursos(view: string, pedido: PedidoEntreTelas) {
+  pedirFiltro(view, pedido);
+  irParaLink({ view });
+}
 
 function textoDoStatus(
   e: SnapshotDosRecursos,
@@ -92,10 +133,13 @@ function textoDoStatus(
 function TelaDaArea({
   estado,
   e,
+  modo,
 }: {
   estado: EstadoDosRecursos;
   e: SnapshotDosRecursos;
+  modo: ModoDosRecursos;
 }) {
+  const analise = modo === "analise";
   const [filtros, setFiltros] = useState(FILTROS_VAZIOS);
   const escuro = usarTemaEscuro();
   const { carregado, dados, area } = e;
@@ -107,6 +151,8 @@ function TelaDaArea({
   const podeAdministrarModelos = Boolean(
     carregado && dados?.pode_administrar_modelos,
   );
+  // Analisar recursos é de quem registra (editor) ou decide (parecer jurídico).
+  const podeAnalisar = podeEditar || podeDecidir;
   const hoje = diaEmBrasilia();
   const recursos = useMemo(
     () => (dados ? enriquecerRecursos(dados, hoje) : []),
@@ -145,10 +191,27 @@ function TelaDaArea({
   const trocarFiltro = (campo: CampoDoFiltroDosRecursos, valor: string) =>
     setFiltros((atuais) => ({ ...atuais, [campo]: valor }));
   const recarregar = () => void estado.carregar(area);
-  // "Abrir" numa resposta com número da Aya: a tela abre já recortada.
-  usarPedidoDeFiltro("recursos", carregado, (pedido) =>
-    setFiltros((atuais) => filtrosDeRecursos(atuais, pedido, opcoes)),
+  /*
+    "Abrir" numa resposta com número da Aya, ou o atalho da outra tela: a tela
+    abre já recortada (e com o recurso pedido aberto).
+  */
+  usarPedidoDeFiltro(
+    analise ? VIEW_DA_ANALISE : VIEW_DO_PAINEL,
+    carregado,
+    (pedido: PedidoEntreTelas & Parameters<typeof filtrosDeRecursos>[1]) => {
+      if (pedido.filtros) setFiltros(filtrosDoPedido(pedido));
+      else setFiltros((atuais) => filtrosDeRecursos(atuais, pedido, opcoes));
+      if (pedido.recurso && recursos.some((r) => r.id === pedido.recurso))
+        estado.abrirGaveta(pedido.recurso);
+    },
   );
+  const irParaAnalise = (recurso?: IdentificadorDoRecurso) => {
+    estado.fecharGaveta();
+    irParaRecursos(VIEW_DA_ANALISE, {
+      filtros,
+      ...(recurso ? { recurso } : {}),
+    });
+  };
 
   return (
     <div className="ui-tela recursos-tela">
@@ -156,11 +219,20 @@ function TelaDaArea({
         status={textoDoStatus(e, recursos)}
         aoAtualizar={recarregar}
         atualizarDesativado={!area || e.atualizando || e.semSessao}
-        aoExportar={() => estado.exportarCsv(filtrados, origens)}
-        exportarDesativado={!carregado || !filtrados.length}
-        aoNovo={podeEditar ? estado.abrirNovo : undefined}
-        novoDesativado={Boolean(e.acao)}
-        aoModelos={podeAdministrarModelos ? estado.abrirModelos : undefined}
+        {...(analise
+          ? {
+              aoVerPainel: () => irParaRecursos(VIEW_DO_PAINEL, { filtros }),
+              aoNovo: podeEditar ? estado.abrirNovo : undefined,
+              novoDesativado: Boolean(e.acao),
+              aoModelos: podeAdministrarModelos
+                ? estado.abrirModelos
+                : undefined,
+            }
+          : {
+              aoExportar: () => estado.exportarCsv(filtrados, origens),
+              exportarDesativado: !carregado || !filtrados.length,
+              aoAnalisar: podeAnalisar ? () => irParaAnalise() : undefined,
+            })}
       />
 
       {e.semSessao ? (
@@ -186,31 +258,36 @@ function TelaDaArea({
         carregado={carregado}
         aoMudar={trocarFiltro}
         aoLimpar={() => setFiltros(FILTROS_VAZIOS)}
+        analise={analise}
       />
-      <Indicadores
-        indicadores={indicadores}
-        carregado={carregado}
-        filtros={filtros}
-        aoFiltrar={alternarFiltro}
-      />
-      <Recorte ativos={ativos} recursos={filtrados} carregado={carregado} />
-      <Graficos
-        recursos={filtrados}
-        pendencias={pendencias}
-        carregado={carregado}
-        filtros={filtros}
-        aoFiltrar={alternarFiltro}
-        escuro={escuro}
-      />
+      {analise ? null : (
+        <>
+          <Indicadores
+            indicadores={indicadores}
+            carregado={carregado}
+            filtros={filtros}
+            aoFiltrar={alternarFiltro}
+          />
+          <Recorte ativos={ativos} recursos={filtrados} carregado={carregado} />
+          <Graficos
+            recursos={filtrados}
+            pendencias={pendencias}
+            carregado={carregado}
+            filtros={filtros}
+            aoFiltrar={alternarFiltro}
+            escuro={escuro}
+          />
+        </>
+      )}
       <TabelaDeRecursos
         recursos={filtrados}
         total={recursos.length}
         origens={origens}
         carregado={carregado}
-        podeEditar={podeEditar}
         aoAbrir={estado.abrirGaveta}
-        aoNovo={estado.abrirNovo}
+        aoNovo={analise && podeEditar ? estado.abrirNovo : undefined}
         comemoracoes={e.comemoracoes}
+        analise={analise}
       />
 
       {/* Com o formulário aberto, a gaveta sai de cena e volta quando ele fecha. */}
@@ -224,9 +301,15 @@ function TelaDaArea({
           podeDecidir={podeDecidir}
           modelos={dados?.modelos || []}
           area={area}
+          somenteLeitura={!analise}
+          aoAnalisar={
+            !analise && podeAnalisar
+              ? () => irParaAnalise(aberto.id)
+              : undefined
+          }
         />
       ) : null}
-      {e.formulario && (e.formulario.modo === "novo" || emEdicao) ? (
+      {analise && e.formulario && (e.formulario.modo === "novo" || emEdicao) ? (
         <FormularioDoRecurso
           key={e.formulario.abertura}
           estado={estado}
@@ -237,12 +320,18 @@ function TelaDaArea({
           origens={origens}
         />
       ) : null}
-      {e.modelosAbertos ? <PainelDeModelos estado={estado} /> : null}
+      {analise && e.modelosAbertos ? <PainelDeModelos estado={estado} /> : null}
     </div>
   );
 }
 
-export function TelaDeRecursos({ estado }: { estado: EstadoDosRecursos }) {
+export function TelaDeRecursos({
+  estado,
+  modo = "painel",
+}: {
+  estado: EstadoDosRecursos;
+  modo?: ModoDosRecursos;
+}) {
   const e = useSyncExternalStore(estado.assinar, estado.obter);
   const { area: areaDoApp } = usarAreaAtual();
 
@@ -257,16 +346,23 @@ export function TelaDeRecursos({ estado }: { estado: EstadoDosRecursos }) {
       void estado.carregar(areaDoApp);
   }, [estado, areaDoApp]);
 
-  return <TelaDaArea key={e.area || "sem-area"} estado={estado} e={e} />;
+  return (
+    <TelaDaArea key={e.area || "sem-area"} estado={estado} e={e} modo={modo} />
+  );
 }
 
 /**
- * Monta a tela na `<section id="page-recursos">` e devolve o controlador do
- * legado: `render()` a cada abertura (carrega a área atual do app e relê as
- * comemorações), mais o estado e a raiz do React (os testes desmontam por ela).
+ * Monta a tela (o Painel de recursos na `<section id="page-recursos">`; com
+ * `modo: "analise"`, Analisar recursos na `#page-analisar-recursos`) e devolve
+ * o controlador do legado: `render()` a cada abertura (carrega a área atual do
+ * app e relê as comemorações), mais o estado e a raiz do React (os testes
+ * desmontam por ela).
  */
 export function montarRecursos({
-  secao = document.getElementById("page-recursos"),
+  modo = "painel",
+  secao = document.getElementById(
+    modo === "analise" ? "page-analisar-recursos" : "page-recursos",
+  ),
   supabase = getSupabaseClient(),
   toast,
   comemoracoesLigadas = () => false,
@@ -277,6 +373,7 @@ export function montarRecursos({
   imprimir,
   novoId,
 }: OpcoesDoEstadoDosRecursos & {
+  modo?: ModoDosRecursos;
   secao?: HTMLElement | null;
   comemoracoesLigadas?: () => boolean;
   areaAtual?: () => unknown;
@@ -291,8 +388,11 @@ export function montarRecursos({
     novoId,
   });
   const raiz = secao
-    ? montarModulo(secao, <TelaDeRecursos estado={estado} />, {
-        nome: "a tela de recursos",
+    ? montarModulo(secao, <TelaDeRecursos estado={estado} modo={modo} />, {
+        nome:
+          modo === "analise"
+            ? "a tela de análise dos recursos"
+            : "o painel de recursos",
       }).raiz
     : null;
   return {
@@ -303,4 +403,11 @@ export function montarRecursos({
       return estado.carregar(String(areaAtual() ?? "").trim());
     },
   };
+}
+
+/** Analisar recursos (view `analisar-recursos`): a operação. */
+export function montarAnaliseDeRecursos(
+  opcoes: Omit<NonNullable<Parameters<typeof montarRecursos>[0]>, "modo"> = {},
+) {
+  return montarRecursos({ ...opcoes, modo: "analise" });
 }

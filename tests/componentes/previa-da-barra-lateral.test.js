@@ -36,6 +36,7 @@ function arvoreDaPessoa() {
       dashboard: true,
       nucleo: true,
       recursos: true,
+      "analisar-recursos": true,
       approved: true,
       config: true,
     },
@@ -154,9 +155,13 @@ describe("a prévia é a barra lateral de verdade", () => {
       previa.querySelector(".menu-seletor__rotulo strong").textContent,
     ).toBe("Projetos");
     expect(
-      previa.querySelector('.menu-item[data-view="recursos"] .menu-item__selo')
-        ?.textContent,
+      previa.querySelector(
+        '.menu-item[data-view="analisar-recursos"] .menu-item__selo',
+      )?.textContent,
     ).toBe("BETA");
+    expect(
+      previa.querySelector('.menu-item[data-view="recursos"]').textContent,
+    ).toBe("Painel de recursos");
     expect(
       previa.querySelector('.menu-item.active[aria-current="page"]').dataset
         .secao,

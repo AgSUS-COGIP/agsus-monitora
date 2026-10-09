@@ -1,4 +1,5 @@
 import {
+  canAnalisarRecursos,
   canViewAvaliacaoDocumental,
   canViewClassificacao,
   canViewCore,
@@ -91,6 +92,10 @@ const BLOQUEIOS = Object.freeze({
     "Sem permissão para a Avaliação documental.",
   ],
   recursos: [canViewRecursos, "Sem permissão para Recursos."],
+  "analisar-recursos": [
+    canAnalisarRecursos,
+    "Sem permissão para analisar recursos.",
+  ],
   entrevistas: [canViewEntrevistas, "Sem permissão para Entrevistas."],
   "conduzir-entrevistas": [
     canViewEntrevistas,

@@ -470,9 +470,24 @@ function CartaoDoAjuste({ ajuste, children }) {
   );
 }
 
-export function SecaoDoAjuste({ estado, recurso: r, acao }) {
+/* `somenteLeitura` (Painel de recursos): as versões, sem propor, aprovar nem cancelar. */
+export function SecaoDoAjuste({
+  estado,
+  recurso: r,
+  acao,
+  somenteLeitura = false,
+}) {
   const e = useSyncExternalStore(estado.assinar, estado.obter);
-  const dados = e.ajustes.get(r.id);
+  const lidos = e.ajustes.get(r.id);
+  const dados =
+    somenteLeitura && lidos && !lidos.erro
+      ? {
+          ...lidos,
+          pode_propor: false,
+          pode_aprovar: false,
+          pode_cancelar: false,
+        }
+      : lidos;
   const previa = e.previas.get(r.id) || null;
   const [modo, setModo] = useState(null); // { tipo: propor|aprovar|cancelar, ajuste }
 

@@ -139,7 +139,9 @@ describe("tours das telas", () => {
     const leitor = perfil({ ...LEITOR_DE_TUDO.permissoes });
     const editor = perfil({ ...LEITOR_DE_TUDO.permissoes, recursos: "editor" });
     const titulos = (p) =>
-      tourDaPagina({ view: "recursos", perfil: p }).passos.map((x) => x.titulo);
+      tourDaPagina({ view: "analisar-recursos", perfil: p }).passos.map(
+        (x) => x.titulo,
+      );
     expect(titulos(leitor)).not.toContain("Novo recurso");
     expect(titulos(editor)).toContain("Novo recurso");
     // Sem perfil (testes, legado), o tour não corta nada.
@@ -194,6 +196,7 @@ describe("tours das telas", () => {
           componentes.includes(`tour="${id}"`) ||
           componentes.includes(`"data-tour": "${id}"`) ||
           componentes.includes(`? "${id}"`) ||
+          componentes.includes(`: "${id}"`) ||
           prefixos.some((prefixo) => id.startsWith(prefixo)),
         id,
       ).toBe(true);

@@ -37,8 +37,8 @@ export const ACOES_COM_PERMISSAO = Object.freeze([
     "decidir recursos (deferir, indeferir ou devolver)",
     (p) => hasResource(p, "recursos_parecer", 2),
     "a permissão Parecer jurídico (Recursos)",
-    "Os botões de decisão aparecem no recurso aberto, quando ele está aguardando parecer.",
-    "recursos",
+    "Os botões de decisão aparecem no recurso aberto em Analisar recursos, quando ele está aguardando parecer.",
+    "analisar-recursos",
   ),
   acao(
     "modelos-de-resposta",
@@ -46,8 +46,8 @@ export const ACOES_COM_PERMISSAO = Object.freeze([
     "gerenciar os modelos de resposta dos recursos",
     (p) => hasResource(p, "recursos", 3),
     "o nível Administrador em Recursos",
-    "O botão Modelos fica no topo de Recursos.",
-    "recursos",
+    "O botão Modelos de resposta fica no topo de Analisar recursos.",
+    "analisar-recursos",
   ),
   acao(
     "ajuste-de-pontuacao",
@@ -55,8 +55,8 @@ export const ACOES_COM_PERMISSAO = Object.freeze([
     "propor ajuste de pontuação num recurso",
     canEditRecursos,
     "o nível Editor em Recursos (aprovar o ajuste é de quem tem Parecer jurídico)",
-    "O ajuste fica no recurso aberto, na parte Ajuste da pontuação.",
-    "recursos",
+    "O ajuste fica no recurso aberto em Analisar recursos, na parte Ajuste da pontuação.",
+    "analisar-recursos",
   ),
   acao(
     "novo-recurso",
@@ -64,8 +64,8 @@ export const ACOES_COM_PERMISSAO = Object.freeze([
     "registrar recursos",
     canEditRecursos,
     "o nível Editor em Recursos",
-    "O botão Novo recurso fica no topo de Recursos.",
-    "recursos",
+    "O botão Novo recurso fica no topo de Analisar recursos.",
+    "analisar-recursos",
   ),
   acao(
     "liberar-entrevista",

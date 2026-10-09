@@ -175,6 +175,21 @@ export function canEditRecursos(profile) {
   return ["admin", "edital_gestor"].includes(normalizeRole(profile));
 }
 
+/*
+  Analisar recursos (a operação: registrar, enviar ao parecer, decidir,
+  responder, ajustar a pontuação): quem edita Recursos ou dá o parecer
+  jurídico, e vê Recursos. Quem só acompanha (leitor) fica com o Painel de
+  recursos. O banco confere cada ação (pode_editar, pode_decidir).
+*/
+export function canAnalisarRecursos(profile) {
+  if (!canViewRecursos(profile)) return false;
+  if (profile?.permissoes)
+    return (
+      canEditRecursos(profile) || hasResource(profile, "recursos_parecer", 2)
+    );
+  return canEditRecursos(profile);
+}
+
 export function canManageSubJudice(profile) {
   if (profile?.permissoes) return hasResource(profile, "aprovados", 2);
   return hasLevel(profile, "contratador");
@@ -294,6 +309,7 @@ export function paginasPermitidas(profile) {
     "conduzir-entrevistas": canViewEntrevistas(profile),
     classificacao: canViewClassificacao(profile),
     recursos: canViewRecursos(profile),
+    "analisar-recursos": canAnalisarRecursos(profile),
     selecao: canViewSelecao(profile),
     config: podeAbrirConfiguracoes(profile),
   };
