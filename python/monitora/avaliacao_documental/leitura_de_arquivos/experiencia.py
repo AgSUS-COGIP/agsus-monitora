@@ -15,17 +15,27 @@ texto, e a leitura vai por três caminhos, nesta ordem:
   3. holerites: as competências (mês/ano) viram um vínculo do primeiro ao
      último mês.
 
-De cada um: empregador, cargo, início, fim (ou atual: fim = a data de emissão
-do documento, se houver), carga horária semanal (se o texto disser) e dias
-(fim − início + 1; atual sem emissão conta até hoje). Período com o fim antes
-do início é descartado.
+De cada um: empregador, cargo (sem o código: "001-TECNICO DE ENFERMAGEM
+3222-05" → "Técnico de enfermagem", o CBO à parte em `cbo`), início, fim,
+atual, carga horária semanal (se o texto disser) e dias. Vínculo sem data de
+saída é ATUAL e fica com fim None; os dias dele são contados até a data de
+emissão do documento (`dias_ate`) ou, sem ela, até hoje (`dias_ate` None) — só
+para o número exibido. Período com o fim antes do início é descartado, e
+também o "vínculo" que começa na própria data de emissão sem empregador (o
+rodapé "emitido em") e o repetido sem empregador com o mesmo início de outro.
+
+Sobreposição (`sobrepostos`): só conta quando dois vínculos dividem mais de um
+dia (o atual que começa no dia em que o anterior acabou não conta). Com
+empregadores diferentes é PERIODO_CONCOMITANTE (aviso leve: dois empregos ao
+mesmo tempo podem ser legítimos); com o mesmo empregador, ou sem saber, é
+PERIODO_SOBREPOSTO.
 """
 
 import re
 from datetime import date
 
 from .pessoas import nome_confere
-from .texto import Data, datas_no_texto, dobrar, iso, trecho
+from .texto import Data, datas_no_texto, dobrar, iso, numa_linha, trecho
 
 TIPOS = (
     ("CTPS", r"carteira de trabalho|ctps|contratos? de trabalho .{0,40}admiss|carteira digital"),
@@ -45,7 +55,7 @@ _ADMISSAO = re.compile(
 )
 _DESLIGAMENTO = re.compile(
     r"(?:data\s+(?:de\s+|da\s+)?)?(?:desligamento|demissao|rescisao|saida|termino|encerramento|afastamento definitivo)"
-    r"|fim\s+do\s+(?:contrato|vinculo)|desligad[oa]\s+em|exonerad[oa]\s+em"
+    r"|fim\s+do\s+(?:contrato|vinculo)|(?:desligad|exonerad|demitid|dispensad|rescindid|encerrad)[oa]\s+em"
 )
 _EMPREGADOR = re.compile(
     r"(?<![a-z])(?:empregador|razao social|nome empresarial|empresa|contratante|orgao|instituicao)\s*:?\s*"
@@ -60,11 +70,39 @@ _FIM_DO_CAMPO = re.compile(
 _ATUAL = re.compile(
     r"ate\s+(?:a\s+presente\s+data|o\s+presente\s+momento|o\s+momento|os\s+dias\s+atuais|hoje|a\s+data\s+atual|o\s+presente)"
     r"|atualmente|em\s+exercicio|em\s+aberto|vinculo\s+ativo|ate\s+a\s+presente|sem\s+data\s+de\s+(?:saida|desligamento)"
+    r"|vem\s+(?:exercendo|trabalhando|desempenhando|atuando)|faz\s+parte\s+do\s+quadro|(?:e|esta)\s+lotad[oa]"
+    r"|permanece|continua\s+(?:a\s+)?(?:exercer|trabalhar|atuar)"
 )
 _CONECTOR = re.compile(r"\s*(?:a|ate|à|-|–|—|e|ao)\s*")
 _DESDE = re.compile(
-    r"(?:desde|a\s+partir\s+de|admitid[oa]\s+em|iniciad[oa]\s+em|inicio\s+em|ingressou\s+em|com\s+inicio\s+em)\s*$"
+    r"(?:desde|a\s+partir\s+de|(?:admitid|contratad|nomead|empossad|iniciad)[oa]\s+(?:\w+\s+){0,3}em|inicio\s+em|"
+    r"ingressou\s+(?:\w+\s+){0,3}em|com\s+inicio\s+em|em\s+exercicio\s+desde|data\s+de\s+admissao\s*:?)\s*$"
 )
+_ATE_A_SAIDA = re.compile(
+    r"(?:(?<![a-z])ate(?:\s+(?:o\s+dia|a\s+data\s+de|o\s+mes\s+de|em))?|"
+    r"(?:desligad|exonerad|demitid|dispensad|rescindid|encerrad|afastad)[oa]\s+(?:\w+\s+){0,2}em|"
+    r"(?:desligamento|demissao|rescisao|saida|termino|encerramento)\s+(?:em|no\s+dia)?)\s*:?\s*$"
+)
+# Declaração de tempo de serviço/vínculo: o candidato trabalha/trabalhou ali (não é declaração de curso).
+DECLARACAO_DE_VINCULO = re.compile(
+    r"(?:trabalh|exerc|admitid|contratad|prestou\s+servic|presta\s+servic|funcionari|vinculo|empregad|lotad|"
+    r"tempo\s+de\s+servico|cargo\s+de|funcao\s+de|servidor)"
+)
+_CBO = re.compile(r"(?:cbo\s*:?\s*)?(?<!\d)(\d{4})\s?-\s?(\d)\s?(\d)(?!\d)|cbo\s*:?\s*(\d{4})(\d{2})(?!\d)")
+_CODIGO_NA_FRENTE = re.compile(r"^\s*\d{1,4}\s*[-–.)]\s*")
+_NAO_E_CARGO = re.compile(r"^(?:exercid[oa]|atual|anterior|cbo|codigo|n[ºo°]?)$")
+_ACENTOS_DO_CARGO = {
+    "tecnico": "técnico", "tecnica": "técnica", "medico": "médico", "medica": "médica", "saude": "saúde",
+    "farmaceutico": "farmacêutico", "farmaceutica": "farmacêutica", "psicologo": "psicólogo",
+    "psicologa": "psicóloga", "odontologo": "odontólogo", "cirurgiao": "cirurgião", "indigena": "indígena",
+    "servicos": "serviços", "administracao": "administração", "gestao": "gestão", "coordenacao": "coordenação",
+    "nutricao": "nutrição", "fonoaudiologo": "fonoaudiólogo", "fonoaudiologa": "fonoaudióloga",
+    "analise": "análise", "biologo": "biólogo", "biologa": "bióloga", "farmacia": "farmácia",
+    "clinico": "clínico", "clinica": "clínica", "laboratorio": "laboratório", "comunitario": "comunitário",
+    "comunitaria": "comunitária", "veterinario": "veterinário", "veterinaria": "veterinária",
+    "assistencia": "assistência", "obstetrica": "obstétrica", "familia": "família", "publica": "pública",
+    "seguranca": "segurança",
+}  # fmt: skip
 _COMPETENCIA = re.compile(r"(?:competencia|referencia|mes/ano|periodo de referencia|mes de referencia)\s*:?\s*$")
 _CARGA_SEMANAL = re.compile(
     r"(\d{1,2})\s*(?:h|horas?)\s*(?:semanais|semanal|por\s+semana|/\s*semana|/\s*sem)"
@@ -85,6 +123,31 @@ def tipo_do_documento(dobrado):
         if re.search(padrao, dobrado):
             return codigo
     return "OUTRO"
+
+
+def limpar_cargo(valor):
+    """(cargo, cbo): sem o código na frente nem o CBO ("001-TECNICO DE ENFERMAGEM 3222-05" →
+    ("Técnico de enfermagem", "3222-05")); cargo None se sobrar só rótulo ("exercido")."""
+    if not valor:
+        return None, None
+    cbo = None
+    m = _CBO.search(dobrar(valor))
+    if m:
+        g = m.groups()
+        cbo = f"{g[0]}-{g[1]}{g[2]}" if g[0] else f"{g[3]}-{g[4]}"
+        valor = valor[: m.start()] + " " + valor[m.end() :]
+    valor = re.sub(r"(?i)(?<![a-zà-ÿ])cbo(?![a-zà-ÿ])\s*:?", " ", valor)
+    valor = numa_linha(_CODIGO_NA_FRENTE.sub("", valor)).strip(" -–:;,.")
+    palavras = valor.split()
+    while palavras and _NAO_E_CARGO.match(dobrar(palavras[0]).strip(".:")):
+        palavras.pop(0)
+    valor = " ".join(palavras).strip(" -–:;,.")
+    if not re.search(r"[A-Za-zÀ-ÿ]{3}", valor):
+        return None, cbo
+    if valor == valor.upper():
+        valor = " ".join(_ACENTOS_DO_CARGO.get(p, p) for p in valor.lower().split())
+        valor = valor[0].upper() + valor[1:]
+    return valor, cbo
 
 
 def _valor_do_campo(original, dobrado, posicao, maximo=120):
@@ -149,14 +212,18 @@ def _vinculo(documento, empregador, cargo, inicio, fim, atual, carga, pagina):
     }
 
 
-def _campo_no_trecho(padrao, original, dobrado, inicio, fim, maximo, do_fim=False):
+def _campo_no_trecho(padrao, original, dobrado, inicio, fim, maximo, do_fim=False, aceita=None):
     """O valor do primeiro (ou do último, `do_fim`) rótulo com valor no trecho [inicio, fim)."""
     achados = list(padrao.finditer(dobrado, inicio, fim))
     for r in reversed(achados) if do_fim else achados:
         valor = _valor_do_campo(original, dobrado, r.end(), maximo)
-        if valor:
+        if valor and (aceita is None or aceita(valor)):
             return valor
     return None
+
+
+def _cargo_de_verdade(valor):
+    return limpar_cargo(valor)[0] is not None
 
 
 def _rotulados(original, dobrado, datas, documento, pagina_de):
@@ -168,6 +235,11 @@ def _rotulados(original, dobrado, datas, documento, pagina_de):
     itens = []
     admissoes = list(_ADMISSAO.finditer(dobrado))
     consumido = 0
+    # Layout com os rótulos ANTES da admissão (CTPS: Empregador, Cargo, Admissão): o rótulo depois da
+    # admissão é do vínculo seguinte e não se procura ali (senão um sub-registro rouba o empregador).
+    rotulos_antes = bool(admissoes) and bool(
+        _EMPREGADOR.search(dobrado, max(0, admissoes[0].start() - 600), admissoes[0].start())
+    )
     for i, m in enumerate(admissoes):
         entrada = _data_depois(datas, m.end())
         if not entrada:
@@ -179,12 +251,19 @@ def _rotulados(original, dobrado, datas, documento, pagina_de):
         d = _DESLIGAMENTO.search(depois)
         if d:
             saida = _data_depois(datas, entrada.fim + d.end())
+        if not saida and _DESLIGAMENTO.search(dobrado, m.end(), entrada.inicio):
+            # Rótulos no cabeçalho da tabela ("Admissão  Desligamento" e, embaixo, as duas datas).
+            seguinte = next((x for x in datas if x.inicio >= entrada.fim), None)
+            if seguinte and re.fullmatch(r"[\s|]{0,30}", dobrado[entrada.fim : seguinte.inicio]):
+                saida = seguinte
         atual = not saida and (documento == "CTPS" or bool(_ATUAL.search(depois)))
+        proximo_empregador = _EMPREGADOR.search(dobrado, entrada.fim, ate)
+        ate_dos_campos = proximo_empregador.start() if rotulos_antes and proximo_empregador else ate
         empregador = _campo_no_trecho(_EMPREGADOR, original, dobrado, antes_de, m.start(), 120, True) or (
-            _campo_no_trecho(_EMPREGADOR, original, dobrado, entrada.fim, ate, 120)
+            None if rotulos_antes else _campo_no_trecho(_EMPREGADOR, original, dobrado, entrada.fim, ate, 120)
         )
-        cargo = _campo_no_trecho(_CARGO, original, dobrado, antes_de, m.start(), 80, True) or (
-            _campo_no_trecho(_CARGO, original, dobrado, entrada.fim, ate, 80)
+        cargo = _campo_no_trecho(_CARGO, original, dobrado, antes_de, m.start(), 80, True, _cargo_de_verdade) or (
+            _campo_no_trecho(_CARGO, original, dobrado, entrada.fim, ate_dos_campos, 80, aceita=_cargo_de_verdade)
         )
         consumido = saida.fim if saida else entrada.fim
         itens.append(
@@ -216,11 +295,27 @@ def _periodos(original, dobrado, datas, documento, pagina_de):
     for a in datas:
         if id(a) in usadas:
             continue
-        antes = dobrado[max(0, a.inicio - 40) : a.inicio]
+        antes = dobrado[max(0, a.inicio - 60) : a.inicio]
         depois = dobrado[a.fim : a.fim + 60]
         if _DESDE.search(antes) or (_ATUAL.search(depois) and re.search(r"(?:de|desde)\s*$", antes)):
             usadas.add(id(a))
-            itens.append((a, None, True))
+            # "contratada em A ... e trabalhou até B" / "admitido em A e desligado em B": B fecha o período.
+            fim = next(
+                (
+                    b
+                    for b in datas
+                    if b.inicio > a.fim
+                    and id(b) not in usadas
+                    and b.inicio - a.fim <= 250
+                    and _ATE_A_SAIDA.search(dobrado[max(a.fim, b.inicio - 40) : b.inicio])
+                ),
+                None,
+            )
+            if fim is not None and fim.ultimo_dia() >= a.primeiro_dia():
+                usadas.add(id(fim))
+                itens.append((a, fim, False))
+            else:
+                itens.append((a, None, True))
     saida = []
     for a, b, atual in itens:
         contexto = dobrado[max(0, a.inicio - 400) : a.inicio]
@@ -293,6 +388,22 @@ def dias_do_vinculo(inicio, fim, hoje):
     return max(0, (final - inicio).days + 1) if inicio and final and final >= inicio else 0
 
 
+def _sem_repetidos(itens, emissao):
+    """Tira o rodapé (começa na data de emissão, sem saída nem empregador) e o vínculo sem empregador
+    com o mesmo início de outro que tem (o cargo dele passa para o outro, se faltar)."""
+    saida = []
+    for it in itens:
+        if not it["fim"] and not it["empregador"] and emissao and it["inicio"] == emissao:
+            continue
+        if not it["empregador"]:
+            par = next((o for o in itens if o is not it and o["empregador"] and o["inicio"] == it["inicio"]), None)
+            if par is not None:
+                par["cargo"] = par["cargo"] or it["cargo"]
+                continue
+        saida.append(it)
+    return saida
+
+
 def vinculos(paginas, nome_do_candidato=None, hoje=None):
     """Os itens VINCULO do arquivo, na ordem do texto, sem repetição."""
     hoje = hoje or date.today()
@@ -309,19 +420,24 @@ def vinculos(paginas, nome_do_candidato=None, hoje=None):
         itens = _periodos(original, dobrado, datas, documento, pagina_de)
     cabecalho = empregador_do_cabecalho(original, dobrado)
     emissao = data_de_emissao(dobrado, datas)
+    itens = _sem_repetidos([it for it in itens if not (it["fim"] and it["fim"] < it["inicio"])], emissao)
     vistos, saida = set(), []
     for it in itens:
-        if it["fim"] and it["fim"] < it["inicio"]:
-            continue
         chave = (it["inicio"], it["fim"])
         if chave in vistos:
             continue
         vistos.add(chave)
         if not it["empregador"]:
             it["empregador"] = cabecalho
-        fim = it["fim"] or (emissao if it["atual"] and emissao and emissao >= it["inicio"] else None)
-        it["dias"] = dias_do_vinculo(it["inicio"], fim, hoje)
-        it["fim"] = fim
+        it["cargo"], cbo = limpar_cargo(it["cargo"])
+        if cbo:
+            it["cbo"] = cbo
+        it["atual"] = bool(it["atual"]) and not it["fim"]
+        # Atual: fim None; os dias vão até a emissão do documento (dias_ate) ou, sem ela, até hoje.
+        ate = emissao if it["atual"] and emissao and emissao >= it["inicio"] else None
+        it["dias"] = dias_do_vinculo(it["inicio"], it["fim"] or ate, hoje)
+        if it["atual"]:
+            it["dias_ate"] = iso(ate)
         it["inicio"], it["fim"] = iso(it["inicio"]), iso(it["fim"])
         if not it["carga_semanal"]:
             it["carga_semanal"] = carga_semanal(dobrado)
@@ -330,18 +446,39 @@ def vinculos(paginas, nome_do_candidato=None, hoje=None):
     return saida[:MAXIMO_DE_VINCULOS]
 
 
-def sobrepostos(itens):
-    """Os índices dos vínculos que se sobrepõem a outro do mesmo arquivo."""
-    marcados = set()
-    datas = [
-        (i, it.get("inicio"), it.get("fim") or "9999-12-31")
-        for i, it in enumerate(itens)
-        if it.get("tipo") == "VINCULO"
-    ]
-    for x in range(len(datas)):
-        for y in range(x + 1, len(datas)):
-            i, a1, b1 = datas[x]
-            j, a2, b2 = datas[y]
-            if a1 and a2 and a1 <= b2 and a2 <= b1:
-                marcados.update({i, j})
-    return sorted(marcados)
+def _mesmo_empregador(a, b):
+    x, y = dobrar(a or "").strip(), dobrar(b or "").strip()
+    return not x or not y or x == y or x.startswith(y) or y.startswith(x)
+
+
+def _dia(valor):
+    try:
+        return date.fromisoformat(valor) if valor else None
+    except ValueError:
+        return None
+
+
+def sobrepostos(itens, hoje=None):
+    """{índice: código} dos vínculos que dividem mais de um dia com outro do arquivo:
+    PERIODO_SOBREPOSTO (mesmo empregador ou sem saber) ou PERIODO_CONCOMITANTE (empregadores diferentes)."""
+    hoje = hoje or date.today()
+    periodos = []
+    for i, it in enumerate(itens):
+        inicio = _dia(it.get("inicio"))
+        if it.get("tipo") != "VINCULO" or not inicio:
+            continue
+        fim = _dia(it.get("fim")) or ((_dia(it.get("dias_ate")) or hoje) if it.get("atual") else None)
+        if fim:
+            periodos.append((i, inicio, fim, it.get("empregador")))
+    marcados = {}
+    for x in range(len(periodos)):
+        for y in range(x + 1, len(periodos)):
+            i, a1, b1, e1 = periodos[x]
+            j, a2, b2, e2 = periodos[y]
+            if (min(b1, b2) - max(a1, a2)).days + 1 <= 1:
+                continue
+            codigo = "PERIODO_SOBREPOSTO" if _mesmo_empregador(e1, e2) else "PERIODO_CONCOMITANTE"
+            for k in (i, j):
+                if marcados.get(k) != "PERIODO_SOBREPOSTO":
+                    marcados[k] = codigo
+    return marcados

@@ -42,6 +42,9 @@ export type ItemLido = {
   atual?: boolean;
   carga_semanal?: number | null;
   dias?: number | null;
+  /** Vínculo atual (sem fim): até quando os dias foram contados (a emissão do documento). */
+  dias_ate?: string | null;
+  cbo?: string | null;
   documento?: string | null;
   // REGISTRO
   conselho?: string | null;
@@ -218,7 +221,13 @@ export function textoDoItemLido(item: ItemLido): string {
         : "?";
     partes.push(`${dataCurta(item.inicio) || "?"} a ${fim}`);
     if (item.carga_semanal) partes.push(`${item.carga_semanal} h/sem`);
-    if (item.dias) partes.push(`${mil(item.dias)} dias`);
+    if (item.dias)
+      partes.push(
+        `${mil(item.dias)} dias` +
+          (item.atual && !item.fim && dataCurta(item.dias_ate)
+            ? ` até ${dataCurta(item.dias_ate)}`
+            : ""),
+      );
   }
   return partes.join(" · ");
 }
@@ -229,9 +238,12 @@ export function alertasDoItemLido(
   leitura: LeituraDoArquivo,
 ): AlertaLido[] {
   const doArquivo = leitura.alertas.filter((a) =>
-    ["NOME_DIVERGENTE", "CPF_DIVERGENTE", "LEITURA_DUVIDOSA"].includes(
-      a.codigo,
-    ),
+    [
+      "NOME_DIVERGENTE",
+      "NOME_A_CONFERIR",
+      "CPF_DIVERGENTE",
+      "LEITURA_DUVIDOSA",
+    ].includes(a.codigo),
   );
   return [...doArquivo, ...(item.alertas ?? [])];
 }

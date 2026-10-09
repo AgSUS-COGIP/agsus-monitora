@@ -19,6 +19,8 @@ AJUDAR o avaliador (quem decide é ele):
     experiencia  vínculos: empregador, cargo, início, fim (ou atual), carga
                  semanal e dias (CTPS, declaração, contrato, certidão, holerite)
     identidade   identidade e registro em conselho: o tipo do documento
+    classificacao o tipo do documento sem item (comprovante de residência,
+                 título de eleitor, histórico escolar, certidão, registro…)
     leitura      `ler_documento`: junta tudo, gera os alertas e o resumo
 
 Os módulos de interpretação são só biblioteca padrão; pdfplumber, Pillow e
@@ -28,4 +30,4 @@ scripts/robo-empregare/requirements.txt). Testes: tests/python/test_leitura_de_a
 """
 
 # Mudou a interpretação → suba a versão: o robô relê o que foi lido com versão anterior.
-VERSAO_DO_EXTRATOR = "2026.10.1"
+VERSAO_DO_EXTRATOR = "2026.10.2"
