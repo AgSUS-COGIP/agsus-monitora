@@ -910,5 +910,177 @@ class FluxoDeUmaVaga(unittest.TestCase):
         self.assertEqual(self.robo.contagem_por_origem([{"vaga": "1", "origem": "outra"}]), "outra 1")
 
 
+class CentralFalsa:
+    """
+    O portal sem Chrome para o fluxo de exportação: cada pedido vira uma linha
+    na Central, que (como a Empregare) só mostra as `visiveis` mais recentes.
+    `falha_ao_pedir`: códigos cuja 1ª exportação não é pedida; `atrasadas`: a 1ª
+    exportação nunca aparece (só a 2ª); `nunca`: nenhuma aparece.
+    """
+
+    def __init__(self, visiveis=15, falha_ao_pedir=(), atrasadas=(), nunca=()):
+        self.visiveis = visiveis
+        self.falha_ao_pedir = set(falha_ao_pedir)
+        self.atrasadas = set(atrasadas)
+        self.nunca = set(nunca)
+        self.exportacoes = []
+        self.eventos = []  # ("exportar" | "capturar" | "baixar", código), na ordem
+        self.pedidos = {}
+        self.paginas_da_central = 1
+
+    def exportar_vaga(self, codigo):
+        self.pedidos[codigo] = self.pedidos.get(codigo, 0) + 1
+        self.eventos.append(("exportar", codigo))
+        if codigo in self.falha_ao_pedir and self.pedidos[codigo] == 1:
+            return False
+        sumida = codigo in self.nunca or (codigo in self.atrasadas and self.pedidos[codigo] == 1)
+        n = len(self.exportacoes) + 1
+        self.exportacoes.append(
+            {
+                "id": str(n),
+                "vaga": codigo,
+                "origem": nav.ORIGEM_EXPORTACAO,
+                "data": "09/10/2026 09:00",
+                "situacao": "Processando" if sumida else "Disponível",
+                "href": "" if sumida else f"/Exports/Download/{n}",
+            }
+        )
+        return True
+
+    def capturar_candidatos(self, codigo):
+        self.eventos.append(("capturar", codigo))
+        return {"vaga_interno": f"Id{codigo}|", "candidatos": {}, "respostas": {}}
+
+    def abrir_central(self):
+        pass
+
+    def ler_central(self):
+        return list(reversed(self.exportacoes))[: self.visiveis]
+
+    def baixar(self, linha, pasta):
+        self.eventos.append(("baixar", linha["vaga"]))
+        return os.path.join(pasta, linha["vaga"] + ".xlsx")
+
+    def codigos(self, evento):
+        return [c for e, c in self.eventos if e == evento]
+
+
+class LotesDeExportacao(unittest.TestCase):
+    def setUp(self):
+        sys.modules.pop("robo_empregare", None)
+        import robo_empregare
+
+        self.robo = robo_empregare
+        self.logs = []
+        self.gravadas = []
+        self.antigos = (robo_empregare.registrar, robo_empregare.gravar_vaga)
+        robo_empregare.registrar = self.logs.append
+
+        def gravar(_config, _sync, codigo, _caminho, enderecos=None):
+            self.gravadas.append(codigo)
+            return "GRAVADA"
+
+        robo_empregare.gravar_vaga = gravar
+        self.vagas = [{"vaga": str(999990100 + i), "edital": "114/2026"} for i in range(1, 31)]
+
+    def tearDown(self):
+        self.robo.registrar, self.robo.gravar_vaga = self.antigos
+
+    def processar(self, portal, vagas=None, agora=lambda: 0.0, contagem=None):
+        return self.robo.processar_vagas(
+            portal,
+            {},
+            "gh-x",
+            vagas or self.vagas,
+            "pasta-falsa",
+            dormir=lambda _: None,
+            agora=agora,
+            relogio=lambda: datetime(2026, 10, 9, 9, 0),
+            contagem=contagem,
+        )
+
+    def test_trinta_vagas_em_tres_lotes_de_dez_com_central_de_quinze(self):
+        portal = CentralFalsa(visiveis=15)
+        contagem = {}
+        self.assertEqual(self.processar(portal, contagem=contagem), (30, 0))
+        self.assertEqual(contagem, {"baixadas": 30, "falhas": 0})
+        self.assertEqual(self.robo.TAMANHO_DO_LOTE_DE_EXPORTACAO, 10)
+        codigos = [v["vaga"] for v in self.vagas]
+        self.assertEqual(sorted(self.gravadas), sorted(codigos))
+        # Cada lote baixa antes de o próximo pedir: a Central de 15 não derruba o lote seguinte.
+        exportar, baixar = [], []
+        for i, (evento, codigo) in enumerate(portal.eventos):
+            (exportar if evento == "exportar" else baixar if evento == "baixar" else []).append((codigo, i))
+        posicao = dict(exportar)
+        baixou = dict(baixar)
+        for n in range(3):
+            lote, seguinte = codigos[n * 10 : n * 10 + 10], codigos[n * 10 + 10 : n * 10 + 11]
+            self.assertTrue(all(baixou[c] < posicao[s] for c in lote for s in seguinte))
+        self.assertTrue(all(n == 1 for n in portal.pedidos.values()))
+        self.assertEqual(sum("Lote " in l and "vaga(s) (" in l for l in self.logs), 3)
+        self.assertIn("Lote 3/3: 10 baixada(s)", "\n".join(self.logs))
+        self.assertFalse(any("Segunda passada" in l for l in self.logs))
+
+    def test_sem_lotes_a_central_de_quinze_perderia_metade_e_a_segunda_passada_recupera(self):
+        antigo = self.robo.TAMANHO_DO_LOTE_DE_EXPORTACAO
+        self.robo.TAMANHO_DO_LOTE_DE_EXPORTACAO = 30
+        try:
+            portal = CentralFalsa(visiveis=15)
+            self.assertEqual(self.processar(portal), (30, 0))
+        finally:
+            self.robo.TAMANHO_DO_LOTE_DE_EXPORTACAO = antigo
+        primeiras = [v["vaga"] for v in self.vagas[:15]]
+        # As 15 primeiras saíram da página da Central e foram pedidas de novo (sem recapturar links).
+        self.assertEqual({c for c, n in portal.pedidos.items() if n == 2}, set(primeiras))
+        self.assertEqual(sorted(portal.codigos("capturar")), sorted(v["vaga"] for v in self.vagas))
+        self.assertIn("Segunda passada: 15 de 15 vaga(s) baixada(s) da Central.", self.logs)
+
+    def test_segunda_passada_so_das_que_nao_apareceram(self):
+        atrasada, sumida, recusada = self.vagas[2]["vaga"], self.vagas[12]["vaga"], self.vagas[25]["vaga"]
+        portal = CentralFalsa(atrasadas=[atrasada], nunca=[sumida], falha_ao_pedir=[recusada])
+        contagem = {}
+        self.assertEqual(self.processar(portal, contagem=contagem), (29, 1))
+        self.assertEqual(contagem, {"baixadas": 29, "falhas": 1})
+        self.assertEqual({c: n for c, n in portal.pedidos.items() if n > 1}, {atrasada: 2, sumida: 2, recusada: 2})
+        segunda = [l for l in self.logs if l.startswith("Segunda passada: pedindo")]
+        self.assertEqual(len(segunda), 1)
+        self.assertIn("3 vaga(s)", segunda[0])
+        # Links capturados uma vez só; a que não foi pedida no lote é capturada na segunda passada.
+        self.assertEqual(portal.codigos("capturar").count(atrasada), 1)
+        self.assertEqual(portal.codigos("capturar").count(recusada), 1)
+        self.assertNotIn(sumida, self.gravadas)
+        self.assertIn(f"Segunda passada: 2 de 3 vaga(s) baixada(s) da Central; com falha: {sumida}.", self.logs)
+
+    def test_sem_tempo_nao_faz_segunda_passada(self):
+        relogio = iter([0.0] + [self.robo.PRAZO_PARA_SEGUNDA_PASSADA] * 100)
+        portal = CentralFalsa(nunca=[self.vagas[0]["vaga"]])
+        self.assertEqual(self.processar(portal, self.vagas[:10], agora=lambda: next(relogio)), (9, 1))
+        self.assertEqual(portal.pedidos[self.vagas[0]["vaga"]], 1)
+        self.assertTrue(any(l.startswith("Sem tempo para a segunda passada") for l in self.logs))
+
+    def test_sem_tempo_nao_comeca_outro_lote(self):
+        tempos = iter([0.0, 0.0] + [self.robo.PRAZO_PARA_NOVO_LOTE] * 100)
+        portal = CentralFalsa()
+        self.assertEqual(self.processar(portal, agora=lambda: next(tempos)), (10, 20))
+        self.assertEqual(len(portal.pedidos), 10)
+
+    def test_central_passa_as_paginas(self):
+        paginas = [
+            [{"id": str(i), "vaga": str(i)} for i in range(1, 16)],
+            [{"id": str(i), "vaga": str(i)} for i in range(16, 31)],
+            [{"id": "30", "vaga": "30"}],  # página que não traz nada novo encerra
+        ]
+        lidas = iter(paginas)
+        linhas, n = nav.percorrer_central(lambda: next(lidas), lambda: True)
+        self.assertEqual((len(linhas), n), (30, 3))
+        # Sem próxima página: só a primeira.
+        linhas, n = nav.percorrer_central(lambda: paginas[0], lambda: False)
+        self.assertEqual((len(linhas), n), (15, 1))
+        # Limite de páginas.
+        contador = iter(range(1000))
+        linhas, n = nav.percorrer_central(lambda: [{"id": str(next(contador))}], lambda: True, limite=4)
+        self.assertEqual((len(linhas), n), (4, 4))
+
+
 if __name__ == "__main__":
     unittest.main()

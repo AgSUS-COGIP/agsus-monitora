@@ -672,7 +672,7 @@ export const VERBETES_AYA = Object.freeze([
       "onde analiso o candidato",
     ],
     resposta:
-      'São duas entradas do menu. O Painel das análises (a tela que antes se chamava Análises curriculares) é só leitura: indicadores, pendências, carga por responsável, evolução e a lista das análises, com a permissão Painel das análises. A Avaliação documental é o trabalho: regra da avaliação, equipe e, nas próximas fases, a Provisória por ART, o lote, a fila e a ficha do candidato, com a permissão própria "Avaliação documental". Quando um edital passar a ser avaliado no MONITORA, a ficha concluída grava na mesma base que o Painel das análises lê.',
+      'São duas entradas do menu. O Painel das análises (a tela que antes se chamava Análises curriculares) é só leitura: indicadores, pendências, carga por responsável, evolução e a lista das análises, com a permissão Painel das análises. A Avaliação documental é o trabalho: regra da avaliação, equipe e, nas próximas fases, a Provisória por ART, o lote, a fila e a ficha do candidato, com a permissão própria "Avaliação documental". No edital com a análise no MONITORA (o botão ao lado de "Avaliação:", da coordenação), cada ficha grava na hora na mesma base que o Painel das análises e a Classificação leem.',
     fato: "No MONITORA, o Painel das análises é leitura (permissão analises) e a Avaliação documental é o trabalho da avaliação (permissão avaliacao_documental).",
     fonte:
       "docs/analises-no-monitora/README.md; supabase/migrations/20261006090000_avaliacao_documental_permissao_e_menu.sql",
@@ -1512,9 +1512,12 @@ export const VERBETES_AYA = Object.freeze([
       "link do arquivo",
       "linha preenchida pela resposta",
       "da resposta do candidato",
+      "confirmar duas vezes",
+      "pede confirmacao 2x",
+      "clicar confere de novo",
     ],
     resposta:
-      'A ficha abre no MODO FOCO: um item por vez, no centro, na ordem do trabalho, de cima para baixo. (1) O que se pede (o título do bloco) e, num bloco compacto "O que o candidato informou", as respostas dele às perguntas que a regra liga ao item ("4 anos ou mais", "Especialização", "5 pontos"…) e, nas perguntas de anexo, a lista dos arquivos que ele enviou, cada um com o nome e o link direto para abrir na Empregare (sem o link capturado, o "Abrir na Empregare" de antes). (2) A pergunta "O documento confere com o declarado?" e as escolhas lado a lado: Confere (verde), Não confere (vermelho) e, nos itens que pontuam (titulação, cursos, experiência), Editar nota (azul) — teclas 1, 2 e 3. Confere aceita o que o candidato declarou: a pontuação fica igual ao declarado. Não confere pede só o motivo (os motivos do bloco em chips, "O candidato não enviou o documento" e uma observação) e a pontuação fica 0. Editar nota é para quando o documento comprova outra coisa: registre o que comprovou e a pontuação vem dos itens. (3) No Confere e no Editar nota, a lista de títulos, cursos ou vínculos aparece com a primeira linha já aberta. Quando as respostas do candidato trazem o curso com a carga horária ("NR-10 120h"), o período do vínculo ("01/02/2020 a 31/01/2022", "03/2018 a 12/2019") ou o título ("Mestrado"), as linhas já vêm preenchidas e marcadas "da resposta do candidato": é só conferir no documento e corrigir se precisar (mexer na linha tira a marca). Quem interpreta as respostas é o job Python da pré-classificação, que grava as sugestões no banco; a tela só mostra. Sem nada que dê para interpretar, a linha abre vazia (o título vem com o nível da resposta). Com Declarado acima de 0, registrar ao menos um item completo e aceito é obrigatório também no Confere; com Declarado 0 ("Não possuo"), não. (4) Um só resumo: "Pontuação: 3 de 5 · declarou 5", com a diferença destacada só se houver. (5) No máximo uma mensagem por item, a mais útil para o próximo passo (ex.: "Registre ao menos um curso com carga horária.", "Escolha o motivo."); no Confere, se os itens registrados derem outra pontuação, uma linha avisa e oferece "Editar nota". Confere sem pendência passa sozinho ao próximo item que pede algo (menos quando a escolha acabou de abrir a linha, para você conferir o registro). O stepper do alto mostra a marca de cada item — número quando falta decidir, ✓ verde, ✕ vermelho, ⊘ cinza (não enviou), ! âmbar quando falta completar — e "X de 6 conferidos": só conta o item decidido e completo, então o ! e o contador nunca se contradizem; passe o mouse no ! para ver o que falta (a mesma mensagem do item). "Ver todos" troca para a lista completa em cartões compactos, com a Conclusão no fim; "Um por vez" volta ao foco, e a escolha fica lembrada neste navegador. A lateral mostra só a nota ("parcial" enquanto falta conferir), o mínimo, o resultado e a composição por bloco. Enquanto falta conferir algum item, o resultado fica neutro ("Em análise · 2 de 4 requisitos conferidos"); o Inapto só aparece quando um item conferido elimina. Cotas e blocos que não valem para o candidato aparecem na Conclusão ("Não se aplicam: …"). Sem resposta na Empregare, o item avisa que o candidato provavelmente não enviou o documento. Copiar o código, abrir o candidato na Empregare e compartilhar no chat ficam no "⋯" da nota.',
+      'A ficha abre no MODO FOCO: um item por vez, no centro, na ordem do trabalho, de cima para baixo. (1) O que se pede (o título do bloco) e, num bloco compacto "O que o candidato informou", as respostas dele às perguntas que a regra liga ao item ("4 anos ou mais", "Especialização", "5 pontos"…) e, nas perguntas de anexo, a lista dos arquivos que ele enviou, cada um com o nome e o link direto para abrir na Empregare (sem o link capturado, o "Abrir na Empregare" de antes). (2) A pergunta "O documento confere com o declarado?" e as escolhas lado a lado: Confere (verde), Não confere (vermelho) e, nos itens que pontuam (titulação, cursos, experiência), Editar nota (azul) — teclas 1, 2 e 3. Confere aceita o que o candidato declarou: a pontuação fica igual ao declarado. Não confere pede só o motivo (os motivos do bloco em chips, "O candidato não enviou o documento" e uma observação) e a pontuação fica 0. Editar nota é para quando o documento comprova outra coisa: registre o que comprovou e a pontuação vem dos itens. (3) No Confere e no Editar nota, a lista de títulos, cursos ou vínculos aparece com a primeira linha já aberta. Quando as respostas do candidato trazem o curso com a carga horária ("NR-10 120h"), o período do vínculo ("01/02/2020 a 31/01/2022", "03/2018 a 12/2019") ou o título ("Mestrado"), as linhas já vêm preenchidas e marcadas "da resposta do candidato": é só conferir no documento e corrigir se precisar (mexer na linha tira a marca). Quem interpreta as respostas é o job Python da pré-classificação, que grava as sugestões no banco; a tela só mostra. Sem nada que dê para interpretar, a linha abre vazia (o título vem com o nível da resposta). Com Declarado acima de 0, registrar ao menos um item completo e aceito é obrigatório também no Confere; com Declarado 0 ("Não possuo"), não. (4) Um só resumo: "Pontuação: 3 de 5 · declarou 5", com a diferença destacada só se houver. (5) No máximo uma mensagem por item, a mais útil para o próximo passo (ex.: "Registre ao menos um curso com carga horária.", "Escolha o motivo."); no Confere, se os itens registrados derem outra pontuação, uma linha avisa e oferece "Editar nota". Confere sem pendência passa sozinho ao próximo item que pede algo (menos quando a escolha acabou de abrir a linha, para você conferir o registro). Basta um clique: depois de completar a linha, o item já conta como conferido e o rodapé mostra "Próximo pendente"; clicar de novo na escolha marcada só confirma e avança (não desmarca nem muda nada — para trocar, escolha outra opção). O stepper do alto mostra a marca de cada item — número quando falta decidir, ✓ verde, ✕ vermelho, ⊘ cinza (não enviou), ! âmbar quando falta completar — e "X de 6 conferidos": só conta o item decidido e completo, então o ! e o contador nunca se contradizem; passe o mouse no ! para ver o que falta (a mesma mensagem do item). "Ver todos" troca para a lista completa em cartões compactos, com a Conclusão no fim; "Um por vez" volta ao foco, e a escolha fica lembrada neste navegador. A lateral mostra só a nota ("parcial" enquanto falta conferir), o mínimo, o resultado e a composição por bloco. Enquanto falta conferir algum item, o resultado fica neutro ("Em análise · 2 de 4 requisitos conferidos"); o Inapto só aparece quando um item conferido elimina. Cotas e blocos que não valem para o candidato aparecem na Conclusão ("Não se aplicam: …"). Sem resposta na Empregare, o item avisa que o candidato provavelmente não enviou o documento. Copiar o código, abrir o candidato na Empregare e compartilhar no chat ficam no "⋯" da nota.',
     fato: "No MONITORA, a ficha de análise mostra um item por vez, com as decisões em botões grandes e o progresso no alto, e calcula a nota pela regra do edital enquanto o analista confere.",
     fonte:
       "src/modulos/avaliacao-documental/ficha/ficha.jsx; src/modulos/avaliacao-documental/ficha/item-da-ficha.tsx; src/modulos/avaliacao-documental/ficha/progresso-da-ficha.tsx; src/lib/avaliacao-documental/respostas-do-candidato.ts; python/monitora/avaliacao_documental/sugestoes_da_ficha.py; src/lib/avaliacao-documental/ficha.js (passosDaFicha, proximoPassoPendente, composicaoDaNota); src/lib/avaliacao-documental/pontuacao.js",
@@ -3049,7 +3052,7 @@ export const VERBETES_AYA = Object.freeze([
       "atualizacao das analises",
     ],
     resposta:
-      "As três planilhas de análise (Saúde Indígena, Projetos e SEDE) enviam para o mesmo banco por Apps Script; em Projetos e SEDE o envio incremental roda a cada 20 minutos. Quem sai da planilha sai do MONITORA: no fim de cada sincronização, as análises ativas daquela planilha (de editais ativos) que não vieram no envio são desativadas, nada é apagado. Há travas: nada é desativado se o envio vier vazio ou incompleto, ou se a remoção passar de 2% das análises ativas da planilha (mínimo de 25). Se o mesmo candidato aparece de novo na mesma vaga e edital, só o registro mais recente fica ativo. Análises de editais encerrados ficam como histórico. O andamento das cargas aparece em Configurações › Status das atualizações.",
+      "As três planilhas de análise (Saúde Indígena, Projetos e SEDE) enviam para o mesmo banco por Apps Script; em Projetos e SEDE o envio incremental roda a cada 20 minutos. Quem sai da planilha sai do MONITORA: no fim de cada sincronização, as análises ativas daquela planilha (de editais ativos) que não vieram no envio são desativadas, nada é apagado. Há travas: nada é desativado se o envio vier vazio ou incompleto, ou se a remoção passar de 2% das análises ativas da planilha (mínimo de 25). Se o mesmo candidato aparece de novo na mesma vaga e edital, só o registro mais recente fica ativo. Análises de editais encerrados ficam como histórico. Edital analisado no MONITORA não passa pela planilha: as fichas atualizam o painel na hora. O andamento das cargas aparece em Configurações › Status das atualizações.",
     fato: "",
     fonte:
       "apps-script/LEIA-ME.md; supabase/migrations/20261001140000_incremental_remove_ausentes.sql; supabase/migrations/20260930100000_analises_sem_registro_fantasma.sql",
@@ -3086,7 +3089,7 @@ export const VERBETES_AYA = Object.freeze([
       "corrigir nota da analise",
     ],
     resposta:
-      'A aba usa a permissão "Análises curriculares" (Leitor basta, em Configurações › Acessos) e mostra só a área atual e, com coordenação, os editais dela. Ela é só de consulta: a análise é feita e corrigida nas planilhas de análise, que chegam ao MONITORA pelo Apps Script. Nota alterada por recurso não muda a análise: vale como ajuste aprovado, aplicado na Classificação.',
+      'A aba usa a permissão "Análises curriculares" (Leitor basta, em Configurações › Acessos) e mostra só a área atual e, com coordenação, os editais dela. Ela é só de consulta: a análise é feita e corrigida nas planilhas de análise, que chegam ao MONITORA pelo Apps Script, ou, no edital analisado no MONITORA, nas fichas da Avaliação documental. Nota alterada por recurso não muda a análise: vale como ajuste aprovado, aplicado na Classificação.',
     fato: "",
     fonte:
       "src/lib/access-roles.js; src/lib/permissoes-recursos.js; src/modulos/analises/; apps-script/LEIA-ME.md",
@@ -3111,20 +3114,27 @@ export const VERBETES_AYA = Object.freeze([
   },
   {
     arquivo: "regras-das-analises.md",
-    titulo: "Avaliação documental no MONITORA (em construção)",
+    titulo: "Análise no MONITORA ou pela planilha",
     perguntas: [
       "avaliacao documental no monitora",
       "analisar no monitora",
+      "analise no monitora",
+      "analise pela planilha",
+      "monitora ou planilha",
       "fazer a analise curricular no monitora",
       "ficha de analise do candidato",
-      "quando vou analisar pelo monitora",
+      "edital analisado no monitora",
+      "dono da avaliacao",
+      "origem da analise",
+      "edital 114 no painel",
+      "onde acompanho a analise do monitora",
       "simulador da analise",
     ],
     resposta:
-      "Está em construção. Hoje a análise curricular é feita nas planilhas (com o simulador) e o MONITORA só a lê, nesta tela. O desenho em aprovação prevê o módulo Avaliação documental dentro do MONITORA: a lista provisória pela nota da ART, o lote de convocação montado sozinho e uma ficha por candidato, com um bloco por documento e o atalho para a Empregare, gravando direto na base que a Classificação já lê. A tela de hoje continua como painel de leitura das análises. Ainda não há data.",
-    fato: "",
+      'Cada edital tem um dono da avaliação documental. Pela planilha (o padrão): a análise é feita nas planilhas de análise e chega ao Painel das análises pela sincronização do Apps Script. No MONITORA: a análise é feita nas fichas da Avaliação documental (Fila), e cada ficha alimenta a mesma base na hora: ao abrir o lote a linha entra como Pendente; atribuída, mostra o responsável; aberta por alguém, Em análise; concluída, Aprovado (apto) ou Reprovado (inapto), com a nota, as parciais, a data e o parecer; em revisão, Revisar; reaberta ou reiniciada, volta. A sincronização da planilha não altera nem inativa essas linhas, nem o edital. Acompanhe no Painel das análises (pendentes, em análise, concluídas, aprovados e reprovados por vaga e por responsável) e na Classificação, como os outros editais; o trabalho em si fica na Avaliação documental › Fila. Quem troca o dono é a coordenação da avaliação do edital (ou o administrador global), pelo botão ao lado de "Avaliação:" na Avaliação documental, com motivo; edital que a planilha já decidiu não passa para o MONITORA por ali. O Edital 114/2026 de Projetos é analisado no MONITORA.',
+    fato: "No MONITORA, o dono da avaliação documental de cada edital fica em TB_ORIGEM_ANALISE_EDITAL (PLANILHA ou MONITORA); com MONITORA, a ficha publica em TB_ANALISE_CURRICULAR com TP_ORIGEM_REGISTRO MONITORA.",
     fonte:
-      "docs/analises-no-monitora/README.md (desenho, branch docs/analises-no-monitora)",
+      "supabase/migrations/20261009200000_fichas_no_painel_das_analises.sql; src/modulos/avaliacao-documental/origem-da-analise.tsx",
     abrir: "analises",
   },
   {
@@ -6160,7 +6170,7 @@ export const VERBETES_AYA = Object.freeze([
       'Em Recursos, "Novo recurso" (para quem tem Editor em Recursos) abre o cadastro: escolha o edital (só os da área atual), a origem e o candidato, buscado nas análises curriculares daquele edital; cargo, vaga, código, nota atual e resultado vêm sozinhos, e o analista vem preenchido com o responsável pela análise. "Não encontrei o candidato" permite digitar o nome, e o recurso fica marcado como fora das análises. O recurso nasce Registrado; depois, anexe os documentos, escreva a resposta e envie para o parecer jurídico. Na edição, edital e candidato não mudam: para isso, exclua e cadastre de novo.',
     fato: "",
     fonte:
-      "src/modulos/recursos/formulario.jsx; supabase/migrations/20261001170000_recursos_parecer_juridico.sql",
+      "src/modulos/recursos/formulario.tsx; supabase/migrations/20261001170000_recursos_parecer_juridico.sql",
     abrir: "recursos",
   },
   {

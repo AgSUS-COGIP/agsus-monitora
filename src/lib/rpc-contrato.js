@@ -1291,6 +1291,13 @@ export const CONTRATO_RPC = {
     resumo:
       "Registra (LGPD) que quem vê a ficha abriu o candidato na Empregare (ABRIR_EMPREGARE) ou copiou o código (COPIAR_CODIGO).",
   },
+  // ── Dono da avaliação do edital (20261009200000_fichas_no_painel_das_analises.sql)
+  definir_origem_analise: {
+    argumentos: ["p_edital", "p_origem", "p_motivo"],
+    critica: false,
+    resumo:
+      "A coordenação da avaliação do edital (ou o admin global; 42501) troca o dono: MONITORA (as fichas alimentam TB_ANALISE_CURRICULAR, o Painel das análises e a Classificação; a planilha deixa de mexer no edital; recusa 23514 se a planilha já decidiu análises) ou PLANILHA. Motivo de 10 a 2.000 e histórico. Devolve { origem, anterior, mudou, publicadas, devolvidas }.",
+  },
   // ── Avaliação documental: regra e equipe (20261006100000_regra_da_analise.sql)
   listar_editais_avaliacao: {
     argumentos: ["p_area"],

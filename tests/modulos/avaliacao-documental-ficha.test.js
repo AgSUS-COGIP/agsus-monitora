@@ -1609,3 +1609,50 @@ describe("ficha: o que o candidato informou (respostas, arquivos e linhas sugeri
     expect(document.querySelector(".avd-ficha-envios")).toBeNull();
   });
 });
+
+describe("ficha: Confere vale com um clique só", () => {
+  it("Confere uma vez + completar a linha = conferido; clicar Confere de novo não desmarca e avança", async () => {
+    await abrirFicha(supabaseFalso());
+    await irAo("CURSOS");
+    await conforme("CURSOS");
+    expect(etapa("CURSOS").dataset.estado).toBe("pendencia");
+    await digitar(
+      cartao("CURSOS").querySelector("input[aria-label='Curso']"),
+      "NR-10",
+    );
+    await digitar(
+      cartao("CURSOS").querySelector("input[aria-label='Carga horária']"),
+      "120",
+    );
+    // Completou a linha: conferido, sem outro clique, e o rodapé já leva adiante.
+    expect(etapa("CURSOS").dataset.estado).toBe("CONFORME");
+    expect(cartao("CURSOS").dataset.escolha).toBe("CONFERE");
+    expect(rodape().querySelector(".avd-ficha-primaria").textContent).toBe(
+      "Próximo pendente",
+    );
+    // Quem clica Confere de novo (por hábito) confirma: não desmarca e avança.
+    await conforme("CURSOS");
+    expect(etapa("CURSOS").dataset.estado).toBe("CONFORME");
+    await esperarAvanco();
+    expect(cartao("CURSOS")).toBeNull();
+    expect(etapa("CURSOS").dataset.estado).toBe("CONFORME");
+  });
+});
+
+describe("ficha: a mesma escolha de novo só confirma", () => {
+  it("Não confere com 'não enviou': clicar Não confere outra vez não muda a situação nem os motivos", async () => {
+    await abrirFicha(supabaseFalso());
+    await irAo("ESCOLARIDADE");
+    const c = () => cartao("ESCOLARIDADE");
+    await clicar(c().querySelector("[data-valor='NAO_CONFERE']"));
+    await clicar(c().querySelector(".avd-ficha-nao-enviou input"));
+    await clicar(c().querySelector(".avd-ficha-chip"));
+    expect(c().dataset.situacao).toBe("NAO_ENVIADO");
+    await clicar(c().querySelector("[data-valor='NAO_CONFERE']"));
+    await teclar(raiz(), "2");
+    expect(c().dataset.situacao).toBe("NAO_ENVIADO");
+    expect(
+      c().querySelector(".avd-ficha-chip").getAttribute("aria-pressed"),
+    ).toBe("true");
+  });
+});

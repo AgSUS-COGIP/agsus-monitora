@@ -505,7 +505,28 @@ describe("fila, status e atualização", () => {
   it("tom do selo de status", () => {
     expect(tomDoStatus("Aprovado")).toBe("aprovado");
     expect(tomDoStatus("REPROVADO")).toBe("reprovado");
+    expect(tomDoStatus("Em análise")).toBe("pendente");
     expect(tomDoStatus("x")).toBe("neutro");
+  });
+
+  it("Em análise (ficha aberta no MONITORA) conta como pendente", () => {
+    const linhas = prontas([
+      linha({ id: "1", status_consolidado: "Em análise" }),
+      linha({ id: "2", status_consolidado: "Pendente" }),
+      linha({ id: "3", status_consolidado: "Aprovado" }),
+    ]);
+    expect(calcularKpis(linhas)).toMatchObject({
+      total: 3,
+      pendente: 2,
+      analisado: 1,
+    });
+    expect(recorteVisual(linhas, { kpi: "pendente" }).map((l) => l.id)).toEqual(
+      ["1", "2"],
+    );
+    expect(
+      pendenciasPrioritarias(linhas).find((p) => p.chave === "pendentes")
+        ?.detalhe,
+    ).toBe("2 registro(s) pendentes no recorte atual.");
   });
 
   it("a hora do dado mais novo: das linhas ou do envelope", () => {

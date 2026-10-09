@@ -329,7 +329,9 @@ export function Escolhas({
                 aria-keyshortcuts={tecla}
                 title={`${rotulo} (tecla ${tecla})`}
                 disabled={desabilitado}
-                onClick={() => aoMudar(escolhido ? null : codigo)}
+                // Clicar de novo na escolha marcada confirma (não desmarca):
+                // quem completa a linha e clica Confere outra vez segue adiante.
+                onClick={() => aoMudar(codigo)}
               >
                 <span className="avd-ficha-decisao-icone" aria-hidden="true">
                   <i className={`fa-solid ${ICONE_DA_ESCOLHA[codigo]}`} />
@@ -1092,7 +1094,9 @@ export function ItemDaFicha({
   // A lista aparece no Confere e no Editar (e num rascunho com itens sem decisão).
   const itensLancados = chave ? (lancamento[chave] as ItemLancado[]) || [] : [];
   const escolher = (nova: Escolha | null) => {
-    decidirNoLancamento(bloco, mudar, nova, contexto);
+    // A mesma escolha de novo só confirma: nada muda no lançamento (o "não
+    // enviou", os motivos e o ajuste ficam) e o item avança se nada falta.
+    if (nova !== escolha) decidirNoLancamento(bloco, mudar, nova, contexto);
     aoDecidir?.(bloco.codigo, nova, itensLancados.length);
   };
   const mostraItens =

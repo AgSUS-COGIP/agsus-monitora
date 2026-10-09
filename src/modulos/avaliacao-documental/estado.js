@@ -29,6 +29,10 @@
     obter_equipe_edital(p_edital)               gestores, equipe e pessoas
     salvar_equipe_edital(...)                   a equipe inteira
     salvar_aldeias_dsei(...)                    lista de aldeias (admin global)
+    definir_origem_analise(...)                 dono da avaliação: MONITORA (as
+                                                fichas alimentam o Painel das
+                                                análises) ou PLANILHA, com motivo
+                                                (20261009200000; coordenação)
 
   A conta da prévia é a de src/lib/avaliacao-documental/pontuacao.js, feita no
   componente; aqui só a carga e a gravação. A aba aberta (`visao`) mora aqui
@@ -55,6 +59,7 @@ const RPC_OBTER_PERGUNTAS = "obter_perguntas_carga_analise";
 const RPC_SALVAR_CLASSIFICACAO = "salvar_regra_classificacao";
 const RPC_OBTER_EQUIPE = "obter_equipe_edital";
 const RPC_SALVAR_EQUIPE = "salvar_equipe_edital";
+const RPC_DEFINIR_ORIGEM = "definir_origem_analise";
 const RPC_SALVAR_ALDEIAS = "salvar_aldeias_dsei";
 
 export const MENSAGEM_SEM_ACESSO = "Sem acesso à Avaliação documental";
@@ -446,6 +451,41 @@ export function criarEstadoDaAvaliacao({
           "success",
         );
         return { ok: true, regra };
+      } catch (erro) {
+        return { ok: false, erro: mensagemDoBanco(erro) };
+      } finally {
+        publicar({ salvando: false });
+      }
+    },
+    /*
+      O dono da avaliação do edital (MONITORA ou PLANILHA), com motivo. No
+      MONITORA, as fichas alimentam o Painel das análises. Devolve { ok, erro }.
+    */
+    async definirOrigem(origem, motivo) {
+      const editalId = estado.editalId;
+      publicar({ salvando: true });
+      try {
+        const r = await rpc(RPC_DEFINIR_ORIGEM, {
+          p_edital: editalId,
+          p_origem: origem,
+          p_motivo: motivo,
+        });
+        gravacoes += 1;
+        const nova = r?.origem ?? origem;
+        if (editalId === estado.editalId && estado.dados)
+          publicar({ dados: { ...estado.dados, origem: nova } });
+        publicar({
+          editais: estado.editais.map((e) =>
+            e.id === editalId ? { ...e, origem: nova } : e,
+          ),
+        });
+        toast(
+          nova === "MONITORA"
+            ? "A avaliação deste edital passa a ser feita no MONITORA."
+            : "A avaliação deste edital voltou para a planilha.",
+          "success",
+        );
+        return { ok: true };
       } catch (erro) {
         return { ok: false, erro: mensagemDoBanco(erro) };
       } finally {

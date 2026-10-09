@@ -35,7 +35,7 @@ e `20260930234000_cache_sem_atropelo.sql`.
 ## Atualização das análises
 
 **perguntas:** como as analises curriculares sao atualizadas | sincronizacao das analises | de onde vem as analises | quem saiu da planilha | atualizacao das analises
-**resposta:** As três planilhas de análise (Saúde Indígena, Projetos e SEDE) enviam para o mesmo banco por Apps Script; em Projetos e SEDE o envio incremental roda a cada 20 minutos. Quem sai da planilha sai do MONITORA: no fim de cada sincronização, as análises ativas daquela planilha (de editais ativos) que não vieram no envio são desativadas, nada é apagado. Há travas: nada é desativado se o envio vier vazio ou incompleto, ou se a remoção passar de 2% das análises ativas da planilha (mínimo de 25). Se o mesmo candidato aparece de novo na mesma vaga e edital, só o registro mais recente fica ativo. Análises de editais encerrados ficam como histórico. O andamento das cargas aparece em Configurações › Status das atualizações.
+**resposta:** As três planilhas de análise (Saúde Indígena, Projetos e SEDE) enviam para o mesmo banco por Apps Script; em Projetos e SEDE o envio incremental roda a cada 20 minutos. Quem sai da planilha sai do MONITORA: no fim de cada sincronização, as análises ativas daquela planilha (de editais ativos) que não vieram no envio são desativadas, nada é apagado. Há travas: nada é desativado se o envio vier vazio ou incompleto, ou se a remoção passar de 2% das análises ativas da planilha (mínimo de 25). Se o mesmo candidato aparece de novo na mesma vaga e edital, só o registro mais recente fica ativo. Análises de editais encerrados ficam como histórico. Edital analisado no MONITORA não passa pela planilha: as fichas atualizam o painel na hora. O andamento das cargas aparece em Configurações › Status das atualizações.
 **fonte:** apps-script/LEIA-ME.md; supabase/migrations/20261001140000_incremental_remove_ausentes.sql; supabase/migrations/20260930100000_analises_sem_registro_fantasma.sql
 
 ## Conferido às, no topo da tela
@@ -47,7 +47,7 @@ e `20260930234000_cache_sem_atropelo.sql`.
 ## Quem vê as Análises curriculares
 
 **perguntas:** quem pode ver as analises curriculares | nao vejo a aba analises | permissao analises | posso editar a analise no monitora | onde corrijo a analise | corrigir nota da analise
-**resposta:** A aba usa a permissão "Análises curriculares" (Leitor basta, em Configurações › Acessos) e mostra só a área atual e, com coordenação, os editais dela. Ela é só de consulta: a análise é feita e corrigida nas planilhas de análise, que chegam ao MONITORA pelo Apps Script. Nota alterada por recurso não muda a análise: vale como ajuste aprovado, aplicado na Classificação.
+**resposta:** A aba usa a permissão "Análises curriculares" (Leitor basta, em Configurações › Acessos) e mostra só a área atual e, com coordenação, os editais dela. Ela é só de consulta: a análise é feita e corrigida nas planilhas de análise, que chegam ao MONITORA pelo Apps Script, ou, no edital analisado no MONITORA, nas fichas da Avaliação documental. Nota alterada por recurso não muda a análise: vale como ajuste aprovado, aplicado na Classificação.
 **fonte:** src/lib/access-roles.js; src/lib/permissoes-recursos.js; src/modulos/analises/; apps-script/LEIA-ME.md
 **abrir:** analises
 
@@ -58,9 +58,10 @@ e `20260930234000_cache_sem_atropelo.sql`.
 **fonte:** src/lib/analises-curriculares.ts; supabase/migrations/20261001140000_incremental_remove_ausentes.sql; supabase/migrations/20260930100000_analises_sem_registro_fantasma.sql
 **abrir:** analises
 
-## Avaliação documental no MONITORA (em construção)
+## Análise no MONITORA ou pela planilha
 
-**perguntas:** avaliacao documental no monitora | analisar no monitora | fazer a analise curricular no monitora | ficha de analise do candidato | quando vou analisar pelo monitora | simulador da analise
-**resposta:** Está em construção. Hoje a análise curricular é feita nas planilhas (com o simulador) e o MONITORA só a lê, nesta tela. O desenho em aprovação prevê o módulo Avaliação documental dentro do MONITORA: a lista provisória pela nota da ART, o lote de convocação montado sozinho e uma ficha por candidato, com um bloco por documento e o atalho para a Empregare, gravando direto na base que a Classificação já lê. A tela de hoje continua como painel de leitura das análises. Ainda não há data.
-**fonte:** docs/analises-no-monitora/README.md (desenho, branch docs/analises-no-monitora)
+**perguntas:** avaliacao documental no monitora | analisar no monitora | analise no monitora | analise pela planilha | monitora ou planilha | fazer a analise curricular no monitora | ficha de analise do candidato | edital analisado no monitora | dono da avaliacao | origem da analise | edital 114 no painel | onde acompanho a analise do monitora | simulador da analise
+**resposta:** Cada edital tem um dono da avaliação documental. Pela planilha (o padrão): a análise é feita nas planilhas de análise e chega ao Painel das análises pela sincronização do Apps Script. No MONITORA: a análise é feita nas fichas da Avaliação documental (Fila), e cada ficha alimenta a mesma base na hora: ao abrir o lote a linha entra como Pendente; atribuída, mostra o responsável; aberta por alguém, Em análise; concluída, Aprovado (apto) ou Reprovado (inapto), com a nota, as parciais, a data e o parecer; em revisão, Revisar; reaberta ou reiniciada, volta. A sincronização da planilha não altera nem inativa essas linhas, nem o edital. Acompanhe no Painel das análises (pendentes, em análise, concluídas, aprovados e reprovados por vaga e por responsável) e na Classificação, como os outros editais; o trabalho em si fica na Avaliação documental › Fila. Quem troca o dono é a coordenação da avaliação do edital (ou o administrador global), pelo botão ao lado de "Avaliação:" na Avaliação documental, com motivo; edital que a planilha já decidiu não passa para o MONITORA por ali. O Edital 114/2026 de Projetos é analisado no MONITORA.
+**fato:** No MONITORA, o dono da avaliação documental de cada edital fica em TB_ORIGEM_ANALISE_EDITAL (PLANILHA ou MONITORA); com MONITORA, a ficha publica em TB_ANALISE_CURRICULAR com TP_ORIGEM_REGISTRO MONITORA.
+**fonte:** supabase/migrations/20261009200000_fichas_no_painel_das_analises.sql; src/modulos/avaliacao-documental/origem-da-analise.tsx
 **abrir:** analises

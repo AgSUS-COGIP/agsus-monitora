@@ -23,6 +23,7 @@ import { criarEstadoDaAvaliacao, MENSAGEM_SEM_ACESSO } from "./estado.js";
 import { criarEstadoDaFila, lerFichaLembrada } from "./estado-da-fila.js";
 import { criarEstadoDaPreClassificacao } from "./estado-da-pre-classificacao.js";
 import { Fila } from "./fila.jsx";
+import { OrigemDaAnalise } from "./origem-da-analise.tsx";
 import { PreClassificacao } from "./pre-classificacao.jsx";
 import { Regra } from "./regra.jsx";
 import "./avaliacao-documental.css";
@@ -49,11 +50,6 @@ const VISOES = [
   { valor: "pre", rotulo: "Pré-classificação", icone: "fa-ranking-star" },
   { valor: "fila", rotulo: "Fila", icone: "fa-list-check" },
 ];
-const ORIGENS = {
-  PLANILHA: "Planilha",
-  COMPARACAO: "Comparação",
-  MONITORA: "MONITORA",
-};
 
 function textoDoStatus(e) {
   if (e.semAcesso) return "Sem acesso";
@@ -165,13 +161,12 @@ function TelaDaArea({ estado, pre, fila, atualizar, e }) {
                 </label>
               ) : null}
               {e.dados ? (
-                <span
-                  className="ui-texto-secundario"
-                  data-origem={e.dados.origem}
-                >
-                  Avaliação: {ORIGENS[e.dados.origem] ?? e.dados.origem}
-                  {papel ? ` · ${rotuloDe(PAPEIS_DA_EQUIPE, papel)}` : ""}
-                </span>
+                <OrigemDaAnalise
+                  origem={e.dados.origem}
+                  rotuloDoPapel={papel ? rotuloDe(PAPEIS_DA_EQUIPE, papel) : ""}
+                  podeTrocar={Boolean(e.dados.pode_coordenar)}
+                  aoTrocar={estado.definirOrigem}
+                />
               ) : null}
             </section>
           )}
