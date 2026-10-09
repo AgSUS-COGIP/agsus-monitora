@@ -65,6 +65,13 @@ from monitora.mascaramento import mascarar, resumo_do_erro  # noqa: E402
 GUIA = "docs/robo-empregare.md"
 LIMITE_PADRAO = 60
 TAMANHO_DO_LOTE = 500
+# Vagas por lote de exportação: pede, captura, baixa e grava o lote antes do próximo.
+# A Central de Exportações mostra só as mais recentes por página (15): com 30 pedidas
+# de uma vez, as 15 primeiras ficavam fora da lista ("ainda não listada").
+TAMANHO_DO_LOTE_DE_EXPORTACAO = 10
+# Prazos contados desde o login (o workflow tem 120 min; links e anexos já têm orçamento próprio).
+PRAZO_PARA_NOVO_LOTE = 95 * 60  # segundos: depois disso, não começa outro lote
+PRAZO_PARA_SEGUNDA_PASSADA = 90 * 60  # segundos: depois disso, sem segunda passada
 TITULO = "Robô da Empregare → MONITORA"
 
 
@@ -238,7 +245,9 @@ def gravar_vaga(config, sync, codigo, caminho, chamar=supabase_rpc.chamar, ender
 
 def baixar_e_gravar(portal, config, sync, pedidas, pasta, desde, dormir=time.sleep, enderecos=None):
     """
-    Percorre a Central até baixar cada vaga pedida. Devolve (baixadas, falhas).
+    Percorre a Central até baixar cada vaga pedida. Devolve (baixadas, falhas,
+    pendentes): `falhas` são as baixadas que não gravaram; `pendentes`, os
+    códigos que não apareceram (ou não baixaram) depois de TENTATIVAS_CENTRAL.
     `enderecos`: {código da vaga: links capturados} (capturar_candidatos).
     """
     enderecos = enderecos or {}
@@ -252,6 +261,10 @@ def baixar_e_gravar(portal, config, sync, pedidas, pasta, desde, dormir=time.sle
         )
         portal.abrir_central()
         linhas = portal.ler_central()
+        registrar(
+            f"Central de Exportações: {len(linhas)} exportação(ões) lida(s) em "
+            f"{getattr(portal, 'paginas_da_central', 1) or 1} página(s)."
+        )
         ainda = []
         for codigo in pendentes:
             linha, motivo = nav.escolher_exportacao(linhas, codigo, desde)
@@ -272,7 +285,133 @@ def baixar_e_gravar(portal, config, sync, pedidas, pasta, desde, dormir=time.sle
             dormir(nav.ESPERA_ENTRE_TENTATIVAS)
     if pendentes:
         registrar(f"Sem download depois de {nav.TENTATIVAS_CENTRAL} tentativas: {', '.join(pendentes)}.")
-    return baixadas, falhas + len(pendentes)
+    return baixadas, falhas, pendentes
+
+
+# ── Lotes de exportação ─────────────────────────────────────────────────────
+
+
+def pedir_exportacoes(portal, vagas, enderecos, com_anexos, gasto):
+    """
+    Pede a exportação de cada vaga e, enquanto a Empregare gera os arquivos,
+    captura os links da vaga e dos candidatos (e, com --anexos, os anexos do
+    questionário, dentro de ORCAMENTO_DOS_ANEXOS somado em gasto["anexos"]).
+    Vaga já capturada (segunda passada) só pede a exportação de novo.
+    Devolve (códigos pedidos, vagas cuja exportação não foi pedida).
+    """
+    pedidas, nao_pedidas = [], []
+    for v in vagas:
+        codigo = v["vaga"]
+        registrar(f"Vaga {codigo} (edital {v.get('edital') or '—'}): pedindo a exportação.")
+        if not portal.exportar_vaga(codigo):
+            nao_pedidas.append(v)
+            continue
+        pedidas.append(codigo)
+        if codigo in enderecos:
+            continue
+        # Enquanto a Empregare gera o arquivo: os links da vaga e dos candidatos.
+        enderecos[codigo] = portal.capturar_candidatos(codigo)
+        # --anexos: os anexos do questionário (GetRespostaDetails de cada resposta).
+        respostas = (enderecos[codigo] or {}).pop("respostas", None)
+        if com_anexos and respostas and gasto["anexos"] < anexos.ORCAMENTO_DOS_ANEXOS:
+            inicio = time.monotonic()
+            prazo = inicio + min(anexos.TEMPO_LIMITE_DOS_ANEXOS, anexos.ORCAMENTO_DOS_ANEXOS - gasto["anexos"])
+            enderecos[codigo]["anexos"] = anexos.capturar_anexos(portal, codigo, respostas, registrar, prazo)
+            gasto["anexos"] += time.monotonic() - inicio
+    return pedidas, nao_pedidas
+
+
+def exportar_e_baixar(portal, config, sync, vagas, pasta, enderecos, com_anexos, gasto, dormir, relogio):
+    """
+    Um lote: pede as exportações, espera, baixa e grava. Devolve (baixadas,
+    falhas na gravação, vagas que não saíram: exportação não pedida ou não baixada).
+    """
+    desde = relogio()
+    pedidas, nao_pedidas = pedir_exportacoes(portal, vagas, enderecos, com_anexos, gasto)
+    if not pedidas:
+        return 0, 0, nao_pedidas
+    registrar(f"Aguardando a Empregare gerar os arquivos ({nav.ESPERA_APOS_EXPORTAR}s).")
+    dormir(nav.ESPERA_APOS_EXPORTAR)
+    baixadas, falhas, pendentes = baixar_e_gravar(portal, config, sync, pedidas, pasta, desde, dormir, enderecos)
+    por_codigo = {v["vaga"]: v for v in vagas}
+    return baixadas, falhas, nao_pedidas + [por_codigo[c] for c in pendentes]
+
+
+def agora_na_empregare():
+    return datetime.now(FUSO).replace(tzinfo=None)
+
+
+def processar_vagas(
+    portal,
+    config,
+    sync,
+    vagas,
+    pasta,
+    com_anexos=False,
+    dormir=time.sleep,
+    agora=time.monotonic,
+    relogio=agora_na_empregare,
+    contagem=None,
+):
+    """
+    Exporta, baixa e grava em lotes de TAMANHO_DO_LOTE_DE_EXPORTACAO vagas (a
+    Central só mostra as exportações mais recentes: pedir todas de uma vez
+    empurrava as primeiras para fora da lista). As que não saírem ganham uma
+    segunda passada no fim (exportação pedida de novo, sem recapturar links),
+    se ainda houver tempo. Devolve (baixadas, falhas). `contagem` (dict) recebe
+    os mesmos números a cada lote: se a execução cair no meio, quem chamou sabe
+    quanto já foi baixado.
+    """
+    inicio = agora()
+    enderecos = {}
+    gasto = {"anexos": 0.0}
+    total = contagem if contagem is not None else {}
+    total.update(baixadas=0, falhas=0)
+    de_novo = []
+    lotes = em_lotes(list(vagas), TAMANHO_DO_LOTE_DE_EXPORTACAO)
+    for n, lote in enumerate(lotes, 1):
+        if agora() - inicio >= PRAZO_PARA_NOVO_LOTE:
+            restantes = [v for resto in lotes[n - 1 :] for v in resto]
+            registrar(
+                f"Sem tempo para mais lotes ({PRAZO_PARA_NOVO_LOTE // 60} min): "
+                f"{len(restantes)} vaga(s) ficaram de fora ({lista_de_codigos(restantes)})."
+            )
+            total["falhas"] += len(restantes)
+            break
+        registrar(f"Lote {n}/{len(lotes)}: {len(lote)} vaga(s) ({lista_de_codigos(lote)}).")
+        b, f, sobra = exportar_e_baixar(
+            portal, config, sync, lote, pasta, enderecos, com_anexos, gasto, dormir, relogio
+        )
+        total["baixadas"] += b
+        total["falhas"] += f
+        de_novo += sobra
+        registrar(
+            f"Lote {n}/{len(lotes)}: {b} baixada(s) · {f} com falha na gravação · "
+            f"{len(sobra)} para a segunda passada · {int(agora() - inicio) // 60} min de execução."
+        )
+    if not de_novo:
+        return total["baixadas"], total["falhas"]
+    if agora() - inicio >= PRAZO_PARA_SEGUNDA_PASSADA:
+        registrar(
+            f"Sem tempo para a segunda passada ({PRAZO_PARA_SEGUNDA_PASSADA // 60} min): "
+            f"{len(de_novo)} vaga(s) com falha ({lista_de_codigos(de_novo)})."
+        )
+        total["falhas"] += len(de_novo)
+        return total["baixadas"], total["falhas"]
+    registrar(f"Segunda passada: pedindo de novo a exportação de {len(de_novo)} vaga(s) ({lista_de_codigos(de_novo)}).")
+    sem_arquivo = []
+    for lote in em_lotes(de_novo, TAMANHO_DO_LOTE_DE_EXPORTACAO):
+        b, f, sobra = exportar_e_baixar(
+            portal, config, sync, lote, pasta, enderecos, com_anexos, gasto, dormir, relogio
+        )
+        total["baixadas"] += b
+        total["falhas"] += f + len(sobra)
+        sem_arquivo += sobra
+    registrar(
+        f"Segunda passada: {len(de_novo) - len(sem_arquivo)} de {len(de_novo)} vaga(s) baixada(s) da Central"
+        + (f"; com falha: {lista_de_codigos(sem_arquivo)}." if sem_arquivo else ".")
+    )
+    return total["baixadas"], total["falhas"]
 
 
 # ── Resumo das perguntas da carga ───────────────────────────────────────────
@@ -386,42 +525,15 @@ def principal(args):
     registrar(f"Execução {sync}: {len(vagas)} vaga(s) ({escolha.get(lista.get('modo'))}); disparo {tipo.lower()}.")
     registrar(f"Origem das vagas: {contagem_por_origem(vagas)}.")
 
-    baixadas = falhas = 0
+    contagem = {"baixadas": 0, "falhas": 0}
     try:
         if vagas:
             with tempfile.TemporaryDirectory() as pasta, nav.PortalEmpregare(pasta, registrar) as portal:
                 portal.entrar(email, senha)
                 portal.abrir_vagas_anunciadas()
-                desde = datetime.now(FUSO).replace(tzinfo=None)
-                pedidas = []
-                enderecos = {}
-                gasto_em_anexos = 0.0
-                for v in vagas:
-                    registrar(f"Vaga {v['vaga']} (edital {v.get('edital') or '—'}): pedindo a exportação.")
-                    if portal.exportar_vaga(v["vaga"]):
-                        pedidas.append(v["vaga"])
-                        # Enquanto a Empregare gera o arquivo: os links da vaga e dos candidatos.
-                        enderecos[v["vaga"]] = portal.capturar_candidatos(v["vaga"])
-                        # --anexos: os anexos do questionário (GetRespostaDetails de cada resposta).
-                        respostas = (enderecos[v["vaga"]] or {}).pop("respostas", None)
-                        if args.anexos and respostas and gasto_em_anexos < anexos.ORCAMENTO_DOS_ANEXOS:
-                            inicio = time.monotonic()
-                            prazo = inicio + min(
-                                anexos.TEMPO_LIMITE_DOS_ANEXOS, anexos.ORCAMENTO_DOS_ANEXOS - gasto_em_anexos
-                            )
-                            enderecos[v["vaga"]]["anexos"] = anexos.capturar_anexos(
-                                portal, v["vaga"], respostas, registrar, prazo
-                            )
-                            gasto_em_anexos += time.monotonic() - inicio
-                    else:
-                        falhas += 1
-                if pedidas:
-                    registrar(f"Aguardando a Empregare gerar os arquivos ({nav.ESPERA_APOS_EXPORTAR}s).")
-                    time.sleep(nav.ESPERA_APOS_EXPORTAR)
-                    b, f = baixar_e_gravar(portal, config, sync, pedidas, pasta, desde, enderecos=enderecos)
-                    baixadas += b
-                    falhas += f
+                processar_vagas(portal, config, sync, vagas, pasta, args.anexos, contagem=contagem)
     except Exception as erro:
+        baixadas, falhas = contagem["baixadas"], contagem["falhas"]
         mensagem = resumo_do_erro(erro)
         try:
             supabase_rpc.chamar(
@@ -434,6 +546,7 @@ def principal(args):
         resumir([f"Execução {sync} FALHOU: {mensagem}", f"Vagas baixadas antes da falha: {baixadas}."])
         return 1
 
+    baixadas, falhas = contagem["baixadas"], contagem["falhas"]
     fim = (
         supabase_rpc.chamar(
             config,
