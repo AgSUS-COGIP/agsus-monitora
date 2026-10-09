@@ -125,6 +125,13 @@ function supabaseFalso({ comRegra = true, pode = true, salvarEquipe } = {}) {
     obter_regra_analise: () => DADOS(regra, pode),
     obter_perguntas_carga_analise: () => PERGUNTAS_DA_CARGA(pode),
     obter_equipe_edital: () => ({ ...EQUIPE, pode_coordenar: pode }),
+    definir_origem_analise: ({ p_origem }) => ({
+      origem: p_origem,
+      anterior: "PLANILHA",
+      mudou: true,
+      publicadas: 0,
+      devolvidas: 0,
+    }),
     copiar_modelo_regra_analise: () => {
       regra = regraSalva(1);
       return { regra, fichas_afetadas: [] };
@@ -491,5 +498,49 @@ describe("equipe do edital (AM-3)", () => {
     expect(secao.textContent).toContain(
       "não tem Editor em Avaliação documental (tem Leitor)",
     );
+  });
+});
+
+describe("dono da avaliação do edital (20261009200000)", () => {
+  it("a coordenação passa o edital para o MONITORA com confirmação e motivo", async () => {
+    const supabase = supabaseFalso();
+    await montar(supabase);
+    const rotulo = secao.querySelector("[data-origem]");
+    expect(rotulo.textContent).toContain("Avaliação: Planilha");
+    await clicar(secao.querySelector("[data-acao='trocar-origem-da-analise']"));
+    const confirmar = document.querySelector(
+      "[data-acao='confirmar-origem-da-analise']",
+    );
+    expect(document.body.textContent).toContain(
+      "As fichas deste edital passam a alimentar o Painel das análises",
+    );
+    expect(confirmar.disabled).toBe(true);
+    await digitar(
+      document.querySelector(".modal textarea"),
+      "Edital analisado pelas fichas",
+    );
+    expect(confirmar.disabled).toBe(false);
+    await clicar(confirmar);
+    await esperar();
+    expect(supabase.rpc).toHaveBeenCalledWith("definir_origem_analise", {
+      p_edital: "e93",
+      p_origem: "MONITORA",
+      p_motivo: "Edital analisado pelas fichas",
+    });
+    expect(secao.querySelector("[data-origem]").textContent).toContain(
+      "Avaliação: MONITORA",
+    );
+    expect(botao("Voltar para a planilha", secao)).toBeTruthy();
+    expect(document.querySelector(".modal")).toBeNull();
+  });
+
+  it("quem não coordena só vê o dono, sem o botão", async () => {
+    await montar(supabaseFalso({ pode: false }));
+    expect(secao.querySelector("[data-origem]").textContent).toContain(
+      "Avaliação: Planilha",
+    );
+    expect(
+      secao.querySelector("[data-acao='trocar-origem-da-analise']"),
+    ).toBeNull();
   });
 });

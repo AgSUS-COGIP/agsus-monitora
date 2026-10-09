@@ -569,10 +569,16 @@ export function temMunicipio(
 
 /* ── KPIs e o recorte visual (KPI e barra do gráfico) ──────────────── */
 
+/*
+  "Em análise": a ficha da Avaliação documental aberta por alguém (edital com a
+  análise no MONITORA). Ainda sem decisão: conta como pendente.
+*/
+export const STATUS_PENDENTES = Object.freeze(["Pendente", "Em análise"]);
+
 export const STATUS_DO_KPI: Readonly<Record<string, readonly string[]>> =
   Object.freeze({
     analisado: Object.freeze(["Revisar", "Aprovado", "Reprovado"]),
-    pendente: Object.freeze(["Pendente"]),
+    pendente: STATUS_PENDENTES,
     revisar: Object.freeze(["Revisar"]),
     aprovado: Object.freeze(["Aprovado"]),
     reprovado: Object.freeze(["Reprovado"]),
@@ -603,7 +609,7 @@ export function calcularKpis(linhas: readonly RegistroDaAnalise[]) {
   const lista = linhas || [];
   const de = (status: string) =>
     contar(lista, (l) => texto(l.status_consolidado) === status);
-  const pendente = de("Pendente");
+  const pendente = STATUS_PENDENTES.reduce((n, s) => n + de(s), 0);
   const revisar = de("Revisar");
   const aprovado = de("Aprovado");
   const reprovado = de("Reprovado");
@@ -810,7 +816,7 @@ export function pendenciasPrioritarias(
   const futura = validacao("DATA_FUTURA");
   const fora = validacao("FORA_PERIODO");
   const semResp = contar(lista, semResponsavel);
-  const pendentes = status("Pendente");
+  const pendentes = STATUS_PENDENTES.reduce((n, s) => n + status(s), 0);
   const revisar = status("Revisar");
   const semData = contar(
     lista,
@@ -957,6 +963,7 @@ export const TOM_DO_STATUS: Readonly<Record<string, string>> = Object.freeze({
   reprovado: "reprovado",
   revisar: "revisar",
   pendente: "pendente",
+  "em analise": "pendente",
 });
 
 /** Tom do selo de status (Selo de src/ui/). */
