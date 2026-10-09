@@ -3,12 +3,13 @@ import {
   completarMembrosPelaComposicao,
   MODOS_DE_LANCAMENTO,
   novoAvaliador,
-} from "../../lib/conducao-de-entrevista.js";
+} from "../../lib/conducao-de-entrevista.ts";
 import { rotuloDaVersao } from "../../lib/nome-da-versao.ts";
 import type { PendenciaDaConfiguracao } from "../../lib/passos-do-preparar.ts";
-import { textoDaPontuacao } from "../../lib/roteiro-de-entrevista.js";
+import { textoDaPontuacao } from "../../lib/roteiro-de-entrevista.ts";
 import { Aviso, Campo, Segmentado } from "../../ui/index.js";
 import { CompetenciasDoMembro } from "./competencias-do-membro.tsx";
+import type { CompetenciaDaFicha } from "./tipos-da-ficha.ts";
 import { BotaoDeLinha, ComposicaoDaBanca, trocarNaLista } from "./partes.tsx";
 
 /*
@@ -49,7 +50,7 @@ export type RoteiroDaLista = {
   versao?: number;
   nome_versao?: string | null;
   ativo?: boolean;
-  competencias?: { id: string; nome: string; ordem?: number | null }[] | null;
+  competencias?: CompetenciaDaFicha[] | null;
 };
 
 type Mudar = (mudancas: Partial<RascunhoDaConfiguracao>) => void;
@@ -92,7 +93,7 @@ export function CampoDoRoteiro({
               aplicarRoteiroNaConfiguracao(
                 r,
                 opcoes.find((x) => x.id === e.target.value) || null,
-              ) as RascunhoDaConfiguracao,
+              ),
             )
           }
         >

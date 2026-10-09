@@ -1,3 +1,37 @@
+import type { Avaliador, Convocado, Avaliacao } from "./fila-de-conducao.ts";
+import type {
+  RoteiroDeEntrevista,
+  BancaDoRascunho,
+} from "./tipos-do-roteiro-de-entrevista.ts";
+import type {
+  MembroDoRascunho,
+  RascunhoDaConfiguracao,
+} from "../modulos/entrevistas/configuracao-do-edital.tsx";
+import type {
+  DadosDoEdital,
+  DadosDaConfiguracaoDaEntrevista,
+  EditalDaLista,
+} from "../modulos/entrevistas/tipos.ts";
+import type {
+  AspectoDaFicha,
+  MapaDeNotas,
+  NotaParaSalvar,
+  ResultadoDoCalculoDaFicha,
+} from "../modulos/entrevistas/tipos-da-ficha.ts";
+import type { Comparecimento } from "../modulos/entrevistas/cabecalho-da-ficha.tsx";
+import { objetoDaConducao } from "./dados-da-conducao.ts";
+type CompetenciasDoMembro = { competencias?: string[] | null };
+type IdentificacaoDaCompetencia = string | { id: string };
+type MembroDaBanca = CompetenciasDoMembro & {
+  id?: string | null;
+  banca?: number | string | null;
+  ativo?: boolean | null;
+};
+type GrupoDeAspectos = {
+  competencia: string;
+  avaliador: string;
+  notas: MapaDeNotas;
+};
 /*
   Condução da entrevista de um edital, sem React e sem banco: a configuração
   (roteiro, composição da banca, modo de lançamento, membros), a ficha de
@@ -25,10 +59,10 @@ import {
   minimoEmPontos,
   novaChave,
   textoDoNumero,
-} from "./roteiro-de-entrevista.js";
+} from "./roteiro-de-entrevista.ts";
 
-const texto = (valor) => String(valor ?? "").trim();
-const numero = (valor) => {
+const texto = (valor: unknown) => String(valor ?? "").trim();
+const numero = (valor: unknown) => {
   const n = lerNumero(valor);
   return n === null || Number.isNaN(n) ? null : n;
 };
@@ -38,7 +72,7 @@ export const MODOS_DE_LANCAMENTO = Object.freeze([
   Object.freeze({ valor: "AVALIADOR", rotulo: "Cada avaliador lança a sua" }),
 ]);
 
-export const rotuloDoLancamento = (valor) =>
+export const rotuloDoLancamento = (valor: unknown) =>
   MODOS_DE_LANCAMENTO.find((m) => m.valor === valor)?.rotulo || "—";
 
 /* ── Erros das RPCs ────────────────────────────────────────────────── */
@@ -48,7 +82,8 @@ export const rotuloDoLancamento = (valor) =>
  * (regra: configurar antes de convocar, candidato com notas…) já vêm escritas
  * pelo banco; 42501 é permissão.
  */
-export function mensagemDoErroDaEntrevista(erro) {
+export function mensagemDoErroDaEntrevista(falha: unknown) {
+  const erro = objetoDaConducao(falha);
   const mensagem = texto(erro?.message);
   switch (erro?.code) {
     case "PGRST202":
@@ -76,12 +111,23 @@ export function mensagemDoErroDaEntrevista(erro) {
  * fica fora. Do mais novo para o mais antigo.
  * @returns {import("../modulos/entrevistas/tipos.ts").EditalDaLista[]}
  */
-export function editaisParaConduzir(doMonitoramento, doPainel) {
+export function editaisParaConduzir(
+  doMonitoramento: Record<string, unknown>[] | null | undefined,
+  doPainel: unknown[] | null | undefined,
+): EditalDaLista[] {
   const comEntrevistas = new Set(
-    (doPainel || []).map((e) => e?.edital_id ?? e?.id).filter(Boolean),
+    (doPainel || [])
+      .map((e) => {
+        const o = objetoDaConducao(e);
+        return o?.edital_id ?? o?.id;
+      })
+      .filter(Boolean),
   );
   const lista = (doMonitoramento || [])
-    .filter((m) => m?.id)
+    .filter(
+      (m): m is Record<string, unknown> & { id: string } =>
+        typeof m?.id === "string" && Boolean(m.id),
+    )
     .map((m) => ({
       id: m.id,
       edital: texto(m.edital),
@@ -104,13 +150,13 @@ export function editaisParaConduzir(doMonitoramento, doPainel) {
   );
 }
 
-const dataCurta = (iso) =>
+const dataCurta = (iso: string) =>
   /^\d{4}-\d{2}-\d{2}$/.test(iso)
     ? iso.slice(8, 10) + "/" + iso.slice(5, 7)
     : "";
 
 /** Complemento do nome do edital na lista ("liberado até 15/11", "fora da janela"). */
-export function marcaDoEdital(item) {
+export function marcaDoEdital(item?: Partial<EditalDaLista> | null) {
   if (!item) return "";
   if (item.visivelPor === "liberado" && item.liberadoAte)
     return `liberado até ${dataCurta(item.liberadoAte)}`;
@@ -120,14 +166,14 @@ export function marcaDoEdital(item) {
 }
 
 /** A janela da entrevista em uma frase. */
-export function textoDaJanela(item) {
+export function textoDaJanela(item?: Partial<EditalDaLista> | null) {
   if (!item?.janelaInicio || !item?.janelaFim)
     return "sem etapa de entrevista no cronograma";
   return `janela da entrevista: ${dataCurta(item.janelaInicio)} a ${dataCurta(item.janelaFim)}`;
 }
 
 /** "06/2026 (sanitarista)" -> 2026 * 10000 + 6; sem número, 0 (vai para o fim). */
-export function ordemDoEdital(edital) {
+export function ordemDoEdital(edital: unknown) {
   const m = String(edital || "").match(/(\d{1,4})\s*\/\s*(\d{4})/);
   return m ? Number(m[2]) * 10000 + Number(m[1]) : 0;
 }
@@ -141,7 +187,7 @@ export function ordemDoEdital(edital) {
  * O candidato é PcD? A análise traz o campo como texto da planilha ("SIM" /
  * "NÃO"); só o sim conta (também aceita booleano, "S", "true" e "1").
  */
-export function ehPcd(valor) {
+export function ehPcd(valor: unknown) {
   if (typeof valor === "boolean") return valor;
   const t = String(valor ?? "")
     .normalize("NFD")
@@ -151,7 +197,7 @@ export function ehPcd(valor) {
   return ["sim", "s", "true", "1", "yes"].includes(t);
 }
 
-export function nomeDoCargo(cargo) {
+export function nomeDoCargo(cargo: unknown) {
   return String(cargo || "")
     .replace(/\s+em\s+excel\b.*$/i, "")
     .replace(/\s*\(question[aá]rio[^)]*\)?\s*$/i, "")
@@ -161,7 +207,10 @@ export function nomeDoCargo(cargo) {
 
 /* ── Configuração do edital ────────────────────────────────────────── */
 
-export function novoAvaliador(origem = "", banca = "1") {
+export function novoAvaliador(
+  origem = "",
+  banca: string | number = "1",
+): MembroDoRascunho {
   return {
     chave: novaChave(),
     id: null,
@@ -184,14 +233,19 @@ export function novoAvaliador(origem = "", banca = "1") {
   (private."FC_AVALIADOR_AVALIA", migration 20261008170000).
 */
 
-const idsDasCompetencias = (competencias) =>
+const idsDasCompetencias = (
+  competencias?: IdentificacaoDaCompetencia[] | null,
+) =>
   (competencias || [])
     .map((c) => (c && typeof c === "object" ? c.id : c))
     .filter(Boolean)
     .map(String);
 
 /** As competências (ids, na ordem do roteiro) que o membro avalia. */
-export function competenciasDoAvaliador(avaliador, competencias) {
+export function competenciasDoAvaliador(
+  avaliador: CompetenciasDoMembro | null | undefined,
+  competencias?: IdentificacaoDaCompetencia[] | null,
+) {
   const ids = idsDasCompetencias(competencias);
   const escolhidas = new Set(
     Array.isArray(avaliador?.competencias)
@@ -203,7 +257,10 @@ export function competenciasDoAvaliador(avaliador, competencias) {
 }
 
 /** O membro avalia todas as competências do roteiro? */
-export function avaliaTodas(avaliador, competencias) {
+export function avaliaTodas(
+  avaliador: CompetenciasDoMembro | null | undefined,
+  competencias?: IdentificacaoDaCompetencia[] | null,
+) {
   return (
     competenciasDoAvaliador(avaliador, competencias).length ===
     idsDasCompetencias(competencias).length
@@ -211,18 +268,22 @@ export function avaliaTodas(avaliador, competencias) {
 }
 
 /** O membro avalia esta competência? */
-export function avaliaACompetencia(avaliador, competencia, competencias) {
+export function avaliaACompetencia(
+  avaliador: CompetenciasDoMembro | null | undefined,
+  competencia: unknown,
+  competencias?: IdentificacaoDaCompetencia[] | null,
+) {
   return competenciasDoAvaliador(avaliador, competencias).includes(
     String(competencia),
   );
 }
 
 /** Os membros (da lista dada) que avaliam a competência. */
-export function avaliadoresDaCompetencia(
-  avaliadores,
-  competencia,
-  competencias,
-) {
+export function avaliadoresDaCompetencia<T extends CompetenciasDoMembro>(
+  avaliadores: T[] | null | undefined,
+  competencia: unknown,
+  competencias?: IdentificacaoDaCompetencia[] | null,
+): T[] {
   return (avaliadores || []).filter((a) =>
     avaliaACompetencia(a, competencia, competencias),
   );
@@ -233,8 +294,11 @@ export function avaliadoresDaCompetencia(
  * `{ idDoAvaliador: [competências] }`, só de quem não avalia todas.
  * @returns {Record<string, string[]>}
  */
-export function atribuicoesDaBanca(avaliadores, competencias) {
-  const atribuicoes = {};
+export function atribuicoesDaBanca(
+  avaliadores: MembroDaBanca[] | null | undefined,
+  competencias?: IdentificacaoDaCompetencia[] | null,
+): Record<string, string[]> {
+  const atribuicoes: Record<string, string[]> = {};
   for (const a of avaliadores || [])
     if (a?.id && !avaliaTodas(a, competencias))
       atribuicoes[a.id] = competenciasDoAvaliador(a, competencias);
@@ -245,15 +309,18 @@ export function atribuicoesDaBanca(avaliadores, competencias) {
  * Em cada banca com membros ativos, as competências que ninguém avalia:
  * `[{ banca, competencia }]` (competência = o objeto do roteiro).
  */
-export function competenciasSemAvaliador(avaliadores, competencias) {
-  const porBanca = new Map();
+export function competenciasSemAvaliador<T extends { id: string }>(
+  avaliadores: MembroDaBanca[] | null | undefined,
+  competencias: T[] | null | undefined,
+): { banca: number; competencia: T }[] {
+  const porBanca = new Map<number, MembroDaBanca[]>();
   for (const a of avaliadores || []) {
     if (a?.ativo === false) continue;
     const banca = Number(lerNumero(a?.banca)) || 1;
     if (!porBanca.has(banca)) porBanca.set(banca, []);
-    porBanca.get(banca).push(a);
+    porBanca.get(banca)!.push(a);
   }
-  const faltas = [];
+  const faltas: { banca: number; competencia: T }[] = [];
   for (const [banca, membros] of [...porBanca].sort((x, y) => x[0] - y[0]))
     for (const c of competencias || [])
       if (!membros.some((a) => avaliaACompetencia(a, c.id, competencias)))
@@ -262,7 +329,9 @@ export function competenciasSemAvaliador(avaliadores, competencias) {
 }
 
 /** O rascunho do formulário de configuração, a partir do payload do edital. */
-export function rascunhoDaConfiguracao(dados) {
+export function rascunhoDaConfiguracao(
+  dados?: Pick<DadosDoEdital, "configuracao" | "avaliadores"> | null,
+): RascunhoDaConfiguracao {
   const cfg = dados?.configuracao || null;
   return {
     roteiro: cfg?.roteiro?.id || "",
@@ -290,7 +359,10 @@ export function rascunhoDaConfiguracao(dados) {
  * pessoa pode mudar depois). Outro roteiro tem outras competências: cada
  * membro volta a avaliar todas.
  */
-export function aplicarRoteiroNaConfiguracao(rascunho, roteiro) {
+export function aplicarRoteiroNaConfiguracao(
+  rascunho: RascunhoDaConfiguracao,
+  roteiro?: Pick<RoteiroDeEntrevista, "id" | "banca_padrao"> | null,
+): RascunhoDaConfiguracao {
   const outro = (roteiro?.id || "") !== rascunho.roteiro;
   const avaliadores = outro
     ? (rascunho.avaliadores || []).map((a) => ({ ...a, competencias: null }))
@@ -308,7 +380,10 @@ export function aplicarRoteiroNaConfiguracao(rascunho, roteiro) {
  * Completa os membros da banca pela composição (origem × quantidade): para
  * cada origem, acrescenta as linhas que faltam na banca 1, com o nome vazio.
  */
-export function completarMembrosPelaComposicao(avaliadores, composicao) {
+export function completarMembrosPelaComposicao(
+  avaliadores: MembroDoRascunho[],
+  composicao?: BancaDoRascunho[] | null,
+): MembroDoRascunho[] {
   const lista = avaliadores.slice();
   for (const linha of composicao || []) {
     const origem = texto(linha.origem);
@@ -329,8 +404,11 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
  * membro que avalia "só estas" sem nenhuma marcada e, em cada banca, a
  * competência que ninguém avalia (`cobertura`).
  */
-export function errosDaConfiguracao(r, roteiro = null) {
-  const erros = {};
+export function errosDaConfiguracao(
+  r: RascunhoDaConfiguracao | null | undefined,
+  roteiro: Pick<RoteiroDeEntrevista, "competencias"> | null = null,
+): Record<string, string> {
+  const erros: Record<string, string> = {};
   if (!r?.roteiro) erros.roteiro = "Escolha o roteiro da entrevista.";
   Object.assign(erros, errosDaBanca(r?.banca));
   for (const a of r?.avaliadores || []) {
@@ -379,13 +457,16 @@ export function errosDaConfiguracao(r, roteiro = null) {
  * @param {import("./tipos-do-roteiro-de-entrevista.ts").RoteiroDeEntrevista | null} [roteiro]
  * @returns {import("../modulos/entrevistas/tipos.ts").DadosDaConfiguracaoDaEntrevista}
  */
-export function dadosDaConfiguracaoParaSalvar(r, roteiro = null) {
+export function dadosDaConfiguracaoParaSalvar(
+  r: RascunhoDaConfiguracao,
+  roteiro: Pick<RoteiroDeEntrevista, "competencias"> | null = null,
+): DadosDaConfiguracaoDaEntrevista {
   return {
     roteiro: r.roteiro,
     banca: bancaDoRascunho(r.banca),
     lancamento: r.lancamento === "AVALIADOR" ? "AVALIADOR" : "SECRETARIA",
     avaliadores: (r.avaliadores || []).map((a) => {
-      const membro = {
+      const membro: DadosDaConfiguracaoDaEntrevista["avaliadores"][number] = {
         nome: texto(a.nome),
         origem: texto(a.origem),
         banca: numero(a.banca) ?? 1,
@@ -413,7 +494,11 @@ export function dadosDaConfiguracaoParaSalvar(r, roteiro = null) {
  * aspectos, `competência|avaliador|aspecto`.
  * @returns {string}
  */
-export const chaveDaNota = (competencia, avaliador, aspecto) =>
+export const chaveDaNota = (
+  competencia: string | null | undefined,
+  avaliador: string | null | undefined,
+  aspecto?: string | null,
+) =>
   aspecto
     ? `${competencia}|${avaliador}|${aspecto}`
     : `${competencia}|${avaliador}`;
@@ -423,8 +508,11 @@ export const chaveDaNota = (competencia, avaliador, aspecto) =>
  * roteiro), uma chave por aspecto (`avaliacoes[].aspectos`).
  * @returns {Record<string, string>}
  */
-export function mapaDasAvaliacoes(avaliacoes, aspectos = []) {
-  const mapa = {};
+export function mapaDasAvaliacoes(
+  avaliacoes?: Avaliacao[] | null,
+  aspectos: AspectoDaFicha[] = [],
+): MapaDeNotas {
+  const mapa: MapaDeNotas = {};
   for (const a of avaliacoes || []) {
     if (aspectos?.length) {
       for (const n of a?.aspectos || []) {
@@ -441,14 +529,14 @@ export function mapaDasAvaliacoes(avaliacoes, aspectos = []) {
 }
 
 /* As notas do mapa agrupadas por competência|avaliador (com aspectos). */
-function gruposDosAspectos(mapa) {
-  const grupos = new Map();
+function gruposDosAspectos(mapa: MapaDeNotas | null | undefined) {
+  const grupos = new Map<string, GrupoDeAspectos>();
   for (const [chave, valor] of Object.entries(mapa || {})) {
-    const [competencia, avaliador, aspecto] = chave.split("|");
+    const [competencia = "", avaliador = "", aspecto] = chave.split("|");
     if (!aspecto) continue;
     const id = `${competencia}|${avaliador}`;
     if (!grupos.has(id)) grupos.set(id, { competencia, avaliador, notas: {} });
-    grupos.get(id).notas[aspecto] = valor;
+    grupos.get(id)!.notas[aspecto] = valor;
   }
   return grupos;
 }
@@ -459,7 +547,10 @@ function gruposDosAspectos(mapa) {
  * @param {import("../modulos/entrevistas/tipos-da-ficha.ts").AspectoDaFicha[]} aspectos
  * @returns {import("./fila-de-conducao.ts").Avaliacao[]}
  */
-export function avaliacoesDoMapa(mapa, aspectos = []) {
+export function avaliacoesDoMapa(
+  mapa: MapaDeNotas,
+  aspectos: AspectoDaFicha[] = [],
+): Avaliacao[] {
   if (aspectos?.length) {
     return [...gruposDosAspectos(mapa).values()].map((g) => ({
       competencia: g.competencia,
@@ -472,7 +563,7 @@ export function avaliacoesDoMapa(mapa, aspectos = []) {
   }
   return Object.entries(mapa || {})
     .map(([chave, valor]) => {
-      const [competencia, avaliador] = chave.split("|");
+      const [competencia = "", avaliador = ""] = chave.split("|");
       return { competencia, avaliador, nota: numero(valor) };
     })
     .filter((a) => a.nota !== null);
@@ -484,7 +575,10 @@ export function avaliacoesDoMapa(mapa, aspectos = []) {
  * só aceita todos os aspectos (ou nenhum).
  * @returns {{ competencia: string; avaliador: string }[]}
  */
-export function aspectosIncompletos(mapa, aspectos = []) {
+export function aspectosIncompletos(
+  mapa: MapaDeNotas,
+  aspectos: AspectoDaFicha[] = [],
+): { competencia: string; avaliador: string }[] {
   if (!aspectos?.length) return [];
   return [...gruposDosAspectos(mapa).values()]
     .filter((g) => {
@@ -507,14 +601,19 @@ export function aspectosIncompletos(mapa, aspectos = []) {
  * @param {import("../modulos/entrevistas/tipos-da-ficha.ts").AspectoDaFicha[]} aspectos
  * @returns {import("../modulos/entrevistas/tipos-da-ficha.ts").NotaParaSalvar[]}
  */
-export function notasAlteradas(original, atual, aspectos = []) {
+export function notasAlteradas(
+  original: MapaDeNotas,
+  atual: MapaDeNotas,
+  aspectos: AspectoDaFicha[] = [],
+): NotaParaSalvar[] {
   if (aspectos?.length) {
     const antes = gruposDosAspectos(original);
     const depois = gruposDosAspectos(atual);
-    const notas = [];
+    const notas: NotaParaSalvar[] = [];
     for (const id of new Set([...antes.keys(), ...depois.keys()])) {
-      const [competencia, avaliador] = id.split("|");
-      const valores = (g) => aspectos.map((a) => numero(g?.notas[a.id]));
+      const [competencia = "", avaliador = ""] = id.split("|");
+      const valores = (g: GrupoDeAspectos | undefined) =>
+        aspectos.map((a) => numero(g?.notas[a.id]));
       const a = valores(antes.get(id));
       const d = valores(depois.get(id));
       if (a.every((n, i) => n === d[i])) continue;
@@ -524,7 +623,7 @@ export function notasAlteradas(original, atual, aspectos = []) {
         notas.push({
           competencia,
           avaliador,
-          aspectos: aspectos.map((x, i) => ({ aspecto: x.id, nota: d[i] })),
+          aspectos: aspectos.map((x, i) => ({ aspecto: x.id, nota: d[i]! })),
         });
     }
     return notas;
@@ -533,12 +632,12 @@ export function notasAlteradas(original, atual, aspectos = []) {
     ...Object.keys(original || {}),
     ...Object.keys(atual || {}),
   ]);
-  const notas = [];
+  const notas: NotaParaSalvar[] = [];
   for (const chave of chaves) {
     const antes = numero(original?.[chave]);
     const depois = numero(atual?.[chave]);
     if (antes === depois) continue;
-    const [competencia, avaliador] = chave.split("|");
+    const [competencia = "", avaliador = ""] = chave.split("|");
     notas.push({ competencia, avaliador, nota: depois });
   }
   return notas;
@@ -548,7 +647,7 @@ export function notasAlteradas(original, atual, aspectos = []) {
  * As bancas com membros ativos, em ordem.
  * @returns {number[]}
  */
-export function bancasDoEdital(avaliadores) {
+export function bancasDoEdital(avaliadores?: Avaliador[] | null): number[] {
   return [
     ...new Set(
       (avaliadores || [])
@@ -563,7 +662,11 @@ export function bancasDoEdital(avaliadores) {
  * definida) e quem já deu nota ao candidato (mesmo que tenha saído da banca).
  * @returns {import("./fila-de-conducao.ts").Avaliador[]}
  */
-export function avaliadoresDaFicha(avaliadores, convocado, banca) {
+export function avaliadoresDaFicha(
+  avaliadores: Avaliador[] | null | undefined,
+  convocado?: Pick<Convocado, "avaliacoes"> | null,
+  banca?: number | string | null,
+): Avaliador[] {
   const comNota = new Set(
     (convocado?.avaliacoes || []).map((a) => a.avaliador),
   );
@@ -582,7 +685,16 @@ export function avaliadoresDaFicha(avaliadores, convocado, banca) {
  * lança por qualquer um). Membro que saiu da banca não recebe nota.
  * @returns {boolean}
  */
-export function podeLancarPor(dados, avaliador) {
+export function podeLancarPor(
+  dados:
+    | Pick<
+        DadosDoEdital,
+        "pode_editar" | "admin_global" | "meu_perfil" | "configuracao"
+      >
+    | null
+    | undefined,
+  avaliador?: Avaliador | null,
+): boolean {
   if (!dados?.pode_editar || !avaliador || avaliador.ativo === false)
     return false;
   if (dados?.configuracao?.lancamento !== "AVALIADOR") return true;
@@ -594,7 +706,9 @@ export function podeLancarPor(dados, avaliador) {
  * Os aspectos do roteiro, em ordem (vazio = uma nota por avaliador).
  * @returns {import("../modulos/entrevistas/tipos-da-ficha.ts").AspectoDaFicha[]}
  */
-export function aspectosDoRoteiro(roteiro) {
+export function aspectosDoRoteiro(
+  roteiro?: Pick<RoteiroDeEntrevista, "aspectos"> | null,
+): AspectoDaFicha[] {
   return (roteiro?.aspectos || [])
     .slice()
     .sort((a, b) => (a.ordem ?? 0) - (b.ordem ?? 0));
@@ -606,14 +720,21 @@ export function aspectosDoRoteiro(roteiro) {
  * aceita todos). `notas`: `{ idDoAspecto: nota }` ou `[{ aspecto, nota }]`.
  * @returns {number | null}
  */
-export function mediaDosAspectos(aspectos, notas) {
+export function mediaDosAspectos(
+  aspectos: AspectoDaFicha[] | null | undefined,
+  notas:
+    | Record<string, unknown>
+    | { aspecto: string; nota: number | string | null }[]
+    | null
+    | undefined,
+): number | null {
   if (!aspectos?.length) return null;
   const mapa = Array.isArray(notas)
     ? Object.fromEntries(notas.map((n) => [n.aspecto, n.nota]))
     : notas || {};
   const valores = aspectos.map((a) => numero(mapa[a.id]));
   if (valores.some((v) => v === null)) return null;
-  return valores.reduce((s, n) => s + n, 0) / valores.length;
+  return valores.reduce<number>((s, n) => s + (n ?? 0), 0) / valores.length;
 }
 
 /**
@@ -640,7 +761,19 @@ export function calcularEntrevista({
   compareceu,
   avaliacoes,
   atribuicoes = null,
-}) {
+}: {
+  roteiro: Pick<
+    RoteiroDeEntrevista,
+    | "aspectos"
+    | "competencias"
+    | "notas_eliminatorias"
+    | "nota_minima_total"
+    | "ausencia_elimina"
+  > | null;
+  compareceu: Comparecimento;
+  avaliacoes: Avaliacao[];
+  atribuicoes?: Record<string, string[]> | null;
+}): ResultadoDoCalculoDaFicha {
   const aspectos = aspectosDoRoteiro(roteiro);
   const comAspectos = aspectos.length > 0;
   const eliminatorias = comAspectos
@@ -655,13 +788,13 @@ export function calcularEntrevista({
   let bruto = 0;
   let falta = false;
   let reprova = false;
-  const conta = (a) => {
-    const lista = atribuicoes?.[a.avaliador];
+  const conta = (a: Avaliacao) => {
+    const lista = a.avaliador ? atribuicoes?.[a.avaliador] : undefined;
     if (!Array.isArray(lista)) return true;
     const doRoteiro = lista.filter((id) =>
       competencias.some((c) => c.id === id),
     );
-    return !doRoteiro.length || doRoteiro.includes(a.competencia);
+    return !doRoteiro.length || doRoteiro.includes(a.competencia ?? "");
   };
   const linhas = competencias.map((c) => {
     const notas = (avaliacoes || [])
@@ -710,7 +843,7 @@ export function calcularEntrevista({
   const soma = arredondar(comAspectos ? bruto : total);
   const minimoTotal = numero(roteiro?.nota_minima_total);
   const totalFinal = compareceu === "N" ? 0 : falta && soma === 0 ? null : soma;
-  let parecer;
+  let parecer: ResultadoDoCalculoDaFicha["parecer"];
   if (compareceu === "N" && roteiro?.ausencia_elimina !== false)
     parecer = "INAPTO";
   else if (compareceu !== "S" || falta) parecer = "SEM_PARECER";
@@ -735,7 +868,11 @@ export function calcularEntrevista({
  * Os motivos do parecer, em frases curtas, para a ficha.
  * @returns {string[]}
  */
-export function motivosDoParecer(resultado, compareceu, roteiro) {
+export function motivosDoParecer(
+  resultado: ResultadoDoCalculoDaFicha,
+  compareceu: Comparecimento,
+  roteiro?: Pick<RoteiroDeEntrevista, "ausencia_elimina"> | null,
+): string[] {
   const motivos = [];
   if (compareceu === "N")
     motivos.push(
@@ -766,7 +903,11 @@ export function motivosDoParecer(resultado, compareceu, roteiro) {
  * Notas lançadas / esperadas: de cada avaliador da banca, só as
  * competências que ele avalia (todas, por padrão).
  */
-export function progressoDasNotas(convocado, avaliadores, competencias) {
+export function progressoDasNotas(
+  convocado: Pick<Convocado, "avaliacoes"> | null | undefined,
+  avaliadores: Avaliador[] | null | undefined,
+  competencias?: IdentificacaoDaCompetencia[] | null,
+) {
   const devidas = new Set();
   for (const a of avaliadores || [])
     for (const c of competenciasDoAvaliador(a, competencias))
@@ -780,7 +921,14 @@ export function progressoDasNotas(convocado, avaliadores, competencias) {
   return { lancadas, esperadas: devidas.size };
 }
 
-export function filtrarConvocados(convocados, filtros) {
+export function filtrarConvocados(
+  convocados: Convocado[] | null | undefined,
+  filtros?: {
+    busca?: string;
+    vaga?: string;
+    banca?: string | number | null;
+  } | null,
+): Convocado[] {
   const busca = normalizarBusca(filtros?.busca);
   return (convocados || []).filter((c) => {
     if (filtros?.vaga && texto(c.vaga) !== filtros.vaga) return false;

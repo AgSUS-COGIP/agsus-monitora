@@ -15,13 +15,13 @@ import {
   avaliaTodas,
   competenciasDoAvaliador,
   competenciasSemAvaliador,
-} from "./conducao-de-entrevista.js";
+} from "./conducao-de-entrevista.ts";
 import { textoDaEscala } from "./digitacao-de-notas.ts";
 import {
   minimoEmPontos,
   opcoesDaEscala,
   pontuacaoMaxima,
-} from "./roteiro-de-entrevista.js";
+} from "./roteiro-de-entrevista.ts";
 
 export type DestinoDoResumo =
   "classificacao" | "configuracao" | "roteiro" | "convocacao";
@@ -233,9 +233,7 @@ function escalaDoRoteiro(
   const maximas = [...new Set(competencias.map((c) => numero(c.nota_maxima)))];
   if (maximas.length !== 1) return "na escala de cada competência";
   const maxima = maximas[0] ?? null;
-  const opcoes = (opcoesDaEscala(roteiro, maxima) as { valor: number }[]).map(
-    (o) => o.valor,
-  );
+  const opcoes = opcoesDaEscala(roteiro, maxima).map((o) => o.valor);
   const escala = textoDaEscala(opcoes);
   if (!escala) return maxima === null ? "" : `de 0 a ${numeroBr(maxima)}`;
   if (/^\S+ a \S+$/.test(escala)) return `de ${escala}`;

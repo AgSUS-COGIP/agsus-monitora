@@ -32,7 +32,7 @@ import {
   textoDaPontuacao,
   TIPOS_DE_AVALIACAO,
   TIPOS_DE_MINIMO,
-} from "../../lib/roteiro-de-entrevista.js";
+} from "../../lib/roteiro-de-entrevista.ts";
 import {
   erroDoNomeDaVersao,
   nomeParaGravar,

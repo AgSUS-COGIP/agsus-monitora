@@ -23,7 +23,7 @@ import {
   secaoDoErro,
 } from "../src/lib/pendencias-do-roteiro.ts";
 import { frasesDaEliminacao } from "../src/lib/resumo-da-entrevista.ts";
-import { errosDoRoteiro } from "../src/lib/roteiro-de-entrevista.js";
+import { errosDoRoteiro } from "../src/lib/roteiro-de-entrevista.ts";
 
 /*
   Entrevistas mais claras: as iniciais do avatar, a busca e o agrupamento da

@@ -6,7 +6,7 @@ import { trocarNaLista } from "../../src/modulos/entrevistas/partes.tsx";
 import {
   dadosDoRoteiroParaSalvar,
   rascunhoDoRoteiro,
-} from "../../src/lib/roteiro-de-entrevista.js";
+} from "../../src/lib/roteiro-de-entrevista.ts";
 import { frasesDaEliminacao } from "../../src/lib/resumo-da-entrevista.ts";
 import type {
   DadosDoRoteiroParaSalvar,

@@ -3,7 +3,7 @@ import {
   MODELO_DE_ASPECTOS,
   moverItem,
   novoAspecto,
-} from "../../lib/roteiro-de-entrevista.js";
+} from "../../lib/roteiro-de-entrevista.ts";
 import { BotaoDeLinha } from "./partes.tsx";
 
 /*

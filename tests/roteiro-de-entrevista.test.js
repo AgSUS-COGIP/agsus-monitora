@@ -14,7 +14,7 @@ import {
   resumoDoRoteiro,
   rotuloDoPeso,
   textoDaPontuacao,
-} from "../src/lib/roteiro-de-entrevista.js";
+} from "../src/lib/roteiro-de-entrevista.ts";
 
 /* Os dois roteiros iniciais da migration 20260930220000. */
 const SAUDE_INDIGENA = {
@@ -306,7 +306,7 @@ describe("rascunho, validação e gravação", () => {
 });
 
 describe("aspectos do roteiro", async () => {
-  const lib = await import("../src/lib/roteiro-de-entrevista.js");
+  const lib = await import("../src/lib/roteiro-de-entrevista.ts");
 
   it("rascunho, validação e o que vai ao banco", () => {
     const r = lib.rascunhoDoRoteiro({

@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-import { calcularEntrevista } from "../src/lib/conducao-de-entrevista.js";
+import { calcularEntrevista } from "../src/lib/conducao-de-entrevista.ts";
 
 /*
   Casos dourados do cálculo da entrevista, compartilhados com o Python

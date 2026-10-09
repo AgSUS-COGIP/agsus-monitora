@@ -2,7 +2,7 @@
   O editor do roteiro de entrevista (src/modulos/entrevistas/roteiros.tsx) em
   seções recolhíveis e a lista do que falta perto do Salvar — como o
   assistente da regra da Avaliação documental. Sem React: as seções, a seção
-  de cada erro de `errosDoRoteiro` (src/lib/roteiro-de-entrevista.js) e a
+  de cada erro de `errosDoRoteiro` (src/lib/roteiro-de-entrevista.ts) e a
   frase de cada erro com o lugar dele ("Competência 2 (Escuta): Nota
   máxima: maior que 0 e até 100.").
 */

@@ -31,7 +31,7 @@ import {
   notasAlteradas,
   podeLancarPor,
   rotuloDoLancamento,
-} from "../../lib/conducao-de-entrevista.js";
+} from "../../lib/conducao-de-entrevista.ts";
 import { textoDaEscala } from "../../lib/digitacao-de-notas.ts";
 import { listaBr } from "../../lib/resumo-da-entrevista.ts";
 import {
@@ -42,7 +42,7 @@ import {
   opcoesDaEscala,
   pontuacaoMaxima,
   rotuloDoPeso,
-} from "../../lib/roteiro-de-entrevista.js";
+} from "../../lib/roteiro-de-entrevista.ts";
 import { Aviso, classes, Segmentado } from "../../ui/index.js";
 import { Popover } from "../../ui/popover.tsx";
 import { AbasDaFicha } from "./abas-da-ficha.tsx";
