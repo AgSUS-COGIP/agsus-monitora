@@ -47,7 +47,7 @@ import {
   payloadMudou,
 } from "../../lib/entrevistas-do-painel.ts";
 import { armazenamentoDePayload } from "../../modules/cache-de-payload-indexeddb.js";
-import { avaliarMarcosDasEntrevistas } from "./marcos.js";
+import { avaliarMarcosDasEntrevistas } from "./marcos.ts";
 
 export const MENSAGEM_SEM_SESSAO =
   "Sessão não localizada. Entre de novo no MONITORA.";
@@ -116,7 +116,7 @@ export function criarEstadoDasEntrevistas({
   armazenamento = armazenamentoDePayload,
   agora = () => Date.now(),
   tempoLimiteMs = TEMPO_LIMITE_MS,
-  /* Vaga pronta para o resultado final (marcos.js); troque nos testes. */
+  /* Vaga pronta para o resultado final (marcos.ts); troque nos testes. */
   avaliarMarcos = avaliarMarcosDasEntrevistas,
 }: OpcoesDoEstadoDasEntrevistas = {}): EstadoDasEntrevistas {
   let estado: SnapshotDasEntrevistas = ESTADO_INICIAL;

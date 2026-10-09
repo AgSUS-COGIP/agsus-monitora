@@ -1,3 +1,7 @@
+import type {
+  FonteDaConvocacao as Fonte,
+  GrupoDaConvocacao,
+} from "../../lib/tipos-da-convocacao-da-entrevista.ts";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   bancasDoEdital,
@@ -13,7 +17,7 @@ import {
   gruposDaConvocacao,
   resumoDaConvocacao,
   textoDoEmpateFinal,
-} from "../../lib/convocacao-da-entrevista.js";
+} from "../../lib/convocacao-da-entrevista.ts";
 import { hojeEmBrasilia } from "../../lib/fila-de-conducao.ts";
 import { rotuloDaVersao } from "../../lib/nome-da-versao.ts";
 import {
@@ -38,7 +42,7 @@ import {
   BotaoIrPara,
   ConvocacaoDaClassificacao,
   ListaDeConvocacao,
-} from "./conducao.jsx";
+} from "./conducao.tsx";
 import {
   BarraDaConfiguracao,
   CampoDoRoteiro,
@@ -82,13 +86,6 @@ type Dados = DadosDoEdital & {
     avaliacoes?: unknown[] | null;
   })[];
 };
-type Fonte = { tipo: string; resultado: unknown; lista?: unknown };
-type GrupoDaConvocacao = {
-  vaga: string;
-  cargo?: string | null;
-  total: number | null;
-  candidatos: unknown[];
-};
 
 /* O que o resumo das regras mostra, a partir do payload e da convocação. */
 function entradaDoResumo(
@@ -107,22 +104,16 @@ function entradaDoResumo(
       null) as EntradaDoResumo["roteiro"],
     avaliadores: (dados.avaliadores || []) as EntradaDoResumo["avaliadores"],
     lancamento: dados.configuracao?.lancamento || null,
-    desempate: criteriosDeDesempate(regra) as EntradaDoResumo["desempate"],
-    empateFinal: textoDoEmpateFinal(regra) as string,
-    convocados:
-      fonte?.tipo === "LISTA"
-        ? (resumoDaConvocacao(grupos) as EntradaDoResumo["convocados"])
-        : null,
+    desempate: criteriosDeDesempate(regra),
+    empateFinal: textoDoEmpateFinal(regra),
+    convocados: fonte?.tipo === "LISTA" ? resumoDaConvocacao(grupos) : null,
   };
 }
 
-/* A convocação ainda tem um contrato de integração com JavaScript. */
+/* Conversores da configuração e da convocação com contratos TypeScript. */
 const errosDaConfiguracaoDo = errosDaConfiguracao;
 const paraSalvar = dadosDaConfiguracaoParaSalvar;
-const fonteDaConvocacaoDo = fonteDaConvocacao as unknown as (
-  dados: unknown,
-  resultado?: unknown,
-) => Fonte;
+const fonteDaConvocacaoDo = fonteDaConvocacao;
 
 const ordem = (a: { ordem?: number | null }, b: { ordem?: number | null }) =>
   (a.ordem ?? 0) - (b.ordem ?? 0);
@@ -181,7 +172,7 @@ function BancaGravada({ dados }: { dados: Dados }) {
   const competencias = [...(roteiro?.competencias || [])].sort(ordem);
   const ativos = (dados.avaliadores || []).filter((a) => a.ativo !== false);
   if (!ativos.length) return null;
-  const bancas = bancasDoEdital(ativos) as number[];
+  const bancas = bancasDoEdital(ativos);
   const nomeDa = (id: string) =>
     competencias.find((c) => c.id === id)?.nome || id;
   return (
@@ -366,11 +357,7 @@ function PrepararDoEdital({
     [dados, calculo],
   );
   const grupos = useMemo(
-    () =>
-      gruposDaConvocacao(
-        fonte.resultado,
-        dados.convocados,
-      ) as GrupoDaConvocacao[],
+    () => gruposDaConvocacao(fonte.resultado, dados.convocados),
     [fonte, dados],
   );
   const entrada = useMemo(
@@ -420,10 +407,7 @@ function PrepararDoEdital({
     [configurado, dados, roteiro],
   );
   const ativos = (dados.avaliadores || []).filter((a) => a.ativo !== false);
-  const resumo = resumoDaConvocacao(grupos) as {
-    naFicha: number;
-    naLista: number;
-  };
+  const resumo = resumoDaConvocacao(grupos);
   const passos = useMemo(
     () =>
       passosDoPreparar({
@@ -448,8 +432,7 @@ function PrepararDoEdital({
           temLista: fonte.tipo === "LISTA",
           naLista: resumo.naLista,
           naFicha: dados.convocados.length,
-          aConvocar:
-            fonte.tipo === "LISTA" ? (aConvocar(grupos) as string[]).length : 0,
+          aConvocar: fonte.tipo === "LISTA" ? aConvocar(grupos).length : 0,
         },
         agenda: {
           comHorario: agendaPorDia(e.agenda, dados.convocados, "").dias.reduce(

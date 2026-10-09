@@ -10,8 +10,91 @@ import {
   textoDasVagas,
   textoDoLimite,
   vagasDaLista,
-} from "../src/lib/convocacao-da-entrevista.js";
+} from "../src/lib/convocacao-da-entrevista.ts";
 import { instantaneoDaLista } from "../src/lib/classificacao/exportacao.js";
+
+describe("entrada externa da convocação", () => {
+  it("descarta retratos e cálculos sem uma lista de vagas", () => {
+    for (const retrato of [null, [], "lista", { vagas: {} }]) {
+      expect(
+        fonteDaConvocacao({
+          lista_convocacao: { lista: { id: "l1" }, retrato },
+        }).tipo,
+      ).toBe("NENHUMA");
+    }
+    expect(fonteDaConvocacao(null, { vagas: "lista" }).tipo).toBe("NENHUMA");
+    expect(
+      fonteDaConvocacao({
+        lista_convocacao: { lista: { id: 42 }, retrato: { vagas: [] } },
+      }).tipo,
+    ).toBe("NENHUMA");
+  });
+  it("usa o cálculo atual quando o retrato registrado não pode ser lido", () => {
+    const calculo = { vagas: [] };
+    expect(
+      fonteDaConvocacao(
+        { lista_convocacao: { lista: { id: "l1" }, retrato: { vagas: {} } } },
+        calculo,
+      ),
+    ).toEqual({ tipo: "CALCULO", lista: null, resultado: calculo });
+  });
+  it("normaliza metadados sem interpretar texto como publicação", () => {
+    const fonte = fonteDaConvocacao({
+      lista_convocacao: {
+        lista: {
+          id: "l1",
+          gerada_em: [],
+          por: {},
+          versao_regra: "3",
+          publicada: "false",
+          extra: "mantido",
+        },
+        retrato: { vagas: [] },
+      },
+    });
+    expect(fonte.lista).toMatchObject({
+      id: "l1",
+      gerada_em: null,
+      por: null,
+      versao_regra: 3,
+      publicada: false,
+      extra: "mantido",
+    });
+  });
+  it("descarta vagas, linhas e modalidades com estrutura inválida", () => {
+    expect(vagasDaLista({ vagas: {} })).toEqual([]);
+    const vagas = vagasDaLista({
+      vagas: [
+        null,
+        "vaga",
+        {
+          codigo: "V1",
+          geral: [
+            null,
+            "candidato",
+            { analise_id: {}, nome: "Inválido" },
+            { analise_id: "a1", nome: "Ana", modalidades: ["AC", null, {}] },
+          ],
+          listas: { PPIQ: {} },
+          limite_convocacao: "dez",
+        },
+      ],
+    });
+    expect(vagas).toHaveLength(1);
+    expect(vagas[0].candidatos).toEqual([
+      {
+        analiseId: "a1",
+        nome: "Ana",
+        posicao: null,
+        nota: null,
+        modalidades: ["AC"],
+        situacao: "",
+        lista: "",
+      },
+    ]);
+    expect(vagas[0].limite).toBeNull();
+  });
+});
 
 /*
   A convocação para a entrevista é a lista CONVOCACAO da Classificação: o

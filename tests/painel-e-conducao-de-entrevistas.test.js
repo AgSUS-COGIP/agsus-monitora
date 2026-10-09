@@ -27,7 +27,7 @@ import {
 import {
   criteriosDeDesempate,
   textoDoEmpateFinal,
-} from "../src/lib/convocacao-da-entrevista.js";
+} from "../src/lib/convocacao-da-entrevista.ts";
 import { destinoDaTela } from "../src/lib/navegacao.js";
 import { paginasPermitidas } from "../src/lib/access-roles.js";
 import { bloqueioDaTela } from "../src/lib/navegacao.js";

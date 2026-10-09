@@ -94,7 +94,7 @@ export type ConvocacaoDaRegra = {
     | null;
 };
 
-/** Uma vaga da lista de convocação (`vagasDaLista` de convocacao-da-entrevista.js). */
+/** Uma vaga da lista de convocação (`vagasDaLista` de convocacao-da-entrevista.ts). */
 export type VagaDoResumo = {
   vaga: string;
   cargo?: string | null;

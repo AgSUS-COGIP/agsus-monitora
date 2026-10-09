@@ -5,7 +5,7 @@ import {
   sufixoDeTreinamento,
 } from "../../lib/edital-de-treinamento.js";
 import { Aviso } from "../../ui/index.js";
-import { LiberacaoDoEdital } from "./conducao.jsx";
+import { LiberacaoDoEdital } from "./conducao.tsx";
 import type { EstadoDaConducao, EstadoDaConducaoComAcoes } from "./tipos.ts";
 
 /*

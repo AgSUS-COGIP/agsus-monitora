@@ -1,3 +1,15 @@
+import type {
+  FonteDaConvocacao,
+  CandidatoDaConvocacao,
+  VagaDaConvocacao,
+  GrupoDaConvocacao,
+  OrigemDaVaga,
+  AvisoDaConvocacao,
+  CriterioDeDesempateDaEntrevista,
+} from "./tipos-da-convocacao-da-entrevista.ts";
+import type { Convocado } from "./fila-de-conducao.ts";
+import type { DadosDoEdital } from "../modulos/entrevistas/tipos.ts";
+import { objetoDaConducao, registrosDaConducao } from "./dados-da-conducao.ts";
 /*
   A convocação para a entrevista, sem React e sem banco. Há uma convocação só:
   a lista CONVOCACAO da Classificação (motor src/lib/classificacao/motor.js,
@@ -23,8 +35,8 @@
 import { DIRECOES, METODOS_DE_EMPATE_FINAL } from "./classificacao/catalogo.js";
 import { criteriosDaRegra } from "./classificacao/regra.js";
 
-const texto = (valor) => String(valor ?? "").trim();
-const numero = (valor) =>
+const texto = (valor: unknown) => String(valor ?? "").trim();
+const numero = (valor: unknown) =>
   valor === null ||
   valor === undefined ||
   valor === "" ||
@@ -33,26 +45,29 @@ const numero = (valor) =>
     : Number(valor);
 
 /* De onde vieram as vagas da vaga e onde se mudam (a view do app). */
-export const ORIGENS_DAS_VAGAS = Object.freeze({
-  QUADRO: Object.freeze({
-    rotulo: "quadro de vagas do edital",
-    view: "nucleo",
-    onde: "Editais",
-  }),
-  CONVOCACAO: Object.freeze({
-    rotulo: "configuração da convocação",
-    view: "aprovados",
-    onde: "Lista de aprovados",
-  }),
-  REGRA: Object.freeze({
-    rotulo: "percentuais da regra",
-    view: "classificacao",
-    onde: "Classificação",
-  }),
-});
+export const ORIGENS_DAS_VAGAS: Readonly<Record<string, OrigemDaVaga>> =
+  Object.freeze({
+    QUADRO: Object.freeze({
+      rotulo: "quadro de vagas do edital",
+      view: "nucleo",
+      onde: "Editais",
+    }),
+    CONVOCACAO: Object.freeze({
+      rotulo: "configuração da convocação",
+      view: "aprovados",
+      onde: "Lista de aprovados",
+    }),
+    REGRA: Object.freeze({
+      rotulo: "percentuais da regra",
+      view: "classificacao",
+      onde: "Classificação",
+    }),
+  });
 
 /** A origem das vagas da vaga, ou a de quem não tem quadro (configurar no Editais). */
-export function origemDasVagas(grupo) {
+export function origemDasVagas(
+  grupo?: Pick<VagaDaConvocacao, "semVagasNaLista" | "origemDasVagas"> | null,
+): OrigemDaVaga {
   if (grupo?.semVagasNaLista)
     return {
       rotulo: "não registrado nesta lista",
@@ -60,7 +75,7 @@ export function origemDasVagas(grupo) {
       onde: "Classificação",
     };
   return (
-    ORIGENS_DAS_VAGAS[grupo?.origemDasVagas] || {
+    ORIGENS_DAS_VAGAS[grupo?.origemDasVagas ?? ""] || {
       rotulo: "sem quadro de vagas",
       view: "nucleo",
       onde: "Editais",
@@ -72,25 +87,55 @@ export function origemDasVagas(grupo) {
  * A convocação que vale na tela: a lista registrada; sem ela, o cálculo atual
  * (`calculada`, o resultado do motor para CONVOCACAO), só para consulta.
  */
-export function fonteDaConvocacao(dados, calculada = null) {
+export function fonteDaConvocacao(
+  dados: Pick<DadosDoEdital, "lista_convocacao"> | null | undefined,
+  calculada: unknown = null,
+): FonteDaConvocacao {
   const registrada = dados?.lista_convocacao;
-  if (registrada?.lista?.id && registrada?.retrato)
+  const lista = objetoDaConducao(registrada?.lista);
+  const retrato = objetoDaConducao(registrada?.retrato);
+  const calculo = objetoDaConducao(calculada);
+  if (
+    lista &&
+    typeof lista.id === "string" &&
+    lista.id.trim() &&
+    retrato &&
+    Array.isArray(retrato.vagas)
+  )
     return {
       tipo: "LISTA",
-      lista: registrada.lista,
-      resultado: registrada.retrato,
+      lista: {
+        ...lista,
+        id: lista.id,
+        gerada_em: typeof lista.gerada_em === "string" ? lista.gerada_em : null,
+        por: typeof lista.por === "string" ? lista.por : null,
+        versao_regra: numero(lista.versao_regra),
+        publicada: lista.publicada === true,
+      },
+      resultado: retrato,
     };
-  if (calculada?.vagas)
-    return { tipo: "CALCULO", lista: null, resultado: calculada };
+  if (calculo && Array.isArray(calculo.vagas))
+    return { tipo: "CALCULO", lista: null, resultado: calculo };
   return { tipo: "NENHUMA", lista: null, resultado: null };
 }
 
-const linhaDaLista = (l, lista) => ({
-  analiseId: texto(l?.analise_id || l?.analiseId),
+const idDaAnalise = (valor: unknown) =>
+  typeof valor === "string"
+    ? valor.trim()
+    : typeof valor === "number" && Number.isFinite(valor)
+      ? String(valor)
+      : "";
+const linhaDaLista = (
+  l: Record<string, unknown>,
+  lista: string,
+): CandidatoDaConvocacao => ({
+  analiseId: idDaAnalise(l?.analise_id || l?.analiseId),
   nome: texto(l?.nome),
   posicao: numero(l?.posicao),
   nota: numero(l?.nota),
-  modalidades: Array.isArray(l?.modalidades) ? l.modalidades : [],
+  modalidades: Array.isArray(l?.modalidades)
+    ? l.modalidades.filter((m): m is string => typeof m === "string")
+    : [],
   situacao: texto(l?.situacao),
   lista,
 });
@@ -100,12 +145,12 @@ const linhaDaLista = (l, lista) => ({
  * depois quem só está numa lista de modalidade (com `lista` = a modalidade),
  * sem repetir ninguém; as vagas e o limite como a Classificação contou.
  */
-export function vagasDaLista(resultado) {
-  return (resultado?.vagas || []).map((v) => {
-    const vistos = new Set();
-    const candidatos = [];
-    const acrescentar = (linhas, lista) => {
-      for (const l of linhas || []) {
+export function vagasDaLista(resultado: unknown): VagaDaConvocacao[] {
+  return registrosDaConducao(objetoDaConducao(resultado)?.vagas).map((v) => {
+    const vistos = new Set<string>();
+    const candidatos: CandidatoDaConvocacao[] = [];
+    const acrescentar = (linhas: unknown, lista: string) => {
+      for (const l of registrosDaConducao(linhas)) {
         const c = linhaDaLista(l, lista);
         if (!c.analiseId || vistos.has(c.analiseId)) continue;
         vistos.add(c.analiseId);
@@ -114,10 +159,10 @@ export function vagasDaLista(resultado) {
     };
     acrescentar(v.geral, "");
     for (const [codigo, linhas] of Object.entries(
-      v.listas || v.porModalidade || {},
+      objetoDaConducao(v.listas || v.porModalidade) || {},
     ))
       acrescentar(linhas, codigo);
-    const limite = v.limite_convocacao || v.limiteConvocacao || null;
+    const limite = objetoDaConducao(v.limite_convocacao || v.limiteConvocacao);
     return {
       vaga: texto(v.codigo) || texto(v.chave),
       cargo: texto(v.cargo),
@@ -127,7 +172,7 @@ export function vagasDaLista(resultado) {
       // Lista gerada antes de o retrato guardar as vagas (antes de 20261005150000).
       semVagasNaLista: !("total" in v),
       cadastroReserva: Boolean(v.cadastro_reserva ?? v.cadastroReserva),
-      origemDasVagas: v.origem_das_vagas ?? v.origemDasVagas ?? null,
+      origemDasVagas: texto(v.origem_das_vagas ?? v.origemDasVagas) || null,
       limite: numero(limite?.limite),
       origemDoLimite: texto(limite?.origem),
       candidatos,
@@ -141,14 +186,17 @@ export function vagasDaLista(resultado) {
  * lista mudou) — eles ficam na ficha; a tela deixa desconvocar quem não tem
  * nota.
  */
-export function gruposDaConvocacao(resultado, convocados = []) {
+export function gruposDaConvocacao(
+  resultado: unknown,
+  convocados: Convocado[] = [],
+): GrupoDaConvocacao[] {
   const porAnalise = new Map(
     (convocados || [])
       .filter((c) => c?.analise_id)
       .map((c) => [String(c.analise_id), c]),
   );
   const vistos = new Set();
-  const grupos = vagasDaLista(resultado).map((g) => ({
+  const grupos: GrupoDaConvocacao[] = vagasDaLista(resultado).map((g) => ({
     ...g,
     candidatos: g.candidatos.map((c) => {
       const convocado = porAnalise.get(c.analiseId) || null;
@@ -162,7 +210,7 @@ export function gruposDaConvocacao(resultado, convocados = []) {
     if (vistos.has(c.id)) continue;
     const vaga = texto(c.vaga);
     if (!porVaga.has(vaga)) {
-      const novo = {
+      const novo: GrupoDaConvocacao = {
         vaga,
         cargo: texto(c.cargo),
         lotacao: "",
@@ -179,13 +227,13 @@ export function gruposDaConvocacao(resultado, convocados = []) {
       porVaga.set(vaga, novo);
       grupos.push(novo);
     }
-    porVaga.get(vaga).fora.push(c);
+    porVaga.get(vaga)!.fora.push(c);
   }
   return grupos;
 }
 
 /** Os da lista ainda não registrados para a ficha (os que "Convocar" leva). */
-export function aConvocar(grupos) {
+export function aConvocar(grupos?: GrupoDaConvocacao[] | null): string[] {
   const ids = [];
   for (const g of grupos || [])
     for (const c of g.candidatos) if (!c.convocado) ids.push(c.analiseId);
@@ -193,7 +241,7 @@ export function aConvocar(grupos) {
 }
 
 /** Os números do passo: na lista, já na ficha, a convocar e fora da lista. */
-export function resumoDaConvocacao(grupos) {
+export function resumoDaConvocacao(grupos?: GrupoDaConvocacao[] | null) {
   let naLista = 0;
   let naFicha = 0;
   let fora = 0;
@@ -209,20 +257,27 @@ export function resumoDaConvocacao(grupos) {
  * "2 vagas imediatas", "cadastro reserva", "sem quadro de vagas"; lista antiga,
  * sem as vagas no retrato, "" (a tela mostra o cabeçalho da vaga).
  */
-export function textoDasVagas(grupo) {
+export function textoDasVagas(
+  grupo?: Pick<
+    VagaDaConvocacao,
+    "semVagasNaLista" | "total" | "cadastroReserva"
+  > | null,
+) {
   if (grupo?.semVagasNaLista) return "";
   const total = numero(grupo?.total);
   if (total === null) return "sem quadro de vagas";
   if (total === 0) return "cadastro reserva";
   const base = `${total} ${total === 1 ? "vaga imediata" : "vagas imediatas"}`;
-  return grupo.cadastroReserva ? `${base} + cadastro reserva` : base;
+  return grupo?.cadastroReserva ? `${base} + cadastro reserva` : base;
 }
 
 /** "até a 10ª (5 × 2 vaga(s))"; sem o limite no retrato (lista antiga), "". */
-export function textoDoLimite(grupo) {
+export function textoDoLimite(
+  grupo?: Pick<VagaDaConvocacao, "limite" | "origemDoLimite"> | null,
+) {
   const limite = numero(grupo?.limite);
   if (limite === null) return "";
-  return grupo.origemDoLimite
+  return grupo?.origemDoLimite
     ? `até a ${limite}ª (${grupo.origemDoLimite})`
     : `até a ${limite}ª`;
 }
@@ -232,8 +287,9 @@ export function textoDoLimite(grupo) {
  * normalizarRegra: multiplo_vagas, posicao_max_cr, incluir_empatados,
  * excecoes[{termos, multiplo_vagas, posicao_max_cr}]).
  */
-export function textoDaRegraDaClassificacao(convocacao) {
-  if (!convocacao || typeof convocacao !== "object") return "";
+export function textoDaRegraDaClassificacao(entrada: unknown) {
+  const convocacao = objetoDaConducao(entrada);
+  if (!convocacao) return "";
   const multiplo = numero(convocacao.multiplo_vagas);
   const posicao = numero(convocacao.posicao_max_cr);
   const partes = [];
@@ -242,9 +298,7 @@ export function textoDaRegraDaClassificacao(convocacao) {
   if (!partes.length) return "sem limite na regra";
   if (convocacao.incluir_empatados !== false)
     partes.push("empatados no limite entram");
-  const excecoes = (
-    Array.isArray(convocacao.excecoes) ? convocacao.excecoes : []
-  )
+  const excecoes = registrosDaConducao(convocacao.excecoes)
     .map((e) => {
       const termos = (Array.isArray(e?.termos) ? e.termos : [])
         .map(texto)
@@ -264,8 +318,12 @@ export function textoDaRegraDaClassificacao(convocacao) {
  * Avisos que pedem ação: sem lista gerada; regra mudou depois da lista; lista
  * com convocado que não está mais nela.
  */
-export function avisosDaConvocacao(dados, fonte, grupos) {
-  const avisos = [];
+export function avisosDaConvocacao(
+  dados: Pick<DadosDoEdital, "regra_classificacao"> | null | undefined,
+  fonte: FonteDaConvocacao | null | undefined,
+  grupos: GrupoDaConvocacao[],
+): AvisoDaConvocacao[] {
+  const avisos: AvisoDaConvocacao[] = [];
   if (fonte?.tipo === "CALCULO")
     avisos.push({
       codigo: "SEM_LISTA",
@@ -309,21 +367,24 @@ export function avisosDaConvocacao(dados, fonte, grupos) {
   ordem) e `empate_final`; aqui viram o texto que a tela mostra, só para
   ler. O antigo texto livre do roteiro (DS_DESEMPATE) não aparece mais.
 */
-export function criteriosDeDesempate(regraDaClassificacao) {
-  if (!regraDaClassificacao || typeof regraDaClassificacao !== "object")
-    return null;
+export function criteriosDeDesempate(
+  entrada: unknown,
+): CriterioDeDesempateDaEntrevista[] | null {
+  const regraDaClassificacao = objetoDaConducao(entrada);
+  if (!regraDaClassificacao) return null;
   if (!Array.isArray(regraDaClassificacao.desempate)) return null;
   return criteriosDaRegra({ desempate: regraDaClassificacao.desempate }).map(
     (d) => ({
       codigo: d.criterio,
-      nome: d.catalogo.nome,
+      nome: d.catalogo?.nome || "",
       direcao: DIRECOES.find(([valor]) => valor === d.direcao)?.[1] || "",
     }),
   );
 }
 
 /** "Sorteio registrado" (o método do empate que sobra), ou "". */
-export function textoDoEmpateFinal(regraDaClassificacao) {
-  const metodo = texto(regraDaClassificacao?.empate_final?.metodo);
+export function textoDoEmpateFinal(entrada: unknown) {
+  const regra = objetoDaConducao(entrada);
+  const metodo = texto(objetoDaConducao(regra?.empate_final)?.metodo);
   return METODOS_DE_EMPATE_FINAL.find(([valor]) => valor === metodo)?.[1] || "";
 }

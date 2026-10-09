@@ -137,7 +137,7 @@ export const CATALOGO_DE_MARCOS: readonly MarcoDoCatalogo[] = Object.freeze([
     id: "vaga-pronta",
     rotulo: "Vaga pronta para o resultado final",
     grupo: "Entrevistas",
-    onde: "src/modulos/entrevistas/marcos.js",
+    onde: "src/modulos/entrevistas/marcos.ts",
     forma: null,
     padrao: opcoes("fogos", "suave"),
   },

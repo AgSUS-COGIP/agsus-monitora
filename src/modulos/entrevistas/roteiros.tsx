@@ -59,7 +59,7 @@ import {
 import { frasesDaEliminacao } from "../../lib/resumo-da-entrevista.ts";
 import { AspectosDoRoteiro } from "./aspectos-do-roteiro.tsx";
 import { PendenciasDoRoteiro, SecaoRecolhivel } from "./secoes-do-roteiro.tsx";
-import { DesempateDaClassificacao } from "./conducao.jsx";
+import { DesempateDaClassificacao } from "./conducao.tsx";
 import {
   BotaoDeLinha,
   ComposicaoDaBanca,

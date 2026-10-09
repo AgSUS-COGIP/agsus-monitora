@@ -36,7 +36,7 @@ type GrupoDeAspectos = {
   Condução da entrevista de um edital, sem React e sem banco: a configuração
   (roteiro, composição da banca, modo de lançamento, membros), a ficha de
   notas e o cálculo do resultado. A convocação é a lista da Classificação
-  (src/lib/convocacao-da-entrevista.js): aqui não há regra nem vagas próprias.
+  (src/lib/convocacao-da-entrevista.ts): aqui não há regra nem vagas próprias.
 
   O contrato é o das migrations 20260930220000_entrevistas_roteiros_e_notas.sql
   e 20261005150000_convocacao_unica_da_entrevista.sql
