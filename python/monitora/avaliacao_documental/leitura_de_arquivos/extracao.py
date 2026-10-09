@@ -3,9 +3,12 @@ O texto de cada página do arquivo, pelo tipo REAL (os primeiros bytes, não a
 extensão do nome):
 
     PDF       pdfplumber; a página sem texto selecionável (escaneada) vai para o
-              OCR (renderizada a 300 dpi pelo pypdfium2 que o pdfplumber traz)
+              OCR (renderizada a 300 dpi pelo pypdfium2 que o pdfplumber traz;
+              com confiança baixa, de novo a 400 dpi, e fica a melhor leitura)
     JPG/PNG   OCR (Tesseract, português) depois de girar pela EXIF e ampliar
               imagem pequena
+    OCR       com confiança baixa, o Tesseract detecta a orientação (--psm 0,
+              OSD) e lê de novo a página girada (foto ou escaneado de lado)
     DOCX      o XML do Word (zipfile)
     TXT       UTF-8 ou Latin-1
     resto     NAO_SUPORTADO (DOC antigo, ZIP, RAR, PPTX…)
@@ -24,9 +27,11 @@ from dataclasses import dataclass, field
 from .texto import letras, preparar
 
 MAXIMO_DE_PAGINAS = 40
-MAXIMO_DE_PAGINAS_NO_OCR = 15
+MAXIMO_DE_PAGINAS_NO_OCR = 30
 MINIMO_DE_LETRAS_DA_PAGINA = 40  # menos que isso no texto do PDF: a página é imagem (OCR)
 RESOLUCAO_DO_OCR = 300
+RESOLUCAO_DA_SEGUNDA_LEITURA = 400
+CONFIANCA_PARA_RELER = 0.60  # OCR abaixo disso: tenta girar (OSD) e, no PDF, resolução maior
 LADO_MINIMO_DA_IMAGEM = 1600  # px: imagem menor é ampliada antes do OCR
 IDIOMA_DO_OCR = "por"
 
@@ -98,7 +103,32 @@ def formato_do_conteudo(conteudo):
 
 
 def ocr_tesseract(imagem):
-    """(texto, confiança 0–1) de uma imagem PIL pelo Tesseract em português."""
+    """(texto, confiança 0–1) de uma imagem PIL pelo Tesseract em português; com confiança
+    baixa, lê de novo a imagem girada pela orientação que o Tesseract detecta (OSD)."""
+    texto, confianca = _ocr_uma_vez(imagem)
+    if confianca >= CONFIANCA_PARA_RELER:
+        return texto, confianca
+    girada = _girar_pela_orientacao(imagem)
+    if girada is not None:
+        texto_girado, confianca_girada = _ocr_uma_vez(girada)
+        if confianca_girada > confianca:
+            return texto_girado, confianca_girada
+    return texto, confianca
+
+
+def _girar_pela_orientacao(imagem):
+    """A imagem em pé pela OSD do Tesseract; None se já está em pé ou a OSD falhou."""
+    try:
+        import pytesseract
+
+        osd = pytesseract.image_to_osd(imagem, config="--psm 0", output_type=pytesseract.Output.DICT)
+        graus = int(osd.get("rotate") or 0)
+    except Exception:  # pragma: no cover - sem osd.traineddata, pouco texto etc.
+        return None
+    return imagem.rotate(-graus, expand=True, fillcolor=255) if graus % 360 else None
+
+
+def _ocr_uma_vez(imagem):
     try:
         import pytesseract
     except ImportError as erro:  # pragma: no cover - depende do ambiente
@@ -158,6 +188,11 @@ def _ler_pdf(conteudo, ocr, leitura):
                 continue
             imagem = pagina.to_image(resolution=RESOLUCAO_DO_OCR).original
             texto_ocr, confianca = ocr(_preparar_imagem(imagem))
+            if confianca is not None and confianca < CONFIANCA_PARA_RELER:
+                maior = pagina.to_image(resolution=RESOLUCAO_DA_SEGUNDA_LEITURA).original
+                texto_maior, confianca_maior = ocr(_preparar_imagem(maior))
+                if (confianca_maior or 0) > confianca:
+                    texto_ocr, confianca = texto_maior, confianca_maior
             com_ocr += 1
             leitura.paginas.append(Pagina(i, preparar(texto_ocr), "OCR", confianca))
         leitura.paginas_sem_leitura += max(0, leitura.total_de_paginas - MAXIMO_DE_PAGINAS)

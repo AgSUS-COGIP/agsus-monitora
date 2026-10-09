@@ -316,7 +316,9 @@ def test_ctps_digital_com_dois_contratos_um_em_aberto():
     assert b["empregador"] == "Prefeitura Municipal de Exemplo"
     assert b["cargo"] == "Enfermeira"
     assert (b["inicio"], b["atual"]) == ("2020-03-01", True)
-    assert b["fim"] == "2026-09-15"  # a data de emissão fecha o vínculo em aberto
+    # Atual: fim fica vazio; os dias são contados até a data de emissão (só para o número exibido).
+    assert (b["fim"], b["dias_ate"]) == (None, "2026-09-15")
+    assert b["dias"] == (date(2026, 9, 15) - date(2020, 3, 1)).days + 1
     assert a["alertas"] == [] and b["alertas"] == []
     assert r["resumo"].startswith("2 vínculos · ")
 
@@ -351,7 +353,7 @@ def test_declaracao_ate_a_presente_data():
         ]
     )
     (v,) = ler_documento(arquivo, "VINCULOS", NOME, hoje=HOJE, ocr=None)["itens"]
-    assert (v["inicio"], v["fim"], v["atual"]) == ("2024-06-10", "2026-10-02", True)
+    assert (v["inicio"], v["fim"], v["atual"], v["dias_ate"]) == ("2024-06-10", None, True, "2026-10-02")
 
 
 def test_holerites_viram_um_periodo():
@@ -509,3 +511,326 @@ def test_minimo_de_horas_e_a_menor_faixa():
     cursos = next(b for b in REGRA["blocos"] if b["codigo"] == "CURSOS")
     assert minimo_de_horas(cursos) == 40
     assert minimo_de_horas({"faixas": []}) is None
+
+
+# ── ajustes do piloto (93/2026): padrões vistos, reproduzidos com texto sintético ──
+
+
+def pdf_so_imagem_com(n):
+    """Um PDF escaneado com `n` páginas só de imagem."""
+    from PIL import Image
+    from reportlab.lib.pagesizes import A4
+    from reportlab.lib.utils import ImageReader
+    from reportlab.pdfgen import canvas
+
+    imagem = Image.new("RGB", (400, 200), "white")
+    saida = io.BytesIO()
+    c = canvas.Canvas(saida, pagesize=A4)
+    for _ in range(n):
+        c.drawImage(ImageReader(imagem), 40, 500, width=400, height=200)
+        c.showPage()
+    c.save()
+    return saida.getvalue()
+
+
+def _campos_livres(itens):
+    return " ".join(str(i.get(c) or "") for i in itens for c in ("curso", "cargo", "instituicao", "empregador"))
+
+
+@pytest.mark.parametrize(
+    ("linha_do_curso", "esperado"),
+    [
+        ("Bacharel em Enfermagem a “ Maria Exemplo da Silva brasileira, natural de Exemplo,", "Enfermagem"),
+        ("Bacharel em Enfermagem Joao Pereira Santos, brasileiro,", "Enfermagem"),
+        ("Bacharel em Enfermagem conferido a Maria Exemplo da Silva", "Enfermagem"),
+        ("Tecnico em ENFERMAGEM EIXO TECNOLÓGICO: AMBIENTE E SAÚDE E = saúde", "ENFERMAGEM"),
+        ("Especialista em\n06/04/2018", None),
+    ],
+)
+def test_curso_do_diploma_sem_lixo_nem_nome_de_pessoa(linha_do_curso, esperado):
+    arquivo = pdf(
+        [
+            "UNIVERSIDADE ESTADUAL DE EXEMPLO",
+            "O Reitor da Universidade Estadual de Exemplo, no uso de suas atribuicoes, confere o titulo de",
+            *linha_do_curso.split("\n"),
+            "e outorga-lhe o presente Diploma. Exemplo, 12 de agosto de 2021.",
+        ]
+    )
+    r = ler_documento(arquivo, "TITULOS", NOME, hoje=HOJE, ocr=None)
+    (item,) = r["itens"]
+    assert item["curso"] == esperado
+    livres = texto.dobrar(_campos_livres(r["itens"]))
+    for nome in ("maria", "silva", "joao", "pereira", "santos", "brasileir"):
+        assert nome not in livres
+
+
+def test_diploma_frente_e_verso_vira_um_titulo_e_assinatura_nao_e_doutorado():
+    arquivo = pdf(
+        [
+            "CENTRO UNIVERSITARIO DE EXEMPLO",
+            "O Centro Universitario de Exemplo confere a Maria Exemplo da Silva o titulo de",
+            "Especialista em Saude da Familia, curso de pos-graduacao lato sensu,",
+            "e outorga-lhe o presente certificado. Exemplo, 08 de outubro de 2019.",
+        ],
+        [
+            "Certificado registrado sob o numero 1234, livro 2, folha 30.",
+            "Curso de pos-graduacao lato sensu em Saude da Familia. Processo 5678, em 08/10/2019.",
+            "Doutor(a) Joao Exemplo Pereira",
+            "Prof. Dr. em Educacao Jose Exemplo - Coordenador do Doutorado em Educacao",
+            "Reitor",
+        ],
+    )
+    r = ler_documento(arquivo, "TITULOS", NOME, hoje=HOJE, ocr=None)
+    (item,) = r["itens"]
+    assert item["titulo"] == "ESPECIALIZACAO" and item["data"] == "2019-10-08"
+    assert item["curso"] == "Saude da Familia"
+    assert r["resumo"].startswith("Especialização · ")
+    assert "Doutorado" not in r["resumo"]
+
+
+def test_diploma_lido_duas_vezes_no_arquivo_vira_um_so():
+    frente = [
+        "UNIVERSIDADE FEDERAL DE EXEMPLO",
+        "A Universidade Federal de Exemplo confere a Maria Exemplo da Silva o grau de",
+        "Bacharel em Enfermagem. Colou grau em 15 de marco de 2016.",
+    ]
+    r = ler_documento(pdf(frente, frente), "TITULOS", NOME, hoje=HOJE, ocr=None)
+    (item,) = r["itens"]
+    assert (item["titulo"], item["data"], item["curso"]) == ("GRADUACAO", "2016-03-15", "Enfermagem")
+
+
+CTPS_DO_PILOTO = [
+    "Carteira de Trabalho Digital",
+    "Nome: Maria Exemplo da Silva",
+    "Empregador: Agencia de Exemplo do SUS",
+    "Cargo: 001-TECNICO DE ENFERMAGEM 3222-05",
+    "Data de admissao: 05/12/2025",
+    "Cargo exercido: 3222-05",
+    "Inicio do contrato 05/12/2025 Termino 30/12/2025",
+    "Empregador: Fundacao Exemplo de Saude",
+    "Cargo: TECNICO DE ENFERMAGEM",
+    "Data de admissao: 01/10/2018",
+    "Data de desligamento: 05/12/2025",
+    "Empregador: Clinica Exemplo Ltda",
+    "Cargo: ENFERMEIRA",
+    "Data de admissao: 01/03/2024",
+    "Data de desligamento: 30/06/2025",
+    "As datas de admissao e desligamento seguem o eSocial. Emitido em 12/02/2026",
+]
+
+
+def test_ctps_atual_sem_fim_cargo_sem_codigo_e_sobreposicao_de_verdade():
+    r = ler_documento(pdf(CTPS_DO_PILOTO), "VINCULOS", NOME, hoje=HOJE, ocr=None)
+    agencia, fundacao, clinica = r["itens"]  # o rodapé "emitido em" e o repetido sem empregador saem
+    assert agencia["empregador"] == "Agencia de Exemplo do SUS"
+    assert (agencia["atual"], agencia["fim"], agencia["dias_ate"]) == (True, None, "2026-02-12")
+    assert agencia["dias"] == (date(2026, 2, 12) - date(2025, 12, 5)).days + 1
+    assert (agencia["cargo"], agencia["cbo"]) == ("Técnico de enfermagem", "3222-05")
+    assert fundacao["cargo"] == "Técnico de enfermagem" and fundacao["atual"] is False
+    assert clinica["cargo"] == "Enfermeira"
+    codigos = [[a["codigo"] for a in i["alertas"]] for i in r["itens"]]
+    # O atual começa no dia em que o anterior acabou: não é sobreposição.
+    assert "PERIODO_SOBREPOSTO" not in sum(codigos, [])
+    assert codigos[0] == []
+    # Dois empregos ao mesmo tempo: aviso leve, não erro.
+    assert "PERIODO_CONCOMITANTE" in codigos[1] and "PERIODO_CONCOMITANTE" in codigos[2]
+
+
+def test_ctps_com_rotulos_no_cabecalho_da_tabela():
+    arquivo = pdf(
+        [
+            "Carteira de Trabalho Digital",
+            "Empregador: Hospital de Exemplo Ltda",
+            "Data de admissao Data de desligamento",
+            "01/02/2018 31/01/2020",
+            "Emitido em 12/02/2026",
+        ]
+    )
+    (v,) = ler_documento(arquivo, "VINCULOS", NOME, hoje=HOJE, ocr=None)["itens"]
+    assert (v["inicio"], v["fim"], v["atual"]) == ("2018-02-01", "2020-01-31", False)
+
+
+@pytest.mark.parametrize(
+    ("cargo", "esperado"),
+    [
+        ("001-TECNICO DE ENFERMAGEM 3222-05", ("Técnico de enfermagem", "3222-05")),
+        ("002-Enfermeiro 2235-05", ("Enfermeiro", "2235-05")),
+        ("exercido 2235-05", (None, "2235-05")),
+        ("Sup. Saude Ocupacional 2235-30", ("Sup. Saude Ocupacional", "2235-30")),
+        ("ENFERMEIRA", ("Enfermeira", None)),
+    ],
+)
+def test_cargo_sem_codigo_e_cbo_a_parte(cargo, esperado):
+    from monitora.avaliacao_documental.leitura_de_arquivos.experiencia import limpar_cargo
+
+    assert limpar_cargo(cargo) == esperado
+
+
+def test_mesmo_empregador_com_periodos_sobrepostos_continua_erro():
+    arquivo = pdf(
+        [
+            "CERTIDAO DE TEMPO DE SERVICO - Fundacao Exemplo",
+            "Maria Exemplo da Silva prestou servicos de 01/01/2019 a 31/12/2020",
+            "e de 31/12/2020 a 30/06/2021, e de 01/06/2021 a 31/12/2021.",
+        ]
+    )
+    itens = ler_documento(arquivo, "VINCULOS", NOME, hoje=HOJE, ocr=None)["itens"]
+    codigos = [[a["codigo"] for a in i["alertas"]] for i in itens]
+    assert codigos[0] == []  # acaba no dia em que o seguinte começa
+    assert codigos[1] == ["PERIODO_SOBREPOSTO"] and codigos[2] == ["PERIODO_SOBREPOSTO"]
+
+
+@pytest.mark.parametrize(
+    "linhas",
+    [
+        ["Conselho Regional de Enfermagem - COREN", "Maria Exemplo da Silva", "Validade: 07/07/1979",
+         "Expedicao: 10/05/2015"],
+        ["Conselho Regional de Enfermagem - COREN", "Maria Exemplo da Silva", "Validade 07/07/1979"],
+        ["Conselho Regional de Enfermagem - COREN", "Maria Exemplo da Silva", "Data de nascimento: 07/07/2001",
+         "Validade"],
+        ["Conselho Regional de Enfermagem - COREN", "Maria Exemplo da Silva", "Nascimento 07/07/1979",
+         "Inscricao ativa"],
+    ],
+)  # fmt: skip
+def test_registro_nao_toma_nascimento_por_validade(linhas):
+    (item,) = ler_documento(pdf(linhas), "REGISTRO", NOME, hoje=HOJE, ocr=None)["itens"]
+    assert item["validade"] is None
+    assert "REGISTRO_VENCIDO" not in [a["codigo"] for a in item["alertas"]]
+
+
+def test_registro_com_validade_depois_da_emissao():
+    arquivo = pdf(["COREN - Conselho Regional de Enfermagem", "Maria Exemplo da Silva",
+                   "Data de emissao: 10/01/2024", "Valido ate 31/12/2027"])  # fmt: skip
+    (item,) = ler_documento(arquivo, "REGISTRO", NOME, hoje=HOJE, ocr=None)["itens"]
+    assert item["validade"] == "2027-12-31" and item["alertas"] == []
+
+
+@pytest.mark.parametrize(
+    ("frase", "horas"),
+    [
+        ("com carga horaria: 40h/a", 40),
+        ("com duracao de 40 horas", 40),
+        ("totalizando 40 horas/aula", 40),
+        ("CH: 40", 40),
+        ("C.H. 40", 40),
+        ("em 40hrs", 40),
+        ("com carga horaria de 40 (quarenta) horas", 40),
+        ("Carga Horaria: 60", 60),
+        ("com quarenta horas", 40),
+        ("com cento e vinte horas de atividades", 120),
+    ],
+)
+def test_carga_horaria_em_outras_grafias(frase, horas):
+    arquivo = pdf(["CERTIFICADO", "Certificamos que Maria Exemplo da Silva concluiu o curso Vacinas,", frase + ".",
+                   "Exemplo, 10/05/2024"])  # fmt: skip
+    (item,) = ler_documento(arquivo, "CURSOS", NOME, hoje=HOJE, ocr=None)["itens"]
+    assert item["horas"] == horas
+    assert "SEM_CARGA_HORARIA" not in [a["codigo"] for a in item["alertas"]]
+
+
+def test_sem_carga_horaria_so_quando_nao_ha():
+    arquivo = pdf(["CERTIFICADO", "Certificamos que Maria Exemplo da Silva concluiu o curso Vacinas,",
+                   "realizado das 8h as 12h. Exemplo, 10/05/2024"])  # fmt: skip
+    (item,) = ler_documento(arquivo, "CURSOS", NOME, hoje=HOJE, ocr=None)["itens"]
+    assert item["horas"] is None
+    assert "SEM_CARGA_HORARIA" in [a["codigo"] for a in item["alertas"]]
+
+
+def test_pdf_escaneado_de_vinte_paginas_e_lido_inteiro():
+    texto_lido = (
+        "CERTIFICADO\nCertificamos que Maria Exemplo da Silva concluiu o curso Vacinas, carga horária de 40 horas."
+    )
+    r = ler_documento(pdf_so_imagem_com(20), "CURSOS", NOME, hoje=HOJE, ocr=ocr_falso(texto_lido))
+    assert "PAGINAS_NAO_LIDAS" not in [a["codigo"] for a in r["alertas"]]
+    assert len(r["itens"]) == 20
+
+
+def test_pagina_com_ocr_fraco_e_relida_com_resolucao_maior():
+    vistas = []
+
+    def ocr(imagem):
+        vistas.append(imagem.width)
+        if len(vistas) == 1:
+            return "CERTIFICADO\nC3rt1f1c4m0s", 0.3
+        return "CERTIFICADO\nCertificamos que Maria Exemplo da Silva concluiu o curso Vacinas, com 40 horas.", 0.9
+
+    r = ler_documento(pdf_so_imagem(), "CURSOS", NOME, hoje=HOJE, ocr=ocr)
+    assert len(vistas) == 2 and vistas[1] > vistas[0]
+    assert r["itens"][0]["horas"] == 40 and r["confianca"] == 0.9
+
+
+@pytest.mark.parametrize(
+    ("linhas", "documento"),
+    [
+        (["CONTA DE ENERGIA ELETRICA", "Cliente: Joao Exemplo Pereira", "Consumo em kWh: 230",
+          "Vencimento 10/09/2026"], "COMPROVANTE_RESIDENCIA"),
+        (["JUSTICA ELEITORAL", "TITULO DE ELEITOR", "Maria Exemplo da Silva", "Zona 12 Secao 34"], "TITULO_ELEITOR"),
+        (["UNIVERSIDADE FEDERAL DE EXEMPLO", "HISTORICO ESCOLAR", "Maria Exemplo da Silva",
+          "Disciplinas cursadas e componentes curriculares"], "HISTORICO_ESCOLAR"),
+        (["REPUBLICA FEDERATIVA DO BRASIL", "CERTIDAO DE NASCIMENTO", "Maria Exemplo da Silva"], "CERTIDAO_CIVIL"),
+        (["CONSELHO REGIONAL DE MEDICINA - CRM", "Certidao de inscricao", "Maria Exemplo da Silva"], "REGISTRO_CRM"),
+        (["CLINICA EXEMPLO LTDA", "CONTRACHEQUE", "Maria Exemplo da Silva", "Mes/ano 03/2024"], "HOLERITE"),
+    ],
+)  # fmt: skip
+def test_tipo_do_documento_sem_item(linhas, documento):
+    r = ler_documento(pdf(linhas), "GERAL", NOME, hoje=HOJE, ocr=None)
+    assert r["documento"] == documento
+
+
+def test_comprovante_de_residencia_em_nome_de_outra_pessoa_nao_diverge():
+    arquivo = pdf(["CONTA DE ENERGIA ELETRICA", "Cliente: Joao Exemplo Pereira", "Consumo em kWh: 230",
+                   "Vencimento 10/09/2026 Rua de Exemplo, 100"])  # fmt: skip
+    r = ler_documento(arquivo, "GERAL", NOME, hoje=HOJE, ocr=None)
+    assert r["nome_confere"] is None
+    assert [a["codigo"] for a in r["alertas"]] == []
+
+
+def test_ocr_fraco_sem_o_nome_pede_conferencia_e_nao_diverge():
+    texto_lido = "CARTEIRA DE IDENTIDADE\nNOME MAR1A EXFMPL0 DA S1LVA\n" + "REGISTRO GERAL 12 SSP " * 25
+    r = ler_documento(png_com_texto(["x"]), "IDENTIDADE", NOME, hoje=HOJE, ocr=ocr_falso(texto_lido, 0.6))
+    codigos = [a["codigo"] for a in r["alertas"]]
+    assert "NOME_A_CONFERIR" in codigos and "NOME_DIVERGENTE" not in codigos
+    assert r["nome_confere"] is None
+
+
+def test_documento_legivel_que_deve_ter_o_nome_e_nao_tem_diverge():
+    arquivo = pdf(["REPUBLICA FEDERATIVA DO BRASIL", "CARTEIRA DE IDENTIDADE", "NOME JOAO EXEMPLO PEREIRA"])
+    r = ler_documento(arquivo, "IDENTIDADE", NOME, hoje=HOJE, ocr=None)
+    assert r["nome_confere"] is False
+    assert "NOME_DIVERGENTE" in [a["codigo"] for a in r["alertas"]]
+
+
+DECLARACAO_DE_VINCULO = [
+    "PREFEITURA MUNICIPAL DE EXEMPLO",
+    "DECLARACAO",
+    "Declaro para os devidos fins que Maria Exemplo da Silva foi contratada em 01/02/2020 para exercer",
+    "a funcao de Enfermeira, e trabalhou nesta instituicao ate 30/04/2021.",
+    "Exemplo, 10 de maio de 2021.",
+]
+
+
+@pytest.mark.parametrize("esperado", ["VINCULOS", "GERAL"])
+def test_declaracao_de_tempo_de_servico_gera_vinculo(esperado):
+    r = ler_documento(pdf(DECLARACAO_DE_VINCULO), esperado, NOME, hoje=HOJE, ocr=None)
+    assert r["documento"] == "DECLARACAO"
+    (v,) = r["itens"]
+    assert v["tipo"] == "VINCULO"
+    assert (v["empregador"], v["cargo"]) == ("PREFEITURA MUNICIPAL DE EXEMPLO", "Enfermeira")
+    assert (v["inicio"], v["fim"], v["atual"]) == ("2020-02-01", "2021-04-30", False)
+
+
+def test_declaracao_admitida_e_demitida():
+    arquivo = pdf(["HOSPITAL DE EXEMPLO LTDA", "Declaramos que Maria Exemplo da Silva foi admitida em 01/02/2020",
+                   "no cargo de Tecnica de Enfermagem e demitida em 15/03/2022."])  # fmt: skip
+    (v,) = ler_documento(arquivo, "GERAL", NOME, hoje=HOJE, ocr=None)["itens"]
+    assert (v["inicio"], v["fim"], v["atual"]) == ("2020-02-01", "2022-03-15", False)
+
+
+def test_campo_livre_nunca_leva_o_nome_do_candidato():
+    from monitora.avaliacao_documental.leitura_de_arquivos.pessoas import sem_nome_de_pessoa
+
+    assert sem_nome_de_pessoa("Enfermagem a Maria Exemplo da Silva", NOME) == "Enfermagem"
+    assert sem_nome_de_pessoa("Hospital Central Maria Exemplo", NOME, estrito=False) == "Hospital Central"
+    assert sem_nome_de_pessoa("Fundacao Oswaldo Cruz", NOME, estrito=False) == "Fundacao Oswaldo Cruz"
+    assert sem_nome_de_pessoa("Maria Exemplo da Silva", NOME) is None
+    assert sem_nome_de_pessoa("Saude da Familia", NOME) == "Saude da Familia"

@@ -116,6 +116,20 @@ describe("leituras da ficha", () => {
     ).toBe("Prefeitura · 01/03/2020 a atual · 2.000 dias");
     expect(
       textoDoItemLido({
+        tipo: "VINCULO",
+        empregador: "Prefeitura",
+        cargo: "Técnico de enfermagem",
+        inicio: "2020-03-01",
+        fim: null,
+        atual: true,
+        dias: 2000,
+        dias_ate: "2025-08-21",
+      }),
+    ).toBe(
+      "Prefeitura · Técnico de enfermagem · 01/03/2020 a atual · 2.000 dias até 21/08/2025",
+    );
+    expect(
+      textoDoItemLido({
         tipo: "TITULO",
         titulo: "MESTRADO",
         curso: "Saúde Coletiva",

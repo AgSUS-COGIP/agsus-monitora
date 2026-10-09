@@ -107,3 +107,90 @@ def cpf_confere(texto, sal, hash_do_candidato):
     if not cpfs:
         return None
     return any(hash_do_cpf(sal, c) == hash_do_candidato for c in cpfs)
+
+
+# ── nome de pessoa nos campos livres ─────────────────────────────────────────
+# Nenhum campo livre gravado (curso, cargo, instituição, empregador) pode levar
+# nome de pessoa. `sem_nome_de_pessoa` corta o valor antes do nome do candidato,
+# de marcas de qualificação ("brasileiro", "natural de", "portador do RG") e, nos
+# campos estritos (curso, cargo), de um prenome comum seguido de outro nome ou de
+# dois sobrenomes comuns seguidos. Na dúvida, o campo fica vazio (None).
+
+PRENOMES_COMUNS = frozenset(
+    """
+    maria jose joao ana antonio francisco carlos paulo pedro lucas luiz luis marcos gabriel rafael daniel
+    marcelo bruno eduardo felipe raimundo rodrigo manoel manuel mateus matheus andre fernando fabio leonardo
+    gustavo guilherme leandro tiago thiago anderson ricardo jorge alexandre roberto sergio vitor victor diego
+    juliana adriana marcia fernanda patricia aline sandra camila amanda bruna jessica leticia julia luciana
+    vanessa mariana gabriela vitoria larissa claudia beatriz luana sonia renata eliane josefa simone natalia
+    cristiane carla debora rosangela jaqueline daniela aparecida marlene terezinha raimunda andreia fabiana
+    lucia raquel angela rafaela joana luzia elaine priscila tatiana monica francisca antonia edna regina
+    helena isabel silvia kelly karina katia cleide denise edson elias emerson fabricio flavio geraldo gilberto
+    henrique hugo igor ivan jair joaquim jonas julio kleber leonardo marcio mauricio miguel milton murilo
+    nelson osvaldo otavio renato reinaldo rogerio ronaldo samuel sebastiao severino valdir vinicius wagner
+    wellington wesley william washington yuri thais tais vera rita rosa sueli suely valeria viviane yasmin
+    """.split()
+)
+SOBRENOMES_COMUNS = frozenset(
+    """
+    silva santos oliveira souza sousa pereira costa rodrigues almeida nascimento lima araujo fernandes
+    carvalho gomes martins rocha ribeiro alves monteiro mendes barros freitas barbosa pinto moura cavalcanti
+    cavalcante dias castro campos cardoso teixeira ferreira correia correa nunes vieira moreira batista
+    machado lopes soares melo mello reis andrade goncalves marques azevedo bezerra brito farias medeiros
+    sales cunha aguiar leite matos mattos fonseca ramos miranda santana xavier queiroz siqueira sampaio
+    """.split()
+)
+_QUALIFICACAO = re.compile(
+    r"(?<![a-z])(?:brasileir[oa]s?|nacionalidade|natural\s+d[eoa]|nascid[oa]|portador[a]?\s|filh[oa]\s+d[eoa]|"
+    r"estado\s+civil|solteir[oa]|casad[oa]|divorciad[oa]|inscrit[oa]\s+no\s+cpf|rg\s*(?:n|:|\d))"
+)
+_PONTAS = re.compile(r"^[\s,;:.\-–—/|()\"“”'’«»=]+|[\s,;:\-–—/|(\"“”'’«»=]+$")
+_CONECTOR_NO_FIM = re.compile(r"(?:\s+(?:a|ao|aos|as|o|e|de|da|do|das|dos|em|para|por|ate))+$", re.I)
+
+
+def _palavras_com_posicao(dobrado):
+    return [(m.start(), m.group()) for m in _PALAVRA.finditer(dobrado)]
+
+
+def _arrumar_pontas(valor):
+    anterior = None
+    while anterior != valor:
+        anterior = valor
+        valor = _PONTAS.sub("", valor)
+        valor = _CONECTOR_NO_FIM.sub("", valor).strip()
+    return valor
+
+
+def sem_nome_de_pessoa(valor, nome_do_candidato=None, estrito=True):
+    """O valor cortado antes de qualquer nome de pessoa; None se não sobrar texto (3 letras seguidas)."""
+    if not isinstance(valor, str) or not valor.strip():
+        return valor if valor is None else None
+    dobrado = dobrar(valor)
+    cortes = [len(valor)]
+    q = _QUALIFICACAO.search(dobrado)
+    if q:
+        cortes.append(q.start())
+    palavras = [(i, p) for i, p in _palavras_com_posicao(dobrado) if p not in PARTICULAS]
+    partes = [p for p in partes_do_nome(nome_do_candidato) if len(p) >= 3] if nome_do_candidato else []
+
+    def do_candidato(p):
+        return len(p) >= 3 and any(_parecidas(p, x) for x in partes)
+
+    for k, (posicao, palavra) in enumerate(palavras):
+        seguinte = palavras[k + 1][1] if k + 1 < len(palavras) else ""
+        if (
+            partes
+            and do_candidato(palavra)
+            and (do_candidato(seguinte) or (estrito and _parecidas(palavra, partes[0])))
+        ):
+            cortes.append(posicao)
+            break
+        if estrito and (
+            (palavra in PRENOMES_COMUNS and seguinte and (seguinte in SOBRENOMES_COMUNS or seguinte in PRENOMES_COMUNS))
+            or (palavra in SOBRENOMES_COMUNS and seguinte in SOBRENOMES_COMUNS)
+            or (palavra in PRENOMES_COMUNS and k == len(palavras) - 1 and k > 0)
+        ):
+            cortes.append(posicao)
+            break
+    limpo = _arrumar_pontas(valor[: min(cortes)])
+    return limpo if re.search(r"[A-Za-zÀ-ÿ]{3}", limpo) else None

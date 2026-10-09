@@ -8,7 +8,8 @@ programático) fica com o anterior. De cada um:
 
   curso        "concluiu o curso X", "curso de aperfeiçoamento em X",
                "participou do X" (até a vírgula, "com carga horária", "realizado"…)
-  horas        "carga horária de 145 horas", "60h", "40 h/a"
+  horas        "carga horária de 145 horas", "carga horária: 40h/a", "CH: 40",
+               "40 (quarenta) horas", "40hrs", "40 horas/aula", "quarenta horas"
   instituicao  "promovido/realizado/oferecido pela X" ou a primeira linha com
                Universidade, Fundação, Instituto, Escola, Fiocruz, UNA-SUS…
   conclusao    a data do fim do período ("de A a B") ou a da emissão (a última do texto)
@@ -22,11 +23,34 @@ from .pessoas import nome_confere
 from .texto import datas_no_texto, dobrar, iso, numa_linha, trecho
 
 _MARCA = re.compile(r"certific|conclu[iu]|participou|carga horaria|declaramos que .{0,80}(curso|capacita)")
-_HORAS = re.compile(
-    r"(?:carga\s*horaria(?:\s*total)?\s*(?:de|:|=)?\s*|totalizando\s*|com\s*|duracao\s*de\s*)"
-    r"(\d{1,4}(?:[.,]\d{1,2})?)\s*(?:h(?:oras?|rs?|s)?\b|h/a|horas?-aula)",
+_NUMERO = r"(\d{1,4}(?:[.,]\d{1,2})?)(?![\d/])"
+_POR_EXTENSO = r"(?:\s*\(\s*[a-z][a-z\s-]{2,40}\))?"  # "40 (quarenta) horas"
+_UNIDADE = r"(?:horas?[\s/-]*aulas?|h\s*/\s*a|horas?|hrs?|hs|h)(?![a-z])"
+_ENTRE = r"(?:\s*(?:total|minima|aproximada|de|:|=|-))*\s*"
+# Com rótulo, a unidade é opcional: "carga horária: 40h/a", "carga horária total de: 40", "CH: 40", "C.H. 40".
+_HORAS_ROTULADAS = re.compile(
+    rf"(?:carga\s*horaria|(?<![a-z])c\.\s?h\.?|(?<![a-z])ch(?=\s*[:=]))(?![a-z]){_ENTRE}{_NUMERO}{_POR_EXTENSO}"
 )
-_HORAS_SOLTAS = re.compile(r"(?<![\d.,/])(\d{1,4}(?:[.,]\d{1,2})?)\s*(?:horas?(?:-aula)?\b|h/a\b|hrs?\b|hs\b|h\b)")
+# Com contexto, a unidade é obrigatória: "com duração de 40 horas", "totalizando 40hrs", "perfazendo 40 h/a".
+_HORAS = re.compile(
+    rf"(?:duracao|totalizando|perfazendo|(?<![a-z])com){_ENTRE}{_NUMERO}{_POR_EXTENSO}\s*{_UNIDADE}",
+)
+# Solta (sem rótulo): não vale hora do dia ("das 8h às 12h", "às 14h30").
+_HORAS_SOLTAS = re.compile(rf"(?<![\d.,/:])(?<!das )(?<!as ){_NUMERO}{_POR_EXTENSO}\s*{_UNIDADE}(?!\s*\d)")
+_UNIDADES_POR_EXTENSO = {
+    "um": 1, "uma": 1, "dois": 2, "duas": 2, "tres": 3, "quatro": 4, "cinco": 5, "seis": 6, "sete": 7,
+    "oito": 8, "nove": 9, "dez": 10, "onze": 11, "doze": 12, "treze": 13, "quatorze": 14, "catorze": 14,
+    "quinze": 15, "dezesseis": 16, "dezessete": 17, "dezoito": 18, "dezenove": 19, "vinte": 20, "trinta": 30,
+    "quarenta": 40, "cinquenta": 50, "sessenta": 60, "setenta": 70, "oitenta": 80, "noventa": 90, "cem": 100,
+    "cento": 100, "duzentas": 200, "duzentos": 200, "trezentas": 300, "trezentos": 300, "quatrocentas": 400,
+    "quatrocentos": 400, "quinhentas": 500, "quinhentos": 500, "seiscentas": 600, "seiscentos": 600,
+    "setecentas": 700, "setecentos": 700, "oitocentas": 800, "oitocentos": 800, "novecentas": 900,
+    "novecentos": 900, "mil": 1000,
+}  # fmt: skip
+_PALAVRA_DE_NUMERO = "|".join(sorted(_UNIDADES_POR_EXTENSO, key=len, reverse=True))
+_HORAS_POR_EXTENSO = re.compile(
+    rf"(?<![a-z])((?:(?:{_PALAVRA_DE_NUMERO})(?:\s+e\s+|\s+))*(?:{_PALAVRA_DE_NUMERO}))\s+horas?(?![a-z])"
+)
 _CURSO = (
     re.compile(r"(?<![a-z])curso\s+(?:livre\s+)?(?:(?:de|em|sobre)\s+)?(?:\"|“)?"),
     re.compile(r"participou\s+(?:do|da|dos|das|no|na|nos|nas)\s+(?:\"|“)?"),
@@ -63,12 +87,29 @@ def segmentos(paginas):
     return [(n, t) for n, t in saida]
 
 
+def _numero_por_extenso(texto):
+    total = 0
+    for palavra in re.findall(r"[a-z]+", texto):
+        if palavra == "mil":
+            total = max(total, 1) * 1000
+        elif palavra in _UNIDADES_POR_EXTENSO:
+            total += _UNIDADES_POR_EXTENSO[palavra]
+    return total
+
+
 def horas_do_texto(dobrado):
-    m = _HORAS.search(dobrado) or _HORAS_SOLTAS.search(dobrado)
-    if not m:
-        return None
-    horas = round(float(m.group(1).replace(",", ".")))
-    return horas if 0 < horas <= 20000 else None
+    """A carga horária: com rótulo ("carga horária: 40h/a", "CH: 40"), com unidade ("40hrs",
+    "40 horas/aula", "com duração de 40 horas") ou por extenso ("quarenta horas")."""
+    for padrao in (_HORAS_ROTULADAS, _HORAS, _HORAS_SOLTAS):
+        for m in padrao.finditer(dobrado):
+            horas = round(float(m.group(1).replace(",", ".")))
+            if 0 < horas <= 20000:
+                return horas
+    m = _HORAS_POR_EXTENSO.search(dobrado)
+    if m:
+        horas = _numero_por_extenso(m.group(1))
+        return horas if 0 < horas <= 20000 else None
+    return None
 
 
 def curso_do_texto(original, dobrado):
