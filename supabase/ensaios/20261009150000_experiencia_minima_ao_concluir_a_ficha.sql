@@ -154,6 +154,10 @@ begin
 end;
 $$;
 
+-- O ensaio monta o conteúdo com funções privadas: libera só nesta transação (desfeita no fim).
+grant usage on schema private to authenticated;
+grant execute on all functions in schema private to authenticated;
+
 -- E1 a E3, como a analista (papel authenticated).
 set local role authenticated;
 do $$
