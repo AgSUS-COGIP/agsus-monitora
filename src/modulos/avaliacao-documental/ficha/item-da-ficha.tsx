@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import { enunciadoCompleto } from "../../../lib/avaliacao-documental/anexo-na-empregare.ts";
 import { PARCIAL_DO_TIPO as PARCIAIS_DOS_TIPOS } from "../../../lib/avaliacao-documental/catalogo.js";
@@ -8,7 +8,7 @@ import {
   blocoSeAplica,
   divergenciaDoBloco,
   ehAnexo,
-  opcoesDeJustificativa,
+  itemCompleto,
   respostasDoBloco,
   SITUACOES_DA_FICHA,
   sugereNaoEnviado,
@@ -16,14 +16,21 @@ import {
   titulosDoNivel,
 } from "../../../lib/avaliacao-documental/ficha.js";
 import {
+  abreComLinhaNova,
   apuradoDoBloco,
   apuradoZeradoPelaDecisao,
   blocoComDecisao,
-  comItensLancados,
-  temItensLancados,
+  tituloDaResposta,
 } from "../../../lib/avaliacao-documental/apurado-da-ficha.ts";
+import {
+  devolverItem,
+  tirarItem,
+} from "../../../lib/avaliacao-documental/itens-da-ficha.ts";
+import type { ItemTirado } from "../../../lib/avaliacao-documental/itens-da-ficha.ts";
+import { justificativasDoBloco } from "../../../lib/avaliacao-documental/justificativas-do-bloco.ts";
 import { tetoDoBloco } from "../../../lib/avaliacao-documental/pontuacao.js";
 import { Selo } from "../../../ui/index.js";
+import { ComprovadoDaFicha } from "./comprovado-da-ficha.tsx";
 import { LinkDaEmpregare, LinkDoAnexo } from "./empregare.tsx";
 import type {
   Bloco,
@@ -96,13 +103,10 @@ const alterarBloco = (mudar: Mudar, codigo: string, campos: Lancado) =>
  * nos blocos que pontuam, o Apurado (blocoComDecisao).
  */
 export function decidirNoLancamento(
-  st: Pick<EstadoDaFicha, "avaliacao" | "declarada">,
   bloco: Bloco,
   mudar: Mudar,
   situacao: Situacao | null,
 ) {
-  const calculado =
-    st.avaliacao.calculados?.[PARCIAL_DO_TIPO[bloco.tipo] ?? ""] ?? 0;
   mudar((l) => {
     l.blocos = {
       ...l.blocos,
@@ -110,8 +114,6 @@ export function decidirNoLancamento(
         bloco,
         lancamento: l,
         situacao,
-        declarada: st.declarada,
-        calculado,
       }) as Lancado,
     };
     return l;
@@ -124,11 +126,14 @@ function RespostaDeclarada({
   linha,
   empregare,
   comLinkGeral,
+  declarado,
 }: {
   linha: LinhaDeResposta;
   empregare: ContextoDaEmpregare;
   /** Sem anexo no item: o "Abrir na Empregare" do candidato ao lado da resposta. */
   comLinkGeral?: boolean;
+  /** Nos blocos com itens: "Declarado pelo candidato" (o comprovado vem dos itens). */
+  declarado?: boolean;
 }) {
   const [inteiro, setInteiro] = useState(false);
   const completo = enunciadoCompleto(linha.coluna);
@@ -150,6 +155,9 @@ function RespostaDeclarada({
         ) : null}
       </p>
       <div className="avd-ficha-valor" data-anexo={anexo || undefined}>
+        {declarado && !anexo ? (
+          <span className="avd-ficha-rotulo">Declarado pelo candidato:</span>
+        ) : null}
         <strong className="avd-ficha-texto-declarado">
           {anexo ? (
             <i className="fa-solid fa-paperclip" aria-hidden="true" />
@@ -174,10 +182,12 @@ function Respostas({
   linhas,
   sugestao,
   empregare,
+  declarado,
 }: {
   linhas: LinhaDeResposta[];
   sugestao: boolean;
   empregare: ContextoDaEmpregare;
+  declarado?: boolean;
 }) {
   const algumAnexo = linhas.some((l) => ehAnexo(l.texto));
   return (
@@ -188,6 +198,7 @@ function Respostas({
           linha={l}
           empregare={empregare}
           comLinkGeral={!algumAnexo && i === 0}
+          declarado={declarado}
         />
       ))}
       {sugestao ? (
@@ -254,6 +265,7 @@ export function Chips({
   aoMudar,
   desabilitado,
   tour,
+  rotuloOculto,
 }: {
   rotulo: string;
   opcoes: Opcao[];
@@ -261,6 +273,8 @@ export function Chips({
   aoMudar: (marcados: string[]) => void;
   desabilitado: boolean;
   tour?: string;
+  /** O rótulo já aparece em volta (o resumo do "Outras justificativas"). */
+  rotuloOculto?: boolean;
 }) {
   return (
     <div
@@ -269,7 +283,9 @@ export function Chips({
       aria-label={rotulo}
       data-tour={tour}
     >
-      <span className="avd-ficha-rotulo">{rotulo}</span>
+      <span className={rotuloOculto ? "sr-only" : "avd-ficha-rotulo"}>
+        {rotulo}
+      </span>
       <div className="avd-ficha-chips-lista">
         {opcoes.map((o) => {
           const marcado = marcados.includes(o.codigo);
@@ -313,40 +329,40 @@ function Itens({
   bloco,
   lancamento,
   declarada,
-  mudar: mudarDoEstado,
+  respostas,
+  mudar,
   desabilitado,
+  experiencia,
 }: {
   bloco: Bloco;
   lancamento: Lancamento;
   declarada: EstadoDaFicha["declarada"];
+  /** As respostas do candidato no bloco (o título declarado vem pré-selecionado). */
+  respostas: string[];
   mudar: Mudar;
   desabilitado: boolean;
+  experiencia: EstadoDaFicha["avaliacao"]["experiencia"];
 }) {
-  // O primeiro item lançado devolve o Apurado ao Calculado (comItensLancados).
-  const mudar: Mudar = (transformar) =>
-    mudarDoEstado((l) => {
-      const tinhaItens = temItensLancados(bloco, l);
-      return comItensLancados(bloco, { tinhaItens }, transformar(l), declarada);
-    });
+  // O item tirado pelo "×", para o "Desfazer" (o clique não pede confirmação).
+  const [tirado, setTirado] = useState<ItemTirado<ItemLancado> | null>(null);
+  const caixa = useRef<HTMLDivElement>(null);
+  const focar = useRef(false);
   const chave = BLOCOS_COM_ITENS[bloco.tipo];
-  if (!chave) return null;
-  const itens = (lancamento[chave] || []) as ItemLancado[];
   const categorias = bloco.categorias || [];
   const titulos = titulosDoNivel(bloco, lancamento.nivel) as {
     codigo: string;
     rotulo: string;
     pontos: number;
   }[];
-  const lista = (l: Lancamento) => (l[chave] || []) as ItemLancado[];
-  const alterar = (i: number, campos: Partial<ItemLancado>) =>
-    mudar((l) => {
-      l[chave] = lista(l).map((it, j) => (j === i ? { ...it, ...campos } : it));
-      return l;
-    });
+  const lista = (l: Lancamento) =>
+    (chave ? l[chave] || [] : []) as ItemLancado[];
   const novo = (): ItemLancado => {
     if (chave === "titulos")
       return {
-        titulo: titulos[0]?.codigo || "ESPECIALIZACAO",
+        titulo:
+          tituloDaResposta(titulos, respostas) ||
+          titulos[0]?.codigo ||
+          "ESPECIALIZACAO",
         nome: "",
         aceito: true,
       };
@@ -359,8 +375,40 @@ function Itens({
       aceito: true,
     };
   };
+  // Declarado acima de 0 e nada registrado: o cartão já abre com a linha
+  // pronta para preencher, com o foco no primeiro campo.
+  const abrir = !desabilitado && abreComLinhaNova(bloco, lancamento, declarada);
+  useEffect(() => {
+    if (!abrir || !chave) return;
+    focar.current = true;
+    mudar((l) => {
+      if (!lista(l).length) l[chave] = [novo()];
+      return l;
+    });
+    // Só ao abrir o cartão (ou quando volta a ficar vazio).
+  }, [abrir, chave]);
+  const quantos = chave ? lista(lancamento).length : 0;
+  useEffect(() => {
+    if (!focar.current || !quantos) return;
+    focar.current = false;
+    caixa.current
+      ?.querySelector<HTMLElement>(
+        ".avd-ficha-item input, .avd-ficha-item select",
+      )
+      ?.focus();
+  }, [quantos]);
+  if (!chave) return null;
+  const itens = lista(lancamento);
+  // Não conforme/Não enviado: a linha incompleta não conta e não pede nada.
+  const situacao = lancamento.blocos?.[bloco.codigo]?.situacao;
+  const pedeCampos = situacao !== "NAO_CONFORME" && situacao !== "NAO_ENVIADO";
+  const alterar = (i: number, campos: Partial<ItemLancado>) =>
+    mudar((l) => {
+      l[chave] = lista(l).map((it, j) => (j === i ? { ...it, ...campos } : it));
+      return l;
+    });
   return (
-    <div className="avd-ficha-itens" data-tour="avd-ficha-itens">
+    <div className="avd-ficha-itens" data-tour="avd-ficha-itens" ref={caixa}>
       {itens.length ? (
         <ul className="avd-ficha-itens-lista">
           {itens.map((it, i) => (
@@ -417,6 +465,9 @@ function Itens({
                   max="20000"
                   inputMode="numeric"
                   placeholder="Horas"
+                  aria-invalid={
+                    pedeCampos && !(Number(it.horas) > 0) ? true : undefined
+                  }
                   value={it.horas ?? ""}
                   disabled={desabilitado}
                   onChange={(ev) =>
@@ -463,6 +514,11 @@ function Itens({
                   />
                 </>
               ) : null}
+              {pedeCampos && faltaNoItem(chave, it) ? (
+                <span className="avd-ficha-campo-erro" role="alert">
+                  {faltaNoItem(chave, it)}
+                </span>
+              ) : null}
               <label className="avd-ficha-aceito">
                 <input
                   type="checkbox"
@@ -503,7 +559,9 @@ function Itens({
                   title="Tirar o item"
                   onClick={() =>
                     mudar((l) => {
-                      l[chave] = lista(l).filter((_, j) => j !== i);
+                      const r = tirarItem(lista(l), i);
+                      l[chave] = r.itens;
+                      setTirado(r.tirado);
                       return l;
                     })
                   }
@@ -515,16 +573,41 @@ function Itens({
           ))}
         </ul>
       ) : null}
+      {tirado && !desabilitado ? (
+        <p className="avd-ficha-tirado" role="status">
+          {ROTULO_DO_TIRADO[chave]}
+          <button
+            type="button"
+            className="avd-ficha-link"
+            onClick={() => {
+              const devolver = tirado;
+              setTirado(null);
+              mudar((l) => {
+                l[chave] = devolverItem(lista(l), devolver);
+                return l;
+              });
+            }}
+          >
+            Desfazer
+          </button>
+        </p>
+      ) : null}
+      <ComprovadoDaFicha
+        bloco={bloco}
+        lancamento={lancamento}
+        experiencia={experiencia}
+      />
       {!desabilitado ? (
         <button
           type="button"
           className="avd-ficha-adicionar"
-          onClick={() =>
+          onClick={() => {
+            setTirado(null);
             mudar((l) => {
               l[chave] = [...lista(l), novo()];
               return l;
-            })
-          }
+            });
+          }}
         >
           <i className="fa-solid fa-plus" aria-hidden="true" />{" "}
           {ROTULO_DO_NOVO[chave]}
@@ -533,6 +616,20 @@ function Itens({
     </div>
   );
 }
+
+/* O que falta na linha, no próprio campo (a linha incompleta não trava o rascunho). */
+function faltaNoItem(chave: ChaveDosItens, it: ItemLancado): string | null {
+  if (itemCompleto(chave, it)) return null;
+  if (chave === "cursos") return "Informe as horas";
+  if (chave === "vinculos") return "Informe o início e o fim";
+  return "Escolha o título";
+}
+
+const ROTULO_DO_TIRADO: Record<ChaveDosItens, string> = {
+  titulos: "Título tirado.",
+  cursos: "Curso tirado.",
+  vinculos: "Vínculo tirado.",
+};
 
 /* ── Declarado → Apurado ──────────────────────────────────────────────── */
 
@@ -559,10 +656,10 @@ function Pontos({
   const teto = tetoDoBloco(bloco, lancamento.nivel) as number | null;
   const ajuste =
     typeof lancado.nota_ajustada === "number" ? lancado.nota_ajustada : null;
-  // Conferido: o que a conta dá (o efeito do bloco vale). Antes: o de partida.
+  // Conferido: o que a conta dá (o efeito do bloco vale). Antes: o ajuste ou o Calculado.
   const valor = conferido
     ? (ajuste ?? avaliacao.parciais?.[parcial] ?? 0)
-    : apuradoDoBloco({ bloco, lancamento, declarada, calculado }).valor;
+    : apuradoDoBloco({ bloco, lancamento, calculado }).valor;
   const diferenca = typeof decl === "number" ? valor - decl : null;
   const temDiferenca = diferenca !== null && Math.abs(diferenca) >= 0.005;
   const zerado = apuradoZeradoPelaDecisao(lancado);
@@ -570,14 +667,22 @@ function Pontos({
   const divergencia = conferido
     ? divergenciaDoBloco(bloco, avaliacao, declarada)
     : null;
-  const opcoes = opcoesDeJustificativa(regra, bloco) as Opcao[];
+  const { doBloco: opcoesDoBloco, outras } = justificativasDoBloco(
+    regra,
+    bloco,
+  );
+  const opcoes: Opcao[] = [...opcoesDoBloco, ...outras];
+  const marcadas = lancado.justificativas || [];
+  const outraMarcada = outras.some((o) => marcadas.includes(o.codigo));
   const menorQueODeclarado =
     lancado.situacao === "CONFORME" && temDiferenca && (diferenca ?? 0) < 0;
-  // Zerado pela decisão: o motivo do Não conforme/Não enviado já justifica.
+  // Só com Conforme: no Não conforme/Não enviado, o motivo do bloco ("Por
+  // que…?") já explica o zero, e a justificativa da nota não aparece.
   const mostrarJustificativa =
-    (!zerado && Boolean(divergencia)) ||
-    (lancado.justificativas || []).length > 0 ||
-    (ajuste !== null && ajuste !== calculado && ajuste !== decl);
+    lancado.situacao === "CONFORME" &&
+    (Boolean(divergencia) ||
+      marcadas.length > 0 ||
+      (ajuste !== null && ajuste !== calculado));
   const definir = (v: number | null) => {
     const limitado =
       v === null ? null : Math.max(0, teto !== null ? Math.min(teto, v) : v);
@@ -588,12 +693,6 @@ function Pontos({
   const porQue = "Por que o apurado é menor que o declarado?";
   return (
     <div className="avd-ficha-pontos" data-tour="avd-ficha-nota">
-      {!conferido && typeof decl === "number" && !desabilitado ? (
-        <p className="avd-ficha-pontos-guia">
-          Confira o documento: se comprova os pontos declarados, marque
-          Conforme; se comprova menos, ajuste o Apurado.
-        </p>
-      ) : null}
       <div className="avd-ficha-pontos-linha">
         <div className="avd-ficha-pontos-caixa">
           <span className="avd-ficha-rotulo">Declarado</span>
@@ -691,16 +790,34 @@ function Pontos({
           className="avd-ficha-justificativa"
           data-tour="avd-ficha-justificativa"
         >
-          {opcoes.length ? (
+          {opcoesDoBloco.length ? (
             <Chips
               rotulo={menorQueODeclarado ? porQue : "Justificativa da nota"}
-              opcoes={opcoes}
-              marcados={lancado.justificativas || []}
+              opcoes={opcoesDoBloco}
+              marcados={marcadas}
               desabilitado={desabilitado}
               aoMudar={(justificativas) =>
                 alterarBloco(mudar, bloco.codigo, { justificativas })
               }
             />
+          ) : null}
+          {outras.length ? (
+            <details
+              className="avd-ficha-outras-justificativas"
+              open={outraMarcada || !opcoesDoBloco.length || undefined}
+            >
+              <summary>Outras justificativas ({outras.length})</summary>
+              <Chips
+                rotulo="Outras justificativas"
+                rotuloOculto
+                opcoes={outras}
+                marcados={marcadas}
+                desabilitado={desabilitado}
+                aoMudar={(justificativas) =>
+                  alterarBloco(mudar, bloco.codigo, { justificativas })
+                }
+              />
+            </details>
           ) : null}
           <label className="avd-ficha-campo">
             <span className="avd-ficha-rotulo">
@@ -865,6 +982,7 @@ export function ItemDaFicha({
               linhas={linhas}
               sugestao={!lancado.situacao && sugereNaoEnviado(linhas)}
               empregare={empregare}
+              declarado={Boolean(BLOCOS_COM_ITENS[bloco.tipo])}
             />
           ) : null}
           {bloco.tipo === "PONTUACAO" ? (
@@ -881,8 +999,10 @@ export function ItemDaFicha({
                 bloco={bloco}
                 lancamento={lancamento}
                 declarada={st.declarada}
+                respostas={linhas.map((l) => l.texto)}
                 mudar={mudar}
                 desabilitado={desabilitado}
+                experiencia={avaliacao.experiencia}
               />
               {PARCIAL_DO_TIPO[bloco.tipo] ? (
                 <Pontos
@@ -902,7 +1022,7 @@ export function ItemDaFicha({
               desabilitado={desabilitado}
               compacto={!foco}
               aoMudar={(nova) => {
-                decidirNoLancamento(st, bloco, mudar, nova);
+                decidirNoLancamento(bloco, mudar, nova);
                 aoDecidir?.(bloco.codigo, nova);
               }}
             />

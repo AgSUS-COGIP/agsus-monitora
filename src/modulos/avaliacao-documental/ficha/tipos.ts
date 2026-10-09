@@ -97,6 +97,17 @@ export type Avaliacao = {
   calculados: Record<string, number | undefined>;
   blocos: BlocoAvaliado[];
   parecer: string;
+  /** O tempo dos vínculos aceitos (apurarExperiencia, em pontuacao.js). */
+  experiencia?: ExperienciaApurada | null;
+};
+
+export type ExperienciaApurada = {
+  dias_total: number;
+  meses: number;
+  meses_estagio: number;
+  meses_considerados: number;
+  pontos: number;
+  abaixo_do_minimo: boolean;
 };
 
 export type Declarada = { parciais: Record<string, number | undefined> };
@@ -133,6 +144,8 @@ export type ParteDaNota = {
   declarado: number | null;
   teto: number | null;
   divergente: boolean;
+  /** O valor provisório do item ainda sem decisão (apurado null). */
+  previa?: number | null;
 };
 
 /** A loja da ficha (estado-da-ficha.js), no que os componentes usam. */

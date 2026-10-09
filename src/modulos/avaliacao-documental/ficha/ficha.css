@@ -654,6 +654,11 @@
   color: var(--text-secondary);
 }
 /* Anexo: "Anexo" e onde achar o arquivo à esquerda; "Abrir na Empregare" à direita. */
+/* "Declarado pelo candidato: 2 anos" junto, o link à direita. */
+.avd-ficha-valor > .avd-ficha-rotulo + .avd-ficha-texto-declarado {
+  margin-right: auto;
+  margin-left: calc(var(--space-2) - var(--space-4));
+}
 .avd-ficha-valor[data-anexo] {
   display: grid;
   grid-template-areas:
@@ -1063,12 +1068,7 @@
 .avd-ficha-calculado strong {
   color: var(--text-primary);
 }
-/* Declarado → Apurado: a frase de conferência, o destaque e a diferença. */
-.avd-ficha-pontos-guia {
-  margin: 0;
-  color: var(--text-primary);
-  font-size: var(--text-body-sm);
-}
+/* Declarado → Apurado: o destaque e a diferença. */
 .avd-ficha-pontos-resumo {
   display: flex;
   flex-wrap: wrap;
@@ -1240,6 +1240,72 @@
 }
 .avd-ficha-parte-barra {
   overflow: visible;
+}
+/* Antes da decisão: a prévia em tom neutro (o valor e a barra). */
+.avd-ficha-parte[data-previa="sim"] .avd-ficha-parte-barra > span {
+  background: var(--text-secondary);
+  opacity: 0.45;
+}
+.avd-ficha-parte-previa {
+  font-style: italic;
+}
+/* Por que deu Inapto: cada motivo leva ao item. */
+.avd-ficha-motivos-resultado {
+  display: grid;
+  gap: var(--space-1);
+  margin: 0;
+  padding: 0;
+  color: var(--text-primary);
+  font-size: var(--text-caption);
+  list-style: none;
+}
+.avd-ficha-motivos-resultado li {
+  padding-left: var(--space-2);
+  border-left: 2px solid var(--state-danger);
+}
+.avd-ficha-motivos-resultado .avd-ficha-link {
+  text-align: left;
+}
+/* O que os itens lançados comprovam, logo abaixo da lista. */
+.avd-ficha-comprovado {
+  display: grid;
+  gap: 2px;
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--text-caption);
+}
+.avd-ficha-comprovado strong {
+  color: var(--text-primary);
+  font-size: var(--text-body-sm);
+}
+.avd-ficha-comprovado[data-abaixo="sim"] strong {
+  color: var(--state-danger);
+}
+.avd-ficha-outras-justificativas > summary {
+  color: var(--text-secondary);
+  font-size: var(--text-caption);
+  cursor: pointer;
+}
+.avd-ficha-outras-justificativas[open] > summary {
+  margin-bottom: var(--space-2);
+}
+/* O que falta na linha do item, no próprio campo ("Informe as horas"). */
+.avd-ficha-campo-erro {
+  align-self: center;
+  color: var(--state-danger);
+  font-size: var(--text-caption);
+}
+.avd-ficha-item input[aria-invalid="true"] {
+  border-color: var(--state-danger);
+}
+/* "Vínculo tirado. Desfazer" depois do ×. */
+.avd-ficha-tirado {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--text-caption);
 }
 .avd-ficha-total[data-grande] .avd-ficha-nota-total {
   font-size: calc(var(--text-display) * 1.33);
