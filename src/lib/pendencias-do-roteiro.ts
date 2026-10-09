@@ -1,5 +1,5 @@
 /*
-  O editor do roteiro de entrevista (src/modulos/entrevistas/roteiros.jsx) em
+  O editor do roteiro de entrevista (src/modulos/entrevistas/roteiros.tsx) em
   seções recolhíveis e a lista do que falta perto do Salvar — como o
   assistente da regra da Avaliação documental. Sem React: as seções, a seção
   de cada erro de `errosDoRoteiro` (src/lib/roteiro-de-entrevista.js) e a

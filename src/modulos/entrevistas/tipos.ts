@@ -1,4 +1,8 @@
-import type { CompetenciaDaFicha, PayloadDasNotas } from "./tipos-da-ficha.ts";
+import type { PayloadDasNotas } from "./tipos-da-ficha.ts";
+import type {
+  DadosDoRoteiroParaSalvar,
+  RoteiroDeEntrevista,
+} from "../../lib/tipos-do-roteiro-de-entrevista.ts";
 
 import type {
   Avaliador,
@@ -35,17 +39,7 @@ export type EditalDaLista = {
   pendentes?: number;
 };
 
-export type RoteiroDoEdital = {
-  id: string;
-  nome?: string;
-  versao?: number;
-  nome_versao?: string | null;
-  competencias?: CompetenciaDaFicha[] | null;
-  aspectos?: { id: string; nome?: string; ordem?: number | null }[] | null;
-  escala?: string | null;
-  ausencia_elimina?: boolean;
-  [campo: string]: unknown;
-};
+export type RoteiroDoEdital = RoteiroDeEntrevista;
 
 export type DadosDoEdital = {
   edital: {
@@ -76,7 +70,7 @@ export type DadosDoEdital = {
 
 export type EstadoDaConducao = {
   area: string;
-  roteiros: Lista<unknown>;
+  roteiros: Lista<RoteiroDeEntrevista>;
   editais: Lista<EditalDaLista> & { admin: boolean; todos: boolean };
   editalId: string;
   edital: DadosDoEdital | null;
@@ -111,10 +105,10 @@ export type EstadoDaConducaoComAcoes = {
   configurar: (dados: unknown) => Promise<Resultado>;
   convocar: (analises: string[]) => Promise<Resultado>;
   desconvocar: (entrevista: string, motivo: string) => Promise<Resultado>;
-  salvarRoteiro: (dados: unknown) => Promise<Resultado>;
+  salvarRoteiro: (dados: DadosDoRoteiroParaSalvar) => Promise<Resultado>;
   renomearRoteiro: (
     roteiro: string,
-    nome: string,
+    nome: string | null,
     motivo: string,
   ) => Promise<Resultado>;
   liberarEdital: (

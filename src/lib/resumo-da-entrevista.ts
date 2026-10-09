@@ -217,7 +217,9 @@ export function linhasDasVagas(
 
 /* ── Como a nota é calculada ───────────────────────────────────────── */
 
-function competenciasEmOrdem(roteiro: RoteiroDoResumo | null | undefined) {
+function competenciasEmOrdem<T extends { ordem?: number | null }>(
+  roteiro: { competencias?: T[] | null } | null | undefined,
+) {
   return [...(roteiro?.competencias || [])].sort(
     (a, b) => (a.ordem ?? 0) - (b.ordem ?? 0),
   );
@@ -243,9 +245,17 @@ function escalaDoRoteiro(
 }
 
 /* O que deixa inapto e a ausência, em frases sem ponto (frasesDaNota e frasesDaEliminacao). */
+export type RoteiroParaEliminacao = Pick<
+  RoteiroDoResumo,
+  "nota_minima_total" | "notas_eliminatorias" | "ausencia_elimina"
+> & {
+  competencias?: Omit<CompetenciaDoResumo, "id">[] | null;
+  aspectos?: readonly unknown[] | null;
+};
+
 function eliminacao(
-  roteiro: RoteiroDoResumo,
-  competencias: CompetenciaDoResumo[],
+  roteiro: RoteiroParaEliminacao,
+  competencias: Omit<CompetenciaDoResumo, "id">[],
   comAspectos: boolean,
 ): string[] {
   const saida: string[] = [];
@@ -298,7 +308,7 @@ function eliminacao(
  * e "Quem falta é eliminado.".
  */
 export function frasesDaEliminacao(
-  roteiro: RoteiroDoResumo | null | undefined,
+  roteiro: RoteiroParaEliminacao | null | undefined,
 ): string[] {
   const competencias = competenciasEmOrdem(roteiro);
   if (!roteiro) return [];

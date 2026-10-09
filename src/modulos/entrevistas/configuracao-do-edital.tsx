@@ -9,7 +9,7 @@ import type { PendenciaDaConfiguracao } from "../../lib/passos-do-preparar.ts";
 import { textoDaPontuacao } from "../../lib/roteiro-de-entrevista.js";
 import { Aviso, Campo, Segmentado } from "../../ui/index.js";
 import { CompetenciasDoMembro } from "./competencias-do-membro.tsx";
-import { BotaoDeLinha, ComposicaoDaBanca, trocarNaLista } from "./partes.jsx";
+import { BotaoDeLinha, ComposicaoDaBanca, trocarNaLista } from "./partes.tsx";
 
 /*
   A configuração da entrevista do edital, repartida nos passos de Preparar
@@ -146,14 +146,17 @@ export function CamposDaBanca({
           <ul className="entrevistas-linhas">
             {r.avaliadores.map((a, i) => {
               const p = `avaliador.${a.chave}`;
-              const trocar = (campo: string, valor: unknown) =>
+              const trocar = <K extends keyof MembroDoRascunho>(
+                campo: K,
+                valor: MembroDoRascunho[K],
+              ) =>
                 mudar({
                   avaliadores: trocarNaLista(
                     r.avaliadores,
                     a.chave,
                     campo,
                     valor,
-                  ) as MembroDoRascunho[],
+                  ),
                 });
               return (
                 <li

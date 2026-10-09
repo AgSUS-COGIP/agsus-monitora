@@ -3763,7 +3763,7 @@ export const VERBETES_AYA = Object.freeze([
       'Os roteiros ficam em Conduzir entrevistas › Preparar, no passo 1 (Roteiro), em "Roteiros da área" (a configuração do gestor, como a Regra fica na Avaliação documental). O editor abre ao lado, em seções que abrem e fecham: Identificação, Competências e aspectos, Escala e níveis, Aprovação, eliminação e ausência (com as frases simples do que elimina, como "Abaixo de 2 em qualquer competência ou abaixo de 8 no total, o candidato fica inapto." e "Quem falta é eliminado."), Resultado e desempate (o desempate só para ler, da Classificação) e Banca padrão. Perto do Salvar fica a lista do que falta ("Competência 2 (Escuta): Nota máxima: maior que 0 e até 100."); clicar num item abre a seção dele, e tentar salvar com pendência marca as seções em vermelho. O nome da versão fica no alto do editor. O roteiro é um modelo reutilizável da entrevista: competências (1 a 20, cada uma com nota máxima, peso e mínimo), escala, regra de aprovação e banca padrão; serve a vários editais. O desempate não é do roteiro: é o da regra de classificação do edital, mostrado só para ler. Quem é convocado sai da lista de convocação da Classificação. Editar grava uma versão nova: os editais que já usam a anterior continuam nela, e a nova vale para as próximas configurações. "Duplicar" cria um roteiro novo, na versão 1. Roteiro sem área serve para qualquer área.',
     fato: "",
     fonte:
-      "supabase/migrations/20260930220000_entrevistas_roteiros_e_notas.sql; src/lib/roteiro-de-entrevista.js; src/modulos/entrevistas/roteiros.jsx",
+      "supabase/migrations/20260930220000_entrevistas_roteiros_e_notas.sql; src/lib/roteiro-de-entrevista.js; src/modulos/entrevistas/roteiros.tsx",
     abrir: "conduzir-entrevistas",
   },
   {

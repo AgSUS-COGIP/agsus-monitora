@@ -266,6 +266,7 @@ export function bancaDoRascunho(linhas) {
     }));
 }
 
+/** @returns {import("./tipos-do-roteiro-de-entrevista.ts").BancaDoRascunho} */
 export const novaOrigemDaBanca = () => ({
   chave: novaChave(),
   origem: "",
@@ -294,6 +295,7 @@ export function errosDaBanca(linhas, prefixo = "banca") {
 
 /* ── Rascunho do roteiro ───────────────────────────────────────────── */
 
+/** @returns {import("./tipos-do-roteiro-de-entrevista.ts").CompetenciaDoRascunho} */
 export function novaCompetencia() {
   return {
     chave: novaChave(),
@@ -307,6 +309,10 @@ export function novaCompetencia() {
   };
 }
 
+/**
+ * @param {number | string} nota
+ * @returns {import("./tipos-do-roteiro-de-entrevista.ts").NivelDoRascunho}
+ */
 export const novoNivel = (nota = "") => ({
   chave: novaChave(),
   nota: textoDoNumero(nota),
@@ -318,6 +324,10 @@ export const novoNivel = (nota = "") => ({
  * O rascunho do formulário: vazio (`roteiro` nulo), a edição de um roteiro
  * (`modo` "editar": grava a versão seguinte) ou a cópia ("duplicar": um
  * roteiro novo, versão 1).
+ *
+ * @param {import("./tipos-do-roteiro-de-entrevista.ts").RoteiroDeEntrevista | null} roteiro
+ * @param {{modo?: import("./tipos-do-roteiro-de-entrevista.ts").ModoDoEditorDeRoteiro; area?: string}} opcoes
+ * @returns {import("./tipos-do-roteiro-de-entrevista.ts").RascunhoDoRoteiro}
  */
 export function rascunhoDoRoteiro(
   roteiro = null,
@@ -402,7 +412,14 @@ export function lerListaDeNotas(valor) {
     .filter((n) => Number.isFinite(n));
 }
 
-/** Troca o item `indice` de lugar com o vizinho (`passo` -1 ou +1). */
+/**
+ * Troca o item `indice` de lugar com o vizinho (`passo` -1 ou +1).
+ * @template T
+ * @param {T[]} lista
+ * @param {number} indice
+ * @param {number} passo
+ * @returns {T[]}
+ */
 export function moverItem(lista, indice, passo) {
   const destino = indice + passo;
   if (destino < 0 || destino >= lista.length) return lista;
@@ -414,6 +431,8 @@ export function moverItem(lista, indice, passo) {
 /**
  * Erros do rascunho, por campo: `{ nome: "…", "competencia.k3.nome": "…" }`.
  * Os limites são os das constraints das tabelas do roteiro.
+ * @param {import("./tipos-do-roteiro-de-entrevista.ts").RascunhoDoRoteiro} r
+ * @returns {Record<string, string>}
  */
 export function errosDoRoteiro(r) {
   const erros = {};
@@ -514,7 +533,11 @@ export function errosDoRoteiro(r) {
   return erros;
 }
 
-/** O `p_dados` de `salvar_roteiro_entrevista`. */
+/**
+ * O `p_dados` de `salvar_roteiro_entrevista`.
+ * @param {import("./tipos-do-roteiro-de-entrevista.ts").RascunhoDoRoteiro} r
+ * @returns {import("./tipos-do-roteiro-de-entrevista.ts").DadosDoRoteiroParaSalvar}
+ */
 export function dadosDoRoteiroParaSalvar(r) {
   const dados = {
     nome: texto(r.nome),
@@ -560,7 +583,10 @@ export function dadosDoRoteiroParaSalvar(r) {
   return dados;
 }
 
-/** Linha de resumo do roteiro na lista: competências, escala e pontuação. */
+/**
+ * Linha de resumo do roteiro na lista: competências, escala e pontuação.
+ * @returns {import("./tipos-do-roteiro-de-entrevista.ts").ResumoDoRoteiro}
+ */
 export function resumoDoRoteiro(roteiro) {
   const competencias = roteiro?.competencias || [];
   return {

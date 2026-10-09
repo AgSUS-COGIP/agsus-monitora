@@ -61,6 +61,7 @@ seletor-do-edital.tsx   o edital compacto abaixo do topo, selo Treinamento, "mos
                         (administrador global) dentro do seletor, liberação e erros com "Tentar novamente"
 fila-do-dia.tsx         a fila em cartões por vaga (iniciais, código, horário e banca, situação, notas só
                         quando há), recortes, busca e situações, estados vazios
+tipos-do-editor-de-roteiro.ts  contratos da visão, cartões, abertura e ações do editor
 tipos-da-ficha.ts       contratos do estado local da ficha, do cálculo e das notas para salvar
 tipos.ts                contratos da tela nova com o estado da condução (JS)
 estado-da-conducao.js   store da condução e dos roteiros: editais, edital aberto, escritas (RPC), uma por vez
@@ -90,10 +91,10 @@ textos-da-ficha.tsx     observação do avaliador (opcional, por avaliador) e ju
 parecer-pronto.tsx      o parecer em texto pronto (src/lib/parecer-da-entrevista.ts) com "Copiar parecer",
                         embaixo da matriz, com tudo lançado
 aspectos-do-roteiro.tsx aspectos do roteiro no editor (e o modelo Conceitua · Propriedade · Profundidade)
-roteiros.jsx            cartões dos roteiros e o editor (gaveta), com versões; desempate só leitura
+roteiros.tsx            cartões dos roteiros e o editor (gaveta), com versões; desempate só leitura
 secoes-do-roteiro.tsx   as seções recolhíveis do editor e a lista do que falta perto do Salvar
                         (src/lib/pendencias-do-roteiro.ts)
-partes.jsx              composição da banca, botão de linha
+partes.tsx              composição da banca, botão de linha
 marcos.js               marco "vaga pronta" (comemoração)
 entrevistas.css         só o que é destas telas (tokens); o resto vem de src/ui/
 ```
@@ -109,7 +110,7 @@ pela apresentação; destinos de agenda e desempate exigem um ID textual do edit
 de agenda anteriores à troca de área ou de sessão são descartadas, inclusive para o mesmo
 edital. O cliente declara apenas `get_entrevistas_da_area` e `obter_agenda_entrevista`,
 compatíveis com o cliente único do app. O snapshot é somente leitura no compilador; dados
-aninhados não são congelados. Os componentes de Conduzir e Roteiros ainda combinam TSX e JSX.
+aninhados não são congelados. Conduzir ainda combina TSX e JSX.
 A ficha de notas (`ficha.tsx`) também está em TypeScript: estado local, modos de lançamento,
 permissões, matriz, progresso, atalhos, observações, justificativa, prévia e salvamento.
 `tipos-da-ficha.ts` distingue notas diretas de notas por aspectos e declara os campos enviados
@@ -118,6 +119,17 @@ em JavaScript, com contratos JSDoc para a integração. O estado da condução a
 payload do banco sem validação completa em tempo de execução; estes tipos não validam JSON.
 `tests/tipos/ficha-de-entrevistas.tsx` confere o contrato da ficha e rejeita notas textuais,
 notas que misturam os dois formatos e códigos de comparecimento inválidos.
+O editor de roteiros (`roteiros.tsx`) e as peças compartilhadas (`partes.tsx`) também
+estão migrados: cartões, quatro modos de abertura, renomeação, competências, níveis,
+notas eliminatórias, seções, pendências, composição da banca e salvamento.
+`src/lib/tipos-do-roteiro-de-entrevista.ts` distingue campos textuais do rascunho
+e valores numéricos enviados ao banco; os campos antigos de convocação e desempate
+seguem preservados. `tipos-do-editor-de-roteiro.ts` declara dados, pedidos e ações.
+A alteração de listas verifica campo e tipo do valor no compilador; o contrato da
+prévia de eliminação aceita apenas os campos de que precisa, inclusive os do rascunho.
+Os auxiliares de roteiro e o estado da condução continuam em JavaScript.
+`tests/tipos/editor-de-roteiros.tsx` confere usos válidos e rejeições de campos,
+valores, modos e números enviados como texto.
 Isso não verifica todos os consumidores JavaScript nem valida o JSON inteiro. `tests/tipos/painel-de-entrevistas.tsx`
 confere usos e rejeições do compilador; o teste do módulo verifica a apresentação integrada.
 

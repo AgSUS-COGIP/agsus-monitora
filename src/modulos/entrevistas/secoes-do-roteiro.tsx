@@ -5,7 +5,7 @@ import type {
 } from "../../lib/pendencias-do-roteiro.ts";
 
 /*
-  Peças do editor do roteiro (roteiros.jsx): a seção recolhível (título,
+  Peças do editor do roteiro (roteiros.tsx): a seção recolhível (título,
   uma linha do que está nela e o selo de erros) e a lista do que falta perto
   do Salvar — clicar num item abre a seção dele. As regras ficam em
   src/lib/pendencias-do-roteiro.ts.

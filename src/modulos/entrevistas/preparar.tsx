@@ -47,7 +47,8 @@ import {
   type RoteiroDaLista,
 } from "./configuracao-do-edital.tsx";
 import { ResumoDasRegras, TabelaDasVagas } from "./resumo-das-regras.tsx";
-import { VisaoDeRoteiros } from "./roteiros.jsx";
+import type { PedidoDeRoteiro } from "./tipos-do-editor-de-roteiro.ts";
+import { VisaoDeRoteiros } from "./roteiros.tsx";
 import type {
   DadosDoEdital,
   EstadoDaConducao,
@@ -396,9 +397,9 @@ function PrepararDoEdital({
   }, [dados, editando]);
 
   const opcoes = useMemo(() => {
-    const lista = (e.roteiros.lista as RoteiroDaLista[]).slice();
+    const lista = e.roteiros.lista.slice();
     if (roteiro && !lista.some((x) => x.id === roteiro.id))
-      lista.unshift(roteiro as RoteiroDaLista);
+      lista.unshift(roteiro);
     return lista;
   }, [e.roteiros.lista, roteiro]);
   const escolhido = opcoes.find((x) => x.id === r.roteiro) || null;
@@ -483,10 +484,7 @@ function PrepararDoEdital({
   const passo = passos[atual] ?? passos[0]!;
 
   /* O pedido de abrir um roteiro no editor (o "Editar" de "Como a nota é calculada"). */
-  const [pedido, setPedido] = useState<{
-    roteiro: unknown;
-    vez: number;
-  } | null>(null);
+  const [pedido, setPedido] = useState<PedidoDeRoteiro | null>(null);
 
   function irAoPasso(id: IdDoPasso) {
     const i = passos.findIndex((p) => p.id === id);

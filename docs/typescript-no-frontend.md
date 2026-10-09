@@ -54,8 +54,12 @@ Na ficha, o Apurado de partida e o efeito da decisão nele estão em `apurado-da
 
 A ficha de notas de Conduzir entrevistas está em `src/modulos/entrevistas/ficha.tsx`,
 com contratos do estado local e do salvamento em `tipos-da-ficha.ts`. A integração preserva
-os cálculos em JavaScript por JSDoc; o estado da condução e o editor de roteiros ainda
-aguardam migração. Os limites de validação estão no README de Entrevistas.
+os cálculos em JavaScript por JSDoc. O editor (`roteiros.tsx`) e a composição da banca
+(`partes.tsx`) também estão migrados: cartões, criação, edição, duplicação, leitura,
+renomeação, seções, níveis e salvamento. Os contratos do rascunho e dos dados enviados
+ao banco estão em `src/lib/tipos-do-roteiro-de-entrevista.ts`; os de abertura e ações,
+em `tipos-do-editor-de-roteiro.ts`. O estado da condução e os auxiliares do roteiro
+continuam em JavaScript. Os limites de validação estão no README de Entrevistas.
 
 ## Verificação
 
