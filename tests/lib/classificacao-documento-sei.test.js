@@ -690,6 +690,7 @@ describe("textos do edital (regra.documento)", () => {
       unidade: "",
       autoridade: "",
       local: "",
+      desempate: "",
       data: null,
       modelos: { FINAL_FINAL: { finais: "x" } },
       colunas: {},

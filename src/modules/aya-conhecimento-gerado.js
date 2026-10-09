@@ -1918,7 +1918,7 @@ export const VERBETES_AYA = Object.freeze([
       "padrao das publicacoes da agsus",
     ],
     resposta:
-      'O documento segue o Comunicado Externo que a AgSUS publica no SEI (editais 83/2026 e 100/2026): "Brasília, na data da assinatura digital." à direita; o título em caixa alta (ex.: RESULTADO PRELIMINAR - ETAPA DE ANÁLISE CURRICULAR, CONVOCAÇÃO PARA ENTREVISTA, RESULTADO FINAL - ETAPA DE ENTREVISTA, RESULTADO FINAL - PROCESSO SELETIVO); "1. DISPOSIÇÕES PRELIMINARES" com os itens 1.1, 1.2…; uma tabela por vaga, com o cabeçalho "VAGA código - cargo - lotação - unidade - N vagas (x AC + y Pretos e Pardos + CR)" ou "- Cadastro Reserva", todas as vagas, inclusive as vazias ("Não houve candidatos aptos."); e "2. DISPOSIÇÕES FINAIS". Colunas padrão, enxutas: avaliação documental — Classificação, Nome, (Modalidade) e Nota Final (as parciais da regra ficam disponíveis, desmarcadas, na aba Colunas); eliminados — Nome, Nota e Justificativa; convocação — uma tabela Nº, NOME, Vaga, (Modalidade), DATA e HORA, com data e hora da agenda das entrevistas salva (sem agenda, em branco para preencher no SEI); entrevista — Classificação, NOME, NOTA (empate na mesma posição); resultado final — CLASSIFICAÇÃO, NOME, NOTA FINAL, e no fim o rodapé da regra. O timbrado, a assinatura eletrônica e o rodapé "título (nº SEI) SEI processo / pg. N" quem põe é o SEI.',
+      'O documento segue o Comunicado Externo que a AgSUS publica no SEI (editais 83/2026 e 100/2026): "Brasília, na data da assinatura digital." à direita; o título em caixa alta (ex.: RESULTADO PRELIMINAR - ETAPA DE ANÁLISE CURRICULAR, CONVOCAÇÃO PARA ENTREVISTA, RESULTADO FINAL - ETAPA DE ENTREVISTA, RESULTADO FINAL - PROCESSO SELETIVO); "1. DISPOSIÇÕES PRELIMINARES" com os itens 1.1, 1.2…; uma tabela por vaga, com o cabeçalho "VAGA código - cargo - lotação - unidade - N vagas (x AC + y Pretos e Pardos + CR)" ou "- Cadastro Reserva", todas as vagas, inclusive as vazias ("Não houve candidatos aptos."); e "2. DISPOSIÇÕES FINAIS". Colunas padrão, enxutas: avaliação documental — Classificação, Nome, (Modalidade) e Nota Final (as parciais da regra ficam disponíveis, desmarcadas, na aba Colunas); eliminados — Nome, Nota e Justificativa; convocação — uma tabela Nº, NOME, Vaga, (Modalidade), DATA e HORA, com data e hora da agenda das entrevistas salva (sem agenda, em branco para preencher no SEI); entrevista — Classificação, NOME, NOTA (empate na mesma posição); resultado final — CLASSIFICAÇÃO, NOME, NOTA FINAL, e no fim o rodapé da regra. Na vaga em que houve empate de nota resolvido pelo desempate, vai logo abaixo da tabela a nota em itálico "*Os critérios de desempate foram considerados conforme item 10 do referido edital." O timbrado, a assinatura eletrônica e o rodapé "título (nº SEI) SEI processo / pg. N" quem põe é o SEI.',
     fato: "No MONITORA, o documento da lista de classificação segue o Comunicado Externo publicado no SEI; timbrado, assinatura e rodapé ficam com o SEI.",
     fonte: "src/lib/classificacao/documento-sei.js",
     abrir: "classificacao",
@@ -1959,6 +1959,26 @@ export const VERBETES_AYA = Object.freeze([
   },
   {
     arquivo: "regras-da-classificacao.md",
+    titulo: "Nota de desempate abaixo da tabela da vaga",
+    perguntas: [
+      "nota de desempate",
+      "rodape da tabela da vaga",
+      "criterios de desempate foram considerados",
+      "asterisco abaixo da tabela",
+      "empate na pontuacao no documento do sei",
+      "item 10 do edital no documento",
+      "mudar o item do desempate",
+      "por que a vaga nao tem a nota de desempate",
+    ],
+    resposta:
+      'Quando, numa vaga, dois candidatos com a mesma nota ficaram em posições diferentes — o empate foi resolvido pelos critérios de desempate da regra ou pelo empate final (sorteio, decisão, ordem de inscrição) —, o documento põe logo abaixo da tabela daquela vaga, em itálico e letra menor: "*Os critérios de desempate foram considerados conforme item 10 do referido edital." Vaga sem empate, ou com o empate na mesma posição (como na lista do resultado da entrevista, quando a regra não usa os critérios ali), fica sem a nota. Vale em todas as listas por nota (avaliação documental, entrevista, resultado final e a lista provisória), na prévia, no "Baixar DOCX" e no "Copiar para o SEI"; não vale na convocação nem nos eliminados. O texto é um só por edital: em "Como fica no SEI" › Textos, campo "Nota de desempate (abaixo da tabela da vaga)". Se o item do edital não for o 10, troque ali e use "Salvar no edital"; "Restaurar o padrão" volta à frase padrão. Quando o rodapé da regra já é a frase do desempate (ex.: "conforme item 10.4 do edital"), ela é o texto inicial, e não se repete no fim do resultado final se já saiu abaixo das vagas.',
+    fato: 'No MONITORA, a nota "*Os critérios de desempate foram considerados conforme item 10 do referido edital." sai só abaixo da tabela da vaga com empate de nota resolvido; o texto se edita em Como fica no SEI › Textos.',
+    fonte:
+      "src/lib/classificacao/documento-sei.js; src/lib/classificacao/documento-docx.js; src/modulos/classificacao/documento.tsx",
+    abrir: "classificacao",
+  },
+  {
+    arquivo: "regras-da-classificacao.md",
     titulo: 'Prévia "Como fica no SEI" (tela grande, zoom e abas)',
     perguntas: [
       "previa do sei pequena",
@@ -1970,7 +1990,7 @@ export const VERBETES_AYA = Object.freeze([
       "previa no celular",
     ],
     resposta:
-      '"Como fica no SEI" abre quase na tela toda, com a folha A4 inteira no centro. Ela começa em "Ajustar" (a folha cabe na largura); − e + mudam o zoom de 50% a 200%, e "Ajustar" volta a caber. O botão de tela cheia, no topo, usa a tela inteira; Esc ou o X fecham. Os ajustes ficam num painel à esquerda, em três abas: "Dados" (número do edital, processo SEI, unidade, autoridade do 1.1, local e data), "Textos" (título e disposições preliminares e finais) e "Colunas" (as colunas da tabela de cada vaga); "Ocultar painel" recolhe o painel e a folha cresce, "Textos e colunas" traz de volta. A prévia muda enquanto você digita. No celular fica uma coluna: os textos em cima e a prévia embaixo. "Restaurar o padrão" e "Salvar no edital" ficam no rodapé, junto de "Baixar DOCX" e "Copiar para o SEI", sempre à vista.',
+      '"Como fica no SEI" abre quase na tela toda, com a folha A4 inteira no centro. Ela começa em "Ajustar" (a folha cabe na largura); − e + mudam o zoom de 50% a 200%, e "Ajustar" volta a caber. O botão de tela cheia, no topo, usa a tela inteira; Esc ou o X fecham. Os ajustes ficam num painel à esquerda, em três abas: "Dados" (número do edital, processo SEI, unidade, autoridade do 1.1, local e data), "Textos" (título, disposições preliminares e finais e a nota de desempate) e "Colunas" (as colunas da tabela de cada vaga); "Ocultar painel" recolhe o painel e a folha cresce, "Textos e colunas" traz de volta. A prévia muda enquanto você digita. No celular fica uma coluna: os textos em cima e a prévia embaixo. "Restaurar o padrão" e "Salvar no edital" ficam no rodapé, junto de "Baixar DOCX" e "Copiar para o SEI", sempre à vista.',
     fato: "",
     fonte:
       "src/modulos/classificacao/documento.tsx; src/lib/classificacao/escala-da-previa.ts",

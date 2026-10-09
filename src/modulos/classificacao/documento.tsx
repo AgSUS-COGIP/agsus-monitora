@@ -9,7 +9,10 @@ import {
 } from "react";
 import {
   chaveDoModelo,
+  listaComNotaDeDesempate,
   MODELOS_PADRAO,
+  notaDeDesempate,
+  notaDeDesempatePadrao,
   numeroDoEdital,
   paginaDaPrevia,
   textosDoModelo,
@@ -45,7 +48,9 @@ import {
   Os textos do edital que o gestor ajusta antes de copiar ficam num painel
   recolhível à esquerda, em três abas: "Dados" (número do edital, processo
   SEI, unidade, autoridade do 1.1, local e data), "Textos" (título e
-  disposições preliminares e finais do modelo desta lista) e "Colunas" (as
+  disposições preliminares e finais do modelo desta lista e, nas listas por
+  nota, a nota de desempate que vai abaixo da tabela da vaga com empate
+  resolvido — uma só por edital) e "Colunas" (as
   colunas da tabela de cada vaga e a ordem delas, por publicação —
   colunas-do-documento.tsx). No celular, uma coluna: o painel em cima e a
   prévia embaixo. Rodapé fixo: "Restaurar o padrão" (na aba Colunas, as
@@ -61,6 +66,7 @@ type Documento = {
   unidade: string;
   autoridade: string;
   local: string;
+  desempate: string;
   data: string | null;
   modelos: Record<string, Partial<Textos>>;
   colunas: Record<string, string[]>;
@@ -70,6 +76,7 @@ type Fase = "PRELIMINAR" | "FINAL" | null;
 type Registrado = {
   retrato: {
     tipo: string;
+    rodape?: string;
     edital?: { edital?: string; unidade?: string };
     modalidades?: unknown[];
     parciais?: string[];
@@ -124,9 +131,14 @@ const ABAS = [
   { id: "colunas", rotulo: "Colunas", icone: "fa-table-columns" },
 ];
 
-function rascunhoInicial(documento: Documento, chave: string): Documento {
+function rascunhoInicial(
+  documento: Documento,
+  chave: string,
+  rodape: string,
+): Documento {
   return {
     ...documento,
+    desempate: notaDeDesempate(documento, rodape),
     modelos: {
       ...documento.modelos,
       [chave]: textosDoModelo(documento, chave) as Textos,
@@ -134,8 +146,15 @@ function rascunhoInicial(documento: Documento, chave: string): Documento {
   };
 }
 
-/* Só fica gravado o modelo (e as colunas) que difere do padrão das publicações. */
-export function documentoParaSalvar(rascunho: Documento): Documento {
+/*
+  Só fica gravado o modelo (e as colunas, e a nota de desempate) que difere do
+  padrão das publicações; `rodape` = o rodapé da regra (o padrão da nota).
+*/
+export function documentoParaSalvar(
+  rascunho: Documento,
+  rodape = "",
+): Documento {
+  const desempate = String(rascunho.desempate ?? "").trim();
   const colunas = Object.fromEntries(
     Object.entries(rascunho.colunas || {}).filter(
       ([chave, ids]) => !ehOPadrao(ids, chave),
@@ -151,7 +170,12 @@ export function documentoParaSalvar(rascunho: Documento): Documento {
     );
     if (Object.keys(proprio).length) modelos[chave] = proprio;
   }
-  return { ...rascunho, modelos, colunas };
+  return {
+    ...rascunho,
+    desempate: desempate === notaDeDesempatePadrao(rodape) ? "" : desempate,
+    modelos,
+    colunas,
+  };
 }
 
 /* A largura da "mesa" da prévia, para o "Ajustar" (ResizeObserver). */
@@ -283,8 +307,17 @@ export function DocumentoDoSei({
     [regraSalva],
   );
   const chave = chaveDoModelo(registrado.retrato.tipo, fase, lista);
+  // O rodapé da regra (ou o do retrato) é o padrão da nota de desempate.
+  const rodape =
+    String(
+      (regraSalva as { rodape?: unknown } | undefined)?.rodape ?? "",
+    ).trim() || String(registrado.retrato.rodape ?? "").trim();
+  const comNotaDeDesempate = listaComNotaDeDesempate(
+    registrado.retrato.tipo,
+    lista,
+  );
   const [rascunho, setRascunho] = useState<Documento>(() =>
-    rascunhoInicial(salvo, chave),
+    rascunhoInicial(salvo, chave, rodape),
   );
   const [salvando, setSalvando] = useState(false);
   const [aba, setAba] = useState("dados");
@@ -304,9 +337,10 @@ export function DocumentoDoSei({
     guardadas,
     chave,
   ) as string[];
-  const paraUsar = documentoParaSalvar(rascunho);
+  const paraUsar = documentoParaSalvar(rascunho, rodape);
   const mudou =
-    JSON.stringify(paraUsar) !== JSON.stringify(documentoParaSalvar(salvo));
+    JSON.stringify(paraUsar) !==
+    JSON.stringify(documentoParaSalvar(salvo, rodape));
 
   const doc = estado.documentoDaLista(registrado, {
     lista,
@@ -315,8 +349,10 @@ export function DocumentoDoSei({
   });
   const pagina = doc ? paginaDaPrevia(doc, estado.marcaDoDocumento()) : "";
 
-  const mudarCampo = (campo: CampoDoEdital | "data", valor: string | null) =>
-    setRascunho((r) => ({ ...r, [campo]: valor }));
+  const mudarCampo = (
+    campo: CampoDoEdital | "data" | "desempate",
+    valor: string | null,
+  ) => setRascunho((r) => ({ ...r, [campo]: valor }));
   const mudarTexto = (campo: keyof Textos, valor: string) =>
     setRascunho((r) => ({
       ...r,
@@ -349,6 +385,7 @@ export function DocumentoDoSei({
       ? restaurarColunas()
       : setRascunho((r) => ({
           ...r,
+          desempate: notaDeDesempatePadrao(rodape),
           modelos: {
             ...r.modelos,
             [chave]: textosDoModelo({ modelos: {} }, chave) as Textos,
@@ -508,6 +545,17 @@ export function DocumentoDoSei({
                   onChange={(ev) => mudarTexto("finais", ev.target.value)}
                 />
               </Campo>
+              {comNotaDeDesempate ? (
+                <Campo rotulo="Nota de desempate (abaixo da tabela da vaga)">
+                  <textarea
+                    data-campo-documento="desempate"
+                    rows={2}
+                    maxLength={1000}
+                    value={rascunho.desempate || ""}
+                    onChange={(ev) => mudarCampo("desempate", ev.target.value)}
+                  />
+                </Campo>
+              ) : null}
             </div>
             <div
               id={`${id}-colunas`}
