@@ -1,3 +1,24 @@
+import type { ComponentProps } from "react";
+import type { ChartOptions, TooltipCallbacks } from "chart.js";
+import type {
+  RecursoDoPainel,
+  FiltrosDosRecursos,
+  CampoDoFiltroDosRecursos,
+  AoFiltrarRecursos,
+} from "../../lib/tipos-dos-recursos.ts";
+import {
+  calcularIndicadores,
+  opcoesDosFiltros,
+  pendenciasPrioritarias,
+} from "../../lib/recursos-dos-candidatos.ts";
+type Opcoes = ReturnType<typeof opcoesDosFiltros>;
+type Pendencia = ReturnType<typeof pendenciasPrioritarias>[number];
+type FiltroAtivo = [CampoDoFiltroDosRecursos, string, string];
+type PropsDoFiltro = {
+  filtros: FiltrosDosRecursos;
+  carregado: boolean;
+  aoFiltrar: AoFiltrarRecursos;
+};
 import { useEffect, useMemo, useRef, useState } from "react";
 import { formatNumberBR } from "../../lib/formatters.js";
 import {
@@ -6,7 +27,7 @@ import {
   impactoNoResultado,
   recursosPorAnalista,
   recursosPorSituacao,
-} from "../../lib/recursos-dos-candidatos.js";
+} from "../../lib/recursos-dos-candidatos.ts";
 import { paletaDoPainel } from "../../lib/tema-do-painel.js";
 import {
   Campo,
@@ -32,14 +53,23 @@ import {
   recorte ativo, os gráficos Chart.js e as pendências prioritárias.
 */
 
-const truncar = (valor, limite) => {
+const truncar = (valor: unknown, limite: number) => {
   const texto = String(valor ?? "").trim();
   return texto.length > limite ? `${texto.slice(0, limite - 1)}…` : texto;
 };
 
 /* ── Topo ───────────────────────────────────────────────────────────── */
 
-export function Topo({ aoNovo, novoDesativado, aoModelos, ...props }) {
+export function Topo({
+  aoNovo,
+  novoDesativado,
+  aoModelos,
+  ...props
+}: ComponentProps<typeof TopoDoPainel> & {
+  aoNovo?: () => void;
+  novoDesativado?: boolean;
+  aoModelos?: () => void;
+}) {
   return (
     <TopoDoPainel {...props}>
       {aoModelos ? (
@@ -73,7 +103,12 @@ export function Topo({ aoNovo, novoDesativado, aoModelos, ...props }) {
 
 /* ── Filtros ────────────────────────────────────────────────────────── */
 
-export const CAMPOS_DO_FILTRO = [
+export const CAMPOS_DO_FILTRO: readonly (readonly [
+  Exclude<CampoDoFiltroDosRecursos, "busca">,
+  string,
+  keyof Opcoes,
+  string,
+])[] = [
   ["edital", "Edital", "editais", "Todos os editais"],
   ["origem", "Origem", "origens", "Todas as origens"],
   ["analista", "Analista", "analistas", "Todos os analistas"],
@@ -81,13 +116,16 @@ export const CAMPOS_DO_FILTRO = [
   ["pendencia", "Pendência", "pendencias", "Qualquer pendência"],
 ];
 
-const rotuloDoValor = (opcoes, lista, valor) =>
+const rotuloDoValor = (opcoes: Opcoes, lista: keyof Opcoes, valor: string) =>
   opcoes[lista].find((o) => o.valor === valor)?.rotulo || valor;
 
 /** Os filtros ativos, como o recorte os descreve: `[campo, rótulo, valor]`. */
-export function filtrosAtivos(filtros, opcoes) {
+export function filtrosAtivos(
+  filtros: FiltrosDosRecursos,
+  opcoes: Opcoes,
+): FiltroAtivo[] {
   const ativos = CAMPOS_DO_FILTRO.filter(([campo]) => filtros[campo]).map(
-    ([campo, rotulo, lista]) => [
+    ([campo, rotulo, lista]): FiltroAtivo => [
       campo,
       rotulo,
       rotuloDoValor(opcoes, lista, filtros[campo]),
@@ -98,7 +136,19 @@ export function filtrosAtivos(filtros, opcoes) {
   return ativos;
 }
 
-export function Filtros({ filtros, opcoes, carregado, aoMudar, aoLimpar }) {
+export function Filtros({
+  filtros,
+  opcoes,
+  carregado,
+  aoMudar,
+  aoLimpar,
+}: {
+  filtros: FiltrosDosRecursos;
+  opcoes: Opcoes;
+  carregado: boolean;
+  aoMudar: AoFiltrarRecursos;
+  aoLimpar: () => void;
+}) {
   const [maisOpcoes, setMaisOpcoes] = useState(false);
   const ativos = filtrosAtivos(filtros, opcoes);
   const avancados = String(filtros.busca || "").trim() ? 1 : 0;
@@ -170,7 +220,21 @@ export function Filtros({ filtros, opcoes, carregado, aoMudar, aoLimpar }) {
 /* ── KPIs ───────────────────────────────────────────────────────────── */
 
 /* O card de KPI de src/ui/ com o número formatado; os que filtram são botões. */
-function Kpi({ valor, sufixo = "", aoFiltrar, carregado, ...props }) {
+function Kpi({
+  valor,
+  sufixo = "",
+  aoFiltrar,
+  carregado,
+  ...props
+}: Omit<
+  ComponentProps<typeof CardDeKpi>,
+  "valor" | "aoClicar" | "carregando"
+> & {
+  valor: number;
+  sufixo?: string;
+  aoFiltrar?: () => void;
+  carregado: boolean;
+}) {
   return (
     <CardDeKpi
       valor={`${formatNumberBR(valor)}${sufixo}`}
@@ -189,8 +253,13 @@ function Kpi({ valor, sufixo = "", aoFiltrar, carregado, ...props }) {
   mudou a nota, prazo vencendo, registrados sem envio) virou pendência,
   filtro ou gráfico — nada se perdeu.
 */
-export function Indicadores({ indicadores: k, carregado, filtros, aoFiltrar }) {
-  const filtro = (campo, valor) =>
+export function Indicadores({
+  indicadores: k,
+  carregado,
+  filtros,
+  aoFiltrar,
+}: PropsDoFiltro & { indicadores: ReturnType<typeof calcularIndicadores> }) {
+  const filtro = (campo: CampoDoFiltroDosRecursos, valor: string) =>
     carregado
       ? {
           ativo: filtros[campo] === valor,
@@ -246,7 +315,15 @@ export function Indicadores({ indicadores: k, carregado, filtros, aoFiltrar }) {
 
 /* ── Recorte ativo ──────────────────────────────────────────────────── */
 
-export function Recorte({ ativos, recursos, carregado }) {
+export function Recorte({
+  ativos,
+  recursos,
+  carregado,
+}: {
+  ativos: FiltroAtivo[];
+  recursos: readonly RecursoDoPainel[];
+  carregado: boolean;
+}) {
   const vencidos = recursos.filter((r) => r.atrasado).length;
   const decididos = recursos.filter((r) => r.decidido).length;
   const taxa = recursos.length
@@ -290,9 +367,18 @@ export function Recorte({ ativos, recursos, carregado }) {
 /* ── Pendências prioritárias ────────────────────────────────────────── */
 
 /* Severidade → tom da borda do item: alta em vermelho; média e baixa em âmbar. */
-const TOM_DA_SEVERIDADE = { alta: "perigo", media: "alerta", baixa: "alerta" };
+const TOM_DA_SEVERIDADE: Record<Pendencia["severidade"], string> = {
+  alta: "perigo",
+  media: "alerta",
+  baixa: "alerta",
+};
 
-function Pendencias({ pendencias, carregado, filtros, aoFiltrar }) {
+function Pendencias({
+  pendencias,
+  carregado,
+  filtros,
+  aoFiltrar,
+}: PropsDoFiltro & { pendencias: readonly Pendencia[] }) {
   return (
     <ListaDePendencias
       carregando={!carregado}
@@ -313,9 +399,21 @@ function Pendencias({ pendencias, carregado, filtros, aoFiltrar }) {
 
 /* Eixos, legenda e dica dos gráficos de barra. */
 function opcoesDeBarras(
-  p,
-  { empilhado = false, legenda = false, deitado = false, aoClicar, dica } = {},
-) {
+  p: ReturnType<typeof paleta>,
+  {
+    empilhado = false,
+    legenda = false,
+    deitado = false,
+    aoClicar,
+    dica,
+  }: {
+    empilhado?: boolean;
+    legenda?: boolean;
+    deitado?: boolean;
+    aoClicar?: (indice: number) => void;
+    dica?: Partial<TooltipCallbacks<"bar">>;
+  } = {},
+): ChartOptions<"bar"> {
   const categorias = {
     stacked: empilhado,
     ticks: { color: p.text, maxRotation: 0 },
@@ -347,13 +445,16 @@ function opcoesDeBarras(
       : { x: categorias, y: valores },
     onClick: aoClicar
       ? (_, elementos) => {
-          if (elementos.length) aoClicar(elementos[0].index);
+          const primeiro = elementos[0];
+          if (primeiro) aoClicar(primeiro.index);
         }
       : undefined,
   };
 }
 
-const coresDaSituacao = (p) => ({
+const coresDaSituacao = (
+  p: ReturnType<typeof paleta>,
+): Partial<Record<string, string>> => ({
   warning: p.warn,
   success: p.ok,
   danger: p.bad,
@@ -361,7 +462,8 @@ const coresDaSituacao = (p) => ({
 });
 
 /* As cores dos tokens do app (com a paleta dos painéis de reserva). */
-const paleta = (escuro) => paletaDosGraficos(escuro, paletaDoPainel(escuro));
+const paleta = (escuro: boolean) =>
+  paletaDosGraficos(escuro, paletaDoPainel(escuro));
 
 export function Graficos({
   recursos,
@@ -370,6 +472,10 @@ export function Graficos({
   filtros,
   aoFiltrar,
   escuro,
+}: PropsDoFiltro & {
+  recursos: readonly RecursoDoPainel[];
+  pendencias: readonly Pendencia[];
+  escuro: boolean;
 }) {
   const analistas = useMemo(
     () => recursosPorAnalista(recursos, 12),
@@ -426,14 +532,15 @@ export function Graficos({
                   legenda: true,
                   dica: {
                     title: (itens) =>
-                      analistas[itens[0].dataIndex]?.rotulo || "",
+                      analistas[itens[0]?.dataIndex ?? -1]?.rotulo || "",
                     afterBody: (itens) => [
-                      `Total: ${formatNumberBR(analistas[itens[0].dataIndex]?.total || 0)}`,
+                      `Total: ${formatNumberBR(analistas[itens[0]?.dataIndex ?? -1]?.total || 0)}`,
                     ],
                   },
-                  aoClicar: (indice) =>
-                    analistas[indice] &&
-                    filtrar.current("analista", analistas[indice].rotulo),
+                  aoClicar: (indice) => {
+                    const analista = analistas[indice];
+                    if (analista) filtrar.current("analista", analista.rotulo);
+                  },
                 }),
               };
             }}
@@ -542,7 +649,7 @@ export function Graficos({
                 deitado: true,
                 dica: {
                   label: (item) =>
-                    `${formatNumberBR(item.parsed.x)} recurso(s)${total ? ` · ${Math.round((item.parsed.x / total) * 100)}%` : ""}`,
+                    `${formatNumberBR(item.parsed.x ?? 0)} recurso(s)${total ? ` · ${Math.round(((item.parsed.x ?? 0) / total) * 100)}%` : ""}`,
                 },
               }),
             };

@@ -715,7 +715,7 @@ com o mesmo md5). Sem migração de dados: a aba começa vazia. O painel externo
   leitor; gravar e buscar candidato, editor.
 - Catálogo: aba `recursos` (ícone `scale`, ordem 6) nas três áreas.
 - O prazo de resposta é classificado no front a partir das etapas do
-  cronograma (`src/lib/prazo-do-recurso.js`); nada é guardado no banco.
+  cronograma (`src/lib/prazo-do-recurso.ts`); nada é guardado no banco.
 
 ## 11. CCE e Escritório Distrital e Regional são Projetos
 

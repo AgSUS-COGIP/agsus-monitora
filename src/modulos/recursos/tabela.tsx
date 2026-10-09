@@ -1,3 +1,10 @@
+import type {
+  DadosDoRecurso,
+  RecursoDoPainel,
+  OrigemDoRecurso,
+  IdentificadorDoRecurso,
+  EtapaDoRecurso,
+} from "../../lib/tipos-dos-recursos.ts";
 import { formatNumberBR } from "../../lib/formatters.js";
 import {
   ETAPAS,
@@ -6,7 +13,7 @@ import {
   rotuloDaOrigem,
   rotuloDaSituacao,
   tomDaSituacao,
-} from "../../lib/recursos-dos-candidatos.js";
+} from "../../lib/recursos-dos-candidatos.ts";
 import { rotuloDoEstado, tomDoEstado } from "../../lib/resposta-do-recurso.js";
 import { classes, Selo, TabelaInfinita } from "../../ui/index.js";
 
@@ -29,7 +36,7 @@ const COLUNAS = [
   { rotulo: "Ações", largura: "8%" },
 ];
 
-export function dataBR(valor) {
+export function dataBR(valor: unknown) {
   const texto = String(valor ?? "").slice(0, 10);
   return /^\d{4}-\d{2}-\d{2}$/.test(texto)
     ? texto.split("-").reverse().join("/")
@@ -37,14 +44,18 @@ export function dataBR(valor) {
 }
 
 /* O tom da situação no selo (Selo, src/ui/). */
-const BADGE_DO_TOM = {
+const BADGE_DO_TOM: Record<string, string> = {
   warning: "pendente",
   success: "aprovado",
   danger: "reprovado",
   info: "revisar",
 };
 
-export function SeloDaSituacao({ situacao }) {
+export function SeloDaSituacao({
+  situacao,
+}: {
+  situacao: DadosDoRecurso["situacao"];
+}) {
   return (
     <Selo tom={BADGE_DO_TOM[tomDaSituacao(situacao)]}>
       {rotuloDaSituacao(situacao)}
@@ -53,7 +64,7 @@ export function SeloDaSituacao({ situacao }) {
 }
 
 /* O estado da resposta escrita (resposta-do-recurso.js), no mesmo selo. */
-export function SeloDaResposta({ estado }) {
+export function SeloDaResposta({ estado }: { estado?: string | null }) {
   if (!estado) return null;
   return (
     <Selo
@@ -70,19 +81,24 @@ export function MarcaForaDasAnalises() {
 }
 
 /* Prazo com o destaque de atraso: vencido (vermelho), vence em até 2 dias (âmbar). */
-export function detalheDoPrazo(recurso) {
+export function detalheDoPrazo(
+  recurso: Pick<
+    RecursoDoPainel,
+    "prazo" | "diasParaPrazo" | "atrasado" | "etapas"
+  >,
+) {
   const { prazo, diasParaPrazo, atrasado, etapas } = recurso;
   if (!prazo.data) return { data: "", texto: "Não encontrado", tom: "neutral" };
   const respondido = etapas.resposta_candidato;
   const tom = atrasado
     ? "danger"
-    : !respondido && diasParaPrazo <= 2
+    : !respondido && diasParaPrazo !== null && diasParaPrazo <= 2
       ? "warning"
       : "neutral";
   const texto = respondido
     ? "respondido"
     : atrasado
-      ? `vencido há ${formatNumberBR(-diasParaPrazo)} ${diasParaPrazo === -1 ? "dia" : "dias"}`
+      ? `vencido há ${formatNumberBR(-(diasParaPrazo ?? 0))} ${diasParaPrazo === -1 ? "dia" : "dias"}`
       : diasParaPrazo === 0
         ? "vence hoje"
         : `em ${formatNumberBR(diasParaPrazo)} ${diasParaPrazo === 1 ? "dia" : "dias"}`;
@@ -98,7 +114,13 @@ export function detalheDoPrazo(recurso) {
   (neutro), pela data da decisão contra o prazo do cronograma. Faz parte das
   comemorações (marcos do processo): some com elas desligadas. Sem confete.
 */
-export function SeloDoPrazoCumprido({ recurso, ligado = true }) {
+export function SeloDoPrazoCumprido({
+  recurso,
+  ligado = true,
+}: {
+  recurso?: Pick<RecursoDoPainel, "noPrazo"> | null;
+  ligado?: boolean;
+}) {
   if (!ligado || typeof recurso?.noPrazo !== "boolean") return null;
   return recurso.noPrazo ? (
     <Selo
@@ -118,7 +140,13 @@ export function SeloDoPrazoCumprido({ recurso, ligado = true }) {
   );
 }
 
-function Prazo({ recurso, comemoracoes }) {
+function Prazo({
+  recurso,
+  comemoracoes,
+}: {
+  recurso: RecursoDoPainel;
+  comemoracoes: boolean;
+}) {
   const { data, texto, tom } = detalheDoPrazo(recurso);
   return (
     <div title={recurso.prazo.aviso || recurso.prazo.atividade || undefined}>
@@ -131,7 +159,11 @@ function Prazo({ recurso, comemoracoes }) {
   );
 }
 
-export function MarcasDasEtapas({ etapas }) {
+export function MarcasDasEtapas({
+  etapas,
+}: {
+  etapas: Record<EtapaDoRecurso, boolean>;
+}) {
   return (
     <span
       className="recursos-etapas"
@@ -152,10 +184,20 @@ export function MarcasDasEtapas({ etapas }) {
   );
 }
 
-const pelaBusca = (recursos, busca) =>
+const pelaBusca = (recursos: readonly RecursoDoPainel[], busca: string) =>
   filtrarRecursos(recursos, { ...FILTROS_VAZIOS, busca });
 
-function LinhaDoRecurso({ recurso: r, origens, comemoracoes, aoAbrir }) {
+function LinhaDoRecurso({
+  recurso: r,
+  origens,
+  comemoracoes,
+  aoAbrir,
+}: {
+  recurso: RecursoDoPainel;
+  origens?: readonly OrigemDoRecurso[];
+  comemoracoes: boolean;
+  aoAbrir: (id: IdentificadorDoRecurso) => void;
+}) {
   return (
     <tr
       className="recursos-linha"
@@ -231,6 +273,15 @@ export function TabelaDeRecursos({
   aoAbrir,
   aoNovo,
   comemoracoes = false,
+}: {
+  recursos: RecursoDoPainel[];
+  total: number;
+  origens?: readonly OrigemDoRecurso[];
+  carregado: boolean;
+  podeEditar: boolean;
+  aoAbrir: (id: IdentificadorDoRecurso) => void;
+  aoNovo: () => void;
+  comemoracoes?: boolean;
 }) {
   return (
     <TabelaInfinita

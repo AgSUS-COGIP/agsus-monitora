@@ -1,3 +1,7 @@
+import type {
+  EtapaDoCronogramaDoRecurso,
+  PrazoDoRecurso,
+} from "./tipos-dos-recursos.ts";
 /*
   Prazo de resposta de um recurso, lido do cronograma do edital.
 
@@ -40,7 +44,7 @@ export const AVISO_PRAZO_PELA_ABERTURA =
 export const AVISO_SEM_PRAZO = "Prazo não encontrado no cronograma.";
 
 /** Minúsculas, sem acento, só letras/números e espaço simples. */
-export function normalizarAtividade(texto) {
+export function normalizarAtividade(texto: unknown) {
   return String(texto ?? "")
     .normalize("NFD")
     .replace(/[̀-ͯ]/g, "")
@@ -56,7 +60,7 @@ export function normalizarAtividade(texto) {
   Resultado Final das Entrevistas" é da entrevista); resultado final só quando
   nenhuma etapa foi citada.
 */
-export function origemDaAtividade(texto) {
+export function origemDaAtividade(texto: unknown) {
   const t = normalizarAtividade(texto).split(/\be convocacao\b/)[0];
   if (!t) return null;
   if (/\bentrevist/.test(t)) return ORIGENS_DO_RECURSO.ENTREVISTA;
@@ -70,18 +74,18 @@ export function origemDaAtividade(texto) {
 }
 
 /** "resposta", "abertura" ou `null` (a atividade não é de recurso). */
-export function papelDaAtividade(texto) {
+export function papelDaAtividade(texto: unknown) {
   const t = normalizarAtividade(texto);
   if (!/\brecurs/.test(t)) return null;
   if (/\brespost|\bjulgament/.test(t)) return "resposta";
   return "abertura";
 }
 
-const numero = (valor) => {
+const numero = (valor: unknown) => {
   const n = Number(valor);
   return Number.isFinite(n) ? n : Number.POSITIVE_INFINITY;
 };
-const data = (valor) => {
+const data = (valor: unknown) => {
   const texto = String(valor ?? "").slice(0, 10);
   return /^\d{4}-\d{2}-\d{2}$/.test(texto) ? texto : null;
 };
@@ -90,9 +94,14 @@ const data = (valor) => {
  * Classifica as etapas de UM cronograma, na ordem dele (`ordem`, depois a data
  * de início). Cada etapa volta com `origem` e `papel` (ambos podem ser nulos).
  */
-export function classificarCronograma(etapas) {
+export function classificarCronograma(
+  etapas:
+    | readonly (EtapaDoCronogramaDoRecurso | null | undefined)[]
+    | null
+    | undefined,
+) {
   const ordenadas = (Array.isArray(etapas) ? etapas : [])
-    .filter(Boolean)
+    .filter((etapa): etapa is EtapaDoCronogramaDoRecurso => Boolean(etapa))
     .map((etapa, indice) => ({ etapa, indice }))
     .sort(
       (a, b) =>
@@ -102,7 +111,7 @@ export function classificarCronograma(etapas) {
         ) ||
         a.indice - b.indice,
     );
-  let ultimaOrigem = null;
+  let ultimaOrigem: string | null = null;
   return ordenadas.map(({ etapa }) => {
     const citada = origemDaAtividade(etapa.atividade);
     const papel = papelDaAtividade(etapa.atividade);
@@ -123,10 +132,12 @@ export function classificarCronograma(etapas) {
   O prazo de resposta para uma origem. Mais de uma atividade de resposta (errata,
   duas rodadas): vale a de fim mais tardio. Atividade sem fim usa o início.
 */
-function ultimaPorData(etapas) {
+function ultimaPorData(etapas: ReturnType<typeof classificarCronograma>) {
   return etapas
     .map((etapa) => ({ ...etapa, data: etapa.fim ?? etapa.inicio }))
-    .filter((etapa) => etapa.data)
+    .filter((etapa): etapa is typeof etapa & { data: string } =>
+      Boolean(etapa.data),
+    )
     .sort((a, b) => a.data.localeCompare(b.data))
     .at(-1);
 }
@@ -135,7 +146,10 @@ function ultimaPorData(etapas) {
  * `{ data, fonte, atividade, aviso }`: `fonte` é "resposta", "abertura" ou
  * `null` (sem prazo; `data` nula e `aviso` = AVISO_SEM_PRAZO).
  */
-export function prazoDoRecurso(etapas, origem) {
+export function prazoDoRecurso(
+  etapas: Parameters<typeof classificarCronograma>[0],
+  origem: string | null | undefined,
+): PrazoDoRecurso {
   const daOrigem = classificarCronograma(etapas).filter(
     (etapa) => etapa.papel && etapa.origem === origem,
   );
@@ -163,13 +177,16 @@ export function prazoDoRecurso(etapas, origem) {
 }
 
 /** As etapas do payload (todas as dos editais com recurso) agrupadas por edital. */
-export function cronogramasPorEdital(etapas) {
-  const mapa = new Map();
+export function cronogramasPorEdital(
+  etapas: Parameters<typeof classificarCronograma>[0],
+) {
+  const mapa = new Map<string, EtapaDoCronogramaDoRecurso[]>();
   for (const etapa of Array.isArray(etapas) ? etapas : []) {
     const id = String(etapa?.edital_id ?? "");
     if (!id) continue;
-    if (!mapa.has(id)) mapa.set(id, []);
-    mapa.get(id).push(etapa);
+    const grupo = mapa.get(id) ?? [];
+    if (etapa) grupo.push(etapa);
+    mapa.set(id, grupo);
   }
   return mapa;
 }
@@ -179,7 +196,7 @@ export function cronogramasPorEdital(etapas) {
  * antes), `false` (depois) ou `null` (sem decisão ou sem prazo no
  * cronograma). Datas AAAA-MM-DD; a da decisão já no dia local.
  */
-export function decididoNoPrazo(diaDaDecisao, dataDoPrazo) {
+export function decididoNoPrazo(diaDaDecisao: unknown, dataDoPrazo: unknown) {
   const decisao = data(diaDaDecisao);
   const prazo = data(dataDoPrazo);
   if (!decisao || !prazo) return null;

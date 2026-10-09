@@ -25,7 +25,7 @@
   mostra o rótulo, os outros ficam desativados.
 */
 import { hojeEmBrasilia } from "../../lib/cronograma-do-edital.js";
-import { csvDosRecursos } from "../../lib/recursos-dos-candidatos.js";
+import { csvDosRecursos } from "../../lib/recursos-dos-candidatos.ts";
 import {
   BUCKET_DOS_ANEXOS,
   caminhoDoAnexo,

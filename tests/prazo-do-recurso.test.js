@@ -8,7 +8,7 @@ import {
   origemDaAtividade,
   papelDaAtividade,
   prazoDoRecurso,
-} from "../src/lib/prazo-do-recurso.js";
+} from "../src/lib/prazo-do-recurso.ts";
 
 /*
   O prazo de resposta do recurso sai do cronograma do edital, cujas atividades

@@ -14,7 +14,7 @@
   .docx) põe o texto como texto — nada de innerHTML.
 */
 import { formatNumberBR } from "./formatters.js";
-import { rotuloDaOrigem, situacaoDecidida } from "./recursos-dos-candidatos.js";
+import { rotuloDaOrigem, situacaoDecidida } from "./recursos-dos-candidatos.ts";
 
 export const MARCADORES = Object.freeze([
   Object.freeze({ chave: "nome_candidato", rotulo: "Nome do candidato" }),

@@ -20,7 +20,7 @@
   tem `recursos_parecer` não vê esses botões. Marcar enviada fica com quem
   edita, mas só com o recurso decidido.
 */
-import { situacaoDecidida } from "./recursos-dos-candidatos.js";
+import { situacaoDecidida } from "./recursos-dos-candidatos.ts";
 
 export const ESTADOS_DA_RESPOSTA = Object.freeze([
   Object.freeze({ id: "rascunho", rotulo: "Rascunho", tom: "neutral" }),

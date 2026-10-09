@@ -7,7 +7,7 @@ import {
   validarArquivoDoAnexo,
 } from "../../lib/anexos-do-recurso.js";
 import { Secao } from "../../ui/index.js";
-import { dataHora } from "./partes.jsx";
+import { dataHora } from "./partes.ts";
 
 /*
   "Anexos", na gaveta do recurso: os arquivos do recurso (o recurso do

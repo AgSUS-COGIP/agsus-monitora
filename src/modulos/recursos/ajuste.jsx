@@ -19,7 +19,7 @@ import {
 import { rotuloDoItem } from "../../lib/classificacao/motor.js";
 import { formatarNota, ordinal } from "../../lib/classificacao/numeros.js";
 import { Aviso, Campo, Secao, Segmentado, Selo } from "../../ui/index.js";
-import { dataHora } from "./partes.jsx";
+import { dataHora } from "./partes.ts";
 
 /*
   "Ajuste da pontuação", na gaveta do recurso (migration

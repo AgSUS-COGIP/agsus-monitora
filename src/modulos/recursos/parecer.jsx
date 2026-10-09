@@ -6,8 +6,8 @@ import {
   LIMITES_DO_PARECER,
 } from "../../lib/parecer-do-recurso.js";
 import { Aviso, Kv, Secao } from "../../ui/index.js";
-import { dataHora } from "./partes.jsx";
-import { SeloDaSituacao } from "./tabela.jsx";
+import { dataHora } from "./partes.ts";
+import { SeloDaSituacao } from "./tabela.tsx";
 
 /*
   "Parecer jurídico", na gaveta do recurso: a situação no fluxo, quem enviou

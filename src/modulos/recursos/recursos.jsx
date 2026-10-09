@@ -14,13 +14,13 @@ import {
   opcoesDosFiltros,
   ORIGENS_PADRAO,
   pendenciasPrioritarias,
-} from "../../lib/recursos-dos-candidatos.js";
+} from "../../lib/recursos-dos-candidatos.ts";
 import { getSupabaseClient } from "../../lib/supabaseClient.js";
 import { Aviso } from "../../ui/index.js";
 import { criarEstadoDosRecursos } from "./estado.js";
 import { FormularioDoRecurso } from "./formulario.jsx";
 import { GavetaDoRecurso } from "./gaveta.jsx";
-import { dataHora } from "./partes.jsx";
+import { dataHora } from "./partes.ts";
 import {
   Filtros,
   filtrosAtivos,
@@ -28,9 +28,9 @@ import {
   Indicadores,
   Recorte,
   Topo,
-} from "./paineis.jsx";
+} from "./paineis.tsx";
 import { PainelDeModelos } from "./modelos.jsx";
-import { TabelaDeRecursos } from "./tabela.jsx";
+import { TabelaDeRecursos } from "./tabela.tsx";
 import "./recursos.css";
 
 /*

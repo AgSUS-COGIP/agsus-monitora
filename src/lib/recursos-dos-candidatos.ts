@@ -1,3 +1,15 @@
+import type {
+  DadosDoRecurso,
+  RecursoDoPainel,
+  EtapaDoRecurso,
+  TomDoRecurso,
+  OrigemDoRecurso,
+  FiltrosDosRecursos,
+  RascunhoDoRecurso,
+  DetalheParaRascunho,
+  IdentificadorDoRecurso,
+  DataDoRecurso,
+} from "./tipos-dos-recursos.ts";
 /*
   A aba Recursos sem DOM: situações, etapas, o que se calcula de cada recurso
   (nota mudou, dias em aberto, prazo, atraso), os indicadores, as pendências
@@ -6,7 +18,7 @@
   O recurso chega de `get_recursos_da_area` (supabase/migrations/
   20260929120000_recursos.sql) já com o candidato, a vaga, a nota e o resultado
   da análise curricular ligada; o prazo sai do cronograma do edital por
-  `prazo-do-recurso.js`. A tela é `src/modulos/recursos/`.
+  `prazo-do-recurso.ts`. A tela é `src/modulos/recursos/`.
 
   Substitui o painel de recursos do Apps Script: mesmas colunas (edital, cargo,
   vaga, origem, analista, código e nome do candidato, situação e as etapas), os
@@ -19,7 +31,7 @@ import {
   cronogramasPorEdital,
   decididoNoPrazo,
   prazoDoRecurso,
-} from "./prazo-do-recurso.js";
+} from "./prazo-do-recurso.ts";
 
 /*
   As situações do fluxo com parecer jurídico
@@ -27,7 +39,11 @@ import {
   parecer-do-recurso.js). PARCIALMENTE_INDEFERIDO é o código de sempre (os
   modelos de resposta o usam); na tela, "Deferido parcialmente".
 */
-export const SITUACOES = Object.freeze([
+export const SITUACOES: readonly {
+  id: string;
+  rotulo: string;
+  tom: TomDoRecurso;
+}[] = Object.freeze([
   Object.freeze({ id: "REGISTRADO", rotulo: "Registrado", tom: "neutral" }),
   Object.freeze({
     id: "EM_ANALISE_JURIDICA",
@@ -55,10 +71,13 @@ export const SITUACOES_DEFERIDAS = Object.freeze([
   "DEFERIDO",
   "PARCIALMENTE_INDEFERIDO",
 ]);
-export const situacaoDecidida = (id) => SITUACOES_DECIDIDAS.includes(id);
+export const situacaoDecidida = (id: unknown) =>
+  typeof id === "string" && SITUACOES_DECIDIDAS.includes(id);
 
 /* Filtro de situação que junta mais de uma (o KPI "Deferidos"). */
-export const GRUPOS_DE_SITUACAO = Object.freeze({
+export const GRUPOS_DE_SITUACAO: Readonly<
+  Record<string, { rotulo: string; situacoes: readonly string[] }>
+> = Object.freeze({
   deferidos: Object.freeze({
     rotulo: "Deferidos (com parcialmente)",
     situacoes: SITUACOES_DEFERIDAS,
@@ -66,7 +85,12 @@ export const GRUPOS_DE_SITUACAO = Object.freeze({
 });
 
 /* As etapas da esteira, na ordem do trabalho. `campo` é a data que o banco devolve. */
-export const ETAPAS = Object.freeze([
+export const ETAPAS: readonly {
+  id: EtapaDoRecurso;
+  rotulo: string;
+  curto: string;
+  campo: `${EtapaDoRecurso}_em`;
+}[] = Object.freeze([
   Object.freeze({
     id: "download_empregare",
     rotulo: "Documentação baixada (Empregare)",
@@ -108,10 +132,10 @@ export const ORIGENS_PADRAO = Object.freeze([
 ]);
 
 const SEM_ANALISTA = "Sem analista";
-const texto = (valor) => String(valor ?? "").trim();
+const texto = (valor: unknown) => String(valor ?? "").trim();
 const DIA = 24 * 60 * 60 * 1000;
 
-export function normalizarBusca(valor) {
+export function normalizarBusca(valor: unknown) {
   return String(valor ?? "")
     .normalize("NFD")
     .replace(/[̀-ͯ]/g, "")
@@ -120,34 +144,39 @@ export function normalizarBusca(valor) {
     .trim();
 }
 
-export const rotuloDaSituacao = (id) =>
+export const rotuloDaSituacao = (id: unknown) =>
   SITUACOES.find((s) => s.id === id)?.rotulo || texto(id) || "Registrado";
-export const tomDaSituacao = (id) =>
+export const tomDaSituacao = (id: unknown) =>
   SITUACOES.find((s) => s.id === id)?.tom || "neutral";
-export const rotuloDaOrigem = (id, origens = ORIGENS_PADRAO) =>
-  origens.find((o) => o.id === id)?.rotulo || texto(id) || "Sem origem";
+export const rotuloDaOrigem = (
+  id: unknown,
+  origens: readonly OrigemDoRecurso[] = ORIGENS_PADRAO,
+) => origens.find((o) => o.id === id)?.rotulo || texto(id) || "Sem origem";
 
 /*
   Data do dia (AAAA-MM-DD) em Brasília, como no resto do sistema: prazo é
   data, não instante, e não muda com o fuso do computador de quem usa.
 */
-export function diaEmBrasilia(data = new Date()) {
+export function diaEmBrasilia(data: DataDoRecurso = new Date()) {
   const d = data instanceof Date ? data : new Date(data);
   return Number.isNaN(d.getTime()) ? "" : hojeEmBrasilia(d);
 }
 
 /* Dias inteiros entre duas datas AAAA-MM-DD (b − a). */
-const emUtc = (dia) => {
-  const [ano, mes, d] = dia.split("-").map(Number);
+const emUtc = (dia: string) => {
+  const [ano = 0, mes = 0, d = 0] = dia.split("-").map(Number);
   return Date.UTC(ano, mes - 1, d);
 };
 
-export function diasEntre(a, b) {
+export function diasEntre(
+  a: string | null | undefined,
+  b: string | null | undefined,
+) {
   if (!a || !b) return null;
   return Math.round((emUtc(b) - emUtc(a)) / DIA);
 }
 
-const nota = (valor) =>
+const nota = (valor: unknown) =>
   valor === null || valor === undefined || valor === ""
     ? null
     : Number.isFinite(Number(valor))
@@ -158,7 +187,10 @@ const nota = (valor) =>
   A nota mudou quando a nota atual da análise é outra que a guardada no dia do
   cadastro. Fora das análises (sem nota), não há como saber: não mudou.
 */
-export function notaMudou(recurso) {
+export function notaMudou(
+  recurso:
+    Pick<DadosDoRecurso, "nota_anterior" | "nota_atual"> | null | undefined,
+) {
   const antes = nota(recurso?.nota_anterior);
   const agora = nota(recurso?.nota_atual);
   if (antes === null || agora === null) return false;
@@ -169,10 +201,19 @@ export function notaMudou(recurso) {
  * O recurso com o que se calcula dele. `cronogramas` é o mapa edital →
  * etapas (`cronogramasPorEdital`); `hoje`, a data AAAA-MM-DD.
  */
-export function enriquecerRecurso(recurso, { cronogramas, hoje }) {
-  const etapas = Object.fromEntries(
-    ETAPAS.map((etapa) => [etapa.id, Boolean(recurso[etapa.campo])]),
-  );
+export function enriquecerRecurso<T extends DadosDoRecurso>(
+  recurso: T,
+  {
+    cronogramas,
+    hoje,
+  }: { cronogramas?: ReturnType<typeof cronogramasPorEdital>; hoje: string },
+) {
+  const etapas = {
+    download_empregare: Boolean(recurso.download_empregare_em),
+    processo_sei: Boolean(recurso.processo_sei_em),
+    upload_sei: Boolean(recurso.upload_sei_em),
+    resposta_candidato: Boolean(recurso.resposta_candidato_em),
+  };
   const situacao = texto(recurso.situacao) || SITUACAO_INICIAL;
   const decidido = situacaoDecidida(situacao);
   const mudouNota = notaMudou(recurso);
@@ -222,103 +263,118 @@ export function enriquecerRecurso(recurso, { cronogramas, hoje }) {
   };
 }
 
-export function enriquecerRecursos(dados, hoje = diaEmBrasilia()) {
+export function enriquecerRecursos<T extends DadosDoRecurso>(
+  dados:
+    | {
+        cronogramas?: Parameters<typeof cronogramasPorEdital>[0];
+        recursos?: readonly T[] | null;
+      }
+    | null
+    | undefined,
+  hoje = diaEmBrasilia(),
+) {
   const cronogramas = cronogramasPorEdital(dados?.cronogramas);
-  return (Array.isArray(dados?.recursos) ? dados.recursos : []).map((r) =>
+  return (Array.isArray(dados?.recursos) ? dados.recursos : []).map((r: T) =>
     enriquecerRecurso(r, { cronogramas, hoje }),
   );
 }
 
 /* Pendências: a chave filtra a tabela; o teste diz quem entra. */
-export const PENDENCIAS = Object.freeze([
+export const PENDENCIAS: readonly {
+  chave: string;
+  titulo: string;
+  severidade: "alta" | "media" | "baixa";
+  teste: (recurso: RecursoDoPainel) => unknown;
+}[] = Object.freeze([
   Object.freeze({
     chave: "prazo_vencido",
     titulo: "Prazo de resposta vencido",
     severidade: "alta",
-    teste: (r) => r.atrasado,
+    teste: (r: RecursoDoPainel) => r.atrasado,
   }),
   Object.freeze({
     chave: "prazo_vencendo",
     titulo: "Prazo vence em até 2 dias",
     severidade: "alta",
-    teste: (r) => r.vencendo,
+    teste: (r: RecursoDoPainel) => r.vencendo,
   }),
   Object.freeze({
     chave: "devolvido",
     titulo: "Devolvidos pelo jurídico",
     severidade: "alta",
-    teste: (r) => r.devolvido,
+    teste: (r: RecursoDoPainel) => r.devolvido,
   }),
   Object.freeze({
     chave: "sem_envio_parecer",
     titulo: "Registrados sem envio ao jurídico",
     severidade: "media",
-    teste: (r) => r.situacao === SITUACAO_INICIAL,
+    teste: (r: RecursoDoPainel) => r.situacao === SITUACAO_INICIAL,
   }),
   Object.freeze({
     chave: "sem_analista",
     titulo: "Sem analista responsável",
     severidade: "alta",
-    teste: (r) => !r.analista,
+    teste: (r: RecursoDoPainel) => !r.analista,
   }),
   Object.freeze({
     chave: "sem_sei",
     titulo: "Sem processo SEI",
     severidade: "alta",
-    teste: (r) => !r.etapas.processo_sei,
+    teste: (r: RecursoDoPainel) => !r.etapas.processo_sei,
   }),
   Object.freeze({
     chave: "sem_upload_sei",
     titulo: "Sem documentação no SEI",
     severidade: "media",
-    teste: (r) => r.etapas.processo_sei && !r.etapas.upload_sei,
+    teste: (r: RecursoDoPainel) =>
+      r.etapas.processo_sei && !r.etapas.upload_sei,
   }),
   Object.freeze({
     chave: "sem_resposta",
     titulo: "Decididos sem resposta ao candidato",
     severidade: "alta",
-    teste: (r) => r.decidido && !r.etapas.resposta_candidato,
+    teste: (r: RecursoDoPainel) => r.decidido && !r.etapas.resposta_candidato,
   }),
   Object.freeze({
     chave: "resposta_devolvida",
     titulo: "Respostas devolvidas",
     severidade: "alta",
-    teste: (r) => r.respostaEstado === "devolvida",
+    teste: (r: RecursoDoPainel) => r.respostaEstado === "devolvida",
   }),
   Object.freeze({
     chave: "resposta_aprovada",
     titulo: "Respostas aprovadas aguardando envio",
     severidade: "alta",
-    teste: (r) => r.respostaEstado === "aprovada",
+    teste: (r: RecursoDoPainel) => r.respostaEstado === "aprovada",
   }),
   Object.freeze({
     chave: "resposta_em_revisao",
     titulo: "Respostas em revisão",
     severidade: "media",
-    teste: (r) => r.respostaEstado === "em_revisao",
+    teste: (r: RecursoDoPainel) => r.respostaEstado === "em_revisao",
   }),
   Object.freeze({
     chave: "mudou_resultado",
     titulo: "Mudança de nota ou classificação",
     severidade: "media",
-    teste: (r) => r.mudouResultado,
+    teste: (r: RecursoDoPainel) => r.mudouResultado,
   }),
   Object.freeze({
     chave: "sem_prazo",
     titulo: "Prazo não encontrado no cronograma",
     severidade: "baixa",
-    teste: (r) => !r.prazo.data,
+    teste: (r: RecursoDoPainel) => !r.prazo.data,
   }),
   Object.freeze({
     chave: "fora_analise",
     titulo: "Candidato fora das análises",
     severidade: "baixa",
-    teste: (r) => r.fora_analise,
+    teste: (r: RecursoDoPainel) => r.fora_analise,
   }),
 ]);
 
 /** As pendências com ocorrência, na ordem de prioridade. */
-export function pendenciasPrioritarias(recursos) {
+export function pendenciasPrioritarias(recursos: readonly RecursoDoPainel[]) {
   return PENDENCIAS.map(({ teste, ...pendencia }) => ({
     ...pendencia,
     valor: recursos.filter(teste).length,
@@ -330,10 +386,11 @@ export function pendenciasPrioritarias(recursos) {
   (com os parcialmente) e indeferidos; total e taxa de decisão vão para a
   contagem da fila e o recorte; o resto é pendência ou gráfico.
 */
-export function calcularIndicadores(recursos) {
+export function calcularIndicadores(recursos: readonly RecursoDoPainel[]) {
   const total = recursos.length;
   const concluidos = recursos.filter((r) => r.decidido).length;
-  const conta = (teste) => recursos.filter(teste).length;
+  const conta = (teste: (recurso: RecursoDoPainel) => boolean) =>
+    recursos.filter(teste).length;
   return {
     total,
     registrados: conta((r) => r.situacao === SITUACAO_INICIAL),
@@ -349,7 +406,7 @@ export function calcularIndicadores(recursos) {
 
 /* ── Filtros ─────────────────────────────────────────────────────────── */
 
-export const FILTROS_VAZIOS = Object.freeze({
+export const FILTROS_VAZIOS: Readonly<FiltrosDosRecursos> = Object.freeze({
   edital: "",
   origem: "",
   analista: "",
@@ -358,27 +415,35 @@ export const FILTROS_VAZIOS = Object.freeze({
   busca: "",
 });
 
-export const IMPACTOS = Object.freeze([
+export const IMPACTOS: readonly {
+  id: string;
+  rotulo: string;
+  teste: (recurso: RecursoDoPainel) => boolean;
+}[] = Object.freeze([
   Object.freeze({
     id: "nota",
     rotulo: "Mudou a nota",
-    teste: (r) => r.mudouNota,
+    teste: (r: RecursoDoPainel) => r.mudouNota,
   }),
   Object.freeze({
     id: "classificacao",
     rotulo: "Mudou a classificação",
-    teste: (r) => r.mudouClassificacao,
+    teste: (r: RecursoDoPainel) => r.mudouClassificacao,
   }),
   Object.freeze({
     id: "sem",
     rotulo: "Sem alteração",
-    teste: (r) => !r.mudouResultado,
+    teste: (r: RecursoDoPainel) => !r.mudouResultado,
   }),
 ]);
 
-const nomeDoAnalista = (r) => r.analista || SEM_ANALISTA;
+const nomeDoAnalista = (r: Pick<RecursoDoPainel, "analista">) =>
+  r.analista || SEM_ANALISTA;
 
-export function filtrarRecursos(recursos, filtros = FILTROS_VAZIOS) {
+export function filtrarRecursos<T extends RecursoDoPainel>(
+  recursos: readonly T[],
+  filtros: Readonly<FiltrosDosRecursos> = FILTROS_VAZIOS,
+) {
   const busca = normalizarBusca(filtros.busca);
   const pendencia = PENDENCIAS.find((p) => p.chave === filtros.pendencia);
   return recursos.filter((r) => {
@@ -411,12 +476,12 @@ export function filtrarRecursos(recursos, filtros = FILTROS_VAZIOS) {
   });
 }
 
-const porTexto = (a, b) =>
+const porTexto = (a: string, b: string) =>
   a.localeCompare(b, "pt-BR", { numeric: true, sensitivity: "base" });
 
 /* Número do edital "30/2026": ano mais novo primeiro, depois o número. */
-export function compararEditais(a, b) {
-  const partes = (valor) => {
+export function compararEditais(a: unknown, b: unknown) {
+  const partes = (valor: unknown): [number, number] => {
     const [numero, ano] = texto(valor).split("/");
     return [Number(ano) || 0, Number(numero) || 0];
   };
@@ -425,8 +490,11 @@ export function compararEditais(a, b) {
   return anoB - anoA || numB - numA || porTexto(texto(a), texto(b));
 }
 
-export function opcoesDosFiltros(recursos, origens = ORIGENS_PADRAO) {
-  const editais = new Map();
+export function opcoesDosFiltros(
+  recursos: readonly RecursoDoPainel[],
+  origens: readonly OrigemDoRecurso[] = ORIGENS_PADRAO,
+) {
+  const editais = new Map<string, string>();
   for (const r of recursos) {
     editais.set(String(r.edital_id), `${r.edital} · ${r.unidade || ""}`.trim());
   }
@@ -453,8 +521,14 @@ export function opcoesDosFiltros(recursos, origens = ORIGENS_PADRAO) {
 
 /* ── Gráficos (valores prontos para o Chart.js do painel) ──────────────── */
 
-export function recursosPorAnalista(recursos, limite = 10) {
-  const mapa = new Map();
+export function recursosPorAnalista(
+  recursos: readonly RecursoDoPainel[],
+  limite = 10,
+) {
+  const mapa = new Map<
+    string,
+    { rotulo: string; total: number; pendentes: number; concluidos: number }
+  >();
   for (const r of recursos) {
     const nome = nomeDoAnalista(r);
     const item = mapa.get(nome) || {
@@ -473,7 +547,7 @@ export function recursosPorAnalista(recursos, limite = 10) {
     .slice(0, limite);
 }
 
-export function recursosPorSituacao(recursos) {
+export function recursosPorSituacao(recursos: readonly RecursoDoPainel[]) {
   return SITUACOES.map((s) => ({
     id: s.id,
     rotulo: s.rotulo,
@@ -482,14 +556,14 @@ export function recursosPorSituacao(recursos) {
   }));
 }
 
-export function impactoNoResultado(recursos) {
+export function impactoNoResultado(recursos: readonly RecursoDoPainel[]) {
   return IMPACTOS.map(({ teste, ...impacto }) => ({
     ...impacto,
     valor: recursos.filter(teste).length,
   }));
 }
 
-export function esteiraDosRecursos(recursos) {
+export function esteiraDosRecursos(recursos: readonly RecursoDoPainel[]) {
   return [
     {
       id: "cadastrados",
@@ -511,8 +585,18 @@ export function esteiraDosRecursos(recursos) {
  * repete a regra e só grava com `permitir_duplicado`).
  */
 export function recursoDuplicado(
-  recursos,
-  { editalId, origem, analiseId, nomeInformado },
+  recursos: readonly DadosDoRecurso[],
+  {
+    editalId,
+    origem,
+    analiseId,
+    nomeInformado,
+  }: {
+    editalId: IdentificadorDoRecurso;
+    origem: string;
+    analiseId?: IdentificadorDoRecurso | null;
+    nomeInformado?: string;
+  },
 ) {
   const nome = normalizarBusca(nomeInformado);
   return (
@@ -530,7 +614,7 @@ export function recursoDuplicado(
 
 /* ── Formulário ───────────────────────────────────────────────────────── */
 
-export const RASCUNHO_VAZIO = Object.freeze({
+export const RASCUNHO_VAZIO: Readonly<RascunhoDoRecurso> = Object.freeze({
   edital_id: "",
   origem: "",
   analise: null,
@@ -545,7 +629,10 @@ export const RASCUNHO_VAZIO = Object.freeze({
 });
 
 /** Rascunho do formulário de edição a partir do recurso e do detalhe. */
-export function rascunhoDoRecurso(recurso, detalhe = {}) {
+export function rascunhoDoRecurso(
+  recurso: DadosDoRecurso,
+  detalhe: DetalheParaRascunho = {},
+): RascunhoDoRecurso {
   return {
     ...RASCUNHO_VAZIO,
     edital_id: String(recurso.edital_id ?? ""),
@@ -553,7 +640,8 @@ export function rascunhoDoRecurso(recurso, detalhe = {}) {
     analise: recurso.fora_analise ? null : { id: recurso.analise_id },
     fora_analise: Boolean(recurso.fora_analise),
     nome_informado:
-      detalhe.nome_informado ?? (recurso.fora_analise ? recurso.candidato : ""),
+      detalhe.nome_informado ??
+      (recurso.fora_analise ? recurso.candidato || "" : ""),
     codigo_informado:
       detalhe.codigo_informado ??
       (recurso.fora_analise ? recurso.codigo || "" : ""),
@@ -570,8 +658,12 @@ export function rascunhoDoRecurso(recurso, detalhe = {}) {
 }
 
 /** Os erros do rascunho, por campo (vazio = pode salvar). */
-export function errosDoRascunho(rascunho, { edicao = false } = {}) {
-  const erros = {};
+export function errosDoRascunho(
+  rascunho: RascunhoDoRecurso,
+  { edicao = false } = {},
+) {
+  const erros: Partial<Record<keyof RascunhoDoRecurso | "candidato", string>> =
+    {};
   if (!edicao && !rascunho.edital_id) erros.edital_id = "Escolha o edital.";
   if (!rascunho.origem) erros.origem = "Escolha a origem do recurso.";
   if (!edicao && !rascunho.fora_analise && !rascunho.analise?.id)
@@ -593,8 +685,16 @@ export function errosDoRascunho(rascunho, { edicao = false } = {}) {
  * que muda a posição a marca; cancelar desmarca) e o banco recusa mudá-la.
  */
 export function dadosParaSalvar(
-  rascunho,
-  { id = null, revisao = null, permitirDuplicado = false } = {},
+  rascunho: RascunhoDoRecurso,
+  {
+    id = null,
+    revisao = null,
+    permitirDuplicado = false,
+  }: {
+    id?: IdentificadorDoRecurso | null;
+    revisao?: number | null;
+    permitirDuplicado?: boolean;
+  } = {},
 ) {
   const comuns = {
     origem: rascunho.origem,
@@ -623,9 +723,9 @@ export function dadosParaSalvar(
 
 /* ── CSV ──────────────────────────────────────────────────────────────── */
 
-const simNao = (valor) => (valor ? "Sim" : "Não");
+const simNao = (valor: unknown) => (valor ? "Sim" : "Não");
 /* Data pura (AAAA-MM-DD, do cronograma) fica como está; instante vira o dia em Brasília. */
-const dataBR = (valor) => {
+const dataBR = (valor: DataDoRecurso | null | undefined) => {
   const texto = String(valor ?? "");
   const dia = /^\d{4}-\d{2}-\d{2}$/.test(texto)
     ? texto
@@ -634,12 +734,16 @@ const dataBR = (valor) => {
       : "";
   return dia ? dia.split("-").reverse().join("/") : "";
 };
-const numeroBR = (valor) =>
+const numeroBR = (valor: unknown) =>
   valor === null || valor === undefined || valor === ""
     ? ""
     : String(valor).replace(".", ",");
 
-export const COLUNAS_DO_CSV = Object.freeze([
+type ColunaDoCsv = readonly [
+  string,
+  (recurso: RecursoDoPainel, origens: readonly OrigemDoRecurso[]) => unknown,
+];
+export const COLUNAS_DO_CSV: readonly ColunaDoCsv[] = Object.freeze([
   ["Nº", (r) => r.nu],
   ["Edital", (r) => r.edital],
   ["Unidade", (r) => r.unidade],
@@ -652,7 +756,10 @@ export const COLUNAS_DO_CSV = Object.freeze([
   ["Analista", (r) => r.analista],
   ["Situação", (r) => rotuloDaSituacao(r.situacao)],
   ["Decidido em", (r) => dataBR(r.decisao_em)],
-  ...ETAPAS.map((etapa) => [etapa.rotulo, (r) => dataBR(r[etapa.campo])]),
+  ...ETAPAS.map((etapa): ColunaDoCsv => [
+    etapa.rotulo,
+    (r) => dataBR(r[etapa.campo]),
+  ]),
   ["Nº processo SEI", (r) => r.processo_sei],
   ["Nota no cadastro", (r) => numeroBR(r.nota_anterior)],
   ["Nota atual", (r) => numeroBR(r.nota_atual)],
@@ -665,8 +772,11 @@ export const COLUNAS_DO_CSV = Object.freeze([
 ]);
 
 /** CSV com `;` (Excel pt-BR), BOM e células protegidas contra fórmula. */
-export function csvDosRecursos(recursos, origens = ORIGENS_PADRAO) {
-  const celula = (valor) => {
+export function csvDosRecursos(
+  recursos: readonly RecursoDoPainel[],
+  origens: readonly OrigemDoRecurso[] = ORIGENS_PADRAO,
+) {
+  const celula = (valor: unknown) => {
     const seguro = sanitizeCsvCell(valor ?? "");
     return /[";\n\r]/.test(seguro) ? `"${seguro.replace(/"/g, '""')}"` : seguro;
   };

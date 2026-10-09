@@ -17,7 +17,7 @@ import {
   SITUACAO_EM_PARECER,
   SITUACAO_INICIAL,
   SITUACOES_DECIDIDAS,
-} from "./recursos-dos-candidatos.js";
+} from "./recursos-dos-candidatos.ts";
 
 export const ACOES_DO_PARECER = Object.freeze({
   enviar_parecer: Object.freeze({

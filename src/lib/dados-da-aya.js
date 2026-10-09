@@ -16,7 +16,7 @@
 import { calcularKpis } from "./analises-curriculares.ts";
 import { isAdminGlobal, paginasPermitidas } from "./access-roles.js";
 import { calcularIndicadores as indicadoresDasEntrevistas } from "./entrevistas-do-painel.ts";
-import { calcularIndicadores as indicadoresDosRecursos } from "./recursos-dos-candidatos.js";
+import { calcularIndicadores as indicadoresDosRecursos } from "./recursos-dos-candidatos.ts";
 import {
   normalizarSaude,
   SITUACOES,
