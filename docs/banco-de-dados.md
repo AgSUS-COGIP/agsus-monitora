@@ -1030,3 +1030,21 @@ Migration `20261009110000_otimizacao_do_banco.sql` (rollback e ensaio com o mesm
   regravações; nota mudada continua gravando. `TB_ENTREVISTA` ainda regrava `CO_SYNC` (é por ele que
   o fechamento desativa quem saiu da planilha).
 - Comentários que faltavam em doze funções `FC_` e em colunas de tabelas novas.
+
+## 18. Reiniciar as fichas de um edital real (sem apagar)
+
+Migration `20261009160000_reiniciar_fichas_do_edital.sql` (ensaio e rollback com o mesmo nome).
+Diferente do reinício do treinamento (seção 16), aqui **nada se apaga**: as fichas do lote (toda
+ficha que não está `FORA_LOTE`) voltam a `PENDENTE`, sem responsável, reserva, lançamento,
+resultado, parecer, notas, rascunho e conclusão, com `NU_VERSAO` + 1, e cada uma ganha uma linha
+`REINICIAR` em `TH_FICHA_ANALISE` (motivo de 10 a 2.000, autor e, em `DS_ALTERACAO`, o que foi
+limpo; o retrato de antes segue nas linhas `SALVAR`/`CONCLUIR`). `FORA_LOTE`, regra, decisões de
+inclusão, pré-classificação, Classificação e `TB_ANALISE_CURRICULAR` não mudam; ficha já no início
+não ganha histórico.
+
+- `public.reiniciar_fichas_do_edital(p_edital, p_motivo)`: só administrador global (42501); na tela,
+  Fila › Ações da coordenação › "Reiniciar as fichas do edital" (só aparece ao admin global).
+- `private."FC_REINICIAR_FICHAS_DO_EDITAL"(p_edital, p_motivo, p_usuario)`: sem grant; usada pela RPC
+  e pelo SQL Editor, que informa o autor (admin global ativo).
+- Primeiro uso: `supabase/correcoes/20261009-reiniciar-fichas-93.sql` (93/2026, Projetos: a análise
+  documental foi feita pela planilha).

@@ -286,7 +286,11 @@ window.avaliacaoDocumentalController = telaSobDemanda({
   metodos: ["render", "abrirVisao"],
   carregar: () =>
     import("./modulos/avaliacao-documental/avaliacao-documental.jsx").then(
-      (m) => m.montarAvaliacaoDocumental({ toast: window.monitoraToast }),
+      (m) =>
+        m.montarAvaliacaoDocumental({
+          toast: window.monitoraToast,
+          getProfile: window.getMonitoraProfile,
+        }),
     ),
 });
 
