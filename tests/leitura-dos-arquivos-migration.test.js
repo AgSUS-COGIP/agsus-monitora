@@ -101,7 +101,9 @@ describe("leitura automática dos arquivos — migration", () => {
         `revoke all on function ${privada} from public, anon, authenticated;`,
       );
       expect(MIGRATION).not.toMatch(
-        new RegExp(`grant [^;]*${privada.replace(/[\\^$.*+?()[\]{}|"]/g, "\\$&")}`),
+        new RegExp(
+          `grant [^;]*${privada.replace(/[\\^$.*+?()[\]{}|"]/g, "\\$&")}`,
+        ),
       );
     }
     for (const cabeca of [
