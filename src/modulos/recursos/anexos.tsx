@@ -1,3 +1,17 @@
+import type {
+  AnexoDoRecurso,
+  PropsDaSecaoDoRecurso,
+} from "./tipos-da-gaveta.ts";
+import type {
+  EstadoDosRecursos,
+  SnapshotDosRecursos,
+} from "./tipos-do-estado.ts";
+import type { IdentificadorDoRecurso } from "../../lib/tipos-dos-recursos.ts";
+interface PropsDoAnexo {
+  estado: EstadoDosRecursos;
+  recursoId: IdentificadorDoRecurso;
+  acao: SnapshotDosRecursos["acao"];
+}
 import { useRef, useState } from "react";
 import {
   ACEITA_NO_SELETOR,
@@ -12,13 +26,18 @@ import { dataHora } from "./partes.ts";
 /*
   "Anexos", na gaveta do recurso: os arquivos do recurso (o recurso do
   candidato, documentos, o documento da resposta), com quem anexou e quando.
-  Baixar registra o download no banco e abre a URL assinada (60 s) numa aba
-  nova. Quem edita anexa (PDF, DOCX, DOC, JPG, PNG ou ODT, até 20 MB) e
+  Baixar registra o download no banco e abre a URL assinada (60 s). Quem edita anexa (PDF, DOCX, DOC, JPG, PNG ou ODT, até 20 MB) e
   arquiva com motivo — o arquivo continua guardado; os arquivados ficam
   recolhidos, e só quem edita os baixa.
 */
 
-function LinhaDoAnexo({ estado, recursoId, anexo, podeEditar, acao }) {
+function LinhaDoAnexo({
+  estado,
+  recursoId,
+  anexo,
+  podeEditar,
+  acao,
+}: PropsDoAnexo & { anexo: AnexoDoRecurso; podeEditar: boolean }) {
   const [arquivando, setArquivando] = useState(false);
   const [motivo, setMotivo] = useState("");
   const baixando = acao?.tipo === `anexo:baixar:${anexo.id}`;
@@ -64,7 +83,7 @@ function LinhaDoAnexo({ estado, recursoId, anexo, podeEditar, acao }) {
               onClick={() => void estado.baixarAnexo(anexo)}
             >
               <i className="fa-solid fa-download" aria-hidden="true" />{" "}
-              {baixando ? acao.rotulo : "Baixar"}
+              {baixando ? acao?.rotulo : "Baixar"}
             </button>
           ) : null}
           {podeEditar && anexo.ativo && !arquivando ? (
@@ -131,10 +150,10 @@ function LinhaDoAnexo({ estado, recursoId, anexo, podeEditar, acao }) {
   );
 }
 
-function EnviarAnexo({ estado, recursoId, acao }) {
+function EnviarAnexo({ estado, recursoId, acao }: PropsDoAnexo) {
   const [tipo, setTipo] = useState("recurso_candidato");
-  const [arquivo, setArquivo] = useState(null);
-  const campo = useRef(null);
+  const [arquivo, setArquivo] = useState<File | null>(null);
+  const campo = useRef<HTMLInputElement | null>(null);
   const erro = arquivo ? validarArquivoDoAnexo(arquivo).erro : "";
   const enviando = acao?.tipo === "anexo:enviar";
   return (
@@ -186,19 +205,25 @@ function EnviarAnexo({ estado, recursoId, acao }) {
           disabled={!arquivo || Boolean(erro) || Boolean(acao)}
         >
           <i className="fa-solid fa-paperclip" aria-hidden="true" />{" "}
-          {enviando ? acao.rotulo : "Anexar"}
+          {enviando ? acao?.rotulo : "Anexar"}
         </button>
       </div>
     </form>
   );
 }
 
-export function SecaoDeAnexos({ estado, recurso, detalhe, podeEditar, acao }) {
+export function SecaoDeAnexos({
+  estado,
+  recurso,
+  detalhe,
+  podeEditar,
+  acao,
+}: PropsDaSecaoDoRecurso) {
   if (!detalhe || detalhe.erro) return null;
   const anexos = Array.isArray(detalhe.anexos) ? detalhe.anexos : [];
   const ativos = anexos.filter((a) => a.ativo);
   const arquivados = anexos.filter((a) => !a.ativo);
-  const linha = (anexo) => (
+  const linha = (anexo: AnexoDoRecurso) => (
     <LinhaDoAnexo
       key={anexo.id}
       estado={estado}

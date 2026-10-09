@@ -1,10 +1,13 @@
+import type { PropsDaSecaoDoRecurso } from "./tipos-da-gaveta.ts";
+import type { BotaoDoParecer } from "../../lib/parecer-do-recurso.ts";
+import type { DataDoRecurso } from "../../lib/tipos-dos-recursos.ts";
 import { useState } from "react";
 import {
   acoesDoParecer,
   aguardandoParecer,
   erroDoTextoDoParecer,
   LIMITES_DO_PARECER,
-} from "../../lib/parecer-do-recurso.js";
+} from "../../lib/parecer-do-recurso.ts";
 import { Aviso, Kv, Secao } from "../../ui/index.js";
 import { dataHora } from "./partes.ts";
 import { SeloDaSituacao } from "./tabela.tsx";
@@ -13,7 +16,7 @@ import { SeloDaSituacao } from "./tabela.tsx";
   "Parecer jurídico", na gaveta do recurso: a situação no fluxo, quem enviou
   para parecer, a devolução (com o que pedir para ajustar), a decisão (quem,
   quando e o texto do parecer) e os botões — só os que a pessoa pode usar
-  (parecer-do-recurso.js). Quem edita envia; quem tem o parecer jurídico
+  (parecer-do-recurso.ts). Quem edita envia; quem tem o parecer jurídico
   defere, defere parcialmente, indefere, devolve ou reabre. Os demais veem
   "Aguardando parecer jurídico". O banco decide
   (transicionar_recurso_candidato); tudo é texto, nunca HTML.
@@ -25,9 +28,22 @@ const ROTULO_DO_TEXTO = {
   opcional: "Observação para o jurídico (opcional)",
 };
 
-const quemQuando = (em, por) => [dataHora(em), por].filter(Boolean).join(" · ");
+const quemQuando = (
+  em: DataDoRecurso | null | undefined,
+  por: string | undefined,
+) => [dataHora(em), por].filter(Boolean).join(" · ");
 
-function ConfirmarParecer({ escolhida, emCurso, aoConfirmar, aoCancelar }) {
+function ConfirmarParecer({
+  escolhida,
+  emCurso,
+  aoConfirmar,
+  aoCancelar,
+}: {
+  escolhida: BotaoDoParecer;
+  emCurso: boolean;
+  aoConfirmar: (texto: string) => void;
+  aoCancelar: () => void;
+}) {
   const [texto, setTexto] = useState("");
   const erro = erroDoTextoDoParecer(escolhida.acao, texto);
   const rotulo =
@@ -83,8 +99,8 @@ export function SecaoDoParecer({
   podeEditar,
   podeDecidir,
   acao,
-}) {
-  const [escolhida, setEscolhida] = useState(null);
+}: PropsDaSecaoDoRecurso & { podeDecidir: boolean }) {
+  const [escolhida, setEscolhida] = useState<BotaoDoParecer | null>(null);
   const respostaEnviada =
     Boolean(r.etapas?.resposta_candidato) ||
     detalhe?.resposta?.estado === "enviada";

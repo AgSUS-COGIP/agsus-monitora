@@ -46,7 +46,11 @@ const recurso = (extra = {}) => ({
   ...extra,
 });
 
-function supabaseFalso({ podeDecidir, recursos = [recurso()] }) {
+function supabaseFalso({
+  podeDecidir,
+  recursos = [recurso()],
+  detalheExtra = {},
+}) {
   const rpc = vi.fn(async (nome) => {
     if (nome === "get_recursos_da_area")
       return {
@@ -74,6 +78,7 @@ function supabaseFalso({ podeDecidir, recursos = [recurso()] }) {
           parecer_enviado_por: "Carla",
           parecer: recursos[0].situacao === "DEFERIDO" ? "Defiro." : null,
           decisao_por: "Dra. Lia",
+          ...detalheExtra,
         },
         error: null,
       };
@@ -115,6 +120,40 @@ const kpis = () =>
   [...document.querySelectorAll(".recursos-kpis [data-kpi]")].map(
     (k) => k.dataset.kpi,
   );
+
+it("abre o detalhe mesmo com histórico e metadados de anexos malformados", async () => {
+  await montar(
+    supabaseFalso({
+      podeDecidir: false,
+      detalheExtra: {
+        historico: [
+          null,
+          {
+            acao: "edicao",
+            campo: "analista",
+            anterior: {},
+            novo: "Carla",
+            autor: {},
+          },
+        ],
+        anexos: [
+          null,
+          { id: "a1", nome: "documento.pdf", mime: {}, bytes: {}, ativo: true },
+        ],
+        etapas: { processo_sei: {} },
+        modalidade: {},
+      },
+    }),
+  );
+  await abrirGaveta();
+  expect(document.querySelector(".recursos-historico").textContent).toContain(
+    "Analista: vazio → Carla",
+  );
+  expect(
+    document.querySelector(".recursos-lista-de-anexos").textContent,
+  ).toContain("documento.pdf");
+  expect(parecer().textContent).toContain("Aguardando parecer jurídico");
+});
 
 beforeEach(() => {
   redefinirDadosDoMonitoramento();

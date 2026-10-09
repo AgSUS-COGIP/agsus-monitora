@@ -5948,7 +5948,7 @@ export const VERBETES_AYA = Object.freeze([
       'No MONITORA, "Aguardando parecer" conta os recursos Em análise jurídica: já enviados ao jurídico e ainda sem decisão. Clicar no indicador filtra a tela por eles. Quem não tem o parecer jurídico vê "Aguardando parecer jurídico" no lugar dos botões de decisão.',
     fato: "",
     fonte:
-      "src/modulos/recursos/paineis.jsx; src/lib/recursos-dos-candidatos.ts",
+      "src/modulos/recursos/paineis.tsx; src/lib/recursos-dos-candidatos.ts",
   },
   {
     arquivo: "regras-dos-recursos.md",
@@ -6035,7 +6035,7 @@ export const VERBETES_AYA = Object.freeze([
       'No MONITORA, a aba Recursos tem quatro indicadores: Aguardando parecer, Prazo vencido, Deferidos (com os parcialmente) e Indeferidos; cada um filtra a tela. O total está na contagem da fila; a taxa de decisão, no recorte ("% decididos"); sem processo SEI, sem resposta, respostas em revisão, aprovadas ou devolvidas, mudança de nota, prazo vencendo e registrados sem envio estão nas Pendências prioritárias e nos gráficos.',
     fato: "",
     fonte:
-      "src/modulos/recursos/paineis.jsx; src/lib/recursos-dos-candidatos.ts",
+      "src/modulos/recursos/paineis.tsx; src/lib/recursos-dos-candidatos.ts",
   },
   {
     arquivo: "regras-dos-recursos.md",

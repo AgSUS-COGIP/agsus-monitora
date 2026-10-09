@@ -25,6 +25,9 @@ export interface DadosDoRecurso {
   vaga?: string;
   nota_anterior?: string | number | null;
   nota_atual?: string | number | null;
+  resultado_atual?: string;
+  resultado_anterior?: string;
+  parecer_enviado_em?: DataDoRecurso | null;
   analista?: string | null;
   situacao?: string | null;
   processo_sei?: string | null;

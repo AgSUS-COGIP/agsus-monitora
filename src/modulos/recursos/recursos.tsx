@@ -28,7 +28,7 @@ import { getSupabaseClient } from "../../lib/supabaseClient.js";
 import { Aviso } from "../../ui/index.js";
 import { criarEstadoDosRecursos } from "./estado.ts";
 import { FormularioDoRecurso } from "./formulario.tsx";
-import { GavetaDoRecurso } from "./gaveta.jsx";
+import { GavetaDoRecurso } from "./gaveta.tsx";
 import { dataHora } from "./partes.ts";
 import {
   Filtros,

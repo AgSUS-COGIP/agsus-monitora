@@ -7,7 +7,7 @@ import {
   avaliarAcaoDoParecer,
   erroDoTextoDoParecer,
   proximaSituacao,
-} from "../src/lib/parecer-do-recurso.js";
+} from "../src/lib/parecer-do-recurso.ts";
 import { SITUACOES } from "../src/lib/recursos-dos-candidatos.ts";
 
 /*
@@ -18,6 +18,21 @@ const MIGRATION = readFileSync(
   "supabase/migrations/20261001170000_recursos_parecer_juridico.sql",
   "utf8",
 ).replace(/\r\n/g, "\n");
+
+it("rejeita nomes herdados de objeto como ações desconhecidas", () => {
+  for (const acao of ["toString", "constructor", "__proto__"]) {
+    expect(proximaSituacao("EM_ANALISE_JURIDICA", acao)).toBeNull();
+    expect(
+      avaliarAcaoDoParecer(acao, {
+        situacao: "EM_ANALISE_JURIDICA",
+        podeDecidir: true,
+      }),
+    ).toEqual({ permitida: false, motivo: "Ação desconhecida." });
+    expect(erroDoTextoDoParecer(acao, "Texto longo de parecer")).toBe(
+      "Ação desconhecida.",
+    );
+  }
+});
 
 describe("estados e transições", () => {
   it("as situações e as ações são as do banco", () => {

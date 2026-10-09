@@ -36,7 +36,7 @@ viraram filtro) estão registrados nestes verbetes. Fontes:
 
 **perguntas:** aguardando parecer | o que é aguardando parecer | kpi aguardando parecer
 **resposta:** No MONITORA, "Aguardando parecer" conta os recursos Em análise jurídica: já enviados ao jurídico e ainda sem decisão. Clicar no indicador filtra a tela por eles. Quem não tem o parecer jurídico vê "Aguardando parecer jurídico" no lugar dos botões de decisão.
-**fonte:** src/modulos/recursos/paineis.jsx; src/lib/recursos-dos-candidatos.ts
+**fonte:** src/modulos/recursos/paineis.tsx; src/lib/recursos-dos-candidatos.ts
 
 ## Deferido parcialmente
 
@@ -72,7 +72,7 @@ viraram filtro) estão registrados nestes verbetes. Fontes:
 
 **perguntas:** indicadores dos recursos | quais sao os indicadores dos recursos | kpis dos recursos | onde está o total de recursos | taxa de conclusão dos recursos | sem processo sei
 **resposta:** No MONITORA, a aba Recursos tem quatro indicadores: Aguardando parecer, Prazo vencido, Deferidos (com os parcialmente) e Indeferidos; cada um filtra a tela. O total está na contagem da fila; a taxa de decisão, no recorte ("% decididos"); sem processo SEI, sem resposta, respostas em revisão, aprovadas ou devolvidas, mudança de nota, prazo vencendo e registrados sem envio estão nas Pendências prioritárias e nos gráficos.
-**fonte:** src/modulos/recursos/paineis.jsx; src/lib/recursos-dos-candidatos.ts
+**fonte:** src/modulos/recursos/paineis.tsx; src/lib/recursos-dos-candidatos.ts
 
 ## Pendências da aba Recursos
 
