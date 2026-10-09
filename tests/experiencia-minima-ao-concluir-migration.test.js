@@ -48,7 +48,9 @@ describe("experiência mínima ao concluir a ficha", () => {
   it("o ensaio leva o mesmo corpo e termina em rollback", () => {
     expect(normal(funcao(ENSAIO))).toBe(normal(funcao(MIGRATION)));
     expect(ENSAIO.trimEnd().endsWith("rollback;")).toBe(true);
-    expect(ENSAIO).toContain("a4ffcb6a-108b-4ee9-a235-7d2187b2ef75");
+    expect(ENSAIO).toContain("992/2099");
+    expect(ENSAIO).not.toMatch(/a4ffcb6a/);
+    expect(ENSAIO).toContain("public.concluir_ficha(");
   });
 
   it("o rollback devolve a função de 20261007130000", () => {
