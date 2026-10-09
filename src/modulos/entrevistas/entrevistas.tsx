@@ -74,7 +74,7 @@ import "./entrevistas.css";
     (`html[data-theme="dark"]`); os gráficos acompanham. Tela cheia: a do app.
   - Aviso (toast): o do app (`window.monitoraToast`, passado por src/main.js).
   - Comemorações: o liga/desliga do app, relido a cada abertura (marco "vaga
-    pronta", marcos.js).
+    pronta", marcos.ts).
 
   Sem tela de carregamento: antes da primeira carga, os KPIs, os gráficos, as
   pendências e a tabela são o skeleton deles; falha na primeira carga vira

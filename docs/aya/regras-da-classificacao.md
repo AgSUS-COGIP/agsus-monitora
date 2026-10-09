@@ -35,7 +35,7 @@ dos PDFs oficiais).
 **perguntas:** desempate da entrevista na classificacao | empate na nota da entrevista | onde desempato a entrevista | editar na classificacao | criterios de desempate do roteiro sumiram | desempate do roteiro
 **resposta:** O desempate de quem empata na nota da entrevista é o da regra de classificação do edital: uma fonte só, aqui em Classificação › Regra (critérios do catálogo, a ordem e o empate final). O Painel de entrevistas marca os empatados e leva para cá; Conduzir entrevistas › Preparar e o editor do roteiro mostram os mesmos critérios só para ler, com "Editar na Classificação". O roteiro não tem mais critérios próprios (o texto antigo ficou guardado, sem uso). Na lista Resultado da entrevista, o empate que sobra fica na mesma posição; o desempate vale no resultado final.
 **fato:** O desempate da entrevista se configura em Classificação › Regra; o roteiro só mostra os critérios.
-**fonte:** src/lib/convocacao-da-entrevista.js; src/modulos/entrevistas/conducao.jsx; supabase/migrations/20261008130000_conduzir_entrevistas_no_menu.sql
+**fonte:** src/lib/convocacao-da-entrevista.ts; src/modulos/entrevistas/conducao.tsx; supabase/migrations/20261008130000_conduzir_entrevistas_no_menu.sql
 **abrir:** classificacao
 
 ## Empate final e sorteio

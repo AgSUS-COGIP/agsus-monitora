@@ -63,7 +63,7 @@ import "../styles/comemoracao.css";
   som), de src/lib/fogos-cena.js; a regra de quando comemorar, de
   src/lib/comemoracao.js. Quem usa: o acesso liberado
   (comemoracao-do-acesso.js), o painel de análises, a tela de Entrevistas
-  (src/modulos/entrevistas/marcos.js), os marcos do ano
+  (src/modulos/entrevistas/marcos.ts), os marcos do ano
   (src/modulos/visao-geral/boas-vindas.tsx) e a Aya (fim de tour e de trilha).
 */
 

@@ -1,3 +1,17 @@
+import type { ReactNode } from "react";
+import type {
+  DadosDoEdital,
+  EditalDaLista,
+  EstadoDaConducao,
+  EstadoDaConducaoComAcoes,
+  Resultado,
+} from "./tipos.ts";
+import type { Convocado } from "../../lib/fila-de-conducao.ts";
+import type {
+  FonteDaConvocacao,
+  GrupoDaConvocacao,
+  OrigemDaVaga,
+} from "../../lib/tipos-da-convocacao-da-entrevista.ts";
 import { useEffect, useMemo, useState } from "react";
 import {
   nomeDoCargo,
@@ -13,7 +27,7 @@ import {
   textoDoLimite,
   criteriosDeDesempate,
   textoDoEmpateFinal,
-} from "../../lib/convocacao-da-entrevista.js";
+} from "../../lib/convocacao-da-entrevista.ts";
 import { Aviso, Campo, classes, Gaveta, Selo } from "../../ui/index.js";
 import { irParaLink } from "../chat/ponte.js";
 import { numeroBR } from "./partes.tsx";
@@ -34,7 +48,7 @@ import { numeroBR } from "./partes.tsx";
     por vaga, na ordem dela; "Convocar selecionados" registra os da lista
     para a ficha e "Desconvocar" (com motivo, só sem notas). Uma convocação
     só — nada de ranking, regra ou vagas próprios
-    (src/lib/convocacao-da-entrevista.js).
+    (src/lib/convocacao-da-entrevista.ts).
   - LiberacaoDoEdital: liberar fora da janela (administrador global).
 
   Quem não edita as entrevistas (`pode_editar` falso) vê tudo sem os botões
@@ -43,7 +57,7 @@ import { numeroBR } from "./partes.tsx";
 
 /* ── Convocação e vagas da Classificação (só leitura) ─────────────── */
 
-const dataEHora = (iso) => {
+const dataEHora = (iso?: string | null) => {
   const data = iso ? new Date(iso) : null;
   return data && !Number.isNaN(data.getTime())
     ? data.toLocaleString("pt-BR", {
@@ -55,7 +69,15 @@ const dataEHora = (iso) => {
 };
 
 /* Vai para outra tela do app; na Classificação, já com o edital aberto. */
-export function BotaoIrPara({ view, edital, children }) {
+export function BotaoIrPara({
+  view,
+  edital,
+  children,
+}: {
+  view: OrigemDaVaga["view"];
+  edital?: DadosDoEdital["edital"];
+  children: ReactNode;
+}) {
   return (
     <button
       type="button"
@@ -80,7 +102,13 @@ export function BotaoIrPara({ view, edital, children }) {
  * com o caminho de onde se mudam (quadro de vagas no Editais, configuração da
  * convocação na Lista de aprovados, regra na Classificação).
  */
-export function ConvocacaoDaClassificacao({ dados, grupos }) {
+export function ConvocacaoDaClassificacao({
+  dados,
+  grupos,
+}: {
+  dados: DadosDoEdital;
+  grupos: GrupoDaConvocacao[];
+}) {
   const regra = dados.regra_classificacao;
   const texto = textoDaRegraDaClassificacao(regra?.convocacao);
   const vagas = grupos.filter((g) => g.candidatos.length || g.total !== null);
@@ -158,7 +186,15 @@ export function ConvocacaoDaClassificacao({ dados, grupos }) {
  * só leitura: o desempate da entrevista é o da Classificação. Sem a regra
  * (ou sem o edital), diz de onde vem e leva à Classificação.
  */
-export function DesempateDaClassificacao({ regra, edital, comBotao = true }) {
+export function DesempateDaClassificacao({
+  regra,
+  edital,
+  comBotao = true,
+}: {
+  regra?: unknown;
+  edital?: DadosDoEdital["edital"];
+  comBotao?: boolean;
+}) {
   const criterios = criteriosDeDesempate(regra);
   const empateFinal = textoDoEmpateFinal(regra);
   return (
@@ -199,7 +235,17 @@ export function DesempateDaClassificacao({ regra, edital, comBotao = true }) {
 
 /* ── Convocação (passo 3 de Preparar) ───────────────────────────────────────────── */
 
-function ModalDeDesconvocar({ convocado, salvando, aoConfirmar, aoFechar }) {
+function ModalDeDesconvocar({
+  convocado,
+  salvando,
+  aoConfirmar,
+  aoFechar,
+}: {
+  convocado: Convocado;
+  salvando: boolean;
+  aoConfirmar: (motivo: string) => Promise<Resultado>;
+  aoFechar: () => void;
+}) {
   const [motivo, setMotivo] = useState("");
   const [erro, setErro] = useState("");
   const valido = motivo.trim().length >= 3 && motivo.trim().length <= 500;
@@ -211,7 +257,7 @@ function ModalDeDesconvocar({ convocado, salvando, aoConfirmar, aoFechar }) {
       className="entrevistas-gaveta"
       cartaoClassName="entrevistas-gaveta-estreita"
       sobretitulo="Retirar da entrevista"
-      titulo={convocado.candidato}
+      titulo={convocado.candidato || ""}
       rotuloDoFechar="Fechar"
     >
       <form
@@ -265,29 +311,37 @@ export function ListaDeConvocacao({
   ocupado,
   aoConvocar,
   aoDesconvocar,
+}: {
+  dados: DadosDoEdital;
+  fonte: FonteDaConvocacao;
+  grupos: GrupoDaConvocacao[];
+  calculo?: EstadoDaConducao["calculo"];
+  salvando: boolean;
+  ocupado: boolean;
+  aoConvocar: (analises: string[]) => Promise<Resultado>;
+  aoDesconvocar: (entrevista: string, motivo: string) => Promise<Resultado>;
 }) {
   const pendentes = useMemo(() => aConvocar(grupos), [grupos]);
   const [selecao, setSelecao] = useState(() => new Set(pendentes));
-  const [desconvocando, setDesconvocando] = useState(null);
+  const [desconvocando, setDesconvocando] = useState<Convocado | null>(null);
   const configurado = Boolean(dados.configuracao);
   const daLista = fonte.tipo === "LISTA";
   const podeEditar = dados.pode_editar && configurado;
   const podeConvocar = podeEditar && daLista;
   const avisos = avisosDaConvocacao(dados, fonte, grupos);
   const resumo = resumoDaConvocacao(grupos);
-  const lista = fonte.lista;
 
   /* A cada payload novo (convocou, outra lista), todos os da lista a convocar ficam marcados. */
   useEffect(() => setSelecao(new Set(pendentes)), [pendentes]);
 
-  const alternar = (id) =>
+  const alternar = (id: string) =>
     setSelecao((atual) => {
       const nova = new Set(atual);
       if (nova.has(id)) nova.delete(id);
       else nova.add(id);
       return nova;
     });
-  const desconvocar = (c) =>
+  const desconvocar = (c: Convocado) =>
     podeEditar && !c.avaliacoes?.length ? (
       <button
         type="button"
@@ -305,12 +359,14 @@ export function ListaDeConvocacao({
       data-tour="entrevistas-conduzir-convocacao"
       data-fonte={fonte.tipo}
     >
-      {daLista ? (
+      {fonte.tipo === "LISTA" ? (
         <p className="entrevistas-fonte-da-lista">
           Lista de convocação da Classificação · gerada em{" "}
-          {dataEHora(lista.gerada_em)}
-          {lista.por ? ` por ${lista.por}` : ""} · regra v{lista.versao_regra}
-          {lista.publicada ? " · publicada" : ""} · {resumo.naLista} na lista
+          {dataEHora(fonte.lista.gerada_em)}
+          {fonte.lista.por ? ` por ${fonte.lista.por}` : ""} · regra v
+          {fonte.lista.versao_regra}
+          {fonte.lista.publicada ? " · publicada" : ""} · {resumo.naLista} na
+          lista
         </p>
       ) : null}
       {avisos.map((a) => (
@@ -499,7 +555,17 @@ export function ListaDeConvocacao({
 
 /* ── Liberação fora da janela (administrador global) ──────────────── */
 
-export function LiberacaoDoEdital({ conducao, item, ocupado, doPainel }) {
+export function LiberacaoDoEdital({
+  conducao,
+  item,
+  ocupado,
+  doPainel,
+}: {
+  conducao: Pick<EstadoDaConducaoComAcoes, "liberarEdital">;
+  item?: EditalDaLista | null;
+  ocupado: boolean;
+  doPainel: unknown[];
+}) {
   const [ate, setAte] = useState("");
   const [motivo, setMotivo] = useState("");
   if (!item || item.naJanela) return null;
@@ -514,7 +580,7 @@ export function LiberacaoDoEdital({ conducao, item, ocupado, doPainel }) {
       <p className="entrevistas-liberacao-texto">
         <strong>Fora da janela</strong> — {textoDaJanela(item)}.{" "}
         {liberado
-          ? `Liberado para a equipe até ${item.liberadoAte.split("-").reverse().join("/")} (${item.motivoLiberacao}).`
+          ? `Liberado para a equipe até ${liberado.split("-").reverse().join("/")} (${item.motivoLiberacao}).`
           : "Só você (administrador global) vê este edital."}
       </p>
       <div className="entrevistas-liberacao-campos">

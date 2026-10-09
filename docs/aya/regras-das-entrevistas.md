@@ -4,7 +4,7 @@ Duas entradas do menu: o Painel de entrevistas (view `entrevistas`, acompanhar) 
 entrevistas (view `conduzir-entrevistas`, fazer: fila do dia, ficha de notas e Preparar, com a
 configuração, a convocação e os roteiros). Fontes: `src/modulos/entrevistas/`, `src/lib/conducao-de-entrevista.ts`,
 `src/lib/roteiro-de-entrevista.ts`, `src/lib/entrevistas-do-painel.ts`,
-`src/lib/convocacao-da-entrevista.js`, `docs/sincronizacao-das-planilhas.md`,
+`src/lib/convocacao-da-entrevista.ts`, `docs/sincronizacao-das-planilhas.md`,
 `.github/workflows/sincronizar-entrevistas.yml` e as migrations `20260929235000_entrevistas.sql`,
 `20260930220000_entrevistas_roteiros_e_notas.sql`, `20260930235000_janela_da_entrevista.sql` e
 `20261005150000_convocacao_unica_da_entrevista.sql` (a convocação é a lista da Classificação); a
@@ -43,7 +43,7 @@ duas entradas, em `src/modulos/entrevistas/conduzir.tsx`, `src/lib/fila-de-condu
 **perguntas:** regras da entrevista | resumo das regras da entrevista | as regras estao confusas | quem e chamado para a entrevista | quantos sao chamados por vaga | como a nota da entrevista e calculada em resumo | quem avalia na entrevista | chama ate | ver detalhes da regra da entrevista | onde mudo a regra da entrevista
 **resposta:** Em Conduzir entrevistas › Preparar, o bloco "Regras da entrevista" explica o edital em linguagem simples, montado com os dados reais da regra de classificação, do roteiro e da banca. "Quem é chamado para a entrevista": quantas pessoas por vaga imediata (e as exceções por cargo, como "Enfermeiro: 6 pessoas"), até que posição nas vagas só de cadastro reserva e se quem empata com o último chamado entra, com a tabelinha por vaga (vagas imediatas e até que posição chama) e quantos da lista já estão na ficha. "Como a nota é calculada": quantas notas cada avaliador dá (os aspectos) e em que escala, a média, o que deixa inapto (mínimo por competência, mínimo total) e o que acontece com quem falta. "Quem avalia": cada banca com os membros e as competências de cada um. "Desempate": os critérios da Classificação, na ordem. Cada bloco tem o botão Editar que leva aonde aquilo muda: Classificação (convocação e desempate), o roteiro (a nota), a configuração (banca); "Ver convocação" desce até a convocação. Os detalhes técnicos (a regra em uma linha, de onde vêm as vagas) ficam em "Ver detalhes". Quem não pode mudar não vê o Editar.
 **fato:** O resumo das regras da entrevista sai da regra de classificação, do roteiro e da banca do edital; para mudar, use o Editar de cada bloco.
-**fonte:** src/lib/resumo-da-entrevista.ts; src/modulos/entrevistas/resumo-das-regras.tsx; src/modulos/entrevistas/conducao.jsx
+**fonte:** src/lib/resumo-da-entrevista.ts; src/modulos/entrevistas/resumo-das-regras.tsx; src/modulos/entrevistas/conducao.tsx
 **abrir:** conduzir-entrevistas
 
 ## Avaliador por competência
@@ -59,7 +59,7 @@ duas entradas, em `src/modulos/entrevistas/conduzir.tsx`, `src/lib/fila-de-condu
 **perguntas:** empate na entrevista | quem desempata a nota da entrevista | candidatos empatados | desempate da entrevista | criterios de desempate do roteiro | onde mudo o desempate
 **resposta:** Empate é quando dois ou mais candidatos do mesmo edital e da mesma vaga têm a mesma nota na entrevista. O Painel de entrevistas marca esses candidatos com o selo "Empate" e avisa: o desempate é feito na Classificação, pelos critérios da regra de classificação do edital (Classificação › Regra), com o botão que abre a Classificação no edital. O roteiro não tem mais critérios de desempate próprios: no editor do roteiro e em Preparar, os critérios aparecem só para ler, os da regra de classificação, com "Editar na Classificação". O texto antigo do roteiro continua guardado, sem uso.
 **fato:** O desempate da entrevista é o da regra de classificação do edital, feito na Classificação.
-**fonte:** src/lib/painel-de-entrevistas.ts; src/lib/convocacao-da-entrevista.js; supabase/migrations/20261008130000_conduzir_entrevistas_no_menu.sql
+**fonte:** src/lib/painel-de-entrevistas.ts; src/lib/convocacao-da-entrevista.ts; supabase/migrations/20261008130000_conduzir_entrevistas_no_menu.sql
 **abrir:** classificacao
 
 ## Janela da entrevista
@@ -80,7 +80,7 @@ duas entradas, em `src/modulos/entrevistas/conduzir.tsx`, `src/lib/fila-de-condu
 
 **perguntas:** como liberar um edital fora da janela | liberar edital fora da janela | liberacao fora da janela | encerrar liberacao | mostrar todos os editais da area
 **resposta:** Só o administrador global libera um edital fora da janela: em Conduzir entrevistas, escolhe o edital e preenche "Liberar até" (de hoje até no máximo 180 dias) e o Motivo (3 a 500 caracteres). A liberação vence sozinha depois da data e pode ser encerrada antes, também com motivo. Só existe uma liberação vigente por edital; a anterior fica guardada no histórico. A caixa "Mostrar todos os editais da área" também é só do administrador global e traz todos os editais ativos da área, ignorando a janela.
-**fonte:** supabase/migrations/20260930235000_janela_da_entrevista.sql; src/modulos/entrevistas/conducao.jsx
+**fonte:** supabase/migrations/20260930235000_janela_da_entrevista.sql; src/modulos/entrevistas/conducao.tsx
 
 ## Roteiros e versões
 
@@ -107,28 +107,28 @@ duas entradas, em `src/modulos/entrevistas/conduzir.tsx`, `src/lib/fila-de-condu
 
 **perguntas:** banca da entrevista | completar banca | completar pela composicao | quem sai da banca | modo avaliador | secretaria passa a limpo
 **resposta:** Na configuração do edital, escolher o roteiro preenche a composição da banca com o padrão dele. "Completar pela composição" acrescenta as linhas que faltam, com o nome vazio; "Sou eu" liga o membro ao seu perfil. Quem sai da banca deixa de avaliar, mas as notas que já deu ficam na ficha, com a marca "saiu da banca". O modo de lançamento pode ser "Secretaria passa a limpo" (padrão) ou "Cada avaliador lança a sua": nesse caso cada avaliador só edita a própria coluna (o administrador global lança por qualquer um). A troca de roteiro fica bloqueada quando já há notas lançadas com outro roteiro.
-**fonte:** src/lib/conducao-de-entrevista.ts; src/modulos/entrevistas/conducao.jsx; supabase/migrations/20260930220000_entrevistas_roteiros_e_notas.sql
+**fonte:** src/lib/conducao-de-entrevista.ts; src/modulos/entrevistas/conducao.tsx; supabase/migrations/20260930220000_entrevistas_roteiros_e_notas.sql
 
 ## Convocação para a entrevista
 
 **perguntas:** como funciona a regra de convocacao da entrevista | regra de convocacao da entrevista | convocacao da entrevista | desconvocar | convocar candidatos | quem e convocado para a entrevista | lista de convocacao na entrevista | conduzir entrevistas nao esta funcionando | ninguem convocado na entrevista
 **resposta:** Há uma convocação só: a lista "Convocação para entrevista" da Classificação. Em Conduzir entrevistas › Preparar, a convocação mostra a última lista gerada na Classificação, por vaga, na mesma ordem, com os mesmos critérios e o mesmo limite da regra de classificação do edital (N vezes as vagas imediatas ou até a posição do cadastro reserva, exceções por cargo, empatados no limite); quem está só na lista de uma modalidade aparece com a marca da lista. "Convocar selecionados" leva os da lista para a ficha de notas (todos vêm marcados; dá para desmarcar). O banco recusa quem não está na lista vigente e, se a Classificação gerou outra lista depois que a tela abriu, pede para recarregar. Convocar exige a configuração salva. Quem foi convocado antes e não está na lista vigente continua na ficha, com a marca "Fora da lista vigente". Desconvocar exige motivo (3 a 500 caracteres), fica no histórico e só vale para quem ainda não tem nota; nada é apagado.
 **fato:** No MONITORA, a convocação para a entrevista é a lista de convocação da Classificação; Entrevistas não tem ranking, regra nem vagas próprios.
-**fonte:** src/lib/convocacao-da-entrevista.js; src/modulos/entrevistas/conducao.jsx; supabase/migrations/20261005150000_convocacao_unica_da_entrevista.sql
+**fonte:** src/lib/convocacao-da-entrevista.ts; src/modulos/entrevistas/conducao.tsx; supabase/migrations/20261005150000_convocacao_unica_da_entrevista.sql
 **abrir:** entrevistas
 
 ## Convocação sem lista gerada na Classificação
 
 **perguntas:** lista ainda nao gerada na classificacao | gerar a lista de convocacao | convocar sem lista | por que nao consigo convocar | calculo atual da convocacao | a regra da classificacao mudou depois desta lista
 **resposta:** Enquanto a Classificação não gerou a lista de convocação do edital, Conduzir entrevistas mostra o cálculo atual (a mesma conta da Classificação, com a regra e as vagas de agora) e o aviso "Lista ainda não gerada na Classificação", sem o botão de convocar: para convocar, gere a lista na Classificação (o botão "Gerar na Classificação" abre a tela já no edital, para quem é Editor de Classificação). Sem acesso à Classificação, a tela só avisa. Se a regra de classificação mudou depois da lista, aparece "A regra da Classificação mudou depois desta lista": gere a lista de novo.
-**fonte:** src/lib/convocacao-da-entrevista.js; src/modulos/entrevistas/estado-da-conducao.ts
+**fonte:** src/lib/convocacao-da-entrevista.ts; src/modulos/entrevistas/estado-da-conducao.ts
 **abrir:** classificacao
 
 ## Vagas imediatas e regra de convocação na entrevista
 
 **perguntas:** vagas imediatas da entrevista | onde digitar as vagas imediatas | vagas imediatas por vaga | regra de convocacao da entrevista onde muda | multiplo das vagas imediatas | posicao do cadastro reserva na entrevista | de onde vem o numero de vagas da entrevista
 **resposta:** As vagas imediatas não se digitam na entrevista. Em Conduzir entrevistas › Preparar, o resumo das regras mostra a tabelinha por vaga (vagas imediatas e até que posição chama) e, em "Ver detalhes", a regra de convocação da Classificação (versão vigente) e, por vaga, as vagas, até que posição se convoca e de onde vêm as vagas, com o botão para a tela onde se mudam: o quadro de vagas do edital (Editais), a configuração da convocação (Lista de aprovados) ou os percentuais da regra (Classificação). Vaga sem quadro aparece como "sem quadro de vagas": cadastre o quadro no edital. A regra de convocação (múltiplo, posição do cadastro reserva, exceções por cargo) muda em Classificação › Regra. O que a entrevista guardava antes (vagas digitadas e regra própria) ficou no banco, sem uso.
-**fonte:** src/modulos/entrevistas/conducao.jsx; src/lib/convocacao-da-entrevista.js; src/lib/classificacao/vagas.js
+**fonte:** src/modulos/entrevistas/conducao.tsx; src/lib/convocacao-da-entrevista.ts; src/lib/classificacao/vagas.js
 **abrir:** entrevistas
 
 ## Ficha de notas

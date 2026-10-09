@@ -61,7 +61,12 @@ ao banco estão em `src/lib/tipos-do-roteiro-de-entrevista.ts`; os de abertura e
 em `tipos-do-editor-de-roteiro.ts`. O estado da condução também está em TypeScript, incluindo ações, cliente RPC,
 normalização dos campos usados na tela e proteção contra gravações obsoletas após
 troca de área ou sessão. `src/lib/roteiro-de-entrevista.ts` também está migrado: escalas, pesos, mínimos,
-conversão do rascunho, validação e dados enviados ao banco. Os limites de validação estão no README de Entrevistas.
+conversão do rascunho, validação e dados enviados ao banco. A convocação (`conducao.tsx`) e suas regras (`src/lib/convocacao-da-entrevista.ts`)
+também estão em TypeScript, com fonte discriminada, lista, seleção, desconvocação,
+liberação, vagas e desempate. A entrada normaliza os campos usados dos retratos e
+calcula grupos sem recalcular a ordem da Classificação. O módulo não tem arquivos
+JS/JSX; `marcos.ts` também tipa a integração do painel com as comemorações compartilhadas.
+Os limites de validação estão no README de Entrevistas.
 
 ## Verificação
 

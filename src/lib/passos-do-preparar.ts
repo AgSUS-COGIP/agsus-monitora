@@ -7,7 +7,7 @@
 
   Nada aqui decide regra: o que falta na banca vem de `errosDaConfiguracao`
   (src/lib/conducao-de-entrevista.ts), a convocação de
-  src/lib/convocacao-da-entrevista.js e a agenda de `obter_agenda_entrevista`.
+  src/lib/convocacao-da-entrevista.ts e a agenda de `obter_agenda_entrevista`.
 */
 
 import { rotuloDoDia } from "./fila-de-conducao.ts";

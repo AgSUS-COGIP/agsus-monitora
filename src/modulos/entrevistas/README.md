@@ -69,7 +69,7 @@ preparar.tsx            Preparar em passos: Roteiro, Banca, Convocação, Agenda
                         src/lib/passos-do-preparar.ts), o resumo das regras no topo
 configuracao-do-edital.tsx  os campos do roteiro (passo 1) e da banca (passo 2) sobre um rascunho só e a
                         barra "Salvar configuração" com a lista do que falta
-conducao.jsx            BotaoIrPara, ConvocacaoDaClassificacao ("Ver detalhes"), DesempateDaClassificacao,
+conducao.tsx            BotaoIrPara, ConvocacaoDaClassificacao ("Ver detalhes"), DesempateDaClassificacao,
                         ListaDeConvocacao (passo 3) e LiberacaoDoEdital
 resumo-das-regras.tsx   "Regras da entrevista": quem é chamado (tabelinha por vaga), como a nota é calculada,
                         quem avalia e o desempate, cada bloco com o "Editar" para onde se muda
@@ -95,7 +95,7 @@ roteiros.tsx            cartões dos roteiros e o editor (gaveta), com versões;
 secoes-do-roteiro.tsx   as seções recolhíveis do editor e a lista do que falta perto do Salvar
                         (src/lib/pendencias-do-roteiro.ts)
 partes.tsx              composição da banca, botão de linha
-marcos.js               marco "vaga pronta" (comemoração)
+marcos.ts               marco "vaga pronta" (comemoração)
 entrevistas.css         só o que é destas telas (tokens); o resto vem de src/ui/
 ```
 
@@ -110,7 +110,7 @@ pela apresentação; destinos de agenda e desempate exigem um ID textual do edit
 de agenda anteriores à troca de área ou de sessão são descartadas, inclusive para o mesmo
 edital. O cliente declara apenas `get_entrevistas_da_area` e `obter_agenda_entrevista`,
 compatíveis com o cliente único do app. O snapshot é somente leitura no compilador; dados
-aninhados não são congelados. Conduzir ainda combina TSX e JSX.
+aninhados não são congelados. As telas do módulo estão em TSX e os estados e marcos em TypeScript.
 A ficha de notas (`ficha.tsx`) também está em TypeScript: estado local, modos de lançamento,
 permissões, matriz, progresso, atalhos, observações, justificativa, prévia e salvamento.
 `tipos-da-ficha.ts` distingue notas diretas de notas por aspectos e declara os campos enviados
@@ -143,13 +143,22 @@ isso não cancela a gravação no banco. Os contadores de leitura também são m
 os testes de dados e de gravação obsoleta cobrem as entradas e as trocas durante uma escrita.
 `tests/tipos/editor-de-roteiros.tsx` confere usos válidos e rejeições de campos,
 valores, modos e números enviados como texto.
+A convocação (`conducao.tsx`) também está migrada: lista, seleção, desconvocação,
+liberação do edital, regra, vagas e desempate. `src/lib/convocacao-da-entrevista.ts`
+lê o retrato registrado e o cálculo atual, normaliza os campos usados na tela e
+descarta estruturas inválidas. `tipos-da-convocacao-da-entrevista.ts` distingue a
+lista convocável do cálculo de consulta e de uma fonte ausente. Campos adicionais
+são preservados; o JSON completo e o motor da Classificação não são validados aqui.
+Preparar usa esses contratos diretamente. `marcos.ts` tipa a integração das comemorações
+com o painel; as regras e efeitos compartilhados das comemorações continuam em JavaScript.
+`tests/tipos/convocacao-de-entrevistas.tsx` verifica os contratos da fonte, tela e ações.
 Isso não verifica todos os consumidores JavaScript nem valida o JSON inteiro. `tests/tipos/painel-de-entrevistas.tsx`
 confere usos e rejeições do compilador; o teste do módulo verifica a apresentação integrada.
 
 Regras puras em `src/lib/` (`entrevistas-do-painel.ts`, `painel-de-entrevistas.ts` — edital do
 recorte, empates, agenda dos próximos dias —, `fila-de-conducao.ts` — fila, situações, recortes, contador —,
 `conducao-de-entrevista.ts`,
-`convocacao-da-entrevista.js` — a lista da Classificação por vaga, quem está na ficha, avisos —,
+`convocacao-da-entrevista.ts` — a lista da Classificação por vaga, quem está na ficha, avisos —,
 `roteiro-de-entrevista.ts`, `digitacao-de-notas.ts` — a digitação da matriz —, `resumo-da-entrevista.ts` — as
 regras em linguagem simples —, `passos-do-preparar.ts` — os passos de Preparar e a agenda por dia —,
 `pendencias-do-roteiro.ts` — as seções e o que falta no editor —, `parecer-da-entrevista.ts` — o parecer em
