@@ -207,26 +207,19 @@ describe("resultado preliminar da análise curricular (83/2026, SEI 0641561)", (
     );
   });
 
-  it("todas as vagas, com o cabeçalho publicado, colunas e linhas", () => {
+  it("todas as vagas, com o cabeçalho publicado, colunas (padrão enxuto) e linhas", () => {
     expect(doc.blocos.map((b) => b.cabecalho)).toEqual([
       "VAGA 169672 - Agente de Combate a Endemias - Área de abrangência DSEI Xingu - DSEI Xingu - 1 vaga (1 AC + CR)",
       "VAGA 169673 - Analista Técnico de Saúde Indígena - DSEI Xingu (Sede) - DSEI Xingu - 1 vaga (1 AC + CR)",
       "VAGA - Apoiador Técnico de Saneamento - DSEI Xingu (Sede) - DSEI Xingu - Cadastro Reserva",
     ]);
     const [t] = doc.blocos[1].tabelas;
-    expect(rotulos(t)).toEqual([
-      "Classificação",
-      "Nome",
-      "Nota Final",
-      "Formação Acadêmica",
-      "Cursos de Aperfeiçoamento",
-      "Experiência Profissional",
-      "Pontuação Étnica",
-    ]);
+    // As parciais da regra ficam disponíveis, desmarcadas (colunas-do-documento.js).
+    expect(rotulos(t)).toEqual(["Classificação", "Nome", "Nota Final"]);
     expect(t.linhas).toEqual([
-      ["1º", "Laucio Ambrosio Lorenço", "21,4", "1,0", "2,0", "6,4", "12,0"],
-      ["2º", "Deysiane Teodoro", "20,7", "0,0", "1,7", "7,0", "12,0"],
-      ["3º", "Aliel Alexandrino", "14,6", "0,0", "1,8", "0,8", "12,0"],
+      ["1º", "Laucio Ambrosio Lorenço", "21,4"],
+      ["2º", "Deysiane Teodoro", "20,7"],
+      ["3º", "Aliel Alexandrino", "14,6"],
     ]);
     expect(t.colunas.reduce((s, c) => s + c.largura, 0)).toBe(100);
     expect(doc.blocos[2].tabelas[0]).toMatchObject({
@@ -301,20 +294,155 @@ describe("resultado preliminar da análise curricular (83/2026, SEI 0641561)", (
       "7 (sete) pontos",
     );
     expect(texto).toContain("2. DISPOSIÇÕES FINAIS");
-    expect(texto).toContain(
-      "Classificação\tNome\tNota Final\tFormação Acadêmica\tCursos de Aperfeiçoamento\tExperiência Profissional\tPontuação Étnica",
-    );
-    expect(texto).toContain(
-      "1º\tLaucio Ambrosio Lorenço\t21,4\t1,0\t2,0\t6,4\t12,0",
-    );
+    expect(texto).toContain("Classificação\tNome\tNota Final");
+    expect(texto).toContain("1º\tLaucio Ambrosio Lorenço\t21,4");
     expect(texto.join("\n")).not.toContain("**");
+  });
+});
+
+describe("colunas escolhidas pelo gestor (regra.documento.colunas)", () => {
+  const retrato = retratoDe("PRELIMINAR");
+  const comColunas = (colunas) => ({
+    ...REGRA_83,
+    documento: { ...REGRA_83.documento, colunas },
+  });
+
+  it("as parciais marcadas, na ordem escolhida, em todas as saídas", () => {
+    const doc = documentoOficial(retrato, {
+      lista: "geral",
+      regra: comColunas({
+        PRELIMINAR_PRELIMINAR: [
+          "NOME",
+          "CLASSIFICACAO",
+          "PARCIAL_EXPERIENCIA",
+          "NOTA",
+        ],
+      }),
+    });
+    const [t] = doc.blocos[1].tabelas;
+    expect(rotulos(t)).toEqual([
+      "Nome",
+      "Classificação",
+      "Experiência Profissional",
+      "Nota Final",
+    ]);
+    expect(t.linhas[0]).toEqual([
+      "Laucio Ambrosio Lorenço",
+      "1º",
+      "6,4",
+      "21,4",
+    ]);
+    expect(t.colunas.reduce((s, c) => s + c.largura, 0)).toBe(100);
+    expect(textoParaSei(doc)).toContain(
+      "Nome\tClassificação\tExperiência Profissional\tNota Final",
+    );
+    expect(htmlParaSei(doc)).toContain("Experiência Profissional");
+    const docx = new TextDecoder().decode(
+      gerarDocxOficial(doc, { cabecalho: "AGÊNCIA" }),
+    );
+    expect(docx).toContain("Experiência Profissional");
+    expect(docx).not.toContain("Formação Acadêmica");
+  });
+
+  it("Classificação e Nome são obrigatórias; códigos desconhecidos são ignorados", () => {
+    const doc = documentoOficial(retrato, {
+      lista: "geral",
+      regra: comColunas({ PRELIMINAR_PRELIMINAR: ["NOTA", "INSCRICAO"] }),
+    });
+    expect(rotulos(doc.blocos[1].tabelas[0])).toEqual([
+      "Classificação",
+      "Nome",
+      "Nota Final",
+    ]);
+  });
+
+  it("a escolha vale só para a publicação dela (os eliminados seguem o padrão)", () => {
+    const regra = comColunas({
+      PRELIMINAR_PRELIMINAR: ["CLASSIFICACAO", "NOME"],
+    });
+    const geral = documentoOficial(retrato, { lista: "geral", regra });
+    expect(rotulos(geral.blocos[1].tabelas[0])).toEqual([
+      "Classificação",
+      "Nome",
+    ]);
+    const eliminados = documentoOficial(retrato, {
+      lista: "eliminados",
+      regra,
+    });
+    expect(rotulos(eliminados.blocos[1].tabelas[0])).toEqual([
+      "Nome",
+      "Nota Final",
+      "Justificativa",
+    ]);
+  });
+
+  it("eliminados com parcial: a Justificativa fica no fim", () => {
+    const doc = documentoOficial(retrato, {
+      lista: "eliminados",
+      regra: comColunas({
+        PRELIMINAR_PRELIMINAR_ELIMINADOS: ["NOME", "PARCIAL_FORMACAO"],
+      }),
+    });
+    const [t] = doc.blocos[1].tabelas;
+    expect(rotulos(t)).toEqual(["Nome", "Formação Acadêmica", "Justificativa"]);
+    expect(t.linhas[0][1]).toBe("0,0");
+  });
+
+  it("resultado final: a Situação (dentro das vagas ou cadastro reserva) é opcional", () => {
+    const doc = documentoOficial(retratoDe("FINAL"), {
+      lista: "geral",
+      regra: comColunas({
+        FINAL_FINAL: ["CLASSIFICACAO", "NOME", "NOTA", "SITUACAO"],
+      }),
+    });
+    const [t] = doc.blocos[0].tabelas;
+    expect(rotulos(t)).toEqual([
+      "CLASSIFICAÇÃO",
+      "NOME",
+      "NOTA FINAL",
+      "SITUAÇÃO",
+    ]);
+    expect(t.linhas[0][3]).toBe("Dentro das vagas");
+  });
+
+  it("a convocação tem colunas fixas", () => {
+    const doc = documentoOficial(retratoDe("CONVOCACAO"), {
+      lista: "geral",
+      regra: comColunas({ CONVOCACAO: ["NOME"] }),
+    });
+    expect(rotulos(doc.blocos[0].tabelas[0])).toEqual([
+      "Nº",
+      "NOME",
+      "Vaga",
+      "DATA",
+      "HORA",
+    ]);
+  });
+
+  it("normalizarRegra guarda as colunas por publicação, sem repetir nem lixo", () => {
+    const r = normalizarRegra({
+      documento: {
+        colunas: {
+          PRELIMINAR_PRELIMINAR: ["NOME", "NOME", "nota", "PARCIAL_CURSOS"],
+          "chave inválida": ["NOME"],
+          FINAL_FINAL: [],
+          ENTREVISTA_FINAL: "NOME",
+        },
+      },
+    });
+    expect(r.documento.colunas).toEqual({
+      PRELIMINAR_PRELIMINAR: ["NOME", "PARCIAL_CURSOS"],
+    });
+    expect(normalizarRegra({ documento: { colunas: {} } })).not.toHaveProperty(
+      "documento",
+    );
   });
 });
 
 describe("eliminados, modalidades e fase final da análise curricular", () => {
   const retrato = retratoDe("PRELIMINAR");
 
-  it("eliminados: Nome | Nota Final | parciais | Justificativa, texto dos eliminados", () => {
+  it("eliminados: Nome | Nota Final | Justificativa, texto dos eliminados", () => {
     const doc = documentoOficial(retrato, {
       lista: "eliminados",
       regra: REGRA_83,
@@ -325,15 +453,7 @@ describe("eliminados, modalidades e fase final da análise curricular", () => {
       "divulga a relação dos candidatos eliminados",
     );
     const [t] = doc.blocos[1].tabelas;
-    expect(rotulos(t)).toEqual([
-      "Nome",
-      "Nota Final",
-      "Formação Acadêmica",
-      "Cursos de Aperfeiçoamento",
-      "Experiência Profissional",
-      "Pontuação Étnica",
-      "Justificativa",
-    ]);
+    expect(rotulos(t)).toEqual(["Nome", "Nota Final", "Justificativa"]);
     expect(t.linhas[0][0]).toBe("Fulano Reprovado");
     expect(t.linhas[0].at(-1)).toContain(
       "Não habilitado na avaliação documental",
@@ -572,6 +692,7 @@ describe("textos do edital (regra.documento)", () => {
       local: "",
       data: null,
       modelos: { FINAL_FINAL: { finais: "x" } },
+      colunas: {},
     });
     // Sem textos próprios, a regra continua igual (sem a chave).
     expect(normalizarRegra({})).not.toHaveProperty("documento");

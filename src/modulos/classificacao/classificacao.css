@@ -316,6 +316,89 @@
   width: 100%;
   font-size: var(--text-body-sm);
 }
+/* Aba "Colunas": as do documento (ordenáveis) e as outras disponíveis. */
+.classificacao-colunas {
+  display: grid;
+  gap: var(--space-2);
+}
+.classificacao-colunas-ajuda {
+  margin: 0;
+  font-size: var(--text-body-sm);
+}
+.classificacao-colunas-titulo {
+  margin: var(--space-2) 0 0;
+  font-size: var(--text-label);
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+.classificacao-colunas-titulo span {
+  font-weight: 400;
+}
+.classificacao-colunas-lista {
+  display: grid;
+  gap: var(--space-1-5);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.classificacao-colunas-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: 44px;
+  padding: var(--space-1-5) var(--space-2);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  background: var(--surface-card);
+  transition: border-color var(--motion-fast);
+}
+.classificacao-colunas-item[draggable="true"] {
+  cursor: grab;
+}
+.classificacao-colunas-item.is-arrastando {
+  opacity: 0.5;
+}
+.classificacao-colunas-item.is-alvo {
+  border-color: var(--brand-primary);
+  background: var(--color-bg-selected);
+}
+.classificacao-colunas-item.is-fora {
+  border-style: dashed;
+  background: transparent;
+}
+.classificacao-colunas-alca,
+.classificacao-colunas-ordem,
+.classificacao-colunas-cadeado,
+.classificacao-colunas-rotulo small {
+  color: var(--text-secondary);
+}
+.classificacao-colunas-ordem {
+  min-width: 1.5em;
+  font-size: var(--text-caption);
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+}
+.classificacao-colunas-rotulo {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+  font-size: var(--text-body-sm);
+  cursor: pointer;
+}
+.classificacao-colunas-rotulo > span {
+  display: grid;
+  min-width: 0;
+}
+.classificacao-colunas-rotulo small,
+.classificacao-colunas-cadeado {
+  font-size: var(--text-caption);
+}
+.classificacao-colunas-setas {
+  display: flex;
+  gap: var(--space-1);
+}
 /* A prévia: barra do zoom e a "mesa" cinza onde fica a folha A4. */
 .classificacao-documento-previa-area {
   display: grid;

@@ -134,9 +134,34 @@ describe("avaliação documental: parciais e eliminados com justificativa", () =
   });
 
   const rotulos = (t) => t.colunas.map((c) => c.rotulo);
+  // O 83/2026 publicou as parciais: o gestor as marca na aba Colunas.
+  const PARCIAIS = [
+    "PARCIAL_FORMACAO",
+    "PARCIAL_CURSOS",
+    "PARCIAL_EXPERIENCIA",
+    "PARCIAL_ETNICO",
+  ];
+  const COMO_O_83 = {
+    ...REGRA_83,
+    documento: {
+      colunas: {
+        PRELIMINAR_PRELIMINAR: ["CLASSIFICACAO", "NOME", "NOTA", ...PARCIAIS],
+        PRELIMINAR_PRELIMINAR_ELIMINADOS: ["NOME", "NOTA", ...PARCIAIS],
+      },
+    },
+  };
 
-  it("documento (como o 83/2026): Classificação | Nome | Nota Final | parciais", () => {
+  it("padrão enxuto: Classificação | Nome | Nota Final (parciais desmarcadas)", () => {
     const doc = documentoOficial(retrato, { lista: "geral", regra: REGRA_83 });
+    expect(rotulos(doc.blocos[0].tabelas[0])).toEqual([
+      "Classificação",
+      "Nome",
+      "Nota Final",
+    ]);
+  });
+
+  it("documento como o 83/2026 (parciais marcadas): Classificação | Nome | Nota Final | parciais", () => {
+    const doc = documentoOficial(retrato, { lista: "geral", regra: COMO_O_83 });
     expect(doc.titulo).toEqual([
       "RESULTADO PRELIMINAR - ETAPA DE ANÁLISE CURRICULAR",
     ]);
@@ -175,7 +200,7 @@ describe("avaliação documental: parciais e eliminados com justificativa", () =
   it("lista de eliminados: nome, nota, parciais e justificativa", () => {
     const doc = documentoOficial(retrato, {
       lista: "eliminados",
-      regra: REGRA_83,
+      regra: COMO_O_83,
     });
     expect(doc.nome).toBe(
       "Resultado Preliminar - Etapa de Análise Curricular - Eliminados",

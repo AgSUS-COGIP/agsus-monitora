@@ -37,7 +37,9 @@ regra.jsx          visão "Regra": formulário (critérios ordenáveis do catál
                    modalidades, convocação, rodapé) e versões
 documento.tsx      "Como fica no SEI": quase tela cheia (ou tela cheia), folha A4 com zoom
                    (escala em src/lib/classificacao/escala-da-previa.ts), painel recolhível
-                   com as abas Dados | Textos e rodapé fixo; no celular, uma coluna
+                   com as abas Dados | Textos | Colunas e rodapé fixo; no celular, uma coluna
+colunas-do-documento.tsx  aba Colunas: marcar e ordenar (setas ou arrastar) as colunas
+                   das tabelas, por publicação (regras em src/lib/classificacao/colunas-do-documento.js)
 hora-de-nascimento.tsx  hora da certidão na gaveta do candidato, só quando o empate chega
                    à maior idade no mesmo dia (sem certidão = 23:59:59)
 documento-no-navegador.js  área de transferência (HTML + texto), logo em PNG, impressão
@@ -48,8 +50,8 @@ Regras puras em `src/lib/classificacao/` (`motor.js`, `regra.js`, `catalogo.js`,
 `numeros.js`, `sorteio.js`, `exportacao.js`, `ajustes.js` — o motor com os ajustes da pontuação
 aprovados em recurso e a prévia do recurso —, `documento-sei.js` — o documento no modelo das
 publicações do SEI, textos-padrão do 83/2026 e do 100/2026 —, `documento-docx.js` — Word com papel
-timbrado —, `dados.js`). Os textos do documento ajustados pelo gestor ficam na regra
-(`DS_CONFIGURACAO.documento`, sem migration); o cabeçalho da agência, em Configurações › Marca
+timbrado —, `dados.js`). Os textos e as colunas do documento ajustados pelo gestor ficam na regra
+(`DS_CONFIGURACAO.documento`, `.colunas` por publicação; sem migration); o cabeçalho da agência, em Configurações › Marca
 (`documento_cabecalho`, `src/lib/cabecalho-dos-documentos.js`). Banco:
 `supabase/migrations/20261002150000_classificacao.sql` (+ `20261002150500_liga_aba_classificacao.sql`),
 `20261002170000_classificacao_lista_da_entrevista.sql` (lista ENTREVISTA e critérios novos do

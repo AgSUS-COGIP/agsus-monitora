@@ -41,9 +41,18 @@
   entrevista e do resultado final, resultado final preliminar) seguem o mesmo
   modelo.
 
+  Colunas das tabelas: as do padrão de cada publicação ou as que o gestor
+  escolheu e ordenou (regra.documento.colunas; colunas-do-documento.js).
+
   SÓ NOME COMPLETO — o retrato já não traz CPF, inscrição nem nascimento.
 */
-import { MOTIVOS_DE_ELIMINACAO, PARCIAIS_DA_DOCUMENTAL } from "./catalogo.js";
+import { MOTIVOS_DE_ELIMINACAO } from "./catalogo.js";
+import {
+  COLUNA_DA_ART,
+  colunasDisponiveis,
+  colunasEscolhidas,
+  parcialDaColuna,
+} from "./colunas-do-documento.js";
 import { formatarNota, lerData, ordinal } from "./numeros.js";
 import { documentoDaRegra, normalizarRegra } from "./regra.js";
 import { CABECALHO_PADRAO } from "../cabecalho-dos-documentos.js";
@@ -59,8 +68,6 @@ const VAZIA = "Não houve candidatos aptos.";
 const VAZIA_ELIMINADOS = "Não houve candidatos eliminados.";
 const VAZIA_CONVOCACAO = "Não houve candidatos convocados.";
 const VAZIA_PROVISORIA = "Não houve candidatos classificados.";
-/* Coluna da nota nas listas da pré-classificação (item 8.3.1). */
-const COLUNA_DA_ART = "Nota da Autodeclaração de Requisitos e Títulos (ART)";
 
 /* ── Textos-padrão (das publicações) ─────────────────────────────────── */
 
@@ -518,9 +525,6 @@ const semMarcas = (valor) =>
     .map((t) => t.texto)
     .join("");
 
-const rotuloDaParcial = (codigo) =>
-  PARCIAIS_DA_DOCUMENTAL.find(([v]) => v === codigo)?.[1] || codigo;
-
 /* Larguras-base (%) por coluna; o Nome (ou a Vaga) fica com o resto. */
 const LARGURAS = Object.freeze({
   Classificação: 14,
@@ -532,6 +536,8 @@ const LARGURAS = Object.freeze({
   Nota: 9,
   "Modalidade de Concorrência": 13,
   MODALIDADE: 14,
+  SITUAÇÃO: 16,
+  Situação: 14,
   DATA: 12,
   HORA: 9,
   Justificativa: 34,
@@ -623,22 +629,30 @@ const siglaDasModalidades = (l, modalidades) =>
     .join(" / ") || "AC";
 
 /*
-  As tabelas de uma lista, no padrão de cada publicação:
-    PRELIMINAR  Classificação | Nome | [Modalidade] | Nota Final | parciais
-                (83/2026; o 100/2026 junta as modalidades no mesmo arquivo)
+  As tabelas de uma lista, no padrão de cada publicação (colunas padrão; o
+  gestor escolhe e ordena em "Como fica no SEI" — colunas-do-documento.js):
+    PRELIMINAR  Classificação | Nome | [Modalidade] | Nota Final
+                (83/2026; o 100/2026 junta as modalidades no mesmo arquivo;
+                as parciais da regra ficam disponíveis, desmarcadas)
     ENTREVISTA  Classificação | NOME | NOTA
     FINAL       CLASSIFICAÇÃO | NOME | [MODALIDADE] | NOTA FINAL
-    eliminados  Nome | [Nota (Final) | parciais] | Justificativa
-    CONVOCACAO  Nº | NOME | Vaga | [Modalidade] | DATA | HORA (uma tabela,
-                agrupada por vaga; data e hora vêm da agenda das entrevistas
-                salva — `agenda`, Map analise_id → { data, inicio } — e, sem
-                horário, ficam em branco para preencher no SEI)
+    eliminados  Nome | [Nota (Final)] | Justificativa
+    CONVOCACAO  Nº | NOME | Vaga | [Modalidade] | DATA | HORA (fixas: uma
+                tabela, agrupada por vaga; data e hora vêm da agenda das
+                entrevistas salva — `agenda`, Map analise_id → { data,
+                inicio } — e, sem horário, ficam em branco para preencher no
+                SEI)
+  `guardadas`: regra.documento.colunas[chave] (undefined = o padrão).
 */
-function tabelasDaLista(retrato, lista, agenda = null) {
+const SITUACAO_NO_DOCUMENTO = Object.freeze({
+  VAGA: "Dentro das vagas",
+  CR: "Cadastro reserva",
+});
+
+function tabelasDaLista(retrato, lista, agenda = null, guardadas, chave) {
   const casas = retrato.casas ?? 2;
   const tipo = retrato.tipo;
   const modalidades = retrato.modalidades || [];
-  const parciais = tipo === "PRELIMINAR" ? retrato.parciais || [] : [];
   const todas = lista === "todas";
   const nota = (v) =>
     v === null || v === undefined ? "-" : formatarNota(v, casas);
@@ -646,49 +660,41 @@ function tabelasDaLista(retrato, lista, agenda = null) {
     codigo === "geral"
       ? "Classificação Geral"
       : modalidades.find((m) => m.codigo === codigo)?.nome || codigo;
+  const disponiveis = colunasDisponiveis(retrato, lista) || [];
+  const rotuloDe = Object.fromEntries(disponiveis.map((c) => [c.id, c.rotulo]));
+  const escolhidas = colunasEscolhidas(disponiveis, guardadas, chave);
 
   const tabela = (codigo, linhasDaLista, comModalidade) => {
-    let rotulos;
-    let alinhamento;
-    if (tipo === "ENTREVISTA") {
-      rotulos = ["Classificação", "NOME", "NOTA"];
-      alinhamento = "centro";
-    } else if (tipo === "PROVISORIA" || tipo === "LOTE") {
-      rotulos = ["Classificação", "Nome", COLUNA_DA_ART];
-      alinhamento = "nome-esquerda";
-    } else if (tipo === "FINAL") {
-      rotulos = [
-        "CLASSIFICAÇÃO",
-        "NOME",
-        ...(comModalidade ? ["MODALIDADE"] : []),
-        "NOTA FINAL",
-      ];
-      alinhamento = "centro";
-    } else {
-      rotulos = [
-        "Classificação",
-        "Nome",
-        ...(comModalidade ? ["Modalidade de Concorrência"] : []),
-        "Nota Final",
-        ...parciais.map(rotuloDaParcial),
-      ];
-      alinhamento = "esquerda";
-    }
+    const alinhamento =
+      tipo === "ENTREVISTA" || tipo === "FINAL"
+        ? "centro"
+        : tipo === "PROVISORIA" || tipo === "LOTE"
+          ? "nome-esquerda"
+          : "esquerda";
+    // A Modalidade só cabe na tabela da classificação geral (com as modalidades).
+    const ids = escolhidas.filter((id) => id !== "MODALIDADE" || comModalidade);
     const decisoes =
       tipo === "PROVISORIA" || tipo === "LOTE"
         ? marcasDasDecisoes(linhasDaLista)
         : { nome: (l) => l.nome, notas: [] };
+    const celula = (id, l) => {
+      const parcial = parcialDaColuna(id);
+      if (parcial) return nota(l.parciais?.[parcial]);
+      if (id === "CLASSIFICACAO") return ordinal(l.posicao);
+      if (id === "NOME") return decisoes.nome(l);
+      if (id === "MODALIDADE") return siglaDasModalidades(l, modalidades);
+      if (id === "NOTA") return formatarNota(l.nota, casas);
+      if (id === "SITUACAO") return SITUACAO_NO_DOCUMENTO[l.situacao] || "-";
+      return "";
+    };
     return {
       titulo: todas ? nomeDaLista(codigo) : "",
-      colunas: colunasComLargura(rotulos, alinhamento),
+      colunas: colunasComLargura(
+        ids.map((id) => rotuloDe[id]),
+        alinhamento,
+      ),
       notas: decisoes.notas,
-      linhas: linhasDaLista.map((l) => [
-        ordinal(l.posicao),
-        decisoes.nome(l),
-        ...(comModalidade ? [siglaDasModalidades(l, modalidades)] : []),
-        formatarNota(l.nota, casas),
-        ...parciais.map((p) => nota(l.parciais?.[p])),
-      ]),
+      linhas: linhasDaLista.map((l) => ids.map((id) => celula(id, l))),
       vazia:
         tipo === "LOTE"
           ? VAZIA_CONVOCACAO
@@ -700,24 +706,25 @@ function tabelasDaLista(retrato, lista, agenda = null) {
 
   const tabelaDeEliminados = (v) => {
     const comNota = (v.eliminados || []).some((e) => e.nota !== undefined);
-    const rotuloDaNota = tipo === "ENTREVISTA" ? "Nota" : "Nota Final";
+    // Vaga sem nota nos eliminados: sem a nota e as parciais.
+    const ids = escolhidas.filter(
+      (id) => comNota || (id !== "NOTA" && !parcialDaColuna(id)),
+    );
+    const celula = (id, e) => {
+      const parcial = parcialDaColuna(id);
+      if (parcial) return nota(e.parciais?.[parcial]);
+      if (id === "NOME") return e.nome;
+      if (id === "NOTA") return nota(e.nota);
+      if (id === "JUSTIFICATIVA") return justificativa(e);
+      return "";
+    };
     return {
       titulo: "",
       colunas: colunasComLargura(
-        [
-          "Nome",
-          ...(comNota ? [rotuloDaNota, ...parciais.map(rotuloDaParcial)] : []),
-          "Justificativa",
-        ],
+        ids.map((id) => rotuloDe[id]),
         "esquerda",
       ),
-      linhas: (v.eliminados || []).map((e) => [
-        e.nome,
-        ...(comNota
-          ? [nota(e.nota), ...parciais.map((p) => nota(e.parciais?.[p]))]
-          : []),
-        justificativa(e),
-      ]),
+      linhas: (v.eliminados || []).map((e) => ids.map((id) => celula(id, e))),
       vazia: VAZIA_ELIMINADOS,
     };
   };
@@ -928,7 +935,13 @@ export function documentoOficial(
       : `${local}, na data da assinatura digital.`,
     localDataPorExtenso: `${local}, ${dataPorExtenso(doc.data || hoje)}.`,
     preliminares,
-    blocos: tabelasDaLista(retrato, listaEfetiva, agenda),
+    blocos: tabelasDaLista(
+      retrato,
+      listaEfetiva,
+      agenda,
+      doc.colunas[chave],
+      chave,
+    ),
     finais,
     nome: treinamento ? `TREINAMENTO - ${nomeDoArquivo}` : nomeDoArquivo,
     treinamento: Boolean(treinamento),
