@@ -19,7 +19,8 @@ import {
 import { normalizarRegra } from "../../lib/classificacao/regra.js";
 import { rotuloDaVersaoNaLista } from "../../lib/nome-da-versao.ts";
 import { conferirSorteio } from "../../lib/classificacao/sorteio.js";
-import { DocumentoDoSei } from "./documento.jsx";
+import { DocumentoDoSei } from "./documento.tsx";
+import { HoraDeNascimento } from "./hora-de-nascimento.tsx";
 import { ModalDePublicacaoDeAprovados } from "./publicar-aprovados.jsx";
 import {
   Aviso,
@@ -374,6 +375,8 @@ function GavetaDoCandidato({
   vaga,
   rotulosDasModalidades,
   casas,
+  podeEditar,
+  aoSalvarHora,
   aoFechar,
 }) {
   const posicoes = Object.entries(explicacao.posicoes || {});
@@ -434,6 +437,15 @@ function GavetaDoCandidato({
             ))}
           </div>
         </Secao>
+        {explicacao.elegivel ? (
+          <HoraDeNascimento
+            key={explicacao.analiseId}
+            horaNascimento={explicacao.horaNascimento ?? null}
+            horaDecide={Boolean(explicacao.horaDecide)}
+            podeEditar={podeEditar}
+            aoSalvar={(hora) => aoSalvarHora(explicacao.analiseId, hora)}
+          />
+        ) : null}
       </div>
     </Gaveta>
   );
@@ -1000,6 +1012,8 @@ export function Listas({ estado, e, calcular, aoAbrirAgenda }) {
           vaga={resultado.vagas.find((v) => v.chave === explicacao.vaga)}
           rotulosDasModalidades={rotulosDasModalidades}
           casas={resultado.casas}
+          podeEditar={e.podeEditar}
+          aoSalvarHora={estado.salvarHoraDeNascimento}
           aoFechar={() => setAberto("")}
         />
       ) : null}

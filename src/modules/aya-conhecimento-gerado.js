@@ -1869,7 +1869,26 @@ export const VERBETES_AYA = Object.freeze([
       'Em "Como fica no SEI" aparecem a prévia (o timbrado simulado, o texto e as tabelas como ficam no SEI) e os textos que o gestor ajusta antes de copiar ou baixar: número do edital, processo SEI (vai no rodapé do Word), unidade por extenso (ex.: "Distrito Sanitário Especial Indígena Xingu (DSEI Xingu)"), autoridade do item 1.1 (ex.: "por intermédio da Diretoria de Atenção Integral à Saúde, no uso das atribuições que lhe foram conferidas pela Designação nº 28/2026/PRES/AgSUS"), local e data (vazia = "na data da assinatura digital"), o título e as disposições preliminares e finais do modelo daquela lista. Cada linha é um item; ">" no começo vira subitem (1.3.1) e ">>" sub-subitem (1.3.3.1); **texto** fica em negrito; campos entre chaves são trocados pelo do edital ({edital}, {unidade}, {fase}, {notas_minimas}…). Os padrões vêm das publicações do 83/2026 e do 100/2026; as notas mínimas do 1.3 vêm da regra. "Salvar no edital" grava na regra (nova versão, motivo "Textos do documento oficial (SEI)"), sem mudar a classificação; "Restaurar o padrão" volta ao texto das publicações.',
     fato: "",
     fonte:
-      "src/modulos/classificacao/documento.jsx; src/lib/classificacao/regra.js",
+      "src/modulos/classificacao/documento.tsx; src/lib/classificacao/regra.js",
+    abrir: "classificacao",
+  },
+  {
+    arquivo: "regras-da-classificacao.md",
+    titulo: 'Prévia "Como fica no SEI" (tela grande, zoom e abas)',
+    perguntas: [
+      "previa do sei pequena",
+      "como aumentar a previa do sei",
+      "zoom da previa do sei",
+      "tela cheia como fica no sei",
+      "ocultar textos da previa",
+      "abas dados e textos",
+      "previa no celular",
+    ],
+    resposta:
+      '"Como fica no SEI" abre quase na tela toda, com a folha A4 inteira no centro. Ela começa em "Ajustar" (a folha cabe na largura); − e + mudam o zoom de 50% a 200%, e "Ajustar" volta a caber. O botão de tela cheia, no topo, usa a tela inteira; Esc ou o X fecham. Os textos ficam num painel à esquerda, em duas abas: "Dados" (número do edital, processo SEI, unidade, autoridade do 1.1, local e data) e "Textos" (título e disposições preliminares e finais); "Ocultar textos" recolhe o painel e a folha cresce, "Editar textos" traz de volta. A prévia muda enquanto você digita. No celular fica uma coluna: os textos em cima e a prévia embaixo. "Restaurar o padrão" e "Salvar no edital" ficam no rodapé, junto de "Baixar DOCX" e "Copiar para o SEI", sempre à vista.',
+    fato: "",
+    fonte:
+      "src/modulos/classificacao/documento.tsx; src/lib/classificacao/escala-da-previa.ts",
     abrir: "classificacao",
   },
   {
@@ -2078,6 +2097,44 @@ export const VERBETES_AYA = Object.freeze([
     fato: "No MONITORA, a versão da regra de classificação tem nome opcional, trocável com motivo sem mudar a configuração.",
     fonte:
       "src/lib/nome-da-versao.ts; supabase/migrations/20261008180000_nome_das_versoes_das_regras.sql (salvar_regra_classificacao, renomear_versao_regra_classificacao)",
+    abrir: "classificacao",
+  },
+  {
+    arquivo: "regras-da-classificacao.md",
+    titulo: "Hora de nascimento no desempate",
+    perguntas: [
+      "hora de nascimento",
+      "hora de nascimento no desempate",
+      "certidao de nascimento no desempate",
+      "23h59min59s",
+      "23:59:59",
+      "empate na maior idade",
+      "nasceram no mesmo dia",
+      "onde informo a hora de nascimento",
+    ],
+    resposta:
+      'Quando o empate chega ao critério "maior idade" e as pessoas nasceram no mesmo dia, decide a hora de nascimento da certidão enviada na inscrição: quem nasceu mais cedo é mais velho e fica à frente (edital 93/2026, itens 6.11.5 e 6.11.6). Sem certidão, vale 23h59min59s — a pessoa fica como a mais nova daquele dia. A planilha da análise curricular e a Empregare não trazem a hora; quem informa é o analista, na Classificação: abra o candidato na lista e use "Hora de nascimento (certidão)". O campo só aparece para quem está nesse empate (ou já tem hora), e a tela avisa "Empate decidido pela hora de nascimento". "Sem certidão" tira a hora e volta a valer 23h59min59s. Cada mudança fica no histórico (quem, quando, antes e depois); gere a lista de novo depois de informar. Se ainda assim empatar (mesmo dia e mesma hora, ou as duas sem certidão), vale o empate final da regra.',
+    fato: "Na maior idade, entre quem nasceu no mesmo dia, vale a hora da certidão; sem certidão, 23h59min59s.",
+    fonte:
+      "src/lib/classificacao/numeros.js; src/lib/classificacao/motor.js; src/modulos/classificacao/hora-de-nascimento.tsx; supabase/migrations/20261009130000_hora_de_nascimento_na_classificacao.sql",
+    abrir: "classificacao",
+  },
+  {
+    arquivo: "regras-da-classificacao.md",
+    titulo: "Desempate na lista preliminar (edital 93/2026)",
+    perguntas: [
+      "desempate na lista preliminar",
+      "empatados na mesma posicao na preliminar",
+      "classificacao preliminar do 93",
+      "desempate do edital 93",
+      "avaliacao documental 93 empate",
+      "por que todos ficaram em primeiro",
+    ],
+    resposta:
+      'Na lista "Avaliação documental — resultado preliminar", o empate na nota segue a regra do edital: "mesma posição" ou "critérios da regra". No 93/2026, cuja análise documental foi feita pela planilha, a lista deixava os empatados na mesma posição — na vaga de Enfermeiro do Trabalho, 8 pessoas com 45 pontos ficavam todas em 1º. O edital manda listar os aprovados pela ordem de classificação (8.2.10.10) e desempatar pelo item 10.1: a) 60 anos ou mais na data de corte (fim das inscrições, 29/09/2026); b) maior tempo de experiência profissional comprovado (os dias da planilha, o mesmo cálculo para todos); c) maior idade, com a hora da certidão. A correção da regra do 93 passa a preliminar para "critérios da regra" (nova versão, com o motivo). A ordem também muda quem entra no limite da convocação (5 × as vagas). Reprovado na planilha sai com o motivo "não habilitado" e, se a nota também ficou abaixo de 15 (8.2.6), a justificativa diz os dois.',
+    fato: "No 93/2026, a lista preliminar desempata pelo item 10.1 (60+, tempo de experiência, maior idade com a hora da certidão).",
+    fonte:
+      "supabase/correcoes/20261009-classificacao-93-desempate-e-quadro.sql; tests/classificacao-93-desempate.test.js",
     abrir: "classificacao",
   },
   {

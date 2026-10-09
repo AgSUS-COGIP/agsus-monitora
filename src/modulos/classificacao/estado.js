@@ -21,6 +21,9 @@
     listar_modelos_convocacao()              dos editais (Lista de aprovados):
                                              as vagas por modalidade saem da
                                              mesma conta (convocacao-do-edital.js)
+    salvar_hora_nascimento_candidato(...)    a hora da certidão para o
+                                             desempate por maior idade
+                                             (migration 20261009130000)
 
   A conta é do motor puro (src/lib/classificacao/motor.js), feita no
   componente a partir de `dados`; aqui só a carga, a gravação e a exportação.
@@ -78,6 +81,7 @@ const RPC_OBTER_PUBLICACAO = "obter_publicacao_lista_aprovados";
 const RPC_PUBLICAR_APROVADOS = "publicar_lista_aprovados_da_classificacao";
 const RPC_CONFIGURACAO_CONVOCACAO = "listar_configuracao_convocacao";
 const RPC_MODELOS_CONVOCACAO = "listar_modelos_convocacao";
+const RPC_SALVAR_HORA = "salvar_hora_nascimento_candidato";
 
 export const MENSAGEM_SEM_ACESSO = "Sem acesso à Classificação";
 const TEMPO_LIMITE_MS = 45000;
@@ -486,6 +490,43 @@ export function criarEstadoDaClassificacao({
     }
   }
 
+  /*
+    A hora de nascimento da certidão (desempate por maior idade no mesmo dia).
+    Vazio tira (volta a valer 23:59:59). O candidato nos dados recebe a hora
+    gravada e o motor recalcula a lista na tela.
+  */
+  async function salvarHoraDeNascimento(analiseId, hora) {
+    const edital = estado.editalId;
+    if (!edital || !analiseId) return false;
+    try {
+      const gravado = await rpc(RPC_SALVAR_HORA, {
+        p_edital: edital,
+        p_analise: analiseId,
+        p_hora: hora || "",
+      });
+      const nova = gravado?.hora_nascimento ?? null;
+      mudarDados(edital, (d) => ({
+        ...d,
+        candidatos: (d.candidatos || []).map((c) =>
+          c.analise_id === analiseId ? { ...c, hora_nascimento: nova } : c,
+        ),
+      }));
+      toast(
+        nova
+          ? "Hora de nascimento registrada."
+          : "Hora de nascimento retirada: vale 23h59min59s.",
+        "success",
+      );
+      return true;
+    } catch (erro) {
+      toast(
+        `Não foi possível salvar a hora: ${mensagemDoBanco(erro)}`,
+        "error",
+      );
+      return false;
+    }
+  }
+
   /* O texto do cabeçalho da agência (Configurações › Marca) e o logo. */
   function marcaDoDocumento() {
     let texto = "";
@@ -630,6 +671,7 @@ export function criarEstadoDaClassificacao({
     publicarLista,
     obterLista,
     registrarDesempate,
+    salvarHoraDeNascimento,
     prepararPublicacaoDeAprovados,
     publicarComoListaDeAprovados,
     exportar,
