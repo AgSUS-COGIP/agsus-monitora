@@ -53,7 +53,6 @@ gera conflito com quem está trabalhando em paralelo.
 | ---------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------- | ---------- |
 | `src/app/` (`montar-modulo.jsx`, `ErrorBoundary.jsx`)                                                            | fica                                                      | —          |
 | `src/ui/` (design system)                                                                                        | fica                                                      | —          |
-| `src/componentes/modal.jsx` (só reexporta `src/ui/modal.jsx`)                                                    | sai quando ninguém importar daqui                         | ao tocar   |
 | `src/componentes/icone.jsx`, `multi-select-busca.jsx`                                                            | `src/ui/`                                                 | ao tocar   |
 | Configurações (moldura, seções e `secoes.js`), Acessos, Módulos e abas                                           | `src/modulos/configuracoes/`, `acessos/`, `modulos/`      | concluído  |
 | `src/componentes/saude-das-cargas/` (Status das atualizações)                                                    | `src/modulos/`                                            | ao tocar   |
@@ -137,7 +136,9 @@ entra assim, não com import estático em `main.js`.
 
 Importe do índice: `import { Kpi, GradeDeKpis, Aviso } from "../../ui/index.js";`. O `ui.css` é
 importado uma vez no ponto de entrada (`src/main.js`); o CSS próprio de um módulo de
-`src/modulos/` entra no `src/main.js` logo depois.
+`src/modulos/` aberto sob demanda é importado pelo ponto de entrada da tela (baixa junto com o código,
+num CSS à parte); só fica no `src/main.js`, logo depois do `ui.css`, o CSS de módulo cujas classes
+aparecem fora da própria tela.
 
 Os componentes emitem só classes `.ui-*` (prefixo para não colidir com `.panel`,
 `.kpi`, `.card`… de `app.css`) e nenhum id fixo. Peças de layout em CSS, sem componente:
@@ -302,4 +303,4 @@ Ficou para depois (ainda em `src/modules/` ou no `index.html`):
 4. O CSS da tela de acesso espalhado (`app.css`, `platform-shell.css`,
    `post-152-regression-fixes.css`, `visual-polish.css`, `mobile-app.css`) consolidado em
    `src/app/entrada/entrada.css`; `auth-storage.js` → `src/lib/`, `sidebar-branding.js` → barra
-   lateral; o CSS morto de `body.sidebar-locked` (`app.css`).
+   lateral.

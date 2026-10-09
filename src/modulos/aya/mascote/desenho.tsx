@@ -1,6 +1,6 @@
 /*
   O desenho da Aya: a arara-azul-grande (Anodorhynchus hyacinthinus) de corpo
-  inteiro, fiel à ilustração de referência (public/assets/arara-azul-monitora.png)
+  inteiro, fiel à ilustração de referência (arara-azul-monitora.png, no histórico do git)
   em anatomia, proporção, cor e luz. Os contornos e as faixas de luz vêm de
   contornos.ts (traçados da referência); aqui fica a composição em camadas que
   as animações movem (mascote.css): cauda, asa aberta (só no aceno e na

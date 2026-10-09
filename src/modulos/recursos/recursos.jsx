@@ -31,6 +31,7 @@ import {
 } from "./paineis.jsx";
 import { PainelDeModelos } from "./modelos.jsx";
 import { TabelaDeRecursos } from "./tabela.jsx";
+import "./recursos.css";
 
 /*
   A tela de Recursos dos candidatos (view `recursos`), um módulo do app:

@@ -246,7 +246,7 @@ no app principal e Tom Select em análises. Não crie um terceiro.
 `--z-overlay`, `--radius-lg`, `--shadow-overlay` e fundo escurecido. O foco fica preso no modal,
 `Esc` fecha e, ao fechar, o foco volta ao elemento que abriu. Largura máxima de 560px (formulário)
 ou 880px (detalhe). Formulário longo não vai em modal pequeno: use página ou drawer.
-Em React, `<Modal>` (`src/componentes/modal.jsx`) já faz o portal, o `Esc`, o foco preso e a volta
+Em React, `<Modal>` (`src/ui/modal.jsx`) já faz o portal, o `Esc`, o foco preso e a volta
 do foco; o legado ainda tem modais próprios (`#editModal`, `#searchModal`).
 
 ### Chip, badge e alerta — `.chip`, `.alert`

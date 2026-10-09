@@ -46,12 +46,6 @@ const numero = (valor) => {
   return Number.isFinite(n) ? n : null;
 };
 
-/* As situações do resultado final: dentro das vagas ou cadastro reserva. */
-export const SITUACOES_DA_LISTA_FINAL = Object.freeze({
-  VAGA: "Aprovado",
-  CR: "Cadastro reserva",
-});
-
 /**
  * Os candidatos do retrato FINAL, um por análise, na ordem das vagas.
  * `analises`: analise_id → { vaga, cargo } (dados do edital na Classificação),

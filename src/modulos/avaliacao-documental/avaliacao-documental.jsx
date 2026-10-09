@@ -25,6 +25,8 @@ import { criarEstadoDaPreClassificacao } from "./estado-da-pre-classificacao.js"
 import { Fila } from "./fila.jsx";
 import { PreClassificacao } from "./pre-classificacao.jsx";
 import { Regra } from "./regra.jsx";
+import "./avaliacao-documental.css";
+import "./ficha/ficha.css";
 
 /*
   A tela Avaliação documental (view `avaliacao-documental`), módulo do app:

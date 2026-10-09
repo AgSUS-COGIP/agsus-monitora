@@ -32,6 +32,8 @@ import { ModalDaCarta } from "./carta-de-convocacao/modal-da-carta.jsx";
 import { ModelosDaCarta } from "./carta-de-convocacao/modelos-da-carta.jsx";
 import { plural } from "./partes.jsx";
 import { SeloDeAvisos } from "../conferencias/avisos-de-conferencia.tsx";
+import "./convocacao.css";
+import "./carta-de-convocacao/carta.css";
 
 /*
   Lista de aprovados (view `approved`), módulo do app — a página
