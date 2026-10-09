@@ -9,7 +9,9 @@
     VAGA <código> - <cargo> - <lotação> - <unidade> - <N vagas (…)>
     [tabela da vaga]  — todas as vagas, inclusive as vazias:
                         "Não houve candidatos aptos."
-    2. DISPOSIÇÕES FINAIS         2.1. …
+    [*nota de desempate] — só na vaga com empate de nota resolvido (critério
+                        ou empate final); texto em regra.documento.desempate
+    2. DISPOSIÇÕES FINAIS        2.1. …
     [assinatura eletrônica e rodapé "<título> (<nº>) SEI <processo> / pg. N"]
                                                          ← o SEI põe
 
@@ -53,7 +55,7 @@ import {
   colunasEscolhidas,
   parcialDaColuna,
 } from "./colunas-do-documento.js";
-import { formatarNota, lerData, ordinal } from "./numeros.js";
+import { escalar, formatarNota, lerData, ordinal } from "./numeros.js";
 import { documentoDaRegra, normalizarRegra } from "./regra.js";
 import { CABECALHO_PADRAO } from "../cabecalho-dos-documentos.js";
 import {
@@ -604,6 +606,57 @@ export function marcasDasDecisoes(linhas) {
   };
 }
 
+/*
+  A nota de desempate: logo abaixo da tabela da vaga em que dois candidatos
+  com a mesma nota (na escala das casas publicadas, como o motor agrupa)
+  ficaram em posições diferentes — o empate foi resolvido pelos critérios da
+  regra ou pelo empate final (sorteio, decisão, inscrição). Empate que fica na
+  mesma posição não leva a nota. O texto: o do edital
+  (regra.documento.desempate) ou o padrão — o rodapé da regra, quando ele já
+  é a frase do desempate, ou o item 10.
+*/
+export const NOTA_DE_DESEMPATE_PADRAO =
+  "*Os critérios de desempate foram considerados conforme item 10 do referido edital.";
+const TIPOS_COM_NOTA_DE_DESEMPATE = new Set([
+  "PRELIMINAR",
+  "ENTREVISTA",
+  "FINAL",
+  "PROVISORIA",
+  "LOTE",
+]);
+const FALA_DO_DESEMPATE = /crit[ée]rios? de desempate/i;
+
+/** A lista leva a nota de desempate? (não a convocação nem os eliminados) */
+export function listaComNotaDeDesempate(tipo, lista) {
+  return TIPOS_COM_NOTA_DE_DESEMPATE.has(tipo) && lista !== "eliminados";
+}
+
+/** O padrão da nota: o rodapé da regra, se é a frase do desempate; senão, o item 10. */
+export function notaDeDesempatePadrao(rodape) {
+  const r = texto(rodape);
+  if (!FALA_DO_DESEMPATE.test(r) || r.length > 300 || r.includes("\n"))
+    return NOTA_DE_DESEMPATE_PADRAO;
+  return r.startsWith("*") ? r : `*${r}`;
+}
+
+/** A nota de desempate do edital (a escrita pelo gestor ou o padrão). */
+export function notaDeDesempate(documento, rodape) {
+  return texto(documento?.desempate) || notaDeDesempatePadrao(rodape);
+}
+
+/** Na lista, dois com a mesma nota em posições diferentes (empate resolvido)? */
+export function houveDesempate(linhas, casas = 2) {
+  const posicoes = new Map();
+  for (const l of linhas || []) {
+    const k = escalar(l?.nota, casas);
+    if (k === null) continue;
+    if (!posicoes.has(k)) posicoes.set(k, new Set());
+    posicoes.get(k).add(l.posicao);
+    if (posicoes.get(k).size > 1) return true;
+  }
+  return false;
+}
+
 function justificativa(e) {
   return [MOTIVOS_DE_ELIMINACAO[e.motivo] || e.motivo, e.detalhe]
     .filter(Boolean)
@@ -773,17 +826,20 @@ function tabelasDaLista(retrato, lista, agenda = null, guardadas, chave) {
 
   return retrato.vagas.map((v) => {
     const tabelas = [];
+    let desempate = false;
+    const comLinhas = (codigo, linhasDaLista, comModalidade) => {
+      if (houveDesempate(linhasDaLista, casas)) desempate = true;
+      tabelas.push(tabela(codigo, linhasDaLista, comModalidade));
+    };
     if (lista === "eliminados") tabelas.push(tabelaDeEliminados(v));
     else {
       if (todas || lista === "geral")
-        tabelas.push(
-          tabela("geral", v.geral || [], todas && modalidades.length > 0),
-        );
+        comLinhas("geral", v.geral || [], todas && modalidades.length > 0);
       for (const m of modalidades)
         if (todas || lista === m.codigo)
-          tabelas.push(tabela(m.codigo, v.listas?.[m.codigo] || [], false));
+          comLinhas(m.codigo, v.listas?.[m.codigo] || [], false);
     }
-    return { cabecalho: v.cabecalho || "", tabelas };
+    return { cabecalho: v.cabecalho || "", tabelas, desempate };
   });
 }
 
@@ -907,9 +963,26 @@ export function documentoOficial(
     ...i,
     texto: limpar(i.texto),
   }));
-  // O rodapé da regra (ex.: os critérios de desempate) vale para o resultado final.
+  // A nota de desempate vai abaixo da tabela de cada vaga com empate resolvido.
+  const nota = listaComNotaDeDesempate(retrato.tipo, listaEfetiva)
+    ? limpar(notaDeDesempate(doc, r.rodape || retrato.rodape))
+    : "";
+  const blocos = tabelasDaLista(
+    retrato,
+    listaEfetiva,
+    agenda,
+    doc.colunas[chave],
+    chave,
+  ).map(({ desempate, ...bloco }) => ({
+    ...bloco,
+    notaDeDesempate: desempate && nota ? nota : "",
+  }));
+  const desempatePorVaga = blocos.some((b) => b.notaDeDesempate);
+  // O rodapé da regra (ex.: os critérios de desempate) vale para o resultado
+  // final — menos a frase do desempate quando ela já está abaixo das vagas.
   if (
     retrato.rodape &&
+    !(desempatePorVaga && FALA_DO_DESEMPATE.test(retrato.rodape)) &&
     retrato.tipo === "FINAL" &&
     listaEfetiva !== "eliminados" &&
     !finais.some((i) => semMarcas(i.texto) === retrato.rodape)
@@ -935,13 +1008,7 @@ export function documentoOficial(
       : `${local}, na data da assinatura digital.`,
     localDataPorExtenso: `${local}, ${dataPorExtenso(doc.data || hoje)}.`,
     preliminares,
-    blocos: tabelasDaLista(
-      retrato,
-      listaEfetiva,
-      agenda,
-      doc.colunas[chave],
-      chave,
-    ),
+    blocos,
     finais,
     nome: treinamento ? `TREINAMENTO - ${nomeDoArquivo}` : nomeDoArquivo,
     treinamento: Boolean(treinamento),
@@ -1032,6 +1099,10 @@ export function htmlParaSei(doc) {
       for (const n of t.notas || [])
         partes.push(`<p class="Texto_Alinhado_Esquerda">${escapar(n)}</p>`);
     }
+    if (bloco.notaDeDesempate)
+      partes.push(
+        `<p class="Texto_Alinhado_Esquerda"><span style="font-size:10pt"><em>${htmlDoTrecho(bloco.notaDeDesempate)}</em></span></p>`,
+      );
   }
   partes.push('<p class="Texto_Justificado">&nbsp;</p>');
   partes.push('<p class="Item_Nivel1">Disposições Finais</p>');
@@ -1076,6 +1147,7 @@ export function textoParaSei(doc) {
       }
       for (const n of t.notas || []) saida.push(n);
     }
+    if (bloco.notaDeDesempate) saida.push(semMarcas(bloco.notaDeDesempate));
     saida.push("");
   }
   secao(2, "DISPOSIÇÕES FINAIS", doc.finais);

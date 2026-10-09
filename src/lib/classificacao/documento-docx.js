@@ -10,7 +10,8 @@
                        PAGE: o Word numera);
     word/document.xml  título, 1. DISPOSIÇÕES PRELIMINARES (itens numerados
                        aqui, com tabulação de 25 mm como no SEI), um bloco por
-                       vaga com a tabela, 2. DISPOSIÇÕES FINAIS e a linha
+                       vaga com a tabela (e a nota de desempate, se houve
+                       empate resolvido), 2. DISPOSIÇÕES FINAIS e a linha
                        "Brasília, <data por extenso>." — sem assinatura (o SEI
                        assina).
 
@@ -35,9 +36,15 @@ const FONTE = '<w:rFonts w:ascii="Calibri" w:hAnsi="Calibri" w:cs="Calibri"/>';
 
 export function corrida(
   texto,
-  { negrito = false, tamanho = 24, cor = "", caixaAlta = false } = {},
+  {
+    negrito = false,
+    italico = false,
+    tamanho = 24,
+    cor = "",
+    caixaAlta = false,
+  } = {},
 ) {
-  return `<w:r><w:rPr>${FONTE}${negrito ? "<w:b/>" : ""}${caixaAlta ? "<w:caps/>" : ""}${cor ? `<w:color w:val="${cor}"/>` : ""}<w:sz w:val="${tamanho}"/></w:rPr><w:t xml:space="preserve">${escaparXml(texto)}</w:t></w:r>`;
+  return `<w:r><w:rPr>${FONTE}${negrito ? "<w:b/>" : ""}${italico ? "<w:i/>" : ""}${caixaAlta ? "<w:caps/>" : ""}${cor ? `<w:color w:val="${cor}"/>` : ""}<w:sz w:val="${tamanho}"/></w:rPr><w:t xml:space="preserve">${escaparXml(texto)}</w:t></w:r>`;
 }
 
 export const corridas = (texto, opcoes = {}) =>
@@ -183,6 +190,14 @@ export function corpoXml(doc) {
           }),
         );
     }
+    // A nota de desempate da vaga (empate de nota resolvido), em itálico.
+    if (bloco.notaDeDesempate)
+      partes.push(
+        paragrafo(
+          corridas(bloco.notaDeDesempate, { italico: true, tamanho: 20 }),
+          { alinhamento: "left", antes: 60 },
+        ),
+      );
   }
   partes.push(titulo(2, "Disposições Finais"));
   const numerosFin = numeracao(doc.finais, 2);

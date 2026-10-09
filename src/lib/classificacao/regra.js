@@ -159,6 +159,10 @@ function normalizarModalidade(m) {
   modelo (a mesma chave dos textos), na ordem do documento: CLASSIFICACAO,
   NOME, MODALIDADE, NOTA, SITUACAO, PARCIAL_FORMACAO…, JUSTIFICATIVA. Sem a
   chave = as colunas padrão da publicação (colunas-do-documento.js).
+
+  `desempate`: a nota logo abaixo da tabela de cada vaga em que um empate de
+  nota foi resolvido (por critério ou pelo empate final). Vazio = o padrão
+  (documento-sei.js: o rodapé da regra, se fala do desempate, ou o item 10).
 */
 const CHAVE_DE_MODELO = /^[A-Z_]{3,60}$/;
 const CODIGO_DE_COLUNA = /^[A-Z][A-Z0-9_]{1,40}$/;
@@ -198,6 +202,7 @@ function normalizarDocumento(bruto) {
     unidade: texto(d.unidade),
     autoridade: texto(d.autoridade),
     local: texto(d.local),
+    desempate: textoLongo(d.desempate),
     data: lerData(d.data) ? texto(d.data).slice(0, 10) : null,
     modelos,
     colunas,
@@ -208,7 +213,9 @@ const documentoVazio = (d) =>
   !Object.keys(d.modelos).length &&
   !Object.keys(d.colunas).length &&
   !d.data &&
-  ["edital", "processo", "unidade", "autoridade", "local"].every((c) => !d[c]);
+  ["edital", "processo", "unidade", "autoridade", "local", "desempate"].every(
+    (c) => !d[c],
+  );
 
 /** Os textos do documento oficial da regra, sempre no formato completo. */
 export function documentoDaRegra(regra) {
@@ -477,7 +484,8 @@ export function validarRegra(bruta) {
     ["edital", "processo", "unidade", "local"].some(
       (c) => doc[c].length > 300,
     ) ||
-    doc.autoridade.length > 1000
+    doc.autoridade.length > 1000 ||
+    doc.desempate.length > 1000
   )
     erro("documento", "Dados do documento longos demais.");
   if (
