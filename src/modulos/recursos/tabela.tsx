@@ -20,7 +20,9 @@ import { classes, Selo, TabelaInfinita } from "../../ui/index.js";
 /*
   "Fila de recursos": a tabela do painel, na tabela de carregamento contínuo
   dos painéis (TabelaInfinita, src/ui/). A busca do cabeçalho vale só para a
-  fila. Clique na linha (ou Enter) ou em "Detalhes" abre a gaveta.
+  fila. Clique na linha (ou Enter) ou no botão da linha abre a gaveta: no
+  Painel de recursos, "Detalhes" (só leitura); em Analisar recursos
+  (`analise`), "Abrir" (a gaveta com as ações).
 */
 
 const COLUNAS = [
@@ -192,11 +194,13 @@ function LinhaDoRecurso({
   origens,
   comemoracoes,
   aoAbrir,
+  analise,
 }: {
   recurso: RecursoDoPainel;
   origens?: readonly OrigemDoRecurso[];
   comemoracoes: boolean;
   aoAbrir: (id: IdentificadorDoRecurso) => void;
+  analise: boolean;
 }) {
   return (
     <tr
@@ -251,13 +255,22 @@ function LinhaDoRecurso({
         <button
           type="button"
           className="btn secondary small"
-          data-tour="recursos-detalhes"
+          data-tour={analise ? "analisar-recursos-abrir" : "recursos-detalhes"}
           onClick={(evento) => {
             evento.stopPropagation();
             aoAbrir(r.id);
           }}
         >
-          <i className="fa-solid fa-chevron-down" aria-hidden="true" /> Detalhes
+          {analise ? (
+            <>
+              <i className="fa-solid fa-gavel" aria-hidden="true" /> Abrir
+            </>
+          ) : (
+            <>
+              <i className="fa-solid fa-chevron-down" aria-hidden="true" />{" "}
+              Detalhes
+            </>
+          )}
         </button>
       </td>
     </tr>
@@ -269,24 +282,25 @@ export function TabelaDeRecursos({
   total,
   origens,
   carregado,
-  podeEditar,
   aoAbrir,
   aoNovo,
   comemoracoes = false,
+  analise = false,
 }: {
   recursos: RecursoDoPainel[];
   total: number;
   origens?: readonly OrigemDoRecurso[];
   carregado: boolean;
-  podeEditar: boolean;
   aoAbrir: (id: IdentificadorDoRecurso) => void;
-  aoNovo: () => void;
+  /** Só em Analisar recursos, para quem edita: "Cadastrar o primeiro". */
+  aoNovo?: () => void;
   comemoracoes?: boolean;
+  analise?: boolean;
 }) {
   return (
     <TabelaInfinita
-      tour="recursos-fila"
-      idDoTitulo="recursosFilaTitulo"
+      tour={analise ? "analisar-recursos-fila" : "recursos-fila"}
+      idDoTitulo={analise ? "analiseRecursosFilaTitulo" : "recursosFilaTitulo"}
       titulo="Fila de recursos"
       busca={{
         placeholder: "Buscar somente na fila de recursos",
@@ -303,13 +317,14 @@ export function TabelaDeRecursos({
           origens={origens}
           comemoracoes={comemoracoes}
           aoAbrir={aoAbrir}
+          analise={analise}
         />
       )}
       total={total}
       vazio={
         <>
           Nenhum recurso cadastrado nesta área.{" "}
-          {podeEditar ? (
+          {aoNovo ? (
             <button
               type="button"
               className="btn secondary small"

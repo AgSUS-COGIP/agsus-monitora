@@ -98,6 +98,19 @@ const MIGRATION_DE_CONDUZIR = ler(
 const MIGRATION_QUE_LIGA_CONDUZIR = ler(
   "supabase/migrations/20261008130500_liga_aba_conduzir_entrevistas.sql",
 );
+/*
+  Analisar recursos (20261009230000_analisar_recursos_no_menu.sql): entra
+  desligada, na ordem 7, nas áreas do painel de recursos (que estão nas três),
+  empurra Painel de entrevistas, Conduzir entrevistas, Classificação,
+  Aprovados e Seleção, e troca o rótulo de Recursos para "Painel de
+  recursos"; 20261009230500_liga_aba_analisar_recursos.sql a liga.
+*/
+const MIGRATION_DE_ANALISAR = ler(
+  "supabase/migrations/20261009230000_analisar_recursos_no_menu.sql",
+);
+const MIGRATION_QUE_LIGA_ANALISAR = ler(
+  "supabase/migrations/20261009230500_liga_aba_analisar_recursos.sql",
+);
 /* A ordem por etapa do processo: só updates de "NU_ORDEM", aplicados por último. */
 const MIGRATION_DA_ORDEM = ler(
   "supabase/migrations/20261001160000_ordem_do_menu_por_etapa.sql",
@@ -150,6 +163,7 @@ function abasDoSeed() {
     ...linhasDoInsertEm(MIGRATION_DA_CLASSIFICACAO, "TB_ABA"),
     ...linhasDoInsertEm(MIGRATION_DA_AVALIACAO, "TB_ABA"),
     ...linhasDoInsertEm(MIGRATION_DE_CONDUZIR, "TB_ABA"),
+    ...linhasDoInsertEm(MIGRATION_DE_ANALISAR, "TB_ABA"),
   ];
   for (const sql of [
     MIGRATION_DAS_ENTREVISTAS,
@@ -157,12 +171,17 @@ function abasDoSeed() {
     MIGRATION_DA_CLASSIFICACAO,
     MIGRATION_DA_AVALIACAO,
     MIGRATION_DE_CONDUZIR,
+    MIGRATION_DE_ANALISAR,
   ])
     for (const [, ordem, aba] of sql.matchAll(
       /update public\."TB_ABA" set "NU_ORDEM" = (\d+)[^;]*where "CO_ABA" = '([^']+)'/g,
     ))
       abas.find((linha) => linha.CO_ABA === aba).NU_ORDEM = Number(ordem);
-  for (const sql of [MIGRATION_DA_AVALIACAO, MIGRATION_DE_CONDUZIR])
+  for (const sql of [
+    MIGRATION_DA_AVALIACAO,
+    MIGRATION_DE_CONDUZIR,
+    MIGRATION_DE_ANALISAR,
+  ])
     for (const [, rotulo, aba] of sql.matchAll(
       /update public."TB_ABA" set "NO_ABA" = '([^']+)'[^;]*where "CO_ABA" = '([^']+)'/g,
     ))
@@ -201,6 +220,12 @@ function ligacoesDoSeed() {
   expect(MIGRATION_QUE_LIGA_CONDUZIR).toContain(
     `set "ST_ATIVO" = 'S', "DT_ATUALIZACAO" = now() where "CO_ABA" = 'conduzir-entrevistas'`,
   );
+  expect(MIGRATION_DE_ANALISAR).toContain(
+    `select 'analisar-recursos', r."CO_AREA", r."ST_ATIVO" from public."RL_ABA_AREA" r where r."CO_ABA" = 'recursos'`,
+  );
+  expect(MIGRATION_QUE_LIGA_ANALISAR).toContain(
+    `set "ST_ATIVO" = 'S', "DT_ATUALIZACAO" = now() where "CO_ABA" = 'analisar-recursos'`,
+  );
   return [
     ...linhasDoInsert("RL_ABA_AREA"),
     ...[
@@ -209,6 +234,8 @@ function ligacoesDoSeed() {
       "classificacao",
       "avaliacao-documental",
       "conduzir-entrevistas",
+      // As áreas do painel de recursos (as três no seed).
+      "analisar-recursos",
     ].flatMap((aba) =>
       AREAS_DO_SISTEMA.map((area) => ({ CO_ABA: aba, CO_AREA: area.id })),
     ),
@@ -290,6 +317,7 @@ describe("o seed da migration é o catálogo do código", () => {
       "entrevistas",
       "conduzir-entrevistas",
       "recursos",
+      "analisar-recursos",
       "selecao",
       "classificacao",
     ]);
@@ -381,7 +409,7 @@ describe("a árvore segue o catálogo do banco quando ele chega", () => {
     const editais = resposta.find((aba) => aba.co_aba === "editais");
     Object.assign(
       editais.areas.find((a) => a.co_area === "projetos"),
-      { nu_ordem: 11, ds_icone: "folder" },
+      { nu_ordem: 13, ds_icone: "folder" },
     );
     const grupos = Object.fromEntries(
       arvore(PERMISSOES.admin, AREAS.todas, abasDoCatalogo(resposta)).map(
@@ -546,12 +574,13 @@ describe("contrato e acesso da função", () => {
   o do banco; sem eles, o do código.
 */
 describe("selo beta das abas", () => {
-  const recursosDe = (abas) => abas.find((aba) => aba.id === "recursos");
+  const recursosDe = (abas) =>
+    abas.find((aba) => aba.id === "analisar-recursos");
 
-  it("no código, só Avaliação documental, Recursos, Entrevistas (painel e conduzir), Classificação e Seleção são beta; as outras nem têm o campo", () => {
+  it("no código, só Avaliação documental, Analisar recursos, Entrevistas (painel e conduzir), Classificação e Seleção são beta; as outras nem têm o campo", () => {
     const beta = [
       "avaliacao-documental",
-      "recursos",
+      "analisar-recursos",
       "entrevistas",
       "conduzir-entrevistas",
       "classificacao",
@@ -571,12 +600,12 @@ describe("selo beta das abas", () => {
     expect(recursosDe(abasDoCatalogo(RESPOSTA_DO_ENSAIO)).beta).toBe(true);
     expect(
       paginasDaArea(abasDoCatalogo(RESPOSTA_DO_ENSAIO), "sede").find(
-        (pagina) => pagina.view === "recursos",
+        (pagina) => pagina.view === "analisar-recursos",
       ),
     ).toEqual({
-      view: "recursos",
-      rotulo: "Recursos",
-      icone: "scale",
+      view: "analisar-recursos",
+      rotulo: "Analisar recursos",
+      icone: "gavel",
       beta: true,
     });
   });
@@ -586,7 +615,7 @@ describe("selo beta das abas", () => {
       abasDoCatalogo(
         RESPOSTA_DO_ENSAIO.map((aba) => ({
           ...aba,
-          ...(aba.co_aba === "recursos" ? campos : {}),
+          ...(aba.co_aba === "analisar-recursos" ? campos : {}),
           ...(aba.co_aba === "editais" ? { ds_selo: "BETA" } : {}),
         })),
       );
@@ -597,9 +626,9 @@ describe("selo beta das abas", () => {
 
   it("o item do menu leva o selo da página beta", () => {
     const itens = montarArvoreDoMenu({
-      permitidas: { nucleo: true, recursos: true },
+      permitidas: { nucleo: true, "analisar-recursos": true },
     })[0].itens;
-    expect(itens.find((i) => i.view === "recursos").beta).toBe(true);
+    expect(itens.find((i) => i.view === "analisar-recursos").beta).toBe(true);
     expect(
       Object.hasOwn(
         itens.find((i) => i.view === "nucleo"),

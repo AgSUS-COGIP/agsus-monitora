@@ -83,7 +83,16 @@ export const TELAS_REACT = Object.freeze({
     "Candidatos por edital e situação de contratação.",
     janela.aprovadosController,
   ],
-  recursos: (_valor, janela) => ["Recursos", "", janela.recursosController],
+  recursos: (_valor, janela) => [
+    "Painel de recursos",
+    "",
+    janela.recursosController,
+  ],
+  "analisar-recursos": (_valor, janela) => [
+    "Analisar recursos",
+    "",
+    janela.analisarRecursosController,
+  ],
   entrevistas: (_valor, janela) => [
     "Painel de entrevistas",
     "",

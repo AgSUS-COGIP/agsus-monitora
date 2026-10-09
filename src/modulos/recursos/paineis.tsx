@@ -47,10 +47,14 @@ import {
 } from "../../ui/index.js";
 
 /*
-  Os blocos da tela de Recursos, com os componentes de src/ui/: o topo (só
+  Os blocos das telas de Recursos, com os componentes de src/ui/: o topo (só
   status e ações — o título e a área estão no cabeçalho do app), "Refinar
   resultados", os quatro KPIs em card compacto (botões que filtram), o
   recorte ativo, os gráficos Chart.js e as pendências prioritárias.
+
+  O Painel de recursos (acompanhar) usa todos; Analisar recursos (fazer) usa
+  o topo e os filtros (`analise`: ids e tour próprios, as duas telas ficam no
+  DOM ao mesmo tempo).
 */
 
 const truncar = (valor: unknown, limite: number) => {
@@ -64,14 +68,33 @@ export function Topo({
   aoNovo,
   novoDesativado,
   aoModelos,
+  aoAnalisar,
+  aoVerPainel,
   ...props
 }: ComponentProps<typeof TopoDoPainel> & {
   aoNovo?: () => void;
   novoDesativado?: boolean;
   aoModelos?: () => void;
+  /** Painel, para quem analisa: Analisar recursos com o recorte do painel. */
+  aoAnalisar?: () => void;
+  /** Analisar recursos: volta ao painel com o mesmo recorte. */
+  aoVerPainel?: () => void;
 }) {
   return (
     <TopoDoPainel {...props}>
+      {aoVerPainel ? (
+        <button
+          type="button"
+          className="btn secondary"
+          data-acao="painel-de-recursos"
+          data-tour="analisar-recursos-painel"
+          title="O Painel de recursos com os mesmos filtros"
+          onClick={aoVerPainel}
+        >
+          <i className="fa-solid fa-chart-column" aria-hidden="true" /> Ver no
+          painel
+        </button>
+      ) : null}
       {aoModelos ? (
         <button
           type="button"
@@ -95,6 +118,18 @@ export function Topo({
           onClick={aoNovo}
         >
           <i className="fa-solid fa-plus" aria-hidden="true" /> Novo recurso
+        </button>
+      ) : null}
+      {aoAnalisar ? (
+        <button
+          type="button"
+          className="btn"
+          data-acao="analisar-recursos"
+          data-tour="recursos-analisar"
+          title="Analisar recursos com os mesmos filtros"
+          onClick={aoAnalisar}
+        >
+          <i className="fa-solid fa-gavel" aria-hidden="true" /> Analisar
         </button>
       ) : null}
     </TopoDoPainel>
@@ -142,21 +177,26 @@ export function Filtros({
   carregado,
   aoMudar,
   aoLimpar,
+  analise = false,
 }: {
   filtros: FiltrosDosRecursos;
   opcoes: Opcoes;
   carregado: boolean;
   aoMudar: AoFiltrarRecursos;
   aoLimpar: () => void;
+  analise?: boolean;
 }) {
   const [maisOpcoes, setMaisOpcoes] = useState(false);
+  const id = (nome: string) => (analise ? `analise-${nome}` : nome);
   const ativos = filtrosAtivos(filtros, opcoes);
   const avancados = String(filtros.busca || "").trim() ? 1 : 0;
 
   return (
     <PainelDeFiltros
-      tour="recursos-filtros"
-      idDoTitulo="recursosFiltrosTitulo"
+      tour={analise ? "analisar-recursos-filtros" : "recursos-filtros"}
+      idDoTitulo={
+        analise ? "analiseRecursosFiltrosTitulo" : "recursosFiltrosTitulo"
+      }
       quantos={ativos.length}
       aoLimpar={aoLimpar}
       aoRecolher={() => setMaisOpcoes(false)}
@@ -165,7 +205,7 @@ export function Filtros({
         {CAMPOS_DO_FILTRO.map(([campo, rotulo, lista, todos]) => (
           <Campo rotulo={rotulo} key={campo}>
             <select
-              id={`filtro-${campo}`}
+              id={id(`filtro-${campo}`)}
               data-tour={`recursos-filtro-${campo}`}
               name={campo}
               value={filtros[campo]}
@@ -183,7 +223,11 @@ export function Filtros({
         ))}
       </div>
       <MaisOpcoes
-        id="recursosFiltrosAdicionais"
+        id={
+          analise
+            ? "analiseRecursosFiltrosAdicionais"
+            : "recursosFiltrosAdicionais"
+        }
         aberto={maisOpcoes}
         aoAlternar={() => setMaisOpcoes((atual) => !atual)}
         quantos={avancados}
@@ -191,7 +235,7 @@ export function Filtros({
       >
         <Campo rotulo="Buscar em toda a tela">
           <input
-            id="filtro-busca"
+            id={id("filtro-busca")}
             data-tour="recursos-busca"
             type="search"
             name="busca"

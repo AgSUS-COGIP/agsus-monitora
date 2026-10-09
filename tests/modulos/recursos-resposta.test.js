@@ -277,6 +277,9 @@ function criarServidor({
 
 let raiz;
 let painel;
+/* O Painel de recursos ao lado: as pendências das respostas ficam nele. */
+let raizDoPainel;
+let acompanhamento;
 const toast = vi.fn();
 const baixarArquivo = vi.fn();
 const abrirUrl = vi.fn();
@@ -290,6 +293,7 @@ async function montar(servidor) {
   document.body.append(raiz);
   await act(async () => {
     painel = montarRecursos({
+      modo: "analise",
       secao: raiz,
       supabase: servidor.supabase,
       areaAtual: () => "saude-indigena",
@@ -303,6 +307,16 @@ async function montar(servidor) {
   // O legado abre a tela (navigate → render()).
   await act(async () => void painel.render());
   await esperar();
+  raizDoPainel = document.createElement("div");
+  document.body.append(raizDoPainel);
+  await act(async () => {
+    acompanhamento = montarRecursos({
+      secao: raizDoPainel,
+      supabase: servidor.supabase,
+      areaAtual: () => "saude-indigena",
+      toast,
+    });
+  });
 }
 
 async function abrirGaveta() {
@@ -318,15 +332,21 @@ const botaoEm = (onde, texto) =>
     b.textContent.trim().startsWith(texto),
   );
 /* As respostas em revisão, aprovadas e devolvidas são pendências (os KPIs delas saíram). */
-const pendencia = (chave) =>
-  Number.parseInt(
-    document.querySelector(`.ui-pendencias [data-pendencia="${chave}"] small`)
-      ?.textContent || "0",
+/* Abre o Painel de recursos de novo (navigate → render()) e lê a pendência. */
+async function pendencia(chave) {
+  await act(async () => void acompanhamento.render());
+  await esperar();
+  return Number.parseInt(
+    raizDoPainel.querySelector(
+      `.ui-pendencias [data-pendencia="${chave}"] small`,
+    )?.textContent || "0",
     10,
   );
+}
 
 afterEach(async () => {
   await act(async () => painel?.raiz?.unmount());
+  await act(async () => acompanhamento?.raiz?.unmount());
   raiz?.remove();
   document.body.innerHTML = "";
   document.body.className = "";
@@ -356,7 +376,7 @@ describe("resposta ao candidato", () => {
   it("modelo → prévia → rascunho → revisão → aprovação por outra pessoa → documento → enviada", async () => {
     const servidor = criarServidor();
     await montar(servidor);
-    expect(pendencia("resposta_em_revisao")).toBe(0);
+    expect(await pendencia("resposta_em_revisao")).toBe(0);
     await abrirGaveta();
     const resposta = secao("resposta");
     expect(resposta).not.toBeNull();
@@ -420,7 +440,7 @@ describe("resposta ao candidato", () => {
         p_comentario: null,
       },
     );
-    expect(pendencia("resposta_em_revisao")).toBe(1);
+    expect(await pendencia("resposta_em_revisao")).toBe(1);
 
     // Em revisão: sem editor de texto; a autora não aprova.
     expect(
@@ -446,7 +466,7 @@ describe("resposta ao candidato", () => {
     );
     await esperar();
     expect(servidor.resposta.estado).toBe("aprovada");
-    expect(pendencia("resposta_aprovada")).toBe(1);
+    expect(await pendencia("resposta_aprovada")).toBe(1);
 
     // Documento: .docx, impressão e anexo ao recurso.
     await clicar(botaoEm(secaoAtual(), "Baixar"));
@@ -550,7 +570,7 @@ describe("resposta ao candidato", () => {
     await clicar(confirmar);
     await esperar();
     expect(servidor.resposta.estado).toBe("devolvida");
-    expect(pendencia("resposta_devolvida")).toBe(1);
+    expect(await pendencia("resposta_devolvida")).toBe(1);
     expect(secao("resposta").textContent).toContain(
       "Ajuste pedido na revisão: Cite o item do edital.",
     );

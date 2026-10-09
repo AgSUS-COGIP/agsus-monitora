@@ -92,13 +92,19 @@ function supabaseFalso({
 let secao;
 let painel;
 
-async function montar(supabase) {
+/* `modo`: "analise" (Analisar recursos, a operação) ou "painel" (os KPIs). */
+async function montar(supabase, modo = "analise") {
   secao = document.createElement("section");
   secao.id = "page-recursos";
   secao.className = "page active";
   document.body.append(secao);
   await act(async () => {
-    painel = montarRecursos({ supabase, toast: vi.fn() });
+    painel = montarRecursos({
+      modo,
+      secao,
+      supabase,
+      toast: vi.fn(),
+    });
   });
   await act(async () => void painel.render());
   await esperar();
@@ -188,6 +194,7 @@ describe("KPIs", () => {
           }),
         ],
       }),
+      "painel",
     );
     expect(kpis()).toEqual([
       "aguardando-parecer",

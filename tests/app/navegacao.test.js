@@ -99,7 +99,7 @@ describe("troca de tela", () => {
     navegacao.irPara("recursos");
     await new Promise((resolver) => setTimeout(resolver, 0));
     expect(avisar).toHaveBeenCalledWith(
-      "Não foi possível abrir Recursos: tabela fora do ar",
+      "Não foi possível abrir Painel de recursos: tabela fora do ar",
       "error",
     );
     expect(navegacao.obter().view).toBe("recursos");
@@ -110,7 +110,9 @@ describe("troca de tela", () => {
     const { navegacao, janela } = criar();
     navegacao.irPara("recursos");
     expect(ativas()).toEqual(["page-recursos"]);
-    expect(document.getElementById("pageTitle").textContent).toBe("Recursos");
+    expect(document.getElementById("pageTitle").textContent).toBe(
+      "Painel de recursos",
+    );
     expect(document.getElementById("pageSubtitle").textContent).toBe(
       "Saúde Indígena",
     );
@@ -120,7 +122,7 @@ describe("troca de tela", () => {
     expect(localStorage.getItem(CHAVE_DA_TELA_GUARDADA)).toBe("recursos");
     expect(obterPaginaDaAya()).toMatchObject({
       view: "recursos",
-      titulo: "Recursos",
+      titulo: "Painel de recursos",
     });
   });
 

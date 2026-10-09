@@ -31,6 +31,7 @@
 */
 
 import {
+  canAnalisarRecursos,
   canChangeCandidateStatus,
   canEditClassificacao,
   canEditRecursos,
@@ -271,19 +272,13 @@ const TOURS = Object.freeze({
     ]),
   }),
   recursos: Object.freeze({
-    titulo: "Recursos",
+    titulo: "Painel de recursos",
     passos: Object.freeze([
       passo(
-        t("recursos-novo"),
-        "Novo recurso",
-        "Registra o recurso com os dados do candidato e os anexos.",
-        { exige: canEditRecursos },
-      ),
-      passo(
-        t("recursos-modelos"),
-        "Modelos de resposta",
-        "Os textos prontos das respostas, para o administrador de Recursos.",
-        { exige: administraRecursos },
+        t("recursos-analisar"),
+        "Analisar",
+        "Abre Analisar recursos com os mesmos filtros: é lá que se registra, decide e responde.",
+        { exige: canAnalisarRecursos },
       ),
       passo(
         [t("recursos-filtros"), "[aria-labelledby='recursosFiltrosTitulo']"],
@@ -307,8 +302,52 @@ const TOURS = Object.freeze({
       ),
       passo(
         t("recursos-detalhes"),
+        "Detalhes",
+        "O recurso inteiro, só para ler: dados, parecer, ajuste, etapas, resposta, anexos e histórico.",
+      ),
+      PASSO_DA_AYA,
+    ]),
+  }),
+  "analisar-recursos": Object.freeze({
+    titulo: "Analisar recursos",
+    passos: Object.freeze([
+      passo(
+        t("analisar-recursos-painel"),
+        "Ver no painel",
+        "Volta ao Painel de recursos com os mesmos filtros, para acompanhar os números.",
+      ),
+      passo(
+        t("recursos-novo"),
+        "Novo recurso",
+        "Registra o recurso com os dados do candidato e os anexos.",
+        { exige: canEditRecursos },
+      ),
+      passo(
+        t("recursos-modelos"),
+        "Modelos de resposta",
+        "Os textos prontos das respostas, para o administrador de Recursos.",
+        { exige: administraRecursos },
+      ),
+      passo(
+        [
+          t("analisar-recursos-filtros"),
+          "[aria-labelledby='analiseRecursosFiltrosTitulo']",
+        ],
+        "Filtros",
+        "Recorte por edital, origem, analista, situação ou pendência, ou busque pelo candidato.",
+      ),
+      passo(
+        [
+          t("analisar-recursos-fila"),
+          "[aria-labelledby='analiseRecursosFilaTitulo']",
+        ],
+        "Fila de recursos",
+        "Cada recurso com situação, etapas, prazo e analista.",
+      ),
+      passo(
+        t("analisar-recursos-abrir"),
         "Abrir o recurso",
-        "Dados, anexos, etapas, parecer, ajuste da pontuação e resposta ao candidato.",
+        "Etapas, parecer e decisão, ajuste da pontuação, resposta ao candidato e anexos.",
       ),
       PASSO_DA_AYA,
     ]),
@@ -1242,8 +1281,8 @@ const TRILHAS = Object.freeze([
       ),
       passo(
         [t("recursos-kpis"), "#page-recursos .recursos-kpis"],
-        "4. Recursos",
-        "Os recursos dos candidatos, do registro ao parecer jurídico e à resposta.",
+        "4. Painel de recursos",
+        "Os recursos dos candidatos, do registro ao parecer jurídico e à resposta; analisar é em Analisar recursos.",
         { pagina: "recursos" },
       ),
       passo(
@@ -1332,32 +1371,35 @@ const TRILHAS = Object.freeze([
       passo(
         t("recursos-novo"),
         "Registrar",
-        "Quem edita Recursos registra o recurso com os dados do candidato e anexa os documentos.",
-        { pagina: "recursos", exige: canEditRecursos },
+        "Em Analisar recursos, quem edita Recursos registra o recurso com os dados do candidato e anexa os documentos.",
+        { pagina: "analisar-recursos", exige: canEditRecursos },
       ),
       passo(
-        [t("recursos-fila"), "[aria-labelledby='recursosFilaTitulo']"],
+        [
+          t("analisar-recursos-fila"),
+          "[aria-labelledby='analiseRecursosFilaTitulo']",
+        ],
         "Rascunho e envio",
         "Na fila, abra o recurso, escreva o rascunho da resposta e envie para o parecer jurídico.",
-        { pagina: "recursos", exige: canEditRecursos },
+        { pagina: "analisar-recursos", exige: canEditRecursos },
       ),
       passo(
         [t("recursos-kpis"), "#page-recursos .recursos-kpis"],
         "Aguardando parecer",
-        "São os recursos enviados ao jurídico e ainda sem decisão. Clicar no indicador filtra a fila.",
+        "No Painel de recursos, são os enviados ao jurídico e ainda sem decisão. Clicar no indicador filtra a fila.",
         { pagina: "recursos" },
       ),
       passo(
         null,
         "Decisão do jurídico",
-        "Quem tem Parecer jurídico defere, defere parcialmente ou indefere, sempre com o texto do parecer, ou devolve para ajuste.",
-        { pagina: "recursos" },
+        "Em Analisar recursos, quem tem Parecer jurídico defere, defere parcialmente ou indefere, sempre com o texto do parecer, ou devolve para ajuste.",
+        { pagina: "analisar-recursos" },
       ),
       passo(
         null,
         "Ajuste da pontuação",
         "Recurso que muda nota tem a proposta de ajuste; aprovada, ela entra na Classificação.",
-        { pagina: "recursos" },
+        { pagina: "analisar-recursos" },
       ),
       passo(
         t("recursos-pendencias"),
@@ -1369,7 +1411,7 @@ const TRILHAS = Object.freeze([
         null,
         "Resposta ao candidato",
         "O jurídico aprova o texto da resposta; depois, quem edita marca a resposta como enviada.",
-        { pagina: "recursos" },
+        { pagina: "analisar-recursos" },
       ),
     ]),
   }),

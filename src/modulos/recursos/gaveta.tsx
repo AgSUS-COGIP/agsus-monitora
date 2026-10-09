@@ -36,6 +36,10 @@ import { detalheDoPrazo, MarcaForaDasAnalises } from "./tabela.tsx";
   a resposta ao candidato
   (resposta.tsx), os anexos (anexos.tsx), a observação e o histórico. Quem
   edita marca as etapas aqui, escreve a resposta, anexa, edita e exclui.
+
+  No Painel de recursos a gaveta é só leitura (`somenteLeitura`): nenhuma
+  ação, nem as do ajuste; quem analisa tem o atalho "Analisar este recurso",
+  que abre o mesmo recurso em Analisar recursos.
 */
 
 const CAMPOS_DO_HISTORICO: Record<string, string> = {
@@ -122,11 +126,15 @@ export function GavetaDoRecurso({
   recurso: r,
   detalhe,
   origens,
-  podeEditar,
-  podeDecidir = false,
+  podeEditar: podeEditarNaTela,
+  podeDecidir: podeDecidirNaTela = false,
   modelos = [],
   area = "",
+  somenteLeitura = false,
+  aoAnalisar,
 }: PropsDaGavetaDoRecurso) {
+  const podeEditar = podeEditarNaTela && !somenteLeitura;
+  const podeDecidir = podeDecidirNaTela && !somenteLeitura;
   // Recurso decidido: excluir é do parecer jurídico. A etapa "resposta
   // enviada" é de quem edita, mas só marca com o recurso decidido.
   const podeExcluir = podeEditar && (!r.decidido || podeDecidir);
@@ -197,6 +205,19 @@ export function GavetaDoRecurso({
 
       <div className="ui-gaveta-corpo">
         <div className="recursos-corpo">
+          {aoAnalisar ? (
+            <div className="ui-acoes">
+              <button
+                type="button"
+                className="btn small"
+                data-acao="analisar-este-recurso"
+                onClick={aoAnalisar}
+              >
+                <i className="fa-solid fa-gavel" aria-hidden="true" /> Analisar
+                este recurso
+              </button>
+            </div>
+          ) : null}
           {podeEditar && !excluindo ? (
             <div className="ui-acoes" data-tour="recursos-gaveta-acoes">
               <button
@@ -231,7 +252,12 @@ export function GavetaDoRecurso({
             acao={acao}
           />
 
-          <SecaoDoAjuste estado={estado} recurso={r} acao={acao} />
+          <SecaoDoAjuste
+            estado={estado}
+            recurso={r}
+            acao={acao}
+            somenteLeitura={somenteLeitura}
+          />
 
           <Secao icone="fa-list-check" titulo="Etapas" secao="etapas">
             <ul className="recursos-checklist" data-tour="recursos-etapas">

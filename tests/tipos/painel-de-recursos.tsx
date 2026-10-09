@@ -74,7 +74,7 @@ const tela = (
       recursos={recorte}
       total={recursos.length}
       carregado
-      podeEditar={false}
+      analise
       aoAbrir={(id) => {
         void id;
       }}
