@@ -10,6 +10,7 @@ import io
 import logging
 import pathlib
 import sys
+from urllib.parse import urlparse
 
 import pytest
 
@@ -71,7 +72,9 @@ def test_candidatos_botao_baixar_vem_primeiro():
     assert c[0] == f"https://corporate.empregare.com/Company/VacancyTests/DownloadArquivo?arquivo={ARQUIVO}"
     assert f"https://arquivos.exemplo.com/case/{ARQUIVO}" in c
     assert not any("/Company/Viewer" in u for u in c)  # o próprio visualizador não conta
-    assert not any("docs.google.com" in u for u in c)  # do visualizador do Google, só o endereço de dentro
+    assert not any(
+        urlparse(u).hostname == "docs.google.com" for u in c
+    )  # do visualizador do Google, só o endereço de dentro
 
 
 def test_candidatos_pelo_onclick_e_pelo_embed():
