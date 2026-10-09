@@ -5,3 +5,7 @@ selenium==4.35.0
 pandas==2.3.2
 openpyxl==3.1.5
 xlrd==2.0.2
+# Leitura automática dos arquivos (leitura_de_arquivos.py; workflow leitura-de-arquivos.yml):
+# texto do PDF (pdfplumber, que traz Pillow e pypdfium2) e OCR (pytesseract + Tesseract do apt).
+pdfplumber==0.11.9
+pytesseract==0.3.13

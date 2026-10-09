@@ -1,0 +1,127 @@
+name: Leitura dos arquivos da Avaliação documental
+
+# Robô em Python (scripts/robo-empregare/leitura_de_arquivos.py) que LÊ os
+# anexos do questionário dos candidatos na Empregare para ajudar o avaliador
+# na ficha da Avaliação documental (ele só sugere e alerta; quem decide é o
+# avaliador). Para os anexos da resposta vigente ainda não lidos (ou lidos
+# com extrator de versão antiga, ou com erro) dos editais pedidos — primeiro
+# os de quem já tem ficha —, baixa cada arquivo só para a memória, lê (texto
+# do PDF ou OCR do Tesseract em português), grava o resultado pela RPC
+# gravar_leituras_de_arquivos (migration 20261009220000) e descarta o arquivo.
+# Retomável: ao esgotar o orçamento de tempo, a próxima execução continua.
+#
+# Quando roda: só pelo botão "Run workflow" desta aba Actions (sem agenda
+# automática por enquanto). Guia: docs/leitura-dos-arquivos.md.
+#
+# O REPOSITÓRIO É PÚBLICO e este log também: o robô só imprime contagens,
+# códigos de erro e números de edital (python/monitora/mascaramento.py). Os
+# arquivos nunca vão para disco, artifact nem log.
+#
+# Secrets (os mesmos do robô da Empregare):
+#   EMPREGARE_EMAIL, EMPREGARE_SENHA, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
+
+on:
+  workflow_dispatch:
+    inputs:
+      editais:
+        description: "Editais separados por vírgula (93/2026, o id ou o nome); vazio = os ativos com vagas da Empregare e regra"
+        type: string
+        required: false
+        default: ""
+      limite:
+        description: "Máximo de arquivos nesta execução (1 a 2000)"
+        type: string
+        required: false
+        default: "300"
+      forcar:
+        description: "Reler também o que já foi lido nesta versão do extrator (até o limite)"
+        type: boolean
+        required: false
+        default: false
+      modo:
+        description: "normal = lê e grava; seco = só conta o que falta ler; sondar = só a estrutura do visualizador de até 3 anexos"
+        type: choice
+        options:
+          - normal
+          - seco
+          - sondar
+        default: normal
+
+permissions:
+  contents: read
+
+concurrency:
+  group: leitura-de-arquivos
+  cancel-in-progress: false
+
+jobs:
+  ler:
+    name: Empregare → leitura → Supabase
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+
+    steps:
+      - name: Baixar código
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 1
+          show-progress: false
+
+      - name: Configurar Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: scripts/robo-empregare/requirements.txt
+
+      - name: Instalar dependências do robô
+        run: pip install --disable-pip-version-check -r scripts/robo-empregare/requirements.txt
+
+      # Tesseract (OCR) em português, com os pacotes .deb guardados no cache do Actions:
+      # com o cache, instala sem baixar; sem ele, baixa uma vez e guarda.
+      - name: Cache do Tesseract
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/apt-tesseract
+          key: tesseract-por-${{ runner.os }}-${{ runner.arch }}-v1
+
+      - name: Instalar o Tesseract
+        if: ${{ inputs.modo != 'seco' }}
+        run: |
+          mkdir -p ~/.cache/apt-tesseract/partial
+          if ls ~/.cache/apt-tesseract/*.deb >/dev/null 2>&1 && sudo dpkg -i ~/.cache/apt-tesseract/*.deb >/dev/null 2>&1; then
+            echo "Tesseract instalado do cache."
+          else
+            sudo apt-get update -qq
+            sudo apt-get install -y -qq --no-install-recommends -o Dir::Cache::Archives="$HOME/.cache/apt-tesseract" \
+              tesseract-ocr tesseract-ocr-por
+            sudo chown -R "$USER" ~/.cache/apt-tesseract
+          fi
+          tesseract --version | head -1
+          tesseract --list-langs | grep -qx por
+
+      # O runner ubuntu já traz o Google Chrome; o Selenium Manager acha o chromedriver.
+      - name: Conferir o Chrome
+        if: ${{ inputs.modo != 'seco' }}
+        run: google-chrome --version
+
+      # Os inputs vão por variável de ambiente (nunca interpolados no shell) e o
+      # script valida o formato de cada um.
+      - name: Ler os arquivos
+        env:
+          EMPREGARE_EMAIL: ${{ secrets.EMPREGARE_EMAIL }}
+          EMPREGARE_SENHA: ${{ secrets.EMPREGARE_SENHA }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          EDITAIS: ${{ inputs.editais }}
+          LIMITE: ${{ inputs.limite || '300' }}
+          FORCAR: ${{ inputs.forcar && 'sim' || 'nao' }}
+          MODO: ${{ inputs.modo || 'normal' }}
+          ORCAMENTO_MINUTOS: "100"
+        run: |
+          args=()
+          case "$MODO" in
+            seco)   args+=(--seco) ;;
+            sondar) args+=(--sondar) ;;
+          esac
+          python scripts/robo-empregare/leitura_de_arquivos.py "${args[@]}"

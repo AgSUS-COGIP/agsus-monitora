@@ -1887,3 +1887,184 @@
     flex-basis: 100%;
   }
 }
+
+/* ── Lido dos arquivos (leitura-dos-arquivos.tsx) ─────────────────────────
+   O resumo do robô ao lado de cada arquivo e a conferência de cada item lido. */
+.avd-ficha-arquivo-lido {
+  display: grid;
+  gap: var(--space-1);
+  max-width: 100%;
+}
+.avd-lido {
+  display: grid;
+  gap: var(--space-0-5);
+  font-size: var(--text-caption);
+  color: var(--text-secondary);
+}
+.avd-lido p {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-1);
+  margin: 0;
+}
+.avd-lido i {
+  flex: none;
+  margin-top: 2px;
+}
+.avd-lido-rotulo {
+  color: var(--text-primary);
+  font-weight: var(--font-weight-medium);
+}
+.avd-lido[data-tom="lido"] .avd-lido-resumo > i {
+  color: var(--state-success);
+}
+.avd-lido[data-tom="alerta"] .avd-lido-resumo > i,
+.avd-lido-alertas,
+.avd-lido-alertas i {
+  color: var(--state-warning);
+}
+.avd-conferir {
+  display: grid;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  background: var(--surface-card);
+}
+.avd-conferir-topo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+.avd-conferir-titulo {
+  margin: 0;
+  color: var(--text-primary);
+  font-size: var(--text-body-sm);
+  font-weight: var(--font-weight-medium);
+}
+.avd-conferir-pendentes {
+  margin-left: var(--space-1);
+  color: var(--text-secondary);
+  font-weight: var(--font-weight-regular);
+}
+.avd-conferir-lista {
+  display: grid;
+  gap: var(--space-1-5);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.avd-conferir-item {
+  display: grid;
+  gap: var(--space-1);
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--border-subtle);
+  border-left: 3px solid var(--border-control);
+  border-radius: var(--radius-md);
+  background: var(--surface-raised);
+}
+.avd-conferir-item:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+.avd-conferir-item[data-alerta="sim"][data-estado="pendente"] {
+  border-left-color: var(--state-warning);
+}
+.avd-conferir-item[data-estado="aceito"] {
+  border-left-color: var(--state-success);
+}
+.avd-conferir-item[data-estado="recusado"] {
+  border-left-color: var(--state-danger);
+}
+.avd-conferir-linha {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1-5) var(--space-3);
+}
+.avd-conferir-texto {
+  flex: 1 1 18rem;
+  min-width: 0;
+  color: var(--text-primary);
+  font-size: var(--text-body-sm);
+}
+.avd-conferir-item[data-estado="recusado"] .avd-conferir-texto {
+  color: var(--text-secondary);
+  text-decoration: line-through;
+}
+.avd-conferir-arquivo {
+  color: var(--text-secondary);
+  font-size: var(--text-caption);
+  white-space: nowrap;
+}
+.avd-conferir-estado {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-size: var(--text-caption);
+  font-weight: var(--font-weight-medium);
+}
+.avd-conferir-estado[data-estado="aceito"] {
+  color: var(--state-success);
+}
+.avd-conferir-estado[data-estado="recusado"] {
+  color: var(--state-danger);
+}
+.avd-conferir-acoes {
+  display: inline-flex;
+  gap: var(--space-1-5);
+}
+.avd-conferir-botao {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  min-height: 32px;
+  padding: var(--space-1) var(--space-3);
+  border: 1px solid var(--border-control);
+  border-radius: var(--radius-md);
+  background: var(--surface-card);
+  color: var(--text-primary);
+  font: inherit;
+  font-size: var(--text-body-sm);
+  cursor: pointer;
+}
+.avd-conferir-botao:hover {
+  background: var(--surface-hover);
+}
+.avd-conferir-botao:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+.avd-conferir-botao[data-acao="aceitar"] i {
+  color: var(--state-success);
+}
+.avd-conferir-botao[data-acao="recusar"] i {
+  color: var(--state-danger);
+}
+.avd-conferir-alertas {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-1);
+  margin: 0;
+  color: var(--state-warning);
+  font-size: var(--text-caption);
+}
+.avd-conferir-alertas i {
+  flex: none;
+  margin-top: 2px;
+}
+.avd-conferir-motivos {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1-5);
+}
+.avd-conferir-outro {
+  flex: 1 1 12rem;
+  min-height: 32px;
+}
+.avd-ficha-da-resposta[data-origem="arquivo"] {
+  background: var(--state-success-soft);
+}

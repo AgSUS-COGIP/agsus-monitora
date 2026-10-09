@@ -7,6 +7,9 @@ Avaliação documental em Python (docs/analises-no-monitora/, fase F2).
                                                      automática e lote de convocação
     monitora.avaliacao_documental.pontuacao          a conta da ficha (fase F4), para
                                                      conferir em lote o que a tela gravou
+    monitora.avaliacao_documental.leitura_de_arquivos  a leitura automática dos anexos
+                                                     (cursos, títulos, vínculos, alertas)
+                                                     que a ficha mostra para o avaliador
 
 É a conta OFICIAL em lote (o job scripts/pre_classificacao/ grava o resultado
 pronto). A mesma conta existe em src/lib/avaliacao-documental/ para a prévia da

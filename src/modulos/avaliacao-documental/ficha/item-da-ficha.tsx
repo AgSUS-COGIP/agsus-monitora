@@ -36,10 +36,17 @@ import type { ItemTirado } from "../../../lib/avaliacao-documental/itens-da-fich
 import { arquivosDaPergunta } from "../../../lib/avaliacao-documental/respostas-do-candidato.ts";
 import type { ArquivoDoCandidato } from "../../../lib/avaliacao-documental/respostas-do-candidato.ts";
 import { justificativasDoBloco } from "../../../lib/avaliacao-documental/justificativas-do-bloco.ts";
+import {
+  itensParaConferir,
+  leituraDoAnexo,
+  leiturasDaFicha,
+} from "../../../lib/avaliacao-documental/leitura-dos-arquivos.ts";
+import type { LeituraDoArquivo } from "../../../lib/avaliacao-documental/leitura-dos-arquivos.ts";
 import { tetoDoBloco } from "../../../lib/avaliacao-documental/pontuacao.js";
 import { Selo } from "../../../ui/index.js";
 import { ComprovadoDaFicha } from "./comprovado-da-ficha.tsx";
 import { LinkDaEmpregare, LinkDoAnexo } from "./empregare.tsx";
+import { ConferenciaDoLido, LidoDoArquivo } from "./leitura-dos-arquivos.tsx";
 import type {
   Bloco,
   ContextoDaEmpregare,
@@ -56,7 +63,10 @@ import type {
 /*
   Um item da ficha (um bloco da regra), na ordem do trabalho do avaliador,
   de cima para baixo:
-  1. o que o candidato declarou e o anexo ("Abrir na Empregare");
+  1. o que o candidato declarou e o anexo ("Abrir na Empregare"), com o
+     "Lido do arquivo" do robô ao lado de cada arquivo e, nos blocos de
+     títulos, cursos e vínculos, a conferência de cada item lido (Aceitar /
+     Recusar — leitura-dos-arquivos.tsx);
   2. a pergunta "O documento confere com o declarado?" com as escolhas lado
      a lado: Confere · Não confere · Editar nota (esta só nos blocos que
      pontuam; teclas 1, 2 e 3). O que cada uma grava: apurado-da-ficha.ts;
@@ -169,14 +179,16 @@ export function decidirNoLancamento(
 function ArquivosDaPergunta({
   arquivos,
   empregare,
+  leituras,
 }: {
   arquivos: ArquivoDoCandidato[];
   empregare: ContextoDaEmpregare;
+  leituras: LeituraDoArquivo[];
 }) {
   return (
     <ul className="avd-ficha-arquivos" aria-label="Arquivos enviados">
       {arquivos.map((a) => (
-        <li key={a.link}>
+        <li key={a.link} className="avd-ficha-arquivo-lido">
           <a
             className="avd-ficha-arquivo"
             href={a.link}
@@ -194,6 +206,7 @@ function ArquivosDaPergunta({
               aria-hidden="true"
             />
           </a>
+          <LidoDoArquivo leitura={leituraDoAnexo(leituras, a)} />
         </li>
       ))}
     </ul>
@@ -204,9 +217,11 @@ function RespostaDeclarada({
   linha,
   empregare,
   comLinkGeral,
+  leituras,
 }: {
   linha: LinhaDeResposta;
   empregare: ContextoDaEmpregare;
+  leituras: LeituraDoArquivo[];
   /** Sem anexo no item: o "Abrir na Empregare" do candidato ao lado da resposta. */
   comLinkGeral?: boolean;
 }) {
@@ -234,7 +249,11 @@ function RespostaDeclarada({
         ) : null}
       </p>
       {arquivos.length ? (
-        <ArquivosDaPergunta arquivos={arquivos} empregare={empregare} />
+        <ArquivosDaPergunta
+          arquivos={arquivos}
+          empregare={empregare}
+          leituras={leituras}
+        />
       ) : (
         <div className="avd-ficha-valor" data-anexo={anexo || undefined}>
           <strong className="avd-ficha-texto-declarado">
@@ -262,9 +281,11 @@ function RespostaDeclarada({
 function Respostas({
   linhas,
   empregare,
+  leituras,
 }: {
   linhas: LinhaDeResposta[];
   empregare: ContextoDaEmpregare;
+  leituras: LeituraDoArquivo[];
 }) {
   const algumAnexo = linhas.some((l) => ehAnexo(l.texto));
   return (
@@ -276,6 +297,7 @@ function Respostas({
           linha={l}
           empregare={empregare}
           comLinkGeral={!algumAnexo && i === 0}
+          leituras={leituras}
         />
       ))}
     </div>
@@ -674,7 +696,16 @@ function Itens({
                   ))}
                 </>
               ) : null}
-              {it.da_resposta ? (
+              {it.do_arquivo ? (
+                <span
+                  className="avd-ficha-da-resposta"
+                  data-origem="arquivo"
+                  title="Lido do arquivo pelo robô e aceito: confira no documento"
+                >
+                  <i className="fa-solid fa-file-lines" aria-hidden="true" />{" "}
+                  lido do arquivo
+                </span>
+              ) : it.da_resposta ? (
                 <span
                   className="avd-ficha-da-resposta"
                   title="Preenchido pela resposta do candidato: confira no documento"
@@ -1085,6 +1116,18 @@ export function ItemDaFicha({
   const situacao = lancado.situacao ? SELO_DA_SITUACAO[lancado.situacao] : null;
   const respostas = linhas.map((l) => l.texto);
   const foco = modo === "foco";
+  // O que o robô leu dos arquivos do bloco (20261009220000): sem leitura, nada aparece.
+  const leituras = leiturasDaFicha(dados.leituras);
+  const lidos =
+    aplica && chave && leituras.length
+      ? itensParaConferir(
+          bloco,
+          leituras,
+          linhas
+            .filter((l) => ehAnexo(l.texto))
+            .flatMap((l) => arquivosDaPergunta(empregare.enderecos, l.coluna)),
+        )
+      : [];
   const contexto: ContextoDaEscolha = {
     declarada: st.declarada,
     respostas,
@@ -1182,8 +1225,20 @@ export function ItemDaFicha({
       {aplica || bloco.tipo === "PONTUACAO" ? (
         <div className="avd-ficha-cartao-corpo">
           {aplica && linhas.length ? (
-            <Respostas linhas={linhas} empregare={empregare} />
+            <Respostas
+              linhas={linhas}
+              empregare={empregare}
+              leituras={leituras}
+            />
           ) : null}
+          <ConferenciaDoLido
+            bloco={bloco}
+            itens={lidos}
+            lancamento={lancamento}
+            mudar={mudar}
+            desabilitado={desabilitado}
+            empregare={empregare}
+          />
           {bloco.tipo === "PONTUACAO" ? (
             <Etnico
               lancamento={lancamento}

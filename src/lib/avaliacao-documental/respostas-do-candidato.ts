@@ -16,7 +16,15 @@ import {
   type EnderecosDaEmpregare,
 } from "./anexo-na-empregare.ts";
 
-export type ArquivoDoCandidato = { numero: number; nome: string; link: string };
+export type ArquivoDoCandidato = {
+  numero: number;
+  nome: string;
+  link: string;
+  /** O anexo na Empregare (a chave da leitura automática: leitura-dos-arquivos.ts). */
+  resposta: string;
+  pergunta: string;
+  arquivo: number;
+};
 
 const TAMANHO_DO_NOME = 60;
 
@@ -53,6 +61,9 @@ export function arquivosDaPergunta(
       numero: i + 1,
       nome: nomeDoLink(a.link) || `Arquivo ${i + 1}`,
       link: a.link,
+      resposta: a.resposta,
+      pergunta: a.pergunta,
+      arquivo: a.arquivo,
     }));
 }
 
