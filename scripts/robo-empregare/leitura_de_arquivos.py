@@ -117,7 +117,25 @@ def para_o_banco(anexo, resultado, hash_do_arquivo):
     )
     leitura.setdefault("itens", [])
     leitura.setdefault("alertas", [])
+    for campo in ("itens", "alertas", "resumo"):
+        leitura[campo] = sem_numero_de_documento(leitura[campo]) if campo in leitura else leitura.get(campo)
     return leitura
+
+
+# Mesma expressão da rede de segurança do banco (gravar_leituras_de_arquivos):
+# sequência com cara de CPF (inclui números longos como registro, protocolo, CTPS).
+_NUMERO_DE_DOCUMENTO = re.compile(r"\d{3}\.?\d{3}\.?\d{3}-?\d{2}")
+
+
+def sem_numero_de_documento(valor):
+    """Tira dos textos lidos qualquer número com cara de CPF antes de ir ao banco."""
+    if isinstance(valor, str):
+        return _NUMERO_DE_DOCUMENTO.sub("[número omitido]", valor)
+    if isinstance(valor, list):
+        return [sem_numero_de_documento(v) for v in valor]
+    if isinstance(valor, dict):
+        return {k: sem_numero_de_documento(v) for k, v in valor.items()}
+    return valor
 
 
 def leitura_com_erro(anexo, codigo):

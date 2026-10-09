@@ -9,6 +9,7 @@ import base64
 import io
 import logging
 import pathlib
+import re
 import sys
 from urllib.parse import urlparse
 
@@ -294,3 +295,17 @@ def test_argumentos_validam_o_pedido():
     with pytest.raises(SystemExit):
         robo.argumentos(["--limite", "0"])
     assert robo.argumentos(["--editais", "93/2026, 114/2026"]).editais == ["93/2026", "114/2026"]
+
+
+def test_para_o_banco_tira_numero_com_cara_de_cpf():
+    anexo = {"resposta": "r", "pergunta": "1", "arquivo": 1}
+    resultado = {
+        "situacao": "LIDO",
+        "resumo": "CTPS 123.456.789-09",
+        "itens": [{"empregador": "Empresa 12345678901", "dias": 30}],
+        "alertas": [{"codigo": "NOME_DIVERGENTE", "texto": "doc 98765432100"}],
+    }
+    saida = robo.para_o_banco(anexo, resultado, "h")
+    texto = str(saida["itens"]) + str(saida["alertas"]) + saida["resumo"]
+    assert not re.search(r"\d{3}\.?\d{3}\.?\d{3}-?\d{2}", texto)
+    assert saida["itens"][0]["dias"] == 30
