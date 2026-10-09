@@ -1,4 +1,5 @@
 import type { ReactNode, RefObject } from "react";
+import type { LeafletDoMapa } from "./tipos-do-leaflet.ts";
 import type { ModoDeEdicao } from "../editor-de-coordenadas/modo-de-edicao.tsx";
 import type {
   ControleDoEnquadramento,
@@ -10,7 +11,7 @@ import type {
 import { useEffect, useReducer, useRef, useState } from "react";
 import { EstadoVazio, classes } from "../../ui/index.js";
 import { BotaoDeRecolher } from "../editor-de-coordenadas/modo-de-edicao.tsx";
-import { criarMapaDoBrasil, remedir, voltarAoBrasil } from "./leaflet.js";
+import { criarMapaDoBrasil, remedir, voltarAoBrasil } from "./leaflet.ts";
 import { usarUltimo } from "./usar-ultimo.ts";
 
 /*
@@ -39,7 +40,7 @@ import { usarUltimo } from "./usar-ultimo.ts";
   reenquadramento enquanto o mapa voa.
 */
 export function usarMapaDoBrasil<T extends object>(
-  L: unknown,
+  L: LeafletDoMapa | null,
   { aoCriar, emVoo, visivel = true, telaCheia = false }: OpcoesDoPainel<T>,
 ) {
   const refDoMapa = useRef<HTMLDivElement | null>(null);

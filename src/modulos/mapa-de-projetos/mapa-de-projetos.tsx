@@ -8,7 +8,8 @@ import type {
   CorrecaoDoLugar,
   PontoEditavelDoProjeto,
 } from "./tipos.ts";
-import type { MapaNacional, MarcadorDoMapa } from "../../lib/tipos-do-mapa.ts";
+import type { MarcadorDoMapa } from "../../lib/tipos-do-mapa.ts";
+import type { MapaDoPainel } from "../mapa-saude-indigena/tipos-do-painel.ts";
 import { useEffect, useMemo, useState } from "react";
 import { usarTemaEscuro } from "../../app/tema.js";
 import { podeEditarCoordenadas } from "../../lib/access-roles.js";
@@ -31,7 +32,7 @@ import {
   ligarDicaEPopup,
   obterLeaflet,
   remedir,
-} from "../mapa-saude-indigena/leaflet.js";
+} from "../mapa-saude-indigena/leaflet.ts";
 import {
   MolduraDoMapa,
   TopoDoMapa,
@@ -57,7 +58,7 @@ import { CorDoProjeto, ListaDeMunicipios } from "./lista.tsx";
   Indígena (src/modulos/mapa-saude-indigena/): o painel, o topo (Coordenadas,
   Brasil, Tela cheia), a moldura, a lista lateral, o leque, o enquadramento e
   o observador de tamanho são as peças comuns de painel-do-mapa.jsx e
-  leaflet.js. Muda o que vai no mapa: um ponto por lugar das vagas de todos
+  leaflet.ts. Muda o que vai no mapa: um ponto por lugar das vagas de todos
   os projetos — município, ou o meio do estado quando o edital só diz a UF —,
   na cor do projeto, com o tamanho pelas vagas (a regra da bolha do DSEI), e a
   lista "Municípios por vagas", com filtro e agrupamento por projeto. Lógica
@@ -196,7 +197,8 @@ export function MapaDeProjetos({
   const { refDoMapa, mapa, camadas, ultimoEnquadramento, aparecimentos } =
     usarMapaDoBrasil(L, {
       telaCheia,
-      aoCriar: (novo: MapaNacional) => {
+      aoCriar: (novo: MapaDoPainel) => {
+        if (!L) throw new Error("Leaflet indisponível para criar as camadas");
         const lugares = L.layerGroup().addTo(novo);
         const leque = criarLeque(L, novo, lugares);
         return {
@@ -216,7 +218,7 @@ export function MapaDeProjetos({
 
   // Um ponto por lugar com coordenada, na cor do projeto.
   useEffect(() => {
-    if (!mapa || !camadas.current) return;
+    if (!L || !mapa || !camadas.current) return;
     const { lugares, leque } = camadas.current;
     lugares.clearLayers();
     leque.limpar();
@@ -252,7 +254,7 @@ export function MapaDeProjetos({
     no Brasil da criação.
   */
   useEffect(() => {
-    if (!mapa || !camadas.current || carregando) return;
+    if (!L || !mapa || !camadas.current || carregando) return;
     if (enquadramento.chave === ultimoEnquadramento.current) return;
     ultimoEnquadramento.current = enquadramento.chave;
     remedir(mapa);

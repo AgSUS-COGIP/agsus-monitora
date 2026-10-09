@@ -51,7 +51,7 @@ import {
   ligarDicaEPopup,
   observarTamanho,
   remedir,
-} from "./leaflet.js";
+} from "./leaflet.ts";
 import { usarUltimo } from "./usar-ultimo.ts";
 import { podeEditarCoordenadas } from "../../lib/access-roles.js";
 import { EditorDeCoordenadas } from "./editor-de-coordenadas.tsx";

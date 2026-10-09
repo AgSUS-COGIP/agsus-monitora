@@ -27,8 +27,10 @@ O editor compartilhado pelos dois mapas também está em TypeScript: fila, suges
 prévia, gravação, modo de edição e regras em `src/lib/editor-de-coordenadas.ts`. As telas principal, nacional e por DSEI da Saúde Indígena também estão em TSX.
 As regras nacionais e distritais de contagens, bolhas, CASAIs, unidades, vínculos,
 resumos e enquadramento estão em `src/lib/mapa-saude-indigena/chaves.ts`, `mapa-nacional.ts`
-e `mapa-do-dsei.ts`. As peças comuns de criação do Leaflet e a reconciliação compartilhada
-permanecem em JavaScript, com contratos JSDoc na integração. Painel, lista, legenda, tela cheia, retorno ao Brasil e hooks dos
+e `mapa-do-dsei.ts`. A integração comum com o Leaflet também está em TypeScript (`leaflet.ts`), incluindo
+criação, fundo com recurso, tamanho, contornos, enquadramento, leque, ícones e balões.
+A reconciliação, as guardas globais e o recuo dos tiles permanecem em JavaScript,
+com contratos JSDoc na integração. Painel, lista, legenda, tela cheia, retorno ao Brasil e hooks dos
 mapas já estão em TypeScript, com contratos em `tipos-do-painel.ts`; formas e cores
 em `src/lib/mapa-saude-indigena/formas.ts`. Outros módulos
 combinam JavaScript/JSX com migrações pontuais para TypeScript: a ficha da Avaliação documental

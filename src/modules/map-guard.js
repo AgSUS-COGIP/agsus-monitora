@@ -310,7 +310,7 @@ function hardenMapInstance(L, map) {
     gesto de zoom da pessoa, `__agsusOverviewMode` cai e o observador se cala.
 
     ENQUADRAMENTO PRÓPRIO: os mapas React da Visão geral (`criarMapa`,
-    src/modulos/mapa-saude-indigena/leaflet.js) enquadram sozinhos — filtro,
+    src/modulos/mapa-saude-indigena/leaflet.ts) enquadram sozinhos — filtro,
     DSEI, pontos de Projetos — e refazem ao aparecer ou mudar de tamanho. Com
     `enquadramentoProprio`, este guarda não reenquadra o Brasil por cima deles
     (a corrida apagava o enquadramento dos pontos) nem fixa o mínimo em 4.5

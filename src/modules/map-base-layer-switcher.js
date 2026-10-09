@@ -295,6 +295,7 @@ function setBaseMapMode(L, map, requestedMode, { persist = false } = {}) {
   ampliada e deslocada até o quadrante certo. Só se o recuo inteiro falhar é
   que o erro sobe.
 */
+/** @returns {import("../modulos/mapa-saude-indigena/tipos-do-leaflet.ts").CamadaDeFundo} */
 export function criarCamadaComRecuo(L, url, options) {
   const Camada = L.TileLayer.extend({
     createTile(coords, done) {
