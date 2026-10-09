@@ -1,6 +1,6 @@
 import type { MouseEventHandler } from "react";
 import type { BancaDoRascunho } from "../../lib/tipos-do-roteiro-de-entrevista.ts";
-import { novaOrigemDaBanca } from "../../lib/roteiro-de-entrevista.js";
+import { novaOrigemDaBanca } from "../../lib/roteiro-de-entrevista.ts";
 import { Campo } from "../../ui/index.js";
 
 /*

@@ -16,7 +16,7 @@ import {
   instantaneoDaLista,
   nomeDoArquivo,
 } from "../src/lib/classificacao/exportacao.js";
-import { editaisParaConduzir } from "../src/lib/conducao-de-entrevista.js";
+import { editaisParaConduzir } from "../src/lib/conducao-de-entrevista.ts";
 import { editaisDaEscolha } from "../src/lib/avaliacao-documental/editais.js";
 import { indicadoresDaVisaoGeral } from "../src/lib/visao-geral.ts";
 import { CONTRATO_RPC } from "../src/lib/rpc-contrato.js";

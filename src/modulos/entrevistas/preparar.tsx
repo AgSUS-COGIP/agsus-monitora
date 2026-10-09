@@ -5,7 +5,7 @@ import {
   errosDaConfiguracao,
   rascunhoDaConfiguracao,
   rotuloDoLancamento,
-} from "../../lib/conducao-de-entrevista.js";
+} from "../../lib/conducao-de-entrevista.ts";
 import {
   aConvocar,
   criteriosDeDesempate,
@@ -31,7 +31,7 @@ import {
   type DestinoDoResumo,
   type EntradaDoResumo,
 } from "../../lib/resumo-da-entrevista.ts";
-import { textoDaPontuacao } from "../../lib/roteiro-de-entrevista.js";
+import { textoDaPontuacao } from "../../lib/roteiro-de-entrevista.ts";
 import { Aviso, EstadoVazio, Selo } from "../../ui/index.js";
 import { irParaLink } from "../chat/ponte.js";
 import {
@@ -116,11 +116,8 @@ function entradaDoResumo(
   };
 }
 
-/* As regras em JavaScript, com os contratos que esta tela usa. */
-const errosDaConfiguracaoDo = errosDaConfiguracao as unknown as (
-  rascunho: unknown,
-  roteiro?: unknown,
-) => Record<string, string>;
+/* A convocação ainda tem um contrato de integração com JavaScript. */
+const errosDaConfiguracaoDo = errosDaConfiguracao;
 const paraSalvar = dadosDaConfiguracaoParaSalvar;
 const fonteDaConvocacaoDo = fonteDaConvocacao as unknown as (
   dados: unknown,
@@ -383,14 +380,11 @@ function PrepararDoEdital({
 
   /* O rascunho da configuração (passos 1 e 2). */
   const [editando, setEditando] = useState(!configurado && podeEditar);
-  const [r, setR] = useState(
-    () => rascunhoDaConfiguracao(dados) as RascunhoDaConfiguracao,
-  );
+  const [r, setR] = useState(() => rascunhoDaConfiguracao(dados));
   const [tentou, setTentou] = useState(false);
   const [erroDoBanco, setErroDoBanco] = useState("");
   useEffect(() => {
-    if (!editando)
-      setR(rascunhoDaConfiguracao(dados) as RascunhoDaConfiguracao);
+    if (!editando) setR(rascunhoDaConfiguracao(dados));
   }, [dados, editando]);
 
   const opcoes = useMemo(() => {
@@ -443,10 +437,10 @@ function PrepararDoEdital({
             }
           : null,
         membros: configurado ? ativos.length : 0,
-        bancas: (bancasDoEdital(ativos) as number[]).length,
+        bancas: bancasDoEdital(ativos).length,
         errosDaBanca: pendenciasDaConfiguracao(
           errosGravados,
-          (rascunhoDaConfiguracao(dados) as RascunhoDaConfiguracao).avaliadores,
+          rascunhoDaConfiguracao(dados).avaliadores,
         )
           .filter((p) => p.passo === "banca")
           .map((p) => p.texto),
@@ -528,7 +522,7 @@ function PrepararDoEdital({
         setEditando(false);
         setTentou(false);
         setErroDoBanco("");
-        setR(rascunhoDaConfiguracao(dados) as RascunhoDaConfiguracao);
+        setR(rascunhoDaConfiguracao(dados));
       }
     : null;
   const temNotas = dados.convocados.some((c) => c.avaliacoes?.length);

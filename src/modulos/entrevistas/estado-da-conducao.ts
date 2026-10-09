@@ -64,7 +64,7 @@ import {
 import {
   editaisParaConduzir,
   mensagemDoErroDaEntrevista,
-} from "../../lib/conducao-de-entrevista.js";
+} from "../../lib/conducao-de-entrevista.ts";
 import { classificarEdital } from "../../lib/classificacao/ajustes.js";
 import { convocacaoDoEdital } from "../../lib/classificacao/convocacao-do-edital.js";
 import { rotuloDaVersao } from "../../lib/nome-da-versao.ts";

@@ -114,8 +114,13 @@ aninhados não são congelados. Conduzir ainda combina TSX e JSX.
 A ficha de notas (`ficha.tsx`) também está em TypeScript: estado local, modos de lançamento,
 permissões, matriz, progresso, atalhos, observações, justificativa, prévia e salvamento.
 `tipos-da-ficha.ts` distingue notas diretas de notas por aspectos e declara os campos enviados
-ao salvar (valores numéricos; `null` apaga). Os auxiliares de cálculo e de roteiro continuam
-em JavaScript, com contratos JSDoc para a integração.
+ao salvar (valores numéricos; `null` apaga). As regras de cálculo, configuração e roteiro também estão em TypeScript:
+`src/lib/conducao-de-entrevista.ts` e `src/lib/roteiro-de-entrevista.ts`. Incluem
+as escalas, pesos, mínimos, aspectos, atribuições por competência, permissões de
+lançamento, mudanças de notas e cálculo do parecer. Os casos de referência mantêm
+a comparação entre o cálculo do frontend e as regras do banco.
+`tests/tipos/regras-das-entrevistas.tsx` confere os contratos dos conversores,
+as notas numéricas de saída e a preservação dos tipos nas listas.
 `tests/tipos/ficha-de-entrevistas.tsx` confere o contrato da ficha e rejeita notas textuais,
 notas que misturam os dois formatos e códigos de comparecimento inválidos.
 O editor de roteiros (`roteiros.tsx`) e as peças compartilhadas (`partes.tsx`) também
@@ -126,7 +131,7 @@ e valores numéricos enviados ao banco; os campos antigos de convocação e dese
 seguem preservados. `tipos-do-editor-de-roteiro.ts` declara dados, pedidos e ações.
 A alteração de listas verifica campo e tipo do valor no compilador; o contrato da
 prévia de eliminação aceita apenas os campos de que precisa, inclusive os do rascunho.
-Os auxiliares de roteiro continuam em JavaScript. O estado (`estado-da-conducao.ts`)
+A configuração chama os conversores tipados diretamente. O estado (`estado-da-conducao.ts`)
 tipa ações, resultados, assinaturas e configuração. `tipos-do-estado-da-conducao.ts`
 limita os nomes de RPC e aceita o cliente único do app. `src/lib/dados-da-conducao.ts`
 recebe `unknown` e verifica os campos usados de roteiros, editais, avaliadores,
@@ -143,9 +148,9 @@ confere usos e rejeições do compilador; o teste do módulo verifica a apresent
 
 Regras puras em `src/lib/` (`entrevistas-do-painel.ts`, `painel-de-entrevistas.ts` — edital do
 recorte, empates, agenda dos próximos dias —, `fila-de-conducao.ts` — fila, situações, recortes, contador —,
-`conducao-de-entrevista.js`,
+`conducao-de-entrevista.ts`,
 `convocacao-da-entrevista.js` — a lista da Classificação por vaga, quem está na ficha, avisos —,
-`roteiro-de-entrevista.js`, `digitacao-de-notas.ts` — a digitação da matriz —, `resumo-da-entrevista.ts` — as
+`roteiro-de-entrevista.ts`, `digitacao-de-notas.ts` — a digitação da matriz —, `resumo-da-entrevista.ts` — as
 regras em linguagem simples —, `passos-do-preparar.ts` — os passos de Preparar e a agenda por dia —,
 `pendencias-do-roteiro.ts` — as seções e o que falta no editor —, `parecer-da-entrevista.ts` — o parecer em
 texto pronto —, `comemoracao.js`). Testes: `tests/modulos/entrevistas.test.js` (painel), `tests/modulos/agenda-do-painel-de-entrevistas.test.js` (respostas antigas da agenda), `tests/modulos/conduzir-entrevistas.test.js`,

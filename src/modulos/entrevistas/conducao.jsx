@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import {
   nomeDoCargo,
   textoDaJanela,
-} from "../../lib/conducao-de-entrevista.js";
+} from "../../lib/conducao-de-entrevista.ts";
 import {
   aConvocar,
   avisosDaConvocacao,
