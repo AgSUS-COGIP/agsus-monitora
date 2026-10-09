@@ -20,7 +20,6 @@
 import {
   CODIGO,
   LOTE_PADRAO,
-  baseDaNota,
   blocoNovo,
   codigoLivre,
   normalizarRegraAnalise,
@@ -1158,9 +1157,4 @@ export function comDesempateDaProvisoria(
   const nova = copia(regra);
   nova.provisoria.desempate = [...desempate];
   return nova;
-}
-
-/** A base da nota do lote, como a regra decide (para a tela). */
-export function baseDaNotaDaRegra(regra: RegraAnalise): "DECLARADA" | "ART" {
-  return baseDaNota(regra.provisoria) as "DECLARADA" | "ART";
 }

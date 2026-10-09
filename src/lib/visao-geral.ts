@@ -42,7 +42,7 @@ import {
   motivosDeAtencao,
 } from "./criticos-da-visao-geral.js";
 import { sanitizeCsvCell } from "./csv-security.js";
-import { tomDoRisco, tomDoStatusDoEdital } from "./editais-do-nucleo.js";
+import { tomDoStatusDoEdital } from "./editais-do-nucleo.js";
 import {
   faseDoEdital,
   FASES,
@@ -94,9 +94,6 @@ export const CAMPOS_DO_FILTRO: readonly {
   Object.freeze({ campo: "uf", rotulo: "UF", todos: "Todas", mais: true }),
 ] as const);
 export const CAMPOS = Object.freeze(CAMPOS_DO_FILTRO.map((c) => c.campo));
-
-export const rotuloDoCampo = (campo: CampoDoFiltro) =>
-  CAMPOS_DO_FILTRO.find((c) => c.campo === campo)?.rotulo || campo;
 
 /** `{ unidade: [], edital: [], … }` */
 export function filtrosVazios(): FiltrosDaVisaoGeral {
@@ -874,8 +871,6 @@ const SELO_DO_TOM: Record<string, string> = {
 };
 export const seloDoStatus = (status: unknown) =>
   SELO_DO_TOM[tomDoStatusDoEdital(status)] || "neutro";
-export const seloDoRisco = (risco: unknown) =>
-  SELO_DO_TOM[tomDoRisco(risco)] || "neutro";
 /** O tom do `Selo` de um motivo de atenção (perigo → vermelho, alerta → âmbar). */
 export const seloDoMotivo = (motivo: Motivo) =>
   motivo?.tom === "perigo" ? "reprovado" : "pendente";

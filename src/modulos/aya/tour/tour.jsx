@@ -93,13 +93,6 @@ function medir(elemento) {
   return geometriaDoHolofote(elemento.getBoundingClientRect());
 }
 
-/** Dá para destacar? Sem passos com alvo visível ou sem alvo, não há o que mostrar. */
-export function haPassoParaMostrar(passos, documento, visivel) {
-  return (passos || []).some(
-    (passo) => !passo.alvo || acharAlvo(passo, documento, visivel),
-  );
-}
-
 export function Tour({
   passos,
   inicio = 0,

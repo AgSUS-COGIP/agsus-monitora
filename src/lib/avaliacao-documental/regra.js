@@ -135,7 +135,6 @@ const nuloOuEntre = (v, min, max) =>
 const texto = (v) => (typeof v === "string" ? v : "");
 const lista = (v) => (Array.isArray(v) ? v : []);
 const bool = (v, padrao) => (typeof v === "boolean" ? v : padrao);
-const copia = (v) => (v === undefined ? undefined : structuredClone(v));
 
 /**
  * A pergunta da regra: o começo do enunciado (texto) ou alternativas (lista;
@@ -993,5 +992,3 @@ export function regrasIguais(a, b) {
         : v;
   return JSON.stringify(ordenar(a)) === JSON.stringify(ordenar(b));
 }
-
-export { copia as copiarRegra };

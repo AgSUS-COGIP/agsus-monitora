@@ -86,20 +86,6 @@ export function avisosAgrupados(avisos = []) {
   );
 }
 
-/** Os KPIs de um resultado. */
-export function indicadoresDoResultado(resultado) {
-  if (!resultado)
-    return {
-      candidatos: 0,
-      elegiveis: 0,
-      eliminados: 0,
-      vagas: 0,
-      avisos: 0,
-      pendencias: 0,
-    };
-  return { ...resultado.totais };
-}
-
 /* O recorte da tela: vaga (chave), lista ("geral" ou modalidade) e busca pelo nome. */
 export const RECORTE_VAZIO = Object.freeze({
   vaga: "",
