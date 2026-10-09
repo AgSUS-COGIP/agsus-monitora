@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   BASES_DA_NOTA_DO_LOTE,
   BASES_DO_LOTE,
@@ -143,8 +143,26 @@ function SemRegra({ e, estado }) {
   );
 }
 
-function Perguntas({ perguntas, regra, aoMudar }) {
+/* As perguntas da carga são lidas só aqui (e no passo das perguntas do assistente). */
+function Perguntas({ e, estado, regra, aoMudar }) {
   const [blocoAlvo, setBlocoAlvo] = useState("");
+  useEffect(() => {
+    void estado.carregarPerguntas?.();
+  }, [estado, e.editalId]);
+  const perguntas = e.perguntasDaCarga;
+  if (e.erroDasPerguntas)
+    return (
+      <Aviso tom="warning" papel="alert">
+        Não foi possível ler as perguntas da última carga: {e.erroDasPerguntas}{" "}
+        <button
+          type="button"
+          className="btn secondary small"
+          onClick={() => void estado.carregarPerguntas({ recarregar: true })}
+        >
+          Tentar novamente
+        </button>
+      </Aviso>
+    );
   if (!perguntas?.length) return null;
   const ligar = (coluna) => {
     const prefixo = comecoDoEnunciado(coluna);
@@ -222,14 +240,20 @@ function Perguntas({ perguntas, regra, aoMudar }) {
                 Pontuar na nota declarada
               </button>
             </div>
-            <span className="ui-texto-secundario">
-              {p.respostas
-                .map((r) => `${r.valor} (${r.quantidade})`)
-                .join(" · ")}
-              {p.outras
-                ? `${p.respostas.length ? " · " : ""}${p.outras} resposta(s) única(s)`
-                : ""}
-            </span>
+            {p.dado_pessoal ? (
+              <span className="ui-texto-secundario" data-dado-pessoal="sim">
+                Dado pessoal — não resumido
+              </span>
+            ) : (
+              <span className="ui-texto-secundario">
+                {p.respostas
+                  .map((r) => `${r.valor} (${r.quantidade})`)
+                  .join(" · ")}
+                {p.outras
+                  ? `${p.respostas.length ? " · " : ""}${p.outras} resposta(s) fora do resumo (únicas ou com cara de dado pessoal)`
+                  : ""}
+              </span>
+            )}
           </li>
         ))}
       </ul>
@@ -1051,7 +1075,8 @@ export function Regra({ e, estado }) {
 
         {leitura ? null : (
           <Perguntas
-            perguntas={dados.perguntas}
+            e={e}
+            estado={estado}
             regra={rascunho}
             aoMudar={setRascunho}
           />

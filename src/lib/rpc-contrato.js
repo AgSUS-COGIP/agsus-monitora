@@ -1302,7 +1302,14 @@ export const CONTRATO_RPC = {
     argumentos: ["p_edital"],
     critica: false,
     resumo:
-      "Regra da avaliação do edital (vigente e versões), modelos, nota mínima da regra de classificação, aldeias do DSEI e, só para a coordenação, as perguntas e respostas da última carga da Empregare (só as que aparecem 2+ vezes). Leitor.",
+      "Regra da avaliação do edital (vigente e versões), modelos, nota mínima da regra de classificação, aldeias do DSEI e quantas vagas da Empregare têm carga. As perguntas da carga saíram para obter_perguntas_carga_analise (20261009180000). Leitor.",
+  },
+  // ── Perguntas da carga da Empregare (20261009180000_resumo_das_perguntas_da_carga.sql)
+  obter_perguntas_carga_analise: {
+    argumentos: ["p_edital"],
+    critica: false,
+    resumo:
+      "Perguntas e respostas da última carga da Empregare do edital, do instantâneo TB_RESUMO_PERGUNTA_EDITAL (calculado em Python pelo robô da Empregare ao fim de cada carga): só respostas que aparecem 2+ vezes, até 30 por pergunta; as únicas viram 'outras'. Só a coordenação (os demais recebem lista vazia). Leitor.",
   },
   salvar_regra_analise: {
     argumentos: [

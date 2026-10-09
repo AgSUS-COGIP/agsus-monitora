@@ -72,6 +72,11 @@ const DADOS = (regra, pode = true) => ({
   aldeias: { quantidade: 0 },
   pode_carregar_aldeias: false,
   vagas_empregare: 1,
+  fichas_concluidas: 0,
+});
+/* obter_perguntas_carga_analise (20261009180000): só a coordenação recebe as perguntas. */
+const PERGUNTAS_DA_CARGA = (pode) => ({
+  schema_version: 1,
   perguntas: pode
     ? [
         {
@@ -80,9 +85,15 @@ const DADOS = (regra, pode = true) => ({
           outras: 1,
           distintas: 2,
         },
+        {
+          coluna: "Pergunta 9 - Informe seu CPF",
+          respostas: [],
+          outras: 3,
+          distintas: 3,
+          dado_pessoal: true,
+        },
       ]
     : [],
-  fichas_concluidas: 0,
 });
 const EQUIPE = {
   papel: "COORDENADOR",
@@ -112,6 +123,7 @@ function supabaseFalso({ comRegra = true, pode = true, salvarEquipe } = {}) {
       ],
     }),
     obter_regra_analise: () => DADOS(regra, pode),
+    obter_perguntas_carga_analise: () => PERGUNTAS_DA_CARGA(pode),
     obter_equipe_edital: () => ({ ...EQUIPE, pode_coordenar: pode }),
     copiar_modelo_regra_analise: () => {
       regra = regraSalva(1);
@@ -407,10 +419,36 @@ describe("regra da avaliação (AM-2)", () => {
   });
 
   it("quem só lê vê a regra travada, sem salvar nem perguntas", async () => {
-    await montar(supabaseFalso({ pode: false }));
+    const supabase = supabaseFalso({ pode: false });
+    await montar(supabase);
     expect(secao.querySelector(".avd-campos").disabled).toBe(true);
     expect(secao.querySelector("[data-acao='salvar-regra']")).toBeNull();
     expect(secao.querySelector("#avdPerguntas")).toBeNull();
+    // As perguntas da carga nem são pedidas a quem só lê.
+    expect(
+      supabase.rpc.mock.calls.some(
+        ([nome]) => nome === "obter_perguntas_carga_analise",
+      ),
+    ).toBe(false);
+  });
+
+  it("as perguntas da carga vêm da RPC própria, uma vez por edital", async () => {
+    const supabase = supabaseFalso();
+    await montar(supabase);
+    expect(secao.querySelector("#avdPerguntas")).not.toBeNull();
+    const pedidos = supabase.rpc.mock.calls.filter(
+      ([nome]) => nome === "obter_perguntas_carga_analise",
+    );
+    expect(pedidos).toEqual([
+      ["obter_perguntas_carga_analise", { p_edital: "e93" }],
+    ]);
+    // Pergunta que pede dado pessoal aparece sem respostas, com o aviso.
+    const cpf = secao.querySelector(
+      "[data-pergunta='Pergunta 9 - Informe seu CPF']",
+    );
+    expect(cpf.querySelector("[data-dado-pessoal]").textContent).toBe(
+      "Dado pessoal — não resumido",
+    );
   });
 });
 

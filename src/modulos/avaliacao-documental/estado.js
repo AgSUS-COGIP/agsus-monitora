@@ -7,7 +7,13 @@
   src/lib/rpc-contrato.js):
     listar_editais_avaliacao(p_area)            os editais da área atual
     obter_regra_analise(p_edital)               regra, versões, modelos, nota
-                                                mínima, aldeias e perguntas
+                                                mínima e aldeias
+    obter_perguntas_carga_analise(p_edital)     perguntas e respostas da última
+                                                carga da Empregare (instantâneo,
+                                                só a coordenação), lidas só
+                                                quando o assistente abre o passo
+                                                das perguntas ou o formulário
+                                                as mostra (20261009180000)
     copiar_modelo_regra_analise(...)            versão 1 a partir de um modelo
     salvar_regra_analise(...)                   versão nova (motivo da 2ª em diante)
     conferir_regra_analise(...)                 outra pessoa da coordenação
@@ -45,6 +51,7 @@ const RPC_SALVAR_REGRA = "salvar_regra_analise";
 const RPC_CONFERIR_REGRA = "conferir_regra_analise";
 const RPC_RENOMEAR_VERSAO = "renomear_versao_regra_analise";
 const RPC_OBTER_APOIO = "obter_apoio_regra_analise";
+const RPC_OBTER_PERGUNTAS = "obter_perguntas_carga_analise";
 const RPC_SALVAR_CLASSIFICACAO = "salvar_regra_classificacao";
 const RPC_OBTER_EQUIPE = "obter_equipe_edital";
 const RPC_SALVAR_EQUIPE = "salvar_equipe_edital";
@@ -77,6 +84,10 @@ const ESTADO_INICIAL = Object.freeze({
   apoio: null,
   carregandoApoio: false,
   erroDoApoio: "",
+  /* Perguntas e respostas da última carga (null = ainda não lidas). */
+  perguntasDaCarga: null,
+  carregandoPerguntas: false,
+  erroDasPerguntas: "",
   /*
     A versão que o assistente acabou de salvar ({ editalId, versao }): a aba
     Regra remonta a cada versão (key), e o assistente reabre no passo 5 com a
@@ -190,7 +201,14 @@ export function criarEstadoDaAvaliacao({
       carregandoEdital: true,
       erroDoEdital: "",
       ...(editalId !== estado.editalId
-        ? { dados: null, equipe: null, apoio: null, erroDoApoio: "" }
+        ? {
+            dados: null,
+            equipe: null,
+            apoio: null,
+            erroDoApoio: "",
+            perguntasDaCarga: null,
+            erroDasPerguntas: "",
+          }
         : {}),
     });
     const gravacoesAntes = gravacoes;
@@ -283,9 +301,46 @@ export function criarEstadoDaAvaliacao({
     }
   }
 
+  /*
+    As perguntas e respostas da última carga: só quando a coordenação abre a
+    parte que as usa (uma vez por edital; "recarregar" lê de novo). Banco sem
+    a RPC (PGRST202): abre sem as perguntas.
+  */
+  let pedidoDasPerguntas = 0;
+  async function carregarPerguntas({ recarregar = false } = {}) {
+    const editalId = estado.editalId;
+    if (
+      !editalId ||
+      (estado.perguntasDaCarga && !recarregar) ||
+      estado.carregandoPerguntas
+    )
+      return estado.perguntasDaCarga;
+    const meu = ++pedidoDasPerguntas;
+    publicar({ carregandoPerguntas: true, erroDasPerguntas: "" });
+    try {
+      const dados = await rpc(RPC_OBTER_PERGUNTAS, { p_edital: editalId });
+      if (meu !== pedidoDasPerguntas || editalId !== estado.editalId)
+        return null;
+      const perguntas = Array.isArray(dados?.perguntas) ? dados.perguntas : [];
+      publicar({ perguntasDaCarga: perguntas, carregandoPerguntas: false });
+      return perguntas;
+    } catch (erro) {
+      if (meu !== pedidoDasPerguntas || editalId !== estado.editalId)
+        return null;
+      const semRpc = erro?.code === "PGRST202";
+      publicar({
+        carregandoPerguntas: false,
+        perguntasDaCarga: semRpc ? [] : null,
+        erroDasPerguntas: semRpc ? "" : mensagemDoBanco(erro),
+      });
+      return null;
+    }
+  }
+
   return {
     obter: () => estado,
     carregarApoio,
+    carregarPerguntas,
     assinar(ouvinte) {
       ouvintes.add(ouvinte);
       return () => ouvintes.delete(ouvinte);

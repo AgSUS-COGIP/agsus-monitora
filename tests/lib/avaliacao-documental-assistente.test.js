@@ -14,6 +14,7 @@ import {
   motivoDoPontoDePartida,
   moverNaLista,
   opcoesDePerguntas,
+  perguntaComDadoPessoal,
   regraDoPontoDePartida,
   respostasDaPergunta,
   situacaoDaPergunta,
@@ -374,6 +375,29 @@ describe("perguntas da Empregare", () => {
       { valor: "1 ano", quantidade: 7 },
       { valor: "2 anos", quantidade: 2 },
     ]);
+  });
+
+  it("pergunta da carga marcada como dado pessoal: sem respostas e avisada", () => {
+    const carga = [
+      {
+        coluna: "Pergunta 2 - Informe seu CPF",
+        respostas: [],
+        outras: 40,
+        distintas: 40,
+        dado_pessoal: true,
+      },
+      {
+        coluna: "Pergunta 5 - Sistema de concorrência",
+        respostas: [{ valor: "PcD", quantidade: 3 }],
+        outras: 0,
+      },
+    ];
+    expect(perguntaComDadoPessoal("Informe seu CPF", carga)).toBe(true);
+    expect(respostasDaPergunta("Informe seu CPF", carga)).toEqual([]);
+    expect(perguntaComDadoPessoal("Sistema de concorrência", carga)).toBe(
+      false,
+    );
+    expect(perguntaComDadoPessoal("", carga)).toBe(false);
   });
 
   it("desligar a última nota declarada volta a base do lote para a ART", () => {
