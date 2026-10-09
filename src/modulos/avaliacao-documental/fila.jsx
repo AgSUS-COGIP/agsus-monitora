@@ -1039,7 +1039,7 @@ export function Fila({ e, fila }) {
           {
             id: "reiniciar-fichas",
             rotulo: "Reiniciar as fichas do edital",
-            icone: "fa-arrow-rotate-left",
+            icone: "fa-rotate-left",
             desabilitado: !noLote.length || Boolean(st.acao),
             aoEscolher: () => setAcao({ tipo: "reiniciar", fichas: noLote }),
             dados: { "data-acao": "reiniciar-fichas" },
