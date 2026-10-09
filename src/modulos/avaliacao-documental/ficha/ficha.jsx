@@ -29,6 +29,7 @@ import {
 } from "../../../lib/avaliacao-documental/ficha.js";
 import {
   NIVEIS,
+  PARCIAL_DO_TIPO,
   rotuloDe,
 } from "../../../lib/avaliacao-documental/catalogo.js";
 import {
@@ -47,7 +48,10 @@ import { usarChatLiberado } from "../../chat/usar-chat-liberado.js";
 import { CabecalhoDaFicha } from "./cabecalho-da-ficha.tsx";
 import { ConclusaoDaFicha } from "./conclusao-da-ficha.tsx";
 import { copiar } from "./empregare.tsx";
-import { blocoEditaNota } from "../../../lib/avaliacao-documental/apurado-da-ficha.ts";
+import {
+  blocoEditaNota,
+  escolhaDoBloco,
+} from "../../../lib/avaliacao-documental/apurado-da-ficha.ts";
 import {
   contextoDaEscolha,
   decidirNoLancamento,
@@ -470,8 +474,18 @@ export function ConteudoDaFicha({
   }
 
   function decidir(bloco, escolha) {
-    const antes = contarItens(loja.obter(), bloco.codigo);
-    decidirNoLancamento(bloco, mudar, escolha, contextoDaEscolha(st, bloco));
+    const agora = loja.obter();
+    const antes = contarItens(agora, bloco.codigo);
+    const parcial = PARCIAL_DO_TIPO[bloco.tipo];
+    const atual = escolhaDoBloco(
+      bloco,
+      agora.lancamento.blocos?.[bloco.codigo],
+      agora.declarada,
+      parcial ? (agora.avaliacao.calculados?.[parcial] ?? 0) : null,
+    );
+    // A mesma tecla de novo só confirma (como o clique): nada muda.
+    if (escolha !== atual)
+      decidirNoLancamento(bloco, mudar, escolha, contextoDaEscolha(st, bloco));
     depoisDeDecidir(bloco.codigo, escolha, antes);
   }
 
