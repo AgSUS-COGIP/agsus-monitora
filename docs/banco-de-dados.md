@@ -934,15 +934,25 @@ Migration `20261007230000_edital_de_treinamento.sql` (ensaio e rollback com o me
   `CK_MONITINDIG_STTREINAMENTO`). A tela não muda a marca; só
   `private."FC_PREPARAR_EDITAL_TREINAMENTO"(p_area)` cria edital com S, um por área:
   - Saúde Indígena: "Treinamento – Saúde Indígena (991/2099)", unidade "DSEI Treinamento"
-    (`private."FC_PREPARAR_TREINAMENTO_SI"`): entrevistas, classificação e a regra da avaliação
-    documental do Edital 111/2026 (modelo SI26-PARINTINS, com as perguntas do questionário NERSSI
-    ligadas; nenhum edital SI tem regra conferida ainda), na situação Conferir;
+    (`private."FC_PREPARAR_TREINAMENTO_SI"`): entrevistas (os 15 primeiros, roteiro com aspectos),
+    classificação e a regra da avaliação documental do Edital 111/2026 (modelo SI26-PARINTINS, com
+    as perguntas do questionário NERSSI ligadas) CONFERIDA e nomeada ("SI26-PARINTINS — Edital
+    111/2026"), 30 fictícios na Empregare (cotas, cancelado, pendente, reprovado, empate, abaixo
+    da linha do lote) e a pré-classificação gravada (migration
+    `20261009120000_treinamentos_completos.sql`);
   - Projetos: "Treinamento – Projetos (992/2099)", unidade "Escritório Treinamento"
     (`private."FC_PREPARAR_TREINAMENTO_PROJETOS"`, migration
     `20261008110000_treinamento_avaliacao_documental.sql`): espelho do Edital 93/2026 (5 vagas com
     códigos fictícios `99099200x`, quadro, cronograma relativo), cópia **independente** (só o JSON)
     da regra conferida do 93/2026 (versão 7) e da regra da classificação, 40 candidatos fictícios
-    no formato da exportação da Empregare e a pré-classificação já gravada.
+    no formato da exportação da Empregare e a pré-classificação já gravada; e a entrevista
+    (`private."FC_PREPARAR_ENTREVISTA_TREINAMENTO_PROJETOS"`, `20261009120000`): roteiro
+    "Treinamento — Entrevista Projetos (exemplo)" (cópia do modelo do SESMT), lançamento pela
+    secretaria, banca com o Avaliador Teste P3 só em "Habilidade intercultural", liberação da
+    janela e a lista de convocação dos que estão no lote da pré-classificação.
+  - Nos dois, `private."FC_CONVOCAR_E_AGENDAR_TREINAMENTO"` convoca a lista vigente (entrevistas
+    do sistema, como `convocar_para_entrevista`) e monta a agenda a partir de hoje (6 hoje, as
+    demais nos dias úteis seguintes), sem mexer no que já existe.
 - **Predicado único** — use estes, nunca `"ST_TREINAMENTO" = S` solto:
   `private."FC_EH_TREINAMENTO"(marca)`, `private."FC_EDITAL_EH_TREINAMENTO"(id)` e
   `private."FC_ANALISE_EH_TREINAMENTO"(origem_planilha)` (as análises fictícias têm
@@ -963,10 +973,12 @@ Migration `20261007230000_edital_de_treinamento.sql` (ensaio e rollback com o me
   `listar_editais_classificacao`, `FC_DADOS_CLASSIFICACAO_EDITAL`, `obter_pre_classificacao`,
   `pre_classificacao_ler_editais`, `get_painel_dos_robos`. O documento oficial gerado sai com
   "TREINAMENTO — SEM VALOR OFICIAL" no título (`documento-sei.js`).
-- **A pré-classificação pronta do treinamento de Projetos:** o resultado do cálculo Python (o
-  mesmo `processar_edital` do job, gerado por `scripts/pre_classificacao/gerar_treinamento.py` a
-  partir de `tests/fixtures/avaliacao-documental/treinamento-projetos.json`, conferido por
-  `tests/python/test_treinamento_projetos.py`) fica no corpo do preparar e é gravado por
+- **A pré-classificação pronta dos treinamentos:** o resultado do cálculo Python (o
+  mesmo `processar_edital` do job, gerado por `scripts/pre_classificacao/gerar_treinamento.py`
+  com `--area projetos` ou `--area saude-indigena` a partir de
+  `tests/fixtures/avaliacao-documental/treinamento-<área>.json`, conferido por
+  `tests/python/test_treinamento_projetos.py` e `test_treinamento_saude_indigena.py`) fica no
+  corpo do preparar e é gravado por
   `private."FC_PRE_CLASSIFICAR_TREINAMENTO"` pelas mesmas RPCs do job
   (`gravar_pre_classificacao_vaga`, `abrir_fichas_pre_classificacao`,
   `finalizar_pre_classificacao`), na execução `treinamento-<id do edital>`. Essa execução fica fora

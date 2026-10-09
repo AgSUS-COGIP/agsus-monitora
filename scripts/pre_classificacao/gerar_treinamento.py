@@ -1,29 +1,34 @@
 """
-PRÉ-CLASSIFICAÇÃO DO EDITAL DE TREINAMENTO DE PROJETOS (992/2099)
+PRÉ-CLASSIFICAÇÃO DOS EDITAIS DE TREINAMENTO (992/2099 PROJETOS E 991/2099 SAÚDE INDÍGENA)
 
-O edital de treinamento de Projetos (migration
-supabase/migrations/20261008110000_treinamento_avaliacao_documental.sql) já nasce
-com a pré-classificação rodada. Quem calcula é o MESMO código do job
-(scripts/pre_classificacao/pre_classificacao.py → processar_edital, com
-python/monitora/avaliacao_documental/): este script roda o cálculo sobre os
-40 candidatos fictícios e grava o resultado pronto no bloco marcado da
-migration (pre-classificacao-do-treinamento:inicio/fim); o preparar do banco o
-grava pelas mesmas RPCs do job. tests/python/test_treinamento_projetos.py
-confere que o Python continua dando o mesmo.
+Os editais de treinamento já nascem com a pré-classificação rodada. Quem calcula
+é o MESMO código do job (scripts/pre_classificacao/pre_classificacao.py →
+processar_edital, com python/monitora/avaliacao_documental/): este script roda
+o cálculo sobre os candidatos fictícios da área e grava o resultado pronto no
+bloco marcado da migration; o preparar do banco o grava pelas mesmas RPCs do
+job. Os testes tests/python/test_treinamento_projetos.py e
+tests/python/test_treinamento_saude_indigena.py conferem que o Python continua
+dando o mesmo.
 
-A entrada (tests/fixtures/avaliacao-documental/treinamento-projetos.json) é o
-que o job leria do banco para o edital — pre_classificacao_ler_editais e
+  projetos        40 fictícios, regra do 93/2026 (migration 20261008110000,
+                  bloco pre-classificacao-do-treinamento:inicio/fim)
+  saude-indigena  30 fictícios, regra do 111/2026 (migration 20261009120000,
+                  bloco pre-classificacao-do-treinamento-si:inicio/fim)
+
+A entrada (tests/fixtures/avaliacao-documental/treinamento-<área>.json) é o que
+o job leria do banco para o edital — pre_classificacao_ler_editais e
 pre_classificacao_ler_candidatos —, capturada num ensaio (begin … rollback) com
-a migration aplicada, com o id de cada inscrito trocado pelo código fictício.
-Só dados fictícios ("Candidato Teste P01"…); nada de dado pessoal.
+a migration aplicada (o bloco ainda sem resultado), com o id de cada inscrito
+trocado pelo código fictício. Só dados fictícios ("Candidato Teste …"); nada
+de dado pessoal.
 
 Uso
-  python scripts/pre_classificacao/gerar_treinamento.py
+  python scripts/pre_classificacao/gerar_treinamento.py [--area projetos|saude-indigena]
       recalcula a partir da entrada guardada e atualiza o resultado (fixture e migration)
-  python scripts/pre_classificacao/gerar_treinamento.py --leitura <arquivo.json>
+  python scripts/pre_classificacao/gerar_treinamento.py --area saude-indigena --leitura <arquivo.json>
       troca a entrada pela leitura de um ensaio ({"editais": …, "candidatos": {vaga: …}})
-Depois, npx prettier --write tests/fixtures/avaliacao-documental/treinamento-projetos.json.
-Mudou a regra, os fictícios ou o cálculo? Rode de novo e reaplique a função na migration nova.
+Depois, npx prettier --write tests/fixtures/avaliacao-documental/treinamento-<área>.json.
+Mudou a regra, os fictícios ou o cálculo? Rode de novo e reaplique a função numa migration nova.
 """
 
 import argparse
@@ -37,25 +42,56 @@ sys.path.insert(0, str(RAIZ / "scripts" / "pre_classificacao"))
 
 import pre_classificacao as job  # noqa: E402
 
-FIXTURE = RAIZ / "tests" / "fixtures" / "avaliacao-documental" / "treinamento-projetos.json"
-MIGRATION = RAIZ / "supabase" / "migrations" / "20261008110000_treinamento_avaliacao_documental.sql"
-INICIO = "-- pre-classificacao-do-treinamento:inicio"
-FIM = "-- pre-classificacao-do-treinamento:fim"
+FIXTURES = RAIZ / "tests" / "fixtures" / "avaliacao-documental"
+MIGRATIONS = RAIZ / "supabase" / "migrations"
 ID_DO_EDITAL = "edital-de-treinamento"
-SOBRE = (
-    "Edital de treinamento de Projetos (992/2099): a entrada é o que o job da pré-classificação lê do banco "
-    "(pre_classificacao_ler_editais e pre_classificacao_ler_candidatos, só fictícios, com o código no lugar do id) "
-    "e o resultado é o que o Python calcula e a migration 20261008110000 grava. Gerado por "
-    "scripts/pre_classificacao/gerar_treinamento.py (depois: npx prettier --write neste arquivo); "
-    "conferido por tests/python/test_treinamento_projetos.py."
-)
+
+AREAS = {
+    "projetos": {
+        "edital": "992/2099",
+        "fixture": FIXTURES / "treinamento-projetos.json",
+        "migration": MIGRATIONS / "20261008110000_treinamento_avaliacao_documental.sql",
+        "marcador": "pre-classificacao-do-treinamento",
+        "sobre": (
+            "Edital de treinamento de Projetos (992/2099): a entrada é o que o job da pré-classificação lê do banco "
+            "(pre_classificacao_ler_editais e pre_classificacao_ler_candidatos, só fictícios, com o código no lugar do id) "
+            "e o resultado é o que o Python calcula e a migration 20261008110000 grava. Gerado por "
+            "scripts/pre_classificacao/gerar_treinamento.py (depois: npx prettier --write neste arquivo); "
+            "conferido por tests/python/test_treinamento_projetos.py."
+        ),
+    },
+    "saude-indigena": {
+        "edital": "991/2099",
+        "fixture": FIXTURES / "treinamento-saude-indigena.json",
+        "migration": MIGRATIONS / "20261009120000_treinamentos_completos.sql",
+        "marcador": "pre-classificacao-do-treinamento-si",
+        "sobre": (
+            "Edital de treinamento da Saúde Indígena (991/2099): a entrada é o que o job da pré-classificação lê do "
+            "banco (pre_classificacao_ler_editais e pre_classificacao_ler_candidatos, só fictícios, com o código no "
+            "lugar do id) e o resultado é o que o Python calcula e a migration 20261009120000 grava. Gerado por "
+            "scripts/pre_classificacao/gerar_treinamento.py --area saude-indigena (depois: npx prettier --write neste "
+            "arquivo); conferido por tests/python/test_treinamento_saude_indigena.py."
+        ),
+    },
+}
+
+# O de Projetos (o primeiro) continua nos nomes de antes.
+FIXTURE = AREAS["projetos"]["fixture"]
+MIGRATION = AREAS["projetos"]["migration"]
+INICIO = f"-- {AREAS['projetos']['marcador']}:inicio"
+FIM = f"-- {AREAS['projetos']['marcador']}:fim"
+
+
+def marcadores(area="projetos"):
+    m = AREAS[area]["marcador"]
+    return f"-- {m}:inicio", f"-- {m}:fim"
 
 
 def entrada_da_leitura(leitura):
     """A entrada guardada: o edital de treinamento e os inscritos por vaga, com o código no lugar do id."""
     editais = (leitura.get("editais") or {}).get("editais") or []
     if len(editais) != 1:
-        raise ValueError("a leitura deve ter um só edital (o de treinamento de Projetos)")
+        raise ValueError("a leitura deve ter um só edital (o de treinamento da área)")
     edital = {**editais[0], "id": ID_DO_EDITAL}
     candidatos = {}
     for vaga, lidos in sorted((leitura.get("candidatos") or {}).items()):
@@ -95,21 +131,23 @@ def calcular(entrada):
     return {"edital": edital, "vagas": dict(sorted(vagas.items()))}
 
 
-def bloco_da_migration(texto):
-    """O JSON do resultado gravado na migration (entre os marcadores)."""
-    inicio = texto.index(INICIO)
-    fim = texto.index(FIM, inicio)
+def bloco_da_migration(texto, area="projetos"):
+    """O JSON do resultado gravado na migration (entre os marcadores da área)."""
+    abre_marca, fecha_marca = marcadores(area)
+    inicio = texto.index(abre_marca)
+    fim = texto.index(fecha_marca, inicio)
     trecho = texto[inicio:fim]
     abre = trecho.index("$pre$") + len("$pre$")
     fecha = trecho.index("$pre$", abre)
     return json.loads(trecho[abre:fecha])
 
 
-def com_bloco(texto, resultado):
-    inicio = texto.index(INICIO)
-    fim = texto.index(FIM, inicio)
+def com_bloco(texto, resultado, area="projetos"):
+    abre_marca, fecha_marca = marcadores(area)
+    inicio = texto.index(abre_marca)
+    fim = texto.index(fecha_marca, inicio)
     novo = (
-        f"{INICIO}\n  c_pre constant jsonb := $pre$"
+        f"{abre_marca}\n  c_pre constant jsonb := $pre$"
         + json.dumps(resultado, ensure_ascii=False, separators=(",", ":"))
         + "$pre$::jsonb;\n  "
     )
@@ -117,22 +155,31 @@ def com_bloco(texto, resultado):
 
 
 def principal(lista=None):
-    p = argparse.ArgumentParser(description="Pré-classificação do edital de treinamento de Projetos")
+    p = argparse.ArgumentParser(description="Pré-classificação dos editais de treinamento")
+    p.add_argument("--area", choices=sorted(AREAS), default="projetos", help="edital de treinamento da área")
     p.add_argument("--leitura", help="JSON lido do banco num ensaio (editais e candidatos)")
     args = p.parse_args(lista)
+    cfg = AREAS[args.area]
     if args.leitura:
         entrada = entrada_da_leitura(json.loads(pathlib.Path(args.leitura).read_text(encoding="utf-8")))
     else:
-        entrada = json.loads(FIXTURE.read_text(encoding="utf-8"))["entrada"]
+        entrada = json.loads(cfg["fixture"].read_text(encoding="utf-8"))["entrada"]
     resultado = calcular(entrada)
-    FIXTURE.write_text(
-        json.dumps({"sobre": SOBRE, "entrada": entrada, "resultado": resultado}, ensure_ascii=False, indent=2) + "\n",
+    cfg["fixture"].write_text(
+        json.dumps({"sobre": cfg["sobre"], "entrada": entrada, "resultado": resultado}, ensure_ascii=False, indent=2)
+        + "\n",
         encoding="utf-8",
+        newline="\n",
     )
-    MIGRATION.write_text(com_bloco(MIGRATION.read_text(encoding="utf-8"), resultado), encoding="utf-8")
+    migration = cfg["migration"]
+    # Mantém o fim de linha do arquivo (o checkout no Windows pode estar em CRLF).
+    fim_de_linha = "\r\n" if b"\r\n" in migration.read_bytes() else "\n"
+    migration.write_text(
+        com_bloco(migration.read_text(encoding="utf-8"), resultado, args.area), encoding="utf-8", newline=fim_de_linha
+    )
     r = resultado["edital"]
     print(
-        f"{r['vagas']} vagas · {r['inscritos']} inscritos · {r['eliminados']} eliminados · "
+        f"{cfg['edital']}: {r['vagas']} vagas · {r['inscritos']} inscritos · {r['eliminados']} eliminados · "
         f"{r['ranqueados']} na Provisória · {r['no_lote']} no lote · {r['divergencias']} divergência(s)"
     )
     return 0
