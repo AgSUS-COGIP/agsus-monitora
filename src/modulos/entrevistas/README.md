@@ -61,6 +61,7 @@ seletor-do-edital.tsx   o edital compacto abaixo do topo, selo Treinamento, "mos
                         (administrador global) dentro do seletor, liberação e erros com "Tentar novamente"
 fila-do-dia.tsx         a fila em cartões por vaga (iniciais, código, horário e banca, situação, notas só
                         quando há), recortes, busca e situações, estados vazios
+tipos-da-ficha.ts       contratos do estado local da ficha, do cálculo e das notas para salvar
 tipos.ts                contratos da tela nova com o estado da condução (JS)
 estado-da-conducao.js   store da condução e dos roteiros: editais, edital aberto, escritas (RPC), uma por vez
 preparar.tsx            Preparar em passos: Roteiro, Banca, Convocação, Agenda (estado e o que falta, de
@@ -72,7 +73,7 @@ conducao.jsx            BotaoIrPara, ConvocacaoDaClassificacao ("Ver detalhes"),
 resumo-das-regras.tsx   "Regras da entrevista": quem é chamado (tabelinha por vaga), como a nota é calculada,
                         quem avalia e o desempate, cada bloco com o "Editar" para onde se muda
 competencias-do-membro.tsx  "Competências que avalia" de cada membro (Todas / Só estas)
-ficha.jsx               ficha de notas em modo de análise (tela inteira, como a da Avaliação documental):
+ficha.tsx               ficha de notas em modo de análise (tela inteira, como a da Avaliação documental):
                         o estado, a gravação e o fluxo; por avaliador (padrão: uma aba por avaliador) ou
                         por competência (lembrado no navegador); componente independente (dados,
                         convocado, convocados, aoSalvar, aoAbrir, aoFechar)
@@ -109,6 +110,14 @@ de agenda anteriores à troca de área ou de sessão são descartadas, inclusive
 edital. O cliente declara apenas `get_entrevistas_da_area` e `obter_agenda_entrevista`,
 compatíveis com o cliente único do app. O snapshot é somente leitura no compilador; dados
 aninhados não são congelados. Os componentes de Conduzir e Roteiros ainda combinam TSX e JSX.
+A ficha de notas (`ficha.tsx`) também está em TypeScript: estado local, modos de lançamento,
+permissões, matriz, progresso, atalhos, observações, justificativa, prévia e salvamento.
+`tipos-da-ficha.ts` distingue notas diretas de notas por aspectos e declara os campos enviados
+ao salvar (valores numéricos; `null` apaga). Os auxiliares de cálculo e de roteiro continuam
+em JavaScript, com contratos JSDoc para a integração. O estado da condução ainda recebe o
+payload do banco sem validação completa em tempo de execução; estes tipos não validam JSON.
+`tests/tipos/ficha-de-entrevistas.tsx` confere o contrato da ficha e rejeita notas textuais,
+notas que misturam os dois formatos e códigos de comparecimento inválidos.
 Isso não verifica todos os consumidores JavaScript nem valida o JSON inteiro. `tests/tipos/painel-de-entrevistas.tsx`
 confere usos e rejeições do compilador; o teste do módulo verifica a apresentação integrada.
 

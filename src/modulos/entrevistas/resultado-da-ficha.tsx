@@ -3,7 +3,7 @@ import { classes } from "../../ui/classes.js";
 import { animar } from "./campo-de-nota.tsx";
 
 /*
-  A lateral viva da ficha de notas (ficha.jsx): a prévia do resultado com as
+  A lateral viva da ficha de notas (ficha.tsx): a prévia do resultado com as
   regras do banco (`calcularEntrevista`), mudando enquanto a pessoa digita.
 
   - O total grande "/ 20" dentro de um anel de progresso, com a marca do
