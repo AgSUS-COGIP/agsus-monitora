@@ -42,7 +42,7 @@ e `20260930234000_cache_sem_atropelo.sql`.
 
 **perguntas:** conferido as | o que e conferido as | o que quer dizer conferido | ultima mudanca | hora no topo da tela | atualizado em | a tela parece parada | dados parados | por que a hora nao muda
 **resposta:** No topo de Análises curriculares, Seleção e Entrevistas, "Conferido às 09:32" é a última vez que a carga conferiu os dados (horário de Brasília; se foi em outro dia, aparece a data, como "em 04/10, 13:05"). Nas Análises curriculares, vem junto "última mudança em …": quando os dados mudaram de fato. Se a carga rodou e a planilha não tinha nada novo, o "Conferido" avança e a última mudança fica — os dados não estão parados. Sem registro de conferência, aparece "Atualizado em …". Se suspeitar de carga atrasada ou com falha, o administrador global confere em Configurações › Status das atualizações.
-**fonte:** src/lib/texto-da-conferencia.js; src/modulos/analises/analises.tsx; src/modulos/selecao/selecao.tsx; src/modulos/entrevistas/entrevistas.jsx
+**fonte:** src/lib/texto-da-conferencia.js; src/modulos/analises/analises.tsx; src/modulos/selecao/selecao.tsx; src/modulos/entrevistas/entrevistas.tsx
 
 ## Quem vê as Análises curriculares
 

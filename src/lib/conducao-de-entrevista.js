@@ -15,7 +15,7 @@
   em Python (`monitora.entrevistas.calculo`, recálculo em lote) e os casos
   dourados dos três lados: `tests/fixtures/entrevistas/casos-de-calculo.json`.
 */
-import { normalizarBusca } from "./entrevistas-do-painel.js";
+import { normalizarBusca } from "./entrevistas-do-painel.ts";
 import {
   arredondar,
   bancaDoRascunho,

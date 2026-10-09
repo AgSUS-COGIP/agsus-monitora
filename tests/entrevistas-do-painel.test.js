@@ -13,12 +13,13 @@ import {
   formatarNota,
   mediaPorCriterio,
   normalizarPayload,
+  normalizarAgendaDoPainel,
   notaDivergente,
   opcoesDosFiltros,
   pendenciasDasEntrevistas,
   rotuloCurtoDoCriterio,
   topUnidades,
-} from "../src/lib/entrevistas-do-painel.js";
+} from "../src/lib/entrevistas-do-painel.ts";
 
 const CRITERIOS = [
   "HABILIDADE TÉCNICA INTERCULTURAL (Conhecimentos sobre a saúde indígena)",
@@ -179,6 +180,52 @@ describe("normalização do payload", () => {
     expect(vazio.entrevistas).toEqual([]);
     expect(vazio.criterios).toEqual([]);
     expect(vazio.ultimaCarga).toBeNull();
+  });
+
+  it("lê objetos externos sem supor o formato das listas ou da análise", () => {
+    for (const invalido of [null, 7, "texto", [], true]) {
+      expect(normalizarPayload(invalido).entrevistas).toEqual([]);
+    }
+    const dados = normalizarPayload({
+      criterios: ["Postura"],
+      entrevistas: [
+        null,
+        7,
+        {
+          id: "e1",
+          candidato: "Ana",
+          analise: "inválida",
+          notas: [null, [0, "3"], [9, 2], [0, "NaN"]],
+        },
+      ],
+    });
+    expect(dados.entrevistas).toHaveLength(1);
+    expect(dados.entrevistas[0].notas).toEqual([
+      { indice: 0, criterio: "Postura", curto: "Postura", nota: 3 },
+    ]);
+    expect(dados.entrevistas[0].analise.nota).toBeNull();
+  });
+
+  it("normaliza a agenda externa e descarta entradas que não são objetos", () => {
+    expect(normalizarAgendaDoPainel(null)).toEqual([]);
+    expect(normalizarAgendaDoPainel({ itens: "inválido" })).toEqual([]);
+    const [agenda] = normalizarAgendaDoPainel({
+      itens: [
+        null,
+        7,
+        [],
+        { nome: "Ana", vaga: 7, inicio: "09:00", banca: "2" },
+      ],
+    });
+    expect(agenda).toEqual({
+      analise_id: null,
+      nome: "Ana",
+      vaga: null,
+      cargo: null,
+      data: null,
+      inicio: "09:00",
+      banca: 2,
+    });
   });
 
   it("tolera diferença de até 0,05 na soma", () => {
@@ -385,7 +432,7 @@ describe("registro da aba", async () => {
 
 describe("cópia guardada", async () => {
   const { PAINEL_DE_ENTREVISTAS, payloadMudou } =
-    await import("../src/lib/entrevistas-do-painel.js");
+    await import("../src/lib/entrevistas-do-painel.ts");
 
   it("chave por área, esquema 1 e payload com a lista", () => {
     expect(PAINEL_DE_ENTREVISTAS.chave({ area: "sede" })).toBe(
