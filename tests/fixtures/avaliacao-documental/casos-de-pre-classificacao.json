@@ -8699,7 +8699,7 @@
     ]
   },
   "congelamento": {
-    "sobre": "fimDasInscricoes/fim_das_inscricoes (a etapa de inscrição do cronograma; com prorrogação, o fim mais tarde) e congelaADeclarada/congela_a_declarada (depois do fim, ou sem data de fim).",
+    "sobre": "fimDasInscricoes/fim_das_inscricoes (a etapa de inscrição do cronograma, sem a \"Validação das inscrições\" dos Projetos; com prorrogação, o fim mais tarde) e congelaADeclarada/congela_a_declarada (depois do fim, ou sem data de fim).",
     "fim_das_inscricoes": [
       [
         [
@@ -8745,6 +8745,21 @@
           }
         ],
         "2026-09-21"
+      ],
+      [
+        [
+          {
+            "atividade": "Período de Inscrições",
+            "inicio": "2026-10-05",
+            "fim": "2026-10-14"
+          },
+          {
+            "atividade": "Validação das inscrições, por meio da verificação da documentação obrigatória / Análise do processo de Heteroidentificação",
+            "inicio": "2026-10-15",
+            "fim": "2026-10-22"
+          }
+        ],
+        "2026-10-14"
       ],
       [
         [
