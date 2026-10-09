@@ -246,6 +246,11 @@ export function situacoesDaLigacao(entrevista) {
   return lista;
 }
 
+/**
+ * @param {readonly import("../modulos/entrevistas/tipos-do-painel.ts").EntrevistaDoPainel[]} entrevistas
+ * @param {import("../modulos/entrevistas/tipos-do-painel.ts").FiltrosDoPainel} [filtros]
+ * @returns {import("../modulos/entrevistas/tipos-do-painel.ts").EntrevistaDoPainel[]}
+ */
 export function filtrarEntrevistas(entrevistas, filtros = FILTROS_VAZIOS) {
   const busca = normalizarBusca(filtros.busca);
   return entrevistas.filter((e) => {
@@ -363,6 +368,10 @@ export function formatarNota(valor, casas = 2) {
 
 /* ── Gráficos ───────────────────────────────────────────────────────── */
 
+/**
+ * @param {readonly import("../modulos/entrevistas/tipos-do-painel.ts").EntrevistaDoPainel[]} entrevistas
+ * @returns {{id: string, rotulo: string, valor: number}[]}
+ */
 export function contagemPorParecer(entrevistas) {
   return PARECERES.map((p) => ({
     id: p.id,
@@ -371,6 +380,10 @@ export function contagemPorParecer(entrevistas) {
   }));
 }
 
+/**
+ * @param {readonly import("../modulos/entrevistas/tipos-do-painel.ts").EntrevistaDoPainel[]} entrevistas
+ * @returns {{id: string, rotulo: string, valor: number}[]}
+ */
 export function contagemPorComparecimento(entrevistas) {
   return COMPARECIMENTOS.map((c) => ({
     id: c.id,
@@ -380,6 +393,10 @@ export function contagemPorComparecimento(entrevistas) {
 }
 
 /* Faixas da nota final entre quem compareceu: a última inclui o 20. */
+/**
+ * @param {readonly import("../modulos/entrevistas/tipos-do-painel.ts").EntrevistaDoPainel[]} entrevistas
+ * @returns {{id: string, rotulo: string, valor: number}[]}
+ */
 export function faixasDeNota(entrevistas) {
   const contagem = FAIXAS_DE_NOTA.map((f) => ({ ...f, valor: 0 }));
   for (const e of entrevistas) {
@@ -394,6 +411,11 @@ export function faixasDeNota(entrevistas) {
 }
 
 /* Média de cada critério entre as notas lançadas (a ordem é a do payload). */
+/**
+ * @param {readonly import("../modulos/entrevistas/tipos-do-painel.ts").EntrevistaDoPainel[]} entrevistas
+ * @param {readonly import("../modulos/entrevistas/tipos-do-painel.ts").CriterioDoPainel[]} criterios
+ * @returns {{indice: number, rotulo: string, texto: string, quantidade: number, media: number | null}[]}
+ */
 export function mediaPorCriterio(entrevistas, criterios) {
   return criterios
     .map((c) => {
@@ -413,6 +435,10 @@ export function mediaPorCriterio(entrevistas, criterios) {
     .filter((c) => c.quantidade > 0);
 }
 
+/**
+ * @param {readonly import("../modulos/entrevistas/tipos-do-painel.ts").EntrevistaDoPainel[]} entrevistas
+ * @returns {{rotulo: string, valor: number}[]}
+ */
 export function topUnidades(entrevistas, limite = 10) {
   const contagem = new Map();
   for (const e of entrevistas) {
@@ -428,6 +454,10 @@ export function topUnidades(entrevistas, limite = 10) {
 /* ── Pendências ─────────────────────────────────────────────────────── */
 
 /** Aprovados sem entrevista agrupados por edital e vaga. */
+/**
+ * @param {readonly import("../modulos/entrevistas/tipos-do-painel.ts").AprovadoSemEntrevista[]} aprovados
+ * @returns {import("../modulos/entrevistas/tipos-do-painel.ts").GrupoDosSemEntrevista[]}
+ */
 export function agruparAprovadosSemEntrevista(aprovados) {
   const grupos = new Map();
   for (const a of aprovados) {
