@@ -30,6 +30,7 @@ export function dataDeCorteDoCronograma(cronograma = []) {
 export const ROTULOS_DOS_AVISOS = Object.freeze({
   EMPATE_PENDENTE: "Empate aguardando sorteio ou decisão",
   SEM_DATA_CORTE: "Sem data de corte da idade",
+  HORA_DE_NASCIMENTO: "Empate decidido pela hora de nascimento",
   NUMERO_INVALIDO: "Número inválido",
   ENTREVISTA_SEM_ANALISE: "Entrevista sem análise ligada",
   CONVOCADO_SEM_ENTREVISTA: "Convocado sem entrevista lançada",

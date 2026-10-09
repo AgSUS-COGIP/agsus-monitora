@@ -130,6 +130,44 @@ export function diasDeVida(nascimento, corte) {
   return dias >= 0 ? dias : null;
 }
 
+/*
+  A hora de nascimento da certidão, para o desempate por "maior idade" entre
+  quem nasceu no MESMO dia (edital 93/2026, itens 6.11.5 e 6.11.6): sem
+  certidão, vale 23h59min59s — a pessoa fica como a mais nova do dia.
+  "8:05", "08:05", "08:05:30" → "08:05:00", "08:05:30"; inválida → null.
+*/
+export const HORA_SEM_CERTIDAO = "23:59:59";
+
+export function lerHora(valor) {
+  const m = String(valor ?? "")
+    .trim()
+    .match(/^(\d{1,2}):(\d{2})(?::(\d{2}))?$/);
+  if (!m) return null;
+  const [h, min, s] = [Number(m[1]), Number(m[2]), Number(m[3] ?? 0)];
+  if (h > 23 || min > 59 || s > 59) return null;
+  const dois = (n) => String(n).padStart(2, "0");
+  return `${dois(h)}:${dois(min)}:${dois(s)}`;
+}
+
+/**
+ * Segundos de vida à 00h00 da data de corte, com a hora de nascimento (sem
+ * hora válida, 23:59:59). Maior = mais velho. Null sem data.
+ */
+export function segundosDeVida(nascimento, hora, corte) {
+  const dias = diasDeVida(nascimento, corte);
+  if (dias === null) return null;
+  const [h, m, s] = (lerHora(hora) || HORA_SEM_CERTIDAO).split(":").map(Number);
+  return dias * 86400 - (h * 3600 + m * 60 + s);
+}
+
+/** "08:05:00" → "08h05min00s" (como nos editais). */
+export function horaBR(valor) {
+  const h = lerHora(valor);
+  if (!h) return "";
+  const [hh, mm, ss] = h.split(":");
+  return `${hh}h${mm}min${ss}s`;
+}
+
 /** "2026-07-20" → "20/07/2026". */
 export function dataBR(valor) {
   const d = lerData(valor);

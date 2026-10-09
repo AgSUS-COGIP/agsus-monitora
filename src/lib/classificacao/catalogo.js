@@ -12,7 +12,7 @@
   Cada critério sabe ler o próprio valor do candidato (`ler`), já com a data de
   corte da idade, e diz qual dado falta quando não consegue (`falta`).
 */
-import { diasDeVida, idadeNaData, numeroBR } from "./numeros.js";
+import { idadeNaData, numeroBR, segundosDeVida } from "./numeros.js";
 
 export const DIRECOES = Object.freeze([
   ["SIM_PRIMEIRO", "Sim antes de não"],
@@ -102,8 +102,10 @@ export const CATALOGO_DE_CRITERIOS = Object.freeze(
       rotuloCurto: "idade",
       tipo: "numero",
       direcao: "MAIOR_PRIMEIRO",
-      origem: "data_nascimento (dias de vida na data de corte)",
-      ler: (c, ctx) => diasDeVida(c.dataNascimento, ctx.dataCorte),
+      origem:
+        "data_nascimento + hora da certidão (sem certidão, 23:59:59; 93/2026, 6.11.5 e 6.11.6)",
+      ler: (c, ctx) =>
+        segundosDeVida(c.dataNascimento, c.horaNascimento, ctx.dataCorte),
       falta: (c, ctx) =>
         !ctx.dataCorte
           ? "data de corte (fim das inscrições)"

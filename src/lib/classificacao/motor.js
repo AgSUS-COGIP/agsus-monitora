@@ -42,7 +42,16 @@ import {
   semAcento,
   simOuNao,
 } from "./catalogo.js";
-import { arredondar, escalar, formatarNota, numeroBR } from "./numeros.js";
+import {
+  arredondar,
+  dataBR,
+  escalar,
+  formatarNota,
+  horaBR,
+  HORA_SEM_CERTIDAO,
+  lerHora,
+  numeroBR,
+} from "./numeros.js";
 import { normalizarRegra } from "./regra.js";
 import { divergenciasDasCotas } from "./convocacao-do-edital.js";
 import { chaveDoGrupo } from "./sorteio.js";
@@ -86,6 +95,8 @@ export function prepararCandidatos(brutos = [], avisos = []) {
       modalidadeTexto: texto(b.modalidade),
       pcd: simOuNao(b.pcd),
       dataNascimento: texto(b.data_nascimento ?? b.dataNascimento),
+      // Da certidão, informada na Classificação (TB_HORA_NASCIMENTO_CANDIDATO).
+      horaNascimento: lerHora(b.hora_nascimento ?? b.horaNascimento) || "",
       status: texto(b.status),
       etapa: texto(b.etapa),
       quadroId: texto(b.quadro ?? b.quadroId),
@@ -352,11 +363,22 @@ function situacaoApta(c, regra) {
 /** A eliminação na documental, ou null. Avisos de nível desconhecido vão por vaga. */
 function eliminacaoDocumental(c, regra, ctx) {
   if (!regra.etapas.documental) return null;
-  if (!situacaoApta(c, regra))
+  if (!situacaoApta(c, regra)) {
+    // Reprovado na análise E abaixo da nota mínima: a publicação diz os dois.
+    const minimo = regra.documental.nota_minima;
+    const abaixo =
+      minimo !== null &&
+      c.notaDocumental !== null &&
+      escalar(c.notaDocumental, 4) < escalar(minimo, 4);
     return {
       motivo: "NAO_HABILITADO",
-      detalhe: `Situação na análise: ${c.status || c.etapa || "não informada"}.`,
+      detalhe: `Situação na análise: ${c.status || c.etapa || "não informada"}.${
+        abaixo
+          ? ` Nota ${formatarNota(c.notaDocumental, ctx.casas)}, abaixo do mínimo de ${formatarNota(minimo, ctx.casas)}.`
+          : ""
+      }`,
     };
+  }
   if (c.notaDocumental === null)
     return { motivo: "SEM_NOTA_DOCUMENTAL", detalhe: "" };
   const porNivel = regra.documental.nota_minima_por_nivel;
@@ -474,11 +496,43 @@ export function compararValores(a, b, direcao) {
   return maiorPrimeiro ? (y > x ? 1 : -1) : x > y ? 1 : -1;
 }
 
-function descreverValor(valor, criterio) {
+/*
+  O valor de um critério na explicação. "Maior idade" mostra a data de
+  nascimento e, quando as duas pessoas nasceram no mesmo dia, a hora da
+  certidão (sem certidão, 23h59min59s — itens 6.11.5 e 6.11.6 do 93/2026).
+*/
+function descreverValor(valor, criterio, c, outro) {
   if (valor === null) return "sem dado";
   if (typeof valor === "boolean") return valor ? "sim" : "não";
-  if (criterio === "MAIOR_IDADE") return `${Math.floor(valor / 365.25)} anos`;
+  if (criterio === "MAIOR_IDADE" && c) {
+    if (outro?.dataNascimento !== c.dataNascimento)
+      return `nasc. ${dataBR(c.dataNascimento)}`;
+    return c.horaNascimento
+      ? `${horaBR(c.horaNascimento)} pela certidão`
+      : `${horaBR(HORA_SEM_CERTIDAO)}, sem certidão`;
+  }
+  if (criterio === "EXP_PROFISSIONAL_TEMPO")
+    return `${formatarNota(valor, 0)} dias`;
   return formatarNota(valor, Number.isInteger(valor) ? 0 : 2);
+}
+
+/*
+  Os pares do grupo de empate que chegam à "maior idade" com a MESMA data de
+  nascimento: só a hora da certidão os separa (sem certidão, 23:59:59).
+*/
+function paresNaMesmaData(grupo, criterios, ctx) {
+  const i = criterios.findIndex((d) => d.criterio === "MAIOR_IDADE");
+  if (i < 0) return [];
+  const antes = criterios.slice(0, i);
+  const pares = [];
+  for (let x = 0; x < grupo.length; x += 1)
+    for (let y = x + 1; y < grupo.length; y += 1) {
+      const [a, b] = [grupo[x], grupo[y]];
+      if (!a.dataNascimento || a.dataNascimento !== b.dataNascimento) continue;
+      if (primeiroQueSepara(a, b, antes, ctx)) continue;
+      pares.push([a, b]);
+    }
+  return pares;
 }
 
 /** O primeiro critério que separa a e b: `{ criterio, direcao, va, vb, sinal }` ou null. */
@@ -829,7 +883,7 @@ function explicar(c, linhaGeral, ctx, tipo) {
           const rotulo =
             CRITERIO_POR_CODIGO[s.criterio]?.rotuloCurto || s.criterio;
           frases.push(
-            `${s.sinal < 0 ? "à frente de" : "atrás de"} ${outro.nome} por ${rotulo} (${descreverValor(s.va, s.criterio)} × ${descreverValor(s.vb, s.criterio)})`,
+            `${s.sinal < 0 ? "à frente de" : "atrás de"} ${outro.nome} por ${rotulo} (${descreverValor(s.va, s.criterio, c, outro)} × ${descreverValor(s.vb, s.criterio, outro, c)})`,
           );
         } else frases.push(`com ${outro.nome}: empate em todos os critérios`);
       }
@@ -918,6 +972,7 @@ export function classificar({
     desempatesUsados: new Set(),
     avisos,
     nivelDesconhecido: new Set(),
+    horaDecide: new Set(),
   };
   if (
     !corte &&
@@ -1207,6 +1262,30 @@ export function classificar({
         }
       }
 
+    /*
+      Empate que chega à "maior idade" entre quem nasceu no mesmo dia: vale a
+      hora da certidão (sem certidão, 23h59min59s). A gaveta desses candidatos
+      mostra o campo da hora (`horaDecide`); o aviso pede a conferência.
+    */
+    if (usarCriterios) {
+      const grupos = new Set(
+        elegiveis.map((c) => c.grupoDaNota).filter((g) => g?.length > 1),
+      );
+      for (const grupo of grupos)
+        for (const [a, b] of paresNaMesmaData(grupo, criterios, ctx)) {
+          ctx.horaDecide.add(a.analiseId);
+          ctx.horaDecide.add(b.analiseId);
+          const semHora = [a, b].filter((x) => !x.horaNascimento).length;
+          avisos.push({
+            codigo: "HORA_DE_NASCIMENTO",
+            tom: semHora ? "warning" : "info",
+            vaga: v.chave,
+            analiseId: a.analiseId,
+            texto: `${a.nome} e ${b.nome}: empatados até a maior idade e nascidos no mesmo dia (${dataBR(a.dataNascimento)}); decide a hora da certidão de nascimento${semHora ? ` — sem certidão vale ${horaBR(HORA_SEM_CERTIDAO)}; informe a hora na explicação do candidato` : ""}.`,
+          });
+        }
+    }
+
     const porModalidade = {};
     for (const m of regra.modalidades) {
       if (!m.lista_propria) continue;
@@ -1303,6 +1382,9 @@ export function classificar({
         modalidades: c.modalidadesNaLista,
         situacao: situacaoDe(c),
         ...(c.ajustes ? { recursos: recursosDoAjuste(c) } : {}),
+        // A hora da certidão: a gaveta mostra o campo só quando ela decide.
+        horaNascimento: c.horaNascimento || null,
+        horaDecide: ctx.horaDecide.has(c.analiseId),
         explicacao: [
           ...explicar(c, linhaGeral, ctx, tipo),
           ...fraseDosAjustes(c, casasDoAjuste),
