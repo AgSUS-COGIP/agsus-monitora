@@ -5,6 +5,7 @@
   normalizador da regra validam a estrutura — estes tipos não validam JSON.
 */
 import type { EnderecosDaEmpregare } from "../../../lib/avaliacao-documental/anexo-na-empregare.ts";
+import type { Recusa } from "../../../lib/avaliacao-documental/leitura-dos-arquivos.ts";
 
 export type Situacao = "CONFORME" | "NAO_CONFORME" | "NAO_ENVIADO";
 
@@ -69,6 +70,8 @@ export type ItemLancado = Partial<Titulo> &
   Vinculo & {
     /** A linha veio da resposta do candidato (o avaliador confere ou corrige). */
     da_resposta?: boolean;
+    /** A linha é um item lido do arquivo que o avaliador aceitou (chave do item lido). */
+    do_arquivo?: string;
   };
 
 export type Lancamento = {
@@ -83,6 +86,8 @@ export type Lancamento = {
   vinculos: ItemLancado[];
   observacoes?: string;
   observacoes_prontas?: string[];
+  /** Os itens lidos dos arquivos que o avaliador recusou (leitura-dos-arquivos.ts). */
+  recusas_lidas?: Record<string, Recusa>;
   [chave: string]: unknown;
 };
 
@@ -187,6 +192,8 @@ export type EstadoDaFicha = {
     respostas: Record<string, unknown>;
     /** Linhas tiradas das respostas pelo job Python, por bloco (20261009190000). */
     sugestoes?: Record<string, unknown[]>;
+    /** O que o robô leu dos anexos da resposta vigente (20261009220000; leiturasDaFicha valida). */
+    leituras?: unknown;
     papel?: string;
   };
 };

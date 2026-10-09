@@ -3,3 +3,5 @@
 # nem para os jobs (cada job tem o próprio requirements, quando precisa).
 pytest==9.0.3
 ruff==0.13.3
+# Gera os PDFs sintéticos dos testes da leitura dos arquivos (nunca documento real).
+reportlab==5.0.1

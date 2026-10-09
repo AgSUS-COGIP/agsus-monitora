@@ -24,6 +24,9 @@ const anexo = (arquivo, link) => ({
   link,
 });
 
+// O anexo na Empregare, a chave da leitura automática dos arquivos.
+const ID = (arquivo) => ({ resposta: "9", pergunta: "16", arquivo });
+
 describe("arquivos da pergunta de anexo", () => {
   it("um link por arquivo, na ordem, com o nome que a Empregare guardou", () => {
     const enderecos = {
@@ -37,14 +40,15 @@ describe("arquivos da pergunta de anexo", () => {
       ],
     };
     expect(arquivosDaPergunta(enderecos, COLUNA)).toEqual([
-      { numero: 1, nome: "NR-10.pdf", link: LINK("NR-10.pdf") },
+      { numero: 1, nome: "NR-10.pdf", link: LINK("NR-10.pdf"), ...ID(1) },
       {
         numero: 2,
         nome: "certificado NR-35.pdf",
         link: LINK("0a1b2c3d4e5f_certificado%20NR-35.pdf", 2),
+        ...ID(2),
       },
       // Sem nome legível: o número.
-      { numero: 3, nome: "Arquivo 3", link: LINK("%20", 3) },
+      { numero: 3, nome: "Arquivo 3", link: LINK("%20", 3), ...ID(3) },
     ]);
     expect(arquivosDaPergunta({ ...enderecos, anexos: [] }, COLUNA)).toEqual(
       [],
