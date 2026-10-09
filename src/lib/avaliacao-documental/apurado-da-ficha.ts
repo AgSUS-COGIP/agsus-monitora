@@ -183,3 +183,49 @@ export function comItensLancados<T extends LancamentoDaFicha>(
     };
   return lancamento;
 }
+
+type ParteDaComposicao = {
+  bloco: string;
+  parcial: string;
+  apurado: number | null;
+} & Record<string, unknown>;
+
+/**
+ * A composição da lateral com a PRÉVIA de cada item ainda sem decisão: o
+ * Apurado que o item mostra (apuradoDoBloco: o ajuste, o Calculado pelos
+ * itens lançados ou o Declarado), para a nota mudar enquanto o analista lança
+ * vínculos, cursos e títulos. Conferido, a prévia é null (vale o apurado).
+ */
+export function composicaoComPrevias<T extends ParteDaComposicao>(
+  partes: T[],
+  blocos: BlocoQuePontua[],
+  lancamento: LancamentoDaFicha,
+  declarada: Declarada,
+  calculados: Record<string, number | undefined> | null | undefined,
+): (T & { previa: number | null })[] {
+  return partes.map((p) => {
+    const bloco = blocos.find((b) => b.codigo === p.bloco);
+    if (p.apurado !== null || !bloco) return { ...p, previa: null };
+    const calculado = calculados?.[p.parcial] ?? 0;
+    return {
+      ...p,
+      previa: apuradoDoBloco({ bloco, lancamento, declarada, calculado }).valor,
+    };
+  });
+}
+
+/** A nota parcial: os apurados dos conferidos mais as prévias dos outros. */
+export function notaComPrevias(
+  partes: { apurado: number | null; previa?: number | null }[],
+): { nota: number; comPrevia: boolean } {
+  let nota = 0;
+  let comPrevia = false;
+  for (const p of partes) {
+    if (p.apurado !== null) nota += p.apurado;
+    else if (typeof p.previa === "number") {
+      nota += p.previa;
+      comPrevia = true;
+    }
+  }
+  return { nota: Math.round(nota * 10000) / 10000, comPrevia };
+}

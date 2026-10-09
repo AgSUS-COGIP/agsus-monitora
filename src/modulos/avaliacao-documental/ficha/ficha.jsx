@@ -35,6 +35,11 @@ import {
   DICA_DA_ART,
   ROTULO_DA_ART,
 } from "../../../lib/avaliacao-documental/tela-da-pre-classificacao.js";
+import {
+  composicaoComPrevias,
+  notaComPrevias,
+} from "../../../lib/avaliacao-documental/apurado-da-ficha.ts";
+import { motivosDoResultado } from "../../../lib/avaliacao-documental/motivos-do-resultado.ts";
 import { rotuloDaVersaoNaLista } from "../../../lib/nome-da-versao.ts";
 import { Aviso, Campo } from "../../../ui/index.js";
 import { compartilharNoChat } from "../../chat/ponte.js";
@@ -354,13 +359,23 @@ export function ConteudoDaFicha({
     ? ficha.tp_resultado
     : (conferencia?.situacao ?? avaliacao.resultado);
   const art = st.dados.declarada_gravada?.art;
+  // Antes da decisão, cada item entra com a prévia (o Apurado que o item mostra).
+  const partes = composicaoComPrevias(
+    composicaoDaNota(regra, lancamento, avaliacao, st.declarada),
+    blocos,
+    lancamento,
+    st.declarada,
+    avaliacao.calculados,
+  );
+  const comPrevias = notaComPrevias(partes);
   const nota = {
     nota: emAnalise
-      ? avaliacao.nota_apurada
+      ? comPrevias.nota
       : gravada
         ? ficha.nota_final
         : avaliacao.nota_final,
     parcial: emAnalise,
+    comPrevia: emAnalise && comPrevias.comPrevia,
     minima: avaliacao.nota_minima ?? null,
     art:
       art !== null && art !== undefined
@@ -374,7 +389,12 @@ export function ConteudoDaFicha({
           : textoDaSituacaoDaConferencia(conferencia),
     },
     resultado,
-    partes: composicaoDaNota(regra, lancamento, avaliacao, st.declarada),
+    // O por quê do Inapto, com o link para o item.
+    motivos: emAnalise
+      ? []
+      : motivosDoResultado(blocos, lancamento, avaliacao, resultado),
+    aoIr: irPara,
+    partes,
   };
   const previa = gravada
     ? { completa: true, texto: ficha.parecer, motivos: [] }

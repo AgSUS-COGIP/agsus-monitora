@@ -8,7 +8,6 @@ import {
   blocoSeAplica,
   divergenciaDoBloco,
   ehAnexo,
-  opcoesDeJustificativa,
   respostasDoBloco,
   SITUACOES_DA_FICHA,
   sugereNaoEnviado,
@@ -22,8 +21,10 @@ import {
   comItensLancados,
   temItensLancados,
 } from "../../../lib/avaliacao-documental/apurado-da-ficha.ts";
+import { justificativasDoBloco } from "../../../lib/avaliacao-documental/justificativas-do-bloco.ts";
 import { tetoDoBloco } from "../../../lib/avaliacao-documental/pontuacao.js";
 import { Selo } from "../../../ui/index.js";
+import { ComprovadoDaFicha } from "./comprovado-da-ficha.tsx";
 import { LinkDaEmpregare, LinkDoAnexo } from "./empregare.tsx";
 import type {
   Bloco,
@@ -124,11 +125,14 @@ function RespostaDeclarada({
   linha,
   empregare,
   comLinkGeral,
+  declarado,
 }: {
   linha: LinhaDeResposta;
   empregare: ContextoDaEmpregare;
   /** Sem anexo no item: o "Abrir na Empregare" do candidato ao lado da resposta. */
   comLinkGeral?: boolean;
+  /** Nos blocos com itens: "Declarado pelo candidato" (o comprovado vem dos itens). */
+  declarado?: boolean;
 }) {
   const [inteiro, setInteiro] = useState(false);
   const completo = enunciadoCompleto(linha.coluna);
@@ -150,6 +154,9 @@ function RespostaDeclarada({
         ) : null}
       </p>
       <div className="avd-ficha-valor" data-anexo={anexo || undefined}>
+        {declarado && !anexo ? (
+          <span className="avd-ficha-rotulo">Declarado pelo candidato:</span>
+        ) : null}
         <strong className="avd-ficha-texto-declarado">
           {anexo ? (
             <i className="fa-solid fa-paperclip" aria-hidden="true" />
@@ -174,10 +181,12 @@ function Respostas({
   linhas,
   sugestao,
   empregare,
+  declarado,
 }: {
   linhas: LinhaDeResposta[];
   sugestao: boolean;
   empregare: ContextoDaEmpregare;
+  declarado?: boolean;
 }) {
   const algumAnexo = linhas.some((l) => ehAnexo(l.texto));
   return (
@@ -188,6 +197,7 @@ function Respostas({
           linha={l}
           empregare={empregare}
           comLinkGeral={!algumAnexo && i === 0}
+          declarado={declarado}
         />
       ))}
       {sugestao ? (
@@ -254,6 +264,7 @@ export function Chips({
   aoMudar,
   desabilitado,
   tour,
+  rotuloOculto,
 }: {
   rotulo: string;
   opcoes: Opcao[];
@@ -261,6 +272,8 @@ export function Chips({
   aoMudar: (marcados: string[]) => void;
   desabilitado: boolean;
   tour?: string;
+  /** O rótulo já aparece em volta (o resumo do "Outras justificativas"). */
+  rotuloOculto?: boolean;
 }) {
   return (
     <div
@@ -269,7 +282,9 @@ export function Chips({
       aria-label={rotulo}
       data-tour={tour}
     >
-      <span className="avd-ficha-rotulo">{rotulo}</span>
+      <span className={rotuloOculto ? "sr-only" : "avd-ficha-rotulo"}>
+        {rotulo}
+      </span>
       <div className="avd-ficha-chips-lista">
         {opcoes.map((o) => {
           const marcado = marcados.includes(o.codigo);
@@ -315,12 +330,14 @@ function Itens({
   declarada,
   mudar: mudarDoEstado,
   desabilitado,
+  experiencia,
 }: {
   bloco: Bloco;
   lancamento: Lancamento;
   declarada: EstadoDaFicha["declarada"];
   mudar: Mudar;
   desabilitado: boolean;
+  experiencia: EstadoDaFicha["avaliacao"]["experiencia"];
 }) {
   // O primeiro item lançado devolve o Apurado ao Calculado (comItensLancados).
   const mudar: Mudar = (transformar) =>
@@ -515,6 +532,11 @@ function Itens({
           ))}
         </ul>
       ) : null}
+      <ComprovadoDaFicha
+        bloco={bloco}
+        lancamento={lancamento}
+        experiencia={experiencia}
+      />
       {!desabilitado ? (
         <button
           type="button"
@@ -570,7 +592,13 @@ function Pontos({
   const divergencia = conferido
     ? divergenciaDoBloco(bloco, avaliacao, declarada)
     : null;
-  const opcoes = opcoesDeJustificativa(regra, bloco) as Opcao[];
+  const { doBloco: opcoesDoBloco, outras } = justificativasDoBloco(
+    regra,
+    bloco,
+  );
+  const opcoes: Opcao[] = [...opcoesDoBloco, ...outras];
+  const marcadas = lancado.justificativas || [];
+  const outraMarcada = outras.some((o) => marcadas.includes(o.codigo));
   const menorQueODeclarado =
     lancado.situacao === "CONFORME" && temDiferenca && (diferenca ?? 0) < 0;
   // Zerado pela decisão: o motivo do Não conforme/Não enviado já justifica.
@@ -691,16 +719,34 @@ function Pontos({
           className="avd-ficha-justificativa"
           data-tour="avd-ficha-justificativa"
         >
-          {opcoes.length ? (
+          {opcoesDoBloco.length ? (
             <Chips
               rotulo={menorQueODeclarado ? porQue : "Justificativa da nota"}
-              opcoes={opcoes}
-              marcados={lancado.justificativas || []}
+              opcoes={opcoesDoBloco}
+              marcados={marcadas}
               desabilitado={desabilitado}
               aoMudar={(justificativas) =>
                 alterarBloco(mudar, bloco.codigo, { justificativas })
               }
             />
+          ) : null}
+          {outras.length ? (
+            <details
+              className="avd-ficha-outras-justificativas"
+              open={outraMarcada || !opcoesDoBloco.length || undefined}
+            >
+              <summary>Outras justificativas ({outras.length})</summary>
+              <Chips
+                rotulo="Outras justificativas"
+                rotuloOculto
+                opcoes={outras}
+                marcados={marcadas}
+                desabilitado={desabilitado}
+                aoMudar={(justificativas) =>
+                  alterarBloco(mudar, bloco.codigo, { justificativas })
+                }
+              />
+            </details>
           ) : null}
           <label className="avd-ficha-campo">
             <span className="avd-ficha-rotulo">
@@ -865,6 +911,7 @@ export function ItemDaFicha({
               linhas={linhas}
               sugestao={!lancado.situacao && sugereNaoEnviado(linhas)}
               empregare={empregare}
+              declarado={Boolean(BLOCOS_COM_ITENS[bloco.tipo])}
             />
           ) : null}
           {bloco.tipo === "PONTUACAO" ? (
@@ -883,6 +930,7 @@ export function ItemDaFicha({
                 declarada={st.declarada}
                 mudar={mudar}
                 desabilitado={desabilitado}
+                experiencia={avaliacao.experiencia}
               />
               {PARCIAL_DO_TIPO[bloco.tipo] ? (
                 <Pontos

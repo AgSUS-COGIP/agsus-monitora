@@ -257,7 +257,8 @@ export const blocoConferido = (lancamento, bloco) =>
 /**
  * O que falta para concluir, bloco a bloco: [{ bloco, tipo, texto }]. Vazio =
  * pode concluir. O banco confere o mesmo em concluir_ficha. `tipo`: situacao,
- * motivo, item, datas, horas, justificativa ou nota. A nota diferente da
+ * motivo, item, datas, horas, minimo, justificativa ou nota. `minimo` (a
+ * experiência Conforme abaixo do mínimo pelos vínculos aceitos) só a tela pede. A nota diferente da
  * declarada só pede justificativa depois que o bloco foi conferido (antes, a
  * falta é a própria situação).
  */
@@ -297,6 +298,24 @@ export function pendenciasDaFicha(
         falta("datas", "Vínculo com data de início ou fim inválida.");
       if (chave === "cursos" && itens.some((c) => c && !(Number(c.horas) > 0)))
         falta("horas", "Curso sem carga horária.");
+      // Conforme com a experiência mínima não comprovada pelos vínculos
+      // aceitos eliminaria em silêncio: lance os vínculos ou marque Não conforme.
+      const exp = avaliacao?.experiencia;
+      if (
+        chave === "vinculos" &&
+        l.situacao === "CONFORME" &&
+        exp?.abaixo_do_minimo &&
+        (bloco.efeito_minimo ?? "ELIMINA") === "ELIMINA"
+      ) {
+        const meses = bloco.minimo_conta_estagio
+          ? exp.meses_considerados
+          : exp.meses;
+        const mes = (n) => `${n} ${Number(n) === 1 ? "mês" : "meses"}`;
+        falta(
+          "minimo",
+          `Experiência mínima de ${mes(bloco.minimo_meses)} não comprovada (comprovado ${mes(meses)}): lance os vínculos que comprovam ou marque Não conforme.`,
+        );
+      }
     }
     if (
       l.situacao &&
@@ -349,6 +368,7 @@ const COMPLEMENTO_DA_FALTA = {
   horas: "carga horária",
   justificativa: "justificativa",
   nota: "nota",
+  minimo: "experiência mínima",
 };
 
 /**

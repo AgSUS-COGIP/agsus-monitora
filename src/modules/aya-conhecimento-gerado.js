@@ -1531,6 +1531,35 @@ export const VERBETES_AYA = Object.freeze([
   },
   {
     arquivo: "regras-da-avaliacao-documental.md",
+    titulo: "Tempo declarado × comprovado na ficha",
+    perguntas: [
+      "tempo declarado",
+      "tempo comprovado",
+      "por que nao muda os anos",
+      "continua 2 anos",
+      "lancei o vinculo e o tempo nao mudou",
+      "quanto tempo o vinculo comprova",
+      "meses de experiencia na ficha",
+      "alem do minimo",
+      "previa na lateral",
+      "nota nao muda na lateral",
+      "experiencia profissional sem nota na lateral",
+      "justificativas de outro bloco",
+      "outras justificativas",
+      "por que deu inapto",
+      "inapto requisito sem motivo",
+      "todos conformes e inapto",
+      "experiencia minima nao comprovada",
+    ],
+    resposta:
+      'No item Experiência, a resposta do questionário aparece como "Declarado pelo candidato" (ex.: 2 anos) e não muda: é o que a pessoa respondeu. O tempo que vale é o "Comprovado", logo abaixo da lista de vínculos, calculado na hora pelos vínculos aceitos com a mesma regra da nota (sobreposições contam uma vez, o vínculo que começa no dia seguinte emenda, dias ÷ 30 e só os meses inteiros): "Comprovado: 2 anos, 7 meses e 27 dias (32 meses)" e, embaixo, a conta dos pontos ("Além do mínimo de 6 meses: 26 meses → 4 períodos de 6 meses → 20 pontos"). Em Cursos e Titulação aparece o mesmo resumo ("Comprovado: 3 cursos, 140 h"). Na lateral, o item ainda sem decisão mostra o valor provisório em tom neutro com "(prévia)" e a nota parcial soma essas prévias. Na justificativa da nota, os chips do próprio bloco vêm primeiro (motivos do bloco e observações prontas do mesmo assunto); as demais ficam em "Outras justificativas", recolhidas. Se a ficha der Inapto, a lateral e a Conclusão dizem por quê, com link para o item (ex.: "Experiência mínima de 6 meses não comprovada (comprovado 0 meses) — item 1.1.1 c"). Experiência marcada Conforme sem vínculos que comprovem o mínimo fica com pendência (! no stepper): lance os vínculos ou marque Não conforme.',
+    fato: "No MONITORA, o mínimo de experiência da regra é conferido pelos vínculos aceitos lançados na ficha, não pela resposta do questionário nem pelo Apurado.",
+    fonte:
+      "src/lib/avaliacao-documental/comprovado-da-ficha.ts; src/lib/avaliacao-documental/justificativas-do-bloco.ts; src/lib/avaliacao-documental/motivos-do-resultado.ts; src/lib/avaliacao-documental/pontuacao.js (apurarExperiencia); src/lib/avaliacao-documental/ficha.js (pendenciasDaFicha)",
+    abrir: "avaliacao-documental",
+  },
+  {
+    arquivo: "regras-da-avaliacao-documental.md",
     titulo: "Parecer da ficha",
     perguntas: [
       "parecer da ficha",
