@@ -233,6 +233,8 @@ export type PerguntaDaCarga = {
   respostas: { valor: string; quantidade: number }[];
   outras: number;
   distintas?: number;
+  /** O enunciado pede dado pessoal (CPF, e-mail...): respostas vêm vazias (perguntas_da_carga.py). */
+  dado_pessoal?: boolean;
 };
 
 /** Regra conferida de outro edital da área (obter_apoio_regra_analise). */

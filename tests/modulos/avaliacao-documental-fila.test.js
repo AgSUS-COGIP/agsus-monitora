@@ -144,7 +144,6 @@ function supabaseFalso(dados = fila(), extra = {}) {
       modelos: [],
       nota_minima: null,
       aldeias: { quantidade: 0 },
-      perguntas: [],
     }),
     obter_equipe_edital: () => ({
       gestores: [],

@@ -8,6 +8,7 @@ import {
   ligarAutomaticamente,
   opcoesDePerguntas,
   parciaisDaRegra,
+  perguntaComDadoPessoal,
   respostasDaPergunta,
   situacaoDaPergunta,
   type Ligacao,
@@ -254,6 +255,7 @@ function ItemDeclarado({
     ? niveis.map((n) => item.pontos_por_nivel?.[n] ?? {})
     : [item[chave] ?? {}];
   const naCarga = respostasDaPergunta(item.pergunta, perguntasDaCarga);
+  const dadoPessoal = perguntaComDadoPessoal(item.pergunta, perguntasDaCarga);
   const respostas = [
     ...new Map(
       [
@@ -371,6 +373,11 @@ function ItemDeclarado({
           }}
         />
       </div>
+      {dadoPessoal ? (
+        <p className="ui-texto-secundario" data-dado-pessoal="sim">
+          Dado pessoal — não resumido
+        </p>
+      ) : null}
       <div className="avd-ast-tabela-rolagem">
         <table className="avd-ast-tabela">
           <thead>

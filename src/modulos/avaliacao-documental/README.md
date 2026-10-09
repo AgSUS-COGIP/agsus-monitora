@@ -114,7 +114,9 @@ A aba Regra abre no **assistente** (`assistente/`, em TSX, contratos em `assiste
    o corte por pontos mínimos, com valores sugeridos das fontes (nenhum peso no código); o grupo
    "Na inscrição" vem primeiro (`GRUPOS_DO_CARDAPIO`);
 3. perguntas da Empregare (`perguntas.tsx`): as colunas de cada vaga
-   (`obter_apoio_regra_analise`), ligação automática pelo enunciado, verde/amarelo/vermelho com a
+   (`obter_apoio_regra_analise`) e as respostas da última carga (`obter_perguntas_carga_analise`,
+   instantâneo calculado em Python pelo robô; pedidas só ao abrir este passo ou o formulário do modo
+   avançado), ligação automática pelo enunciado, verde/amarelo/vermelho com a
    regra de `nota-declarada.js`, e a nota declarada;
 4. nota mínima e desempate (`nota-e-desempate.tsx`, `lista-ordenavel.tsx`,
    `seletor-de-criterios.tsx`): a regra de classificação (gravada por

@@ -1,6 +1,7 @@
 /*
   Contratos do assistente da regra com o estado da tela (estado.js) e com as
-  RPCs obter_regra_analise e obter_apoio_regra_analise. Dados externos: uma
+  RPCs obter_regra_analise, obter_apoio_regra_analise e
+  obter_perguntas_carga_analise. Dados externos: uma
   anotação não valida JSON; a regra é conferida por validarRegraAnalise antes
   de salvar, e o banco confere de novo.
 */
@@ -52,7 +53,6 @@ export type DadosDaRegra = {
   regra: RegraSalva | null;
   modelos: ModeloDaRegra[];
   nota_minima: NotaMinimaDaClassificacao;
-  perguntas: PerguntaDaCarga[];
 };
 
 export type SnapshotDaAvaliacao = {
@@ -63,6 +63,10 @@ export type SnapshotDaAvaliacao = {
   apoio: ApoioDaRegra | null;
   carregandoApoio: boolean;
   erroDoApoio: string;
+  /** Perguntas e respostas da última carga (obter_perguntas_carga_analise); null = ainda não lidas. */
+  perguntasDaCarga?: PerguntaDaCarga[] | null;
+  carregandoPerguntas?: boolean;
+  erroDasPerguntas?: string;
   /** A versão que o assistente acabou de salvar (a aba remonta a cada versão). */
   regraSalvaAgora?: { editalId: string; versao: number } | null;
 };
@@ -71,6 +75,7 @@ export type ResultadoDaGravacao = { ok: boolean; erro?: string };
 
 export type EstadoDaRegra = {
   carregarApoio: (opcoes?: { recarregar?: boolean }) => Promise<unknown>;
+  carregarPerguntas: (opcoes?: { recarregar?: boolean }) => Promise<unknown>;
   salvarRegra: (
     configuracao: unknown,
     motivo: string,
