@@ -14,16 +14,16 @@ parecer.tsx     parecer jurídico: enviar, deferir/deferir parcialmente/indeferi
 ajuste.jsx      ajuste da pontuação no recurso deferido: componentes da regra, prévia da posição,
                 propor, aprovar (prévia recalculada), cancelar, versões
 formulario.tsx  cadastro e edição (candidato buscado nas análises do edital)
-resposta.jsx    resposta ao candidato: modelo, prévia, revisão, documento
+resposta.tsx    resposta ao candidato: modelo, prévia, revisão, documento
 anexos.tsx      anexos com download registrado (URL assinada de 60 s)
-modelos.jsx     modelos de resposta (administração)
+modelos.tsx     modelos de resposta (administração)
 partes.ts      dataHora e nota
 recursos.css    só o que é desta tela (tokens); o resto vem de src/ui/
 ```
 
 Regras puras em `src/lib/` (`recursos-dos-candidatos.ts`, `prazo-do-recurso.ts`,
-`resposta-do-recurso.js`, `parecer-do-recurso.ts`, `anexos-do-recurso.js`,
-`modelos-de-resposta.js`, `documento-da-resposta.js`). Testes: `tests/modulos/recursos*.test.js`.
+`resposta-do-recurso.ts`, `parecer-do-recurso.ts`, `anexos-do-recurso.js`,
+`modelos-de-resposta.ts`, `documento-da-resposta.js`). Testes: `tests/modulos/recursos*.test.js`.
 
 Decidir é só de quem tem `recursos_parecer` (Acessos › "Parecer jurídico (Recursos)", grupo
 "Jurídico"); o banco confere (`20261001170000_recursos_parecer_juridico.sql`). As regras
@@ -50,8 +50,10 @@ snapshot, cliente RPC/Storage, ações, busca e callbacks ficam em `tipos-do-est
 `src/lib/dados-dos-recursos.ts` valida os campos usados no painel e no formulário,
 conservando campos adicionais e tratando permissões somente quando booleanas. O detalhe
 valida histórico, autores das etapas, textos do parecer e metadados dos anexos.
-Dados complexos de ajuste, Classificação, resposta e modelos continuam parcialmente opacos
-para as peças JSX; somente os metadados da resposta usados pela gaveta estão tipados.
+Resposta e modelos também são validados: identificadores, versões, textos, histórico e
+escopo dos modelos. Modelos com área/origem malformada são ignorados; respostas com
+identificador, revisão ou estado inválido são sinalizadas sem abrir um novo rascunho.
+Dados complexos de ajuste e Classificação continuam opacos para o componente de ajuste.
 
 Trocar área ou usuário invalida consultas de detalhe, ajustes, prévias e modelos, e os
 efeitos locais de ações em curso: não fecha o formulário novo, mostra avisos antigos nem
@@ -60,11 +62,17 @@ assinatura antiga não abre download. Isso não cancela escrita ou upload já en
 banco/Storage. O arquivo de um upload interrompido depois de enviado pode ficar sem registro.
 
 A busca de candidato descarta o resultado quando o campo muda ou o componente desmonta.
-Gaveta, parecer e anexos estão em TSX; ajuste, resposta e modelos ainda estão em JSX.
+Gaveta, parecer, anexos, resposta e modelos estão em TSX; somente ajuste ainda está em JSX.
 Os contratos da gaveta ficam em `tipos-da-gaveta.ts`; as regras do parecer e os botões
 permitidos estão em `src/lib/parecer-do-recurso.ts`.
+Os contratos da resposta e dos modelos ficam em `src/lib/tipos-da-resposta-do-recurso.ts`.
+As regras de preenchimento e seleção de modelos estão em `src/lib/modelos-de-resposta.ts`;
+transições e revisão em `src/lib/resposta-do-recurso.ts`. A versão usada na resposta continua
+escolhível quando arquivada ou substituída; os marcadores são preenchidos uma única vez, como
+texto puro. A autoria continua restringindo aprovação/devolução, e a decisão do recurso
+continua sendo exigida para aprovação e marcação de envio.
 As permissões no banco, RPCs, Storage e transições jurídicas seguem as regras existentes.
 
 Verificação: `tests/dados-dos-recursos.test.js`, `tests/modulos/recursos-estado-contexto.test.js`,
 testes existentes de Recursos e contratos de compilação em `tests/tipos/estado-dos-recursos.tsx`
-e `tests/tipos/gaveta-dos-recursos.tsx`.
+`tests/tipos/gaveta-dos-recursos.tsx` e `tests/tipos/resposta-e-modelos-dos-recursos.tsx`.

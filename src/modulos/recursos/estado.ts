@@ -18,6 +18,7 @@ import {
   normalizarDadosDosRecursos,
   normalizarDetalheDoRecurso,
   normalizarCandidatosDosRecursos,
+  normalizarDadosDosModelos,
   objetoDosRecursos,
   metadadosDaRpcDosRecursos,
 } from "../../lib/dados-dos-recursos.ts";
@@ -63,7 +64,7 @@ import {
   montarPaginaDeImpressao,
   nomeDoDocumento,
 } from "../../lib/documento-da-resposta.js";
-import { dadosDoModelo } from "../../lib/modelos-de-resposta.js";
+import { dadosDoModelo } from "../../lib/modelos-de-resposta.ts";
 
 export const MENSAGEM_SEM_SESSAO =
   "Sessão não localizada. Entre de novo no MONITORA.";
@@ -946,8 +947,8 @@ export function criarEstadoDosRecursos({
     if (minhaGeracao !== geracao) return null;
     publicar({
       modelosAdmin: error
-        ? { erro: mensagemDe(error) }
-        : data || { modelos: [], areas: [], origens: [], marcadores: [] },
+        ? normalizarDadosDosModelos({ erro: mensagemDe(error) })
+        : normalizarDadosDosModelos(data),
     });
   }
 

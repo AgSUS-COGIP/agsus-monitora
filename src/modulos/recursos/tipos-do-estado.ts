@@ -1,4 +1,8 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import type {
+  ModeloDaResposta,
+  DadosDosModelos,
+} from "../../lib/tipos-da-resposta-do-recurso.ts";
 import type { CamposDoDetalheDaGaveta } from "./tipos-da-gaveta.ts";
 import type {
   DadosDoRecurso,
@@ -29,7 +33,7 @@ export interface DadosDosRecursos extends RegistroDosRecursos {
   cronogramas: EtapaDoCronogramaDoRecurso[];
   origens: OrigemDoRecurso[];
   editais: EditalDosRecursos[];
-  modelos: RegistroDosRecursos[];
+  modelos: ModeloDaResposta[];
   pode_editar: boolean;
   pode_decidir: boolean;
   pode_administrar_modelos: boolean;
@@ -93,7 +97,7 @@ export interface SnapshotDosRecursos {
     abertura: number;
   } | null;
   modelosAbertos: boolean;
-  modelosAdmin: RegistroDosRecursos | null;
+  modelosAdmin: DadosDosModelos | null;
   comemoracoes: boolean;
 }
 export interface OpcoesDoEstadoDosRecursos {

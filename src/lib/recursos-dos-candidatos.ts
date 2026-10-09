@@ -257,7 +257,7 @@ export function enriquecerRecurso<T extends DadosDoRecurso>(
         ? decididoNoPrazo(diaEmBrasilia(recurso.decisao_em), prazo.data)
         : null,
     etapasFeitas: ETAPAS.filter((etapa) => etapas[etapa.id]).length,
-    // A resposta escrita no sistema (resposta-do-recurso.js) e os anexos ativos.
+    // A resposta escrita no sistema (resposta-do-recurso.ts) e os anexos ativos.
     respostaEstado: recurso.resposta_estado || null,
     qtAnexos: Number(recurso.qt_anexos) || 0,
   };

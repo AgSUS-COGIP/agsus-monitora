@@ -8,7 +8,7 @@ import {
   ESTADOS_DA_RESPOSTA,
   podeEditarTexto,
   proximoEstado,
-} from "../src/lib/resposta-do-recurso.js";
+} from "../src/lib/resposta-do-recurso.ts";
 
 /*
   A máquina de estados da resposta ao recurso e quem pode fazer cada
@@ -39,6 +39,16 @@ const contexto = (extra = {}) => ({
   podeDecidir: true,
   situacao: "DEFERIDO",
   ...extra,
+});
+
+it("ignora nomes herdados de objeto como transições da resposta", () => {
+  for (const acao of ["constructor", "toString", "__proto__"]) {
+    expect(proximoEstado("rascunho", acao)).toBeNull();
+    expect(avaliarAcao(acao, contexto())).toEqual({
+      permitida: false,
+      motivo: "Ação desconhecida.",
+    });
+  }
 });
 
 describe("estados e transições", () => {

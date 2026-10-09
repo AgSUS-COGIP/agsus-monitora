@@ -1,3 +1,30 @@
+import type { AcaoDaResposta } from "../modulos/recursos/tipos-do-estado.ts";
+import type { RespostaDoRecurso } from "./tipos-da-resposta-do-recurso.ts";
+import type { IdentificadorDoRecurso } from "./tipos-dos-recursos.ts";
+interface RegraDaResposta {
+  rotulo: string;
+  de: readonly string[];
+  para: string;
+  comentario: "nao" | "opcional" | "obrigatorio";
+  juridico?: boolean;
+}
+export interface ContextoDaResposta {
+  resposta?: Partial<RespostaDoRecurso> | null;
+  eu?: IdentificadorDoRecurso | null;
+  podeEditar?: boolean;
+  podeDecidir?: boolean;
+  situacao?: string | null;
+  alterada?: boolean;
+}
+export interface BotaoDaResposta {
+  acao: AcaoDaResposta;
+  rotulo: string;
+  comentario: RegraDaResposta["comentario"];
+  permitida: boolean;
+  motivo: string;
+}
+const acaoConhecida = (acao: string): acao is AcaoDaResposta =>
+  Object.hasOwn(ACOES_DA_RESPOSTA, acao);
 /*
   A resposta escrita a um recurso, sem DOM: os estados, as transições e quem
   pode fazer cada uma. É o espelho das regras de `salvar_resposta_recurso` e
@@ -22,7 +49,11 @@
 */
 import { situacaoDecidida } from "./recursos-dos-candidatos.ts";
 
-export const ESTADOS_DA_RESPOSTA = Object.freeze([
+export const ESTADOS_DA_RESPOSTA: readonly {
+  id: string;
+  rotulo: string;
+  tom: "neutral" | "warning" | "danger" | "success" | "info";
+}[] = Object.freeze([
   Object.freeze({ id: "rascunho", rotulo: "Rascunho", tom: "neutral" }),
   Object.freeze({ id: "em_revisao", rotulo: "Em revisão", tom: "warning" }),
   Object.freeze({ id: "devolvida", rotulo: "Devolvida", tom: "danger" }),
@@ -30,7 +61,9 @@ export const ESTADOS_DA_RESPOSTA = Object.freeze([
   Object.freeze({ id: "enviada", rotulo: "Enviada", tom: "info" }),
 ]);
 
-export const ACOES_DA_RESPOSTA = Object.freeze({
+export const ACOES_DA_RESPOSTA: Readonly<
+  Record<AcaoDaResposta, RegraDaResposta>
+> = Object.freeze({
   enviar_revisao: Object.freeze({
     rotulo: "Enviar para revisão",
     de: Object.freeze(["rascunho", "devolvida"]),
@@ -65,22 +98,24 @@ export const ACOES_DA_RESPOSTA = Object.freeze({
   }),
 });
 
-export const rotuloDoEstado = (id) =>
+export const rotuloDoEstado = (id: unknown) =>
   ESTADOS_DA_RESPOSTA.find((e) => e.id === id)?.rotulo || "Sem resposta";
-export const tomDoEstado = (id) =>
+export const tomDoEstado = (id: unknown) =>
   ESTADOS_DA_RESPOSTA.find((e) => e.id === id)?.tom || "neutral";
 
 /** O estado depois da ação, ou `null` se a ação não vale a partir dele. */
-export function proximoEstado(estado, acao) {
-  const regra = ACOES_DA_RESPOSTA[acao];
+export function proximoEstado(estado: string, acao: string) {
+  const regra = acaoConhecida(acao) ? ACOES_DA_RESPOSTA[acao] : undefined;
   return regra && regra.de.includes(estado) ? regra.para : null;
 }
 
 /** O texto (modelo e fundamentação) só muda em rascunho ou devolvida. */
-export const podeEditarTexto = (resposta) =>
-  !resposta || ["rascunho", "devolvida"].includes(resposta.estado);
+export const podeEditarTexto = (
+  resposta: Partial<RespostaDoRecurso> | null | undefined,
+) => !resposta || ["rascunho", "devolvida"].includes(resposta.estado ?? "");
 
-const mesmo = (a, b) => Boolean(a) && Boolean(b) && String(a) === String(b);
+const mesmo = (a: unknown, b: unknown) =>
+  Boolean(a) && Boolean(b) && String(a) === String(b);
 
 /**
  * Pode fazer `acao`? `{ permitida, motivo }`. `resposta` é a do detalhe
@@ -88,7 +123,7 @@ const mesmo = (a, b) => Boolean(a) && Boolean(b) && String(a) === String(b);
  * detalhe), `situacao` a do recurso, `podeDecidir` = recursos_parecer.
  */
 export function avaliarAcao(
-  acao,
+  acao: string,
   {
     resposta,
     eu,
@@ -96,9 +131,9 @@ export function avaliarAcao(
     podeDecidir = false,
     situacao,
     alterada = false,
-  } = {},
+  }: ContextoDaResposta = {},
 ) {
-  const regra = ACOES_DA_RESPOSTA[acao];
+  const regra = acaoConhecida(acao) ? ACOES_DA_RESPOSTA[acao] : undefined;
   if (!regra) return { permitida: false, motivo: "Ação desconhecida." };
   if (!podeEditar)
     return { permitida: false, motivo: "Sem permissão para responder." };
@@ -106,7 +141,7 @@ export function avaliarAcao(
     return { permitida: false, motivo: "É do parecer jurídico." };
   if (!resposta?.id)
     return { permitida: false, motivo: "Salve o rascunho primeiro." };
-  if (!regra.de.includes(resposta.estado))
+  if (!regra.de.includes(resposta.estado ?? ""))
     return {
       permitida: false,
       motivo: `Não se aplica a uma resposta ${rotuloDoEstado(resposta.estado).toLowerCase()}.`,
@@ -156,22 +191,25 @@ export function avaliarAcao(
  * As ações que fazem sentido no estado atual, com a avaliação de cada uma.
  * As do parecer jurídico nem aparecem para quem não o tem.
  */
-export function acoesDaResposta(contexto = {}) {
+export function acoesDaResposta(
+  contexto: ContextoDaResposta = {},
+): BotaoDaResposta[] {
   const estado = contexto.resposta?.estado;
-  return Object.entries(ACOES_DA_RESPOSTA)
-    .filter(([, regra]) => estado && regra.de.includes(estado))
-    .filter(([, regra]) => !regra.juridico || contexto.podeDecidir)
-    .map(([acao, regra]) => ({
+  return Object.keys(ACOES_DA_RESPOSTA)
+    .filter(acaoConhecida)
+    .filter((acao) => estado && ACOES_DA_RESPOSTA[acao].de.includes(estado))
+    .filter((acao) => !ACOES_DA_RESPOSTA[acao].juridico || contexto.podeDecidir)
+    .map((acao) => ({
       acao,
-      rotulo: regra.rotulo,
-      comentario: regra.comentario,
+      rotulo: ACOES_DA_RESPOSTA[acao].rotulo,
+      comentario: ACOES_DA_RESPOSTA[acao].comentario,
       ...avaliarAcao(acao, contexto),
     }));
 }
 
 /** Comentário da ação: `""` se está bom, senão o erro. */
-export function erroDoComentario(acao, comentario) {
-  const regra = ACOES_DA_RESPOSTA[acao];
+export function erroDoComentario(acao: string, comentario: unknown) {
+  const regra = acaoConhecida(acao) ? ACOES_DA_RESPOSTA[acao] : undefined;
   const valor = String(comentario ?? "").trim();
   if (valor.length > 2000) return "O comentário passa de 2.000 caracteres.";
   if (regra?.comentario === "obrigatorio" && valor.length < 3)

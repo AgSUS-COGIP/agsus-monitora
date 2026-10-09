@@ -1,15 +1,33 @@
+import type { PropsDaSecaoDoRecurso } from "./tipos-da-gaveta.ts";
+import type {
+  RespostaDoRecurso,
+  ModeloDaResposta,
+  ModeloEscolhivel,
+} from "../../lib/tipos-da-resposta-do-recurso.ts";
+import type {
+  IdentificadorDoRecurso,
+  OrigemDoRecurso,
+} from "../../lib/tipos-dos-recursos.ts";
+import type { BotaoDaResposta } from "../../lib/resposta-do-recurso.ts";
+type PropsDaResposta = Omit<PropsDaSecaoDoRecurso, "detalhe"> & {
+  resposta: RespostaDoRecurso | null;
+};
+interface RascunhoDaResposta {
+  modelo: ModeloEscolhivel | null;
+  fundamentacao: string;
+}
 import { useMemo, useState } from "react";
 import {
   modelosAplicaveis,
   renderizarModelo,
   valoresDoRecurso,
   MARCADORES,
-} from "../../lib/modelos-de-resposta.js";
+} from "../../lib/modelos-de-resposta.ts";
 import {
   acoesDaResposta,
   erroDoComentario,
   podeEditarTexto,
-} from "../../lib/resposta-do-recurso.js";
+} from "../../lib/resposta-do-recurso.ts";
 import { Aviso, Kv, Secao } from "../../ui/index.js";
 import { dataHora } from "./partes.ts";
 import { SeloDaResposta } from "./tabela.tsx";
@@ -25,14 +43,14 @@ import { SeloDaResposta } from "./tabela.tsx";
   enviada é de quem edita, só com o recurso decidido.
 
   O banco decide (transicionar_resposta_recurso); os botões seguem
-  resposta-do-recurso.js só para dizer antes por que uma ação não vale. Tudo
+  resposta-do-recurso.ts só para dizer antes por que uma ação não vale. Tudo
   é texto: o preview e o texto final vão como filhos, nunca como HTML.
 
   A gaveta monta esta seção com `key` na revisão da resposta: quando o banco
   devolve uma revisão nova, o rascunho local recomeça do que foi salvo.
 */
 
-const ROTULO_DO_HISTORICO = {
+const ROTULO_DO_HISTORICO: Record<string, string> = {
   criacao: "Criou o rascunho",
   edicao: "Editou o texto",
   enviar_revisao: "Enviou para revisão",
@@ -42,9 +60,16 @@ const ROTULO_DO_HISTORICO = {
   marcar_enviada: "Marcou como enviada ao candidato",
 };
 
-const chaveDoModelo = (id, versao) => (id ? `${id}:${versao}` : "");
+const chaveDoModelo = (
+  id: IdentificadorDoRecurso | null | undefined,
+  versao: number | null | undefined,
+) => (id ? `${id}:${versao}` : "");
 
-function rascunhoInicial(resposta, aplicaveis, decidido) {
+function rascunhoInicial(
+  resposta: RespostaDoRecurso | null,
+  aplicaveis: ModeloDaResposta[],
+  decidido: boolean,
+): RascunhoDaResposta {
   if (resposta)
     return {
       modelo: {
@@ -57,13 +82,23 @@ function rascunhoInicial(resposta, aplicaveis, decidido) {
       fundamentacao: resposta.fundamentacao || "",
     };
   return {
-    modelo: decidido && aplicaveis.length ? aplicaveis[0] : null,
+    modelo: decidido && aplicaveis.length ? (aplicaveis[0] ?? null) : null,
     fundamentacao: "",
   };
 }
 
 /* Ação escolhida: comentário (quando a ação pede) e confirmação. */
-function ConfirmarAcao({ escolhida, emCurso, aoConfirmar, aoCancelar }) {
+function ConfirmarAcao({
+  escolhida,
+  emCurso,
+  aoConfirmar,
+  aoCancelar,
+}: {
+  escolhida: BotaoDaResposta;
+  emCurso: boolean;
+  aoConfirmar: (comentario: string) => void;
+  aoCancelar: () => void;
+}) {
   const [comentario, setComentario] = useState("");
   const erro = erroDoComentario(escolhida.acao, comentario);
   const pede = escolhida.comentario !== "nao";
@@ -121,8 +156,17 @@ function ConfirmarAcao({ escolhida, emCurso, aoConfirmar, aoCancelar }) {
   );
 }
 
-function AcoesDaResposta({ estado, recurso, resposta, acoes, acao }) {
-  const [escolhida, setEscolhida] = useState(null);
+function AcoesDaResposta({
+  estado,
+  recurso,
+  resposta,
+  acoes,
+  acao,
+}: Omit<PropsDaResposta, "resposta" | "podeEditar"> & {
+  resposta: RespostaDoRecurso;
+  acoes: BotaoDaResposta[];
+}) {
+  const [escolhida, setEscolhida] = useState<BotaoDaResposta | null>(null);
   if (!acoes.length) return null;
   if (escolhida)
     return (
@@ -168,8 +212,15 @@ function AcoesDaResposta({ estado, recurso, resposta, acoes, acao }) {
   );
 }
 
-function Documento({ estado, recurso, resposta, podeEditar, acao }) {
-  if (!["aprovada", "enviada"].includes(resposta?.estado)) return null;
+function Documento({
+  estado,
+  recurso,
+  resposta,
+  podeEditar,
+  acao,
+}: PropsDaResposta) {
+  if (!resposta || !["aprovada", "enviada"].includes(resposta.estado))
+    return null;
   return (
     <div className="recursos-documento" aria-label="Documento da resposta">
       <strong>Documento</strong>
@@ -217,6 +268,11 @@ export function SecaoDaResposta({
   podeEditar,
   podeDecidir = false,
   acao,
+}: PropsDaSecaoDoRecurso & {
+  modelos: readonly ModeloDaResposta[];
+  origens: readonly OrigemDoRecurso[];
+  area: string;
+  podeDecidir?: boolean;
 }) {
   const resposta = detalhe?.resposta || null;
   const eu = detalhe?.eu || null;
@@ -256,7 +312,7 @@ export function SecaoDaResposta({
   });
   const salvando = acao?.tipo === "resposta:salvar";
 
-  if (!detalhe) return null;
+  if (!detalhe || detalhe.erro) return null;
   if (!resposta && !podeEditar)
     return (
       <Secao
@@ -274,12 +330,13 @@ export function SecaoDaResposta({
 
   // O modelo em uso pode não estar mais entre os aplicáveis (versão antiga,
   // arquivado ou a situação mudou): continua escolhível.
-  const opcoes =
-    rascunho.modelo &&
+  const modeloAtual = rascunho.modelo;
+  const opcoes: ModeloEscolhivel[] =
+    modeloAtual &&
     !aplicaveis.some(
       (m) =>
         chaveDoModelo(m.id, m.versao) ===
-        chaveDoModelo(rascunho.modelo.id, rascunho.modelo.versao),
+        chaveDoModelo(modeloAtual.id, modeloAtual.versao),
     )
       ? [{ ...rascunho.modelo, emUso: true }, ...aplicaveis]
       : aplicaveis;
@@ -351,7 +408,13 @@ export function SecaoDaResposta({
             className="recursos-resposta-editor"
             onSubmit={(evento) => {
               evento.preventDefault();
-              if (!rascunho.modelo || !renderizado) return;
+              if (
+                !rascunho.modelo ||
+                rascunho.modelo.id === null ||
+                rascunho.modelo.versao === null ||
+                !renderizado
+              )
+                return;
               void estado.salvarResposta(r.id, {
                 modelo_id: rascunho.modelo.id,
                 modelo_versao: rascunho.modelo.versao,
@@ -423,12 +486,14 @@ export function SecaoDaResposta({
                 className="btn small"
                 disabled={
                   !rascunho.modelo ||
+                  rascunho.modelo.id === null ||
+                  rascunho.modelo.versao === null ||
                   !rascunho.modelo.corpo ||
                   !alterada ||
                   Boolean(acao)
                 }
               >
-                {salvando ? acao.rotulo : "Salvar rascunho"}
+                {salvando ? acao?.rotulo : "Salvar rascunho"}
               </button>
             </div>
           </form>
@@ -484,8 +549,12 @@ export function SecaoDaResposta({
   );
 }
 
-function PreviaDoTexto({ renderizado }) {
-  const rotulo = (chave) =>
+function PreviaDoTexto({
+  renderizado,
+}: {
+  renderizado: ReturnType<typeof renderizarModelo>;
+}) {
+  const rotulo = (chave: string) =>
     MARCADORES.find((m) => m.chave === chave)?.rotulo || chave;
   return (
     <div className="recursos-previa">
