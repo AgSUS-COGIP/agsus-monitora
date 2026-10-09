@@ -359,17 +359,23 @@ const abrirMais = () =>
 const rodape = () => document.querySelector("[data-tour='avd-ficha-barra']");
 
 /* Lança um título, um curso de 120 h e um vínculo de 3 anos, como declarados. */
+/* Com Declarado > 0 o cartão já abre com a linha; sem ela, "Adicionar …". */
+async function linhaPronta(codigo, rotulo) {
+  if (!cartao(codigo).querySelector(".avd-ficha-item"))
+    await clicar(botao(rotulo, cartao(codigo)));
+}
+
 async function lancarItensComoDeclarados() {
   await irAo("FORMACAO");
-  await clicar(botao("Adicionar título", cartao("FORMACAO")));
+  await linhaPronta("FORMACAO", "Adicionar título");
   await irAo("CURSOS");
-  await clicar(botao("Adicionar curso", cartao("CURSOS")));
+  await linhaPronta("CURSOS", "Adicionar curso");
   await digitar(
     cartao("CURSOS").querySelector("input[aria-label='Carga horária']"),
     "120",
   );
   await irAo("EXPERIENCIA");
-  await clicar(botao("Adicionar vínculo", cartao("EXPERIENCIA")));
+  await linhaPronta("EXPERIENCIA", "Adicionar vínculo");
   await digitar(
     cartao("EXPERIENCIA").querySelector("input[aria-label='Início']"),
     "2020-01-01",
@@ -413,7 +419,7 @@ describe("ficha: modo foco, um item por vez (AM-7)", () => {
       document.querySelector("[data-tour='avd-ficha-etapas']").textContent,
     ).toContain("0 de 6 itens conferidos");
     // A lateral: nota parcial, "Em análise"; antes de conferir, cada parte é a
-    // prévia (o Apurado que o item mostra: o declarado, sem itens lançados).
+    // prévia (o Apurado que o item mostra: o calculado pelos itens, 0 sem item).
     const total = document.querySelector(".avd-ficha-total");
     expect(total.textContent).toContain(
       "Em análise · 0 de 4 requisitos conferidos",
@@ -431,11 +437,11 @@ describe("ficha: modo foco, um item por vez (AM-7)", () => {
     ]);
     expect(
       partes.map((l) => l.querySelector(".avd-ficha-parte-valor").textContent),
-    ).toEqual(["5 / 10 (prévia)", "3 / 5 (prévia)", "0 / 35 (prévia)"]);
+    ).toEqual(["0 / 10 (prévia)", "0 / 5 (prévia)", "0 / 35 (prévia)"]);
     expect(partes.map((l) => l.dataset.previa)).toEqual(["sim", "sim", "sim"]);
     // A nota parcial soma as prévias e diz que são prévias.
     expect(total.querySelector(".avd-ficha-nota-total").textContent).toBe(
-      "8 parcial (com prévias)",
+      "0 parcial (com prévias)",
     );
     expect(document.querySelectorAll("[data-divergente='sim']")).toHaveLength(
       0,
@@ -626,26 +632,28 @@ describe("ficha: Conclusão e parecer (sem resultado antes da hora)", () => {
     ).toContain("Não enviado");
   });
 
-  it("a diferença para a declarada aparece só depois de conferir", async () => {
+  it("Titulação abre com a linha do título declarado; a diferença aparece só depois de conferir", async () => {
     await abrirFicha(supabaseFalso());
     await irAo("FORMACAO");
+    // Declarado 5 e nada registrado: a linha já vem, com o título da resposta e o foco nela.
+    const linha = cartao("FORMACAO").querySelector(".avd-ficha-item");
+    expect(linha).not.toBeNull();
+    const titulo = linha.querySelector("select[aria-label='Título']");
+    expect(titulo.value).toBe("ESPECIALIZACAO");
+    expect(document.activeElement).toBe(titulo);
     expect(
       cartao("FORMACAO").querySelector("input[data-divergente]"),
     ).toBeNull();
     await conforme("FORMACAO");
-    // Conforme sem itens confirma o declarado (valor explícito): sem divergência.
+    // O Apurado vem do calculado pelo título registrado: sem divergência, avança.
     expect(parte("FORMACAO").dataset.divergente).toBeUndefined();
     expect(
       parte("FORMACAO").querySelector(".avd-ficha-parte-valor").textContent,
     ).toBe("5 / 10");
-    // Títulos sem item e declarado 5: o lembrete aparece e o avanço espera
-    // 2 s (mexer no item, como abaixo, cancela o avanço).
-    expect(document.querySelector(".avd-ficha-aviso-rapido").textContent).toBe(
-      "Lance os títulos comprovados ou ajuste o Apurado",
-    );
     await esperarAvanco();
-    expect(cartao("FORMACAO")).not.toBeNull();
-    // Um apurado abaixo do declarado diverge.
+    expect(cartao("FORMACAO")).toBeNull();
+    // Um apurado ajustado abaixo do declarado diverge e pede justificativa.
+    await irAo("FORMACAO");
     await clicar(
       cartao("FORMACAO").querySelector("[aria-label='Diminuir meio ponto']"),
     );
@@ -655,7 +663,7 @@ describe("ficha: Conclusão e parecer (sem resultado antes da hora)", () => {
     );
   });
 
-  it("Conforme em Cursos com declarado 0 (Não possuo) avança já, sem lembrete", async () => {
+  it("Cursos com declarado 0 (Não possuo): sem linha e o Conforme avança", async () => {
     const semCursos = fichaDoBanco();
     semCursos.regra = structuredClone(semCursos.regra);
     semCursos.regra.configuracao.provisoria.nota_declarada[1].pontos[
@@ -668,28 +676,61 @@ describe("ficha: Conclusão e parecer (sem resultado antes da hora)", () => {
     };
     await abrirFicha(supabaseFalso(semCursos));
     await irAo("CURSOS");
+    expect(cartao("CURSOS").querySelector(".avd-ficha-item")).toBeNull();
     await conforme("CURSOS");
-    expect(document.querySelector(".avd-ficha-aviso-rapido")).toBeNull();
     await esperarAvanco();
     expect(cartao("CURSOS")).toBeNull();
   });
 
-  it("Conforme em Cursos com declarado 3 e nenhum curso: lembrete e avança em 2 s", async () => {
-    await abrirFicha(supabaseFalso());
+  it("Cursos com declarado 3: abre com a linha; Conforme sem curso registrado avisa e não avança; linha sem horas não trava o rascunho", async () => {
+    const supabase = supabaseFalso();
+    await abrirFicha(supabase);
     await irAo("CURSOS");
+    const linha = cartao("CURSOS").querySelector(".avd-ficha-item");
+    expect(document.activeElement).toBe(
+      linha.querySelector("input[aria-label='Curso']"),
+    );
+    // O erro fica no campo.
+    expect(linha.querySelector(".avd-ficha-campo-erro").textContent).toBe(
+      "Informe as horas",
+    );
+    expect(
+      linha
+        .querySelector("input[aria-label='Carga horária']")
+        .getAttribute("aria-invalid"),
+    ).toBe("true");
+    // A linha sem horas não trava o rascunho: vai sem o campo.
+    await digitar(linha.querySelector("input[aria-label='Curso']"), "NR-10");
+    await teclar(raiz(), "s", { ctrlKey: true });
+    await esperar();
+    const gravado = chamadas(supabase, "salvar_rascunho_ficha").at(-1);
+    expect(gravado.p_lancamento.cursos).toEqual([
+      { nome: "NR-10", aceito: true },
+    ]);
+    expect(document.querySelector(".avd-ficha-salvo").textContent).toMatch(
+      /^Salvo às /,
+    );
+    // Conforme sem curso completo: o aviso no item, e não avança.
     await conforme("CURSOS");
-    // O Apurado pré-preenchido, gravado pelo Conforme, conta como definido.
-    expect(document.querySelector(".avd-ficha-aviso-rapido").textContent).toBe(
-      "Lance os cursos comprovados ou ajuste o Apurado",
+    expect(cartao("CURSOS").textContent).toContain(
+      "Registre o curso comprovado (ou marque Não conforme ou Não enviado).",
     );
     await esperarAvanco();
     expect(cartao("CURSOS")).not.toBeNull();
-    await esperar(() => new Promise((r) => setTimeout(r, 1700)));
-    expect(cartao("CURSOS")).toBeNull();
-    expect(document.querySelector(".avd-ficha-aviso-rapido")).toBeNull();
-  }, 15000);
+    // Com as horas, o aviso some e o Apurado vem do calculado.
+    await digitar(
+      cartao("CURSOS").querySelector("input[aria-label='Carga horária']"),
+      "40",
+    );
+    expect(cartao("CURSOS").textContent).not.toContain("Registre o curso");
+    expect(cartao("CURSOS").querySelector(".avd-ficha-campo-erro")).toBeNull();
+    expect(
+      cartao("CURSOS").querySelector("[data-tour='avd-ficha-nota'] input")
+        .value,
+    ).toBe("1");
+  });
 
-  it("o apurado começa com o declarado e a decisão mexe nele (AM-10)", async () => {
+  it("o apurado vem do calculado; Não conforme zera com uma só área de motivo (AM-10)", async () => {
     const supabase = supabaseFalso();
     await abrirFicha(supabase);
     await irAo("CURSOS");
@@ -697,33 +738,36 @@ describe("ficha: Conclusão e parecer (sem resultado antes da hora)", () => {
       cartao("CURSOS").querySelector("[data-tour='avd-ficha-nota'] input");
     const resumo = () =>
       cartao("CURSOS").querySelector(".avd-ficha-pontos-resumo");
-    // Antes de decidir: preenchido com o declarado e a frase de conferência.
-    expect(apurado().value).toBe("3");
-    expect(cartao("CURSOS").textContent).toContain(
-      "Confira o documento: se comprova os pontos declarados, marque Conforme",
-    );
-    expect(resumo().textContent).toMatch(/Declarado\s*3\s*→\s*Apurado\s*3/);
-    expect(resumo().dataset.diferenca).toBe("nenhuma");
-    // Não conforme zera, com aviso.
+    // Antes de decidir: o calculado (nenhum curso completo = 0), não o declarado.
+    expect(apurado().value).toBe("0");
+    expect(resumo().textContent).toMatch(/Declarado\s*3\s*→\s*Apurado\s*0/);
+    // Não conforme zera, com aviso, e só pede o motivo do bloco: sem a
+    // "Justificativa da nota" e sem a falta da linha vazia.
     await clicar(cartao("CURSOS").querySelector("[data-valor='NAO_CONFORME']"));
     expect(apurado().value).toBe("0");
     expect(cartao("CURSOS").textContent).toContain("Apurado zerado");
-    expect(resumo().textContent).toContain("−3");
-    // De volta ao Conforme: o declarado de novo, gravado explícito.
-    await conforme("CURSOS");
-    expect(apurado().value).toBe("3");
-    expect(cartao("CURSOS").textContent).not.toContain("Apurado zerado");
-    await teclar(raiz(), "s", { ctrlKey: true });
-    await esperar();
-    const gravado = chamadas(supabase, "salvar_rascunho_ficha").at(-1);
-    expect(gravado.p_lancamento.blocos.CURSOS.nota_ajustada).toBe(3);
-    // O primeiro curso lançado devolve o apurado ao calculado.
-    await clicar(botao("Adicionar curso", cartao("CURSOS")));
+    expect(
+      cartao("CURSOS").querySelector("[data-tour='avd-ficha-justificativa']"),
+    ).toBeNull();
+    expect(
+      cartao("CURSOS").querySelector("[data-tour='avd-ficha-motivos']"),
+    ).not.toBeNull();
+    expect(cartao("CURSOS").textContent).not.toContain(
+      "Curso sem carga horária",
+    );
+    expect(cartao("CURSOS").querySelector(".avd-ficha-campo-erro")).toBeNull();
+    // De volta ao Conforme: o calculado (sem ajuste gravado).
     await digitar(
       cartao("CURSOS").querySelector("input[aria-label='Carga horária']"),
       "40",
     );
+    await conforme("CURSOS");
     expect(apurado().value).toBe("1");
+    expect(cartao("CURSOS").textContent).not.toContain("Apurado zerado");
+    await teclar(raiz(), "s", { ctrlKey: true });
+    await esperar();
+    const gravado = chamadas(supabase, "salvar_rascunho_ficha").at(-1);
+    expect(gravado.p_lancamento.blocos.CURSOS.nota_ajustada ?? null).toBeNull();
     expect(resumo().dataset.diferenca).toBe("menor");
   });
 

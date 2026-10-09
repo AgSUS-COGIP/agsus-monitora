@@ -144,7 +144,10 @@ type TituloLancado = { titulo?: string; aceito?: boolean };
 export function comprovadoDosCursos(
   cursos: CursoLancado[] | null | undefined,
 ): Comprovado {
-  const aceitos = (cursos ?? []).filter((c) => c && c.aceito !== false);
+  // Só os aceitos e com horas (a linha em preenchimento não conta).
+  const aceitos = (cursos ?? []).filter(
+    (c) => c && c.aceito !== false && numero(c.horas) > 0,
+  );
   const horas = aceitos.reduce((soma, c) => soma + numero(c.horas), 0);
   return {
     texto: aceitos.length

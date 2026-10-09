@@ -188,7 +188,21 @@ export function lancamentoInicial({
     : base;
 }
 
-/** As justificativas que o bloco oferece: os motivos do bloco e as observações prontas. */
+const textoComparavel = (t) =>
+  String(t ?? "")
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim();
+const mesmoTexto = (a, b) =>
+  Boolean(textoComparavel(a)) && textoComparavel(a) === textoComparavel(b);
+
+/**
+ * As justificativas que o bloco oferece: os motivos do bloco e as
+ * observações prontas (sem a observação de texto igual a um motivo do bloco:
+ * vale o motivo).
+ */
 export function opcoesDeJustificativa(regra, bloco) {
   const r = normalizarRegraAnalise(regra);
   return [
@@ -198,7 +212,15 @@ export function opcoesDeJustificativa(regra, bloco) {
       grupo: "Motivos do bloco",
     })),
     ...r.observacoes_prontas
-      .filter((o) => !lista(bloco?.motivos).some((m) => m.codigo === o.codigo))
+      .filter(
+        (o) =>
+          !lista(bloco?.motivos).some(
+            (m) =>
+              m.codigo === o.codigo ||
+              mesmoTexto(m.texto, o.texto) ||
+              mesmoTexto(m.texto, o.rotulo),
+          ),
+      )
       .map((o) => ({
         codigo: o.codigo,
         texto: o.rotulo || o.texto,
@@ -250,6 +272,70 @@ const datasValidas = (v) =>
   /^\d{4}-\d{2}-\d{2}$/.test(String(v?.fim ?? "")) &&
   v.fim >= v.inicio;
 
+/** O item lançado está completo (título com nível, curso com horas, vínculo com datas)? */
+export function itemCompleto(chave, item) {
+  if (!item || typeof item !== "object") return false;
+  if (chave === "titulos") return Boolean(item.titulo);
+  if (chave === "cursos") return Number(item.horas) > 0;
+  if (chave === "vinculos") return datasValidas(item);
+  return true;
+}
+
+const ITEM_NO_SINGULAR = {
+  titulos: "o título",
+  cursos: "o curso",
+  vinculos: "o vínculo",
+};
+
+/**
+ * Com Declarado acima de 0, o Conforme pede ao menos um título, curso ou
+ * vínculo completo e aceito. Devolve o texto da falta (ou null).
+ */
+export function faltaDoComprovado(bloco, lancamento, declarada) {
+  const chave = BLOCOS_COM_ITENS[bloco?.tipo];
+  if (!chave) return null;
+  const decl = objeto(declarada?.parciais)[PARCIAL_DO_TIPO[bloco.tipo]];
+  if (!(typeof decl === "number" && decl > 0)) return null;
+  const algum = lista(lancamento?.[chave]).some(
+    (i) => i && i.aceito !== false && itemCompleto(chave, i),
+  );
+  return algum
+    ? null
+    : `Registre ${ITEM_NO_SINGULAR[chave]} comprovado (ou marque Não conforme ou Não enviado).`;
+}
+
+const ZERAM_O_BLOCO = ["NAO_CONFORME", "NAO_ENVIADO"];
+
+/**
+ * O lançamento que vai para o banco (rascunho e conclusão): no bloco Não
+ * conforme ou Não enviado, as linhas incompletas saem (não contam e não
+ * pedem nada); nos outros, o curso sem horas vai sem o campo, para a linha
+ * em preenchimento não travar o rascunho (a falta fica na tela).
+ */
+export function lancamentoParaGravar(regraEntrada, lancamento) {
+  const regra = normalizarRegraAnalise(regraEntrada);
+  const saida = { ...objeto(lancamento) };
+  const blocos = objeto(saida.blocos);
+  for (const bloco of regra.blocos) {
+    const chave = BLOCOS_COM_ITENS[bloco.tipo];
+    if (!chave || !Array.isArray(saida[chave])) continue;
+    const zerado = ZERAM_O_BLOCO.includes(
+      objeto(blocos[bloco.codigo]).situacao,
+    );
+    saida[chave] = saida[chave]
+      .filter((i) => !zerado || itemCompleto(chave, i))
+      .map((i) => {
+        if (chave !== "cursos" || !i || typeof i !== "object") return i;
+        const horas = Number(i.horas);
+        if (i.horas !== "" && i.horas !== null && Number.isFinite(horas))
+          return i;
+        const { horas: _semHoras, ...resto } = i;
+        return resto;
+      });
+  }
+  return saida;
+}
+
 /** O analista já marcou a situação do bloco (Conforme, Não conforme, Não enviado)? */
 export const blocoConferido = (lancamento, bloco) =>
   Boolean(objeto(objeto(lancamento?.blocos)[bloco?.codigo]).situacao);
@@ -257,7 +343,7 @@ export const blocoConferido = (lancamento, bloco) =>
 /**
  * O que falta para concluir, bloco a bloco: [{ bloco, tipo, texto }]. Vazio =
  * pode concluir. O banco confere o mesmo em concluir_ficha. `tipo`: situacao,
- * motivo, item, datas, horas, minimo, justificativa ou nota. `minimo` (a
+ * motivo, item, datas, horas, comprovado, minimo, justificativa ou nota. `minimo` (a
  * experiência Conforme abaixo do mínimo pelos vínculos aceitos) só a tela pede. A nota diferente da
  * declarada só pede justificativa depois que o bloco foi conferido (antes, a
  * falta é a própria situação).
@@ -271,6 +357,9 @@ export function pendenciasDaFicha(
   const regra = normalizarRegraAnalise(regraEntrada);
   const pendencias = [];
   const blocos = objeto(lancamento?.blocos);
+  const eliminadoPorBloco = lista(avaliacao?.blocos).some(
+    (b) => b?.efeito === "ELIMINA",
+  );
   for (const bloco of regra.blocos) {
     if (!pedeSituacao(bloco) || !blocoSeAplica(bloco, lancamento)) continue;
     const l = objeto(blocos[bloco.codigo]);
@@ -290,18 +379,29 @@ export function pendenciasDaFicha(
           : "Escreva o motivo (10 caracteres ou mais).",
       );
     const chave = BLOCOS_COM_ITENS[bloco.tipo];
+    // Não conforme/Não enviado: as linhas incompletas são ignoradas.
+    const zerado = ZERAM_O_BLOCO.includes(l.situacao);
     if (chave) {
-      const itens = lista(lancamento?.[chave]);
+      const itens = lista(lancamento?.[chave]).filter(
+        (i) => !zerado || itemCompleto(chave, i),
+      );
       if (itens.some((i) => i && i.aceito === false && !i.motivo))
         falta("item", "Item recusado sem motivo.");
       if (chave === "vinculos" && itens.some((v) => v && !datasValidas(v)))
         falta("datas", "Vínculo com data de início ou fim inválida.");
       if (chave === "cursos" && itens.some((c) => c && !(Number(c.horas) > 0)))
         falta("horas", "Curso sem carga horária.");
+      // Já eliminado por outro bloco (efeito Elimina): não pede o registro.
+      const comprovado =
+        l.situacao === "CONFORME" && !eliminadoPorBloco
+          ? faltaDoComprovado(bloco, lancamento, declarada)
+          : null;
+      if (comprovado) falta("comprovado", comprovado);
       // Conforme com a experiência mínima não comprovada pelos vínculos
       // aceitos eliminaria em silêncio: lance os vínculos ou marque Não conforme.
       const exp = avaliacao?.experiencia;
       if (
+        !comprovado &&
         chave === "vinculos" &&
         l.situacao === "CONFORME" &&
         exp?.abaixo_do_minimo &&
@@ -317,8 +417,9 @@ export function pendenciasDaFicha(
         );
       }
     }
+    // Com Não conforme/Não enviado, o motivo do bloco já justifica o zero.
     if (
-      l.situacao &&
+      l.situacao === "CONFORME" &&
       avaliacao?.resultado !== "INAPTO_REQUISITO" &&
       divergenciaDoBloco(bloco, avaliacao, declarada) &&
       !blocoJustificado(regra, bloco, l)
@@ -369,6 +470,7 @@ const COMPLEMENTO_DA_FALTA = {
   justificativa: "justificativa",
   nota: "nota",
   minimo: "experiência mínima",
+  comprovado: "item comprovado",
 };
 
 /**

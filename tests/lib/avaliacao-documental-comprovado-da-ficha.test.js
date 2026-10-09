@@ -143,16 +143,15 @@ describe("prévia na lateral", () => {
       composicaoDaNota(REGRA, lancamento, avaliacao, declarada),
       REGRA.blocos,
       lancamento,
-      declarada,
       avaliacao.calculados,
     );
     const por = Object.fromEntries(partes.map((p) => [p.bloco, p]));
     expect(por.CURSOS).toMatchObject({ apurado: 3, previa: null });
     // com vínculo lançado, a prévia é o Calculado (20), não o declarado (15)
     expect(por.EXPERIENCIA).toMatchObject({ apurado: null, previa: 20 });
-    // sem itens, a prévia é o declarado
-    expect(por.FORMACAO).toMatchObject({ apurado: null, previa: 5 });
-    expect(notaComPrevias(partes)).toEqual({ nota: 28, comPrevia: true });
+    // sem itens, a prévia é o calculado (0): o declarado não preenche o Apurado
+    expect(por.FORMACAO).toMatchObject({ apurado: null, previa: 0 });
+    expect(notaComPrevias(partes)).toEqual({ nota: 23, comPrevia: true });
     expect(notaComPrevias([{ apurado: 2, previa: null }])).toEqual({
       nota: 2,
       comPrevia: false,
@@ -232,7 +231,7 @@ describe("caso TREINO-P02: Inapto com o motivo", () => {
     ]);
   });
 
-  it("não conclui em silêncio: a Experiência pede os vínculos (! no stepper)", () => {
+  it("não conclui em silêncio: Conforme sem registro pede o título, o curso e o vínculo", () => {
     const avaliacao = calcularFicha(REGRA, LANCAMENTO, DOCUMENTAL);
     const pendencias = pendenciasDaFicha(
       REGRA,
@@ -240,16 +239,38 @@ describe("caso TREINO-P02: Inapto com o motivo", () => {
       avaliacao,
       declarada,
     );
+    expect(pendencias.map((p) => [p.bloco, p.tipo])).toEqual([
+      ["FORMACAO", "comprovado"],
+      ["CURSOS", "comprovado"],
+      ["EXPERIENCIA", "comprovado"],
+    ]);
+    expect(pendencias[2].texto).toBe(
+      "Registre o vínculo comprovado (ou marque Não conforme ou Não enviado).",
+    );
+  });
+
+  it("vínculo registrado abaixo do mínimo: pede o mínimo (! no stepper)", () => {
+    const lancamento = {
+      ...LANCAMENTO,
+      vinculos: [vinculo("2026-01-01", "2026-03-31")],
+    };
+    const avaliacao = calcularFicha(REGRA, lancamento, DOCUMENTAL);
+    const pendencias = pendenciasDaFicha(
+      REGRA,
+      lancamento,
+      avaliacao,
+      declarada,
+    ).filter((p) => p.bloco === "EXPERIENCIA");
     expect(pendencias).toEqual([
       {
         bloco: "EXPERIENCIA",
         tipo: "minimo",
         texto:
-          "Experiência mínima de 6 meses não comprovada (comprovado 0 meses): lance os vínculos que comprovam ou marque Não conforme.",
+          "Experiência mínima de 6 meses não comprovada (comprovado 3 meses): lance os vínculos que comprovam ou marque Não conforme.",
       },
     ]);
     expect(
-      conferenciaDaFicha(REGRA, LANCAMENTO, avaliacao, pendencias)
+      conferenciaDaFicha(REGRA, lancamento, avaliacao, pendencias)
         .texto_da_falta,
     ).toBe("Falta: Experiência Profissional (experiência mínima)");
   });

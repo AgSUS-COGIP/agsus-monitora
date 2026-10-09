@@ -1068,12 +1068,7 @@
 .avd-ficha-calculado strong {
   color: var(--text-primary);
 }
-/* Declarado → Apurado: a frase de conferência, o destaque e a diferença. */
-.avd-ficha-pontos-guia {
-  margin: 0;
-  color: var(--text-primary);
-  font-size: var(--text-body-sm);
-}
+/* Declarado → Apurado: o destaque e a diferença. */
 .avd-ficha-pontos-resumo {
   display: flex;
   flex-wrap: wrap;
@@ -1293,6 +1288,15 @@
 }
 .avd-ficha-outras-justificativas[open] > summary {
   margin-bottom: var(--space-2);
+}
+/* O que falta na linha do item, no próprio campo ("Informe as horas"). */
+.avd-ficha-campo-erro {
+  align-self: center;
+  color: var(--state-danger);
+  font-size: var(--text-caption);
+}
+.avd-ficha-item input[aria-invalid="true"] {
+  border-color: var(--state-danger);
 }
 /* "Vínculo tirado. Desfazer" depois do ×. */
 .avd-ficha-tirado {
