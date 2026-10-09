@@ -587,6 +587,61 @@ describe("tela de Classificação", () => {
     expect(document.getElementById("classificacaoDocumento")).toBeNull();
   });
 
+  it("Como fica no SEI: aba Colunas marca, ordena, restaura e salva no edital", async () => {
+    const supabase = supabaseFalso();
+    await montar(supabase);
+    await abrirEdital();
+    await clicar(secao.querySelector("[data-acao='gerar']"));
+    await esperar();
+    await clicar(secao.querySelector("[data-acao='ver-documento']"));
+    await esperar();
+    const modal = document.getElementById("classificacaoDocumento");
+    const previa = () =>
+      modal
+        .querySelector("iframe.classificacao-documento-previa")
+        .getAttribute("srcdoc");
+    const noDocumento = () =>
+      [
+        ...modal.querySelectorAll(
+          "[aria-label='Colunas no documento'] [data-coluna]",
+        ),
+      ].map((li) => li.dataset.coluna);
+    await clicar(modal.querySelector(".ui-abas [data-aba='colunas']"));
+    // Padrão enxuto; Classificação e Nome não se desmarcam.
+    expect(noDocumento()).not.toContain("SITUACAO");
+    expect(
+      modal.querySelector("[data-marcar-coluna='CLASSIFICACAO']").disabled,
+    ).toBe(true);
+    expect(modal.querySelector("[data-marcar-coluna='NOME']").disabled).toBe(
+      true,
+    );
+    expect(previa()).not.toContain("SITUAÇÃO");
+
+    await clicar(modal.querySelector("[data-marcar-coluna='SITUACAO']"));
+    expect(noDocumento().at(-1)).toBe("SITUACAO");
+    expect(previa()).toContain("SITUAÇÃO");
+    await clicar(
+      modal.querySelector(
+        "[data-coluna='SITUACAO'] [data-acao='subir-coluna']",
+      ),
+    );
+    expect(noDocumento().at(-2)).toBe("SITUACAO");
+
+    // "Restaurar o padrão", na aba Colunas, volta às colunas padrão.
+    await clicar(modal.querySelector("[data-acao='restaurar-textos']"));
+    expect(noDocumento()).not.toContain("SITUACAO");
+    await clicar(modal.querySelector("[data-marcar-coluna='SITUACAO']"));
+
+    await clicar(modal.querySelector("[data-acao='salvar-textos']"));
+    await esperar();
+    const chamada = supabase.rpc.mock.calls.find(
+      ([n]) => n === "salvar_regra_classificacao",
+    );
+    expect(chamada[1].p_configuracao.documento.colunas.FINAL_FINAL).toEqual(
+      expect.arrayContaining(["CLASSIFICACAO", "NOME", "NOTA", "SITUACAO"]),
+    );
+  });
+
   it("sem geração, exportar fica desligado; leitor não vê Gerar", async () => {
     await montar(
       supabaseFalso({

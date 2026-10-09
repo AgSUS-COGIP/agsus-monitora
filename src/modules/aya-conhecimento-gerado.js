@@ -713,7 +713,7 @@ export const VERBETES_AYA = Object.freeze([
       "assistente ou modo avancado",
     ],
     resposta:
-      'Na aba Regra, quem coordena o edital escolhe "Assistente" (o padrão) ou "Modo avançado"; os dois mexem no mesmo rascunho, e a escolha fica lembrada neste navegador. O assistente ("Nova regra" ou "Editar regra") tem cinco passos, e dá para ir e voltar entre eles: 1) Ponto de partida: continuar da versão vigente, copiar a regra conferida de outro edital da mesma área (aparece o número, a unidade e a versão), usar um modelo ou começar do zero — sempre uma cópia independente, que não muda a origem; 2) O que vale e o que elimina: um cardápio de cartões com caixa, começando pelo grupo "Na inscrição" (inscrição cancelada, questionário não finalizado, reprovado na Empregare, termo recusado e o corte por pontos mínimos, que eliminam antes de qualquer análise) e seguindo com os requisitos que eliminam (identidade, formação exigida, conselho de classe e outros documentos, com o item do edital e os motivos), titulação (pontos por título e por nível, vale o maior ou somam, teto), cursos (faixas de horas, pontos, teto, por nível), experiência (mínimo exigido, por mês ou por período, só além do mínimo, teto, por nível), critério étnico (indígena e aldeia; só na Saúde Indígena), e as cotas; o corte por pontos mínimos diz a nota usada (declarada na inscrição ou ART). Marcado, o cartão abre só os seus campos, já com valores sugeridos (do ponto de partida, dos modelos e das regras da área); desmarcado, some da regra, e marcar de novo traz de volta o que estava; 3) Perguntas da Empregare; 4) Nota mínima e desempate; 5) Testar e salvar, nesta ordem: o resumo, a comparação de versões, o "Testar com um candidato fictício" (fechado até abrir) e, por último, o nome da versão, o motivo e o salvar, que cria a versão nova (na primeira versão, o motivo diz de onde ela veio). Ao lado do botão aparece o que falta para salvar. O que o assistente não mostra (distribuição, revisão, textos do parecer, observações prontas) continua no modo avançado e não muda.',
+      'Na aba Regra, quem coordena o edital escolhe "Assistente" (o padrão) ou "Modo avançado"; os dois mexem no mesmo rascunho, e a escolha fica lembrada neste navegador. O assistente ("Nova regra" ou "Editar regra") tem cinco passos, e dá para ir e voltar entre eles: 1) Ponto de partida: continuar da versão vigente, copiar a regra conferida de outro edital da mesma área (aparece o número, a unidade e a versão), usar um modelo ou começar do zero — sempre uma cópia independente, que não muda a origem; 2) O que vale e o que elimina: um cardápio de cartões com caixa, começando pelo grupo "Na inscrição" (inscrição cancelada, questionário não finalizado, reprovado na Empregare, termo recusado e o corte por pontos mínimos, que eliminam antes de qualquer análise) e seguindo com os requisitos que eliminam (identidade, formação exigida, conselho de classe e outros documentos, com o item do edital e os motivos), titulação (pontos por título e por nível, vale o maior ou somam, teto), cursos (faixas de horas, pontos, teto, por nível), experiência (mínimo exigido, por mês ou por período, só além do mínimo, teto, por nível), critério étnico (indígena e aldeia; só na Saúde Indígena), e as cotas; o corte por pontos mínimos diz a nota usada (declarada na inscrição ou ART). Marcado, o cartão abre só os seus campos, já com valores sugeridos (do ponto de partida, dos modelos e das regras da área); desmarcado, some da regra, e marcar de novo traz de volta o que estava; 3) Perguntas da Empregare; 4) Nota mínima e desempate; 5) Testar e salvar: no topo, um cartão diz em que pé está (sem mudanças, pronto para salvar com o que falta, ou salvo); depois o resumo, a comparação de versões, o "Testar com um candidato fictício" (fechado até abrir) e o nome da versão e o motivo. O botão principal fica preso ao pé e diz o que vai acontecer ("Salvar como Versão 2", "Concluir sem mudanças" ou "Fechar o assistente"); salvar cria a versão nova (na primeira versão, o motivo diz de onde ela veio). O que o assistente não mostra (distribuição, revisão, textos do parecer, observações prontas) continua no modo avançado e não muda.',
     fato: "No MONITORA, o assistente da regra da avaliação documental tem cinco passos (ponto de partida, cardápio do que vale e do que elimina, perguntas da Empregare, nota mínima e desempate, testar e salvar) e grava o mesmo formato de regra do modo avançado.",
     fonte:
       "src/modulos/avaliacao-documental/assistente/; src/lib/avaliacao-documental/assistente-da-regra.ts",
@@ -765,6 +765,29 @@ export const VERBETES_AYA = Object.freeze([
   },
   {
     arquivo: "regras-da-avaliacao-documental.md",
+    titulo: "Concluir o assistente (passo 5)",
+    perguntas: [
+      "passo 5 travado",
+      "nao consigo finalizar o assistente",
+      "fica travado no 5",
+      "concluir o assistente",
+      "concluir sem mudancas",
+      "fechar o assistente",
+      "regra conferida no assistente",
+      "nao mudei nada no assistente",
+      "depois de salvar a regra",
+      "marcar como conferida no assistente",
+      "abrir o assistente de novo",
+    ],
+    resposta:
+      'O passo 5 sempre tem uma saída, no botão preso ao pé do assistente. Sem nenhuma mudança, o cartão do topo diz "Sem mudanças — a Versão 1 continua valendo (Conferida)": "Concluir sem mudanças" marca o passo 5 com ✓ e nada é gravado; "Fechar o assistente" volta ao resumo da regra (com "Abrir o assistente") e "Voltar ao passo 2" leva ao cardápio. Com mudanças, o cartão diz "Pronto para salvar como Versão N" e o que falta; cada item leva ao campo. Depois de salvar, o assistente fica no passo 5 com ✓ e a confirmação "Versão N salva": quem pode conferir (outra pessoa da coordenação do edital, ou o administrador global) marca como conferida ali mesmo; quem salvou a versão vê que outra pessoa precisa conferir (dupla conferência). Atenção: abrir o passo 3 pode ligar sozinho perguntas da Empregare que estavam sem ligação, e isso já conta como mudança.',
+    fato: "",
+    fonte:
+      "src/modulos/avaliacao-documental/assistente/estado-do-passo-5.tsx; src/modulos/avaliacao-documental/assistente/assistente.tsx",
+    abrir: "avaliacao-documental",
+  },
+  {
+    arquivo: "regras-da-avaliacao-documental.md",
     titulo: "O que falta para salvar a regra",
     perguntas: [
       "salvar desabilitado",
@@ -777,7 +800,7 @@ export const VERBETES_AYA = Object.freeze([
       "requisito sem item do edital",
     ],
     resposta:
-      'No passo 5 do assistente, ao lado do "Salvar como versão N", aparece o que falta. "Para salvar, falta" (o botão fica desabilitado): nenhuma mudança em relação à vigente, o motivo com menos de 10 caracteres, o nome da versão fora de 3 a 80 caracteres e os erros da regra ou da classificação. "Confira também" (não impede): pergunta sem ligação com a Empregare e requisito sem item do edital. Clicar num item leva ao passo e ao campo.',
+      'No passo 5 do assistente, o cartão do topo lista o que falta para "Salvar como Versão N" (o botão, preso ao pé, fica desabilitado até resolver): o motivo com menos de 10 caracteres, o nome da versão fora de 3 a 80 caracteres e os erros da regra ou da classificação. Perto do motivo, "Confira também" (não impede): pergunta sem ligação com a Empregare e requisito sem item do edital. Clicar num item leva ao passo e ao campo. Sem nenhuma mudança não há o que salvar: o botão vira "Concluir sem mudanças".',
     fato: "",
     fonte:
       "src/lib/avaliacao-documental/pendencias-do-salvar.ts; src/modulos/avaliacao-documental/assistente/conferir.tsx",
@@ -1476,7 +1499,7 @@ export const VERBETES_AYA = Object.freeze([
       "motivo em chips",
     ],
     resposta:
-      'A ficha abre no MODO FOCO: um item por vez, no centro. Cada item mostra o que se pede (o título do bloco e o enunciado curto da pergunta, com "ver texto completo"), a resposta do candidato na Empregare em destaque ("Anexo", "4 anos ou mais", "Especialização"…), o "Abrir na Empregare" e as três decisões em botões grandes: Conforme (verde), Não conforme (vermelho) e Não enviado (cinza) — as teclas 1, 2 e 3 aparecem ao passar o mouse. Conforme marca com o ✓ e passa sozinho, com uma animação curta, ao próximo item que ainda pede algo; Não conforme e Não enviado ficam no item e abrem os motivos padronizados em chips (marque um ou mais). Nos itens que pontuam (titulação, cursos, experiência), primeiro vem a lista compacta de títulos, cursos ou vínculos com "+ Adicionar", depois o bloco "Declarado → Apurado" com − e + de meio em meio ponto (até o teto do bloco) e o "Calculado pelos itens"; o Apurado já começa preenchido (com o Declarado, ou com o Calculado quando há itens lançados); a decisão vem por último, e o Conforme num item ainda sem item lançado não avança, para você lançar o comprovado. O stepper do alto mostra cada item com a marca do estado — número quando falta conferir, ✓ verde Conforme, ✕ vermelho Não conforme, ⊘ cinza Não enviado, ! âmbar quando falta completar (motivo, justificativa…) — e a barra enche a cada item conferido ("4 de 6 itens conferidos"); clique num passo para ir a ele. "Ver todos" troca para a lista completa, com todos os itens em cartões compactos (a resposta e as decisões na mesma linha) e a Conclusão no fim; "Um por vez" volta ao foco, e a escolha fica lembrada neste navegador. A lateral mostra só a nota (o número grande, "parcial" enquanto falta conferir), o mínimo, o resultado e a composição por bloco em barras finas (o traço na barra é o declarado; "—" antes de conferir; âmbar quando difere da declarada). Enquanto falta conferir algum item, o resultado fica neutro — "Em análise · 2 de 4 requisitos conferidos" (os requisitos são os blocos que podem eliminar) —, porque a conta trata o bloco não marcado como Conforme e a experiência sem vínculo como abaixo do mínimo; o Inapto só aparece quando um item conferido elimina, e Apto ou Inapto pela nota mínima só com tudo conferido. Cotas e blocos que não valem para o candidato não viram passo: aparecem na Conclusão ("Não se aplicam: …"). Sem resposta na Empregare, o item sugere "Não enviado". Copiar o código, abrir o candidato na Empregare e compartilhar no chat ficam no "⋯" da nota.',
+      'A ficha abre no MODO FOCO: um item por vez, no centro. Cada item mostra o que se pede (o título do bloco e o enunciado curto da pergunta, com "ver texto completo"), a resposta do candidato na Empregare em destaque ("Anexo", "4 anos ou mais", "Especialização"…), o "Abrir na Empregare" e as três decisões em botões grandes: Conforme (verde), Não conforme (vermelho) e Não enviado (cinza) — as teclas 1, 2 e 3 aparecem ao passar o mouse. Conforme marca com o ✓ e passa sozinho, com uma animação curta, ao próximo item que ainda pede algo; Não conforme e Não enviado ficam no item e abrem os motivos padronizados em chips (marque um ou mais). Nos itens que pontuam (titulação, cursos, experiência), o registro do comprovado é obrigatório: com Declarado acima de 0 e nada registrado, o cartão já abre com uma linha pronta e o cursor no primeiro campo (o título vem com o nível da resposta do candidato, ex.: Mestrado; o curso pede nome e horas; o vínculo, empregador, início e fim). Depois vem o bloco "Declarado → Apurado" com − e + de meio em meio ponto (até o teto do bloco) e o "Calculado pelos itens"; o Apurado vem do Calculado pelos itens registrados (não do Declarado) e só muda à mão com justificativa. A decisão vem por último: com Declarado acima de 0, o Conforme pede ao menos um título, curso ou vínculo completo e aceito — sem ele, o item avisa "Registre o curso comprovado (ou marque Não conforme ou Não enviado)" e não avança; com Declarado 0 ("Não possuo"), o Conforme avança sem pedir item. A linha incompleta não trava o rascunho: o que falta aparece no próprio campo ("Informe as horas", "Informe o início e o fim"); com Não conforme ou Não enviado, a linha vazia é ignorada. O stepper do alto mostra cada item com a marca do estado — número quando falta conferir, ✓ verde Conforme, ✕ vermelho Não conforme, ⊘ cinza Não enviado, ! âmbar quando falta completar (motivo, justificativa…) — e a barra enche a cada item conferido ("4 de 6 itens conferidos"); clique num passo para ir a ele. "Ver todos" troca para a lista completa, com todos os itens em cartões compactos (a resposta e as decisões na mesma linha) e a Conclusão no fim; "Um por vez" volta ao foco, e a escolha fica lembrada neste navegador. A lateral mostra só a nota (o número grande, "parcial" enquanto falta conferir), o mínimo, o resultado e a composição por bloco em barras finas (o traço na barra é o declarado; "—" antes de conferir; âmbar quando difere da declarada). Enquanto falta conferir algum item, o resultado fica neutro — "Em análise · 2 de 4 requisitos conferidos" (os requisitos são os blocos que podem eliminar) —, porque a conta trata o bloco não marcado como Conforme e a experiência sem vínculo como abaixo do mínimo; o Inapto só aparece quando um item conferido elimina, e Apto ou Inapto pela nota mínima só com tudo conferido. Cotas e blocos que não valem para o candidato não viram passo: aparecem na Conclusão ("Não se aplicam: …"). Sem resposta na Empregare, o item sugere "Não enviado". Copiar o código, abrir o candidato na Empregare e compartilhar no chat ficam no "⋯" da nota.',
     fato: "No MONITORA, a ficha de análise mostra um item por vez, com as decisões em botões grandes e o progresso no alto, e calcula a nota pela regra do edital enquanto o analista confere.",
     fonte:
       "src/modulos/avaliacao-documental/ficha/ficha.jsx; src/modulos/avaliacao-documental/ficha/item-da-ficha.tsx; src/modulos/avaliacao-documental/ficha/progresso-da-ficha.tsx; src/lib/avaliacao-documental/ficha.js (passosDaFicha, proximoPassoPendente, composicaoDaNota); src/lib/avaliacao-documental/pontuacao.js",
@@ -1547,10 +1570,48 @@ export const VERBETES_AYA = Object.freeze([
       "nivel da vaga travado",
     ],
     resposta:
-      'Em cada item que pontua aparece "Declarado → Apurado": o Declarado é o que a resposta da Empregare vale pela nota declarada da regra, o Apurado é a nota que vale (com − e + de meio em meio ponto) e, embaixo, o Calculado pelos itens lançados. O Apurado começa preenchido com o Declarado (ou com o Calculado, se já há itens lançados): se o documento comprova os pontos, marque Conforme (o valor é gravado); se comprova menos, ajuste o Apurado e diga por quê. Não conforme e Não enviado zeram o Apurado, com aviso; voltar para Conforme devolve o valor. "Declarado 3 → Apurado 3" mostra a diferença quando houver. O analista pode ajustar o Apurado para menos ou para mais, até o teto do bloco no nível da vaga; "Usar o calculado" volta à conta. Toda nota apurada diferente da declarada pede justificativa: um motivo do bloco ou uma observação pronta da regra (ex.: "Nota de experiência diminuída", "Nota de cursos diminuída", "Experiência anterior à diplomação não é computada") e, se quiser, um complemento. As justificativas aparecem em chips. Sem justificativa, o item avisa, fica com o ! âmbar no stepper e a ficha não conclui. Na lateral, a barra do bloco fica âmbar; a justificativa entra no parecer. Quem é inapto por requisito não precisa justificar as notas. Bloco sem pergunta mapeada na nota declarada mostra "—" e não pede justificativa. Na pergunta com pontos por nível (a experiência do 93/2026), o Declarado é o do nível da vaga na ficha. O nível vem da vaga e aparece na linha da vaga, no cabeçalho, só para leitura para o analista; a coordenação do edital pode mudá-lo no "⋯" da nota, com o aviso de que isso muda os pontos declarados.',
+      'Em cada item que pontua aparece "Declarado → Apurado": o Declarado é o que a resposta da Empregare vale pela nota declarada da regra, o Apurado é a nota que vale (com − e + de meio em meio ponto) e, embaixo, o Calculado pelos itens lançados. O Apurado vem do Calculado pelos títulos, cursos ou vínculos registrados — o Declarado não o preenche: registre o que o documento comprova e marque Conforme; ajuste à mão só com justificativa. Não conforme e Não enviado zeram o Apurado, com aviso, e aí só aparece a área "Por que…?" com os motivos do bloco (o zero é consequência da decisão e não pede a justificativa da nota); voltar para Conforme devolve o Calculado. "Declarado 3 → Apurado 3" mostra a diferença quando houver. O analista pode ajustar o Apurado para menos ou para mais, até o teto do bloco no nível da vaga; "Usar o calculado" volta à conta. Com Conforme, toda nota apurada diferente da declarada pede justificativa: um motivo do bloco ou uma observação pronta da regra (a observação de texto igual a um motivo do bloco não se repete) (ex.: "Nota de experiência diminuída", "Nota de cursos diminuída", "Experiência anterior à diplomação não é computada") e, se quiser, um complemento. As justificativas aparecem em chips. Sem justificativa, o item avisa, fica com o ! âmbar no stepper e a ficha não conclui. Na lateral, a barra do bloco fica âmbar; a justificativa entra no parecer. Quem é inapto por requisito não precisa justificar as notas. Bloco sem pergunta mapeada na nota declarada mostra "—" e não pede justificativa. Na pergunta com pontos por nível (a experiência do 93/2026), o Declarado é o do nível da vaga na ficha. O nível vem da vaga e aparece na linha da vaga, no cabeçalho, só para leitura para o analista; a coordenação do edital pode mudá-lo no "⋯" da nota, com o aviso de que isso muda os pontos declarados.',
     fato: "No MONITORA, nota apurada diferente da declarada na ficha exige justificativa padronizada, que vai para o parecer e para o histórico.",
     fonte:
       "src/lib/avaliacao-documental/ficha.js (pendenciasDaFicha, divergenciaDoBloco); src/lib/avaliacao-documental/apurado-da-ficha.ts; supabase/migrations/20261007130000_conteudo_da_ficha.sql (FC_PENDENCIAS_FICHA)",
+    abrir: "avaliacao-documental",
+  },
+  {
+    arquivo: "regras-da-avaliacao-documental.md",
+    titulo: "Tempo declarado × comprovado na ficha",
+    perguntas: [
+      "registrar o titulo",
+      "registrar o curso",
+      "registrar o vinculo",
+      "linha ja aberta",
+      "cartao abre com linha",
+      "conforme nao avanca",
+      "informe as horas",
+      "nao foi possivel salvar carga horaria",
+      "duas justificativas",
+      "tempo declarado",
+      "tempo comprovado",
+      "por que nao muda os anos",
+      "continua 2 anos",
+      "lancei o vinculo e o tempo nao mudou",
+      "quanto tempo o vinculo comprova",
+      "meses de experiencia na ficha",
+      "alem do minimo",
+      "previa na lateral",
+      "nota nao muda na lateral",
+      "experiencia profissional sem nota na lateral",
+      "justificativas de outro bloco",
+      "outras justificativas",
+      "por que deu inapto",
+      "inapto requisito sem motivo",
+      "todos conformes e inapto",
+      "experiencia minima nao comprovada",
+    ],
+    resposta:
+      'No item Experiência, a resposta do questionário aparece como "Declarado pelo candidato" (ex.: 2 anos) e não muda: é o que a pessoa respondeu. O tempo que vale é o "Comprovado", logo abaixo da lista de vínculos, calculado na hora pelos vínculos aceitos com a mesma regra da nota (sobreposições contam uma vez, o vínculo que começa no dia seguinte emenda, dias ÷ 30 e só os meses inteiros): "Comprovado: 2 anos, 7 meses e 27 dias (32 meses)" e, embaixo, a conta dos pontos ("Além do mínimo de 6 meses: 26 meses → 4 períodos de 6 meses → 20 pontos"). Em Cursos e Titulação aparece o mesmo resumo ("Comprovado: 3 cursos, 140 h"). Na lateral, o item ainda sem decisão mostra o valor provisório em tom neutro com "(prévia)" e a nota parcial soma essas prévias. Na justificativa da nota, os chips do próprio bloco vêm primeiro (motivos do bloco e observações prontas do mesmo assunto); as demais ficam em "Outras justificativas", recolhidas. Se a ficha der Inapto, a lateral e a Conclusão dizem por quê, com link para o item (ex.: "Experiência mínima de 6 meses não comprovada (comprovado 0 meses) — item 1.1.1 c"). Experiência marcada Conforme sem vínculo registrado pede o registro ("Registre o vínculo comprovado…"); com vínculos abaixo do mínimo, a pendência é a experiência mínima (! no stepper): registre os vínculos que comprovam ou marque Não conforme.',
+    fato: "No MONITORA, o mínimo de experiência da regra é conferido pelos vínculos aceitos lançados na ficha, não pela resposta do questionário nem pelo Apurado.",
+    fonte:
+      "src/lib/avaliacao-documental/comprovado-da-ficha.ts; src/lib/avaliacao-documental/justificativas-do-bloco.ts; src/lib/avaliacao-documental/motivos-do-resultado.ts; src/lib/avaliacao-documental/pontuacao.js (apurarExperiencia); src/lib/avaliacao-documental/ficha.js (pendenciasDaFicha)",
     abrir: "avaliacao-documental",
   },
   {
@@ -1857,7 +1918,7 @@ export const VERBETES_AYA = Object.freeze([
       "padrao das publicacoes da agsus",
     ],
     resposta:
-      'O documento segue o Comunicado Externo que a AgSUS publica no SEI (editais 83/2026 e 100/2026): "Brasília, na data da assinatura digital." à direita; o título em caixa alta (ex.: RESULTADO PRELIMINAR - ETAPA DE ANÁLISE CURRICULAR, CONVOCAÇÃO PARA ENTREVISTA, RESULTADO FINAL - ETAPA DE ENTREVISTA, RESULTADO FINAL - PROCESSO SELETIVO); "1. DISPOSIÇÕES PRELIMINARES" com os itens 1.1, 1.2…; uma tabela por vaga, com o cabeçalho "VAGA código - cargo - lotação - unidade - N vagas (x AC + y Pretos e Pardos + CR)" ou "- Cadastro Reserva", todas as vagas, inclusive as vazias ("Não houve candidatos aptos."); e "2. DISPOSIÇÕES FINAIS". Colunas como nas publicações: avaliação documental — Classificação, Nome, (Modalidade), Nota Final e as parciais da regra; eliminados — Nome, Nota, parciais e Justificativa; convocação — uma tabela Nº, NOME, Vaga, (Modalidade), DATA e HORA, com data e hora da agenda das entrevistas salva (sem agenda, em branco para preencher no SEI); entrevista — Classificação, NOME, NOTA (empate na mesma posição); resultado final — CLASSIFICAÇÃO, NOME, NOTA FINAL, e no fim o rodapé da regra. O timbrado, a assinatura eletrônica e o rodapé "título (nº SEI) SEI processo / pg. N" quem põe é o SEI.',
+      'O documento segue o Comunicado Externo que a AgSUS publica no SEI (editais 83/2026 e 100/2026): "Brasília, na data da assinatura digital." à direita; o título em caixa alta (ex.: RESULTADO PRELIMINAR - ETAPA DE ANÁLISE CURRICULAR, CONVOCAÇÃO PARA ENTREVISTA, RESULTADO FINAL - ETAPA DE ENTREVISTA, RESULTADO FINAL - PROCESSO SELETIVO); "1. DISPOSIÇÕES PRELIMINARES" com os itens 1.1, 1.2…; uma tabela por vaga, com o cabeçalho "VAGA código - cargo - lotação - unidade - N vagas (x AC + y Pretos e Pardos + CR)" ou "- Cadastro Reserva", todas as vagas, inclusive as vazias ("Não houve candidatos aptos."); e "2. DISPOSIÇÕES FINAIS". Colunas padrão, enxutas: avaliação documental — Classificação, Nome, (Modalidade) e Nota Final (as parciais da regra ficam disponíveis, desmarcadas, na aba Colunas); eliminados — Nome, Nota e Justificativa; convocação — uma tabela Nº, NOME, Vaga, (Modalidade), DATA e HORA, com data e hora da agenda das entrevistas salva (sem agenda, em branco para preencher no SEI); entrevista — Classificação, NOME, NOTA (empate na mesma posição); resultado final — CLASSIFICAÇÃO, NOME, NOTA FINAL, e no fim o rodapé da regra. O timbrado, a assinatura eletrônica e o rodapé "título (nº SEI) SEI processo / pg. N" quem põe é o SEI.',
     fato: "No MONITORA, o documento da lista de classificação segue o Comunicado Externo publicado no SEI; timbrado, assinatura e rodapé ficam com o SEI.",
     fonte: "src/lib/classificacao/documento-sei.js",
     abrir: "classificacao",
@@ -1909,10 +1970,30 @@ export const VERBETES_AYA = Object.freeze([
       "previa no celular",
     ],
     resposta:
-      '"Como fica no SEI" abre quase na tela toda, com a folha A4 inteira no centro. Ela começa em "Ajustar" (a folha cabe na largura); − e + mudam o zoom de 50% a 200%, e "Ajustar" volta a caber. O botão de tela cheia, no topo, usa a tela inteira; Esc ou o X fecham. Os textos ficam num painel à esquerda, em duas abas: "Dados" (número do edital, processo SEI, unidade, autoridade do 1.1, local e data) e "Textos" (título e disposições preliminares e finais); "Ocultar textos" recolhe o painel e a folha cresce, "Editar textos" traz de volta. A prévia muda enquanto você digita. No celular fica uma coluna: os textos em cima e a prévia embaixo. "Restaurar o padrão" e "Salvar no edital" ficam no rodapé, junto de "Baixar DOCX" e "Copiar para o SEI", sempre à vista.',
+      '"Como fica no SEI" abre quase na tela toda, com a folha A4 inteira no centro. Ela começa em "Ajustar" (a folha cabe na largura); − e + mudam o zoom de 50% a 200%, e "Ajustar" volta a caber. O botão de tela cheia, no topo, usa a tela inteira; Esc ou o X fecham. Os ajustes ficam num painel à esquerda, em três abas: "Dados" (número do edital, processo SEI, unidade, autoridade do 1.1, local e data), "Textos" (título e disposições preliminares e finais) e "Colunas" (as colunas da tabela de cada vaga); "Ocultar painel" recolhe o painel e a folha cresce, "Textos e colunas" traz de volta. A prévia muda enquanto você digita. No celular fica uma coluna: os textos em cima e a prévia embaixo. "Restaurar o padrão" e "Salvar no edital" ficam no rodapé, junto de "Baixar DOCX" e "Copiar para o SEI", sempre à vista.',
     fato: "",
     fonte:
       "src/modulos/classificacao/documento.tsx; src/lib/classificacao/escala-da-previa.ts",
+    abrir: "classificacao",
+  },
+  {
+    arquivo: "regras-da-classificacao.md",
+    titulo: "Colunas da tabela no documento do SEI",
+    perguntas: [
+      "colunas do documento do sei",
+      "escolher colunas da tabela",
+      "tirar coluna formacao academica",
+      "tirar cursos de aperfeicoamento",
+      "mostrar pontuacoes parciais no sei",
+      "mudar a ordem das colunas",
+      "personalizar colunas da classificacao",
+      "coluna situacao cadastro reserva",
+    ],
+    resposta:
+      'Em "Como fica no SEI", a aba "Colunas" escolhe o que aparece na tabela de cada vaga e em que ordem. O padrão é enxuto: Classificação, Nome, Modalidade de Concorrência (só na tabela geral, quando há modalidades) e Nota Final; nos eliminados, Nome, Nota e Justificativa. Em "Outras colunas" ficam as que dá para incluir: as pontuações parciais da avaliação documental que a regra publica (Formação Acadêmica, Cursos de Aperfeiçoamento, Experiência Profissional, Pontuação Étnica) e, no resultado final, a Situação (dentro das vagas ou cadastro reserva). Marque ou desmarque; as setas ou arrastar mudam a ordem. Classificação e Nome (e a Justificativa dos eliminados) têm cadeado: são obrigatórias. A prévia, o "Baixar DOCX" e o "Copiar para o SEI" mudam na hora; "Salvar no edital" grava a escolha daquela publicação na regra do edital (nova versão) e "Restaurar o padrão", com a aba Colunas aberta, volta às colunas padrão. Na convocação para entrevista as colunas são fixas (Nº, NOME, Vaga, DATA e HORA). Não há coluna de inscrição, CPF ou nascimento: o documento é público e leva só o nome.',
+    fato: "No MONITORA, as colunas das tabelas do documento do SEI são escolhidas por publicação na aba Colunas e gravadas na regra do edital.",
+    fonte:
+      "src/modulos/classificacao/colunas-do-documento.tsx; src/lib/classificacao/colunas-do-documento.js",
     abrir: "classificacao",
   },
   {

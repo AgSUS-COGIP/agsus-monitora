@@ -63,6 +63,7 @@ function supabaseFalso({
   regra: inicial = null,
   pode = true,
   apoio = {},
+  salvarPedeOutraPessoa = false,
 } = {}) {
   let regra = inicial;
   const respostas = {
@@ -118,7 +119,13 @@ function supabaseFalso({
       ...apoio,
     }),
     salvar_regra_analise: ({ p_configuracao, p_versao_atual }) => {
-      regra = regraSalva(p_versao_atual + 1, p_configuracao);
+      regra = regraSalva(p_versao_atual + 1, p_configuracao, {
+        conferir_pede_outra_pessoa: salvarPedeOutraPessoa,
+      });
+      return { regra, fichas_afetadas: [] };
+    },
+    conferir_regra_analise: () => {
+      regra = { ...regra, situacao: "CONFERIDA", conferida_por: "Eu" };
       return { regra, fichas_afetadas: [] };
     },
     salvar_regra_classificacao: ({ p_configuracao }) => ({
@@ -341,53 +348,142 @@ describe("assistente da regra", () => {
     ).toBeNull();
   });
 
-  it("passo 5: Salvar diz o que falta e cada item leva ao passo e ao campo", async () => {
-    await montar(supabaseFalso({ regra: regraSalva(2) }));
-    await clicar(passo("conferir"));
-    const salvar = () => secao.querySelector("[data-acao='salvar-assistente']");
-    // Ordem: resumo, comparar, testar (fechado) e salvar.
+  it("passo 5 sem mudanças: diz que a vigente continua valendo e conclui com ✓", async () => {
+    const supabase = supabaseFalso({ regra: regraSalva(2) });
+    await montar(supabase);
+    // (O passo 3 liga sozinho as perguntas sem ligação: aí a regra muda.)
+    for (const id of ["cardapio", "nota", "conferir"]) await clicar(passo(id));
+    // Ordem: estado, resumo, comparar, testar (fechado); sem mudança, sem barra de salvar.
     const ordem = [
       ...secao.querySelectorAll(
-        ".avd-ast-resumo, .avd-ast-comparar, .avd-previa, .avd-ast-salvar",
+        ".avd-ast-estado, .avd-ast-resumo, .avd-ast-comparar, .avd-previa, .avd-ast-salvar",
       ),
     ].map((s) => s.classList[1]);
     expect(ordem).toEqual([
+      "avd-ast-estado",
       "avd-ast-resumo",
       "avd-ast-comparar",
       "avd-previa",
-      "avd-ast-salvar",
     ]);
     expect(secao.querySelector(".avd-previa-corpo")).toBeNull();
-    expect(salvar().disabled).toBe(true);
-    const falta = () => secao.querySelector("[data-impede='sim']");
-    expect(falta().textContent).toContain(
-      "Nenhuma mudança em relação à versão vigente",
+    const cartao = () => secao.querySelector(".avd-ast-estado");
+    expect(cartao().dataset.modo).toBe("sem-mudancas");
+    expect(cartao().textContent).toContain(
+      "Sem mudanças — a Versão 2 continua valendo (a conferir)",
     );
-    await clicar(falta().querySelector("button"));
+    expect(secao.querySelector("[data-acao='salvar-assistente']")).toBeNull();
+    const concluir = secao.querySelector("[data-acao='concluir-assistente']");
+    expect(concluir.textContent).toContain("Concluir sem mudanças");
+    expect(secao.querySelector(".avd-ast-navegacao").dataset.fixa).toBe("sim");
+    const ultimoPasso = () =>
+      secao.querySelector(".avd-ast-passos li:last-child");
+    expect(ultimoPasso().dataset.estado).toBe("atual");
+    await clicar(concluir);
+    expect(ultimoPasso().dataset.estado).toBe("feito");
+    expect(cartao().dataset.modo).toBe("concluido");
+    // Voltar ao passo 2 e fechar o assistente.
+    await clicar(secao.querySelector("[data-acao='voltar-ao-passo-2']"));
     expect(passo("cardapio").getAttribute("aria-current")).toBe("step");
-    // Mudou a nota mínima: falta o motivo, que leva ao campo.
+    await clicar(passo("conferir"));
+    await clicar(
+      secao.querySelector("[data-acao='fechar-assistente-do-cartao']"),
+    );
+    expect(secao.querySelector(".avd-ast")).toBeNull();
+    expect(
+      secao.querySelector(".avd-ast-fechado .avd-ast-resumo"),
+    ).not.toBeNull();
+    await clicar(secao.querySelector("[data-acao='abrir-assistente']"));
+    expect(secao.querySelector(".avd-ast")).not.toBeNull();
+    expect(
+      supabase.rpc.mock.calls.some(([nome]) => nome.startsWith("salvar_")),
+    ).toBe(false);
+  });
+
+  it("passo 5 com mudanças: o que falta leva ao campo; salvar mostra a confirmação e confere ali", async () => {
+    const supabase = supabaseFalso({ regra: regraSalva(2) });
+    await montar(supabase);
     await clicar(passo("nota"));
     await digitar(
       secao.querySelector("[data-tour='avd-assistente-nota-minima'] input"),
       "16",
     );
+    await clicar(passo("cardapio"));
+    await clicar(
+      cartao("bloco:CURSOS").querySelector("input[type='checkbox']"),
+    );
     await clicar(passo("conferir"));
+    const estadoDoPasso = () => secao.querySelector(".avd-ast-estado");
+    const salvar = () => secao.querySelector("[data-acao='salvar-assistente']");
+    expect(estadoDoPasso().dataset.modo).toBe("pronto");
+    expect(estadoDoPasso().textContent).toContain(
+      "Pronto para salvar como Versão 3",
+    );
+    expect(salvar().textContent).toContain("Salvar como Versão 3");
     expect(salvar().disabled).toBe(true);
-    expect(falta().textContent).toContain(
+    const falta = estadoDoPasso().querySelector(".avd-ast-falta-item");
+    expect(falta.textContent).toContain(
       "Escreva o motivo da alteração (mín. 10 caracteres)",
     );
-    await clicar(falta().querySelector("button"));
+    await clicar(falta);
     await esperar(() => new Promise((r) => requestAnimationFrame(r)));
     expect(document.activeElement).toBe(
       secao.querySelector("[data-campo='motivo'] input"),
     );
     await digitar(
       secao.querySelector("[data-campo='motivo'] input"),
-      "Nota mínima do edital retificado",
+      "Edital retificado: sem cursos",
     );
-    expect(falta()).toBeNull();
+    expect(estadoDoPasso().textContent).toContain("Tudo certo");
     expect(salvar().disabled).toBe(false);
-  });
+    await clicar(salvar());
+    await esperar();
+    await esperar();
+    // A aba remonta na versão nova: o assistente volta no passo 5, com ✓.
+    expect(passo("conferir").getAttribute("aria-current")).toBe("step");
+    expect(
+      secao.querySelector(".avd-ast-passos li:last-child").dataset.estado,
+    ).toBe("feito");
+    expect(estadoDoPasso().dataset.modo).toBe("salvo");
+    expect(estadoDoPasso().textContent).toContain("Versão 3 salva");
+    await clicar(secao.querySelector("[data-acao='conferir-no-assistente']"));
+    await esperar();
+    expect(
+      supabase.rpc.mock.calls.some(
+        ([nome]) => nome === "conferir_regra_analise",
+      ),
+    ).toBe(true);
+    expect(estadoDoPasso().textContent).toContain("(Conferida)");
+    await clicar(secao.querySelector("[data-acao='fechar-assistente']"));
+    expect(
+      secao.querySelector("[data-acao='abrir-assistente']"),
+    ).not.toBeNull();
+  }, 20000);
+
+  it("passo 5 depois de salvar: quem salvou vê por que não pode conferir", async () => {
+    await montar(
+      supabaseFalso({ regra: regraSalva(2), salvarPedeOutraPessoa: true }),
+    );
+    await clicar(passo("cardapio"));
+    await clicar(
+      cartao("bloco:CURSOS").querySelector("input[type='checkbox']"),
+    );
+    await clicar(passo("conferir"));
+    await digitar(
+      secao.querySelector("[data-campo='motivo'] input"),
+      "Edital retificado: sem cursos",
+    );
+    await clicar(secao.querySelector("[data-acao='salvar-assistente']"));
+    await esperar();
+    await esperar();
+    const cartaoDoPasso = secao.querySelector(".avd-ast-estado");
+    expect(cartaoDoPasso.dataset.modo).toBe("salvo");
+    expect(
+      cartaoDoPasso.querySelector("[data-acao='conferir-no-assistente']"),
+    ).toBeNull();
+    expect(
+      cartaoDoPasso.querySelector("[data-dupla-conferencia]").textContent,
+    ).toContain("outra pessoa da coordenação");
+  }, 20000);
 
   it("resumo de uma página e Copiar para o SEI", async () => {
     const writeText = vi.fn(async () => {});

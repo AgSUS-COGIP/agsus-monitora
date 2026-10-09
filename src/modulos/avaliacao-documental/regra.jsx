@@ -818,6 +818,8 @@ export function Regra({ e, estado }) {
   const [erroDoBanco, setErroDoBanco] = useState("");
   const [aldeiasAbertas, setAldeiasAbertas] = useState(false);
   const [modo, setModo] = useState(lerModo);
+  // "Fechar o assistente" (passo 5): a regra em resumo, com "Abrir o assistente".
+  const [assistenteFechado, setAssistenteFechado] = useState(false);
   const mudarModo = (novo) => {
     setModo(novo);
     guardarModo(novo);
@@ -840,6 +842,7 @@ export function Regra({ e, estado }) {
       rascunho={rascunho}
       inicial={inicial}
       aoMudarRascunho={setRascunho}
+      aoFechar={regraSalva ? () => setAssistenteFechado(true) : undefined}
     />
   );
 
@@ -878,7 +881,39 @@ export function Regra({ e, estado }) {
         {cabecalho}
         {avisoDoBanco}
         {seletorDeModo}
-        {assistente}
+        {assistenteFechado ? (
+          <section
+            className="ui-card avd-ast-fechado"
+            aria-label="Assistente fechado"
+          >
+            <div className="ui-acoes">
+              <button
+                type="button"
+                className="btn"
+                data-acao="abrir-assistente"
+                onClick={() => setAssistenteFechado(false)}
+              >
+                <i
+                  className="fa-solid fa-wand-magic-sparkles"
+                  aria-hidden="true"
+                />{" "}
+                Abrir o assistente
+              </button>
+            </div>
+            <ResumoDaRegra
+              regra={inicial}
+              contexto={{
+                versao: regraSalva.versao,
+                nome: regraSalva.nome ?? null,
+                notaMinima: dados.nota_minima?.nota_minima ?? null,
+                notaMinimaPorNivel:
+                  dados.nota_minima?.nota_minima_por_nivel ?? {},
+              }}
+            />
+          </section>
+        ) : (
+          assistente
+        )}
         <Versoes
           regra={regraSalva}
           podeUsar

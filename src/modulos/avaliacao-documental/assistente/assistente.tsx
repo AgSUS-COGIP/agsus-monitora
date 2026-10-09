@@ -23,6 +23,7 @@ import {
 import { CATALOGO_DE_CRITERIOS } from "../../../lib/classificacao/catalogo.js";
 import {
   erroDoNomeDaVersao,
+  rotuloDaVersao,
   nomeParaGravar,
   sugerirNomeDaVersao,
 } from "../../../lib/nome-da-versao.ts";
@@ -30,6 +31,7 @@ import { Aviso } from "../../../ui/index.js";
 import { nomeDoCampo } from "../../../ui/nome-da-versao.tsx";
 import { Previa } from "../previa.tsx";
 import { PassoCardapio } from "./cardapio.tsx";
+import { EstadoDoPasso5, type ModoDoPasso5 } from "./estado-do-passo-5.tsx";
 import {
   BarraDeSalvar,
   ComparacaoDeVersoes,
@@ -73,6 +75,8 @@ type Props = {
   /** A versão vigente normalizada (null sem regra). */
   inicial: RegraAnalise | null;
   aoMudarRascunho: (regra: RegraAnalise | null) => void;
+  /** "Fechar o assistente": a aba Regra mostra o resumo, com "Abrir o assistente". */
+  aoFechar?: () => void;
 } & FerramentasDoDocumento;
 
 const NOME_DO_CRITERIO = new Map(
@@ -90,6 +94,7 @@ export function AssistenteDaRegra({
   rascunho,
   inicial,
   aoMudarRascunho,
+  aoFechar,
   copiar,
   imprimir,
 }: Props) {
@@ -97,7 +102,14 @@ export function AssistenteDaRegra({
   const regraSalva = dados?.regra ?? null;
   const area = dados?.edital?.area ?? e.area;
   const apoio = e.apoio;
-  const [passo, setPasso] = useState(0);
+  // A aba remonta a cada versão: a que acabou de ser salva reabre no passo 5.
+  const salvaAgora = Boolean(
+    regraSalva &&
+    e.regraSalvaAgora?.editalId === e.editalId &&
+    e.regraSalvaAgora?.versao === regraSalva.versao,
+  );
+  const [passo, setPasso] = useState(salvaAgora ? PASSOS.length - 1 : 0);
+  const [concluido, setConcluido] = useState(false);
   const [ponto, setPonto] = useState<PontoDePartida | null>(
     regraSalva
       ? {
@@ -278,6 +290,31 @@ export function AssistenteDaRegra({
     if (p.alvo) setAlvo(p.alvo);
   };
 
+  const mudou = mudouRegra || mudouClassificacao;
+  const versaoNova = (regraSalva?.versao ?? 0) + 1;
+  const impedem = pendencias.filter((p) => p.impede);
+  const modoDoPasso5: ModoDoPasso5 = mudou
+    ? "pronto"
+    : salvaAgora
+      ? "salvo"
+      : concluido
+        ? "concluido"
+        : "sem-mudancas";
+  // O passo 5 ganha o ✓ ao salvar ou ao concluir sem mudanças.
+  const passo5Feito = modoDoPasso5 === "salvo" || modoDoPasso5 === "concluido";
+  const fechar = () => {
+    estado.esquecerRegraSalvaAgora?.();
+    setConcluido(false);
+    if (aoFechar) aoFechar();
+    else setPasso(0);
+  };
+  const voltarAoPasso2 = () => {
+    estado.esquecerRegraSalvaAgora?.();
+    setConcluido(false);
+    setPasso(1);
+  };
+  const ultimo = PASSOS.length - 1;
+
   const passoAtual = PASSOS[passo] ?? PASSOS[0];
   const contexto = {
     edital: editalRotulo,
@@ -318,7 +355,11 @@ export function AssistenteDaRegra({
             <li
               key={p.id}
               data-estado={
-                i < passo ? "feito" : i === passo ? "atual" : "depois"
+                i < passo || (i === ultimo && passo5Feito)
+                  ? "feito"
+                  : i === passo
+                    ? "atual"
+                    : "depois"
               }
             >
               <button
@@ -329,7 +370,11 @@ export function AssistenteDaRegra({
                 onClick={() => setPasso(i)}
               >
                 <span className="avd-ast-passo-numero" aria-hidden="true">
-                  {i < passo ? <i className="fa-solid fa-check" /> : i + 1}
+                  {i < passo || (i === ultimo && passo5Feito) ? (
+                    <i className="fa-solid fa-check" />
+                  ) : (
+                    i + 1
+                  )}
                 </span>
                 <span className="avd-ast-passo-rotulo">{p.rotulo}</span>
               </button>
@@ -408,6 +453,24 @@ export function AssistenteDaRegra({
         ) : null}
         {passo === 4 && rascunho ? (
           <div className="avd-ast-passo">
+            <EstadoDoPasso5
+              modo={modoDoPasso5}
+              rotuloDaVigente={
+                regraSalva ? rotuloDaVersao(regraSalva) : "regra nova"
+              }
+              conferida={regraSalva?.situacao === "CONFERIDA"}
+              versaoNova={versaoNova}
+              faltam={impedem}
+              aoIrPara={irPara}
+              aoConcluir={() => setConcluido(true)}
+              aoFechar={fechar}
+              aoVoltarAoPasso2={voltarAoPasso2}
+              confereOutraPessoa={Boolean(
+                regraSalva?.conferir_pede_outra_pessoa,
+              )}
+              aoConferir={estado.conferirRegra}
+              salvando={e.salvando}
+            />
             <ResumoDaRegra
               regra={rascunho}
               contexto={contexto}
@@ -422,32 +485,32 @@ export function AssistenteDaRegra({
                 nota_minima_por_nivel: notaMinimaPorNivel,
               }}
             />
-            <BarraDeSalvar
-              versaoNova={(regraSalva?.versao ?? 0) + 1}
-              pendencias={pendencias}
-              aoIrPara={irPara}
-              motivo={motivo}
-              aoMudarMotivo={setMotivo}
-              pedeNome={mudouRegra}
-              nome={nome}
-              sugestaoDoNome={sugestao}
-              aoMudarNome={setNome}
-              motivoObrigatorio={motivoObrigatorio}
-              salvaClassificacao={mudouClassificacao}
-              podeDescartar={mudouRegra || mudouClassificacao}
-              salvando={e.salvando}
-              erroDoBanco={erroDoBanco}
-              aoSalvar={() => void salvar()}
-              aoDescartar={() => {
-                aoMudarRascunho(inicial);
-                setClassificacao(classificacaoOriginal);
-                setGuardados({});
-                setMotivo("");
-                setNome(null);
-                setErroDoBanco("");
-                setPasso(0);
-              }}
-            />
+            {mudou || erroDoBanco ? (
+              <BarraDeSalvar
+                pendencias={pendencias.filter((p) => !p.impede)}
+                aoIrPara={irPara}
+                motivo={motivo}
+                aoMudarMotivo={setMotivo}
+                pedeNome={mudouRegra}
+                nome={nome}
+                sugestaoDoNome={sugestao}
+                aoMudarNome={setNome}
+                motivoObrigatorio={motivoObrigatorio}
+                salvaClassificacao={mudouClassificacao}
+                podeDescartar={mudouRegra || mudouClassificacao}
+                salvando={e.salvando}
+                erroDoBanco={erroDoBanco}
+                aoDescartar={() => {
+                  aoMudarRascunho(inicial);
+                  setClassificacao(classificacaoOriginal);
+                  setGuardados({});
+                  setMotivo("");
+                  setNome(null);
+                  setErroDoBanco("");
+                  setPasso(0);
+                }}
+              />
+            ) : null}
           </div>
         ) : null}
       </div>
@@ -459,7 +522,10 @@ export function AssistenteDaRegra({
         </p>
       ) : null}
 
-      <div className="avd-ast-navegacao">
+      <div
+        className="avd-ast-navegacao"
+        data-fixa={passo === ultimo ? "sim" : undefined}
+      >
         <button
           type="button"
           className="btn secondary"
@@ -477,6 +543,40 @@ export function AssistenteDaRegra({
           >
             Próximo <i className="fa-solid fa-arrow-right" aria-hidden="true" />
           </button>
+        ) : null}
+        {passo === ultimo && rascunho ? (
+          modoDoPasso5 === "pronto" ? (
+            <button
+              type="button"
+              className="btn"
+              data-acao="salvar-assistente"
+              disabled={e.salvando || impedem.length > 0}
+              title={impedem[0]?.texto}
+              onClick={() => void salvar()}
+            >
+              <i className="fa-solid fa-floppy-disk" aria-hidden="true" />{" "}
+              Salvar como Versão {versaoNova}
+            </button>
+          ) : modoDoPasso5 === "sem-mudancas" ? (
+            <button
+              type="button"
+              className="btn"
+              data-acao="concluir-assistente"
+              onClick={() => setConcluido(true)}
+            >
+              <i className="fa-solid fa-check" aria-hidden="true" /> Concluir
+              sem mudanças
+            </button>
+          ) : (
+            <button
+              type="button"
+              className="btn"
+              data-acao="fechar-assistente"
+              onClick={fechar}
+            >
+              Fechar o assistente
+            </button>
+          )
         ) : null}
       </div>
     </section>

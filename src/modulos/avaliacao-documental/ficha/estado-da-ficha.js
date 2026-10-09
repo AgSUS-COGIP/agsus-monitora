@@ -19,6 +19,7 @@
 */
 import {
   calcularFicha,
+  lancamentoParaGravar,
   conferenciaDaFicha,
   declaradaDaFicha,
   lancamentoInicial,
@@ -167,7 +168,10 @@ export function criarEstadoDaFicha({
       const r = await rpc(RPC_SALVAR, {
         p_ficha: estado.fichaId,
         p_versao: versao,
-        p_lancamento: lancamento,
+        p_lancamento: lancamentoParaGravar(
+          estado.dados.regra.configuracao,
+          lancamento,
+        ),
         p_resultado: resumoParaGravar(avaliacao, declarada),
         p_parecer: avaliacao.parecer,
       });
@@ -218,7 +222,10 @@ export function criarEstadoDaFicha({
         p_ficha: estado.fichaId,
         p_versao: estado.versao,
         p_versao_regra: estado.dados.regra.versao,
-        p_lancamento: lancamento,
+        p_lancamento: lancamentoParaGravar(
+          estado.dados.regra.configuracao,
+          lancamento,
+        ),
         p_resultado: resumoParaGravar(avaliacao, declarada),
         p_parecer: avaliacao.parecer,
       });

@@ -77,6 +77,12 @@ const ESTADO_INICIAL = Object.freeze({
   apoio: null,
   carregandoApoio: false,
   erroDoApoio: "",
+  /*
+    A versão que o assistente acabou de salvar ({ editalId, versao }): a aba
+    Regra remonta a cada versão (key), e o assistente reabre no passo 5 com a
+    confirmação e o "Marcar como conferida" em vez de voltar ao passo 1.
+  */
+  regraSalvaAgora: null,
 });
 
 /* Sem a RPC do assistente publicada: abre sem as perguntas por vaga, as regras da área e a classificação. */
@@ -209,7 +215,12 @@ export function criarEstadoDaAvaliacao({
   }
 
   /* Grava e devolve { ok, erro }; a regra nova volta para a tela. */
-  async function gravarRegra(nome, argumentos, aviso) {
+  async function gravarRegra(
+    nome,
+    argumentos,
+    aviso,
+    { versaoNova = false } = {},
+  ) {
     const editalId = estado.editalId;
     publicar({ salvando: true });
     try {
@@ -218,6 +229,9 @@ export function criarEstadoDaAvaliacao({
       if (editalId === estado.editalId && estado.dados)
         publicar({
           dados: { ...estado.dados, regra: resposta?.regra ?? null },
+          ...(versaoNova && resposta?.regra
+            ? { regraSalvaAgora: { editalId, versao: resposta.regra.versao } }
+            : {}),
         });
       atualizarEditalNaLista(editalId, resposta?.regra);
       toast(aviso, "success");
@@ -300,7 +314,12 @@ export function criarEstadoDaAvaliacao({
           ...(nome ? { p_nome: nome } : {}),
         },
         "Regra salva como versão nova.",
+        { versaoNova: true },
       ),
+    /* O assistente fechou a confirmação da versão salva. */
+    esquecerRegraSalvaAgora() {
+      if (estado.regraSalvaAgora) publicar({ regraSalvaAgora: null });
+    },
     /* Troca só o nome de uma versão (null tira o nome); conteúdo e hash ficam. */
     renomearVersao: (versao, nome, motivo) =>
       gravarRegra(

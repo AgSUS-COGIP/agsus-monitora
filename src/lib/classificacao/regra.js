@@ -154,8 +154,15 @@ function normalizarModalidade(m) {
   publicações (src/lib/classificacao/documento-sei.js). Na regra só aparece
   quando o gestor ajustou algo (as regras sem textos próprios continuam
   iguais); `documentoDaRegra` devolve sempre o formato completo.
+
+  `colunas`: as colunas das tabelas escolhidas em "Como fica no SEI", por
+  modelo (a mesma chave dos textos), na ordem do documento: CLASSIFICACAO,
+  NOME, MODALIDADE, NOTA, SITUACAO, PARCIAL_FORMACAO…, JUSTIFICATIVA. Sem a
+  chave = as colunas padrão da publicação (colunas-do-documento.js).
 */
 const CHAVE_DE_MODELO = /^[A-Z_]{3,60}$/;
+const CODIGO_DE_COLUNA = /^[A-Z][A-Z0-9_]{1,40}$/;
+const MAXIMO_DE_COLUNAS = 20;
 const CAMPOS_DO_MODELO = ["titulo", "preliminares", "finais"];
 const textoLongo = (valor) =>
   String(valor ?? "")
@@ -175,6 +182,16 @@ function normalizarDocumento(bruto) {
     );
     if (Object.keys(m).length) modelos[chave] = m;
   }
+  const colunas = {};
+  for (const [chave, valor] of Object.entries(objeto(d.colunas))) {
+    if (!CHAVE_DE_MODELO.test(chave) || !Array.isArray(valor)) continue;
+    const codigos = [
+      ...new Set(
+        valor.map((c) => texto(c)).filter((c) => CODIGO_DE_COLUNA.test(c)),
+      ),
+    ].slice(0, MAXIMO_DE_COLUNAS);
+    if (codigos.length) colunas[chave] = codigos;
+  }
   return {
     edital: texto(d.edital),
     processo: texto(d.processo),
@@ -183,11 +200,13 @@ function normalizarDocumento(bruto) {
     local: texto(d.local),
     data: lerData(d.data) ? texto(d.data).slice(0, 10) : null,
     modelos,
+    colunas,
   };
 }
 
 const documentoVazio = (d) =>
   !Object.keys(d.modelos).length &&
+  !Object.keys(d.colunas).length &&
   !d.data &&
   ["edital", "processo", "unidade", "autoridade", "local"].every((c) => !d[c]);
 
@@ -468,6 +487,8 @@ export function validarRegra(bruta) {
     )
   )
     erro("documento", "Textos do documento com até 10000 caracteres.");
+  if (Object.keys(doc.colunas).length > 40)
+    erro("documento", "Colunas do documento de até 40 publicações.");
   return erros;
 }
 
