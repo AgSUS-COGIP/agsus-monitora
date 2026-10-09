@@ -182,7 +182,7 @@ async function montar(supabase, { abrir = true, ...opcoes } = {}) {
   secao.className = "page active";
   document.body.append(secao);
   await act(async () => {
-    painel = montarRecursos({ supabase, toast, baixar, ...opcoes });
+    painel = montarRecursos({ secao, supabase, toast, baixar, ...opcoes });
   });
   if (abrir) await abrirATela();
   return painel;
@@ -244,7 +244,7 @@ describe("a tela dentro do app", () => {
     expect(status().textContent).toMatch(/^Atualizado em 20\/09\/2026/);
     expect(
       [...topo.querySelectorAll("button")].map((b) => b.textContent.trim()),
-    ).toEqual(["Atualizar", "Exportar", "Novo recurso"]);
+    ).toEqual(["Atualizar", "Exportar", "Analisar"]);
     expect(topo.querySelector('[aria-label*="tema"]')).toBeNull();
     expect(topo.querySelector('[aria-label*="tela cheia"]')).toBeNull();
     // Uma data de carga só, e sem selo "Somente consulta".
@@ -395,7 +395,7 @@ describe("área atual do app", () => {
         }),
       },
     });
-    await montar(supabase);
+    await montar(supabase, { modo: "analise" });
     expect(botao("Novo recurso")).toBeUndefined();
 
     podeEditar = true;
@@ -653,7 +653,7 @@ describe("permissão", () => {
 
 describe("cadastro", () => {
   async function abrirNovo(supabase) {
-    await montar(supabase);
+    await montar(supabase, { modo: "analise" });
     await clicar(botao("Novo recurso"));
     return document.querySelector(".recursos-formulario-cartao");
   }
@@ -702,7 +702,7 @@ describe("cadastro", () => {
   });
 
   it("Esc fecha o formulário e o foco volta para “Novo recurso”", async () => {
-    await montar(supabaseFalso());
+    await montar(supabaseFalso(), { modo: "analise" });
     botao("Novo recurso").focus();
     await clicar(botao("Novo recurso"));
     expect(document.activeElement.name).toBe("edital_id");
@@ -800,7 +800,7 @@ describe("cadastro", () => {
 describe("gaveta", () => {
   it("abre pela linha (clique ou Enter); quem edita marca a etapa, que entra na hora", async () => {
     const supabase = supabaseFalso();
-    await montar(supabase);
+    await montar(supabase, { modo: "analise" });
     const linha = document.querySelector(".recursos-linha");
     linha.focus();
     await teclar(linha, "Enter");
@@ -856,7 +856,7 @@ describe("gaveta", () => {
       supabase.rpc.mock.calls.filter(
         ([nome]) => nome === "get_recurso_candidato_detalhe",
       ).length;
-    await montar(supabase);
+    await montar(supabase, { modo: "analise" });
     await clicar(document.querySelector(".recursos-linha"));
     await esperar();
     expect(leituras()).toBe(1);
@@ -892,5 +892,106 @@ describe("gaveta", () => {
       ([n]) => n === "salvar_recurso_candidato",
     );
     expect(salvo.p_dados).toMatchObject({ id: "r1", observacao: "" });
+  });
+});
+
+/*
+  Painel de recursos (acompanhar) × Analisar recursos (fazer): o painel não tem
+  nenhuma ação operacional; quem analisa tem os atalhos para a outra tela, que
+  levam os filtros e o recurso aberto.
+*/
+describe("painel e análise separados", () => {
+  afterEach(() => {
+    delete window.navigate;
+  });
+
+  it("o painel é só leitura: sem Novo recurso, sem Modelos e o detalhe sem ações", async () => {
+    await montar(
+      supabaseFalso({
+        dados: payload({ pode_decidir: true, pode_administrar_modelos: true }),
+      }),
+    );
+    expect(botao("Novo recurso")).toBeUndefined();
+    expect(botao("Modelos de resposta")).toBeUndefined();
+    await clicar(document.querySelector(".recursos-linha"));
+    await esperar();
+    const gaveta = document.getElementById("recursosGaveta");
+    expect(gaveta).not.toBeNull();
+    expect(botao("Editar")).toBeUndefined();
+    expect(botao("Excluir")).toBeUndefined();
+    expect(botao("Enviar para parecer jurídico")).toBeUndefined();
+    expect(
+      [...gaveta.querySelectorAll("input[type=checkbox]")].every(
+        (c) => c.disabled,
+      ),
+    ).toBe(true);
+    expect(
+      gaveta.querySelector("[data-acao='analisar-este-recurso']"),
+    ).not.toBeNull();
+  });
+
+  it("quem só lê não tem o atalho Analisar", async () => {
+    await montar(supabaseFalso({ dados: payload({ pode_editar: false }) }));
+    expect(botao("Analisar")).toBeUndefined();
+    await clicar(document.querySelector(".recursos-linha"));
+    await esperar();
+    expect(
+      document.querySelector("[data-acao='analisar-este-recurso']"),
+    ).toBeNull();
+  });
+
+  it("a análise tem a fila e as ações, sem indicadores nem gráficos", async () => {
+    await montar(supabaseFalso(), { modo: "analise" });
+    const topo = secao.querySelector("header.ui-topo");
+    expect(
+      [...topo.querySelectorAll("button")].map((b) => b.textContent.trim()),
+    ).toEqual(["Atualizar", "Ver no painel", "Novo recurso"]);
+    expect(secao.querySelector(".recursos-kpis")).toBeNull();
+    expect(secao.querySelector("canvas")).toBeNull();
+    expect(secao.querySelector("#analiseRecursosFilaTitulo")).not.toBeNull();
+    expect(secao.querySelector("#recursosFilaTitulo")).toBeNull();
+    expect(secao.querySelector("#analise-filtro-edital")).not.toBeNull();
+  });
+
+  it("“Analisar este recurso” leva à análise com os filtros e o recurso", async () => {
+    const navegar = vi.fn();
+    window.navigate = navegar;
+    const pedidos = await import("../../src/app/pedido-de-filtro.js");
+    await montar(supabaseFalso());
+    await escolher(secao.querySelector("#filtro-origem"), "analise-curricular");
+    await clicar(document.querySelector(".recursos-linha"));
+    await esperar();
+    await clicar(document.querySelector("[data-acao='analisar-este-recurso']"));
+    expect(navegar).toHaveBeenCalledWith("analisar-recursos");
+    expect(document.getElementById("recursosGaveta")).toBeNull();
+    const pedido = pedidos.consumirPedidoDeFiltro("analisar-recursos");
+    expect(pedido.recurso).toBe("r1");
+    expect(pedido.filtros.origem).toBe("analise-curricular");
+  });
+
+  it("a análise aplica o pedido: os filtros e a gaveta do recurso", async () => {
+    const pedidos = await import("../../src/app/pedido-de-filtro.js");
+    pedidos.pedirFiltro("analisar-recursos", {
+      filtros: { edital: "e1", inventado: "x" },
+      recurso: "r1",
+    });
+    await montar(supabaseFalso(), { modo: "analise" });
+    await esperar();
+    expect(document.getElementById("recursosGaveta")).not.toBeNull();
+    expect(secao.querySelector("#analise-filtro-edital").value).toBe("e1");
+    expect(botao("Editar")).toBeTruthy();
+  });
+
+  it("“Ver no painel” volta com os mesmos filtros", async () => {
+    const navegar = vi.fn();
+    window.navigate = navegar;
+    const pedidos = await import("../../src/app/pedido-de-filtro.js");
+    await montar(supabaseFalso(), { modo: "analise" });
+    await escolher(secao.querySelector("#analise-filtro-origem"), "entrevista");
+    await clicar(botao("Ver no painel"));
+    expect(navegar).toHaveBeenCalledWith("recursos");
+    expect(pedidos.consumirPedidoDeFiltro("recursos").filtros.origem).toBe(
+      "entrevista",
+    );
   });
 });

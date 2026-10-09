@@ -67,4 +67,8 @@ export interface PropsDaGavetaDoRecurso extends Omit<
   podeDecidir?: boolean;
   modelos?: ModeloDaResposta[];
   area?: string;
+  /** Painel de recursos: só ler (nenhuma ação, nem a do ajuste). */
+  somenteLeitura?: boolean;
+  /** Painel de recursos, para quem analisa: abre o recurso em Analisar recursos. */
+  aoAnalisar?: () => void;
 }

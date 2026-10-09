@@ -112,7 +112,7 @@ describe("página e área atuais", () => {
   it("põe a área no nome das páginas do menu", () => {
     expect(
       paginaDaAya({ view: "recursos", area: "sede", nomeDaArea: "SEDE" }).nome,
-    ).toBe("Recursos · SEDE");
+    ).toBe("Painel de recursos · SEDE");
   });
 
   it("a Visão geral de cada área fala do mapa certo", () => {
@@ -148,9 +148,12 @@ describe("página e área atuais", () => {
     );
   });
 
-  it("Recursos explica o parecer jurídico", () => {
+  it("o Painel de recursos explica os números; Analisar recursos, o fluxo", () => {
     expect(paginaDaAya({ view: "recursos" }).intro).toBe(
-      "Posso explicar o fluxo do parecer jurídico, os prazos e os indicadores desta tela.",
+      "Posso explicar os indicadores, as pendências, os prazos e o fluxo do parecer jurídico.",
+    );
+    expect(paginaDaAya({ view: "analisar-recursos" }).intro).toBe(
+      "Posso explicar como registrar, enviar ao parecer, decidir, responder e ajustar a pontuação.",
     );
   });
 });
@@ -158,8 +161,12 @@ describe("página e área atuais", () => {
 describe("ações das respostas", () => {
   it("só navega dentro do app", () => {
     expect(acaoDaAya("recursos")).toMatchObject({
-      rotulo: "Abrir Recursos",
+      rotulo: "Abrir Painel de recursos",
       view: "recursos",
+    });
+    expect(acaoDaAya("analisar-recursos")).toMatchObject({
+      rotulo: "Abrir Analisar recursos",
+      view: "analisar-recursos",
     });
     expect(acaoDaAya("config:acessos")).toMatchObject({
       rotulo: "Ir para Configurações › Acessos",

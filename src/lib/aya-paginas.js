@@ -120,14 +120,26 @@ const PAGINAS = Object.freeze({
     ],
   },
   recursos: {
-    nome: "Recursos",
+    nome: "Painel de recursos",
     intro: () =>
-      "Posso explicar o fluxo do parecer jurídico, os prazos e os indicadores desta tela.",
+      "Posso explicar os indicadores, as pendências, os prazos e o fluxo do parecer jurídico.",
     sugestoes: () => [
-      sug("Quem decide", "Quem pode decidir um recurso?"),
-      sug("Fluxo do parecer", "Como funciona o fluxo do parecer jurídico?"),
-      sug("Prazo", "De onde vem o prazo do recurso?"),
+      sug("Painel", "Para que serve o Painel de recursos?"),
       sug("Indicadores", "Quais são os indicadores dos recursos?"),
+      sug("Prazo", "De onde vem o prazo do recurso?"),
+      sug("Fluxo do parecer", "Como funciona o fluxo do parecer jurídico?"),
+      sug("Quem decide", "Quem pode decidir um recurso?"),
+    ],
+  },
+  "analisar-recursos": {
+    nome: "Analisar recursos",
+    intro: () =>
+      "Posso explicar como registrar, enviar ao parecer, decidir, responder e ajustar a pontuação.",
+    sugestoes: () => [
+      sug("Registrar", "Como registrar um recurso?"),
+      sug("Fluxo do parecer", "Como funciona o fluxo do parecer jurídico?"),
+      sug("Quem decide", "Quem pode decidir um recurso?"),
+      sug("Ajuste da pontuação", "Como ajustar a pontuação no recurso?"),
       sug("Resposta enviada", "Quem marca a resposta como enviada?"),
     ],
   },
@@ -332,7 +344,14 @@ export const ACOES_DA_AYA = Object.freeze({
     rotulo: "Abrir Avaliação documental",
     view: "avaliacao-documental",
   }),
-  recursos: Object.freeze({ rotulo: "Abrir Recursos", view: "recursos" }),
+  recursos: Object.freeze({
+    rotulo: "Abrir Painel de recursos",
+    view: "recursos",
+  }),
+  "analisar-recursos": Object.freeze({
+    rotulo: "Abrir Analisar recursos",
+    view: "analisar-recursos",
+  }),
   entrevistas: Object.freeze({
     rotulo: "Abrir Painel de entrevistas",
     view: "entrevistas",

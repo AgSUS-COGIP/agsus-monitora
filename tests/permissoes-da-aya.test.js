@@ -52,8 +52,8 @@ describe("resposta para o perfil", () => {
   it("quem pode: diz onde fica e o que conferir", () => {
     const r = explicarPermissao("não aparece o botão de novo recurso", EDITOR);
     expect(r.answer).toContain("pode registrar recursos");
-    expect(r.answer).toContain("topo de Recursos");
-    expect(r.acao).toBe("recursos");
+    expect(r.answer).toContain("topo de Analisar recursos");
+    expect(r.acao).toBe("analisar-recursos");
   });
 
   it("sem perfil, quem responde é a base", () => {

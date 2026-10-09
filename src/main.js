@@ -183,15 +183,28 @@ window.calendarioEditaisController = telaSobDemanda({
 });
 
 /*
-  Recursos dos candidatos: módulo de src/modulos/, na própria <section>. A
-  área é a atual do app; `render()` recarrega a cada abertura (permissões do
-  banco e comemorações relidas).
+  Recursos dos candidatos, em duas entradas do menu (src/modulos/recursos/):
+  o Painel de recursos (acompanhar, só leitura) e Analisar recursos (fazer),
+  cada um na própria <section> e com o próprio estado. A área é a atual do
+  app; `render()` recarrega a cada abertura (permissões do banco e
+  comemorações relidas), então o que se decide em Analisar aparece no painel
+  ao voltar.
 */
 window.recursosController = telaSobDemanda({
   secao: "page-recursos",
   carregar: () =>
     import("./modulos/recursos/recursos.tsx").then((m) =>
       m.montarRecursos({ toast: window.monitoraToast, comemoracoesLigadas }),
+    ),
+});
+window.analisarRecursosController = telaSobDemanda({
+  secao: "page-analisar-recursos",
+  carregar: () =>
+    import("./modulos/recursos/recursos.tsx").then((m) =>
+      m.montarAnaliseDeRecursos({
+        toast: window.monitoraToast,
+        comemoracoesLigadas,
+      }),
     ),
 });
 

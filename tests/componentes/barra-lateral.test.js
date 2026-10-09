@@ -521,7 +521,7 @@ describe("barra recolhida: páginas da área como ícones", () => {
       ["Editais", "file-text", "Editais"],
       ["Cronograma", "calendar-days", "Cronograma"],
       ["Painel das análises", "file-search", "Painel das análises"],
-      ["Recursos", "scale", "Recursos · BETA"],
+      ["Painel de recursos", "scale", "Painel de recursos"],
       ["Lista de aprovados", "user-round-check", "Lista de aprovados"],
     ]);
     // O nome continua no botão para o leitor de tela.
@@ -615,6 +615,7 @@ describe("ícones e selo beta no menu aberto", () => {
         dashboard: true,
         nucleo: true,
         recursos: true,
+        "analisar-recursos": true,
         config: true,
       },
       paineis: [{ codigo: "x", titulo: "Painel X" }],
@@ -643,11 +644,16 @@ describe("ícones e selo beta no menu aberto", () => {
     const selos = document.querySelectorAll("#nav .menu-item__selo");
     expect(selos).toHaveLength(1);
     expect(selos[0].textContent).toBe("BETA");
-    expect(selos[0].closest(".menu-item")).toBe(item("recursos"));
-    expect(item("recursos").classList.contains("menu-item--beta")).toBe(true);
-    expect(selos[0].previousElementSibling.textContent).toBe("Recursos");
+    expect(selos[0].closest(".menu-item")).toBe(item("analisar-recursos"));
+    expect(
+      item("analisar-recursos").classList.contains("menu-item--beta"),
+    ).toBe(true);
+    expect(selos[0].previousElementSibling.textContent).toBe(
+      "Analisar recursos",
+    );
     // O mobile lê o nome de `data-rotulo`: o selo não entra nele.
-    expect(item("recursos").dataset.rotulo).toBe("Recursos");
+    expect(item("analisar-recursos").dataset.rotulo).toBe("Analisar recursos");
+    expect(item("recursos").querySelector(".menu-item__selo")).toBeNull();
     expect(item("nucleo").querySelector(".menu-item__selo")).toBeNull();
   });
 

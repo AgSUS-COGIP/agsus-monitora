@@ -1,11 +1,22 @@
 # `src/modulos/recursos/` — Recursos dos candidatos
 
-A tela `#page-recursos` (view `recursos`), módulo do app desde a Etapa 2: monta na própria
-`<section>` por `montarRecursos()` (`src/main.js` → `window.recursosController`); o legado chama
-`render()` ao navegar. Área = a atual do app; sessão, tema, aviso e tela cheia = os do app.
+Duas entradas do menu (como Entrevistas), cada uma na própria `<section>` e com o próprio estado:
+
+- **Painel de recursos** (`#page-recursos`, view `recursos`, `montarRecursos()` →
+  `window.recursosController`): acompanhar, só leitura — status, exportação, filtros, KPIs,
+  recorte, gráficos, pendências e a fila; o detalhe abre sem ações (`somenteLeitura`).
+- **Analisar recursos** (`#page-analisar-recursos`, view `analisar-recursos`,
+  `montarAnaliseDeRecursos()` → `window.analisarRecursosController`, selo BETA): fazer — Novo
+  recurso, Modelos de resposta, filtros e a fila; a gaveta com todas as ações.
+
+Atalhos: no painel, "Analisar" (os mesmos filtros) e, no detalhe, "Analisar este recurso"; na
+análise, "Ver no painel". Levam o pedido por `pedirFiltro` e navegam por `irParaLink`. Vê a
+análise quem edita Recursos ou dá o parecer jurídico (`canAnalisarRecursos`); o menu vem do banco
+(`20261009230000_analisar_recursos_no_menu.sql`). O legado chama `render()` ao navegar. Área = a
+atual do app; sessão, tema, aviso e tela cheia = os do app.
 
 ```
-recursos.tsx    <TelaDeRecursos> e montarRecursos() (área atual, troca de área, controlador)
+recursos.tsx    <TelaDeRecursos modo>, montarRecursos() e montarAnaliseDeRecursos() (área, controlador)
 estado.ts       store sem React: carga da área, gaveta, formulário, escritas (RPC e Storage)
 paineis.tsx     topo (status e ações), filtros, 4 KPIs, recorte, gráficos, pendências
 tabela.tsx      fila (TabelaInfinita), selos de situação, resposta e prazo

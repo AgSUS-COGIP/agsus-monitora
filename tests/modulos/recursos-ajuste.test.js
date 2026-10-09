@@ -177,7 +177,12 @@ async function montar(supabase) {
   secao.className = "page active";
   document.body.append(secao);
   await act(async () => {
-    painel = montarRecursos({ supabase, toast: vi.fn() });
+    painel = montarRecursos({
+      modo: "analise",
+      secao,
+      supabase,
+      toast: vi.fn(),
+    });
   });
   await act(async () => void painel.render());
   await esperar();

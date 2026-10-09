@@ -69,7 +69,7 @@ beforeEach(() => {
   definirAreasDoUsuario(["saude-indigena", "sede", "projetos"]);
   definirAreaAtual("sede");
   redefinirPaginaDaAya();
-  definirPaginaDaAya("recursos", "Recursos");
+  definirPaginaDaAya("recursos", "Painel de recursos");
   perguntar = vi.fn(async ({ question }) => ({
     answer: `Resposta para: ${question}`,
     provider: "curated-official",
@@ -99,9 +99,9 @@ describe("abrir e fechar", () => {
     const painel = $(".aya-painel");
     expect(painel.getAttribute("role")).toBe("dialog");
     expect(textoDe(".aya-balao")).toBe("Olá, sou a Aya.");
-    expect(textoDe(".aya-painel__pagina")).toBe("Recursos · SEDE");
+    expect(textoDe(".aya-painel__pagina")).toBe("Painel de recursos · SEDE");
     expect(painel.textContent).toContain(
-      "Posso explicar o fluxo do parecer jurídico, os prazos e os indicadores desta tela.",
+      "Posso explicar os indicadores, as pendências, os prazos e o fluxo do parecer jurídico.",
     );
     expect(painel.textContent).toContain("Para começar, digite sua pergunta.");
     // Só o chip do tour da tela; as sugestões de pergunta não aparecem.
@@ -125,7 +125,9 @@ describe("abrir e fechar", () => {
     const gmail = new URL(suporte.href);
     expect(gmail.origin).toBe("https://mail.google.com");
     expect(gmail.searchParams.get("to")).toBe("suporte@agenciasus.org.br");
-    expect(gmail.searchParams.get("body")).toContain("Página: Recursos");
+    expect(gmail.searchParams.get("body")).toContain(
+      "Página: Painel de recursos",
+    );
     expect(suporte.target).toBe("_blank");
     expect($$("a[href^='mailto:']")).toHaveLength(0);
     expect($("textarea").getAttribute("placeholder")).toBe("Pergunte à Aya…");
@@ -291,7 +293,7 @@ describe("avaliação e chamado", () => {
       ),
     ).toBe(true);
     expect(decodeURIComponent(href)).toContain(
-      "MONITORA · Chamado · Recursos · SEDE",
+      "MONITORA · Chamado · Painel de recursos · SEDE",
     );
     expect(decodeURIComponent(href)).toContain(
       "Pergunta: Quem pode decidir um recurso?",
