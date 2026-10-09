@@ -7,22 +7,22 @@ A tela `#page-recursos` (view `recursos`), módulo do app desde a Etapa 2: monta
 ```
 recursos.tsx    <TelaDeRecursos> e montarRecursos() (área atual, troca de área, controlador)
 estado.ts       store sem React: carga da área, gaveta, formulário, escritas (RPC e Storage)
-paineis.jsx     topo (status e ações), filtros, 4 KPIs, recorte, gráficos, pendências
-tabela.jsx      fila (TabelaInfinita), selos de situação, resposta e prazo
-gaveta.jsx      detalhe: parecer, etapas, resposta, anexos, resultado, prazo, observação, histórico
-parecer.jsx     parecer jurídico: enviar, deferir/deferir parcialmente/indeferir, devolver, reabrir
+paineis.tsx     topo (status e ações), filtros, 4 KPIs, recorte, gráficos, pendências
+tabela.tsx      fila (TabelaInfinita), selos de situação, resposta e prazo
+gaveta.tsx      detalhe: parecer, etapas, resposta, anexos, resultado, prazo, observação, histórico
+parecer.tsx     parecer jurídico: enviar, deferir/deferir parcialmente/indeferir, devolver, reabrir
 ajuste.jsx      ajuste da pontuação no recurso deferido: componentes da regra, prévia da posição,
                 propor, aprovar (prévia recalculada), cancelar, versões
 formulario.tsx  cadastro e edição (candidato buscado nas análises do edital)
 resposta.jsx    resposta ao candidato: modelo, prévia, revisão, documento
-anexos.jsx      anexos com download registrado (URL assinada de 60 s)
+anexos.tsx      anexos com download registrado (URL assinada de 60 s)
 modelos.jsx     modelos de resposta (administração)
-partes.jsx      dataHora e nota
+partes.ts      dataHora e nota
 recursos.css    só o que é desta tela (tokens); o resto vem de src/ui/
 ```
 
 Regras puras em `src/lib/` (`recursos-dos-candidatos.ts`, `prazo-do-recurso.ts`,
-`resposta-do-recurso.js`, `parecer-do-recurso.js`, `anexos-do-recurso.js`,
+`resposta-do-recurso.js`, `parecer-do-recurso.ts`, `anexos-do-recurso.js`,
 `modelos-de-resposta.js`, `documento-da-resposta.js`). Testes: `tests/modulos/recursos*.test.js`.
 
 Decidir é só de quem tem `recursos_parecer` (Acessos › "Parecer jurídico (Recursos)", grupo
@@ -48,8 +48,10 @@ callbacks sem elemento e dicas vazias. Os testes de compilação ficam em
 A entrada, o estado e o cadastro/edição também estão em TypeScript/TSX. Os contratos de
 snapshot, cliente RPC/Storage, ações, busca e callbacks ficam em `tipos-do-estado.ts`.
 `src/lib/dados-dos-recursos.ts` valida os campos usados no painel e no formulário,
-conservando campos adicionais e tratando permissões somente quando booleanas. Dados
-complexos de ajuste, Classificação, resposta e modelos continuam opacos para as peças JSX.
+conservando campos adicionais e tratando permissões somente quando booleanas. O detalhe
+valida histórico, autores das etapas, textos do parecer e metadados dos anexos.
+Dados complexos de ajuste, Classificação, resposta e modelos continuam parcialmente opacos
+para as peças JSX; somente os metadados da resposta usados pela gaveta estão tipados.
 
 Trocar área ou usuário invalida consultas de detalhe, ajustes, prévias e modelos, e os
 efeitos locais de ações em curso: não fecha o formulário novo, mostra avisos antigos nem
@@ -58,8 +60,11 @@ assinatura antiga não abre download. Isso não cancela escrita ou upload já en
 banco/Storage. O arquivo de um upload interrompido depois de enviado pode ficar sem registro.
 
 A busca de candidato descarta o resultado quando o campo muda ou o componente desmonta.
-A gaveta e as peças de parecer, ajuste, resposta, anexos e modelos ainda estão em JSX.
+Gaveta, parecer e anexos estão em TSX; ajuste, resposta e modelos ainda estão em JSX.
+Os contratos da gaveta ficam em `tipos-da-gaveta.ts`; as regras do parecer e os botões
+permitidos estão em `src/lib/parecer-do-recurso.ts`.
 As permissões no banco, RPCs, Storage e transições jurídicas seguem as regras existentes.
 
 Verificação: `tests/dados-dos-recursos.test.js`, `tests/modulos/recursos-estado-contexto.test.js`,
-testes existentes de Recursos e contratos de compilação em `tests/tipos/estado-dos-recursos.tsx`.
+testes existentes de Recursos e contratos de compilação em `tests/tipos/estado-dos-recursos.tsx`
+e `tests/tipos/gaveta-dos-recursos.tsx`.

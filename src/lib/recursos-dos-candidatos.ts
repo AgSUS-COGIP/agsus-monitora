@@ -36,7 +36,7 @@ import {
 /*
   As situações do fluxo com parecer jurídico
   (20261001170000_recursos_parecer_juridico.sql; transições em
-  parecer-do-recurso.js). PARCIALMENTE_INDEFERIDO é o código de sempre (os
+  parecer-do-recurso.ts). PARCIALMENTE_INDEFERIDO é o código de sempre (os
   modelos de resposta o usam); na tela, "Deferido parcialmente".
 */
 export const SITUACOES: readonly {

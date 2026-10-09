@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import type { CamposDoDetalheDaGaveta } from "./tipos-da-gaveta.ts";
 import type {
   DadosDoRecurso,
   DetalheParaRascunho,
@@ -34,7 +35,7 @@ export interface DadosDosRecursos extends RegistroDosRecursos {
   pode_administrar_modelos: boolean;
 }
 export interface DetalheDoRecurso
-  extends DetalheParaRascunho, RegistroDosRecursos {
+  extends DetalheParaRascunho, CamposDoDetalheDaGaveta, RegistroDosRecursos {
   erro?: string;
 }
 export interface ErroDosRecursos {

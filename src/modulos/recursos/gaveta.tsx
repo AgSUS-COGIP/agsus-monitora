@@ -1,3 +1,8 @@
+import type {
+  PropsDaGavetaDoRecurso,
+  HistoricoDoRecurso,
+} from "./tipos-da-gaveta.ts";
+import type { OrigemDoRecurso } from "../../lib/tipos-dos-recursos.ts";
 import { useState, useSyncExternalStore } from "react";
 import { formatNumberBR } from "../../lib/formatters.js";
 import {
@@ -15,8 +20,8 @@ import {
   Secao,
 } from "../../ui/index.js";
 import { SecaoDoAjuste } from "./ajuste.jsx";
-import { SecaoDeAnexos } from "./anexos.jsx";
-import { SecaoDoParecer } from "./parecer.jsx";
+import { SecaoDeAnexos } from "./anexos.tsx";
+import { SecaoDoParecer } from "./parecer.tsx";
 import { dataHora, nota } from "./partes.ts";
 import { SecaoDaResposta } from "./resposta.jsx";
 import { detalheDoPrazo, MarcaForaDasAnalises } from "./tabela.tsx";
@@ -26,14 +31,14 @@ import { detalheDoPrazo, MarcaForaDasAnalises } from "./tabela.tsx";
   pílulas, o contexto em cartões e as seções (Secao, Kv). Traz os dados do
   candidato (vindos da
   análise), a nota e o resultado do cadastro contra os de hoje, o prazo do
-  cronograma, o parecer jurídico (parecer.jsx), o ajuste da pontuação
+  cronograma, o parecer jurídico (parecer.tsx), o ajuste da pontuação
   (ajuste.jsx), as etapas com quem e quando,
   a resposta ao candidato
-  (resposta.jsx), os anexos (anexos.jsx), a observação e o histórico. Quem
+  (resposta.jsx), os anexos (anexos.tsx), a observação e o histórico. Quem
   edita marca as etapas aqui, escreve a resposta, anexa, edita e exclui.
 */
 
-const CAMPOS_DO_HISTORICO = {
+const CAMPOS_DO_HISTORICO: Record<string, string> = {
   origem: "Origem",
   situacao: "Situação",
   analista: "Analista",
@@ -46,7 +51,7 @@ const CAMPOS_DO_HISTORICO = {
   vaga_informada: "Vaga",
 };
 
-const ACOES_DO_PARECER_NO_HISTORICO = {
+const ACOES_DO_PARECER_NO_HISTORICO: Record<string, string> = {
   enviar_parecer: "Enviou para parecer jurídico",
   devolver: "Devolveu para ajuste",
   deferir: "Deferiu",
@@ -55,13 +60,13 @@ const ACOES_DO_PARECER_NO_HISTORICO = {
   reabrir: "Reabriu a decisão",
 };
 
-const ACOES_DO_AJUSTE_NO_HISTORICO = {
+const ACOES_DO_AJUSTE_NO_HISTORICO: Record<string, string> = {
   propor: "Propôs o ajuste da pontuação",
   aprovar: "Aprovou o ajuste da pontuação",
   cancelar: "Cancelou o ajuste da pontuação",
 };
 
-const ACOES_DA_RESPOSTA_NO_HISTORICO = {
+const ACOES_DA_RESPOSTA_NO_HISTORICO: Record<string, string> = {
   criacao: "Criou o rascunho da resposta",
   enviar_revisao: "Enviou a resposta para revisão",
   aprovar: "Aprovou a resposta",
@@ -70,7 +75,10 @@ const ACOES_DA_RESPOSTA_NO_HISTORICO = {
   marcar_enviada: "Marcou a resposta como enviada",
 };
 
-function textoDoHistorico(h, origens) {
+function textoDoHistorico(
+  h: HistoricoDoRecurso,
+  origens: readonly OrigemDoRecurso[],
+) {
   if (h.acao === "criacao") return "Cadastrou o recurso";
   if (h.acao === "anexo")
     return h.campo === "arquivamento"
@@ -99,7 +107,7 @@ function textoDoHistorico(h, origens) {
     const etapa = ETAPAS.find((e) => e.id === h.campo)?.rotulo || h.campo;
     return `${h.novo === "S" ? "Marcou" : "Desmarcou"}: ${etapa}`;
   }
-  const valor = (v) => {
+  const valor = (v: string | null) => {
     if (v === null || v === undefined || v === "") return "vazio";
     if (h.campo === "situacao") return rotuloDaSituacao(v);
     if (h.campo === "origem") return rotuloDaOrigem(v, origens);
@@ -116,13 +124,13 @@ export function GavetaDoRecurso({
   origens,
   podeEditar,
   podeDecidir = false,
-  modelos = /** @type {import("./tipos-do-estado.ts").RegistroDosRecursos[]} */ ([]),
+  modelos = [],
   area = "",
-}) {
+}: PropsDaGavetaDoRecurso) {
   // Recurso decidido: excluir é do parecer jurídico. A etapa "resposta
   // enviada" é de quem edita, mas só marca com o recurso decidido.
   const podeExcluir = podeEditar && (!r.decidido || podeDecidir);
-  const podeMarcar = (etapa) =>
+  const podeMarcar = (etapa: (typeof ETAPAS)[number]) =>
     etapa.id === "resposta_candidato"
       ? podeEditar && (r.decidido || r.etapas[etapa.id])
       : podeEditar;
@@ -396,7 +404,7 @@ export function GavetaDoRecurso({
               <Carregando className="ui-secao-texto" />
             ) : (
               <ol className="recursos-historico">
-                {(detalhe.historico || []).map((h, indice) => (
+                {(detalhe?.historico || []).map((h, indice) => (
                   <li key={`${h.em}-${indice}`}>
                     <span>{textoDoHistorico(h, origens)}</span>
                     <small>

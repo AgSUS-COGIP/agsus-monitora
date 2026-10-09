@@ -57,6 +57,9 @@ function recursoDoBanco(r: RegistroDosRecursos): DadosDoRecurso | null {
     mudou_classificacao: r.mudou_classificacao === true,
     nota_anterior: escalar(r.nota_anterior),
     nota_atual: escalar(r.nota_atual),
+    resultado_atual: texto(r.resultado_atual),
+    resultado_anterior: texto(r.resultado_anterior),
+    parecer_enviado_em: texto(r.parecer_enviado_em) || null,
     criado_em: texto(r.criado_em),
     decisao_em: texto(r.decisao_em) || null,
     devolvido_em: texto(r.devolvido_em) || null,
@@ -117,8 +120,67 @@ export function normalizarDadosDosRecursos(valor: unknown): DadosDosRecursos {
 }
 export function normalizarDetalheDoRecurso(valor: unknown): DetalheDoRecurso {
   const d = objetoDosRecursos(valor);
+  const resposta =
+    d.resposta === null || d.resposta === undefined
+      ? null
+      : objetoDosRecursos(d.resposta);
+  const etapas = objetoDosRecursos(d.etapas);
   return {
     ...d,
+    modalidade: texto(d.modalidade),
+    responsavel_analise: texto(d.responsavel_analise),
+    criado_por: texto(d.criado_por),
+    parecer_enviado_por: texto(d.parecer_enviado_por),
+    decisao_por: texto(d.decisao_por),
+    devolvido_por: texto(d.devolvido_por),
+    comentario_devolucao: texto(d.comentario_devolucao),
+    parecer: texto(d.parecer),
+    etapas: {
+      download_empregare: texto(etapas.download_empregare),
+      processo_sei: texto(etapas.processo_sei),
+      upload_sei: texto(etapas.upload_sei),
+      resposta_candidato: texto(etapas.resposta_candidato),
+    },
+    historico: registros(d.historico).map((h) => ({
+      acao: texto(h.acao),
+      campo: texto(h.campo),
+      anterior: escalar(h.anterior) === null ? null : String(h.anterior),
+      novo: escalar(h.novo) === null ? null : String(h.novo),
+      motivo: texto(h.motivo),
+      em: texto(h.em),
+      autor: texto(h.autor),
+    })),
+    anexos: registros(d.anexos).flatMap((a) => {
+      const id = idDosRecursos(a.id);
+      return id === null
+        ? []
+        : [
+            {
+              ...a,
+              id,
+              nome: texto(a.nome),
+              tipo: texto(a.tipo),
+              mime: texto(a.mime),
+              bytes: numero(a.bytes) ?? 0,
+              ativo: a.ativo === true,
+              incluido_em: texto(a.incluido_em),
+              incluido_por: texto(a.incluido_por),
+              arquivado_em: texto(a.arquivado_em),
+              arquivado_por: texto(a.arquivado_por),
+              motivo_arquivamento: texto(a.motivo_arquivamento),
+            },
+          ];
+    }),
+    resposta:
+      resposta === null
+        ? null
+        : {
+            ...resposta,
+            id: idDosRecursos(resposta.id) ?? undefined,
+            revisao: numero(resposta.revisao),
+            estado:
+              typeof resposta.estado === "string" ? resposta.estado : undefined,
+          },
     erro: texto(d.erro) || undefined,
     observacao: texto(d.observacao),
     nome_informado:
