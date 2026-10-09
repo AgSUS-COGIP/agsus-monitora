@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { criarEstadoDaConducao } from "../../src/modulos/entrevistas/estado-da-conducao.js";
+import { criarEstadoDaConducao } from "../../src/modulos/entrevistas/estado-da-conducao.ts";
 
 /*
   Leituras e gravações da condução fora de ordem: a releitura do edital pedida

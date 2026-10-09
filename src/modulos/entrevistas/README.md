@@ -63,8 +63,8 @@ fila-do-dia.tsx         a fila em cartões por vaga (iniciais, código, horário
                         quando há), recortes, busca e situações, estados vazios
 tipos-do-editor-de-roteiro.ts  contratos da visão, cartões, abertura e ações do editor
 tipos-da-ficha.ts       contratos do estado local da ficha, do cálculo e das notas para salvar
-tipos.ts                contratos da tela nova com o estado da condução (JS)
-estado-da-conducao.js   store da condução e dos roteiros: editais, edital aberto, escritas (RPC), uma por vez
+tipos.ts                contratos da tela nova com o estado da condução (TS)
+estado-da-conducao.ts   store da condução e dos roteiros: editais, edital aberto, escritas (RPC), uma por vez
 preparar.tsx            Preparar em passos: Roteiro, Banca, Convocação, Agenda (estado e o que falta, de
                         src/lib/passos-do-preparar.ts), o resumo das regras no topo
 configuracao-do-edital.tsx  os campos do roteiro (passo 1) e da banca (passo 2) sobre um rascunho só e a
@@ -115,8 +115,7 @@ A ficha de notas (`ficha.tsx`) também está em TypeScript: estado local, modos 
 permissões, matriz, progresso, atalhos, observações, justificativa, prévia e salvamento.
 `tipos-da-ficha.ts` distingue notas diretas de notas por aspectos e declara os campos enviados
 ao salvar (valores numéricos; `null` apaga). Os auxiliares de cálculo e de roteiro continuam
-em JavaScript, com contratos JSDoc para a integração. O estado da condução ainda recebe o
-payload do banco sem validação completa em tempo de execução; estes tipos não validam JSON.
+em JavaScript, com contratos JSDoc para a integração.
 `tests/tipos/ficha-de-entrevistas.tsx` confere o contrato da ficha e rejeita notas textuais,
 notas que misturam os dois formatos e códigos de comparecimento inválidos.
 O editor de roteiros (`roteiros.tsx`) e as peças compartilhadas (`partes.tsx`) também
@@ -127,7 +126,16 @@ e valores numéricos enviados ao banco; os campos antigos de convocação e dese
 seguem preservados. `tipos-do-editor-de-roteiro.ts` declara dados, pedidos e ações.
 A alteração de listas verifica campo e tipo do valor no compilador; o contrato da
 prévia de eliminação aceita apenas os campos de que precisa, inclusive os do rascunho.
-Os auxiliares de roteiro e o estado da condução continuam em JavaScript.
+Os auxiliares de roteiro continuam em JavaScript. O estado (`estado-da-conducao.ts`)
+tipa ações, resultados, assinaturas e configuração. `tipos-do-estado-da-conducao.ts`
+limita os nomes de RPC e aceita o cliente único do app. `src/lib/dados-da-conducao.ts`
+recebe `unknown` e verifica os campos usados de roteiros, editais, avaliadores,
+convocados e agenda; preserva campos adicionais e dados opacos da Classificação.
+Não valida o JSON inteiro. Respostas de gravações iniciadas antes da troca de área
+ou sessão não alteram a tela, os avisos ou a ação em andamento da nova sessão;
+isso não cancela a gravação no banco. Os contadores de leitura também são mantidos.
+`tests/tipos/estado-da-conducao.tsx` verifica ações e compatibilidade do cliente;
+os testes de dados e de gravação obsoleta cobrem as entradas e as trocas durante uma escrita.
 `tests/tipos/editor-de-roteiros.tsx` confere usos válidos e rejeições de campos,
 valores, modos e números enviados como texto.
 Isso não verifica todos os consumidores JavaScript nem valida o JSON inteiro. `tests/tipos/painel-de-entrevistas.tsx`

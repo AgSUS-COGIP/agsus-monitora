@@ -121,10 +121,7 @@ const errosDaConfiguracaoDo = errosDaConfiguracao as unknown as (
   rascunho: unknown,
   roteiro?: unknown,
 ) => Record<string, string>;
-const paraSalvar = dadosDaConfiguracaoParaSalvar as unknown as (
-  rascunho: unknown,
-  roteiro?: unknown,
-) => unknown;
+const paraSalvar = dadosDaConfiguracaoParaSalvar;
 const fonteDaConvocacaoDo = fonteDaConvocacao as unknown as (
   dados: unknown,
   resultado?: unknown,
@@ -366,7 +363,7 @@ function PrepararDoEdital({
   const corpo = useRef<HTMLDivElement>(null);
 
   /* A convocação é a lista da Classificação (sem ela, o cálculo atual, só para ver). */
-  const calculo = e.calculo as { resultado?: unknown; erro?: string } | null;
+  const calculo = e.calculo;
   const fonte = useMemo(
     () => fonteDaConvocacaoDo(dados, calculo?.resultado),
     [dados, calculo],

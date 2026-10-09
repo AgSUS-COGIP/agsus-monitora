@@ -3918,7 +3918,7 @@ export const VERBETES_AYA = Object.freeze([
       'Enquanto a Classificação não gerou a lista de convocação do edital, Conduzir entrevistas mostra o cálculo atual (a mesma conta da Classificação, com a regra e as vagas de agora) e o aviso "Lista ainda não gerada na Classificação", sem o botão de convocar: para convocar, gere a lista na Classificação (o botão "Gerar na Classificação" abre a tela já no edital, para quem é Editor de Classificação). Sem acesso à Classificação, a tela só avisa. Se a regra de classificação mudou depois da lista, aparece "A regra da Classificação mudou depois desta lista": gere a lista de novo.',
     fato: "",
     fonte:
-      "src/lib/convocacao-da-entrevista.js; src/modulos/entrevistas/estado-da-conducao.js",
+      "src/lib/convocacao-da-entrevista.js; src/modulos/entrevistas/estado-da-conducao.ts",
     abrir: "classificacao",
   },
   {

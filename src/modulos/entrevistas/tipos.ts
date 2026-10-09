@@ -12,9 +12,9 @@ import type {
 
 /*
   Contratos de "Conduzir entrevistas" (conduzir.tsx, fila-do-dia.tsx) com o
-  estado da condução, que é JavaScript (estado-da-conducao.js). Só os campos
-  que a tela nova lê; o payload vem do banco sem validação em tempo de
-  execução (as regras de src/lib/fila-de-conducao.ts toleram campo faltando).
+  estado em TypeScript (estado-da-conducao.ts). Os campos usados pela tela
+  são verificados na entrada por dados-da-conducao.ts; dados opacos do motor
+  de classificação e campos adicionais permanecem unknown.
 */
 
 export type Lista<T> = {
@@ -63,7 +63,11 @@ export type DadosDoEdital = {
     desempate?: unknown;
     empate_final?: unknown;
   } | null;
-  lista_convocacao?: unknown;
+  lista_convocacao?: {
+    lista?: ({ id?: string } & Record<string, unknown>) | null;
+    [campo: string]: unknown;
+  } | null;
+  [campo: string]: unknown;
   avaliadores: Avaliador[];
   convocados: Convocado[];
 };
@@ -75,15 +79,37 @@ export type EstadoDaConducao = {
   editalId: string;
   edital: DadosDoEdital | null;
   agenda: { itens?: ItemDaAgendaNoBanco[] | null } | null;
-  calculo: unknown;
+  calculo: { resultado?: unknown; erro?: string } | null;
   carregandoEdital: boolean;
   erroDoEdital: string;
   podeEditar: boolean | null;
-  acao: { tipo: string; rotulo: string } | null;
+  acao: { tipo: TipoDaAcaoDaConducao; rotulo: string } | null;
   fichaAberta: string | null;
 };
 
-export type Resultado = { ok?: boolean; erro?: string };
+export type TipoDaAcaoDaConducao =
+  "roteiro" | "liberar" | "configurar" | "convocar" | "desconvocar" | "notas";
+export type DadosDaConfiguracaoDaEntrevista = {
+  roteiro: string;
+  lancamento: "AVALIADOR" | "SECRETARIA";
+  banca: { origem: string; quantidade: number }[];
+  avaliadores: {
+    id?: string;
+    nome: string;
+    origem: string;
+    banca: number;
+    perfil: string | null;
+    competencias: string[] | null;
+  }[];
+};
+export type Resultado = {
+  ok?: boolean;
+  erro?: string;
+  codigo?: string;
+  dados?: DadosDoEdital | null;
+  roteiro?: RoteiroDeEntrevista | null;
+  convocados?: number;
+};
 
 export type EstadoDaConducaoComAcoes = {
   obter: () => EstadoDaConducao;
@@ -102,7 +128,7 @@ export type EstadoDaConducaoComAcoes = {
     dados: PayloadDasNotas,
   ) => Promise<Resultado>;
   abrirFicha: (id: string | null) => void;
-  configurar: (dados: unknown) => Promise<Resultado>;
+  configurar: (dados: DadosDaConfiguracaoDaEntrevista) => Promise<Resultado>;
   convocar: (analises: string[]) => Promise<Resultado>;
   desconvocar: (entrevista: string, motivo: string) => Promise<Resultado>;
   salvarRoteiro: (dados: DadosDoRoteiroParaSalvar) => Promise<Resultado>;
