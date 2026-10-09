@@ -1294,6 +1294,15 @@
 .avd-ficha-outras-justificativas[open] > summary {
   margin-bottom: var(--space-2);
 }
+/* "Vínculo tirado. Desfazer" depois do ×. */
+.avd-ficha-tirado {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--text-caption);
+}
 .avd-ficha-total[data-grande] .avd-ficha-nota-total {
   font-size: calc(var(--text-display) * 1.33);
 }

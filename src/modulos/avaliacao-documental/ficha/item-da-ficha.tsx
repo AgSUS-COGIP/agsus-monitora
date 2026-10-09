@@ -21,6 +21,11 @@ import {
   comItensLancados,
   temItensLancados,
 } from "../../../lib/avaliacao-documental/apurado-da-ficha.ts";
+import {
+  devolverItem,
+  tirarItem,
+} from "../../../lib/avaliacao-documental/itens-da-ficha.ts";
+import type { ItemTirado } from "../../../lib/avaliacao-documental/itens-da-ficha.ts";
 import { justificativasDoBloco } from "../../../lib/avaliacao-documental/justificativas-do-bloco.ts";
 import { tetoDoBloco } from "../../../lib/avaliacao-documental/pontuacao.js";
 import { Selo } from "../../../ui/index.js";
@@ -339,6 +344,8 @@ function Itens({
   desabilitado: boolean;
   experiencia: EstadoDaFicha["avaliacao"]["experiencia"];
 }) {
+  // O item tirado pelo "×", para o "Desfazer" (o clique não pede confirmação).
+  const [tirado, setTirado] = useState<ItemTirado<ItemLancado> | null>(null);
   // O primeiro item lançado devolve o Apurado ao Calculado (comItensLancados).
   const mudar: Mudar = (transformar) =>
     mudarDoEstado((l) => {
@@ -520,7 +527,9 @@ function Itens({
                   title="Tirar o item"
                   onClick={() =>
                     mudar((l) => {
-                      l[chave] = lista(l).filter((_, j) => j !== i);
+                      const r = tirarItem(lista(l), i);
+                      l[chave] = r.itens;
+                      setTirado(r.tirado);
                       return l;
                     })
                   }
@@ -532,6 +541,25 @@ function Itens({
           ))}
         </ul>
       ) : null}
+      {tirado && !desabilitado ? (
+        <p className="avd-ficha-tirado" role="status">
+          {ROTULO_DO_TIRADO[chave]}
+          <button
+            type="button"
+            className="avd-ficha-link"
+            onClick={() => {
+              const devolver = tirado;
+              setTirado(null);
+              mudar((l) => {
+                l[chave] = devolverItem(lista(l), devolver);
+                return l;
+              });
+            }}
+          >
+            Desfazer
+          </button>
+        </p>
+      ) : null}
       <ComprovadoDaFicha
         bloco={bloco}
         lancamento={lancamento}
@@ -541,12 +569,13 @@ function Itens({
         <button
           type="button"
           className="avd-ficha-adicionar"
-          onClick={() =>
+          onClick={() => {
+            setTirado(null);
             mudar((l) => {
               l[chave] = [...lista(l), novo()];
               return l;
-            })
-          }
+            });
+          }}
         >
           <i className="fa-solid fa-plus" aria-hidden="true" />{" "}
           {ROTULO_DO_NOVO[chave]}
@@ -555,6 +584,12 @@ function Itens({
     </div>
   );
 }
+
+const ROTULO_DO_TIRADO: Record<ChaveDosItens, string> = {
+  titulos: "Título tirado.",
+  cursos: "Curso tirado.",
+  vinculos: "Vínculo tirado.",
+};
 
 /* ── Declarado → Apurado ──────────────────────────────────────────────── */
 

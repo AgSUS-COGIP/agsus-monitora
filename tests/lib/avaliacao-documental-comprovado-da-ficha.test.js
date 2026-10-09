@@ -314,3 +314,18 @@ describe("caso TREINO-P02: Inapto com o motivo", () => {
     ).toEqual([{ bloco: null, texto: "Nota 10 abaixo da mínima 15" }]);
   });
 });
+
+describe("tirar e desfazer um vínculo (a P02 perdeu o vínculo pelo ×)", () => {
+  it("tira com um clique e o Desfazer devolve na mesma posição", async () => {
+    const { tirarItem, devolverItem } =
+      await import("../../src/lib/avaliacao-documental/itens-da-ficha.ts");
+    const a = vinculo("2020-01-01", "2020-12-31");
+    const b = vinculo("2024-02-08", "2026-10-01");
+    const r = tirarItem([a, b], 1);
+    expect(r.itens).toEqual([a]);
+    expect(r.tirado).toEqual({ indice: 1, item: b });
+    expect(devolverItem(r.itens, r.tirado)).toEqual([a, b]);
+    expect(devolverItem([], { indice: 3, item: b })).toEqual([b]);
+    expect(tirarItem([a], 5).tirado).toBeNull();
+  });
+});
