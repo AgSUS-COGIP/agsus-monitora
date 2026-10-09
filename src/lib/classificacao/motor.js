@@ -1065,6 +1065,28 @@ export function classificar({
       } else aptosDoc.push(c);
     }
 
+    /*
+      A avaliação documental publica a nota e as parciais da regra lado a
+      lado: se as parciais da planilha não somam a nota (93/2026: a nota
+      final ajustada segue o barema, as colunas de pontuação não), a lista
+      sairia incoerente. Não muda a ordem (vale a nota); avisa por vaga.
+    */
+    if (tipo === "PRELIMINAR" && regra.documental.parciais.length) {
+      const diferentes = aptosDoc.filter((c) => {
+        const valores = regra.documental.parciais.map((p) => parciaisDe(c)[p]);
+        if (valores.every((x) => x === null || x === undefined)) return false;
+        const soma = valores.reduce((s, x) => s + (x ?? 0), 0);
+        return escalar(soma, 2) !== escalar(c.notaDocumental, 2);
+      });
+      if (diferentes.length)
+        avisos.push({
+          codigo: "PARCIAIS_DIFERENTES_DA_NOTA",
+          tom: "warning",
+          vaga: v.chave,
+          texto: `Vaga ${v.codigo || v.cargo}: em ${diferentes.length} de ${aptosDoc.length} candidato(s) a soma das parciais publicadas não é a nota documental (ex.: inscrição ${diferentes[0].codigo || "—"}: nota ${formatarNota(diferentes[0].notaDocumental, 2)}, parciais ${regra.documental.parciais.map((p) => formatarNota(parciaisDe(diferentes[0])[p] ?? 0, 2)).join(" + ")}). Confira a planilha antes de publicar.`,
+        });
+    }
+
     // A preliminar (base da convocação e da final).
     for (const c of aptosDoc)
       c.nota = arredondar(

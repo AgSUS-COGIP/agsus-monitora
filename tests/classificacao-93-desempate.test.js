@@ -296,6 +296,44 @@ describe("lista preliminar do 93/2026 — nota mínima, eliminados e vagas", () 
   });
 });
 
+describe("parciais × nota documental (o que a lista publica)", () => {
+  it("avisa a vaga em que as parciais da planilha não somam a nota; a ordem segue a nota", () => {
+    const candidatos = [
+      // Como no 93: nota 45 pelo barema, colunas de pontuação 0 + 5 + 16.
+      cand("Ana", 45, {
+        pontuacao_formacao: 0,
+        pontuacao_cursos: 5,
+        pontuacao_experiencia: 16,
+      }),
+      cand("Bia", 21, {
+        pontuacao_formacao: 0,
+        pontuacao_cursos: 5,
+        pontuacao_experiencia: 16,
+      }),
+      cand("Caio", 30),
+    ];
+    const r = preliminar(candidatos);
+    expect(geral(r)).toBe("1 Ana | 2 Caio | 3 Bia");
+    const avisos = r.avisos.filter(
+      (a) => a.codigo === "PARCIAIS_DIFERENTES_DA_NOTA",
+    );
+    expect(avisos).toHaveLength(1);
+    expect(avisos[0].texto).toContain("em 1 de 3 candidato(s)");
+    expect(avisos[0].texto).toContain(
+      "nota 45,00, parciais 0,00 + 5,00 + 16,00",
+    );
+    // Na final não há parciais publicadas: sem aviso.
+    expect(
+      classificar({
+        tipo: "FINAL",
+        regra: REGRA_93,
+        candidatos,
+        quadro: QUADRO({}),
+      }).avisos.some((a) => a.codigo === "PARCIAIS_DIFERENTES_DA_NOTA"),
+    ).toBe(false);
+  });
+});
+
 describe("hora de nascimento (6.11.5 e 6.11.6)", () => {
   it("lê HH:MM e HH:MM:SS; inválida fica de fora", () => {
     expect(lerHora("8:05")).toBe("08:05:00");
