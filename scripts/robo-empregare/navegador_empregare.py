@@ -6,7 +6,8 @@ AgSUS-COGIP/COGIP_extracao-empregare, "src/extração empregare.py"):
 login em duas telas, busca da vaga em "Vagas Anunciadas", Processo Seletivo →
 "Relatório e Indicadores" → "Exportar Candidatos" com as respostas do
 questionário e de competência, e o download na Central de Exportações
-(tabela Tabulator lida por JavaScript, rolando para carregar todas as linhas).
+(tabela Tabulator lida por JavaScript, rolando para carregar todas as linhas e
+passando as páginas do paginador: a 1ª página só traz as exportações mais recentes).
 
 Diferenças do original:
   - credenciais só do ambiente (EMPREGARE_EMAIL / EMPREGARE_SENHA), nunca no código;
@@ -92,6 +93,40 @@ const h = document.querySelector('.tabulator-tableholder');
 if (!h) { return [0, 0]; }
 h.scrollTop = arguments[0];
 return [h.scrollTop, h.scrollHeight - h.clientHeight];
+"""
+
+# A Central é paginada (Tabulator): a 1ª página traz só as exportações mais recentes
+# (15 por página na prática: com 30 vagas pedidas, as 15 primeiras saíam da página e
+# davam "ainda não listada"). Rolar não traz a página seguinte; é preciso o paginador.
+LIMITE_DE_PAGINAS_DA_CENTRAL = 6
+ESPERA_PELA_PAGINA_DA_CENTRAL = 15  # segundos até a página seguinte trocar as linhas
+
+JS_PRIMEIRA_LINHA_DA_CENTRAL = """
+const r = document.querySelector('.tabulator-row');
+if (!r) { return ''; }
+const c = r.querySelector('[tabulator-field="id"]');
+return (c ? c.textContent : r.textContent || '').trim().slice(0, 200);
+"""
+
+JS_PROXIMA_PAGINA_DA_CENTRAL = """
+const livre = function (b) {
+  return !b.disabled && b.getAttribute('aria-disabled') !== 'true' && !b.classList.contains('disabled')
+    && b.offsetParent !== null;
+};
+const botao = Array.from(document.querySelectorAll(
+  '.tabulator-paginator [data-page="next"], .tabulator-footer [data-page="next"]'
+)).find(livre);
+if (botao) { botao.click(); return true; }
+try {
+  if (window.Tabulator && Tabulator.findTable) {
+    const t = Tabulator.findTable('.tabulator')[0];
+    if (t && t.getPage && t.getPageMax) {
+      const atual = t.getPage();
+      if (atual && atual < t.getPageMax()) { t.nextPage(); return true; }
+    }
+  }
+} catch (e) {}
+return false;
 """
 
 # Lista de candidatos da vaga (candidaturas). Nada aqui devolve dado pessoal ao log:
@@ -594,6 +629,27 @@ def carregar_lista_inteira(
     return atual
 
 
+def percorrer_central(ler_pagina, proxima_pagina, limite=LIMITE_DE_PAGINAS_DA_CENTRAL):
+    """
+    Lê a Central página por página (paginador do Tabulator). Para quando não há
+    próxima, quando uma página não traz exportação nova ou no limite de páginas.
+    Devolve (linhas sem repetição, páginas lidas).
+    """
+    encontradas = {}
+    paginas = 0
+    for _ in range(limite):
+        paginas += 1
+        novas = 0
+        for linha in ler_pagina() or []:
+            chave = linha.get("id") or (linha.get("vaga", "") + linha.get("data", ""))
+            if chave not in encontradas:
+                encontradas[chave] = linha
+                novas += 1
+        if not novas or not proxima_pagina():
+            break
+    return list(encontradas.values()), paginas
+
+
 def percorrer_paginas(ler_pagina, proxima_pagina, limite=LIMITE_DE_PAGINAS, prazo=None, agora=time.monotonic):
     """
     Lê página por página até uma página não trazer candidato novo, não haver
@@ -626,6 +682,7 @@ class PortalEmpregare:
         self.janela = None  # janela do login (pedir a exportação pode abrir outra)
         self.diagnostico = {}  # da última página de candidaturas aberta (só contagens)
         self.respostas = {}  # código do candidato → {pessoa, respostas} dos questionários (última lista lida)
+        self.paginas_da_central = 0  # páginas da Central lidas na última leitura (só contagem)
 
     def __enter__(self):
         self.driver = self._iniciar()
@@ -1019,6 +1076,14 @@ class PortalEmpregare:
         time.sleep(2)
 
     def ler_central(self):
+        """Todas as exportações da Central, página por página (até LIMITE_DE_PAGINAS_DA_CENTRAL)."""
+        linhas, self.paginas_da_central = percorrer_central(
+            self._ler_pagina_da_central, self._proxima_pagina_da_central
+        )
+        return linhas
+
+    def _ler_pagina_da_central(self):
+        """As linhas da página aberta da Central, rolando a tabela para carregar todas."""
         encontradas = {}
 
         def coletar():
@@ -1037,6 +1102,19 @@ class PortalEmpregare:
                 break
         self.driver.execute_script(JS_ROLAR, 0)
         return list(encontradas.values())
+
+    def _proxima_pagina_da_central(self):
+        """Clica na próxima página da Central, se houver. True se as linhas trocaram."""
+        primeira = self.driver.execute_script(JS_PRIMEIRA_LINHA_DA_CENTRAL)
+        if not self.driver.execute_script(JS_PROXIMA_PAGINA_DA_CENTRAL):
+            return False
+        fim = time.monotonic() + ESPERA_PELA_PAGINA_DA_CENTRAL
+        while time.monotonic() < fim:
+            time.sleep(0.5)
+            if self.driver.execute_script(JS_PRIMEIRA_LINHA_DA_CENTRAL) != primeira:
+                time.sleep(1)
+                return True
+        return False
 
     def _apontar_downloads(self, pasta):
         from selenium.common.exceptions import WebDriverException

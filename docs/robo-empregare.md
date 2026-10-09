@@ -18,6 +18,14 @@ roda no GitHub Actions e, para cada vaga:
 5. lê o Excel e grava no Supabase (`TB_EMPREGARE_CANDIDATO`, um candidato por vaga, com todas as
    colunas originais; log em `TL_SYNC_EMPREGARE`).
 
+As vagas andam em **lotes de 10** (`TAMANHO_DO_LOTE_DE_EXPORTACAO`): o robô pede a exportação do
+lote, captura links e anexos do lote, baixa e grava o lote e só então passa ao próximo. A Central
+é paginada e a 1ª página mostra só as 15 exportações mais recentes: pedindo 30 de uma vez, as 15
+primeiras saíam da lista e davam "ainda não listada" (edital 114/2026, 09/10/2026). O robô também
+passa as páginas da Central (até 6) e o log diz quantas exportações leu em quantas páginas. Vaga
+que não sair no seu lote ganha uma **segunda passada** no fim (pede a exportação de novo e tenta
+baixar), se a execução ainda estiver com menos de 90 min; depois de 95 min não começa outro lote.
+
 É a mesma sequência do robô antigo (repositório privado `COGIP_extracao-empregare`), sem planilha
 local, sem caminho pessoal e sem senha no código.
 
