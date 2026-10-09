@@ -164,6 +164,8 @@ filtros, rascunho e os campos calculados; usos válidos e rejeições estão em
 com validação dos campos do painel/formulário e descarte de respostas após troca de contexto.
 Os contratos desses fluxos são conferidos em `tests/tipos/estado-dos-recursos.tsx`. Gaveta, parecer e anexos também estão em TSX; regras jurídicas e botões em
 `src/lib/parecer-do-recurso.ts`, com validação de histórico e metadados dos anexos.
-Os contratos estão em `tests/tipos/gaveta-dos-recursos.tsx`. Ajuste, resposta e modelos
-ainda estão em JSX; contratos e limites em
+Os contratos estão em `tests/tipos/gaveta-dos-recursos.tsx`. Resposta e modelos também estão
+em TSX, com regras de marcadores e revisão em TypeScript, validação de versões, escopo e
+histórico e contratos em `tests/tipos/resposta-e-modelos-dos-recursos.tsx`. Somente o
+componente de ajuste continua em JSX; contratos e limites em
 [../src/modulos/recursos/README.md](../src/modulos/recursos/README.md).

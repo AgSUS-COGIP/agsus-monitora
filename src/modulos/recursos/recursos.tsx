@@ -38,7 +38,7 @@ import {
   Recorte,
   Topo,
 } from "./paineis.tsx";
-import { PainelDeModelos } from "./modelos.jsx";
+import { PainelDeModelos } from "./modelos.tsx";
 import { TabelaDeRecursos } from "./tabela.tsx";
 import "./recursos.css";
 

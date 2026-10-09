@@ -1,3 +1,15 @@
+import type {
+  DadosDoRecurso,
+  OrigemDoRecurso,
+  DataDoRecurso,
+} from "./tipos-dos-recursos.ts";
+import type {
+  ModeloDaResposta,
+  RascunhoDoModelo,
+} from "./tipos-da-resposta-do-recurso.ts";
+export type ErrosDoModelo = Partial<
+  Record<"nome" | "situacao" | "corpo", string>
+>;
 /*
   Modelos de resposta a recurso, sem DOM: os marcadores aceitos, o
   preenchimento do texto com os dados do recurso, a escolha dos modelos que
@@ -41,7 +53,7 @@ export const CHAVES_DOS_MARCADORES = Object.freeze(
 );
 
 const PADRAO_DO_MARCADOR = /\{([a-z_]+)\}/g;
-const texto = (valor) => String(valor ?? "").trim();
+const texto = (valor: unknown) => String(valor ?? "").trim();
 
 const MESES = [
   "janeiro",
@@ -59,13 +71,13 @@ const MESES = [
 ];
 
 /** "29 de setembro de 2026" (data local de quem usa). */
-export function dataPorExtenso(data = new Date()) {
+export function dataPorExtenso(data: DataDoRecurso = new Date()) {
   const d = data instanceof Date ? data : new Date(data);
   if (Number.isNaN(d.getTime())) return "";
   return `${d.getDate()} de ${MESES[d.getMonth()]} de ${d.getFullYear()}`;
 }
 
-const notaEmTexto = (valor) =>
+const notaEmTexto = (valor: unknown) =>
   valor === null || valor === undefined || valor === ""
     ? ""
     : Number.isFinite(Number(valor))
@@ -73,18 +85,20 @@ const notaEmTexto = (valor) =>
       : texto(valor);
 
 /** Os marcadores citados no texto, sem repetir, na ordem em que aparecem. */
-export function marcadoresDoTexto(corpo) {
+export function marcadoresDoTexto(corpo: unknown) {
   return [
     ...new Set(
-      [...String(corpo ?? "").matchAll(PADRAO_DO_MARCADOR)].map((m) => m[1]),
+      [...String(corpo ?? "").matchAll(PADRAO_DO_MARCADOR)].map(
+        (m) => m[1] ?? "",
+      ),
     ),
   ];
 }
 
 /** Marcadores do texto que não estão na lista aceita. */
-export function marcadoresDesconhecidos(corpo) {
+export function marcadoresDesconhecidos(corpo: unknown) {
   return marcadoresDoTexto(corpo).filter(
-    (chave) => !CHAVES_DOS_MARCADORES.includes(chave),
+    (chave) => !CHAVES_DOS_MARCADORES.some((c) => c === chave),
   );
 }
 
@@ -93,8 +107,18 @@ export function marcadoresDesconhecidos(corpo) {
  * `get_recursos_da_area`). Vazio = não informado.
  */
 export function valoresDoRecurso(
-  recurso,
-  { origens, fundamentacao = "", analista = "", hoje = new Date() } = {},
+  recurso: Partial<DadosDoRecurso> | null | undefined,
+  {
+    origens,
+    fundamentacao = "",
+    analista = "",
+    hoje = new Date(),
+  }: {
+    origens?: readonly OrigemDoRecurso[];
+    fundamentacao?: string;
+    analista?: string;
+    hoje?: DataDoRecurso;
+  } = {},
 ) {
   const r = recurso || {};
   return {
@@ -116,7 +140,7 @@ export function valoresDoRecurso(
 }
 
 /** O que fica no lugar de um marcador sem valor: visível para quem revisa. */
-export const marcaDeFaltando = (chave) =>
+export const marcaDeFaltando = (chave: string) =>
   `[não informado: ${MARCADORES.find((m) => m.chave === chave)?.rotulo || chave}]`;
 
 /**
@@ -124,13 +148,16 @@ export const marcaDeFaltando = (chave) =>
  * que ficam como "[não informado: …]") e os desconhecidos (ficam como
  * estão). Uma passada só: o valor inserido não é relido.
  */
-export function renderizarModelo(corpo, valores = {}) {
-  const faltando = new Set();
-  const desconhecidos = new Set();
+export function renderizarModelo(
+  corpo: unknown,
+  valores: Record<string, unknown> = {},
+) {
+  const faltando = new Set<string>();
+  const desconhecidos = new Set<string>();
   const resultado = String(corpo ?? "").replace(
     PADRAO_DO_MARCADOR,
-    (inteiro, chave) => {
-      if (!CHAVES_DOS_MARCADORES.includes(chave)) {
+    (inteiro: string, chave: string) => {
+      if (!CHAVES_DOS_MARCADORES.some((c) => c === chave)) {
         desconhecidos.add(chave);
         return inteiro;
       }
@@ -155,7 +182,13 @@ export function renderizarModelo(corpo, valores = {}) {
   da área e da origem (a aprovação exige a decisão). Primeiro os da origem
   exata e da situação do recurso, depois pelo nome.
 */
-export function modelosAplicaveis(modelos, recurso, area) {
+export function modelosAplicaveis<
+  T extends Pick<ModeloDaResposta, "area" | "origem" | "situacao" | "nome">,
+>(
+  modelos: readonly T[] | null | undefined,
+  recurso: Partial<DadosDoRecurso> | null | undefined,
+  area: string,
+) {
   const situacao = recurso?.situacao || "";
   const decidido = situacaoDecidida(situacao);
   return (Array.isArray(modelos) ? modelos : [])
@@ -175,7 +208,7 @@ export function modelosAplicaveis(modelos, recurso, area) {
 
 /* ── Formulário de modelo (administração) ─────────────────────────────── */
 
-export const MODELO_VAZIO = Object.freeze({
+export const MODELO_VAZIO: Readonly<RascunhoDoModelo> = Object.freeze({
   id: null,
   versao: null,
   nome: "",
@@ -185,11 +218,13 @@ export const MODELO_VAZIO = Object.freeze({
   corpo: "",
 });
 
-export function rascunhoDoModelo(modelo) {
+export function rascunhoDoModelo(
+  modelo: Partial<RascunhoDoModelo> | null | undefined,
+): RascunhoDoModelo {
   if (!modelo) return { ...MODELO_VAZIO };
   return {
-    id: modelo.id,
-    versao: modelo.versao,
+    id: modelo.id ?? null,
+    versao: modelo.versao ?? null,
     nome: modelo.nome || "",
     situacao: modelo.situacao || "DEFERIDO",
     origem: modelo.origem || "",
@@ -199,15 +234,17 @@ export function rascunhoDoModelo(modelo) {
 }
 
 /** Erros do formulário de modelo, por campo (vazio = pode salvar). */
-export function errosDoModelo(rascunho) {
-  const erros = {};
+export function errosDoModelo(
+  rascunho: Partial<RascunhoDoModelo> | null | undefined,
+): ErrosDoModelo {
+  const erros: ErrosDoModelo = {};
   const nome = texto(rascunho?.nome);
   const corpo = texto(rascunho?.corpo);
   if (nome.length < 3 || nome.length > 150)
     erros.nome = "Informe o nome do modelo (3 a 150 caracteres).";
   if (
     !["DEFERIDO", "INDEFERIDO", "PARCIALMENTE_INDEFERIDO"].includes(
-      rascunho?.situacao,
+      rascunho?.situacao ?? "",
     )
   )
     erros.situacao = "Escolha a situação.";
@@ -222,7 +259,7 @@ export function errosDoModelo(rascunho) {
 }
 
 /** O `p_dados` de `salvar_modelo_resposta_recurso`. */
-export function dadosDoModelo(rascunho) {
+export function dadosDoModelo(rascunho: Partial<RascunhoDoModelo>) {
   return {
     ...(rascunho.id ? { id: rascunho.id, versao: rascunho.versao } : {}),
     nome: texto(rascunho.nome),

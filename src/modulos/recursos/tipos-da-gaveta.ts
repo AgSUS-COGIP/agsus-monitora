@@ -10,6 +10,10 @@ import type {
   RegistroDosRecursos,
   DetalheDoRecurso,
 } from "./tipos-do-estado.ts";
+import type {
+  RespostaDoRecurso,
+  ModeloDaResposta,
+} from "../../lib/tipos-da-resposta-do-recurso.ts";
 
 export interface HistoricoDoRecurso {
   acao: string;
@@ -45,13 +49,8 @@ export interface CamposDoDetalheDaGaveta {
   etapas?: Partial<Record<EtapaDoRecurso, string>>;
   historico?: HistoricoDoRecurso[];
   anexos?: AnexoDoRecurso[];
-  resposta?:
-    | (RegistroDosRecursos & {
-        id?: IdentificadorDoRecurso;
-        revisao?: number;
-        estado?: string;
-      })
-    | null;
+  resposta?: RespostaDoRecurso | null;
+  eu?: IdentificadorDoRecurso | null;
 }
 export interface PropsDaSecaoDoRecurso {
   estado: EstadoDosRecursos;
@@ -66,6 +65,6 @@ export interface PropsDaGavetaDoRecurso extends Omit<
 > {
   origens: readonly OrigemDoRecurso[];
   podeDecidir?: boolean;
-  modelos?: RegistroDosRecursos[];
+  modelos?: ModeloDaResposta[];
   area?: string;
 }

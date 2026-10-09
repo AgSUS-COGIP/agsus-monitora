@@ -3,7 +3,88 @@ import {
   normalizarDadosDosRecursos,
   normalizarDetalheDoRecurso,
   normalizarCandidatosDosRecursos,
+  normalizarDadosDosModelos,
+  normalizarRespostaDoRecurso,
 } from "../src/lib/dados-dos-recursos.ts";
+
+describe("entrada da resposta e dos modelos", () => {
+  it("não amplia o escopo de modelos com área ou origem malformada", () => {
+    const dados = normalizarDadosDosModelos({
+      modelos: [
+        null,
+        { id: "m1", versao: 1, area: {} },
+        { id: "m2", versao: 1, origem: [] },
+        { id: "m3", versao: 0 },
+        {
+          id: "m4",
+          versao: 2,
+          area: "sede",
+          origem: "entrevista",
+          corpo: "{fundamentacao}",
+          ativo: true,
+        },
+      ],
+      areas: [null, { id: {}, rotulo: "Área" }, { id: "sede", rotulo: {} }],
+      origens: { id: "entrevista" },
+    });
+    expect(dados.modelos).toHaveLength(1);
+    expect(dados.modelos[0]).toMatchObject({
+      id: "m4",
+      versao: 2,
+      area: "sede",
+      origem: "entrevista",
+      corpo: "{fundamentacao}",
+      ativo: true,
+    });
+    expect(dados.areas).toEqual([{ id: "sede", rotulo: "" }]);
+    expect(dados.origens).toEqual([]);
+  });
+  it("sinaliza uma resposta inválida em vez de oferecer um novo rascunho", () => {
+    for (const resposta of [
+      [],
+      "texto",
+      { id: "resp1", estado: "rascunho", revisao: Infinity },
+      { id: "resp1", estado: "inventado", revisao: 1 },
+    ]) {
+      const detalhe = normalizarDetalheDoRecurso({ resposta });
+      expect(detalhe.resposta).toBeNull();
+      expect(detalhe.erro).toContain("resposta recebida é inválida");
+    }
+    expect(normalizarDetalheDoRecurso({ resposta: null }).erro).toBeUndefined();
+  });
+  it("conserva a versão usada e protege textos e histórico da resposta", () => {
+    const r = normalizarRespostaDoRecurso({
+      id: "resp1",
+      revisao: 3,
+      estado: "devolvida",
+      modelo_id: "m1",
+      modelo_versao: 1,
+      modelo_corpo: "Texto antigo {fundamentacao}",
+      modelo_vigente: false,
+      texto_final: "<b>Texto</b>",
+      fundamentacao: {},
+      comentario_revisao: [],
+      historico: [null, { acao: "devolver", comentario: {}, autor: {} }],
+      passou_revisao: true,
+      autor_id: "autora",
+      envio_revisao_por_id: "remetente",
+      extra: { valor: 1 },
+    });
+    expect(r).toMatchObject({
+      modelo_versao: 1,
+      modelo_corpo: "Texto antigo {fundamentacao}",
+      modelo_vigente: false,
+      texto_final: "<b>Texto</b>",
+      fundamentacao: "",
+      comentario_revisao: "",
+      passou_revisao: true,
+      extra: { valor: 1 },
+    });
+    expect(r.historico).toEqual([
+      { acao: "devolver", comentario: "", autor: "", em: "" },
+    ]);
+  });
+});
 
 describe("entrada dos Recursos", () => {
   it("conserva campos adicionais e só libera permissões booleanas", () => {
@@ -16,7 +97,7 @@ describe("entrada dos Recursos", () => {
           campo_extra: { valor: 1 },
         },
       ],
-      modelos: [{ corpo: "Texto" }],
+      modelos: [{ id: "m1", versao: 1, corpo: "Texto" }],
       pode_editar: true,
       pode_decidir: "true",
       pode_administrar_modelos: 1,
@@ -27,7 +108,7 @@ describe("entrada dos Recursos", () => {
       nota_atual: "5.5",
       campo_extra: { valor: 1 },
     });
-    expect(d.modelos).toEqual([{ corpo: "Texto" }]);
+    expect(d.modelos).toMatchObject([{ id: "m1", versao: 1, corpo: "Texto" }]);
     expect([d.pode_editar, d.pode_decidir, d.pode_administrar_modelos]).toEqual(
       [true, false, false],
     );
@@ -66,7 +147,12 @@ describe("entrada dos Recursos", () => {
       observacao: {},
       nome_informado: [],
       codigo_informado: "001",
-      resposta: { texto_final: "Texto" },
+      resposta: {
+        id: "resp1",
+        estado: "rascunho",
+        revisao: 1,
+        texto_final: "Texto",
+      },
       historico: [{ campo: "origem" }],
     });
     expect(d.observacao).toBe("");

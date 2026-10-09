@@ -9,6 +9,11 @@ import type {
   CandidatoDoRecurso,
   RegistroDosRecursos,
 } from "../modulos/recursos/tipos-do-estado.ts";
+import type {
+  ModeloDaResposta,
+  RespostaDoRecurso,
+  DadosDosModelos,
+} from "./tipos-da-resposta-do-recurso.ts";
 export const objetoDosRecursos = (valor: unknown): RegistroDosRecursos =>
   valor !== null && typeof valor === "object" && !Array.isArray(valor)
     ? (valor as RegistroDosRecursos)
@@ -86,7 +91,7 @@ export function normalizarDadosDosRecursos(valor: unknown): DadosDosRecursos {
   }));
   return {
     ...d,
-    modelos: registros(d.modelos),
+    modelos: normalizarModelosDaResposta(d.modelos),
     recursos: registros(d.recursos)
       .map(recursoDoBanco)
       .filter((r): r is DadosDoRecurso => r !== null),
@@ -120,10 +125,7 @@ export function normalizarDadosDosRecursos(valor: unknown): DadosDosRecursos {
 }
 export function normalizarDetalheDoRecurso(valor: unknown): DetalheDoRecurso {
   const d = objetoDosRecursos(valor);
-  const resposta =
-    d.resposta === null || d.resposta === undefined
-      ? null
-      : objetoDosRecursos(d.resposta);
+  const resposta = normalizarRespostaDoRecurso(d.resposta);
   const etapas = objetoDosRecursos(d.etapas);
   return {
     ...d,
@@ -171,17 +173,13 @@ export function normalizarDetalheDoRecurso(valor: unknown): DetalheDoRecurso {
             },
           ];
     }),
-    resposta:
-      resposta === null
-        ? null
-        : {
-            ...resposta,
-            id: idDosRecursos(resposta.id) ?? undefined,
-            revisao: numero(resposta.revisao),
-            estado:
-              typeof resposta.estado === "string" ? resposta.estado : undefined,
-          },
-    erro: texto(d.erro) || undefined,
+    resposta,
+    eu: idDosRecursos(d.eu),
+    erro:
+      texto(d.erro) ||
+      (d.resposta != null && resposta === null
+        ? "A resposta recebida é inválida. Recarregue o recurso."
+        : undefined),
     observacao: texto(d.observacao),
     nome_informado:
       typeof d.nome_informado === "string" ? d.nome_informado : undefined,
@@ -190,6 +188,106 @@ export function normalizarDetalheDoRecurso(valor: unknown): DetalheDoRecurso {
       typeof d.cargo_informado === "string" ? d.cargo_informado : undefined,
     vaga_informada:
       typeof d.vaga_informada === "string" ? d.vaga_informada : undefined,
+  };
+}
+
+/** Modelos com escopo inválido são ignorados para não virar modelos de todas as áreas. */
+export function normalizarModelosDaResposta(
+  valor: unknown,
+): ModeloDaResposta[] {
+  return registros(valor).flatMap((m) => {
+    const id = idDosRecursos(m.id),
+      versao = numero(m.versao);
+    if (
+      id === null ||
+      versao === undefined ||
+      !Number.isInteger(versao) ||
+      versao < 1 ||
+      (m.area != null && typeof m.area !== "string") ||
+      (m.origem != null && typeof m.origem !== "string")
+    )
+      return [];
+    return [
+      {
+        ...m,
+        id,
+        versao,
+        nome: texto(m.nome),
+        corpo: texto(m.corpo),
+        situacao: texto(m.situacao),
+        origem: texto(m.origem),
+        area: texto(m.area),
+        ativo: m.ativo === true,
+        em_uso: numero(m.em_uso) ?? 0,
+        arquivado_em: texto(m.arquivado_em),
+        arquivado_por: texto(m.arquivado_por),
+        motivo_arquivamento: texto(m.motivo_arquivamento),
+      },
+    ];
+  });
+}
+export function normalizarDadosDosModelos(valor: unknown): DadosDosModelos {
+  const d = objetoDosRecursos(valor);
+  const opcoes = (v: unknown) =>
+    registros(v).flatMap((o) =>
+      typeof o.id === "string" ? [{ id: o.id, rotulo: texto(o.rotulo) }] : [],
+    );
+  return {
+    erro: texto(d.erro) || undefined,
+    modelos: normalizarModelosDaResposta(d.modelos),
+    areas: opcoes(d.areas),
+    origens: opcoes(d.origens),
+  };
+}
+export function normalizarRespostaDoRecurso(
+  valor: unknown,
+): RespostaDoRecurso | null {
+  if (valor == null) return null;
+  const r = objetoDosRecursos(valor),
+    id = idDosRecursos(r.id),
+    revisao = numero(r.revisao);
+  if (
+    id === null ||
+    revisao === undefined ||
+    !Number.isInteger(revisao) ||
+    revisao < 1 ||
+    typeof r.estado !== "string" ||
+    !["rascunho", "em_revisao", "aprovada", "devolvida", "enviada"].includes(
+      r.estado,
+    )
+  )
+    return null;
+  return {
+    ...r,
+    id,
+    revisao,
+    estado: r.estado,
+    modelo_id: idDosRecursos(r.modelo_id),
+    modelo_versao: numero(r.modelo_versao) ?? null,
+    modelo_nome: texto(r.modelo_nome),
+    modelo_corpo: texto(r.modelo_corpo),
+    modelo_situacao: texto(r.modelo_situacao),
+    modelo_vigente: r.modelo_vigente === true,
+    fundamentacao: texto(r.fundamentacao),
+    texto_final: texto(r.texto_final),
+    autor: texto(r.autor),
+    autor_id: idDosRecursos(r.autor_id),
+    envio_revisao_por_id: idDosRecursos(r.envio_revisao_por_id),
+    passou_revisao: Boolean(r.passou_revisao),
+    atualizado_em: texto(r.atualizado_em),
+    envio_revisao_em: texto(r.envio_revisao_em),
+    envio_revisao_por: texto(r.envio_revisao_por),
+    revisor: texto(r.revisor),
+    revisao_em: texto(r.revisao_em),
+    enviada_em: texto(r.enviada_em),
+    enviada_por: texto(r.enviada_por),
+    comentario_revisao: texto(r.comentario_revisao),
+    historico: registros(r.historico).map((h) => ({
+      acao: texto(h.acao),
+      comentario: texto(h.comentario),
+      em: texto(h.em),
+      autor: texto(h.autor),
+    })),
   };
 }
 export function normalizarCandidatosDosRecursos(
@@ -214,7 +312,7 @@ export function normalizarCandidatosDosRecursos(
         ];
   });
 }
-/** Metadados das escritas. JSON de prévias e modelos continua opaco e é preservado. */
+/** Metadados das escritas. JSON de prévias de pontuação continua opaco e é preservado. */
 export function metadadosDaRpcDosRecursos(
   valor: unknown,
 ): RegistroDosRecursos & {

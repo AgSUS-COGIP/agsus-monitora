@@ -14,7 +14,7 @@ import {
   rotuloDaSituacao,
   tomDaSituacao,
 } from "../../lib/recursos-dos-candidatos.ts";
-import { rotuloDoEstado, tomDoEstado } from "../../lib/resposta-do-recurso.js";
+import { rotuloDoEstado, tomDoEstado } from "../../lib/resposta-do-recurso.ts";
 import { classes, Selo, TabelaInfinita } from "../../ui/index.js";
 
 /*
@@ -63,7 +63,7 @@ export function SeloDaSituacao({
   );
 }
 
-/* O estado da resposta escrita (resposta-do-recurso.js), no mesmo selo. */
+/* O estado da resposta escrita (resposta-do-recurso.ts), no mesmo selo. */
 export function SeloDaResposta({ estado }: { estado?: string | null }) {
   if (!estado) return null;
   return (

@@ -10,7 +10,7 @@ import {
   modelosAplicaveis,
   renderizarModelo,
   valoresDoRecurso,
-} from "../src/lib/modelos-de-resposta.js";
+} from "../src/lib/modelos-de-resposta.ts";
 
 /*
   Os modelos de resposta a recurso: o preenchimento dos marcadores (texto

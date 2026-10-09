@@ -1,10 +1,25 @@
+import type {
+  EstadoDosRecursos,
+  SnapshotDosRecursos,
+} from "./tipos-do-estado.ts";
+import type {
+  ModeloDaResposta,
+  RascunhoDoModelo,
+  DadosDosModelos,
+} from "../../lib/tipos-da-resposta-do-recurso.ts";
+import type { ErrosDoModelo } from "../../lib/modelos-de-resposta.ts";
+interface PropsDoModelo {
+  estado: EstadoDosRecursos;
+  dados: DadosDosModelos;
+  acao: SnapshotDosRecursos["acao"];
+}
 import { useRef, useState, useSyncExternalStore } from "react";
 import {
   errosDoModelo,
   MARCADORES,
   MODELO_VAZIO,
   rascunhoDoModelo,
-} from "../../lib/modelos-de-resposta.js";
+} from "../../lib/modelos-de-resposta.ts";
 import {
   rotuloDaOrigem,
   rotuloDaSituacao,
@@ -25,16 +40,27 @@ import { dataHora } from "./partes.ts";
 
 const SITUACOES_DO_MODELO = SITUACOES.filter((s) => situacaoDecidida(s.id));
 
-function FormularioDoModelo({ estado, modelo, dados, acao, aoFechar }) {
+function FormularioDoModelo({
+  estado,
+  modelo,
+  dados,
+  acao,
+  aoFechar,
+}: PropsDoModelo & {
+  modelo: Partial<RascunhoDoModelo> | null;
+  aoFechar: () => void;
+}) {
   const [rascunho, setRascunho] = useState(() => rascunhoDoModelo(modelo));
   const [tentou, setTentou] = useState(false);
-  const texto = useRef(null);
+  const texto = useRef<HTMLTextAreaElement | null>(null);
   const erros = errosDoModelo(rascunho);
-  const erro = (campo) => (tentou ? erros[campo] : "");
-  const mudar = (campo, valor) =>
-    setRascunho((atual) => ({ ...atual, [campo]: valor }));
+  const erro = (campo: keyof ErrosDoModelo) => (tentou ? erros[campo] : "");
+  const mudar = (
+    campo: "nome" | "situacao" | "origem" | "area" | "corpo",
+    valor: string,
+  ) => setRascunho((atual) => ({ ...atual, [campo]: valor }));
 
-  function inserirMarcador(chave) {
+  function inserirMarcador(chave: string) {
     const campo = texto.current;
     const marcador = `{${chave}}`;
     const inicio = campo?.selectionStart ?? rascunho.corpo.length;
@@ -64,7 +90,7 @@ function FormularioDoModelo({ estado, modelo, dados, acao, aoFechar }) {
     >
       <strong>
         {rascunho.id
-          ? `Editar “${modelo.nome}” (grava a versão ${Number(rascunho.versao) + 1})`
+          ? `Editar “${modelo?.nome || ""}” (grava a versão ${Number(rascunho.versao) + 1})`
           : "Novo modelo"}
       </strong>
       <div className="recursos-formulario-grade">
@@ -178,7 +204,13 @@ function FormularioDoModelo({ estado, modelo, dados, acao, aoFechar }) {
   );
 }
 
-function CartaoDoModelo({ estado, modelo, dados, acao, aoEditar }) {
+function CartaoDoModelo({
+  estado,
+  modelo,
+  dados,
+  acao,
+  aoEditar,
+}: PropsDoModelo & { modelo: ModeloDaResposta; aoEditar: () => void }) {
   const [arquivando, setArquivando] = useState(false);
   const [motivo, setMotivo] = useState("");
   const area =
@@ -281,13 +313,13 @@ function CartaoDoModelo({ estado, modelo, dados, acao, aoEditar }) {
   );
 }
 
-export function PainelDeModelos({ estado }) {
+export function PainelDeModelos({ estado }: { estado: EstadoDosRecursos }) {
   const { modelosAdmin: dados, acao } = useSyncExternalStore(
     estado.assinar,
     estado.obter,
   );
   // `null`: lista; `MODELO_VAZIO`: novo; um modelo: edição.
-  const [editando, setEditando] = useState(null);
+  const [editando, setEditando] = useState<RascunhoDoModelo | null>(null);
   const modelos = dados?.modelos || [];
 
   return (
@@ -297,6 +329,8 @@ export function PainelDeModelos({ estado }) {
       aoFechar={estado.fecharModelos}
       className="recursos-gaveta"
       titulo="Modelos de resposta"
+      sobretitulo={null}
+      resumo={null}
       rotuloDoFechar="Fechar modelos de resposta"
     >
       <div className="ui-gaveta-corpo">

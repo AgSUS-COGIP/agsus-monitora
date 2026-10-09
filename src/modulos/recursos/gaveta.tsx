@@ -10,7 +10,7 @@ import {
   rotuloDaOrigem,
   rotuloDaSituacao,
 } from "../../lib/recursos-dos-candidatos.ts";
-import { rotuloDoEstado } from "../../lib/resposta-do-recurso.js";
+import { rotuloDoEstado } from "../../lib/resposta-do-recurso.ts";
 import {
   Aviso,
   Carregando,
@@ -23,7 +23,7 @@ import { SecaoDoAjuste } from "./ajuste.jsx";
 import { SecaoDeAnexos } from "./anexos.tsx";
 import { SecaoDoParecer } from "./parecer.tsx";
 import { dataHora, nota } from "./partes.ts";
-import { SecaoDaResposta } from "./resposta.jsx";
+import { SecaoDaResposta } from "./resposta.tsx";
 import { detalheDoPrazo, MarcaForaDasAnalises } from "./tabela.tsx";
 
 /*
@@ -34,7 +34,7 @@ import { detalheDoPrazo, MarcaForaDasAnalises } from "./tabela.tsx";
   cronograma, o parecer jurídico (parecer.tsx), o ajuste da pontuação
   (ajuste.jsx), as etapas com quem e quando,
   a resposta ao candidato
-  (resposta.jsx), os anexos (anexos.tsx), a observação e o histórico. Quem
+  (resposta.tsx), os anexos (anexos.tsx), a observação e o histórico. Quem
   edita marca as etapas aqui, escreve a resposta, anexa, edita e exclui.
 */
 

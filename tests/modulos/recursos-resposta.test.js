@@ -6,7 +6,7 @@ import {
   escolher,
   esperar,
 } from "../componentes/interacoes.js";
-import { proximoEstado } from "../../src/lib/resposta-do-recurso.js";
+import { proximoEstado } from "../../src/lib/resposta-do-recurso.ts";
 
 /*
   A resposta ao candidato e os anexos, na gaveta do painel de recursos: modelo
@@ -334,6 +334,25 @@ afterEach(async () => {
 });
 
 describe("resposta ao candidato", () => {
+  it("não oferece um novo rascunho quando a resposta existente tem revisão inválida", async () => {
+    await montar(
+      criarServidor({
+        resposta: {
+          id: "resp1",
+          revisao: "3",
+          estado: "rascunho",
+          texto_final: "Resposta existente",
+        },
+      }),
+    );
+    await abrirGaveta();
+    expect(secao("resposta")).toBeNull();
+    expect(document.querySelector(".recursos-corpo").textContent).toContain(
+      "A resposta recebida é inválida",
+    );
+    expect(document.querySelector(".recursos-resposta-editor")).toBeNull();
+  });
+
   it("modelo → prévia → rascunho → revisão → aprovação por outra pessoa → documento → enviada", async () => {
     const servidor = criarServidor();
     await montar(servidor);
