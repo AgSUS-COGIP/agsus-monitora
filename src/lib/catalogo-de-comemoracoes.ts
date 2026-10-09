@@ -175,10 +175,6 @@ export const CATALOGO_DE_MARCOS: readonly MarcoDoCatalogo[] = Object.freeze([
   },
 ]);
 
-export const IDS_DO_CATALOGO: readonly string[] = Object.freeze(
-  CATALOGO_DE_MARCOS.map((m) => m.id),
-);
-
 const marcoDoCatalogo = (id: string) =>
   CATALOGO_DE_MARCOS.find((m) => m.id === id);
 
@@ -549,18 +545,6 @@ export function mensagemDoPersonalizado(p: MarcoPersonalizado): string {
   return p.tipo === "edital-contratados"
     ? `Edital ${p.edital} chegou a ${meta} contratados! 🎉`
     : `A equipe passou de ${meta} análises concluídas hoje! 🎉`;
-}
-
-/** O rótulo de um marco (catálogo ou personalizado) para as telas. */
-export function rotuloDoMarco(
-  config: ConfiguracaoDasComemoracoes,
-  id: string,
-): string {
-  return (
-    marcoDoCatalogo(id)?.rotulo ||
-    config.personalizados.find((p) => p.id === id)?.nome ||
-    id
-  );
 }
 
 // ── Revisão da publicação ───────────────────────────────────────────────────

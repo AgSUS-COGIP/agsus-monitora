@@ -1,6 +1,6 @@
 /*
   Contornos da arara-azul da Aya, em camadas, no viewBox 0 0 200 200.
-  Tra�ados da ilustra��o de refer�ncia (public/assets/arara-azul-monitora.png):
+  Tra�ados da ilustra��o de refer�ncia (arara-azul-monitora.png, no histórico do git):
   a silhueta de cada parte vem da cor (azul, amarelo, cinza) recortada por
   regi�es desenhadas � m�o; TONS s�o as faixas de luz da refer�ncia, do mais
   escuro ao mais claro, empilhadas; penas = o realce fino das bordas das penas

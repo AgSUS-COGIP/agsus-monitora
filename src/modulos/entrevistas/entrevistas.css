@@ -223,7 +223,6 @@ html[data-theme="dark"] .entrevistas-link a {
   margin: 0;
   accent-color: var(--brand-primary);
 }
-.entrevistas-dica,
 .entrevistas-origem-vaga {
   color: var(--text-secondary);
   font-size: var(--text-caption);
@@ -276,12 +275,6 @@ label.entrevistas-marcar {
   display: grid;
   gap: var(--space-2);
 }
-.entrevistas-sublista-topo {
-  font-size: var(--text-body-sm);
-}
-.entrevistas-sublista-topo strong {
-  font-weight: var(--font-weight-semibold);
-}
 .entrevistas-linhas {
   display: grid;
   gap: var(--space-2);
@@ -300,9 +293,6 @@ label.entrevistas-marcar {
 }
 .entrevistas-linhas > li > * {
   min-width: 0;
-}
-.entrevistas-linha-excecao {
-  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) minmax(0, 1fr) auto;
 }
 .entrevistas-linha-banca {
   grid-template-columns: minmax(0, 3fr) minmax(0, 1fr) auto;
@@ -1608,7 +1598,6 @@ table.entrevistas-tabela {
 /* ── Celular ───────────────────────────────────────────────────────── */
 
 @media (max-width: 720px) {
-  .entrevistas-linha-excecao,
   .entrevistas-linha-banca,
   .entrevistas-linha-nivel,
   .entrevistas-linha-membro {

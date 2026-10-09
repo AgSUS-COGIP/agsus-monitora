@@ -88,20 +88,11 @@ body.mobile-app .app .top {
   }
 
   .access-request-grid,
-  .form-grid,
-  .filter-grid,
-  .filters-grid,
-  .kpi-grid,
-  .cards-grid,
-  .dashboard-grid,
-  .panel-grid {
+  .form-grid {
     grid-template-columns: minmax(0, 1fr) !important;
   }
 
-  .app-shell,
-  .layout,
-  .main-layout,
-  .page-shell {
+  .layout {
     min-height: 100dvh;
   }
 
@@ -140,9 +131,7 @@ body.mobile-app .app .top {
 
   .main,
   main,
-  .main-content,
-  #conteudoPrincipal,
-  .content-area {
+  #conteudoPrincipal {
     width: 100% !important;
     min-width: 0 !important;
     margin-left: 0 !important;
@@ -151,10 +140,7 @@ body.mobile-app .app .top {
     padding-bottom: calc(20px + var(--mobile-safe-bottom)) !important;
   }
 
-  .topbar,
-  .header,
-  .page-header,
-  .app-header {
+  .header {
     position: sticky;
     top: var(--mobile-safe-top);
     z-index: 900;
@@ -165,49 +151,14 @@ body.mobile-app .app .top {
     backdrop-filter: blur(14px);
   }
 
-  .topbar h1,
-  .header h1,
-  .page-header h1,
-  .app-header h1 {
+  .header h1 {
     font-size: clamp(1.05rem, 4.5vw, 1.35rem) !important;
     line-height: 1.2;
   }
 
-  .topbar-actions,
-  .header-actions,
-  .page-actions,
-  .toolbar,
-  .actions-row {
-    display: flex;
-    gap: 8px;
-    max-width: 100%;
-    overflow-x: auto;
-    overscroll-behavior-x: contain;
-    scrollbar-width: none;
-  }
-
-  .topbar-actions::-webkit-scrollbar,
-  .header-actions::-webkit-scrollbar,
-  .page-actions::-webkit-scrollbar,
-  .toolbar::-webkit-scrollbar,
-  .actions-row::-webkit-scrollbar {
-    display: none;
-  }
-
-  .topbar-actions > *,
-  .header-actions > *,
-  .page-actions > *,
-  .toolbar > *,
-  .actions-row > * {
-    flex: 0 0 auto;
-  }
-
   .card,
   .panel,
-  .widget,
-  .kpi-card,
-  .table-card,
-  .chart-card {
+  .table-card {
     min-width: 0;
     border-radius: 16px !important;
     box-shadow: 0 5px 18px rgba(15, 35, 60, 0.07) !important;
@@ -215,43 +166,15 @@ body.mobile-app .app .top {
 
   .card,
   .panel,
-  .widget,
-  .table-card,
-  .chart-card {
+  .table-card {
     padding: 14px !important;
   }
 
-  .kpi-grid,
-  .cards-grid {
-    gap: 10px !important;
-  }
-
-  .kpi-card {
-    min-height: 112px;
-  }
-
-  .filters,
-  .filter-panel {
+  .filters {
     width: 100%;
   }
 
-  .filters-actions,
-  .filter-actions {
-    display: grid !important;
-    grid-template-columns: 1fr 1fr;
-    gap: 8px;
-  }
-
-  .filters-actions > *,
-  .filter-actions > * {
-    width: 100%;
-  }
-
-  .table-wrap,
-  .table-container,
-  .data-table-wrap,
-  .responsive-table,
-  .analises-table-wrap {
+  .table-wrap {
     width: 100%;
     max-width: calc(100vw - 24px);
     overflow-x: auto !important;
@@ -287,9 +210,6 @@ body.mobile-app .app .top {
   }
 
   .modal-card,
-  .dialog-card,
-  .drawer,
-  .modal-content,
   [role="dialog"] > div {
     width: 100% !important;
     max-width: 100% !important;
@@ -313,11 +233,6 @@ body.mobile-app .app .top {
     max-width: 100%;
     min-height: 70dvh;
   }
-
-  .hide-on-mobile,
-  .desktop-only {
-    display: none !important;
-  }
 }
 
 @media (max-width: 560px) {
@@ -337,25 +252,16 @@ body.mobile-app .app .top {
 
   .main,
   main,
-  .main-content,
-  #conteudoPrincipal,
-  .content-area {
+  #conteudoPrincipal {
     padding-left: 8px !important;
     padding-right: 8px !important;
   }
 
   .card,
   .panel,
-  .widget,
-  .table-card,
-  .chart-card {
+  .table-card {
     border-radius: 14px !important;
     padding: 12px !important;
-  }
-
-  .filters-actions,
-  .filter-actions {
-    grid-template-columns: 1fr;
   }
 
   .btn,

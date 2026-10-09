@@ -20,7 +20,7 @@ mascote/
                 boca, bico inferior e superior, poleiro com sombra); cada parte
                 recorta um conjunto único de tons; abaixo de 40px, versão chapada
   contornos.ts  os contornos e as faixas de luz, traçados da ilustração de
-                referência (public/assets/arara-azul-monitora.png): só dados
+                referência (arara-azul-monitora.png, no histórico do git): só dados
   mascote.tsx   <Mascote>: estados parada, atenta, falando, pensando, comemorando,
                 dormindo e acenando; piscar e arrepio sorteados (Web Animations),
                 olho que segue o ponteiro (variáveis CSS), sono por inatividade,

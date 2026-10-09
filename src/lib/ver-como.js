@@ -12,11 +12,7 @@ import {
 } from "./access-roles.js";
 import { areasDoUsuario, montarArvoreDoMenu } from "./menu-lateral.ts";
 import { normalizePlatformContext } from "./platform-context.js";
-import {
-  RESOURCES,
-  niveisDoRecurso,
-  rotuloDoNivel,
-} from "./permissoes-recursos.js";
+import { niveisDoRecurso } from "./permissoes-recursos.js";
 import {
   MODULOS,
   adminGlobalDaLinha,
@@ -55,16 +51,6 @@ export function menuDoContexto(
     ),
     areas: areasDoUsuario(perfil.areas),
   });
-}
-
-/** Níveis efetivos por módulo, com rótulo. */
-export function permissoesEfetivas(perfil) {
-  return RESOURCES.map(([id, rotulo]) => ({
-    id,
-    rotulo,
-    nivel: perfil?.permissoes?.[id] || "sem_acesso",
-    rotuloDoNivel: rotuloDoNivel(perfil?.permissoes?.[id] || "sem_acesso", id),
-  }));
 }
 
 /** O que a pessoa consegue fazer, em frases. */

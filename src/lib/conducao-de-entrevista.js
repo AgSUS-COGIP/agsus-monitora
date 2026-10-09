@@ -776,12 +776,6 @@ export function progressoDasNotas(convocado, avaliadores, competencias) {
   return { lancadas, esperadas: devidas.size };
 }
 
-export const FILTROS_DA_FICHA = Object.freeze({
-  vaga: "",
-  banca: "",
-  busca: "",
-});
-
 export function filtrarConvocados(convocados, filtros) {
   const busca = normalizarBusca(filtros?.busca);
   return (convocados || []).filter((c) => {

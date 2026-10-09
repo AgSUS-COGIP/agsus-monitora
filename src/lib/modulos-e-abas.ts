@@ -47,7 +47,6 @@ const situacaoDe = (valor: unknown) =>
   texto(valor).toUpperCase() === "MANUTENCAO" ? "MANUTENCAO" : "ATIVA";
 
 export const temAtivo = (alvo: AlvoDosModulos) => alvo?.escopo !== "sistema";
-export const temMensagem = (alvo: AlvoDosModulos) => alvo?.escopo !== "painel";
 
 export function chaveDoCampo(alvo: AlvoDosModulos, campo: CampoDosModulos) {
   return [

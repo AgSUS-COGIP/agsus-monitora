@@ -25,6 +25,7 @@ import { criarEstadoDaAgenda } from "./estado-da-agenda.js";
 import { Listas } from "./listas.jsx";
 import { Regra } from "./regra.jsx";
 import { SeloDeAvisos } from "../conferencias/avisos-de-conferencia.tsx";
+import "./classificacao.css";
 
 /*
   A tela de Classificação (view `classificacao`), módulo do app: monta direto

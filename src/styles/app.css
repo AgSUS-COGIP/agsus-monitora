@@ -796,8 +796,7 @@ body.config-loading .loader-sub {
   display: grid;
   grid-template-columns: var(--sidebar) minmax(0, 1fr);
 }
-body.sidebar-collapsed .app,
-body.sidebar-locked .app {
+body.sidebar-collapsed .app {
   grid-template-columns: var(--sidebar-mini) minmax(0, 1fr);
 }
 body.app-fullscreen-fallback {
@@ -1664,47 +1663,6 @@ body.system-fullscreen-mode.external-clean .external-panel {
   height: 100vh !important;
   min-height: 100vh !important;
 }
-
-body.sidebar-locked {
-  overflow-x: hidden;
-}
-body.sidebar-locked .app {
-  grid-template-columns: var(--sidebar-mini) minmax(0, 1fr);
-  width: 100%;
-  max-width: 100vw;
-  overflow-x: hidden;
-}
-body.sidebar-locked .main {
-  grid-column: 2;
-  min-width: 0;
-  width: 100%;
-  max-width: 100%;
-  overflow-x: hidden;
-}
-body.sidebar-locked .global-side-toggle {
-  display: none !important;
-}
-body.sidebar-locked .content {
-  padding-left: 8px;
-  padding-right: 8px;
-}
-body.sidebar-locked #page-dashboard .table-wrap {
-  overflow: auto;
-}
-body.sidebar-locked #page-dashboard table {
-  width: 100%;
-  min-width: 1360px;
-}
-
-@media (max-width: 980px) {
-  body.sidebar-locked .top {
-    align-items: flex-start;
-    flex-direction: column;
-  }
-  body.sidebar-locked .actions {
-    justify-content: flex-start;
-  }
-}
 /* 900px, não 820: o JS (SIDEBAR_MOBILE_BREAKPOINT) e o restante do CSS já
    tratam 900px como gaveta; entre 821 e 900 o conteúdo caía na coluna de 68px. */
 @media (max-width: 900px) {
@@ -1725,25 +1683,6 @@ body.sidebar-locked #page-dashboard table {
   }
   .actions {
     justify-content: flex-start;
-  }
-}
-@media (max-width: 640px) {
-  body.sidebar-locked .content {
-    padding-left: 6px;
-    padding-right: 6px;
-  }
-}
-@media (max-width: 560px) {
-  body.sidebar-locked .page-title h1 {
-    font-size: 20px;
-  }
-  body.sidebar-locked .page-title p {
-    font-size: 12px;
-  }
-  body.sidebar-locked .actions .btn {
-    min-height: 36px;
-    padding: 0 9px;
-    font-size: 12px;
   }
 }
 @media (max-width: 540px) {
