@@ -119,7 +119,14 @@ def lista_de_codigos(vagas, maximo=80):
     return texto + (f" … (+{len(codigos) - maximo})" if len(codigos) > maximo else "")
 
 
-ORIGENS = (("quadro", "quadro do edital"), ("selecao", "Seleção"), ("pedida", "pedidas fora das duas"))
+# ligada: vaga já ligada ao edital em TB_EMPREGARE_VAGA (edital em inscrição, sem análise
+# nem Seleção; migration 20261009140000_acompanhamento_das_inscricoes.sql).
+ORIGENS = (
+    ("quadro", "quadro do edital"),
+    ("selecao", "Seleção"),
+    ("ligada", "ligadas ao edital"),
+    ("pedida", "pedidas fora das fontes"),
+)
 
 
 def contagem_por_origem(vagas):
