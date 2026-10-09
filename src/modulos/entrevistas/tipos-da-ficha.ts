@@ -9,7 +9,7 @@ export type CompetenciaDaFicha = {
   ordem?: number | null;
   descricao?: string | null;
   nota_maxima?: number | string | null;
-  nota_minima?: number | string | null;
+  minimo?: number | string | null;
   peso?: number | string | null;
   tipo_minimo?: string | null;
   avaliacao?: string | null;

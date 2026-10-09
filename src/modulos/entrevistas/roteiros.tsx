@@ -1,3 +1,18 @@
+import type { FormEvent } from "react";
+import type {
+  IdDaSecao,
+  PendenciaDoRoteiro,
+} from "../../lib/pendencias-do-roteiro.ts";
+import type {
+  RascunhoDoRoteiro,
+  CompetenciaDoRascunho,
+} from "../../lib/tipos-do-roteiro-de-entrevista.ts";
+import type {
+  PropriedadesDoCartaoDoRoteiro,
+  PropriedadesDaVisaoDeRoteiros,
+  PropriedadesDoEditorDeRoteiro,
+  RoteiroAberto,
+} from "./tipos-do-editor-de-roteiro.ts";
 import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import { rotuloDaAreaDoPainel } from "../../lib/area-do-painel-de-analises.js";
 import {
@@ -50,7 +65,7 @@ import {
   ComposicaoDaBanca,
   numeroBR,
   trocarNaLista,
-} from "./partes.jsx";
+} from "./partes.tsx";
 
 /*
   "Roteiros de entrevista", a configuração do gestor em Conduzir entrevistas
@@ -71,7 +86,12 @@ import {
   banco decide (42501 vira aviso).
 */
 
-function CartaoDoRoteiro({ roteiro, podeEditar, aoAbrir, aoRenomear }) {
+function CartaoDoRoteiro({
+  roteiro,
+  podeEditar,
+  aoAbrir,
+  aoRenomear,
+}: PropriedadesDoCartaoDoRoteiro) {
   const r = resumoDoRoteiro(roteiro);
   return (
     <article className="ui-card entrevistas-cartao" data-roteiro={roteiro.id}>
@@ -126,7 +146,7 @@ function CartaoDoRoteiro({ roteiro, podeEditar, aoAbrir, aoRenomear }) {
               onClick={() => aoAbrir(roteiro, "editar")}
             >
               <i className="fa-solid fa-pen" aria-hidden="true" /> Editar (cria
-              versão {r.versao + 1})
+              versão {(r.versao ?? 1) + 1})
             </button>
             <button
               type="button"
@@ -156,16 +176,15 @@ function CartaoDoRoteiro({ roteiro, podeEditar, aoAbrir, aoRenomear }) {
  * resumo das regras em Preparar); cada pedido novo tem outra `vez`.
  * `embutido`: dentro do passo 1 de Preparar (sem cartão próprio; o
  * "Atualizar" do topo relê a lista).
- * @param {{ conducao: any, area: string, pedido?: { roteiro: unknown, vez: number } | null, embutido?: boolean }} props
  */
 export function VisaoDeRoteiros({
   conducao,
   area,
   pedido = null,
   embutido = false,
-}) {
+}: PropriedadesDaVisaoDeRoteiros) {
   const e = useSyncExternalStore(conducao.assinar, conducao.obter);
-  const [aberto, setAberto] = useState(null);
+  const [aberto, setAberto] = useState<RoteiroAberto | null>(null);
   const { roteiros, podeEditar } = e;
 
   useEffect(() => {
@@ -287,7 +306,17 @@ export function VisaoDeRoteiros({
 
 /* ── Formulário ─────────────────────────────────────────────────────── */
 
-function EscalaDoRoteiro({ r, mudar, erros, somenteLeitura }) {
+function EscalaDoRoteiro({
+  r,
+  mudar,
+  erros,
+  somenteLeitura,
+}: {
+  r: RascunhoDoRoteiro;
+  mudar: (mudancas: Partial<RascunhoDoRoteiro>) => void;
+  erros: Record<string, string>;
+  somenteLeitura: boolean;
+}) {
   return (
     <>
       <Segmentado
@@ -415,7 +444,7 @@ function EscalaDoRoteiro({ r, mudar, erros, somenteLeitura }) {
               onClick={() => {
                 const notas = r.niveis
                   .map((n) => lerNumero(n.nota))
-                  .filter(Number.isFinite);
+                  .filter((n): n is number => n !== null && Number.isFinite(n));
                 const proxima = notas.length ? Math.max(...notas) + 1 : 0;
                 mudar({ niveis: [...r.niveis, novoNivel(proxima)] });
               }}
@@ -438,6 +467,18 @@ function Competencia({
   remover,
   erros,
   somenteLeitura,
+}: {
+  c: CompetenciaDoRascunho;
+  indice: number;
+  total: number;
+  mudar: (
+    campo: keyof Omit<CompetenciaDoRascunho, "chave">,
+    valor: string,
+  ) => void;
+  mover: (passo: number) => void;
+  remover: () => void;
+  erros: Record<string, string>;
+  somenteLeitura: boolean;
 }) {
   const p = `competencia.${c.chave}`;
   const peso = rotuloDoPeso(c.peso);
@@ -567,11 +608,19 @@ function Competencia({
   );
 }
 
-function NotasEliminatorias({ valor, aoMudar, somenteLeitura }) {
+function NotasEliminatorias({
+  valor,
+  aoMudar,
+  somenteLeitura,
+}: {
+  valor: number[];
+  aoMudar: (notas: number[]) => void;
+  somenteLeitura: boolean;
+}) {
   const [texto, setTexto] = useState("");
   const acrescentar = () => {
     const n = lerNumero(texto);
-    if (!Number.isFinite(n) || n < 0) return;
+    if (n === null || !Number.isFinite(n) || n < 0) return;
     if (!valor.includes(n)) aoMudar([...valor, n].sort((a, b) => a - b));
     setTexto("");
   };
@@ -640,7 +689,7 @@ export function EditorDeRoteiro({
   salvando = false,
   aoSalvar,
   aoFechar,
-}) {
+}: PropriedadesDoEditorDeRoteiro) {
   const [r, setR] = useState(() =>
     rascunhoDoRoteiro(roteiro, {
       modo: modo === "novo" ? "editar" : modo,
@@ -649,7 +698,7 @@ export function EditorDeRoteiro({
   );
   const [tentou, setTentou] = useState(false);
   const [erroDoBanco, setErroDoBanco] = useState("");
-  const [nomeDaVersao, setNomeDaVersao] = useState(null);
+  const [nomeDaVersao, setNomeDaVersao] = useState<string | null>(null);
   const [hoje] = useState(() => new Date());
   const sugestaoDoNome = sugerirNomeDaVersao({
     tipo: "roteiro",
@@ -658,14 +707,21 @@ export function EditorDeRoteiro({
   });
   const nomeEscolhido = nomeDoCampo(nomeDaVersao, sugestaoDoNome);
   const erros = useMemo(() => errosDoRoteiro(r), [r]);
-  const errosVisiveis = tentou ? erros : {};
+  const errosVisiveis: Record<string, string> = tentou ? erros : {};
   const quantosErros = Object.keys(erros).length;
-  const mudar = (mudancas) => setR((atual) => ({ ...atual, ...mudancas }));
+  const mudar = (mudancas: Partial<RascunhoDoRoteiro>) =>
+    setR((atual) => ({ ...atual, ...mudancas }));
   const erroDoNome = somenteLeitura ? "" : erroDoNomeDaVersao(nomeEscolhido);
-  const pendencias = useMemo(
+  const pendencias = useMemo<PendenciaDoRoteiro[]>(
     () => [
       ...(erroDoNome
-        ? [{ chave: "nome_versao", secao: "identificacao", texto: erroDoNome }]
+        ? [
+            {
+              chave: "nome_versao",
+              secao: "identificacao" as const,
+              texto: erroDoNome,
+            },
+          ]
         : []),
       ...pendenciasDoRoteiro(erros, r),
     ],
@@ -674,40 +730,42 @@ export function EditorDeRoteiro({
   const porSecao = errosPorSecao(pendencias);
   const eliminacao = useMemo(() => frasesDaEliminacao(r), [r]);
   /* Seções abertas: ao criar, Identificação e Competências; ao editar ou ver, Competências. */
-  const [abertas, setAbertas] = useState(
+  const [abertas, setAbertas] = useState<Set<IdDaSecao>>(
     () =>
-      new Set(
+      new Set<IdDaSecao>(
         modo === "novo" || modo === "duplicar"
           ? ["identificacao", "competencias"]
           : ["competencias"],
       ),
   );
-  const alternar = (id, aberta) =>
+  const alternar = (id: IdDaSecao, aberta: boolean) =>
     setAbertas((atual) => {
       const nova = new Set(atual);
       if (aberta) nova.add(id);
       else nova.delete(id);
       return nova;
     });
-  const secao = (id) => {
+  const secao = (id: IdDaSecao) => {
     const s = SECOES_DO_ROTEIRO.find((x) => x.id === id);
     return {
       id,
-      titulo: s.titulo,
-      icone: s.icone,
-      erros: tentou ? porSecao[id] : 0,
+      titulo: s?.titulo ?? "",
+      icone: s?.icone ?? "",
+      erros: tentou ? (porSecao[id] ?? 0) : 0,
       aberta: abertas.has(id),
       aoAlternar: alternar,
     };
   };
-  function irASecao(id) {
+  function irASecao(id: IdDaSecao) {
     alternar(id, true);
     globalThis.requestAnimationFrame?.(() => {
       const el = document.querySelector(
         `#entrevistasEditorDeRoteiro [data-secao="${id}"]`,
       );
       el?.scrollIntoView?.({ behavior: "smooth", block: "start" });
-      el?.querySelector?.(
+      el?.querySelector<
+        HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
+      >(
         ".entrevistas-secao-corpo input, .entrevistas-secao-corpo select, .entrevistas-secao-corpo textarea",
       )?.focus?.();
     });
@@ -721,15 +779,17 @@ export function EditorDeRoteiro({
         : roteiro?.nome || "Roteiro";
   const sobretitulo =
     modo === "editar"
-      ? `Roteiro · versão ${r.versao} → salvar grava a versão ${r.versao + 1}`
+      ? `Roteiro · versão ${r.versao} → salvar grava a versão ${(r.versao ?? 1) + 1}`
       : modo === "ver"
         ? `Roteiro · ${rotuloDaVersao({ versao: roteiro?.versao ?? 1, nome: roteiro?.nome_versao })}`
         : "Roteiro de entrevista";
-  const opcoesDeArea = [...new Set([area, roteiro?.area].filter(Boolean))].map(
-    (valor) => ({ valor, rotulo: rotuloDaAreaDoPainel(valor) }),
-  );
+  const opcoesDeArea = [
+    ...new Set(
+      [area, roteiro?.area].filter((valor): valor is string => Boolean(valor)),
+    ),
+  ].map((valor) => ({ valor, rotulo: rotuloDaAreaDoPainel(valor) }));
 
-  async function salvar(evento) {
+  async function salvar(evento: FormEvent<HTMLFormElement>) {
     evento.preventDefault();
     if (somenteLeitura) return;
     setTentou(true);
@@ -1060,7 +1120,7 @@ export function EditorDeRoteiro({
               {salvando
                 ? "Salvando…"
                 : modo === "editar"
-                  ? `Salvar versão ${r.versao + 1}`
+                  ? `Salvar versão ${(r.versao ?? 1) + 1}`
                   : "Criar roteiro"}
             </button>
           )}

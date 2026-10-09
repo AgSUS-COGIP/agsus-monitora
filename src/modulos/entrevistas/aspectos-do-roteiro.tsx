@@ -4,10 +4,10 @@ import {
   moverItem,
   novoAspecto,
 } from "../../lib/roteiro-de-entrevista.js";
-import { BotaoDeLinha } from "./partes.jsx";
+import { BotaoDeLinha } from "./partes.tsx";
 
 /*
-  Aspectos do roteiro (opcionais), no editor de roteiro (roteiros.jsx): cada
+  Aspectos do roteiro (opcionais), no editor de roteiro (roteiros.tsx): cada
   avaliador dá uma nota em cada aspecto, na escala do roteiro, e a nota dele na
   competência é a média. Sem aspectos, uma nota por avaliador. O botão do
   modelo preenche os da planilha da Saúde Indígena.

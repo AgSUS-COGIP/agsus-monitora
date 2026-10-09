@@ -1,3 +1,5 @@
+import type { MouseEventHandler } from "react";
+import type { BancaDoRascunho } from "../../lib/tipos-do-roteiro-de-entrevista.ts";
 import { novaOrigemDaBanca } from "../../lib/roteiro-de-entrevista.js";
 import { Campo } from "../../ui/index.js";
 
@@ -8,7 +10,17 @@ import { Campo } from "../../ui/index.js";
   (`Segmentado`) são de src/ui/.
 */
 
-export function BotaoDeLinha({ icone, rotulo, aoClicar, desabilitado }) {
+export function BotaoDeLinha({
+  icone,
+  rotulo,
+  aoClicar,
+  desabilitado,
+}: {
+  icone: string;
+  rotulo: string;
+  aoClicar: MouseEventHandler<HTMLButtonElement>;
+  desabilitado?: boolean;
+}) {
   return (
     <button
       type="button"
@@ -24,7 +36,12 @@ export function BotaoDeLinha({ icone, rotulo, aoClicar, desabilitado }) {
 }
 
 /* Troca um campo de um item da lista (achado pela `chave`). */
-export const trocarNaLista = (lista, chave, campo, valor) =>
+export const trocarNaLista = <T extends { chave: string }, K extends keyof T>(
+  lista: readonly T[],
+  chave: string,
+  campo: K,
+  valor: NoInfer<T[K]>,
+): T[] =>
   lista.map((item) =>
     item.chave === chave ? { ...item, [campo]: valor } : item,
   );
@@ -36,6 +53,12 @@ export function ComposicaoDaBanca({
   erros = {},
   prefixo = "banca",
   somenteLeitura = false,
+}: {
+  valor: BancaDoRascunho[];
+  aoMudar: (banca: BancaDoRascunho[]) => void;
+  erros?: Record<string, string | undefined>;
+  prefixo?: string;
+  somenteLeitura?: boolean;
 }) {
   return (
     <div className="entrevistas-sublista" aria-label="Composição da banca">
@@ -107,7 +130,7 @@ export function ComposicaoDaBanca({
   );
 }
 
-export const numeroBR = (valor) =>
+export const numeroBR = (valor: unknown) =>
   valor === null || valor === undefined || valor === ""
     ? "—"
     : Number(valor).toLocaleString("pt-BR", { maximumFractionDigits: 2 });

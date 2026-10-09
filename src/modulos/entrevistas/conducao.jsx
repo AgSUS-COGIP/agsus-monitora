@@ -16,7 +16,7 @@ import {
 } from "../../lib/convocacao-da-entrevista.js";
 import { Aviso, Campo, classes, Gaveta, Selo } from "../../ui/index.js";
 import { irParaLink } from "../chat/ponte.js";
-import { numeroBR } from "./partes.jsx";
+import { numeroBR } from "./partes.tsx";
 
 /*
   Peças de "Conduzir entrevistas" que Preparar (preparar.tsx) e o seletor do
