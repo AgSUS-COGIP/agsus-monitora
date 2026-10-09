@@ -1010,3 +1010,23 @@ os fictícios. Garantias:
    registro real para ela aborta tudo.
 5. O ensaio confere que regra real não se apaga nem com a marca, que o reinício recusa edital real
    e que nenhuma contagem real muda.
+
+## 17. Otimização do banco (09/10/2026)
+
+Migration `20261009110000_otimizacao_do_banco.sql` (rollback e ensaio com o mesmo nome em
+`supabase/rollback/` e `supabase/ensaios/`). Números do banco no ar desde 02/10/2026 (7,4 dias).
+
+- **Doze índices saem**, nenhum de constraint: iguais a um único que fica
+  (`idx_monitoramento_cronograma_monitoramento`, `idx_perfis_usuarios_user_id`,
+  `idx_analises_editais_ativo_chave`), prefixos de um único (`idx_analises_staging_sync_id`,
+  `idx_analises_staging_sync_entidade`, `IN_FKROTEIROCOMPETENCIA_CO`), sem leitura numa tabela de
+  147 linhas (quatro `idx_monitoramento_indigena_*`) e os dois `*_ordem_todos` de
+  `TB_ANALISE_CURRICULAR` (1 e 4 leituras; 14 → 12 índices). Ensaio: painel de análises e pacote
+  das entrevistas leem menos buffers; atualizar 2.000 análises gera ~10% menos WAL.
+- **`IN_SYNCANALISE_PROCESSADO`** (parcial): o último sync processado
+  (`obter_ultima_conferencia`) deixa de ler `TL_SYNC_ANALISE` inteira (430 → 3–6 buffers).
+- **`sincronizar_entrevistas` só regrava a nota que mudou**: a carga de hora em hora atualizava
+  todas (754 mil atualizações em 7,4 dias). Ensaio com linhas fictícias: carga igual 4 → 0
+  regravações; nota mudada continua gravando. `TB_ENTREVISTA` ainda regrava `CO_SYNC` (é por ele que
+  o fechamento desativa quem saiu da planilha).
+- Comentários que faltavam em doze funções `FC_` e em colunas de tabelas novas.

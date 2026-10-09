@@ -26,7 +26,7 @@ import {
 import { irParaLink } from "../chat/ponte.js";
 import { AgendaDosProximosDias, AvisoDeEmpates } from "./agenda-e-empates.tsx";
 import { criarEstadoDasEntrevistas, MENSAGEM_SEM_ACESSO } from "./estado.js";
-import { GavetaDaEntrevista, GavetaDosSemEntrevista } from "./gaveta.jsx";
+import { GavetaDaEntrevista, GavetaDosSemEntrevista } from "./gaveta.tsx";
 import {
   Filtros,
   filtrosAtivos,
@@ -34,8 +34,8 @@ import {
   Indicadores,
   Recorte,
   Topo,
-} from "./paineis.jsx";
-import { MENSAGEM_SEM_ENTREVISTAS, TabelaDeEntrevistas } from "./tabela.jsx";
+} from "./paineis.tsx";
+import { MENSAGEM_SEM_ENTREVISTAS, TabelaDeEntrevistas } from "./tabela.tsx";
 import { SeloDeAvisos } from "../conferencias/avisos-de-conferencia.tsx";
 
 /*
