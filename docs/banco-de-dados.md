@@ -934,15 +934,25 @@ Migration `20261007230000_edital_de_treinamento.sql` (ensaio e rollback com o me
   `CK_MONITINDIG_STTREINAMENTO`). A tela não muda a marca; só
   `private."FC_PREPARAR_EDITAL_TREINAMENTO"(p_area)` cria edital com S, um por área:
   - Saúde Indígena: "Treinamento – Saúde Indígena (991/2099)", unidade "DSEI Treinamento"
-    (`private."FC_PREPARAR_TREINAMENTO_SI"`): entrevistas, classificação e a regra da avaliação
-    documental do Edital 111/2026 (modelo SI26-PARINTINS, com as perguntas do questionário NERSSI
-    ligadas; nenhum edital SI tem regra conferida ainda), na situação Conferir;
+    (`private."FC_PREPARAR_TREINAMENTO_SI"`): entrevistas (os 15 primeiros, roteiro com aspectos),
+    classificação e a regra da avaliação documental do Edital 111/2026 (modelo SI26-PARINTINS, com
+    as perguntas do questionário NERSSI ligadas) CONFERIDA e nomeada ("SI26-PARINTINS — Edital
+    111/2026"), 30 fictícios na Empregare (cotas, cancelado, pendente, reprovado, empate, abaixo
+    da linha do lote) e a pré-classificação gravada (migration
+    `20261009120000_treinamentos_completos.sql`);
   - Projetos: "Treinamento – Projetos (992/2099)", unidade "Escritório Treinamento"
     (`private."FC_PREPARAR_TREINAMENTO_PROJETOS"`, migration
     `20261008110000_treinamento_avaliacao_documental.sql`): espelho do Edital 93/2026 (5 vagas com
     códigos fictícios `99099200x`, quadro, cronograma relativo), cópia **independente** (só o JSON)
     da regra conferida do 93/2026 (versão 7) e da regra da classificação, 40 candidatos fictícios
-    no formato da exportação da Empregare e a pré-classificação já gravada.
+    no formato da exportação da Empregare e a pré-classificação já gravada; e a entrevista
+    (`private."FC_PREPARAR_ENTREVISTA_TREINAMENTO_PROJETOS"`, `20261009120000`): roteiro
+    "Treinamento — Entrevista Projetos (exemplo)" (cópia do modelo do SESMT), lançamento pela
+    secretaria, banca com o Avaliador Teste P3 só em "Habilidade intercultural", liberação da
+    janela e a lista de convocação dos que estão no lote da pré-classificação.
+  - Nos dois, `private."FC_CONVOCAR_E_AGENDAR_TREINAMENTO"` convoca a lista vigente (entrevistas
+    do sistema, como `convocar_para_entrevista`) e monta a agenda a partir de hoje (6 hoje, as
+    demais nos dias úteis seguintes), sem mexer no que já existe.
 - **Predicado único** — use estes, nunca `"ST_TREINAMENTO" = S` solto:
   `private."FC_EH_TREINAMENTO"(marca)`, `private."FC_EDITAL_EH_TREINAMENTO"(id)` e
   `private."FC_ANALISE_EH_TREINAMENTO"(origem_planilha)` (as análises fictícias têm
@@ -963,10 +973,12 @@ Migration `20261007230000_edital_de_treinamento.sql` (ensaio e rollback com o me
   `listar_editais_classificacao`, `FC_DADOS_CLASSIFICACAO_EDITAL`, `obter_pre_classificacao`,
   `pre_classificacao_ler_editais`, `get_painel_dos_robos`. O documento oficial gerado sai com
   "TREINAMENTO — SEM VALOR OFICIAL" no título (`documento-sei.js`).
-- **A pré-classificação pronta do treinamento de Projetos:** o resultado do cálculo Python (o
-  mesmo `processar_edital` do job, gerado por `scripts/pre_classificacao/gerar_treinamento.py` a
-  partir de `tests/fixtures/avaliacao-documental/treinamento-projetos.json`, conferido por
-  `tests/python/test_treinamento_projetos.py`) fica no corpo do preparar e é gravado por
+- **A pré-classificação pronta dos treinamentos:** o resultado do cálculo Python (o
+  mesmo `processar_edital` do job, gerado por `scripts/pre_classificacao/gerar_treinamento.py`
+  com `--area projetos` ou `--area saude-indigena` a partir de
+  `tests/fixtures/avaliacao-documental/treinamento-<área>.json`, conferido por
+  `tests/python/test_treinamento_projetos.py` e `test_treinamento_saude_indigena.py`) fica no
+  corpo do preparar e é gravado por
   `private."FC_PRE_CLASSIFICAR_TREINAMENTO"` pelas mesmas RPCs do job
   (`gravar_pre_classificacao_vaga`, `abrir_fichas_pre_classificacao`,
   `finalizar_pre_classificacao`), na execução `treinamento-<id do edital>`. Essa execução fica fora
@@ -998,3 +1010,23 @@ os fictícios. Garantias:
    registro real para ela aborta tudo.
 5. O ensaio confere que regra real não se apaga nem com a marca, que o reinício recusa edital real
    e que nenhuma contagem real muda.
+
+## 17. Otimização do banco (09/10/2026)
+
+Migration `20261009110000_otimizacao_do_banco.sql` (rollback e ensaio com o mesmo nome em
+`supabase/rollback/` e `supabase/ensaios/`). Números do banco no ar desde 02/10/2026 (7,4 dias).
+
+- **Doze índices saem**, nenhum de constraint: iguais a um único que fica
+  (`idx_monitoramento_cronograma_monitoramento`, `idx_perfis_usuarios_user_id`,
+  `idx_analises_editais_ativo_chave`), prefixos de um único (`idx_analises_staging_sync_id`,
+  `idx_analises_staging_sync_entidade`, `IN_FKROTEIROCOMPETENCIA_CO`), sem leitura numa tabela de
+  147 linhas (quatro `idx_monitoramento_indigena_*`) e os dois `*_ordem_todos` de
+  `TB_ANALISE_CURRICULAR` (1 e 4 leituras; 14 → 12 índices). Ensaio: painel de análises e pacote
+  das entrevistas leem menos buffers; atualizar 2.000 análises gera ~10% menos WAL.
+- **`IN_SYNCANALISE_PROCESSADO`** (parcial): o último sync processado
+  (`obter_ultima_conferencia`) deixa de ler `TL_SYNC_ANALISE` inteira (430 → 3–6 buffers).
+- **`sincronizar_entrevistas` só regrava a nota que mudou**: a carga de hora em hora atualizava
+  todas (754 mil atualizações em 7,4 dias). Ensaio com linhas fictícias: carga igual 4 → 0
+  regravações; nota mudada continua gravando. `TB_ENTREVISTA` ainda regrava `CO_SYNC` (é por ele que
+  o fechamento desativa quem saiu da planilha).
+- Comentários que faltavam em doze funções `FC_` e em colunas de tabelas novas.

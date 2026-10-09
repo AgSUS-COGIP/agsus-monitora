@@ -21,7 +21,13 @@ edital, Preparar em passos, a configuração do edital, o parecer pronto e as se
 `src/lib/painel-de-entrevistas.ts`, `src/lib/fila-de-conducao.ts`, `src/lib/digitacao-de-notas.ts`,
 `src/lib/resumo-da-entrevista.ts`, `src/lib/passos-do-preparar.ts`, `src/lib/pendencias-do-roteiro.ts` e
 `src/lib/parecer-da-entrevista.ts`)
-já nascem em TypeScript. O Mapa de Projetos está em TypeScript, incluindo carregador,
+já nascem em TypeScript. A apresentação dos resultados do Painel de entrevistas foi migrada:
+`paineis.tsx` (filtros, indicadores, recorte, gráficos e pendências), `tabela.tsx` e `gaveta.tsx`,
+com contratos em `tipos-do-painel.ts`. A entrada `entrevistas.jsx`, o estado e a normalização
+em `src/lib/entrevistas-do-painel.js` permanecem em JavaScript; as agregações consumidas
+pelos componentes declaram contratos JSDoc. Identificadores externos preservados do JSON
+continuam como `unknown`, e notas e vínculos ausentes são anuláveis. Os casos compilados
+estão em `tests/tipos/painel-de-entrevistas.tsx`. O Mapa de Projetos está em TypeScript, incluindo carregador,
 cache, mapa, lista, balões, integração do editor e regras em `src/lib/visao-geral-da-area.ts`.
 O editor compartilhado pelos dois mapas também está em TypeScript: fila, sugestões, histórico,
 prévia, gravação, modo de edição e regras em `src/lib/editor-de-coordenadas.ts`. As telas principal, nacional e por DSEI da Saúde Indígena também estão em TSX.

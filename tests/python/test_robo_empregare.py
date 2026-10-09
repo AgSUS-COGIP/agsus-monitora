@@ -900,10 +900,11 @@ class FluxoDeUmaVaga(unittest.TestCase):
             {"vaga": "999999103", "origem": "selecao"},
             {"vaga": "999999104", "origem": "pedida"},
             {"vaga": "999999105"},  # banco antes da migration 20261006080000: sem origem = Seleção
+            {"vaga": "999999106", "origem": "ligada"},
         ]
         self.assertEqual(
             self.robo.contagem_por_origem(vagas),
-            "quadro do edital 2 · Seleção 2 · pedidas fora das duas 1",
+            "quadro do edital 2 · Seleção 2 · ligadas ao edital 1 · pedidas fora das fontes 1",
         )
         self.assertEqual(self.robo.contagem_por_origem([]), "—")
         self.assertEqual(self.robo.contagem_por_origem([{"vaga": "1", "origem": "outra"}]), "outra 1")
