@@ -1,4 +1,7 @@
-import { textoDoProgresso } from "../../../lib/avaliacao-documental/ficha.js";
+import {
+  ESCOLHAS_DA_FICHA,
+  textoDoProgresso,
+} from "../../../lib/avaliacao-documental/ficha.js";
 import { Popover } from "../../../ui/index.js";
 import type { Conferencia, EstadoDoPasso, Passo } from "./tipos.ts";
 
@@ -6,7 +9,9 @@ import type { Conferencia, EstadoDoPasso, Passo } from "./tipos.ts";
   O stepper do modo de análise: um passo por item (Identidade · Formação ·
   Conselho · Titulação · Cursos · Experiência) e a Conclusão, com a marca do
   estado (✓ verde, ✕ vermelho, ⊘ cinza, ! âmbar quando falta completar) e a
-  barra de progresso que enche. Clicar vai ao passo. À direita, "Ver todos" /
+  barra de progresso que enche ("X de 6 conferidos": conta só o item com
+  decisão e sem falta, a mesma regra do "!"; passar o mouse no "!" mostra o
+  que falta, a mesma mensagem do item). Clicar vai ao passo. À direita, "Ver todos" /
   "Um por vez" (o modo fica lembrado) e o "?" com os atalhos.
 */
 
@@ -27,10 +32,12 @@ const TEXTO: Record<EstadoDoPasso, string> = {
   NAO_ENVIADO: "não enviado",
 };
 
+const ESCOLHAS = ESCOLHAS_DA_FICHA as unknown as ReadonlyArray<
+  readonly [string, string, string]
+>;
+
 export const ATALHOS: ReadonlyArray<readonly [string, string]> = [
-  ["1", "Conforme"],
-  ["2", "Não conforme"],
-  ["3", "Não enviado"],
+  ...ESCOLHAS.map(([, rotulo, tecla]) => [tecla, rotulo] as const),
   ["J / K", "Próximo / anterior"],
   ["Ctrl+S", "Salvar rascunho"],
   ["Ctrl+Enter", "Concluir e próxima"],
@@ -70,6 +77,9 @@ export function ProgressoDaFicha({
                 data-etapa={p.codigo}
                 data-estado={p.estado}
                 aria-current={p.codigo === atual ? "step" : undefined}
+                title={
+                  p.estado === "pendencia" && p.motivo ? p.motivo : undefined
+                }
                 onClick={() => aoIr(p.codigo)}
               >
                 <span
@@ -80,7 +90,11 @@ export function ProgressoDaFicha({
                   {icone ? <i className={`fa-solid ${icone}`} /> : null}
                 </span>
                 <span className="avd-ficha-etapa-nome">{p.nome}</span>
-                <span className="sr-only"> ({TEXTO[p.estado]})</span>
+                <span className="sr-only">
+                  {" "}
+                  ({TEXTO[p.estado]}
+                  {p.estado === "pendencia" && p.motivo ? `: ${p.motivo}` : ""})
+                </span>
               </button>
             </li>
           );

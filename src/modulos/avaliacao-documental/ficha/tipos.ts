@@ -40,6 +40,8 @@ export type Lancado = {
   nota_ajustada?: number | null;
   justificativas?: string[];
   justificativa_livre?: string;
+  /** Editar nota (a pontuação pelos itens registrados); false = Confere. */
+  edita_nota?: boolean;
 };
 
 export type Titulo = {
@@ -62,7 +64,12 @@ export type Vinculo = {
   aceito?: boolean;
   motivo?: string | null;
 };
-export type ItemLancado = Partial<Titulo> & Curso & Vinculo;
+export type ItemLancado = Partial<Titulo> &
+  Curso &
+  Vinculo & {
+    /** A linha veio da resposta do candidato (o avaliador confere ou corrige). */
+    da_resposta?: boolean;
+  };
 
 export type Lancamento = {
   nivel: string;
@@ -134,7 +141,13 @@ export type LinhaDeResposta = {
 export type EstadoDoPasso =
   "nao_conferido" | "pendencia" | "opcional" | "pronta" | Situacao;
 
-export type Passo = { codigo: string; nome: string; estado: EstadoDoPasso };
+export type Passo = {
+  codigo: string;
+  nome: string;
+  estado: EstadoDoPasso;
+  /** No "!": o que falta (a mesma mensagem do item). */
+  motivo?: string | null;
+};
 
 export type ParteDaNota = {
   bloco: string;
@@ -172,6 +185,8 @@ export type EstadoDaFicha = {
   dados: {
     regra: { configuracao: Regra };
     respostas: Record<string, unknown>;
+    /** Linhas tiradas das respostas pelo job Python, por bloco (20261009190000). */
+    sugestoes?: Record<string, unknown[]>;
     papel?: string;
   };
 };

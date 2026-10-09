@@ -245,7 +245,7 @@ describe("caso TREINO-P02: Inapto com o motivo", () => {
       ["EXPERIENCIA", "comprovado"],
     ]);
     expect(pendencias[2].texto).toBe(
-      "Registre o vínculo comprovado (ou marque Não conforme ou Não enviado).",
+      "Registre ao menos um vínculo com início e fim.",
     );
   });
 
@@ -266,7 +266,7 @@ describe("caso TREINO-P02: Inapto com o motivo", () => {
         bloco: "EXPERIENCIA",
         tipo: "minimo",
         texto:
-          "Experiência mínima de 6 meses não comprovada (comprovado 3 meses): lance os vínculos que comprovam ou marque Não conforme.",
+          "Experiência mínima de 6 meses não comprovada (comprovado 3 meses): registre os vínculos que comprovam ou escolha Não confere.",
       },
     ]);
     expect(

@@ -23,7 +23,9 @@ import {
   proximoPassoPendente,
   respostasDoBloco,
   resumoParaGravar,
-  situacaoDaTecla,
+  escolhaDaTecla,
+  itemConferido,
+  mensagemDoBloco,
   sugereNaoEnviado,
   textoDaAlteracao,
   textoDaSituacaoDaConferencia,
@@ -254,7 +256,7 @@ describe("o que falta para concluir", () => {
     expect(p).toContainEqual({
       bloco: "IDENTIDADE",
       tipo: "situacao",
-      texto: "Marque Conforme, Não conforme ou Não enviado.",
+      texto: "Escolha Confere ou Não confere.",
     });
     expect(p).toContainEqual({
       bloco: "ESCOLARIDADE",
@@ -285,7 +287,7 @@ describe("o que falta para concluir", () => {
       {
         bloco: "CURSOS",
         tipo: "justificativa",
-        texto: "Nota diferente da declarada: escolha a justificativa.",
+        texto: "Pontuação diferente da declarada: escolha a justificativa.",
       },
     ]);
     lanc.blocos.CURSOS = {
@@ -321,7 +323,7 @@ describe("o que falta para concluir", () => {
     ).toContainEqual({
       bloco: "FORMACAO",
       tipo: "nota",
-      texto: "Nota ajustada de 0 a 10.",
+      texto: "Ajuste a pontuação entre 0 e 10.",
     });
   });
 
@@ -347,22 +349,62 @@ describe("o que falta para concluir", () => {
     ).map((p) => `${p.bloco}: ${p.texto}`);
     expect(textos).toEqual(
       expect.arrayContaining([
-        "FORMACAO: Item recusado sem motivo.",
-        "EXPERIENCIA: Vínculo com data de início ou fim inválida.",
-        "CURSOS: Curso sem carga horária.",
+        "FORMACAO: Escolha o motivo da recusa do item.",
+        "EXPERIENCIA: Confira o início e o fim do vínculo.",
+        "CURSOS: Informe a carga horária do curso.",
       ]),
     );
   });
 });
 
 describe("apoio da tela", () => {
-  it("atalhos 1, 2 e 3", () => {
-    expect(["1", "2", "3", "4"].map(situacaoDaTecla)).toEqual([
-      "CONFORME",
-      "NAO_CONFORME",
-      "NAO_ENVIADO",
+  it("atalhos 1, 2 e 3: Confere, Não confere e Editar nota", () => {
+    expect(["1", "2", "3", "4"].map(escolhaDaTecla)).toEqual([
+      "CONFERE",
+      "NAO_CONFERE",
+      "EDITAR",
       null,
     ]);
+  });
+
+  it("uma só mensagem por item: a falta mais útil primeiro", () => {
+    const pendencias = [
+      {
+        bloco: "CURSOS",
+        tipo: "horas",
+        texto: "Informe a carga horária do curso.",
+      },
+      {
+        bloco: "CURSOS",
+        tipo: "comprovado",
+        texto: "Registre ao menos um curso com carga horária.",
+      },
+      { bloco: "CURSOS", tipo: "situacao", texto: "Escolha…" },
+      {
+        bloco: "FORMACAO",
+        tipo: "justificativa",
+        texto: "Pontuação diferente…",
+      },
+    ];
+    expect(mensagemDoBloco(pendencias, "CURSOS")).toBe(
+      "Registre ao menos um curso com carga horária.",
+    );
+    expect(mensagemDoBloco(pendencias, "CURSOS", { comSituacao: true })).toBe(
+      "Escolha…",
+    );
+    expect(mensagemDoBloco(pendencias, "IDENTIDADE")).toBeNull();
+    // Conferido = com decisão e sem falta (o contador e o "!" do stepper).
+    const lanc = {
+      blocos: {
+        CURSOS: { situacao: "CONFORME" },
+        IDENTIDADE: { situacao: "CONFORME" },
+      },
+    };
+    expect(itemConferido({ codigo: "CURSOS" }, lanc, pendencias)).toBe(false);
+    expect(itemConferido({ codigo: "IDENTIDADE" }, lanc, pendencias)).toBe(
+      true,
+    );
+    expect(itemConferido({ codigo: "FORMACAO" }, lanc, pendencias)).toBe(false);
   });
 
   it("justificativas: os motivos do bloco e as observações prontas", () => {
@@ -487,7 +529,7 @@ describe("conferência: em análise, progresso e o que falta", () => {
     expect(textoDaSituacaoDaConferencia(c)).toBe(
       "Em análise · 0 de 4 requisitos conferidos",
     );
-    expect(textoDoProgresso(c)).toBe("0 de 6 itens conferidos");
+    expect(textoDoProgresso(c)).toBe("0 de 6 conferidos");
   });
 
   it("antes de conferir, a nota diferente da declarada não pede justificativa", () => {
@@ -594,7 +636,7 @@ describe("experiência declarada por nível (93/2026)", () => {
     expect(pendenciasDaFicha(COM_EXP, lanc, av, declarada)).toContainEqual({
       bloco: "EXPERIENCIA",
       tipo: "justificativa",
-      texto: "Nota diferente da declarada: escolha a justificativa.",
+      texto: "Pontuação diferente da declarada: escolha a justificativa.",
     });
     expect(resumoParaGravar(av, declarada).declarada.EXPERIENCIA).toBe(15);
   });
@@ -648,12 +690,43 @@ describe("modo de análise: etapas, prévia do parecer e anexos", () => {
     };
     const { pendencias } = conta(lanc);
     expect(etapasDaFicha(REGRA, lanc, pendencias)).toEqual([
-      { codigo: "IDENTIDADE", nome: "Identidade", estado: "CONFORME" },
-      { codigo: "ESCOLARIDADE", nome: "Formação", estado: "pendencia" },
-      { codigo: "REGISTRO_CONSELHO", nome: "Conselho", estado: "NAO_CONFORME" },
-      { codigo: "FORMACAO", nome: "Titulação", estado: "nao_conferido" },
-      { codigo: "CURSOS", nome: "Cursos", estado: "nao_conferido" },
-      { codigo: "EXPERIENCIA", nome: "Experiência", estado: "nao_conferido" },
+      {
+        codigo: "IDENTIDADE",
+        nome: "Identidade",
+        estado: "CONFORME",
+        motivo: null,
+      },
+      {
+        codigo: "ESCOLARIDADE",
+        nome: "Formação",
+        estado: "pendencia",
+        // O "!" diz o que falta: a mesma mensagem do item.
+        motivo: "Escolha o motivo.",
+      },
+      {
+        codigo: "REGISTRO_CONSELHO",
+        nome: "Conselho",
+        estado: "NAO_CONFORME",
+        motivo: null,
+      },
+      {
+        codigo: "FORMACAO",
+        nome: "Titulação",
+        estado: "nao_conferido",
+        motivo: null,
+      },
+      {
+        codigo: "CURSOS",
+        nome: "Cursos",
+        estado: "nao_conferido",
+        motivo: null,
+      },
+      {
+        codigo: "EXPERIENCIA",
+        nome: "Experiência",
+        estado: "nao_conferido",
+        motivo: null,
+      },
     ]);
   });
 

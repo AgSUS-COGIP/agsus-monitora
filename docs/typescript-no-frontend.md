@@ -50,7 +50,7 @@ O assistente da regra da Avaliação documental (`src/modulos/avaliacao-document
 já nasceu em TSX, com as regras em `src/lib/avaliacao-documental/assistente-da-regra.ts`,
 `resumo-da-regra.ts`, `comparar-regras.ts`, `catalogo-de-desempate.ts`, `pendencias-do-salvar.ts` e os
 contratos em `tipos-da-regra.ts`; a prévia "Testar com um candidato fictício" está em `previa.tsx`.
-Na ficha, o Apurado de partida e o efeito da decisão nele estão em `apurado-da-ficha.ts`.
+Na ficha, as escolhas de cada item (Confere, Não confere, Editar nota) e o que gravam estão em `apurado-da-ficha.ts`.
 
 A ficha de notas de Conduzir entrevistas está em `src/modulos/entrevistas/ficha.tsx`,
 com contratos do estado local e do salvamento em `tipos-da-ficha.ts`. As regras de cálculo e de configuração em

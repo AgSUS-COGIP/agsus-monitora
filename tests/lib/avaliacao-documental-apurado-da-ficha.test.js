@@ -3,6 +3,9 @@ import {
   abreComLinhaNova,
   apuradoDoBloco,
   blocoComDecisao,
+  blocoComEscolha,
+  escolhaDoBloco,
+  lancamentoComEscolha,
   tituloDaResposta,
 } from "../../src/lib/avaliacao-documental/apurado-da-ficha.ts";
 import {
@@ -87,13 +90,31 @@ describe("apurado da ficha", () => {
 });
 
 describe("registro obrigatório dos itens", () => {
-  it("abre com linha nova só com declarado > 0, lista vazia e sem Não conforme/Não enviado", () => {
-    expect(abreComLinhaNova(CURSOS, lancamento(), declarada)).toBe(true);
+  it("abre com linha nova no Confere com declarado > 0 (ou no Editar), lista vazia", () => {
+    const conferido = lancamento({ CURSOS: { situacao: "CONFORME" } });
+    // Sem escolha, a lista não aparece: nada abre.
+    expect(abreComLinhaNova(CURSOS, lancamento(), declarada)).toBe(false);
+    expect(abreComLinhaNova(CURSOS, conferido, declarada)).toBe(true);
+    // Rascunho antigo, Conforme sem item: abre igual.
     expect(
-      abreComLinhaNova(CURSOS, lancamento(), { parciais: { CURSOS: 0 } }),
+      abreComLinhaNova(
+        CURSOS,
+        lancamento({ CURSOS: { situacao: "CONFORME", nota_ajustada: 3 } }),
+        declarada,
+      ),
+    ).toBe(true);
+    expect(
+      abreComLinhaNova(
+        CURSOS,
+        lancamento({ CURSOS: { situacao: "CONFORME", edita_nota: true } }),
+        { parciais: { CURSOS: 0 } },
+      ),
+    ).toBe(true);
+    expect(
+      abreComLinhaNova(CURSOS, conferido, { parciais: { CURSOS: 0 } }),
     ).toBe(false);
     expect(
-      abreComLinhaNova(CURSOS, lancamento({}, { cursos: [{}] }), declarada),
+      abreComLinhaNova(CURSOS, { ...conferido, cursos: [{}] }, declarada),
     ).toBe(false);
     expect(
       abreComLinhaNova(
@@ -121,8 +142,7 @@ describe("registro obrigatório dos itens", () => {
   });
 
   it("Conforme com declarado > 0 pede um item completo e aceito", () => {
-    const texto =
-      "Registre o curso comprovado (ou marque Não conforme ou Não enviado).";
+    const texto = "Registre ao menos um curso com carga horária.";
     expect(faltaDoComprovado(CURSOS, lancamento(), declarada)).toBe(texto);
     // Linha vazia ou recusada não conta.
     expect(
@@ -219,5 +239,132 @@ describe("registro obrigatório dos itens", () => {
       "EVENTO",
       "OUTRA",
     ]);
+  });
+});
+
+describe("as três escolhas: Confere, Não confere e Editar nota", () => {
+  const escolher = (l, escolha, extra = {}) =>
+    blocoComEscolha({
+      bloco: CURSOS,
+      lancamento: l,
+      escolha,
+      declarada,
+      ...extra,
+    });
+
+  it("Confere aceita o declarado: pontuação = declarado, sem justificativa", () => {
+    expect(
+      escolher(
+        lancamento({
+          CURSOS: { justificativas: ["X"], justificativa_livre: "t" },
+        }),
+        "CONFERE",
+      ),
+    ).toEqual({
+      situacao: "CONFORME",
+      motivos: [],
+      edita_nota: false,
+      nota_ajustada: 3,
+      justificativas: [],
+      justificativa_livre: "",
+    });
+  });
+
+  it("Não confere zera; 'não enviou' vira NAO_ENVIADO e os motivos ficam", () => {
+    const nao = escolher(
+      lancamento({ CURSOS: { motivos: ["M1"], edita_nota: true } }),
+      "NAO_CONFERE",
+    );
+    expect(nao).toMatchObject({
+      situacao: "NAO_CONFORME",
+      nota_ajustada: 0,
+      edita_nota: true,
+    });
+    expect(nao.motivos).toEqual(["M1"]);
+    expect(
+      escolher(lancamento({ CURSOS: nao }), "NAO_CONFERE", { naoEnviou: true }),
+    ).toMatchObject({
+      situacao: "NAO_ENVIADO",
+      nota_ajustada: 0,
+      motivos: ["M1"],
+    });
+  });
+
+  it("Editar nota: a pontuação vem do calculado; o ajuste de quem já editava fica", () => {
+    const editar = escolher(
+      lancamento({ CURSOS: { situacao: "CONFORME", nota_ajustada: 3 } }),
+      "EDITAR",
+    );
+    expect(editar).toMatchObject({
+      situacao: "CONFORME",
+      edita_nota: true,
+      nota_ajustada: null,
+    });
+    expect(
+      escolher(
+        lancamento({
+          CURSOS: { situacao: "CONFORME", edita_nota: true, nota_ajustada: 2 },
+        }),
+        "EDITAR",
+      ).nota_ajustada,
+    ).toBe(2);
+    // Desmarcar tira a escolha e o ajuste.
+    const nada = escolher(lancamento({ CURSOS: editar }), null);
+    expect(nada.situacao).toBeNull();
+    expect(nada.nota_ajustada).toBeNull();
+    expect("edita_nota" in nada).toBe(false);
+  });
+
+  it("blocos que não pontuam: só Confere e Não confere, sem nota", () => {
+    const doc = { codigo: "IDENTIDADE", tipo: "DOCUMENTO" };
+    expect(
+      blocoComEscolha({
+        bloco: doc,
+        lancamento: lancamento(),
+        escolha: "CONFERE",
+        declarada,
+      }),
+    ).toEqual({ situacao: "CONFORME", motivos: [] });
+    expect(escolhaDoBloco(doc, { situacao: "CONFORME" }, declarada, null)).toBe(
+      "CONFERE",
+    );
+  });
+
+  it("a escolha gravada; rascunhos de antes pela pontuação (igual ao declarado = Confere)", () => {
+    const de = (lancado, calculado = 0) =>
+      escolhaDoBloco(CURSOS, lancado, declarada, calculado);
+    expect(de({})).toBeNull();
+    expect(de({ situacao: "NAO_ENVIADO" })).toBe("NAO_CONFERE");
+    expect(
+      de({ situacao: "CONFORME", edita_nota: true, nota_ajustada: 3 }),
+    ).toBe("EDITAR");
+    expect(
+      de({ situacao: "CONFORME", edita_nota: false, nota_ajustada: 1 }),
+    ).toBe("CONFERE");
+    // Rascunho antigo: o Declarado gravado como ajuste do Apurado = Confere.
+    expect(de({ situacao: "CONFORME", nota_ajustada: 3 })).toBe("CONFERE");
+    // Rascunho da tela anterior: o Apurado pelos itens, diferente = Editar.
+    expect(de({ situacao: "CONFORME" }, 1)).toBe("EDITAR");
+    expect(de({ situacao: "CONFORME" }, 3)).toBe("CONFERE");
+  });
+
+  it("Confere com declarado > 0 já abre a linha; Não confere não abre nada", () => {
+    const comLinha = lancamentoComEscolha({
+      bloco: CURSOS,
+      lancamento: lancamento(),
+      escolha: "CONFERE",
+      declarada,
+      respostas: ['"3 pontos"'],
+    });
+    expect(comLinha.cursos).toEqual([{ nome: "", horas: "", aceito: true }]);
+    expect(
+      lancamentoComEscolha({
+        bloco: CURSOS,
+        lancamento: lancamento(),
+        escolha: "NAO_CONFERE",
+        declarada,
+        respostas: [],
+      }).cursos,
+    ).toEqual([]);
   });
 });
