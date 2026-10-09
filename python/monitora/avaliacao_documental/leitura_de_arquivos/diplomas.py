@@ -50,7 +50,8 @@ _CURSO = re.compile(
     r"especializacao|mestrado|doutorado|residencia|graduacao|curso superior)\s+(?:de\s+|em\s+|no\s+curso\s+de\s+)"
 )
 _FIM_DO_CURSO = re.compile(
-    r"[,;.\"“”:=|«»]|\s(?:a|ao|aos|pela?|na|no|com|em\s+\d|por\s+ter|eixo|nos\s+termos|de\s+acordo|conforme|tendo)"
+    r"[,;.\"“”:=|«»]|\s(?:a|ao|aos|pela?|na|no|com|coma|em\s+\d|em\s+conformidade|por\s+ter|eixo|nos\s+termos|"
+    r"de\s+acordo|conforme|tendo|resolucao)"
     r"(?![a-z])|\s(?:conferid|outorgad|realizad|habilitac|modalidad|reconhecid|registrad|concluid)"
 )
 _NAO_E_CURSO = re.compile(r"certific|declara|diploma|universidade|faculdade|reitor|registr|portaria")

@@ -30,4 +30,4 @@ scripts/robo-empregare/requirements.txt). Testes: tests/python/test_leitura_de_a
 """
 
 # Mudou a interpretação → suba a versão: o robô relê o que foi lido com versão anterior.
-VERSAO_DO_EXTRATOR = "2026.10.2"
+VERSAO_DO_EXTRATOR = "2026.10.3"

@@ -834,3 +834,71 @@ def test_campo_livre_nunca_leva_o_nome_do_candidato():
     assert sem_nome_de_pessoa("Fundacao Oswaldo Cruz", NOME, estrito=False) == "Fundacao Oswaldo Cruz"
     assert sem_nome_de_pessoa("Maria Exemplo da Silva", NOME) is None
     assert sem_nome_de_pessoa("Saude da Familia", NOME) == "Saude da Familia"
+
+
+# ── segunda rodada (lote novo do 93/2026) ────────────────────────────────────
+
+
+def test_cargo_com_de_na_frente():
+    from monitora.avaliacao_documental.leitura_de_arquivos.experiencia import limpar_cargo
+
+    assert limpar_cargo("de TECNICO DE ENFERMAGEM") == ("Técnico de enfermagem", None)
+    assert limpar_cargo("de Técnico") == ("Técnico", None)
+
+
+def test_ctps_emissao_rotulada_no_topo_e_vizinho_com_o_mesmo_cargo():
+    arquivo = pdf(
+        [
+            "Carteira de Trabalho Digital",
+            "Documento emitido em 27/07/2026",
+            "Empregador: Caixa de Exemplo dos Funcionarios",
+            "Cargo: MEDICO DO TRABALHO 4 HORAS 20",
+            "Data de admissao: 02/04/2026",
+            "Cargo de MEDICO DO TRABALHO 4 HORAS 20",
+            "Data de admissao: 24/08/2022",
+            "Data de desligamento: 01/04/2026",
+            "Nascimento 07/07/1979",
+        ]
+    )
+    r = ler_documento(arquivo, "VINCULOS", NOME, hoje=HOJE, ocr=None)
+    atual, anterior = r["itens"]
+    assert (atual["atual"], atual["fim"], atual["dias_ate"]) == (True, None, "2026-07-27")
+    assert anterior["empregador"] == "Caixa de Exemplo dos Funcionarios"
+    assert anterior["cargo"] == "Médico do trabalho 4 horas 20"
+    assert [a["codigo"] for a in atual["alertas"]] == []
+
+
+def test_vinculos_com_empregador_nao_lido_sao_concomitantes_e_nao_sobrepostos():
+    from monitora.avaliacao_documental.leitura_de_arquivos.experiencia import sobrepostos
+
+    itens = [
+        {"tipo": "VINCULO", "empregador": "Hospital A", "inicio": "2020-01-01", "fim": None, "atual": True},
+        {"tipo": "VINCULO", "empregador": None, "inicio": "2024-01-01", "fim": None, "atual": True},
+        {"tipo": "VINCULO", "empregador": "Hospital A", "inicio": "2021-01-01", "fim": "2021-12-31", "atual": False},
+    ]
+    assert sobrepostos(itens, HOJE) == {0: "PERIODO_SOBREPOSTO", 1: "PERIODO_CONCOMITANTE", 2: "PERIODO_SOBREPOSTO"}
+
+
+def test_curso_do_certificado_para_na_barra_e_instituicao_nao_e_esta():
+    arquivo = pdf(
+        [
+            "CERTIFICADO",
+            "Certificamos que Maria Exemplo da Silva concluiu o curso Primeiros Socorros | Curso Online | 2023,",
+            "com carga horaria de 10 horas, emitido por esta instituicao. Exemplo, 04/01/2026",
+        ]
+    )
+    (item,) = ler_documento(arquivo, "CURSOS", NOME, hoje=HOJE, ocr=None)["itens"]
+    assert item["curso"] == "Primeiros Socorros"
+    assert not (item["instituicao"] or "").lower().startswith("esta")
+
+
+def test_curso_do_diploma_para_em_conformidade():
+    arquivo = pdf(
+        [
+            "CENTRO UNIVERSITARIO DE EXEMPLO",
+            "confere a Maria Exemplo da Silva o titulo de Especialista em ERGONOMIA em conformidade coma Resolucao",
+            "CNE/CES n 1. Exemplo, 10 de marco de 2020.",
+        ]
+    )
+    (item,) = ler_documento(arquivo, "TITULOS", NOME, hoje=HOJE, ocr=None)["itens"]
+    assert item["curso"] == "ERGONOMIA"

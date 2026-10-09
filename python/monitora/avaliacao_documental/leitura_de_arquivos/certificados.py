@@ -58,7 +58,7 @@ _CURSO = (
 )
 _NAO_E_CURSO = re.compile(r"certific|declara|confere|^de\s+\w+$|^(?:conclusao|graduacao)$")
 _FIM_DO_CURSO = re.compile(
-    r"[,;\n]|\s(?:com\s+carga|com\s+(?:a\s+)?dura|carga\s+horaria|realizad|promovid|oferecid|ministrad|"
+    r"[,;\n|]|\s(?:com\s+carga|com\s+(?:a\s+)?dura|carga\s+horaria|realizad|promovid|oferecid|ministrad|"
     r"no\s+periodo|na\s+modalidade|pela?\s+(?:universidade|fundacao|escola|instituto)|em\s+\d|de\s+\d|"
     r"totalizando|no\s+dia|nos\s+dias|com\s+aproveitamento|conforme|sob\s+a|carga)"
 )
@@ -70,6 +70,7 @@ _INSTITUICAO = re.compile(
     r"senac|senai|sesi|sebrae|secretaria|ministerio|hospital|conselho|associacao|sociedade|enap|"
     r"organizacao pan-americana|opas|unasus|telessaude|avasus|cruz vermelha)(?![a-z])"
 )
+_ESTA_INSTITUICAO = re.compile(r"^(?:esta|este|nesta|neste|desta|deste)(?![a-z])")
 _PERIODO = re.compile(r"(?:no\s+periodo\s+de|de|entre)\s*$")
 
 MAXIMO_DE_CERTIFICADOS = 30
@@ -132,7 +133,7 @@ def instituicao_do_texto(original, dobrado):
     if m:
         fim = re.search(r"[,;\n]|\s(?:com|no|na|em|de\s+\d|carga)\s", dobrado[m.end() :])
         nome = trecho(original, m.end(), m.end() + (fim.start() if fim else 100), 120)
-        if len(nome) >= 3:
+        if len(nome) >= 3 and not _ESTA_INSTITUICAO.match(dobrar(nome)):
             return nome
     m = _INSTITUICAO.search(dobrado)
     if m:

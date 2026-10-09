@@ -25,10 +25,11 @@ também o "vínculo" que começa na própria data de emissão sem empregador (o
 rodapé "emitido em") e o repetido sem empregador com o mesmo início de outro.
 
 Sobreposição (`sobrepostos`): só conta quando dois vínculos dividem mais de um
-dia (o atual que começa no dia em que o anterior acabou não conta). Com
-empregadores diferentes é PERIODO_CONCOMITANTE (aviso leve: dois empregos ao
-mesmo tempo podem ser legítimos); com o mesmo empregador, ou sem saber, é
-PERIODO_SOBREPOSTO.
+dia (o atual que começa no dia em que o anterior acabou não conta). Com o
+mesmo empregador é PERIODO_SOBREPOSTO; com empregadores diferentes (ou um
+deles não lido) é PERIODO_CONCOMITANTE, aviso leve: dois empregos ao mesmo
+tempo podem ser legítimos. Na CTPS, o vínculo sem empregador vizinho de outro
+com o MESMO cargo fica com o empregador dele.
 """
 
 import re
@@ -139,7 +140,9 @@ def limpar_cargo(valor):
     valor = re.sub(r"(?i)(?<![a-zà-ÿ])cbo(?![a-zà-ÿ])\s*:?", " ", valor)
     valor = numa_linha(_CODIGO_NA_FRENTE.sub("", valor)).strip(" -–:;,.")
     palavras = valor.split()
-    while palavras and _NAO_E_CARGO.match(dobrar(palavras[0]).strip(".:")):
+    while palavras and (
+        _NAO_E_CARGO.match(dobrar(palavras[0]).strip(".:")) or dobrar(palavras[0]) in ("de", "da", "do")
+    ):
         palavras.pop(0)
     valor = " ".join(palavras).strip(" -–:;,.")
     if not re.search(r"[A-Za-zÀ-ÿ]{3}", valor):
@@ -192,9 +195,20 @@ def carga_semanal(dobrado):
     return horas if 1 <= horas <= 80 else None
 
 
+_EMISSAO = re.compile(
+    r"(?:emitid[oa]|gerad[oa]|expedid[oa]|impress[oa])\s+em|data\s+(?:de\s+|da\s+)?(?:emissao|expedicao|impressao)"
+    r"|emissao\s*:?"
+)
+
+
 def data_de_emissao(dobrado, datas):
-    """A data do documento: a última data completa do texto (a do local e data da assinatura)."""
+    """A data do documento: a rotulada ("Emitido em", "Data de emissão") ou a última data completa do
+    texto (a do local e data da assinatura)."""
     completas = [d for d in datas if d.dia]
+    for e in _EMISSAO.finditer(dobrado):
+        rotulada = _data_depois(completas, e.end(), 25)
+        if rotulada:
+            return rotulada.primeiro_dia()
     return completas[-1].primeiro_dia() if completas else None
 
 
@@ -404,6 +418,18 @@ def _sem_repetidos(itens, emissao):
     return saida
 
 
+def _empregador_do_vizinho(itens):
+    """CTPS: o vínculo sem empregador logo antes/depois de outro com o mesmo cargo fica com o empregador dele."""
+    for k, it in enumerate(itens):
+        if it["empregador"] or not it["cargo"]:
+            continue
+        cargo = dobrar(limpar_cargo(it["cargo"])[0] or "")
+        for vizinho in itens[max(0, k - 1) : k] + itens[k + 1 : k + 2]:
+            if vizinho["empregador"] and cargo and dobrar(limpar_cargo(vizinho["cargo"])[0] or "") == cargo:
+                it["empregador"] = vizinho["empregador"]
+                break
+
+
 def vinculos(paginas, nome_do_candidato=None, hoje=None):
     """Os itens VINCULO do arquivo, na ordem do texto, sem repetição."""
     hoje = hoje or date.today()
@@ -421,6 +447,8 @@ def vinculos(paginas, nome_do_candidato=None, hoje=None):
     cabecalho = empregador_do_cabecalho(original, dobrado)
     emissao = data_de_emissao(dobrado, datas)
     itens = _sem_repetidos([it for it in itens if not (it["fim"] and it["fim"] < it["inicio"])], emissao)
+    if documento == "CTPS":
+        _empregador_do_vizinho(itens)
     vistos, saida = set(), []
     for it in itens:
         chave = (it["inicio"], it["fim"])
@@ -447,8 +475,9 @@ def vinculos(paginas, nome_do_candidato=None, hoje=None):
 
 
 def _mesmo_empregador(a, b):
+    """Os dois empregadores conhecidos e iguais (sem saber um deles, não dá para dizer que é o mesmo)."""
     x, y = dobrar(a or "").strip(), dobrar(b or "").strip()
-    return not x or not y or x == y or x.startswith(y) or y.startswith(x)
+    return bool(x and y) and (x == y or x.startswith(y) or y.startswith(x))
 
 
 def _dia(valor):
@@ -460,7 +489,7 @@ def _dia(valor):
 
 def sobrepostos(itens, hoje=None):
     """{índice: código} dos vínculos que dividem mais de um dia com outro do arquivo:
-    PERIODO_SOBREPOSTO (mesmo empregador ou sem saber) ou PERIODO_CONCOMITANTE (empregadores diferentes)."""
+    PERIODO_SOBREPOSTO (o mesmo empregador) ou PERIODO_CONCOMITANTE (empregadores diferentes ou não lidos)."""
     hoje = hoje or date.today()
     periodos = []
     for i, it in enumerate(itens):
