@@ -4,7 +4,7 @@ import { describe, expect, it } from "vitest";
 /*
   Migration da ficha com a resposta vigente do questionário (ainda não
   aplicada: o ensaio begin…rollback está em supabase/ensaios/). Invariantes
-  estáticas: a vigente é a de maior id numa função privada (MAD), a ficha
+  estáticas: a vigente é a mais nova com pergunta lida numa função privada (MAD), a ficha
   devolve respostas e anexos só dela e os outros envios à parte (o resto igual
   a 20261009190000), rollback com o corpo de antes e ensaio com o mesmo corpo.
 */
@@ -28,14 +28,14 @@ const OBTER =
 const VIGENTE = 'private."FC_RESPOSTA_VIGENTE_EMPREGARE"(uuid)';
 
 describe("ficha com a resposta vigente do questionário", () => {
-  it("a vigente é a de maior id, numa função privada comentada e sem grant", () => {
+  it("a vigente é a mais nova com pergunta lida (a vazia só sem outra), numa função privada comentada e sem grant", () => {
     const funcao = corpoDaFuncao(
       MIGRATION,
       'create function private."FC_RESPOSTA_VIGENTE_EMPREGARE"(p_candidato uuid)',
     );
     expect(funcao).toContain("set search_path to ''");
     expect(funcao).toContain(
-      'order by r."CO_RESPOSTA_QUESTIONARIO"::numeric desc',
+      'order by (r."QT_PERGUNTA" > 0) desc, r."CO_RESPOSTA_QUESTIONARIO"::numeric desc',
     );
     expect(funcao).toContain("limit 1;");
     expect(MIGRATION).toContain(`comment on function ${VIGENTE} is`);
@@ -104,5 +104,8 @@ describe("ficha com a resposta vigente do questionário", () => {
     expect(ENSAIO.trimEnd().endsWith("rollback;")).toBe(true);
     expect(ENSAIO).not.toMatch(/^\s*commit\s*;/im);
     expect(ENSAIO).toContain("'6452621'");
+    expect(ENSAIO).toContain(
+      "E4: a resposta vazia aparece nos envios anteriores",
+    );
   });
 });

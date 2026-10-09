@@ -18,8 +18,9 @@ Opção de pontuação ("5 pontos", "De 40 a 79 horas", "Mais de 120h"),
 de fora (a tela abre a linha vazia, como antes).
 
 As colunas são as da exportação (DS_COLUNA_ORIGINAL, uma linha por
-candidato), que já é a resposta vigente do questionário — a mais recente, a
-mesma da ficha (20261009210000) — mesmo de quem respondeu mais de uma vez.
+candidato), que traz o questionário mais novo — mesmo de quem respondeu mais
+de uma vez. Quem não respondeu o retificado vem com "--" e fica sem sugestão
+(a ficha mostra a resposta anterior dele, 20261009210000).
 
 O job da pré-classificação (scripts/pre_classificacao/pre_classificacao.py)
 calcula por candidato e grava (gravar_sugestoes_da_ficha, migration

@@ -5,13 +5,17 @@
   e execute. Ele abre uma transação, aplica o corpo da migration (copiado sem
   mudança, sem o begin/commit dela) e confere:
     E1  FC_RESPOSTA_VIGENTE_EMPREGARE privada e, em todo candidato com 2+
-        respostas, a de maior id (numérico);
+        respostas, a de maior id (numérico) entre as com pergunta lida; quem
+        tem a mais nova vazia fica com a anterior respondida;
     E2  a ficha de um candidato com 2+ respostas (o 6452621 da vaga 180231, se
         houver ficha): empregare.respostas com uma só (a vigente), anexos só
         dela e sem pergunta repetida, envios_anteriores com as outras e os
         arquivos de cada uma;
     E3  a ficha de um candidato com uma resposta: envios_anteriores vazio e os
-        mesmos anexos de antes.
+        mesmos anexos de antes;
+    E4  a ficha de um candidato com a resposta mais nova vazia (questionário
+        retificado não respondido): a vigente é a anterior respondida, e a
+        vazia não aparece nos envios anteriores.
   Termina em ROLLBACK: nada fica gravado.
 */
 begin;
@@ -36,15 +40,16 @@ language sql
 stable
 set search_path to ''
 as $function$
-  -- A de maior id da Empregare (sequencial; o JSON não traz data de envio).
+  -- A mais nova com pergunta lida (id da Empregare sequencial; o JSON não traz data de envio);
+  -- a resposta vazia (questionário retificado não respondido) só vale se não houver outra.
   select r."CO_EMPREGARE_RESPOSTA"
     from public."TB_EMPREGARE_RESPOSTA" r
    where r."CO_EMPREGARE_CANDIDATO" = p_candidato
-   order by r."CO_RESPOSTA_QUESTIONARIO"::numeric desc
+   order by (r."QT_PERGUNTA" > 0) desc, r."CO_RESPOSTA_QUESTIONARIO"::numeric desc
    limit 1;
 $function$;
 comment on function private."FC_RESPOSTA_VIGENTE_EMPREGARE"(uuid) is
-  'A resposta vigente do questionário de um candidato (TB_EMPREGARE_RESPOSTA): a de maior CO_RESPOSTA_QUESTIONARIO (numérico; o id da Empregare é sequencial e GetRespostaDetails não traz data de envio). É a que a exportação (Excel) traz. Null sem resposta.';
+  'A resposta vigente do questionário de um candidato (TB_EMPREGARE_RESPOSTA): a de maior CO_RESPOSTA_QUESTIONARIO (numérico; o id da Empregare é sequencial e GetRespostaDetails não traz data de envio) entre as que têm pergunta lida (QT_PERGUNTA > 0); só se nenhuma tiver, a de maior id. Null sem resposta.';
 revoke all on function private."FC_RESPOSTA_VIGENTE_EMPREGARE"(uuid) from public, anon, authenticated;
 
 -- 2. A ficha: só a vigente; as outras em envios_anteriores -----------------------------
@@ -158,41 +163,54 @@ begin
 end;
 $function$;
 comment on function public.obter_ficha_analise(uuid) is
-  'A ficha para analisar (json): o cabeçalho (sem CPF nem contato), o lançamento e o resultado gravados, a regra com que é analisada (a vigente; a da conclusão, se concluída — AM-2.3), a nota mínima e os níveis da regra de classificação, a nota declarada e a ART da pré-classificação, as respostas da Empregare SÓ das perguntas que a regra liga, os links da Empregare capturados pelo robô (empregare: link_candidato da página de detalhes, vaga_interno e link_vaga das candidaturas, respostas [{resposta, link_impressao, perguntas, anexos, capturado_em}] e anexos [{resposta, pergunta, arquivo, ordem, enunciado, coluna, tipo, link}] SÓ da resposta vigente do questionário — a de maior id, FC_RESPOSTA_VIGENTE_EMPREGARE — e envios_anteriores [{resposta, link_impressao, perguntas, capturado_em, arquivos: [{pergunta, arquivo, ordem, enunciado, coluna, tipo, link}]}] com as outras, da mais nova para a mais antiga (20261009210000); dado restrito, só aqui), as sugestões de títulos, cursos e vínculos tiradas das respostas pelo job Python (20261009190000), o histórico (até 200, com as alterações) e se quem chama pode editar (reserva vigente, em análise) ou reabrir (coordenação, concluída). Vê: coordenação e revisão; o analista, só nas vagas dele; o leitor, só concluída.';
+  'A ficha para analisar (json): o cabeçalho (sem CPF nem contato), o lançamento e o resultado gravados, a regra com que é analisada (a vigente; a da conclusão, se concluída — AM-2.3), a nota mínima e os níveis da regra de classificação, a nota declarada e a ART da pré-classificação, as respostas da Empregare SÓ das perguntas que a regra liga, os links da Empregare capturados pelo robô (empregare: link_candidato da página de detalhes, vaga_interno e link_vaga das candidaturas, respostas [{resposta, link_impressao, perguntas, anexos, capturado_em}] e anexos [{resposta, pergunta, arquivo, ordem, enunciado, coluna, tipo, link}] SÓ da resposta vigente do questionário — a mais nova com pergunta lida, FC_RESPOSTA_VIGENTE_EMPREGARE — e envios_anteriores [{resposta, link_impressao, perguntas, capturado_em, arquivos: [{pergunta, arquivo, ordem, enunciado, coluna, tipo, link}]}] com as outras, da mais nova para a mais antiga (20261009210000); dado restrito, só aqui), as sugestões de títulos, cursos e vínculos tiradas das respostas pelo job Python (20261009190000), o histórico (até 200, com as alterações) e se quem chama pode editar (reserva vigente, em análise) ou reabrir (coordenação, concluída). Vê: coordenação e revisão; o analista, só nas vagas dele; o leitor, só concluída.';
 revoke all on function public.obter_ficha_analise(uuid) from public, anon;
 grant execute on function public.obter_ficha_analise(uuid) to authenticated;
 -- ═══ CORPO DA MIGRATION (fim) ═══
 
--- E1: a vigente é a de maior id ----------------------------------------------------------
+-- E1: a vigente é a mais nova com pergunta lida -----------------------------------------
 do $$
 declare
   v_erradas integer;
   v_com_duas integer;
+  v_nova_vazia integer;
 begin
   if has_function_privilege('authenticated', 'private."FC_RESPOSTA_VIGENTE_EMPREGARE"(uuid)', 'execute') then
     raise exception 'E1: authenticated executa FC_RESPOSTA_VIGENTE_EMPREGARE';
   end if;
   select count(*), count(*) filter (
-           where private."FC_RESPOSTA_VIGENTE_EMPREGARE"(x.cand) is distinct from x.maior)
-    into v_com_duas, v_erradas
+           where private."FC_RESPOSTA_VIGENTE_EMPREGARE"(x.cand) is distinct from x.maior
+              or (select v."QT_PERGUNTA" from public."TB_EMPREGARE_RESPOSTA" v
+                   where v."CO_EMPREGARE_RESPOSTA" = private."FC_RESPOSTA_VIGENTE_EMPREGARE"(x.cand)) = 0 and x.nova_vazia),
+         count(*) filter (where x.nova_vazia)
+    into v_com_duas, v_erradas, v_nova_vazia
     from (select r."CO_EMPREGARE_CANDIDATO" as cand,
-                 (array_agg(r."CO_EMPREGARE_RESPOSTA" order by r."CO_RESPOSTA_QUESTIONARIO"::numeric desc))[1] as maior
+                 (array_agg(r."CO_EMPREGARE_RESPOSTA" order by r."QT_PERGUNTA" = 0, r."CO_RESPOSTA_QUESTIONARIO"::numeric desc))[1] as maior,
+                 (array_agg(r."QT_PERGUNTA" order by r."CO_RESPOSTA_QUESTIONARIO"::numeric desc))[1] = 0
+                   and max(r."QT_PERGUNTA") > 0 as nova_vazia
             from public."TB_EMPREGARE_RESPOSTA" r
            group by 1 having count(*) > 1) x;
   if v_erradas > 0 then
     raise exception 'E1: % de % candidatos com a vigente errada', v_erradas, v_com_duas;
   end if;
-  raise notice 'E1 ok: % candidatos com 2+ respostas', v_com_duas;
+  raise notice 'E1 ok: % candidatos com 2+ respostas, % com a mais nova vazia (ficam com a anterior)', v_com_duas, v_nova_vazia;
 end;
 $$;
 
 -- Fichas para E2 e E3: lidas como quem coordena (a RPC exige poder ver a ficha).
 create temporary table ensaio_ficha on commit drop as
 select f."CO_FICHA_ANALISE" as ficha, c."CO_CANDIDATO_EMPREGARE" as codigo,
-       (select count(*) from public."TB_EMPREGARE_RESPOSTA" r
-         where r."CO_EMPREGARE_CANDIDATO" = c."CO_EMPREGARE_CANDIDATO") as respostas
+       x.respostas, x.respondida, x.qt_nova = 0 and x.qt_max > 0 as nova_vazia
   from public."TB_FICHA_ANALISE" f
-  join public."TB_EMPREGARE_CANDIDATO" c on c."CO_EMPREGARE_CANDIDATO" = f."CO_EMPREGARE_CANDIDATO";
+  join public."TB_EMPREGARE_CANDIDATO" c on c."CO_EMPREGARE_CANDIDATO" = f."CO_EMPREGARE_CANDIDATO"
+  cross join lateral (
+    select count(*) as respostas,
+           (array_agg(r."CO_RESPOSTA_QUESTIONARIO" order by r."QT_PERGUNTA" = 0,
+                      r."CO_RESPOSTA_QUESTIONARIO"::numeric desc))[1] as respondida,
+           (array_agg(r."QT_PERGUNTA" order by r."CO_RESPOSTA_QUESTIONARIO"::numeric desc))[1] as qt_nova,
+           max(r."QT_PERGUNTA") as qt_max
+      from public."TB_EMPREGARE_RESPOSTA" r
+     where r."CO_EMPREGARE_CANDIDATO" = c."CO_EMPREGARE_CANDIDATO") x;
 grant select on ensaio_ficha to authenticated;
 grant usage on schema private to authenticated;
 grant execute on all functions in schema private to authenticated;
@@ -227,6 +245,9 @@ begin
               where (x ->> 'resposta')::numeric >= (v_e -> 'respostas' -> 0 ->> 'resposta')::numeric) then
     raise exception 'E2: envio anterior mais novo que a vigente';
   end if;
+  if exists (select 1 from jsonb_array_elements(v_e -> 'envios_anteriores') x where (x ->> 'perguntas')::int = 0) then
+    raise exception 'E2: envio vazio nos anteriores';
+  end if;
   raise notice 'E2 ok';
 end;
 $$;
@@ -248,6 +269,33 @@ begin
       jsonb_array_length(v_e -> 'envios_anteriores');
   end if;
   raise notice 'E3 ok';
+end;
+$$;
+
+-- E4: candidato com a resposta mais nova vazia: a vigente é a anterior respondida, sem envios anteriores vazios
+do $$
+declare
+  v_ficha uuid;
+  v_e jsonb;
+  v_respondida text;
+begin
+  select e.ficha, e.respondida into v_ficha, v_respondida
+    from ensaio_ficha e
+   where e.respostas > 1 and e.nova_vazia
+   order by e.ficha limit 1;
+  if v_ficha is null then
+    raise notice 'E4 pulado: nenhuma ficha de candidato com a resposta mais nova vazia';
+    return;
+  end if;
+  v_e := public.obter_ficha_analise(v_ficha)::jsonb -> 'empregare';
+  if v_e -> 'respostas' -> 0 ->> 'resposta' is distinct from v_respondida
+     or (v_e -> 'respostas' -> 0 ->> 'perguntas')::int = 0 then
+    raise exception 'E4: vigente % (esperava a respondida %)', v_e -> 'respostas' -> 0 ->> 'resposta', v_respondida;
+  end if;
+  if exists (select 1 from jsonb_array_elements(v_e -> 'envios_anteriores') x where (x ->> 'perguntas')::int = 0) then
+    raise exception 'E4: a resposta vazia aparece nos envios anteriores';
+  end if;
+  raise notice 'E4 ok';
 end;
 $$;
 

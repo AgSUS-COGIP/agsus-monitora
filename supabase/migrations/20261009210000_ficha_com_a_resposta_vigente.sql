@@ -11,15 +11,16 @@
   09/10/2026: 223 de 4.889 candidatos com 2 respostas.
 
   A RESPOSTA VIGENTE
-    É a de maior CO_RESPOSTA_QUESTIONARIO (numérico). O JSON de
-    GetRespostaDetails não traz data de envio (sucesso, questionario: {id,
-    totalPerguntas, respostas: [{PerguntaID, Ordem, Pergunta, TipoResposta,
-    Resposta, RespostaID, AlternativaID}]}); o id da Empregare é sequencial.
-    É a mesma que a exportação (Excel, DS_COLUNA_ORIGINAL) traz: conferido nas
-    223 — a coluna "Pergunta N" é a do questionário mais novo; quem não
-    respondeu o novo (42, resposta com 0 perguntas) tem "--" no Excel. Por
-    isso a vigente é a de maior id mesmo vazia: os arquivos da ficha batem com
-    as respostas que ela mostra, e os antigos ficam nos envios anteriores.
+    É a de maior CO_RESPOSTA_QUESTIONARIO (numérico) ENTRE AS QUE TÊM
+    PERGUNTA LIDA (QT_PERGUNTA > 0); só se nenhuma tiver, a de maior id. O
+    JSON de GetRespostaDetails não traz data de envio (sucesso, questionario:
+    {id, totalPerguntas, respostas: [{PerguntaID, Ordem, Pergunta,
+    TipoResposta, Resposta, RespostaID, AlternativaID}]}); o id da Empregare
+    é sequencial. Conferido nas 223: a exportação (Excel, DS_COLUNA_ORIGINAL)
+    traz o questionário mais novo. Quem não respondeu o retificado (42, a
+    resposta mais nova com 0 perguntas e "--" no Excel) fica com a anterior
+    respondida como vigente: o avaliador precisa ver os documentos no item. A
+    vazia não aparece nem nos envios anteriores (não tem pergunta nem arquivo).
 
   POR QUE CALCULAR NA LEITURA (e não uma coluna ST_VIGENTE)
     A regra é função só dos ids gravados. Uma coluna teria de ser recalculada
@@ -38,7 +39,9 @@
                                     antiga. O resto igual a 20261009190000.
 
   O Python (sugestoes_da_ficha.py, perguntas_da_carga.py) lê o Excel
-  (DS_COLUNA_ORIGINAL), uma linha por candidato, que já é a vigente: não muda.
+  (DS_COLUNA_ORIGINAL), uma linha por candidato, que traz o questionário mais
+  novo: não muda (dos 42 sem resposta ao retificado, o Excel vem com "--" e
+  não sai sugestão; o resumo só conta o que foi respondido).
 
   PRÉ-REQUISITO: 20261009190000_sugestoes_da_ficha.sql.
 
@@ -66,15 +69,16 @@ language sql
 stable
 set search_path to ''
 as $function$
-  -- A de maior id da Empregare (sequencial; o JSON não traz data de envio).
+  -- A mais nova com pergunta lida (id da Empregare sequencial; o JSON não traz data de envio);
+  -- a resposta vazia (questionário retificado não respondido) só vale se não houver outra.
   select r."CO_EMPREGARE_RESPOSTA"
     from public."TB_EMPREGARE_RESPOSTA" r
    where r."CO_EMPREGARE_CANDIDATO" = p_candidato
-   order by r."CO_RESPOSTA_QUESTIONARIO"::numeric desc
+   order by (r."QT_PERGUNTA" > 0) desc, r."CO_RESPOSTA_QUESTIONARIO"::numeric desc
    limit 1;
 $function$;
 comment on function private."FC_RESPOSTA_VIGENTE_EMPREGARE"(uuid) is
-  'A resposta vigente do questionário de um candidato (TB_EMPREGARE_RESPOSTA): a de maior CO_RESPOSTA_QUESTIONARIO (numérico; o id da Empregare é sequencial e GetRespostaDetails não traz data de envio). É a que a exportação (Excel) traz. Null sem resposta.';
+  'A resposta vigente do questionário de um candidato (TB_EMPREGARE_RESPOSTA): a de maior CO_RESPOSTA_QUESTIONARIO (numérico; o id da Empregare é sequencial e GetRespostaDetails não traz data de envio) entre as que têm pergunta lida (QT_PERGUNTA > 0); só se nenhuma tiver, a de maior id. Null sem resposta.';
 revoke all on function private."FC_RESPOSTA_VIGENTE_EMPREGARE"(uuid) from public, anon, authenticated;
 
 -- 2. A ficha: só a vigente; as outras em envios_anteriores -----------------------------
@@ -188,7 +192,7 @@ begin
 end;
 $function$;
 comment on function public.obter_ficha_analise(uuid) is
-  'A ficha para analisar (json): o cabeçalho (sem CPF nem contato), o lançamento e o resultado gravados, a regra com que é analisada (a vigente; a da conclusão, se concluída — AM-2.3), a nota mínima e os níveis da regra de classificação, a nota declarada e a ART da pré-classificação, as respostas da Empregare SÓ das perguntas que a regra liga, os links da Empregare capturados pelo robô (empregare: link_candidato da página de detalhes, vaga_interno e link_vaga das candidaturas, respostas [{resposta, link_impressao, perguntas, anexos, capturado_em}] e anexos [{resposta, pergunta, arquivo, ordem, enunciado, coluna, tipo, link}] SÓ da resposta vigente do questionário — a de maior id, FC_RESPOSTA_VIGENTE_EMPREGARE — e envios_anteriores [{resposta, link_impressao, perguntas, capturado_em, arquivos: [{pergunta, arquivo, ordem, enunciado, coluna, tipo, link}]}] com as outras, da mais nova para a mais antiga (20261009210000); dado restrito, só aqui), as sugestões de títulos, cursos e vínculos tiradas das respostas pelo job Python (20261009190000), o histórico (até 200, com as alterações) e se quem chama pode editar (reserva vigente, em análise) ou reabrir (coordenação, concluída). Vê: coordenação e revisão; o analista, só nas vagas dele; o leitor, só concluída.';
+  'A ficha para analisar (json): o cabeçalho (sem CPF nem contato), o lançamento e o resultado gravados, a regra com que é analisada (a vigente; a da conclusão, se concluída — AM-2.3), a nota mínima e os níveis da regra de classificação, a nota declarada e a ART da pré-classificação, as respostas da Empregare SÓ das perguntas que a regra liga, os links da Empregare capturados pelo robô (empregare: link_candidato da página de detalhes, vaga_interno e link_vaga das candidaturas, respostas [{resposta, link_impressao, perguntas, anexos, capturado_em}] e anexos [{resposta, pergunta, arquivo, ordem, enunciado, coluna, tipo, link}] SÓ da resposta vigente do questionário — a mais nova com pergunta lida, FC_RESPOSTA_VIGENTE_EMPREGARE — e envios_anteriores [{resposta, link_impressao, perguntas, capturado_em, arquivos: [{pergunta, arquivo, ordem, enunciado, coluna, tipo, link}]}] com as outras, da mais nova para a mais antiga (20261009210000); dado restrito, só aqui), as sugestões de títulos, cursos e vínculos tiradas das respostas pelo job Python (20261009190000), o histórico (até 200, com as alterações) e se quem chama pode editar (reserva vigente, em análise) ou reabrir (coordenação, concluída). Vê: coordenação e revisão; o analista, só nas vagas dele; o leitor, só concluída.';
 revoke all on function public.obter_ficha_analise(uuid) from public, anon;
 grant execute on function public.obter_ficha_analise(uuid) to authenticated;
 

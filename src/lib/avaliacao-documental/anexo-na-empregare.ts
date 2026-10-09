@@ -10,7 +10,7 @@
   Empregare com login, não expira) com a Ordem, o enunciado e a coluna do
   Excel casada (pela Ordem, confirmada pelo enunciado); por resposta, o link de impressão (/Company/VacancyTests/PrintResult?…).
   obter_ficha_analise devolve em `empregare.anexos` e `empregare.respostas` só os
-  da resposta vigente (a de maior id, a mesma do Excel — 20261009210000); quem
+  da resposta vigente (a mais nova com pergunta lida — 20261009210000); quem
   respondeu o questionário mais de uma vez tem as outras em
   `empregare.envios_anteriores`, cada uma com os arquivos.
 
