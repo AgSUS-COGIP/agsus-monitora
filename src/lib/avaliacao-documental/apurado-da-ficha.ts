@@ -229,3 +229,38 @@ export function notaComPrevias(
   }
   return { nota: Math.round(nota * 10000) / 10000, comPrevia };
 }
+
+const NOME_DOS_ITENS: Record<string, string> = {
+  titulos: "títulos",
+  cursos: "cursos",
+  vinculos: "vínculos",
+};
+
+/**
+ * O que o Conforme faz no modo foco, num bloco de títulos, cursos ou
+ * vínculos: com itens lançados, ou com Declarado 0 (a resposta "Não
+ * possuo"), avança como os outros. Declarado acima de 0 e nenhum item: avisa
+ * "Lance os cursos comprovados ou ajuste o Apurado" e avança (depois do
+ * aviso) se o Apurado está definido — o Conforme grava o pré-preenchido
+ * (nota_ajustada), que conta como definido; sem Apurado definido, fica.
+ */
+export function avancoDoConforme({
+  bloco,
+  lancamento,
+  declarada,
+}: {
+  bloco: BlocoQuePontua;
+  lancamento: LancamentoDaFicha;
+  declarada: Declarada;
+}): { avanca: boolean; aviso: string | null } {
+  const chave = ITENS[bloco.tipo];
+  if (!chave || temItensLancados(bloco, lancamento))
+    return { avanca: true, aviso: null };
+  const decl = declaradoDoBloco(bloco, declarada);
+  if (decl !== null && decl <= 0) return { avanca: true, aviso: null };
+  const definido = notaAjustada(lancamento.blocos?.[bloco.codigo]) !== null;
+  return {
+    avanca: definido,
+    aviso: `Lance os ${NOME_DOS_ITENS[chave] ?? "itens"} comprovados ou ajuste o Apurado`,
+  };
+}

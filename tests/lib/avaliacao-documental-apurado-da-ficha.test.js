@@ -103,3 +103,35 @@ describe("apurado da ficha", () => {
     expect(outro.blocos.CURSOS.nota_ajustada).toBe(2);
   });
 });
+
+describe("Conforme num bloco de itens (avancoDoConforme)", () => {
+  it("declarado 0 ou itens lançados avançam; declarado > 0 sem item avisa e avança só com o Apurado definido", async () => {
+    const { avancoDoConforme } =
+      await import("../../src/lib/avaliacao-documental/apurado-da-ficha.ts");
+    const entrada = (decl, blocos = {}, extra = {}) => ({
+      bloco: CURSOS,
+      lancamento: lancamento(blocos, extra),
+      declarada: { parciais: { CURSOS: decl } },
+    });
+    expect(avancoDoConforme(entrada(0))).toEqual({ avanca: true, aviso: null });
+    expect(
+      avancoDoConforme(entrada(3, {}, { cursos: [{ horas: 40 }] })),
+    ).toEqual({ avanca: true, aviso: null });
+    expect(
+      avancoDoConforme(entrada(3, { CURSOS: { nota_ajustada: 3 } })),
+    ).toEqual({
+      avanca: true,
+      aviso: "Lance os cursos comprovados ou ajuste o Apurado",
+    });
+    expect(avancoDoConforme(entrada(3))).toEqual({
+      avanca: false,
+      aviso: "Lance os cursos comprovados ou ajuste o Apurado",
+    });
+    expect(
+      avancoDoConforme({
+        ...entrada(3),
+        bloco: { codigo: "X", tipo: "DOCUMENTO" },
+      }),
+    ).toEqual({ avanca: true, aviso: null });
+  });
+});

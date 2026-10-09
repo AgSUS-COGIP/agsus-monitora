@@ -36,6 +36,7 @@ import {
   ROTULO_DA_ART,
 } from "../../../lib/avaliacao-documental/tela-da-pre-classificacao.js";
 import {
+  avancoDoConforme,
   composicaoComPrevias,
   notaComPrevias,
 } from "../../../lib/avaliacao-documental/apurado-da-ficha.ts";
@@ -80,6 +81,8 @@ const passoResolvido = (passo) =>
 
 const CHAVE_DO_MODO = "monitora.avaliacao-documental.ficha-modo";
 const ESPERA_PARA_AVANCAR_MS = 420;
+/* Com o lembrete "Lance os … comprovados ou ajuste o Apurado": dá tempo de ler. */
+const ESPERA_COM_LEMBRETE_MS = 2000;
 
 function lerModo() {
   try {
@@ -438,10 +441,18 @@ export function ConteudoDaFicha({
     if (situacao !== "CONFORME" || modo !== "foco") return;
     const agora = loja.obter();
     if (agora.pendencias.some((p) => p.bloco === codigo)) return;
-    // Títulos, cursos ou vínculos ainda sem item: fica, para lançar os comprovados.
+    // Títulos, cursos ou vínculos sem item e Declarado > 0: avisa e avança
+    // depois do aviso, se o Apurado está definido (avancoDoConforme).
     const bloco = blocos.find((b) => b.codigo === codigo);
-    const chave = BLOCOS_COM_ITENS[bloco?.tipo];
-    if (chave && !(agora.lancamento[chave] || []).length) return;
+    const { avanca, aviso: lembrete } = bloco
+      ? avancoDoConforme({
+          bloco,
+          lancamento: agora.lancamento,
+          declarada: agora.declarada,
+        })
+      : { avanca: true, aviso: null };
+    if (lembrete) setAviso(lembrete);
+    if (!avanca) return;
     const proximo = proximoPassoPendente(
       passosDaFicha(
         agora.dados.regra.configuracao,
@@ -451,7 +462,13 @@ export function ConteudoDaFicha({
       codigo,
     );
     clearTimeout(avanco.current);
-    avanco.current = setTimeout(() => irPara(proximo), ESPERA_PARA_AVANCAR_MS);
+    avanco.current = setTimeout(
+      () => {
+        if (lembrete) setAviso((a) => (a === lembrete ? "" : a));
+        irPara(proximo);
+      },
+      lembrete ? ESPERA_COM_LEMBRETE_MS : ESPERA_PARA_AVANCAR_MS,
+    );
   }
 
   function decidir(bloco, situacao) {

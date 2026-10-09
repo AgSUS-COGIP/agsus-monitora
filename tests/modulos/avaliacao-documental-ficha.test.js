@@ -412,7 +412,8 @@ describe("ficha: modo foco, um item por vez (AM-7)", () => {
     expect(
       document.querySelector("[data-tour='avd-ficha-etapas']").textContent,
     ).toContain("0 de 6 itens conferidos");
-    // A lateral: nota parcial, "Em análise", composição sem apurado antes de conferir.
+    // A lateral: nota parcial, "Em análise"; antes de conferir, cada parte é a
+    // prévia (o Apurado que o item mostra: o declarado, sem itens lançados).
     const total = document.querySelector(".avd-ficha-total");
     expect(total.textContent).toContain(
       "Em análise · 0 de 4 requisitos conferidos",
@@ -430,7 +431,12 @@ describe("ficha: modo foco, um item por vez (AM-7)", () => {
     ]);
     expect(
       partes.map((l) => l.querySelector(".avd-ficha-parte-valor").textContent),
-    ).toEqual(["— / 10", "— / 5", "— / 35"]);
+    ).toEqual(["5 / 10 (prévia)", "3 / 5 (prévia)", "0 / 35 (prévia)"]);
+    expect(partes.map((l) => l.dataset.previa)).toEqual(["sim", "sim", "sim"]);
+    // A nota parcial soma as prévias e diz que são prévias.
+    expect(total.querySelector(".avd-ficha-nota-total").textContent).toBe(
+      "8 parcial (com prévias)",
+    );
     expect(document.querySelectorAll("[data-divergente='sim']")).toHaveLength(
       0,
     );
@@ -632,7 +638,11 @@ describe("ficha: Conclusão e parecer (sem resultado antes da hora)", () => {
     expect(
       parte("FORMACAO").querySelector(".avd-ficha-parte-valor").textContent,
     ).toBe("5 / 10");
-    // Títulos ainda sem item: o Conforme não avança (é a hora de lançar o comprovado).
+    // Títulos sem item e declarado 5: o lembrete aparece e o avanço espera
+    // 2 s (mexer no item, como abaixo, cancela o avanço).
+    expect(document.querySelector(".avd-ficha-aviso-rapido").textContent).toBe(
+      "Lance os títulos comprovados ou ajuste o Apurado",
+    );
     await esperarAvanco();
     expect(cartao("FORMACAO")).not.toBeNull();
     // Um apurado abaixo do declarado diverge.
@@ -644,6 +654,40 @@ describe("ficha: Conclusão e parecer (sem resultado antes da hora)", () => {
       "Por que o apurado é menor que o declarado?",
     );
   });
+
+  it("Conforme em Cursos com declarado 0 (Não possuo) avança já, sem lembrete", async () => {
+    const semCursos = fichaDoBanco();
+    semCursos.regra = structuredClone(semCursos.regra);
+    semCursos.regra.configuracao.provisoria.nota_declarada[1].pontos[
+      "Não possuo"
+    ] = 0;
+    semCursos.respostas = {
+      ...semCursos.respostas,
+      "Pergunta 14 - Selecione a pontuação relativa à carga horária de Cursos":
+        '"Não possuo"',
+    };
+    await abrirFicha(supabaseFalso(semCursos));
+    await irAo("CURSOS");
+    await conforme("CURSOS");
+    expect(document.querySelector(".avd-ficha-aviso-rapido")).toBeNull();
+    await esperarAvanco();
+    expect(cartao("CURSOS")).toBeNull();
+  });
+
+  it("Conforme em Cursos com declarado 3 e nenhum curso: lembrete e avança em 2 s", async () => {
+    await abrirFicha(supabaseFalso());
+    await irAo("CURSOS");
+    await conforme("CURSOS");
+    // O Apurado pré-preenchido, gravado pelo Conforme, conta como definido.
+    expect(document.querySelector(".avd-ficha-aviso-rapido").textContent).toBe(
+      "Lance os cursos comprovados ou ajuste o Apurado",
+    );
+    await esperarAvanco();
+    expect(cartao("CURSOS")).not.toBeNull();
+    await esperar(() => new Promise((r) => setTimeout(r, 1700)));
+    expect(cartao("CURSOS")).toBeNull();
+    expect(document.querySelector(".avd-ficha-aviso-rapido")).toBeNull();
+  }, 15000);
 
   it("o apurado começa com o declarado e a decisão mexe nele (AM-10)", async () => {
     const supabase = supabaseFalso();
