@@ -21,6 +21,7 @@
   (edital e ficha) fica na sessão da aba (sessionStorage), para recarregar a
   página voltar ao modo de análise; fechar a ficha esquece.
 */
+import { isAdminGlobal } from "../../lib/access-roles.js";
 import { comTempoLimite } from "../../lib/falha-de-rede.js";
 import {
   csvDaFila,
@@ -39,6 +40,7 @@ const RPC_LIBERAR = "liberar_reserva";
 const RPC_DISTRIBUIR = "distribuir_fichas";
 const RPC_REVISAO = "mandar_fichas_revisao";
 const RPC_ABRIR_FICHAS = "abrir_fichas_do_edital";
+const RPC_REINICIAR_FICHAS = "reiniciar_fichas_do_edital";
 const RPC_SALVAR_FILTRO = "salvar_filtro_fila";
 const RPC_EXCLUIR_FILTRO = "excluir_filtro_fila";
 
@@ -134,6 +136,7 @@ export function criarEstadoDaFila({
   cancelar = (id) => clearInterval(id),
   tempoLimiteMs = TEMPO_LIMITE_MS,
   baixar = baixarNoNavegador,
+  getProfile = () => null,
 } = {}) {
   let estado = { ...INICIAL, filtro: lerFiltro(armazenamento) };
   let pedido = 0;
@@ -365,6 +368,18 @@ export function criarEstadoDaFila({
       (r) => `${r?.criadas ?? 0} ficha(s) aberta(s).`,
     );
 
+  /* Só o administrador global (o banco confere): as fichas do lote voltam ao início. */
+  const reiniciarFichas = (motivo) =>
+    executar(
+      "reiniciar",
+      () =>
+        rpc(RPC_REINICIAR_FICHAS, {
+          p_edital: estado.editalId,
+          p_motivo: motivo,
+        }),
+      (r) => `${r?.reiniciadas ?? 0} ficha(s) de volta ao início.`,
+    );
+
   /* Inclusão no lote por decisão da coordenação e revogação ([{ codigo, vaga }], motivo). */
   const incluirPorDecisao = (candidatos, motivo) =>
     executar(
@@ -435,6 +450,8 @@ export function criarEstadoDaFila({
     liberarReservas,
     mandarParaRevisao,
     abrirFichasDoLote,
+    reiniciarFichas,
+    ehAdminGlobal: () => isAdminGlobal(getProfile()),
     incluirPorDecisao,
     revogarDecisao,
     salvarFiltro,

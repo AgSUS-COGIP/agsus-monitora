@@ -1271,6 +1271,13 @@ export const CONTRATO_RPC = {
     resumo:
       "A coordenação reabre uma ficha concluída (volta a Em análise com o mesmo responsável), com motivo de 10 a 2.000.",
   },
+  // ── Reiniciar as fichas do edital (20261009160000_reiniciar_fichas_do_edital.sql)
+  reiniciar_fichas_do_edital: {
+    argumentos: ["p_edital", "p_motivo"],
+    critica: false,
+    resumo:
+      "Só admin global (42501): volta ao início as fichas do lote do edital (PENDENTE, sem responsável, reserva nem conteúdo; versão + 1), com motivo de 10 a 2.000 e histórico REINICIAR por ficha; FORA_LOTE fica; nada se apaga.",
+  },
   registrar_acesso_ficha: {
     argumentos: ["p_ficha", "p_tipo"],
     critica: false,
