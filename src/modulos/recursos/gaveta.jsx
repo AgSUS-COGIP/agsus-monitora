@@ -116,7 +116,7 @@ export function GavetaDoRecurso({
   origens,
   podeEditar,
   podeDecidir = false,
-  modelos = [],
+  modelos = /** @type {import("./tipos-do-estado.ts").RegistroDosRecursos[]} */ ([]),
   area = "",
 }) {
   // Recurso decidido: excluir é do parecer jurídico. A etapa "resposta

@@ -25,7 +25,7 @@ vi.mock("../../src/lib/chartjs-global.js", () => ({
 }));
 
 const { montarRecursos } =
-  await import("../../src/modulos/recursos/recursos.jsx");
+  await import("../../src/modulos/recursos/recursos.tsx");
 
 const REGRA = {
   etapas: { documental: true, entrevista: false },

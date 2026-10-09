@@ -30,9 +30,9 @@ vi.mock("../../src/lib/chartjs-global.js", () => ({
 }));
 
 const { montarRecursos } =
-  await import("../../src/modulos/recursos/recursos.jsx");
+  await import("../../src/modulos/recursos/recursos.tsx");
 const { criarEstadoDosRecursos } =
-  await import("../../src/modulos/recursos/estado.js");
+  await import("../../src/modulos/recursos/estado.ts");
 
 const RECURSO_ID = "527c2b8c-7744-4a4b-bc06-108f6683297b";
 const AUTORA = "00000000-0000-4000-8000-0000000000a2";
