@@ -190,7 +190,7 @@ window.calendarioEditaisController = telaSobDemanda({
 window.recursosController = telaSobDemanda({
   secao: "page-recursos",
   carregar: () =>
-    import("./modulos/recursos/recursos.jsx").then((m) =>
+    import("./modulos/recursos/recursos.tsx").then((m) =>
       m.montarRecursos({ toast: window.monitoraToast, comemoracoesLigadas }),
     ),
 });

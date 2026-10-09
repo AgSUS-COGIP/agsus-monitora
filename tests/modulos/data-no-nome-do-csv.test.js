@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 
 import { criarEstadoDasEntrevistas } from "../../src/modulos/entrevistas/estado.ts";
-import { criarEstadoDosRecursos } from "../../src/modulos/recursos/estado.js";
+import { criarEstadoDosRecursos } from "../../src/modulos/recursos/estado.ts";
 import { criarEstadoDaSelecao } from "../../src/modulos/selecao/estado.ts";
 
 /*

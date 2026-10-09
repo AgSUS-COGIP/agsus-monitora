@@ -160,6 +160,8 @@ os dados originais para preservar os alvos usados pelo banco.
 O painel de Recursos também está migrado: filtros, indicadores, gráficos, recorte e fila,
 com regras de prazos, enriquecimento, busca e CSV em TypeScript. Os contratos incluem etapas,
 filtros, rascunho e os campos calculados; usos válidos e rejeições estão em
-`tests/tipos/painel-de-recursos.tsx`. Estado, entrada, gaveta e formulários ainda estão em
-JavaScript/JSX; contratos e limites em
+`tests/tipos/painel-de-recursos.tsx`. Entrada, estado e cadastro/edição também estão tipados,
+com validação dos campos do painel/formulário e descarte de respostas após troca de contexto.
+Os contratos desses fluxos são conferidos em `tests/tipos/estado-dos-recursos.tsx`. Gaveta e
+peças de parecer, ajuste, resposta, anexos e modelos ainda estão em JSX; contratos e limites em
 [../src/modulos/recursos/README.md](../src/modulos/recursos/README.md).

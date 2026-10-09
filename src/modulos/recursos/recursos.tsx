@@ -1,3 +1,12 @@
+import type {
+  EstadoDosRecursos,
+  SnapshotDosRecursos,
+  OpcoesDoEstadoDosRecursos,
+} from "./tipos-do-estado.ts";
+import type {
+  RecursoDoPainel,
+  CampoDoFiltroDosRecursos,
+} from "../../lib/tipos-dos-recursos.ts";
 import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import { usarPedidoDeFiltro } from "../../app/pedido-de-filtro.js";
 import { filtrosDeRecursos } from "../../lib/filtro-da-aya.js";
@@ -17,8 +26,8 @@ import {
 } from "../../lib/recursos-dos-candidatos.ts";
 import { getSupabaseClient } from "../../lib/supabaseClient.js";
 import { Aviso } from "../../ui/index.js";
-import { criarEstadoDosRecursos } from "./estado.js";
-import { FormularioDoRecurso } from "./formulario.jsx";
+import { criarEstadoDosRecursos } from "./estado.ts";
+import { FormularioDoRecurso } from "./formulario.tsx";
 import { GavetaDoRecurso } from "./gaveta.jsx";
 import { dataHora } from "./partes.ts";
 import {
@@ -58,14 +67,19 @@ import "./recursos.css";
 
 const NUMEROS_ZERADOS = calcularIndicadores([]);
 
-function textoDoStatus(e, recursos) {
+function textoDoStatus(
+  e: SnapshotDosRecursos,
+  recursos: readonly (RecursoDoPainel & { atualizado_em?: unknown })[],
+) {
   if (e.semSessao) return "Sessão não localizada";
   if (e.erroAoCarregar && !e.carregado) return "Sem dados";
   if (!e.carregado) return "Carregando dados...";
   if (e.atualizando) return "Atualizando...";
   const ultima = recursos
-    .map((r) => r.atualizado_em || r.criado_em)
-    .filter(Boolean)
+    .map((r) =>
+      typeof r.atualizado_em === "string" ? r.atualizado_em : r.criado_em,
+    )
+    .filter((data): data is string | number | Date => data !== undefined)
     .sort()
     .at(-1);
   return `Atualizado em ${dataHora(ultima || e.carregadoEm)}`;
@@ -75,7 +89,13 @@ function textoDoStatus(e, recursos) {
   A tela de uma área. Monta de novo quando a área muda (`key`): filtros, busca
   da fila e filtros recolhidos recomeçam, como recomeçavam no antigo quadro.
 */
-function TelaDaArea({ estado, e }) {
+function TelaDaArea({
+  estado,
+  e,
+}: {
+  estado: EstadoDosRecursos;
+  e: SnapshotDosRecursos;
+}) {
   const [filtros, setFiltros] = useState(FILTROS_VAZIOS);
   const escuro = usarTemaEscuro();
   const { carregado, dados, area } = e;
@@ -110,18 +130,19 @@ function TelaDaArea({ estado, e }) {
   );
   const ativos = filtrosAtivos(filtros, opcoes);
   const aberto = e.gaveta ? recursos.find((r) => r.id === e.gaveta) : null;
+  const idEmEdicao = e.formulario?.id;
   const emEdicao =
     e.formulario?.modo === "edicao"
-      ? recursos.find((r) => r.id === e.formulario.id)
+      ? recursos.find((r) => r.id === idEmEdicao)
       : null;
 
   // KPI, pendência e barra de gráfico: clicar de novo tira o filtro.
-  const alternarFiltro = (campo, valor) =>
+  const alternarFiltro = (campo: CampoDoFiltroDosRecursos, valor: string) =>
     setFiltros((atuais) => ({
       ...atuais,
       [campo]: atuais[campo] === valor ? "" : valor,
     }));
-  const trocarFiltro = (campo, valor) =>
+  const trocarFiltro = (campo: CampoDoFiltroDosRecursos, valor: string) =>
     setFiltros((atuais) => ({ ...atuais, [campo]: valor }));
   const recarregar = () => void estado.carregar(area);
   // "Abrir" numa resposta com número da Aya: a tela abre já recortada.
@@ -137,9 +158,9 @@ function TelaDaArea({ estado, e }) {
         atualizarDesativado={!area || e.atualizando || e.semSessao}
         aoExportar={() => estado.exportarCsv(filtrados, origens)}
         exportarDesativado={!carregado || !filtrados.length}
-        aoNovo={podeEditar ? estado.abrirNovo : null}
+        aoNovo={podeEditar ? estado.abrirNovo : undefined}
         novoDesativado={Boolean(e.acao)}
-        aoModelos={podeAdministrarModelos ? estado.abrirModelos : null}
+        aoModelos={podeAdministrarModelos ? estado.abrirModelos : undefined}
       />
 
       {e.semSessao ? (
@@ -221,7 +242,7 @@ function TelaDaArea({ estado, e }) {
   );
 }
 
-export function TelaDeRecursos({ estado }) {
+export function TelaDeRecursos({ estado }: { estado: EstadoDosRecursos }) {
   const e = useSyncExternalStore(estado.assinar, estado.obter);
   const { area: areaDoApp } = usarAreaAtual();
 
@@ -255,6 +276,10 @@ export function montarRecursos({
   abrirUrl,
   imprimir,
   novoId,
+}: OpcoesDoEstadoDosRecursos & {
+  secao?: HTMLElement | null;
+  comemoracoesLigadas?: () => boolean;
+  areaAtual?: () => unknown;
 } = {}) {
   const estado = criarEstadoDosRecursos({
     supabase,

@@ -1,3 +1,30 @@
+import type { FormEvent } from "react";
+import type {
+  EstadoDosRecursos,
+  CandidatoDoRecurso,
+  EditalDosRecursos,
+  DetalheDoRecurso,
+} from "./tipos-do-estado.ts";
+import type {
+  DadosDoRecurso,
+  OrigemDoRecurso,
+  RascunhoDoRecurso,
+} from "../../lib/tipos-dos-recursos.ts";
+type RascunhoDoFormulario = Omit<RascunhoDoRecurso, "analise"> & {
+  analise:
+    | CandidatoDoRecurso
+    | {
+        id?: string | number | null;
+        candidato?: string;
+        cargo?: string;
+        vaga?: string;
+        codigo?: string | number | null;
+        nota?: number | string | null;
+        resultado?: string;
+        responsavel?: string;
+      }
+    | null;
+};
 import {
   useEffect,
   useMemo,
@@ -43,7 +70,11 @@ import { nota } from "./partes.ts";
 
 const ESPERA_DA_BUSCA_MS = 300;
 
-function ResumoDoCandidato({ analise }) {
+function ResumoDoCandidato({
+  analise,
+}: {
+  analise: NonNullable<RascunhoDoFormulario["analise"]>;
+}) {
   return (
     <div
       className="ui-kv-grade recursos-resumo"
@@ -66,9 +97,19 @@ function BuscaDoCandidato({
   aoEscolher,
   aoNaoEncontrar,
   erro,
+}: {
+  estado: EstadoDosRecursos;
+  editalId: string;
+  aoEscolher: (item: CandidatoDoRecurso) => void;
+  aoNaoEncontrar: () => void;
+  erro?: string;
 }) {
   const [texto, setTexto] = useState("");
-  const [resultado, setResultado] = useState({
+  const [resultado, setResultado] = useState<{
+    itens: CandidatoDoRecurso[];
+    buscado: string;
+    erro: string;
+  }>({
     itens: [],
     buscado: "",
     erro: "",
@@ -93,12 +134,19 @@ function BuscaDoCandidato({
           setResultado({ itens, buscado: busca, erro: "" });
       } catch (falha) {
         if (meu === ultimo.current)
-          setResultado({ itens: [], buscado: busca, erro: falha.message });
+          setResultado({
+            itens: [],
+            buscado: busca,
+            erro: falha instanceof Error ? falha.message : String(falha),
+          });
       } finally {
         if (meu === ultimo.current) setBuscando(false);
       }
     }, ESPERA_DA_BUSCA_MS);
-    return () => clearTimeout(espera);
+    return () => {
+      ultimo.current += 1;
+      clearTimeout(espera);
+    };
   }, [texto, editalId, estado]);
 
   return (
@@ -186,16 +234,25 @@ export function FormularioDoRecurso({
   recursos,
   editais,
   origens,
+}: {
+  estado: EstadoDosRecursos;
+  recurso?: DadosDoRecurso | null;
+  detalhe?: DetalheDoRecurso | null;
+  recursos: readonly DadosDoRecurso[];
+  editais: readonly EditalDosRecursos[];
+  origens: readonly OrigemDoRecurso[];
 }) {
   const { acao } = useSyncExternalStore(estado.assinar, estado.obter);
   const gaveta = usarClassesDaGaveta();
   const edicao = Boolean(recurso);
-  const [rascunho, setRascunho] = useState(() =>
-    edicao ? rascunhoDoRecurso(recurso, detalhe || {}) : RASCUNHO_VAZIO,
+  const [rascunho, setRascunho] = useState<RascunhoDoFormulario>(() =>
+    recurso ? rascunhoDoRecurso(recurso, detalhe || {}) : RASCUNHO_VAZIO,
   );
   const [tentou, setTentou] = useState(false);
   const [confirmaDuplicado, setConfirmaDuplicado] = useState(false);
-  const [duplicadoDoBanco, setDuplicadoDoBanco] = useState(null);
+  const [duplicadoDoBanco, setDuplicadoDoBanco] = useState<
+    string | number | null
+  >(null);
   const analistaAutomatico = useRef("");
 
   /*
@@ -207,7 +264,7 @@ export function FormularioDoRecurso({
   const semDetalhe = edicao && !detalheChegou;
   const preenchido = useRef(edicao && detalheChegou);
   useEffect(() => {
-    if (!edicao || !detalheChegou || preenchido.current) return;
+    if (!edicao || !detalheChegou || !detalhe || preenchido.current) return;
     preenchido.current = true;
     setRascunho((atual) => ({
       ...atual,
@@ -227,7 +284,14 @@ export function FormularioDoRecurso({
     (o) => o.ativo || o.id === rascunho.origem,
   );
   const analistas = useMemo(
-    () => [...new Set(recursos.map((r) => r.analista).filter(Boolean))].sort(),
+    () =>
+      [
+        ...new Set(
+          recursos
+            .map((r) => r.analista)
+            .filter((nome): nome is string => Boolean(nome)),
+        ),
+      ].sort(),
     [recursos],
   );
   const erros = errosDoRascunho(rascunho, { edicao });
@@ -242,7 +306,10 @@ export function FormularioDoRecurso({
   const numeroDuplicado = duplicado?.nu ?? duplicadoDoBanco;
   const salvando = acao?.tipo === "salvar";
 
-  const mudar = (campo, valor) => {
+  const mudar = <K extends keyof RascunhoDoFormulario>(
+    campo: K,
+    valor: RascunhoDoFormulario[K],
+  ) => {
     setRascunho((atual) => ({ ...atual, [campo]: valor }));
     if (
       [
@@ -258,7 +325,7 @@ export function FormularioDoRecurso({
     }
   };
 
-  function escolherCandidato(item) {
+  function escolherCandidato(item: CandidatoDoRecurso) {
     setRascunho((atual) => {
       const analistaFoiAutomatico =
         !atual.analista || atual.analista === analistaAutomatico.current;
@@ -275,7 +342,7 @@ export function FormularioDoRecurso({
     setDuplicadoDoBanco(null);
   }
 
-  async function enviar(evento) {
+  async function enviar(evento: FormEvent<HTMLFormElement>) {
     evento.preventDefault();
     setTentou(true);
     if (semDetalhe || Object.keys(erros).length) return;
@@ -295,7 +362,7 @@ export function FormularioDoRecurso({
     }
   }
 
-  const erro = (campo) => (tentou ? erros[campo] : "");
+  const erro = (campo: keyof typeof erros) => (tentou ? erros[campo] : "");
 
   return (
     <Modal
@@ -309,12 +376,13 @@ export function FormularioDoRecurso({
       <form onSubmit={enviar} noValidate>
         <TopoDaGaveta
           sobretitulo={edicao ? "Edição do recurso" : "Cadastro de recurso"}
-          titulo={edicao ? `Editar recurso nº ${recurso.nu}` : "Novo recurso"}
+          titulo={recurso ? `Editar recurso nº ${recurso.nu}` : "Novo recurso"}
           tituloId="recursosFormularioTitulo"
+          resumo={null}
           rotuloDoFechar="Fechar formulário"
           aoFechar={estado.fecharFormulario}
         />
-        {edicao ? (
+        {recurso ? (
           <div className="ui-gaveta-contexto">
             <div>
               <small>Candidato</small>
@@ -353,7 +421,9 @@ export function FormularioDoRecurso({
                 <button
                   type="button"
                   className="recursos-link"
-                  onClick={() => void estado.carregarDetalhe(recurso.id)}
+                  onClick={() =>
+                    recurso && void estado.carregarDetalhe(recurso.id)
+                  }
                 >
                   Tentar novamente
                 </button>
@@ -606,7 +676,7 @@ export function FormularioDoRecurso({
             {salvando ? (
               <>
                 <span className="recursos-girando" aria-hidden="true" />{" "}
-                {acao.rotulo}
+                {acao?.rotulo}
               </>
             ) : edicao ? (
               "Salvar alterações"

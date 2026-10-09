@@ -112,7 +112,7 @@ viraram filtro) estão registrados nestes verbetes. Fontes:
 
 **perguntas:** como registrar um recurso | novo recurso | cadastrar recurso | lancar recurso | registrar recurso do candidato | candidato nao encontrado no recurso
 **resposta:** Em Recursos, "Novo recurso" (para quem tem Editor em Recursos) abre o cadastro: escolha o edital (só os da área atual), a origem e o candidato, buscado nas análises curriculares daquele edital; cargo, vaga, código, nota atual e resultado vêm sozinhos, e o analista vem preenchido com o responsável pela análise. "Não encontrei o candidato" permite digitar o nome, e o recurso fica marcado como fora das análises. O recurso nasce Registrado; depois, anexe os documentos, escreva a resposta e envie para o parecer jurídico. Na edição, edital e candidato não mudam: para isso, exclua e cadastre de novo.
-**fonte:** src/modulos/recursos/formulario.jsx; supabase/migrations/20261001170000_recursos_parecer_juridico.sql
+**fonte:** src/modulos/recursos/formulario.tsx; supabase/migrations/20261001170000_recursos_parecer_juridico.sql
 **abrir:** recursos
 
 ## Ajuste da pontuação que não aparece
