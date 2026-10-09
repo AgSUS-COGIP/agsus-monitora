@@ -10,7 +10,7 @@ import {
   formatarNota,
   rotuloDoComparecimento,
   rotuloDoParecer,
-} from "../../lib/entrevistas-do-painel.js";
+} from "../../lib/entrevistas-do-painel.ts";
 import { Selo, TabelaInfinita } from "../../ui/index.js";
 
 /*

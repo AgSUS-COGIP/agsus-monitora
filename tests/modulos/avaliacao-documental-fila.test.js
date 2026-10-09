@@ -211,13 +211,13 @@ let secao;
 let painel;
 const toast = vi.fn();
 
-async function montar(supabase, { abrirFila = true } = {}) {
+async function montar(supabase, { abrirFila = true, getProfile } = {}) {
   secao = document.createElement("section");
   secao.id = "page-avaliacao-documental";
   secao.className = "page active";
   document.body.append(secao);
   await act(async () => {
-    painel = montarAvaliacaoDocumental({ supabase, toast });
+    painel = montarAvaliacaoDocumental({ supabase, toast, getProfile });
   });
   await act(async () => void painel.render());
   await esperar();
@@ -960,5 +960,37 @@ describe("fila: andamento, menu da coordenação e tabela agrupada por vaga", ()
     expect(menu.querySelector("[data-acao='liberar-reservas']").disabled).toBe(
       true,
     );
+  });
+});
+
+describe("fila: reiniciar as fichas do edital (admin global)", () => {
+  it("só o admin global vê; pede motivo e chama a RPC", async () => {
+    await montar(supabaseFalso());
+    await abrirMenu();
+    expect(secao.querySelector("[data-acao='reiniciar-fichas']")).toBeNull();
+    document.body.innerHTML = "";
+
+    const supabase = supabaseFalso(fila(), {
+      reiniciar_fichas_do_edital: () => ({ reiniciadas: 5 }),
+    });
+    await montar(supabase, {
+      getProfile: () => ({ ativo: true, admin_global: true }),
+    });
+    await abrirMenu();
+    await clicar(secao.querySelector("[data-acao='reiniciar-fichas']"));
+    const gaveta = document.querySelector("[data-tour='avd-fila-confirmar']");
+    expect(gaveta.textContent).toContain("voltam a Pendente");
+    const confirmar = gaveta.querySelector("[data-acao='confirmar-reiniciar']");
+    expect(confirmar.disabled).toBe(true);
+    await digitar(
+      gaveta.querySelector("textarea"),
+      "A análise documental foi feita pela planilha",
+    );
+    await clicar(confirmar);
+    await esperar();
+    expect(supabase.rpc).toHaveBeenCalledWith("reiniciar_fichas_do_edital", {
+      p_edital: "e93",
+      p_motivo: "A análise documental foi feita pela planilha",
+    });
   });
 });

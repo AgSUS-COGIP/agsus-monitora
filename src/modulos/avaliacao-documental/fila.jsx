@@ -186,6 +186,7 @@ const TITULOS_DA_ACAO = {
   distribuir: "Distribuir fichas",
   liberar: "Liberar reservas",
   revisao: "Mandar para revisão",
+  reiniciar: "Reiniciar as fichas do edital",
 };
 
 function AcaoEmLote({ fila, acao, dados, aoFechar }) {
@@ -206,6 +207,7 @@ function AcaoEmLote({ fila, acao, dados, aoFechar }) {
     acao.fichas.some((c) => c.ficha.reserva?.usuario !== dados.eu);
   const exigeMotivo =
     acao.tipo === "revisao" ||
+    acao.tipo === "reiniciar" ||
     deOutros ||
     (acao.tipo === "distribuir" && (plano.redistribui || para === "fila"));
   const motivoOk = !exigeMotivo || motivo.trim().length >= 10;
@@ -226,6 +228,8 @@ function AcaoEmLote({ fila, acao, dados, aoFechar }) {
         })),
         motivo.trim(),
       );
+    else if (acao.tipo === "reiniciar")
+      r = await fila.reiniciarFichas(motivo.trim());
     else if (acao.tipo === "liberar")
       r = await fila.liberarReservas(
         acao.fichas.map((c) => c.ficha.id),
@@ -296,6 +300,12 @@ function AcaoEmLote({ fila, acao, dados, aoFechar }) {
               </Aviso>
             ) : null}
           </>
+        ) : null}
+        {acao.tipo === "reiniciar" ? (
+          <Aviso tom="warning">
+            Todas as fichas do lote voltam a Pendente, sem responsável nem
+            análise. As fora do lote ficam como estão.
+          </Aviso>
         ) : null}
         {exigeMotivo ? (
           <Campo
@@ -901,6 +911,9 @@ export function Fila({ e, fila }) {
   const selecionados = candidatos.filter((c) => selecao.has(c.id));
   const acoes = acoesDaSelecao(selecionados);
   const coordena = Boolean(dados?.pode_coordenar);
+  const noLote = candidatos.filter(
+    (c) => c.ficha && c.ficha.situacao !== "FORA_LOTE",
+  );
   const livres = candidatos.filter(
     (c) => c.ficha?.situacao === "PENDENTE" && !c.ficha.responsavel,
   );
@@ -1021,6 +1034,18 @@ export function Fila({ e, fila }) {
       aoEscolher: () => setAcao({ tipo: "revisao", fichas: acoes.revisao }),
       dados: { "data-acao": "mandar-para-revisao" },
     },
+    ...(fila.ehAdminGlobal?.()
+      ? [
+          {
+            id: "reiniciar-fichas",
+            rotulo: "Reiniciar as fichas do edital",
+            icone: "fa-rotate-left",
+            desabilitado: !noLote.length || Boolean(st.acao),
+            aoEscolher: () => setAcao({ tipo: "reiniciar", fichas: noLote }),
+            dados: { "data-acao": "reiniciar-fichas" },
+          },
+        ]
+      : []),
     ...(dados.sem_ficha
       ? [
           {

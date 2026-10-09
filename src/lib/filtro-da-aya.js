@@ -51,6 +51,10 @@ export function filtrosDeRecursos(atuais, pedido, opcoes) {
 /**
  * Entrevistas (Resultados): um edital, o parecer ou comparecimento e a busca
  * (o caso de um aviso de conferência busca o candidato).
+ * @param {import("../modulos/entrevistas/tipos-do-painel.ts").FiltrosDoPainel} atuais
+ * @param {{ edital?: string, metrica?: string, busca?: string, entrevista?: string } | null} pedido
+ * @param {import("../modulos/entrevistas/tipos-do-painel.ts").OpcoesDosFiltros} opcoes
+ * @returns {import("../modulos/entrevistas/tipos-do-painel.ts").FiltrosDoPainel}
  */
 export function filtrosDeEntrevistas(atuais, pedido, opcoes) {
   const proximos = { ...atuais };
