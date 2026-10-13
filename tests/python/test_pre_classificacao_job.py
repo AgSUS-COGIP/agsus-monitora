@@ -53,9 +53,17 @@ def candidato(i, art, situacao="Ativo"):
 
 class BancoFalso:
     def __init__(
-        self, editais, candidatos=None, falhar_vaga=None, em_andamento=False, distribuicao=None, decisoes=None
+        self,
+        editais,
+        candidatos=None,
+        falhar_vaga=None,
+        em_andamento=False,
+        distribuicao=None,
+        decisoes=None,
+        anterior=None,
     ):
         self.editais = editais
+        self.anterior = anterior or {}
         self.decisoes = decisoes or {}
         self.distribuicao = distribuicao or {"modo": "PEGAR_PROXIMO", "novos": "MENOS_PENDENTES", "a_abrir": []}
         self.candidatos = candidatos or {}
@@ -70,7 +78,7 @@ class BancoFalso:
         if funcao == "pre_classificacao_ler_candidatos":
             return {
                 "candidatos": self.candidatos.get(corpo["p_vaga"], []),
-                "anterior": {},
+                "anterior": self.anterior.get(corpo["p_vaga"], {}),
                 "decisoes": self.decisoes,
             }
         if funcao == "iniciar_pre_classificacao":
@@ -212,13 +220,39 @@ class Fluxo(unittest.TestCase):
         with self.assertRaises(SystemExit):
             job.argumentos(["--editais", "93/2026', x='1"])
 
-    def test_refazer_recusado_quando_ja_ha_ficha(self):
-        edital = {**edital_93(), "refazer_permitido": False}
+    def test_refazer_recusado_com_ficha_iniciada(self):
+        edital = {**edital_93(), "refazer_permitido": False, "fichas_iniciadas": 3}
         banco = BancoFalso([edital], CANDIDATOS)
-        rodar(banco, ["--refazer-lote"])
+        codigo, saida = rodar(banco, ["--refazer-lote"])
+        self.assertEqual(codigo, 2)
+        self.assertIn("93/2026: FALHOU — lote não refeito: o lote já está em análise: 3 fichas iniciadas.", saida)
         fim = banco.de("finalizar_pre_classificacao")[0]["p_editais"][0]
-        self.assertIn("REFAZER_RECUSADO", fim["avisos"])
+        self.assertEqual(fim["situacao"], "FALHOU")
         self.assertTrue(banco.de("iniciar_pre_classificacao")[0]["p_refazer"])
+        # Nada do edital é gravado nem abre ficha.
+        self.assertEqual(banco.de("gravar_pre_classificacao_vaga"), [])
+        self.assertEqual(banco.de("abrir_fichas_pre_classificacao"), [])
+
+    def test_refazer_recusado_no_modo_seco_tambem_explica(self):
+        edital = {**edital_93(), "refazer_permitido": False, "fichas_iniciadas": 0}
+        codigo, saida = rodar(BancoFalso([edital], CANDIDATOS), ["--seco", "--refazer-lote"])
+        self.assertEqual(codigo, 2)
+        self.assertIn("lote não refeito: o edital já tem candidato analisado", saida)
+
+    def test_refazer_com_fichas_intocadas_diz_quem_fica_entra_e_sai(self):
+        c1, c2, c3 = (c["id"] for c in CANDIDATOS["179698"])
+        lote = {"lote": 1, "lista_lote": "GERAL", "entrada": "INICIAL", "motivo_entrada": "Lote inicial"}
+        # Antes: c2 e c3 no lote; c1 fora. Refeito (1 vaga + CR = 2): c1 e c2 no lote, c3 cancelou.
+        anterior = {"179698": {c2: {"situacao": "NO_LOTE", **lote}, c3: {"situacao": "NO_LOTE", **lote}}}
+        banco = BancoFalso([{**edital_93(), "fichas_iniciadas": 0}], CANDIDATOS, anterior=anterior)
+        codigo, saida = rodar(banco, ["--refazer-lote"])
+        self.assertEqual(codigo, 0)
+        self.assertIn("lote refeito: 1 ficam, 1 entram, 1 saem", saida)
+        linhas = {l["id"]: l["situacao"] for l in banco.de("gravar_pre_classificacao_vaga")[0]["p_linhas"]}
+        self.assertEqual(linhas, {c1: "NO_LOTE", c2: "NO_LOTE", c3: "ELIMINADO"})
+        fim = banco.de("finalizar_pre_classificacao")[0]["p_editais"][0]
+        self.assertEqual(fim["lote_refeito"], {"ficam": 1, "entram": 1, "saem": 1})
+        self.assertEqual(len(banco.de("abrir_fichas_pre_classificacao")), 1)
 
     def test_abre_as_fichas_do_lote_no_fim_do_edital(self):
         distribuicao = {
