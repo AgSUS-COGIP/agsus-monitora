@@ -4,7 +4,7 @@ import {
   classificar,
   limiteDaConvocacao,
 } from "../../src/lib/classificacao/motor.js";
-import { normalizarRegra } from "../../src/lib/classificacao/regra.js";
+import { normalizarRegra } from "../../src/lib/classificacao/regra.ts";
 import {
   chaveDoGrupo,
   ordemDoSorteio,

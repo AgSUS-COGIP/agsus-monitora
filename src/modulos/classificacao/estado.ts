@@ -88,7 +88,7 @@ import {
   logoEmPng,
 } from "./documento-no-navegador.js";
 import { convocacaoDoEdital } from "../../lib/classificacao/convocacao-do-edital.js";
-import { normalizarRegra } from "../../lib/classificacao/regra.js";
+import { normalizarRegra } from "../../lib/classificacao/regra.ts";
 import { rotuloDaVersao } from "../../lib/nome-da-versao.ts";
 import {
   comTempoLimite,

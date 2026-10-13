@@ -8,7 +8,7 @@ import {
   textoParaSei,
 } from "../../src/lib/classificacao/documento-sei.js";
 import { corpoXml } from "../../src/lib/classificacao/documento-docx.js";
-import { documentoDaRegra } from "../../src/lib/classificacao/regra.js";
+import { documentoDaRegra } from "../../src/lib/classificacao/regra.ts";
 
 /*
   A nota de desempate abaixo da tabela da vaga: só na vaga em que dois com a

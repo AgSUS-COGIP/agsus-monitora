@@ -26,7 +26,7 @@ import type { RegraAnalise } from "../../../lib/avaliacao-documental/tipos-da-re
 import {
   normalizarRegra,
   validarRegra,
-} from "../../../lib/classificacao/regra.js";
+} from "../../../lib/classificacao/regra.ts";
 import { CATALOGO_DE_CRITERIOS } from "../../../lib/classificacao/catalogo.js";
 import {
   erroDoNomeDaVersao,

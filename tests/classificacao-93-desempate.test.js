@@ -6,7 +6,7 @@ import {
   lerHora,
   segundosDeVida,
 } from "../src/lib/classificacao/numeros.js";
-import { validarRegra } from "../src/lib/classificacao/regra.js";
+import { validarRegra } from "../src/lib/classificacao/regra.ts";
 
 /*
   Auditoria do edital 93/2026 (Projetos, análise documental pela planilha):

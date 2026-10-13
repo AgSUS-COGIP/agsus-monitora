@@ -52,7 +52,7 @@ import {
   lerHora,
   numeroBR,
 } from "./numeros.js";
-import { normalizarRegra } from "./regra.js";
+import { normalizarRegra } from "./regra.ts";
 import { divergenciasDasCotas } from "./convocacao-do-edital.js";
 import { chaveDoGrupo } from "./sorteio.js";
 import { montarVagas, nivelDaVaga } from "./vagas.js";

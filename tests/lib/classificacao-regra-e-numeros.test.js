@@ -18,7 +18,7 @@ import {
   normalizarRegra,
   REGRA_VAZIA,
   validarRegra,
-} from "../../src/lib/classificacao/regra.js";
+} from "../../src/lib/classificacao/regra.ts";
 import {
   chaveDoGrupo,
   conferirSorteio,

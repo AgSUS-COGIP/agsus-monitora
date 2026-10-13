@@ -1,3 +1,28 @@
+import type { FormEvent, InputHTMLAttributes, ReactNode } from "react";
+import type {
+  EstadoDaClassificacao,
+  RegraDaClassificacao,
+  SnapshotDaClassificacao,
+} from "./tipos-do-estado.ts";
+import type { RascunhoDaRegra } from "../../app/rascunho-da-regra.ts";
+import {
+  alterarCampoDaRegra,
+  alterarGrupoDaRegra,
+  alterarListaDaRegra,
+  numeroOuNulo,
+  lista,
+  textoDaLista,
+  listaEmMaiusculas,
+  textoDoNumero,
+  niveisPorCargo,
+  textoDosNiveisPorCargo,
+} from "../../lib/classificacao/edicao-da-regra.ts";
+import type {
+  RegraEmEdicao,
+  NumeroEmEdicao,
+} from "../../lib/classificacao/edicao-da-regra.ts";
+import { objetoDosRecursos } from "../../lib/dados-dos-recursos.ts";
+
 import { useId, useMemo, useState } from "react";
 import {
   CATALOGO_DE_CRITERIOS,
@@ -17,7 +42,7 @@ import {
   normalizarRegra,
   REGRA_VAZIA,
   validarRegra,
-} from "../../lib/classificacao/regra.js";
+} from "../../lib/classificacao/regra.ts";
 import {
   erroDoNomeDaVersao,
   nomeParaGravar,
@@ -52,32 +77,6 @@ import {
   — sem botão enquanto não existe.
 */
 
-const numeroOuNulo = (texto) => {
-  const t = String(texto ?? "")
-    .trim()
-    .replace(",", ".");
-  if (!t) return null;
-  const n = Number(t);
-  return Number.isFinite(n) ? n : texto;
-};
-const lista = (texto) =>
-  String(texto ?? "")
-    .split(/[,;\n]/)
-    .map((t) => t.trim())
-    .filter(Boolean);
-const textoDaLista = (valores) => (valores || []).join(", ");
-const listaEmMaiusculas = (texto) => lista(String(texto ?? "").toUpperCase());
-const textoDoNumero = (valor) =>
-  valor === null || valor === undefined ? "" : String(valor).replace(".", ",");
-const niveisPorCargo = (texto) =>
-  String(texto ?? "")
-    .split(";")
-    .map((par) => par.split("=").map((t) => t.trim()))
-    .filter(([termo, nivel]) => termo && nivel)
-    .map(([termo, nivel]) => ({ termo, nivel }));
-const textoDosNiveisPorCargo = (niveis) =>
-  niveis.map((n) => `${n.termo}=${n.nivel}`).join("; ");
-
 /*
   Entrada de um valor convertido (número, lista): enquanto a pessoa digita,
   o campo mostra o texto como ela escreveu ("7," ou "PP, ") e a regra
@@ -85,8 +84,23 @@ const textoDosNiveisPorCargo = (niveis) =>
   ao sair do campo, volta a mostrar o valor formatado. Converter e formatar
   a cada tecla comia a vírgula e o espaço do que estava a meio caminho.
 */
-function EntradaConvertida({ valor, formatar, converter, aoMudar, ...props }) {
-  const [digitado, setDigitado] = useState(null);
+function EntradaConvertida<T>({
+  valor,
+  formatar,
+  converter,
+  aoMudar,
+  ...props
+}: Omit<
+  InputHTMLAttributes<HTMLInputElement>,
+  "value" | "onChange" | "onBlur"
+> & {
+  valor: T;
+  formatar: (v: T) => string;
+  converter: (v: string) => T;
+  aoMudar: (v: T) => void;
+  "data-passo"?: string;
+}) {
+  const [digitado, setDigitado] = useState<string | null>(null);
   return (
     <input
       {...props}
@@ -107,6 +121,13 @@ function CampoNumero({
   desabilitado,
   passo = "0.1",
   dica,
+}: {
+  rotulo: string;
+  valor: NumeroEmEdicao;
+  aoMudar: (v: NumeroEmEdicao) => void;
+  desabilitado: boolean;
+  passo?: string;
+  dica?: string;
 }) {
   const id = useId();
   return (
@@ -125,7 +146,17 @@ function CampoNumero({
   );
 }
 
-function CampoLista({ rotulo, valor, aoMudar, desabilitado }) {
+function CampoLista({
+  rotulo,
+  valor,
+  aoMudar,
+  desabilitado,
+}: {
+  rotulo: string;
+  valor: string[];
+  aoMudar: (v: string[]) => void;
+  desabilitado: boolean;
+}) {
   const id = useId();
   return (
     <Campo rotulo={rotulo} idDoControle={id}>
@@ -141,7 +172,17 @@ function CampoLista({ rotulo, valor, aoMudar, desabilitado }) {
   );
 }
 
-function Caixa({ rotulo, marcado, aoMudar, desabilitado }) {
+function Caixa({
+  rotulo,
+  marcado,
+  aoMudar,
+  desabilitado,
+}: {
+  rotulo: ReactNode;
+  marcado: boolean;
+  aoMudar: (v: boolean) => void;
+  desabilitado: boolean;
+}) {
   return (
     <label className="classificacao-caixa">
       <input
@@ -155,7 +196,19 @@ function Caixa({ rotulo, marcado, aoMudar, desabilitado }) {
   );
 }
 
-function Escolha({ rotulo, valor, opcoes, aoMudar, desabilitado }) {
+function Escolha({
+  rotulo,
+  valor,
+  opcoes,
+  aoMudar,
+  desabilitado,
+}: {
+  rotulo: string;
+  valor: string | null;
+  opcoes: ReadonlyArray<readonly (string | undefined)[]>;
+  aoMudar: (v: string) => void;
+  desabilitado: boolean;
+}) {
   const id = useId();
   return (
     <Campo rotulo={rotulo}>
@@ -163,7 +216,7 @@ function Escolha({ rotulo, valor, opcoes, aoMudar, desabilitado }) {
         id={id}
         value={valor ?? ""}
         disabled={desabilitado}
-        onChange={(e) => aoMudar(e.target.value || null)}
+        onChange={(e) => aoMudar(e.target.value)}
       >
         {opcoes.map(([v, r]) => (
           <option key={v} value={v}>
@@ -176,17 +229,26 @@ function Escolha({ rotulo, valor, opcoes, aoMudar, desabilitado }) {
 }
 
 /* Os critérios de desempate escolhidos, na ordem: arrastar, setas, direção e remover. */
-function CriteriosDeDesempate({ desempate, aoMudar, desabilitado }) {
-  const [arrastando, setArrastando] = useState(null);
+function CriteriosDeDesempate({
+  desempate,
+  aoMudar,
+  desabilitado,
+}: {
+  desempate: RegraEmEdicao["desempate"];
+  aoMudar: (v: RegraEmEdicao["desempate"]) => void;
+  desabilitado: boolean;
+}) {
+  const [arrastando, setArrastando] = useState<number | null>(null);
   const idNovo = useId();
   const usados = new Set(desempate.map((d) => d.criterio));
   const disponiveis = CATALOGO_DE_CRITERIOS.filter(
     (c) => !usados.has(c.codigo),
   );
-  const mover = (de, para) => {
+  const mover = (de: number, para: number) => {
     if (de === para || para < 0 || para >= desempate.length) return;
     const nova = [...desempate];
     const [item] = nova.splice(de, 1);
+    if (!item) return;
     nova.splice(para, 0, item);
     aoMudar(nova);
   };
@@ -237,8 +299,8 @@ function CriteriosDeDesempate({ desempate, aoMudar, desabilitado }) {
                 >
                   {DIRECOES.filter(([v]) =>
                     c?.tipo === "booleano"
-                      ? v.endsWith("_PRIMEIRO") && !v.startsWith("M")
-                      : v.startsWith("M"),
+                      ? v?.endsWith("_PRIMEIRO") && !v?.startsWith("M")
+                      : v?.startsWith("M"),
                   ).map(([v, r]) => (
                     <option key={v} value={v}>
                       {r}
@@ -315,9 +377,19 @@ function CriteriosDeDesempate({ desempate, aoMudar, desabilitado }) {
   );
 }
 
-function Modalidades({ modalidades, aoMudar, desabilitado }) {
-  const mudar = (i, campos) =>
-    aoMudar(modalidades.map((m, j) => (j === i ? { ...m, ...campos } : m)));
+function Modalidades({
+  modalidades,
+  aoMudar,
+  desabilitado,
+}: {
+  modalidades: RegraEmEdicao["modalidades"];
+  aoMudar: (v: RegraEmEdicao["modalidades"]) => void;
+  desabilitado: boolean;
+}) {
+  const mudar = (
+    i: number,
+    campos: Partial<RegraEmEdicao["modalidades"][number]>,
+  ) => aoMudar(modalidades.map((m, j) => (j === i ? { ...m, ...campos } : m)));
   return (
     <div className="ui-tabela-rolagem classificacao-modalidades">
       <table>
@@ -487,7 +559,17 @@ function Modalidades({ modalidades, aoMudar, desabilitado }) {
   );
 }
 
-function Versoes({ regra, podeEditar, aoUsar, aoRenomear }) {
+function Versoes({
+  regra,
+  podeEditar,
+  aoUsar,
+  aoRenomear,
+}: {
+  regra: RegraDaClassificacao | null;
+  podeEditar: boolean;
+  aoUsar: (config: unknown) => void;
+  aoRenomear: EstadoDaClassificacao["renomearVersao"];
+}) {
   const versoes = regra?.versoes || [];
   if (!versoes.length) return null;
   return (
@@ -515,7 +597,7 @@ function Versoes({ regra, podeEditar, aoUsar, aoRenomear }) {
             })}
             {v.por ? ` · ${v.por}` : ""}
             {v.motivo ? ` · ${v.motivo}` : ""}
-            {podeEditar && v.versao !== regra.versao ? (
+            {podeEditar && v.configuracao && v.versao !== regra?.versao ? (
               <button
                 type="button"
                 className="btn secondary small"
@@ -541,21 +623,33 @@ function Versoes({ regra, podeEditar, aoUsar, aoRenomear }) {
 }
 
 /* O rascunho guardado (src/app/rascunho-da-regra.ts, tipo CLASSIFICACAO): { regra }. */
-const mesmaRegra = (a, b) =>
+const mesmaRegra = (a: unknown, b: unknown) =>
   JSON.stringify(normalizarRegra(a)) === JSON.stringify(b);
-const regraDoGuardado = (conteudo) =>
-  conteudo?.regra && typeof conteudo.regra === "object" ? conteudo.regra : null;
+const regraDoGuardado = (conteudo: unknown) => {
+  const regra = objetoDosRecursos(conteudo).regra;
+  return regra && typeof regra === "object" ? regra : null;
+};
 
-export function Regra({ estado, e, dataDeCorte, rascunhoGuardado }) {
+export function Regra({
+  estado,
+  e,
+  dataDeCorte,
+  rascunhoGuardado,
+}: {
+  estado: EstadoDaClassificacao;
+  e: SnapshotDaClassificacao;
+  dataDeCorte: string | null;
+  rascunhoGuardado: RascunhoDaRegra;
+}) {
   const dados = e.dados;
   const regraSalva = dados?.regra || null;
   const inicial = useMemo(
     () => normalizarRegra(regraSalva?.configuracao || REGRA_VAZIA),
     [regraSalva],
   );
-  const [rascunho, setRascunho] = useState(inicial);
+  const [rascunho, setRascunho] = useState<RegraEmEdicao>(inicial);
   const [motivo, setMotivo] = useState("");
-  const [nome, setNome] = useState(null);
+  const [nome, setNome] = useState<string | null>(null);
   const [tentou, setTentou] = useState(false);
   const ids = {
     motivo: useId(),
@@ -584,22 +678,35 @@ export function Regra({ estado, e, dataDeCorte, rascunhoGuardado }) {
   const exigeMotivo = Boolean(regraSalva);
   const sugestao = sugerirNomeDaVersao({
     tipo: "classificacao",
-    edital: dados?.edital?.numero,
+    edital: String(dados?.edital?.numero ?? ""),
     motivo,
   });
   const nomeEscolhido = nomeDoCampo(nome, sugestao);
   const nomeRuim = Boolean(erroDoNomeDaVersao(nomeEscolhido));
 
-  const mudar = (caminho, valor) =>
-    setRascunho((atual) => {
-      const novo = structuredClone(atual);
-      let alvo = novo;
-      for (const p of caminho.slice(0, -1)) alvo = alvo[p];
-      alvo[caminho.at(-1)] = valor;
-      return novo;
-    });
+  const mudarCampo = <K extends keyof RegraEmEdicao>(
+    campo: K,
+    valor: RegraEmEdicao[K],
+  ) => setRascunho((atual) => alterarCampoDaRegra(atual, campo, valor));
+  const mudarGrupo = <
+    K extends
+      | "etapas"
+      | "documental"
+      | "entrevista"
+      | "composicao"
+      | "empate_final"
+      | "cotas"
+      | "convocacao",
+  >(
+    grupo: K,
+    campos: Partial<RegraEmEdicao[K]>,
+  ) => setRascunho((atual) => alterarGrupoDaRegra(atual, grupo, campos));
+  const mudarLista = (
+    tipo: keyof RegraEmEdicao["listas"],
+    campos: { empate: string },
+  ) => setRascunho((atual) => alterarListaDaRegra(atual, tipo, campos));
 
-  async function salvar(evento) {
+  async function salvar(evento: FormEvent<HTMLFormElement>) {
     evento.preventDefault();
     setTentou(true);
     if (erros.length || (exigeMotivo && motivo.trim().length < 3) || nomeRuim)
@@ -666,13 +773,13 @@ export function Regra({ estado, e, dataDeCorte, rascunhoGuardado }) {
             rotulo="Avaliação documental"
             marcado={r.etapas.documental}
             desabilitado={leitura}
-            aoMudar={(v) => mudar(["etapas", "documental"], v)}
+            aoMudar={(v) => mudarGrupo("etapas", { documental: v })}
           />
           <Caixa
             rotulo="Entrevista"
             marcado={r.etapas.entrevista}
             desabilitado={leitura}
-            aoMudar={(v) => mudar(["etapas", "entrevista"], v)}
+            aoMudar={(v) => mudarGrupo("etapas", { entrevista: v })}
           />
         </div>
         <div className="ui-grade-de-campos">
@@ -687,28 +794,26 @@ export function Regra({ estado, e, dataDeCorte, rascunhoGuardado }) {
                   marcado={i >= 0}
                   desabilitado={leitura}
                   aoMudar={(sim) =>
-                    mudar(
-                      ["composicao", "componentes"],
-                      sim
+                    mudarGrupo("composicao", {
+                      componentes: sim
                         ? [...r.composicao.componentes, { codigo, peso: 1 }]
                         : r.composicao.componentes.filter(
                             (c) => c.codigo !== codigo,
                           ),
-                    )
+                    })
                   }
                 />
                 {i >= 0 ? (
                   <CampoNumero
                     rotulo="Peso"
-                    valor={r.composicao.componentes[i].peso}
+                    valor={r.composicao.componentes[i]?.peso ?? null}
                     desabilitado={leitura}
                     aoMudar={(v) =>
-                      mudar(
-                        ["composicao", "componentes"],
-                        r.composicao.componentes.map((c, j) =>
+                      mudarGrupo("composicao", {
+                        componentes: r.composicao.componentes.map((c, j) =>
                           j === i ? { ...c, peso: v } : c,
                         ),
-                      )
+                      })
                     }
                   />
                 ) : null}
@@ -720,14 +825,14 @@ export function Regra({ estado, e, dataDeCorte, rascunhoGuardado }) {
             passo="1"
             valor={r.composicao.casas}
             desabilitado={leitura}
-            aoMudar={(v) => mudar(["composicao", "casas"], v)}
+            aoMudar={(v) => mudarGrupo("composicao", { casas: v })}
           />
           <Escolha
             rotulo="Arredondamento"
             valor={r.composicao.arredondamento}
             opcoes={ARREDONDAMENTOS}
             desabilitado={leitura}
-            aoMudar={(v) => mudar(["composicao", "arredondamento"], v)}
+            aoMudar={(v) => mudarGrupo("composicao", { arredondamento: v })}
           />
           <Campo
             rotulo="Data de corte da idade"
@@ -740,7 +845,9 @@ export function Regra({ estado, e, dataDeCorte, rascunhoGuardado }) {
               type="date"
               value={r.data_corte || ""}
               disabled={leitura}
-              onChange={(ev) => mudar(["data_corte"], ev.target.value || null)}
+              onChange={(ev) =>
+                mudarCampo("data_corte", ev.target.value || null)
+              }
             />
           </Campo>
         </div>
@@ -759,13 +866,13 @@ export function Regra({ estado, e, dataDeCorte, rascunhoGuardado }) {
             rotulo="Situações aptas na análise"
             valor={r.documental.situacoes_aptas}
             desabilitado={leitura}
-            aoMudar={(v) => mudar(["documental", "situacoes_aptas"], v)}
+            aoMudar={(v) => mudarGrupo("documental", { situacoes_aptas: v })}
           />
           <CampoNumero
             rotulo="Mínimo documental"
             valor={r.documental.nota_minima}
             desabilitado={leitura}
-            aoMudar={(v) => mudar(["documental", "nota_minima"], v)}
+            aoMudar={(v) => mudarGrupo("documental", { nota_minima: v })}
           />
           {NIVEIS.map(([nivel, rotulo]) => (
             <CampoNumero
@@ -777,7 +884,7 @@ export function Regra({ estado, e, dataDeCorte, rascunhoGuardado }) {
                 const porNivel = { ...r.documental.nota_minima_por_nivel };
                 if (v === null) delete porNivel[nivel];
                 else porNivel[nivel] = v;
-                mudar(["documental", "nota_minima_por_nivel"], porNivel);
+                mudarGrupo("documental", { nota_minima_por_nivel: porNivel });
               }}
             />
           ))}
@@ -786,7 +893,9 @@ export function Regra({ estado, e, dataDeCorte, rascunhoGuardado }) {
             valor={r.documental.nivel_padrao || ""}
             opcoes={[["", "Nenhum"], ...NIVEIS]}
             desabilitado={leitura}
-            aoMudar={(v) => mudar(["documental", "nivel_padrao"], v || null)}
+            aoMudar={(v) =>
+              mudarGrupo("documental", { nivel_padrao: v || null })
+            }
           />
           <Campo
             rotulo="Nível pelo início do cargo"
@@ -800,7 +909,7 @@ export function Regra({ estado, e, dataDeCorte, rascunhoGuardado }) {
               converter={niveisPorCargo}
               disabled={leitura}
               placeholder="Técnico=tecnico; Agente=fundamental"
-              aoMudar={(v) => mudar(["documental", "niveis_por_cargo"], v)}
+              aoMudar={(v) => mudarGrupo("documental", { niveis_por_cargo: v })}
             />
           </Campo>
           <fieldset className="classificacao-parciais" data-campo="parciais">
@@ -814,14 +923,14 @@ export function Regra({ estado, e, dataDeCorte, rascunhoGuardado }) {
                 marcado={r.documental.parciais.includes(codigo)}
                 desabilitado={leitura}
                 aoMudar={(marcado) =>
-                  mudar(
-                    ["documental", "parciais"],
-                    PARCIAIS_DA_DOCUMENTAL.map(([c]) => c).filter((c) =>
-                      c === codigo
-                        ? marcado
-                        : r.documental.parciais.includes(c),
+                  mudarGrupo("documental", {
+                    parciais: PARCIAIS_DA_DOCUMENTAL.map(([c]) => c).filter(
+                      (c) =>
+                        c === codigo
+                          ? marcado
+                          : r.documental.parciais.includes(c),
                     ),
-                  )
+                  })
                 }
               />
             ))}
@@ -830,19 +939,23 @@ export function Regra({ estado, e, dataDeCorte, rascunhoGuardado }) {
             rotulo="Mínimo na entrevista"
             valor={r.entrevista.nota_minima}
             desabilitado={leitura}
-            aoMudar={(v) => mudar(["entrevista", "nota_minima"], v)}
+            aoMudar={(v) => mudarGrupo("entrevista", { nota_minima: v })}
           />
           <CampoNumero
             rotulo="Mínimo por competência"
             valor={r.entrevista.nota_minima_competencia}
             desabilitado={leitura}
-            aoMudar={(v) => mudar(["entrevista", "nota_minima_competencia"], v)}
+            aoMudar={(v) =>
+              mudarGrupo("entrevista", { nota_minima_competencia: v })
+            }
           />
           <CampoNumero
             rotulo="Elimina com nota até"
             valor={r.entrevista.nota_eliminatoria_ate}
             desabilitado={leitura}
-            aoMudar={(v) => mudar(["entrevista", "nota_eliminatoria_ate"], v)}
+            aoMudar={(v) =>
+              mudarGrupo("entrevista", { nota_eliminatoria_ate: v })
+            }
           />
         </div>
         <div className="classificacao-caixas">
@@ -850,19 +963,21 @@ export function Regra({ estado, e, dataDeCorte, rascunhoGuardado }) {
             rotulo="Ausente na entrevista é eliminado"
             marcado={r.entrevista.exige_comparecimento}
             desabilitado={leitura}
-            aoMudar={(v) => mudar(["entrevista", "exige_comparecimento"], v)}
+            aoMudar={(v) =>
+              mudarGrupo("entrevista", { exige_comparecimento: v })
+            }
           />
           <Caixa
             rotulo="Parecer inapto elimina"
             marcado={r.entrevista.inapto_elimina}
             desabilitado={leitura}
-            aoMudar={(v) => mudar(["entrevista", "inapto_elimina"], v)}
+            aoMudar={(v) => mudarGrupo("entrevista", { inapto_elimina: v })}
           />
           <Caixa
             rotulo="Entrevista só com parecer (apto/inapto, sem nota)"
             marcado={r.entrevista.so_parecer}
             desabilitado={leitura}
-            aoMudar={(v) => mudar(["entrevista", "so_parecer"], v)}
+            aoMudar={(v) => mudarGrupo("entrevista", { so_parecer: v })}
           />
         </div>
         {r.entrevista.competencias.length ? (
@@ -874,12 +989,11 @@ export function Regra({ estado, e, dataDeCorte, rascunhoGuardado }) {
                 valor={c.minimo}
                 desabilitado={leitura}
                 aoMudar={(v) =>
-                  mudar(
-                    ["entrevista", "competencias"],
-                    r.entrevista.competencias.map((x, j) =>
+                  mudarGrupo("entrevista", {
+                    competencias: r.entrevista.competencias.map((x, j) =>
                       j === i ? { ...x, minimo: v } : x,
                     ),
-                  )
+                  })
                 }
               />
             ))}
@@ -898,7 +1012,7 @@ export function Regra({ estado, e, dataDeCorte, rascunhoGuardado }) {
         <CriteriosDeDesempate
           desempate={r.desempate}
           desabilitado={leitura}
-          aoMudar={(v) => mudar(["desempate"], v)}
+          aoMudar={(v) => mudarCampo("desempate", v)}
         />
         <div className="ui-grade-de-campos">
           <Escolha
@@ -906,28 +1020,28 @@ export function Regra({ estado, e, dataDeCorte, rascunhoGuardado }) {
             valor={r.listas.PRELIMINAR.empate}
             opcoes={EMPATE_NAS_LISTAS}
             desabilitado={leitura}
-            aoMudar={(v) => mudar(["listas", "PRELIMINAR", "empate"], v)}
+            aoMudar={(v) => mudarLista("PRELIMINAR", { empate: v })}
           />
           <Escolha
             rotulo="Empate no resultado da entrevista"
             valor={r.listas.ENTREVISTA.empate}
             opcoes={EMPATE_NAS_LISTAS}
             desabilitado={leitura}
-            aoMudar={(v) => mudar(["listas", "ENTREVISTA", "empate"], v)}
+            aoMudar={(v) => mudarLista("ENTREVISTA", { empate: v })}
           />
           <Escolha
             rotulo="Empate no resultado final"
             valor={r.listas.FINAL.empate}
             opcoes={EMPATE_NAS_LISTAS}
             desabilitado={leitura}
-            aoMudar={(v) => mudar(["listas", "FINAL", "empate"], v)}
+            aoMudar={(v) => mudarLista("FINAL", { empate: v })}
           />
           <Escolha
             rotulo="Numeração dos empatados"
             valor={r.empate_final.numeracao}
             opcoes={NUMERACOES}
             desabilitado={leitura}
-            aoMudar={(v) => mudar(["empate_final", "numeracao"], v)}
+            aoMudar={(v) => mudarGrupo("empate_final", { numeracao: v })}
           />
         </div>
         <div className="classificacao-empate-final">
@@ -936,13 +1050,12 @@ export function Regra({ estado, e, dataDeCorte, rascunhoGuardado }) {
           </span>
           <Segmentado
             rotulo="Empate final"
-            opcoes={METODOS_DE_EMPATE_FINAL.map(([valor, rotulo]) => ({
-              valor,
-              rotulo,
-            }))}
+            opcoes={METODOS_DE_EMPATE_FINAL.flatMap(([valor, rotulo]) =>
+              valor && rotulo ? [{ valor, rotulo }] : [],
+            )}
             valor={r.empate_final.metodo}
             desabilitado={leitura}
-            aoMudar={(v) => mudar(["empate_final", "metodo"], v)}
+            aoMudar={(v) => mudarGrupo("empate_final", { metodo: v })}
           />
         </div>
       </section>
@@ -958,7 +1071,7 @@ export function Regra({ estado, e, dataDeCorte, rascunhoGuardado }) {
         <Modalidades
           modalidades={r.modalidades}
           desabilitado={leitura}
-          aoMudar={(v) => mudar(["modalidades"], v)}
+          aoMudar={(v) => mudarCampo("modalidades", v)}
         />
         <div className="ui-grade-de-campos">
           <CampoNumero
@@ -966,14 +1079,16 @@ export function Regra({ estado, e, dataDeCorte, rascunhoGuardado }) {
             passo="1"
             valor={r.cotas.minimo_vagas_reserva}
             desabilitado={leitura}
-            aoMudar={(v) => mudar(["cotas", "minimo_vagas_reserva"], v ?? 0)}
+            aoMudar={(v) =>
+              mudarGrupo("cotas", { minimo_vagas_reserva: v ?? 0 })
+            }
           />
           <Escolha
             rotulo="Mais de uma cota (no resultado final)"
             valor={r.cotas.acumulo}
             opcoes={ACUMULOS}
             desabilitado={leitura}
-            aoMudar={(v) => mudar(["cotas", "acumulo"], v)}
+            aoMudar={(v) => mudarGrupo("cotas", { acumulo: v })}
           />
         </div>
       </section>
@@ -991,14 +1106,14 @@ export function Regra({ estado, e, dataDeCorte, rascunhoGuardado }) {
             rotulo="Vezes as vagas imediatas"
             valor={r.convocacao.multiplo_vagas}
             desabilitado={leitura}
-            aoMudar={(v) => mudar(["convocacao", "multiplo_vagas"], v)}
+            aoMudar={(v) => mudarGrupo("convocacao", { multiplo_vagas: v })}
           />
           <CampoNumero
             rotulo="Só cadastro reserva: até a posição"
             passo="1"
             valor={r.convocacao.posicao_max_cr}
             desabilitado={leitura}
-            aoMudar={(v) => mudar(["convocacao", "posicao_max_cr"], v)}
+            aoMudar={(v) => mudarGrupo("convocacao", { posicao_max_cr: v })}
           />
         </div>
         <div className="classificacao-caixas">
@@ -1006,7 +1121,7 @@ export function Regra({ estado, e, dataDeCorte, rascunhoGuardado }) {
             rotulo="Incluir os empatados no limite"
             marcado={r.convocacao.incluir_empatados}
             desabilitado={leitura}
-            aoMudar={(v) => mudar(["convocacao", "incluir_empatados"], v)}
+            aoMudar={(v) => mudarGrupo("convocacao", { incluir_empatados: v })}
           />
         </div>
         {r.convocacao.excecoes.map((x, i) => (
@@ -1016,12 +1131,11 @@ export function Regra({ estado, e, dataDeCorte, rascunhoGuardado }) {
               valor={x.termos}
               desabilitado={leitura}
               aoMudar={(termos) =>
-                mudar(
-                  ["convocacao", "excecoes"],
-                  r.convocacao.excecoes.map((y, j) =>
+                mudarGrupo("convocacao", {
+                  excecoes: r.convocacao.excecoes.map((y, j) =>
                     j === i ? { ...y, termos } : y,
                   ),
-                )
+                })
               }
             />
 
@@ -1030,12 +1144,11 @@ export function Regra({ estado, e, dataDeCorte, rascunhoGuardado }) {
               valor={x.multiplo_vagas}
               desabilitado={leitura}
               aoMudar={(v) =>
-                mudar(
-                  ["convocacao", "excecoes"],
-                  r.convocacao.excecoes.map((y, j) =>
+                mudarGrupo("convocacao", {
+                  excecoes: r.convocacao.excecoes.map((y, j) =>
                     j === i ? { ...y, multiplo_vagas: v } : y,
                   ),
-                )
+                })
               }
             />
             <CampoNumero
@@ -1044,12 +1157,11 @@ export function Regra({ estado, e, dataDeCorte, rascunhoGuardado }) {
               valor={x.posicao_max_cr}
               desabilitado={leitura}
               aoMudar={(v) =>
-                mudar(
-                  ["convocacao", "excecoes"],
-                  r.convocacao.excecoes.map((y, j) =>
+                mudarGrupo("convocacao", {
+                  excecoes: r.convocacao.excecoes.map((y, j) =>
                     j === i ? { ...y, posicao_max_cr: v } : y,
                   ),
-                )
+                })
               }
             />
             {leitura ? null : (
@@ -1058,10 +1170,9 @@ export function Regra({ estado, e, dataDeCorte, rascunhoGuardado }) {
                 className="btn danger small"
                 aria-label="Tirar a exceção"
                 onClick={() =>
-                  mudar(
-                    ["convocacao", "excecoes"],
-                    r.convocacao.excecoes.filter((_, j) => j !== i),
-                  )
+                  mudarGrupo("convocacao", {
+                    excecoes: r.convocacao.excecoes.filter((_, j) => j !== i),
+                  })
                 }
               >
                 <i className="fa-solid fa-xmark" aria-hidden="true" />
@@ -1074,13 +1185,12 @@ export function Regra({ estado, e, dataDeCorte, rascunhoGuardado }) {
             type="button"
             className="btn secondary small"
             onClick={() =>
-              mudar(
-                ["convocacao", "excecoes"],
-                [
+              mudarGrupo("convocacao", {
+                excecoes: [
                   ...r.convocacao.excecoes,
                   { termos: [], multiplo_vagas: null, posicao_max_cr: null },
                 ],
-              )
+              })
             }
           >
             <i className="fa-solid fa-plus" aria-hidden="true" /> Exceção por
@@ -1100,7 +1210,7 @@ export function Regra({ estado, e, dataDeCorte, rascunhoGuardado }) {
             maxLength={1000}
             value={r.rodape}
             disabled={leitura}
-            onChange={(ev) => mudar(["rodape"], ev.target.value)}
+            onChange={(ev) => mudarCampo("rodape", ev.target.value)}
           />
         </Campo>
       </section>

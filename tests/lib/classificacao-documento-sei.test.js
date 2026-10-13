@@ -23,7 +23,7 @@ import {
   documentoDaRegra,
   normalizarRegra,
   validarRegra,
-} from "../../src/lib/classificacao/regra.js";
+} from "../../src/lib/classificacao/regra.ts";
 
 /*
   O documento oficial (SEI) bate com as publicações do edital 83/2026 (DSEI

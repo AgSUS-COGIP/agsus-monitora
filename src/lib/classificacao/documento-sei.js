@@ -56,7 +56,7 @@ import {
   parcialDaColuna,
 } from "./colunas-do-documento.js";
 import { escalar, formatarNota, lerData, ordinal } from "./numeros.js";
-import { documentoDaRegra, normalizarRegra } from "./regra.js";
+import { documentoDaRegra, normalizarRegra } from "./regra.ts";
 import { CABECALHO_PADRAO } from "../cabecalho-dos-documentos.js";
 import {
   MARCA_SEM_VALOR_OFICIAL,

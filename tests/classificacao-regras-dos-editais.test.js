@@ -5,7 +5,7 @@ import { classificar } from "../src/lib/classificacao/motor.js";
 import {
   normalizarRegra,
   validarRegra,
-} from "../src/lib/classificacao/regra.js";
+} from "../src/lib/classificacao/regra.ts";
 
 /*
   O seed das regras de TODOS os editais (lidas dos PDFs oficiais em 02/10/2026)

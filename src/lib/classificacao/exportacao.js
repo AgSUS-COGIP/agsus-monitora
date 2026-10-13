@@ -17,7 +17,7 @@ import {
   TIPOS_DE_LISTA,
   TIPOS_DE_LISTA_DA_PRE_CLASSIFICACAO,
 } from "./catalogo.js";
-import { normalizarRegra } from "./regra.js";
+import { normalizarRegra } from "./regra.ts";
 import { ehEditalDeTreinamento } from "../edital-de-treinamento.js";
 
 export const MIME_XLSX =

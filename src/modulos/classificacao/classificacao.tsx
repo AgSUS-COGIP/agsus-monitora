@@ -34,7 +34,7 @@ import { Agenda } from "./agenda.jsx";
 import { criarEstadoDaClassificacao, MENSAGEM_SEM_ACESSO } from "./estado.ts";
 import { criarEstadoDaAgenda } from "./estado-da-agenda.js";
 import { Listas } from "./listas.tsx";
-import { Regra } from "./regra.jsx";
+import { Regra } from "./regra.tsx";
 import { SeloDeAvisos } from "../conferencias/avisos-de-conferencia.tsx";
 import "./classificacao.css";
 

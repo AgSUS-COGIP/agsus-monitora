@@ -36,7 +36,7 @@ import {
 import { derivarQuadro } from "../lista-convocacao-rules.js";
 import { normalizarModelo } from "../modelo-de-convocacao.js";
 import { codigosDaModalidade } from "./catalogo.js";
-import { normalizarRegra } from "./regra.js";
+import { normalizarRegra } from "./regra.ts";
 
 const ARREDONDAMENTO_DA_REGRA = Object.freeze({
   PARA_CIMA: "sempre_acima",

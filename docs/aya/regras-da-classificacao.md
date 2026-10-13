@@ -20,7 +20,7 @@ dos PDFs oficiais).
 **perguntas:** regra de classificacao | como funciona a regra de classificacao | como funciona a regra de classificacao do edital | versao da regra | versoes da regra | regra do edital
 **resposta:** No MONITORA não há regra de classificação fixa: cada edital tem a sua, decidida pelo gestor do edital na aba Classificação › Regra. Ela define as etapas consideradas, a composição da nota (componentes, pesos, casas decimais e arredondamento), as notas mínimas e eliminatórias (documental, por nível da vaga, total da entrevista e por competência), os critérios de desempate e a ordem deles, o empate final, as modalidades, a convocação para entrevista e o rodapé das listas. Salvar sempre cria uma versão nova (da segunda em diante, com o motivo); as anteriores ficam no histórico e podem voltar ao formulário. Cada lista gerada guarda a versão usada.
 **fato:** No MONITORA, a regra de classificação é de cada edital, versionada: salvar cria versão nova e a lista gerada guarda a versão usada.
-**fonte:** src/lib/classificacao/regra.js; supabase/migrations/20261002150000_classificacao.sql
+**fonte:** src/lib/classificacao/regra.ts; supabase/migrations/20261002150000_classificacao.sql
 **abrir:** classificacao
 
 ## Rascunho guardado da regra de classificação
@@ -115,7 +115,7 @@ dos PDFs oficiais).
 
 **perguntas:** textos do documento do sei | editar disposicoes preliminares | mudar o titulo do documento da lista | processo sei da classificacao | como fica no sei
 **resposta:** Em "Como fica no SEI" aparecem a prévia (o timbrado simulado, o texto e as tabelas como ficam no SEI) e os textos que o gestor ajusta antes de copiar ou baixar: número do edital, processo SEI (vai no rodapé do Word), unidade por extenso (ex.: "Distrito Sanitário Especial Indígena Xingu (DSEI Xingu)"), autoridade do item 1.1 (ex.: "por intermédio da Diretoria de Atenção Integral à Saúde, no uso das atribuições que lhe foram conferidas pela Designação nº 28/2026/PRES/AgSUS"), local e data (vazia = "na data da assinatura digital"), o título e as disposições preliminares e finais do modelo daquela lista. Cada linha é um item; ">" no começo vira subitem (1.3.1) e ">>" sub-subitem (1.3.3.1); **texto** fica em negrito; campos entre chaves são trocados pelo do edital ({edital}, {unidade}, {fase}, {notas_minimas}…). Os padrões vêm das publicações do 83/2026 e do 100/2026; as notas mínimas do 1.3 vêm da regra. "Salvar no edital" grava na regra (nova versão, motivo "Textos do documento oficial (SEI)"), sem mudar a classificação; "Restaurar o padrão" volta ao texto das publicações.
-**fonte:** src/modulos/classificacao/documento.tsx; src/lib/classificacao/regra.js
+**fonte:** src/modulos/classificacao/documento.tsx; src/lib/classificacao/regra.ts
 **abrir:** classificacao
 
 ## Nota de desempate abaixo da tabela da vaga
@@ -167,7 +167,7 @@ dos PDFs oficiais).
 
 **perguntas:** entrevista so com parecer | entrevista apto inapto sem nota | entrevista sem nota na classificacao
 **resposta:** Nos editais em que a entrevista só diz apto ou inapto (os da Sede de 2025), a regra marca "Entrevista só com parecer": o apto segue sem nota, o inapto é eliminado e quem não tem parecer também sai, com o motivo; a nota final é só a da avaliação documental, e a lista do resultado da entrevista segue a ordem da documental.
-**fonte:** src/lib/classificacao/regra.js; src/lib/classificacao/motor.js
+**fonte:** src/lib/classificacao/regra.ts; src/lib/classificacao/motor.js
 **abrir:** classificacao
 
 ## Vagas da classificação e a convocação do edital
