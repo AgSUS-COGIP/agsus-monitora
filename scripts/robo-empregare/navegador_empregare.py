@@ -68,6 +68,8 @@ ESPERA_ENTRE_TENTATIVAS = 30  # segundos
 TIMEOUT_DOWNLOAD = 180  # segundos para o arquivo terminar de baixar
 ESPERA_APOS_EXPORTAR = 20  # segundos antes de abrir a Central pela 1ª vez
 TENTATIVAS_DE_EXPORTAR = 2  # a 1ª vaga depois da Central às vezes esgota o tempo
+TENTATIVAS_DE_LOGIN = 2  # a tela da senha às vezes não fica pronta a tempo
+ESPERA_ENTRE_LOGINS = 5  # segundos
 FOLGA_DO_RELOGIO = timedelta(minutes=10)  # relógio da Empregare × do runner
 
 JS_LER_LINHAS = """
@@ -745,6 +747,25 @@ class PortalEmpregare:
     # ── login e vagas ──
 
     def entrar(self, email, senha):
+        """
+        Login no portal. A tela da senha às vezes ainda não está pronta quando o
+        campo já existe no DOM (13/10/2026 16:00 UTC: ElementNotInteractableException
+        16 s depois de começar, nenhuma vaga baixada): tenta de novo do começo,
+        até TENTATIVAS_DE_LOGIN vezes. Senha recusada (ErroDeLogin) não repete.
+        """
+        for tentativa in range(1, TENTATIVAS_DE_LOGIN + 1):
+            try:
+                self._entrar_uma_vez(email, senha)
+                return
+            except ErroDeLogin:
+                raise
+            except Exception as erro:
+                if tentativa == TENTATIVAS_DE_LOGIN:
+                    raise
+                self.registrar(f"Login: tentativa {tentativa} falhou ({resumo_do_erro(erro)}); tentando de novo.")
+                time.sleep(ESPERA_ENTRE_LOGINS)
+
+    def _entrar_uma_vez(self, email, senha):
         from selenium.common.exceptions import TimeoutException
         from selenium.webdriver.common.by import By
         from selenium.webdriver.support import expected_conditions as EC
@@ -752,11 +773,14 @@ class PortalEmpregare:
         d = self.driver
         d.get(URL_LOGIN)
         self.janela = d.current_window_handle
-        self._esperar(20).until(EC.presence_of_element_located((By.ID, "loginEmail"))).send_keys(email)
-        self._esperar(20).until(EC.element_to_be_clickable((By.ID, "btn-login-avancar"))).click()
+        # Clicável (visível e habilitado), não só presente: digitar num campo escondido dá
+        # ElementNotInteractableException.
+        clicavel = EC.element_to_be_clickable
+        self._esperar(20).until(clicavel((By.ID, "loginEmail"))).send_keys(email)
+        self._esperar(20).until(clicavel((By.ID, "btn-login-avancar"))).click()
         time.sleep(1)
-        self._esperar(20).until(EC.presence_of_element_located((By.ID, "loginSenha"))).send_keys(senha)
-        self._esperar(20).until(EC.element_to_be_clickable((By.ID, "btn-login-acessar"))).click()
+        self._esperar(20).until(clicavel((By.ID, "loginSenha"))).send_keys(senha)
+        self._esperar(20).until(clicavel((By.ID, "btn-login-acessar"))).click()
         try:
             self._esperar(30).until(EC.presence_of_element_located((By.CSS_SELECTOR, 'a[href="/empresa/vagas"]')))
         except TimeoutException as erro:
