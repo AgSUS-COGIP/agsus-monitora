@@ -63,11 +63,18 @@ até a 10ª posição do cadastro reserva) é regra da lista CONVOCACAO da Class
 - **Conteúdo da ficha** (`ficha/`), no modo de análise da Fila, calmo e guiado: cabeçalho enxuto
   (nome e código, a vaga com o nível, chips da nota declarada, posição e modalidade; situação,
   responsável, reserva e regra no "i"; aviso só com menos de 5 minutos de reserva) e o stepper
-  (um passo por item que se aplica + Conclusão, com a marca do estado e a barra de progresso);
+  (um passo por item que se aplica + Conclusão, com a marca do estado e a barra de progresso).
+  No notebook o bloco preso ao alto encolhe pela altura da tela (`data-tamanho`): "enxuto" até
+  860 px de altura CSS (nome, código, vaga cortada com dica e chips numa linha; stepper e progresso
+  numa faixa; rodapé mais fino) e "compacto" ao rolar ou até 680 px (125% de zoom: só as marcas e
+  o nome do passo atual; os outros na dica); volta ao normal quando a rolagem volta ao alto;
 - **modo foco** (padrão): um item por vez — o que se pede (enunciado curto, "ver texto completo"),
-  a resposta da Empregare em destaque com "Abrir na Empregare" (o anexo diz onde achar o arquivo:
-  "Na Empregare: aba Questionários › Pergunta N — …"; o link sai de
-  `src/lib/avaliacao-documental/anexo-na-empregare.ts`, para trocar pelo link direto do arquivo), a
+  a resposta da Empregare em destaque: os arquivos capturados da pergunta, cada um com o seu link
+  (também quando a exportação traz "--"); com a resposta vigente lida e sem arquivo na pergunta,
+  "Sem arquivo enviado" e "Conferir na Empregare" (a exportação escreve "Anexo" em toda pergunta de
+  anexo); arquivo só num envio anterior, "Ver documento do envio anterior"; sem resposta capturada,
+  "Abrir na Empregare" e onde achar o arquivo ("Na Empregare: aba Questionários › Pergunta N — …").
+  Tudo sai de `src/lib/avaliacao-documental/anexo-na-empregare.ts`; a
   pergunta "O documento confere com o declarado?" com as escolhas lado a lado — Confere (pontuação
   = declarado), Não confere (só o motivo, pontuação 0; "não enviou" vira NAO_ENVIADO) e, nos itens
   que pontuam, Editar nota (pontuação pelos itens, −/+ e "Usar o calculado") — teclas 1, 2, 3; J/K;

@@ -1147,6 +1147,187 @@
   color: var(--state-info);
 }
 
+/* ── Cabeçalho no notebook (cabecalho-da-ficha.tsx, data-tamanho) ─────
+   "enxuto" (tela baixa, até 860 px de altura CSS): nome, código, vaga
+   (cortada, inteira na dica) e chips numa linha; o stepper e o progresso na
+   mesma faixa. "compacto" (ao rolar, ou até 680 px — 125% de zoom): o stepper
+   só com as marcas e o nome do passo atual (os outros na dica). O celular
+   (até 900 px de largura) tem as regras próprias lá embaixo. */
+@media (min-width: 901px) {
+  .avd-analise-topo {
+    transition:
+      padding var(--duration-base, 180ms) var(--ease-standard),
+      gap var(--duration-base, 180ms) var(--ease-standard);
+  }
+  .avd-analise-topo[data-tamanho] {
+    gap: var(--space-2);
+    padding: var(--space-2) var(--space-4);
+  }
+  .avd-analise-topo[data-tamanho] .avd-analise-linha {
+    gap: var(--space-3);
+  }
+  .avd-analise-topo[data-tamanho] .avd-analise-voltar {
+    justify-content: center;
+    width: 32px;
+    min-height: 32px;
+    padding: 0;
+  }
+  /* "Voltar à fila" fica para o leitor de tela e na dica (title). */
+  .avd-analise-topo[data-tamanho] .avd-analise-voltar span {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+  .avd-analise-topo[data-tamanho] .avd-analise-identidade {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+  }
+  .avd-analise-topo[data-tamanho] .avd-analise-identidade h2 {
+    flex: 0 1 auto;
+    align-items: baseline;
+    gap: var(--space-2);
+  }
+  .avd-analise-topo[data-tamanho] .avd-analise-nome {
+    min-width: 10ch;
+    font-size: var(--text-h3);
+    line-height: var(--leading-h3, 1.35);
+  }
+  /* Nome, vaga e chips como irmãos na linha: a vaga cede primeiro, o nome
+     depois (até 10 caracteres); os chips não encolhem. */
+  .avd-analise-topo[data-tamanho] .avd-analise-subtitulo {
+    display: contents;
+  }
+  .avd-analise-topo[data-tamanho] .avd-analise-vaga {
+    flex: 0 4 auto;
+    min-width: 7ch; /* ao menos o código da vaga; o resto na dica */
+    max-width: none;
+    font-size: var(--text-caption);
+  }
+  .avd-analise-topo[data-tamanho] .avd-analise-dados,
+  .avd-analise-topo[data-tamanho] .avd-analise-decisao {
+    flex: none;
+    flex-wrap: nowrap;
+  }
+  .avd-analise-topo[data-tamanho] .avd-analise-seta {
+    width: 28px;
+    height: 28px;
+  }
+  /* O stepper (à esquerda) e o progresso com Ver todos e "?" (à direita) numa faixa. */
+  .avd-analise-topo[data-tamanho] .avd-ficha-etapas {
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: var(--space-4);
+    padding-top: var(--space-2);
+  }
+  .avd-analise-topo[data-tamanho] .avd-ficha-etapas li + li::before {
+    top: 10px;
+    right: calc(50% + 15px);
+    left: calc(-50% + 15px);
+  }
+  .avd-analise-topo[data-tamanho] .avd-ficha-etapas li > button {
+    gap: 2px;
+  }
+  .avd-analise-topo[data-tamanho] .avd-ficha-etapa-marca {
+    width: 22px;
+    height: 22px;
+    transition:
+      width var(--duration-base, 180ms) var(--ease-standard),
+      height var(--duration-base, 180ms) var(--ease-standard),
+      transform var(--duration-base, 180ms) var(--ease-standard),
+      background-color var(--duration-base, 180ms) var(--ease-standard);
+  }
+  .avd-analise-topo[data-tamanho] .avd-ficha-etapa-marca i {
+    width: 12px;
+    height: 12px;
+  }
+  .avd-analise-topo[data-tamanho]
+    .avd-ficha-etapas
+    button[aria-current="step"]
+    .avd-ficha-etapa-marca {
+    box-shadow: 0 0 0 3px var(--state-info-soft);
+  }
+  .avd-analise-topo[data-tamanho] .avd-ficha-etapas-pe {
+    gap: var(--space-3);
+  }
+  .avd-analise-topo[data-tamanho] .avd-ficha-progresso {
+    flex: none;
+    gap: var(--space-2);
+  }
+  .avd-analise-topo[data-tamanho] .avd-ficha-progresso-barra {
+    flex: none;
+    width: 64px;
+  }
+  .avd-analise-topo[data-tamanho] .avd-ficha-modo {
+    min-height: 26px;
+    padding: 0 var(--space-2);
+  }
+  .avd-analise-topo[data-tamanho] .avd-ficha-etapas-acoes .ui-popover-botao {
+    width: 26px;
+    height: 26px;
+  }
+  /* Compacto: só as marcas; o passo atual com o nome ao lado (o botão cobre a linha). */
+  .avd-analise-topo[data-tamanho="compacto"] .avd-ficha-etapas li > button {
+    z-index: 1;
+    grid-auto-flow: column;
+    align-items: center;
+    gap: var(--space-1-5);
+    padding: 0 var(--space-1-5);
+    background: var(--surface-card);
+  }
+  /* O passo atual ganha o dobro da largura para o nome caber sem cobrir os vizinhos. */
+  .avd-analise-topo[data-tamanho="compacto"]
+    .avd-ficha-etapas
+    li:has(> button[aria-current="step"]) {
+    flex-grow: 2;
+  }
+  .avd-analise-topo[data-tamanho="compacto"]
+    .avd-ficha-etapas
+    button[aria-current="step"] {
+    z-index: 2;
+    flex: none;
+  }
+  .avd-analise-topo[data-tamanho="compacto"]
+    .avd-ficha-etapas
+    button[aria-current="step"]
+    .avd-ficha-etapa-nome {
+    max-width: none;
+    overflow: visible;
+  }
+  .avd-analise-topo[data-tamanho="compacto"]
+    .avd-ficha-etapas
+    button:not([aria-current="step"])
+    .avd-ficha-etapa-nome {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+}
+@media (min-width: 901px) and (prefers-reduced-motion: reduce) {
+  .avd-analise-topo,
+  .avd-analise-topo[data-tamanho] .avd-ficha-etapa-marca {
+    transition: none;
+  }
+}
+/* Rodapé mais fino e menos espaço entre os blocos na tela baixa do notebook. */
+@media (min-width: 901px) and (max-height: 860px) {
+  .avd-analise {
+    gap: var(--space-3);
+  }
+  .avd-analise .avd-ficha-barra {
+    padding: var(--space-1) var(--space-2) var(--space-1) var(--space-4);
+  }
+  .avd-analise .avd-ficha-barra .btn {
+    min-height: 32px;
+  }
+}
+
 /* Lateral: só a nota, o mínimo, a composição e o "⋯". */
 .avd-ficha-lateral {
   position: sticky;

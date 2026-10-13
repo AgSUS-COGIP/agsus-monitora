@@ -12,7 +12,8 @@ import type { Conferencia, EstadoDoPasso, Passo } from "./tipos.ts";
   barra de progresso que enche ("X de 6 conferidos": conta só o item com
   decisão e sem falta, a mesma regra do "!"; passar o mouse no "!" mostra o
   que falta, a mesma mensagem do item). Clicar vai ao passo. À direita, "Ver todos" /
-  "Um por vez" (o modo fica lembrado) e o "?" com os atalhos.
+  "Um por vez" (o modo fica lembrado) e o "?" com os atalhos. A dica de cada
+  passo traz o nome (no cabeçalho compacto só o passo atual mostra o nome).
 */
 
 const ICONE: Partial<Record<EstadoDoPasso, string>> = {
@@ -78,7 +79,9 @@ export function ProgressoDaFicha({
                 data-estado={p.estado}
                 aria-current={p.codigo === atual ? "step" : undefined}
                 title={
-                  p.estado === "pendencia" && p.motivo ? p.motivo : undefined
+                  p.estado === "pendencia" && p.motivo
+                    ? `${p.nome}: ${p.motivo}`
+                    : p.nome
                 }
                 onClick={() => aoIr(p.codigo)}
               >

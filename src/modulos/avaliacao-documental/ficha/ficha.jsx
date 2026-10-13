@@ -2,6 +2,7 @@ import {
   anexosDaEmpregare,
   enviosAnterioresDaEmpregare,
   impressaoDasRespostas,
+  respostaLidaDaEmpregare,
 } from "../../../lib/avaliacao-documental/anexo-na-empregare.ts";
 import {
   useCallback,
@@ -130,6 +131,7 @@ function enderecosDaEmpregare(dados, ficha) {
     anexos: anexosDaEmpregare(empregare),
     impressao: impressaoDasRespostas(empregare),
     anteriores: enviosAnterioresDaEmpregare(empregare),
+    respostaLida: respostaLidaDaEmpregare(empregare),
   };
 }
 
