@@ -1046,3 +1046,31 @@ body.external-panel-mode .content {
 body.external-panel-mode .app {
   overflow: hidden;
 }
+
+/*
+  Rolagem da barra lateral, igual à do SIGAV: sem a faixa branca do trilho
+  padrão do navegador (aberta e recolhida). Trilho transparente, polegar fino.
+*/
+.side-navigation,
+body.sidebar-collapsed .menu-area__itens {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-sidebar-scroll-thumb) transparent;
+  scrollbar-gutter: stable;
+}
+.side-navigation::-webkit-scrollbar,
+body.sidebar-collapsed .menu-area__itens::-webkit-scrollbar {
+  width: 6px;
+}
+.side-navigation::-webkit-scrollbar-track,
+body.sidebar-collapsed .menu-area__itens::-webkit-scrollbar-track {
+  background: transparent;
+}
+.side-navigation::-webkit-scrollbar-thumb,
+body.sidebar-collapsed .menu-area__itens::-webkit-scrollbar-thumb {
+  background-color: var(--color-sidebar-scroll-thumb);
+  border-radius: 999px;
+}
+.side-navigation:hover::-webkit-scrollbar-thumb,
+body.sidebar-collapsed .menu-area__itens:hover::-webkit-scrollbar-thumb {
+  background-color: var(--color-sidebar-scroll-thumb-hover);
+}
