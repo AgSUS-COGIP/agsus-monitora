@@ -26,6 +26,9 @@ type Vinculo = {
 };
 export type Candidato = {
   nivel: string;
+  /** A vaga ou o cargo de uma diferença por cargo (regra-por-cargo.ts). */
+  vaga?: string | null;
+  cargo?: string | null;
   modalidade: string;
   indigena: boolean;
   mora_aldeia: boolean;

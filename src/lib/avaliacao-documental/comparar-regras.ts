@@ -42,6 +42,14 @@ const NOMES: Record<string, string> = {
   corte: "Nota mínima",
   parecer: "Parecer",
   observacoes_prontas: "Observações prontas",
+  por_cargo: "Diferenças por cargo",
+  vagas: "vagas",
+  cargos: "cargos",
+  extras: "itens extras",
+  area: "área exigida",
+  requisitos: "requisitos",
+  termos: "termos",
+  nao_pontua_em: "não pontua em",
   titulo: "título",
   item_edital: "item do edital",
   perguntas: "perguntas",
@@ -134,6 +142,9 @@ const CHAVE_DA_LISTA: Record<
   observacoes_prontas: (o) => String(o.codigo),
   categorias: (c) => String(c.codigo),
   nota_declarada: (d, i) => `${String(d.parcial)}#${i}`,
+  por_cargo: (d) => String(d.codigo),
+  extras: (e) => String(e.codigo),
+  requisitos: (q) => String(q.codigo),
 };
 const ROTULO_DO_ITEM: Record<
   string,
@@ -144,6 +155,9 @@ const ROTULO_DO_ITEM: Record<
   eliminacao_automatica: (e) => `eliminação "${String(e.motivo || e.codigo)}"`,
   observacoes_prontas: (o) => `observação "${String(o.rotulo || o.codigo)}"`,
   categorias: (c) => `categoria ${String(c.rotulo || c.codigo)}`,
+  por_cargo: (d) => `diferença "${String(d.rotulo || d.codigo)}"`,
+  extras: (e) => `extra "${String(e.rotulo || e.codigo)}"`,
+  requisitos: (q) => `requisito "${String(q.rotulo || q.codigo)}"`,
   nota_declarada: (d) =>
     `nota declarada (${String(d.parcial).toLowerCase()}: ${textoDaPergunta(d.pergunta as string)})`,
 };
@@ -158,6 +172,9 @@ function comparar(
   if (igual(antes, depois)) return;
   const lugar = onde.join(" › ");
   const fabrica = CHAVE_DA_LISTA[chave];
+  // Lista que entrou ou saiu inteira (ex.: as diferenças por cargo): item a item.
+  if (fabrica && antes === undefined && Array.isArray(depois)) antes = [];
+  if (fabrica && depois === undefined && Array.isArray(antes)) depois = [];
   if (
     fabrica &&
     Array.isArray(antes) &&
@@ -222,7 +239,7 @@ export function diferencasEntreRegras(
   const a = regraNormalizada(antes) as RegraAnalise & Record<string, unknown>;
   const d = regraNormalizada(depois) as RegraAnalise & Record<string, unknown>;
   const saida: Diferenca[] = [];
-  for (const chave of Object.keys(d)) {
+  for (const chave of new Set([...Object.keys(d), ...Object.keys(a)])) {
     if (chave === "schema" || chave === "modelo") continue;
     comparar(
       a[chave],

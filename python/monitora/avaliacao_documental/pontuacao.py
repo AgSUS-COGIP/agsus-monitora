@@ -10,11 +10,17 @@ este módulo recalcula em lote para CONFERIR o que foi gravado
 (conferir_ficha). Os casos dourados de
 tests/fixtures/avaliacao-documental/casos-de-pontuacao.json rodam nos dois
 lados (vitest e pytest). Mudou lá, muda aqui.
+
+As diferenças por cargo (regra.por_cargo) seguem
+src/lib/avaliacao-documental/regra-por-cargo.ts: a regra da vaga
+(regra_da_vaga) põe teto, faixas, extras, área exigida e requisitos do cargo
+por cima do nível (cargo > nível > padrão).
 """
 
 import datetime
 import math
 import re
+import unicodedata
 from decimal import ROUND_HALF_UP, Decimal
 
 _EPSILON = 2.220446049250313e-16
@@ -135,11 +141,99 @@ def anos_meses_dias(dias):
     return {"anos": total // 365, "meses": resto // 30, "dias": resto % 30}
 
 
+def texto_do_cargo(valor):
+    """Sem acento (U+0300–U+036F, como o JS), minúsculo, só letras e dígitos."""
+    t = unicodedata.normalize("NFD", "" if valor is None else str(valor))
+    t = "".join(c for c in t if not 0x300 <= ord(c) <= 0x36F).lower()
+    return re.sub(r"[^a-z0-9]+", " ", t).strip()
+
+
+def cargo_casa(cargo, seletor):
+    """Palavras inteiras: "cargo 1" não casa "cargo 15"."""
+    s, c = texto_do_cargo(seletor), texto_do_cargo(cargo)
+    return bool(s and c) and f" {s} " in f" {c} "
+
+
+def diferenca_da_vaga(regra, alvo):
+    """A diferença por cargo que vale para a vaga (código da vaga primeiro, depois o cargo)."""
+    diferencas = [d for d in _lista(_objeto(regra).get("por_cargo")) if isinstance(d, dict)]
+    alvo = _objeto(alvo)
+    vaga = str(alvo.get("vaga") if alvo.get("vaga") is not None else "").strip()
+    if vaga:
+        for d in diferencas:
+            if any(str(v).strip() == vaga for v in _lista(d.get("vagas"))):
+                return d
+    cargo = alvo.get("cargo")
+    if not texto_do_cargo(cargo):
+        return None
+    return next((d for d in diferencas if any(cargo_casa(cargo, s) for s in _lista(d.get("cargos")))), None)
+
+
+def bloco_do_cargo(bloco, sobrescrita, nivel):
+    if not isinstance(sobrescrita, dict):
+        return bloco
+    parte = _objeto(bloco.get("por_nivel")).get("" if nivel is None else str(nivel))
+    r = {**bloco, **parte} if isinstance(parte, dict) else {**bloco}
+    r.pop("por_nivel", None)
+    if "teto" in sobrescrita:
+        r["teto"] = sobrescrita.get("teto")
+    if _lista(sobrescrita.get("faixas")):
+        r["faixas"] = sobrescrita["faixas"]
+    if _lista(sobrescrita.get("extras")):
+        r["extras"] = sobrescrita["extras"]
+    if _texto(sobrescrita.get("area")).strip():
+        r["area"] = _texto(sobrescrita.get("area")).strip()
+    requisitos = _lista(sobrescrita.get("requisitos"))
+    if requisitos:
+        r["requisitos"] = requisitos
+        r["motivos"] = [
+            *_lista(bloco.get("motivos")),
+            *(
+                {
+                    "codigo": q.get("codigo"),
+                    "texto": q.get("motivo"),
+                    "item_edital": q.get("item_edital") or bloco.get("item_edital") or "",
+                    "efeito": "ELIMINA",
+                }
+                for q in requisitos
+            ),
+        ]
+    return r
+
+
+def regra_da_vaga(regra, alvo):
+    """A regra com a diferença do cargo da vaga aplicada (regraDaVaga do JS)."""
+    diferenca = diferenca_da_vaga(regra, alvo)
+    if not diferenca:
+        return regra
+    sobrescritas = _objeto(diferenca.get("blocos"))
+    nivel = _objeto(alvo).get("nivel")
+    return {
+        **regra,
+        "por_cargo": [],
+        "cargo": {"codigo": diferenca.get("codigo"), "rotulo": diferenca.get("rotulo")},
+        "blocos": [
+            bloco_do_cargo(b, sobrescritas.get(str(b.get("codigo"))), nivel) if isinstance(b, dict) else b
+            for b in _lista(regra.get("blocos"))
+        ],
+    }
+
+
+def pontos_dos_extras(bloco, lancado):
+    marcados = _objeto(_objeto(lancado).get("extras"))
+    return sum(
+        e.get("pontos") if _eh_numero(e.get("pontos")) else 0
+        for e in _lista(_objeto(bloco).get("extras"))
+        if isinstance(e, dict) and marcados.get(e.get("codigo")) is True
+    )
+
+
 def normalizar_regra(entrada):
     """Só o que a conta da ficha usa, com os padrões de normalizarRegraAnalise."""
     r = _objeto(entrada)
     casas = r.get("casas_parecer")
     return {
+        "por_cargo": _lista(r.get("por_cargo")),
         "titulo_etapa": _texto(r.get("titulo_etapa")).strip() or TITULO_PADRAO_DA_ETAPA,
         "edital_rotulo": _texto(r.get("edital_rotulo")),
         "casas_parecer": casas if _eh_numero(casas) and 0 <= casas <= 4 else 1,
@@ -234,10 +328,11 @@ def _pontos_dos_titulos(bloco, candidato):
             continue
         achado = next((x for x in tabela if x.get("titulo") == t.get("titulo")), None)
         valores.append(_numero(achado.get("pontos")) if achado else 0)
-    if not valores:
+    extras = pontos_dos_extras(bloco, _objeto(candidato.get("blocos")).get(bloco.get("codigo")))
+    if not valores and not extras:
         return 0
-    total = sum(valores) if bloco.get("cumulativa") else max(valores)
-    return _com_teto(total, bloco.get("teto"))
+    dos_titulos = 0 if not valores else (sum(valores) if bloco.get("cumulativa") else max(valores))
+    return _com_teto(dos_titulos + extras, bloco.get("teto"))
 
 
 def faixa_do_curso(faixas, horas):
@@ -288,6 +383,7 @@ def _pontos_dos_cursos(bloco_geral, candidato):
             continue
         faixa = faixa_do_curso(bloco.get("faixas"), c.get("horas"))
         total += _numero(faixa.get("pontos")) if faixa else 0
+    total += pontos_dos_extras(bloco, _objeto(candidato.get("blocos")).get(bloco.get("codigo")))
     return _com_teto(arredondar(total), bloco.get("teto"))
 
 
@@ -368,8 +464,9 @@ def _numero_saida(n):
 
 def calcular_avaliacao(regra_entrada, candidato=None, opcoes=None):
     """A avaliação de um candidato pela regra (calcularAvaliacao do JS)."""
-    regra = normalizar_regra(regra_entrada)
     candidato = _objeto(candidato)
+    # A regra da vaga: a diferença do cargo por cima do nível (cargo > nível > padrão).
+    regra = regra_da_vaga(normalizar_regra(regra_entrada), candidato)
     opcoes = _objeto(opcoes)
     avaliados = _avaliar_blocos(regra, candidato, opcoes.get("situacaoPadrao") or "CONFORME")
     blocos_lancados = _objeto(candidato.get("blocos"))

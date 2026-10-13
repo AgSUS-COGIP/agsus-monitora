@@ -1257,7 +1257,7 @@ export const CONTRATO_RPC = {
     ],
     critica: false,
     resumo:
-      "Salvamento automático da ficha: lançamento, resultado da conta da tela e parecer, revalidados contra a regra (estrutura, limites, coerência); exige a reserva (55P03) e a versão aberta (40001); renova a reserva; alteração vai ao histórico.",
+      "Salvamento automático da ficha: lançamento (com a vaga e o cargo da ficha), resultado da conta da tela e parecer, revalidados contra a regra da vaga, com as diferenças por cargo (estrutura, limites, coerência); exige a reserva (55P03) e a versão aberta (40001); renova a reserva; alteração vai ao histórico.",
   },
   concluir_ficha: {
     argumentos: [
@@ -1270,7 +1270,7 @@ export const CONTRATO_RPC = {
     ],
     critica: false,
     resumo:
-      "Conclui a ficha: confere reserva, versões (ficha e regra vigente conferida), estrutura e o que falta (situação, motivos, itens, justificativa de nota diferente da declarada); grava resultado, notas, parecer e a versão da regra; libera a reserva.",
+      "Conclui a ficha: confere reserva, versões (ficha e regra vigente conferida), estrutura e o que falta pela regra da vaga (situação, motivos, requisitos e extras do cargo, itens, justificativa de nota diferente da declarada); grava resultado, notas, parecer e a versão da regra; libera a reserva.",
   },
   reabrir_ficha: {
     argumentos: ["p_ficha", "p_versao", "p_motivo"],
@@ -1370,7 +1370,7 @@ export const CONTRATO_RPC = {
     argumentos: ["p_edital"],
     critica: false,
     resumo:
-      "O que o assistente da regra lê: os nomes das colunas de pergunta da última carga de cada vaga (sem respostas), as regras conferidas dos outros editais da área (só a coordenação) e a regra de classificação vigente com pode_editar. Leitor.",
+      "O que o assistente da regra lê: os nomes das colunas de pergunta da última carga de cada vaga (sem respostas) com o cargo da vaga, os cargos do quadro de vagas (diferenças por cargo), as regras conferidas dos outros editais da área (só a coordenação) e a regra de classificação vigente com pode_editar. Leitor.",
   },
   obter_equipe_edital: {
     argumentos: ["p_edital"],

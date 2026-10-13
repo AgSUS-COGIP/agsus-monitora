@@ -12,6 +12,7 @@ import {
   calcularAvaliacao,
   numeroDoParecer,
 } from "../../lib/avaliacao-documental/pontuacao.js";
+import { diferencaDaVaga } from "../../lib/avaliacao-documental/regra-por-cargo.ts";
 import type { RegraAnalise } from "../../lib/avaliacao-documental/tipos-da-regra.ts";
 import type { Candidato, NotaMinima } from "./previa.tsx";
 import { Campo, Selo } from "../../ui/index.js";
@@ -103,6 +104,25 @@ export default function CorpoDaPrevia({
               opcoes={OPCOES_DE_NIVEL}
               aoMudar={(v) => mudar(["nivel"], v)}
             />
+            {regra.por_cargo?.length ? (
+              <Escolha
+                rotulo="Cargo"
+                valor={diferencaDaVaga(regra, c)?.codigo ?? null}
+                vazio="Sem diferença (só o nível)"
+                opcoes={regra.por_cargo.map(
+                  (d) => [d.codigo, d.rotulo] as const,
+                )}
+                aoMudar={(codigo) => {
+                  const d = regra.por_cargo?.find((x) => x.codigo === codigo);
+                  setC({
+                    ...c,
+                    vaga: d?.vagas?.[0] ?? null,
+                    cargo:
+                      d && !d.vagas?.length ? (d.cargos?.[0] ?? null) : null,
+                  });
+                }}
+              />
+            ) : null}
             <Campo rotulo="Modalidade">
               <input
                 value={c.modalidade}

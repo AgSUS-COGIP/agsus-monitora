@@ -53,6 +53,11 @@ export function lugarDoErro(erro: string): {
   }
   if (/^Eliminação automática/.test(texto))
     return { passo: "cardapio", alvo: `[data-cartao^="eliminacao:"]` };
+  if (/^Diferenças? por cargo/.test(texto))
+    return {
+      passo: "cardapio",
+      alvo: "[data-tour='avd-diferencas-por-cargo']",
+    };
   return { passo: "cardapio" };
 }
 

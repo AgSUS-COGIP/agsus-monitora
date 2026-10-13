@@ -20,6 +20,7 @@ import {
   validarRegraAnalise,
 } from "../../lib/avaliacao-documental/regra.js";
 import { comecoDoEnunciado } from "../../lib/avaliacao-documental/nota-declarada.js";
+import { DiferencasPorCargo } from "./assistente/diferencas-por-cargo.tsx";
 import {
   erroDoNomeDaVersao,
   nomeParaGravar,
@@ -320,6 +321,24 @@ const respostasPorNivel = (item) => [
     niveisDoItem(item).flatMap((n) => Object.keys(item.pontos_por_nivel[n])),
   ),
 ];
+
+/* As diferenças por cargo no modo avançado: as vagas e os cargos do quadro vêm do apoio do assistente. */
+function PorCargo({ e, estado, regra, aoMudar }) {
+  useEffect(() => {
+    if (!e.apoio && !e.carregandoApoio && !e.erroDoApoio)
+      void estado.carregarApoio?.();
+  }, [estado, e.apoio, e.carregandoApoio, e.erroDoApoio]);
+  return (
+    <div className="ui-card">
+      <DiferencasPorCargo
+        regra={regra}
+        aoMudar={aoMudar}
+        vagas={e.apoio?.perguntas_por_vaga ?? []}
+        cargosDoQuadro={e.apoio?.cargos_do_quadro ?? []}
+      />
+    </div>
+  );
+}
 
 function RespostasPorNivel({ item, aoMudar }) {
   const niveis = niveisDoItem(item);
@@ -1174,6 +1193,13 @@ export function Regra({ e, estado, rascunhoGuardado }) {
             aoMudar={(v) => mudar(["blocos"], v)}
           />
         </section>
+
+        <PorCargo
+          e={e}
+          estado={estado}
+          regra={rascunho}
+          aoMudar={setRascunho}
+        />
 
         {leitura ? null : (
           <Perguntas

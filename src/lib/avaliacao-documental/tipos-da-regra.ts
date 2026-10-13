@@ -5,6 +5,13 @@
   o assistente e o resumo. Uma anotação não valida JSON: quem valida é
   validarRegraAnalise.
 */
+import type {
+  DiferencaDoCargo,
+  ItemExtra,
+  RequisitoDoCargo,
+} from "./regra-por-cargo.ts";
+
+export type { DiferencaDoCargo, ItemExtra, RequisitoDoCargo };
 
 export type Nivel = "superior" | "tecnico" | "medio" | "fundamental";
 export type TipoDeBloco =
@@ -106,6 +113,10 @@ export type Bloco = {
     dias_por_mes?: number;
     so_sem_experiencia?: boolean;
   } | null;
+  // Só na regra da vaga (regraDaVaga, regra-por-cargo.ts): o que o cargo muda.
+  extras?: ItemExtra[];
+  area?: string;
+  requisitos?: RequisitoDoCargo[];
 };
 
 export type MapaDeRespostas = Record<string, number>;
@@ -184,6 +195,8 @@ export type RegraAnalise = {
     string
   >;
   observacoes_prontas: ObservacaoPronta[];
+  /** Diferenças por cargo (regra-por-cargo.ts): cargo > nível > padrão. */
+  por_cargo?: DiferencaDoCargo[];
 };
 
 /** A regra salva como obter_regra_analise devolve (FC_REGRA_ANALISE_JSON). */

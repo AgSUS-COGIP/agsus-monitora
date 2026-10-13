@@ -57,6 +57,12 @@ import { tetoDoBloco } from "../../../lib/avaliacao-documental/pontuacao.js";
 import { Selo } from "../../../ui/index.js";
 import { CamposDoItem } from "./campos-do-item.tsx";
 import { ComprovadoDaFicha } from "./comprovado-da-ficha.tsx";
+import {
+  AreaExigida,
+  AvisosDoTituloUnico,
+  ExtrasDoBloco,
+  RequisitosDoCargo,
+} from "./diferencas-do-cargo.tsx";
 import { LinkDaEmpregare, LinkDoAnexo } from "./empregare.tsx";
 import { ConferenciaDoLido, LidoDoArquivo } from "./leitura-dos-arquivos.tsx";
 import type {
@@ -90,6 +96,9 @@ import type {
   5. no máximo UMA mensagem: a falta mais útil (mensagemDoBloco, pelas
      pendências da ficha) ou, no Confere, o aviso de que os itens dão outra
      pontuação, com o atalho para Editar nota.
+  O que o cargo da vaga muda (diferencas-do-cargo.tsx): a lista de requisitos
+  do cargo antes das escolhas, as linhas extras (ex.: UMCQA) depois dos
+  itens, o aviso do 8.2.7 e a área exigida da experiência.
   PELOS ITENS (o robô leu títulos, cursos ou vínculos do arquivo): o fluxo é
   conferir os itens → a pontuação sai dos aceitos → o avaliador confirma.
   A conferência (Aceitar / Corrigir / Recusar) e, embaixo, as linhas à mão
@@ -1444,6 +1453,7 @@ export function ItemDaFicha({
       </header>
       {aplica || bloco.tipo === "PONTUACAO" ? (
         <div className="avd-ficha-cartao-corpo">
+          {aplica && bloco.area ? <AreaExigida area={bloco.area} /> : null}
           {aplica && linhas.length ? (
             <Respostas
               linhas={linhas}
@@ -1490,7 +1500,16 @@ export function ItemDaFicha({
               desabilitado={desabilitado}
               aoEscolher={escolher}
             />
-          ) : pedeSituacao ? (
+          ) : null}
+          {pedeSituacao && bloco.requisitos?.length ? (
+            <RequisitosDoCargo
+              bloco={bloco}
+              lancado={lancado}
+              mudar={mudar}
+              desabilitado={desabilitado}
+            />
+          ) : null}
+          {pelosItens ? null : pedeSituacao ? (
             <Escolhas
               valor={escolha}
               comEditar={blocoEditaNota(bloco)}
@@ -1520,6 +1539,22 @@ export function ItemDaFicha({
               experiencia={avaliacao.experiencia}
               pedeCampos={escolha === "CONFERE" || escolha === "EDITAR"}
               sugestoes={dados.sugestoes}
+            />
+          ) : null}
+          {pedeSituacao && bloco.extras?.length && escolha !== "NAO_CONFERE" ? (
+            <ExtrasDoBloco
+              bloco={bloco}
+              lancado={lancado}
+              mudar={mudar}
+              desabilitado={desabilitado}
+            />
+          ) : null}
+          {aplica && (chave === "titulos" || chave === "cursos") ? (
+            <AvisosDoTituloUnico
+              regra={st.regra}
+              bloco={bloco}
+              lancamento={lancamento}
+              itens={itensLancados}
             />
           ) : null}
           {parcial &&

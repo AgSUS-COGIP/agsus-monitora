@@ -41,11 +41,20 @@ import {
 } from "./nota-declarada.js";
 import { calcularAvaliacao, tetoDoBloco } from "./pontuacao.js";
 import { normalizarRegraAnalise } from "./regra.js";
+import { faltasDoCargo, regraDaVaga } from "./regra-por-cargo.ts";
 
 const lista = (v) => (Array.isArray(v) ? v : []);
 const objeto = (v) =>
   v !== null && typeof v === "object" && !Array.isArray(v) ? v : {};
 const DIFERENCA = 1e-4;
+
+/**
+ * A regra que vale para a ficha: normalizada e com a diferença do cargo da
+ * vaga (regraDaVaga: cargo > nível > padrão). Aplicar de novo não muda nada.
+ */
+export function regraDaFicha(regra, lancamento) {
+  return regraDaVaga(normalizarRegraAnalise(regra), lancamento);
+}
 
 /**
  * As escolhas de cada item, lado a lado (atalhos 1, 2 e 3): [código, rótulo,
@@ -164,13 +173,16 @@ function marcou(linhas, termo) {
 /**
  * O lançamento de uma ficha nova: nível, modalidade e, quando a regra tem o
  * critério étnico, indígena e aldeia como o candidato respondeu (o analista
- * confirma). Lançamento gravado vem por cima.
+ * confirma). Lançamento gravado vem por cima. A vaga e o cargo são sempre os
+ * da ficha (a diferença por cargo da regra: regra-por-cargo.ts; o banco grava
+ * os mesmos em salvar_rascunho_ficha e concluir_ficha).
  */
 export function lancamentoInicial({
   regra,
   respostas,
   modalidade,
   cargo,
+  vaga,
   documental,
   gravado,
 }) {
@@ -192,9 +204,13 @@ export function lancamentoInicial({
     observacoes_prontas: [],
   };
   const g = objeto(gravado);
+  const daFicha = {
+    vaga: vaga === undefined || vaga === null ? null : String(vaga),
+    cargo: cargo ?? null,
+  };
   return Object.keys(g).length
-    ? { ...base, ...g, blocos: objeto(g.blocos) }
-    : base;
+    ? { ...base, ...g, blocos: objeto(g.blocos), ...daFicha }
+    : { ...base, ...daFicha };
 }
 
 const textoComparavel = (t) =>
@@ -320,7 +336,7 @@ const ZERAM_O_BLOCO = ["NAO_CONFORME", "NAO_ENVIADO"];
  * em preenchimento não travar o rascunho (a falta fica na tela).
  */
 export function lancamentoParaGravar(regraEntrada, lancamento) {
-  const regra = normalizarRegraAnalise(regraEntrada);
+  const regra = regraDaFicha(regraEntrada, lancamento);
   const saida = { ...objeto(lancamento) };
   const blocos = objeto(saida.blocos);
   for (const bloco of regra.blocos) {
@@ -354,6 +370,8 @@ export const blocoConferido = (lancamento, bloco) =>
 const ORDEM_DAS_FALTAS = [
   "situacao",
   "motivo",
+  "requisito",
+  "extra",
   "comprovado",
   "horas",
   "datas",
@@ -406,7 +424,7 @@ export function pendenciasDaFicha(
   avaliacao,
   declarada,
 ) {
-  const regra = normalizarRegraAnalise(regraEntrada);
+  const regra = regraDaFicha(regraEntrada, lancamento);
   const pendencias = [];
   const blocos = objeto(lancamento?.blocos);
   const eliminadoPorBloco = lista(avaliacao?.blocos).some(
@@ -485,6 +503,9 @@ export function pendenciasDaFicha(
         "justificativa",
         "Pontuação diferente da declarada: escolha a justificativa.",
       );
+    // Diferenças por cargo (a regra da vaga): cada requisito do cargo e cada
+    // item extra conferido (o banco pede o mesmo em FC_PENDENCIAS_FICHA).
+    for (const f of faltasDoCargo(bloco, l)) falta(f.tipo, f.texto);
     const ajuste = l.nota_ajustada;
     const teto = tetoDoBloco(bloco, lancamento?.nivel);
     if (
@@ -528,6 +549,8 @@ const COMPLEMENTO_DA_FALTA = {
   nota: "nota",
   minimo: "experiência mínima",
   comprovado: "item comprovado",
+  requisito: "requisitos do cargo",
+  extra: "item extra",
 };
 
 /**
@@ -547,7 +570,7 @@ export function conferenciaDaFicha(
   avaliacao,
   pendencias = [],
 ) {
-  const regra = normalizarRegraAnalise(regraEntrada);
+  const regra = regraDaFicha(regraEntrada, lancamento);
   const itens = regra.blocos.filter(
     (b) => pedeSituacao(b) && blocoSeAplica(b, lancamento),
   );
@@ -793,7 +816,7 @@ export function nomeDaEtapa(bloco) {
  * do item), "CONFORME", "NAO_CONFORME" ou "NAO_ENVIADO".
  */
 export function etapasDaFicha(regraEntrada, lancamento, pendencias = []) {
-  const regra = normalizarRegraAnalise(regraEntrada);
+  const regra = regraDaFicha(regraEntrada, lancamento);
   return regra.blocos
     .filter((b) => pedeSituacao(b) && blocoSeAplica(b, lancamento))
     .map((b) => {
@@ -857,7 +880,7 @@ const RESOLVIDOS = new Set([
  * estado "opcional") e, no fim, a Conclusão (estado "pronta" quando nada falta).
  */
 export function passosDaFicha(regraEntrada, lancamento, pendencias = []) {
-  const regra = normalizarRegraAnalise(regraEntrada);
+  const regra = regraDaFicha(regraEntrada, lancamento);
   const etapas = new Map(
     etapasDaFicha(regra, lancamento, pendencias).map((e) => [e.codigo, e]),
   );
@@ -905,7 +928,7 @@ export function composicaoDaNota(
   avaliacao,
   declarada,
 ) {
-  const regra = normalizarRegraAnalise(regraEntrada);
+  const regra = regraDaFicha(regraEntrada, lancamento);
   return regra.blocos
     .filter((b) => PARCIAL_DO_TIPO[b.tipo] && blocoSeAplica(b, lancamento))
     .map((b) => {

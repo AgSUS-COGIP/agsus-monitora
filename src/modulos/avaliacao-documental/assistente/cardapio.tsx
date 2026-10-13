@@ -18,6 +18,7 @@ import {
 } from "../../../lib/avaliacao-documental/catalogo.js";
 import type {
   Bloco,
+  ColunasDaVaga,
   EliminacaoAutomatica,
   Efeito,
   Faixa,
@@ -36,6 +37,7 @@ import {
   CampoTexto,
   Escolha,
 } from "../campos.jsx";
+import { DiferencasPorCargo } from "./diferencas-por-cargo.tsx";
 
 /*
   Passo 2: "O que vale ponto e o que elimina", um cardápio de cartões. O
@@ -54,6 +56,9 @@ type Props = {
   notaMinima: number | null;
   aoMudar: (regra: RegraAnalise) => void;
   aoAlternar: (cartao: Cartao, marcar: boolean) => void;
+  /** As vagas do edital e os cargos do quadro (as diferenças por cargo). */
+  vagas?: ColunasDaVaga[];
+  cargosDoQuadro?: string[];
 };
 
 /* ---------- Resumo de uma linha no cabeçalho do cartão ---------- */
@@ -427,7 +432,7 @@ function EditorTitulos({
   );
 }
 
-function EditorFaixas({
+export function EditorFaixas({
   alvo,
   aoMudar,
   rotulo,
@@ -962,6 +967,8 @@ export function PassoCardapio({
   notaMinima,
   aoMudar,
   aoAlternar,
+  vagas,
+  cargosDoQuadro,
 }: Props) {
   const cartoes = cartoesDaRegra(regra, { area, guardados });
   return (
@@ -998,6 +1005,12 @@ export function PassoCardapio({
           </section>
         );
       })}
+      <DiferencasPorCargo
+        regra={regra}
+        aoMudar={aoMudar}
+        vagas={vagas}
+        cargosDoQuadro={cargosDoQuadro}
+      />
     </div>
   );
 }

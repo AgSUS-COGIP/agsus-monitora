@@ -6,6 +6,10 @@
 */
 import type { EnderecosDaEmpregare } from "../../../lib/avaliacao-documental/anexo-na-empregare.ts";
 import type { Recusa } from "../../../lib/avaliacao-documental/leitura-dos-arquivos.ts";
+import type {
+  ItemExtra,
+  RequisitoDoCargo,
+} from "../../../lib/avaliacao-documental/regra-por-cargo.ts";
 
 export type Situacao = "CONFORME" | "NAO_CONFORME" | "NAO_ENVIADO";
 
@@ -21,6 +25,10 @@ export type Bloco = {
   categorias?: { codigo: string; rotulo?: string }[];
   perguntas?: string[];
   rotulo_curto?: string;
+  /** Da diferença do cargo da vaga (regra-por-cargo.ts: regraDaVaga). */
+  extras?: ItemExtra[];
+  area?: string;
+  requisitos?: RequisitoDoCargo[];
 };
 
 export type ObservacaoPronta = {
@@ -32,6 +40,8 @@ export type ObservacaoPronta = {
 export type Regra = {
   blocos: Bloco[];
   observacoes_prontas?: ObservacaoPronta[];
+  /** A diferença por cargo que vale para a vaga (só na regra da vaga). */
+  cargo?: { codigo: string; rotulo: string };
 };
 
 export type Lancado = {
@@ -43,6 +53,10 @@ export type Lancado = {
   justificativa_livre?: string;
   /** Editar nota (a pontuação pelos itens registrados); false = Confere. */
   edita_nota?: boolean;
+  /** Linhas extras do cargo (ex.: UMCQA): true Confere, false Não confere. */
+  extras?: Record<string, boolean>;
+  /** Requisitos do cargo: true Confere, false Não confere (motivo que elimina). */
+  requisitos?: Record<string, boolean>;
 };
 
 export type Titulo = {
@@ -184,6 +198,8 @@ export type ContextoDaEmpregare = {
 
 /** O snapshot da ficha que os componentes leem (estado-da-ficha.js: obter()). */
 export type EstadoDaFicha = {
+  /** A regra da vaga: a diferença do cargo por cima do nível (estado-da-ficha.js). */
+  regra: Regra;
   lancamento: Lancamento;
   avaliacao: Avaliacao;
   declarada: Declarada | null;

@@ -24,6 +24,8 @@ export type RegraDeClassificacaoSalva = {
 
 export type ApoioDaRegra = {
   perguntas_por_vaga: ColunasDaVaga[];
+  /** Os cargos do quadro de vagas do edital (diferenças por cargo, 20261013130000). */
+  cargos_do_quadro?: string[];
   regras_da_area: RegraDeOutroEdital[];
   classificacao: {
     pode_ler: boolean;

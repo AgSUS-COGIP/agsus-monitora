@@ -528,6 +528,8 @@ export function AssistenteDaRegra({
             notaMinima={notaMinima}
             aoMudar={mudar}
             aoAlternar={alternar}
+            vagas={apoio?.perguntas_por_vaga ?? []}
+            cargosDoQuadro={apoio?.cargos_do_quadro ?? []}
           />
         ) : null}
         {passo === 2 && rascunho ? (
