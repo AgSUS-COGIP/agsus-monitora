@@ -55,6 +55,7 @@ class Pagina:
     metodo: str  # TEXTO | OCR
     confianca: float | None = None
     palavras: list | None = None  # layout.Palavra (posição de cada palavra), quando houver
+    tamanho: tuple | None = None  # (largura, altura) da página no sistema das palavras, quando se sabe
 
 
 @dataclass
@@ -259,7 +260,15 @@ def _ler_pdf(conteudo, ocr, leitura):
         for i, pagina in enumerate(pdf.pages[:MAXIMO_DE_PAGINAS], start=1):
             texto = preparar(pagina.extract_text() or "")
             if letras(texto) >= MINIMO_DE_LETRAS_DA_PAGINA:
-                leitura.paginas.append(Pagina(i, texto, "TEXTO", palavras=palavras_do_pdfplumber(pagina)))
+                leitura.paginas.append(
+                    Pagina(
+                        i,
+                        texto,
+                        "TEXTO",
+                        palavras=palavras_do_pdfplumber(pagina),
+                        tamanho=(float(pagina.width), float(pagina.height)),
+                    )
+                )
                 continue
             if ocr is None or com_ocr >= MAXIMO_DE_PAGINAS_NO_OCR:
                 leitura.paginas_sem_leitura += 1

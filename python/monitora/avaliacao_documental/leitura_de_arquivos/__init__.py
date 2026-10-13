@@ -26,6 +26,11 @@ AJUDAR o avaliador (quem decide é ele):
     diplomas     titulação: graduação, especialização, mestrado, doutorado…
     experiencia  vínculos: empregador, cargo, início, fim (ou atual), carga
                  semanal e dias (CTPS, declaração, contrato, certidão, holerite)
+    declaracoes  declaração/contrato/certidão: o EMISSOR é o empregador (timbre,
+                 "A X, inscrita no CNPJ…", rodapé, CNPJ), uma seção por
+                 declaração, a data de emissão ("Cidade, dd de mês de aaaa"),
+                 o fim ("até a presente data" → atual; sem nada: fim não
+                 informado) e a carga só quando ligada a "horas semanais"
     identidade   identidade e registro em conselho: o tipo do documento
     classificacao o tipo do documento sem item (comprovante de residência,
                  título de eleitor, histórico escolar, certidão, registro…)
@@ -40,4 +45,4 @@ gratuito: nenhum documento vai para serviço de fora (nem API de IA, nem consult
 """
 
 # Mudou a interpretação → suba a versão: o robô relê o que foi lido com versão anterior.
-VERSAO_DO_EXTRATOR = "2026.10.5"
+VERSAO_DO_EXTRATOR = "2026.10.6"

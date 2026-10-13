@@ -5,8 +5,8 @@ Mede a leitura dos arquivos nos documentos SINTÉTICOS (sinteticos_leitura.py).
     python tests/python/avaliar_leitura_sintetica.py --codigo DIR  # outro checkout (o "antes"): DIR/python
 
 Para cada caso: vínculos esperados e achados, e, dos achados que casam com o
-gabarito (pela data de início), quantos têm o empregador, o fim, o cargo e a
-carga semanal certos; quantos saem com "Empregador não lido" e quantos com
+gabarito (pela data de início), quantos têm o empregador, o fim (a data e se é
+atual), o cargo e a carga semanal certos; quantos saem com "Empregador não lido" e quantos com
 alerta de sobreposição falso (os sintéticos não têm duplicidade de verdade); e
 o tempo. As imagens precisam do Tesseract (com o pacote "por").
 """
@@ -42,6 +42,11 @@ def casos():
         ("CTPS digital · tabela", lambda: s.ctps_digital(medico, "tabela")),
         ("CTPS digital · grade + férias", lambda: s.ctps_digital(medico, "grade")),
         ("CTPS digital · só CNPJ", lambda: s.ctps_digital(enfermeira, "grade", sem_razao_social=(1,))),
+        ("Declarações · 6 emissores em 7 páginas", lambda: s.declaracoes_de_vinculo()),
+    ]
+    lista += [
+        (f"Declaração sozinha · {d['emissor'] or 'só CNPJ'}"[:60], lambda d=d: s.declaracoes_de_vinculo([d]))
+        for d in s.DECLARACOES
     ]
     if shutil.which("tesseract"):
         lista += [
@@ -49,6 +54,7 @@ def casos():
             ("Foto da CTPS digital (torta, sombra)", lambda: s.foto_de_ctps_digital(medico[:2])),
             ("Foto da CTPS digital deitada (90°)", lambda: s.foto_de_ctps_digital(enfermeira, girar=90)),
             ("CTPS física fotografada", lambda: s.ctps_fisica(medico[2:])),
+            ("Declarações escaneadas (ruído)", lambda: s.declaracoes_como_foto()),
         ]
     return lista
 
@@ -68,7 +74,9 @@ def avaliar(ler_documento):
                 continue
             conta["casados"] += 1
             conta["empregador"] += _empregador_certo(item.get("empregador"), g["empregador"])
-            conta["fim"] += item.get("fim") == g["fim"]
+            # O fim certo é a data certa E a situação certa: atual, encerrado ou fim não informado.
+            atual = g.get("atual", g["fim"] is None)
+            conta["fim"] += item.get("fim") == g["fim"] and bool(item.get("atual")) == atual
             conta["cargo"] += _normal(item.get("cargo")) == _normal(g["cargo"])
             conta["carga"] += item.get("carga_semanal") == g["carga"]
         alertas = [a["codigo"] for i in itens for a in i.get("alertas") or []]

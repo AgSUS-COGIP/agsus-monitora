@@ -4,13 +4,16 @@ Texto e datas dos documentos (biblioteca padrão).
 `dobrar` deixa o texto minúsculo e sem acento com o MESMO tamanho: a busca é
 feita no texto dobrado e o trecho sai do original (com os acentos), pela
 mesma posição. `datas_no_texto` acha datas numéricas (12/03/2023, 12.03.23),
-por extenso (12 de março de 2023) e mês/ano (03/2023, março de 2023).
+por extenso (12 de março de 2023, 1º de setembro de 2026), por extenso com o mês
+mal lido pelo OCR ("10 de seternbro de 2026", "5 de outubr0 de 2026": o mês mais
+parecido, sem empate) e mês/ano (03/2023, março de 2023).
 """
 
 import calendar
 import re
 import unicodedata
 from datetime import date
+from difflib import SequenceMatcher
 
 MESES = {
     "janeiro": 1,
@@ -44,6 +47,11 @@ _DIA_MES_ANO = re.compile(r"(?<![\d/.-])(\d{1,2})\s?[/.-]\s?(\d{1,2})\s?[/.-]\s?
 _POR_EXTENSO = re.compile(
     rf"(?<!\d)(\d{{1,2}})\s*(?:º|o|°)?\s*(?:de\s+)?({_NOMES_DOS_MESES})(?![a-z])\.?\s*(?:de\s+|/\s*)?(\d{{4}})(?!\d)"
 )
+# "dd de <palavra> de aaaa" com a palavra que não é mês: o OCR estragou o mês (seternbro, outubr0, rnarço).
+_POR_EXTENSO_RUIDOSO = re.compile(r"(?<!\d)(\d{1,2})\s*(?:º|o|°|ª)?\s*de\s+([a-z0-9]{4,11})\.?\s+de\s+(\d{4})(?!\d)")
+_MESES_POR_EXTENSO = [m for m in MESES if len(m) > 3]
+SEMELHANCA_DO_MES = 0.75
+_TROCAS_DO_OCR = (("rn", "m"), ("0", "o"), ("1", "l"), ("vv", "w"), ("ii", "u"), ("5", "s"), ("8", "b"))
 _MES_ANO = re.compile(r"(?<![\d/.-])(\d{1,2})\s?/\s?(\d{4})(?![\d/])")
 _MES_ANO_EXTENSO = re.compile(rf"(?<![a-z])({_NOMES_DOS_MESES})(?![a-z])\.?\s*(?:de\s+|/\s*)(\d{{4}})(?!\d)")
 
@@ -94,6 +102,31 @@ def _data(ano, mes, dia):
         return None
 
 
+def mes_parecido(palavra):
+    """O número do mês por extenso que o OCR estragou ("seternbro" → 9), pelo nome mais parecido (difflib, a partir
+    de SEMELHANCA_DO_MES e com folga para o segundo); None se não parece mês ou se empata (jutho: junho ou julho?)."""
+    palavra = dobrar(palavra)
+    if palavra in MESES:
+        return MESES[palavra]
+    variantes = {palavra}
+    for de, para in _TROCAS_DO_OCR:
+        variantes |= {v.replace(de, para) for v in variantes}
+    notas = {}
+    for v in variantes:
+        if v in MESES and len(v) > 3:
+            return MESES[v]
+        for nome in _MESES_POR_EXTENSO:
+            nota = SequenceMatcher(None, v, nome).ratio()
+            if nota > notas.get(MESES[nome], 0):
+                notas[MESES[nome]] = nota
+    ordem = sorted(notas.items(), key=lambda x: -x[1])
+    if not ordem or ordem[0][1] < SEMELHANCA_DO_MES:
+        return None
+    if len(ordem) > 1 and ordem[0][1] - ordem[1][1] < 0.08:
+        return None
+    return ordem[0][0]
+
+
 class Data:
     """Uma data achada no texto: posição, o dia (ou o mês inteiro) e a precisão."""
 
@@ -133,6 +166,11 @@ def datas_no_texto(dobrado):
         guardar(m, m.group(3), MESES[m.group(2)], m.group(1))
     for m in _DIA_MES_ANO.finditer(dobrado):
         guardar(m, m.group(3), m.group(2), m.group(1))
+    for m in _POR_EXTENSO_RUIDOSO.finditer(dobrado):
+        if m.group(2) not in MESES and livre(m.start(), m.end()):
+            mes = mes_parecido(m.group(2))
+            if mes:
+                guardar(m, m.group(3), mes, m.group(1))
     for m in _MES_ANO_EXTENSO.finditer(dobrado):
         guardar(m, m.group(2), MESES[m.group(1)], None)
     for m in _MES_ANO.finditer(dobrado):

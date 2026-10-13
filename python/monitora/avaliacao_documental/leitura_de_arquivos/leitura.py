@@ -308,18 +308,19 @@ def _interpretar(resultado, leitura, texto, esperado, nome, sal, hash_do_cpf, mi
     resultado["nome_confere"] = nome_confere(nome, texto) if nome else None
     resultado["cpf_confere"] = cpf_confere(texto, sal, hash_do_cpf)
     tipo = classificar(dobrar(texto))
+    avisos = []  # alertas leves da leitura dos vínculos (data depois da emissão da declaração)
     if esperado == "CURSOS":
         itens = _certificados.certificados(paginas, nome)
     elif esperado == "TITULOS":
         itens = _diplomas.titulos(paginas, nome)
     elif esperado == "VINCULOS":
-        itens = _experiencia.vinculos(paginas, nome, hoje, leitura.data_do_arquivo)
+        itens = _experiencia.vinculos(paginas, nome, hoje, leitura.data_do_arquivo, avisos)
     elif esperado == "IDENTIDADE":
         itens = _identidade.identidade(paginas)
     elif esperado == "REGISTRO":
         itens = _identidade.registro(paginas)
     elif tipo in DOCUMENTOS_DE_VINCULO:
-        itens = _experiencia.vinculos(paginas, nome, hoje, leitura.data_do_arquivo)
+        itens = _experiencia.vinculos(paginas, nome, hoje, leitura.data_do_arquivo, avisos)
     else:
         itens = []
     for item in itens:
@@ -353,6 +354,9 @@ def _interpretar(resultado, leitura, texto, esperado, nome, sal, hash_do_cpf, mi
                 else "O CPF do documento não é o do candidato",
             )
         )
+    for aviso in avisos:
+        if aviso not in alertas:
+            alertas.append(aviso)
     if not itens and esperado in NAO_ACHOU:
         alertas.append(_alerta("NADA_ENCONTRADO", NAO_ACHOU[esperado]))
     if leitura.paginas_sem_leitura:
