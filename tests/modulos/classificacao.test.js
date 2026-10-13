@@ -753,7 +753,7 @@ describe("tela de Classificação", () => {
     let rascunho = {
       conteudo: { regra: configuracao },
       versao_base: 2,
-      atualizado_em: "2026-10-13T14:05:00Z",
+      atualizado_em: new Date(2026, 9, 13, 14, 5).toISOString(),
     };
     const supabase = supabaseFalso({
       obter_rascunho_regra: ({ p_tipo }) =>
@@ -978,6 +978,36 @@ describe("Classificação: publicar o resultado final como lista de aprovados", 
     },
     publicacoes: [],
   };
+
+  it("bloqueia a publicação quando a lista vigente não traz todos os dados para revisão", async () => {
+    const supabase = supabaseFalso({
+      obter_publicacao_lista_aprovados: () => ({
+        ...VIGENTE,
+        vigente: {
+          ...VIGENTE.vigente,
+          candidatos: [VIGENTE.vigente.candidatos[0], null],
+        },
+      }),
+    });
+    await montar(supabase);
+    await abrirEdital();
+    await clicar(secao.querySelector("[data-acao='gerar']"));
+    await esperar();
+    await clicar(secao.querySelector("[data-acao='publicar-aprovados']"));
+    await esperar();
+    const modal = document.getElementById("classificacaoPublicarAprovados");
+    expect(modal.querySelector("[role='alert']").textContent).toContain(
+      "Recarregue a lista",
+    );
+    expect(
+      modal.querySelector("[data-acao='confirmar-publicacao-aprovados']"),
+    ).toBeNull();
+    expect(
+      supabase.rpc.mock.calls.some(
+        ([nome]) => nome === "publicar_lista_aprovados_da_classificacao",
+      ),
+    ).toBe(false);
+  });
 
   it("mostra o que muda, pede revisão de quem saiu com status e publica com os vínculos", async () => {
     const supabase = supabaseFalso({

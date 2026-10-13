@@ -21,7 +21,7 @@ import { rotuloDaVersaoNaLista } from "../../lib/nome-da-versao.ts";
 import { conferirSorteio } from "../../lib/classificacao/sorteio.js";
 import { DocumentoDoSei } from "./documento.tsx";
 import { HoraDeNascimento } from "./hora-de-nascimento.tsx";
-import { ModalDePublicacaoDeAprovados } from "./publicar-aprovados.jsx";
+import { ModalDePublicacaoDeAprovados } from "./publicar-aprovados.tsx";
 import {
   Aviso,
   Campo,
@@ -44,7 +44,7 @@ import {
   hash); "Exportar" sai de uma lista registrada (PDF pela impressão, DOCX,
   XLSX). O empate que espera sorteio ou decisão abre o registro aqui.
   No resultado final, "Publicar como lista de aprovados" faz dele a lista de
-  aprovados vigente do edital (publicar-aprovados.jsx).
+  aprovados vigente do edital (publicar-aprovados.tsx).
   Nota alterada por ajuste aprovado em recurso: selo "Recurso nº X" na linha
   e a frase na explicação; lista gerada antes de um ajuste aprovado (ou do
   cancelamento de um aprovado): aviso para gerar de novo.

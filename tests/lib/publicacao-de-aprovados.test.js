@@ -9,7 +9,7 @@ import {
   resumoDaPublicacao,
   resumoDasOrigens,
   temDadosDaLista,
-} from "../../src/lib/publicacao-de-aprovados.js";
+} from "../../src/lib/publicacao-de-aprovados.ts";
 
 const retrato = {
   tipo: "FINAL",

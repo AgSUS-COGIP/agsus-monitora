@@ -24,7 +24,7 @@ estado.ts          store sem React: editais da área, dados do edital, salvar re
                    SEI, DOCX timbrado, PDF) e XLSX; salvar os textos do documento
 listas.jsx         visão "Listas": KPIs, avisos e pendências, gerar/exportar, filtros, uma
                    tabela por vaga, eliminados, gaveta com a explicação, registro do empate
-publicar-aprovados.jsx  "Publicar como lista de aprovados" (resultado final, editor): o que
+publicar-aprovados.tsx  "Publicar como lista de aprovados" (resultado final, editor): o que
                    muda em relação à lista de aprovados vigente (entram, saem, mudam de
                    posição, preservados, sub judice mantidos) e revisão de quem não casou
 agenda.jsx         visão "Agenda": regra da agenda das entrevistas (versões), gerar pela
@@ -68,12 +68,19 @@ oficiais, 13 modelos; aplicar depois da migration 20261002170000, rodando antes 
 Lista de aprovados: o resultado FINAL é a fonte da Lista de aprovados. "Publicar como lista de
 aprovados" cria a lista vigente do edital (`TB_LISTA_APROVADO` com `TP_ORIGEM` = `CLASSIFICACAO`),
 levando status, matrícula, sub judice e anexos de quem já estava na lista (o casamento das pessoas,
-o resumo e os candidatos do retrato em `src/lib/publicacao-de-aprovados.js`; o banco confere os
+o resumo e os candidatos do retrato em `src/lib/publicacao-de-aprovados.ts`; o banco confere os
 vínculos e grava `TH_PUBLICACAO_APROVADO`). Banco:
 `supabase/migrations/20261005160000_lista_de_aprovados_da_classificacao.sql` (ensaio e rollback com
 o mesmo nome); a Lista de aprovados mostra a origem e, no modal do edital, oferece publicar daqui.
 Testes: `tests/lib/publicacao-de-aprovados.test.js`,
 `tests/lista-de-aprovados-da-classificacao-migration.test.js`.
+O modal e essas regras estão em TypeScript/TSX; contratos em
+`src/lib/tipos-da-publicacao-de-aprovados.ts` e validação das respostas em
+`src/lib/dados-da-publicacao-de-aprovados.ts`. A prévia exige os candidatos da lista vigente
+com identidades únicas e coleções válidas, sem descartar pessoas para montar uma revisão
+parcial. A confirmação valida quantidade e pendências retornadas pelo banco. Testes:
+`tests/lib/dados-da-publicacao-de-aprovados.test.js`,
+`tests/tipos/publicacao-da-classificacao.tsx` e o fluxo em `tests/modulos/classificacao.test.js`.
 Agenda das entrevistas: motor em `src/lib/agenda-das-entrevistas.js`, banco em
 `supabase/migrations/20261005120000_agenda_das_entrevistas.sql` (ensaio e rollback com o mesmo
 nome); Conduzir entrevistas abre a fila em Hoje pela agenda salva (`src/modulos/entrevistas/fila-do-dia.tsx`).
