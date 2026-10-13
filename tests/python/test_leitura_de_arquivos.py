@@ -323,6 +323,41 @@ def test_ctps_digital_com_dois_contratos_um_em_aberto():
     assert r["resumo"].startswith("2 vínculos · ")
 
 
+def _cnpj_valido_de_teste(base):
+    from monitora.avaliacao_documental.leitura_de_arquivos.ctps import cnpj_valido, formatar_cnpj
+
+    return next(formatar_cnpj(base + f"{d:02d}") for d in range(100) if cnpj_valido(base + f"{d:02d}"))
+
+
+@pytest.mark.parametrize(
+    "tipo_de_admissao",
+    ["Tipo de admissao", "Tipo de admissão: Reemprego"],
+)
+def test_ctps_digital_tipo_de_admissao_nao_vira_empregador(tipo_de_admissao):
+    # Leitura real de 13/10/2026: "Tipo de admissão" (rótulo da CTPS Digital) virava a razão social do
+    # contrato seguinte, que só tinha o CNPJ. Rótulo nunca é empregador: fica "CNPJ …".
+    c1, c2 = _cnpj_valido_de_teste("112223330001"), _cnpj_valido_de_teste("445556660001")
+    arquivo = pdf(
+        [
+            "Carteira de Trabalho Digital",
+            "Contratos de trabalho",
+            "HOSPITAL EXEMPLO LTDA",
+            f"CNPJ: {c1}",
+            "Data de admissao: 01/02/2018",
+            "Data de desligamento: 31/01/2020",
+            tipo_de_admissao,
+            f"CNPJ: {c2}",
+            "Data de admissao: 01/03/2020",
+            "Emitido em 15/09/2026",
+        ]
+    )
+    r = ler_documento(arquivo, "VINCULOS", NOME, hoje=HOJE, ocr=None)
+    a, b = r["itens"]
+    assert a["empregador"] == "HOSPITAL EXEMPLO LTDA"
+    assert b["empregador"] == f"CNPJ {c2}"
+    assert all("admiss" not in (i["empregador"] or "").lower() for i in r["itens"])
+
+
 def test_declaracao_em_texto_corrido():
     arquivo = pdf(
         [

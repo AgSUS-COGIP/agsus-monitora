@@ -26,7 +26,7 @@ from monitora.avaliacao_documental.perguntas_da_carga import (  # noqa: E402
 
 P5 = "Pergunta 5 - Sistema de concorrência"
 P10 = "Pergunta 10 - Escolaridade"
-P2 = "Pergunta 2 - Nome social"
+P2 = "Pergunta 2 - Possui deficiência?"  # "Nome social" agora é dado pessoal (fora do resumo)
 
 
 class ContaDoResumo(unittest.TestCase):
@@ -100,12 +100,21 @@ class DadoPessoalForaDoResumo(unittest.TestCase):
         "Pergunta 10 - Número do PIS/NIS",
         "Pergunta 11 - Matrícula no conselho de classe",
         "Pergunta 12 - EMAIL",
+        # 13/10/2026: o resumo do 114/2026 guardava nomes de trabalhadores da AgSUS (repetidos 2+ vezes).
+        "Pergunta 21 - Se respondeu SIM na pergunta anterior, por gentileza informe o nome completo do "
+        "trabalhador da AgSUS.",
+        "Pergunta 1 - Nome completo:(sem abreviações)",
+        "Pergunta 16 - Nome social (se houver)",
+        "Pergunta 22 - Informe o nome do parente ou cônjuge que trabalha na AgSUS",
     ]
     NAO_PEDEM = [
         "Pergunta 1 - Sistema de concorrência",
         "Pergunta 13 - Experiência Profissional em atividades compatíveis com o cargo",
         "Pergunta 14 - Candidatos concorrendo às vagas destinadas a Pretos ou Pardos, grave um vídeo",
         "Pergunta 15 - Possui curso de pós-graduação (especialização)?",
+        "Pergunta 20 - Você possui cônjuge, companheiro(a), parentes até o terceiro grau ou qualquer conhecido "
+        "que integre o quadro de trabalhadores da AgSUS?",
+        "Pergunta 17 - Nome do curso de especialização",
     ]
 
     def test_enunciados_que_pedem_dado_pessoal(self):

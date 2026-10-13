@@ -29,7 +29,7 @@ Pré-requisito: a migration `20261009220000` aplicada (o ensaio está em `supaba
 5. Satisfeito, aumente o `limite` (até 2000) ou rode sem `editais` (os ativos com regra). Cada
    execução continua de onde a anterior parou; `forcar` relê o que já foi lido nesta versão.
 
-## Como lê (extrator 2026.10.8) — tudo local e gratuito
+## Como lê (extrator 2026.10.13) — tudo local e gratuito
 
 Nenhum documento sai do runner: sem API de IA paga, sem consulta de CNPJ na internet.
 
