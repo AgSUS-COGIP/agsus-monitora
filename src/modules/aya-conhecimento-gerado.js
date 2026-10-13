@@ -721,6 +721,33 @@ export const VERBETES_AYA = Object.freeze([
   },
   {
     arquivo: "regras-da-avaliacao-documental.md",
+    titulo: "Rascunho guardado da regra",
+    perguntas: [
+      "rascunho da regra",
+      "rascunho guardado",
+      "rascunho nao salvo",
+      "perdi a regra",
+      "perdi o que fiz na regra",
+      "atualizei e perdi",
+      "recarreguei a pagina e perdi",
+      "f5 na regra",
+      "continuar de onde parei",
+      "descartar o rascunho",
+      "rascunho guardado as",
+      "guardando",
+      "sem conexao guardado neste computador",
+      "rascunho em outro computador",
+      "rascunho partiu da versao",
+    ],
+    resposta:
+      'Na aba Regra, o que você muda (no assistente ou no modo avançado, inclusive a nota mínima e o desempate) é guardado sozinho cerca de um segundo depois de cada mudança, no banco, por edital e por pessoa — só você vê o seu rascunho. O indicador discreto ao lado diz "Guardando…", "Rascunho guardado às 14:05" ou, sem internet, "Sem conexão — guardado neste computador" (o banco recebe quando a conexão volta). Ao abrir a regra de novo — depois de recarregar a página, fechar o navegador ou em outro computador —, aparece "Você tem um rascunho não salvo de 13/10 14:05" com "Continuar de onde parei" (o assistente volta no passo 2 com tudo) ou "Descartar" (pede confirmação e não dá para recuperar). Se outra pessoa salvou uma versão depois que o seu rascunho começou, o aviso diz de qual versão ele partiu e qual é a vigente: ao continuar, confira a comparação de versões antes de salvar. Salvar a versão nova ou descartar as alterações apaga o rascunho. Com alteração por salvar, recarregar (F5) ou fechar a aba pede confirmação, o botão "Atualizar" da tela avisa antes, e a versão nova do sistema espera o rascunho ser guardado para entrar. O rascunho não é versão: só "Salvar como versão" vale para a avaliação.',
+    fato: "No MONITORA, o rascunho da regra da avaliação documental e da regra de classificação é guardado a cada mudança em TB_RASCUNHO_REGRA (por tipo, edital e pessoa; migration 20261013120000), com cópia no navegador quando falta conexão.",
+    fonte:
+      "src/app/rascunho-da-regra.ts; src/app/guarda-de-alteracoes.ts; supabase/migrations/20261013120000_rascunho_das_regras.sql",
+    abrir: "avaliacao-documental",
+  },
+  {
+    arquivo: "regras-da-avaliacao-documental.md",
     titulo: "Perguntas da Empregare no assistente",
     perguntas: [
       "cores das perguntas",
@@ -1877,6 +1904,23 @@ export const VERBETES_AYA = Object.freeze([
     fato: "No MONITORA, a regra de classificação é de cada edital, versionada: salvar cria versão nova e a lista gerada guarda a versão usada.",
     fonte:
       "src/lib/classificacao/regra.js; supabase/migrations/20261002150000_classificacao.sql",
+    abrir: "classificacao",
+  },
+  {
+    arquivo: "regras-da-classificacao.md",
+    titulo: "Rascunho guardado da regra de classificação",
+    perguntas: [
+      "rascunho da regra de classificacao",
+      "perdi a regra de classificacao",
+      "rascunho guardado na classificacao",
+      "continuar de onde parei na classificacao",
+      "descartar rascunho da classificacao",
+    ],
+    resposta:
+      'Na aba Classificação › Regra, o que você muda é guardado sozinho cerca de um segundo depois de cada mudança (por edital e por pessoa, só você vê): o indicador ao lado de "Salvar" diz "Rascunho guardado às 14:05" ou, sem internet, "Sem conexão — guardado neste computador". Ao abrir a regra de novo, mesmo em outro computador, aparece "Você tem um rascunho não salvo de…" com "Continuar de onde parei" ou "Descartar"; se outra pessoa salvou uma versão no meio, o aviso diz de qual versão o rascunho partiu. Salvar a versão nova ou descartar apaga o rascunho; com alteração por salvar, recarregar ou fechar a aba pede confirmação.',
+    fato: "No MONITORA, o rascunho da regra de classificação é guardado em TB_RASCUNHO_REGRA (tipo CLASSIFICACAO), como o da regra da avaliação documental.",
+    fonte:
+      "src/app/rascunho-da-regra.ts; supabase/migrations/20261013120000_rascunho_das_regras.sql",
     abrir: "classificacao",
   },
   {

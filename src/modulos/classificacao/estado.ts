@@ -158,6 +158,7 @@ export function criarEstadoDaClassificacao({
   enderecoDoLogo = LOGO_PADRAO_DA_BARRA,
   tempoLimiteMs = TEMPO_LIMITE_MS,
   agendaDoEdital = () => null,
+  aoGravarVersao = () => {},
 }: OpcoesDoEstado = {}) {
   let estado: SnapshotDaClassificacao = ESTADO_INICIAL;
   let pedidoDosEditais = 0;
@@ -356,6 +357,7 @@ export function criarEstadoDaClassificacao({
       );
       if (!vigente()) return false;
       if (!regra) throw new Error("A versão da regra recebida é inválida.");
+      aoGravarVersao(edital);
       receberRegra(edital, regra);
       publicar({ salvando: false });
       toast(`Regra salva (${rotuloDaVersao(regra) || "—"}).`, "success");

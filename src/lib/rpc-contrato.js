@@ -1330,6 +1330,24 @@ export const CONTRATO_RPC = {
     resumo:
       "Salva a regra como versão nova (40001 se a versão aberta não é a vigente; motivo de 10 a 2.000 da 2ª em diante) e volta para Conferir; devolve as fichas concluídas com versão anterior (nenhuma nota muda). p_nome (opcional, 3 a 80): o nome da versão (20261008180000). Só a coordenação do edital.",
   },
+  obter_rascunho_regra: {
+    argumentos: ["p_tipo", "p_edital"],
+    critica: false,
+    resumo:
+      "O rascunho não salvo de quem chama para a regra do tipo (ANALISE ou CLASSIFICACAO) no edital: conteudo, versao_base, criado_em e atualizado_em; null sem rascunho (20261013120000). Só quem edita a regra.",
+  },
+  salvar_rascunho_regra: {
+    argumentos: ["p_tipo", "p_edital", "p_conteudo", "p_versao_base"],
+    critica: false,
+    resumo:
+      "Guarda (ou troca) o rascunho não salvo da regra do tipo no edital, de quem chama (objeto json de até 1 MB e a versão vigente de onde partiu); devolve atualizado_em. Uma linha por tipo + edital + pessoa em TB_RASCUNHO_REGRA. Só quem edita a regra.",
+  },
+  descartar_rascunho_regra: {
+    argumentos: ["p_tipo", "p_edital"],
+    critica: false,
+    resumo:
+      "Apaga o rascunho não salvo de quem chama para a regra do tipo no edital (versão nova salva ou Descartar); devolve { descartado }. Só o próprio rascunho.",
+  },
   renomear_versao_regra_analise: {
     argumentos: ["p_edital", "p_versao", "p_nome", "p_motivo"],
     critica: false,

@@ -38,6 +38,10 @@
   componente; aqui só a carga e a gravação. A aba aberta (`visao`) mora aqui
   para o "Atualizar" e a reabertura da tela relerem a aba certa.
 
+  Rascunho: o que a pessoa muda na regra é guardado a cada mudança por
+  src/app/rascunho-da-regra.ts (montado em avaliacao-documental.jsx); ao
+  salvar a versão nova, `aoGravarVersao` o apaga antes de a aba remontar.
+
   Leitura x gravação: a leitura do edital que estava no ar quando uma gravação
   terminou pode ter saído antes dela (banco lento): a resposta velha não
   sobrescreve a gravada; a leitura se refaz.
@@ -124,6 +128,7 @@ export function criarEstadoDaAvaliacao({
   supabase = null,
   toast = (mensagem) => console.info(mensagem),
   tempoLimiteMs = TEMPO_LIMITE_MS,
+  aoGravarVersao = (_editalId) => {},
 } = {}) {
   let estado = ESTADO_INICIAL;
   let pedidoDosEditais = 0;
@@ -249,6 +254,7 @@ export function criarEstadoDaAvaliacao({
     try {
       const resposta = await rpc(nome, argumentos);
       gravacoes += 1;
+      if (versaoNova && resposta?.regra) aoGravarVersao(editalId);
       if (editalId === estado.editalId && estado.dados)
         publicar({
           dados: { ...estado.dados, regra: resposta?.regra ?? null },

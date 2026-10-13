@@ -107,6 +107,8 @@ export interface OpcoesDoEstado {
   enderecoDoLogo?: string;
   tempoLimiteMs?: number;
   agendaDoEdital?: (id: string) => unknown;
+  /** Versão nova da regra salva (o rascunho guardado do edital acaba antes de a aba remontar). */
+  aoGravarVersao?: (editalId: string) => void;
 }
 export type EstadoDaClassificacao = ReturnType<
   typeof import("./estado.ts").criarEstadoDaClassificacao
@@ -117,4 +119,7 @@ export type EstadoDaAgenda = ReturnType<
 export interface OpcoesDaTela extends OpcoesDoEstado {
   secao?: HTMLElement | null;
   areaAtual?: () => string | null;
+  /** O rascunho guardado da regra (src/app/rascunho-da-regra.ts, tipo CLASSIFICACAO). */
+  rascunho?: import("../../app/rascunho-da-regra.ts").RascunhoDaRegra;
+  confirmar?: (mensagem: string) => boolean;
 }

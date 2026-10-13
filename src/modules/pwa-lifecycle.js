@@ -84,7 +84,9 @@ function bindServiceWorkerUpdates() {
     Antes recarregava aqui, na hora: quem estava digitando (notas de
     entrevista, resposta de recurso) perdia o texto. Agora a versão nova fica
     pendente e entra na próxima troca de página (aplicarAtualizacaoPendente,
-    chamada pelo navigate do legado depois da guarda de alterações não salvas).
+    chamada pelo navigate do legado depois da guarda de alterações não salvas
+    e só quando nenhuma tela tem rascunho por guardar — src/app/
+    guarda-de-alteracoes.ts).
   */
   navigator.serviceWorker.addEventListener("controllerchange", () => {
     const shouldReload = shouldReloadAfterControllerChange({

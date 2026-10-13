@@ -3,6 +3,7 @@ import {
   montarClassificacao,
 } from "../../src/modulos/classificacao/classificacao.tsx";
 import { criarEstadoDaClassificacao } from "../../src/modulos/classificacao/estado.ts";
+import { criarRascunhoDaRegra } from "../../src/app/rascunho-da-regra.ts";
 import type {
   EstadoDaAgenda,
   SnapshotDaClassificacao,
@@ -21,7 +22,12 @@ function conferir(agenda: EstadoDaAgenda, lista: ListaRegistrada) {
     },
   });
   const snapshot: SnapshotDaClassificacao = estado.obter();
-  const tela = <TelaDeClassificacao estado={estado} agenda={agenda} />;
+  const rascunho = criarRascunhoDaRegra({ tipo: "CLASSIFICACAO" });
+  const tela = (
+    <TelaDeClassificacao estado={estado} agenda={agenda} rascunho={rascunho} />
+  );
+  // @ts-expect-error O tipo do rascunho é ANALISE ou CLASSIFICACAO.
+  void criarRascunhoDaRegra({ tipo: "OUTRA" });
   void montarClassificacao({ secao: null, areaAtual: () => "sede" });
   void estado.publicarLista(lista.id);
   // @ts-expect-error O sinalizador de salvamento precisa ser booleano.

@@ -34,7 +34,8 @@ estado-da-agenda.js  store da agenda (obter_agenda_entrevista, salvar_regra_agen
                    salvar_agenda_entrevista); a agenda salva preenche DATA e HORA do
                    documento da convocação (agendaDoDocumento)
 regra.jsx          visão "Regra": formulário (critérios ordenáveis do catálogo, empate final,
-                   modalidades, convocação, rodapé) e versões
+                   modalidades, convocação, rodapé) e versões; o rascunho é guardado a cada
+                   mudança (src/app/rascunho-da-regra.ts, tipo CLASSIFICACAO) e volta ao abrir
 documento.tsx      "Como fica no SEI": quase tela cheia (ou tela cheia), folha A4 com zoom
                    (escala em src/lib/classificacao/escala-da-previa.ts), painel recolhível
                    com as abas Dados | Textos | Colunas e rodapé fixo; no celular, uma coluna

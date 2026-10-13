@@ -744,6 +744,64 @@ describe("tela de Classificação", () => {
     );
   });
 
+  it("Regra: o rascunho guardado volta ao abrir (Continuar) e salvar a versão o apaga", async () => {
+    const configuracao = structuredClone(EDITAL.regra.configuracao);
+    configuracao.desempate = [
+      { criterio: "IDOSO_60", direcao: "SIM_PRIMEIRO" },
+      ...configuracao.desempate,
+    ];
+    let rascunho = {
+      conteudo: { regra: configuracao },
+      versao_base: 2,
+      atualizado_em: "2026-10-13T14:05:00Z",
+    };
+    const supabase = supabaseFalso({
+      obter_rascunho_regra: ({ p_tipo }) =>
+        p_tipo === "CLASSIFICACAO" ? rascunho : null,
+      salvar_rascunho_regra: ({ p_conteudo, p_versao_base }) => {
+        rascunho = {
+          conteudo: p_conteudo,
+          versao_base: p_versao_base,
+          atualizado_em: "2026-10-13T15:00:00Z",
+        };
+        return { atualizado_em: rascunho.atualizado_em };
+      },
+      descartar_rascunho_regra: () => {
+        rascunho = null;
+        return { descartado: true };
+      },
+    });
+    await montar(supabase);
+    await abrirEdital();
+    await clicar(secao.querySelector(".ui-topo [data-valor='regra']"));
+    await esperar();
+    expect(secao.querySelector(".ui-aviso-de-rascunho").textContent).toContain(
+      "Você tem um rascunho não salvo de 13/10 14:05",
+    );
+    await clicar(botao("Continuar de onde parei", secao));
+    await esperar();
+    expect(
+      [...secao.querySelectorAll(".classificacao-lista-ordenavel li")].map(
+        (li) => li.dataset.criterio,
+      ),
+    ).toEqual(["IDOSO_60", "INDIGENA_COMPROVADO"]);
+    await digitar(
+      secao.querySelector(".classificacao-salvar input"),
+      "60+ primeiro, retomado do rascunho",
+    );
+    await clicar(secao.querySelector("[data-acao='salvar-regra']"));
+    await esperar();
+    await esperar();
+    expect(
+      supabase.rpc.mock.calls.some(
+        ([nome, args]) =>
+          nome === "descartar_rascunho_regra" &&
+          args.p_tipo === "CLASSIFICACAO",
+      ),
+    ).toBe(true);
+    expect(rascunho).toBeNull();
+  });
+
   it("Regra: digitar tecla a tecla não come a vírgula nem o espaço (números e listas)", async () => {
     const supabase = supabaseFalso();
     await montar(supabase);

@@ -220,6 +220,18 @@ describe("guarda de saída e versão nova", () => {
     expect(janela.location.reload).toHaveBeenCalled();
     expect(ativas()).toEqual([]);
   });
+
+  it("versão nova esperando com rascunho ainda não guardado: não recarrega e troca de tela", () => {
+    const aplicarAtualizacao = vi.fn(() => true);
+    const { navegacao, janela } = criar({
+      aplicarAtualizacao,
+      podeRecarregar: () => false,
+    });
+    navegacao.irPara("nucleo");
+    expect(aplicarAtualizacao).not.toHaveBeenCalled();
+    expect(janela.location.reload).not.toHaveBeenCalled();
+    expect(navegacao.obter().view).toBe("nucleo");
+  });
 });
 
 describe("painel externo", () => {

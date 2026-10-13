@@ -106,7 +106,10 @@ A próxima fase traz a revisão (F5).
 A aba Regra abre no **assistente** (`assistente/`, em TSX, contratos em `assistente/tipos.ts` e
 `src/lib/avaliacao-documental/tipos-da-regra.ts`); o **Modo avançado** é o formulário inteiro de
 `regra.jsx`. Os dois editam o mesmo rascunho e salvam o mesmo JSON (`regra.js`) pelo
-`salvar_regra_analise`. Cinco passos:
+`salvar_regra_analise`. O rascunho é guardado a cada mudança (por edital e por pessoa, em
+`TB_RASCUNHO_REGRA` com cópia no navegador sem conexão: `src/app/rascunho-da-regra.ts`, hook
+`src/app/usar-rascunho-da-regra.ts`) e volta ao abrir ("Continuar de onde parei" / "Descartar");
+salvar a versão (`aoGravarVersao` do `estado.js`) apaga. Cinco passos:
 
 1. ponto de partida (`partida.tsx`): versão vigente, regra conferida de outro edital da área,
    modelo ou do zero — sempre cópia independente;
@@ -136,7 +139,6 @@ A aba Regra abre no **assistente** (`assistente/`, em TSX, contratos em `assiste
 (`conferir_pede_outra_pessoa`). Migration `20261008120000_assistente_da_regra.sql`. O critério de
 aceite (refazer a v7 do 93/2026 a partir do PROJ26) está em
 `tests/lib/avaliacao-documental-assistente.test.js`.
-
 
 ## Dono da avaliação: planilha ou MONITORA
 

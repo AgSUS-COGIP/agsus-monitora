@@ -23,6 +23,14 @@ dos PDFs oficiais).
 **fonte:** src/lib/classificacao/regra.js; supabase/migrations/20261002150000_classificacao.sql
 **abrir:** classificacao
 
+## Rascunho guardado da regra de classificação
+
+**perguntas:** rascunho da regra de classificacao | perdi a regra de classificacao | rascunho guardado na classificacao | continuar de onde parei na classificacao | descartar rascunho da classificacao
+**resposta:** Na aba Classificação › Regra, o que você muda é guardado sozinho cerca de um segundo depois de cada mudança (por edital e por pessoa, só você vê): o indicador ao lado de "Salvar" diz "Rascunho guardado às 14:05" ou, sem internet, "Sem conexão — guardado neste computador". Ao abrir a regra de novo, mesmo em outro computador, aparece "Você tem um rascunho não salvo de…" com "Continuar de onde parei" ou "Descartar"; se outra pessoa salvou uma versão no meio, o aviso diz de qual versão o rascunho partiu. Salvar a versão nova ou descartar apaga o rascunho; com alteração por salvar, recarregar ou fechar a aba pede confirmação.
+**fato:** No MONITORA, o rascunho da regra de classificação é guardado em TB_RASCUNHO_REGRA (tipo CLASSIFICACAO), como o da regra da avaliação documental.
+**fonte:** src/app/rascunho-da-regra.ts; supabase/migrations/20261013120000_rascunho_das_regras.sql
+**abrir:** classificacao
+
 ## Critérios de desempate
 
 **perguntas:** criterios de desempate | como funcionam os criterios de desempate | desempate da classificacao | catalogo de criterios | ordem do desempate
