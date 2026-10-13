@@ -1,6 +1,7 @@
 import { useEffect, useState, useSyncExternalStore } from "react";
 import { editaisDaEscolha } from "../../lib/avaliacao-documental/editais.js";
 import { montarModulo } from "../../app/montar-modulo.jsx";
+import { criarRascunhoDaRegra } from "../../app/rascunho-da-regra.ts";
 import { obterDadosDoMonitoramento } from "../../componentes/dados-do-monitoramento.ts";
 import { SeloDeTreinamento } from "../../componentes/selo-de-treinamento.jsx";
 import { usarAreaAtual } from "../../componentes/usar-area-atual.ts";
@@ -61,7 +62,10 @@ function textoDoStatus(e) {
   return e.dados ? "Sem regra" : "";
 }
 
-function TelaDaArea({ estado, pre, fila, atualizar, e }) {
+const AVISO_AO_ATUALIZAR =
+  "A regra tem alterações ainda não salvas como versão (o rascunho fica guardado e volta ao abrir a regra). Atualizar agora?";
+
+function TelaDaArea({ estado, pre, fila, rascunho, atualizar, confirmar, e }) {
   const visao = e.visao;
   const [todos, setTodos] = useState(false);
   const { lista: editais, ocultos } = editaisDaEscolha(e.editais, {
@@ -91,7 +95,11 @@ function TelaDaArea({ estado, pre, fila, atualizar, e }) {
             />
           }
           status={textoDoStatus(e)}
-          aoAtualizar={() => void atualizar()}
+          aoAtualizar={() => {
+            if (rascunho.comAlteracoes() && !confirmar(AVISO_AO_ATUALIZAR))
+              return;
+            void atualizar();
+          }}
           atualizarDesativado={
             !e.area || e.carregandoEditais || e.carregandoEdital
           }
@@ -191,6 +199,7 @@ function TelaDaArea({ estado, pre, fila, atualizar, e }) {
                   key={`${e.editalId}:${e.dados.regra?.versao ?? 0}`}
                   e={e}
                   estado={estado}
+                  rascunhoGuardado={rascunho}
                 />
               ) : visao === "fila" ? (
                 <Fila key={e.editalId} e={e} fila={fila} />
@@ -221,7 +230,14 @@ function TelaDaArea({ estado, pre, fila, atualizar, e }) {
   );
 }
 
-export function TelaDaAvaliacaoDocumental({ estado, pre, fila, atualizar }) {
+export function TelaDaAvaliacaoDocumental({
+  estado,
+  pre,
+  fila,
+  rascunho,
+  atualizar,
+  confirmar = (mensagem) => globalThis.confirm?.(mensagem) ?? true,
+}) {
   const e = useSyncExternalStore(estado.assinar, estado.obter);
   const { area: areaDoApp } = usarAreaAtual();
   useEffect(() => {
@@ -235,7 +251,9 @@ export function TelaDaAvaliacaoDocumental({ estado, pre, fila, atualizar }) {
       estado={estado}
       pre={pre}
       fila={fila}
+      rascunho={rascunho}
       atualizar={atualizar}
+      confirmar={confirmar}
       e={e}
     />
   );
@@ -288,8 +306,15 @@ export function montarAvaliacaoDocumental({
   getProfile = () => null,
   cabecalho = () =>
     estadoDasConfiguracoes.obter().valores?.get?.(CHAVE_DO_CABECALHO) || "",
+  rascunho = criarRascunhoDaRegra({ tipo: "ANALISE", supabase }),
+  confirmar,
 } = {}) {
-  const estado = criarEstadoDaAvaliacao({ supabase, toast });
+  // Versão nova salva: o rascunho guardado acaba antes de a aba Regra remontar.
+  const estado = criarEstadoDaAvaliacao({
+    supabase,
+    toast,
+    aoGravarVersao: (editalId) => void rascunho.esquecer(editalId),
+  });
   const pre = criarEstadoDaPreClassificacao({
     supabase,
     toast,
@@ -305,7 +330,9 @@ export function montarAvaliacaoDocumental({
           estado={estado}
           pre={pre}
           fila={fila}
+          rascunho={rascunho}
           atualizar={atualizar}
+          {...(confirmar ? { confirmar } : {})}
         />,
         { nome: "a tela de avaliação documental" },
       ).raiz
@@ -314,6 +341,7 @@ export function montarAvaliacaoDocumental({
     estado,
     pre,
     fila,
+    rascunho,
     raiz,
     atualizar,
     render() {

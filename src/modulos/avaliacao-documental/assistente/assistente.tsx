@@ -1,4 +1,11 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
 import {
   alternarCartao,
   motivoDoPontoDePartida,
@@ -54,7 +61,18 @@ import type { EstadoDaRegra, SnapshotDaAvaliacao } from "./tipos.ts";
   (salvar_regra_classificacao, com a permissão dela). O passo 5 segue a ordem
   Resumo → Comparar versões → Testar (recolhido) → Nome, motivo e Salvar, com
   a lista do que falta ao lado do botão (cada item leva ao passo e ao campo).
+
+  O rascunho é guardado a cada mudança pela aba Regra (regra.jsx, com
+  src/app/rascunho-da-regra.ts): a regra e, se mudaram, a nota mínima e o
+  desempate (com a versão da classificação de onde partiram). Retomado, ele
+  abre no passo 2; a classificação só volta se a versão dela ainda for a mesma.
 */
+
+/** A nota mínima e o desempate guardados no rascunho. */
+export type ClassificacaoDoRascunho = {
+  versao_base: number;
+  configuracao: unknown;
+};
 
 const PASSOS = [
   { id: "partida", rotulo: "Ponto de partida", icone: "fa-flag" },
@@ -77,6 +95,14 @@ type Props = {
   aoMudarRascunho: (regra: RegraAnalise | null) => void;
   /** "Fechar o assistente": a aba Regra mostra o resumo, com "Abrir o assistente". */
   aoFechar?: () => void;
+  /** A classificação do rascunho retomado (vale se a versão ainda for a mesma). */
+  classificacaoRetomada?: ClassificacaoDoRascunho | null;
+  /** A classificação mudada vai para o rascunho guardado (null = sem mudança). */
+  aoMudarClassificacaoDoRascunho?: (c: ClassificacaoDoRascunho | null) => void;
+  /** O indicador "Rascunho guardado às…". */
+  situacaoDoRascunho?: ReactNode;
+  /** "Descartar alterações": a regra e a classificação do rascunho voltam às vigentes. */
+  aoDescartarTudo?: () => void;
 } & FerramentasDoDocumento;
 
 const NOME_DO_CRITERIO = new Map(
@@ -95,6 +121,10 @@ export function AssistenteDaRegra({
   inicial,
   aoMudarRascunho,
   aoFechar,
+  classificacaoRetomada = null,
+  aoMudarClassificacaoDoRascunho,
+  situacaoDoRascunho = null,
+  aoDescartarTudo,
   copiar,
   imprimir,
 }: Props) {
@@ -108,7 +138,14 @@ export function AssistenteDaRegra({
     e.regraSalvaAgora?.editalId === e.editalId &&
     e.regraSalvaAgora?.versao === regraSalva.versao,
   );
-  const [passo, setPasso] = useState(salvaAgora ? PASSOS.length - 1 : 0);
+  // Rascunho retomado (já difere da vigente): abre no passo 2, não no ponto de partida.
+  const [passo, setPasso] = useState(() =>
+    salvaAgora
+      ? PASSOS.length - 1
+      : rascunho && (!inicial || !regrasIguais(rascunho, inicial))
+        ? 1
+        : 0,
+  );
   const [concluido, setConcluido] = useState(false);
   const [ponto, setPonto] = useState<PontoDePartida | null>(
     regraSalva
@@ -162,11 +199,29 @@ export function AssistenteDaRegra({
         : null,
     [regraDaClassificacao],
   );
+  const versaoDaClassificacao = regraDaClassificacao?.versao ?? null;
+  const classificacaoDoRascunho = useMemo(
+    () =>
+      classificacaoRetomada &&
+      versaoDaClassificacao !== null &&
+      classificacaoRetomada.versao_base === versaoDaClassificacao
+        ? (normalizarRegra(
+            classificacaoRetomada.configuracao,
+          ) as unknown as RegraDeClassificacao)
+        : null,
+    [classificacaoRetomada, versaoDaClassificacao],
+  );
+  const classificacaoInicial = classificacaoDoRascunho ?? classificacaoOriginal;
   const [classificacao, setClassificacao] =
-    useState<RegraDeClassificacao | null>(classificacaoOriginal);
+    useState<RegraDeClassificacao | null>(classificacaoInicial);
   useEffect(
-    () => setClassificacao(classificacaoOriginal),
-    [classificacaoOriginal],
+    () => setClassificacao(classificacaoInicial),
+    [classificacaoInicial],
+  );
+  const classificacaoDoRascunhoMudou = Boolean(
+    classificacaoRetomada &&
+    versaoDaClassificacao !== null &&
+    classificacaoRetomada.versao_base !== versaoDaClassificacao,
   );
 
   const editalRotulo = dados?.edital?.numero
@@ -199,6 +254,22 @@ export function AssistenteDaRegra({
     classificacaoOriginal &&
     !regrasIguais(classificacao, classificacaoOriginal),
   );
+  // A classificação mudada vai para o rascunho guardado (sem o apoio lido, nada muda).
+  useEffect(() => {
+    if (!aoMudarClassificacaoDoRascunho || !apoio) return;
+    aoMudarClassificacaoDoRascunho(
+      mudouClassificacao && classificacao && versaoDaClassificacao !== null
+        ? { versao_base: versaoDaClassificacao, configuracao: classificacao }
+        : null,
+    );
+  }, [
+    aoMudarClassificacaoDoRascunho,
+    apoio,
+    mudouClassificacao,
+    classificacao,
+    versaoDaClassificacao,
+  ]);
+
   const erros = [
     ...(rascunho ? (validarRegraAnalise(rascunho) as string[]) : []),
     ...(mudouClassificacao && classificacao
@@ -349,6 +420,7 @@ export function AssistenteDaRegra({
             Alterações não salvas
           </span>
         ) : null}
+        {situacaoDoRascunho}
       </header>
 
       <nav
@@ -399,6 +471,13 @@ export function AssistenteDaRegra({
           >
             Tentar novamente
           </button>
+        </Aviso>
+      ) : null}
+      {classificacaoDoRascunhoMudou ? (
+        <Aviso tom="warning" papel="status">
+          A nota mínima e o desempate do rascunho partiram da versão{" "}
+          {classificacaoRetomada?.versao_base} da regra de classificação, que
+          mudou: valem os da versão {versaoDaClassificacao}.
         </Aviso>
       ) : null}
       {noPassoDasPerguntas && e.erroDasPerguntas ? (
@@ -520,7 +599,8 @@ export function AssistenteDaRegra({
                 salvando={e.salvando}
                 erroDoBanco={erroDoBanco}
                 aoDescartar={() => {
-                  aoMudarRascunho(inicial);
+                  if (aoDescartarTudo) aoDescartarTudo();
+                  else aoMudarRascunho(inicial);
                   setClassificacao(classificacaoOriginal);
                   setGuardados({});
                   setMotivo("");

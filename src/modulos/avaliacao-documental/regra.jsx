@@ -27,6 +27,7 @@ import {
 } from "../../lib/nome-da-versao.ts";
 import {
   Aviso,
+  AvisoDeRascunho,
   Campo,
   CampoNomeDaVersao,
   EstadoVazio,
@@ -36,7 +37,13 @@ import {
   RenomearVersao,
   Segmentado,
   Selo,
+  SituacaoDoRascunho,
 } from "../../ui/index.js";
+import { usarRascunhoDaRegra } from "../../app/usar-rascunho-da-regra.ts";
+import {
+  dataEHoraCurtas,
+  textoDaGravacao,
+} from "../../lib/rascunho-da-regra.ts";
 import { AssistenteDaRegra } from "./assistente/assistente.tsx";
 import { ComparacaoDeVersoes, ResumoDaRegra } from "./assistente/conferir.tsx";
 import { Blocos } from "./blocos.jsx";
@@ -88,6 +95,30 @@ function guardarModo(modo) {
   } catch {
     // Sem armazenamento (modo privado): vale só nesta abertura.
   }
+}
+
+/*
+  O rascunho guardado (src/app/rascunho-da-regra.ts, tipo ANALISE):
+  { regra, classificacao? } — a regra inteira e, se o assistente mudou a nota
+  mínima ou o desempate, a regra de classificação com a versão de onde partiu.
+*/
+const ehObjeto = (v) =>
+  Boolean(v) && typeof v === "object" && !Array.isArray(v);
+function classificacaoDoGuardado(conteudo) {
+  const c = conteudo?.classificacao;
+  return ehObjeto(c) &&
+    Number.isInteger(c.versao_base) &&
+    ehObjeto(c.configuracao)
+    ? c
+    : null;
+}
+function guardadoIgualAoVigente(conteudo, inicial) {
+  if (!ehObjeto(conteudo?.regra)) return true;
+  if (classificacaoDoGuardado(conteudo)) return false;
+  return (
+    Boolean(inicial) &&
+    regrasIguais(normalizarRegraAnalise(conteudo.regra), inicial)
+  );
 }
 
 const dataHora = (iso) =>
@@ -827,7 +858,7 @@ function CabecalhoDaRegra({ regraSalva, leitura, mudou, e, estado, aoErro }) {
   );
 }
 
-export function Regra({ e, estado }) {
+export function Regra({ e, estado, rascunhoGuardado }) {
   const dados = e.dados;
   const regraSalva = dados?.regra ?? null;
   const leitura = !dados?.pode_coordenar;
@@ -844,6 +875,51 @@ export function Regra({ e, estado }) {
   const [modo, setModo] = useState(lerModo);
   // "Fechar o assistente" (passo 5): a regra em resumo, com "Abrir o assistente".
   const [assistenteFechado, setAssistenteFechado] = useState(false);
+  // Nota mínima e desempate mudados no assistente (vão no rascunho guardado).
+  const [classificacaoDoRascunho, setClassificacaoDoRascunho] = useState(null);
+  const [classificacaoRetomada, setClassificacaoRetomada] = useState(null);
+  const conteudoDoRascunho = useMemo(
+    () =>
+      rascunho
+        ? {
+            regra: rascunho,
+            ...(classificacaoDoRascunho
+              ? { classificacao: classificacaoDoRascunho }
+              : {}),
+          }
+        : {},
+    [rascunho, classificacaoDoRascunho],
+  );
+  const guardado = usarRascunhoDaRegra({
+    loja: rascunhoGuardado,
+    editalId: e.editalId,
+    versaoVigente: regraSalva?.versao ?? 0,
+    ativo: !leitura,
+    conteudo: conteudoDoRascunho,
+    comAlteracoes:
+      Boolean(rascunho && (!inicial || !regrasIguais(rascunho, inicial))) ||
+      Boolean(classificacaoDoRascunho),
+    igualAoVigente: (conteudo) => guardadoIgualAoVigente(conteudo, inicial),
+    aplicar: (conteudo) => {
+      const classificacao = classificacaoDoGuardado(conteudo);
+      setRascunho(normalizarRegraAnalise(conteudo.regra));
+      setClassificacaoDoRascunho(classificacao);
+      setClassificacaoRetomada(classificacao);
+      setAssistenteFechado(false);
+    },
+  });
+  const textoDoRascunho = textoDaGravacao(
+    guardado.gravacao,
+    guardado.guardadoEm,
+  );
+  const situacaoDoRascunho = (
+    <SituacaoDoRascunho texto={textoDoRascunho} gravacao={guardado.gravacao} />
+  );
+  const descartarTudo = () => {
+    setRascunho(inicial);
+    setClassificacaoDoRascunho(null);
+    setClassificacaoRetomada(null);
+  };
   const mudarModo = (novo) => {
     setModo(novo);
     guardarModo(novo);
@@ -867,8 +943,34 @@ export function Regra({ e, estado }) {
       inicial={inicial}
       aoMudarRascunho={setRascunho}
       aoFechar={regraSalva ? () => setAssistenteFechado(true) : undefined}
+      classificacaoRetomada={classificacaoRetomada}
+      aoMudarClassificacaoDoRascunho={setClassificacaoDoRascunho}
+      situacaoDoRascunho={situacaoDoRascunho}
+      aoDescartarTudo={descartarTudo}
     />
   );
+
+  // Lendo o rascunho guardado, ou perguntando o que fazer com ele: sem editor.
+  if (guardado.bloqueia)
+    return (
+      <div className="avd-regra" data-rascunho-guardado="">
+        {guardado.perguntar && guardado.guardado ? (
+          <AvisoDeRascunho
+            quando={dataEHoraCurtas(guardado.guardado.atualizadoEm)}
+            versaoBase={guardado.guardado.versaoBase}
+            versaoVigente={regraSalva?.versao ?? 0}
+            local={guardado.guardado.local}
+            aoContinuar={guardado.continuar}
+            aoDescartar={guardado.descartar}
+          />
+        ) : (
+          <div className="ui-card" aria-busy="true">
+            <div className="ui-esqueleto-linha" />
+            <div className="ui-esqueleto-linha" />
+          </div>
+        )}
+      </div>
+    );
 
   if (!regraSalva) {
     if (leitura) return <SemRegra e={e} estado={estado} />;
@@ -1375,11 +1477,12 @@ export function Regra({ e, estado }) {
             mostrarErro={tentou}
           />
           <div className="ui-acoes">
+            {situacaoDoRascunho}
             <button
               type="button"
               className="btn secondary"
-              disabled={!mudou}
-              onClick={() => setRascunho(inicial)}
+              disabled={!mudou && !classificacaoDoRascunho}
+              onClick={descartarTudo}
             >
               Descartar
             </button>

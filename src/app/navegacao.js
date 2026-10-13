@@ -1,4 +1,5 @@
 import { aplicarAtualizacaoPendente } from "../modules/pwa-lifecycle.js";
+import { guardaDeAlteracoes } from "./guarda-de-alteracoes.ts";
 import { aplicarManutencaoNaNavegacao } from "../modules/situacao-dos-modulos.js";
 import { situacaoDoSistema } from "../modules/situacao-dos-modulos.js";
 import { abasDoMenu } from "../modules/catalogo-de-abas.js";
@@ -161,6 +162,7 @@ export function criarNavegacao({
   ajustarBarra = () => {},
   confirmarSaida = () => confirmarSaidaPadrao(janela),
   aplicarAtualizacao = aplicarAtualizacaoPendente,
+  podeRecarregar = guardaDeAlteracoes.podeRecarregar,
   recarregar = () => janela.location.reload(),
 } = {}) {
   let view = "dashboard";
@@ -313,9 +315,12 @@ export function criarNavegacao({
     const tela = destino.view || deEntrada();
     if (tela !== view && !confirmarSaida()) return;
     // Versão nova do sistema esperando: entra agora. A tela pedida fica guardada
-    // e abre depois da recarga (a tela de entrada confere a permissão).
+    // e abre depois da recarga (a tela de entrada confere a permissão). Com
+    // rascunho ainda não guardado (ex.: a regra, src/app/guarda-de-alteracoes.ts),
+    // a versão nova espera a próxima troca de tela.
     if (
       tela !== view &&
+      podeRecarregar() &&
       aplicarAtualizacao(() => {
         guardarTela(tela);
         recarregar();

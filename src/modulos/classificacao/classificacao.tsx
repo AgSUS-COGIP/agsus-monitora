@@ -13,6 +13,10 @@ import {
   useSyncExternalStore,
 } from "react";
 import { montarModulo } from "../../app/montar-modulo.jsx";
+import {
+  criarRascunhoDaRegra,
+  type RascunhoDaRegra,
+} from "../../app/rascunho-da-regra.ts";
 import { estadoDasConfiguracoes } from "../configuracoes/estado.js";
 import { obterDadosDoMonitoramento } from "../../componentes/dados-do-monitoramento.ts";
 import { CHAVE_DO_CABECALHO } from "../../lib/cabecalho-dos-documentos.js";
@@ -80,15 +84,23 @@ export function calcularClassificacao(
   return classificarEdital(dados, tipo);
 }
 
+const AVISO_AO_ATUALIZAR =
+  "A regra tem alterações ainda não salvas como versão (o rascunho fica guardado e volta ao abrir a regra). Atualizar agora?";
+
+type PropsDaTela = {
+  estado: EstadoDaClassificacao;
+  agenda: EstadoDaAgenda;
+  rascunho: RascunhoDaRegra;
+  confirmar: (mensagem: string) => boolean;
+};
+
 function TelaDaArea({
   estado,
   agenda,
+  rascunho,
+  confirmar,
   e,
-}: {
-  estado: EstadoDaClassificacao;
-  agenda: EstadoDaAgenda;
-  e: SnapshotDaClassificacao;
-}) {
+}: PropsDaTela & { e: SnapshotDaClassificacao }) {
   const [visao, setVisao] = useState("listas");
   const idEdital = useId();
   const recarregar = () => {
@@ -138,6 +150,8 @@ function TelaDaArea({
         }
         status={textoDoStatus(e)}
         aoAtualizar={() => {
+          if (rascunho.comAlteracoes() && !confirmar(AVISO_AO_ATUALIZAR))
+            return;
           recarregar();
           if (e.editalId) {
             void estado.escolherEdital(e.editalId);
@@ -260,6 +274,7 @@ function TelaDaArea({
                 estado={estado}
                 e={e}
                 dataDeCorte={dataDeCorte}
+                rascunhoGuardado={rascunho}
               />
             ) : (
               <div className="ui-card" aria-busy="true">
@@ -277,9 +292,10 @@ function TelaDaArea({
 export function TelaDeClassificacao({
   estado,
   agenda,
-}: {
-  estado: EstadoDaClassificacao;
-  agenda: EstadoDaAgenda;
+  rascunho,
+  confirmar = (mensagem) => globalThis.confirm?.(mensagem) ?? true,
+}: Omit<PropsDaTela, "confirmar"> & {
+  confirmar?: PropsDaTela["confirmar"];
 }) {
   const e = useSyncExternalStore(estado.assinar, estado.obter);
   const { area: areaDoApp } = usarAreaAtual();
@@ -296,6 +312,8 @@ export function TelaDeClassificacao({
       key={e.area || "sem-area"}
       estado={estado}
       agenda={agenda}
+      rascunho={rascunho}
+      confirmar={confirmar}
       e={e}
     />
   );
@@ -316,6 +334,8 @@ export function montarClassificacao({
   carregarLogo,
   cabecalho = () =>
     estadoDasConfiguracoes.obter().valores?.get?.(CHAVE_DO_CABECALHO) || "",
+  rascunho = criarRascunhoDaRegra({ tipo: "CLASSIFICACAO", supabase }),
+  confirmar,
 }: OpcoesDaTela = {}) {
   const agenda = criarEstadoDaAgenda({
     supabase,
@@ -327,6 +347,8 @@ export function montarClassificacao({
     toast,
     cabecalho,
     agendaDoEdital: (editalId) => agenda.agendaDoDocumento(editalId),
+    // Versão nova salva: o rascunho guardado acaba antes de a aba Regra remontar.
+    aoGravarVersao: (editalId) => void rascunho.esquecer(editalId),
     ...(baixar ? { baixar } : {}),
     ...(imprimir ? { imprimir } : {}),
     ...(copiar ? { copiar } : {}),
@@ -335,7 +357,12 @@ export function montarClassificacao({
   const raiz = secao
     ? montarModulo(
         secao,
-        <TelaDeClassificacao estado={estado} agenda={agenda} />,
+        <TelaDeClassificacao
+          estado={estado}
+          agenda={agenda}
+          rascunho={rascunho}
+          {...(confirmar ? { confirmar } : {})}
+        />,
         {
           nome: "a tela de classificação",
         },
@@ -344,6 +371,7 @@ export function montarClassificacao({
   return {
     estado,
     agenda,
+    rascunho,
     raiz,
     render() {
       return estado.carregar(String(areaAtual() ?? "").trim());
