@@ -16,8 +16,9 @@ import {
   - auditoria (`registrar_evento_acesso`): entrada, abertura de tela, heartbeat
     a cada `access_heartbeat_minutos` e saída;
   - presença (`registrar_presenca_monitora`, TB_PRESENCA_ONLINE_MONITORA): a
-    batida a cada 45 s com o lugar da pessoa ("Recursos · SEDE"), na hora em
-    que ela troca de página, área ou seção;
+    batida a cada 90 s com o lugar da pessoa ("Recursos · SEDE"), na hora em
+    que ela troca de página, área ou seção. O banco conta "online" por 4 min
+    (migration 20261013140000): uma batida perdida não derruba ninguém;
   - "Pessoas online" (`listar_presenca_online_monitora`): a lista que o
     cabeçalho mostra (src/componentes/pessoas-online/), só para quem
     `podeVerPessoasOnline` (admin global e Gestor).
@@ -29,7 +30,7 @@ const RPC_EVENTO_DE_ACESSO = "registrar_evento_acesso";
 const RPC_REGISTRAR_PRESENCA = "registrar_presenca_monitora";
 const RPC_LISTAR_PRESENCA = "listar_presenca_online_monitora";
 const CHAVE_DA_ABA = "agsus_monitora_client_session_id";
-export const INTERVALO_DA_PRESENCA_MS = 45_000;
+export const INTERVALO_DA_PRESENCA_MS = 90_000;
 const HEARTBEAT_PADRAO_MINUTOS = 5;
 
 /* Onde a pessoa está agora, em texto para quem lê (página · área, ou a seção de Configurações). */
@@ -158,7 +159,7 @@ export function criarPresenca({
     ultimoLocal = lugar;
   }
 
-  /* Ao trocar de página, área ou seção, avisa na hora (sem esperar os 45 s). */
+  /* Ao trocar de página, área ou seção, avisa na hora (sem esperar os 90 s). */
   function avisarTrocaDeLocal() {
     if (!batida) return;
     if (local(view()) === ultimoLocal) return;
