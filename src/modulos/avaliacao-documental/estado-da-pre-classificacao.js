@@ -49,7 +49,7 @@ import {
   RPC_SITUACAO_DO_DISPARO,
   situacaoDoPedido,
 } from "../../lib/robos-de-carga.js";
-import { baixarNoNavegador } from "../classificacao/estado.js";
+import { baixarNoNavegador } from "../classificacao/estado.ts";
 import {
   copiarParaAreaDeTransferencia,
   imprimirPagina,

@@ -18,8 +18,8 @@ Convocação, `TB_CONVOCACAO_EDITAL`) > percentuais da regra — as duas última
 classificação decide listas, remanejamento e acúmulo; a ordem de chamada é da Convocação.
 
 ```
-classificacao.jsx  <TelaDeClassificacao>, montarClassificacao() e calcularClassificacao()
-estado.js          store sem React: editais da área, dados do edital, salvar regra, gerar,
+classificacao.tsx  <TelaDeClassificacao>, montarClassificacao() e calcularClassificacao()
+estado.ts          store sem React: editais da área, dados do edital, salvar regra, gerar,
                    publicar, desempate (sorteio/decisão), documento oficial (Copiar para o
                    SEI, DOCX timbrado, PDF) e XLSX; salvar os textos do documento
 listas.jsx         visão "Listas": KPIs, avisos e pendências, gerar/exportar, filtros, uma
@@ -86,3 +86,26 @@ Explicações para a Aya: `docs/aya/regras-da-classificacao.md`, `docs/aya/regra
 `tests/classificacao-migration.test.js`,
 `tests/classificacao-lista-entrevista-migration.test.js` e `tests/classificacao-regras-dos-editais.test.js`
 (seed e um edital por modelo).
+
+## TypeScript na entrada e no estado
+
+A tela principal e o estado estão em TypeScript/TSX. Os contratos de snapshot, editais,
+versões da regra, registros das listas, RPCs e callbacks ficam em `tipos-do-estado.ts`.
+`src/lib/classificacao/dados-do-estado.ts` valida os campos do seletor e os metadados
+usados pelo estado, preservando os campos adicionais para as peças ainda em JSX.
+Permissão de edição exige booleano; coleções malformadas são recusadas para não calcular
+uma lista com candidatos descartados. Configuração da regra, cálculos e documentos
+continuam nas bibliotecas existentes, com contratos JSDoc nas chamadas de documento.
+
+Troca de edital, área ou usuário invalida os efeitos locais das gravações e leituras de
+listas. Sair e voltar ao mesmo ID não aceita uma resposta anterior: ela não altera dados,
+mostra avisos antigos nem libera os botões de outra gravação. A troca libera os controles
+do contexto novo. Uma carga de logo antiga não inicia download; uma cópia já iniciada não
+é cancelada, mas seu resultado antigo não mostra aviso. Chamadas ao banco já enviadas
+não são canceladas. As RPCs, a versão conferida pelo banco e os cálculos não mudaram.
+
+Listas, regra, publicação de aprovados, agenda e seu estado ainda estão em JavaScript/JSX.
+Verificação: `tests/tipos/tela-estado-da-classificacao.tsx`,
+`tests/lib/classificacao-dados-do-estado.test.js`,
+`tests/modulos/classificacao-contexto-de-gravacao.test.js` e testes existentes da tela,
+agenda, exportação e hora de nascimento.

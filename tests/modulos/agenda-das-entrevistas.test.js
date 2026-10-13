@@ -4,7 +4,7 @@ import {
   definirAreaAtual,
   redefinirDadosDoMonitoramento,
 } from "../../src/componentes/dados-do-monitoramento.ts";
-import { montarClassificacao } from "../../src/modulos/classificacao/classificacao.jsx";
+import { montarClassificacao } from "../../src/modulos/classificacao/classificacao.tsx";
 import {
   clicar,
   digitar,

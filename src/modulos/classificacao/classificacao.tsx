@@ -1,3 +1,10 @@
+import type {
+  EstadoDaClassificacao,
+  EstadoDaAgenda,
+  SnapshotDaClassificacao,
+  RegistroDaClassificacao,
+  OpcoesDaTela,
+} from "./tipos-do-estado.ts";
 import {
   useCallback,
   useEffect,
@@ -20,7 +27,7 @@ import { Aviso, Campo, Segmentado, TopoDoPainel } from "../../ui/index.js";
 import { abrirConversaDoEdital, definirEditalDaTela } from "../chat/ponte.js";
 import { usarChatLiberado } from "../chat/usar-chat-liberado.js";
 import { Agenda } from "./agenda.jsx";
-import { criarEstadoDaClassificacao, MENSAGEM_SEM_ACESSO } from "./estado.js";
+import { criarEstadoDaClassificacao, MENSAGEM_SEM_ACESSO } from "./estado.ts";
 import { criarEstadoDaAgenda } from "./estado-da-agenda.js";
 import { Listas } from "./listas.jsx";
 import { Regra } from "./regra.jsx";
@@ -51,7 +58,7 @@ const VISOES = [
   { valor: "regra", rotulo: "Regra", icone: "fa-sliders" },
 ];
 
-function textoDoStatus(e) {
+function textoDoStatus(e: SnapshotDaClassificacao) {
   if (e.semAcesso) return "Sem acesso";
   if (!e.carregado && e.carregandoEditais) return "Carregando editais...";
   if (e.carregandoEdital) return "Carregando o edital...";
@@ -66,18 +73,30 @@ function textoDoStatus(e) {
   da análise (src/lib/classificacao/ajustes.ts — a mesma conta da prévia do
   recurso).
 */
-export function calcularClassificacao(dados, tipo) {
+export function calcularClassificacao(
+  dados: RegistroDaClassificacao | null,
+  tipo: string,
+) {
   return classificarEdital(dados, tipo);
 }
 
-function TelaDaArea({ estado, agenda, e }) {
+function TelaDaArea({
+  estado,
+  agenda,
+  e,
+}: {
+  estado: EstadoDaClassificacao;
+  agenda: EstadoDaAgenda;
+  e: SnapshotDaClassificacao;
+}) {
   const [visao, setVisao] = useState("listas");
   const idEdital = useId();
   const recarregar = () => {
     void estado.carregar(e.area);
   };
   const calcular = useCallback(
-    (dados, tipo) => calcularClassificacao(dados, tipo),
+    (dados: RegistroDaClassificacao, tipo: string) =>
+      calcularClassificacao(dados, tipo),
     [],
   );
   const chat = usarChatLiberado();
@@ -129,7 +148,7 @@ function TelaDaArea({ estado, agenda, e }) {
           !e.area || e.carregandoEditais || e.carregandoEdital
         }
       >
-        <SeloDeTreinamento edital={editalEscolhido} />
+        <SeloDeTreinamento edital={editalEscolhido} className="" />
         <SeloDeAvisos modulo="classificacao" />
       </TopoDoPainel>
 
@@ -187,7 +206,7 @@ function TelaDaArea({ estado, agenda, e }) {
                 ))}
               </select>
             </Campo>
-            <SeloDeTreinamento edital={editalEscolhido} />
+            <SeloDeTreinamento edital={editalEscolhido} className="" />
             {chat && e.editalId ? (
               <button
                 type="button"
@@ -255,7 +274,13 @@ function TelaDaArea({ estado, agenda, e }) {
   );
 }
 
-export function TelaDeClassificacao({ estado, agenda }) {
+export function TelaDeClassificacao({
+  estado,
+  agenda,
+}: {
+  estado: EstadoDaClassificacao;
+  agenda: EstadoDaAgenda;
+}) {
   const e = useSyncExternalStore(estado.assinar, estado.obter);
   const { area: areaDoApp } = usarAreaAtual();
 
@@ -291,7 +316,7 @@ export function montarClassificacao({
   carregarLogo,
   cabecalho = () =>
     estadoDasConfiguracoes.obter().valores?.get?.(CHAVE_DO_CABECALHO) || "",
-} = {}) {
+}: OpcoesDaTela = {}) {
   const agenda = criarEstadoDaAgenda({
     supabase,
     toast,
