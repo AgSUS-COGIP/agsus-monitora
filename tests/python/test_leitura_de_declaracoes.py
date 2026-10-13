@@ -18,6 +18,7 @@ from monitora.avaliacao_documental.leitura_de_arquivos.declaracoes import (
     carga_declarada,
     emissor_da_pagina,
     limpar_nome,
+    mascarar_ignorados,
     nome_de_instituicao,
     numero_por_extenso,
     parece_lixo,
@@ -47,7 +48,7 @@ def _por_inicio(itens):
 
 
 def test_versao_do_extrator_subiu():
-    assert VERSAO_DO_EXTRATOR == "2026.10.7"
+    assert VERSAO_DO_EXTRATOR == "2026.10.8"
 
 
 # ── o caso do arquivo com várias declarações ────────────────────────────────
@@ -429,3 +430,80 @@ def test_numero_por_extenso(texto, valor):
 def test_carga_com_extenso_vale_o_extenso():
     assert carga_declarada(dobrar("carga horária de 26 (vinte) horas semanais")).horas == 20
     assert carga_declarada(dobrar("40 (quarenta) horas semanais")).horas == 40
+
+
+# ── ficha de registro com férias (extrator 2026.10.8) ───────────────────────
+
+FICHA_DO_SESI = next(d for d in s.CASO_DO_MEDICO if d.get("linhas"))
+
+
+def test_caso_do_medico_com_ficha_de_ferias_fica_com_tres_vinculos(caso_do_medico):
+    resultado, _ = caso_do_medico
+    assert len(resultado["itens"]) == 3
+    assert not any("Estabelecimento" in (i["empregador"] or "") for i in resultado["itens"])
+    # Nada de período aquisitivo/gozo de férias, afastamento ou reajuste virando vínculo.
+    inicios = {i["inicio"] for i in resultado["itens"]}
+    assert not inicios & {"2025-11-06", "2025-01-10", "2025-10-01", "2025-04-01", "2025-05-01"}
+
+
+def test_ficha_de_registro_sozinha_e_um_vinculo_so():
+    conteudo, _ = s.declaracoes_de_vinculo([FICHA_DO_SESI])
+    r = ler_documento(conteudo, "VINCULOS", NOME, hoje=HOJE, ocr=None)
+    assert len(r["itens"]) == 1
+    item = r["itens"][0]
+    assert (item["empregador"], item["inicio"], item["carga_semanal"]) == (
+        "SERVIÇO SOCIAL DA INDÚSTRIA — SESI",
+        "2024-09-02",
+        10,
+    )
+
+
+def test_mascara_ferias_afastamentos_e_lotacao_sem_mudar_as_posicoes():
+    texto = "\n".join(
+        [
+            "Cargo: Enfermeira",
+            "Data de admissão: 01/02/2019",
+            "FÉRIAS",
+            "Início      Fim       Dias",
+            "01/02/2020  02/03/2020  30",
+            "Afastamentos",
+            "10/01/2021 a 20/01/2021",
+            "Estabelecimento definido para HOSPITAL EXEMPLO",
+            "Declaramos que exerceu de 01/02/2019 a 30/06/2022, sem afastamentos.",
+        ]
+    )
+    mascarado = mascarar_ignorados(texto)
+    assert len(mascarado) == len(texto)
+    assert "01/02/2020" not in mascarado and "10/01/2021" not in mascarado and "Estabelecimento" not in mascarado
+    assert "Data de admissão: 01/02/2019" in mascarado
+    assert "exerceu de 01/02/2019 a 30/06/2022, sem afastamentos" in mascarado
+
+
+def test_periodo_sem_cargo_nem_verbo_de_vinculo_nao_e_vinculo():
+    texto = "HOSPITAL EXEMPLO LTDA\nRELATÓRIO\nReferência: 01/02/2020 a 29/02/2020.\nExemplópolis, 10/10/2026"
+    assert vinculos([Pagina(1, texto, "TEXTO")], hoje=HOJE) == []
+
+
+def test_mesmo_empregador_em_duas_paginas_com_o_mesmo_inicio_vira_um():
+    a = "SERVIÇO SOCIAL DA INDÚSTRIA — SESI\nFICHA\nCargo: Médico do Trabalho\nData de admissão: 24/08/2022"
+    b = (
+        "SERVIÇO SOCIAL DA INDÚSTRIA — SESI, DEPARTAMENTO REGIONAL DE EXEMPLO\nDECLARAÇÃO\nDeclaramos que a "
+        "profissional exerce o cargo de Médico desde 24/08/2022 até a presente data.\nExemplópolis, 12/02/2026"
+    )
+    itens = vinculos([Pagina(1, a, "TEXTO"), Pagina(2, b, "TEXTO")], hoje=HOJE)
+    assert len(itens) == 1
+    assert itens[0]["atual"] is True and itens[0]["dias_ate"] == "2026-02-12"
+
+
+def test_sem_empregador_dentro_de_outro_vinculo_compativel_sai():
+    a = (
+        "HOSPITAL EXEMPLO LTDA\nDECLARAÇÃO\nDeclaramos que a profissional exerce o cargo de Médica do Trabalho "
+        "desde 01/02/2019 até a presente data.\nExemplópolis, 10/10/2026"
+    )
+    b = "DECLARAÇÃO\nDeclaramos que exerceu o cargo de Médica do Trabalho no período de 01/04/2025 a 02/04/2026."
+    c = "DECLARAÇÃO\nDeclaramos que exerceu o cargo de Motorista no período de 01/04/2025 a 02/04/2026."
+    itens = vinculos([Pagina(1, a, "TEXTO"), Pagina(2, b, "TEXTO"), Pagina(3, c, "TEXTO")], hoje=HOJE)
+    assert [(i["inicio"], i["cargo"]) for i in itens] == [
+        ("2019-02-01", "Médica do Trabalho"),
+        ("2025-04-01", "Motorista"),
+    ]
