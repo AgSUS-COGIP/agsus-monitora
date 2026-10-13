@@ -22,7 +22,7 @@ paineis.tsx     topo (status e ações), filtros, 4 KPIs, recorte, gráficos, pe
 tabela.tsx      fila (TabelaInfinita), selos de situação, resposta e prazo
 gaveta.tsx      detalhe: parecer, etapas, resposta, anexos, resultado, prazo, observação, histórico
 parecer.tsx     parecer jurídico: enviar, deferir/deferir parcialmente/indeferir, devolver, reabrir
-ajuste.jsx      ajuste da pontuação no recurso deferido: componentes da regra, prévia da posição,
+ajuste.tsx      ajuste da pontuação no recurso deferido: componentes da regra, prévia da posição,
                 propor, aprovar (prévia recalculada), cancelar, versões
 formulario.tsx  cadastro e edição (candidato buscado nas análises do edital)
 resposta.tsx    resposta ao candidato: modelo, prévia, revisão, documento
@@ -42,7 +42,7 @@ explicadas à pessoa ficam com a Aya (`docs/aya/regras-dos-recursos.md`).
 
 Ajuste da pontuação (`20261005130000_recurso_ajusta_pontuacao.sql`): propor e aprovar são do
 parecer jurídico; aprovar exige o recurso deferido; reabrir/indeferir/devolver/excluir cancela
-(gatilho). A conta da prévia é a da Classificação (`src/lib/classificacao/ajustes.js`); a nota
+(gatilho). A conta da prévia é a da Classificação (`src/lib/classificacao/ajustes.ts`); a nota
 da planilha nunca muda. "O recurso mudou a classificação" é automática (aprovação do ajuste).
 
 ## TypeScript no painel
@@ -64,7 +64,10 @@ valida histórico, autores das etapas, textos do parecer e metadados dos anexos.
 Resposta e modelos também são validados: identificadores, versões, textos, histórico e
 escopo dos modelos. Modelos com área/origem malformada são ignorados; respostas com
 identificador, revisão ou estado inválido são sinalizadas sem abrir um novo rascunho.
-Dados complexos de ajuste e Classificação continuam opacos para o componente de ajuste.
+Versões, itens, permissões e resumos de prévia do ajuste também são validados em
+`src/lib/classificacao/dados-dos-ajustes.ts`. Coleções malformadas de Classificação e itens
+inválidos de versões são sinalizados antes de calcular/propor/aprovar. Os campos adicionais
+são conservados; a configuração da regra continua sendo interpretada pelo motor existente.
 
 Trocar área ou usuário invalida consultas de detalhe, ajustes, prévias e modelos, e os
 efeitos locais de ações em curso: não fecha o formulário novo, mostra avisos antigos nem
@@ -73,7 +76,12 @@ assinatura antiga não abre download. Isso não cancela escrita ou upload já en
 banco/Storage. O arquivo de um upload interrompido depois de enviado pode ficar sem registro.
 
 A busca de candidato descarta o resultado quando o campo muda ou o componente desmonta.
-Gaveta, parecer, anexos, resposta e modelos estão em TSX; somente ajuste ainda está em JSX.
+Todos os componentes da pasta Recursos estão em TSX, e seu estado está em TypeScript.
+O ajuste usa os contratos de `src/lib/classificacao/tipos-dos-ajustes.ts`: componentes,
+valores, versões, permissões, proposta e prévia. As regras de `ajustes.ts` mantêm totais pela
+soma das diferenças e recalculam a prévia antes da aprovação. O motor compartilhado
+`src/lib/classificacao/motor.js` permanece em JavaScript, com contrato JSDoc na entrada;
+nenhum cálculo do motor, regra de edital ou permissão no banco foi alterado.
 Os contratos da gaveta ficam em `tipos-da-gaveta.ts`; as regras do parecer e os botões
 permitidos estão em `src/lib/parecer-do-recurso.ts`.
 Os contratos da resposta e dos modelos ficam em `src/lib/tipos-da-resposta-do-recurso.ts`.
@@ -85,5 +93,7 @@ continua sendo exigida para aprovação e marcação de envio.
 As permissões no banco, RPCs, Storage e transições jurídicas seguem as regras existentes.
 
 Verificação: `tests/dados-dos-recursos.test.js`, `tests/modulos/recursos-estado-contexto.test.js`,
-testes existentes de Recursos e contratos de compilação em `tests/tipos/estado-dos-recursos.tsx`
-`tests/tipos/gaveta-dos-recursos.tsx` e `tests/tipos/resposta-e-modelos-dos-recursos.tsx`.
+testes existentes de Recursos e contratos de compilação em `tests/tipos/estado-dos-recursos.tsx`,
+`tests/tipos/gaveta-dos-recursos.tsx`, `tests/tipos/resposta-e-modelos-dos-recursos.tsx` e
+`tests/tipos/ajuste-dos-recursos.tsx`. Ajustes também são cobertos por
+`tests/lib/classificacao-ajustes.test.js` e `tests/lib/dados-dos-ajustes.test.js`.

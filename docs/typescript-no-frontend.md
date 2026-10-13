@@ -166,6 +166,9 @@ Os contratos desses fluxos são conferidos em `tests/tipos/estado-dos-recursos.t
 `src/lib/parecer-do-recurso.ts`, com validação de histórico e metadados dos anexos.
 Os contratos estão em `tests/tipos/gaveta-dos-recursos.tsx`. Resposta e modelos também estão
 em TSX, com regras de marcadores e revisão em TypeScript, validação de versões, escopo e
-histórico e contratos em `tests/tipos/resposta-e-modelos-dos-recursos.tsx`. Somente o
-componente de ajuste continua em JSX; contratos e limites em
+histórico e contratos em `tests/tipos/resposta-e-modelos-dos-recursos.tsx`. O
+componente de ajuste também está em TSX: itens, proposta, validação e prévia estão em
+TypeScript, com contratos em `tests/tipos/ajuste-dos-recursos.tsx`. A pasta Recursos já tem
+todos os componentes e o estado tipados; o motor compartilhado de Classificação continua
+em JavaScript, com contrato JSDoc na entrada. Contratos e limites em
 [../src/modulos/recursos/README.md](../src/modulos/recursos/README.md).

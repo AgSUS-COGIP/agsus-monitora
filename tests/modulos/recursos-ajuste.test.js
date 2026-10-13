@@ -85,7 +85,11 @@ const recurso = (extra = {}) => ({
 });
 
 /* Um banco falso com estado: as versões do ajuste mudam a cada escrita. */
-function supabaseFalso({ podeDecidir = true, situacao = "DEFERIDO" } = {}) {
+function supabaseFalso({
+  podeDecidir = true,
+  situacao = "DEFERIDO",
+  dadosDaPrevia = DADOS_DA_PREVIA,
+} = {}) {
   const banco = { versoes: [], mudou: false };
   const resposta = () => ({
     recurso_id: "r1",
@@ -120,7 +124,7 @@ function supabaseFalso({ podeDecidir = true, situacao = "DEFERIDO" } = {}) {
       return { data: resposta(), error: null };
     if (nome === "obter_dados_previa_ajuste")
       return podeDecidir
-        ? { data: DADOS_DA_PREVIA, error: null }
+        ? { data: dadosDaPrevia, error: null }
         : { data: null, error: { code: "42501", message: "Sem parecer" } };
     if (nome === "propor_ajuste_pontuacao") {
       for (const v of banco.versoes)
@@ -171,14 +175,14 @@ function supabaseFalso({ podeDecidir = true, situacao = "DEFERIDO" } = {}) {
 let secao;
 let painel;
 
-async function montar(supabase) {
+async function montar(supabase, modo = "analise") {
   secao = document.createElement("section");
   secao.id = "page-recursos";
   secao.className = "page active";
   document.body.append(secao);
   await act(async () => {
     painel = montarRecursos({
-      modo: "analise",
+      modo,
       secao,
       supabase,
       toast: vi.fn(),
@@ -211,6 +215,36 @@ afterEach(async () => {
 });
 
 describe("seção de ajuste da pontuação", () => {
+  it("recusa dados de prévia malformados antes de abrir o formulário ou propor", async () => {
+    const supabase = supabaseFalso({
+      dadosDaPrevia: { ...DADOS_DA_PREVIA, candidatos: {} },
+    });
+    await montar(supabase);
+    await clicar(botao("propor"));
+    await esperar();
+    expect(secaoDoAjuste().textContent).toContain(
+      "Os dados da classificação recebidos são inválidos",
+    );
+    expect(
+      secaoDoAjuste().querySelector(".recursos-ajuste-formulario"),
+    ).toBeNull();
+    expect(chamadas(supabase, "propor_ajuste_pontuacao")).toHaveLength(0);
+  });
+  it("o painel mostra versões em somente leitura mesmo quando o banco permite decidir", async () => {
+    const supabase = supabaseFalso();
+    supabase.banco.versoes.push({
+      id: "aj1",
+      versao: 1,
+      situacao: "APROVADO",
+      lista: "PRELIMINAR",
+      itens: [{ codigo: "FORMACAO", anterior: 5, novo: 7 }],
+    });
+    await montar(supabase, "painel");
+    expect(secaoDoAjuste().textContent).toContain("Versão 1");
+    expect(secaoDoAjuste().querySelector("[data-acao-ajuste]")).toBeNull();
+    expect(chamadas(supabase, "obter_dados_previa_ajuste")).toHaveLength(0);
+  });
+
   it("quem não decide não vê a seção sem ajuste", async () => {
     const supabase = supabaseFalso({ podeDecidir: false });
     await montar(supabase);

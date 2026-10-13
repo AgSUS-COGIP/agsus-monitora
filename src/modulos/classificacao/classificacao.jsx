@@ -12,7 +12,7 @@ import { CHAVE_DO_CABECALHO } from "../../lib/cabecalho-dos-documentos.js";
 import { usarAreaAtual } from "../../componentes/usar-area-atual.ts";
 import { SeloDeTreinamento } from "../../componentes/selo-de-treinamento.jsx";
 import { sufixoDeTreinamento } from "../../lib/edital-de-treinamento.js";
-import { classificarEdital } from "../../lib/classificacao/ajustes.js";
+import { classificarEdital } from "../../lib/classificacao/ajustes.ts";
 import { dataDeCorteDoCronograma } from "../../lib/classificacao/dados.js";
 import { rotuloDaVersao } from "../../lib/nome-da-versao.ts";
 import { getSupabaseClient } from "../../lib/supabaseClient.js";
@@ -63,7 +63,7 @@ function textoDoStatus(e) {
 /*
   A classificação de um edital numa lista: o motor, com a data de corte do
   cronograma e os ajustes da pontuação aprovados em recurso por cima da nota
-  da análise (src/lib/classificacao/ajustes.js — a mesma conta da prévia do
+  da análise (src/lib/classificacao/ajustes.ts — a mesma conta da prévia do
   recurso).
 */
 export function calcularClassificacao(dados, tipo) {

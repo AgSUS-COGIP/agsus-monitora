@@ -1,3 +1,25 @@
+import type { ReactNode } from "react";
+import type {
+  EstadoDosRecursos,
+  SnapshotDosRecursos,
+} from "./tipos-do-estado.ts";
+import type {
+  RecursoDoPainel,
+  DataDoRecurso,
+} from "../../lib/tipos-dos-recursos.ts";
+import type {
+  ItemParaEnviar,
+  PreviaDoAjuste,
+  ResumoDaPosicao,
+  VersaoDoAjuste,
+  DadosParaPreviaDoAjuste,
+} from "../../lib/classificacao/tipos-dos-ajustes.ts";
+interface PropsDoAjuste {
+  estado: EstadoDosRecursos;
+  recurso: RecursoDoPainel;
+  emCurso: boolean;
+  aoFechar: () => void;
+}
 import {
   useEffect,
   useId,
@@ -15,7 +37,7 @@ import {
   montarItens,
   previaDoAjuste,
   validarAjuste,
-} from "../../lib/classificacao/ajustes.js";
+} from "../../lib/classificacao/ajustes.ts";
 import { rotuloDoItem } from "../../lib/classificacao/motor.js";
 import { formatarNota, ordinal } from "../../lib/classificacao/numeros.js";
 import { Aviso, Campo, Secao, Segmentado, Selo } from "../../ui/index.js";
@@ -25,21 +47,25 @@ import { dataHora } from "./partes.ts";
   "Ajuste da pontuação", na gaveta do recurso (migration
   20261005130000_recurso_ajusta_pontuacao.sql): no recurso deferido (total ou
   parcialmente), quem decide propõe os novos valores dos componentes da nota
-  da REGRA DO EDITAL (src/lib/classificacao/ajustes.js), vê a prévia — nova
+  da REGRA DO EDITAL (src/lib/classificacao/ajustes.ts), vê a prévia — nova
   nota e nova posição, calculadas pelo motor da Classificação — e quem aprova
   a resposta (o parecer jurídico) aprova. A nota da análise nunca muda: o
   ajuste é uma versão guardada, e só o aprovado vale na Classificação. Reabrir
   a decisão cancela o ajuste (o banco faz). Tudo é texto, nunca HTML.
 */
 
-const SITUACOES = {
+const SITUACOES: Record<
+  string,
+  readonly ["pendente" | "aprovado" | "neutro", string]
+> = {
   PROPOSTO: ["pendente", "Proposto"],
   APROVADO: ["aprovado", "Aprovado"],
   CANCELADO: ["neutro", "Cancelado"],
 };
 const ROTULO_DA_LISTA = Object.fromEntries(LISTAS_DA_PREVIA);
-const quemQuando = (em, por) => [dataHora(em), por].filter(Boolean).join(" · ");
-const posicao = (r) =>
+const quemQuando = (em: DataDoRecurso | null | undefined, por: string) =>
+  [dataHora(em), por].filter(Boolean).join(" · ");
+const posicao = (r: ResumoDaPosicao) =>
   !r?.naLista
     ? "fora da lista"
     : r.elegivel
@@ -47,10 +73,17 @@ const posicao = (r) =>
         ? ordinal(r.posicao)
         : "fora da geral"
       : "eliminado";
-const posicaoDoAfetado = (p) => (p ? ordinal(p) : "fora da lista");
+const posicaoDoAfetado = (p: number | null | undefined) =>
+  p ? ordinal(p) : "fora da lista";
 
 /* Componente · antes · depois · justificativa. */
-function TabelaDeItens({ itens, rotulos = {} }) {
+function TabelaDeItens({
+  itens,
+  rotulos = {},
+}: {
+  itens: readonly ItemParaEnviar[];
+  rotulos?: Record<string, string>;
+}) {
   return (
     <div className="ui-tabela-rolagem">
       <table className="recursos-ajuste-itens">
@@ -79,13 +112,17 @@ function TabelaDeItens({ itens, rotulos = {} }) {
   );
 }
 
-const numeroOuNulo = (v) =>
+const numeroOuNulo = (v: unknown) =>
   v === null || v === undefined || v === "" || !Number.isFinite(Number(v))
     ? null
     : Number(v);
 
 /* Nova nota e nova posição (e quem muda de posição por causa dele). */
-export function ResumoDaPrevia({ previa }) {
+export function ResumoDaPrevia({
+  previa,
+}: {
+  previa: PreviaDoAjuste | null | undefined;
+}) {
   if (!previa?.antes) return null;
   const { antes, depois } = previa;
   return (
@@ -117,7 +154,10 @@ export function ResumoDaPrevia({ previa }) {
 }
 
 /* O que a tela precisa dos dados da prévia: o candidato e os componentes da regra. */
-function usarBaseDoAjuste(dados, recurso) {
+function usarBaseDoAjuste(
+  dados: DadosParaPreviaDoAjuste | null,
+  recurso: RecursoDoPainel,
+) {
   return useMemo(() => {
     if (!dados || dados.erro) return { erro: dados?.erro || "" };
     if (!dados.regra?.configuracao)
@@ -141,10 +181,13 @@ function FormularioDoAjuste({
   base,
   emCurso,
   aoFechar,
+}: PropsDoAjuste & {
+  dados: DadosParaPreviaDoAjuste | null;
+  base: VersaoDoAjuste | null;
 }) {
   const { itens = [], erro } = usarBaseDoAjuste(dados, recurso);
   const [lista, setLista] = useState(listaDaOrigem(recurso.origem));
-  const [valores, setValores] = useState(() =>
+  const [valores, setValores] = useState<Record<string, string>>(() =>
     Object.fromEntries(
       (base?.itens || []).map((i) => [
         i.codigo,
@@ -152,12 +195,13 @@ function FormularioDoAjuste({
       ]),
     ),
   );
-  const [justificativas, setJustificativas] = useState(() =>
-    Object.fromEntries(
-      (base?.itens || [])
-        .filter((i) => i.justificativa)
-        .map((i) => [i.codigo, i.justificativa]),
-    ),
+  const [justificativas, setJustificativas] = useState<Record<string, string>>(
+    () =>
+      Object.fromEntries(
+        (base?.itens || [])
+          .filter((i) => i.justificativa)
+          .map((i) => [i.codigo, i.justificativa ?? ""]),
+      ),
   );
   const [geral, setGeral] = useState(base?.justificativa || "");
   const idGeral = useId();
@@ -169,7 +213,7 @@ function FormularioDoAjuste({
   const enviar = useMemo(() => itensParaEnviar(montados), [montados]);
   const previa = useMemo(
     () =>
-      erro || !enviar.length
+      erro || !dados || !enviar.length
         ? null
         : previaDoAjuste({
             dados,
@@ -285,7 +329,10 @@ function FormularioDoAjuste({
         rotulo="Prévia na lista"
         opcoes={LISTAS_DA_PREVIA.map(([valor, rotulo]) => ({ valor, rotulo }))}
         valor={lista}
-        aoMudar={setLista}
+        aoMudar={(valor) => {
+          const escolhida = LISTAS_DA_PREVIA.find(([id]) => id === valor)?.[0];
+          if (escolhida) setLista(escolhida);
+        }}
       />
       {previa ? <ResumoDaPrevia previa={previa} /> : null}
       {erros.length ? (
@@ -324,6 +371,9 @@ function ConfirmarAprovacao({
   dados,
   emCurso,
   aoFechar,
+}: PropsDoAjuste & {
+  dados: DadosParaPreviaDoAjuste | null;
+  ajuste: VersaoDoAjuste;
 }) {
   const previa = useMemo(() => {
     if (!dados || dados.erro || !dados.regra?.configuracao) return null;
@@ -365,6 +415,7 @@ function ConfirmarAprovacao({
           data-acao-ajuste="confirmar-aprovacao"
           disabled={!previa || emCurso}
           onClick={async () => {
+            if (!previa) return;
             const ok = await estado.aprovarAjuste(recurso, ajuste.id, previa);
             if (ok) aoFechar();
           }}
@@ -376,7 +427,13 @@ function ConfirmarAprovacao({
   );
 }
 
-function ConfirmarCancelamento({ estado, recurso, ajuste, emCurso, aoFechar }) {
+function ConfirmarCancelamento({
+  estado,
+  recurso,
+  ajuste,
+  emCurso,
+  aoFechar,
+}: PropsDoAjuste & { ajuste: VersaoDoAjuste }) {
   const [motivo, setMotivo] = useState("");
   const idMotivo = useId();
   const valido = motivo.trim().length >= 3;
@@ -421,7 +478,13 @@ function ConfirmarCancelamento({ estado, recurso, ajuste, emCurso, aoFechar }) {
   );
 }
 
-function CartaoDoAjuste({ ajuste, children }) {
+function CartaoDoAjuste({
+  ajuste,
+  children,
+}: {
+  ajuste: VersaoDoAjuste;
+  children?: ReactNode;
+}) {
   const [tom, rotulo] = SITUACOES[ajuste.situacao] || [
     "neutro",
     ajuste.situacao,
@@ -476,6 +539,11 @@ export function SecaoDoAjuste({
   recurso: r,
   acao,
   somenteLeitura = false,
+}: {
+  estado: EstadoDosRecursos;
+  recurso: RecursoDoPainel;
+  acao: SnapshotDosRecursos["acao"];
+  somenteLeitura?: boolean;
 }) {
   const e = useSyncExternalStore(estado.assinar, estado.obter);
   const lidos = e.ajustes.get(r.id);
@@ -489,7 +557,10 @@ export function SecaoDoAjuste({
         }
       : lidos;
   const previa = e.previas.get(r.id) || null;
-  const [modo, setModo] = useState(null); // { tipo: propor|aprovar|cancelar, ajuste }
+  const [modo, setModo] = useState<{
+    tipo: "propor" | "aprovar" | "cancelar";
+    ajuste: VersaoDoAjuste | null;
+  } | null>(null);
 
   useEffect(() => {
     if (!r.fora_analise && !e.ajustes.has(r.id))
@@ -513,8 +584,12 @@ export function SecaoDoAjuste({
   const aprovado = versoes.find((v) => v.situacao === "APROVADO") || null;
   const anteriores = versoes.filter((v) => v.situacao === "CANCELADO");
   const ocupado = Boolean(acao);
-  const emCurso = (tipo) => acao?.tipo === `ajuste:${tipo}`;
-  const abrir = async (tipo, ajuste = null) => {
+  const emCurso = (tipo: "propor" | "aprovar" | "cancelar") =>
+    acao?.tipo === `ajuste:${tipo}`;
+  const abrir = async (
+    tipo: "propor" | "aprovar",
+    ajuste: VersaoDoAjuste | null = null,
+  ) => {
     setModo({ tipo, ajuste });
     if (tipo === "propor") await estado.carregarDadosDaPrevia(r.id);
     if (tipo === "aprovar")
@@ -522,7 +597,7 @@ export function SecaoDoAjuste({
   };
   const fechar = () => setModo(null);
 
-  const acoesDo = (ajuste) =>
+  const acoesDo = (ajuste: VersaoDoAjuste) =>
     modo?.ajuste?.id === ajuste.id ? (
       modo.tipo === "aprovar" ? (
         <ConfirmarAprovacao

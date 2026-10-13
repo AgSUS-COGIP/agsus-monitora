@@ -2247,7 +2247,7 @@ export const VERBETES_AYA = Object.freeze([
       'No MONITORA, a Classificação aplica os ajustes da pontuação aprovados em recurso por cima da nota da análise (a planilha não muda): o valor novo de cada componente substitui o da análise e o candidato aparece com o selo "Recurso nº X" na tabela; a explicação da posição diz o que mudou ("Nota alterada pelo recurso nº X: …") e o retrato da lista gerada guarda o número do recurso. Se a análise mudar depois do ajuste, a tela avisa e vale o ajuste. Quando há ajuste aprovado (ou cancelado depois de aprovado) depois da última lista gerada, a tela avisa "Há recursos aprovados depois desta lista — gere de novo". O documento do SEI segue o modelo das publicações, sem marca.',
     fato: "",
     fonte:
-      "src/lib/classificacao/motor.js (aplicarAjustes); src/lib/classificacao/ajustes.js; src/modulos/classificacao/listas.jsx; supabase/migrations/20261005130000_recurso_ajusta_pontuacao.sql",
+      "src/lib/classificacao/motor.js (aplicarAjustes); src/lib/classificacao/ajustes.ts; src/modulos/classificacao/listas.jsx; supabase/migrations/20261005130000_recurso_ajusta_pontuacao.sql",
     abrir: "classificacao",
   },
   {
@@ -6216,7 +6216,7 @@ export const VERBETES_AYA = Object.freeze([
       'Sim. Em Analisar recursos, no recurso deferido (total ou parcialmente), a seção "Ajuste da pontuação" da gaveta mostra os componentes da nota que a regra de classificação do edital tem — pertencimento étnico, formação, cursos, experiência, nota documental, entrevista ou cada competência, ART — com o valor atual (da análise ou da entrevista) e um campo para o novo valor e a justificativa; a nota documental (e a da entrevista, quando há competências) é a soma das diferenças. Escreva a justificativa geral ou a de cada componente alterado. Antes de confirmar, a prévia mostra a nova nota, a nova posição do candidato e quem muda de lugar por causa dele, calculadas pelo motor da Classificação na lista da etapa do recurso (documental, entrevista ou resultado final). Propor é de quem decide o recurso (Parecer jurídico); pode-se propor já em análise jurídica. A nota da planilha nunca é sobrescrita: cada proposta é uma versão guardada com quem propôs, quando e os valores antes e depois.',
     fato: "No MONITORA, o ajuste da pontuação do recurso deferido fica em tabela própria, em versões (proposto, aprovado, cancelado); a nota da análise curricular nunca é sobrescrita e só o ajuste aprovado vale na Classificação.",
     fonte:
-      "src/modulos/recursos/ajuste.jsx; src/lib/classificacao/ajustes.js; supabase/migrations/20261005130000_recurso_ajusta_pontuacao.sql",
+      "src/modulos/recursos/ajuste.tsx; src/lib/classificacao/ajustes.ts; supabase/migrations/20261005130000_recurso_ajusta_pontuacao.sql",
     abrir: "analisar-recursos",
   },
   {
@@ -6284,7 +6284,7 @@ export const VERBETES_AYA = Object.freeze([
       'A seção "Ajuste da pontuação" da gaveta (em Analisar recursos; no Painel de recursos, só para ler) só aparece quando o recurso é de um candidato das análises (recurso "fora das análises" não tem) e o edital tem regra de classificação salva. Propor é de quem tem a permissão "Parecer jurídico (Recursos)", com o recurso em análise jurídica ou já deferido (total ou parcialmente); quem não pode propor só vê a seção se já houver versões do ajuste. Indeferir, devolver, reabrir ou excluir o recurso cancela o ajuste.',
     fato: "",
     fonte:
-      "src/modulos/recursos/ajuste.jsx; supabase/migrations/20261005130000_recurso_ajusta_pontuacao.sql",
+      "src/modulos/recursos/ajuste.tsx; supabase/migrations/20261005130000_recurso_ajusta_pontuacao.sql",
     abrir: "analisar-recursos",
   },
 ]);
