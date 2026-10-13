@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { criarEstadoDaClassificacao } from "../../src/modulos/classificacao/estado.js";
+import { criarEstadoDaClassificacao } from "../../src/modulos/classificacao/estado.ts";
 
 /*
   Gravar e trocar de edital antes da resposta: a regra (com a versão) do

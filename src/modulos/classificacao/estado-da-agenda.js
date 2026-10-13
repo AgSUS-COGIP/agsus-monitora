@@ -29,7 +29,7 @@ import {
   ehFalhaDeConexao,
   mensagemDeFalha,
 } from "../../lib/falha-de-rede.js";
-import { baixarNoNavegador } from "./estado.js";
+import { baixarNoNavegador } from "./estado.ts";
 
 const RPC_OBTER_AGENDA = "obter_agenda_entrevista";
 const RPC_SALVAR_REGRA_AGENDA = "salvar_regra_agenda_entrevista";
@@ -56,6 +56,7 @@ export function mensagemDaAgenda(erro) {
   return erro?.message || mensagemDeFalha(erro);
 }
 
+/** @param {{supabase?: import("./tipos-do-estado.ts").ClienteDaClassificacao | null, toast?: (mensagem: string, tom?: string) => void, baixar?: import("./tipos-do-estado.ts").OpcoesDoEstado['baixar']}} [opcoes] */
 export function criarEstadoDaAgenda({
   supabase = null,
   toast = (mensagem) => console.info(mensagem),

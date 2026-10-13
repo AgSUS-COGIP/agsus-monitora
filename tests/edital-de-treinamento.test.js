@@ -153,7 +153,7 @@ describe("telas operacionais: aparece, com a marca", () => {
     for (const arquivo of [
       "src/modulos/entrevistas/seletor-do-edital.tsx",
       "src/modulos/avaliacao-documental/avaliacao-documental.jsx",
-      "src/modulos/classificacao/classificacao.jsx",
+      "src/modulos/classificacao/classificacao.tsx",
     ]) {
       const fonte = ler(arquivo);
       expect(fonte, arquivo).toContain("<SeloDeTreinamento");

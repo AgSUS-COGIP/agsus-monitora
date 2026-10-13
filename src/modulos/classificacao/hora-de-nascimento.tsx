@@ -9,7 +9,7 @@ import { Campo, Secao } from "../../ui/index.js";
   hora já foi informada (para trocar ou tirar). Sem hora, vale 23h59min59s
   (itens 6.11.5 e 6.11.6 do 93/2026). A planilha e a Empregare não trazem a
   hora: quem informa é o analista, pela certidão enviada na inscrição.
-  Grava por salvar_hora_nascimento_candidato (estado.js); quem só lê vê a hora.
+  Grava por salvar_hora_nascimento_candidato (estado.ts); quem só lê vê a hora.
 */
 
 export type PropriedadesDaHora = {

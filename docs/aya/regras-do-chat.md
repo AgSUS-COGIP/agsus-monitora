@@ -25,7 +25,7 @@ e `supabase/migrations/20261007210000_chat_v2.sql`.
 
 **perguntas:** conversa do edital | botao conversa | chat do edital | quem ve a conversa do edital | conversar sobre um edital
 **resposta:** O botão "Conversa" fica na linha de cada edital em Editais e ao lado da escolha do edital na Classificação. Ele abre a conversa daquele edital (criada na primeira vez). Quem vê o edital pela área e pela coordenação lê e escreve nela, mesmo sem ter aberto antes; quem perde o acesso ao edital deixa de ver a conversa. Ao abrir ou escrever, a conversa passa a aparecer na sua lista; "Deixar de acompanhar" (menu da conversa) tira da lista sem perder o acesso.
-**fonte:** src/modulos/editais/nucleo.jsx; src/modulos/classificacao/classificacao.jsx; supabase/migrations/20261002210000_chat.sql
+**fonte:** src/modulos/editais/nucleo.jsx; src/modulos/classificacao/classificacao.tsx; supabase/migrations/20261002210000_chat.sql
 
 ## Escrever e enviar
 

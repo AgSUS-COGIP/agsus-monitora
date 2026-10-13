@@ -909,6 +909,9 @@ function dataEHoraDaAgenda(agenda, analiseId) {
  *   treinamento  edital de treinamento (padrão: o do retrato): o título abre
  *             com "TREINAMENTO — SEM VALOR OFICIAL" e o nome do arquivo também
  */
+/** @param {unknown} retrato
+ * @param {{lista?: string, fase?: string | null, regra?: Record<string, unknown>, agenda?: unknown, treinamento?: boolean}} [opcoes]
+ */
 export function documentoOficial(
   retrato,
   {

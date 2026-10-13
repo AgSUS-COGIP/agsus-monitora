@@ -172,3 +172,11 @@ TypeScript, com contratos em `tests/tipos/ajuste-dos-recursos.tsx`. A pasta Recu
 todos os componentes e o estado tipados; o motor compartilhado de Classificação continua
 em JavaScript, com contrato JSDoc na entrada. Contratos e limites em
 [../src/modulos/recursos/README.md](../src/modulos/recursos/README.md).
+
+A entrada e o estado de Classificação também estão migrados: seletor de edital, carga,
+versões de regra, registros e publicação de listas, desempate, hora de nascimento e
+exportação. Dados usados pelo estado são validados; respostas antigas não atualizam
+dados, avisos ou flags após troca de edital, área ou usuário. Os contratos estão em
+`tests/tipos/tela-estado-da-classificacao.tsx`; regras, documentos e peças de listas e
+agenda continuam parcialmente em JavaScript/JSX. Contratos e limites em
+[../src/modulos/classificacao/README.md](../src/modulos/classificacao/README.md).

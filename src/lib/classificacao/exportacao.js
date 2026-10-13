@@ -25,6 +25,9 @@ export const MIME_XLSX =
 export const VERSAO_DO_RETRATO = 1;
 
 /** O retrato que vai para o banco (e de onde sai a exportação). */
+/** @param {unknown} resultado
+ * @param {{edital?: Record<string, unknown>, regra?: Record<string, unknown>, versao?: number | null}} [opcoes]
+ */
 export function instantaneoDaLista(
   resultado,
   { edital = {}, regra, versao = null } = {},

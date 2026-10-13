@@ -4371,7 +4371,7 @@ export const VERBETES_AYA = Object.freeze([
       'O botão "Conversa" fica na linha de cada edital em Editais e ao lado da escolha do edital na Classificação. Ele abre a conversa daquele edital (criada na primeira vez). Quem vê o edital pela área e pela coordenação lê e escreve nela, mesmo sem ter aberto antes; quem perde o acesso ao edital deixa de ver a conversa. Ao abrir ou escrever, a conversa passa a aparecer na sua lista; "Deixar de acompanhar" (menu da conversa) tira da lista sem perder o acesso.',
     fato: "",
     fonte:
-      "src/modulos/editais/nucleo.jsx; src/modulos/classificacao/classificacao.jsx; supabase/migrations/20261002210000_chat.sql",
+      "src/modulos/editais/nucleo.jsx; src/modulos/classificacao/classificacao.tsx; supabase/migrations/20261002210000_chat.sql",
   },
   {
     arquivo: "regras-do-chat.md",

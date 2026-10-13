@@ -279,7 +279,7 @@ window.classificacaoController = telaSobDemanda({
   secao: "page-classificacao",
   metodos: ["render", "abrirVisao"],
   carregar: () =>
-    import("./modulos/classificacao/classificacao.jsx").then((m) =>
+    import("./modulos/classificacao/classificacao.tsx").then((m) =>
       m.montarClassificacao({ toast: window.monitoraToast }),
     ),
 });

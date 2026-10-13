@@ -85,7 +85,7 @@ type Registrado = {
 };
 type DocumentoDaLista = { nome?: string } | null;
 
-/* O que esta tela usa do estado da Classificação (estado.js). */
+/* O que esta tela usa do estado da Classificação (estado.ts). */
 export type EstadoDoDocumento = {
   obter: () => { dados?: { regra?: { configuracao?: unknown } } | null };
   documentoDaLista: (

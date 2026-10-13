@@ -1,3 +1,23 @@
+import type {
+  SnapshotDaClassificacao,
+  OpcoesDoEstado,
+  RpcDaClassificacao,
+  RegistroDaClassificacao,
+  DadosDaClassificacao,
+  RegraDaClassificacao,
+  ListaRegistrada,
+  ResultadoDaClassificacao,
+  OpcoesDoDocumento,
+} from "./tipos-do-estado.ts";
+import {
+  objeto,
+  textoDaClassificacao,
+  editaisDaClassificacao,
+  dadosDaClassificacao,
+  regraDaClassificacao,
+  listaRegistrada,
+  listaComRetrato,
+} from "../../lib/classificacao/dados-do-estado.ts";
 /*
   Estado da tela de Classificação (`#page-classificacao`), fora do React. Os
   componentes leem com `useSyncExternalStore`. Este arquivo não importa React.
@@ -86,7 +106,7 @@ const RPC_SALVAR_HORA = "salvar_hora_nascimento_candidato";
 export const MENSAGEM_SEM_ACESSO = "Sem acesso à Classificação";
 const TEMPO_LIMITE_MS = 45000;
 
-const ESTADO_INICIAL = Object.freeze({
+const ESTADO_INICIAL: Readonly<SnapshotDaClassificacao> = Object.freeze({
   area: "",
   editais: [],
   podeEditar: false,
@@ -102,18 +122,22 @@ const ESTADO_INICIAL = Object.freeze({
   gerando: false,
 });
 
-function mensagemDoBanco(erro) {
-  if (erro?.code === "PGRST202")
+function mensagemDoBanco(erro: unknown) {
+  const e = objeto(erro);
+  if (e.code === "PGRST202")
     return "A aba Classificação ainda não foi publicada no banco.";
-  if (erro?.code === "42501")
+  if (e.code === "42501")
     return "Seu acesso não inclui a classificação desta área ou deste edital.";
-  if (erro?.code === "40001")
-    return erro.message || "A regra mudou desde que você abriu; recarregue.";
+  if (e.code === "40001")
+    return (
+      textoDaClassificacao(e.message) ||
+      "A regra mudou desde que você abriu; recarregue."
+    );
   if (ehFalhaDeConexao(erro)) return mensagemDeFalha(erro);
-  return erro?.message || mensagemDeFalha(erro);
+  return textoDaClassificacao(e.message) || mensagemDeFalha(erro);
 }
 
-export function baixarNoNavegador(bytes, nome, tipo) {
+export function baixarNoNavegador(bytes: BlobPart, nome: string, tipo: string) {
   const arquivo = new Blob([bytes], { type: tipo });
   const url = URL.createObjectURL(arquivo);
   const ancora = document.createElement("a");
@@ -134,23 +158,25 @@ export function criarEstadoDaClassificacao({
   enderecoDoLogo = LOGO_PADRAO_DA_BARRA,
   tempoLimiteMs = TEMPO_LIMITE_MS,
   agendaDoEdital = () => null,
-} = {}) {
-  let estado = ESTADO_INICIAL;
+}: OpcoesDoEstado = {}) {
+  let estado: SnapshotDaClassificacao = ESTADO_INICIAL;
   let pedidoDosEditais = 0;
+  let geracao = 0;
   let pedidoDoEdital = 0;
-  const ouvintes = new Set();
+  const ouvintes = new Set<() => void>();
 
-  function publicar(mudancas) {
+  function publicar(mudancas: Partial<SnapshotDaClassificacao>) {
     estado = { ...estado, ...mudancas };
     for (const ouvinte of ouvintes) ouvinte();
   }
 
   function reiniciar() {
+    geracao += 1;
     pedidoDosEditais += 1;
     pedidoDoEdital += 1;
     publicar(ESTADO_INICIAL);
   }
-  let identidade;
+  let identidade: string | null | undefined;
   supabase?.auth?.onAuthStateChange?.((_evento, sessao) => {
     const atual = sessao?.user?.id || null;
     if (atual === identidade) return;
@@ -158,7 +184,10 @@ export function criarEstadoDaClassificacao({
     identidade = atual;
   });
 
-  async function rpc(nome, argumentos) {
+  async function rpc(
+    nome: RpcDaClassificacao,
+    argumentos?: RegistroDaClassificacao,
+  ) {
     if (!supabase) throw new Error("Sem conexão com o banco.");
     const { data, error } = await comTempoLimite(
       supabase.rpc(nome, argumentos),
@@ -173,11 +202,14 @@ export function criarEstadoDaClassificacao({
     if (!area) return false;
     const meu = ++pedidoDosEditais;
     if (area !== estado.area) {
+      geracao += 1;
       pedidoDoEdital += 1;
       publicar({ ...ESTADO_INICIAL, area, carregandoEditais: true });
     } else publicar({ carregandoEditais: true, erroAoCarregar: "" });
     try {
-      const dados = await rpc(RPC_LISTAR_EDITAIS, { p_area: area });
+      const dados = editaisDaClassificacao(
+        await rpc(RPC_LISTAR_EDITAIS, { p_area: area }),
+      );
       if (meu !== pedidoDosEditais) return false;
       const editais = Array.isArray(dados?.editais) ? dados.editais : [];
       const escolhido = editais.some((e) => e.id === estado.editalId)
@@ -185,7 +217,7 @@ export function criarEstadoDaClassificacao({
         : "";
       publicar({
         editais,
-        podeEditar: Boolean(dados?.pode_editar),
+        podeEditar: dados.pode_editar === true,
         carregado: true,
         carregandoEditais: false,
         semAcesso: false,
@@ -199,7 +231,7 @@ export function criarEstadoDaClassificacao({
       publicar({
         carregandoEditais: false,
         carregado: estado.carregado,
-        semAcesso: erro?.code === "42501",
+        semAcesso: objeto(erro).code === "42501",
         erroAoCarregar: mensagemDoBanco(erro),
       });
       return false;
@@ -210,7 +242,7 @@ export function criarEstadoDaClassificacao({
     A configuração de convocação do edital (Lista de aprovados), se houver.
     Sem acesso ou sem configuração → null: a classificação segue com a regra.
   */
-  async function carregarConvocacao(id) {
+  async function carregarConvocacao(id: string) {
     try {
       const [configuracoes, modelos] = await Promise.all([
         rpc(RPC_CONFIGURACAO_CONVOCACAO),
@@ -223,12 +255,15 @@ export function criarEstadoDaClassificacao({
   }
 
   /* O edital escolhido: tudo o que o motor precisa. */
-  async function escolherEdital(id) {
+  async function escolherEdital(id: string) {
     const meu = ++pedidoDoEdital;
+    if (id !== estado.editalId) geracao += 1;
     if (!id) {
       publicar({
         editalId: "",
         dados: null,
+        salvando: false,
+        gerando: false,
         carregandoEdital: false,
         erroDoEdital: "",
       });
@@ -239,7 +274,7 @@ export function criarEstadoDaClassificacao({
       editalId: id,
       carregandoEdital: true,
       erroDoEdital: "",
-      ...(outro ? { dados: null } : {}),
+      ...(outro ? { dados: null, salvando: false, gerando: false } : {}),
     });
     try {
       const [dados, convocacao] = await Promise.all([
@@ -248,9 +283,9 @@ export function criarEstadoDaClassificacao({
       ]);
       if (meu !== pedidoDoEdital) return false;
       publicar({
-        dados: dados ? { ...dados, convocacao } : null,
+        dados: dados ? { ...dadosDaClassificacao(dados), convocacao } : null,
         carregandoEdital: false,
-        podeEditar: Boolean(dados?.pode_editar),
+        podeEditar: objeto(dados).pode_editar === true,
       });
       return true;
     } catch (erro) {
@@ -268,14 +303,17 @@ export function criarEstadoDaClassificacao({
     edital enquanto a RPC corre não pode pôr a regra, a lista ou o desempate de
     um edital nos dados do outro.
   */
-  const mudarDados = (edital, mudar) => {
+  const mudarDados = (
+    edital: string,
+    mudar: (dados: DadosDaClassificacao) => DadosDaClassificacao,
+  ) => {
     if (!estado.dados || estado.editalId !== edital) return;
     publicar({ dados: mudar(estado.dados) });
   };
 
   /* Salva a regra (nova versão). Devolve true/false; erro vira aviso. */
   /* A regra nova (ou renomeada) volta para a tela e para o seletor de editais. */
-  function receberRegra(edital, regra) {
+  function receberRegra(edital: string, regra: RegraDaClassificacao | null) {
     mudarDados(edital, (d) => ({ ...d, regra }));
     if (regra)
       publicar({
@@ -295,23 +333,35 @@ export function criarEstadoDaClassificacao({
     Salva a regra (nova versão). Devolve true/false; erro vira aviso. O nome
     da versão só vai quando preenchido (sem ele, a chamada é a de antes).
   */
-  async function salvarRegra(configuracao, motivo = "", nome = null) {
+  async function salvarRegra(
+    configuracao: RegistroDaClassificacao,
+    motivo = "",
+    nome: string | null = null,
+  ) {
     if (!estado.editalId || estado.salvando) return false;
     const edital = estado.editalId;
+    const minhaGeracao = geracao;
+    const vigente = () =>
+      minhaGeracao === geracao && estado.editalId === edital;
     publicar({ salvando: true });
     try {
-      const regra = await rpc(RPC_SALVAR_REGRA, {
-        p_edital: edital,
-        p_configuracao: normalizarRegra(configuracao),
-        p_versao_atual: estado.dados?.regra?.versao ?? 0,
-        p_motivo: motivo || null,
-        ...(nome ? { p_nome: nome } : {}),
-      });
+      const regra = regraDaClassificacao(
+        await rpc(RPC_SALVAR_REGRA, {
+          p_edital: edital,
+          p_configuracao: normalizarRegra(configuracao),
+          p_versao_atual: estado.dados?.regra?.versao ?? 0,
+          p_motivo: motivo || null,
+          ...(nome ? { p_nome: nome } : {}),
+        }),
+      );
+      if (!vigente()) return false;
+      if (!regra) throw new Error("A versão da regra recebida é inválida.");
       receberRegra(edital, regra);
       publicar({ salvando: false });
       toast(`Regra salva (${rotuloDaVersao(regra) || "—"}).`, "success");
       return true;
     } catch (erro) {
+      if (!vigente()) return false;
       publicar({ salvando: false });
       toast(
         `Não foi possível salvar a regra: ${mensagemDoBanco(erro)}`,
@@ -322,29 +372,44 @@ export function criarEstadoDaClassificacao({
   }
 
   /* Troca só o nome de uma versão (null tira o nome). Devolve { ok, erro }. */
-  async function renomearVersao(versao, nome, motivo) {
+  async function renomearVersao(
+    versao: number,
+    nome: string | null,
+    motivo: string,
+  ) {
     if (!estado.editalId) return { ok: false, erro: "Escolha o edital." };
     const edital = estado.editalId;
+    const minhaGeracao = geracao;
+    const vigente = () =>
+      minhaGeracao === geracao && estado.editalId === edital;
     try {
-      const regra = await rpc(RPC_RENOMEAR_VERSAO, {
-        p_edital: edital,
-        p_versao: versao,
-        p_nome: nome || null,
-        p_motivo: motivo,
-      });
+      const regra = regraDaClassificacao(
+        await rpc(RPC_RENOMEAR_VERSAO, {
+          p_edital: edital,
+          p_versao: versao,
+          p_nome: nome || null,
+          p_motivo: motivo,
+        }),
+      );
+      if (!vigente()) return { ok: false, erro: "" };
+      if (!regra) throw new Error("A versão da regra recebida é inválida.");
       receberRegra(edital, regra);
       toast("Nome da versão trocado.", "success");
       return { ok: true };
     } catch (erro) {
+      if (!vigente()) return { ok: false, erro: "" };
       return { ok: false, erro: mensagemDoBanco(erro) };
     }
   }
 
   /* "Gerar": grava o retrato da lista com a versão da regra; o banco devolve o hash. */
-  async function gerarLista(resultado) {
+  async function gerarLista(resultado: ResultadoDaClassificacao) {
     const d = estado.dados;
     if (!d?.regra || estado.gerando) return null;
     const edital = estado.editalId;
+    const minhaGeracao = geracao;
+    const vigente = () =>
+      minhaGeracao === geracao && estado.editalId === edital;
     publicar({ gerando: true });
     try {
       const retrato = instantaneoDaLista(resultado, {
@@ -352,12 +417,16 @@ export function criarEstadoDaClassificacao({
         regra: d.regra.configuracao,
         versao: d.regra.versao,
       });
-      const registro = await rpc(RPC_REGISTRAR_LISTA, {
-        p_edital: edital,
-        p_tipo: resultado.tipo,
-        p_versao: d.regra.versao,
-        p_resultado: retrato,
-      });
+      const registro = listaRegistrada(
+        await rpc(RPC_REGISTRAR_LISTA, {
+          p_edital: edital,
+          p_tipo: resultado.tipo,
+          p_versao: d.regra.versao,
+          p_resultado: retrato,
+        }),
+      );
+      if (!registro) throw new Error("Registro de lista inválido.");
+      if (!vigente()) return null;
       const registrado = { ...registro, retrato };
       mudarDados(edital, (atual) => ({
         ...atual,
@@ -367,6 +436,7 @@ export function criarEstadoDaClassificacao({
       toast("Lista gerada e registrada.", "success");
       return registrado;
     } catch (erro) {
+      if (!vigente()) return null;
       publicar({ gerando: false });
       toast(
         `Não foi possível gerar a lista: ${mensagemDoBanco(erro)}`,
@@ -376,12 +446,19 @@ export function criarEstadoDaClassificacao({
     }
   }
 
-  async function publicarLista(id) {
+  async function publicarLista(id: string) {
     const edital = estado.editalId;
+    const minhaGeracao = geracao;
+    const vigente = () =>
+      minhaGeracao === geracao && estado.editalId === edital;
     try {
-      const registro = await rpc(RPC_PUBLICAR_LISTA, {
-        p_lista: id,
-      });
+      const registro = listaRegistrada(
+        await rpc(RPC_PUBLICAR_LISTA, {
+          p_lista: id,
+        }),
+      );
+      if (!registro) throw new Error("Registro de lista inválido.");
+      if (!vigente()) return null;
       mudarDados(edital, (d) => ({
         ...d,
         listas: (d.listas || []).map((l) => (l.id === id ? registro : l)),
@@ -389,19 +466,21 @@ export function criarEstadoDaClassificacao({
       toast("Lista marcada como publicada.", "success");
       return registro;
     } catch (erro) {
+      if (!vigente()) return null;
       toast(`Não foi possível publicar: ${mensagemDoBanco(erro)}`, "error");
       return null;
     }
   }
 
   /* O retrato de uma geração (para exportar de novo). */
-  async function obterLista(id) {
+  async function obterLista(id: string) {
+    const minhaGeracao = geracao;
     try {
       const dados = await rpc(RPC_OBTER_LISTA, { p_lista: id });
-      return dados?.resultado
-        ? { ...dados.lista, retrato: dados.resultado }
-        : null;
+      if (minhaGeracao !== geracao) return null;
+      return listaComRetrato(dados);
     } catch (erro) {
+      if (minhaGeracao !== geracao) return null;
       toast(
         `Não foi possível abrir a lista: ${mensagemDoBanco(erro)}`,
         "error",
@@ -415,23 +494,28 @@ export function criarEstadoDaClassificacao({
     a lista de aprovados vigente do edital, com os candidatos (o casamento das
     pessoas e o resumo são de src/lib/publicacao-de-aprovados.js).
   */
-  async function prepararPublicacaoDeAprovados(registrado) {
+  async function prepararPublicacaoDeAprovados(
+    registrado: ListaRegistrada | null,
+  ) {
     if (!registrado?.id || !estado.editalId) return null;
+    const minhaGeracao = geracao;
     try {
       const [alvo, situacao] = await Promise.all([
         registrado.retrato
           ? Promise.resolve(registrado)
           : rpc(RPC_OBTER_LISTA, { p_lista: registrado.id }).then((d) =>
-              d?.resultado ? { ...d.lista, retrato: d.resultado } : null,
+              listaComRetrato(d),
             ),
         rpc(RPC_OBTER_PUBLICACAO, {
           p_edital: estado.editalId,
           p_com_candidatos: true,
         }),
       ]);
+      if (minhaGeracao !== geracao) return null;
       if (!alvo?.retrato) throw new Error("Lista não encontrada.");
-      return { registrado: alvo, situacao: situacao || {} };
+      return { registrado: alvo, situacao: objeto(situacao) };
     } catch (erro) {
+      if (minhaGeracao !== geracao) return null;
       return { erro: mensagemDoBanco(erro) };
     }
   }
@@ -441,19 +525,28 @@ export function criarEstadoDaClassificacao({
     listaId,
     listaVigente,
     vinculos,
+  }: {
+    listaId: string;
+    listaVigente?: string | null;
+    vinculos?: RegistroDaClassificacao[];
   }) {
+    const minhaGeracao = geracao;
     try {
-      const resultado = await rpc(RPC_PUBLICAR_APROVADOS, {
-        p_lista_classificacao: listaId,
-        p_lista_vigente: listaVigente || null,
-        p_vinculos: vinculos || [],
-      });
+      const resultado = objeto(
+        await rpc(RPC_PUBLICAR_APROVADOS, {
+          p_lista_classificacao: listaId,
+          p_lista_vigente: listaVigente || null,
+          p_vinculos: vinculos || [],
+        }),
+      );
+      if (minhaGeracao !== geracao) return null;
       toast(
         `Lista de aprovados publicada: ${resultado?.candidatos ?? 0} candidato(s).`,
         "success",
       );
       return resultado;
     } catch (erro) {
+      if (minhaGeracao !== geracao) return null;
       toast(
         `Não foi possível publicar a lista de aprovados: ${mensagemDoBanco(erro)}`,
         "error",
@@ -463,13 +556,24 @@ export function criarEstadoDaClassificacao({
   }
 
   /* Sorteio (semente vazia = do servidor) ou decisão manual. */
-  async function registrarDesempate(dados) {
+  async function registrarDesempate(dados: RegistroDaClassificacao) {
     const edital = estado.editalId;
+    const minhaGeracao = geracao;
+    const vigente = () =>
+      minhaGeracao === geracao && estado.editalId === edital;
     try {
-      const registro = await rpc(RPC_REGISTRAR_DESEMPATE, {
-        p_edital: edital,
-        p_dados: dados,
-      });
+      const bruto = objeto(
+        await rpc(RPC_REGISTRAR_DESEMPATE, {
+          p_edital: edital,
+          p_dados: dados,
+        }),
+      );
+      const registro = {
+        ...bruto,
+        chave: textoDaClassificacao(bruto.chave),
+        metodo: textoDaClassificacao(bruto.metodo),
+      };
+      if (!vigente()) return null;
       mudarDados(edital, (d) => ({
         ...d,
         desempates: [
@@ -485,6 +589,7 @@ export function criarEstadoDaClassificacao({
       );
       return registro;
     } catch (erro) {
+      if (!vigente()) return null;
       toast(`Não foi possível registrar: ${mensagemDoBanco(erro)}`, "error");
       return null;
     }
@@ -495,16 +600,22 @@ export function criarEstadoDaClassificacao({
     Vazio tira (volta a valer 23:59:59). O candidato nos dados recebe a hora
     gravada e o motor recalcula a lista na tela.
   */
-  async function salvarHoraDeNascimento(analiseId, hora) {
+  async function salvarHoraDeNascimento(analiseId: string, hora: string) {
     const edital = estado.editalId;
+    const minhaGeracao = geracao;
+    const vigente = () =>
+      minhaGeracao === geracao && estado.editalId === edital;
     if (!edital || !analiseId) return false;
     try {
-      const gravado = await rpc(RPC_SALVAR_HORA, {
-        p_edital: edital,
-        p_analise: analiseId,
-        p_hora: hora || "",
-      });
-      const nova = gravado?.hora_nascimento ?? null;
+      const gravado = objeto(
+        await rpc(RPC_SALVAR_HORA, {
+          p_edital: edital,
+          p_analise: analiseId,
+          p_hora: hora || "",
+        }),
+      );
+      if (!vigente()) return false;
+      const nova = textoDaClassificacao(gravado.hora_nascimento) || null;
       mudarDados(edital, (d) => ({
         ...d,
         candidatos: (d.candidatos || []).map((c) =>
@@ -519,6 +630,7 @@ export function criarEstadoDaClassificacao({
       );
       return true;
     } catch (erro) {
+      if (!vigente()) return false;
       toast(
         `Não foi possível salvar a hora: ${mensagemDoBanco(erro)}`,
         "error",
@@ -545,8 +657,8 @@ export function criarEstadoDaClassificacao({
     entrevistas salva do edital (`agendaDoEdital`, estado-da-agenda.js).
   */
   function documentoDaLista(
-    registrado,
-    { lista = "todas", fase = null, documento = null } = {},
+    registrado: ListaRegistrada | null,
+    { lista = "todas", fase = null, documento = null }: OpcoesDoDocumento = {},
   ) {
     if (!registrado?.retrato) return null;
     const configuracao = estado.dados?.regra?.configuracao || {};
@@ -576,13 +688,14 @@ export function criarEstadoDaClassificacao({
     textos (null = os da regra).
   */
   async function exportar(
-    registrado,
-    formato,
+    registrado: ListaRegistrada | null,
+    formato: string,
     lista = "todas",
-    fase = null,
-    documento = null,
+    fase: OpcoesDoDocumento["fase"] = null,
+    documento: RegistroDaClassificacao | null = null,
   ) {
     if (!registrado?.retrato) return false;
+    const minhaGeracao = geracao;
     const { retrato } = registrado;
     /*
       O XLSX é a planilha inteira do retrato (classificação e eliminados), para
@@ -601,6 +714,7 @@ export function criarEstadoDaClassificacao({
       const logo = await Promise.resolve()
         .then(() => carregarLogo())
         .catch(() => null);
+      if (minhaGeracao !== geracao) return false;
       baixar(
         gerarDocxOficial(doc, { cabecalho: marca.cabecalho, logo }),
         `${nome}.docx`,
@@ -612,15 +726,17 @@ export function criarEstadoDaClassificacao({
 
   /* "Copiar para o SEI": HTML (classes do SEI) + texto na área de transferência. */
   async function copiarParaSei(
-    registrado,
+    registrado: ListaRegistrada | null,
     { lista = "todas", fase = null, documento = null } = {},
   ) {
     const doc = documentoDaLista(registrado, { lista, fase, documento });
     if (!doc) return "";
+    const minhaGeracao = geracao;
     const resultado = await copiar({
       html: htmlParaSei(doc),
       texto: textoParaSei(doc),
     });
+    if (minhaGeracao !== geracao) return "";
     if (resultado === "html")
       toast(
         "Copiado. No SEI, cole no editor do documento (Ctrl+V).",
@@ -640,7 +756,7 @@ export function criarEstadoDaClassificacao({
   }
 
   /* Os textos do documento ficam na regra do edital (nova versão). */
-  function salvarTextosDoDocumento(documento) {
+  function salvarTextosDoDocumento(documento: RegistroDaClassificacao) {
     const configuracao = estado.dados?.regra?.configuracao;
     if (!configuracao) return Promise.resolve(false);
     return salvarRegra(
@@ -659,7 +775,7 @@ export function criarEstadoDaClassificacao({
 
   return {
     obter: () => estado,
-    assinar(ouvinte) {
+    assinar(ouvinte: () => void) {
       ouvintes.add(ouvinte);
       return () => ouvintes.delete(ouvinte);
     },
