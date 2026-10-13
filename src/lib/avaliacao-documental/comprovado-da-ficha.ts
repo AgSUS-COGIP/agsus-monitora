@@ -8,7 +8,12 @@
   aceite e nunca diverge dos pontos. A divisão "além do mínimo → períodos →
   pontos" repete a fórmula de apurarExperiencia só para explicar a conta.
 */
-import { anosMesesDias, doNivel, tetoDoBloco } from "./pontuacao.js";
+import {
+  anosMesesDias,
+  diasDosIntervalos,
+  doNivel,
+  tetoDoBloco,
+} from "./pontuacao.js";
 
 type ExperienciaApurada = {
   dias_total: number;
@@ -33,6 +38,10 @@ type BlocoDeVinculos = {
   efeito_minimo?: string;
   item_minimo?: string;
   item_edital?: string;
+  categorias?: { codigo: string; pontua?: boolean }[];
+  unir_sobreposicao?: boolean;
+  data_limite?: string | null;
+  max_vinculos?: number;
 };
 
 export type Comprovado = {
@@ -174,4 +183,38 @@ export function comprovadoDosTitulos(
     detalhe: null,
     abaixoDoMinimo: false,
   };
+}
+
+type VinculoLancado = {
+  inicio?: string;
+  fim?: string;
+  categoria?: string;
+  aceito?: boolean;
+};
+
+/**
+ * Os dias em comum entre os vínculos aceitos que contam (a regra dos editais:
+ * a sobreposição conta uma vez). Não refaz a conta: é a diferença entre a
+ * soma e a união de diasDosIntervalos, com os mesmos filtros de
+ * apurarExperiencia (aceitos, categorias que pontuam, data limite). Na regra
+ * que não une (unir_sobreposicao = false), 0.
+ */
+export function diasEmComum(
+  bloco: BlocoDeVinculos,
+  vinculos: VinculoLancado[] | null | undefined,
+): number {
+  if (bloco.unir_sobreposicao === false) return 0;
+  const queContam = new Set(
+    (bloco.categorias ?? [])
+      .filter((c) => c.pontua !== false)
+      .map((c) => c.codigo),
+  );
+  const aceitos = (vinculos ?? [])
+    .filter((v) => v && v.aceito !== false)
+    .slice(0, bloco.max_vinculos ?? 20)
+    .filter((v) => queContam.has(String(v.categoria ?? "")));
+  const limite = bloco.data_limite || null;
+  const soma = diasDosIntervalos(aceitos, { unir: false, limite });
+  const unidos = diasDosIntervalos(aceitos, { unir: true, limite });
+  return Math.max(0, soma - unidos);
 }

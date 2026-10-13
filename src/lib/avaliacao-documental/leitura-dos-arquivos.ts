@@ -221,11 +221,15 @@ export function textoDoItemLido(item: ItemLido): string {
         : "?";
     partes.push(`${dataCurta(item.inicio) || "?"} a ${fim}`);
     if (item.carga_semanal) partes.push(`${item.carga_semanal} h/sem`);
+    // Atual: os dias vão até a emissão do documento ou, sem ela, até hoje (o
+    // "até hoje" fica no texto, discreto, em vez de alerta).
     if (item.dias)
       partes.push(
         `${mil(item.dias)} dias` +
-          (item.atual && !item.fim && dataCurta(item.dias_ate)
-            ? ` até ${dataCurta(item.dias_ate)}`
+          (item.atual && !item.fim
+            ? dataCurta(item.dias_ate)
+              ? ` até ${dataCurta(item.dias_ate)}`
+              : " até hoje"
             : ""),
       );
   }
@@ -299,6 +303,8 @@ export function itensParaConferir(
 export type LinhaLida = Record<string, unknown> & {
   aceito: boolean;
   do_arquivo: string;
+  /** O avaliador corrigiu o que foi lido antes de aceitar ("lido do arquivo, corrigido"). */
+  corrigido?: boolean;
 };
 
 /** A linha do lançamento que o item lido vira ao Aceitar. */
@@ -335,11 +341,55 @@ export function linhaDoItemLido(
       .slice(0, 200),
     categoria: bloco.categorias?.[0]?.codigo,
     inicio: item.inicio && DATA.test(item.inicio) ? item.inicio : "",
-    fim: item.fim && DATA.test(item.fim) ? item.fim : "",
+    // Atual: o fim é a emissão do documento (até onde o robô contou); sem ela, fica em branco.
+    fim: dataDoFim(item),
     aceito: true,
     do_arquivo: chave,
   };
 }
+
+function dataDoFim(item: ItemLido): string {
+  if (item.fim && DATA.test(item.fim)) return item.fim;
+  if (item.atual && item.dias_ate && DATA.test(item.dias_ate))
+    return item.dias_ate;
+  return "";
+}
+
+/**
+ * A linha que o "Corrigir" abre já preenchida: a do Aceitar; no título que o
+ * robô não classificou, o título padrão do nível (o avaliador escolhe).
+ */
+export function linhaParaCorrigir(
+  bloco: BlocoComItens,
+  item: ItemLido,
+  chave: string,
+  tituloPadrao?: string,
+): LinhaLida | null {
+  const linha = linhaDoItemLido(bloco, item, chave);
+  if (linha) return linha;
+  if (LISTA_DO_BLOCO[bloco.tipo] !== "titulos" || item.tipo !== "TITULO")
+    return null;
+  return {
+    titulo: tituloPadrao || "ESPECIALIZACAO",
+    nome: [texto(item.curso), texto(item.instituicao)]
+      .filter(Boolean)
+      .join(" · ")
+      .slice(0, 200),
+    aceito: true,
+    do_arquivo: chave,
+  };
+}
+
+/* Os campos que o avaliador corrige (o resto da linha é marca). */
+const CAMPOS_DA_LINHA = [
+  "titulo",
+  "nome",
+  "horas",
+  "empregador",
+  "categoria",
+  "inicio",
+  "fim",
+] as const;
 
 type LancamentoComLeituras = Record<string, unknown> & {
   recusas_lidas?: Record<string, Recusa>;
@@ -393,6 +443,55 @@ export function aceitarItemLido<T extends LancamentoComLeituras>(
   const atuais = linhas(lancamento, lista);
   const novas = atuais.some((i) => i?.do_arquivo === item.chave)
     ? atuais
+    : [...atuais.filter((i) => !linhaVazia(i)), linha];
+  const saida: T = { ...lancamento, [lista]: novas };
+  const recusas = semRecusa(lancamento.recusas_lidas, item.chave);
+  if (recusas) saida.recusas_lidas = recusas;
+  else delete saida.recusas_lidas;
+  return saida;
+}
+
+/** A linha aceita do item lido (null se não foi aceito). */
+export function linhaAceita(
+  lancamento: LancamentoComLeituras,
+  bloco: BlocoComItens,
+  chave: string,
+): Record<string, unknown> | null {
+  const lista = LISTA_DO_BLOCO[bloco.tipo];
+  if (!lista) return null;
+  return linhas(lancamento, lista).find((i) => i?.do_arquivo === chave) ?? null;
+}
+
+/**
+ * O lançamento com o item lido aceito COM A CORREÇÃO do avaliador: a linha
+ * corrigida no lugar da lida (ou nova), marcada `corrigido` quando algum
+ * campo mudou em relação ao que o robô leu; sai a recusa dele.
+ */
+export function aceitarItemCorrigido<T extends LancamentoComLeituras>(
+  lancamento: T,
+  bloco: BlocoComItens,
+  item: ItemParaConferir,
+  correcao: Record<string, unknown>,
+): T {
+  const lista = LISTA_DO_BLOCO[bloco.tipo];
+  if (!lista || !CHAVE.test(item.chave)) return lancamento;
+  const lida = linhaDoItemLido(bloco, item.item, item.chave);
+  const campos: Record<string, unknown> = {};
+  for (const c of CAMPOS_DA_LINHA) if (c in correcao) campos[c] = correcao[c];
+  const corrigido =
+    !lida ||
+    CAMPOS_DA_LINHA.some(
+      (c) => c in campos && String(campos[c] ?? "") !== String(lida[c] ?? ""),
+    );
+  const linha: LinhaLida = {
+    ...campos,
+    aceito: true,
+    do_arquivo: item.chave,
+    ...(corrigido ? { corrigido: true } : {}),
+  };
+  const atuais = linhas(lancamento, lista);
+  const novas = atuais.some((i) => i?.do_arquivo === item.chave)
+    ? atuais.map((i) => (i?.do_arquivo === item.chave ? linha : i))
     : [...atuais.filter((i) => !linhaVazia(i)), linha];
   const saida: T = { ...lancamento, [lista]: novas };
   const recusas = semRecusa(lancamento.recusas_lidas, item.chave);
@@ -476,4 +575,96 @@ export function rotuloDaRecusa(recusa: Recusa | undefined): string {
 /** O alerta do arquivo inteiro numa linha ("O nome do candidato não aparece no documento · …"). */
 export function alertasDoArquivo(leitura: LeituraDoArquivo): string {
   return leitura.alertas.map((a) => a.texto).join(" · ");
+}
+
+/* ── Os alertas de um item, resumidos ─────────────────────────────────── */
+
+/** Os que impedem: o item provavelmente não vale (laranja). */
+const ALERTAS_QUE_IMPEDEM = [
+  "NOME_DIVERGENTE",
+  "CPF_DIVERGENTE",
+  "DOCUMENTO_ILEGIVEL",
+  "PERIODO_SOBREPOSTO",
+];
+/* Viram texto ou selo, não alerta: o atual sem emissão ("até hoje", no texto) e o concomitante. */
+const ALERTAS_EM_TEXTO = ["SEM_DATA_FIM", "PERIODO_CONCOMITANTE"];
+
+export type AlertasResumidos = {
+  /** O alerta mais importante, o único visível (null sem alerta). */
+  principal: AlertaLido | null;
+  /** O principal impede (nome divergente, ilegível, mesmo empregador repetido): laranja. */
+  grave: boolean;
+  /** Os demais, no "+N" com a dica. */
+  outros: AlertaLido[];
+  /** Concomitante com vínculo de outro empregador: selo neutro, sem alerta. */
+  concomitante: boolean;
+};
+
+/** No máximo um alerta visível por item (o que impede primeiro); os outros no "+N". */
+export function alertasResumidos(
+  alertas: readonly AlertaLido[],
+): AlertasResumidos {
+  const visiveis = alertas.filter((a) => !ALERTAS_EM_TEXTO.includes(a.codigo));
+  const ordenados = [
+    ...visiveis.filter((a) => ALERTAS_QUE_IMPEDEM.includes(a.codigo)),
+    ...visiveis.filter((a) => !ALERTAS_QUE_IMPEDEM.includes(a.codigo)),
+  ];
+  const principal = ordenados[0] ?? null;
+  return {
+    principal,
+    grave: Boolean(principal && ALERTAS_QUE_IMPEDEM.includes(principal.codigo)),
+    outros: ordenados.slice(1),
+    concomitante:
+      alertas.some((a) => a.codigo === "PERIODO_CONCOMITANTE") &&
+      !alertas.some((a) => a.codigo === "PERIODO_SOBREPOSTO"),
+  };
+}
+
+const EXTENSOES_DE_IMAGEM = /\.(?:jpe?g|png|webp|gif|bmp|heic|heif|tiff?)$/i;
+
+/** O anexo é foto (pelo nome do arquivo)? */
+export function anexoEhImagem(nome: string | null | undefined): boolean {
+  return EXTENSOES_DE_IMAGEM.test(String(nome ?? "").trim());
+}
+
+/**
+ * O link abre a imagem direto (dá miniatura)? Só o endereço https que termina
+ * na extensão de imagem; o visualizador da Empregare (GetViewerLogArquivo)
+ * pede a sessão e registra cada acesso, então não vira miniatura.
+ */
+export function linkDaMiniatura(
+  link: string | null | undefined,
+): string | null {
+  try {
+    const url = new URL(String(link ?? ""));
+    if (url.protocol !== "https:") return null;
+    if (/GetViewerLogArquivo/i.test(url.pathname)) return null;
+    return EXTENSOES_DE_IMAGEM.test(url.pathname) ? url.href : null;
+  } catch {
+    return null;
+  }
+}
+
+/** A linha aceita numa linha de texto ("Hospital · 01/02/2024 a 13/10/2026"), para mostrar a correção. */
+export function textoDaLinha(
+  lista: ChaveDosItens,
+  linha: Record<string, unknown>,
+): string {
+  const t = (v: unknown) => texto(typeof v === "string" ? v : "");
+  if (lista === "cursos")
+    return [
+      t(linha.nome) || "Curso",
+      Number(linha.horas) > 0 ? `${String(linha.horas)} h` : "",
+    ]
+      .filter(Boolean)
+      .join(" · ");
+  if (lista === "titulos")
+    return [ROTULO_DO_TITULO[t(linha.titulo)] ?? "Título", t(linha.nome)]
+      .filter(Boolean)
+      .join(" · ");
+  const inicio = dataCurta(t(linha.inicio)) || "?";
+  const fim = dataCurta(t(linha.fim)) || "?";
+  return [t(linha.empregador) || "Empregador", `${inicio} a ${fim}`].join(
+    " · ",
+  );
 }

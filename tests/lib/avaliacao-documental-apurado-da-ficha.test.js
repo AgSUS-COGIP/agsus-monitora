@@ -5,7 +5,10 @@ import {
   blocoComDecisao,
   blocoComEscolha,
   escolhaDoBloco,
+  escolhaPelosItens,
   lancamentoComEscolha,
+  lancamentoConfirmadoPelosItens,
+  semConfirmacaoSeMudouItens,
   tituloDaResposta,
 } from "../../src/lib/avaliacao-documental/apurado-da-ficha.ts";
 import {
@@ -366,5 +369,78 @@ describe("as três escolhas: Confere, Não confere e Editar nota", () => {
         respostas: [],
       }).cursos,
     ).toEqual([]);
+  });
+});
+
+describe("pelos itens lidos: confirmar pela pontuação dos aceitos", () => {
+  it("Confirmar é Confere quando os aceitos dão o declarado; senão Editar nota sem ajuste e sem linha nova", () => {
+    expect(escolhaPelosItens(CURSOS, declarada, 3)).toBe("CONFERE");
+    expect(escolhaPelosItens(CURSOS, declarada, 2)).toBe("EDITAR");
+    expect(escolhaPelosItens(CURSOS, null, 2)).toBe("CONFERE");
+    const igual = lancamentoConfirmadoPelosItens({
+      bloco: CURSOS,
+      lancamento: lancamento(
+        {},
+        { cursos: [{ nome: "A", horas: 60, aceito: true }] },
+      ),
+      declarada,
+      calculado: 3,
+    });
+    expect(igual.blocos.CURSOS).toMatchObject({
+      situacao: "CONFORME",
+      edita_nota: false,
+      nota_ajustada: 3,
+    });
+    const menor = lancamentoConfirmadoPelosItens({
+      bloco: CURSOS,
+      lancamento: lancamento({
+        CURSOS: { situacao: "CONFORME", edita_nota: true, nota_ajustada: 4 },
+      }),
+      declarada,
+      calculado: 1,
+    });
+    expect(menor.blocos.CURSOS).toMatchObject({
+      situacao: "CONFORME",
+      edita_nota: true,
+      nota_ajustada: null,
+    });
+    // Nenhuma linha aberta sozinha (os itens estão na conferência).
+    expect(menor.cursos ?? []).toEqual([]);
+  });
+
+  it("mexer nos itens depois de confirmar volta a pedir a confirmação; sem mudança nos itens, nada muda", () => {
+    const antes = lancamento(
+      {
+        CURSOS: {
+          situacao: "CONFORME",
+          edita_nota: true,
+          nota_ajustada: null,
+          justificativas: ["X"],
+        },
+      },
+      { cursos: [] },
+    );
+    const depois = {
+      ...antes,
+      cursos: [{ nome: "A", horas: 60, aceito: true }],
+    };
+    const r = semConfirmacaoSeMudouItens(CURSOS, antes, depois);
+    expect(r.blocos.CURSOS.situacao).toBeNull();
+    expect(r.blocos.CURSOS.edita_nota).toBeUndefined();
+    expect(r.blocos.CURSOS.justificativas).toEqual(["X"]);
+    expect(semConfirmacaoSeMudouItens(CURSOS, antes, { ...antes })).toEqual(
+      antes,
+    );
+    // O Não confere fica.
+    const nao = lancamento(
+      { CURSOS: { situacao: "NAO_CONFORME", nota_ajustada: 0 } },
+      { cursos: [] },
+    );
+    expect(
+      semConfirmacaoSeMudouItens(CURSOS, nao, {
+        ...nao,
+        cursos: [{ horas: 1 }],
+      }).blocos.CURSOS.situacao,
+    ).toBe("NAO_CONFORME");
   });
 });

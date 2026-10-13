@@ -72,6 +72,8 @@ export type ItemLancado = Partial<Titulo> &
     da_resposta?: boolean;
     /** A linha é um item lido do arquivo que o avaliador aceitou (chave do item lido). */
     do_arquivo?: string;
+    /** O item lido foi corrigido pelo avaliador antes de aceitar. */
+    corrigido?: boolean;
   };
 
 export type Lancamento = {

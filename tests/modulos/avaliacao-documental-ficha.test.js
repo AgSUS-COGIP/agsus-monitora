@@ -1656,3 +1656,143 @@ describe("ficha: a mesma escolha de novo só confirma", () => {
     ).toBe("true");
   });
 });
+
+/* ── Pelos itens lidos do arquivo ─────────────────────────────────────── */
+
+const COL_CERTIFICADOS =
+  "Pergunta 15 - Anexe os seus Certificados de Conclusão dos Cursos";
+
+/* A ficha com os certificados lidos pelo robô (145 h e 60 h) no item Cursos (declarou 3). */
+function fichaComLeitura() {
+  const ficha = fichaDoBanco();
+  const regra = structuredClone(REGRA);
+  regra.blocos
+    .find((b) => b.codigo === "CURSOS")
+    .perguntas.push("Anexe os seus Certificados de Conclusão");
+  ficha.regra = { ...ficha.regra, configuracao: regra };
+  ficha.respostas = { ...RESPOSTAS, [COL_CERTIFICADOS]: "Anexo" };
+  ficha.empregare = {
+    anexos: [
+      {
+        resposta: "9",
+        pergunta: "15",
+        arquivo: 1,
+        ordem: 15,
+        enunciado: "Anexe os seus Certificados de Conclusão dos Cursos",
+        coluna: COL_CERTIFICADOS,
+        link: "https://corporate.empregare.com/Company/VacancyTests/GetViewerLogArquivo?arquivo=certificados.pdf&nome=Case&token=TK&questionarioRespostaID=9",
+      },
+    ],
+  };
+  const curso = (nome, horas, pagina) => ({
+    tipo: "CURSO",
+    curso: nome,
+    horas,
+    instituicao: "Fiocruz",
+    conclusao: "2023-05-12",
+    pagina,
+    alertas: [],
+  });
+  ficha.leituras = [
+    {
+      resposta: "9",
+      pergunta: "15",
+      arquivo: 1,
+      situacao: "LIDO",
+      metodo: "TEXTO",
+      documento: "CERTIFICADO",
+      paginas: 4,
+      nome_confere: true,
+      cpf_confere: null,
+      alertas: [],
+      itens: [curso("Arboviroses", 145, 1), curso("Saúde Indígena", 60, 3)],
+      resumo: "2 certificados · 145 h, 60 h · nome confere",
+    },
+  ];
+  return ficha;
+}
+
+describe("ficha: pelos itens lidos (conferir → pontuação dos aceitos → confirmar)", () => {
+  it("anexo que é foto: o ícone de foto (o visualizador da Empregare não vira miniatura) e 'por imagem — confira'", async () => {
+    const ficha = fichaComLeitura();
+    ficha.empregare.anexos[0].link = ficha.empregare.anexos[0].link.replace(
+      "certificados.pdf",
+      "certificado-foto.jpg",
+    );
+    ficha.leituras[0].metodo = "OCR";
+    await abrirFicha(supabaseFalso(ficha));
+    await irAo("CURSOS");
+    const arquivo = [
+      ...cartao("CURSOS").querySelectorAll(".avd-ficha-arquivo"),
+    ].find((a) => a.textContent.includes("certificado-foto.jpg"));
+    expect(arquivo.dataset.imagem).toBe("true");
+    expect(arquivo.querySelector(".fa-image")).not.toBeNull();
+    expect(arquivo.querySelector("img")).toBeNull();
+    expect(
+      cartao("CURSOS").querySelector(".avd-lido-metodo").textContent,
+    ).toContain("por imagem — confira");
+  });
+
+  it("sem as três escolhas: Confirmar pela pontuação dos aceitos; mexer nos itens volta a pedir a confirmação", async () => {
+    await abrirFicha(supabaseFalso(fichaComLeitura()));
+    await irAo("CURSOS");
+    const c = () => cartao("CURSOS");
+    const resumo = () =>
+      c().querySelector(".avd-ficha-pelos-itens-resumo").textContent;
+    // A pergunta das três escolhas dá lugar ao rodapé pelos itens; sem dica de tecla solta.
+    expect(c().querySelector(".avd-ficha-decidir")).toBeNull();
+    expect(c().querySelector("kbd")).toBeNull();
+    expect(resumo()).toContain("Pontuação pelos itens aceitos: 0 de 5");
+    expect(resumo()).toContain("declarou 3");
+    const confirmar = () =>
+      c().querySelector("[data-acao='confirmar-pelos-itens']");
+    expect(confirmar().getAttribute("aria-keyshortcuts")).toBe("1");
+    const lidos = () => c().querySelectorAll(".avd-conferir-item");
+    await clicar(lidos()[0].querySelector("[data-acao='aceitar']"));
+    expect(resumo()).toContain("Pontuação pelos itens aceitos: 3 de 5");
+    // Dá o declarado: Confirmar grava Confere.
+    await clicar(confirmar());
+    expect(c().dataset.escolha).toBe("CONFERE");
+    expect(c().dataset.situacao).toBe("CONFORME");
+    expect(confirmar().textContent).toContain("Confirmado");
+    // Aceitar outro depois de confirmar: a confirmação volta a ser pedida.
+    await clicar(lidos()[1].querySelector("[data-acao='aceitar']"));
+    expect(c().dataset.escolha).toBeUndefined();
+    expect(resumo()).toContain("Pontuação pelos itens aceitos: 4 de 5");
+    // Diferente do declarado: Confirmar vira Editar nota (vale o calculado) e pede a justificativa.
+    await teclar(raiz(), "1");
+    expect(c().dataset.escolha).toBe("EDITAR");
+    expect(c().querySelector(".avd-ficha-justificativa")).not.toBeNull();
+    // Sem o passador: o resumo é o do rodapé (o ajuste fino só no "Editar nota").
+    expect(c().querySelector(".avd-ficha-passador")).toBeNull();
+    expect(parte("CURSOS").textContent).toContain("4");
+    await clicar(c().querySelector(".avd-ficha-ajuste-fino"));
+    expect(c().querySelector(".avd-ficha-passador input").value).toBe("4");
+  });
+
+  it("adicionar à mão com a leitura presente: o botão sempre à vista, a linha entra na conta", async () => {
+    await abrirFicha(supabaseFalso(fichaComLeitura()));
+    await irAo("CURSOS");
+    const c = () => cartao("CURSOS");
+    const conferencia = () => c().querySelector(".avd-conferir");
+    // Antes de qualquer decisão, o "Adicionar curso" já aparece na conferência.
+    const adicionar = botao("Adicionar curso", conferencia());
+    expect(adicionar).toBeTruthy();
+    await clicar(adicionar);
+    const aMao = () => conferencia().querySelector(".avd-ficha-item");
+    expect(aMao()).not.toBeNull();
+    expect(conferencia().textContent).toContain("Digitados à mão");
+    await digitar(aMao().querySelector("input[aria-label='Curso']"), "NR-10");
+    await digitar(
+      aMao().querySelector("input[aria-label='Carga horária']"),
+      "120",
+    );
+    expect(
+      c().querySelector(".avd-ficha-pelos-itens-resumo").textContent,
+    ).toContain("Pontuação pelos itens aceitos: 3 de 5");
+    await clicar(c().querySelector("[data-acao='confirmar-pelos-itens']"));
+    expect(c().dataset.escolha).toBe("CONFERE");
+    // Os lidos continuam pendentes e a linha à mão não é marcada "lido do arquivo".
+    expect(aMao().querySelector(".avd-ficha-da-resposta")).toBeNull();
+  });
+});

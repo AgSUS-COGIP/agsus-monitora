@@ -1,6 +1,13 @@
 import { describe, expect, it } from "vitest";
 import {
+  aceitarItemCorrigido,
   aceitarItemLido,
+  alertasResumidos,
+  anexoEhImagem,
+  linhaAceita,
+  linhaParaCorrigir,
+  linkDaMiniatura,
+  textoDaLinha,
   aceitarTodosSemAlerta,
   alertasDoArquivo,
   desfazerDecisaoLida,
@@ -113,7 +120,7 @@ describe("leituras da ficha", () => {
         atual: true,
         dias: 2000,
       }),
-    ).toBe("Prefeitura · 01/03/2020 a atual · 2.000 dias");
+    ).toBe("Prefeitura · 01/03/2020 a atual · 2.000 dias até hoje");
     expect(
       textoDoItemLido({
         tipo: "VINCULO",
@@ -296,5 +303,143 @@ describe("decisões do avaliador no lançamento", () => {
     );
     expect(l.cursos.map((c) => c.horas)).toEqual([145, 60]);
     expect(estadoDoItemLido(l, CURSOS, itens[2].chave)).toBe("PENDENTE");
+  });
+});
+
+describe("corrigir o item lido, alertas resumidos e foto", () => {
+  const VINCULO = {
+    tipo: "VINCULO",
+    empregador: "Instituto de Saúde",
+    cargo: "Enfermeiro",
+    inicio: "2024-02-01",
+    fim: null,
+    atual: true,
+    dias: 984,
+  };
+  const leitura = { ...LEITURA, pergunta: "912", itens: [VINCULO] };
+  const [item] = itensParaConferir(EXPERIENCIA, leiturasDaFicha([leitura]), [
+    { ...ANEXO, pergunta: "912" },
+  ]);
+
+  it("o atual com emissão vira fim; sem emissão, o fim fica em branco e o texto diz até hoje", () => {
+    expect(
+      linhaDoItemLido(
+        EXPERIENCIA,
+        { ...VINCULO, dias_ate: "2025-08-21" },
+        "1:2:1:0",
+      ).fim,
+    ).toBe("2025-08-21");
+    expect(linhaDoItemLido(EXPERIENCIA, VINCULO, "1:2:1:0").fim).toBe("");
+    expect(textoDoItemLido(VINCULO)).toContain("984 dias até hoje");
+  });
+
+  it("aceitar com a correção: a linha corrigida no lugar, marcada corrigido; sem mudança, sem a marca", () => {
+    const base = {
+      nivel: "superior",
+      vinculos: [{ empregador: "", inicio: "", fim: "", aceito: true }],
+      recusas_lidas: { [item.chave]: { motivo: "ILEGIVEL" } },
+    };
+    const linha = linhaParaCorrigir(EXPERIENCIA, item.item, item.chave);
+    const corrigido = aceitarItemCorrigido(base, EXPERIENCIA, item, {
+      ...linha,
+      fim: "2026-10-13",
+    });
+    // A linha vazia aberta sai; a recusa do item também.
+    expect(corrigido.vinculos).toEqual([
+      {
+        empregador: "Instituto de Saúde · Enfermeiro",
+        categoria: "AREA_OU_SUS",
+        inicio: "2024-02-01",
+        fim: "2026-10-13",
+        aceito: true,
+        do_arquivo: item.chave,
+        corrigido: true,
+      },
+    ]);
+    expect(corrigido.recusas_lidas).toBeUndefined();
+    expect(estadoDoItemLido(corrigido, EXPERIENCIA, item.chave)).toBe("ACEITO");
+    expect(linhaAceita(corrigido, EXPERIENCIA, item.chave).corrigido).toBe(
+      true,
+    );
+    // Corrigir de novo troca a mesma linha (não duplica).
+    const outra = aceitarItemCorrigido(corrigido, EXPERIENCIA, item, {
+      ...linha,
+      fim: "2026-01-31",
+    });
+    expect(outra.vinculos).toHaveLength(1);
+    expect(outra.vinculos[0].fim).toBe("2026-01-31");
+    // Sem mudar nada em relação ao lido: aceito sem a marca.
+    const igual = aceitarItemCorrigido(
+      { vinculos: [] },
+      EXPERIENCIA,
+      item,
+      linha,
+    );
+    expect(igual.vinculos[0].corrigido).toBeUndefined();
+    expect(textoDaLinha("vinculos", corrigido.vinculos[0])).toBe(
+      "Instituto de Saúde · Enfermeiro · 01/02/2024 a 13/10/2026",
+    );
+  });
+
+  it("título não classificado: o Corrigir abre com o título padrão do nível", () => {
+    expect(
+      linhaParaCorrigir(
+        FORMACAO,
+        { tipo: "TITULO", titulo: null, curso: "Saúde", instituicao: "UF" },
+        "1:2:1:0",
+        "MESTRADO",
+      ),
+    ).toEqual({
+      titulo: "MESTRADO",
+      nome: "Saúde · UF",
+      aceito: true,
+      do_arquivo: "1:2:1:0",
+    });
+  });
+
+  it("no máximo um alerta visível: o que impede primeiro; os leves em cinza; atual e concomitante não são alerta", () => {
+    const a = (codigo) => ({ codigo, texto: codigo });
+    expect(
+      alertasResumidos([
+        a("SEM_EMPREGADOR"),
+        a("NOME_DIVERGENTE"),
+        a("DATA_FUTURA"),
+      ]),
+    ).toEqual({
+      principal: a("NOME_DIVERGENTE"),
+      grave: true,
+      outros: [a("SEM_EMPREGADOR"), a("DATA_FUTURA")],
+      concomitante: false,
+    });
+    expect(alertasResumidos([a("SEM_EMPREGADOR")])).toMatchObject({
+      principal: a("SEM_EMPREGADOR"),
+      grave: false,
+      outros: [],
+    });
+    expect(
+      alertasResumidos([a("SEM_DATA_FIM"), a("PERIODO_CONCOMITANTE")]),
+    ).toEqual({
+      principal: null,
+      grave: false,
+      outros: [],
+      concomitante: true,
+    });
+    // O mesmo empregador repetido é laranja.
+    expect(alertasResumidos([a("PERIODO_SOBREPOSTO")]).grave).toBe(true);
+  });
+
+  it("foto: ícone pelo nome; miniatura só com link https direto da imagem (não o visualizador da Empregare)", () => {
+    expect(anexoEhImagem("carteira.JPG")).toBe(true);
+    expect(anexoEhImagem("diploma.pdf")).toBe(false);
+    expect(linkDaMiniatura(ANEXO.link)).toBeNull();
+    expect(
+      linkDaMiniatura(
+        "https://corporate.empregare.com/Company/VacancyTests/GetViewerLogArquivo?arquivo=foto.jpg",
+      ),
+    ).toBeNull();
+    expect(linkDaMiniatura("https://arquivos.exemplo.org/foto.png")).toBe(
+      "https://arquivos.exemplo.org/foto.png",
+    );
+    expect(linkDaMiniatura("http://arquivos.exemplo.org/foto.png")).toBeNull();
   });
 });
