@@ -125,6 +125,9 @@
   --color-sidebar-indicator: var(--color-blue-300);
   --color-sidebar-divider: rgb(255 255 255 / 0.08);
   --color-sidebar-focus: var(--color-neutral-0);
+  /* Rolagem da barra lateral (como no SIGAV): trilho transparente, polegar claro discreto. */
+  --color-sidebar-scroll-thumb: rgb(219 234 254 / 0.28);
+  --color-sidebar-scroll-thumb-hover: rgb(219 234 254 / 0.45);
 
   /* ---------- Gráficos ---------- */
   --color-chart-1: var(--color-blue-600);
@@ -347,6 +350,8 @@
   texto escurece (#071421 sobre #70cfff: 10,66).
 */
 html[data-theme="dark"] {
+  --color-sidebar-scroll-thumb: rgb(219 234 254 / 0.28);
+  --color-sidebar-scroll-thumb-hover: rgb(219 234 254 / 0.45);
   /* ---------- Fundo ---------- */
   --color-bg-canvas: #0e1e2e;
   --color-bg-subtle: #14283a;
