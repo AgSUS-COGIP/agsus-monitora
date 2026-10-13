@@ -19,6 +19,8 @@ import type {
     cópia, devolve na hora (`daCopia`) e revalida por trás (`revalidacao`);
     `aoMudar` recebe o payload novo se o servidor mandou outro, e
     `aoPerderAcesso` é chamado se o acesso caiu (as cópias são apagadas).
+    A revalidação manda a `versao` da cópia (`*_se_mudou`, migration
+    20261013160000): sem mudança, o banco responde só `{ inalterado: true }`.
   - `detalhe(id)`: o detalhamento de um registro (parecer, pontuações,
     experiências, links, datas), ao abrir a gaveta. Guardado por id.
   - `textos(area, escopo)`: parecer, link do PDF e experiência de todas as
@@ -34,6 +36,10 @@ import {
   criarCacheDoPainel,
   revalidarPayload,
 } from "../../lib/cache-do-painel-de-analises.js";
+import {
+  respostaInalterada,
+  versaoDoPacote,
+} from "../../lib/cache-de-payload.js";
 import { comTempoLimite } from "../../lib/falha-de-rede.js";
 import {
   envelopeDeTodos,
@@ -44,7 +50,7 @@ import { mapaDosTextos } from "../../lib/textos-do-painel-de-analises.js";
 import { armazenamentoDePayload } from "../../modules/cache-de-payload-indexeddb.js";
 
 const RPC_PORTEIRO = "usuario_pode_ler_analises";
-const RPC_LISTA = "get_analises_dashboard_payload_v2";
+const RPC_LISTA = "get_analises_dashboard_payload_v2_se_mudou";
 const RPC_DETALHE = "get_analise_detalhe_do_painel";
 const RPC_TEXTOS = "get_analises_texto_do_painel";
 const RPC_CONFERENCIA = "obter_ultima_conferencia";
@@ -97,15 +103,22 @@ export function criarConsultasDasAnalises({
     }
   }
 
-  const buscarPacote = async (area: string, escopo: string) =>
-    normalizarPayloadDasAnalises(
-      primeiro(
-        await chamar(RPC_LISTA, {
-          p_scope: escopo,
-          ...parametroDeAreaDaRpc(area),
-        }),
-      ),
+  /* Com a cópia (`guardado`), manda a versão dela: se ainda vale, nada trafega e volta a própria cópia. */
+  const buscarPacote = async (
+    area: string,
+    escopo: string,
+    guardado: ReturnType<typeof normalizarPayloadDasAnalises> | null = null,
+  ) => {
+    const resposta = primeiro(
+      await chamar(RPC_LISTA, {
+        p_scope: escopo,
+        ...parametroDeAreaDaRpc(area),
+        p_versao: versaoDoPacote(guardado),
+      }),
     );
+    if (guardado && respostaInalterada(resposta)) return guardado;
+    return normalizarPayloadDasAnalises(resposta);
+  };
 
   async function carregarPacote({
     area,
@@ -128,7 +141,7 @@ export function criarConsultasDasAnalises({
     if (guardado) {
       const revalidacao = revalidarPayload({
         guardado,
-        buscar: () => buscarPacote(area, escopo),
+        buscar: () => buscarPacote(area, escopo, guardado),
         guardar: (novo: unknown) => copias.guardar(contexto, novo),
         apagarTudo: () => copias.apagarTudo(),
         aoMudar: (novo: unknown) => {

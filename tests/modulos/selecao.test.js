@@ -188,8 +188,9 @@ describe("a tela dentro do app", () => {
     expect(supabase.rpc).not.toHaveBeenCalled();
 
     await abrirATela();
-    expect(supabase.rpc).toHaveBeenCalledWith("get_selecao_da_area", {
+    expect(supabase.rpc).toHaveBeenCalledWith("get_selecao_da_area_se_mudou", {
       p_area: "saude-indigena",
+      p_versao: null,
     });
     expect(kpi("inscritos")).toBe("122");
   });
@@ -563,9 +564,13 @@ describe("área atual do app", () => {
 
     await act(async () => definirAreaAtual("sede"));
     await esperar();
-    expect(supabase.rpc).toHaveBeenLastCalledWith("get_selecao_da_area", {
-      p_area: "sede",
-    });
+    expect(supabase.rpc).toHaveBeenLastCalledWith(
+      "get_selecao_da_area_se_mudou",
+      {
+        p_area: "sede",
+        p_versao: null,
+      },
+    );
     expect(painel.estado.obter().area).toBe("sede");
     expect(linhas()).toHaveLength(2);
     expect(recorte()).toBe("Sem filtros");
@@ -578,9 +583,36 @@ describe("área atual do app", () => {
     expect(supabase.rpc).toHaveBeenCalledTimes(2);
     definirAreaAtual("projetos");
     await abrirATela();
-    expect(supabase.rpc).toHaveBeenLastCalledWith("get_selecao_da_area", {
-      p_area: "projetos",
+    expect(supabase.rpc).toHaveBeenLastCalledWith(
+      "get_selecao_da_area_se_mudou",
+      {
+        p_area: "projetos",
+        p_versao: null,
+      },
+    );
+  });
+
+  it("a volta à tela manda a versão que tem; inalterado, a tela fica como estava", async () => {
+    const supabase = supabaseFalso({
+      data: { ...PAYLOAD, versao: "v1" },
+      error: null,
     });
+    await montar(supabase);
+    const antes = linhas().length;
+    supabase.rpc.mockResolvedValue({
+      data: { inalterado: true, versao: "v1" },
+      error: null,
+    });
+    await abrirATela();
+    expect(supabase.rpc).toHaveBeenLastCalledWith(
+      "get_selecao_da_area_se_mudou",
+      {
+        p_area: "saude-indigena",
+        p_versao: "v1",
+      },
+    );
+    expect(linhas()).toHaveLength(antes);
+    expect(kpi("inscritos")).toBe("122");
   });
 });
 

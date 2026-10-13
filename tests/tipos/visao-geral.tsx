@@ -19,14 +19,15 @@ import { textosDaVisaoGeral } from "../../src/lib/visao-geral.ts";
 declare const clienteReal: SupabaseClient;
 const acompanhamento: ClienteDoAcompanhamento = clienteReal;
 const marcos: ClienteDosMarcos = clienteReal;
-void acompanhamento.rpc("listar_acompanhamento_da_visao_geral", {
+void acompanhamento.rpc("listar_acompanhamento_da_visao_geral_se_mudou", {
   p_area: "sede",
+  p_versao: null,
 });
 void marcos.rpc("obter_marcos_da_area", { p_area: "sede" });
 // @ts-expect-error Esta leitura não oferece RPCs de escrita.
 void acompanhamento.rpc("salvar_monitoramento", { p_area: "sede" });
 // @ts-expect-error A RPC de acompanhamento exige a área.
-void acompanhamento.rpc("listar_acompanhamento_da_visao_geral", {});
+void acompanhamento.rpc("listar_acompanhamento_da_visao_geral_se_mudou", {});
 
 declare const origem: DadosDoMonitoramento;
 const estado = criarEstadoDaVisaoGeral({

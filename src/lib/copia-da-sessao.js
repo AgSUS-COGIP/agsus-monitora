@@ -90,7 +90,11 @@ export function dadosDasRespostas(respostas) {
     return dados;
   }
   if (monitoramento.error) return null;
-  dados.monitoramento = { linhas: monitoramento.data ?? [] };
+  // A `versao` do banco vai junto: a próxima entrada pergunta só se mudou.
+  dados.monitoramento = {
+    linhas: monitoramento.data ?? [],
+    versao: monitoramento.versao ?? null,
+  };
   return dados;
 }
 
@@ -104,7 +108,11 @@ export function consultasDosDados(dados) {
     unidades: resposta(dados.unidades),
     abas: resposta(dados.abas ?? null),
     monitoramento: dados.monitoramento
-      ? resposta(dados.monitoramento.linhas)
+      ? Promise.resolve({
+          data: dados.monitoramento.linhas,
+          versao: dados.monitoramento.versao ?? null,
+          error: null,
+        })
       : null,
   };
 }

@@ -108,9 +108,13 @@ export function initSidebarBranding() {
 
   if (!client) return;
 
+  /*
+    Só na entrada. A renovação do token (TOKEN_REFRESHED) não muda logo nem cor
+    e relia a configuração a cada renovação: 30 mil leituras em 11 dias, cada
+    uma uma linha de log da plataforma. Quem troca a marca vê na hora
+    (Configurações › Aparência aplica direto); os outros, na próxima entrada.
+  */
   client.auth.onAuthStateChange((event) => {
-    if (event === "SIGNED_IN" || event === "TOKEN_REFRESHED") {
-      void readSidebarBranding();
-    }
+    if (event === "SIGNED_IN") void readSidebarBranding();
   });
 }

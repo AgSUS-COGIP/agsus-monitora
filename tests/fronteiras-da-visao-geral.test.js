@@ -134,15 +134,40 @@ describe("fronteiras externas da Visão geral", () => {
     expect(buscar).toHaveBeenCalledTimes(2);
   });
 
+  it("o acompanhamento pergunta pela versão que já tem; inalterado, volta o mesmo", async () => {
+    const primeiro = {
+      etapas: [],
+      listas: [{ edital_id: "e1" }],
+      versao: "v1",
+    };
+    const rpc = vi
+      .fn()
+      .mockResolvedValueOnce({ data: primeiro, error: null })
+      .mockResolvedValueOnce({
+        data: { inalterado: true, versao: "v1" },
+        error: null,
+      });
+    const buscar = buscarAcompanhamentoNoSupabase({ rpc });
+    expect(await buscar("area-da-versao")).toBe(primeiro);
+    expect(await buscar("area-da-versao")).toBe(primeiro);
+    expect(rpc.mock.calls.map(([, argumentos]) => argumentos.p_versao)).toEqual(
+      [null, "v1"],
+    );
+  });
+
   it("repassa o erro da RPC e não aceita números de marcos malformados", async () => {
     const erro = { code: "42501", message: "Sem acesso" };
     const rpc = vi.fn(async () => ({ data: null, error: erro }));
     await expect(buscarAcompanhamentoNoSupabase({ rpc })("sede")).rejects.toBe(
       erro,
     );
-    expect(rpc).toHaveBeenCalledWith("listar_acompanhamento_da_visao_geral", {
-      p_area: "sede",
-    });
+    expect(rpc).toHaveBeenCalledWith(
+      "listar_acompanhamento_da_visao_geral_se_mudou",
+      {
+        p_area: "sede",
+        p_versao: null,
+      },
+    );
     for (const data of [
       null,
       [],

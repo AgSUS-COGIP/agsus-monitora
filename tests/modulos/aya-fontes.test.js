@@ -32,7 +32,7 @@ const PACOTES = {
 
 const supabaseFalso = () => ({
   rpc: vi.fn(async (nome, argumentos) => {
-    if (nome !== "get_analises_dashboard_payload_v2")
+    if (nome !== "get_analises_dashboard_payload_v2_se_mudou")
       return { data: null, error: { message: "inesperada" } };
     return { data: [PACOTES[argumentos.p_scope]], error: null };
   }),

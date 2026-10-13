@@ -205,9 +205,13 @@ describe("Resultados", () => {
   it("carrega a área, mostra KPIs, a última carga e a tabela", async () => {
     const supabase = supabaseFalso({ data: PAYLOAD, error: null });
     await montar(supabase);
-    expect(supabase.rpc).toHaveBeenCalledWith("get_entrevistas_da_area", {
-      p_area: "saude-indigena",
-    });
+    expect(supabase.rpc).toHaveBeenCalledWith(
+      "get_entrevistas_da_area_se_mudou",
+      {
+        p_area: "saude-indigena",
+        p_versao: null,
+      },
+    );
     expect(kpi("vagas")).toBe("2");
     expect(kpi("aptos")).toBe("1");
     expect(kpi("inaptos")).toBe("1");
@@ -502,9 +506,13 @@ describe("a tela dentro do app", () => {
     expect(secao.querySelector(".entrevistas-visoes")).toBeNull();
 
     await abrirATela();
-    expect(supabase.rpc).toHaveBeenCalledWith("get_entrevistas_da_area", {
-      p_area: "saude-indigena",
-    });
+    expect(supabase.rpc).toHaveBeenCalledWith(
+      "get_entrevistas_da_area_se_mudou",
+      {
+        p_area: "saude-indigena",
+        p_versao: null,
+      },
+    );
     expect(kpi("candidatos")).toBe("2");
   });
 
@@ -683,8 +691,11 @@ describe("área atual do app", () => {
 
     await act(async () => definirAreaAtual("sede"));
     await esperar();
-    expect(chamadas(supabase, "get_entrevistas_da_area").at(-1)[1]).toEqual({
+    expect(
+      chamadas(supabase, "get_entrevistas_da_area_se_mudou").at(-1)[1],
+    ).toEqual({
       p_area: "sede",
+      p_versao: null,
     });
     expect(painel.estado.obter().area).toBe("sede");
     expect(linhasDaTabela()).toHaveLength(2);
@@ -699,12 +710,41 @@ describe("área atual do app", () => {
     const supabase = supabaseFalso({ data: PAYLOAD, error: null });
     await montar(supabase);
     await abrirATela();
-    expect(chamadas(supabase, "get_entrevistas_da_area")).toHaveLength(2);
+    expect(chamadas(supabase, "get_entrevistas_da_area_se_mudou")).toHaveLength(
+      2,
+    );
     definirAreaAtual("projetos");
     await abrirATela();
-    expect(supabase.rpc).toHaveBeenLastCalledWith("get_entrevistas_da_area", {
-      p_area: "projetos",
+    expect(supabase.rpc).toHaveBeenLastCalledWith(
+      "get_entrevistas_da_area_se_mudou",
+      {
+        p_area: "projetos",
+        p_versao: null,
+      },
+    );
+  });
+
+  it("a volta à tela manda a versão que tem; inalterado, a tela fica como estava", async () => {
+    const supabase = supabaseFalso({
+      data: { ...PAYLOAD, versao: "v1" },
+      error: null,
     });
+    await montar(supabase);
+    const antes = linhasDaTabela().length;
+    supabase.rpc.mockResolvedValue({
+      data: { inalterado: true, versao: "v1" },
+      error: null,
+    });
+    await abrirATela();
+    expect(supabase.rpc).toHaveBeenLastCalledWith(
+      "get_entrevistas_da_area_se_mudou",
+      {
+        p_area: "saude-indigena",
+        p_versao: "v1",
+      },
+    );
+    expect(linhasDaTabela()).toHaveLength(antes);
+    expect(antes).toBeGreaterThan(0);
   });
 
   it("render relê as comemorações do app", async () => {
