@@ -20,6 +20,7 @@ mesma data no arquivo viram um só.
 import re
 
 from .certificados import instituicao_do_texto
+from .layout import campo_rotulado
 from .pessoas import nome_confere, sem_nome_de_pessoa
 from .texto import datas_no_texto, dobrar, iso, trecho
 
@@ -173,6 +174,7 @@ def _juntar_repetidos(itens):
 def titulos(paginas, nome_do_candidato=None):
     """Os itens TITULO do arquivo (o título mais alto da frente de cada documento)."""
     itens = []
+    por_numero = {p.numero: p for p in paginas}
     for numero, frente, texto in segmentos_de_titulo(paginas)[:10]:
         dobrado_frente, dobrado = dobrar(frente), dobrar(texto)
         nivel = nivel_do_texto(dobrado_frente) or nivel_do_texto(dobrado)
@@ -182,7 +184,9 @@ def titulos(paginas, nome_do_candidato=None):
             {
                 "tipo": "TITULO",
                 "titulo": nivel,
-                "curso": curso_do_titulo(frente, nome_do_candidato) or curso_do_titulo(texto, nome_do_candidato),
+                "curso": curso_do_titulo(frente, nome_do_candidato)
+                or curso_do_titulo(texto, nome_do_candidato)
+                or limpar_curso(campo_rotulado(por_numero.get(numero), r"curso(?=\s*:|\s*$)"), nome_do_candidato),
                 "instituicao": instituicao_do_texto(frente, dobrado_frente) or instituicao_do_texto(texto, dobrado),
                 "data": iso(data_do_titulo(dobrado)),
                 "pagina": numero,
