@@ -370,3 +370,25 @@ def test_inclinacao_medida_pelo_opencv():
     assert abs(imagem.angulo_da_inclinacao(cv2, np, endireitada)) < 1.0
     variantes = imagem.variantes(torta)
     assert set(variantes) == {"cinza", "binarizada"} and max(variantes["cinza"].size) >= imagem.LADO_MINIMO
+
+
+def test_pdf_que_o_pdfplumber_nao_abre_vai_pelo_pdfium(monkeypatch):
+    """PDF com estrutura que o pdfplumber não entende (0 páginas ou erro) cai no PDFium."""
+    from monitora.avaliacao_documental.leitura_de_arquivos import extracao
+
+    def quebra(conteudo, ocr, leitura):
+        leitura.total_de_paginas = 0
+
+    chamado = {}
+
+    def pdfium(conteudo, ocr, leitura):
+        chamado["sim"] = True
+        leitura.total_de_paginas = 1
+        leitura.paginas.append(extracao.Pagina(1, "CARTEIRA DE IDENTIDADE " * 10, "TEXTO"))
+
+    monkeypatch.setattr(extracao, "_ler_pdf", quebra)
+    monkeypatch.setattr(extracao, "_ler_pdf_pelo_pdfium", pdfium)
+    leitura = extracao.ler_paginas(b"%PDF-1.4 quebrado", ocr=None)
+    assert chamado.get("sim")
+    assert leitura.total_de_paginas == 1
+    assert leitura.erro is None
