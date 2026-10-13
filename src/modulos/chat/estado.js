@@ -108,7 +108,11 @@ const RPC_STATUS = "definir_status_chat";
 
 const TEMPO_LIMITE_MS = 30000;
 const DIGITANDO_MS = 4000;
-const RELER_LISTA_MS = 60000;
+/*
+  Rede de segurança da lista: mensagem nova já chega pelo Realtime. De 5 em
+  5 min (era 1): cada leitura vira log da plataforma, para cada pessoa aberta.
+*/
+const RELER_LISTA_MS = 300000;
 /* Quantas páginas antigas buscar para achar a mensagem (busca, citação). */
 const PAGINAS_PARA_ACHAR = 10;
 /* A URL assinada vale 60 s; a miniatura reaproveita por um pouco menos. */
