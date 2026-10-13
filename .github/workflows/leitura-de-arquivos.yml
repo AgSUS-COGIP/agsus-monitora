@@ -38,6 +38,11 @@ on:
         type: boolean
         required: false
         default: false
+      so_relidos:
+        description: "Só reler o que já foi lido (versão antiga do extrator ou erro); nunca lê arquivo novo"
+        type: boolean
+        required: false
+        default: false
       modo:
         description: "normal = lê e grava; seco = só conta o que falta ler; sondar = só a estrutura do visualizador de até 3 anexos"
         type: choice
@@ -116,6 +121,7 @@ jobs:
           EDITAIS: ${{ inputs.editais }}
           LIMITE: ${{ inputs.limite || '300' }}
           FORCAR: ${{ inputs.forcar && 'sim' || 'nao' }}
+          SO_RELIDOS: ${{ inputs.so_relidos && 'sim' || 'nao' }}
           MODO: ${{ inputs.modo || 'normal' }}
           ORCAMENTO_MINUTOS: "100"
         run: |
