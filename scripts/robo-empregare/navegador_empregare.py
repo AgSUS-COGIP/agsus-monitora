@@ -67,6 +67,7 @@ TENTATIVAS_CENTRAL = 12
 ESPERA_ENTRE_TENTATIVAS = 30  # segundos
 TIMEOUT_DOWNLOAD = 180  # segundos para o arquivo terminar de baixar
 ESPERA_APOS_EXPORTAR = 20  # segundos antes de abrir a Central pela 1ª vez
+TENTATIVAS_DE_EXPORTAR = 2  # a 1ª vaga depois da Central às vezes esgota o tempo
 FOLGA_DO_RELOGIO = timedelta(minutes=10)  # relógio da Empregare × do runner
 
 JS_LER_LINHAS = """
@@ -854,7 +855,24 @@ class PortalEmpregare:
         return self.ids_das_vagas.get(str(codigo))
 
     def exportar_vaga(self, codigo):
-        """Pede a exportação "Candidatos da vaga (Excel)" da vaga. True se pediu."""
+        """
+        Pede a exportação "Candidatos da vaga (Excel)" da vaga. True se pediu.
+
+        A 1ª vaga pedida depois de passar pela Central de Exportações esgotava o
+        tempo (a página de vagas não estava pronta): tenta de novo uma vez, com a
+        lista de vagas aberta pelo endereço.
+        """
+        for tentativa in range(1, TENTATIVAS_DE_EXPORTAR + 1):
+            if self._pedir_exportacao(codigo, ultima=tentativa == TENTATIVAS_DE_EXPORTAR):
+                return True
+            try:
+                self.driver.get(URL_VAGAS)
+                self.abrir_vagas_anunciadas()
+            except Exception:
+                pass
+        return False
+
+    def _pedir_exportacao(self, codigo, ultima=True):
         from selenium.common.exceptions import TimeoutException
         from selenium.webdriver.common.by import By
         from selenium.webdriver.support import expected_conditions as EC
@@ -900,7 +918,12 @@ class PortalEmpregare:
             self.abrir_vagas_anunciadas()
             return True
         except Exception as erro:
-            self.registrar(f"Vaga {codigo}: não consegui pedir a exportação ({resumo_do_erro(erro)}).")
+            if ultima:
+                self.registrar(f"Vaga {codigo}: não consegui pedir a exportação ({resumo_do_erro(erro)}).")
+            else:
+                self.registrar(
+                    f"Vaga {codigo}: pedido de exportação falhou ({resumo_do_erro(erro)}); tentando de novo."
+                )
             try:
                 self.abrir_vagas_anunciadas()
             except Exception:
