@@ -279,6 +279,35 @@ def _ler_pdf(conteudo, ocr, leitura):
         leitura.paginas_sem_leitura += max(0, leitura.total_de_paginas - MAXIMO_DE_PAGINAS)
 
 
+def _ler_pdf_pelo_pdfium(conteudo, ocr, leitura):
+    """Plano B do PDF: abre com o PDFium (pypdfium2, que já vem com o pdfplumber)."""
+    import pypdfium2 as pdfium
+
+    pdf = pdfium.PdfDocument(bytes(conteudo))
+    try:
+        leitura.total_de_paginas = len(pdf)
+        com_ocr = 0
+        for i in range(min(len(pdf), MAXIMO_DE_PAGINAS)):
+            pagina = pdf[i]
+            try:
+                texto = preparar(pagina.get_textpage().get_text_range() or "")
+            except Exception:
+                texto = ""
+            if letras(texto) >= MINIMO_DE_LETRAS_DA_PAGINA:
+                leitura.paginas.append(Pagina(i + 1, texto, "TEXTO"))
+                continue
+            if ocr is None or com_ocr >= MAXIMO_DE_PAGINAS_NO_OCR:
+                leitura.paginas_sem_leitura += 1
+                continue
+            imagem = pagina.render(scale=RESOLUCAO_DO_OCR / 72).to_pil()
+            texto_ocr, confianca, palavras = _chamar_ocr(ocr, _preparar_imagem(imagem))
+            com_ocr += 1
+            leitura.paginas.append(Pagina(i + 1, preparar(texto_ocr), "OCR", confianca, palavras))
+        leitura.paginas_sem_leitura += max(0, leitura.total_de_paginas - MAXIMO_DE_PAGINAS)
+    finally:
+        pdf.close()
+
+
 def _ler_imagem(conteudo, ocr, leitura):
     from PIL import Image, ImageSequence
 
@@ -323,7 +352,17 @@ def ler_paginas(conteudo, ocr=ocr_tesseract):
     leitura = Leitura(formato)
     try:
         if formato == "PDF":
-            _ler_pdf(conteudo, ocr, leitura)
+            try:
+                _ler_pdf(conteudo, ocr, leitura)
+                if not leitura.total_de_paginas:
+                    raise ValueError("pdf sem páginas no pdfplumber")
+            except OcrIndisponivel:
+                raise
+            except Exception:
+                # PDF que o pdfplumber não abre (estrutura quebrada, xref ruim, gerado por
+                # celular/scanner): o PDFium é mais tolerante — página vira imagem e vai ao OCR.
+                leitura = Leitura(formato)
+                _ler_pdf_pelo_pdfium(conteudo, ocr, leitura)
         elif formato == "IMAGEM":
             _ler_imagem(conteudo, ocr, leitura)
         elif formato == "DOCX":
