@@ -2307,7 +2307,7 @@ export const VERBETES_AYA = Object.freeze([
       'No MONITORA, o resultado final da Classificação é a fonte da Lista de aprovados. Em "Resultado final", o Editor de Classificação gera a lista e clica em "Publicar como lista de aprovados": a confirmação mostra, em relação à lista de aprovados vigente, quantos entram, saem e mudam de posição e o que é preservado (status, matrícula, sub judice, anexos); quem não foi reconhecido aparece para revisão. A lista nova entra em vigor com posição, nota, modalidade, vaga e situação (dentro das vagas ou cadastro reserva) de cada candidato; a anterior fica no histórico. "Marcar como publicada" continua sendo só o registro da publicação no SEI.',
     fato: 'No MONITORA, o resultado final da Classificação vira a lista de aprovados pelo botão "Publicar como lista de aprovados".',
     fonte:
-      "src/modulos/classificacao/publicar-aprovados.jsx; src/lib/publicacao-de-aprovados.js; supabase/migrations/20261005160000_lista_de_aprovados_da_classificacao.sql",
+      "src/modulos/classificacao/publicar-aprovados.tsx; src/lib/publicacao-de-aprovados.ts; supabase/migrations/20261005160000_lista_de_aprovados_da_classificacao.sql",
     abrir: "classificacao",
   },
   {
@@ -2535,7 +2535,7 @@ export const VERBETES_AYA = Object.freeze([
       'No MONITORA, a lista de aprovados de cada edital tem uma de duas origens, mostrada na tela e no modal "Listas do edital": "Publicada da Classificação em DD/MM" — o resultado final da aba Classificação, com posição, nota, modalidade, vaga e situação (dentro das vagas ou cadastro reserva) calculados pela regra do edital, sem digitação — ou "Lista manual (planilha)", importada por XLSX com posição e nota digitadas. Edital com análise no sistema publica da Classificação; a planilha fica para editais sem análise no sistema. Cada troca de lista fica no histórico das publicações do edital.',
     fato: "No MONITORA, a lista de aprovados vem do resultado final da Classificação; a planilha XLSX fica para editais sem análise no sistema.",
     fonte:
-      "src/lib/publicacao-de-aprovados.js; src/modulos/aprovados/modal-listas-do-edital.jsx; supabase/migrations/20261005160000_lista_de_aprovados_da_classificacao.sql",
+      "src/lib/publicacao-de-aprovados.ts; src/modulos/aprovados/modal-listas-do-edital.jsx; supabase/migrations/20261005160000_lista_de_aprovados_da_classificacao.sql",
     abrir: "approved",
   },
   {
@@ -2551,7 +2551,7 @@ export const VERBETES_AYA = Object.freeze([
       'Na Classificação, abra o edital, vá ao "Resultado final", gere a lista e clique em "Publicar como lista de aprovados" (Editor de Classificação, na área do edital; lista com empate pendente não publica, e só o resultado final mais recente). A confirmação compara com a lista vigente: quantos entram, saem, mudam de posição, quantos têm status ou sub judice preservados e quantos sub judice são mantidos. Publicar cria a nova lista vigente do edital; a anterior fica inativa no histórico, sem apagar nada. Pelo modal "Listas do edital" da Lista de aprovados, "Publicar da Classificação" leva à Classificação no edital.',
     fato: "",
     fonte:
-      "src/modulos/classificacao/publicar-aprovados.jsx; supabase/migrations/20261005160000_lista_de_aprovados_da_classificacao.sql",
+      "src/modulos/classificacao/publicar-aprovados.tsx; supabase/migrations/20261005160000_lista_de_aprovados_da_classificacao.sql",
     abrir: "classificacao",
   },
   {
@@ -2570,7 +2570,7 @@ export const VERBETES_AYA = Object.freeze([
       'Quem já estava na lista vigente leva para a lista nova o status (Contratado, Desistente…), a matrícula, o processo SEI, o sub judice e os anexos. A pessoa é reconhecida pela análise (lista já publicada da Classificação) ou, nas listas de planilha — que não trazem CPF nem código do candidato —, pelo nome sem acento e sem diferença de maiúsculas no mesmo edital, desempatando pela vaga. Quem tinha nota ou modalidade alterada por decisão judicial continua com a da decisão (a da Classificação vira a original, para desfazer) e é recolocado pela nota; quem foi incluído sub judice e não está no resultado continua na lista como sub judice. Homônimo que não se resolve e quem sai com status ou matrícula aparecem em "Revisar" na confirmação, para dizer quem é na lista nova ou que não está; quem sai continua na lista anterior, com tudo, e fica registrado na publicação. Sub judice segue editável na Lista de aprovados.',
     fato: "",
     fonte:
-      "src/lib/publicacao-de-aprovados.js; supabase/migrations/20261005160000_lista_de_aprovados_da_classificacao.sql",
+      "src/lib/publicacao-de-aprovados.ts; supabase/migrations/20261005160000_lista_de_aprovados_da_classificacao.sql",
     abrir: "approved",
   },
   {
@@ -2765,7 +2765,7 @@ export const VERBETES_AYA = Object.freeze([
       'A Lista de aprovados mostra a lista vigente de cada edital da área atual (e do recorte da sua coordenação). Edital sem lista ainda não teve o resultado final publicado da Classificação nem planilha importada: publique em Classificação › Resultado final ("Publicar como lista de aprovados") ou, em edital sem análise no sistema, importe o XLSX (Editor em Importação e convocação). As listas anteriores ficam inativas, para consulta, no modal "Listas do edital".',
     fato: "",
     fonte:
-      "src/lib/publicacao-de-aprovados.js; src/modulos/aprovados/modal-listas-do-edital.jsx; src/lib/access-roles.js",
+      "src/lib/publicacao-de-aprovados.ts; src/modulos/aprovados/modal-listas-do-edital.jsx; src/lib/access-roles.js",
     abrir: "approved",
   },
   {

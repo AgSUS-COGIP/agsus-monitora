@@ -180,3 +180,12 @@ dados, avisos ou flags após troca de edital, área ou usuário. Os contratos es
 `tests/tipos/tela-estado-da-classificacao.tsx`; regras, documentos e peças de listas e
 agenda continuam parcialmente em JavaScript/JSX. Contratos e limites em
 [../src/modulos/classificacao/README.md](../src/modulos/classificacao/README.md).
+
+A publicação do resultado final como lista de aprovados também está em TypeScript/TSX:
+modal de confirmação, extração dos candidatos do retrato, casamento por análise, nome ou
+vaga, revisão manual, comparação de posições e resumo das origens. Os contratos ficam em
+`tests/tipos/publicacao-da-classificacao.tsx`. A prévia valida a lista vigente inteira e
+recusa candidatos sem identidade, duplicados ou coleções malformadas; uma resposta incompleta
+não permite publicar com uma revisão parcial. Status, matrícula e sub judice continuam
+preservados pelos vínculos conferidos pelo banco. A publicação só é confirmada na tela com
+uma resposta válida do banco.

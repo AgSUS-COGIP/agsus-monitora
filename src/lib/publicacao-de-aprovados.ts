@@ -1,3 +1,16 @@
+import type {
+  CandidatoAnterior,
+  CandidatoDaListaFinal,
+  CasamentoDeCandidatos,
+  FormaDoVinculo,
+  OrigemDaLista,
+  VinculoDaPublicacao,
+} from "./tipos-da-publicacao-de-aprovados.ts";
+import {
+  registroDaPublicacao,
+  vagasDoRetrato,
+} from "./dados-da-publicacao-de-aprovados.ts";
+
 /*
   A lista de aprovados publicada a partir do resultado FINAL da Classificação.
 
@@ -26,10 +39,10 @@
   O banco recebe os vínculos (`argumentosDaPublicacao`) e confere cada um.
 */
 
-const texto = (valor) => String(valor ?? "").trim();
+const texto = (valor: unknown) => String(valor ?? "").trim();
 
 /** "José  da Silva" e "JOSE DA SILVA" viram "jose da silva". */
-export function normalizarNome(nome) {
+export function normalizarNome(nome: unknown) {
   return texto(nome)
     .normalize("NFD")
     .replace(/[̀-ͯ]/g, "")
@@ -38,9 +51,9 @@ export function normalizarNome(nome) {
     .trim();
 }
 
-const normalizarVaga = (codigo) => texto(codigo).toLowerCase();
+const normalizarVaga = (codigo: unknown) => texto(codigo).toLowerCase();
 
-const numero = (valor) => {
+const numero = (valor: unknown) => {
   if (valor === null || valor === undefined || valor === "") return null;
   const n = Number(valor);
   return Number.isFinite(n) ? n : null;
@@ -51,9 +64,19 @@ const numero = (valor) => {
  * `analises`: analise_id → { vaga, cargo } (dados do edital na Classificação),
  * para o código da vaga quando a vaga do retrato não tem (vaga do quadro).
  */
-export function candidatosDaListaFinal(retrato, { analises = new Map() } = {}) {
-  const vistos = new Map();
-  const vagas = Array.isArray(retrato?.vagas) ? retrato.vagas : [];
+export function candidatosDaListaFinal(
+  retrato: unknown,
+  {
+    analises = new Map(),
+  }: {
+    analises?: ReadonlyMap<string, { vaga?: unknown; cargo?: unknown }>;
+  } = {},
+): CandidatoDaListaFinal[] {
+  const vistos = new Map<
+    string,
+    CandidatoDaListaFinal & { ordem: number; fonte: number }
+  >();
+  const vagas = vagasDoRetrato(retrato);
   vagas.forEach((vaga, ordem) => {
     const linhas = [
       ...(vaga.geral || []).map((l) => ({ l, fonte: 0 })),
@@ -73,7 +96,7 @@ export function candidatosDaListaFinal(retrato, { analises = new Map() } = {}) {
             (fonte === atual.fonte &&
               (posicao ?? Infinity) < (atual.posicao ?? Infinity))));
       if (!melhor) continue;
-      const analise = analises.get?.(id) || {};
+      const analise = analises.get(id) || {};
       vistos.set(id, {
         analise_id: id,
         nome: texto(l.nome),
@@ -101,7 +124,9 @@ export function candidatosDaListaFinal(retrato, { analises = new Map() } = {}) {
 }
 
 /** O candidato da lista de aprovados tem algo que é só da lista (e se perde se não casar)? */
-export function temDadosDaLista(candidato) {
+export function temDadosDaLista(
+  candidato: Partial<CandidatoAnterior> | null | undefined,
+) {
   return Boolean(
     texto(candidato?.status) ||
     texto(candidato?.matricula) ||
@@ -111,13 +136,13 @@ export function temDadosDaLista(candidato) {
   );
 }
 
-const agruparPorNome = (lista) => {
-  const grupos = new Map();
+const agruparPorNome = <T extends { nome?: string | null }>(lista: T[]) => {
+  const grupos = new Map<string, T[]>();
   for (const item of lista) {
     const chave = normalizarNome(item.nome);
     if (!chave) continue;
     if (!grupos.has(chave)) grupos.set(chave, []);
-    grupos.get(chave).push(item);
+    grupos.get(chave)?.push(item);
   }
   return grupos;
 };
@@ -129,12 +154,20 @@ const agruparPorNome = (lista) => {
  * Devolve { vinculos: [{ candidato_id, analise_id, forma }], naoCasados }.
  * forma: ANALISE | NOME | NOME_VAGA | MANUAL.
  */
-export function casarCandidatos(anteriores, novos, { manuais = {} } = {}) {
+export function casarCandidatos(
+  anteriores: CandidatoAnterior[],
+  novos: CandidatoDaListaFinal[],
+  { manuais = {} }: { manuais?: Record<string, string> } = {},
+): CasamentoDeCandidatos {
   const livres = new Map((novos || []).map((n) => [texto(n.analise_id), n]));
-  const vinculos = [];
+  const vinculos: VinculoDaPublicacao[] = [];
   const decididos = new Set();
   const ambiguos = new Set();
-  const vincular = (anterior, novo, forma) => {
+  const vincular = (
+    anterior: CandidatoAnterior,
+    novo: CandidatoDaListaFinal,
+    forma: FormaDoVinculo,
+  ) => {
     vinculos.push({
       candidato_id: texto(anterior.candidato_id),
       analise_id: texto(novo.analise_id),
@@ -174,7 +207,7 @@ export function casarCandidatos(anteriores, novos, { manuais = {} } = {}) {
       livres.has(texto(n.analise_id)),
     );
     if (!depois.length) continue;
-    if (antes.length === 1 && depois.length === 1) {
+    if (antes.length === 1 && depois.length === 1 && antes[0] && depois[0]) {
       vincular(antes[0], depois[0], "NOME");
       continue;
     }
@@ -189,7 +222,7 @@ export function casarCandidatos(anteriores, novos, { manuais = {} } = {}) {
       const rivais = antes.filter(
         (b) => b !== a && vaga && normalizarVaga(b.codigo_vaga) === vaga,
       );
-      if (mesmos.length === 1 && !rivais.length)
+      if (mesmos.length === 1 && !rivais.length && mesmos[0])
         vincular(a, mesmos[0], "NOME_VAGA");
       else ambiguos.add(texto(a.candidato_id));
     }
@@ -206,7 +239,10 @@ export function casarCandidatos(anteriores, novos, { manuais = {} } = {}) {
   return { vinculos, naoCasados };
 }
 
-const mudouDePosicao = (anterior, novo) => {
+const mudouDePosicao = (
+  anterior: CandidatoAnterior,
+  novo: CandidatoDaListaFinal,
+) => {
   if (numero(anterior.classificacao) !== numero(novo.posicao)) return true;
   const vaga = normalizarVaga(anterior.codigo_vaga);
   return Boolean(vaga) && vaga !== normalizarVaga(novo.codigo_vaga);
@@ -216,7 +252,11 @@ const mudouDePosicao = (anterior, novo) => {
  * O que a publicação faz, em relação à lista vigente. A mesma conta do banco
  * (que grava os números no histórico da publicação).
  */
-export function resumoDaPublicacao(anteriores, novos, casamento) {
+export function resumoDaPublicacao(
+  anteriores: CandidatoAnterior[],
+  novos: CandidatoDaListaFinal[],
+  casamento: CasamentoDeCandidatos,
+) {
   const porId = new Map(
     (anteriores || []).map((a) => [texto(a.candidato_id), a]),
   );
@@ -226,8 +266,9 @@ export function resumoDaPublicacao(anteriores, novos, casamento) {
   const vinculados = new Set(
     casamento.vinculos.map((v) => texto(v.analise_id)),
   );
-  const mudam = [];
-  const preservados = [];
+  const mudam: { anterior: CandidatoAnterior; novo: CandidatoDaListaFinal }[] =
+    [];
+  const preservados: typeof mudam = [];
   for (const v of casamento.vinculos) {
     const anterior = porId.get(v.candidato_id);
     const novo = porAnalise.get(v.analise_id);
@@ -254,7 +295,7 @@ export function resumoDaPublicacao(anteriores, novos, casamento) {
 }
 
 /** Os vínculos como o banco os recebe (p_vinculos). */
-export function argumentosDaPublicacao(casamento) {
+export function argumentosDaPublicacao(casamento: CasamentoDeCandidatos) {
   return casamento.vinculos.map(({ candidato_id, analise_id, forma }) => ({
     candidato_id,
     analise_id,
@@ -265,12 +306,13 @@ export function argumentosDaPublicacao(casamento) {
 /* O motivo para trocar pela planilha uma lista publicada da Classificação. */
 export const MOTIVO_MINIMO = 3;
 export const MOTIVO_MAXIMO = 500;
-export function motivoValido(motivo) {
+export function motivoValido(motivo: unknown) {
   const t = texto(motivo);
   return t.length >= MOTIVO_MINIMO && t.length <= MOTIVO_MAXIMO;
 }
 
-const diaMes = (valor) => {
+const diaMes = (valor: unknown) => {
+  if (typeof valor !== "string" && typeof valor !== "number") return "";
   const d = new Date(valor);
   if (Number.isNaN(d.getTime())) return "";
   return d.toLocaleDateString("pt-BR", {
@@ -284,10 +326,11 @@ const diaMes = (valor) => {
  * A origem da lista vigente (linha de listar_listas_aprovados):
  * { tipo: "CLASSIFICACAO" | "XLSX", texto }.
  */
-export function origemDaLista(lista) {
+export function origemDaLista(lista: unknown): OrigemDaLista | null {
   if (!lista) return null;
-  if (texto(lista.origem).toUpperCase() === "CLASSIFICACAO") {
-    const quando = diaMes(lista.importado_em);
+  const dados = registroDaPublicacao(lista);
+  if (texto(dados.origem).toUpperCase() === "CLASSIFICACAO") {
+    const quando = diaMes(dados.importado_em);
     return {
       tipo: "CLASSIFICACAO",
       texto: quando
@@ -302,12 +345,12 @@ export function origemDaLista(lista) {
  * A origem das listas na tela: a do edital quando só há um no recorte; com
  * vários, quantas vieram de cada origem.
  */
-export function resumoDasOrigens(listas) {
+export function resumoDasOrigens(listas: unknown[] | null | undefined) {
   const vigentes = (listas || []).filter(Boolean);
   if (!vigentes.length) return "";
-  if (vigentes.length === 1) return origemDaLista(vigentes[0]).texto;
+  if (vigentes.length === 1) return origemDaLista(vigentes[0])?.texto ?? "";
   const daClassificacao = vigentes.filter(
-    (l) => origemDaLista(l).tipo === "CLASSIFICACAO",
+    (l) => origemDaLista(l)?.tipo === "CLASSIFICACAO",
   ).length;
   const manuais = vigentes.length - daClassificacao;
   const partes = [];

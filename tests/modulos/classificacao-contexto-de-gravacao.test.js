@@ -41,6 +41,39 @@ function banco() {
   };
 }
 describe("Classificação após mudança de contexto", () => {
+  it("pede conferência da lista quando o banco não confirma uma publicação enviada", async () => {
+    const b = banco(),
+      toast = vi.fn(),
+      e = criarEstadoDaClassificacao({ supabase: b.supabase, toast });
+    await e.escolherEdital("A");
+    const p = e.publicarComoListaDeAprovados({ listaId: "l1", vinculos: [] });
+    b.pendentes[0].resolver({ data: { ok: true }, error: null });
+    expect(await p).toBeNull();
+    expect(toast).toHaveBeenCalledWith(
+      expect.stringContaining(
+        "Confira a Lista de aprovados antes de tentar novamente",
+      ),
+      "warning",
+    );
+    expect(toast).not.toHaveBeenCalledWith(expect.anything(), "success");
+  });
+
+  it("descarta a confirmação de aprovados após sair e voltar ao mesmo edital", async () => {
+    const b = banco(),
+      toast = vi.fn(),
+      e = criarEstadoDaClassificacao({ supabase: b.supabase, toast });
+    await e.escolherEdital("A");
+    const p = e.publicarComoListaDeAprovados({ listaId: "l1", vinculos: [] });
+    await e.escolherEdital("B");
+    await e.escolherEdital("A");
+    b.pendentes[0].resolver({
+      data: { ok: true, candidatos: 3, pendencias: [] },
+      error: null,
+    });
+    expect(await p).toBeNull();
+    expect(toast).not.toHaveBeenCalled();
+  });
+
   it("uma geração antiga não libera o botão nem insere uma lista no contexto novo", async () => {
     const b = banco(),
       toast = vi.fn(),

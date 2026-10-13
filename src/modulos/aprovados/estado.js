@@ -83,7 +83,7 @@ import {
   somaDasReservas,
 } from "../../lib/configuracao-de-convocacao.js";
 import { PLANILHAS } from "../../lib/planilhas.js";
-import { motivoValido } from "../../lib/publicacao-de-aprovados.js";
+import { motivoValido } from "../../lib/publicacao-de-aprovados.ts";
 import { irParaLink } from "../chat/ponte.js";
 import { criarEstadoDaCarta } from "./carta-de-convocacao/estado.js";
 import {

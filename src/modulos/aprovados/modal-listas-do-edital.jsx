@@ -8,7 +8,7 @@ import { PLANILHAS } from "../../lib/planilhas.js";
 import {
   MOTIVO_MAXIMO,
   origemDaLista,
-} from "../../lib/publicacao-de-aprovados.js";
+} from "../../lib/publicacao-de-aprovados.ts";
 import { Abas, Aviso, BotaoDeAcao, classes, Modal } from "../../ui/index.js";
 import { FormularioDeConvocacao } from "./formulario-de-convocacao.jsx";
 
