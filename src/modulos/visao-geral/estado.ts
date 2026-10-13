@@ -45,6 +45,10 @@ import {
   linhasDaArea,
   obterDadosDoMonitoramento,
 } from "../../componentes/dados-do-monitoramento.ts";
+import {
+  respostaInalterada,
+  versaoDoPacote,
+} from "../../lib/cache-de-payload.js";
 import { hojeEmBrasilia } from "../../lib/cronograma-do-edital.js";
 import { semTreinamento } from "../../lib/edital-de-treinamento.js";
 import { chaveDoDsei } from "../../lib/mapa-saude-indigena/chaves.ts";
@@ -71,19 +75,31 @@ import {
 export const CHAVE_DOS_FILTROS = "agsus_monitora_filters_v1";
 export const CHAVE_DAS_COLUNAS = "agsus_visible_cols_v1";
 /** Etapas do cronograma e resumo das listas de aprovados da área. */
-export const RPC_ACOMPANHAMENTO = "listar_acompanhamento_da_visao_geral";
+export const RPC_ACOMPANHAMENTO =
+  "listar_acompanhamento_da_visao_geral_se_mudou";
 
 const txt = (valor: unknown) => String(valor ?? "").trim();
+
+/*
+  O último acompanhamento de cada área, com a `versao` do banco. Fica fora da
+  tela (ela remonta a cada abertura): a volta pergunta só se mudou e, se não,
+  o banco responde `{ inalterado: true }` (migration 20261013160000).
+*/
+const acompanhamentosConhecidos = new Map<string, unknown>();
 
 /** A busca do acompanhamento pelo cliente Supabase da tela. */
 export function buscarAcompanhamentoNoSupabase(
   supabase: ClienteDoAcompanhamento,
 ) {
   return async (area: string) => {
+    const conhecido = acompanhamentosConhecidos.get(area) ?? null;
     const { data, error } = await supabase.rpc(RPC_ACOMPANHAMENTO, {
       p_area: area,
+      p_versao: versaoDoPacote(conhecido),
     });
     if (error) throw error;
+    if (conhecido && respostaInalterada(data)) return conhecido;
+    acompanhamentosConhecidos.set(area, data);
     return data;
   };
 }

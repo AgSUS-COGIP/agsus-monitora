@@ -155,8 +155,8 @@ export type SnapshotDasEntrevistas = Readonly<{
 type SessaoDoPainel = { user?: { id?: string } } | null;
 export interface ClienteDoPainel {
   rpc(
-    nome: "get_entrevistas_da_area",
-    argumentos: { p_area: string },
+    nome: "get_entrevistas_da_area_se_mudou",
+    argumentos: { p_area: string; p_versao: string | null },
   ): PromiseLike<{ data: unknown; error: unknown }>;
   rpc(
     nome: "obter_agenda_entrevista",

@@ -272,7 +272,7 @@ describe("a tela dentro do app", () => {
   it("o acompanhamento da área chega uma vez por carga: parado e pós-resultado", async () => {
     const supabase = {
       rpc: vi.fn(async (nome) =>
-        nome === "listar_acompanhamento_da_visao_geral"
+        nome === "listar_acompanhamento_da_visao_geral_se_mudou"
           ? {
               data: {
                 etapas: [
@@ -308,10 +308,13 @@ describe("a tela dentro do app", () => {
     await esperar();
     const pedidos = () =>
       supabase.rpc.mock.calls.filter(
-        ([nome]) => nome === "listar_acompanhamento_da_visao_geral",
+        ([nome]) => nome === "listar_acompanhamento_da_visao_geral_se_mudou",
       );
     expect(pedidos()).toEqual([
-      ["listar_acompanhamento_da_visao_geral", { p_area: "saude-indigena" }],
+      [
+        "listar_acompanhamento_da_visao_geral_se_mudou",
+        { p_area: "saude-indigena", p_versao: null },
+      ],
     ]);
     // 11/2025: sem etapa em curso desde 11/09 → parado há 20 dias.
     expect(valorDoKpi("criticos")).toBe("2");

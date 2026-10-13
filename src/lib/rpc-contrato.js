@@ -354,12 +354,6 @@ export const CONTRATO_RPC = {
     resumo:
       "Todas as etapas de cronograma dos editais ativos, num pedido só (tela Cronograma).",
   },
-  listar_acompanhamento_da_visao_geral: {
-    argumentos: ["p_area"],
-    critica: false,
-    resumo:
-      "Visão geral de uma área: etapas do cronograma e, por edital com lista vigente, aprovados, com status, contratados e desistentes (crítico parado, Próximos 7 dias e Pós-resultado; migration 20261002131000). Sem ela, a tela usa só as linhas.",
-  },
   get_nucleo_cronograma_resumo: {
     argumentos: [],
     critica: false,
@@ -372,6 +366,40 @@ export const CONTRATO_RPC = {
     critica: true,
     resumo:
       "Lista as listas vigentes de aprovados vinculadas aos editais, com nome e e-mail de quem importou, a origem (XLSX ou CLASSIFICACAO) e a lista de classificação publicada.",
+  },
+  // ── Payload só quando muda (20261013160000_payload_so_quando_muda.sql) ──
+  // As quatro primeiras chamam a função de sempre e devolvem o payload com
+  // `versao` (md5 sem `gerado_em`), ou só `{ inalterado, versao }` quando
+  // p_versao é a atual.
+  get_analises_dashboard_payload_v2_se_mudou: {
+    argumentos: ["p_scope", "p_area", "p_versao"],
+    critica: true,
+    resumo:
+      "get_analises_dashboard_payload_v2 com versão: o painel de Análises revalida a cópia sem baixar o payload (até 4 MB) quando nada mudou.",
+  },
+  get_entrevistas_da_area_se_mudou: {
+    argumentos: ["p_area", "p_versao"],
+    critica: false,
+    resumo:
+      "get_entrevistas_da_area com versão: a aba Entrevistas revalida a cópia ou o que já tem sem baixar o payload quando nada mudou.",
+  },
+  get_selecao_da_area_se_mudou: {
+    argumentos: ["p_area", "p_versao"],
+    critica: false,
+    resumo:
+      "get_selecao_da_area com versão: a aba Seleção revalida a cópia ou o que já tem sem baixar o payload quando nada mudou.",
+  },
+  listar_acompanhamento_da_visao_geral_se_mudou: {
+    argumentos: ["p_area", "p_versao"],
+    critica: false,
+    resumo:
+      "listar_acompanhamento_da_visao_geral com versão: a Visão geral relê o acompanhamento da área sem baixar de novo o que não mudou.",
+  },
+  listar_monitoramento_operacional: {
+    argumentos: ["p_versao"],
+    critica: true,
+    resumo:
+      "As linhas ativas do monitoramento (VW_MONITORAMENTO_INDIGENA_OPERACIONAL, 40 colunas, por unidade e edital; SECURITY INVOKER, a RLS de sempre), com versão: a entrada, o F5 e o 'Atualizar dados' não baixam de novo o que não mudou. Substitui o select direto na view.",
   },
   listar_candidatos_aprovados_compacto: {
     argumentos: ["p_area", "p_versao"],
@@ -572,12 +600,6 @@ export const CONTRATO_RPC = {
     resumo:
       "Lugares das vagas da área (TB_LOCAL_VAGA_EDITAL, lidos dos PDFs dos editais, + UBS móvel no nome da vaga): chave do lugar, município ou UF, coordenada do banco (TB_COORDENADA_LOCAL_VAGA, nula se ainda não há), projetos e editais de cada um, vagas publicadas e nas análises, candidatos, aprovados e reprovados — mapa da Visão geral de Projetos (migrations 20260929090000, 20261001180000 e 20261002190000).",
   },
-  get_analises_dashboard_payload_v2: {
-    argumentos: ["p_scope", "p_area"],
-    critica: true,
-    resumo:
-      "Lista enxuta (schema_version 4) do painel de Análises da área (Saúde Indígena, SEDE ou Projetos), por escopo: ativo, inativo ou desativadas ('Todos' = os três juntos no navegador). Vem do cache do servidor (`TA_PAINEL_ANALISE`, `cache.hit`), exceto para quem tem recorte por coordenação (migration 20260929150000).",
-  },
   get_analise_detalhe_do_painel: {
     argumentos: ["p_id"],
     critica: false,
@@ -591,14 +613,6 @@ export const CONTRATO_RPC = {
       "Parecer, link do PDF e tempo de experiência profissional da área e escopo do painel de Análises, em lote, para o CSV e a busca geral.",
   },
 
-  // ── Entrevistas (aba Entrevistas, 20260929235000_entrevistas.sql) ──────
-  get_entrevistas_da_area: {
-    argumentos: ["p_area"],
-    critica: false,
-    resumo:
-      "Aba Entrevistas de uma área (json, só leitura): entrevistas com as notas por critério, a análise ligada, a última carga da planilha e os aprovados na análise sem entrevista.",
-  },
-  // ── Seleção (aba Seleção, 20261001090000_selecao.sql) ──────────────────
   // ── Status das atualizações (Configurações, 20261001120000_saude_das_cargas.sql) ──
   get_saude_das_cargas: {
     argumentos: [],
@@ -657,12 +671,6 @@ export const CONTRATO_RPC = {
     critica: false,
     resumo:
       "Ignora um aviso de conferência aberto com motivo (10 a 500 caracteres): administrador global ou quem administra o módulo (classificação: editor). Volta a aberto se a quantidade crescer.",
-  },
-  get_selecao_da_area: {
-    argumentos: ["p_area"],
-    critica: false,
-    resumo:
-      "Aba Seleção de uma área (json, só leitura): o funil de cada vaga da planilha Auditoria, os convocados (entrevistas do MONITORA ou a planilha) e aprovados/contratados da lista vigente.",
   },
   // ── Entrevistas no sistema (20260930220000_entrevistas_roteiros_e_notas.sql)
   listar_roteiros_entrevista: {

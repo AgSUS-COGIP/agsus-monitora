@@ -32,7 +32,9 @@ import { hojeEmBrasilia } from "../../lib/cronograma-do-edital.js";
 import {
   criarCacheDePayload,
   ehErroDeAcesso,
+  respostaInalterada,
   revalidarPayload,
+  versaoDoPacote,
 } from "../../lib/cache-de-payload.js";
 import {
   comTempoLimite,
@@ -122,6 +124,8 @@ export function criarEstadoDasEntrevistas({
   let estado: SnapshotDasEntrevistas = ESTADO_INICIAL;
   let pedido = 0;
   let usuarioDaCarga = "";
+  /* O último payload mostrado (com a `versao` do banco): a volta à tela pergunta só se mudou. */
+  let ultimo: { area: string; payload: unknown } | null = null;
   const ouvintes = new Set<() => void>();
   const agendas = new Map<string, ItemDaAgenda[]>();
   let geracaoDasAgendas = 0;
@@ -140,6 +144,7 @@ export function criarEstadoDasEntrevistas({
     payload: unknown,
     extra: Partial<SnapshotDasEntrevistas> = {},
   ) {
+    ultimo = { area: estado.area, payload };
     publicar({
       dados: normalizarPayload(payload || {}),
       carregado: true,
@@ -158,7 +163,8 @@ export function criarEstadoDasEntrevistas({
     });
   }
 
-  const perderAcesso = (erro: unknown) =>
+  const perderAcesso = (erro: unknown) => {
+    ultimo = null;
     publicar({
       ...ESTADO_INICIAL,
       area: estado.area,
@@ -166,6 +172,7 @@ export function criarEstadoDasEntrevistas({
       semAcesso: codigoDoErro(erro) === "42501",
       erroAoCarregar: mensagemDaCarga(erro),
     });
+  };
 
   /*
     Outro usuário na mesma aba (ou saiu da conta): o que era do anterior sai e
@@ -176,6 +183,7 @@ export function criarEstadoDasEntrevistas({
     agendas.clear();
     geracaoDasAgendas += 1;
     usuarioDaCarga = "";
+    ultimo = null;
     publicar({ ...ESTADO_INICIAL, comemoracoes: estado.comemoracoes });
   }
   let identidade: string | null | undefined;
@@ -187,14 +195,26 @@ export function criarEstadoDasEntrevistas({
     identidade = atual;
   });
 
-  /* O payload da área; lança o erro do banco (ou o de rede/tempo). */
-  async function buscar(area: string): Promise<unknown> {
+  /*
+    O payload da área; lança o erro do banco (ou o de rede/tempo). Com o que a
+    tela já tem (`conhecido`), manda a versão dele: se ainda vale, o banco
+    responde só `{ inalterado: true }` (migration 20261013160000) e volta o
+    próprio `conhecido`.
+  */
+  async function buscar(
+    area: string,
+    conhecido: unknown = null,
+  ): Promise<unknown> {
     if (!supabase) throw new Error("Sem conexão com o banco.");
     const { data, error } = await comTempoLimite(
-      supabase.rpc("get_entrevistas_da_area", { p_area: area }),
+      supabase.rpc("get_entrevistas_da_area_se_mudou", {
+        p_area: area,
+        p_versao: versaoDoPacote(conhecido),
+      }),
       tempoLimiteMs,
     );
     if (error) throw error;
+    if (conhecido && respostaInalterada(data)) return conhecido;
     return data || {};
   }
 
@@ -250,7 +270,7 @@ export function criarEstadoDasEntrevistas({
         mostrar(guardado, { atualizando: true, daCopia: true });
         const novo = await revalidarPayload({
           guardado,
-          buscar: () => buscar(area),
+          buscar: () => buscar(area, guardado),
           guardar: (payload: unknown) => copias.guardar(contexto, payload),
           mudou: payloadMudou,
           aoMudar: (payload: unknown) => {
@@ -271,7 +291,10 @@ export function criarEstadoDasEntrevistas({
         return Boolean(novo);
       }
 
-      const payload = await buscar(area);
+      const payload = await buscar(
+        area,
+        ultimo?.area === area ? ultimo.payload : null,
+      );
       if (meu !== pedido) return false;
       mostrar(payload);
       void copias.guardar(contexto, payload);
