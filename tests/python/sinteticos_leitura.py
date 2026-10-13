@@ -546,6 +546,46 @@ CASO_DO_MEDICO = [
         "gabarito": None,  # a mesma do SESI, ilegível: não pode virar um vínculo a mais
     },
     {
+        # A ficha de registro do SESI (eSocial): admissão, cargo, jornada e as tabelas de férias (períodos
+        # aquisitivos e de gozo), afastamentos e alterações salariais, que têm datas e NÃO são vínculos; e o
+        # cabeçalho de lotação "Estabelecimento definido para…", que não é o empregador.
+        "emissor": "SERVIÇO SOCIAL DA INDÚSTRIA — SESI",
+        "cnpj": cnpj_ficticio(55777342, 1),
+        "timbre": True,
+        "rodape_so_cnpj": True,
+        "texto": "Ficha de registro de empregado (extrato do eSocial).",
+        "linhas": [
+            "Estabelecimento definido para SERVICO SOCIAL DA INDUSTRIA",
+            "Cargo: MEDICO DO TRABALHO",
+            "Data de admissão: 02/09/2024",
+            "Jornada: 10 horas semanais",
+            "Férias",
+            "Período aquisitivo        Período de gozo",
+            "02/09/2024 a 01/09/2025   06/11/2025 a 05/12/2025",
+            "02/09/2025 a 01/09/2026   01/10/2026 a 30/10/2026",
+            "Abono pecuniário: não    1/3 de férias: 05/11/2025",
+            "Afastamentos",
+            "10/01/2025 a 20/01/2025  Licença médica",
+            "Alterações salariais",
+            "01/05/2025  Reajuste anual",
+        ],
+        "local": "Exemplópolis, 12 de fevereiro de 2026",
+        "gabarito": None,  # o mesmo vínculo da declaração do SESI: junta com ele
+    },
+    {
+        # Página sem empregador legível com um período DENTRO do vínculo atual da caixa de assistência.
+        "emissor": None,
+        "cnpj": None,
+        "timbre": True,
+        "timbre_lido": "Ae ras Wnt",
+        "texto": (
+            "Declaramos que {nome}, CPF {cpf}, exerceu o cargo de Médico do Trabalho no período de 01/04/2025 a "
+            "02/04/2026."
+        ),
+        "local": "Exemplópolis, 12 de fevereiro de 2026",
+        "gabarito": None,
+    },
+    {
         "emissor": "GR CLINICA MEDICA EXEMPLO",
         "cnpj": cnpj_ficticio(66285673),
         "timbre": False,
@@ -602,6 +642,10 @@ def declaracoes_de_vinculo(declaracoes=None, nome=NOME_FICTICIO, cpf=CPF_FICTICI
         c.drawCentredString(largura / 2, altura - 150, "DECLARAÇÃO")
         corpo = d["texto"].format(nome=nome.upper(), cpf=cpf, cnpj=d["cnpj"])
         y = _paragrafo(c, corpo, 70, altura - 200, largura - 140)
+        for linha in d.get("linhas") or []:  # ficha de registro: uma linha por campo/tabela
+            c.setFont("Helvetica", 10)
+            c.drawString(70, y, linha)
+            y -= 16
         if d.get("continuacao"):
             c.setFont("Helvetica", 8)
             c.drawString(70, 40, "continua na próxima página")

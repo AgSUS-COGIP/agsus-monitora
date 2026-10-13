@@ -132,7 +132,9 @@ EMPRESA = re.compile(
 )
 _TITULO = re.compile(
     r"^(?:declaracao|declaracoes|atestado|certidao|contrato|termo|certificado|a quem|ao\s|aos\s|ilm|prezad|ref\b|"
-    r"assunto|oficio|memorando|pagina|folha|declar|atest|certific|para os devidos|continua)"
+    r"assunto|oficio|memorando|pagina|folha|declar|atest|certific|para os devidos|continua|"
+    # Cabeçalho de lotação da ficha de registro/eSocial: não é o empregador.
+    r"estabelecimento|lotacao|local\s+de\s+trabalho|centro\s+de\s+custo)"
 )
 _CONTATO = re.compile(
     r"(?<![a-z])(?:rua|avenida|av|rodovia|travessa|alameda|praca|quadra|qd|lote|bairro|cep|tel|telefone|fone|"
@@ -501,6 +503,57 @@ def _nome_pelo_cnpj(secoes_):
     for s in secoes_:
         if s.emissor and not s.emissor.nome and _raiz(s.emissor.cnpj) in nomes:
             s.emissor.nome = nomes[_raiz(s.emissor.cnpj)]
+
+
+# ── férias, afastamentos e alterações (ficha de registro / eSocial) ─────────
+
+# Os assuntos que têm datas e não são vínculo: períodos aquisitivo/concessivo/de gozo de férias, abono, 1/3,
+# afastamentos, licenças, alterações salariais/contratuais e o cabeçalho de lotação.
+_ASSUNTO_IGNORADO = (
+    r"ferias|periodos?\s+aquisitivos?|aquisitivo|concessivo|gozo|abono(?:\s+pecuniario)?|1/3|um\s+terco|"
+    r"afastamentos?|licencas?|alteracao(?:oes)?\s+(?:salariais|salarial|contratuais|contratual|de\s+cargo)|"
+    r"alteracoes|reajustes?|historico\s+salarial|remuneracao|salario|estabelecimento\s+definido|"
+    r"situacao\s+(?:do\s+)?afastamento|retorno"
+)
+_LINHA_DE_ASSUNTO = re.compile(rf"^[\s\-–•·*\d.)]*(?:{_ASSUNTO_IGNORADO})(?![a-z])")
+_ASSUNTO_NA_LINHA = re.compile(rf"(?<![a-z])(?:{_ASSUNTO_IGNORADO})(?![a-z])")
+_DATA_NA_LINHA = re.compile(r"(?<![\d/])\d{1,2}\s?[/.-]\s?\d{1,2}\s?[/.-]\s?\d{2,4}(?![\d/])")
+# Cabeçalho das tabelas dessas seções ("Início  Fim  Dias", "Período  Data de pagamento").
+_CABECALHO_DE_TABELA = re.compile(
+    r"^(?:(?:inicio|fim|termino|dias?|qtd|quantidade|periodo|data|de|ate|a|pagamento|motivo|situacao|"
+    r"valor|tipo|n[ºo°]?|codigo|cid|observacao|parcela|referencia|[\s/|:\-–.])+)$"
+)
+VERBO_DE_VINCULO = re.compile(
+    r"(?<![a-z])(?:exerc|admiti|admiss|contratad|contratacao|trabalh|prest|atu(?:a|ou|ando)(?![a-z])|nomead|"
+    r"empossad|lotad|servidor|funcionari|empregad|vincul|labor|desempenh|ocup|cargo|funcao|emprego|ingress|"
+    r"quadro\s+de|permanec)"
+)
+
+
+def mascarar_ignorados(original):
+    """O texto com as linhas de férias, afastamentos, alterações salariais e lotação trocadas por espaços (mesmo
+    tamanho: as posições continuam valendo). A linha que COMEÇA pelo assunto abre um bloco que segue enquanto
+    as linhas forem datas, cabeçalho de tabela ou o mesmo assunto (e sem verbo de vínculo); a linha de texto corrido com o assunto no
+    meio ("…, sem afastamentos") só sai se tiver duas datas e nenhum verbo de vínculo."""
+    saida, no_bloco = [], False
+    for linha in original.split("\n"):
+        d = dobrar(linha).strip()
+        datas = len(_DATA_NA_LINHA.findall(d))
+        if _LINHA_DE_ASSUNTO.match(d):
+            no_bloco = True
+            saida.append(" " * len(linha))
+            continue
+        # O bloco acaba na linha com verbo de vínculo ("Data de admissão", "Declaramos que exerceu…").
+        continua = not d or datas or _CABECALHO_DE_TABELA.match(d) or _ASSUNTO_NA_LINHA.search(d)
+        if no_bloco and continua and not VERBO_DE_VINCULO.search(d):
+            saida.append(" " * len(linha))
+            continue
+        no_bloco = False
+        if datas >= 2 and _ASSUNTO_NA_LINHA.search(d) and not VERBO_DE_VINCULO.search(d):
+            saida.append(" " * len(linha))
+            continue
+        saida.append(linha)
+    return "\n".join(saida)
 
 
 # ── emissão ──────────────────────────────────────────────────────────────────
