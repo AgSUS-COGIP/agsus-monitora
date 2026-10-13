@@ -62,7 +62,7 @@
     decisão, o candidato volta ao que a regra diz.
 */
 import { codigosDaModalidade } from "../classificacao/catalogo.js";
-import { dataDeCorteDoCronograma } from "../classificacao/dados.js";
+import { dataDeCorteDoCronograma } from "../classificacao/dados.ts";
 import { DESEMPATE_PADRAO_DA_PROVISORIA } from "./catalogo.js";
 import {
   calcularNotaDeclarada,

@@ -4,7 +4,7 @@ import { Campo, Secao } from "../../ui/index.js";
 
 /*
   A hora de nascimento pela certidão, na explicação do candidato
-  (listas.jsx › gaveta). Só aparece quando decide: o empate chegou à "maior
+  (listas.tsx › gaveta). Só aparece quando decide: o empate chegou à "maior
   idade" com a mesma data de nascimento (o motor marca `horaDecide`), ou a
   hora já foi informada (para trocar ou tirar). Sem hora, vale 23h59min59s
   (itens 6.11.5 e 6.11.6 do 93/2026). A planilha e a Empregare não trazem a

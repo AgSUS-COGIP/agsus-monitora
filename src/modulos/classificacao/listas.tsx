@@ -1,3 +1,21 @@
+import type { FormEvent } from "react";
+import type {
+  ExplicacaoDoCandidato,
+  PendenciaDeEmpate,
+  RecorteDasListas,
+  ResultadoDoMotor,
+  TipoDeLista,
+  VagaDoResultado,
+  VagaRecortada,
+} from "../../lib/classificacao/tipos-do-resultado.ts";
+import type {
+  DadosDaClassificacao,
+  DesempateRegistrado,
+  EstadoDaClassificacao,
+  ListaRegistrada,
+  SnapshotDaClassificacao,
+} from "./tipos-do-estado.ts";
+
 import { useId, useMemo, useState } from "react";
 import {
   MOTIVOS_DE_ELIMINACAO,
@@ -10,7 +28,7 @@ import {
   listaDesatualizada,
   recortarResultado,
   RECORTE_VAZIO,
-} from "../../lib/classificacao/dados.js";
+} from "../../lib/classificacao/dados.ts";
 import {
   dataBR,
   formatarNota,
@@ -51,7 +69,7 @@ import {
 */
 
 /* "Recurso nº 12" ao lado do nome: a nota veio de um ajuste aprovado em recurso. */
-export function MarcaDoRecurso({ recursos }) {
+export function MarcaDoRecurso({ recursos }: { recursos?: number[] }) {
   if (!recursos?.length) return null;
   const numeros = recursos.map((n) => `nº ${n}`).join(", ");
   return (
@@ -65,15 +83,18 @@ export function MarcaDoRecurso({ recursos }) {
   );
 }
 
-const SITUACOES = {
+const SITUACOES: Record<string, [string, string]> = {
   VAGA: ["aprovado", "Vaga"],
   CR: ["neutro", "CR"],
   CONVOCADO: ["revisar", "Convocado"],
   APTO: ["aprovado", "Apto"],
 };
 const VAGAS_POR_VEZ = 30;
+const motivosDaEliminacao: Readonly<Record<string, string>> =
+  MOTIVOS_DE_ELIMINACAO;
 
-function dataHora(valor) {
+function dataHora(valor: unknown) {
+  if (typeof valor !== "string" && typeof valor !== "number") return "";
   const d = new Date(valor);
   return Number.isNaN(d.getTime())
     ? ""
@@ -84,9 +105,16 @@ function dataHora(valor) {
       });
 }
 
-export function Indicadores({ resultado, carregando }) {
-  const t = resultado?.totais || {};
-  const n = (v) => (Number.isFinite(v) ? v.toLocaleString("pt-BR") : "0");
+export function Indicadores({
+  resultado,
+  carregando,
+}: {
+  resultado: ResultadoDoMotor | null;
+  carregando: boolean;
+}) {
+  const t: Partial<ResultadoDoMotor["totais"]> = resultado?.totais || {};
+  const n = (v: number | undefined) =>
+    v !== undefined && Number.isFinite(v) ? v.toLocaleString("pt-BR") : "0";
   return (
     <GradeDeKpis
       tour="classificacao-kpis"
@@ -136,7 +164,15 @@ export function Indicadores({ resultado, carregando }) {
   );
 }
 
-function Avisos({ resultado, podeEditar, aoResolver }) {
+function Avisos({
+  resultado,
+  podeEditar,
+  aoResolver,
+}: {
+  resultado: ResultadoDoMotor;
+  podeEditar: boolean;
+  aoResolver: (p: PendenciaDeEmpate) => void;
+}) {
   const grupos = avisosAgrupados(resultado.avisos);
   if (!grupos.length && !resultado.pendencias.length) return null;
   const tom = grupos.some((g) => g.tom === "danger") ? "danger" : "warning";
@@ -188,7 +224,17 @@ function Avisos({ resultado, podeEditar, aoResolver }) {
   );
 }
 
-function Filtros({ resultado, regra, recorte, aoMudar }) {
+function Filtros({
+  resultado,
+  regra,
+  recorte,
+  aoMudar,
+}: {
+  resultado: ResultadoDoMotor;
+  regra: Record<string, unknown> | null;
+  recorte: RecorteDasListas;
+  aoMudar: (r: RecorteDasListas) => void;
+}) {
   const ids = { vaga: useId(), lista: useId(), busca: useId() };
   const modalidades = normalizarRegra(regra).modalidades.filter(
     (m) => m.lista_propria,
@@ -244,13 +290,23 @@ function Filtros({ resultado, regra, recorte, aoMudar }) {
   );
 }
 
-const ORIGEM_DAS_VAGAS = Object.freeze({
+const ORIGEM_DAS_VAGAS: Readonly<Record<string, string>> = Object.freeze({
   CONVOCACAO:
     "Vagas por modalidade: configuração de convocação do edital (Lista de aprovados).",
   REGRA: "Vagas por modalidade: percentuais da regra de classificação.",
 });
 
-function TabelaDaVaga({ vaga, casas, rotulosDasModalidades, aoAbrir }) {
+function TabelaDaVaga({
+  vaga,
+  casas,
+  rotulosDasModalidades,
+  aoAbrir,
+}: {
+  vaga: VagaRecortada;
+  casas: number;
+  rotulosDasModalidades: Record<string, string>;
+  aoAbrir: (id: string) => void;
+}) {
   return (
     <article className="ui-card classificacao-vaga" data-vaga={vaga.chave}>
       <h3 className="ui-titulo">{vaga.cabecalho}</h3>
@@ -311,9 +367,9 @@ function TabelaDaVaga({ vaga, casas, rotulosDasModalidades, aoAbrir }) {
                       .join(" / ")}
                   </td>
                   <td>
-                    {SITUACOES[l.situacao] ? (
-                      <Selo tom={SITUACOES[l.situacao][0]}>
-                        {SITUACOES[l.situacao][1]}
+                    {l.situacao && SITUACOES[l.situacao] ? (
+                      <Selo tom={SITUACOES[l.situacao]?.[0]}>
+                        {SITUACOES[l.situacao]?.[1]}
                         {l.situacao === "VAGA" &&
                         l.vagaPor &&
                         l.vagaPor !== "AC"
@@ -357,7 +413,7 @@ function TabelaDaVaga({ vaga, casas, rotulosDasModalidades, aoAbrir }) {
                       </button>{" "}
                       <MarcaDoRecurso recursos={e.recursos} />
                     </td>
-                    <td>{MOTIVOS_DE_ELIMINACAO[e.motivo] || e.motivo}</td>
+                    <td>{motivosDaEliminacao[e.motivo] || e.motivo}</td>
                     <td>{e.detalhe || "—"}</td>
                   </tr>
                 ))}
@@ -378,6 +434,14 @@ function GavetaDoCandidato({
   podeEditar,
   aoSalvarHora,
   aoFechar,
+}: {
+  explicacao: ExplicacaoDoCandidato;
+  vaga?: VagaDoResultado;
+  rotulosDasModalidades: Record<string, string>;
+  casas: number;
+  podeEditar: boolean;
+  aoSalvarHora: EstadoDaClassificacao["salvarHoraDeNascimento"];
+  aoFechar: () => void;
 }) {
   const posicoes = Object.entries(explicacao.posicoes || {});
   return (
@@ -452,25 +516,37 @@ function GavetaDoCandidato({
 }
 
 /* Registro do empate final: sorteio (semente do servidor ou informada) ou decisão manual. */
-function ModalDeDesempate({ pendencia, estado, aoFechar }) {
+function ModalDeDesempate({
+  pendencia,
+  estado,
+  aoFechar,
+}: {
+  pendencia: PendenciaDeEmpate;
+  estado: EstadoDaClassificacao;
+  aoFechar: () => void;
+}) {
   const sorteio = pendencia.metodo === "SORTEIO";
   const [origem, setOrigem] = useState("SERVIDOR");
   const [semente, setSemente] = useState("");
   const [ordem, setOrdem] = useState(pendencia.candidatos);
   const [justificativa, setJustificativa] = useState("");
   const [enviando, setEnviando] = useState(false);
-  const [registro, setRegistro] = useState(null);
+  const [registro, setRegistro] = useState<DesempateRegistrado | null>(null);
   const ids = { semente: useId(), justificativa: useId() };
   const nomes = Object.fromEntries(
     pendencia.candidatos.map((c) => [c.analiseId, c.nome]),
   );
 
-  const mover = (i, passo) =>
+  const mover = (i: number, passo: number) =>
     setOrdem((atual) => {
       const nova = [...atual];
       const j = i + passo;
       if (j < 0 || j >= nova.length) return atual;
-      [nova[i], nova[j]] = [nova[j], nova[i]];
+      const atualNaPosicao = nova[i],
+        destino = nova[j];
+      if (!atualNaPosicao || !destino) return atual;
+      nova[i] = destino;
+      nova[j] = atualNaPosicao;
       return nova;
     });
 
@@ -478,7 +554,7 @@ function ModalDeDesempate({ pendencia, estado, aoFechar }) {
     ? origem === "SERVIDOR" || semente.trim().length >= 4
     : justificativa.trim().length >= 10;
 
-  async function enviar(evento) {
+  async function enviar(evento: FormEvent<HTMLFormElement>) {
     evento.preventDefault();
     if (!podeEnviar || enviando) return;
     setEnviando(true);
@@ -655,9 +731,18 @@ function Acoes({
   aoGerado,
   aoCarregarRegistro,
   aoAbrirAgenda,
+}: {
+  tipo: TipoDeLista;
+  e: SnapshotDaClassificacao;
+  resultado: ResultadoDoMotor;
+  registro: ListaRegistrada | null;
+  estado: EstadoDaClassificacao;
+  aoGerado: (l: ListaRegistrada) => void;
+  aoCarregarRegistro: (l: ListaRegistrada) => void;
+  aoAbrirAgenda?: () => void;
 }) {
   const [lista, setLista] = useState("todas");
-  const [fase, setFase] = useState("");
+  const [fase, setFase] = useState<"" | "PRELIMINAR" | "FINAL">("");
   const idLista = useId();
   const idFase = useId();
   const dados = e.dados;
@@ -668,8 +753,8 @@ function Acoes({
     dados?.regra?.configuracao,
   ).modalidades.filter((m) => m.lista_propria);
 
-  const [documento, setDocumento] = useState(null);
-  const [publicando, setPublicando] = useState(null);
+  const [documento, setDocumento] = useState<ListaRegistrada | null>(null);
+  const [publicando, setPublicando] = useState<ListaRegistrada | null>(null);
   const analises = useMemo(
     () =>
       new Map(
@@ -689,7 +774,7 @@ function Acoes({
     if (alvo) aoCarregarRegistro(alvo);
     return alvo?.retrato ? alvo : null;
   }
-  async function exportar(formato) {
+  async function exportar(formato: string) {
     const alvo = await alvoRegistrado();
     if (alvo) await estado.exportar(alvo, formato, lista, fase || null);
   }
@@ -755,7 +840,11 @@ function Acoes({
               id={idFase}
               value={fase}
               data-campo="fase"
-              onChange={(ev) => setFase(ev.target.value)}
+              onChange={(ev) => {
+                const valor = ev.target.value;
+                if (valor === "" || valor === "PRELIMINAR" || valor === "FINAL")
+                  setFase(valor);
+              }}
             >
               <option value="">
                 {tipo === "FINAL" ? "Resultado final" : "Preliminar"}
@@ -793,7 +882,7 @@ function Acoes({
           ["docx", "Baixar DOCX"],
           ["pdf", "PDF"],
           ["xlsx", "XLSX"],
-        ].map(([formato, rotulo]) => (
+        ].map(([formato = "", rotulo]) => (
           <button
             key={formato}
             type="button"
@@ -822,7 +911,7 @@ function Acoes({
             type="button"
             className="btn secondary"
             data-acao="publicar"
-            disabled={ultima.pendencias > 0}
+            disabled={(ultima.pendencias ?? 0) > 0}
             onClick={async () => {
               const publicado = await estado.publicarLista(ultima.id);
               if (publicado) aoCarregarRegistro({ ...ultima, ...publicado });
@@ -837,7 +926,7 @@ function Acoes({
             className="btn secondary"
             data-acao="publicar-aprovados"
             data-tour="classificacao-publicar-aprovados"
-            disabled={ultima.pendencias > 0}
+            disabled={(ultima.pendencias ?? 0) > 0}
             onClick={abrirPublicacaoDeAprovados}
           >
             <i className="fa-solid fa-user-check" aria-hidden="true" /> Publicar
@@ -871,11 +960,11 @@ function Acoes({
           aoFechar={() => setPublicando(null)}
         />
       ) : null}
-      {documento ? (
+      {documento?.retrato ? (
         <DocumentoDoSei
           estado={estado}
           podeEditar={e.podeEditar}
-          registrado={documento}
+          registrado={{ ...documento, retrato: documento.retrato }}
           lista={
             tipo === "CONVOCACAO" && lista === "eliminados" ? "todas" : lista
           }
@@ -887,13 +976,28 @@ function Acoes({
   );
 }
 
-export function Listas({ estado, e, calcular, aoAbrirAgenda }) {
+export function Listas({
+  estado,
+  e,
+  calcular,
+  aoAbrirAgenda,
+}: {
+  estado: EstadoDaClassificacao;
+  e: SnapshotDaClassificacao;
+  calcular: (
+    dados: DadosDaClassificacao,
+    tipo: TipoDeLista,
+  ) => ResultadoDoMotor;
+  aoAbrirAgenda?: () => void;
+}) {
   // Até a pessoa escolher, a lista acompanha a fase do edital.
-  const [escolhido, setEscolhido] = useState(null);
+  const [escolhido, setEscolhido] = useState<TipoDeLista | null>(null);
   const [recorte, setRecorte] = useState(RECORTE_VAZIO);
   const [aberto, setAberto] = useState("");
-  const [pendencia, setPendencia] = useState(null);
-  const [registros, setRegistros] = useState({});
+  const [pendencia, setPendencia] = useState<PendenciaDeEmpate | null>(null);
+  const [registros, setRegistros] = useState<
+    Partial<Record<TipoDeLista, ListaRegistrada>>
+  >({});
   const [quantasVagas, setQuantasVagas] = useState(VAGAS_POR_VEZ);
   const dados = e.dados;
   const regra = dados?.regra?.configuracao || null;
@@ -919,7 +1023,14 @@ export function Listas({ estado, e, calcular, aoAbrirAgenda }) {
   );
   const explicacao = aberto && resultado ? resultado.explicacoes[aberto] : null;
 
-  const trocarTipo = (novo) => {
+  const trocarTipo = (novo: string) => {
+    if (
+      novo !== "PRELIMINAR" &&
+      novo !== "CONVOCACAO" &&
+      novo !== "ENTREVISTA" &&
+      novo !== "FINAL"
+    )
+      return;
     setEscolhido(novo);
     setAberto("");
     setQuantasVagas(VAGAS_POR_VEZ);
@@ -930,7 +1041,9 @@ export function Listas({ estado, e, calcular, aoAbrirAgenda }) {
       <Segmentado
         rotulo="Lista"
         className="classificacao-tipos"
-        opcoes={TIPOS_DE_LISTA.map(([valor, rotulo]) => ({ valor, rotulo }))}
+        opcoes={TIPOS_DE_LISTA.flatMap(([valor, rotulo]) =>
+          valor && rotulo ? [{ valor, rotulo }] : [],
+        )}
         valor={tipo}
         aoMudar={trocarTipo}
       />
@@ -1006,7 +1119,7 @@ export function Listas({ estado, e, calcular, aoAbrirAgenda }) {
           <div className="ui-esqueleto-linha" />
         </div>
       ) : null}
-      {explicacao ? (
+      {explicacao && resultado ? (
         <GavetaDoCandidato
           explicacao={explicacao}
           vaga={resultado.vagas.find((v) => v.chave === explicacao.vaga)}

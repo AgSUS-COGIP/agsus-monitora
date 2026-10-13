@@ -14,6 +14,7 @@ export interface RegraDaClassificacao extends RegistroDaClassificacao {
   versao: number;
   nome: string | null;
   configuracao: RegistroDaClassificacao;
+  versoes?: import("../../lib/nome-da-versao.ts").VersaoComNome[];
 }
 export interface RetratoDaClassificacao extends RegistroDaClassificacao {
   tipo: string;
@@ -25,15 +26,25 @@ export interface RetratoDaClassificacao extends RegistroDaClassificacao {
   vagas: RegistroDaClassificacao[];
   modalidades: RegistroDaClassificacao[];
   parciais?: string[];
+  rodape?: string;
 }
 export interface ListaRegistrada extends RegistroDaClassificacao {
   id: string;
   tipo?: string;
   retrato?: RetratoDaClassificacao;
+  publicada?: boolean;
+  pendencias?: number;
+  gerada_em?: string;
+  por?: string;
+  versao_regra?: number;
+  hash?: string;
 }
 export interface DesempateRegistrado extends RegistroDaClassificacao {
   chave: string;
   metodo: string;
+  ordem?: string[];
+  semente?: string;
+  origem_semente?: string;
 }
 export interface DadosDaClassificacao extends RegistroDaClassificacao {
   edital: RegistroDaClassificacao & { id?: string; treinamento?: boolean };

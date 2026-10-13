@@ -6,7 +6,7 @@ import {
   listaDaFase,
   recortarResultado,
   RECORTE_VAZIO,
-} from "../../src/lib/classificacao/dados.js";
+} from "../../src/lib/classificacao/dados.ts";
 
 /* O que a tela de Classificação precisa em volta do motor. */
 

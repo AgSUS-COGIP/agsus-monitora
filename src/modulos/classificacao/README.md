@@ -22,7 +22,7 @@ classificacao.tsx  <TelaDeClassificacao>, montarClassificacao() e calcularClassi
 estado.ts          store sem React: editais da área, dados do edital, salvar regra, gerar,
                    publicar, desempate (sorteio/decisão), documento oficial (Copiar para o
                    SEI, DOCX timbrado, PDF) e XLSX; salvar os textos do documento
-listas.jsx         visão "Listas": KPIs, avisos e pendências, gerar/exportar, filtros, uma
+listas.tsx         visão "Listas" em TypeScript: KPIs, avisos e pendências, gerar/exportar, filtros, uma
                    tabela por vaga, eliminados, gaveta com a explicação, registro do empate
 publicar-aprovados.tsx  "Publicar como lista de aprovados" (resultado final, editor): o que
                    muda em relação à lista de aprovados vigente (entram, saem, mudam de
@@ -51,7 +51,7 @@ Regras puras em `src/lib/classificacao/` (`motor.js`, `regra.js`, `catalogo.js`,
 `numeros.js`, `sorteio.js`, `exportacao.js`, `ajustes.ts` — o motor com os ajustes da pontuação
 aprovados em recurso e a prévia do recurso —, `documento-sei.js` — o documento no modelo das
 publicações do SEI, textos-padrão do 83/2026 e do 100/2026 —, `documento-docx.js` — Word com papel
-timbrado —, `dados.js`). Os textos e as colunas do documento ajustados pelo gestor ficam na regra
+timbrado —, `dados.ts`). Os textos e as colunas do documento ajustados pelo gestor ficam na regra
 (`DS_CONFIGURACAO.documento`, `.colunas` por publicação, `.desempate` = a nota abaixo da tabela da
 vaga com empate de nota resolvido; sem migration); o cabeçalho da agência, em Configurações › Marca
 (`documento_cabecalho`, `src/lib/cabecalho-dos-documentos.js`). Banco:
@@ -81,6 +81,12 @@ com identidades únicas e coleções válidas, sem descartar pessoas para montar
 parcial. A confirmação valida quantidade e pendências retornadas pelo banco. Testes:
 `tests/lib/dados-da-publicacao-de-aprovados.test.js`,
 `tests/tipos/publicacao-da-classificacao.tsx` e o fluxo em `tests/modulos/classificacao.test.js`.
+Listas e filtros: saída pública do motor em `src/lib/classificacao/tipos-do-resultado.ts`,
+contratos de uso em `tests/tipos/listas-da-classificacao.tsx`. O motor usa esse contrato
+via JSDoc e mantém o cálculo em JavaScript. O estado valida a quantidade de pendências
+e a situação de publicação dos registros; uma ordem incompleta ou duplicada não é
+apresentada como sorteio registrado. Testes em
+`tests/lib/classificacao-metadados-das-listas.test.js`.
 Agenda das entrevistas: motor em `src/lib/agenda-das-entrevistas.js`, banco em
 `supabase/migrations/20261005120000_agenda_das_entrevistas.sql` (ensaio e rollback com o mesmo
 nome); Conduzir entrevistas abre a fila em Hoje pela agenda salva (`src/modulos/entrevistas/fila-do-dia.tsx`).

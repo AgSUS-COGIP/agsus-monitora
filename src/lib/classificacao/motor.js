@@ -932,7 +932,10 @@ const ordemDosMotivos = Object.keys(MOTIVOS_DE_ELIMINACAO);
  * ou `FINAL`).
  * Ver o comentário do topo para a entrada e a saída.
  */
-/** @param {import("./tipos-dos-ajustes.ts").EntradaDoMotor} [opcoes] */
+/**
+ * @param {import("./tipos-dos-ajustes.ts").EntradaDoMotor} [opcoes]
+ * @returns {import("./tipos-do-resultado.ts").ResultadoDoMotor}
+ */
 export function classificar({
   tipo = "FINAL",
   regra: regraBruta,

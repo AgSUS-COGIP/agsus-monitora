@@ -7,7 +7,7 @@ import {
 import {
   dataDeCorteDoCronograma,
   janelaDasInscricoes,
-} from "../../src/lib/classificacao/dados.js";
+} from "../../src/lib/classificacao/dados.ts";
 import {
   CRONOGRAMA_114,
   DADOS_114,

@@ -6,6 +6,7 @@ import type {
   ListaRegistrada,
   DadosDaClassificacao,
   RetratoDaClassificacao,
+  DesempateRegistrado,
 } from "../../modulos/classificacao/tipos-do-estado.ts";
 export { objeto };
 export const textoDaClassificacao = (v: unknown) =>
@@ -54,13 +55,73 @@ export function regraDaClassificacao(v: unknown): RegraDaClassificacao | null {
     versao,
     nome: textoDaClassificacao(r.nome) || null,
     configuracao: objeto(r.configuracao),
+    versoes:
+      r.versoes == null
+        ? undefined
+        : registros(r.versoes).map((v) => ({
+            ...v,
+            versao: numero(v.versao),
+            nome: textoDaClassificacao(v.nome) || null,
+          })),
   };
 }
 export function listaRegistrada(v: unknown): ListaRegistrada | null {
   const r = objeto(v);
+  if (
+    r.pendencias != null &&
+    (typeof r.pendencias !== "number" ||
+      !Number.isSafeInteger(r.pendencias) ||
+      r.pendencias < 0)
+  )
+    throw new Error("Quantidade de pendências da lista inválida.");
+  if (r.publicada != null && typeof r.publicada !== "boolean")
+    throw new Error("Situação de publicação da lista inválida.");
   return typeof r.id !== "string" || !r.id
     ? null
-    : { ...r, id: r.id, tipo: typeof r.tipo === "string" ? r.tipo : undefined };
+    : {
+        ...r,
+        id: r.id,
+        tipo: typeof r.tipo === "string" ? r.tipo : undefined,
+        publicada: typeof r.publicada === "boolean" ? r.publicada : undefined,
+        pendencias: numero(r.pendencias),
+        gerada_em: typeof r.gerada_em === "string" ? r.gerada_em : undefined,
+        por: typeof r.por === "string" ? r.por : undefined,
+        versao_regra: numero(r.versao_regra),
+        hash: typeof r.hash === "string" ? r.hash : undefined,
+      };
+}
+/** Uma ordem incompleta não pode ser apresentada como resultado de um sorteio. */
+export function desempateRegistrado(v: unknown): DesempateRegistrado {
+  const r = objeto(v);
+  const chave = textoDaClassificacao(r.chave),
+    metodo = textoDaClassificacao(r.metodo);
+  if (!chave || (metodo !== "SORTEIO" && metodo !== "MANUAL"))
+    throw new Error("Registro de desempate inválido.");
+  let ordem: string[] | undefined;
+  if (r.ordem != null) {
+    if (
+      !Array.isArray(r.ordem) ||
+      !r.ordem.every(
+        (id): id is string => typeof id === "string" && Boolean(id.trim()),
+      )
+    )
+      throw new Error("Ordem do desempate inválida.");
+    ordem = r.ordem;
+    if (new Set(ordem).size !== ordem.length)
+      throw new Error("Ordem do desempate inválida.");
+  }
+  const semente = typeof r.semente === "string" ? r.semente : undefined;
+  if (metodo === "SORTEIO" && (!semente?.trim() || !ordem?.length))
+    throw new Error("Resultado do sorteio incompleto.");
+  return {
+    ...r,
+    chave,
+    metodo,
+    ordem,
+    semente,
+    origem_semente:
+      typeof r.origem_semente === "string" ? r.origem_semente : undefined,
+  };
 }
 export function retratoDaClassificacao(
   v: unknown,
@@ -91,6 +152,7 @@ export function retratoDaClassificacao(
     parciais: Array.isArray(r.parciais)
       ? r.parciais.filter((p): p is string => typeof p === "string")
       : undefined,
+    rodape: typeof r.rodape === "string" ? r.rodape : undefined,
   };
 }
 export function listaComRetrato(v: unknown): ListaRegistrada | null {
@@ -141,10 +203,6 @@ export function dadosDaClassificacao(v: unknown): DadosDaClassificacao {
       .filter((r): r is ListaRegistrada => r !== null),
     candidatos: registros(d.candidatos),
     cronograma: registros(d.cronograma),
-    desempates: registros(d.desempates).map((r) => ({
-      ...r,
-      chave: textoDaClassificacao(r.chave),
-      metodo: textoDaClassificacao(r.metodo),
-    })),
+    desempates: registros(d.desempates).map(desempateRegistrado),
   };
 }

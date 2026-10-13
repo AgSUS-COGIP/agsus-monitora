@@ -1988,7 +1988,7 @@ export const VERBETES_AYA = Object.freeze([
     resposta:
       'O critério "60 anos ou mais" usa a idade na data de corte — o último dia de inscrição, como mandam os editais (Estatuto da Pessoa Idosa) —, não a idade de hoje. A data de corte é a da regra do edital; sem ela, o fim do período de inscrição no cronograma do edital. Quem faz 60 anos no último dia de inscrição conta; no dia seguinte, não. Sem data de nascimento, o candidato fica atrás de quem tem e a tela avisa; sem data de corte, a tela avisa que o critério não pode ser aplicado.',
     fato: "",
-    fonte: "src/lib/classificacao/catalogo.js; src/lib/classificacao/dados.js",
+    fonte: "src/lib/classificacao/catalogo.js; src/lib/classificacao/dados.ts",
     abrir: "classificacao",
   },
   {
@@ -2291,7 +2291,7 @@ export const VERBETES_AYA = Object.freeze([
       'No MONITORA, a Classificação aplica os ajustes da pontuação aprovados em recurso por cima da nota da análise (a planilha não muda): o valor novo de cada componente substitui o da análise e o candidato aparece com o selo "Recurso nº X" na tabela; a explicação da posição diz o que mudou ("Nota alterada pelo recurso nº X: …") e o retrato da lista gerada guarda o número do recurso. Se a análise mudar depois do ajuste, a tela avisa e vale o ajuste. Quando há ajuste aprovado (ou cancelado depois de aprovado) depois da última lista gerada, a tela avisa "Há recursos aprovados depois desta lista — gere de novo". O documento do SEI segue o modelo das publicações, sem marca.',
     fato: "",
     fonte:
-      "src/lib/classificacao/motor.js (aplicarAjustes); src/lib/classificacao/ajustes.ts; src/modulos/classificacao/listas.jsx; supabase/migrations/20261005130000_recurso_ajusta_pontuacao.sql",
+      "src/lib/classificacao/motor.js (aplicarAjustes); src/lib/classificacao/ajustes.ts; src/modulos/classificacao/listas.tsx; supabase/migrations/20261005130000_recurso_ajusta_pontuacao.sql",
     abrir: "classificacao",
   },
   {
@@ -2326,7 +2326,7 @@ export const VERBETES_AYA = Object.freeze([
       '"Gerar", "Marcar como publicada" e "Publicar como lista de aprovados" só aparecem para quem tem Editor em Classificação, com a área e o edital; "Gerar" fica desabilitado enquanto o edital não tem regra salva. Copiar para o SEI, Como fica no SEI, Baixar DOCX, PDF e XLSX ficam desabilitados até existir uma lista gerada naquela etapa: gere primeiro. "Marcar como publicada" e "Publicar como lista de aprovados" ficam desabilitados enquanto houver empate esperando sorteio ou decisão, e "Publicar como lista de aprovados" só existe na lista Resultado final.',
     fato: "",
     fonte:
-      "src/modulos/classificacao/listas.jsx; src/lib/access-roles.js (canEditClassificacao)",
+      "src/modulos/classificacao/listas.tsx; src/lib/access-roles.js (canEditClassificacao)",
     abrir: "classificacao",
   },
   {

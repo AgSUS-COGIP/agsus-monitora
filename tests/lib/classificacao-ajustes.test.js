@@ -9,7 +9,7 @@ import {
   previaDoAjuste,
   validarAjuste,
 } from "../../src/lib/classificacao/ajustes.ts";
-import { listaDesatualizada } from "../../src/lib/classificacao/dados.js";
+import { listaDesatualizada } from "../../src/lib/classificacao/dados.ts";
 import { instantaneoDaLista } from "../../src/lib/classificacao/exportacao.js";
 
 /*
