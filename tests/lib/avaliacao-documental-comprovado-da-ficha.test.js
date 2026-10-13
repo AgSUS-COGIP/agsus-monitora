@@ -8,6 +8,7 @@ import {
   comprovadoDaExperiencia,
   comprovadoDosCursos,
   comprovadoDosTitulos,
+  diasEmComum,
   textoDoTempo,
 } from "../../src/lib/avaliacao-documental/comprovado-da-ficha.ts";
 import {
@@ -348,5 +349,47 @@ describe("tirar e desfazer um vínculo (a P02 perdeu o vínculo pelo ×)", () =>
     expect(devolverItem(r.itens, r.tirado)).toEqual([a, b]);
     expect(devolverItem([], { indice: 3, item: b })).toEqual([b]);
     expect(tirarItem([a], 5).tirado).toBeNull();
+  });
+});
+
+describe("dias em comum entre vínculos (contam uma vez)", () => {
+  const BLOCO = {
+    tipo: "VINCULOS",
+    categorias: [{ codigo: "AREA" }, { codigo: "OUTRA", pontua: false }],
+  };
+  const v = (inicio, fim, extra = {}) => ({
+    inicio,
+    fim,
+    categoria: "AREA",
+    aceito: true,
+    ...extra,
+  });
+  it("a soma menos a união dos aceitos que contam; emendar no dia seguinte não é comum", () => {
+    expect(
+      diasEmComum(BLOCO, [
+        v("2020-01-01", "2020-01-31"),
+        v("2020-01-21", "2020-02-10"),
+      ]),
+    ).toBe(11);
+    expect(
+      diasEmComum(BLOCO, [
+        v("2020-01-01", "2020-01-31"),
+        v("2020-02-01", "2020-02-10"),
+      ]),
+    ).toBe(0);
+    // Recusado e categoria que não pontua ficam de fora; regra que não une, 0.
+    expect(
+      diasEmComum(BLOCO, [
+        v("2020-01-01", "2020-01-31"),
+        v("2020-01-01", "2020-01-31", { aceito: false }),
+        v("2020-01-01", "2020-01-31", { categoria: "OUTRA" }),
+      ]),
+    ).toBe(0);
+    expect(
+      diasEmComum({ ...BLOCO, unir_sobreposicao: false }, [
+        v("2020-01-01", "2020-01-31"),
+        v("2020-01-01", "2020-01-31"),
+      ]),
+    ).toBe(0);
   });
 });
