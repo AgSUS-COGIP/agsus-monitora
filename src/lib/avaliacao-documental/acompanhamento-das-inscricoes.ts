@@ -12,7 +12,7 @@
   grava da véspera do início a 3 dias depois do fim: o cartão aparece na mesma
   janela (DIAS_DEPOIS_DO_FIM igual ao Python).
 */
-import { janelaDasInscricoes } from "../classificacao/dados.js";
+import { janelaDasInscricoes } from "../classificacao/dados.ts";
 
 export const DIAS_DEPOIS_DO_FIM = 3;
 

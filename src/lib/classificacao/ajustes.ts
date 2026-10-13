@@ -36,7 +36,7 @@ import {
     causa do ajuste, na lista da etapa (documental, entrevista ou final).
 */
 import { ITEM_DO_AJUSTE_POR_CODIGO, ITENS_DO_AJUSTE } from "./catalogo.js";
-import { dataDeCorteDoCronograma } from "./dados.js";
+import { dataDeCorteDoCronograma } from "./dados.ts";
 import {
   aplicarAgrupamentos,
   aplicarAjustes,

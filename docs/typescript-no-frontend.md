@@ -177,8 +177,8 @@ A entrada e o estado de Classificação também estão migrados: seletor de edit
 versões de regra, registros e publicação de listas, desempate, hora de nascimento e
 exportação. Dados usados pelo estado são validados; respostas antigas não atualizam
 dados, avisos ou flags após troca de edital, área ou usuário. Os contratos estão em
-`tests/tipos/tela-estado-da-classificacao.tsx`; regras, documentos e peças de listas e
-agenda continuam parcialmente em JavaScript/JSX. Contratos e limites em
+`tests/tipos/tela-estado-da-classificacao.tsx`; regras, documentos e agenda continuam
+parcialmente em JavaScript/JSX. Contratos e limites em
 [../src/modulos/classificacao/README.md](../src/modulos/classificacao/README.md).
 
 A publicação do resultado final como lista de aprovados também está em TypeScript/TSX:
@@ -189,3 +189,12 @@ recusa candidatos sem identidade, duplicados ou coleções malformadas; uma resp
 não permite publicar com uma revisão parcial. Status, matrícula e sub judice continuam
 preservados pelos vínculos conferidos pelo banco. A publicação só é confirmada na tela com
 uma resposta válida do banco.
+
+A visão Listas também está em TSX: indicadores, filtros, tabelas por vaga, eliminados,
+gaveta de explicações, sorteio/decisão manual, geração, publicação e exportação. As regras
+de recorte, avisos agrupados, inscrições e fase inicial ficam em `classificacao/dados.ts`.
+O contrato público da saída do motor fica em `classificacao/tipos-do-resultado.ts`, usado
+via JSDoc pelo motor ainda em JavaScript. O cálculo da ordem continua no motor; esta etapa
+não converte sua implementação. Metadados de geração, versões e desempates são normalizados
+para os campos usados na tela. Ordens incompletas ou duplicadas e contagens inválidas de
+pendências são recusadas. Contratos da tela em `tests/tipos/listas-da-classificacao.tsx`.

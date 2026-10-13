@@ -1,3 +1,8 @@
+import type {
+  EstadoDaClassificacao,
+  ListaRegistrada,
+  RetratoDaClassificacao,
+} from "./tipos-do-estado.ts";
 import {
   useCallback,
   useEffect,
@@ -73,39 +78,18 @@ type Documento = {
 };
 type CampoDoEdital = "edital" | "processo" | "unidade" | "autoridade" | "local";
 type Fase = "PRELIMINAR" | "FINAL" | null;
-type Registrado = {
-  retrato: {
-    tipo: string;
-    rodape?: string;
-    edital?: { edital?: string; unidade?: string };
-    modalidades?: unknown[];
-    parciais?: string[];
-    vagas?: unknown[];
-  };
-};
-type DocumentoDaLista = { nome?: string } | null;
+type Registrado = ListaRegistrada & { retrato: RetratoDaClassificacao };
 
 /* O que esta tela usa do estado da Classificação (estado.ts). */
-export type EstadoDoDocumento = {
-  obter: () => { dados?: { regra?: { configuracao?: unknown } } | null };
-  documentoDaLista: (
-    registrado: Registrado,
-    opcoes: { lista: string; fase: Fase; documento: Documento },
-  ) => DocumentoDaLista;
-  marcaDoDocumento: () => { cabecalho: string; logo: string };
-  salvarTextosDoDocumento: (documento: Documento) => Promise<boolean>;
-  exportar: (
-    registrado: Registrado,
-    formato: string,
-    lista: string,
-    fase: Fase,
-    documento: Documento,
-  ) => Promise<unknown>;
-  copiarParaSei: (
-    registrado: Registrado,
-    opcoes: { lista: string; fase: Fase; documento: Documento },
-  ) => Promise<unknown>;
-};
+export type EstadoDoDocumento = Pick<
+  EstadoDaClassificacao,
+  | "obter"
+  | "documentoDaLista"
+  | "marcaDoDocumento"
+  | "salvarTextosDoDocumento"
+  | "exportar"
+  | "copiarParaSei"
+>;
 
 const CAMPOS_DO_EDITAL: ReadonlyArray<[CampoDoEdital, string, string]> = [
   ["edital", "Edital nº", ""],

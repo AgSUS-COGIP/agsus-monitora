@@ -23,6 +23,8 @@ import {
   regraDaClassificacao,
   listaRegistrada,
   listaComRetrato,
+  retratoDaClassificacao,
+  desempateRegistrado,
 } from "../../lib/classificacao/dados-do-estado.ts";
 /*
   Estado da tela de Classificação (`#page-classificacao`), fora do React. Os
@@ -420,11 +422,14 @@ export function criarEstadoDaClassificacao({
       minhaGeracao === geracao && estado.editalId === edital;
     publicar({ gerando: true });
     try {
-      const retrato = instantaneoDaLista(resultado, {
-        edital: d.edital,
-        regra: d.regra.configuracao,
-        versao: d.regra.versao,
-      });
+      const retrato = retratoDaClassificacao(
+        instantaneoDaLista(resultado, {
+          edital: d.edital,
+          regra: d.regra.configuracao,
+          versao: d.regra.versao,
+        }),
+      );
+      if (!retrato) throw new Error("Retrato de lista inválido.");
       const registro = listaRegistrada(
         await rpc(RPC_REGISTRAR_LISTA, {
           p_edital: edital,
@@ -585,11 +590,7 @@ export function criarEstadoDaClassificacao({
           p_dados: dados,
         }),
       );
-      const registro = {
-        ...bruto,
-        chave: textoDaClassificacao(bruto.chave),
-        metodo: textoDaClassificacao(bruto.metodo),
-      };
+      const registro = desempateRegistrado(bruto);
       if (!vigente()) return null;
       mudarDados(edital, (d) => ({
         ...d,
@@ -744,7 +745,7 @@ export function criarEstadoDaClassificacao({
   /* "Copiar para o SEI": HTML (classes do SEI) + texto na área de transferência. */
   async function copiarParaSei(
     registrado: ListaRegistrada | null,
-    { lista = "todas", fase = null, documento = null } = {},
+    { lista = "todas", fase = null, documento = null }: OpcoesDoDocumento = {},
   ) {
     const doc = documentoDaLista(registrado, { lista, fase, documento });
     if (!doc) return "";

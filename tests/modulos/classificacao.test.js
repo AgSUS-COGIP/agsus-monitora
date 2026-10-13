@@ -306,6 +306,27 @@ describe("tela de Classificação", () => {
     ).toContain("Davi <b>Reprovado</b>");
   });
 
+  it("não confirma sorteio com ordem incompleta recebida do banco", async () => {
+    const supabase = supabaseFalso({
+      registrar_desempate_classificacao: ({ p_dados }) => ({
+        ...p_dados,
+        semente: "abcd",
+        ordem: [A(1), null],
+      }),
+    });
+    await montar(supabase);
+    await abrirEdital();
+    await clicar(botao("Registrar sorteio", secao));
+    await clicar(botao("Sortear e registrar"));
+    await esperar();
+    expect(document.body.textContent).not.toContain("Conferido: a ordem");
+    expect(secao.querySelector(".classificacao-pendencias")).not.toBeNull();
+    expect(toast).toHaveBeenCalledWith(
+      expect.stringContaining("Ordem do desempate inválida"),
+      "error",
+    );
+  });
+
   it("o empate que espera sorteio aparece no topo e o sorteio é registrado e conferido", async () => {
     const supabase = supabaseFalso();
     await montar(supabase);
