@@ -19,6 +19,7 @@ import {
 const USUARIO = { id: "u1", email: "ana@agenciasus.org.br" };
 const PERFIL = { id: "p1", ativo: true, perfil: "edital_gestor" };
 const LINHAS = [{ id: 1, unidade: "DSEI Xingu", CO_AREA: "saude-indigena" }];
+const VERSAO_DAS_LINHAS = "md5-das-linhas";
 
 /* Consulta preguiçosa como a do Supabase: só "sai" quando alguém chama then. */
 function consultaPreguicosa(nome, resposta, registro) {
@@ -53,21 +54,29 @@ function montar({
     TB_PAINEL_EXTERNO: [{ id: "1", codigo: "bi" }],
     TB_CONFIG_MAPA_SAUDE_INDIG: [],
     TD_UNIDADE: [{ nome_oficial: "DSEI Xingu" }],
-    TB_MONITORAMENTO_INDIGENA: LINHAS,
   };
   const canais = [];
   const cliente = {
     from: vi.fn((tabela) =>
       consultaPreguicosa(
         tabela,
-        () =>
-          tabela === "TB_MONITORAMENTO_INDIGENA" && erroNasLinhas
-            ? { data: null, error: erroNasLinhas }
-            : { data: respostas[tabela], error: null },
+        () => ({ data: respostas[tabela], error: null }),
         saidas,
       ),
     ),
-    rpc: vi.fn(async () => ({ data: { resumo: true }, error: null })),
+    // O monitoramento vem por RPC com versão (migration 20261013160000).
+    rpc: vi.fn(async (nome, { p_versao } = {}) => {
+      saidas.push(nome);
+      if (nome !== "listar_monitoramento_operacional")
+        return { data: { resumo: true }, error: null };
+      if (erroNasLinhas) return { data: null, error: erroNasLinhas };
+      if (p_versao === VERSAO_DAS_LINHAS)
+        return { data: { inalterado: true, versao: p_versao }, error: null };
+      return {
+        data: { versao: VERSAO_DAS_LINHAS, linhas: LINHAS },
+        error: null,
+      };
+    }),
     channel: vi.fn(() => {
       const canal = {
         ao: null,
@@ -179,10 +188,12 @@ afterEach(() => vi.useRealTimers());
 
 describe("entrada", () => {
   it("dispara todas as consultas antes da primeira espera", async () => {
-    const { carga, ordem } = montar();
+    const { carga, ordem, saidas } = montar();
     await carga.carregarEntrada();
-    // Quando a configuração começou a ser aplicada, as cinco consultas já tinham saído.
-    expect(ordem.find(([etapa]) => etapa === "config")).toEqual(["config", 5]);
+    // Quando a configuração começou a ser aplicada, as quatro consultas já tinham
+    // saído; a do monitoramento sai assim que a cópia local é lida (leva a versão).
+    expect(ordem.find(([etapa]) => etapa === "config")).toEqual(["config", 4]);
+    expect(saidas).toContain("listar_monitoramento_operacional");
   });
 
   it("abre o app na tela de entrada, esconde o skeleton e comemora, nessa ordem", async () => {
@@ -227,7 +238,10 @@ describe("entrada", () => {
     expect(copia.guardar).toHaveBeenCalledTimes(1);
     const guardada = copia.guardar.mock.calls[0][0];
     expect(guardada).toMatchObject({ usuarioId: "u1", versao: "v1" });
-    expect(guardada.dados.monitoramento).toEqual({ linhas: LINHAS });
+    expect(guardada.dados.monitoramento).toEqual({
+      linhas: LINHAS,
+      versao: VERSAO_DAS_LINHAS,
+    });
   });
 
   it("não chama a RPC do payload consolidado (ninguém o lia)", async () => {
@@ -235,7 +249,49 @@ describe("entrada", () => {
     await carga.carregarEntrada();
     await esperarTudo();
     await carga.atualizarDados();
-    expect(cliente.rpc).not.toHaveBeenCalled();
+    const nomes = new Set(cliente.rpc.mock.calls.map(([nome]) => nome));
+    expect([...nomes]).toEqual(["listar_monitoramento_operacional"]);
+  });
+
+  it("o monitoramento pergunta pela versão que já tem: sem mudança, as linhas ficam", async () => {
+    const { carga, cliente } = montar();
+    await carga.carregarEntrada();
+    await esperarTudo();
+    await carga.atualizarDados();
+    const pedidos = cliente.rpc.mock.calls.filter(
+      ([nome]) => nome === "listar_monitoramento_operacional",
+    );
+    expect(pedidos.map(([, argumentos]) => argumentos.p_versao)).toEqual([
+      null,
+      VERSAO_DAS_LINHAS,
+    ]);
+    expect(carga.linhas()).toEqual(LINHAS);
+  });
+
+  it("a cópia da sessão leva a versão das linhas: a entrada não baixa de novo", async () => {
+    const dados = {
+      config: [{ chave: "app_title", valor: "MONITORA" }],
+      paineis: [{ id: "1", codigo: "bi" }],
+      mapa: [],
+      unidades: [{ nome_oficial: "DSEI Xingu" }],
+      abas: null,
+      monitoramento: { linhas: LINHAS, versao: VERSAO_DAS_LINHAS },
+    };
+    const copiaGuardada = montarCopia({
+      usuarioId: "u1",
+      acesso: assinaturaDoAcesso(PERFIL, ["1"]),
+      versao: "v1",
+      agora: 500,
+      dados,
+    });
+    const { carga, cliente } = montar({ copiaGuardada });
+    await carga.carregarEntrada();
+    await esperarTudo();
+    const pedido = cliente.rpc.mock.calls.find(
+      ([nome]) => nome === "listar_monitoramento_operacional",
+    );
+    expect(pedido[1]).toEqual({ p_versao: VERSAO_DAS_LINHAS });
+    expect(carga.linhas()).toEqual(LINHAS);
   });
 
   it("a cópia que serve abre a tela; a configuração vem dela, não da rede", async () => {
@@ -328,8 +384,8 @@ describe("Realtime do monitoramento", () => {
       "ok",
     );
     expect(
-      cliente.from.mock.calls.filter(
-        ([t]) => t === "TB_MONITORAMENTO_INDIGENA",
+      cliente.rpc.mock.calls.filter(
+        ([nome]) => nome === "listar_monitoramento_operacional",
       ),
     ).toHaveLength(1);
     carga.pararRealtime();
@@ -358,7 +414,7 @@ describe("Realtime do monitoramento", () => {
     vi.useFakeTimers();
     const { carga, canais, avisar, cliente } = montar();
     carga.iniciarRealtime();
-    cliente.from.mockImplementation(() => {
+    cliente.rpc.mockImplementation(() => {
       throw new Error("sem rede");
     });
     canais[0].ao();
@@ -404,6 +460,24 @@ describe("contratos da carga", () => {
     const colunas = COLUNAS_DO_MONITORAMENTO.split(",");
     for (const coluna of ["cronograma_automatico", "CO_AREA", "link_edital"])
       expect(colunas).toContain(coluna);
+  });
+
+  it("a RPC do monitoramento devolve exatamente COLUNAS_DO_MONITORAMENTO", () => {
+    const sql = readFileSync(
+      "supabase/migrations/20261013160000_payload_so_quando_muda.sql",
+      "utf8",
+    );
+    const corpo = sql.slice(
+      sql.indexOf("function public.listar_monitoramento_operacional"),
+    );
+    const lista = corpo.slice(
+      corpo.indexOf("select v."),
+      corpo.indexOf('from public."VW_MONITORAMENTO_INDIGENA_OPERACIONAL"'),
+    );
+    const colunas = [...lista.matchAll(/v\.("?)([A-Za-z_]+)\1/g)].map(
+      (m) => m[2],
+    );
+    expect(colunas).toEqual(COLUNAS_DO_MONITORAMENTO.split(","));
   });
 
   it("sem tela de carregamento (o skeleton e a barra do cabeçalho bastam)", () => {

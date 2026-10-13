@@ -13,27 +13,10 @@ const CRONOGRAMA = [
 ];
 
 /*
-  A consulta nomeia a TABELA, mas quem responde é a view.
-
   As seis colunas de `CRONOGRAMA` não existem em `TB_MONITORAMENTO_INDIGENA` —
-  são calculadas em `VW_MONITORAMENTO_INDIGENA_OPERACIONAL`. O que faz isto
-  funcionar é `monitoramento-operational-transport.js`, que intercepta o cliente
-  Supabase e desvia os `select` da tabela para a view, deixando as escritas na
-  tabela. Ler o `.from()` aqui e concluir que falta coluna é o erro natural, e a
-  razão de este comentário existir.
+  são calculadas em `VW_MONITORAMENTO_INDIGENA_OPERACIONAL`, que a RPC
+  `listar_monitoramento_operacional` lê (migration 20261013160000).
 */
-function colunasDoSelect(fonte) {
-  const i = fonte.indexOf('.from("TB_MONITORAMENTO_INDIGENA")');
-  if (i < 0) return [];
-  const sel = fonte.indexOf(".select(", i);
-  const a = fonte.indexOf('"', sel);
-  const b = fonte.indexOf('"', a + 1);
-  return fonte
-    .slice(a + 1, b)
-    .split(",")
-    .map((c) => c.trim())
-    .filter(Boolean);
-}
 
 /*
   O servidor não era o gargalo (medido em 09/09/2026: a view inteira em 31 ms).

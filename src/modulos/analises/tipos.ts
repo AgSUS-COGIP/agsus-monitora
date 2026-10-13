@@ -89,7 +89,7 @@ export interface ClienteDasAnalises {
   rpc(
     nome:
       | "usuario_pode_ler_analises"
-      | "get_analises_dashboard_payload_v2"
+      | "get_analises_dashboard_payload_v2_se_mudou"
       | "get_analise_detalhe_do_painel"
       | "get_analises_texto_do_painel"
       | "obter_ultima_conferencia",

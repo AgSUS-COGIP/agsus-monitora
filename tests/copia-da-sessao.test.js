@@ -24,7 +24,11 @@ const RESPOSTAS = {
   mapa: ok([{ chave: "lmap", payload: { dsei: [] } }]),
   unidades: ok([{ id_unidade: 7, nome_oficial: "DSEI Yanomami" }]),
   abas: ok([{ co_aba: "editais", no_aba: "Editais", co_view: "nucleo" }]),
-  monitoramento: ok([{ id: 10, edital: "01/2026" }]),
+  // A RPC do monitoramento manda a versão das linhas (migration 20261013160000).
+  monitoramento: {
+    ...ok([{ id: 10, edital: "01/2026" }]),
+    versao: "md5-das-linhas",
+  },
 };
 
 const PERFIL = {
@@ -77,8 +81,11 @@ describe("dados das respostas", () => {
       mapa: [{ chave: "lmap", payload: { dsei: [] } }],
       unidades: [{ id_unidade: 7, nome_oficial: "DSEI Yanomami" }],
       abas: [{ co_aba: "editais", no_aba: "Editais", co_view: "nucleo" }],
-      // Só as linhas: o payload consolidado da RPC não era lido por ninguém.
-      monitoramento: { linhas: [{ id: 10, edital: "01/2026" }] },
+      // As linhas e a versão delas: a próxima entrada pergunta só se mudou.
+      monitoramento: {
+        linhas: [{ id: 10, edital: "01/2026" }],
+        versao: "md5-das-linhas",
+      },
     });
   });
 

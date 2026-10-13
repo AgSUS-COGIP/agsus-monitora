@@ -137,8 +137,8 @@ export type BuscaDoAcompanhamento = (
 ) => unknown | PromiseLike<unknown>;
 export type ClienteDoAcompanhamento = {
   rpc: (
-    nome: "listar_acompanhamento_da_visao_geral",
-    parametros: { p_area: string },
+    nome: "listar_acompanhamento_da_visao_geral_se_mudou",
+    parametros: { p_area: string; p_versao: string | null },
   ) => PromiseLike<{ data: unknown; error: unknown }>;
 };
 export type ClienteDosMarcos = {

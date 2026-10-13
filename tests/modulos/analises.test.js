@@ -187,7 +187,7 @@ function supabaseFalso({ respostas = {}, sessao = true } = {}) {
     if (respostas[nome]) return respostas[nome](argumentos);
     if (nome === "usuario_pode_ler_analises")
       return { data: true, error: null };
-    if (nome === "get_analises_dashboard_payload_v2")
+    if (nome === "get_analises_dashboard_payload_v2_se_mudou")
       return { data: payload(), error: null };
     if (nome === "get_analise_detalhe_do_painel")
       return { data: DETALHE, error: null };
@@ -317,9 +317,9 @@ describe("a tela dentro do app", () => {
 
     await abrirATela();
     expect(chamadas(supabase, "usuario_pode_ler_analises")).toHaveLength(1);
-    expect(chamadas(supabase, "get_analises_dashboard_payload_v2")).toEqual([
-      { p_scope: "ativo", p_area: "saude-indigena" },
-    ]);
+    expect(
+      chamadas(supabase, "get_analises_dashboard_payload_v2_se_mudou"),
+    ).toEqual([{ p_scope: "ativo", p_area: "saude-indigena", p_versao: null }]);
     expect(linhasDaFila()).toHaveLength(4);
   });
 
@@ -495,7 +495,7 @@ describe("filtros", () => {
     await montar(
       supabaseFalso({
         respostas: {
-          get_analises_dashboard_payload_v2: () => ({
+          get_analises_dashboard_payload_v2_se_mudou: () => ({
             data: payload(linhas),
             error: null,
           }),
@@ -510,7 +510,7 @@ describe("situação do processo (escopo)", () => {
   it("Inativo pede o pacote dele; Todos junta os três; Limpar tudo volta ao Ativo", async () => {
     const supabase = supabaseFalso({
       respostas: {
-        get_analises_dashboard_payload_v2: ({ p_scope }) => ({
+        get_analises_dashboard_payload_v2_se_mudou: ({ p_scope }) => ({
           data: payload(
             p_scope === "ativo"
               ? LINHAS
@@ -542,7 +542,7 @@ describe("situação do processo (escopo)", () => {
     await escolher(document.getElementById("analises-filtro-escopo"), "todos");
     await esperar();
     expect(
-      chamadas(supabase, "get_analises_dashboard_payload_v2").map(
+      chamadas(supabase, "get_analises_dashboard_payload_v2_se_mudou").map(
         (a) => a.p_scope,
       ),
     ).toEqual(["ativo", "inativo", "ativo", "inativo", "desativadas"]);
@@ -566,7 +566,7 @@ describe("pendências prioritárias (atalhos)", () => {
     await montar(
       supabaseFalso({
         respostas: {
-          get_analises_dashboard_payload_v2: () => ({
+          get_analises_dashboard_payload_v2_se_mudou: () => ({
             data: payload(linhas),
             error: null,
           }),
@@ -811,7 +811,7 @@ describe("fila", () => {
   it("50 por vez, Carregar mais, contagem do recorte e a busca só da fila", async () => {
     const supabase = supabaseFalso({
       respostas: {
-        get_analises_dashboard_payload_v2: () => ({
+        get_analises_dashboard_payload_v2_se_mudou: () => ({
           data: payload(muitas),
           error: null,
         }),
@@ -844,7 +844,7 @@ describe("fila", () => {
     await montar(
       supabaseFalso({
         respostas: {
-          get_analises_dashboard_payload_v2: () => ({
+          get_analises_dashboard_payload_v2_se_mudou: () => ({
             data: payload([]),
             error: null,
           }),
@@ -975,7 +975,7 @@ describe("exportar, atualizar e a cópia do navegador", () => {
     await clicar(secao.querySelector('[data-acao="atualizar"]'));
     await esperar();
     expect(
-      chamadas(supabase, "get_analises_dashboard_payload_v2"),
+      chamadas(supabase, "get_analises_dashboard_payload_v2_se_mudou"),
     ).toHaveLength(2);
     expect(toast).toHaveBeenCalledWith(
       "Análises atualizadas: 4 registros.",
@@ -993,7 +993,7 @@ describe("exportar, atualizar e a cópia do navegador", () => {
     let soltar;
     const supabase = supabaseFalso({
       respostas: {
-        get_analises_dashboard_payload_v2: () =>
+        get_analises_dashboard_payload_v2_se_mudou: () =>
           new Promise((ok) => {
             soltar = () =>
               ok({
@@ -1013,6 +1013,39 @@ describe("exportar, atualizar e a cópia do navegador", () => {
     expect(linhasDaFila()).toHaveLength(2);
     expect(status().textContent).toMatch(/^Atualizado em/);
   });
+
+  it("com cópia guardada, a revalidação manda a versão dela; inalterado, nada se baixa e a cópia fica", async () => {
+    const armazenamento = armazenamentoEmMemoria();
+    await montar(
+      supabaseFalso({
+        respostas: {
+          get_analises_dashboard_payload_v2_se_mudou: () => ({
+            data: payload(LINHAS, { versao: "v1" }),
+            error: null,
+          }),
+        },
+      }),
+      { armazenamento },
+    );
+    await act(async () => painel.raiz.unmount());
+    secao.remove();
+
+    const supabase = supabaseFalso({
+      respostas: {
+        get_analises_dashboard_payload_v2_se_mudou: () => ({
+          data: { inalterado: true, versao: "v1" },
+          error: null,
+        }),
+      },
+    });
+    await montar(supabase, { armazenamento });
+    await esperar();
+    expect(
+      chamadas(supabase, "get_analises_dashboard_payload_v2_se_mudou"),
+    ).toEqual([{ p_scope: "ativo", p_area: "saude-indigena", p_versao: "v1" }]);
+    expect(linhasDaFila()).toHaveLength(4);
+    expect(status().textContent).toMatch(/^Atualizado em/);
+  });
 });
 
 describe("sessão, permissão, erro e demora", () => {
@@ -1027,7 +1060,7 @@ describe("sessão, permissão, erro e demora", () => {
       "Sem acesso ao Painel das análises.",
     );
     expect(
-      chamadas(supabase, "get_analises_dashboard_payload_v2"),
+      chamadas(supabase, "get_analises_dashboard_payload_v2_se_mudou"),
     ).toHaveLength(0);
     expect(status().textContent).toBe("Sem acesso");
   });
@@ -1036,7 +1069,7 @@ describe("sessão, permissão, erro e demora", () => {
     await montar(
       supabaseFalso({
         respostas: {
-          get_analises_dashboard_payload_v2: () => ({
+          get_analises_dashboard_payload_v2_se_mudou: () => ({
             data: null,
             error: { code: "42501", message: "x" },
           }),
@@ -1059,7 +1092,7 @@ describe("sessão, permissão, erro e demora", () => {
     let falhar = true;
     const supabase = supabaseFalso({
       respostas: {
-        get_analises_dashboard_payload_v2: () =>
+        get_analises_dashboard_payload_v2_se_mudou: () =>
           falhar
             ? { data: null, error: { message: "fora do ar" } }
             : { data: payload(), error: null },
@@ -1079,7 +1112,7 @@ describe("sessão, permissão, erro e demora", () => {
     vi.useFakeTimers();
     const supabase = supabaseFalso({
       respostas: {
-        get_analises_dashboard_payload_v2: () => new Promise(() => {}),
+        get_analises_dashboard_payload_v2_se_mudou: () => new Promise(() => {}),
       },
     });
     await montar(supabase, { abrir: false });
@@ -1105,10 +1138,11 @@ describe("área, usuário, reabertura e comemorações", () => {
     await act(async () => definirAreaAtual("projetos"));
     await esperar();
     expect(
-      chamadas(supabase, "get_analises_dashboard_payload_v2").at(-1),
+      chamadas(supabase, "get_analises_dashboard_payload_v2_se_mudou").at(-1),
     ).toEqual({
       p_scope: "ativo",
       p_area: "projetos",
+      p_versao: null,
     });
     expect(linhasDaFila()).toHaveLength(4);
   });
@@ -1118,7 +1152,7 @@ describe("área, usuário, reabertura e comemorações", () => {
     await montar(supabase);
     await abrirATela();
     expect(
-      chamadas(supabase, "get_analises_dashboard_payload_v2"),
+      chamadas(supabase, "get_analises_dashboard_payload_v2_se_mudou"),
     ).toHaveLength(1);
     const agora = Date.now();
     const relogio = vi
@@ -1126,7 +1160,7 @@ describe("área, usuário, reabertura e comemorações", () => {
       .mockReturnValue(agora + 6 * 60 * 1000);
     await abrirATela();
     expect(
-      chamadas(supabase, "get_analises_dashboard_payload_v2"),
+      chamadas(supabase, "get_analises_dashboard_payload_v2_se_mudou"),
     ).toHaveLength(2);
     relogio.mockRestore();
   });
@@ -1135,7 +1169,7 @@ describe("área, usuário, reabertura e comemorações", () => {
     let soltar;
     const supabase = supabaseFalso({
       respostas: {
-        get_analises_dashboard_payload_v2: () =>
+        get_analises_dashboard_payload_v2_se_mudou: () =>
           new Promise((ok) => {
             soltar = () => ok({ data: payload(), error: null });
           }),
@@ -1145,7 +1179,7 @@ describe("área, usuário, reabertura e comemorações", () => {
     await act(async () => void painel.render());
     await act(async () => void painel.render());
     expect(
-      chamadas(supabase, "get_analises_dashboard_payload_v2"),
+      chamadas(supabase, "get_analises_dashboard_payload_v2_se_mudou"),
     ).toHaveLength(1);
     await act(async () => soltar());
     await esperar();

@@ -58,12 +58,16 @@ import { avisar as avisarPadrao } from "./avisos.js";
 const TABELA_DO_MAPA = "TB_CONFIG_MAPA_SAUDE_INDIG";
 
 /*
-  As seis colunas `cronograma_*` entram de propósito: uma leitura só do
-  monitoramento (a Visão geral e os detalhes leem daqui). A consulta nomeia a
-  tabela, mas quem responde é a view (monitoramento-operational-transport.js).
+  As colunas de cada linha do monitoramento, as que
+  `listar_monitoramento_operacional` devolve (migration 20261013160000, da view
+  VW_MONITORAMENTO_INDIGENA_OPERACIONAL). As seis `cronograma_*` entram de
+  propósito: uma leitura só do monitoramento (a Visão geral e os detalhes
+  leem daqui). tests/app/carga.test.js confere que a migration seleciona
+  exatamente estas.
 */
 export const COLUNAS_DO_MONITORAMENTO =
   "aprovados_analise,aprovados_prova,aptos_analise,ativo,cancelados,cargos,ciclo,contratados,cronograma_atividade_atual,cronograma_automatico,cronograma_dias_para_proxima,cronograma_percentual,cronograma_proxima_atividade,cronograma_proxima_data,data_fim,data_inicio,edital,eliminados_nota,entrevistados,etapa,id,id_unidade,inscritos,link_edital,observacoes,observacoes_internas,processo,reprovados_analise,responsavel,risco,sigla_unidade,status,tipo_unidade,total_eliminados,uf,unidade,vagas_ociosas,vagas_total,CO_AREA,ST_TREINAMENTO";
+const RPC_DO_MONITORAMENTO = "listar_monitoramento_operacional";
 
 const COPIA_PADRAO = Object.freeze({
   ler: lerCopiaDaSessao,
@@ -108,6 +112,8 @@ export function criarCarga({
   agora = () => Date.now(),
 } = {}) {
   let linhas = [];
+  /* A versão das `linhas` que o banco mandou: a próxima carga pergunta só se mudou. */
+  let versaoDasLinhas = null;
   let unidades = [];
   let copiaEmLeitura = null;
   let cargaDasLinhas = null;
@@ -147,16 +153,32 @@ export function criarCarga({
     );
   }
 
-  // `Promise.resolve` dispara a consulta já (ver `iniciarConsultas`).
-  const consultaDoMonitoramento = () =>
-    Promise.resolve(
-      sb()
-        .from("TB_MONITORAMENTO_INDIGENA")
-        .select(COLUNAS_DO_MONITORAMENTO)
-        .eq("ativo", true)
-        .order("unidade", { ascending: true })
-        .order("edital", { ascending: true }),
-    );
+  /*
+    As linhas ativas, por unidade e edital. `conhecidas` (`{ linhas, versao }`,
+    ou a promessa dele) é o que a tela já tem: a da memória ou a da cópia da
+    sessão. Se a versão ainda vale, o banco responde só `{ inalterado: true }`
+    e voltam as mesmas linhas; sem isso eram ~300 kB a cada entrada.
+    Responde no formato do Supabase (`{ data, error }`) mais a `versao`.
+  */
+  const consultaDoMonitoramento = (
+    conhecidas = { linhas, versao: versaoDasLinhas },
+  ) =>
+    Promise.resolve(conhecidas)
+      .catch(() => null)
+      .then(async (base) => {
+        const versao = base?.versao || null;
+        const { data, error } = await sb().rpc(RPC_DO_MONITORAMENTO, {
+          p_versao: versao,
+        });
+        if (error) return { data: null, error };
+        if (versao && data?.inalterado === true)
+          return { data: base.linhas, versao, error: null };
+        return {
+          data: Array.isArray(data?.linhas) ? data.linhas : [],
+          versao: typeof data?.versao === "string" ? data.versao : null,
+          error: null,
+        };
+      });
 
   /*
     As consultas da entrada saem juntas: dependem só da sessão e do perfil, não
@@ -165,7 +187,7 @@ export function criarCarga({
     que dispara, porque a consulta do Supabase só vai para a rede quando alguém
     chama `then`.
   */
-  function iniciarConsultas() {
+  function iniciarConsultas(monitoramentoConhecido) {
     const iniciar = (consulta) => Promise.resolve(consulta);
     return {
       config: iniciar(configuracao.consulta()),
@@ -174,7 +196,7 @@ export function criarCarga({
       unidades: iniciar(consultaDeUnidades()),
       abas: abas.consulta(sb()),
       monitoramento: podeCarregarMonitoramento()
-        ? consultaDoMonitoramento()
+        ? consultaDoMonitoramento(monitoramentoConhecido)
         : null,
     };
   }
@@ -247,13 +269,15 @@ export function criarCarga({
         navegacao.montarMenu();
         return true;
       }
-      const { data, error } = await (consulta || consultaDoMonitoramento());
+      const { data, error, versao } = await (consulta ||
+        consultaDoMonitoramento());
       if (rodada !== rodadaDasLinhas) return false;
       if (error) {
         avisar("Erro ao carregar dados: " + erroAmigavel(error), "error");
         return false;
       }
       linhas = Array.isArray(data) ? data : [];
+      versaoDasLinhas = versao || null;
       // A Visão geral (React) recorta; o mapa da Saúde Indígena lê o recorte dela.
       publicarLinhasDoMonitoramento(linhas);
       return true;
@@ -340,7 +364,14 @@ export function criarCarga({
       acesso: assinaturaDoAcesso(perfil(), paineis.liberados()),
       versao: copia.versao,
     };
-    const consultas = iniciarConsultas();
+    // As linhas da cópia que serve dizem ao banco a versão que a tela já tem.
+    const consultas = iniciarConsultas(
+      Promise.resolve(copiaLida).then((guardada) =>
+        copiaServe(guardada, { ...sessao, agora: agora() })
+          ? guardada.dados.monitoramento
+          : null,
+      ),
+    );
     // Fora da cópia da sessão: a manutenção é sempre a do banco, nesta entrada.
     const situacaoDoBanco = situacao.consulta(sb());
     const guardada = await copiaLida;
@@ -474,6 +505,7 @@ export function criarCarga({
     rodadaDasLinhas += 1;
     cargaDasLinhas = null;
     linhas = [];
+    versaoDasLinhas = null;
     copiaEmLeitura = null;
     esquecerLinhasDoMonitoramento();
   }

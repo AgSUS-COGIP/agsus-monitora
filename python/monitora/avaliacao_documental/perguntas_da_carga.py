@@ -23,7 +23,8 @@ Regra de privacidade (a mesma de antes, quando o banco contava na hora):
 Dado pessoal fica fora do resumo:
   - pergunta cujo enunciado pede dado pessoal (CPF, RG, e-mail, telefone ou
     celular, endereço, CEP, data de nascimento, nome da mãe, PIS/NIS/PASEP,
-    matrícula) entra com respostas [] e "dado_pessoal": true — todas as
+    matrícula, nome completo/social ou nome de terceiro — "o nome completo do
+    trabalhador da AgSUS", 13/10/2026) entra com respostas [] e "dado_pessoal": true — todas as
     respostas contam só em "outras";
   - em qualquer pergunta, resposta com cara de CPF (11 dígitos, com ou sem
     máscara), e-mail, telefone ou CEP vira "outras", mesmo repetida.
@@ -49,6 +50,10 @@ _PEDE_DADO_PESSOAL = re.compile(
     r"|endereco|logradouro|cep"
     r"|data de nascimento|nascimento"
     r"|nome da mae|nome de sua mae|nome da sua mae"
+    # Nome de pessoa: o do candidato e o de terceiros ("informe o nome completo do trabalhador da AgSUS").
+    r"|nome completo|nome social|seu nome"
+    r"|nome d[oa]s? (?:trabalhador|trabalhadora|parente|conjuge|companheir[oa]|servidor|servidora"
+    r"|funcionari[oa]|colaborador|colaboradora|familiar|empregad[oa])"
     r"|pis|nis|pasep|nit"
     r"|matricula"
     r")\b"
