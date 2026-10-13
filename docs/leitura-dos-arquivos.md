@@ -29,7 +29,7 @@ Pré-requisito: a migration `20261009220000` aplicada (o ensaio está em `supaba
 5. Satisfeito, aumente o `limite` (até 2000) ou rode sem `editais` (os ativos com regra). Cada
    execução continua de onde a anterior parou; `forcar` relê o que já foi lido nesta versão.
 
-## Como lê (extrator 2026.10.7) — tudo local e gratuito
+## Como lê (extrator 2026.10.8) — tudo local e gratuito
 
 Nenhum documento sai do runner: sem API de IA paga, sem consulta de CNPJ na internet.
 
@@ -67,7 +67,12 @@ Nenhum documento sai do runner: sem API de IA paga, sem consulta de CNPJ na inte
   sem artigo, sem o pedaço de frase antes ("…, nesta empresa, X" → "X"), sem CNPJ e sem qualificador no
   fim ("— Empresa Privada"), com até 80 caracteres; a seção só com CNPJ fica com a razão social de outra
   seção do arquivo com a mesma raiz de CNPJ; o mesmo vínculo lido em outra página sem empregador legível
-  (mesmo início, cargo compatível) não vira outro item; "26 (vinte) horas" vale o extenso.
+  (mesmo início, cargo compatível) não vira outro item; "26 (vinte) horas" vale o extenso. Ficha de
+  registro/eSocial: as linhas e tabelas de férias (período aquisitivo, concessivo, gozo, abono, 1/3),
+  afastamentos, licenças e alterações salariais são ignoradas, e "Estabelecimento definido para…" (lotação)
+  não é empregador; um vínculo precisa de cargo ou de verbo de vínculo. O mesmo empregador (CNPJ da mesma
+  raiz ou razão social no começo da outra) com o mesmo início e cargo compatível é um item só (fica o que
+  diz o fim), e o vínculo sem empregador com período dentro de outro compatível sai.
 - **Sobreposição**: alerta `PERIODO_SOBREPOSTO` só para o MESMO empregador (CNPJ com a mesma raiz ou
   razão social igual): provável duplicidade. Empregadores diferentes ao mesmo tempo são legítimos:
   o item ganha `concomitante` e a informação "os dias em comum contam uma vez", sem alerta. O total

@@ -565,6 +565,8 @@ def _vinculos_da_secao(secao, documento, avisos):
     """Os vínculos de uma declaração (seção): extraídos só do texto dela, com o emissor dela como empregador
     (o rotulado "Empregador:" do formulário vale antes), o fim/atual e a carga do trecho do vínculo."""
     original, pagina_de = _paginador(secao.paginas)
+    # Férias, afastamentos, alterações salariais e lotação da ficha de registro têm datas e não são vínculos.
+    original = _declaracoes.mascarar_ignorados(original)
     dobrado = dobrar(original)
     datas = datas_no_texto(dobrado)
     emissao, local, confiavel = _emissao_da_secao(dobrado, datas)
@@ -584,6 +586,9 @@ def _vinculos_da_secao(secao, documento, avisos):
             continue
         comeco, fim = it["_janela"] if len(itens) > 1 else (0, len(dobrado))
         comeco, fim = max(0, comeco), min(len(dobrado), fim)
+        # Um vínculo tem cargo ou, ao menos, um verbo de vínculo perto (exerce, admitido, contratado…).
+        if not it["cargo"] and not _declaracoes.VERBO_DE_VINCULO.search(dobrado, comeco, fim):
+            continue
         # O "Empregador: X" do formulário vale antes do emissor, se tiver cara de nome ("nesta empresa em…" não).
         rotulado = it["_rotulado"] and _declaracoes.nome_de_instituicao(it["empregador"] or "")
         if emissor and not rotulado:
@@ -650,10 +655,35 @@ def _cargos_compativeis(a, b):
     return longo[: len(curto)] == curto
 
 
+def _informativo(it):
+    """Quanto o vínculo diz: com fim ou atual (conta dias) vale mais que o de fim não informado."""
+    return (bool(it["fim"] or it["atual"]), bool(it["empregador"]), bool(it.get("cnpj")))
+
+
+def _juntar_vinculos(fica, sai):
+    if not fica["fim"] and not fica["atual"] and (sai["fim"] or sai["atual"]):
+        fica["fim"], fica["atual"] = sai["fim"], sai["atual"]
+    fica["empregador"] = fica["empregador"] or sai["empregador"]
+    fica["cargo"] = fica["cargo"] or sai["cargo"]
+    if not fica.get("cnpj") and sai.get("cnpj"):
+        fica["cnpj"] = sai["cnpj"]
+    if not fica["carga_semanal"] and (sai.get("_emissor") == fica.get("_emissor") or mesmo_empregador(fica, sai)):
+        fica["carga_semanal"] = sai["carga_semanal"]
+
+
+def _fim_efetivo(it):
+    if it["fim"]:
+        return it["fim"]
+    return date.max if it["atual"] else it["inicio"]
+
+
 def _sem_duplicados_entre_paginas(itens):
-    """O mesmo vínculo lido em duas páginas (mesmo início, cargo compatível — "Médico" e "Médico do trabalho")
-    em que um não tem empregador legível: fica um só, o que tem empregador, com o fim/atual e a carga do outro
-    quando faltarem."""
+    """O mesmo vínculo lido em duas páginas vira um item só:
+
+    - mesmo início e cargo compatível ("Médico" e "Médico do trabalho") quando um não tem empregador legível
+      ou os dois são do MESMO empregador (CNPJ da mesma raiz ou razão social igual/no começo da outra: "SESI" e
+      "SESI, Departamento Regional de X"): fica o que diz o fim (atual ou com data), com o que faltar do outro;
+    - sem empregador, com o período dentro do de outro vínculo com empregador e cargo compatível: sai."""
     saida = []
     for it in itens:
         par = next(
@@ -661,23 +691,31 @@ def _sem_duplicados_entre_paginas(itens):
                 o
                 for o in saida
                 if o["inicio"] == it["inicio"]
-                and (not o["empregador"]) != (not it["empregador"])
                 and _cargos_compativeis(o["cargo"], it["cargo"])
+                and ((not o["empregador"]) != (not it["empregador"]) or mesmo_empregador(o, it))
             ),
             None,
         )
         if par is None:
             saida.append(it)
             continue
-        fica, sai = (par, it) if par["empregador"] else (it, par)
-        if not fica["fim"] and not fica["atual"] and (sai["fim"] or sai["atual"]):
-            fica["fim"], fica["atual"] = sai["fim"], sai["atual"]
-        fica["cargo"] = fica["cargo"] or sai["cargo"]
-        if not fica["carga_semanal"] and sai.get("_emissor") == fica.get("_emissor"):
-            fica["carga_semanal"] = sai["carga_semanal"]
+        fica, sai = (it, par) if _informativo(it) > _informativo(par) else (par, it)
+        _juntar_vinculos(fica, sai)
         if fica is it:
             saida[saida.index(par)] = it
-    return saida
+    return [
+        it
+        for it in saida
+        if it["empregador"]
+        or not any(
+            o is not it
+            and o["empregador"]
+            and o["inicio"] <= it["inicio"]
+            and _fim_efetivo(it) <= _fim_efetivo(o)
+            and _cargos_compativeis(o["cargo"], it["cargo"])
+            for o in saida
+        )
+    ]
 
 
 def vinculos(paginas, nome_do_candidato=None, hoje=None, data_do_arquivo=None, avisos=None):
