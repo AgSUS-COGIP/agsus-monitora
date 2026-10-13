@@ -172,8 +172,11 @@ menos pendentes (`distribuicao.atribuicoes_dos_novos`); o banco valida cada atri
   "Run workflow".
 - **Modos:** `normal`, `seco` (calcula e mostra o resumo; um edital com a regra ainda "Conferir"
   sai como prévia; sem regra, o resumo diz "edital sem regra conferida" e quantos inscritos
-  aguardam) e `refazer_lote` (recorta o lote do zero; recusado por edital que já tem ficha, e o
-  banco recusa tirar do lote quem tem ficha aberta).
+  aguardam) e `refazer_lote` (recorta o lote do zero enquanto todas as fichas do edital estão
+  intocadas — pendentes, nunca atribuídas, reservadas, salvas nem concluídas: quem fica mantém a
+  ficha, quem sai tem a ficha `FORA_LOTE` com "Lote refeito em dd/mm" e quem entra ganha ficha
+  nova; com ficha iniciada o edital é recusado, "o lote já está em análise: N fichas iniciadas",
+  e o banco confere de novo — 20261013110000).
 - **Edital sem regra conferida:** não é gravado e não quebra a execução; aparece no resumo do
   Actions e na aba (`ultima_execucao.edital.situacao` = `SEM_REGRA` ou `REGRA_NAO_CONFERIDA`).
 - **Casos dourados:** `tests/fixtures/avaliacao-documental/casos-de-pre-classificacao.json` (19

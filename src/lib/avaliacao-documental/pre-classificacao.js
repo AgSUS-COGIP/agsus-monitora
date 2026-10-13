@@ -52,7 +52,7 @@
   - "a linha anda": quem está no lote só sai eliminado; com linha_anda, o
     lugar aberto vai para o próximo da Provisória, num lote novo (reposição),
     com o motivo; ANALISADO (já tem ficha) nunca muda;
-  - refazer (só antes das fichas): o lote é recortado do zero;
+  - refazer (só com todas as fichas do edital intocadas): o lote é recortado do zero;
   - decisão da coordenação (decisoes[id] = { motivo }, de TB_DECISAO_LOTE):
     quem a regra elimina (menos quem saiu da Empregare) ou deixa fora do lote
     fica no lote com a entrada DECISAO e o motivo da decisão, no lote em que
@@ -438,7 +438,7 @@ const peloLoteDaRegra = (ant) =>
  *   anterior     { [id]: { situacao, lote, lista_lote, entrada, motivo_entrada, posicao,
  *                  declarada_congelada } } (declarada_congelada: o valor guardado, que não se recalcula)
  *   ultimo_lote  o maior número de lote já usado na vaga
- *   refazer      recorta o lote do zero (só antes das fichas)
+ *   refazer      recorta o lote do zero (só com todas as fichas intocadas)
  *   hoje         "AAAA-MM-DD" (idade do desempate)
  *   congelar     guarda a declarada completa de quem ainda não a tem congelada (congelaADeclarada)
  *   decisoes     { [id]: { motivo } }: as decisões vigentes da coordenação (ficam no lote, entrada DECISAO)

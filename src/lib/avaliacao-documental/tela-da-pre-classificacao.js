@@ -32,7 +32,7 @@ export const AVISOS_DA_VAGA = Object.freeze({
   LINHA_PARADA: "Lugar aberto no lote: a regra não repõe.",
   FORA_DO_LOTE_ACIMA_DO_CORTE: "Fora do lote com nota acima da linha de corte.",
   LOTE_ACIMA_DO_TAMANHO: "Lote maior que o tamanho de agora.",
-  REFAZER_RECUSADO: "O lote não foi refeito: já há fichas.",
+  REFAZER_RECUSADO: "O lote não foi refeito: já há fichas iniciadas.",
   DECISAO_SAIU_DA_EMPREGARE:
     "Candidato com decisão da coordenação saiu do arquivo da Empregare: ficou fora do lote. Revogue a decisão.",
 });

@@ -140,7 +140,7 @@ export const OPCOES_DOS_ROBOS = Object.freeze({
         valor: "refazer_lote",
         rotulo: "Refazer lote",
         explicacao:
-          "Recorta o lote de convocação do zero. Só antes das fichas começarem.",
+          "Recorta o lote de convocação do zero. Só com todas as fichas do edital intocadas (nenhuma atribuída, aberta ou salva).",
       },
     ]),
     editais: "numero_ou_id",

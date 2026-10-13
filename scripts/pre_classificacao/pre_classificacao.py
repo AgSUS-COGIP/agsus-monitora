@@ -42,6 +42,15 @@ Uso
   python scripts/pre_classificacao/pre_classificacao.py [--editais 93/2026,<id>]
       [--refazer-lote] [--apos-robo] [--disparado-por <uuid>|robo]
 
+--refazer-lote (modo refazer_lote): recorta o lote do zero. Vale enquanto
+ninguém foi analisado e TODAS as fichas do edital estão intocadas (pendentes,
+nunca atribuídas, reservadas, salvas nem concluídas); o banco confere de novo
+na gravação. Quem continua no lote mantém a ficha, quem sai fica com a ficha
+FORA_LOTE ("Lote refeito em dd/mm") e quem entra ganha ficha nova; o resumo
+diz quantos ficam, entram e saem. Com ficha iniciada, o edital é recusado
+("o lote já está em análise: N fichas iniciadas").
+Migration: 20261013110000_refazer_lote_com_fichas_intocadas.sql.
+
 Sem --editais nem --apos-robo: os editais ativos com vagas da Empregare.
 Editais: números ("93/2026"), ids (uuid) ou, sem número, o nome ("FCC").
 
@@ -67,6 +76,7 @@ from monitora.avaliacao_documental.distribuicao import atribuicoes_dos_novos  # 
 from monitora.avaliacao_documental.pre_classificacao import (  # noqa: E402
     congela_a_declarada,
     fim_das_inscricoes,
+    mudancas_do_lote,
     nivel_da_vaga,
     normalizar_regra,
     pre_classificar_vaga,
@@ -124,7 +134,9 @@ def argumentos(lista=None):
         "--editais", default=os.environ.get("EDITAIS", ""), help="93/2026, ids ou nomes, separados por vírgula"
     )
     p.add_argument("--seco", action="store_true", help="calcula e mostra o resumo; não grava")
-    p.add_argument("--refazer-lote", action="store_true", help="recorta o lote do zero (só antes das fichas)")
+    p.add_argument(
+        "--refazer-lote", action="store_true", help="recorta o lote do zero (só com todas as fichas intocadas)"
+    )
     p.add_argument("--apos-robo", action="store_true", help="os editais das vagas da última carga do robô")
     p.add_argument("--disparado-por", default=os.environ.get("DISPARADO_POR", ""))
     args = p.parse_args(lista)
@@ -222,9 +234,12 @@ def processar_edital(chamar, edital, hoje, refazer, gravar, retratar=False, grav
         return resultado
     if situacao == "REGRA_NAO_CONFERIDA" and not so_retrato:
         resultado["situacao"] = "PREVIA"
-    if refazer and not edital.get("refazer_permitido", True):
-        refazer = False
-        resultado["avisos"].append("REFAZER_RECUSADO")
+    # Refazer o lote do zero só com todas as fichas do edital intocadas (o banco confere de novo
+    # na gravação): senão o edital não é processado e o resumo diz por quê.
+    if refazer and not so_retrato and not edital.get("refazer_permitido", True):
+        resultado["situacao"] = "FALHOU"
+        resultado["mensagem"] = mensagem_do_refazer_recusado(edital)
+        return resultado
 
     regra = normalizar_regra(edital["regra"].get("configuracao"))
     # A declarada congela na primeira pré-classificação depois do fim das inscrições (ou já, sem data).
@@ -234,6 +249,7 @@ def processar_edital(chamar, edital, hoje, refazer, gravar, retratar=False, grav
         resultado["base_da_nota"] = regra["provisoria"]["base_da_nota"]
         resultado["congelar"] = congelar
     avisos = Counter()
+    lote_refeito = Counter()
     for vaga in vagas:
         lidos = ler_candidatos(chamar, edital, vaga)
         r = pre_classificar_vaga(
@@ -254,6 +270,8 @@ def processar_edital(chamar, edital, hoje, refazer, gravar, retratar=False, grav
             )
         if so_retrato:
             continue
+        if refazer:
+            lote_refeito.update(mudancas_do_lote(lidos.get("anterior") or {}, r["linhas"]))
         if gravar is not None:
             gravar(vaga["codigo"], r)
         if gravar_sugestoes is not None and tem_blocos_com_itens(regra):
@@ -289,7 +307,17 @@ def processar_edital(chamar, edital, hoje, refazer, gravar, retratar=False, grav
         return resultado
     resultado["avisos"] = sorted(set(resultado["avisos"]) | set(avisos))
     resultado["avisos_por_vaga"] = dict(sorted(avisos.items()))
+    if refazer:
+        resultado["lote_refeito"] = {k: lote_refeito[k] for k in ("ficam", "entram", "saem")}
     return resultado
+
+
+def mensagem_do_refazer_recusado(edital):
+    """Por que o lote do edital não pode ser refeito (só a contagem; sem dado pessoal)."""
+    iniciadas = int(edital.get("fichas_iniciadas") or 0)
+    if iniciadas:
+        return f"lote não refeito: o lote já está em análise: {iniciadas} fichas iniciadas"
+    return "lote não refeito: o edital já tem candidato analisado"
 
 
 def tem_blocos_com_itens(regra):
@@ -380,6 +408,12 @@ def linha_do_resumo(r):
         f" · nota do lote: declarada ({r.get('pela_art', 0)} pela ART, sem declarada completa)"
         if r.get("base_da_nota") == "DECLARADA"
         else (" · nota do lote: ART" if r.get("base_da_nota") else "")
+    )
+    refeito = r.get("lote_refeito")
+    texto_fichas += (
+        f" · lote refeito: {refeito['ficam']} ficam, {refeito['entram']} entram, {refeito['saem']} saem"
+        if refeito
+        else ""
     )
     texto_congeladas = f" · {r['congeladas']} declarada(s) congelada(s)" if r.get("congeladas") else ""
     texto_lote = f"{r['no_lote']} no lote"

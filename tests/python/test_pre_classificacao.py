@@ -354,5 +354,95 @@ class BaseDaNotaECongelamento(unittest.TestCase):
         )
 
 
+class RefazerOLote(unittest.TestCase):
+    """
+    O recorte do zero com fichas intocadas (20261013110000), como no 114/2026:
+    lote pela nota mínima (≥ 10), linha parada. Quem continua no lote FICA
+    (mantém a ficha), quem se inscreveu depois com a nota ENTRA (ficha nova) e
+    quem não cabe mais no recorte ou foi eliminado SAI (ficha FORA_LOTE).
+    """
+
+    REGRA = {
+        "schema": 1,
+        "provisoria": {
+            "eliminacao_automatica": [
+                {"codigo": "CANCELADO", "coluna": "SITUAÇÃO", "quando": ["CANCELADO"], "motivo": "Cancelou a inscrição"}
+            ],
+            "nota_declarada": [],
+        },
+        "lote": {"base": "NOTA_MINIMA", "nota_minima": 10, "item_edital": "8.2.6", "linha_anda": False},
+        "blocos": [],
+    }
+    VAGA = {"codigo": "182493", "vagas_imediatas": 1, "cadastro_reserva": True, "modalidades": None, "nivel": None}
+
+    @staticmethod
+    def candidato(n, art, situacao="Ativo"):
+        return {
+            "id": f"c{n}",
+            "codigo": f"70000{n}",
+            "ativo": True,
+            "nascimento": "1990-01-01",
+            "candidatura": f"2026-10-0{n}T12:00:00+00:00",
+            "colunas": {"SITUAÇÃO": situacao, "NOTA - Questionário": art},
+        }
+
+    def setUp(self):
+        self.candidatos = [
+            self.candidato(1, "24,0/30,0"),  # estava no lote e continua: fica
+            self.candidato(2, "12,0/30,0"),  # inscreveu-se depois, com a nota mínima: entra
+            self.candidato(3, "28,0/30,0", "Cancelado"),  # estava e cancelou: sai eliminado
+            self.candidato(4, "8,0/30,0"),  # estava, mas a nota baixou do mínimo: sai do recorte
+            self.candidato(5, "5,0/30,0"),  # nunca esteve: continua fora
+        ]
+        lote = {"lote": 1, "lista_lote": "GERAL", "entrada": "INICIAL", "motivo_entrada": "Lote inicial: nota ≥ 10"}
+        self.anterior = {
+            "c1": {"situacao": "NO_LOTE", "posicao": 2, **lote},
+            "c3": {"situacao": "NO_LOTE", "posicao": 1, **lote},
+            "c4": {"situacao": "NO_LOTE", "posicao": 3, **lote},
+            "c5": {"situacao": "RANQUEADO", "posicao": 4},
+        }
+
+    def rodar(self, refazer):
+        return pc.pre_classificar_vaga(
+            pc.normalizar_regra(self.REGRA),
+            self.VAGA,
+            self.candidatos,
+            anterior=self.anterior,
+            ultimo_lote=1,
+            refazer=refazer,
+            hoje="2026-10-13",
+        )
+
+    def test_sem_refazer_quem_chegou_depois_fica_fora(self):
+        r = self.rodar(refazer=False)
+        situacao = {l["id"]: l["situacao"] for l in r["linhas"]}
+        self.assertEqual(situacao["c2"], "RANQUEADO")
+        self.assertEqual(situacao["c4"], "NO_LOTE")
+        self.assertEqual(pc.mudancas_do_lote(self.anterior, r["linhas"]), {"ficam": 2, "entram": 0, "saem": 1})
+
+    def test_refazer_recorta_do_zero_entra_sai_e_fica(self):
+        r = self.rodar(refazer=True)
+        por_id = {l["id"]: l for l in r["linhas"]}
+        self.assertEqual(
+            {i: por_id[i]["situacao"] for i in por_id},
+            {"c1": "NO_LOTE", "c2": "NO_LOTE", "c3": "ELIMINADO", "c4": "RANQUEADO", "c5": "RANQUEADO"},
+        )
+        # Todo o lote refeito é o lote 1, entrada INICIAL (o banco grava; a ficha de quem fica não muda).
+        self.assertEqual({(por_id[i]["lote"], por_id[i]["entrada"]) for i in ("c1", "c2")}, {(1, "INICIAL")})
+        self.assertIsNone(por_id["c4"]["lote"])
+        self.assertEqual(r["resumo"]["no_lote"], 2)
+        self.assertEqual(pc.mudancas_do_lote(self.anterior, r["linhas"]), {"ficam": 1, "entram": 1, "saem": 2})
+
+    def test_mudancas_do_lote_conta_analisado_como_no_lote(self):
+        anterior = {"a": {"situacao": "ANALISADO"}, "b": {"situacao": "NO_LOTE"}, "c": {"situacao": "ELIMINADO"}}
+        linhas = [
+            {"id": "a", "situacao": "ANALISADO"},
+            {"id": "b", "situacao": "RANQUEADO"},
+            {"id": "d", "situacao": "NO_LOTE"},
+        ]
+        self.assertEqual(pc.mudancas_do_lote(anterior, linhas), {"ficam": 1, "entram": 1, "saem": 1})
+        self.assertEqual(pc.mudancas_do_lote(None, None), {"ficam": 0, "entram": 0, "saem": 0})
+
+
 if __name__ == "__main__":
     unittest.main()

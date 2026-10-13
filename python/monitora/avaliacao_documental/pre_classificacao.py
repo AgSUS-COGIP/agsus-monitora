@@ -889,3 +889,18 @@ def pre_classificar_vaga(
             "avisos": sorted(avisos),
         },
     }
+
+
+def mudancas_do_lote(anterior, linhas):
+    """
+    O que o recorte novo muda no lote gravado: quantos FICAM (estavam e
+    continuam), ENTRAM (não estavam) e SAEM (estavam e não estão mais —
+    eliminados ou fora do recorte). No lote = NO_LOTE ou ANALISADO.
+      anterior  {id: {situacao, ...}} (a pré-classificação gravada da vaga)
+      linhas    as linhas de pre_classificar_vaga
+    Só contagens: é o resumo do "refazer o lote" (quem fica mantém a ficha,
+    quem sai tem a ficha FORA_LOTE e quem entra ganha ficha nova, no banco).
+    """
+    antes = {i for i, a in _objeto(anterior).items() if _objeto(a).get("situacao") in _NO_LOTE}
+    depois = {l.get("id") for l in _lista(linhas) if l.get("situacao") in _NO_LOTE}
+    return {"ficam": len(antes & depois), "entram": len(depois - antes), "saem": len(antes - depois)}

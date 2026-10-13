@@ -17,6 +17,13 @@ name: Pré-classificação da Avaliação documental
 #   - pelo botão "Run workflow" desta aba Actions.
 # Guia: docs/python-no-monitora.md. Migration: 20261006110000_pre_classificacao_e_lote.sql.
 #
+# Modo refazer_lote: recorta o lote do zero enquanto ninguém foi analisado e TODAS as
+# fichas do edital estão intocadas (pendentes, nunca atribuídas, reservadas, salvas nem
+# concluídas). Quem continua no lote mantém a ficha; quem sai fica com a ficha FORA_LOTE
+# ("Lote refeito em dd/mm"); quem entra ganha ficha nova. Com ficha iniciada, o edital é
+# recusado ("o lote já está em análise: N fichas iniciadas"); o banco confere de novo
+# (20261013110000_refazer_lote_com_fichas_intocadas.sql).
+#
 # O REPOSITÓRIO É PÚBLICO e este log também: o job só imprime contagens,
 # códigos de vaga e de aviso e números de edital (python/monitora/mascaramento.py).
 #
@@ -33,7 +40,7 @@ on:
         required: false
         default: ""
       modo:
-        description: "normal = calcula e grava; seco = só calcula e mostra o resumo; refazer_lote = recorta o lote do zero (só antes das fichas)"
+        description: "normal = calcula e grava; seco = só calcula e mostra o resumo; refazer_lote = recorta o lote do zero (só com todas as fichas do edital intocadas)"
         type: choice
         options:
           - normal
