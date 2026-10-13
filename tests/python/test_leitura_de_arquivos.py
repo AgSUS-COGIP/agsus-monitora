@@ -632,8 +632,10 @@ def test_ctps_atual_sem_fim_cargo_sem_codigo_e_sobreposicao_de_verdade():
     # O atual começa no dia em que o anterior acabou: não é sobreposição.
     assert "PERIODO_SOBREPOSTO" not in sum(codigos, [])
     assert codigos[0] == []
-    # Dois empregos ao mesmo tempo: aviso leve, não erro.
-    assert "PERIODO_CONCOMITANTE" in codigos[1] and "PERIODO_CONCOMITANTE" in codigos[2]
+    # Dois empregos ao mesmo tempo (empregadores diferentes): legítimo, só a informação, sem alerta.
+    assert codigos[1] == [] and codigos[2] == []
+    assert r["itens"][1]["concomitante"] is True and r["itens"][2]["concomitante"] is True
+    assert "dias em comum" in r["itens"][1]["informacao"]
 
 
 def test_ctps_com_rotulos_no_cabecalho_da_tabela():
@@ -864,7 +866,7 @@ def test_ctps_emissao_rotulada_no_topo_e_vizinho_com_o_mesmo_cargo():
     atual, anterior = r["itens"]
     assert (atual["atual"], atual["fim"], atual["dias_ate"]) == (True, None, "2026-07-27")
     assert anterior["empregador"] == "Caixa de Exemplo dos Funcionarios"
-    assert anterior["cargo"] == "Médico do trabalho 4 horas 20"
+    assert (anterior["cargo"], anterior["carga_semanal"]) == ("Médico do trabalho", 20)
     assert [a["codigo"] for a in atual["alertas"]] == []
 
 

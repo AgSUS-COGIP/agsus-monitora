@@ -24,8 +24,11 @@ import {
   comLinhaAberta,
   declaradoDoBloco,
   escolhaDoBloco,
+  escolhaPelosItens,
   lancamentoComEscolha,
+  lancamentoConfirmadoPelosItens,
   novoItemDoBloco,
+  semConfirmacaoSeMudouItens,
 } from "../../../lib/avaliacao-documental/apurado-da-ficha.ts";
 import type { Escolha } from "../../../lib/avaliacao-documental/apurado-da-ficha.ts";
 import {
@@ -37,13 +40,22 @@ import { arquivosDaPergunta } from "../../../lib/avaliacao-documental/respostas-
 import type { ArquivoDoCandidato } from "../../../lib/avaliacao-documental/respostas-do-candidato.ts";
 import { justificativasDoBloco } from "../../../lib/avaliacao-documental/justificativas-do-bloco.ts";
 import {
+  anexoEhImagem,
   itensParaConferir,
   leituraDoAnexo,
   leiturasDaFicha,
+  linkDaMiniatura,
 } from "../../../lib/avaliacao-documental/leitura-dos-arquivos.ts";
+import type { ItemParaConferir } from "../../../lib/avaliacao-documental/leitura-dos-arquivos.ts";
+import type { EnderecosDaEmpregare } from "../../../lib/avaliacao-documental/anexo-na-empregare.ts";
+import {
+  comprovadoDaExperiencia,
+  diasEmComum,
+} from "../../../lib/avaliacao-documental/comprovado-da-ficha.ts";
 import type { LeituraDoArquivo } from "../../../lib/avaliacao-documental/leitura-dos-arquivos.ts";
 import { tetoDoBloco } from "../../../lib/avaliacao-documental/pontuacao.js";
 import { Selo } from "../../../ui/index.js";
+import { CamposDoItem } from "./campos-do-item.tsx";
 import { ComprovadoDaFicha } from "./comprovado-da-ficha.tsx";
 import { LinkDaEmpregare, LinkDoAnexo } from "./empregare.tsx";
 import { ConferenciaDoLido, LidoDoArquivo } from "./leitura-dos-arquivos.tsx";
@@ -78,6 +90,15 @@ import type {
   5. no máximo UMA mensagem: a falta mais útil (mensagemDoBloco, pelas
      pendências da ficha) ou, no Confere, o aviso de que os itens dão outra
      pontuação, com o atalho para Editar nota.
+  PELOS ITENS (o robô leu títulos, cursos ou vínculos do arquivo): o fluxo é
+  conferir os itens → a pontuação sai dos aceitos → o avaliador confirma.
+  A conferência (Aceitar / Corrigir / Recusar) e, embaixo, as linhas à mão
+  com "Adicionar …" sempre à vista; no rodapé, "Pontuação pelos itens
+  aceitos: X de 10 · declarou 10" e Confirmar (Confere se X é o declarado;
+  senão Editar nota com a justificativa) · Não confere (o motivo) · "Editar
+  nota" só como ajuste fino. Mexer nos itens depois de confirmar volta a
+  pedir a confirmação. As situações gravadas são as de sempre
+  (apurado-da-ficha.ts).
   No modo lista, o mesmo em cartão compacto. A gravação é a do estado da
   ficha (mudar).
 */
@@ -131,35 +152,108 @@ export type ContextoDaEscolha = {
   naoEnviou?: boolean;
   /** As linhas que o job Python tirou das respostas (obter_ficha_analise → sugestoes). */
   sugestoes?: EstadoDaFicha["dados"]["sugestoes"];
+  /** Pelos itens lidos do arquivo: a pontuação dos aceitos (o Confere vira "Confirmar"). */
+  pelosItens?: { calculado: number } | null;
 };
+
+/** Os itens que o robô leu dos arquivos do bloco, para conferir (sem leitura, nenhum). */
+export function lidosDoBloco(
+  st: EstadoDaFicha,
+  bloco: Bloco,
+  enderecos: EnderecosDaEmpregare | null | undefined,
+): ItemParaConferir[] {
+  const leituras = leiturasDaFicha(st.dados.leituras);
+  if (!enderecos || !leituras.length || !BLOCOS_COM_ITENS[bloco.tipo])
+    return [];
+  if (!blocoSeAplica(bloco, st.lancamento)) return [];
+  const linhas = respostasDoBloco(
+    bloco,
+    st.dados.respostas,
+  ) as LinhaDeResposta[];
+  return itensParaConferir(
+    bloco,
+    leituras,
+    linhas
+      .filter((l) => ehAnexo(l.texto))
+      .flatMap((l) => arquivosDaPergunta(enderecos, l.coluna)),
+  );
+}
+
+/** O bloco decide pelos itens lidos? (pontua e o robô leu itens.) */
+const decidePelosItens = (bloco: Bloco, lidos: ItemParaConferir[]) =>
+  lidos.length > 0 && blocoEditaNota(bloco);
 
 /** O contexto da escolha de um bloco, a partir do estado da ficha. */
 export function contextoDaEscolha(
   st: EstadoDaFicha,
   bloco: Bloco,
+  enderecos?: EnderecosDaEmpregare | null,
 ): ContextoDaEscolha {
   const linhas = respostasDoBloco(
     bloco,
     st.dados.respostas,
   ) as LinhaDeResposta[];
+  const parcial = PARCIAL_DO_TIPO[bloco.tipo] ?? "";
   return {
     declarada: st.declarada,
     respostas: linhas.map((l) => l.texto),
     naoEnviou: sugereNaoEnviado(linhas),
     sugestoes: st.dados.sugestoes,
+    pelosItens: decidePelosItens(bloco, lidosDoBloco(st, bloco, enderecos))
+      ? { calculado: st.avaliacao.calculados?.[parcial] ?? 0 }
+      : null,
   };
 }
 
 /**
  * Grava uma escolha (botões ou teclas 1, 2 e 3): a situação, os motivos, a
  * pontuação e, no Confere/Editar sem nada registrado, a primeira linha.
+ * Pelos itens, o Confere é o "Confirmar" (Confere ou Editar nota, conforme
+ * a pontuação dos aceitos). Devolve a escolha gravada.
  */
 export function decidirNoLancamento(
   bloco: Bloco,
   mudar: Mudar,
   escolha: Escolha | null,
   contexto: ContextoDaEscolha,
-) {
+): Escolha | null {
+  if (escolha === "CONFERE" && contexto.pelosItens) {
+    const { calculado } = contexto.pelosItens;
+    mudar((l) =>
+      lancamentoConfirmadoPelosItens({
+        bloco,
+        lancamento: l,
+        declarada: contexto.declarada,
+        calculado,
+      }),
+    );
+    return escolhaPelosItens(bloco, contexto.declarada, calculado);
+  }
+  if (escolha === "EDITAR" && contexto.pelosItens) {
+    // Pelos itens, "Editar nota" é o ajuste fino: parte da pontuação dos
+    // aceitos (o passador aparece) e não abre linha nova.
+    const { calculado } = contexto.pelosItens;
+    mudar((l) => {
+      const editado = blocoComEscolha({
+        bloco,
+        lancamento: l,
+        escolha: "EDITAR",
+        declarada: contexto.declarada,
+      }) as Lancado;
+      l.blocos = {
+        ...l.blocos,
+        [bloco.codigo]: {
+          ...editado,
+          nota_ajustada:
+            typeof editado.nota_ajustada === "number"
+              ? editado.nota_ajustada
+              : calculado,
+        },
+      };
+      return l;
+    });
+    return "EDITAR";
+  }
   mudar((l) =>
     lancamentoComEscolha({
       bloco,
@@ -171,9 +265,33 @@ export function decidirNoLancamento(
       sugestoes: contexto.sugestoes,
     }),
   );
+  return escolha;
 }
 
 /* ── A resposta declarada ─────────────────────────────────────────────── */
+
+/*
+  O ícone do arquivo: foto com link que abre a imagem direto vira miniatura
+  (sem ela, ou se não carregar, o ícone de foto); os outros, o clipe.
+*/
+function IconeDoArquivo({ arquivo }: { arquivo: ArquivoDoCandidato }) {
+  const [falhou, setFalhou] = useState(false);
+  if (!anexoEhImagem(arquivo.nome))
+    return <i className="fa-solid fa-paperclip" aria-hidden="true" />;
+  const miniatura = linkDaMiniatura(arquivo.link);
+  if (miniatura && !falhou)
+    return (
+      <img
+        className="avd-ficha-miniatura"
+        src={miniatura}
+        alt=""
+        loading="lazy"
+        referrerPolicy="no-referrer"
+        onError={() => setFalhou(true)}
+      />
+    );
+  return <i className="fa-solid fa-image" aria-hidden="true" />;
+}
 
 /* Os arquivos da pergunta de anexo, cada um com o link direto e o nome. */
 function ArquivosDaPergunta({
@@ -195,11 +313,12 @@ function ArquivosDaPergunta({
             target="_blank"
             rel="noopener noreferrer"
             title={`Abrir ${a.nome} na Empregare`}
+            data-imagem={anexoEhImagem(a.nome) || undefined}
             onClick={() =>
               void empregare.loja.registrarAcesso("ABRIR_EMPREGARE")
             }
           >
-            <i className="fa-solid fa-paperclip" aria-hidden="true" />
+            <IconeDoArquivo arquivo={a} />
             <span>{a.nome}</span>
             <i
               className="fa-solid fa-arrow-up-right-from-square"
@@ -359,7 +478,6 @@ export function Escolhas({
                   <i className={`fa-solid ${ICONE_DA_ESCOLHA[codigo]}`} />
                 </span>
                 <span className="avd-ficha-decisao-rotulo">{rotulo}</span>
-                <kbd aria-hidden="true">{tecla}</kbd>
               </button>
             );
           },
@@ -533,6 +651,7 @@ function Itens({
   experiencia,
   pedeCampos,
   sugestoes,
+  soAMao = false,
 }: {
   bloco: Bloco;
   lancamento: Lancamento;
@@ -544,32 +663,40 @@ function Itens({
   /** Confere ou Editar nota: o campo que falta fica marcado. */
   pedeCampos: boolean;
   sugestoes: EstadoDaFicha["dados"]["sugestoes"];
+  /**
+   * Pelos itens lidos: só as linhas digitadas à mão (as aceitas do arquivo
+   * estão na conferência), sem abrir linha sozinha e sem o "Comprovado"
+   * (vai no rodapé da decisão).
+   */
+  soAMao?: boolean;
 }) {
   // O item tirado pelo "×", para o "Desfazer" (o clique não pede confirmação).
   const [tirado, setTirado] = useState<ItemTirado<ItemLancado> | null>(null);
   const caixa = useRef<HTMLDivElement>(null);
   const chave = BLOCOS_COM_ITENS[bloco.tipo];
-  const categorias = bloco.categorias || [];
-  const titulos = titulosDoNivel(bloco, lancamento.nivel) as {
-    codigo: string;
-    rotulo: string;
-    pontos: number;
-  }[];
   const lista = (l: Lancamento) =>
     (chave ? l[chave] || [] : []) as ItemLancado[];
   const novo = () =>
     novoItemDoBloco(bloco, lancamento.nivel, respostas) as ItemLancado;
   // Rascunho de antes desta tela, já Confere sem nada registrado: a primeira
   // linha abre ao mostrar a lista (a mesma da escolha).
-  const abrir = !desabilitado && abreComLinhaNova(bloco, lancamento, declarada);
+  const abrir =
+    !soAMao && !desabilitado && abreComLinhaNova(bloco, lancamento, declarada);
   useEffect(() => {
     if (!abrir) return;
     mudar((l) => comLinhaAberta(bloco, l, declarada, respostas, sugestoes));
     // Só quando volta a ficar vazia.
   }, [abrir]);
   const itens = lista(lancamento);
+  // A posição de cada linha na lista do lançamento (pelos itens, só as à mão).
+  const visiveis = itens
+    .map((it, i) => [it, i] as const)
+    .filter(([it]) => !soAMao || !it.do_arquivo);
   const primeiraEmBranco =
-    chave && itens.length === 1 && itens[0] && emBranco(chave, itens[0]);
+    chave &&
+    visiveis.length === 1 &&
+    visiveis[0] &&
+    emBranco(chave, visiveis[0][0]);
   useEffect(() => {
     if (!primeiraEmBranco || desabilitado) return;
     caixa.current
@@ -588,114 +715,33 @@ function Itens({
       return l;
     });
   return (
-    <div className="avd-ficha-itens" data-tour="avd-ficha-itens" ref={caixa}>
-      {itens.length ? (
+    <div
+      className="avd-ficha-itens"
+      data-tour="avd-ficha-itens"
+      data-so-a-mao={soAMao || undefined}
+      ref={caixa}
+    >
+      {soAMao && visiveis.length ? (
+        <p className="avd-ficha-itens-rotulo">Digitados à mão</p>
+      ) : null}
+      {visiveis.length ? (
         <ul className="avd-ficha-itens-lista">
-          {itens.map((it, i) => (
+          {visiveis.map(([it, i]) => (
             <li
               key={i}
               className="avd-ficha-item"
               data-chave={chave}
               data-aceito={it.aceito !== false}
             >
-              {chave === "titulos" ? (
-                <select
-                  aria-label="Título"
-                  value={it.titulo}
-                  disabled={desabilitado}
-                  onChange={(ev) => alterar(i, { titulo: ev.target.value })}
-                >
-                  {titulos.map((t) => (
-                    <option key={t.codigo} value={t.codigo}>
-                      {t.rotulo}
-                      {t.pontos ? ` (${t.pontos})` : ""}
-                    </option>
-                  ))}
-                </select>
-              ) : null}
-              {chave === "vinculos" ? (
-                <input
-                  aria-label="Empregador ou cargo"
-                  placeholder="Empregador ou cargo"
-                  value={it.empregador || ""}
-                  maxLength={200}
-                  disabled={desabilitado}
-                  onChange={(ev) => alterar(i, { empregador: ev.target.value })}
-                />
-              ) : (
-                <input
-                  aria-label={
-                    chave === "cursos" ? "Curso" : "Curso ou instituição"
-                  }
-                  placeholder={
-                    chave === "cursos" ? "Curso" : "Curso ou instituição"
-                  }
-                  value={it.nome || ""}
-                  maxLength={200}
-                  disabled={desabilitado}
-                  onChange={(ev) => alterar(i, { nome: ev.target.value })}
-                />
-              )}
-              {chave === "cursos" ? (
-                <input
-                  aria-label="Carga horária"
-                  className="avd-ficha-item-curto"
-                  type="number"
-                  min="0"
-                  max="20000"
-                  inputMode="numeric"
-                  placeholder="Horas"
-                  aria-invalid={
-                    pedeCampos && !(Number(it.horas) > 0) ? true : undefined
-                  }
-                  value={it.horas ?? ""}
-                  disabled={desabilitado}
-                  onChange={(ev) =>
-                    alterar(i, {
-                      horas:
-                        ev.target.value === "" ? "" : Number(ev.target.value),
-                    })
-                  }
-                />
-              ) : null}
-              {chave === "vinculos" ? (
-                <>
-                  {categorias.length > 1 ? (
-                    <select
-                      aria-label="Categoria"
-                      value={it.categoria}
-                      disabled={desabilitado}
-                      onChange={(ev) =>
-                        alterar(i, { categoria: ev.target.value })
-                      }
-                    >
-                      {categorias.map((c) => (
-                        <option key={c.codigo} value={c.codigo}>
-                          {c.rotulo || c.codigo}
-                        </option>
-                      ))}
-                    </select>
-                  ) : null}
-                  {(["inicio", "fim"] as const).map((campo) => (
-                    <input
-                      key={campo}
-                      aria-label={campo === "inicio" ? "Início" : "Fim"}
-                      className="avd-ficha-item-data"
-                      type="date"
-                      aria-invalid={
-                        pedeCampos && !itemCompleto(chave, it)
-                          ? true
-                          : undefined
-                      }
-                      value={it[campo] || ""}
-                      disabled={desabilitado}
-                      onChange={(ev) =>
-                        alterar(i, { [campo]: ev.target.value })
-                      }
-                    />
-                  ))}
-                </>
-              ) : null}
+              <CamposDoItem
+                chave={chave}
+                bloco={bloco}
+                nivel={lancamento.nivel}
+                item={it}
+                pedeCampos={pedeCampos}
+                desabilitado={desabilitado}
+                aoAlterar={(campos) => alterar(i, campos)}
+              />
               {it.do_arquivo ? (
                 <span
                   className="avd-ficha-da-resposta"
@@ -703,7 +749,9 @@ function Itens({
                   title="Lido do arquivo pelo robô e aceito: confira no documento"
                 >
                   <i className="fa-solid fa-file-lines" aria-hidden="true" />{" "}
-                  lido do arquivo
+                  {it.corrigido
+                    ? "lido do arquivo, corrigido"
+                    : "lido do arquivo"}
                 </span>
               ) : it.da_resposta ? (
                 <span
@@ -795,6 +843,11 @@ function Itens({
           <button
             type="button"
             className="avd-ficha-adicionar"
+            title={
+              soAMao
+                ? "Quando a leitura não achou ou errou: digite o item como está no documento"
+                : undefined
+            }
             onClick={() => {
               setTirado(null);
               mudar((l) => {
@@ -807,7 +860,8 @@ function Itens({
             {ROTULO_DO_NOVO[chave]}
           </button>
         ) : null}
-        {itens.some((it) => it.aceito !== false && itemCompleto(chave, it)) ? (
+        {!soAMao &&
+        itens.some((it) => it.aceito !== false && itemCompleto(chave, it)) ? (
           <ComprovadoDaFicha
             bloco={bloco}
             lancamento={lancamento}
@@ -1053,6 +1107,162 @@ function Etnico({
   );
 }
 
+/* ── Pelos itens: o rodapé da decisão ─────────────────────────────────── */
+
+const milBr = (n: number) => n.toLocaleString("pt-BR");
+
+/*
+  "Pontuação pelos itens aceitos: X de 10 · declarou 10" e, na Experiência,
+  o tempo já unido ("Comprovado: … · 1.160 dias") com os dias em comum entre
+  vínculos (contam uma vez, sem alerta). Confirmar · Não confere e o "Editar
+  nota" discreto, só para o ajuste fino. As teclas 1, 2 e 3 ficam na dica.
+*/
+function DecisaoPelosItens({
+  st,
+  bloco,
+  escolha,
+  calculado,
+  desabilitado,
+  aoEscolher,
+}: {
+  st: EstadoDaFicha;
+  bloco: Bloco;
+  escolha: Escolha | null;
+  calculado: number;
+  desabilitado: boolean;
+  aoEscolher: (escolha: Escolha) => void;
+}) {
+  const { lancamento } = st;
+  const decl = declaradoDoBloco(bloco, st.declarada);
+  const teto = tetoDoBloco(bloco, lancamento.nivel) as number | null;
+  const diferenca = decl !== null ? calculado - decl : null;
+  const temDiferenca = diferenca !== null && Math.abs(diferenca) >= 0.005;
+  const confirmado = escolha === "CONFERE" || escolha === "EDITAR";
+  const idDoResumo = `avdPelosItens-${bloco.codigo}`;
+  let tempo: { texto: string; dias: number; comum: number } | null = null;
+  if (bloco.tipo === "VINCULOS") {
+    const exp = st.avaliacao.experiencia;
+    tempo = {
+      texto: comprovadoDaExperiencia(
+        bloco as Parameters<typeof comprovadoDaExperiencia>[0],
+        exp,
+        lancamento.nivel,
+      ).texto,
+      dias: exp?.dias_total ?? 0,
+      comum: diasEmComum(
+        bloco as Parameters<typeof diasEmComum>[0],
+        lancamento.vinculos as Parameters<typeof diasEmComum>[1],
+      ),
+    };
+  }
+  return (
+    <div
+      className="avd-ficha-pelos-itens"
+      data-tour="avd-ficha-decisoes"
+      data-diferenca={
+        !temDiferenca ? "nenhuma" : (diferenca ?? 0) < 0 ? "menor" : "maior"
+      }
+    >
+      <p className="avd-ficha-pelos-itens-resumo" id={idDoResumo}>
+        <span className="avd-ficha-resultado-rotulo">
+          Pontuação pelos itens aceitos:
+        </span>{" "}
+        <strong className="avd-ficha-resultado-valor">
+          {textoDaNota(calculado)}
+        </strong>
+        {teto !== null ? (
+          <span className="avd-ficha-resultado-teto">
+            {" "}
+            de {textoDaNota(teto)}
+          </span>
+        ) : null}
+        {decl !== null ? (
+          <span className="avd-ficha-resultado-declarado">
+            {" "}
+            · declarou {textoDaNota(decl)}
+          </span>
+        ) : null}
+        {temDiferenca ? (
+          <span className="avd-ficha-resultado-diferenca">
+            {(diferenca ?? 0) > 0 ? "+" : "−"}
+            {textoDaNota(Math.abs(diferenca ?? 0))}
+          </span>
+        ) : null}
+      </p>
+      {tempo ? (
+        <p className="avd-ficha-pelos-itens-tempo">
+          {tempo.texto}
+          {tempo.dias ? ` · ${milBr(tempo.dias)} dias` : ""}
+          {tempo.comum > 0 ? (
+            <span className="avd-ficha-pelos-itens-comum">
+              {" "}
+              · {milBr(tempo.comum)}{" "}
+              {tempo.comum === 1 ? "dia em comum" : "dias em comum"} entre
+              vínculos {tempo.comum === 1 ? "conta" : "contam"} uma vez
+            </span>
+          ) : null}
+        </p>
+      ) : null}
+      <div
+        className="avd-ficha-pelos-itens-acoes"
+        role="group"
+        aria-labelledby={idDoResumo}
+      >
+        <button
+          type="button"
+          className="avd-ficha-decisao"
+          data-valor="CONFERE"
+          data-acao="confirmar-pelos-itens"
+          aria-pressed={confirmado}
+          aria-keyshortcuts="1"
+          title={
+            temDiferenca
+              ? "Confirmar a pontuação dos itens aceitos (diferente do declarado: pede a justificativa) — tecla 1"
+              : "Confirmar a pontuação dos itens aceitos — tecla 1"
+          }
+          disabled={desabilitado}
+          onClick={() => aoEscolher("CONFERE")}
+        >
+          <span className="avd-ficha-decisao-icone" aria-hidden="true">
+            <i className="fa-solid fa-check" />
+          </span>
+          <span className="avd-ficha-decisao-rotulo">
+            {confirmado ? "Confirmado" : "Confirmar"}
+          </span>
+        </button>
+        <button
+          type="button"
+          className="avd-ficha-decisao"
+          data-valor="NAO_CONFERE"
+          aria-pressed={escolha === "NAO_CONFERE"}
+          aria-keyshortcuts="2"
+          title="Não confere (o documento não comprova) — tecla 2"
+          disabled={desabilitado}
+          onClick={() => aoEscolher("NAO_CONFERE")}
+        >
+          <span className="avd-ficha-decisao-icone" aria-hidden="true">
+            <i className="fa-solid fa-xmark" />
+          </span>
+          <span className="avd-ficha-decisao-rotulo">Não confere</span>
+        </button>
+        {!desabilitado ? (
+          <button
+            type="button"
+            className="avd-ficha-link avd-ficha-ajuste-fino"
+            data-valor="EDITAR"
+            aria-pressed={escolha === "EDITAR"}
+            aria-keyshortcuts="3"
+            title="Ajuste fino da pontuação, com justificativa — tecla 3"
+            onClick={() => aoEscolher("EDITAR")}
+          >
+            <i className="fa-solid fa-pen" aria-hidden="true" /> Editar nota
+          </button>
+        ) : null}
+      </div>
+    </div>
+  );
+}
+
 /* ── A mensagem única do item ─────────────────────────────────────────── */
 
 type Mensagem = {
@@ -1118,31 +1328,40 @@ export function ItemDaFicha({
   const foco = modo === "foco";
   // O que o robô leu dos arquivos do bloco (20261009220000): sem leitura, nada aparece.
   const leituras = leiturasDaFicha(dados.leituras);
-  const lidos =
-    aplica && chave && leituras.length
-      ? itensParaConferir(
-          bloco,
-          leituras,
-          linhas
-            .filter((l) => ehAnexo(l.texto))
-            .flatMap((l) => arquivosDaPergunta(empregare.enderecos, l.coluna)),
-        )
-      : [];
+  const lidos = aplica ? lidosDoBloco(st, bloco, empregare.enderecos) : [];
+  // Pelos itens: conferir os lidos → a pontuação sai dos aceitos → confirmar.
+  const pelosItens = pedeSituacao && decidePelosItens(bloco, lidos);
   const contexto: ContextoDaEscolha = {
     declarada: st.declarada,
     respostas,
     naoEnviou: sugereNaoEnviado(linhas),
     sugestoes: dados.sugestoes,
+    pelosItens: pelosItens ? { calculado: calculado ?? 0 } : null,
   };
+  // Pelos itens, mexer nos itens depois de confirmar volta a pedir a confirmação.
+  const mudarItens: Mudar = pelosItens
+    ? (transformar) =>
+        mudar((l) => {
+          const antes = { ...l };
+          return semConfirmacaoSeMudouItens(bloco, antes, transformar(l));
+        })
+    : mudar;
   // A lista aparece no Confere e no Editar (e num rascunho com itens sem decisão).
   const itensLancados = chave ? (lancamento[chave] as ItemLancado[]) || [] : [];
   const escolher = (nova: Escolha | null) => {
     // A mesma escolha de novo só confirma: nada muda no lançamento (o "não
     // enviou", os motivos e o ajuste ficam) e o item avança se nada falta.
-    if (nova !== escolha) decidirNoLancamento(bloco, mudar, nova, contexto);
-    aoDecidir?.(bloco.codigo, nova, itensLancados.length);
+    // Pelos itens, Confirmar sempre grava (a pontuação dos aceitos pode ter
+    // mudado) e o "Editar nota" abre o ajuste fino mesmo já em Editar.
+    const gravada =
+      nova !== escolha ||
+      (pelosItens && (nova === "CONFERE" || nova === "EDITAR"))
+        ? decidirNoLancamento(bloco, mudar, nova, contexto)
+        : nova;
+    aoDecidir?.(bloco.codigo, gravada, itensLancados.length);
   };
   const mostraItens =
+    !pelosItens &&
     aplica &&
     Boolean(chave) &&
     (escolha === "CONFERE" ||
@@ -1164,6 +1383,7 @@ export function ItemDaFicha({
       tom: "dica",
     };
   else if (
+    !pelosItens &&
     escolha === "CONFERE" &&
     chave &&
     decl !== null &&
@@ -1235,10 +1455,25 @@ export function ItemDaFicha({
             bloco={bloco}
             itens={lidos}
             lancamento={lancamento}
-            mudar={mudar}
+            mudar={mudarItens}
             desabilitado={desabilitado}
             empregare={empregare}
-          />
+          >
+            {pelosItens ? (
+              <Itens
+                bloco={bloco}
+                lancamento={lancamento}
+                declarada={st.declarada}
+                respostas={respostas}
+                mudar={mudarItens}
+                desabilitado={desabilitado}
+                experiencia={avaliacao.experiencia}
+                pedeCampos
+                sugestoes={dados.sugestoes}
+                soAMao
+              />
+            ) : null}
+          </ConferenciaDoLido>
           {bloco.tipo === "PONTUACAO" ? (
             <Etnico
               lancamento={lancamento}
@@ -1246,7 +1481,16 @@ export function ItemDaFicha({
               desabilitado={desabilitado}
             />
           ) : null}
-          {pedeSituacao ? (
+          {pelosItens ? (
+            <DecisaoPelosItens
+              st={st}
+              bloco={bloco}
+              escolha={escolha}
+              calculado={calculado ?? 0}
+              desabilitado={desabilitado}
+              aoEscolher={escolher}
+            />
+          ) : pedeSituacao ? (
             <Escolhas
               valor={escolha}
               comEditar={blocoEditaNota(bloco)}
@@ -1278,7 +1522,12 @@ export function ItemDaFicha({
               sugestoes={dados.sugestoes}
             />
           ) : null}
-          {parcial && escolha ? (
+          {parcial &&
+          escolha &&
+          // Pelos itens, o resumo é o do rodapé; o passador só no ajuste fino.
+          (!pelosItens ||
+            (escolha === "EDITAR" &&
+              typeof lancado.nota_ajustada === "number")) ? (
             <Resultado
               st={st}
               bloco={bloco}

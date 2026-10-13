@@ -19,6 +19,7 @@ programático) fica com o anterior. De cada um:
 
 import re
 
+from .layout import campo_rotulado
 from .pessoas import nome_confere
 from .texto import datas_no_texto, dobrar, iso, numa_linha, trecho
 
@@ -157,15 +158,41 @@ def conclusao_do_texto(dobrado, datas=None):
     return datas[-1].ultimo_dia()
 
 
+_ROTULO_DAS_HORAS = r"carga\s*horaria(?:\s+total)?|c\.\s?h\.?|ch(?=\s*:)|duracao|total\s+de\s+horas"
+_ROTULO_DO_CURSO = r"(?:nome\s+do\s+)?curso(?=\s*:|\s*$)|evento(?=\s*:)|atividade(?=\s*:)|capacitacao(?=\s*:)"
+
+
+def horas_do_rotulo(pagina):
+    """A carga horária pela POSIÇÃO: o rótulo "Carga horária" numa célula e o número ao lado ou embaixo."""
+
+    def horas(valor):
+        return horas_do_texto(dobrar(f"carga horaria: {valor}"))
+
+    valor = campo_rotulado(pagina, _ROTULO_DAS_HORAS, lambda v: horas(v) is not None)
+    return horas(valor) if valor else None
+
+
+def curso_do_rotulo(pagina):
+    """O curso pela POSIÇÃO: o rótulo "Curso:" e o nome ao lado ou embaixo (formulário de certificado)."""
+
+    def bom(valor):
+        return len(valor) >= 4 and bool(re.search(r"[A-Za-zÀ-ÿ]{3}", valor)) and not _NAO_E_CURSO.search(dobrar(valor))
+
+    valor = campo_rotulado(pagina, _ROTULO_DO_CURSO, bom)
+    return trecho(valor, 0, len(valor), 160) if valor else None
+
+
 def certificados(paginas, nome_do_candidato=None):
     """Os itens CURSO do arquivo, um por certificado com curso ou carga horária."""
     itens = []
+    por_numero = {p.numero: p for p in paginas}
     for numero, texto in segmentos(paginas)[:MAXIMO_DE_CERTIFICADOS]:
         dobrado = dobrar(texto)
         if not _MARCA.search(dobrado):
             continue
-        horas = horas_do_texto(dobrar(numa_linha(texto)))
-        curso = curso_do_texto(texto, dobrado)
+        horas = horas_do_texto(dobrar(numa_linha(texto))) or horas_do_rotulo(por_numero.get(numero))
+        # O rótulo "Curso:" (formulário) vale mais que a frase: "Curso  Carga horária" na linha engana a frase.
+        curso = curso_do_rotulo(por_numero.get(numero)) or curso_do_texto(texto, dobrado)
         if horas is None and not curso:
             continue
         itens.append(

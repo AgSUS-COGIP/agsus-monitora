@@ -378,6 +378,79 @@ export function blocoComEscolha({
   };
 }
 
+/* ── Pelos itens: quando o robô leu itens do arquivo ──────────────────── */
+
+const MESMA_NOTA = 0.005;
+
+/**
+ * "Confirmar" pelos itens aceitos: a pontuação dos itens (o calculado) igual
+ * ao declarado é Confere; diferente, Editar nota (vale o calculado e pede a
+ * justificativa). Sem declarado, Confere.
+ */
+export function escolhaPelosItens(
+  bloco: BlocoQuePontua,
+  declarada: Declarada,
+  calculado: number,
+): "CONFERE" | "EDITAR" {
+  const decl = declaradoDoBloco(bloco, declarada);
+  if (decl === null || Math.abs(calculado - decl) < MESMA_NOTA)
+    return "CONFERE";
+  return "EDITAR";
+}
+
+/**
+ * O lançamento com o bloco confirmado pelos itens aceitos (escolhaPelosItens):
+ * nada de linha nova aberta (os itens já estão na conferência) e, no Editar,
+ * sem ajuste por cima (vale o calculado).
+ */
+export function lancamentoConfirmadoPelosItens<
+  T extends LancamentoDaFicha,
+>(entrada: {
+  bloco: BlocoComItens;
+  lancamento: T;
+  declarada: Declarada;
+  calculado: number;
+}): T {
+  const { bloco, lancamento, declarada, calculado } = entrada;
+  const escolha = escolhaPelosItens(bloco, declarada, calculado);
+  const decidido = blocoComEscolha({ bloco, lancamento, escolha, declarada });
+  return {
+    ...lancamento,
+    blocos: {
+      ...lancamento.blocos,
+      [bloco.codigo]:
+        escolha === "EDITAR" ? { ...decidido, nota_ajustada: null } : decidido,
+    },
+  };
+}
+
+/**
+ * Mexeu nos itens depois de confirmar (aceitar, recusar, corrigir, adicionar
+ * ou tirar): a confirmação volta a pedir decisão, porque a pontuação dos
+ * itens mudou. O Não confere fica; as justificativas digitadas também.
+ */
+export function semConfirmacaoSeMudouItens<T extends LancamentoDaFicha>(
+  bloco: BlocoComItens,
+  antes: T,
+  depois: T,
+): T {
+  const chave = ITENS[bloco.tipo];
+  const lancado = depois.blocos?.[bloco.codigo];
+  if (!chave || lancado?.situacao !== "CONFORME") return depois;
+  if (
+    JSON.stringify(antes[chave] ?? []) === JSON.stringify(depois[chave] ?? [])
+  )
+    return depois;
+  const { edita_nota: _escolha, ...resto } = lancado;
+  return {
+    ...depois,
+    blocos: {
+      ...depois.blocos,
+      [bloco.codigo]: { ...resto, situacao: null, nota_ajustada: null },
+    },
+  };
+}
+
 /**
  * O lançamento depois de uma escolha (botões ou teclas 1, 2 e 3): o bloco
  * (blocoComEscolha) e, no Confere ou no Editar sem nada registrado, a

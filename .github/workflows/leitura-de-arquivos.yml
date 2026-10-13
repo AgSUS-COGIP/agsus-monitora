@@ -6,7 +6,8 @@ name: Leitura dos arquivos da Avaliação documental
 # avaliador). Para os anexos da resposta vigente ainda não lidos (ou lidos
 # com extrator de versão antiga, ou com erro) dos editais pedidos — primeiro
 # os de quem já tem ficha —, baixa cada arquivo só para a memória, lê (texto
-# do PDF ou OCR do Tesseract em português), grava o resultado pela RPC
+# do PDF pela posição das palavras ou OCR do Tesseract em português, com a
+# foto arrumada pelo OpenCV — tudo local e gratuito), grava o resultado pela RPC
 # gravar_leituras_de_arquivos (migration 20261009220000) e descarta o arquivo.
 # Retomável: ao esgotar o orçamento de tempo, a próxima execução continua.
 #

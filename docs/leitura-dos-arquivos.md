@@ -29,6 +29,43 @@ Pré-requisito: a migration `20261009220000` aplicada (o ensaio está em `supaba
 5. Satisfeito, aumente o `limite` (até 2000) ou rode sem `editais` (os ativos com regra). Cada
    execução continua de onde a anterior parou; `forcar` relê o que já foi lido nesta versão.
 
+## Como lê (extrator 2026.10.4) — tudo local e gratuito
+
+Nenhum documento sai do runner: sem API de IA paga, sem consulta de CNPJ na internet.
+
+- **Posição das palavras** (`layout.py`): no PDF com texto, `extract_words` do pdfplumber; no OCR, o
+  `image_to_data` do Tesseract. A página vira linhas e células, e o valor de cada rótulo é achado na
+  própria célula, à direita ou embaixo (rótulo pequeno em cima, valor embaixo).
+- **CTPS** (`ctps.py`), digital ou física: um contrato por bloco (razão social, CNPJ, admissão,
+  desligamento/"Data de fim"/"Situação", ocupação/CBO, jornada). As datas das seções de alterações
+  salariais/contratuais, férias e afastamentos são ignoradas. O nome do empregador em destaque sem
+  rótulo, logo acima do CNPJ, é a razão social. Duas páginas lado a lado (foto da carteira aberta)
+  são lidas como duas colunas. O mesmo empregador com dois vínculos sobrepostos, um em aberto, vira
+  um contrato só (`alteracoes`: alteração contratual lida como admissão).
+- **CNPJ** com dígito verificador conferido (também o alfanumérico); sem a razão social, o
+  empregador fica "CNPJ 00.000.000/0000-00". CPF/CEI de empregador pessoa física nunca é guardado.
+- **Cargo** sem "de " na frente, sem código, sem CBO e sem a jornada ("MEDICO DO TRABALHO 4 HORAS"
+  → "Médico do trabalho", carga semanal 20; "MÉDICO - 10HS" → "Médico", 10).
+- **Vínculo atual**: os dias vão até a emissão do documento ("Gerado/Emitido em", carimbo de data e
+  hora, assinatura digital), senão até a criação do PDF (metadados), senão até a data da leitura —
+  `dias_ate` e `dias_ate_fonte` (EMISSAO, ARQUIVO, LEITURA), sem alerta.
+- **Sobreposição**: alerta `PERIODO_SOBREPOSTO` só para o MESMO empregador (CNPJ com a mesma raiz ou
+  razão social igual): provável duplicidade. Empregadores diferentes ao mesmo tempo são legítimos:
+  o item ganha `concomitante` e a informação "os dias em comum contam uma vez", sem alerta. O total
+  do resumo é a UNIÃO dos períodos (`pontuacao.dias_dos_intervalos`, a mesma regra da pontuação) e
+  diz "N dias em comum não somam".
+- **Fotos e escaneados** (`imagem.py`, OpenCV): lado maior entre 2000 e 3300 px, perspectiva da folha
+  endireitada, sombra tirada, inclinação desfeita, versão binarizada; depois o Tesseract em
+  `--psm 3` e, com confiança baixa, a orientação pela OSD e os modos 4, 6 e 11, ficando a leitura
+  com mais texto confiável.
+- **Certificados e diplomas**: "Carga horária" e "Curso" também pela posição (rótulo e valor
+  embaixo ou ao lado).
+
+Medição nos documentos sintéticos (`tests/python/sinteticos_leitura.py`, nada real):
+`python tests/python/avaliar_leitura_sintetica.py --ocr` (com `--codigo DIR` mede outro checkout).
+EasyOCR foi medido e não compensou (pior nas fotos de lado, ~25 s por imagem, 2,9 GB de memória e
+1,2 GB de dependências); fica o Tesseract com a imagem arrumada.
+
 Mudou a interpretação? Suba `VERSAO_DO_EXTRATOR` (`leitura_de_arquivos/__init__.py`): o robô relê o
 que foi lido com versão anterior.
 

@@ -2,12 +2,16 @@
 Comprovantes de EXPERIÊNCIA: um item VINCULO por vínculo achado.
 
 O tipo do documento (CTPS, DECLARACAO, CONTRATO, CERTIDAO, HOLERITE) sai do
-texto, e a leitura vai por três caminhos, nesta ordem:
+texto, e a leitura vai por estes caminhos, nesta ordem:
 
-  1. campos rotulados (CTPS digital ou física, ficha de registro, declaração
-     em formulário): cada "Admissão" abre um vínculo, com o "Empregador"/
-     "Razão social", o "Cargo"/"Ocupação"/"Função", o "Desligamento"/
-     "Demissão"/"Saída" (sem ele, na CTPS, o vínculo está em aberto: atual);
+  0. CTPS (digital ou física): pela POSIÇÃO dos campos (`ctps`), um contrato
+     por bloco — empregador (razão social e CNPJ validado), admissão,
+     desligamento, ocupação/CBO, jornada —, sem as datas das seções de
+     alterações, férias e afastamentos;
+  1. campos rotulados no texto (ficha de registro, declaração em formulário,
+     CTPS que o caminho 0 não leu): cada "Admissão" abre um vínculo, com o
+     "Empregador"/"Razão social", o "Cargo"/"Ocupação"/"Função", o
+     "Desligamento"/"Demissão"/"Saída" (sem ele, na CTPS, o vínculo é atual);
   2. texto corrido (declaração, contrato, certidão de tempo de serviço):
      "no período de A a B", "de A até a presente data", "desde A",
      "admitido(a) em A", com o cargo ("no cargo/na função de X") e o
@@ -15,31 +19,41 @@ texto, e a leitura vai por três caminhos, nesta ordem:
   3. holerites: as competências (mês/ano) viram um vínculo do primeiro ao
      último mês.
 
-De cada um: empregador, cargo (sem o código: "001-TECNICO DE ENFERMAGEM
-3222-05" → "Técnico de enfermagem", o CBO à parte em `cbo`), início, fim,
-atual, carga horária semanal (se o texto disser) e dias. Vínculo sem data de
-saída é ATUAL e fica com fim None; os dias dele são contados até a data de
-emissão do documento (`dias_ate`) ou, sem ela, até hoje (`dias_ate` None) — só
-para o número exibido. Período com o fim antes do início é descartado, e
-também o "vínculo" que começa na própria data de emissão sem empregador (o
-rodapé "emitido em") e o repetido sem empregador com o mesmo início de outro.
+De cada um: empregador, cnpj (só o de empresa, validado), cargo (sem código,
+CBO, "de " na frente nem jornada: "de MEDICO DO TRABALHO 4 HORAS 20" →
+"Médico do trabalho", carga semanal 20; o CBO à parte em `cbo`), início, fim,
+atual, carga horária semanal e dias. Vínculo sem data de saída é ATUAL e fica
+com fim None; os dias dele são contados até a emissão do documento ("Emitido/
+Gerado em", carimbo de data e hora, assinatura digital), senão até a data do
+PDF (metadados) ou a da leitura — `dias_ate` e `dias_ate_fonte`, sem alerta.
+Período com o fim antes do início é descartado, e também o "vínculo" que
+começa na própria data de emissão sem empregador (o rodapé "emitido em") e o
+repetido sem empregador com o mesmo início de outro. Na CTPS, o mesmo
+empregador com dois vínculos sobrepostos, um deles em aberto, é um contrato só
+(alteração contratual), e o vínculo sem empregador vizinho de outro com o
+MESMO cargo fica com o empregador dele.
 
 Sobreposição (`sobrepostos`): só conta quando dois vínculos dividem mais de um
-dia (o atual que começa no dia em que o anterior acabou não conta). Com o
-mesmo empregador é PERIODO_SOBREPOSTO; com empregadores diferentes (ou um
-deles não lido) é PERIODO_CONCOMITANTE, aviso leve: dois empregos ao mesmo
-tempo podem ser legítimos. Na CTPS, o vínculo sem empregador vizinho de outro
-com o MESMO cargo fica com o empregador dele.
+dia. Com o MESMO empregador (CNPJ com a mesma raiz ou razão social igual) é
+PERIODO_SOBREPOSTO (provável duplicidade); com empregadores diferentes (ou um
+deles não lido) é PERIODO_CONCOMITANTE, informação neutra: os dias em comum
+contam uma vez só (a soma é a união dos períodos, como na pontuação).
 """
 
 import re
 from datetime import date
 
+from .ctps import ler_contratos
 from .pessoas import nome_confere
 from .texto import Data, datas_no_texto, dobrar, iso, numa_linha, trecho
 
 TIPOS = (
-    ("CTPS", r"carteira de trabalho|ctps|contratos? de trabalho .{0,40}admiss|carteira digital"),
+    # A página de contrato da CTPS física não diz "carteira": os rótulos impressos dela dizem.
+    (
+        "CTPS",
+        r"carteira de trabalho|ctps|contratos? de trabalho .{0,40}admiss|carteira digital"
+        r"|esp\.? do estabelecimento|remuneracao especificada",
+    ),
     (
         "HOLERITE",
         r"contracheque|contra-cheque|holerite|demonstrativo de pagamento|recibo de pagamento|folha de pagamento",
@@ -126,11 +140,48 @@ def tipo_do_documento(dobrado):
     return "OUTRO"
 
 
-def limpar_cargo(valor):
-    """(cargo, cbo): sem o código na frente nem o CBO ("001-TECNICO DE ENFERMAGEM 3222-05" →
-    ("Técnico de enfermagem", "3222-05")); cargo None se sobrar só rótulo ("exercido")."""
+_JORNADA_NO_CARGO = re.compile(
+    r"[\s(,;/\-–]*(?<![\d/])(\d{1,2})\s*(?:h|hs|hrs?|horas?)(?![a-z])"
+    r"(?:\s*(semanais|semanal|/\s*sem(?:ana)?|por\s+semana|diarias|diaria|/\s*dia|por\s+dia|ao\s+dia))?"
+    r"(?:\s*[/\-–]?\s*(\d{1,2})(?:\s*(?:h|hs|hrs?|horas?)(?![a-z]))?(?:\s*(?:semanais|semanal|/\s*sem(?:ana)?))?)?"
+    r"\s*\)?\s*$"
+)
+
+
+def jornada_do_cargo(valor):
+    """(cargo sem a jornada, carga semanal ou None): "MEDICO DO TRABALHO 4 HORAS 20" → ("MEDICO DO TRABALHO", 20);
+    "MÉDICO - 10HS" → ("MÉDICO", 10); "ENFERMEIRO 6 HORAS" → ("ENFERMEIRO", 30) (até 8 h sem "semanais": por dia)."""
+    m = _JORNADA_NO_CARGO.search(dobrar(valor or ""))
+    if not m:
+        return valor, None
+    primeiro, unidade, segundo = int(m.group(1)), m.group(2) or "", m.group(3)
+    if segundo and int(segundo) >= primeiro and 1 <= int(segundo) <= 60:
+        carga = int(segundo)
+    elif re.search(r"dia", unidade):
+        carga = primeiro * 5
+    elif re.search(r"sem", unidade) or primeiro >= 10:
+        carga = primeiro
+    elif 1 <= primeiro <= 8:
+        carga = primeiro * 5  # "4 HORAS" no nome do cargo: 4 h por dia
+    else:
+        carga = None
+    return valor[: m.start()].rstrip(" -–,;/("), (carga if carga and 1 <= carga <= 80 else None)
+
+
+def _caixa_do_cargo(valor):
+    """Só a primeira letra maiúscula, com os acentos de sempre ("MEDICO DO TRABALHO" → "Médico do trabalho")."""
+    palavras = []
+    for p in valor.lower().split():
+        palavras.append(_ACENTOS_DO_CARGO.get(p, p))
+    texto = " ".join(palavras)
+    return texto[0].upper() + texto[1:] if texto else texto
+
+
+def cargo_e_jornada(valor):
+    """(cargo, cbo, carga semanal do nome do cargo): sem o código na frente, sem o CBO, sem o "de " e sem a
+    jornada ("de MEDICO DO TRABALHO 4 HORAS 20" → ("Médico do trabalho", None, 20))."""
     if not valor:
-        return None, None
+        return None, None, None
     cbo = None
     m = _CBO.search(dobrar(valor))
     if m:
@@ -144,13 +195,20 @@ def limpar_cargo(valor):
         _NAO_E_CARGO.match(dobrar(palavras[0]).strip(".:")) or dobrar(palavras[0]) in ("de", "da", "do")
     ):
         palavras.pop(0)
-    valor = " ".join(palavras).strip(" -–:;,.")
+    valor, carga = jornada_do_cargo(" ".join(palavras).strip(" -–:;,."))
+    valor = valor.strip(" -–:;,.")
     if not re.search(r"[A-Za-zÀ-ÿ]{3}", valor):
-        return None, cbo
+        return None, cbo, carga
     if valor == valor.upper():
-        valor = " ".join(_ACENTOS_DO_CARGO.get(p, p) for p in valor.lower().split())
-        valor = valor[0].upper() + valor[1:]
-    return valor, cbo
+        valor = _caixa_do_cargo(valor)
+    return valor, cbo, carga
+
+
+def limpar_cargo(valor):
+    """(cargo, cbo): sem o código na frente nem o CBO ("001-TECNICO DE ENFERMAGEM 3222-05" →
+    ("Técnico de enfermagem", "3222-05")); cargo None se sobrar só rótulo ("exercido")."""
+    cargo, cbo, _ = cargo_e_jornada(valor)
+    return cargo, cbo
 
 
 def _valor_do_campo(original, dobrado, posicao, maximo=120):
@@ -196,20 +254,36 @@ def carga_semanal(dobrado):
 
 
 _EMISSAO = re.compile(
-    r"(?:emitid[oa]|gerad[oa]|expedid[oa]|impress[oa])\s+em|data\s+(?:de\s+|da\s+)?(?:emissao|expedicao|impressao)"
+    r"(?:emitid[oa]|gerad[oa]|expedid[oa]|impress[oa]|extraid[oa]|consultad[oa]|assinad[oa]\s+digitalmente)\s+em"
+    r"|data\s+(?:de\s+|da\s+)?(?:emissao|geracao|expedicao|impressao|consulta|assinatura)"
     r"|emissao\s*:?"
 )
+# Carimbo de data e hora ("10/10/2026 às 14:22", "10/10/2026 14:22:05"): a hora em que o sistema gerou o documento.
+_CARIMBO = re.compile(r"^\s*(?:as|,|-)?\s*\d{1,2}\s?[:h]\s?\d{2}(?::\d{2})?")
+# Assinatura digital (ICP-Brasil/gov.br): "Data: 2026.10.01 14:22:05 -03'00'" ou "2026-10-01T14:22".
+_DATA_DA_ASSINATURA = re.compile(r"(?<!\d)(20\d{2})[.-](\d{2})[.-](\d{2})(?:[ t]\d{2}:\d{2})")
 
 
-def data_de_emissao(dobrado, datas):
-    """A data do documento: a rotulada ("Emitido em", "Data de emissão") ou a última data completa do
-    texto (a do local e data da assinatura)."""
+def data_de_emissao(dobrado, datas, ultima_como_emissao=True):
+    """A data do documento: a rotulada ("Emitido em", "Gerado em", "Data de emissão"), a de um carimbo de data e
+    hora, a da assinatura digital ou (se `ultima_como_emissao`) a última data completa do texto (a do local e data
+    da assinatura de uma declaração). A CTPS não usa a última data: nela é a de um contrato."""
     completas = [d for d in datas if d.dia]
     for e in _EMISSAO.finditer(dobrado):
         rotulada = _data_depois(completas, e.end(), 25)
         if rotulada:
             return rotulada.primeiro_dia()
-    return completas[-1].primeiro_dia() if completas else None
+    carimbos = [d for d in completas if _CARIMBO.match(dobrado[d.fim : d.fim + 12])]
+    if carimbos:
+        return carimbos[-1].primeiro_dia()
+    for m in _DATA_DA_ASSINATURA.finditer(dobrado):
+        try:
+            return date(int(m.group(1)), int(m.group(2)), int(m.group(3)))
+        except ValueError:
+            continue
+    if ultima_como_emissao and completas:
+        return completas[-1].primeiro_dia()
+    return None
 
 
 def _vinculo(documento, empregador, cargo, inicio, fim, atual, carga, pagina):
@@ -430,54 +504,167 @@ def _empregador_do_vizinho(itens):
                 break
 
 
-def vinculos(paginas, nome_do_candidato=None, hoje=None):
-    """Os itens VINCULO do arquivo, na ordem do texto, sem repetição."""
+def _da_ctps(paginas):
+    """Os vínculos da CTPS pela posição dos campos (`ctps`) e a data de emissão que ela traz."""
+    contratos, emissao = ler_contratos(paginas)
+    itens = []
+    for c in contratos:
+        empregador = c.empregador or (f"CNPJ {c.cnpj}" if c.cnpj else None)
+        fim = c.desligamento.ultimo_dia() if c.desligamento else None
+        item = _vinculo(
+            "CTPS",
+            empregador,
+            c.cargo,
+            c.admissao.primeiro_dia(),
+            fim,
+            not fim and not c.desligado,
+            carga_semanal(dobrar(c.jornada or "")) or _horas_da_jornada(c.jornada),
+            c.pagina,
+        )
+        if c.cnpj:
+            item["cnpj"] = c.cnpj
+        if c.cbo:
+            item["cbo"] = c.cbo
+        if c.desligado and not fim:
+            item["desligado_sem_data"] = True
+        itens.append(item)
+    return itens, emissao
+
+
+def _horas_da_jornada(texto):
+    m = re.search(r"(?<!\d)(\d{1,2})(?:[.,]\d+)?\s*(?:h|hs|horas?)?", dobrar(texto or ""))
+    horas = int(m.group(1)) if m else None
+    return horas if horas and 1 <= horas <= 80 else None
+
+
+def _unir_alteracoes(itens):
+    """CTPS: o mesmo empregador com dois vínculos sobrepostos em que um está em aberto é o mesmo contrato
+    (uma alteração contratual lida como admissão, ou o desligamento não lido): fica um só, do primeiro dia."""
+    saida = []
+    for it in sorted(itens, key=lambda x: x["inicio"]):
+        par = next(
+            (
+                o
+                for o in saida
+                if mesmo_empregador(o, it)
+                and (o["atual"] or it["atual"])
+                and (o["fim"] is None or it["inicio"] <= o["fim"])
+            ),
+            None,
+        )
+        if par is None:
+            saida.append(it)
+            continue
+        if it["fim"] is None or (par["fim"] is not None and it["fim"] > par["fim"]):
+            par["fim"] = it["fim"]
+        par["atual"] = par["fim"] is None and (par["atual"] or it["atual"])
+        par["cargo"] = par["cargo"] or it["cargo"]
+        par["carga_semanal"] = par["carga_semanal"] or it["carga_semanal"]
+        par["alteracoes"] = par.get("alteracoes", 0) + 1
+    ordem = {id(it): k for k, it in enumerate(itens)}
+    return sorted(saida, key=lambda x: ordem.get(id(x), 0))
+
+
+def vinculos(paginas, nome_do_candidato=None, hoje=None, data_do_arquivo=None):
+    """Os itens VINCULO do arquivo, na ordem do texto, sem repetição.
+
+    O vínculo atual (sem fim) conta os dias até a emissão do documento; sem ela, até a data em que o PDF foi
+    gerado (`data_do_arquivo`, dos metadados) ou, sem nada, até `hoje` (a data da leitura) — sempre com
+    `dias_ate` (a data) e `dias_ate_fonte` (EMISSAO, ARQUIVO ou LEITURA), sem alerta."""
     hoje = hoje or date.today()
     original, pagina_de = _paginador(paginas)
     dobrado = dobrar(original)
     datas = datas_no_texto(dobrado)
     documento = tipo_do_documento(dobrado)
-    itens = []
+    itens, emissao = [], None
+    if documento == "CTPS":
+        itens, emissao = _da_ctps(paginas)
     if documento == "HOLERITE":
         itens = _holerites(dobrado, datas, documento, pagina_de)
     if not itens:
         itens = _rotulados(original, dobrado, datas, documento, pagina_de)
     if not itens:
         itens = _periodos(original, dobrado, datas, documento, pagina_de)
-    cabecalho = empregador_do_cabecalho(original, dobrado)
-    emissao = data_de_emissao(dobrado, datas)
+    cabecalho = None if documento == "CTPS" else empregador_do_cabecalho(original, dobrado)
+    emissao = emissao or data_de_emissao(dobrado, datas, ultima_como_emissao=documento != "CTPS")
     itens = _sem_repetidos([it for it in itens if not (it["fim"] and it["fim"] < it["inicio"])], emissao)
     if documento == "CTPS":
         _empregador_do_vizinho(itens)
     vistos, saida = set(), []
     for it in itens:
-        chave = (it["inicio"], it["fim"])
+        chave = (it["inicio"], it["fim"], dobrar(it["empregador"] or ""))
         if chave in vistos:
             continue
         vistos.add(chave)
         if not it["empregador"]:
             it["empregador"] = cabecalho
-        it["cargo"], cbo = limpar_cargo(it["cargo"])
-        if cbo:
+        it["cargo"], cbo, carga_do_cargo = cargo_e_jornada(it["cargo"])
+        if cbo and not it.get("cbo"):
             it["cbo"] = cbo
-        it["atual"] = bool(it["atual"]) and not it["fim"]
-        # Atual: fim None; os dias vão até a emissão do documento (dias_ate) ou, sem ela, até hoje.
-        ate = emissao if it["atual"] and emissao and emissao >= it["inicio"] else None
-        it["dias"] = dias_do_vinculo(it["inicio"], it["fim"] or ate, hoje)
-        if it["atual"]:
-            it["dias_ate"] = iso(ate)
-        it["inicio"], it["fim"] = iso(it["inicio"]), iso(it["fim"])
         if not it["carga_semanal"]:
+            it["carga_semanal"] = carga_do_cargo
+        it["atual"] = bool(it["atual"]) and not it["fim"]
+        saida.append(it)
+    if documento == "CTPS":
+        saida = _unir_alteracoes(saida)
+    # Data depois do dia da leitura (OCR que leu 2028 por 2026, metadado errado) não serve de limite.
+    emissao = emissao if emissao and emissao <= hoje else None
+    data_do_arquivo = data_do_arquivo if data_do_arquivo and data_do_arquivo <= hoje else None
+    for it in saida:
+        # Atual: fim None; os dias vão até a emissão do documento, a data do arquivo ou a da leitura.
+        if it["atual"]:
+            if emissao and emissao >= it["inicio"]:
+                ate, fonte = emissao, "EMISSAO"
+            elif data_do_arquivo and data_do_arquivo >= it["inicio"]:
+                ate, fonte = data_do_arquivo, "ARQUIVO"
+            else:
+                ate, fonte = hoje, "LEITURA"
+            it["dias"] = dias_do_vinculo(it["inicio"], ate, hoje)
+            it["dias_ate"], it["dias_ate_fonte"] = iso(ate), fonte
+        elif it["fim"] or not it.get("desligado_sem_data"):
+            it["dias"] = dias_do_vinculo(it["inicio"], it["fim"], hoje)
+        else:
+            it["dias"] = 0  # "Desligado" sem a data de saída: não dá para contar
+        it["inicio"], it["fim"] = iso(it["inicio"]), iso(it["fim"])
+        if not it["carga_semanal"] and documento != "CTPS":
             it["carga_semanal"] = carga_semanal(dobrado)
         it["nome_confere"] = nome_confere(nome_do_candidato, original) if nome_do_candidato else None
-        saida.append(it)
     return saida[:MAXIMO_DE_VINCULOS]
 
 
-def _mesmo_empregador(a, b):
-    """Os dois empregadores conhecidos e iguais (sem saber um deles, não dá para dizer que é o mesmo)."""
-    x, y = dobrar(a or "").strip(), dobrar(b or "").strip()
-    return bool(x and y) and (x == y or x.startswith(y) or y.startswith(x))
+_SUFIXOS_DE_EMPRESA = re.compile(
+    r"(?<![a-z])(?:ltda|limitada|s\s?/?\s?a|me|epp|eireli|cia|companhia|sociedade anonima|ss|"
+    r"em recuperacao judicial)(?![a-z])"
+)
+
+
+def _nome_normalizado(nome):
+    t = dobrar(nome or "")
+    t = re.sub(r"cnpj\s*[\d./\-a-z]*", " ", t)
+    t = re.sub(r"[^a-z0-9 ]", " ", t)
+    t = _SUFIXOS_DE_EMPRESA.sub(" ", t)
+    return " ".join(t.split())
+
+
+def _raiz_do_cnpj(item):
+    c = re.sub(r"[^0-9A-Za-z]", "", str(item.get("cnpj") or "")).upper()
+    return c[:8] if len(c) == 14 else None
+
+
+def mesmo_empregador(a, b):
+    """Os dois vínculos são do MESMO empregador: CNPJ com a mesma raiz (matriz e filiais) ou, sem CNPJ nos dois,
+    a razão social normalizada igual (sem acento, pontuação e Ltda/S.A./ME…). Sem saber um deles, não é o mesmo."""
+    ra, rb = _raiz_do_cnpj(a), _raiz_do_cnpj(b)
+    if ra and rb:
+        return ra == rb
+    x, y = _nome_normalizado(a.get("empregador")), _nome_normalizado(b.get("empregador"))
+    if not x or not y:
+        return False
+    if x == y:
+        return True
+    curto, longo = sorted((x, y), key=len)
+    # "SERVICO SOCIAL DA INDUSTRIA" e "SERVICO SOCIAL DA INDUSTRIA SESI": o nome inteiro de um no começo do outro.
+    return len(curto.split()) >= 3 and longo.startswith(curto + " ")
 
 
 def _dia(valor):
@@ -488,8 +675,9 @@ def _dia(valor):
 
 
 def sobrepostos(itens, hoje=None):
-    """{índice: código} dos vínculos que dividem mais de um dia com outro do arquivo:
-    PERIODO_SOBREPOSTO (o mesmo empregador) ou PERIODO_CONCOMITANTE (empregadores diferentes ou não lidos)."""
+    """{índice: código} dos vínculos que dividem mais de um dia com outro do arquivo: PERIODO_SOBREPOSTO (o mesmo
+    empregador: provável duplicidade do mesmo vínculo) ou PERIODO_CONCOMITANTE (empregadores diferentes ou não
+    lidos: legítimo; os dias em comum contam uma vez só na soma)."""
     hoje = hoje or date.today()
     periodos = []
     for i, it in enumerate(itens):
@@ -498,7 +686,7 @@ def sobrepostos(itens, hoje=None):
             continue
         fim = _dia(it.get("fim")) or ((_dia(it.get("dias_ate")) or hoje) if it.get("atual") else None)
         if fim:
-            periodos.append((i, inicio, fim, it.get("empregador")))
+            periodos.append((i, inicio, fim, it))
     marcados = {}
     for x in range(len(periodos)):
         for y in range(x + 1, len(periodos)):
@@ -506,8 +694,21 @@ def sobrepostos(itens, hoje=None):
             j, a2, b2, e2 = periodos[y]
             if (min(b1, b2) - max(a1, a2)).days + 1 <= 1:
                 continue
-            codigo = "PERIODO_SOBREPOSTO" if _mesmo_empregador(e1, e2) else "PERIODO_CONCOMITANTE"
+            codigo = "PERIODO_SOBREPOSTO" if mesmo_empregador(e1, e2) else "PERIODO_CONCOMITANTE"
             for k in (i, j):
                 if marcados.get(k) != "PERIODO_SOBREPOSTO":
                     marcados[k] = codigo
     return marcados
+
+
+def intervalos_para_somar(itens, hoje=None):
+    """[{inicio, fim}] dos vínculos (o atual até `dias_ate`), para a soma sem sobreposição da pontuação."""
+    hoje = hoje or date.today()
+    saida = []
+    for it in itens:
+        if it.get("tipo") != "VINCULO" or not it.get("inicio"):
+            continue
+        fim = it.get("fim") or ((it.get("dias_ate") or hoje.isoformat()) if it.get("atual") else None)
+        if fim:
+            saida.append({"inicio": it["inicio"], "fim": fim})
+    return saida
