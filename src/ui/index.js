@@ -31,6 +31,7 @@ export {
   RenomearVersao,
 } from "./nome-da-versao.tsx";
 export { Popover } from "./popover.tsx";
+export { AvisoDeRascunho, SituacaoDoRascunho } from "./rascunho-guardado.tsx";
 export {
   ChipDeFiltro,
   ChipsDeFiltro,

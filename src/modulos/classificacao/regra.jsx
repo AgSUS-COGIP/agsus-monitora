@@ -25,13 +25,20 @@ import {
 } from "../../lib/nome-da-versao.ts";
 import {
   Aviso,
+  AvisoDeRascunho,
   Campo,
   CampoNomeDaVersao,
   NomeDaVersao,
   nomeDoCampo,
   RenomearVersao,
   Segmentado,
+  SituacaoDoRascunho,
 } from "../../ui/index.js";
+import { usarRascunhoDaRegra } from "../../app/usar-rascunho-da-regra.ts";
+import {
+  dataEHoraCurtas,
+  textoDaGravacao,
+} from "../../lib/rascunho-da-regra.ts";
 
 /*
   A aba "Regra" da Classificação: o formulário da regra do edital, decidida
@@ -533,7 +540,13 @@ function Versoes({ regra, podeEditar, aoUsar, aoRenomear }) {
   );
 }
 
-export function Regra({ estado, e, dataDeCorte }) {
+/* O rascunho guardado (src/app/rascunho-da-regra.ts, tipo CLASSIFICACAO): { regra }. */
+const mesmaRegra = (a, b) =>
+  JSON.stringify(normalizarRegra(a)) === JSON.stringify(b);
+const regraDoGuardado = (conteudo) =>
+  conteudo?.regra && typeof conteudo.regra === "object" ? conteudo.regra : null;
+
+export function Regra({ estado, e, dataDeCorte, rascunhoGuardado }) {
   const dados = e.dados;
   const regraSalva = dados?.regra || null;
   const inicial = useMemo(
@@ -552,8 +565,22 @@ export function Regra({ estado, e, dataDeCorte }) {
   };
   const leitura = !e.podeEditar;
   const erros = validarRegra(rascunho);
-  const mudou =
-    JSON.stringify(normalizarRegra(rascunho)) !== JSON.stringify(inicial);
+  const mudou = !mesmaRegra(rascunho, inicial);
+  const conteudoDoRascunho = useMemo(() => ({ regra: rascunho }), [rascunho]);
+  const guardado = usarRascunhoDaRegra({
+    loja: rascunhoGuardado,
+    editalId: e.editalId,
+    versaoVigente: regraSalva?.versao ?? 0,
+    ativo: !leitura,
+    conteudo: conteudoDoRascunho,
+    comAlteracoes: mudou,
+    igualAoVigente: (conteudo) => {
+      const regra = regraDoGuardado(conteudo);
+      return !regra || mesmaRegra(regra, inicial);
+    },
+    aplicar: (conteudo) =>
+      setRascunho(normalizarRegra(regraDoGuardado(conteudo))),
+  });
   const exigeMotivo = Boolean(regraSalva);
   const sugestao = sugerirNomeDaVersao({
     tipo: "classificacao",
@@ -589,6 +616,28 @@ export function Regra({ estado, e, dataDeCorte }) {
       setTentou(false);
     }
   }
+
+  // Lendo o rascunho guardado, ou perguntando o que fazer com ele: sem editor.
+  if (guardado.bloqueia)
+    return (
+      <div className="classificacao-regra" data-rascunho-guardado="">
+        {guardado.perguntar && guardado.guardado ? (
+          <AvisoDeRascunho
+            quando={dataEHoraCurtas(guardado.guardado.atualizadoEm)}
+            versaoBase={guardado.guardado.versaoBase}
+            versaoVigente={regraSalva?.versao ?? 0}
+            local={guardado.guardado.local}
+            aoContinuar={guardado.continuar}
+            aoDescartar={guardado.descartar}
+          />
+        ) : (
+          <div className="ui-card" aria-busy="true">
+            <div className="ui-esqueleto-linha" />
+            <div className="ui-esqueleto-linha" />
+          </div>
+        )}
+      </div>
+    );
 
   const r = rascunho;
   return (
@@ -1096,6 +1145,10 @@ export function Regra({ estado, e, dataDeCorte }) {
             mostrarErro={tentou}
           />
           <div className="ui-acoes">
+            <SituacaoDoRascunho
+              texto={textoDaGravacao(guardado.gravacao, guardado.guardadoEm)}
+              gravacao={guardado.gravacao}
+            />
             <button
               type="button"
               className="btn secondary"
