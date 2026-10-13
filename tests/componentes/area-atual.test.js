@@ -118,8 +118,13 @@ describe("resumoDasLinhas", () => {
 describe("as leituras de editais pedem a área", () => {
   // As colunas são listadas uma a uma; sem CO_AREA, SEDE e Projetos ficavam vazios.
   it("src/app/carga.js", () => {
-    expect(readFileSync("src/app/carga.js", "utf8")).toContain(
-      '.from("TB_MONITORAMENTO_INDIGENA")\n        .select(COLUNAS_DO_MONITORAMENTO)',
+    /*
+      Por expressão, não pelo texto com "\n" e oito espaços: no Windows
+      (core.autocrlf) a cópia vinha em CRLF e o teste falhava sem defeito. O
+      .gitattributes agora fixa LF; o espaço entre as chamadas pode ser qualquer.
+    */
+    expect(readFileSync("src/app/carga.js", "utf8")).toMatch(
+      /\.from\("TB_MONITORAMENTO_INDIGENA"\)\s*\.select\(COLUNAS_DO_MONITORAMENTO\)/,
     );
     expect(COLUNAS_DO_MONITORAMENTO.split(",")).toContain("CO_AREA");
   });

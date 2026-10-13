@@ -21,8 +21,9 @@
   cartão "Abrir chamado" (e-mail ao suporte) depois de um "não ajudou" ou
   quando a pessoa pede o suporte.
 
-  Camada: z-index 10042 (aya.css), acima do cabeçalho (.top 10030) e da barra
-  lateral (10036), abaixo do aviso de parabéns (10045).
+  Camada: z-index 10038 (aya.css), acima do cabeçalho (.top 10030) e da barra
+  lateral (10036), abaixo dos menus das telas (10040) e do aviso de parabéns
+  (10045).
 */
 
 import {

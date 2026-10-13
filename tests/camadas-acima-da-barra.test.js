@@ -55,3 +55,29 @@ describe("camadas acima da barra lateral", () => {
     expect(app).not.toMatch(/body\.sidebar-locked \.sidebar\s*\{/);
   });
 });
+
+/*
+  A arara da Aya fica acima do cabeçalho e da barra do celular, mas abaixo
+  dos menus e popovers das telas: em 13/10/2026, a 10042, ela cobria os itens
+  de "Ações da coordenação" na Fila da Avaliação documental.
+*/
+describe("a Aya e os menus das telas", () => {
+  // O z-index do primeiro bloco `<seletor> {` no começo de uma linha.
+  const zDe = (caminho, seletor) => {
+    const fonte = semComentarios(ler(caminho));
+    const bloco = fonte.slice(fonte.indexOf(`\n${seletor} {`));
+    return Number(bloco.match(/z-index:\s*(\d+)/)?.[1]);
+  };
+  const aya = zDe("src/modulos/aya/aya.css", ".aya");
+
+  it("barra do celular (10036) < Aya < popover das telas", () => {
+    expect(aya).toBeGreaterThan(10036);
+    expect(aya).toBeLessThan(valorDoToken("--z-popover"));
+  });
+
+  it("o tour da Aya continua acima dela", () => {
+    expect(zDe("src/modulos/aya/tour/tour.css", ".aya-tour")).toBeGreaterThan(
+      aya,
+    );
+  });
+});
