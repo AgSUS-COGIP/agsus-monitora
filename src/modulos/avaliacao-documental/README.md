@@ -25,6 +25,11 @@ continua sendo a leitura. Desenho e fases: `docs/analises-no-monitora/`; histór
 - "Recalcular" (coordenação): RPC `disparar_robo` com o edital (o banco pede ao GitHub), travado com a regra não
   conferida ou o job rodando; o resultado do pedido fica na aba (o motivo da recusa, com o botão
   de volta, ou "pedido") e a aba relê sozinha até a execução terminar;
+- o cargo, a lotação e o nível de cada vaga vêm da linha do quadro de vagas
+  (`private."FC_QUADRO_DA_VAGA_EMPREGARE"`): pelo nome da vaga na planilha e, quando a análise é
+  do MONITORA (114/2026), pelo título da vaga na Empregare — o número do CARGO e, com o mesmo cargo
+  em mais de uma lotação, a UF dos inscritos de cada vaga irmã (migration
+  `20261013140000_quadro_da_vaga_pelo_titulo.sql`); o nível sai do "(Nível …)" do cargo;
 - tamanho do lote por vaga: o campo vira `lote.por_vaga` numa versão nova da regra (com motivo);
 - listas oficiais PROVISORIA e LOTE (cada reposição, se a regra publica): registradas no banco
   (`registrar_lista_pre_classificacao`) e exportadas pelo gerador da Classificação.
@@ -140,6 +145,26 @@ salvar a versão (`aoGravarVersao` do `estado.js`) apaga. Cinco passos:
 aceite (refazer a v7 do 93/2026 a partir do PROJ26) está em
 `tests/lib/avaliacao-documental-assistente.test.js`.
 
+## Diferenças por cargo
+
+A regra varia por nível (`por_nivel`) e, quando o edital pede, por cargo (`regra.por_cargo`; formato,
+conta e validação em `src/lib/avaliacao-documental/regra-por-cargo.ts`). Cada diferença vale para
+códigos de vaga da Empregare e/ou o começo do nome do cargo ("CARGO 15", palavras inteiras) e muda,
+por bloco: CURSOS teto/faixas/extras, TITULOS teto/extras, VINCULOS teto/área exigida e DOCUMENTO
+requisitos (rótulo, motivo da eliminação, termos e "não pontua em" do 8.2.7). Precedência: cargo >
+nível > padrão; o código da vaga vale antes do nome. A regra da vaga (`regraDaVaga`) é a mesma no JS,
+no Python (`regra_da_vaga` em `pontuacao.py`, casos dourados "por cargo: …") e no banco
+(`private."FC_REGRA_DA_VAGA"`, migration `20261013130000_regra_por_cargo.sql`): `salvar_rascunho_ficha`
+e `concluir_ficha` gravam a vaga e o cargo da ficha no lançamento e validam contra ela.
+
+- assistente (passo 2) e modo avançado: `assistente/diferencas-por-cargo.tsx` (as vagas e os cargos
+  do quadro vêm de `obter_apoio_regra_analise`);
+- ficha: `ficha/diferencas-do-cargo.tsx` — a lista de requisitos DAQUELE cargo com Confere / Não
+  confere e o motivo pronto (o Não confere entra como motivo que elimina), as linhas extras (ex.:
+  UMCQA, +5, até o teto do cargo; `blocos[X].extras`), o aviso do 8.2.7 e a área exigida da
+  experiência; as faltas "requisito" e "extra" em `pendenciasDaFicha` (e `FC_PENDENCIAS_FICHA`);
+- prévia: o seletor "Cargo" aplica uma diferença ao candidato fictício.
+
 ## Dono da avaliação: planilha ou MONITORA
 
 Ao lado de "Avaliação:" (`origem-da-analise.tsx`), a coordenação da avaliação do edital (e o
@@ -157,6 +182,7 @@ não vira MONITORA por aqui (a virada com adoção é da F8).
 avaliacao-documental.jsx  tela e montarAvaliacaoDocumental() (na #page-avaliacao-documental)
 estado.js                 store sem React: editais, regra, equipe e as gravações (RPCs)
 regra.jsx                 aba Regra: formulário, perguntas da carga, versões, aldeias
+assistente/diferencas-por-cargo.tsx  "Diferenças por cargo" (assistente e modo avançado)
 blocos.jsx                os blocos da ficha na regra
 previa.tsx                "Testar com um candidato fictício" (entradas à esquerda, resultado preso
                           à direita; uma coluna em largura estreita)
@@ -170,6 +196,7 @@ ficha/*.tsx               cabeçalho, stepper, item, Conclusão, nota, "⋯", ro
                           Empregare (contratos em ficha/tipos.ts); as escolhas (Confere,
                           Não confere, Editar nota) e o que gravam em
                           src/lib/avaliacao-documental/apurado-da-ficha.ts
+ficha/diferencas-do-cargo.tsx  requisitos e extras do cargo, aviso do 8.2.7, área exigida
 ficha/estado-da-ficha.js  store da ficha: obter_ficha_analise, rascunho automático,
                           concluir_ficha, reabrir_ficha, registrar_acesso_ficha
 ficha/ficha.css           estilos da ficha (só tokens)
@@ -220,4 +247,8 @@ avaliacao-documental.css  só tokens
   `tests/modulos/avaliacao-documental-pre-classificacao.test.js`,
   `tests/lib/avaliacao-documental-*.test.js`, `tests/avaliacao-documental-migration.test.js`,
   `tests/pre-classificacao-migration.test.js`, `tests/python/test_pre_classificacao.py` e
-  `tests/python/test_pre_classificacao_job.py`.
+  `tests/python/test_pre_classificacao_job.py`; diferenças por cargo em
+  `tests/lib/avaliacao-documental-regra-por-cargo.test.js`,
+  `tests/modulos/avaliacao-documental-ficha-por-cargo.test.js`,
+  `tests/modulos/avaliacao-documental-diferencas-por-cargo.test.js` e
+  `tests/regra-por-cargo-migration.test.js`.

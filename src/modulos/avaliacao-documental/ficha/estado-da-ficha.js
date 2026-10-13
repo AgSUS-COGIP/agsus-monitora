@@ -24,6 +24,7 @@ import {
   declaradaDaFicha,
   lancamentoInicial,
   pendenciasDaFicha,
+  regraDaFicha,
   resumoParaGravar,
 } from "../../../lib/avaliacao-documental/ficha.js";
 import { mensagemDoBanco } from "../estado.js";
@@ -41,6 +42,7 @@ const INICIAL = Object.freeze({
   carregando: false,
   erro: "",
   dados: null,
+  regra: null,
   lancamento: null,
   avaliacao: null,
   declarada: null,
@@ -73,9 +75,13 @@ export function criarEstadoDaFicha({
     for (const ouvinte of ouvintes) ouvinte();
   };
 
-  /* A declarada segue o nível do lançamento (pontos por nível da regra). */
+  /*
+    A declarada segue o nível do lançamento (pontos por nível da regra). A
+    regra da ficha é a da vaga: a diferença do cargo por cima do nível
+    (regra-por-cargo.ts); a tela lê os blocos dela (requisitos, extras, teto).
+  */
   function calcular(lancamento, dados = estado.dados) {
-    const regra = dados.regra.configuracao;
+    const regra = regraDaFicha(dados.regra.configuracao, lancamento);
     const declarada = declaradaDaFicha(
       regra,
       dados.respostas,
@@ -89,6 +95,7 @@ export function criarEstadoDaFicha({
       declarada,
     );
     return {
+      regra,
       lancamento,
       avaliacao,
       declarada,
@@ -116,6 +123,7 @@ export function criarEstadoDaFicha({
         respostas: dados.respostas,
         modalidade: dados.ficha.modalidade,
         cargo: dados.ficha.cargo,
+        vaga: dados.ficha.vaga,
         documental: dados.documental,
         gravado: dados.ficha.lancamento,
       });

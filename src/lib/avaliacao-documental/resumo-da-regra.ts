@@ -1,7 +1,7 @@
 /*
   O resumo de uma página da regra da avaliação documental, em linguagem
-  simples: o que elimina, quanto vale cada item, as cotas, o corte e o lote,
-  a nota declarada e os desempates. Sai em texto e em HTML (para o "Copiar
+  simples: o que elimina, quanto vale cada item, as cotas, as diferenças por
+  cargo, o corte e o lote, a nota declarada e os desempates. Sai em texto e em HTML (para o "Copiar
   para o SEI" e a impressão). Sem DOM e sem estado. Os números saem da regra
   (e da regra de classificação, para a nota mínima e o desempate).
 */
@@ -22,6 +22,7 @@ import type {
   PontosDeExperiencia,
   RegraAnalise,
 } from "./tipos-da-regra.ts";
+import type { DiferencaDoCargo } from "./regra-por-cargo.ts";
 
 export type SecaoDoResumo = { titulo: string; itens: string[] };
 export type ResumoDaRegra = {
@@ -164,6 +165,37 @@ const PARCIAL: Record<string, string> = {
   EXPERIENCIA: "Experiência",
 };
 
+/** Uma diferença por cargo numa frase: a quem vale e o que muda em cada bloco. */
+function diferencaDoCargo(d: DiferencaDoCargo, blocos: Bloco[]): string {
+  const quem = [
+    ...(d.cargos ?? []),
+    d.vagas?.length ? `vagas ${d.vagas.join(", ")}` : "",
+  ].filter(Boolean);
+  const partes: string[] = [];
+  for (const [codigo, s] of Object.entries(d.blocos ?? {})) {
+    const b = blocos.find((x) => x.codigo === codigo);
+    const nome =
+      PARCIAL[b?.parcial ?? ""] ??
+      String(b?.titulo ?? codigo).split(/ \(|,/)[0];
+    const itens: string[] = [];
+    if (s.faixas?.length)
+      itens.push(faixas({ teto: s.teto ?? null, faixas: s.faixas }));
+    else if (Object.hasOwn(s, "teto"))
+      itens.push(
+        s.teto === null || s.teto === undefined
+          ? "sem teto"
+          : `até ${numeroBr(s.teto)} pontos`,
+      );
+    for (const e of s.extras ?? [])
+      itens.push(`+${numeroBr(e.pontos)} por ${e.rotulo}`);
+    if (s.area) itens.push(`área exigida: ${s.area}`);
+    if (s.requisitos?.length)
+      itens.push(`exige ${s.requisitos.map((q) => q.rotulo).join("; ")}`);
+    if (itens.length) partes.push(`${nome}: ${itens.join(", ")}`);
+  }
+  return `${d.rotulo}${quem.length ? ` (${quem.join("; ")})` : ""} — ${partes.join(" · ").replace(/\.$/, "")}.`;
+}
+
 /** O resumo da regra em seções de frases curtas. */
 export function resumoDaRegra(
   regra: RegraAnalise,
@@ -199,6 +231,12 @@ export function resumoDaRegra(
 
   const cotas = blocos.filter((b) => b.tipo === "COTA").map(cota);
   if (cotas.length) secoes.push({ titulo: "Cotas", itens: cotas });
+
+  const porCargo = (regra.por_cargo ?? []).map((d) =>
+    diferencaDoCargo(d, blocos),
+  );
+  if (porCargo.length)
+    secoes.push({ titulo: "Diferenças por cargo", itens: porCargo });
 
   const corte: string[] = [];
   const minima = contexto.notaMinima;

@@ -1169,6 +1169,782 @@
           "texto": "Nota de experiência profissional diminuída em decorrência do tempo de serviço comprovado pelo candidato(a)."
         }
       ]
+    },
+    "E114-POR-CARGO": {
+      "lote": {
+        "base": "NOTA_MINIMA",
+        "fixo": null,
+        "multiplo": null,
+        "inclui_cr": true,
+        "linha_anda": false,
+        "item_edital": "8.2.6",
+        "nota_minima": 10,
+        "por_modalidade": false,
+        "inclui_empatados": true,
+        "publica_reposicao": false
+      },
+      "corte": {
+        "fonte": "REGRA_CLASSIFICACAO",
+        "item_edital": "8.2.6"
+      },
+      "blocos": [
+        {
+          "tipo": "DOCUMENTO",
+          "codigo": "IDENTIDADE",
+          "titulo": "Documento de identificação oficial com foto",
+          "efeitos": {
+            "NAO_ENVIADO": "ELIMINA",
+            "NAO_CONFORME": "ELIMINA"
+          },
+          "motivos": [
+            {
+              "texto": "Documento de identificação fora da lista do subitem 6.5 (ex.: certidão, CPF, título de eleitor, carteira de estudante).",
+              "codigo": "NAO_ACEITO",
+              "efeito": "ELIMINA",
+              "item_edital": "6.5.1"
+            },
+            {
+              "texto": "Documento de identificação ilegível, não identificável ou danificado.",
+              "codigo": "ILEGIVEL",
+              "efeito": "ELIMINA",
+              "item_edital": "6.5.1"
+            },
+            {
+              "texto": "O candidato não apresentou documento de identificação conforme previsto no subitem 6.5 do edital, sendo eliminado do processo seletivo.",
+              "codigo": "MOTIVO",
+              "item_edital": "6.5.2"
+            }
+          ],
+          "perguntas": [
+            "Anexe o documento de identificação com foto, frente e verso, conforme instruções contidas no subitem 6.5 do edital.",
+            "Anexe um documento de identificação com foto, frente e verso, conforme instruções contidas no subitem 6.5 do edital."
+          ],
+          "item_edital": "6.5; 8.2.10.8"
+        },
+        {
+          "tipo": "DOCUMENTO",
+          "codigo": "ESCOLARIDADE",
+          "titulo": "Formação exigida pela vaga (diploma ou certificado, frente e verso)",
+          "efeitos": {
+            "NAO_ENVIADO": "ELIMINA",
+            "NAO_CONFORME": "ELIMINA"
+          },
+          "motivos": [
+            {
+              "texto": "Não comprovou a formação acadêmica exigida para a vaga.",
+              "codigo": "NAO_COMPROVADA",
+              "efeito": "ELIMINA",
+              "item_edital": "8.2.1"
+            },
+            {
+              "texto": "Diploma ou certificado sem frente ou verso.",
+              "codigo": "SEM_FRENTE_VERSO",
+              "efeito": "ELIMINA",
+              "item_edital": "6.6.1"
+            },
+            {
+              "texto": "Curso diverso do exigido para a vaga.",
+              "codigo": "CURSO_DIVERSO",
+              "efeito": "ELIMINA",
+              "item_edital": "8.2.1"
+            },
+            {
+              "texto": "Diploma ou certificado ilegível.",
+              "codigo": "MOTIVO",
+              "item_edital": "6.6.1"
+            },
+            {
+              "texto": "Documentos anexados em campos incorretos não foram considerados na análise.",
+              "codigo": "MOTIVO_2",
+              "item_edital": "6.6.5"
+            },
+            {
+              "texto": "Documento em desacordo com formato PDF ou tamanho máximo de 14 MB.",
+              "codigo": "MOTIVO_3",
+              "item_edital": "6.6.6"
+            },
+            {
+              "texto": "Documentação recusada devido à ausência do documento comprobatório (ex: certidão de casamento, sentença judicial) que justifique a alteração de nome do(a) candidato(a). ",
+              "codigo": "MOTIVO_4",
+              "item_edital": "8.2.10.7"
+            }
+          ],
+          "perguntas": [
+            "Você possui Ensino Médio completo",
+            "Você possui Graduação na área da vaga",
+            "Anexe a comprovação de Nível Superior",
+            "Anexe a comprovação de Nível Técnico"
+          ],
+          "item_edital": "8.2.1; 8.2.10.8"
+        },
+        {
+          "tipo": "DOCUMENTO",
+          "codigo": "REQUISITO_DO_CARGO",
+          "titulo": "Requisito específico do cargo",
+          "efeitos": {
+            "NAO_ENVIADO": "ELIMINA",
+            "NAO_CONFORME": "ELIMINA"
+          },
+          "motivos": [
+            {
+              "texto": "Não apresentou a CNH vigente na categoria exigida para o cargo.",
+              "codigo": "SEM_CNH",
+              "efeito": "ELIMINA",
+              "item_edital": "2"
+            },
+            {
+              "texto": "Não apresentou o curso de especialização ou capacitação em Cromatografia Gasosa (cargos 5 a 8).",
+              "codigo": "SEM_CURSO_EXIGIDO",
+              "efeito": "ELIMINA",
+              "item_edital": "2"
+            },
+            {
+              "texto": "Não possui experiência mínima de 06 (seis) meses na área da vaga",
+              "codigo": "MOTIVO",
+              "item_edital": "1.1.1, alínea 'c'"
+            },
+            {
+              "texto": "Não apresentou o curso de direção defensiva (cargos 14 e 15)",
+              "codigo": "MOTIVO_2",
+              "item_edital": "2"
+            },
+            {
+              "texto": "Cada título será considerado uma única vez para efeito de pontuação.",
+              "codigo": "MOTIVO_3",
+              "item_edital": "8.2.7"
+            },
+            {
+              "texto": "Documentos exigidos como requisito obrigatório não serão pontuados na etapa de análise curricular, pois possuem caráter eliminatório.",
+              "codigo": "MOTIVO_4",
+              "item_edital": "8.2.10.5"
+            },
+            {
+              "texto": "Pontuação não atribuída devido à ausência do documento comprobatório (ex: certidão de casamento, sentença judicial) que justifique a alteração de nome do(a) candidato(a). ",
+              "codigo": "MOTIVO_5",
+              "item_edital": "8.2.10.7"
+            }
+          ],
+          "perguntas": [],
+          "item_edital": "2; 3.1 i; 8.2.10.8"
+        },
+        {
+          "tipo": "COTA",
+          "codigo": "COTA_PP",
+          "titulo": "Pretos e pardos (autodeclaração, Anexo IV; foto e vídeo, Anexo V; sem heteroidentificação, 5.7.8)",
+          "efeitos": {
+            "NAO_ENVIADO": "SEGUE_AMPLA",
+            "NAO_CONFORME": "SEGUE_AMPLA"
+          },
+          "motivos": [],
+          "condicao": "MODALIDADE=PP",
+          "perguntas": [
+            "Candidatos às vagas destinadas a Pretos ou Pardos e QuilombolasAnexe, neste campo, a autodeclaração conforme o modelo",
+            "Candidatos concorrendo às vagas destinadas a Pretos ou Pardos, grave um vídeo, em fundo branco, com duração máxima de",
+            "Candidatos concorrendo às vagas destinadas a Pretos ou Pardos, anexe uma foto de frente e uma foto de perfil, reunidas"
+          ],
+          "item_edital": "5.7.1"
+        },
+        {
+          "tipo": "COTA",
+          "codigo": "COTA_PI",
+          "titulo": "Indígena (Anexos IV e VI; verificação documental complementar)",
+          "efeitos": {
+            "NAO_ENVIADO": "SEGUE_AMPLA",
+            "NAO_CONFORME": "SEGUE_AMPLA"
+          },
+          "motivos": [],
+          "condicao": "MODALIDADE=PI",
+          "perguntas": [
+            "Para candidatos que se declaram indígenas, anexe sua Declaração de Pertencimento Étnico."
+          ],
+          "item_edital": "5.7.5"
+        },
+        {
+          "tipo": "COTA",
+          "codigo": "COTA_PQ",
+          "titulo": "Quilombola (Anexos IV e VII ou certificado da FCP)",
+          "efeitos": {
+            "NAO_ENVIADO": "SEGUE_AMPLA",
+            "NAO_CONFORME": "SEGUE_AMPLA"
+          },
+          "motivos": [],
+          "condicao": "MODALIDADE=PQ",
+          "perguntas": [
+            "Candidatos às vagas destinadas a Pretos ou Pardos e QuilombolasAnexe, neste campo, a autodeclaração conforme o modelo",
+            "Para candidatos que se declaram quilombolas, anexe sua Declaração de Pertencimento Étnico"
+          ],
+          "item_edital": "5.7.6"
+        },
+        {
+          "tipo": "COTA",
+          "codigo": "COTA_PCD",
+          "titulo": "Pessoa com deficiência (laudo e declaração de capacidade laborativa)",
+          "efeitos": {
+            "CONFORME": "ENCAMINHA_PERICIA",
+            "NAO_ENVIADO": "SEGUE_AMPLA",
+            "NAO_CONFORME": "SEGUE_AMPLA"
+          },
+          "motivos": [],
+          "condicao": "MODALIDADE=PCD",
+          "perguntas": [
+            "Os candidatos que concorrem às vagas destinadas a PcD devem anexar aqui o laudo médico, devidamente assinado por médico"
+          ],
+          "item_edital": "5.1.5"
+        },
+        {
+          "tipo": "DOCUMENTO",
+          "codigo": "REGISTRO_CONSELHO",
+          "titulo": "Registro ativo no conselho de classe, quando exigido",
+          "efeitos": {
+            "NAO_ENVIADO": "ELIMINA",
+            "NAO_CONFORME": "ELIMINA"
+          },
+          "motivos": [
+            {
+              "texto": "Não apresentou registro ativo no conselho de classe exigido para a vaga.",
+              "codigo": "SEM_REGISTRO",
+              "efeito": "ELIMINA",
+              "item_edital": "6.4"
+            }
+          ],
+          "perguntas": [
+            "Você possui registro profissional ativo",
+            "Anexe o comprovante do seu registro profissional"
+          ],
+          "item_edital": "6.4"
+        },
+        {
+          "teto": 10,
+          "tipo": "TITULOS",
+          "codigo": "FORMACAO",
+          "titulo": "Titulação acadêmica (a maior)",
+          "efeitos": {},
+          "motivos": [
+            {
+              "texto": "Certificado de pós-graduação lato sensu sem a carga horária mínima de 360h não foi pontuado.",
+              "codigo": "LATO_SENSU_SEM_CH",
+              "item_edital": "8.2.10.4"
+            },
+            {
+              "texto": "Título exigido como requisito do cargo (ex.: especialização em Cromatografia Gasosa nos cargos 5 a 8) não é pontuado.",
+              "codigo": "REQUISITO_NAO_PONTUA",
+              "item_edital": "8.2.10.5"
+            }
+          ],
+          "parcial": "FORMACAO",
+          "perguntas": ["Qual seu Nível de Titulação Acadêmica"],
+          "cumulativa": false,
+          "item_edital": "8.2.6",
+          "pontos_por_nivel": {
+            "superior": [
+              {
+                "pontos": 5,
+                "titulo": "ESPECIALIZACAO"
+              },
+              {
+                "pontos": 8,
+                "titulo": "MESTRADO"
+              },
+              {
+                "pontos": 10,
+                "titulo": "DOUTORADO"
+              }
+            ]
+          }
+        },
+        {
+          "teto": 5,
+          "tipo": "CURSOS",
+          "codigo": "CURSOS",
+          "faixas": [
+            {
+              "pontos": 1,
+              "max_horas": 60,
+              "min_horas": 40
+            },
+            {
+              "pontos": 2,
+              "max_horas": 119,
+              "min_horas": 61
+            },
+            {
+              "pontos": 3,
+              "max_horas": null,
+              "min_horas": 120
+            }
+          ],
+          "titulo": "Cursos de aperfeiçoamento na área da vaga (mínimo 40h)",
+          "efeitos": {},
+          "motivos": [
+            {
+              "texto": "Eventos acadêmicos, palestras, workshops, simpósios, seminários, congressos e afins não são pontuados.",
+              "codigo": "EVENTO",
+              "item_edital": "6.4"
+            },
+            {
+              "texto": "Cargo 15 (Motorista categoria D): o certificado de capacitação para condução de Unidade Móvel de Controle da Qualidade da Água (UMCQA) vale 5 pontos próprios, além das faixas (máximo de 15 em cursos).",
+              "codigo": "CAPACITACAO_UMCQA",
+              "item_edital": "8.2.6"
+            }
+          ],
+          "parcial": "CURSOS",
+          "perguntas": [
+            "Selecione a pontuação relativa à carga horária de Cursos de Aperfeiçoamento na área em que concorre, com carga horária",
+            "Anexe os seus Certificados de Conclusão dos Cursos de Aperfeiçoamento"
+          ],
+          "por_nivel": {
+            "medio": {
+              "teto": 10,
+              "faixas": [
+                {
+                  "pontos": 2,
+                  "max_horas": 60,
+                  "min_horas": 40
+                },
+                {
+                  "pontos": 4,
+                  "max_horas": 119,
+                  "min_horas": 61
+                },
+                {
+                  "pontos": 6,
+                  "max_horas": null,
+                  "min_horas": 120
+                }
+              ]
+            },
+            "tecnico": {
+              "teto": 10,
+              "faixas": [
+                {
+                  "pontos": 2,
+                  "max_horas": 60,
+                  "min_horas": 40
+                },
+                {
+                  "pontos": 4,
+                  "max_horas": 119,
+                  "min_horas": 61
+                },
+                {
+                  "pontos": 6,
+                  "max_horas": null,
+                  "min_horas": 120
+                }
+              ]
+            },
+            "superior": {
+              "teto": 5,
+              "faixas": [
+                {
+                  "pontos": 1,
+                  "max_horas": 60,
+                  "min_horas": 40
+                },
+                {
+                  "pontos": 2,
+                  "max_horas": 119,
+                  "min_horas": 61
+                },
+                {
+                  "pontos": 3,
+                  "max_horas": null,
+                  "min_horas": 120
+                }
+              ]
+            }
+          },
+          "item_edital": "8.2.6"
+        },
+        {
+          "teto": 35,
+          "tipo": "VINCULOS",
+          "codigo": "EXPERIENCIA",
+          "titulo": "Experiência na área",
+          "efeitos": {},
+          "motivos": [
+            {
+              "texto": "Experiência anterior à data de diplomação não é computada.",
+              "codigo": "ANTES_DO_DIPLOMA",
+              "item_edital": "8.2.9"
+            },
+            {
+              "texto": "Estágio curricular, monitoria, tutoria, docência, bolsa ou voluntariado não comprovam experiência profissional.",
+              "codigo": "ESTAGIO_OU_SIMILAR",
+              "item_edital": "8.2.5"
+            }
+          ],
+          "parcial": "EXPERIENCIA",
+          "perguntas": [
+            "Experiência Profissional na área em que concorre, conforme requisitos do Edital",
+            "Anexe o comprovante de Experiência Profissional de acordo com os requisitos do Edital",
+            "Experiência Profissional na área em que concorre conforme requisitos do Edital",
+            "Anexe o comprovante de Experiência Profissional conforme requisitos do Edital"
+          ],
+          "pontuacao": "POR_PERIODO",
+          "categorias": [
+            {
+              "codigo": "AREA",
+              "pontua": true,
+              "rotulo": "Na área",
+              "desempate": null
+            }
+          ],
+          "data_limite": null,
+          "item_edital": "8.2.6",
+          "item_minimo": "1.1.1 c",
+          "dias_por_mes": 30,
+          "max_vinculos": 20,
+          "minimo_meses": 6,
+          "efeito_minimo": "ELIMINA",
+          "periodo_meses": 6,
+          "pontos_por_mes": 0,
+          "desconta_minimo": true,
+          "estagio_indigena": {
+            "ativo": false,
+            "dias_por_mes": 22,
+            "horas_por_dia": 8,
+            "so_sem_experiencia": true
+          },
+          "unir_sobreposicao": true,
+          "pontos_por_periodo": 5,
+          "minimo_conta_estagio": false
+        }
+      ],
+      "modelo": "PROJ26-RIO-DOCE",
+      "schema": 1,
+      "parecer": {
+        "APTO": "{edital}\nCandidato(a) HABILITADO(A) na {titulo_etapa} com a pontuação total de {nota} pontos, distribuídos da seguinte forma:\n\n{distribuicao}",
+        "INAPTO_NOTA": "{edital}\nCandidato(a) NÃO HABILITADO(A) por não atingir a nota mínima de {corte} pontos (item {item_corte}). Nota obtida: {nota} pontos, distribuídos da seguinte forma:\n\n{distribuicao}",
+        "observacoes": "\n\nObservações da análise:\n{observacoes}",
+        "INAPTO_REQUISITO": "{edital}\nCandidato(a) INABILITADO(A) na {titulo_etapa}, pelo(s) seguinte(s) motivo(s):\n\n{motivos}"
+      },
+      "revisao": {
+        "todas": false,
+        "sinais": [],
+        "duplo_cego": false,
+        "inaptos_nota": false,
+        "entrou_pela_linha": false,
+        "inaptos_requisito": true,
+        "amostra_percentual": 10,
+        "divergencia_pontos": null,
+        "minimo_por_analista": 0
+      },
+      "provisoria": {
+        "desempate": ["IDOSO", "EXPERIENCIA_DECLARADA", "MAIOR_IDADE"],
+        "base_da_nota": "DECLARADA",
+        "nota_declarada": [
+          {
+            "tipo": "OPCAO",
+            "pontos": {
+              "1 ano": 5,
+              "2 anos": 15,
+              "3 anos": 25,
+              "4 anos ou mais": 35,
+              "1 ano e 6 meses": 10,
+              "1 anos e 6 meses": 10,
+              "2 anos e 6 meses": 20,
+              "3 anos e 6 meses": 30,
+              "6 meses obrigatórios": 0
+            },
+            "parcial": "EXPERIENCIA",
+            "pergunta": "Experiência Profissional"
+          }
+        ],
+        "pergunta_experiencia": "Experiência Profissional",
+        "eliminacao_automatica": [
+          {
+            "codigo": "CANCELADO",
+            "coluna": "SITUAÇÃO",
+            "motivo": "Cancelou a inscrição",
+            "quando": ["CANCELADO"]
+          }
+        ],
+        "divergencia_tolerancia": 0
+      },
+      "distribuicao": {
+        "modo": "PEGAR_PROXIMO",
+        "novos": "MENOS_PENDENTES",
+        "criterio": "PARTES_IGUAIS",
+        "dias_parada": 3,
+        "limite_por_analista": null
+      },
+      "titulo_etapa": "Avaliação Documental e de Títulos",
+      "casas_parecer": 1,
+      "edital_rotulo": "Edital 114/2026",
+      "observacoes_prontas": [
+        {
+          "texto": "O candidato(a) não anexou o documento da alteração de nome; títulos e experiências em outro nome foram desconsiderados (subitem 8.2.10.7).",
+          "codigo": "ALTERACAO_DE_NOME",
+          "rotulo": "Alteração de nome sem documento",
+          "item_edital": "8.2.10.7"
+        },
+        {
+          "texto": "Nota de experiência profissional diminuída em decorrência do tempo de serviço comprovado: só contam blocos completos de 6 meses além do mínimo exigido (subitens 8.2.2 a 8.2.4).",
+          "codigo": "EXPERIENCIA_DIMINUIDA",
+          "rotulo": "Nota de experiência diminuída",
+          "item_edital": "8.2.3"
+        },
+        {
+          "texto": "Nota de cursos de aperfeiçoamento diminuída: certificados sem relação direta com a área da vaga, abaixo de 40h ou de eventos não foram contabilizados.",
+          "codigo": "CURSOS_DIMINUIDA",
+          "rotulo": "Nota de cursos diminuída",
+          "item_edital": "6.4"
+        },
+        {
+          "texto": "Cargo 15 (Motorista categoria D): o certificado de capacitação ou treinamento para condução, manejo e operação de UMCQA vale 5 pontos em cursos de aperfeiçoamento (máximo de 15 pontos para o cargo), conforme o subitem 8.2.6.",
+          "codigo": "MOTORISTA_UMCQA",
+          "rotulo": "Motorista D: capacitação UMCQA",
+          "item_edital": "8.2.6"
+        },
+        {
+          "texto": "O(a) candidato(a) não enviou a imagem legível da certidão de nascimento; no desempate por idade, foi considerada a hora 23h59min59s (subitem 6.11.4).",
+          "codigo": "HORA_NASCIMENTO_PADRAO",
+          "rotulo": "Sem certidão: hora 23h59min59s",
+          "item_edital": "6.11.4"
+        }
+      ],
+      "por_cargo": [
+        {
+          "codigo": "ANALISE_DA_AGUA",
+          "rotulo": "Cargos 1 a 4 — Análise da Água",
+          "vagas": [
+            "182418",
+            "182421",
+            "182428",
+            "182431",
+            "182433",
+            "182438",
+            "182429",
+            "182434"
+          ],
+          "cargos": ["CARGO 1", "CARGO 2", "CARGO 3", "CARGO 4"],
+          "blocos": {
+            "EXPERIENCIA": {
+              "area": "Análises de água (Anexo I: mínimo de 6 meses)."
+            }
+          }
+        },
+        {
+          "codigo": "METAIS_PESADOS",
+          "rotulo": "Cargos 5 a 8 — Especialista em metais pesados",
+          "vagas": [
+            "182442",
+            "182446",
+            "182450",
+            "182452",
+            "182427",
+            "182432",
+            "182439",
+            "182441"
+          ],
+          "cargos": ["CARGO 5", "CARGO 6", "CARGO 7", "CARGO 8"],
+          "blocos": {
+            "REQUISITO_DO_CARGO": {
+              "requisitos": [
+                {
+                  "codigo": "CROMATOGRAFIA",
+                  "rotulo": "Curso de especialização ou capacitação em Cromatografia Gasosa",
+                  "motivo": "Não apresentou o curso de especialização ou capacitação em Cromatografia Gasosa exigido para o cargo (Anexo I).",
+                  "item_edital": "2 e Anexo I",
+                  "termos": ["cromatografia"],
+                  "nao_pontua_em": ["FORMACAO", "CURSOS"]
+                }
+              ]
+            },
+            "EXPERIENCIA": {
+              "area": "Análises de água; análises de metais pesados por Espectrofotometria de Absorção Atômica (FAAS e GFAAS); e análises de agrotóxicos por ICP-OES ou técnica equivalente (Anexo I: mínimo de 6 meses)."
+            }
+          }
+        },
+        {
+          "codigo": "TECNICO_LABORATORIO",
+          "rotulo": "Cargo 9 — Técnico de Laboratório",
+          "vagas": ["182445", "182449"],
+          "cargos": ["CARGO 9"],
+          "blocos": {
+            "REQUISITO_DO_CARGO": {
+              "requisitos": [
+                {
+                  "codigo": "DIPLOMA_TECNICO_AREA",
+                  "rotulo": "Diploma de curso técnico em Química, Saneamento, Meio Ambiente, Análises Clínicas, Biotecnologia ou em Laboratório",
+                  "motivo": "Não apresentou diploma de curso técnico em Química, Saneamento, Meio Ambiente, Análises Clínicas, Biotecnologia ou em Laboratório, emitido por instituição reconhecida pelo MEC (Anexo I).",
+                  "item_edital": "2 e Anexo I"
+                },
+                {
+                  "codigo": "REGISTRO_ATIVO",
+                  "rotulo": "Registro ativo no conselho profissional competente",
+                  "motivo": "Não apresentou registro ativo no conselho profissional competente (Anexo I).",
+                  "item_edital": "2 e Anexo I"
+                }
+              ]
+            },
+            "EXPERIENCIA": {
+              "area": "Laboratório de análises de água (Anexo I: mínimo de 6 meses)."
+            }
+          }
+        },
+        {
+          "codigo": "SUPERVISOR_SAUDE_AMBIENTAL",
+          "rotulo": "Cargo 10 — Supervisor de Saúde Ambiental",
+          "vagas": ["182424", "182430"],
+          "cargos": ["CARGO 10"],
+          "blocos": {
+            "REQUISITO_DO_CARGO": {
+              "requisitos": [
+                {
+                  "codigo": "REGISTRO_QUANDO_APLICAVEL",
+                  "rotulo": "Registro ativo no conselho profissional competente, quando aplicável à formação",
+                  "motivo": "Não apresentou registro ativo no conselho profissional competente, exigido para a sua formação (Anexo I).",
+                  "item_edital": "2 e Anexo I"
+                }
+              ]
+            },
+            "EXPERIENCIA": {
+              "area": "Coordenação de equipes, gestão de saneamento ambiental ou vigilância em saúde (Anexo I: mínimo de 6 meses)."
+            }
+          }
+        },
+        {
+          "codigo": "AUXILIAR_LOGISTICA",
+          "rotulo": "Cargo 11 — Auxiliar de Logística",
+          "vagas": ["182444", "182496"],
+          "cargos": ["CARGO 11"],
+          "blocos": {
+            "EXPERIENCIA": {
+              "area": "Atividades operacionais de campo, manutenção, saneamento ou apoio logístico (Anexo I: mínimo de 6 meses)."
+            }
+          }
+        },
+        {
+          "codigo": "COMPILACAO_DE_DADOS",
+          "rotulo": "Cargo 12 — Compilação de dados",
+          "vagas": ["182448", "182497"],
+          "cargos": ["CARGO 12"],
+          "blocos": {
+            "REQUISITO_DO_CARGO": {
+              "requisitos": [
+                {
+                  "codigo": "INFORMATICA_PLANILHAS",
+                  "rotulo": "Conhecimento em informática, planilhas eletrônicas e operação de bancos de dados",
+                  "motivo": "Não comprovou conhecimento em informática, planilhas eletrônicas e operação de bancos de dados (Anexo I).",
+                  "item_edital": "2 e Anexo I"
+                }
+              ]
+            },
+            "EXPERIENCIA": {
+              "area": "Compilação, tratamento de dados, digitação ou apoio administrativo (Anexo I: mínimo de 6 meses)."
+            }
+          }
+        },
+        {
+          "codigo": "PLATAFORMA_DO_SUS",
+          "rotulo": "Cargo 13 — Alimentação e controle de plataforma do SUS",
+          "vagas": ["182493", "182502"],
+          "cargos": ["CARGO 13"],
+          "blocos": {
+            "REQUISITO_DO_CARGO": {
+              "requisitos": [
+                {
+                  "codigo": "INFORMATICA_SISTEMAS",
+                  "rotulo": "Conhecimento em informática, operação de sistemas informatizados e plataformas web",
+                  "motivo": "Não comprovou conhecimento em informática, operação de sistemas informatizados e plataformas web (Anexo I).",
+                  "item_edital": "2 e Anexo I"
+                }
+              ]
+            },
+            "EXPERIENCIA": {
+              "area": "Digitação, inserção de dados em sistemas de saúde pública ou apoio administrativo (Anexo I: mínimo de 6 meses)."
+            }
+          }
+        },
+        {
+          "codigo": "MOTORISTA_B",
+          "rotulo": "Cargo 14 — Motorista categoria B",
+          "vagas": ["182513", "182514"],
+          "cargos": ["CARGO 14"],
+          "blocos": {
+            "REQUISITO_DO_CARGO": {
+              "requisitos": [
+                {
+                  "codigo": "CNH_B",
+                  "rotulo": "CNH categoria B vigente",
+                  "motivo": "Não apresentou CNH categoria B vigente (Anexo I).",
+                  "item_edital": "2 e Anexo I"
+                },
+                {
+                  "codigo": "DIRECAO_DEFENSIVA",
+                  "rotulo": "Curso de direção defensiva",
+                  "motivo": "Não apresentou o curso de direção defensiva exigido para o cargo (Anexo I).",
+                  "item_edital": "2 e Anexo I",
+                  "termos": ["direção defensiva"],
+                  "nao_pontua_em": ["CURSOS"]
+                }
+              ]
+            },
+            "EXPERIENCIA": {
+              "area": "Experiência como motorista (Anexo I: mínimo de 6 meses)."
+            }
+          }
+        },
+        {
+          "codigo": "MOTORISTA_D",
+          "rotulo": "Cargo 15 — Motorista categoria D",
+          "vagas": ["182528", "182567"],
+          "cargos": ["CARGO 15"],
+          "blocos": {
+            "CURSOS": {
+              "teto": 15,
+              "faixas": [
+                {
+                  "min_horas": 40,
+                  "max_horas": 60,
+                  "pontos": 2
+                },
+                {
+                  "min_horas": 61,
+                  "max_horas": 119,
+                  "pontos": 4
+                },
+                {
+                  "min_horas": 120,
+                  "max_horas": null,
+                  "pontos": 6
+                }
+              ],
+              "extras": [
+                {
+                  "codigo": "UMCQA",
+                  "rotulo": "Certificado de capacitação para condução, manejo e operação de UMCQA, ou capacitação específica fornecida pela contratante",
+                  "pontos": 5,
+                  "item_edital": "8.2.6"
+                }
+              ]
+            },
+            "REQUISITO_DO_CARGO": {
+              "requisitos": [
+                {
+                  "codigo": "CNH_D",
+                  "rotulo": "CNH categoria D vigente",
+                  "motivo": "Não apresentou CNH categoria D vigente (Anexo I).",
+                  "item_edital": "2 e Anexo I"
+                },
+                {
+                  "codigo": "DIRECAO_DEFENSIVA",
+                  "rotulo": "Curso de direção defensiva",
+                  "motivo": "Não apresentou o curso de direção defensiva exigido para o cargo (Anexo I).",
+                  "item_edital": "2 e Anexo I",
+                  "termos": ["direção defensiva"],
+                  "nao_pontua_em": ["CURSOS"]
+                }
+              ]
+            },
+            "EXPERIENCIA": {
+              "area": "Condução de veículos de maior porte, furgão adaptado, unidade móvel ou veículo similar (Anexo I: mínimo de 6 meses)."
+            }
+          }
+        }
+      ]
     }
   },
   "casos": [
@@ -2506,6 +3282,417 @@
         ],
         "encaminhamentos": [],
         "parecer": "Candidato(a) INABILITADO(A) na Avaliação Documental e de Títulos, pelo(s) seguinte(s) motivo(s):\n\n- Item 6.5.1: Documento de identificação ilegível, não identificável ou danificado.\n\nObservações da análise:\n- Item 8.2.9: Experiência anterior à data de diplomação não é computada."
+      }
+    },
+    {
+      "nome": "por cargo: Motorista D (vaga 182528) — cursos 6+6+6 e UMCQA passam do teto de 15 do cargo",
+      "regra": "E114-POR-CARGO",
+      "candidato": {
+        "nivel": "medio",
+        "vaga": "182528",
+        "cargo": null,
+        "blocos": {
+          "IDENTIDADE": {
+            "situacao": "CONFORME"
+          },
+          "ESCOLARIDADE": {
+            "situacao": "CONFORME"
+          },
+          "REGISTRO_CONSELHO": {
+            "situacao": "CONFORME"
+          },
+          "REQUISITO_DO_CARGO": {
+            "situacao": "CONFORME",
+            "requisitos": {
+              "CNH_D": true,
+              "DIRECAO_DEFENSIVA": true
+            }
+          },
+          "CURSOS": {
+            "situacao": "CONFORME",
+            "edita_nota": true,
+            "extras": {
+              "UMCQA": true
+            }
+          },
+          "EXPERIENCIA": {
+            "situacao": "CONFORME"
+          }
+        },
+        "cursos": [
+          {
+            "nome": "Curso de 120h",
+            "horas": 120,
+            "aceito": true
+          },
+          {
+            "nome": "Curso de 130h",
+            "horas": 130,
+            "aceito": true
+          },
+          {
+            "nome": "Curso de 200h",
+            "horas": 200,
+            "aceito": true
+          }
+        ],
+        "vinculos": [
+          {
+            "categoria": "AREA",
+            "inicio": "2022-01-01",
+            "fim": "2024-06-30",
+            "aceito": true
+          }
+        ]
+      },
+      "opcoes": {
+        "notaMinima": 10
+      },
+      "esperado": {
+        "resultado": "APTO",
+        "nota_apurada": 35,
+        "nota_final": 35,
+        "parciais": {
+          "FORMACAO": 0,
+          "CURSOS": 15,
+          "EXPERIENCIA": 20
+        },
+        "eliminatorios": [],
+        "encaminhamentos": [],
+        "parecer": "Edital 114/2026\nCandidato(a) HABILITADO(A) na Avaliação Documental e de Títulos com a pontuação total de 35,0 pontos, distribuídos da seguinte forma:\n\n- Formação Acadêmica: 0,0 pontos.\n- Cursos de Aperfeiçoamento: 15,0 pontos.\n- Experiência Profissional: 20,0 pontos."
+      }
+    },
+    {
+      "nome": "por cargo: Motorista D — 40h (2) + 61h (4) + UMCQA (5) = 11; sem UMCQA seriam 6",
+      "regra": "E114-POR-CARGO",
+      "candidato": {
+        "nivel": "medio",
+        "vaga": "182567",
+        "blocos": {
+          "IDENTIDADE": {
+            "situacao": "CONFORME"
+          },
+          "ESCOLARIDADE": {
+            "situacao": "CONFORME"
+          },
+          "REGISTRO_CONSELHO": {
+            "situacao": "CONFORME"
+          },
+          "REQUISITO_DO_CARGO": {
+            "situacao": "CONFORME",
+            "requisitos": {
+              "CNH_D": true,
+              "DIRECAO_DEFENSIVA": true
+            }
+          },
+          "CURSOS": {
+            "situacao": "CONFORME",
+            "extras": {
+              "UMCQA": true
+            }
+          },
+          "EXPERIENCIA": {
+            "situacao": "CONFORME"
+          }
+        },
+        "cursos": [
+          {
+            "nome": "Curso de 40h",
+            "horas": 40,
+            "aceito": true
+          },
+          {
+            "nome": "Curso de 61h",
+            "horas": 61,
+            "aceito": true
+          }
+        ],
+        "vinculos": [
+          {
+            "categoria": "AREA",
+            "inicio": "2023-01-01",
+            "fim": "2024-06-30",
+            "aceito": true
+          }
+        ]
+      },
+      "opcoes": {
+        "notaMinima": 10
+      },
+      "esperado": {
+        "resultado": "APTO",
+        "nota_apurada": 21,
+        "nota_final": 21,
+        "parciais": {
+          "FORMACAO": 0,
+          "CURSOS": 11,
+          "EXPERIENCIA": 10
+        },
+        "eliminatorios": [],
+        "encaminhamentos": [],
+        "parecer": "Edital 114/2026\nCandidato(a) HABILITADO(A) na Avaliação Documental e de Títulos com a pontuação total de 21,0 pontos, distribuídos da seguinte forma:\n\n- Formação Acadêmica: 0,0 pontos.\n- Cursos de Aperfeiçoamento: 11,0 pontos.\n- Experiência Profissional: 10,0 pontos."
+      }
+    },
+    {
+      "nome": "por cargo: Motorista D com UMCQA não conferido — só as faixas",
+      "regra": "E114-POR-CARGO",
+      "candidato": {
+        "nivel": "medio",
+        "vaga": "182567",
+        "blocos": {
+          "IDENTIDADE": {
+            "situacao": "CONFORME"
+          },
+          "ESCOLARIDADE": {
+            "situacao": "CONFORME"
+          },
+          "REGISTRO_CONSELHO": {
+            "situacao": "CONFORME"
+          },
+          "REQUISITO_DO_CARGO": {
+            "situacao": "CONFORME",
+            "requisitos": {
+              "CNH_D": true,
+              "DIRECAO_DEFENSIVA": true
+            }
+          },
+          "CURSOS": {
+            "situacao": "CONFORME",
+            "extras": {
+              "UMCQA": false
+            }
+          },
+          "EXPERIENCIA": {
+            "situacao": "CONFORME"
+          }
+        },
+        "cursos": [
+          {
+            "nome": "Curso de 40h",
+            "horas": 40,
+            "aceito": true
+          },
+          {
+            "nome": "Curso de 61h",
+            "horas": 61,
+            "aceito": true
+          }
+        ],
+        "vinculos": [
+          {
+            "categoria": "AREA",
+            "inicio": "2023-01-01",
+            "fim": "2024-06-30",
+            "aceito": true
+          }
+        ]
+      },
+      "opcoes": {
+        "notaMinima": 10
+      },
+      "esperado": {
+        "resultado": "APTO",
+        "nota_apurada": 16,
+        "nota_final": 16,
+        "parciais": {
+          "FORMACAO": 0,
+          "CURSOS": 6,
+          "EXPERIENCIA": 10
+        },
+        "eliminatorios": [],
+        "encaminhamentos": [],
+        "parecer": "Edital 114/2026\nCandidato(a) HABILITADO(A) na Avaliação Documental e de Títulos com a pontuação total de 16,0 pontos, distribuídos da seguinte forma:\n\n- Formação Acadêmica: 0,0 pontos.\n- Cursos de Aperfeiçoamento: 6,0 pontos.\n- Experiência Profissional: 10,0 pontos."
+      }
+    },
+    {
+      "nome": "por cargo: pelo nome do cargo (CARGO 15, vaga fora da lista; \"CARGO 1\" não casa)",
+      "regra": "E114-POR-CARGO",
+      "candidato": {
+        "nivel": "medio",
+        "vaga": "999999",
+        "cargo": "CARGO 15: MOTORISTA - Categoria D (Nível Médio)",
+        "blocos": {
+          "IDENTIDADE": {
+            "situacao": "CONFORME"
+          },
+          "ESCOLARIDADE": {
+            "situacao": "CONFORME"
+          },
+          "REGISTRO_CONSELHO": {
+            "situacao": "CONFORME"
+          },
+          "CURSOS": {
+            "situacao": "CONFORME",
+            "extras": {
+              "UMCQA": true
+            }
+          },
+          "EXPERIENCIA": {
+            "situacao": "CONFORME"
+          }
+        },
+        "cursos": [
+          {
+            "nome": "Curso de 120h",
+            "horas": 120,
+            "aceito": true
+          },
+          {
+            "nome": "Curso de 120h",
+            "horas": 120,
+            "aceito": true
+          }
+        ],
+        "vinculos": [
+          {
+            "categoria": "AREA",
+            "inicio": "2023-01-01",
+            "fim": "2024-06-30",
+            "aceito": true
+          }
+        ]
+      },
+      "opcoes": {
+        "notaMinima": 10
+      },
+      "esperado": {
+        "resultado": "APTO",
+        "nota_apurada": 25,
+        "nota_final": 25,
+        "parciais": {
+          "FORMACAO": 0,
+          "CURSOS": 15,
+          "EXPERIENCIA": 10
+        },
+        "eliminatorios": [],
+        "encaminhamentos": [],
+        "parecer": "Edital 114/2026\nCandidato(a) HABILITADO(A) na Avaliação Documental e de Títulos com a pontuação total de 25,0 pontos, distribuídos da seguinte forma:\n\n- Formação Acadêmica: 0,0 pontos.\n- Cursos de Aperfeiçoamento: 15,0 pontos.\n- Experiência Profissional: 10,0 pontos."
+      }
+    },
+    {
+      "nome": "por cargo: cargo 11 (só a área da experiência) — cursos do nível médio, teto 10; o extra do Motorista não vale",
+      "regra": "E114-POR-CARGO",
+      "candidato": {
+        "nivel": "medio",
+        "vaga": "999998",
+        "cargo": "CARGO 11 AUXILIAR ADMINISTRATIVO - Auxiliar de Logística",
+        "blocos": {
+          "IDENTIDADE": {
+            "situacao": "CONFORME"
+          },
+          "ESCOLARIDADE": {
+            "situacao": "CONFORME"
+          },
+          "REGISTRO_CONSELHO": {
+            "situacao": "CONFORME"
+          },
+          "CURSOS": {
+            "situacao": "CONFORME",
+            "extras": {
+              "UMCQA": true
+            }
+          },
+          "EXPERIENCIA": {
+            "situacao": "CONFORME"
+          }
+        },
+        "cursos": [
+          {
+            "nome": "Curso de 120h",
+            "horas": 120,
+            "aceito": true
+          },
+          {
+            "nome": "Curso de 120h",
+            "horas": 120,
+            "aceito": true
+          }
+        ],
+        "vinculos": [
+          {
+            "categoria": "AREA",
+            "inicio": "2023-01-01",
+            "fim": "2024-06-30",
+            "aceito": true
+          }
+        ]
+      },
+      "opcoes": {
+        "notaMinima": 10
+      },
+      "esperado": {
+        "resultado": "APTO",
+        "nota_apurada": 20,
+        "nota_final": 20,
+        "parciais": {
+          "FORMACAO": 0,
+          "CURSOS": 10,
+          "EXPERIENCIA": 10
+        },
+        "eliminatorios": [],
+        "encaminhamentos": [],
+        "parecer": "Edital 114/2026\nCandidato(a) HABILITADO(A) na Avaliação Documental e de Títulos com a pontuação total de 20,0 pontos, distribuídos da seguinte forma:\n\n- Formação Acadêmica: 0,0 pontos.\n- Cursos de Aperfeiçoamento: 10,0 pontos.\n- Experiência Profissional: 10,0 pontos."
+      }
+    },
+    {
+      "nome": "por cargo: cargo 5 sem Cromatografia Gasosa — o requisito do cargo elimina com o motivo do Anexo I",
+      "regra": "E114-POR-CARGO",
+      "candidato": {
+        "nivel": "superior",
+        "vaga": "182442",
+        "blocos": {
+          "IDENTIDADE": {
+            "situacao": "CONFORME"
+          },
+          "ESCOLARIDADE": {
+            "situacao": "CONFORME"
+          },
+          "REGISTRO_CONSELHO": {
+            "situacao": "CONFORME"
+          },
+          "REQUISITO_DO_CARGO": {
+            "situacao": "NAO_CONFORME",
+            "motivos": ["CROMATOGRAFIA"],
+            "requisitos": {
+              "CROMATOGRAFIA": false
+            }
+          },
+          "EXPERIENCIA": {
+            "situacao": "CONFORME"
+          }
+        },
+        "titulos": [
+          {
+            "titulo": "MESTRADO",
+            "aceito": true
+          }
+        ],
+        "vinculos": [
+          {
+            "categoria": "AREA",
+            "inicio": "2022-01-01",
+            "fim": "2024-06-30",
+            "aceito": true
+          }
+        ]
+      },
+      "opcoes": {
+        "notaMinima": 10
+      },
+      "esperado": {
+        "resultado": "INAPTO_REQUISITO",
+        "nota_apurada": 28,
+        "nota_final": 0,
+        "parciais": {
+          "FORMACAO": 8,
+          "CURSOS": 0,
+          "EXPERIENCIA": 20
+        },
+        "eliminatorios": [
+          "Item 2 e Anexo I: Não apresentou o curso de especialização ou capacitação em Cromatografia Gasosa exigido para o cargo (Anexo I)."
+        ],
+        "encaminhamentos": [],
+        "parecer": "Edital 114/2026\nCandidato(a) INABILITADO(A) na Avaliação Documental e de Títulos, pelo(s) seguinte(s) motivo(s):\n\n- Item 2 e Anexo I: Não apresentou o curso de especialização ou capacitação em Cromatografia Gasosa exigido para o cargo (Anexo I)."
       }
     }
   ],

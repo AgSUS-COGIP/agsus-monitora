@@ -8629,6 +8629,21 @@
     "sobre": "O nível da vaga para a nota declarada por nível (nivelDaVaga de src/lib/classificacao/vagas.js e nivel_da_vaga do job): termo da regra de classificação, nível escrito no cargo ('(Nível Superior)'), cargo que começa com 'Técnico' e o nível padrão.",
     "casos": [
       {
+        "cargo": "CARGO 15: MOTORISTA - Categoria D (Nível Médio)",
+        "documental": { "niveis_por_cargo": [], "nivel_padrao": null },
+        "esperado": "medio"
+      },
+      {
+        "cargo": "CARGO 9: TÉCNICO DE LABORATÓRIO (Nível Técnico)",
+        "documental": { "niveis_por_cargo": [], "nivel_padrao": null },
+        "esperado": "tecnico"
+      },
+      {
+        "cargo": "CARGO 10: SUPERVISOR DE SAÚDE AMBIENTAL (Nível Superior)",
+        "documental": { "niveis_por_cargo": [], "nivel_padrao": null },
+        "esperado": "superior"
+      },
+      {
         "cargo": "ANALISTA DE GESTÃO: MÉDICO DO TRABALHO (Nível Superior)",
         "documental": {},
         "esperado": "superior"

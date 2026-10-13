@@ -157,7 +157,10 @@ A convocação, o desempate final e a nota final são da **regra de classificaç
   - O estágio de indígena soma à experiência (`so_sem_experiencia: false`) e conta para o mínimo.
 - **Projetos.** O PROJ26-RIO-DOCE parte do PROJ26-CURRICULAR, com as diferenças da seção 2. A
   capacitação UMCQA do motorista D fica como observação pronta (`MOTORISTA_UMCQA`) e como motivo
-  no bloco de cursos. O formato ainda não pontua um item só de um cargo.
+  no bloco de cursos. Desde 13/10/2026 o formato pontua por cargo (`regra.por_cargo`,
+  `src/lib/avaliacao-documental/regra-por-cargo.ts`): a correção
+  `supabase/correcoes/20261013-edital-114-regra-por-cargo.sql` dá ao Motorista D cursos até 15 com
+  o extra UMCQA (+5) e os requisitos de cada cargo do Anexo I.
 
 ## 5. Pontos para o usuário confirmar
 
@@ -173,10 +176,9 @@ A convocação, o desempate final e a nota final são da **regra de classificaç
 
 3. **114: Motorista categoria D (cargo 15).** O cargo tem 5 pontos próprios pela capacitação
    UMCQA (máx. 15 em cursos), e o quadro cita "ou Categoria D". Esses 5 pontos são só da
-   capacitação ou também de quem tem CNH D, que já é requisito? Como o formato não pontua por
-   cargo, há duas saídas:
-   - lançar à mão (observação pronta);
-   - estender o formato (cursos por vaga).
+   capacitação ou também de quem tem CNH D, que já é requisito? Resolvido em 13/10/2026: os 5
+   pontos são do certificado UMCQA ou da capacitação da contratante (a CNH D é requisito e não
+   pontua, 8.2.10.5), pela diferença por cargo `MOTORISTA_D` da regra.
 4. **Tamanho do lote na Saúde Indígena.** Aceita as fórmulas da seção 4 e o ajuste por vaga para
    CR e TE/Enf.? O 100 e o 91 dizem "até 20 vezes para o caso de CR". Sem vagas imediatas, isso é
    a 20ª posição, como no 111 e no 109?

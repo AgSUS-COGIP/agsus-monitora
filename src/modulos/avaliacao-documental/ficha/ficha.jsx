@@ -90,9 +90,7 @@ const passoResolvido = (passo) =>
 
 /* Quantos títulos, cursos ou vínculos o bloco tem (a escolha pode abrir uma linha). */
 function contarItens(estado, codigo) {
-  const bloco = estado.dados?.regra?.configuracao?.blocos?.find(
-    (b) => b.codigo === codigo,
-  );
+  const bloco = estado.regra?.blocos?.find((b) => b.codigo === codigo);
   const chave = bloco ? BLOCOS_COM_ITENS[bloco.tipo] : null;
   return chave ? (estado.lancamento?.[chave] || []).length : 0;
 }
@@ -253,7 +251,8 @@ export function ConteudoDaFicha({
     return () => globalThis.removeEventListener?.("beforeunload", avisar);
   }, [loja]);
 
-  const regra = st.dados?.regra?.configuracao;
+  // A regra da vaga (a diferença do cargo por cima do nível): estado-da-ficha.js.
+  const regra = st.regra;
   const blocos = useMemo(() => regra?.blocos || [], [regra]);
   const passos = useMemo(
     () =>
@@ -464,11 +463,7 @@ export function ConteudoDaFicha({
     if (itensAntes !== null && itensAntes !== contarItens(agora, codigo))
       return;
     const proximo = proximoPassoPendente(
-      passosDaFicha(
-        agora.dados.regra.configuracao,
-        agora.lancamento,
-        agora.pendencias,
-      ),
+      passosDaFicha(agora.regra, agora.lancamento, agora.pendencias),
       codigo,
     );
     clearTimeout(avanco.current);

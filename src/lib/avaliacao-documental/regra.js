@@ -32,9 +32,13 @@
                 efeitos{}, motivos[], …campos do tipo } ],
     corte: { fonte: "REGRA_CLASSIFICACAO", item_edital },
     parecer: { APTO, INAPTO_REQUISITO, INAPTO_NOTA, observacoes },
-    observacoes_prontas: [ { codigo, rotulo, texto, item_edital } ]
+    observacoes_prontas: [ { codigo, rotulo, texto, item_edital } ],
+    por_cargo: [ { codigo, rotulo, vagas[], cargos[], blocos{ <CODIGO>: {…} } } ]
   }
   A nota mínima não fica aqui: é a da regra de classificação do edital.
+  As diferenças por cargo (por_cargo: teto, faixas, extras, área exigida e
+  requisitos de cada cargo, por cima do nível) e a regra da vaga estão em
+  regra-por-cargo.ts.
 */
 import {
   BASES_DA_NOTA_DO_LOTE,
@@ -57,6 +61,7 @@ import {
   TITULO_PADRAO_DA_ETAPA,
   TITULOS_ACADEMICOS,
 } from "./catalogo.js";
+import { validarPorCargo } from "./regra-por-cargo.ts";
 
 const valores = (lista) => new Set(lista.map(([v]) => v));
 const TIPOS = valores(TIPOS_DE_BLOCO);
@@ -219,6 +224,7 @@ export function normalizarRegraAnalise(entrada) {
       ...(ehObjeto(r.parecer) ? r.parecer : {}),
     },
     observacoes_prontas: lista(r.observacoes_prontas),
+    ...(lista(r.por_cargo).length ? { por_cargo: r.por_cargo } : {}),
   };
 }
 
@@ -886,6 +892,7 @@ export function validarRegraAnalise(regra) {
       });
     });
   }
+  erros.push(...validarPorCargo(regra));
   return erros;
 }
 

@@ -7,11 +7,15 @@
   Candidato (o formato da ficha):
   {
     nivel: "superior" | "tecnico" | "medio" | "fundamental",
+    vaga: "182528", cargo: "CARGO 15: MOTORISTA - Categoria D" (a diferença
+      por cargo da regra que vale para a vaga: regra-por-cargo.ts),
     modalidade: "AC" | "PP" | …,
     indigena, mora_aldeia, aldeia_na_lista: boolean,
     blocos: { <CODIGO>: { situacao, motivos: [<código>], motivo_livre,
                           nota_ajustada, justificativas: [<código>],
-                          justificativa_livre } },
+                          justificativa_livre,
+                          extras: { <código do extra>: true | false },
+                          requisitos: { <código do requisito>: true | false } } },
     titulos: [{ titulo: "ESPECIALIZACAO", nome, aceito, motivo }],
     cursos: [{ nome, horas, aceito, motivo }],
     vinculos: [{ empregador, categoria, inicio: "AAAA-MM-DD", fim, aceito, motivo }],
@@ -32,6 +36,10 @@
     valores do nível da vaga (por_nivel) quando houver; estágio de indígena sem
     experiência = horas ÷ horas_por_dia ÷ dias_por_mes (só os inteiros);
   - desempate em anos (365 dias), meses (30) e dias;
+  - diferença por cargo (regra.por_cargo): a regra da vaga (regraDaVaga) põe
+    o teto, as faixas, os extras e os requisitos do cargo por cima do nível;
+    o extra marcado true soma os pontos dele aos dos títulos/cursos, até o
+    teto do cargo; o requisito do cargo é um motivo do bloco que elimina;
   - nota abaixo da mínima (a da regra de classificação, por nível se houver)
     dá Inapto (nota mínima);
   - a ficha (F4) pode AJUSTAR a nota de um bloco que pontua (nota_ajustada,
@@ -49,6 +57,7 @@ import {
   TITULO_PADRAO_DA_ETAPA,
 } from "./catalogo.js";
 import { normalizarRegraAnalise } from "./regra.js";
+import { pontosDosExtras, regraDaVaga } from "./regra-por-cargo.ts";
 
 const DIA_MS = 24 * 60 * 60 * 1000;
 const arredondar = (n, casas = 4) => {
@@ -197,11 +206,14 @@ function pontosDosTitulos(bloco, candidato) {
   const valores = lista(candidato.titulos)
     .filter((t) => t && t.aceito !== false)
     .map((t) => numero(tabela.find((x) => x.titulo === t.titulo)?.pontos));
-  if (!valores.length) return 0;
-  const total = bloco.cumulativa
-    ? valores.reduce((a, b) => a + b, 0)
-    : Math.max(...valores);
-  return comTeto(total, bloco.teto);
+  const extras = pontosDosExtras(bloco, candidato.blocos?.[bloco.codigo]);
+  if (!valores.length && !extras) return 0;
+  const dosTitulos = !valores.length
+    ? 0
+    : bloco.cumulativa
+      ? valores.reduce((a, b) => a + b, 0)
+      : Math.max(...valores);
+  return comTeto(dosTitulos + extras, bloco.teto);
 }
 
 export function faixaDoCurso(faixas, horas) {
@@ -261,12 +273,13 @@ export function textosDasJustificativas(regra, bloco, lancado) {
 
 function pontosDosCursos(blocoGeral, candidato) {
   const bloco = doNivel(blocoGeral, candidato.nivel);
-  const total = lista(candidato.cursos)
-    .filter((c) => c && c.aceito !== false)
-    .reduce(
-      (soma, c) => soma + numero(faixaDoCurso(bloco.faixas, c.horas)?.pontos),
-      0,
-    );
+  const total =
+    lista(candidato.cursos)
+      .filter((c) => c && c.aceito !== false)
+      .reduce(
+        (soma, c) => soma + numero(faixaDoCurso(bloco.faixas, c.horas)?.pontos),
+        0,
+      ) + pontosDosExtras(bloco, candidato.blocos?.[bloco.codigo]);
   return comTeto(arredondar(total), bloco.teto);
 }
 
@@ -375,7 +388,8 @@ export function preencherModelo(modelo, campos) {
  * @param {string} [opcoes.situacaoPadrao] situação do bloco não lançado ("CONFORME")
  */
 export function calcularAvaliacao(regraEntrada, candidato = {}, opcoes = {}) {
-  const regra = normalizarRegraAnalise(regraEntrada);
+  // A regra da vaga: a diferença do cargo por cima do nível (cargo > nível > padrão).
+  const regra = regraDaVaga(normalizarRegraAnalise(regraEntrada), candidato);
   const situacaoPadrao = opcoes.situacaoPadrao ?? "CONFORME";
   const avaliados = avaliarBlocos(regra, candidato, situacaoPadrao);
 

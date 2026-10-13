@@ -138,6 +138,27 @@ os modelos em `supabase/correcoes/20261006-modelos-da-regra-da-analise.sql` e o 
 **fonte:** src/lib/avaliacao-documental/pontuacao.js
 **abrir:** avaliacao-documental
 
+## Diferenças por cargo na regra
+
+**perguntas:** diferencas por cargo | regra por cargo | cargo com pontuacao diferente | motorista categoria d | umcqa | teto do cargo | requisito do cargo | item extra | cursos ate 15 | por cargo e por nivel
+**resposta:** A regra muda por nível da vaga e, quando o edital pede, também por cargo: em "Diferenças por cargo" (no passo 2 do assistente e no modo avançado), cada diferença diz a quem vale — as vagas do edital, com o cargo de cada uma, e/ou o começo do nome do cargo pelo quadro de vagas ("CARGO 15"; "CARGO 1" não pega o "CARGO 15") — e o que muda em cada bloco: o teto e as faixas dos cursos, itens extras que pontuam (ex.: o certificado de condução de UMCQA do Motorista categoria D, +5, até 15 em cursos no Edital 114/2026), o teto da titulação ou da experiência, a área exigida da experiência e os requisitos daquele cargo (cada um com o motivo da eliminação). Vale primeiro o código da vaga, depois o nome do cargo; e o cargo vence o nível, que vence o padrão. A mesma conta roda na tela, na base Python e no banco.
+**fonte:** src/lib/avaliacao-documental/regra-por-cargo.ts; src/modulos/avaliacao-documental/assistente/diferencas-por-cargo.tsx; supabase/migrations/20261013130000_regra_por_cargo.sql
+**abrir:** avaliacao-documental
+
+## Requisitos do cargo e itens extras na ficha
+
+**perguntas:** requisito especifico do cargo na ficha | checklist do cargo | lista de requisitos | linha extra da ficha | umcqa na ficha | area exigida da experiencia | cnh na ficha | cromatografia gasosa
+**resposta:** Na ficha, o item "Requisito específico do cargo" mostra só os requisitos do cargo da vaga, um por linha, cada um com Confere / Não confere; o Não confere já traz o motivo pronto (com o item do edital) e elimina. Com todas as linhas Confere, o item fica Conforme; marcar Confere no item sem passar pelas linhas deixa a falta "Confira cada requisito do cargo". Nos cursos ou na titulação, o item extra do cargo (ex.: UMCQA) é uma linha própria com Confere / Não confere: conferido, soma os pontos dele até o teto do cargo ("Cursos 0/15"); na pontuação pelos itens, a ficha pede essa decisão. Na experiência, aparece a área exigida do cargo (texto do Anexo I do edital).
+**fonte:** src/modulos/avaliacao-documental/ficha/diferencas-do-cargo.tsx; src/lib/avaliacao-documental/regra-por-cargo.ts
+**abrir:** avaliacao-documental
+
+## Cada título conta uma única vez (8.2.7)
+
+**perguntas:** cada titulo considerado uma unica vez | 8.2.7 | documento usado como requisito pontua | direcao defensiva pontua em cursos | requisito nao pontua | 8.2.10.5
+**resposta:** Documento exigido como requisito do cargo não pontua de novo (itens 8.2.7 e 8.2.10.5 do 114/2026). Quando a regra diz que o requisito "não pontua em" títulos ou cursos, a ficha avisa no item: se o nome de um curso ou título lançado tem os termos do requisito (ex.: "direção defensiva", "cromatografia"), aparece o aviso naquela linha; se o requisito já foi conferido e há cursos lançados, aparece o lembrete. A decisão é do avaliador: recusar a linha com o motivo, ou manter se for outro documento.
+**fonte:** src/lib/avaliacao-documental/regra-por-cargo.ts (avisosDoTituloUnico)
+**abrir:** avaliacao-documental
+
 ## Equipe da avaliação documental
 
 **perguntas:** quem pode entrar na equipe da avaliacao documental | equipe da avaliacao documental | equipe do edital | analista e revisor | coordenacao da avaliacao | gestor do edital na avaliacao | quem coordena a avaliacao
