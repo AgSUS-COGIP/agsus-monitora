@@ -588,6 +588,9 @@ def _vinculos_da_secao(secao, documento, avisos):
         rotulado = it["_rotulado"] and _declaracoes.nome_de_instituicao(it["empregador"] or "")
         if emissor and not rotulado:
             it["empregador"] = emissor.empregador
+        elif it["empregador"] and not it["empregador"].startswith("CNPJ "):
+            # Sem emissor (ou rotulado): o nome limpo, e lixo de OCR vira "Empregador não lido".
+            it["empregador"] = _declaracoes.nome_de_instituicao(it["empregador"]) or None
         if emissor and emissor.cnpj and not it.get("cnpj"):
             it["cnpj"] = emissor.cnpj
         if not it["fim"]:
@@ -635,7 +638,46 @@ def _vinculos_declarados(paginas, documento, avisos):
     for secao in secoes:
         itens.extend(_vinculos_da_secao(secao, documento, avisos))
     _carga_capturada_duas_vezes(itens)
-    return itens
+    return _sem_duplicados_entre_paginas(itens)
+
+
+def _cargos_compativeis(a, b):
+    x = dobrar(limpar_cargo(a)[0] or "").split()
+    y = dobrar(limpar_cargo(b)[0] or "").split()
+    if not x or not y:
+        return True
+    curto, longo = sorted((x, y), key=len)
+    return longo[: len(curto)] == curto
+
+
+def _sem_duplicados_entre_paginas(itens):
+    """O mesmo vínculo lido em duas páginas (mesmo início, cargo compatível — "Médico" e "Médico do trabalho")
+    em que um não tem empregador legível: fica um só, o que tem empregador, com o fim/atual e a carga do outro
+    quando faltarem."""
+    saida = []
+    for it in itens:
+        par = next(
+            (
+                o
+                for o in saida
+                if o["inicio"] == it["inicio"]
+                and (not o["empregador"]) != (not it["empregador"])
+                and _cargos_compativeis(o["cargo"], it["cargo"])
+            ),
+            None,
+        )
+        if par is None:
+            saida.append(it)
+            continue
+        fica, sai = (par, it) if par["empregador"] else (it, par)
+        if not fica["fim"] and not fica["atual"] and (sai["fim"] or sai["atual"]):
+            fica["fim"], fica["atual"] = sai["fim"], sai["atual"]
+        fica["cargo"] = fica["cargo"] or sai["cargo"]
+        if not fica["carga_semanal"] and sai.get("_emissor") == fica.get("_emissor"):
+            fica["carga_semanal"] = sai["carga_semanal"]
+        if fica is it:
+            saida[saida.index(par)] = it
+    return saida
 
 
 def vinculos(paginas, nome_do_candidato=None, hoje=None, data_do_arquivo=None, avisos=None):

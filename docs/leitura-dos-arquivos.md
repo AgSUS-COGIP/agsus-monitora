@@ -29,7 +29,7 @@ Pré-requisito: a migration `20261009220000` aplicada (o ensaio está em `supaba
 5. Satisfeito, aumente o `limite` (até 2000) ou rode sem `editais` (os ativos com regra). Cada
    execução continua de onde a anterior parou; `forcar` relê o que já foi lido nesta versão.
 
-## Como lê (extrator 2026.10.6) — tudo local e gratuito
+## Como lê (extrator 2026.10.7) — tudo local e gratuito
 
 Nenhum documento sai do runner: sem API de IA paga, sem consulta de CNPJ na internet.
 
@@ -62,7 +62,12 @@ Nenhum documento sai do runner: sem API de IA paga, sem consulta de CNPJ na inte
   "plantões de 12 horas" → `plantonista`/`plantao_horas`; sem carga → `carga_nao_encontrada`; a
   mesma captura em emissores diferentes vira None. Datas por extenso ("1º de setembro de 2026") e com
   o mês estragado pelo OCR ("seternbro"); vínculo que começa depois da emissão é descartado
-  (`DATA_APOS_EMISSAO`, leve).
+  (`DATA_APOS_EMISSAO`, leve). O nome do empregador sai limpo: sem lixo de OCR (símbolo de moldura,
+  palavra sem vogal, palavrinha que não é partícula, nenhuma palavra conhecida → "Empregador não lido"),
+  sem artigo, sem o pedaço de frase antes ("…, nesta empresa, X" → "X"), sem CNPJ e sem qualificador no
+  fim ("— Empresa Privada"), com até 80 caracteres; a seção só com CNPJ fica com a razão social de outra
+  seção do arquivo com a mesma raiz de CNPJ; o mesmo vínculo lido em outra página sem empregador legível
+  (mesmo início, cargo compatível) não vira outro item; "26 (vinte) horas" vale o extenso.
 - **Sobreposição**: alerta `PERIODO_SOBREPOSTO` só para o MESMO empregador (CNPJ com a mesma raiz ou
   razão social igual): provável duplicidade. Empregadores diferentes ao mesmo tempo são legítimos:
   o item ganha `concomitante` e a informação "os dias em comum contam uma vez", sem alerta. O total

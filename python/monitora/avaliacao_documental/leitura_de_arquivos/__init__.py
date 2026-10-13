@@ -45,4 +45,4 @@ gratuito: nenhum documento vai para serviço de fora (nem API de IA, nem consult
 """
 
 # Mudou a interpretação → suba a versão: o robô relê o que foi lido com versão anterior.
-VERSAO_DO_EXTRATOR = "2026.10.6"
+VERSAO_DO_EXTRATOR = "2026.10.7"
