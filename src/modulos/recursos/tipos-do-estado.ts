@@ -1,5 +1,9 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type {
+  DadosDosAjustes,
+  DadosParaPreviaDoAjuste,
+} from "../../lib/classificacao/tipos-dos-ajustes.ts";
+import type {
   ModeloDaResposta,
   DadosDosModelos,
 } from "../../lib/tipos-da-resposta-do-recurso.ts";
@@ -89,8 +93,8 @@ export interface SnapshotDosRecursos {
   acao: { tipo: string; rotulo: string } | null;
   gaveta: IdentificadorDoRecurso | null;
   detalhes: Map<IdentificadorDoRecurso, DetalheDoRecurso>;
-  ajustes: Map<IdentificadorDoRecurso, RegistroDosRecursos>;
-  previas: Map<IdentificadorDoRecurso, RegistroDosRecursos>;
+  ajustes: Map<IdentificadorDoRecurso, DadosDosAjustes>;
+  previas: Map<IdentificadorDoRecurso, DadosParaPreviaDoAjuste>;
   formulario: {
     modo: "novo" | "edicao";
     id: IdentificadorDoRecurso | null;

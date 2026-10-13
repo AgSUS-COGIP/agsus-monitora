@@ -24,6 +24,14 @@ import {
 } from "../../lib/dados-dos-recursos.ts";
 import { dadosParaSalvar } from "../../lib/recursos-dos-candidatos.ts";
 type DocumentoDaResposta = { id: Id; texto_final: string; revisao?: number };
+import {
+  normalizarDadosDosAjustes,
+  normalizarDadosParaPrevia,
+} from "../../lib/classificacao/dados-dos-ajustes.ts";
+import type {
+  PropostaDoAjuste,
+  PreviaDoAjuste,
+} from "../../lib/classificacao/tipos-dos-ajustes.ts";
 /*
   Estado da tela de Recursos (`#page-recursos`), fora do React: o que o banco
   devolve para a área atual do app, o recurso aberto na gaveta
@@ -540,7 +548,7 @@ export function criarEstadoDosRecursos({
 
   function guardarAjustes(id: Id, valor: RegistroDosRecursos) {
     const ajustes = new Map(estado.ajustes);
-    ajustes.set(id, valor);
+    ajustes.set(id, normalizarDadosDosAjustes(valor));
     publicar({ ajustes });
   }
 
@@ -576,9 +584,12 @@ export function criarEstadoDosRecursos({
     const guardado = estado.previas.get(id);
     if (error && manter && guardado && !guardado.erro) return null;
     const previas = new Map(estado.previas);
-    previas.set(id, error ? { erro: mensagemDe(error) } : data || {});
+    const normalizados = normalizarDadosParaPrevia(
+      error ? { erro: mensagemDe(error) } : data,
+    );
+    previas.set(id, normalizados);
     publicar({ previas });
-    return error ? null : data || {};
+    return error ? null : normalizados;
   }
 
   /*
@@ -630,7 +641,7 @@ export function criarEstadoDosRecursos({
     });
   }
 
-  const proporAjuste = (recurso: DadosDoRecurso, dados: RegistroDosRecursos) =>
+  const proporAjuste = (recurso: DadosDoRecurso, dados: PropostaDoAjuste) =>
     escreverAjuste(recurso, "propor", () =>
       banco.rpc("propor_ajuste_pontuacao", {
         p_recurso: recurso.id,
@@ -640,7 +651,7 @@ export function criarEstadoDosRecursos({
   const aprovarAjuste = (
     recurso: DadosDoRecurso,
     ajusteId: Id,
-    previa: RegistroDosRecursos,
+    previa: PreviaDoAjuste,
   ) =>
     escreverAjuste(recurso, "aprovar", () =>
       banco.rpc("aprovar_ajuste_pontuacao", {

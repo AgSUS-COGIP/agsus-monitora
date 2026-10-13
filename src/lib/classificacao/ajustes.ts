@@ -1,3 +1,22 @@
+import type { IdentificadorDoRecurso as Id } from "../tipos-dos-recursos.ts";
+import type {
+  ItemDoAjuste,
+  ItemMontadoDoAjuste,
+  ItemParaEnviar,
+  CandidatoParaAjuste,
+  ExplicacaoParaPrevia,
+  ResumoDaPosicao,
+  PreviaDoAjuste,
+  ListaDaPrevia,
+  RegistroDaClassificacao,
+  DadosParaPreviaDoAjuste,
+} from "./tipos-dos-ajustes.ts";
+import {
+  normalizarDadosParaPrevia,
+  candidatoParaAjuste,
+  explicacoesParaPrevia,
+  numeroDoAjuste,
+} from "./dados-dos-ajustes.ts";
 /*
   O ajuste da pontuação decidido em recurso, sem DOM e sem banco
   (TB_AJUSTE_PONTUACAO_RECURSO, migration 20261005130000):
@@ -30,19 +49,24 @@ import { numeroBR } from "./numeros.js";
 import { normalizarRegra } from "./regra.js";
 
 /* A lista da etapa contra a qual o candidato recorreu (a da prévia). */
-export const LISTA_DA_ORIGEM = Object.freeze({
-  "analise-curricular": "PRELIMINAR",
-  entrevista: "ENTREVISTA",
-  "resultado-final": "FINAL",
-});
+export const LISTA_DA_ORIGEM: Readonly<Record<string, ListaDaPrevia>> =
+  Object.freeze({
+    "analise-curricular": "PRELIMINAR",
+    entrevista: "ENTREVISTA",
+    "resultado-final": "FINAL",
+  });
 
-export const LISTAS_DA_PREVIA = Object.freeze([
-  ["PRELIMINAR", "Documental"],
-  ["ENTREVISTA", "Entrevista"],
-  ["FINAL", "Resultado final"],
-]);
+export const LISTAS_DA_PREVIA: readonly (readonly [ListaDaPrevia, string])[] =
+  Object.freeze([
+    ["PRELIMINAR", "Documental"],
+    ["ENTREVISTA", "Entrevista"],
+    ["FINAL", "Resultado final"],
+  ]);
 
-export const listaDaOrigem = (origem) => LISTA_DA_ORIGEM[origem] || "FINAL";
+export const listaDaOrigem = (origem: string | null | undefined) =>
+  (Object.hasOwn(LISTA_DA_ORIGEM, origem ?? "")
+    ? LISTA_DA_ORIGEM[origem ?? ""]
+    : undefined) ?? "FINAL";
 
 export const LIMITES_DO_AJUSTE = Object.freeze({
   justificativa: Object.freeze({ minimo: 10, maximo: 4000 }),
@@ -53,7 +77,13 @@ export const LIMITES_DO_AJUSTE = Object.freeze({
 const JUSTIFICATIVA_DO_TOTAL = "Soma das diferenças dos componentes ajustados.";
 
 /** A classificação do edital numa lista, com os ajustes dados (padrão: os aprovados). */
-export function classificarEdital(dados, tipo, ajustes = dados?.ajustes || []) {
+export function classificarEdital(
+  entrada: RegistroDaClassificacao | null | undefined,
+  tipo: string,
+  ajustes?: RegistroDaClassificacao[],
+) {
+  const dados = normalizarDadosParaPrevia(entrada);
+  if (dados.erro) throw new Error(dados.erro);
   return classificar({
     tipo,
     regra: dados?.regra?.configuracao,
@@ -64,7 +94,7 @@ export function classificarEdital(dados, tipo, ajustes = dados?.ajustes || []) {
     dataCorte: dataDeCorteDoCronograma(dados?.cronograma),
     desempates: dados?.desempates || [],
     convocacao: dados?.convocacao || null,
-    ajustes,
+    ajustes: ajustes ?? dados.ajustes,
   });
 }
 
@@ -72,13 +102,17 @@ export function classificarEdital(dados, tipo, ajustes = dados?.ajustes || []) {
   O candidato como o motor o vê, com os ajustes aprovados — menos os do
   próprio recurso (`semRecurso`): a nova versão substitui a aprovada.
 */
-export function candidatoAtual(dados, analiseId, { semRecurso = null } = {}) {
-  const regra = normalizarRegra(dados?.regra?.configuracao);
-  const avisos = [];
+export function candidatoAtual(
+  dados: DadosParaPreviaDoAjuste,
+  analiseId: Id | null | undefined,
+  { semRecurso = null }: { semRecurso?: Id | null } = {},
+): CandidatoParaAjuste | null {
+  const regra = normalizarRegra(dados?.regra?.configuracao ?? {});
+  const avisos: string[] = [];
   const ajustes = (dados?.ajustes || []).filter(
     (a) => !semRecurso || a.recurso_id !== semRecurso,
   );
-  const candidatos = aplicarAjustes(
+  const candidatos: unknown[] = aplicarAjustes(
     ligarEntrevistas(
       aplicarAgrupamentos(
         prepararCandidatos(dados?.candidatos || [], avisos),
@@ -90,7 +124,15 @@ export function candidatoAtual(dados, analiseId, { semRecurso = null } = {}) {
     ajustes,
     avisos,
   );
-  return candidatos.find((c) => c.analiseId === analiseId) || null;
+  return candidatoParaAjuste(
+    candidatos.find(
+      (c) =>
+        c !== null &&
+        typeof c === "object" &&
+        "analiseId" in c &&
+        c.analiseId === analiseId,
+    ) || null,
+  );
 }
 
 /**
@@ -98,10 +140,13 @@ export function candidatoAtual(dados, analiseId, { semRecurso = null } = {}) {
  * `[{ codigo, rotulo, atual, calculado, grupo }]`. `calculado`: o total que
  * sai da soma (documental com parciais; entrevista com competências).
  */
-export function itensDoAjuste(regraBruta, candidato) {
+export function itensDoAjuste(
+  regraBruta: RegistroDaClassificacao,
+  candidato: CandidatoParaAjuste | null,
+): ItemDoAjuste[] {
   if (!candidato) return [];
   const regra = normalizarRegra(regraBruta);
-  const itens = [];
+  const itens: ItemDoAjuste[] = [];
   const parciais = ITENS_DO_AJUSTE.filter(
     (i) => i.parcial && regra.documental.parciais.includes(i.parcial),
   );
@@ -109,7 +154,7 @@ export function itensDoAjuste(regraBruta, candidato) {
     itens.push({
       codigo: p.codigo,
       rotulo: p.rotulo,
-      atual: candidato[p.campo] ?? null,
+      atual: numeroDoAjuste(candidato[p.campo]),
       calculado: false,
       grupo: "DOCUMENTAL",
     });
@@ -117,7 +162,9 @@ export function itensDoAjuste(regraBruta, candidato) {
   if (regra.etapas.documental || componentes.includes("DOCUMENTAL"))
     itens.push({
       codigo: "DOCUMENTAL",
-      rotulo: ITEM_DO_AJUSTE_POR_CODIGO.DOCUMENTAL.rotulo,
+      rotulo:
+        ITEM_DO_AJUSTE_POR_CODIGO.DOCUMENTAL?.rotulo ??
+        rotuloDoItem("DOCUMENTAL"),
       atual: candidato.notaDocumental ?? null,
       calculado: parciais.length > 0,
       grupo: null,
@@ -127,10 +174,10 @@ export function itensDoAjuste(regraBruta, candidato) {
     !regra.entrevista.so_parecer &&
     candidato.entrevista
   ) {
-    const nomes = new Map(
+    const nomes = new Map<number, string>(
       regra.entrevista.competencias.map((c) => [c.ordem, c.nome]),
     );
-    const ordens = [
+    const ordens: number[] = [
       ...new Set([
         ...regra.entrevista.competencias.map((c) => c.ordem),
         ...candidato.entrevista.notas
@@ -153,7 +200,9 @@ export function itensDoAjuste(regraBruta, candidato) {
     }
     itens.push({
       codigo: "ENTREVISTA",
-      rotulo: ITEM_DO_AJUSTE_POR_CODIGO.ENTREVISTA.rotulo,
+      rotulo:
+        ITEM_DO_AJUSTE_POR_CODIGO.ENTREVISTA?.rotulo ??
+        rotuloDoItem("ENTREVISTA"),
       atual: candidato.notaEntrevista ?? null,
       calculado: ordens.length > 0,
       grupo: null,
@@ -162,7 +211,7 @@ export function itensDoAjuste(regraBruta, candidato) {
   if (componentes.includes("ART"))
     itens.push({
       codigo: "ART",
-      rotulo: ITEM_DO_AJUSTE_POR_CODIGO.ART.rotulo,
+      rotulo: ITEM_DO_AJUSTE_POR_CODIGO.ART?.rotulo ?? rotuloDoItem("ART"),
       atual: candidato.notaArt ?? null,
       calculado: false,
       grupo: null,
@@ -170,10 +219,10 @@ export function itensDoAjuste(regraBruta, candidato) {
   return itens;
 }
 
-const arredondar4 = (v) => Math.round(v * 10000) / 10000;
-const igual = (a, b) =>
+const arredondar4 = (v: number) => Math.round(v * 10000) / 10000;
+const igual = (a: number | null, b: number | null) =>
   a === null || b === null ? a === b : Math.abs(a - b) < 1e-9;
-const texto = (v) => String(v ?? "").trim();
+const texto = (v: unknown) => String(v ?? "").trim();
 
 /**
  * O rascunho aplicado aos itens: `{ valores: { codigo: "7,5" },
@@ -181,7 +230,13 @@ const texto = (v) => String(v ?? "").trim();
  * justificativa }]`. Campo vazio = sem mudança; os totais calculados somam a
  * diferença dos componentes do grupo.
  */
-export function montarItens(itens, rascunho = {}) {
+export function montarItens(
+  itens: readonly ItemDoAjuste[],
+  rascunho: {
+    valores?: Record<string, string>;
+    justificativas?: Record<string, string>;
+  } = {},
+): ItemMontadoDoAjuste[] {
   const valores = rascunho.valores || {};
   const justificativas = rascunho.justificativas || {};
   const montados = itens.map((item) => {
@@ -222,7 +277,10 @@ export function montarItens(itens, rascunho = {}) {
 }
 
 /** Os erros do rascunho (vazio = pode propor). */
-export function validarAjuste(montados, justificativaGeral = "") {
+export function validarAjuste(
+  montados: readonly ItemMontadoDoAjuste[],
+  justificativaGeral = "",
+) {
   const erros = [];
   const geral = texto(justificativaGeral);
   const invalidos = montados.filter((i) => i.invalido);
@@ -232,7 +290,7 @@ export function validarAjuste(montados, justificativaGeral = "") {
     );
   const mudados = montados.filter((i) => i.mudou);
   if (!mudados.length) erros.push("Altere ao menos um valor.");
-  if (mudados.some((i) => i.novo < 0 || i.novo > 1000))
+  if (mudados.some((i) => i.novo !== null && (i.novo < 0 || i.novo > 1000)))
     erros.push("O total calculado fica fora de 0 a 1000.");
   if (geral.length > LIMITES_DO_AJUSTE.justificativa.maximo)
     erros.push("A justificativa geral passa de 4.000 caracteres.");
@@ -258,7 +316,9 @@ export function validarAjuste(montados, justificativaGeral = "") {
 }
 
 /** Os itens que vão para propor_ajuste_pontuacao: só os que mudaram. */
-export function itensParaEnviar(montados) {
+export function itensParaEnviar(
+  montados: readonly ItemMontadoDoAjuste[],
+): ItemParaEnviar[] {
   return montados
     .filter((i) => i.mudou)
     .map((i) => ({
@@ -269,7 +329,9 @@ export function itensParaEnviar(montados) {
     }));
 }
 
-function resumoDe(explicacao) {
+function resumoDe(
+  explicacao: ExplicacaoParaPrevia | undefined,
+): ResumoDaPosicao {
   if (!explicacao) return { naLista: false };
   return {
     naLista: true,
@@ -296,7 +358,17 @@ export function previaDoAjuste({
   recursoId,
   numero = null,
   itens = [],
-}) {
+}: {
+  dados: DadosParaPreviaDoAjuste;
+  tipo: string;
+  analiseId: Id | null | undefined;
+  recursoId: Id;
+  numero?: number | null;
+  itens?: ItemParaEnviar[];
+}): PreviaDoAjuste {
+  if (dados.erro) throw new Error(dados.erro);
+  if (analiseId == null)
+    throw new Error("O candidato não está nas análises do edital.");
   const aprovados = dados?.ajustes || [];
   const outros = aprovados.filter((a) => a.recurso_id !== recursoId);
   const proposto = {
@@ -308,24 +380,23 @@ export function previaDoAjuste({
   };
   const agora = classificarEdital(dados, tipo, aprovados);
   const depois = classificarEdital(dados, tipo, [...outros, proposto]);
-  const a = agora.explicacoes[analiseId];
-  const d = depois.explicacoes[analiseId];
+  const explicacoesAgora = explicacoesParaPrevia(agora.explicacoes);
+  const explicacoesDepois = explicacoesParaPrevia(depois.explicacoes);
+  const a = explicacoesAgora[analiseId];
+  const d = explicacoesDepois[analiseId];
   const vaga = (d || a)?.vaga ?? null;
   const resumoAntes = resumoDe(a);
   const resumoDepois = resumoDe(d);
   const afetados = [];
   if (vaga !== null) {
     const ids = new Set(
-      [
-        ...Object.values(agora.explicacoes),
-        ...Object.values(depois.explicacoes),
-      ]
+      [...Object.values(explicacoesAgora), ...Object.values(explicacoesDepois)]
         .filter((e) => e.vaga === vaga && e.analiseId !== analiseId)
         .map((e) => e.analiseId),
     );
     for (const id of ids) {
-      const x = resumoDe(agora.explicacoes[id]);
-      const y = resumoDe(depois.explicacoes[id]);
+      const x = resumoDe(explicacoesAgora[id]);
+      const y = resumoDe(explicacoesDepois[id]);
       if (
         x.posicao === y.posicao &&
         x.situacao === y.situacao &&
@@ -333,7 +404,7 @@ export function previaDoAjuste({
       )
         continue;
       afetados.push({
-        nome: (depois.explicacoes[id] || agora.explicacoes[id]).nome,
+        nome: (explicacoesDepois[id] || explicacoesAgora[id])?.nome ?? "",
         antes: x.posicao,
         depois: y.posicao,
         situacaoAntes: x.situacao,

@@ -8,7 +8,7 @@ import {
   montarItens,
   previaDoAjuste,
   validarAjuste,
-} from "../../src/lib/classificacao/ajustes.js";
+} from "../../src/lib/classificacao/ajustes.ts";
 import { listaDesatualizada } from "../../src/lib/classificacao/dados.js";
 import { instantaneoDaLista } from "../../src/lib/classificacao/exportacao.js";
 
@@ -368,6 +368,14 @@ describe("prévia do ajuste", () => {
     expect(listaDaOrigem("entrevista")).toBe("ENTREVISTA");
     expect(listaDaOrigem("resultado-final")).toBe("FINAL");
     expect(listaDaOrigem("outra")).toBe("FINAL");
+    for (const origem of [
+      "toString",
+      "constructor",
+      "__proto__",
+      null,
+      undefined,
+    ])
+      expect(listaDaOrigem(origem)).toBe("FINAL");
   });
 });
 

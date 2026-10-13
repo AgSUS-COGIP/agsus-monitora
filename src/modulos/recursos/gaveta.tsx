@@ -19,7 +19,7 @@ import {
   Kv,
   Secao,
 } from "../../ui/index.js";
-import { SecaoDoAjuste } from "./ajuste.jsx";
+import { SecaoDoAjuste } from "./ajuste.tsx";
 import { SecaoDeAnexos } from "./anexos.tsx";
 import { SecaoDoParecer } from "./parecer.tsx";
 import { dataHora, nota } from "./partes.ts";
@@ -32,7 +32,7 @@ import { detalheDoPrazo, MarcaForaDasAnalises } from "./tabela.tsx";
   candidato (vindos da
   análise), a nota e o resultado do cadastro contra os de hoje, o prazo do
   cronograma, o parecer jurídico (parecer.tsx), o ajuste da pontuação
-  (ajuste.jsx), as etapas com quem e quando,
+  (ajuste.tsx), as etapas com quem e quando,
   a resposta ao candidato
   (resposta.tsx), os anexos (anexos.tsx), a observação e o histórico. Quem
   edita marca as etapas aqui, escreve a resposta, anexa, edita e exclui.
