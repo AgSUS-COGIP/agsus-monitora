@@ -183,11 +183,11 @@ begin
 
   -- E3
   v := public.listar_anexos_para_leitura(array['93/2026'], '0-ensaio', false, 2000, v_sal, true);
-  if exists (select 1 from jsonb_array_elements(v -> 'anexos') a
+  if exists (select 1 from jsonb_array_elements(v -> 'anexos') anx(item)
               where not exists (select 1 from public."TB_LEITURA_ARQUIVO" l
-                                 where l."CO_EMPREGARE_RESPOSTA" = (a ->> 'resposta')::uuid
-                                   and l."CO_PERGUNTA_EMPREGARE" = a ->> 'pergunta'
-                                   and l."NU_ARQUIVO" = (a ->> 'arquivo')::smallint)) then
+                                 where l."CO_EMPREGARE_RESPOSTA" = (anx.item ->> 'resposta')::uuid
+                                   and l."CO_PERGUNTA_EMPREGARE" = anx.item ->> 'pergunta'
+                                   and l."NU_ARQUIVO" = (anx.item ->> 'arquivo')::smallint)) then
     raise exception 'E3: p_so_relidos trouxe anexo nunca lido';
   end if;
   if jsonb_array_length(v -> 'anexos') = 0 or (v ->> 'pendentes')::integer <> jsonb_array_length(v -> 'anexos') then
@@ -198,10 +198,10 @@ begin
   -- E4: na versão mais recente gravada, o que já está nela não volta (sem p_forcar).
   select max("NU_VERSAO_EXTRATOR") into v_atual from public."TB_LEITURA_ARQUIVO";
   v := public.listar_anexos_para_leitura(array['93/2026'], v_atual, false, 2000, v_sal, true);
-  if exists (select 1 from jsonb_array_elements(v -> 'anexos') a
+  if exists (select 1 from jsonb_array_elements(v -> 'anexos') anx(item)
                join public."TB_LEITURA_ARQUIVO" l
-                 on l."CO_EMPREGARE_RESPOSTA" = (a ->> 'resposta')::uuid and l."CO_PERGUNTA_EMPREGARE" = a ->> 'pergunta'
-                and l."NU_ARQUIVO" = (a ->> 'arquivo')::smallint
+                 on l."CO_EMPREGARE_RESPOSTA" = (anx.item ->> 'resposta')::uuid and l."CO_PERGUNTA_EMPREGARE" = anx.item ->> 'pergunta'
+                and l."NU_ARQUIVO" = (anx.item ->> 'arquivo')::smallint
               where l."NU_VERSAO_EXTRATOR" = v_atual and l."TP_SITUACAO" <> 'ERRO') then
     raise exception 'E4: trouxe leitura já na versão %', v_atual;
   end if;
