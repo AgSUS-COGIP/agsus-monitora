@@ -1,3 +1,4 @@
+import { objetoDosRecursos as objeto } from "../dados-dos-recursos.ts";
 /*
   A regra de classificação de UM edital, decidida pelo gestor do edital.
 
@@ -100,28 +101,32 @@ export const REGRA_VAZIA = Object.freeze({
   importacao: null,
 });
 
-const objeto = (valor) =>
-  valor && typeof valor === "object" && !Array.isArray(valor) ? valor : {};
-const lista = (valor) => (Array.isArray(valor) ? valor : []);
-const texto = (valor) => String(valor ?? "").trim();
-const numeroOuNulo = (valor) =>
+const lista = (valor: unknown): unknown[] =>
+  Array.isArray(valor) ? valor : [];
+const texto = (valor: unknown) => String(valor ?? "").trim();
+const numeroOuNulo = (valor: unknown): number | null =>
   valor === null || valor === undefined || valor === ""
     ? null
     : numeroBR(valor);
-const booleano = (valor, padrao) =>
+const booleano = (valor: unknown, padrao: boolean) =>
   typeof valor === "boolean" ? valor : padrao;
-const umDe = (valor, opcoes, padrao) =>
-  opcoes.some(([v]) => v === valor) ? valor : padrao;
-const termos = (valor) =>
+type Opcoes = ReadonlyArray<readonly (string | undefined)[]>;
+function umDe(valor: unknown, opcoes: Opcoes, padrao: string): string;
+function umDe(valor: unknown, opcoes: Opcoes, padrao: null): string | null;
+function umDe(valor: unknown, opcoes: Opcoes, padrao: string | null) {
+  const encontrado = opcoes.find(([v]) => v === valor)?.[0];
+  return encontrado ?? padrao;
+}
+const termos = (valor: unknown) =>
   (Array.isArray(valor) ? valor : String(valor ?? "").split(/[,;\n]/))
     .map(texto)
     .filter(Boolean);
-const codigos = (valor) =>
+const codigos = (valor: unknown) =>
   termos(valor)
     .map((c) => c.toUpperCase())
     .filter((c, i, todos) => todos.indexOf(c) === i);
 
-function normalizarModalidade(m) {
+function normalizarModalidade(m: unknown) {
   const o = objeto(m);
   const codigo = texto(o.codigo).toUpperCase();
   return {
@@ -167,26 +172,28 @@ function normalizarModalidade(m) {
 const CHAVE_DE_MODELO = /^[A-Z_]{3,60}$/;
 const CODIGO_DE_COLUNA = /^[A-Z][A-Z0-9_]{1,40}$/;
 const MAXIMO_DE_COLUNAS = 20;
-const CAMPOS_DO_MODELO = ["titulo", "preliminares", "finais"];
-const textoLongo = (valor) =>
+const CAMPOS_DO_MODELO = ["titulo", "preliminares", "finais"] as const;
+type TextosDoModelo = Partial<
+  Record<(typeof CAMPOS_DO_MODELO)[number], string>
+>;
+const textoLongo = (valor: unknown) =>
   String(valor ?? "")
     .replace(/\r\n?/g, "\n")
     .trim();
 
-function normalizarDocumento(bruto) {
+function normalizarDocumento(bruto: unknown) {
   const d = objeto(bruto);
-  const modelos = {};
+  const modelos: Record<string, TextosDoModelo> = {};
   for (const [chave, valor] of Object.entries(objeto(d.modelos))) {
     if (!CHAVE_DE_MODELO.test(chave)) continue;
-    const m = Object.fromEntries(
-      CAMPOS_DO_MODELO.map((campo) => [
-        campo,
-        textoLongo(objeto(valor)[campo]),
-      ]).filter(([, v]) => v),
-    );
+    const m: TextosDoModelo = {};
+    for (const campo of CAMPOS_DO_MODELO) {
+      const valorDoCampo = textoLongo(objeto(valor)[campo]);
+      if (valorDoCampo) m[campo] = valorDoCampo;
+    }
     if (Object.keys(m).length) modelos[chave] = m;
   }
-  const colunas = {};
+  const colunas: Record<string, string[]> = {};
   for (const [chave, valor] of Object.entries(objeto(d.colunas))) {
     if (!CHAVE_DE_MODELO.test(chave) || !Array.isArray(valor)) continue;
     const codigos = [
@@ -209,21 +216,32 @@ function normalizarDocumento(bruto) {
   };
 }
 
-const documentoVazio = (d) =>
+const documentoVazio = (d: ReturnType<typeof normalizarDocumento>) =>
   !Object.keys(d.modelos).length &&
   !Object.keys(d.colunas).length &&
   !d.data &&
   ["edital", "processo", "unidade", "autoridade", "local", "desempate"].every(
-    (c) => !d[c],
+    (c) => !objeto(d)[c],
   );
 
 /** Os textos do documento oficial da regra, sempre no formato completo. */
-export function documentoDaRegra(regra) {
+export function documentoDaRegra(regra: unknown) {
   return normalizarDocumento(objeto(regra).documento);
 }
 
+function minimosPorNivel(
+  porNivel: Record<string, unknown>,
+): Record<string, number> {
+  const saida: Record<string, number> = {};
+  for (const [nivel] of NIVEIS) {
+    if (!nivel) continue;
+    const minimo = numeroOuNulo(porNivel[nivel]);
+    if (minimo !== null) saida[nivel] = minimo;
+  }
+  return saida;
+}
 /** A regra completa, com os campos que faltarem neutros (nunca os de outro edital). */
-export function normalizarRegra(bruta) {
+export function normalizarRegra(bruta: unknown) {
   const r = objeto(bruta);
   const doc = objeto(r.documental);
   const ent = objeto(r.entrevista);
@@ -239,7 +257,7 @@ export function normalizarRegra(bruta) {
     .map(normalizarModalidade)
     .filter((m) => m.codigo);
   if (!modalidades.some((m) => m.codigo === "AC"))
-    modalidades.unshift({ ...MODALIDADE_AMPLA });
+    modalidades.unshift(normalizarModalidade(MODALIDADE_AMPLA));
 
   return {
     schema: VERSAO_DO_ESQUEMA,
@@ -253,11 +271,7 @@ export function normalizarRegra(bruta) {
         doc.situacoes_aptas ?? REGRA_VAZIA.documental.situacoes_aptas,
       ),
       nota_minima: numeroOuNulo(doc.nota_minima),
-      nota_minima_por_nivel: Object.fromEntries(
-        NIVEIS.map(([nivel]) => [nivel, numeroOuNulo(porNivel[nivel])]).filter(
-          ([, v]) => v !== null,
-        ),
-      ),
+      nota_minima_por_nivel: minimosPorNivel(porNivel),
       niveis_por_cargo: lista(doc.niveis_por_cargo)
         .map((n) => ({
           termo: texto(objeto(n).termo),
@@ -371,19 +385,20 @@ export function normalizarRegra(bruta) {
   };
 }
 
-const entre = (valor, min, max) =>
+const entre = (valor: number | null, min: number, max: number) =>
   valor === null || (Number.isFinite(valor) && valor >= min && valor <= max);
 
 /**
  * Os erros da regra (já normalizada ou não): `[{ campo, mensagem }]`. Vazio =
  * pode salvar. As mesmas conferências do banco.
  */
-export function validarRegra(bruta) {
+export function validarRegra(bruta: unknown) {
   const r = normalizarRegra(bruta);
-  const erros = [];
-  const erro = (campo, mensagem) => erros.push({ campo, mensagem });
+  const erros: { campo: string; mensagem: string }[] = [];
+  const erro = (campo: string, mensagem: string) =>
+    erros.push({ campo, mensagem });
 
-  if (bruta?.data_corte && !r.data_corte)
+  if (objeto(bruta).data_corte && !r.data_corte)
     erro("data_corte", "Data de corte inválida.");
   if (!r.etapas.documental && !r.etapas.entrevista)
     erro("etapas", "Escolha ao menos uma etapa.");
@@ -405,7 +420,7 @@ export function validarRegra(bruta) {
     "nota_minima",
     "nota_minima_competencia",
     "nota_eliminatoria_ate",
-  ])
+  ] as const)
     if (!entre(r.entrevista[campo], 0, 1000))
       erro(`entrevista.${campo}`, "Valor entre 0 e 1000.");
   if (r.entrevista.competencias.length > 20)
@@ -482,7 +497,7 @@ export function validarRegra(bruta) {
   const doc = documentoDaRegra(r);
   if (
     ["edital", "processo", "unidade", "local"].some(
-      (c) => doc[c].length > 300,
+      (c) => String(objeto(doc)[c] ?? "").length > 300,
     ) ||
     doc.autoridade.length > 1000 ||
     doc.desempate.length > 1000
@@ -491,7 +506,7 @@ export function validarRegra(bruta) {
   if (
     Object.keys(doc.modelos).length > 40 ||
     Object.values(doc.modelos).some((m) =>
-      Object.values(m).some((v) => v.length > 10000),
+      Object.values(m).some((v) => v !== undefined && v.length > 10000),
     )
   )
     erro("documento", "Textos do documento com até 10000 caracteres.");
@@ -501,8 +516,11 @@ export function validarRegra(bruta) {
 }
 
 /** O critério do catálogo com a direção da regra (para a tela e a explicação). */
-export function criteriosDaRegra(regra) {
+export function criteriosDaRegra(regra: unknown) {
   return normalizarRegra(regra)
     .desempate.map((d) => ({ ...d, catalogo: CRITERIO_POR_CODIGO[d.criterio] }))
     .filter((d) => d.catalogo);
 }
+
+export type RegraNormalizada = ReturnType<typeof normalizarRegra>;
+export type DocumentoDaRegra = ReturnType<typeof documentoDaRegra>;

@@ -177,7 +177,7 @@ A entrada e o estado de Classificação também estão migrados: seletor de edit
 versões de regra, registros e publicação de listas, desempate, hora de nascimento e
 exportação. Dados usados pelo estado são validados; respostas antigas não atualizam
 dados, avisos ou flags após troca de edital, área ou usuário. Os contratos estão em
-`tests/tipos/tela-estado-da-classificacao.tsx`; regras, documentos e agenda continuam
+`tests/tipos/tela-estado-da-classificacao.tsx`; documentos e agenda continuam
 parcialmente em JavaScript/JSX. Contratos e limites em
 [../src/modulos/classificacao/README.md](../src/modulos/classificacao/README.md).
 
@@ -198,3 +198,11 @@ via JSDoc pelo motor ainda em JavaScript. O cálculo da ordem continua no motor;
 não converte sua implementação. Metadados de geração, versões e desempates são normalizados
 para os campos usados na tela. Ordens incompletas ou duplicadas e contagens inválidas de
 pendências são recusadas. Contratos da tela em `tests/tipos/listas-da-classificacao.tsx`.
+
+A visão Regra está em TSX, incluindo notas, critérios ordenáveis, modalidades, convocação,
+versões e retomada do rascunho guardado. Normalização, validação e textos do documento estão
+em `classificacao/regra.ts`; conversão de entradas e alterações imutáveis do formulário,
+em `classificacao/edicao-da-regra.ts`. O rascunho admite texto durante a edição dos números;
+a regra normalizada mantém valores numéricos. O histórico preserva configuração, autoria,
+motivo e renomeações; versões inválidas são recusadas. A modalidade padrão tem listas
+independentes por edital. Contratos em `tests/tipos/regra-da-classificacao.tsx`.

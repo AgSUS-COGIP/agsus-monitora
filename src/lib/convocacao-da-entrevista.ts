@@ -33,7 +33,7 @@ import { objetoDaConducao, registrosDaConducao } from "./dados-da-conducao.ts";
 */
 
 import { DIRECOES, METODOS_DE_EMPATE_FINAL } from "./classificacao/catalogo.js";
-import { criteriosDaRegra } from "./classificacao/regra.js";
+import { criteriosDaRegra } from "./classificacao/regra.ts";
 
 const texto = (valor: unknown) => String(valor ?? "").trim();
 const numero = (valor: unknown) =>

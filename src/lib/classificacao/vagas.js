@@ -21,7 +21,7 @@ import {
   vagasPelaConta,
 } from "./convocacao-do-edital.js";
 import { numeroBR } from "./numeros.js";
-import { normalizarRegra } from "./regra.js";
+import { normalizarRegra } from "./regra.ts";
 
 const texto = (valor) => String(valor ?? "").trim();
 

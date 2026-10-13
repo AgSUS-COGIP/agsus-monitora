@@ -38,7 +38,7 @@ import {
   colunasParaGuardar,
   ehOPadrao,
 } from "../../lib/classificacao/colunas-do-documento.js";
-import { documentoDaRegra } from "../../lib/classificacao/regra.js";
+import { documentoDaRegra } from "../../lib/classificacao/regra.ts";
 import { Abas, Campo, classes, Modal } from "../../ui/index.js";
 import {
   ColunasDoDocumento,

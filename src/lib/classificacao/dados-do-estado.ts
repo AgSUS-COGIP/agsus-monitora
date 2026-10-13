@@ -7,6 +7,7 @@ import type {
   DadosDaClassificacao,
   RetratoDaClassificacao,
   DesempateRegistrado,
+  VersaoDaRegraDaClassificacao,
 } from "../../modulos/classificacao/tipos-do-estado.ts";
 export { objeto };
 export const textoDaClassificacao = (v: unknown) =>
@@ -45,6 +46,39 @@ export function editaisDaClassificacao(v: unknown): {
     ),
   };
 }
+function versoesDaRegra(
+  v: unknown,
+): VersaoDaRegraDaClassificacao[] | undefined {
+  if (v == null) return undefined;
+  if (!Array.isArray(v) || registros(v).length !== v.length)
+    throw new Error("Histórico de versões da regra inválido.");
+  return registros(v).map((r) => {
+    const versao = numero(r.versao);
+    if (versao === undefined || !Number.isInteger(versao) || versao < 1)
+      throw new Error("Versão da regra inválida.");
+    if (
+      r.configuracao != null &&
+      (typeof r.configuracao !== "object" || Array.isArray(r.configuracao))
+    )
+      throw new Error("Configuração da versão inválida.");
+    return {
+      ...r,
+      versao,
+      nome: textoDaClassificacao(r.nome) || null,
+      em: textoDaClassificacao(r.em),
+      por: textoDaClassificacao(r.por),
+      motivo: textoDaClassificacao(r.motivo),
+      configuracao: r.configuracao == null ? undefined : objeto(r.configuracao),
+      renomeacoes: registros(r.renomeacoes).map((t) => ({
+        em: textoDaClassificacao(t.em),
+        por: textoDaClassificacao(t.por),
+        de: textoDaClassificacao(t.de),
+        para: textoDaClassificacao(t.para),
+        motivo: textoDaClassificacao(t.motivo),
+      })),
+    };
+  });
+}
 export function regraDaClassificacao(v: unknown): RegraDaClassificacao | null {
   const r = objeto(v),
     versao = numero(r.versao);
@@ -55,14 +89,7 @@ export function regraDaClassificacao(v: unknown): RegraDaClassificacao | null {
     versao,
     nome: textoDaClassificacao(r.nome) || null,
     configuracao: objeto(r.configuracao),
-    versoes:
-      r.versoes == null
-        ? undefined
-        : registros(r.versoes).map((v) => ({
-            ...v,
-            versao: numero(v.versao),
-            nome: textoDaClassificacao(v.nome) || null,
-          })),
+    versoes: versoesDaRegra(r.versoes),
   };
 }
 export function listaRegistrada(v: unknown): ListaRegistrada | null {

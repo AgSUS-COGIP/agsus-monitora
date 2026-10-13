@@ -3,7 +3,7 @@
   pode escolher (e ordenar), os motivos padronizados de eliminação, os métodos
   do empate final e as modalidades de concorrência conhecidas.
 
-  NADA AQUI É REGRA FIXA. A regra de cada edital (src/lib/classificacao/regra.js,
+  NADA AQUI É REGRA FIXA. A regra de cada edital (src/lib/classificacao/regra.ts,
   gravada em TH_REGRA_CLASSIFICACAO) escolhe do catálogo e decide a ordem. O
   catálogo é o mesmo do banco (TB_CRITERIO_CLASSIFICACAO, seed da migration
   20261002150000_classificacao.sql); o teste `classificacao-migration.test.js`
@@ -14,6 +14,7 @@
 */
 import { idadeNaData, numeroBR, segundosDeVida } from "./numeros.js";
 
+/** @type {ReadonlyArray<readonly [string, string]>} */
 export const DIRECOES = Object.freeze([
   ["SIM_PRIMEIRO", "Sim antes de não"],
   ["NAO_PRIMEIRO", "Não antes de sim"],
@@ -220,11 +221,13 @@ export const CATALOGO_DE_CRITERIOS = Object.freeze(
   ].map((criterio) => Object.freeze(criterio)),
 );
 
+/** @type {Record<string, (typeof CATALOGO_DE_CRITERIOS)[number] | undefined>} */
 export const CRITERIO_POR_CODIGO = Object.freeze(
   Object.fromEntries(CATALOGO_DE_CRITERIOS.map((c) => [c.codigo, c])),
 );
 
 /* O empate que sobra depois de todos os critérios: o gestor escolhe. */
+/** @type {ReadonlyArray<readonly [string, string]>} */
 export const METODOS_DE_EMPATE_FINAL = Object.freeze([
   ["SORTEIO", "Sorteio registrado"],
   ["ORDEM_INSCRICAO", "Ordem de inscrição"],
@@ -233,12 +236,14 @@ export const METODOS_DE_EMPATE_FINAL = Object.freeze([
 ]);
 
 /* Numeração de quem fica na mesma posição: 1º, 2º, 2º, 3º ou 1º, 2º, 2º, 4º. */
+/** @type {ReadonlyArray<readonly [string, string]>} */
 export const NUMERACOES = Object.freeze([
   ["DENSA", "1º, 2º, 2º, 3º"],
   ["SALTANDO", "1º, 2º, 2º, 4º"],
 ]);
 
 /* O que fazer com o empate em cada lista: critérios da regra ou mesma posição. */
+/** @type {ReadonlyArray<readonly [string, string]>} */
 export const EMPATE_NAS_LISTAS = Object.freeze([
   ["CRITERIOS", "Critérios da regra"],
   ["MESMA_POSICAO", "Mesma posição"],
@@ -281,6 +286,7 @@ export const FASES_DA_PUBLICACAO = Object.freeze([
   das publicações. Cada edital escolhe as suas na regra (o 100/2026 não tem
   cursos de aperfeiçoamento).
 */
+/** @type {ReadonlyArray<readonly [string, string]>} */
 export const PARCIAIS_DA_DOCUMENTAL = Object.freeze([
   ["FORMACAO", "Formação Acadêmica"],
   ["CURSOS", "Cursos de Aperfeiçoamento"],
@@ -288,6 +294,7 @@ export const PARCIAIS_DA_DOCUMENTAL = Object.freeze([
   ["ETNICO", "Pontuação Étnica"],
 ]);
 
+/** @type {ReadonlyArray<readonly [string, string]>} */
 export const COMPONENTES_DA_NOTA = Object.freeze([
   ["DOCUMENTAL", "Nota documental (curricular)"],
   ["ENTREVISTA", "Nota da entrevista"],
@@ -351,6 +358,7 @@ export function ordemDaCompetencia(codigo) {
   return m ? Number(m[1]) : null;
 }
 
+/** @type {ReadonlyArray<readonly [string, string]>} */
 export const NIVEIS = Object.freeze([
   ["superior", "Superior"],
   ["tecnico", "Técnico"],

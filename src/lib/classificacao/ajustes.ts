@@ -46,7 +46,7 @@ import {
   rotuloDoItem,
 } from "./motor.js";
 import { numeroBR } from "./numeros.js";
-import { normalizarRegra } from "./regra.js";
+import { normalizarRegra } from "./regra.ts";
 
 /* A lista da etapa contra a qual o candidato recorreu (a da prévia). */
 export const LISTA_DA_ORIGEM: Readonly<Record<string, ListaDaPrevia>> =

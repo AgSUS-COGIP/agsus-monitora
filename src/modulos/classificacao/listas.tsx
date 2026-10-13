@@ -34,7 +34,7 @@ import {
   formatarNota,
   ordinal,
 } from "../../lib/classificacao/numeros.js";
-import { normalizarRegra } from "../../lib/classificacao/regra.js";
+import { normalizarRegra } from "../../lib/classificacao/regra.ts";
 import { rotuloDaVersaoNaLista } from "../../lib/nome-da-versao.ts";
 import { conferirSorteio } from "../../lib/classificacao/sorteio.js";
 import { DocumentoDoSei } from "./documento.tsx";

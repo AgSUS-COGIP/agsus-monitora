@@ -1,6 +1,21 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { classificarEdital } from "../../lib/classificacao/ajustes.ts";
 export type RegistroDaClassificacao = Record<string, unknown>;
+export interface VersaoDaRegraDaClassificacao extends RegistroDaClassificacao {
+  versao: number;
+  nome: string | null;
+  em: string;
+  por: string;
+  motivo: string;
+  configuracao?: RegistroDaClassificacao;
+  renomeacoes: {
+    em: string;
+    por: string;
+    de: string;
+    para: string;
+    motivo: string;
+  }[];
+}
 export interface EditalDaClassificacao extends RegistroDaClassificacao {
   id: string;
   edital: string;
@@ -14,7 +29,7 @@ export interface RegraDaClassificacao extends RegistroDaClassificacao {
   versao: number;
   nome: string | null;
   configuracao: RegistroDaClassificacao;
-  versoes?: import("../../lib/nome-da-versao.ts").VersaoComNome[];
+  versoes?: VersaoDaRegraDaClassificacao[];
 }
 export interface RetratoDaClassificacao extends RegistroDaClassificacao {
   tipo: string;

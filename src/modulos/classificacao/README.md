@@ -33,7 +33,7 @@ agenda.jsx         visão "Agenda": regra da agenda das entrevistas (versões), 
 estado-da-agenda.js  store da agenda (obter_agenda_entrevista, salvar_regra_agenda_entrevista,
                    salvar_agenda_entrevista); a agenda salva preenche DATA e HORA do
                    documento da convocação (agendaDoDocumento)
-regra.jsx          visão "Regra": formulário (critérios ordenáveis do catálogo, empate final,
+regra.tsx          visão "Regra" em TypeScript: formulário (critérios ordenáveis do catálogo, empate final,
                    modalidades, convocação, rodapé) e versões; o rascunho é guardado a cada
                    mudança (src/app/rascunho-da-regra.ts, tipo CLASSIFICACAO) e volta ao abrir
 documento.tsx      "Como fica no SEI": quase tela cheia (ou tela cheia), folha A4 com zoom
@@ -47,7 +47,7 @@ documento-no-navegador.js  área de transferência (HTML + texto), logo em PNG, 
 classificacao.css  só o que é desta tela (tokens)
 ```
 
-Regras puras em `src/lib/classificacao/` (`motor.js`, `regra.js`, `catalogo.js`, `vagas.js`,
+Regras puras em `src/lib/classificacao/` (`motor.js`, `regra.ts`, `catalogo.js`, `vagas.js`,
 `numeros.js`, `sorteio.js`, `exportacao.js`, `ajustes.ts` — o motor com os ajustes da pontuação
 aprovados em recurso e a prévia do recurso —, `documento-sei.js` — o documento no modelo das
 publicações do SEI, textos-padrão do 83/2026 e do 100/2026 —, `documento-docx.js` — Word com papel
@@ -87,6 +87,14 @@ via JSDoc e mantém o cálculo em JavaScript. O estado valida a quantidade de pe
 e a situação de publicação dos registros; uma ordem incompleta ou duplicada não é
 apresentada como sorteio registrado. Testes em
 `tests/lib/classificacao-metadados-das-listas.test.js`.
+Regra: `src/lib/classificacao/regra.ts` normaliza e valida a configuração, incluindo textos
+e colunas dos documentos; `src/lib/classificacao/edicao-da-regra.ts` converte as entradas e
+altera campos, grupos e listas sem modificar a regra vigente. O rascunho admite texto nos
+campos numéricos durante a edição; a normalização produz números. Cada edital recebe
+listas independentes na modalidade padrão. O histórico valida a versão e a configuração,
+preservando autoria, motivo e renomeações; só versões com configuração podem voltar ao
+formulário. Testes em `tests/lib/classificacao-edicao-da-regra.test.js` e contratos em
+`tests/tipos/regra-da-classificacao.tsx`.
 Agenda das entrevistas: motor em `src/lib/agenda-das-entrevistas.js`, banco em
 `supabase/migrations/20261005120000_agenda_das_entrevistas.sql` (ensaio e rollback com o mesmo
 nome); Conduzir entrevistas abre a fila em Hoje pela agenda salva (`src/modulos/entrevistas/fila-do-dia.tsx`).

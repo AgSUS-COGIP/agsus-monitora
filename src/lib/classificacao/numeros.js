@@ -38,6 +38,7 @@ export function numeroBR(valor) {
   return Number.isFinite(numero) ? numero : null;
 }
 
+/** @type {ReadonlyArray<readonly [string, string]>} */
 export const ARREDONDAMENTOS = Object.freeze([
   ["MEIO_PARA_CIMA", "Arredondar (0,5 para cima)"],
   ["TRUNCAR", "Truncar"],
