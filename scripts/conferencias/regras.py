@@ -21,6 +21,8 @@ from datetime import date, datetime, time, timedelta
 
 from catalogo import CATALOGO
 
+from monitora.avaliacao_documental.pontuacao import conferir_ficha
+
 MAX_EXEMPLOS = 20
 MAX_CASOS = 5000
 TOLERANCIA = 0.01
@@ -232,6 +234,8 @@ def resumir(aviso, numero_do_edital):
         return f"{plural(n, 'análise', 'análises')} com experiência acima de {extra.get('teto')} {onde}."
     if c == "ANALISE_DATA_INVALIDA":
         return f"{plural(n, 'análise', 'análises')} com data no futuro ou antes da inscrição {onde}."
+    if c == "ANALISE_FICHA_CONTA_DIVERGENTE":
+        return f"{plural(n, 'ficha concluída', 'fichas concluídas')} com a conta gravada diferente da regra {onde}."
     if c == "ANALISE_EM_DOIS_EDITAIS":
         return f"{plural(n, 'candidato', 'candidatos')} com análise em mais de um edital ativo."
     if c == "ENTREVISTA_SEM_NOTA_APOS_DATA":
@@ -353,6 +357,71 @@ def conferir_analises(paginas, contexto, acumulador):
                 area=area,
                 exemplo=codigo,
                 caso={"codigo": codigo, "detalhe": {"editais": len(conjunto)}},
+            )
+
+
+# ── Fichas da avaliação documental (a conta gravada) ────────────────────────
+
+
+def _campos_da_divergencia(diferencas):
+    """Os campos divergentes, num texto de identificador ("nota_final/parecer"), até 40 caracteres."""
+    texto = ""
+    for campo in (d.get("campo") for d in diferencas):
+        proximo = f"{texto}/{campo}" if texto else str(campo)
+        if len(proximo) > 40:
+            break
+        texto = proximo
+    return texto
+
+
+def conferir_fichas(paginas, acumulador):
+    """
+    paginas: iterável das páginas de conferencia_ler_fichas ({linhas, regras}).
+
+    Refaz a conta de cada ficha concluída com a versão da regra com que foi
+    concluída (pontuacao.conferir_ficha, a mesma de calcularAvaliacao da tela)
+    e avisa quando o resultado, as notas, as parciais ou o parecer gravados
+    (TB_FICHA_ANALISE) não batem: o banco só valida a estrutura e os limites
+    do que a tela manda. A nota mínima é a que a conta gravou (a da regra de
+    classificação na hora da conclusão) e, sem ela, a de agora.
+    """
+    for pagina in paginas:
+        pagina = pagina or {}
+        regras_da_pagina = {
+            (r.get("regra"), r.get("versao")): r.get("configuracao") for r in pagina.get("regras") or []
+        }
+        for f in pagina.get("linhas") or []:
+            resultado = f.get("resultado") if isinstance(f.get("resultado"), dict) else {}
+            documental = f.get("documental") if isinstance(f.get("documental"), dict) else {}
+            minima = resultado.get("nota_minima") if "nota_minima" in resultado else documental.get("nota_minima")
+            opcoes = {"notaMinima": minima}
+            if "nota_minima" not in resultado:
+                opcoes["notaMinimaPorNivel"] = documental.get("nota_minima_por_nivel") or {}
+            regra = regras_da_pagina.get((f.get("regra"), f.get("versao_regra")))
+            try:
+                if not isinstance(regra, dict):
+                    raise ValueError("regra da ficha ausente")
+                diferencas = conferir_ficha(
+                    regra, f.get("lancamento") or {}, {**resultado, "parecer": f.get("parecer") or ""}, opcoes
+                )
+            except Exception:
+                diferencas = [{"campo": "erro_na_conta"}]
+            if not diferencas:
+                continue
+            nota = next((d for d in diferencas if d.get("campo") == "nota_final"), None)
+            detalhe = {"campos": _campos_da_divergencia(diferencas)}
+            if nota:
+                detalhe["nota_gravada"] = numero(nota.get("gravado"))
+                detalhe["nota_recalculada"] = numero(nota.get("recalculado"))
+            caso = {"analise": f.get("analise"), "detalhe": detalhe}
+            if not f.get("analise"):
+                caso["referencia"] = f.get("ficha")
+            acumulador.anotar(
+                "ANALISE_FICHA_CONTA_DIVERGENTE",
+                edital=f.get("edital"),
+                area=f.get("area"),
+                exemplo=f.get("analise") or f.get("ficha"),
+                caso=caso,
             )
 
 

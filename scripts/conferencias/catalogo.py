@@ -17,6 +17,7 @@ CATALOGO = {
     "ANALISE_NOTA_DIFERENTE_DA_SOMA": ("analises", ATENCAO, "Nota final diferente da soma das parciais"),
     "ANALISE_EXPERIENCIA_ACIMA_DO_TETO": ("analises", ATENCAO, "Experiência acima do teto da regra"),
     "ANALISE_DATA_INVALIDA": ("analises", ATENCAO, "Data da análise no futuro ou antes da inscrição"),
+    "ANALISE_FICHA_CONTA_DIVERGENTE": ("analises", CRITICA, "Ficha concluída com a conta diferente da regra"),
     "ANALISE_EM_DOIS_EDITAIS": ("analises", INFORMATIVO, "Candidato analisado em dois editais ativos"),
     # Entrevistas
     "ENTREVISTA_SEM_NOTA_APOS_DATA": ("entrevistas", ATENCAO, "Convocado sem nota depois da data da entrevista"),
