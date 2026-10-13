@@ -25,6 +25,11 @@ continua sendo a leitura. Desenho e fases: `docs/analises-no-monitora/`; histór
 - "Recalcular" (coordenação): RPC `disparar_robo` com o edital (o banco pede ao GitHub), travado com a regra não
   conferida ou o job rodando; o resultado do pedido fica na aba (o motivo da recusa, com o botão
   de volta, ou "pedido") e a aba relê sozinha até a execução terminar;
+- o cargo, a lotação e o nível de cada vaga vêm da linha do quadro de vagas
+  (`private."FC_QUADRO_DA_VAGA_EMPREGARE"`): pelo nome da vaga na planilha e, quando a análise é
+  do MONITORA (114/2026), pelo título da vaga na Empregare — o número do CARGO e, com o mesmo cargo
+  em mais de uma lotação, a UF dos inscritos de cada vaga irmã (migration
+  `20261013140000_quadro_da_vaga_pelo_titulo.sql`); o nível sai do "(Nível …)" do cargo;
 - tamanho do lote por vaga: o campo vira `lote.por_vaga` numa versão nova da regra (com motivo);
 - listas oficiais PROVISORIA e LOTE (cada reposição, se a regra publica): registradas no banco
   (`registrar_lista_pre_classificacao`) e exportadas pelo gerador da Classificação.
