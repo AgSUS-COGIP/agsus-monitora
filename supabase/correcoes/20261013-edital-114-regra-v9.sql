@@ -21,15 +21,21 @@
     2. Sai do REQUISITO_DO_CARGO o motivo "Não possui experiência mínima de 06
        (seis) meses na área da vaga": a experiência mínima já é conferida
        pelo bloco EXPERIENCIA (minimo_meses / FC_PENDENCIAS_FICHA).
-    3. Códigos legíveis no lugar dos genéricos (MOTIVO, MOTIVO_2...), sem
+    3. Saem também do REQUISITO_DO_CARGO os genéricos repetidos SEM_CNH,
+       SEM_CURSO_EXIGIDO e o da direção defensiva (MOTIVO_2): o por_cargo já
+       gera esses requisitos com ELIMINA só nas vagas certas (CNH B/D,
+       direção defensiva, Cromatografia). O bloco fica sem motivos soltos
+       (a validação aceita); nas vagas com requisito, os motivos vêm do
+       por_cargo, e nas demais o avaliador usa o motivo livre.
+    4. Códigos legíveis no lugar dos genéricos (MOTIVO, MOTIVO_2...), sem
        mudar textos nem itens do edital:
          IDENTIDADE          MOTIVO   -> SEM_IDENTIDADE_6_5
          ESCOLARIDADE        MOTIVO   -> DIPLOMA_ILEGIVEL
                              MOTIVO_2 -> CAMPO_INCORRETO
                              MOTIVO_3 -> FORA_DO_FORMATO
                              MOTIVO_4 -> NOME_ALTERADO_SEM_DOCUMENTO
-         REQUISITO_DO_CARGO  MOTIVO_2 -> SEM_DIRECAO_DEFENSIVA (efeito
-                             ELIMINA, como SEM_CNH)
+       SEM_IDENTIDADE_6_5 fica sem efeito próprio: o bloco IDENTIDADE já
+       elimina pelos efeitos do bloco (NAO_ENVIADO/NAO_CONFORME = ELIMINA).
        Um código já usado no lançamento de alguma ficha do 114 não é
        renomeado (avisa); um motivo a retirar que já esteja em uso faz o
        script parar sem mudar nada.
@@ -57,14 +63,16 @@ declare
   {"bloco": "ESCOLARIDADE", "de": "MOTIVO", "para": "DIPLOMA_ILEGIVEL", "texto": "Diploma ou certificado ilegível"},
   {"bloco": "ESCOLARIDADE", "de": "MOTIVO_2", "para": "CAMPO_INCORRETO", "texto": "Documentos anexados em campos incorretos"},
   {"bloco": "ESCOLARIDADE", "de": "MOTIVO_3", "para": "FORA_DO_FORMATO", "texto": "Documento em desacordo com formato PDF"},
-  {"bloco": "ESCOLARIDADE", "de": "MOTIVO_4", "para": "NOME_ALTERADO_SEM_DOCUMENTO", "texto": "Documentação recusada devido à ausência do documento comprobatório"},
-  {"bloco": "REQUISITO_DO_CARGO", "de": "MOTIVO_2", "para": "SEM_DIRECAO_DEFENSIVA", "texto": "Não apresentou o curso de direção defensiva", "efeito": "ELIMINA"}
+  {"bloco": "ESCOLARIDADE", "de": "MOTIVO_4", "para": "NOME_ALTERADO_SEM_DOCUMENTO", "texto": "Documentação recusada devido à ausência do documento comprobatório"}
 ]
 $ren$::jsonb;
   -- Começos dos textos que saem do REQUISITO_DO_CARGO.
   c_txt_experiencia constant text := 'Não possui experiência mínima de 06 (seis) meses';
   c_txt_titulo constant text := 'Cada título será considerado uma única vez';
   c_txt_requisito constant text := 'Documentos exigidos como requisito obrigatório não serão pontuados';
+  c_txt_direcao constant text := 'Não apresentou o curso de direção defensiva';
+  -- Genéricos repetidos (o por_cargo gera os requisitos nas vagas certas).
+  c_repetidos constant text[] := array['SEM_CNH', 'SEM_CURSO_EXIGIDO'];
   c_txt_nome constant text := 'Pontuação não atribuída devido à ausência do documento comprobatório';
   v_regra public."TB_REGRA_ANALISE";
   v_atual jsonb;
@@ -75,6 +83,8 @@ $ren$::jsonb;
   m_titulo jsonb;
   m_requisito jsonb;
   m_nome jsonb;
+  m_direcao jsonb;
+  v_retirar text[];
   v_blocos jsonb := '[]'::jsonb;
   v_b record;
   v_bloco jsonb;
@@ -120,14 +130,16 @@ begin
   select m into m_titulo from jsonb_array_elements(v_req -> 'motivos') m where btrim(m ->> 'texto') like c_txt_titulo || '%';
   select m into m_requisito from jsonb_array_elements(v_req -> 'motivos') m where btrim(m ->> 'texto') like c_txt_requisito || '%';
   select m into m_nome from jsonb_array_elements(v_req -> 'motivos') m where btrim(m ->> 'texto') like c_txt_nome || '%';
-  if m_experiencia is null or m_titulo is null or m_requisito is null or m_nome is null then
-    raise exception 'O REQUISITO_DO_CARGO da versão vigente (%) não tem os quatro motivos esperados: confira antes de rodar.',
+  select m into m_direcao from jsonb_array_elements(v_req -> 'motivos') m where btrim(m ->> 'texto') like c_txt_direcao || '%';
+  if m_experiencia is null or m_titulo is null or m_requisito is null or m_nome is null or m_direcao is null then
+    raise exception 'O REQUISITO_DO_CARGO da versão vigente (%) não tem os motivos esperados: confira antes de rodar.',
       v_regra."NU_VERSAO_VIGENTE";
   end if;
+  v_retirar := array[m_experiencia ->> 'codigo', m_titulo ->> 'codigo', m_requisito ->> 'codigo',
+                     m_nome ->> 'codigo', m_direcao ->> 'codigo'] || c_repetidos;
   -- Um motivo retirado que já esteja em algum lançamento: para tudo.
   if exists (select 1 from public."TB_FICHA_ANALISE" f
-              cross join (values (m_experiencia ->> 'codigo'), (m_titulo ->> 'codigo'),
-                                 (m_requisito ->> 'codigo'), (m_nome ->> 'codigo')) c(codigo)
+              cross join unnest(v_retirar) c(codigo)
               where f."CO_MONITORAMENTO" = c_edital
                 and (f."DS_LANCAMENTO" #> '{blocos,REQUISITO_DO_CARGO}')::text like '%"' || c.codigo || '"%') then
     raise exception 'Há ficha do 114 com motivo do REQUISITO_DO_CARGO que seria retirado: nada foi feito.';
@@ -141,8 +153,7 @@ begin
       v_mot := v_m.value;
       -- Retirados do REQUISITO_DO_CARGO.
       if v_bloco ->> 'codigo' = 'REQUISITO_DO_CARGO'
-         and v_mot ->> 'codigo' in (m_experiencia ->> 'codigo', m_titulo ->> 'codigo',
-                                    m_requisito ->> 'codigo', m_nome ->> 'codigo') then
+         and v_mot ->> 'codigo' = any (v_retirar) then
         continue;
       end if;
       -- Renomeações (só se o texto confere e o código antigo não está em uso).
