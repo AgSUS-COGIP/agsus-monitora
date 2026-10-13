@@ -398,8 +398,7 @@
 .avd-ficha-atalhos dd {
   margin: 0;
 }
-.avd-ficha-atalhos kbd,
-.avd-ficha-decisao kbd {
+.avd-ficha-atalhos kbd {
   display: inline-block;
   min-width: 1.5em;
   padding: 1px var(--space-1);
@@ -796,20 +795,9 @@
   width: 14px;
   height: 14px;
 }
-.avd-ficha-decisao kbd {
-  position: absolute;
-  top: var(--space-1-5);
-  right: var(--space-1-5);
-  opacity: 0;
-  transition: opacity var(--duration-fast, 120ms) var(--ease-standard);
-}
 .avd-ficha-decisao:hover:not(:disabled) {
   border-color: var(--tom);
   background: var(--tom-suave);
-}
-.avd-ficha-decisao:hover:not(:disabled) kbd,
-.avd-ficha-decisao:focus-visible kbd {
-  opacity: 1;
 }
 .avd-ficha-decisao:active:not(:disabled) {
   transform: scale(0.98);
@@ -864,9 +852,6 @@
 .avd-ficha-decisoes[data-compacto] .avd-ficha-decisao-icone {
   width: 22px;
   height: 22px;
-}
-.avd-ficha-decisoes[data-compacto] kbd {
-  display: none;
 }
 
 /* Chips (motivos, justificativas, observações prontas). */
@@ -1827,9 +1812,6 @@
     justify-content: flex-start;
     min-height: var(--mobile-touch-size, 52px);
   }
-  .avd-ficha-decisao kbd {
-    display: none;
-  }
   .avd-ficha-chip {
     min-height: var(--mobile-touch-size, 44px);
   }
@@ -2067,4 +2049,137 @@
 }
 .avd-ficha-da-resposta[data-origem="arquivo"] {
   background: var(--state-success-soft);
+}
+
+/* ── Pelos itens lidos (item-da-ficha.tsx: DecisaoPelosItens) ─────────────
+   Corrigir o item lido, os alertas resumidos, as linhas à mão e o rodapé da
+   decisão: "Pontuação pelos itens aceitos" com Confirmar · Não confere. */
+.avd-conferir-item[data-alerta="grave"][data-estado="pendente"] {
+  border-left-color: var(--state-warning);
+}
+.avd-conferir-alertas[data-tom="leve"],
+.avd-conferir-alertas[data-tom="leve"] i {
+  color: var(--text-secondary);
+}
+.avd-conferir-mais {
+  flex: none;
+  padding: 0 var(--space-1-5);
+  border-radius: var(--radius-full, 999px);
+  background: var(--surface-hover);
+  color: var(--text-secondary);
+  font-weight: var(--font-weight-medium);
+  cursor: help;
+}
+.avd-conferir-mais:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 1px;
+}
+.avd-conferir-selo {
+  display: inline-block;
+  margin-left: var(--space-1-5);
+  padding: 0 var(--space-1-5);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-full, 999px);
+  color: var(--text-secondary);
+  font-size: var(--text-caption);
+  vertical-align: 1px;
+  cursor: help;
+}
+.avd-conferir-botao[data-acao="corrigir"] i {
+  color: var(--state-info);
+}
+.avd-conferir-botao:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+.avd-conferir-corrigido {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--text-caption);
+}
+.avd-conferir-corrigir {
+  display: grid;
+  gap: var(--space-2);
+  padding-top: var(--space-1);
+}
+.avd-conferir-corrigir-acoes {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-2) var(--space-3);
+}
+.avd-conferir-falta {
+  margin-right: auto;
+  color: var(--text-secondary);
+  font-size: var(--text-caption);
+}
+.avd-conferir > .avd-ficha-itens {
+  padding-top: var(--space-2);
+  border-top: 1px dashed var(--border-subtle);
+}
+.avd-ficha-itens-rotulo {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--text-caption);
+  font-weight: var(--font-weight-medium);
+}
+.avd-ficha-arquivo .avd-ficha-miniatura {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-sm);
+  object-fit: cover;
+}
+.avd-lido-metodo {
+  color: var(--text-secondary);
+}
+.avd-ficha-pelos-itens {
+  display: grid;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  background: var(--surface-raised);
+}
+.avd-ficha-pelos-itens-resumo,
+.avd-ficha-pelos-itens-tempo {
+  margin: 0;
+}
+.avd-ficha-pelos-itens-resumo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0 var(--space-1);
+  color: var(--text-secondary);
+}
+.avd-ficha-pelos-itens-resumo .avd-ficha-resultado-valor {
+  color: var(--text-primary);
+}
+.avd-ficha-pelos-itens-tempo {
+  color: var(--text-secondary);
+  font-size: var(--text-caption);
+}
+.avd-ficha-pelos-itens-acoes {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-3);
+}
+.avd-ficha-pelos-itens-acoes .avd-ficha-decisao {
+  flex: 0 1 12rem;
+  min-height: 44px;
+}
+.avd-ficha-ajuste-fino {
+  margin-left: auto;
+}
+.avd-ficha-ajuste-fino[aria-pressed="true"] {
+  font-weight: var(--font-weight-semibold);
+}
+@media (max-width: 600px) {
+  .avd-ficha-pelos-itens-acoes .avd-ficha-decisao {
+    flex: 1 1 100%;
+  }
+  .avd-ficha-ajuste-fino {
+    margin-left: 0;
+  }
 }

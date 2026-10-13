@@ -485,10 +485,15 @@ export function ConteudoDaFicha({
       agora.declarada,
       parcial ? (agora.avaliacao.calculados?.[parcial] ?? 0) : null,
     );
-    // A mesma tecla de novo só confirma (como o clique): nada muda.
-    if (escolha !== atual)
-      decidirNoLancamento(bloco, mudar, escolha, contextoDaEscolha(st, bloco));
-    depoisDeDecidir(bloco.codigo, escolha, antes);
+    const contexto = contextoDaEscolha(agora, bloco, empregare.enderecos);
+    // A mesma tecla de novo só confirma (como o clique): nada muda. Pelos
+    // itens lidos, o 1 é o Confirmar e grava de novo (os aceitos podem ter mudado).
+    const gravada =
+      escolha !== atual ||
+      (contexto.pelosItens && (escolha === "CONFERE" || escolha === "EDITAR"))
+        ? decidirNoLancamento(bloco, mudar, escolha, contexto)
+        : escolha;
+    depoisDeDecidir(bloco.codigo, gravada, antes);
   }
 
   async function concluirEProxima() {

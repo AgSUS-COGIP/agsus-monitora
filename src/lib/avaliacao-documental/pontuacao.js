@@ -75,6 +75,10 @@ function diaUtc(texto) {
  * Dias de um conjunto de intervalos [inicio, fim] (datas AAAA-MM-DD,
  * inclusivos). Com `unir`, as sobreposições contam uma vez e o intervalo que
  * começa no dia seguinte ao fim do anterior emenda. `limite` corta o fim.
+ *
+ * @param {unknown} intervalos
+ * @param {{ unir?: boolean; limite?: string | null }} [opcoes]
+ * @returns {number}
  */
 export function diasDosIntervalos(
   intervalos,
