@@ -29,7 +29,7 @@ Pré-requisito: a migration `20261009220000` aplicada (o ensaio está em `supaba
 5. Satisfeito, aumente o `limite` (até 2000) ou rode sem `editais` (os ativos com regra). Cada
    execução continua de onde a anterior parou; `forcar` relê o que já foi lido nesta versão.
 
-## Como lê (extrator 2026.10.4) — tudo local e gratuito
+## Como lê (extrator 2026.10.6) — tudo local e gratuito
 
 Nenhum documento sai do runner: sem API de IA paga, sem consulta de CNPJ na internet.
 
@@ -49,6 +49,20 @@ Nenhum documento sai do runner: sem API de IA paga, sem consulta de CNPJ na inte
 - **Vínculo atual**: os dias vão até a emissão do documento ("Gerado/Emitido em", carimbo de data e
   hora, assinatura digital), senão até a criação do PDF (metadados), senão até a data da leitura —
   `dias_ate` e `dias_ate_fonte` (EMISSAO, ARQUIVO, LEITURA), sem alerta.
+- **Declarações, contratos, certidões, contracheques** (`declaracoes.py`): o empregador é QUEM
+  DECLARA — "A X, inscrita no CNPJ…", o timbre (linha de fonte maior ou centralizada no primeiro quinto
+  da página, pela posição), "contratada pela X"/"trabalha no Hospital X", o cabeçalho sem posição, o
+  rodapé com razão social/CNPJ ou só o CNPJ validado. Uma seção por declaração (página com emissor
+  próprio ou título abre seção; sem nada, continua a anterior); os vínculos herdam o emissor dela.
+  Fim: "até a presente data", "atualmente", "encontra-se em exercício", "permanece" ou verbo no
+  presente ("exerce", "trabalha") → atual, com os dias até a emissão da própria declaração ("Cidade,
+  dd de mês de aaaa"); sem fim nem nada disso → `fim_nao_informado` (dias 0; a tela diz "fim não
+  informado", nunca "?"). Carga só ligada a "horas semanais"/"h/semana"/"carga horária (semanal) de
+  NN horas"/"jornada de NN horas" e procurada no trecho do vínculo (nunca no documento inteiro);
+  "plantões de 12 horas" → `plantonista`/`plantao_horas`; sem carga → `carga_nao_encontrada`; a
+  mesma captura em emissores diferentes vira None. Datas por extenso ("1º de setembro de 2026") e com
+  o mês estragado pelo OCR ("seternbro"); vínculo que começa depois da emissão é descartado
+  (`DATA_APOS_EMISSAO`, leve).
 - **Sobreposição**: alerta `PERIODO_SOBREPOSTO` só para o MESMO empregador (CNPJ com a mesma raiz ou
   razão social igual): provável duplicidade. Empregadores diferentes ao mesmo tempo são legítimos:
   o item ganha `concomitante` e a informação "os dias em comum contam uma vez", sem alerta. O total

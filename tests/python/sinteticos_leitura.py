@@ -386,3 +386,175 @@ def ctps_digital_impressa_como_imagem(contratos):
     """(PDF só de imagem da CTPS Digital — "impressa" como foto —, gabarito)."""
     conteudo, gabarito = ctps_digital(contratos, "grade")
     return pdf_de_imagens(paginas_como_imagem(conteudo, resolucao=150)), gabarito
+
+
+# ── declarações de vínculo / tempo de serviço ───────────────────────────────
+#
+# Cada declaração é uma página (ou mais) com o EMISSOR de um jeito: timbre no topo (nome em fonte grande,
+# centralizado, e o endereço embaixo), só no rodapé (razão social e CNPJ em letra pequena), só no texto
+# ("O SERVIÇO SOCIAL…, inscrito no CNPJ…, declara") ou só o CNPJ. O texto é corrido, com o fim do vínculo
+# ("até a presente data", "no período de A a B", "desligada em") ou sem nada, a carga ("20 horas semanais",
+# "jornada de 40 horas semanais", "plantões de 12 horas") ou números que não são carga (CEP, "Rua 26 de
+# Agosto", "carga horária total de 60 horas" de treinamento), e o local e data no fim. Tudo fictício.
+
+DECLARACOES = [
+    {
+        "emissor": "CAIXA DE ASSISTÊNCIA DOS FUNCIONÁRIOS DE EXEMPLO",
+        "cnpj": cnpj_ficticio(33719485),
+        "timbre": True,
+        "endereco": "Rua 26 de Agosto, 260 - Centro - CEP 26.260-000 - Exemplópolis/EX",
+        "texto": (
+            "Declaramos para os devidos fins que {nome}, CPF {cpf}, exerce desde 24/08/2022 até a presente data o "
+            "cargo de Médico do Trabalho, com carga horária de 20 horas semanais, nesta instituição."
+        ),
+        "local": "Exemplópolis, 10 de outubro de 2026",
+        "gabarito": {"inicio": "2022-08-24", "fim": None, "atual": True, "carga": 20, "cargo": "Médico do trabalho"},
+    },
+    {
+        "emissor": "SERVIÇO SOCIAL DA INDÚSTRIA - SESI EXEMPLO",
+        "cnpj": cnpj_ficticio(3777341, 12),
+        "timbre": False,
+        "texto": (
+            "O SERVIÇO SOCIAL DA INDÚSTRIA - SESI EXEMPLO, inscrito no CNPJ sob o nº {cnpj}, declara para os devidos "
+            "fins que {nome}, portadora do CPF {cpf}, presta serviços nesta entidade desde 1º de setembro de 2024, "
+            "no cargo de Médico, em regime de plantões de 12 horas, encontrando-se em exercício até o momento."
+        ),
+        "local": "Vila Exemplo - EX, 28 de setembro de 2026",
+        "gabarito": {"inicio": "2024-09-01", "fim": None, "atual": True, "carga": None, "cargo": "Médico"},
+    },
+    {
+        "emissor": "HOSPITAL REGIONAL EXEMPLO LTDA",
+        "cnpj": cnpj_ficticio(12345678),
+        "timbre": True,
+        "endereco": "Avenida Exemplo, 26 - CEP 26.000-260 - Telefone (26) 2626-2626",
+        "texto": (
+            "Declaramos, para fins de comprovação de experiência profissional, que {nome}, CPF {cpf}, trabalhou "
+            "neste hospital no período de 01/02/2016 a 31/12/2019, na função de Médico Clínico, com jornada de "
+            "40 horas semanais."
+        ),
+        "local": "Exemplópolis, 2 de outubro de 2026",
+        "gabarito": {
+            "inicio": "2016-02-01",
+            "fim": "2019-12-31",
+            "atual": False,
+            "carga": 40,
+            "cargo": "Médico clínico",
+        },
+    },
+    {
+        "emissor": "FUNDAÇÃO MUNICIPAL DE SAÚDE DE EXEMPLO",
+        "cnpj": cnpj_ficticio(7654321),
+        "timbre": False,
+        "rodape": True,
+        "texto": (
+            "Declaro, a pedido da interessada, que {nome}, CPF {cpf}, atuou como Médica desde 10/03/2020 e "
+            "concluiu o treinamento introdutório com carga horária total de 60 horas, em 26/04/2020."
+        ),
+        "local": "Exemplópolis, 26 de setembro de 2026",
+        "gabarito": {"inicio": "2020-03-10", "fim": None, "atual": False, "carga": None, "cargo": "Médica"},
+    },
+    {
+        "emissor": "CLÍNICA SÃO LUCAS DE EXEMPLO LTDA",
+        "cnpj": cnpj_ficticio(45678912),
+        "timbre": True,
+        "endereco": "Rua das Flores, 10 - Exemplópolis/EX",
+        "texto": (
+            "Declaramos que {nome}, CPF {cpf}, foi admitida em 01/10/2018 para exercer a função de Técnica de "
+            "Enfermagem, com carga horária semanal de 30 horas, cumprindo escala definida pela coordenação de "
+            "enfermagem desta clínica, conforme os registros funcionais mantidos pelo setor de pessoal."
+        ),
+        # Continua na página seguinte (sem timbre): a saída e o local e data.
+        "continuacao": (
+            "Prosseguindo, informamos que a referida profissional foi desligada em 26/03/2021, a pedido, "
+            "nada constando que desabone sua conduta."
+        ),
+        "local": "Exemplópolis, 5 de abril de 2026",
+        "gabarito": {
+            "inicio": "2018-10-01",
+            "fim": "2021-03-26",
+            "atual": False,
+            "carga": 30,
+            "cargo": "Técnica de enfermagem",
+        },
+    },
+    {
+        "emissor": None,
+        "cnpj": cnpj_ficticio(36741852),
+        "timbre": False,
+        "rodape_so_cnpj": True,
+        "texto": (
+            "Declaramos para os devidos fins que {nome}, CPF {cpf}, trabalha como Enfermeira desde 05/04/2021, "
+            "permanecendo no quadro de colaboradores, com carga horária de 36 horas semanais."
+        ),
+        "local": "Exemplópolis, 1º de outubro de 2026",
+        "gabarito": {"inicio": "2021-04-05", "fim": None, "atual": True, "carga": 36, "cargo": "Enfermeira"},
+    },
+]
+
+
+def _gabarito_da_declaracao(d):
+    g = dict(d["gabarito"])
+    g["empregador"] = d["emissor"] or f"CNPJ {d['cnpj']}"
+    g["cnpj"] = d["cnpj"]
+    return g
+
+
+def _paragrafo(c, texto, x, y, largura, fonte="Helvetica", tamanho=11, entrelinha=17):
+    from reportlab.lib.utils import simpleSplit
+
+    for linha in simpleSplit(texto, fonte, tamanho, largura):
+        c.setFont(fonte, tamanho)
+        c.drawString(x, y, linha)
+        y -= entrelinha
+    return y
+
+
+def declaracoes_de_vinculo(declaracoes=None, nome=NOME_FICTICIO, cpf=CPF_FICTICIO):
+    """(PDF com texto, gabarito): uma declaração por página (a de `continuacao` ocupa duas), cada uma de um
+    emissor, com o timbre, o rodapé ou só o texto dizendo quem declara."""
+    declaracoes = DECLARACOES if declaracoes is None else declaracoes
+    saida, c, (largura, altura) = _canvas()
+    for d in declaracoes:
+        if d.get("timbre"):
+            c.setFont("Helvetica-Bold", 16)
+            c.drawCentredString(largura / 2, altura - 60, d["emissor"])
+            c.setFont("Helvetica", 8.5)
+            c.drawCentredString(largura / 2, altura - 76, d.get("endereco") or "")
+            c.line(50, altura - 86, largura - 50, altura - 86)
+        c.setFont("Helvetica-Bold", 13)
+        c.drawCentredString(largura / 2, altura - 150, "DECLARAÇÃO")
+        corpo = d["texto"].format(nome=nome.upper(), cpf=cpf, cnpj=d["cnpj"])
+        y = _paragrafo(c, corpo, 70, altura - 200, largura - 140)
+        if d.get("continuacao"):
+            c.setFont("Helvetica", 8)
+            c.drawString(70, 40, "continua na próxima página")
+            c.showPage()
+            y = _paragrafo(c, d["continuacao"], 70, altura - 120, largura - 140)
+        y -= 30
+        c.setFont("Helvetica", 11)
+        c.drawRightString(largura - 70, y, d["local"])
+        c.line(largura / 2 - 110, y - 70, largura / 2 + 110, y - 70)
+        c.setFont("Helvetica", 9)
+        c.drawCentredString(largura / 2, y - 84, "Responsável pelo Setor de Pessoal")
+        if d.get("rodape"):
+            c.setFont("Helvetica", 7.5)
+            c.drawCentredString(largura / 2, 46, f"{d['emissor']} - CNPJ {d['cnpj']}")
+            c.drawCentredString(largura / 2, 36, "Rua Projetada, 26 - Exemplópolis/EX - CEP 26.000-000")
+        if d.get("rodape_so_cnpj"):
+            c.setFont("Helvetica", 7.5)
+            c.drawCentredString(largura / 2, 40, f"CNPJ {d['cnpj']}")
+        c.showPage()
+    c.save()
+    return saida.getvalue(), [_gabarito_da_declaracao(d) for d in declaracoes]
+
+
+def declaracoes_como_foto(declaracoes=None, semente=5):
+    """(PDF só de imagem: cada página da declaração "escaneada" com ruído e inclinação leve, gabarito)."""
+    from PIL import Image
+
+    conteudo, gabarito = declaracoes_de_vinculo(declaracoes)
+    fotos = []
+    for k, imagem in enumerate(paginas_como_imagem(conteudo, resolucao=200)):
+        jpeg = fotografar(imagem, semente=semente + k, angulo=1.5, perspectiva=False, sombra=0.85, largura=1700)
+        fotos.append(Image.open(io.BytesIO(jpeg)).convert("RGB"))
+    return pdf_de_imagens(fotos), gabarito

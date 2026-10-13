@@ -15,7 +15,8 @@ texto, e a leitura vai por estes caminhos, nesta ordem:
   2. texto corrido (declaração, contrato, certidão de tempo de serviço):
      "no período de A a B", "de A até a presente data", "desde A",
      "admitido(a) em A", com o cargo ("no cargo/na função de X") e o
-     empregador (o cabeçalho com Prefeitura, Secretaria, Hospital, Ltda…);
+     empregador: QUEM DECLARA (`declaracoes`: o timbre, o "A X, inscrita no
+     CNPJ…", o rodapé com razão social/CNPJ), uma declaração por seção;
   3. holerites: as competências (mês/ano) viram um vínculo do primeiro ao
      último mês.
 
@@ -43,6 +44,7 @@ contam uma vez só (a soma é a união dos períodos, como na pontuação).
 import re
 from datetime import date
 
+from . import declaracoes as _declaracoes
 from .ctps import ler_contratos
 from .pessoas import nome_confere
 from .texto import Data, datas_no_texto, dobrar, iso, numa_linha, trecho
@@ -123,13 +125,6 @@ _CARGA_SEMANAL = re.compile(
     r"(\d{1,2})\s*(?:h|horas?)\s*(?:semanais|semanal|por\s+semana|/\s*semana|/\s*sem)"
     r"|carga\s+horaria\s+(?:semanal\s+)?de\s+(\d{1,2})\s*(?:h|horas?)\s*(?:semanais|semanal|por\s+semana)"
 )
-_EMPRESA_NO_CABECALHO = re.compile(
-    r"(?<![a-z])(prefeitura|secretaria|hospital|fundacao|instituto|ltda|s/a|s\.a\.|eireli|associacao|clinica|"
-    r"cooperativa|consorcio|governo|ministerio|universidade|empresa|servicos|saude|distrito sanitario|dsei|"
-    r"unidade|centro|laboratorio|farmacia|escola|camara|municipio|estado de|organizacao|agencia|banco)(?![a-z])"
-)
-_NAO_E_EMPREGADOR = re.compile(r"^(?:declara|certific|atest|a quem|para os devidos|ilmo|prezad|ref|assunto)")
-
 MAXIMO_DE_VINCULOS = 20
 
 
@@ -227,21 +222,6 @@ def _data_depois(datas, posicao, alcance=60):
     for d in datas:
         if 0 <= d.inicio - posicao <= alcance:
             return d
-    return None
-
-
-def empregador_do_cabecalho(original, dobrado):
-    """A primeira das 12 primeiras linhas com cara de instituição (Prefeitura, Hospital, Ltda…)."""
-    inicio = 0
-    for _ in range(12):
-        fim = dobrado.find("\n", inicio)
-        fim = len(dobrado) if fim < 0 else fim
-        linha = dobrado[inicio:fim].strip()
-        if linha and not _NAO_E_EMPREGADOR.match(linha) and _EMPRESA_NO_CABECALHO.search(linha) and len(linha) <= 160:
-            return trecho(original, inicio, fim, 120)
-        if fim >= len(dobrado):
-            break
-        inicio = fim + 1
     return None
 
 
@@ -354,18 +334,18 @@ def _rotulados(original, dobrado, datas, documento, pagina_de):
             _campo_no_trecho(_CARGO, original, dobrado, entrada.fim, ate_dos_campos, 80, aceita=_cargo_de_verdade)
         )
         consumido = saida.fim if saida else entrada.fim
-        itens.append(
-            _vinculo(
-                documento,
-                empregador,
-                cargo,
-                entrada.primeiro_dia(),
-                saida.ultimo_dia() if saida else None,
-                atual,
-                carga_semanal(dobrado[antes_de:ate]),
-                pagina_de(m.start()),
-            )
+        item = _vinculo(
+            documento,
+            empregador,
+            cargo,
+            entrada.primeiro_dia(),
+            saida.ultimo_dia() if saida else None,
+            atual,
+            carga_semanal(dobrado[antes_de:ate]),
+            pagina_de(m.start()),
         )
+        item["_janela"], item["_pos"], item["_rotulado"] = (antes_de, ate), entrada.inicio, empregador is not None
+        itens.append(item)
     return itens
 
 
@@ -418,18 +398,19 @@ def _periodos(original, dobrado, datas, documento, pagina_de):
             empregador = _valor_do_campo(original, dobrado, max(0, a.inicio - 400) + e.end())
             if empregador:
                 break
-        saida.append(
-            _vinculo(
-                documento,
-                empregador,
-                cargo,
-                a.primeiro_dia(),
-                b.ultimo_dia() if b else None,
-                atual,
-                None,
-                pagina_de(a.inicio),
-            )
+        item = _vinculo(
+            documento,
+            empregador,
+            cargo,
+            a.primeiro_dia(),
+            b.ultimo_dia() if b else None,
+            atual,
+            None,
+            pagina_de(a.inicio),
         )
+        fim_da_janela = (b.fim if b else a.fim) + 250
+        item["_janela"], item["_pos"], item["_rotulado"] = (max(0, a.inicio - 250), fim_da_janela), a.inicio, False
+        saida.append(item)
     return saida
 
 
@@ -565,70 +546,175 @@ def _unir_alteracoes(itens):
     return sorted(saida, key=lambda x: ordem.get(id(x), 0))
 
 
-def vinculos(paginas, nome_do_candidato=None, hoje=None, data_do_arquivo=None):
+DATA_APOS_EMISSAO = "Vínculo com data depois da emissão da declaração descartado (provável leitura errada): confira"
+
+
+def _emissao_da_secao(dobrado, datas):
+    """(data de emissão, Data do local e data ou None, confiável?): o "Cidade, 10 de outubro de 2026", a rotulada
+    (emitido em, carimbo, assinatura digital) ou, sem confiança, a última data completa."""
+    local = _declaracoes.local_e_data(dobrado, datas)
+    if local:
+        return local.primeiro_dia(), local, True
+    rotulada = data_de_emissao(dobrado, datas, ultima_como_emissao=False)
+    if rotulada:
+        return rotulada, None, True
+    return data_de_emissao(dobrado, datas), None, False
+
+
+def _vinculos_da_secao(secao, documento, avisos):
+    """Os vínculos de uma declaração (seção): extraídos só do texto dela, com o emissor dela como empregador
+    (o rotulado "Empregador:" do formulário vale antes), o fim/atual e a carga do trecho do vínculo."""
+    original, pagina_de = _paginador(secao.paginas)
+    dobrado = dobrar(original)
+    datas = datas_no_texto(dobrado)
+    emissao, local, confiavel = _emissao_da_secao(dobrado, datas)
+    candidatas = [d for d in datas if d is not local]  # o local e data não é início de vínculo
+    itens = _rotulados(original, dobrado, candidatas, documento, pagina_de) or _periodos(
+        original, dobrado, candidatas, documento, pagina_de
+    )
+    # O "rodapé" que começa na emissão só se tira com a emissão de verdade (não a última data, que pode ser o início).
+    itens = _sem_repetidos(
+        [it for it in itens if not (it["fim"] and it["fim"] < it["inicio"])], emissao if confiavel else None
+    )
+    emissor = secao.emissor
+    saida = []
+    for it in itens:
+        if confiavel and emissao and it["inicio"] > emissao:
+            avisos.append({"codigo": "DATA_APOS_EMISSAO", "texto": DATA_APOS_EMISSAO})
+            continue
+        comeco, fim = it["_janela"] if len(itens) > 1 else (0, len(dobrado))
+        comeco, fim = max(0, comeco), min(len(dobrado), fim)
+        # O "Empregador: X" do formulário vale antes do emissor, se tiver cara de nome ("nesta empresa em…" não).
+        rotulado = it["_rotulado"] and _declaracoes.nome_de_instituicao(it["empregador"] or "")
+        if emissor and not rotulado:
+            it["empregador"] = emissor.empregador
+        if emissor and emissor.cnpj and not it.get("cnpj"):
+            it["cnpj"] = emissor.cnpj
+        if not it["fim"]:
+            it["atual"] = bool(_declaracoes.ATUAL_DECLARADO.search(dobrado, comeco, fim))
+        carga = _declaracoes.carga_declarada(dobrado, comeco, fim, it["_pos"])
+        it["carga_semanal"] = carga.horas if carga else None
+        if carga and carga.plantao:
+            it["plantonista"], it["plantao_horas"] = True, carga.plantao
+        it["_carga"] = (id(secao), carga.posicao) if carga and carga.horas else None
+        it["_emissor"] = emissor.chave() if emissor else f"secao-{id(secao)}"
+        it["_emissao"] = emissao
+        saida.append(it)
+    return saida
+
+
+def _carga_capturada_duas_vezes(itens):
+    """O mesmo número de carga (a mesma posição no texto) em vínculos de emissores diferentes é captura do mesmo
+    trecho: a carga desses vínculos fica None ("carga não encontrada")."""
+    por_captura = {}
+    for it in itens:
+        if it.get("_carga"):
+            por_captura.setdefault(it["_carga"], []).append(it)
+    for grupo in por_captura.values():
+        if len({it["_emissor"] for it in grupo}) > 1:
+            for it in grupo:
+                it["carga_semanal"] = None
+
+
+def _vinculos_declarados(paginas, documento, avisos):
+    """Declaração, contrato, certidão, holerite: os vínculos de cada seção (uma declaração por emissor)."""
+    secoes = _declaracoes.secoes(paginas)
+    if documento == "HOLERITE":
+        original, pagina_de = _paginador(paginas)
+        dobrado = dobrar(original)
+        itens = _holerites(dobrado, datas_no_texto(dobrado), documento, pagina_de)
+        if itens:
+            for it in itens:
+                secao = next((s for s in secoes if any(p.numero == it["pagina"] for p in s.paginas)), None)
+                if secao and secao.emissor:
+                    it["empregador"] = secao.emissor.empregador
+                    if secao.emissor.cnpj:
+                        it["cnpj"] = secao.emissor.cnpj
+            return itens
+    itens = []
+    for secao in secoes:
+        itens.extend(_vinculos_da_secao(secao, documento, avisos))
+    _carga_capturada_duas_vezes(itens)
+    return itens
+
+
+def vinculos(paginas, nome_do_candidato=None, hoje=None, data_do_arquivo=None, avisos=None):
     """Os itens VINCULO do arquivo, na ordem do texto, sem repetição.
 
-    O vínculo atual (sem fim) conta os dias até a emissão do documento; sem ela, até a data em que o PDF foi
-    gerado (`data_do_arquivo`, dos metadados) ou, sem nada, até `hoje` (a data da leitura) — sempre com
-    `dias_ate` (a data) e `dias_ate_fonte` (EMISSAO, ARQUIVO ou LEITURA), sem alerta."""
+    CTPS: pela posição dos campos (`ctps`) ou pelos rótulos. Declaração, contrato, certidão e holerite: por seção
+    (`declaracoes`: uma declaração por emissor), com o emissor como empregador, o fim/atual e a carga do trecho do
+    vínculo; o vínculo sem fim e sem "até a presente data"/"atualmente"/verbo no presente fica com
+    `fim_nao_informado` (dias 0), o sem carga declarada com `carga_nao_encontrada`, e o que começa depois da
+    emissão da declaração é descartado (o alerta leve vai para `avisos`, se dada uma lista).
+
+    O vínculo atual (sem fim) conta os dias até a emissão do documento (na declaração, a da própria seção); sem
+    ela, até a data em que o PDF foi gerado (`data_do_arquivo`, dos metadados) ou, sem nada, até `hoje` (a data da
+    leitura) — sempre com `dias_ate` (a data) e `dias_ate_fonte` (EMISSAO, ARQUIVO ou LEITURA), sem alerta."""
     hoje = hoje or date.today()
+    avisos = [] if avisos is None else avisos
     original, pagina_de = _paginador(paginas)
     dobrado = dobrar(original)
     datas = datas_no_texto(dobrado)
     documento = tipo_do_documento(dobrado)
-    itens, emissao = [], None
+    declarado = documento != "CTPS"
     if documento == "CTPS":
         itens, emissao = _da_ctps(paginas)
-    if documento == "HOLERITE":
-        itens = _holerites(dobrado, datas, documento, pagina_de)
-    if not itens:
-        itens = _rotulados(original, dobrado, datas, documento, pagina_de)
-    if not itens:
-        itens = _periodos(original, dobrado, datas, documento, pagina_de)
-    cabecalho = None if documento == "CTPS" else empregador_do_cabecalho(original, dobrado)
-    emissao = emissao or data_de_emissao(dobrado, datas, ultima_como_emissao=documento != "CTPS")
-    itens = _sem_repetidos([it for it in itens if not (it["fim"] and it["fim"] < it["inicio"])], emissao)
-    if documento == "CTPS":
+        if not itens:
+            itens = _rotulados(original, dobrado, datas, documento, pagina_de) or _periodos(
+                original, dobrado, datas, documento, pagina_de
+            )
+        emissao = emissao or data_de_emissao(dobrado, datas, ultima_como_emissao=False)
+        itens = _sem_repetidos([it for it in itens if not (it["fim"] and it["fim"] < it["inicio"])], emissao)
         _empregador_do_vizinho(itens)
+    else:
+        itens = _vinculos_declarados(paginas, documento, avisos)
+        emissao = data_de_emissao(dobrado, datas)
     vistos, saida = set(), []
     for it in itens:
         chave = (it["inicio"], it["fim"], dobrar(it["empregador"] or ""))
         if chave in vistos:
             continue
         vistos.add(chave)
-        if not it["empregador"]:
-            it["empregador"] = cabecalho
         it["cargo"], cbo, carga_do_cargo = cargo_e_jornada(it["cargo"])
         if cbo and not it.get("cbo"):
             it["cbo"] = cbo
-        if not it["carga_semanal"]:
+        if not it["carga_semanal"] and not it.get("plantonista"):
             it["carga_semanal"] = carga_do_cargo
         it["atual"] = bool(it["atual"]) and not it["fim"]
         saida.append(it)
     if documento == "CTPS":
         saida = _unir_alteracoes(saida)
     # Data depois do dia da leitura (OCR que leu 2028 por 2026, metadado errado) não serve de limite.
-    emissao = emissao if emissao and emissao <= hoje else None
     data_do_arquivo = data_do_arquivo if data_do_arquivo and data_do_arquivo <= hoje else None
     for it in saida:
+        emissao_do_item = it.get("_emissao", emissao)
+        emissao_do_item = emissao_do_item if emissao_do_item and emissao_do_item <= hoje else None
         # Atual: fim None; os dias vão até a emissão do documento, a data do arquivo ou a da leitura.
         if it["atual"]:
-            if emissao and emissao >= it["inicio"]:
-                ate, fonte = emissao, "EMISSAO"
+            if emissao_do_item and emissao_do_item >= it["inicio"]:
+                ate, fonte = emissao_do_item, "EMISSAO"
             elif data_do_arquivo and data_do_arquivo >= it["inicio"]:
                 ate, fonte = data_do_arquivo, "ARQUIVO"
             else:
                 ate, fonte = hoje, "LEITURA"
             it["dias"] = dias_do_vinculo(it["inicio"], ate, hoje)
             it["dias_ate"], it["dias_ate_fonte"] = iso(ate), fonte
-        elif it["fim"] or not it.get("desligado_sem_data"):
+        elif it["fim"]:
+            it["dias"] = dias_do_vinculo(it["inicio"], it["fim"], hoje)
+        elif declarado and not it.get("desligado_sem_data"):
+            # Sem fim e sem "até a presente data": não dá para saber até quando (a tela diz "fim não informado").
+            it["dias"] = 0
+            it["fim_nao_informado"] = True
+        elif not it.get("desligado_sem_data"):
             it["dias"] = dias_do_vinculo(it["inicio"], it["fim"], hoje)
         else:
             it["dias"] = 0  # "Desligado" sem a data de saída: não dá para contar
         it["inicio"], it["fim"] = iso(it["inicio"]), iso(it["fim"])
-        if not it["carga_semanal"] and documento != "CTPS":
-            it["carga_semanal"] = carga_semanal(dobrado)
+        if declarado and not it["carga_semanal"] and not it.get("plantonista"):
+            it["carga_nao_encontrada"] = True
         it["nome_confere"] = nome_confere(nome_do_candidato, original) if nome_do_candidato else None
+        for chave in [k for k in it if k.startswith("_")]:
+            del it[chave]
     return saida[:MAXIMO_DE_VINCULOS]
 
 

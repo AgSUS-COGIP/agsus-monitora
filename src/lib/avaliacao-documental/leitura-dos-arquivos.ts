@@ -44,6 +44,13 @@ export type ItemLido = {
   dias?: number | null;
   /** Vínculo atual (sem fim): até quando os dias foram contados (a emissão do documento). */
   dias_ate?: string | null;
+  /** Declaração sem data de saída e sem "até a presente data": não dá para saber até quando. */
+  fim_nao_informado?: boolean;
+  /** Declaração sem número ligado a "horas semanais"/"carga horária"/"jornada". */
+  carga_nao_encontrada?: boolean;
+  /** "Plantões de 12 horas": plantonista, sem carga semanal direta. */
+  plantonista?: boolean;
+  plantao_horas?: number | null;
   cbo?: string | null;
   documento?: string | null;
   // REGISTRO
@@ -214,13 +221,25 @@ export function textoDoItemLido(item: ItemLido): string {
   } else if (item.tipo === "VINCULO") {
     partes.push(texto(item.empregador) || "Empregador não lido");
     if (item.cargo) partes.push(texto(item.cargo));
-    const fim = item.fim
-      ? dataCurta(item.fim) + (item.atual ? " (atual)" : "")
-      : item.atual
-        ? "atual"
-        : "?";
-    partes.push(`${dataCurta(item.inicio) || "?"} a ${fim}`);
+    const inicio = dataCurta(item.inicio);
+    if (item.fim)
+      partes.push(
+        `${inicio || "?"} a ${dataCurta(item.fim)}${item.atual ? " (atual)" : ""}`,
+      );
+    else if (item.atual) partes.push(`${inicio || "?"} a atual`);
+    // Sem fim e sem "atual": nunca um "?" ambíguo.
+    else
+      partes.push(
+        `${inicio ? `desde ${inicio}` : "início não lido"}, fim não informado`,
+      );
     if (item.carga_semanal) partes.push(`${item.carga_semanal} h/sem`);
+    else if (item.plantonista)
+      partes.push(
+        item.plantao_horas
+          ? `plantões de ${item.plantao_horas} h`
+          : "plantonista",
+      );
+    else if (item.carga_nao_encontrada) partes.push("carga não encontrada");
     // Atual: os dias vão até a emissão do documento ou, sem ela, até hoje (o
     // "até hoje" fica no texto, discreto, em vez de alerta).
     if (item.dias)

@@ -135,6 +135,37 @@ describe("leituras da ficha", () => {
     ).toBe(
       "Prefeitura · Técnico de enfermagem · 01/03/2020 a atual · 2.000 dias até 21/08/2025",
     );
+    // Declaração sem saída nem "até a presente data": nunca "?"; sem carga declarada, diz.
+    expect(
+      textoDoItemLido({
+        tipo: "VINCULO",
+        empregador: "Fundação Exemplo",
+        cargo: "Médica",
+        inicio: "2020-03-10",
+        fim: null,
+        atual: false,
+        fim_nao_informado: true,
+        carga_nao_encontrada: true,
+        dias: 0,
+      }),
+    ).toBe(
+      "Fundação Exemplo · Médica · desde 10/03/2020, fim não informado · carga não encontrada",
+    );
+    expect(
+      textoDoItemLido({
+        tipo: "VINCULO",
+        empregador: "SESI",
+        inicio: "2024-09-01",
+        fim: null,
+        atual: true,
+        plantonista: true,
+        plantao_horas: 12,
+        dias: 758,
+        dias_ate: "2026-09-28",
+      }),
+    ).toBe(
+      "SESI · 01/09/2024 a atual · plantões de 12 h · 758 dias até 28/09/2026",
+    );
     expect(
       textoDoItemLido({
         tipo: "TITULO",
