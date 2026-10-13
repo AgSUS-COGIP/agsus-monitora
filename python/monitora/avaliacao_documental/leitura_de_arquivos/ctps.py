@@ -63,7 +63,8 @@ _ROTULOS = (
     ("SITUACAO", r"situacao(?:\s+do\s+(?:vinculo|contrato))?"),
     ("CBO", r"c\s?\.?\s?b\s?\.?\s?o\.?(?:\s+n[ºo°.]*)?(?![a-z])"),
     ("CARGO", r"cargo\s*/\s*funcao|descricao\s+do\s+cargo|cargo(?:\s+exercido)?|ocupacao|funcao"),
-    ("TIPO", r"tipo\s+de\s+(?:contrato|vinculo)|categoria(?:\s+do\s+trabalhador)?"),
+    # "Tipo de admissão" (CTPS Digital) é rótulo: sem ele, virava a razão social do contrato seguinte.
+    ("TIPO", r"tipo\s+de\s+(?:contrato|vinculo|admissao)|categoria(?:\s+do\s+trabalhador)?"),
     ("REMUNERACAO", r"(?:remuneracao|salario)(?:\s+(?:inicial|contratual|base|mensal|especificada))?"),
     (
         "JORNADA",

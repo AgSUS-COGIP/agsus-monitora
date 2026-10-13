@@ -1,10 +1,12 @@
 import { readFileSync, readdirSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import {
+  caminhoRegistado,
   classificar,
   escaparLiteral,
   ficheirosNoDisco,
   hashDoConteudo,
+  timestampsRepetidos,
 } from "../scripts/estado-das-migrations-nucleo.mjs";
 
 /*
@@ -72,6 +74,19 @@ describe("os quatro estados", () => {
     Registado no banco e sem ficheiro no disco. Não é erro por si — o SIGAV
     apagou 181 migrations ao criar um baseline —, mas tem de ser visível.
   */
+  it("o prefixo supabase/ do registro não vira órfão nem pendente", () => {
+    expect(caminhoRegistado("supabase/migrations/a.sql")).toBe(
+      "migrations/a.sql",
+    );
+    const r = classificar(
+      [ficheiro("migrations/a.sql", "h1")],
+      [registo("supabase/migrations/a.sql", "h1")],
+    );
+    expect(r.aplicados.map((f) => f.caminho)).toEqual(["migrations/a.sql"]);
+    expect(r.pendentes).toEqual([]);
+    expect(r.orfaos).toEqual([]);
+  });
+
   it("registado sem ficheiro é órfão", () => {
     const r = classificar([], [registo("migrations/apagada.sql", "h1")]);
     expect(r.orfaos).toHaveLength(1);
@@ -114,7 +129,18 @@ describe("o hash", () => {
     próprio para reconhecer a mudança que foi só de forma.
   */
   it("é sensível a espaço em branco", () => {
-    expect(hashDoConteudo("a\n")).not.toBe(hashDoConteudo("a\r\n"));
+    expect(hashDoConteudo("a \n")).not.toBe(hashDoConteudo("a\n"));
+  });
+
+  /*
+    O "\r" não: vem do checkout (core.autocrlf no Windows), não do SQL. O
+    registro do banco é o sha256 do arquivo sem "\r" (auditoria de 13/10/2026).
+  */
+  it("ignora o \\r do fim de linha (CRLF e LF dão o mesmo hash)", () => {
+    expect(hashDoConteudo("a\r\nb\r\n")).toBe(hashDoConteudo("a\nb\n"));
+    expect(hashDoConteudo(Buffer.from("a\r\n"))).toBe(
+      "87428fc522803d31065e7bce3cf03fe475096631e5e07bbd7a0fde60c4cf25c7",
+    );
   });
 });
 
@@ -156,6 +182,67 @@ describe("contra os ficheiros deste repositório", () => {
   it("cada ficheiro tem caminho único", () => {
     const vistos = new Set(noDisco.map((f) => f.caminho));
     expect(vistos.size).toBe(noDisco.length);
+  });
+
+  /*
+    Já aplicadas e registradas pelo caminho: renomear agora quebraria o
+    registro. Ficam como estão; nenhum par novo.
+  */
+  const REPETIDOS_CONHECIDOS = {
+    20260928180000: [
+      "20260928180000_analises_do_painel_por_area.sql",
+      "20260928180000_autoria_e_trava_da_lista_de_aprovados.sql",
+    ],
+    20260928190000: [
+      "20260928190000_anexos_do_candidato_aprovado.sql",
+      "20260928190000_remove_rpcs_do_painel_react.sql",
+    ],
+    20260928200000: [
+      "20260928200000_analises_painel_mais_leve.sql",
+      "20260928200000_anexos_do_candidato_em_bytea.sql",
+    ],
+    20261001150000: [
+      "20261001150000_ausentes_com_permissao_do_sync.sql",
+      "20261001150000_sub_judice_alteracao.sql",
+    ],
+    20261002090000: [
+      "20261002090000_convocacao_serie_mgi.sql",
+      "20261002090000_kpis_depois_da_carga_da_selecao.sql",
+    ],
+    20261013120000: [
+      "20261013120000_esvaziar_logs.sql",
+      "20261013120000_rascunho_das_regras.sql",
+    ],
+    20261013140000: [
+      "20261013140000_menos_chamadas_e_log.sql",
+      "20261013140000_quadro_da_vaga_pelo_titulo.sql",
+    ],
+  };
+
+  it("nenhum timestamp de migration repetido além dos já aplicados", () => {
+    const nomes = noDisco
+      .filter((f) => f.diretorio === "migrations")
+      .map((f) => f.caminho);
+    const repetidos = timestampsRepetidos(nomes);
+    for (const [ts, lista] of Object.entries(repetidos)) {
+      expect(
+        REPETIDOS_CONHECIDOS[ts],
+        `timestamp ${ts} repetido: ${lista.join(", ")} — renumere a migration nova`,
+      ).toEqual(lista);
+    }
+  });
+
+  it("acha o timestamp repetido", () => {
+    expect(
+      timestampsRepetidos([
+        "migrations/20261013190000_a.sql",
+        "migrations/20261013190000_b.sql",
+        "migrations/20261013200000_c.sql",
+        "migrations/sem_timestamp.sql",
+      ]),
+    ).toEqual({
+      20261013190000: ["20261013190000_a.sql", "20261013190000_b.sql"],
+    });
   });
 
   it("diretório ausente não é erro", () => {

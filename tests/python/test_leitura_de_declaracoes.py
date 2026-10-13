@@ -48,7 +48,7 @@ def _por_inicio(itens):
 
 
 def test_versao_do_extrator_subiu():
-    assert VERSAO_DO_EXTRATOR == "2026.10.8"
+    assert VERSAO_DO_EXTRATOR == "2026.10.13"
 
 
 # ── o caso do arquivo com várias declarações ────────────────────────────────
