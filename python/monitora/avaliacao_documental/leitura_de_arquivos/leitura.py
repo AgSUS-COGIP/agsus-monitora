@@ -38,6 +38,7 @@ Os textos dos alertas não levam nome, CPF nem trecho do documento.
 from datetime import date
 
 from ..nota_declarada import colunas_da_pergunta, normalizar_texto
+from ..pontuacao import dias_dos_intervalos
 from . import certificados as _certificados
 from . import diplomas as _diplomas
 from . import experiencia as _experiencia
@@ -47,6 +48,7 @@ from .extracao import ler_paginas, ocr_tesseract
 from .pessoas import cpf_confere, cpfs_do_texto, nome_confere, sem_nome_de_pessoa
 from .texto import dobrar, letras
 
+INFORMACAO_CONCOMITANTE = "Concomitante com outro vínculo: os dias em comum contam uma vez"
 MINIMO_DE_LETRAS = 30  # o arquivo inteiro com menos que isso: ilegível
 CONFIANCA_MINIMA_DO_OCR = 0.45
 CONFIANCA_DO_NOME = 0.70  # OCR abaixo disso: nome não achado é "confira", não "diverge"
@@ -154,13 +156,18 @@ def _alertas_do_item(item, hoje, minimo, nome_do_arquivo_confere, sobrepostos, i
             alertas.append(_alerta("SEM_DATA", "Data de conclusão não encontrada"))
     if tipo == "VINCULO":
         if sobrepostos.get(indice) == "PERIODO_SOBREPOSTO":
-            alertas.append(_alerta("PERIODO_SOBREPOSTO", "Período sobreposto a outro vínculo do mesmo empregador"))
-        elif sobrepostos.get(indice) == "PERIODO_CONCOMITANTE":
             alertas.append(
-                _alerta("PERIODO_CONCOMITANTE", "Concomitante com outro vínculo (pode ser legítimo): confira")
+                _alerta(
+                    "PERIODO_SOBREPOSTO",
+                    "Período sobreposto a outro vínculo do mesmo empregador (provável duplicidade): confira",
+                )
             )
-        if item.get("atual") and not item.get("fim") and not item.get("dias_ate"):
-            alertas.append(_alerta("SEM_DATA_FIM", "Vínculo atual sem data de emissão: dias contados até hoje"))
+        elif sobrepostos.get(indice) == "PERIODO_CONCOMITANTE":
+            # Empregadores diferentes ao mesmo tempo: legítimo (médico 20 h + 10 h). Só a informação, sem alerta.
+            item["concomitante"] = True
+            item["informacao"] = INFORMACAO_CONCOMITANTE
+        if item.get("desligado_sem_data"):
+            alertas.append(_alerta("SEM_DATA_FIM", "Vínculo encerrado, mas a data de saída não foi lida"))
         if not item.get("empregador"):
             alertas.append(_alerta("SEM_EMPREGADOR", "Empregador não encontrado"))
     if tipo == "REGISTRO":
@@ -189,6 +196,14 @@ def _mil(n):
     return f"{n:,}".replace(",", ".")
 
 
+def dias_dos_vinculos(vinculos, hoje=None):
+    """(dias da união dos períodos, dias em comum que não somam): a mesma regra da pontuação
+    (`pontuacao.dias_dos_intervalos` com unir=True); o atual vai até `dias_ate`."""
+    intervalos = _experiencia.intervalos_para_somar(vinculos, hoje)
+    uniao = dias_dos_intervalos(intervalos, unir=True)
+    return uniao, max(0, dias_dos_intervalos(intervalos, unir=False) - uniao)
+
+
 def resumo(resultado):
     """Uma linha para a ficha (sem dado pessoal)."""
     situacao = resultado["situacao"]
@@ -211,10 +226,13 @@ def resumo(resultado):
     if titulos:
         partes.append(", ".join(dict.fromkeys(ROTULO_DO_TITULO.get(t["titulo"], t["titulo"]) for t in titulos)))
     if vinculos:
-        dias = sum(v.get("dias") or 0 for v in vinculos)
+        # A regra dos editais: dias em que dois vínculos coexistem contam uma vez (a união dos períodos).
+        dias, em_comum = dias_dos_vinculos(vinculos)
         partes.append(f"{len(vinculos)} vínculo{'s' if len(vinculos) > 1 else ''}")
         if dias:
             partes.append(f"{_mil(dias)} dias")
+        if em_comum:
+            partes.append(f"{_mil(em_comum)} dias em comum não somam")
     for i in itens:
         if i["tipo"] == "IDENTIDADE":
             partes.append(ROTULO_DA_IDENTIDADE.get(i["documento"], i["documento"]))
@@ -295,13 +313,13 @@ def _interpretar(resultado, leitura, texto, esperado, nome, sal, hash_do_cpf, mi
     elif esperado == "TITULOS":
         itens = _diplomas.titulos(paginas, nome)
     elif esperado == "VINCULOS":
-        itens = _experiencia.vinculos(paginas, nome, hoje)
+        itens = _experiencia.vinculos(paginas, nome, hoje, leitura.data_do_arquivo)
     elif esperado == "IDENTIDADE":
         itens = _identidade.identidade(paginas)
     elif esperado == "REGISTRO":
         itens = _identidade.registro(paginas)
     elif tipo in DOCUMENTOS_DE_VINCULO:
-        itens = _experiencia.vinculos(paginas, nome, hoje)
+        itens = _experiencia.vinculos(paginas, nome, hoje, leitura.data_do_arquivo)
     else:
         itens = []
     for item in itens:

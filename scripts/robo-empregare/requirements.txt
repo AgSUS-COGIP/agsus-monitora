@@ -9,3 +9,5 @@ xlrd==2.0.2
 # texto do PDF (pdfplumber, que traz Pillow e pypdfium2) e OCR (pytesseract + Tesseract do apt).
 pdfplumber==0.11.9
 pytesseract==0.3.13
+# Arruma a foto antes do OCR (perspectiva, sombra, inclinação, binarização): leitura_de_arquivos/imagem.py.
+opencv-python-headless==4.12.0.88
