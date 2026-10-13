@@ -43,6 +43,7 @@ def casos():
         ("CTPS digital · grade + férias", lambda: s.ctps_digital(medico, "grade")),
         ("CTPS digital · só CNPJ", lambda: s.ctps_digital(enfermeira, "grade", sem_razao_social=(1,))),
         ("Declarações · 6 emissores em 7 páginas", lambda: s.declaracoes_de_vinculo()),
+        ("Declarações · caso do médico (OCR sujo)", lambda: s.declaracoes_de_vinculo(s.CASO_DO_MEDICO)),
     ]
     lista += [
         (f"Declaração sozinha · {d['emissor'] or 'só CNPJ'}"[:60], lambda d=d: s.declaracoes_de_vinculo([d]))
@@ -68,6 +69,7 @@ def avaliar(ler_documento):
         segundos = time.perf_counter() - inicio
         itens = [i for i in r["itens"] if i.get("tipo") == "VINCULO"]
         conta = {"empregador": 0, "fim": 0, "cargo": 0, "carga": 0, "casados": 0}
+        # Itens a mais que o gabarito (vínculo duplicado entre páginas, rodapé lido como vínculo).
         for g in gabarito:
             item = next((i for i in itens if i.get("inicio") == g["inicio"]), None)
             if item is None:

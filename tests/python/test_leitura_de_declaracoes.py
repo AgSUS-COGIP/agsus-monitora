@@ -14,7 +14,15 @@ import pytest
 import sinteticos_leitura as s
 
 from monitora.avaliacao_documental.leitura_de_arquivos import VERSAO_DO_EXTRATOR
-from monitora.avaliacao_documental.leitura_de_arquivos.declaracoes import carga_declarada, emissor_da_pagina, secoes
+from monitora.avaliacao_documental.leitura_de_arquivos.declaracoes import (
+    carga_declarada,
+    emissor_da_pagina,
+    limpar_nome,
+    nome_de_instituicao,
+    numero_por_extenso,
+    parece_lixo,
+    secoes,
+)
 from monitora.avaliacao_documental.leitura_de_arquivos.experiencia import _carga_capturada_duas_vezes, vinculos
 from monitora.avaliacao_documental.leitura_de_arquivos.extracao import Pagina
 from monitora.avaliacao_documental.leitura_de_arquivos.layout import Palavra
@@ -39,7 +47,7 @@ def _por_inicio(itens):
 
 
 def test_versao_do_extrator_subiu():
-    assert VERSAO_DO_EXTRATOR == "2026.10.6"
+    assert VERSAO_DO_EXTRATOR == "2026.10.7"
 
 
 # ── o caso do arquivo com várias declarações ────────────────────────────────
@@ -331,3 +339,93 @@ def test_palavra_solta_depois_de_empresa_nao_vira_empregador():
     item = vinculos([Pagina(1, texto, "TEXTO")], hoje=HOJE)[0]
     assert item["empregador"] == "HOSPITAL EXEMPLO LTDA"
     assert (item["atual"], item["carga_semanal"], item["dias_ate"]) == (True, 30, "2026-10-10")
+
+
+# ── limpeza do empregador (extrator 2026.10.7: o caso do médico relido) ──────
+
+
+@pytest.fixture(scope="module")
+def caso_do_medico():
+    conteudo, gabarito = s.declaracoes_de_vinculo(s.CASO_DO_MEDICO)
+    return ler_documento(conteudo, "VINCULOS", NOME, hoje=HOJE, ocr=None), gabarito
+
+
+def test_caso_do_medico_sem_duplicado_nem_lixo(caso_do_medico):
+    resultado, gabarito = caso_do_medico
+    assert len(resultado["itens"]) == len(gabarito) == 3
+    itens = _por_inicio(resultado["itens"])
+    for g in gabarito:
+        item = itens[g["inicio"]]
+        assert item["empregador"] == g["empregador"], g
+        assert (item["fim"], item["atual"], item["carga_semanal"]) == (g["fim"], g["atual"], g["carga"]), g
+
+
+def test_timbre_ilegivel_fica_com_a_razao_social_do_mesmo_cnpj(caso_do_medico):
+    resultado, _ = caso_do_medico
+    item = _por_inicio(resultado["itens"])["2022-08-24"]
+    # O timbre "Cariaira cle |DX" é recusado; o CNPJ da filial (rodapé) tem a raiz do da capa, que tem o nome.
+    assert item["empregador"] == "CAIXA DE ASSISTÊNCIA DOS FUNCIONÁRIOS DE EXEMPLO"
+    assert item["cnpj"] == s.cnpj_ficticio(44719486, 54)
+    # "26 (vinte) horas semanais": vale o extenso.
+    assert item["carga_semanal"] == 20
+
+
+def test_pagina_ilegivel_repetindo_o_vinculo_nao_vira_outro(caso_do_medico):
+    resultado, _ = caso_do_medico
+    assert [i["inicio"] for i in resultado["itens"]].count("2024-09-02") == 1
+    assert all(i["empregador"] for i in resultado["itens"])
+
+
+@pytest.mark.parametrize(
+    "lixo",
+    ["Cariaira cle |DX", "Ae ras Wnt", "~ HSPTL ~", "ll |l ESCOLA", "Bnrst Qwd"],
+)
+def test_lixo_de_ocr_nao_e_empregador(lixo):
+    assert parece_lixo(lixo) or nome_de_instituicao(lixo) is None
+    assert nome_de_instituicao(lixo) is None
+
+
+@pytest.mark.parametrize(
+    ("bruto", "limpo"),
+    [
+        (
+            "O Serviço Social da Indústria — SESI, Departamento Regional de Exemplo — Empresa Privada",
+            "Serviço Social da Indústria — SESI, Departamento Regional de Exemplo",
+        ),
+        (
+            "serviço em medicina do trabalho, como médico examinador, nesta empresa, GR CLINICA MEDICA",
+            "GR CLINICA MEDICA",
+        ),
+        ("A CLÍNICA EXEMPLO LTDA, pessoa jurídica de direito privado", "CLÍNICA EXEMPLO LTDA"),
+        ("HOSPITAL MUNICIPAL DE EXEMPLO - CNPJ 11.222.333/0001-81", "HOSPITAL MUNICIPAL DE EXEMPLO"),
+        ("CAIXA DE ASSISTÊNCIA DOS FUNCIONÁRIOS DE EXEMPLO", "CAIXA DE ASSISTÊNCIA DOS FUNCIONÁRIOS DE EXEMPLO"),
+    ],
+)
+def test_nome_sem_artigo_preambulo_nem_qualificador(bruto, limpo):
+    assert nome_de_instituicao(bruto) == limpo
+
+
+def test_nome_com_no_maximo_80_caracteres():
+    longo = "FUNDAÇÃO DE SAÚDE EXEMPLO, Unidade Hospitalar Regional, Departamento de Medicina do Trabalho, Setor Norte"
+    assert len(limpar_nome(longo)) <= 80
+    assert limpar_nome(longo).startswith("FUNDAÇÃO DE SAÚDE EXEMPLO")
+
+
+def test_vinculo_repetido_sem_empregador_de_outro_cargo_nao_e_juntado():
+    texto_a = "HOSPITAL EXEMPLO LTDA\nDECLARAÇÃO\nDeclaramos que a profissional exerce o cargo de Enfermeira desde 01/02/2019."
+    texto_b = "DECLARAÇÃO\nDeclaramos que a profissional exerce o cargo de Motorista desde 01/02/2019."
+    itens = vinculos([Pagina(1, texto_a, "TEXTO"), Pagina(2, texto_b, "TEXTO")], hoje=HOJE)
+    assert len(itens) == 2
+
+
+@pytest.mark.parametrize(
+    ("texto", "valor"),
+    [("vinte", 20), ("vinte e quatro", 24), ("quarenta e quatro", 44), ("doze", 12), ("vinte e trinta", None)],
+)
+def test_numero_por_extenso(texto, valor):
+    assert numero_por_extenso(texto) == valor
+
+
+def test_carga_com_extenso_vale_o_extenso():
+    assert carga_declarada(dobrar("carga horária de 26 (vinte) horas semanais")).horas == 20
+    assert carga_declarada(dobrar("40 (quarenta) horas semanais")).horas == 40

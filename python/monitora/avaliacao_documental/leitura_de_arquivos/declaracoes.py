@@ -50,7 +50,28 @@ ATUAL_DECLARADO = re.compile(
 
 # ── carga horária ────────────────────────────────────────────────────────────
 
-_NUMERO = r"(?<![\d/.,])(\d{1,2})"
+# O número e, se houver, o extenso entre parênteses ("20 (vinte) horas"): o extenso vale mais que o dígito (o OCR
+# troca 0 por 6 e 8, mas raramente estraga a palavra inteira).
+_NUMERO = r"(?<![\d/.,])(\d{1,2})(?:\s*\(\s*(?P<extenso>[a-z][a-z ]{1,30}?)\s*\))?"
+_EXTENSO = {
+    "um": 1, "uma": 1, "dois": 2, "duas": 2, "tres": 3, "quatro": 4, "cinco": 5, "seis": 6, "sete": 7, "oito": 8,
+    "nove": 9, "dez": 10, "onze": 11, "doze": 12, "treze": 13, "quatorze": 14, "catorze": 14, "quinze": 15,
+    "dezesseis": 16, "dezessete": 17, "dezoito": 18, "dezenove": 19, "vinte": 20, "trinta": 30, "quarenta": 40,
+    "cinquenta": 50, "sessenta": 60, "setenta": 70, "oitenta": 80,
+}  # fmt: skip
+
+
+def numero_por_extenso(texto):
+    """ "vinte e quatro" → 24; None se não for um número por extenso de 1 a 89."""
+    partes = [p for p in (texto or "").split() if p != "e"]
+    if not partes or any(p not in _EXTENSO for p in partes):
+        return None
+    valores = [_EXTENSO[p] for p in partes]
+    if len(valores) == 2 and valores[0] >= 20 and valores[0] % 10 == 0 and valores[1] < 10:
+        return sum(valores)
+    return valores[0] if len(valores) == 1 else None
+
+
 _UNIDADE = r"\s*(?:h|hs|hrs?|horas?)(?![a-z])"
 _SEMANAL = r"\s*(?:semanais|semanal|por\s+semana|/\s*semana|/\s*sem(?![a-z])|na\s+semana|a\s+semana)"
 _DIARIA = r"\s*(?:diarias|diaria|por\s+dia|/\s*dia|ao\s+dia)"
@@ -84,7 +105,7 @@ def carga_declarada(dobrado, inicio=0, fim=None, perto_de=None):
     achadas = []
     for tipo, padrao in _CARGAS:
         for m in padrao.finditer(dobrado, inicio, fim):
-            horas = int(m.group(1))
+            horas = numero_por_extenso(m.group("extenso")) or int(m.group(1))
             if tipo == "PLANTAO":
                 if 1 <= horas <= 48:
                     achadas.append(Carga(None, m.start(1), horas))
@@ -153,21 +174,108 @@ def _limpo(texto):
     return re.sub(r"\s+-\s*$", "", t)
 
 
-def nome_de_instituicao(texto, exige_empresa=False):
-    """O texto como nome de instituição (sem título, endereço, contato, data) ou None."""
-    t = _limpo(texto)
+MAXIMO_DO_NOME = 80
+# Qualificadores no fim que não são o nome: "— Empresa Privada", ", pessoa jurídica de direito privado".
+_QUALIFICADOR = re.compile(
+    r"^(?:empresa\s+(?:privada|publica)|entidade\s+(?:privada|publica|sem\s+fins\s+lucrativos)|sem\s+fins\s+lucrativos"
+    r"|pessoa\s+juridica.*|sociedade\s+de\s+economia\s+mista|direito\s+privado|direito\s+publico|matriz|filial"
+    r"|unidade\s+(?:matriz|filial))$"
+)
+# Preâmbulo antes do nome: "nesta empresa, GR CLINICA" → "GR CLINICA".
+_PREAMBULO = re.compile(
+    r"^.*(?<![a-z])(?:nesta|neste|desta|deste|nessa|nesse)\s+(?:empresa|instituicao|entidade|unidade)\b"
+)
+_PARTICULAS = {"de", "da", "do", "das", "dos", "e", "em", "a", "o", "na", "no", "para", "sua", "seu", "ao"}
+_SIMBOLOS_DE_LIXO = re.compile(r"[|\{}\[\]~_<>@#$%^*=+¦§¨]")
+_VOGAIS = set("aeiouy")
+# Palavras de nome de instituição (além das de EMPRESA): uma delas no nome mostra que não é lixo de OCR.
+VOCABULARIO = {
+    "assistencia", "funcionarios", "medica", "medico", "medicina", "trabalho", "regional", "municipal", "estadual",
+    "federal", "nacional", "social", "industria", "brasil", "brasileira", "hospitalar", "odontologica",
+    "departamento", "diretoria", "coordenacao", "geral", "publica", "privada", "integrada", "especializada",
+    "especializados", "medicos", "atencao", "basica", "familia", "indigena", "especial", "diagnostico",
+    "imagem", "exames", "ocupacional", "previdencia", "beneficencia", "misericordia", "evangelico", "catolica",
+    "comercial", "nordeste", "norte", "sul", "leste", "oeste", "central", "metropolitana", "regiao",
+}  # fmt: skip
+
+
+def parece_lixo(nome):
+    """O nome tem cara de lixo de OCR ("Cariaira cle |DX"): símbolo de moldura/logo, palavra de 3+ letras sem
+    vogal, palavrinha minúscula que não é partícula, ou nenhuma palavra conhecida num nome curto em caixa mista."""
+    if _SIMBOLOS_DE_LIXO.search(nome):
+        return True
+    palavras = re.findall(r"[A-Za-zÀ-ÿ]+", nome)
+    dobradas = [dobrar(p) for p in palavras]
+    for p, d in zip(palavras, dobradas, strict=True):
+        if len(d) >= 3 and not (set(d) & _VOGAIS):
+            return True
+        if 2 <= len(d) <= 3 and p.islower() and d not in _PARTICULAS:
+            return True
+    conhecidas = [d for d in dobradas if d in VOCABULARIO or EMPRESA.fullmatch(d)]
+    longas = [d for d in dobradas if len(d) >= 4]
+    return not conhecidas and not nome.isupper() and len(longas) < 3
+
+
+def limpar_nome(texto):
+    """O nome sem o que não é nome: o pedaço de frase antes ("serviço em …, nesta empresa, GR CLINICA" → "GR
+    CLINICA"), o artigo ("O Serviço Social" → "Serviço Social"), o CNPJ e o qualificador no fim ("— Empresa
+    Privada"), com até MAXIMO_DO_NOME caracteres (corta pelos pedaços do fim, senão pela palavra)."""
+    t = _limpo(texto or "")
+    corte = re.search(r"(?i)\s*[-–—,]?\s*(?:c\.?\s?n\.?\s?p\.?\s?j|inscrit[oa]\s+no)", t)
+    if corte and corte.start() > 0:
+        t = t[: corte.start()]
     d = dobrar(t)
-    if len(t) < 3 or len(t) > 140 or _TITULO.match(d) or _CONTATO.search(d):
+    preambulo = _PREAMBULO.match(d)
+    if preambulo and preambulo.end() < len(t):
+        t = t[preambulo.end() :].lstrip(" ,;:-–—")
+    # Pedaços separados por vírgula/travessão: fora os do começo em minúscula (frase) e os qualificadores do fim.
+    pedacos = [p.strip() for p in re.split(r"\s*(?:,|\s[-–—]\s|—|–)\s*", t) if p.strip()]
+    separadores = re.findall(r"\s*(?:,|\s[-–—]\s|—|–)\s*", t)
+    if not pedacos:
+        return ""
+    comeco = 0
+    while comeco < len(pedacos) - 1 and pedacos[comeco][:1].islower():
+        comeco += 1
+    fim = len(pedacos)
+    while fim - 1 > comeco and _QUALIFICADOR.match(dobrar(pedacos[fim - 1])):
+        fim -= 1
+    while fim - 1 > comeco and len(_juntar(pedacos, separadores, comeco, fim)) > MAXIMO_DO_NOME:
+        fim -= 1
+    t = _juntar(pedacos, separadores, comeco, fim)
+    t = re.sub(r"(?i)^(?:a|o|as|os)\s+(?=[A-ZÀ-Ý])", "", t)
+    if len(t) > MAXIMO_DO_NOME:
+        t = t[:MAXIMO_DO_NOME].rsplit(" ", 1)[0]
+    return _limpo(t)
+
+
+def _juntar(pedacos, separadores, comeco, fim):
+    saida = pedacos[comeco]
+    for k in range(comeco + 1, fim):
+        separador = separadores[k - 1] if k - 1 < len(separadores) else ", "
+        saida += ", " if "," in separador else " — "
+        saida += pedacos[k]
+    return saida
+
+
+def nome_de_instituicao(texto, exige_empresa=False):
+    """O texto como nome de instituição, limpo (`limpar_nome`), sem título, endereço, contato, data nem cara de
+    lixo de OCR (`parece_lixo`), ou None."""
+    bruto = _limpo(texto)
+    if len(bruto) < 3 or len(bruto) > 240 or _TITULO.match(dobrar(bruto)):
+        return None
+    t = limpar_nome(bruto)
+    d = dobrar(t)
+    if len(t) < 3 or _TITULO.match(d) or _CONTATO.search(d):
         return None
     if re.search(r"\d{1,2}\s?[/.]\s?\d{1,2}\s?[/.]\s?\d{2,4}|\d{3}\.\d{3}", d):
         return None
-    sem_espaco = re.sub(r"[\s\-–.,/&]", "", t)
+    sem_espaco = re.sub(r"[\s\-–—.,/&]", "", t)
     if not sem_espaco or sum(c.isalpha() for c in sem_espaco) < 0.75 * len(sem_espaco):
         return None
     palavras = re.findall(r"[A-Za-zÀ-ÿ]{2,}", t)
     if not palavras or (len(palavras) == 1 and not (t.isupper() and len(palavras[0]) >= 3)):
         return None
-    if exige_empresa and not EMPRESA.search(d):
+    if parece_lixo(t) or (exige_empresa and not EMPRESA.search(d)):
         return None
     return t
 
@@ -378,7 +486,21 @@ def secoes(paginas):
             atual.emissor = emissor
         elif emissor and not atual.emissor.cnpj:
             atual.emissor.cnpj = emissor.cnpj
+    _nome_pelo_cnpj(saida)
     return saida
+
+
+def _raiz(cnpj):
+    return re.sub(r"[^0-9A-Za-z]", "", cnpj or "").upper()[:8]
+
+
+def _nome_pelo_cnpj(secoes_):
+    """A seção que só tem o CNPJ (timbre ilegível) fica com a razão social de outra seção do arquivo com o CNPJ
+    da mesma raiz (matriz e filiais)."""
+    nomes = {_raiz(s.emissor.cnpj): s.emissor.nome for s in secoes_ if s.emissor and s.emissor.nome and s.emissor.cnpj}
+    for s in secoes_:
+        if s.emissor and not s.emissor.nome and _raiz(s.emissor.cnpj) in nomes:
+            s.emissor.nome = nomes[_raiz(s.emissor.cnpj)]
 
 
 # ── emissão ──────────────────────────────────────────────────────────────────

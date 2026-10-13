@@ -400,7 +400,7 @@ def ctps_digital_impressa_como_imagem(contratos):
 DECLARACOES = [
     {
         "emissor": "CAIXA DE ASSISTÊNCIA DOS FUNCIONÁRIOS DE EXEMPLO",
-        "cnpj": cnpj_ficticio(33719485),
+        "cnpj": cnpj_ficticio(44719486),
         "timbre": True,
         "endereco": "Rua 26 de Agosto, 260 - Centro - CEP 26.260-000 - Exemplópolis/EX",
         "texto": (
@@ -412,7 +412,7 @@ DECLARACOES = [
     },
     {
         "emissor": "SERVIÇO SOCIAL DA INDÚSTRIA - SESI EXEMPLO",
-        "cnpj": cnpj_ficticio(3777341, 12),
+        "cnpj": cnpj_ficticio(55777342, 12),
         "timbre": False,
         "texto": (
             "O SERVIÇO SOCIAL DA INDÚSTRIA - SESI EXEMPLO, inscrito no CNPJ sob o nº {cnpj}, declara para os devidos "
@@ -492,7 +492,83 @@ DECLARACOES = [
 ]
 
 
+# O caso do médico relido com o extrator 2026.10.6 (o mesmo desenho, tudo fictício): a declaração da caixa de
+# assistência com o timbre virando lixo de OCR na 2ª página (só o CNPJ de uma filial no rodapé; a razão social
+# está na capa, com o CNPJ da matriz), a carga "26 (vinte) horas" (o dígito mal lido), o SESI com artigo e
+# qualificadores ("O Serviço Social… — Empresa Privada"), uma página ilegível repetindo o vínculo do SESI e a
+# clínica com o nome no fim de um pedaço de frase ("prestou serviço em …, nesta empresa, GR CLINICA…").
+CASO_DO_MEDICO = [
+    {
+        "emissor": "CAIXA DE ASSISTÊNCIA DOS FUNCIONÁRIOS DE EXEMPLO",
+        "cnpj": cnpj_ficticio(44719486),
+        "timbre": True,
+        "rodape_so_cnpj": True,
+        "endereco": "Setor Exemplo, Quadra 1 - Exemplópolis/EX",
+        "texto": (
+            "Ofício nº 123/2026. Encaminhamos, a pedido da interessada, a declaração de vínculo que segue na "
+            "página seguinte, emitida pela área de gestão de pessoas."
+        ),
+        "local": "Exemplópolis, 12 de fevereiro de 2026",
+        "gabarito": None,
+    },
+    {
+        "emissor": "CAIXA DE ASSISTÊNCIA DOS FUNCIONÁRIOS DE EXEMPLO",
+        "cnpj": cnpj_ficticio(44719486, 54),
+        "timbre": True,
+        "timbre_lido": "Cariaira cle |DX",
+        "rodape_so_cnpj": True,
+        "texto": (
+            "Declaramos para os devidos fins que {nome}, CPF {cpf}, exerce desde 24/08/2022 até a presente data o "
+            "cargo de Médico do Trabalho, com carga horária de 26 (vinte) horas semanais."
+        ),
+        "local": "Exemplópolis, 12 de fevereiro de 2026",
+        "gabarito": {"inicio": "2022-08-24", "fim": None, "atual": True, "carga": 20, "cargo": "Médico do Trabalho"},
+    },
+    {
+        "emissor": "Serviço Social da Indústria — SESI, Departamento Regional de Exemplo",
+        "cnpj": cnpj_ficticio(55777342, 12),
+        "timbre": False,
+        "texto": (
+            "O Serviço Social da Indústria — SESI, Departamento Regional de Exemplo — Empresa Privada, inscrito no "
+            "CNPJ sob o nº {cnpj}, declara que {nome}, CPF {cpf}, trabalha nesta entidade desde 02/09/2024, no "
+            "cargo de Médico, com jornada de 10 horas semanais."
+        ),
+        "local": "Exemplópolis, 12 de fevereiro de 2026",
+        "gabarito": {"inicio": "2024-09-02", "fim": None, "atual": True, "carga": 10, "cargo": "Médico"},
+    },
+    {
+        "emissor": None,
+        "cnpj": None,
+        "timbre": True,
+        "timbre_lido": "Ae ras Wnt",
+        "texto": "Declaramos que {nome}, CPF {cpf}, exerce o cargo de Médico desde 02/09/2024.",
+        "local": "Exemplópolis, 12 de fevereiro de 2026",
+        "gabarito": None,  # a mesma do SESI, ilegível: não pode virar um vínculo a mais
+    },
+    {
+        "emissor": "GR CLINICA MEDICA EXEMPLO",
+        "cnpj": cnpj_ficticio(66285673),
+        "timbre": False,
+        "texto": (
+            "Declaramos que {nome}, CPF {cpf}, prestou serviço em medicina do trabalho, como médico examinador, "
+            "nesta empresa, GR CLINICA MEDICA EXEMPLO, inscrita no CNPJ {cnpj}, no período de 01/03/2022 a "
+            "31/05/2023, com carga horária de 20 horas semanais."
+        ),
+        "local": "Exemplópolis, 12 de fevereiro de 2026",
+        "gabarito": {
+            "inicio": "2022-03-01",
+            "fim": "2023-05-31",
+            "atual": False,
+            "carga": 20,
+            "cargo": "Médico examinador",
+        },
+    },
+]
+
+
 def _gabarito_da_declaracao(d):
+    if not d.get("gabarito"):
+        return None
     g = dict(d["gabarito"])
     g["empregador"] = d["emissor"] or f"CNPJ {d['cnpj']}"
     g["cnpj"] = d["cnpj"]
@@ -517,7 +593,8 @@ def declaracoes_de_vinculo(declaracoes=None, nome=NOME_FICTICIO, cpf=CPF_FICTICI
     for d in declaracoes:
         if d.get("timbre"):
             c.setFont("Helvetica-Bold", 16)
-            c.drawCentredString(largura / 2, altura - 60, d["emissor"])
+            # "timbre_lido": o que o OCR leu do timbre (logo virando lixo: "Cariaira cle |DX").
+            c.drawCentredString(largura / 2, altura - 60, d.get("timbre_lido") or d["emissor"])
             c.setFont("Helvetica", 8.5)
             c.drawCentredString(largura / 2, altura - 76, d.get("endereco") or "")
             c.line(50, altura - 86, largura - 50, altura - 86)
@@ -545,7 +622,7 @@ def declaracoes_de_vinculo(declaracoes=None, nome=NOME_FICTICIO, cpf=CPF_FICTICI
             c.drawCentredString(largura / 2, 40, f"CNPJ {d['cnpj']}")
         c.showPage()
     c.save()
-    return saida.getvalue(), [_gabarito_da_declaracao(d) for d in declaracoes]
+    return saida.getvalue(), [g for g in (_gabarito_da_declaracao(d) for d in declaracoes) if g]
 
 
 def declaracoes_como_foto(declaracoes=None, semente=5):
