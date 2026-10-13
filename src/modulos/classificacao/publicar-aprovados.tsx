@@ -1,3 +1,25 @@
+import type {
+  CandidatoAnterior,
+  CandidatoDaListaFinal,
+  ResultadoDaPublicacao,
+} from "../../lib/tipos-da-publicacao-de-aprovados.ts";
+import type {
+  EstadoDaClassificacao,
+  ListaRegistrada,
+} from "./tipos-do-estado.ts";
+type Preparo = NonNullable<
+  Awaited<ReturnType<EstadoDaClassificacao["prepararPublicacaoDeAprovados"]>>
+>;
+type Props = {
+  estado: Pick<
+    EstadoDaClassificacao,
+    "prepararPublicacaoDeAprovados" | "publicarComoListaDeAprovados"
+  >;
+  registro: ListaRegistrada;
+  analises: ReadonlyMap<string, { vaga?: unknown; cargo?: unknown }>;
+  aoFechar: () => void;
+};
+
 import { useEffect, useMemo, useState } from "react";
 import { formatarNota } from "../../lib/classificacao/numeros.js";
 import {
@@ -7,7 +29,7 @@ import {
   origemDaLista,
   resumoDaPublicacao,
   temDadosDaLista,
-} from "../../lib/publicacao-de-aprovados.js";
+} from "../../lib/publicacao-de-aprovados.ts";
 import { Aviso, GradeDeKpis, Kpi, Modal } from "../../ui/index.js";
 
 /*
@@ -17,16 +39,26 @@ import { Aviso, GradeDeKpis, Kpi, Modal } from "../../ui/index.js";
   vigente, quantos entram, saem e mudam de posição, o que é preservado
   (status, matrícula, sub judice) e quem saiu com dados e precisa de revisão:
   ali dá para dizer quem é a mesma pessoa na lista nova. A conta é de
-  src/lib/publicacao-de-aprovados.js; o banco confere e grava o histórico.
+  src/lib/publicacao-de-aprovados.ts; o banco confere e grava o histórico.
 */
 
-const texto = (valor) => String(valor ?? "").trim();
+const texto = (valor: unknown) => String(valor ?? "").trim();
 
-function rotuloDoNovo(n) {
+function rotuloDoNovo(n: CandidatoDaListaFinal) {
   return `${n.nome} — ${n.codigo_vaga || n.cargo} · ${n.posicao}º`;
 }
 
-function LinhaDeRevisao({ anterior, novos, escolhido, aoEscolher }) {
+function LinhaDeRevisao({
+  anterior,
+  novos,
+  escolhido,
+  aoEscolher,
+}: {
+  anterior: CandidatoAnterior;
+  novos: CandidatoDaListaFinal[];
+  escolhido: string;
+  aoEscolher: (valor: string) => void;
+}) {
   const id = `revisao-${anterior.candidato_id}`;
   return (
     <li className="classificacao-revisao-linha">
@@ -64,11 +96,13 @@ export function ModalDePublicacaoDeAprovados({
   registro,
   analises,
   aoFechar,
-}) {
-  const [preparo, setPreparo] = useState(null);
-  const [manuais, setManuais] = useState({});
+}: Props) {
+  const [preparo, setPreparo] = useState<Preparo | null>(null);
+  const [manuais, setManuais] = useState<Record<string, string>>({});
   const [enviando, setEnviando] = useState(false);
-  const [publicado, setPublicado] = useState(null);
+  const [publicado, setPublicado] = useState<ResultadoDaPublicacao | null>(
+    null,
+  );
 
   useEffect(() => {
     let vivo = true;
@@ -117,7 +151,7 @@ export function ModalDePublicacaoDeAprovados({
     );
   });
   const ocupados = new Set(casamento.vinculos.map((v) => v.analise_id));
-  const opcoesPara = (anterior) => {
+  const opcoesPara = (anterior: CandidatoAnterior) => {
     const meu = casamento.vinculos.find(
       (v) => v.candidato_id === texto(anterior.candidato_id),
     )?.analise_id;
@@ -139,7 +173,7 @@ export function ModalDePublicacaoDeAprovados({
   }
 
   const origem = origemDaLista(vigente);
-  const kpis = [
+  const kpis: [string, string, string, string, number][] = [
     ["entram", "sucesso", "fa-user-plus", "Entram", resumo.entram.length],
     ["saem", "perigo", "fa-user-minus", "Saem", resumo.saem.length],
     [
@@ -183,7 +217,7 @@ export function ModalDePublicacaoDeAprovados({
             <div className="ui-esqueleto-linha" />
             <div className="ui-esqueleto-linha" />
           </div>
-        ) : preparo.erro ? (
+        ) : "erro" in preparo ? (
           <Aviso tom="danger" papel="alert">
             {preparo.erro}
           </Aviso>
@@ -210,7 +244,7 @@ export function ModalDePublicacaoDeAprovados({
           <>
             <p className="ui-texto-secundario" data-origem-vigente>
               {vigente
-                ? `Lista vigente: ${origem.texto} · ${anteriores.length} candidato(s)`
+                ? `Lista vigente: ${origem?.texto ?? ""} · ${anteriores.length} candidato(s)`
                 : "O edital ainda não tem lista de aprovados."}{" "}
               · Resultado final: {novos.length} candidato(s)
             </p>

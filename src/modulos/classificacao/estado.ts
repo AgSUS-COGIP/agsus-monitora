@@ -9,6 +9,12 @@ import type {
   ResultadoDaClassificacao,
   OpcoesDoDocumento,
 } from "./tipos-do-estado.ts";
+import type { VinculoDaPublicacao } from "../../lib/tipos-da-publicacao-de-aprovados.ts";
+import { candidatosDaListaFinal } from "../../lib/publicacao-de-aprovados.ts";
+import {
+  situacaoDaPublicacao,
+  resultadoDaPublicacao,
+} from "../../lib/dados-da-publicacao-de-aprovados.ts";
 import {
   objeto,
   textoDaClassificacao,
@@ -494,7 +500,7 @@ export function criarEstadoDaClassificacao({
   /*
     A prévia de "Publicar como lista de aprovados": o retrato da lista FINAL e
     a lista de aprovados vigente do edital, com os candidatos (o casamento das
-    pessoas e o resumo são de src/lib/publicacao-de-aprovados.js).
+    pessoas e o resumo são de src/lib/publicacao-de-aprovados.ts).
   */
   async function prepararPublicacaoDeAprovados(
     registrado: ListaRegistrada | null,
@@ -515,7 +521,8 @@ export function criarEstadoDaClassificacao({
       ]);
       if (minhaGeracao !== geracao) return null;
       if (!alvo?.retrato) throw new Error("Lista não encontrada.");
-      return { registrado: alvo, situacao: objeto(situacao) };
+      candidatosDaListaFinal(alvo.retrato);
+      return { registrado: alvo, situacao: situacaoDaPublicacao(situacao) };
     } catch (erro) {
       if (minhaGeracao !== geracao) return null;
       return { erro: mensagemDoBanco(erro) };
@@ -530,18 +537,26 @@ export function criarEstadoDaClassificacao({
   }: {
     listaId: string;
     listaVigente?: string | null;
-    vinculos?: RegistroDaClassificacao[];
+    vinculos?: VinculoDaPublicacao[];
   }) {
     const minhaGeracao = geracao;
     try {
-      const resultado = objeto(
-        await rpc(RPC_PUBLICAR_APROVADOS, {
-          p_lista_classificacao: listaId,
-          p_lista_vigente: listaVigente || null,
-          p_vinculos: vinculos || [],
-        }),
-      );
+      const resposta = await rpc(RPC_PUBLICAR_APROVADOS, {
+        p_lista_classificacao: listaId,
+        p_lista_vigente: listaVigente || null,
+        p_vinculos: vinculos || [],
+      });
       if (minhaGeracao !== geracao) return null;
+      let resultado;
+      try {
+        resultado = resultadoDaPublicacao(resposta);
+      } catch {
+        toast(
+          "A solicitação de publicação foi enviada, mas a confirmação do banco está incompleta. Confira a Lista de aprovados antes de tentar novamente.",
+          "warning",
+        );
+        return null;
+      }
       toast(
         `Lista de aprovados publicada: ${resultado?.candidatos ?? 0} candidato(s).`,
         "success",
