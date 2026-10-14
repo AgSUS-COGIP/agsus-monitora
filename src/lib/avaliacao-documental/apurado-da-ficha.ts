@@ -20,7 +20,12 @@
   Rascunhos sem edita_nota (antes desta tela): o Apurado igual ao declarado
   (inclusive o Declarado gravado como ajuste) é Confere; diferente, Editar.
 */
-import { BLOCOS_COM_ITENS, titulosDoNivel } from "./ficha.js";
+import {
+  BLOCOS_COM_ITENS,
+  BLOCOS_PELA_NOTA,
+  decidePelaNota,
+  titulosDoNivel,
+} from "./ficha.js";
 import { itensSugeridos } from "./respostas-do-candidato.ts";
 import { PARCIAL_DO_TIPO } from "./catalogo.js";
 import { notaAjustada, tetoDoBloco } from "./pontuacao.js";
@@ -256,6 +261,9 @@ export function abreComLinhaNova(
   declarada: Declarada,
 ): boolean {
   if (!ITENS[bloco.tipo] || temItensLancados(bloco, lancamento)) return false;
+  // Cursos: pela faixa/nota do bloco, sem lista (BLOCOS_PELA_NOTA em ficha.js).
+  if ((BLOCOS_PELA_NOTA as readonly string[]).includes(bloco.tipo))
+    return false;
   const lancado = lancamento.blocos?.[bloco.codigo];
   if (lancado?.situacao !== "CONFORME") return false;
   if (lancado.edita_nota === true) return true;
@@ -390,6 +398,20 @@ export function blocoComEscolha({
   }
   // Editar: a pontuação vem do calculado (o ajuste de quem já editava fica).
   const jaEditava = atual.situacao === "CONFORME" && atual.edita_nota === true;
+  if (!jaEditava && decidePelaNota(bloco, lancamento)) {
+    // Cursos pela faixa/nota (sem lista): a nota começa no declarado e o
+    // avaliador ajusta (com justificativa, se ficar diferente).
+    const declarado = declaradoDoBloco(bloco, declarada);
+    const teto = tetoDoBloco(bloco, lancamento.nivel) as number | null;
+    return {
+      ...novo,
+      edita_nota: true,
+      nota_ajustada:
+        declarado !== null && teto !== null
+          ? Math.min(declarado, teto)
+          : declarado,
+    };
+  }
   return {
     ...novo,
     edita_nota: true,

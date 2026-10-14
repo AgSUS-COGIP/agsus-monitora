@@ -89,6 +89,21 @@ export const BLOCOS_COM_ITENS = Object.freeze({
   VINCULOS: "vinculos",
 });
 
+/**
+ * Blocos que o avaliador decide pela faixa/nota do bloco, sem a lista item a
+ * item (pedido da COREs, 14/10/2026: Cursos de Aperfeiçoamento): Confere (a
+ * nota declarada), Editar nota (com justificativa) ou Não confere. A ficha
+ * antiga que já tem cursos lançados continua com a lista como estava.
+ */
+export const BLOCOS_PELA_NOTA = Object.freeze(["CURSOS"]);
+
+/** O bloco decide pela nota, sem a lista (BLOCOS_PELA_NOTA e nenhum item lançado)? */
+export function decidePelaNota(bloco, lancamento) {
+  if (!BLOCOS_PELA_NOTA.includes(bloco?.tipo)) return false;
+  const chave = BLOCOS_COM_ITENS[bloco.tipo];
+  return !lista(lancamento?.[chave]).length;
+}
+
 /** Bloco que a ficha mostra: os que só registram não pedem situação. */
 const pedeSituacao = (bloco) => bloco.tipo !== "REGISTRO";
 
@@ -373,11 +388,12 @@ const FALTA_DO_COMPROVADO = {
 
 /**
  * Com Declarado acima de 0, o Confere e o Editar nota (CONFORME) pedem ao
- * menos um título, curso ou vínculo completo e aceito. Devolve o texto da falta (ou null).
+ * menos um título ou vínculo completo e aceito (os cursos não: BLOCOS_PELA_NOTA). Devolve o texto da falta (ou null).
  */
 export function faltaDoComprovado(bloco, lancamento, declarada) {
   const chave = BLOCOS_COM_ITENS[bloco?.tipo];
-  if (!chave) return null;
+  // Cursos: pela faixa/nota do bloco, sem exigir a lista (BLOCOS_PELA_NOTA).
+  if (!chave || BLOCOS_PELA_NOTA.includes(bloco.tipo)) return null;
   const decl = objeto(declarada?.parciais)[PARCIAL_DO_TIPO[bloco.tipo]];
   if (!(typeof decl === "number" && decl > 0)) return null;
   const algum = lista(lancamento?.[chave]).some(

@@ -6,6 +6,7 @@ import {
   BLOCOS_COM_ITENS as ITENS_DOS_TIPOS,
   blocoNaoPontuaNoNivel,
   blocoSeAplica,
+  decidePelaNota,
   divergenciaDoBloco,
   ehAnexo,
   ESCOLHAS_DA_FICHA,
@@ -195,6 +196,8 @@ export function lidosDoBloco(
   if (!enderecos || !leituras.length || !BLOCOS_COM_ITENS[bloco.tipo])
     return [];
   if (!blocoSeAplica(bloco, st.lancamento)) return [];
+  // Cursos pela faixa/nota do bloco: sem a conferência item a item.
+  if (decidePelaNota(bloco, st.lancamento)) return [];
   const linhas = respostasDoBloco(
     bloco,
     st.dados.respostas,
@@ -1003,7 +1006,11 @@ function Resultado({
           {textoDaNota(Math.abs(diferenca ?? 0))}
         </span>
       ) : null}
-      {editar && ajuste !== null && ajuste !== calculado && !desabilitado ? (
+      {editar &&
+      ajuste !== null &&
+      ajuste !== calculado &&
+      !desabilitado &&
+      !decidePelaNota(bloco, lancamento) ? (
         <button
           type="button"
           className="avd-ficha-link"
@@ -1524,6 +1531,7 @@ export function ItemDaFicha({
   const mostraItens =
     !pelosItens &&
     aplica &&
+    !decidePelaNota(bloco, lancamento) &&
     Boolean(chave) &&
     (escolha === "CONFERE" ||
       escolha === "EDITAR" ||
