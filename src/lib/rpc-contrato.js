@@ -1028,7 +1028,13 @@ export const CONTRATO_RPC = {
     argumentos: ["p_edital"],
     critica: false,
     resumo:
-      "A fila do edital: cada inscrito da pré-classificação com a ficha (situação, responsável, reserva vigente, versão, rascunho e, concluída, resultado e nota; nome sem CPF nem contato), as vagas, os analistas com as pendentes, a distribuição da regra, quantos do lote estão sem ficha e os filtros salvos de quem chama. O analista vê só as vagas dele. Leitor da Avaliação documental.",
+      "A fila do edital (schema_version 2, 20261014180000_fila_leve.sql): os inscritos do núcleo (no lote ou com ficha viva) com a ficha (situação, responsável, reserva vigente, versão, rascunho e, concluída, resultado e nota; nome sem CPF nem contato), as contagens e a versão dos de fora do lote (fora_do_lote; as linhas vêm de obter_fila_fora_do_lote), as vagas, os analistas com as pendentes, a distribuição da regra, quantos do lote estão sem ficha e os filtros salvos de quem chama. O analista vê só as vagas dele. Leitor da Avaliação documental.",
+  },
+  obter_fila_fora_do_lote: {
+    argumentos: ["p_edital", "p_apos", "p_limite"],
+    critica: false,
+    resumo:
+      "Os inscritos de fora do lote na fila (eliminados e ranqueados sem ficha viva), no formato de obter_fila_avaliacao, em páginas de até 2.000 pela chave do inscrito (p_apos = o proximo da página anterior). Pedida só pelas abas Inscritos e Eliminados e por Incluir por decisão. 20261014180000_fila_leve.sql.",
   },
   pegar_proxima_ficha: {
     argumentos: ["p_edital", "p_vaga"],
