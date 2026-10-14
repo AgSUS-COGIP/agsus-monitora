@@ -108,7 +108,7 @@ dos PDFs oficiais).
 
 **perguntas:** copiar para o sei | como colar a lista no sei | colar a classificacao no sei | a lista colou sem tabela no sei | numeracao sumiu no sei
 **resposta:** Gere a lista, escolha o recorte e a publicação e clique em "Copiar para o SEI". No SEI, crie o documento (Comunicado Externo), abra o editor, clique no corpo e cole (Ctrl+V); depois confira, preencha data e hora na convocação se não houver agenda salva, e assine. O que é copiado: o HTML com as classes de estilo do próprio SEI (Item_Nivel1 e Item_Nivel2 numeram sozinhos "1." e "1.1.", Texto_Centralizado_Maiusculas, Tabela_Texto_Centralizado…) e tabelas com borda e largura em porcentagem, além do texto puro numerado para quem cola fora do SEI. Se o navegador não liberar o formato com tabelas, a cópia vai só como texto e a tela avisa — aí use o DOCX. Se a numeração dos itens não aparecer no SEI, o editor removeu as classes ao colar: aplique o estilo "Item_Nivel1/Item_Nivel2" pelo menu de estilos ou use o DOCX.
-**fonte:** src/lib/classificacao/documento-sei.ts; src/modulos/classificacao/documento-no-navegador.js
+**fonte:** src/lib/classificacao/documento-sei.ts; src/modulos/classificacao/documento-no-navegador.ts
 **abrir:** classificacao
 
 ## Textos do documento por edital

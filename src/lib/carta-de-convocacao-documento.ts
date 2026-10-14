@@ -1,3 +1,12 @@
+import type {
+  CartaMontada,
+  DocumentoDasCartas,
+  OpcoesDasCartas,
+} from "./tipos-da-carta.ts";
+import type {
+  MarcaDaPrevia,
+  OpcoesDoDocx,
+} from "./classificacao/tipos-dos-documentos.ts";
 /*
   O documento da carta de convocação, no modelo das publicações da AgSUS no
   SEI — reaproveitando o documento oficial da Classificação:
@@ -20,7 +29,7 @@
     Parágrafos com recuo na primeira linha; documentos em itens.
     [assinatura eletrônica]                              ← o SEI põe
 
-  `montarCartas` preenche o modelo para cada candidato (carta-de-convocacao.js).
+  `montarCartas` preenche o modelo para cada candidato (carta-de-convocacao.ts).
 */
 
 import {
@@ -37,21 +46,21 @@ import {
   QUEBRA_DE_PAGINA,
 } from "./classificacao/documento-docx.ts";
 import { zipSemCompressao } from "./documento-da-resposta.js";
-import { hojeEmBrasilia, preencherCarta } from "./carta-de-convocacao.js";
+import { hojeEmBrasilia, preencherCarta } from "./carta-de-convocacao.ts";
 import { dataPorExtenso } from "./classificacao/documento-sei.ts";
 
-const texto = (valor) => String(valor ?? "").trim();
+const texto = (valor: unknown) => String(valor ?? "").trim();
 
-const escapar = (valor) =>
+const escapar = (valor: unknown) =>
   String(valor ?? "").replace(
     /[&<>"']/g,
     (c) =>
       ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[
         c
-      ],
+      ] ?? c,
   );
 
-const semMarcas = (valor) =>
+const semMarcas = (valor: unknown) =>
   trechos(valor)
     .map((t) => t.texto)
     .join("");
@@ -69,7 +78,7 @@ export function montarCartas({
   emissao = {},
   hoje = hojeEmBrasilia(),
   cidade = LOCAL_PADRAO,
-} = {}) {
+}: OpcoesDasCartas = {}): DocumentoDasCartas {
   const vigente = modelo?.vigente || {};
   const cartas = candidatos.map((candidato) => {
     const carta = preencherCarta(vigente, candidato, {
@@ -90,7 +99,7 @@ export function montarCartas({
   return {
     nome:
       cartas.length === 1
-        ? `${tituloEmFrase(titulo)} - ${cartas[0].nome}`
+        ? `${tituloEmFrase(titulo)} - ${cartas[0]?.nome ?? ""}`
         : `${tituloEmFrase(titulo)} - ${cartas.length} candidatos`,
     modelo: texto(modelo?.nome),
     versao: Number(modelo?.versao) || 0,
@@ -101,13 +110,13 @@ export function montarCartas({
 }
 
 /* "CARTA DE CONVOCAÇÃO" → "Carta de convocação" (nome do arquivo e da aba). */
-function tituloEmFrase(valor) {
+function tituloEmFrase(valor: unknown) {
   const t = texto(valor).toLocaleLowerCase("pt-BR");
-  return t ? t[0].toLocaleUpperCase("pt-BR") + t.slice(1) : "Carta";
+  return t ? (t[0] ?? "").toLocaleUpperCase("pt-BR") + t.slice(1) : "Carta";
 }
 
 /** Um documento com uma carta só (a de índice `i`), para "uma por candidato". */
-export function soACarta(doc, i) {
+export function soACarta(doc: DocumentoDasCartas, i: number) {
   const carta = doc.cartas[i];
   if (!carta) return null;
   return {
@@ -123,7 +132,7 @@ export function soACarta(doc, i) {
 const QUEBRA_DO_SEI =
   '<div style="page-break-after: always"><span style="display: none;">&nbsp;</span></div>';
 
-function htmlDaCarta(doc, carta) {
+function htmlDaCarta(doc: DocumentoDasCartas, carta: CartaMontada) {
   const partes = [
     `<p class="Texto_Alinhado_Direita">${escapar(doc.localData)}</p>`,
     `<p class="Texto_Centralizado_Maiusculas">${htmlDoTrecho(carta.titulo)}</p>`,
@@ -138,14 +147,14 @@ function htmlDaCarta(doc, carta) {
 }
 
 /** O HTML para colar no editor do SEI (sem timbrado, assinatura e rodapé). */
-export function htmlParaSei(doc) {
+export function htmlParaSei(doc: DocumentoDasCartas) {
   return doc.cartas
     .map((carta) => htmlDaCarta(doc, carta))
     .join(`\n${QUEBRA_DO_SEI}\n`);
 }
 
 /** As cartas em texto puro, separadas por uma linha de traços. */
-export function textoParaSei(doc) {
+export function textoParaSei(doc: DocumentoDasCartas) {
   return doc.cartas
     .map((carta) =>
       [
@@ -165,7 +174,10 @@ export function textoParaSei(doc) {
  * A página "Como fica no SEI" das cartas (prévia e impressão), uma por página.
  * `marca`: { cabecalho, logo } (Configurações › Marca).
  */
-export function paginaDaPrevia(doc, marca = {}) {
+export function paginaDaPrevia(
+  doc: DocumentoDasCartas,
+  marca: MarcaDaPrevia = {},
+) {
   const corpoHtml = doc.cartas
     .map(
       (carta, i) =>
@@ -187,8 +199,18 @@ export function paginaDaPrevia(doc, marca = {}) {
 const RECUO = 1418; // 25 mm, como no SEI
 
 function paragrafoXml(
-  conteudo,
-  { alinhamento = "both", recuo = 0, antes = 0, depois = 120 } = {},
+  conteudo: string,
+  {
+    alinhamento = "both",
+    recuo = 0,
+    antes = 0,
+    depois = 120,
+  }: {
+    alinhamento?: string;
+    recuo?: number;
+    antes?: number;
+    depois?: number;
+  } = {},
 ) {
   return (
     `<w:p><w:pPr><w:spacing w:before="${antes}" w:after="${depois}"/>` +
@@ -196,7 +218,7 @@ function paragrafoXml(
   );
 }
 
-function partesDaCarta(doc, carta) {
+function partesDaCarta(doc: DocumentoDasCartas, carta: CartaMontada) {
   return [
     paragrafoXml(corridas(doc.localDataPorExtenso), {
       alinhamento: "right",
@@ -215,8 +237,8 @@ function partesDaCarta(doc, carta) {
 }
 
 /** O word/document.xml das cartas, uma por página. */
-export function corpoDasCartasXml(doc) {
-  const partes = [];
+export function corpoDasCartasXml(doc: DocumentoDasCartas) {
+  const partes: string[] = [];
   doc.cartas.forEach((carta, i) => {
     if (i) partes.push(QUEBRA_DE_PAGINA);
     partes.push(...partesDaCarta(doc, carta));
@@ -225,7 +247,10 @@ export function corpoDasCartasXml(doc) {
 }
 
 /** Os bytes do .docx com todas as cartas (papel timbrado). */
-export function gerarDocxDasCartas(doc, opcoes = {}) {
+export function gerarDocxDasCartas(
+  doc: DocumentoDasCartas,
+  opcoes: OpcoesDoDocx = {},
+) {
   return pacoteDocx(
     { nome: doc.nome, documento: corpoDasCartasXml(doc) },
     opcoes,
@@ -233,7 +258,7 @@ export function gerarDocxDasCartas(doc, opcoes = {}) {
 }
 
 /** Nome de arquivo seguro: sem acento, barra nem símbolo. */
-export function nomeDeArquivo(valor) {
+export function nomeDeArquivo(valor: unknown) {
   return (
     texto(valor)
       .normalize("NFD")
@@ -246,11 +271,15 @@ export function nomeDeArquivo(valor) {
 }
 
 /** Um .docx por candidato, num .zip ("01 - Nome.docx"). */
-export function gerarZipDasCartas(doc, opcoes = {}) {
+export function gerarZipDasCartas(
+  doc: DocumentoDasCartas,
+  opcoes: OpcoesDoDocx = {},
+) {
   const quando = opcoes.quando || new Date();
   const largura = String(doc.cartas.length).length;
   const arquivos = doc.cartas.map((carta, i) => {
     const uma = soACarta(doc, i);
+    if (!uma) throw new Error("Carta não encontrada no documento.");
     const bytes = zipSemCompressao(
       arquivosDoDocx(
         { nome: uma.nome, documento: corpoDasCartasXml(uma) },

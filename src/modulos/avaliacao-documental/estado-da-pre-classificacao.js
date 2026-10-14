@@ -65,7 +65,7 @@ import {
   copiarParaAreaDeTransferencia,
   imprimirPagina,
   logoEmPng,
-} from "../classificacao/documento-no-navegador.js";
+} from "../classificacao/documento-no-navegador.ts";
 import { criarCopiasPorVersao } from "../../app/copias-por-versao.ts";
 import {
   criarLeituraPorVersao,

@@ -3,7 +3,7 @@
 A tela Lista de aprovados (view `approved`): status dos candidatos, importação, convocação, sub
 judice e anexos. Fontes: `src/modulos/aprovados/`, `src/lib/lista-aprovados-rules.js`,
 `src/lib/aprovados-import.js`, `src/lib/lista-convocacao-rules.js`,
-`src/lib/modelo-de-convocacao.js`, `src/lib/anexos-do-candidato.js`, `src/lib/carta-de-convocacao.js`, `src/lib/access-roles.js` e as
+`src/lib/modelo-de-convocacao.js`, `src/lib/anexos-do-candidato.js`, `src/lib/carta-de-convocacao.ts`, `src/lib/access-roles.js` e as
 migrations `20260928235000_anexos_so_admin.sql`, `20260930200000_aprovados_por_grupo_edital_gestor_edita.sql`,
 `20261001150000_sub_judice_alteracao.sql`, `20261005160000_lista_de_aprovados_da_classificacao.sql` (lista
 publicada do resultado final da Classificação; `src/lib/publicacao-de-aprovados.ts`) e
@@ -100,7 +100,7 @@ publicada do resultado final da Classificação; `src/lib/publicacao-de-aprovado
 
 **perguntas:** carta de convocacao | emitir carta de convocacao | como emitir a carta de convocacao | carta para contratacao | convocar por carta
 **resposta:** Na aba Convocação, marque os candidatos e clique em "Carta de convocação" (ou use o envelope na linha ou na gaveta do candidato). Escolha o modelo (os do edital aparecem primeiro), confira a data limite, o local, os documentos e o contato desta emissão, e se sai um documento com todas ou uma carta por candidato. A prévia mostra como fica no SEI. As saídas são Copiar para o SEI, DOCX (com uma carta por candidato, vem um .zip) e PDF. A primeira saída registra a emissão: quem, quando, o modelo e a versão e os candidatos. Emitir é de quem tem Editor em Aprovados.
-**fonte:** src/modulos/aprovados/carta-de-convocacao/; src/lib/carta-de-convocacao.js; src/lib/carta-de-convocacao-documento.js
+**fonte:** src/modulos/aprovados/carta-de-convocacao/; src/lib/carta-de-convocacao.ts; src/lib/carta-de-convocacao-documento.ts
 **abrir:** approved
 
 ## Marcar convocados depois da carta
@@ -114,14 +114,14 @@ publicada do resultado final da Classificação; `src/lib/publicacao-de-aprovado
 
 **perguntas:** modelo da carta de convocacao | modelos da carta | editar carta de convocacao | campos da carta | versao do modelo da carta
 **resposta:** Os modelos da carta são da área e, se preciso, de um edital, e ficam em "Modelos da carta", na aba Convocação. O texto tem um parágrafo por linha, **negrito** e campos entre chaves: {NOME}, {CPF}, {CARGO}, {VAGA}, {LOTACAO}, {UNIDADE}, {EDITAL}, {POSICAO}, {MODALIDADE}, {DATA_LIMITE}, {LOCAL}, {DOCUMENTOS}, {CONTATO} e {DATA}; a linha que é só {DOCUMENTOS} vira a lista dos documentos. O modelo guarda os valores padrão de local, documentos, contato e prazo em dias. Cada alteração é uma versão nova e, a partir da segunda, pede o motivo; modelo não se apaga, inativa-se com motivo. Quem tem Editor em Aprovados cria e altera; os demais só consultam.
-**fonte:** src/lib/carta-de-convocacao.js; src/modulos/aprovados/carta-de-convocacao/modelos-da-carta.jsx
+**fonte:** src/lib/carta-de-convocacao.ts; src/modulos/aprovados/carta-de-convocacao/modelos-da-carta.tsx
 **abrir:** approved
 
 ## CPF na carta de convocação
 
 **perguntas:** cpf na carta de convocacao | carta com cpf | cpf mascarado
 **resposta:** A lista de aprovados não guarda CPF. Se o modelo usa {CPF}, a carta sai com o espaço em branco e a emissão avisa quem ficou sem; quando houver CPF, ele aparece sempre mascarado (***.456.789-**).
-**fonte:** src/lib/carta-de-convocacao.js
+**fonte:** src/lib/carta-de-convocacao.ts
 
 ## Cartas emitidas na gaveta do candidato
 

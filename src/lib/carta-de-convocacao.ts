@@ -1,8 +1,24 @@
+import type {
+  BlocoDaCarta,
+  CandidatoDaCarta,
+  CartaPreenchida,
+  ConteudoDaCarta,
+  EmissaoDaCarta,
+  ModeloDaCarta,
+  ModeloDoDocumentoDaCarta,
+  RascunhoDaCarta,
+} from "./tipos-da-carta.ts";
+import { objetoDaCarta, registrosDaCarta } from "./dados-da-carta.ts";
+function exigirCarta<T>(valor: T | undefined): T {
+  if (valor === undefined)
+    throw new Error("Dados internos da carta inconsistentes.");
+  return valor;
+}
 /*
   A carta de convocação para contratação, sem DOM: os campos do modelo, o
   preenchimento por candidato, a validação do modelo e da emissão, e a leitura
   dos modelos que o banco guarda (migration 20261005180000). O documento (SEI,
-  DOCX, PDF) sai de carta-de-convocacao-documento.js; a tela, de
+  DOCX, PDF) sai de carta-de-convocacao-documento.ts; a tela, de
   src/modulos/aprovados/carta-de-convocacao/.
 
   O MODELO
@@ -23,36 +39,37 @@
 import { dataPorExtenso } from "./classificacao/documento-sei.ts";
 import { modalidadeSemAspas } from "./lista-aprovados-rules.js";
 
-const texto = (valor) => String(valor ?? "").trim();
+const texto = (valor: unknown) => String(valor ?? "").trim();
 
 /** O que vai no lugar de um campo sem valor: um espaço para preencher à mão. */
 export const ESPACO_EM_BRANCO = "__________";
 
 export const CAMPOS_DA_CARTA = Object.freeze(
-  [
-    ["NOME", "Nome do candidato", "candidato"],
-    ["CPF", "CPF mascarado (***.456.789-**)", "candidato"],
-    ["CARGO", "Cargo", "candidato"],
-    ["VAGA", "Código da vaga", "candidato"],
-    ["LOTACAO", "Lotação (unidade do edital)", "candidato"],
-    ["UNIDADE", "Unidade do edital", "candidato"],
-    ["EDITAL", "Número do edital", "candidato"],
-    ["POSICAO", "Posição na classificação", "candidato"],
-    ["MODALIDADE", "Modalidade de concorrência", "candidato"],
-    ["DATA_LIMITE", "Data limite para apresentação", "emissao"],
-    ["LOCAL", "Local de apresentação", "emissao"],
-    ["DOCUMENTOS", "Documentos exigidos", "emissao"],
-    ["CONTATO", "Contato para dúvidas", "emissao"],
-    ["DATA", "Data da emissão, por extenso", "emissao"],
-  ].map(([chave, rotulo, origem]) => Object.freeze({ chave, rotulo, origem })),
+  (
+    [
+      ["NOME", "Nome do candidato", "candidato"],
+      ["CPF", "CPF mascarado (***.456.789-**)", "candidato"],
+      ["CARGO", "Cargo", "candidato"],
+      ["VAGA", "Código da vaga", "candidato"],
+      ["LOTACAO", "Lotação (unidade do edital)", "candidato"],
+      ["UNIDADE", "Unidade do edital", "candidato"],
+      ["EDITAL", "Número do edital", "candidato"],
+      ["POSICAO", "Posição na classificação", "candidato"],
+      ["MODALIDADE", "Modalidade de concorrência", "candidato"],
+      ["DATA_LIMITE", "Data limite para apresentação", "emissao"],
+      ["LOCAL", "Local de apresentação", "emissao"],
+      ["DOCUMENTOS", "Documentos exigidos", "emissao"],
+      ["CONTATO", "Contato para dúvidas", "emissao"],
+      ["DATA", "Data da emissão, por extenso", "emissao"],
+    ] satisfies readonly (readonly [string, string, "candidato" | "emissao"])[]
+  ).map(([chave, rotulo, origem]) => Object.freeze({ chave, rotulo, origem })),
 );
 
 const CHAVES = new Set(CAMPOS_DA_CARTA.map((campo) => campo.chave));
 
 /** "Lotação/Unidade" → "LOTACAO"; "data limite" → "DATA_LIMITE". */
-export function chaveDoCampo(bruto) {
-  return texto(bruto)
-    .split("/")[0]
+export function chaveDoCampo(bruto: unknown) {
+  return (texto(bruto).split("/")[0] ?? "")
     .normalize("NFD")
     .replace(/[̀-ͯ]/g, "")
     .toUpperCase()
@@ -63,8 +80,8 @@ export function chaveDoCampo(bruto) {
 const PADRAO_DO_CAMPO = /\{([^{}\n]{1,40})\}/g;
 
 /** Os campos que o texto usa, na ordem em que aparecem, sem repetir. */
-export function camposUsados(...textos) {
-  const vistos = [];
+export function camposUsados(...textos: unknown[]) {
+  const vistos: string[] = [];
   for (const t of textos)
     for (const [, bruto] of String(t ?? "").matchAll(PADRAO_DO_CAMPO)) {
       const chave = chaveDoCampo(bruto);
@@ -74,12 +91,12 @@ export function camposUsados(...textos) {
 }
 
 /** Os campos usados que a carta não conhece (sairiam como estão). */
-export function camposDesconhecidos(...textos) {
+export function camposDesconhecidos(...textos: unknown[]) {
   return camposUsados(...textos).filter((chave) => !CHAVES.has(chave));
 }
 
 /* Chave aberta sem fechar (ou fechada sem abrir) numa mesma linha. */
-function chavesQuebradas(valor) {
+function chavesQuebradas(valor: unknown) {
   return String(valor ?? "")
     .split(/\r?\n/)
     .some((linha) => {
@@ -89,14 +106,14 @@ function chavesQuebradas(valor) {
 }
 
 /** CPF com 11 dígitos → "***.456.789-**"; qualquer outra coisa → "". */
-export function mascararCpf(cpf) {
+export function mascararCpf(cpf: unknown) {
   const digitos = String(cpf ?? "").replace(/\D/g, "");
   if (digitos.length !== 11) return "";
   return `***.${digitos.slice(3, 6)}.${digitos.slice(6, 9)}-**`;
 }
 
 /** "2026-10-12" → "12/10/2026". */
-export function dataCurta(valor) {
+export function dataCurta(valor: unknown) {
   const m = texto(valor).match(/^(\d{4})-(\d{2})-(\d{2})/);
   return m ? `${m[3]}/${m[2]}/${m[1]}` : "";
 }
@@ -117,16 +134,18 @@ export function hojeEmBrasilia(agora = new Date()) {
 }
 
 /** Data limite padrão: `dias` corridos depois de `hoje` ("AAAA-MM-DD"). */
-export function dataLimitePadrao(hoje, dias) {
+export function dataLimitePadrao(hoje: unknown, dias: unknown) {
   const n = Number(dias);
   const m = texto(hoje).match(/^(\d{4})-(\d{2})-(\d{2})$/);
   if (!m || !Number.isInteger(n) || n < 0) return "";
-  const data = new Date(Date.UTC(+m[1], +m[2] - 1, +m[3] + n));
+  const data = new Date(
+    Date.UTC(Number(m[1]), Number(m[2]) - 1, Number(m[3]) + n),
+  );
   return data.toISOString().slice(0, 10);
 }
 
 /** Os documentos, um por linha (sem marcadores no começo). */
-export function listaDeDocumentos(valor) {
+export function listaDeDocumentos(valor: unknown) {
   return String(valor ?? "")
     .split(/\r?\n/)
     .map((linha) => linha.replace(/^\s*(?:[-•*]|\d+[.)])\s*/, "").trim())
@@ -139,7 +158,10 @@ export function listaDeDocumentos(valor) {
  *              unidade, edital, classificacao, modalidade, cpf?)
  *   emissao    { dataLimite, local, documentos, contato, data }
  */
-export function valoresDaCarta(candidato = {}, emissao = {}) {
+export function valoresDaCarta(
+  candidato: CandidatoDaCarta = {},
+  emissao: EmissaoDaCarta = {},
+): Record<string, string> {
   const documentos = listaDeDocumentos(emissao.documentos);
   const posicao = Number(candidato.classificacao);
   return {
@@ -164,8 +186,8 @@ export function valoresDaCarta(candidato = {}, emissao = {}) {
 }
 
 /** Troca os campos de uma linha; devolve o texto e os campos que ficaram sem valor. */
-export function trocarCampos(linha, valores) {
-  const faltando = [];
+export function trocarCampos(linha: unknown, valores: Record<string, unknown>) {
+  const faltando: string[] = [];
   const saida = String(linha ?? "").replace(
     PADRAO_DO_CAMPO,
     (inteiro, bruto) => {
@@ -184,13 +206,18 @@ export function trocarCampos(linha, valores) {
  * A carta de um candidato: { titulo, blocos: [{ tipo: "paragrafo" | "item",
  * texto }], faltando: [chaves sem valor] }.
  */
-export function preencherCarta(modelo = {}, candidato = {}, emissao = {}) {
+export function preencherCarta(
+  modelo: Partial<ConteudoDaCarta> = {},
+  candidato: CandidatoDaCarta = {},
+  emissao: EmissaoDaCarta = {},
+): CartaPreenchida {
   const valores = valoresDaCarta(candidato, emissao);
-  const faltando = new Set();
-  const anotar = (lista) => lista.forEach((chave) => faltando.add(chave));
+  const faltando = new Set<string>();
+  const anotar = (lista: string[]) =>
+    lista.forEach((chave) => faltando.add(chave));
   const titulo = trocarCampos(texto(modelo.titulo), valores);
   anotar(titulo.faltando);
-  const blocos = [];
+  const blocos: BlocoDaCarta[] = [];
   for (const bruta of String(modelo.texto ?? "").split(/\r?\n/)) {
     const linha = bruta.trim();
     if (!linha) continue;
@@ -219,15 +246,18 @@ export function preencherCarta(modelo = {}, candidato = {}, emissao = {}) {
 const ROTULO = Object.fromEntries(
   CAMPOS_DA_CARTA.map((campo) => [campo.chave, campo.rotulo]),
 );
-export const rotuloDoCampo = (chave) => ROTULO[chave] || chave;
+export const rotuloDoCampo = (chave: string) => ROTULO[chave] || chave;
 
 /**
  * O rascunho do modelo antes de salvar: { erros, avisos }.
  * `versaoAtual` > 0 = editando (o motivo passa a ser obrigatório).
  */
-export function validarModelo(rascunho = {}, { versaoAtual = 0 } = {}) {
+export function validarModelo(
+  rascunho: Partial<RascunhoDaCarta> = {},
+  { versaoAtual = 0 } = {},
+) {
   const erros = [];
-  const avisos = [];
+  const avisos: string[] = [];
   const nome = texto(rascunho.nome);
   const titulo = texto(rascunho.titulo);
   const corpo = texto(rascunho.texto);
@@ -280,9 +310,14 @@ export function validarEmissao({
   candidatos = [],
   emissao = {},
   hoje = hojeEmBrasilia(),
+}: {
+  modelo?: Partial<ConteudoDaCarta> | null;
+  candidatos?: readonly CandidatoDaCarta[];
+  emissao?: EmissaoDaCarta;
+  hoje?: string;
 } = {}) {
   const erros = [];
-  const avisos = [];
+  const avisos: string[] = [];
   if (!modelo) erros.push("Escolha o modelo da carta.");
   if (!candidatos.length) erros.push("Escolha ao menos um candidato.");
   if (candidatos.length > 500)
@@ -298,10 +333,10 @@ export function validarEmissao({
     ["LOCAL", "local"],
     ["DOCUMENTOS", "documentos"],
     ["CONTATO", "contato"],
-  ])
+  ] satisfies readonly (readonly [string, keyof EmissaoDaCarta])[])
     if (usados.includes(chave) && !texto(emissao[campo]))
       erros.push(`Informe ${rotuloDoCampo(chave).toLowerCase()}.`);
-  const semValor = new Map();
+  const semValor = new Map<string, string[]>();
   for (const candidato of candidatos) {
     const { faltando } = preencherCarta(modelo, candidato, emissao);
     faltando
@@ -312,7 +347,7 @@ export function validarEmissao({
       )
       .forEach((chave) => {
         if (!semValor.has(chave)) semValor.set(chave, []);
-        semValor.get(chave).push(texto(candidato.nome));
+        exigirCarta(semValor.get(chave)).push(texto(candidato.nome));
       });
   }
   for (const [chave, nomes] of semValor)
@@ -324,7 +359,7 @@ export function validarEmissao({
   );
   if (comStatus.length)
     avisos.push(
-      `${comStatus.length === 1 ? `${texto(comStatus[0].nome)} já está` : `${comStatus.length} candidatos já estão`} com outro status (${[...new Set(comStatus.map((c) => texto(c.status)))].join(", ")}).`,
+      `${comStatus.length === 1 ? `${texto(comStatus[0]?.nome)} já está` : `${comStatus.length} candidatos já estão`} com outro status (${[...new Set(comStatus.map((c) => texto(c.status)))].join(", ")}).`,
     );
   return { erros, avisos };
 }
@@ -355,23 +390,30 @@ export const MODELO_PADRAO = Object.freeze({
   prazoDias: "5",
 });
 
-const versaoDe = (bruto) => ({
-  titulo: texto(bruto?.titulo),
-  texto: String(bruto?.texto ?? ""),
-  local: texto(bruto?.local),
-  documentos: String(bruto?.documentos ?? ""),
-  contato: texto(bruto?.contato),
-  prazoDias:
-    bruto?.prazo_dias === null || bruto?.prazo_dias === undefined
-      ? ""
-      : String(bruto.prazo_dias),
-  usuario: texto(bruto?.usuario),
-  salvoEm: texto(bruto?.salvo_em),
-});
+const versaoDe = (valor: unknown) => {
+  const bruto = objetoDaCarta(valor);
+  return {
+    titulo: texto(bruto?.titulo),
+    texto: String(bruto?.texto ?? ""),
+    local: texto(bruto?.local),
+    documentos: String(bruto?.documentos ?? ""),
+    contato: texto(bruto?.contato),
+    prazoDias:
+      bruto?.prazo_dias === null || bruto?.prazo_dias === undefined
+        ? ""
+        : String(bruto.prazo_dias),
+    usuario: texto(bruto?.usuario),
+    salvoEm: texto(bruto?.salvo_em),
+  };
+};
 
 /** A resposta de listar_modelos_carta_convocacao, normalizada. */
-export function lerModelosDoBanco(dados) {
-  const modelos = Array.isArray(dados?.modelos) ? dados.modelos : [];
+export function lerModelosDoBanco(valor: unknown): {
+  podeEditar: boolean;
+  modelos: ModeloDaCarta[];
+} {
+  const dados = objetoDaCarta(valor);
+  const modelos = registrosDaCarta(dados.modelos);
   return {
     podeEditar: dados?.pode_editar === true,
     modelos: modelos.map((m) => ({
@@ -387,7 +429,7 @@ export function lerModelosDoBanco(dados) {
       atualizadoEm: texto(m.atualizado_em),
       cartas: Number(m.cartas) || 0,
       vigente: versaoDe(m.vigente),
-      versoes: (Array.isArray(m.versoes) ? m.versoes : []).map((v) => ({
+      versoes: registrosDaCarta(m.versoes).map((v) => ({
         versao: Number(v.versao) || 0,
         motivo: texto(v.motivo),
         usuario: texto(v.usuario),
@@ -401,7 +443,10 @@ export function lerModelosDoBanco(dados) {
  * Os modelos que servem para emitir a carta destes candidatos: ativos, da
  * área ou do edital de TODOS eles; os do edital primeiro.
  */
-export function modelosParaEmitir(modelos, candidatos) {
+export function modelosParaEmitir(
+  modelos: readonly ModeloDaCarta[] | null | undefined,
+  candidatos: readonly CandidatoDaCarta[] | null | undefined,
+) {
   const editais = new Set((candidatos || []).map((c) => texto(c.edital_id)));
   const unico = editais.size === 1 ? [...editais][0] : "";
   return (modelos || [])
@@ -414,7 +459,9 @@ export function modelosParaEmitir(modelos, candidatos) {
 }
 
 /** O rascunho do formulário a partir de um modelo (ou do padrão, para criar). */
-export function rascunhoDoModelo(modelo = null) {
+export function rascunhoDoModelo(
+  modelo: ModeloDaCarta | null = null,
+): RascunhoDaCarta {
   if (!modelo) return { ...MODELO_PADRAO, editalId: "", motivo: "" };
   return {
     nome: modelo.nome,
@@ -430,7 +477,7 @@ export function rascunhoDoModelo(modelo = null) {
 }
 
 /** O p_conteudo de salvar_modelo_carta_convocacao. */
-export function conteudoParaSalvar(rascunho = {}) {
+export function conteudoParaSalvar(rascunho: Partial<RascunhoDaCarta> = {}) {
   const prazo = texto(rascunho.prazoDias);
   return {
     nome: texto(rascunho.nome),
@@ -446,7 +493,10 @@ export function conteudoParaSalvar(rascunho = {}) {
 }
 
 /** Os valores da emissão a partir da versão vigente do modelo. */
-export function emissaoInicial(modelo, hoje = hojeEmBrasilia()) {
+export function emissaoInicial(
+  modelo: ModeloDoDocumentoDaCarta | null | undefined,
+  hoje = hojeEmBrasilia(),
+) {
   const vigente = modelo?.vigente || {};
   return {
     dataLimite:
@@ -460,7 +510,7 @@ export function emissaoInicial(modelo, hoje = hojeEmBrasilia()) {
 }
 
 /** O p_campos de registrar_carta_convocacao. */
-export function camposParaRegistrar(emissao = {}) {
+export function camposParaRegistrar(emissao: EmissaoDaCarta = {}) {
   return {
     data_limite: texto(emissao.dataLimite) || null,
     local: texto(emissao.local),
@@ -480,6 +530,12 @@ export function assinaturaDaEmissao({
   candidatoIds,
   agrupamento,
   emissao,
+}: {
+  modeloId: string;
+  versao: number;
+  candidatoIds: string[];
+  agrupamento: string;
+  emissao: EmissaoDaCarta;
 }) {
   return JSON.stringify([
     modeloId,

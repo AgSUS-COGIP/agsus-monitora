@@ -18,7 +18,7 @@ import {
   rascunhoDoModelo,
   validarEmissao,
   validarModelo,
-} from "../../src/lib/carta-de-convocacao.js";
+} from "../../src/lib/carta-de-convocacao.ts";
 import {
   gerarDocxDasCartas,
   gerarZipDasCartas,
@@ -27,7 +27,7 @@ import {
   paginaDaPrevia,
   soACarta,
   textoParaSei,
-} from "../../src/lib/carta-de-convocacao-documento.js";
+} from "../../src/lib/carta-de-convocacao-documento.ts";
 
 /*
   A carta de convocação sem DOM. Os testes seguem as histórias de

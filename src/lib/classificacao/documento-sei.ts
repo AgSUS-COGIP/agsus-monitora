@@ -1284,7 +1284,7 @@ const ESTILO_DO_SEI = `
  * Uma página no modelo do SEI, para qualquer documento: o timbrado (logo e
  * cabeçalho da agência), o HTML do SEI (`corpoHtml`) e, se vier, o aviso do
  * que o SEI acrescenta. Vai num iframe sem script (a prévia) ou na impressão
- * (PDF). A carta de convocação também a usa (carta-de-convocacao-documento.js).
+ * (PDF). A carta de convocação também a usa (carta-de-convocacao-documento.ts).
  */
 export function paginaNoModeloDoSei(
   {

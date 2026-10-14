@@ -2212,7 +2212,7 @@ export const VERBETES_AYA = Object.freeze([
       'Gere a lista, escolha o recorte e a publicação e clique em "Copiar para o SEI". No SEI, crie o documento (Comunicado Externo), abra o editor, clique no corpo e cole (Ctrl+V); depois confira, preencha data e hora na convocação se não houver agenda salva, e assine. O que é copiado: o HTML com as classes de estilo do próprio SEI (Item_Nivel1 e Item_Nivel2 numeram sozinhos "1." e "1.1.", Texto_Centralizado_Maiusculas, Tabela_Texto_Centralizado…) e tabelas com borda e largura em porcentagem, além do texto puro numerado para quem cola fora do SEI. Se o navegador não liberar o formato com tabelas, a cópia vai só como texto e a tela avisa — aí use o DOCX. Se a numeração dos itens não aparecer no SEI, o editor removeu as classes ao colar: aplique o estilo "Item_Nivel1/Item_Nivel2" pelo menu de estilos ou use o DOCX.',
     fato: "",
     fonte:
-      "src/lib/classificacao/documento-sei.ts; src/modulos/classificacao/documento-no-navegador.js",
+      "src/lib/classificacao/documento-sei.ts; src/modulos/classificacao/documento-no-navegador.ts",
     abrir: "classificacao",
   },
   {
@@ -2767,7 +2767,7 @@ export const VERBETES_AYA = Object.freeze([
       'Na aba Convocação, marque os candidatos e clique em "Carta de convocação" (ou use o envelope na linha ou na gaveta do candidato). Escolha o modelo (os do edital aparecem primeiro), confira a data limite, o local, os documentos e o contato desta emissão, e se sai um documento com todas ou uma carta por candidato. A prévia mostra como fica no SEI. As saídas são Copiar para o SEI, DOCX (com uma carta por candidato, vem um .zip) e PDF. A primeira saída registra a emissão: quem, quando, o modelo e a versão e os candidatos. Emitir é de quem tem Editor em Aprovados.',
     fato: "",
     fonte:
-      "src/modulos/aprovados/carta-de-convocacao/; src/lib/carta-de-convocacao.js; src/lib/carta-de-convocacao-documento.js",
+      "src/modulos/aprovados/carta-de-convocacao/; src/lib/carta-de-convocacao.ts; src/lib/carta-de-convocacao-documento.ts",
     abrir: "approved",
   },
   {
@@ -2800,7 +2800,7 @@ export const VERBETES_AYA = Object.freeze([
       'Os modelos da carta são da área e, se preciso, de um edital, e ficam em "Modelos da carta", na aba Convocação. O texto tem um parágrafo por linha, **negrito** e campos entre chaves: {NOME}, {CPF}, {CARGO}, {VAGA}, {LOTACAO}, {UNIDADE}, {EDITAL}, {POSICAO}, {MODALIDADE}, {DATA_LIMITE}, {LOCAL}, {DOCUMENTOS}, {CONTATO} e {DATA}; a linha que é só {DOCUMENTOS} vira a lista dos documentos. O modelo guarda os valores padrão de local, documentos, contato e prazo em dias. Cada alteração é uma versão nova e, a partir da segunda, pede o motivo; modelo não se apaga, inativa-se com motivo. Quem tem Editor em Aprovados cria e altera; os demais só consultam.',
     fato: "",
     fonte:
-      "src/lib/carta-de-convocacao.js; src/modulos/aprovados/carta-de-convocacao/modelos-da-carta.jsx",
+      "src/lib/carta-de-convocacao.ts; src/modulos/aprovados/carta-de-convocacao/modelos-da-carta.tsx",
     abrir: "approved",
   },
   {
@@ -2810,7 +2810,7 @@ export const VERBETES_AYA = Object.freeze([
     resposta:
       "A lista de aprovados não guarda CPF. Se o modelo usa {CPF}, a carta sai com o espaço em branco e a emissão avisa quem ficou sem; quando houver CPF, ele aparece sempre mascarado (***.456.789-**).",
     fato: "",
-    fonte: "src/lib/carta-de-convocacao.js",
+    fonte: "src/lib/carta-de-convocacao.ts",
   },
   {
     arquivo: "regras-da-lista-de-aprovados.md",
