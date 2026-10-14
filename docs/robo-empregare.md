@@ -143,7 +143,14 @@ Há dois passos (`scripts/robo-empregare/anexos_empregare.py`):
 2. **Capturar** (`anexos` marcado no Run workflow, modo `normal`/`forcar`; opcional até
    validarmos): a lista de candidaturas que o robô já lê dá, por candidato, o token e as respostas
    (`ler_respostas_do_html` em `navegador_empregare.py`). Para cada resposta, o mesmo GET com a
-   sessão (6 por vez, `fetch` na página; até 10 min por vaga e 30 por execução); o JSON é lido
+   sessão (6 por vez, `fetch` na página; até 10 min por vaga e 70 por execução, parando antes de
+   85 min de execução menos 1 min por vaga que ainda falta pedir, para a carga caber). Antes, a
+   vaga pergunta ao banco a ordem (`listar_prioridade_anexos_empregare`, migration
+   `20261014200000_anexos_priorizam_o_lote.sql`): primeiro quem está no lote ou tem ficha
+   pendente/em análise, depois os ranqueados e os demais; **pula** quem não finalizou o
+   questionário (coluna "SITUAÇÃO - …" diferente de FINALIZADO), cancelou ou foi eliminado por isso,
+   e não relê a resposta já lida com o mesmo número (resposta nova é lida). Banco sem essa
+   migration: lê todos, na ordem da lista, como antes. O JSON é lido
    (`ler_detalhes_da_resposta`), os links são montados como o front e cada anexo ganha a coluna do
    Excel: a "Pergunta <Ordem>" se o enunciado confirma, senão a única de enunciado que casa
    (`coluna_da_pergunta`). Para casar, o enunciado vira uma chave só com letras e dígitos (sem

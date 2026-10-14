@@ -502,9 +502,12 @@ export function pendenciasDaFicha(
       );
       if (itens.some((i) => i && i.aceito === false && !i.motivo))
         falta("item", "Escolha o motivo da recusa do item.");
-      if (chave === "vinculos" && itens.some((v) => v && !datasValidas(v)))
+      // O item recusado não conta: não pede as datas nem a carga horária (a
+      // recusa pode ser justamente "carga horária não comprovada").
+      const aceitos = itens.filter((i) => i && i.aceito !== false);
+      if (chave === "vinculos" && aceitos.some((v) => !datasValidas(v)))
         falta("datas", "Confira o início e o fim do vínculo.");
-      if (chave === "cursos" && itens.some((c) => c && !(Number(c.horas) > 0)))
+      if (chave === "cursos" && aceitos.some((c) => !(Number(c.horas) > 0)))
         falta("horas", "Informe a carga horária do curso.");
       // Já eliminado por outro bloco (efeito Elimina): não pede o registro.
       const comprovado =

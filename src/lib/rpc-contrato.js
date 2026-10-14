@@ -618,7 +618,7 @@ export const CONTRATO_RPC = {
     argumentos: [],
     critica: false,
     resumo:
-      "Últimas 10 execuções de cada carga (análises por origem, entrevistas, seleção, robô da Empregare com vagas pedidas/baixadas/falhas/recusadas e quem disparou — 20261005170000 —, conferências de consistência com avisos novos/abertos/resolvidos — 20261005210000; análises com encerrada_por_inatividade — 20261007170000; agenda dos robôs pelo banco com chave cadastrada, último pedido aceito, falhas/sem chave em 24 h e os últimos pedidos — 20261008140000) e das tarefas agsus_* do pg_cron, para a seção Status das atualizações (só administrador global). O expurgo dos anexos do chat saiu em 20261014120000.",
+      "Últimas 10 execuções de cada carga (análises por origem, entrevistas, seleção, robô da Empregare com vagas pedidas/baixadas/falhas/recusadas e quem disparou — 20261005170000 —, conferências de consistência com avisos novos/abertos/resolvidos — 20261005210000; análises com encerrada_por_inatividade — 20261007170000; agenda dos robôs pelo banco com chave cadastrada, último pedido aceito, falhas/sem chave em 24 h e os últimos pedidos — 20261008140000) e das tarefas agsus_* do pg_cron, para a seção Status das atualizações (só administrador global). O expurgo dos anexos do chat saiu em 20261014160000 (desligar o chat).",
   },
   // ── Painel dos robôs (Status das atualizações, 20261007190000_painel_dos_robos.sql) ──
   get_painel_dos_robos: {
@@ -1028,7 +1028,13 @@ export const CONTRATO_RPC = {
     argumentos: ["p_edital"],
     critica: false,
     resumo:
-      "A fila do edital: cada inscrito da pré-classificação com a ficha (situação, responsável, reserva vigente, versão, rascunho e, concluída, resultado e nota; nome sem CPF nem contato), as vagas, os analistas com as pendentes, a distribuição da regra, quantos do lote estão sem ficha e os filtros salvos de quem chama. O analista vê só as vagas dele. Leitor da Avaliação documental.",
+      "A fila do edital (schema_version 2, 20261014180000_fila_leve.sql): os inscritos do núcleo (no lote ou com ficha viva) com a ficha (situação, responsável, reserva vigente, versão, rascunho e, concluída, resultado e nota; nome sem CPF nem contato), as contagens e a versão dos de fora do lote (fora_do_lote; as linhas vêm de obter_fila_fora_do_lote), as vagas, os analistas com as pendentes, a distribuição da regra, quantos do lote estão sem ficha e os filtros salvos de quem chama. O analista vê só as vagas dele. Leitor da Avaliação documental.",
+  },
+  obter_fila_fora_do_lote: {
+    argumentos: ["p_edital", "p_apos", "p_limite"],
+    critica: false,
+    resumo:
+      "Os inscritos de fora do lote na fila (eliminados e ranqueados sem ficha viva), no formato de obter_fila_avaliacao, em páginas de até 2.000 pela chave do inscrito (p_apos = o proximo da página anterior). Pedida só pelas abas Inscritos e Eliminados e por Incluir por decisão. 20261014180000_fila_leve.sql.",
   },
   pegar_proxima_ficha: {
     argumentos: ["p_edital", "p_vaga"],

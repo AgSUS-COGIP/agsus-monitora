@@ -164,9 +164,13 @@ export function criarEstadoDaFicha({
     }
   }
 
-  /* Muda o lançamento (só em edição) e agenda o rascunho. */
+  /*
+    Muda o lançamento (só em edição) e agenda o rascunho. Durante a conclusão,
+    nada muda: a mudança iria para um rascunho que a ficha concluída não
+    aceita mais e sumiria em silêncio.
+  */
   function mudar(transformar) {
-    if (!estado.podeEditar || !estado.lancamento) return;
+    if (!estado.podeEditar || !estado.lancamento || estado.concluindo) return;
     const lancamento = transformar(structuredClone(estado.lancamento));
     mudancas += 1;
     publicar({
@@ -240,14 +244,23 @@ export function criarEstadoDaFicha({
     return ok;
   }
 
-  /* Conclui; devolve { ok, pendencias, erro }. */
+  /*
+    Conclui; devolve { ok, pendencias, erro } ou { ok: false, emAndamento }
+    quando já há uma conclusão em curso (duplo clique, Ctrl+Enter repetido):
+    a segunda chamada não vai ao banco (lá daria 40001 e recarregaria a ficha
+    com "a ficha mudou" enquanto a primeira concluía).
+  */
   async function concluir() {
+    if (estado.concluindo) return { ok: false, emAndamento: true };
     if (!estado.podeEditar)
       return { ok: false, erro: "Ficha só para leitura." };
     if (estado.pendencias.length)
       return { ok: false, pendencias: estado.pendencias };
-    if (!(await salvar())) return { ok: false, erro: estado.aviso };
     publicar({ concluindo: true });
+    if (!(await salvar())) {
+      publicar({ concluindo: false });
+      return { ok: false, erro: estado.aviso };
+    }
     try {
       const { lancamento, avaliacao, declarada } = estado;
       const r = await rpc(RPC_CONCLUIR, {

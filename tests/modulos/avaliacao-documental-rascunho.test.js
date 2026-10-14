@@ -102,7 +102,7 @@ function supabaseFalso({ versao = 2, guardado = null } = {}) {
       rascunho = {
         conteudo: p_conteudo,
         versao_base: p_versao_base,
-        atualizado_em: "2026-10-13T15:30:00Z",
+        atualizado_em: new Date(2026, 9, 13, 15, 30).toISOString(),
       };
       return { atualizado_em: rascunho.atualizado_em };
     },
@@ -181,7 +181,8 @@ describe("rascunho guardado da regra", () => {
       guardado: {
         conteudo: { regra: DO_RASCUNHO },
         versao_base: 2,
-        atualizado_em: "2026-10-13T14:05:00Z",
+        // Hora local (a tela mostra a hora local): o teste vale em qualquer fuso.
+        atualizado_em: new Date(2026, 9, 13, 14, 5).toISOString(),
       },
     });
     await montar(supabase);
@@ -217,7 +218,8 @@ describe("rascunho guardado da regra", () => {
       guardado: {
         conteudo: { regra: DO_RASCUNHO },
         versao_base: 1,
-        atualizado_em: "2026-10-13T14:05:00Z",
+        // Hora local (a tela mostra a hora local): o teste vale em qualquer fuso.
+        atualizado_em: new Date(2026, 9, 13, 14, 5).toISOString(),
       },
     });
     await montar(supabase);
@@ -233,7 +235,8 @@ describe("rascunho guardado da regra", () => {
       guardado: {
         conteudo: { regra: DO_RASCUNHO },
         versao_base: 2,
-        atualizado_em: "2026-10-13T14:05:00Z",
+        // Hora local (a tela mostra a hora local): o teste vale em qualquer fuso.
+        atualizado_em: new Date(2026, 9, 13, 14, 5).toISOString(),
       },
     });
     await montar(supabase);
@@ -257,7 +260,8 @@ describe("rascunho guardado da regra", () => {
       guardado: {
         conteudo: { regra: PROJ },
         versao_base: 2,
-        atualizado_em: "2026-10-13T14:05:00Z",
+        // Hora local (a tela mostra a hora local): o teste vale em qualquer fuso.
+        atualizado_em: new Date(2026, 9, 13, 14, 5).toISOString(),
       },
     });
     await montar(supabase);

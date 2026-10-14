@@ -452,7 +452,7 @@ export function PreClassificacao({ e, estado, pre }) {
   const [descongelando, setDescongelando] = useState(false);
   const versaoDaRegra = e.dados?.regra?.versao ?? 0;
   useEffect(() => {
-    void pre.carregar(e.editalId);
+    void pre.garantirCarregado(e.editalId, String(versaoDaRegra));
   }, [pre, e.editalId, versaoDaRegra]);
 
   if (p.erro)
