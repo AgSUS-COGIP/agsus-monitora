@@ -5,6 +5,7 @@
     "src/app/moldura.js": "impressão: cabeçalho do relatório impresso, sempre em papel branco",
     "src/lib/access-branding.js": "valor padrão gravado da cor do painel da tela de acesso (configuração, não tema)",
     "src/lib/avaliacao-documental/anexo-na-empregare.ts": "falso positivo: entidade HTML (&#160;), não é cor",
+    "src/lib/avaliacao-documental/espelho-de-nota.ts": "documento para impressão (espelho de nota do candidato): papel branco, texto escuro, azul e bordas do timbrado",
     "src/lib/avaliacao-documental/resumo-da-regra.ts": "documento gerado para impressão/arquivo: papel branco, texto preto",
     "src/lib/classificacao/documento-sei.ts": "documento no padrão do SEI: papel branco, texto preto, bordas e faixas do modelo",
     "src/lib/contraste.js": "regra de contraste: as duas cores de texto sobre cor configurada (barra, painel de acesso)",
@@ -57,6 +58,18 @@
     },
     "src/lib/avaliacao-documental/anexo-na-empregare.ts": {
       "#160": 2
+    },
+    "src/lib/avaliacao-documental/espelho-de-nota.ts": {
+      "#fff": 1,
+      "#111": 1,
+      "#003b70": 4,
+      "#444": 2,
+      "#e8eef5": 1,
+      "#b9c7d6": 4,
+      "#f6f8fb": 2,
+      "#333": 1,
+      "#fcfcfd": 1,
+      "#555": 1
     },
     "src/lib/avaliacao-documental/resumo-da-regra.ts": {
       "#000": 1

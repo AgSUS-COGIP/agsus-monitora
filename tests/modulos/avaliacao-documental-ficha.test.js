@@ -681,6 +681,7 @@ describe("ficha: Conclusão e parecer (sem resultado antes da hora)", () => {
     );
     expect(parecer.textContent).not.toMatch(/HABILITADO/);
     expect(botao("Copiar parecer")).toBeUndefined();
+    expect(botao("Espelho de nota")).toBeUndefined();
     const concluir = botao("Concluir e próxima");
     expect(concluir.disabled).toBe(true);
     expect(concluir.getAttribute("title")).toMatch(/^Falta: /);
@@ -1188,6 +1189,36 @@ describe("ficha concluída: só leitura, histórico e reabrir", () => {
     expect(chamadas(supabase, "reabrir_ficha")).toEqual([
       { p_ficha: "f1", p_versao: 5, p_motivo: "Conferir de novo os cursos" },
     ]);
+  });
+
+  it("o Espelho de nota abre a impressão no navegador, sem gravar nada", async () => {
+    const lancamento = {
+      nivel: "superior",
+      modalidade: "AC",
+      blocos: { IDENTIDADE: { situacao: "CONFORME" } },
+      titulos: [{ titulo: "ESPECIALIZACAO", aceito: true }],
+      cursos: [],
+      vinculos: [],
+    };
+    const ficha = fichaDoBanco({
+      situacao: "CONCLUIDA",
+      lancamento,
+      editar: false,
+    });
+    ficha.ficha.tp_resultado = "APTO";
+    ficha.ficha.nota_final = 30;
+    const supabase = supabaseFalso(ficha);
+    await abrirFicha(supabase);
+    const antes = supabase.rpc.mock.calls.length;
+    await clicar(botao("Espelho de nota"));
+    const quadro = document.querySelector("iframe[srcdoc]");
+    expect(quadro).not.toBeNull();
+    const html = quadro.getAttribute("srcdoc");
+    expect(html).toContain("Espelho de Pontuação da Análise Curricular");
+    expect(html).toContain('data-modelo="COM_PONTOS"');
+    expect(html).toContain("Pontuação por critério");
+    expect(supabase.rpc.mock.calls.length).toBe(antes);
+    quadro.remove();
   });
 
   it("na fila, as concluídas mostram nota e resultado", async () => {

@@ -65,6 +65,8 @@ export type PropriedadesDaConclusao = {
   desabilitado: boolean;
   mudar: Mudar;
   aoCopiarParecer: () => void;
+  /** Só na ficha concluída: abre a impressão do espelho de nota (espelho-de-nota.ts). */
+  aoAbrirEspelho?: (() => void) | null;
   historico: ItemDoHistorico[];
   /** Blocos que só registram (sem decisão), já desenhados. */
   registros?: ReactNode;
@@ -138,6 +140,7 @@ export function ConclusaoDaFicha({
   desabilitado,
   mudar,
   aoCopiarParecer,
+  aoAbrirEspelho = null,
   historico,
   registros,
 }: PropriedadesDaConclusao) {
@@ -251,14 +254,32 @@ export function ConclusaoDaFicha({
               ) : null}
             </strong>
             {previa.completa ? (
-              <button
-                type="button"
-                className="btn secondary small"
-                onClick={aoCopiarParecer}
-              >
-                <i className="fa-regular fa-copy" aria-hidden="true" /> Copiar
-                parecer
-              </button>
+              <span className="avd-ficha-parecer-acoes">
+                {concluida && aoAbrirEspelho ? (
+                  <button
+                    type="button"
+                    className="btn secondary small"
+                    data-acao="espelho-de-nota"
+                    data-tour="avd-ficha-espelho"
+                    title="Documento para o atendimento ao candidato: abre a impressão (Salvar como PDF). Nada fica gravado."
+                    onClick={aoAbrirEspelho}
+                  >
+                    <i
+                      className="fa-regular fa-file-lines"
+                      aria-hidden="true"
+                    />{" "}
+                    Espelho de nota
+                  </button>
+                ) : null}
+                <button
+                  type="button"
+                  className="btn secondary small"
+                  onClick={aoCopiarParecer}
+                >
+                  <i className="fa-regular fa-copy" aria-hidden="true" /> Copiar
+                  parecer
+                </button>
+              </span>
             ) : null}
           </div>
           {previa.completa ? (

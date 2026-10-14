@@ -1703,6 +1703,12 @@
   justify-content: space-between;
   gap: var(--space-2);
 }
+.avd-ficha-parecer-acoes {
+  display: inline-flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--space-2);
+}
 .avd-ficha-parecer pre {
   max-height: 260px;
   margin: 0;

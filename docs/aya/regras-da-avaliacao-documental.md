@@ -442,6 +442,13 @@ os modelos em `supabase/correcoes/20261006-modelos-da-regra-da-analise.sql` e o 
 **fonte:** src/lib/avaliacao-documental/pontuacao.js (calcularAvaliacao); src/modulos/avaliacao-documental/ficha/ficha.jsx
 **abrir:** avaliacao-documental
 
+## Espelho de nota do candidato
+
+**perguntas:** espelho de nota | espelho de pontuacao | espelho da analise curricular | espelho para o candidato | atendimento ao candidato | candidato pediu a nota | pdf da nota do candidato | gerar espelho | espelho do eliminado | espelho com pontos
+**resposta:** Na ficha concluída, na etapa Conclusão, o botão "Espelho de nota" (ao lado de "Copiar parecer") abre a impressão do navegador com o "Espelho de Pontuação da Análise Curricular", o documento simplificado para o atendimento ao candidato; "Salvar como PDF" gera o arquivo. Nada é gravado (nem no banco, nem no Storage) e não há consulta nova: o espelho sai do que a ficha já carregou e usa os mesmos textos do parecer. Traz o timbrado da AgSUS (Configurações › Marca), a saudação, os dados do registro (edital e unidade, candidato, código, modalidade, vaga, etapa e situação; a linha Descrição só aparece quando há regime e carga horária) e as notas. O modelo é escolhido pelo resultado gravado: no Inapto por requisito (eliminado), não há pontos — só a nota autodeclarada (ART) e "Não se aplica" na consolidada, e a justificativa traz os motivos da eliminação com o item do edital, inclusive o "Outro motivo" descrito; no Apto e no Inapto por nota mínima, vem também a pontuação por critério (declarada, após a análise e teto, com a justificativa de cada critério) e as observações registradas (a Observação do avaliador de cada item, as observações prontas e a observação geral). Dados internos (avaliador, CPF, questionário) não aparecem.
+**fonte:** src/lib/avaliacao-documental/espelho-de-nota.ts; src/modulos/avaliacao-documental/ficha/espelho-de-nota.ts; src/modulos/avaliacao-documental/ficha/conclusao-da-ficha.tsx
+**abrir:** avaliacao-documental
+
 ## Rascunho, concluir e próxima
 
 **perguntas:** salvar rascunho da ficha | salvo as | rascunho automatico | concluir e proxima | concluir ficha | fechar e liberar | o que falta para concluir | perdi o que fiz | concluir desabilitado | itens conferidos | barra de progresso da ficha | conclusao da ficha | revisar e concluir | proximo pendente | rodape da ficha
