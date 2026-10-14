@@ -7,7 +7,6 @@ import {
   corDaBarraSegura,
   logoDaBarraSegura,
 } from "../lib/marca-da-barra-lateral.js";
-import { getSupabaseClient } from "../lib/supabaseClient.js";
 
 /*
   Pinta a barra lateral com a logo e a cor gravadas (`ui_sidebar_logo_url`,
@@ -15,10 +14,14 @@ import { getSupabaseClient } from "../lib/supabaseClient.js";
   aviso de contraste) é de Configurações › Aparência, em React
   (src/modulos/configuracoes/aparencia.jsx), que chama
   `aplicarMarcaDaBarraLateral` enquanto a pessoa experimenta.
+
+  Os valores vêm da leitura da configuração que o app já faz na entrada
+  (src/app/configuracao.js chama `aplicarMarcaDaConfiguracao`): sem consulta
+  própria. A consulta antiga relia TB_CONFIGURACAO a cada SIGNED_IN, e o
+  Supabase emite SIGNED_IN toda vez que a aba volta a ficar visível.
 */
 
 let initialized = false;
-let client = null;
 let currentLogo = LOGO_PADRAO_DA_BARRA;
 let currentColor = COR_PADRAO_DA_BARRA;
 
@@ -71,21 +74,17 @@ export function aplicarMarcaDaBarraLateral({
   );
 }
 
-async function readSidebarBranding() {
-  if (!client) return false;
-  const { data: sessionData } = await client.auth.getSession();
-  if (!sessionData?.session) return false;
-  const { data, error } = await client
-    .from("TB_CONFIGURACAO")
-    .select("chave,valor")
-    .in("chave", [CHAVE_DO_LOGO_DA_BARRA, CHAVE_DA_COR_DA_BARRA]);
-  if (error) return false;
-  const values = Object.fromEntries(
-    (data || []).map((row) => [row.chave, row.valor]),
-  );
+/**
+ * Pinta a barra com a logo e a cor da configuração carregada (objeto chave →
+ * valor). Leitura sem nenhuma das duas chaves (a da tela de acesso, sem
+ * sessão, não as traz) não mexe no que está pintado.
+ */
+export function aplicarMarcaDaConfiguracao(valores = {}) {
+  const tem = (chave) => Object.hasOwn(valores || {}, chave);
+  if (!tem(CHAVE_DO_LOGO_DA_BARRA) && !tem(CHAVE_DA_COR_DA_BARRA)) return false;
   aplicarMarcaDaBarraLateral({
-    logo: values[CHAVE_DO_LOGO_DA_BARRA],
-    cor: values[CHAVE_DA_COR_DA_BARRA],
+    logo: valores[CHAVE_DO_LOGO_DA_BARRA],
+    cor: valores[CHAVE_DA_COR_DA_BARRA],
   });
   return true;
 }
@@ -93,28 +92,15 @@ async function readSidebarBranding() {
 export function initSidebarBranding() {
   if (initialized || typeof document === "undefined") return;
   initialized = true;
-  client = getSupabaseClient();
 
-  const boot = () => {
-    aplicarMarcaDaBarraLateral();
-    void readSidebarBranding();
-  };
-
+  // O padrão até a configuração chegar (aplicarMarcaDaConfiguracao).
   if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", boot, { once: true });
+    document.addEventListener(
+      "DOMContentLoaded",
+      () => aplicarMarcaDaBarraLateral(),
+      { once: true },
+    );
   } else {
-    boot();
+    aplicarMarcaDaBarraLateral();
   }
-
-  if (!client) return;
-
-  /*
-    Só na entrada. A renovação do token (TOKEN_REFRESHED) não muda logo nem cor
-    e relia a configuração a cada renovação: 30 mil leituras em 11 dias, cada
-    uma uma linha de log da plataforma. Quem troca a marca vê na hora
-    (Configurações › Aparência aplica direto); os outros, na próxima entrada.
-  */
-  client.auth.onAuthStateChange((event) => {
-    if (event === "SIGNED_IN") void readSidebarBranding();
-  });
 }

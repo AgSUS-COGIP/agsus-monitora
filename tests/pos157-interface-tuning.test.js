@@ -148,14 +148,13 @@ describe("branding independente da sidebar", () => {
     );
   });
 
-  it("não desreferencia o cliente quando não há ambiente", () => {
-    const init = sidebar.slice(
-      sidebar.indexOf("export function initSidebarBranding"),
-    );
-    const guarda = init.indexOf("if (!client) return;");
-    const uso = init.indexOf("client.auth.onAuthStateChange");
-    expect(guarda).toBeGreaterThan(-1);
-    expect(guarda).toBeLessThan(uso);
+  it("não relê a configuração: logo e cor vêm da leitura da entrada", () => {
+    // O Supabase emite SIGNED_IN a cada volta da aba; a leitura própria era ~2.700/dia.
+    expect(sidebar).not.toContain('.from("TB_CONFIGURACAO")');
+    expect(sidebar).not.toContain("onAuthStateChange");
+    expect(sidebar).toContain("export function aplicarMarcaDaConfiguracao");
+    const configuracao = readFileSync("src/app/configuracao.js", "utf8");
+    expect(configuracao).toContain("pintarBarra(valores)");
   });
 
   it("é inicializado antes da moldura de Configurações", () => {

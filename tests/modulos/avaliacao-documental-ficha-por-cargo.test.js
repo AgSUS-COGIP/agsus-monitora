@@ -56,7 +56,9 @@ async function abrir(vaga) {
   const salvos = [];
   const loja = criarEstadoDaFicha({
     rpc: async (nome, args) => {
-      if (nome === "obter_ficha_analise") return fichaDoBanco(vaga);
+      // A leve (20261014231000) sem regra.chave: o mesmo payload.
+      if (nome === "obter_ficha_analise" || nome === "obter_ficha_analise_leve")
+        return fichaDoBanco(vaga);
       if (nome === "salvar_rascunho_ficha") {
         salvos.push(args);
         return {

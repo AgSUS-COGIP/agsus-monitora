@@ -12,6 +12,7 @@ import {
 import { sessaoDoApp } from "./sessao.js";
 import { definirMarcaDaConfiguracao } from "./entrada/marca.js";
 import { estadoDasConfiguracoes } from "../modulos/configuracoes/estado.js";
+import { aplicarMarcaDaConfiguracao } from "../modules/sidebar-branding.js";
 import { avisar as avisarPadrao } from "./avisos.js";
 import {
   CHAVE_DAS_COMEMORACOES,
@@ -51,6 +52,7 @@ export function criarConfiguracao({
   sessao = sessaoDoApp,
   definirMarca = definirMarcaDaConfiguracao,
   estado = estadoDasConfiguracoes,
+  pintarBarra = aplicarMarcaDaConfiguracao,
 } = {}) {
   let valores = {};
   let chaves = new Set();
@@ -178,6 +180,8 @@ export function criarConfiguracao({
       carregou = true;
     }
     aplicarNaTela();
+    // Logo e cor da barra lateral: desta mesma leitura (sem consulta própria).
+    if (carregou) pintarBarra(valores);
     // Os marcos das comemorações (Configurações › Comemorações) valem para todos.
     definirConfiguracaoDasComemoracoes(valores[CHAVE_DAS_COMEMORACOES]);
     // As seções de Configurações (React, src/modulos/configuracoes/) leem daqui.

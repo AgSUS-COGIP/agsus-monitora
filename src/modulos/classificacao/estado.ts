@@ -33,8 +33,14 @@ import {
   RPCs (supabase/migrations/20261002150000_classificacao.sql; contrato em
   src/lib/rpc-contrato.js):
     listar_editais_classificacao(p_area)     os editais da área atual
-    obter_classificacao_do_edital(p_edital)  regra, quadro, análises,
-                                             entrevistas, listas e desempates
+    obter_classificacao_do_edital_se_mudou(p_edital, p_versao)
+                                             (20261014230000) regra, quadro,
+                                             análises, entrevistas, listas e
+                                             desempates, por versão: candidatos
+                                             em colunas e, quando nada mudou, só
+                                             { inalterado } (leitura-por-versao.ts;
+                                             cópia no navegador). Banco sem ela:
+    obter_classificacao_do_edital(p_edital)  o mesmo, inteiro, como antes
     salvar_regra_classificacao(...)          nova versão da regra
     registrar_lista_classificacao(...)       "Gerar": retrato + hash do banco
     publicar_lista_classificacao(p_lista)
@@ -95,10 +101,13 @@ import {
   ehFalhaDeConexao,
   mensagemDeFalha,
 } from "../../lib/falha-de-rede.js";
+import { criarCopiasPorVersao } from "../../app/copias-por-versao.ts";
+import { criarLeituraPorVersao } from "../../lib/avaliacao-documental/leitura-por-versao.ts";
 
 /* As RPCs (src/lib/rpc-contrato.js); chamadas por `rpc()`, com tempo limite. */
 const RPC_LISTAR_EDITAIS = "listar_editais_classificacao";
 const RPC_OBTER_EDITAL = "obter_classificacao_do_edital";
+const RPC_OBTER_EDITAL_SE_MUDOU = "obter_classificacao_do_edital_se_mudou";
 const RPC_SALVAR_REGRA = "salvar_regra_classificacao";
 const RPC_RENOMEAR_VERSAO = "renomear_versao_regra_classificacao";
 const RPC_REGISTRAR_LISTA = "registrar_lista_classificacao";
@@ -167,8 +176,14 @@ export function criarEstadoDaClassificacao({
   tempoLimiteMs = TEMPO_LIMITE_MS,
   agendaDoEdital = () => null,
   aoGravarVersao = () => {},
+  copias = criarCopiasPorVersao(supabase, RPC_OBTER_EDITAL_SE_MUDOU),
 }: OpcoesDoEstado = {}) {
   let estado: SnapshotDaClassificacao = ESTADO_INICIAL;
+  const leituraDoEdital = criarLeituraPorVersao({
+    nova: RPC_OBTER_EDITAL_SE_MUDOU,
+    antiga: RPC_OBTER_EDITAL,
+    copias,
+  });
   let pedidoDosEditais = 0;
   let geracao = 0;
   let pedidoDoEdital = 0;
@@ -183,6 +198,7 @@ export function criarEstadoDaClassificacao({
     geracao += 1;
     pedidoDosEditais += 1;
     pedidoDoEdital += 1;
+    leituraDoEdital.esquecer();
     publicar(ESTADO_INICIAL);
   }
   let identidade: string | null | undefined;
@@ -287,7 +303,11 @@ export function criarEstadoDaClassificacao({
     });
     try {
       const [dados, convocacao] = await Promise.all([
-        rpc(RPC_OBTER_EDITAL, { p_edital: id }),
+        leituraDoEdital.ler(
+          (nome, argumentos) => rpc(nome as RpcDaClassificacao, argumentos),
+          { p_edital: id },
+          id,
+        ),
         carregarConvocacao(id),
       ]);
       if (meu !== pedidoDoEdital) return false;

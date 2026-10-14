@@ -16,7 +16,8 @@ function banco() {
           data: { editais: [{ id: "A" }], pode_editar: true },
           error: null,
         });
-      if (nome === "obter_classificacao_do_edital")
+      // A leitura por versão (_se_mudou, 20261014230000) responde o mesmo payload.
+      if (nome.startsWith("obter_classificacao_do_edital"))
         return Promise.resolve({
           data: {
             edital: { id: args.p_edital },

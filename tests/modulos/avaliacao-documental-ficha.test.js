@@ -1958,3 +1958,114 @@ describe("ficha: pelos itens lidos (conferir → pontuação dos aceitos → con
     expect(campo().value).toContain("Aceitos 2 cursos (205 h)");
   });
 });
+
+describe("estado da ficha: menos chamadas (20261014231000)", () => {
+  const salvarFalso = (args) => ({
+    versao: args.p_versao + 1,
+    salvo_em: "2026-10-15T13:05:00Z",
+  });
+
+  it("rascunho 3 s depois da última mudança, mas no máximo 15 s depois da primeira pendente", async () => {
+    let agora = 0;
+    const agendados = [];
+    const rpc = vi.fn(async (nome, args) =>
+      nome === "salvar_rascunho_ficha"
+        ? salvarFalso(args)
+        : nome === "obter_ficha_analise"
+          ? fichaDoBanco()
+          : null,
+    );
+    const estado = criarEstadoDaFicha({
+      rpc,
+      toast,
+      relogio: () => agora,
+      agendar: (fn, ms) => agendados.push({ fn, ms }),
+      cancelar: () => {},
+      regras: new Map(),
+    });
+    await estado.carregar("f1");
+    const nivel = (n) => estado.mudar((l) => ({ ...l, nivel: n }));
+    nivel("tecnico");
+    expect(agendados.at(-1).ms).toBe(3000);
+    // Mudanças a cada 2 s: a espera encurta até fechar 15 s da primeira.
+    for (const t of [2000, 4000, 6000, 8000, 10000, 12000, 14000]) {
+      agora = t;
+      nivel(t % 4000 ? "superior" : "tecnico");
+    }
+    expect(agendados.at(-1).ms).toBe(1000);
+    await agendados.at(-1).fn();
+    expect(
+      rpc.mock.calls.filter(([n]) => n === "salvar_rascunho_ficha"),
+    ).toHaveLength(1);
+    // Depois do envio, a próxima mudança volta aos 3 s.
+    agora = 20000;
+    nivel("superior");
+    expect(agendados.at(-1).ms).toBe(3000);
+    estado.descartar();
+  });
+
+  it("a ficha leve: a segunda ficha manda a chave da regra e usa a configuração guardada", async () => {
+    const regras = new Map();
+    const chamadas = [];
+    const completa = fichaDoBanco();
+    const rpc = vi.fn(async (nome, args) => {
+      if (nome !== "obter_ficha_analise_leve") return null;
+      chamadas.push(args.p_regra_chave);
+      const f = structuredClone(completa);
+      f.regra.chave = "k1";
+      if (args.p_regra_chave === "k1") {
+        f.regra.configuracao = null;
+        f.regra_omitida = true;
+      } else f.regra_omitida = false;
+      return f;
+    });
+    const criar = () =>
+      criarEstadoDaFicha({
+        rpc,
+        toast,
+        agendar: () => 0,
+        cancelar: () => {},
+        regras,
+      });
+    const primeira = criar();
+    await primeira.carregar("f1");
+    const segunda = criar();
+    await segunda.carregar("f1");
+    expect(chamadas).toEqual([null, "k1"]);
+    expect(segunda.obter().dados.regra.configuracao).toEqual(
+      completa.regra.configuracao,
+    );
+    // Cópia: a ficha não divide o objeto da regra com as outras.
+    expect(segunda.obter().dados.regra.configuracao).not.toBe(
+      primeira.obter().dados.regra.configuracao,
+    );
+    expect(segunda.obter().regra).toEqual(primeira.obter().regra);
+    primeira.descartar();
+    segunda.descartar();
+  });
+
+  it("banco sem a ficha leve: a de sempre", async () => {
+    const ausente = Object.assign(new Error("Could not find"), {
+      code: "PGRST202",
+    });
+    const rpc = vi.fn(async (nome) => {
+      if (nome === "obter_ficha_analise_leve") throw ausente;
+      return nome === "obter_ficha_analise" ? fichaDoBanco() : null;
+    });
+    const estado = criarEstadoDaFicha({
+      rpc,
+      toast,
+      agendar: () => 0,
+      cancelar: () => {},
+      regras: new Map(),
+    });
+    expect(await estado.carregar("f1")).toBe(true);
+    expect(await estado.carregar("f1")).toBe(true);
+    expect(rpc.mock.calls.map(([n]) => n)).toEqual([
+      "obter_ficha_analise_leve",
+      "obter_ficha_analise",
+      "obter_ficha_analise",
+    ]);
+    estado.descartar();
+  });
+});

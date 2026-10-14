@@ -18,10 +18,13 @@ import {
   - presença (`registrar_presenca_monitora`, TB_PRESENCA_ONLINE_MONITORA): a
     batida a cada 90 s com o lugar da pessoa ("Recursos · SEDE"), na hora em
     que ela troca de página, área ou seção. O banco conta "online" por 4 min
-    (migration 20261013140000): uma batida perdida não derruba ninguém;
+    (migration 20261013140000): uma batida perdida não derruba ninguém. Com a
+    aba oculta, a batida para; na volta, bate uma vez só (se a última passou
+    do intervalo) e o relógio recomeça dali;
   - "Pessoas online" (`listar_presenca_online_monitora`): a lista que o
     cabeçalho mostra (src/componentes/pessoas-online/), só para quem
-    `podeVerPessoasOnline` (admin global e Gestor).
+    `podeVerPessoasOnline` (admin global e Gestor). Com a lista aberta, relê a
+    cada batida; fechada, só a contagem do botão, no máximo a cada 10 min.
 
   O estado de "Pessoas online" é assinável (`obter()` / `assinar(ouvinte)`).
 */
@@ -31,6 +34,8 @@ const RPC_REGISTRAR_PRESENCA = "registrar_presenca_monitora";
 const RPC_LISTAR_PRESENCA = "listar_presenca_online_monitora";
 const CHAVE_DA_ABA = "agsus_monitora_client_session_id";
 export const INTERVALO_DA_PRESENCA_MS = 90_000;
+/* Lista fechada: a contagem do botão é relida no máximo a cada 10 min. */
+export const LISTA_FECHADA_MS = 10 * 60_000;
 const HEARTBEAT_PADRAO_MINUTOS = 5;
 
 /* Onde a pessoa está agora, em texto para quem lê (página · área, ou a seção de Configurações). */
@@ -88,6 +93,10 @@ export function criarPresenca({
   let batida = null;
   let heartbeat = null;
   let ultimoLocal = null;
+  /* `iniciar` ligou a presença (a aba oculta só pausa a batida). */
+  let ligada = false;
+  let ultimaBatida = null;
+  let ultimaLista = null;
 
   const sb = () => cliente();
   const usuarioId = () => obterUsuario()?.id;
@@ -157,58 +166,109 @@ export function criarPresenca({
     });
     if (resposta.error) throw resposta.error;
     ultimoLocal = lugar;
+    ultimaBatida = agora();
   }
 
   /* Ao trocar de página, área ou seção, avisa na hora (sem esperar os 90 s). */
   function avisarTrocaDeLocal() {
-    if (!batida) return;
+    if (!ligada || !batida) return;
     if (local(view()) === ultimoLocal) return;
     registrarLocal().catch(() => {});
   }
+
+  function falhou() {
+    definir(
+      podeVer()
+        ? { visivel: true, sincronizado: false, pessoas: [] }
+        : { visivel: false },
+    );
+  }
+
+  /* A lista de "Pessoas online" (só quem pode ver). */
+  async function listar() {
+    // Sem permissão (inclusive quem a perdeu nesta sessão): o indicador some.
+    if (!podeVer()) {
+      definir({ visivel: false });
+      return;
+    }
+    const resposta = await sb().rpc(RPC_LISTAR_PRESENCA);
+    if (resposta.error) throw resposta.error;
+    ultimaLista = agora();
+    definir({
+      visivel: true,
+      sincronizado: true,
+      pessoas: normalizeOnlinePresenceList(resposta.data),
+    });
+  }
+
+  /* Lista aberta: a cada batida. Fechada: a primeira e, depois, a cada 10 min. */
+  const listaVencida = () =>
+    estado.aberto ||
+    ultimaLista === null ||
+    agora() - ultimaLista >= LISTA_FECHADA_MS;
 
   async function sincronizar() {
     if (!sb() || !usuarioId() || !visivelNaAba()) return;
     try {
       await registrarLocal();
-      // Sem permissão (inclusive quem a perdeu nesta sessão): o indicador some.
-      if (!podeVer()) {
-        definir({ visivel: false });
-        return;
-      }
-      const resposta = await sb().rpc(RPC_LISTAR_PRESENCA);
-      if (resposta.error) throw resposta.error;
-      definir({
-        visivel: true,
-        sincronizado: true,
-        pessoas: normalizeOnlinePresenceList(resposta.data),
-      });
+      if (!podeVer()) definir({ visivel: false });
+      else if (listaVencida()) await listar();
     } catch {
-      definir(
-        podeVer()
-          ? { visivel: true, sincronizado: false, pessoas: [] }
-          : { visivel: false },
-      );
+      falhou();
     }
   }
 
-  function parar() {
+  function pararBatida() {
     clearInterval(batida);
     batida = null;
+  }
+
+  function ligarBatida() {
+    pararBatida();
+    batida = setInterval(sincronizar, INTERVALO_DA_PRESENCA_MS);
+  }
+
+  function parar() {
+    ligada = false;
+    pararBatida();
+    ultimaBatida = null;
+    ultimaLista = null;
     definir({ visivel: false, aberto: false });
   }
 
   function iniciar() {
     parar();
     if (!usuarioId()) return;
+    ligada = true;
+    if (!visivelNaAba()) return; // começa quando a aba ficar visível
     void sincronizar();
-    batida = setInterval(sincronizar, INTERVALO_DA_PRESENCA_MS);
+    ligarBatida();
   }
 
-  /** Abre ou fecha a lista; ao abrir, relê na hora. */
+  /* Aba oculta: a batida para (o banco ainda conta 4 min de "online"). */
+  function pausar() {
+    pararBatida();
+  }
+
+  /*
+    Aba visível de novo: uma batida só, e só se a última já passou do
+    intervalo; o relógio recomeça daqui (sem a batida dobrada da volta).
+  */
+  function retomar() {
+    if (!ligada || batida || !usuarioId() || !visivelNaAba()) return;
+    if (
+      ultimaBatida === null ||
+      agora() - ultimaBatida >= INTERVALO_DA_PRESENCA_MS
+    )
+      void sincronizar();
+    ligarBatida();
+  }
+
+  /** Abre ou fecha a lista; ao abrir, relê só a lista. */
   function alternar() {
     const aberto = !estado.aberto;
     definir({ aberto });
-    if (aberto) void sincronizar();
+    if (aberto && sb() && usuarioId()) listar().catch(falhou);
   }
 
   function fechar() {
@@ -217,8 +277,8 @@ export function criarPresenca({
 
   /*
     A navegação avisa: tela aberta → auditoria; qualquer troca (tela, menu,
-    seção) → o lugar na presença. A aba que volta a ficar visível relê.
-    Devolve o cancelamento.
+    seção) → o lugar na presença. A aba oculta pausa a batida; a que volta a
+    ficar visível retoma. Devolve o cancelamento.
   */
   function acompanhar() {
     const pararNavegacao = navegacao.assinar((evento) => {
@@ -226,13 +286,14 @@ export function criarPresenca({
         void registrarEvento("abertura_tela", { tela: evento.view });
       avisarTrocaDeLocal();
     });
-    const aoVoltar = () => {
-      if (visivelNaAba() && usuarioId()) void sincronizar();
+    const aoMudarVisibilidade = () => {
+      if (visivelNaAba()) retomar();
+      else pausar();
     };
-    documento.addEventListener("visibilitychange", aoVoltar);
+    documento.addEventListener("visibilitychange", aoMudarVisibilidade);
     return () => {
       pararNavegacao();
-      documento.removeEventListener("visibilitychange", aoVoltar);
+      documento.removeEventListener("visibilitychange", aoMudarVisibilidade);
     };
   }
 

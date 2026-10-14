@@ -6,8 +6,14 @@
   RPCs (supabase/migrations/20261006100000_regra_da_analise.sql; contrato em
   src/lib/rpc-contrato.js):
     listar_editais_avaliacao(p_area)            os editais da área atual
-    obter_regra_analise(p_edital)               regra, versões, modelos, nota
-                                                mínima e aldeias
+    obter_regra_analise_se_mudou(p_edital, p_versao)
+                                                (20261014230000) regra, versões,
+                                                modelos, nota mínima e aldeias,
+                                                por versão: quando nada mudou, só
+                                                { inalterado } (a cópia fica na
+                                                memória e no navegador:
+                                                leitura-por-versao.ts). Banco sem ela:
+    obter_regra_analise(p_edital)               o mesmo, inteiro, como antes
     obter_perguntas_carga_analise(p_edital)     perguntas e respostas da última
                                                 carga da Empregare (instantâneo,
                                                 só a coordenação), lidas só
@@ -51,9 +57,12 @@ import {
   ehFalhaDeConexao,
   mensagemDeFalha,
 } from "../../lib/falha-de-rede.js";
+import { criarCopiasPorVersao } from "../../app/copias-por-versao.ts";
+import { criarLeituraPorVersao } from "../../lib/avaliacao-documental/leitura-por-versao.ts";
 
 const RPC_LISTAR_EDITAIS = "listar_editais_avaliacao";
 const RPC_OBTER_REGRA = "obter_regra_analise";
+const RPC_OBTER_REGRA_SE_MUDOU = "obter_regra_analise_se_mudou";
 const RPC_COPIAR_MODELO = "copiar_modelo_regra_analise";
 const RPC_SALVAR_REGRA = "salvar_regra_analise";
 const RPC_CONFERIR_REGRA = "conferir_regra_analise";
@@ -129,8 +138,14 @@ export function criarEstadoDaAvaliacao({
   toast = (mensagem) => console.info(mensagem),
   tempoLimiteMs = TEMPO_LIMITE_MS,
   aoGravarVersao = (_editalId) => {},
+  copias = criarCopiasPorVersao(supabase, RPC_OBTER_REGRA_SE_MUDOU),
 } = {}) {
   let estado = ESTADO_INICIAL;
+  const leituraDaRegra = criarLeituraPorVersao({
+    nova: RPC_OBTER_REGRA_SE_MUDOU,
+    antiga: RPC_OBTER_REGRA,
+    copias,
+  });
   let pedidoDosEditais = 0;
   let pedidoDoEdital = 0;
   let gravacoes = 0;
@@ -148,6 +163,7 @@ export function criarEstadoDaAvaliacao({
     if (identidade !== undefined || !atual) {
       pedidoDosEditais += 1;
       pedidoDoEdital += 1;
+      leituraDaRegra.esquecer();
       publicar(ESTADO_INICIAL);
     }
     identidade = atual;
@@ -224,7 +240,7 @@ export function criarEstadoDaAvaliacao({
     const gravacoesAntes = gravacoes;
     try {
       const [dados, equipe] = await Promise.all([
-        rpc(RPC_OBTER_REGRA, { p_edital: editalId }),
+        leituraDaRegra.ler(rpc, { p_edital: editalId }, editalId),
         rpc(RPC_OBTER_EQUIPE, { p_edital: editalId }),
       ]);
       if (meu !== pedidoDoEdital) return false;

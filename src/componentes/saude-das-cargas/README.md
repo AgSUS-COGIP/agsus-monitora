@@ -20,8 +20,10 @@ Os consumidores que continuam em JavaScript não são todos verificados pelo com
 O módulo usa o cliente Supabase compartilhado. `disparar_robo` cria o pedido
 e `situacao_do_disparo_robo` acompanha a resposta; a chave fica no Vault.
 A agenda apresenta a última aceitação e as falhas recentes. A primeira conferência
-ocorre após 3 segundos; os pedidos aguardam 20 segundos antes da releitura,
-e o botão continua bloqueado enquanto houver execução ou pedido recente.
+ocorre após 3 segundos; os pedidos aguardam 60 segundos antes da releitura, que só
+sai com a seção aberta e a aba visível (a que cai fora da tela fica para a volta),
+e o botão continua bloqueado enquanto houver execução ou pedido recente. O cartão
+de avisos relê só quando muda a última conferência (`marcaDasConferencias`).
 
 Testes de saúde, painel, treinamento, formulário e API verificam os fluxos existentes.
 `tests/saude-das-cargas-fronteiras.test.js` cobre respostas malformadas e um disparo

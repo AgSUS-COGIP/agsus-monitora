@@ -17,6 +17,8 @@ import {
 
 const { SeloDeAvisos, CartaoDeAvisos } =
   await import("../../src/modulos/conferencias/avisos-de-conferencia.tsx");
+const { esquecerAvisosGuardados } =
+  await import("../../src/modulos/conferencias/estado.ts");
 
 const aviso = (extra) => ({
   id: "a1",
@@ -39,7 +41,7 @@ const aviso = (extra) => ({
 function supabaseFalso(avisos) {
   return {
     rpc: vi.fn(async (nome) => {
-      if (nome === "listar_avisos_conferencia")
+      if (nome === "listar_avisos_conferencia_se_mudou")
         return { data: { avisos: avisos() }, error: null };
       return { data: { id: "a1", situacao: "IGNORADO" }, error: null };
     }),
@@ -59,6 +61,7 @@ async function montar(elemento) {
 
 beforeEach(() => {
   sessionStorage.clear();
+  esquecerAvisosGuardados();
   definirAreasDoUsuario(["saude-indigena"]);
   definirAreaAtual("saude-indigena");
 });
@@ -74,10 +77,10 @@ describe("selo de avisos no topo da tela", () => {
   it("pede os avisos do módulo na área atual e abre a gaveta", async () => {
     const supabase = supabaseFalso(() => [aviso()]);
     await montar(createElement(SeloDeAvisos, { modulo: "analises", supabase }));
-    expect(supabase.rpc).toHaveBeenCalledWith("listar_avisos_conferencia", {
-      p_area: "saude-indigena",
-      p_modulo: "analises",
-    });
+    expect(supabase.rpc).toHaveBeenCalledWith(
+      "listar_avisos_conferencia_se_mudou",
+      { p_area: "saude-indigena", p_modulo: "analises", p_versao: null },
+    );
     const selo = document.querySelector(".conf-selo-do-modulo");
     expect(selo.textContent).toContain("1 aviso");
     expect(selo.className).toContain("conf-selo-do-modulo--perigo");
@@ -123,10 +126,10 @@ describe("cartão do Status das atualizações", () => {
       }),
     ]);
     await montar(createElement(CartaoDeAvisos, { supabase }));
-    expect(supabase.rpc).toHaveBeenCalledWith("listar_avisos_conferencia", {
-      p_area: null,
-      p_modulo: null,
-    });
+    expect(supabase.rpc).toHaveBeenCalledWith(
+      "listar_avisos_conferencia_se_mudou",
+      { p_area: null, p_modulo: null, p_versao: null },
+    );
     expect(document.querySelectorAll(".conf-aviso")).toHaveLength(2);
 
     await clicar(document.querySelector('[data-valor="cargas"]'));
@@ -157,5 +160,51 @@ describe("cartão do Status das atualizações", () => {
       p_motivo: "Conferido com a banca.",
     });
     expect(document.body.textContent).toContain("Ignorados (1)");
+  });
+});
+
+describe("releitura só quando muda", () => {
+  it("o selo montado de novo manda a versão; sem mudança, a mesma lista sem baixar", async () => {
+    const versoes = [];
+    const supabase = {
+      rpc: vi.fn(async (nome, argumentos) => {
+        if (nome !== "listar_avisos_conferencia_se_mudou")
+          return { data: null, error: null };
+        versoes.push(argumentos.p_versao);
+        if (argumentos.p_versao === "v1")
+          return { data: { inalterado: true, versao: "v1" }, error: null };
+        return { data: { avisos: [aviso()], versao: "v1" }, error: null };
+      }),
+    };
+    await montar(createElement(SeloDeAvisos, { modulo: "analises", supabase }));
+    expect(
+      document.querySelector(".conf-selo-do-modulo").textContent,
+    ).toContain("1 aviso");
+    await act(async () => montagem.unmount());
+    raiz.remove();
+    await montar(createElement(SeloDeAvisos, { modulo: "analises", supabase }));
+    expect(versoes).toEqual([null, "v1"]);
+    expect(
+      document.querySelector(".conf-selo-do-modulo").textContent,
+    ).toContain("1 aviso");
+  });
+
+  it("o cartão relê quando a marca da conferência muda, e só então", async () => {
+    const supabase = supabaseFalso(() => [aviso()]);
+    await montar(createElement(CartaoDeAvisos, { supabase, marca: "a" }));
+    const leituras = () =>
+      supabase.rpc.mock.calls.filter(
+        ([nome]) => nome === "listar_avisos_conferencia_se_mudou",
+      ).length;
+    expect(leituras()).toBe(1);
+    await act(async () =>
+      montagem.render(createElement(CartaoDeAvisos, { supabase, marca: "a" })),
+    );
+    expect(leituras()).toBe(1);
+    await act(async () =>
+      montagem.render(createElement(CartaoDeAvisos, { supabase, marca: "b" })),
+    );
+    await esperar();
+    expect(leituras()).toBe(2);
   });
 });

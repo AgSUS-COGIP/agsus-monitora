@@ -211,6 +211,11 @@ describe("decisão da coordenação no banco", () => {
 
   it("o store relê depois de incluir e devolve o erro do banco (permissão, ficha concluída)", async () => {
     const respostas = {
+      // Banco sem a leitura por versão (20261014230000): a tela lê pela de sempre.
+      obter_pre_classificacao_se_mudou: () => ({
+        data: null,
+        error: { code: "PGRST202", message: "Could not find the function" },
+      }),
       obter_pre_classificacao: () => ({ data: { vagas: [] }, error: null }),
       incluir_no_lote_por_decisao: () => ({
         data: null,

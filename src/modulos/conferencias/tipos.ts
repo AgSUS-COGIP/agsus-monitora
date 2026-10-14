@@ -131,13 +131,14 @@ type RespostaDosAvisos = {
   data: unknown;
   error: { message?: string; code?: string } | null;
 };
-/** Usa apenas as três RPCs já existentes e o cliente compartilhado do app. */
+/** Usa apenas as três RPCs dos avisos e o cliente compartilhado do app. */
 export interface ClienteDosAvisos {
   rpc(
-    nome: "listar_avisos_conferencia",
+    nome: "listar_avisos_conferencia_se_mudou",
     parametros: {
       p_area: string | null | undefined;
       p_modulo: string | null | undefined;
+      p_versao: string | null;
     },
   ): PromiseLike<RespostaDosAvisos>;
   rpc(

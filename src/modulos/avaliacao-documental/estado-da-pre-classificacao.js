@@ -5,7 +5,16 @@
 
   RPCs (supabase/migrations/20261006110000_pre_classificacao_e_lote.sql;
   contrato em src/lib/rpc-contrato.js):
-    obter_pre_classificacao(p_edital)                 o resultado gravado
+    obter_pre_classificacao_se_mudou(p_edital, p_versao)
+                                                      (20261014230000) o resultado gravado,
+                                                      por versão: os inscritos em colunas e,
+                                                      quando nada mudou, só { inalterado }
+                                                      (src/lib/avaliacao-documental/
+                                                      leitura-por-versao.ts; a cópia fica no
+                                                      navegador). Banco sem ela:
+    obter_pre_classificacao(p_edital)                 o resultado inteiro, como antes
+    obter_situacao_pre_classificacao(p_edital)        (20261014230000) só a execução: o
+                                                      acompanhamento do Recalcular
     obter_acompanhamento_inscricoes(p_edital)         (20261009140000) os retratos diários
                                                       das inscrições, para o cartão
                                                       "Inscrições" (falha não impede a aba)
@@ -24,7 +33,9 @@
   poucos segundos, se o GitHub recusou ou se a chave falta ou expirou. O
   resultado do pedido fica na aba (`aviso`): o erro, com o botão de volta; ou
   "pedido", e a aba acompanha a execução (em_andamento e ultima_execucao de
-  obter_pre_classificacao) e relê sozinha quando ela termina.
+  obter_situacao_pre_classificacao, ~0,4 KB a cada 15 s) e relê o resultado
+  só quando ela termina. As releituras depois de uma gravação (decisão,
+  lista) não relêem o cartão "Inscrições".
   O documento das listas sai do gerador da Classificação
   (src/lib/classificacao/documento-sei.ts e documento-docx.js).
 */
@@ -55,10 +66,17 @@ import {
   imprimirPagina,
   logoEmPng,
 } from "../classificacao/documento-no-navegador.js";
+import { criarCopiasPorVersao } from "../../app/copias-por-versao.ts";
+import {
+  criarLeituraPorVersao,
+  funcaoAusente,
+} from "../../lib/avaliacao-documental/leitura-por-versao.ts";
 import { decidirNoLote } from "./decisao-no-banco.js";
 import { mensagemDoBanco } from "./estado.js";
 
 const RPC_OBTER_PRE_CLASSIFICACAO = "obter_pre_classificacao";
+const RPC_OBTER_PRE_SE_MUDOU = "obter_pre_classificacao_se_mudou";
+const RPC_SITUACAO_PRE = "obter_situacao_pre_classificacao";
 const RPC_OBTER_INSCRICOES = "obter_acompanhamento_inscricoes";
 const RPC_REGISTRAR_LISTA = "registrar_lista_pre_classificacao";
 const RPC_PUBLICAR_LISTA = "publicar_lista_classificacao";
@@ -69,7 +87,7 @@ const ESPERA_DA_RESPOSTA_MS = 3000;
 /* O job leva de segundos a poucos minutos: a aba relê neste intervalo até
    a execução terminar, no máximo pelo tempo limite do workflow. */
 const INTERVALO_DO_ACOMPANHAMENTO_MS = 15000;
-/* Voltar à aba não relê (4,3 MB no 114/2026) se a leitura é recente e nada mudou. */
+/* Voltar à aba não relê se a leitura é recente (com a versão, a releitura que nada mudou é ~70 bytes). */
 const VALIDADE_DA_LEITURA_MS = 5 * 60 * 1000;
 const LIMITE_DO_ACOMPANHAMENTO_MS =
   (roboDeCarga("pre_classificacao")?.limiteMin ?? 20) * 60000;
@@ -104,8 +122,15 @@ export function criarEstadoDaPreClassificacao({
   carregarLogo = logoEmPng,
   cabecalho = () => CABECALHO_PADRAO,
   tempoLimiteMs = TEMPO_LIMITE_MS,
+  copias = criarCopiasPorVersao(supabase, RPC_OBTER_PRE_SE_MUDOU),
 } = {}) {
   let estado = INICIAL;
+  const leitura = criarLeituraPorVersao({
+    nova: RPC_OBTER_PRE_SE_MUDOU,
+    antiga: RPC_OBTER_PRE_CLASSIFICACAO,
+    copias,
+  });
+  let semSituacao = false;
   let pedido = 0;
   let lidoEm = 0;
   let chaveLida = "";
@@ -126,8 +151,15 @@ export function criarEstadoDaPreClassificacao({
     return data;
   }
 
-  /* Lê o resultado gravado do edital (troca de edital recomeça do zero). */
-  async function carregar(editalId = estado.editalId) {
+  /*
+    Lê o resultado gravado do edital (troca de edital recomeça do zero). As
+    releituras depois de uma gravação passam { inscricoes: false }: o cartão
+    "Inscrições" (retratos diários) não muda com elas.
+  */
+  async function carregar(
+    editalId = estado.editalId,
+    { inscricoes: lerInscricoes = true } = {},
+  ) {
     const meu = ++pedido;
     if (!editalId) {
       publicar({ ...INICIAL });
@@ -139,10 +171,13 @@ export function criarEstadoDaPreClassificacao({
         : { carregando: true, erro: "" },
     );
     try {
+      const mesmo = editalId === estado.editalId && estado.inscricoes;
       const [dados, inscricoes] = await Promise.all([
-        rpc(RPC_OBTER_PRE_CLASSIFICACAO, { p_edital: editalId }),
+        leitura.ler(rpc, { p_edital: editalId }, editalId),
         // O cartão "Inscrições" é extra: banco sem a migration ou falha = sem cartão.
-        rpc(RPC_OBTER_INSCRICOES, { p_edital: editalId }).catch(() => null),
+        !lerInscricoes && mesmo
+          ? estado.inscricoes
+          : rpc(RPC_OBTER_INSCRICOES, { p_edital: editalId }).catch(() => null),
       ]);
       if (meu !== pedido) return false;
       lidoEm = agora().getTime();
@@ -272,7 +307,8 @@ export function criarEstadoDaPreClassificacao({
     try {
       const r = await decidirNoLote(rpc, acao, editalId, candidatos, motivo);
       toast(r.texto, "success");
-      if (estado.editalId === editalId) await carregar(editalId);
+      if (estado.editalId === editalId)
+        await carregar(editalId, { inscricoes: false });
       return { ok: true, quantidade: r.quantidade };
     } catch (erro) {
       return { ok: false, erro: mensagemDoBanco(erro) };
@@ -287,18 +323,48 @@ export function criarEstadoDaPreClassificacao({
   }
 
   /*
-    Relê até a execução pedida terminar: sem execução em andamento e com uma
-    última execução diferente da que havia no clique. Para no tempo limite do
-    workflow, ao trocar de edital ou num pedido novo.
+    A situação da execução: a RPC leve (~0,4 KB), que a aba mostra na hora
+    (em_andamento e ultima_execucao nos dados); banco sem ela, relê o
+    resultado inteiro, como antes. null = falhou (tenta na próxima volta).
+  */
+  async function situacaoDaExecucao(editalId) {
+    if (!semSituacao) {
+      try {
+        const s = await rpc(RPC_SITUACAO_PRE, { p_edital: editalId });
+        if (s && typeof s === "object") {
+          if (estado.editalId === editalId && estado.dados)
+            publicar({
+              dados: {
+                ...estado.dados,
+                em_andamento: Boolean(s.em_andamento),
+                ultima_execucao: s.ultima_execucao ?? null,
+              },
+            });
+          return s;
+        }
+      } catch (erro) {
+        if (!funcaoAusente(erro)) return null;
+        semSituacao = true;
+      }
+    }
+    return (await carregar(editalId, { inscricoes: false }))
+      ? estado.dados
+      : null;
+  }
+
+  /*
+    Acompanha até a execução pedida terminar: sem execução em andamento e com
+    uma última execução diferente da que havia no clique; só então relê o
+    resultado. Para no tempo limite do workflow, ao trocar de edital ou num
+    pedido novo.
   */
   function acompanhar(editalId, antes, desde) {
     const meu = acompanhamento;
     const vale = () => meu === acompanhamento && estado.editalId === editalId;
     const passo = async () => {
       if (!vale()) return;
-      await carregar(editalId);
+      const d = await situacaoDaExecucao(editalId);
       if (!vale()) return;
-      const d = estado.dados;
       const ultima = d?.ultima_execucao;
       if (
         d &&
@@ -307,6 +373,9 @@ export function criarEstadoDaPreClassificacao({
         ultima.id !== antes &&
         ultima.situacao !== "EM_ANDAMENTO"
       ) {
+        // Terminou: o resultado novo (com a RPC leve, a única releitura do pacote).
+        if (!semSituacao) await carregar(editalId, { inscricoes: false });
+        if (!vale()) return;
         const falhou = ultima.situacao === "FALHOU";
         const texto = falhou
           ? `O recálculo falhou${ultima.mensagem ? `: ${ultima.mensagem}` : "."}`
@@ -352,7 +421,7 @@ export function criarEstadoDaPreClassificacao({
           },
         });
       toast("Lista registrada. Copie para o SEI ou baixe o DOCX.", "success");
-      void carregar(editalId);
+      void carregar(editalId, { inscricoes: false });
       return true;
     } catch (erro) {
       toast(`Não foi possível registrar: ${mensagemDoBanco(erro)}`, "error");
@@ -366,7 +435,7 @@ export function criarEstadoDaPreClassificacao({
     try {
       await rpc(RPC_PUBLICAR_LISTA, { p_lista: id });
       toast("Lista marcada como publicada.", "success");
-      void carregar();
+      void carregar(estado.editalId, { inscricoes: false });
       return true;
     } catch (erro) {
       toast(`Não foi possível marcar: ${mensagemDoBanco(erro)}`, "error");

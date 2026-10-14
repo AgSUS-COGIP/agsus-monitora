@@ -156,7 +156,10 @@ describe("migration das conferências: acesso", () => {
       expect(ROLLBACK).toContain(
         `drop function if exists public.${nome}(${assinatura});`,
       );
-      expect(CONTRATO_RPC[nome]).toBeDefined();
+      // A tela lê os avisos pela versão (`*_se_mudou`, 20261015000000), que embrulha esta.
+      expect(
+        CONTRATO_RPC[nome] ?? CONTRATO_RPC[`${nome}_se_mudou`],
+      ).toBeDefined();
     },
   );
 

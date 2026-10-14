@@ -566,6 +566,22 @@ export function normalizarSaude(
   };
 }
 
+/**
+ * Marca da última conferência de consistência (início e fim, ISO): muda só
+ * quando uma conferência nova começa ou termina. O cartão "Avisos de
+ * conferência" relê os avisos quando ela muda, e não a cada releitura da tela.
+ */
+export function marcaDasConferencias(
+  saude: Pick<SaudeNormalizada, "grupos"> | null | undefined,
+) {
+  const carga = (saude?.grupos || [])
+    .flatMap((g) => g.cargas)
+    .find((c) => c.id === "conferencias");
+  const ultima = carga?.ultima;
+  if (!ultima) return "";
+  return `${ultima.inicio?.toISOString() ?? ""}|${ultima.fim?.toISOString() ?? ""}`;
+}
+
 /** "há 5 min", "há 3 h", "há 2 dias"; "—" sem data. */
 export function textoDaIdade(minutos: number | null | undefined) {
   if (minutos === null || minutos === undefined) return "—";

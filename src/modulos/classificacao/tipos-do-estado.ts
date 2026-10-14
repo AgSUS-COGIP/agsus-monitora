@@ -88,6 +88,7 @@ export interface SnapshotDaClassificacao {
 export type RpcDaClassificacao =
   | "listar_editais_classificacao"
   | "obter_classificacao_do_edital"
+  | "obter_classificacao_do_edital_se_mudou"
   | "salvar_regra_classificacao"
   | "renomear_versao_regra_classificacao"
   | "registrar_lista_classificacao"
@@ -135,6 +136,10 @@ export interface OpcoesDoEstado {
   agendaDoEdital?: (id: string) => unknown;
   /** Versão nova da regra salva (o rascunho guardado do edital acaba antes de a aba remontar). */
   aoGravarVersao?: (editalId: string) => void;
+  /** A cópia no navegador da leitura por versão (src/app/copias-por-versao.ts); null = só a memória. */
+  copias?:
+    | import("../../lib/avaliacao-documental/leitura-por-versao.ts").CopiasPorChave
+    | null;
 }
 export type EstadoDaClassificacao = ReturnType<
   typeof import("./estado.ts").criarEstadoDaClassificacao

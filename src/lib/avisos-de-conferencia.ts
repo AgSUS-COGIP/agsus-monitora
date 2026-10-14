@@ -8,7 +8,8 @@ import type {
 } from "../modulos/conferencias/tipos.ts";
 /*
   Avisos de conferência, sem React e sem banco: o que chega de
-  `listar_avisos_conferencia` (20261005210000_conferencias_de_consistencia.sql)
+  `listar_avisos_conferencia_se_mudou` (20261005210000 e 20261015000000: sem
+  chaves nulas e sem `exemplos` quando o aviso tem casos)
   vira a lista da tela — título de cada conferência, tom da gravidade, onde
   (edital, área ou vaga), contagem do selo de cada módulo e a validação do
   motivo ao ignorar.

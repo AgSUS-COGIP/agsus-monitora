@@ -26,14 +26,24 @@ function montar({ linhas = [], erro = null } = {}) {
   const definirMarca = vi.fn();
   const estado = { definirValoresCarregados: vi.fn() };
   const avisar = vi.fn();
+  const pintarBarra = vi.fn();
   const configuracao = criarConfiguracao({
     cliente: () => cliente,
     avisar,
     sessao,
     definirMarca,
     estado,
+    pintarBarra,
   });
-  return { configuracao, cliente, sessao, definirMarca, estado, avisar };
+  return {
+    configuracao,
+    cliente,
+    sessao,
+    definirMarca,
+    estado,
+    avisar,
+    pintarBarra,
+  };
 }
 
 const $ = (id) => document.getElementById(id);
@@ -65,6 +75,23 @@ describe("valores", () => {
 });
 
 describe("carregar", () => {
+  it("a logo e a cor da barra saem desta leitura (sem consulta própria)", async () => {
+    const { configuracao, pintarBarra, cliente } = montar({
+      linhas: [{ chave: "ui_sidebar_background_color", valor: "#123456" }],
+    });
+    await configuracao.carregar();
+    expect(cliente.from).toHaveBeenCalledTimes(1);
+    expect(pintarBarra).toHaveBeenCalledWith(
+      expect.objectContaining({ ui_sidebar_background_color: "#123456" }),
+    );
+  });
+
+  it("leitura com erro não pinta a barra", async () => {
+    const { configuracao, pintarBarra } = montar({ erro: { message: "x" } });
+    await configuracao.carregar({ silent: true });
+    expect(pintarBarra).not.toHaveBeenCalled();
+  });
+
   it("aplica os textos, repassa à sessão, à marca e às Configurações", async () => {
     const { configuracao, sessao, definirMarca, estado } = montar({
       linhas: [

@@ -249,10 +249,10 @@ export function ligarSistema() {
     presenca.pararHeartbeat();
     carga.pararRealtime();
   });
+  // A batida da presença pausa e retoma sozinha com a aba (presenca.acompanhar).
   window.addEventListener("agsus:background-resume", () => {
     if (!perfil.obterUsuario()?.id) return;
     presenca.iniciarHeartbeat();
-    presenca.iniciar();
     carga.iniciarRealtime();
   });
 

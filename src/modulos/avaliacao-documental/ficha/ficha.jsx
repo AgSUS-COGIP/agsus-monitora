@@ -254,6 +254,28 @@ export function ConteudoDaFicha({
     return () => globalThis.removeEventListener?.("beforeunload", avisar);
   }, [loja]);
 
+  useEffect(() => {
+    // Esconder a aba ou sair da página salva o rascunho na hora (o automático espera até 3 s).
+    const salvarAgora = () => {
+      if (loja.temAlteracaoPendente()) void loja.salvar();
+    };
+    const aoMudarVisibilidade = () => {
+      if (globalThis.document?.visibilityState === "hidden") salvarAgora();
+    };
+    globalThis.document?.addEventListener?.(
+      "visibilitychange",
+      aoMudarVisibilidade,
+    );
+    globalThis.addEventListener?.("pagehide", salvarAgora);
+    return () => {
+      globalThis.document?.removeEventListener?.(
+        "visibilitychange",
+        aoMudarVisibilidade,
+      );
+      globalThis.removeEventListener?.("pagehide", salvarAgora);
+    };
+  }, [loja]);
+
   // A regra da vaga (a diferença do cargo por cima do nível): estado-da-ficha.js.
   const regra = st.regra;
   const blocos = useMemo(() => regra?.blocos || [], [regra]);

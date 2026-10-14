@@ -20,6 +20,8 @@ const USUARIO = { id: "u1", email: "ana@agenciasus.org.br" };
 const PERFIL = { id: "p1", ativo: true, perfil: "edital_gestor" };
 const LINHAS = [{ id: 1, unidade: "DSEI Xingu", CO_AREA: "saude-indigena" }];
 const VERSAO_DAS_LINHAS = "md5-das-linhas";
+const MAPA = [{ chave: "lmap", payload: { dsei: [] } }];
+const VERSAO_DO_MAPA = "md5-do-mapa";
 
 /* Consulta preguiçosa como a do Supabase: só "sai" quando alguém chama then. */
 function consultaPreguicosa(nome, resposta, registro) {
@@ -52,7 +54,6 @@ function montar({
   const respostas = {
     TB_CONFIGURACAO: [{ chave: "app_title", valor: "MONITORA" }],
     TB_PAINEL_EXTERNO: [{ id: "1", codigo: "bi" }],
-    TB_CONFIG_MAPA_SAUDE_INDIG: [],
     TD_UNIDADE: [{ nome_oficial: "DSEI Xingu" }],
   };
   const canais = [];
@@ -67,6 +68,11 @@ function montar({
     // O monitoramento vem por RPC com versão (migration 20261013160000).
     rpc: vi.fn(async (nome, { p_versao } = {}) => {
       saidas.push(nome);
+      // O mapa também (migration 20261015000100).
+      if (nome === "listar_mapa_da_saude_indigena")
+        return p_versao === VERSAO_DO_MAPA
+          ? { data: { inalterado: true, versao: p_versao }, error: null }
+          : { data: { versao: VERSAO_DO_MAPA, linhas: MAPA }, error: null };
       if (nome !== "listar_monitoramento_operacional")
         return { data: { resumo: true }, error: null };
       if (erroNasLinhas) return { data: null, error: erroNasLinhas };
@@ -190,10 +196,14 @@ describe("entrada", () => {
   it("dispara todas as consultas antes da primeira espera", async () => {
     const { carga, ordem, saidas } = montar();
     await carga.carregarEntrada();
-    // Quando a configuração começou a ser aplicada, as quatro consultas já tinham
-    // saído; a do monitoramento sai assim que a cópia local é lida (leva a versão).
-    expect(ordem.find(([etapa]) => etapa === "config")).toEqual(["config", 4]);
+    // Quando a configuração começou a ser aplicada, as três consultas sem versão
+    // já tinham saído; mapa e monitoramento saem assim que a cópia local é lida
+    // (levam a versão que ela tem).
+    expect(
+      ordem.find(([etapa]) => etapa === "config")[1],
+    ).toBeGreaterThanOrEqual(3);
     expect(saidas).toContain("listar_monitoramento_operacional");
+    expect(saidas).toContain("listar_mapa_da_saude_indigena");
   });
 
   it("abre o app na tela de entrada, esconde o skeleton e comemora, nessa ordem", async () => {
@@ -250,7 +260,10 @@ describe("entrada", () => {
     await esperarTudo();
     await carga.atualizarDados();
     const nomes = new Set(cliente.rpc.mock.calls.map(([nome]) => nome));
-    expect([...nomes]).toEqual(["listar_monitoramento_operacional"]);
+    expect([...nomes].sort()).toEqual([
+      "listar_mapa_da_saude_indigena",
+      "listar_monitoramento_operacional",
+    ]);
   });
 
   it("o monitoramento pergunta pela versão que já tem: sem mudança, as linhas ficam", async () => {
@@ -266,6 +279,36 @@ describe("entrada", () => {
       VERSAO_DAS_LINHAS,
     ]);
     expect(carga.linhas()).toEqual(LINHAS);
+  });
+
+  it("o mapa também pergunta pela versão: sem mudança, o mesmo mapa", async () => {
+    const { carga, cliente } = montar();
+    await carga.carregarEntrada();
+    await esperarTudo();
+    await carga.atualizarDados();
+    const pedidos = cliente.rpc.mock.calls.filter(
+      ([nome]) => nome === "listar_mapa_da_saude_indigena",
+    );
+    expect(pedidos.map(([, argumentos]) => argumentos.p_versao)).toEqual([
+      null,
+      VERSAO_DO_MAPA,
+    ]);
+  });
+
+  it("a cópia guarda a versão do mapa e a próxima entrada a manda", async () => {
+    const primeira = montar();
+    await primeira.carga.carregarEntrada();
+    await esperarTudo();
+    const guardada = primeira.copia.guardar.mock.calls[0][0];
+    expect(guardada.dados.mapa).toEqual(MAPA);
+    expect(guardada.dados.versaoDoMapa).toBe(VERSAO_DO_MAPA);
+    const { carga, cliente } = montar({ copiaGuardada: guardada });
+    await carga.carregarEntrada();
+    await esperarTudo();
+    const pedido = cliente.rpc.mock.calls.find(
+      ([nome]) => nome === "listar_mapa_da_saude_indigena",
+    );
+    expect(pedido[1]).toEqual({ p_versao: VERSAO_DO_MAPA });
   });
 
   it("a cópia da sessão leva a versão das linhas: a entrada não baixa de novo", async () => {

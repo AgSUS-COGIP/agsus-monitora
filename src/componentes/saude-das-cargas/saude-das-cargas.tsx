@@ -20,6 +20,7 @@ import {
 } from "../../lib/robos-de-carga.js";
 import {
   dataHora,
+  marcaDasConferencias,
   SITUACOES,
   textoDaIdade,
   visaoSimples,
@@ -435,12 +436,25 @@ export function SaudeDasCargas({
       </ul>
       {supabase ? (
         <CartaoDeAvisos
-          key={atual.dados.geradoEm?.getTime() ?? 0}
           supabase={supabase}
+          marca={marcaDasConferencias(atual.dados)}
         />
       ) : null}
     </div>
   );
+}
+
+/*
+  A releitura do acompanhamento só sai com a aba visível e a seção aberta
+  (Configurações › Status das atualizações, na página ativa): fora dela, a
+  próxima abertura relê de qualquer jeito (`render`).
+*/
+function secaoNaTela(raiz: HTMLElement | null | undefined) {
+  if (globalThis.document?.visibilityState === "hidden") return false;
+  if (!raiz) return true;
+  if (raiz.closest("[hidden]")) return false;
+  const pagina = raiz.closest(".page");
+  return !pagina || pagina.classList.contains("active");
 }
 
 /**
@@ -453,12 +467,16 @@ export function montarSaudeDasCargas({
   getProfile,
   agora,
   agendar,
+  naTela = () => secaoNaTela(raizDaTela),
+  aoVoltar,
 }: Partial<DependenciasDaSaude> & { raizDaTela?: HTMLElement | null } = {}) {
   const estado = criarEstadoDaSaude({
     supabase,
     getProfile,
+    naTela,
     ...(agora ? { agora } : {}),
     ...(agendar ? { agendar } : {}),
+    ...(aoVoltar ? { aoVoltar } : {}),
   });
   const raiz = raizDaTela
     ? montarModulo(

@@ -208,6 +208,10 @@ export interface DependenciasDaSaude {
   getProfile?: () => Record<string, unknown> | null;
   agora?: () => Date;
   agendar?: (fn: () => void, ms: number) => unknown;
+  /** A seção está na tela e a aba visível (a releitura só sai assim). */
+  naTela?: () => boolean;
+  /** Registra o aviso de "a aba voltou a ficar visível". */
+  aoVoltar?: (fn: () => void) => void;
 }
 export interface EstadoDaSaude {
   obter(): SnapshotDaSaude;

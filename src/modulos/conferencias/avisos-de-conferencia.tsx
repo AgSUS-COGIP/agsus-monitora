@@ -667,12 +667,17 @@ export function ListaDeAvisos({
   );
 }
 
-/** Configurações › Status das atualizações: todos os avisos, com filtro por módulo. */
+/**
+ * Configurações › Status das atualizações: todos os avisos, com filtro por
+ * módulo. `marca` (a da última conferência, marcaDasConferencias) relê quando
+ * uma conferência nova começa ou termina; as releituras da tela não relêem.
+ */
 export function CartaoDeAvisos({
   supabase = getSupabaseClient(),
   estado: externo,
   aoAbrirCaso,
-}: PropsDoCartao) {
+  marca = "",
+}: PropsDoCartao & { marca?: string }) {
   const estado = useMemo(
     () => externo || criarEstadoDosAvisos({ supabase }),
     [externo, supabase],
@@ -681,7 +686,7 @@ export function CartaoDeAvisos({
   const [modulo, setModulo] = useState("todos");
   useEffect(() => {
     void estado.carregar();
-  }, [estado]);
+  }, [estado, marca]);
   const contagem = contagemPorModulo(atual.lista);
   const opcoes = [
     { valor: "todos", rotulo: `Todos (${atual.lista?.abertos.length ?? 0})` },

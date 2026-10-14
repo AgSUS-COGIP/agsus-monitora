@@ -770,3 +770,106 @@ describe("estado da pré-classificação: voltar à aba não relê", () => {
     expect(leituras()).toBe(5);
   });
 });
+
+describe("Pré-classificação por versão (20261014230000)", () => {
+  /* Um banco com as RPCs novas: a leitura por versão e a situação leve. */
+  function bancoNovo() {
+    const estado = {
+      versao: "v1",
+      execucao: { id: "precl-1", situacao: "CONCLUIDA" },
+      andamento: false,
+    };
+    const pacote = () => ({
+      schema_version: 1,
+      em_andamento: estado.andamento,
+      ultima_execucao: estado.execucao,
+      vagas: [{ codigo: "179698", inscritos: 2 }],
+      versao: estado.versao,
+      candidatos_em_colunas: {
+        colunas: ["codigo", "situacao", "vaga"],
+        dicionarios: { situacao: ["NO_LOTE"], vaga: ["179698"] },
+        linhas: [
+          ["7000001", 0, 0],
+          ["7000003", 0, 0],
+        ],
+      },
+    });
+    const rpc = vi.fn(async (nome, args) => {
+      if (nome === "obter_pre_classificacao_se_mudou")
+        return {
+          data:
+            args.p_versao === estado.versao
+              ? { inalterado: true, versao: estado.versao }
+              : pacote(),
+          error: null,
+        };
+      if (nome === "obter_situacao_pre_classificacao")
+        return {
+          data: {
+            em_andamento: estado.andamento,
+            ultima_execucao: estado.execucao,
+          },
+          error: null,
+        };
+      if (nome === "disparar_robo") return { data: 61, error: null };
+      return { data: null, error: null };
+    });
+    return { estado, rpc };
+  }
+  const chamadas = (rpc, nome) =>
+    rpc.mock.calls.filter(([n]) => n === nome).map(([, a]) => a);
+
+  it("refaz os inscritos das colunas; a releitura sem mudança manda a versão e fica com o que tem", async () => {
+    const { rpc } = bancoNovo();
+    const pre = criarEstadoDaPreClassificacao({
+      supabase: { rpc },
+      copias: null,
+    });
+    await pre.carregar("e1");
+    const dados = pre.obter().dados;
+    expect(dados.candidatos).toEqual([
+      { codigo: "7000001", situacao: "NO_LOTE", vaga: "179698" },
+      { codigo: "7000003", situacao: "NO_LOTE", vaga: "179698" },
+    ]);
+    await pre.carregar("e1");
+    expect(chamadas(rpc, "obter_pre_classificacao_se_mudou")).toEqual([
+      { p_edital: "e1", p_versao: null },
+      { p_edital: "e1", p_versao: "v1" },
+    ]);
+    expect(pre.obter().dados).toBe(dados);
+    expect(chamadas(rpc, "obter_pre_classificacao")).toHaveLength(0);
+  });
+
+  it("Recalcular acompanha pela situação leve e relê o pacote só no fim", async () => {
+    const { estado, rpc } = bancoNovo();
+    const fila = [];
+    const pre = criarEstadoDaPreClassificacao({
+      supabase: { rpc },
+      copias: null,
+      toast: () => {},
+      agendar: (fn) => fila.push(fn),
+    });
+    await pre.carregar("e1");
+    await pre.recalcular();
+    // A conferência do pedido e a primeira volta do acompanhamento.
+    await fila.shift()();
+    estado.andamento = true;
+    estado.versao = "v2";
+    await fila.shift()();
+    expect(pre.obter().dados.em_andamento).toBe(true);
+    await fila.shift()();
+    estado.andamento = false;
+    estado.execucao = { id: "precl-2", situacao: "CONCLUIDA", fim: null };
+    estado.versao = "v3";
+    await fila.shift()();
+    expect(fila).toHaveLength(0);
+    expect(chamadas(rpc, "obter_situacao_pre_classificacao")).toHaveLength(3);
+    // Uma leitura ao abrir e uma no fim: nenhuma a cada volta.
+    expect(chamadas(rpc, "obter_pre_classificacao_se_mudou")).toEqual([
+      { p_edital: "e1", p_versao: null },
+      { p_edital: "e1", p_versao: "v1" },
+    ]);
+    expect(pre.obter().dados.ultima_execucao.id).toBe("precl-2");
+    expect(pre.obter().aviso.texto).toMatch(/^Pré-classificação recalculada/);
+  });
+});

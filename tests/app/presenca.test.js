@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   INTERVALO_DA_PRESENCA_MS,
+  LISTA_FECHADA_MS,
   criarPresenca,
   idDaAba,
 } from "../../src/app/presenca.js";
@@ -14,8 +15,25 @@ const USUARIO = { id: "u1" };
 const GESTOR = { id: "g", ativo: true, perfil: "edital_gestor" };
 const USUARIO_COMUM = { id: "c", ativo: true, perfil: "usuario" };
 
+/* Documento falso: a visibilidade da aba muda pelo teste. */
+function criarDocumento() {
+  const ouvintes = new Set();
+  const documento = {
+    visibilityState: "visible",
+    title: "MONITORA",
+    addEventListener: (_nome, ouvinte) => ouvintes.add(ouvinte),
+    removeEventListener: (_nome, ouvinte) => ouvintes.delete(ouvinte),
+    mudar(estado) {
+      documento.visibilityState = estado;
+      ouvintes.forEach((ouvinte) => ouvinte());
+    },
+  };
+  return documento;
+}
+
 function montar({ perfil = GESTOR, lista = [], erroNaLista = null } = {}) {
   const ouvintesDaNavegacao = new Set();
+  const documento = criarDocumento();
   let view = "recursos";
   let lugar = "Recursos · Saúde Indígena";
   const cliente = {
@@ -36,6 +54,7 @@ function montar({ perfil = GESTOR, lista = [], erroNaLista = null } = {}) {
   };
   const presenca = criarPresenca({
     cliente: () => cliente,
+    documento,
     agente: () => "teste",
     obterUsuario: () => USUARIO,
     obterPerfil: () => perfil,
@@ -46,6 +65,7 @@ function montar({ perfil = GESTOR, lista = [], erroNaLista = null } = {}) {
   return {
     presenca,
     cliente,
+    documento,
     avisarNavegacao: (evento) =>
       ouvintesDaNavegacao.forEach((ouvinte) => ouvinte(evento)),
     mudar: (novaView, novoLugar) => {
@@ -162,7 +182,7 @@ describe("presença", () => {
     expect(presenca.obter().visivel).toBe(false);
   });
 
-  it("bate a cada 45 s e avisa na hora a troca de lugar", async () => {
+  it("bate a cada 90 s e avisa na hora a troca de lugar", async () => {
     vi.useFakeTimers();
     const { presenca, cliente, avisarNavegacao, mudar } = montar();
     presenca.acompanhar();
@@ -184,13 +204,84 @@ describe("presença", () => {
     expect(presenca.obter()).toMatchObject({ visivel: false, aberto: false });
   });
 
-  it("abrir a lista relê; Esc/fechar fecha", async () => {
+  it("abrir a lista relê só a lista; Esc/fechar fecha", async () => {
     const { presenca, cliente } = montar();
     presenca.alternar();
     await Promise.resolve();
     expect(presenca.obter().aberto).toBe(true);
-    expect(chamadas(cliente, "registrar_presenca_monitora")).toHaveLength(1);
+    expect(chamadas(cliente, "listar_presenca_online_monitora")).toHaveLength(
+      1,
+    );
+    expect(chamadas(cliente, "registrar_presenca_monitora")).toHaveLength(0);
     presenca.fechar();
     expect(presenca.obter().aberto).toBe(false);
+  });
+
+  it("aba oculta pausa a batida; a volta bate uma vez só, sem dobrar", async () => {
+    vi.useFakeTimers();
+    const { presenca, cliente, documento } = montar();
+    presenca.acompanhar();
+    presenca.iniciar();
+    await vi.advanceTimersByTimeAsync(0);
+    expect(chamadas(cliente, "registrar_presenca_monitora")).toHaveLength(1);
+    documento.mudar("hidden");
+    await vi.advanceTimersByTimeAsync(INTERVALO_DA_PRESENCA_MS * 4);
+    expect(chamadas(cliente, "registrar_presenca_monitora")).toHaveLength(1);
+    documento.mudar("visible");
+    // Um segundo aviso de visível (o Supabase e o ciclo de fundo também avisam) não dobra.
+    documento.mudar("visible");
+    await vi.advanceTimersByTimeAsync(0);
+    expect(chamadas(cliente, "registrar_presenca_monitora")).toHaveLength(2);
+    // O relógio recomeça da volta: a próxima, 90 s depois.
+    await vi.advanceTimersByTimeAsync(INTERVALO_DA_PRESENCA_MS - 1);
+    expect(chamadas(cliente, "registrar_presenca_monitora")).toHaveLength(2);
+    await vi.advanceTimersByTimeAsync(1);
+    expect(chamadas(cliente, "registrar_presenca_monitora")).toHaveLength(3);
+  });
+
+  it("volta rápida (antes do intervalo) não bate na hora", async () => {
+    vi.useFakeTimers();
+    const { presenca, cliente, documento } = montar();
+    presenca.acompanhar();
+    presenca.iniciar();
+    await vi.advanceTimersByTimeAsync(0);
+    documento.mudar("hidden");
+    await vi.advanceTimersByTimeAsync(10_000);
+    documento.mudar("visible");
+    await vi.advanceTimersByTimeAsync(0);
+    expect(chamadas(cliente, "registrar_presenca_monitora")).toHaveLength(1);
+  });
+
+  it("iniciada com a aba oculta, só começa quando ela fica visível", async () => {
+    vi.useFakeTimers();
+    const { presenca, cliente, documento } = montar();
+    presenca.acompanhar();
+    documento.visibilityState = "hidden";
+    presenca.iniciar();
+    await vi.advanceTimersByTimeAsync(INTERVALO_DA_PRESENCA_MS * 2);
+    expect(chamadas(cliente, "registrar_presenca_monitora")).toHaveLength(0);
+    documento.mudar("visible");
+    await vi.advanceTimersByTimeAsync(0);
+    expect(chamadas(cliente, "registrar_presenca_monitora")).toHaveLength(1);
+  });
+
+  it("lista fechada: a contagem relida no máximo a cada 10 min; aberta, a cada batida", async () => {
+    vi.useFakeTimers();
+    const { presenca, cliente } = montar();
+    const listas = () =>
+      chamadas(cliente, "listar_presenca_online_monitora").length;
+    presenca.iniciar();
+    await vi.advanceTimersByTimeAsync(0);
+    expect(listas()).toBe(1);
+    await vi.advanceTimersByTimeAsync(INTERVALO_DA_PRESENCA_MS * 3);
+    expect(chamadas(cliente, "registrar_presenca_monitora")).toHaveLength(4);
+    expect(listas()).toBe(1);
+    await vi.advanceTimersByTimeAsync(LISTA_FECHADA_MS);
+    expect(listas()).toBe(2);
+    presenca.alternar();
+    await vi.advanceTimersByTimeAsync(0);
+    const aoAbrir = listas();
+    await vi.advanceTimersByTimeAsync(INTERVALO_DA_PRESENCA_MS * 2);
+    expect(listas()).toBe(aoAbrir + 2);
   });
 });
