@@ -42,7 +42,7 @@ Arquivos que exigem cuidado:
   `src/modulos/cronograma/`.
 - `configuracao-de-convocacao.ts` — leitura do modelo e das vagas que o banco guarda, precedência do
   quadro (manual > total da vaga > padrão), rascunho do formulário e edição imutável do modelo. O
-  cálculo da ordem é de `lista-convocacao-rules.js`; o desenho, de `src/modulos/aprovados/`.
+  cálculo da ordem é de `lista-convocacao-rules.ts`; o desenho, de `src/modulos/aprovados/`.
 - `copia-da-sessao.js` — quando a cópia da sessão guardada no navegador pode abrir a tela (mesmo
   usuário, mesmo acesso, mesma versão publicada, dentro da validade) e o que mudou desde ela.
   Afrouxar uma regra daqui expõe dado a quem perdeu acesso.

@@ -73,7 +73,7 @@ describe("KPIs: mesma altura, rótulo em até duas linhas", () => {
     for (const caminho of [
       "src/modulos/editais/painel-operacional.jsx",
       "src/modulos/aprovados/aba-aprovados.jsx",
-      "src/modulos/aprovados/aba-convocacao.jsx",
+      "src/modulos/aprovados/aba-convocacao.tsx",
     ]) {
       const jsx = ler(caminho);
       expect(jsx, caminho).toContain("<GradeDeKpis");

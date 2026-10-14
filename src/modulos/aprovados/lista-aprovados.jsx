@@ -23,7 +23,7 @@ import { soDosEditais } from "../../componentes/dados-do-monitoramento.ts";
 import { usarAreaAtual } from "../../componentes/usar-area-atual.ts";
 import { classes, ErroAoCarregar, TopoDoPainel } from "../../ui/index.js";
 import { AbaAprovados } from "./aba-aprovados.jsx";
-import { AbaConvocacao } from "./aba-convocacao.jsx";
+import { AbaConvocacao } from "./aba-convocacao.tsx";
 import { criarEstadoDaListaDeAprovados } from "./estado.js";
 import { ModalDeAnexos, ModalDeStatus, ModalSubJudice } from "./modais.jsx";
 import { ModalListasDoEdital } from "./modal-listas-do-edital.jsx";

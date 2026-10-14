@@ -240,6 +240,13 @@ export function candidateModalidadesForEdital(rows, editalId) {
   total e a página aberta pode deixar de existir. Devolver uma fatia vazia nesse
   caso faria a tabela parecer sem resultados quando há.
 */
+/**
+ * @template T
+ * @param {readonly T[]} rows
+ * @param {number} [page]
+ * @param {number} [pageSize]
+ * @returns {{rows: T[], page: number, totalPages: number, total: number, from: number, to: number}}
+ */
 export function paginateApprovedCandidates(rows, page = 1, pageSize = 50) {
   const todas = Array.isArray(rows) ? rows : [];
   const tamanho =

@@ -1,3 +1,19 @@
+import type {
+  ModeloDaConvocacao,
+  CategoriaDaConvocacao,
+  ArredondamentoDaConvocacao,
+} from "./tipos-da-configuracao-de-convocacao.ts";
+import type {
+  CandidatoDaConvocacao,
+  LinhaDaConvocacao,
+  ResultadoDaConvocacao,
+  EntradaDaConvocacao,
+  BaseDoGrupoDaConvocacao,
+  GrupoDaConvocacao,
+  ConfiguracaoDaVagaParaChamada,
+  ItemDaFilaDaConvocacao,
+  OpcoesDoCsvDaConvocacao,
+} from "./tipos-da-lista-de-convocacao.ts";
 /*
   Ordem de convocação: quem é chamado, em que posição, por conta de que vaga.
 
@@ -57,7 +73,7 @@ import {
 } from "./modelo-de-convocacao.ts";
 import { sanitizeCsvCell } from "./csv-security.js";
 
-const texto = (valor) => String(valor ?? "").trim();
+const texto = (valor: unknown) => String(valor ?? "").trim();
 
 /** Status que tiram o candidato da fila sem consumir a vaga. */
 export const STATUS_FORA_DA_FILA = Object.freeze([
@@ -65,7 +81,9 @@ export const STATUS_FORA_DA_FILA = Object.freeze([
   "Documentação Rejeitada",
 ]);
 
-export function estaForaDaFila(candidato) {
+export function estaForaDaFila(
+  candidato: CandidatoDaConvocacao | null | undefined,
+) {
   return STATUS_FORA_DA_FILA.includes(texto(candidato?.status));
 }
 
@@ -79,16 +97,20 @@ export const STATUS_JA_CHAMADO = Object.freeze([
   "Migração",
 ]);
 
-export function jaFoiChamado(candidato) {
+export function jaFoiChamado(
+  candidato: CandidatoDaConvocacao | null | undefined,
+) {
   return STATUS_JA_CHAMADO.includes(texto(candidato?.status));
 }
 
 /** Vaga imediata cujo candidato ainda não foi chamado. */
-export function estaAConvocar(linha) {
+export function estaAConvocar(
+  linha: Pick<LinhaDaConvocacao, "imediata" | "candidato"> | null | undefined,
+) {
   return Boolean(linha?.imediata) && !jaFoiChamado(linha?.candidato);
 }
 
-function inteiroNaoNegativo(valor) {
+function inteiroNaoNegativo(valor: unknown) {
   const numero = Math.floor(Number(valor));
   return Number.isFinite(numero) && numero > 0 ? numero : 0;
 }
@@ -101,7 +123,10 @@ function inteiroNaoNegativo(valor) {
  * `sempre_acima` é a do 91/2026 para PCD, que sobe qualquer fração — e por isso
  * vem sempre acompanhada de um teto.
  */
-export function arredondarVaga(valor, modo = "meio_acima") {
+export function arredondarVaga(
+  valor: number,
+  modo: ArredondamentoDaConvocacao = "meio_acima",
+) {
   if (!Number.isFinite(valor) || valor <= 0) return 0;
   if (modo === "sempre_acima") return Math.ceil(valor);
   const inteiro = Math.floor(valor);
@@ -109,13 +134,18 @@ export function arredondarVaga(valor, modo = "meio_acima") {
 }
 
 /** Quadro zerado com uma entrada por categoria do modelo. */
-export function quadroVazio(modelo) {
+export function quadroVazio(
+  modelo: ModeloDaConvocacao,
+): Record<string, number> {
   return Object.fromEntries(
     modelo.categorias.map((categoria) => [categoria.id, 0]),
   );
 }
 
-export function normalizarQuadro(quadro, modelo) {
+export function normalizarQuadro(
+  quadro: Record<string, unknown> | null | undefined,
+  modelo: ModeloDaConvocacao,
+): Record<string, number> {
   const base = quadroVazio(modelo);
   modelo.categorias.forEach((categoria) => {
     base[categoria.id] = inteiroNaoNegativo(quadro?.[categoria.id]);
@@ -123,8 +153,10 @@ export function normalizarQuadro(quadro, modelo) {
   return base;
 }
 
-export function totalDoQuadro(quadro) {
-  return Object.values(quadro || {}).reduce(
+export function totalDoQuadro(
+  quadro: Record<string, unknown> | null | undefined,
+) {
+  return Object.values(quadro || {}).reduce<number>(
     (soma, valor) => soma + inteiroNaoNegativo(valor),
     0,
   );
@@ -142,10 +174,13 @@ export function totalDoQuadro(quadro) {
  * O que sobra é da ampla. Não é um percentual à parte: é o resto, e é assim que
  * os editais a definem.
  */
-export function derivarQuadro(totalImediatas, modelo) {
+export function derivarQuadro(
+  totalImediatas: unknown,
+  modelo: ModeloDaConvocacao,
+) {
   const total = inteiroNaoNegativo(totalImediatas);
   const quadro = quadroVazio(modelo);
-  const ampla = categoriaDaAmpla(modelo);
+  const ampla = amplaDoModelo(modelo);
   if (!total) return quadro;
 
   let restante = total;
@@ -183,12 +218,14 @@ export function derivarQuadro(totalImediatas, modelo) {
   continua correta quando a planilha já trazia a classificação única.
 */
 // Vazio é "sem valor", não zero: Number(null) e Number("") dão 0.
-const numeroOuNada = (valor) =>
+const numeroOuNada = (valor: unknown) =>
   valor === null || valor === undefined || String(valor).trim() === ""
     ? Number.NaN
     : Number(valor);
 
-export function ordenarPorClassificacao(candidatos) {
+export function ordenarPorClassificacao<T extends CandidatoDaConvocacao>(
+  candidatos: readonly T[] | null | undefined,
+): T[] {
   return [...(candidatos || [])].sort((a, b) => {
     const notaA = numeroOuNada(a?.nota);
     const notaB = numeroOuNada(b?.nota);
@@ -217,8 +254,13 @@ export function ordenarPorClassificacao(candidatos) {
 
   Com 2 de ampla e 1 de pretos e pardos sai `AC, PP, AC`.
 */
-function sequenciaProporcional(quadro, modelo, total) {
-  const posicoes = [];
+function sequenciaProporcional(
+  quadro: Record<string, number>,
+  modelo: ModeloDaConvocacao,
+  total: number,
+): string[] {
+  const posicoes: { id: string; ideal: number; ordem: number; k: number }[] =
+    [];
   modelo.categorias.forEach((categoria) => {
     const quantidade = quadro[categoria.id] || 0;
     for (let k = 1; k <= quantidade; k += 1) {
@@ -244,12 +286,19 @@ function sequenciaProporcional(quadro, modelo, total) {
   Posição já tomada por outra categoria passa à seguinte livre: o edital não
   prevê o choque, e empurrar é menos errado do que perder a vaga.
 */
-function sequenciaPorPosicao(quadro, modelo, total) {
-  const slots = new Array(total).fill(null);
+function sequenciaPorPosicao(
+  quadro: Record<string, number>,
+  modelo: ModeloDaConvocacao,
+  total: number,
+): string[] {
+  const slots: (string | null)[] = Array.from({ length: total }, () => null);
 
-  const seriePosicoes = (categoria, quantidade) => {
+  const seriePosicoes = (
+    categoria: CategoriaDaConvocacao,
+    quantidade: number,
+  ) => {
     const serie = [...categoria.posicoes];
-    let proxima = serie.length ? serie[serie.length - 1] : 0;
+    let proxima = serie.at(-1) ?? 0;
     while (serie.length < quantidade && categoria.intervalo > 0) {
       proxima += categoria.intervalo;
       if (proxima > total * 2 + categoria.intervalo) break;
@@ -283,7 +332,7 @@ function sequenciaPorPosicao(quadro, modelo, total) {
       }
     });
 
-  const ampla = categoriaDaAmpla(modelo);
+  const ampla = amplaDoModelo(modelo);
   return slots.map((id) => id ?? ampla.id);
 }
 
@@ -307,9 +356,13 @@ function sequenciaPorPosicao(quadro, modelo, total) {
   pardos continuam de 4 em 4. Categoria sem percentual (quadro manual) usa o
   passo total ÷ vagas da categoria.
 */
-function serieDoMgi(categoria, quantidade, total) {
+function serieDoMgi(
+  categoria: CategoriaDaConvocacao,
+  quantidade: number,
+  total: number,
+) {
   const serie = [...categoria.posicoes];
-  let proxima = serie.length ? serie[serie.length - 1] : 0;
+  let proxima = serie.at(-1) ?? 0;
   while (serie.length && serie.length < quantidade && categoria.intervalo > 0) {
     proxima += categoria.intervalo;
     serie.push(proxima);
@@ -322,7 +375,7 @@ function serieDoMgi(categoria, quantidade, total) {
   return serie.slice(0, quantidade);
 }
 
-function livreMaisProxima(slots, alvo) {
+function livreMaisProxima(slots: readonly (string | null)[], alvo: number) {
   const inicio = Math.min(Math.max(alvo, 0), slots.length - 1);
   for (let indice = inicio; indice >= 0; indice -= 1)
     if (slots[indice] === null) return indice;
@@ -331,8 +384,12 @@ function livreMaisProxima(slots, alvo) {
   return -1;
 }
 
-function sequenciaDoMgi(quadro, modelo, total) {
-  const slots = new Array(total).fill(null);
+function sequenciaDoMgi(
+  quadro: Record<string, number>,
+  modelo: ModeloDaConvocacao,
+  total: number,
+): string[] {
+  const slots: (string | null)[] = Array.from({ length: total }, () => null);
   categoriasDeReserva(modelo)
     .filter((categoria) => (quadro[categoria.id] || 0) > 0)
     .sort(
@@ -342,12 +399,14 @@ function sequenciaDoMgi(quadro, modelo, total) {
         a.ordem - b.ordem,
     )
     .forEach((categoria) => {
-      serieDoMgi(categoria, quadro[categoria.id], total).forEach((posicao) => {
-        const indice = livreMaisProxima(slots, posicao - 1);
-        if (indice >= 0) slots[indice] = categoria.id;
-      });
+      serieDoMgi(categoria, quadro[categoria.id] ?? 0, total).forEach(
+        (posicao) => {
+          const indice = livreMaisProxima(slots, posicao - 1);
+          if (indice >= 0) slots[indice] = categoria.id;
+        },
+      );
     });
-  const ampla = categoriaDaAmpla(modelo);
+  const ampla = amplaDoModelo(modelo);
   return slots.map((id) => id ?? ampla.id);
 }
 
@@ -357,7 +416,10 @@ function sequenciaDoMgi(quadro, modelo, total) {
  * Empates resolvem-se pela ordem declarada das categorias, para que o resultado
  * seja sempre o mesmo entre execuções.
  */
-export function sequenciaDeConvocacao(quadro, modelo) {
+export function sequenciaDeConvocacao(
+  quadro: Record<string, number>,
+  modelo: ModeloDaConvocacao,
+): string[] {
   const total = totalDoQuadro(quadro);
   if (!total) return [];
   if (modelo.distribuicao === "posicao_fixa")
@@ -384,7 +446,11 @@ export function sequenciaDeConvocacao(quadro, modelo) {
  *   1-indexada, dentro da lista específica de cada reserva que declarou.
  * @returns {string[]} as reservas em que concorre.
  */
-export function reservasEfetivas(reservas, modelo, posicaoNaReserva) {
+export function reservasEfetivas(
+  reservas: readonly string[] | null | undefined,
+  modelo: ModeloDaConvocacao,
+  posicaoNaReserva?: ReadonlyMap<string, number>,
+): string[] {
   const declaradas = (reservas || []).filter((id) =>
     modelo.categorias.some(
       (categoria) => categoria.id === id && !categoria.ampla,
@@ -393,9 +459,9 @@ export function reservasEfetivas(reservas, modelo, posicaoNaReserva) {
   if (declaradas.length <= 1) return declaradas;
   if (modelo.cotaMultipla === "todas") return declaradas;
 
-  const percentual = (id) =>
+  const percentual = (id: string) =>
     modelo.categorias.find((categoria) => categoria.id === id)?.percentual ?? 0;
-  const eAcumulavel = (id) =>
+  const eAcumulavel = (id: string) =>
     modelo.categorias.find((categoria) => categoria.id === id)?.acumulavel ===
     true;
 
@@ -410,10 +476,10 @@ export function reservasEfetivas(reservas, modelo, posicaoNaReserva) {
   if (modelo.cotaMultipla === "acumula_com_acumulavel") {
     const acumulavel = porPrioridade.find(eAcumulavel);
     const outra = porPrioridade.find((id) => !eAcumulavel(id));
-    return [acumulavel, outra].filter(Boolean);
+    return [acumulavel, outra].filter((id): id is string => id !== undefined);
   }
 
-  return [porPrioridade[0]];
+  return porPrioridade.slice(0, 1);
 }
 
 /*
@@ -421,10 +487,12 @@ export function reservasEfetivas(reservas, modelo, posicaoNaReserva) {
   declarou. É o insumo do desempate de percentuais iguais, e tem de ser
   calculado sobre a fila JÁ ordenada.
 */
-function posicoesNasReservas(fila) {
-  const contadores = new Map();
+function posicoesNasReservas<T extends CandidatoDaConvocacao>(
+  fila: readonly ItemDaFilaDaConvocacao<T>[],
+) {
+  const contadores = new Map<string, number>();
   return fila.map((item) => {
-    const posicoes = new Map();
+    const posicoes = new Map<string, number>();
     item.declaradas.forEach((id) => {
       const proxima = (contadores.get(id) ?? 0) + 1;
       contadores.set(id, proxima);
@@ -444,31 +512,33 @@ function posicoesNasReservas(fila) {
  * @param {boolean} [entrada.proporcionalidade=true] Quando falso, devolve a
  *   ordem pura de classificação, sem categorias.
  */
-export function montarConvocacaoDaVaga({
+export function montarConvocacaoDaVaga<T extends CandidatoDaConvocacao>({
   candidatos,
   quadro,
   modelo: modeloCru,
   proporcionalidade = true,
-}) {
+}: EntradaDaConvocacao<T>): ResultadoDaConvocacao<T> {
   const modelo = modeloCru?.categorias
     ? modeloCru
     : normalizarModelo(modeloCru);
   const quadroFinal = normalizarQuadro(quadro, modelo);
-  const ampla = categoriaDaAmpla(modelo);
+  const ampla = amplaDoModelo(modelo);
 
-  const declaradasDe = (candidato) =>
+  const declaradasDe = (candidato: T) =>
     lerModalidade(candidato?.modalidade, modelo).reservas;
 
   const ordenados = ordenarPorClassificacao(candidatos);
-  const foraDaFila = ordenados.filter(estaForaDaFila).map((candidato) => ({
-    candidato,
-    posicao: null,
-    categoria: null,
-    categoriaReservada: null,
-    imediata: false,
-    reservas: declaradasDe(candidato),
-    reservasEfetivas: [],
-  }));
+  const foraDaFila: LinhaDaConvocacao<T>[] = ordenados
+    .filter(estaForaDaFila)
+    .map((candidato) => ({
+      candidato,
+      posicao: null,
+      categoria: null,
+      categoriaReservada: null,
+      imediata: false,
+      reservas: declaradasDe(candidato),
+      reservasEfetivas: [],
+    }));
   const naFila = ordenados.filter((candidato) => !estaForaDaFila(candidato));
 
   if (!proporcionalidade) {
@@ -497,9 +567,10 @@ export function montarConvocacaoDaVaga({
     todas as categorias pela célula, e refazê-la a cada tentativa de preencher
     uma vaga tornaria o cálculo quadrático numa vaga com centenas de aprovados.
   */
-  const fila = naFila.map((candidato) => ({
+  const fila: ItemDaFilaDaConvocacao<T>[] = naFila.map((candidato) => ({
     candidato,
     declaradas: declaradasDe(candidato),
+    efetivas: [],
   }));
   const posicoes = posicoesNasReservas(fila);
   fila.forEach((item, indice) => {
@@ -530,17 +601,17 @@ export function montarConvocacaoDaVaga({
     porque candidato que já foi chamado, ou que não disputa aquela categoria,
     nunca volta a ser elegível — o que deixa o preenchimento linear.
   */
-  const ocupado = new Array(fila.length).fill(false);
-  const ponteiros = new Map();
+  const ocupado: boolean[] = Array.from({ length: fila.length }, () => false);
+  const ponteiros = new Map<string, number>();
 
-  const disputa = (item, categoriaId) =>
+  const disputa = (item: ItemDaFilaDaConvocacao<T>, categoriaId: string) =>
     categoriaId === ampla.id || item.efetivas.includes(categoriaId);
 
-  const proximoDa = (categoriaId) => {
+  const proximoDa = (categoriaId: string) => {
     let indice = ponteiros.get(categoriaId) ?? 0;
     while (
       indice < fila.length &&
-      (ocupado[indice] || !disputa(fila[indice], categoriaId))
+      (ocupado[indice] || !disputa(exigirItem(fila[indice]), categoriaId))
     )
       indice += 1;
     ponteiros.set(categoriaId, indice);
@@ -552,7 +623,7 @@ export function montarConvocacaoDaVaga({
     a ampla — que nunca fica vazia enquanto sobrar gente na fila, e é o que
     garante o fim do laço.
   */
-  const preencher = (categoriaId) => {
+  const preencher = (categoriaId: string) => {
     const categoria = modelo.categorias.find((item) => item.id === categoriaId);
     const tentativas = [categoriaId, ...(categoria?.cascata || []), ampla.id];
     for (const alvo of tentativas) {
@@ -562,7 +633,7 @@ export function montarConvocacaoDaVaga({
     return null;
   };
 
-  const linhas = [];
+  const linhas: LinhaDaConvocacao<T>[] = [];
   for (let volta = 0; linhas.length < fila.length; volta += 1) {
     // As imediatas seguem o quadro (que pode ser manual); a reserva, a série.
     const categoriaDaVaga =
@@ -570,19 +641,20 @@ export function montarConvocacaoDaVaga({
         ? ciclo[volta]
         : (sequenciaDaFila?.[volta] ??
           cicloEfetivo[volta % cicloEfetivo.length]);
-    const escolha = preencher(categoriaDaVaga);
+    const escolha = preencher(exigirItem(categoriaDaVaga));
     if (!escolha) break;
 
     ocupado[escolha.indice] = true;
     const reverteu = escolha.categoria !== categoriaDaVaga;
+    const item = exigirItem(fila[escolha.indice]);
     linhas.push({
-      candidato: fila[escolha.indice].candidato,
+      candidato: item.candidato,
       posicao: linhas.length + 1,
       categoria: escolha.categoria,
-      categoriaReservada: reverteu ? categoriaDaVaga : null,
+      categoriaReservada: reverteu ? exigirItem(categoriaDaVaga) : null,
       imediata: linhas.length < totalImediatas,
-      reservas: fila[escolha.indice].declaradas,
-      reservasEfetivas: fila[escolha.indice].efetivas,
+      reservas: item.declaradas,
+      reservasEfetivas: item.efetivas,
     });
   }
 
@@ -595,23 +667,28 @@ export function montarConvocacaoDaVaga({
   mesmo cargo quando existe exatamente uma; havendo várias, o cargo passa a ser a
   própria chave, porque não há como adivinhar a qual delas ele pertence.
 */
-function indexarCodigosPorCargo(candidatos) {
-  const porCargo = new Map();
+function indexarCodigosPorCargo(
+  candidatos: readonly CandidatoDaConvocacao[] | null | undefined,
+) {
+  const porCargo = new Map<string, Set<string>>();
   (candidatos || []).forEach((candidato) => {
     const codigo = texto(candidato?.codigo_vaga);
     if (!codigo) return;
-    const cargo = texto(candidato?.cargo);
+    const cargo = chaveDoCargo(candidato);
     if (!porCargo.has(cargo)) porCargo.set(cargo, new Set());
-    porCargo.get(cargo).add(codigo);
+    exigirItem(porCargo.get(cargo)).add(codigo);
   });
   return porCargo;
 }
 
-function resolverCodigoDaVaga(candidato, porCargo) {
+function resolverCodigoDaVaga(
+  candidato: CandidatoDaConvocacao,
+  porCargo: ReadonlyMap<string, ReadonlySet<string>>,
+) {
   const codigo = texto(candidato?.codigo_vaga);
   if (codigo) return codigo;
-  const codigos = porCargo.get(texto(candidato?.cargo));
-  if (codigos && codigos.size === 1) return [...codigos][0];
+  const codigos = porCargo.get(chaveDoCargo(candidato));
+  if (codigos && codigos.size === 1) return [...codigos][0] ?? "";
   return "";
 }
 
@@ -626,9 +703,15 @@ function resolverCodigoDaVaga(candidato, porCargo) {
  *   o resultado.
  * @returns {Array} um grupo por vaga, ordenado por edital, cargo e código.
  */
-export function montarListaDeConvocacao(candidatos, obterConfiguracao) {
+export function montarListaDeConvocacao<T extends CandidatoDaConvocacao>(
+  candidatos: readonly T[] | null | undefined,
+  obterConfiguracao: (
+    editalId: string,
+    codigoVaga: string,
+  ) => ConfiguracaoDaVagaParaChamada | null | undefined,
+): GrupoDaConvocacao<T>[] {
   const porCargo = indexarCodigosPorCargo(candidatos);
-  const grupos = new Map();
+  const grupos = new Map<string, BaseDoGrupoDaConvocacao<T>>();
 
   (candidatos || []).forEach((candidato) => {
     const editalId = String(candidato?.edital_id ?? "");
@@ -647,7 +730,7 @@ export function montarListaDeConvocacao(candidatos, obterConfiguracao) {
         candidatos: [],
       });
     }
-    grupos.get(chave).candidatos.push(candidato);
+    exigirItem(grupos.get(chave)).candidatos.push(candidato);
   });
 
   return [...grupos.values()]
@@ -682,7 +765,9 @@ export function montarListaDeConvocacao(candidatos, obterConfiguracao) {
 /**
  * Resumo da convocação para os KPIs da aba.
  */
-export function resumirConvocacao(grupos) {
+export function resumirConvocacao(
+  grupos: readonly GrupoDaConvocacao[] | null | undefined,
+) {
   const resumo = {
     vagas: 0,
     imediatas: 0,
@@ -710,13 +795,13 @@ export function resumirConvocacao(grupos) {
 }
 
 /* "2026-10-05" → "05/10/2026". */
-const dataBr = (valor) => {
+const dataBr = (valor: unknown) => {
   const m = texto(valor).match(/^(\d{4})-(\d{2})-(\d{2})/);
   return m ? `${m[3]}/${m[2]}/${m[1]}` : "";
 };
 
 /** Onde a linha está na chamada: a convocar, já chamado, reserva ou fora. */
-export function situacaoNaChamada(linha) {
+export function situacaoNaChamada(linha: LinhaDaConvocacao | null | undefined) {
   if (!linha?.posicao) return "Fora da fila";
   if (jaFoiChamado(linha.candidato)) return "Já chamado";
   return linha.imediata ? "A convocar" : "Cadastro de reserva";
@@ -729,11 +814,14 @@ export function situacaoNaChamada(linha) {
  * categoria)` dá o nome da categoria da vaga. Quem gera o arquivo passa as
  * células por sanitizeCsvCell (csv-security.js).
  */
-export function linhasDoCsvDaConvocacao(
-  grupos,
-  { convocacoes = new Map(), rotulo = (_, categoria) => categoria || "" } = {},
+export function linhasDoCsvDaConvocacao<T extends CandidatoDaConvocacao>(
+  grupos: readonly GrupoDaConvocacao<T>[] | null | undefined,
+  {
+    convocacoes = new Map(),
+    rotulo = (_, categoria) => categoria || "",
+  }: OpcoesDoCsvDaConvocacao<T> = {},
 ) {
-  const linhas = [
+  const linhas: unknown[][] = [
     [
       "Edital",
       "Unidade",
@@ -781,8 +869,11 @@ export function linhasDoCsvDaConvocacao(
 }
 
 /** O CSV da ordem de convocação: `;` (Excel pt-BR), BOM e células protegidas contra fórmula. */
-export function csvDaConvocacao(grupos, opcoes = {}) {
-  const celula = (valor) => {
+export function csvDaConvocacao<T extends CandidatoDaConvocacao>(
+  grupos: readonly GrupoDaConvocacao<T>[] | null | undefined,
+  opcoes: OpcoesDoCsvDaConvocacao<T> = {},
+) {
+  const celula = (valor: unknown) => {
     const seguro = sanitizeCsvCell(valor ?? "");
     return /[";\n\r]/.test(seguro) ? `"${seguro.replace(/"/g, '""')}"` : seguro;
   };
@@ -790,4 +881,22 @@ export function csvDaConvocacao(grupos, opcoes = {}) {
     linha.map(celula).join(";"),
   );
   return `\uFEFF${linhas.join("\r\n")}\r\n`;
+}
+
+function exigirItem<T>(valor: T | undefined): T {
+  if (valor === undefined)
+    throw new Error("Dados internos da convocação inconsistentes.");
+  return valor;
+}
+function amplaDoModelo(modelo: ModeloDaConvocacao): CategoriaDaConvocacao {
+  const ampla = categoriaDaAmpla(modelo);
+  if (!ampla)
+    throw new Error(
+      "Modelo sem ampla concorrência. Recarregue a configuração.",
+    );
+  return ampla;
+}
+
+function chaveDoCargo(candidato: CandidatoDaConvocacao): string {
+  return String(candidato.edital_id ?? "") + "\u0000" + texto(candidato.cargo);
 }

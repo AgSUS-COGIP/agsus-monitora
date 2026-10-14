@@ -20,7 +20,7 @@ import {
   Configuração da lista de convocação: o que o banco guarda por edital (modelo
   de regras e vagas imediatas) e o rascunho que o formulário do edital edita.
   Sem DOM nem rede — a tela é `src/modulos/aprovados/`, e o cálculo
-  da ordem está em `lista-convocacao-rules.js`.
+  da ordem está em `lista-convocacao-rules.ts`.
 
   O MODELO É PARTILHADO, E ISSO TEM DOIS LADOS
 
@@ -50,7 +50,7 @@ import {
   normalizarQuadro,
   quadroVazio,
   sequenciaDeConvocacao,
-} from "./lista-convocacao-rules.js";
+} from "./lista-convocacao-rules.ts";
 
 const text = (value: unknown) => String(value ?? "").trim();
 
