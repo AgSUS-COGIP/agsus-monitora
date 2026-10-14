@@ -289,7 +289,8 @@ describe("blocos, efeitos e parecer", () => {
     });
     expect(r.observacoes).toEqual([
       "Item 8.14 a: Vínculo sem data de término.",
-      "Item 8.14: Declaração sem carimbo do órgão.",
+      // O Outro motivo vai como o avaliador escreveu, sem o item do edital.
+      "Declaração sem carimbo do órgão.",
       "Nota de experiência profissional diminuída em decorrência do tempo de serviço comprovado pelo candidato(a).",
       "Conferido na Empregare.",
     ]);
@@ -312,7 +313,7 @@ describe("blocos, efeitos e parecer", () => {
     ]);
   });
 
-  it("Outro motivo na justificativa da nota vale com o item do bloco", () => {
+  it("Outro motivo na justificativa da nota vale como escrito, sem o item do bloco", () => {
     const r = calcularAvaliacao(regra, {
       ...base,
       blocos: {
@@ -325,7 +326,10 @@ describe("blocos, efeitos e parecer", () => {
       },
     });
     expect(r.observacoes).toContain(
-      "Item 8.14: Vínculo de 2019 sem assinatura do empregador.",
+      "Vínculo de 2019 sem assinatura do empregador.",
+    );
+    expect(r.observacoes.join(" | ")).not.toContain(
+      "Item 8.14: Vínculo de 2019",
     );
   });
 

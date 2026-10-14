@@ -4123,7 +4123,7 @@
       }
     },
     {
-      "nome": "Outro motivo (descrever): Motorista B, requisito Não confere só com o motivo escrito — elimina com o texto e o item do bloco",
+      "nome": "Outro motivo (descrever): Motorista B, requisito Não confere só com o motivo escrito — elimina com o texto como o avaliador escreveu, sem o item do bloco",
       "regra": "E114-POR-CARGO",
       "candidato": {
         "nivel": "medio",
@@ -4171,7 +4171,7 @@
           "EXPERIENCIA": 20
         },
         "eliminatorios": [
-          "Item 2; 3.1 i; 8.2.10.8: CNH enviada cortada, sem a data de validade visível."
+          "CNH enviada cortada, sem a data de validade visível."
         ],
         "encaminhamentos": [],
         "calculados": {
@@ -4180,7 +4180,7 @@
           "EXPERIENCIA": 20
         },
         "ajustes": {},
-        "parecer": "Edital 114/2026\nCandidato(a) INABILITADO(A) na Avaliação Documental e de Títulos, pelo(s) seguinte(s) motivo(s):\n\n- Item 2; 3.1 i; 8.2.10.8: CNH enviada cortada, sem a data de validade visível."
+        "parecer": "Edital 114/2026\nCandidato(a) INABILITADO(A) na Avaliação Documental e de Títulos, pelo(s) seguinte(s) motivo(s):\n\n- CNH enviada cortada, sem a data de validade visível."
       }
     },
     {
@@ -4251,7 +4251,7 @@
           "EXPERIENCIA": 20
         },
         "ajustes": {},
-        "parecer": "Edital 114/2026\nCandidato(a) HABILITADO(A) na Avaliação Documental e de Títulos com a pontuação total de 26,0 pontos, distribuídos da seguinte forma:\n\n- Formação Acadêmica: 0,0 pontos.\n- Cursos de Aperfeiçoamento: 6,0 pontos.\n- Experiência Profissional: 20,0 pontos.\n\nObservações da análise:\n- Item 8.2.6: Certificado de 60 h sem assinatura da instituição; aceito pela declaração anexa.\n- Item 8.2.6: Aceito 1 curso: 120 h (faixa ≥120 h, 6 pontos)."
+        "parecer": "Edital 114/2026\nCandidato(a) HABILITADO(A) na Avaliação Documental e de Títulos com a pontuação total de 26,0 pontos, distribuídos da seguinte forma:\n\n- Formação Acadêmica: 0,0 pontos.\n- Cursos de Aperfeiçoamento: 6,0 pontos.\n- Experiência Profissional: 20,0 pontos.\n\nObservações da análise:\n- Certificado de 60 h sem assinatura da instituição; aceito pela declaração anexa.\n- Item 8.2.6: Aceito 1 curso: 120 h (faixa ≥120 h, 6 pontos)."
       }
     },
     {
@@ -4320,7 +4320,7 @@
           "EXPERIENCIA": 20
         },
         "ajustes": {},
-        "parecer": "Edital 114/2026\nCandidato(a) HABILITADO(A) na Avaliação Documental e de Títulos com a pontuação total de 20,0 pontos, distribuídos da seguinte forma:\n\n- Formação Acadêmica: 0,0 pontos.\n- Cursos de Aperfeiçoamento: 0,0 pontos.\n- Experiência Profissional: 20,0 pontos.\n\nObservações da análise:\n- Item 8.2.6: Enviou só a capa do certificado.\n- Item 6.5; 8.2.10.8 — RG com foto antiga, mas legível; conferido com a CNH.\n- Item 8.2.6 — Enviou diploma de graduação; não pontua no nível médio.\n- Item 8.2.6 — Vínculos conferidos na CTPS digital."
+        "parecer": "Edital 114/2026\nCandidato(a) HABILITADO(A) na Avaliação Documental e de Títulos com a pontuação total de 20,0 pontos, distribuídos da seguinte forma:\n\n- Formação Acadêmica: 0,0 pontos.\n- Cursos de Aperfeiçoamento: 0,0 pontos.\n- Experiência Profissional: 20,0 pontos.\n\nObservações da análise:\n- Enviou só a capa do certificado.\n- Item 6.5; 8.2.10.8 — RG com foto antiga, mas legível; conferido com a CNH.\n- Item 8.2.6 — Enviou diploma de graduação; não pontua no nível médio.\n- Item 8.2.6 — Vínculos conferidos na CTPS digital."
       }
     }
   ],

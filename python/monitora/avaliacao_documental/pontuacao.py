@@ -336,7 +336,9 @@ def _avaliar_blocos(regra, candidato, situacao_padrao):
             for m in escolhidos
         ]
         if livre:
-            motivos.append({"codigo": None, "texto": livre, "item_edital": bloco.get("item_edital") or ""})
+            # O motivo escrito vai como o avaliador escreveu, sem o item do edital
+            # (ele cita o item no texto, se quiser); os motivos da regra levam o item.
+            motivos.append({"codigo": None, "texto": livre, "item_edital": ""})
         avaliados.append({"bloco": bloco, "situacao": situacao, "efeito": efeito, "motivos": motivos})
     return avaliados
 
@@ -404,7 +406,7 @@ def _texto_comparavel(texto):
 def textos_das_justificativas(regra, bloco, lancado):
     """
     O motivo do bloco (com o item), a observação pronta ou o "Outro motivo"
-    escrito (motivo_livre, com o item), e o texto livre (a justificativa do
+    escrito (motivo_livre, como o avaliador escreveu, sem o item), e o texto livre (a justificativa do
     ajuste); o motivo ou a observação cujo texto já está no texto livre sai.
     """
     lancado = _objeto(lancado)
@@ -419,7 +421,7 @@ def textos_das_justificativas(regra, bloco, lancado):
         if codigo == OUTRO_MOTIVO:
             outro = str(lancado.get("motivo_livre") or "").strip()
             if outro and not no_livre(outro):
-                textos.append(_com_item(bloco.get("item_edital"), outro))
+                textos.append(outro)  # como o avaliador escreveu, sem o item do edital
             continue
         motivo = next((m for m in _lista(bloco.get("motivos")) if m.get("codigo") == codigo), None)
         if motivo:
