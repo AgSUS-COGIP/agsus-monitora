@@ -12,7 +12,19 @@ export function normalizeTableHeader(value) {
 export function getTableHeaders(table) {
   const headerCells = table.querySelectorAll("thead th");
   return Array.from(headerCells).map((cell, index) => {
-    return normalizeTableHeader(cell.textContent) || `Campo ${index + 1}`;
+    /*
+      Cabeçalho sem texto (a caixa "Selecionar as fichas da lista" da Fila):
+      o nome acessível do controle, em vez de "Campo 1" no cartão do celular.
+    */
+    const rotuloAcessivel =
+      cell.getAttribute("aria-label") ||
+      cell.querySelector("[aria-label]")?.getAttribute("aria-label") ||
+      cell.getAttribute("title");
+    return (
+      normalizeTableHeader(cell.textContent) ||
+      normalizeTableHeader(rotuloAcessivel) ||
+      `Campo ${index + 1}`
+    );
   });
 }
 

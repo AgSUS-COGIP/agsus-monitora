@@ -82,37 +82,60 @@ export function LinkDaEmpregare({
 }
 
 /**
- * O anexo declarado: "Ver documento" com o link Visualizar Arquivo da pergunta;
- * senão "Ver respostas na Empregare" ou "Abrir na Empregare" e a dica de onde achar o arquivo
- * (anexo-na-empregare.ts monta o endereço, o rótulo e a dica).
+ * A resposta de anexo sem arquivo da resposta vigente na ficha: o texto
+ * declarado ("Anexo", ou "Sem arquivo enviado" quando a resposta lida não traz
+ * arquivo nesta pergunta) e o link — o documento de um envio anterior, a
+ * impressão, o candidato ou a vaga — com a dica de onde achar o arquivo
+ * (anexo-na-empregare.ts monta o endereço, o rótulo, o texto e a dica).
  */
-export function LinkDoAnexo({
+export function AnexoDeclarado({
   empregare,
   coluna,
+  texto,
 }: {
   empregare: ContextoDaEmpregare;
   coluna: string;
+  texto: string;
 }) {
   const endereco = enderecoDoAnexo(empregare.enderecos, coluna);
-  if (!endereco) return null;
-  const { rotulo, dica } = apresentacaoDoAnexo(coluna, endereco);
+  const apresentacao = endereco ? apresentacaoDoAnexo(coluna, endereco) : null;
+  const { candidato, impressao } = empregare.enderecos;
+  // Sem o candidato nem a impressão, o link é a vaga: copia o código para a busca.
+  const levaAVaga =
+    endereco?.destino === "vaga" ||
+    endereco?.destino === "vagas" ||
+    (endereco?.destino === "sem_arquivo" && !candidato && !impressao);
   return (
-    <span className="avd-ficha-anexo">
-      <a
-        className="btn secondary small avd-ficha-ver-anexo"
-        href={endereco.href}
-        target="_blank"
-        rel="noopener noreferrer"
-        onClick={() => {
-          if (endereco.destino === "vaga" || endereco.destino === "vagas")
-            void copiarParaABusca(empregare);
-          void empregare.loja.registrarAcesso("ABRIR_EMPREGARE");
-        }}
-      >
-        <Icone /> {rotulo}
-      </a>
-      {dica ? <small className="avd-ficha-dica-anexo">{dica}</small> : null}
-    </span>
+    <>
+      <strong className="avd-ficha-texto-declarado">
+        <i
+          className={`fa-solid ${apresentacao?.texto ? "fa-file-circle-xmark" : "fa-paperclip"}`}
+          aria-hidden="true"
+        />
+        {apresentacao?.texto ?? (texto || "Sem resposta")}
+      </strong>
+      {endereco && apresentacao ? (
+        <span className="avd-ficha-anexo" data-destino={endereco.destino}>
+          {endereco.href ? (
+            <a
+              className="btn secondary small avd-ficha-ver-anexo"
+              href={endereco.href}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={() => {
+                if (levaAVaga) void copiarParaABusca(empregare);
+                void empregare.loja.registrarAcesso("ABRIR_EMPREGARE");
+              }}
+            >
+              <Icone /> {apresentacao.rotulo}
+            </a>
+          ) : null}
+          {apresentacao.dica ? (
+            <small className="avd-ficha-dica-anexo">{apresentacao.dica}</small>
+          ) : null}
+        </span>
+      ) : null}
+    </>
   );
 }
 

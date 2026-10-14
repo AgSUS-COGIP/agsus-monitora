@@ -9,6 +9,12 @@ import { Popover } from "../../../ui/index.js";
   responsável, reserva e regra ficam no "i"; a reserva só aparece quando faltam
   menos de 5 minutos. À direita, Anterior / Próxima entre as fichas da lista.
   Os filhos (o stepper) ficam embaixo, no mesmo bloco preso ao alto.
+
+  No notebook (tela baixa) o bloco fica "enxuto": nome, código, vaga (cortada,
+  inteira na dica) e chips numa linha só, e o stepper com o progresso na mesma
+  faixa. Ao rolar o conteúdo — ou em tela bem baixa (zoom de 125%) — fica
+  "compacto": o stepper só com as marcas e o nome do passo atual (os outros
+  na dica). Volta ao normal quando a rolagem volta ao alto. Estilo: ficha.css.
 */
 
 export type FichaVizinha = { id: string; codigo: string } | null;
@@ -45,6 +51,72 @@ export type PropriedadesDoCabecalho = {
 
 const CINCO_MINUTOS = 5 * 60 * 1000;
 
+/* As alturas de tela (px CSS, já com o zoom) dos tamanhos do cabeçalho; o celular tem o seu. */
+const TELA_BAIXA = "(min-width: 901px) and (max-height: 860px)";
+const TELA_MUITO_BAIXA = "(min-width: 901px) and (max-height: 680px)";
+/* Rolagem (px) para compactar e para voltar; a folga evita o vaivém em página quase sem rolagem. */
+const ROLAGEM_PARA_COMPACTAR = 48;
+const ROLAGEM_PARA_VOLTAR = 8;
+const FOLGA_DA_ROLAGEM = 160;
+
+export type TamanhoDoCabecalho = "normal" | "enxuto" | "compacto";
+
+/* A consulta de mídia como estado (relê quando a tela ou o zoom mudam). */
+function usarMidia(consulta: string): boolean {
+  const [casa, setCasa] = useState(
+    () => globalThis.matchMedia?.(consulta).matches ?? false,
+  );
+  useEffect(() => {
+    const midia = globalThis.matchMedia?.(consulta);
+    if (!midia) return undefined;
+    const aoMudar = () => setCasa(midia.matches);
+    aoMudar();
+    midia.addEventListener("change", aoMudar);
+    return () => midia.removeEventListener("change", aoMudar);
+  }, [consulta]);
+  return casa;
+}
+
+/* A página rolou para baixo (com histerese: compacta depois de 48 px, volta antes de 8 px). */
+function usarRolado(): boolean {
+  const [rolado, setRolado] = useState(false);
+  useEffect(() => {
+    let quadro = 0;
+    const medir = () => {
+      quadro = 0;
+      const y = globalThis.scrollY ?? 0;
+      const sobra =
+        (document.documentElement?.scrollHeight ?? 0) -
+        (globalThis.innerHeight ?? 0);
+      setRolado((antes) =>
+        antes
+          ? y > ROLAGEM_PARA_VOLTAR
+          : y > ROLAGEM_PARA_COMPACTAR &&
+            sobra > ROLAGEM_PARA_COMPACTAR + FOLGA_DA_ROLAGEM,
+      );
+    };
+    const aoRolar = () => {
+      if (!quadro) quadro = globalThis.requestAnimationFrame(medir);
+    };
+    globalThis.addEventListener("scroll", aoRolar, { passive: true });
+    medir();
+    return () => {
+      globalThis.removeEventListener("scroll", aoRolar);
+      if (quadro) globalThis.cancelAnimationFrame(quadro);
+    };
+  }, []);
+  return rolado;
+}
+
+/** O tamanho do cabeçalho: compacto ao rolar ou em tela muito baixa; enxuto em tela baixa. */
+export function usarTamanhoDoCabecalho(): TamanhoDoCabecalho {
+  const baixa = usarMidia(TELA_BAIXA);
+  const muitoBaixa = usarMidia(TELA_MUITO_BAIXA);
+  const rolado = usarRolado();
+  if (muitoBaixa || rolado) return "compacto";
+  return baixa ? "enxuto" : "normal";
+}
+
 /* Minutos que faltam na reserva, quando faltam menos de 5 (senão null). Relê a cada 20 s. */
 function usarReservaAcabando(fim: string | null | undefined): number | null {
   const [agora, setAgora] = useState(() => Date.now());
@@ -78,9 +150,16 @@ export function CabecalhoDaFicha({
   children,
 }: PropriedadesDoCabecalho) {
   const minutos = usarReservaAcabando(fimDaMinhaReserva);
+  const tamanho = usarTamanhoDoCabecalho();
   const { anterior, proxima, abrindo, ir } = navegacao;
+  const nomeDaFicha = nome || `Candidato ${codigo}`;
+  const linhaDaVaga = [vaga, cargo, nivel].filter(Boolean).join(" · ");
   return (
-    <header className="avd-analise-topo" data-tour="avd-ficha-topo">
+    <header
+      className="avd-analise-topo"
+      data-tour="avd-ficha-topo"
+      data-tamanho={tamanho === "normal" ? undefined : tamanho}
+    >
       <div className="avd-analise-linha">
         <button
           type="button"
@@ -94,17 +173,14 @@ export function CabecalhoDaFicha({
         </button>
         <div className="avd-analise-identidade">
           <h2 id="avdFichaTitulo">
-            <span className="avd-analise-nome">
-              {nome || `Candidato ${codigo}`}
+            <span className="avd-analise-nome" title={nomeDaFicha}>
+              {nomeDaFicha}
             </span>
             <span className="avd-analise-codigo">Código {codigo}</span>
           </h2>
           <div className="avd-analise-subtitulo">
-            <span
-              className="avd-analise-vaga"
-              title={[vaga, cargo, nivel].filter(Boolean).join(" · ")}
-            >
-              {[vaga, cargo, nivel].filter(Boolean).join(" · ")}
+            <span className="avd-analise-vaga" title={linhaDaVaga}>
+              {linhaDaVaga}
             </span>
             <span className="avd-analise-dados" aria-label="Cabeçalho da ficha">
               {declarada ? (

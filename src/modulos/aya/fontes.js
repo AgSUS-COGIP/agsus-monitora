@@ -77,7 +77,7 @@ export function criarFontesDaAya({
       const pacote = async (escopo) =>
         linhasDoPayload(
           primeiro(
-            await chamar("get_analises_dashboard_payload_v2", {
+            await chamar("get_analises_dashboard_payload_v2_se_mudou", {
               p_scope: escopo,
               ...parametroDeAreaDaRpc(area),
             }),
@@ -101,13 +101,17 @@ export function criarFontesDaAya({
       return { recursos: enriquecerRecursos(primeiro(dados)) };
     },
     async entrevistas({ area }) {
-      const dados = await chamar("get_entrevistas_da_area", { p_area: area });
+      const dados = await chamar("get_entrevistas_da_area_se_mudou", {
+        p_area: area,
+      });
       return payloadDasEntrevistas(primeiro(dados));
     },
     async selecao({ area }) {
       const carregados = daTela(janela, "selecaoController", area, "dados");
       if (Array.isArray(carregados?.vagas)) return { vagas: carregados.vagas };
-      const dados = await chamar("get_selecao_da_area", { p_area: area });
+      const dados = await chamar("get_selecao_da_area_se_mudou", {
+        p_area: area,
+      });
       return payloadDaSelecao(primeiro(dados));
     },
     async conferencia({ area, cargaDe }) {

@@ -1,0 +1,13 @@
+# Fim de linha LF em toda cópia de trabalho, inclusive no Windows
+# (core.autocrlf=true trazia CRLF): os testes que leem a fonte
+# (tests/componentes/area-atual.test.js) e o Prettier (endOfLine "lf")
+# esperam LF. O repositório já guarda tudo em LF.
+* text=auto eol=lf
+
+*.webp binary
+*.png binary
+*.jpg binary
+*.ico binary
+*.xlsx binary
+*.docx binary
+*.pdf binary

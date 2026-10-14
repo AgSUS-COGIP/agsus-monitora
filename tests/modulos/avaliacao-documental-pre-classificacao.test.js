@@ -347,6 +347,11 @@ describe("Pré-classificação (AM-4)", () => {
     expect(vaga.querySelector(".avd-eliminados").textContent).toContain(
       "Cancelou a inscrição",
     );
+    // Os eliminados rolam dentro do cartão, como o lote (a tabela solta
+    // herdava min-width 1180px de app.css e a página rolava de lado).
+    expect(
+      vaga.querySelector(".avd-eliminados > .ui-tabela-rolagem > table"),
+    ).not.toBeNull();
     expect(vaga.textContent).toContain(
       "Fora do lote com nota acima da linha de corte",
     );

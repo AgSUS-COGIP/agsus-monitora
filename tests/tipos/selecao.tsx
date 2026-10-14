@@ -47,10 +47,13 @@ estado.exportarCsv(snapshot.dados.vagas);
 // @ts-expect-error — a Seleção usa apenas sua RPC de leitura.
 cliente.rpc("publicar_classificacao", { p_area: "sede" });
 // @ts-expect-error — a RPC exige o argumento p_area como string.
-cliente.rpc("get_selecao_da_area", { p_area: 7 });
+cliente.rpc("get_selecao_da_area_se_mudou", { p_area: 7, p_versao: null });
 
 const comLimite: Promise<{ data: unknown; error: unknown }> = comTempoLimite(
-  cliente.rpc("get_selecao_da_area", { p_area: "sede" }),
+  cliente.rpc("get_selecao_da_area_se_mudou", {
+    p_area: "sede",
+    p_versao: null,
+  }),
 );
 // @ts-expect-error — limitar o tempo mantém o tipo de retorno da operação.
 const numeroComLimite: Promise<number> = comLimite;

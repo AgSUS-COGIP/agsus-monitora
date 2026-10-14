@@ -119,7 +119,7 @@ describe("as leituras de editais pedem a área", () => {
   // As colunas são listadas uma a uma; sem CO_AREA, SEDE e Projetos ficavam vazios.
   it("src/app/carga.js", () => {
     expect(readFileSync("src/app/carga.js", "utf8")).toContain(
-      '.from("TB_MONITORAMENTO_INDIGENA")\n        .select(COLUNAS_DO_MONITORAMENTO)',
+      '"listar_monitoramento_operacional"',
     );
     expect(COLUNAS_DO_MONITORAMENTO.split(",")).toContain("CO_AREA");
   });

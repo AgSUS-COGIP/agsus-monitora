@@ -54,8 +54,8 @@ type SessaoDaSelecao = { user?: { id?: string } } | null;
 /** Só as operações já consumidas pelo módulo; aceita o cliente único do app. */
 export type ClienteDaSelecao = {
   rpc: (
-    nome: "get_selecao_da_area",
-    argumentos: { p_area: string },
+    nome: "get_selecao_da_area_se_mudou",
+    argumentos: { p_area: string; p_versao: string | null },
   ) => PromiseLike<{ data: unknown; error: unknown }>;
   auth?: {
     getSession?: () => PromiseLike<{
