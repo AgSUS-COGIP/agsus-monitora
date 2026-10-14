@@ -265,6 +265,61 @@ describe("o que falta para concluir", () => {
     });
   });
 
+  it("Outro motivo (descrever): o texto vale como motivo; sem texto, pede a descrição", () => {
+    const lanc = lancamentoCompleto();
+    lanc.blocos.ESCOLARIDADE = {
+      situacao: "NAO_CONFORME",
+      motivos: ["OUTRO"],
+      motivo_livre: "curto",
+    };
+    const faltas = (l) =>
+      pendenciasDaFicha(
+        REGRA,
+        l,
+        calcularFicha(REGRA, l, DOCUMENTAL),
+        declarada,
+      ).filter((p) => p.bloco === "ESCOLARIDADE");
+    expect(faltas(lanc)).toEqual([
+      {
+        bloco: "ESCOLARIDADE",
+        tipo: "motivo",
+        texto: "Descreva o outro motivo (10 caracteres ou mais).",
+      },
+    ]);
+    lanc.blocos.ESCOLARIDADE.motivo_livre = "Diploma sem o verso.";
+    expect(faltas(lanc)).toEqual([]);
+    const av = calcularFicha(REGRA, lanc, DOCUMENTAL);
+    expect(av.parecer).toContain("Diploma sem o verso.");
+  });
+
+  it("Outro motivo na justificativa da nota diferente da declarada", () => {
+    const lanc = lancamentoCompleto({
+      cursos: [{ nome: "Curso A", horas: 120, aceito: true }],
+    });
+    lanc.blocos.CURSOS = {
+      situacao: "CONFORME",
+      justificativas: ["OUTRO"],
+      motivo_livre: "",
+    };
+    const faltas = () =>
+      pendenciasDaFicha(
+        REGRA,
+        lanc,
+        calcularFicha(REGRA, lanc, DOCUMENTAL),
+        declarada,
+      );
+    // Uma falta só: a descrição (não também "escolha a justificativa").
+    expect(faltas()).toEqual([
+      {
+        bloco: "CURSOS",
+        tipo: "justificativa",
+        texto: "Descreva o outro motivo (10 caracteres ou mais).",
+      },
+    ]);
+    lanc.blocos.CURSOS.motivo_livre = "Certificado de 60 h sem assinatura.";
+    expect(faltas()).toEqual([]);
+  });
+
   it("cota de outra modalidade não pede nada", () => {
     const lanc = lancamentoCompleto();
     expect(blocoSeAplica(bloco("COTA_PP"), lanc)).toBe(false);

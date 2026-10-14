@@ -301,6 +301,42 @@ describe("as três escolhas: Confere, Não confere e Editar nota", () => {
     });
   });
 
+  it("o Outro motivo escrito fica no 'não enviou' e sai ao trocar de escolha; a observação fica sempre", () => {
+    const nao = escolher(
+      lancamento({
+        CURSOS: {
+          situacao: "NAO_CONFORME",
+          motivos: ["OUTRO"],
+          motivo_livre: "Só a capa do certificado.",
+          observacao: "Conferido no PDF.",
+        },
+      }),
+      "NAO_CONFERE",
+      { naoEnviou: true },
+    );
+    expect(nao).toMatchObject({
+      situacao: "NAO_ENVIADO",
+      motivos: ["OUTRO"],
+      motivo_livre: "Só a capa do certificado.",
+    });
+    const editar = escolher(lancamento({ CURSOS: nao }), "EDITAR");
+    expect(editar.motivo_livre).toBe("");
+    expect(editar.motivos).toEqual([]);
+    expect(editar.observacao).toBe("Conferido no PDF.");
+    const confere = escolher(
+      lancamento({
+        CURSOS: {
+          situacao: "CONFORME",
+          edita_nota: true,
+          justificativas: ["OUTRO"],
+          motivo_livre: "Sem assinatura.",
+        },
+      }),
+      "CONFERE",
+    );
+    expect(confere).toMatchObject({ justificativas: [], motivo_livre: "" });
+  });
+
   it("Editar nota: a pontuação vem do calculado; o ajuste de quem já editava fica", () => {
     const editar = escolher(
       lancamento({ CURSOS: { situacao: "CONFORME", nota_ajustada: 3 } }),

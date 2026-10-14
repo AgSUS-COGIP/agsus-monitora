@@ -4121,6 +4121,207 @@
         "ajustes": {},
         "parecer": "Edital 28/2026\nCandidato(a) HABILITADO(A) para a próxima etapa com a pontuação total de 2,4 pontos, distribuídos da seguinte forma:\n\n- Critério Étnico: 0,0 pontos.\n- Formação Acadêmica: 0,0 pontos.\n- Cursos de Aperfeiçoamento: 0,0 pontos.\n- Experiência Profissional: 2,4 pontos."
       }
+    },
+    {
+      "nome": "Outro motivo (descrever): Motorista B, requisito Não confere só com o motivo escrito — elimina com o texto e o item do bloco",
+      "regra": "E114-POR-CARGO",
+      "candidato": {
+        "nivel": "medio",
+        "vaga": "182513",
+        "cargo": null,
+        "blocos": {
+          "IDENTIDADE": {
+            "situacao": "CONFORME"
+          },
+          "ESCOLARIDADE": {
+            "situacao": "CONFORME"
+          },
+          "REQUISITO_DO_CARGO": {
+            "situacao": "NAO_CONFORME",
+            "motivos": ["OUTRO"],
+            "motivo_livre": "CNH enviada cortada, sem a data de validade visível."
+          },
+          "CURSOS": {
+            "situacao": "CONFORME"
+          },
+          "EXPERIENCIA": {
+            "situacao": "CONFORME"
+          }
+        },
+        "cursos": [],
+        "vinculos": [
+          {
+            "categoria": "AREA",
+            "inicio": "2022-01-01",
+            "fim": "2024-06-30",
+            "aceito": true
+          }
+        ]
+      },
+      "opcoes": {
+        "notaMinima": 10
+      },
+      "esperado": {
+        "resultado": "INAPTO_REQUISITO",
+        "nota_apurada": 20,
+        "nota_final": 0,
+        "parciais": {
+          "FORMACAO": 0,
+          "CURSOS": 0,
+          "EXPERIENCIA": 20
+        },
+        "eliminatorios": [
+          "Item 2; 3.1 i; 8.2.10.8: CNH enviada cortada, sem a data de validade visível."
+        ],
+        "encaminhamentos": [],
+        "calculados": {
+          "FORMACAO": 0,
+          "CURSOS": 0,
+          "EXPERIENCIA": 20
+        },
+        "ajustes": {},
+        "parecer": "Edital 114/2026\nCandidato(a) INABILITADO(A) na Avaliação Documental e de Títulos, pelo(s) seguinte(s) motivo(s):\n\n- Item 2; 3.1 i; 8.2.10.8: CNH enviada cortada, sem a data de validade visível."
+      }
+    },
+    {
+      "nome": "Outro motivo (descrever) na justificativa da nota: Motorista D, cursos com nota diferente da declarada",
+      "regra": "E114-POR-CARGO",
+      "candidato": {
+        "nivel": "medio",
+        "vaga": "182528",
+        "cargo": null,
+        "blocos": {
+          "IDENTIDADE": {
+            "situacao": "CONFORME"
+          },
+          "ESCOLARIDADE": {
+            "situacao": "CONFORME"
+          },
+          "REQUISITO_DO_CARGO": {
+            "situacao": "CONFORME",
+            "requisitos": {
+              "CNH_D": true,
+              "DIRECAO_DEFENSIVA": true
+            }
+          },
+          "CURSOS": {
+            "situacao": "CONFORME",
+            "edita_nota": true,
+            "justificativas": ["OUTRO"],
+            "motivo_livre": "Certificado de 60 h sem assinatura da instituição; aceito pela declaração anexa.",
+            "justificativa_livre": "Aceito 1 curso: 120 h (faixa ≥120 h, 6 pontos)."
+          },
+          "EXPERIENCIA": {
+            "situacao": "CONFORME"
+          }
+        },
+        "cursos": [
+          {
+            "nome": "Curso de 120h",
+            "horas": 120,
+            "aceito": true
+          }
+        ],
+        "vinculos": [
+          {
+            "categoria": "AREA",
+            "inicio": "2022-01-01",
+            "fim": "2024-06-30",
+            "aceito": true
+          }
+        ]
+      },
+      "opcoes": {
+        "notaMinima": 10
+      },
+      "esperado": {
+        "resultado": "APTO",
+        "nota_apurada": 26,
+        "nota_final": 26,
+        "parciais": {
+          "FORMACAO": 0,
+          "CURSOS": 6,
+          "EXPERIENCIA": 20
+        },
+        "eliminatorios": [],
+        "encaminhamentos": [],
+        "calculados": {
+          "FORMACAO": 0,
+          "CURSOS": 6,
+          "EXPERIENCIA": 20
+        },
+        "ajustes": {},
+        "parecer": "Edital 114/2026\nCandidato(a) HABILITADO(A) na Avaliação Documental e de Títulos com a pontuação total de 26,0 pontos, distribuídos da seguinte forma:\n\n- Formação Acadêmica: 0,0 pontos.\n- Cursos de Aperfeiçoamento: 6,0 pontos.\n- Experiência Profissional: 20,0 pontos.\n\nObservações da análise:\n- Item 8.2.6: Certificado de 60 h sem assinatura da instituição; aceito pela declaração anexa.\n- Item 8.2.6: Aceito 1 curso: 120 h (faixa ≥120 h, 6 pontos)."
+      }
+    },
+    {
+      "nome": "Observação do avaliador em todo item: Não se aplica (titulação no nível médio), Conforme e Não confere, com o item e sem repetir o motivo",
+      "regra": "E114-POR-CARGO",
+      "candidato": {
+        "nivel": "medio",
+        "vaga": "182528",
+        "cargo": null,
+        "blocos": {
+          "IDENTIDADE": {
+            "situacao": "CONFORME",
+            "observacao": "RG com foto antiga, mas legível;\nconferido com a CNH."
+          },
+          "ESCOLARIDADE": {
+            "situacao": "CONFORME"
+          },
+          "REQUISITO_DO_CARGO": {
+            "situacao": "CONFORME",
+            "requisitos": {
+              "CNH_D": true,
+              "DIRECAO_DEFENSIVA": true
+            }
+          },
+          "FORMACAO": {
+            "observacao": "Enviou diploma de graduação; não pontua no nível médio."
+          },
+          "CURSOS": {
+            "situacao": "NAO_ENVIADO",
+            "motivos": ["OUTRO"],
+            "motivo_livre": "Enviou só a capa do certificado.",
+            "observacao": "enviou só a capa do certificado"
+          },
+          "EXPERIENCIA": {
+            "situacao": "CONFORME",
+            "observacao": "Vínculos conferidos na CTPS digital."
+          }
+        },
+        "cursos": [],
+        "vinculos": [
+          {
+            "categoria": "AREA",
+            "inicio": "2022-01-01",
+            "fim": "2024-06-30",
+            "aceito": true
+          }
+        ]
+      },
+      "opcoes": {
+        "notaMinima": 10
+      },
+      "esperado": {
+        "resultado": "APTO",
+        "nota_apurada": 20,
+        "nota_final": 20,
+        "parciais": {
+          "FORMACAO": 0,
+          "CURSOS": 0,
+          "EXPERIENCIA": 20
+        },
+        "eliminatorios": [],
+        "encaminhamentos": [],
+        "calculados": {
+          "FORMACAO": 0,
+          "CURSOS": 0,
+          "EXPERIENCIA": 20
+        },
+        "ajustes": {},
+        "parecer": "Edital 114/2026\nCandidato(a) HABILITADO(A) na Avaliação Documental e de Títulos com a pontuação total de 20,0 pontos, distribuídos da seguinte forma:\n\n- Formação Acadêmica: 0,0 pontos.\n- Cursos de Aperfeiçoamento: 0,0 pontos.\n- Experiência Profissional: 20,0 pontos.\n\nObservações da análise:\n- Item 8.2.6: Enviou só a capa do certificado.\n- Item 6.5; 8.2.10.8 — RG com foto antiga, mas legível; conferido com a CNH.\n- Item 8.2.6 — Enviou diploma de graduação; não pontua no nível médio.\n- Item 8.2.6 — Vínculos conferidos na CTPS digital."
+      }
     }
   ],
   "nota_declarada": [

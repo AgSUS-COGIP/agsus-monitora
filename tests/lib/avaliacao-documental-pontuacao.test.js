@@ -274,13 +274,13 @@ describe("blocos, efeitos e parecer", () => {
     expect(r.parecer).toContain("nota mínima de 10,00 pontos (item 8.5)");
   });
 
-  it("motivo livre e observações entram no parecer", () => {
+  it("outro motivo escrito e observações entram no parecer", () => {
     const r = calcularAvaliacao(regra, {
       ...base,
       blocos: {
         EXPERIENCIA: {
           situacao: "NAO_CONFORME",
-          motivos: ["SEM_DATA_TERMINO"],
+          motivos: ["SEM_DATA_TERMINO", "OUTRO"],
           motivo_livre: "Declaração sem carimbo do órgão.",
         },
       },
@@ -294,6 +294,65 @@ describe("blocos, efeitos e parecer", () => {
       "Conferido na Empregare.",
     ]);
     expect(r.parecer).toContain("Observações da análise:\n- Item 8.14 a");
+  });
+
+  it("o texto que ficou sem o Outro motivo marcado não entra no parecer", () => {
+    const r = calcularAvaliacao(regra, {
+      ...base,
+      blocos: {
+        EXPERIENCIA: {
+          situacao: "NAO_CONFORME",
+          motivos: ["SEM_DATA_TERMINO"],
+          motivo_livre: "Texto de outra escolha.",
+        },
+      },
+    });
+    expect(r.observacoes).toEqual([
+      "Item 8.14 a: Vínculo sem data de término.",
+    ]);
+  });
+
+  it("Outro motivo na justificativa da nota vale com o item do bloco", () => {
+    const r = calcularAvaliacao(regra, {
+      ...base,
+      blocos: {
+        EXPERIENCIA: {
+          situacao: "CONFORME",
+          nota_ajustada: 1,
+          justificativas: ["OUTRO"],
+          motivo_livre: "Vínculo de 2019 sem assinatura do empregador.",
+        },
+      },
+    });
+    expect(r.observacoes).toContain(
+      "Item 8.14: Vínculo de 2019 sem assinatura do empregador.",
+    );
+  });
+
+  it("observação do avaliador de cada item, com o item e sem repetir a justificativa", () => {
+    const r = calcularAvaliacao(regra, {
+      ...base,
+      blocos: {
+        EXPERIENCIA: {
+          situacao: "CONFORME",
+          justificativa_livre: "Aceito 1 vínculo.",
+          observacao: "aceito 1 vínculo",
+        },
+        FORMACAO: {
+          situacao: "CONFORME",
+          observacao: "Diploma\n em  duas linhas.",
+        },
+      },
+    });
+    const formacao = regra.blocos.find((b) => b.codigo === "FORMACAO");
+    // Sem item do edital no bloco, o título do bloco.
+    expect(formacao.item_edital).toBeFalsy();
+    expect(r.observacoes).toContain(
+      `${formacao.titulo} — Diploma em duas linhas.`,
+    );
+    expect(r.observacoes.filter((t) => /aceito 1 vínculo/i.test(t))).toEqual([
+      "Item 8.14: Aceito 1 vínculo.",
+    ]);
   });
 
   it("modelo do parecer: campo desconhecido fica; número com vírgula", () => {

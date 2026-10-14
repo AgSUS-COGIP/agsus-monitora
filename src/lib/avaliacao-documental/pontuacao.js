@@ -13,7 +13,7 @@
     indigena, mora_aldeia, aldeia_na_lista: boolean,
     blocos: { <CODIGO>: { situacao, motivos: [<código>], motivo_livre,
                           nota_ajustada, justificativas: [<código>],
-                          justificativa_livre,
+                          justificativa_livre, observacao,
                           extras: { <código do extra>: true | false },
                           requisitos: { <código do requisito>: true | false } } },
     titulos: [{ titulo: "ESPECIALIZACAO", nome, aceito, motivo }],
@@ -154,6 +154,35 @@ function condicaoVale(condicao, candidato) {
 const comItem = (item, textoDoMotivo) =>
   item ? `Item ${item}: ${textoDoMotivo}` : textoDoMotivo;
 
+/**
+ * O código do "Outro motivo (descrever)": em motivos (Não confere, Não enviou)
+ * ou em justificativas (nota diferente da declarada), com o texto em
+ * motivo_livre, que vale como o motivo do item.
+ */
+export const OUTRO_MOTIVO = "OUTRO";
+
+/*
+  O motivo escrito (motivo_livre) vale no Não confere/Não enviou com o
+  "Outro motivo" marcado ou no bloco sem motivos na regra (o texto é o
+  motivo). Na justificativa da nota, vale pelo OUTRO em justificativas
+  (textosDasJustificativas). Fora disso (texto que ficou de outra escolha),
+  não entra no parecer.
+*/
+function motivoLivreDoNaoConfere(bloco, lancado) {
+  const livre = String(lancado.motivo_livre ?? "").trim();
+  if (!livre) return "";
+  return lista(lancado.motivos).includes(OUTRO_MOTIVO) ||
+    !lista(bloco.motivos).length
+    ? livre
+    : "";
+}
+
+/* Uma linha só: o parecer lista uma observação por linha. */
+const umaLinha = (t) =>
+  String(t ?? "")
+    .replace(/\s+/g, " ")
+    .trim();
+
 /** Situação, efeito e motivos de cada bloco. */
 function avaliarBlocos(regra, candidato, situacaoPadrao) {
   return regra.blocos.map((bloco) => {
@@ -187,7 +216,10 @@ function avaliarBlocos(regra, candidato, situacaoPadrao) {
     const efeito = efeitosDosMotivos.length
       ? maisForte(efeitosDosMotivos)
       : efeitoDaSituacao;
-    const livre = String(lancado.motivo_livre ?? "").trim();
+    const livre =
+      situacao === "NAO_CONFORME" || situacao === "NAO_ENVIADO"
+        ? motivoLivreDoNaoConfere(bloco, lancado)
+        : "";
     const motivos = escolhidos.map((m) => ({
       codigo: m.codigo,
       texto: m.texto,
@@ -201,6 +233,30 @@ function avaliarBlocos(regra, candidato, situacaoPadrao) {
       });
     return { bloco, situacao, efeito, motivos };
   });
+}
+
+/**
+ * A Observação do avaliador de cada item (blocos[codigo].observacao), em
+ * qualquer situação (inclusive Não se aplica), na ordem da regra: "Item 8.2.6
+ * — …" (sem item do edital, o título do bloco). A observação igual à
+ * justificativa do ajuste ou ao motivo escrito não se repete.
+ */
+export function observacoesDosItens(avaliados, candidato) {
+  const textos = [];
+  for (const { bloco } of avaliados) {
+    const lancado = candidato.blocos?.[bloco.codigo] ?? {};
+    const obs = umaLinha(lancado.observacao);
+    if (!obs) continue;
+    const repetida = [lancado.justificativa_livre, lancado.motivo_livre].some(
+      (t) => textoComparavel(t) === textoComparavel(obs),
+    );
+    if (repetida) continue;
+    const item = bloco.item_edital
+      ? `Item ${bloco.item_edital}`
+      : String(bloco.titulo || bloco.codigo);
+    textos.push(`${item} — ${obs}`);
+  }
+  return textos;
 }
 
 function pontosEtnicos(bloco, avaliado, candidato) {
@@ -271,8 +327,10 @@ const textoComparavel = (t) =>
 
 /**
  * Os textos das justificativas escolhidas num bloco: o motivo do bloco (com o
- * item do edital) ou a observação pronta da regra, e o complemento livre. O
- * motivo ou a observação cujo texto já está no complemento sai (sem duplicar).
+ * item do edital), a observação pronta da regra ou o "Outro motivo" escrito
+ * (motivo_livre, com o item do edital), e o texto livre (a justificativa do
+ * ajuste). O motivo ou a observação cujo texto já está no texto livre sai
+ * (sem duplicar).
  */
 export function textosDasJustificativas(regra, bloco, lancado) {
   const textos = [];
@@ -282,6 +340,12 @@ export function textosDasJustificativas(regra, bloco, lancado) {
     Boolean(textoComparavel(texto)) &&
     textoComparavel(livre).includes(textoComparavel(texto));
   for (const codigo of lista(lancado?.justificativas)) {
+    if (codigo === OUTRO_MOTIVO) {
+      const outro = String(lancado?.motivo_livre ?? "").trim();
+      if (outro && !noLivre(outro))
+        textos.push(comItem(bloco.item_edital, outro));
+      continue;
+    }
     const motivo = lista(bloco.motivos).find((m) => m.codigo === codigo);
     if (motivo) {
       if (!noLivre(motivo.texto))
@@ -510,6 +574,9 @@ export function calcularAvaliacao(regraEntrada, candidato = {}, opcoes = {}) {
           if (!observacoes.includes(t)) observacoes.push(t);
     }
   }
+
+  for (const t of observacoesDosItens(avaliados, candidato))
+    if (!observacoes.includes(t)) observacoes.push(t);
 
   for (const codigo of lista(candidato.observacoes_prontas)) {
     const pronta = regra.observacoes_prontas.find((o) => o.codigo === codigo);

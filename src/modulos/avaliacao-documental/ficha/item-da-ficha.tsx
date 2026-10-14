@@ -10,6 +10,7 @@ import {
   ehAnexo,
   ESCOLHAS_DA_FICHA,
   itemCompleto,
+  marcouOutroMotivo,
   mensagemDoBloco,
   PERGUNTA_DA_DECISAO,
   respostasDoBloco,
@@ -77,6 +78,12 @@ import {
 } from "./diferencas-do-cargo.tsx";
 import { AnexoDeclarado, LinkDaEmpregare } from "./empregare.tsx";
 import { ConferenciaDoLido, LidoDoArquivo } from "./leitura-dos-arquivos.tsx";
+import {
+  comOutroMotivo,
+  MotivoEscrito,
+  ObservacaoDoItem,
+  OPCAO_OUTRO_MOTIVO,
+} from "./observacao-do-item.tsx";
 import type {
   Bloco,
   ContextoDaEmpregare,
@@ -590,17 +597,30 @@ function NaoConfere({
 }) {
   const motivos = bloco.motivos || [];
   const naoEnviou = lancado.situacao === "NAO_ENVIADO";
+  const marcados = lancado.motivos || [];
+  const alterar = (campos: Lancado) =>
+    alterarBloco(mudar, bloco.codigo, campos);
   return (
     <div className="avd-ficha-nao-confere" data-tour="avd-ficha-motivos">
       {motivos.length ? (
         <Chips
           rotulo="Por que não confere?"
-          opcoes={motivos}
-          marcados={lancado.motivos || []}
+          opcoes={[...motivos, OPCAO_OUTRO_MOTIVO]}
+          marcados={marcados}
           desabilitado={desabilitado}
           aoMudar={(escolhidos) =>
-            alterarBloco(mudar, bloco.codigo, { motivos: escolhidos })
+            alterar(comOutroMotivo("motivos", escolhidos, lancado))
           }
+        />
+      ) : null}
+      {/* Sem motivos na regra, o texto é o motivo; com motivos, só no "Outro". */}
+      {!motivos.length || marcouOutroMotivo(marcados) ? (
+        <MotivoEscrito
+          codigo={bloco.codigo}
+          rotulo={motivos.length ? "Descreva o motivo" : "Motivo"}
+          lancado={lancado}
+          desabilitado={desabilitado}
+          aoMudar={alterar}
         />
       ) : null}
       <label className="avd-ficha-opcao avd-ficha-nao-enviou">
@@ -626,23 +646,6 @@ function NaoConfere({
           }}
         />{" "}
         O candidato não enviou o documento
-      </label>
-      <label className="avd-ficha-campo">
-        <span className="avd-ficha-rotulo">
-          {motivos.length
-            ? "Observação (opcional)"
-            : "Motivo (10 caracteres ou mais)"}
-        </span>
-        <input
-          value={lancado.motivo_livre || ""}
-          maxLength={2000}
-          disabled={desabilitado}
-          onChange={(ev) =>
-            alterarBloco(mudar, bloco.codigo, {
-              motivo_livre: ev.target.value,
-            })
-          }
-        />
       </label>
     </div>
   );
@@ -1127,19 +1130,31 @@ function Justificativa({
       ? "Por que a pontuação é menor que a declarada?"
       : "Justificativa da pontuação";
   const mudarJustificativas = (justificativas: string[]) =>
-    alterarBloco(mudar, bloco.codigo, { justificativas });
+    alterarBloco(
+      mudar,
+      bloco.codigo,
+      comOutroMotivo("justificativas", justificativas, lancado),
+    );
   return (
     <div
       className="avd-ficha-justificativa"
       data-tour="avd-ficha-justificativa"
     >
-      {doBloco.length ? (
+      {opcoes.length ? (
         <Chips
           rotulo={rotulo}
-          opcoes={doBloco}
+          opcoes={[...doBloco, OPCAO_OUTRO_MOTIVO]}
           marcados={marcadas}
           desabilitado={desabilitado}
           aoMudar={mudarJustificativas}
+        />
+      ) : null}
+      {marcouOutroMotivo(marcadas) ? (
+        <MotivoEscrito
+          codigo={bloco.codigo}
+          lancado={lancado}
+          desabilitado={desabilitado}
+          aoMudar={(campos) => alterarBloco(mudar, bloco.codigo, campos)}
         />
       ) : null}
       {outras.length ? (
@@ -1173,12 +1188,12 @@ function Justificativa({
             }
           />
         )
-      ) : (
+      ) : opcoes.length ? null : (
+        // Sem justificativas na regra, o texto é a justificativa (o comentário
+        // à parte vai na Observação do avaliador, no fim do card).
         <label className="avd-ficha-campo">
           <span className="avd-ficha-rotulo">
-            {opcoes.length
-              ? "Complemento (opcional)"
-              : `${rotulo} (10 caracteres ou mais)`}
+            {rotulo} (10 caracteres ou mais)
           </span>
           <input
             value={lancado.justificativa_livre || ""}
@@ -1758,6 +1773,13 @@ export function ItemDaFicha({
           ) : null}
         </div>
       ) : null}
+      {/* O mesmo campo em todo item, cargo e situação, sempre no fim do card. */}
+      <ObservacaoDoItem
+        codigo={bloco.codigo}
+        lancado={lancado}
+        desabilitado={desabilitado}
+        mudar={mudar}
+      />
       {children}
     </section>
   );
