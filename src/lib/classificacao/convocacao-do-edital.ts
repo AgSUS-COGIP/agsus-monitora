@@ -15,7 +15,7 @@ import type {
   modalidade uma vaga tem. A convocação já calcula isso a partir do modelo do
   edital (percentual, arredondamento "0,5 sobe" ou "sempre para cima", teto,
   mínimo de vagas por reserva), em `derivarQuadro`
-  (src/lib/lista-convocacao-rules.js). A Classificação passa a usar a MESMA
+  (src/lib/lista-convocacao-rules.ts). A Classificação passa a usar a MESMA
   função — nunca uma segunda conta parecida:
 
     1. quadro de vagas do edital com as vagas por modalidade explícitas
@@ -39,7 +39,7 @@ import {
   lerConfiguracoesDoBanco,
   lerModelosDoBanco,
 } from "../configuracao-de-convocacao.ts";
-import { derivarQuadro } from "../lista-convocacao-rules.js";
+import { derivarQuadro } from "../lista-convocacao-rules.ts";
 import { normalizarModelo } from "../modelo-de-convocacao.ts";
 import { codigosDaModalidade } from "./catalogo.ts";
 import { normalizarRegra } from "./regra.ts";

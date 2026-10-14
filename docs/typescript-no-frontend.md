@@ -260,3 +260,11 @@ contratos com a Classificação. Coleções malformadas, identidades ausentes e 
 duplicadas impedem atualizar a configuração; os mapas anteriores são preservados.
 Contratos em `tests/tipos/configuracao-da-convocacao.tsx` e testes de recuperação em
 `tests/lib/configuracao-da-convocacao-dados.test.js`.
+
+O cálculo e a aba de Convocação em Aprovados estão em TypeScript/TSX: cotas,
+cascatas, ordenação, agrupamento, indicadores, filtros, paginação, seleção para
+cartas e CSV. Os contratos preservam os campos adicionais dos candidatos durante
+a ordenação e o cálculo. A associação do sub judice ao cargo fica restrita ao
+próprio edital; múltiplas vagas no mesmo edital continuam sem escolha automática.
+Contratos em `tests/tipos/lista-de-convocacao.tsx` e regressão em
+`tests/lib/convocacao-sub-judice-por-edital.test.js`.

@@ -7,7 +7,7 @@ import {
   derivarQuadro,
   montarConvocacaoDaVaga,
   sequenciaDeConvocacao,
-} from "../src/lib/lista-convocacao-rules.js";
+} from "../src/lib/lista-convocacao-rules.ts";
 import {
   comDistribuicao,
   previaDaConvocacao,

@@ -9,7 +9,7 @@ import {
 } from "../../src/lib/classificacao/convocacao-do-edital.ts";
 import { classificar } from "../../src/lib/classificacao/motor.ts";
 import { vagasPelosPercentuais } from "../../src/lib/classificacao/vagas.ts";
-import { derivarQuadro } from "../../src/lib/lista-convocacao-rules.js";
+import { derivarQuadro } from "../../src/lib/lista-convocacao-rules.ts";
 import { modeloDeReferencia } from "../../src/lib/modelo-de-convocacao.ts";
 
 /*

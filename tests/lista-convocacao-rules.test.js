@@ -14,7 +14,7 @@ import {
   resumirConvocacao,
   sequenciaDeConvocacao,
   situacaoNaChamada,
-} from "../src/lib/lista-convocacao-rules.js";
+} from "../src/lib/lista-convocacao-rules.ts";
 import { LEI_15142_ESPALHADA } from "./modelos-de-convocacao-antigos.js";
 
 /*

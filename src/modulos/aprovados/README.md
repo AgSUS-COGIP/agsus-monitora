@@ -16,7 +16,7 @@ estado.js                  store sem React: candidatos (pacote compacto por áre
                            da carta (`estado.carta`)
 aba-aprovados.jsx          visão Aprovados: KPIs (Convocados no lugar do antigo Fim de fila), filtros,
                            tabela, ações por linha (anexos, status, carta, decisão judicial, sub judice)
-aba-convocacao.jsx         visão Convocação: KPIs (A convocar, Convocados…), filtros, escolha dos
+aba-convocacao.tsx         visão Convocação: KPIs (A convocar, Convocados…), filtros, escolha dos
                            candidatos para a carta, "Escolher os a convocar", Exportar CSV, uma tabela
                            por vaga
 partes.jsx                 peças das duas abas: selo de status (com a data do Convocado), nome que abre
@@ -43,7 +43,7 @@ Convocado (com a data da convocação), Contratado, Desistente, Migração e Doc
 "Fim de Fila" saiu (migration `20261005180000`). Status já definido só o admin de Aprovados muda,
 exceto do Convocado para o status seguinte (quem edita faz); deixar sem status é sempre do admin.
 Contratados (Seleção e KPIs) são só Contratado e Migração. Regras: `src/lib/lista-aprovados-rules.js`
-(status, trava, resumo) e `src/lib/lista-convocacao-rules.js` (ordem, "a convocar", CSV).
+(status, trava, resumo) e `src/lib/lista-convocacao-rules.ts` (ordem, "a convocar", CSV).
 
 ## Carta de convocação
 
@@ -72,6 +72,12 @@ Os tipos compartilhados ficam em `src/lib/tipos-da-configuracao-de-convocacao.ts
 reutilizados pela Classificação. A leitura confere coleções, identidades e chaves duplicadas;
 uma resposta malformada exibe aviso e preserva os mapas anteriores. A precedência permanece
 quadro manual da vaga, total da vaga e padrão do edital.
+
+O cálculo e a aba de Convocação também estão em TypeScript/TSX. Os contratos de
+candidatos, linhas, grupos e CSV ficam em `src/lib/tipos-da-lista-de-convocacao.ts`;
+a tela usa `tipos-da-aba-de-convocacao.ts`. Candidatos sub judice sem código são
+associados ao cargo somente quando existe uma única vaga desse cargo no próprio
+edital. Vagas de outros editais não participam dessa escolha.
 
 ## Banco
 

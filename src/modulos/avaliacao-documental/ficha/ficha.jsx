@@ -50,6 +50,7 @@ import { CabecalhoDaFicha } from "./cabecalho-da-ficha.tsx";
 import { cpfDaFicha } from "../../../lib/avaliacao-documental/cpf-da-ficha.ts";
 import { ConclusaoDaFicha } from "./conclusao-da-ficha.tsx";
 import { copiar, EnviosAnteriores } from "./empregare.tsx";
+import { abrirEspelhoDeNota } from "./espelho-de-nota.ts";
 import {
   blocoEditaNota,
   escolhaDoBloco,
@@ -607,6 +608,11 @@ export function ConteudoDaFicha({
             ? "Parecer copiado"
             : "Não foi possível copiar",
         )
+      }
+      aoAbrirEspelho={
+        gravada && ficha.tp_resultado
+          ? () => abrirEspelhoDeNota(st, ficha)
+          : null
       }
       historico={st.dados.historico || []}
       registros={

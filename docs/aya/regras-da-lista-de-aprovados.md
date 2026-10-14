@@ -2,7 +2,7 @@
 
 A tela Lista de aprovados (view `approved`): status dos candidatos, importação, convocação, sub
 judice e anexos. Fontes: `src/modulos/aprovados/`, `src/lib/lista-aprovados-rules.js`,
-`src/lib/aprovados-import.js`, `src/lib/lista-convocacao-rules.js`,
+`src/lib/aprovados-import.js`, `src/lib/lista-convocacao-rules.ts`,
 `src/lib/modelo-de-convocacao.ts`, `src/lib/anexos-do-candidato.js`, `src/lib/carta-de-convocacao.ts`, `src/lib/access-roles.js` e as
 migrations `20260928235000_anexos_so_admin.sql`, `20260930200000_aprovados_por_grupo_edital_gestor_edita.sql`,
 `20261001150000_sub_judice_alteracao.sql`, `20261005160000_lista_de_aprovados_da_classificacao.sql` (lista
@@ -32,12 +32,12 @@ publicada do resultado final da Classificação; `src/lib/publicacao-de-aprovado
 
 **perguntas:** como funciona o modelo de convocacao | modelo de convocacao | cotas intercaladas | ordem da convocacao | sem modelo de convocacao
 **resposta:** O modelo de convocação são as regras de reserva do edital: categorias, percentuais, arredondamento e cascata. As vagas de cota entram intercaladas às de ampla (proporcional, como AC, PP, AC, AC, PP, AC, ou nas posições fixas que o edital publica) e a convocação segue a classificação. Quem concorre a cota concorre também à ampla, e ser chamado pela ampla não gasta a vaga da cota; cota sem candidato desce a cascata e, no fim, volta para a ampla. Desistente e Documentação Rejeitada não ocupam vaga; Convocado, Contratado e Migração continuam na posição e não são chamados de novo. As vagas imediatas são informadas por vaga (zero vira cadastro reserva). Sem modelo, tudo sai como ampla concorrência. O modelo é compartilhado entre editais: a tela avisa quantos serão afetados e oferece "Duplicar". Modelo e vagas valem para o edital e sobrevivem à troca do XLSX.
-**fonte:** src/lib/lista-convocacao-rules.js; src/lib/modelo-de-convocacao.ts; src/lib/configuracao-de-convocacao.ts
+**fonte:** src/lib/lista-convocacao-rules.ts; src/lib/modelo-de-convocacao.ts; src/lib/configuracao-de-convocacao.ts
 
 ## Candidato sub judice
 
 **perguntas:** como funciona o candidato sub judice | sub judice | decisao judicial | incluir sub judice
-**resposta:** Quem tem Editor em Aprovados inclui um candidato sub judice, que fica vinculado à lista vigente do edital; remover vale só para quem foi incluído assim. Alterar nota ou modalidade por decisão judicial, e desfazer, é só do Administrador em Aprovados: a classificação é refeita e o número do processo judicial é opcional.
+**resposta:** Quem tem Editor em Aprovados inclui um candidato sub judice, que fica vinculado à lista vigente do edital; remover vale só para quem foi incluído assim. Alterar nota ou modalidade por decisão judicial, e desfazer, é só do Administrador em Aprovados: a classificação é refeita e o número do processo judicial é opcional. Na Convocação, quem está sem código de vaga entra na vaga do mesmo cargo quando há uma única no próprio edital; se houver várias, o sistema não escolhe automaticamente. Vagas de outros editais não participam dessa escolha.
 **fonte:** src/lib/access-roles.js; src/lib/lista-aprovados-rules.js; supabase/migrations/20261001150000_sub_judice_alteracao.sql
 
 ## Anexos do candidato
@@ -93,7 +93,7 @@ publicada do resultado final da Classificação; `src/lib/publicacao-de-aprovado
 
 **perguntas:** a convocar | quem chamar agora | proximos a convocar | quem ainda nao foi chamado | ordem de chamada convocado
 **resposta:** Na aba Convocação, "A convocar" são as vagas imediatas cujo candidato ainda não foi chamado (sem status). Convocado, Contratado e Migração continuam na posição que a ordem lhes deu e não são chamados de novo; Desistente e Documentação Rejeitada saem da fila e o próximo toma a vaga. "Escolher os a convocar" marca de uma vez esses candidatos para a carta. "Exportar CSV" baixa a ordem com a situação na chamada, o status e a data da convocação.
-**fonte:** src/lib/lista-convocacao-rules.js; src/modulos/aprovados/aba-convocacao.jsx
+**fonte:** src/lib/lista-convocacao-rules.ts; src/modulos/aprovados/aba-convocacao.tsx
 **abrir:** approved
 
 ## Carta de convocação
@@ -141,7 +141,7 @@ publicada do resultado final da Classificação; `src/lib/publicacao-de-aprovado
 
 **perguntas:** carta de convocacao nao aparece | sumiu o botao da carta | nao consigo emitir a carta | envelope da carta nao aparece
 **resposta:** O botão "Carta de convocação", na aba Convocação, e o envelope na linha e na gaveta do candidato só aparecem para quem tem Editor em Aprovados, e só para candidatos de lista ativa. Com Leitor, ou numa lista inativa, eles não aparecem. Criar e alterar os modelos da carta também é de quem tem Editor em Aprovados.
-**fonte:** src/modulos/aprovados/partes.jsx (AcaoDeCarta); src/modulos/aprovados/aba-convocacao.jsx
+**fonte:** src/modulos/aprovados/partes.jsx (AcaoDeCarta); src/modulos/aprovados/aba-convocacao.tsx
 **abrir:** approved
 
 ## Edital sem lista de aprovados

@@ -9,7 +9,7 @@ import {
   montarConvocacaoDaVaga,
   reservasEfetivas,
   sequenciaDeConvocacao,
-} from "../src/lib/lista-convocacao-rules.js";
+} from "../src/lib/lista-convocacao-rules.ts";
 import {
   FGV_MINIMOS_POR_CARGO,
   LEI_15142_ESPALHADA,

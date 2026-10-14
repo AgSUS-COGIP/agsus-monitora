@@ -35,7 +35,7 @@ import type {
 
   Aqui mora a forma do modelo: normalizar o que vem do banco, dar os padrões, e
   responder "que categorias esta célula de modalidade declara?". A ordem de
-  convocação em si está em `lista-convocacao-rules.js`, que consome um modelo já
+  convocação em si está em `lista-convocacao-rules.ts`, que consome um modelo já
   normalizado.
 */
 

@@ -1,3 +1,16 @@
+import type { ModeloDaConvocacao } from "../../lib/tipos-da-configuracao-de-convocacao.ts";
+import type {
+  PropsDaAbaDaConvocacao,
+  CandidatoDaTabelaDaConvocacao,
+  GrupoDaTabelaDaConvocacao,
+  LinhaDaTabelaDaConvocacao,
+  LinhaPlanaDaConvocacao,
+  BlocoDaTabelaDaConvocacao,
+  FiltrosDaConvocacao,
+  SelecaoDaConvocacao,
+  EstadoDaAbaDaConvocacao,
+  ConvocacoesDaTabela,
+} from "./tipos-da-aba-de-convocacao.ts";
 import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import {
   OPCOES_DO_FILTRO_DE_STATUS,
@@ -12,7 +25,7 @@ import {
   estaAConvocar,
   montarListaDeConvocacao,
   resumirConvocacao,
-} from "../../lib/lista-convocacao-rules.js";
+} from "../../lib/lista-convocacao-rules.ts";
 import { canChangeCandidateStatus } from "../../lib/access-roles.js";
 import {
   lerModalidade,
@@ -46,7 +59,7 @@ import {
 /*
   A aba "Lista de convocação" da página: a ordem de chamada que sai do modelo
   de regras e das vagas imediatas de cada edital. O cálculo está em
-  `lib/lista-convocacao-rules.js`; aqui fica o desenho.
+  `lib/lista-convocacao-rules.ts`; aqui fica o desenho.
 
   Ordem e Classificação geral são coisas diferentes, e mostrar as duas lado a
   lado é o ponto: Ordem é a posição que o cálculo de convocação deu;
@@ -55,16 +68,20 @@ import {
   porque foi chamada mais cedo por conta de uma reserva.
 */
 
-const text = (value) => String(value ?? "").trim();
-const FILTROS_INICIAIS = Object.freeze({ editalId: [], cargo: [], status: [] });
+const text = (value: unknown) => String(value ?? "").trim();
+const FILTROS_INICIAIS: FiltrosDaConvocacao = Object.freeze({
+  editalId: [],
+  cargo: [],
+  status: [],
+});
 
 /*
   Devolve um teste de status já resolvido: a lista de escolhas é lida uma vez
   por desenho, e não por linha.
 */
-function filtroDeStatus(escolhidos) {
+function filtroDeStatus(escolhidos: readonly string[]) {
   if (!escolhidos.length) return () => true;
-  return (candidato) => {
+  return (candidato: CandidatoDaTabelaDaConvocacao) => {
     const status = text(candidato?.status);
     return escolhidos.some((escolha) =>
       escolha === SEM_STATUS ? !status : escolha === status,
@@ -81,8 +98,11 @@ function filtroDeStatus(escolhidos) {
   por ele antes tiraria da fila o desistente que o cálculo precisa de ver para
   saltar.
 */
-function linhasPlanas(grupos, passaNoStatus) {
-  const linhas = [];
+function linhasPlanas(
+  grupos: readonly GrupoDaTabelaDaConvocacao[],
+  passaNoStatus: (candidato: CandidatoDaTabelaDaConvocacao) => boolean,
+) {
+  const linhas: LinhaPlanaDaConvocacao[] = [];
   grupos.forEach((grupo) => {
     [...grupo.linhas, ...grupo.foraDaFila].forEach((linha) => {
       if (passaNoStatus(linha.candidato)) linhas.push({ grupo, linha });
@@ -96,8 +116,8 @@ function linhasPlanas(grupos, passaNoStatus) {
   grupo de cada vez —, então basta juntar as consecutivas do mesmo grupo. Cada
   bloco vira um <table> com o seu próprio cabeçalho.
 */
-function emBlocos(linhas) {
-  const blocos = [];
+function emBlocos(linhas: readonly LinhaPlanaDaConvocacao[]) {
+  const blocos: BlocoDaTabelaDaConvocacao[] = [];
   linhas.forEach(({ grupo, linha }) => {
     const ultimo = blocos.at(-1);
     if (ultimo && ultimo.grupo === grupo) ultimo.linhas.push(linha);
@@ -106,7 +126,13 @@ function emBlocos(linhas) {
   return blocos;
 }
 
-function VagaDaConvocacao({ grupo, linha }) {
+function VagaDaConvocacao({
+  grupo,
+  linha,
+}: {
+  grupo: GrupoDaTabelaDaConvocacao;
+  linha: LinhaDaTabelaDaConvocacao;
+}) {
   if (!linha.posicao)
     return <span className="convocacao-vaga fora">Fora da fila</span>;
   if (!grupo.proporcionalidade)
@@ -117,7 +143,7 @@ function VagaDaConvocacao({ grupo, linha }) {
     ) : (
       <span className="convocacao-vaga reserva">Cadastro de reserva</span>
     );
-  const categoria = rotuloDaCategoria(grupo.modelo, linha.categoria);
+  const categoria = rotuloDaCategoria(grupo.modelo, linha.categoria ?? "");
   return (
     <>
       {linha.imediata ? (
@@ -143,7 +169,15 @@ function VagaDaConvocacao({ grupo, linha }) {
   no cálculo. Quem declarou duas vê as duas siglas, com a que vale em
   destaque — sem isso, a lista pareceria ter perdido uma das cotas da pessoa.
 */
-function ModalidadeDeclarada({ candidato, linha, modelo }) {
+function ModalidadeDeclarada({
+  candidato,
+  linha,
+  modelo,
+}: {
+  candidato: CandidatoDaTabelaDaConvocacao;
+  linha: LinhaDaTabelaDaConvocacao;
+  modelo: ModeloDaConvocacao;
+}) {
   const declarada = text(candidato.modalidade);
   if (!declarada)
     return <span className="convocacao-modalidade vazia">Não declarada</span>;
@@ -191,7 +225,7 @@ function ModalidadeDeclarada({ candidato, linha, modelo }) {
   e não misturado como uma linha entre candidatos. Cada vaga tem o seu próprio
   <table>, com o seu próprio <thead>.
 */
-function CabecalhoDoGrupo({ grupo }) {
+function CabecalhoDoGrupo({ grupo }: { grupo: GrupoDaTabelaDaConvocacao }) {
   const quadro = grupo.proporcionalidade
     ? resumirQuadro(grupo.quadro, grupo.modelo)
     : "";
@@ -224,6 +258,13 @@ function TabelaDoGrupo({
   estado,
   convocacoes,
   selecao,
+}: {
+  grupo: GrupoDaTabelaDaConvocacao;
+  linhas: readonly LinhaDaTabelaDaConvocacao[];
+  perfil: unknown;
+  estado: EstadoDaAbaDaConvocacao;
+  convocacoes: ConvocacoesDaTabela;
+  selecao: SelecaoDaConvocacao | null;
 }) {
   const podeEscolher = Boolean(selecao);
   return (
@@ -261,7 +302,7 @@ function TabelaDoGrupo({
               >
                 {podeEscolher ? (
                   <td className="convocacao-escolha">
-                    {candidato.lista_ativa ? (
+                    {selecao && candidato.lista_ativa ? (
                       <input
                         type="checkbox"
                         data-convocacao-action="escolher"
@@ -340,26 +381,29 @@ export function AbaConvocacao({
   convocacoes = new Map(),
   carregado,
   erroAoCarregar,
-}) {
+}: PropsDaAbaDaConvocacao) {
   const [filtros, setFiltros] = useState(FILTROS_INICIAIS);
   /*
     Os escolhidos para a carta: sobrevivem a trocar de página e de filtro (a
     barra diz quantos são); quem saiu da lista carregada deixa de contar.
   */
-  const [escolhidos, setEscolhidos] = useState(() => new Set());
+  const [escolhidos, setEscolhidos] = useState(() => new Set<string>());
   const podeEmitir = canChangeCandidateStatus(perfil);
   const [pagina, setPagina] = useState(1);
   const [tamanho, setTamanho] = useState(50);
-  const tabela = useRef(null);
+  const tabela = useRef<HTMLDivElement>(null);
 
-  const opcoesEditais = useMemo(() => opcoesDeEdital(listas), [listas]);
-  const editais = manterSoAsOpcoes(filtros.editalId, opcoesEditais);
-  const opcoesCargos = useMemo(
+  const opcoesEditais: { value: string; label: string }[] = useMemo(
+    () => opcoesDeEdital(listas),
+    [listas],
+  );
+  const editais: string[] = manterSoAsOpcoes(filtros.editalId, opcoesEditais);
+  const opcoesCargos: string[] = useMemo(
     () => candidateCargosForEdital(candidatos, editais),
     // `editais` é recalculado a cada desenho; a chave é o conteúdo.
     [candidatos, editais.join("\u0000")],
   );
-  const cargos = manterSoAsOpcoes(filtros.cargo, opcoesCargos);
+  const cargos: string[] = manterSoAsOpcoes(filtros.cargo, opcoesCargos);
 
   /*
     Edital e cargo recortam ANTES do cálculo: cada vaga é uma convocação
@@ -394,7 +438,7 @@ export function AbaConvocacao({
     [candidatos],
   );
   const escolhidosValidos = [...escolhidos].filter((id) => ativos.has(id));
-  const selecao = podeEmitir
+  const selecao: SelecaoDaConvocacao | null = podeEmitir
     ? {
         tem: (id) => escolhidos.has(String(id)),
         alternar: (id) =>
@@ -441,7 +485,7 @@ export function AbaConvocacao({
     document.dispatchEvent(new CustomEvent("agsus:content-updated"));
   }, [paginaAtual.rows]);
 
-  function mudarFiltro(campo, valores) {
+  function mudarFiltro(campo: keyof FiltrosDaConvocacao, valores: string[]) {
     setFiltros((atuais) => {
       const proximos = { ...atuais, [campo]: valores };
       // Trocar de edital muda quais cargos existem.
@@ -460,7 +504,7 @@ export function AbaConvocacao({
     setPagina(1);
   }
 
-  function irPara(destino) {
+  function irPara(destino: number) {
     const alvo = paginateApprovedCandidates(todas, destino, tamanho).page;
     if (alvo === paginaAtual.page) return;
     setPagina(alvo);
@@ -471,7 +515,14 @@ export function AbaConvocacao({
   const quantos = [editais, cargos, filtros.status].filter(
     (lista) => lista.length,
   ).length;
-  const kpi = (idDoValor, chave, tom, icone, rotulo, valor) => (
+  const kpi = (
+    idDoValor: string,
+    chave: string,
+    tom: string,
+    icone: string,
+    rotulo: string,
+    valor: number,
+  ) => (
     <Kpi
       idDoValor={idDoValor}
       chave={chave}
@@ -699,7 +750,7 @@ export function AbaConvocacao({
           tamanho={tamanho}
           unidade="linhas"
           aoIrPara={irPara}
-          aoMudarTamanho={(valor) => {
+          aoMudarTamanho={(valor: number) => {
             setTamanho(valor);
             setPagina(1);
           }}
