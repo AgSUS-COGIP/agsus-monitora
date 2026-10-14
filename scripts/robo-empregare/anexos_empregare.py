@@ -1372,8 +1372,15 @@ LINK_DA_IMPRESSAO = re.compile(
     r"^https://corporate\.empregare\.com/Company/VacancyTests/PrintResult\?[A-Za-z0-9_.~=&%|+/:-]+$"
 )
 TAMANHO_DO_LINK = 1500
-ORCAMENTO_DOS_ANEXOS = 30 * 60  # segundos na execução inteira (o workflow tem 120 min)
+# Segundos na execução inteira (o workflow tem 120 min; a carga sem anexos leva ~30–40). O robô
+# ainda para os anexos antes de PRAZO_DOS_ANEXOS (robo_empregare.py), com folga para a carga.
+ORCAMENTO_DOS_ANEXOS = 70 * 60
 TEMPO_LIMITE_DOS_ANEXOS = 10 * 60  # segundos por vaga
+# Prioridade de leitura (listar_prioridade_anexos_empregare, migration 20261014200000):
+# 1 no lote ou com ficha aberta, 2 ranqueado, 3 os demais, 0 pular (não finalizou o
+# questionário ou cancelou). Candidato que o banco ainda não conhece vem depois de todos.
+PULAR = 0
+PRIORIDADE_DESCONHECIDO = 4
 PEDIDOS_POR_VEZ = 6  # GETs em paralelo na página
 TAMANHO_DO_HTML = 3_000_000  # caracteres por resposta
 
@@ -1606,11 +1613,72 @@ def buscar_detalhes(driver, pedidos):
     return driver.execute_async_script(JS_BUSCAR_DETALHES, caminhos) or []
 
 
-def capturar_anexos(portal, codigo, respostas, registrar, prazo, agora=time.monotonic):
+def prioridades_da_vaga(config, codigo, chamar, registrar):
+    """
+    {código do candidato: {"prioridade": 0–3, "lidas": {respostas já lidas}}} da vaga
+    (listar_prioridade_anexos_empregare). None se o banco não tem a migration
+    20261014200000 ou a chamada falhou: aí a captura lê todos, na ordem da lista.
+    """
+    from monitora import supabase_rpc
+
+    try:
+        r = chamar(config, "listar_prioridade_anexos_empregare", {"p_vaga": codigo}) or {}
+    except supabase_rpc.ErroDoSupabase as erro:
+        if getattr(erro, "status", None) == 404:
+            registrar("O banco ainda não prioriza os anexos (falta a migration 20261014200000); lendo todos.")
+        else:
+            registrar(f"Vaga {codigo}: sem a prioridade dos anexos ({erro}); lendo todos.")
+        return None
+    except Exception as erro:
+        registrar(f"Vaga {codigo}: sem a prioridade dos anexos ({resumo_do_erro(erro)}); lendo todos.")
+        return None
+    prioridades = {}
+    for c in r.get("candidatos") or []:
+        cod = str(c.get("codigo") or "").strip()
+        if not cod:
+            continue
+        try:
+            prioridade = int(c.get("prioridade"))
+        except (TypeError, ValueError):
+            prioridade = PRIORIDADE_DESCONHECIDO
+        prioridades[cod] = {"prioridade": prioridade, "lidas": {str(x) for x in c.get("lidas") or []}}
+    return prioridades
+
+
+def ordenar_pedidos(pedidos, prioridades):
+    """
+    Ordem e filtro da leitura. Sem `prioridades` (None), todos na ordem da lista.
+    Com elas: pula quem tem prioridade 0 (não finalizou o questionário ou cancelou)
+    e a resposta já lida (mesmo número: economia; resposta nova é lida), e lê
+    primeiro o lote/ficha aberta (1), depois ranqueados (2), os demais (3) e os
+    que o banco ainda não conhece. Devolve (pedidos, contagem para o log ou None).
+    """
+    if prioridades is None:
+        return list(pedidos), None
+    contagem = {"pulados": 0, "ja_lidas": 0, 1: 0, 2: 0, 3: 0, PRIORIDADE_DESCONHECIDO: 0}
+    fila = []
+    for i, (cod, r, pessoa) in enumerate(pedidos):
+        info = prioridades.get(cod)
+        prioridade = PRIORIDADE_DESCONHECIDO if info is None else info["prioridade"]
+        if prioridade == PULAR:
+            contagem["pulados"] += 1
+            continue
+        if info is not None and str(r.get("id")) in info["lidas"]:
+            contagem["ja_lidas"] += 1
+            continue
+        prioridade = prioridade if prioridade in (1, 2, 3) else PRIORIDADE_DESCONHECIDO
+        contagem[prioridade] += 1
+        fila.append((prioridade, i, (cod, r, pessoa)))
+    fila.sort(key=lambda x: (x[0], x[1]))
+    return [p for _, _, p in fila], contagem
+
+
+def capturar_anexos(portal, codigo, respostas, registrar, prazo, agora=time.monotonic, prioridades=None):
     """
     Para cada candidato ({código: {"pessoa", "respostas": [{"id", "token", "vaga"}]}}) e resposta, o GET de
     GetRespostaDetails com a sessão; devolve {código: [{"resposta", "impressao",
-    "perguntas", "anexos"}]}. No log, só contagens. Nunca levanta.
+    "perguntas", "anexos"}]}. `prioridades` (prioridades_da_vaga): ordem e filtro
+    (ordenar_pedidos). No log, só contagens. Nunca levanta.
     """
     pedidos = [
         (cod, r, dados.get("pessoa") or "")
@@ -1618,6 +1686,13 @@ def capturar_anexos(portal, codigo, respostas, registrar, prazo, agora=time.mono
         for r in dados.get("respostas") or []
         if RESPOSTA.match(str(r.get("id"))) and TOKEN.match(str(r.get("token") or ""))
     ]
+    pedidos, contagem = ordenar_pedidos(pedidos, prioridades)
+    if contagem is not None:
+        registrar(
+            f"Vaga {codigo}: anexos a ler {len(pedidos)} (lote/ficha {contagem[1]} · ranqueados {contagem[2]} · "
+            f"outros {contagem[3] + contagem[PRIORIDADE_DESCONHECIDO]}) · já lidas {contagem['ja_lidas']} · "
+            f"puladas {contagem['pulados']} (questionário não finalizado ou cancelado)."
+        )
     capturados = {}
     lidas = falhas = anexos = sem_impressao = fora = 0
     esgotou = False
