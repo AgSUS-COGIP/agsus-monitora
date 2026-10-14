@@ -6,6 +6,7 @@ import {
   redefinirDadosDoMonitoramento,
 } from "../../src/componentes/dados-do-monitoramento.ts";
 import { montarAvaliacaoDocumental } from "../../src/modulos/avaliacao-documental/avaliacao-documental.jsx";
+import { criarEstadoDaPreClassificacao } from "../../src/modulos/avaliacao-documental/estado-da-pre-classificacao.js";
 import {
   clicar,
   digitar,
@@ -739,5 +740,33 @@ describe("inclusão no lote por decisão da coordenação", () => {
     expect(
       vaga.querySelector("[data-acao='abrir-revogar-decisao']"),
     ).toBeNull();
+  });
+});
+
+describe("estado da pré-classificação: voltar à aba não relê", () => {
+  it("relê só com outro edital, outra versão da regra ou depois de 5 minutos", async () => {
+    let agora = new Date("2026-10-15T12:00:00Z");
+    const rpc = vi.fn(async (nome) => ({
+      data: nome === "obter_pre_classificacao" ? { vagas: [] } : null,
+      error: null,
+    }));
+    const pre = criarEstadoDaPreClassificacao({
+      supabase: { rpc },
+      agora: () => agora,
+    });
+    const leituras = () =>
+      rpc.mock.calls.filter(([n]) => n === "obter_pre_classificacao").length;
+    await pre.garantirCarregado("e1", "2");
+    await pre.garantirCarregado("e1", "2");
+    expect(leituras()).toBe(1);
+    await pre.garantirCarregado("e1", "3");
+    expect(leituras()).toBe(2);
+    await pre.garantirCarregado("e2", "3");
+    expect(leituras()).toBe(3);
+    agora = new Date(agora.getTime() + 5 * 60 * 1000);
+    await pre.garantirCarregado("e2", "3");
+    expect(leituras()).toBe(4);
+    await pre.carregar();
+    expect(leituras()).toBe(5);
   });
 });

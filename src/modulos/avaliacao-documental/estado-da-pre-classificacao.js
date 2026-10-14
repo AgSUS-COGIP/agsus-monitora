@@ -69,6 +69,8 @@ const ESPERA_DA_RESPOSTA_MS = 3000;
 /* O job leva de segundos a poucos minutos: a aba relê neste intervalo até
    a execução terminar, no máximo pelo tempo limite do workflow. */
 const INTERVALO_DO_ACOMPANHAMENTO_MS = 15000;
+/* Voltar à aba não relê (4,3 MB no 114/2026) se a leitura é recente e nada mudou. */
+const VALIDADE_DA_LEITURA_MS = 5 * 60 * 1000;
 const LIMITE_DO_ACOMPANHAMENTO_MS =
   (roboDeCarga("pre_classificacao")?.limiteMin ?? 20) * 60000;
 
@@ -105,6 +107,8 @@ export function criarEstadoDaPreClassificacao({
 } = {}) {
   let estado = INICIAL;
   let pedido = 0;
+  let lidoEm = 0;
+  let chaveLida = "";
   let acompanhamento = 0;
   const ouvintes = new Set();
   const publicar = (mudancas) => {
@@ -141,6 +145,7 @@ export function criarEstadoDaPreClassificacao({
         rpc(RPC_OBTER_INSCRICOES, { p_edital: editalId }).catch(() => null),
       ]);
       if (meu !== pedido) return false;
+      lidoEm = agora().getTime();
       publicar({ dados, inscricoes, carregando: false, erro: "" });
       return true;
     } catch (erro) {
@@ -148,6 +153,22 @@ export function criarEstadoDaPreClassificacao({
       publicar({ carregando: false, erro: mensagemDoBanco(erro) });
       return false;
     }
+  }
+
+  /*
+    Ao abrir a aba: relê só com outro edital, outra chave (a versão da regra)
+    ou leitura com mais de 5 minutos. "Atualizar" e o acompanhamento do
+    recálculo chamam carregar e sempre relêem.
+  */
+  async function garantirCarregado(editalId, chave = "") {
+    const recente =
+      Boolean(estado.dados) &&
+      !estado.erro &&
+      estado.editalId === editalId &&
+      chaveLida === chave &&
+      agora().getTime() - lidoEm < VALIDADE_DA_LEITURA_MS;
+    chaveLida = chave;
+    return recente ? true : carregar(editalId);
   }
 
   /* "Recalcular": pede o job da pré-classificação só deste edital. */
@@ -424,6 +445,7 @@ export function criarEstadoDaPreClassificacao({
       return () => ouvintes.delete(ouvinte);
     },
     carregar,
+    garantirCarregado,
     recalcular,
     descongelar,
     incluirPorDecisao: (candidatos, motivo) =>

@@ -5,7 +5,10 @@
 
   RPCs (supabase/migrations/20261006120000_fichas_fila_e_reserva.sql;
   contrato em src/lib/rpc-contrato.js):
-    obter_fila_avaliacao(p_edital)                     a fila do edital
+    obter_fila_avaliacao(p_edital)                     a fila do edital: o núcleo (no lote ou com
+                                                       ficha viva) e as contagens de fora do lote
+    obter_fila_fora_do_lote(p_edital, p_apos, p_limite) os de fora do lote, sob demanda e em
+                                                       páginas (20261014180000_fila_leve.sql)
     pegar_proxima_ficha(p_edital, p_vaga)              "Pegar próximo"
     reservar_ficha(p_ficha)                            abre (reserva 15 min)
     renovar_reserva(p_ficha)                           a cada 5 min, enquanto aberta
@@ -17,7 +20,10 @@
     salvar_filtro_fila(p_nome, p_filtro) / excluir_filtro_fila(p_filtro)
   "Exportar CSV" baixa a aba aberta (csvDaFila), sem ir ao banco.
   O último filtro usado fica no navegador só por conveniência (try/catch);
-  os filtros salvos com nome ficam no banco, por pessoa. A ficha aberta
+  os filtros salvos com nome ficam no banco, por pessoa. A lista de fora do
+  lote (eliminados e ranqueados) só vem quando a tela pede (carregarForaDoLote:
+  abas Inscritos e Eliminados, "Incluir por decisão") e fica guardada até a
+  versão dela (fora_do_lote.versao) mudar numa releitura da fila. A ficha aberta
   (edital e ficha) fica na sessão da aba (sessionStorage), para recarregar a
   página voltar ao modo de análise; fechar a ficha esquece.
 */
@@ -29,6 +35,10 @@ import {
   nomeDoCsvDaFila,
   normalizarFiltro,
 } from "../../lib/avaliacao-documental/fila.js";
+import {
+  lerForaDoLote,
+  resumoForaDoLote,
+} from "../../lib/avaliacao-documental/fila-fora-do-lote.ts";
 import { decidirNoLote } from "./decisao-no-banco.js";
 import { mensagemDoBanco } from "./estado.js";
 
@@ -50,9 +60,18 @@ export const RENOVAR_A_CADA_MS = 5 * 60 * 1000;
 const CHAVE_DO_FILTRO = "monitora.avaliacao-documental.fila.filtro";
 const CHAVE_DA_FICHA_ABERTA = "monitora.avaliacao-documental.ficha-aberta";
 
+/* As linhas de fora do lote: null = ainda não lidas (ou a versão mudou). */
+const FORA_INICIAL = Object.freeze({
+  linhas: null,
+  versao: "",
+  carregando: false,
+  erro: "",
+});
+
 const INICIAL = Object.freeze({
   editalId: "",
   dados: null,
+  fora: FORA_INICIAL,
   carregando: false,
   erro: "",
   filtro: FILTRO_INICIAL,
@@ -142,6 +161,7 @@ export function criarEstadoDaFila({
   let pedido = 0;
   let renovacao = null;
   let restaurou = false;
+  let leituraDeFora = null;
   const ouvintes = new Set();
   const publicar = (mudancas) => {
     estado = { ...estado, ...mudancas };
@@ -178,7 +198,17 @@ export function criarEstadoDaFila({
     try {
       const dados = await rpc(RPC_OBTER_FILA, { p_edital: editalId });
       if (meu !== pedido) return false;
-      publicar({ dados, carregando: false, erro: "" });
+      const versao = resumoForaDoLote(dados).versao;
+      const foraMudou =
+        estado.fora.linhas !== null && estado.fora.versao !== versao;
+      publicar({
+        dados,
+        carregando: false,
+        erro: "",
+        ...(foraMudou ? { fora: { ...estado.fora, linhas: null } } : {}),
+      });
+      // Quem já abriu a lista de fora do lote recebe a versão nova.
+      if (foraMudou) void carregarForaDoLote();
       // Página recarregada com a ficha aberta: volta a ela (uma vez).
       const lembrada = lerFichaLembrada(sessao);
       if (
@@ -196,6 +226,55 @@ export function criarEstadoDaFila({
       publicar({ carregando: false, erro: mensagemDoBanco(erro) });
       return false;
     }
+  }
+
+  /*
+    As linhas de fora do lote (eliminados e ranqueados), em páginas. Já lidas
+    na versão atual: não vai ao banco. Uma leitura por vez (quem pede durante
+    a leitura espera a mesma).
+  */
+  function carregarForaDoLote() {
+    const editalId = estado.editalId;
+    const versao = resumoForaDoLote(estado.dados).versao;
+    if (!editalId || !estado.dados) return Promise.resolve(false);
+    // Banco sem a fila leve (sem fora_do_lote): "candidatos" já traz todos.
+    if (!estado.dados.fora_do_lote) {
+      if (estado.fora.linhas === null)
+        publicar({ fora: { ...FORA_INICIAL, linhas: [] } });
+      return Promise.resolve(true);
+    }
+    if (estado.fora.linhas !== null && estado.fora.versao === versao)
+      return Promise.resolve(true);
+    if (leituraDeFora?.editalId === editalId && leituraDeFora.versao === versao)
+      return leituraDeFora.promessa;
+    publicar({ fora: { ...estado.fora, carregando: true, erro: "" } });
+    const promessa = lerForaDoLote(rpc, editalId)
+      .then((linhas) => {
+        // Outro edital ou outra versão no meio da leitura: vale a leitura mais nova.
+        if (
+          estado.editalId !== editalId ||
+          resumoForaDoLote(estado.dados).versao !== versao
+        )
+          return false;
+        publicar({ fora: { linhas, versao, carregando: false, erro: "" } });
+        return true;
+      })
+      .catch((erro) => {
+        if (leituraDeFora?.promessa === promessa)
+          publicar({
+            fora: {
+              ...estado.fora,
+              carregando: false,
+              erro: mensagemDoBanco(erro),
+            },
+          });
+        return false;
+      })
+      .finally(() => {
+        if (leituraDeFora?.promessa === promessa) leituraDeFora = null;
+      });
+    leituraDeFora = { editalId, versao, promessa };
+    return promessa;
   }
 
   function mudarFiltro(mudancas) {
@@ -441,6 +520,7 @@ export function criarEstadoDaFila({
       return () => ouvintes.delete(ouvinte);
     },
     carregar,
+    carregarForaDoLote,
     mudarFiltro,
     abrir,
     pegarProxima,

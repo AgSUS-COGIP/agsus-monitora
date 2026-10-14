@@ -1203,5 +1203,115 @@ class LotesDeExportacao(unittest.TestCase):
         self.assertEqual((len(linhas), n), (4, 4))
 
 
+class CentralComRespostas(CentralFalsa):
+    """A Central falsa com respostas de questionário na lista de cada vaga (para --anexos)."""
+
+    def capturar_candidatos(self, codigo):
+        self.eventos.append(("capturar", codigo))
+        return {
+            "vaga_interno": f"Id{codigo}|",
+            "candidatos": {},
+            "respostas": {"8000001": {"pessoa": "", "respostas": [{"id": "1", "token": "TK", "vaga": ""}]}},
+        }
+
+
+class OrcamentoDosAnexos(unittest.TestCase):
+    """--anexos: orçamento maior (70 min), parando com folga para a carga das vagas que faltam."""
+
+    PRIORIDADES = {"8000001": {"prioridade": 1, "lidas": set()}}
+
+    def setUp(self):
+        sys.modules.pop("robo_empregare", None)
+        import robo_empregare
+
+        self.robo = robo_empregare
+        self.anexos = robo_empregare.anexos
+        self.logs = []
+        self.leituras = []  # (código, início, prazo absoluto, prioridades)
+        self.relogio = [0.0]
+        self.duracao = 0.0  # quanto cada leitura gasta (até o prazo)
+        self.antigos = (
+            robo_empregare.registrar,
+            robo_empregare.gravar_vaga,
+            self.anexos.capturar_anexos,
+            self.anexos.prioridades_da_vaga,
+        )
+        robo_empregare.registrar = self.logs.append
+        robo_empregare.gravar_vaga = lambda *_a, **_k: "GRAVADA"
+
+        def capturar(_portal, codigo, _respostas, _registrar, prazo, agora=None, prioridades=None):
+            self.leituras.append((codigo, self.relogio[0], prazo, prioridades))
+            self.relogio[0] = min(prazo, self.relogio[0] + self.duracao)
+            return {}
+
+        self.anexos.capturar_anexos = capturar
+        self.anexos.prioridades_da_vaga = lambda _config, _codigo, _chamar, _registrar: self.PRIORIDADES
+
+    def tearDown(self):
+        (
+            self.robo.registrar,
+            self.robo.gravar_vaga,
+            self.anexos.capturar_anexos,
+            self.anexos.prioridades_da_vaga,
+        ) = self.antigos
+
+    def processar(self, n, portal=None, com_anexos=True):
+        vagas = [{"vaga": str(999990200 + i), "edital": "114/2026"} for i in range(1, n + 1)]
+        return self.robo.processar_vagas(
+            portal or CentralComRespostas(),
+            {},
+            "gh-x",
+            vagas,
+            "pasta-falsa",
+            com_anexos=com_anexos,
+            dormir=lambda _: None,
+            agora=lambda: self.relogio[0],
+            relogio=lambda: datetime(2026, 10, 9, 9, 0),
+        )
+
+    def test_orcamento_de_setenta_minutos_dentro_dos_cento_e_vinte(self):
+        self.assertEqual(self.anexos.ORCAMENTO_DOS_ANEXOS, 70 * 60)
+        self.assertEqual(self.anexos.TEMPO_LIMITE_DOS_ANEXOS, 10 * 60)
+        # Os anexos param antes do prazo do último lote, e o último lote ainda cabe nos 120 min.
+        self.assertLess(self.robo.PRAZO_DOS_ANEXOS, self.robo.PRAZO_PARA_NOVO_LOTE)
+        self.assertLessEqual(self.robo.PRAZO_PARA_NOVO_LOTE + 15 * 60, 120 * 60)
+
+    def test_cada_vaga_le_com_a_prioridade_e_o_limite_por_vaga(self):
+        self.assertEqual(self.processar(3), (3, 0))
+        self.assertEqual([c for c, *_ in self.leituras], ["999990201", "999990202", "999990203"])
+        self.assertTrue(all(p - i == self.anexos.TEMPO_LIMITE_DOS_ANEXOS for _, i, p, _ in self.leituras))
+        self.assertTrue(all(pr is self.PRIORIDADES for *_, pr in self.leituras))
+
+    def test_orcamento_somado_corta_as_ultimas_vagas(self):
+        # Cada vaga gasta os 10 min inteiros: o orçamento de 70 min cobre 7 vagas.
+        self.duracao = 10 * 60
+        antigo = self.robo.PRAZO_DOS_ANEXOS
+        self.robo.PRAZO_DOS_ANEXOS = 10**9  # isola o orçamento do prazo da execução
+        try:
+            self.assertEqual(self.processar(9), (9, 0))
+        finally:
+            self.robo.PRAZO_DOS_ANEXOS = antigo
+        self.assertEqual(len(self.leituras), 7)
+        self.assertEqual(sum("sem tempo para os anexos" in l for l in self.logs), 2)
+
+    def test_reserva_tempo_para_a_carga_das_vagas_que_faltam(self):
+        self.duracao = 10 * 60
+        self.processar(30)
+        reserva, fim = self.robo.RESERVA_POR_VAGA, self.robo.PRAZO_DOS_ANEXOS
+        self.assertTrue(self.leituras)
+        for n, (_, inicio, prazo, _) in enumerate(self.leituras):
+            faltam = 30 - n - 1  # vagas que ainda vão ser pedidas
+            self.assertLessEqual(prazo - inicio, self.anexos.TEMPO_LIMITE_DOS_ANEXOS)
+            self.assertLessEqual(prazo, fim - reserva * faltam)
+        # A 1ª vaga lê os 10 min; a soma nunca passa do orçamento.
+        self.assertEqual(self.leituras[0][2], self.anexos.TEMPO_LIMITE_DOS_ANEXOS)
+        self.assertLessEqual(sum(min(p - i, self.duracao) for _, i, p, _ in self.leituras), 70 * 60)
+
+    def test_sem_respostas_ou_sem_anexos_nao_le(self):
+        self.processar(1, portal=CentralFalsa())
+        self.processar(1, com_anexos=False)
+        self.assertEqual(self.leituras, [])
+
+
 if __name__ == "__main__":
     unittest.main()

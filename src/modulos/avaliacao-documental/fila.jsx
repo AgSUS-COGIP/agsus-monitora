@@ -15,7 +15,6 @@ import {
   andamentoDaFila,
   COLUNAS_DA_FILA,
   colunasDaEtapa,
-  contadoresDaFila,
   ETAPAS_DA_FILA,
   fichaPeloCodigo,
   filtrarFila,
@@ -34,6 +33,13 @@ import {
   textoDoAndamento,
 } from "../../lib/avaliacao-documental/fila.js";
 import { tomDoResultado } from "../../lib/avaliacao-documental/ficha.js";
+import {
+  contadoresComForaDoLote,
+  juntarFila,
+  modalidadesDaFila,
+  precisaDoForaDoLote,
+  resumoForaDoLote,
+} from "../../lib/avaliacao-documental/fila-fora-do-lote.ts";
 import {
   DICA_DA_ART,
   nota,
@@ -362,6 +368,7 @@ function ModoDeAnalise({
   aberta,
   abrindo,
   dados,
+  inscritos,
   filtroVaga,
   navegaveis,
   versoes,
@@ -444,7 +451,7 @@ function ModoDeAnalise({
 
   const situacao = SITUACOES_DA_FICHA[f.situacao] || {};
   // O inscrito da fila (entrada no lote e a decisão da coordenação).
-  const inscrito = (dados.candidatos || []).find((c) => c.ficha?.id === f.id);
+  const inscrito = (inscritos || []).find((c) => c.ficha?.id === f.id);
   const reservaDeOutro =
     reservaVigente(f.reserva) && f.reserva.usuario !== dados.eu;
   const posicao = navegaveis.findIndex((c) => c.ficha.id === f.id);
@@ -609,6 +616,8 @@ function TabelaDaFila({
   ordem,
   setOrdem,
   total,
+  carregado,
+  erroDeFora,
   semPreClassificacao,
   coordena,
   selecao,
@@ -616,6 +625,19 @@ function TabelaDaFila({
   limparSelecao,
   grupo,
 }) {
+  if (erroDeFora)
+    return (
+      <Aviso tom="danger" papel="alert">
+        Não foi possível carregar os inscritos de fora do lote: {erroDeFora}{" "}
+        <button
+          type="button"
+          className="btn secondary small"
+          onClick={() => void fila.carregarForaDoLote()}
+        >
+          Tentar novamente
+        </button>
+      </Aviso>
+    );
   const etapa = st.filtro.etapa;
   const chaves = colunasDaEtapa(etapa);
   const comFicha = linhas.filter((c) => c.ficha);
@@ -672,7 +694,7 @@ function TabelaDaFila({
       className="avd-fila-tabela"
       idDoTitulo="avdFilaTitulo"
       titulo={rotuloDaEtapa}
-      carregado
+      carregado={carregado}
       itens={exibidas}
       filtrarPelaBusca={jaFiltrado}
       colunas={colunas}
@@ -884,15 +906,29 @@ export function Fila({ e, fila }) {
   }, [fila]);
 
   const dados = st.dados;
+  // O núcleo (no lote ou com ficha viva); os de fora do lote vêm sob demanda (st.fora).
   const candidatos = useMemo(() => dados?.candidatos || [], [dados]);
-  const contadores = useMemo(() => contadoresDaFila(candidatos), [candidatos]);
+  const resumoDeFora = useMemo(() => resumoForaDoLote(dados), [dados]);
+  const todos = useMemo(
+    () => juntarFila(candidatos, st.fora.linhas),
+    [candidatos, st.fora.linhas],
+  );
+  const precisaDeFora = precisaDoForaDoLote(etapa) && resumoDeFora.total > 0;
+  const foraPronto = !precisaDeFora || st.fora.linhas !== null;
+  useEffect(() => {
+    if (precisaDeFora) void fila.carregarForaDoLote();
+  }, [fila, precisaDeFora, resumoDeFora.versao]);
+  const contadores = useMemo(
+    () => contadoresComForaDoLote(candidatos, resumoDeFora),
+    [candidatos, resumoDeFora],
+  );
   const andamento = useMemo(
     () => andamentoDaFila(candidatos, dados?.vagas),
     [candidatos, dados?.vagas],
   );
   const linhas = useMemo(
-    () => filtrarFila(candidatos, st.filtro, dados?.eu),
-    [candidatos, st.filtro, dados?.eu],
+    () => filtrarFila(todos, st.filtro, dados?.eu),
+    [todos, st.filtro, dados?.eu],
   );
   const ordenadas = useMemo(() => ordenarFila(linhas, ordem), [linhas, ordem]);
   // Todas as vagas: a tabela agrupa por vaga (o CSV sai sem agrupar, na ordem da coluna).
@@ -906,11 +942,10 @@ export function Fila({ e, fila }) {
     [exibidas],
   );
   const modalidades = useMemo(
-    () =>
-      [...new Set(candidatos.map((c) => c.modalidade).filter(Boolean))].sort(),
-    [candidatos],
+    () => modalidadesDaFila(candidatos, resumoDeFora),
+    [candidatos, resumoDeFora],
   );
-  const selecionados = candidatos.filter((c) => selecao.has(c.id));
+  const selecionados = todos.filter((c) => selecao.has(c.id));
   const acoes = acoesDaSelecao(selecionados);
   const coordena = Boolean(dados?.pode_coordenar);
   const noLote = candidatos.filter(
@@ -920,7 +955,7 @@ export function Fila({ e, fila }) {
     (c) => c.ficha?.situacao === "PENDENTE" && !c.ficha.responsavel,
   );
   const lote = loteDaFila(candidatos, st.filtro.vaga);
-  const foraDoLote = candidatos
+  const foraDoLote = todos
     .filter(
       (c) =>
         (!st.filtro.vaga || c.vaga === st.filtro.vaga) &&
@@ -996,8 +1031,14 @@ export function Fila({ e, fila }) {
       id: "incluir",
       rotulo: "Incluir por decisão da coordenação",
       icone: "fa-user-plus",
-      desabilitado: !foraDoLote.length || Boolean(st.acao),
-      aoEscolher: () => setIncluindo(true),
+      desabilitado:
+        !(foraDoLote.length || resumoDeFora.total) ||
+        Boolean(st.acao) ||
+        st.fora.carregando,
+      // A lista de fora do lote vem antes de abrir (uma vez por versão).
+      aoEscolher: async () => {
+        if (await fila.carregarForaDoLote()) setIncluindo(true);
+      },
       dados: {
         "data-acao": "incluir-por-decisao",
         "data-tour": "avd-fila-incluir-por-decisao",
@@ -1070,6 +1111,7 @@ export function Fila({ e, fila }) {
         aberta={st.aberta}
         abrindo={st.abrindo}
         dados={dados}
+        inscritos={todos}
         filtroVaga={st.filtro.vaga}
         navegaveis={navegaveis}
         versoes={e.dados?.regra?.versoes}
@@ -1159,7 +1201,7 @@ export function Fila({ e, fila }) {
               }}
               onKeyDown={(ev) => {
                 if (ev.key !== "Enter") return;
-                const achado = fichaPeloCodigo(candidatos, busca);
+                const achado = fichaPeloCodigo(todos, busca);
                 if (achado) void fila.abrir(achado.ficha.id);
               }}
             />
@@ -1220,7 +1262,9 @@ export function Fila({ e, fila }) {
         ordem={ordem}
         setOrdem={setOrdem}
         total={contadores[st.filtro.etapa] ?? 0}
-        semPreClassificacao={!candidatos.length}
+        carregado={foraPronto}
+        erroDeFora={precisaDeFora ? st.fora.erro : ""}
+        semPreClassificacao={!candidatos.length && !resumoDeFora.total}
         coordena={coordena}
         selecao={selecao}
         marcar={marcar}

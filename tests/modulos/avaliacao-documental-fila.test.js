@@ -993,3 +993,120 @@ describe("fila: reiniciar as fichas do edital (admin global)", () => {
     });
   });
 });
+
+describe("fila leve: o lote em toda leitura, os de fora do lote sob demanda", () => {
+  /* schema_version 2 (20261014180000_fila_leve.sql): os eliminados não vêm em "candidatos". */
+  function filaLeve(versao = "v1") {
+    const base = fila();
+    return {
+      ...base,
+      schema_version: 2,
+      candidatos: base.candidatos.filter((c) => c.situacao_pre !== "ELIMINADO"),
+      fora_do_lote: {
+        total: 1,
+        eliminados: 1,
+        ranqueados: 0,
+        modalidades: ["AC"],
+        versao,
+      },
+    };
+  }
+  const eliminado = () =>
+    fila().candidatos.find((c) => c.situacao_pre === "ELIMINADO");
+  const chamadasDeFora = (supabase) =>
+    supabase.rpc.mock.calls.filter(
+      ([nome]) => nome === "obter_fila_fora_do_lote",
+    );
+
+  it("No lote não pede os de fora; Eliminados pede uma vez (em páginas) e guarda", async () => {
+    const supabase = supabaseFalso(filaLeve(), {
+      obter_fila_fora_do_lote: () => ({
+        candidatos: [eliminado()],
+        proximo: null,
+      }),
+    });
+    await montar(supabase);
+    const etapas = secao.querySelector("[data-tour='avd-fila-etapas']");
+    expect(etapas.textContent).toContain("Inscritos5");
+    expect(etapas.textContent).toContain("Eliminados1");
+    expect(chamadasDeFora(supabase)).toHaveLength(0);
+
+    await clicar(etapas.querySelector("[data-valor='eliminados']"));
+    await esperar();
+    expect(chamadasDeFora(supabase)).toEqual([
+      [
+        "obter_fila_fora_do_lote",
+        { p_edital: "e93", p_apos: null, p_limite: 2000 },
+      ],
+    ]);
+    expect(linhas()).toEqual(["7009"]);
+
+    await clicar(etapas.querySelector("[data-valor='inscritos']"));
+    await esperar();
+    expect(linhas()).toEqual(["7001", "7002", "7003", "7004", "7009"]);
+    expect(chamadasDeFora(supabase)).toHaveLength(1);
+  });
+
+  it("Incluir por decisão lê os de fora do lote antes de abrir", async () => {
+    const supabase = supabaseFalso(filaLeve(), {
+      obter_fila_fora_do_lote: () => ({
+        candidatos: [eliminado()],
+        proximo: null,
+      }),
+    });
+    await montar(supabase);
+    await abrirMenu();
+    await clicar(secao.querySelector("[data-acao='incluir-por-decisao']"));
+    await esperar();
+    expect(chamadasDeFora(supabase)).toHaveLength(1);
+    const opcoes = [
+      ...document.querySelectorAll(
+        "table[aria-label='Candidatos fora do lote pela regra'] tbody tr",
+      ),
+    ].map((tr) => tr.dataset.candidato);
+    expect(opcoes).toEqual(["7009"]);
+  });
+
+  it("estado: lê todas as páginas; só relê quando a versão de fora muda", async () => {
+    let versao = "v1";
+    const paginas = {
+      null: { candidatos: [eliminado()], proximo: "c-7009" },
+      "c-7009": {
+        candidatos: [{ ...eliminado(), id: "c-7010", codigo: "7010" }],
+        proximo: null,
+      },
+    };
+    const supabase = supabaseFalso(undefined, {
+      obter_fila_avaliacao: () => filaLeve(versao),
+      obter_fila_fora_do_lote: ({ p_apos }) => paginas[String(p_apos)],
+    });
+    const estado = criarEstadoDaFila({ supabase, toast, armazenamento: null });
+    await estado.carregar("e93");
+    expect(estado.obter().fora.linhas).toBeNull();
+    expect(await estado.carregarForaDoLote()).toBe(true);
+    expect(estado.obter().fora.linhas.map((c) => c.codigo)).toEqual([
+      "7009",
+      "7010",
+    ]);
+    expect(chamadasDeFora(supabase)).toHaveLength(2);
+
+    await estado.carregar();
+    await estado.carregarForaDoLote();
+    expect(chamadasDeFora(supabase)).toHaveLength(2);
+
+    versao = "v2";
+    await estado.carregar();
+    await esperar();
+    expect(chamadasDeFora(supabase)).toHaveLength(4);
+    expect(estado.obter().fora.versao).toBe("v2");
+  });
+
+  it("estado: banco sem a fila leve (sem fora_do_lote) não pede a lista de fora", async () => {
+    const supabase = supabaseFalso();
+    const estado = criarEstadoDaFila({ supabase, toast, armazenamento: null });
+    await estado.carregar("e93");
+    expect(await estado.carregarForaDoLote()).toBe(true);
+    expect(estado.obter().fora.linhas).toEqual([]);
+    expect(chamadasDeFora(supabase)).toHaveLength(0);
+  });
+});

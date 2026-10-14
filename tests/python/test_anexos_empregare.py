@@ -844,6 +844,116 @@ class DetalhesDaResposta(unittest.TestCase):
         _sem_proibidos(self, texto)
 
 
+class PrioridadeDosAnexos(unittest.TestCase):
+    """Ordem e filtro da leitura: lote primeiro, sem quem não finalizou, sem reler a resposta já lida."""
+
+    @staticmethod
+    def respostas():
+        # Na ordem da lista da Empregare (a de antes: um eliminado na frente do lote).
+        def r(rid):
+            return {"id": rid, "token": "TKfict123", "vaga": ""}
+
+        return {
+            "8000001": {"pessoa": "", "respostas": [r("1001")]},  # não finalizou: pular
+            "8000002": {"pessoa": "", "respostas": [r("1002")]},  # ranqueado
+            "8000003": {"pessoa": "", "respostas": [r("1003")]},  # no lote, já lida a mesma resposta
+            "8000004": {"pessoa": "", "respostas": [r("1004")]},  # no lote, sem resposta lida
+            "8000005": {"pessoa": "", "respostas": [r("1005")]},  # desconhecido do banco
+            "8000006": {"pessoa": "", "respostas": [r("1106")]},  # no lote, resposta mudou (lida a 1006)
+            "8000007": {"pessoa": "", "respostas": [r("1007")]},  # outro edital (sem pré-classificação)
+        }
+
+    PRIORIDADES = {
+        "candidatos": [
+            {"codigo": "8000003", "prioridade": 1, "lidas": ["1003"]},
+            {"codigo": "8000004", "prioridade": 1, "lidas": []},
+            {"codigo": "8000006", "prioridade": 1, "lidas": ["1006"]},
+            {"codigo": "8000002", "prioridade": 2, "lidas": []},
+            {"codigo": "8000007", "prioridade": 3, "lidas": []},
+            {"codigo": "8000001", "prioridade": 0, "lidas": []},
+        ]
+    }
+
+    def prioridades(self, erro=None):
+        chamadas = []
+
+        def chamar(_config, funcao, corpo):
+            chamadas.append((funcao, corpo))
+            if erro:
+                raise erro
+            return self.PRIORIDADES
+
+        logs = []
+        return anexos.prioridades_da_vaga({}, "182514", chamar, logs.append), chamadas, logs
+
+    def test_le_a_prioridade_da_vaga_pela_rpc(self):
+        prioridades, chamadas, logs = self.prioridades()
+        self.assertEqual(chamadas, [("listar_prioridade_anexos_empregare", {"p_vaga": "182514"})])
+        self.assertEqual(prioridades["8000003"], {"prioridade": 1, "lidas": {"1003"}})
+        self.assertEqual(prioridades["8000001"]["prioridade"], anexos.PULAR)
+        self.assertEqual(logs, [])
+
+    def test_sem_a_migration_ou_com_erro_le_todos_como_antes(self):
+        prioridades, _, logs = self.prioridades(erro=supabase_rpc.ErroDoSupabase("x", 404, "not found"))
+        self.assertIsNone(prioridades)
+        self.assertIn("falta a migration 20261014200000", logs[0])
+        prioridades, _, logs = self.prioridades(erro=RuntimeError("caiu"))
+        self.assertIsNone(prioridades)
+        self.assertIn("lendo todos", logs[0])
+        pedidos = [("1", {"id": "1"}, ""), ("2", {"id": "2"}, "")]
+        self.assertEqual(anexos.ordenar_pedidos(pedidos, None), (pedidos, None))
+
+    def test_lote_primeiro_pula_quem_nao_finalizou_e_nao_rele_a_mesma_resposta(self):
+        logs = []
+
+        class PortalFalso:
+            driver = _DriverDosDetalhes()
+
+        prioridades, _, _ = self.prioridades()
+        capturados = anexos.capturar_anexos(
+            PortalFalso(), "182514", self.respostas(), logs.append, prazo=float("inf"), prioridades=prioridades
+        )
+        lidas = [c.split("/")[-1].split("?")[0] for c in PortalFalso.driver.caminhos]
+        # Lote (sem a já lida; a resposta nova do 8000006 entra), ranqueado, outros, desconhecido.
+        self.assertEqual(lidas, ["1004", "1106", "1002", "1007", "1005"])
+        self.assertNotIn("8000001", capturados)
+        self.assertNotIn("8000003", capturados)
+        self.assertEqual(
+            logs[0],
+            "Vaga 182514: anexos a ler 5 (lote/ficha 2 · ranqueados 1 · outros 2) · já lidas 1 · "
+            "puladas 1 (questionário não finalizado ou cancelado).",
+        )
+        self.assertIn("respostas de questionário lidas 5 de 5", logs[1])
+        for linha in logs:
+            _sem_proibidos(self, linha)
+
+    def test_tempo_curto_le_so_o_lote(self):
+        logs = []
+        tempos = iter([0.0, 10.0])
+
+        class PortalFalso:
+            driver = _DriverDosDetalhes()
+
+        antigo = anexos.PEDIDOS_POR_VEZ
+        anexos.PEDIDOS_POR_VEZ = 2
+        try:
+            prioridades, _, _ = self.prioridades()
+            capturados = anexos.capturar_anexos(
+                PortalFalso(),
+                "182514",
+                self.respostas(),
+                logs.append,
+                prazo=5.0,
+                agora=lambda: next(tempos),
+                prioridades=prioridades,
+            )
+        finally:
+            anexos.PEDIDOS_POR_VEZ = antigo
+        # Só o primeiro grupo de GETs coube no prazo: os dois do lote da pré-classificação.
+        self.assertEqual(sorted(capturados), ["8000004", "8000006"])
+        self.assertIn("tempo esgotado", logs[-1])
+
+
 class CasamentoComAColuna(unittest.TestCase):
     """Enunciados do edital (texto público, sem dado pessoal) como o JSON e o Excel trazem."""
 
