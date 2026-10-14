@@ -499,7 +499,9 @@ function ModoDeAnalise({
             c={inscrito}
             aoRevogar={async (motivo) => {
               const r = await fila.revogarDecisao([inscrito], motivo);
-              if (r.ok) await fila.abrir(f.id);
+              // Reabrir a ficha desmonta o conteúdo: salva o que falta antes
+              // (como Voltar e Ir), senão o rascunho agendado se perde.
+              if (r.ok && (await podeSair())) await fila.abrir(f.id);
               return r;
             }}
           />

@@ -221,7 +221,7 @@ export function DesempateDaClassificacao({
             ? "A regra de classificação ainda não tem critérios de desempate."
             : edital?.id
               ? "O edital ainda não tem regra de classificação."
-              : "O da regra de classificação de cada edital."}
+              : "O desempate vem da regra de classificação de cada edital."}
         </span>
       )}
       {comBotao ? (

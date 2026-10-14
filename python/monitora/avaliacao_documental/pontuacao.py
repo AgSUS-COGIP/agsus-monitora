@@ -508,6 +508,13 @@ def calcular_avaliacao(regra_entrada, candidato=None, opcoes=None):
     for avaliado in avaliados:
         bloco, efeito, motivos = avaliado["bloco"], avaliado["efeito"], avaliado["motivos"]
         parcial = PARCIAL_DO_TIPO.get(bloco.get("tipo"))
+        # O bloco que não se aplica (condição do candidato ou cargo da vaga) não
+        # pontua nem elimina: zero, sem o ajuste que ficou de antes e sem o
+        # mínimo da experiência (calcularAvaliacao do JS).
+        if parcial and avaliado["situacao"] == "NAO_SE_APLICA":
+            calculados[parcial] = 0
+            parciais[parcial] = 0
+            continue
         if parcial:
             pontos = 0
             tipo = bloco.get("tipo")

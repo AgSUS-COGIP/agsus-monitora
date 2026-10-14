@@ -18,6 +18,7 @@
   A pontuação continua a das linhas aceitas (a conta da ficha e a do banco).
   Sem DOM e sem estado. Testes: tests/lib/avaliacao-documental-leitura-dos-arquivos.test.js.
 */
+import { itemCompleto } from "./ficha.js";
 
 export type AlertaLido = { codigo: string; texto: string };
 
@@ -566,18 +567,25 @@ export function desfazerDecisaoLida<T extends LancamentoComLeituras>(
   return saida;
 }
 
-/** "Aceitar todos sem alerta": os pendentes sem nenhum alerta viram linha. */
+/**
+ * "Aceitar todos sem alerta": os pendentes sem nenhum alerta e completos viram
+ * linha. O incompleto (curso sem carga horária, vínculo sem início ou fim
+ * lido) fica pendente, como no Aceitar de um item só, que abre o Corrigir.
+ */
 export function aceitarTodosSemAlerta<T extends LancamentoComLeituras>(
   lancamento: T,
   bloco: BlocoComItens,
   itens: readonly ItemParaConferir[],
 ): T {
+  const lista = LISTA_DO_BLOCO[bloco.tipo];
   return itens
-    .filter(
-      (i) =>
-        !i.alertas.length &&
-        estadoDoItemLido(lancamento, bloco, i.chave) === "PENDENTE",
-    )
+    .filter((i) => {
+      if (i.alertas.length) return false;
+      if (estadoDoItemLido(lancamento, bloco, i.chave) !== "PENDENTE")
+        return false;
+      const linha = linhaDoItemLido(bloco, i.item, i.chave);
+      return Boolean(lista && linha && itemCompleto(lista, linha));
+    })
     .reduce((l, i) => aceitarItemLido(l, bloco, i), lancamento);
 }
 

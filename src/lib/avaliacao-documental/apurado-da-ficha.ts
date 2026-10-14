@@ -23,7 +23,7 @@
 import { BLOCOS_COM_ITENS, titulosDoNivel } from "./ficha.js";
 import { itensSugeridos } from "./respostas-do-candidato.ts";
 import { PARCIAL_DO_TIPO } from "./catalogo.js";
-import { notaAjustada } from "./pontuacao.js";
+import { notaAjustada, tetoDoBloco } from "./pontuacao.js";
 
 type Situacao = "CONFORME" | "NAO_CONFORME" | "NAO_ENVIADO";
 type BlocoQuePontua = { codigo: string; tipo: string };
@@ -361,14 +361,23 @@ export function blocoComEscolha({
   }
   const novo = blocoComDecisao({ bloco, lancamento, situacao: "CONFORME" });
   if (!blocoEditaNota(bloco)) return novo;
-  if (escolha === "CONFERE")
+  if (escolha === "CONFERE") {
+    // O declarado vem das respostas (teto próprio da nota declarada); o ajuste
+    // gravado fica no teto do bloco no nível, como na conta — acima dele o
+    // banco recusa o rascunho (FC_VALIDAR_LANCAMENTO_FICHA: 0 a teto).
+    const declarado = declaradoDoBloco(bloco, declarada);
+    const teto = tetoDoBloco(bloco, lancamento.nivel) as number | null;
     return {
       ...novo,
       edita_nota: false,
-      nota_ajustada: declaradoDoBloco(bloco, declarada),
+      nota_ajustada:
+        declarado !== null && teto !== null
+          ? Math.min(declarado, teto)
+          : declarado,
       justificativas: [],
       justificativa_livre: "",
     };
+  }
   // Editar: a pontuação vem do calculado (o ajuste de quem já editava fica).
   const jaEditava = atual.situacao === "CONFORME" && atual.edita_nota === true;
   return {
@@ -427,7 +436,10 @@ export function lancamentoConfirmadoPelosItens<
 /**
  * Mexeu nos itens depois de confirmar (aceitar, recusar, corrigir, adicionar
  * ou tirar): a confirmação volta a pedir decisão, porque a pontuação dos
- * itens mudou. O Não confere fica; as justificativas digitadas também.
+ * itens mudou. O Não confere fica; as justificativas digitadas também. Os
+ * itens extras do cargo (ex.: UMCQA, +5) contam como itens: marcar ou
+ * desmarcar depois do Confirmar mudaria a pontuação na tela sem mudar a nota
+ * gravada (o Confere grava o declarado em nota_ajustada).
  */
 export function semConfirmacaoSeMudouItens<T extends LancamentoDaFicha>(
   bloco: BlocoComItens,
@@ -437,8 +449,15 @@ export function semConfirmacaoSeMudouItens<T extends LancamentoDaFicha>(
   const chave = ITENS[bloco.tipo];
   const lancado = depois.blocos?.[bloco.codigo];
   if (!chave || lancado?.situacao !== "CONFORME") return depois;
+  const extras = (l: T) =>
+    JSON.stringify(
+      (l.blocos?.[bloco.codigo] as { extras?: unknown } | undefined)?.extras ??
+        {},
+    );
   if (
-    JSON.stringify(antes[chave] ?? []) === JSON.stringify(depois[chave] ?? [])
+    JSON.stringify(antes[chave] ?? []) ===
+      JSON.stringify(depois[chave] ?? []) &&
+    extras(antes) === extras(depois)
   )
     return depois;
   const { edita_nota: _escolha, ...resto } = lancado;

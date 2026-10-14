@@ -1686,7 +1686,7 @@ export function ItemDaFicha({
             <ExtrasDoBloco
               bloco={bloco}
               lancado={lancado}
-              mudar={mudar}
+              mudar={mudarItens}
               desabilitado={desabilitado}
             />
           ) : null}

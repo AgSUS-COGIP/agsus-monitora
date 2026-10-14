@@ -44,7 +44,7 @@ export type GrupoDaConvocacao = Omit<VagaDaConvocacao, "candidatos"> & {
 };
 export type OrigemDaVaga = {
   rotulo: string;
-  view: "nucleo" | "aprovados" | "classificacao";
+  view: "nucleo" | "approved" | "classificacao";
   onde: string;
 };
 export type AvisoDaConvocacao = {

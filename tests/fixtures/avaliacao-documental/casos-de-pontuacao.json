@@ -4070,6 +4070,57 @@
         "mostrar_pontos_quando_inapto": true,
         "pontos_informativos": "\n\nPontuação apurada dos títulos, para fins informativos (não entra na nota final, item 8.2.1): {nota_informativa} pontos ({distribuicao_informativa})."
       }
+    },
+    {
+      "nome": "bloco que não se aplica não soma o ajuste que ficou de antes (Confere no étnico e depois 'Indígena' desmarcado)",
+      "regra": "SI26-INTERIOR-SUL",
+      "candidato": {
+        "nivel": "superior",
+        "indigena": false,
+        "mora_aldeia": false,
+        "aldeia_na_lista": false,
+        "blocos": {
+          "ETNICO": {
+            "situacao": "CONFORME",
+            "edita_nota": false,
+            "nota_ajustada": 7
+          }
+        },
+        "titulos": [],
+        "cursos": [],
+        "vinculos": [
+          {
+            "categoria": "SAUDE_INDIGENA",
+            "inicio": "2022-01-01",
+            "fim": "2022-12-31",
+            "aceito": true
+          }
+        ]
+      },
+      "opcoes": {
+        "notaMinima": 1
+      },
+      "esperado": {
+        "resultado": "APTO",
+        "nota_apurada": 2.4,
+        "nota_final": 2.4,
+        "parciais": {
+          "ETNICO": 0,
+          "FORMACAO": 0,
+          "CURSOS": 0,
+          "EXPERIENCIA": 2.4
+        },
+        "eliminatorios": [],
+        "encaminhamentos": [],
+        "calculados": {
+          "ETNICO": 0,
+          "FORMACAO": 0,
+          "CURSOS": 0,
+          "EXPERIENCIA": 2.4
+        },
+        "ajustes": {},
+        "parecer": "Edital 28/2026\nCandidato(a) HABILITADO(A) para a próxima etapa com a pontuação total de 2,4 pontos, distribuídos da seguinte forma:\n\n- Critério Étnico: 0,0 pontos.\n- Formação Acadêmica: 0,0 pontos.\n- Cursos de Aperfeiçoamento: 0,0 pontos.\n- Experiência Profissional: 2,4 pontos."
+      }
     }
   ],
   "nota_declarada": [
