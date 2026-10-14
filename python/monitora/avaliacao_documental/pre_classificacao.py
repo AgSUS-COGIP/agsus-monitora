@@ -21,6 +21,7 @@ from datetime import date
 from functools import cmp_to_key
 
 from monitora.avaliacao_documental.nota_declarada import (
+    _PREFIXO_DA_PERGUNTA,
     calcular_nota_declarada,
     chave_da_opcao,
     coluna_da_pergunta,
@@ -311,8 +312,6 @@ def perguntas_ambiguas(regra, colunas, pergunta_da_experiencia=None):
     PERGUNTA_AMBIGUA:MODALIDADE e PERGUNTA_AMBIGUA:EXPERIENCIA_DECLARADA.
     """
     provisoria = (regra or {}).get("provisoria") or {}
-    bloco = next((b for b in _lista((regra or {}).get("blocos")) if _objeto(b).get("codigo") == "MODALIDADE"), None)
-    perguntas_do_bloco = _lista(_objeto(bloco).get("perguntas"))
     fontes = [
         (_objeto(e).get("codigo"), _objeto(e).get("pergunta"))
         for e in _lista(provisoria.get("eliminacao_automatica"))
@@ -322,7 +321,7 @@ def perguntas_ambiguas(regra, colunas, pergunta_da_experiencia=None):
         (f"NOTA_{_objeto(i).get('parcial') or ''}", _objeto(i).get("pergunta"))
         for i in _lista(provisoria.get("nota_declarada"))
     ]
-    fontes.append(("MODALIDADE", perguntas_do_bloco[0] if perguntas_do_bloco else None))
+    fontes += [("MODALIDADE", pergunta) for pergunta in _perguntas_da_modalidade(regra)]
     fontes.append(("EXPERIENCIA_DECLARADA", pergunta_da_experiencia))
     return [
         f"{PREFIXO_DO_AVISO_DE_PERGUNTA_AMBIGUA}{codigo}"
@@ -350,14 +349,59 @@ def eliminacao_do_candidato(regra, colunas):
     return None, ausentes
 
 
-def modalidade_do_candidato(regra, colunas):
-    """A modalidade declarada (bloco MODALIDADE da regra): "PP", "PCD"… ou "AC"."""
+def _perguntas_da_modalidade(regra):
+    """As perguntas do bloco MODALIDADE da regra (a do sistema de concorrência primeiro)."""
     bloco = next((b for b in _lista((regra or {}).get("blocos")) if _objeto(b).get("codigo") == "MODALIDADE"), None)
-    perguntas = _lista(_objeto(bloco).get("perguntas"))
-    coluna = coluna_da_pergunta(colunas, perguntas[0]) if perguntas else None
-    if not coluna:
+    return [p for p in _lista(_objeto(bloco).get("perguntas")) if p]
+
+
+def _respondeu_sim(valor):
+    return normalizar_texto(texto_da_resposta(valor)) in ("sim", "s", "yes", "true", "1")
+
+
+def cotas_marcadas(regra, colunas):
+    """
+    As cotas que o inscrito marcou nas perguntas do bloco MODALIDADE, na ordem de
+    codigos_da_modalidade (PCD, PP, PI, PQ, TRANS), sem a ampla:
+      - a resposta da pergunta do sistema de concorrência, inclusive a múltipla
+        ('"Ampla concorrência", "Pretos ou pardos"' → PP);
+      - a pergunta de sim ou não cujo nome diz a modalidade (a coluna "PCD" = SIM → PCD).
+    """
+    marcadas = []
+    for pergunta in _perguntas_da_modalidade(regra):
+        coluna = coluna_da_pergunta(colunas, pergunta)
+        if not coluna:
+            continue
+        codigos = codigos_da_modalidade(colunas.get(coluna))
+        if not codigos and _respondeu_sim(colunas.get(coluna)):
+            codigos = codigos_da_modalidade(_PREFIXO_DA_PERGUNTA.sub("", normalizar_texto(coluna), count=1))
+        marcadas += [c for c in codigos if c != "AC" and c not in marcadas]
+    ordem = codigos_da_modalidade("ac pcd pp pi pq trans")
+    return sorted(marcadas, key=ordem.index)
+
+
+def modalidade_do_candidato(regra, colunas, cotas=None):
+    """
+    A modalidade declarada (bloco MODALIDADE da regra): "PP", "PCD"… ou "AC".
+    A cota marcada prevalece sobre a ampla. Com mais de uma cota, uma só, pelo
+    acúmulo da regra de classificação (cotas = {"acumulo", "percentuais"},
+    de FC_DOCUMENTAL_DO_EDITAL): PCD_MAIS_UMA → a PcD, se marcada; senão a de
+    maior percentual (MAIOR_PERCENTUAL: a lista em que o inscrito fica). Sem
+    percentual, a primeira na ordem de codigos_da_modalidade.
+    """
+    marcadas = cotas_marcadas(regra, colunas)
+    if not marcadas:
         return "AC"
-    return next((c for c in codigos_da_modalidade(colunas.get(coluna)) if c != "AC"), "AC")
+    cotas = _objeto(cotas)
+    if cotas.get("acumulo") == "PCD_MAIS_UMA" and "PCD" in marcadas:
+        return "PCD"
+    percentuais = _objeto(cotas.get("percentuais"))
+
+    def percentual(codigo):
+        valor = percentuais.get(codigo)
+        return valor if _numero_js(valor) else 0
+
+    return max(marcadas, key=lambda c: (percentual(c), -marcadas.index(c)))
 
 
 def _numero_do_quadro(valor):
@@ -552,8 +596,10 @@ def pre_classificar_vaga(
     """
     Pré-classifica os inscritos de uma vaga (mesmo contrato de preClassificarVaga do JS).
       regra        normalizar_regra(configuração do edital)
-      vaga         {codigo, vagas_imediatas, cadastro_reserva, modalidades, nivel}
-                   (nivel: o da vaga, para a nota declarada por nível; None = desconhecido)
+      vaga         {codigo, vagas_imediatas, cadastro_reserva, modalidades, nivel, cotas}
+                   (nivel: o da vaga, para a nota declarada por nível; None = desconhecido;
+                   cotas: {acumulo, percentuais} da regra de classificação, para escolher a
+                   modalidade de quem marcou mais de uma cota — modalidade_do_candidato)
       candidatos   [{id, codigo, ativo, colunas, nascimento, candidatura}]
       anterior     {id: {situacao, lote, lista_lote, entrada, motivo_entrada, posicao, declarada_congelada}}
       congelar     guarda a declarada completa de quem ainda não a tem congelada (congela_a_declarada)
@@ -636,7 +682,7 @@ def pre_classificar_vaga(
                 "divergente": diverge_da_art(art, declarada["total"], tolerancia)
                 if declarada and declarada["completa"]
                 else False,
-                "modalidade": modalidade_do_candidato(regra, colunas),
+                "modalidade": modalidade_do_candidato(regra, colunas, _objeto(vaga).get("cotas")),
                 "posicao": None,
                 "posicao_modalidade": None,
                 "lote": None,

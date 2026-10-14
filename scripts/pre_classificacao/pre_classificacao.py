@@ -190,6 +190,8 @@ def dados_da_vaga(vaga, documental=None):
     A vaga para a conta: o quadro e o nível (do nome do cargo e da regra de
     classificação do edital — a mesma conta da ficha), para a nota declarada
     que pontua por nível. Sem cargo nem nível padrão, o nível fica None.
+    As cotas (acúmulo e percentuais da regra de classificação) escolhem a
+    modalidade de quem marcou mais de uma cota (modalidade_do_candidato).
     """
     quadro = vaga.get("quadro") or None
     return {
@@ -198,6 +200,7 @@ def dados_da_vaga(vaga, documental=None):
         "cadastro_reserva": bool(quadro and quadro.get("cadastro_reserva")),
         "modalidades": quadro.get("modalidades") if quadro else None,
         "nivel": nivel_da_vaga(vaga.get("cargo"), documental),
+        "cotas": (documental or {}).get("cotas"),
     }
 
 
