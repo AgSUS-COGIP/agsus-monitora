@@ -14,6 +14,7 @@ import pathlib
 import sys
 import unittest
 from contextlib import redirect_stdout
+from unittest import mock
 
 _RAIZ = pathlib.Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(_RAIZ / "scripts" / "pre_classificacao"))
@@ -294,6 +295,73 @@ class Fluxo(unittest.TestCase):
         self.assertEqual((superior["nivel"], superior["vagas_imediatas"]), ("superior", None))
         self.assertIsNone(job.dados_da_vaga({"codigo": "1", "cargo": "Engenheiro"}, {})["nivel"])
         self.assertEqual(job.dados_da_vaga({"codigo": "1", "cargo": None}, {"nivel_padrao": "medio"})["nivel"], "medio")
+
+    def test_le_os_inscritos_em_partes_com_o_quadro_da_vaga_e_o_mesmo_resultado(self):
+        """A vaga lida em partes (20261014110000) dá o mesmo cálculo que lida de uma vez."""
+        candidatos = [candidato(i, f"{10 + i},0/30,0") for i in range(1, 8)]
+        quadro = {"vagas_imediatas": 2, "cadastro_reserva": False, "modalidades": {"Ampla Concorrência": 2}}
+        anterior = {candidatos[0]["id"]: {"situacao": "NO_LOTE", "posicao": 7, "lote": 1}}
+        chamadas = []
+
+        def banco(funcao, corpo):
+            self.assertEqual(funcao, "pre_classificacao_ler_candidatos")
+            chamadas.append(corpo)
+            apos, limite = corpo.get("p_apos"), corpo["p_limite"]
+            resto = [c for c in candidatos if apos is None or c["id"] > apos]
+            parte = {"candidatos": resto[:limite], "mais": len(resto) > limite}
+            if apos is None:
+                parte.update(
+                    vaga={"cargo": "CARGO 1: QUÍMICO (Nível Superior)", "quadro": quadro},
+                    anterior=anterior,
+                    decisoes={},
+                )
+            return parte
+
+        def calcular(tamanho):
+            chamadas.clear()
+            gravados = {}
+            # Sem cargo nem quadro na lista do edital: vêm com os inscritos.
+            vaga = {"codigo": "179698", "candidatos_ativos": 7, "ultimo_lote": 1}
+            with mock.patch.object(job, "TAMANHO_DA_PARTE", tamanho):
+                job.processar_edital(
+                    banco,
+                    edital_93(vagas=[vaga]),
+                    "2026-10-06",
+                    True,
+                    lambda codigo, r: gravados.setdefault(codigo, job.payload_da_vaga(r)),
+                )
+            return gravados, [c.get("p_apos") for c in chamadas]
+
+        em_partes, apos = calcular(3)
+        # 7 inscritos em partes de 3: 3 chamadas, cada uma depois do último id da anterior.
+        self.assertEqual(apos, [None, candidatos[2]["id"], candidatos[5]["id"]])
+        resumo, linhas = em_partes["179698"]
+        self.assertEqual(sorted(linha["id"] for linha in linhas), [c["id"] for c in candidatos])
+        self.assertEqual(resumo["tamanho"], 2)  # as 2 vagas imediatas do quadro lido com a vaga
+        # De uma vez (uma parte só) o resultado é idêntico.
+        de_uma_vez, apos = calcular(5000)
+        self.assertEqual(apos, [None])
+        self.assertEqual(de_uma_vez, em_partes)
+
+        lidos = job.ler_candidatos(banco, edital_93(), {"codigo": "179698"}, 2)
+        self.assertEqual([c["id"] for c in lidos["candidatos"]], [c["id"] for c in candidatos])
+        self.assertNotIn("mais", lidos)
+        self.assertEqual((lidos["vaga"]["quadro"], lidos["anterior"], lidos["decisoes"]), (quadro, anterior, {}))
+
+    def test_a_leitura_em_partes_para_sem_mais_e_recusa_parte_fora_de_ordem(self):
+        def banco(funcao, corpo):
+            if corpo.get("p_apos") is None:
+                return {"candidatos": [{"id": "b"}], "mais": True}
+            return {"candidatos": [{"id": "a"}], "mais": False}
+
+        with self.assertRaises(RuntimeError):
+            job.ler_candidatos(banco, {"id": E93}, {"codigo": "1"}, 1)
+        # Sem "mais" (banco antigo ou dados de treinamento), uma chamada só.
+        so_uma = []
+        lidos = job.ler_candidatos(
+            lambda f, c: so_uma.append(c) or {"candidatos": [{"id": "x"}]}, {"id": E93}, {"codigo": "1"}
+        )
+        self.assertEqual((len(so_uma), so_uma[0]["p_limite"], lidos["candidatos"]), (1, 500, [{"id": "x"}]))
 
     def test_grava_as_sugestoes_da_ficha_pelas_respostas(self):
         regra = {

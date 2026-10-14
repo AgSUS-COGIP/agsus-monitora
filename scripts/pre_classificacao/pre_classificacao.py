@@ -59,6 +59,13 @@ DISPARADO_POR (do workflow). O log é público (repositório público): só
 contagens, códigos de vaga e de aviso e números de edital; tudo passa por
 python/monitora/mascaramento.py.
 
+Leitura em partes (20261014110000_pre_classificacao_ler_em_partes.sql): a lista
+dos editais traz só os metadados das vagas; cada vaga é lida à parte, com os
+inscritos em partes de TAMANHO_DA_PARTE (na ordem do id, a mesma de antes), e
+a primeira parte traz o cargo e a linha do quadro da vaga. Assim nenhuma
+chamada passa do statement_timeout do service_role, por maior que seja o
+edital (o 114/2026, com 7.160 inscritos, estourava os 8 s numa chamada só).
+
 Saída: 0 concluída; 2 parcial (algum edital falhou); 1 erro.
 """
 
@@ -120,6 +127,8 @@ EXPLICACOES = {
     "SEM_VAGAS": "nenhuma vaga da Empregare ligada ao edital: rode o robô da Empregare para ele",
     "PREVIA": "regra ainda não conferida: prévia calculada, nada seria gravado",
 }
+# Inscritos por chamada de pre_classificacao_ler_candidatos (o banco aceita até 5.000).
+TAMANHO_DA_PARTE = 500
 _PEDIDO = re.compile(r"^[A-Za-z0-9/ ._-]{1,100}$")
 log = registro("pre_classificacao")
 
@@ -252,6 +261,8 @@ def processar_edital(chamar, edital, hoje, refazer, gravar, retratar=False, grav
     lote_refeito = Counter()
     for vaga in vagas:
         lidos = ler_candidatos(chamar, edital, vaga)
+        # O cargo e a linha do quadro vêm com a primeira parte dos inscritos (desde 20261014110000).
+        vaga = {**vaga, **(lidos.get("vaga") or {})}
         r = pre_classificar_vaga(
             regra,
             dados_da_vaga(vaga, edital.get("documental")),
@@ -325,8 +336,29 @@ def tem_blocos_com_itens(regra):
     return any(b.get("tipo") in ITENS_DO_TIPO for b in regra.get("blocos") or [])
 
 
-def ler_candidatos(chamar, edital, vaga):
-    return chamar("pre_classificacao_ler_candidatos", {"p_edital": edital["id"], "p_vaga": vaga["codigo"]}) or {}
+def ler_candidatos(chamar, edital, vaga, tamanho=None):
+    """
+    Os inscritos da vaga, lidos em partes de `tamanho` (TAMANHO_DA_PARTE) na ordem do id (p_apos =
+    o último id da parte anterior) enquanto o banco disser que há mais. A
+    primeira parte traz também a vaga (cargo e quadro), a situação anterior e
+    as decisões. Devolve tudo junto, como uma leitura só.
+    """
+    corpo = {"p_edital": edital["id"], "p_vaga": vaga["codigo"], "p_limite": tamanho or TAMANHO_DA_PARTE}
+    lidos = chamar("pre_classificacao_ler_candidatos", corpo) or {}
+    candidatos = list(lidos.get("candidatos") or [])
+    parte = lidos
+    while parte.get("mais") and candidatos:
+        apos = candidatos[-1]["id"]
+        parte = chamar("pre_classificacao_ler_candidatos", {**corpo, "p_apos": apos}) or {}
+        novos = parte.get("candidatos") or []
+        if novos and str(novos[0]["id"]) <= str(apos):
+            raise RuntimeError(f"leitura em partes fora de ordem na vaga {vaga['codigo']}")
+        candidatos.extend(novos)
+        if not novos:
+            break
+    lidos = {k: v for k, v in lidos.items() if k != "mais"}
+    lidos["candidatos"] = candidatos
+    return lidos
 
 
 def gravar_retrato(chamar, id_execucao, resultado):
