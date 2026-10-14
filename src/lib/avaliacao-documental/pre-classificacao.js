@@ -61,7 +61,7 @@
     eliminado ganha posição depois do último da Provisória. Revogada a
     decisão, o candidato volta ao que a regra diz.
 */
-import { codigosDaModalidade } from "../classificacao/catalogo.js";
+import { codigosDaModalidade } from "../classificacao/catalogo.ts";
 import { dataDeCorteDoCronograma } from "../classificacao/dados.ts";
 import { DESEMPATE_PADRAO_DA_PROVISORIA } from "./catalogo.js";
 import {

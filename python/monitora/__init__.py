@@ -9,6 +9,6 @@ Base Python comum do MONITORA (guia: docs/python-no-monitora.md).
 
 Só biblioteca padrão: o pacote não pesa nas funções da Vercel nem nos jobs.
 Quem importa: scripts/robo-empregare/, scripts/conferencias/,
-scripts/pre_classificacao/, scripts/expurgo_anexos_chat/ e as funções
+scripts/pre_classificacao/ e as funções
 api/*.py que precisarem (sys.path + "includeFiles" no vercel.json).
 """

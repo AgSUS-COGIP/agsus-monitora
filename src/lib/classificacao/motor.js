@@ -41,7 +41,7 @@ import {
   ordemDaCompetencia,
   semAcento,
   simOuNao,
-} from "./catalogo.js";
+} from "./catalogo.ts";
 import {
   arredondar,
   dataBR,
@@ -51,10 +51,10 @@ import {
   HORA_SEM_CERTIDAO,
   lerHora,
   numeroBR,
-} from "./numeros.js";
+} from "./numeros.ts";
 import { normalizarRegra } from "./regra.ts";
 import { divergenciasDasCotas } from "./convocacao-do-edital.js";
-import { chaveDoGrupo } from "./sorteio.js";
+import { chaveDoGrupo } from "./sorteio.ts";
 import { montarVagas, nivelDaVaga } from "./vagas.js";
 
 const texto = (valor) => String(valor ?? "").trim();

@@ -72,7 +72,6 @@ describe("tours das telas", () => {
       "config:operacao",
       "config:modulos",
       "config:cargas",
-      "config:mensagens",
       "config:acessos",
     ])
       expect(PAGINAS_COM_TOUR).toContain(chave);

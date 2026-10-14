@@ -787,7 +787,7 @@ export const VERBETES_AYA = Object.freeze([
       'No passo 4 do assistente ficam juntos a nota mínima e o desempate. A nota mínima (e a por nível, quando diferente) e os critérios de desempate da classificação são da regra de classificação do edital: o assistente mostra e, para quem tem Editor na Classificação, grava pelo mesmo caminho da aba Classificação, como versão nova dela, com o mesmo motivo (até 500 caracteres); sem Editor na Classificação, aparecem só para ler, com um aviso (antes, o "Acrescentar critério" aparecia vazio). Sem regra de classificação no edital, crie-a primeiro na Classificação. Embaixo, o desempate da lista do lote (Provisória), que é da regra da avaliação. Nas duas listas, arraste o critério ou use as setas para mudar a ordem, troque a direção (na classificação) e tire critérios. "Acrescentar critério" abre o catálogo inteiro da lista em grupos (Prioridade legal, Pontuação, Experiência, Idade, Outros), com busca; os já usados aparecem com a posição ("2º na lista"). A Provisória tem catálogo próprio, menor: é o que a conta do lote sabe calcular. Ao salvar, a regra de classificação é gravada antes; se ela recusar, nada é salvo.',
     fato: "",
     fonte:
-      "src/modulos/avaliacao-documental/assistente/nota-e-desempate.tsx; src/modulos/avaliacao-documental/assistente/seletor-de-criterios.tsx; src/lib/avaliacao-documental/catalogo-de-desempate.ts; src/lib/classificacao/catalogo.js; supabase/migrations/20261002150000_classificacao.sql (salvar_regra_classificacao)",
+      "src/modulos/avaliacao-documental/assistente/nota-e-desempate.tsx; src/modulos/avaliacao-documental/assistente/seletor-de-criterios.tsx; src/lib/avaliacao-documental/catalogo-de-desempate.ts; src/lib/classificacao/catalogo.ts; supabase/migrations/20261002150000_classificacao.sql (salvar_regra_classificacao)",
     abrir: "avaliacao-documental",
   },
   {
@@ -1604,7 +1604,7 @@ export const VERBETES_AYA = Object.freeze([
       "clicar confere de novo",
     ],
     resposta:
-      'A ficha abre no MODO FOCO: um item por vez, no centro, na ordem do trabalho, de cima para baixo. (1) O que se pede (o título do bloco) e, num bloco compacto "O que o candidato informou", as respostas dele às perguntas que a regra liga ao item ("4 anos ou mais", "Especialização", "5 pontos"…) e, nas perguntas de anexo, a lista dos arquivos que ele enviou, cada um com o nome e o link direto para abrir na Empregare (sem o link capturado, o "Abrir na Empregare" de antes). (2) A pergunta "O documento confere com o declarado?" e as escolhas lado a lado: Confere (verde), Não confere (vermelho) e, nos itens que pontuam (titulação, cursos, experiência), Editar nota (azul) — teclas 1, 2 e 3 (aparecem ao passar o mouse). Nos itens em que o robô leu títulos, cursos ou vínculos do arquivo, no lugar das três escolhas vem o rodapé "Pontuação pelos itens aceitos" com Confirmar e Não confere (veja "Conferir pelos itens lidos e confirmar"). Confere aceita o que o candidato declarou: a pontuação fica igual ao declarado. Não confere pede só o motivo (os motivos do bloco em chips, "O candidato não enviou o documento" e uma observação) e a pontuação fica 0. Editar nota é para quando o documento comprova outra coisa: registre o que comprovou e a pontuação vem dos itens. (3) No Confere e no Editar nota, a lista de títulos, cursos ou vínculos aparece com a primeira linha já aberta. Quando as respostas do candidato trazem o curso com a carga horária ("NR-10 120h"), o período do vínculo ("01/02/2020 a 31/01/2022", "03/2018 a 12/2019") ou o título ("Mestrado"), as linhas já vêm preenchidas e marcadas "da resposta do candidato": é só conferir no documento e corrigir se precisar (mexer na linha tira a marca). Quem interpreta as respostas é o job Python da pré-classificação, que grava as sugestões no banco; a tela só mostra. Sem nada que dê para interpretar, a linha abre vazia (o título vem com o nível da resposta). Com Declarado acima de 0, registrar ao menos um item completo e aceito é obrigatório também no Confere; com Declarado 0 ("Não possuo"), não. (4) Um só resumo: "Pontuação: 3 de 5 · declarou 5", com a diferença destacada só se houver. (5) No máximo uma mensagem por item, a mais útil para o próximo passo (ex.: "Registre ao menos um curso com carga horária.", "Escolha o motivo."); no Confere, se os itens registrados derem outra pontuação, uma linha avisa e oferece "Editar nota". Confere sem pendência passa sozinho ao próximo item que pede algo (menos quando a escolha acabou de abrir a linha, para você conferir o registro). Basta um clique: depois de completar a linha, o item já conta como conferido e o rodapé mostra "Próximo pendente"; clicar de novo na escolha marcada só confirma e avança (não desmarca nem muda nada — para trocar, escolha outra opção). O stepper do alto mostra a marca de cada item — número quando falta decidir, ✓ verde, ✕ vermelho, ⊘ cinza (não enviou), ! âmbar quando falta completar — e "X de 6 conferidos": só conta o item decidido e completo, então o ! e o contador nunca se contradizem; passe o mouse no ! para ver o que falta (a mesma mensagem do item). "Ver todos" troca para a lista completa em cartões compactos, com a Conclusão no fim; "Um por vez" volta ao foco, e a escolha fica lembrada neste navegador. A lateral mostra só a nota ("parcial" enquanto falta conferir), o mínimo, o resultado e a composição por bloco. Enquanto falta conferir algum item, o resultado fica neutro ("Em análise · 2 de 4 requisitos conferidos"); o Inapto só aparece quando um item conferido elimina. Cotas e blocos que não valem para o candidato aparecem na Conclusão ("Não se aplicam: …"). Sem resposta na Empregare, o item avisa que o candidato provavelmente não enviou o documento. Copiar o código, abrir o candidato na Empregare e compartilhar no chat ficam no "⋯" da nota.',
+      'A ficha abre no MODO FOCO: um item por vez, no centro, na ordem do trabalho, de cima para baixo. (1) O que se pede (o título do bloco) e, num bloco compacto "O que o candidato informou", as respostas dele às perguntas que a regra liga ao item ("4 anos ou mais", "Especialização", "5 pontos"…) e, nas perguntas de anexo, a lista dos arquivos que ele enviou, cada um com o nome e o link direto para abrir na Empregare (sem o link capturado, o "Abrir na Empregare" de antes). (2) A pergunta "O documento confere com o declarado?" e as escolhas lado a lado: Confere (verde), Não confere (vermelho) e, nos itens que pontuam (titulação, cursos, experiência), Editar nota (azul) — teclas 1, 2 e 3 (aparecem ao passar o mouse). Nos itens em que o robô leu títulos, cursos ou vínculos do arquivo, no lugar das três escolhas vem o rodapé "Pontuação pelos itens aceitos" com Confirmar e Não confere (veja "Conferir pelos itens lidos e confirmar"). Confere aceita o que o candidato declarou: a pontuação fica igual ao declarado. Não confere pede só o motivo (os motivos do bloco em chips, "O candidato não enviou o documento" e uma observação) e a pontuação fica 0. Editar nota é para quando o documento comprova outra coisa: registre o que comprovou e a pontuação vem dos itens. (3) No Confere e no Editar nota, a lista de títulos, cursos ou vínculos aparece com a primeira linha já aberta. Quando as respostas do candidato trazem o curso com a carga horária ("NR-10 120h"), o período do vínculo ("01/02/2020 a 31/01/2022", "03/2018 a 12/2019") ou o título ("Mestrado"), as linhas já vêm preenchidas e marcadas "da resposta do candidato": é só conferir no documento e corrigir se precisar (mexer na linha tira a marca). Quem interpreta as respostas é o job Python da pré-classificação, que grava as sugestões no banco; a tela só mostra. Sem nada que dê para interpretar, a linha abre vazia (o título vem com o nível da resposta). Com Declarado acima de 0, registrar ao menos um item completo e aceito é obrigatório também no Confere; com Declarado 0 ("Não possuo"), não. (4) Um só resumo: "Pontuação: 3 de 5 · declarou 5", com a diferença destacada só se houver. (5) No máximo uma mensagem por item, a mais útil para o próximo passo (ex.: "Registre ao menos um curso com carga horária.", "Escolha o motivo."); no Confere, se os itens registrados derem outra pontuação, uma linha avisa e oferece "Editar nota". Confere sem pendência passa sozinho ao próximo item que pede algo (menos quando a escolha acabou de abrir a linha, para você conferir o registro). Basta um clique: depois de completar a linha, o item já conta como conferido e o rodapé mostra "Próximo pendente"; clicar de novo na escolha marcada só confirma e avança (não desmarca nem muda nada — para trocar, escolha outra opção). O stepper do alto mostra a marca de cada item — número quando falta decidir, ✓ verde, ✕ vermelho, ⊘ cinza (não enviou), ! âmbar quando falta completar — e "X de 6 conferidos": só conta o item decidido e completo, então o ! e o contador nunca se contradizem; passe o mouse no ! para ver o que falta (a mesma mensagem do item). "Ver todos" troca para a lista completa em cartões compactos, com a Conclusão no fim; "Um por vez" volta ao foco, e a escolha fica lembrada neste navegador. A lateral mostra só a nota ("parcial" enquanto falta conferir), o mínimo, o resultado e a composição por bloco. Enquanto falta conferir algum item, o resultado fica neutro ("Em análise · 2 de 4 requisitos conferidos"); o Inapto só aparece quando um item conferido elimina. Cotas e blocos que não valem para o candidato aparecem na Conclusão ("Não se aplicam: …"). Sem resposta na Empregare, o item avisa que o candidato provavelmente não enviou o documento. Copiar o código e abrir o candidato na Empregare ficam no "⋯" da nota.',
     fato: "No MONITORA, a ficha de análise mostra um item por vez, com as decisões em botões grandes e o progresso no alto, e calcula a nota pela regra do edital enquanto o analista confere.",
     fonte:
       "src/modulos/avaliacao-documental/ficha/ficha.jsx; src/modulos/avaliacao-documental/ficha/item-da-ficha.tsx; src/modulos/avaliacao-documental/ficha/progresso-da-ficha.tsx; src/lib/avaliacao-documental/respostas-do-candidato.ts; python/monitora/avaliacao_documental/sugestoes_da_ficha.py; src/lib/avaliacao-documental/ficha.js (passosDaFicha, proximoPassoPendente, composicaoDaNota); src/lib/avaliacao-documental/pontuacao.js",
@@ -1626,7 +1626,7 @@ export const VERBETES_AYA = Object.freeze([
       "copiar codigo do candidato",
     ],
     resposta:
-      'Os documentos ficam na Empregare (entre logado nela). Ao lado de cada "Anexo" declarado, "Abrir na Empregare" abre a página do candidato pelo link que o robô captura — por enquanto, o currículo, não o arquivo — e a ficha mostra onde achar o anexo lá dentro: "Na Empregare: aba Questionários › Pergunta 4 — Anexe o documento de identificação com foto". Sem o link do candidato, o botão abre a vaga (e copia o código do candidato para a busca das candidaturas) ou, se nem a vaga foi capturada, a lista de vagas (e copia o código da vaga para a busca de Vagas Anunciadas); o aviso de copiado aparece no rodapé. Nos itens sem anexo, o "Abrir na Empregare" fica ao lado da resposta. No "⋯" da nota ficam "Copiar código", "Abrir candidato na Empregare" e "Compartilhar no chat". Todo acesso fica registrado. Quando o robô passar a capturar o link direto de cada arquivo, o botão abrirá o arquivo.',
+      'Os documentos ficam na Empregare (entre logado nela). Ao lado de cada "Anexo" declarado, "Abrir na Empregare" abre a página do candidato pelo link que o robô captura — por enquanto, o currículo, não o arquivo — e a ficha mostra onde achar o anexo lá dentro: "Na Empregare: aba Questionários › Pergunta 4 — Anexe o documento de identificação com foto". Sem o link do candidato, o botão abre a vaga (e copia o código do candidato para a busca das candidaturas) ou, se nem a vaga foi capturada, a lista de vagas (e copia o código da vaga para a busca de Vagas Anunciadas); o aviso de copiado aparece no rodapé. Nos itens sem anexo, o "Abrir na Empregare" fica ao lado da resposta. No "⋯" da nota ficam "Copiar código" e "Abrir candidato na Empregare". Todo acesso fica registrado. Quando o robô passar a capturar o link direto de cada arquivo, o botão abrirá o arquivo.',
     fato: "",
     fonte:
       "src/lib/avaliacao-documental/anexo-na-empregare.ts; src/modulos/avaliacao-documental/ficha/empregare.tsx; supabase/migrations/20261007130000_conteudo_da_ficha.sql (registrar_acesso_ficha)",
@@ -1744,7 +1744,7 @@ export const VERBETES_AYA = Object.freeze([
       "interrogacao na ficha",
     ],
     resposta:
-      'Na ficha aberta: 1 marca Confere (e passa sozinho ao próximo item que pede algo), 2 marca Não confere (fica no item para escolher o motivo) e 3 abre Editar nota (só nos itens que pontuam); J e K vão ao item seguinte e ao anterior (a Conclusão é o último); Ctrl+S salva o rascunho na hora; Ctrl+Enter confere o que falta, conclui e abre a próxima ficha. A legenda fica no "?" ao lado de "Ver todos", e a tecla de cada escolha aparece ao passar o mouse no botão (os números não ficam mais escritos nos botões). Nos itens com leitura do robô, o 1 é o "Confirmar" pela pontuação dos aceitos; na linha de um item lido selecionada, A aceita, C corrige e R recusa. Os atalhos valem na página inteira enquanto a ficha está aberta, menos com o cursor num campo de texto, com uma janela aberta ou dentro do chat e da Aya. No celular, os botões fazem o mesmo.',
+      'Na ficha aberta: 1 marca Confere (e passa sozinho ao próximo item que pede algo), 2 marca Não confere (fica no item para escolher o motivo) e 3 abre Editar nota (só nos itens que pontuam); J e K vão ao item seguinte e ao anterior (a Conclusão é o último); Ctrl+S salva o rascunho na hora; Ctrl+Enter confere o que falta, conclui e abre a próxima ficha. A legenda fica no "?" ao lado de "Ver todos", e a tecla de cada escolha aparece ao passar o mouse no botão (os números não ficam mais escritos nos botões). Nos itens com leitura do robô, o 1 é o "Confirmar" pela pontuação dos aceitos; na linha de um item lido selecionada, A aceita, C corrige e R recusa. Os atalhos valem na página inteira enquanto a ficha está aberta, menos com o cursor num campo de texto, com uma janela aberta ou dentro da Aya. No celular, os botões fazem o mesmo.',
     fato: "",
     fonte:
       "src/modulos/avaliacao-documental/ficha/ficha.jsx (aoTeclar); src/modulos/avaliacao-documental/ficha/progresso-da-ficha.tsx (ATALHOS); src/lib/avaliacao-documental/ficha.js (escolhaDaTecla, ESCOLHAS_DA_FICHA)",
@@ -2025,7 +2025,7 @@ export const VERBETES_AYA = Object.freeze([
     resposta:
       "O empate é sempre na nota publicada (com as casas decimais da regra). Se a regra manda desempatar naquela lista, valem os critérios escolhidos do catálogo, na ordem em que o gestor os arrumou (arrastando): 60 anos ou mais na data de corte, ser comprovadamente indígena (pontuação étnica validada maior que zero), maior tempo de experiência na saúde indígena, maior tempo na atenção básica, maior nota documental, maior nota da entrevista, maior idade, pontuações por critério, tempo de experiência profissional e PcD. Da leitura de todos os editais entraram mais quatro: tempo em média e alta complexidade, tempo em saúde digital, maior escolaridade e nota de conhecimentos específicos da prova — enquanto a análise não grava esses dados, eles não separam ninguém e a tela avisa. Cada critério tem direção (sim antes de não, maior primeiro…). Quem não tem o dado de um critério fica atrás de quem tem, e isso vira aviso. O que sobra empatado depois de todos os critérios segue o empate final.",
     fato: "",
-    fonte: "src/lib/classificacao/catalogo.js; src/lib/classificacao/motor.js",
+    fonte: "src/lib/classificacao/catalogo.ts; src/lib/classificacao/motor.js",
     abrir: "classificacao",
   },
   {
@@ -2061,7 +2061,7 @@ export const VERBETES_AYA = Object.freeze([
       'Quando o empate continua depois de todos os critérios, vale o que o gestor escolheu na regra: sorteio registrado, ordem de inscrição (código menor primeiro), mesma posição (1º, 2º, 2º, 3º ou 1º, 2º, 2º, 4º) ou decisão manual com justificativa. No sorteio, a semente é gerada no servidor ou informada pelo gestor; a ordem é a crescente do SHA-256 de "semente:id da análise", e ficam gravados semente, ordem, quem e quando — qualquer pessoa com a semente refaz a conta. Refazer um sorteio exige justificativa e guarda o anterior. Enquanto um empate espera sorteio ou decisão, a lista mostra os empatados na mesma posição, o aviso pede o registro e a lista não pode ser marcada como publicada.',
     fato: "No MONITORA, o empate final é escolha do gestor do edital (sorteio registrado e reprodutível, ordem de inscrição, mesma posição ou decisão manual justificada).",
     fonte:
-      "src/lib/classificacao/sorteio.js; supabase/migrations/20261002150000_classificacao.sql",
+      "src/lib/classificacao/sorteio.ts; supabase/migrations/20261002150000_classificacao.sql",
     abrir: "classificacao",
   },
   {
@@ -2077,7 +2077,7 @@ export const VERBETES_AYA = Object.freeze([
     resposta:
       'O critério "60 anos ou mais" usa a idade na data de corte — o último dia de inscrição, como mandam os editais (Estatuto da Pessoa Idosa) —, não a idade de hoje. A data de corte é a da regra do edital; sem ela, o fim do período de inscrição no cronograma do edital. Quem faz 60 anos no último dia de inscrição conta; no dia seguinte, não. Sem data de nascimento, o candidato fica atrás de quem tem e a tela avisa; sem data de corte, a tela avisa que o critério não pode ser aplicado.',
     fato: "",
-    fonte: "src/lib/classificacao/catalogo.js; src/lib/classificacao/dados.ts",
+    fonte: "src/lib/classificacao/catalogo.ts; src/lib/classificacao/dados.ts",
     abrir: "classificacao",
   },
   {
@@ -2440,7 +2440,7 @@ export const VERBETES_AYA = Object.freeze([
       'Nas listas e nos documentos, AC é ampla concorrência; PcD, pessoas com deficiência; PP, pretos e pardos; PI, indígenas; PQ, quilombolas; e PPIQ, a reserva conjunta de pretos e pardos, indígenas e quilombolas de alguns editais. CR é cadastro reserva: quem passou, mas ficou além das vagas imediatas, ou a vaga que só tem cadastro reserva (no cabeçalho, "- Cadastro Reserva"). O cotista também concorre na ampla, e quem é chamado pela ampla não gasta a vaga reservada. Percentual, lista própria e remanejamento de cada modalidade são da regra de classificação do edital.',
     fato: "",
     fonte:
-      "src/lib/classificacao/catalogo.js (MODALIDADES_CONHECIDAS); src/lib/classificacao/motor.js; src/lib/classificacao/vagas.js",
+      "src/lib/classificacao/catalogo.ts (MODALIDADES_CONHECIDAS); src/lib/classificacao/motor.js; src/lib/classificacao/vagas.js",
     abrir: "classificacao",
   },
   {
@@ -2457,7 +2457,7 @@ export const VERBETES_AYA = Object.freeze([
       'ART é a nota da Autodeclaração de Requisitos e Títulos, a nota do questionário da Empregare. Na Classificação ela pode entrar como componente da nota final ("Nota da autodeclaração (ART)") quando a regra do edital usar, e o recurso deferido pode ajustá-la. A lista provisória do ranqueamento pela ART e a linha de corte (o lote de convocação para a avaliação documental) ainda não são geradas pelo MONITORA: a classificação começa na avaliação documental dos candidatos do lote (situação Triado ou Aprovado na análise).',
     fato: "",
     fonte:
-      "src/lib/classificacao/catalogo.js (COMPONENTES_DA_NOTA); supabase/correcoes/20261002-regras-de-classificacao-todos-os-editais.sql (importacao.em_aberto)",
+      "src/lib/classificacao/catalogo.ts (COMPONENTES_DA_NOTA); supabase/correcoes/20261002-regras-de-classificacao-todos-os-editais.sql (importacao.em_aberto)",
     abrir: "classificacao",
   },
   {
@@ -2495,7 +2495,7 @@ export const VERBETES_AYA = Object.freeze([
       'Quando o empate chega ao critério "maior idade" e as pessoas nasceram no mesmo dia, decide a hora de nascimento da certidão enviada na inscrição: quem nasceu mais cedo é mais velho e fica à frente (edital 93/2026, itens 6.11.5 e 6.11.6). Sem certidão, vale 23h59min59s — a pessoa fica como a mais nova daquele dia. A planilha da análise curricular e a Empregare não trazem a hora; quem informa é o analista, na Classificação: abra o candidato na lista e use "Hora de nascimento (certidão)". O campo só aparece para quem está nesse empate (ou já tem hora), e a tela avisa "Empate decidido pela hora de nascimento". "Sem certidão" tira a hora e volta a valer 23h59min59s. Cada mudança fica no histórico (quem, quando, antes e depois); gere a lista de novo depois de informar. Se ainda assim empatar (mesmo dia e mesma hora, ou as duas sem certidão), vale o empate final da regra.',
     fato: "Na maior idade, entre quem nasceu no mesmo dia, vale a hora da certidão; sem certidão, 23h59min59s.",
     fonte:
-      "src/lib/classificacao/numeros.js; src/lib/classificacao/motor.js; src/modulos/classificacao/hora-de-nascimento.tsx; supabase/migrations/20261009130000_hora_de_nascimento_na_classificacao.sql",
+      "src/lib/classificacao/numeros.ts; src/lib/classificacao/motor.js; src/modulos/classificacao/hora-de-nascimento.tsx; supabase/migrations/20261009130000_hora_de_nascimento_na_classificacao.sql",
     abrir: "classificacao",
   },
   {
@@ -3699,7 +3699,7 @@ export const VERBETES_AYA = Object.freeze([
       "administracao",
     ],
     resposta:
-      "Configurações fica em Administração, no menu, com uma seção por item: Marca, Página inicial, Tela de acesso, Aparência, Painéis externos, Operação, Acessos, Módulos e abas, Status das atualizações e Mensagens (chat). As seis primeiras abrem para quem tem Editor em Configurações; Acessos, para quem gerencia acessos; Módulos e abas, Status das atualizações e Mensagens (chat), só para o administrador global. Cada pessoa vê só as seções que pode abrir.",
+      "Configurações fica em Administração, no menu, com uma seção por item: Marca, Página inicial, Tela de acesso, Aparência, Painéis externos, Operação, Acessos, Módulos e abas e Status das atualizações. As seis primeiras abrem para quem tem Editor em Configurações; Acessos, para quem gerencia acessos; Módulos e abas e Status das atualizações, só para o administrador global. Cada pessoa vê só as seções que pode abrir.",
     fato: "",
     fonte: "src/lib/access-roles.js; src/modulos/configuracoes/secoes.js",
   },
@@ -4458,443 +4458,6 @@ export const VERBETES_AYA = Object.freeze([
       "src/lib/nome-da-versao.ts; supabase/migrations/20261008180000_nome_das_versoes_das_regras.sql (salvar_roteiro_entrevista, renomear_versao_roteiro_entrevista)",
   },
   {
-    arquivo: "regras-do-chat.md",
-    titulo: "O que é o chat",
-    perguntas: [
-      "o que e o chat",
-      "chat do monitora",
-      "como mandar mensagem",
-      "onde ficam as mensagens",
-      "icone de mensagens",
-      "painel de mensagens",
-    ],
-    resposta:
-      'O ícone Mensagens (balões de conversa) fica no cabeçalho, ao lado de Pessoas online, com o número de mensagens não lidas. Ele abre um painel à direita, que não bloqueia a tela: dá para continuar trabalhando com ele aberto. O painel lista as conversas — as fixadas no topo, depois da mais recente para a mais antiga — com a última mensagem, a hora, as não lidas, um "@" quando alguém mencionou você e o ponto de presença (verde, vermelho ou âmbar). A busca do topo procura no nome da conversa, nas pessoas e na unidade do edital e, a partir de 2 letras, também dentro das mensagens. Embaixo ficam "Meu status" e os Avisos.',
-    fato: "",
-    fonte: "src/modulos/chat/chat.jsx; src/modulos/chat/painel.jsx",
-  },
-  {
-    arquivo: "regras-do-chat.md",
-    titulo: "Tipos de conversa",
-    perguntas: [
-      "tipos de conversa",
-      "conversa direta",
-      "conversa em grupo",
-      "criar grupo no chat",
-      "nova conversa",
-      "como criar um grupo",
-    ],
-    resposta:
-      'Há três tipos. Conversa direta: entre duas pessoas, uma só por par (abrir de novo leva à mesma conversa). Grupo: quem cria escolhe o nome e as pessoas; qualquer participante pode adicionar outras pessoas pelo menu da conversa (Adicionar pessoas) e cada um pode sair do grupo. Conversa do edital: uma por edital, aberta a todos que veem aquele edital. Em "Nova conversa" você escolhe Conversa direta ou Grupo e procura a pessoa por nome ou e-mail; só aparecem pessoas com acesso às Mensagens.',
-    fato: "",
-    fonte:
-      "src/modulos/chat/painel.jsx; supabase/migrations/20261002210000_chat.sql",
-  },
-  {
-    arquivo: "regras-do-chat.md",
-    titulo: "Conversa do edital",
-    perguntas: [
-      "conversa do edital",
-      "botao conversa",
-      "chat do edital",
-      "quem ve a conversa do edital",
-      "conversar sobre um edital",
-    ],
-    resposta:
-      'O botão "Conversa" fica na linha de cada edital em Editais e ao lado da escolha do edital na Classificação. Ele abre a conversa daquele edital (criada na primeira vez). Quem vê o edital pela área e pela coordenação lê e escreve nela, mesmo sem ter aberto antes; quem perde o acesso ao edital deixa de ver a conversa. Ao abrir ou escrever, a conversa passa a aparecer na sua lista; "Deixar de acompanhar" (menu da conversa) tira da lista sem perder o acesso.',
-    fato: "",
-    fonte:
-      "src/modulos/editais/nucleo.jsx; src/modulos/classificacao/classificacao.tsx; supabase/migrations/20261002210000_chat.sql",
-  },
-  {
-    arquivo: "regras-do-chat.md",
-    titulo: "Escrever e enviar",
-    perguntas: [
-      "como enviar mensagem",
-      "enter envia",
-      "quebrar linha na mensagem",
-      "tamanho maximo da mensagem",
-      "limite de caracteres do chat",
-      "mencionar alguem",
-      "arroba no chat",
-    ],
-    resposta:
-      'Enter envia e Shift+Enter quebra a linha. A mensagem tem até 4.000 caracteres; perto do limite aparece a contagem. Com anexo ou cartão, o texto pode ficar vazio. Digite @ e o começo do nome para mencionar alguém da conversa: escolha a pessoa na lista (setas e Enter, ou clique). A pessoa mencionada vê o "@" na lista, a menção destacada e a mensagem com uma borda azul, e recebe o aviso mesmo que tenha silenciado a conversa. Se a rede falhar, a mensagem fica como "Não enviada", com "Tentar de novo"; reenviar não duplica (nem sobe o arquivo de novo).',
-    fato: "",
-    fonte: "src/modulos/chat/conversa.jsx; src/lib/chat.js",
-  },
-  {
-    arquivo: "regras-do-chat.md",
-    titulo: "Compartilhar esta tela",
-    perguntas: [
-      "compartilhar esta tela",
-      "mandar link da tela",
-      "link no chat",
-      "abrir tela pelo chat",
-    ],
-    resposta:
-      '"Compartilhar esta tela", embaixo do campo da mensagem, anexa à mensagem o lugar onde você está: a página, a área e, na Classificação, o edital escolhido (em Configurações, a seção). A mensagem mostra um cartão com o nome da tela e o botão "Abrir", que leva à mesma tela dentro do MONITORA. Quem não tem a página vê "Sem acesso" no lugar do botão. Não é um endereço da internet: o chat não abre sites externos.',
-    fato: "",
-    fonte: "src/modulos/chat/ponte.js; src/lib/chat.js",
-  },
-  {
-    arquivo: "regras-do-chat.md",
-    titulo: "Editar e apagar mensagem",
-    perguntas: [
-      "editar mensagem",
-      "apagar mensagem",
-      "mensagem apagada",
-      "corrigir mensagem enviada",
-      "excluir mensagem do chat",
-      "copiar texto da mensagem",
-      "menu da mensagem",
-      "tres pontinhos da mensagem",
-    ],
-    resposta:
-      'Cada mensagem tem o botão "⋯" (três pontinhos) no canto, sempre à vista — também no celular, com um toque. Ele abre as reações rápidas, Responder, Encaminhar e "Copiar texto"; na sua mensagem, também Editar e Apagar (só quem escreveu edita ou apaga). A mensagem editada mostra "editada" ao lado da hora. Apagar pede confirmação e deixa no lugar "Mensagem apagada" para todos: o texto, as reações e os anexos somem (ninguém mais baixa o arquivo), mas o registro de que houve uma mensagem fica.',
-    fato: "",
-    fonte:
-      "src/modulos/chat/conversa.jsx; supabase/migrations/20261002210000_chat.sql",
-  },
-  {
-    arquivo: "regras-do-chat.md",
-    titulo: "Reações",
-    perguntas: [
-      "reagir a mensagem",
-      "reacao no chat",
-      "curtir mensagem",
-      "joinha na mensagem",
-      "quem reagiu",
-      "tirar reacao",
-    ],
-    resposta:
-      'No "⋯" da mensagem, a primeira linha tem as reações rápidas: 👍 ✅ ❤️ 😂 👀 🙏. Escolha uma e ela aparece embaixo da mensagem, com a contagem; passe o mouse sobre a reação para ver quem reagiu. Clicar numa reação que já está na mensagem põe a sua (ou tira, se já for sua). As reações chegam na hora para todos da conversa; mensagem apagada não tem reação.',
-    fato: "",
-    fonte:
-      "src/modulos/chat/conversa.jsx; src/lib/chat.js; supabase/migrations/20261005100000_chat_limpar_e_reacoes.sql",
-  },
-  {
-    arquivo: "regras-do-chat.md",
-    titulo: "Emojis",
-    perguntas: [
-      "enviar emoji",
-      "emoji no chat",
-      "carinha no chat",
-      "botao de emoji",
-      "emojis recentes",
-      "procurar emoji",
-    ],
-    resposta:
-      'O botão da carinha, à esquerda de "Compartilhar esta tela", abre os emojis: carinhas, gestos, trabalho (pasta, clipe, calendário, alfinete…), símbolos (✅ ❌ ⚠️…) e celebração. Dá para procurar pelo nome em português, como "joinha", "café" ou "atenção" (Enter escolhe o primeiro). O emoji entra onde está o cursor e o seletor fica aberto para escolher mais; Esc ou um clique fora fecha. Os que você usa aparecem em "Recentes", guardados só neste navegador.',
-    fato: "",
-    fonte: "src/modulos/chat/seletor-de-emoji.jsx; src/lib/emojis-do-chat.js",
-  },
-  {
-    arquivo: "regras-do-chat.md",
-    titulo: "Limpar conversa",
-    perguntas: [
-      "limpar conversa",
-      "limpar historico do chat",
-      "apagar conversa",
-      "esconder mensagens antigas",
-      "zerar a conversa",
-    ],
-    resposta:
-      'No menu da conversa (os três pontinhos ao lado do nome), "Limpar conversa" esconde para você todas as mensagens até agora, depois de confirmar. Só para você: as outras pessoas continuam vendo tudo e nada é apagado. As mensagens que chegarem depois aparecem normalmente. Não existe apagar a conversa para todos; num grupo, você pode Sair do grupo.',
-    fato: "",
-    fonte:
-      "src/modulos/chat/conversa.jsx; supabase/migrations/20261005100000_chat_limpar_e_reacoes.sql",
-  },
-  {
-    arquivo: "regras-do-chat.md",
-    titulo: "Anexar arquivo",
-    perguntas: [
-      "anexar arquivo no chat",
-      "mandar pdf no chat",
-      "enviar planilha no chat",
-      "enviar imagem no chat",
-      "clipe no chat",
-      "tipos de arquivo do chat",
-      "tamanho maximo do anexo",
-      "arrastar arquivo para o chat",
-    ],
-    resposta:
-      "O clipe, ao lado da carinha, embaixo do campo, escolhe o arquivo; também dá para arrastar o arquivo para o campo. Valem PDF, imagem (PNG, JPG, WEBP, GIF) e planilha (XLSX, XLS, ODS, CSV), de até 10 MB cada, até 5 por mensagem. Os escolhidos aparecem acima do campo (a imagem com miniatura), com um X para tirar; a mensagem pode ir só com o anexo. Na conversa, a imagem aparece em miniatura e o arquivo com o nome e o tamanho: clique para baixar. O arquivo fica guardado de forma privada: só quem participa da conversa baixa, por um link que vale 1 minuto.",
-    fato: "",
-    fonte:
-      "src/modulos/chat/conversa.jsx; src/lib/anexos-do-chat.js; supabase/migrations/20261007210000_chat_v2.sql",
-  },
-  {
-    arquivo: "regras-do-chat.md",
-    titulo: "Colar print no chat",
-    perguntas: [
-      "colar print no chat",
-      "ctrl v imagem no chat",
-      "colar captura de tela",
-      "mandar print",
-      "print screen no chat",
-    ],
-    resposta:
-      'Copie a imagem (a tecla Print Screen, a Ferramenta de Captura ou "Copiar imagem") e cole no campo da mensagem com Ctrl+V: ela vira anexo, com um nome de print com a data e a hora (por exemplo, print-2026-10-07-14h05m09.png). Texto colado continua indo para o campo normalmente.',
-    fato: "",
-    fonte: "src/modulos/chat/conversa.jsx; src/lib/anexos-do-chat.js",
-  },
-  {
-    arquivo: "regras-do-chat.md",
-    titulo: "Responder mensagem",
-    perguntas: [
-      "responder mensagem",
-      "citar mensagem",
-      "responder uma mensagem especifica",
-      "resposta no chat",
-      "ir para a mensagem citada",
-    ],
-    resposta:
-      'No "⋯" da mensagem, "Responder" mostra acima do campo "Respondendo a…" com o começo da mensagem (o X desiste). A resposta vai com a citação; clicar na citação rola a conversa até a mensagem original e a destaca por um instante (se ela for antiga, o chat busca as páginas anteriores). Se a original for apagada pela retenção, a citação some.',
-    fato: "",
-    fonte:
-      "src/modulos/chat/conversa.jsx; src/modulos/chat/estado.js; supabase/migrations/20261007210000_chat_v2.sql",
-  },
-  {
-    arquivo: "regras-do-chat.md",
-    titulo: "Encaminhar mensagem",
-    perguntas: [
-      "encaminhar mensagem",
-      "repassar mensagem",
-      "mandar a mensagem para outra conversa",
-      "encaminhada no chat",
-    ],
-    resposta:
-      'No "⋯" da mensagem, "Encaminhar" abre a lista das suas conversas: escolha a de destino e a mensagem vai para lá com o texto, o cartão e os anexos, marcada como "Encaminhada" — sem as menções e sem dizer de que conversa veio. Mensagem apagada não se encaminha.',
-    fato: "",
-    fonte:
-      "src/modulos/chat/painel.jsx; supabase/migrations/20261007210000_chat_v2.sql",
-  },
-  {
-    arquivo: "regras-do-chat.md",
-    titulo: "Buscar nas mensagens",
-    perguntas: [
-      "buscar mensagem",
-      "procurar texto nas conversas",
-      "pesquisar no chat",
-      "achar mensagem antiga",
-      "buscar arquivo no chat",
-    ],
-    resposta:
-      'Na busca do topo da lista, a partir de 2 letras, aparece "Nas mensagens", com os resultados das suas conversas: a conversa, quem escreveu, quando e o trecho com o termo destacado (também acha pelo nome do anexo). Maiúsculas e acentos não importam. Clique no resultado para abrir a conversa já na mensagem. A busca só olha conversas que você acompanha e o que você não limpou; mensagens apagadas não aparecem.',
-    fato: "",
-    fonte:
-      "src/modulos/chat/painel.jsx; supabase/migrations/20261007210000_chat_v2.sql",
-  },
-  {
-    arquivo: "regras-do-chat.md",
-    titulo: "Visto (lido)",
-    perguntas: [
-      "visto no chat",
-      "mensagem lida",
-      "dois tracinhos",
-      "quem viu a mensagem",
-      "confirmacao de leitura",
-      "sabe se a pessoa leu",
-    ],
-    resposta:
-      'Nas suas mensagens, ao lado da hora: ✓ quer dizer enviada e ✓✓ azul, vista. Na conversa direta, ✓✓ quando a outra pessoa abriu a conversa depois do envio. No grupo, passe o mouse sobre os tracinhos para ver "Visto por" com os nomes; ✓✓ azul quando todos viram. Só quem participa da conversa vê a leitura dos outros: na conversa do edital, quem só tem acesso ao edital e não a acompanha não vê.',
-    fato: "",
-    fonte:
-      "src/modulos/chat/conversa.jsx; src/lib/chat.js; supabase/migrations/20261007210000_chat_v2.sql",
-  },
-  {
-    arquivo: "regras-do-chat.md",
-    titulo: "Cartões e Compartilhar esta ficha",
-    perguntas: [
-      "cartao no chat",
-      "compartilhar esta ficha",
-      "mandar ficha da avaliacao documental",
-      "link da ficha no chat",
-      "botao abrir no chat",
-      "sem acesso no cartao",
-    ],
-    resposta:
-      'Links internos viram cartão na mensagem: a tela, o edital ou a ficha da Avaliação documental (pelo código do candidato), com o botão "Abrir". Na ficha aberta no modo de análise, a lateral tem "Compartilhar esta ficha": o painel de Mensagens abre para você escolher a conversa e o cartão fica pronto no campo — é só escrever (ou não) e enviar. Quem recebe clica em "Abrir" e vai para a Fila do edital com a ficha aberta, se tiver acesso à Avaliação documental e ao edital; sem a página, o cartão mostra "Sem acesso", e o banco confere de novo ao abrir.',
-    fato: "",
-    fonte:
-      "src/modulos/chat/ponte.js; src/modulos/avaliacao-documental/ficha/ficha.jsx; src/lib/chat.js",
-  },
-  {
-    arquivo: "regras-do-chat.md",
-    titulo: "Fixar e marcar como não lida",
-    perguntas: [
-      "fixar conversa",
-      "conversa no topo",
-      "alfinete no chat",
-      "marcar como nao lida",
-      "deixar conversa como nao lida",
-      "soltar do topo",
-    ],
-    resposta:
-      'No menu da conversa (os três pontinhos ao lado do nome), "Fixar no topo" deixa a conversa sempre no alto da lista, com um alfinete (a fixada por último fica primeiro); "Soltar do topo" desfaz. "Marcar como não lida" volta para a lista com a conversa contando 1 não lida, para você lembrar dela; abrir a conversa desmarca. Valem só para você.',
-    fato: "",
-    fonte:
-      "src/modulos/chat/conversa.jsx; supabase/migrations/20261007210000_chat_v2.sql",
-  },
-  {
-    arquivo: "regras-do-chat.md",
-    titulo: "Meu status",
-    perguntas: [
-      "status no chat",
-      "ocupado no chat",
-      "ausente no chat",
-      "disponivel",
-      "ponto vermelho",
-      "ponto amarelo no chat",
-      "mudar meu status",
-    ],
-    resposta:
-      'No fim da lista de conversas, "Meu status" tem Disponível, Ocupado e Ausente. Os outros veem o ponto no seu avatar enquanto você está com o MONITORA aberto: verde (Disponível), vermelho (Ocupado) ou âmbar (Ausente); na conversa direta, aparece também escrito. Fora do MONITORA, não há ponto. O status fica guardado até você mudar.',
-    fato: "",
-    fonte:
-      "src/modulos/chat/painel.jsx; src/modulos/chat/avatar.jsx; supabase/migrations/20261007210000_chat_v2.sql",
-  },
-  {
-    arquivo: "regras-do-chat.md",
-    titulo: "Não lidas e avisos",
-    perguntas: [
-      "mensagens nao lidas",
-      "contador de mensagens",
-      "numero no titulo da aba",
-      "som do chat",
-      "notificacao do chat",
-      "silenciar conversa",
-      "avisos do chat",
-    ],
-    resposta:
-      'O número no ícone Mensagens e na frente do nome da aba, como "(3) MONITORA", soma as mensagens não lidas de todas as conversas; das silenciadas, só conta as menções a você. Abrir a conversa marca como lida. No fim da lista, em Avisos, você liga o Som e as Notificações do navegador; os dois começam desligados, e a notificação pede a permissão do navegador. "Silenciar", no menu da conversa, tira a conversa do contador e dos avisos — menos quando alguém menciona você com @.',
-    fato: "",
-    fonte:
-      "src/modulos/chat/estado.js; src/modulos/chat/painel.jsx; src/lib/identidade-da-aba.js",
-  },
-  {
-    arquivo: "regras-do-chat.md",
-    titulo: "Aviso de mensagem nova",
-    perguntas: [
-      "aviso de mensagem nova",
-      "popup do chat",
-      "notificacao quando chega mensagem",
-      "nao aparece aviso de mensagem",
-      "aviso no canto da tela",
-      "ativar notificacao do navegador",
-      "aviso some sozinho",
-    ],
-    resposta:
-      'Quando chega mensagem de outra pessoa e você não está com aquela conversa aberta na tela, aparece um aviso no canto inferior direito com quem mandou e o começo do texto; clique nele para abrir a conversa, ou no X para dispensar. Ele some sozinho em alguns segundos (fica enquanto o mouse está em cima) e aparecem no máximo três, um por conversa. Com o MONITORA em outra aba ou minimizado, o aviso vem como notificação do navegador, se você ligou "Notificações do navegador" em Avisos, no fim da lista de conversas: o navegador pede a permissão nesse clique. Suas mensagens e as apagadas não geram aviso; as de conversas silenciadas também não, a não ser que mencionem você.',
-    fato: "",
-    fonte:
-      "src/modulos/chat/avisos.jsx; src/modulos/chat/estado.js; src/lib/avisos-do-chat.js",
-  },
-  {
-    arquivo: "regras-do-chat.md",
-    titulo: "Tempo real e online",
-    perguntas: [
-      "chat em tempo real",
-      "mensagem demora a chegar",
-      "digitando no chat",
-      "ponto verde no chat",
-      "quem esta online no chat",
-      "reconectando",
-      "novas mensagens",
-      "botao seta para baixo no chat",
-    ],
-    resposta:
-      'As mensagens chegam na hora, sem recarregar a página, e aparece "está digitando…" quando alguém escreve na conversa aberta. A conversa abre na última mensagem; se você estiver lendo mensagens antigas quando chegar uma nova, aparece o botão "↓ Nova mensagem", que leva ao fim. Se a conexão cair, o painel mostra "Reconectando…" e, ao voltar, busca o que chegou; ao voltar para a aba do navegador, a lista também é relida. O ponto no avatar indica quem esteve com o MONITORA aberto nos últimos 2 minutos (verde, vermelho ou âmbar conforme o status da pessoa).',
-    fato: "",
-    fonte:
-      "src/modulos/chat/estado.js; supabase/migrations/20261002210000_chat.sql",
-  },
-  {
-    arquivo: "regras-do-chat.md",
-    titulo: "Quem pode usar as Mensagens",
-    perguntas: [
-      "quem pode usar o chat",
-      "nao vejo o icone de mensagens",
-      "permissao do chat",
-      "desligar o chat de um grupo",
-    ],
-    resposta:
-      'Mensagens é um recurso da matriz de acessos (Configurações › Acessos), com dois níveis: Sem acesso ou Usar. Em teste, só os grupos Administrador global e Gestor estão com Usar (05/10/2026); o administrador liga ou desliga por grupo ou por pessoa. Pessoas online, de onde sai o botão Mensagem, também é só do administrador global e do Gestor. Sem o recurso, o ícone não aparece e o botão "Conversa" some de Editais e da Classificação. Em Pessoas online, cada pessoa tem o botão "Mensagem", que abre a conversa direta com ela.',
-    fato: "",
-    fonte:
-      "src/lib/permissoes-recursos.js; src/lib/access-roles.js; supabase/migrations/20261002210000_chat.sql",
-  },
-  {
-    arquivo: "regras-do-chat.md",
-    titulo: "Seção Mensagens (chat) das Configurações",
-    perguntas: [
-      "para que serve mensagens (chat)",
-      "para que serve a secao mensagens (chat)",
-      "configuracoes mensagens chat",
-      "retencao do chat",
-      "quem configura o chat",
-      "secao mensagens das configuracoes",
-    ],
-    resposta:
-      "Em Configurações › Mensagens (chat), só o administrador global define por quanto tempo o chat guarda as mensagens, zera as mensagens e vê o histórico das limpezas. No topo aparecem quantas mensagens, reações e conversas existem e a data da mensagem mais antiga.",
-    fato: "",
-    fonte:
-      "src/modulos/configuracoes/mensagens-do-chat.jsx; supabase/migrations/20261005190000_chat_retencao_das_mensagens.sql",
-    abrir: "config:mensagens",
-  },
-  {
-    arquivo: "regras-do-chat.md",
-    titulo: "Prazo de retenção das mensagens",
-    perguntas: [
-      "prazo de retencao das mensagens",
-      "como funciona o prazo de retencao das mensagens",
-      "por quanto tempo o chat guarda as mensagens",
-      "mensagens antigas somem",
-      "apagar mensagens antigas do chat",
-      "lgpd chat",
-      "guardar para sempre",
-    ],
-    resposta:
-      'O padrão é "Guardar para sempre". O administrador global pode escolher 30, 90, 180 ou 365 dias, ou outro prazo de 7 a 3.650 dias, e informa o motivo. A tela mostra quantas mensagens o prazo escolhido apagaria; se apagar alguma, pede confirmação ("Isto apaga X mensagens com mais de N dias; não dá para desfazer"). Ao salvar, as mensagens mais antigas que o prazo, as reações e os anexos delas são apagados de fato, na hora (dado que passou do prazo deixa de existir, como pede a LGPD); as conversas continuam, sem essas mensagens. Depois, uma limpeza automática roda todo dia às 3h15 de Brasília e aparece em Status das atualizações como "Retenção das mensagens do chat". Quem está com o chat aberto vê as mensagens sumirem sozinhas. Os arquivos dos anexos apagados saem do armazenamento sozinhos, todo dia às 6h30 de Brasília (o "Expurgo dos anexos do chat" em Status das atualizações), e também quando o administrador global abre esta seção; o que não sair num dia fica para o seguinte. Enquanto espera, o arquivo já não abre para ninguém. O arquivo encaminhado só sai quando a última cópia sai.',
-    fato: "",
-    fonte:
-      "src/lib/retencao-do-chat.js; supabase/migrations/20261005190000_chat_retencao_das_mensagens.sql; supabase/migrations/20261007250000_expurgo_diario_dos_anexos_do_chat.sql; .github/workflows/expurgo-anexos-chat.yml",
-    abrir: "config:mensagens",
-  },
-  {
-    arquivo: "regras-do-chat.md",
-    titulo: "Zerar mensagens",
-    perguntas: [
-      "o que o zerar mensagens apaga",
-      "zerar mensagens",
-      "apagar todas as mensagens do chat",
-      "limpar o chat de todo mundo",
-      "apagar conversas sem participante",
-    ],
-    resposta:
-      '"Zerar mensagens" apaga TODAS as mensagens, reações e anexos do chat, de todas as pessoas, sem volta. Antes, a tela mostra quanto vai ser apagado. Marcando "Apagar também as conversas sem participante ativo", saem ainda os grupos e as conversas de edital que todos deixaram; conversas diretas e as que ainda têm alguém continuam, vazias. Para confirmar, é preciso digitar ZERAR (em maiúsculas) e informar o motivo (de 3 a 500 caracteres). É diferente de "Limpar conversa", que só esconde o histórico para você.',
-    fato: "",
-    fonte:
-      "src/modulos/configuracoes/mensagens-do-chat.jsx; supabase/migrations/20261005190000_chat_retencao_das_mensagens.sql",
-    abrir: "config:mensagens",
-  },
-  {
-    arquivo: "regras-do-chat.md",
-    titulo: "Histórico das limpezas do chat",
-    perguntas: [
-      "historico das limpezas",
-      "quem apagou as mensagens do chat",
-      "quando as mensagens foram apagadas",
-      "auditoria do chat",
-    ],
-    resposta:
-      'Em Configurações › Mensagens (chat), o histórico mostra cada limpeza: o tipo (prazo salvo, limpeza diária ou zerar), quando, quem pediu (ou "Tarefa diária"), quantas mensagens, reações, anexos e conversas saíram e o motivo. O histórico nunca guarda o conteúdo das mensagens apagadas, nem o nome dos arquivos.',
-    fato: "",
-    fonte: "supabase/migrations/20261005190000_chat_retencao_das_mensagens.sql",
-    abrir: "config:mensagens",
-  },
-  {
     arquivo: "regras-do-cronograma.md",
     titulo: "Tela de Cronograma",
     perguntas: [
@@ -5256,7 +4819,7 @@ export const VERBETES_AYA = Object.freeze([
       "presenca online",
     ],
     resposta:
-      'Pessoas online fica no cabeçalho e só o administrador global e o Gestor veem (o chat está em teste com os dois). Mostra quem está com o MONITORA aberto: nome, foto ou iniciais, grupo e onde a pessoa está, como "Análises curriculares · Saúde Indígena" ou "Configurações › Acessos" (painel externo aparece como "Painel externo"). Atualiza a cada 45 segundos com a aba visível, e trocar de página, área ou seção avisa na hora.',
+      'Pessoas online fica no cabeçalho e só o administrador global e o Gestor veem. Mostra quem está com o MONITORA aberto: nome, foto ou iniciais, grupo e onde a pessoa está, como "Análises curriculares · Saúde Indígena" ou "Configurações › Acessos" (painel externo aparece como "Painel externo"). Atualiza a cada 45 segundos com a aba visível, e trocar de página, área ou seção avisa na hora.',
     fato: "",
     fonte:
       "src/lib/online-presence.js; src/app/presenca.js; src/componentes/pessoas-online/pessoas-online.jsx; src/lib/access-roles.js (podeVerPessoasOnline)",
@@ -5303,7 +4866,7 @@ export const VERBETES_AYA = Object.freeze([
       "iniciais no lugar da foto",
     ],
     resposta:
-      "A foto que aparece para os colegas (em Pessoas online, no chat e em Acessos) é a da conta Google com que você entra. O MONITORA a copia para o seu perfil quando o perfil é criado ou ligado à sua conta e, depois, sempre que ela muda (no sinal de presença enviado enquanto o sistema está aberto); só vale endereço https. Não há escolha de foto dentro do MONITORA: para trocar, troque a foto da conta Google. Sem foto no Google, aparecem as iniciais.",
+      "A foto que aparece para os colegas (em Pessoas online e em Acessos) é a da conta Google com que você entra. O MONITORA a copia para o seu perfil quando o perfil é criado ou ligado à sua conta e, depois, sempre que ela muda (no sinal de presença enviado enquanto o sistema está aberto); só vale endereço https. Não há escolha de foto dentro do MONITORA: para trocar, troque a foto da conta Google. Sem foto no Google, aparecem as iniciais.",
     fato: "",
     fonte: "supabase/migrations/20261005200000_foto_do_google_no_perfil.sql",
   },
@@ -5337,10 +4900,10 @@ export const VERBETES_AYA = Object.freeze([
       "cargas de dados",
     ],
     resposta:
-      'As análises curriculares chegam pelo Apps Script das planilhas (o envio incremental é esperado a cada 20 minutos e fica "Atrasada" depois de 1 hora; a carga completa não tem prazo). Entrevistas carregam pelo GitHub Actions de hora em hora, o dia todo, e ficam atrasadas depois de 4 horas; a Seleção carrega às 8h10, 13h10 e 18h10 de Brasília e fica atrasada depois de 15 horas (a noite sem carga é esperada). Quem marca esses horários é o banco (Agenda dos robôs), não o GitHub. O robô da Empregare não tem agenda: roda só quando um administrador clica em "Rodar agora", por isso nunca fica "Atrasado". As tarefas do banco que rodam a cada 2 minutos (como o pacote do painel de análises e o das entrevistas) atrasam depois de 15 minutos; as diárias, depois de 26 horas; as mensais, depois de 32 dias. As conferências de consistência rodam todo dia às 6h de Brasília e ficam atrasadas depois de 26 horas. A pré-classificação da Avaliação documental roda no fim de cada carga do robô da Empregare e no Recalcular da coordenação, sem agenda, por isso também nunca fica "Atrasada". A retenção das mensagens do chat roda todo dia às 3h15 de Brasília, e o expurgo dos anexos do chat (tira do armazenamento os arquivos das mensagens já apagadas) às 6h30, atrasado depois de 26 horas; "Falhou" nele pode ser execução parcial, com arquivos que ficaram na fila para o dia seguinte. Os KPIs dos editais são recalculados no fim de cada carga da Seleção e, de novo, às 10h de Brasília.',
+      'As análises curriculares chegam pelo Apps Script das planilhas (o envio incremental é esperado a cada 20 minutos e fica "Atrasada" depois de 1 hora; a carga completa não tem prazo). Entrevistas carregam pelo GitHub Actions de hora em hora, o dia todo, e ficam atrasadas depois de 4 horas; a Seleção carrega às 8h10, 13h10 e 18h10 de Brasília e fica atrasada depois de 15 horas (a noite sem carga é esperada). Quem marca esses horários é o banco (Agenda dos robôs), não o GitHub. O robô da Empregare não tem agenda: roda só quando um administrador clica em "Rodar agora", por isso nunca fica "Atrasado". As tarefas do banco que rodam a cada 2 minutos (como o pacote do painel de análises e o das entrevistas) atrasam depois de 15 minutos; as diárias, depois de 26 horas; as mensais, depois de 32 dias. As conferências de consistência rodam todo dia às 6h de Brasília e ficam atrasadas depois de 26 horas. A pré-classificação da Avaliação documental roda no fim de cada carga do robô da Empregare e no Recalcular da coordenação, sem agenda, por isso também nunca fica "Atrasada". Os KPIs dos editais são recalculados no fim de cada carga da Seleção e, de novo, às 10h de Brasília.',
     fato: "",
     fonte:
-      "src/lib/saude-das-cargas.ts; supabase/migrations/20261001120000_saude_das_cargas.sql; supabase/migrations/20261002090000_kpis_depois_da_carga_da_selecao.sql; supabase/migrations/20261002130000_kpis_de_todo_edital_com_fonte.sql; .github/workflows/sincronizar-selecao.yml; .github/workflows/sincronizar-entrevistas.yml; supabase/migrations/20260930235900_kpis_uma_vez_por_dia.sql; .github/workflows/expurgo-anexos-chat.yml; docs/agenda-dos-robos.md",
+      "src/lib/saude-das-cargas.ts; supabase/migrations/20261001120000_saude_das_cargas.sql; supabase/migrations/20261002090000_kpis_depois_da_carga_da_selecao.sql; supabase/migrations/20261002130000_kpis_de_todo_edital_com_fonte.sql; .github/workflows/sincronizar-selecao.yml; .github/workflows/sincronizar-entrevistas.yml; supabase/migrations/20260930235900_kpis_uma_vez_por_dia.sql; docs/agenda-dos-robos.md",
   },
   {
     arquivo: "regras-do-status-das-atualizacoes.md",
@@ -5361,7 +4924,7 @@ export const VERBETES_AYA = Object.freeze([
       "http 401 na agenda dos robos",
     ],
     resposta:
-      'O agendamento do próprio GitHub atrasava ou pulava as cargas (as de hora em hora chegaram a rodar só a cada 5 a 8 horas). Por isso o banco do MONITORA passou a ser o único agendador (e também quem atende o "Rodar agora", com a mesma chave): na hora marcada, ele pede ao GitHub a execução de Entrevistas (de hora em hora), Seleção (3 vezes ao dia: 8h10, 13h10 e 18h10), Conferências (6h) e Expurgo dos anexos do chat (6h30). A linha "Agenda dos robôs" do Status das atualizações mostra o último pedido aceito e as falhas das últimas 24 horas. "Sem chave no Vault" quer dizer que falta o token do GitHub no Supabase: nada é pedido e as cargas param de rodar sozinhas. "Falhou" com HTTP 401 quer dizer chave inválida ou expirada (403 ou 404: sem permissão no repositório). Para resolver, gere um novo token fine-grained (Actions: read and write, só o repositório agsus-monitora) e, no Supabase (Integrations › Vault › Secrets), troque o valor do segredo github_disparo_robos, com o mesmo nome. O próximo horário já usa a chave nova; para não esperar, use o "Rodar agora" de cada carga.',
+      'O agendamento do próprio GitHub atrasava ou pulava as cargas (as de hora em hora chegaram a rodar só a cada 5 a 8 horas). Por isso o banco do MONITORA passou a ser o único agendador (e também quem atende o "Rodar agora", com a mesma chave): na hora marcada, ele pede ao GitHub a execução de Entrevistas (de hora em hora), Seleção (3 vezes ao dia: 8h10, 13h10 e 18h10) e Conferências (6h). A linha "Agenda dos robôs" do Status das atualizações mostra o último pedido aceito e as falhas das últimas 24 horas. "Sem chave no Vault" quer dizer que falta o token do GitHub no Supabase: nada é pedido e as cargas param de rodar sozinhas. "Falhou" com HTTP 401 quer dizer chave inválida ou expirada (403 ou 404: sem permissão no repositório). Para resolver, gere um novo token fine-grained (Actions: read and write, só o repositório agsus-monitora) e, no Supabase (Integrations › Vault › Secrets), troque o valor do segredo github_disparo_robos, com o mesmo nome. O próximo horário já usa a chave nova; para não esperar, use o "Rodar agora" de cada carga.',
     fato: "",
     fonte:
       "docs/agenda-dos-robos.md; supabase/migrations/20261008140000_agenda_dos_robos_pelo_banco.sql; src/lib/saude-das-cargas.ts",
@@ -5380,11 +4943,10 @@ export const VERBETES_AYA = Object.freeze([
       "rodar o robo da empregare agora",
       "rodar as conferencias agora",
       "rodar a pre-classificacao agora",
-      "rodar o expurgo dos anexos agora",
       "atualizar agora sem esperar",
     ],
     resposta:
-      'Em Configurações › Status das atualizações, o administrador global vê o botão "Rodar agora" nas linhas Robô da Empregare, Conferências de consistência, Expurgo dos anexos do chat, Pré-classificação (Avaliação documental), Seleção e Entrevistas. Na pré-classificação, o Rodar agora recalcula todos os editais ativos com vagas da Empregare; a coordenação de um edital usa o Recalcular da aba Pré-classificação. O clique pede ao banco, que pede ao GitHub Actions (com a mesma chave da Agenda dos robôs) a execução do workflow daquela carga, em modo normal, e registra quem pediu; funciona também fora do site publicado; para escolher editais, vagas, modo ou limite, use "Opções". O botão fica desabilitado enquanto a carga roda (pelo registro do banco) e por 3 minutos depois do pedido; em segundos a linha diz se o GitHub aceitou. A nova execução entra na lista em alguns minutos; o robô da Empregare pode levar mais de meia hora.',
+      'Em Configurações › Status das atualizações, o administrador global vê o botão "Rodar agora" nas linhas Robô da Empregare, Conferências de consistência, Pré-classificação (Avaliação documental), Seleção e Entrevistas. Na pré-classificação, o Rodar agora recalcula todos os editais ativos com vagas da Empregare; a coordenação de um edital usa o Recalcular da aba Pré-classificação. O clique pede ao banco, que pede ao GitHub Actions (com a mesma chave da Agenda dos robôs) a execução do workflow daquela carga, em modo normal, e registra quem pediu; funciona também fora do site publicado; para escolher editais, vagas, modo ou limite, use "Opções". O botão fica desabilitado enquanto a carga roda (pelo registro do banco) e por 3 minutos depois do pedido; em segundos a linha diz se o GitHub aceitou. A nova execução entra na lista em alguns minutos; o robô da Empregare pode levar mais de meia hora.',
     fato: "",
     fonte:
       "src/lib/robos-de-carga.js; supabase/migrations/20261008140000_agenda_dos_robos_pelo_banco.sql; docs/robo-empregare.md",
@@ -5854,7 +5416,7 @@ export const VERBETES_AYA = Object.freeze([
       "permissao editais",
     ],
     resposta:
-      'Cadastrar ("Novo edital") e editar (o lápis da linha) é de quem tem nível Editor em Editais ou em Cronograma, em Configurações › Acessos. Com Leitor, a tela mostra a tabela, os indicadores e o "Ver cronograma", sem esses botões. Na linha, o ícone da Lista de aprovados aparece para quem tem Editor em Importação e convocação, e o botão "Conversa" para quem usa as Mensagens. Mover o edital de área é só do administrador global.',
+      'Cadastrar ("Novo edital") e editar (o lápis da linha) é de quem tem nível Editor em Editais ou em Cronograma, em Configurações › Acessos. Com Leitor, a tela mostra a tabela, os indicadores e o "Ver cronograma", sem esses botões. Na linha, o ícone da Lista de aprovados aparece para quem tem Editor em Importação e convocação. Mover o edital de área é só do administrador global.',
     fato: "",
     fonte:
       "src/modulos/editais/nucleo.jsx; src/lib/access-roles.js (canManageEditais, canImportApprovedList, canMoveEditalBetweenAreas)",

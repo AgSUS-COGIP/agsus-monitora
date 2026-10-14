@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { horaBR, lerHora } from "../../lib/classificacao/numeros.js";
+import { horaBR, lerHora } from "../../lib/classificacao/numeros.ts";
 import { Campo, Secao } from "../../ui/index.js";
 
 /*

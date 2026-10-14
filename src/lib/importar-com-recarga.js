@@ -1,7 +1,7 @@
 /*
   Import sob demanda que sobrevive a uma versão nova publicada.
 
-  Os pedaços baixados na hora (ex.: o painel do chat) têm o hash no nome. Se a
+  Os pedaços baixados na hora (ex.: as telas sob demanda) têm o hash no nome. Se a
   Vercel publica uma versão enquanto a página está aberta, o arquivo antigo
   some e o `import()` falha; o `lazy` do React guarda a falha e a ilha mostra
   "Não foi possível mostrar esta parte da tela" até a pessoa recarregar.

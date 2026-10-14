@@ -371,7 +371,7 @@ body.access-request-mode .login-instituicao {
 }
 
 /* Rótulo de campo em caixa alta. O rótulo de caixa de marcar/opção (filtros,
-   "Agrupar por projeto", avisos do chat) é texto comum: fica de fora. */
+   "Agrupar por projeto") é texto comum: fica de fora. */
 label:where(:not(:has(input[type="checkbox"], input[type="radio"]))) {
   font-size: 12px;
   font-weight: 900;

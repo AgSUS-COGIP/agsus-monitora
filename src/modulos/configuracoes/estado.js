@@ -35,11 +35,7 @@ const RPC_RESTORE = "restaurar_configuracoes_versao";
 const TEMPO_LIMITE_MS = 30000;
 
 /* Seções que salvam pela própria tela React, com motivo: sem barra de salvar. */
-export const SECOES_COM_SALVAR_PROPRIO = Object.freeze([
-  "acessos",
-  "modulos",
-  "mensagens",
-]);
+export const SECOES_COM_SALVAR_PROPRIO = Object.freeze(["acessos", "modulos"]);
 
 const txt = (valor) => String(valor ?? "").trim();
 

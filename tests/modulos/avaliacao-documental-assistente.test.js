@@ -7,7 +7,7 @@ import {
 } from "../../src/componentes/dados-do-monitoramento.ts";
 import { montarAvaliacaoDocumental } from "../../src/modulos/avaliacao-documental/avaliacao-documental.jsx";
 import { DESEMPATES_DA_PROVISORIA } from "../../src/lib/avaliacao-documental/catalogo.js";
-import { CATALOGO_DE_CRITERIOS } from "../../src/lib/classificacao/catalogo.js";
+import { CATALOGO_DE_CRITERIOS } from "../../src/lib/classificacao/catalogo.ts";
 import {
   clicar,
   digitar,

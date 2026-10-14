@@ -20,7 +20,7 @@ import { useId, useMemo, useState } from "react";
 import {
   MOTIVOS_DE_ELIMINACAO,
   TIPOS_DE_LISTA,
-} from "../../lib/classificacao/catalogo.js";
+} from "../../lib/classificacao/catalogo.ts";
 import {
   avisosAgrupados,
   filtrosAtivosDoRecorte,
@@ -33,10 +33,10 @@ import {
   dataBR,
   formatarNota,
   ordinal,
-} from "../../lib/classificacao/numeros.js";
+} from "../../lib/classificacao/numeros.ts";
 import { normalizarRegra } from "../../lib/classificacao/regra.ts";
 import { rotuloDaVersaoNaLista } from "../../lib/nome-da-versao.ts";
-import { conferirSorteio } from "../../lib/classificacao/sorteio.js";
+import { conferirSorteio } from "../../lib/classificacao/sorteio.ts";
 import { DocumentoDoSei } from "./documento.tsx";
 import { HoraDeNascimento } from "./hora-de-nascimento.tsx";
 import { ModalDePublicacaoDeAprovados } from "./publicar-aprovados.tsx";

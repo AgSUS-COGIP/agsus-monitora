@@ -14,13 +14,13 @@
   Convocação) ou dos percentuais da regra — estas duas pela MESMA conta da
   convocação (`derivarQuadro`; ver convocacao-do-edital.js).
 */
-import { codigosDaModalidade, semAcento } from "./catalogo.js";
+import { codigosDaModalidade, semAcento } from "./catalogo.ts";
 import {
   modeloDaRegra,
   vagasDaConvocacao,
   vagasPelaConta,
 } from "./convocacao-do-edital.js";
-import { numeroBR } from "./numeros.js";
+import { numeroBR } from "./numeros.ts";
 import { normalizarRegra } from "./regra.ts";
 
 const texto = (valor) => String(valor ?? "").trim();

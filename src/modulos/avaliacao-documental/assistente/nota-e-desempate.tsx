@@ -10,7 +10,7 @@ import type {
   DesempateDaProvisoria,
   RegraAnalise,
 } from "../../../lib/avaliacao-documental/tipos-da-regra.ts";
-import { DIRECOES, NIVEIS } from "../../../lib/classificacao/catalogo.js";
+import { DIRECOES, NIVEIS } from "../../../lib/classificacao/catalogo.ts";
 import { rotuloDaVersao } from "../../../lib/nome-da-versao.ts";
 import { Aviso } from "../../../ui/index.js";
 import { CampoNumero } from "../campos.jsx";

@@ -44,18 +44,21 @@ describe("migration da agenda dos robôs (20261008140000)", () => {
     );
   });
 
-  it("a lista fixa da função e da tabela é a mesma de ROBOS_DE_CARGA", () => {
+  /* O expurgo dos anexos do chat saiu da lista em 20261014120000 (o chat saiu). */
+  const NA_EPOCA = [...WORKFLOWS, "expurgo-anexos-chat.yml"];
+
+  it("a lista fixa da função e da tabela era a de ROBOS_DE_CARGA (mais o expurgo do chat)", () => {
     const daFuncao = [
       ...DISPARAR.matchAll(/'([a-z-]+\.yml)', jsonb_build_array/g),
     ].map((m) => m[1]);
-    expect(daFuncao.sort()).toEqual([...WORKFLOWS].sort());
+    expect(daFuncao.sort()).toEqual([...NA_EPOCA].sort());
     const check = MIGRATION.slice(
       MIGRATION.indexOf('"CK_DISPROBO_NOWORKFLOW" check'),
       MIGRATION.indexOf('"CK_DISPROBO_TPSITUACAO"'),
     );
     expect(
       [...check.matchAll(/'([a-z-]+\.yml)'/g)].map((m) => m[1]).sort(),
-    ).toEqual([...WORKFLOWS].sort());
+    ).toEqual([...NA_EPOCA].sort());
     expect(DISPARAR).toMatch(
       /not \(c_aceitos \? p_workflow\)[\s\S]*errcode = '22023'/,
     );

@@ -9,10 +9,10 @@ globalThis.IS_REACT_ACT_ENVIRONMENT = true;
 
 /*
   "Pessoas online" no cabeçalho (src/componentes/pessoas-online/): o botão, a
-  lista com o rótulo do perfil (não o código) e o "Mensagem" inteiro.
+  lista com o rótulo do perfil (não o código), sem rolagem lateral.
 */
 
-function presencaFalsa(inicial = {}, { perfil, usuario } = {}) {
+function presencaFalsa(inicial = {}) {
   let estado = {
     visivel: true,
     aberto: false,
@@ -34,14 +34,6 @@ function presencaFalsa(inicial = {}, { perfil, usuario } = {}) {
     },
     alternar: vi.fn(() => definir({ aberto: !estado.aberto })),
     fechar: vi.fn(() => definir({ aberto: false })),
-    perfilAtual: () =>
-      perfil ?? {
-        id: "g",
-        ativo: true,
-        perfil: "edital_gestor",
-        permissoes: { chat: "leitor" },
-      },
-    usuarioAtual: () => usuario ?? { id: "eu" },
     definir,
   };
 }
@@ -156,24 +148,10 @@ describe("lista", () => {
     expect(texto).not.toMatch(/Edital_gestor|\bAdmin\b|Master/);
   });
 
-  it("Mensagem: para as outras pessoas, inteiro, ao lado do texto que encolhe", async () => {
+  it("só a pessoa e o lugar (sem botão), com o texto que encolhe", async () => {
     await montar(presencaFalsa({ pessoas: PESSOAS, aberto: true }));
-    const botoes = [...document.querySelectorAll("[data-chat-usuario]")];
-    expect(botoes.map((b) => b.getAttribute("data-chat-usuario"))).toEqual([
-      "u3",
-      "u2",
-    ]);
-    for (const botao of botoes) {
-      expect(botao.textContent).toBe("Mensagem");
-      // O texto da pessoa e o botão são irmãos: o texto encolhe, o botão não.
-      expect(botao.previousElementSibling.className).toBe(
-        "online-presence-texto",
-      );
-    }
-    expect(botoes[1].getAttribute("aria-label")).toBe(
-      "Mensagem para Maria Aparecida dos Santos Nascimento Ferreira",
-    );
-    // Regras que mantêm o botão inteiro e a lista sem rolagem lateral.
+    expect(document.querySelector("#onlinePresenceList button")).toBeNull();
+    // Regras que mantêm a lista sem rolagem lateral.
     const shell = readFileSync("src/styles/platform-shell.css", "utf8");
     expect(shell).toMatch(
       /\.online-presence-texto \{\s*flex: 1 1 auto;\s*min-width: 0;/,
@@ -183,20 +161,6 @@ describe("lista", () => {
     expect(shell).toMatch(
       /@media \(max-width: 900px\) \{\s*\.online-presence \{\s*position: static;\s*\}\s*\.online-presence-popover \{\s*left: 0;\s*right: 0;\s*width: auto;/,
     );
-    const chat = readFileSync("src/modulos/chat/chat.css", "utf8");
-    expect(chat).toMatch(
-      /\.online-presence-mensagem \{\s*flex: none;\s*white-space: nowrap;/,
-    );
-  });
-
-  it("sem chat no perfil, sem Mensagem", async () => {
-    await montar(
-      presencaFalsa(
-        { pessoas: PESSOAS, aberto: true },
-        { perfil: { id: "c", ativo: true, perfil: "usuario" } },
-      ),
-    );
-    expect(document.querySelector("[data-chat-usuario]")).toBeNull();
   });
 
   it("ninguém mais: o aviso curto", async () => {

@@ -11,7 +11,7 @@ O que vale em todas as telas: Pessoas online, atualização do sistema e busca g
 ## Pessoas online
 
 **perguntas:** o que mostra pessoas online | pessoas online | quem esta online | presenca online
-**resposta:** Pessoas online fica no cabeçalho e só o administrador global e o Gestor veem (o chat está em teste com os dois). Mostra quem está com o MONITORA aberto: nome, foto ou iniciais, grupo e onde a pessoa está, como "Análises curriculares · Saúde Indígena" ou "Configurações › Acessos" (painel externo aparece como "Painel externo"). Atualiza a cada 45 segundos com a aba visível, e trocar de página, área ou seção avisa na hora.
+**resposta:** Pessoas online fica no cabeçalho e só o administrador global e o Gestor veem. Mostra quem está com o MONITORA aberto: nome, foto ou iniciais, grupo e onde a pessoa está, como "Análises curriculares · Saúde Indígena" ou "Configurações › Acessos" (painel externo aparece como "Painel externo"). Atualiza a cada 45 segundos com a aba visível, e trocar de página, área ou seção avisa na hora.
 **fonte:** src/lib/online-presence.js; src/app/presenca.js; src/componentes/pessoas-online/pessoas-online.jsx; src/lib/access-roles.js (podeVerPessoasOnline)
 
 ## Atualização do sistema
@@ -29,5 +29,5 @@ O que vale em todas as telas: Pessoas online, atualização do sistema e busca g
 ## Foto do perfil
 
 **perguntas:** foto do perfil | minha foto nao aparece | foto do google | trocar minha foto | avatar | iniciais no lugar da foto
-**resposta:** A foto que aparece para os colegas (em Pessoas online, no chat e em Acessos) é a da conta Google com que você entra. O MONITORA a copia para o seu perfil quando o perfil é criado ou ligado à sua conta e, depois, sempre que ela muda (no sinal de presença enviado enquanto o sistema está aberto); só vale endereço https. Não há escolha de foto dentro do MONITORA: para trocar, troque a foto da conta Google. Sem foto no Google, aparecem as iniciais.
+**resposta:** A foto que aparece para os colegas (em Pessoas online e em Acessos) é a da conta Google com que você entra. O MONITORA a copia para o seu perfil quando o perfil é criado ou ligado à sua conta e, depois, sempre que ela muda (no sinal de presença enviado enquanto o sistema está aberto); só vale endereço https. Não há escolha de foto dentro do MONITORA: para trocar, troque a foto da conta Google. Sem foto no Google, aparecem as iniciais.
 **fonte:** supabase/migrations/20261005200000_foto_do_google_no_perfil.sql

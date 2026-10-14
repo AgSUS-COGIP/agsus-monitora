@@ -348,6 +348,35 @@ class Fluxo(unittest.TestCase):
         self.assertNotIn("mais", lidos)
         self.assertEqual((lidos["vaga"]["quadro"], lidos["anterior"], lidos["decisoes"]), (quadro, anterior, {}))
 
+    def test_a_gravacao_leva_a_linha_do_quadro_lida_com_a_vaga(self):
+        """O banco não acha a linha do quadro de novo: o job manda a que leu (20261014130000)."""
+        candidatos = [candidato(i, f"{10 + i},0/30,0") for i in range(1, 4)]
+        id_quadro = "00000000-0000-4000-a000-00000000q001".replace("q", "0")
+
+        def gravar_com(quadro):
+            def banco(funcao, corpo):
+                return {"candidatos": candidatos, "vaga": {"cargo": "CARGO 1", "quadro": quadro}, "anterior": {}}
+
+            gravados = {}
+            job.processar_edital(
+                banco,
+                edital_93(vagas=[{"codigo": "179698", "candidatos_ativos": 3, "ultimo_lote": 0}]),
+                "2026-10-06",
+                True,
+                lambda codigo, r: gravados.setdefault(codigo, job.payload_da_vaga(r)),
+            )
+            return gravados["179698"][0]
+
+        com_quadro = {"id": id_quadro, "vagas_imediatas": 1, "cadastro_reserva": False, "modalidades": None}
+        self.assertEqual(gravar_com(com_quadro)["quadro"], id_quadro)
+        # Vaga sem linha do quadro: a chave vai nula (o banco grava sem quadro, sem procurar de novo).
+        resumo = gravar_com(None)
+        self.assertIn("quadro", resumo)
+        self.assertIsNone(resumo["quadro"])
+        # Quem não informa (ex.: o treinamento) não manda a chave: o banco acha a linha.
+        sem = {"resumo": {"tamanho": 1, "descricao": "", "por_modalidade": None, "acima_do_corte": 0, "avisos": []}}
+        self.assertNotIn("quadro", job.payload_da_vaga({**sem, "linhas": []})[0])
+
     def test_a_leitura_em_partes_para_sem_mais_e_recusa_parte_fora_de_ordem(self):
         def banco(funcao, corpo):
             if corpo.get("p_apos") is None:

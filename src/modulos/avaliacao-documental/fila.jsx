@@ -6,7 +6,7 @@ import {
   useState,
   useSyncExternalStore,
 } from "react";
-import { ordinal } from "../../lib/classificacao/numeros.js";
+import { ordinal } from "../../lib/classificacao/numeros.ts";
 import { formatNumberBR } from "../../lib/formatters.js";
 import { rotuloDaVersaoNaLista } from "../../lib/nome-da-versao.ts";
 import {

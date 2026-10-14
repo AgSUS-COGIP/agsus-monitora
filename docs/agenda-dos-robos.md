@@ -22,7 +22,6 @@ em `supabase/ensaios/` e `supabase/rollback/`).
 | `agsus_robo_sincronizar_entrevistas` | `5 * * * *`         | de hora em hora, aos :05    | `sincronizar-entrevistas.yml` |
 | `agsus_robo_sincronizar_selecao`     | `10 11,16,21 * * *` | 8h10, 13h10 e 18h10         | `sincronizar-selecao.yml`     |
 | `agsus_robo_conferencias`            | `0 9 * * *`         | 6h                          | `conferencias.yml`            |
-| `agsus_robo_expurgo_anexos_chat`     | `30 9 * * *`        | 6h30                        | `expurgo-anexos-chat.yml`     |
 | `agsus_robo_conferir_disparos`       | `*/5 * * * *`       | a cada 5 min (lê respostas) | —                             |
 | `agsus_robo_inscricoes_114_2026`     | `0 10,16 * * *`     | 7h e 13h, até 15/10/2026    | `robo-empregare.yml`          |
 
@@ -108,7 +107,7 @@ recusada; um administrador precisa trocá-la no cofre (Vault) com o nome github_
 
 Configurações › Status das atualizações › **Agenda dos robôs**: último pedido aceito (o GitHub
 responde 204), falhas e pedidos sem chave nas últimas 24 h; em "Detalhes", os 20 últimos pedidos.
-As cargas (Entrevistas, Seleção, Conferências, Expurgo) continuam com o selo de atraso de sempre.
+As cargas (Entrevistas, Seleção, Conferências) continuam com o selo de atraso de sempre.
 
 ## Desligar
 

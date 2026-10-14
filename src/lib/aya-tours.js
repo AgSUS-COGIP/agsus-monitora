@@ -39,7 +39,6 @@ import {
   canManageEditais,
   isAdminGlobal,
   paginasPermitidas,
-  podeUsarChat,
   secaoDeConfiguracaoPermitida,
 } from "./access-roles.js";
 import { hasResource } from "./permissoes-recursos.js";
@@ -1130,32 +1129,6 @@ const TOURS = Object.freeze({
       PASSO_DA_AYA,
     ]),
   }),
-  "config:mensagens": Object.freeze({
-    titulo: "Configurações › Mensagens",
-    passos: Object.freeze([
-      passo(
-        t("config-mensagens"),
-        "Mensagens guardadas",
-        "Quantas mensagens do chat estão guardadas.",
-      ),
-      passo(
-        t("config-mensagens-salvar-prazo"),
-        "Prazo de retenção",
-        "Mensagens mais velhas que o prazo são apagadas toda madrugada.",
-      ),
-      passo(
-        [t("config-mensagens-zerar-botao"), t("config-mensagens-zerar")],
-        "Zerar mensagens",
-        "Apaga todas as mensagens de uma vez, com confirmação.",
-      ),
-      passo(
-        t("config-mensagens-historico"),
-        "Histórico das limpezas",
-        "Quem limpou, quando e quantas mensagens saíram.",
-      ),
-      PASSO_DA_AYA,
-    ]),
-  }),
   "config:acessos": Object.freeze({
     titulo: "Configurações › Acessos",
     passos: Object.freeze([
@@ -1234,12 +1207,6 @@ const TRILHAS = Object.freeze([
         "Busca rápida",
         "Ctrl+K (ou Cmd+K) abre a busca global por edital, unidade, etapa, responsável e mais.",
         { pagina: "dashboard" },
-      ),
-      passo(
-        t("chat-botao"),
-        "Mensagens",
-        "Converse com a equipe; cada edital pode ter a própria conversa.",
-        { pagina: "dashboard", exige: podeUsarChat },
       ),
       passo(
         [t("barra-tema"), t("barra-rodape")],

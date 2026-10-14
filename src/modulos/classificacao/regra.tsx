@@ -34,8 +34,8 @@ import {
   NIVEIS,
   NUMERACOES,
   PARCIAIS_DA_DOCUMENTAL,
-} from "../../lib/classificacao/catalogo.js";
-import { dataBR, ARREDONDAMENTOS } from "../../lib/classificacao/numeros.js";
+} from "../../lib/classificacao/catalogo.ts";
+import { dataBR, ARREDONDAMENTOS } from "../../lib/classificacao/numeros.ts";
 import {
   ACUMULOS,
   ARREDONDAMENTOS_DE_COTA,
