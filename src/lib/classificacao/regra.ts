@@ -24,8 +24,8 @@ import {
   NIVEIS,
   NUMERACOES,
   PARCIAIS_DA_DOCUMENTAL,
-} from "./catalogo.js";
-import { ARREDONDAMENTOS, lerData, numeroBR } from "./numeros.js";
+} from "./catalogo.ts";
+import { ARREDONDAMENTOS, lerData, numeroBR } from "./numeros.ts";
 
 export const VERSAO_DO_ESQUEMA = 1;
 

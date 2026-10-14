@@ -47,8 +47,8 @@ documento-no-navegador.js  área de transferência (HTML + texto), logo em PNG, 
 classificacao.css  só o que é desta tela (tokens)
 ```
 
-Regras puras em `src/lib/classificacao/` (`motor.js`, `regra.ts`, `catalogo.js`, `vagas.js`,
-`numeros.js`, `sorteio.js`, `exportacao.js`, `ajustes.ts` — o motor com os ajustes da pontuação
+Regras puras em `src/lib/classificacao/` (`motor.js`, `regra.ts`, `catalogo.ts`, `vagas.js`,
+`numeros.ts`, `sorteio.ts`, `exportacao.js`, `ajustes.ts` — o motor com os ajustes da pontuação
 aprovados em recurso e a prévia do recurso —, `documento-sei.js` — o documento no modelo das
 publicações do SEI, textos-padrão do 83/2026 e do 100/2026 —, `documento-docx.js` — Word com papel
 timbrado —, `dados.ts`). Os textos e as colunas do documento ajustados pelo gestor ficam na regra

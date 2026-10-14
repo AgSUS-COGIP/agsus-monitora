@@ -16,7 +16,7 @@ import {
   MOTIVOS_DE_ELIMINACAO,
   TIPOS_DE_LISTA,
   TIPOS_DE_LISTA_DA_PRE_CLASSIFICACAO,
-} from "./catalogo.js";
+} from "./catalogo.ts";
 import { normalizarRegra } from "./regra.ts";
 import { ehEditalDeTreinamento } from "../edital-de-treinamento.js";
 

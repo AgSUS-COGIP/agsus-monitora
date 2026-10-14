@@ -629,7 +629,7 @@ Ordem de publicação do edital 100/2026 (vaga de CASAI), da qual se aproveita a
 | g | **Convocação para Entrevista** | Nº (ordem de convocação), Nome, Vaga, Modalidade, Data, Horário, local | — | **Classificação** `CONVOCACAO` + **Agenda das entrevistas** (#273) | **sim** |
 | h | **Resultado final do processo** | classificação final, vagas e CR | — | **Classificação** `FINAL` → "Publicar como lista de aprovados" | **sim** |
 
-O que já existe (`src/lib/classificacao/catalogo.js`): `TIPOS_DE_LISTA` = `PRELIMINAR`
+O que já existe (`src/lib/classificacao/catalogo.ts`): `TIPOS_DE_LISTA` = `PRELIMINAR`
 (avaliação documental), `CONVOCACAO`, `ENTREVISTA` e `FINAL`, com `FASES_DA_PUBLICACAO`
 Preliminar/Final e os modelos do SEI em `documento-sei.js`. O que falta criar:
 

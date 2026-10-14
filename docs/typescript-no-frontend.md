@@ -214,3 +214,11 @@ banco é validada em `dados-da-agenda.ts`. A carga do mesmo edital preserva os d
 falha; respostas de gravação antigas não alteram dados, flags ou avisos após troca de
 edital ou usuário, inclusive ao sair e voltar ao mesmo edital. Convocação inválida impede
 gerar uma agenda parcial. Contratos da tela e ações em `tests/tipos/agenda-da-classificacao.tsx`.
+
+Números, arredondamento/escala das notas, datas, idade e hora de nascimento, catálogo de
+critérios/modalidades e sorteios da Classificação também estão em TypeScript:
+`classificacao/numeros.ts`, `catalogo.ts` e `sorteio.ts`. O catálogo tem contratos para os
+campos já normalizados do candidato e a data de corte. O sorteio preserva a ordem por
+SHA-256 da semente e identidade, conferida contra o Node nos testes. Bigints que excedem
+a representação numérica finita retornam `null`. Contratos em
+`tests/tipos/calculos-e-desempates.tsx`; a orquestração do motor permanece em JavaScript.

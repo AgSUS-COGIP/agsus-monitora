@@ -1,5 +1,5 @@
 import { useEffect, useState, useSyncExternalStore } from "react";
-import { ordinal } from "../../lib/classificacao/numeros.js";
+import { ordinal } from "../../lib/classificacao/numeros.ts";
 import {
   contadoresDaPreClassificacao,
   declaradasCongeladas,

@@ -35,7 +35,7 @@ import {
   - `previaDoAjuste`: nova nota, nova posição e quem muda de posição por
     causa do ajuste, na lista da etapa (documental, entrevista ou final).
 */
-import { ITEM_DO_AJUSTE_POR_CODIGO, ITENS_DO_AJUSTE } from "./catalogo.js";
+import { ITEM_DO_AJUSTE_POR_CODIGO, ITENS_DO_AJUSTE } from "./catalogo.ts";
 import { dataDeCorteDoCronograma } from "./dados.ts";
 import {
   aplicarAgrupamentos,
@@ -45,7 +45,7 @@ import {
   prepararCandidatos,
   rotuloDoItem,
 } from "./motor.js";
-import { numeroBR } from "./numeros.js";
+import { numeroBR } from "./numeros.ts";
 import { normalizarRegra } from "./regra.ts";
 
 /* A lista da etapa contra a qual o candidato recorreu (a da prévia). */
