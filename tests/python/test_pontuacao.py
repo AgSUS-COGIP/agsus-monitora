@@ -74,7 +74,10 @@ class Detalhes(unittest.TestCase):
             "modalidade": "AC",
             "blocos": {"REGISTRO_CONSELHO": {"situacao": "NAO_ENVIADO", "motivos": ["SEM_REGISTRO"]}},
         }
-        do_registro = lambda r: [t for t in r["eliminatorios"] if "conselho de classe" in t]
+
+        def do_registro(r):
+            return [t for t in r["eliminatorios"] if "conselho de classe" in t]
+
         self.assertEqual(
             do_registro(pt.calcular_avaliacao(regra, candidato, {"notaMinima": 0})),
             ["Item 6.4: Não apresentou registro ativo no conselho de classe exigido para a vaga."],

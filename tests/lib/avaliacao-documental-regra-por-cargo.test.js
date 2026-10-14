@@ -293,8 +293,9 @@ describe("bloco que não se aplica ao cargo (nao_se_aplica)", () => {
   // O registro no conselho não se aplica ao Motorista D (114/2026, Anexo I).
   const comNaoSeAplica = () => {
     const r = structuredClone(REGRA);
-    r.por_cargo.find((d) => d.codigo === "MOTORISTA_D").blocos.REGISTRO_CONSELHO =
-      { nao_se_aplica: true };
+    r.por_cargo.find(
+      (d) => d.codigo === "MOTORISTA_D",
+    ).blocos.REGISTRO_CONSELHO = { nao_se_aplica: true };
     return r;
   };
   const motorista = (regra) =>
@@ -333,7 +334,10 @@ describe("bloco que não se aplica ao cargo (nao_se_aplica)", () => {
     const l = {
       ...motorista(REGRA),
       blocos: {
-        REGISTRO_CONSELHO: { situacao: "NAO_ENVIADO", motivos: ["SEM_REGISTRO"] },
+        REGISTRO_CONSELHO: {
+          situacao: "NAO_ENVIADO",
+          motivos: ["SEM_REGISTRO"],
+        },
       },
     };
     const doRegistro = (a) =>
@@ -343,9 +347,9 @@ describe("bloco que não se aplica ao cargo (nao_se_aplica)", () => {
     ]);
     const a = calcularAvaliacao(comNaoSeAplica(), l, { notaMinima: 0 });
     expect(doRegistro(a)).toEqual([]);
-    expect(a.blocos.find((b) => b.codigo === "REGISTRO_CONSELHO").situacao).toBe(
-      "NAO_SE_APLICA",
-    );
+    expect(
+      a.blocos.find((b) => b.codigo === "REGISTRO_CONSELHO").situacao,
+    ).toBe("NAO_SE_APLICA");
   });
 
   it("valida: só em bloco de documento, marcado e sozinho; aparece no resumo", () => {

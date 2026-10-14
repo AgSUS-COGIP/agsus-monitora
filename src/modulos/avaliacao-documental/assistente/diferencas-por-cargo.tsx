@@ -117,7 +117,9 @@ function SobrescritaDoTipo({
         <Caixa
           rotulo="Não se aplica a este cargo"
           marcado={false}
-          aoMudar={(v: boolean) => (v ? aoMudar({ nao_se_aplica: true }) : null)}
+          aoMudar={(v: boolean) =>
+            v ? aoMudar({ nao_se_aplica: true }) : null
+          }
         />
       ) : null}
       {campos.includes("faixas") ? (

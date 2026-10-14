@@ -41,6 +41,8 @@ describe("bloco que não se aplica ao cargo", () => {
       expect(ROLLBACK).toContain(`revoke all on function ${f}`);
     }
     expect(ROLLBACK).not.toContain("nao_se_aplica', true");
-    expect(ROLLBACK).toContain("when 'DOCUMENTO' then array['requisitos'] end;");
+    expect(ROLLBACK).toContain(
+      "when 'DOCUMENTO' then array['requisitos'] end;",
+    );
   });
 });
