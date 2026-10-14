@@ -2,15 +2,17 @@
   A Aya (src/modulos/aya/aya.jsx): a arara flutuante e o painel de conversa.
   Só tokens (src/styles/tokens.css); o tema escuro vem deles.
 
-  Camada: 10042 — acima do cabeçalho (.top 10030) e da barra lateral do
-  celular (10036), abaixo do aviso de parabéns (comemoracao.css, 10045) e dos
-  modais (--z-overlay). Fica fora da escada de app.css de propósito: entre o
-  cabeçalho e o parabéns não há token.
+  Camada: 10038 — acima do cabeçalho (.top 10030) e da barra lateral do
+  celular (10036), abaixo dos menus e popovers das telas (--z-popover 10040:
+  em 13/10/2026 a arara, a 10042, cobria os itens de "Ações da coordenação"
+  da Fila), do aviso de parabéns (comemoracao.css, 10045) e dos modais
+  (--z-overlay). Fica fora da escada de app.css de propósito: entre a barra
+  e o popover não há token.
 */
 
 .aya {
   position: fixed;
-  z-index: 10042;
+  z-index: 10038;
   right: 0;
   bottom: 0;
   pointer-events: none;

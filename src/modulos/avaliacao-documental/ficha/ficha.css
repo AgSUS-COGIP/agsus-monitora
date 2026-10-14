@@ -1607,6 +1607,8 @@
   justify-content: space-between;
   gap: var(--space-3);
   padding: var(--space-2) var(--space-3) var(--space-2) var(--space-5);
+  /* O botão principal fica fora do canto da arara da Aya (--aya-reserva). */
+  padding-right: calc(var(--space-3) + var(--aya-reserva, 0px));
   padding-bottom: calc(var(--space-2) + var(--mobile-safe-bottom, 0px));
 }
 .avd-analise .avd-ficha-barra {

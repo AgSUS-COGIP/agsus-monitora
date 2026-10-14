@@ -47,6 +47,8 @@ function Botao({
       type="button"
       className={className}
       data-acao={a.acao}
+      // No celular as setas escondem o texto (ficha.css): o nome fica aqui.
+      aria-label={a.rotulo}
       disabled={a.desabilitado}
       title={a.dica}
       onClick={a.aoClicar}

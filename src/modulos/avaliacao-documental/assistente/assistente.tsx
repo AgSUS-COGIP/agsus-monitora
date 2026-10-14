@@ -443,6 +443,8 @@ export function AssistenteDaRegra({
               <button
                 type="button"
                 data-passo={p.id}
+                // No celular o rótulo some (só o número): o nome fica aqui.
+                aria-label={`Passo ${i + 1}: ${p.rotulo}`}
                 aria-current={i === passo ? "step" : undefined}
                 disabled={!rascunho && i > 0}
                 onClick={() => setPasso(i)}

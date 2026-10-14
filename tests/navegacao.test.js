@@ -45,6 +45,13 @@ describe("bloqueioDaTela", () => {
     );
   });
 
+  it("tela que não existe é bloqueada com aviso (antes ficava em branco)", () => {
+    expect(bloqueioDaTela("chat", GESTOR, SEM_PAINEIS)).toBe(
+      'A tela "chat" não existe.',
+    );
+    expect(bloqueioDaTela(TELA_SEM_ACESSO, GESTOR, SEM_PAINEIS)).toBe("");
+  });
+
   it("Cronograma: com matriz, o módulo calendario; sem matriz, o de Editais", () => {
     expect(
       bloqueioDaTela(

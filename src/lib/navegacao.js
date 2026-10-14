@@ -107,8 +107,8 @@ const BLOQUEIOS = Object.freeze({
 });
 
 /**
- * O aviso quando o perfil não pode abrir a tela; "" quando pode (ou quando a
- * tela não tem regra própria, como "sem-acesso").
+ * O aviso quando o perfil não pode abrir a tela (ou quando a tela não existe);
+ * "" quando pode, e para "sem-acesso".
  */
 export function bloqueioDaTela(view, perfil, paineis) {
   if (ehPainelExterno(view))
@@ -116,7 +116,13 @@ export function bloqueioDaTela(view, perfil, paineis) {
       ? ""
       : "Sem permissão para este painel externo ou painel inativo.";
   const regra = BLOQUEIOS[view];
-  if (!regra) return "";
+  /*
+    Tela que não existe (link velho, `navigate("chat")`): antes passava, a
+    navegação tirava a página ativa e ficava a tela em branco com o título da
+    anterior. Agora é bloqueio com aviso, e a tela atual continua.
+  */
+  if (!regra)
+    return view === TELA_SEM_ACESSO ? "" : `A tela "${view}" não existe.`;
   const [pode, aviso] = regra;
   return pode(perfil) ? "" : aviso;
 }
