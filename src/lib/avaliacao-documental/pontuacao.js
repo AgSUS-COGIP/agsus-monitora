@@ -225,12 +225,9 @@ function avaliarBlocos(regra, candidato, situacaoPadrao) {
       texto: m.texto,
       item_edital: m.item_edital || bloco.item_edital || "",
     }));
-    if (livre)
-      motivos.push({
-        codigo: null,
-        texto: livre,
-        item_edital: bloco.item_edital || "",
-      });
+    // O motivo escrito vai como o avaliador escreveu, sem o item do edital
+    // (ele cita o item no texto, se quiser); os motivos da regra levam o item.
+    if (livre) motivos.push({ codigo: null, texto: livre, item_edital: "" });
     return { bloco, situacao, efeito, motivos };
   });
 }
@@ -328,7 +325,7 @@ const textoComparavel = (t) =>
 /**
  * Os textos das justificativas escolhidas num bloco: o motivo do bloco (com o
  * item do edital), a observação pronta da regra ou o "Outro motivo" escrito
- * (motivo_livre, com o item do edital), e o texto livre (a justificativa do
+ * (motivo_livre, como o avaliador escreveu, sem o item do edital), e o texto livre (a justificativa do
  * ajuste). O motivo ou a observação cujo texto já está no texto livre sai
  * (sem duplicar).
  */
@@ -342,8 +339,7 @@ export function textosDasJustificativas(regra, bloco, lancado) {
   for (const codigo of lista(lancado?.justificativas)) {
     if (codigo === OUTRO_MOTIVO) {
       const outro = String(lancado?.motivo_livre ?? "").trim();
-      if (outro && !noLivre(outro))
-        textos.push(comItem(bloco.item_edital, outro));
+      if (outro && !noLivre(outro)) textos.push(outro); // como o avaliador escreveu, sem o item do edital
       continue;
     }
     const motivo = lista(bloco.motivos).find((m) => m.codigo === codigo);
