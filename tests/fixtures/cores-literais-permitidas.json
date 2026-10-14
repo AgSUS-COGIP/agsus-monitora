@@ -6,7 +6,7 @@
     "src/lib/access-branding.js": "valor padrão gravado da cor do painel da tela de acesso (configuração, não tema)",
     "src/lib/avaliacao-documental/anexo-na-empregare.ts": "falso positivo: entidade HTML (&#160;), não é cor",
     "src/lib/avaliacao-documental/resumo-da-regra.ts": "documento gerado para impressão/arquivo: papel branco, texto preto",
-    "src/lib/classificacao/documento-sei.js": "documento no padrão do SEI: papel branco, texto preto, bordas e faixas do modelo",
+    "src/lib/classificacao/documento-sei.ts": "documento no padrão do SEI: papel branco, texto preto, bordas e faixas do modelo",
     "src/lib/contraste.js": "regra de contraste: as duas cores de texto sobre cor configurada (barra, painel de acesso)",
     "src/lib/documento-da-resposta.js": "documento gerado para impressão/arquivo: papel branco, texto preto",
     "src/lib/fogos.js": "efeito de comemoração (canvas): cores do fogo de artifício",
@@ -61,7 +61,7 @@
     "src/lib/avaliacao-documental/resumo-da-regra.ts": {
       "#000": 1
     },
-    "src/lib/classificacao/documento-sei.js": {
+    "src/lib/classificacao/documento-sei.ts": {
       "#000000": 1,
       "#d9d9d9": 1,
       "#fff": 1,
