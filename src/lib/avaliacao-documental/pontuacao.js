@@ -149,7 +149,9 @@ function avaliarBlocos(regra, candidato, situacaoPadrao) {
     // O critério étnico só vale para quem se declarou indígena.
     const condicao =
       bloco.condicao ?? (bloco.tipo === "PONTUACAO" ? "INDIGENA" : null);
-    const aplica = condicaoVale(condicao, candidato);
+    // O bloco que não se aplica ao cargo da vaga (por_cargo → nao_se_aplica).
+    const aplica =
+      bloco.nao_se_aplica !== true && condicaoVale(condicao, candidato);
     const situacao = aplica
       ? lancado.situacao || situacaoPadrao
       : "NAO_SE_APLICA";

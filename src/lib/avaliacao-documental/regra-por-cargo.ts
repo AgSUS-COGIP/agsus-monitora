@@ -15,7 +15,8 @@
           extras: [{ codigo, rotulo, pontos, item_edital }],   // CURSOS e TITULOS
           area,                 // VINCULOS: a área exigida da experiência
           requisitos: [{ codigo, rotulo, motivo, item_edital,
-                         termos: [], nao_pontua_em: [<bloco>] }]  // DOCUMENTO
+                         termos: [], nao_pontua_em: [<bloco>] }],  // DOCUMENTO
+          nao_se_aplica: true   // DOCUMENTO, sozinho: o item não vale para o cargo
         }
       }
     }]
@@ -26,6 +27,10 @@
   (regraDaVaga) já traz cada bloco com a diferença aplicada: por_nivel do
   nível por baixo, a diferença por cima; os requisitos viram motivos do bloco
   (efeito ELIMINA), os extras viram linhas conferíveis que somam até o teto.
+  Com nao_se_aplica, o bloco vem marcado `nao_se_aplica: true` e não vale
+  para a vaga (ficha: "Não se aplica a este cargo"; conta: NAO_SE_APLICA, sem
+  efeito), como um bloco de cota fora da modalidade (114/2026: o registro no
+  conselho não se aplica aos cargos 11 a 15, Anexo I).
 
   A mesma conta está em python/monitora/avaliacao_documental/pontuacao.py
   (regra_da_vaga) e no banco (private."FC_REGRA_DA_VAGA",
@@ -65,6 +70,8 @@ export type SobrescritaDoBloco = {
   extras?: ItemExtra[];
   area?: string;
   requisitos?: RequisitoDoCargo[];
+  /** O bloco não se aplica ao cargo (só DOCUMENTO, sem outra mudança). */
+  nao_se_aplica?: true;
 };
 
 export type DiferencaDoCargo = {
@@ -114,7 +121,7 @@ export const CAMPOS_POR_TIPO: Readonly<Record<string, readonly string[]>> =
     CURSOS: ["teto", "faixas", "extras"],
     TITULOS: ["teto", "extras"],
     VINCULOS: ["teto", "area"],
-    DOCUMENTO: ["requisitos"],
+    DOCUMENTO: ["requisitos", "nao_se_aplica"],
   });
 
 const CODIGO = /^[A-Z][A-Z0-9_]{1,29}$/;
@@ -191,6 +198,7 @@ export function blocoDoCargo(
     ? { ...bloco, ...parte }
     : { ...bloco };
   delete r.por_nivel;
+  if (sobrescrita.nao_se_aplica === true) r.nao_se_aplica = true;
   if (Object.hasOwn(sobrescrita, "teto")) r.teto = sobrescrita.teto ?? null;
   if (lista(sobrescrita.faixas).length) r.faixas = sobrescrita.faixas;
   if (lista(sobrescrita.extras).length) r.extras = sobrescrita.extras;
@@ -471,6 +479,12 @@ function conferirSobrescrita(
   for (const k of chaves)
     if (!campos.includes(k))
       erros.push(`${onde}: ${k} não muda por cargo neste bloco.`);
+  if (Object.hasOwn(s, "nao_se_aplica")) {
+    if (s.nao_se_aplica !== true)
+      erros.push(`${onde}: "não se aplica" só aceita marcado (true).`);
+    else if (chaves.length > 1)
+      erros.push(`${onde}: "não se aplica" não vai com outras mudanças.`);
+  }
   if (Object.hasOwn(s, "teto") && !(s.teto === null || entre(s.teto, 0, 100)))
     erros.push(`${onde}: teto entre 0 e 100.`);
   if (Object.hasOwn(s, "faixas")) conferirFaixas(erros, s.faixas, onde);
@@ -685,6 +699,7 @@ export function resumoDaDiferenca(
       const extras = lista(s.extras).length;
       if (extras) itens.push(`+${extras} ${extras === 1 ? "extra" : "extras"}`);
       if (texto(s.area).trim()) itens.push("área exigida");
+      if (s.nao_se_aplica === true) itens.push("não se aplica");
       const req = lista(s.requisitos).length;
       if (req) itens.push(`${req} ${req === 1 ? "requisito" : "requisitos"}`);
     }

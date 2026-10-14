@@ -87,8 +87,12 @@ export const BLOCOS_COM_ITENS = Object.freeze({
 /** Bloco que a ficha mostra: os que só registram não pedem situação. */
 const pedeSituacao = (bloco) => bloco.tipo !== "REGISTRO";
 
-/** O bloco vale para este candidato (condição de modalidade ou indígena)? */
+/**
+ * O bloco vale para este candidato (condição de modalidade ou indígena)? O
+ * que não se aplica ao cargo da vaga (regraDaVaga: nao_se_aplica) não vale.
+ */
 export function blocoSeAplica(bloco, lancamento) {
+  if (bloco?.nao_se_aplica === true) return false;
   const condicao =
     bloco.condicao ?? (bloco.tipo === "PONTUACAO" ? "INDIGENA" : null);
   if (!condicao) return true;

@@ -1,6 +1,7 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import {
+  blocoSeAplica,
   calcularFicha,
   composicaoDaNota,
   lancamentoInicial,
@@ -285,6 +286,108 @@ describe("a ficha do Motorista D", () => {
         l,
       ),
     ).toEqual([]);
+  });
+});
+
+describe("bloco que não se aplica ao cargo (nao_se_aplica)", () => {
+  // O registro no conselho não se aplica ao Motorista D (114/2026, Anexo I).
+  const comNaoSeAplica = () => {
+    const r = structuredClone(REGRA);
+    r.por_cargo.find((d) => d.codigo === "MOTORISTA_D").blocos.REGISTRO_CONSELHO =
+      { nao_se_aplica: true };
+    return r;
+  };
+  const motorista = (regra) =>
+    lancamentoInicial({
+      regra,
+      respostas: {},
+      modalidade: "AC",
+      cargo: "CARGO 15: MOTORISTA - Categoria D (Nível Médio)",
+      vaga: 182528,
+      documental: DOCUMENTAL,
+    });
+
+  it("a regra da vaga marca o bloco e a ficha não o pede", () => {
+    const regra = comNaoSeAplica();
+    const l = motorista(regra);
+    const r = regraDaFicha(regra, l);
+    expect(bloco(r, "REGISTRO_CONSELHO").nao_se_aplica).toBe(true);
+    expect(blocoSeAplica(bloco(r, "REGISTRO_CONSELHO"), l)).toBe(false);
+    expect(blocoSeAplica(bloco(r, "IDENTIDADE"), l)).toBe(true);
+    // Em outra vaga o bloco vale.
+    const quimico = { ...l, vaga: "182418", cargo: "CARGO 1: QUÍMICO" };
+    expect(
+      bloco(regraDaFicha(regra, quimico), "REGISTRO_CONSELHO").nao_se_aplica,
+    ).toBeUndefined();
+    const pendentes = pendenciasDaFicha(
+      regra,
+      l,
+      calcularFicha(regra, l, DOCUMENTAL),
+      null,
+    ).map((p) => p.bloco);
+    expect(pendentes).not.toContain("REGISTRO_CONSELHO");
+    expect(pendentes).toContain("IDENTIDADE");
+  });
+
+  it("o Não enviado no bloco que não se aplica não elimina", () => {
+    const l = {
+      ...motorista(REGRA),
+      blocos: {
+        REGISTRO_CONSELHO: { situacao: "NAO_ENVIADO", motivos: ["SEM_REGISTRO"] },
+      },
+    };
+    const doRegistro = (a) =>
+      a.eliminatorios.filter((t) => t.includes("conselho de classe"));
+    expect(doRegistro(calcularAvaliacao(REGRA, l, { notaMinima: 0 }))).toEqual([
+      "Item 6.4: Não apresentou registro ativo no conselho de classe exigido para a vaga.",
+    ]);
+    const a = calcularAvaliacao(comNaoSeAplica(), l, { notaMinima: 0 });
+    expect(doRegistro(a)).toEqual([]);
+    expect(a.blocos.find((b) => b.codigo === "REGISTRO_CONSELHO").situacao).toBe(
+      "NAO_SE_APLICA",
+    );
+  });
+
+  it("valida: só em bloco de documento, marcado e sozinho; aparece no resumo", () => {
+    const regra = comNaoSeAplica();
+    expect(validarRegraAnalise(regra)).toEqual([]);
+    const d = regra.por_cargo.find((x) => x.codigo === "MOTORISTA_D");
+    expect(resumoDaDiferenca(d, regra.blocos)).toContain(
+      "Registro ativo no conselho de classe: não se aplica",
+    );
+    const erros = validarPorCargo({
+      blocos: REGRA.blocos,
+      por_cargo: [
+        {
+          codigo: "A1",
+          rotulo: "A",
+          vagas: ["1"],
+          blocos: { REGISTRO_CONSELHO: { nao_se_aplica: false } },
+        },
+        {
+          codigo: "A2",
+          rotulo: "B",
+          vagas: ["2"],
+          blocos: {
+            REQUISITO_DO_CARGO: {
+              nao_se_aplica: true,
+              requisitos: [{ codigo: "X1", rotulo: "X", motivo: "Y" }],
+            },
+          },
+        },
+        {
+          codigo: "A3",
+          rotulo: "C",
+          vagas: ["3"],
+          blocos: { CURSOS: { nao_se_aplica: true } },
+        },
+      ],
+    });
+    expect(erros).toEqual([
+      'Diferença por cargo 1 (A), REGISTRO_CONSELHO: "não se aplica" só aceita marcado (true).',
+      'Diferença por cargo 2 (B), REQUISITO_DO_CARGO: "não se aplica" não vai com outras mudanças.',
+      "Diferença por cargo 3 (C), CURSOS: nao_se_aplica não muda por cargo neste bloco.",
+    ]);
   });
 });
 
