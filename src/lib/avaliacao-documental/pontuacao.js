@@ -432,6 +432,14 @@ export function calcularAvaliacao(regraEntrada, candidato = {}, opcoes = {}) {
   for (const avaliado of avaliados) {
     const { bloco, efeito, motivos } = avaliado;
     const parcial = PARCIAL_DO_TIPO[bloco.tipo];
+    // O bloco que não se aplica (condição do candidato ou cargo da vaga) não
+    // pontua nem elimina: zero, sem o ajuste que ficou de antes (ex.: Confere
+    // no étnico e depois "Indígena" desmarcado) e sem o mínimo da experiência.
+    if (parcial && avaliado.situacao === "NAO_SE_APLICA") {
+      calculados[parcial] = 0;
+      parciais[parcial] = 0;
+      continue;
+    }
     if (parcial) {
       let pontos = 0;
       if (bloco.tipo === "PONTUACAO")
