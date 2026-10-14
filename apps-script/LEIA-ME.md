@@ -291,3 +291,23 @@ em até ~40 min):
    com `'LIMPAR_ESTADO_LOCAL'` (ou apague a propriedade
    `ANALISES_SYNC_INCREMENTAL_CLIENT_V1` em **Configurações do projeto >
    Propriedades do script**).
+
+## Planilha igual ao último envio: nada vai ao banco (14/10/2026)
+
+**Por quê.** O Supabase do MONITORA está no plano gratuito (egress e logs
+limitados). Em 13–14/10 o incremental rodava ~220 vezes por dia (Projetos a cada
+10 min, Saúde Indígena a cada 20 min), quase sempre sem nenhuma linha alterada, e
+cada execução fazia dezenas de requisições (a SI manda o manifesto das ~10.300
+linhas em lotes de 300 para `comparar_analises_incremental_v2`).
+
+**O que mudou** (`3-analises-incremental.gs`, as três planilhas; marcado
+`[sem-mudanca]`): depois de um envio confirmado, o script guarda o hash da
+planilha (`ANALISES_SYNC_INCREMENTAL_ULTIMO_V1` nas Propriedades do script). No
+ciclo seguinte, sem sync guardado e com a planilha igual (mesmo hash) há menos de
+6 horas, ele **não chama o banco** e responde "processado, sem mudança" ao
+orquestrador (`Incremental: Planilha igual ao ultimo envio confirmado; nada
+enviado ao banco.` no log). Mudou qualquer linha de `FATO_ANALISES` ou
+`DIM_EDITAIS`, ou passaram 6 horas, o sync roda como antes.
+`limparEstadoLocalAnalisesIncremental('LIMPAR_ESTADO_LOCAL')` apaga também o hash
+(força o próximo envio). Para aplicar: colar o `3-analises-incremental.gs` novo nas
+três planilhas (não precisa reinstalar gatilho).

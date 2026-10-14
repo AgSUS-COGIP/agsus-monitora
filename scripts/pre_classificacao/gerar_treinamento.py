@@ -117,6 +117,10 @@ def calcular(entrada):
     vagas = {}
 
     def chamar(funcao, corpo):
+        # Os nomes das colunas (20261014220000); os inscritos voltam inteiros, com o mesmo resultado.
+        if funcao == "pre_classificacao_ler_colunas":
+            lidos = entrada["candidatos"].values()
+            return {"colunas": sorted({k for v in lidos for c in v["candidatos"] for k in c.get("colunas") or {}})}
         if funcao != "pre_classificacao_ler_candidatos":
             raise ValueError(f"RPC inesperada: {funcao}")
         return entrada["candidatos"][corpo["p_vaga"]]

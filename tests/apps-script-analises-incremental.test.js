@@ -420,7 +420,7 @@ describe("leitura lenta da planilha não trava o sync (07/10/2026)", () => {
       const s = INCREMENTAL[p];
       expect(s).toMatch(/MIN_WORK_MS: 4 \* 60 \* 1000/);
       expect(s).toMatch(
-        /const snapshot = montarSnapshotAnalisesIncremental_\(\);\n\s+deadline = Math\.max\(deadline, Date\.now\(\) \+ ANALISES_INCREMENTAL_CFG\.MIN_WORK_MS\)/,
+        /const snapshot = snapshotPrevio \|\| montarSnapshotAnalisesIncremental_\(\); \/\/ \[sem-mudanca\]\n\s+deadline = Math\.max\(deadline, Date\.now\(\) \+ ANALISES_INCREMENTAL_CFG\.MIN_WORK_MS\)/,
       );
       expect(s).toMatch(
         /if \(lotesNestaExecucao > 0 && Date\.now\(\) >= deadline/,
@@ -435,6 +435,63 @@ describe("leitura lenta da planilha não trava o sync (07/10/2026)", () => {
     (p) => {
       expect(ORQUESTRADOR[p]).toMatch(
         /MAX_ELAPSED_BEFORE_INCREMENTAL_MS: 15 \* 60 \* 1000/,
+      );
+    },
+  );
+});
+
+describe("planilha igual ao último envio: nenhuma chamada ao banco (14/10/2026)", () => {
+  const AGORA = Date.parse("2026-10-14T12:00:00Z");
+  const H = 60 * MIN;
+
+  it("pularSemMudancaAnalisesIncremental_: só com o mesmo hash e há menos de 6 h", () => {
+    const { ctx } = contexto(INCREMENTAL["saude-indigena"]);
+    const pular = (ultimo, hash) =>
+      ctx.pularSemMudancaAnalisesIncremental_(ultimo, hash, AGORA);
+    const em = (horas) => new Date(AGORA - horas * H).toISOString();
+    expect(pular({ hash: "h1", em: em(1) }, "h1")).toBe(true);
+    expect(pular({ hash: "h1", em: em(1) }, "h2")).toBe(false);
+    expect(pular({ hash: "h1", em: em(6.1) }, "h1")).toBe(false);
+    expect(pular({ hash: "h1", em: "lixo" }, "h1")).toBe(false);
+    expect(pular(null, "h1")).toBe(false);
+  });
+
+  it.each(PLANILHAS)(
+    "%s: depois de um envio confirmado, o próximo com a planilha igual não chama o banco",
+    (p) => {
+      const { UrlFetchApp, chamadas } = bancoFalso(new Map());
+      const { ctx, props } = contexto(INCREMENTAL[p], {
+        UrlFetchApp,
+        ...AUXILIARES_DO_FULL,
+      });
+      const primeiro = ctx.syncAnalisesCurricularesIncremental();
+      expect(primeiro).toMatchObject({ ok: true, status: "processado" });
+      expect(props.has("ANALISES_SYNC_INCREMENTAL_ULTIMO_V1")).toBe(true);
+
+      const antes = chamadas.length;
+      const segundo = ctx.syncAnalisesCurricularesIncremental();
+      expect(segundo).toMatchObject({
+        ok: true,
+        status: "processado",
+        sem_mudanca: true,
+        sync_id: null,
+      });
+      expect(chamadas.length).toBe(antes);
+
+      // Limpar o estado local à mão força o próximo envio.
+      ctx.limparEstadoLocalAnalisesIncremental("LIMPAR_ESTADO_LOCAL");
+      expect(
+        ctx.syncAnalisesCurricularesIncremental().sem_mudanca,
+      ).toBeUndefined();
+      expect(chamadas.length).toBeGreaterThan(antes);
+    },
+  );
+
+  it.each(PLANILHAS)(
+    "%s: o orquestrador conclui o ciclo com o incremental 'processado' sem sync_id",
+    (p) => {
+      expect(ORQUESTRADOR[p]).toMatch(
+        /result && result\.ok === true && result\.status === 'processado'/,
       );
     },
   );

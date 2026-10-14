@@ -73,6 +73,14 @@ vagas gravadas: abrir_fichas_pre_classificacao só roda no fim do edital; se uma
 vaga falha, o edital fica FALHOU, as fichas não mudam e a próxima execução
 refaz o lote do zero.
 
+Menos egress (20261014220000_jobs_leem_so_o_necessario.sql): o job pede os
+nomes das colunas do edital uma vez (pre_classificacao_ler_colunas), escolhe as
+que a regra olha (colunas_da_leitura.py) e lê só elas de cada inscrito
+(p_colunas; o 114/2026 caiu de 38,9 MB para 4,6 MB por execução, com o mesmo
+resultado). No fim do robô (--apos-robo), o edital que não mudou desde a última
+pré-classificação concluída de hoje ("sem_mudanca") não é recalculado; sem
+nenhum edital a recalcular, nem abre execução.
+
 Saída: 0 concluída; 2 parcial (algum edital falhou); 1 erro.
 """
 
@@ -86,6 +94,7 @@ from collections import Counter
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[2] / "python"))
 
 from monitora import execucao, supabase_rpc  # noqa: E402
+from monitora.avaliacao_documental.colunas_da_leitura import colunas_necessarias, montar_colunas  # noqa: E402
 from monitora.avaliacao_documental.distribuicao import atribuicoes_dos_novos  # noqa: E402
 from monitora.avaliacao_documental.pre_classificacao import (  # noqa: E402
     congela_a_declarada,
@@ -238,8 +247,11 @@ def processar_edital(chamar, edital, hoje, refazer, gravar, retratar=False, grav
         if not retratar or not vagas:
             return resultado
         if situacao == "SEM_REGRA":
+            colunas = colunas_do_edital(chamar, edital, None)
             resultado["retrato"] = [
-                retrato_da_vaga(vaga["codigo"], ler_candidatos(chamar, edital, vaga).get("candidatos") or [])
+                retrato_da_vaga(
+                    vaga["codigo"], ler_candidatos(chamar, edital, vaga, colunas=colunas).get("candidatos") or []
+                )
                 for vaga in vagas
             ]
             return resultado
@@ -266,8 +278,10 @@ def processar_edital(chamar, edital, hoje, refazer, gravar, retratar=False, grav
         resultado["congelar"] = congelar
     avisos = Counter()
     lote_refeito = Counter()
+    # Só as colunas que esta regra olha (20261014220000): o resultado é o mesmo.
+    colunas = colunas_do_edital(chamar, edital, regra)
     for vaga in vagas:
-        lidos = ler_candidatos(chamar, edital, vaga)
+        lidos = ler_candidatos(chamar, edital, vaga, colunas=colunas)
         # O cargo e a linha do quadro vêm com a primeira parte dos inscritos (desde 20261014110000).
         vaga = {**vaga, **(lidos.get("vaga") or {})}
         r = pre_classificar_vaga(
@@ -345,14 +359,32 @@ def tem_blocos_com_itens(regra):
     return any(b.get("tipo") in ITENS_DO_TIPO for b in regra.get("blocos") or [])
 
 
-def ler_candidatos(chamar, edital, vaga, tamanho=None):
+def colunas_do_edital(chamar, edital, regra):
+    """
+    As colunas que o cálculo olha com esta regra (colunas_da_leitura.py), dos nomes
+    que o banco tem no edital; None = ler todas (banco sem pre_classificacao_ler_colunas).
+    """
+    try:
+        nomes = (chamar("pre_classificacao_ler_colunas", {"p_edital": edital["id"]}) or {}).get("colunas")
+    except supabase_rpc.ErroDoSupabase as erro:
+        if erro.status == 404:
+            return None
+        raise
+    return colunas_necessarias(regra, nomes or [])
+
+
+def ler_candidatos(chamar, edital, vaga, tamanho=None, colunas=None):
     """
     Os inscritos da vaga, lidos em partes de `tamanho` (TAMANHO_DA_PARTE) na ordem do id (p_apos =
     o último id da parte anterior) enquanto o banco disser que há mais. A
     primeira parte traz também a vaga (cargo e quadro), a situação anterior e
     as decisões. Devolve tudo junto, como uma leitura só.
+    colunas: só estas colunas de cada inscrito (o banco devolve pela posição, em "c";
+    aqui voltam a {nome: valor} em "colunas"); None = todas.
     """
     corpo = {"p_edital": edital["id"], "p_vaga": vaga["codigo"], "p_limite": tamanho or TAMANHO_DA_PARTE}
+    if colunas is not None:
+        corpo["p_colunas"] = list(colunas)
     lidos = chamar("pre_classificacao_ler_candidatos", corpo) or {}
     candidatos = list(lidos.get("candidatos") or [])
     parte = lidos
@@ -366,6 +398,13 @@ def ler_candidatos(chamar, edital, vaga, tamanho=None):
         if not novos:
             break
     lidos = {k: v for k, v in lidos.items() if k != "mais"}
+    if colunas is not None:
+        candidatos = [
+            {**{k: v for k, v in c.items() if k != "c"}, "colunas": montar_colunas(c.get("c"), colunas)}
+            if "c" in c
+            else c
+            for c in candidatos
+        ]
     lidos["candidatos"] = candidatos
     return lidos
 
@@ -496,6 +535,16 @@ def principal(args, configuracao=None, chamar_rpc=None):
     editais = contexto.get("editais") or []
     hoje = contexto.get("hoje")
     cabecalho = []
+    # No fim do robô, o edital que não mudou desde a última pré-classificação de hoje não é
+    # recalculado (20261014220000): nada a ler nem gravar.
+    sem_mudanca = [e for e in editais if e.get("sem_mudanca")]
+    if sem_mudanca:
+        editais = [e for e in editais if not e.get("sem_mudanca")]
+        cabecalho.append(
+            "Sem mudança desde a última pré-classificação de hoje (não recalculado): "
+            + ", ".join(str(e.get("rotulo") or e.get("id")) for e in sem_mudanca)
+            + "."
+        )
     if contexto.get("nao_encontrados"):
         cabecalho.append("Editais não encontrados: " + ", ".join(contexto["nao_encontrados"]) + ".")
     if not editais:
@@ -519,6 +568,10 @@ def principal(args, configuracao=None, chamar_rpc=None):
             TITULO, ["Modo seco: nada foi gravado."] + cabecalho + [linha_do_resumo(r) for r in resultados]
         )
         return 2 if any(r["situacao"] == "FALHOU" for r in resultados) else 0
+
+    if sem_mudanca and not editais:
+        execucao.resumir(TITULO, cabecalho)
+        return 0
 
     tipo, usuario = tipo_do_disparo(args.disparado_por)
     id_execucao = execucao.identificador(prefixo="precl")
