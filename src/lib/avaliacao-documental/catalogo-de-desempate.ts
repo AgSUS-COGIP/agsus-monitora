@@ -1,13 +1,13 @@
 /*
   O catálogo de desempate no assistente da regra (passo 4), agrupado para
-  escolher: os critérios da CLASSIFICAÇÃO (src/lib/classificacao/catalogo.js,
+  escolher: os critérios da CLASSIFICAÇÃO (src/lib/classificacao/catalogo.ts,
   o mesmo do banco) e os da PROVISÓRIA (DESEMPATES_DA_PROVISORIA, que a base
   Python sabe calcular). Os dois catálogos continuam separados: aqui só se
   decide em que grupo cada um aparece, a busca e quais já estão na lista.
 */
 import { DESEMPATES_DA_PROVISORIA } from "./catalogo.js";
 import { normalizarTexto } from "./nota-declarada.js";
-import { CATALOGO_DE_CRITERIOS } from "../classificacao/catalogo.js";
+import { CATALOGO_DE_CRITERIOS } from "../classificacao/catalogo.ts";
 
 export type GrupoDeDesempate =
   "legal" | "pontuacao" | "experiencia" | "idade" | "outros";

@@ -21,7 +21,7 @@
   A escolha fica na regra do edital (regra.documento.colunas[chave], a lista
   ordenada dos códigos); sem a chave, o padrão.
 */
-import { PARCIAIS_DA_DOCUMENTAL } from "./catalogo.js";
+import { PARCIAIS_DA_DOCUMENTAL } from "./catalogo.ts";
 
 export const COLUNA_DA_ART =
   "Nota da Autodeclaração de Requisitos e Títulos (ART)";

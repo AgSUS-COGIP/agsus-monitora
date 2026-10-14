@@ -5,7 +5,7 @@ import {
   redefinirDadosDoMonitoramento,
 } from "../../src/componentes/dados-do-monitoramento.ts";
 import { montarClassificacao } from "../../src/modulos/classificacao/classificacao.tsx";
-import { ordemDoSorteio } from "../../src/lib/classificacao/sorteio.js";
+import { ordemDoSorteio } from "../../src/lib/classificacao/sorteio.ts";
 import {
   clicar,
   digitar,

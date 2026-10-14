@@ -5,7 +5,7 @@ import {
   CATALOGO_DE_CRITERIOS,
   codigosDaModalidade,
   simOuNao,
-} from "../../src/lib/classificacao/catalogo.js";
+} from "../../src/lib/classificacao/catalogo.ts";
 import {
   arredondar,
   dataBR,
@@ -13,7 +13,7 @@ import {
   formatarNota,
   idadeNaData,
   numeroBR,
-} from "../../src/lib/classificacao/numeros.js";
+} from "../../src/lib/classificacao/numeros.ts";
 import {
   normalizarRegra,
   REGRA_VAZIA,
@@ -25,7 +25,7 @@ import {
   ordemDoSorteio,
   sementeValida,
   sha256Hex,
-} from "../../src/lib/classificacao/sorteio.js";
+} from "../../src/lib/classificacao/sorteio.ts";
 import {
   nivelDaVaga,
   textoDasVagas,
@@ -229,6 +229,14 @@ describe("nível e vagas", () => {
     expect(textoDasVagas({ total: 0, porModalidade: {} }, regra)).toBe(
       "Cadastro Reserva",
     );
+  });
+});
+
+describe("limites de conversão numérica", () => {
+  it("não introduz Infinity ao converter bigint grande", () => {
+    expect(numeroBR(7n)).toBe(7);
+    expect(numeroBR(10n ** 400n)).toBeNull();
+    expect(numeroBR(-(10n ** 400n))).toBeNull();
   });
 });
 

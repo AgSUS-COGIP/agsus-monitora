@@ -28,7 +28,7 @@ import {
 } from "../../lib/recursos-dos-candidatos.ts";
 import { getSupabaseClient } from "../../lib/supabaseClient.js";
 import { Aviso } from "../../ui/index.js";
-import { irParaLink } from "../chat/ponte.js";
+import { irParaTela } from "../../app/ir-para-tela.ts";
 import { criarEstadoDosRecursos } from "./estado.ts";
 import { FormularioDoRecurso } from "./formulario.tsx";
 import { GavetaDoRecurso } from "./gaveta.tsx";
@@ -60,7 +60,7 @@ import "./recursos.css";
   (`#page-recursos` e `#page-analisar-recursos`) do index.html. O legado
   continua dono da classe `.active` da seção e chama `render()` do
   controlador ao navegar. Os atalhos entre as duas deixam o pedido
-  (`pedirFiltro`: os filtros e o recurso a abrir) e navegam (`irParaLink`).
+  (`pedirFiltro`: os filtros e o recurso a abrir) e navegam (`irParaTela`).
 
   - Área: a área atual do app (menu lateral → dados-do-monitoramento.ts). Cada
     abertura carrega a área de agora; trocar de área com a tela aberta
@@ -105,7 +105,7 @@ function filtrosDoPedido(pedido: PedidoEntreTelas): FiltrosDosRecursos {
 /** Vai para a outra tela de Recursos, com os filtros (e o recurso aberto). */
 export function irParaRecursos(view: string, pedido: PedidoEntreTelas) {
   pedirFiltro(view, pedido);
-  irParaLink({ view });
+  irParaTela({ view });
 }
 
 function textoDoStatus(

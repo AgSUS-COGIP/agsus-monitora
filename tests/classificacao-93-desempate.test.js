@@ -5,7 +5,7 @@ import {
   horaBR,
   lerHora,
   segundosDeVida,
-} from "../src/lib/classificacao/numeros.js";
+} from "../src/lib/classificacao/numeros.ts";
 import { validarRegra } from "../src/lib/classificacao/regra.ts";
 
 /*

@@ -66,6 +66,13 @@ a primeira parte traz o cargo e a linha do quadro da vaga. Assim nenhuma
 chamada passa do statement_timeout do service_role, por maior que seja o
 edital (o 114/2026, com 7.160 inscritos, estourava os 8 s numa chamada só).
 
+Gravação (20261014130000_gravar_pre_classificacao_rapido.sql): o resumo de cada
+vaga leva a linha do quadro lida com ela (p_resumo.quadro; o banco só confere
+que é do edital) e o banco lê as linhas uma vez. O refazer só vale com todas as
+vagas gravadas: abrir_fichas_pre_classificacao só roda no fim do edital; se uma
+vaga falha, o edital fica FALHOU, as fichas não mudam e a próxima execução
+refaz o lote do zero.
+
 Saída: 0 concluída; 2 parcial (algum edital falhou); 1 erro.
 """
 
@@ -284,6 +291,8 @@ def processar_edital(chamar, edital, hoje, refazer, gravar, retratar=False, grav
         if refazer:
             lote_refeito.update(mudancas_do_lote(lidos.get("anterior") or {}, r["linhas"]))
         if gravar is not None:
+            # A linha do quadro lida com a vaga vai junto: o banco só confere (20261014130000).
+            r["quadro"] = (vaga.get("quadro") or {}).get("id")
             gravar(vaga["codigo"], r)
         if gravar_sugestoes is not None and tem_blocos_com_itens(regra):
             nivel = dados_da_vaga(vaga, edital.get("documental"))["nivel"]
@@ -409,8 +418,13 @@ def abrir_fichas(chamar, id_execucao, edital_id):
 
 def payload_da_vaga(resultado_da_vaga):
     resumo = resultado_da_vaga["resumo"]
+    dados = {k: resumo[k] for k in ("tamanho", "descricao", "por_modalidade", "acima_do_corte", "avisos")}
+    # A linha do quadro lida nesta execução (id ou None = vaga sem quadro). Sem a chave, o
+    # banco acha a linha de novo (FC_QUADRO_DA_VAGA_EMPREGARE, até ~2 s por vaga).
+    if "quadro" in resultado_da_vaga:
+        dados["quadro"] = resultado_da_vaga["quadro"]
     return (
-        {k: resumo[k] for k in ("tamanho", "descricao", "por_modalidade", "acima_do_corte", "avisos")},
+        dados,
         [{k: linha.get(k) for k in CAMPOS_DA_LINHA} for linha in resultado_da_vaga["linhas"]],
     )
 

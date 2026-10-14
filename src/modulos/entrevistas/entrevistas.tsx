@@ -30,7 +30,7 @@ import {
   gruposEmpatados,
   mapaDeEmpates,
 } from "../../lib/painel-de-entrevistas.ts";
-import { irParaLink } from "../chat/ponte.js";
+import { irParaTela } from "../../app/ir-para-tela.ts";
 import { AgendaDosProximosDias, AvisoDeEmpates } from "./agenda-e-empates.tsx";
 import { criarEstadoDasEntrevistas, MENSAGEM_SEM_ACESSO } from "./estado.ts";
 import { GavetaDaEntrevista, GavetaDosSemEntrevista } from "./gaveta.tsx";
@@ -177,7 +177,7 @@ function TelaDaArea({
 
   /* Outra tela, já no edital do recorte (ou no `id` pedido). */
   const irCom = (view: string, id = editalId) =>
-    irParaLink({
+    irParaTela({
       view,
       ...(id ? { edital: { id, titulo: doRecorte?.edital || "" } } : {}),
     });

@@ -7,8 +7,8 @@ import {
 } from "../src/lib/importar-com-recarga.js";
 
 /*
-  Versão nova publicada com a página aberta: o pedaço baixado sob demanda (o
-  painel do chat) some e o import falha. Recarrega uma vez; sem laço.
+  Versão nova publicada com a página aberta: o pedaço baixado sob demanda (ex.:
+  uma tela sob demanda) some e o import falha. Recarrega uma vez; sem laço.
 */
 
 function memoria() {

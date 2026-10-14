@@ -64,7 +64,7 @@ describe("podeEditarCoordenadas", () => {
   });
 });
 
-describe("Pessoas online (chat em teste)", () => {
+describe("Pessoas online", () => {
   it("só administrador global e Gestor veem", () => {
     expect(
       podeVerPessoasOnline({

@@ -84,7 +84,7 @@ import {
 } from "../../lib/configuracao-de-convocacao.js";
 import { PLANILHAS } from "../../lib/planilhas.js";
 import { motivoValido } from "../../lib/publicacao-de-aprovados.ts";
-import { irParaLink } from "../chat/ponte.js";
+import { irParaTela } from "../../app/ir-para-tela.ts";
 import { criarEstadoDaCarta } from "./carta-de-convocacao/estado.js";
 import {
   copiarParaAreaDeTransferencia,
@@ -649,7 +649,7 @@ export function criarEstadoDaListaDeAprovados({
   /* "Publicar da Classificação": a tela da Classificação, no edital. */
   function irParaClassificacao(editalId, titulo = "") {
     fecharModal();
-    const foi = irParaLink({
+    const foi = irParaTela({
       view: "classificacao",
       edital: { id: String(editalId || ""), titulo },
     });

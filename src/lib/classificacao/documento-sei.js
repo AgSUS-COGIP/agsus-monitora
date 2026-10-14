@@ -48,14 +48,14 @@
 
   SÓ NOME COMPLETO — o retrato já não traz CPF, inscrição nem nascimento.
 */
-import { MOTIVOS_DE_ELIMINACAO } from "./catalogo.js";
+import { MOTIVOS_DE_ELIMINACAO } from "./catalogo.ts";
 import {
   COLUNA_DA_ART,
   colunasDisponiveis,
   colunasEscolhidas,
   parcialDaColuna,
 } from "./colunas-do-documento.js";
-import { escalar, formatarNota, lerData, ordinal } from "./numeros.js";
+import { escalar, formatarNota, lerData, ordinal } from "./numeros.ts";
 import { documentoDaRegra, normalizarRegra } from "./regra.ts";
 import { CABECALHO_PADRAO } from "../cabecalho-dos-documentos.js";
 import {
