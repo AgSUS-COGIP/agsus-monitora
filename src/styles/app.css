@@ -57,6 +57,13 @@
      variável, o ui.css caía no reserva 100 e o cabeçalho passava por cima
      da lista dos filtros (Lista de aprovados, 05/10/2026). */
   --z-sticky: 2;
+
+  /* O canto da arara da Aya (src/modulos/aya/aya.css: 56px de altura, a até
+     24px da borda): as barras de ação presas ao pé da tela (ficha da
+     Avaliação documental, ficha de notas das Entrevistas, salvar das
+     Configurações) recuam este tanto à direita para o botão principal não
+     ficar debaixo dela (auditoria das telas, 13/10/2026). */
+  --aya-reserva: 96px;
 }
 
 *,

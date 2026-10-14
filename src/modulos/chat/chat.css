@@ -5,7 +5,7 @@
   --chat-* (balão próprio, selecionado, destaque, link, cores fortes). Nada de
   --color-* aqui: eles ficam claros no escuro (tests/chat-tema-escuro.test.js).
 
-  Camada do painel: 10043 — acima da Aya (aya.css, 10042: a arara não cobre o
+  Camada do painel: 10043 — acima da Aya (aya.css, 10038: a arara não cobre o
   campo de escrita) e do cabeçalho (.top 10030), abaixo do aviso de parabéns
   (comemoracao.css, 10045) e dos modais (--z-overlay). Como a Aya, fica fora
   da escada de app.css de propósito: entre o cabeçalho e o parabéns não há

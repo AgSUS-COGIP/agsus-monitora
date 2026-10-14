@@ -222,9 +222,12 @@ describe("20261002131000: acompanhamento da Visão geral", () => {
     expect(ensaio.endsWith("rollback;")).toBe(true);
   });
 
+  // A tela chama a versão com `p_versao` (20261013160000), que lê esta.
   it("está no contrato de RPC, com o argumento da área", () => {
-    expect(CONTRATO_RPC.listar_acompanhamento_da_visao_geral).toMatchObject({
-      argumentos: ["p_area"],
+    expect(
+      CONTRATO_RPC.listar_acompanhamento_da_visao_geral_se_mudou,
+    ).toMatchObject({
+      argumentos: ["p_area", "p_versao"],
       critica: false,
     });
   });

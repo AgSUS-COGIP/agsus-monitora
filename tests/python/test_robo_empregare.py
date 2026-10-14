@@ -569,6 +569,54 @@ class PortalFalso(nav.PortalEmpregare):
         self.voltou += 1
 
 
+class LoginFalso(nav.PortalEmpregare):
+    """O login sem Chrome: cada tentativa levanta o próximo erro da lista (None = entrou)."""
+
+    def __init__(self, erros):
+        self.logs = []
+        super().__init__("pasta-falsa", self.logs.append)
+        self.erros = list(erros)
+        self.tentativas = 0
+
+    def _entrar_uma_vez(self, email, senha):
+        self.tentativas += 1
+        erro = self.erros.pop(0)
+        if erro:
+            raise erro
+
+
+class Login(unittest.TestCase):
+    def setUp(self):
+        self._espera, nav.ESPERA_ENTRE_LOGINS = nav.ESPERA_ENTRE_LOGINS, 0
+
+    def tearDown(self):
+        nav.ESPERA_ENTRE_LOGINS = self._espera
+
+    def test_tela_da_senha_nao_pronta_tenta_de_novo(self):
+        # 13/10/2026 16:00 UTC: ElementNotInteractableException no login derrubou a execução inteira.
+        class ElementNotInteractableException(Exception):
+            pass
+
+        portal = LoginFalso([ElementNotInteractableException("element not interactable"), None])
+        portal.entrar("robo@exemplo", "senha")
+        self.assertEqual(portal.tentativas, 2)
+        self.assertEqual(len(portal.logs), 1)
+        self.assertIn("Login: tentativa 1 falhou (ElementNotInteractableException", portal.logs[0])
+        self.assertNotIn("senha", portal.logs[0].replace("Login: tentativa", ""))
+
+    def test_senha_recusada_nao_repete(self):
+        portal = LoginFalso([nav.ErroDeLogin("recusado"), None])
+        with self.assertRaises(nav.ErroDeLogin):
+            portal.entrar("robo@exemplo", "senha")
+        self.assertEqual(portal.tentativas, 1)
+
+    def test_falha_em_todas_as_tentativas_sobe_o_erro(self):
+        portal = LoginFalso([TimeoutError("1"), TimeoutError("2")])
+        with self.assertRaises(TimeoutError):
+            portal.entrar("robo@exemplo", "senha")
+        self.assertEqual(portal.tentativas, nav.TENTATIVAS_DE_LOGIN)
+
+
 class DiagnosticoDaLista(unittest.TestCase):
     PAGINA = {
         "caminho": "/empresa/vagas/candidaturas/Mc5fictPML0|",

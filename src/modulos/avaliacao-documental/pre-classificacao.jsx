@@ -261,28 +261,33 @@ function VagaDaPre({
       {v.eliminados.length ? (
         <details className="avd-eliminados">
           <summary>Eliminados ({v.eliminados.length})</summary>
-          <table className="avd-tabela">
-            <thead>
-              <tr>
-                <th scope="col">Código</th>
-                <th scope="col">Nome</th>
-                <th scope="col">Motivo</th>
-              </tr>
-            </thead>
-            <tbody>
-              {v.eliminados.map((c) => (
-                <tr
-                  key={c.id}
-                  data-candidato={c.codigo}
-                  data-situacao="ELIMINADO"
-                >
-                  <td>{c.codigo}</td>
-                  <td>{c.nome}</td>
-                  <td>{c.motivo}</td>
+          {/* Na mesma rolagem da tabela do lote: sem ela, a tabela global de
+              app.css (min-width 1180px) estourava o cartão e a página rolava
+              de lado ao abrir os eliminados. */}
+          <div className="ui-tabela-rolagem">
+            <table className="avd-tabela">
+              <thead>
+                <tr>
+                  <th scope="col">Código</th>
+                  <th scope="col">Nome</th>
+                  <th scope="col">Motivo</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {v.eliminados.map((c) => (
+                  <tr
+                    key={c.id}
+                    data-candidato={c.codigo}
+                    data-situacao="ELIMINADO"
+                  >
+                    <td>{c.codigo}</td>
+                    <td>{c.nome}</td>
+                    <td>{c.motivo}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </details>
       ) : null}
     </article>
