@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { copiarParaAreaDeTransferencia } from "../classificacao/documento-no-navegador.js";
+import { copiarParaAreaDeTransferencia } from "../classificacao/documento-no-navegador.ts";
 
 /*
   O parecer da entrevista em texto pronto, embaixo da matriz da ficha de

@@ -21,7 +21,7 @@ import { CampoNomeDaVersao } from "../../../ui/nome-da-versao.tsx";
 import {
   copiarParaAreaDeTransferencia,
   imprimirPagina,
-} from "../../classificacao/documento-no-navegador.js";
+} from "../../classificacao/documento-no-navegador.ts";
 
 /*
   Passo 5: testar e conferir. O resumo de uma página em linguagem simples

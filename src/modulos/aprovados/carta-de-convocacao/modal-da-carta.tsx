@@ -1,10 +1,19 @@
+import type {
+  AgrupamentoDaCarta,
+  CandidatoDaCarta,
+  EmissaoDaCarta,
+  EstadoPaiDaCarta,
+  RegistroDaCarta,
+  ResultadoDaEmissao,
+  SaidaDaCarta,
+} from "../../../lib/tipos-da-carta.ts";
 import { useMemo, useState, useSyncExternalStore } from "react";
 import {
   camposUsados,
   emissaoInicial,
   modelosParaEmitir,
   validarEmissao,
-} from "../../../lib/carta-de-convocacao.js";
+} from "../../../lib/carta-de-convocacao.ts";
 import { formatarData } from "../../../lib/lista-aprovados-rules.js";
 import {
   Aviso,
@@ -26,24 +35,40 @@ import {
   está sem status (ou já convocado), com a data.
 */
 
-const AGRUPAMENTOS = [
+const AGRUPAMENTOS: { valor: AgrupamentoDaCarta; rotulo: string }[] = [
   { valor: "UNICO", rotulo: "Um documento com todas" },
   { valor: "POR_CANDIDATO", rotulo: "Uma carta por candidato" },
 ];
 
-const CAMPOS_DA_EMISSAO = [
+const CAMPOS_DA_EMISSAO: readonly (readonly [
+  string,
+  keyof EmissaoDaCarta,
+  string,
+])[] = [
   ["DATA_LIMITE", "dataLimite", "Data limite"],
   ["LOCAL", "local", "Local de apresentação"],
   ["CONTATO", "contato", "Contato para dúvidas"],
   ["DOCUMENTOS", "documentos", "Documentos (um por linha)"],
 ];
 
-const marcaveis = (candidatos) =>
+const marcaveis = (candidatos: readonly CandidatoDaCarta[]) =>
   candidatos.filter((c) => !c.status || c.status === "Convocado");
 
-function Emitida({ estado, emissao, candidatos, hoje }) {
+function Emitida({
+  estado,
+  emissao,
+  candidatos,
+  hoje,
+}: {
+  estado: EstadoPaiDaCarta;
+  emissao: ResultadoDaEmissao;
+  candidatos: readonly CandidatoDaCarta[];
+  hoje: string;
+}) {
   const [data, setData] = useState(hoje);
-  const [marcado, setMarcado] = useState(null);
+  const [marcado, setMarcado] = useState<
+    (RegistroDaCarta & { marcados: number }) | null
+  >(null);
   const daEmissao = candidatos.filter((c) =>
     emissao.candidatos.some((e) => e.candidato_id === c.candidato_id),
   );
@@ -61,7 +86,7 @@ function Emitida({ estado, emissao, candidatos, hoje }) {
         <span className="carta-marcar">
           <label htmlFor="cartaDataConvocacao">
             Marcar{" "}
-            {quem.length === 1 ? quem[0].nome : `${quem.length} candidatos`}{" "}
+            {quem.length === 1 ? quem[0]?.nome : `${quem.length} candidatos`}{" "}
             como Convocado em
           </label>
           <input
@@ -100,6 +125,10 @@ export function ModalDaCarta({
   estado,
   candidatos: iniciais,
   podeEditarModelos,
+}: {
+  estado: EstadoPaiDaCarta;
+  candidatos: readonly CandidatoDaCarta[];
+  podeEditarModelos: boolean;
 }) {
   const carta = useSyncExternalStore(estado.carta.assinar, estado.carta.obter);
   const hoje = estado.carta.hoje();
@@ -110,11 +139,12 @@ export function ModalDaCarta({
   );
   const [modeloId, setModeloId] = useState("");
   const modelo = opcoes.find((m) => m.id === modeloId) || opcoes[0] || null;
-  const [valores, setValores] = useState({});
-  const emissao = valores[modelo?.id] || emissaoInicial(modelo, hoje);
-  const [agrupamento, setAgrupamento] = useState("UNICO");
+  const [valores, setValores] = useState<Record<string, EmissaoDaCarta>>({});
+  const emissao: EmissaoDaCarta =
+    valores[modelo?.id ?? ""] || emissaoInicial(modelo, hoje);
+  const [agrupamento, setAgrupamento] = useState<AgrupamentoDaCarta>("UNICO");
   const [indice, setIndice] = useState(0);
-  const [emitida, setEmitida] = useState(null);
+  const [emitida, setEmitida] = useState<ResultadoDaEmissao | null>(null);
   const fechar = estado.fecharModal;
 
   const usados = modelo
@@ -131,19 +161,23 @@ export function ModalDaCarta({
   const doc = modelo
     ? estado.carta.documento({
         modelo,
-        candidatos: porCandidato ? [candidatos[atual]] : candidatos,
+        candidatos: porCandidato
+          ? candidatos.slice(atual, atual + 1)
+          : candidatos,
         emissao,
       })
     : null;
   const pagina = estado.carta.paginaDe(doc);
 
-  const mudar = (campo, valor) =>
+  const mudar = (campo: keyof EmissaoDaCarta, valor: string) => {
+    if (!modelo) return;
     setValores((atuais) => ({
       ...atuais,
-      [modelo.id]: { ...emissao, [campo]: valor },
+      [modelo.id]: { ...(atuais[modelo.id] ?? emissao), [campo]: valor },
     }));
+  };
 
-  async function emitir(saida) {
+  async function emitir(saida: SaidaDaCarta) {
     const resultado = await estado.carta.emitir({
       modelo,
       candidatos,
@@ -157,7 +191,7 @@ export function ModalDaCarta({
 
   const titulo =
     candidatos.length === 1
-      ? candidatos[0].nome
+      ? candidatos[0]?.nome
       : `${candidatos.length} candidatos`;
 
   return (
@@ -227,7 +261,7 @@ export function ModalDaCarta({
                 id="cartaModelo"
                 data-tour="aprovados-carta-modelo"
                 data-foco-inicial
-                value={modelo.id}
+                value={modelo?.id ?? ""}
                 onChange={(evento) => {
                   setModeloId(evento.target.value);
                   setEmitida(null);

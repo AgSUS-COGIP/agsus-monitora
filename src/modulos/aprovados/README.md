@@ -27,12 +27,12 @@ modal-listas-do-edital.jsx listas do edital: origem, importar XLSX, publicar da 
 formulario-de-convocacao.jsx, editor-de-modelo.jsx, previa-da-convocacao.jsx
                            configuração da convocação do edital (modelo de reserva de vagas)
 carta-de-convocacao/       a carta de convocação para contratação
-  estado.js                store da carta: modelos da área, salvar versão, inativar, emitir (SEI,
+  estado.ts                store da carta: modelos da área, salvar versão, inativar, emitir (SEI,
                            DOCX, PDF) registrando a emissão uma vez por carta, histórico do candidato
-  modal-da-carta.jsx       emitir para um ou vários: modelo, valores da emissão, um documento ou uma
+  modal-da-carta.tsx       emitir para um ou vários: modelo, valores da emissão, um documento ou uma
                            carta por candidato, prévia "Como fica no SEI", saídas e "Marcar como
                            Convocado"
-  modelos-da-carta.jsx     os modelos: lista, editor com os campos, prévia, versões, inativar/reativar
+  modelos-da-carta.tsx     os modelos: lista, editor com os campos, prévia, versões, inativar/reativar
   carta.css                só desta parte (e da gaveta do candidato)
 aprovados.css, convocacao.css
 ```
@@ -49,12 +49,18 @@ Contratados (Seleção e KPIs) são só Contratado e Migração. Regras: `src/li
 
 Modelos por área (e, se quiser, por edital), versionados no banco — motivo a partir da 2ª versão;
 inativar com motivo, nada se apaga. Quem edita é quem tem Editor em Aprovados. O texto, o
-preenchimento e a validação são de `src/lib/carta-de-convocacao.js`; o documento (HTML do SEI, texto,
-página da prévia/PDF, DOCX e ZIP) é de `src/lib/carta-de-convocacao-documento.js`, que reaproveita o
+preenchimento e a validação são de `src/lib/carta-de-convocacao.ts`; o documento (HTML do SEI, texto,
+página da prévia/PDF, DOCX e ZIP) é de `src/lib/carta-de-convocacao-documento.ts`, que reaproveita o
 documento oficial da Classificação (`src/lib/classificacao/documento-sei.ts` — `paginaNoModeloDoSei`
-— e `documento-docx.js` — `pacoteDocx`, `arquivosDoDocx`) e o que precisa do navegador
-(`../classificacao/documento-no-navegador.js`: área de transferência, logo em PNG, impressão). O
+— e `documento-docx.ts` — `pacoteDocx`, `arquivosDoDocx`) e o que precisa do navegador
+(`../classificacao/documento-no-navegador.ts`: área de transferência, logo em PNG, impressão). O
 cabeçalho é o de Configurações › Marca.
+
+O módulo de cartas, seu estado e os geradores estão em TypeScript/TSX. Os contratos
+compartilhados ficam em `src/lib/tipos-da-carta.ts`; `src/lib/dados-da-carta.ts` confere
+as respostas usadas. Uma coleção de modelos malformada interrompe a carga. Uma emissão
+sem identificador confirmado não gera a saída nem repete automaticamente o registro;
+o aviso orienta conferir o histórico antes de tentar outra emissão.
 
 Campos: {NOME}, {CPF} (sempre mascarado; a lista não guarda CPF, então sai em branco e a emissão
 avisa), {CARGO}, {VAGA}, {LOTACAO} / {LOTAÇÃO/UNIDADE}, {UNIDADE}, {EDITAL}, {POSICAO}, {MODALIDADE},

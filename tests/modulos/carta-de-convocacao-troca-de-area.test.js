@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { criarEstadoDaCarta } from "../../src/modulos/aprovados/carta-de-convocacao/estado.js";
+import { criarEstadoDaCarta } from "../../src/modulos/aprovados/carta-de-convocacao/estado.ts";
 
 /*
   Trocar de área enquanto os modelos da carta carregavam descartava a
