@@ -535,6 +535,49 @@ describe("ficha: modo foco, um item por vez (AM-7)", () => {
     );
   });
 
+  it("Outro motivo (descrever) vale como motivo e a Observação do avaliador fica no fim de todo item", async () => {
+    const supabase = supabaseFalso();
+    await abrirFicha(supabase);
+    await irAo("ESCOLARIDADE");
+    const c = () => cartao("ESCOLARIDADE");
+    // A observação aparece já antes da decisão, no fim do card.
+    const obs = () => c().querySelector(".avd-ficha-observacao-do-item");
+    expect(obs()).not.toBeNull();
+    expect(c().lastElementChild).toBe(obs());
+    await teclar(raiz(), "2");
+    await esperarAvanco();
+    // Sem o campo avulso de antes: o texto só com o "Outro motivo".
+    expect(c().querySelector(".avd-ficha-motivo-escrito")).toBeNull();
+    const outro = c().querySelector("[data-motivo='OUTRO']");
+    expect(outro.textContent).toContain("Outro motivo (descrever)");
+    await clicar(outro);
+    const campo = c().querySelector(".avd-ficha-motivo-escrito input");
+    expect(campo).not.toBeNull();
+    await digitar(campo, "curto");
+    expect(c().querySelector(".avd-ficha-mensagem").textContent).toBe(
+      "Descreva o outro motivo (10 caracteres ou mais).",
+    );
+    await digitar(campo, "Diploma sem o verso.");
+    expect(c().querySelector(".avd-ficha-mensagem")).toBeNull();
+    expect(etapa("ESCOLARIDADE").dataset.estado).toBe("NAO_CONFORME");
+    await digitar(obs().querySelector("textarea"), "Pediu prazo por e-mail.");
+    await teclar(raiz(), "s", { ctrlKey: true });
+    await esperar();
+    const gravado = chamadas(supabase, "salvar_rascunho_ficha").at(-1);
+    expect(gravado.p_lancamento.blocos.ESCOLARIDADE).toMatchObject({
+      situacao: "NAO_CONFORME",
+      motivos: ["OUTRO"],
+      motivo_livre: "Diploma sem o verso.",
+      observacao: "Pediu prazo por e-mail.",
+    });
+    // Desmarcar o "Outro motivo" tira o texto.
+    await clicar(c().querySelector("[data-motivo='OUTRO']"));
+    expect(c().querySelector(".avd-ficha-motivo-escrito")).toBeNull();
+    expect(c().querySelector(".avd-ficha-mensagem").textContent).toBe(
+      "Escolha o motivo.",
+    );
+  });
+
   it("J e K andam entre os itens; Anterior e Próximo do rodapé também", async () => {
     await abrirFicha(supabaseFalso());
     await teclar(raiz(), "j");

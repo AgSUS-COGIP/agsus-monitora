@@ -2451,3 +2451,18 @@
     grid-template-columns: minmax(0, 1fr);
   }
 }
+
+/* Observação do avaliador: o mesmo campo no fim de todo card (observacao-do-item.tsx). */
+.avd-ficha-observacao-do-item {
+  padding-top: var(--space-3);
+  border-top: 1px dashed var(--border-subtle);
+}
+.avd-ficha-observacao-do-item textarea {
+  min-height: 44px;
+  resize: vertical;
+  font-size: var(--text-body-sm);
+  line-height: var(--leading-body-sm, 1.5);
+}
+.avd-ficha-cartao[data-modo="lista"] .avd-ficha-observacao-do-item {
+  padding-top: var(--space-2);
+}

@@ -280,6 +280,29 @@ def _com_item(item, texto):
     return f"Item {item}: {texto}" if item else texto
 
 
+# O "Outro motivo (descrever)": em motivos (Não confere, Não enviou) ou em
+# justificativas (nota diferente da declarada), com o texto em motivo_livre,
+# que vale como o motivo do item (OUTRO_MOTIVO do JS).
+OUTRO_MOTIVO = "OUTRO"
+
+
+def _motivo_livre_do_nao_confere(bloco, lancado):
+    """
+    O motivo escrito vale com o "Outro motivo" marcado ou no bloco sem motivos
+    na regra (o texto é o motivo); fora disso (texto que ficou de outra
+    escolha), não entra no parecer (motivoLivreDoNaoConfere do JS).
+    """
+    livre = str(lancado.get("motivo_livre") or "").strip()
+    if not livre:
+        return ""
+    return livre if OUTRO_MOTIVO in _lista(lancado.get("motivos")) or not _lista(bloco.get("motivos")) else ""
+
+
+def _uma_linha(texto):
+    """Uma linha só: o parecer lista uma observação por linha (umaLinha do JS)."""
+    return re.sub(r"\s+", " ", str(texto or "")).strip()
+
+
 def _avaliar_blocos(regra, candidato, situacao_padrao):
     avaliados = []
     for bloco in regra["blocos"]:
@@ -303,7 +326,7 @@ def _avaliar_blocos(regra, candidato, situacao_padrao):
                 efeito_da_situacao = None if situacao == "CONFORME" else "SO_REGISTRO"
         dos_motivos = [m.get("efeito") for m in escolhidos if m.get("efeito")]
         efeito = _mais_forte(dos_motivos) if dos_motivos else efeito_da_situacao
-        livre = str(lancado.get("motivo_livre") or "").strip()
+        livre = _motivo_livre_do_nao_confere(bloco, lancado) if situacao in ("NAO_CONFORME", "NAO_ENVIADO") else ""
         motivos = [
             {
                 "codigo": m.get("codigo"),
@@ -380,8 +403,9 @@ def _texto_comparavel(texto):
 
 def textos_das_justificativas(regra, bloco, lancado):
     """
-    O motivo do bloco (com o item) ou a observação pronta, e o complemento
-    livre; o motivo ou a observação cujo texto já está no complemento sai.
+    O motivo do bloco (com o item), a observação pronta ou o "Outro motivo"
+    escrito (motivo_livre, com o item), e o texto livre (a justificativa do
+    ajuste); o motivo ou a observação cujo texto já está no texto livre sai.
     """
     lancado = _objeto(lancado)
     textos = []
@@ -392,6 +416,11 @@ def textos_das_justificativas(regra, bloco, lancado):
         return bool(livre) and bool(t) and t in _texto_comparavel(livre)
 
     for codigo in _lista(lancado.get("justificativas")):
+        if codigo == OUTRO_MOTIVO:
+            outro = str(lancado.get("motivo_livre") or "").strip()
+            if outro and not no_livre(outro):
+                textos.append(_com_item(bloco.get("item_edital"), outro))
+            continue
         motivo = next((m for m in _lista(bloco.get("motivos")) if m.get("codigo") == codigo), None)
         if motivo:
             if not no_livre(motivo.get("texto")):
@@ -402,6 +431,34 @@ def textos_das_justificativas(regra, bloco, lancado):
             textos.append(pronta.get("texto"))
     if livre:
         textos.append(_com_item(bloco.get("item_edital"), livre))
+    return textos
+
+
+def observacoes_dos_itens(avaliados, candidato):
+    """
+    A Observação do avaliador de cada item (blocos[codigo].observacao), em
+    qualquer situação (inclusive Não se aplica), na ordem da regra: "Item 8.2.6
+    — …" (sem item do edital, o título do bloco); a igual à justificativa do
+    ajuste ou ao motivo escrito não se repete (observacoesDosItens do JS).
+    """
+    textos = []
+    for avaliado in avaliados:
+        bloco = avaliado["bloco"]
+        lancado = _objeto(_objeto(candidato.get("blocos")).get(bloco.get("codigo")))
+        obs = _uma_linha(lancado.get("observacao"))
+        if not obs:
+            continue
+        if any(
+            _texto_comparavel(t) == _texto_comparavel(obs)
+            for t in (lancado.get("justificativa_livre"), lancado.get("motivo_livre"))
+        ):
+            continue
+        item = (
+            f"Item {bloco.get('item_edital')}"
+            if bloco.get("item_edital")
+            else str(bloco.get("titulo") or bloco.get("codigo"))
+        )
+        textos.append(f"{item} — {obs}")
     return textos
 
 
@@ -565,6 +622,10 @@ def calcular_avaliacao(regra_entrada, candidato=None, opcoes=None):
                 for t in textos_das_justificativas(regra, bloco, blocos_lancados.get(bloco.get("codigo"))):
                     if t not in observacoes:
                         observacoes.append(t)
+
+    for t in observacoes_dos_itens(avaliados, candidato):
+        if t not in observacoes:
+            observacoes.append(t)
 
     for codigo in _lista(candidato.get("observacoes_prontas")):
         pronta = next((o for o in regra["observacoes_prontas"] if o.get("codigo") == codigo), None)

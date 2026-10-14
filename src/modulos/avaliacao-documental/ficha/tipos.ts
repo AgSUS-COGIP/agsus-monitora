@@ -50,10 +50,13 @@ export type Regra = {
 export type Lancado = {
   situacao?: Situacao | null;
   motivos?: string[];
+  /** O "Outro motivo (descrever)" (OUTRO em motivos ou justificativas), ou o motivo do bloco sem motivos na regra. */
   motivo_livre?: string;
   nota_ajustada?: number | null;
   justificativas?: string[];
   justificativa_livre?: string;
+  /** Observação do avaliador (opcional, até 2.000 caracteres): vai para "Observações da análise" com o item. */
+  observacao?: string;
   /** Editar nota (a pontuação pelos itens registrados); false = Confere. */
   edita_nota?: boolean;
   /** Linhas extras do cargo (ex.: UMCQA): true Confere, false Não confere. */

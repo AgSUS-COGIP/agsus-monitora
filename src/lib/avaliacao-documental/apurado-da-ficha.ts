@@ -30,6 +30,7 @@ type BlocoQuePontua = { codigo: string; tipo: string };
 type BlocoLancado = {
   situacao?: Situacao | null;
   motivos?: string[];
+  motivo_livre?: string;
   nota_ajustada?: number | null;
   justificativas?: string[];
   justificativa_livre?: string;
@@ -98,6 +99,9 @@ export function apuradoZeradoPelaDecisao(lancado: BlocoLancado | undefined) {
  * O bloco lançado depois de uma decisão (Conforme, Não conforme, Não
  * enviado ou desmarcar = null): a situação, os motivos (só nos que pedem) e,
  * nos blocos que pontuam, o Apurado (nota_ajustada) conforme as regras acima.
+ * O motivo escrito (motivo_livre, o "Outro motivo") é do Não confere ou da
+ * justificativa da nota: trocar de um para o outro, ou desmarcar, o apaga.
+ * A Observação do avaliador fica sempre.
  */
 export function blocoComDecisao({
   bloco,
@@ -110,10 +114,14 @@ export function blocoComDecisao({
 }): BlocoLancado {
   const atual: BlocoLancado = lancamento.blocos?.[bloco.codigo] ?? {};
   const zera = ZERAM.includes(situacao ?? "");
+  const mesmoMotivo = zera
+    ? !atual.situacao || ZERAM.includes(atual.situacao)
+    : situacao === "CONFORME" && atual.situacao === "CONFORME";
   const novo: BlocoLancado = {
     ...atual,
     situacao,
     motivos: zera ? atual.motivos || [] : [],
+    ...(atual.motivo_livre && !mesmoMotivo ? { motivo_livre: "" } : {}),
   };
   if (!parcialDoBloco(bloco)) return novo;
   if (zera)
@@ -376,6 +384,8 @@ export function blocoComEscolha({
           : declarado,
       justificativas: [],
       justificativa_livre: "",
+      // Sem justificativa, sem o "Outro motivo" escrito dela.
+      ...(novo.motivo_livre ? { motivo_livre: "" } : {}),
     };
   }
   // Editar: a pontuação vem do calculado (o ajuste de quem já editava fica).

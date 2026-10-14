@@ -17,7 +17,12 @@
 
   O lançamento é o "candidato" de pontuacao.js, com:
     blocos[<CODIGO>] = { situacao, motivos[], motivo_livre, nota_ajustada,
-                         justificativas[], justificativa_livre }
+                         justificativas[], justificativa_livre, observacao }
+  "Outro motivo (descrever)": o código OUTRO_MOTIVO em motivos (Não confere,
+  Não enviou) ou em justificativas (nota diferente da declarada) e o texto em
+  motivo_livre (10 caracteres ou mais), que vale como o motivo. A
+  `observacao` (Observação do avaliador, opcional, até 2.000 caracteres) vai
+  para "Observações da análise" com o item (pontuacao.js).
     titulos[] = { titulo, nome, aceito, motivo }
     cursos[]  = { nome, horas, aceito, motivo }
     vinculos[]= { empregador, categoria, inicio, fim, aceito, motivo }
@@ -39,7 +44,7 @@ import {
   opcoesDaResposta,
   textoDaResposta,
 } from "./nota-declarada.js";
-import { calcularAvaliacao, tetoDoBloco } from "./pontuacao.js";
+import { calcularAvaliacao, OUTRO_MOTIVO, tetoDoBloco } from "./pontuacao.js";
 import { normalizarRegraAnalise } from "./regra.js";
 import { faltasDoCargo, regraDaVaga } from "./regra-por-cargo.ts";
 
@@ -305,13 +310,27 @@ export function calcularFicha(regra, lancamento, documental) {
 
 const temTexto = (v, min = 1) => String(v ?? "").trim().length >= min;
 
+export { OUTRO_MOTIVO };
+/** O mínimo do motivo escrito (o banco pede o mesmo em FC_PENDENCIAS_FICHA). */
+export const MINIMO_DO_MOTIVO_LIVRE = 10;
+/** O limite da Observação do avaliador (FC_VALIDAR_LANCAMENTO_FICHA). */
+export const TAMANHO_DA_OBSERVACAO = 2000;
+
+/** Marcou "Outro motivo (descrever)" nesta lista de códigos? */
+export const marcouOutroMotivo = (codigos) =>
+  lista(codigos).includes(OUTRO_MOTIVO);
+const daRegra = (codigos) => lista(codigos).filter((c) => c !== OUTRO_MOTIVO);
+const motivoLivreBasta = (l) =>
+  temTexto(l.motivo_livre, MINIMO_DO_MOTIVO_LIVRE);
+
 /** O bloco tem justificativa para a nota diferente da declarada? */
 export function blocoJustificado(regra, bloco, lancado) {
   const l = objeto(lancado);
-  if (lista(l.justificativas).length) return true;
+  if (daRegra(l.justificativas).length) return true;
+  if (marcouOutroMotivo(l.justificativas) && motivoLivreBasta(l)) return true;
   if (
     ["NAO_CONFORME", "NAO_ENVIADO"].includes(l.situacao) &&
-    (lista(l.motivos).length || temTexto(l.motivo_livre, 10))
+    (lista(l.motivos).length || motivoLivreBasta(l))
   )
     return true;
   return (
@@ -482,10 +501,22 @@ export function pendenciasDaFicha(
           ? "Escolha Confere, Não confere ou Editar nota."
           : "Escolha Confere ou Não confere.",
       );
-    if (
-      ["NAO_CONFORME", "NAO_ENVIADO"].includes(l.situacao) &&
-      !lista(l.motivos).length &&
-      !(lista(bloco.motivos).length === 0 && temTexto(l.motivo_livre, 10))
+    // O motivo do Não confere: um da regra, o "Outro motivo" descrito ou,
+    // no bloco sem motivos, o texto. Marcado, o "Outro motivo" pede o texto
+    // (também na justificativa da nota).
+    const zera = ["NAO_CONFORME", "NAO_ENVIADO"].includes(l.situacao);
+    const outro = marcouOutroMotivo(
+      zera ? l.motivos : l.situacao === "CONFORME" ? l.justificativas : [],
+    );
+    if (outro && !motivoLivreBasta(l))
+      falta(
+        zera ? "motivo" : "justificativa",
+        "Descreva o outro motivo (10 caracteres ou mais).",
+      );
+    else if (
+      zera &&
+      !daRegra(l.motivos).length &&
+      !(outro || (!lista(bloco.motivos).length && motivoLivreBasta(l)))
     )
       falta(
         "motivo",
@@ -540,7 +571,9 @@ export function pendenciasDaFicha(
       l.situacao === "CONFORME" &&
       avaliacao?.resultado !== "INAPTO_REQUISITO" &&
       divergenciaDoBloco(bloco, avaliacao, declarada) &&
-      !blocoJustificado(regra, bloco, l)
+      !blocoJustificado(regra, bloco, l) &&
+      // O "Outro motivo" sem texto já pediu a descrição (uma falta só).
+      !(outro && !motivoLivreBasta(l))
     )
       falta(
         "justificativa",
