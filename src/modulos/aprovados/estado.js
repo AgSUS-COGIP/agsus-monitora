@@ -72,7 +72,7 @@ import {
   statusNeedsMatricula,
   statusTravado,
 } from "../../lib/lista-aprovados-rules.js";
-import { hojeEmBrasilia } from "../../lib/carta-de-convocacao.js";
+import { hojeEmBrasilia } from "../../lib/carta-de-convocacao.ts";
 import {
   argumentosDaConfiguracao,
   fixarIdsNovos,
@@ -85,12 +85,12 @@ import {
 import { PLANILHAS } from "../../lib/planilhas.js";
 import { motivoValido } from "../../lib/publicacao-de-aprovados.ts";
 import { irParaTela } from "../../app/ir-para-tela.ts";
-import { criarEstadoDaCarta } from "./carta-de-convocacao/estado.js";
+import { criarEstadoDaCarta } from "./carta-de-convocacao/estado.ts";
 import {
   copiarParaAreaDeTransferencia,
   imprimirPagina,
   logoEmPng,
-} from "../classificacao/documento-no-navegador.js";
+} from "../classificacao/documento-no-navegador.ts";
 import {
   anexosPorCandidato,
   arquivoEmBase64,

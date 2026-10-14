@@ -19,7 +19,7 @@
     "src/modulos/analises/paineis.tsx": "monta rgba() a partir de um token lido em tempo de execução (não é cor fixa)",
     "src/modulos/aya/mascote/contornos.ts": "marca: desenho da mascote AYA",
     "src/modulos/aya/mascote/desenho.tsx": "marca: desenho da mascote AYA",
-    "src/modulos/classificacao/documento-no-navegador.js": "documento: fundo branco do papel ao rasterizar a prévia",
+    "src/modulos/classificacao/documento-no-navegador.ts": "documento: fundo branco do papel ao rasterizar a prévia",
     "src/modulos/configuracoes/partes.jsx": "valor padrão gravado da cor do painel da tela de acesso (configuração, não tema)",
     "src/modulos/mapa-saude-indigena/leaflet.ts": "mapa: contorno branco dos marcadores sobre a base do mapa",
     "src/modulos/mapa-saude-indigena/legenda.tsx": "mapa: legenda com o mesmo contorno dos marcadores",
@@ -185,7 +185,7 @@
       "#2a1512": 1,
       "#2a1608": 1
     },
-    "src/modulos/classificacao/documento-no-navegador.js": {
+    "src/modulos/classificacao/documento-no-navegador.ts": {
       "#ffffff": 1
     },
     "src/modulos/configuracoes/partes.jsx": {

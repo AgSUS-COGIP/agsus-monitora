@@ -92,7 +92,7 @@ import {
   copiarParaAreaDeTransferencia,
   imprimirPagina,
   logoEmPng,
-} from "./documento-no-navegador.js";
+} from "./documento-no-navegador.ts";
 import { convocacaoDoEdital } from "../../lib/classificacao/convocacao-do-edital.ts";
 import { normalizarRegra } from "../../lib/classificacao/regra.ts";
 import { rotuloDaVersao } from "../../lib/nome-da-versao.ts";

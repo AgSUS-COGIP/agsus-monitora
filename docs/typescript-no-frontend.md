@@ -178,7 +178,7 @@ versões de regra, registros e publicação de listas, desempate, hora de nascim
 exportação. Dados usados pelo estado são validados; respostas antigas não atualizam
 dados, avisos ou flags após troca de edital, área ou usuário. Os contratos estão em
 `tests/tipos/tela-estado-da-classificacao.tsx`; utilitários de impressão e área de transferência no navegador
-continuam em JavaScript. Contratos e limites em
+também estão em TypeScript. Contratos e limites em
 [../src/modulos/classificacao/README.md](../src/modulos/classificacao/README.md).
 
 A publicação do resultado final como lista de aprovados também está em TypeScript/TSX:
@@ -243,3 +243,12 @@ em TypeScript: `classificacao/exportacao.ts`, `colunas-do-documento.ts`,
 exportação, recusando coleções malformadas e notas não numéricas. São preservados os
 XML dos arquivos, texto público, timbrado, numeração, notas de rodapé e horários da agenda.
 Contratos em `tests/tipos/documentos-da-classificacao.tsx`.
+
+As cartas de convocação estão em TypeScript/TSX, incluindo estado, modelos, versões,
+emissão, histórico e documentos SEI/DOCX/ZIP. Os contratos ficam em
+`src/lib/tipos-da-carta.ts` e `tests/tipos/cartas-e-navegador.tsx`. Modelos malformados
+interrompem a carga com aviso. Uma confirmação incompleta da emissão impede a saída
+e a repetição automática do registro; o usuário deve conferir o histórico. O cache
+do logo considera URL e largura e permite nova tentativa após falha. Testes em
+`tests/modulos/carta-confirmacao-e-modelos.test.js` e
+`tests/modulos/documentos-no-navegador.test.js`.

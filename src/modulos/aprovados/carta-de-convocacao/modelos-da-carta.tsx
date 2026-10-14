@@ -1,10 +1,17 @@
+import type {
+  CandidatoDaCarta,
+  EstadoPaiDaCarta,
+  ModeloDaCarta,
+  RascunhoDaCarta,
+  RegistroDaCarta,
+} from "../../../lib/tipos-da-carta.ts";
 import { useRef, useState, useSyncExternalStore } from "react";
 import {
   CAMPOS_DA_CARTA,
   emissaoInicial,
   rascunhoDoModelo,
   validarModelo,
-} from "../../../lib/carta-de-convocacao.js";
+} from "../../../lib/carta-de-convocacao.ts";
 import { opcoesDeEdital } from "../../../lib/lista-aprovados-rules.js";
 import { formatarDataHora } from "../../../lib/cronograma-do-edital.js";
 import {
@@ -25,7 +32,7 @@ import {
   modelos e as versões; quem edita (aprovados >= editor) muda.
 */
 
-function Versoes({ modelo }) {
+function Versoes({ modelo }: { modelo: ModeloDaCarta }) {
   if (!modelo.versoes.length) return null;
   return (
     <details className="carta-versoes">
@@ -43,7 +50,13 @@ function Versoes({ modelo }) {
   );
 }
 
-function MudarSituacao({ estado, modelo }) {
+function MudarSituacao({
+  estado,
+  modelo,
+}: {
+  estado: EstadoPaiDaCarta;
+  modelo: ModeloDaCarta;
+}) {
   const [abrindo, setAbrindo] = useState(false);
   const [motivo, setMotivo] = useState("");
   const rotulo = modelo.ativo ? "Inativar" : "Reativar";
@@ -91,14 +104,26 @@ function MudarSituacao({ estado, modelo }) {
   );
 }
 
-function Editor({ estado, modelo, listas, exemplo, aoVoltar }) {
+function Editor({
+  estado,
+  modelo,
+  listas,
+  exemplo,
+  aoVoltar,
+}: {
+  estado: EstadoPaiDaCarta;
+  modelo: ModeloDaCarta | null;
+  listas: readonly RegistroDaCarta[];
+  exemplo: CandidatoDaCarta | null;
+  aoVoltar: () => void;
+}) {
   const [rascunho, setRascunho] = useState(() => rascunhoDoModelo(modelo));
-  const texto = useRef(null);
+  const texto = useRef<HTMLTextAreaElement | null>(null);
   const editando = Boolean(modelo);
   const { erros, avisos } = validarModelo(rascunho, {
     versaoAtual: modelo?.versao || 0,
   });
-  const mudar = (campo, valor) =>
+  const mudar = (campo: keyof RascunhoDaCarta, valor: string) =>
     setRascunho((atual) => ({ ...atual, [campo]: valor }));
   const comoModelo = {
     id: modelo?.id || "novo",
@@ -124,7 +149,7 @@ function Editor({ estado, modelo, listas, exemplo, aoVoltar }) {
     : "";
 
   /* Põe o campo onde está o cursor do texto (ou no fim). */
-  function inserir(chave) {
+  function inserir(chave: string) {
     const campo = texto.current;
     const marca = `{${chave}}`;
     const valor = rascunho.texto;
@@ -146,7 +171,7 @@ function Editor({ estado, modelo, listas, exemplo, aoVoltar }) {
     <div className="carta-editor">
       <form
         className="carta-formulario"
-        aria-label={editando ? `Editar ${modelo.nome}` : "Novo modelo"}
+        aria-label={editando ? `Editar ${modelo?.nome ?? ""}` : "Novo modelo"}
         onSubmit={(evento) => evento.preventDefault()}
       >
         <div className="ui-grade-de-campos">
@@ -159,7 +184,7 @@ function Editor({ estado, modelo, listas, exemplo, aoVoltar }) {
               onChange={(evento) => mudar("nome", evento.target.value)}
             />
           </Campo>
-          {editando ? (
+          {modelo ? (
             <Campo rotulo="Vale para">
               <input
                 id="cartaModeloEscopo"
@@ -261,7 +286,7 @@ function Editor({ estado, modelo, listas, exemplo, aoVoltar }) {
             onChange={(evento) => mudar("documentos", evento.target.value)}
           />
         </Campo>
-        {editando ? (
+        {modelo ? (
           <Campo
             rotulo={`Motivo da alteração (versão ${modelo.versao + 1})`}
             obrigatorio
@@ -310,7 +335,7 @@ function Editor({ estado, modelo, listas, exemplo, aoVoltar }) {
           </BotaoDeAcao>
         </div>
       </form>
-      {pagina ? (
+      {pagina && exemplo ? (
         <div className="carta-previa">
           <small className="carta-previa-exemplo">
             Prévia com {exemplo.nome}
@@ -327,9 +352,17 @@ function Editor({ estado, modelo, listas, exemplo, aoVoltar }) {
   );
 }
 
-export function ModelosDaCarta({ estado, listas, candidatos }) {
+export function ModelosDaCarta({
+  estado,
+  listas,
+  candidatos,
+}: {
+  estado: EstadoPaiDaCarta;
+  listas: readonly RegistroDaCarta[];
+  candidatos: readonly CandidatoDaCarta[];
+}) {
   const carta = useSyncExternalStore(estado.carta.assinar, estado.carta.obter);
-  const [editando, setEditando] = useState(null);
+  const [editando, setEditando] = useState<ModeloDaCarta | "novo" | null>(null);
   const fechar = estado.fecharModal;
   const exemplo =
     candidatos.find((c) => c.lista_ativa) || candidatos[0] || null;

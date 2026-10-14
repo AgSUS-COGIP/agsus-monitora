@@ -43,7 +43,7 @@ colunas-do-documento.tsx  aba Colunas: marcar e ordenar (setas ou arrastar) as c
                    das tabelas, por publicação (regras em src/lib/classificacao/colunas-do-documento.ts)
 hora-de-nascimento.tsx  hora da certidão na gaveta do candidato, só quando o empate chega
                    à maior idade no mesmo dia (sem certidão = 23:59:59)
-documento-no-navegador.js  área de transferência (HTML + texto), logo em PNG, impressão
+documento-no-navegador.ts  área de transferência (HTML + texto), logo em PNG, impressão
 classificacao.css  só o que é desta tela (tokens)
 ```
 
@@ -144,4 +144,5 @@ Retrato, XLSX, colunas e documentos SEI/DOCX estão em TypeScript, com contratos
 `dados-dos-documentos.ts`; nenhuma linha malformada é descartada para exportar o restante.
 São preservados o nome público, o timbrado, a numeração, as notas de desempate e de decisão,
 os horários da agenda e os formatos XML. A área de transferência, logo e impressão no
-navegador ainda ficam em `documento-no-navegador.js`.
+navegador também estão tipados em `documento-no-navegador.ts`. O cache do logo considera
+URL e largura; uma conversão que falha pode ser tentada novamente.
