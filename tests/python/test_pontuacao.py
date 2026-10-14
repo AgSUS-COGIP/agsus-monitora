@@ -72,6 +72,31 @@ class Detalhes(unittest.TestCase):
         self.assertEqual(pt.teto_do_bloco(cursos, "superior"), 5)
         self.assertEqual(pt.teto_do_bloco(cursos, "tecnico"), 10)
 
+    def test_bloco_que_nao_se_aplica_ao_cargo_nao_elimina(self):
+        # O registro no conselho não se aplica ao Motorista D (114/2026, Anexo I): como o vitest.
+        regra = json.loads(json.dumps(CASOS["regras"]["E114-POR-CARGO"]))
+        motorista = next(d for d in regra["por_cargo"] if d["codigo"] == "MOTORISTA_D")
+        candidato = {
+            "nivel": "medio",
+            "vaga": "182528",
+            "modalidade": "AC",
+            "blocos": {"REGISTRO_CONSELHO": {"situacao": "NAO_ENVIADO", "motivos": ["SEM_REGISTRO"]}},
+        }
+
+        def do_registro(r):
+            return [t for t in r["eliminatorios"] if "conselho de classe" in t]
+
+        self.assertEqual(
+            do_registro(pt.calcular_avaliacao(regra, candidato, {"notaMinima": 0})),
+            ["Item 6.4: Não apresentou registro ativo no conselho de classe exigido para a vaga."],
+        )
+        motorista["blocos"]["REGISTRO_CONSELHO"] = {"nao_se_aplica": True}
+        da_vaga = pt.regra_da_vaga(pt.normalizar_regra(regra), candidato)
+        registro = next(b for b in da_vaga["blocos"] if b["codigo"] == "REGISTRO_CONSELHO")
+        self.assertIs(registro["nao_se_aplica"], True)
+        r = pt.calcular_avaliacao(regra, candidato, {"notaMinima": 0})
+        self.assertEqual(do_registro(r), [])
+
 
 class Conferencia(unittest.TestCase):
     def setUp(self):

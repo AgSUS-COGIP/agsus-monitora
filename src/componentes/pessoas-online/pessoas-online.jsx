@@ -1,6 +1,5 @@
 import { useEffect, useReducer, useSyncExternalStore } from "react";
 import { montarModulo } from "../../app/montar-modulo.jsx";
-import { podeUsarChat } from "../../lib/access-roles.js";
 import { situacaoDaPresenca } from "../../lib/online-presence.js";
 
 /*
@@ -8,8 +7,7 @@ import { situacaoDaPresenca } from "../../lib/online-presence.js";
   lista de quem está com o MONITORA aberto, com o lugar de cada um. O estado é
   de src/app/presenca.js; aqui só se desenha.
 
-  "Mensagem" abre a conversa direta: src/modulos/chat/ escuta o clique em
-  `[data-chat-usuario]`. Os ids (`#onlinePresence`, `#onlinePresenceBtn`,
+  Os ids (`#onlinePresence`, `#onlinePresenceBtn`,
   `#onlinePresenceList`…) são os de antes: o CSS e os testes de ponta a ponta
   continuam valendo.
 */
@@ -42,7 +40,7 @@ function Avatar({ pessoa }) {
   );
 }
 
-function Pessoa({ pessoa, comMensagem }) {
+function Pessoa({ pessoa }) {
   return (
     <div className="online-presence-person">
       <Avatar pessoa={pessoa} />
@@ -53,16 +51,6 @@ function Pessoa({ pessoa, comMensagem }) {
           {pessoa.currentView ? ` · ${pessoa.currentView}` : ""}
         </small>
       </span>
-      {comMensagem ? (
-        <button
-          type="button"
-          className="online-presence-mensagem"
-          data-chat-usuario={pessoa.userId}
-          aria-label={`Mensagem para ${pessoa.fullName}`}
-        >
-          Mensagem
-        </button>
-      ) : null}
     </div>
   );
 }
@@ -96,9 +84,6 @@ export function PessoasOnline({ presenca, agora = () => Date.now() }) {
     return () => document.removeEventListener("keydown", aoTeclar);
   }, [estado.aberto, presenca]);
 
-  const perfil = presenca.perfilAtual();
-  const euId = presenca.usuarioAtual()?.id;
-  const comChat = podeUsarChat(perfil);
   const semPessoas =
     situacao.estado === "error" || situacao.estado === "offline"
       ? situacao.detalhe
@@ -147,11 +132,7 @@ export function PessoasOnline({ presenca, agora = () => Date.now() }) {
         <div id="onlinePresenceList" className="online-presence-list">
           {estado.pessoas.length && situacao.estado === "ready" ? (
             estado.pessoas.map((pessoa) => (
-              <Pessoa
-                key={pessoa.userId}
-                pessoa={pessoa}
-                comMensagem={comChat && pessoa.userId !== euId}
-              />
+              <Pessoa key={pessoa.userId} pessoa={pessoa} />
             ))
           ) : (
             <p>{semPessoas}</p>

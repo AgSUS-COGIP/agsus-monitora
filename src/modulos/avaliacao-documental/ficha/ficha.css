@@ -2369,6 +2369,24 @@
 .avd-ficha-ajuste-fino {
   margin-left: auto;
 }
+/* "Justificativa do ajuste": o resumo dos itens, editável (entra no parecer). */
+.avd-ficha-justificativa-do-ajuste {
+  display: grid;
+  gap: var(--space-1-5);
+}
+.avd-ficha-justificativa-do-ajuste-topo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-1) var(--space-3);
+}
+.avd-ficha-justificativa-do-ajuste textarea {
+  min-height: 64px;
+  resize: vertical;
+  font-size: var(--text-body-sm);
+  line-height: var(--leading-body-sm, 1.5);
+}
 .avd-ficha-ajuste-fino[aria-pressed="true"] {
   font-weight: var(--font-weight-semibold);
 }

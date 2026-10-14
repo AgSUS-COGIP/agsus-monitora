@@ -61,7 +61,7 @@ migrations `20260928120000_edital_novo_sem_motivo.sql`, `20260928220000_edital_n
 
 **perguntas:** vagas imediatas | de onde vem as vagas imediatas | origem das vagas imediatas | vaga imediata
 **resposta:** No MONITORA, as vagas imediatas não se digitam mais à mão (manual) nas Entrevistas: o número digitado lá antes ficou no banco, sem uso. Valem, nesta ordem: o quadro de vagas do edital, cadastrado em Editais; sem ele, a configuração de convocação do edital, em Lista de aprovados › Convocação (o total de vagas imediatas informado por vaga e dividido pelo modelo de cotas; zero quer dizer só cadastro reserva). Quando o quadro só traz o total, a divisão por modalidade sai dessa configuração ou dos percentuais da regra de classificação. A Classificação, a convocação das Entrevistas e a ordem de chamada da lista de aprovados usam essa mesma conta.
-**fonte:** src/lib/classificacao/vagas.js; src/lib/classificacao/convocacao-do-edital.js; src/lib/configuracao-de-convocacao.js; supabase/migrations/20261005150000_convocacao_unica_da_entrevista.sql
+**fonte:** src/lib/classificacao/vagas.ts; src/lib/classificacao/convocacao-do-edital.ts; src/lib/configuracao-de-convocacao.js; supabase/migrations/20261005150000_convocacao_unica_da_entrevista.sql
 **abrir:** nucleo
 
 ## Mover edital de área
@@ -79,7 +79,7 @@ migrations `20260928120000_edital_novo_sem_motivo.sql`, `20260928220000_edital_n
 ## Quem pode cadastrar e editar editais
 
 **perguntas:** quem pode editar edital | quem pode cadastrar edital | botao novo edital nao aparece | nao consigo editar o edital | sumiu o lapis do edital | permissao editais
-**resposta:** Cadastrar ("Novo edital") e editar (o lápis da linha) é de quem tem nível Editor em Editais ou em Cronograma, em Configurações › Acessos. Com Leitor, a tela mostra a tabela, os indicadores e o "Ver cronograma", sem esses botões. Na linha, o ícone da Lista de aprovados aparece para quem tem Editor em Importação e convocação, e o botão "Conversa" para quem usa as Mensagens. Mover o edital de área é só do administrador global.
+**resposta:** Cadastrar ("Novo edital") e editar (o lápis da linha) é de quem tem nível Editor em Editais ou em Cronograma, em Configurações › Acessos. Com Leitor, a tela mostra a tabela, os indicadores e o "Ver cronograma", sem esses botões. Na linha, o ícone da Lista de aprovados aparece para quem tem Editor em Importação e convocação. Mover o edital de área é só do administrador global.
 **fonte:** src/modulos/editais/nucleo.jsx; src/lib/access-roles.js (canManageEditais, canImportApprovedList, canMoveEditalBetweenAreas)
 **abrir:** config:acessos
 

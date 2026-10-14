@@ -61,9 +61,6 @@ describe("barras fixas acima do menu inferior do celular", () => {
     expect(
       bloco(ler("src/styles/connectivity-status.css"), ".connectivity-status"),
     ).toContain(TOKEN);
-    expect(bloco(ler("src/modulos/chat/chat.css"), ".chat-avisos")).toContain(
-      TOKEN,
-    );
     expect(
       bloco(ler("src/modulos/aya/tour/tour.css"), ".aya-oferta--balao"),
     ).toContain(TOKEN);

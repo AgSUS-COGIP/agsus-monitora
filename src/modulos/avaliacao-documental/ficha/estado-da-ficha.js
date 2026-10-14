@@ -12,6 +12,11 @@
     reabrir_ficha(p_ficha, p_versao, p_motivo)
     registrar_acesso_ficha(p_ficha, p_tipo)
 
+  A justificativa dos itens (justificativa-dos-itens.ts) acompanha os itens:
+  na abertura em edição, preenche o campo vazio do item que precisa (sem
+  marcar a ficha como alterada: vai no próximo rascunho ou na conclusão); a
+  cada mudança, refaz o texto automático quando o resumo dos itens mudou.
+
   Salvamento automático: cada mudança agenda um rascunho (ATRASO_MS); uma
   mudança durante o envio agenda outro com a versão nova. "Salvo às HH:MM" só
   depois de o banco confirmar (AM-12.1). Versão velha (40001) ou reserva
@@ -27,6 +32,7 @@ import {
   regraDaFicha,
   resumoParaGravar,
 } from "../../../lib/avaliacao-documental/ficha.js";
+import { comJustificativasDosItens } from "../../../lib/avaliacao-documental/justificativa-dos-itens.ts";
 import { mensagemDoBanco } from "../estado.js";
 
 const RPC_OBTER = "obter_ficha_analise";
@@ -104,6 +110,18 @@ export function criarEstadoDaFicha({
     };
   }
 
+  /* O retrato com a justificativa dos itens em dia (recalcula se mudou). */
+  function comJustificativas(antes, retrato, dados = estado.dados) {
+    const lancamento = comJustificativasDosItens(
+      antes,
+      retrato,
+      dados.leituras,
+    );
+    return lancamento === retrato.lancamento
+      ? retrato
+      : calcular(lancamento, dados);
+  }
+
   function pararTemporizador() {
     if (temporizador !== null) cancelar(temporizador);
     temporizador = null;
@@ -127,13 +145,16 @@ export function criarEstadoDaFicha({
         documental: dados.documental,
         gravado: dados.ficha.lancamento,
       });
+      const podeEditar = Boolean(dados.pode_editar);
+      let retrato = calcular(lancamento, dados);
+      if (podeEditar) retrato = comJustificativas(null, retrato, dados);
       publicar({
         carregando: false,
         dados,
         versao: dados.ficha.versao,
-        podeEditar: Boolean(dados.pode_editar),
+        podeEditar,
         salvoEm: dados.ficha.rascunho_em || null,
-        ...calcular(lancamento, dados),
+        ...retrato,
       });
       return true;
     } catch (erro) {
@@ -148,7 +169,10 @@ export function criarEstadoDaFicha({
     if (!estado.podeEditar || !estado.lancamento) return;
     const lancamento = transformar(structuredClone(estado.lancamento));
     mudancas += 1;
-    publicar({ ...calcular(lancamento), sujo: true });
+    publicar({
+      ...comJustificativas(estado, calcular(lancamento)),
+      sujo: true,
+    });
     pararTemporizador();
     temporizador = agendar(() => {
       temporizador = null;

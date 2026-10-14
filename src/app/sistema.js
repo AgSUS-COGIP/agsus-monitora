@@ -35,7 +35,7 @@ import { sessaoDoApp } from "./sessao.js";
   Os ganchos de `sessaoDoApp.ligarSistema` são o contrato com a sessão
   (docs/arquitetura-react.md, "Sessão ↔ sistema"). As funções em `window` são
   os contratos de quem ainda chama por elas: os `onclick` do index.html, a
-  barra lateral, a Aya, o chat e as telas montadas em src/main.js.
+  barra lateral, a Aya e as telas montadas em src/main.js.
 */
 
 export const perfil = criarPerfil();

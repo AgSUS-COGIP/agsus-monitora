@@ -40,6 +40,14 @@ import { arquivosDaPergunta } from "../../../lib/avaliacao-documental/respostas-
 import type { ArquivoDoCandidato } from "../../../lib/avaliacao-documental/respostas-do-candidato.ts";
 import { justificativasDoBloco } from "../../../lib/avaliacao-documental/justificativas-do-bloco.ts";
 import {
+  justificativaDoBloco,
+  TAMANHO_DA_JUSTIFICATIVA,
+} from "../../../lib/avaliacao-documental/justificativa-dos-itens.ts";
+import type {
+  BlocoComItens,
+  RetratoDaFicha,
+} from "../../../lib/avaliacao-documental/justificativa-dos-itens.ts";
+import {
   anexoEhImagem,
   itensParaConferir,
   leituraDoAnexo,
@@ -105,7 +113,8 @@ import type {
   com "Adicionar …" sempre à vista; no rodapé, "Pontuação pelos itens
   aceitos: X de 10 · declarou 10" e Confirmar (Confere se X é o declarado;
   senão Editar nota com a justificativa) · Não confere (o motivo) · "Editar
-  nota" só como ajuste fino. Mexer nos itens depois de confirmar volta a
+  nota" só como ajuste fino; confirmado, a "Justificativa do ajuste" (o
+  resumo dos aceitos e dos não pontuados, editável: justificativa-dos-itens.ts). Mexer nos itens depois de confirmar volta a
   pedir a confirmação. As situações gravadas são as de sempre
   (apurado-da-ficha.ts).
   No modo lista, o mesmo em cartão compacto. A gravação é a do estado da
@@ -1002,6 +1011,76 @@ function Resultado({
   );
 }
 
+/* O resumo dos itens do bloco e se o item pede a justificativa. */
+const justificativaDosItens = (st: EstadoDaFicha, bloco: Bloco) =>
+  justificativaDoBloco(
+    st as unknown as RetratoDaFicha,
+    bloco as unknown as BlocoComItens,
+    st.dados.leituras,
+  );
+
+/*
+  "Justificativa do ajuste": o resumo dos itens aceitos e dos não pontuados,
+  já preenchido no campo justificativa_livre (estado-da-ficha.js) e editável;
+  o texto entra no parecer. Quando o texto não é o resumo atual (editado, ou
+  os itens mudaram depois de editar), "Usar o resumo dos itens" volta a ele.
+*/
+function JustificativaDoAjuste({
+  st,
+  bloco,
+  lancado,
+  mudar,
+  desabilitado,
+  rotulo = "Justificativa do ajuste",
+}: {
+  st: EstadoDaFicha;
+  bloco: Bloco;
+  lancado: Lancado;
+  mudar: Mudar;
+  desabilitado: boolean;
+  rotulo?: string;
+}) {
+  const { texto: resumo } = justificativaDosItens(st, bloco);
+  const valor = lancado.justificativa_livre || "";
+  const id = `avdJustificativaDoAjuste-${bloco.codigo}`;
+  return (
+    <div
+      className="avd-ficha-justificativa-do-ajuste"
+      data-tour="avd-ficha-justificativa-do-ajuste"
+    >
+      <div className="avd-ficha-justificativa-do-ajuste-topo">
+        <label className="avd-ficha-rotulo" htmlFor={id}>
+          {rotulo}
+        </label>
+        {resumo && valor !== resumo && !desabilitado ? (
+          <button
+            type="button"
+            className="avd-ficha-link"
+            onClick={() =>
+              alterarBloco(mudar, bloco.codigo, { justificativa_livre: resumo })
+            }
+          >
+            Usar o resumo dos itens
+          </button>
+        ) : null}
+      </div>
+      <textarea
+        id={id}
+        rows={3}
+        value={valor}
+        maxLength={TAMANHO_DA_JUSTIFICATIVA}
+        disabled={desabilitado}
+        onChange={(ev) =>
+          alterarBloco(mudar, bloco.codigo, {
+            // Uma linha só: o parecer lista uma observação por linha.
+            justificativa_livre: ev.target.value.replace(/\s*\n\s*/g, " "),
+          })
+        }
+      />
+    </div>
+  );
+}
+
 /* A justificativa da pontuação diferente da declarada (uma só área). */
 function Justificativa({
   st,
@@ -1009,20 +1088,32 @@ function Justificativa({
   lancado,
   mudar,
   desabilitado,
+  textoNoRodape = false,
 }: {
   st: EstadoDaFicha;
   bloco: Bloco;
   lancado: Lancado;
   mudar: Mudar;
   desabilitado: boolean;
+  /** Pelos itens: a "Justificativa do ajuste" fica no rodapé da decisão. */
+  textoNoRodape?: boolean;
 }) {
   const regra = st.dados.regra.configuracao;
   const divergencia = divergenciaDoBloco(bloco, st.avaliacao, st.declarada) as {
     diferenca: number;
   } | null;
   const marcadas = lancado.justificativas || [];
+  // Bloco com itens: o texto é a "Justificativa do ajuste" (resumo dos itens).
+  const comItens = Boolean(BLOCOS_COM_ITENS[bloco.tipo]);
+  const comTexto =
+    Boolean(lancado.justificativa_livre) ||
+    (comItens && justificativaDosItens(st, bloco).precisa);
   if (lancado.situacao !== "CONFORME") return null;
-  if (!divergencia && !marcadas.length && !lancado.justificativa_livre)
+  if (
+    !divergencia &&
+    !marcadas.length &&
+    (!comTexto || (comItens && textoNoRodape))
+  )
     return null;
   const { doBloco, outras } = justificativasDoBloco(regra, bloco);
   const opcoes: Opcao[] = [...doBloco, ...outras];
@@ -1063,23 +1154,40 @@ function Justificativa({
           />
         </details>
       ) : null}
-      <label className="avd-ficha-campo">
-        <span className="avd-ficha-rotulo">
-          {opcoes.length
-            ? "Complemento (opcional)"
-            : `${rotulo} (10 caracteres ou mais)`}
-        </span>
-        <input
-          value={lancado.justificativa_livre || ""}
-          maxLength={2000}
-          disabled={desabilitado}
-          onChange={(ev) =>
-            alterarBloco(mudar, bloco.codigo, {
-              justificativa_livre: ev.target.value,
-            })
-          }
-        />
-      </label>
+      {comItens ? (
+        textoNoRodape ? null : (
+          <JustificativaDoAjuste
+            st={st}
+            bloco={bloco}
+            lancado={lancado}
+            mudar={mudar}
+            desabilitado={desabilitado}
+            rotulo={
+              opcoes.length || !divergencia
+                ? "Justificativa do ajuste"
+                : "Justificativa do ajuste (10 caracteres ou mais)"
+            }
+          />
+        )
+      ) : (
+        <label className="avd-ficha-campo">
+          <span className="avd-ficha-rotulo">
+            {opcoes.length
+              ? "Complemento (opcional)"
+              : `${rotulo} (10 caracteres ou mais)`}
+          </span>
+          <input
+            value={lancado.justificativa_livre || ""}
+            maxLength={TAMANHO_DA_JUSTIFICATIVA}
+            disabled={desabilitado}
+            onChange={(ev) =>
+              alterarBloco(mudar, bloco.codigo, {
+                justificativa_livre: ev.target.value,
+              })
+            }
+          />
+        </label>
+      )}
     </div>
   );
 }
@@ -1130,20 +1238,26 @@ const milBr = (n: number) => n.toLocaleString("pt-BR");
   o tempo já unido ("Comprovado: … · 1.160 dias") com os dias em comum entre
   vínculos (contam uma vez, sem alerta). Confirmar · Não confere e o "Editar
   nota" discreto, só para o ajuste fino. As teclas 1, 2 e 3 ficam na dica.
+  Confirmado, embaixo, a "Justificativa do ajuste" quando o item precisa
+  (pontuação diferente da declarada ou item não pontuado) ou já tem texto.
 */
 function DecisaoPelosItens({
   st,
   bloco,
+  lancado,
   escolha,
   calculado,
   desabilitado,
+  mudar,
   aoEscolher,
 }: {
   st: EstadoDaFicha;
   bloco: Bloco;
+  lancado: Lancado;
   escolha: Escolha | null;
   calculado: number;
   desabilitado: boolean;
+  mudar: Mudar;
   aoEscolher: (escolha: Escolha) => void;
 }) {
   const { lancamento } = st;
@@ -1152,6 +1266,11 @@ function DecisaoPelosItens({
   const diferenca = decl !== null ? calculado - decl : null;
   const temDiferenca = diferenca !== null && Math.abs(diferenca) >= 0.005;
   const confirmado = escolha === "CONFERE" || escolha === "EDITAR";
+  const mostraJustificativa =
+    confirmado &&
+    lancado.situacao === "CONFORME" &&
+    (Boolean(lancado.justificativa_livre) ||
+      justificativaDosItens(st, bloco).precisa);
   const idDoResumo = `avdPelosItens-${bloco.codigo}`;
   let tempo: { texto: string; dias: number; comum: number } | null = null;
   if (bloco.tipo === "VINCULOS") {
@@ -1273,6 +1392,15 @@ function DecisaoPelosItens({
           </button>
         ) : null}
       </div>
+      {mostraJustificativa ? (
+        <JustificativaDoAjuste
+          st={st}
+          bloco={bloco}
+          lancado={lancado}
+          mudar={mudar}
+          desabilitado={desabilitado}
+        />
+      ) : null}
     </div>
   );
 }
@@ -1448,7 +1576,13 @@ export function ItemDaFicha({
               {textoDoEfeito(avaliado.efeito)}
             </Selo>
           ) : null}
-          {!aplica ? <Selo>Não se aplica</Selo> : null}
+          {!aplica ? (
+            <Selo>
+              {bloco.nao_se_aplica === true
+                ? "Não se aplica a este cargo"
+                : "Não se aplica"}
+            </Selo>
+          ) : null}
           {!foco && bloco.item_edital ? (
             <span className="avd-ficha-item-edital">
               Item {bloco.item_edital}
@@ -1500,9 +1634,11 @@ export function ItemDaFicha({
             <DecisaoPelosItens
               st={st}
               bloco={bloco}
+              lancado={lancado}
               escolha={escolha}
               calculado={calculado ?? 0}
               desabilitado={desabilitado}
+              mudar={mudar}
               aoEscolher={escolher}
             />
           ) : null}
@@ -1584,6 +1720,7 @@ export function ItemDaFicha({
               lancado={lancado}
               mudar={mudar}
               desabilitado={desabilitado}
+              textoNoRodape={pelosItens}
             />
           ) : null}
           {mensagem && !desabilitado ? (

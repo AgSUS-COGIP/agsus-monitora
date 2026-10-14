@@ -13,7 +13,7 @@ lados (vitest e pytest). Mudou lá, muda aqui.
 
 As diferenças por cargo (regra.por_cargo) seguem
 src/lib/avaliacao-documental/regra-por-cargo.ts: a regra da vaga
-(regra_da_vaga) põe teto, faixas, extras, área exigida e requisitos do cargo
+(regra_da_vaga) põe teto, faixas, extras, área exigida, requisitos do cargo e "não se aplica"
 por cima do nível (cargo > nível > padrão).
 """
 
@@ -186,6 +186,8 @@ def bloco_do_cargo(bloco, sobrescrita, nivel):
     parte = _objeto(bloco.get("por_nivel")).get("" if nivel is None else str(nivel))
     r = {**bloco, **parte} if isinstance(parte, dict) else {**bloco}
     r.pop("por_nivel", None)
+    if sobrescrita.get("nao_se_aplica") is True:
+        r["nao_se_aplica"] = True
     if "teto" in sobrescrita:
         r["teto"] = sobrescrita.get("teto")
     if _lista(sobrescrita.get("faixas")):
@@ -283,7 +285,8 @@ def _avaliar_blocos(regra, candidato, situacao_padrao):
     for bloco in regra["blocos"]:
         lancado = _objeto(_objeto(candidato.get("blocos")).get(bloco.get("codigo")))
         condicao = bloco.get("condicao") or ("INDIGENA" if bloco.get("tipo") == "PONTUACAO" else None)
-        aplica = _condicao_vale(condicao, candidato)
+        # O bloco que não se aplica ao cargo da vaga (por_cargo → nao_se_aplica).
+        aplica = bloco.get("nao_se_aplica") is not True and _condicao_vale(condicao, candidato)
         situacao = (lancado.get("situacao") or situacao_padrao) if aplica else "NAO_SE_APLICA"
         escolhidos = []
         if situacao in ("NAO_CONFORME", "NAO_ENVIADO"):
@@ -369,18 +372,34 @@ def nota_ajustada(lancado):
     return float(v) if _eh_numero(v) else None
 
 
+def _texto_comparavel(texto):
+    """Minúsculo, espaços simples, sem a pontuação do fim (textoComparavel do JS)."""
+    t = re.sub(r"\s+", " ", str(texto or "").lower()).strip()
+    return re.sub(r"[.;:]+$", "", t)
+
+
 def textos_das_justificativas(regra, bloco, lancado):
+    """
+    O motivo do bloco (com o item) ou a observação pronta, e o complemento
+    livre; o motivo ou a observação cujo texto já está no complemento sai.
+    """
     lancado = _objeto(lancado)
     textos = []
+    livre = str(lancado.get("justificativa_livre") or "").strip()
+
+    def no_livre(texto):
+        t = _texto_comparavel(texto)
+        return bool(livre) and bool(t) and t in _texto_comparavel(livre)
+
     for codigo in _lista(lancado.get("justificativas")):
         motivo = next((m for m in _lista(bloco.get("motivos")) if m.get("codigo") == codigo), None)
         if motivo:
-            textos.append(_com_item(motivo.get("item_edital") or bloco.get("item_edital"), motivo.get("texto")))
+            if not no_livre(motivo.get("texto")):
+                textos.append(_com_item(motivo.get("item_edital") or bloco.get("item_edital"), motivo.get("texto")))
             continue
         pronta = next((o for o in regra["observacoes_prontas"] if o.get("codigo") == codigo), None)
-        if pronta:
+        if pronta and not no_livre(pronta.get("texto")):
             textos.append(pronta.get("texto"))
-    livre = str(lancado.get("justificativa_livre") or "").strip()
     if livre:
         textos.append(_com_item(bloco.get("item_edital"), livre))
     return textos

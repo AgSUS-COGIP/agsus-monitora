@@ -6,9 +6,9 @@ import {
   modeloDaRegra,
   vagasDaConvocacao,
   vagasPelaConta,
-} from "../../src/lib/classificacao/convocacao-do-edital.js";
+} from "../../src/lib/classificacao/convocacao-do-edital.ts";
 import { classificar } from "../../src/lib/classificacao/motor.js";
-import { vagasPelosPercentuais } from "../../src/lib/classificacao/vagas.js";
+import { vagasPelosPercentuais } from "../../src/lib/classificacao/vagas.ts";
 import { derivarQuadro } from "../../src/lib/lista-convocacao-rules.js";
 import { modeloDeReferencia } from "../../src/lib/modelo-de-convocacao.js";
 

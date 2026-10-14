@@ -268,10 +268,10 @@ export function rebasearRascunho(rascunho, usuariosRecarregados = []) {
 
 /*
   Módulos que contam para a frase do grupo ("acessos" e o parecer viram frase à
-  parte; Mensagens não é página nem dado).
+  parte).
 */
 const MODULOS_DA_FRASE = MODULOS.filter(
-  (m) => !["acessos", "recursos_parecer", "chat"].includes(m.id),
+  (m) => !["acessos", "recursos_parecer"].includes(m.id),
 );
 /* "Tudo" não conta Configurações: o módulo não tem nível de leitura. */
 const MODULOS_DE_TUDO = MODULOS_DA_FRASE.filter(

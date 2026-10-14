@@ -5,8 +5,8 @@ import type { ContextoDaEmpregare } from "./tipos.ts";
 
 /*
   O "⋯" da nota: as ações secundárias da ficha — copiar o código do
-  candidato, abrir na Empregare, compartilhar no chat e, só para a
-  coordenação, o nível da vaga (que muda os pontos declarados).
+  candidato, abrir na Empregare e, só para a coordenação, o nível da vaga
+  (que muda os pontos declarados).
 */
 
 const NIVEIS = LISTA_DE_NIVEIS as unknown as ReadonlyArray<
@@ -15,14 +15,12 @@ const NIVEIS = LISTA_DE_NIVEIS as unknown as ReadonlyArray<
 
 export type PropriedadesDasMaisAcoes = {
   empregare: ContextoDaEmpregare;
-  aoCompartilhar?: (() => void) | null;
   /** Só para quem coordena e pode editar. */
   nivel?: { valor: string; aoMudar: (nivel: string) => void } | null;
 };
 
 export function MaisAcoesDaFicha({
   empregare,
-  aoCompartilhar,
   nivel,
 }: PropriedadesDasMaisAcoes) {
   const codigo = empregare.codigoDoCandidato;
@@ -56,20 +54,6 @@ export function MaisAcoesDaFicha({
             className="avd-ficha-mais-item"
             aoAbrir={fechar}
           />
-          {aoCompartilhar ? (
-            <button
-              type="button"
-              className="avd-ficha-mais-item"
-              data-tour="avd-ficha-compartilhar"
-              onClick={() => {
-                aoCompartilhar();
-                fechar();
-              }}
-            >
-              <i className="fa-solid fa-comments" aria-hidden="true" />{" "}
-              Compartilhar no chat
-            </button>
-          ) : null}
           {nivel ? (
             <label className="avd-ficha-campo avd-ficha-mais-nivel">
               <span className="avd-ficha-rotulo">Nível da vaga</span>

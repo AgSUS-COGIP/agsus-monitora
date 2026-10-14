@@ -34,7 +34,8 @@ import { EditorFaixas } from "./cardapio.tsx";
   de vagas) e, por bloco, só o que o tipo aceita mudar: teto e faixas dos
   cursos, itens extras (ex.: UMCQA, +5), a área exigida da experiência e os
   requisitos do cargo (rótulo, motivo da eliminação, termos e onde não
-  pontua — item 8.2.7). Fechado, cada cartão mostra o resumo de uma linha.
+  pontua — item 8.2.7) ou, num bloco de documento, "não se aplica a este
+  cargo" (sozinho). Fechado, cada cartão mostra o resumo de uma linha.
 */
 
 type Props = {
@@ -100,8 +101,27 @@ function SobrescritaDoTipo({
   const pontuam = blocos.filter(
     (b) => b.tipo === "TITULOS" || b.tipo === "CURSOS",
   );
+  if (campos.includes("nao_se_aplica") && valor.nao_se_aplica === true)
+    return (
+      <div className="avd-ast-cargo-bloco">
+        <Caixa
+          rotulo="Não se aplica a este cargo"
+          marcado
+          aoMudar={(v: boolean) => (v ? null : sem("nao_se_aplica"))}
+        />
+      </div>
+    );
   return (
     <div className="avd-ast-cargo-bloco">
+      {campos.includes("nao_se_aplica") ? (
+        <Caixa
+          rotulo="Não se aplica a este cargo"
+          marcado={false}
+          aoMudar={(v: boolean) =>
+            v ? aoMudar({ nao_se_aplica: true }) : null
+          }
+        />
+      ) : null}
       {campos.includes("faixas") ? (
         <>
           <Caixa

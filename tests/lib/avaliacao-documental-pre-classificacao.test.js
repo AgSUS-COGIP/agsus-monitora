@@ -15,7 +15,7 @@ import {
   tamanhoDoLote,
   vagasPorModalidade,
 } from "../../src/lib/avaliacao-documental/pre-classificacao.js";
-import { nivelDaVaga } from "../../src/lib/classificacao/vagas.js";
+import { nivelDaVaga } from "../../src/lib/classificacao/vagas.ts";
 import {
   calcularNotaDeclarada,
   chaveDaOpcao,

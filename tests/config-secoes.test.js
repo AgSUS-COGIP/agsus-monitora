@@ -22,7 +22,7 @@ const modulo = readFileSync("src/modulos/configuracoes/secoes.js", "utf8");
   Status); este módulo cria o esqueleto das seções, move os blocos das ilhas
   e controla a seção aberta.
 */
-describe("as seções (as sete do SIGAV + Módulos e abas + Status das atualizações + Mensagens (chat))", () => {
+describe("as seções (as sete do SIGAV + Módulos e abas + Status das atualizações)", () => {
   it("são exatamente essas, nessa ordem", () => {
     expect(SECOES.map((s) => s.rotulo)).toEqual([
       "Marca",
@@ -35,7 +35,6 @@ describe("as seções (as sete do SIGAV + Módulos e abas + Status das atualiza�
       "Acessos",
       "Módulos e abas",
       "Status das atualizações",
-      "Mensagens (chat)",
     ]);
   });
 
@@ -93,9 +92,9 @@ describe("organizar cria as seções e move os blocos", () => {
 
   beforeEach(montarPagina);
 
-  it("cria as onze seções, com o corpo das seções React vazio", () => {
+  it("cria as dez seções, com o corpo das seções React vazio", () => {
     expect(organizarConfiguracoesEmSecoes(document)).toBe(true);
-    expect(document.querySelectorAll(".config-secao")).toHaveLength(11);
+    expect(document.querySelectorAll(".config-secao")).toHaveLength(10);
     for (const secao of [
       "marca",
       "inicio",
@@ -156,7 +155,7 @@ describe("organizar cria as seções e move os blocos", () => {
   it("não organiza duas vezes", () => {
     expect(organizarConfiguracoesEmSecoes(document)).toBe(true);
     expect(organizarConfiguracoesEmSecoes(document)).toBe(false);
-    expect(document.querySelectorAll(".config-secao")).toHaveLength(11);
+    expect(document.querySelectorAll(".config-secao")).toHaveLength(10);
   });
 });
 

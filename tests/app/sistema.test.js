@@ -7,7 +7,7 @@ window.matchMedia ||= () => ({ matches: false });
 
 /*
   A ligação do sistema (src/app/sistema.js): os contratos em window que o
-  index.html, a barra lateral, a Aya, o chat e as telas usam, os ganchos da
+  index.html, a barra lateral, a Aya e as telas usam, os ganchos da
   sessão e a busca global.
 */
 

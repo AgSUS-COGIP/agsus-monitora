@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-import { nivelDaVaga } from "../src/lib/classificacao/vagas.js";
+import { nivelDaVaga } from "../src/lib/classificacao/vagas.ts";
 
 /*
   Invariantes da migration 20261013140000 (a linha do quadro de cada vaga pelo
