@@ -46,17 +46,27 @@
     de 0 até o teto do bloco no nível da vaga) por cima do que os itens
     lançados dão; o efeito do bloco (elimina, zera) continua valendo. As
     justificativas do bloco (códigos dos motivos do bloco ou das observações
-    prontas, e o complemento livre) entram nas observações do parecer.
+    prontas, e o complemento livre) entram nas observações do parecer;
+  - inapto por requisito com parecer.mostrar_pontos_quando_inapto: a nota
+    final continua 0 e o resultado Inapto, mas a conta devolve a pontuação
+    apurada (pontos_informativos: { nota, parciais }, a soma das parciais, só
+    informativa) e o parecer ganha a linha do modelo pontos_informativos
+    (campos nota_informativa e distribuicao_informativa), antes das
+    observações.
 */
 import {
   FORCA_DO_EFEITO,
   PARCIAIS,
+  PARCIAIS_CURTAS,
   PARCIAL_DO_TIPO,
   rotuloDe,
   SITUACOES_DO_BLOCO,
   TITULO_PADRAO_DA_ETAPA,
 } from "./catalogo.js";
-import { normalizarRegraAnalise } from "./regra.js";
+import {
+  MODELO_DOS_PONTOS_INFORMATIVOS,
+  normalizarRegraAnalise,
+} from "./regra.js";
 import { pontosDosExtras, regraDaVaga } from "./regra-por-cargo.ts";
 
 const DIA_MS = 24 * 60 * 60 * 1000;
@@ -500,6 +510,12 @@ export function calcularAvaliacao(regraEntrada, candidato = {}, opcoes = {}) {
       ? "INAPTO_NOTA"
       : "APTO";
   const notaFinal = resultado === "INAPTO_REQUISITO" ? 0 : notaApurada;
+  // Inapto por requisito com a opção ligada: a pontuação apurada, só informativa.
+  const pontosInformativos =
+    resultado === "INAPTO_REQUISITO" &&
+    regra.parecer.mostrar_pontos_quando_inapto === true
+      ? { nota: notaApurada, parciais: { ...parciais } }
+      : null;
 
   const casas = regra.casas_parecer;
   const ordemDosBlocos = regra.blocos
@@ -520,8 +536,24 @@ export function calcularAvaliacao(regraEntrada, candidato = {}, opcoes = {}) {
     distribuicao,
     motivos: eliminatorios.map((t) => `- ${t}`).join("\n"),
     observacoes: observacoes.map((t) => `- ${t}`).join("\n"),
+    nota_informativa: pontosInformativos
+      ? numeroDoParecer(pontosInformativos.nota, casas)
+      : "",
+    distribuicao_informativa: pontosInformativos
+      ? ordemDosBlocos
+          .map(
+            (p) =>
+              `${rotuloDe(PARCIAIS_CURTAS, p)} ${numeroDoParecer(parciais[p], casas)}`,
+          )
+          .join("; ")
+      : "",
   };
   let parecer = preencherModelo(regra.parecer[resultado], campos);
+  if (pontosInformativos)
+    parecer += preencherModelo(
+      regra.parecer.pontos_informativos || MODELO_DOS_PONTOS_INFORMATIVOS,
+      campos,
+    );
   if (observacoes.length)
     parecer += preencherModelo(regra.parecer.observacoes, campos);
 
@@ -543,6 +575,7 @@ export function calcularAvaliacao(regraEntrada, candidato = {}, opcoes = {}) {
     encaminhamentos,
     observacoes,
     experiencia,
+    pontos_informativos: pontosInformativos,
     parecer: parecer.replace(/^\n+/, ""),
   };
 }

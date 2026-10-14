@@ -20,6 +20,10 @@ import {
   validarRegraAnalise,
 } from "../../lib/avaliacao-documental/regra.js";
 import { comecoDoEnunciado } from "../../lib/avaliacao-documental/nota-declarada.js";
+import {
+  comPontosQuandoInapto,
+  ROTULO_DA_OPCAO,
+} from "../../lib/avaliacao-documental/pontos-informativos.ts";
 import { DiferencasPorCargo } from "./assistente/diferencas-por-cargo.tsx";
 import {
   erroDoNomeDaVersao,
@@ -1465,6 +1469,26 @@ export function Regra({ e, estado, rascunhoGuardado }) {
               />
             </Campo>
           ))}
+          <Caixa
+            rotulo={ROTULO_DA_OPCAO}
+            marcado={rascunho.parecer.mostrar_pontos_quando_inapto === true}
+            aoMudar={(v) => setRascunho(comPontosQuandoInapto(rascunho, v))}
+          />
+          {rascunho.parecer.mostrar_pontos_quando_inapto === true ? (
+            <Campo
+              rotulo="Modelo: Pontuação informativa (inapto por requisito)"
+              largo
+            >
+              <textarea
+                rows={2}
+                maxLength={4000}
+                value={rascunho.parecer.pontos_informativos ?? ""}
+                onChange={(ev) =>
+                  mudar(["parecer", "pontos_informativos"], ev.target.value)
+                }
+              />
+            </Campo>
+          ) : null}
           <ObservacoesProntas regra={rascunho} aoMudar={setRascunho} />
         </section>
       </fieldset>

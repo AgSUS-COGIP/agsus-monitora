@@ -667,6 +667,10 @@ export function resumoParaGravar(avaliacao, declarada) {
           por_categoria: exp.por_categoria,
         }
       : null,
+    // Só com parecer.mostrar_pontos_quando_inapto no inapto por requisito (o banco confere).
+    ...(avaliacao.pontos_informativos
+      ? { pontos_informativos: avaliacao.pontos_informativos }
+      : {}),
   };
 }
 

@@ -18,11 +18,19 @@ _FIXTURES = pathlib.Path(__file__).resolve().parents[1] / "fixtures" / "avaliaca
 CASOS = json.loads((_FIXTURES / "casos-de-pontuacao.json").read_text(encoding="utf-8"))
 
 
+def regra_do_caso(caso):
+    """A regra do caso: parecer_da_regra põe as opções do parecer por cima."""
+    regra = CASOS["regras"][caso["regra"]]
+    if not caso.get("parecer_da_regra"):
+        return regra
+    return {**regra, "parecer": {**regra["parecer"], **caso["parecer_da_regra"]}}
+
+
 class CasosDourados(unittest.TestCase):
     def test_todos_os_casos(self):
         for caso in CASOS["casos"]:
             with self.subTest(caso["nome"]):
-                r = pt.calcular_avaliacao(CASOS["regras"][caso["regra"]], caso["candidato"], caso.get("opcoes"))
+                r = pt.calcular_avaliacao(regra_do_caso(caso), caso["candidato"], caso.get("opcoes"))
                 esperado = caso["esperado"]
                 self.assertEqual(r["resultado"], esperado["resultado"])
                 self.assertEqual(r["nota_final"], esperado["nota_final"])
@@ -31,7 +39,7 @@ class CasosDourados(unittest.TestCase):
                 self.assertEqual(r["eliminatorios"], esperado["eliminatorios"])
                 self.assertEqual(r["encaminhamentos"], esperado["encaminhamentos"])
                 self.assertEqual(r["parecer"], esperado["parecer"])
-                for campo in ("calculados", "ajustes"):
+                for campo in ("calculados", "ajustes", "pontos_informativos"):
                     if campo in esperado:
                         self.assertEqual(r[campo], esperado[campo])
                 if "experiencia" in esperado:
@@ -85,6 +93,41 @@ class Conferencia(unittest.TestCase):
         ]
         self.assertIn("nota_final", campos)
         self.assertIn("parciais.EXPERIENCIA", campos)
+
+
+class PontosInformativos(unittest.TestCase):
+    """Inapto por requisito com parecer.mostrar_pontos_quando_inapto: nota 0, informativa gravada e conferida."""
+
+    def setUp(self):
+        self.caso = next(c for c in CASOS["casos"] if c.get("parecer_da_regra"))
+        self.regra = regra_do_caso(self.caso)
+
+    def test_ficha_gravada_com_a_informativa_confere(self):
+        gravado = dict(self.caso["esperado"])
+        self.assertEqual(pt.conferir_ficha(self.regra, self.caso["candidato"], gravado, self.caso["opcoes"]), [])
+
+    def test_ficha_gravada_sem_a_informativa_aponta_o_campo(self):
+        gravado = {k: v for k, v in self.caso["esperado"].items() if k != "pontos_informativos"}
+        campos = [
+            d["campo"] for d in pt.conferir_ficha(self.regra, self.caso["candidato"], gravado, self.caso["opcoes"])
+        ]
+        self.assertEqual(campos, ["pontos_informativos"])
+
+    def test_opcao_desligada_nao_tem_a_informativa(self):
+        r = pt.calcular_avaliacao(CASOS["regras"][self.caso["regra"]], self.caso["candidato"], self.caso["opcoes"])
+        self.assertIsNone(r["pontos_informativos"])
+        self.assertEqual((r["resultado"], r["nota_final"], r["nota_apurada"]), ("INAPTO_REQUISITO", 0, 10))
+        self.assertNotIn("para fins informativos", r["parecer"])
+
+    def test_modelo_padrao_quando_a_regra_nao_traz_o_texto(self):
+        regra = {**self.regra, "parecer": {**self.regra["parecer"], "pontos_informativos": ""}}
+        r = pt.calcular_avaliacao(regra, self.caso["candidato"], self.caso["opcoes"])
+        self.assertTrue(
+            r["parecer"].endswith(
+                "Pontuação apurada dos títulos, para fins informativos: 10,0 pontos "
+                "(Titulação 8,0; Cursos 2,0; Experiência 0,0)."
+            )
+        )
 
 
 if __name__ == "__main__":

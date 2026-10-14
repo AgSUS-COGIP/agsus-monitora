@@ -1,5 +1,5 @@
 {
-  "sobre": "Casos dourados da avaliação documental: a mesma regra e o mesmo candidato têm de dar o mesmo resultado em src/lib/avaliacao-documental/pontuacao.js, no banco (fase F4) e em qualquer conferidor (Python). As regras são cópia dos modelos de supabase/correcoes/20261006-modelos-da-regra-da-analise.sql (tests/avaliacao-documental-casos.test.js confere).",
+  "sobre": "Casos dourados da avaliação documental: a mesma regra e o mesmo candidato têm de dar o mesmo resultado em src/lib/avaliacao-documental/pontuacao.js, no banco (fase F4) e em qualquer conferidor (Python). As regras são cópia dos modelos de supabase/correcoes/20261006-modelos-da-regra-da-analise.sql (tests/avaliacao-documental-casos.test.js confere). O caso com parecer_da_regra põe esses campos no parecer da regra antes da conta (as opções do parecer, como mostrar_pontos_quando_inapto).",
   "regras": {
     "PROJ26-CURRICULAR": {
       "schema": 1,
@@ -3693,6 +3693,230 @@
         ],
         "encaminhamentos": [],
         "parecer": "Edital 114/2026\nCandidato(a) INABILITADO(A) na Avaliação Documental e de Títulos, pelo(s) seguinte(s) motivo(s):\n\n- Item 2 e Anexo I: Não apresentou o curso de especialização ou capacitação em Cromatografia Gasosa exigido para o cargo (Anexo I)."
+      }
+    },
+    {
+      "nome": "pontos informativos: opção desligada (como hoje) — inapto por curso diverso, mestrado e curso de 80h: nota 0, sem a pontuação informativa",
+      "regra": "E114-POR-CARGO",
+      "candidato": {
+        "nivel": "superior",
+        "vaga": "182438",
+        "modalidade": "AC",
+        "blocos": {
+          "IDENTIDADE": {
+            "situacao": "CONFORME"
+          },
+          "ESCOLARIDADE": {
+            "situacao": "NAO_CONFORME",
+            "motivos": ["CURSO_DIVERSO"]
+          },
+          "REQUISITO_DO_CARGO": {
+            "situacao": "CONFORME"
+          },
+          "REGISTRO_CONSELHO": {
+            "situacao": "CONFORME"
+          },
+          "FORMACAO": {
+            "situacao": "CONFORME"
+          },
+          "CURSOS": {
+            "situacao": "CONFORME"
+          },
+          "EXPERIENCIA": {
+            "situacao": "CONFORME"
+          }
+        },
+        "titulos": [
+          {
+            "titulo": "MESTRADO",
+            "aceito": true
+          }
+        ],
+        "cursos": [
+          {
+            "horas": 80,
+            "aceito": true
+          }
+        ],
+        "vinculos": [
+          {
+            "categoria": "AREA",
+            "inicio": "2024-01-01",
+            "fim": "2024-06-29",
+            "aceito": true
+          }
+        ]
+      },
+      "opcoes": {
+        "notaMinima": 10
+      },
+      "esperado": {
+        "resultado": "INAPTO_REQUISITO",
+        "nota_apurada": 10,
+        "nota_final": 0,
+        "parciais": {
+          "FORMACAO": 8,
+          "CURSOS": 2,
+          "EXPERIENCIA": 0
+        },
+        "eliminatorios": ["Item 8.2.1: Curso diverso do exigido para a vaga."],
+        "encaminhamentos": [],
+        "pontos_informativos": null,
+        "parecer": "Edital 114/2026\nCandidato(a) INABILITADO(A) na Avaliação Documental e de Títulos, pelo(s) seguinte(s) motivo(s):\n\n- Item 8.2.1: Curso diverso do exigido para a vaga."
+      }
+    },
+    {
+      "nome": "pontos informativos: opção ligada — inapto por curso diverso continua nota 0; informativa 10 (Titulação 8 + Cursos 2)",
+      "regra": "E114-POR-CARGO",
+      "candidato": {
+        "nivel": "superior",
+        "vaga": "182438",
+        "modalidade": "AC",
+        "blocos": {
+          "IDENTIDADE": {
+            "situacao": "CONFORME"
+          },
+          "ESCOLARIDADE": {
+            "situacao": "NAO_CONFORME",
+            "motivos": ["CURSO_DIVERSO"]
+          },
+          "REQUISITO_DO_CARGO": {
+            "situacao": "CONFORME"
+          },
+          "REGISTRO_CONSELHO": {
+            "situacao": "CONFORME"
+          },
+          "FORMACAO": {
+            "situacao": "CONFORME"
+          },
+          "CURSOS": {
+            "situacao": "CONFORME"
+          },
+          "EXPERIENCIA": {
+            "situacao": "CONFORME"
+          }
+        },
+        "titulos": [
+          {
+            "titulo": "MESTRADO",
+            "aceito": true
+          }
+        ],
+        "cursos": [
+          {
+            "horas": 80,
+            "aceito": true
+          }
+        ],
+        "vinculos": [
+          {
+            "categoria": "AREA",
+            "inicio": "2024-01-01",
+            "fim": "2024-06-29",
+            "aceito": true
+          }
+        ]
+      },
+      "opcoes": {
+        "notaMinima": 10
+      },
+      "esperado": {
+        "resultado": "INAPTO_REQUISITO",
+        "nota_apurada": 10,
+        "nota_final": 0,
+        "parciais": {
+          "FORMACAO": 8,
+          "CURSOS": 2,
+          "EXPERIENCIA": 0
+        },
+        "eliminatorios": ["Item 8.2.1: Curso diverso do exigido para a vaga."],
+        "encaminhamentos": [],
+        "pontos_informativos": {
+          "nota": 10,
+          "parciais": {
+            "FORMACAO": 8,
+            "CURSOS": 2,
+            "EXPERIENCIA": 0
+          }
+        },
+        "parecer": "Edital 114/2026\nCandidato(a) INABILITADO(A) na Avaliação Documental e de Títulos, pelo(s) seguinte(s) motivo(s):\n\n- Item 8.2.1: Curso diverso do exigido para a vaga.\n\nPontuação apurada dos títulos, para fins informativos (não entra na nota final, item 8.2.1): 10,0 pontos (Titulação 8,0; Cursos 2,0; Experiência 0,0)."
+      },
+      "parecer_da_regra": {
+        "mostrar_pontos_quando_inapto": true,
+        "pontos_informativos": "\n\nPontuação apurada dos títulos, para fins informativos (não entra na nota final, item 8.2.1): {nota_informativa} pontos ({distribuicao_informativa})."
+      }
+    },
+    {
+      "nome": "pontos informativos: opção ligada — apto não ganha a linha informativa",
+      "regra": "E114-POR-CARGO",
+      "candidato": {
+        "nivel": "superior",
+        "vaga": "182438",
+        "modalidade": "AC",
+        "blocos": {
+          "IDENTIDADE": {
+            "situacao": "CONFORME"
+          },
+          "ESCOLARIDADE": {
+            "situacao": "CONFORME"
+          },
+          "REQUISITO_DO_CARGO": {
+            "situacao": "CONFORME"
+          },
+          "REGISTRO_CONSELHO": {
+            "situacao": "CONFORME"
+          },
+          "FORMACAO": {
+            "situacao": "CONFORME"
+          },
+          "CURSOS": {
+            "situacao": "CONFORME"
+          },
+          "EXPERIENCIA": {
+            "situacao": "CONFORME"
+          }
+        },
+        "titulos": [
+          {
+            "titulo": "MESTRADO",
+            "aceito": true
+          }
+        ],
+        "cursos": [
+          {
+            "horas": 80,
+            "aceito": true
+          }
+        ],
+        "vinculos": [
+          {
+            "categoria": "AREA",
+            "inicio": "2024-01-01",
+            "fim": "2024-06-29",
+            "aceito": true
+          }
+        ]
+      },
+      "opcoes": {
+        "notaMinima": 10
+      },
+      "esperado": {
+        "resultado": "APTO",
+        "nota_apurada": 10,
+        "nota_final": 10,
+        "parciais": {
+          "FORMACAO": 8,
+          "CURSOS": 2,
+          "EXPERIENCIA": 0
+        },
+        "eliminatorios": [],
+        "encaminhamentos": [],
+        "pontos_informativos": null,
+        "parecer": "Edital 114/2026\nCandidato(a) HABILITADO(A) na Avaliação Documental e de Títulos com a pontuação total de 10,0 pontos, distribuídos da seguinte forma:\n\n- Formação Acadêmica: 8,0 pontos.\n- Cursos de Aperfeiçoamento: 2,0 pontos.\n- Experiência Profissional: 0,0 pontos."
+      },
+      "parecer_da_regra": {
+        "mostrar_pontos_quando_inapto": true,
+        "pontos_informativos": "\n\nPontuação apurada dos títulos, para fins informativos (não entra na nota final, item 8.2.1): {nota_informativa} pontos ({distribuicao_informativa})."
       }
     }
   ],

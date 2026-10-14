@@ -217,7 +217,15 @@ export function resumoDaRegra(
     regra.provisoria.eliminacao_automatica.map(eliminacaoAutomatica);
   secoes.push({
     titulo: "O que elimina",
-    itens: [...eliminam, ...automaticas.map((t) => `Na inscrição: ${t}`)],
+    itens: [
+      ...eliminam,
+      ...automaticas.map((t) => `Na inscrição: ${t}`),
+      ...(regra.parecer.mostrar_pontos_quando_inapto === true
+        ? [
+            "Inapto por requisito: a ficha e o parecer mostram também a pontuação dos títulos, só informativa (a nota final continua 0).",
+          ]
+        : []),
+    ],
   });
 
   const valem: string[] = [];

@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { textoDaNota } from "../../../lib/avaliacao-documental/ficha.js";
 import type { MotivoDoResultado } from "../../../lib/avaliacao-documental/motivos-do-resultado.ts";
+import type { PontuacaoInformativa } from "../../../lib/avaliacao-documental/pontos-informativos.ts";
 import { Selo } from "../../../ui/index.js";
 import type { ParteDaNota } from "./tipos.ts";
 
@@ -10,7 +11,9 @@ import type { ParteDaNota } from "./tipos.ts";
   QUÊ do Inapto (cada motivo leva ao item) e a composição por bloco em barras
   finas (apurado sobre o teto; antes de decidir, a prévia em tom neutro com
   "(prévia)"; a diferença para a declarada em âmbar). Na lateral (fora da
-  Conclusão) e, maior, na Conclusão.
+  Conclusão) e, maior, na Conclusão. No inapto por requisito com a opção da
+  regra (parecer.mostrar_pontos_quando_inapto), a pontuação dos títulos só
+  informativa, que não entra na nota final.
 */
 
 export type PropriedadesDoResumo = {
@@ -27,6 +30,8 @@ export type PropriedadesDoResumo = {
   motivos?: MotivoDoResultado[];
   /** Vai ao item do motivo. */
   aoIr?: (codigo: string) => void;
+  /** A pontuação dos títulos no inapto por requisito, só informativa. */
+  informativa?: PontuacaoInformativa | null;
   partes: ParteDaNota[];
   grande?: boolean;
   /** Ações ao lado do título (o menu "⋯"). */
@@ -106,6 +111,32 @@ function MotivosDoResultado({
   );
 }
 
+function PontuacaoInformativaDaNota({
+  informativa,
+}: {
+  informativa: PontuacaoInformativa;
+}) {
+  return (
+    <div
+      className="avd-ficha-informativa"
+      data-tour="avd-ficha-pontos-informativos"
+    >
+      <span>
+        Pontuação dos títulos (informativa):{" "}
+        <strong>{textoDaNota(informativa.nota)}</strong>
+      </span>
+      {informativa.partes.length ? (
+        <span className="avd-ficha-informativa-partes">
+          {informativa.partes
+            .map((p) => `${p.rotulo} ${textoDaNota(p.valor)}`)
+            .join(" · ")}
+        </span>
+      ) : null}
+      <small>Não entra na nota final.</small>
+    </div>
+  );
+}
+
 export function ResumoDaNota({
   nota,
   parcial,
@@ -116,6 +147,7 @@ export function ResumoDaNota({
   resultado,
   motivos,
   aoIr,
+  informativa,
   partes,
   grande,
   acoes,
@@ -154,6 +186,9 @@ export function ResumoDaNota({
       </Selo>
       {motivos?.length ? (
         <MotivosDoResultado motivos={motivos} aoIr={aoIr} />
+      ) : null}
+      {informativa ? (
+        <PontuacaoInformativaDaNota informativa={informativa} />
       ) : null}
       {partes.length ? (
         <ul

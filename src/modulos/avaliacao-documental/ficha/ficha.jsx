@@ -43,6 +43,7 @@ import {
   notaComPrevias,
 } from "../../../lib/avaliacao-documental/apurado-da-ficha.ts";
 import { motivosDoResultado } from "../../../lib/avaliacao-documental/motivos-do-resultado.ts";
+import { pontuacaoInformativaDaFicha } from "../../../lib/avaliacao-documental/pontos-informativos.ts";
 import { rotuloDaVersaoNaLista } from "../../../lib/nome-da-versao.ts";
 import { Aviso, Campo } from "../../../ui/index.js";
 import { compartilharNoChat } from "../../chat/ponte.js";
@@ -414,6 +415,10 @@ export function ConteudoDaFicha({
       ? []
       : motivosDoResultado(blocos, lancamento, avaliacao, resultado),
     aoIr: irPara,
+    // Inapto por requisito com a opção da regra: a pontuação só informativa.
+    informativa: emAnalise
+      ? null
+      : pontuacaoInformativaDaFicha(avaliacao, resultado),
     partes,
   };
   const previa = gravada
