@@ -28,8 +28,6 @@ import { dataDeCorteDoCronograma } from "../../lib/classificacao/dados.ts";
 import { rotuloDaVersao } from "../../lib/nome-da-versao.ts";
 import { getSupabaseClient } from "../../lib/supabaseClient.js";
 import { Aviso, Campo, Segmentado, TopoDoPainel } from "../../ui/index.js";
-import { abrirConversaDoEdital, definirEditalDaTela } from "../chat/ponte.js";
-import { usarChatLiberado } from "../chat/usar-chat-liberado.js";
 import { Agenda } from "./agenda.jsx";
 import { criarEstadoDaClassificacao, MENSAGEM_SEM_ACESSO } from "./estado.ts";
 import { criarEstadoDaAgenda } from "./estado-da-agenda.js";
@@ -111,26 +109,12 @@ function TelaDaArea({
       calcularClassificacao(dados, tipo),
     [],
   );
-  const chat = usarChatLiberado();
   const editalEscolhido = e.editais.find((ed) => ed.id === e.editalId);
-  const tituloDoEdital = editalEscolhido
-    ? editalEscolhido.edital || editalEscolhido.unidade || ""
-    : "";
 
   /* A agenda das entrevistas acompanha o edital escolhido (também preenche o documento). */
   useEffect(() => {
     void agenda.carregar(e.editalId);
   }, [agenda, e.editalId]);
-
-  /* O edital escolhido vale para "Compartilhar esta tela" do chat. */
-  useEffect(() => {
-    definirEditalDaTela(
-      e.editalId
-        ? { view: "classificacao", id: e.editalId, titulo: tituloDoEdital }
-        : null,
-    );
-    return () => definirEditalDaTela(null);
-  }, [e.editalId, tituloDoEdital]);
 
   const dataDeCorte = e.dados
     ? dataDeCorteDoCronograma(e.dados.cronograma)
@@ -221,21 +205,6 @@ function TelaDaArea({
               </select>
             </Campo>
             <SeloDeTreinamento edital={editalEscolhido} className="" />
-            {chat && e.editalId ? (
-              <button
-                type="button"
-                className="btn secondary classificacao-conversa"
-                onClick={() =>
-                  abrirConversaDoEdital({
-                    id: e.editalId,
-                    titulo: tituloDoEdital,
-                  })
-                }
-              >
-                <i className="fa-solid fa-comments" aria-hidden="true" />{" "}
-                Conversa
-              </button>
-            ) : null}
           </section>
 
           {e.erroDoEdital ? (

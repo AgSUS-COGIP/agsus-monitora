@@ -80,8 +80,8 @@ até a 10ª posição do cadastro reserva) é regra da lista CONVOCACAO da Class
   (`itemConferido`);
 - lateral só com a nota (parcial enquanto falta conferir; "Em análise · X de N requisitos
   conferidos"; Inapto só quando um item conferido elimina), o mínimo e a composição por bloco em
-  barras finas (`composicaoDaNota`); ações secundárias no "⋯" (copiar código, abrir na Empregare,
-  compartilhar no chat e, para a coordenação, o nível da vaga);
+  barras finas (`composicaoDaNota`); ações secundárias no "⋯" (copiar código, abrir na Empregare
+  e, para a coordenação, o nível da vaga);
 - **Conclusão**: resumo de todos os itens (clicáveis), nota final com a composição, observações
   prontas e observação, prévia do parecer (sem resultado enquanto falta conferir) e histórico;
 - rodapé mínimo: "Salvo às HH:MM" (rascunho automático), Anterior / Próximo item e o botão do

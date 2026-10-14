@@ -5,8 +5,7 @@
 
   O conteúdo é todo React: as seções que publicam pela barra fixa (Marca,
   Página inicial, Tela de acesso, Aparência, Painéis externos, Operação e
-  Comemorações)
-  e Mensagens (chat), que salva sozinha, entram por portal no corpo da
+  Comemorações) entram por portal no corpo da
   própria seção (src/modulos/configuracoes/configuracoes.jsx); Acessos, Módulos e abas
   e Status das atualizações são ilhas próprias, cujos blocos do index.html
   este módulo move para a seção certa (SECAO_POR_BLOCO).
@@ -88,14 +87,6 @@ export const SECOES = Object.freeze([
     iconeDoMenu: "heart-pulse",
     descricao:
       "Se os dados de cada aba estão atualizados: quando rodou cada atualização, o que atrasou e o que falhou.",
-  },
-  {
-    id: "mensagens",
-    rotulo: "Mensagens (chat)",
-    icone: "fa-comments",
-    iconeDoMenu: "messages-square",
-    descricao:
-      "Por quanto tempo o chat guarda as mensagens, zerar as mensagens e o histórico das limpezas.",
   },
 ]);
 

@@ -21,7 +21,7 @@
 .classificacao-edital select {
   width: min(640px, 100%);
 }
-/* "Conversa" do edital (chat) ao lado da escolha. */
+/* O selo de treinamento ao lado da escolha do edital. */
 .classificacao-edital {
   display: flex;
   flex-wrap: wrap;

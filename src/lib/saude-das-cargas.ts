@@ -29,8 +29,6 @@ import type {
                             atrasada depois de 15 h (a noite inteira sem carga é esperada)
     Robô da Empregare       sem prazo: só roda pelo "Rodar agora" (decisão de 05/10/2026)
     Conferências            todo dia às 6h (Brasília) · atrasada depois de 26 h
-    Expurgo dos anexos      todo dia às 6h30 (Brasília) · atrasada depois de 26 h
-    do chat                 (20261007250000; parcial conta como falha, como nas conferências)
     Agenda dos robôs        o banco pede cada execução ao GitHub (pg_cron + pg_net,
                             20261008140000): falhou se o último pedido foi recusado ou se
                             não há chave no Vault; atrasada sem pedido aceito há 2 h
@@ -72,12 +70,10 @@ const TAREFAS: Readonly<Record<string, string>> = Object.freeze({
   agsus_entrevistas_cache_do_painel: "Painel de entrevistas (pacote pronto)",
   agsus_analises_analyze_diario: "Estatísticas das tabelas de análises",
   agsus_eventos_acesso_limpeza_mensal: "Limpeza do registro de acessos",
-  agsus_chat_retencao_diaria: "Retenção das mensagens do chat",
   agsus_analises_encerrar_inativas: "Encerrar cargas de análises paradas",
   agsus_robo_sincronizar_entrevistas: "Agenda: pedir a carga das Entrevistas",
   agsus_robo_sincronizar_selecao: "Agenda: pedir a carga da Seleção",
   agsus_robo_conferencias: "Agenda: pedir as conferências",
-  agsus_robo_expurgo_anexos_chat: "Agenda: pedir o expurgo dos anexos do chat",
   agsus_robo_conferir_disparos: "Agenda: conferir as respostas do GitHub",
   // Até 15/10/2026; desliga sozinha (20261009140000).
   agsus_robo_inscricoes_114_2026:
@@ -89,7 +85,6 @@ const NOMES_DOS_WORKFLOWS: Readonly<Record<string, string>> = Object.freeze({
   "sincronizar-entrevistas.yml": "Entrevistas",
   "sincronizar-selecao.yml": "Seleção",
   "conferencias.yml": "Conferências",
-  "expurgo-anexos-chat.yml": "Expurgo dos anexos do chat",
   "robo-empregare.yml": "Robô da Empregare",
   "pre-classificacao.yml": "Pré-classificação",
 });
@@ -243,25 +238,6 @@ function execucaoDaConferencia(entrada: unknown) {
   ];
   const falhas = Array.isArray(bruta?.falhas) ? bruta.falhas.length : 0;
   if (falhas) partes.push(`${falhas} conferências falharam`);
-  const quem = rotulo(QUEM_DISPAROU, texto(bruta?.disparo));
-  if (quem) partes.push(`disparo: ${quem}`);
-  const mensagem = texto(bruta?.mensagem);
-  return {
-    ...bruta,
-    mensagem: `${partes.join(" · ")}${mensagem ? `. ${mensagem}` : ""}`,
-  };
-}
-
-/* Execução do expurgo dos anexos do chat: só contagens (nunca caminho de arquivo). */
-function execucaoDoExpurgo(entrada: unknown) {
-  const bruta = registro(entrada);
-  const n = (campo: string) => inteiro(bruta?.[campo]) ?? 0;
-  const partes = [
-    `${n("confirmados")} arquivos removidos`,
-    `${n("falhas")} ficaram na fila`,
-  ];
-  const pendentes = inteiro(bruta?.pendentes);
-  if (pendentes !== null) partes.push(`${pendentes} na fila ao fim`);
   const quem = rotulo(QUEM_DISPAROU, texto(bruta?.disparo));
   if (quem) partes.push(`disparo: ${quem}`);
   const mensagem = texto(bruta?.mensagem);
@@ -510,23 +486,6 @@ export function normalizarSaude(
       ),
     );
 
-  // O expurgo dos anexos do chat só aparece depois da migration 20261007250000 (a chave vem no payload).
-  if (Array.isArray(dados?.expurgo_chat))
-    robos.push(
-      montarCarga(
-        {
-          id: "expurgo_chat",
-          nome: "Expurgo dos anexos do chat",
-          onde: "GitHub Actions · Expurgo dos anexos do chat",
-          esperado: "todo dia às 6h30",
-          prazoMin: PRAZO_DIARIO_MIN,
-          tipo: "conferencia",
-          execucoes: registros(dados.expurgo_chat).map(execucaoDoExpurgo),
-        },
-        agora,
-      ),
-    );
-
   // A agenda só aparece depois da migration 20261008140000 (a chave vem no payload).
   const agenda =
     dados?.agenda_dos_robos &&
@@ -575,7 +534,7 @@ export function normalizarSaude(
       id: "robos",
       titulo: "Robô da Empregare e conferências",
       descricao:
-        "Candidatos de cada vaga, do Excel exportado da Empregare, quando um administrador pede (Rodar agora); conferências de consistência todo dia às 6h; expurgo dos anexos do chat todo dia às 6h30.",
+        "Candidatos de cada vaga, do Excel exportado da Empregare, quando um administrador pede (Rodar agora); conferências de consistência todo dia às 6h.",
       cargas: robos,
     },
     {
@@ -745,10 +704,6 @@ export function visaoSimples(saude: SaudeNormalizada): {
     conferencias: [
       "Conferências de consistência",
       "Confere análises, entrevistas, classificação, aprovados e cargas e lista os avisos abaixo, todo dia às 6h.",
-    ],
-    expurgo_chat: [
-      "Expurgo dos anexos do chat",
-      "Tira do armazenamento os arquivos dos anexos de mensagens já apagadas pela retenção ou pelo Zerar, todo dia às 6h30.",
     ],
     pre_classificacao: [
       "Pré-classificação (Avaliação documental)",

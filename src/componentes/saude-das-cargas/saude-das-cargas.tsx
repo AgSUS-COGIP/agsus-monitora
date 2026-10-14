@@ -47,7 +47,7 @@ import { RodarComOpcoes } from "./rodar-com-opcoes.tsx";
   Abaixo da lista, o cartão "Avisos de conferência" (src/modulos/conferencias/):
   os avisos que o job Python das conferências gravou, de todos os módulos.
 
-  Empregare, Seleção, Entrevistas, Conferências e o Expurgo dos anexos do chat têm
+  Empregare, Seleção, Entrevistas, Conferências e a Pré-classificação têm
   "Rodar agora": o botão chama a RPC disparar_robo (o banco pede o workflow ao
   GitHub com a chave do Vault, 20261008140000) e acompanha por
   situacao_do_disparo_robo; fica desabilitado enquanto a carga roda

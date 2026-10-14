@@ -259,7 +259,5 @@ export function criarPresenca({
     fechar,
     avisarTrocaDeLocal,
     acompanhar,
-    usuarioAtual: () => obterUsuario(),
-    perfilAtual: () => obterPerfil(),
   };
 }

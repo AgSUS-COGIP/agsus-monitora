@@ -4,7 +4,7 @@ import {
   canAnalisarRecursos,
   paginasPermitidas,
 } from "../src/lib/access-roles.js";
-import { linkDaTela } from "../src/lib/chat.js";
+import { linkInterno } from "../src/lib/link-interno.ts";
 import { ABAS_DO_MENU, montarArvoreDoMenu } from "../src/lib/menu-lateral.ts";
 import { bloqueioDaTela, destinoDaTela } from "../src/lib/navegacao.js";
 
@@ -196,9 +196,9 @@ describe("quem vê cada entrada de Recursos", () => {
     expect(bloqueioDaTela("analisar-recursos", perfil("editor"))).toBe("");
   });
 
-  it("as duas telas valem como link interno (Compartilhar, atalhos)", () => {
-    expect(linkDaTela({ view: "recursos" })?.view).toBe("recursos");
-    expect(linkDaTela({ view: "analisar-recursos" })?.view).toBe(
+  it("as duas telas valem como link interno (Ir para…)", () => {
+    expect(linkInterno({ view: "recursos" })?.view).toBe("recursos");
+    expect(linkInterno({ view: "analisar-recursos" })?.view).toBe(
       "analisar-recursos",
     );
   });

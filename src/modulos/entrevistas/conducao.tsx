@@ -29,7 +29,7 @@ import {
   textoDoEmpateFinal,
 } from "../../lib/convocacao-da-entrevista.ts";
 import { Aviso, Campo, classes, Gaveta, Selo } from "../../ui/index.js";
-import { irParaLink } from "../chat/ponte.js";
+import { irParaTela } from "../../app/ir-para-tela.ts";
 import { numeroBR } from "./partes.tsx";
 
 /*
@@ -84,7 +84,7 @@ export function BotaoIrPara({
       className="btn secondary small"
       data-ir-para={view}
       onClick={() =>
-        irParaLink({
+        irParaTela({
           view,
           ...(view === "classificacao" && edital?.id
             ? { edital: { id: edital.id, titulo: edital.edital || "" } }
