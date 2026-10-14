@@ -10,6 +10,7 @@ import {
   enviosAnterioresDaEmpregare,
   impressaoDasRespostas,
   numeroDaPergunta,
+  respostaLidaDaEmpregare,
 } from "../../src/lib/avaliacao-documental/anexo-na-empregare.ts";
 
 /*
@@ -330,5 +331,102 @@ describe("envios anteriores do questionário (empregare.envios_anteriores)", () 
     ]);
     expect(enviosAnterioresDaEmpregare(null)).toEqual([]);
     expect(enviosAnterioresDaEmpregare({ envios_anteriores: {} })).toEqual([]);
+  });
+});
+
+/*
+  A exportação da Empregare escreve "Anexo" em toda pergunta de anexo, mesmo
+  quando o candidato respondeu sem arquivo. Com a resposta vigente lida pelo
+  robô (perguntas > 0) e sem arquivo na pergunta, a ficha diz "Sem arquivo
+  enviado" e oferece "Conferir na Empregare" — não um botão que pareça o
+  documento. Com arquivo só num envio anterior, o link vai a ele.
+*/
+describe("pergunta de anexo sem arquivo na resposta lida", () => {
+  const coluna = "Pergunta 7 - Anexe o registro no conselho de classe";
+  const base = {
+    candidato: CANDIDATO,
+    vaga: VAGA,
+    vagaDireta: true,
+    anexos: anexosDaEmpregare(DA_RPC),
+  };
+
+  it("a resposta lida é a que tem perguntas > 0", () => {
+    expect(respostaLidaDaEmpregare({ respostas: [{ perguntas: 27 }] })).toBe(
+      true,
+    );
+    expect(respostaLidaDaEmpregare({ respostas: [{ perguntas: 0 }, {}] })).toBe(
+      false,
+    );
+    expect(respostaLidaDaEmpregare(null)).toBe(false);
+    expect(respostaLidaDaEmpregare({ respostas: "x" })).toBe(false);
+  });
+
+  it("resposta lida e sem arquivo: 'Sem arquivo enviado' e o candidato para conferir", () => {
+    const endereco = enderecoDoAnexo({ ...base, respostaLida: true }, coluna);
+    expect(endereco).toEqual({ href: CANDIDATO, destino: "sem_arquivo" });
+    expect(apresentacaoDoAnexo(coluna, endereco)).toEqual({
+      rotulo: "Conferir na Empregare",
+      texto: "Sem arquivo enviado",
+      dica: "A resposta lida na Empregare não traz arquivo nesta pergunta",
+    });
+    // A impressão das respostas vem antes do candidato; sem nada, sem link.
+    expect(
+      enderecoDoAnexo(
+        { ...base, impressao: IMPRESSAO, respostaLida: true },
+        coluna,
+      ),
+    ).toEqual({ href: IMPRESSAO, destino: "sem_arquivo" });
+    expect(
+      enderecoDoAnexo(
+        { candidato: null, vaga: null, vagaDireta: false, respostaLida: true },
+        coluna,
+      ),
+    ).toEqual({ href: null, destino: "sem_arquivo" });
+  });
+
+  it("a pergunta com arquivo continua indo ao documento, mesmo com a resposta lida", () => {
+    expect(
+      enderecoDoAnexo({ ...base, respostaLida: true }, COLUNA)?.destino,
+    ).toBe("arquivo");
+  });
+
+  it("resposta não lida (robô não capturou): o candidato, como antes", () => {
+    expect(enderecoDoAnexo(base, coluna)).toEqual({
+      href: CANDIDATO,
+      destino: "candidato",
+    });
+  });
+
+  it("arquivo só num envio anterior: o link vai a ele", () => {
+    const anteriores = enviosAnterioresDaEmpregare({
+      envios_anteriores: [
+        {
+          resposta: "9800001",
+          link_impressao: null,
+          arquivos: [
+            {
+              pergunta: "507",
+              arquivo: 1,
+              ordem: 7,
+              enunciado: "Anexe o registro no conselho de classe",
+              coluna,
+              link: ARQ(507, "antigo"),
+            },
+          ],
+        },
+      ],
+    });
+    const endereco = enderecoDoAnexo(
+      { ...base, anteriores, respostaLida: true },
+      coluna,
+    );
+    expect(endereco).toEqual({
+      href: ARQ(507, "antigo"),
+      destino: "anterior",
+      outros: [],
+    });
+    expect(apresentacaoDoAnexo(coluna, endereco).rotulo).toBe(
+      "Ver documento do envio anterior",
+    );
   });
 });

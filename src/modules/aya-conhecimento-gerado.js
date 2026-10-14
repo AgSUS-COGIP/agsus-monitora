@@ -787,7 +787,7 @@ export const VERBETES_AYA = Object.freeze([
       'No passo 4 do assistente ficam juntos a nota mínima e o desempate. A nota mínima (e a por nível, quando diferente) e os critérios de desempate da classificação são da regra de classificação do edital: o assistente mostra e, para quem tem Editor na Classificação, grava pelo mesmo caminho da aba Classificação, como versão nova dela, com o mesmo motivo (até 500 caracteres); sem Editor na Classificação, aparecem só para ler, com um aviso (antes, o "Acrescentar critério" aparecia vazio). Sem regra de classificação no edital, crie-a primeiro na Classificação. Embaixo, o desempate da lista do lote (Provisória), que é da regra da avaliação. Nas duas listas, arraste o critério ou use as setas para mudar a ordem, troque a direção (na classificação) e tire critérios. "Acrescentar critério" abre o catálogo inteiro da lista em grupos (Prioridade legal, Pontuação, Experiência, Idade, Outros), com busca; os já usados aparecem com a posição ("2º na lista"). A Provisória tem catálogo próprio, menor: é o que a conta do lote sabe calcular. Ao salvar, a regra de classificação é gravada antes; se ela recusar, nada é salvo.',
     fato: "",
     fonte:
-      "src/modulos/avaliacao-documental/assistente/nota-e-desempate.tsx; src/modulos/avaliacao-documental/assistente/seletor-de-criterios.tsx; src/lib/avaliacao-documental/catalogo-de-desempate.ts; src/lib/classificacao/catalogo.js; supabase/migrations/20261002150000_classificacao.sql (salvar_regra_classificacao)",
+      "src/modulos/avaliacao-documental/assistente/nota-e-desempate.tsx; src/modulos/avaliacao-documental/assistente/seletor-de-criterios.tsx; src/lib/avaliacao-documental/catalogo-de-desempate.ts; src/lib/classificacao/catalogo.ts; supabase/migrations/20261002150000_classificacao.sql (salvar_regra_classificacao)",
     abrir: "avaliacao-documental",
   },
   {
@@ -1996,7 +1996,7 @@ export const VERBETES_AYA = Object.freeze([
     resposta:
       "O empate é sempre na nota publicada (com as casas decimais da regra). Se a regra manda desempatar naquela lista, valem os critérios escolhidos do catálogo, na ordem em que o gestor os arrumou (arrastando): 60 anos ou mais na data de corte, ser comprovadamente indígena (pontuação étnica validada maior que zero), maior tempo de experiência na saúde indígena, maior tempo na atenção básica, maior nota documental, maior nota da entrevista, maior idade, pontuações por critério, tempo de experiência profissional e PcD. Da leitura de todos os editais entraram mais quatro: tempo em média e alta complexidade, tempo em saúde digital, maior escolaridade e nota de conhecimentos específicos da prova — enquanto a análise não grava esses dados, eles não separam ninguém e a tela avisa. Cada critério tem direção (sim antes de não, maior primeiro…). Quem não tem o dado de um critério fica atrás de quem tem, e isso vira aviso. O que sobra empatado depois de todos os critérios segue o empate final.",
     fato: "",
-    fonte: "src/lib/classificacao/catalogo.js; src/lib/classificacao/motor.js",
+    fonte: "src/lib/classificacao/catalogo.ts; src/lib/classificacao/motor.js",
     abrir: "classificacao",
   },
   {
@@ -2032,7 +2032,7 @@ export const VERBETES_AYA = Object.freeze([
       'Quando o empate continua depois de todos os critérios, vale o que o gestor escolheu na regra: sorteio registrado, ordem de inscrição (código menor primeiro), mesma posição (1º, 2º, 2º, 3º ou 1º, 2º, 2º, 4º) ou decisão manual com justificativa. No sorteio, a semente é gerada no servidor ou informada pelo gestor; a ordem é a crescente do SHA-256 de "semente:id da análise", e ficam gravados semente, ordem, quem e quando — qualquer pessoa com a semente refaz a conta. Refazer um sorteio exige justificativa e guarda o anterior. Enquanto um empate espera sorteio ou decisão, a lista mostra os empatados na mesma posição, o aviso pede o registro e a lista não pode ser marcada como publicada.',
     fato: "No MONITORA, o empate final é escolha do gestor do edital (sorteio registrado e reprodutível, ordem de inscrição, mesma posição ou decisão manual justificada).",
     fonte:
-      "src/lib/classificacao/sorteio.js; supabase/migrations/20261002150000_classificacao.sql",
+      "src/lib/classificacao/sorteio.ts; supabase/migrations/20261002150000_classificacao.sql",
     abrir: "classificacao",
   },
   {
@@ -2048,7 +2048,7 @@ export const VERBETES_AYA = Object.freeze([
     resposta:
       'O critério "60 anos ou mais" usa a idade na data de corte — o último dia de inscrição, como mandam os editais (Estatuto da Pessoa Idosa) —, não a idade de hoje. A data de corte é a da regra do edital; sem ela, o fim do período de inscrição no cronograma do edital. Quem faz 60 anos no último dia de inscrição conta; no dia seguinte, não. Sem data de nascimento, o candidato fica atrás de quem tem e a tela avisa; sem data de corte, a tela avisa que o critério não pode ser aplicado.',
     fato: "",
-    fonte: "src/lib/classificacao/catalogo.js; src/lib/classificacao/dados.ts",
+    fonte: "src/lib/classificacao/catalogo.ts; src/lib/classificacao/dados.ts",
     abrir: "classificacao",
   },
   {
@@ -2411,7 +2411,7 @@ export const VERBETES_AYA = Object.freeze([
       'Nas listas e nos documentos, AC é ampla concorrência; PcD, pessoas com deficiência; PP, pretos e pardos; PI, indígenas; PQ, quilombolas; e PPIQ, a reserva conjunta de pretos e pardos, indígenas e quilombolas de alguns editais. CR é cadastro reserva: quem passou, mas ficou além das vagas imediatas, ou a vaga que só tem cadastro reserva (no cabeçalho, "- Cadastro Reserva"). O cotista também concorre na ampla, e quem é chamado pela ampla não gasta a vaga reservada. Percentual, lista própria e remanejamento de cada modalidade são da regra de classificação do edital.',
     fato: "",
     fonte:
-      "src/lib/classificacao/catalogo.js (MODALIDADES_CONHECIDAS); src/lib/classificacao/motor.js; src/lib/classificacao/vagas.js",
+      "src/lib/classificacao/catalogo.ts (MODALIDADES_CONHECIDAS); src/lib/classificacao/motor.js; src/lib/classificacao/vagas.js",
     abrir: "classificacao",
   },
   {
@@ -2428,7 +2428,7 @@ export const VERBETES_AYA = Object.freeze([
       'ART é a nota da Autodeclaração de Requisitos e Títulos, a nota do questionário da Empregare. Na Classificação ela pode entrar como componente da nota final ("Nota da autodeclaração (ART)") quando a regra do edital usar, e o recurso deferido pode ajustá-la. A lista provisória do ranqueamento pela ART e a linha de corte (o lote de convocação para a avaliação documental) ainda não são geradas pelo MONITORA: a classificação começa na avaliação documental dos candidatos do lote (situação Triado ou Aprovado na análise).',
     fato: "",
     fonte:
-      "src/lib/classificacao/catalogo.js (COMPONENTES_DA_NOTA); supabase/correcoes/20261002-regras-de-classificacao-todos-os-editais.sql (importacao.em_aberto)",
+      "src/lib/classificacao/catalogo.ts (COMPONENTES_DA_NOTA); supabase/correcoes/20261002-regras-de-classificacao-todos-os-editais.sql (importacao.em_aberto)",
     abrir: "classificacao",
   },
   {
@@ -2466,7 +2466,7 @@ export const VERBETES_AYA = Object.freeze([
       'Quando o empate chega ao critério "maior idade" e as pessoas nasceram no mesmo dia, decide a hora de nascimento da certidão enviada na inscrição: quem nasceu mais cedo é mais velho e fica à frente (edital 93/2026, itens 6.11.5 e 6.11.6). Sem certidão, vale 23h59min59s — a pessoa fica como a mais nova daquele dia. A planilha da análise curricular e a Empregare não trazem a hora; quem informa é o analista, na Classificação: abra o candidato na lista e use "Hora de nascimento (certidão)". O campo só aparece para quem está nesse empate (ou já tem hora), e a tela avisa "Empate decidido pela hora de nascimento". "Sem certidão" tira a hora e volta a valer 23h59min59s. Cada mudança fica no histórico (quem, quando, antes e depois); gere a lista de novo depois de informar. Se ainda assim empatar (mesmo dia e mesma hora, ou as duas sem certidão), vale o empate final da regra.',
     fato: "Na maior idade, entre quem nasceu no mesmo dia, vale a hora da certidão; sem certidão, 23h59min59s.",
     fonte:
-      "src/lib/classificacao/numeros.js; src/lib/classificacao/motor.js; src/modulos/classificacao/hora-de-nascimento.tsx; supabase/migrations/20261009130000_hora_de_nascimento_na_classificacao.sql",
+      "src/lib/classificacao/numeros.ts; src/lib/classificacao/motor.js; src/modulos/classificacao/hora-de-nascimento.tsx; supabase/migrations/20261009130000_hora_de_nascimento_na_classificacao.sql",
     abrir: "classificacao",
   },
   {
@@ -4303,7 +4303,7 @@ export const VERBETES_AYA = Object.freeze([
       'A agenda das entrevistas fica na Classificação, na visão Agenda (ou pelo botão "Agenda das entrevistas" da lista Convocação para entrevista), porque os convocados saem dessa lista e a agenda preenche o documento dela. Cada edital tem a sua regra da agenda, com versões, e uma agenda salva: um horário por convocado, com dia, hora de Brasília e banca. Os convocados vêm da última lista de convocação gerada; sem lista gerada, do cálculo atual, com um aviso. Quem conduz vê a fila do dia em Conduzir entrevistas. Salvar a regra e a agenda exige Editor em Entrevistas ou em Classificação; ler, Leitor em uma delas; sempre com acesso à área e ao edital.',
     fato: "",
     fonte:
-      "src/modulos/classificacao/agenda.jsx; supabase/migrations/20261005120000_agenda_das_entrevistas.sql",
+      "src/modulos/classificacao/agenda.tsx; supabase/migrations/20261005120000_agenda_das_entrevistas.sql",
     abrir: "classificacao",
   },
   {
@@ -4324,7 +4324,7 @@ export const VERBETES_AYA = Object.freeze([
       'A regra da agenda tem: os dias (um intervalo, com a opção "Só dias úteis", ou uma lista de dias, em dd/mm/aaaa) e os dias sem entrevista (feriados); de 1 a 6 períodos por dia (ex.: 08:00–12:00 e 14:00–18:00), no horário de Brasília; a duração de cada entrevista (5 a 240 minutos) e o intervalo entre elas (0 a 120); uma pausa opcional (ex.: almoço), em que nenhuma entrevista acontece; de 1 a 20 bancas simultâneas, com nome (os membros cadastrados na banca de Entrevistas aparecem junto); a ordem dos candidatos (classificação na convocação, vaga/cargo, alfabética ou modalidade, com a ampla primeiro); "Agrupar por cargo" (todos de um cargo antes do próximo, e cada cargo começa num horário novo); e "Reservar o primeiro horário de cada período" (fica livre para encaixe). Até 60 dias. Salvar cria uma versão nova; da segunda em diante, com motivo.',
     fato: "",
     fonte:
-      "src/lib/agenda-das-entrevistas.js; supabase/migrations/20261005120000_agenda_das_entrevistas.sql",
+      "src/lib/agenda-das-entrevistas.ts; supabase/migrations/20261005120000_agenda_das_entrevistas.sql",
     abrir: "classificacao",
   },
   {
@@ -4340,7 +4340,7 @@ export const VERBETES_AYA = Object.freeze([
     resposta:
       '"Gerar agenda" monta os horários de cada dia a partir de cada período: começa no início, avança de duração mais intervalo e pula a pausa. Em cada horário cabe uma entrevista por banca. Os convocados, na ordem da regra, ocupam os horários em ordem: banca 1, banca 2… no mesmo horário, depois o próximo horário e o próximo dia. Se não couber, a tela diz quantos ficaram sem horário e quanto tempo de entrevista falta; se sobrar muito (30% dos lugares ou mais), diz quantos horários sobram e quantos dias bastam. O resultado é um rascunho: só vale depois de "Salvar agenda".',
     fato: "",
-    fonte: "src/lib/agenda-das-entrevistas.js",
+    fonte: "src/lib/agenda-das-entrevistas.ts",
     abrir: "classificacao",
   },
   {
@@ -4357,7 +4357,7 @@ export const VERBETES_AYA = Object.freeze([
       'Na agenda, "Mudar" abre o ajuste de um convocado: escolher um horário livre (de qualquer banca, inclusive os reservados) ou "Sem horário", ou trocar de lugar com outro convocado (os dois trocam dia, hora e banca). O ajuste fica marcado como "Ajuste manual". Conflito é a mesma banca com horários que se sobrepõem no mesmo dia ou o mesmo candidato duas vezes: a tela lista os conflitos e não deixa salvar até resolver; o banco também recusa. "Gerar de novo" sobre uma agenda com ajustes manuais pergunta antes, porque a distribuição da regra substitui os ajustes. Cada gravação fica no histórico (Gravações), com quem, quando e o que mudou.',
     fato: "",
     fonte:
-      "src/modulos/classificacao/agenda.jsx; src/lib/agenda-das-entrevistas.js; supabase/migrations/20261005120000_agenda_das_entrevistas.sql",
+      "src/modulos/classificacao/agenda.tsx; src/lib/agenda-das-entrevistas.ts; supabase/migrations/20261005120000_agenda_das_entrevistas.sql",
     abrir: "classificacao",
   },
   {
@@ -4373,7 +4373,7 @@ export const VERBETES_AYA = Object.freeze([
       "Com a agenda salva, o documento da Convocação para entrevista (Copiar para o SEI, Baixar DOCX, PDF e Como fica no SEI) sai com as colunas DATA e HORA preenchidas com o dia e a hora de início de cada convocado; quem não tem horário fica em branco, para preencher no SEI. O modelo publicado não ganha coluna de banca. O XLSX da agenda (botão XLSX na visão Agenda) traz dia, hora de início e fim, banca, nome, vaga, cargo, modalidade e se o horário foi ajustado à mão.",
     fato: "",
     fonte:
-      "src/lib/classificacao/documento-sei.js; src/lib/agenda-das-entrevistas.js",
+      "src/lib/classificacao/documento-sei.js; src/lib/agenda-das-entrevistas.ts",
     abrir: "classificacao",
   },
   {

@@ -6,7 +6,10 @@ regras que atravessam os módulos — Análises, Entrevistas, Classificação, L
 de aprovados e as cargas da Empregare — e grava AVISOS em
 TB_AVISO_CONFERENCIA (supabase/migrations/20261005210000_conferencias_de_consistencia.sql),
 com todos os casos de cada um em TB_CASO_AVISO_CONFERENCIA (20261007120000).
-Não muda análise, entrevista, lista nem aprovado. As regras estão em regras.py;
+Não muda análise, entrevista, lista nem aprovado. No módulo Análises entra
+também a conta das fichas concluídas da avaliação documental
+(conferencia_ler_fichas, refeita por python/monitora/avaliacao_documental/pontuacao.py).
+As regras estão em regras.py;
 o catálogo (código, módulo, gravidade, título), em catalogo.py.
 
 Roda pelo GitHub Actions (.github/workflows/conferencias.yml): todo dia às 6h
@@ -44,6 +47,8 @@ from monitora.registro import registro  # noqa: E402
 
 TITULO = "Conferências de consistência → MONITORA"
 TAMANHO_DA_PAGINA = 5000
+# A ficha leva o lançamento e a página leva a regra de cada versão usada (centenas de KB).
+TAMANHO_DA_PAGINA_DE_FICHAS = 500
 TAMANHO_DO_LOTE = 500
 CASOS_POR_LOTE = 20000
 log = registro("conferencias")
@@ -75,6 +80,24 @@ def paginas_de_analises(chamar):
         apos = proximo
 
 
+def paginas_de_fichas(chamar):
+    """Gera as páginas de conferencia_ler_fichas ({linhas, regras}) até o fim (cursor pelo id da ficha)."""
+    apos = None
+    while True:
+        pagina = chamar("conferencia_ler_fichas", {"p_apos": apos, "p_limite": TAMANHO_DA_PAGINA_DE_FICHAS}) or {}
+        yield pagina
+        proximo = pagina.get("proximo")
+        if not proximo or proximo == apos:
+            return
+        apos = proximo
+
+
+def conferir_o_modulo_de_analises(chamar, contexto, acumulador):
+    """As análises do painel e, das fichas concluídas no MONITORA, a conta gravada."""
+    regras.conferir_analises(paginas_de_analises(chamar), contexto, acumulador)
+    regras.conferir_fichas(paginas_de_fichas(chamar), acumulador)
+
+
 def lotes(avisos, tamanho=TAMANHO_DO_LOTE, casos_por_lote=CASOS_POR_LOTE):
     """Avisos em lotes de até `tamanho` avisos e `casos_por_lote` casos (um aviso nunca se parte)."""
     lote, casos = [], 0
@@ -95,7 +118,7 @@ def conferir(chamar, dias_convocado):
     editais = {e["id"]: e for e in contexto.get("editais") or []}
     acumulador = regras.Acumulador(editais)
     etapas = {
-        "analises": lambda: regras.conferir_analises(paginas_de_analises(chamar), contexto, acumulador),
+        "analises": lambda: conferir_o_modulo_de_analises(chamar, contexto, acumulador),
         "entrevistas": lambda: regras.conferir_entrevistas(
             chamar("conferencia_ler_entrevistas", {}) or {}, contexto, acumulador
         ),

@@ -15,8 +15,8 @@ import { objetoDosRecursos } from "../dados-dos-recursos.ts";
   - os avisos agrupados por tipo, para o topo;
   - a lista em que a tela abre, pela fase do edital.
 */
-import { semAcento } from "./catalogo.js";
-import { lerData, numeroBR } from "./numeros.js";
+import { semAcento } from "./catalogo.ts";
+import { lerData, numeroBR } from "./numeros.ts";
 
 /**
  * As etapas de inscrição do cronograma: "inscri" no nome, sem resultado,

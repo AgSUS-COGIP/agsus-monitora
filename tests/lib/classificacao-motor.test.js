@@ -8,7 +8,7 @@ import { normalizarRegra } from "../../src/lib/classificacao/regra.ts";
 import {
   chaveDoGrupo,
   ordemDoSorteio,
-} from "../../src/lib/classificacao/sorteio.js";
+} from "../../src/lib/classificacao/sorteio.ts";
 
 /*
   O motor da classificação com casos montados a partir das listas publicadas

@@ -672,7 +672,7 @@ export function criarEstadoDaClassificacao({
     O documento oficial de uma lista registrada (documento-sei.js), com os
     textos do edital — os salvos na regra ou, se vier `documento`, o rascunho
     que o gestor está editando. Na convocação, DATA e HORA saem da agenda das
-    entrevistas salva do edital (`agendaDoEdital`, estado-da-agenda.js).
+    entrevistas salva do edital (`agendaDoEdital`, estado-da-agenda.ts).
   */
   function documentoDaLista(
     registrado: ListaRegistrada | null,

@@ -188,6 +188,77 @@ class Analises(unittest.TestCase):
         self.assertEqual((dois["gravidade"], dois["exemplos"]), ("INFORMATIVO", ["C1"]))
 
 
+class FichasDaAvaliacao(unittest.TestCase):
+    """A conta gravada das fichas concluídas, refeita com pontuacao.py (casos dourados do 114/2026)."""
+
+    @staticmethod
+    def _pagina(gravado=None, parecer=None, analise=A1, regra="R1", versao=12, sem_regra=False):
+        from monitora.avaliacao_documental import pontuacao
+
+        dourado = json.loads(
+            (_RAIZ / "tests/fixtures/avaliacao-documental/casos-de-pontuacao.json").read_text(encoding="utf-8")
+        )
+        caso = next(c for c in dourado["casos"] if c["regra"] == "E114-POR-CARGO")
+        configuracao = dourado["regras"]["E114-POR-CARGO"]
+        conta = pontuacao.calcular_avaliacao(configuracao, caso["candidato"], caso.get("opcoes"))
+        resultado = {k: conta[k] for k in ("resultado", "nota_apurada", "nota_final", "nota_minima", "parciais")}
+        resultado.update(gravado or {})
+        linha = {
+            "ficha": "00000000-0000-4000-a000-0000000000f1",
+            "analise": analise,
+            "edital": E1,
+            "area": "projetos",
+            "regra": regra,
+            "versao_regra": versao,
+            "lancamento": caso["candidato"],
+            "resultado": resultado,
+            "parecer": conta["parecer"] if parecer is None else parecer,
+            "documental": {"nota_minima": 10},
+        }
+        regras_da_pagina = [] if sem_regra else [{"regra": regra, "versao": versao, "configuracao": configuracao}]
+        return {"linhas": [linha], "regras": regras_da_pagina, "proximo": None}
+
+    def _conferir(self, pagina):
+        acumulador = regras.Acumulador({E1: {"id": E1, "numero": "114/2026", "area": "projetos"}})
+        regras.conferir_fichas([pagina], acumulador)
+        return _avisos(acumulador)
+
+    def test_conta_igual_nao_avisa(self):
+        self.assertEqual(self._conferir(self._pagina()), {})
+
+    def test_nota_e_parciais_trocadas_avisam_com_o_campo_e_as_notas(self):
+        avisos = self._conferir(self._pagina({"nota_final": 99, "nota_apurada": 99, "parciais": {"CURSOS": 99}}))
+        aviso = avisos[("ANALISE_FICHA_CONTA_DIVERGENTE", f"edital:{E1}")]
+        self.assertEqual(aviso["gravidade"], "CRITICA")
+        self.assertEqual(aviso["quantidade"], 1)
+        caso = aviso["casos"][0]
+        self.assertEqual(caso["analise"], A1)
+        self.assertTrue(caso["detalhe"]["campos"].startswith("nota_apurada/nota_final"))
+        self.assertEqual(caso["detalhe"]["nota_gravada"], 99)
+        self.assertIn("114/2026", aviso["resumo"])
+
+    def test_parecer_diferente_avisa(self):
+        avisos = self._conferir(self._pagina(parecer="Outro texto"))
+        caso = avisos[("ANALISE_FICHA_CONTA_DIVERGENTE", f"edital:{E1}")]["casos"][0]
+        self.assertEqual(caso["detalhe"], {"campos": "parecer"})
+
+    def test_sem_analise_publicada_a_referencia_e_a_ficha(self):
+        avisos = self._conferir(self._pagina({"resultado": "INAPTO_NOTA"}, analise=None))
+        caso = avisos[("ANALISE_FICHA_CONTA_DIVERGENTE", f"edital:{E1}")]["casos"][0]
+        self.assertEqual(caso["referencia"], "00000000-0000-4000-a000-0000000000f1")
+        self.assertNotIn("analise", caso)
+
+    def test_regra_ausente_vira_erro_na_conta(self):
+        avisos = self._conferir(self._pagina(sem_regra=True))
+        caso = avisos[("ANALISE_FICHA_CONTA_DIVERGENTE", f"edital:{E1}")]["casos"][0]
+        self.assertEqual(caso["detalhe"], {"campos": "erro_na_conta"})
+
+    def test_campos_cabem_em_40_caracteres(self):
+        texto = regras._campos_da_divergencia([{"campo": f"parciais.CAMPO_{i}"} for i in range(5)])
+        self.assertLessEqual(len(texto), 40)
+        self.assertTrue(texto.startswith("parciais.CAMPO_0/"))
+
+
 class Entrevistas(unittest.TestCase):
     def test_regras_das_entrevistas(self):
         dados = {
@@ -407,6 +478,17 @@ class Fluxo(unittest.TestCase):
         banco = _BancoFalso()
         self._rodar(banco)
         self.assertEqual(banco.opcoes["iniciar_conferencia"], {"tentativas": 1})
+
+    def test_paginas_de_fichas_seguem_o_cursor(self):
+        chamadas = []
+
+        def chamar(funcao, corpo):
+            chamadas.append((funcao, corpo))
+            return {"linhas": [], "regras": [], "proximo": "f1" if corpo["p_apos"] is None else None}
+
+        self.assertEqual(len(list(conferencias.paginas_de_fichas(chamar))), 2)
+        self.assertEqual([c[1]["p_apos"] for c in chamadas], [None, "f1"])
+        self.assertTrue(all(f == "conferencia_ler_fichas" for f, _ in chamadas))
 
     def test_cursor_parado_encerra(self):
         def chamar(funcao, corpo):

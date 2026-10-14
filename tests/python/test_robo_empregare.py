@@ -821,9 +821,82 @@ class FluxoDeUmaVaga(unittest.TestCase):
 
         self.assertEqual(self.robo.gravar_vaga({}, "gh-x", "177979", self.caminho, chamar), "GRAVADA")
         lotes = [c for f, c in chamadas if f == "gravar_lote_empregare"]
-        self.assertEqual([len(l["p_linhas"]) for l in lotes], [500, 500, 202])
+        self.assertEqual([len(l["p_linhas"]) for l in lotes], [200] * 6 + [2])
         self.assertTrue(all(l["p_total"] == 1202 for l in lotes))
+        # Os ausentes só saem no fechamento, depois do último lote.
+        self.assertEqual([f for f, _ in chamadas].index("fechar_vaga_empregare"), len(chamadas) - 1)
         self.assertEqual(chamadas[-1][1]["p_colunas"], ["Nome", "E-mail"])
+
+    def _estouro(self, funcao):
+        return self.robo.supabase_rpc.ErroDoSupabase(funcao, 500, "57014: canceling statement due to statement timeout")
+
+    def test_lote_que_estoura_o_tempo_e_dividido_ao_meio(self):
+        chamadas = []
+        saida = []
+
+        def chamar(_config, funcao, corpo):
+            chamadas.append((funcao, corpo))
+            if funcao == "fechar_vaga_empregare":
+                return {"situacao": "GRAVADA", "ativos": 1202, "desativadas": 0}
+            if len(corpo["p_linhas"]) > 100:
+                raise self._estouro(funcao)
+            return {"situacao": "EM_CARGA", "gravadas": len(corpo["p_linhas"])}
+
+        antigo = self.robo.registrar
+        self.robo.registrar = saida.append
+        try:
+            situacao = self.robo.gravar_vaga({}, "gh-x", "177979", self.caminho, chamar)
+        finally:
+            self.robo.registrar = antigo
+        self.assertEqual(situacao, "GRAVADA")
+        gravados = [c["p_linhas"] for f, c in chamadas if f == "gravar_lote_empregare" and len(c["p_linhas"]) <= 100]
+        # Todos os candidatos, uma vez cada, na ordem do arquivo; p_total sempre o do arquivo inteiro.
+        emails = [l["email"] for lote in gravados for l in lote]
+        self.assertEqual(len(emails), 1202)
+        self.assertEqual(len(set(emails)), 1202)
+        self.assertEqual(emails[0], "p1@exemplo.invalid")
+        self.assertEqual(emails[-1], "p1202@exemplo.invalid")
+        self.assertTrue(all(c["p_total"] == 1202 for f, c in chamadas if f == "gravar_lote_empregare"))
+        self.assertEqual(chamadas[-1][0], "fechar_vaga_empregare")
+        self.assertTrue(any("estourou o tempo do banco" in s for s in saida))
+
+    def test_recusa_na_primeira_metade_para_a_vaga(self):
+        chamadas = []
+
+        def chamar(_config, funcao, corpo):
+            chamadas.append((funcao, len(corpo.get("p_linhas", []))))
+            if funcao == "gravar_lote_empregare" and len(corpo["p_linhas"]) > 100:
+                raise self._estouro(funcao)
+            return {"situacao": "RECUSADA"}
+
+        self.assertEqual(self.robo.gravar_vaga({}, "gh-x", "177979", self.caminho, chamar), "RECUSADA")
+        self.assertEqual(
+            chamadas, [("gravar_lote_empregare", 200), ("gravar_lote_empregare", 100), ("fechar_vaga_empregare", 0)]
+        )
+
+    def test_estouro_no_lote_minimo_vira_falha_sem_fechar(self):
+        chamadas = []
+
+        def chamar(_config, funcao, corpo):
+            chamadas.append(funcao)
+            if funcao == "gravar_lote_empregare":
+                raise self._estouro(funcao)
+            return {"situacao": "GRAVADA"}
+
+        self.assertEqual(self.robo.gravar_vaga({}, "gh-x", "177979", self.caminho, chamar), "FALHA")
+        # 200 → 100 → 50 → 25 e para: sem fechar, ninguém é desativado.
+        self.assertEqual(len(chamadas), 4)
+        self.assertNotIn("fechar_vaga_empregare", chamadas)
+
+    def test_outro_erro_do_banco_nao_divide_o_lote(self):
+        chamadas = []
+
+        def chamar(_config, funcao, corpo):
+            chamadas.append(funcao)
+            raise self.robo.supabase_rpc.ErroDoSupabase(funcao, 400, "22023: Código de vaga inválido")
+
+        self.assertEqual(self.robo.gravar_vaga({}, "gh-x", "177979", self.caminho, chamar), "FALHA")
+        self.assertEqual(chamadas, ["gravar_lote_empregare"])
 
     def test_grava_links_dos_candidatos_e_identificador_da_vaga(self):
         caminho = LeituraDoExcel._excel(

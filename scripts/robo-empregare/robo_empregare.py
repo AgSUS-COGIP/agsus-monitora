@@ -64,7 +64,12 @@ from monitora.mascaramento import mascarar, resumo_do_erro  # noqa: E402
 
 GUIA = "docs/robo-empregare.md"
 LIMITE_PADRAO = 60
-TAMANHO_DO_LOTE = 500
+# Candidatos por chamada de gravar_lote_empregare. Cada linha leva o questionário
+# inteiro (~3 KB): com 500, a vaga 182528 (769 candidatos) estourou os 8 s do banco
+# em 14/10. Com 200 o lote fica em ~0,3 s; se ainda estourar, o lote é dividido ao
+# meio até TAMANHO_MINIMO_DO_LOTE (gravar_lote).
+TAMANHO_DO_LOTE = 200
+TAMANHO_MINIMO_DO_LOTE = 25
 # Vagas por lote de exportação: pede, captura, baixa e grava o lote antes do próximo.
 # A Central de Exportações mostra só as mais recentes por página (15): com 30 pedidas
 # de uma vez, as 15 primeiras ficavam fora da lista ("ainda não listada").
@@ -190,6 +195,33 @@ def fechar_vaga(config, corpo, vaga_interno, chamar):
         return chamar(config, "fechar_vaga_empregare", corpo)
 
 
+def estourou_o_tempo(erro):
+    """57014 = o banco cancelou a instrução no statement_timeout (a transação inteira volta)."""
+    return isinstance(erro, supabase_rpc.ErroDoSupabase) and "57014" in str(erro)
+
+
+def gravar_lote(config, sync, codigo, total, lote, chamar):
+    """
+    Grava um lote da vaga; devolve a resposta da última chamada. Se o banco
+    cancelar por tempo (57014), divide o lote ao meio e grava as duas metades,
+    até TAMANHO_MINIMO_DO_LOTE. Seguro porque a chamada cancelada não gravou
+    nada (cada RPC é uma transação) e o upsert pela chave é idempotente; os
+    ausentes só saem em fechar_vaga_empregare, depois do último lote.
+    """
+    corpo = {"p_sync": sync, "p_vaga": codigo, "p_total": total, "p_linhas": lote}
+    try:
+        return chamar(config, "gravar_lote_empregare", corpo)
+    except supabase_rpc.ErroDoSupabase as erro:
+        if not estourou_o_tempo(erro) or len(lote) <= TAMANHO_MINIMO_DO_LOTE:
+            raise
+    meio = len(lote) // 2
+    registrar(f"Vaga {codigo}: lote de {len(lote)} estourou o tempo do banco; gravando em duas partes.")
+    r = gravar_lote(config, sync, codigo, total, lote[:meio], chamar)
+    if (r or {}).get("situacao") == "RECUSADA":
+        return r
+    return gravar_lote(config, sync, codigo, total, lote[meio:], chamar)
+
+
 def gravar_vaga(config, sync, codigo, caminho, chamar=supabase_rpc.chamar, enderecos=None):
     """
     Lê o Excel e grava. Devolve 'GRAVADA', 'RECUSADA' ou 'FALHA'. `enderecos`
@@ -204,11 +236,7 @@ def gravar_vaga(config, sync, codigo, caminho, chamar=supabase_rpc.chamar, ender
     linhas, ligados = com_links(lido["linhas"], enderecos)
     try:
         for lote in em_lotes(linhas, TAMANHO_DO_LOTE):
-            r = chamar(
-                config,
-                "gravar_lote_empregare",
-                {"p_sync": sync, "p_vaga": codigo, "p_total": len(linhas), "p_linhas": lote},
-            )
+            r = gravar_lote(config, sync, codigo, len(linhas), lote, chamar)
             if (r or {}).get("situacao") == "RECUSADA":
                 break
         fim = fechar_vaga(

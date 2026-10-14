@@ -32,7 +32,7 @@ import { objetoDaConducao, registrosDaConducao } from "./dados-da-conducao.ts";
   porModalidade, total, origemDasVagas, limiteConvocacao) entram iguais.
 */
 
-import { DIRECOES, METODOS_DE_EMPATE_FINAL } from "./classificacao/catalogo.js";
+import { DIRECOES, METODOS_DE_EMPATE_FINAL } from "./classificacao/catalogo.ts";
 import { criteriosDaRegra } from "./classificacao/regra.ts";
 
 const texto = (valor: unknown) => String(valor ?? "").trim();

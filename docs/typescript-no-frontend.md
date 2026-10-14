@@ -177,8 +177,8 @@ A entrada e o estado de Classificação também estão migrados: seletor de edit
 versões de regra, registros e publicação de listas, desempate, hora de nascimento e
 exportação. Dados usados pelo estado são validados; respostas antigas não atualizam
 dados, avisos ou flags após troca de edital, área ou usuário. Os contratos estão em
-`tests/tipos/tela-estado-da-classificacao.tsx`; documentos e agenda continuam
-parcialmente em JavaScript/JSX. Contratos e limites em
+`tests/tipos/tela-estado-da-classificacao.tsx`; partes do motor e utilitários de documentos
+continuam em JavaScript. Contratos e limites em
 [../src/modulos/classificacao/README.md](../src/modulos/classificacao/README.md).
 
 A publicação do resultado final como lista de aprovados também está em TypeScript/TSX:
@@ -206,3 +206,19 @@ em `classificacao/edicao-da-regra.ts`. O rascunho admite texto durante a ediçã
 a regra normalizada mantém valores numéricos. O histórico preserva configuração, autoria,
 motivo e renomeações; versões inválidas são recusadas. A modalidade padrão tem listas
 independentes por edital. Contratos em `tests/tipos/regra-da-classificacao.tsx`.
+
+A Agenda está em TypeScript/TSX: formulário da regra, distribuição, conflitos, trocas
+manuais, gravação, histórico, XLSX e horários do documento da convocação. As regras puras
+ficam em `agenda-das-entrevistas.ts`, com contratos em `tipos-da-agenda.ts`; a entrada do
+banco é validada em `dados-da-agenda.ts`. A carga do mesmo edital preserva os dados após
+falha; respostas de gravação antigas não alteram dados, flags ou avisos após troca de
+edital ou usuário, inclusive ao sair e voltar ao mesmo edital. Convocação inválida impede
+gerar uma agenda parcial. Contratos da tela e ações em `tests/tipos/agenda-da-classificacao.tsx`.
+
+Números, arredondamento/escala das notas, datas, idade e hora de nascimento, catálogo de
+critérios/modalidades e sorteios da Classificação também estão em TypeScript:
+`classificacao/numeros.ts`, `catalogo.ts` e `sorteio.ts`. O catálogo tem contratos para os
+campos já normalizados do candidato e a data de corte. O sorteio preserva a ordem por
+SHA-256 da semente e identidade, conferida contra o Node nos testes. Bigints que excedem
+a representação numérica finita retornam `null`. Contratos em
+`tests/tipos/calculos-e-desempates.tsx`; a orquestração do motor permanece em JavaScript.

@@ -104,6 +104,7 @@ topo da minha tela quantos avisos há, **para** corrigir sem procurar.
 | `ANALISE_NOTA_DIFERENTE_DA_SOMA`          | Análises      | Atenção     | nota final ≠ formação + cursos + experiência + étnico (±0,01)            |
 | `ANALISE_EXPERIENCIA_ACIMA_DO_TETO`       | Análises      | Atenção     | experiência acima de `documental.teto_experiencia` (se a regra tiver)    |
 | `ANALISE_DATA_INVALIDA`                   | Análises      | Atenção     | data da análise no futuro ou antes da candidatura na Empregare           |
+| `ANALISE_FICHA_CONTA_DIVERGENTE`          | Análises      | Crítico     | ficha concluída cuja conta refeita (pontuacao.py) difere da gravada      |
 | `ANALISE_EM_DOIS_EDITAIS`                 | Análises      | Informativo | mesmo código de candidato em dois editais ativos                         |
 | `ENTREVISTA_SEM_NOTA_APOS_DATA`           | Entrevistas   | Atenção     | data da agenda passou, sem nota e sem ausência marcada                   |
 | `ENTREVISTA_NOTA_FORA_DA_ESCALA`          | Entrevistas   | Crítico     | nota do avaliador fora da faixa/passo, lista ou níveis do roteiro        |

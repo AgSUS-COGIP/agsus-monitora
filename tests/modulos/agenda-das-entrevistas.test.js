@@ -14,7 +14,7 @@ import {
 
 /*
   A agenda das entrevistas na Classificação (visão "Agenda",
-  src/modulos/classificacao/agenda.jsx): salvar a regra, gerar a agenda dos
+  src/modulos/classificacao/agenda.tsx): salvar a regra, gerar a agenda dos
   convocados da última convocação registrada (aviso de que não cabe), salvar,
   ajuste manual com conflito (salvar bloqueado), "Gerar de novo" que pergunta
   antes de sobrescrever ajustes manuais, quem só lê sem os controles, e o

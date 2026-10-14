@@ -28,9 +28,9 @@ import { dataDeCorteDoCronograma } from "../../lib/classificacao/dados.ts";
 import { rotuloDaVersao } from "../../lib/nome-da-versao.ts";
 import { getSupabaseClient } from "../../lib/supabaseClient.js";
 import { Aviso, Campo, Segmentado, TopoDoPainel } from "../../ui/index.js";
-import { Agenda } from "./agenda.jsx";
+import { Agenda } from "./agenda.tsx";
 import { criarEstadoDaClassificacao, MENSAGEM_SEM_ACESSO } from "./estado.ts";
-import { criarEstadoDaAgenda } from "./estado-da-agenda.js";
+import { criarEstadoDaAgenda } from "./estado-da-agenda.ts";
 import { Listas } from "./listas.tsx";
 import { Regra } from "./regra.tsx";
 import { SeloDeAvisos } from "../conferencias/avisos-de-conferencia.tsx";
@@ -45,7 +45,7 @@ import "./classificacao.css";
   - Área: a área atual do app; trocar de área com a tela aberta recarrega.
   - Edital: escolhido no topo; a regra é DESTE edital (decidida pelo gestor).
   - Visões: "Listas" (preliminar, convocação, resultado final), "Agenda"
-    (regra e agenda das entrevistas dos convocados; agenda.jsx) e "Regra".
+    (regra e agenda das entrevistas dos convocados; agenda.tsx) e "Regra".
     A agenda fica aqui, junto da lista de convocação de onde saem os
     convocados e do documento que ela preenche (DATA e HORA); quem conduz vê
     a agenda do dia em Entrevistas › Conduzir entrevistas.

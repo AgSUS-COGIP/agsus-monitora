@@ -35,7 +35,7 @@ dos PDFs oficiais).
 
 **perguntas:** criterios de desempate | como funcionam os criterios de desempate | desempate da classificacao | catalogo de criterios | ordem do desempate
 **resposta:** O empate é sempre na nota publicada (com as casas decimais da regra). Se a regra manda desempatar naquela lista, valem os critérios escolhidos do catálogo, na ordem em que o gestor os arrumou (arrastando): 60 anos ou mais na data de corte, ser comprovadamente indígena (pontuação étnica validada maior que zero), maior tempo de experiência na saúde indígena, maior tempo na atenção básica, maior nota documental, maior nota da entrevista, maior idade, pontuações por critério, tempo de experiência profissional e PcD. Da leitura de todos os editais entraram mais quatro: tempo em média e alta complexidade, tempo em saúde digital, maior escolaridade e nota de conhecimentos específicos da prova — enquanto a análise não grava esses dados, eles não separam ninguém e a tela avisa. Cada critério tem direção (sim antes de não, maior primeiro…). Quem não tem o dado de um critério fica atrás de quem tem, e isso vira aviso. O que sobra empatado depois de todos os critérios segue o empate final.
-**fonte:** src/lib/classificacao/catalogo.js; src/lib/classificacao/motor.js
+**fonte:** src/lib/classificacao/catalogo.ts; src/lib/classificacao/motor.js
 **abrir:** classificacao
 
 ## Desempate da entrevista é na Classificação
@@ -51,14 +51,14 @@ dos PDFs oficiais).
 **perguntas:** empate final | como funciona o empate final | como funciona o empate final e o sorteio | sorteio do empate | semente do sorteio | decisao manual do empate
 **resposta:** Quando o empate continua depois de todos os critérios, vale o que o gestor escolheu na regra: sorteio registrado, ordem de inscrição (código menor primeiro), mesma posição (1º, 2º, 2º, 3º ou 1º, 2º, 2º, 4º) ou decisão manual com justificativa. No sorteio, a semente é gerada no servidor ou informada pelo gestor; a ordem é a crescente do SHA-256 de "semente:id da análise", e ficam gravados semente, ordem, quem e quando — qualquer pessoa com a semente refaz a conta. Refazer um sorteio exige justificativa e guarda o anterior. Enquanto um empate espera sorteio ou decisão, a lista mostra os empatados na mesma posição, o aviso pede o registro e a lista não pode ser marcada como publicada.
 **fato:** No MONITORA, o empate final é escolha do gestor do edital (sorteio registrado e reprodutível, ordem de inscrição, mesma posição ou decisão manual justificada).
-**fonte:** src/lib/classificacao/sorteio.js; supabase/migrations/20261002150000_classificacao.sql
+**fonte:** src/lib/classificacao/sorteio.ts; supabase/migrations/20261002150000_classificacao.sql
 **abrir:** classificacao
 
 ## 60 anos ou mais
 
 **perguntas:** 60 anos ou mais | como e calculado o criterio de 60 anos | como e calculado o criterio de 60 anos ou mais | idoso no desempate | data de corte da idade
 **resposta:** O critério "60 anos ou mais" usa a idade na data de corte — o último dia de inscrição, como mandam os editais (Estatuto da Pessoa Idosa) —, não a idade de hoje. A data de corte é a da regra do edital; sem ela, o fim do período de inscrição no cronograma do edital. Quem faz 60 anos no último dia de inscrição conta; no dia seguinte, não. Sem data de nascimento, o candidato fica atrás de quem tem e a tela avisa; sem data de corte, a tela avisa que o critério não pode ser aplicado.
-**fonte:** src/lib/classificacao/catalogo.js; src/lib/classificacao/dados.ts
+**fonte:** src/lib/classificacao/catalogo.ts; src/lib/classificacao/dados.ts
 **abrir:** classificacao
 
 ## Nota final e eliminação
@@ -210,14 +210,14 @@ dos PDFs oficiais).
 
 **perguntas:** siglas das modalidades | o que e ac | ampla concorrencia | o que e pp | pretos e pardos | o que e pi | o que e pq | quilombolas | o que e pcd | pessoa com deficiencia | o que e ppiq | o que e cr | cotas da classificacao
 **resposta:** Nas listas e nos documentos, AC é ampla concorrência; PcD, pessoas com deficiência; PP, pretos e pardos; PI, indígenas; PQ, quilombolas; e PPIQ, a reserva conjunta de pretos e pardos, indígenas e quilombolas de alguns editais. CR é cadastro reserva: quem passou, mas ficou além das vagas imediatas, ou a vaga que só tem cadastro reserva (no cabeçalho, "- Cadastro Reserva"). O cotista também concorre na ampla, e quem é chamado pela ampla não gasta a vaga reservada. Percentual, lista própria e remanejamento de cada modalidade são da regra de classificação do edital.
-**fonte:** src/lib/classificacao/catalogo.js (MODALIDADES_CONHECIDAS); src/lib/classificacao/motor.js; src/lib/classificacao/vagas.js
+**fonte:** src/lib/classificacao/catalogo.ts (MODALIDADES_CONHECIDAS); src/lib/classificacao/motor.js; src/lib/classificacao/vagas.js
 **abrir:** classificacao
 
 ## Nota da ART e lote de convocação
 
 **perguntas:** o que e art | nota da art | autodeclaracao de requisitos e titulos | lote | triado
 **resposta:** ART é a nota da Autodeclaração de Requisitos e Títulos, a nota do questionário da Empregare. Na Classificação ela pode entrar como componente da nota final ("Nota da autodeclaração (ART)") quando a regra do edital usar, e o recurso deferido pode ajustá-la. A lista provisória do ranqueamento pela ART e a linha de corte (o lote de convocação para a avaliação documental) ainda não são geradas pelo MONITORA: a classificação começa na avaliação documental dos candidatos do lote (situação Triado ou Aprovado na análise).
-**fonte:** src/lib/classificacao/catalogo.js (COMPONENTES_DA_NOTA); supabase/correcoes/20261002-regras-de-classificacao-todos-os-editais.sql (importacao.em_aberto)
+**fonte:** src/lib/classificacao/catalogo.ts (COMPONENTES_DA_NOTA); supabase/correcoes/20261002-regras-de-classificacao-todos-os-editais.sql (importacao.em_aberto)
 **abrir:** classificacao
 
 ## Nome da versão da regra de classificação
@@ -233,7 +233,7 @@ dos PDFs oficiais).
 **perguntas:** hora de nascimento | hora de nascimento no desempate | certidao de nascimento no desempate | 23h59min59s | 23:59:59 | empate na maior idade | nasceram no mesmo dia | onde informo a hora de nascimento
 **resposta:** Quando o empate chega ao critério "maior idade" e as pessoas nasceram no mesmo dia, decide a hora de nascimento da certidão enviada na inscrição: quem nasceu mais cedo é mais velho e fica à frente (edital 93/2026, itens 6.11.5 e 6.11.6). Sem certidão, vale 23h59min59s — a pessoa fica como a mais nova daquele dia. A planilha da análise curricular e a Empregare não trazem a hora; quem informa é o analista, na Classificação: abra o candidato na lista e use "Hora de nascimento (certidão)". O campo só aparece para quem está nesse empate (ou já tem hora), e a tela avisa "Empate decidido pela hora de nascimento". "Sem certidão" tira a hora e volta a valer 23h59min59s. Cada mudança fica no histórico (quem, quando, antes e depois); gere a lista de novo depois de informar. Se ainda assim empatar (mesmo dia e mesma hora, ou as duas sem certidão), vale o empate final da regra.
 **fato:** Na maior idade, entre quem nasceu no mesmo dia, vale a hora da certidão; sem certidão, 23h59min59s.
-**fonte:** src/lib/classificacao/numeros.js; src/lib/classificacao/motor.js; src/modulos/classificacao/hora-de-nascimento.tsx; supabase/migrations/20261009130000_hora_de_nascimento_na_classificacao.sql
+**fonte:** src/lib/classificacao/numeros.ts; src/lib/classificacao/motor.js; src/modulos/classificacao/hora-de-nascimento.tsx; supabase/migrations/20261009130000_hora_de_nascimento_na_classificacao.sql
 **abrir:** classificacao
 
 ## Desempate na lista preliminar (edital 93/2026)

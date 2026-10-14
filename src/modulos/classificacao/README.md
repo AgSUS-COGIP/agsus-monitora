@@ -27,10 +27,10 @@ listas.tsx         visão "Listas" em TypeScript: KPIs, avisos e pendências, ge
 publicar-aprovados.tsx  "Publicar como lista de aprovados" (resultado final, editor): o que
                    muda em relação à lista de aprovados vigente (entram, saem, mudam de
                    posição, preservados, sub judice mantidos) e revisão de quem não casou
-agenda.jsx         visão "Agenda": regra da agenda das entrevistas (versões), gerar pela
+agenda.tsx         visão "Agenda": regra da agenda das entrevistas (versões), gerar pela
                    regra, avisos (não cabe, sobra), ajuste manual com conflito, XLSX;
                    o botão "Agenda das entrevistas" da convocação abre esta visão
-estado-da-agenda.js  store da agenda (obter_agenda_entrevista, salvar_regra_agenda_entrevista,
+estado-da-agenda.ts  store da agenda (obter_agenda_entrevista, salvar_regra_agenda_entrevista,
                    salvar_agenda_entrevista); a agenda salva preenche DATA e HORA do
                    documento da convocação (agendaDoDocumento)
 regra.tsx          visão "Regra" em TypeScript: formulário (critérios ordenáveis do catálogo, empate final,
@@ -47,8 +47,8 @@ documento-no-navegador.js  área de transferência (HTML + texto), logo em PNG, 
 classificacao.css  só o que é desta tela (tokens)
 ```
 
-Regras puras em `src/lib/classificacao/` (`motor.js`, `regra.ts`, `catalogo.js`, `vagas.js`,
-`numeros.js`, `sorteio.js`, `exportacao.js`, `ajustes.ts` — o motor com os ajustes da pontuação
+Regras puras em `src/lib/classificacao/` (`motor.js`, `regra.ts`, `catalogo.ts`, `vagas.js`,
+`numeros.ts`, `sorteio.ts`, `exportacao.js`, `ajustes.ts` — o motor com os ajustes da pontuação
 aprovados em recurso e a prévia do recurso —, `documento-sei.js` — o documento no modelo das
 publicações do SEI, textos-padrão do 83/2026 e do 100/2026 —, `documento-docx.js` — Word com papel
 timbrado —, `dados.ts`). Os textos e as colunas do documento ajustados pelo gestor ficam na regra
@@ -95,9 +95,16 @@ listas independentes na modalidade padrão. O histórico valida a versão e a co
 preservando autoria, motivo e renomeações; só versões com configuração podem voltar ao
 formulário. Testes em `tests/lib/classificacao-edicao-da-regra.test.js` e contratos em
 `tests/tipos/regra-da-classificacao.tsx`.
-Agenda das entrevistas: motor em `src/lib/agenda-das-entrevistas.js`, banco em
+Agenda das entrevistas: motor em `src/lib/agenda-das-entrevistas.ts`, banco em
 `supabase/migrations/20261005120000_agenda_das_entrevistas.sql` (ensaio e rollback com o mesmo
 nome); Conduzir entrevistas abre a fila em Hoje pela agenda salva (`src/modulos/entrevistas/fila-do-dia.tsx`).
+Tela, estado e regras da agenda estão em TypeScript/TSX. Contratos em
+`src/lib/tipos-da-agenda.ts`; validação dos dados em `src/lib/dados-da-agenda.ts`. A
+convocação inválida mostra erro e bloqueia a geração. Respostas antigas de gravação não
+mudam dados, flags ou avisos depois de trocar de edital ou usuário (inclusive A → B → A).
+Falha ao atualizar o mesmo edital preserva a agenda aberta. Testes:
+`tests/lib/dados-da-agenda.test.js`, `tests/modulos/agenda-contexto-de-gravacao.test.js`
+e `tests/tipos/agenda-da-classificacao.tsx`.
 A lista `CONVOCACAO` gerada aqui é a única convocação para a entrevista: Conduzir entrevistas › Preparar mostra
 a última gerada e registra para a ficha só quem está nela
 (`supabase/migrations/20261005150000_convocacao_unica_da_entrevista.sql`); o retrato guarda, por

@@ -21,6 +21,11 @@
       "gravidade": "ATENCAO",
       "titulo": "Data da análise no futuro ou antes da inscrição"
     },
+    "ANALISE_FICHA_CONTA_DIVERGENTE": {
+      "modulo": "analises",
+      "gravidade": "CRITICA",
+      "titulo": "Ficha concluída com a conta diferente da regra"
+    },
     "ANALISE_EM_DOIS_EDITAIS": {
       "modulo": "analises",
       "gravidade": "INFORMATIVO",

@@ -27,7 +27,7 @@ import {
   normalizarRegra,
   validarRegra,
 } from "../../../lib/classificacao/regra.ts";
-import { CATALOGO_DE_CRITERIOS } from "../../../lib/classificacao/catalogo.js";
+import { CATALOGO_DE_CRITERIOS } from "../../../lib/classificacao/catalogo.ts";
 import {
   erroDoNomeDaVersao,
   rotuloDaVersao,

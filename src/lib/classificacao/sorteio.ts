@@ -27,10 +27,11 @@ const K = new Uint32Array([
   0x90befffa, 0xa4506ceb, 0xbef9a3f7, 0xc67178f2,
 ]);
 
-const rotr = (x, n) => (x >>> n) | (x << (32 - n));
+const palavra = (vetor: Uint32Array, indice: number) => vetor[indice] ?? 0;
+const rotr = (x: number, n: number) => (x >>> n) | (x << (32 - n));
 
 /** SHA-256 de um texto (UTF-8), em hexadecimal minúsculo. */
-export function sha256Hex(texto) {
+export function sha256Hex(texto: unknown) {
   const dados = new TextEncoder().encode(String(texto ?? ""));
   const bits = dados.length * 8;
   const tamanho = Math.ceil((dados.length + 9) / 64) * 64;
@@ -49,15 +50,21 @@ export function sha256Hex(texto) {
   for (let i = 0; i < tamanho; i += 64) {
     for (let t = 0; t < 16; t += 1) w[t] = visao.getUint32(i + t * 4);
     for (let t = 16; t < 64; t += 1) {
-      const s0 = rotr(w[t - 15], 7) ^ rotr(w[t - 15], 18) ^ (w[t - 15] >>> 3);
-      const s1 = rotr(w[t - 2], 17) ^ rotr(w[t - 2], 19) ^ (w[t - 2] >>> 10);
-      w[t] = (w[t - 16] + s0 + w[t - 7] + s1) >>> 0;
+      const s0 =
+        rotr(palavra(w, t - 15), 7) ^
+        rotr(palavra(w, t - 15), 18) ^
+        (palavra(w, t - 15) >>> 3);
+      const s1 =
+        rotr(palavra(w, t - 2), 17) ^
+        rotr(palavra(w, t - 2), 19) ^
+        (palavra(w, t - 2) >>> 10);
+      w[t] = (palavra(w, t - 16) + s0 + palavra(w, t - 7) + s1) >>> 0;
     }
-    let [a, b, c, d, e, f, g, hh] = h;
+    let [a = 0, b = 0, c = 0, d = 0, e = 0, f = 0, g = 0, hh = 0] = h;
     for (let t = 0; t < 64; t += 1) {
       const S1 = rotr(e, 6) ^ rotr(e, 11) ^ rotr(e, 25);
       const ch = (e & f) ^ (~e & g);
-      const t1 = (hh + S1 + ch + K[t] + w[t]) >>> 0;
+      const t1 = (hh + S1 + ch + palavra(K, t) + palavra(w, t)) >>> 0;
       const S0 = rotr(a, 2) ^ rotr(a, 13) ^ rotr(a, 22);
       const maj = (a & b) ^ (a & c) ^ (b & c);
       const t2 = (S0 + maj) >>> 0;
@@ -70,29 +77,35 @@ export function sha256Hex(texto) {
       b = a;
       a = (t1 + t2) >>> 0;
     }
-    h[0] += a;
-    h[1] += b;
-    h[2] += c;
-    h[3] += d;
-    h[4] += e;
-    h[5] += f;
-    h[6] += g;
-    h[7] += hh;
+    h[0] = palavra(h, 0) + a;
+    h[1] = palavra(h, 1) + b;
+    h[2] = palavra(h, 2) + c;
+    h[3] = palavra(h, 3) + d;
+    h[4] = palavra(h, 4) + e;
+    h[5] = palavra(h, 5) + f;
+    h[6] = palavra(h, 6) + g;
+    h[7] = palavra(h, 7) + hh;
   }
   return [...h].map((x) => x.toString(16).padStart(8, "0")).join("");
 }
 
 /** Os ids na ordem do sorteio com a semente dada. */
-export function ordemDoSorteio(semente, ids) {
+export function ordemDoSorteio(
+  semente: unknown,
+  ids: readonly unknown[] | null | undefined,
+) {
   const s = String(semente ?? "");
   return [...new Set((ids || []).map(String))]
-    .map((id) => [id, sha256Hex(`${s}:${id}`)])
+    .map((id): [string, string] => [id, sha256Hex(`${s}:${id}`)])
     .sort((a, b) => (a[1] < b[1] ? -1 : a[1] > b[1] ? 1 : 0))
     .map(([id]) => id);
 }
 
 /** A ordem gravada é a que a semente produz? */
-export function conferirSorteio(semente, ordemGravada) {
+export function conferirSorteio(
+  semente: unknown,
+  ordemGravada: readonly unknown[] | null | undefined,
+) {
   const ordem = (ordemGravada || []).map(String);
   const refeita = ordemDoSorteio(semente, ordem);
   return (
@@ -105,13 +118,17 @@ export function conferirSorteio(semente, ordemGravada) {
   ordem. Se o grupo mudar (entrou ou saiu alguém), a chave muda e a decisão
   registrada deixa de valer — a tela avisa.
 */
-export function chaveDoGrupo(tipoLista, vaga, ids) {
+export function chaveDoGrupo(
+  tipoLista: string,
+  vaga: string,
+  ids: readonly unknown[] | null | undefined,
+) {
   const ordenados = [...new Set((ids || []).map(String))].sort();
   return `${tipoLista}|${vaga}|${ordenados.join(",")}`;
 }
 
 /** Semente informada pelo gestor: 4 a 200 caracteres visíveis. */
-export function sementeValida(semente) {
+export function sementeValida(semente: unknown) {
   const s = String(semente ?? "").trim();
   return (
     s.length >= 4 &&

@@ -101,6 +101,8 @@ def entrada_da_leitura(leitura):
             ),
             "anterior": {},
             "decisoes": {},
+            # Desde 20261014110000 o cargo e o quadro da vaga vêm com os inscritos.
+            **({"vaga": lidos["vaga"]} if lidos.get("vaga") else {}),
         }
     return {"hoje": (leitura.get("editais") or {}).get("hoje"), "edital": edital, "candidatos": candidatos}
 
