@@ -44,7 +44,7 @@ import {
   ligarEntrevistas,
   prepararCandidatos,
   rotuloDoItem,
-} from "./motor.js";
+} from "./motor.ts";
 import { numeroBR } from "./numeros.ts";
 import { normalizarRegra } from "./regra.ts";
 
@@ -108,7 +108,7 @@ export function candidatoAtual(
   { semRecurso = null }: { semRecurso?: Id | null } = {},
 ): CandidatoParaAjuste | null {
   const regra = normalizarRegra(dados?.regra?.configuracao ?? {});
-  const avisos: string[] = [];
+  const avisos: import("./tipos-do-resultado.ts").AvisoDaClassificacao[] = [];
   const ajustes = (dados?.ajustes || []).filter(
     (a) => !semRecurso || a.recurso_id !== semRecurso,
   );

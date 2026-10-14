@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { CRITERIO_POR_CODIGO } from "../src/lib/classificacao/catalogo.ts";
-import { classificar } from "../src/lib/classificacao/motor.js";
+import { classificar } from "../src/lib/classificacao/motor.ts";
 import {
   normalizarRegra,
   validarRegra,

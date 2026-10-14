@@ -18,7 +18,7 @@ import {
   unidadeDoEdital,
 } from "../../src/lib/classificacao/documento-sei.js";
 import { gerarDocxOficial } from "../../src/lib/classificacao/documento-docx.js";
-import { classificar } from "../../src/lib/classificacao/motor.js";
+import { classificar } from "../../src/lib/classificacao/motor.ts";
 import {
   documentoDaRegra,
   normalizarRegra,

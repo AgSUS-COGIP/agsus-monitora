@@ -48,12 +48,12 @@ import {
     listar_configuracao_convocacao()         a configuração de convocação
     listar_modelos_convocacao()              dos editais (Lista de aprovados):
                                              as vagas por modalidade saem da
-                                             mesma conta (convocacao-do-edital.js)
+                                             mesma conta (convocacao-do-edital.ts)
     salvar_hora_nascimento_candidato(...)    a hora da certidão para o
                                              desempate por maior idade
                                              (migration 20261009130000)
 
-  A conta é do motor puro (src/lib/classificacao/motor.js), feita no
+  A conta é do motor puro (src/lib/classificacao/motor.ts), feita no
   componente a partir de `dados`; aqui só a carga, a gravação e a exportação.
 
   Sessão: o cliente Supabase único do app. Outro usuário na mesma aba: tudo

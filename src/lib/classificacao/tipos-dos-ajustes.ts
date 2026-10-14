@@ -99,19 +99,7 @@ export interface ExplicacaoParaPrevia {
   situacao: string | null;
   motivo: string | null;
 }
-/** Fronteira com o motor JavaScript compartilhado. */
-export interface EntradaDoMotor {
-  tipo?: string;
-  regra?: RegistroDaClassificacao;
-  candidatos?: RegistroDaClassificacao[];
-  entrevistas?: RegistroDaClassificacao[];
-  quadro?: RegistroDaClassificacao[];
-  unidade?: string;
-  dataCorte?: string | null;
-  desempates?: RegistroDaClassificacao[];
-  convocacao?: RegistroDaClassificacao | null;
-  ajustes?: RegistroDaClassificacao[];
-}
+export type { EntradaDoMotor } from "./tipos-do-motor.ts";
 export interface PropostaDoAjuste {
   lista: ListaDaPrevia;
   justificativa: string | null;

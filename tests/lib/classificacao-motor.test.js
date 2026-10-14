@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   classificar,
   limiteDaConvocacao,
-} from "../../src/lib/classificacao/motor.js";
+} from "../../src/lib/classificacao/motor.ts";
 import { normalizarRegra } from "../../src/lib/classificacao/regra.ts";
 import {
   chaveDoGrupo,

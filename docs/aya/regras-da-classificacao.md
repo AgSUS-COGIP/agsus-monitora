@@ -35,7 +35,7 @@ dos PDFs oficiais).
 
 **perguntas:** criterios de desempate | como funcionam os criterios de desempate | desempate da classificacao | catalogo de criterios | ordem do desempate
 **resposta:** O empate é sempre na nota publicada (com as casas decimais da regra). Se a regra manda desempatar naquela lista, valem os critérios escolhidos do catálogo, na ordem em que o gestor os arrumou (arrastando): 60 anos ou mais na data de corte, ser comprovadamente indígena (pontuação étnica validada maior que zero), maior tempo de experiência na saúde indígena, maior tempo na atenção básica, maior nota documental, maior nota da entrevista, maior idade, pontuações por critério, tempo de experiência profissional e PcD. Da leitura de todos os editais entraram mais quatro: tempo em média e alta complexidade, tempo em saúde digital, maior escolaridade e nota de conhecimentos específicos da prova — enquanto a análise não grava esses dados, eles não separam ninguém e a tela avisa. Cada critério tem direção (sim antes de não, maior primeiro…). Quem não tem o dado de um critério fica atrás de quem tem, e isso vira aviso. O que sobra empatado depois de todos os critérios segue o empate final.
-**fonte:** src/lib/classificacao/catalogo.ts; src/lib/classificacao/motor.js
+**fonte:** src/lib/classificacao/catalogo.ts; src/lib/classificacao/motor.ts
 **abrir:** classificacao
 
 ## Desempate da entrevista é na Classificação
@@ -65,21 +65,21 @@ dos PDFs oficiais).
 
 **perguntas:** nota final da classificacao | como e calculada a nota final da classificacao | motivo da eliminacao | eliminados da classificacao | por que o candidato foi eliminado
 **resposta:** A nota final é a soma dos componentes da regra (nota documental, nota da entrevista e, se o edital usar, a nota da autodeclaração), cada um com o seu peso, arredondada nas casas da regra. A entrevista é ligada à análise do candidato só pelo identificador da análise — nunca pelo nome, como fazia a planilha antiga, que perdia candidatos sem avisar; nota com vírgula é lida como número. Fica fora da lista, com o motivo: não habilitado na análise, sem nota documental, abaixo da nota mínima documental (inclusive por nível da vaga), fora do limite de convocação, sem entrevista, ausente, inapto, sem nota da entrevista, abaixo do mínimo da entrevista, competência abaixo do mínimo ou nota eliminatória numa competência.
-**fonte:** src/lib/classificacao/motor.js
+**fonte:** src/lib/classificacao/motor.ts
 **abrir:** classificacao
 
 ## Convocação para entrevista
 
 **perguntas:** convocacao para entrevista da classificacao | limite da convocacao | como funciona o limite da convocacao | quantos candidatos sao convocados
 **resposta:** A lista de convocação são os primeiros da avaliação documental até o limite da regra: N vezes as vagas imediatas da vaga, ou, na vaga só de cadastro reserva, até a posição definida (ex.: 5 vezes as vagas e até a 10ª no 83/2026; 6 vezes e até a 5ª no 100/2026). Cargos podem ter exceção (Enfermeiro e Técnico de Enfermagem: 10 vezes e até a 20ª). Se houver empate no limite, a regra diz se os empatados entram todos. No resultado final, quem estava dentro do limite e não tem entrevista lançada vira aviso. É a única convocação do sistema: Conduzir entrevistas › Preparar convoca a partir da última lista de convocação gerada aqui, e só quem está nela; por isso, gere a lista antes de convocar e gere de novo quando a regra ou as vagas mudarem.
-**fonte:** src/lib/classificacao/motor.js; supabase/migrations/20261005150000_convocacao_unica_da_entrevista.sql
+**fonte:** src/lib/classificacao/motor.ts; supabase/migrations/20261005150000_convocacao_unica_da_entrevista.sql
 **abrir:** classificacao
 
 ## Modalidades e vagas
 
 **perguntas:** modalidades da classificacao | cotista na lista geral | lista por modalidade | remanejamento de vaga | acumulo de cotas
 **resposta:** Cada modalidade da regra (PcD, pretos e pardos, indígenas, quilombolas, trans…) tem percentual, lista própria, posição que recomeça em 1º ou mantém a da geral, se o cotista aparece também na geral, para onde vai a vaga reservada sem candidato e, se for uma reserva conjunta (como a PPIQ de 30% dos editais de 2025), quais modalidades ela reúne — quem declarou pretos e pardos, indígena ou quilombola entra nessa lista. Na lista final, as vagas da ampla vão para os primeiros da geral (cotista aprovado na ampla não ocupa vaga reservada); cada reserva vai para os primeiros da modalidade; a reserva que sobra segue o remanejamento da regra e, por fim, a ampla. Com mais de uma cota, a regra diz se o candidato fica em todas, só na de maior percentual ou em PcD e mais uma (vale no resultado final). As vagas por modalidade vêm do quadro de vagas do edital; quando ele só traz o total, da configuração de convocação do edital (Lista de aprovados › Convocação) ou dos percentuais da regra, pela mesma conta da convocação.
-**fonte:** src/lib/classificacao/motor.js; src/lib/classificacao/vagas.ts
+**fonte:** src/lib/classificacao/motor.ts; src/lib/classificacao/vagas.ts
 **abrir:** classificacao
 
 ## Gerar e publicar a lista
@@ -152,7 +152,7 @@ dos PDFs oficiais).
 
 **perguntas:** listas da classificacao | quais listas a classificacao gera | resultado da entrevista na classificacao | lista da entrevista | resultado preliminar e final da classificacao
 **resposta:** São quatro listas, como a AgSUS publica. 1) Avaliação documental e de títulos: quem passou na documental, por vaga e por modalidade, pela nota documental (com as parciais), e os eliminados com o motivo — a mesma lista vale como resultado preliminar ou final da etapa, antes e depois dos recursos. 2) Convocação para entrevista: os primeiros até o limite da regra (N vezes as vagas, ou até a k-ésima no cadastro reserva), com os empatados no limite se a regra mandar. 3) Resultado da entrevista: os convocados aptos pela nota da entrevista; o empate que sobra fica na mesma posição (o desempate do edital é do resultado final); os eliminados da entrevista com o motivo. 4) Resultado final: documental + entrevista (ou a composição da regra), desempate, vagas imediatas e cadastro reserva.
-**fonte:** src/lib/classificacao/motor.js; src/lib/classificacao/exportacao.js
+**fonte:** src/lib/classificacao/motor.ts; src/lib/classificacao/exportacao.js
 **abrir:** classificacao
 
 ## Regras dos editais lidas dos PDFs
@@ -167,7 +167,7 @@ dos PDFs oficiais).
 
 **perguntas:** entrevista so com parecer | entrevista apto inapto sem nota | entrevista sem nota na classificacao
 **resposta:** Nos editais em que a entrevista só diz apto ou inapto (os da Sede de 2025), a regra marca "Entrevista só com parecer": o apto segue sem nota, o inapto é eliminado e quem não tem parecer também sai, com o motivo; a nota final é só a da avaliação documental, e a lista do resultado da entrevista segue a ordem da documental.
-**fonte:** src/lib/classificacao/regra.ts; src/lib/classificacao/motor.js
+**fonte:** src/lib/classificacao/regra.ts; src/lib/classificacao/motor.ts
 **abrir:** classificacao
 
 ## Vagas da classificação e a convocação do edital
@@ -188,7 +188,7 @@ dos PDFs oficiais).
 
 **perguntas:** nota alterada pelo recurso | recurso mudou a nota na classificacao | ajuste aprovado na classificacao | ha recursos aprovados depois desta lista | gere de novo a lista | lista desatualizada
 **resposta:** No MONITORA, a Classificação aplica os ajustes da pontuação aprovados em recurso por cima da nota da análise (a planilha não muda): o valor novo de cada componente substitui o da análise e o candidato aparece com o selo "Recurso nº X" na tabela; a explicação da posição diz o que mudou ("Nota alterada pelo recurso nº X: …") e o retrato da lista gerada guarda o número do recurso. Se a análise mudar depois do ajuste, a tela avisa e vale o ajuste. Quando há ajuste aprovado (ou cancelado depois de aprovado) depois da última lista gerada, a tela avisa "Há recursos aprovados depois desta lista — gere de novo". O documento do SEI segue o modelo das publicações, sem marca.
-**fonte:** src/lib/classificacao/motor.js (aplicarAjustes); src/lib/classificacao/ajustes.ts; src/modulos/classificacao/listas.tsx; supabase/migrations/20261005130000_recurso_ajusta_pontuacao.sql
+**fonte:** src/lib/classificacao/motor.ts (aplicarAjustes); src/lib/classificacao/ajustes.ts; src/modulos/classificacao/listas.tsx; supabase/migrations/20261005130000_recurso_ajusta_pontuacao.sql
 **abrir:** classificacao
 
 ## Publicar como lista de aprovados
@@ -210,7 +210,7 @@ dos PDFs oficiais).
 
 **perguntas:** siglas das modalidades | o que e ac | ampla concorrencia | o que e pp | pretos e pardos | o que e pi | o que e pq | quilombolas | o que e pcd | pessoa com deficiencia | o que e ppiq | o que e cr | cotas da classificacao
 **resposta:** Nas listas e nos documentos, AC é ampla concorrência; PcD, pessoas com deficiência; PP, pretos e pardos; PI, indígenas; PQ, quilombolas; e PPIQ, a reserva conjunta de pretos e pardos, indígenas e quilombolas de alguns editais. CR é cadastro reserva: quem passou, mas ficou além das vagas imediatas, ou a vaga que só tem cadastro reserva (no cabeçalho, "- Cadastro Reserva"). O cotista também concorre na ampla, e quem é chamado pela ampla não gasta a vaga reservada. Percentual, lista própria e remanejamento de cada modalidade são da regra de classificação do edital.
-**fonte:** src/lib/classificacao/catalogo.ts (MODALIDADES_CONHECIDAS); src/lib/classificacao/motor.js; src/lib/classificacao/vagas.ts
+**fonte:** src/lib/classificacao/catalogo.ts (MODALIDADES_CONHECIDAS); src/lib/classificacao/motor.ts; src/lib/classificacao/vagas.ts
 **abrir:** classificacao
 
 ## Nota da ART e lote de convocação
@@ -233,7 +233,7 @@ dos PDFs oficiais).
 **perguntas:** hora de nascimento | hora de nascimento no desempate | certidao de nascimento no desempate | 23h59min59s | 23:59:59 | empate na maior idade | nasceram no mesmo dia | onde informo a hora de nascimento
 **resposta:** Quando o empate chega ao critério "maior idade" e as pessoas nasceram no mesmo dia, decide a hora de nascimento da certidão enviada na inscrição: quem nasceu mais cedo é mais velho e fica à frente (edital 93/2026, itens 6.11.5 e 6.11.6). Sem certidão, vale 23h59min59s — a pessoa fica como a mais nova daquele dia. A planilha da análise curricular e a Empregare não trazem a hora; quem informa é o analista, na Classificação: abra o candidato na lista e use "Hora de nascimento (certidão)". O campo só aparece para quem está nesse empate (ou já tem hora), e a tela avisa "Empate decidido pela hora de nascimento". "Sem certidão" tira a hora e volta a valer 23h59min59s. Cada mudança fica no histórico (quem, quando, antes e depois); gere a lista de novo depois de informar. Se ainda assim empatar (mesmo dia e mesma hora, ou as duas sem certidão), vale o empate final da regra.
 **fato:** Na maior idade, entre quem nasceu no mesmo dia, vale a hora da certidão; sem certidão, 23h59min59s.
-**fonte:** src/lib/classificacao/numeros.ts; src/lib/classificacao/motor.js; src/modulos/classificacao/hora-de-nascimento.tsx; supabase/migrations/20261009130000_hora_de_nascimento_na_classificacao.sql
+**fonte:** src/lib/classificacao/numeros.ts; src/lib/classificacao/motor.ts; src/modulos/classificacao/hora-de-nascimento.tsx; supabase/migrations/20261009130000_hora_de_nascimento_na_classificacao.sql
 **abrir:** classificacao
 
 ## Desempate na lista preliminar (edital 93/2026)
