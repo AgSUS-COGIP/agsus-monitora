@@ -144,11 +144,15 @@ describe("resumo dos cursos", () => {
   });
 
   it("o texto respeita o limite do campo no banco", () => {
-    const cursos = Array.from({ length: 50 }, (_, i) => ({
-      horas: 1 + i,
-      aceito: false,
-      motivo: i % 2 ? "EVENTO" : "OUTRO",
-    }));
+    // Um curso lançado à mão e aceito: ficha antiga, com a lista.
+    const cursos = [
+      { nome: "A", horas: 40, aceito: true },
+      ...Array.from({ length: 49 }, (_, i) => ({
+        horas: 1 + i,
+        aceito: false,
+        motivo: i % 2 ? "EVENTO" : "OUTRO",
+      })),
+    ];
     const l = base({ blocos: { CURSOS: { situacao: "CONFORME" } }, cursos });
     const blocoLongo = {
       ...bloco("CURSOS"),

@@ -97,11 +97,18 @@ export const BLOCOS_COM_ITENS = Object.freeze({
  */
 export const BLOCOS_PELA_NOTA = Object.freeze(["CURSOS"]);
 
-/** O bloco decide pela nota, sem a lista (BLOCOS_PELA_NOTA e nenhum item lançado)? */
+/**
+ * O bloco decide pela nota, sem a lista? Sim em BLOCOS_PELA_NOTA, a menos que
+ * o avaliador já tenha lançado à mão um item completo e aceito (ficha antiga).
+ * A linha vazia ou sem horas (aberta pela tela antiga) e o item lido do
+ * arquivo não trazem a lista de volta.
+ */
 export function decidePelaNota(bloco, lancamento) {
   if (!BLOCOS_PELA_NOTA.includes(bloco?.tipo)) return false;
   const chave = BLOCOS_COM_ITENS[bloco.tipo];
-  return !lista(lancamento?.[chave]).length;
+  return !lista(lancamento?.[chave]).some(
+    (i) => i && !i.do_arquivo && i.aceito !== false && itemCompleto(chave, i),
+  );
 }
 
 /** Bloco que a ficha mostra: os que só registram não pedem situação. */
@@ -420,8 +427,10 @@ export function lancamentoParaGravar(regraEntrada, lancamento) {
     const zerado = ZERAM_O_BLOCO.includes(
       objeto(blocos[bloco.codigo]).situacao,
     );
+    // Pela nota (Cursos): as linhas incompletas não vão para o banco.
+    const semIncompletas = zerado || decidePelaNota(bloco, saida);
     saida[chave] = saida[chave]
-      .filter((i) => !zerado || itemCompleto(chave, i))
+      .filter((i) => !semIncompletas || itemCompleto(chave, i))
       .map((i) => {
         if (chave !== "cursos" || !i || typeof i !== "object") return i;
         const horas = Number(i.horas);
@@ -540,7 +549,10 @@ export function pendenciasDaFicha(
           ? "Escolha o motivo."
           : "Escreva o motivo (10 caracteres ou mais).",
       );
-    const chave = BLOCOS_COM_ITENS[bloco.tipo];
+    // Pela nota (Cursos): sem lista, os itens não pedem nada.
+    const chave = decidePelaNota(bloco, lancamento)
+      ? null
+      : BLOCOS_COM_ITENS[bloco.tipo];
     // Não conforme/Não enviado: as linhas incompletas são ignoradas.
     const zerado = ZERAM_O_BLOCO.includes(l.situacao);
     if (chave) {

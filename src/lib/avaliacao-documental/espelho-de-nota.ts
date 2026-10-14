@@ -6,8 +6,9 @@
   navegador imprime ("Salvar como PDF") e nada fica guardado (nem no Storage).
 
   Dois modelos, escolhidos pelo resultado gravado da ficha:
-  - ELIMINADO (Inapto por requisito): sem pontos. Notas: só a autodeclarada;
-    a consolidada é "Não se aplica". Justificativa: os motivos da eliminação
+  - ELIMINADO (Inapto por requisito): sem pontos e sem a nota declarada
+    (pedido da COREs em 14/10): nas notas, só a consolidada, "Não se aplica".
+    Justificativa: os motivos da eliminação
     com o item do edital (motivosDoResultado, o mesmo texto da lateral da
     ficha), inclusive o "Outro motivo" descrito.
   - COM_PONTOS (Apto ou Inapto pela nota mínima): notas, a pontuação por
@@ -236,17 +237,25 @@ export function montarEspelho(entrada: EntradaDoEspelho): Espelho {
   const notaFinal = ehNumero(entrada.notaFinal)
     ? entrada.notaFinal
     : avaliacao.nota_final;
-  const notas: LinhaDoEspelho[] = [
-    {
-      rotulo: "Nota autodeclarada (antes da análise)",
-      valor: numero(autodeclarada),
-    },
-    {
-      rotulo: "Nota consolidada (após a análise documental)",
-      valor:
-        modelo === "ELIMINADO" ? NAO_SE_APLICA_NO_ELIMINADO : numero(notaFinal),
-    },
-  ];
+  // O eliminado no requisito não mostra a nota declarada: só "Não se aplica".
+  const notas: LinhaDoEspelho[] =
+    modelo === "ELIMINADO"
+      ? [
+          {
+            rotulo: "Nota consolidada (após a análise documental)",
+            valor: NAO_SE_APLICA_NO_ELIMINADO,
+          },
+        ]
+      : [
+          {
+            rotulo: "Nota autodeclarada (antes da análise)",
+            valor: numero(autodeclarada),
+          },
+          {
+            rotulo: "Nota consolidada (após a análise documental)",
+            valor: numero(notaFinal),
+          },
+        ];
 
   const criterios: CriterioDoEspelho[] = [];
   let justificativas: string[];
@@ -332,11 +341,13 @@ const escapar = (valor: unknown) =>
       ] ?? c,
   );
 
+// @page sem margem: o navegador não imprime o cabeçalho/rodapé dele (data,
+// título e o endereço do sistema); a margem fica no padding da folha.
 const ESTILO = `
-  @page { size: A4; margin: 15mm 18mm 18mm 18mm; }
+  @page { size: A4; margin: 0; }
   * { box-sizing: border-box; }
   body { margin: 0; background: #fff; color: #111; font-family: Calibri, Carlito, "Segoe UI", Arial, sans-serif; font-size: 11pt; line-height: 1.4; }
-  .folha { max-width: 174mm; margin: 0 auto; padding: 8mm 0; }
+  .folha { max-width: 210mm; margin: 0 auto; padding: 15mm 18mm 18mm; }
   .timbrado { text-align: center; font-size: 8pt; line-height: 1.35; padding-bottom: 6pt; border-bottom: 1px solid #003b70; margin-bottom: 12pt; }
   .timbrado img { width: 22mm; height: auto; display: block; margin: 0 auto 6pt; }
   .timbrado p { margin: 0; text-align: center; }

@@ -2,6 +2,8 @@ import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import {
   blocoSeAplica,
+  decidePelaNota,
+  lancamentoParaGravar,
   calcularFicha,
   composicaoDaNota,
   conferenciaDaFicha,
@@ -247,6 +249,34 @@ describe("o que falta para concluir", () => {
     expect(pendenciasDaFicha(REGRA, lanc, av, declarada)).toEqual([]);
   });
 
+  it("Cursos pela nota: a linha vazia da tela antiga e o item lido do arquivo não trazem a lista de volta", () => {
+    const bloco = REGRA.blocos.find((b) => b.tipo === "CURSOS");
+    const vazia = { cursos: [{ nome: "", horas: "", aceito: true }] };
+    const lido = {
+      cursos: [{ nome: "NR-10", horas: 40, aceito: true, do_arquivo: true }],
+    };
+    const amao = { cursos: [{ nome: "NR-10", horas: 40, aceito: true }] };
+    expect(decidePelaNota(bloco, vazia)).toBe(true);
+    expect(decidePelaNota(bloco, lido)).toBe(true);
+    expect(decidePelaNota(bloco, amao)).toBe(false);
+    const lanc = lancamentoCompleto(vazia);
+    lanc.blocos.CURSOS = {
+      situacao: "CONFORME",
+      edita_nota: true,
+      nota_ajustada: 5,
+    };
+    const av = calcularFicha(REGRA, lanc, DOCUMENTAL);
+    const p = pendenciasDaFicha(REGRA, lanc, av, declarada);
+    expect(
+      p.filter(
+        (x) =>
+          x.bloco === "CURSOS" &&
+          ["horas", "item", "comprovado"].includes(x.tipo),
+      ),
+    ).toEqual([]);
+    expect(lancamentoParaGravar(REGRA, lanc).cursos).toEqual([]);
+  });
+
   it("bloco sem situação e Não conforme sem motivo", () => {
     const lanc = lancamentoCompleto();
     delete lanc.blocos.IDENTIDADE;
@@ -406,9 +436,10 @@ describe("o que falta para concluir", () => {
       expect.arrayContaining([
         "FORMACAO: Escolha o motivo da recusa do item.",
         "EXPERIENCIA: Confira o início e o fim do vínculo.",
-        "CURSOS: Informe a carga horária do curso.",
       ]),
     );
+    // Cursos pela nota: a linha sem horas não pede nada (decidePelaNota).
+    expect(textos.filter((t) => t.startsWith("CURSOS:"))).toEqual([]);
   });
 
   it("item recusado (com motivo) não pede datas nem carga horária", () => {
