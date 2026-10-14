@@ -4,6 +4,7 @@ import { enunciadoCompleto } from "../../../lib/avaliacao-documental/anexo-na-em
 import { PARCIAL_DO_TIPO as PARCIAIS_DOS_TIPOS } from "../../../lib/avaliacao-documental/catalogo.js";
 import {
   BLOCOS_COM_ITENS as ITENS_DOS_TIPOS,
+  blocoNaoPontuaNoNivel,
   blocoSeAplica,
   divergenciaDoBloco,
   ehAnexo,
@@ -36,7 +37,10 @@ import {
   tirarItem,
 } from "../../../lib/avaliacao-documental/itens-da-ficha.ts";
 import type { ItemTirado } from "../../../lib/avaliacao-documental/itens-da-ficha.ts";
-import { arquivosDaPergunta } from "../../../lib/avaliacao-documental/respostas-do-candidato.ts";
+import {
+  arquivosDaPergunta,
+  semPerguntaNoQuestionario,
+} from "../../../lib/avaliacao-documental/respostas-do-candidato.ts";
 import type { ArquivoDoCandidato } from "../../../lib/avaliacao-documental/respostas-do-candidato.ts";
 import { justificativasDoBloco } from "../../../lib/avaliacao-documental/justificativas-do-bloco.ts";
 import {
@@ -1580,7 +1584,9 @@ export function ItemDaFicha({
             <Selo>
               {bloco.nao_se_aplica === true
                 ? "Não se aplica a este cargo"
-                : "Não se aplica"}
+                : blocoNaoPontuaNoNivel(bloco, lancamento.nivel)
+                  ? "Não pontua neste nível"
+                  : "Não se aplica"}
             </Selo>
           ) : null}
           {!foco && bloco.item_edital ? (
@@ -1599,6 +1605,11 @@ export function ItemDaFicha({
               empregare={empregare}
               leituras={leituras}
             />
+          ) : aplica &&
+            semPerguntaNoQuestionario(bloco, dados.respostas, linhas.length) ? (
+            <p className="avd-ficha-sem-pergunta">
+              O questionário desta vaga não tem pergunta para este item.
+            </p>
           ) : null}
           <ConferenciaDoLido
             bloco={bloco}

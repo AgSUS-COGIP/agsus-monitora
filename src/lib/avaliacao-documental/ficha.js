@@ -87,12 +87,48 @@ export const BLOCOS_COM_ITENS = Object.freeze({
 /** Bloco que a ficha mostra: os que só registram não pedem situação. */
 const pedeSituacao = (bloco) => bloco.tipo !== "REGISTRO";
 
+/* Efeito que muda o resultado (o SO_REGISTRO só registra). */
+const mudaOResultado = (efeito) =>
+  typeof efeito === "string" && efeito !== "" && efeito !== "SO_REGISTRO";
+
+/**
+ * O bloco de títulos, cursos ou experiência não pontua no nível da vaga: o
+ * teto no nível é 0 ou, nos títulos por nível (pontos_por_nivel), não há
+ * tabela para o nível (no 114/2026, a titulação só pontua no superior). Só
+ * quando o bloco não tem como mudar o resultado: sem efeito (além de
+ * SO_REGISTRO) na situação nem nos motivos, sem requisito do cargo, sem
+ * linha extra e sem experiência mínima. Igual a FC_BLOCO_NAO_PONTUA_NO_NIVEL
+ * (migration 20261014210000). Sem nível conhecido, pontua.
+ */
+export function blocoNaoPontuaNoNivel(bloco, nivel) {
+  if (!nivel || !["TITULOS", "CURSOS", "VINCULOS"].includes(bloco?.tipo))
+    return false;
+  const doNivelDaVaga = objeto(objeto(bloco.por_nivel)[nivel]);
+  const podeMudar =
+    Object.values(objeto(bloco.efeitos)).some(mudaOResultado) ||
+    lista(bloco.motivos).some((m) => mudaOResultado(m?.efeito)) ||
+    lista(bloco.requisitos).length > 0 ||
+    lista(bloco.extras).length > 0 ||
+    lista(doNivelDaVaga.extras).length > 0 ||
+    (typeof bloco.minimo_meses === "number" && bloco.minimo_meses > 0);
+  if (podeMudar) return false;
+  if (tetoDoBloco(bloco, nivel) === 0) return true;
+  const porNivel = objeto(bloco.pontos_por_nivel);
+  return (
+    bloco.tipo === "TITULOS" &&
+    Object.keys(porNivel).length > 0 &&
+    lista(porNivel[nivel]).length === 0
+  );
+}
+
 /**
  * O bloco vale para este candidato (condição de modalidade ou indígena)? O
- * que não se aplica ao cargo da vaga (regraDaVaga: nao_se_aplica) não vale.
+ * que não se aplica ao cargo da vaga (regraDaVaga: nao_se_aplica) não vale,
+ * nem o que não pontua no nível da vaga (blocoNaoPontuaNoNivel).
  */
 export function blocoSeAplica(bloco, lancamento) {
   if (bloco?.nao_se_aplica === true) return false;
+  if (blocoNaoPontuaNoNivel(bloco, lancamento?.nivel)) return false;
   const condicao =
     bloco.condicao ?? (bloco.tipo === "PONTUACAO" ? "INDIGENA" : null);
   if (!condicao) return true;

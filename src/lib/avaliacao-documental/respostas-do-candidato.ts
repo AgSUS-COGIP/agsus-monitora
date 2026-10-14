@@ -8,7 +8,12 @@
     (python/monitora/avaliacao_documental/sugestoes_da_ficha.py) tirou das
     respostas e o banco devolve em `sugestoes` (migration 20261009190000):
     aqui não se interpreta nada, só se lê. A linha vem marcada
-    `da_resposta`, para o avaliador conferir ou corrigir.
+    `da_resposta`, para o avaliador conferir ou corrigir;
+  - quando o questionário da vaga não tem nenhuma das perguntas que a regra
+    liga ao bloco (no 114/2026, a regra liga ao bloco as perguntas de todos
+    os questionários — superior, técnico, médio, Motorista —, e a ficha só
+    mostra as que existem no do candidato: FC_RESPOSTAS_DA_FICHA e
+    respostasDoBloco), o item avisa em vez de ficar em branco.
   Sem DOM e sem estado. Testes: tests/lib/avaliacao-documental-respostas-do-candidato.test.js.
 */
 import {
@@ -101,4 +106,26 @@ export function itensSugeridos(
       aceito: true,
       da_resposta: true as const,
     }));
+}
+
+/* ── Item sem pergunta no questionário da vaga ────────────────────────── */
+
+/**
+ * O item tem perguntas ligadas na regra, as respostas do candidato chegaram
+ * e nenhuma dessas perguntas está no questionário dele (linhas = as de
+ * respostasDoBloco): o item diz isso em vez de ficar em branco. O critério
+ * étnico (PONTUACAO) não entra: é marcado na própria ficha.
+ */
+export function semPerguntaNoQuestionario(
+  bloco: { tipo?: string; perguntas?: unknown },
+  respostas: unknown,
+  linhas: number,
+): boolean {
+  if (linhas > 0 || bloco.tipo === "PONTUACAO") return false;
+  if (!Array.isArray(bloco.perguntas) || !bloco.perguntas.length) return false;
+  return (
+    Boolean(respostas) &&
+    typeof respostas === "object" &&
+    Object.keys(respostas as object).length > 0
+  );
 }
