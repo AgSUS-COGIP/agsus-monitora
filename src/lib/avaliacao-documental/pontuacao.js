@@ -46,7 +46,9 @@
     de 0 até o teto do bloco no nível da vaga) por cima do que os itens
     lançados dão; o efeito do bloco (elimina, zera) continua valendo. As
     justificativas do bloco (códigos dos motivos do bloco ou das observações
-    prontas, e o complemento livre) entram nas observações do parecer.
+    prontas, e o complemento livre) entram nas observações do parecer; o
+    motivo ou a observação cujo texto já está no complemento (a "Justificativa
+    do ajuste" cita o motivo de cada item não pontuado) não se repete.
 */
 import {
   FORCA_DO_EFEITO,
@@ -247,26 +249,40 @@ export function notaAjustada(lancado) {
   return typeof v === "number" && Number.isFinite(v) ? v : null;
 }
 
+/* Para comparar textos: minúsculo, espaços simples, sem a pontuação do fim. */
+const textoComparavel = (t) =>
+  String(t ?? "")
+    .toLowerCase()
+    .replace(/\s+/g, " ")
+    .trim()
+    .replace(/[.;:]+$/, "");
+
 /**
  * Os textos das justificativas escolhidas num bloco: o motivo do bloco (com o
- * item do edital) ou a observação pronta da regra, e o complemento livre.
+ * item do edital) ou a observação pronta da regra, e o complemento livre. O
+ * motivo ou a observação cujo texto já está no complemento sai (sem duplicar).
  */
 export function textosDasJustificativas(regra, bloco, lancado) {
   const textos = [];
+  const livre = String(lancado?.justificativa_livre ?? "").trim();
+  const noLivre = (texto) =>
+    Boolean(livre) &&
+    Boolean(textoComparavel(texto)) &&
+    textoComparavel(livre).includes(textoComparavel(texto));
   for (const codigo of lista(lancado?.justificativas)) {
     const motivo = lista(bloco.motivos).find((m) => m.codigo === codigo);
     if (motivo) {
-      textos.push(
-        comItem(motivo.item_edital || bloco.item_edital, motivo.texto),
-      );
+      if (!noLivre(motivo.texto))
+        textos.push(
+          comItem(motivo.item_edital || bloco.item_edital, motivo.texto),
+        );
       continue;
     }
     const pronta = lista(regra.observacoes_prontas).find(
       (o) => o.codigo === codigo,
     );
-    if (pronta) textos.push(pronta.texto);
+    if (pronta && !noLivre(pronta.texto)) textos.push(pronta.texto);
   }
-  const livre = String(lancado?.justificativa_livre ?? "").trim();
   if (livre) textos.push(comItem(bloco.item_edital, livre));
   return textos;
 }

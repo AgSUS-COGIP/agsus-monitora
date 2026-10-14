@@ -358,18 +358,34 @@ def nota_ajustada(lancado):
     return float(v) if _eh_numero(v) else None
 
 
+def _texto_comparavel(texto):
+    """Minúsculo, espaços simples, sem a pontuação do fim (textoComparavel do JS)."""
+    t = re.sub(r"\s+", " ", str(texto or "").lower()).strip()
+    return re.sub(r"[.;:]+$", "", t)
+
+
 def textos_das_justificativas(regra, bloco, lancado):
+    """
+    O motivo do bloco (com o item) ou a observação pronta, e o complemento
+    livre; o motivo ou a observação cujo texto já está no complemento sai.
+    """
     lancado = _objeto(lancado)
     textos = []
+    livre = str(lancado.get("justificativa_livre") or "").strip()
+
+    def no_livre(texto):
+        t = _texto_comparavel(texto)
+        return bool(livre) and bool(t) and t in _texto_comparavel(livre)
+
     for codigo in _lista(lancado.get("justificativas")):
         motivo = next((m for m in _lista(bloco.get("motivos")) if m.get("codigo") == codigo), None)
         if motivo:
-            textos.append(_com_item(motivo.get("item_edital") or bloco.get("item_edital"), motivo.get("texto")))
+            if not no_livre(motivo.get("texto")):
+                textos.append(_com_item(motivo.get("item_edital") or bloco.get("item_edital"), motivo.get("texto")))
             continue
         pronta = next((o for o in regra["observacoes_prontas"] if o.get("codigo") == codigo), None)
-        if pronta:
+        if pronta and not no_livre(pronta.get("texto")):
             textos.append(pronta.get("texto"))
-    livre = str(lancado.get("justificativa_livre") or "").strip()
     if livre:
         textos.append(_com_item(bloco.get("item_edital"), livre))
     return textos
