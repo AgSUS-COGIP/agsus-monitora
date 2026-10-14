@@ -49,7 +49,7 @@ import "./classificacao.css";
     A agenda fica aqui, junto da lista de convocação de onde saem os
     convocados e do documento que ela preenche (DATA e HORA); quem conduz vê
     a agenda do dia em Entrevistas › Conduzir entrevistas.
-  - A conta é do motor puro (src/lib/classificacao/motor.js), com a data de
+  - A conta é do motor puro (src/lib/classificacao/motor.ts), com a data de
     corte do cronograma quando a regra não traz a sua.
   Sem tela de carregamento: KPIs e listas em skeleton até a primeira carga.
 */

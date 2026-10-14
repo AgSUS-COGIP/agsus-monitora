@@ -80,8 +80,8 @@ Todos os componentes da pasta Recursos estão em TSX, e seu estado está em Type
 O ajuste usa os contratos de `src/lib/classificacao/tipos-dos-ajustes.ts`: componentes,
 valores, versões, permissões, proposta e prévia. As regras de `ajustes.ts` mantêm totais pela
 soma das diferenças e recalculam a prévia antes da aprovação. O motor compartilhado
-`src/lib/classificacao/motor.js` permanece em JavaScript, com contrato JSDoc na entrada;
-nenhum cálculo do motor, regra de edital ou permissão no banco foi alterado.
+`src/lib/classificacao/motor.ts` também está em TypeScript, com contratos para candidatos,
+entrevistas, ajustes e saída das listas. As regras dos editais e permissões do banco são preservadas.
 Os contratos da gaveta ficam em `tipos-da-gaveta.ts`; as regras do parecer e os botões
 permitidos estão em `src/lib/parecer-do-recurso.ts`.
 Os contratos da resposta e dos modelos ficam em `src/lib/tipos-da-resposta-do-recurso.ts`.

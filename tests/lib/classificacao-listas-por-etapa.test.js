@@ -6,7 +6,7 @@ import {
   linhasDaPlanilha,
 } from "../../src/lib/classificacao/exportacao.js";
 import { documentoOficial } from "../../src/lib/classificacao/documento-sei.js";
-import { classificar } from "../../src/lib/classificacao/motor.js";
+import { classificar } from "../../src/lib/classificacao/motor.ts";
 
 /*
   As quatro listas por etapa, no padrão das publicações da AgSUS

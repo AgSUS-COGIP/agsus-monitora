@@ -38,7 +38,7 @@ import {
   previaDoAjuste,
   validarAjuste,
 } from "../../lib/classificacao/ajustes.ts";
-import { rotuloDoItem } from "../../lib/classificacao/motor.js";
+import { rotuloDoItem } from "../../lib/classificacao/motor.ts";
 import { formatarNota, ordinal } from "../../lib/classificacao/numeros.ts";
 import { Aviso, Campo, Secao, Segmentado, Selo } from "../../ui/index.js";
 import { dataHora } from "./partes.ts";

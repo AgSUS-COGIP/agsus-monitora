@@ -11,7 +11,7 @@ import {
   htmlParaSei,
 } from "../../src/lib/classificacao/documento-sei.js";
 import { gerarDocxOficial } from "../../src/lib/classificacao/documento-docx.js";
-import { classificar } from "../../src/lib/classificacao/motor.js";
+import { classificar } from "../../src/lib/classificacao/motor.ts";
 
 /*
   O retrato da lista (o que vai para o banco) e a exportação no padrão das

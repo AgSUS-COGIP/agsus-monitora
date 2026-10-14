@@ -1,3 +1,32 @@
+import type {
+  AlocacaoDoMotor,
+  BlocoDeEmpate,
+  CandidatoDoMotor,
+  ComposicaoDaNota,
+  ContextoDoMotor,
+  CriterioDoMotor,
+  DesempateDoMotor,
+  EntradaDoMotor,
+  EntrevistaDoMotor,
+  LinhaDoMotor,
+  RegistroDoMotor,
+  RegraDoMotor,
+} from "./tipos-do-motor.ts";
+import type {
+  AvisoDaClassificacao,
+  ExplicacaoDoCandidato,
+  LinhaDaLista,
+  PendenciaDeEmpate,
+  ResultadoDoMotor,
+  SituacaoDaLinha,
+  VagaDoResultado,
+} from "./tipos-do-resultado.ts";
+import type { VagaMontada } from "./tipos-das-vagas.ts";
+import {
+  convocacaoDoMotor,
+  ordemDoMotor,
+  registroDoMotor,
+} from "./dados-do-motor.ts";
 /*
   O motor da classificação: lógica pura, sem DOM e sem banco.
 
@@ -57,14 +86,25 @@ import { divergenciasDasCotas } from "./convocacao-do-edital.ts";
 import { chaveDoGrupo } from "./sorteio.ts";
 import { montarVagas, nivelDaVaga } from "./vagas.ts";
 
-const texto = (valor) => String(valor ?? "").trim();
-const comparaNome = (a, b) =>
+function exigir<T>(valor: T | undefined): T {
+  if (valor === undefined)
+    throw new Error("Dados internos da classificação inconsistentes.");
+  return valor;
+}
+
+const texto = (valor: unknown) => String(valor ?? "").trim();
+const comparaNome = (a: CandidatoDoMotor, b: CandidatoDoMotor) =>
   a.nome.localeCompare(b.nome, "pt-BR", { sensitivity: "base" }) ||
   (a.analiseId < b.analiseId ? -1 : a.analiseId > b.analiseId ? 1 : 0);
 
 /* ── Entrada ────────────────────────────────────────────────────────── */
 
-function lerNumero(bruto, campo, c, avisos) {
+function lerNumero(
+  bruto: unknown,
+  campo: string,
+  c: Pick<CandidatoDoMotor, "vaga" | "analiseId" | "nome">,
+  avisos: AvisoDaClassificacao[],
+) {
   const n = numeroBR(bruto);
   if (n === null && texto(bruto))
     avisos.push({
@@ -78,14 +118,32 @@ function lerNumero(bruto, campo, c, avisos) {
 }
 
 /** Os candidatos do RPC no formato do motor (números pt-BR, modalidades em código). */
-export function prepararCandidatos(brutos = [], avisos = []) {
+export function prepararCandidatos(
+  brutos: readonly RegistroDoMotor[] = [],
+  avisos: AvisoDaClassificacao[] = [],
+): CandidatoDoMotor[] {
   const vistos = new Set();
   const candidatos = [];
   for (const b of brutos || []) {
     const analiseId = texto(b?.analise_id ?? b?.analiseId);
     if (!analiseId || vistos.has(analiseId)) continue;
     vistos.add(analiseId);
-    const c = {
+    const c: CandidatoDoMotor = {
+      notaDocumental: null,
+      notaArt: null,
+      pontuacaoFormacao: null,
+      pontuacaoCursos: null,
+      pontuacaoExperiencia: null,
+      pontuacaoEtnica: null,
+      expSaudeIndigena: null,
+      expAtencaoBasica: null,
+      expProfissional: null,
+      expAltaComplexidade: null,
+      expSaudeDigital: null,
+      nivelEscolaridade: null,
+      notaConhecimentosEspecificos: null,
+      modalidades: [],
+      modalidadeIdentificada: false,
       analiseId,
       codigo: texto(b.codigo),
       nome: texto(b.nome ?? b.candidato) || "(sem nome)",
@@ -101,7 +159,8 @@ export function prepararCandidatos(brutos = [], avisos = []) {
       etapa: texto(b.etapa),
       quadroId: texto(b.quadro ?? b.quadroId),
     };
-    const ler = (campo, rotulo) => lerNumero(b[campo], rotulo, c, avisos);
+    const ler = (campo: string, rotulo: string) =>
+      lerNumero(b[campo], rotulo, c, avisos);
     c.notaDocumental = ler("nota_documental", "nota documental");
     c.notaArt = ler("nota_art", "nota ART");
     c.pontuacaoFormacao = ler("pontuacao_formacao", "pontuação de formação");
@@ -148,12 +207,16 @@ export function prepararCandidatos(brutos = [], avisos = []) {
   As entrevistas ligadas à análise pelo id. Entrevista sem análise vira aviso
   (o Apps Script antigo juntava pelo nome e o candidato sumia sem aviso).
 */
-export function ligarEntrevistas(candidatos, brutas = [], avisos = []) {
+export function ligarEntrevistas(
+  candidatos: CandidatoDoMotor[],
+  brutas: readonly RegistroDoMotor[] = [],
+  avisos: AvisoDaClassificacao[] = [],
+): CandidatoDoMotor[] {
   const porAnalise = new Map(candidatos.map((c) => [c.analiseId, c]));
-  const escolhidas = new Map();
+  const escolhidas = new Map<string, EntrevistaDoMotor>();
   for (const b of brutas || []) {
     const analiseId = texto(b?.analise_id ?? b?.analiseId);
-    const e = {
+    const e: EntrevistaDoMotor = {
       id: texto(b.id),
       analiseId,
       nome: texto(b.nome ?? b.candidato),
@@ -165,19 +228,20 @@ export function ligarEntrevistas(candidatos, brutas = [], avisos = []) {
       ligacao: texto(b.ligacao),
       origem: texto(b.origem) || "planilha",
       notas: (Array.isArray(b.notas) ? b.notas : [])
-        .map((n) =>
-          Array.isArray(n)
+        .map((valor: unknown) => {
+          const n = registroDoMotor(valor);
+          return Array.isArray(valor)
             ? {
-                ordem: Number(n[0]),
-                criterio: texto(n[2]),
-                nota: numeroBR(n[1]),
+                ordem: Number(valor[0]),
+                criterio: texto(valor[2]),
+                nota: numeroBR(valor[1]),
               }
             : {
                 ordem: Number(n?.ordem),
                 criterio: texto(n?.criterio),
                 nota: numeroBR(n?.nota),
-              },
-        )
+              };
+        })
         .filter((n) => Number.isFinite(n.ordem)),
     };
     if (!analiseId || !porAnalise.has(analiseId)) {
@@ -189,7 +253,7 @@ export function ligarEntrevistas(candidatos, brutas = [], avisos = []) {
       });
       continue;
     }
-    const c = porAnalise.get(analiseId);
+    const c = exigir(porAnalise.get(analiseId));
     if (e.nota === null && texto(b.nota))
       avisos.push({
         codigo: "NUMERO_INVALIDO",
@@ -215,7 +279,7 @@ export function ligarEntrevistas(candidatos, brutas = [], avisos = []) {
         analiseId,
         texto: `${c.nome}: mais de uma entrevista lançada; vale a do sistema (ou a de parecer definido).`,
       });
-      const peso = (x) =>
+      const peso = (x: EntrevistaDoMotor) =>
         (x.origem === "sistema" ? 2 : 0) +
         (x.parecer !== "SEM_PARECER" ? 1 : 0);
       if (peso(e) > peso(atual) || (peso(e) === peso(atual) && e.id > atual.id))
@@ -239,9 +303,13 @@ export function ligarEntrevistas(candidatos, brutas = [], avisos = []) {
   valor da análise mudou depois do ajuste (o "antes" gravado é outro), avisa
   — vale o ajuste.
 */
-const quase = (a, b) => Math.abs(a - b) < 1e-9;
+const quase = (a: number, b: number) => Math.abs(a - b) < 1e-9;
 
-export function aplicarAjustes(candidatos, ajustes = [], avisos = []) {
+export function aplicarAjustes(
+  candidatos: CandidatoDoMotor[],
+  ajustes: readonly RegistroDoMotor[] = [],
+  avisos: AvisoDaClassificacao[] = [],
+): CandidatoDoMotor[] {
   if (!Array.isArray(ajustes) || !ajustes.length) return candidatos;
   const porAnalise = new Map(candidatos.map((c) => [c.analiseId, c]));
   const ordenados = [...ajustes].sort((a, b) =>
@@ -250,9 +318,10 @@ export function aplicarAjustes(candidatos, ajustes = [], avisos = []) {
   for (const ajuste of ordenados) {
     const c = porAnalise.get(texto(ajuste?.analise_id ?? ajuste?.analiseId));
     if (!c) continue;
-    const numero = ajuste.numero ?? null;
+    const numero = numeroBR(ajuste.numero);
     const aplicados = [];
-    for (const item of Array.isArray(ajuste.itens) ? ajuste.itens : []) {
+    for (const bruto of Array.isArray(ajuste.itens) ? ajuste.itens : []) {
+      const item = registroDoMotor(bruto);
       const novo = numeroBR(item?.novo);
       if (novo === null) continue;
       const codigo = texto(item.codigo).toUpperCase();
@@ -271,7 +340,7 @@ export function aplicarAjustes(candidatos, ajustes = [], avisos = []) {
         continue;
       }
       let atual;
-      if (competencia !== null) {
+      if (competencia !== null && c.entrevista) {
         const notas = c.entrevista.notas.map((n) => ({ ...n }));
         let alvo = notas.find((n) => n.ordem === competencia);
         if (!alvo) {
@@ -282,14 +351,14 @@ export function aplicarAjustes(candidatos, ajustes = [], avisos = []) {
         atual = alvo.nota;
         alvo.nota = novo;
         c.entrevista = { ...c.entrevista, notas };
-      } else if (codigo === "ENTREVISTA") {
-        atual = c.notaEntrevista;
+      } else if (codigo === "ENTREVISTA" && c.entrevista) {
+        atual = c.notaEntrevista ?? null;
         c.entrevista = { ...c.entrevista, nota: novo };
         c.notaEntrevista = novo;
-      } else {
-        atual = c[def.campo];
+      } else if (def) {
+        atual = c[def.campo] ?? null;
         c[def.campo] = novo;
-      }
+      } else continue;
       const anterior = numeroBR(item.anterior);
       if (anterior !== null && atual !== null && !quase(anterior, atual))
         avisos.push({
@@ -311,14 +380,14 @@ export function aplicarAjustes(candidatos, ajustes = [], avisos = []) {
 }
 
 /** O rótulo de um item do ajuste ("Formação acadêmica", "Competência 2"). */
-export function rotuloDoItem(codigo) {
+export function rotuloDoItem(codigo: string) {
   const competencia = ordemDaCompetencia(codigo);
   if (competencia !== null) return `Competência ${competencia}`;
   return ITEM_DO_AJUSTE_POR_CODIGO[codigo]?.rotulo || codigo;
 }
 
 /* A frase da explicação: "Nota alterada pelo recurso nº 12: formação 2,00 → 3,00." */
-function fraseDosAjustes(c, casas) {
+function fraseDosAjustes(c: CandidatoDoMotor, casas: number) {
   return (c.ajustes || []).map(
     (a) =>
       `Nota alterada pelo recurso nº ${a.numero ?? "—"}: ${a.itens
@@ -330,16 +399,19 @@ function fraseDosAjustes(c, casas) {
   );
 }
 
-const recursosDoAjuste = (c) =>
+const recursosDoAjuste = (c: CandidatoDoMotor) =>
   (c.ajustes || []).map((a) => a.numero).filter((n) => n !== null);
 
 /*
   Reservas conjuntas da regra (`agrupa`): quem declarou PP, PI ou PQ entra na
   PPIQ quando a regra tem uma reserva única para os três (e não as separadas).
 */
-export function aplicarAgrupamentos(candidatos, regra) {
+export function aplicarAgrupamentos(
+  candidatos: CandidatoDoMotor[],
+  regra: RegraDoMotor,
+) {
   const proprias = new Set(regra.modalidades.map((m) => m.codigo));
-  const destino = new Map();
+  const destino = new Map<string, string>();
   for (const m of regra.modalidades)
     for (const codigo of m.agrupa)
       if (!proprias.has(codigo) && !destino.has(codigo))
@@ -354,14 +426,18 @@ export function aplicarAgrupamentos(candidatos, regra) {
 
 /* ── Etapas ─────────────────────────────────────────────────────────── */
 
-function situacaoApta(c, regra) {
+function situacaoApta(c: CandidatoDoMotor, regra: RegraDoMotor) {
   const aptas = regra.documental.situacoes_aptas.map(semAcento);
   if (!aptas.length) return true;
   return [c.status, c.etapa].some((s) => s && aptas.includes(semAcento(s)));
 }
 
 /** A eliminação na documental, ou null. Avisos de nível desconhecido vão por vaga. */
-function eliminacaoDocumental(c, regra, ctx) {
+function eliminacaoDocumental(
+  c: CandidatoDoMotor,
+  regra: RegraDoMotor,
+  ctx: ContextoDoMotor,
+) {
   if (!regra.etapas.documental) return null;
   if (!situacaoApta(c, regra)) {
     // Reprovado na análise E abaixo da nota mínima: a publicação diz os dois.
@@ -369,7 +445,7 @@ function eliminacaoDocumental(c, regra, ctx) {
     const abaixo =
       minimo !== null &&
       c.notaDocumental !== null &&
-      escalar(c.notaDocumental, 4) < escalar(minimo, 4);
+      (escalar(c.notaDocumental, 4) ?? 0) < (escalar(minimo, 4) ?? 0);
     return {
       motivo: "NAO_HABILITADO",
       detalhe: `Situação na análise: ${c.status || c.etapa || "não informada"}.${
@@ -386,10 +462,14 @@ function eliminacaoDocumental(c, regra, ctx) {
   let nivel = null;
   if (Object.keys(porNivel).length) {
     nivel = nivelDaVaga(c, regra);
-    if (nivel && porNivel[nivel] !== undefined) minimo = porNivel[nivel];
+    if (nivel && porNivel[nivel] !== undefined)
+      minimo = porNivel[nivel] ?? null;
     else if (!nivel) ctx.nivelDesconhecido.add(c.vaga);
   }
-  if (minimo !== null && escalar(c.notaDocumental, 4) < escalar(minimo, 4))
+  if (
+    minimo !== null &&
+    (escalar(c.notaDocumental, 4) ?? 0) < (escalar(minimo, 4) ?? 0)
+  )
     return {
       motivo: "ABAIXO_NOTA_MINIMA_DOCUMENTAL",
       detalhe: `Nota ${formatarNota(c.notaDocumental, ctx.casas)}; mínimo ${formatarNota(minimo, ctx.casas)}${nivel ? ` (${nivel})` : ""}.`,
@@ -397,7 +477,11 @@ function eliminacaoDocumental(c, regra, ctx) {
   return null;
 }
 
-function eliminacaoEntrevista(c, regra, ctx) {
+function eliminacaoEntrevista(
+  c: CandidatoDoMotor,
+  regra: RegraDoMotor,
+  ctx: ContextoDoMotor,
+) {
   if (!regra.etapas.entrevista) return null;
   const e = c.entrevista;
   const ent = regra.entrevista;
@@ -413,7 +497,7 @@ function eliminacaoEntrevista(c, regra, ctx) {
   if (e.nota === null) return { motivo: "SEM_NOTA_ENTREVISTA", detalhe: "" };
   if (
     ent.nota_minima !== null &&
-    escalar(e.nota, 4) < escalar(ent.nota_minima, 4)
+    (escalar(e.nota, 4) ?? 0) < (escalar(ent.nota_minima, 4) ?? 0)
   )
     return {
       motivo: "ABAIXO_NOTA_MINIMA_ENTREVISTA",
@@ -437,14 +521,17 @@ function eliminacaoEntrevista(c, regra, ctx) {
     const nome = comp?.nome || n.criterio || `Competência ${n.ordem}`;
     if (
       ent.nota_eliminatoria_ate !== null &&
-      escalar(n.nota, 4) <= escalar(ent.nota_eliminatoria_ate, 4)
+      (escalar(n.nota, 4) ?? 0) <= (escalar(ent.nota_eliminatoria_ate, 4) ?? 0)
     )
       return {
         motivo: "COMPETENCIA_ELIMINATORIA",
         detalhe: `${nome}: ${formatarNota(n.nota, ctx.casas)} (elimina até ${formatarNota(ent.nota_eliminatoria_ate, ctx.casas)}).`,
       };
     const minimo = comp?.minimo ?? ent.nota_minima_competencia;
-    if (minimo !== null && escalar(n.nota, 4) < escalar(minimo, 4))
+    if (
+      minimo !== null &&
+      (escalar(n.nota, 4) ?? 0) < (escalar(minimo, 4) ?? 0)
+    )
       return {
         motivo: "COMPETENCIA_ABAIXO_MINIMO",
         detalhe: `${nome}: ${formatarNota(n.nota, ctx.casas)} (mínimo ${formatarNota(minimo, ctx.casas)}).`,
@@ -454,9 +541,12 @@ function eliminacaoEntrevista(c, regra, ctx) {
 }
 
 /** A nota final pela composição da regra (pesos e arredondamento). */
-export function notaComposta(c, regra) {
+export function notaComposta(
+  c: Pick<CandidatoDoMotor, "notaDocumental" | "notaEntrevista" | "notaArt">,
+  regra: RegraDoMotor,
+): ComposicaoDaNota {
   const { componentes, casas, arredondamento } = regra.composicao;
-  const valores = {
+  const valores: Record<string, number | null | undefined> = {
     DOCUMENTAL: c.notaDocumental,
     ENTREVISTA: c.notaEntrevista,
     ART: c.notaArt,
@@ -478,13 +568,21 @@ export function notaComposta(c, regra) {
 
 /* ── Ordenação e empate ─────────────────────────────────────────────── */
 
-function valorDoCriterio(c, criterio, ctx) {
+function valorDoCriterio(
+  c: CandidatoDoMotor,
+  criterio: string,
+  ctx: ContextoDoMotor,
+) {
   const v = CRITERIO_POR_CODIGO[criterio]?.ler(c, ctx);
   return v === undefined ? null : v;
 }
 
 /* Nulo perde sempre (vai depois), qualquer que seja a direção. */
-export function compararValores(a, b, direcao) {
+export function compararValores(
+  a: number | boolean | null,
+  b: number | boolean | null,
+  direcao: string,
+) {
   if (a === null && b === null) return 0;
   if (a === null) return 1;
   if (b === null) return -1;
@@ -501,7 +599,12 @@ export function compararValores(a, b, direcao) {
   nascimento e, quando as duas pessoas nasceram no mesmo dia, a hora da
   certidão (sem certidão, 23h59min59s — itens 6.11.5 e 6.11.6 do 93/2026).
 */
-function descreverValor(valor, criterio, c, outro) {
+function descreverValor(
+  valor: number | boolean | null,
+  criterio: string,
+  c: CandidatoDoMotor,
+  outro: CandidatoDoMotor,
+) {
   if (valor === null) return "sem dado";
   if (typeof valor === "boolean") return valor ? "sim" : "não";
   if (criterio === "MAIOR_IDADE" && c) {
@@ -520,14 +623,19 @@ function descreverValor(valor, criterio, c, outro) {
   Os pares do grupo de empate que chegam à "maior idade" com a MESMA data de
   nascimento: só a hora da certidão os separa (sem certidão, 23:59:59).
 */
-function paresNaMesmaData(grupo, criterios, ctx) {
+function paresNaMesmaData(
+  grupo: CandidatoDoMotor[],
+  criterios: CriterioDoMotor[],
+  ctx: ContextoDoMotor,
+): [CandidatoDoMotor, CandidatoDoMotor][] {
   const i = criterios.findIndex((d) => d.criterio === "MAIOR_IDADE");
   if (i < 0) return [];
   const antes = criterios.slice(0, i);
-  const pares = [];
+  const pares: [CandidatoDoMotor, CandidatoDoMotor][] = [];
   for (let x = 0; x < grupo.length; x += 1)
     for (let y = x + 1; y < grupo.length; y += 1) {
-      const [a, b] = [grupo[x], grupo[y]];
+      const a = exigir(grupo[x]),
+        b = exigir(grupo[y]);
       if (!a.dataNascimento || a.dataNascimento !== b.dataNascimento) continue;
       if (primeiroQueSepara(a, b, antes, ctx)) continue;
       pares.push([a, b]);
@@ -536,7 +644,12 @@ function paresNaMesmaData(grupo, criterios, ctx) {
 }
 
 /** O primeiro critério que separa a e b: `{ criterio, direcao, va, vb, sinal }` ou null. */
-function primeiroQueSepara(a, b, criterios, ctx) {
+function primeiroQueSepara(
+  a: CandidatoDoMotor,
+  b: CandidatoDoMotor,
+  criterios: CriterioDoMotor[],
+  ctx: ContextoDoMotor,
+) {
   for (const { criterio, direcao } of criterios) {
     const va = valorDoCriterio(a, criterio, ctx);
     const vb = valorDoCriterio(b, criterio, ctx);
@@ -546,7 +659,7 @@ function primeiroQueSepara(a, b, criterios, ctx) {
   return null;
 }
 
-function codigoDeInscricao(c) {
+function codigoDeInscricao(c: CandidatoDoMotor) {
   const n = numeroBR(c.codigo);
   return n === null ? null : n;
 }
@@ -557,19 +670,31 @@ function codigoDeInscricao(c) {
   posição ou pendente).
 */
 function ordenarVaga(
-  elegiveis,
-  { usarCriterios, tipo, vaga, ctx, residualNaMesmaPosicao = false },
+  elegiveis: CandidatoDoMotor[],
+  {
+    usarCriterios,
+    tipo,
+    vaga,
+    ctx,
+    residualNaMesmaPosicao = false,
+  }: {
+    usarCriterios: boolean;
+    tipo: string;
+    vaga: string;
+    ctx: ContextoDoMotor;
+    residualNaMesmaPosicao?: boolean;
+  },
 ) {
   const { criterios, regra, desempates } = ctx;
-  const porNota = new Map();
+  const porNota = new Map<number | null, CandidatoDoMotor[]>();
   for (const c of elegiveis) {
     const k = escalar(c.nota, ctx.casas);
     if (!porNota.has(k)) porNota.set(k, []);
-    porNota.get(k).push(c);
+    exigir(porNota.get(k)).push(c);
   }
-  const blocos = [];
-  for (const k of [...porNota.keys()].sort((a, b) => b - a)) {
-    const grupo = porNota.get(k).sort(comparaNome);
+  const blocos: BlocoDeEmpate[] = [];
+  for (const k of [...porNota.keys()].sort((a, b) => (b ?? 0) - (a ?? 0))) {
+    const grupo = exigir(porNota.get(k)).sort(comparaNome);
     for (const c of grupo) c.grupoDaNota = grupo;
     if (grupo.length === 1) {
       blocos.push({ membros: grupo, resolucao: "UNICO" });
@@ -584,10 +709,10 @@ function ordenarVaga(
       return s ? s.sinal : comparaNome(a, b);
     });
     // Blocos de quem empata em todos os critérios.
-    const subs = [];
+    const subs: CandidatoDoMotor[][] = [];
     for (const c of ordenado) {
       const ultimo = subs.at(-1);
-      if (ultimo && !primeiroQueSepara(ultimo[0], c, criterios, ctx))
+      if (ultimo && !primeiroQueSepara(exigir(ultimo[0]), c, criterios, ctx))
         ultimo.push(c);
       else subs.push([c]);
     }
@@ -608,7 +733,22 @@ function ordenarVaga(
   return blocos;
 }
 
-function resolverEmpateFinal(sub, { tipo, vaga, regra, desempates, ctx }) {
+function resolverEmpateFinal(
+  sub: CandidatoDoMotor[],
+  {
+    tipo,
+    vaga,
+    regra,
+    desempates,
+    ctx,
+  }: {
+    tipo: string;
+    vaga: string;
+    regra: RegraDoMotor;
+    desempates: DesempateDoMotor[];
+    ctx: ContextoDoMotor;
+  },
+): BlocoDeEmpate[] {
   const metodo = regra.empate_final.metodo;
   const ids = sub.map((c) => c.analiseId);
   const chave = chaveDoGrupo(tipo, vaga, ids);
@@ -625,15 +765,16 @@ function resolverEmpateFinal(sub, { tipo, vaga, regra, desempates, ctx }) {
         analiseId: c.analiseId,
         texto: `${c.nome}: sem código de inscrição numérico; fica empatado depois dos que têm.`,
       });
-    const blocos = [];
+    const blocos: BlocoDeEmpate[] = [];
     for (const c of com.sort(
       (a, b) =>
-        codigoDeInscricao(a) - codigoDeInscricao(b) || comparaNome(a, b),
+        (codigoDeInscricao(a) ?? 0) - (codigoDeInscricao(b) ?? 0) ||
+        comparaNome(a, b),
     )) {
       const ultimo = blocos.at(-1);
       if (
         ultimo &&
-        codigoDeInscricao(ultimo.membros[0]) === codigoDeInscricao(c)
+        codigoDeInscricao(exigir(ultimo.membros[0])) === codigoDeInscricao(c)
       ) {
         ultimo.membros.push(c);
         ultimo.resolucao = "MESMA_POSICAO";
@@ -671,8 +812,12 @@ function resolverEmpateFinal(sub, { tipo, vaga, regra, desempates, ctx }) {
 }
 
 /** Posições de uma lista (membros filtrados dos blocos), na numeração da regra. */
-function numerar(blocos, pertence, numeracao) {
-  const linhas = [];
+function numerar(
+  blocos: BlocoDeEmpate[],
+  pertence: (c: CandidatoDoMotor) => boolean,
+  numeracao: string,
+): LinhaDoMotor[] {
+  const linhas: LinhaDoMotor[] = [];
   let contador = 0;
   let antes = 0;
   for (const bloco of blocos) {
@@ -689,19 +834,27 @@ function numerar(blocos, pertence, numeracao) {
 
 /* ── Modalidades, acúmulo e vagas ───────────────────────────────────── */
 
-function modalidadesNaLista(c, tipo, regra, ordemDoUniverso) {
+function modalidadesNaLista(
+  c: CandidatoDoMotor,
+  tipo: string,
+  regra: RegraDoMotor,
+  ordemDoUniverso: {
+    posicaoEm: (c: CandidatoDoMotor, codigo: string) => number;
+  } | null,
+) {
   const conhecidas = new Set(regra.modalidades.map((m) => m.codigo));
   let cods = c.modalidades.filter((m) => conhecidas.has(m) || m === "AC");
   if (tipo !== "FINAL" || regra.cotas.acumulo === "TODAS") return cods;
   const cotas = cods.filter((m) => m !== "AC");
   if (cotas.length < 2) return cods;
-  const pct = (m) =>
+  const pct = (m: string) =>
     regra.modalidades.find((x) => x.codigo === m)?.percentual ?? 0;
-  const melhor = (lista) =>
+  const melhor = (lista: string[]) =>
     [...lista].sort(
       (a, b) =>
         pct(b) - pct(a) ||
-        ordemDoUniverso.posicaoEm(c, a) - ordemDoUniverso.posicaoEm(c, b),
+        (ordemDoUniverso?.posicaoEm(c, a) ?? 0) -
+          (ordemDoUniverso?.posicaoEm(c, b) ?? 0),
     )[0];
   let ficam;
   if (regra.cotas.acumulo === "PCD_MAIS_UMA") {
@@ -714,9 +867,9 @@ function modalidadesNaLista(c, tipo, regra, ordemDoUniverso) {
   return cods.filter((m) => m === "AC" || ficam.includes(m));
 }
 
-function naGeral(c, regra) {
-  if (c.modalidadesNaLista.includes("AC")) return true;
-  return c.modalidadesNaLista.some(
+function naGeral(c: CandidatoDoMotor, regra: RegraDoMotor) {
+  if ((c.modalidadesNaLista ?? []).includes("AC")) return true;
+  return (c.modalidadesNaLista ?? []).some(
     (m) =>
       regra.modalidades.find((x) => x.codigo === m)?.aparece_na_geral !== false,
   );
@@ -728,16 +881,22 @@ function naGeral(c, regra) {
   que sobra vai para o destino da regra (remanejar_para) e, por fim, para a
   ampla. Devolve analiseId → { situacao, modalidade }.
 */
-function alocarVagas(vaga, geral, porModalidade, regra, ctx) {
-  const resultado = new Map();
+function alocarVagas(
+  vaga: VagaMontada,
+  geral: LinhaDoMotor[],
+  porModalidade: Record<string, LinhaDoMotor[]>,
+  regra: RegraDoMotor,
+  ctx: ContextoDoMotor,
+): Map<string, AlocacaoDoMotor> {
+  const resultado = new Map<string, AlocacaoDoMotor>();
   if (!vaga.porModalidade) return resultado;
   const lugares = { ...vaga.porModalidade };
   const ocupados = new Set();
-  const ocupar = (linhas, codigo, quantos) => {
+  const ocupar = (linhas: LinhaDoMotor[], codigo: string, quantos: number) => {
     let usados = 0;
     let i = 0;
     while (i < linhas.length && usados < quantos) {
-      const { c, bloco } = linhas[i];
+      const { c, bloco } = exigir(linhas[i]);
       if (ocupados.has(c.analiseId)) {
         i += 1;
         continue;
@@ -759,7 +918,7 @@ function alocarVagas(vaga, geral, porModalidade, regra, ctx) {
     }
     return quantos - usados;
   };
-  const sobra = {};
+  const sobra: Record<string, number> = {};
   sobra.AC = ocupar(geral, "AC", lugares.AC || 0);
   for (const m of regra.modalidades) {
     if (m.codigo === "AC") continue;
@@ -773,12 +932,12 @@ function alocarVagas(vaga, geral, porModalidade, regra, ctx) {
   for (let passo = 0; passo < regra.modalidades.length + 1; passo += 1) {
     let mexeu = false;
     for (const m of regra.modalidades) {
-      if (m.codigo === "AC" || !(sobra[m.codigo] > 0)) continue;
+      if (m.codigo === "AC" || !((sobra[m.codigo] ?? 0) > 0)) continue;
       const destinos = [...m.remanejar_para, "AC"];
       for (const destino of destinos) {
-        if (!(sobra[m.codigo] > 0)) break;
+        if (!((sobra[m.codigo] ?? 0) > 0)) break;
         const linhas = destino === "AC" ? geral : porModalidade[destino] || [];
-        const restante = ocupar(linhas, destino, sobra[m.codigo]);
+        const restante = ocupar(linhas, destino, sobra[m.codigo] ?? 0);
         if (restante !== sobra[m.codigo]) mexeu = true;
         sobra[m.codigo] = restante;
       }
@@ -794,7 +953,10 @@ function alocarVagas(vaga, geral, porModalidade, regra, ctx) {
 
 /* ── Convocação ─────────────────────────────────────────────────────── */
 
-export function limiteDaConvocacao(vaga, regra) {
+export function limiteDaConvocacao(
+  vaga: Pick<VagaMontada, "cargo" | "total">,
+  regra: RegraDoMotor,
+) {
   const conv = regra.convocacao;
   const cargo = semAcento(vaga.cargo);
   const excecao = conv.excecoes.find((e) =>
@@ -803,7 +965,7 @@ export function limiteDaConvocacao(vaga, regra) {
   const multiplo = excecao?.multiplo_vagas ?? conv.multiplo_vagas;
   const posicaoCr = excecao?.posicao_max_cr ?? conv.posicao_max_cr;
   const total = vaga.total;
-  if (total > 0 && multiplo !== null)
+  if (total !== null && total > 0 && multiplo !== null)
     return {
       limite: Math.ceil(multiplo * total),
       origem: `${formatarNota(multiplo, 0)} × ${total} vaga(s)${excecao ? " (exceção do cargo)" : ""}`,
@@ -816,14 +978,21 @@ export function limiteDaConvocacao(vaga, regra) {
   return { limite: null, origem: "sem limite na regra" };
 }
 
-function convocar(linhas, limite, incluirEmpatados, ctx, vaga, avisar = true) {
+function convocar(
+  linhas: LinhaDoMotor[],
+  limite: number | null,
+  incluirEmpatados: boolean,
+  ctx: ContextoDoMotor,
+  vaga: VagaMontada,
+  avisar = true,
+): Set<string> {
   if (limite === null) return new Set(linhas.map((l) => l.c.analiseId));
-  const convocados = new Set();
-  const blocos = [];
+  const convocados = new Set<string>();
+  const blocos: { bloco: BlocoDeEmpate; linhas: LinhaDoMotor[] }[] = [];
   for (const l of linhas) {
     if (blocos.at(-1)?.bloco !== l.bloco)
       blocos.push({ bloco: l.bloco, linhas: [] });
-    blocos.at(-1).linhas.push(l);
+    exigir(blocos.at(-1)).linhas.push(l);
   }
   let contados = 0;
   for (const { linhas: membros } of blocos) {
@@ -848,7 +1017,12 @@ function convocar(linhas, limite, incluirEmpatados, ctx, vaga, avisar = true) {
 
 /* ── Explicação ─────────────────────────────────────────────────────── */
 
-function explicar(c, linhaGeral, ctx, tipo) {
+function explicar(
+  c: CandidatoDoMotor,
+  linhaGeral: { bloco?: BlocoDeEmpate },
+  ctx: ContextoDoMotor,
+  tipo: string,
+) {
   const partes = [];
   const casas = ctx.casas;
   if (tipo === "FINAL" && c.composicao) {
@@ -914,7 +1088,7 @@ function explicar(c, linhaGeral, ctx, tipo) {
 }
 
 /* As parciais da documental que as publicações mostram (colunas). */
-function parciaisDe(c) {
+function parciaisDe(c: CandidatoDoMotor): Record<string, number | null> {
   return {
     FORMACAO: c.pontuacaoFormacao,
     CURSOS: c.pontuacaoCursos,
@@ -926,15 +1100,14 @@ function parciaisDe(c) {
 /* ── Principal ──────────────────────────────────────────────────────── */
 
 const ordemDosMotivos = Object.keys(MOTIVOS_DE_ELIMINACAO);
+const motivos: Readonly<Record<string, string | undefined>> =
+  MOTIVOS_DE_ELIMINACAO;
+const motivoDaEliminacao = (codigo: string) => motivos[codigo];
 
 /**
  * Classifica o edital numa lista (`PRELIMINAR`, `CONVOCACAO`, `ENTREVISTA`
  * ou `FINAL`).
  * Ver o comentário do topo para a entrada e a saída.
- */
-/**
- * @param {import("./tipos-dos-ajustes.ts").EntradaDoMotor} [opcoes]
- * @returns {import("./tipos-do-resultado.ts").ResultadoDoMotor}
  */
 export function classificar({
   tipo = "FINAL",
@@ -947,9 +1120,9 @@ export function classificar({
   desempates = [],
   convocacao = null,
   ajustes = [],
-} = {}) {
+}: EntradaDoMotor = {}): ResultadoDoMotor {
   const regra = normalizarRegra(regraBruta);
-  const avisos = [];
+  const avisos: AvisoDaClassificacao[] = [];
   const candidatos = aplicarAjustes(
     ligarEntrevistas(
       aplicarAgrupamentos(prepararCandidatos(candidatosBrutos, avisos), regra),
@@ -963,14 +1136,16 @@ export function classificar({
   const criterios = regra.desempate.filter(
     (d) => CRITERIO_POR_CODIGO[d.criterio],
   );
-  const ctx = {
+  const ctx: ContextoDoMotor = {
     regra,
     criterios,
     casas: regra.composicao.casas,
     dataCorte: corte,
     desempates: (desempates || []).map((d) => ({
       ...d,
-      ordem: (d.ordem || []).map(String),
+      chave: texto(d.chave),
+      vaga: d.vaga == null ? undefined : texto(d.vaga),
+      ordem: ordemDoMotor(d.ordem),
       metodo: String(d.metodo || "").toUpperCase(),
     })),
     desempatesUsados: new Set(),
@@ -989,8 +1164,15 @@ export function classificar({
         "A regra usa a idade, mas não há data de corte (fim das inscrições): defina na regra ou no cronograma do edital.",
     });
 
-  const vagas = montarVagas({ candidatos, quadro, regra, unidade, convocacao });
-  for (const frase of divergenciasDasCotas(regra, convocacao))
+  const conv = convocacaoDoMotor(convocacao);
+  const vagas = montarVagas({
+    candidatos,
+    quadro,
+    regra,
+    unidade,
+    convocacao: conv,
+  });
+  for (const frase of divergenciasDasCotas(regra, conv))
     avisos.push({
       codigo: "COTAS_DIFERENTES_DA_CONVOCACAO",
       tom: "warning",
@@ -1004,12 +1186,17 @@ export function classificar({
         vaga: v.chave,
         texto: `Vaga ${v.codigo || v.cargo}: ${v.total} vaga(s) imediata(s) no quadro do edital × ${v.totalNaConvocacao} na configuração de convocação; valeu o quadro do edital.`,
       });
-  const porVaga = new Map(
-    vagas.map((v) => [v.chave, { vaga: v, candidatos: [] }]),
-  );
+  const porVaga = new Map<
+    string,
+    { vaga: VagaMontada; candidatos: CandidatoDoMotor[] }
+  >(vagas.map((v) => [v.chave, { vaga: v, candidatos: [] }]));
   for (const c of candidatos) {
     if (!porVaga.has(c.vaga)) {
-      const v = {
+      const v: VagaMontada = {
+        lotacao: "",
+        cadastroReserva: false,
+        origemDasVagas: null,
+        cabecalho: `VAGA ${c.vaga || "sem código"} - ${c.cargo}`,
         chave: c.vaga,
         codigo: c.vaga,
         cargo: c.cargo,
@@ -1021,19 +1208,19 @@ export function classificar({
       porVaga.set(c.vaga, { vaga: v, candidatos: [] });
       vagas.push(v);
     }
-    porVaga.get(c.vaga).candidatos.push(c);
+    exigir(porVaga.get(c.vaga)).candidatos.push(c);
   }
 
   // Itens do ajuste com ao menos 2 casas (as da planilha), não só as da nota final.
   const casasDoAjuste = Math.max(2, ctx.casas);
-  const saidaVagas = [];
-  const explicacoes = {};
-  const pendencias = [];
+  const saidaVagas: VagaDoResultado[] = [];
+  const explicacoes: Record<string, ExplicacaoDoCandidato> = {};
+  const pendencias: PendenciaDeEmpate[] = [];
   let elegiveisTotal = 0;
   let eliminadosTotal = 0;
 
   for (const v of vagas) {
-    const { candidatos: daVaga } = porVaga.get(v.chave);
+    const { candidatos: daVaga } = exigir(porVaga.get(v.chave));
     if (v.semQuadro && daVaga.length)
       avisos.push({
         codigo: "VAGA_SEM_QUADRO",
@@ -1052,8 +1239,12 @@ export function classificar({
         texto: `Vaga ${v.codigo || v.cargo}: ${semModalidade} candidato(s) sem modalidade informada, considerados na ampla concorrência.`,
       });
 
-    const eliminados = [];
-    const aptosDoc = [];
+    const eliminados: {
+      c: CandidatoDoMotor;
+      motivo: string;
+      detalhe: string;
+    }[] = [];
+    const aptosDoc: CandidatoDoMotor[] = [];
     for (const c of daVaga) {
       const e = eliminacaoDocumental(c, regra, ctx);
       if (e) {
@@ -1064,7 +1255,7 @@ export function classificar({
             tom: "warning",
             vaga: v.chave,
             analiseId: c.analiseId,
-            texto: `${c.nome}: tem entrevista lançada, mas não passou na avaliação documental (${MOTIVOS_DE_ELIMINACAO[e.motivo]}).`,
+            texto: `${c.nome}: tem entrevista lançada, mas não passou na avaliação documental (${motivoDaEliminacao(e.motivo)}).`,
           });
       } else aptosDoc.push(c);
     }
@@ -1079,15 +1270,15 @@ export function classificar({
       const diferentes = aptosDoc.filter((c) => {
         const valores = regra.documental.parciais.map((p) => parciaisDe(c)[p]);
         if (valores.every((x) => x === null || x === undefined)) return false;
-        const soma = valores.reduce((s, x) => s + (x ?? 0), 0);
-        return escalar(soma, 2) !== escalar(c.notaDocumental, 2);
+        const soma = valores.reduce<number>((s, x) => s + (x ?? 0), 0);
+        return (escalar(soma, 2) ?? 0) !== (escalar(c.notaDocumental, 2) ?? 0);
       });
       if (diferentes.length)
         avisos.push({
           codigo: "PARCIAIS_DIFERENTES_DA_NOTA",
           tom: "warning",
           vaga: v.chave,
-          texto: `Vaga ${v.codigo || v.cargo}: em ${diferentes.length} de ${aptosDoc.length} candidato(s) a soma das parciais publicadas não é a nota documental (ex.: inscrição ${diferentes[0].codigo || "—"}: nota ${formatarNota(diferentes[0].notaDocumental, 2)}, parciais ${regra.documental.parciais.map((p) => formatarNota(parciaisDe(diferentes[0])[p] ?? 0, 2)).join(" + ")}). Confira a planilha antes de publicar.`,
+          texto: `Vaga ${v.codigo || v.cargo}: em ${diferentes.length} de ${aptosDoc.length} candidato(s) a soma das parciais publicadas não é a nota documental (ex.: inscrição ${exigir(diferentes[0]).codigo || "—"}: nota ${formatarNota(exigir(diferentes[0]).notaDocumental, 2)}, parciais ${regra.documental.parciais.map((p) => formatarNota(parciaisDe(exigir(diferentes[0]))[p] ?? 0, 2)).join(" + ")}). Confira a planilha antes de publicar.`,
         });
     }
 
@@ -1126,7 +1317,7 @@ export function classificar({
       if (m.codigo === "AC" || m.aparece_na_geral !== false) continue;
       const lista = numerar(
         blocos,
-        (c) => c.modalidadesNaLista.includes(m.codigo),
+        (c) => (c.modalidadesNaLista ?? []).includes(m.codigo),
         regra.empate_final.numeracao,
       );
       for (const id of convocar(
@@ -1141,7 +1332,7 @@ export function classificar({
     }
 
     let elegiveis = aptosDoc;
-    let tipoDaOrdem = "PRELIMINAR";
+    let tipoDaOrdem: "PRELIMINAR" | "ENTREVISTA" | "FINAL" = "PRELIMINAR";
     if (tipo === "ENTREVISTA") {
       // Só os convocados: quem não passou na documental ou ficou fora do
       // limite não é desta etapa (está nas listas anteriores).
@@ -1254,7 +1445,7 @@ export function classificar({
         ctx,
       });
       const ordem = {
-        posicaoEm: (c, codigo) => {
+        posicaoEm: (c: CandidatoDoMotor, codigo: string) => {
           const membros = blocos
             .flatMap((b) => b.membros)
             .filter((x) => x.modalidades.includes(codigo));
@@ -1278,6 +1469,7 @@ export function classificar({
         for (const { criterio } of criterios) {
           if (valorDoCriterio(c, criterio, ctx) !== null) continue;
           const cat = CRITERIO_POR_CODIGO[criterio];
+          if (!cat) continue;
           avisos.push({
             codigo: "DADO_FALTANDO",
             tom: "warning",
@@ -1295,7 +1487,9 @@ export function classificar({
     */
     if (usarCriterios) {
       const grupos = new Set(
-        elegiveis.map((c) => c.grupoDaNota).filter((g) => g?.length > 1),
+        elegiveis
+          .map((c) => c.grupoDaNota)
+          .filter((g): g is CandidatoDoMotor[] => Boolean(g && g.length > 1)),
       );
       for (const grupo of grupos)
         for (const [a, b] of paresNaMesmaData(grupo, criterios, ctx)) {
@@ -1312,11 +1506,11 @@ export function classificar({
         }
     }
 
-    const porModalidade = {};
+    const porModalidade: Record<string, LinhaDoMotor[]> = {};
     for (const m of regra.modalidades) {
       if (!m.lista_propria) continue;
-      const pertence = (c) =>
-        c.modalidadesNaLista.includes(m.codigo) &&
+      const pertence = (c: CandidatoDoMotor) =>
+        (c.modalidadesNaLista ?? []).includes(m.codigo) &&
         (tipo !== "CONVOCACAO" || convocados.has(c.analiseId));
       let linhas = numerar(blocos, pertence, regra.empate_final.numeracao);
       if (!m.recomeca_posicao) {
@@ -1343,7 +1537,7 @@ export function classificar({
         vaga: v.chave,
         vagaTexto: v.codigo || v.cargo,
         metodo: bloco.metodo,
-        nota: bloco.membros[0].nota,
+        nota: exigir(bloco.membros[0]).nota ?? null,
         candidatos: bloco.membros.map((c) => ({
           analiseId: c.analiseId,
           nome: c.nome,
@@ -1354,15 +1548,15 @@ export function classificar({
         codigo: "EMPATE_PENDENTE",
         tom: "danger",
         vaga: v.chave,
-        texto: `Vaga ${v.codigo || v.cargo}: ${bloco.membros.length} candidatos empatados em ${formatarNota(bloco.membros[0].nota, ctx.casas)} depois de todos os critérios — ${bloco.metodo === "SORTEIO" ? "registre o sorteio" : "registre a decisão"}.`,
+        texto: `Vaga ${v.codigo || v.cargo}: ${bloco.membros.length} candidatos empatados em ${formatarNota(exigir(bloco.membros[0]).nota ?? null, ctx.casas)} depois de todos os critérios — ${bloco.metodo === "SORTEIO" ? "registre o sorteio" : "registre a decisão"}.`,
       });
     }
 
     const alocacao =
       tipo === "FINAL"
         ? alocarVagas(v, geral, porModalidade, regra, ctx)
-        : new Map();
-    const situacaoDe = (c) =>
+        : new Map<string, AlocacaoDoMotor>();
+    const situacaoDe = (c: CandidatoDoMotor): SituacaoDaLinha | null =>
       tipo === "CONVOCACAO"
         ? "CONVOCADO"
         : tipo === "ENTREVISTA"
@@ -1371,13 +1565,13 @@ export function classificar({
             ? alocacao.get(c.analiseId)?.situacao || null
             : null;
     const comParciais = tipo === "PRELIMINAR";
-    const linhaPublica = (l) => ({
+    const linhaPublica = (l: LinhaDoMotor): LinhaDaLista => ({
       analiseId: l.c.analiseId,
       nome: l.c.nome,
-      nota: l.c.nota,
+      nota: l.c.nota ?? null,
       posicao: l.posicao,
       empatados: l.empatados,
-      modalidades: l.c.modalidadesNaLista,
+      modalidades: l.c.modalidadesNaLista ?? l.c.modalidades,
       situacao: situacaoDe(l.c),
       vagaPor: alocacao.get(l.c.analiseId)?.modalidade || null,
       ...(comParciais ? { parciais: parciaisDe(l.c) } : {}),
@@ -1385,11 +1579,11 @@ export function classificar({
     });
 
     const linhaGeralDe = new Map(geral.map((l) => [l.c.analiseId, l]));
-    const blocoDe = new Map();
+    const blocoDe = new Map<string, BlocoDeEmpate>();
     for (const b of blocos)
       for (const c of b.membros) blocoDe.set(c.analiseId, b);
     for (const c of elegiveis) {
-      const posicoes = {};
+      const posicoes: Record<string, number> = {};
       for (const [codigo, linhas] of Object.entries(porModalidade)) {
         const l = linhas.find((x) => x.c === c);
         if (l) posicoes[codigo] = l.posicao;
@@ -1431,7 +1625,7 @@ export function classificar({
         motivo: e.motivo,
         ...(e.c.ajustes ? { recursos: recursosDoAjuste(e.c) } : {}),
         explicacao: [
-          `${MOTIVOS_DE_ELIMINACAO[e.motivo]}.`,
+          `${motivoDaEliminacao(e.motivo)}.`,
           e.detalhe,
           ...fraseDosAjustes(e.c, casasDoAjuste),
         ].filter(Boolean),

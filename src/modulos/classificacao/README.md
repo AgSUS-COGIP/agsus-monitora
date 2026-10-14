@@ -5,7 +5,7 @@ A tela `#page-classificacao` (view `classificacao`): monta na própria `<section
 `render()` ao navegar (`TELAS_REACT`). Área = a atual do app; o edital é escolhido no topo.
 
 A regra de classificação é **de cada edital** (decidida pelo gestor do edital, versionada no
-banco); nada é fixo no código. A conta é do motor puro `src/lib/classificacao/motor.js`.
+banco); nada é fixo no código. A conta é do motor puro `src/lib/classificacao/motor.ts`.
 
 Listas (`TIPOS_DE_LISTA`), no padrão das publicações da AgSUS: `PRELIMINAR` (avaliação documental e
 de títulos, com as parciais e os eliminados — vale como preliminar ou final da etapa; a exportação
@@ -47,7 +47,7 @@ documento-no-navegador.js  área de transferência (HTML + texto), logo em PNG, 
 classificacao.css  só o que é desta tela (tokens)
 ```
 
-Regras puras em `src/lib/classificacao/` (`motor.js`, `regra.ts`, `catalogo.ts`, `vagas.ts`,
+Regras puras em `src/lib/classificacao/` (`motor.ts`, `regra.ts`, `catalogo.ts`, `vagas.ts`,
 `numeros.ts`, `sorteio.ts`, `exportacao.js`, `ajustes.ts` — o motor com os ajustes da pontuação
 aprovados em recurso e a prévia do recurso —, `documento-sei.js` — o documento no modelo das
 publicações do SEI, textos-padrão do 83/2026 e do 100/2026 —, `documento-docx.js` — Word com papel

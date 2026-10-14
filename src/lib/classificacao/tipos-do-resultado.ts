@@ -32,7 +32,7 @@ export interface VagaDoResultado {
   vagasPorModalidade: Record<string, number> | null;
   cadastroReserva: boolean;
   origemDasVagas: string | null;
-  limiteConvocacao: { limite: number; origem: string } | null;
+  limiteConvocacao: { limite: number | null; origem: string } | null;
   geral: LinhaDaLista[];
   porModalidade: Record<string, LinhaDaLista[]>;
   eliminados: EliminadoDaLista[];

@@ -12,7 +12,7 @@ import type { DadosDoEdital } from "../modulos/entrevistas/tipos.ts";
 import { objetoDaConducao, registrosDaConducao } from "./dados-da-conducao.ts";
 /*
   A convocação para a entrevista, sem React e sem banco. Há uma convocação só:
-  a lista CONVOCACAO da Classificação (motor src/lib/classificacao/motor.js,
+  a lista CONVOCACAO da Classificação (motor src/lib/classificacao/motor.ts,
   regra do edital, vagas do quadro do edital ou da configuração da
   convocação). Entrevistas › Conduzir mostra essa lista e registra quem dela
   vai para a ficha de notas (`convocar_para_entrevista`, migration

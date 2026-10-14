@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-import { classificar } from "../src/lib/classificacao/motor.js";
+import { classificar } from "../src/lib/classificacao/motor.ts";
 import {
   horaBR,
   lerHora,

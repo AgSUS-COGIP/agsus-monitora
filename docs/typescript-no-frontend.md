@@ -169,15 +169,15 @@ em TSX, com regras de marcadores e revisão em TypeScript, validação de versõ
 histórico e contratos em `tests/tipos/resposta-e-modelos-dos-recursos.tsx`. O
 componente de ajuste também está em TSX: itens, proposta, validação e prévia estão em
 TypeScript, com contratos em `tests/tipos/ajuste-dos-recursos.tsx`. A pasta Recursos já tem
-todos os componentes e o estado tipados; o motor compartilhado de Classificação continua
-em JavaScript, com contrato JSDoc na entrada. Contratos e limites em
+todos os componentes e o estado tipados; o motor compartilhado de Classificação também
+está em TypeScript, com contratos na entrada e na saída. Contratos e limites em
 [../src/modulos/recursos/README.md](../src/modulos/recursos/README.md).
 
 A entrada e o estado de Classificação também estão migrados: seletor de edital, carga,
 versões de regra, registros e publicação de listas, desempate, hora de nascimento e
 exportação. Dados usados pelo estado são validados; respostas antigas não atualizam
 dados, avisos ou flags após troca de edital, área ou usuário. Os contratos estão em
-`tests/tipos/tela-estado-da-classificacao.tsx`; partes do motor e utilitários de documentos
+`tests/tipos/tela-estado-da-classificacao.tsx`; utilitários de documentos
 continuam em JavaScript. Contratos e limites em
 [../src/modulos/classificacao/README.md](../src/modulos/classificacao/README.md).
 
@@ -194,8 +194,7 @@ A visão Listas também está em TSX: indicadores, filtros, tabelas por vaga, el
 gaveta de explicações, sorteio/decisão manual, geração, publicação e exportação. As regras
 de recorte, avisos agrupados, inscrições e fase inicial ficam em `classificacao/dados.ts`.
 O contrato público da saída do motor fica em `classificacao/tipos-do-resultado.ts`, usado
-via JSDoc pelo motor ainda em JavaScript. O cálculo da ordem continua no motor; esta etapa
-não converte sua implementação. Metadados de geração, versões e desempates são normalizados
+pelo motor em TypeScript. Metadados de geração, versões e desempates são normalizados
 para os campos usados na tela. Ordens incompletas ou duplicadas e contagens inválidas de
 pendências são recusadas. Contratos da tela em `tests/tipos/listas-da-classificacao.tsx`.
 
@@ -221,7 +220,7 @@ critérios/modalidades e sorteios da Classificação também estão em TypeScrip
 campos já normalizados do candidato e a data de corte. O sorteio preserva a ordem por
 SHA-256 da semente e identidade, conferida contra o Node nos testes. Bigints que excedem
 a representação numérica finita retornam `null`. Contratos em
-`tests/tipos/calculos-e-desempates.tsx`; a orquestração do motor permanece em JavaScript.
+`tests/tipos/calculos-e-desempates.tsx`; a orquestração do motor também está em TypeScript.
 
 A montagem das vagas e a ponte com a convocação do edital também estão em TypeScript:
 `classificacao/vagas.ts` e `convocacao-do-edital.ts`, com contratos em
@@ -229,3 +228,10 @@ A montagem das vagas e a ponte com a convocação do edital também estão em Ty
 convocação compatível com o total e percentuais da regra. A distribuição reutiliza a
 mesma conta da Lista de aprovados, preservando cadastro de reserva, vagas sem candidatos
 e avisos de divergência das cotas. Contratos em `tests/tipos/vagas-da-classificacao.tsx`.
+
+O motor completo está em `classificacao/motor.ts`: preparação de candidatos, vínculo das
+entrevistas, aplicação de ajustes aprovados, elegibilidade, composição de notas,
+desempates, cotas, convocação e explicações das quatro listas. Os contratos internos
+ficam em `tipos-do-motor.ts`; `dados-do-motor.ts` valida a ponte de convocação antes do
+cálculo. Configurações incompletas são recusadas. Uma convocação sem limite conserva
+`limite: null`. Contratos em `tests/tipos/motor-da-classificacao.tsx`.

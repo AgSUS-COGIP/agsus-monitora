@@ -350,43 +350,50 @@ export const COMPONENTES_DA_NOTA: ReadonlyArray<readonly [string, string]> =
   ajuste aprovado SUBSTITUI o da análise na classificação (a planilha não muda).
 */
 export const ITENS_DO_AJUSTE = Object.freeze(
-  [
-    {
-      codigo: "FORMACAO",
-      parcial: "FORMACAO",
-      rotulo: "Formação acadêmica",
-      campo: "pontuacaoFormacao",
-    },
-    {
-      codigo: "CURSOS",
-      parcial: "CURSOS",
-      rotulo: "Cursos de aperfeiçoamento",
-      campo: "pontuacaoCursos",
-    },
-    {
-      codigo: "EXPERIENCIA",
-      parcial: "EXPERIENCIA",
-      rotulo: "Experiência profissional",
-      campo: "pontuacaoExperiencia",
-    },
-    {
-      codigo: "ETNICO",
-      parcial: "ETNICO",
-      rotulo: "Pertencimento étnico",
-      campo: "pontuacaoEtnica",
-    },
-    {
-      codigo: "DOCUMENTAL",
-      rotulo: "Nota documental",
-      campo: "notaDocumental",
-    },
-    {
-      codigo: "ENTREVISTA",
-      rotulo: "Nota da entrevista",
-      campo: "notaEntrevista",
-    },
-    { codigo: "ART", rotulo: "Nota da ART", campo: "notaArt" },
-  ].map((item) => Object.freeze(item)),
+  (
+    [
+      {
+        codigo: "FORMACAO",
+        parcial: "FORMACAO",
+        rotulo: "Formação acadêmica",
+        campo: "pontuacaoFormacao",
+      },
+      {
+        codigo: "CURSOS",
+        parcial: "CURSOS",
+        rotulo: "Cursos de aperfeiçoamento",
+        campo: "pontuacaoCursos",
+      },
+      {
+        codigo: "EXPERIENCIA",
+        parcial: "EXPERIENCIA",
+        rotulo: "Experiência profissional",
+        campo: "pontuacaoExperiencia",
+      },
+      {
+        codigo: "ETNICO",
+        parcial: "ETNICO",
+        rotulo: "Pertencimento étnico",
+        campo: "pontuacaoEtnica",
+      },
+      {
+        codigo: "DOCUMENTAL",
+        rotulo: "Nota documental",
+        campo: "notaDocumental",
+      },
+      {
+        codigo: "ENTREVISTA",
+        rotulo: "Nota da entrevista",
+        campo: "notaEntrevista",
+      },
+      { codigo: "ART", rotulo: "Nota da ART", campo: "notaArt" },
+    ] satisfies {
+      codigo: string;
+      rotulo: string;
+      campo: CamposNumericosDoCriterio | "notaArt";
+      parcial?: string;
+    }[]
+  ).map((item) => Object.freeze(item)),
 );
 
 export const ITEM_DO_AJUSTE_POR_CODIGO: Readonly<
