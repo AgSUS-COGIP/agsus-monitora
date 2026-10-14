@@ -2129,6 +2129,15 @@
   justify-content: space-between;
   gap: var(--space-2);
 }
+.avd-conferir-atalhos {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+}
+.avd-conferir-atalhos:empty {
+  display: none;
+}
 .avd-conferir-titulo {
   margin: 0;
   color: var(--text-primary);

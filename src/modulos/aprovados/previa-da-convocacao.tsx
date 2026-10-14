@@ -1,11 +1,13 @@
+import type { ReactNode } from "react";
+import type { ModeloDaConvocacao } from "../../lib/tipos-da-configuracao-de-convocacao.ts";
 import { useMemo, useState } from "react";
-import { DISTRIBUICOES } from "../../lib/modelo-de-convocacao.js";
+import { DISTRIBUICOES } from "../../lib/modelo-de-convocacao.ts";
 import {
   LIMITE_DA_PREVIA,
   lerInteiro,
   ordinalFeminino,
   previaDaConvocacao,
-} from "../../lib/configuracao-de-convocacao.js";
+} from "../../lib/configuracao-de-convocacao.ts";
 import { classes } from "../../ui/index.js";
 import { CampoEditavel } from "./partes.jsx";
 
@@ -28,6 +30,11 @@ export function PreviaDaConvocacao({
   totalInicial = 10,
   id,
   acao = null,
+}: {
+  modelo: ModeloDaConvocacao;
+  totalInicial?: number;
+  id: string;
+  acao?: ReactNode;
 }) {
   const [total, setTotal] = useState(() => lerInteiro(totalInicial) || 10);
   const previa = useMemo(
@@ -65,10 +72,10 @@ export function PreviaDaConvocacao({
       </div>
       <p
         className="convocacao-previa-regra"
-        data-convocacao-previa-regra={regra.id}
+        data-convocacao-previa-regra={regra?.id}
       >
         <span>
-          Ordem: <strong>{regra.rotulo}</strong>
+          Ordem: <strong>{regra?.rotulo}</strong>
         </span>
         {acao}
       </p>

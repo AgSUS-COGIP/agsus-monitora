@@ -24,7 +24,7 @@ partes.jsx                 peças das duas abas: selo de status (com a data do C
 modais.jsx                 status (Convocado pede a data), anexos, sub judice
 gaveta-do-candidato.jsx    a gaveta do candidato: dados, status e as cartas de convocação emitidas
 modal-listas-do-edital.jsx listas do edital: origem, importar XLSX, publicar da Classificação
-formulario-de-convocacao.jsx, editor-de-modelo.jsx, previa-da-convocacao.jsx
+formulario-de-convocacao.tsx, editor-de-modelo.tsx, previa-da-convocacao.tsx
                            configuração da convocação do edital (modelo de reserva de vagas)
 carta-de-convocacao/       a carta de convocação para contratação
   estado.ts                store da carta: modelos da área, salvar versão, inativar, emitir (SEI,
@@ -65,6 +65,13 @@ o aviso orienta conferir o histórico antes de tentar outra emissão.
 Campos: {NOME}, {CPF} (sempre mascarado; a lista não guarda CPF, então sai em branco e a emissão
 avisa), {CARGO}, {VAGA}, {LOTACAO} / {LOTAÇÃO/UNIDADE}, {UNIDADE}, {EDITAL}, {POSICAO}, {MODALIDADE},
 {DATA_LIMITE}, {LOCAL}, {DOCUMENTOS} (sozinho na linha vira a lista), {CONTATO} e {DATA}.
+
+A configuração de convocação também está em TypeScript/TSX: formulário, editor e prévia,
+com regras em `src/lib/modelo-de-convocacao.ts` e `src/lib/configuracao-de-convocacao.ts`.
+Os tipos compartilhados ficam em `src/lib/tipos-da-configuracao-de-convocacao.ts` e são
+reutilizados pela Classificação. A leitura confere coleções, identidades e chaves duplicadas;
+uma resposta malformada exibe aviso e preserva os mapas anteriores. A precedência permanece
+quadro manual da vaga, total da vaga e padrão do edital.
 
 ## Banco
 

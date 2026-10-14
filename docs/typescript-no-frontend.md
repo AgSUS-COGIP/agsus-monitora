@@ -252,3 +252,11 @@ e a repetição automática do registro; o usuário deve conferir o histórico. 
 do logo considera URL e largura e permite nova tentativa após falha. Testes em
 `tests/modulos/carta-confirmacao-e-modelos.test.js` e
 `tests/modulos/documentos-no-navegador.test.js`.
+
+A configuração de convocação em Aprovados também está em TypeScript/TSX: catálogo e
+normalização dos modelos, categorias, cascata, edição imutável, formulário e prévia
+da ordem de chamada. `src/lib/tipos-da-configuracao-de-convocacao.ts` compartilha os
+contratos com a Classificação. Coleções malformadas, identidades ausentes e chaves
+duplicadas impedem atualizar a configuração; os mapas anteriores são preservados.
+Contratos em `tests/tipos/configuracao-da-convocacao.tsx` e testes de recuperação em
+`tests/lib/configuracao-da-convocacao-dados.test.js`.

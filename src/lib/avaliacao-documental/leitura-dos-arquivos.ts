@@ -568,25 +568,67 @@ export function desfazerDecisaoLida<T extends LancamentoComLeituras>(
 }
 
 /**
+ * Os itens lidos que um "aceitar de uma vez" pode aceitar: os ainda pendentes
+ * (nem aceitos nem recusados) e completos. O incompleto (curso sem carga
+ * horária, vínculo sem início ou fim lido) fica pendente, como no Aceitar de
+ * um item só, que abre o Corrigir.
+ */
+export function pendentesCompletos(
+  lancamento: LancamentoComLeituras,
+  bloco: BlocoComItens,
+  itens: readonly ItemParaConferir[],
+): ItemParaConferir[] {
+  const lista = LISTA_DO_BLOCO[bloco.tipo];
+  return itens.filter((i) => {
+    if (estadoDoItemLido(lancamento, bloco, i.chave) !== "PENDENTE")
+      return false;
+    const linha = linhaDoItemLido(bloco, i.item, i.chave);
+    return Boolean(lista && linha && itemCompleto(lista, linha));
+  });
+}
+
+/**
  * "Aceitar todos sem alerta": os pendentes sem nenhum alerta e completos viram
- * linha. O incompleto (curso sem carga horária, vínculo sem início ou fim
- * lido) fica pendente, como no Aceitar de um item só, que abre o Corrigir.
+ * linha (pendentesCompletos).
  */
 export function aceitarTodosSemAlerta<T extends LancamentoComLeituras>(
   lancamento: T,
   bloco: BlocoComItens,
   itens: readonly ItemParaConferir[],
 ): T {
-  const lista = LISTA_DO_BLOCO[bloco.tipo];
-  return itens
-    .filter((i) => {
-      if (i.alertas.length) return false;
-      if (estadoDoItemLido(lancamento, bloco, i.chave) !== "PENDENTE")
-        return false;
-      const linha = linhaDoItemLido(bloco, i.item, i.chave);
-      return Boolean(lista && linha && itemCompleto(lista, linha));
-    })
+  return pendentesCompletos(lancamento, bloco, itens)
+    .filter((i) => !i.alertas.length)
     .reduce((l, i) => aceitarItemLido(l, bloco, i), lancamento);
+}
+
+/**
+ * "Conferir todos": todos os pendentes completos do bloco viram linha de uma
+ * vez, com ou sem alerta — o mesmo Aceitar de cada item, no mesmo lançamento
+ * (a ficha grava como no clique de um só). Não mexe no recusado nem no já
+ * aceito; o incompleto fica pendente. Devolve também as chaves aceitas, para
+ * o "Desfazer" (desfazerAceitos).
+ */
+export function conferirTodos<T extends LancamentoComLeituras>(
+  lancamento: T,
+  bloco: BlocoComItens,
+  itens: readonly ItemParaConferir[],
+): { lancamento: T; aceitos: string[] } {
+  const alvo = pendentesCompletos(lancamento, bloco, itens);
+  return {
+    lancamento: alvo.reduce((l, i) => aceitarItemLido(l, bloco, i), lancamento),
+    aceitos: alvo.map((i) => i.chave),
+  };
+}
+
+/** "Desfazer" do Conferir todos: os itens aceitos naquele clique voltam a pendente. */
+export function desfazerAceitos<T extends LancamentoComLeituras>(
+  lancamento: T,
+  bloco: BlocoComItens,
+  chaves: readonly string[],
+): T {
+  return chaves
+    .filter((c) => estadoDoItemLido(lancamento, bloco, c) === "ACEITO")
+    .reduce((l, c) => desfazerDecisaoLida(l, bloco, c), lancamento);
 }
 
 /** O rótulo curto do motivo da recusa. */

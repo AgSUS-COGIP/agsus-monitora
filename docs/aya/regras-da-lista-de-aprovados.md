@@ -3,7 +3,7 @@
 A tela Lista de aprovados (view `approved`): status dos candidatos, importação, convocação, sub
 judice e anexos. Fontes: `src/modulos/aprovados/`, `src/lib/lista-aprovados-rules.js`,
 `src/lib/aprovados-import.js`, `src/lib/lista-convocacao-rules.js`,
-`src/lib/modelo-de-convocacao.js`, `src/lib/anexos-do-candidato.js`, `src/lib/carta-de-convocacao.ts`, `src/lib/access-roles.js` e as
+`src/lib/modelo-de-convocacao.ts`, `src/lib/anexos-do-candidato.js`, `src/lib/carta-de-convocacao.ts`, `src/lib/access-roles.js` e as
 migrations `20260928235000_anexos_so_admin.sql`, `20260930200000_aprovados_por_grupo_edital_gestor_edita.sql`,
 `20261001150000_sub_judice_alteracao.sql`, `20261005160000_lista_de_aprovados_da_classificacao.sql` (lista
 publicada do resultado final da Classificação; `src/lib/publicacao-de-aprovados.ts`) e
@@ -32,7 +32,7 @@ publicada do resultado final da Classificação; `src/lib/publicacao-de-aprovado
 
 **perguntas:** como funciona o modelo de convocacao | modelo de convocacao | cotas intercaladas | ordem da convocacao | sem modelo de convocacao
 **resposta:** O modelo de convocação são as regras de reserva do edital: categorias, percentuais, arredondamento e cascata. As vagas de cota entram intercaladas às de ampla (proporcional, como AC, PP, AC, AC, PP, AC, ou nas posições fixas que o edital publica) e a convocação segue a classificação. Quem concorre a cota concorre também à ampla, e ser chamado pela ampla não gasta a vaga da cota; cota sem candidato desce a cascata e, no fim, volta para a ampla. Desistente e Documentação Rejeitada não ocupam vaga; Convocado, Contratado e Migração continuam na posição e não são chamados de novo. As vagas imediatas são informadas por vaga (zero vira cadastro reserva). Sem modelo, tudo sai como ampla concorrência. O modelo é compartilhado entre editais: a tela avisa quantos serão afetados e oferece "Duplicar". Modelo e vagas valem para o edital e sobrevivem à troca do XLSX.
-**fonte:** src/lib/lista-convocacao-rules.js; src/lib/modelo-de-convocacao.js; src/lib/configuracao-de-convocacao.js
+**fonte:** src/lib/lista-convocacao-rules.js; src/lib/modelo-de-convocacao.ts; src/lib/configuracao-de-convocacao.ts
 
 ## Candidato sub judice
 

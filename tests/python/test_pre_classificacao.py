@@ -444,5 +444,124 @@ class RefazerOLote(unittest.TestCase):
         self.assertEqual(pc.mudancas_do_lote(None, None), {"ficam": 0, "entram": 0, "saem": 0})
 
 
+class ModalidadePelaPerguntaDoSistemaDeConcorrencia(unittest.TestCase):
+    """
+    O 114/2026: a modalidade sai da pergunta "Indique em qual sistema de
+    concorrência…" (bloco MODALIDADE da regra) e da coluna "PCD" (SIM/NÃO).
+    Respostas reais da Empregare, sem dados pessoais.
+    """
+
+    PERGUNTA = "Pergunta 15 - Indique em qual sistema de concorrência você deseja se inscrever."
+    REGRA = {
+        "blocos": [
+            {
+                "codigo": "MODALIDADE",
+                "tipo": "REGISTRO",
+                "titulo": "Sistema de concorrência",
+                "perguntas": ["Indique em qual sistema de concorrência", "PCD"],
+            }
+        ]
+    }
+    # Acúmulo e percentuais da regra de classificação do 114/2026 (FC_DOCUMENTAL_DO_EDITAL).
+    COTAS_DO_114 = {"acumulo": "MAIOR_PERCENTUAL", "percentuais": {"PCD": 5, "PP": 25, "PI": 3, "PQ": 2}}
+
+    def modalidade(self, resposta, pcd="NÃO", cotas=COTAS_DO_114, regra=REGRA):
+        colunas = {self.PERGUNTA: resposta, "PCD": pcd, "SITUAÇÃO - Questionário": "FINALIZADO"}
+        return pc.modalidade_do_candidato(regra, colunas, cotas)
+
+    def test_respostas_reais_de_uma_opcao(self):
+        self.assertEqual(self.modalidade('"Ampla concorrência"'), "AC")
+        self.assertEqual(self.modalidade('"Pretos ou pardos"'), "PP")
+        self.assertEqual(self.modalidade('"Pessoas com deficiência (PCD)"', pcd="SIM"), "PCD")
+        self.assertEqual(self.modalidade('"Indígenas"'), "PI")
+        self.assertEqual(self.modalidade('"Quilombolas"'), "PQ")
+
+    def test_resposta_multipla_a_cota_prevalece_sobre_a_ampla(self):
+        self.assertEqual(self.modalidade('"Ampla concorrência", "Pretos ou pardos"'), "PP")
+        self.assertEqual(self.modalidade('"Ampla concorrência", "Pessoas com deficiência (PCD)"'), "PCD")
+        self.assertEqual(self.modalidade('"Ampla concorrência", "Quilombolas"'), "PQ")
+        self.assertEqual(self.modalidade('"Ampla concorrência", "Indígenas"'), "PI")
+
+    def test_mais_de_uma_cota_segue_o_acumulo_da_classificacao(self):
+        todas = '"Ampla concorrência", "Pretos ou pardos", "Quilombolas", "Indígenas", "Pessoas com deficiência (PCD)"'
+        # MAIOR_PERCENTUAL: fica na de maior percentual (PP, 25%).
+        self.assertEqual(self.modalidade(todas), "PP")
+        self.assertEqual(self.modalidade('"Pretos ou pardos", "Indígenas"'), "PP")
+        self.assertEqual(self.modalidade('"Ampla concorrência", "Pretos ou pardos", "Quilombolas"'), "PP")
+        self.assertEqual(self.modalidade('"Indígenas", "Quilombolas"'), "PI")
+        # PCD_MAIS_UMA: a PcD, quando marcada.
+        self.assertEqual(self.modalidade(todas, cotas={**self.COTAS_DO_114, "acumulo": "PCD_MAIS_UMA"}), "PCD")
+        # Sem a regra de classificação: a primeira na ordem de sempre (PCD, PP, PI, PQ).
+        self.assertEqual(self.modalidade(todas, cotas=None), "PCD")
+        self.assertEqual(self.modalidade('"Pretos ou pardos", "Indígenas"', cotas=None), "PP")
+
+    def test_coluna_pcd_sim_conta_como_pcd(self):
+        self.assertEqual(self.modalidade('"Ampla concorrência"', pcd="SIM"), "PCD")
+        self.assertEqual(self.modalidade("", pcd="SIM"), "PCD")
+        self.assertEqual(self.modalidade('"Ampla concorrência"', pcd="NÃO"), "AC")
+        # PP marcado e PcD pela coluna: decide o acúmulo (MAIOR_PERCENTUAL → PP).
+        self.assertEqual(self.modalidade('"Pretos ou pardos"', pcd="SIM"), "PP")
+
+    def test_sem_resposta_ou_sem_bloco_e_ampla(self):
+        self.assertEqual(self.modalidade(None), "AC")
+        self.assertEqual(self.modalidade("Resposta não informada"), "AC")
+        self.assertEqual(self.modalidade('"Pretos ou pardos"', regra={"blocos": []}), "AC")
+
+    def test_cotas_marcadas_e_aviso_de_pergunta_ambigua(self):
+        colunas = {self.PERGUNTA: '"Ampla concorrência", "Pretos ou pardos", "Indígenas"', "PCD": "SIM"}
+        self.assertEqual(pc.cotas_marcadas(self.REGRA, colunas), ["PCD", "PP", "PI"])
+        duas = {**colunas, "Pergunta 17 - Indique em qual sistema de concorrência você deseja se inscrever.": "x"}
+        self.assertEqual(pc.perguntas_ambiguas(self.REGRA, duas), ["PERGUNTA_AMBIGUA:MODALIDADE"])
+
+    def test_lote_do_114_com_a_distribuicao_real(self):
+        """As contagens reais do lote do 114 (14/10/2026) dão a distribuição esperada."""
+        respostas = [
+            ('"Ampla concorrência"', "NÃO", 1052),
+            ('"Pretos ou pardos"', "NÃO", 183),
+            ('"Ampla concorrência", "Pretos ou pardos"', "NÃO", 47),
+            ('"Pessoas com deficiência (PCD)"', "SIM", 42),
+            ('"Ampla concorrência", "Pessoas com deficiência (PCD)"', "SIM", 8),
+            ('"Indígenas"', "NÃO", 3),
+            ('"Ampla concorrência", "Quilombolas"', "NÃO", 1),
+            ('"Quilombolas"', "NÃO", 1),
+            ('"Pretos ou pardos", "Indígenas"', "NÃO", 1),
+            ('"Ampla concorrência", "Indígenas"', "NÃO", 1),
+            (
+                '"Ampla concorrência", "Pretos ou pardos", "Quilombolas", "Indígenas", "Pessoas com deficiência (PCD)"',
+                "SIM",
+                1,
+            ),
+            ('"Ampla concorrência", "Pretos ou pardos", "Quilombolas"', "NÃO", 1),
+            ('"Ampla concorrência", "Pretos ou pardos", "Indígenas"', "NÃO", 1),
+        ]
+        candidatos = []
+        for resposta, pcd, n in respostas:
+            for _ in range(n):
+                i = len(candidatos) + 1
+                candidatos.append(
+                    {
+                        "id": f"c{i:04d}",
+                        "codigo": str(i),
+                        "ativo": True,
+                        "nascimento": "1990-01-01",
+                        "candidatura": "2026-09-01T00:00:00+00:00",
+                        "colunas": {"NOTA - Art": 20, self.PERGUNTA: resposta, "PCD": pcd},
+                    }
+                )
+        vaga = {
+            "codigo": "1",
+            "vagas_imediatas": 1,
+            "cadastro_reserva": True,
+            "modalidades": None,
+            "nivel": None,
+            "cotas": self.COTAS_DO_114,
+        }
+        r = pc.pre_classificar_vaga(pc.normalizar_regra(self.REGRA), vaga, candidatos, hoje="2026-10-14")
+        contagem = {}
+        for linha in r["linhas"]:
+            contagem[linha["modalidade"]] = contagem.get(linha["modalidade"], 0) + 1
+        self.assertEqual(contagem, {"AC": 1052, "PP": 234, "PCD": 50, "PI": 4, "PQ": 2})
+
+
 if __name__ == "__main__":
     unittest.main()

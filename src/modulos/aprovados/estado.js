@@ -81,7 +81,7 @@ import {
   lerModelosDoBanco,
   modeloParaSalvar,
   somaDasReservas,
-} from "../../lib/configuracao-de-convocacao.js";
+} from "../../lib/configuracao-de-convocacao.ts";
 import { PLANILHAS } from "../../lib/planilhas.js";
 import { motivoValido } from "../../lib/publicacao-de-aprovados.ts";
 import { irParaTela } from "../../app/ir-para-tela.ts";
@@ -369,10 +369,15 @@ export function criarEstadoDaListaDeAprovados({
       );
       return null;
     }
-    return {
-      modelos: lerModelosDoBanco(modelos.data),
-      configs: lerConfiguracoesDoBanco(configs.data),
-    };
+    try {
+      return {
+        modelos: lerModelosDoBanco(modelos.data),
+        configs: lerConfiguracoesDoBanco(configs.data),
+      };
+    } catch (erro) {
+      toast(mensagemDe(erro), "warn");
+      return null;
+    }
   }
 
   /*

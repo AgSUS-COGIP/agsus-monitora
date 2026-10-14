@@ -308,6 +308,12 @@ class Fluxo(unittest.TestCase):
         self.assertIsNone(job.dados_da_vaga({"codigo": "1", "cargo": "Engenheiro"}, {})["nivel"])
         self.assertEqual(job.dados_da_vaga({"codigo": "1", "cargo": None}, {"nivel_padrao": "medio"})["nivel"], "medio")
 
+    def test_a_vaga_leva_as_cotas_da_regra_de_classificacao(self):
+        cotas = {"acumulo": "MAIOR_PERCENTUAL", "percentuais": {"PP": 25, "PCD": 5}}
+        self.assertEqual(job.dados_da_vaga({"codigo": "1"}, {"cotas": cotas})["cotas"], cotas)
+        self.assertIsNone(job.dados_da_vaga({"codigo": "1"}, {})["cotas"])
+        self.assertIsNone(job.dados_da_vaga({"codigo": "1"})["cotas"])
+
     def test_le_os_inscritos_em_partes_com_o_quadro_da_vaga_e_o_mesmo_resultado(self):
         """A vaga lida em partes (20261014110000) dá o mesmo cálculo que lida de uma vez."""
         candidatos = [candidato(i, f"{10 + i},0/30,0") for i in range(1, 8)]

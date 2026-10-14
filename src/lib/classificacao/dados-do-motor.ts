@@ -1,4 +1,4 @@
-import { normalizarModelo } from "../modelo-de-convocacao.js";
+import { normalizarModelo } from "../modelo-de-convocacao.ts";
 import type { RegistroDoMotor } from "./tipos-do-motor.ts";
 import type {
   ConvocacaoDoEdital,
