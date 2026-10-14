@@ -70,11 +70,9 @@ function Conferencia({
   desabilitado = false,
   registrar = vi.fn(),
   aoMudar = () => {},
+  inicial = { nivel: "superior", cursos: [] },
 }) {
-  const [lancamento, setLancamento] = useState({
-    nivel: "superior",
-    cursos: [],
-  });
+  const [lancamento, setLancamento] = useState(inicial);
   const mudar = (transformar) =>
     setLancamento((l) => {
       const novo = transformar(structuredClone(l));
@@ -212,8 +210,10 @@ describe("conferência dos itens lidos", () => {
       );
     });
     expect(terceira.querySelectorAll(".avd-ficha-chip")).toHaveLength(6);
-    // Só sobra 1 pendente sem alerta: o atalho de "todos" só aparece com 2 ou mais.
-    expect(raiz.querySelector(".avd-conferir-topo button")).toBeNull();
+    // Só sobra 1 pendente sem alerta: o "Aceitar todos sem alerta" só aparece com 2 ou mais.
+    expect(
+      raiz.querySelector('.avd-conferir-topo [data-acao="aceitar-sem-alerta"]'),
+    ).toBeNull();
   });
 
   it("aceitar todos sem alerta", async () => {
@@ -221,13 +221,62 @@ describe("conferência dos itens lidos", () => {
     await montar(
       createElement(Conferencia, { aoMudar: (l) => mudancas.push(l) }),
     );
-    const botao = raiz.querySelector(".avd-conferir-topo button");
+    const botao = raiz.querySelector(
+      '.avd-conferir-topo [data-acao="aceitar-sem-alerta"]',
+    );
     expect(botao.textContent).toContain("Aceitar todos sem alerta (2)");
     await clicar(botao);
     expect(mudancas.at(-1).cursos.map((c) => c.horas)).toEqual([145, 60]);
     expect(
       raiz.querySelectorAll('.avd-conferir-item[data-estado="pendente"]'),
     ).toHaveLength(1);
+  });
+
+  it("conferir todos: aceita os pendentes de uma vez, sem mexer no recusado, e desfaz", async () => {
+    const mudancas = [];
+    const { recusarItemLido } =
+      await import("../../src/lib/avaliacao-documental/leitura-dos-arquivos.ts");
+    const inicial = recusarItemLido(
+      { nivel: "superior", cursos: [] },
+      CURSOS,
+      itens[1].chave,
+      "FORA_DA_AREA",
+    );
+    await montar(
+      createElement(Conferencia, {
+        inicial,
+        aoMudar: (l) => mudancas.push(l),
+      }),
+    );
+    const botao = raiz.querySelector(
+      '.avd-conferir-topo [data-acao="conferir-todos"]',
+    );
+    expect(botao.textContent).toContain("Conferir todos (2)");
+    await clicar(botao);
+    // Uma só mudança no lançamento (o rascunho grava como no clique de um item).
+    expect(mudancas).toHaveLength(1);
+    expect(mudancas[0].cursos.map((c) => c.horas)).toEqual([145, 20]);
+    expect(mudancas[0].recusas_lidas[itens[1].chave].motivo).toBe(
+      "FORA_DA_AREA",
+    );
+    expect(
+      raiz.querySelectorAll('.avd-conferir-item[data-estado="aceito"]'),
+    ).toHaveLength(2);
+    expect(
+      raiz.querySelector('.avd-conferir-topo [data-acao="conferir-todos"]'),
+    ).toBeNull();
+    const desfazer = raiz.querySelector(
+      '.avd-conferir-topo [data-acao="desfazer-todos"]',
+    );
+    expect(desfazer.textContent).toContain("Desfazer (2)");
+    await clicar(desfazer);
+    expect(mudancas.at(-1).cursos).toEqual([]);
+    expect(mudancas.at(-1).recusas_lidas[itens[1].chave].motivo).toBe(
+      "FORA_DA_AREA",
+    );
+    expect(
+      raiz.querySelector('.avd-conferir-topo [data-acao="desfazer-todos"]'),
+    ).toBeNull();
   });
 
   it("só leitura: sem botões nem teclas; abrir o arquivo registra o acesso", async () => {

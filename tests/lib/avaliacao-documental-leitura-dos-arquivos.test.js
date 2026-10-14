@@ -10,6 +10,8 @@ import {
   textoDaLinha,
   aceitarTodosSemAlerta,
   alertasDoArquivo,
+  conferirTodos,
+  desfazerAceitos,
   desfazerDecisaoLida,
   estadoDoItemLido,
   itensParaConferir,
@@ -334,6 +336,52 @@ describe("decisões do avaliador no lançamento", () => {
     );
     expect(l.cursos.map((c) => c.horas)).toEqual([145, 60]);
     expect(estadoDoItemLido(l, CURSOS, itens[2].chave)).toBe("PENDENTE");
+  });
+
+  it("conferir todos aceita os pendentes com ou sem alerta e não mexe no recusado nem no já aceito", () => {
+    const base = recusarItemLido(
+      aceitarItemLido({ nivel: "superior", cursos: [] }, CURSOS, itens[0]),
+      CURSOS,
+      itens[1].chave,
+      "FORA_DA_AREA",
+    );
+    const { lancamento: l, aceitos } = conferirTodos(base, CURSOS, itens);
+    expect(aceitos).toEqual([itens[2].chave]);
+    expect(l.cursos.map((c) => c.horas)).toEqual([145, 20]);
+    expect(estadoDoItemLido(l, CURSOS, itens[1].chave)).toBe("RECUSADO");
+    expect(l.recusas_lidas[itens[1].chave].motivo).toBe("FORA_DA_AREA");
+    // Desfazer: só os aceitos naquele clique voltam a pendente.
+    const d = desfazerAceitos(l, CURSOS, aceitos);
+    expect(d.cursos.map((c) => c.horas)).toEqual([145]);
+    expect(estadoDoItemLido(d, CURSOS, itens[2].chave)).toBe("PENDENTE");
+    expect(estadoDoItemLido(d, CURSOS, itens[1].chave)).toBe("RECUSADO");
+    // Tudo pendente: os três de uma vez; o lançamento de entrada não muda.
+    const vazio = { nivel: "superior", cursos: [] };
+    expect(
+      conferirTodos(vazio, CURSOS, itens).lancamento.cursos.map((c) => c.horas),
+    ).toEqual([145, 60, 20]);
+    expect(vazio.cursos).toEqual([]);
+  });
+
+  it("conferir todos deixa o incompleto pendente (curso sem horas)", () => {
+    const semHoras = itensParaConferir(
+      CURSOS,
+      leiturasDaFicha([
+        {
+          ...LEITURA,
+          itens: [curso("Sem carga", null), curso("Com carga", 80)],
+        },
+      ]),
+      [ANEXO],
+    );
+    const { lancamento: l, aceitos } = conferirTodos(
+      { nivel: "superior", cursos: [] },
+      CURSOS,
+      semHoras,
+    );
+    expect(aceitos).toEqual([semHoras[1].chave]);
+    expect(l.cursos.map((c) => c.horas)).toEqual([80]);
+    expect(estadoDoItemLido(l, CURSOS, semHoras[0].chave)).toBe("PENDENTE");
   });
 
   it("aceitar todos sem alerta deixa o incompleto pendente (vínculo atual sem a data do fim, curso sem horas)", () => {
