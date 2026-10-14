@@ -1649,7 +1649,9 @@ def ordenar_pedidos(pedidos, prioridades):
     """
     Ordem e filtro da leitura. Sem `prioridades` (None), todos na ordem da lista.
     Com elas: pula quem tem prioridade 0 (não finalizou o questionário ou cancelou)
-    e a resposta já lida (mesmo número: economia; resposta nova é lida), e lê
+    e a resposta já lida por inteiro (mesmo número: economia; resposta nova é lida;
+    a capturada pela metade, enquanto o candidato ainda respondia, não vem em "lidas"
+    desde a migration 20261015040000 e é relida, trocando os anexos), e lê
     primeiro o lote/ficha aberta (1), depois ranqueados (2), os demais (3) e os
     que o banco ainda não conhece. Devolve (pedidos, contagem para o log ou None).
     """
