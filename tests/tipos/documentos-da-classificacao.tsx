@@ -39,8 +39,8 @@ gerarXlsx([{ nome: "Lista", linhas: [[{}]] }]);
 corrida("Título", { tamanho: "24" });
 // @ts-expect-error O pacote exige o XML do corpo do documento.
 pacoteDocx({ nome: "Resultado" });
-// @ts-expect-error Os bytes da imagem são binários.
 const imagemInvalida: LogoDoDocumento = {
+  // @ts-expect-error Os bytes da imagem são binários.
   bytes: "png",
   largura: 100,
   altura: 50,
