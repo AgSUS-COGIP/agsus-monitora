@@ -11,7 +11,7 @@
   Este ficheiro não sabe que existem "pretos e pardos" ou "PCD". Sabe que há
   categorias, uma delas a ampla, e que cada uma tem percentual, arredondamento,
   cascata e um jeito de entrar na fila. Tudo isso chega num MODELO
-  (`modelo-de-convocacao.js`), que é dado editável — porque a leitura de oito
+  (`modelo-de-convocacao.ts`), que é dado editável — porque a leitura de oito
   editais da AgSUS mostrou que quase nada é constante: o 97/2025 tem cota trans,
   o edital da FCC junta negros e indígenas numa cota só e publica as posições
   literais em vez de proporcionalidade, e o 91/2026 manda a vaga de PCD vazia
@@ -54,7 +54,7 @@ import {
   categoriasDeReserva,
   lerModalidade,
   normalizarModelo,
-} from "./modelo-de-convocacao.js";
+} from "./modelo-de-convocacao.ts";
 import { sanitizeCsvCell } from "./csv-security.js";
 
 const texto = (valor) => String(valor ?? "").trim();

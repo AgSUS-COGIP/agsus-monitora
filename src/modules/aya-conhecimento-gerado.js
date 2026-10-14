@@ -2367,7 +2367,7 @@ export const VERBETES_AYA = Object.freeze([
       "A Classificação e a Lista de aprovados › Convocação usam a mesma conta das vagas por modalidade. Vale, nesta ordem: o quadro de vagas do edital quando traz a divisão; senão, a configuração de convocação do edital (quadro manual da vaga ou o total de vagas imediatas pelo modelo de cotas); senão, os percentuais da regra de classificação. A tela mostra de onde vieram as vagas da vaga e avisa quando os percentuais da regra e os do modelo de convocação divergem ou quando o total de vagas não bate. Quem fica em cada lista e para onde vai a vaga reservada sem candidato é da regra de classificação; a ordem de chamada para contratar é da Convocação.",
     fato: "",
     fonte:
-      "src/lib/classificacao/convocacao-do-edital.ts; src/lib/configuracao-de-convocacao.js",
+      "src/lib/classificacao/convocacao-do-edital.ts; src/lib/configuracao-de-convocacao.ts",
     abrir: "classificacao",
   },
   {
@@ -2598,7 +2598,7 @@ export const VERBETES_AYA = Object.freeze([
       'O modelo de convocação são as regras de reserva do edital: categorias, percentuais, arredondamento e cascata. As vagas de cota entram intercaladas às de ampla (proporcional, como AC, PP, AC, AC, PP, AC, ou nas posições fixas que o edital publica) e a convocação segue a classificação. Quem concorre a cota concorre também à ampla, e ser chamado pela ampla não gasta a vaga da cota; cota sem candidato desce a cascata e, no fim, volta para a ampla. Desistente e Documentação Rejeitada não ocupam vaga; Convocado, Contratado e Migração continuam na posição e não são chamados de novo. As vagas imediatas são informadas por vaga (zero vira cadastro reserva). Sem modelo, tudo sai como ampla concorrência. O modelo é compartilhado entre editais: a tela avisa quantos serão afetados e oferece "Duplicar". Modelo e vagas valem para o edital e sobrevivem à troca do XLSX.',
     fato: "",
     fonte:
-      "src/lib/lista-convocacao-rules.js; src/lib/modelo-de-convocacao.js; src/lib/configuracao-de-convocacao.js",
+      "src/lib/lista-convocacao-rules.js; src/lib/modelo-de-convocacao.ts; src/lib/configuracao-de-convocacao.ts",
   },
   {
     arquivo: "regras-da-lista-de-aprovados.md",
@@ -5394,7 +5394,7 @@ export const VERBETES_AYA = Object.freeze([
       "No MONITORA, as vagas imediatas não se digitam mais à mão (manual) nas Entrevistas: o número digitado lá antes ficou no banco, sem uso. Valem, nesta ordem: o quadro de vagas do edital, cadastrado em Editais; sem ele, a configuração de convocação do edital, em Lista de aprovados › Convocação (o total de vagas imediatas informado por vaga e dividido pelo modelo de cotas; zero quer dizer só cadastro reserva). Quando o quadro só traz o total, a divisão por modalidade sai dessa configuração ou dos percentuais da regra de classificação. A Classificação, a convocação das Entrevistas e a ordem de chamada da lista de aprovados usam essa mesma conta.",
     fato: "",
     fonte:
-      "src/lib/classificacao/vagas.ts; src/lib/classificacao/convocacao-do-edital.ts; src/lib/configuracao-de-convocacao.js; supabase/migrations/20261005150000_convocacao_unica_da_entrevista.sql",
+      "src/lib/classificacao/vagas.ts; src/lib/classificacao/convocacao-do-edital.ts; src/lib/configuracao-de-convocacao.ts; supabase/migrations/20261005150000_convocacao_unica_da_entrevista.sql",
     abrir: "nucleo",
   },
   {

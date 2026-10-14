@@ -1,29 +1,13 @@
 export type VagasPorModalidade = Record<string, number>;
 
-export interface CategoriaDaConvocacao {
-  id: string;
-  rotulo: string;
-  sigla: string;
-  ampla: boolean;
-  acumulavel: boolean;
-  percentual: number;
-  arredondamento: string;
-  teto: number;
-  minimo: number;
-  termos: string[];
-  posicoes: number[];
-  intervalo: number;
-  cascata: string[];
-  ordem: number;
-}
-
-export interface ModeloDaConvocacao {
-  id: string;
-  nome: string;
-  distribuicao: string;
-  cotaMultipla: string;
-  categorias: CategoriaDaConvocacao[];
-}
+import type {
+  CategoriaDaConvocacao,
+  ModeloDaConvocacao,
+} from "../tipos-da-configuracao-de-convocacao.ts";
+export type {
+  CategoriaDaConvocacao,
+  ModeloDaConvocacao,
+} from "../tipos-da-configuracao-de-convocacao.ts";
 
 export interface ConvocacaoDoEdital {
   editalId: string;

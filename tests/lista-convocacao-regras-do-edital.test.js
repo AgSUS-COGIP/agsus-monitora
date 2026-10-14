@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   modeloDeReferencia,
   normalizarModelo,
-} from "../src/lib/modelo-de-convocacao.js";
+} from "../src/lib/modelo-de-convocacao.ts";
 import {
   arredondarVaga,
   derivarQuadro,

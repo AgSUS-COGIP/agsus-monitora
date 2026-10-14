@@ -38,9 +38,9 @@ import {
   configuracaoDaVaga,
   lerConfiguracoesDoBanco,
   lerModelosDoBanco,
-} from "../configuracao-de-convocacao.js";
+} from "../configuracao-de-convocacao.ts";
 import { derivarQuadro } from "../lista-convocacao-rules.js";
-import { normalizarModelo } from "../modelo-de-convocacao.js";
+import { normalizarModelo } from "../modelo-de-convocacao.ts";
 import { codigosDaModalidade } from "./catalogo.ts";
 import { normalizarRegra } from "./regra.ts";
 

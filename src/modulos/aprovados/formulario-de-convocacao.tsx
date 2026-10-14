@@ -1,10 +1,21 @@
+import type {
+  ModeloDaConvocacao,
+  ReferenciaDoModelo,
+  ConfiguracoesDaConvocacao,
+  ModelosDaConvocacao,
+  CandidatoDaConfiguracao,
+  FormularioDaConvocacao,
+  VagaDoFormulario,
+  EditorDaConvocacao,
+  EstadoDaConfiguracao,
+} from "../../lib/tipos-da-configuracao-de-convocacao.ts";
 import { useMemo, useState } from "react";
 import { canImportApprovedList } from "../../lib/access-roles.js";
 import {
   categoriasDeReserva,
   modeloDeReferencia,
   modeloEmBranco,
-} from "../../lib/modelo-de-convocacao.js";
+} from "../../lib/modelo-de-convocacao.ts";
 import { totalDoQuadro } from "../../lib/lista-convocacao-rules.js";
 import {
   comDistribuicao,
@@ -15,9 +26,9 @@ import {
   rascunhoDoFormulario,
   resumirQuadro,
   resumoDoModelo,
-} from "../../lib/configuracao-de-convocacao.js";
-import { EditorDeModelo } from "./editor-de-modelo.jsx";
-import { PreviaDaConvocacao } from "./previa-da-convocacao.jsx";
+} from "../../lib/configuracao-de-convocacao.ts";
+import { EditorDeModelo } from "./editor-de-modelo.tsx";
+import { PreviaDaConvocacao } from "./previa-da-convocacao.tsx";
 import { BotaoDeAcao, classes } from "../../ui/index.js";
 import { CampoEditavel, plural } from "./partes.jsx";
 
@@ -32,7 +43,17 @@ import { CampoEditavel, plural } from "./partes.jsx";
 /* Abre já na regra comum: Lei 15.142/2025 na ordem do simulador do MGI. */
 const BASE_DE_MODELO_NOVO = "mgi-simulador";
 
-function QuadroDaVaga({ vaga, modelo, editavel, aoMudarCota }) {
+function QuadroDaVaga({
+  vaga,
+  modelo,
+  editavel,
+  aoMudarCota,
+}: {
+  vaga: VagaDoFormulario;
+  modelo: ModeloDaConvocacao;
+  editavel: boolean;
+  aoMudarCota: (categoria: string, valor: number) => void;
+}) {
   if (vaga.manual)
     return modelo.categorias.map((categoria) => (
       <label key={categoria.id} className="convocacao-quadro-campo">
@@ -47,7 +68,7 @@ function QuadroDaVaga({ vaga, modelo, editavel, aoMudarCota }) {
           data-convocacao-vaga-cota={categoria.id}
           aria-label={`${categoria.rotulo} da vaga ${vaga.codigo}`}
           disabled={!editavel}
-          aoMudar={(valor) => aoMudarCota(categoria.id, valor)}
+          aoMudar={(valor: number) => aoMudarCota(categoria.id, valor)}
         />
       </label>
     ));
@@ -69,12 +90,20 @@ export function FormularioDeConvocacao({
   candidatos,
   configs,
   modelos,
+}: {
+  ativa: boolean;
+  estado: EstadoDaConfiguracao;
+  perfil: unknown;
+  editalId: unknown;
+  candidatos: readonly CandidatoDaConfiguracao[];
+  configs: ConfiguracoesDaConvocacao;
+  modelos: ModelosDaConvocacao;
 }) {
   const [formulario, setFormulario] = useState(() =>
     rascunhoDoFormulario(candidatos, configs, editalId),
   );
   /* O modelo em edição, ou `null`: { novo, modelo, editais, abertura }. */
-  const [editor, setEditor] = useState(null);
+  const [editor, setEditor] = useState<EditorDaConvocacao | null>(null);
 
   const editavel = canImportApprovedList(perfil);
   const escolhido = modeloPorId(modelos, formulario.modeloId);
@@ -109,9 +138,12 @@ export function FormularioDeConvocacao({
     formulario.padraoImediata ||
     10;
 
-  const mudar = (mudancas) =>
+  const mudar = (mudancas: Partial<FormularioDaConvocacao>) =>
     setFormulario((atual) => ({ ...atual, ...mudancas }));
-  const mudarVaga = (codigo, transformar) =>
+  const mudarVaga = (
+    codigo: string,
+    transformar: (vaga: VagaDoFormulario) => Partial<VagaDoFormulario>,
+  ) =>
     setFormulario((atual) => ({
       ...atual,
       vagas: atual.vagas.map((vaga) =>
@@ -119,7 +151,14 @@ export function FormularioDeConvocacao({
       ),
     }));
 
-  function abrirEditor(base, { novo = false, origem = null } = {}) {
+  function abrirEditor(
+    base: ModeloDaConvocacao | ReferenciaDoModelo | null,
+    {
+      novo = false,
+      origem = null,
+    }: { novo?: boolean; origem?: string | null } = {},
+  ) {
+    if (!base) return;
     const copia = copiaDoModelo(base);
     if (novo) copia.id = "";
     setEditor((anterior) => ({
@@ -147,7 +186,7 @@ export function FormularioDeConvocacao({
     Ao ligar a sobrescrita manual, o quadro derivado é copiado para os campos:
     começar do zero faria a vaga perder as vagas que já tinha.
   */
-  function alternarManual(codigo, ligando) {
+  function alternarManual(codigo: string, ligando: boolean) {
     mudarVaga(codigo, (vaga) => ({
       manual: ligando,
       quadro:
@@ -158,6 +197,7 @@ export function FormularioDeConvocacao({
   }
 
   async function salvarModelo() {
+    if (!editor) return;
     const novoId = await estado.salvarModelo(editor.modelo);
     if (novoId === null) return;
     mudar({ modeloId: novoId });
@@ -165,6 +205,7 @@ export function FormularioDeConvocacao({
   }
 
   async function removerModelo() {
+    if (!editor) return;
     const removido = editor.modelo.id;
     if (!(await estado.removerModelo(editor.modelo, editor.editais))) return;
     setFormulario((atual) =>
@@ -279,7 +320,7 @@ export function FormularioDeConvocacao({
           id="convocacaoModeloResumo"
           className={classes(
             "convocacao-modelo-resumo",
-            escolhido?.editais > 1 && "compartilhado",
+            (escolhido?.editais ?? 0) > 1 && "compartilhado",
           )}
         >
           {resumoDoModelo(escolhido)}
@@ -323,13 +364,18 @@ export function FormularioDeConvocacao({
               editor={editor}
               totalDaPrevia={totalDaPrevia}
               aoAlterar={(transformar) =>
-                setEditor((atual) => ({
-                  ...atual,
-                  modelo: transformar(atual.modelo),
-                }))
+                setEditor((atual) =>
+                  atual
+                    ? {
+                        ...atual,
+                        modelo: transformar(atual.modelo),
+                      }
+                    : atual,
+                )
               }
               aoEscolherBase={(id) => {
                 const partida = id ? modeloDeReferencia(id) : modeloEmBranco();
+                if (!partida) return;
                 // O nome já digitado sobrevive à troca de base: é do edital, não da regra.
                 abrirEditor(
                   { ...partida, id: "", nome: editor.modelo.nome },
@@ -391,7 +437,9 @@ export function FormularioDeConvocacao({
                   valor={formulario.padraoImediata}
                   ler={lerInteiro}
                   disabled={!editavel}
-                  aoMudar={(padraoImediata) => mudar({ padraoImediata })}
+                  aoMudar={(padraoImediata: number) =>
+                    mudar({ padraoImediata })
+                  }
                 />
               </label>
               {editavel ? (
@@ -449,7 +497,7 @@ export function FormularioDeConvocacao({
                           data-convocacao-imediatas=""
                           aria-label={`Vagas imediatas da vaga ${vaga.codigo}`}
                           disabled={!editavel}
-                          aoMudar={(imediatas) =>
+                          aoMudar={(imediatas: number) =>
                             mudarVaga(vaga.codigo, () => ({ imediatas }))
                           }
                         />

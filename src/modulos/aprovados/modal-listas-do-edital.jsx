@@ -10,13 +10,13 @@ import {
   origemDaLista,
 } from "../../lib/publicacao-de-aprovados.ts";
 import { Abas, Aviso, BotaoDeAcao, classes, Modal } from "../../ui/index.js";
-import { FormularioDeConvocacao } from "./formulario-de-convocacao.jsx";
+import { FormularioDeConvocacao } from "./formulario-de-convocacao.tsx";
 
 /*
   O modal "Listas do edital", aberto pelo Núcleo (`openImportModal` do
   controlador) com a página de aprovados possivelmente escondida — por isso é
   um portal. Duas abas: o XLSX da lista de aprovados e a configuração da lista
-  de convocação (`formulario-de-convocacao.jsx`).
+  de convocação (`formulario-de-convocacao.tsx`).
 
   A lista de aprovados vem do resultado final da Classificação quando o edital
   tem análise no sistema (migration 20261005160000): o modal diz a origem da

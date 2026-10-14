@@ -10,7 +10,7 @@ import {
 import { classificar } from "../../src/lib/classificacao/motor.ts";
 import { vagasPelosPercentuais } from "../../src/lib/classificacao/vagas.ts";
 import { derivarQuadro } from "../../src/lib/lista-convocacao-rules.js";
-import { modeloDeReferencia } from "../../src/lib/modelo-de-convocacao.js";
+import { modeloDeReferencia } from "../../src/lib/modelo-de-convocacao.ts";
 
 /*
   Uma conta só para as vagas por modalidade: a Classificação usa a mesma

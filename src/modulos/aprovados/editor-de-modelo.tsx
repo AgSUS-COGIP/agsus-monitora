@@ -1,3 +1,12 @@
+import type { ReactNode } from "react";
+import type {
+  CategoriaDaConvocacao,
+  ModeloDaConvocacao,
+  OpcaoDaConvocacao,
+  MudancasDaCategoria,
+  EditorDaConvocacao,
+  EstadoDaConfiguracao,
+} from "../../lib/tipos-da-configuracao-de-convocacao.ts";
 import { useMemo } from "react";
 import {
   ARREDONDAMENTOS,
@@ -6,7 +15,7 @@ import {
   MODELOS_DE_REFERENCIA,
   lerTermos,
   normalizarModelo,
-} from "../../lib/modelo-de-convocacao.js";
+} from "../../lib/modelo-de-convocacao.ts";
 import {
   acrescentarCategoria,
   alterarCategoria,
@@ -19,16 +28,16 @@ import {
   lerTaxa,
   removerCategoria,
   resumoDasRegrasDaCategoria,
-} from "../../lib/configuracao-de-convocacao.js";
+} from "../../lib/configuracao-de-convocacao.ts";
 import { BotaoDeAcao, classes } from "../../ui/index.js";
 import { CampoEditavel } from "./partes.jsx";
-import { PreviaDaConvocacao } from "./previa-da-convocacao.jsx";
+import { PreviaDaConvocacao } from "./previa-da-convocacao.tsx";
 
 /*
   Editor do modelo de regras de convocação, dentro do formulário do edital.
   Edita um rascunho (`editor.modelo`, uma cópia): enquanto está aberto, o
   modelo guardado continua a valer para a tabela de vagas. Quem guarda o
-  rascunho e salva é `formulario-de-convocacao.jsx`; `aoAlterar` recebe uma
+  rascunho e salva é `formulario-de-convocacao.tsx`; `aoAlterar` recebe uma
   função do modelo atual para o próximo.
 
   O que se vê primeiro é o que muda o resultado: nome, sigla e percentual de
@@ -37,14 +46,26 @@ import { PreviaDaConvocacao } from "./previa-da-convocacao.jsx";
   planilha ficam em "Ajustar regras", com o resumo delas numa frase por fora.
 */
 
-const juntar = (lista) => lista.join("; ");
+const juntar = (lista: readonly (string | number)[]) => lista.join("; ");
 
 /*
   A ajuda da opção escolhida fica VISÍVEL, e não num `title` que ninguém
   descobre: são decisões que o rótulo sozinho não explica, e o preço de errar é
   uma convocação inteira calculada de outro jeito.
 */
-function CampoDeEscolha({ chave, lista, valor, rotulo, aoMudar }) {
+function CampoDeEscolha<T extends string>({
+  chave,
+  lista,
+  valor,
+  rotulo,
+  aoMudar,
+}: {
+  chave: string;
+  lista: readonly OpcaoDaConvocacao<T>[];
+  valor: T;
+  rotulo: string;
+  aoMudar: (valor: T) => void;
+}) {
   const escolhida = lista.find((item) => item.id === valor) || lista[0];
   return (
     <label className="convocacao-editor-campo">
@@ -52,7 +73,10 @@ function CampoDeEscolha({ chave, lista, valor, rotulo, aoMudar }) {
       <select
         data-convocacao-modelo={chave}
         value={valor}
-        onChange={(evento) => aoMudar(evento.target.value)}
+        onChange={(evento) => {
+          const item = lista.find((item) => item.id === evento.target.value);
+          if (item) aoMudar(item.id);
+        }}
       >
         {lista.map((item) => (
           <option key={item.id} value={item.id}>
@@ -67,7 +91,7 @@ function CampoDeEscolha({ chave, lista, valor, rotulo, aoMudar }) {
   );
 }
 
-function Aviso({ children }) {
+function Aviso({ children }: { children: ReactNode }) {
   return (
     <p className="convocacao-editor-aviso">
       <i className="fa-solid fa-triangle-exclamation" aria-hidden="true" />{" "}
@@ -76,7 +100,13 @@ function Aviso({ children }) {
   );
 }
 
-function CampoDosTermos({ categoria, aoMudar }) {
+function CampoDosTermos({
+  categoria,
+  aoMudar,
+}: {
+  categoria: CategoriaDaConvocacao;
+  aoMudar: (mudancas: MudancasDaCategoria) => void;
+}) {
   return (
     <label className="convocacao-editor-campo largo">
       <span>
@@ -93,14 +123,22 @@ function CampoDosTermos({ categoria, aoMudar }) {
         ler={lerTermos}
         escrever={juntar}
         data-convocacao-cat="termos"
-        aoMudar={(termos) => aoMudar({ termos })}
+        aoMudar={(termos: string[]) => aoMudar({ termos })}
       />
     </label>
   );
 }
 
 /* Para onde vai a vaga desta cota quando não há candidato dela. */
-function CascataDaCategoria({ categoria, modelo, aoMudar }) {
+function CascataDaCategoria({
+  categoria,
+  modelo,
+  aoMudar,
+}: {
+  categoria: CategoriaDaConvocacao;
+  modelo: ModeloDaConvocacao;
+  aoMudar: (mudancas: MudancasDaCategoria) => void;
+}) {
   const destinos = destinosDaCascata(categoria, modelo);
   return (
     <div
@@ -155,7 +193,17 @@ function CascataDaCategoria({ categoria, modelo, aoMudar }) {
   );
 }
 
-function FichaDaCategoria({ categoria, modelo, aoMudar, aoRemover }) {
+function FichaDaCategoria({
+  categoria,
+  modelo,
+  aoMudar,
+  aoRemover,
+}: {
+  categoria: CategoriaDaConvocacao;
+  modelo: ModeloDaConvocacao;
+  aoMudar: (mudancas: MudancasDaCategoria) => void;
+  aoRemover: () => void;
+}) {
   const comPosicoes =
     modelo.distribuicao === "posicao_fixa" ||
     modelo.distribuicao === "serie_mgi";
@@ -201,7 +249,7 @@ function FichaDaCategoria({ categoria, modelo, aoMudar, aoRemover }) {
                 ler={lerTaxa}
                 data-convocacao-cat="percentual"
                 aria-label="Percentual reservado"
-                aoMudar={(percentual) => aoMudar({ percentual })}
+                aoMudar={(percentual: number) => aoMudar({ percentual })}
               />
               <span>%</span>
             </label>
@@ -253,9 +301,12 @@ function FichaDaCategoria({ categoria, modelo, aoMudar, aoRemover }) {
               <select
                 data-convocacao-cat="arredondamento"
                 value={categoria.arredondamento}
-                onChange={(evento) =>
-                  aoMudar({ arredondamento: evento.target.value })
-                }
+                onChange={(evento) => {
+                  const item = ARREDONDAMENTOS.find(
+                    (item) => item.id === evento.target.value,
+                  );
+                  if (item) aoMudar({ arredondamento: item.id });
+                }}
               >
                 {ARREDONDAMENTOS.map((item) => (
                   <option key={item.id} value={item.id}>
@@ -264,7 +315,7 @@ function FichaDaCategoria({ categoria, modelo, aoMudar, aoRemover }) {
                 ))}
               </select>
               <small className="convocacao-editor-ajuda">
-                {arredondamento.ajuda}
+                {arredondamento?.ajuda}
               </small>
             </label>
             <label className="convocacao-editor-campo estreito">
@@ -279,7 +330,7 @@ function FichaDaCategoria({ categoria, modelo, aoMudar, aoRemover }) {
                 valor={categoria.teto}
                 ler={lerTaxa}
                 data-convocacao-cat="teto"
-                aoMudar={(teto) => aoMudar({ teto })}
+                aoMudar={(teto: number) => aoMudar({ teto })}
               />
               <small className="convocacao-editor-ajuda">
                 A reserva nunca passa desta fatia das vagas. Ex.: PCD 5% com
@@ -298,7 +349,7 @@ function FichaDaCategoria({ categoria, modelo, aoMudar, aoRemover }) {
                 valor={categoria.minimo}
                 ler={lerInteiro}
                 data-convocacao-cat="minimo"
-                aoMudar={(minimo) => aoMudar({ minimo })}
+                aoMudar={(minimo: number) => aoMudar({ minimo })}
               />
               <small className="convocacao-editor-ajuda">
                 Abaixo disso a cota não existe naquela vaga, e a vaga é da
@@ -324,7 +375,7 @@ function FichaDaCategoria({ categoria, modelo, aoMudar, aoRemover }) {
                     escrever={juntar}
                     data-convocacao-cat="posicoes"
                     placeholder="5; 21"
-                    aoMudar={(posicoes) => aoMudar({ posicoes })}
+                    aoMudar={(posicoes: number[]) => aoMudar({ posicoes })}
                   />
                 </label>
                 <label className="convocacao-editor-campo estreito">
@@ -338,7 +389,7 @@ function FichaDaCategoria({ categoria, modelo, aoMudar, aoRemover }) {
                     valor={categoria.intervalo}
                     ler={lerInteiro}
                     data-convocacao-cat="intervalo"
-                    aoMudar={(intervalo) => aoMudar({ intervalo })}
+                    aoMudar={(intervalo: number) => aoMudar({ intervalo })}
                   />
                 </label>
               </>
@@ -372,7 +423,13 @@ function FichaDaCategoria({ categoria, modelo, aoMudar, aoRemover }) {
   uma frase o que o modelo faz. Só aparece na criação — trocar a base de um
   modelo em uso apagaria o que já está configurado.
 */
-function EscolhaDaBase({ base, aoEscolherBase }) {
+function EscolhaDaBase({
+  base,
+  aoEscolherBase,
+}: {
+  base: string | null;
+  aoEscolherBase: (id: string) => void;
+}) {
   return (
     <div className="convocacao-editor-base">
       <span>Comece de um modelo pronto e ajuste o que o seu edital mudar</span>
@@ -421,6 +478,18 @@ export function EditorDeModelo({
   aoRemover,
   aoCancelar,
   aoSalvar,
+}: {
+  estado: EstadoDaConfiguracao;
+  editor: EditorDaConvocacao;
+  totalDaPrevia: number;
+  aoAlterar: (
+    transformar: (modelo: ModeloDaConvocacao) => ModeloDaConvocacao,
+  ) => void;
+  aoEscolherBase: (id: string) => void;
+  aoDuplicar: () => void;
+  aoRemover: () => void;
+  aoCancelar: () => void;
+  aoSalvar: () => void;
 }) {
   const modelo = editor.modelo;
   const salvo = !editor.novo && Boolean(modelo.id);
