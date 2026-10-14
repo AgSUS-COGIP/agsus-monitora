@@ -20,7 +20,6 @@ import {
   canUnlockCandidateStatus,
   isAdminGlobal,
   podeEditarCoordenadas,
-  podeUsarChat,
   podeVerPessoasOnline,
   roleLabel,
 } from "./access-roles.js";
@@ -194,15 +193,6 @@ export const ACOES_COM_PERMISSAO = Object.freeze([
     "config:modulos",
   ),
   acao(
-    "retencao-do-chat",
-    /\bzerar (as )?mensagens\b|\bretencao\b/,
-    "mudar a retenção e zerar as mensagens do chat",
-    isAdminGlobal,
-    "ser administrador global",
-    "Fica em Configurações › Mensagens.",
-    "config:mensagens",
-  ),
-  acao(
     "publicar-configuracoes",
     /\bpublicar (as )?configurac\w*\b|\b(mudar|trocar) (a )?(marca|logo|cor|arte de fundo|aviso global)\b/,
     "alterar e publicar as Configurações",
@@ -226,15 +216,7 @@ export const ACOES_COM_PERMISSAO = Object.freeze([
     "ver as Pessoas online",
     podeVerPessoasOnline,
     "ser administrador global ou Gestor",
-    "Fica no cabeçalho, ao lado das Mensagens.",
-  ),
-  acao(
-    "chat",
-    /\b(chat|mensagens?|conversa)\b/,
-    "usar as Mensagens (chat)",
-    podeUsarChat,
-    "a permissão Mensagens no seu grupo",
-    "O ícone das Mensagens fica no cabeçalho.",
+    "Fica no cabeçalho.",
   ),
 ]);
 

@@ -10,7 +10,7 @@ Duas entradas do menu (como Entrevistas), cada uma na própria `<section>` e com
   recurso, Modelos de resposta, filtros e a fila; a gaveta com todas as ações.
 
 Atalhos: no painel, "Analisar" (os mesmos filtros) e, no detalhe, "Analisar este recurso"; na
-análise, "Ver no painel". Levam o pedido por `pedirFiltro` e navegam por `irParaLink`. Vê a
+análise, "Ver no painel". Levam o pedido por `pedirFiltro` e navegam por `irParaTela`. Vê a
 análise quem edita Recursos ou dá o parecer jurídico (`canAnalisarRecursos`); o menu vem do banco
 (`20261009230000_analisar_recursos_no_menu.sql`). O legado chama `render()` ao navegar. Área = a
 atual do app; sessão, tema, aviso e tela cheia = os do app.

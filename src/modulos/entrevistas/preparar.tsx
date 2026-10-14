@@ -37,7 +37,7 @@ import {
 } from "../../lib/resumo-da-entrevista.ts";
 import { textoDaPontuacao } from "../../lib/roteiro-de-entrevista.ts";
 import { Aviso, EstadoVazio, Selo } from "../../ui/index.js";
-import { irParaLink } from "../chat/ponte.js";
+import { irParaTela } from "../../app/ir-para-tela.ts";
 import {
   BotaoIrPara,
   ConvocacaoDaClassificacao,
@@ -467,7 +467,7 @@ function PrepararDoEdital({
   }
   function ir(destino: DestinoDoResumo) {
     if (destino === "classificacao")
-      irParaLink({
+      irParaTela({
         view: "classificacao",
         edital: { id: dados.edital?.id, titulo: dados.edital?.edital || "" },
       });

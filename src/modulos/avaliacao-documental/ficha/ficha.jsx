@@ -45,8 +45,6 @@ import {
 import { motivosDoResultado } from "../../../lib/avaliacao-documental/motivos-do-resultado.ts";
 import { rotuloDaVersaoNaLista } from "../../../lib/nome-da-versao.ts";
 import { Aviso, Campo } from "../../../ui/index.js";
-import { compartilharNoChat } from "../../chat/ponte.js";
-import { usarChatLiberado } from "../../chat/usar-chat-liberado.js";
 import { CabecalhoDaFicha } from "./cabecalho-da-ficha.tsx";
 import { ConclusaoDaFicha } from "./conclusao-da-ficha.tsx";
 import { copiar, EnviosAnteriores } from "./empregare.tsx";
@@ -210,8 +208,6 @@ export function ConteudoDaFicha({
   const [aviso, setAviso] = useState("");
   const raiz = useRef(null);
   const avanco = useRef(null);
-  // "Compartilhar no chat" no "⋯" (o cartão da ficha vai para uma conversa).
-  const comChat = usarChatLiberado();
   const fichaId = aberta.ficha.id;
 
   useEffect(() => {
@@ -303,7 +299,7 @@ export function ConteudoDaFicha({
   /*
     Os atalhos valem na página inteira enquanto a ficha está aberta (sem
     precisar clicar nela antes), menos em campo de texto, com um modal aberto
-    ou com o foco em outro painel (chat, Aya).
+    ou com o foco em outro painel (Aya).
   */
   const teclar = useRef(null);
   teclar.current = null;
@@ -420,24 +416,9 @@ export function ConteudoDaFicha({
     ? { completa: true, texto: ficha.parecer, motivos: [] }
     : previaDoParecer(avaliacao, conferencia, lancamento);
 
-  const compartilhar = comChat
-    ? () => {
-        const ok = compartilharNoChat({
-          view: "avaliacao-documental",
-          area: st.dados.edital?.area || "",
-          edital: {
-            id: st.dados.edital?.id,
-            titulo: st.dados.edital?.rotulo || "",
-          },
-          ficha: { id: ficha.id, codigo: String(ficha.codigo ?? "") },
-        });
-        if (!ok) setAviso("Não foi possível compartilhar esta ficha");
-      }
-    : null;
   const maisAcoes = (
     <MaisAcoesDaFicha
       empregare={empregare}
-      aoCompartilhar={compartilhar}
       nivel={
         !desabilitado && st.dados.papel === "COORDENADOR"
           ? {

@@ -41,9 +41,8 @@ Só biblioteca padrão — não pesa na Vercel nem nos jobs.
 | `monitora.execucao`     | `disparo(...)` (AGENDA/MONITORA/GITHUB), `identificador(prefixo=…)`, `url_da_execucao()` e `resumir(titulo, linhas)` (GITHUB_STEP_SUMMARY)                  |
 
 Quem usa hoje: o robô da Empregare (`scripts/robo-empregare/`), as conferências
-(`scripts/conferencias/`), a pré-classificação da Avaliação documental (`scripts/pre_classificacao/`,
-com a conta em `monitora.avaliacao_documental`) e o expurgo diário dos anexos do chat
-(`scripts/expurgo_anexos_chat/`, com `monitora.chat.expurgo`).
+(`scripts/conferencias/`) e a pré-classificação da Avaliação documental (`scripts/pre_classificacao/`,
+com a conta em `monitora.avaliacao_documental`).
 
 | Módulo de domínio                                 | O que faz                                                                                                                                |
 | ------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
@@ -51,7 +50,6 @@ com a conta em `monitora.avaliacao_documental`) e o expurgo diário dos anexos d
 | `monitora.avaliacao_documental.pre_classificacao` | eliminação automática, Provisória por ART, tamanho do lote e "a linha anda" (cópia fiel de `pre-classificacao.js`)                       |
 | `monitora.avaliacao_documental.distribuicao`      | distribuição das fichas (menor carga, limites) e as fichas novas da distribuição inicial (cópia fiel de `distribuicao.js`)               |
 | `monitora.entrevistas.calculo`                    | nota por competência, total e parecer da entrevista, com ou sem aspectos (a regra de `FC_CALCULAR_ENTREVISTA` e de `calcularEntrevista`) |
-| `monitora.chat.expurgo`                           | tira do Storage, em lotes, os arquivos da fila de expurgo dos anexos do chat (API do Storage com a `service_role`)                       |
 
 ### Importar a base
 
@@ -187,41 +185,11 @@ menos pendentes (`distribuicao.atribuicoes_dos_novos`); o banco valida cada atri
 - **Log público:** contagens, códigos de vaga e de aviso e números de edital. O resultado por edital
   que vai ao banco é recusado se tiver `@` ou 11 dígitos seguidos.
 
-## Terceira entrega: expurgo diário dos anexos do chat
+## Terceira entrega: expurgo diário dos anexos do chat (saiu)
 
-Job `scripts/expurgo_anexos_chat/expurgo_anexos_chat.py`, workflow `expurgo-anexos-chat.yml`,
-migration `20261007250000_expurgo_diario_dos_anexos_do_chat.sql`. A retenção e o "Zerar mensagens"
-apagam as linhas dos anexos e põem o arquivo na fila `TB_EXPURGO_ANEXO_CHAT`; o Storage não aceita
-DELETE pelo SQL. Antes, só a seção Configurações › Mensagens (chat) tirava os arquivos, quando um
-administrador global a abria. Agora o job faz o mesmo todo dia, com a `service_role`:
-
-1. `preparar_expurgo_anexos_chat()` devolve até 100 caminhos da fila (e põe nela os arquivos
-   enviados e nunca anexados há mais de 1 dia);
-2. `DELETE /storage/v1/object/chat-anexos` remove pela API do Storage, em pedaços de 100 — só
-   caminho no formato do bucket (`<uuid>/<uuid>.<extensão>`), porque a `service_role` passa por cima
-   das políticas do bucket;
-3. `confirmar_expurgo_anexos_chat(caminhos)` marca como expurgado só o que de fato saiu de
-   `storage.objects`. O que falhou (pedido recusado, rede, arquivo que continua lá) fica na fila
-   para o dia seguinte (ou para a tela).
-
-Até 50 lotes (5.000 arquivos) por execução. Um caminho que falhou não é tentado de novo na mesma
-execução; se a fila só devolver caminhos já tentados (os 100 mais antigos falhando), a execução
-para e sai **PARCIAL** — confira no Status das atualizações.
-
-- **Permissão:** as duas RPCs aceitam também a `service_role` (`FC_CHAT_EXIGIR_ADMIN_OU_SERVICO`);
-  para quem usa o app continua só o administrador global.
-- **Quando roda:** todo dia às 6h30 de Brasília (9h30 UTC), pelo "Rodar agora" do Status das
-  atualizações e pelo "Run workflow".
-- **Modos:** `normal` e `seco` (só lê a fila e diz quantos sairiam no primeiro lote; não remove,
-  não confirma e não registra — a leitura da fila ainda põe nela os órfãos de mais de 1 dia).
-- **Registro:** `registrar_expurgo_anexos_chat` grava em `TL_EXPURGO_ANEXO_CHAT` quem disparou e
-  as contagens (lotes, removidos, confirmados, falhas, pendentes); `get_saude_das_cargas` devolve
-  as 10 últimas em `expurgo_chat`. Saída 0 concluída, 2 parcial, 1 erro.
-- **Log público:** só contagens — nunca caminho, nome de arquivo nem conteúdo. Mensagem de erro
-  passa por `sem_caminhos` (tira os uuids) além do mascaramento; o banco omite a que ainda trouxer
-  uuid, `@` ou 11 dígitos.
-- **Testes:** `tests/python/test_expurgo_anexos_chat.py` (lotes, falha parcial, seco, log sem
-  caminho) e `tests/expurgo-anexos-chat-migration.test.js`.
+O job `scripts/expurgo_anexos_chat/` e o workflow `expurgo-anexos-chat.yml` saíram com o chat
+(14/10/2026, `20261014120000_desligar_o_chat.sql`): sem chat não há anexo novo nem mensagem
+apagada, e a fila `TB_EXPURGO_ANEXO_CHAT` estava vazia. O histórico fica no git.
 
 ## Carga do banco: o que saiu do Postgres e o que vai para o Python (07/10/2026)
 
@@ -263,7 +231,7 @@ tarefas deixava todo o resto lento.
   cada linha que o sync grava em `TB_ANALISE_CURRICULAR` mexia em 19 índices.
 - **`get_monitoramento_dashboard_payload` sai** (`20261007220100`): ninguém no código chama desde
   #305; as chamadas eram de abas com o bundle antigo, que já tratava o erro.
-- **Realtime**: fora do chat (outro módulo), a tela assina só `TB_MONITORAMENTO_INDIGENA` (a
+- **Realtime**: a tela assina só `TB_MONITORAMENTO_INDIGENA` (a
   releitura quando um edital muda, que o usuário vê) — nada a cortar ali. O custo do Realtime é a
   leitura do WAL a cada ~1,5 s, que caiu com o item acima.
 - **Cálculo da entrevista em Python** (`monitora.entrevistas.calculo`, Decimal): os 15 casos

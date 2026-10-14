@@ -23,10 +23,8 @@ import {
 import { SecaoAparencia } from "./aparencia.jsx";
 import { InterruptorPessoal, SecaoComemoracoes } from "./comemoracoes.tsx";
 import { estadoDasConfiguracoes, SECOES_COM_SALVAR_PROPRIO } from "./estado.js";
-import { criarEstadoDasMensagensDoChat } from "./estado-das-mensagens-do-chat.js";
 import { criarImagensDaAparencia } from "./imagens.js";
 import { SecaoMarca } from "./marca.jsx";
-import { SecaoMensagensDoChat } from "./mensagens-do-chat.jsx";
 import { SecaoOperacao } from "./operacao.jsx";
 import { SecaoPaginaInicial } from "./pagina-inicial.jsx";
 import { SecaoPaineisExternos } from "./paineis-externos.jsx";
@@ -47,9 +45,7 @@ import { SecaoTelaDeAcesso } from "./tela-de-acesso.jsx";
   As seções (Marca, Página inicial, Tela de acesso, Aparência, Painéis
   externos, Operação e Comemorações) entram por portal no corpo da própria seção
   (`.config-secao__corpo`, criado por secoes.js). O estado é de
-  `estado.js`; as imagens da Aparência, de `imagens.js`. Mensagens (chat),
-  só do administrador global, também entra por portal, mas salva sozinha
-  (`estado-das-mensagens-do-chat.js`; a barra fixa some nela).
+  `estado.js`; as imagens da Aparência, de `imagens.js`.
 */
 
 const plural = (n, um, varios) => `${n} ${n === 1 ? um : varios}`;
@@ -570,7 +566,7 @@ const SECOES_NO_PORTAL = Object.freeze([
   ["comemoracoes", SecaoComemoracoes],
 ]);
 
-function Configuracoes({ estado, imagens, mensagensDoChat, alvos }) {
+function Configuracoes({ estado, imagens, alvos }) {
   return (
     <>
       <Cabecalho estado={estado} />
@@ -594,15 +590,6 @@ function Configuracoes({ estado, imagens, mensagensDoChat, alvos }) {
             alvos.operacao,
           )
         : null}
-      {alvos.mensagens && mensagensDoChat
-        ? createPortal(
-            <SecaoMensagensDoChat
-              estado={mensagensDoChat}
-              configuracoes={estado}
-            />,
-            alvos.mensagens,
-          )
-        : null}
     </>
   );
 }
@@ -624,9 +611,6 @@ export function montarConfiguracoes({
     configuracoes: estado,
     documento,
   }),
-  mensagensDoChat = criarEstadoDasMensagensDoChat({
-    supabase: getSupabaseClient,
-  }),
 } = {}) {
   const pagina = documento.getElementById("page-config");
   const raizDaTela = documento.getElementById("configuracoesApp");
@@ -643,16 +627,13 @@ export function montarConfiguracoes({
     <Configuracoes
       estado={estado}
       imagens={imagens}
-      mensagensDoChat={mensagensDoChat}
       alvos={Object.fromEntries(
-        [
-          ...SECOES_NO_PORTAL.map(([secao]) => secao),
-          "operacao",
-          "mensagens",
-        ].map((secao) => [secao, corpoDaSecao(pagina, secao)]),
+        [...SECOES_NO_PORTAL.map(([secao]) => secao), "operacao"].map(
+          (secao) => [secao, corpoDaSecao(pagina, secao)],
+        ),
       )}
     />,
     { nome: "Configurações" },
   );
-  return { estado, imagens, mensagensDoChat, raiz };
+  return { estado, imagens, raiz };
 }

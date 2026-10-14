@@ -45,7 +45,6 @@ acesso libera. O menu lateral mostra, por área, as abas ativas (catálogo em `T
 | Avaliação documental | `index.html` (`src/modulos/avaliacao-documental/`) | regra, equipe, pré-classificação e fila de fichas                                                         |
 | Classificação        | `index.html` (`src/modulos/classificacao/`)        | regras por edital, listas, sorteio, exportação e publicação na Lista de aprovados                         |
 | Lista de aprovados   | `index.html` (`src/modulos/aprovados/`)            | aprovados e convocação                                                                                    |
-| Mensagens            | cabeçalho (`src/modulos/chat/`)                    | conversas, anexos, respostas, menções, busca e compartilhamento de telas e fichas                         |
 | Aya                  | painel lateral (`src/modulos/aya/`)                | assistência e orientação contextual com a base de `docs/aya/`                                             |
 | Acessos              | `index.html` (`src/modulos/acessos/`)              | convites, grupos, contas desativadas e reativação                                                         |
 
