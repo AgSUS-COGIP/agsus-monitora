@@ -151,6 +151,8 @@ describe("espelho do eliminado", () => {
     expect(html).not.toMatch(/informativ/i);
     expect(html).toContain(NAO_SE_APLICA_NO_ELIMINADO);
     expect(html).not.toMatch(/autodeclarada/i);
+    // Sem o cabeçalho/rodapé do navegador (endereço do sistema, data).
+    expect(html).toContain("@page { size: A4; margin: 0; }");
     expect(html).toContain(RODAPE_DO_ESPELHO);
   });
 });

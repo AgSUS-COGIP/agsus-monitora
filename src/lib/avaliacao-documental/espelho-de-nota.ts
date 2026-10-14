@@ -341,11 +341,13 @@ const escapar = (valor: unknown) =>
       ] ?? c,
   );
 
+// @page sem margem: o navegador não imprime o cabeçalho/rodapé dele (data,
+// título e o endereço do sistema); a margem fica no padding da folha.
 const ESTILO = `
-  @page { size: A4; margin: 15mm 18mm 18mm 18mm; }
+  @page { size: A4; margin: 0; }
   * { box-sizing: border-box; }
   body { margin: 0; background: #fff; color: #111; font-family: Calibri, Carlito, "Segoe UI", Arial, sans-serif; font-size: 11pt; line-height: 1.4; }
-  .folha { max-width: 174mm; margin: 0 auto; padding: 8mm 0; }
+  .folha { max-width: 210mm; margin: 0 auto; padding: 15mm 18mm 18mm; }
   .timbrado { text-align: center; font-size: 8pt; line-height: 1.35; padding-bottom: 6pt; border-bottom: 1px solid #003b70; margin-bottom: 12pt; }
   .timbrado img { width: 22mm; height: auto; display: block; margin: 0 auto 6pt; }
   .timbrado p { margin: 0; text-align: center; }
