@@ -903,6 +903,22 @@ class PrioridadeDosAnexos(unittest.TestCase):
         pedidos = [("1", {"id": "1"}, ""), ("2", {"id": "2"}, "")]
         self.assertEqual(anexos.ordenar_pedidos(pedidos, None), (pedidos, None))
 
+    def test_resposta_incompleta_fora_de_lidas_e_relida_primeiro(self):
+        # 20261015040000: a resposta capturada pela metade não vem em "lidas"; o robô a relê (lote primeiro).
+        pedidos = [
+            ("A", {"id": "8044295", "token": "t"}, ""),
+            ("B", {"id": "9000001", "token": "t"}, ""),
+            ("C", {"id": "9000002", "token": "t"}, ""),
+        ]
+        prioridades = {
+            "A": {"prioridade": 1, "lidas": set()},
+            "B": {"prioridade": 2, "lidas": set()},
+            "C": {"prioridade": 1, "lidas": {"9000002"}},
+        }
+        fila, contagem = anexos.ordenar_pedidos(pedidos, prioridades)
+        self.assertEqual([r["id"] for _c, r, _p in fila], ["8044295", "9000001"])
+        self.assertEqual(contagem["ja_lidas"], 1)
+
     def test_lote_primeiro_pula_quem_nao_finalizou_e_nao_rele_a_mesma_resposta(self):
         logs = []
 
