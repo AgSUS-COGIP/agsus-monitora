@@ -1,5 +1,5 @@
 /*
-  Ensaio de 20261014120000_desligar_o_chat.sql: execute logo depois da
+  Ensaio de 20261014160000_desligar_o_chat.sql: execute logo depois da
   migration, na mesma transação, num banco de desenvolvimento. Termina em
   rollback. Confere que o que rodava sozinho parou e que nada foi apagado.
 */

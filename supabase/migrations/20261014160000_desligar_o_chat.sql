@@ -35,8 +35,8 @@
                  permissões gravadas: tirá-lo faria salvar_grupo_acesso apagar
                  as linhas dele.
 
-  Ensaio: supabase/ensaios/20261014120000_desligar_o_chat.sql
-  Rollback: supabase/rollback/20261014120000_desligar_o_chat.sql (com o
+  Ensaio: supabase/ensaios/20261014160000_desligar_o_chat.sql
+  Rollback: supabase/rollback/20261014160000_desligar_o_chat.sql (com o
   rollback, o workflow expurgo-anexos-chat.yml volta pelo git).
 */
 begin;

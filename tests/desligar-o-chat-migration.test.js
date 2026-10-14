@@ -5,11 +5,11 @@ import { CONTRATO_RPC } from "../src/lib/rpc-contrato.js";
 
 /*
   O chat saiu (14/10/2026, "vamos tirar o chat, ele pesa"): o front inteiro e,
-  no banco (20261014120000), o que rodava sozinho — sem apagar dado nenhum.
+  no banco (20261014160000), o que rodava sozinho — sem apagar dado nenhum.
   O ensaio (supabase/ensaios/) confere no banco; aqui, as invariantes do texto.
 */
 const ler = (f) => readFileSync(f, "utf8").replace(/\r\n/g, "\n");
-const NOME = "20261014120000_desligar_o_chat.sql";
+const NOME = "20261014160000_desligar_o_chat.sql";
 const MIGRATION = ler(`supabase/migrations/${NOME}`);
 const ROLLBACK = ler(`supabase/rollback/${NOME}`);
 const ENSAIO = ler(`supabase/ensaios/${NOME}`);

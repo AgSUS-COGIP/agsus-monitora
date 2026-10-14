@@ -1,4 +1,4 @@
--- Desfaz 20261014120000_desligar_o_chat.sql: devolve as agendas, o Realtime, as
+-- Desfaz 20261014160000_desligar_o_chat.sql: devolve as agendas, o Realtime, as
 -- RPCs, as políticas e o expurgo nos robôs (definições vivas de 14/10/2026).
 -- O workflow .github/workflows/expurgo-anexos-chat.yml e o front do chat voltam
 -- pelo git (revertendo o commit que tirou o chat).
