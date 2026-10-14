@@ -126,9 +126,8 @@ describe("espelho do eliminado", () => {
     expect(espelho.criterios).toEqual([]);
   });
 
-  it("notas: só a autodeclarada; a consolidada não se aplica", () => {
+  it("notas: sem a nota declarada; a consolidada não se aplica", () => {
     expect(espelho.notas).toEqual([
-      { rotulo: "Nota autodeclarada (antes da análise)", valor: "40,0" },
       {
         rotulo: "Nota consolidada (após a análise documental)",
         valor: NAO_SE_APLICA_NO_ELIMINADO,
@@ -151,6 +150,7 @@ describe("espelho do eliminado", () => {
     expect(html).not.toContain("Pontuação por critério");
     expect(html).not.toMatch(/informativ/i);
     expect(html).toContain(NAO_SE_APLICA_NO_ELIMINADO);
+    expect(html).not.toMatch(/autodeclarada/i);
     expect(html).toContain(RODAPE_DO_ESPELHO);
   });
 });

@@ -6,8 +6,9 @@
   navegador imprime ("Salvar como PDF") e nada fica guardado (nem no Storage).
 
   Dois modelos, escolhidos pelo resultado gravado da ficha:
-  - ELIMINADO (Inapto por requisito): sem pontos. Notas: só a autodeclarada;
-    a consolidada é "Não se aplica". Justificativa: os motivos da eliminação
+  - ELIMINADO (Inapto por requisito): sem pontos e sem a nota declarada
+    (pedido da COREs em 14/10): nas notas, só a consolidada, "Não se aplica".
+    Justificativa: os motivos da eliminação
     com o item do edital (motivosDoResultado, o mesmo texto da lateral da
     ficha), inclusive o "Outro motivo" descrito.
   - COM_PONTOS (Apto ou Inapto pela nota mínima): notas, a pontuação por
@@ -236,17 +237,25 @@ export function montarEspelho(entrada: EntradaDoEspelho): Espelho {
   const notaFinal = ehNumero(entrada.notaFinal)
     ? entrada.notaFinal
     : avaliacao.nota_final;
-  const notas: LinhaDoEspelho[] = [
-    {
-      rotulo: "Nota autodeclarada (antes da análise)",
-      valor: numero(autodeclarada),
-    },
-    {
-      rotulo: "Nota consolidada (após a análise documental)",
-      valor:
-        modelo === "ELIMINADO" ? NAO_SE_APLICA_NO_ELIMINADO : numero(notaFinal),
-    },
-  ];
+  // O eliminado no requisito não mostra a nota declarada: só "Não se aplica".
+  const notas: LinhaDoEspelho[] =
+    modelo === "ELIMINADO"
+      ? [
+          {
+            rotulo: "Nota consolidada (após a análise documental)",
+            valor: NAO_SE_APLICA_NO_ELIMINADO,
+          },
+        ]
+      : [
+          {
+            rotulo: "Nota autodeclarada (antes da análise)",
+            valor: numero(autodeclarada),
+          },
+          {
+            rotulo: "Nota consolidada (após a análise documental)",
+            valor: numero(notaFinal),
+          },
+        ];
 
   const criterios: CriterioDoEspelho[] = [];
   let justificativas: string[];
