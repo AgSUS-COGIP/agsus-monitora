@@ -15,11 +15,16 @@ mascaramento não reconhece. As RPCs que criam registro (`iniciar_*`) devem
 ser chamadas com `tentativas=1`: repetir depois de uma resposta perdida
 esbarra na execução que a primeira tentativa já abriu.
 
+Pede a resposta comprimida (Accept-Encoding: gzip): sem isso o urllib recebe o
+JSON cru, e a leitura dos jobs é a maior parte do egress do Supabase no plano
+gratuito (14/10/2026). A resposta gzip é descomprimida aqui.
+
 Funções da Vercel (api/*.py) NÃO usam este módulo: lá a chamada vai com o
 Bearer de quem pediu, para o banco decidir a permissão (ver
 docs/python-no-monitora.md).
 """
 
+import gzip
 import http.client
 import json
 import time
@@ -45,6 +50,16 @@ def texto_do_erro(texto):
     if not codigo and not mensagem:
         return "erro sem mensagem"
     return f"{codigo}: {mensagem}" if codigo and mensagem else (codigo or mensagem)
+
+
+def ler_corpo(resposta):
+    """O corpo da resposta em texto, descomprimido quando veio em gzip."""
+    dados = resposta.read()
+    cabecalhos = getattr(resposta, "headers", None)
+    codificacao = (cabecalhos.get("Content-Encoding") if cabecalhos else "") or ""
+    if "gzip" in codificacao.lower() or dados[:2] == b"\x1f\x8b":
+        dados = gzip.decompress(dados)
+    return dados.decode("utf-8", "replace")
 
 
 class ErroDoSupabase(Exception):
@@ -80,16 +95,17 @@ def chamar(config, funcao, corpo, tentativas=3, abrir=urllib.request.urlopen, es
             method="POST",
             headers={
                 "Content-Type": "application/json",
+                "Accept-Encoding": "gzip",
                 "apikey": config["chave"],
                 "Authorization": f"Bearer {config['chave']}",
             },
         )
         try:
             with abrir(pedido, timeout=tempo_limite) as resposta:
-                texto = resposta.read().decode("utf-8")
+                texto = ler_corpo(resposta)
                 return json.loads(texto) if texto else None
         except urllib.error.HTTPError as erro:
-            texto = erro.read().decode("utf-8", "replace")
+            texto = ler_corpo(erro)
             ultimo = ErroDoSupabase(funcao, erro.code, texto_do_erro(texto))
             if erro.code < 500:
                 break

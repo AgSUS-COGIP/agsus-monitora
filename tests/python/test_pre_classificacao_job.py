@@ -52,6 +52,13 @@ def candidato(i, art, situacao="Ativo"):
     }
 
 
+def compactar(c, pedidas):
+    """O inscrito como o banco devolve com p_colunas (20261014220000): só as pedidas, pela posição."""
+    saida = {k: v for k, v in c.items() if k != "colunas" and v is not None}
+    saida["c"] = {str(i): c["colunas"][n] for i, n in enumerate(pedidas) if n in c["colunas"]}
+    return saida
+
+
 class BancoFalso:
     def __init__(
         self,
@@ -76,9 +83,14 @@ class BancoFalso:
         self.chamadas.append((funcao, json.loads(json.dumps(corpo))))
         if funcao == "pre_classificacao_ler_editais":
             return {"hoje": "2026-10-06", "nao_encontrados": ["99/2099"], "editais": self.editais}
+        if funcao == "pre_classificacao_ler_colunas":
+            return {"colunas": sorted({k for cs in self.candidatos.values() for c in cs for k in c["colunas"]})}
         if funcao == "pre_classificacao_ler_candidatos":
+            candidatos = self.candidatos.get(corpo["p_vaga"], [])
+            if corpo.get("p_colunas") is not None:
+                candidatos = [compactar(c, corpo["p_colunas"]) for c in candidatos]
             return {
-                "candidatos": self.candidatos.get(corpo["p_vaga"], []),
+                "candidatos": candidatos,
                 "anterior": self.anterior.get(corpo["p_vaga"], {}),
                 "decisoes": self.decisoes,
             }
@@ -304,6 +316,8 @@ class Fluxo(unittest.TestCase):
         chamadas = []
 
         def banco(funcao, corpo):
+            if funcao == "pre_classificacao_ler_colunas":
+                return {"colunas": []}
             self.assertEqual(funcao, "pre_classificacao_ler_candidatos")
             chamadas.append(corpo)
             apos, limite = corpo.get("p_apos"), corpo["p_limite"]
@@ -416,6 +430,93 @@ class Fluxo(unittest.TestCase):
         )
         self.assertIn("sugestões da ficha: 1 candidato(s)", saida)
         self.assertNotIn("sugestoes", banco.de("finalizar_pre_classificacao")[0]["p_editais"][0])
+
+    def test_le_so_as_colunas_da_regra_e_o_resultado_e_o_mesmo(self):
+        """p_colunas (20261014220000): só as colunas que a regra olha; a gravação é idêntica à leitura completa."""
+        regra = {
+            **REGRA,
+            "provisoria": {
+                **REGRA["provisoria"],
+                "eliminacao_automatica": REGRA["provisoria"]["eliminacao_automatica"]
+                + [{"codigo": "SEM_MEDIO", "pergunta": "Você possui Ensino Médio", "quando": ["Não"], "motivo": "x"}],
+                "nota_declarada": [
+                    {"parcial": "CURSOS", "pergunta": "Selecione a pontuação", "tipo": "OPCAO", "pontos": {"10": 10}}
+                ],
+            },
+            "blocos": [
+                {"codigo": "MODALIDADE", "tipo": "MODALIDADE", "perguntas": ["Indique em qual sistema"]},
+                {"codigo": "CURSOS", "tipo": "CURSOS", "perguntas": ["Informe os cursos"]},
+            ],
+        }
+        edital = {**edital_93(), "regra": {"versao": 3, "situacao": "CONFERIDA", "configuracao": regra}}
+        candidatos = []
+        for i, (medio, pontos, sistema) in enumerate([("Sim", "10", "Ampla"), ("Não", "10", "PcD"), ("Sim", "", "")]):
+            c = candidato(i + 1, f"{20 + i},0/30,0")
+            c["colunas"].update(
+                {
+                    "Pergunta 5 - Você possui Ensino Médio completo?": medio,
+                    "Pergunta 9 - Selecione a pontuação relativa aos cursos": pontos,
+                    "Pergunta 11 - Indique em qual sistema de concorrência": sistema,
+                    "Pergunta 15 - Informe os cursos (nome e carga horária)": '"NR-10 120h"',
+                    "Justificativa - Pergunta 5": "longa " * 50,
+                    "MARCADORES": "x",
+                    "SITUAÇÃO - NIVEL MÉDIO": "Finalizado",
+                }
+            )
+            candidatos.append(c)
+
+        def gravacoes(banco):
+            rodar(banco, ["--editais", "93/2026"])
+            sem_execucao = [
+                [{k: v for k, v in g.items() if k != "p_execucao"} for g in banco.de(f)]
+                for f in ("gravar_pre_classificacao_vaga", "gravar_sugestoes_da_ficha")
+            ]
+            self.assertTrue(all(sem_execucao))
+            return sem_execucao
+
+        enxuto = BancoFalso([edital], {"179698": candidatos})
+        completo = BancoFalso([edital], {"179698": candidatos})
+        completo_chamar = completo.__call__
+
+        def sem_colunas(_cfg, funcao, corpo):
+            if funcao == "pre_classificacao_ler_colunas":
+                raise supabase_rpc.ErroDoSupabase(funcao, 404, "PGRST202: function not found")
+            return completo_chamar(_cfg, funcao, corpo)
+
+        sem_colunas.de = completo.de
+        self.assertEqual(gravacoes(enxuto), gravacoes(sem_colunas))
+        [pedido] = enxuto.de("pre_classificacao_ler_candidatos")
+        self.assertEqual(
+            sorted(pedido["p_colunas"]),
+            sorted(
+                [
+                    "SITUAÇÃO",
+                    "NOTA - Questionário",
+                    "SITUAÇÃO - NIVEL MÉDIO",
+                    "Pergunta 5 - Você possui Ensino Médio completo?",
+                    "Pergunta 9 - Selecione a pontuação relativa aos cursos",
+                    "Pergunta 11 - Indique em qual sistema de concorrência",
+                    "Pergunta 15 - Informe os cursos (nome e carga horária)",
+                ]
+            ),
+        )
+        # Banco antigo (sem pre_classificacao_ler_colunas): lê tudo, como antes.
+        self.assertNotIn("p_colunas", completo.de("pre_classificacao_ler_candidatos")[0])
+
+    def test_no_fim_do_robo_pula_o_edital_sem_mudanca(self):
+        sem_mudanca = {**edital_93(), "sem_mudanca": True}
+        banco = BancoFalso([sem_mudanca], CANDIDATOS)
+        codigo, saida = rodar(banco, ["--apos-robo"])
+        self.assertEqual(codigo, 0)
+        self.assertIn("Sem mudança desde a última pré-classificação de hoje", saida)
+        self.assertEqual(banco.de("iniciar_pre_classificacao"), [])
+        self.assertEqual(banco.de("pre_classificacao_ler_candidatos"), [])
+        # Com outro edital que mudou, só ele é recalculado.
+        fcc = {**edital_93(), "id": EFCC, "rotulo": "FCC"}
+        banco = BancoFalso([sem_mudanca, fcc], CANDIDATOS)
+        codigo, saida = rodar(banco, ["--apos-robo"])
+        self.assertEqual(codigo, 0)
+        self.assertEqual({g["p_edital"] for g in banco.de("gravar_pre_classificacao_vaga")}, {EFCC})
 
     def test_sem_bloco_de_itens_nao_grava_sugestoes(self):
         banco = BancoFalso([edital_93()], CANDIDATOS)

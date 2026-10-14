@@ -31,7 +31,11 @@ const ANALISES_INCREMENTAL_CFG = {
   MAX_CONFIRMATION_CHECKS: 3,
   // [nao-trava] Sem progresso por mais que isto, o sync guardado e descartado e outro comeca.
   // Mesmo limite do banco (20261007170000): la a execucao parada sai como "encerrada por inatividade".
-  MAX_SEM_PROGRESSO_MS: 30 * 60 * 1000
+  MAX_SEM_PROGRESSO_MS: 30 * 60 * 1000,
+  // [sem-mudanca] Planilha igual ao ultimo envio confirmado: nada e enviado (nenhuma chamada ao banco)
+  // por ate MAX_SEM_ENVIO_MS; depois disso o sync roda mesmo igual, para o banco reconciliar.
+  PROP_ULTIMO_ENVIO: 'ANALISES_SYNC_INCREMENTAL_ULTIMO_V1',
+  MAX_SEM_ENVIO_MS: 6 * 60 * 60 * 1000
 };
 
 function syncAnalisesCurricularesIncremental() {
@@ -59,6 +63,7 @@ function limparEstadoLocalAnalisesIncremental(confirmacao) {
     throw new Error('Use confirmaracao LIMPAR_ESTADO_LOCAL apenas depois de conferir o sync remoto.');
   }
   PropertiesService.getScriptProperties().deleteProperty(ANALISES_INCREMENTAL_CFG.PROP_STATE);
+  PropertiesService.getScriptProperties().deleteProperty(ANALISES_INCREMENTAL_CFG.PROP_ULTIMO_ENVIO); // [sem-mudanca]
   limparContinuacoesAnalisesIncremental_();
   return { ok: true };
 }
@@ -77,6 +82,27 @@ function executarSyncAnalisesCurricularesIncremental_(options) {
 
     let state = lerEstadoAnalisesIncremental_();
     let remotePending = null;
+
+    // [sem-mudanca] Sem sync guardado e com a planilha igual ao ultimo envio confirmado (ha menos
+    // de 6 h): nada a enviar e nenhuma chamada ao banco. Em 14/10/2026 eram ~220 syncs por dia,
+    // quase todos sem nenhuma linha alterada, cada um com dezenas de requisicoes.
+    let snapshotPrevio = null;
+    if (!state && !opts.resumeOnly) {
+      snapshotPrevio = montarSnapshotAnalisesIncremental_();
+      if (pularSemMudancaAnalisesIncremental_(lerUltimoEnvioAnalisesIncremental_(), snapshotPrevio.snapshotHash, Date.now())) {
+        const igual = {
+          ok: true,
+          status: 'processado',
+          sem_mudanca: true,
+          sync_id: null,
+          modo: ANALISES_INCREMENTAL_CFG.MODE,
+          total_ativos_local: snapshotPrevio.fatoAtivo.length,
+          motivo: 'Planilha igual ao ultimo envio confirmado; nada enviado ao banco.'
+        };
+        Logger.log('Incremental: ' + igual.motivo);
+        return igual;
+      }
+    }
 
     if (!state) {
       remotePending = consultarQualquerSyncPendenteAnalises_();
@@ -112,7 +138,7 @@ function executarSyncAnalisesCurricularesIncremental_(options) {
       salvarEstadoAnalisesIncremental_(state);
     }
 
-    const snapshot = montarSnapshotAnalisesIncremental_();
+    const snapshot = snapshotPrevio || montarSnapshotAnalisesIncremental_(); // [sem-mudanca]
     deadline = Math.max(deadline, Date.now() + ANALISES_INCREMENTAL_CFG.MIN_WORK_MS); // [sempre-avanca]
 
     // [nao-trava] Antes de tudo, o banco diz se o sync guardado ainda pode seguir. Se nao pode
@@ -481,6 +507,7 @@ function concluirAnalisesIncremental_(state, remote, snapshot) {
 
   PropertiesService.getScriptProperties().deleteProperty(ANALISES_INCREMENTAL_CFG.PROP_STATE);
   limparContinuacoesAnalisesIncremental_();
+  salvarUltimoEnvioAnalisesIncremental_(state.snapshot_hash || snapshot.snapshotHash); // [sem-mudanca]
 
   const result = {
     ok: true,
@@ -674,6 +701,33 @@ function descartarEstadoAnalisesIncremental_(state, motivo) {
   novo.descartado_anterior = { sync_id: state.sync_id, phase: state.phase, motivo: motivo, em: novo.created_at };
   salvarEstadoAnalisesIncremental_(novo);
   return novo;
+}
+
+/**
+ * [sem-mudanca] Pula o sync? So com o ultimo envio confirmado (hash da planilha e quando) igual ao
+ * hash de agora e ha menos de MAX_SEM_ENVIO_MS. Funcao pura, testada em
+ * tests/apps-script-analises-incremental.test.js.
+ */
+function pularSemMudancaAnalisesIncremental_(ultimo, snapshotHash, agoraMs) {
+  if (!ultimo || !ultimo.hash || !snapshotHash || ultimo.hash !== snapshotHash) return false;
+  const em = Date.parse(ultimo.em || '');
+  return isFinite(em) && agoraMs - em >= 0 && agoraMs - em < ANALISES_INCREMENTAL_CFG.MAX_SEM_ENVIO_MS;
+}
+
+function lerUltimoEnvioAnalisesIncremental_() {
+  const raw = PropertiesService.getScriptProperties().getProperty(ANALISES_INCREMENTAL_CFG.PROP_ULTIMO_ENVIO);
+  if (!raw) return null;
+  try {
+    return JSON.parse(raw);
+  } catch (err) {
+    return null;
+  }
+}
+
+function salvarUltimoEnvioAnalisesIncremental_(hash) {
+  if (!hash) return;
+  PropertiesService.getScriptProperties().setProperty(ANALISES_INCREMENTAL_CFG.PROP_ULTIMO_ENVIO,
+    JSON.stringify({ hash: hash, em: new Date().toISOString() }));
 }
 
 function lerEstadoAnalisesIncremental_() {

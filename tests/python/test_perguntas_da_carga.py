@@ -198,6 +198,48 @@ class PassoDoRobo(unittest.TestCase):
         self.assertIn("114/2026", log[0])
         self.assertNotIn("PcD", " ".join(log))  # o log público leva só contagens
 
+    def test_le_compacto_e_da_o_mesmo_resumo(self):
+        """Com p_compacto (20261014220000) o nome da coluna vem uma vez; o resumo é o mesmo."""
+        p6 = "Pergunta 6 - Você possui experiência?"
+        completas = [{P5: "PcD"}, {P5: "PcD", p6: "Sim"}, {p6: "Sim"}]
+        pedidos, gravados = [], []
+        edital = {"edital": "e1", "numero": "114/2026", "hash": "h1", "vagas": ["1"], "colunas": [P5, p6]}
+
+        def chamar(_config, funcao, corpo, tentativas=3):
+            if funcao == "listar_resumos_pergunta_pendentes":
+                return {"editais": [edital]}
+            if funcao == "ler_respostas_pergunta_vaga":
+                pedidos.append(corpo)
+                linhas = [["PcD", None], ["PcD", "Sim"], [None, "Sim"]]
+                return {"candidatos": 3, "colunas": [P5, p6], "linhas": linhas}
+            if funcao == "gravar_resumo_pergunta_edital":
+                gravados.append(corpo["p_perguntas"])
+                return {}
+            raise AssertionError(funcao)
+
+        resumo_das_perguntas.resumir_editais({}, lambda _: None, chamar)
+        self.assertTrue(pedidos[0]["p_compacto"])
+        self.assertEqual(gravados[0], resumir_perguntas([P5, p6], completas))
+
+    def test_banco_sem_p_compacto_le_como_antes(self):
+        pedidos = []
+        edital = {"edital": "e1", "numero": "114/2026", "hash": "h1", "vagas": ["1"], "colunas": [P5]}
+
+        def chamar(_config, funcao, corpo, tentativas=3):
+            if funcao == "listar_resumos_pergunta_pendentes":
+                return {"editais": [edital]}
+            if funcao == "ler_respostas_pergunta_vaga":
+                pedidos.append(corpo)
+                if "p_compacto" in corpo:
+                    raise supabase_rpc.ErroDoSupabase(funcao, 404, "PGRST202: function not found")
+                return {"candidatos": 2, "linhas": [{P5: "PcD"}, {P5: "PcD"}]}
+            if funcao == "gravar_resumo_pergunta_edital":
+                return {}
+            raise AssertionError(funcao)
+
+        self.assertEqual(resumo_das_perguntas.resumir_editais({}, lambda _: None, chamar), (1, 0))
+        self.assertEqual(pedidos, [{"p_vaga": "1", "p_compacto": True}, {"p_vaga": "1"}])
+
     def test_carga_que_mudou_no_meio_fica_para_a_proxima(self):
         gravacoes, log = [], []
         feitos, falhas = resumo_das_perguntas.resumir_editais({}, log.append, self._chamar(gravacoes, recusar="e1"))
