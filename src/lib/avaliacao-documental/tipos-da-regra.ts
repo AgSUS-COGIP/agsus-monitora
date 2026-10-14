@@ -117,6 +117,8 @@ export type Bloco = {
   extras?: ItemExtra[];
   area?: string;
   requisitos?: RequisitoDoCargo[];
+  /** O bloco não se aplica ao cargo da vaga (a ficha mostra "Não se aplica a este cargo"). */
+  nao_se_aplica?: true;
 };
 
 export type MapaDeRespostas = Record<string, number>;

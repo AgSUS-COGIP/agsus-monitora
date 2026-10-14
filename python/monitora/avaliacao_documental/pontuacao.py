@@ -13,7 +13,7 @@ lados (vitest e pytest). Mudou lá, muda aqui.
 
 As diferenças por cargo (regra.por_cargo) seguem
 src/lib/avaliacao-documental/regra-por-cargo.ts: a regra da vaga
-(regra_da_vaga) põe teto, faixas, extras, área exigida e requisitos do cargo
+(regra_da_vaga) põe teto, faixas, extras, área exigida, requisitos do cargo e "não se aplica"
 por cima do nível (cargo > nível > padrão).
 """
 
@@ -175,6 +175,8 @@ def bloco_do_cargo(bloco, sobrescrita, nivel):
     parte = _objeto(bloco.get("por_nivel")).get("" if nivel is None else str(nivel))
     r = {**bloco, **parte} if isinstance(parte, dict) else {**bloco}
     r.pop("por_nivel", None)
+    if sobrescrita.get("nao_se_aplica") is True:
+        r["nao_se_aplica"] = True
     if "teto" in sobrescrita:
         r["teto"] = sobrescrita.get("teto")
     if _lista(sobrescrita.get("faixas")):
@@ -272,7 +274,8 @@ def _avaliar_blocos(regra, candidato, situacao_padrao):
     for bloco in regra["blocos"]:
         lancado = _objeto(_objeto(candidato.get("blocos")).get(bloco.get("codigo")))
         condicao = bloco.get("condicao") or ("INDIGENA" if bloco.get("tipo") == "PONTUACAO" else None)
-        aplica = _condicao_vale(condicao, candidato)
+        # O bloco que não se aplica ao cargo da vaga (por_cargo → nao_se_aplica).
+        aplica = bloco.get("nao_se_aplica") is not True and _condicao_vale(condicao, candidato)
         situacao = (lancado.get("situacao") or situacao_padrao) if aplica else "NAO_SE_APLICA"
         escolhidos = []
         if situacao in ("NAO_CONFORME", "NAO_ENVIADO"):
