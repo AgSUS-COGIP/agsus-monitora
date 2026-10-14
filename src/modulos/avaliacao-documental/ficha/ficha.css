@@ -605,6 +605,12 @@
   letter-spacing: 0.02em;
   text-transform: uppercase;
 }
+/* O questionário da vaga não tem pergunta para o item (respostas-do-candidato.ts). */
+.avd-ficha-sem-pergunta {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--text-caption);
+}
 /* Os arquivos da pergunta de anexo: um link direto por arquivo, com o nome. */
 .avd-ficha-arquivos {
   display: flex;

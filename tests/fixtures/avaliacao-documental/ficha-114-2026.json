@@ -1,0 +1,1188 @@
+{
+  "_sobre": "Regra vigente (v18) do Edital 114/2026 e, por vaga, as respostas que FC_RESPOSTAS_DA_FICHA devolve para um candidato (só as perguntas ligadas pela regra; 14/10/2026). Sem dado pessoal.",
+  "regra": {
+    "lote": {
+      "base": "NOTA_MINIMA",
+      "fixo": null,
+      "multiplo": null,
+      "inclui_cr": true,
+      "linha_anda": false,
+      "item_edital": "8.2.6",
+      "nota_minima": 10,
+      "por_modalidade": false,
+      "inclui_empatados": true,
+      "publica_reposicao": false
+    },
+    "corte": {
+      "fonte": "REGRA_CLASSIFICACAO",
+      "item_edital": "8.2.6"
+    },
+    "blocos": [
+      {
+        "tipo": "DOCUMENTO",
+        "codigo": "IDENTIDADE",
+        "titulo": "Documento de identificação oficial com foto",
+        "efeitos": {
+          "NAO_ENVIADO": "ELIMINA",
+          "NAO_CONFORME": "ELIMINA"
+        },
+        "motivos": [
+          {
+            "texto": "Documento de identificação fora da lista do subitem 6.5 (ex.: certidão, CPF, título de eleitor, carteira de estudante).",
+            "codigo": "NAO_ACEITO",
+            "efeito": "ELIMINA",
+            "item_edital": "6.5.1"
+          },
+          {
+            "texto": "Documento de identificação ilegível, não identificável ou danificado.",
+            "codigo": "ILEGIVEL",
+            "efeito": "ELIMINA",
+            "item_edital": "6.5.1"
+          },
+          {
+            "texto": "O candidato não apresentou documento de identificação conforme previsto no subitem 6.5 do edital, sendo eliminado do processo seletivo.",
+            "codigo": "SEM_IDENTIDADE_6_5",
+            "item_edital": "6.5.2"
+          }
+        ],
+        "perguntas": [
+          "Anexe o documento de identificação com foto",
+          "Anexe um documento de identificação com foto"
+        ],
+        "item_edital": "6.5; 8.2.10.8"
+      },
+      {
+        "tipo": "DOCUMENTO",
+        "codigo": "ESCOLARIDADE",
+        "titulo": "Formação exigida pela vaga (diploma ou certificado, frente e verso)",
+        "efeitos": {
+          "NAO_ENVIADO": "ELIMINA",
+          "NAO_CONFORME": "ELIMINA"
+        },
+        "motivos": [
+          {
+            "texto": "Não comprovou a formação acadêmica exigida para a vaga.",
+            "codigo": "NAO_COMPROVADA",
+            "efeito": "ELIMINA",
+            "item_edital": "8.2.1"
+          },
+          {
+            "texto": "Diploma ou certificado sem frente ou verso.",
+            "codigo": "SEM_FRENTE_VERSO",
+            "efeito": "ELIMINA",
+            "item_edital": "6.6.1"
+          },
+          {
+            "texto": "Curso diverso do exigido para a vaga.",
+            "codigo": "CURSO_DIVERSO",
+            "efeito": "ELIMINA",
+            "item_edital": "8.2.1"
+          },
+          {
+            "texto": "Diploma ou certificado ilegível.",
+            "codigo": "DIPLOMA_ILEGIVEL",
+            "item_edital": "6.6.1"
+          },
+          {
+            "texto": "Documentos anexados em campos incorretos não foram considerados na análise.",
+            "codigo": "CAMPO_INCORRETO",
+            "item_edital": "6.6.5"
+          },
+          {
+            "texto": "Documento em desacordo com formato PDF ou tamanho máximo de 14 MB.",
+            "codigo": "FORA_DO_FORMATO",
+            "item_edital": "6.6.6"
+          },
+          {
+            "texto": "Documentação recusada devido à ausência do documento comprobatório (ex: certidão de casamento, sentença judicial) que justifique a alteração de nome do(a) candidato(a). ",
+            "codigo": "NOME_ALTERADO_SEM_DOCUMENTO",
+            "item_edital": "8.2.10.7"
+          }
+        ],
+        "perguntas": [
+          "Você possui Ensino Médio completo",
+          "Anexe a comprovação de conclusão de Nível Médio",
+          "Anexe a comprovação de conclusão do Nível Médio",
+          "Você possui Curso Técnico na área da vaga",
+          "Anexe a comprovação de Nível Técnico",
+          "Você possui Graduação na área da vaga",
+          "Anexe a comprovação de Nível Superior"
+        ],
+        "item_edital": "8.2.1; 8.2.10.8"
+      },
+      {
+        "tipo": "DOCUMENTO",
+        "codigo": "REQUISITO_DO_CARGO",
+        "titulo": "Requisito específico do cargo",
+        "efeitos": {
+          "NAO_ENVIADO": "ELIMINA",
+          "NAO_CONFORME": "ELIMINA"
+        },
+        "motivos": [],
+        "perguntas": [
+          "Você possui CNH Categoria B",
+          "Anexe aqui sua CNH Categoria B",
+          "Você possui CNH Categoria D",
+          "Anexe aqui sua CNH Categoria D",
+          "Você possui curso de direção defensiva",
+          "Anexe o comprovante de conclusão do curso de direção defensiva",
+          "Você possui curso de especialização ou capacitação em Cromatografia Gasosa",
+          "Anexe o comprovante de conclusão de especialização ou capacitação em Cromatografia Gasosa"
+        ],
+        "item_edital": "2; 3.1 i; 8.2.10.8"
+      },
+      {
+        "tipo": "COTA",
+        "codigo": "COTA_PP",
+        "titulo": "Pretos e pardos (autodeclaração, Anexo IV; foto e vídeo, Anexo V; sem heteroidentificação, 5.7.8)",
+        "efeitos": {
+          "NAO_ENVIADO": "SEGUE_AMPLA",
+          "NAO_CONFORME": "SEGUE_AMPLA"
+        },
+        "motivos": [
+          {
+            "texto": "Não anexou a autodeclaração de pessoa preta ou parda conforme o modelo do Anexo IV (subitem 5.7.1).",
+            "codigo": "SEM_AUTODECLARACAO",
+            "item_edital": "5.7.1 e Anexo IV"
+          },
+          {
+            "texto": "Autodeclaração fora do modelo do Anexo IV, sem assinatura ou com preenchimento incompleto (subitens 5.7.1 e 5.7.4).",
+            "codigo": "AUTODECLARACAO_INCOMPLETA",
+            "item_edital": "5.7.1, 5.7.4 e Anexo IV"
+          },
+          {
+            "texto": "Não anexou a foto (de frente e de perfil) conforme as instruções do Anexo V (subitem 5.7.3).",
+            "codigo": "SEM_FOTO",
+            "item_edital": "5.7.3 e Anexo V"
+          },
+          {
+            "texto": "Foto ilegível ou em desacordo com as instruções do Anexo V (subitem 5.7.3).",
+            "codigo": "FOTO_FORA_DO_PADRAO",
+            "item_edital": "5.7.3 e Anexo V"
+          },
+          {
+            "texto": "Não enviou o vídeo conforme as instruções do Anexo V (subitem 5.7.3).",
+            "codigo": "SEM_VIDEO",
+            "item_edital": "5.7.3 e Anexo V"
+          },
+          {
+            "texto": "Vídeo em desacordo com as instruções do Anexo V (fundo, duração ou conteúdo) (subitem 5.7.3).",
+            "codigo": "VIDEO_FORA_DO_PADRAO",
+            "item_edital": "5.7.3 e Anexo V"
+          },
+          {
+            "texto": "Documento ilegível ou incompleto, que não permite a identificação das informações (subitem 6.6.1).",
+            "codigo": "DOCUMENTO_ILEGIVEL",
+            "item_edital": "6.6.1"
+          },
+          {
+            "texto": "Documento anexado em campo incorreto da plataforma; não foi considerado para análise (subitem 6.6.5).",
+            "codigo": "CAMPO_INCORRETO",
+            "item_edital": "6.6.5"
+          }
+        ],
+        "condicao": "MODALIDADE=PP",
+        "perguntas": [
+          "Candidatos às vagas destinadas a Pretos ou Pardos e Quilombolas",
+          "Candidatos concorrendo às vagas destinadas a Pretos ou Pardos, grave um vídeo",
+          "Candidatos concorrendo às vagas destinadas a Pretos ou Pardos, anexe uma foto"
+        ],
+        "item_edital": "5.7.1"
+      },
+      {
+        "tipo": "COTA",
+        "codigo": "COTA_PI",
+        "titulo": "Indígena (Anexos IV e VI; verificação documental complementar)",
+        "efeitos": {
+          "NAO_ENVIADO": "SEGUE_AMPLA",
+          "NAO_CONFORME": "SEGUE_AMPLA"
+        },
+        "motivos": [
+          {
+            "texto": "Não anexou a autodeclaração conforme o modelo do Anexo IV (subitem 5.7.2).",
+            "codigo": "SEM_AUTODECLARACAO",
+            "item_edital": "5.7.2 e Anexo IV"
+          },
+          {
+            "texto": "Não enviou a declaração de pertencimento étnico emitida pelo grupo indígena, conforme o modelo do Anexo VI (subitens 5.7.2 e 5.7.5).",
+            "codigo": "SEM_DECLARACAO_PERTENCIMENTO",
+            "item_edital": "5.7.5 e Anexo VI"
+          },
+          {
+            "texto": "Declaração de pertencimento étnico sem a assinatura de liderança local (subitem 5.7.5).",
+            "codigo": "DECLARACAO_SEM_ASSINATURA",
+            "item_edital": "5.7.5"
+          },
+          {
+            "texto": "Declaração de pertencimento étnico em desacordo com o modelo do Anexo VI (subitem 5.7.5).",
+            "codigo": "DECLARACAO_FORA_DO_MODELO",
+            "item_edital": "5.7.5 e Anexo VI"
+          },
+          {
+            "texto": "Documento ilegível ou incompleto, que não permite a identificação das informações (subitem 6.6.1).",
+            "codigo": "DOCUMENTO_ILEGIVEL",
+            "item_edital": "6.6.1"
+          },
+          {
+            "texto": "Documento anexado em campo incorreto da plataforma; não foi considerado para análise (subitem 6.6.5).",
+            "codigo": "CAMPO_INCORRETO",
+            "item_edital": "6.6.5"
+          }
+        ],
+        "condicao": "MODALIDADE=PI",
+        "perguntas": [
+          "Para candidatos que se declaram indígenas, anexe sua Declaração de Pertencimento Étnico"
+        ],
+        "item_edital": "5.7.5"
+      },
+      {
+        "tipo": "COTA",
+        "codigo": "COTA_PQ",
+        "titulo": "Quilombola (Anexos IV e VII ou certificado da FCP)",
+        "efeitos": {
+          "NAO_ENVIADO": "SEGUE_AMPLA",
+          "NAO_CONFORME": "SEGUE_AMPLA"
+        },
+        "motivos": [
+          {
+            "texto": "Não anexou a autodeclaração conforme o modelo do Anexo IV (subitem 5.7.2).",
+            "codigo": "SEM_AUTODECLARACAO",
+            "item_edital": "5.7.2 e Anexo IV"
+          },
+          {
+            "texto": "Não enviou a declaração de pertencimento emitida e assinada por liderança ou associação local (Anexo VII) nem o certificado de reconhecimento do território emitido pela Fundação Cultural Palmares (subitem 5.7.6).",
+            "codigo": "SEM_PERTENCIMENTO_OU_FCP",
+            "item_edital": "5.7.6 e Anexo VII"
+          },
+          {
+            "texto": "Declaração de pertencimento sem a assinatura de liderança ou associação local (subitem 5.7.6).",
+            "codigo": "DECLARACAO_SEM_ASSINATURA",
+            "item_edital": "5.7.6"
+          },
+          {
+            "texto": "Declaração de pertencimento em desacordo com o modelo do Anexo VII (subitem 5.7.6).",
+            "codigo": "DECLARACAO_FORA_DO_MODELO",
+            "item_edital": "5.7.6 e Anexo VII"
+          },
+          {
+            "texto": "Documento ilegível ou incompleto, que não permite a identificação das informações (subitem 6.6.1).",
+            "codigo": "DOCUMENTO_ILEGIVEL",
+            "item_edital": "6.6.1"
+          },
+          {
+            "texto": "Documento anexado em campo incorreto da plataforma; não foi considerado para análise (subitem 6.6.5).",
+            "codigo": "CAMPO_INCORRETO",
+            "item_edital": "6.6.5"
+          }
+        ],
+        "condicao": "MODALIDADE=PQ",
+        "perguntas": [
+          "Candidatos às vagas destinadas a Pretos ou Pardos e Quilombolas",
+          "Para candidatos que se declaram quilombolas, anexe sua Declaração de Pertencimento Étnico"
+        ],
+        "item_edital": "5.7.6"
+      },
+      {
+        "tipo": "COTA",
+        "codigo": "COTA_PCD",
+        "titulo": "Pessoa com deficiência (laudo e declaração de capacidade laborativa)",
+        "efeitos": {
+          "CONFORME": "ENCAMINHA_PERICIA",
+          "NAO_ENVIADO": "SEGUE_AMPLA",
+          "NAO_CONFORME": "SEGUE_AMPLA"
+        },
+        "motivos": [
+          {
+            "texto": "Não enviou o laudo médico (ou documentação caracterizadora) que ateste a condição de pessoa com deficiência (subitens 5.1.5, alínea b, e 5.1.12.8, alínea a).",
+            "codigo": "SEM_LAUDO",
+            "item_edital": "5.1.5 b; 5.1.12.8 a"
+          },
+          {
+            "texto": "A documentação caracterizadora não informa a espécie e o grau ou o nível da deficiência (subitem 5.1.7).",
+            "codigo": "LAUDO_SEM_ESPECIE_E_GRAU",
+            "item_edital": "5.1.7"
+          },
+          {
+            "texto": "A documentação caracterizadora não tem a identificação do(a) candidato(a), a data da emissão, a assinatura do profissional responsável (física com carimbo, ou eletrônica com mecanismo de verificação de autenticidade) ou o número de inscrição no Conselho Regional Profissional (subitem 5.1.7).",
+            "codigo": "LAUDO_SEM_IDENTIFICACAO_MEDICA",
+            "item_edital": "5.1.7"
+          },
+          {
+            "texto": "Documentação caracterizadora emitida há mais de 36 meses da data de publicação do edital, fora dos casos de Transtorno do Espectro Autista ou de deficiência permanente (subitens 5.1.9 e 5.1.12.8, alínea b).",
+            "codigo": "LAUDO_FORA_DO_PRAZO",
+            "item_edital": "5.1.9; 5.1.12.8 b"
+          },
+          {
+            "texto": "Não enviou a declaração expressa de capacidade laborativa para o exercício das atividades relacionadas à função pretendida (subitem 5.1.5, alínea b).",
+            "codigo": "SEM_DECLARACAO_CAPACIDADE",
+            "item_edital": "5.1.5 b"
+          },
+          {
+            "texto": "A condição descrita não se enquadra como deficiência nos termos do subitem 5.1.4 (Lei nº 13.146/2015, Decreto nº 3.298/1999, Lei nº 12.764/2012, Lei nº 14.126/2021 e Lei nº 14.768/2023).",
+            "codigo": "DEFICIENCIA_NAO_ENQUADRADA",
+            "item_edital": "5.1.4"
+          },
+          {
+            "texto": "Imagem do documento parcial ou totalmente ilegível, sem permitir a plena identificação das informações (subitem 5.1.8).",
+            "codigo": "DOCUMENTO_ILEGIVEL",
+            "item_edital": "5.1.8"
+          },
+          {
+            "texto": "Documento anexado em campo incorreto da plataforma; não foi considerado para análise (subitem 6.6.5).",
+            "codigo": "CAMPO_INCORRETO",
+            "item_edital": "6.6.5"
+          }
+        ],
+        "condicao": "MODALIDADE=PCD",
+        "perguntas": [
+          "Os candidatos que concorrem às vagas destinadas a PcD devem anexar aqui o laudo médico"
+        ],
+        "item_edital": "5.1.5"
+      },
+      {
+        "tipo": "DOCUMENTO",
+        "codigo": "REGISTRO_CONSELHO",
+        "titulo": "Registro ativo no conselho de classe, quando exigido",
+        "efeitos": {
+          "NAO_ENVIADO": "ELIMINA",
+          "NAO_CONFORME": "ELIMINA"
+        },
+        "motivos": [
+          {
+            "texto": "Não apresentou registro ativo no conselho de classe exigido para a vaga.",
+            "codigo": "SEM_REGISTRO",
+            "efeito": "ELIMINA",
+            "item_edital": "6.4"
+          }
+        ],
+        "perguntas": [
+          "Você possui registro profissional ativo",
+          "Anexe o comprovante do seu registro profissional"
+        ],
+        "item_edital": "6.4"
+      },
+      {
+        "teto": 10,
+        "tipo": "TITULOS",
+        "codigo": "FORMACAO",
+        "titulo": "Titulação acadêmica (a maior)",
+        "efeitos": {},
+        "motivos": [
+          {
+            "texto": "Certificado de pós-graduação lato sensu sem a carga horária mínima de 360h não foi pontuado.",
+            "codigo": "LATO_SENSU_SEM_CH",
+            "item_edital": "8.2.10.4"
+          },
+          {
+            "texto": "Título exigido como requisito do cargo (ex.: especialização em Cromatografia Gasosa nos cargos 5 a 8) não é pontuado.",
+            "codigo": "REQUISITO_NAO_PONTUA",
+            "item_edital": "8.2.10.5"
+          },
+          {
+            "texto": "Pontuação não atribuída devido à ausência do documento comprobatório (ex: certidão de casamento, sentença judicial) que justifique a alteração de nome do(a) candidato(a). ",
+            "codigo": "NOME_ALTERADO_SEM_DOCUMENTO",
+            "item_edital": "8.2.10.7"
+          },
+          {
+            "texto": "Não apresentou diploma ou certificado da titulação acadêmica (especialização, mestrado ou doutorado) conforme o subitem 8.2.10.1",
+            "codigo": "MOTIVO_4",
+            "item_edital": "8.2.10.1"
+          }
+        ],
+        "parcial": "FORMACAO",
+        "perguntas": [
+          "Qual seu Nível de Titulação Acadêmica",
+          "Anexe seu comprovante de Titulação"
+        ],
+        "cumulativa": false,
+        "item_edital": "8.2.6",
+        "pontos_por_nivel": {
+          "superior": [
+            {
+              "pontos": 5,
+              "titulo": "ESPECIALIZACAO"
+            },
+            {
+              "pontos": 8,
+              "titulo": "MESTRADO"
+            },
+            {
+              "pontos": 10,
+              "titulo": "DOUTORADO"
+            }
+          ]
+        }
+      },
+      {
+        "teto": 5,
+        "tipo": "CURSOS",
+        "codigo": "CURSOS",
+        "faixas": [
+          {
+            "pontos": 1,
+            "max_horas": 60,
+            "min_horas": 40
+          },
+          {
+            "pontos": 2,
+            "max_horas": 119,
+            "min_horas": 61
+          },
+          {
+            "pontos": 3,
+            "max_horas": null,
+            "min_horas": 120
+          }
+        ],
+        "titulo": "Cursos de aperfeiçoamento na área da vaga (mínimo 40h)",
+        "efeitos": {},
+        "motivos": [
+          {
+            "texto": "Eventos acadêmicos, palestras, workshops, simpósios, seminários, congressos e afins não são pontuados.",
+            "codigo": "EVENTO",
+            "item_edital": "6.4"
+          },
+          {
+            "texto": "Cargo 15 (Motorista categoria D): o certificado de capacitação para condução de Unidade Móvel de Controle da Qualidade da Água (UMCQA) vale 5 pontos próprios, além das faixas (máximo de 15 em cursos).",
+            "codigo": "CAPACITACAO_UMCQA",
+            "item_edital": "8.2.6"
+          },
+          {
+            "texto": "Pontuação não atribuída devido à ausência do documento comprobatório (ex: certidão de casamento, sentença judicial) que justifique a alteração de nome do(a) candidato(a). ",
+            "codigo": "NOME_ALTERADO_SEM_DOCUMENTO",
+            "item_edital": "8.2.10.7"
+          },
+          {
+            "texto": "Não apresentou certificados de cursos de aperfeiçoamento conforme o subitem 8.2.10.1",
+            "codigo": "MOTIVO_4",
+            "item_edital": "8.2.10.1"
+          }
+        ],
+        "parcial": "CURSOS",
+        "perguntas": [
+          "Selecione a pontuação relativa à carga horária de Cursos de Aperfeiçoamento",
+          "Anexe os seus Certificados de Conclusão dos Cursos de Aperfeiçoamento",
+          "Você possui Certificado de capacitação ou treinamento específico para condução, manejo e operação de Unidade Móvel de Controle da Qualidade da Água",
+          "Anexe o certificado de capacitação ou treinamento específico para condução, manejo e operação de Unidade Móvel de Controle da Qualidade da Água"
+        ],
+        "por_nivel": {
+          "medio": {
+            "teto": 10,
+            "faixas": [
+              {
+                "pontos": 2,
+                "max_horas": 60,
+                "min_horas": 40
+              },
+              {
+                "pontos": 4,
+                "max_horas": 119,
+                "min_horas": 61
+              },
+              {
+                "pontos": 6,
+                "max_horas": null,
+                "min_horas": 120
+              }
+            ]
+          },
+          "tecnico": {
+            "teto": 10,
+            "faixas": [
+              {
+                "pontos": 2,
+                "max_horas": 60,
+                "min_horas": 40
+              },
+              {
+                "pontos": 4,
+                "max_horas": 119,
+                "min_horas": 61
+              },
+              {
+                "pontos": 6,
+                "max_horas": null,
+                "min_horas": 120
+              }
+            ]
+          },
+          "superior": {
+            "teto": 5,
+            "faixas": [
+              {
+                "pontos": 1,
+                "max_horas": 60,
+                "min_horas": 40
+              },
+              {
+                "pontos": 2,
+                "max_horas": 119,
+                "min_horas": 61
+              },
+              {
+                "pontos": 3,
+                "max_horas": null,
+                "min_horas": 120
+              }
+            ]
+          }
+        },
+        "item_edital": "8.2.6"
+      },
+      {
+        "teto": 35,
+        "tipo": "VINCULOS",
+        "codigo": "EXPERIENCIA",
+        "titulo": "Experiência na área",
+        "efeitos": {},
+        "motivos": [
+          {
+            "texto": "Experiência anterior à data de diplomação não é computada.",
+            "codigo": "ANTES_DO_DIPLOMA",
+            "item_edital": "8.2.9"
+          },
+          {
+            "texto": "Estágio curricular, monitoria, tutoria, docência, bolsa ou voluntariado não comprovam experiência profissional.",
+            "codigo": "ESTAGIO_OU_SIMILAR",
+            "item_edital": "8.2.5"
+          },
+          {
+            "texto": "Pontuação não atribuída devido à ausência do documento comprobatório (ex: certidão de casamento, sentença judicial) que justifique a alteração de nome do(a) candidato(a). ",
+            "codigo": "NOME_ALTERADO_SEM_DOCUMENTO",
+            "item_edital": "8.2.10.7"
+          },
+          {
+            "texto": "Não apresentou comprovante de experiência profissional conforme o subitem 6.4",
+            "codigo": "MOTIVO_4",
+            "item_edital": "6.4"
+          },
+          {
+            "texto": "Não foi comprovada a experiência profissional mínima de 6 (seis) meses exigida como requisito obrigatório na área da vaga, resultando na reprovação do(a) candidato(a).",
+            "codigo": "MOTIVO_5",
+            "item_edital": "1.1.1 alínea 'c' "
+          }
+        ],
+        "parcial": "EXPERIENCIA",
+        "perguntas": [
+          "Experiência Profissional na área em que concorre",
+          "Anexe o comprovante de Experiência Profissional de acordo com os requisitos do Edital",
+          "Anexe o comprovante de Experiência Profissional conforme requisitos do Edital",
+          "Anexe o comprovante de Experiência Profissional na área em que concorre"
+        ],
+        "pontuacao": "POR_PERIODO",
+        "categorias": [
+          {
+            "codigo": "AREA",
+            "pontua": true,
+            "rotulo": "Na área",
+            "desempate": null
+          }
+        ],
+        "data_limite": null,
+        "item_edital": "8.2.6",
+        "item_minimo": "1.1.1 c",
+        "dias_por_mes": 30,
+        "max_vinculos": 20,
+        "minimo_meses": 6,
+        "efeito_minimo": "ELIMINA",
+        "periodo_meses": 6,
+        "pontos_por_mes": 0,
+        "desconta_minimo": true,
+        "estagio_indigena": {
+          "ativo": false,
+          "dias_por_mes": 22,
+          "horas_por_dia": 8,
+          "so_sem_experiencia": true
+        },
+        "unir_sobreposicao": true,
+        "pontos_por_periodo": 5,
+        "minimo_conta_estagio": false
+      }
+    ],
+    "modelo": "PROJ26-RIO-DOCE",
+    "schema": 1,
+    "parecer": {
+      "APTO": "{edital}\nCandidato(a) HABILITADO(A) na {titulo_etapa} com a pontuação total de {nota} pontos, distribuídos da seguinte forma:\n\n{distribuicao}",
+      "INAPTO_NOTA": "{edital}\nCandidato(a) NÃO HABILITADO(A) por não atingir a nota mínima de {corte} pontos (item {item_corte}). Nota obtida: {nota} pontos, distribuídos da seguinte forma:\n\n{distribuicao}",
+      "observacoes": "\n\nObservações da análise:\n{observacoes}",
+      "INAPTO_REQUISITO": "{edital}\nCandidato(a) INABILITADO(A) na {titulo_etapa}, pelo(s) seguinte(s) motivo(s):\n\n{motivos}",
+      "pontos_informativos": "\n\nPontuação apurada dos títulos, para fins informativos (não entra na nota final, item 8.2.1): {nota_informativa} pontos ({distribuicao_informativa}).",
+      "mostrar_pontos_quando_inapto": true
+    },
+    "revisao": {
+      "todas": false,
+      "sinais": [],
+      "duplo_cego": false,
+      "inaptos_nota": false,
+      "entrou_pela_linha": false,
+      "inaptos_requisito": true,
+      "amostra_percentual": 10,
+      "divergencia_pontos": null,
+      "minimo_por_analista": 0
+    },
+    "por_cargo": [
+      {
+        "vagas": [
+          "182418",
+          "182421",
+          "182428",
+          "182431",
+          "182433",
+          "182438",
+          "182429",
+          "182434"
+        ],
+        "blocos": {
+          "EXPERIENCIA": {
+            "area": "Análises de água (Anexo I: mínimo de 6 meses)."
+          },
+          "REGISTRO_CONSELHO": {
+            "requisitos": [
+              {
+                "codigo": "REGISTRO_OBRIGATORIO",
+                "motivo": "Não apresentou registro ativo no conselho profissional competente, obrigatório para o cargo (Anexo I).",
+                "rotulo": "Registro ativo no conselho de classe — obrigatório para este cargo (Anexo I)",
+                "item_edital": "2 e Anexo I"
+              }
+            ]
+          }
+        },
+        "cargos": ["CARGO 1", "CARGO 2", "CARGO 3", "CARGO 4"],
+        "codigo": "ANALISE_DA_AGUA",
+        "rotulo": "Cargos 1 a 4 — Análise da Água"
+      },
+      {
+        "vagas": [
+          "182442",
+          "182446",
+          "182450",
+          "182452",
+          "182427",
+          "182432",
+          "182439",
+          "182441"
+        ],
+        "blocos": {
+          "EXPERIENCIA": {
+            "area": "Análises de água; análises de metais pesados por Espectrofotometria de Absorção Atômica (FAAS e GFAAS); e análises de agrotóxicos por ICP-OES ou técnica equivalente (Anexo I: mínimo de 6 meses)."
+          },
+          "REGISTRO_CONSELHO": {
+            "requisitos": [
+              {
+                "codigo": "REGISTRO_OBRIGATORIO",
+                "motivo": "Não apresentou registro ativo no conselho profissional competente, obrigatório para o cargo (Anexo I).",
+                "rotulo": "Registro ativo no conselho de classe — obrigatório para este cargo (Anexo I)",
+                "item_edital": "2 e Anexo I"
+              }
+            ]
+          },
+          "REQUISITO_DO_CARGO": {
+            "requisitos": [
+              {
+                "codigo": "CROMATOGRAFIA",
+                "motivo": "Não apresentou o curso de especialização ou capacitação em Cromatografia Gasosa exigido para o cargo (Anexo I).",
+                "rotulo": "Curso de especialização ou capacitação em Cromatografia Gasosa",
+                "termos": ["cromatografia"],
+                "item_edital": "2 e Anexo I",
+                "nao_pontua_em": ["FORMACAO", "CURSOS"]
+              }
+            ]
+          }
+        },
+        "cargos": ["CARGO 5", "CARGO 6", "CARGO 7", "CARGO 8"],
+        "codigo": "METAIS_PESADOS",
+        "rotulo": "Cargos 5 a 8 — Especialista em metais pesados"
+      },
+      {
+        "vagas": ["182445", "182449"],
+        "blocos": {
+          "EXPERIENCIA": {
+            "area": "Laboratório de análises de água (Anexo I: mínimo de 6 meses)."
+          },
+          "REGISTRO_CONSELHO": {
+            "requisitos": [
+              {
+                "codigo": "REGISTRO_OBRIGATORIO",
+                "motivo": "Não apresentou registro ativo no conselho profissional competente, obrigatório para o cargo (Anexo I).",
+                "rotulo": "Registro ativo no conselho de classe — obrigatório para este cargo (Anexo I)",
+                "item_edital": "2 e Anexo I"
+              }
+            ]
+          },
+          "REQUISITO_DO_CARGO": {
+            "requisitos": [
+              {
+                "codigo": "DIPLOMA_TECNICO_AREA",
+                "motivo": "Não apresentou diploma de curso técnico em Química, Saneamento, Meio Ambiente, Análises Clínicas, Biotecnologia ou em Laboratório, emitido por instituição reconhecida pelo MEC (Anexo I).",
+                "rotulo": "Diploma de curso técnico em Química, Saneamento, Meio Ambiente, Análises Clínicas, Biotecnologia ou em Laboratório",
+                "item_edital": "2 e Anexo I"
+              }
+            ]
+          }
+        },
+        "cargos": ["CARGO 9"],
+        "codigo": "TECNICO_LABORATORIO",
+        "rotulo": "Cargo 9 — Técnico de Laboratório"
+      },
+      {
+        "vagas": ["182424", "182430"],
+        "blocos": {
+          "EXPERIENCIA": {
+            "area": "Coordenação de equipes, gestão de saneamento ambiental ou vigilância em saúde (Anexo I: mínimo de 6 meses)."
+          },
+          "REGISTRO_CONSELHO": {
+            "requisitos": [
+              {
+                "codigo": "REGISTRO_QUANDO_APLICAVEL",
+                "motivo": "Não apresentou registro ativo no conselho profissional competente, exigido para a sua formação (Anexo I).",
+                "rotulo": "Registro ativo no conselho de classe — quando aplicável à formação (Anexo I); se a formação não tem conselho, marque Confere",
+                "item_edital": "2 e Anexo I"
+              }
+            ]
+          }
+        },
+        "cargos": ["CARGO 10"],
+        "codigo": "SUPERVISOR_SAUDE_AMBIENTAL",
+        "rotulo": "Cargo 10 — Supervisor de Saúde Ambiental"
+      },
+      {
+        "vagas": ["182444", "182496"],
+        "blocos": {
+          "EXPERIENCIA": {
+            "area": "Atividades operacionais de campo, manutenção, saneamento ou apoio logístico (Anexo I: mínimo de 6 meses)."
+          },
+          "REGISTRO_CONSELHO": {
+            "nao_se_aplica": true
+          }
+        },
+        "cargos": ["CARGO 11"],
+        "codigo": "AUXILIAR_LOGISTICA",
+        "rotulo": "Cargo 11 — Auxiliar de Logística"
+      },
+      {
+        "vagas": ["182448", "182497"],
+        "blocos": {
+          "EXPERIENCIA": {
+            "area": "Compilação, tratamento de dados, digitação ou apoio administrativo (Anexo I: mínimo de 6 meses)."
+          },
+          "REGISTRO_CONSELHO": {
+            "nao_se_aplica": true
+          },
+          "REQUISITO_DO_CARGO": {
+            "requisitos": [
+              {
+                "codigo": "INFORMATICA_PLANILHAS",
+                "motivo": "Não comprovou conhecimento em informática, planilhas eletrônicas e operação de bancos de dados (Anexo I).",
+                "rotulo": "Conhecimento em informática, planilhas eletrônicas e operação de bancos de dados",
+                "item_edital": "2 e Anexo I"
+              }
+            ]
+          }
+        },
+        "cargos": ["CARGO 12"],
+        "codigo": "COMPILACAO_DE_DADOS",
+        "rotulo": "Cargo 12 — Compilação de dados"
+      },
+      {
+        "vagas": ["182493", "182502"],
+        "blocos": {
+          "EXPERIENCIA": {
+            "area": "Digitação, inserção de dados em sistemas de saúde pública ou apoio administrativo (Anexo I: mínimo de 6 meses)."
+          },
+          "REGISTRO_CONSELHO": {
+            "nao_se_aplica": true
+          },
+          "REQUISITO_DO_CARGO": {
+            "requisitos": [
+              {
+                "codigo": "INFORMATICA_SISTEMAS",
+                "motivo": "Não comprovou conhecimento em informática, operação de sistemas informatizados e plataformas web (Anexo I).",
+                "rotulo": "Conhecimento em informática, operação de sistemas informatizados e plataformas web",
+                "item_edital": "2 e Anexo I"
+              }
+            ]
+          }
+        },
+        "cargos": ["CARGO 13"],
+        "codigo": "PLATAFORMA_DO_SUS",
+        "rotulo": "Cargo 13 — Alimentação e controle de plataforma do SUS"
+      },
+      {
+        "vagas": ["182513", "182514"],
+        "blocos": {
+          "EXPERIENCIA": {
+            "area": "Experiência como motorista (Anexo I: mínimo de 6 meses)."
+          },
+          "REGISTRO_CONSELHO": {
+            "nao_se_aplica": true
+          },
+          "REQUISITO_DO_CARGO": {
+            "requisitos": [
+              {
+                "codigo": "CNH_B",
+                "motivo": "Não apresentou CNH categoria B vigente (Anexo I).",
+                "rotulo": "CNH categoria B vigente",
+                "item_edital": "2 e Anexo I"
+              },
+              {
+                "codigo": "DIRECAO_DEFENSIVA",
+                "motivo": "Não apresentou o curso de direção defensiva exigido para o cargo (Anexo I).",
+                "rotulo": "Curso de direção defensiva",
+                "termos": ["direção defensiva"],
+                "item_edital": "2 e Anexo I",
+                "nao_pontua_em": ["CURSOS"]
+              }
+            ]
+          }
+        },
+        "cargos": ["CARGO 14"],
+        "codigo": "MOTORISTA_B",
+        "rotulo": "Cargo 14 — Motorista categoria B"
+      },
+      {
+        "vagas": ["182528", "182567"],
+        "blocos": {
+          "CURSOS": {
+            "teto": 15,
+            "extras": [
+              {
+                "codigo": "UMCQA",
+                "pontos": 5,
+                "rotulo": "Certificado de capacitação para condução, manejo e operação de UMCQA, ou capacitação específica fornecida pela contratante",
+                "item_edital": "8.2.6"
+              }
+            ],
+            "faixas": [
+              {
+                "pontos": 2,
+                "max_horas": 60,
+                "min_horas": 40
+              },
+              {
+                "pontos": 4,
+                "max_horas": 119,
+                "min_horas": 61
+              },
+              {
+                "pontos": 6,
+                "max_horas": null,
+                "min_horas": 120
+              }
+            ]
+          },
+          "EXPERIENCIA": {
+            "area": "Condução de veículos de maior porte, furgão adaptado, unidade móvel ou veículo similar (Anexo I: mínimo de 6 meses)."
+          },
+          "REGISTRO_CONSELHO": {
+            "nao_se_aplica": true
+          },
+          "REQUISITO_DO_CARGO": {
+            "requisitos": [
+              {
+                "codigo": "CNH_D",
+                "motivo": "Não apresentou CNH categoria D vigente (Anexo I).",
+                "rotulo": "CNH categoria D vigente",
+                "item_edital": "2 e Anexo I"
+              },
+              {
+                "codigo": "DIRECAO_DEFENSIVA",
+                "motivo": "Não apresentou o curso de direção defensiva exigido para o cargo (Anexo I).",
+                "rotulo": "Curso de direção defensiva",
+                "termos": ["direção defensiva"],
+                "item_edital": "2 e Anexo I",
+                "nao_pontua_em": ["CURSOS"]
+              }
+            ]
+          }
+        },
+        "cargos": ["CARGO 15"],
+        "codigo": "MOTORISTA_D",
+        "rotulo": "Cargo 15 — Motorista categoria D"
+      }
+    ],
+    "provisoria": {
+      "desempate": ["IDOSO", "EXPERIENCIA_DECLARADA", "MAIOR_IDADE"],
+      "base_da_nota": "DECLARADA",
+      "nota_declarada": [
+        {
+          "tipo": "OPCAO",
+          "pontos": {
+            "1 ano": 5,
+            "2 anos": 15,
+            "3 anos": 25,
+            "4 anos ou mais": 35,
+            "1 ano e 6 meses": 10,
+            "1 anos e 6 meses": 10,
+            "2 anos e 6 meses": 20,
+            "3 anos e 6 meses": 30,
+            "6 meses obrigatórios": 0
+          },
+          "parcial": "EXPERIENCIA",
+          "pergunta": "Experiência Profissional"
+        },
+        {
+          "teto": 10,
+          "tipo": "OPCAO",
+          "parcial": "FORMACAO",
+          "pergunta": "Qual seu Nível de Titulação Acadêmica",
+          "pontos_por_nivel": {
+            "medio": {
+              "Mestrado": 0,
+              "Doutorado": 0,
+              "Não Possuo": 0,
+              "Especialização": 0
+            },
+            "tecnico": {
+              "Mestrado": 0,
+              "Doutorado": 0,
+              "Não Possuo": 0,
+              "Especialização": 0
+            },
+            "superior": {
+              "Mestrado": 8,
+              "Doutorado": 10,
+              "Não Possuo": 0,
+              "Especialização": 5
+            }
+          }
+        },
+        {
+          "teto": 10,
+          "tipo": "OPCAO",
+          "parcial": "CURSOS",
+          "pergunta": "Selecione a pontuação relativa à carga horária de Cursos de Aperfeiçoamento",
+          "pontos_por_nivel": {
+            "medio": {
+              "1 ponto": 1,
+              "2 pontos": 2,
+              "3 pontos": 3,
+              "4 pontos": 4,
+              "5 pontos": 5,
+              "6 pontos": 6,
+              "8 pontos": 8,
+              "10 pontos": 10,
+              "Não possuo": 0
+            },
+            "tecnico": {
+              "1 ponto": 1,
+              "2 pontos": 2,
+              "3 pontos": 3,
+              "4 pontos": 4,
+              "5 pontos": 5,
+              "6 pontos": 6,
+              "8 pontos": 8,
+              "10 pontos": 10,
+              "Não possuo": 0
+            },
+            "superior": {
+              "1 ponto": 1,
+              "2 pontos": 2,
+              "3 pontos": 3,
+              "4 pontos": 4,
+              "5 pontos": 5,
+              "6 pontos": 5,
+              "8 pontos": 5,
+              "10 pontos": 5,
+              "Não possuo": 0
+            }
+          }
+        },
+        {
+          "teto": 5,
+          "tipo": "OPCAO",
+          "pontos": {
+            "Sim": 5,
+            "Não": 0
+          },
+          "parcial": "CURSOS",
+          "pergunta": "Você possui Certificado de capacitação ou treinamento específico para condução, manejo e operação de Unidade Móvel de Controle da Qualidade da Água"
+        }
+      ],
+      "pergunta_experiencia": "Experiência Profissional",
+      "eliminacao_automatica": [
+        {
+          "codigo": "CANCELADO",
+          "coluna": "SITUAÇÃO",
+          "motivo": "Cancelou a inscrição",
+          "quando": ["CANCELADO"]
+        },
+        {
+          "codigo": "QUESTIONARIO",
+          "exceto": ["FINALIZADO"],
+          "motivo": "Não finalizou o questionário",
+          "coluna_prefixo": "SITUAÇÃO - "
+        }
+      ],
+      "divergencia_tolerancia": 0
+    },
+    "distribuicao": {
+      "modo": "PEGAR_PROXIMO",
+      "novos": "MENOS_PENDENTES",
+      "criterio": "PARTES_IGUAIS",
+      "dias_parada": 3,
+      "limite_por_analista": null
+    },
+    "titulo_etapa": "Avaliação Documental e de Títulos",
+    "casas_parecer": 1,
+    "edital_rotulo": "Edital 114/2026",
+    "observacoes_prontas": [
+      {
+        "texto": "O candidato(a) não anexou o documento da alteração de nome; títulos e experiências em outro nome foram desconsiderados (subitem 8.2.10.7).",
+        "codigo": "ALTERACAO_DE_NOME",
+        "rotulo": "Alteração de nome sem documento",
+        "item_edital": "8.2.10.7"
+      },
+      {
+        "texto": "Nota de experiência profissional diminuída em decorrência do tempo de serviço comprovado: só contam blocos completos de 6 meses além do mínimo exigido (subitens 8.2.2 a 8.2.4).",
+        "codigo": "EXPERIENCIA_DIMINUIDA",
+        "rotulo": "Nota de experiência diminuída",
+        "item_edital": "8.2.3"
+      },
+      {
+        "texto": "Nota de cursos de aperfeiçoamento diminuída: certificados sem relação direta com a área da vaga, abaixo de 40h ou de eventos não foram contabilizados.",
+        "codigo": "CURSOS_DIMINUIDA",
+        "rotulo": "Nota de cursos diminuída",
+        "item_edital": "6.4"
+      },
+      {
+        "texto": "Cargo 15 (Motorista categoria D): o certificado de capacitação ou treinamento para condução, manejo e operação de UMCQA vale 5 pontos em cursos de aperfeiçoamento (máximo de 15 pontos para o cargo), conforme o subitem 8.2.6.",
+        "codigo": "MOTORISTA_UMCQA",
+        "rotulo": "Motorista D: capacitação UMCQA",
+        "item_edital": "8.2.6"
+      },
+      {
+        "texto": "O(a) candidato(a) não enviou a imagem legível da certidão de nascimento; no desempate por idade, foi considerada a hora 23h59min59s (subitem 6.11.4).",
+        "codigo": "HORA_NASCIMENTO_PADRAO",
+        "rotulo": "Sem certidão: hora 23h59min59s",
+        "item_edital": "6.11.4"
+      },
+      {
+        "texto": "Cada título será considerado uma única vez para efeito de pontuação.",
+        "codigo": "TITULO_UMA_VEZ",
+        "rotulo": "Cada título conta uma única vez",
+        "item_edital": "8.2.7"
+      },
+      {
+        "texto": "Documentos exigidos como requisito obrigatório não serão pontuados na etapa de análise curricular, pois possuem caráter eliminatório.",
+        "codigo": "REQUISITO_SEM_PONTUACAO",
+        "rotulo": "Requisito obrigatório não pontua",
+        "item_edital": "8.2.10.5"
+      }
+    ]
+  },
+  "vagas": {
+    "182418": {
+      "cargo": "CARGO 1: QUÍMICO - Análise da Água (Nível Superior)",
+      "nivel": "superior",
+      "respostas": {
+        "Pergunta 12 - Anexe seu comprovante de Titulação:": "Anexo",
+        "Pergunta 5 - Você possui Graduação na área da vaga? (Será necessário comprovar)": "\"Sim\"",
+        "Pergunta 14 - Anexe os seus Certificados de Conclusão dos Cursos de Aperfeiçoamento:": "Anexo",
+        "Pergunta 4 - Anexe o documento de identificação com foto, frente e verso, conforme instruções contidas no subitem 6.5 do edital.": "Anexo",
+        "Pergunta 6 - Anexe a comprovação de Nível Superior:(frente e verso de acordo com o subitem 6.4 do Edital)Poderá unir os certificados em único arquivo em formato PDF..": "Anexo",
+        "Pergunta 7 - Você possui registro profissional ativo, junto ao respectivo Conselho Profissional competente da sua área de formação?(obrigatória comprovação na pergunta posterior)": "\"Sim.\"",
+        "Pergunta 18 - Candidatos concorrendo às vagas destinadas a Pretos ou Pardos, anexe uma foto de frente e uma foto de perfil, reunidas em um único arquivo, preferencialmente no formato PDF.Os candidatos": "Anexo",
+        "Pergunta 10 - Anexe o comprovante de Experiência Profissional conforme requisitos do Edital (no cargo em que concorre): Comprovante de experiência profissional: Se vínculo perante empresa privada: Car": "Anexo",
+        "Pergunta 16 - Candidatos às vagas destinadas a Pretos ou Pardos e QuilombolasAnexe, neste campo, a autodeclaração conforme o modelo constante no Anexo IV do Edital.Importante: Os candidatos que se aut": "Anexo",
+        "Pergunta 19 - Para candidatos que se declaram quilombolas, anexe sua Declaração de Pertencimento Étnico (Anexo VII do edital) ou Certificado de Reconhecimento do Território de Pertencimento emitido pe": "Anexo",
+        "Pergunta 21 - Os candidatos que concorrem às vagas destinadas a PcD devem anexar aqui o laudo médico, devidamente assinado por médico(a) com registro ativo no CRM, conforme as exigências dos subitens ": "Anexo",
+        "Pergunta 17 - Candidatos&nbsp;concorrendo às vagas destinadas a Pretos ou Pardos, grave um vídeo, em fundo branco, com duração máxima de 20 segundos, apresentando o seu nome completo e a cor com a qua": "Vídeo",
+        "Pergunta 20 - Para candidatos que se declaram indígenas, anexe sua Declaração de Pertencimento Étnico.(obrigatório envio no modelo do Anexo VI do edital)Os candidatos que estiverem inscritos em outra ": "Anexo",
+        "Pergunta 9 - Experiência Profissional&nbsp;na área em que concorre&nbsp;conforme requisitos do Edital:Será necessário comprovar.(contabilizada a partir de 06 meses completos, sem sobreposição de tempo": "\"4 anos ou mais\"",
+        "Pergunta 8 - Anexe o comprovante do seu registro profissional no Conselho profissional competente, quando obrigatório, conforme previsto no Anexo I – Descrição de Requisitos e Atribuições.(preferencia": "Anexo",
+        "Pergunta 13 - Selecione a pontuação relativa à carga horária de Cursos de Aperfeiçoamento na área em que concorre, com carga horária mínima de 40h.(Não será permitido o envio de vários arquivos separa": "\"Não possuo\"",
+        "Pergunta 11 - Qual seu Nível de Titulação Acadêmica?Considera-se a maior titulação apresentada:(será necessária comprovação) Especialização: 05 pontosMestrado: 08 pontos Doutorado: 10 pontos Máximo: 1": "\"Não Possuo\""
+      }
+    },
+    "182444": {
+      "cargo": "CARGO 11: AUXILIAR ADMINISTRATIVO - Auxiliar de Logística (Nível Médio)",
+      "nivel": "medio",
+      "respostas": {
+        "Pergunta 5 - Você possui Ensino Médio completo? (Será necessário comprovar)": "\"Sim\"",
+        "Pergunta 10 - Anexe os seus Certificados de Conclusão dos Cursos de Aperfeiçoamento:": "Anexo",
+        "Pergunta 6 - Anexe a comprovação de conclusão de Nível Médio:(frente e verso de acordo com o subitem 6.4 do Edital)": "Anexo",
+        "Pergunta 4 - Anexe um documento de identificação com foto, frente e verso, conforme instruções contidas no subitem 6.5 do edital.": "Anexo",
+        "Pergunta 14 - Candidatos concorrendo às vagas destinadas a Pretos ou Pardos, anexe uma foto de frente e uma foto de perfil, reunidas em um único arquivo, preferencialmente no formato PDF.Os candidatos": "Anexo",
+        "Pergunta 12 - Candidatos às vagas destinadas a Pretos ou Pardos e QuilombolasAnexe, neste campo, a autodeclaração conforme o modelo constante no Anexo IV do Edital.Importante: Os candidatos que se aut": "Anexo",
+        "Pergunta 8 - Anexe o comprovante de Experiência Profissional de acordo com os requisitos do Edital (no cargo em que concorre):Comprovante de experiência profissional: Se vínculo perante empresa privad": "Anexo",
+        "Pergunta 15 - Para candidatos que se declaram quilombolas, anexe sua Declaração de Pertencimento Étnico (Anexo VII do edital) ou Certificado de Reconhecimento do Território de Pertencimento emitido pe": "Anexo",
+        "Pergunta 17 - Os candidatos que concorrem às vagas destinadas a PcD devem anexar aqui o laudo médico, devidamente assinado por médico(a) com registro ativo no CRM, conforme as exigências do edital.Os ": "Anexo",
+        "Pergunta 13 - Candidatos&nbsp;concorrendo às vagas destinadas a Pretos ou Pardos, grave um vídeo, em fundo branco, com duração máxima de 20 segundos, apresentando o seu nome completo e a cor com a qua": "Vídeo",
+        "Pergunta 16 - Para candidatos que se declaram indígenas, anexe sua Declaração de Pertencimento Étnico.(obrigatório envio no modelo do Anexo VI do edital)Os candidatos que estiverem inscritos em outra ": "Anexo",
+        "Pergunta 7 - Experiência Profissional na área em que concorre, conforme requisitos do Edital: Será necessário comprovar.(contabilizada a partir de 6 meses completos, sem sobreposição de tempo, exceden": "\"4 anos ou mais\"",
+        "Pergunta 9 - Selecione a pontuação relativa à carga horária de Cursos de Aperfeiçoamento na área em que concorre, com carga horária mínima de 40h.(Não será permitido o envio de vários arquivos separad": "\"Não possuo\""
+      }
+    },
+    "182445": {
+      "cargo": "CARGO 9: TÉCNICO DE LABORATÓRIO (Nível Técnico)",
+      "nivel": "tecnico",
+      "respostas": {
+        "Pergunta 12 - Anexe os seus Certificados de Conclusão dos Cursos de Aperfeiçoamento:": "Anexo",
+        "Pergunta 5 - Você possui Curso Técnico na área da vaga? (Será necessário comprovar)": "\"Sim\"",
+        "Pergunta 6 - Anexe a comprovação de Nível Técnico:(frente e verso de acordo com o subitem 6.4 do Edital)": "Anexo",
+        "Pergunta 4 - Anexe um documento de identificação com foto, frente e verso, conforme instruções contidas no subitem 6.5 do edital.": "Anexo",
+        "Pergunta 7 - Você possui registro profissional ativo, junto ao respectivo Conselho Profissional competente da sua área de formação?(Será necessário comprovar)": "\"Sim\"",
+        "Pergunta 16 - Candidatos concorrendo às vagas destinadas a Pretos ou Pardos, anexe uma foto de frente e uma foto de perfil, reunidas em um único arquivo, preferencialmente no formato PDF.Os candidatos": "Anexo",
+        "Pergunta 14 - Candidatos às vagas destinadas a Pretos ou Pardos e QuilombolasAnexe, neste campo, a autodeclaração conforme o modelo constante no Anexo IV do Edital.Importante: Os candidatos que se aut": "Anexo",
+        "Pergunta 10 - Anexe o comprovante de Experiência Profissional na área em que concorre, conforme requisitos do Edital:Comprovante de experiência profissional: Se vínculo perante empresa privada: Cartei": "Anexo",
+        "Pergunta 17 - Para candidatos que se declaram quilombolas, anexe sua Declaração de Pertencimento Étnico (Anexo VII do edital) ou Certificado de Reconhecimento do Território de Pertencimento emitido pe": "Anexo",
+        "Pergunta 19 - Os candidatos que concorrem às vagas destinadas a PcD devem anexar aqui o laudo médico, devidamente assinado por médico(a) com registro ativo no CRM, conforme as exigências do edital.Os ": "Anexo",
+        "Pergunta 15 - Candidatos&nbsp;concorrendo às vagas destinadas a Pretos ou Pardos, grave um vídeo, em fundo branco, com duração máxima de 20 segundos, apresentando o seu nome completo e a cor com a qua": "Vídeo",
+        "Pergunta 18 - Para candidatos que se declaram indígenas, anexe sua Declaração de Pertencimento Étnico.(obrigatório envio no modelo do Anexo VI do edital)Os candidatos que estiverem inscritos em outra ": "Anexo",
+        "Pergunta 9 - &nbsp;Experiência Profissional na área em que concorre, conforme requisitos do Edital: Será necessário comprovar.(contabilizada a partir de 6 meses completos, sem sobreposição de tempo, e": "\"2 anos\"",
+        "Pergunta 8 - Anexe o comprovante do seu registro profissional no Conselho profissional competente, quando obrigatório, conforme previsto no Anexo I – Descrição de Requisitos e Atribuições.(preferencia": "Anexo",
+        "Pergunta 11 - Selecione a pontuação relativa à carga horária de Cursos de Aperfeiçoamento na área em que concorre, com carga horária mínima de 40h.(Não será permitido o envio de vários arquivos separa": "\"6 pontos\""
+      }
+    },
+    "182528": {
+      "cargo": "CARGO 15: MOTORISTA - Categoria D (Nível Médio)",
+      "nivel": "medio",
+      "respostas": {
+        "Pergunta 8 - Anexe aqui sua CNH Categoria&nbsp;D.": "Anexo",
+        "Pergunta 10 - Anexe o comprovante de conclusão do curso de direção defensiva": "Anexo",
+        "Pergunta 5 - Você possui Ensino Médio completo? (Será necessário comprovar)": "\"Sim\"",
+        "Pergunta 7 - Você possui CNH Categoria D vigente?(Será necessário comprovar)": "\"Sim.&nbsp;\"",
+        "Pergunta 9 - Você possui curso de direção defensiva?(Será necessário comprovar)": "\"Sim.\"",
+        "Pergunta 16 - Anexe os seus Certificados de Conclusão dos Cursos de Aperfeiçoamento:": "Anexo",
+        "Pergunta 6 - Anexe a comprovação de conclusão do Nível Médio.(frente e verso de acordo com o subitem 6.4 do Edital)": "Anexo",
+        "Pergunta 4 - Anexe um documento de identificação com foto, frente e verso, conforme instruções contidas no subitem 6.5 do edital.": "Anexo",
+        "Pergunta 20 - Candidatos concorrendo às vagas destinadas a Pretos ou Pardos, anexe uma foto de frente e uma foto de perfil, reunidas em um único arquivo, preferencialmente no formato PDF.Os candidatos": "Anexo",
+        "Pergunta 12 - Anexe o comprovante de Experiência Profissional de acordo com os requisitos do Edital (no cargo em que concorre):Comprovante de experiência profissional: Se vínculo perante empresa priva": "Anexo",
+        "Pergunta 18 - Candidatos às vagas destinadas a Pretos ou Pardos e QuilombolasAnexe, neste campo, a autodeclaração conforme o modelo constante no Anexo IV do Edital.Importante: Os candidatos que se aut": "Anexo",
+        "Pergunta 21 - Para candidatos que se declaram quilombolas, anexe sua Declaração de Pertencimento Étnico (Anexo VII do edital) ou Certificado de Reconhecimento do Território de Pertencimento emitido pe": "Anexo",
+        "Pergunta 23 - Os candidatos que concorrem às vagas destinadas a PcD devem anexar aqui o laudo médico, devidamente assinado por médico(a) com registro ativo no CRM, conforme as exigências do edital.Os ": "Anexo",
+        "Pergunta 19 - Candidatos&nbsp;concorrendo às vagas destinadas a Pretos ou Pardos, grave um vídeo, em fundo branco, com duração máxima de 20 segundos, apresentando o seu nome completo e a cor com a qua": "Vídeo",
+        "Pergunta 22 - Para candidatos que se declaram indígenas, anexe sua Declaração de Pertencimento Étnico.(obrigatório envio no modelo do Anexo VI do edital)Os candidatos que estiverem inscritos em outra ": "Anexo",
+        "Pergunta 11 - Experiência Profissional na área em que concorre, conforme requisitos do Edital: Será necessário comprovar.(contabilizada a partir de 6 meses completos, sem sobreposição de tempo, excede": "\"4 anos ou mais\"",
+        "Pergunta 15 - Selecione a pontuação relativa à carga horária de Cursos de Aperfeiçoamento na área em que concorre, com carga horária mínima de 40h.(Não será permitido o envio de vários arquivos separa": "\"2 pontos\"",
+        "Pergunta 14 - Anexe o certificado de capacitação ou treinamento específico para condução, manejo e operação de Unidade Móvel de Controle da Qualidade da Água – UMCQA; ou Comprovação de realização de c": "Anexo",
+        "Pergunta 13 - Você possui Certificado de capacitação ou treinamento específico para condução, manejo e operação de Unidade Móvel de Controle da Qualidade da Água – UMCQA; ou Comprovação de realização ": "\"Não\""
+      }
+    },
+    "182567": {
+      "cargo": "CARGO 15: MOTORISTA - Categoria D (Nível Médio)",
+      "nivel": "medio",
+      "respostas": {
+        "Pergunta 8 - Anexe aqui sua CNH Categoria&nbsp;D.": "Anexo",
+        "Pergunta 10 - Anexe o comprovante de conclusão do curso de direção defensiva": "Anexo",
+        "Pergunta 5 - Você possui Ensino Médio completo? (Será necessário comprovar)": "\"Sim\"",
+        "Pergunta 7 - Você possui CNH Categoria D vigente?(Será necessário comprovar)": "\"Sim.&nbsp;\"",
+        "Pergunta 9 - Você possui curso de direção defensiva?(Será necessário comprovar)": "\"Sim.\"",
+        "Pergunta 16 - Anexe os seus Certificados de Conclusão dos Cursos de Aperfeiçoamento:": "Anexo",
+        "Pergunta 6 - Anexe a comprovação de conclusão do Nível Médio.(frente e verso de acordo com o subitem 6.4 do Edital)": "Anexo",
+        "Pergunta 4 - Anexe um documento de identificação com foto, frente e verso, conforme instruções contidas no subitem 6.5 do edital.": "Anexo",
+        "Pergunta 20 - Candidatos concorrendo às vagas destinadas a Pretos ou Pardos, anexe uma foto de frente e uma foto de perfil, reunidas em um único arquivo, preferencialmente no formato PDF.Os candidatos": "Anexo",
+        "Pergunta 12 - Anexe o comprovante de Experiência Profissional de acordo com os requisitos do Edital (no cargo em que concorre):Comprovante de experiência profissional: Se vínculo perante empresa priva": "Anexo",
+        "Pergunta 18 - Candidatos às vagas destinadas a Pretos ou Pardos e QuilombolasAnexe, neste campo, a autodeclaração conforme o modelo constante no Anexo IV do Edital.Importante: Os candidatos que se aut": "Anexo",
+        "Pergunta 21 - Para candidatos que se declaram quilombolas, anexe sua Declaração de Pertencimento Étnico (Anexo VII do edital) ou Certificado de Reconhecimento do Território de Pertencimento emitido pe": "Anexo",
+        "Pergunta 23 - Os candidatos que concorrem às vagas destinadas a PcD devem anexar aqui o laudo médico, devidamente assinado por médico(a) com registro ativo no CRM, conforme as exigências do edital.Os ": "Anexo",
+        "Pergunta 19 - Candidatos&nbsp;concorrendo às vagas destinadas a Pretos ou Pardos, grave um vídeo, em fundo branco, com duração máxima de 20 segundos, apresentando o seu nome completo e a cor com a qua": "Vídeo",
+        "Pergunta 22 - Para candidatos que se declaram indígenas, anexe sua Declaração de Pertencimento Étnico.(obrigatório envio no modelo do Anexo VI do edital)Os candidatos que estiverem inscritos em outra ": "Anexo",
+        "Pergunta 11 - Experiência Profissional na área em que concorre, conforme requisitos do Edital: Será necessário comprovar.(contabilizada a partir de 6 meses completos, sem sobreposição de tempo, excede": "\"4 anos ou mais\"",
+        "Pergunta 15 - Selecione a pontuação relativa à carga horária de Cursos de Aperfeiçoamento na área em que concorre, com carga horária mínima de 40h.(Não será permitido o envio de vários arquivos separa": "\"4 pontos\"",
+        "Pergunta 14 - Anexe o certificado de capacitação ou treinamento específico para condução, manejo e operação de Unidade Móvel de Controle da Qualidade da Água – UMCQA; ou Comprovação de realização de c": "Anexo",
+        "Pergunta 13 - Você possui Certificado de capacitação ou treinamento específico para condução, manejo e operação de Unidade Móvel de Controle da Qualidade da Água – UMCQA; ou Comprovação de realização ": "\"Não\""
+      }
+    }
+  }
+}
