@@ -79,7 +79,7 @@ dos PDFs oficiais).
 
 **perguntas:** modalidades da classificacao | cotista na lista geral | lista por modalidade | remanejamento de vaga | acumulo de cotas
 **resposta:** Cada modalidade da regra (PcD, pretos e pardos, indígenas, quilombolas, trans…) tem percentual, lista própria, posição que recomeça em 1º ou mantém a da geral, se o cotista aparece também na geral, para onde vai a vaga reservada sem candidato e, se for uma reserva conjunta (como a PPIQ de 30% dos editais de 2025), quais modalidades ela reúne — quem declarou pretos e pardos, indígena ou quilombola entra nessa lista. Na lista final, as vagas da ampla vão para os primeiros da geral (cotista aprovado na ampla não ocupa vaga reservada); cada reserva vai para os primeiros da modalidade; a reserva que sobra segue o remanejamento da regra e, por fim, a ampla. Com mais de uma cota, a regra diz se o candidato fica em todas, só na de maior percentual ou em PcD e mais uma (vale no resultado final). As vagas por modalidade vêm do quadro de vagas do edital; quando ele só traz o total, da configuração de convocação do edital (Lista de aprovados › Convocação) ou dos percentuais da regra, pela mesma conta da convocação.
-**fonte:** src/lib/classificacao/motor.js; src/lib/classificacao/vagas.js
+**fonte:** src/lib/classificacao/motor.js; src/lib/classificacao/vagas.ts
 **abrir:** classificacao
 
 ## Gerar e publicar a lista
@@ -174,7 +174,7 @@ dos PDFs oficiais).
 
 **perguntas:** vagas por modalidade na classificacao | classificacao e convocacao | configuracao de convocacao na classificacao | de onde vem o numero de vagas da classificacao
 **resposta:** A Classificação e a Lista de aprovados › Convocação usam a mesma conta das vagas por modalidade. Vale, nesta ordem: o quadro de vagas do edital quando traz a divisão; senão, a configuração de convocação do edital (quadro manual da vaga ou o total de vagas imediatas pelo modelo de cotas); senão, os percentuais da regra de classificação. A tela mostra de onde vieram as vagas da vaga e avisa quando os percentuais da regra e os do modelo de convocação divergem ou quando o total de vagas não bate. Quem fica em cada lista e para onde vai a vaga reservada sem candidato é da regra de classificação; a ordem de chamada para contratar é da Convocação.
-**fonte:** src/lib/classificacao/convocacao-do-edital.js; src/lib/configuracao-de-convocacao.js
+**fonte:** src/lib/classificacao/convocacao-do-edital.ts; src/lib/configuracao-de-convocacao.js
 **abrir:** classificacao
 
 ## Quem pode mudar a classificação
@@ -210,7 +210,7 @@ dos PDFs oficiais).
 
 **perguntas:** siglas das modalidades | o que e ac | ampla concorrencia | o que e pp | pretos e pardos | o que e pi | o que e pq | quilombolas | o que e pcd | pessoa com deficiencia | o que e ppiq | o que e cr | cotas da classificacao
 **resposta:** Nas listas e nos documentos, AC é ampla concorrência; PcD, pessoas com deficiência; PP, pretos e pardos; PI, indígenas; PQ, quilombolas; e PPIQ, a reserva conjunta de pretos e pardos, indígenas e quilombolas de alguns editais. CR é cadastro reserva: quem passou, mas ficou além das vagas imediatas, ou a vaga que só tem cadastro reserva (no cabeçalho, "- Cadastro Reserva"). O cotista também concorre na ampla, e quem é chamado pela ampla não gasta a vaga reservada. Percentual, lista própria e remanejamento de cada modalidade são da regra de classificação do edital.
-**fonte:** src/lib/classificacao/catalogo.ts (MODALIDADES_CONHECIDAS); src/lib/classificacao/motor.js; src/lib/classificacao/vagas.js
+**fonte:** src/lib/classificacao/catalogo.ts (MODALIDADES_CONHECIDAS); src/lib/classificacao/motor.js; src/lib/classificacao/vagas.ts
 **abrir:** classificacao
 
 ## Nota da ART e lote de convocação

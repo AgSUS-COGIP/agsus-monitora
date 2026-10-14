@@ -222,3 +222,10 @@ campos já normalizados do candidato e a data de corte. O sorteio preserva a ord
 SHA-256 da semente e identidade, conferida contra o Node nos testes. Bigints que excedem
 a representação numérica finita retornam `null`. Contratos em
 `tests/tipos/calculos-e-desempates.tsx`; a orquestração do motor permanece em JavaScript.
+
+A montagem das vagas e a ponte com a convocação do edital também estão em TypeScript:
+`classificacao/vagas.ts` e `convocacao-do-edital.ts`, com contratos em
+`tipos-das-vagas.ts`. A precedência continua sendo quadro explícito, configuração de
+convocação compatível com o total e percentuais da regra. A distribuição reutiliza a
+mesma conta da Lista de aprovados, preservando cadastro de reserva, vagas sem candidatos
+e avisos de divergência das cotas. Contratos em `tests/tipos/vagas-da-classificacao.tsx`.

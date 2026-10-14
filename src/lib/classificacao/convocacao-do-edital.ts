@@ -1,3 +1,9 @@
+import type {
+  CategoriaDaConvocacao,
+  ModeloDaConvocacao,
+  ConvocacaoDoEdital,
+  VagasPorModalidade,
+} from "./tipos-das-vagas.ts";
 /*
   A ponte entre a Classificação e a configuração de convocação do edital
   (Lista de aprovados › Convocação: TB_CONVOCACAO_EDITAL, TB_VAGA_IMEDIATA e o
@@ -38,24 +44,28 @@ import { normalizarModelo } from "../modelo-de-convocacao.js";
 import { codigosDaModalidade } from "./catalogo.ts";
 import { normalizarRegra } from "./regra.ts";
 
-const ARREDONDAMENTO_DA_REGRA = Object.freeze({
-  PARA_CIMA: "sempre_acima",
-  MEIO_PARA_CIMA: "meio_acima",
-});
-const ACUMULO_DA_REGRA = Object.freeze({
-  MAIOR_PERCENTUAL: "maior_percentual",
-  PCD_MAIS_UMA: "acumula_com_acumulavel",
-  TODAS: "todas",
-});
+const ARREDONDAMENTO_DA_REGRA: Readonly<Record<string, string | undefined>> =
+  Object.freeze({
+    PARA_CIMA: "sempre_acima",
+    MEIO_PARA_CIMA: "meio_acima",
+  });
+const ACUMULO_DA_REGRA: Readonly<Record<string, string | undefined>> =
+  Object.freeze({
+    MAIOR_PERCENTUAL: "maior_percentual",
+    PCD_MAIS_UMA: "acumula_com_acumulavel",
+    TODAS: "todas",
+  });
 
 /* O código de modalidade da classificação (AC, PCD, PP, PI, PQ…) de uma categoria do modelo. */
-export function codigoDaCategoria(categoria) {
+export function codigoDaCategoria(
+  categoria: Partial<CategoriaDaConvocacao> | null | undefined,
+): string | null {
   if (categoria?.ampla) return "AC";
   const id = String(categoria?.id || "").replace(/_/g, " ");
   const achados = codigosDaModalidade(
     `${categoria?.rotulo || ""} ${categoria?.sigla || ""} ${id}`,
   ).filter((c) => c !== "AC");
-  if (achados.length) return achados[0];
+  if (achados[0]) return achados[0];
   const sigla = String(categoria?.sigla || "")
     .toUpperCase()
     .replace(/[^A-Z]/g, "");
@@ -67,7 +77,7 @@ export function codigoDaCategoria(categoria) {
   `derivarQuadro`). "Fração para baixo" não existe no modelo de convocação:
   devolve null e quem chama usa a conta própria (só esse caso).
 */
-export function modeloDaRegra(regraBruta) {
+export function modeloDaRegra(regraBruta: unknown): ModeloDaConvocacao | null {
   const regra = normalizarRegra(regraBruta);
   const reservas = regra.modalidades.filter(
     (m) => m.codigo !== "AC" && m.percentual,
@@ -97,8 +107,14 @@ export function modeloDaRegra(regraBruta) {
 }
 
 /* `{ AC: 2, PP: 1 }` a partir do quadro por categoria do modelo. */
-export function vagasPorCodigo(quadro, modelo, codigoDe = codigoDaCategoria) {
-  const saida = {};
+export function vagasPorCodigo(
+  quadro: Record<string, unknown> | null | undefined,
+  modelo: ModeloDaConvocacao | null | undefined,
+  codigoDe: (
+    categoria: CategoriaDaConvocacao,
+  ) => string | null = codigoDaCategoria,
+): VagasPorModalidade {
+  const saida: VagasPorModalidade = {};
   for (const categoria of modelo?.categorias || []) {
     const codigo = codigoDe(categoria);
     if (!codigo) continue;
@@ -110,7 +126,10 @@ export function vagasPorCodigo(quadro, modelo, codigoDe = codigoDaCategoria) {
 }
 
 /* As vagas por modalidade de `total` vagas imediatas pela conta da convocação. */
-export function vagasPelaConta(total, modelo) {
+export function vagasPelaConta(
+  total: number,
+  modelo: ModeloDaConvocacao,
+): VagasPorModalidade {
   // O modelo montado da regra guarda o código da modalidade na sigla (PPIQ, TRANS…).
   return vagasPorCodigo(derivarQuadro(total, modelo), modelo, (c) =>
     c.ampla ? "AC" : c.sigla,
@@ -122,7 +141,13 @@ export function vagasPelaConta(total, modelo) {
   `listar_configuracao_convocacao` e `listar_modelos_convocacao`. Sem
   configuração para o edital → null (a Classificação segue com a regra).
 */
-export function convocacaoDoEdital({ configuracoes, modelos } = {}, editalId) {
+export function convocacaoDoEdital(
+  {
+    configuracoes,
+    modelos,
+  }: { configuracoes?: unknown; modelos?: unknown } = {},
+  editalId: unknown = null,
+): ConvocacaoDoEdital | null {
   if (!editalId) return null;
   const configs = lerConfiguracoesDoBanco(configuracoes);
   const config = configs.get(String(editalId));
@@ -144,7 +169,10 @@ export function convocacaoDoEdital({ configuracoes, modelos } = {}, editalId) {
   (`configuracaoDaVaga`: quadro manual > total da vaga > padrão do edital), ou
   null quando a configuração não fala desta vaga e não tem padrão.
 */
-export function vagasDaConvocacao(convocacao, codigoVaga) {
+export function vagasDaConvocacao(
+  convocacao: ConvocacaoDoEdital | null | undefined,
+  codigoVaga: unknown,
+) {
   if (!convocacao) return null;
   const config = convocacao.configs.get(convocacao.editalId);
   const codigo = String(codigoVaga ?? "").trim();
@@ -166,7 +194,10 @@ export function vagasDaConvocacao(convocacao, codigoVaga) {
   coisas diferentes sobre as cotas (percentual, arredondamento, mínimo,
   remanejamento). Lista de frases; vazia = coerentes.
 */
-export function divergenciasDasCotas(regraBruta, convocacao) {
+export function divergenciasDasCotas(
+  regraBruta: unknown,
+  convocacao: ConvocacaoDoEdital | null | undefined,
+): string[] {
   const modelo = convocacao?.modelo;
   if (!modelo) return [];
   const regra = normalizarRegra(regraBruta);
@@ -176,7 +207,7 @@ export function divergenciasDasCotas(regraBruta, convocacao) {
       .filter((m) => m.codigo !== "AC")
       .map((m) => [m.codigo, m]),
   );
-  const doModelo = new Map();
+  const doModelo = new Map<string, CategoriaDaConvocacao>();
   for (const c of modelo.categorias) {
     const codigo = codigoDaCategoria(c);
     if (codigo && codigo !== "AC") doModelo.set(codigo, c);

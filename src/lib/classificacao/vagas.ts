@@ -1,3 +1,11 @@
+import type {
+  BaseDaVaga,
+  CandidatoDaVaga,
+  ConvocacaoDoEdital,
+  QuadroDaVaga,
+  VagaMontada,
+  VagasPorModalidade,
+} from "./tipos-das-vagas.ts";
 /*
   As vagas de um edital para a classificação: o código da vaga (das análises)
   ligado à linha do quadro de vagas do edital (TB_QUADRO_VAGA_EDITAL, ligação
@@ -12,22 +20,24 @@
   As vagas por modalidade vêm, nesta ordem: do quadro do edital (quando traz a
   divisão), da configuração de convocação do edital (Lista de aprovados ›
   Convocação) ou dos percentuais da regra — estas duas pela MESMA conta da
-  convocação (`derivarQuadro`; ver convocacao-do-edital.js).
+  convocação (`derivarQuadro`; ver convocacao-do-edital.ts).
 */
 import { codigosDaModalidade, semAcento } from "./catalogo.ts";
 import {
   modeloDaRegra,
   vagasDaConvocacao,
   vagasPelaConta,
-} from "./convocacao-do-edital.js";
+} from "./convocacao-do-edital.ts";
 import { numeroBR } from "./numeros.ts";
 import { normalizarRegra } from "./regra.ts";
 
-const texto = (valor) => String(valor ?? "").trim();
+const texto = (valor: unknown) => String(valor ?? "").trim();
 
 /** As vagas por modalidade de uma linha do quadro: `{ AC: 2, PP: 1 }` (null = só CR). */
-export function vagasDoQuadroPorModalidade(modalidades) {
-  const saida = {};
+export function vagasDoQuadroPorModalidade(
+  modalidades: Record<string, unknown> | null | undefined,
+): VagasPorModalidade | null {
+  const saida: VagasPorModalidade = {};
   let explicitas = false;
   for (const [nome, valor] of Object.entries(modalidades || {})) {
     const codigo = codigosDaModalidade(nome)[0];
@@ -39,7 +49,7 @@ export function vagasDoQuadroPorModalidade(modalidades) {
   return explicitas ? saida : null;
 }
 
-function arredondarCota(valor, modo) {
+function arredondarCota(valor: number, modo: string) {
   if (modo === "PARA_CIMA") return Math.ceil(valor - 1e-9);
   if (modo === "PARA_BAIXO") return Math.floor(valor + 1e-9);
   return Math.floor(valor + 0.5 + 1e-9);
@@ -51,37 +61,46 @@ function arredondarCota(valor, modo) {
   pela conta da convocação (`derivarQuadro`). Só "fração para baixo", que a
   convocação não tem, usa a conta daqui.
 */
-export function vagasPelosPercentuais(total, regra) {
+export function vagasPelosPercentuais(
+  total: number,
+  regra: unknown,
+): VagasPorModalidade {
   const r = normalizarRegra(regra);
   const modelo = modeloDaRegra(r);
   if (modelo) return limparZeros(vagasPelaConta(total, modelo));
-  const saida = { AC: total };
+  const saida: VagasPorModalidade = { AC: total };
   if (!total || total < Math.max(1, r.cotas.minimo_vagas_reserva)) return saida;
   for (const m of r.modalidades) {
     if (m.codigo === "AC" || !m.percentual) continue;
     const n = arredondarCota((total * m.percentual) / 100, m.arredondamento);
     if (n > 0) {
       saida[m.codigo] = n;
-      saida.AC -= n;
+      saida.AC = (saida.AC ?? 0) - n;
     }
   }
-  saida.AC = Math.max(0, saida.AC);
+  saida.AC = Math.max(0, saida.AC ?? 0);
   return saida;
 }
 
-function limparZeros(vagas) {
+function limparZeros(vagas: VagasPorModalidade): VagasPorModalidade {
   return Object.fromEntries(
     Object.entries(vagas).filter(([codigo, n]) => codigo === "AC" || n > 0),
   );
 }
 
-function nomeDaModalidade(codigo, regra) {
+function nomeDaModalidade(
+  codigo: string,
+  regra: ReturnType<typeof normalizarRegra>,
+) {
   if (codigo === "AC") return "AC";
   return regra.modalidades.find((m) => m.codigo === codigo)?.nome || codigo;
 }
 
 /** "3 vagas (2 AC + 1 Pretos e pardos + CR)" ou "Cadastro Reserva". */
-export function textoDasVagas(vaga, regraBruta) {
+export function textoDasVagas(
+  vaga: Pick<VagaMontada, "total" | "porModalidade" | "cadastroReserva">,
+  regraBruta: unknown,
+) {
   const regra = normalizarRegra(regraBruta);
   const total = vaga.total ?? null;
   if (total === null) return "";
@@ -98,7 +117,11 @@ export function textoDasVagas(vaga, regraBruta) {
   (Sede) - DSEI Xingu - 1 vaga (1 AC + CR)". A unidade vem mesmo quando a
   lotação já a cita (como o 83/2026 publicou); só sai se for igual à lotação.
 */
-export function cabecalhoDaVaga(vaga, regra, unidade = "") {
+export function cabecalhoDaVaga(
+  vaga: Omit<VagaMontada, "cabecalho">,
+  regra: unknown,
+  unidade = "",
+) {
   const partes = [
     vaga.codigo ? `VAGA ${vaga.codigo}` : "VAGA",
     vaga.cargo,
@@ -124,29 +147,42 @@ export function montarVagas({
   regra,
   unidade = "",
   convocacao = null,
-}) {
+}: {
+  candidatos?: readonly CandidatoDaVaga[];
+  quadro?: readonly QuadroDaVaga[];
+  regra?: unknown;
+  unidade?: string;
+  convocacao?: ConvocacaoDoEdital | null;
+}): VagaMontada[] {
   const r = normalizarRegra(regra);
   const linhas = new Map((quadro || []).map((q) => [String(q.id), q]));
-  const porCodigo = new Map();
+  const porCodigo = new Map<
+    string,
+    { cargos: Map<string, number>; quadros: Map<string, number> }
+  >();
   for (const c of candidatos) {
     const codigo = texto(c.vaga);
     if (!codigo) continue;
     if (!porCodigo.has(codigo))
       porCodigo.set(codigo, { cargos: new Map(), quadros: new Map() });
     const v = porCodigo.get(codigo);
+    if (!v) continue;
     const cargo = texto(c.cargo);
     if (cargo) v.cargos.set(cargo, (v.cargos.get(cargo) || 0) + 1);
     const q = c.quadroId ? String(c.quadroId) : "";
     if (q) v.quadros.set(q, (v.quadros.get(q) || 0) + 1);
   }
-  const maisComum = (mapa) =>
+  const maisComum = (mapa: Map<string, number>) =>
     [...mapa.entries()].sort(
       (a, b) => b[1] - a[1] || (a[0] < b[0] ? -1 : 1),
     )[0]?.[0] || "";
 
-  const usados = new Set();
-  const vagas = [];
-  const completar = (base, linha) => {
+  const usados = new Set<string>();
+  const vagas: Omit<VagaMontada, "cabecalho">[] = [];
+  const completar = (
+    base: BaseDaVaga,
+    linha: QuadroDaVaga | undefined,
+  ): Omit<VagaMontada, "cabecalho"> => {
     const daConvocacao = base.codigo
       ? vagasDaConvocacao(convocacao, base.codigo)
       : null;
@@ -236,10 +272,10 @@ export function montarVagas({
  * sem isso, o cargo que COMEÇA com "Técnico" ("Técnico de Enfermagem do
  * Trabalho"; "Analista Técnico" não é técnico). Null quando o nome não diz.
  */
-export function nivelNoNomeDoCargo(cargo) {
+export function nivelNoNomeDoCargo(cargo: unknown): string | null {
   const c = semAcento(cargo).replace(/\s+/g, " ").trim();
   const escrito = /\bnivel (superior|tecnico|medio|fundamental)\b/.exec(c);
-  if (escrito) return escrito[1];
+  if (escrito?.[1]) return escrito[1];
   return /^tecnic[oa]\b/.test(c) ? "tecnico" : null;
 }
 
@@ -248,7 +284,10 @@ export function nivelNoNomeDoCargo(cargo) {
  * nome do cargo ("(Nível Superior)", "Técnico de…"), pela categoria e, por
  * fim, o nível padrão da regra.
  */
-export function nivelDaVaga({ cargo = "", categoria = "" }, regra) {
+export function nivelDaVaga(
+  { cargo = "", categoria = "" }: { cargo?: unknown; categoria?: unknown },
+  regra: unknown,
+): string | null {
   const r = normalizarRegra(regra);
   const c = semAcento(cargo);
   // O cargo COMEÇA com o termo ("Técnico de Enfermagem"; "Analista Técnico" não é técnico).
