@@ -1210,6 +1210,70 @@ describe("estado da ficha: salvamento automático", () => {
     estado.descartar();
   });
 
+  it("a justificativa do ajuste acompanha os itens: preenche na abertura sem marcar alterada, refaz com os itens e guarda o texto editado", async () => {
+    const lancamento = {
+      nivel: "superior",
+      modalidade: "AC",
+      blocos: { CURSOS: { situacao: "CONFORME" } },
+      titulos: [],
+      cursos: [
+        { nome: "A", horas: 120, aceito: true },
+        { nome: "B", horas: 30, aceito: true },
+      ],
+      vinculos: [],
+    };
+    const { estado, agendados } = loja(
+      rpcFalso({ obter_ficha_analise: () => fichaDoBanco({ lancamento }) }),
+    );
+    await estado.carregar("f1");
+    const texto = () =>
+      estado.obter().lancamento.blocos.CURSOS.justificativa_livre;
+    expect(texto()).toBe(
+      "Aceito 1 curso: 120 h (faixa ≥120 h, 3 pontos). Não pontuados: 1 curso de 30 h — abaixo de 40 h (8.2.6).",
+    );
+    expect(estado.obter().sujo).toBe(false);
+    expect(agendados).toHaveLength(0);
+    expect(estado.obter().avaliacao.parecer).toContain(
+      "- Item 8.2.6: Aceito 1 curso: 120 h",
+    );
+    estado.mudar((l) => {
+      l.cursos.push({ nome: "C", horas: 60, aceito: true });
+      return l;
+    });
+    expect(texto()).toContain("Aceitos 2 cursos (180 h)");
+    estado.mudar((l) => {
+      l.blocos.CURSOS.justificativa_livre = "Texto do avaliador.";
+      return l;
+    });
+    estado.mudar((l) => {
+      l.cursos.pop();
+      return l;
+    });
+    expect(texto()).toBe("Texto do avaliador.");
+    estado.descartar();
+  });
+
+  it("na ficha só para leitura, a justificativa gravada não muda", async () => {
+    const lancamento = {
+      nivel: "superior",
+      modalidade: "AC",
+      blocos: { CURSOS: { situacao: "CONFORME" } },
+      titulos: [],
+      cursos: [{ nome: "B", horas: 30, aceito: true }],
+      vinculos: [],
+    };
+    const { estado } = loja(
+      rpcFalso({
+        obter_ficha_analise: () => fichaDoBanco({ lancamento, editar: false }),
+      }),
+    );
+    await estado.carregar("f1");
+    expect(
+      estado.obter().lancamento.blocos.CURSOS.justificativa_livre,
+    ).toBeUndefined();
+    estado.descartar();
+  });
+
   it("cada mudança agenda o rascunho; mudança durante o envio salva de novo com a versão nova", async () => {
     let soltar;
     const rpc = rpcFalso({
@@ -1823,5 +1887,33 @@ describe("ficha: pelos itens lidos (conferir → pontuação dos aceitos → con
     expect(c().dataset.escolha).toBe("CONFERE");
     // Os lidos continuam pendentes e a linha à mão não é marcada "lido do arquivo".
     expect(aMao().querySelector(".avd-ficha-da-resposta")).toBeNull();
+  });
+
+  it("Justificativa do ajuste no rodapé: o resumo dos aceitos já preenchido, editável, e 'Usar o resumo dos itens'", async () => {
+    await abrirFicha(supabaseFalso(fichaComLeitura()));
+    await irAo("CURSOS");
+    const c = () => cartao("CURSOS");
+    const campo = () =>
+      c().querySelector(
+        ".avd-ficha-pelos-itens .avd-ficha-justificativa-do-ajuste textarea",
+      );
+    const lidos = () => c().querySelectorAll(".avd-conferir-item");
+    await clicar(lidos()[0].querySelector("[data-acao='aceitar']"));
+    await clicar(lidos()[1].querySelector("[data-acao='aceitar']"));
+    // Antes de confirmar, nada; confirmado (4 ≠ declarou 3), o resumo no rodapé.
+    expect(campo()).toBeNull();
+    await clicar(c().querySelector("[data-acao='confirmar-pelos-itens']"));
+    expect(campo().value).toBe(
+      "Aceitos 2 cursos (205 h): 145 h (faixa ≥120 h, 3 pontos) e 60 h (faixa 40–60 h, 1 ponto).",
+    );
+    // O texto não se repete na área das justificativas (só os chips ficam lá).
+    expect(
+      c().querySelectorAll(".avd-ficha-justificativa-do-ajuste"),
+    ).toHaveLength(1);
+    expect(botao("Usar o resumo dos itens", c())).toBeFalsy();
+    await digitar(campo(), "Aceitos 2 cursos; o terceiro sem carga.");
+    expect(campo().value).toBe("Aceitos 2 cursos; o terceiro sem carga.");
+    await clicar(botao("Usar o resumo dos itens", c()));
+    expect(campo().value).toContain("Aceitos 2 cursos (205 h)");
   });
 });

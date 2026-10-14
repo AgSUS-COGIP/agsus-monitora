@@ -1701,7 +1701,7 @@ export const VERBETES_AYA = Object.freeze([
       "confirmacao voltou a ser pedida",
     ],
     resposta:
-      'Quando o robô leu títulos, cursos ou vínculos do arquivo do item, a ficha segue o caminho mais curto: (1) confira cada item lido — Aceitar, Corrigir ou Recusar — e, se a leitura não achou ou errou algum, use "Adicionar vínculo" (ou curso/título), sempre à vista embaixo da lista, para digitar à mão; (2) a pontuação sai dos aceitos, num rodapé: "Pontuação pelos itens aceitos: 30 de 35 · declarou 35"; na Experiência, logo abaixo, o tempo já unido ("Comprovado: 4 anos e 2 meses (50 meses) · 1.520 dias") e, se houver vínculos ao mesmo tempo, "N dias em comum entre vínculos contam uma vez" — a regra dos editais: dia em comum conta uma vez só; (3) confirme. "Confirmar" grava Confere quando os aceitos dão o declarado; quando dão outra pontuação, grava Editar nota com o valor dos aceitos e pede a justificativa (um chip do bloco ou o complemento). "Não confere" pede só o motivo, como antes. "Editar nota", discreto à direita, é só o ajuste fino: abre o − e + a partir da pontuação dos aceitos. Se você aceitar, recusar, corrigir, adicionar ou tirar um item depois de confirmar, a confirmação volta a ser pedida (a pontuação mudou). As teclas continuam: 1 Confirmar, 2 Não confere, 3 Editar nota (aparecem ao passar o mouse). Itens sem leitura do robô seguem com as três escolhas de sempre (Confere · Não confere · Editar nota).',
+      'Quando o robô leu títulos, cursos ou vínculos do arquivo do item, a ficha segue o caminho mais curto: (1) confira cada item lido — Aceitar, Corrigir ou Recusar — e, se a leitura não achou ou errou algum, use "Adicionar vínculo" (ou curso/título), sempre à vista embaixo da lista, para digitar à mão; (2) a pontuação sai dos aceitos, num rodapé: "Pontuação pelos itens aceitos: 30 de 35 · declarou 35"; na Experiência, logo abaixo, o tempo já unido ("Comprovado: 4 anos e 2 meses (50 meses) · 1.520 dias") e, se houver vínculos ao mesmo tempo, "N dias em comum entre vínculos contam uma vez" — a regra dos editais: dia em comum conta uma vez só; (3) confirme. "Confirmar" grava Confere quando os aceitos dão o declarado; quando dão outra pontuação, grava Editar nota com o valor dos aceitos e pede a justificativa (um chip do bloco); embaixo do rodapé aparece a "Justificativa do ajuste", já preenchida com o resumo dos itens. "Não confere" pede só o motivo, como antes. "Editar nota", discreto à direita, é só o ajuste fino: abre o − e + a partir da pontuação dos aceitos. Se você aceitar, recusar, corrigir, adicionar ou tirar um item depois de confirmar, a confirmação volta a ser pedida (a pontuação mudou). As teclas continuam: 1 Confirmar, 2 Não confere, 3 Editar nota (aparecem ao passar o mouse). Itens sem leitura do robô seguem com as três escolhas de sempre (Confere · Não confere · Editar nota).',
     fato: "Na ficha da Avaliação documental, com itens lidos do arquivo, o avaliador confere os itens, a pontuação sai dos aceitos e ele confirma (Confere se dá o declarado, senão Editar nota com justificativa); dias em comum entre vínculos contam uma vez.",
     fonte:
       "src/modulos/avaliacao-documental/ficha/item-da-ficha.tsx (DecisaoPelosItens); src/modulos/avaliacao-documental/ficha/leitura-dos-arquivos.tsx (ConferenciaDoLido, CorrecaoDoItem); src/lib/avaliacao-documental/apurado-da-ficha.ts (escolhaPelosItens, lancamentoConfirmadoPelosItens, semConfirmacaoSeMudouItens); src/lib/avaliacao-documental/comprovado-da-ficha.ts (diasEmComum); src/lib/avaliacao-documental/leitura-dos-arquivos.ts (aceitarItemCorrigido, alertasResumidos)",
@@ -1782,6 +1782,35 @@ export const VERBETES_AYA = Object.freeze([
     fato: "No MONITORA, nota apurada diferente da declarada na ficha exige justificativa padronizada, que vai para o parecer e para o histórico.",
     fonte:
       "src/lib/avaliacao-documental/ficha.js (pendenciasDaFicha, divergenciaDoBloco); src/lib/avaliacao-documental/apurado-da-ficha.ts; supabase/migrations/20261007130000_conteudo_da_ficha.sql (FC_PENDENCIAS_FICHA)",
+    abrir: "avaliacao-documental",
+  },
+  {
+    arquivo: "regras-da-avaliacao-documental.md",
+    titulo: "Justificativa do ajuste (resumo dos itens)",
+    perguntas: [
+      "justificativa do ajuste",
+      "resumo dos itens",
+      "campo de regras",
+      "justificar o ajuste da nota",
+      "quantos cursos foram aceitos",
+      "cursos nao aceitos",
+      "curso abaixo de 40h",
+      "curso nao pontuado",
+      "por que o curso nao pontuou",
+      "evento academico nao pontua",
+      "vinculo recusado no parecer",
+      "dias em comum no parecer",
+      "usar o resumo dos itens",
+      "editar a justificativa",
+      "justificativa automatica",
+      "texto da justificativa no parecer",
+      "observacoes da analise cursos",
+    ],
+    resposta:
+      'Nos itens Titulação, Cursos e Experiência, a ficha monta sozinha a "Justificativa do ajuste" a partir dos itens lançados: os aceitos (quantos, as horas de cada um com a faixa e os pontos da regra, e o total) e os não pontuados, agrupados pelo motivo — o motivo da recusa escolhido na linha (ex.: eventos acadêmicos, item 6.4), o motivo da recusa do item lido do arquivo (fora da área da vaga, carga horária não comprovada…), o curso abaixo do mínimo de horas da regra (ex.: abaixo de 40 h, item 8.2.6) ou sem carga horária, o título sem pontos no nível da vaga. Exemplo: "Aceitos 2 cursos (205 h): 145 h (faixa ≥120 h, 3 pontos) e 60 h (faixa 40–60 h, 1 ponto). Não pontuados: 1 curso de 30 h — abaixo de 40 h (8.2.6)." Na Experiência: os vínculos aceitos, os dias unidos, os dias em comum que contam uma vez, a conta além do mínimo ("Além do mínimo de 6 meses: 30 meses → 5 períodos de 6 meses → 25 pontos") e os vínculos não contados com o motivo. O campo aparece quando o item está em Confere ou Editar nota e a pontuação é diferente da declarada ou algum item não pontuou: com a leitura do robô, embaixo de "Pontuação pelos itens aceitos"; sem ela, na área da justificativa. O texto pode ser editado: o que você escreve fica, mesmo que os itens mudem; enquanto não editar, ele acompanha os itens (aceitar, recusar, corrigir ou adicionar refaz o resumo). "Usar o resumo dos itens" volta ao texto automático. Ele entra no parecer, em "Observações da análise", com o item do edital do bloco; o chip escolhido cujo texto o resumo já cita não se repete. O chip do bloco (ou a observação pronta) continua pedido quando a pontuação difere da declarada.',
+    fato: 'No MONITORA, a ficha da Avaliação documental resume na "Justificativa do ajuste" os cursos, títulos e vínculos aceitos e os não pontuados com o motivo, e esse texto entra nas observações do parecer.',
+    fonte:
+      "src/lib/avaliacao-documental/justificativa-dos-itens.ts; src/modulos/avaliacao-documental/ficha/item-da-ficha.tsx (JustificativaDoAjuste); src/modulos/avaliacao-documental/ficha/estado-da-ficha.js; src/lib/avaliacao-documental/pontuacao.js (textosDasJustificativas); python/monitora/avaliacao_documental/pontuacao.py (textos_das_justificativas)",
     abrir: "avaliacao-documental",
   },
   {

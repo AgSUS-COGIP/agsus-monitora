@@ -3694,6 +3694,158 @@
         "encaminhamentos": [],
         "parecer": "Edital 114/2026\nCandidato(a) INABILITADO(A) na Avaliação Documental e de Títulos, pelo(s) seguinte(s) motivo(s):\n\n- Item 2 e Anexo I: Não apresentou o curso de especialização ou capacitação em Cromatografia Gasosa exigido para o cargo (Anexo I)."
       }
+    },
+    {
+      "nome": "ficha: justificativa do ajuste dos cursos cita o motivo escolhido (o motivo não se repete)",
+      "regra": "PROJ26-CURRICULAR",
+      "candidato": {
+        "nivel": "superior",
+        "modalidade": "AC",
+        "titulos": [
+          {
+            "titulo": "ESPECIALIZACAO",
+            "nome": "Especialização fictícia",
+            "aceito": true
+          }
+        ],
+        "vinculos": [
+          {
+            "empregador": "Empresa fictícia",
+            "categoria": "AREA_OU_SUS",
+            "inicio": "2020-01-01",
+            "fim": "2022-12-31",
+            "aceito": true
+          }
+        ],
+        "blocos": {
+          "IDENTIDADE": {
+            "situacao": "CONFORME"
+          },
+          "ESCOLARIDADE": {
+            "situacao": "CONFORME"
+          },
+          "REGISTRO_CONSELHO": {
+            "situacao": "CONFORME"
+          },
+          "CURSOS": {
+            "situacao": "CONFORME",
+            "justificativas": ["EVENTO"],
+            "justificativa_livre": "Aceito 1 curso: 145 h (faixa ≥120 h, 3 pontos). Não pontuados: 1 curso de 30 h — abaixo de 40 h (8.2.6); 1 curso de 16 h — eventos acadêmicos, palestras, workshops, simpósios, seminários, congressos e afins não são pontuados (6.4)."
+          }
+        },
+        "cursos": [
+          {
+            "nome": "Curso A",
+            "horas": 145,
+            "aceito": true
+          },
+          {
+            "nome": "Curso B",
+            "horas": 30,
+            "aceito": true
+          },
+          {
+            "nome": "Congresso",
+            "horas": 16,
+            "aceito": false,
+            "motivo": "EVENTO"
+          }
+        ]
+      },
+      "opcoes": {
+        "notaMinima": 20
+      },
+      "esperado": {
+        "resultado": "APTO",
+        "nota_apurada": 33,
+        "nota_final": 33,
+        "parciais": {
+          "FORMACAO": 5,
+          "CURSOS": 3,
+          "EXPERIENCIA": 25
+        },
+        "calculados": {
+          "FORMACAO": 5,
+          "CURSOS": 3,
+          "EXPERIENCIA": 25
+        },
+        "eliminatorios": [],
+        "encaminhamentos": [],
+        "parecer": "Candidato(a) HABILITADO(A) na Avaliação Documental e de Títulos com a pontuação total de 33,0 pontos, distribuídos da seguinte forma:\n\n- Formação Acadêmica: 5,0 pontos.\n- Cursos de Aperfeiçoamento: 3,0 pontos.\n- Experiência Profissional: 25,0 pontos.\n\nObservações da análise:\n- Item 8.2.6: Aceito 1 curso: 145 h (faixa ≥120 h, 3 pontos). Não pontuados: 1 curso de 30 h — abaixo de 40 h (8.2.6); 1 curso de 16 h — eventos acadêmicos, palestras, workshops, simpósios, seminários, congressos e afins não são pontuados (6.4)."
+      }
+    },
+    {
+      "nome": "ficha: justificativa do ajuste editada e observação pronta entram as duas",
+      "regra": "PROJ26-CURRICULAR",
+      "candidato": {
+        "nivel": "superior",
+        "modalidade": "AC",
+        "titulos": [
+          {
+            "titulo": "ESPECIALIZACAO",
+            "nome": "Especialização fictícia",
+            "aceito": true
+          }
+        ],
+        "vinculos": [
+          {
+            "empregador": "Empresa fictícia",
+            "categoria": "AREA_OU_SUS",
+            "inicio": "2020-01-01",
+            "fim": "2022-12-31",
+            "aceito": true
+          }
+        ],
+        "blocos": {
+          "IDENTIDADE": {
+            "situacao": "CONFORME"
+          },
+          "ESCOLARIDADE": {
+            "situacao": "CONFORME"
+          },
+          "REGISTRO_CONSELHO": {
+            "situacao": "CONFORME"
+          },
+          "CURSOS": {
+            "situacao": "CONFORME",
+            "justificativas": ["CURSOS_DIMINUIDA"],
+            "justificativa_livre": "Aceito 1 curso de 145 h; o de 30 h ficou abaixo de 40 h."
+          }
+        },
+        "cursos": [
+          {
+            "nome": "Curso A",
+            "horas": 145,
+            "aceito": true
+          },
+          {
+            "nome": "Curso B",
+            "horas": 30,
+            "aceito": true
+          }
+        ]
+      },
+      "opcoes": {
+        "notaMinima": 20
+      },
+      "esperado": {
+        "resultado": "APTO",
+        "nota_apurada": 33,
+        "nota_final": 33,
+        "parciais": {
+          "FORMACAO": 5,
+          "CURSOS": 3,
+          "EXPERIENCIA": 25
+        },
+        "calculados": {
+          "FORMACAO": 5,
+          "CURSOS": 3,
+          "EXPERIENCIA": 25
+        },
+        "eliminatorios": [],
+        "encaminhamentos": [],
+        "parecer": "Candidato(a) HABILITADO(A) na Avaliação Documental e de Títulos com a pontuação total de 33,0 pontos, distribuídos da seguinte forma:\n\n- Formação Acadêmica: 5,0 pontos.\n- Cursos de Aperfeiçoamento: 3,0 pontos.\n- Experiência Profissional: 25,0 pontos.\n\nObservações da análise:\n- Nota de cursos de aperfeiçoamento diminuída: certificados sem relação direta com a área da vaga, abaixo de 40h ou de eventos não foram contabilizados.\n- Item 8.2.6: Aceito 1 curso de 145 h; o de 30 h ficou abaixo de 40 h."
+      }
     }
   ],
   "nota_declarada": [
