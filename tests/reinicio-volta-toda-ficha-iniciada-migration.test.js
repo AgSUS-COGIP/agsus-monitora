@@ -18,9 +18,7 @@ describe("reinício volta toda ficha iniciada", () => {
     expect(MIGRATION).toMatch(
       /create or replace function private\."FC_REINICIAR_FICHAS_DO_EDITAL"/,
     );
-    expect(MIGRATION).toContain(
-      'if not private."FC_FICHA_INICIADA"(v_f) then',
-    );
+    expect(MIGRATION).toContain('if not private."FC_FICHA_INICIADA"(v_f) then');
     expect(MIGRATION).not.toMatch(
       /v_f\."TP_SITUACAO" = 'PENDENTE' and v_f\."CO_USUARIO_RESPONSAVEL" is null/,
     );
@@ -62,7 +60,7 @@ describe("reinício volta toda ficha iniciada", () => {
     expect(ENSAIO).toContain("refazer_permitido");
     expect(ENSAIO).not.toMatch(/^\s*commit\s*;/im);
     expect(ROLLBACK).toContain(
-      "v_f.\"TP_SITUACAO\" = 'PENDENTE' and v_f.\"CO_USUARIO_RESPONSAVEL\" is null",
+      'v_f."TP_SITUACAO" = \'PENDENTE\' and v_f."CO_USUARIO_RESPONSAVEL" is null',
     );
     expect(ROLLBACK).not.toContain("FC_FICHA_INICIADA");
   });
