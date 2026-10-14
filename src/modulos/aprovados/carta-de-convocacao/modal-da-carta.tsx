@@ -14,7 +14,7 @@ import {
   modelosParaEmitir,
   validarEmissao,
 } from "../../../lib/carta-de-convocacao.ts";
-import { formatarData } from "../../../lib/lista-aprovados-rules.js";
+import { formatarData } from "../../../lib/lista-aprovados-rules.ts";
 import {
   Aviso,
   BlocosEsqueleto,

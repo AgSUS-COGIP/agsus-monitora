@@ -71,7 +71,7 @@ import {
   statusEhConvocado,
   statusNeedsMatricula,
   statusTravado,
-} from "../../lib/lista-aprovados-rules.js";
+} from "../../lib/lista-aprovados-rules.ts";
 import { hojeEmBrasilia } from "../../lib/carta-de-convocacao.ts";
 import {
   argumentosDaConfiguracao,

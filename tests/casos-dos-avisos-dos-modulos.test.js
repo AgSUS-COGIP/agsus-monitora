@@ -11,7 +11,7 @@ import { filtrosDeEntrevistas } from "../src/lib/filtro-da-aya.js";
 import {
   filterApprovedCandidates,
   nomeDosCandidatosFiltrados,
-} from "../src/lib/lista-aprovados-rules.js";
+} from "../src/lib/lista-aprovados-rules.ts";
 
 /*
   Casos dos avisos dos outros módulos (20261007240000): aprovados,

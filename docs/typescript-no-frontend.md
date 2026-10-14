@@ -268,3 +268,13 @@ a ordenação e o cálculo. A associação do sub judice ao cargo fica restrita 
 próprio edital; múltiplas vagas no mesmo edital continuam sem escolha automática.
 Contratos em `tests/tipos/lista-de-convocacao.tsx` e regressão em
 `tests/lib/convocacao-sub-judice-por-edital.test.js`.
+
+A aba Aprovados, as peças compartilhadas e as regras de filtros/status estão em
+TypeScript/TSX: indicadores, origem das listas, ações, selos, decisões judiciais,
+filtros, paginação e campos editáveis. Os contratos genéricos preservam os campos
+adicionais dos candidatos e distinguem o valor recebido do valor convertido pelo
+campo. Texto em edição e atualizações externas continuam preservados. A paginação
+corrige tamanhos positivos fracionários para ao menos uma linha. Contratos em
+`tests/tipos/aba-e-regras-de-aprovados.tsx` e testes de edição em
+`tests/componentes/campos-dos-aprovados.test.js`. A entrada principal, o estado e
+os modais/gaveta de Aprovados ainda incluem JavaScript/JSX.

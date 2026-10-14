@@ -30,7 +30,7 @@ import {
 import { EditorDeModelo } from "./editor-de-modelo.tsx";
 import { PreviaDaConvocacao } from "./previa-da-convocacao.tsx";
 import { BotaoDeAcao, classes } from "../../ui/index.js";
-import { CampoEditavel, plural } from "./partes.jsx";
+import { CampoEditavel, plural } from "./partes.tsx";
 
 /*
   A aba "Lista de convocação" do modal de listas do edital: o MODELO de regras

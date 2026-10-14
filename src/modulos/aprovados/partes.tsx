@@ -1,3 +1,17 @@
+import type {
+  ReactNode,
+  ReactElement,
+  InputHTMLAttributes,
+  ButtonHTMLAttributes,
+} from "react";
+import type {
+  CandidatoDasRegrasDeAprovados,
+  PaginaDosAprovados,
+} from "../../lib/tipos-das-regras-de-aprovados.ts";
+import type { CandidatoDaTabelaDeAprovados } from "./tipos-da-aba-de-aprovados.ts";
+type AtributosDaAcao = ButtonHTMLAttributes<HTMLButtonElement> & {
+  [chave: `data-${string}`]: string | number | boolean | undefined;
+};
 import { useState } from "react";
 import { canChangeCandidateStatus } from "../../lib/access-roles.js";
 import { formatNumberBR } from "../../lib/formatters.js";
@@ -10,7 +24,7 @@ import {
   statusEhConvocado,
   statusTravado,
   tomDoStatus,
-} from "../../lib/lista-aprovados-rules.js";
+} from "../../lib/lista-aprovados-rules.ts";
 import { Icone } from "../../componentes/icone.jsx";
 
 /*
@@ -21,14 +35,20 @@ import { Icone } from "../../componentes/icone.jsx";
 
 export { classes } from "../../ui/index.js";
 
-export const plural = (total, singular, varios) =>
+export const plural = (total: number, singular: string, varios: string) =>
   `${formatNumberBR(total)} ${total === 1 ? singular : varios}`;
 
 /*
   O selo do status; com a data da convocação (`dataConvocacao`, "AAAA-MM-DD"),
   Convocado mostra o dia em que foi chamado.
 */
-export function SeloDeStatus({ status, dataConvocacao = "" }) {
+export function SeloDeStatus({
+  status,
+  dataConvocacao = "",
+}: {
+  status: string;
+  dataConvocacao?: string;
+}) {
   const data = statusEhConvocado(status) ? formatarData(dataConvocacao) : "";
   return (
     <span className="approved-status-celula">
@@ -44,7 +64,16 @@ export function SeloDeStatus({ status, dataConvocacao = "" }) {
   O nome do candidato; com `aoAbrir`, o nome é o botão que abre a gaveta do
   candidato (dados, status e cartas de convocação emitidas).
 */
-export function NomeDoCandidato({ candidato, aoAbrir }) {
+export function NomeDoCandidato({
+  candidato,
+  aoAbrir,
+}: {
+  candidato: Pick<
+    CandidatoDaTabelaDeAprovados,
+    "candidato_id" | "nome" | "edital" | "lista_ativa" | "sub_judice"
+  >;
+  aoAbrir?: (id: string) => void;
+}) {
   return (
     <div className="approved-name">
       {aoAbrir ? (
@@ -75,7 +104,7 @@ export function NomeDoCandidato({ candidato, aoAbrir }) {
   Nota e modalidade mudadas por decisão judicial aparecem com o valor do
   resultado publicado riscado antes do atual ("33 → 40").
 */
-function DeParaJudicial({ de, para }) {
+function DeParaJudicial({ de, para }: { de: ReactNode; para: ReactNode }) {
   return (
     <span className="approved-de-para" title="Alterado por decisão judicial">
       <s>{de}</s>
@@ -86,7 +115,11 @@ function DeParaJudicial({ de, para }) {
   );
 }
 
-export function NotaDoCandidato({ candidato }) {
+export function NotaDoCandidato({
+  candidato,
+}: {
+  candidato: CandidatoDasRegrasDeAprovados;
+}) {
   const mudou = alteracaoJudicial(candidato)?.nota;
   return mudou ? (
     <DeParaJudicial
@@ -98,7 +131,11 @@ export function NotaDoCandidato({ candidato }) {
   );
 }
 
-export function ModalidadeDoCandidato({ candidato }) {
+export function ModalidadeDoCandidato({
+  candidato,
+}: {
+  candidato: CandidatoDasRegrasDeAprovados;
+}) {
   const mudou = alteracaoJudicial(candidato)?.modalidade;
   return mudou ? (
     <DeParaJudicial de={mudou.de || "-"} para={mudou.para || "-"} />
@@ -112,7 +149,17 @@ export function ModalidadeDoCandidato({ candidato }) {
   quem poderia está barrado (lista inativa, ou status já definido e só o admin
   altera), e um traço para quem não pode.
 */
-export function AcaoDeStatus({ perfil, candidato, atributos = {}, aoAbrir }) {
+export function AcaoDeStatus({
+  perfil,
+  candidato,
+  atributos = {},
+  aoAbrir,
+}: {
+  perfil: unknown;
+  candidato: CandidatoDaTabelaDeAprovados;
+  atributos?: AtributosDaAcao;
+  aoAbrir: (id: string) => void;
+}) {
   if (canEditCandidateStatus(perfil, candidato))
     return (
       <button
@@ -151,7 +198,17 @@ export function AcaoDeStatus({ perfil, candidato, atributos = {}, aoAbrir }) {
   A carta de convocação da linha: só para quem emite (aprovados >= editor) e em
   lista ativa; para os demais, nada.
 */
-export function AcaoDeCarta({ perfil, candidato, atributos = {}, aoAbrir }) {
+export function AcaoDeCarta({
+  perfil,
+  candidato,
+  atributos = {},
+  aoAbrir,
+}: {
+  perfil: unknown;
+  candidato: CandidatoDaTabelaDeAprovados;
+  atributos?: AtributosDaAcao;
+  aoAbrir: (ids: readonly string[]) => void;
+}) {
   if (!candidato.lista_ativa || !canChangeCandidateStatus(perfil)) return null;
   return (
     <button
@@ -169,7 +226,7 @@ export function AcaoDeCarta({ perfil, candidato, atributos = {}, aoAbrir }) {
 }
 
 /** O ícone de PDF dos anexos; a cor vem do texto em volta. */
-export const IconeDePdf = ({ tamanho = 22 }) => (
+export const IconeDePdf = ({ tamanho = 22 }: { tamanho?: number }) => (
   <Icone nome="file-type-pdf" tamanho={tamanho} />
 );
 
@@ -178,7 +235,15 @@ export const IconeDePdf = ({ tamanho = 22 }) => (
   arquivo. Sem anexo, fica desativado (e não some), para que o lápis de status
   continue no mesmo lugar em todas as linhas.
 */
-export function AcaoDeAnexos({ candidato, anexos = [], aoAbrir }) {
+export function AcaoDeAnexos({
+  candidato,
+  anexos = [],
+  aoAbrir,
+}: {
+  candidato: Pick<CandidatoDaTabelaDeAprovados, "nome" | "candidato_id">;
+  anexos?: readonly unknown[];
+  aoAbrir: (id: string) => void;
+}) {
   const total = anexos.length;
   return (
     <button
@@ -215,6 +280,13 @@ export function Paginacao({
   unidade,
   aoIrPara,
   aoMudarTamanho,
+}: {
+  prefixo: string;
+  pagina: Omit<PaginaDosAprovados<unknown>, "rows">;
+  tamanho: number;
+  unidade: string;
+  aoIrPara: (destino: number) => void;
+  aoMudarTamanho: (tamanho: number) => void;
 }) {
   const { total, page, totalPages, from, to } = pagina;
   return (
@@ -292,13 +364,13 @@ export function Paginacao({
   (o "Aplicar a todas", a troca de base do modelo) para algo que o texto atual
   já não diz.
 */
-export function CampoEditavel({
+function CampoComLeitura<TEntrada, TLido>({
   valor,
-  ler = (texto) => texto,
+  ler,
   escrever = (atual) => String(atual ?? ""),
   aoMudar,
   ...atributos
-}) {
+}: PropsDoCampoEditavel<TEntrada, TLido>) {
   const [texto, setTexto] = useState(() => escrever(valor));
   const [visto, setVisto] = useState(valor);
   if (!Object.is(valor, visto)) {
@@ -315,4 +387,34 @@ export function CampoEditavel({
       }}
     />
   );
+}
+
+type AtributosDoCampo = Omit<
+  InputHTMLAttributes<HTMLInputElement>,
+  "value" | "defaultValue" | "onChange"
+> & { [chave: `data-${string}`]: string | number | boolean | undefined };
+export type PropsDoCampoEditavel<
+  TEntrada,
+  TLido = TEntrada,
+> = AtributosDoCampo & {
+  valor: TEntrada;
+  ler: (texto: string) => TLido;
+  escrever?: (valor: TEntrada | TLido) => string;
+  aoMudar: (valor: TLido) => void;
+};
+type PropsDoCampoDeTexto = AtributosDoCampo & {
+  valor: string;
+  ler?: undefined;
+  escrever?: (valor: string) => string;
+  aoMudar: (valor: string) => void;
+};
+export function CampoEditavel<TEntrada, TLido>(
+  props: PropsDoCampoEditavel<TEntrada, TLido>,
+): ReactElement;
+export function CampoEditavel(props: PropsDoCampoDeTexto): ReactElement;
+export function CampoEditavel<TEntrada, TLido>(
+  props: PropsDoCampoEditavel<TEntrada, TLido> | PropsDoCampoDeTexto,
+): ReactElement {
+  if (props.ler) return <CampoComLeitura {...props} />;
+  return <CampoComLeitura {...props} ler={(texto) => texto} />;
 }

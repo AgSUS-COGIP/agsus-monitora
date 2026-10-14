@@ -5,7 +5,7 @@ import {
   formatarData,
   formatarNota,
   modalidadeSemAspas,
-} from "../../lib/lista-aprovados-rules.js";
+} from "../../lib/lista-aprovados-rules.ts";
 import { formatarDataHora } from "../../lib/cronograma-do-edital.js";
 import {
   BlocosEsqueleto,
@@ -14,7 +14,7 @@ import {
   Kv,
   Secao,
 } from "../../ui/index.js";
-import { SeloDeStatus } from "./partes.jsx";
+import { SeloDeStatus } from "./partes.tsx";
 
 /*
   A gaveta do candidato (clique no nome, nas duas abas): os dados da lista, o
