@@ -55,6 +55,11 @@ export const CONFERENCIAS: Readonly<
     gravidade: "ATENCAO",
     titulo: "Data da análise no futuro ou antes da inscrição",
   }),
+  ANALISE_FICHA_CONTA_DIVERGENTE: Object.freeze({
+    modulo: "analises",
+    gravidade: "CRITICA",
+    titulo: "Ficha concluída com a conta diferente da regra",
+  }),
   ANALISE_EM_DOIS_EDITAIS: Object.freeze({
     modulo: "analises",
     gravidade: "INFORMATIVO",
@@ -435,6 +440,14 @@ export function motivoDoCaso(
       return `Nota ${numeroDoCaso(d.nota)} · soma das parciais ${numeroDoCaso(d.soma)}`;
     case "ANALISE_EXPERIENCIA_ACIMA_DO_TETO":
       return `Experiência ${numeroDoCaso(d.experiencia)} · teto ${numeroDoCaso(d.teto)}`;
+    case "ANALISE_FICHA_CONTA_DIVERGENTE": {
+      const campos = texto(d.campos).split("/").filter(Boolean).join(", ");
+      const nota =
+        d.nota_gravada !== undefined && d.nota_recalculada !== undefined
+          ? ` · nota ${numeroDoCaso(d.nota_gravada)}, pela regra ${numeroDoCaso(d.nota_recalculada)}`
+          : "";
+      return campos ? `Diferente na conta: ${campos}${nota}` : "";
+    }
     case "ANALISE_EM_DOIS_EDITAIS": {
       const n = numero(d.editais) || caso.analises?.length || 0;
       return n > 1 ? `Em ${n} editais ativos` : "Em mais de um edital ativo";
