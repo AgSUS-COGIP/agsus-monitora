@@ -1,3 +1,13 @@
+import type {
+  ConvocadoDaAgenda,
+  HorarioDaAgenda,
+  ItemDaAgenda,
+  ItemComHorario,
+  ItemParaSalvar,
+  RegraDaAgenda,
+  AvisoDaAgenda,
+} from "./tipos-da-agenda.ts";
+import { objeto, registrosDaAgenda, textoDaAgenda } from "./dados-da-agenda.ts";
 /*
   A agenda das entrevistas de um edital: a regra (dias, períodos, duração,
   intervalo, pausa, bancas, ordem) e o motor que distribui os convocados da
@@ -25,12 +35,13 @@ export { MIME_XLSX };
 export const FUSO_DA_AGENDA = "America/Sao_Paulo";
 export const VERSAO_DA_REGRA_DA_AGENDA = 1;
 
-export const ORDENS_DA_AGENDA = Object.freeze([
-  ["CLASSIFICACAO", "Classificação na convocação"],
-  ["VAGA", "Vaga / cargo"],
-  ["ALFABETICA", "Alfabética"],
-  ["MODALIDADE", "Modalidade"],
-]);
+export const ORDENS_DA_AGENDA: ReadonlyArray<readonly [string, string]> =
+  Object.freeze([
+    ["CLASSIFICACAO", "Classificação na convocação"],
+    ["VAGA", "Vaga / cargo"],
+    ["ALFABETICA", "Alfabética"],
+    ["MODALIDADE", "Modalidade"],
+  ]);
 export const ORIGENS_DA_AGENDA = Object.freeze({
   GERADA: "Gerada",
   MANUAL: "Ajuste manual",
@@ -39,9 +50,9 @@ export const ORIGENS_DA_AGENDA = Object.freeze({
 export const LIMITES_DA_AGENDA = Object.freeze({
   dias: 60,
   periodos: 6,
-  duracao: [5, 240],
-  intervalo: [0, 120],
-  bancas: [1, 20],
+  duracao: [5, 240] as const,
+  intervalo: [0, 120] as const,
+  bancas: [1, 20] as const,
   nomeDaBanca: 60,
 });
 
@@ -75,31 +86,32 @@ const RE_HORA = /^([01]\d|2[0-3]):[0-5]\d$/;
 
 /* ── Datas e horas ─────────────────────────────────────────────────── */
 
-export function dataValida(texto) {
+export function dataValida(texto: unknown) {
   if (!RE_DATA.test(String(texto || ""))) return false;
   const d = new Date(`${texto}T00:00:00Z`);
   return !Number.isNaN(d.getTime()) && d.toISOString().slice(0, 10) === texto;
 }
-export const horaValida = (texto) => RE_HORA.test(String(texto || ""));
+export const horaValida = (texto: unknown) => RE_HORA.test(String(texto || ""));
 
 /** "08:30" → 510. */
-export function minutos(hora) {
-  const [h, m] = String(hora).split(":").map(Number);
+export function minutos(hora: unknown) {
+  const [h = NaN, m = NaN] = String(hora).split(":").map(Number);
   return h * 60 + m;
 }
 /** 510 → "08:30". */
-export function hora(totalMin) {
+export function hora(totalMin: number) {
   const h = Math.floor(totalMin / 60);
   const m = totalMin % 60;
   return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
 }
 
-const somarDias = (data, n) => {
+const somarDias = (data: string, n: number) => {
   const d = new Date(`${data}T00:00:00Z`);
   d.setUTCDate(d.getUTCDate() + n);
   return d.toISOString().slice(0, 10);
 };
-const diaDaSemanaNumero = (data) => new Date(`${data}T00:00:00Z`).getUTCDay();
+const diaDaSemanaNumero = (data: string) =>
+  new Date(`${data}T00:00:00Z`).getUTCDay();
 
 /** O dia de hoje no calendário de Brasília ("AAAA-MM-DD"). */
 export function hojeEmBrasilia(agora = new Date()) {
@@ -115,35 +127,38 @@ export function hojeEmBrasilia(agora = new Date()) {
  * O dia que a agenda do dia mostra primeiro: hoje, se houver entrevista;
  * senão o próximo dia com entrevista; senão o último.
  */
-export function diaInicialDaAgenda(dias, hoje) {
+export function diaInicialDaAgenda(
+  dias: string[] | null | undefined,
+  hoje: string,
+) {
   const ordenados = [...new Set(dias || [])].filter(Boolean).sort();
   if (!ordenados.length) return "";
-  return ordenados.find((d) => d >= hoje) || ordenados.at(-1);
+  return ordenados.find((d) => d >= hoje) || ordenados.at(-1) || "";
 }
 
 /** "2026-10-06" → "06/10/2026". */
-export function dataBR(data) {
+export function dataBR(data: unknown) {
   if (!dataValida(data)) return "";
-  const [a, m, d] = data.split("-");
+  const [a, m, d] = String(data).split("-");
   return `${d}/${m}/${a}`;
 }
 const NOMES_DOS_DIAS = ["dom", "seg", "ter", "qua", "qui", "sex", "sáb"];
 /** "2026-10-06" → "ter, 06/10/2026". */
-export function dataComDia(data) {
+export function dataComDia(data: string | null | undefined) {
   return dataValida(data)
-    ? `${NOMES_DOS_DIAS[diaDaSemanaNumero(data)]}, ${dataBR(data)}`
+    ? `${NOMES_DOS_DIAS[diaDaSemanaNumero(data || "")]}, ${dataBR(data)}`
     : "";
 }
 
 /** "06/10/2026, 07/10/2026" ou "2026-10-06" por linha → { dias, invalidos }. */
-export function lerDias(texto) {
-  const dias = [];
-  const invalidos = [];
+export function lerDias(texto: unknown) {
+  const dias: string[] = [];
+  const invalidos: string[] = [];
   for (const parte of String(texto || "").split(/[\s,;]+/)) {
     if (!parte) continue;
     const br = parte.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
     const iso = br
-      ? `${br[3]}-${br[2].padStart(2, "0")}-${br[1].padStart(2, "0")}`
+      ? `${br[3]}-${(br[2] || "").padStart(2, "0")}-${(br[1] || "").padStart(2, "0")}`
       : parte;
     if (dataValida(iso)) {
       if (!dias.includes(iso)) dias.push(iso);
@@ -151,10 +166,11 @@ export function lerDias(texto) {
   }
   return { dias: dias.sort(), invalidos };
 }
-export const textoDosDias = (dias) => (dias || []).map(dataBR).join(", ");
+export const textoDosDias = (dias: string[] | null | undefined) =>
+  (dias || []).map(dataBR).join(", ");
 
 /** 150 → "2 h 30 min". */
-export function textoDaDuracao(totalMin) {
+export function textoDaDuracao(totalMin: number) {
   const n = Math.max(0, Math.round(totalMin));
   const h = Math.floor(n / 60);
   const m = n % 60;
@@ -164,29 +180,33 @@ export function textoDaDuracao(totalMin) {
 
 /* ── Regra ─────────────────────────────────────────────────────────── */
 
-const inteiro = (valor, padrao) => {
+const inteiro = (valor: unknown, padrao: number) => {
   const n = Number(valor);
   return Number.isFinite(n) ? Math.round(n) : padrao;
 };
-const listaDeDatas = (valor) =>
+const listaDeDatas = (valor: unknown) =>
   Array.isArray(valor)
     ? [...new Set(valor.map(String).filter(Boolean))].sort()
     : [];
 
 /** A regra completa, com os padrões no que faltar (não valida). */
-export function normalizarRegraDaAgenda(bruta) {
-  const r = bruta && typeof bruta === "object" ? bruta : {};
+export function normalizarRegraDaAgenda(bruta: unknown): RegraDaAgenda {
+  const r = objeto(bruta);
   const p = REGRA_PADRAO_DA_AGENDA;
-  const datas = r.datas && typeof r.datas === "object" ? r.datas : {};
+  const datas = objeto(r.datas);
   const periodos = Array.isArray(r.periodos)
     ? r.periodos.map((x) => ({
-        inicio: String(x?.inicio || ""),
-        fim: String(x?.fim || ""),
+        inicio: String(objeto(x).inicio || ""),
+        fim: String(objeto(x).fim || ""),
       }))
     : p.periodos.map((x) => ({ ...x }));
+  const dadosDaPausa = objeto(r.pausa);
   const pausa =
-    r.pausa && (r.pausa.inicio || r.pausa.fim)
-      ? { inicio: String(r.pausa.inicio || ""), fim: String(r.pausa.fim || "") }
+    r.pausa && (dadosDaPausa.inicio || dadosDaPausa.fim)
+      ? {
+          inicio: String(dadosDaPausa.inicio || ""),
+          fim: String(dadosDaPausa.fim || ""),
+        }
       : null;
   const bancas = inteiro(r.bancas, p.bancas);
   return {
@@ -209,7 +229,7 @@ export function normalizarRegraDaAgenda(bruta) {
           .slice(0, LIMITES_DA_AGENDA.bancas[1])
           .map((n) => String(n ?? "").trim())
       : [],
-    ordem: ORDENS_DA_AGENDA.some(([v]) => v === r.ordem) ? r.ordem : p.ordem,
+    ordem: ORDENS_DA_AGENDA.find(([v]) => v === r.ordem)?.[0] ?? p.ordem,
     agrupar_por_cargo: r.agrupar_por_cargo === true,
     reservar_primeiro_horario: r.reservar_primeiro_horario === true,
     fuso: FUSO_DA_AGENDA,
@@ -217,10 +237,10 @@ export function normalizarRegraDaAgenda(bruta) {
 }
 
 /** Os dias da agenda, em ordem (sem os excluídos; só úteis, se a regra pedir). */
-export function diasDaRegra(regraBruta) {
+export function diasDaRegra(regraBruta: unknown) {
   const r = normalizarRegraDaAgenda(regraBruta);
   const excluir = new Set(r.datas.excluir);
-  let dias = [];
+  let dias: string[] = [];
   if (r.datas.modo === "LISTA") dias = r.datas.dias.filter(dataValida);
   else if (
     dataValida(r.datas.inicio) &&
@@ -241,10 +261,10 @@ export function diasDaRegra(regraBruta) {
 }
 
 /** Os erros da regra (vazio = pode salvar). As mesmas do banco. */
-export function validarRegraDaAgenda(regraBruta) {
+export function validarRegraDaAgenda(regraBruta: unknown) {
   const r = normalizarRegraDaAgenda(regraBruta);
   const L = LIMITES_DA_AGENDA;
-  const erros = [];
+  const erros: string[] = [];
   if (r.datas.modo === "INTERVALO") {
     if (!dataValida(r.datas.inicio) || !dataValida(r.datas.fim))
       erros.push("Informe a data de início e a de fim.");
@@ -277,7 +297,7 @@ export function validarRegraDaAgenda(regraBruta) {
       (a, b) => minutos(a.inicio) - minutos(b.inicio),
     );
     for (let i = 1; i < ordenados.length; i += 1)
-      if (minutos(ordenados[i].inicio) < minutos(ordenados[i - 1].fim)) {
+      if (minutos(ordenados[i]?.inicio) < minutos(ordenados[i - 1]?.fim)) {
         erros.push("Os períodos não podem se sobrepor.");
         break;
       }
@@ -305,20 +325,20 @@ export function validarRegraDaAgenda(regraBruta) {
 }
 
 /** O nome da banca n (1, 2…): o da regra ou "Banca n". */
-export function nomeDaBanca(regraBruta, numero) {
+export function nomeDaBanca(regraBruta: unknown, numero: number | null) {
   const r = normalizarRegraDaAgenda(regraBruta);
-  return r.nomes_das_bancas[numero - 1] || `Banca ${numero}`;
+  return r.nomes_das_bancas[(numero ?? 0) - 1] || `Banca ${numero}`;
 }
 
 /**
  * Os horários da regra, em ordem: { data, inicio, fim, reservado }. Cada um
  * vale para todas as bancas.
  */
-export function horariosDaRegra(regraBruta) {
+export function horariosDaRegra(regraBruta: unknown) {
   const r = normalizarRegraDaAgenda(regraBruta);
   if (validarRegraDaAgenda(r).length) return [];
   const passo = r.duracao_min + r.intervalo_min;
-  const pausa = r.pausa
+  const pausa: [number, number] | null = r.pausa
     ? [minutos(r.pausa.inicio), minutos(r.pausa.fim)]
     : null;
   const periodos = [...r.periodos].sort(
@@ -357,54 +377,70 @@ export function horariosDaRegra(regraBruta) {
  * (analise_id) ou o resultado do motor (analiseId) —, sem repetir, na ordem
  * da lista: por vaga, a geral e depois quem só está numa lista de modalidade.
  */
-export function convocadosDaLista(lista) {
+export function convocadosDaLista(lista: unknown): ConvocadoDaAgenda[] {
   const vistos = new Set();
-  const convocados = [];
-  for (const v of lista?.vagas || []) {
+  const convocados: ConvocadoDaAgenda[] = [];
+  for (const v of registrosDaAgenda(objeto(lista).vagas)) {
     const listas = [
       v.geral || [],
-      ...Object.values(v.listas || v.porModalidade || {}),
+      ...Object.values(objeto(v.listas || v.porModalidade)),
     ];
     for (const linhas of listas)
-      for (const l of linhas || []) {
-        const id = l.analise_id || l.analiseId;
-        if (!id || vistos.has(id)) continue;
+      for (const l of registrosDaAgenda(linhas)) {
+        const id = textoDaAgenda(l.analise_id || l.analiseId);
+        if (!id) throw new Error("Convocado da agenda sem identificação.");
+        if (vistos.has(id)) continue;
         vistos.add(id);
         convocados.push({
           analiseId: id,
-          nome: l.nome || "",
-          vaga: v.codigo || "",
-          cargo: v.cargo || "",
-          lotacao: v.lotacao || "",
-          posicao: Number.isFinite(l.posicao) ? l.posicao : null,
-          modalidades: Array.isArray(l.modalidades) ? l.modalidades : [],
+          nome: textoDaAgenda(l.nome),
+          vaga: textoDaAgenda(v.codigo),
+          cargo: textoDaAgenda(v.cargo),
+          lotacao: textoDaAgenda(v.lotacao),
+          posicao:
+            typeof l.posicao === "number" && Number.isFinite(l.posicao)
+              ? l.posicao
+              : null,
+          modalidades: Array.isArray(l.modalidades)
+            ? l.modalidades.filter((m): m is string => typeof m === "string")
+            : [],
         });
       }
   }
   return convocados;
 }
 
-const semAcento = (t) =>
+const semAcento = (t: unknown) =>
   String(t || "")
     .normalize("NFD")
     .replace(/[̀-ͯ]/g, "")
     .toLowerCase()
     .trim();
-const comparaTexto = (a, b) =>
+const comparaTexto = (a: unknown, b: unknown) =>
   String(a || "").localeCompare(String(b || ""), "pt-BR", {
     sensitivity: "base",
     numeric: true,
   });
 /** A modalidade de ordenação: a primeira cota; sem cota, AC. */
-export const modalidadeDoConvocado = (c) =>
+export const modalidadeDoConvocado = (c: ConvocadoDaAgenda) =>
   (c.modalidades || []).find((m) => m && m !== "AC") || "AC";
 
 /** Os convocados na ordem da regra (estável). */
-export function ordenarConvocados(convocados, regraBruta) {
+export function ordenarConvocados(
+  convocados: ConvocadoDaAgenda[],
+  regraBruta: unknown,
+) {
   const r = normalizarRegraDaAgenda(regraBruta);
   const base = (convocados || []).map((c, indice) => ({ c, indice }));
-  const posicao = (x) => x.c.posicao ?? Number.MAX_SAFE_INTEGER;
-  const criterios = {
+  const posicao = (x: { c: ConvocadoDaAgenda; indice: number }) =>
+    x.c.posicao ?? Number.MAX_SAFE_INTEGER;
+  const criterios: Record<
+    string,
+    (
+      a: { c: ConvocadoDaAgenda; indice: number },
+      b: { c: ConvocadoDaAgenda; indice: number },
+    ) => number
+  > = {
     CLASSIFICACAO: (a, b) => posicao(a) - posicao(b),
     VAGA: (a, b) =>
       comparaTexto(a.c.vaga, b.c.vaga) ||
@@ -422,15 +458,15 @@ export function ordenarConvocados(convocados, regraBruta) {
       return posicao(a) - posicao(b);
     },
   };
-  const criterio = criterios[r.ordem];
+  const criterio = criterios[r.ordem] || ((a, b) => posicao(a) - posicao(b));
   base.sort((a, b) => criterio(a, b) || a.indice - b.indice);
   let ordenados = base.map((x) => x.c);
   if (r.agrupar_por_cargo) {
-    const grupos = new Map();
+    const grupos = new Map<string, ConvocadoDaAgenda[]>();
     for (const c of ordenados) {
       const chave = semAcento(c.cargo) || semAcento(c.vaga);
       if (!grupos.has(chave)) grupos.set(chave, []);
-      grupos.get(chave).push(c);
+      grupos.get(chave)?.push(c);
     }
     ordenados = [...grupos.values()].flat();
   }
@@ -439,7 +475,8 @@ export function ordenarConvocados(convocados, regraBruta) {
 
 /* ── Geração ───────────────────────────────────────────────────────── */
 
-const chaveDoCargo = (c) => semAcento(c.cargo) || semAcento(c.vaga);
+const chaveDoCargo = (c: ConvocadoDaAgenda) =>
+  semAcento(c.cargo) || semAcento(c.vaga);
 
 /**
  * Gera a agenda: { itens, semHorario, avisos, totais }. `itens` traz um por
@@ -447,15 +484,18 @@ const chaveDoCargo = (c) => semAcento(c.cargo) || semAcento(c.vaga);
  * posicao, data, inicio, fim, banca, origem: "GERADA" }); `semHorario`, os
  * que não couberam.
  */
-export function gerarAgenda(convocados, regraBruta) {
+export function gerarAgenda(
+  convocados: ConvocadoDaAgenda[],
+  regraBruta: unknown,
+) {
   const r = normalizarRegraDaAgenda(regraBruta);
   const horarios = horariosDaRegra(r).filter((h) => !h.reservado);
   const ordenados = ordenarConvocados(convocados, r);
-  const itens = [];
-  const semHorario = [];
+  const itens: ItemDaAgenda[] = [];
+  const semHorario: ConvocadoDaAgenda[] = [];
   let linha = 0;
   let assento = 0;
-  let cargoAnterior = null;
+  let cargoAnterior: string | null = null;
   for (const c of ordenados) {
     const cargo = chaveDoCargo(c);
     if (
@@ -490,13 +530,13 @@ export function gerarAgenda(convocados, regraBruta) {
   const dias = diasDaRegra(r);
   const lugares = horarios.length * r.bancas;
   const sobra = Math.max(0, lugares - itens.length);
-  const ultimoDia = itens.length ? itens[itens.length - 1].data : null;
+  const ultimoDia = itens.length ? itens[itens.length - 1]?.data || null : null;
   const diasNecessarios = ultimoDia ? dias.indexOf(ultimoDia) + 1 : 0;
   const passo = r.duracao_min + r.intervalo_min;
   const faltaMin = semHorario.length
     ? Math.ceil(semHorario.length / r.bancas) * passo
     : 0;
-  const avisos = [];
+  const avisos: AvisoDaAgenda[] = [];
   if (semHorario.length)
     avisos.push({
       codigo: "NAO_CABE",
@@ -532,10 +572,11 @@ export function gerarAgenda(convocados, regraBruta) {
 
 /* ── Ajuste manual e conflitos ─────────────────────────────────────── */
 
-const comHorario = (i) => Boolean(i.data && i.inicio && i.fim && i.banca);
+const comHorario = (i: ItemDaAgenda): i is ItemComHorario =>
+  Boolean(i.data && i.inicio && i.fim && i.banca);
 
 /** Ordena por dia, hora e banca (sem horário no fim). */
-export function ordenarAgenda(itens) {
+export function ordenarAgenda(itens: ItemDaAgenda[]) {
   return [...(itens || [])].sort((a, b) => {
     if (comHorario(a) !== comHorario(b)) return comHorario(a) ? -1 : 1;
     return (
@@ -551,9 +592,12 @@ export function ordenarAgenda(itens) {
  * Os conflitos: mesma banca com horários que se sobrepõem no mesmo dia
  * (tipo HORARIO) e candidato repetido (tipo REPETIDO). Cada um traz os ids.
  */
-export function conflitosDaAgenda(itens, regraBruta = null) {
-  const conflitos = [];
-  const porId = new Map();
+export function conflitosDaAgenda(
+  itens: ItemDaAgenda[],
+  regraBruta: unknown = null,
+) {
+  const conflitos: { tipo: string; ids: string[]; texto: string }[] = [];
+  const porId = new Map<string, number>();
   for (const i of itens || []) {
     porId.set(i.analiseId, (porId.get(i.analiseId) || 0) + 1);
   }
@@ -566,12 +610,12 @@ export function conflitosDaAgenda(itens, regraBruta = null) {
         texto: `${nome} aparece ${n} vezes na agenda.`,
       });
     }
-  const grupos = new Map();
+  const grupos = new Map<string, ItemDaAgenda[]>();
   for (const i of itens || []) {
     if (!comHorario(i)) continue;
     const chave = `${i.data}|${i.banca}`;
     if (!grupos.has(chave)) grupos.set(chave, []);
-    grupos.get(chave).push(i);
+    grupos.get(chave)?.push(i);
   }
   for (const lista of grupos.values()) {
     const ordenados = [...lista].sort(
@@ -581,7 +625,7 @@ export function conflitosDaAgenda(itens, regraBruta = null) {
       Compara cada horário com o que termina mais tarde entre os anteriores,
       não só com o vizinho: uma entrevista longa pode cobrir várias seguintes.
     */
-    let a = null;
+    let a: ItemDaAgenda | null = null;
     for (const b of ordenados) {
       // O repetido já é acusado como REPETIDO; não conflita consigo.
       if (
@@ -601,7 +645,11 @@ export function conflitosDaAgenda(itens, regraBruta = null) {
 }
 
 /** O horário de alguém muda (ou sai, com `horario` nulo): vira ajuste manual. */
-export function moverNaAgenda(itens, analiseId, horario) {
+export function moverNaAgenda(
+  itens: ItemDaAgenda[],
+  analiseId: string,
+  horario: HorarioDaAgenda | null,
+): ItemDaAgenda[] {
   return (itens || []).map((i) =>
     i.analiseId === analiseId
       ? {
@@ -617,11 +665,15 @@ export function moverNaAgenda(itens, analiseId, horario) {
 }
 
 /** Dois candidatos trocam de horário e banca: os dois viram ajuste manual. */
-export function trocarNaAgenda(itens, idA, idB) {
+export function trocarNaAgenda(
+  itens: ItemDaAgenda[],
+  idA: string,
+  idB: string,
+): ItemDaAgenda[] {
   const a = (itens || []).find((i) => i.analiseId === idA);
   const b = (itens || []).find((i) => i.analiseId === idB);
   if (!a || !b || idA === idB) return itens;
-  const lugar = (x) => ({
+  const lugar = (x: ItemDaAgenda) => ({
     data: x.data,
     inicio: x.inicio,
     fim: x.fim,
@@ -637,7 +689,7 @@ export function trocarNaAgenda(itens, idA, idB) {
 }
 
 /** Os horários da regra × bancas ainda sem ninguém (os reservados também). */
-export function horariosLivres(itens, regraBruta) {
+export function horariosLivres(itens: ItemDaAgenda[], regraBruta: unknown) {
   const r = normalizarRegraDaAgenda(regraBruta);
   const ocupados = new Set(
     (itens || [])
@@ -652,12 +704,12 @@ export function horariosLivres(itens, regraBruta) {
   return livres;
 }
 
-export const temAjusteManual = (itens) =>
+export const temAjusteManual = (itens: ItemDaAgenda[]) =>
   (itens || []).some((i) => i.origem === "MANUAL");
 
 /** analiseId → { data, inicio, fim, banca } (para o documento da convocação). */
-export function agendaPorCandidato(itens) {
-  const mapa = new Map();
+export function agendaPorCandidato(itens: ItemDaAgenda[]) {
+  const mapa = new Map<string, HorarioDaAgenda>();
   for (const i of itens || [])
     if (comHorario(i))
       mapa.set(i.analiseId, {
@@ -670,7 +722,7 @@ export function agendaPorCandidato(itens) {
 }
 
 /** O que vai para salvar_agenda_entrevista (só quem tem horário). */
-export function itensParaSalvar(itens) {
+export function itensParaSalvar(itens: ItemDaAgenda[]): ItemParaSalvar[] {
   return (itens || []).filter(comHorario).map((i) => ({
     analise: i.analiseId,
     data: i.data,
@@ -682,18 +734,19 @@ export function itensParaSalvar(itens) {
 }
 
 /** Itens do banco (obter_agenda_entrevista) no formato do motor. */
-export function itensDoBanco(linhas) {
-  return (linhas || []).map((l) => ({
-    analiseId: l.analise_id,
-    nome: l.nome || "",
-    vaga: l.vaga || "",
-    cargo: l.cargo || "",
-    modalidades: l.modalidade ? [l.modalidade] : [],
+export function itensDoBanco(linhas: unknown): ItemDaAgenda[] {
+  return registrosDaAgenda(linhas).map((l) => ({
+    analiseId: textoDaAgenda(l.analise_id),
+    nome: textoDaAgenda(l.nome),
+    vaga: textoDaAgenda(l.vaga),
+    cargo: textoDaAgenda(l.cargo),
+    modalidades:
+      typeof l.modalidade === "string" && l.modalidade ? [l.modalidade] : [],
     posicao: null,
-    data: l.data || null,
+    data: textoDaAgenda(l.data) || null,
     inicio: String(l.inicio || "").slice(0, 5) || null,
     fim: String(l.fim || "").slice(0, 5) || null,
-    banca: l.banca || null,
+    banca: typeof l.banca === "number" ? l.banca : null,
     origem: l.origem === "MANUAL" ? "MANUAL" : "GERADA",
   }));
 }
@@ -703,9 +756,12 @@ export function itensDoBanco(linhas) {
  * fica com os dados dela (nome, vaga, posição) e o horário salvo; quem foi
  * salvo e saiu da lista vem com `foraDaLista`.
  */
-export function juntarComConvocados(salvos, convocados) {
+export function juntarComConvocados(
+  salvos: ItemDaAgenda[],
+  convocados: ConvocadoDaAgenda[],
+): ItemDaAgenda[] {
   const porId = new Map((salvos || []).map((s) => [s.analiseId, s]));
-  const itens = (convocados || []).map((c) => {
+  const itens: ItemDaAgenda[] = (convocados || []).map((c) => {
     const s = porId.get(c.analiseId);
     porId.delete(c.analiseId);
     return s
@@ -733,8 +789,11 @@ export function juntarComConvocados(salvos, convocados) {
 /* ── Exportação ────────────────────────────────────────────────────── */
 
 /** As linhas da planilha da agenda (uma por convocado, na ordem da agenda). */
-export function linhasDaAgenda(itens, regraBruta = null) {
-  const linhas = [
+export function linhasDaAgenda(
+  itens: ItemDaAgenda[],
+  regraBruta: unknown = null,
+) {
+  const linhas: string[][] = [
     [
       "Data",
       "Dia",
@@ -751,7 +810,7 @@ export function linhasDaAgenda(itens, regraBruta = null) {
   for (const i of ordenarAgenda(itens))
     linhas.push([
       dataBR(i.data) || "Sem horário",
-      i.data ? NOMES_DOS_DIAS[diaDaSemanaNumero(i.data)] : "",
+      i.data ? NOMES_DOS_DIAS[diaDaSemanaNumero(i.data)] || "" : "",
       i.inicio || "",
       i.fim || "",
       i.banca ? nomeDaBanca(regraBruta, i.banca) : "",
@@ -766,8 +825,8 @@ export function linhasDaAgenda(itens, regraBruta = null) {
 
 /** Os bytes do .xlsx da agenda. */
 export function gerarXlsxDaAgenda(
-  itens,
-  regraBruta = null,
+  itens: ItemDaAgenda[],
+  regraBruta: unknown = null,
   quando = new Date(),
 ) {
   return gerarXlsx(
@@ -777,7 +836,7 @@ export function gerarXlsxDaAgenda(
 }
 
 /** "agenda-entrevistas-100-2026" (sem extensão). */
-export function nomeDoArquivoDaAgenda(edital) {
+export function nomeDoArquivoDaAgenda(edital: unknown) {
   const numero = String(edital || "edital")
     .replace(/[^0-9a-z]+/gi, "-")
     .replace(/^-+|-+$/g, "");

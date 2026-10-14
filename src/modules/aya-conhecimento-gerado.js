@@ -4303,7 +4303,7 @@ export const VERBETES_AYA = Object.freeze([
       'A agenda das entrevistas fica na Classificação, na visão Agenda (ou pelo botão "Agenda das entrevistas" da lista Convocação para entrevista), porque os convocados saem dessa lista e a agenda preenche o documento dela. Cada edital tem a sua regra da agenda, com versões, e uma agenda salva: um horário por convocado, com dia, hora de Brasília e banca. Os convocados vêm da última lista de convocação gerada; sem lista gerada, do cálculo atual, com um aviso. Quem conduz vê a fila do dia em Conduzir entrevistas. Salvar a regra e a agenda exige Editor em Entrevistas ou em Classificação; ler, Leitor em uma delas; sempre com acesso à área e ao edital.',
     fato: "",
     fonte:
-      "src/modulos/classificacao/agenda.jsx; supabase/migrations/20261005120000_agenda_das_entrevistas.sql",
+      "src/modulos/classificacao/agenda.tsx; supabase/migrations/20261005120000_agenda_das_entrevistas.sql",
     abrir: "classificacao",
   },
   {
@@ -4324,7 +4324,7 @@ export const VERBETES_AYA = Object.freeze([
       'A regra da agenda tem: os dias (um intervalo, com a opção "Só dias úteis", ou uma lista de dias, em dd/mm/aaaa) e os dias sem entrevista (feriados); de 1 a 6 períodos por dia (ex.: 08:00–12:00 e 14:00–18:00), no horário de Brasília; a duração de cada entrevista (5 a 240 minutos) e o intervalo entre elas (0 a 120); uma pausa opcional (ex.: almoço), em que nenhuma entrevista acontece; de 1 a 20 bancas simultâneas, com nome (os membros cadastrados na banca de Entrevistas aparecem junto); a ordem dos candidatos (classificação na convocação, vaga/cargo, alfabética ou modalidade, com a ampla primeiro); "Agrupar por cargo" (todos de um cargo antes do próximo, e cada cargo começa num horário novo); e "Reservar o primeiro horário de cada período" (fica livre para encaixe). Até 60 dias. Salvar cria uma versão nova; da segunda em diante, com motivo.',
     fato: "",
     fonte:
-      "src/lib/agenda-das-entrevistas.js; supabase/migrations/20261005120000_agenda_das_entrevistas.sql",
+      "src/lib/agenda-das-entrevistas.ts; supabase/migrations/20261005120000_agenda_das_entrevistas.sql",
     abrir: "classificacao",
   },
   {
@@ -4340,7 +4340,7 @@ export const VERBETES_AYA = Object.freeze([
     resposta:
       '"Gerar agenda" monta os horários de cada dia a partir de cada período: começa no início, avança de duração mais intervalo e pula a pausa. Em cada horário cabe uma entrevista por banca. Os convocados, na ordem da regra, ocupam os horários em ordem: banca 1, banca 2… no mesmo horário, depois o próximo horário e o próximo dia. Se não couber, a tela diz quantos ficaram sem horário e quanto tempo de entrevista falta; se sobrar muito (30% dos lugares ou mais), diz quantos horários sobram e quantos dias bastam. O resultado é um rascunho: só vale depois de "Salvar agenda".',
     fato: "",
-    fonte: "src/lib/agenda-das-entrevistas.js",
+    fonte: "src/lib/agenda-das-entrevistas.ts",
     abrir: "classificacao",
   },
   {
@@ -4357,7 +4357,7 @@ export const VERBETES_AYA = Object.freeze([
       'Na agenda, "Mudar" abre o ajuste de um convocado: escolher um horário livre (de qualquer banca, inclusive os reservados) ou "Sem horário", ou trocar de lugar com outro convocado (os dois trocam dia, hora e banca). O ajuste fica marcado como "Ajuste manual". Conflito é a mesma banca com horários que se sobrepõem no mesmo dia ou o mesmo candidato duas vezes: a tela lista os conflitos e não deixa salvar até resolver; o banco também recusa. "Gerar de novo" sobre uma agenda com ajustes manuais pergunta antes, porque a distribuição da regra substitui os ajustes. Cada gravação fica no histórico (Gravações), com quem, quando e o que mudou.',
     fato: "",
     fonte:
-      "src/modulos/classificacao/agenda.jsx; src/lib/agenda-das-entrevistas.js; supabase/migrations/20261005120000_agenda_das_entrevistas.sql",
+      "src/modulos/classificacao/agenda.tsx; src/lib/agenda-das-entrevistas.ts; supabase/migrations/20261005120000_agenda_das_entrevistas.sql",
     abrir: "classificacao",
   },
   {
@@ -4373,7 +4373,7 @@ export const VERBETES_AYA = Object.freeze([
       "Com a agenda salva, o documento da Convocação para entrevista (Copiar para o SEI, Baixar DOCX, PDF e Como fica no SEI) sai com as colunas DATA e HORA preenchidas com o dia e a hora de início de cada convocado; quem não tem horário fica em branco, para preencher no SEI. O modelo publicado não ganha coluna de banca. O XLSX da agenda (botão XLSX na visão Agenda) traz dia, hora de início e fim, banca, nome, vaga, cargo, modalidade e se o horário foi ajustado à mão.",
     fato: "",
     fonte:
-      "src/lib/classificacao/documento-sei.js; src/lib/agenda-das-entrevistas.js",
+      "src/lib/classificacao/documento-sei.js; src/lib/agenda-das-entrevistas.ts",
     abrir: "classificacao",
   },
   {

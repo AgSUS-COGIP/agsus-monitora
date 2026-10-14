@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { criarEstadoDaAgenda } from "../../src/modulos/classificacao/estado-da-agenda.js";
+import { criarEstadoDaAgenda } from "../../src/modulos/classificacao/estado-da-agenda.ts";
 
 /*
-  O estado da agenda das entrevistas (src/modulos/classificacao/estado-da-agenda.js):
+  O estado da agenda das entrevistas (src/modulos/classificacao/estado-da-agenda.ts):
   gravar e trocar de edital antes da resposta não pode pôr a regra ou a agenda
   do edital A nos dados do edital B; e falha no "Atualizar" do mesmo edital
   mantém a agenda que já estava na tela.
