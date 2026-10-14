@@ -335,6 +335,44 @@ describe("decisões do avaliador no lançamento", () => {
     expect(l.cursos.map((c) => c.horas)).toEqual([145, 60]);
     expect(estadoDoItemLido(l, CURSOS, itens[2].chave)).toBe("PENDENTE");
   });
+
+  it("aceitar todos sem alerta deixa o incompleto pendente (vínculo atual sem a data do fim, curso sem horas)", () => {
+    const vinculo = {
+      tipo: "VINCULO",
+      empregador: "Instituto",
+      inicio: "2022-01-01",
+      fim: null,
+      atual: true,
+      alertas: [],
+    };
+    const leitura = {
+      ...LEITURA,
+      itens: [vinculo, { ...vinculo, fim: "2023-12-31", atual: false }],
+    };
+    const doVinculo = itensParaConferir(
+      EXPERIENCIA,
+      leiturasDaFicha([leitura]),
+      [ANEXO],
+    );
+    const l = aceitarTodosSemAlerta(
+      { nivel: "superior", vinculos: [] },
+      EXPERIENCIA,
+      doVinculo,
+    );
+    expect(l.vinculos.map((v) => v.fim)).toEqual(["2023-12-31"]);
+    expect(estadoDoItemLido(l, EXPERIENCIA, doVinculo[0].chave)).toBe(
+      "PENDENTE",
+    );
+    const semHoras = itensParaConferir(
+      CURSOS,
+      leiturasDaFicha([{ ...LEITURA, itens: [curso("Sem carga", null)] }]),
+      [ANEXO],
+    );
+    expect(
+      aceitarTodosSemAlerta({ nivel: "superior", cursos: [] }, CURSOS, semHoras)
+        .cursos,
+    ).toEqual([]);
+  });
 });
 
 describe("corrigir o item lido, alertas resumidos e foto", () => {

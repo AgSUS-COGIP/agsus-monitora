@@ -618,7 +618,7 @@ export const CONTRATO_RPC = {
     argumentos: [],
     critica: false,
     resumo:
-      "Últimas 10 execuções de cada carga (análises por origem, entrevistas, seleção, robô da Empregare com vagas pedidas/baixadas/falhas/recusadas e quem disparou — 20261005170000 —, conferências de consistência com avisos novos/abertos/resolvidos — 20261005210000; análises com encerrada_por_inatividade — 20261007170000; agenda dos robôs pelo banco com chave cadastrada, último pedido aceito, falhas/sem chave em 24 h e os últimos pedidos — 20261008140000) e das tarefas agsus_* do pg_cron, para a seção Status das atualizações (só administrador global). O expurgo dos anexos do chat saiu em 20261014120000.",
+      "Últimas 10 execuções de cada carga (análises por origem, entrevistas, seleção, robô da Empregare com vagas pedidas/baixadas/falhas/recusadas e quem disparou — 20261005170000 —, conferências de consistência com avisos novos/abertos/resolvidos — 20261005210000; análises com encerrada_por_inatividade — 20261007170000; agenda dos robôs pelo banco com chave cadastrada, último pedido aceito, falhas/sem chave em 24 h e os últimos pedidos — 20261008140000) e das tarefas agsus_* do pg_cron, para a seção Status das atualizações (só administrador global). O expurgo dos anexos do chat saiu em 20261014160000 (desligar o chat).",
   },
   // ── Painel dos robôs (Status das atualizações, 20261007190000_painel_dos_robos.sql) ──
   get_painel_dos_robos: {

@@ -1314,6 +1314,47 @@ describe("estado da ficha: salvamento automático", () => {
     expect(estado.obter().aviso).toContain("mudou desde que você abriu");
   });
 
+  it("concluir duas vezes (duplo clique, Ctrl+Enter) vai ao banco uma vez só e nada muda durante a conclusão", async () => {
+    let soltar;
+    const rpc = rpcFalso({
+      concluir_ficha: (a) =>
+        new Promise(
+          (r) =>
+            (soltar = () =>
+              r({ versao: a.p_versao + 1, resultado: "INAPTO_REQUISITO" })),
+        ),
+    });
+    const { estado } = loja(rpc);
+    await estado.carregar("f1");
+    // Não confere em tudo, com o motivo: nada falta para concluir.
+    for (let volta = 0; volta < 4 && estado.obter().pendencias.length; volta++)
+      estado.mudar((l) => {
+        for (const p of estado.obter().pendencias) {
+          const bloco = estado
+            .obter()
+            .regra.blocos.find((b) => b.codigo === p.bloco);
+          const lb = (l.blocos[p.bloco] ??= {});
+          lb.situacao = "NAO_CONFORME";
+          if (bloco.motivos?.length) lb.motivos = [bloco.motivos[0].codigo];
+          else lb.motivo_livre = "Documento não apresentado.";
+        }
+        return l;
+      });
+    expect(estado.obter().pendencias).toEqual([]);
+    const primeira = estado.concluir();
+    const segunda = await estado.concluir();
+    expect(segunda).toEqual({ ok: false, emAndamento: true });
+    await vi.waitFor(() => expect(soltar).toBeTypeOf("function"));
+    const antes = estado.obter().lancamento;
+    estado.mudar((l) => ({ ...l, observacoes: "durante" }));
+    expect(estado.obter().lancamento).toBe(antes);
+    soltar();
+    expect((await primeira).ok).toBe(true);
+    expect(rpc.mock.calls.filter(([n]) => n === "concluir_ficha")).toHaveLength(
+      1,
+    );
+  });
+
   it("só leitura não muda nem salva", async () => {
     const rpc = rpcFalso({
       obter_ficha_analise: () => fichaDoBanco({ editar: false }),

@@ -54,7 +54,7 @@ export const ORIGENS_DAS_VAGAS: Readonly<Record<string, OrigemDaVaga>> =
     }),
     CONVOCACAO: Object.freeze({
       rotulo: "configuração da convocação",
-      view: "aprovados",
+      view: "approved",
       onde: "Lista de aprovados",
     }),
     REGRA: Object.freeze({

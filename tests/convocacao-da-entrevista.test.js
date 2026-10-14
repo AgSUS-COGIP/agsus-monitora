@@ -12,6 +12,7 @@ import {
   vagasDaLista,
 } from "../src/lib/convocacao-da-entrevista.ts";
 import { instantaneoDaLista } from "../src/lib/classificacao/exportacao.ts";
+import { linkInterno } from "../src/lib/link-interno.ts";
 
 describe("entrada externa da convocação", () => {
   it("descarta retratos e cálculos sem uma lista de vagas", () => {
@@ -332,11 +333,17 @@ describe("textos e avisos", () => {
       onde: "Editais",
     });
     expect(origemDasVagas({ origemDasVagas: "CONVOCACAO" }).view).toBe(
-      "aprovados",
+      "approved",
     );
     expect(origemDasVagas({ origemDasVagas: "REGRA" }).view).toBe(
       "classificacao",
     );
+    // O botão da origem leva à tela: a view tem de ser uma aba do menu
+    // ("aprovados" é o id da aba; a view é "approved").
+    for (const origem of ["QUADRO", "CONVOCACAO", "REGRA"])
+      expect(
+        linkInterno({ view: origemDasVagas({ origemDasVagas: origem }).view }),
+      ).not.toBeNull();
   });
 
   it("lista gerada antes de o retrato guardar as vagas: não diz que falta quadro", () => {

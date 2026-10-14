@@ -138,6 +138,7 @@ function Reabrir({ loja }) {
   const [aberto, setAberto] = useState(false);
   const [motivo, setMotivo] = useState("");
   const [erro, setErro] = useState("");
+  const [enviando, setEnviando] = useState(false);
   if (!aberto)
     return (
       <button
@@ -161,9 +162,12 @@ function Reabrir({ loja }) {
       <button
         type="button"
         className="btn small"
-        disabled={motivo.trim().length < 10}
+        disabled={enviando || motivo.trim().length < 10}
         onClick={async () => {
+          // Um envio só: o segundo clique daria "a ficha mudou" (40001).
+          setEnviando(true);
           const r = await loja.reabrir(motivo.trim());
+          setEnviando(false);
           if (!r.ok) setErro(r.erro);
         }}
       >
@@ -342,7 +346,7 @@ export function ConteudoDaFicha({
     );
 
   const ficha = { ...aberta.ficha, ...st.dados.ficha };
-  const desabilitado = !st.podeEditar;
+  const desabilitado = !st.podeEditar || st.concluindo;
   const conferencia = st.conferencia;
   const avaliacao = st.avaliacao;
   const lancamento = st.lancamento;
@@ -483,6 +487,7 @@ export function ConteudoDaFicha({
     setErroDeConclusao("");
     setTentouConcluir(true);
     const r = await loja.concluir();
+    if (r.emAndamento) return;
     if (r.ok) {
       await fila.pegarProxima(filtroVaga || "");
       return;

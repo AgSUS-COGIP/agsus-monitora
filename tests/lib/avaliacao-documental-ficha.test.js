@@ -355,6 +355,29 @@ describe("o que falta para concluir", () => {
       ]),
     );
   });
+
+  it("item recusado (com motivo) não pede datas nem carga horária", () => {
+    const lanc = lancamentoCompleto({
+      vinculos: [
+        {
+          categoria: "AREA_OU_SUS",
+          inicio: "2020-01-01",
+          fim: "",
+          aceito: false,
+          motivo: "DATAS_ILEGIVEIS",
+        },
+      ],
+      cursos: [{ nome: "Sem horas", horas: "", aceito: false, motivo: "CH" }],
+    });
+    const tipos = pendenciasDaFicha(
+      REGRA,
+      lanc,
+      calcularFicha(REGRA, lanc, DOCUMENTAL),
+      {},
+    ).map((p) => p.tipo);
+    expect(tipos).not.toContain("datas");
+    expect(tipos).not.toContain("horas");
+  });
 });
 
 describe("apoio da tela", () => {

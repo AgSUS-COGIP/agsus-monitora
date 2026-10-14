@@ -255,6 +255,14 @@ describe("as três escolhas: Confere, Não confere e Editar nota", () => {
       ...extra,
     });
 
+  it("Confere com o declarado acima do teto do bloco grava o teto (o banco recusa acima dele)", () => {
+    const r = escolher(lancamento(), "CONFERE", {
+      declarada: { parciais: { CURSOS: 6 } },
+    });
+    expect(r.nota_ajustada).toBe(5);
+    expect(r.edita_nota).toBe(false);
+  });
+
   it("Confere aceita o declarado: pontuação = declarado, sem justificativa", () => {
     expect(
       escolher(
@@ -406,6 +414,26 @@ describe("pelos itens lidos: confirmar pela pontuação dos aceitos", () => {
     });
     // Nenhuma linha aberta sozinha (os itens estão na conferência).
     expect(menor.cursos ?? []).toEqual([]);
+  });
+
+  it("marcar o item extra do cargo (UMCQA) depois do Confere volta a pedir a confirmação (a nota gravada era o declarado)", () => {
+    const antes = lancamento(
+      {
+        CURSOS: { situacao: "CONFORME", edita_nota: false, nota_ajustada: 3 },
+      },
+      { cursos: [{ nome: "A", horas: 60, aceito: true }] },
+    );
+    const depois = {
+      ...antes,
+      blocos: {
+        ...antes.blocos,
+        CURSOS: { ...antes.blocos.CURSOS, extras: { UMCQA: true } },
+      },
+    };
+    const r = semConfirmacaoSeMudouItens(CURSOS, antes, depois);
+    expect(r.blocos.CURSOS.situacao).toBeNull();
+    expect(r.blocos.CURSOS.nota_ajustada).toBeNull();
+    expect(r.blocos.CURSOS.extras).toEqual({ UMCQA: true });
   });
 
   it("mexer nos itens depois de confirmar volta a pedir a confirmação; sem mudança nos itens, nada muda", () => {
