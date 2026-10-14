@@ -123,6 +123,8 @@ def calcular(entrada):
 
     def gravar(codigo, r):
         resumo, linhas = job.payload_da_vaga(r)
+        # A linha do quadro (id do banco real, 20261014130000) não entra no resultado guardado.
+        resumo.pop("quadro", None)
         linhas = sorted(({"codigo": linha.pop("id"), **linha} for linha in linhas), key=lambda linha: linha["codigo"])
         vagas[codigo] = {"resumo": resumo, "linhas": linhas}
 
