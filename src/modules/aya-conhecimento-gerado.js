@@ -2125,7 +2125,7 @@ export const VERBETES_AYA = Object.freeze([
     resposta:
       "Cada modalidade da regra (PcD, pretos e pardos, indígenas, quilombolas, trans…) tem percentual, lista própria, posição que recomeça em 1º ou mantém a da geral, se o cotista aparece também na geral, para onde vai a vaga reservada sem candidato e, se for uma reserva conjunta (como a PPIQ de 30% dos editais de 2025), quais modalidades ela reúne — quem declarou pretos e pardos, indígena ou quilombola entra nessa lista. Na lista final, as vagas da ampla vão para os primeiros da geral (cotista aprovado na ampla não ocupa vaga reservada); cada reserva vai para os primeiros da modalidade; a reserva que sobra segue o remanejamento da regra e, por fim, a ampla. Com mais de uma cota, a regra diz se o candidato fica em todas, só na de maior percentual ou em PcD e mais uma (vale no resultado final). As vagas por modalidade vêm do quadro de vagas do edital; quando ele só traz o total, da configuração de convocação do edital (Lista de aprovados › Convocação) ou dos percentuais da regra, pela mesma conta da convocação.",
     fato: "",
-    fonte: "src/lib/classificacao/motor.js; src/lib/classificacao/vagas.js",
+    fonte: "src/lib/classificacao/motor.js; src/lib/classificacao/vagas.ts",
     abrir: "classificacao",
   },
   {
@@ -2346,7 +2346,7 @@ export const VERBETES_AYA = Object.freeze([
       "A Classificação e a Lista de aprovados › Convocação usam a mesma conta das vagas por modalidade. Vale, nesta ordem: o quadro de vagas do edital quando traz a divisão; senão, a configuração de convocação do edital (quadro manual da vaga ou o total de vagas imediatas pelo modelo de cotas); senão, os percentuais da regra de classificação. A tela mostra de onde vieram as vagas da vaga e avisa quando os percentuais da regra e os do modelo de convocação divergem ou quando o total de vagas não bate. Quem fica em cada lista e para onde vai a vaga reservada sem candidato é da regra de classificação; a ordem de chamada para contratar é da Convocação.",
     fato: "",
     fonte:
-      "src/lib/classificacao/convocacao-do-edital.js; src/lib/configuracao-de-convocacao.js",
+      "src/lib/classificacao/convocacao-do-edital.ts; src/lib/configuracao-de-convocacao.js",
     abrir: "classificacao",
   },
   {
@@ -2440,7 +2440,7 @@ export const VERBETES_AYA = Object.freeze([
       'Nas listas e nos documentos, AC é ampla concorrência; PcD, pessoas com deficiência; PP, pretos e pardos; PI, indígenas; PQ, quilombolas; e PPIQ, a reserva conjunta de pretos e pardos, indígenas e quilombolas de alguns editais. CR é cadastro reserva: quem passou, mas ficou além das vagas imediatas, ou a vaga que só tem cadastro reserva (no cabeçalho, "- Cadastro Reserva"). O cotista também concorre na ampla, e quem é chamado pela ampla não gasta a vaga reservada. Percentual, lista própria e remanejamento de cada modalidade são da regra de classificação do edital.',
     fato: "",
     fonte:
-      "src/lib/classificacao/catalogo.ts (MODALIDADES_CONHECIDAS); src/lib/classificacao/motor.js; src/lib/classificacao/vagas.js",
+      "src/lib/classificacao/catalogo.ts (MODALIDADES_CONHECIDAS); src/lib/classificacao/motor.js; src/lib/classificacao/vagas.ts",
     abrir: "classificacao",
   },
   {
@@ -4218,7 +4218,7 @@ export const VERBETES_AYA = Object.freeze([
       'As vagas imediatas não se digitam na entrevista. Em Conduzir entrevistas › Preparar, o resumo das regras mostra a tabelinha por vaga (vagas imediatas e até que posição chama) e, em "Ver detalhes", a regra de convocação da Classificação (versão vigente) e, por vaga, as vagas, até que posição se convoca e de onde vêm as vagas, com o botão para a tela onde se mudam: o quadro de vagas do edital (Editais), a configuração da convocação (Lista de aprovados) ou os percentuais da regra (Classificação). Vaga sem quadro aparece como "sem quadro de vagas": cadastre o quadro no edital. A regra de convocação (múltiplo, posição do cadastro reserva, exceções por cargo) muda em Classificação › Regra. O que a entrevista guardava antes (vagas digitadas e regra própria) ficou no banco, sem uso.',
     fato: "",
     fonte:
-      "src/modulos/entrevistas/conducao.tsx; src/lib/convocacao-da-entrevista.ts; src/lib/classificacao/vagas.js",
+      "src/modulos/entrevistas/conducao.tsx; src/lib/convocacao-da-entrevista.ts; src/lib/classificacao/vagas.ts",
     abrir: "entrevistas",
   },
   {
@@ -5373,7 +5373,7 @@ export const VERBETES_AYA = Object.freeze([
       "No MONITORA, as vagas imediatas não se digitam mais à mão (manual) nas Entrevistas: o número digitado lá antes ficou no banco, sem uso. Valem, nesta ordem: o quadro de vagas do edital, cadastrado em Editais; sem ele, a configuração de convocação do edital, em Lista de aprovados › Convocação (o total de vagas imediatas informado por vaga e dividido pelo modelo de cotas; zero quer dizer só cadastro reserva). Quando o quadro só traz o total, a divisão por modalidade sai dessa configuração ou dos percentuais da regra de classificação. A Classificação, a convocação das Entrevistas e a ordem de chamada da lista de aprovados usam essa mesma conta.",
     fato: "",
     fonte:
-      "src/lib/classificacao/vagas.js; src/lib/classificacao/convocacao-do-edital.js; src/lib/configuracao-de-convocacao.js; supabase/migrations/20261005150000_convocacao_unica_da_entrevista.sql",
+      "src/lib/classificacao/vagas.ts; src/lib/classificacao/convocacao-do-edital.ts; src/lib/configuracao-de-convocacao.js; supabase/migrations/20261005150000_convocacao_unica_da_entrevista.sql",
     abrir: "nucleo",
   },
   {

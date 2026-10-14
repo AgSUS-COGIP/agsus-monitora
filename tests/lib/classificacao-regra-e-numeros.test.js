@@ -30,7 +30,7 @@ import {
   nivelDaVaga,
   textoDasVagas,
   vagasPelosPercentuais,
-} from "../../src/lib/classificacao/vagas.js";
+} from "../../src/lib/classificacao/vagas.ts";
 
 const SEED = readFileSync(
   "supabase/correcoes/20261002-regras-de-classificacao-83-e-100.sql",

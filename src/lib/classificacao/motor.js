@@ -53,9 +53,9 @@ import {
   numeroBR,
 } from "./numeros.ts";
 import { normalizarRegra } from "./regra.ts";
-import { divergenciasDasCotas } from "./convocacao-do-edital.js";
+import { divergenciasDasCotas } from "./convocacao-do-edital.ts";
 import { chaveDoGrupo } from "./sorteio.ts";
-import { montarVagas, nivelDaVaga } from "./vagas.js";
+import { montarVagas, nivelDaVaga } from "./vagas.ts";
 
 const texto = (valor) => String(valor ?? "").trim();
 const comparaNome = (a, b) =>

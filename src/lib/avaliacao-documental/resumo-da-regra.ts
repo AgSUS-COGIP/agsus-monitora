@@ -178,6 +178,7 @@ function diferencaDoCargo(d: DiferencaDoCargo, blocos: Bloco[]): string {
       PARCIAL[b?.parcial ?? ""] ??
       String(b?.titulo ?? codigo).split(/ \(|,/)[0];
     const itens: string[] = [];
+    if (s.nao_se_aplica === true) itens.push("não se aplica a este cargo");
     if (s.faixas?.length)
       itens.push(faixas({ teto: s.teto ?? null, faixas: s.faixas }));
     else if (Object.hasOwn(s, "teto"))

@@ -24,7 +24,7 @@
   O banco revalida a estrutura (supabase/migrations/20261007130000_conteudo_da_ficha.sql)
   e o Python reconfere a conta (python/monitora/avaliacao_documental/pontuacao.py).
 */
-import { nivelDaVaga } from "../classificacao/vagas.js";
+import { nivelDaVaga } from "../classificacao/vagas.ts";
 import {
   PARCIAIS,
   PARCIAL_DO_TIPO,
@@ -87,8 +87,12 @@ export const BLOCOS_COM_ITENS = Object.freeze({
 /** Bloco que a ficha mostra: os que só registram não pedem situação. */
 const pedeSituacao = (bloco) => bloco.tipo !== "REGISTRO";
 
-/** O bloco vale para este candidato (condição de modalidade ou indígena)? */
+/**
+ * O bloco vale para este candidato (condição de modalidade ou indígena)? O
+ * que não se aplica ao cargo da vaga (regraDaVaga: nao_se_aplica) não vale.
+ */
 export function blocoSeAplica(bloco, lancamento) {
+  if (bloco?.nao_se_aplica === true) return false;
   const condicao =
     bloco.condicao ?? (bloco.tipo === "PONTUACAO" ? "INDIGENA" : null);
   if (!condicao) return true;

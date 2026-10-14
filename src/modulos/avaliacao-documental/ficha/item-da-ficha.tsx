@@ -1576,7 +1576,13 @@ export function ItemDaFicha({
               {textoDoEfeito(avaliado.efeito)}
             </Selo>
           ) : null}
-          {!aplica ? <Selo>Não se aplica</Selo> : null}
+          {!aplica ? (
+            <Selo>
+              {bloco.nao_se_aplica === true
+                ? "Não se aplica a este cargo"
+                : "Não se aplica"}
+            </Selo>
+          ) : null}
           {!foco && bloco.item_edital ? (
             <span className="avd-ficha-item-edital">
               Item {bloco.item_edital}

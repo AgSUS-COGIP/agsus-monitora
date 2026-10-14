@@ -87,7 +87,7 @@ import {
   imprimirPagina,
   logoEmPng,
 } from "./documento-no-navegador.js";
-import { convocacaoDoEdital } from "../../lib/classificacao/convocacao-do-edital.js";
+import { convocacaoDoEdital } from "../../lib/classificacao/convocacao-do-edital.ts";
 import { normalizarRegra } from "../../lib/classificacao/regra.ts";
 import { rotuloDaVersao } from "../../lib/nome-da-versao.ts";
 import {
