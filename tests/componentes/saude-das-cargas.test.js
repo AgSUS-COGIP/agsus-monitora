@@ -226,8 +226,8 @@ describe("Rodar agora (pelo banco: disparar_robo)", () => {
     expect(linhaDe("empregare").textContent).toContain(
       "Pedido enviado. Aguardando o GitHub.",
     );
-    // A primeira conferência (3 s) e a releitura (20 s).
-    expect(agendar.mock.calls.map(([, ms]) => ms)).toEqual([3000, 20000]);
+    // A primeira conferência (3 s) e a releitura (60 s).
+    expect(agendar.mock.calls.map(([, ms]) => ms)).toEqual([3000, 60000]);
     await act(async () => {
       agendar.mock.calls[0][0]();
     });

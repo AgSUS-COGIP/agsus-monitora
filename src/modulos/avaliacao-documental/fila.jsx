@@ -893,15 +893,18 @@ export function Fila({ e, fila }) {
   useEffect(() => setOrdem({ chave: "", sentido: "" }), [etapa]);
 
   useEffect(() => {
-    if (fila.obter().editalId !== e.editalId) void fila.carregar(e.editalId);
+    // Outro edital, ou a lista mudou enquanto a aba estava em outro lugar: relê.
+    if (fila.obter().editalId !== e.editalId || fila.estaDesatualizada())
+      void fila.carregar(e.editalId);
   }, [fila, e.editalId]);
   useEffect(() => {
     // Ao sair da página, a reserva é liberada mas a ficha fica lembrada (recarregar volta a ela).
-    const aoSairDaPagina = () => void fila.fechar();
+    // Sem reler: a lista não está na tela (a remontagem relê se ficou desatualizada).
+    const aoSairDaPagina = () => void fila.fechar({ reler: false });
     globalThis.addEventListener?.("pagehide", aoSairDaPagina);
     return () => {
       globalThis.removeEventListener?.("pagehide", aoSairDaPagina);
-      void fila.fechar();
+      void fila.fechar({ reler: false });
     };
   }, [fila]);
 

@@ -1110,3 +1110,116 @@ describe("fila leve: o lote em toda leitura, os de fora do lote sob demanda", ()
     expect(chamadasDeFora(supabase)).toHaveLength(0);
   });
 });
+
+describe("fila só com o que mudou (20261014231000)", () => {
+  /* obter_fila_avaliacao_desde: inteira sem p_desde; depois, parcial. */
+  function comDesde(mudou = () => []) {
+    const base = fila();
+    const leituras = [];
+    const supabase = supabaseFalso(base, {
+      obter_fila_avaliacao_desde: (args) => {
+        leituras.push(args);
+        if (!args.p_desde)
+          return { ...base, gerado_em: "t0", marca: "m1", parcial: false };
+        const { vagas: _vagas, candidatos, ...resto } = base;
+        return {
+          ...resto,
+          gerado_em: `t${leituras.length}`,
+          marca: "m1",
+          parcial: true,
+          candidatos: mudou(candidatos),
+          saiu: [],
+          total_nucleo: candidatos.length,
+        };
+      },
+      reservar_ficha: ({ p_ficha }) => ({
+        ficha: { id: p_ficha, versao: 4, situacao: "EM_ANALISE" },
+        reservada: true,
+      }),
+      pegar_proxima_ficha: () => ({
+        ficha: { id: "f3", versao: 3, situacao: "EM_ANALISE" },
+        reservada: true,
+      }),
+    });
+    return { supabase, leituras };
+  }
+  const nomes = (supabase) => supabase.rpc.mock.calls.map(([nome]) => nome);
+  const criar = (supabase) =>
+    criarEstadoDaFila({
+      supabase,
+      toast,
+      armazenamento: null,
+      agendar: () => 0,
+      cancelar: () => {},
+    });
+
+  it("a primeira leitura é inteira; a seguinte manda o gerado_em e a marca e junta as linhas", async () => {
+    const { supabase, leituras } = comDesde((candidatos) => [
+      { ...candidatos[0], nome: "Nome novo" },
+    ]);
+    const estado = criar(supabase);
+    await estado.carregar("e93");
+    const antes = estado.obter().dados.candidatos;
+    await estado.carregar("e93");
+    expect(leituras).toEqual([
+      { p_edital: "e93", p_desde: null, p_marca: null },
+      { p_edital: "e93", p_desde: "t0", p_marca: "m1" },
+    ]);
+    const depois = estado.obter().dados;
+    expect(depois.candidatos).toHaveLength(antes.length);
+    expect(depois.candidatos[0].nome).toBe("Nome novo");
+    expect(depois.candidatos[1]).toBe(antes[1]);
+    expect(depois.vagas).toEqual(fila().vagas);
+    expect(depois.gerado_em).toBe("t2");
+    expect(nomes(supabase)).not.toContain("obter_fila_avaliacao");
+  });
+
+  it("passar de uma ficha a outra não relê a fila; voltar à lista relê só o que mudou", async () => {
+    const { supabase, leituras } = comDesde();
+    const estado = criar(supabase);
+    await estado.carregar("e93");
+    await estado.abrir("f2");
+    await estado.pegarProxima();
+    await estado.abrir("f4");
+    expect(leituras).toHaveLength(1);
+    expect(estado.estaDesatualizada()).toBe(true);
+    // Sair da página (ou desmontar a aba) também não relê.
+    await estado.fechar({ reler: false });
+    expect(leituras).toHaveLength(1);
+    await estado.abrir("f2");
+    // "Voltar à fila": a lista aparece e é relida (parcial).
+    await estado.fechar({ esquecer: true });
+    await esperar();
+    expect(leituras).toHaveLength(2);
+    expect(leituras[1].p_desde).toBe("t0");
+    expect(estado.estaDesatualizada()).toBe(false);
+  });
+
+  it("parcial que não bate (linha nova): lê a fila inteira", async () => {
+    const { supabase, leituras } = comDesde(() => [
+      { id: "c-novo", vaga: "179698", codigo: "7999" },
+    ]);
+    const estado = criar(supabase);
+    await estado.carregar("e93");
+    await estado.carregar("e93");
+    expect(leituras.map((l) => l.p_desde)).toEqual([null, "t0", null]);
+    expect(estado.obter().dados.parcial).toBe(false);
+  });
+
+  it("banco sem a RPC nova: a fila de sempre", async () => {
+    const ausente = Object.assign(new Error("Could not find"), {
+      code: "PGRST202",
+    });
+    const supabase = supabaseFalso(fila(), {
+      obter_fila_avaliacao_desde: () => ausente,
+    });
+    const estado = criar(supabase);
+    await estado.carregar("e93");
+    await estado.carregar("e93");
+    expect(nomes(supabase)).toEqual([
+      "obter_fila_avaliacao_desde",
+      "obter_fila_avaliacao",
+      "obter_fila_avaliacao",
+    ]);
+  });
+});

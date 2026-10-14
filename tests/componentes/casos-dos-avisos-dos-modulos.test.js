@@ -87,7 +87,7 @@ const casos = [
 function supabaseFalso() {
   return {
     rpc: vi.fn(async (nome) => {
-      if (nome === "listar_avisos_conferencia")
+      if (nome === "listar_avisos_conferencia_se_mudou")
         return { data: { avisos: [aviso] }, error: null };
       if (nome === "listar_casos_aviso_conferencia")
         return { data: { total: casos.length, casos }, error: null };

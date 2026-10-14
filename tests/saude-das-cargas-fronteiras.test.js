@@ -1,5 +1,9 @@
 import { describe, expect, it, vi } from "vitest";
-import { normalizarSaude, visaoSimples } from "../src/lib/saude-das-cargas.ts";
+import {
+  marcaDasConferencias,
+  normalizarSaude,
+  visaoSimples,
+} from "../src/lib/saude-das-cargas.ts";
 import {
   acompanhamentoDoPedido,
   normalizarPainel,
@@ -121,7 +125,7 @@ describe("fronteiras do Status das atualizações", () => {
       p_inputs: { modo: "seco", vagas: ["123"], limite: "1" },
     });
     expect(agendar).toHaveBeenCalledWith(expect.any(Function), 3000);
-    expect(agendar).toHaveBeenCalledWith(expect.any(Function), 20000);
+    expect(agendar).toHaveBeenCalledWith(expect.any(Function), 60000);
     expect(estado.obter().acompanhamentos.empregare).toMatchObject({
       id: 41,
       em: agora(),
@@ -129,6 +133,61 @@ describe("fronteiras do Status das atualizações", () => {
       frase: "Uma vaga.",
       disparo: { situacao: "PEDIDO", terminou: false },
     });
+  });
+  it("a releitura do acompanhamento só sai na tela; fora dela, fica para a volta", async () => {
+    const rpc = vi.fn(async (nome) =>
+      nome === "disparar_robo"
+        ? { data: 7, error: null }
+        : { data: null, error: null },
+    );
+    const agendados = [];
+    let voltar = () => {};
+    let naTela = true;
+    const estado = criarEstadoDaSaude({
+      supabase: { rpc },
+      agendar: (fn, ms) => agendados.push({ fn, ms }),
+      naTela: () => naTela,
+      aoVoltar: (fn) => (voltar = fn),
+    });
+    expect(await estado.rodarAgora("empregare")).toBe(true);
+    const releitura = agendados.find(({ ms }) => ms === 60000);
+    const leituras = () =>
+      rpc.mock.calls.filter(([nome]) => nome === "get_saude_das_cargas").length;
+    naTela = false;
+    releitura.fn();
+    await Promise.resolve();
+    expect(leituras()).toBe(0);
+    naTela = true;
+    voltar();
+    await Promise.resolve();
+    expect(leituras()).toBe(1);
+    // Voltar de novo sem releitura pendente não relê.
+    voltar();
+    await Promise.resolve();
+    expect(leituras()).toBe(1);
+  });
+  it("marca das conferências: muda só com a última conferência", () => {
+    const comConferencia = (inicio, fim) =>
+      normalizarSaude(
+        {
+          conferencias: [{ inicio, fim, situacao: "CONCLUIDA" }],
+        },
+        new Date("2026-10-14T12:00:00Z"),
+      );
+    const a = marcaDasConferencias(
+      comConferencia("2026-10-14T09:00:00Z", "2026-10-14T09:05:00Z"),
+    );
+    expect(a).toBe("2026-10-14T09:00:00.000Z|2026-10-14T09:05:00.000Z");
+    expect(
+      marcaDasConferencias(
+        comConferencia("2026-10-14T09:00:00Z", "2026-10-14T09:05:00Z"),
+      ),
+    ).toBe(a);
+    expect(
+      marcaDasConferencias(comConferencia("2026-10-14T11:00:00Z", null)),
+    ).not.toBe(a);
+    expect(marcaDasConferencias(null)).toBe("");
+    expect(marcaDasConferencias(normalizarSaude({}))).toBe("");
   });
   it.each([null, {}, [], "inválido", 0, Infinity, 1.5])(
     "recusa identificador inválido do disparo: %s",

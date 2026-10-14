@@ -9,9 +9,16 @@ import type {
 } from "./tipos.ts";
 /*
   Estado dos avisos de conferência, fora do React: a última leitura de
-  `listar_avisos_conferencia` (área e módulo opcionais), já normalizada por
-  src/lib/avisos-de-conferencia.ts, e o "ignorar" com motivo
-  (`ignorar_aviso_conferencia`). A tela lê com `useSyncExternalStore`.
+  `listar_avisos_conferencia_se_mudou` (área e módulo opcionais; migration
+  20261015000000), já normalizada por src/lib/avisos-de-conferencia.ts, e o
+  "ignorar" com motivo (`ignorar_aviso_conferencia`). A tela lê com
+  `useSyncExternalStore`.
+
+  Cada recorte (área × módulo) lido nesta página fica na memória com a versão
+  que o banco mandou: o selo de cada tela é montado de novo a cada visita, e a
+  releitura manda a versão; sem mudança (os avisos mudam uma vez por dia, no
+  "Rodar agora" e no "ignorar"), o banco responde só `{ inalterado: true }`
+  em vez da lista inteira (~25 kB no recorte de tudo).
 
   Quem usa: o cartão "Avisos de conferência" de Configurações › Status das
   atualizações (todos os módulos) e o selo de cada tela (Análises,
@@ -31,6 +38,10 @@ import {
   normalizarCasos,
   termoDeBusca,
 } from "../../lib/avisos-de-conferencia.ts";
+import {
+  respostaInalterada,
+  versaoDoPacote,
+} from "../../lib/cache-de-payload.js";
 import { comTempoLimite, mensagemDeFalha } from "../../lib/falha-de-rede.js";
 
 function baixarNoNavegador(conteudo: string, nome: string) {
@@ -44,6 +55,21 @@ function baixarNoNavegador(conteudo: string, nome: string) {
   ancora.download = nome;
   ancora.click();
   setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+const RPC_DOS_AVISOS = "listar_avisos_conferencia_se_mudou";
+
+/* Recorte → a última lista lida e a versão dela (só nesta página). */
+const memoria = new Map<
+  string,
+  { lista: SnapshotDosAvisos["lista"]; versao: string }
+>();
+const chaveDoRecorte = ({ area, modulo }: FiltroDosAvisos) =>
+  `${area || ""}|${modulo || ""}`;
+
+/** Só para os testes: esquece as listas guardadas na memória. */
+export function esquecerAvisosGuardados() {
+  memoria.clear();
 }
 
 export function criarEstadoDosAvisos({
@@ -85,12 +111,17 @@ export function criarEstadoDosAvisos({
       publicar({ status: "error", erro: "Sem conexão com o banco." });
       return;
     }
+    const chave = chaveDoRecorte(filtro);
+    const guardada = memoria.get(chave);
+    // A lista guardada só volta depois que o banco confirma a versão (outra
+    // pessoa pode ter entrado nesta aba e ver outro recorte).
     publicar({ status: "loading", erro: "", erroCodigo: "" });
     try {
       const { data, error } = await comTempoLimite(
-        supabase.rpc("listar_avisos_conferencia", {
+        supabase.rpc(RPC_DOS_AVISOS, {
           p_area: filtro.area,
           p_modulo: filtro.modulo,
+          p_versao: guardada?.versao ?? null,
         }),
         20000,
       );
@@ -103,7 +134,15 @@ export function criarEstadoDosAvisos({
         });
         return;
       }
-      publicar({ status: "ready", lista: normalizarAvisos(data) });
+      if (guardada && respostaInalterada(data)) {
+        publicar({ status: "ready", lista: guardada.lista });
+        return;
+      }
+      const lista = normalizarAvisos(data);
+      const versao = versaoDoPacote(data);
+      if (versao) memoria.set(chave, { lista, versao });
+      else memoria.delete(chave);
+      publicar({ status: "ready", lista });
     } catch (falha) {
       if (meu !== pedido) return;
       publicar({ status: "error", erro: mensagemDeFalha(falha) });

@@ -395,6 +395,12 @@ export const CONTRATO_RPC = {
     resumo:
       "listar_acompanhamento_da_visao_geral com versão: a Visão geral relê o acompanhamento da área sem baixar de novo o que não mudou.",
   },
+  listar_mapa_da_saude_indigena: {
+    argumentos: ["p_versao"],
+    critica: false,
+    resumo:
+      "O mapa da Saúde Indígena (`lmap` e `rede_cnes` de TB_CONFIG_MAPA_SAUDE_INDIG, ~150 kB; SECURITY INVOKER, a RLS de sempre) como `{ linhas: [{ chave, payload }], versao }`; p_versao igual à atual devolve só `inalterado` (20261015000100). Substitui o select direto na tabela na entrada.",
+  },
   listar_monitoramento_operacional: {
     argumentos: ["p_versao"],
     critica: true,
@@ -647,11 +653,11 @@ export const CONTRATO_RPC = {
       "Vagas da Empregare conhecidas dos editais (ids) ou dos códigos pedidos (quadro do edital, Seleção e já carregadas): código, edital, cargo, última carga e situação. Sugestões do Rodar com opções; só administrador global.",
   },
   // ── Conferências de consistência (20261005210000_conferencias_de_consistencia.sql) ──
-  listar_avisos_conferencia: {
-    argumentos: ["p_area", "p_modulo"],
+  listar_avisos_conferencia_se_mudou: {
+    argumentos: ["p_area", "p_modulo", "p_versao"],
     critica: false,
     resumo:
-      "Avisos abertos e ignorados das conferências (job Python scripts/conferencias/) que a pessoa pode ver: módulo (leitor), área e recorte do edital; cargas e avisos sem área, só o administrador global. Área e módulo opcionais; pode_ignorar por aviso. Cartão do Status das atualizações e selo de cada tela.",
+      "listar_avisos_conferencia com versão (20261015000000): avisos abertos e ignorados das conferências que a pessoa pode ver (módulo, área e recorte do edital; cargas e avisos sem área, só o administrador global), sem campos nulos e sem `exemplos` quando o aviso tem casos; p_versao igual à atual devolve só `inalterado`. Cartão do Status das atualizações e selo de cada tela.",
   },
   listar_casos_aviso_conferencia: {
     argumentos: [
@@ -904,6 +910,12 @@ export const CONTRATO_RPC = {
     resumo:
       "O que o motor de classificação precisa: regra vigente e versões, catálogo, cronograma, quadro de vagas, análises (sem CPF), entrevistas ligadas por CO_ANALISE_CURRICULAR, listas geradas, desempates e os ajustes da pontuação aprovados em recurso (ajustes, ajustes_mudaram_em).",
   },
+  obter_classificacao_do_edital_se_mudou: {
+    argumentos: ["p_edital", "p_versao"],
+    critica: false,
+    resumo:
+      "obter_classificacao_do_edital com versão e os candidatos em colunas (candidatos_em_colunas; 114/2026: 850 KB → 235 KB cheio, 66 bytes inalterado; 20261014230000). Mesma permissão.",
+  },
   salvar_regra_classificacao: {
     argumentos: [
       "p_edital",
@@ -990,6 +1002,21 @@ export const CONTRATO_RPC = {
     resumo:
       "Pré-classificação gravada pelo job Python: regra, última execução, vagas (quadro, tamanho do lote, linha de corte, avisos), inscritos (código, nome, situação, ART, nota declarada, posição, lote e motivo; sem CPF nem contato) e as listas PROVISORIA/LOTE registradas. Leitor da Avaliação documental.",
   },
+  // ── Leitura por versão (20261014230000_avaliacao_leitura_por_versao.sql): chamam a função de
+  // sempre e devolvem o payload com `versao` (md5 sem `gerado_em`) e as listas grandes em colunas
+  // (`<campo>_em_colunas`), ou só `{ inalterado, versao }` quando p_versao é a atual.
+  obter_pre_classificacao_se_mudou: {
+    argumentos: ["p_edital", "p_versao"],
+    critica: false,
+    resumo:
+      "obter_pre_classificacao com versão e os inscritos em colunas (candidatos_em_colunas; 114/2026: 4,6 MB → 1,1 MB cheio, 66 bytes inalterado). Mesma permissão.",
+  },
+  obter_situacao_pre_classificacao: {
+    argumentos: ["p_edital"],
+    critica: false,
+    resumo:
+      "Só em_andamento e ultima_execucao da pré-classificação do edital (~0,4 KB): o acompanhamento do Recalcular a cada 15 s, sem reler o pacote. Leitor da Avaliação documental.",
+  },
   // ── Avaliação documental: acompanhamento das inscrições (20261009140000_acompanhamento_das_inscricoes.sql)
   obter_acompanhamento_inscricoes: {
     argumentos: ["p_edital"],
@@ -1029,6 +1056,12 @@ export const CONTRATO_RPC = {
     critica: false,
     resumo:
       "A fila do edital (schema_version 2, 20261014180000_fila_leve.sql): os inscritos do núcleo (no lote ou com ficha viva) com a ficha (situação, responsável, reserva vigente, versão, rascunho e, concluída, resultado e nota; nome sem CPF nem contato), as contagens e a versão dos de fora do lote (fora_do_lote; as linhas vêm de obter_fila_fora_do_lote), as vagas, os analistas com as pendentes, a distribuição da regra, quantos do lote estão sem ficha e os filtros salvos de quem chama. O analista vê só as vagas dele. Leitor da Avaliação documental.",
+  },
+  obter_fila_avaliacao_desde: {
+    argumentos: ["p_edital", "p_desde", "p_marca"],
+    critica: false,
+    resumo:
+      "obter_fila_avaliacao só com o que mudou (20261014231000_fila_e_ficha_so_o_que_mudou.sql): sem p_desde (ou outra marca), a fila inteira com marca e parcial false; com o gerado_em e a marca da leitura anterior, só as linhas do núcleo cuja ficha mudou (ou cuja reserva vence) desde p_desde − 2 min, saiu, total_nucleo e o resto sem vagas (~1,5 KB). Mesma permissão.",
   },
   obter_fila_fora_do_lote: {
     argumentos: ["p_edital", "p_apos", "p_limite"],
@@ -1097,6 +1130,12 @@ export const CONTRATO_RPC = {
     resumo:
       "A ficha para analisar: cabeçalho, lançamento e resultado gravados, a regra com que é analisada (a vigente; a da conclusão, se concluída), nota mínima e níveis da regra de classificação, nota declarada e ART, as respostas da Empregare só das perguntas que a regra liga, os links da Empregare capturados pelo robô (candidato e candidaturas da vaga — 20261007160000; as respostas e os anexos do questionário (Visualizar Arquivo por pergunta e impressão) — 20261008160000 — só da resposta vigente, a mais nova com pergunta lida, e os envios anteriores com os arquivos de cada um — 20261009210000; dado restrito), as sugestões de títulos, cursos e vínculos tiradas das respostas pelo job Python (20261009190000), as leituras dos anexos da resposta vigente feitas pelo robô (cursos, títulos, vínculos, alertas, nome/CPF só como confere — 20261009220000), o histórico e se pode editar ou reabrir. Coordenação, revisão, analista da vaga; leitor só a concluída.",
   },
+  obter_ficha_analise_leve: {
+    argumentos: ["p_ficha", "p_regra_chave"],
+    critica: false,
+    resumo:
+      "obter_ficha_analise com regra.chave (md5 da configuração); com p_regra_chave igual, regra.configuracao vem null e regra_omitida true — a tela usa a que guardou (~29 KB a menos por ficha; 20261014231000). Mesma permissão.",
+  },
   salvar_rascunho_ficha: {
     argumentos: [
       "p_ficha",
@@ -1160,6 +1199,12 @@ export const CONTRATO_RPC = {
     critica: false,
     resumo:
       "Regra da avaliação do edital (vigente e versões), modelos, nota mínima da regra de classificação, aldeias do DSEI e quantas vagas da Empregare têm carga. As perguntas da carga saíram para obter_perguntas_carga_analise (20261009180000). Leitor.",
+  },
+  obter_regra_analise_se_mudou: {
+    argumentos: ["p_edital", "p_versao"],
+    critica: false,
+    resumo:
+      "obter_regra_analise com versão (FC_SE_MUDOU; 20261014230000): a tela revalida a regra guardada (~0,5 MB com as versões) recebendo só { inalterado } quando nada mudou. Mesma permissão.",
   },
   // ── Perguntas da carga da Empregare (20261009180000_resumo_das_perguntas_da_carga.sql)
   obter_perguntas_carga_analise: {

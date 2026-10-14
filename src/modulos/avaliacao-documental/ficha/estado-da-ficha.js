@@ -6,6 +6,10 @@
 
   RPCs (supabase/migrations/20261007130000_conteudo_da_ficha.sql; contrato em
   src/lib/rpc-contrato.js):
+    obter_ficha_analise_leve(p_ficha, p_regra_chave)   (20261014231000) a ficha; com a
+                                                    chave da configuração da regra que a
+                                                    tela já guardou, sem ela (~29 KB a menos
+                                                    por ficha). Banco sem ela:
     obter_ficha_analise(p_ficha)
     salvar_rascunho_ficha(p_ficha, p_versao, p_lancamento, p_resultado, p_parecer)
     concluir_ficha(p_ficha, p_versao, p_versao_regra, p_lancamento, p_resultado, p_parecer)
@@ -17,10 +21,14 @@
   marcar a ficha como alterada: vai no próximo rascunho ou na conclusão); a
   cada mudança, refaz o texto automático quando o resumo dos itens mudou.
 
-  Salvamento automático: cada mudança agenda um rascunho (ATRASO_MS); uma
-  mudança durante o envio agenda outro com a versão nova. "Salvo às HH:MM" só
-  depois de o banco confirmar (AM-12.1). Versão velha (40001) ou reserva
-  perdida (55P03) param a edição com o aviso.
+  Salvamento automático: cada mudança agenda um rascunho para ATRASO_MS (3 s)
+  depois da última; com mudanças seguidas, o envio sai no máximo
+  MAXIMO_SEM_SALVAR_MS (15 s) depois da primeira que ficou pendente. Fechar,
+  trocar de ficha, concluir e esconder a aba (ficha.jsx: visibilitychange e
+  pagehide) salvam na hora (salvar()). Uma mudança durante o envio agenda
+  outro com a versão nova. "Salvo às HH:MM" só depois de o banco confirmar
+  (AM-12.1). Versão velha (40001) ou reserva perdida (55P03) param a edição
+  com o aviso.
 */
 import {
   calcularFicha,
@@ -33,15 +41,35 @@ import {
   resumoParaGravar,
 } from "../../../lib/avaliacao-documental/ficha.js";
 import { comJustificativasDosItens } from "../../../lib/avaliacao-documental/justificativa-dos-itens.ts";
+import { funcaoAusente } from "../../../lib/avaliacao-documental/leitura-por-versao.ts";
 import { mensagemDoBanco } from "../estado.js";
 
 const RPC_OBTER = "obter_ficha_analise";
+const RPC_OBTER_LEVE = "obter_ficha_analise_leve";
 const RPC_SALVAR = "salvar_rascunho_ficha";
 const RPC_CONCLUIR = "concluir_ficha";
 const RPC_REABRIR = "reabrir_ficha";
 const RPC_ACESSO = "registrar_acesso_ficha";
 
-export const ATRASO_MS = 1200;
+export const ATRASO_MS = 3000;
+export const MAXIMO_SEM_SALVAR_MS = 15000;
+
+/*
+  As configurações de regra já recebidas, pela chave (md5) que o banco manda
+  em regra.chave: uma por versão da regra, iguais em todas as fichas dela.
+  Da página inteira (a ficha monta uma loja por abertura).
+*/
+const REGRAS_DA_PAGINA = new Map();
+const MAXIMO_DE_REGRAS = 8;
+
+/** Lembra a configuração da regra pela chave (as mais antigas saem). */
+export function guardarRegra(regras, chave, configuracao) {
+  if (typeof chave !== "string" || !chave || configuracao === undefined) return;
+  regras.delete(chave);
+  regras.set(chave, structuredClone(configuracao));
+  while (regras.size > MAXIMO_DE_REGRAS)
+    regras.delete(regras.keys().next().value);
+}
 
 const INICIAL = Object.freeze({
   fichaId: "",
@@ -69,12 +97,58 @@ export function criarEstadoDaFicha({
   agendar = (fn, ms) => setTimeout(fn, ms),
   cancelar = (id) => clearTimeout(id),
   atrasoMs = ATRASO_MS,
+  maximoSemSalvarMs = MAXIMO_SEM_SALVAR_MS,
+  relogio = () => Date.now(),
+  regras = REGRAS_DA_PAGINA,
 } = {}) {
   let estado = { ...INICIAL };
   let pedido = 0;
   let temporizador = null;
   let mudancas = 0;
   let envio = null;
+  let pendenteDesde = null;
+  let semLeve = false;
+
+  /*
+    A ficha: a leve, com a chave da última regra guardada (o banco omite a
+    configuração igual); banco sem ela, a de sempre.
+  */
+  async function lerFicha(fichaId) {
+    if (!semLeve) {
+      try {
+        const ultima = [...regras.keys()].pop() ?? null;
+        let dados = await rpc(RPC_OBTER_LEVE, {
+          p_ficha: fichaId,
+          p_regra_chave: ultima,
+        });
+        // Omitida e já sem a cópia (não deveria): pede de novo, com a configuração.
+        if (dados?.regra_omitida === true && !regras.has(dados.regra?.chave))
+          dados = await rpc(RPC_OBTER_LEVE, {
+            p_ficha: fichaId,
+            p_regra_chave: null,
+          });
+        const regra = dados?.regra;
+        if (regra && typeof regra === "object") {
+          if (dados.regra_omitida === true)
+            return {
+              ...dados,
+              // Cópia: a ficha não divide o objeto com as outras.
+              regra: {
+                ...regra,
+                configuracao: structuredClone(regras.get(regra.chave)),
+              },
+            };
+          guardarRegra(regras, regra.chave, regra.configuracao);
+          return dados;
+        }
+        if (dados && typeof dados === "object") return dados;
+      } catch (erro) {
+        if (!funcaoAusente(erro)) throw erro;
+        semLeve = true;
+      }
+    }
+    return rpc(RPC_OBTER, { p_ficha: fichaId });
+  }
   const ouvintes = new Set();
   const publicar = (m) => {
     estado = { ...estado, ...m };
@@ -127,13 +201,32 @@ export function criarEstadoDaFicha({
     temporizador = null;
   }
 
+  /*
+    Agenda o rascunho: ATRASO_MS depois da última mudança, mas nunca mais de
+    MAXIMO_SEM_SALVAR_MS depois da primeira que ficou pendente.
+  */
+  function agendarRascunho() {
+    const agora = relogio();
+    if (pendenteDesde === null) pendenteDesde = agora;
+    const espera = Math.max(
+      0,
+      Math.min(atrasoMs, pendenteDesde + maximoSemSalvarMs - agora),
+    );
+    pararTemporizador();
+    temporizador = agendar(() => {
+      temporizador = null;
+      void salvar();
+    }, espera);
+  }
+
   async function carregar(fichaId = estado.fichaId) {
     const meu = ++pedido;
     pararTemporizador();
     mudancas = 0;
+    pendenteDesde = null;
     publicar({ ...INICIAL, fichaId, carregando: true });
     try {
-      const dados = await rpc(RPC_OBTER, { p_ficha: fichaId });
+      const dados = await lerFicha(fichaId);
       if (meu !== pedido) return false;
       const regra = dados.regra.configuracao;
       const lancamento = lancamentoInicial({
@@ -177,11 +270,7 @@ export function criarEstadoDaFicha({
       ...comJustificativas(estado, calcular(lancamento)),
       sujo: true,
     });
-    pararTemporizador();
-    temporizador = agendar(() => {
-      temporizador = null;
-      void salvar();
-    }, atrasoMs);
+    agendarRascunho();
   }
 
   function pararEdicao(erro) {
@@ -198,6 +287,8 @@ export function criarEstadoDaFicha({
 
   async function enviarRascunho() {
     const minhas = mudancas;
+    // O que mudar a partir daqui conta a espera máxima de novo.
+    pendenteDesde = null;
     const { lancamento, avaliacao, declarada, versao } = estado;
     publicar({ salvando: true });
     try {

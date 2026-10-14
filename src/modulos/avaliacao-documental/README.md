@@ -24,7 +24,8 @@ continua sendo a leitura. Desenho e fases: `docs/analises-no-monitora/`; histór
   eliminados com o motivo e os avisos da vaga;
 - "Recalcular" (coordenação): RPC `disparar_robo` com o edital (o banco pede ao GitHub), travado com a regra não
   conferida ou o job rodando; o resultado do pedido fica na aba (o motivo da recusa, com o botão
-  de volta, ou "pedido") e a aba relê sozinha até a execução terminar;
+  de volta, ou "pedido") e a aba acompanha a execução pela RPC leve
+  `obter_situacao_pre_classificacao` (~0,4 KB a cada 15 s) e relê o resultado só quando ela termina;
 - o cargo, a lotação e o nível de cada vaga vêm da linha do quadro de vagas
   (`private."FC_QUADRO_DA_VAGA_EMPREGARE"`): pelo nome da vaga na planilha e, quando a análise é
   do MONITORA (114/2026), pelo título da vaga na Empregare — o número do CARGO e, com o mesmo cargo
@@ -182,6 +183,19 @@ Pendente, Em análise, Revisar, Aprovado/Triados ou Reprovado, com responsável,
 e parecer. O Painel das análises e a Classificação leem essas linhas sem código especial; a
 sincronização da planilha ignora as linhas e os editais MONITORA. Edital que a planilha já decidiu
 não vira MONITORA por aqui (a virada com adoção é da F8).
+
+## Menos egress (plano gratuito do Supabase)
+
+As leituras grandes vão por versão (migrations `20261014230000_avaliacao_leitura_por_versao.sql` e
+`20261014231000_fila_e_ficha_so_o_que_mudou.sql`; lógica pura em
+`src/lib/avaliacao-documental/leitura-por-versao.ts` e `fila-por-mudancas.ts`; cópia no navegador
+em `src/app/copias-por-versao.ts`): a pré-classificação, a regra e a Classificação mandam a versão
+que a tela tem e recebem só `{ inalterado }` quando nada mudou (a pré-classificação e a
+Classificação, quando mudou, com os inscritos em colunas); a fila, depois da primeira leitura, só as
+linhas que mudaram, e não é relida ao passar de uma ficha a outra no modo de análise (só ao voltar à
+lista); a ficha não traz a configuração da regra que a tela já guardou. O rascunho automático sai 3 s
+depois da última mudança (no máximo 15 s depois da primeira pendente) e na hora ao fechar, trocar de
+ficha ou esconder a aba. Sem as migrations, a tela usa as RPCs de sempre.
 
 ## Arquivos
 

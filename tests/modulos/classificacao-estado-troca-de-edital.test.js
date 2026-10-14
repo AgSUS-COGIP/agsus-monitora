@@ -11,7 +11,8 @@ function bancoFalso() {
   const pendentes = [];
   const supabase = {
     rpc(nome, argumentos) {
-      if (nome === "obter_classificacao_do_edital") {
+      // A leitura por versão (_se_mudou, 20261014230000) responde o mesmo payload.
+      if (nome.startsWith("obter_classificacao_do_edital")) {
         const id = argumentos.p_edital;
         return Promise.resolve({
           data: { edital: { id }, regra: { versao: id === "A" ? 7 : 2 } },

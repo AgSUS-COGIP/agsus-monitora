@@ -67,7 +67,7 @@ const TODOS = Array.from({ length: 60 }, (_, i) => caso(i + 1));
 function supabaseFalso() {
   return {
     rpc: vi.fn(async (nome, args) => {
-      if (nome === "listar_avisos_conferencia")
+      if (nome === "listar_avisos_conferencia_se_mudou")
         return { data: { avisos: [aviso] }, error: null };
       if (nome === "listar_casos_aviso_conferencia") {
         const termo = String(args.p_busca || "").toLowerCase();

@@ -55,7 +55,13 @@ import { avisar as avisarPadrao } from "./avisos.js";
   Visão geral.
 */
 
-const TABELA_DO_MAPA = "TB_CONFIG_MAPA_SAUDE_INDIG";
+/*
+  O mapa da Saúde Indígena (`lmap` e `rede_cnes` de TB_CONFIG_MAPA_SAUDE_INDIG,
+  ~150 kB) vem por RPC com versão (migration 20261015000100): a entrada manda
+  a versão que já tem (da memória ou da cópia da sessão) e, sem mudança, o
+  banco responde só `{ inalterado: true }`.
+*/
+const RPC_DO_MAPA = "listar_mapa_da_saude_indigena";
 
 /*
   As colunas de cada linha do monitoramento, as que
@@ -114,6 +120,8 @@ export function criarCarga({
   let linhas = [];
   /* A versão das `linhas` que o banco mandou: a próxima carga pergunta só se mudou. */
   let versaoDasLinhas = null;
+  /* O mapa que a tela tem (`{ linhas, versao }`), pelo mesmo motivo. */
+  let mapaAtual = null;
   let unidades = [];
   let copiaEmLeitura = null;
   let cargaDasLinhas = null;
@@ -137,12 +145,6 @@ export function criarCarga({
       .order("tipo", { ascending: true })
       .order("nome_oficial", { ascending: true });
 
-  const consultaDoMapa = () =>
-    sb()
-      .from(TABELA_DO_MAPA)
-      .select("chave,payload")
-      .in("chave", ["lmap", "rede_cnes"]);
-
   function podeCarregarMonitoramento() {
     return (
       pode("ind") ||
@@ -154,22 +156,18 @@ export function criarCarga({
   }
 
   /*
-    As linhas ativas, por unidade e edital. `conhecidas` (`{ linhas, versao }`,
-    ou a promessa dele) é o que a tela já tem: a da memória ou a da cópia da
-    sessão. Se a versão ainda vale, o banco responde só `{ inalterado: true }`
-    e voltam as mesmas linhas; sem isso eram ~300 kB a cada entrada.
-    Responde no formato do Supabase (`{ data, error }`) mais a `versao`.
+    RPC com versão (`*_se_mudou`, FC_SE_MUDOU). `conhecidas` (`{ linhas,
+    versao }`, ou a promessa dele) é o que a tela já tem: o da memória ou o da
+    cópia da sessão. Se a versão ainda vale, o banco responde só
+    `{ inalterado: true }` e voltam as mesmas linhas. Responde no formato do
+    Supabase (`{ data, error }`) mais a `versao`.
   */
-  const consultaDoMonitoramento = (
-    conhecidas = { linhas, versao: versaoDasLinhas },
-  ) =>
+  const consultaComVersao = (rpc, conhecidas) =>
     Promise.resolve(conhecidas)
       .catch(() => null)
       .then(async (base) => {
         const versao = base?.versao || null;
-        const { data, error } = await sb().rpc(RPC_DO_MONITORAMENTO, {
-          p_versao: versao,
-        });
+        const { data, error } = await sb().rpc(rpc, { p_versao: versao });
         if (error) return { data: null, error };
         if (versao && data?.inalterado === true)
           return { data: base.linhas, versao, error: null };
@@ -180,6 +178,15 @@ export function criarCarga({
         };
       });
 
+  /* As linhas ativas, por unidade e edital (sem a versão eram ~300 kB a cada entrada). */
+  const consultaDoMonitoramento = (
+    conhecidas = { linhas, versao: versaoDasLinhas },
+  ) => consultaComVersao(RPC_DO_MONITORAMENTO, conhecidas);
+
+  /* `lmap` e `rede_cnes` (~150 kB): `[{ chave, payload }]`, como a tabela. */
+  const consultaDoMapa = (conhecido = mapaAtual) =>
+    consultaComVersao(RPC_DO_MAPA, conhecido);
+
   /*
     As consultas da entrada saem juntas: dependem só da sessão e do perfil, não
     umas das outras. Quem aplica o resultado continua sendo cada carga, na
@@ -187,16 +194,16 @@ export function criarCarga({
     que dispara, porque a consulta do Supabase só vai para a rede quando alguém
     chama `then`.
   */
-  function iniciarConsultas(monitoramentoConhecido) {
+  function iniciarConsultas({ monitoramento, mapa } = {}) {
     const iniciar = (consulta) => Promise.resolve(consulta);
     return {
       config: iniciar(configuracao.consulta()),
       paineis: iniciar(paineis.consulta()),
-      mapa: iniciar(consultaDoMapa()),
+      mapa: consultaDoMapa(mapa),
       unidades: iniciar(consultaDeUnidades()),
       abas: abas.consulta(sb()),
       monitoramento: podeCarregarMonitoramento()
-        ? consultaDoMonitoramento(monitoramentoConhecido)
+        ? consultaDoMonitoramento(monitoramento)
         : null,
     };
   }
@@ -227,7 +234,7 @@ export function criarCarga({
 
   async function carregarMapa({ consulta } = {}) {
     if (!sb()) return false;
-    const { data, error } = await (consulta || consultaDoMapa());
+    const { data, error, versao } = await (consulta || consultaDoMapa());
     if (error) {
       console.warn("Mapa/rede do Supabase indisponível:", error);
       if (pode("config"))
@@ -237,6 +244,10 @@ export function criarCarga({
         );
       return false;
     }
+    mapaAtual = {
+      linhas: Array.isArray(data) ? data : [],
+      versao: versao || null,
+    };
     const porChave = Object.fromEntries(
       (data || []).map((linha) => [linha.chave, linha.payload]),
     );
@@ -364,14 +375,21 @@ export function criarCarga({
       acesso: assinaturaDoAcesso(perfil(), paineis.liberados()),
       versao: copia.versao,
     };
-    // As linhas da cópia que serve dizem ao banco a versão que a tela já tem.
-    const consultas = iniciarConsultas(
+    // A cópia que serve diz ao banco a versão das linhas e do mapa que a tela já tem.
+    const daCopiaQueServe = (parte) =>
       Promise.resolve(copiaLida).then((guardada) =>
         copiaServe(guardada, { ...sessao, agora: agora() })
-          ? guardada.dados.monitoramento
+          ? parte(guardada.dados)
+          : null,
+      );
+    const consultas = iniciarConsultas({
+      monitoramento: daCopiaQueServe((dados) => dados.monitoramento),
+      mapa: daCopiaQueServe((dados) =>
+        dados.versaoDoMapa
+          ? { linhas: dados.mapa, versao: dados.versaoDoMapa }
           : null,
       ),
-    );
+    });
     // Fora da cópia da sessão: a manutenção é sempre a do banco, nesta entrada.
     const situacaoDoBanco = situacao.consulta(sb());
     const guardada = await copiaLida;
@@ -506,6 +524,7 @@ export function criarCarga({
     cargaDasLinhas = null;
     linhas = [];
     versaoDasLinhas = null;
+    mapaAtual = null;
     copiaEmLeitura = null;
     esquecerLinhasDoMonitoramento();
   }

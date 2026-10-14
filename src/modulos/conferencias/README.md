@@ -4,9 +4,10 @@ Módulo completo em React e TypeScript: estado externo, cartão de avisos, selos
 módulos, gaveta, busca de casos, paginação, justificativa para ignorar, navegação e CSV.
 As regras puras estão em `../../lib/avisos-de-conferencia.ts` e os contratos em `tipos.ts`.
 
-`estado.ts` usa o cliente Supabase compartilhado e as RPCs existentes
-`listar_avisos_conferencia`, `listar_casos_aviso_conferencia` e
-`ignorar_aviso_conferencia`. O snapshot é lido por `useSyncExternalStore`;
+`estado.ts` usa o cliente Supabase compartilhado e as RPCs
+`listar_avisos_conferencia_se_mudou` (com versão, 20261015000000: cada recorte lido
+na página guarda a versão e a releitura sem mudança recebe só `inalterado`),
+`listar_casos_aviso_conferencia` e `ignorar_aviso_conferencia`. O snapshot é lido por `useSyncExternalStore`;
 respostas antigas não substituem a leitura de outra área ou módulo.
 O CSV lê páginas de 1000 casos, encerra quando não há novos casos e protege as células
 contra fórmulas. A interface mantém busca com espera de 300 ms e páginas de 50 casos.

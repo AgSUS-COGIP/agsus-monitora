@@ -84,6 +84,8 @@ export function dadosDasRespostas(respostas) {
     const resposta = respostas?.[parte];
     dados[parte] = !resposta || resposta.error ? null : (resposta.data ?? null);
   }
+  // A versão do mapa (listar_mapa_da_saude_indigena): a próxima entrada pergunta só se mudou.
+  dados.versaoDoMapa = respostas.mapa.versao ?? null;
   const monitoramento = respostas.monitoramento;
   if (!monitoramento) {
     dados.monitoramento = null;
@@ -104,7 +106,11 @@ export function consultasDosDados(dados) {
   return {
     config: resposta(dados.config),
     paineis: resposta(dados.paineis),
-    mapa: resposta(dados.mapa),
+    mapa: Promise.resolve({
+      data: dados.mapa,
+      versao: dados.versaoDoMapa ?? null,
+      error: null,
+    }),
     unidades: resposta(dados.unidades),
     abas: resposta(dados.abas ?? null),
     monitoramento: dados.monitoramento

@@ -5,6 +5,12 @@
 
   RPCs (supabase/migrations/20261006120000_fichas_fila_e_reserva.sql;
   contrato em src/lib/rpc-contrato.js):
+    obter_fila_avaliacao_desde(p_edital, p_desde, p_marca)
+                                                       (20261014231000) a fila do edital: a
+                                                       primeira leitura inteira; as seguintes
+                                                       só com as linhas que mudaram desde a
+                                                       anterior (fila-por-mudancas.ts). Banco
+                                                       sem ela:
     obter_fila_avaliacao(p_edital)                     a fila do edital: o núcleo (no lote ou com
                                                        ficha viva) e as contagens de fora do lote
     obter_fila_fora_do_lote(p_edital, p_apos, p_limite) os de fora do lote, sob demanda e em
@@ -26,6 +32,10 @@
   versão dela (fora_do_lote.versao) mudar numa releitura da fila. A ficha aberta
   (edital e ficha) fica na sessão da aba (sessionStorage), para recarregar a
   página voltar ao modo de análise; fechar a ficha esquece.
+  No modo de análise a lista não aparece: passar de uma ficha a outra (Pegar
+  próximo, Anterior / Próxima, "Concluir e próxima") não relê a fila; ela fica
+  marcada como desatualizada e é relida ao voltar à lista ("Voltar à fila",
+  remontar a aba).
 */
 import { isAdminGlobal } from "../../lib/access-roles.js";
 import { comTempoLimite } from "../../lib/falha-de-rede.js";
@@ -39,6 +49,12 @@ import {
   lerForaDoLote,
   resumoForaDoLote,
 } from "../../lib/avaliacao-documental/fila-fora-do-lote.ts";
+import {
+  aplicarMudancasDaFila,
+  argumentosDaFilaDesde,
+  RPC_FILA_DESDE,
+} from "../../lib/avaliacao-documental/fila-por-mudancas.ts";
+import { funcaoAusente } from "../../lib/avaliacao-documental/leitura-por-versao.ts";
 import { decidirNoLote } from "./decisao-no-banco.js";
 import { mensagemDoBanco } from "./estado.js";
 
@@ -162,6 +178,9 @@ export function criarEstadoDaFila({
   let renovacao = null;
   let restaurou = false;
   let leituraDeFora = null;
+  let semFilaDesde = false;
+  /* A lista mudou desde a última leitura e ninguém a está vendo (modo de análise). */
+  let desatualizada = false;
   const ouvintes = new Set();
   const publicar = (mudancas) => {
     estado = { ...estado, ...mudancas };
@@ -183,8 +202,39 @@ export function criarEstadoDaFila({
     renovacao = null;
   }
 
+  /*
+    A fila do edital: só o que mudou desde a leitura anterior (do mesmo
+    edital), ou inteira quando não dá para juntar; banco sem a RPC nova, a de
+    sempre.
+  */
+  async function lerFila(editalId) {
+    const anterior = estado.editalId === editalId ? estado.dados : null;
+    if (!semFilaDesde) {
+      try {
+        const r = await rpc(
+          RPC_FILA_DESDE,
+          argumentosDaFilaDesde(editalId, anterior),
+        );
+        const junta = aplicarMudancasDaFila(anterior, r);
+        if (junta) return junta;
+        if (r && typeof r === "object") {
+          const inteira = aplicarMudancasDaFila(
+            null,
+            await rpc(RPC_FILA_DESDE, argumentosDaFilaDesde(editalId, null)),
+          );
+          if (inteira) return inteira;
+        }
+      } catch (erro) {
+        if (!funcaoAusente(erro)) throw erro;
+        semFilaDesde = true;
+      }
+    }
+    return rpc(RPC_OBTER_FILA, { p_edital: editalId });
+  }
+
   async function carregar(editalId = estado.editalId) {
     const meu = ++pedido;
+    desatualizada = false;
     if (!editalId) {
       pararRenovacao();
       publicar({ ...INICIAL, filtro: estado.filtro });
@@ -196,7 +246,7 @@ export function criarEstadoDaFila({
         : { carregando: true, erro: "" },
     );
     try {
-      const dados = await rpc(RPC_OBTER_FILA, { p_edital: editalId });
+      const dados = await lerFila(editalId);
       if (meu !== pedido) return false;
       const versao = resumoForaDoLote(dados).versao;
       const foraMudou =
@@ -291,6 +341,8 @@ export function criarEstadoDaFila({
       r?.ficha?.id ? { edital: estado.editalId, ficha: r.ficha.id } : null,
     );
     if (r?.reservada && r.ficha?.id) {
+      // A reserva mudou a linha da ficha: a lista é relida ao voltar a ela.
+      desatualizada = true;
       const id = r.ficha.id;
       renovacao = agendar(() => renovar(id), RENOVAR_A_CADA_MS);
     }
@@ -298,7 +350,7 @@ export function criarEstadoDaFila({
 
   async function abrir(fichaId) {
     if (!fichaId) return false;
-    await fechar();
+    await fechar({ reler: false });
     publicar({ abrindo: true });
     try {
       mostrarFicha(await rpc(RPC_RESERVAR, { p_ficha: fichaId }));
@@ -315,7 +367,7 @@ export function criarEstadoDaFila({
   }
 
   async function pegarProxima(vaga = "") {
-    await fechar({ esquecer: true });
+    await fechar({ esquecer: true, reler: false });
     publicar({ abrindo: true });
     try {
       const r = await rpc(RPC_PEGAR_PROXIMA, {
@@ -325,13 +377,15 @@ export function criarEstadoDaFila({
       if (!r?.ficha) {
         publicar({ abrindo: false });
         toast(r?.motivo || "Nenhuma ficha livre na fila.", "info");
+        // A lista volta à tela: relê o que mudou.
+        if (desatualizada) void carregar();
         return false;
       }
       mostrarFicha(r);
-      void carregar();
       return true;
     } catch (erro) {
       publicar({ abrindo: false });
+      if (desatualizada) void carregar();
       toast(
         `Não foi possível pegar a próxima: ${mensagemDoBanco(erro)}`,
         "error",
@@ -366,25 +420,29 @@ export function criarEstadoDaFila({
     Fecha a ficha aberta e libera a reserva dela (se era sua). Só "Voltar à
     fila" (e Pegar próximo) esquece a ficha lembrada ({ esquecer: true }); ao
     sair da página ou da aba ela continua lembrada para recarregar voltar a ela.
+    { reler: false }: outra ficha vai abrir em seguida (ou a página está
+    saindo) e a lista não aparece; ela fica desatualizada até voltar à tela.
   */
-  async function fechar({ esquecer = false } = {}) {
+  async function fechar({ esquecer = false, reler = true } = {}) {
     const aberta = estado.aberta;
     pararRenovacao();
     if (esquecer) lembrarFicha(sessao, null);
-    if (!aberta) return true;
-    publicar({ aberta: null });
-    if (aberta.reservada && aberta.ficha?.id) {
-      try {
-        await rpc(RPC_LIBERAR, {
-          p_edital: estado.editalId,
-          p_fichas: [aberta.ficha.id],
-          p_motivo: null,
-        });
-      } catch {
-        /* A reserva vence sozinha em 15 minutos. */
+    if (aberta) {
+      publicar({ aberta: null });
+      if (aberta.reservada && aberta.ficha?.id) {
+        try {
+          await rpc(RPC_LIBERAR, {
+            p_edital: estado.editalId,
+            p_fichas: [aberta.ficha.id],
+            p_motivo: null,
+          });
+        } catch {
+          /* A reserva vence sozinha em 15 minutos. */
+        }
+        desatualizada = true;
       }
-      void carregar();
     }
+    if (reler && desatualizada && estado.editalId) void carregar();
     return true;
   }
 
@@ -520,6 +578,8 @@ export function criarEstadoDaFila({
       return () => ouvintes.delete(ouvinte);
     },
     carregar,
+    /* A lista mudou no modo de análise e ainda não foi relida. */
+    estaDesatualizada: () => desatualizada,
     carregarForaDoLote,
     mudarFiltro,
     abrir,

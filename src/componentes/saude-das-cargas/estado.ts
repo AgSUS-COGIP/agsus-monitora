@@ -20,7 +20,9 @@ import type {
   `buscarVagas` pede listar_vagas_dos_robos para as sugestões do formulário;
   `acompanhamentos` guarda o último pedido de cada robô (quando, qual modo,
   o id do pedido e a situação dele) e, enquanto ele não termina, a tela
-  relê a cada 20 s.
+  relê a cada 60 s, só com a seção na tela e a aba visível (cada releitura
+  são ~75 kB: get_saude_das_cargas e get_painel_dos_robos). A releitura que
+  cai com a aba oculta fica para quando ela voltar.
 */
 import { isAdminGlobal } from "../../lib/access-roles.js";
 import { comTempoLimite, mensagemDeFalha } from "../../lib/falha-de-rede.js";
@@ -39,7 +41,7 @@ import {
 } from "../../lib/robos-de-carga.js";
 import { normalizarSaude } from "../../lib/saude-das-cargas.ts";
 
-const ESPERA_DEPOIS_DO_PEDIDO_MS = 20000;
+export const ESPERA_DEPOIS_DO_PEDIDO_MS = 60_000;
 /* O GitHub responde ao banco em 1 ou 2 s: a primeira conferência do pedido. */
 const ESPERA_DA_RESPOSTA_MS = 3000;
 const RPC_PAINEL_DOS_ROBOS = "get_painel_dos_robos";
@@ -50,6 +52,11 @@ export function criarEstadoDaSaude({
   getProfile,
   agora = () => new Date(),
   agendar = (fn, ms) => setTimeout(fn, ms),
+  naTela = () => globalThis.document?.visibilityState !== "hidden",
+  aoVoltar = (fn) =>
+    globalThis.document?.addEventListener("visibilitychange", () => {
+      if (globalThis.document.visibilityState === "visible") fn();
+    }),
 }: DependenciasDaSaude): EstadoDaSaude {
   let estado: SnapshotDaSaude = {
     status: "idle",
@@ -65,6 +72,8 @@ export function criarEstadoDaSaude({
   };
   let pedido = 0;
   let releituraAgendada = false;
+  /* Uma releitura caiu com a seção fora da tela ou a aba oculta. */
+  let releituraAdiada = false;
   const ouvintes = new Set<() => void>();
   const publicar = (mudancas: Partial<SnapshotDaSaude>) => {
     estado = { ...estado, ...mudancas };
@@ -72,6 +81,7 @@ export function criarEstadoDaSaude({
   };
 
   async function carregar() {
+    releituraAdiada = false;
     const meu = ++pedido;
     const perfil = getProfile?.() || null;
     publicar({ status: "loading", perfil });
@@ -212,12 +222,24 @@ export function criarEstadoDaSaude({
       },
     );
     if (!pendente) return;
+    agendarReleitura();
+  }
+
+  /* Uma releitura por vez, em 60 s; fora da tela, fica para a volta. */
+  function agendarReleitura() {
     releituraAgendada = true;
     agendar(() => {
       releituraAgendada = false;
-      void carregar();
+      if (naTela()) void carregar();
+      else releituraAdiada = true;
     }, ESPERA_DEPOIS_DO_PEDIDO_MS);
   }
+
+  aoVoltar(() => {
+    if (!releituraAdiada || releituraAgendada || !naTela()) return;
+    releituraAdiada = false;
+    void carregar();
+  });
 
   /*
     situacao_do_disparo_robo: o GitHub aceitou? Se recusou (ou falta a chave),
@@ -321,11 +343,7 @@ export function criarEstadoDaSaude({
       },
     });
     agendar(() => void conferirPedido(id), ESPERA_DA_RESPOSTA_MS);
-    releituraAgendada = true;
-    agendar(() => {
-      releituraAgendada = false;
-      void carregar();
-    }, ESPERA_DEPOIS_DO_PEDIDO_MS);
+    if (!releituraAgendada) agendarReleitura();
     return true;
   }
 
