@@ -9,9 +9,9 @@
     - `textoParaSei`: o mesmo em texto puro;
     - `paginaDaPrevia`: a página "Como fica no SEI" (timbrado simulado) — a
       prévia na tela e a impressão (PDF), uma carta por página
-      (paginaNoModeloDoSei, de classificacao/documento-sei.js);
+      (paginaNoModeloDoSei, de classificacao/documento-sei.ts);
     - `gerarDocxDasCartas`: o .docx com papel timbrado (pacoteDocx, de
-      classificacao/documento-docx.js), uma carta por página; e
+      classificacao/documento-docx.ts), uma carta por página; e
       `gerarZipDasCartas`, um .docx por candidato num .zip.
 
     [timbrado: logo + nome e endereço da agência]        ← o SEI põe
@@ -28,17 +28,17 @@ import {
   htmlDoTrecho,
   paginaNoModeloDoSei,
   trechos,
-} from "./classificacao/documento-sei.js";
+} from "./classificacao/documento-sei.ts";
 import {
   arquivosDoDocx,
   corridas,
   documentoComPartes,
   pacoteDocx,
   QUEBRA_DE_PAGINA,
-} from "./classificacao/documento-docx.js";
+} from "./classificacao/documento-docx.ts";
 import { zipSemCompressao } from "./documento-da-resposta.js";
 import { hojeEmBrasilia, preencherCarta } from "./carta-de-convocacao.js";
-import { dataPorExtenso } from "./classificacao/documento-sei.js";
+import { dataPorExtenso } from "./classificacao/documento-sei.ts";
 
 const texto = (valor) => String(valor ?? "").trim();
 

@@ -177,7 +177,7 @@ A entrada e o estado de Classificação também estão migrados: seletor de edit
 versões de regra, registros e publicação de listas, desempate, hora de nascimento e
 exportação. Dados usados pelo estado são validados; respostas antigas não atualizam
 dados, avisos ou flags após troca de edital, área ou usuário. Os contratos estão em
-`tests/tipos/tela-estado-da-classificacao.tsx`; utilitários de documentos
+`tests/tipos/tela-estado-da-classificacao.tsx`; utilitários de impressão e área de transferência no navegador
 continuam em JavaScript. Contratos e limites em
 [../src/modulos/classificacao/README.md](../src/modulos/classificacao/README.md).
 
@@ -235,3 +235,11 @@ desempates, cotas, convocação e explicações das quatro listas. Os contratos 
 ficam em `tipos-do-motor.ts`; `dados-do-motor.ts` valida a ponte de convocação antes do
 cálculo. Configurações incompletas são recusadas. Uma convocação sem limite conserva
 `limite: null`. Contratos em `tests/tipos/motor-da-classificacao.tsx`.
+
+Retrato das listas, exportação XLSX, seleção de colunas e geração SEI/DOCX também estão
+em TypeScript: `classificacao/exportacao.ts`, `colunas-do-documento.ts`,
+`documento-sei.ts` e `documento-docx.ts`. Os contratos compartilhados ficam em
+`tipos-dos-documentos.ts`; `dados-dos-documentos.ts` verifica todas as linhas antes da
+exportação, recusando coleções malformadas e notas não numéricas. São preservados os
+XML dos arquivos, texto público, timbrado, numeração, notas de rodapé e horários da agenda.
+Contratos em `tests/tipos/documentos-da-classificacao.tsx`.

@@ -22,7 +22,7 @@ import {
   paginaDaPrevia,
   textosDoModelo,
   unidadeDoEdital,
-} from "../../lib/classificacao/documento-sei.js";
+} from "../../lib/classificacao/documento-sei.ts";
 import {
   ALTURA_DA_PAGINA,
   escalaParaLargura,
@@ -37,7 +37,7 @@ import {
   colunasEscolhidas,
   colunasParaGuardar,
   ehOPadrao,
-} from "../../lib/classificacao/colunas-do-documento.js";
+} from "../../lib/classificacao/colunas-do-documento.ts";
 import { documentoDaRegra } from "../../lib/classificacao/regra.ts";
 import { Abas, Campo, classes, Modal } from "../../ui/index.js";
 import {

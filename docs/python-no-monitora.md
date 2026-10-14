@@ -294,7 +294,7 @@ cada vaga e grava por RPC; compara com a planilha enquanto ela existir.
 ### 2. Listas oficiais grandes geradas no servidor
 
 Hoje a Classificação Provisória por ART, os Resultados Preliminar/Final (Aptos e Inaptos) e a
-Convocação para entrevista saem no navegador (`src/lib/classificacao/documento-sei.js`,
+Convocação para entrevista saem no navegador (`src/lib/classificacao/documento-sei.ts`,
 `documento-docx.js`, a partir do retrato da lista em `exportacao.js`). Com editais grandes isso pesa
 na máquina de quem gera.
 

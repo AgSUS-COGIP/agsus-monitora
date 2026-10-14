@@ -16,13 +16,13 @@ import {
   documentoOficial,
   faseDaPublicacao,
   textoParaSei,
-} from "../../src/lib/classificacao/documento-sei.js";
-import { nomeDoArquivo } from "../../src/lib/classificacao/exportacao.js";
+} from "../../src/lib/classificacao/documento-sei.ts";
+import { nomeDoArquivo } from "../../src/lib/classificacao/exportacao.ts";
 
 /*
   A aba Pré-classificação sem DOM (src/lib/avaliacao-documental/
   tela-da-pre-classificacao.js) e o documento das listas PROVISORIA e LOTE no
-  gerador da Classificação (src/lib/classificacao/documento-sei.js) — AM-4.4,
+  gerador da Classificação (src/lib/classificacao/documento-sei.ts) — AM-4.4,
   AM-5.0, AM-5.6 e AM-16.
 */
 

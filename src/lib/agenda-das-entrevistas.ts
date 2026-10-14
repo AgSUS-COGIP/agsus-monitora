@@ -29,7 +29,7 @@ import { objeto, registrosDaAgenda, textoDaAgenda } from "./dados-da-agenda.ts";
   cronológica, banca 1, banca 2… no mesmo horário. Agrupar por cargo: um
   cargo novo começa num horário novo (nunca divide o horário com o anterior).
 */
-import { gerarXlsx, MIME_XLSX } from "./classificacao/exportacao.js";
+import { gerarXlsx, MIME_XLSX } from "./classificacao/exportacao.ts";
 
 export { MIME_XLSX };
 export const FUSO_DA_AGENDA = "America/Sao_Paulo";

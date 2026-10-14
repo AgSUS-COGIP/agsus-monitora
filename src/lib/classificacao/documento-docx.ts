@@ -1,7 +1,17 @@
+import { exigirDadoDoDocumento } from "./dados-dos-documentos.ts";
+import type {
+  ArquivoDoDocx,
+  DocumentoOficial,
+  EstiloDaCorrida,
+  LogoDoDocumento,
+  OpcoesDoDocx,
+  PartesDoDocx,
+  TabelaDoDocumento,
+} from "./tipos-dos-documentos.ts";
 /*
   O documento oficial da lista em .docx, com papel timbrado, para quem prefere
   anexar ou ajustar no Word antes de subir no SEI. Mesmo modelo de
-  documento-sei.js (documentoOficial), sem dependência nova: o ZIP sem
+  documento-sei.ts (documentoOficial), sem dependência nova: o ZIP sem
   compressão de documento-da-resposta.js com
 
     word/header1.xml   o logo da AgSUS (PNG embutido) e o cabeçalho da agência
@@ -19,7 +29,7 @@
   cabeçalho vai só com o texto.
 */
 import { escaparXml, zipSemCompressao } from "../documento-da-resposta.js";
-import { CABECALHO_PADRAO, numeracao, trechos } from "./documento-sei.js";
+import { CABECALHO_PADRAO, numeracao, trechos } from "./documento-sei.ts";
 
 const W = "http://schemas.openxmlformats.org/wordprocessingml/2006/main";
 const R = "http://schemas.openxmlformats.org/officeDocument/2006/relationships";
@@ -35,19 +45,19 @@ const RECUO_DO_NUMERO = 1418; // 25 mm, o recuo do número dos itens no SEI
 const FONTE = '<w:rFonts w:ascii="Calibri" w:hAnsi="Calibri" w:cs="Calibri"/>';
 
 export function corrida(
-  texto,
+  texto: unknown,
   {
     negrito = false,
     italico = false,
     tamanho = 24,
     cor = "",
     caixaAlta = false,
-  } = {},
+  }: EstiloDaCorrida = {},
 ) {
   return `<w:r><w:rPr>${FONTE}${negrito ? "<w:b/>" : ""}${italico ? "<w:i/>" : ""}${caixaAlta ? "<w:caps/>" : ""}${cor ? `<w:color w:val="${cor}"/>` : ""}<w:sz w:val="${tamanho}"/></w:rPr><w:t xml:space="preserve">${escaparXml(texto)}</w:t></w:r>`;
 }
 
-export const corridas = (texto, opcoes = {}) =>
+export const corridas = (texto: unknown, opcoes: EstiloDaCorrida = {}) =>
   trechos(texto)
     .map((t) =>
       corrida(t.texto, { ...opcoes, negrito: opcoes.negrito || t.negrito }),
@@ -55,13 +65,19 @@ export const corridas = (texto, opcoes = {}) =>
     .join("");
 
 export function paragrafo(
-  conteudo,
+  conteudo: string,
   {
     alinhamento = "both",
     depois = 120,
     antes = 0,
     sombra = false,
     tabulacao = false,
+  }: {
+    alinhamento?: string;
+    depois?: number;
+    antes?: number;
+    sombra?: boolean;
+    tabulacao?: boolean;
   } = {},
 ) {
   return (
@@ -74,30 +90,36 @@ export function paragrafo(
 
 const TAB = `<w:r><w:rPr>${FONTE}</w:rPr><w:tab/></w:r>`;
 
-function item(numero, texto) {
+function item(numero: string | undefined, texto: string) {
   return paragrafo(`${corrida(numero)}${TAB}${corridas(texto)}`, {
     tabulacao: true,
   });
 }
 
-function titulo(n, rotulo) {
+function titulo(n: number, rotulo: string) {
   return paragrafo(
     `${corrida(`${n}.`)}${TAB}${corrida(rotulo.toUpperCase(), { negrito: true })}`,
     { sombra: true, tabulacao: true, antes: 240 },
   );
 }
 
-const borda = (lado) =>
+const borda = (lado: string) =>
   `<w:${lado} w:val="single" w:sz="4" w:space="0" w:color="000000"/>`;
 
 function celula(
-  texto,
+  texto: unknown,
   {
     largura,
     alinhamento = "left",
     negrito = false,
     sombra = false,
     extensao = 0,
+  }: {
+    largura: number;
+    alinhamento?: string;
+    negrito?: boolean;
+    sombra?: boolean;
+    extensao?: number;
   },
 ) {
   return (
@@ -108,7 +130,7 @@ function celula(
 }
 
 /** A tabela da vaga: larguras em % do modelo convertidas para a largura útil da página. */
-export function tabelaXml(t) {
+export function tabelaXml(t: TabelaDoDocumento) {
   const larguras = t.colunas.map((c) =>
     Math.round((LARGURA_UTIL * c.largura) / 100),
   );
@@ -128,7 +150,7 @@ export function tabelaXml(t) {
   const cabecalho = `<w:tr><w:trPr><w:tblHeader/></w:trPr>${t.colunas
     .map((c, i) =>
       celula(c.rotulo, {
-        largura: larguras[i],
+        largura: exigirDadoDoDocumento(larguras[i]),
         alinhamento: "center",
         negrito: true,
         sombra: true,
@@ -141,9 +163,11 @@ export function tabelaXml(t) {
         `<w:tr><w:trPr><w:cantSplit/></w:trPr>${linha
           .map((valor, i) =>
             celula(String(valor ?? ""), {
-              largura: larguras[i],
+              largura: exigirDadoDoDocumento(larguras[i]),
               alinhamento:
-                t.colunas[i].alinhamento === "esquerda" ? "left" : "center",
+                exigirDadoDoDocumento(t.colunas[i]).alinhamento === "esquerda"
+                  ? "left"
+                  : "center",
             }),
           )
           .join("")}</w:tr>`,
@@ -153,7 +177,7 @@ export function tabelaXml(t) {
 }
 
 /** O word/document.xml do documento oficial. */
-export function corpoXml(doc) {
+export function corpoXml(doc: DocumentoOficial) {
   const partes = doc.titulo.map((linha) =>
     paragrafo(corridas(linha, { tamanho: 26, caixaAlta: true }), {
       alinhamento: "center",
@@ -218,7 +242,7 @@ export const QUEBRA_DE_PAGINA = '<w:p><w:r><w:br w:type="page"/></w:r></w:p>';
  * O word/document.xml com os parágrafos já montados: A4, margens das
  * publicações, cabeçalho e rodapé (rIdCabecalho, rIdRodape).
  */
-export function documentoComPartes(partes) {
+export function documentoComPartes(partes: readonly string[]) {
   return (
     '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
     `<w:document xmlns:w="${W}" xmlns:r="${R}">` +
@@ -234,7 +258,7 @@ export function documentoComPartes(partes) {
 /* 1 px = 9525 EMU; o logo sai com 2,2 cm de largura. */
 const LARGURA_DO_LOGO = 792000;
 
-function logoXml(logo) {
+function logoXml(logo: LogoDoDocumento) {
   const altura = Math.round(
     (LARGURA_DO_LOGO * (logo.altura || 1)) / (logo.largura || 1),
   );
@@ -251,7 +275,10 @@ function logoXml(logo) {
 }
 
 /** O word/header1.xml: logo e as linhas do cabeçalho da agência. */
-export function cabecalhoXml(cabecalho, logo) {
+export function cabecalhoXml(
+  cabecalho: unknown,
+  logo: LogoDoDocumento | null | undefined,
+) {
   const linhas = String(cabecalho || CABECALHO_PADRAO)
     .split(/\r?\n/)
     .map((l) => l.trim())
@@ -276,7 +303,7 @@ export function cabecalhoXml(cabecalho, logo) {
 }
 
 /** O word/footer1.xml: "<nome> · SEI <processo> / pg. N" (N = campo PAGE). */
-export function rodapeXml(doc) {
+export function rodapeXml(doc: { nome: string; processo?: string }) {
   const texto = [doc.nome, doc.processo ? `SEI ${doc.processo}` : ""]
     .filter(Boolean)
     .join(" · ");
@@ -300,7 +327,7 @@ export function rodapeXml(doc) {
   );
 }
 
-const relacao = (id, tipo, alvo) =>
+const relacao = (id: string, tipo: string, alvo: string) =>
   `<Relationship Id="${id}" Type="${R}/${tipo}" Target="${alvo}"/>`;
 
 /**
@@ -309,7 +336,10 @@ const relacao = (id, tipo, alvo) =>
  *   cabecalho  o texto do cabeçalho da agência (linhas)
  *   logo       { bytes: Uint8Array PNG, largura, altura } ou null
  */
-export function gerarDocxOficial(doc, opcoes = {}) {
+export function gerarDocxOficial(
+  doc: DocumentoOficial,
+  opcoes: OpcoesDoDocx = {},
+) {
   return pacoteDocx(
     { nome: doc.nome, processo: doc.processo, documento: corpoXml(doc) },
     opcoes,
@@ -322,12 +352,16 @@ export function gerarDocxOficial(doc, opcoes = {}) {
  * "<nome> · SEI <processo> / pg. N". A carta de convocação também o usa.
  */
 export function arquivosDoDocx(
-  { nome, processo = "", documento },
-  { cabecalho = CABECALHO_PADRAO, logo = null, quando = new Date() } = {},
+  { nome, processo = "", documento }: PartesDoDocx,
+  {
+    cabecalho = CABECALHO_PADRAO,
+    logo = null,
+    quando = new Date(),
+  }: OpcoesDoDocx = {},
 ) {
   const doc = { nome, processo };
   const comLogo = Boolean(logo?.bytes?.length);
-  const arquivos = [
+  const arquivos: ArquivoDoDocx[] = [
     {
       nome: "[Content_Types].xml",
       conteudo:
@@ -378,7 +412,7 @@ export function arquivosDoDocx(
     },
     { nome: "word/footer1.xml", conteudo: rodapeXml(doc) },
   ];
-  if (comLogo)
+  if (comLogo && logo)
     arquivos.push(
       {
         nome: "word/_rels/header1.xml.rels",
@@ -394,7 +428,7 @@ export function arquivosDoDocx(
 }
 
 /** Os bytes do .docx (arquivosDoDocx zipado). */
-export function pacoteDocx(partes, opcoes = {}) {
+export function pacoteDocx(partes: PartesDoDocx, opcoes: OpcoesDoDocx = {}) {
   const quando = opcoes.quando || new Date();
   return zipSemCompressao(
     arquivosDoDocx(partes, { ...opcoes, quando }),
