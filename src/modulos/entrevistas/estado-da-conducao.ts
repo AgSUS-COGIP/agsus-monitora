@@ -66,7 +66,7 @@ import {
   mensagemDoErroDaEntrevista,
 } from "../../lib/conducao-de-entrevista.ts";
 import { classificarEdital } from "../../lib/classificacao/ajustes.ts";
-import { convocacaoDoEdital } from "../../lib/classificacao/convocacao-do-edital.js";
+import { convocacaoDoEdital } from "../../lib/classificacao/convocacao-do-edital.ts";
 import { rotuloDaVersao } from "../../lib/nome-da-versao.ts";
 
 const TEMPO_LIMITE_MS = 30000;

@@ -128,7 +128,7 @@ duas entradas, em `src/modulos/entrevistas/conduzir.tsx`, `src/lib/fila-de-condu
 
 **perguntas:** vagas imediatas da entrevista | onde digitar as vagas imediatas | vagas imediatas por vaga | regra de convocacao da entrevista onde muda | multiplo das vagas imediatas | posicao do cadastro reserva na entrevista | de onde vem o numero de vagas da entrevista
 **resposta:** As vagas imediatas não se digitam na entrevista. Em Conduzir entrevistas › Preparar, o resumo das regras mostra a tabelinha por vaga (vagas imediatas e até que posição chama) e, em "Ver detalhes", a regra de convocação da Classificação (versão vigente) e, por vaga, as vagas, até que posição se convoca e de onde vêm as vagas, com o botão para a tela onde se mudam: o quadro de vagas do edital (Editais), a configuração da convocação (Lista de aprovados) ou os percentuais da regra (Classificação). Vaga sem quadro aparece como "sem quadro de vagas": cadastre o quadro no edital. A regra de convocação (múltiplo, posição do cadastro reserva, exceções por cargo) muda em Classificação › Regra. O que a entrevista guardava antes (vagas digitadas e regra própria) ficou no banco, sem uso.
-**fonte:** src/modulos/entrevistas/conducao.tsx; src/lib/convocacao-da-entrevista.ts; src/lib/classificacao/vagas.js
+**fonte:** src/modulos/entrevistas/conducao.tsx; src/lib/convocacao-da-entrevista.ts; src/lib/classificacao/vagas.ts
 **abrir:** entrevistas
 
 ## Ficha de notas

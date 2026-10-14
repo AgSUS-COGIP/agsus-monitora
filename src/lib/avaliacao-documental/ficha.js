@@ -24,7 +24,7 @@
   O banco revalida a estrutura (supabase/migrations/20261007130000_conteudo_da_ficha.sql)
   e o Python reconfere a conta (python/monitora/avaliacao_documental/pontuacao.py).
 */
-import { nivelDaVaga } from "../classificacao/vagas.js";
+import { nivelDaVaga } from "../classificacao/vagas.ts";
 import {
   PARCIAIS,
   PARCIAL_DO_TIPO,
