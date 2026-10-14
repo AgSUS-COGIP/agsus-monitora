@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-import { TIPOS_DE_LISTA } from "../src/lib/classificacao/catalogo.js";
+import { TIPOS_DE_LISTA } from "../src/lib/classificacao/catalogo.ts";
 
 /*
   A migration da lista do resultado da entrevista: o banco aceita os mesmos

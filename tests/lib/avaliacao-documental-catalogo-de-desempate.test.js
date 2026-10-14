@@ -7,7 +7,7 @@ import {
   CRITERIOS_DA_PROVISORIA,
   GRUPOS_DE_DESEMPATE,
 } from "../../src/lib/avaliacao-documental/catalogo-de-desempate.ts";
-import { CATALOGO_DE_CRITERIOS } from "../../src/lib/classificacao/catalogo.js";
+import { CATALOGO_DE_CRITERIOS } from "../../src/lib/classificacao/catalogo.ts";
 
 /*
   O passo 2 começa por "Na inscrição" e o passo 4 mostra o catálogo INTEIRO

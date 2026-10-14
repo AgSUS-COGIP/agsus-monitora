@@ -13,9 +13,12 @@
 const MILHAR = /^-?\d{1,3}(\.\d{3})+$/;
 
 /** "12,5" → 12.5; "1.234,5" → 1234.5; "abc", "", null → null. */
-export function numeroBR(valor) {
+export function numeroBR(valor: unknown) {
   if (typeof valor === "number") return Number.isFinite(valor) ? valor : null;
-  if (typeof valor === "bigint") return Number(valor);
+  if (typeof valor === "bigint") {
+    const n = Number(valor);
+    return Number.isFinite(n) ? n : null;
+  }
   const texto = String(valor ?? "")
     .trim()
     .replace(/\s+/g, "");
@@ -38,20 +41,19 @@ export function numeroBR(valor) {
   return Number.isFinite(numero) ? numero : null;
 }
 
-/** @type {ReadonlyArray<readonly [string, string]>} */
-export const ARREDONDAMENTOS = Object.freeze([
-  ["MEIO_PARA_CIMA", "Arredondar (0,5 para cima)"],
-  ["TRUNCAR", "Truncar"],
-  ["NENHUM", "Sem arredondamento"],
-]);
+export const ARREDONDAMENTOS: ReadonlyArray<readonly [string, string]> =
+  Object.freeze([
+    ["MEIO_PARA_CIMA", "Arredondar (0,5 para cima)"],
+    ["TRUNCAR", "Truncar"],
+    ["NENHUM", "Sem arredondamento"],
+  ]);
 
 /*
   Arredonda na escala de `casas` decimais. O épsilon relativo corrige a
   representação binária (1,005 é 1,00499… em ponto flutuante).
 */
-export function arredondar(valor, casas = 2, modo = "MEIO_PARA_CIMA") {
-  if (valor === null || valor === undefined || !Number.isFinite(valor))
-    return null;
+export function arredondar(valor: unknown, casas = 2, modo = "MEIO_PARA_CIMA") {
+  if (typeof valor !== "number" || !Number.isFinite(valor)) return null;
   if (modo === "NENHUM") return valor;
   const fator = 10 ** Math.max(0, Math.min(6, Math.trunc(casas)));
   const escalado = valor * fator;
@@ -64,17 +66,15 @@ export function arredondar(valor, casas = 2, modo = "MEIO_PARA_CIMA") {
 }
 
 /** O valor em inteiro na escala das casas (para comparar). `null` fica `null`. */
-export function escalar(valor, casas = 2) {
-  if (valor === null || valor === undefined || !Number.isFinite(valor))
-    return null;
+export function escalar(valor: unknown, casas = 2) {
+  if (typeof valor !== "number" || !Number.isFinite(valor)) return null;
   const fator = 10 ** Math.max(0, Math.min(6, Math.trunc(casas)));
   return Math.round(valor * fator + Math.sign(valor) * 1e-9);
 }
 
 /** 52 → "52,00" (casas fixas); null → "—". */
-export function formatarNota(valor, casas = 2) {
-  if (valor === null || valor === undefined || !Number.isFinite(valor))
-    return "—";
+export function formatarNota(valor: unknown, casas = 2) {
+  if (typeof valor !== "number" || !Number.isFinite(valor)) return "—";
   const c = Math.max(0, Math.min(6, Math.trunc(casas)));
   return valor.toLocaleString("pt-BR", {
     minimumFractionDigits: c,
@@ -84,7 +84,7 @@ export function formatarNota(valor, casas = 2) {
 }
 
 /** 1 → "1º". */
-export function ordinal(posicao) {
+export function ordinal(posicao: unknown) {
   return Number.isFinite(posicao) ? `${posicao}º` : "—";
 }
 
@@ -92,12 +92,12 @@ export function ordinal(posicao) {
   Data em "AAAA-MM-DD" (ou ISO com hora, ou "DD/MM/AAAA") → { ano, mes, dia }.
   Inválida → null. Sem `Date` para não depender do fuso.
 */
-export function lerData(valor) {
+export function lerData(valor: unknown) {
   const texto = String(valor ?? "").trim();
   let m = texto.match(/^(\d{4})-(\d{2})-(\d{2})/);
-  let ano;
-  let mes;
-  let dia;
+  let ano: number;
+  let mes: number;
+  let dia: number;
   if (m) [ano, mes, dia] = [Number(m[1]), Number(m[2]), Number(m[3])];
   else {
     m = texto.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
@@ -111,7 +111,7 @@ export function lerData(valor) {
 }
 
 /** Idade em anos completos na data de corte (aniversário no dia conta). */
-export function idadeNaData(nascimento, corte) {
+export function idadeNaData(nascimento: unknown, corte: unknown) {
   const n = lerData(nascimento);
   const c = lerData(corte);
   if (!n || !c) return null;
@@ -121,7 +121,7 @@ export function idadeNaData(nascimento, corte) {
 }
 
 /** Dias de vida na data de corte (para "maior idade"). */
-export function diasDeVida(nascimento, corte) {
+export function diasDeVida(nascimento: unknown, corte: unknown) {
   const n = lerData(nascimento);
   const c = lerData(corte);
   if (!n || !c) return null;
@@ -139,14 +139,14 @@ export function diasDeVida(nascimento, corte) {
 */
 export const HORA_SEM_CERTIDAO = "23:59:59";
 
-export function lerHora(valor) {
+export function lerHora(valor: unknown) {
   const m = String(valor ?? "")
     .trim()
     .match(/^(\d{1,2}):(\d{2})(?::(\d{2}))?$/);
   if (!m) return null;
   const [h, min, s] = [Number(m[1]), Number(m[2]), Number(m[3] ?? 0)];
   if (h > 23 || min > 59 || s > 59) return null;
-  const dois = (n) => String(n).padStart(2, "0");
+  const dois = (n: number) => String(n).padStart(2, "0");
   return `${dois(h)}:${dois(min)}:${dois(s)}`;
 }
 
@@ -154,15 +154,21 @@ export function lerHora(valor) {
  * Segundos de vida à 00h00 da data de corte, com a hora de nascimento (sem
  * hora válida, 23:59:59). Maior = mais velho. Null sem data.
  */
-export function segundosDeVida(nascimento, hora, corte) {
+export function segundosDeVida(
+  nascimento: unknown,
+  hora: unknown,
+  corte: unknown,
+) {
   const dias = diasDeVida(nascimento, corte);
   if (dias === null) return null;
-  const [h, m, s] = (lerHora(hora) || HORA_SEM_CERTIDAO).split(":").map(Number);
+  const [h = NaN, m = NaN, s = NaN] = (lerHora(hora) || HORA_SEM_CERTIDAO)
+    .split(":")
+    .map(Number);
   return dias * 86400 - (h * 3600 + m * 60 + s);
 }
 
 /** "08:05:00" → "08h05min00s" (como nos editais). */
-export function horaBR(valor) {
+export function horaBR(valor: unknown) {
   const h = lerHora(valor);
   if (!h) return "";
   const [hh, mm, ss] = h.split(":");
@@ -170,9 +176,9 @@ export function horaBR(valor) {
 }
 
 /** "2026-07-20" → "20/07/2026". */
-export function dataBR(valor) {
+export function dataBR(valor: unknown) {
   const d = lerData(valor);
   if (!d) return "";
-  const dois = (n) => String(n).padStart(2, "0");
+  const dois = (n: number) => String(n).padStart(2, "0");
   return `${dois(d.dia)}/${dois(d.mes)}/${d.ano}`;
 }

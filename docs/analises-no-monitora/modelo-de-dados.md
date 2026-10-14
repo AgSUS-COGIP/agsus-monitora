@@ -839,7 +839,7 @@ alter table public."TB_LISTA_CLASSIFICACAO" add constraint "CK_LISTACLASSIF_TPLI
   check ("TP_LISTA" in ('PROVISORIA', 'LOTE', 'PRELIMINAR', 'CONVOCACAO', 'ENTREVISTA', 'FINAL'));
 ```
 
-Com isso, `TIPOS_DE_LISTA` (em `src/lib/classificacao/catalogo.js`) ganha `PROVISORIA` ("Lista
+Com isso, `TIPOS_DE_LISTA` (em `src/lib/classificacao/catalogo.ts`) ganha `PROVISORIA` ("Lista
 provisória por ART") e `LOTE` ("Lote de convocação"), e `documento-sei.js` ganha os modelos
 `PROVISORIA` (item 8.3.1) e `LOTE` (item 8.4). A `PRELIMINAR` passa a usar o parecer da ficha
 como "Justificativa" dos inaptos.

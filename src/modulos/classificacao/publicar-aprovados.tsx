@@ -21,7 +21,7 @@ type Props = {
 };
 
 import { useEffect, useMemo, useState } from "react";
-import { formatarNota } from "../../lib/classificacao/numeros.js";
+import { formatarNota } from "../../lib/classificacao/numeros.ts";
 import {
   argumentosDaPublicacao,
   candidatosDaListaFinal,
