@@ -59,7 +59,7 @@ import {
   Sessão: o cliente Supabase único do app. Outro usuário na mesma aba: tudo
   volta ao início.
 
-  Documento oficial (SEI): o modelo sai de src/lib/classificacao/documento-sei.js
+  Documento oficial (SEI): o modelo sai de src/lib/classificacao/documento-sei.ts
   com os textos do edital (regra.documento); "Copiar para o SEI" leva HTML +
   texto à área de transferência; DOCX com papel timbrado
   (documento-docx.js); PDF = impressão da página "Como fica no SEI". O
@@ -71,15 +71,15 @@ import {
   instantaneoDaLista,
   MIME_XLSX,
   nomeDoArquivo,
-} from "../../lib/classificacao/exportacao.js";
+} from "../../lib/classificacao/exportacao.ts";
 import {
   CABECALHO_PADRAO,
   documentoOficial,
   htmlParaSei,
   paginaDaPrevia,
   textoParaSei,
-} from "../../lib/classificacao/documento-sei.js";
-import { gerarDocxOficial } from "../../lib/classificacao/documento-docx.js";
+} from "../../lib/classificacao/documento-sei.ts";
+import { gerarDocxOficial } from "../../lib/classificacao/documento-docx.ts";
 import { ehEditalDeTreinamento } from "../../lib/edital-de-treinamento.js";
 import { LOGO_PADRAO_DA_BARRA } from "../../lib/marca-da-barra-lateral.js";
 import {
@@ -727,6 +727,7 @@ export function criarEstadoDaClassificacao({
     }
     const nome = nomeDoArquivo(retrato, lista);
     const doc = documentoDaLista(registrado, { lista, fase, documento });
+    if (!doc) return false;
     const marca = marcaDoDocumento();
     if (formato === "docx") {
       const logo = await Promise.resolve()

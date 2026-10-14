@@ -10,7 +10,7 @@ import {
   validarAjuste,
 } from "../../src/lib/classificacao/ajustes.ts";
 import { listaDesatualizada } from "../../src/lib/classificacao/dados.ts";
-import { instantaneoDaLista } from "../../src/lib/classificacao/exportacao.js";
+import { instantaneoDaLista } from "../../src/lib/classificacao/exportacao.ts";
 
 /*
   O ajuste da pontuação aprovado em recurso (migration 20261005130000) no

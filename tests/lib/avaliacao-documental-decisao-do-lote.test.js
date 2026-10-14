@@ -22,8 +22,8 @@ import {
   htmlParaSei,
   marcasDasDecisoes,
   textoParaSei,
-} from "../../src/lib/classificacao/documento-sei.js";
-import { corpoXml } from "../../src/lib/classificacao/documento-docx.js";
+} from "../../src/lib/classificacao/documento-sei.ts";
+import { corpoXml } from "../../src/lib/classificacao/documento-docx.ts";
 
 /*
   Inclusão no lote por decisão da coordenação (ex.: "Critério CORES"): o selo,
