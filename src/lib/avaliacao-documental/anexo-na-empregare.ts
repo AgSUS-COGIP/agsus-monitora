@@ -17,12 +17,18 @@
     enderecos.anexos = anexosDaEmpregare(dados.empregare);        // ficha.jsx
     enderecos.impressao = impressaoDasRespostas(dados.empregare);
     enderecos.anteriores = enviosAnterioresDaEmpregare(dados.empregare);
+    enderecos.respostaLida = respostaLidaDaEmpregare(dados.empregare);
     const endereco = enderecoDoAnexo(enderecos, coluna);           // { href, destino } | null
     const { rotulo, dica } = apresentacaoDoAnexo(coluna, endereco);
   destino "arquivo" → "Ver documento" (sem dica; "2 arquivos nesta pergunta" com mais de um
-  arquivo); "respostas" → "Ver respostas na Empregare" e a dica da pergunta;
-  sem nada capturado, o candidato (o currículo) ou a vaga / a lista de vagas,
-  com a dica de antes.
+  arquivo); "anterior" → "Ver documento do envio anterior" (a pergunta só tem
+  arquivo num envio anterior); "sem_arquivo" → a resposta vigente foi lida e
+  não traz arquivo nesta pergunta (o candidato respondeu sem anexar; a
+  exportação da Empregare escreve "Anexo" em toda pergunta de anexo): o texto
+  "Sem arquivo enviado" e "Conferir na Empregare", nunca um botão que pareça
+  ser o documento; "respostas" → "Ver respostas na Empregare" e a dica da
+  pergunta; sem nada capturado, o candidato (o currículo) ou a vaga / a lista
+  de vagas, com a dica de antes.
   Sem DOM e sem estado. Testes: tests/lib/avaliacao-documental-anexo-na-empregare.test.js.
 */
 
@@ -56,21 +62,35 @@ export type EnderecosDaEmpregare = {
   impressao?: string | null;
   /** As outras respostas ao questionário, da mais nova para a mais antiga. */
   anteriores?: readonly EnvioAnterior[];
+  /**
+   * A resposta vigente do questionário foi lida pelo robô (perguntas > 0):
+   * pergunta de anexo sem arquivo nela é pergunta respondida sem arquivo.
+   */
+  respostaLida?: boolean;
 };
 
 /** Para onde o link leva. */
 export type DestinoNaEmpregare =
-  "arquivo" | "respostas" | "candidato" | "vaga" | "vagas";
+  | "arquivo"
+  | "anterior"
+  | "sem_arquivo"
+  | "respostas"
+  | "candidato"
+  | "vaga"
+  | "vagas";
 
 export type EnderecoDoAnexo = {
-  href: string;
+  /** null só em "sem_arquivo" sem nenhum endereço da Empregare para conferir. */
+  href: string | null;
   destino: DestinoNaEmpregare;
-  /** Os outros arquivos da mesma pergunta (só no destino "arquivo"). */
+  /** Os outros arquivos da mesma pergunta (destinos "arquivo" e "anterior"). */
   outros?: readonly string[];
 };
 
 export type ApresentacaoDoAnexo = {
   rotulo: string;
+  /** O que mostrar no lugar do "Anexo" da exportação (só em "sem_arquivo"). */
+  texto?: string;
   /** Onde achar o arquivo depois de abrir (vazio quando o link já é o arquivo). */
   dica: string;
 };
@@ -191,6 +211,18 @@ export function impressaoDasRespostas(empregare: unknown): string | null {
   return null;
 }
 
+/** A resposta vigente foi lida (alguma de empregare.respostas com perguntas > 0)? */
+export function respostaLidaDaEmpregare(empregare: unknown): boolean {
+  const bruto = (empregare as { respostas?: unknown } | null | undefined)
+    ?.respostas;
+  return (
+    Array.isArray(bruto) &&
+    bruto.some(
+      (item) => Number((item as Record<string, unknown>)?.perguntas) > 0,
+    )
+  );
+}
+
 /** "Pergunta 4" pelo nome da coluna da Empregare ("Pergunta 4 - Anexe…"); null sem número. */
 export function numeroDaPergunta(coluna: unknown): string | null {
   const m = PERGUNTA.exec(limpar(coluna));
@@ -233,9 +265,10 @@ export function anexosDaColuna(
 }
 
 /**
- * O endereço do anexo: o "Visualizar Arquivo" da pergunta; sem ele, a
- * impressão das respostas; sem ela, o candidato (o currículo) e, sem ele, as
- * candidaturas da vaga ou a lista de vagas.
+ * O endereço do anexo: o "Visualizar Arquivo" da pergunta; sem ele, o de um
+ * envio anterior; com a resposta vigente lida e sem arquivo, "sem_arquivo"
+ * (com o melhor endereço para conferir); senão a impressão das respostas, o
+ * candidato (o currículo) e, sem ele, as candidaturas da vaga ou a lista de vagas.
  */
 export function enderecoDoAnexo(
   enderecos: EnderecosDaEmpregare,
@@ -250,6 +283,24 @@ export function enderecoDoAnexo(
       href: primeiro.link,
       destino: "arquivo",
       outros: outros.map((a) => a.link),
+    };
+  for (const envio of enderecos.anteriores ?? []) {
+    const [antigo, ...outrosAntigos] = anexosDaColuna(
+      envio.arquivos,
+      coluna,
+    ).sort((a, b) => a.arquivo - b.arquivo);
+    if (antigo)
+      return {
+        href: antigo.link,
+        destino: "anterior",
+        outros: outrosAntigos.map((a) => a.link),
+      };
+  }
+  if (enderecos.respostaLida)
+    return {
+      href:
+        enderecos.impressao ?? enderecos.candidato ?? enderecos.vaga ?? null,
+      destino: "sem_arquivo",
     };
   if (enderecos.impressao)
     return { href: enderecos.impressao, destino: "respostas" };
@@ -288,6 +339,17 @@ export function apresentacaoDoAnexo(
       dica: total > 1 ? `${total} arquivos nesta pergunta` : "",
     };
   }
+  if (endereco?.destino === "anterior")
+    return {
+      rotulo: "Ver documento do envio anterior",
+      dica: "Nesta pergunta, só um envio anterior do questionário tem arquivo",
+    };
+  if (endereco?.destino === "sem_arquivo")
+    return {
+      rotulo: "Conferir na Empregare",
+      texto: "Sem arquivo enviado",
+      dica: "A resposta lida na Empregare não traz arquivo nesta pergunta",
+    };
   const numero = numeroDaPergunta(coluna);
   const enunciado = curto(
     enunciadoCompleto(coluna).split(/[?:(]/)[0]?.trim() ?? "",

@@ -63,7 +63,7 @@ import {
   ExtrasDoBloco,
   RequisitosDoCargo,
 } from "./diferencas-do-cargo.tsx";
-import { LinkDaEmpregare, LinkDoAnexo } from "./empregare.tsx";
+import { AnexoDeclarado, LinkDaEmpregare } from "./empregare.tsx";
 import { ConferenciaDoLido, LidoDoArquivo } from "./leitura-dos-arquivos.tsx";
 import type {
   Bloco,
@@ -179,12 +179,11 @@ export function lidosDoBloco(
     bloco,
     st.dados.respostas,
   ) as LinhaDeResposta[];
+  // Os arquivos capturados de cada pergunta, mesmo com "--" na exportação.
   return itensParaConferir(
     bloco,
     leituras,
-    linhas
-      .filter((l) => ehAnexo(l.texto))
-      .flatMap((l) => arquivosDaPergunta(enderecos, l.coluna)),
+    linhas.flatMap((l) => arquivosDaPergunta(enderecos, l.coluna)),
   );
 }
 
@@ -357,10 +356,11 @@ function RespostaDeclarada({
   const completo = enunciadoCompleto(linha.coluna);
   const temMais = completo.length > linha.enunciado.length + 3;
   const anexo = ehAnexo(linha.texto);
-  // Anexo com os links capturados: a lista dos arquivos, cada um com o seu link.
-  const arquivos = anexo
-    ? arquivosDaPergunta(empregare.enderecos, linha.coluna)
-    : [];
+  /*
+    Os arquivos capturados da pergunta, cada um com o seu link — também quando
+    a exportação traz "--" e a resposta lida tem arquivo nela.
+  */
+  const arquivos = arquivosDaPergunta(empregare.enderecos, linha.coluna);
   return (
     <div className="avd-ficha-resposta" data-anexo={anexo || undefined}>
       <p className="avd-ficha-pergunta">
@@ -384,21 +384,26 @@ function RespostaDeclarada({
         />
       ) : (
         <div className="avd-ficha-valor" data-anexo={anexo || undefined}>
-          <strong className="avd-ficha-texto-declarado">
-            {anexo ? (
-              <i className="fa-solid fa-paperclip" aria-hidden="true" />
-            ) : null}
-            {linha.texto || "Sem resposta"}
-          </strong>
           {anexo ? (
-            <LinkDoAnexo empregare={empregare} coluna={linha.coluna} />
-          ) : comLinkGeral ? (
-            <LinkDaEmpregare
+            <AnexoDeclarado
               empregare={empregare}
-              rotulo="Abrir na Empregare"
-              className="btn secondary small avd-ficha-ver-candidato"
+              coluna={linha.coluna}
+              texto={linha.texto}
             />
-          ) : null}
+          ) : (
+            <>
+              <strong className="avd-ficha-texto-declarado">
+                {linha.texto || "Sem resposta"}
+              </strong>
+              {comLinkGeral ? (
+                <LinkDaEmpregare
+                  empregare={empregare}
+                  rotulo="Abrir na Empregare"
+                  className="btn secondary small avd-ficha-ver-candidato"
+                />
+              ) : null}
+            </>
+          )}
         </div>
       )}
     </div>

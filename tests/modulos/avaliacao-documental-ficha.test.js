@@ -503,7 +503,7 @@ describe("ficha: modo foco, um item por vez (AM-7)", () => {
     expect(etapa("ESCOLARIDADE").dataset.estado).toBe("pendencia");
     // O "!" diz o motivo ao passar o mouse; e o contador não conta o item.
     expect(etapa("ESCOLARIDADE").getAttribute("title")).toBe(
-      "Escolha o motivo.",
+      "Formação: Escolha o motivo.",
     );
     expect(
       document.querySelector("[data-tour='avd-ficha-etapas']").textContent,
@@ -893,7 +893,7 @@ describe("ficha: Conclusão e parecer (sem resultado antes da hora)", () => {
     );
     expect(etapa("CURSOS").dataset.estado).toBe("pendencia");
     expect(etapa("CURSOS").getAttribute("title")).toBe(
-      "Registre ao menos um curso com carga horária.",
+      "Cursos: Registre ao menos um curso com carga horária.",
     );
   });
 });
@@ -1599,6 +1599,35 @@ describe("ficha: o que o candidato informou (respostas, arquivos e linhas sugeri
       link("7995988", "RG%20antigo.pdf"),
     );
     await clicar(anterior);
+    expect(chamadas(supabase, "registrar_acesso_ficha").at(-1)).toMatchObject({
+      p_tipo: "ABRIR_EMPREGARE",
+    });
+  });
+
+  it("resposta lida sem arquivo na pergunta: 'Sem arquivo enviado' e 'Conferir na Empregare', não um falso documento", async () => {
+    const LINK =
+      "https://corporate.empregare.com/empresa/curriculo/detalhes?tokenCandidato=TKfict&id=IDfict|";
+    const supabase = supabaseFalso({
+      ...fichaDoBanco(),
+      empregare: {
+        link_candidato: LINK,
+        respostas: [{ resposta: "8019889", perguntas: 27, anexos: 0 }],
+        anexos: [],
+      },
+    });
+    await abrirFicha(supabase);
+    const c = cartao("IDENTIDADE");
+    expect(c.querySelector(".avd-ficha-texto-declarado").textContent).toBe(
+      "Sem arquivo enviado",
+    );
+    const conferir = c.querySelector(".avd-ficha-ver-anexo");
+    expect(conferir.textContent).toContain("Conferir na Empregare");
+    expect(conferir.getAttribute("href")).toBe(LINK);
+    expect(c.querySelector(".avd-ficha-dica-anexo").textContent).toBe(
+      "A resposta lida na Empregare não traz arquivo nesta pergunta",
+    );
+    await clicar(conferir);
+    await esperar();
     expect(chamadas(supabase, "registrar_acesso_ficha").at(-1)).toMatchObject({
       p_tipo: "ABRIR_EMPREGARE",
     });
