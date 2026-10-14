@@ -22,6 +22,8 @@ export type FichaVizinha = { id: string; codigo: string } | null;
 export type PropriedadesDoCabecalho = {
   codigo: string;
   nome?: string | null;
+  /** O CPF que o candidato informou no questionário, já formatado (cpfDaFicha). */
+  cpf?: string | null;
   vaga: string;
   cargo?: string | null;
   /** O rótulo do nível da vaga ("Superior"), quando a ficha já carregou. */
@@ -135,6 +137,7 @@ function usarReservaAcabando(fim: string | null | undefined): number | null {
 export function CabecalhoDaFicha({
   codigo,
   nome,
+  cpf,
   vaga,
   cargo,
   nivel,
@@ -177,6 +180,14 @@ export function CabecalhoDaFicha({
               {nomeDaFicha}
             </span>
             <span className="avd-analise-codigo">Código {codigo}</span>
+            {cpf ? (
+              <span
+                className="avd-analise-codigo avd-analise-cpf"
+                title="CPF informado pelo candidato no questionário da Empregare"
+              >
+                CPF {cpf}
+              </span>
+            ) : null}
           </h2>
           <div className="avd-analise-subtitulo">
             <span className="avd-analise-vaga" title={linhaDaVaga}>

@@ -47,6 +47,7 @@ import { pontuacaoInformativaDaFicha } from "../../../lib/avaliacao-documental/p
 import { rotuloDaVersaoNaLista } from "../../../lib/nome-da-versao.ts";
 import { Aviso, Campo } from "../../../ui/index.js";
 import { CabecalhoDaFicha } from "./cabecalho-da-ficha.tsx";
+import { cpfDaFicha } from "../../../lib/avaliacao-documental/cpf-da-ficha.ts";
 import { ConclusaoDaFicha } from "./conclusao-da-ficha.tsx";
 import { copiar, EnviosAnteriores } from "./empregare.tsx";
 import { abrirEspelhoDeNota } from "./espelho-de-nota.ts";
@@ -663,7 +664,11 @@ export function ConteudoDaFicha({
       data-tour="avd-ficha-conteudo"
     >
       {topo ? (
-        <CabecalhoDaFicha {...topo} nivel={rotuloDe(NIVEIS, lancamento.nivel)}>
+        <CabecalhoDaFicha
+          {...topo}
+          nivel={rotuloDe(NIVEIS, lancamento.nivel)}
+          cpf={cpfDaFicha(st.dados.cpf_informado)}
+        >
           <ProgressoDaFicha
             passos={passos}
             atual={atual}

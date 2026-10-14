@@ -232,7 +232,7 @@ describe("caso TREINO-P02: Inapto com o motivo", () => {
     ]);
   });
 
-  it("não conclui em silêncio: Conforme sem registro pede o título, o curso e o vínculo", () => {
+  it("não conclui em silêncio: Conforme sem registro pede o título e o vínculo (cursos pela faixa/nota, sem lista)", () => {
     const avaliacao = calcularFicha(REGRA, LANCAMENTO, DOCUMENTAL);
     const pendencias = pendenciasDaFicha(
       REGRA,
@@ -242,10 +242,9 @@ describe("caso TREINO-P02: Inapto com o motivo", () => {
     );
     expect(pendencias.map((p) => [p.bloco, p.tipo])).toEqual([
       ["FORMACAO", "comprovado"],
-      ["CURSOS", "comprovado"],
       ["EXPERIENCIA", "comprovado"],
     ]);
-    expect(pendencias[2].texto).toBe(
+    expect(pendencias[1].texto).toBe(
       "Registre ao menos um vínculo com início e fim.",
     );
   });

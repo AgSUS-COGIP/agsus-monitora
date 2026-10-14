@@ -28,10 +28,19 @@ import {
 */
 const CURSOS = { codigo: "CURSOS", tipo: "CURSOS", teto: 5, motivos: [] };
 const declarada = { parciais: { CURSOS: 3 } };
+const TITULOS = {
+  codigo: "FORMACAO",
+  tipo: "TITULOS",
+  teto: 5,
+  motivos: [],
+  titulos: [{ codigo: "MESTRADO", rotulo: "Mestrado", pontos: 3 }],
+};
+const declaradaT = { parciais: { FORMACAO: 3 } };
 const lancamento = (blocos = {}, extra = {}) => ({
   nivel: "superior",
   blocos,
   cursos: [],
+  titulos: [],
   ...extra,
 });
 
@@ -93,37 +102,45 @@ describe("apurado da ficha", () => {
 });
 
 describe("registro obrigatório dos itens", () => {
-  it("abre com linha nova no Confere com declarado > 0 (ou no Editar), lista vazia", () => {
-    const conferido = lancamento({ CURSOS: { situacao: "CONFORME" } });
+  it("abre com linha nova no Confere com declarado > 0 (ou no Editar), lista vazia — Titulação; Cursos não (pela nota)", () => {
+    const conferido = lancamento({ FORMACAO: { situacao: "CONFORME" } });
+    // Cursos de Aperfeiçoamento decidem pela faixa/nota do bloco: nunca abrem a lista.
+    expect(
+      abreComLinhaNova(
+        CURSOS,
+        lancamento({ CURSOS: { situacao: "CONFORME" } }),
+        declarada,
+      ),
+    ).toBe(false);
     // Sem escolha, a lista não aparece: nada abre.
-    expect(abreComLinhaNova(CURSOS, lancamento(), declarada)).toBe(false);
-    expect(abreComLinhaNova(CURSOS, conferido, declarada)).toBe(true);
+    expect(abreComLinhaNova(TITULOS, lancamento(), declaradaT)).toBe(false);
+    expect(abreComLinhaNova(TITULOS, conferido, declaradaT)).toBe(true);
     // Rascunho antigo, Conforme sem item: abre igual.
     expect(
       abreComLinhaNova(
-        CURSOS,
-        lancamento({ CURSOS: { situacao: "CONFORME", nota_ajustada: 3 } }),
-        declarada,
+        TITULOS,
+        lancamento({ FORMACAO: { situacao: "CONFORME", nota_ajustada: 3 } }),
+        declaradaT,
       ),
     ).toBe(true);
     expect(
       abreComLinhaNova(
-        CURSOS,
-        lancamento({ CURSOS: { situacao: "CONFORME", edita_nota: true } }),
-        { parciais: { CURSOS: 0 } },
+        TITULOS,
+        lancamento({ FORMACAO: { situacao: "CONFORME", edita_nota: true } }),
+        { parciais: { FORMACAO: 0 } },
       ),
     ).toBe(true);
     expect(
-      abreComLinhaNova(CURSOS, conferido, { parciais: { CURSOS: 0 } }),
+      abreComLinhaNova(TITULOS, conferido, { parciais: { FORMACAO: 0 } }),
     ).toBe(false);
     expect(
-      abreComLinhaNova(CURSOS, { ...conferido, cursos: [{}] }, declarada),
+      abreComLinhaNova(TITULOS, { ...conferido, titulos: [{}] }, declaradaT),
     ).toBe(false);
     expect(
       abreComLinhaNova(
-        CURSOS,
-        lancamento({ CURSOS: { situacao: "NAO_ENVIADO" } }),
-        declarada,
+        TITULOS,
+        lancamento({ FORMACAO: { situacao: "NAO_ENVIADO" } }),
+        declaradaT,
       ),
     ).toBe(false);
     expect(
@@ -144,34 +161,35 @@ describe("registro obrigatório dos itens", () => {
     expect(tituloDaResposta(opcoes, ["Não possuo"])).toBeNull();
   });
 
-  it("Conforme com declarado > 0 pede um item completo e aceito", () => {
-    const texto = "Registre ao menos um curso com carga horária.";
-    expect(faltaDoComprovado(CURSOS, lancamento(), declarada)).toBe(texto);
+  it("Conforme com declarado > 0 pede um item completo e aceito (Titulação; Cursos não pedem a lista)", () => {
+    const texto = "Registre ao menos um título.";
+    expect(faltaDoComprovado(CURSOS, lancamento(), declarada)).toBeNull();
+    expect(faltaDoComprovado(TITULOS, lancamento(), declaradaT)).toBe(texto);
     // Linha vazia ou recusada não conta.
     expect(
       faltaDoComprovado(
-        CURSOS,
-        lancamento({}, { cursos: [{ nome: "", horas: "" }] }),
-        declarada,
+        TITULOS,
+        lancamento({}, { titulos: [{ titulo: "" }] }),
+        declaradaT,
       ),
     ).toBe(texto);
     expect(
       faltaDoComprovado(
-        CURSOS,
-        lancamento({}, { cursos: [{ horas: 40, aceito: false }] }),
-        declarada,
+        TITULOS,
+        lancamento({}, { titulos: [{ titulo: "MESTRADO", aceito: false }] }),
+        declaradaT,
       ),
     ).toBe(texto);
     expect(
       faltaDoComprovado(
-        CURSOS,
-        lancamento({}, { cursos: [{ horas: 40, aceito: true }] }),
-        declarada,
+        TITULOS,
+        lancamento({}, { titulos: [{ titulo: "MESTRADO", aceito: true }] }),
+        declaradaT,
       ),
     ).toBeNull();
     // Declarado 0 ("Não possuo"): não pede item.
     expect(
-      faltaDoComprovado(CURSOS, lancamento(), { parciais: { CURSOS: 0 } }),
+      faltaDoComprovado(TITULOS, lancamento(), { parciais: { FORMACAO: 0 } }),
     ).toBeNull();
     expect(itemCompleto("vinculos", { inicio: "2024-01-01", fim: "" })).toBe(
       false,
@@ -342,11 +360,22 @@ describe("as três escolhas: Confere, Não confere e Editar nota", () => {
       lancamento({ CURSOS: { situacao: "CONFORME", nota_ajustada: 3 } }),
       "EDITAR",
     );
+    // Cursos sem lista (pela faixa/nota): o Editar começa no declarado.
     expect(editar).toMatchObject({
       situacao: "CONFORME",
       edita_nota: true,
-      nota_ajustada: null,
+      nota_ajustada: 3,
     });
+    // Ficha antiga com cursos lançados: a pontuação vem do calculado.
+    expect(
+      escolher(
+        lancamento(
+          { CURSOS: { situacao: "CONFORME", nota_ajustada: 3 } },
+          { cursos: [{ nome: "A", horas: 60, aceito: true }] },
+        ),
+        "EDITAR",
+      ).nota_ajustada,
+    ).toBeNull();
     expect(
       escolher(
         lancamento({
@@ -395,7 +424,7 @@ describe("as três escolhas: Confere, Não confere e Editar nota", () => {
     expect(de({ situacao: "CONFORME" }, 3)).toBe("CONFERE");
   });
 
-  it("Confere com declarado > 0 já abre a linha; Não confere não abre nada", () => {
+  it("Confere em Cursos não abre a lista (pela faixa/nota); Não confere não abre nada", () => {
     const comLinha = lancamentoComEscolha({
       bloco: CURSOS,
       lancamento: lancamento(),
@@ -403,7 +432,8 @@ describe("as três escolhas: Confere, Não confere e Editar nota", () => {
       declarada,
       respostas: ['"3 pontos"'],
     });
-    expect(comLinha.cursos).toEqual([{ nome: "", horas: "", aceito: true }]);
+    expect(comLinha.cursos).toEqual([]);
+    expect(comLinha.blocos.CURSOS.nota_ajustada).toBe(3);
     expect(
       lancamentoComEscolha({
         bloco: CURSOS,

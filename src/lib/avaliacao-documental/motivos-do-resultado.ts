@@ -36,7 +36,8 @@ type Avaliacao = {
     codigo: string;
     situacao: string;
     efeito: string | null;
-    motivos: { texto: string; item_edital?: string }[];
+    /** codigo null = o motivo escrito pelo avaliador (Outro motivo): sem o item do edital. */
+    motivos: { codigo?: string | null; texto: string; item_edital?: string }[];
   }[];
   experiencia?: {
     dias_total: number;
@@ -82,7 +83,7 @@ export function motivosDoResultado(
             bloco: bloco.codigo,
             texto: comItem(
               `${nome}: ${semPonto(m.texto)}`,
-              m.item_edital || bloco.item_edital,
+              m.codigo === null ? "" : m.item_edital || bloco.item_edital,
             ),
           });
       else

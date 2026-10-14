@@ -33,6 +33,7 @@
 import {
   BLOCOS_COM_ITENS,
   blocoSeAplica,
+  decidePelaNota,
   divergenciaDoBloco,
   rotuloDoTitulo,
   titulosDoNivel,
@@ -431,6 +432,8 @@ export function justificativaDoBloco(
   ];
   const { lancamento, avaliacao } = retrato;
   if (!chave || !lancamento || !blocoSeAplica(bloco, lancamento)) return vazio;
+  // Cursos pela faixa/nota (sem lista): a justificativa é a do avaliador.
+  if (decidePelaNota(bloco, lancamento)) return vazio;
   const leituras = TIPO_LIDO[chave] ? leiturasDaFicha(leiturasBrutas) : [];
   const resumo =
     chave === "cursos"

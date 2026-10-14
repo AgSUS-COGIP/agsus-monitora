@@ -136,11 +136,12 @@ describe("espelho do eliminado", () => {
     ]);
   });
 
-  it("justificativa: o outro motivo descrito com o item do edital, sem observações internas", () => {
+  it("justificativa: o outro motivo descrito como o avaliador escreveu (sem o item do edital), sem observações internas", () => {
     expect(espelho.justificativas).toHaveLength(1);
     expect(espelho.justificativas[0]).toMatch(
-      /CNH enviada cortada, sem a data de validade visível — item 2; 3\.1 i; 8\.2\.10\.8$/,
+      /CNH enviada cortada, sem a data de validade visível\.?$/,
     );
+    expect(espelho.justificativas[0]).not.toMatch(/— item/);
     expect(espelho.justificativas.join(" ")).not.toMatch(/RG com foto/);
   });
 
@@ -179,7 +180,8 @@ describe("espelho com pontos", () => {
     expect(cursos.declarada).not.toBe("");
     expect(cursos.teto).toMatch(/^\d/);
     expect(cursos.justificativas).toEqual([
-      "Item 8.2.6: Certificado de 40 h sem assinatura da instituição.",
+      // O Outro motivo vai como o avaliador escreveu, sem o item do edital (#466).
+      "Certificado de 40 h sem assinatura da instituição.",
     ]);
   });
 
