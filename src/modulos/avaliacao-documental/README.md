@@ -196,8 +196,10 @@ previa.tsx                "Testar com um candidato fictício" (entradas à esque
 equipe.jsx                aba Equipe
 pre-classificacao.jsx     aba Pré-classificação (contadores, vagas, listas oficiais)
 fila.jsx                  aba Fila (etapas, filtros, ações em lote, ficha aberta)
-estado-da-fila.js         store da aba: obter_fila_avaliacao, Pegar próximo, reserva
-                          (renovação e liberação), distribuição, revisão, filtros salvos
+estado-da-fila.js         store da aba: obter_fila_avaliacao (só o lote e as contagens),
+                          os de fora do lote sob demanda e em páginas (obter_fila_fora_do_lote,
+                          lib fila-fora-do-lote.ts), Pegar próximo, reserva (renovação e
+                          liberação), distribuição, revisão, filtros salvos
 ficha/ficha.jsx           conteúdo da ficha aberta: modo foco / lista, passos, teclas, rodapé
 ficha/*.tsx               cabeçalho, stepper, item, Conclusão, nota, "⋯", rodapé e links da
                           Empregare (contratos em ficha/tipos.ts); as escolhas (Confere,
