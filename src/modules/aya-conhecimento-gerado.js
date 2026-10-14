@@ -2626,7 +2626,7 @@ export const VERBETES_AYA = Object.freeze([
       'O modelo de convocação são as regras de reserva do edital: categorias, percentuais, arredondamento e cascata. As vagas de cota entram intercaladas às de ampla (proporcional, como AC, PP, AC, AC, PP, AC, ou nas posições fixas que o edital publica) e a convocação segue a classificação. Quem concorre a cota concorre também à ampla, e ser chamado pela ampla não gasta a vaga da cota; cota sem candidato desce a cascata e, no fim, volta para a ampla. Desistente e Documentação Rejeitada não ocupam vaga; Convocado, Contratado e Migração continuam na posição e não são chamados de novo. As vagas imediatas são informadas por vaga (zero vira cadastro reserva). Sem modelo, tudo sai como ampla concorrência. O modelo é compartilhado entre editais: a tela avisa quantos serão afetados e oferece "Duplicar". Modelo e vagas valem para o edital e sobrevivem à troca do XLSX.',
     fato: "",
     fonte:
-      "src/lib/lista-convocacao-rules.js; src/lib/modelo-de-convocacao.ts; src/lib/configuracao-de-convocacao.ts",
+      "src/lib/lista-convocacao-rules.ts; src/lib/modelo-de-convocacao.ts; src/lib/configuracao-de-convocacao.ts",
   },
   {
     arquivo: "regras-da-lista-de-aprovados.md",
@@ -2638,7 +2638,7 @@ export const VERBETES_AYA = Object.freeze([
       "incluir sub judice",
     ],
     resposta:
-      "Quem tem Editor em Aprovados inclui um candidato sub judice, que fica vinculado à lista vigente do edital; remover vale só para quem foi incluído assim. Alterar nota ou modalidade por decisão judicial, e desfazer, é só do Administrador em Aprovados: a classificação é refeita e o número do processo judicial é opcional.",
+      "Quem tem Editor em Aprovados inclui um candidato sub judice, que fica vinculado à lista vigente do edital; remover vale só para quem foi incluído assim. Alterar nota ou modalidade por decisão judicial, e desfazer, é só do Administrador em Aprovados: a classificação é refeita e o número do processo judicial é opcional. Na Convocação, quem está sem código de vaga entra na vaga do mesmo cargo quando há uma única no próprio edital; se houver várias, o sistema não escolhe automaticamente. Vagas de outros editais não participam dessa escolha.",
     fato: "",
     fonte:
       "src/lib/access-roles.js; src/lib/lista-aprovados-rules.js; supabase/migrations/20261001150000_sub_judice_alteracao.sql",
@@ -2778,7 +2778,7 @@ export const VERBETES_AYA = Object.freeze([
       'Na aba Convocação, "A convocar" são as vagas imediatas cujo candidato ainda não foi chamado (sem status). Convocado, Contratado e Migração continuam na posição que a ordem lhes deu e não são chamados de novo; Desistente e Documentação Rejeitada saem da fila e o próximo toma a vaga. "Escolher os a convocar" marca de uma vez esses candidatos para a carta. "Exportar CSV" baixa a ordem com a situação na chamada, o status e a data da convocação.',
     fato: "",
     fonte:
-      "src/lib/lista-convocacao-rules.js; src/modulos/aprovados/aba-convocacao.jsx",
+      "src/lib/lista-convocacao-rules.ts; src/modulos/aprovados/aba-convocacao.tsx",
     abrir: "approved",
   },
   {
@@ -2887,7 +2887,7 @@ export const VERBETES_AYA = Object.freeze([
       'O botão "Carta de convocação", na aba Convocação, e o envelope na linha e na gaveta do candidato só aparecem para quem tem Editor em Aprovados, e só para candidatos de lista ativa. Com Leitor, ou numa lista inativa, eles não aparecem. Criar e alterar os modelos da carta também é de quem tem Editor em Aprovados.',
     fato: "",
     fonte:
-      "src/modulos/aprovados/partes.jsx (AcaoDeCarta); src/modulos/aprovados/aba-convocacao.jsx",
+      "src/modulos/aprovados/partes.jsx (AcaoDeCarta); src/modulos/aprovados/aba-convocacao.tsx",
     abrir: "approved",
   },
   {

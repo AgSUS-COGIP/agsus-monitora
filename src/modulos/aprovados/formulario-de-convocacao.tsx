@@ -16,7 +16,7 @@ import {
   modeloDeReferencia,
   modeloEmBranco,
 } from "../../lib/modelo-de-convocacao.ts";
-import { totalDoQuadro } from "../../lib/lista-convocacao-rules.js";
+import { totalDoQuadro } from "../../lib/lista-convocacao-rules.ts";
 import {
   comDistribuicao,
   copiaDoModelo,
