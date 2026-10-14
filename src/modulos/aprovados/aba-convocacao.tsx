@@ -19,7 +19,7 @@ import {
   manterSoAsOpcoes,
   opcoesDeEdital,
   paginateApprovedCandidates,
-} from "../../lib/lista-aprovados-rules.js";
+} from "../../lib/lista-aprovados-rules.ts";
 import {
   csvDaConvocacao,
   estaAConvocar,
@@ -54,7 +54,7 @@ import {
   NotaDoCandidato,
   Paginacao,
   SeloDeStatus,
-} from "./partes.jsx";
+} from "./partes.tsx";
 
 /*
   A aba "Lista de convocação" da página: a ordem de chamada que sai do modelo

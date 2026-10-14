@@ -1,3 +1,4 @@
+import type { PropsDaAbaDeAprovados } from "./tipos-da-aba-de-aprovados.ts";
 import { useEffect, useRef } from "react";
 import {
   OPCOES_DO_FILTRO_DE_STATUS,
@@ -5,7 +6,7 @@ import {
   canEditSubJudice,
   nomeDosCandidatosFiltrados,
   summarizeApprovedCandidates,
-} from "../../lib/lista-aprovados-rules.js";
+} from "../../lib/lista-aprovados-rules.ts";
 import { formatNumberBR } from "../../lib/formatters.js";
 import { resumoDasOrigens } from "../../lib/publicacao-de-aprovados.ts";
 import { MultiSelectBusca } from "../../componentes/multi-select-busca.jsx";
@@ -28,7 +29,7 @@ import {
   Paginacao,
   plural,
   SeloDeStatus,
-} from "./partes.jsx";
+} from "./partes.tsx";
 
 /*
   A aba "Lista de aprovados": indicadores, filtros e a tabela paginada.
@@ -45,7 +46,7 @@ import {
   com "Tentar novamente" fica no topo da tela e a tabela diz "Sem dados.".
 */
 
-const text = (value) => String(value ?? "").trim();
+const text = (value: unknown) => String(value ?? "").trim();
 
 const COLUNAS = 7;
 
@@ -67,8 +68,8 @@ export function AbaAprovados({
   tamanho,
   aoIrPara,
   aoMudarTamanho,
-}) {
-  const tabela = useRef(null);
+}: PropsDaAbaDeAprovados) {
+  const tabela = useRef<HTMLDivElement>(null);
   const resumo = summarizeApprovedCandidates(candidatos, filtros);
   const carregando = !carregado && !erroAoCarregar;
   const quantos = Object.values(filtros).filter((lista) => lista.length).length;
@@ -85,13 +86,20 @@ export function AbaAprovados({
     document.dispatchEvent(new CustomEvent("agsus:content-updated"));
   }, [pagina.rows]);
 
-  function irPara(destino) {
+  function irPara(destino: number) {
     if (!aoIrPara(destino)) return;
     // Trocar de página com a tabela rolada deixaria a pessoa a meio da lista.
     tabela.current?.scrollIntoView?.({ block: "nearest", behavior: "smooth" });
   }
 
-  const kpi = (idDoValor, chave, tom, icone, rotulo, valor) => (
+  const kpi = (
+    idDoValor: string,
+    chave: string,
+    tom: string,
+    icone: string,
+    rotulo: string,
+    valor: number,
+  ) => (
     <Kpi
       idDoValor={idDoValor}
       chave={chave}

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { paginateApprovedCandidates } from "../src/lib/lista-aprovados-rules.js";
+import { paginateApprovedCandidates } from "../src/lib/lista-aprovados-rules.ts";
 
 /** Candidatos falsos, só com o que a paginação precisa: a ordem. */
 const candidatos = (quantidade) =>
@@ -9,6 +9,17 @@ const candidatos = (quantidade) =>
   }));
 
 describe("paginateApprovedCandidates", () => {
+  it("tamanho positivo menor que 1 mantém ao menos uma linha por página", () => {
+    const resultado = paginateApprovedCandidates(candidatos(3), 2, 0.5);
+    expect(resultado).toMatchObject({
+      page: 2,
+      totalPages: 3,
+      total: 3,
+      from: 2,
+      to: 2,
+    });
+    expect(resultado.rows.map((c) => c.candidato_id)).toEqual(["2"]);
+  });
   it("devolve só as linhas da página pedida", () => {
     const resultado = paginateApprovedCandidates(candidatos(120), 2, 50);
     expect(resultado.rows).toHaveLength(50);

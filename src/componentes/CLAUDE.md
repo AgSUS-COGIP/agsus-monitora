@@ -80,7 +80,7 @@ moram em `src/modulos/editais/`, `cronograma/` e `aprovados/` (componentes, CSS 
 - Modal em React é sempre `<Modal>` (portal): um modal dentro da `<section>` sumiria com a página
   escondida — o de listas do edital abre a partir do Núcleo.
 - Campo cujo texto não é o valor (número, lista separada por `;`) usa `CampoEditavel`
-  (`src/modulos/aprovados/partes.jsx`): amarrar o `value` ao valor lido apaga o que a pessoa digita.
+  (`src/modulos/aprovados/partes.tsx`): amarrar o `value` ao valor lido apaga o que a pessoa digita.
 - Tabela nova avisa `agsus:content-updated` depois de desenhar: é o que põe os rótulos do modo
   cartão (`src/modules/mobile-table-cards.js`, ≤ 900px).
 - Teste em `tests/componentes/` (`.test.js`, sem JSX, com `act`) — modelo em

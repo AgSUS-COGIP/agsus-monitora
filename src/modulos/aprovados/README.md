@@ -14,7 +14,7 @@ estado.js                  store sem React: candidatos (pacote compacto por áre
                            listas, configuração de convocação, anexos, convocações (data da
                            convocação e cartas por candidato), ações que escrevem no banco e o estado
                            da carta (`estado.carta`)
-aba-aprovados.jsx          visão Aprovados: KPIs (Convocados no lugar do antigo Fim de fila), filtros,
+aba-aprovados.tsx          visão Aprovados: KPIs (Convocados no lugar do antigo Fim de fila), filtros,
                            tabela, ações por linha (anexos, status, carta, decisão judicial, sub judice)
 aba-convocacao.tsx         visão Convocação: KPIs (A convocar, Convocados…), filtros, escolha dos
                            candidatos para a carta, "Escolher os a convocar", Exportar CSV, uma tabela
@@ -42,7 +42,7 @@ aprovados.css, convocacao.css
 Convocado (com a data da convocação), Contratado, Desistente, Migração e Documentação Rejeitada.
 "Fim de Fila" saiu (migration `20261005180000`). Status já definido só o admin de Aprovados muda,
 exceto do Convocado para o status seguinte (quem edita faz); deixar sem status é sempre do admin.
-Contratados (Seleção e KPIs) são só Contratado e Migração. Regras: `src/lib/lista-aprovados-rules.js`
+Contratados (Seleção e KPIs) são só Contratado e Migração. Regras: `src/lib/lista-aprovados-rules.ts`
 (status, trava, resumo) e `src/lib/lista-convocacao-rules.ts` (ordem, "a convocar", CSV).
 
 ## Carta de convocação
@@ -78,6 +78,14 @@ candidatos, linhas, grupos e CSV ficam em `src/lib/tipos-da-lista-de-convocacao.
 a tela usa `tipos-da-aba-de-convocacao.ts`. Candidatos sub judice sem código são
 associados ao cargo somente quando existe uma única vaga desse cargo no próprio
 edital. Vagas de outros editais não participam dessa escolha.
+
+A aba Aprovados, as peças compartilhadas e as regras de filtros/status também estão
+em TypeScript/TSX. Os contratos ficam em `src/lib/tipos-das-regras-de-aprovados.ts`
+e `tipos-da-aba-de-aprovados.ts`. Filtros e paginação preservam os campos adicionais
+dos candidatos. Campos editáveis distinguem o valor recebido e o valor convertido,
+sem substituir o texto enquanto se digita. A paginação garante ao menos
+uma linha para tamanhos positivos menores que 1. A entrada principal, o estado e
+os modais/gaveta ainda têm partes em JavaScript/JSX.
 
 ## Banco
 

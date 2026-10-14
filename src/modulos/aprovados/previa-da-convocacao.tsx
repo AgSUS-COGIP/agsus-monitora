@@ -9,7 +9,7 @@ import {
   previaDaConvocacao,
 } from "../../lib/configuracao-de-convocacao.ts";
 import { classes } from "../../ui/index.js";
-import { CampoEditavel } from "./partes.jsx";
+import { CampoEditavel } from "./partes.tsx";
 
 /*
   "Como fica a ordem de chamada": com N vagas imediatas (a pessoa escolhe), o

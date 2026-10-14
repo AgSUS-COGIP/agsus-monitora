@@ -1,7 +1,7 @@
 # Regras da Lista de aprovados
 
 A tela Lista de aprovados (view `approved`): status dos candidatos, importação, convocação, sub
-judice e anexos. Fontes: `src/modulos/aprovados/`, `src/lib/lista-aprovados-rules.js`,
+judice e anexos. Fontes: `src/modulos/aprovados/`, `src/lib/lista-aprovados-rules.ts`,
 `src/lib/aprovados-import.js`, `src/lib/lista-convocacao-rules.ts`,
 `src/lib/modelo-de-convocacao.ts`, `src/lib/anexos-do-candidato.js`, `src/lib/carta-de-convocacao.ts`, `src/lib/access-roles.js` e as
 migrations `20260928235000_anexos_so_admin.sql`, `20260930200000_aprovados_por_grupo_edital_gestor_edita.sql`,
@@ -13,14 +13,14 @@ publicada do resultado final da Classificação; `src/lib/publicacao-de-aprovado
 
 **perguntas:** tela da lista de aprovados | lista de aprovados | aba lista de aprovados | para que serve lista de aprovados | para que serve a lista de aprovados | status do candidato
 **resposta:** A Lista de aprovados mostra a lista vigente de cada edital da área atual, em duas abas: Aprovados (os candidatos e o status) e Convocação (a ordem de chamada, os a convocar e a carta de convocação). Os status do candidato são Convocado, Contratado, Desistente, Migração e Documentação Rejeitada; Contratado e Migração exigem matrícula e Convocado leva a data da convocação. Status já definido só quem tem Administrador em Aprovados altera (os demais veem um cadeado), exceto do Convocado para o status seguinte. Clicar no nome abre a gaveta do candidato, com os dados e as cartas de convocação emitidas. Quem tem Editor em Aprovados muda status; o grupo Gestor edita a lista desde que tenha a área e o edital. Quem importou ou substituiu a lista fica registrado.
-**fonte:** src/lib/lista-aprovados-rules.js; src/modulos/aprovados/; supabase/migrations/20260930200000_aprovados_por_grupo_edital_gestor_edita.sql
+**fonte:** src/lib/lista-aprovados-rules.ts; src/modulos/aprovados/; supabase/migrations/20260930200000_aprovados_por_grupo_edital_gestor_edita.sql
 **abrir:** approved
 
 ## Lista inativa
 
 **perguntas:** o que acontece com uma lista inativa | lista inativa | listas inativas | ativar lista | inativar lista
 **resposta:** Listas inativas continuam consultáveis, mas seus candidatos não podem ser alterados, nem receber anexos. Ativar ou inativar a lista é de quem pode importar (Editor em Importação, como o grupo Gestor); substituir ou remover o XLSX de uma lista existente é do Administrador em Importação.
-**fonte:** src/lib/lista-aprovados-rules.js; src/lib/access-roles.js
+**fonte:** src/lib/lista-aprovados-rules.ts; src/lib/access-roles.js
 
 ## Importar a lista
 
@@ -38,13 +38,13 @@ publicada do resultado final da Classificação; `src/lib/publicacao-de-aprovado
 
 **perguntas:** como funciona o candidato sub judice | sub judice | decisao judicial | incluir sub judice
 **resposta:** Quem tem Editor em Aprovados inclui um candidato sub judice, que fica vinculado à lista vigente do edital; remover vale só para quem foi incluído assim. Alterar nota ou modalidade por decisão judicial, e desfazer, é só do Administrador em Aprovados: a classificação é refeita e o número do processo judicial é opcional. Na Convocação, quem está sem código de vaga entra na vaga do mesmo cargo quando há uma única no próprio edital; se houver várias, o sistema não escolhe automaticamente. Vagas de outros editais não participam dessa escolha.
-**fonte:** src/lib/access-roles.js; src/lib/lista-aprovados-rules.js; supabase/migrations/20261001150000_sub_judice_alteracao.sql
+**fonte:** src/lib/access-roles.js; src/lib/lista-aprovados-rules.ts; supabase/migrations/20261001150000_sub_judice_alteracao.sql
 
 ## Anexos do candidato
 
 **perguntas:** quem pode anexar documentos ao candidato | anexos do candidato | anexar pdf ao candidato | documentos do candidato
 **resposta:** Só quem tem Administrador em Aprovados inclui e remove anexos do candidato, e só em lista ativa: PDF de até 2 MB, no máximo 5 por candidato. Ver e baixar os anexos é para quem lê a lista.
-**fonte:** src/lib/anexos-do-candidato.js; src/lib/lista-aprovados-rules.js; supabase/migrations/20260928235000_anexos_so_admin.sql
+**fonte:** src/lib/anexos-do-candidato.js; src/lib/lista-aprovados-rules.ts; supabase/migrations/20260928235000_anexos_so_admin.sql
 
 ## Origem da lista de aprovados
 
@@ -86,7 +86,7 @@ publicada do resultado final da Classificação; `src/lib/publicacao-de-aprovado
 
 **perguntas:** status convocado | o que e convocado | convocado | data da convocacao | marcar como convocado | convocado para contratacao | fim de fila | status fim de fila | sumiu o fim de fila
 **resposta:** Convocado é o candidato chamado para a contratação que ainda vai se apresentar e entregar os documentos; o status leva a data da convocação (hoje, por padrão, nunca futura). O caminho seguinte é Contratado, Desistente ou Documentação Rejeitada: quem tem Editor em Aprovados faz essa passagem sem o cadeado, mas voltar a "Sem status" é só do Administrador em Aprovados. A data continua registrada depois que o status muda e some se o status for apagado. Convocado não conta como contratado na Seleção nem nos indicadores de contratados (que somam Contratado e Migração). O status "Fim de Fila" deixou de existir.
-**fonte:** src/lib/lista-aprovados-rules.js; supabase/migrations/20261005180000_convocado_e_carta_de_convocacao.sql
+**fonte:** src/lib/lista-aprovados-rules.ts; supabase/migrations/20261005180000_convocado_e_carta_de_convocacao.sql
 **abrir:** approved
 
 ## A convocar na ordem de chamada
@@ -134,14 +134,14 @@ publicada do resultado final da Classificação; `src/lib/publicacao-de-aprovado
 
 **perguntas:** cadeado no status | por que aparece um cadeado | nao consigo mudar o status | status travado | voltar para sem status | desfazer status do candidato
 **resposta:** O cadeado aparece para quem tem Editor em Aprovados quando a lista é inativa ou quando o status já foi definido e só o Administrador em Aprovados pode mudá-lo (inclusive voltar a "Sem status"). A exceção é o Convocado: o Editor o leva para Contratado, Desistente ou Documentação Rejeitada sem cadeado. Sem Editor em Aprovados, a coluna mostra só um traço. Peça a mudança a quem tem Administrador em Aprovados.
-**fonte:** src/modulos/aprovados/partes.jsx (AcaoDeStatus); src/lib/lista-aprovados-rules.js; src/lib/access-roles.js
+**fonte:** src/modulos/aprovados/partes.tsx (AcaoDeStatus); src/lib/lista-aprovados-rules.ts; src/lib/access-roles.js
 **abrir:** approved
 
 ## Carta de convocação que não aparece
 
 **perguntas:** carta de convocacao nao aparece | sumiu o botao da carta | nao consigo emitir a carta | envelope da carta nao aparece
 **resposta:** O botão "Carta de convocação", na aba Convocação, e o envelope na linha e na gaveta do candidato só aparecem para quem tem Editor em Aprovados, e só para candidatos de lista ativa. Com Leitor, ou numa lista inativa, eles não aparecem. Criar e alterar os modelos da carta também é de quem tem Editor em Aprovados.
-**fonte:** src/modulos/aprovados/partes.jsx (AcaoDeCarta); src/modulos/aprovados/aba-convocacao.tsx
+**fonte:** src/modulos/aprovados/partes.tsx (AcaoDeCarta); src/modulos/aprovados/aba-convocacao.tsx
 **abrir:** approved
 
 ## Edital sem lista de aprovados

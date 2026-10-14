@@ -1,3 +1,11 @@
+import type {
+  CandidatoDasRegrasDeAprovados,
+  FiltrosDasRegrasDeAprovados,
+  EscolhasDosFiltros,
+  PaginaDosAprovados,
+  ListaParaFiltroDeAprovados,
+  OpcaoDosAprovados,
+} from "./tipos-das-regras-de-aprovados.ts";
 import {
   canAlterarPorDecisaoJudicial,
   canChangeCandidateStatus,
@@ -6,27 +14,30 @@ import {
   canUnlockCandidateStatus,
 } from "./access-roles.js";
 
-const text = (value) => String(value ?? "").trim();
-const low = (value) => text(value).toLocaleLowerCase("pt-BR");
+const text = (value: unknown) => String(value ?? "").trim();
+const low = (value: unknown) => text(value).toLocaleLowerCase("pt-BR");
 
 /*
   Os filtros da tela aceitam várias escolhas por campo. Aceitar também a forma
   antiga (uma string) evita quebrar quem ainda chame com um valor só — e é o que
   `summarizeApprovedCandidates` faz ao zerar o status.
 */
-const multi = (value) =>
+const multi = (value: unknown) =>
   (Array.isArray(value) ? value : [value]).map(text).filter(Boolean);
 
 export const SEM_STATUS = "__sem_status__";
 
-function matchStatus(escolhidos, row) {
+function matchStatus(
+  escolhidos: readonly string[],
+  row: CandidatoDasRegrasDeAprovados,
+) {
   const status = text(row.status);
   return escolhidos.some((escolha) =>
     escolha === SEM_STATUS ? !status : escolha === status,
   );
 }
 
-export function statusNeedsMatricula(status) {
+export function statusNeedsMatricula(status: unknown) {
   return status === "Contratado" || status === "Migração";
 }
 
@@ -38,11 +49,14 @@ export function statusNeedsMatricula(status) {
 */
 export const STATUS_CONVOCADO = "Convocado";
 
-export function statusEhConvocado(status) {
+export function statusEhConvocado(status: unknown) {
   return text(status) === STATUS_CONVOCADO;
 }
 
-export function canEditCandidateStatus(profile, candidate) {
+export function canEditCandidateStatus(
+  profile: unknown,
+  candidate: CandidatoDasRegrasDeAprovados | null | undefined,
+) {
   return (
     Boolean(candidate?.lista_ativa) &&
     canChangeCandidateStatus(profile) &&
@@ -56,7 +70,10 @@ export function canEditCandidateStatus(profile, candidate) {
   RPC. Convocado não trava: quem edita segue o fluxo (Contratado,
   Desistente…) ou corrige a data (migration 20261005180000).
 */
-export function statusTravado(profile, candidate) {
+export function statusTravado(
+  profile: unknown,
+  candidate: CandidatoDasRegrasDeAprovados | null | undefined,
+) {
   return (
     Boolean(text(candidate?.status)) &&
     !statusEhConvocado(candidate?.status) &&
@@ -68,12 +85,18 @@ export function statusTravado(profile, candidate) {
   Voltar a "Sem status" (desfazer a convocação, por exemplo) é só do admin do
   módulo quando o candidato já tem status. O banco repete a regra.
 */
-export function podeTirarOStatus(profile, candidate) {
+export function podeTirarOStatus(
+  profile: unknown,
+  candidate: CandidatoDasRegrasDeAprovados | null | undefined,
+) {
   return !text(candidate?.status) || canUnlockCandidateStatus(profile);
 }
 
 /** Anexos do candidato: só o admin do módulo inclui e remove, em lista ativa. */
-export function canEditCandidateAttachments(profile, candidate) {
+export function canEditCandidateAttachments(
+  profile: unknown,
+  candidate: CandidatoDasRegrasDeAprovados | null | undefined,
+) {
   return (
     Boolean(candidate?.lista_ativa) && canManageCandidateAttachments(profile)
   );
@@ -84,7 +107,10 @@ export function canEditCandidateAttachments(profile, candidate) {
   ou a modalidade alterada por decisão judicial sai pelo "Desfazer alteração",
   que devolve os valores do resultado publicado.
 */
-export function canEditSubJudice(profile, candidate) {
+export function canEditSubJudice(
+  profile: unknown,
+  candidate: CandidatoDasRegrasDeAprovados | null | undefined,
+) {
   return (
     Boolean(candidate?.lista_ativa && candidate?.sub_judice) &&
     !candidate?.alterado_judicialmente &&
@@ -93,13 +119,19 @@ export function canEditSubJudice(profile, candidate) {
 }
 
 /** Alterar nota/modalidade por decisão judicial: candidato de lista ativa, só o admin. */
-export function canAlterarCandidatoSubJudice(profile, candidate) {
+export function canAlterarCandidatoSubJudice(
+  profile: unknown,
+  candidate: CandidatoDasRegrasDeAprovados | null | undefined,
+) {
   return (
     Boolean(candidate?.lista_ativa) && canAlterarPorDecisaoJudicial(profile)
   );
 }
 
-export function canDesfazerAlteracaoSubJudice(profile, candidate) {
+export function canDesfazerAlteracaoSubJudice(
+  profile: unknown,
+  candidate: CandidatoDasRegrasDeAprovados | null | undefined,
+) {
   return (
     Boolean(candidate?.alterado_judicialmente) &&
     canAlterarCandidatoSubJudice(profile, candidate)
@@ -111,7 +143,9 @@ export function canDesfazerAlteracaoSubJudice(profile, candidate) {
   com nota e modalidade em `{ de, para }`, ou nulas quando não mudaram. Nulo de
   todo quando o candidato não foi alterado.
 */
-export function alteracaoJudicial(candidate) {
+export function alteracaoJudicial(
+  candidate: CandidatoDasRegrasDeAprovados | null | undefined,
+) {
   if (!candidate?.alterado_judicialmente) return null;
   const notaDe = Number(candidate.nota_original);
   const notaPara = Number(candidate.nota);
@@ -136,7 +170,12 @@ export function alteracaoJudicial(candidate) {
   `candidatos` (ids): só aqueles registros — o caso de um aviso de conferência
   ("Contratado em duas vagas") abre a lista nas vagas da pessoa.
 */
-export function filterApprovedCandidates(rows, filters = {}) {
+export function filterApprovedCandidates<
+  T extends CandidatoDasRegrasDeAprovados,
+>(
+  rows: readonly T[] | null | undefined,
+  filters: FiltrosDasRegrasDeAprovados = {},
+): T[] {
   const query = low(filters.query);
   const candidatoIds = multi(filters.candidatos);
   const editalIds = multi(filters.editalId);
@@ -165,7 +204,10 @@ export function filterApprovedCandidates(rows, filters = {}) {
 }
 
 /** O nome da pessoa do caso de aviso (o primeiro dos registros que estão na tela). */
-export function nomeDosCandidatosFiltrados(rows, ids = []) {
+export function nomeDosCandidatosFiltrados(
+  rows: readonly CandidatoDasRegrasDeAprovados[] | null | undefined,
+  ids: EscolhasDosFiltros | undefined = [],
+) {
   const procurados = multi(ids);
   const achado = (rows || []).find((row) =>
     procurados.includes(String(row.candidato_id)),
@@ -173,7 +215,10 @@ export function nomeDosCandidatosFiltrados(rows, ids = []) {
   return text(achado?.nome);
 }
 
-export function summarizeApprovedCandidates(rows, filters = {}) {
+export function summarizeApprovedCandidates(
+  rows: readonly CandidatoDasRegrasDeAprovados[] | null | undefined,
+  filters: FiltrosDasRegrasDeAprovados = {},
+) {
   const baseFilters = { ...filters, status: "" };
   const filtered = filterApprovedCandidates(rows, baseFilters);
   const summary = {
@@ -198,7 +243,10 @@ export function summarizeApprovedCandidates(rows, filters = {}) {
   return summary;
 }
 
-function valoresUnicos(rows, campo) {
+function valoresUnicos(
+  rows: readonly CandidatoDasRegrasDeAprovados[] | null | undefined,
+  campo: "cargo" | "modalidade",
+) {
   return [
     ...new Set((rows || []).map((row) => text(row[campo])).filter(Boolean)),
   ].sort((a, b) => a.localeCompare(b, "pt-BR"));
@@ -208,7 +256,10 @@ function valoresUnicos(rows, campo) {
   Cargo e modalidade só oferecem o que existe nos editais escolhidos. Listar
   tudo daria opções que não devolvem candidato nenhum.
 */
-function noEscopoDosEditais(rows, editalId) {
+function noEscopoDosEditais(
+  rows: readonly CandidatoDasRegrasDeAprovados[] | null | undefined,
+  editalId: EscolhasDosFiltros | undefined,
+) {
   const selectedEditalIds = multi(editalId);
   if (!selectedEditalIds.length) return rows || [];
   return (rows || []).filter((row) =>
@@ -216,15 +267,23 @@ function noEscopoDosEditais(rows, editalId) {
   );
 }
 
-export function uniqueCandidateCargos(rows) {
+export function uniqueCandidateCargos(
+  rows: readonly CandidatoDasRegrasDeAprovados[] | null | undefined,
+) {
   return valoresUnicos(rows, "cargo");
 }
 
-export function candidateCargosForEdital(rows, editalId) {
+export function candidateCargosForEdital(
+  rows: readonly CandidatoDasRegrasDeAprovados[] | null | undefined,
+  editalId: EscolhasDosFiltros | undefined,
+) {
   return valoresUnicos(noEscopoDosEditais(rows, editalId), "cargo");
 }
 
-export function candidateModalidadesForEdital(rows, editalId) {
+export function candidateModalidadesForEdital(
+  rows: readonly CandidatoDasRegrasDeAprovados[] | null | undefined,
+  editalId: EscolhasDosFiltros | undefined,
+) {
   return valoresUnicos(noEscopoDosEditais(rows, editalId), "modalidade");
 }
 
@@ -240,17 +299,16 @@ export function candidateModalidadesForEdital(rows, editalId) {
   total e a página aberta pode deixar de existir. Devolver uma fatia vazia nesse
   caso faria a tabela parecer sem resultados quando há.
 */
-/**
- * @template T
- * @param {readonly T[]} rows
- * @param {number} [page]
- * @param {number} [pageSize]
- * @returns {{rows: T[], page: number, totalPages: number, total: number, from: number, to: number}}
- */
-export function paginateApprovedCandidates(rows, page = 1, pageSize = 50) {
-  const todas = Array.isArray(rows) ? rows : [];
+export function paginateApprovedCandidates<T>(
+  rows: readonly T[] | null | undefined,
+  page = 1,
+  pageSize = 50,
+): PaginaDosAprovados<T> {
+  const todas: readonly T[] = Array.isArray(rows) ? rows : [];
   const tamanho =
-    Number.isFinite(pageSize) && pageSize > 0 ? Math.floor(pageSize) : 50;
+    Number.isFinite(pageSize) && pageSize > 0
+      ? Math.max(1, Math.floor(pageSize))
+      : 50;
   const totalPages = Math.max(1, Math.ceil(todas.length / tamanho));
   const pedida = Number.isFinite(page) ? Math.floor(page) : 1;
   const current = Math.min(Math.max(1, pedida), totalPages);
@@ -289,13 +347,13 @@ export const OPCOES_DO_FILTRO_DE_STATUS = Object.freeze([
 ]);
 
 /** "2026-10-05" → "05/10/2026" (sem fuso: é uma data, não um instante). */
-export function formatarData(valor) {
+export function formatarData(valor: unknown) {
   const m = text(valor).match(/^(\d{4})-(\d{2})-(\d{2})/);
   return m ? `${m[3]}/${m[2]}/${m[1]}` : "";
 }
 
 /** Nota como a tela a escreve: "87,5"; "-" quando não há número. */
-export function formatarNota(value) {
+export function formatarNota(value: unknown) {
   const number = Number(value);
   if (!Number.isFinite(number)) return "-";
   return new Intl.NumberFormat("pt-BR", { maximumFractionDigits: 3 }).format(
@@ -304,14 +362,14 @@ export function formatarNota(value) {
 }
 
 /** A planilha importada traz a modalidade entre aspas ("Ampla Concorrência"). */
-export function modalidadeSemAspas(value) {
+export function modalidadeSemAspas(value: unknown) {
   return String(value ?? "")
     .trim()
     .replace(/^["“”']+|["“”']+$/g, "");
 }
 
 /** Tom do selo de status (`.approved-status.<tom>`). */
-export function tomDoStatus(status) {
+export function tomDoStatus(status: unknown) {
   if (status === "Contratado") return "success";
   if (status === "Desistente" || status === "Documentação Rejeitada")
     return "danger";
@@ -321,7 +379,7 @@ export function tomDoStatus(status) {
 }
 
 /** Nome do arquivo no Storage: sem acento, espaço nem símbolo. */
-export function nomeDeArquivoSeguro(name) {
+export function nomeDeArquivoSeguro(name: unknown) {
   return (
     text(name)
       .normalize("NFD")
@@ -335,7 +393,9 @@ export function nomeDeArquivoSeguro(name) {
  * Opções do filtro de edital: um por edital com lista, ordenados por número
  * e unidade, no formato "03/2025 · CASAI Manaus".
  */
-export function opcoesDeEdital(lists) {
+export function opcoesDeEdital(
+  lists: readonly ListaParaFiltroDeAprovados[] | null | undefined,
+): OpcaoDosAprovados[] {
   return [
     ...new Map(
       (lists || []).map((row) => [String(row.edital_id), row]),
@@ -359,7 +419,10 @@ export function opcoesDeEdital(lists) {
   cargos encolhe, e um cargo escolhido que sumiu não pode continuar a filtrar —
   estaria a esconder linhas sem aparecer na tela.
 */
-export function manterSoAsOpcoes(selecionados, opcoes) {
+export function manterSoAsOpcoes<T extends string | number>(
+  selecionados: readonly T[] | null | undefined,
+  opcoes: readonly (T | { value: T })[] | null | undefined,
+): T[] {
   const disponiveis = new Set(
     (opcoes || []).map((opcao) =>
       typeof opcao === "object" && opcao !== null ? opcao.value : opcao,

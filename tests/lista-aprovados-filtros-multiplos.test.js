@@ -6,7 +6,7 @@ import {
   candidateModalidadesForEdital,
   filterApprovedCandidates,
   summarizeApprovedCandidates,
-} from "../src/lib/lista-aprovados-rules.js";
+} from "../src/lib/lista-aprovados-rules.ts";
 
 const candidatos = [
   {

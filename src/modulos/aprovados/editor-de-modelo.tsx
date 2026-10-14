@@ -30,7 +30,7 @@ import {
   resumoDasRegrasDaCategoria,
 } from "../../lib/configuracao-de-convocacao.ts";
 import { BotaoDeAcao, classes } from "../../ui/index.js";
-import { CampoEditavel } from "./partes.jsx";
+import { CampoEditavel } from "./partes.tsx";
 import { PreviaDaConvocacao } from "./previa-da-convocacao.tsx";
 
 /*

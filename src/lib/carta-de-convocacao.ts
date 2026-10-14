@@ -37,7 +37,7 @@ function exigirCarta<T>(valor: T | undefined): T {
 */
 
 import { dataPorExtenso } from "./classificacao/documento-sei.ts";
-import { modalidadeSemAspas } from "./lista-aprovados-rules.js";
+import { modalidadeSemAspas } from "./lista-aprovados-rules.ts";
 
 const texto = (valor: unknown) => String(valor ?? "").trim();
 

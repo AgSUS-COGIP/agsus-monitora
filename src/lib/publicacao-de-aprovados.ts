@@ -345,7 +345,9 @@ export function origemDaLista(lista: unknown): OrigemDaLista | null {
  * A origem das listas na tela: a do edital quando só há um no recorte; com
  * vários, quantas vieram de cada origem.
  */
-export function resumoDasOrigens(listas: unknown[] | null | undefined) {
+export function resumoDasOrigens(
+  listas: readonly unknown[] | null | undefined,
+) {
   const vigentes = (listas || []).filter(Boolean);
   if (!vigentes.length) return "";
   if (vigentes.length === 1) return origemDaLista(vigentes[0])?.texto ?? "";

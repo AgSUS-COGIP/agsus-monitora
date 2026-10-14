@@ -16,13 +16,13 @@ import {
   manterSoAsOpcoes,
   opcoesDeEdital,
   paginateApprovedCandidates,
-} from "../../lib/lista-aprovados-rules.js";
+} from "../../lib/lista-aprovados-rules.ts";
 import { PLANILHAS } from "../../lib/planilhas.js";
 import { formatarDataHora } from "../../lib/cronograma-do-edital.js";
 import { soDosEditais } from "../../componentes/dados-do-monitoramento.ts";
 import { usarAreaAtual } from "../../componentes/usar-area-atual.ts";
 import { classes, ErroAoCarregar, TopoDoPainel } from "../../ui/index.js";
-import { AbaAprovados } from "./aba-aprovados.jsx";
+import { AbaAprovados } from "./aba-aprovados.tsx";
 import { AbaConvocacao } from "./aba-convocacao.tsx";
 import { criarEstadoDaListaDeAprovados } from "./estado.js";
 import { ModalDeAnexos, ModalDeStatus, ModalSubJudice } from "./modais.jsx";
@@ -30,7 +30,7 @@ import { ModalListasDoEdital } from "./modal-listas-do-edital.jsx";
 import { GavetaDoCandidato } from "./gaveta-do-candidato.jsx";
 import { ModalDaCarta } from "./carta-de-convocacao/modal-da-carta.tsx";
 import { ModelosDaCarta } from "./carta-de-convocacao/modelos-da-carta.tsx";
-import { plural } from "./partes.jsx";
+import { plural } from "./partes.tsx";
 import { SeloDeAvisos } from "../conferencias/avisos-de-conferencia.tsx";
 import "./convocacao.css";
 import "./carta-de-convocacao/carta.css";

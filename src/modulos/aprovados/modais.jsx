@@ -20,9 +20,9 @@ import {
   modalidadeSemAspas,
   statusNeedsMatricula,
   uniqueCandidateCargos,
-} from "../../lib/lista-aprovados-rules.js";
+} from "../../lib/lista-aprovados-rules.ts";
 import { Abas, BotaoDeAcao, classes, Modal } from "../../ui/index.js";
-import { IconeDePdf } from "./partes.jsx";
+import { IconeDePdf } from "./partes.tsx";
 
 /*
   Os modais de status do candidato (com os anexos novos), dos anexos do

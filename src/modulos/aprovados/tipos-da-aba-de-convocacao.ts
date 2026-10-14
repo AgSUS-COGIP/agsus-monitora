@@ -1,3 +1,4 @@
+import type { CandidatoDaTabelaDeAprovados } from "./tipos-da-aba-de-aprovados.ts";
 import type {
   CandidatoDaConvocacao,
   GrupoDaConvocacao,
@@ -7,7 +8,7 @@ import type {
   ConfiguracoesDaConvocacao,
   ModelosDaConvocacao,
 } from "../../lib/tipos-da-configuracao-de-convocacao.ts";
-export interface CandidatoDaTabelaDaConvocacao extends CandidatoDaConvocacao {
+export interface CandidatoDaTabelaDaConvocacao extends CandidatoDaTabelaDeAprovados {
   candidato_id: string;
   nome: string;
   classificacao?: string | number | null;
@@ -59,5 +60,5 @@ export interface PropsDaAbaDaConvocacao {
   modelos: ModelosDaConvocacao;
   convocacoes?: ConvocacoesDaTabela;
   carregado: boolean;
-  erroAoCarregar: boolean;
+  erroAoCarregar: string | boolean;
 }
