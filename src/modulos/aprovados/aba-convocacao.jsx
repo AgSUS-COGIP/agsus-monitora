@@ -18,12 +18,12 @@ import {
   lerModalidade,
   rotuloDaCategoria,
   siglaDaCategoria,
-} from "../../lib/modelo-de-convocacao.js";
+} from "../../lib/modelo-de-convocacao.ts";
 import {
   configuracaoDaVaga,
   ordinalFeminino,
   resumirQuadro,
-} from "../../lib/configuracao-de-convocacao.js";
+} from "../../lib/configuracao-de-convocacao.ts";
 import { MultiSelectBusca } from "../../componentes/multi-select-busca.jsx";
 import { formatNumberBR } from "../../lib/formatters.js";
 import {

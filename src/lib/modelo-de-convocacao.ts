@@ -1,3 +1,12 @@
+import type {
+  ArredondamentoDaConvocacao,
+  DistribuicaoDaConvocacao,
+  CotaMultiplaDaConvocacao,
+  OpcaoDaConvocacao,
+  CategoriaDaConvocacao,
+  ModeloDaConvocacao,
+  ReferenciaDoModelo,
+} from "./tipos-da-configuracao-de-convocacao.ts";
 /*
   O MODELO DE CONVOCAÇÃO: as regras do edital como DADO.
 
@@ -30,7 +39,7 @@
   normalizado.
 */
 
-const texto = (valor) => String(valor ?? "").trim();
+const texto = (valor: unknown) => String(valor ?? "").trim();
 
 /** Arredondamento da fração de vagas. */
 export const ARREDONDAMENTOS = Object.freeze([
@@ -44,7 +53,7 @@ export const ARREDONDAMENTOS = Object.freeze([
     rotulo: "Sempre para o inteiro seguinte",
     ajuda: "Usada pelo 91/2026 para PCD, combinada com um teto.",
   },
-]);
+] satisfies OpcaoDaConvocacao<ArredondamentoDaConvocacao>[]);
 
 /*
   Como as vagas de reserva se espalham pela ordem de chamada.
@@ -72,7 +81,7 @@ export const DISTRIBUICOES = Object.freeze([
     ajuda:
       "Para o edital que lista as posições, como “a cota ocupa a 3ª, a 8ª, a 13ª… de cinco em cinco”. Cada categoria informa as primeiras posições e o intervalo em que a série continua.",
   },
-]);
+] satisfies OpcaoDaConvocacao<DistribuicaoDaConvocacao>[]);
 
 /*
   A mesma pessoa pode ocupar vaga de MAIS DE UMA cota?
@@ -104,7 +113,7 @@ export const COTAS_MULTIPLAS = Object.freeze([
     ajuda:
       "Maria declarou pretos e pardos e quilombola, e ocupa a vaga que vier primeiro, de qualquer das duas. Nenhum dos oito editais lidos faz assim; existe como escape para um edital futuro.",
   },
-]);
+] satisfies OpcaoDaConvocacao<CotaMultiplaDaConvocacao>[]);
 
 /*
   Normalização do texto, partilhada pela célula de modalidade e pelos termos de
@@ -114,7 +123,7 @@ export const COTAS_MULTIPLAS = Object.freeze([
   "quilombola"` ou `"pretos e pardos" e "quilombola"` conforme o dia, e depois
   desta passagem as duas viram a mesma sequência de palavras.
 */
-export function normalizarTexto(valor) {
+export function normalizarTexto(valor: unknown) {
   return String(valor ?? "")
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")
@@ -123,7 +132,7 @@ export function normalizarTexto(valor) {
     .trim();
 }
 
-function escaparRegex(valor) {
+function escaparRegex(valor: string) {
   return valor.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
@@ -136,7 +145,7 @@ function escaparRegex(valor) {
   Sem o asterisco, o termo casa apenas com a palavra inteira. É o padrão mais
   seguro: `ac` solto casaria com "acesso" se fosse prefixo.
 */
-export function compilarTermos(termos) {
+export function compilarTermos(termos: unknown) {
   const partes = (Array.isArray(termos) ? termos : [])
     .map((termo) => {
       const cru = texto(termo);
@@ -151,7 +160,7 @@ export function compilarTermos(termos) {
 }
 
 /** Aceita os termos como lista ou como texto separado por `;` ou nova linha. */
-export function lerTermos(valor) {
+export function lerTermos(valor: unknown) {
   if (Array.isArray(valor)) return valor.map(texto).filter(Boolean);
   return String(valor ?? "")
     .split(/[;\n]/)
@@ -159,23 +168,31 @@ export function lerTermos(valor) {
     .filter(Boolean);
 }
 
-function inteiroNaoNegativo(valor) {
+function inteiroNaoNegativo(valor: unknown) {
   const numero = Math.floor(Number(valor));
   return Number.isFinite(numero) && numero > 0 ? numero : 0;
 }
 
-function taxa(valor) {
+function taxa(valor: unknown) {
   const numero = Number(valor);
   if (!Number.isFinite(numero) || numero <= 0) return 0;
   return Math.min(numero, 100);
 }
 
-function escolher(lista, valor, padrao) {
+function escolher<T extends string>(
+  lista: readonly OpcaoDaConvocacao<T>[],
+  valor: unknown,
+  padrao: T,
+): T {
   const id = texto(valor);
-  return lista.some((item) => item.id === id) ? id : padrao;
+  return lista.find((item) => item.id === id)?.id ?? padrao;
 }
 
-function normalizarCategoria(categoria, indice) {
+function normalizarCategoria(
+  valor: unknown,
+  indice: number,
+): CategoriaDaConvocacao {
+  const categoria = registroDoModelo(valor);
   const id = normalizarTexto(categoria?.id).replace(/ /g, "_");
   return {
     id: id || `categoria_${indice + 1}`,
@@ -224,7 +241,14 @@ function normalizarCategoria(categoria, indice) {
  * declarar nenhuma, a primeira categoria sem percentual é promovida; não
  * havendo nenhuma, uma é acrescentada.
  */
-export function normalizarModelo(modelo) {
+function registroDoModelo(valor: unknown): Record<string, unknown> {
+  return valor !== null && typeof valor === "object" && !Array.isArray(valor)
+    ? Object.fromEntries(Object.entries(valor))
+    : {};
+}
+
+export function normalizarModelo(valor: unknown): ModeloDaConvocacao {
+  const modelo = registroDoModelo(valor);
   const categorias = (
     Array.isArray(modelo?.categorias) ? modelo.categorias : []
   ).map(normalizarCategoria);
@@ -283,9 +307,9 @@ export function normalizarModelo(modelo) {
   mil regex a cada desenho da tela. O padrão fica guardado na própria categoria,
   invisível a quem só lê o modelo.
 */
-const padroes = new WeakMap();
+const padroes = new WeakMap<CategoriaDaConvocacao, RegExp | null>();
 
-function padraoDaCategoria(categoria) {
+function padraoDaCategoria(categoria: CategoriaDaConvocacao) {
   if (padroes.has(categoria)) return padroes.get(categoria);
   const padrao = compilarTermos(categoria.termos);
   padroes.set(categoria, padrao);
@@ -293,24 +317,24 @@ function padraoDaCategoria(categoria) {
 }
 
 /** A categoria que recebe o resto das vagas. */
-export function categoriaDaAmpla(modelo) {
+export function categoriaDaAmpla(modelo: ModeloDaConvocacao) {
   return modelo.categorias.find((categoria) => categoria.ampla);
 }
 
 /** Só as reservas, na ordem em que o modelo as declara. */
-export function categoriasDeReserva(modelo) {
+export function categoriasDeReserva(modelo: ModeloDaConvocacao) {
   return modelo.categorias.filter((categoria) => !categoria.ampla);
 }
 
-export function categoriaPorId(modelo, id) {
+export function categoriaPorId(modelo: ModeloDaConvocacao, id: string) {
   return modelo.categorias.find((categoria) => categoria.id === id) || null;
 }
 
-export function rotuloDaCategoria(modelo, id) {
+export function rotuloDaCategoria(modelo: ModeloDaConvocacao, id: string) {
   return categoriaPorId(modelo, id)?.rotulo || "—";
 }
 
-export function siglaDaCategoria(modelo, id) {
+export function siglaDaCategoria(modelo: ModeloDaConvocacao, id: string) {
   return categoriaPorId(modelo, id)?.sigla || "—";
 }
 
@@ -328,11 +352,11 @@ export function siglaDaCategoria(modelo, id) {
  *   nenhum termo bateu — nem os da ampla —, o que sinaliza célula vazia ou termo
  *   que o modelo ainda não conhece.
  */
-export function lerModalidade(modalidade, modelo) {
+export function lerModalidade(modalidade: unknown, modelo: ModeloDaConvocacao) {
   const alvo = normalizarTexto(modalidade);
   if (!alvo) return { reservas: [], reconhecida: false };
 
-  const reservas = [];
+  const reservas: string[] = [];
   let bateuAlguma = false;
   modelo.categorias.forEach((categoria) => {
     const padrao = padraoDaCategoria(categoria);
@@ -359,8 +383,8 @@ export function lerModalidade(modalidade, modelo) {
   só então para a ampla — que é o destino final de todas e por isso nunca
   aparece escrita.
 */
-export const MODELOS_DE_REFERENCIA = Object.freeze([
-  Object.freeze({
+export const MODELOS_DE_REFERENCIA = Object.freeze<ReferenciaDoModelo[]>([
+  Object.freeze<ReferenciaDoModelo>({
     /*
       A ordem do simulador de reserva de vagas do MGI. Confere posição por
       posição com a simulação de 100 vagas que ele publica. Percentuais da Lei
@@ -425,7 +449,7 @@ export const MODELOS_DE_REFERENCIA = Object.freeze([
       },
     ],
   }),
-  Object.freeze({
+  Object.freeze<ReferenciaDoModelo>({
     /*
       Saúde Indígena 2026, COM troca entre as cotas: editais 36, 37, 38, 71,
       72, 74, 75, 76, 79, 81, 82 e 83/2026, e 101 a 103, 105, 107 a 112 e
@@ -506,7 +530,7 @@ export const MODELOS_DE_REFERENCIA = Object.freeze([
       },
     ],
   }),
-  Object.freeze({
+  Object.freeze<ReferenciaDoModelo>({
     /*
       Saúde Indígena, pelo edital 91/2026 (DSEI Alagoas e Sergipe). Têm a
       mesma regra os editais 88, 92, 94, 95, 97 e 100/2026 (o 94/2026 escreve o
@@ -585,7 +609,7 @@ export const MODELOS_DE_REFERENCIA = Object.freeze([
       },
     ],
   }),
-  Object.freeze({
+  Object.freeze<ReferenciaDoModelo>({
     /*
       Saúde Indígena 2026, SEM troca entre as cotas: editais 34/2026, do 39 ao
       60/2026 e do 63 ao 70/2026 (sanitaristas e DSEI, abril de 2026; o 61 e o
@@ -655,7 +679,7 @@ export const MODELOS_DE_REFERENCIA = Object.freeze([
       },
     ],
   }),
-  Object.freeze({
+  Object.freeze<ReferenciaDoModelo>({
     /*
       Lei 15.142/2025 no padrão Cebraspe: editais 96/2025, 04/2026, 30/2026 e
       93/2026.
@@ -722,7 +746,7 @@ export const MODELOS_DE_REFERENCIA = Object.freeze([
       },
     ],
   }),
-  Object.freeze({
+  Object.freeze<ReferenciaDoModelo>({
     // Regra do edital 97/2025, que acrescenta a reserva para candidatos trans.
     id: "portaria-5801-trans",
     nome: "Portaria GM/MS 5.801/2024 — 30/5/5/5 e 10% PCD",
@@ -780,7 +804,7 @@ export const MODELOS_DE_REFERENCIA = Object.freeze([
       },
     ],
   }),
-  Object.freeze({
+  Object.freeze<ReferenciaDoModelo>({
     /*
       Reserva ÚNICA de 30%, sem dividir entre as cotas (lidos em 02/10/2026):
       os editais DSEI de 2025 — 11 a 15, 39, 53, 64 a 66, 68, 70 a 74, 76,
@@ -851,7 +875,7 @@ export const MODELOS_DE_REFERENCIA = Object.freeze([
       },
     ],
   }),
-  Object.freeze({
+  Object.freeze<ReferenciaDoModelo>({
     /*
       Regra do edital FCC 125: negros e indígenas numa cota só, e as posições
       publicadas no edital em vez de proporcionalidade.
@@ -910,7 +934,7 @@ export const MODELOS_DE_REFERENCIA = Object.freeze([
  * Existe para que nada dependa da POSIÇÃO no catálogo: acrescentar um modelo
  * novo no meio da lista não pode mudar o significado de quem o consome.
  */
-export function modeloDeReferencia(id) {
+export function modeloDeReferencia(id: string) {
   return MODELOS_DE_REFERENCIA.find((modelo) => modelo.id === id) || null;
 }
 

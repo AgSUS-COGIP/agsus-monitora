@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   modeloDeReferencia,
   normalizarModelo,
-} from "../src/lib/modelo-de-convocacao.js";
+} from "../src/lib/modelo-de-convocacao.ts";
 import {
   derivarQuadro,
   montarConvocacaoDaVaga,
@@ -12,7 +12,7 @@ import {
   comDistribuicao,
   previaDaConvocacao,
   resumoDasRegrasDaCategoria,
-} from "../src/lib/configuracao-de-convocacao.js";
+} from "../src/lib/configuracao-de-convocacao.ts";
 import { LEI_15142_ESPALHADA } from "./modelos-de-convocacao-antigos.js";
 
 /*

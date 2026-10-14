@@ -1,3 +1,21 @@
+import type {
+  CategoriaDaConvocacao,
+  ModeloDaConvocacao,
+  ConfiguracaoDaConvocacao,
+  ConfiguracoesDaConvocacao,
+  ModelosDaConvocacao,
+  CandidatoDaConfiguracao,
+  FormularioDaConvocacao,
+  VagaDoFormulario,
+  MudancasDaCategoria,
+  DistribuicaoDaConvocacao,
+} from "./tipos-da-configuracao-de-convocacao.ts";
+import {
+  linhasDaConfiguracao,
+  identificadorDaConfiguracao,
+  chaveUnicaDaConfiguracao,
+  quadroDaConfiguracao,
+} from "./dados-da-configuracao-de-convocacao.ts";
 /*
   Configuração da lista de convocação: o que o banco guarda por edital (modelo
   de regras e vagas imediatas) e o rascunho que o formulário do edital edita.
@@ -26,7 +44,7 @@ import {
   modeloEmBranco,
   normalizarModelo,
   normalizarTexto,
-} from "./modelo-de-convocacao.js";
+} from "./modelo-de-convocacao.ts";
 import {
   derivarQuadro,
   normalizarQuadro,
@@ -34,30 +52,35 @@ import {
   sequenciaDeConvocacao,
 } from "./lista-convocacao-rules.js";
 
-const text = (value) => String(value ?? "").trim();
+const text = (value: unknown) => String(value ?? "").trim();
 
 // ── Leitura do banco ─────────────────────────────────────────────────────
 
 /** `listar_modelos_convocacao` → modelo_id → modelo normalizado, com `editais`. */
-export function lerModelosDoBanco(linhas) {
+export function lerModelosDoBanco(
+  linhas: unknown,
+): Map<string, ModeloDaConvocacao> {
+  const usadas = new Set<string>();
   return new Map(
-    (Array.isArray(linhas) ? linhas : []).map((linha) => [
-      String(linha.modelo_id),
+    linhasDaConfiguracao(linhas).map((linha) => [
+      chaveUnicaDaConfiguracao(
+        identificadorDaConfiguracao(linha.modelo_id),
+        usadas,
+      ),
       {
         ...normalizarModelo({
           id: linha.modelo_id,
           nome: linha.nome,
           distribuicao: linha.distribuicao,
           cotaMultipla: linha.cota_multipla,
-          categorias: (Array.isArray(linha.categorias)
-            ? linha.categorias
-            : []
-          ).map((categoria) => ({
-            ...categoria,
-            termos: lerTermos(categoria.termos),
-            posicoes: lerTermos(categoria.posicoes).map(Number),
-            cascata: lerTermos(categoria.cascata),
-          })),
+          categorias: linhasDaConfiguracao(linha.categorias).map(
+            (categoria) => ({
+              ...categoria,
+              termos: lerTermos(categoria.termos),
+              posicoes: lerTermos(categoria.posicoes).map(Number),
+              cascata: lerTermos(categoria.cascata),
+            }),
+          ),
         }),
         editais: Number(linha.editais) || 0,
       },
@@ -69,28 +92,39 @@ export function lerModelosDoBanco(linhas) {
  * `listar_configuracao_convocacao` → edital_id →
  * `{ proporcionalidade, modeloId, padraoImediata, vagas }`, com `vagas` por código.
  */
-export function lerConfiguracoesDoBanco(linhas) {
+export function lerConfiguracoesDoBanco(
+  linhas: unknown,
+): Map<string, ConfiguracaoDaConvocacao> {
+  const usadas = new Set<string>();
   return new Map(
-    (Array.isArray(linhas) ? linhas : []).map((linha) => [
-      String(linha.edital_id),
+    linhasDaConfiguracao(linhas).map((linha) => [
+      chaveUnicaDaConfiguracao(
+        identificadorDaConfiguracao(linha.edital_id),
+        usadas,
+      ),
       {
         proporcionalidade: linha.proporcionalidade !== false,
         modeloId: linha.modelo_id ? String(linha.modelo_id) : "",
         padraoImediata: Number(linha.padrao_imediata) || 0,
-        vagas: new Map(
-          (Array.isArray(linha.vagas) ? linha.vagas : []).map((vaga) => [
-            text(vaga.codigo_vaga),
-            {
-              cargo: text(vaga.cargo),
-              imediatas: Number(vaga.imediatas) || 0,
-              manual: vaga.manual === true,
-              quadro:
-                vaga.quadro && typeof vaga.quadro === "object"
-                  ? vaga.quadro
-                  : {},
-            },
-          ]),
-        ),
+        vagas: mapaDasVagas(linha.vagas),
+      },
+    ]),
+  );
+}
+
+function mapaDasVagas(valor: unknown): ConfiguracaoDaConvocacao["vagas"] {
+  const usadas = new Set<string>();
+  return new Map(
+    linhasDaConfiguracao(valor).map((vaga) => [
+      chaveUnicaDaConfiguracao(
+        identificadorDaConfiguracao(vaga.codigo_vaga),
+        usadas,
+      ),
+      {
+        cargo: text(vaga.cargo),
+        imediatas: Number(vaga.imediatas) || 0,
+        manual: vaga.manual === true,
+        quadro: quadroDaConfiguracao(vaga.quadro),
       },
     ]),
   );
@@ -98,8 +132,10 @@ export function lerConfiguracoesDoBanco(linhas) {
 
 // ── Configuração que vale para cada vaga ─────────────────────────────────
 
-export const modeloPorId = (modelos, id) =>
-  modelos?.get(String(id || "")) || null;
+export const modeloPorId = (
+  modelos: ModelosDaConvocacao | null | undefined,
+  id: unknown,
+) => modelos?.get(String(id || "")) || null;
 
 /*
   Sem modelo escolhido vale um modelo em branco: só ampla concorrência,
@@ -107,7 +143,11 @@ export const modeloPorId = (modelos, id) =>
   todas como ampla — dizer "cadastro de reserva" esconderia vagas que ele
   afirmou ter, e inventar categorias seria pior ainda.
 */
-export function modeloDoEdital(configs, modelos, editalId) {
+export function modeloDoEdital(
+  configs: ConfiguracoesDaConvocacao | null | undefined,
+  modelos: ModelosDaConvocacao | null | undefined,
+  editalId: unknown,
+) {
   const config = configs?.get(String(editalId));
   return modeloPorId(modelos, config?.modeloId) || modeloEmBranco();
 }
@@ -117,7 +157,16 @@ export function modeloDoEdital(configs, modelos, editalId) {
 
     quadro manual da vaga  >  derivado do total da vaga  >  derivado do padrão
 */
-export function configuracaoDaVaga(configs, modelos, editalId, codigoVaga) {
+export function configuracaoDaVaga(
+  configs: ConfiguracoesDaConvocacao | null | undefined,
+  modelos: ModelosDaConvocacao | null | undefined,
+  editalId: unknown,
+  codigoVaga: unknown,
+): {
+  proporcionalidade: boolean;
+  quadro: Record<string, number>;
+  modelo: ModeloDaConvocacao;
+} {
   const config = configs?.get(String(editalId));
   const modelo = modeloDoEdital(configs, modelos, editalId);
   if (!config)
@@ -137,8 +186,15 @@ export function configuracaoDaVaga(configs, modelos, editalId, codigoVaga) {
   cujo código sumiu do XLSX novo continua na lista, marcada, para que o gestor
   decida apagá-la em vez de a perder em silêncio.
 */
-export function vagasDoEdital(candidatos, configs, editalId) {
-  const porCodigo = new Map();
+export function vagasDoEdital(
+  candidatos: readonly CandidatoDaConfiguracao[] | null | undefined,
+  configs: ConfiguracoesDaConvocacao | null | undefined,
+  editalId: unknown,
+) {
+  const porCodigo = new Map<
+    string,
+    Pick<VagaDoFormulario, "codigo" | "cargo" | "na_lista" | "total">
+  >();
   (candidatos || [])
     .filter((linha) => String(linha.edital_id) === String(editalId))
     .forEach((linha) => {
@@ -151,7 +207,8 @@ export function vagasDoEdital(candidatos, configs, editalId) {
           na_lista: true,
           total: 0,
         });
-      porCodigo.get(codigo).total += 1;
+      const vaga = porCodigo.get(codigo);
+      if (vaga) vaga.total += 1;
     });
 
   configs?.get(String(editalId))?.vagas.forEach((guardada, codigo) => {
@@ -172,7 +229,11 @@ export function vagasDoEdital(candidatos, configs, editalId) {
 }
 
 /** O rascunho que o formulário edita, a partir do que está guardado. */
-export function rascunhoDoFormulario(candidatos, configs, editalId) {
+export function rascunhoDoFormulario(
+  candidatos: readonly CandidatoDaConfiguracao[] | null | undefined,
+  configs: ConfiguracoesDaConvocacao | null | undefined,
+  editalId: unknown,
+): FormularioDaConvocacao {
   const config = configs?.get(String(editalId));
   return {
     editalId: String(editalId || ""),
@@ -194,14 +255,17 @@ export function rascunhoDoFormulario(candidatos, configs, editalId) {
 }
 
 /** Quadro que vale para a linha: o manual, ou o derivado do percentual. */
-export function quadroDaVaga(vaga, modelo) {
+export function quadroDaVaga(
+  vaga: Pick<VagaDoFormulario, "manual" | "quadro" | "imediatas">,
+  modelo: ModeloDaConvocacao,
+): Record<string, number> {
   return vaga.manual
     ? normalizarQuadro(vaga.quadro, modelo)
     : derivarQuadro(vaga.imediatas, modelo);
 }
 
 /** Argumentos de `salvar_configuracao_convocacao`. */
-export function argumentosDaConfiguracao(formulario) {
+export function argumentosDaConfiguracao(formulario: FormularioDaConvocacao) {
   return {
     p_edital_id: formulario.editalId,
     p_proporcionalidade: formulario.proporcionalidade,
@@ -220,14 +284,17 @@ export function argumentosDaConfiguracao(formulario) {
 // ── Textos ───────────────────────────────────────────────────────────────
 
 /** Percentual como o edital o escreve: "25%", "2,5%" — nunca "25.00%". */
-export function formatarTaxa(valor) {
+export function formatarTaxa(valor: unknown) {
   return `${new Intl.NumberFormat("pt-BR", { maximumFractionDigits: 2 }).format(
     Number(valor) || 0,
   )}%`;
 }
 
 /** Resumo legível de um quadro: "AC 6 · PP 3 · PCD 1". */
-export function resumirQuadro(quadro, modelo) {
+export function resumirQuadro(
+  quadro: Record<string, number>,
+  modelo: ModeloDaConvocacao,
+) {
   return modelo.categorias
     .filter((categoria) => (quadro[categoria.id] || 0) > 0)
     .map((categoria) => `${categoria.sigla} ${quadro[categoria.id]}`)
@@ -235,7 +302,7 @@ export function resumirQuadro(quadro, modelo) {
 }
 
 /** "PP 25% · IND 3% · usado por 6 editais — editar muda todos" */
-export function resumoDoModelo(modelo) {
+export function resumoDoModelo(modelo: ModeloDaConvocacao | null | undefined) {
   if (!modelo) return "Sem modelo: tudo como ampla.";
   const reservas = categoriasDeReserva(modelo)
     .map(
@@ -243,21 +310,21 @@ export function resumoDoModelo(modelo) {
     )
     .join(" · ");
   const usos =
-    modelo.editais > 1
+    (modelo.editais ?? 0) > 1
       ? ` · usado por ${modelo.editais} editais — editar muda todos`
       : "";
   return `${reservas || "Sem reservas"}${usos}`;
 }
 
 /* "1ª", "2ª" — feminino, porque o que se numera é a vaga. */
-export const ordinalFeminino = (numero) => `${numero}ª`;
+export const ordinalFeminino = (numero: number) => `${numero}ª`;
 
 /*
   As regras de uma reserva numa frase, para a ficha da categoria mostrar sem
   abrir os detalhes: "Fração de 0,5 sobe · sem limite máximo · vale com
   qualquer número de vagas".
 */
-export function resumoDasRegrasDaCategoria(categoria) {
+export function resumoDasRegrasDaCategoria(categoria: CategoriaDaConvocacao) {
   const partes = [
     categoria.arredondamento === "sempre_acima"
       ? "Arredonda sempre para cima"
@@ -292,11 +359,11 @@ export const LIMITE_DA_PREVIA = 300;
   `primeiras` traz a 1ª posição de cada reserva ("PCD na 5ª"), que é o que se
   confere contra o edital ou o simulador do MGI.
 */
-export function previaDaConvocacao(total, modelo) {
+export function previaDaConvocacao(total: unknown, modelo: ModeloDaConvocacao) {
   const vagas = Math.min(lerInteiro(total), LIMITE_DA_PREVIA);
-  const quadro = derivarQuadro(vagas, modelo);
-  const sequencia = sequenciaDeConvocacao(quadro, modelo);
-  const contagem = {};
+  const quadro: Record<string, number> = derivarQuadro(vagas, modelo);
+  const sequencia: string[] = sequenciaDeConvocacao(quadro, modelo);
+  const contagem: Record<string, number> = {};
   const posicoes = sequencia.map((id, indice) => {
     contagem[id] = (contagem[id] || 0) + 1;
     const categoria = modelo.categorias.find((item) => item.id === id);
@@ -306,7 +373,7 @@ export function previaDaConvocacao(total, modelo) {
       sigla: categoria?.sigla || "—",
       rotulo: categoria?.rotulo || "—",
       reserva: !categoria?.ampla,
-      tom: modelo.categorias.indexOf(categoria),
+      tom: categoria ? modelo.categorias.indexOf(categoria) : -1,
       noGrupo: contagem[id],
       doGrupo: quadro[id] || 0,
     };
@@ -329,18 +396,18 @@ export function previaDaConvocacao(total, modelo) {
 
 // ── Leitura dos campos ───────────────────────────────────────────────────
 
-export function lerInteiro(valor) {
+export function lerInteiro(valor: unknown) {
   const numero = Math.floor(Number(valor));
   return Number.isFinite(numero) && numero > 0 ? numero : 0;
 }
 
-export function lerTaxa(valor) {
+export function lerTaxa(valor: unknown) {
   const numero = Number(String(valor).replace(",", "."));
   if (!Number.isFinite(numero) || numero <= 0) return 0;
   return Math.min(numero, 100);
 }
 
-export const lerPosicoes = (valor) =>
+export const lerPosicoes = (valor: unknown) =>
   lerTermos(valor)
     .map(lerInteiro)
     .filter(Boolean)
@@ -352,16 +419,18 @@ export const lerPosicoes = (valor) =>
   Cópia profunda: enquanto o editor está aberto, o modelo guardado continua a
   valer para a tabela de vagas ao lado.
 */
-export function copiaDoModelo(modelo) {
+export function copiaDoModelo(modelo: unknown) {
   return normalizarModelo(JSON.parse(JSON.stringify(modelo)));
 }
 
 /** Identificador estável a partir do rótulo, para categoria nova. */
-export function idPeloRotulo(rotulo) {
+export function idPeloRotulo(rotulo: string) {
   return normalizarTexto(rotulo).replace(/ /g, "_") || "categoria";
 }
 
-export function acrescentarCategoria(modelo) {
+export function acrescentarCategoria(
+  modelo: ModeloDaConvocacao,
+): ModeloDaConvocacao {
   const base = "nova_reserva";
   let id = base;
   let sufixo = 2;
@@ -405,13 +474,16 @@ export const SERIE_DA_PCD_NO_MGI = Object.freeze({
   intervalo: 20,
 });
 
-const ePcd = (categoria) =>
+const ePcd = (categoria: CategoriaDaConvocacao) =>
   categoria.id === "pcd" ||
   /(^| )(pcd|deficien[a-z]*)( |$)/.test(
     normalizarTexto(`${categoria.sigla} ${categoria.rotulo}`),
   );
 
-export function comDistribuicao(modelo, distribuicao) {
+export function comDistribuicao(
+  modelo: ModeloDaConvocacao,
+  distribuicao: DistribuicaoDaConvocacao,
+): ModeloDaConvocacao {
   if (distribuicao !== "serie_mgi") return { ...modelo, distribuicao };
   return {
     ...modelo,
@@ -428,7 +500,10 @@ export function comDistribuicao(modelo, distribuicao) {
   };
 }
 
-export function removerCategoria(modelo, categoriaId) {
+export function removerCategoria(
+  modelo: ModeloDaConvocacao,
+  categoriaId: string,
+) {
   return {
     ...modelo,
     categorias: modelo.categorias
@@ -442,7 +517,11 @@ export function removerCategoria(modelo, categoriaId) {
 }
 
 /** `mudancas` é um objeto, ou uma função da categoria atual para o objeto. */
-export function alterarCategoria(modelo, categoriaId, mudancas) {
+export function alterarCategoria(
+  modelo: ModeloDaConvocacao,
+  categoriaId: string,
+  mudancas: MudancasDaCategoria,
+) {
   return {
     ...modelo,
     categorias: modelo.categorias.map((item) =>
@@ -457,7 +536,11 @@ export function alterarCategoria(modelo, categoriaId, mudancas) {
 }
 
 /* Marcar põe o destino no fim da cascata: a ordem é a ordem em que se marca. */
-export function alternarNaCascata(cascata, destino, marcar) {
+export function alternarNaCascata(
+  cascata: readonly string[],
+  destino: string,
+  marcar: boolean,
+) {
   const sem = cascata.filter((id) => id !== destino);
   return marcar ? [...sem, destino] : sem;
 }
@@ -467,7 +550,10 @@ export function alternarNaCascata(cascata, destino, marcar) {
   do modelo. Sem isto, a lista mostrava "2º PP" antes de "1º IND" — o número
   dizia a ordem e a disposição dizia outra coisa.
 */
-export function destinosDaCascata(categoria, modelo) {
+export function destinosDaCascata(
+  categoria: CategoriaDaConvocacao,
+  modelo: ModeloDaConvocacao,
+) {
   return modelo.categorias
     .filter((item) => item.id !== categoria.id && !item.ampla)
     .sort((a, b) => {
@@ -484,14 +570,14 @@ export function destinosDaCascata(categoria, modelo) {
   acumulável. Sem nenhuma, ela degrada em silêncio para "só a de maior
   percentual" — e o gestor ficaria a achar que configurou o 91/2026.
 */
-export function faltaCategoriaAcumulavel(modelo) {
+export function faltaCategoriaAcumulavel(modelo: ModeloDaConvocacao) {
   return (
     modelo.cotaMultipla === "acumula_com_acumulavel" &&
     !modelo.categorias.some((categoria) => categoria.acumulavel)
   );
 }
 
-export function somaDasReservas(modelo) {
+export function somaDasReservas(modelo: ModeloDaConvocacao) {
   return categoriasDeReserva(modelo).reduce(
     (total, categoria) => total + categoria.percentual,
     0,
@@ -503,7 +589,7 @@ export function somaDasReservas(modelo) {
   Renomear "Quilombola" depois de o modelo estar em uso não pode trocar o id:
   ele é a chave da cascata e do quadro manual já gravado.
 */
-export function fixarIdsNovos(modelo) {
+export function fixarIdsNovos(modelo: ModeloDaConvocacao) {
   return {
     ...modelo,
     categorias: modelo.categorias.map((categoria) =>
@@ -515,7 +601,7 @@ export function fixarIdsNovos(modelo) {
 }
 
 /** `p_modelo` de `salvar_modelo_convocacao`: listas viajam como texto. */
-export function modeloParaSalvar(modelo) {
+export function modeloParaSalvar(modelo: ModeloDaConvocacao) {
   return {
     id: modelo.id || null,
     nome: modelo.nome,
