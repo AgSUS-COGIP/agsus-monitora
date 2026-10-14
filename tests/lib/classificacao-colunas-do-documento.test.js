@@ -5,7 +5,7 @@ import {
   colunasPadrao,
   colunasParaGuardar,
   ehOPadrao,
-} from "../../src/lib/classificacao/colunas-do-documento.js";
+} from "../../src/lib/classificacao/colunas-do-documento.ts";
 
 /*
   As colunas das tabelas do documento oficial que o gestor escolhe em "Como

@@ -1378,7 +1378,7 @@ export const VERBETES_AYA = Object.freeze([
       'Na aba Pré-classificação, quem coordena o edital (ou quem tem Editor na Classificação) registra a "Lista Geral de Classificação Provisória (ART)" e o "Lote de convocação". Registrar grava um retrato com hash na Classificação (tipos PROVISORIA e LOTE), montado no banco a partir da pré-classificação gravada; depois saem "Copiar para o SEI" e "Baixar DOCX", no mesmo modelo das outras listas (por vaga: classificação, nome e a nota da ART; a Provisória também tem a lista dos eliminados com o motivo). Os textos-padrão citam os itens 8.3.1 e 8.4 e podem ser trocados por edital na regra de classificação. Com "publica cada reposição" na regra, cada lote novo aparece para registrar como um novo Lote de Convocação; sem, aparece só o lote inicial e as reposições ficam registradas no histórico. Registrar exige a regra de classificação do edital; marcar como publicada exige Editor na Classificação.',
     fato: "",
     fonte:
-      "supabase/migrations/20261006110000_pre_classificacao_e_lote.sql; src/lib/classificacao/documento-sei.js",
+      "supabase/migrations/20261006110000_pre_classificacao_e_lote.sql; src/lib/classificacao/documento-sei.ts",
     abrir: "avaliacao-documental",
   },
   {
@@ -2162,7 +2162,7 @@ export const VERBETES_AYA = Object.freeze([
       '"Gerar" registra a lista no banco: o retrato (por vaga, posição, nome, nota e modalidade; eliminados com motivo; só o nome, sem CPF), a versão da regra usada, quem e quando, e o SHA-256 do retrato, calculado no banco. Se a regra mudou desde que a tela abriu, o banco recusa e pede para gerar de novo. "Marcar como publicada" registra quem e quando publicou; lista com empate esperando sorteio ou decisão não pode ser publicada.',
     fato: "",
     fonte:
-      "supabase/migrations/20261002150000_classificacao.sql; src/lib/classificacao/exportacao.js",
+      "supabase/migrations/20261002150000_classificacao.sql; src/lib/classificacao/exportacao.ts",
     abrir: "classificacao",
   },
   {
@@ -2179,7 +2179,7 @@ export const VERBETES_AYA = Object.freeze([
       'Tudo sai de uma lista já gerada (registrada com a versão da regra e o hash). Antes, escolha em "Exportar" o recorte — geral e modalidades no mesmo documento (como o 100/2026), só a geral, só uma modalidade (como o 83/2026, um documento por modalidade) ou só os eliminados — e, em "Publicação", se é o resultado preliminar ou o final (depois dos recursos). Saídas: "Copiar para o SEI" (o principal), "Como fica no SEI" (prévia e textos), "Baixar DOCX" (Word com papel timbrado), PDF (impressão da prévia, "Salvar como PDF") e XLSX (planilhas Classificação e Eliminados, para conferência). Só o nome do candidato, sem CPF, inscrição ou nascimento.',
     fato: "",
     fonte:
-      "src/lib/classificacao/exportacao.js; src/lib/classificacao/documento-sei.js",
+      "src/lib/classificacao/exportacao.ts; src/lib/classificacao/documento-sei.ts",
     abrir: "classificacao",
   },
   {
@@ -2195,7 +2195,7 @@ export const VERBETES_AYA = Object.freeze([
     resposta:
       'O documento segue o Comunicado Externo que a AgSUS publica no SEI (editais 83/2026 e 100/2026): "Brasília, na data da assinatura digital." à direita; o título em caixa alta (ex.: RESULTADO PRELIMINAR - ETAPA DE ANÁLISE CURRICULAR, CONVOCAÇÃO PARA ENTREVISTA, RESULTADO FINAL - ETAPA DE ENTREVISTA, RESULTADO FINAL - PROCESSO SELETIVO); "1. DISPOSIÇÕES PRELIMINARES" com os itens 1.1, 1.2…; uma tabela por vaga, com o cabeçalho "VAGA código - cargo - lotação - unidade - N vagas (x AC + y Pretos e Pardos + CR)" ou "- Cadastro Reserva", todas as vagas, inclusive as vazias ("Não houve candidatos aptos."); e "2. DISPOSIÇÕES FINAIS". Colunas padrão, enxutas: avaliação documental — Classificação, Nome, (Modalidade) e Nota Final (as parciais da regra ficam disponíveis, desmarcadas, na aba Colunas); eliminados — Nome, Nota e Justificativa; convocação — uma tabela Nº, NOME, Vaga, (Modalidade), DATA e HORA, com data e hora da agenda das entrevistas salva (sem agenda, em branco para preencher no SEI); entrevista — Classificação, NOME, NOTA (empate na mesma posição); resultado final — CLASSIFICAÇÃO, NOME, NOTA FINAL, e no fim o rodapé da regra. Na vaga em que houve empate de nota resolvido pelo desempate, vai logo abaixo da tabela a nota em itálico "*Os critérios de desempate foram considerados conforme item 10 do referido edital." O timbrado, a assinatura eletrônica e o rodapé "título (nº SEI) SEI processo / pg. N" quem põe é o SEI.',
     fato: "No MONITORA, o documento da lista de classificação segue o Comunicado Externo publicado no SEI; timbrado, assinatura e rodapé ficam com o SEI.",
-    fonte: "src/lib/classificacao/documento-sei.js",
+    fonte: "src/lib/classificacao/documento-sei.ts",
     abrir: "classificacao",
   },
   {
@@ -2212,7 +2212,7 @@ export const VERBETES_AYA = Object.freeze([
       'Gere a lista, escolha o recorte e a publicação e clique em "Copiar para o SEI". No SEI, crie o documento (Comunicado Externo), abra o editor, clique no corpo e cole (Ctrl+V); depois confira, preencha data e hora na convocação se não houver agenda salva, e assine. O que é copiado: o HTML com as classes de estilo do próprio SEI (Item_Nivel1 e Item_Nivel2 numeram sozinhos "1." e "1.1.", Texto_Centralizado_Maiusculas, Tabela_Texto_Centralizado…) e tabelas com borda e largura em porcentagem, além do texto puro numerado para quem cola fora do SEI. Se o navegador não liberar o formato com tabelas, a cópia vai só como texto e a tela avisa — aí use o DOCX. Se a numeração dos itens não aparecer no SEI, o editor removeu as classes ao colar: aplique o estilo "Item_Nivel1/Item_Nivel2" pelo menu de estilos ou use o DOCX.',
     fato: "",
     fonte:
-      "src/lib/classificacao/documento-sei.js; src/modulos/classificacao/documento-no-navegador.js",
+      "src/lib/classificacao/documento-sei.ts; src/modulos/classificacao/documento-no-navegador.js",
     abrir: "classificacao",
   },
   {
@@ -2249,7 +2249,7 @@ export const VERBETES_AYA = Object.freeze([
       'Quando, numa vaga, dois candidatos com a mesma nota ficaram em posições diferentes — o empate foi resolvido pelos critérios de desempate da regra ou pelo empate final (sorteio, decisão, ordem de inscrição) —, o documento põe logo abaixo da tabela daquela vaga, em itálico e letra menor: "*Os critérios de desempate foram considerados conforme item 10 do referido edital." Vaga sem empate, ou com o empate na mesma posição (como na lista do resultado da entrevista, quando a regra não usa os critérios ali), fica sem a nota. Vale em todas as listas por nota (avaliação documental, entrevista, resultado final e a lista provisória), na prévia, no "Baixar DOCX" e no "Copiar para o SEI"; não vale na convocação nem nos eliminados. O texto é um só por edital: em "Como fica no SEI" › Textos, campo "Nota de desempate (abaixo da tabela da vaga)". Se o item do edital não for o 10, troque ali e use "Salvar no edital"; "Restaurar o padrão" volta à frase padrão. Quando o rodapé da regra já é a frase do desempate (ex.: "conforme item 10.4 do edital"), ela é o texto inicial, e não se repete no fim do resultado final se já saiu abaixo das vagas.',
     fato: 'No MONITORA, a nota "*Os critérios de desempate foram considerados conforme item 10 do referido edital." sai só abaixo da tabela da vaga com empate de nota resolvido; o texto se edita em Como fica no SEI › Textos.',
     fonte:
-      "src/lib/classificacao/documento-sei.js; src/lib/classificacao/documento-docx.js; src/modulos/classificacao/documento.tsx",
+      "src/lib/classificacao/documento-sei.ts; src/lib/classificacao/documento-docx.ts; src/modulos/classificacao/documento.tsx",
     abrir: "classificacao",
   },
   {
@@ -2288,7 +2288,7 @@ export const VERBETES_AYA = Object.freeze([
       'Em "Como fica no SEI", a aba "Colunas" escolhe o que aparece na tabela de cada vaga e em que ordem. O padrão é enxuto: Classificação, Nome, Modalidade de Concorrência (só na tabela geral, quando há modalidades) e Nota Final; nos eliminados, Nome, Nota e Justificativa. Em "Outras colunas" ficam as que dá para incluir: as pontuações parciais da avaliação documental que a regra publica (Formação Acadêmica, Cursos de Aperfeiçoamento, Experiência Profissional, Pontuação Étnica) e, no resultado final, a Situação (dentro das vagas ou cadastro reserva). Marque ou desmarque; as setas ou arrastar mudam a ordem. Classificação e Nome (e a Justificativa dos eliminados) têm cadeado: são obrigatórias. A prévia, o "Baixar DOCX" e o "Copiar para o SEI" mudam na hora; "Salvar no edital" grava a escolha daquela publicação na regra do edital (nova versão) e "Restaurar o padrão", com a aba Colunas aberta, volta às colunas padrão. Na convocação para entrevista as colunas são fixas (Nº, NOME, Vaga, DATA e HORA). Não há coluna de inscrição, CPF ou nascimento: o documento é público e leva só o nome.',
     fato: "No MONITORA, as colunas das tabelas do documento do SEI são escolhidas por publicação na aba Colunas e gravadas na regra do edital.",
     fonte:
-      "src/modulos/classificacao/colunas-do-documento.tsx; src/lib/classificacao/colunas-do-documento.js",
+      "src/modulos/classificacao/colunas-do-documento.tsx; src/lib/classificacao/colunas-do-documento.ts",
     abrir: "classificacao",
   },
   {
@@ -2304,7 +2304,7 @@ export const VERBETES_AYA = Object.freeze([
       '"Baixar DOCX" gera o mesmo documento em Word para anexar ou ajustar: no cabeçalho, o logo da AgSUS e o nome, endereço e site da agência (Configurações › Marca › Documentos oficiais); no corpo, o título, os itens numerados com o recuo do SEI, as tabelas por vaga e a linha final "Brasília, <data por extenso>."; no rodapé, o nome do documento, o processo SEI e o número da página. Não tem bloco de assinatura: quem assina é o SEI.',
     fato: "",
     fonte:
-      "src/lib/classificacao/documento-docx.js; src/lib/cabecalho-dos-documentos.js",
+      "src/lib/classificacao/documento-docx.ts; src/lib/cabecalho-dos-documentos.js",
     abrir: "classificacao",
   },
   {
@@ -2321,7 +2321,7 @@ export const VERBETES_AYA = Object.freeze([
       "São quatro listas, como a AgSUS publica. 1) Avaliação documental e de títulos: quem passou na documental, por vaga e por modalidade, pela nota documental (com as parciais), e os eliminados com o motivo — a mesma lista vale como resultado preliminar ou final da etapa, antes e depois dos recursos. 2) Convocação para entrevista: os primeiros até o limite da regra (N vezes as vagas, ou até a k-ésima no cadastro reserva), com os empatados no limite se a regra mandar. 3) Resultado da entrevista: os convocados aptos pela nota da entrevista; o empate que sobra fica na mesma posição (o desempate do edital é do resultado final); os eliminados da entrevista com o motivo. 4) Resultado final: documental + entrevista (ou a composição da regra), desempate, vagas imediatas e cadastro reserva.",
     fato: "",
     fonte:
-      "src/lib/classificacao/motor.ts; src/lib/classificacao/exportacao.js",
+      "src/lib/classificacao/motor.ts; src/lib/classificacao/exportacao.ts",
     abrir: "classificacao",
   },
   {
@@ -4423,7 +4423,7 @@ export const VERBETES_AYA = Object.freeze([
       "Com a agenda salva, o documento da Convocação para entrevista (Copiar para o SEI, Baixar DOCX, PDF e Como fica no SEI) sai com as colunas DATA e HORA preenchidas com o dia e a hora de início de cada convocado; quem não tem horário fica em branco, para preencher no SEI. O modelo publicado não ganha coluna de banca. O XLSX da agenda (botão XLSX na visão Agenda) traz dia, hora de início e fim, banca, nome, vaga, cargo, modalidade e se o horário foi ajustado à mão.",
     fato: "",
     fonte:
-      "src/lib/classificacao/documento-sei.js; src/lib/agenda-das-entrevistas.ts",
+      "src/lib/classificacao/documento-sei.ts; src/lib/agenda-das-entrevistas.ts",
     abrir: "classificacao",
   },
   {

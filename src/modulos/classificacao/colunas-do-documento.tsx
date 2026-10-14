@@ -9,7 +9,7 @@ import { Aviso, classes } from "../../ui/index.js";
   ficam marcadas, com o cadeado. A prévia, o DOCX e o "Copiar para o SEI"
   mudam na hora; "Salvar no edital" grava a escolha desta publicação.
   As regras (o que existe, o padrão) ficam em
-  src/lib/classificacao/colunas-do-documento.js.
+  src/lib/classificacao/colunas-do-documento.ts.
 */
 
 export type ColunaDisponivel = {

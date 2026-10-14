@@ -6,8 +6,8 @@ import {
   NOTA_DE_DESEMPATE_PADRAO,
   notaDeDesempatePadrao,
   textoParaSei,
-} from "../../src/lib/classificacao/documento-sei.js";
-import { corpoXml } from "../../src/lib/classificacao/documento-docx.js";
+} from "../../src/lib/classificacao/documento-sei.ts";
+import { corpoXml } from "../../src/lib/classificacao/documento-docx.ts";
 import { documentoDaRegra } from "../../src/lib/classificacao/regra.ts";
 
 /*

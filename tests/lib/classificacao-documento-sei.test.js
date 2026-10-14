@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-import { instantaneoDaLista } from "../../src/lib/classificacao/exportacao.js";
+import { instantaneoDaLista } from "../../src/lib/classificacao/exportacao.ts";
 import {
   CABECALHO_PADRAO,
   chaveDoModelo,
@@ -16,8 +16,8 @@ import {
   textoParaSei,
   trechos,
   unidadeDoEdital,
-} from "../../src/lib/classificacao/documento-sei.js";
-import { gerarDocxOficial } from "../../src/lib/classificacao/documento-docx.js";
+} from "../../src/lib/classificacao/documento-sei.ts";
+import { gerarDocxOficial } from "../../src/lib/classificacao/documento-docx.ts";
 import { classificar } from "../../src/lib/classificacao/motor.ts";
 import {
   documentoDaRegra,

@@ -26,17 +26,17 @@
   "pedido", e a aba acompanha a execução (em_andamento e ultima_execucao de
   obter_pre_classificacao) e relê sozinha quando ela termina.
   O documento das listas sai do gerador da Classificação
-  (src/lib/classificacao/documento-sei.js e documento-docx.js).
+  (src/lib/classificacao/documento-sei.ts e documento-docx.js).
 */
 import {
   documentoOficial,
   htmlParaSei,
   paginaDaPrevia,
   textoParaSei,
-} from "../../lib/classificacao/documento-sei.js";
-import { gerarDocxOficial } from "../../lib/classificacao/documento-docx.js";
+} from "../../lib/classificacao/documento-sei.ts";
+import { gerarDocxOficial } from "../../lib/classificacao/documento-docx.ts";
 import { ehEditalDeTreinamento } from "../../lib/edital-de-treinamento.js";
-import { nomeDoArquivo } from "../../lib/classificacao/exportacao.js";
+import { nomeDoArquivo } from "../../lib/classificacao/exportacao.ts";
 import { CABECALHO_PADRAO } from "../../lib/cabecalho-dos-documentos.js";
 import { MIME_DOCX } from "../../lib/documento-da-resposta.js";
 import { comTempoLimite, mensagemDeFalha } from "../../lib/falha-de-rede.js";

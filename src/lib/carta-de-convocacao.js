@@ -20,7 +20,7 @@
     com o espaço em branco e a emissão avisa quem ficou sem.
 */
 
-import { dataPorExtenso } from "./classificacao/documento-sei.js";
+import { dataPorExtenso } from "./classificacao/documento-sei.ts";
 import { modalidadeSemAspas } from "./lista-aprovados-rules.js";
 
 const texto = (valor) => String(valor ?? "").trim();

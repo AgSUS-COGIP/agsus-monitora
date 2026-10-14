@@ -4,8 +4,8 @@ import { TIPOS_DE_LISTA } from "../../src/lib/classificacao/catalogo.ts";
 import {
   instantaneoDaLista,
   linhasDaPlanilha,
-} from "../../src/lib/classificacao/exportacao.js";
-import { documentoOficial } from "../../src/lib/classificacao/documento-sei.js";
+} from "../../src/lib/classificacao/exportacao.ts";
+import { documentoOficial } from "../../src/lib/classificacao/documento-sei.ts";
 import { classificar } from "../../src/lib/classificacao/motor.ts";
 
 /*
