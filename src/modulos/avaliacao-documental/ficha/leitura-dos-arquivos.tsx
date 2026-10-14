@@ -10,12 +10,15 @@ import {
   aceitarTodosSemAlerta,
   alertasDoArquivo,
   alertasResumidos,
+  conferirTodos,
+  desfazerAceitos,
   desfazerDecisaoLida,
   estadoDoItemLido,
   linhaAceita,
   linhaDoItemLido,
   linhaParaCorrigir,
   MOTIVOS_DA_RECUSA,
+  pendentesCompletos,
   recusarItemLido,
   rotuloDaRecusa,
   TAMANHO_DO_TEXTO_DA_RECUSA,
@@ -49,8 +52,10 @@ import type {
     e R na linha focada). Aceitar vira linha do item, marcada "lido do
     arquivo"; Corrigir abre a linha preenchida para ajustar e "Aceitar com a
     correção" marca "lido do arquivo, corrigido"; Recusar pede o motivo em
-    chips curtos e fica registrado (dá para trocar ou desfazer). "Aceitar
-    todos sem alerta" aceita de uma vez os pendentes sem alerta. Embaixo da
+    chips curtos e fica registrado (dá para trocar ou desfazer). "Conferir
+    todos" aceita de uma vez todos os pendentes completos (com ou sem
+    alerta; o recusado e o já aceito não mudam), com "Desfazer" logo ao
+    lado; "Aceitar todos sem alerta" aparece quando há pendentes com alerta. Embaixo da
     lista (children), as linhas digitadas à mão e o "Adicionar …".
   Sem leitura, nada aparece.
 */
@@ -140,6 +145,7 @@ export function ConferenciaDoLido({
 }: PropriedadesDaConferencia) {
   const [recusando, setRecusando] = useState<string | null>(null);
   const [corrigindo, setCorrigindo] = useState<Correcao | null>(null);
+  const [ultimoLote, setUltimoLote] = useState<string[] | null>(null);
   const lista = LISTA_DO_BLOCO[bloco.tipo];
   if (!itens.length || !lista) return null;
   const estados = itens.map((i) =>
@@ -149,6 +155,11 @@ export function ConferenciaDoLido({
   const semAlerta = itens.filter(
     (i, n) => estados[n] === "PENDENTE" && !i.alertas.length,
   ).length;
+  const completos = pendentesCompletos(lancamento, bloco, itens).length;
+  const loteParaDesfazer =
+    ultimoLote?.filter(
+      (c) => estadoDoItemLido(lancamento, bloco, c) === "ACEITO",
+    ) ?? [];
   const [um, varios] = ROTULO_DA_LISTA[bloco.tipo] ?? [
     "item lido",
     "itens lidos",
@@ -191,6 +202,20 @@ export function ConferenciaDoLido({
     setCorrigindo(null);
     aplicar((l) => desfazerDecisaoLida(l, bloco, item.chave));
   };
+  const aceitarTodos = () => {
+    setRecusando(null);
+    setCorrigindo(null);
+    const { aceitos } = conferirTodos(lancamento, bloco, itens);
+    if (!aceitos.length) return;
+    setUltimoLote(aceitos);
+    // A mesma mudança do Aceitar de cada item, numa só (o rascunho grava pelo mesmo caminho).
+    aplicar((l) => conferirTodos(l, bloco, itens).lancamento);
+  };
+  const desfazerLote = () => {
+    const chaves = loteParaDesfazer;
+    setUltimoLote(null);
+    if (chaves.length) aplicar((l) => desfazerAceitos(l, bloco, chaves));
+  };
   const aoTeclar = (
     ev: KeyboardEvent<HTMLLIElement>,
     item: ItemParaConferir,
@@ -226,18 +251,44 @@ export function ConferenciaDoLido({
             </span>
           ) : null}
         </p>
-        {!desabilitado && semAlerta > 1 ? (
-          <button
-            type="button"
-            className="avd-ficha-link"
-            onClick={() =>
-              aplicar((l) => aceitarTodosSemAlerta(l, bloco, itens))
-            }
-          >
-            <i className="fa-solid fa-list-check" aria-hidden="true" /> Aceitar
-            todos sem alerta ({semAlerta})
-          </button>
-        ) : null}
+        <span className="avd-conferir-atalhos">
+          {!desabilitado && completos > 1 ? (
+            <button
+              type="button"
+              className="avd-ficha-link"
+              data-acao="conferir-todos"
+              title="Aceita de uma vez os itens ainda sem decisão (com ou sem alerta). Os recusados e os já aceitos não mudam; o que falta dado (sem carga horária ou sem data) fica para corrigir."
+              onClick={aceitarTodos}
+            >
+              <i className="fa-solid fa-check-double" aria-hidden="true" />{" "}
+              Conferir todos ({completos})
+            </button>
+          ) : null}
+          {!desabilitado && loteParaDesfazer.length ? (
+            <button
+              type="button"
+              className="avd-ficha-link"
+              data-acao="desfazer-todos"
+              onClick={desfazerLote}
+            >
+              <i className="fa-solid fa-rotate-left" aria-hidden="true" />{" "}
+              Desfazer ({loteParaDesfazer.length})
+            </button>
+          ) : null}
+          {!desabilitado && semAlerta > 1 && semAlerta < completos ? (
+            <button
+              type="button"
+              className="avd-ficha-link"
+              data-acao="aceitar-sem-alerta"
+              onClick={() =>
+                aplicar((l) => aceitarTodosSemAlerta(l, bloco, itens))
+              }
+            >
+              <i className="fa-solid fa-list-check" aria-hidden="true" />{" "}
+              Aceitar todos sem alerta ({semAlerta})
+            </button>
+          ) : null}
+        </span>
       </header>
       <ul className="avd-conferir-lista">
         {itens.map((item, n) => {
