@@ -51,7 +51,8 @@ type AvaliacaoDoEspelho = {
     codigo: string;
     situacao: string;
     efeito: string | null;
-    motivos: { texto: string; item_edital?: string }[];
+    /** codigo null = o motivo escrito pelo avaliador (Outro motivo): sem o item do edital. */
+    motivos: { codigo?: string | null; texto: string; item_edital?: string }[];
   }[];
   experiencia?: unknown;
 };
@@ -172,7 +173,8 @@ function justificativasDoCriterio(
   );
   const textos: string[] = [];
   for (const m of avaliado?.motivos ?? []) {
-    const item = m.item_edital || bloco.item_edital;
+    // O Outro motivo (codigo null) vai como o avaliador escreveu, sem o item (#466).
+    const item = m.codigo === null ? "" : m.item_edital || bloco.item_edital;
     textos.push(item ? `Item ${item}: ${m.texto}` : m.texto);
   }
   const lancado = lancamento.blocos?.[bloco.codigo];
