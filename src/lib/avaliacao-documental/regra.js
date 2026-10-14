@@ -31,7 +31,12 @@
     blocos: [ { codigo, titulo, item_edital, tipo, perguntas[], condicao,
                 efeitos{}, motivos[], …campos do tipo } ],
     corte: { fonte: "REGRA_CLASSIFICACAO", item_edital },
-    parecer: { APTO, INAPTO_REQUISITO, INAPTO_NOTA, observacoes },
+    parecer: { APTO, INAPTO_REQUISITO, INAPTO_NOTA, observacoes,
+               mostrar_pontos_quando_inapto, pontos_informativos },
+    (mostrar_pontos_quando_inapto: o inapto por requisito também mostra, só
+    para informar, a pontuação apurada dos títulos — ficha e parecer, com o
+    modelo pontos_informativos; o resultado e a nota final continuam
+    Inapto e 0. Sem ela, desligada)
     observacoes_prontas: [ { codigo, rotulo, texto, item_edital } ],
     por_cargo: [ { codigo, rotulo, vagas[], cargos[], blocos{ <CODIGO>: {…} } } ]
   }
@@ -99,6 +104,15 @@ export const PARECER_PADRAO = Object.freeze({
     "{edital}\nCandidato(a) NÃO HABILITADO(A) por não atingir a nota mínima de {corte} pontos (item {item_corte}). Nota obtida: {nota} pontos, distribuídos da seguinte forma:\n\n{distribuicao}",
   observacoes: "\n\nObservações da análise:\n{observacoes}",
 });
+
+/**
+ * A linha da pontuação informativa do inapto por requisito
+ * (parecer.mostrar_pontos_quando_inapto), quando a regra não traz o modelo
+ * parecer.pontos_informativos. Fica fora do PARECER_PADRAO para não mudar as
+ * regras que não usam a opção.
+ */
+export const MODELO_DOS_PONTOS_INFORMATIVOS =
+  "\n\nPontuação apurada dos títulos, para fins informativos: {nota_informativa} pontos ({distribuicao_informativa}).";
 
 export const LOTE_PADRAO = Object.freeze({
   base: "MULTIPLO_VAGAS",
@@ -866,6 +880,20 @@ export function validarRegraAnalise(regra) {
         obrigatorio: true,
         max: LIMITES.modeloDeParecer,
       });
+  if (ehObjeto(parecer)) {
+    const mostrar = parecer.mostrar_pontos_quando_inapto;
+    // Como FC_JSON_SIM_NAO_OK: sem a chave, ou sim/não.
+    if (mostrar !== undefined && typeof mostrar !== "boolean")
+      erros.push(
+        "Parecer: mostrar a pontuação dos títulos no inapto é sim ou não.",
+      );
+    conferirTexto(
+      erros,
+      parecer.pontos_informativos,
+      "Parecer (pontos_informativos)",
+      { max: LIMITES.modeloDeParecer },
+    );
+  }
   const prontas = regra.observacoes_prontas ?? [];
   if (!Array.isArray(prontas) || prontas.length > LIMITES.observacoes)
     erros.push(`Até ${LIMITES.observacoes} observações prontas.`);

@@ -159,6 +159,13 @@ os modelos em `supabase/correcoes/20261006-modelos-da-regra-da-analise.sql` e o 
 **fonte:** src/lib/avaliacao-documental/regra-por-cargo.ts (avisosDoTituloUnico)
 **abrir:** avaliacao-documental
 
+## Pontuação dos títulos no inapto por requisito (8.2.1)
+
+**perguntas:** pontuacao no inapto por requisito | inapto por requisito com nota zero | pontuacao informativa | pontos informativos | mostrar a pontuacao dos titulos mesmo quando inapto | inapto nao tera seus titulos avaliados | 8.2.1 | mestrado e ficou com zero | por que o inapto ficou com 0
+**resposta:** Quem é inapto por requisito (ex.: Escolaridade "Não confere", curso diverso do exigido) não tem os títulos avaliados (item 8.2.1 do 114/2026): o resultado é Inapto (requisito) e a nota final é 0 — isso não muda a classificação, o lote nem o painel oficial. Quando a regra liga "Mostrar a pontuação dos títulos mesmo quando inapto por requisito (só informativa)" (no passo 4 do assistente, em "Inapto por requisito", e no modo avançado, em Parecer), a ficha mostra também, abaixo do resultado, "Pontuação dos títulos (informativa): 10" com as parciais (Titulação 8 · Cursos 2 · Experiência 0) e "Não entra na nota final", e o parecer ganha a linha do modelo "Pontuação informativa" (campos {nota_informativa} e {distribuicao_informativa}), ex.: "Pontuação apurada dos títulos, para fins informativos: 10,0 pontos (Titulação 8,0; Cursos 2,0; Experiência 0,0)." A pontuação informativa é a soma das parciais apuradas, gravada junto com o resultado da ficha; a nota final oficial continua 0. Desligada (o padrão), tudo fica como antes. Ligar ou desligar cria uma versão nova da regra, que a coordenação confere.
+**fonte:** src/lib/avaliacao-documental/pontuacao.js (pontos_informativos), src/lib/avaliacao-documental/pontos-informativos.ts, supabase/migrations/20261014170000_pontos_informativos_no_inapto.sql
+**abrir:** avaliacao-documental
+
 ## Equipe da avaliação documental
 
 **perguntas:** quem pode entrar na equipe da avaliacao documental | equipe da avaliacao documental | equipe do edital | analista e revisor | coordenacao da avaliacao | gestor do edital na avaliacao | quem coordena a avaliacao

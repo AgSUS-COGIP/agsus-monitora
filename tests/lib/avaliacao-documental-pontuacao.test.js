@@ -14,6 +14,12 @@ import {
   divergeDaArt,
   lerArt,
 } from "../../src/lib/avaliacao-documental/nota-declarada.js";
+import {
+  comPontosQuandoInapto,
+  pontuacaoInformativaDaFicha,
+} from "../../src/lib/avaliacao-documental/pontos-informativos.ts";
+import { resumoParaGravar } from "../../src/lib/avaliacao-documental/ficha.js";
+import { normalizarRegraAnalise } from "../../src/lib/avaliacao-documental/regra.js";
 
 /*
   A conta da avaliação documental (src/lib/avaliacao-documental/). Os casos
@@ -27,13 +33,17 @@ const CASOS = JSON.parse(
   ),
 );
 
+/* A regra do caso: parecer_da_regra põe as opções do parecer por cima. */
+const regraDoCaso = (caso) => {
+  const regra = CASOS.regras[caso.regra];
+  return caso.parecer_da_regra
+    ? { ...regra, parecer: { ...regra.parecer, ...caso.parecer_da_regra } }
+    : regra;
+};
+
 describe("casos dourados", () => {
   it.each(CASOS.casos.map((c) => [c.nome, c]))("%s", (_nome, caso) => {
-    const r = calcularAvaliacao(
-      CASOS.regras[caso.regra],
-      caso.candidato,
-      caso.opcoes,
-    );
+    const r = calcularAvaliacao(regraDoCaso(caso), caso.candidato, caso.opcoes);
     expect(r.resultado).toBe(caso.esperado.resultado);
     expect(r.nota_final).toBe(caso.esperado.nota_final);
     expect(r.nota_apurada).toBe(caso.esperado.nota_apurada);
@@ -46,6 +56,8 @@ describe("casos dourados", () => {
     if (caso.esperado.calculados)
       expect(r.calculados).toEqual(caso.esperado.calculados);
     if (caso.esperado.ajustes) expect(r.ajustes).toEqual(caso.esperado.ajustes);
+    if ("pontos_informativos" in caso.esperado)
+      expect(r.pontos_informativos).toEqual(caso.esperado.pontos_informativos);
   });
 
   it.each(CASOS.nota_declarada.map((c) => [c.nome, c]))(
@@ -341,5 +353,57 @@ describe("nota declarada e ART", () => {
     expect(divergeDaArt(6, 7)).toBe(true);
     expect(divergeDaArt(6, 7, 1)).toBe(false);
     expect(divergeDaArt(null, 7)).toBe(false);
+  });
+});
+
+describe("pontuação informativa no inapto por requisito", () => {
+  const caso = CASOS.casos.find((c) => c.parecer_da_regra);
+  const ligada = regraDoCaso(caso);
+  const desligada = CASOS.regras[caso.regra];
+
+  it("desligada (padrão): como hoje, sem a informativa nem a linha", () => {
+    const r = calcularAvaliacao(desligada, caso.candidato, caso.opcoes);
+    expect([r.resultado, r.nota_final, r.nota_apurada]).toEqual([
+      "INAPTO_REQUISITO",
+      0,
+      10,
+    ]);
+    expect(r.pontos_informativos).toBeNull();
+    expect(r.parecer).not.toContain("para fins informativos");
+    expect(resumoParaGravar(r, null)).not.toHaveProperty("pontos_informativos");
+    expect(pontuacaoInformativaDaFicha(r, r.resultado)).toBeNull();
+  });
+
+  it("ligada: nota final 0, informativa 10 gravada e mostrada na ficha", () => {
+    const r = calcularAvaliacao(ligada, caso.candidato, caso.opcoes);
+    expect(r.nota_final).toBe(0);
+    expect(resumoParaGravar(r, null).pontos_informativos).toEqual({
+      nota: 10,
+      parciais: { FORMACAO: 8, CURSOS: 2, EXPERIENCIA: 0 },
+    });
+    expect(pontuacaoInformativaDaFicha(r, "INAPTO_REQUISITO")).toEqual({
+      nota: 10,
+      partes: [
+        { parcial: "FORMACAO", rotulo: "Titulação", valor: 8 },
+        { parcial: "CURSOS", rotulo: "Cursos", valor: 2 },
+        { parcial: "EXPERIENCIA", rotulo: "Experiência", valor: 0 },
+      ],
+    });
+    // A ficha só mostra no inapto por requisito (o resultado mostrado).
+    expect(pontuacaoInformativaDaFicha(r, "APTO")).toBeNull();
+  });
+
+  it("ligar traz o modelo padrão; desligar devolve a regra de antes", () => {
+    const regra = normalizarRegraAnalise(desligada);
+    const com = comPontosQuandoInapto(regra, true);
+    expect(com.parecer.mostrar_pontos_quando_inapto).toBe(true);
+    expect(com.parecer.pontos_informativos).toContain("{nota_informativa}");
+    expect(comPontosQuandoInapto(com, false)).toEqual(regra);
+    // Religar mantém o modelo que a regra já tinha.
+    const propria = comPontosQuandoInapto(
+      { ...com, parecer: { ...com.parecer, pontos_informativos: "X" } },
+      true,
+    );
+    expect(propria.parecer.pontos_informativos).toBe("X");
   });
 });

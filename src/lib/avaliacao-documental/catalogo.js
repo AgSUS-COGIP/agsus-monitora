@@ -39,6 +39,14 @@ export const PARCIAIS = Object.freeze([
   ["EXPERIENCIA", "Experiência Profissional"],
 ]);
 
+/** Rótulos curtos das parciais na pontuação informativa do inapto por requisito. */
+export const PARCIAIS_CURTAS = Object.freeze([
+  ["ETNICO", "Critério étnico"],
+  ["FORMACAO", "Titulação"],
+  ["CURSOS", "Cursos"],
+  ["EXPERIENCIA", "Experiência"],
+]);
+
 export const SITUACOES_DO_BLOCO = Object.freeze([
   ["CONFORME", "Conforme"],
   ["NAO_CONFORME", "Não conforme"],
@@ -201,6 +209,9 @@ export const CAMPOS_DO_PARECER = Object.freeze([
   "distribuicao",
   "motivos",
   "observacoes",
+  // Só no modelo pontos_informativos (parecer.mostrar_pontos_quando_inapto).
+  "nota_informativa",
+  "distribuicao_informativa",
 ]);
 
 export const RESULTADOS = Object.freeze([

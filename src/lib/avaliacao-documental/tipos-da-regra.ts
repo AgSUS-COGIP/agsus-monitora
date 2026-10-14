@@ -195,7 +195,12 @@ export type RegraAnalise = {
   parecer: Record<
     "APTO" | "INAPTO_REQUISITO" | "INAPTO_NOTA" | "observacoes",
     string
-  >;
+  > & {
+    /** Inapto por requisito também mostra a pontuação, só informativa. */
+    mostrar_pontos_quando_inapto?: boolean;
+    /** O modelo da linha informativa ({nota_informativa}, {distribuicao_informativa}). */
+    pontos_informativos?: string;
+  };
   observacoes_prontas: ObservacaoPronta[];
   /** Diferenças por cargo (regra-por-cargo.ts): cargo > nível > padrão. */
   por_cargo?: DiferencaDoCargo[];

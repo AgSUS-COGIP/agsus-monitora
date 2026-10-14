@@ -35,6 +35,12 @@ PARCIAIS = {
     "CURSOS": "Cursos de Aperfeiçoamento",
     "EXPERIENCIA": "Experiência Profissional",
 }
+PARCIAIS_CURTAS = {
+    "ETNICO": "Critério étnico",
+    "FORMACAO": "Titulação",
+    "CURSOS": "Cursos",
+    "EXPERIENCIA": "Experiência",
+}
 SITUACOES_DO_BLOCO = {
     "CONFORME": "Conforme",
     "NAO_CONFORME": "Não conforme",
@@ -59,6 +65,11 @@ PARECER_PADRAO = {
     "(item {item_corte}). Nota obtida: {nota} pontos, distribuídos da seguinte forma:\n\n{distribuicao}",
     "observacoes": "\n\nObservações da análise:\n{observacoes}",
 }
+# A linha da pontuação informativa do inapto por requisito (parecer.mostrar_pontos_quando_inapto),
+# quando a regra não traz parecer.pontos_informativos (MODELO_DOS_PONTOS_INFORMATIVOS do regra.js).
+MODELO_DOS_PONTOS_INFORMATIVOS = (
+    "\n\nPontuação apurada dos títulos, para fins informativos: {nota_informativa} pontos ({distribuicao_informativa})."
+)
 
 
 def _lista(valor):
@@ -572,6 +583,12 @@ def calcular_avaliacao(regra_entrada, candidato=None, opcoes=None):
     else:
         resultado = "APTO"
     nota_final = 0 if resultado == "INAPTO_REQUISITO" else nota_apurada
+    # Inapto por requisito com a opção ligada: a pontuação apurada, só informativa.
+    pontos_informativos = (
+        {"nota": nota_apurada, "parciais": dict(parciais)}
+        if resultado == "INAPTO_REQUISITO" and regra["parecer"].get("mostrar_pontos_quando_inapto") is True
+        else None
+    )
 
     casas = regra["casas_parecer"]
     ordem = [PARCIAL_DO_TIPO.get(b.get("tipo")) for b in regra["blocos"]]
@@ -586,8 +603,18 @@ def calcular_avaliacao(regra_entrada, candidato=None, opcoes=None):
         "distribuicao": distribuicao,
         "motivos": "\n".join(f"- {t}" for t in eliminatorios),
         "observacoes": "\n".join(f"- {t}" for t in observacoes),
+        "nota_informativa": numero_do_parecer(nota_apurada, casas) if pontos_informativos else "",
+        "distribuicao_informativa": "; ".join(
+            f"{PARCIAIS_CURTAS.get(p, p)} {numero_do_parecer(parciais[p], casas)}" for p in ordem
+        )
+        if pontos_informativos
+        else "",
     }
     parecer = preencher_modelo(regra["parecer"].get(resultado), campos)
+    if pontos_informativos:
+        parecer += preencher_modelo(
+            regra["parecer"].get("pontos_informativos") or MODELO_DOS_PONTOS_INFORMATIVOS, campos
+        )
     if observacoes:
         parecer += preencher_modelo(regra["parecer"].get("observacoes"), campos)
 
@@ -615,6 +642,12 @@ def calcular_avaliacao(regra_entrada, candidato=None, opcoes=None):
         "encaminhamentos": encaminhamentos,
         "observacoes": observacoes,
         "experiencia": experiencia,
+        "pontos_informativos": None
+        if pontos_informativos is None
+        else {
+            "nota": _numero_saida(pontos_informativos["nota"]),
+            "parciais": {k: _numero_saida(v) for k, v in pontos_informativos["parciais"].items()},
+        },
         "parecer": parecer.lstrip("\n"),
     }
 
@@ -638,6 +671,19 @@ def conferir_ficha(regra, lancamento, gravado, opcoes=None, tolerancia=1e-4):
             diferencas.append(
                 {"campo": f"parciais.{p}", "gravado": parciais.get(p), "recalculado": r["parciais"].get(p)}
             )
+    # A pontuação informativa do inapto por requisito (parecer.mostrar_pontos_quando_inapto).
+    informativa = _objeto(gravado.get("pontos_informativos")) or None
+    recalculada = r["pontos_informativos"]
+    if (informativa is None) != (recalculada is None) or (
+        informativa and abs(_numero(informativa.get("nota")) - _numero(recalculada["nota"])) > tolerancia
+    ):
+        diferencas.append(
+            {
+                "campo": "pontos_informativos",
+                "gravado": None if informativa is None else informativa.get("nota"),
+                "recalculado": None if recalculada is None else recalculada["nota"],
+            }
+        )
     if "parecer" in gravado and str(gravado.get("parecer") or "") != r["parecer"]:
         diferencas.append({"campo": "parecer", "gravado": "(texto)", "recalculado": "(texto)"})
     return diferencas

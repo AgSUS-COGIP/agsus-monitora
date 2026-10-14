@@ -6,6 +6,10 @@ import {
   CRITERIOS_DA_CLASSIFICACAO,
   CRITERIOS_DA_PROVISORIA,
 } from "../../../lib/avaliacao-documental/catalogo-de-desempate.ts";
+import {
+  comPontosQuandoInapto,
+  ROTULO_DA_OPCAO,
+} from "../../../lib/avaliacao-documental/pontos-informativos.ts";
 import type {
   DesempateDaProvisoria,
   RegraAnalise,
@@ -13,13 +17,14 @@ import type {
 import { DIRECOES, NIVEIS } from "../../../lib/classificacao/catalogo.ts";
 import { rotuloDaVersao } from "../../../lib/nome-da-versao.ts";
 import { Aviso } from "../../../ui/index.js";
-import { CampoNumero } from "../campos.jsx";
+import { Caixa, CampoNumero } from "../campos.jsx";
 import { ListaOrdenavel } from "./lista-ordenavel.tsx";
 import { SeletorDeCriterios } from "./seletor-de-criterios.tsx";
 import type { ApoioDaRegra, NotaMinimaDaClassificacao } from "./tipos.ts";
 
 /*
-  Passo 4: nota mínima e desempate na mesma tela. A nota mínima e os
+  Passo 4: nota mínima e desempate na mesma tela (e a opção de mostrar a
+  pontuação dos títulos no inapto por requisito, só informativa). A nota mínima e os
   critérios de desempate são da regra de CLASSIFICAÇÃO do edital (gravados
   pelo salvar_regra_classificacao, com a permissão da Classificação); o
   desempate da Provisória (a lista do lote) é da regra da avaliação.
@@ -247,6 +252,19 @@ export function PassoNotaEDesempate({
           aoEscolher={(c) =>
             mudarDesempate([...desempate, c.codigo as DesempateDaProvisoria])
           }
+        />
+      </section>
+
+      <section
+        className="avd-ast-grupo"
+        aria-label="Inapto por requisito"
+        data-tour="avd-assistente-pontos-informativos"
+      >
+        <h3 className="avd-ast-grupo-titulo">Inapto por requisito</h3>
+        <Caixa
+          rotulo={ROTULO_DA_OPCAO}
+          marcado={regra.parecer.mostrar_pontos_quando_inapto === true}
+          aoMudar={(v: boolean) => aoMudar(comPontosQuandoInapto(regra, v))}
         />
       </section>
     </div>

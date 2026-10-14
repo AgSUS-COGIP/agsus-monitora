@@ -6,6 +6,7 @@
 */
 import type { EnderecosDaEmpregare } from "../../../lib/avaliacao-documental/anexo-na-empregare.ts";
 import type { Recusa } from "../../../lib/avaliacao-documental/leitura-dos-arquivos.ts";
+import type { PontosInformativos } from "../../../lib/avaliacao-documental/pontos-informativos.ts";
 import type {
   ItemExtra,
   RequisitoDoCargo,
@@ -129,6 +130,8 @@ export type Avaliacao = {
   parecer: string;
   /** O tempo dos vínculos aceitos (apurarExperiencia, em pontuacao.js). */
   experiencia?: ExperienciaApurada | null;
+  /** Inapto por requisito com parecer.mostrar_pontos_quando_inapto (pontos-informativos.ts). */
+  pontos_informativos?: PontosInformativos | null;
 };
 
 export type ExperienciaApurada = {
