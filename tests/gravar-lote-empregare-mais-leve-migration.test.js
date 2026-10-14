@@ -68,7 +68,7 @@ describe("gravar_lote_empregare mais leve", () => {
   });
 });
 
-const NOME2 = "20261014110000_abrir_vaga_empregare_sem_varredura.sql";
+const NOME2 = "20261014120000_abrir_vaga_empregare_sem_varredura.sql";
 const ABRIR = ler(`supabase/migrations/${NOME2}`);
 const ABRIR_ROLLBACK = ler(`supabase/rollback/${NOME2}`);
 const ABRIR_ENSAIO = ler(`supabase/ensaios/${NOME2}`);

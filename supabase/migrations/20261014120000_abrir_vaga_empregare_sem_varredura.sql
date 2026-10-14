@@ -18,7 +18,7 @@
     inteira quando p_vaga é nulo; um código pelo índice quando não é). Mesmo
     resultado, mesma assinatura.
 
-  Rollback: supabase/rollback/20261014110000_abrir_vaga_empregare_sem_varredura.sql
+  Rollback: supabase/rollback/20261014120000_abrir_vaga_empregare_sem_varredura.sql
 */
 begin;
 

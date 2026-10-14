@@ -1,5 +1,5 @@
 /*
-  Ensaio de 20261014110000 (abrir a vaga sem varrer as análises). Sempre
+  Ensaio de 20261014120000 (abrir a vaga sem varrer as análises). Sempre
   termina em rollback. Cole a migration no ponto marcado (dentro do mesmo
   begin/rollback): reprova se FC_EMPREGARE_VAGAS_DO_QUADRO mudar de resultado
   (lista inteira e cada código ativo) e mostra o tempo de uma busca por código.
@@ -13,7 +13,7 @@ select v.vaga as pedido, q.*
         union select ' 182528' union select 'x') v,
        lateral private."FC_EMPREGARE_VAGAS_DO_QUADRO"(v.vaga) q;
 
--- >>> cole aqui supabase/migrations/20261014110000_abrir_vaga_empregare_sem_varredura.sql <<<
+-- >>> cole aqui supabase/migrations/20261014120000_abrir_vaga_empregare_sem_varredura.sql <<<
 
 create temp table t_tempo (etapa text, ms numeric);
 do $$

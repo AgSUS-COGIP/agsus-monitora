@@ -1,4 +1,4 @@
--- Desfaz 20261014110000: FC_EMPREGARE_ABRIR_VAGA volta a procurar o edital em toda chamada,
+-- Desfaz 20261014120000: FC_EMPREGARE_ABRIR_VAGA volta a procurar o edital em toda chamada,
 -- FC_EMPREGARE_VAGAS_DO_QUADRO volta ao filtro único (varre as análises) e o índice sai.
 begin;
 CREATE OR REPLACE FUNCTION private."FC_EMPREGARE_VAGAS_DO_QUADRO"(p_vaga text DEFAULT NULL::text)
