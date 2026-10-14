@@ -11,11 +11,11 @@ import {
   normalizarPainel,
   opcoesDosEditais,
 } from "../src/lib/painel-dos-robos.ts";
-import { documentoOficial } from "../src/lib/classificacao/documento-sei.js";
+import { documentoOficial } from "../src/lib/classificacao/documento-sei.ts";
 import {
   instantaneoDaLista,
   nomeDoArquivo,
-} from "../src/lib/classificacao/exportacao.js";
+} from "../src/lib/classificacao/exportacao.ts";
 import { editaisParaConduzir } from "../src/lib/conducao-de-entrevista.ts";
 import { editaisDaEscolha } from "../src/lib/avaliacao-documental/editais.js";
 import { indicadoresDaVisaoGeral } from "../src/lib/visao-geral.ts";

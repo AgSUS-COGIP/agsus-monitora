@@ -1,3 +1,8 @@
+import type {
+  ColunaDisponivel,
+  RetratoParaDocumento,
+} from "./tipos-dos-documentos.ts";
+import { retratoParaDocumento } from "./dados-dos-documentos.ts";
 /*
   As colunas das tabelas do documento oficial (SEI, Word e a prévia "Como
   fica no SEI"), que o gestor escolhe e ordena por publicação.
@@ -16,7 +21,7 @@
   colunas fixas (Nº, NOME, Vaga, DATA, HORA).
 
   Não há coluna de inscrição, CPF ou nascimento: o retrato da lista guarda
-  só o nome (exportacao.js) — o documento é público.
+  só o nome (exportacao.ts) — o documento é público.
 
   A escolha fica na regra do edital (regra.documento.colunas[chave], a lista
   ordenada dos códigos); sem a chave, o padrão.
@@ -32,28 +37,29 @@ const NO_FIM = new Set(["JUSTIFICATIVA"]);
 const SEM_MODALIDADE_NO_PADRAO = new Set(["ENTREVISTA", "PROVISORIA", "LOTE"]);
 
 /** "PARCIAL_FORMACAO" ← "FORMACAO". */
-export const colunaDaParcial = (codigo) => `${PREFIXO_DA_PARCIAL}${codigo}`;
+export const colunaDaParcial = (codigo: string) =>
+  `${PREFIXO_DA_PARCIAL}${codigo}`;
 
 /** "FORMACAO" ← "PARCIAL_FORMACAO" (ou null). */
-export const parcialDaColuna = (id) =>
+export const parcialDaColuna = (id: unknown) =>
   String(id).startsWith(PREFIXO_DA_PARCIAL)
     ? String(id).slice(PREFIXO_DA_PARCIAL.length)
     : null;
 
-export const rotuloDaParcial = (codigo) =>
+export const rotuloDaParcial = (codigo: string) =>
   PARCIAIS_DA_DOCUMENTAL.find(([v]) => v === codigo)?.[1] || codigo;
 
 /** O tipo de lista e se é a dos eliminados, a partir da chave do modelo. */
-function partesDaChave(chave) {
+function partesDaChave(chave: unknown) {
   const texto = String(chave || "");
   return {
-    tipo: texto.split("_")[0],
+    tipo: texto.split("_")[0] ?? "",
     eliminados: texto.endsWith("_ELIMINADOS"),
   };
 }
 
 /** As colunas padrão de uma publicação (chave do modelo); null = fixas. */
-export function colunasPadrao(chave) {
+export function colunasPadrao(chave: unknown) {
   const { tipo, eliminados } = partesDaChave(chave);
   if (tipo === "CONVOCACAO") return null;
   if (eliminados) return ["NOME", "NOTA", "JUSTIFICATIVA"];
@@ -63,7 +69,7 @@ export function colunasPadrao(chave) {
 }
 
 /** O rótulo de uma coluna no documento, no padrão de cada publicação. */
-export function rotuloDaColuna(id, tipo, eliminados = false) {
+export function rotuloDaColuna(id: string, tipo: string, eliminados = false) {
   const parcial = parcialDaColuna(id);
   if (parcial) return rotuloDaParcial(parcial);
   const caixaAlta = tipo === "FINAL" && !eliminados;
@@ -91,7 +97,7 @@ export function rotuloDaColuna(id, tipo, eliminados = false) {
 }
 
 /* A explicação curta que a tela mostra ao lado de cada coluna. */
-const AJUDA = Object.freeze({
+const AJUDA: Readonly<Record<string, string | undefined>> = Object.freeze({
   MODALIDADE: "Só na tabela da classificação geral, com as modalidades.",
   SITUACAO: "Dentro das vagas ou cadastro reserva.",
 });
@@ -99,11 +105,24 @@ const AJUDA = Object.freeze({
 /**
  * As colunas que esta lista registrada pode mostrar, na ordem natural:
  * [{ id, rotulo, obrigatoria, ajuda }]. null = colunas fixas (convocação).
- *   retrato  o retrato da lista (exportacao.js)
+ *   retrato  o retrato da lista (exportacao.ts)
  *   lista    "todas" | "geral" | código da modalidade | "eliminados"
  */
-export function colunasDisponiveis(retrato, lista = "todas") {
-  const tipo = retrato?.tipo;
+export function colunasDisponiveis(
+  entrada: unknown,
+  lista = "todas",
+): ColunaDisponivel[] | null {
+  if (entrada == null) return null;
+  const retrato = retratoParaDocumento(entrada);
+  return colunasDoRetrato(retrato, lista);
+}
+
+/** O gerador já validou o retrato; reutilizar suas linhas sem outra conversão. */
+export function colunasDoRetrato(
+  retrato: RetratoParaDocumento,
+  lista = "todas",
+): ColunaDisponivel[] | null {
+  const tipo = retrato.tipo;
   if (!tipo || tipo === "CONVOCACAO") return null;
   const eliminados = lista === "eliminados";
   const parciais = tipo === "PRELIMINAR" ? retrato.parciais || [] : [];
@@ -142,7 +161,11 @@ export function colunasDisponiveis(retrato, lista = "todas") {
  *   disponiveis  ids (ou o retorno de colunasDisponiveis)
  *   guardadas    regra.documento.colunas[chave] (ou undefined)
  */
-export function colunasEscolhidas(disponiveis, guardadas, chave) {
+export function colunasEscolhidas(
+  disponiveis: readonly (string | ColunaDisponivel)[] | null | undefined,
+  guardadas: readonly string[] | null | undefined,
+  chave: unknown,
+) {
   const ids = (disponiveis || []).map((c) =>
     typeof c === "string" ? c : c.id,
   );
@@ -166,7 +189,12 @@ export function colunasEscolhidas(disponiveis, guardadas, chave) {
  * classificação geral), cada uma depois da coluna que a antecedia — para a
  * escolha valer também nas outras listas da mesma publicação.
  */
-export function colunasParaGuardar(escolhidas, disponiveis, anteriores, chave) {
+export function colunasParaGuardar(
+  escolhidas: readonly string[],
+  disponiveis: readonly (string | ColunaDisponivel)[] | null | undefined,
+  anteriores: readonly string[] | null | undefined,
+  chave: unknown,
+) {
   const ids = (disponiveis || []).map((c) =>
     typeof c === "string" ? c : c.id,
   );
@@ -186,7 +214,10 @@ export function colunasParaGuardar(escolhidas, disponiveis, anteriores, chave) {
 }
 
 /** As colunas guardadas iguais ao padrão da publicação (não precisam ir à regra). */
-export function ehOPadrao(colunas, chave) {
+export function ehOPadrao(
+  colunas: readonly string[] | null | undefined,
+  chave: unknown,
+) {
   const padrao = colunasPadrao(chave);
   return (
     !Array.isArray(colunas) ||

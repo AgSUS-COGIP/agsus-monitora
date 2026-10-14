@@ -1,3 +1,11 @@
+import type { ResultadoDoMotor, LinhaDaLista } from "./tipos-do-resultado.ts";
+import type {
+  CelulaDaPlanilha,
+  LinhaDoRetrato,
+  ModalidadeDoRetrato,
+  PlanilhaDaClassificacao,
+} from "./tipos-dos-documentos.ts";
+import { retratoParaDocumento } from "./dados-dos-documentos.ts";
 /*
   O retrato da lista gerada e a exportação no padrão das publicações.
 
@@ -6,8 +14,8 @@
   as de cada modalidade com posição, nome e nota, e os eliminados com motivo.
   SÓ NOME — sem CPF, data de nascimento, código de inscrição ou contato.
 
-  O documento oficial (SEI, Word e impressão) sai de documento-sei.js e
-  documento-docx.js, a partir deste retrato. Aqui ficam a planilha (XLSX:
+  O documento oficial (SEI, Word e impressão) sai de documento-sei.ts e
+  documento-docx.ts, a partir deste retrato. Aqui ficam a planilha (XLSX:
   SpreadsheetML mínimo, duas planilhas — Classificação e Eliminados) e o
   nome do arquivo.
 */
@@ -29,13 +37,21 @@ export const VERSAO_DO_RETRATO = 1;
  * @param {{edital?: Record<string, unknown>, regra?: Record<string, unknown>, versao?: number | null}} [opcoes]
  */
 export function instantaneoDaLista(
-  resultado,
-  { edital = {}, regra, versao = null } = {},
+  resultado: ResultadoDoMotor,
+  {
+    edital = {},
+    regra,
+    versao = null,
+  }: {
+    edital?: Record<string, unknown>;
+    regra?: unknown;
+    versao?: number | null;
+  } = {},
 ) {
   const r = normalizarRegra(regra);
   // Só as parciais que a regra publica, e só na avaliação documental.
   const parciais = resultado.tipo === "PRELIMINAR" ? r.documental.parciais : [];
-  const soParciais = (valores) =>
+  const soParciais = (valores: Record<string, number | null> | undefined) =>
     parciais.length && valores
       ? {
           parciais: Object.fromEntries(
@@ -43,7 +59,7 @@ export function instantaneoDaLista(
           ),
         }
       : {};
-  const linha = (l) => ({
+  const linha = (l: LinhaDaLista) => ({
     posicao: l.posicao,
     analise_id: l.analiseId,
     nome: l.nome,
@@ -117,13 +133,17 @@ export function instantaneoDaLista(
   };
 }
 
-const rotuloDaModalidade = (codigo, modalidades) =>
+const rotuloDaModalidade = (
+  codigo: string,
+  modalidades: ModalidadeDoRetrato[],
+) =>
   codigo === "AC"
     ? "AC"
     : modalidades.find((m) => m.codigo === codigo)?.nome || codigo;
 
 /** "classificacao-final-83-2026" (sem extensão). */
-export function nomeDoArquivo(retrato, lista = "todas") {
+export function nomeDoArquivo(entrada: unknown, lista = "todas") {
+  const retrato = retratoParaDocumento(entrada);
   const tipo =
     [...TIPOS_DE_LISTA, ...TIPOS_DE_LISTA_DA_PRE_CLASSIFICACAO]
       .find(([v]) => v === retrato.tipo)?.[0]
@@ -147,7 +167,7 @@ export function nomeDoArquivo(retrato, lista = "todas") {
 
 /* ── XLSX ───────────────────────────────────────────────────────────── */
 
-const colunaExcel = (i) => {
+const colunaExcel = (i: number) => {
   let s = "";
   let n = i + 1;
   while (n > 0) {
@@ -158,7 +178,7 @@ const colunaExcel = (i) => {
   return s;
 };
 
-function planilhaXml(linhas) {
+function planilhaXml(linhas: PlanilhaDaClassificacao["linhas"]) {
   const corpo = linhas
     .map(
       (linha, l) =>
@@ -180,15 +200,16 @@ function planilhaXml(linhas) {
 }
 
 /** As linhas das duas planilhas (Classificação e Eliminados) do retrato. */
-export function linhasDaPlanilha(retrato) {
+export function linhasDaPlanilha(entrada: unknown) {
+  const retrato = retratoParaDocumento(entrada, true);
   const modalidades = retrato.modalidades || [];
-  const situacoes = {
+  const situacoes: Readonly<Record<string, string | undefined>> = {
     VAGA: "Dentro das vagas",
     CR: "Cadastro reserva",
     CONVOCADO: "Convocado",
     APTO: "Apto",
   };
-  const classificacao = [
+  const classificacao: CelulaDaPlanilha[][] = [
     [
       "Vaga",
       "Cargo",
@@ -200,11 +221,16 @@ export function linhasDaPlanilha(retrato) {
       "Situação",
     ],
   ];
-  const eliminados = [["Vaga", "Cargo", "Nome", "Motivo", "Detalhe"]];
+  const eliminados: CelulaDaPlanilha[][] = [
+    ["Vaga", "Cargo", "Nome", "Motivo", "Detalhe"],
+  ];
   for (const v of retrato.vagas) {
-    const listas = [
+    const listas: [string, LinhaDoRetrato[]][] = [
       ["Classificação Geral", v.geral],
-      ...modalidades.map((m) => [m.nome, v.listas?.[m.codigo] || []]),
+      ...modalidades.map((m): [string, LinhaDoRetrato[]] => [
+        m.nome,
+        v.listas?.[m.codigo] || [],
+      ]),
     ];
     for (const [nome, linhas] of listas)
       for (const l of linhas)
@@ -218,14 +244,14 @@ export function linhasDaPlanilha(retrato) {
           (l.modalidades || [])
             .map((m) => rotuloDaModalidade(m, modalidades))
             .join(" / "),
-          situacoes[l.situacao] || "",
+          situacoes[l.situacao ?? ""] || "",
         ]);
     for (const e of v.eliminados)
       eliminados.push([
         v.codigo || "",
         v.cargo || "",
         e.nome,
-        MOTIVOS_DE_ELIMINACAO[e.motivo] || e.motivo,
+        motivos[e.motivo] || e.motivo,
         e.detalhe || "",
       ]);
   }
@@ -233,7 +259,7 @@ export function linhasDaPlanilha(retrato) {
 }
 
 /** Os bytes do .xlsx da lista. */
-export function gerarXlsxDaLista(retrato, quando = new Date()) {
+export function gerarXlsxDaLista(retrato: unknown, quando = new Date()) {
   const { classificacao, eliminados } = linhasDaPlanilha(retrato);
   return gerarXlsx(
     [
@@ -249,7 +275,10 @@ export function gerarXlsxDaLista(retrato, quando = new Date()) {
  * a primeira linha de cada uma em negrito. Também usado pela agenda das
  * entrevistas.
  */
-export function gerarXlsx(planilhas, quando = new Date()) {
+export function gerarXlsx(
+  planilhas: readonly PlanilhaDaClassificacao[],
+  quando = new Date(),
+) {
   const folhas = planilhas.map((p, i) => ({ ...p, n: i + 1 }));
   const arquivos = [
     {
@@ -315,3 +344,6 @@ export function gerarXlsx(planilhas, quando = new Date()) {
   ];
   return zipSemCompressao(arquivos, quando);
 }
+
+const motivos: Readonly<Record<string, string | undefined>> =
+  MOTIVOS_DE_ELIMINACAO;

@@ -156,18 +156,18 @@ function normalizarModalidade(m: unknown) {
   gestor ajustou neste edital: número do edital e processo SEI, a unidade e a
   autoridade do item 1.1, local e data, e os modelos (título, disposições
   preliminares e finais) de cada tipo de lista. Vazio = o padrão das
-  publicações (src/lib/classificacao/documento-sei.js). Na regra só aparece
+  publicações (src/lib/classificacao/documento-sei.ts). Na regra só aparece
   quando o gestor ajustou algo (as regras sem textos próprios continuam
   iguais); `documentoDaRegra` devolve sempre o formato completo.
 
   `colunas`: as colunas das tabelas escolhidas em "Como fica no SEI", por
   modelo (a mesma chave dos textos), na ordem do documento: CLASSIFICACAO,
   NOME, MODALIDADE, NOTA, SITUACAO, PARCIAL_FORMACAO…, JUSTIFICATIVA. Sem a
-  chave = as colunas padrão da publicação (colunas-do-documento.js).
+  chave = as colunas padrão da publicação (colunas-do-documento.ts).
 
   `desempate`: a nota logo abaixo da tabela de cada vaga em que um empate de
   nota foi resolvido (por critério ou pelo empate final). Vazio = o padrão
-  (documento-sei.js: o rodapé da regra, se fala do desempate, ou o item 10).
+  (documento-sei.ts: o rodapé da regra, se fala do desempate, ou o item 10).
 */
 const CHAVE_DE_MODELO = /^[A-Z_]{3,60}$/;
 const CODIGO_DE_COLUNA = /^[A-Z][A-Z0-9_]{1,40}$/;

@@ -196,7 +196,7 @@ duas entradas, em `src/modulos/entrevistas/conduzir.tsx`, `src/lib/fila-de-condu
 
 **perguntas:** data e hora na convocacao | preencher data e hora da convocacao | agenda no documento do sei | exportar a agenda
 **resposta:** Com a agenda salva, o documento da Convocação para entrevista (Copiar para o SEI, Baixar DOCX, PDF e Como fica no SEI) sai com as colunas DATA e HORA preenchidas com o dia e a hora de início de cada convocado; quem não tem horário fica em branco, para preencher no SEI. O modelo publicado não ganha coluna de banca. O XLSX da agenda (botão XLSX na visão Agenda) traz dia, hora de início e fim, banca, nome, vaga, cargo, modalidade e se o horário foi ajustado à mão.
-**fonte:** src/lib/classificacao/documento-sei.js; src/lib/agenda-das-entrevistas.ts
+**fonte:** src/lib/classificacao/documento-sei.ts; src/lib/agenda-das-entrevistas.ts
 **abrir:** classificacao
 
 ## Agenda do dia em Conduzir entrevistas

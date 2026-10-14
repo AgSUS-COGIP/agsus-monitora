@@ -5,12 +5,12 @@ import {
   instantaneoDaLista,
   linhasDaPlanilha,
   nomeDoArquivo,
-} from "../../src/lib/classificacao/exportacao.js";
+} from "../../src/lib/classificacao/exportacao.ts";
 import {
   documentoOficial,
   htmlParaSei,
-} from "../../src/lib/classificacao/documento-sei.js";
-import { gerarDocxOficial } from "../../src/lib/classificacao/documento-docx.js";
+} from "../../src/lib/classificacao/documento-sei.ts";
+import { gerarDocxOficial } from "../../src/lib/classificacao/documento-docx.ts";
 import { classificar } from "../../src/lib/classificacao/motor.ts";
 
 /*

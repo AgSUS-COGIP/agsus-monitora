@@ -11,7 +11,7 @@ import {
   textoDoLimite,
   vagasDaLista,
 } from "../src/lib/convocacao-da-entrevista.ts";
-import { instantaneoDaLista } from "../src/lib/classificacao/exportacao.js";
+import { instantaneoDaLista } from "../src/lib/classificacao/exportacao.ts";
 
 describe("entrada externa da convocação", () => {
   it("descarta retratos e cálculos sem uma lista de vagas", () => {

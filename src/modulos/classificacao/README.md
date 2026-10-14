@@ -40,7 +40,7 @@ documento.tsx      "Como fica no SEI": quase tela cheia (ou tela cheia), folha A
                    (escala em src/lib/classificacao/escala-da-previa.ts), painel recolhível
                    com as abas Dados | Textos | Colunas e rodapé fixo; no celular, uma coluna
 colunas-do-documento.tsx  aba Colunas: marcar e ordenar (setas ou arrastar) as colunas
-                   das tabelas, por publicação (regras em src/lib/classificacao/colunas-do-documento.js)
+                   das tabelas, por publicação (regras em src/lib/classificacao/colunas-do-documento.ts)
 hora-de-nascimento.tsx  hora da certidão na gaveta do candidato, só quando o empate chega
                    à maior idade no mesmo dia (sem certidão = 23:59:59)
 documento-no-navegador.js  área de transferência (HTML + texto), logo em PNG, impressão
@@ -48,9 +48,9 @@ classificacao.css  só o que é desta tela (tokens)
 ```
 
 Regras puras em `src/lib/classificacao/` (`motor.ts`, `regra.ts`, `catalogo.ts`, `vagas.ts`,
-`numeros.ts`, `sorteio.ts`, `exportacao.js`, `ajustes.ts` — o motor com os ajustes da pontuação
-aprovados em recurso e a prévia do recurso —, `documento-sei.js` — o documento no modelo das
-publicações do SEI, textos-padrão do 83/2026 e do 100/2026 —, `documento-docx.js` — Word com papel
+`numeros.ts`, `sorteio.ts`, `exportacao.ts`, `ajustes.ts` — o motor com os ajustes da pontuação
+aprovados em recurso e a prévia do recurso —, `documento-sei.ts` — o documento no modelo das
+publicações do SEI, textos-padrão do 83/2026 e do 100/2026 —, `documento-docx.ts` — Word com papel
 timbrado —, `dados.ts`). Os textos e as colunas do documento ajustados pelo gestor ficam na regra
 (`DS_CONFIGURACAO.documento`, `.colunas` por publicação, `.desempate` = a nota abaixo da tabela da
 vaga com empate de nota resolvido; sem migration); o cabeçalho da agência, em Configurações › Marca
@@ -83,7 +83,7 @@ parcial. A confirmação valida quantidade e pendências retornadas pelo banco. 
 `tests/tipos/publicacao-da-classificacao.tsx` e o fluxo em `tests/modulos/classificacao.test.js`.
 Listas e filtros: saída pública do motor em `src/lib/classificacao/tipos-do-resultado.ts`,
 contratos de uso em `tests/tipos/listas-da-classificacao.tsx`. O motor usa esse contrato
-via JSDoc e mantém o cálculo em JavaScript. O estado valida a quantidade de pendências
+em TypeScript, com contratos internos em `src/lib/classificacao/tipos-do-motor.ts`. O estado valida a quantidade de pendências
 e a situação de publicação dos registros; uma ordem incompleta ou duplicada não é
 apresentada como sorteio registrado. Testes em
 `tests/lib/classificacao-metadados-das-listas.test.js`.
@@ -121,10 +121,10 @@ Explicações para a Aya: `docs/aya/regras-da-classificacao.md`, `docs/aya/regra
 A tela principal e o estado estão em TypeScript/TSX. Os contratos de snapshot, editais,
 versões da regra, registros das listas, RPCs e callbacks ficam em `tipos-do-estado.ts`.
 `src/lib/classificacao/dados-do-estado.ts` valida os campos do seletor e os metadados
-usados pelo estado, preservando os campos adicionais para as peças ainda em JSX.
+usados pelo estado, preservando os campos adicionais do retrato e da regra.
 Permissão de edição exige booleano; coleções malformadas são recusadas para não calcular
 uma lista com candidatos descartados. Configuração da regra, cálculos e documentos
-continuam nas bibliotecas existentes, com contratos JSDoc nas chamadas de documento.
+estão em TypeScript nas bibliotecas compartilhadas.
 
 Troca de edital, área ou usuário invalida os efeitos locais das gravações e leituras de
 listas. Sair e voltar ao mesmo ID não aceita uma resposta anterior: ela não altera dados,
@@ -133,8 +133,15 @@ do contexto novo. Uma carga de logo antiga não inicia download; uma cópia já 
 é cancelada, mas seu resultado antigo não mostra aviso. Chamadas ao banco já enviadas
 não são canceladas. As RPCs, a versão conferida pelo banco e os cálculos não mudaram.
 
-Listas, regra, publicação de aprovados, agenda e seu estado ainda estão em JavaScript/JSX.
+Listas, regra, publicação de aprovados, agenda e seu estado também estão em TypeScript/TSX.
 Verificação: `tests/tipos/tela-estado-da-classificacao.tsx`,
 `tests/lib/classificacao-dados-do-estado.test.js`,
 `tests/modulos/classificacao-contexto-de-gravacao.test.js` e testes existentes da tela,
 agenda, exportação e hora de nascimento.
+
+Retrato, XLSX, colunas e documentos SEI/DOCX estão em TypeScript, com contratos em
+`src/lib/classificacao/tipos-dos-documentos.ts`. A entrada é conferida por
+`dados-dos-documentos.ts`; nenhuma linha malformada é descartada para exportar o restante.
+São preservados o nome público, o timbrado, a numeração, as notas de desempate e de decisão,
+os horários da agenda e os formatos XML. A área de transferência, logo e impressão no
+navegador ainda ficam em `documento-no-navegador.js`.

@@ -1,3 +1,29 @@
+import type {
+  AgendaDoDocumento,
+  BlocoDoDocumento,
+  ColunaDaTabela,
+  DocumentoOficial,
+  EliminadoDoRetrato,
+  ItemDoDocumento,
+  LinhaDoRetrato,
+  MarcaDaPrevia,
+  ModalidadeDoRetrato,
+  OpcoesDoDocumento,
+  RetratoParaDocumento,
+  TabelaDoDocumento,
+  VagaDoRetrato,
+} from "./tipos-dos-documentos.ts";
+import {
+  agendaParaDocumento,
+  exigirDadoDoDocumento,
+  retratoParaDocumento,
+} from "./dados-dos-documentos.ts";
+type ModeloDeTexto = {
+  titulo: string;
+  preliminares: string;
+  finais: string;
+  publico_geral?: string;
+};
 /*
   O documento oficial de uma lista da Classificação, no modelo das publicações
   da AgSUS no SEI (Comunicado Externo dos editais 83/2026 e 100/2026):
@@ -16,7 +42,7 @@
                                                          ← o SEI põe
 
   `documentoOficial` monta o modelo (sem HTML) a partir do retrato da lista
-  registrada (exportacao.js) e dos textos do edital (regra.documento, com os
+  registrada (exportacao.ts) e dos textos do edital (regra.documento, com os
   padrões abaixo). Dele saem:
     - `htmlParaSei`: o HTML para colar no editor do SEI (CKEditor), com as
       classes de estilo do SEI (Item_Nivel1/2/3/4 numeram sozinhas, por
@@ -26,7 +52,7 @@
       para a área de transferência e para quem cola fora do SEI;
     - `paginaDaPrevia`: a página "Como fica no SEI" (timbrado simulado, as
       classes do SEI imitadas em CSS) — a prévia na tela e a impressão (PDF);
-    - o DOCX com papel timbrado (documento-docx.js).
+    - o DOCX com papel timbrado (documento-docx.ts).
 
   Textos: cada linha das disposições é um item (1.1., 1.2.…); ">" no começo
   desce um nível (1.3.1.), ">>" dois (1.3.3.1.). **negrito** vira negrito.
@@ -44,17 +70,17 @@
   modelo.
 
   Colunas das tabelas: as do padrão de cada publicação ou as que o gestor
-  escolheu e ordenou (regra.documento.colunas; colunas-do-documento.js).
+  escolheu e ordenou (regra.documento.colunas; colunas-do-documento.ts).
 
   SÓ NOME COMPLETO — o retrato já não traz CPF, inscrição nem nascimento.
 */
 import { MOTIVOS_DE_ELIMINACAO } from "./catalogo.ts";
 import {
   COLUNA_DA_ART,
-  colunasDisponiveis,
+  colunasDoRetrato,
   colunasEscolhidas,
   parcialDaColuna,
-} from "./colunas-do-documento.js";
+} from "./colunas-do-documento.ts";
 import { escalar, formatarNota, lerData, ordinal } from "./numeros.ts";
 import { documentoDaRegra, normalizarRegra } from "./regra.ts";
 import { CABECALHO_PADRAO } from "../cabecalho-dos-documentos.js";
@@ -83,14 +109,14 @@ const QUESTIONARIOS =
 const NOTA_MINIMA_DOCUMENTAL =
   "Nos termos do item 8.20 do Edital, a pontuação mínima exigida para aptidão na **Avaliação Documental e de Títulos** é de {notas_minimas}.";
 /* O 83/2026 cita "do Edital" na documental e "do Edital nº 83/2026" na entrevista. */
-const recurso = (etapa, { comNumero = true } = {}) =>
+const recurso = (etapa: string, { comNumero = true } = {}) =>
   `Os candidatos poderão interpor recurso contra o resultado preliminar ${etapa}, nos termos do item 11 do Edital${comNumero ? " nº {edital}" : ""}, exclusivamente por meio do e-mail recursos.nerssi@agenciasus.org.br, mediante requerimento específico, conforme modelo constante no Anexo VII, no período estabelecido no cronograma.`;
-const ELIMINADOS_FINAL = (etapa) => [
+const ELIMINADOS_FINAL = (etapa: string) => [
   `O presente Resultado Final divulga a relação dos candidatos eliminados ${etapa}, os quais, nos termos deste Edital, não atenderam aos requisitos para classificação nesta etapa.`,
   "Em razão da eliminação, os candidatos relacionados nesta publicação não serão convocados para as etapas subsequentes do Processo Seletivo Simplificado.",
   "As publicações referentes às demais etapas do Processo Seletivo Simplificado serão divulgadas no site oficial da AgSUS.",
 ];
-const linhas = (...itens) => itens.join("\n");
+const linhas = (...itens: string[]) => itens.join("\n");
 
 const DOCUMENTAL_PRELIMINARES = linhas(
   `A ${AGSUS}{autoridade}, em conformidade com o **Edital nº {edital}**, referente ao Processo Seletivo Simplificado destinado {ao} **{unidade}**, ${COMPROMISSO}, torna público o **Resultado {fase} da Etapa de Avaliação Documental e de Títulos {publico}**, conforme previsto no item 8 do referido Edital.`,
@@ -153,7 +179,9 @@ const FINAL_ELIMINADOS_PRELIMINARES = linhas(
   `publico_geral`: o que {publico} diz na lista geral (o 83 publicou a geral
   da documental como "das Vagas de Ampla Concorrência").
 */
-export const MODELOS_PADRAO = Object.freeze({
+export const MODELOS_PADRAO: Readonly<
+  Record<string, ModeloDeTexto | undefined>
+> & { PRELIMINAR_PRELIMINAR: ModeloDeTexto } = Object.freeze({
   PROVISORIA: {
     rotulo: "Lista Geral de Classificação Provisória (ART)",
     titulo: "LISTA GERAL DE CLASSIFICAÇÃO PROVISÓRIA - RANQUEAMENTO ELETRÔNICO",
@@ -295,12 +323,14 @@ export const MODELOS_PADRAO = Object.freeze({
   },
 });
 
-const FASE_PADRAO = Object.freeze({ FINAL: "FINAL" });
+const FASE_PADRAO: Readonly<Record<string, string | undefined>> = Object.freeze(
+  { FINAL: "FINAL" },
+);
 /* Listas sem fase no título (a convocação e as da pré-classificação). */
 const SEM_FASE = new Set(["CONVOCACAO", "PROVISORIA", "LOTE"]);
 
 /** A fase da publicação: a escolhida, ou a padrão da etapa (FINAL no resultado final). */
-export function faseDaPublicacao(tipo, fase) {
+export function faseDaPublicacao(tipo: string, fase?: string | null) {
   if (SEM_FASE.has(tipo)) return null;
   return fase === "FINAL" || fase === "PRELIMINAR"
     ? fase
@@ -308,7 +338,11 @@ export function faseDaPublicacao(tipo, fase) {
 }
 
 /** A chave do modelo de texto: "PRELIMINAR_FINAL_ELIMINADOS", "CONVOCACAO"… */
-export function chaveDoModelo(tipo, fase, lista = "todas") {
+export function chaveDoModelo(
+  tipo: string,
+  fase?: string | null,
+  lista = "todas",
+) {
   if (tipo === "CONVOCACAO" || tipo === "LOTE") return tipo;
   if (tipo === "PROVISORIA")
     return lista === "eliminados" ? "PROVISORIA_ELIMINADOS" : "PROVISORIA";
@@ -318,7 +352,10 @@ export function chaveDoModelo(tipo, fase, lista = "todas") {
 }
 
 /** Os textos de um modelo: os do edital (regra.documento.modelos) ou os padrões. */
-export function textosDoModelo(documento, chave) {
+export function textosDoModelo(
+  documento: Partial<ReturnType<typeof documentoDaRegra>> | null | undefined,
+  chave: string,
+) {
   const padrao = MODELOS_PADRAO[chave] || MODELOS_PADRAO.PRELIMINAR_PRELIMINAR;
   const proprio = documento?.modelos?.[chave] || {};
   return {
@@ -331,7 +368,7 @@ export function textosDoModelo(documento, chave) {
 /* ── Campos do edital ───────────────────────────────────────────────── */
 
 /** "Edital 83/2026 - DSEI Xingu" → "83/2026". */
-export function numeroDoEdital(texto) {
+export function numeroDoEdital(texto: unknown) {
   const m = String(texto ?? "").match(/(\d{1,4})\s*\/\s*(\d{4})/);
   return m ? `${Number(m[1])}/${m[2]}` : String(texto ?? "").trim();
 }
@@ -340,9 +377,10 @@ export function numeroDoEdital(texto) {
   A unidade por extenso e os artigos ("destinado ao Distrito…", "à Casa…").
   `propria` = o que o gestor escreveu (vence a dedução pela sigla).
 */
-export function unidadeDoEdital(sigla, propria = "") {
+export function unidadeDoEdital(sigla: unknown, propria: unknown = "") {
   const s = String(sigla ?? "").trim();
-  const feminino = (nome) => /^(casa|coordena|diretoria|unidade)/i.test(nome);
+  const feminino = (nome: string) =>
+    /^(casa|coordena|diretoria|unidade)/i.test(nome);
   if (String(propria ?? "").trim()) {
     const nome = String(propria).trim();
     return feminino(nome)
@@ -394,7 +432,7 @@ const UNIDADES = [
 const DEZENAS = ["", "", "vinte", "trinta", "quarenta", "cinquenta"];
 
 /** 7 → "7 (sete)"; 7,5 → "7,5". Até 59 por extenso. */
-export function numeroComExtenso(valor) {
+export function numeroComExtenso(valor: unknown) {
   if (!Number.isFinite(valor)) return "";
   const n = Number(valor);
   const digitos = n.toLocaleString("pt-BR", { maximumFractionDigits: 2 });
@@ -406,7 +444,7 @@ export function numeroComExtenso(valor) {
   return `${digitos} (${extenso})`;
 }
 
-const NIVEIS_DO_TEXTO = [
+const NIVEIS_DO_TEXTO: readonly (readonly [string, string])[] = [
   ["superior", "superior"],
   ["tecnico", "técnico"],
   ["medio", "médio"],
@@ -418,12 +456,12 @@ const NIVEIS_DO_TEXTO = [
   médio, e 5 (cinco) pontos para nível fundamental" — das notas mínimas da
   regra (por nível, ou a única). Sem nota mínima: lacuna para o gestor.
 */
-export function textoDasNotasMinimas(regraBruta) {
+export function textoDasNotasMinimas(regraBruta: unknown): string {
   const r = normalizarRegra(regraBruta);
-  const pontos = (v) =>
+  const pontos = (v: number) =>
     `${numeroComExtenso(v)} ${v === 1 ? "ponto" : "pontos"}`;
   const porNivel = r.documental.nota_minima_por_nivel;
-  const grupos = [];
+  const grupos: { valor: number; rotulos: string[] }[] = [];
   for (const [nivel, rotulo] of NIVEIS_DO_TEXTO) {
     const v = porNivel[nivel];
     if (v === undefined || v === null) continue;
@@ -438,7 +476,7 @@ export function textoDasNotasMinimas(regraBruta) {
     );
     return partes.length > 1
       ? `${partes.slice(0, -1).join(", ")}, e ${partes.at(-1)}`
-      : partes[0];
+      : (partes[0] ?? "");
   }
   if (r.documental.nota_minima !== null)
     return pontos(r.documental.nota_minima);
@@ -461,7 +499,7 @@ const MESES = [
 ];
 
 /** "2026-10-02" (ou Date) → "2 de outubro de 2026"; dia 1 → "1º de …". */
-export function dataPorExtenso(valor) {
+export function dataPorExtenso(valor: unknown) {
   let d = null;
   if (valor instanceof Date && !Number.isNaN(valor.getTime())) {
     const partes = Object.fromEntries(
@@ -482,10 +520,10 @@ export function dataPorExtenso(valor) {
 
 /* ── O modelo do documento ───────────────────────────────────────────── */
 
-const texto = (valor) => String(valor ?? "").trim();
+const texto = (valor: unknown) => String(valor ?? "").trim();
 
 /** Troca {campo} pelo valor (campo desconhecido fica como está). */
-export function preencher(modelo, campos) {
+export function preencher(modelo: unknown, campos: Record<string, unknown>) {
   return String(modelo ?? "").replace(/\{(\w+)\}/g, (inteiro, nome) =>
     Object.prototype.hasOwnProperty.call(campos, nome)
       ? String(campos[nome])
@@ -494,7 +532,7 @@ export function preencher(modelo, campos) {
 }
 
 /** As linhas do texto em itens: { nivel: 2|3|4, texto }. */
-export function itensDoTexto(bruto) {
+export function itensDoTexto(bruto: unknown): ItemDoDocumento[] {
   return String(bruto ?? "")
     .replace(/\r\n?/g, "\n")
     .split("\n")
@@ -503,7 +541,7 @@ export function itensDoTexto(bruto) {
     .map((linha) => {
       const m = linha.match(/^(>{1,2})\s*/);
       return {
-        nivel: 2 + (m ? m[1].length : 0),
+        nivel: 2 + (m ? (m[1]?.length ?? 0) : 0),
         texto: m ? linha.slice(m[0].length) : linha,
       };
     })
@@ -511,7 +549,7 @@ export function itensDoTexto(bruto) {
 }
 
 /** "texto **negrito** texto" → [{ texto, negrito }]. */
-export function trechos(textoComMarcas) {
+export function trechos(textoComMarcas: unknown) {
   const saida = [];
   const partes = String(textoComMarcas ?? "").split(/(\*\*[^*]+?\*\*)/g);
   for (const parte of partes) {
@@ -522,13 +560,13 @@ export function trechos(textoComMarcas) {
   return saida;
 }
 
-const semMarcas = (valor) =>
+const semMarcas = (valor: unknown) =>
   trechos(valor)
     .map((t) => t.texto)
     .join("");
 
 /* Larguras-base (%) por coluna; o Nome (ou a Vaga) fica com o resto. */
-const LARGURAS = Object.freeze({
+const LARGURAS: Readonly<Record<string, number | undefined>> = Object.freeze({
   Classificação: 14,
   CLASSIFICAÇÃO: 18,
   Nº: 6,
@@ -547,21 +585,24 @@ const LARGURAS = Object.freeze({
 });
 const ELASTICAS = new Set(["Nome", "NOME", "Vaga"]);
 
-function colunasComLargura(rotulos, alinhamento) {
+function colunasComLargura(
+  rotulos: string[],
+  alinhamento: string,
+): ColunaDaTabela[] {
   const fixas = rotulos.filter((r) => !ELASTICAS.has(r));
   const base = Object.fromEntries(fixas.map((r) => [r, LARGURAS[r] ?? 11]));
-  let soma = fixas.reduce((s, r) => s + base[r], 0);
+  let soma = fixas.reduce((s, r) => s + (base[r] ?? 0), 0);
   const elasticas = rotulos.length - fixas.length || 1;
   const minimoElastico = 22 * elasticas;
   if (soma > 100 - minimoElastico) {
     const fator = (100 - minimoElastico) / soma;
-    for (const r of fixas) base[r] = Math.floor(base[r] * fator);
-    soma = fixas.reduce((s, r) => s + base[r], 0);
+    for (const r of fixas) base[r] = Math.floor((base[r] ?? 0) * fator);
+    soma = fixas.reduce((s, r) => s + (base[r] ?? 0), 0);
   }
   const resto = 100 - soma;
   const vaga = rotulos.includes("Vaga") && rotulos.includes("NOME");
   return rotulos.map((rotulo) => {
-    let largura = base[rotulo];
+    let largura = base[rotulo] ?? 0;
     if (ELASTICAS.has(rotulo)) {
       largura = vaga
         ? Math.round(resto * (rotulo === "Vaga" ? 0.6 : 0.4))
@@ -587,15 +628,17 @@ function colunasComLargura(rotulos, alinhamento) {
 export const PREFIXO_DA_NOTA_DE_DECISAO =
   "Incluído por decisão da coordenação: ";
 
-export function marcasDasDecisoes(linhas) {
-  const motivos = [];
+export function marcasDasDecisoes(
+  linhas: readonly LinhaDoRetrato[] | null | undefined,
+) {
+  const motivos: string[] = [];
   for (const l of linhas || []) {
     const motivo = String(l?.decisao ?? "").trim();
     if (motivo && !motivos.includes(motivo)) motivos.push(motivo);
   }
   const marca = new Map(motivos.map((m, i) => [m, "*".repeat(i + 1)]));
   return {
-    nome: (l) => {
+    nome: (l: LinhaDoRetrato) => {
       const m = marca.get(String(l?.decisao ?? "").trim());
       return m ? `${l.nome} ${m}` : l.nome;
     },
@@ -627,12 +670,12 @@ const TIPOS_COM_NOTA_DE_DESEMPATE = new Set([
 const FALA_DO_DESEMPATE = /crit[ée]rios? de desempate/i;
 
 /** A lista leva a nota de desempate? (não a convocação nem os eliminados) */
-export function listaComNotaDeDesempate(tipo, lista) {
+export function listaComNotaDeDesempate(tipo: string, lista: string) {
   return TIPOS_COM_NOTA_DE_DESEMPATE.has(tipo) && lista !== "eliminados";
 }
 
 /** O padrão da nota: o rodapé da regra, se é a frase do desempate; senão, o item 10. */
-export function notaDeDesempatePadrao(rodape) {
+export function notaDeDesempatePadrao(rodape: unknown) {
   const r = texto(rodape);
   if (!FALA_DO_DESEMPATE.test(r) || r.length > 300 || r.includes("\n"))
     return NOTA_DE_DESEMPATE_PADRAO;
@@ -640,36 +683,49 @@ export function notaDeDesempatePadrao(rodape) {
 }
 
 /** A nota de desempate do edital (a escrita pelo gestor ou o padrão). */
-export function notaDeDesempate(documento, rodape) {
+export function notaDeDesempate(
+  documento: { desempate?: unknown } | null | undefined,
+  rodape: unknown,
+) {
   return texto(documento?.desempate) || notaDeDesempatePadrao(rodape);
 }
 
 /** Na lista, dois com a mesma nota em posições diferentes (empate resolvido)? */
-export function houveDesempate(linhas, casas = 2) {
-  const posicoes = new Map();
+export function houveDesempate(
+  linhas: readonly LinhaDoRetrato[] | null | undefined,
+  casas = 2,
+) {
+  const posicoes = new Map<number, Set<number | undefined>>();
   for (const l of linhas || []) {
     const k = escalar(l?.nota, casas);
     if (k === null) continue;
     if (!posicoes.has(k)) posicoes.set(k, new Set());
-    posicoes.get(k).add(l.posicao);
-    if (posicoes.get(k).size > 1) return true;
+    const doGrupo = exigirDadoDoDocumento(posicoes.get(k));
+    doGrupo.add(l.posicao);
+    if (doGrupo.size > 1) return true;
   }
   return false;
 }
 
-function justificativa(e) {
-  return [MOTIVOS_DE_ELIMINACAO[e.motivo] || e.motivo, e.detalhe]
+function justificativa(e: EliminadoDoRetrato) {
+  return [motivos[e.motivo] || e.motivo, e.detalhe]
     .filter(Boolean)
     .join(". ")
     .replace(/\.\./g, ".");
 }
 
-const nomeDaModalidade = (codigo, modalidades) =>
+const nomeDaModalidade = (
+  codigo: string,
+  modalidades: ModalidadeDoRetrato[],
+) =>
   codigo === "AC"
     ? "AC"
     : modalidades.find((m) => m.codigo === codigo)?.nome || codigo;
 
-const siglaDasModalidades = (l, modalidades) =>
+const siglaDasModalidades = (
+  l: LinhaDoRetrato,
+  modalidades: ModalidadeDoRetrato[],
+) =>
   (l.modalidades || [])
     .filter((m) => m !== "AC")
     .map((m) =>
@@ -683,7 +739,7 @@ const siglaDasModalidades = (l, modalidades) =>
 
 /*
   As tabelas de uma lista, no padrão de cada publicação (colunas padrão; o
-  gestor escolhe e ordena em "Como fica no SEI" — colunas-do-documento.js):
+  gestor escolhe e ordena em "Como fica no SEI" — colunas-do-documento.ts):
     PRELIMINAR  Classificação | Nome | [Modalidade] | Nota Final
                 (83/2026; o 100/2026 junta as modalidades no mesmo arquivo;
                 as parciais da regra ficam disponíveis, desmarcadas)
@@ -697,27 +753,38 @@ const siglaDasModalidades = (l, modalidades) =>
                 SEI)
   `guardadas`: regra.documento.colunas[chave] (undefined = o padrão).
 */
-const SITUACAO_NO_DOCUMENTO = Object.freeze({
-  VAGA: "Dentro das vagas",
-  CR: "Cadastro reserva",
-});
+const SITUACAO_NO_DOCUMENTO: Readonly<Record<string, string | undefined>> =
+  Object.freeze({
+    VAGA: "Dentro das vagas",
+    CR: "Cadastro reserva",
+  });
 
-function tabelasDaLista(retrato, lista, agenda = null, guardadas, chave) {
+function tabelasDaLista(
+  retrato: RetratoParaDocumento,
+  lista: string,
+  agenda: AgendaDoDocumento | null,
+  guardadas: readonly string[] | undefined,
+  chave: string,
+): (BlocoDoDocumento & { desempate?: boolean })[] {
   const casas = retrato.casas ?? 2;
   const tipo = retrato.tipo;
   const modalidades = retrato.modalidades || [];
   const todas = lista === "todas";
-  const nota = (v) =>
+  const nota = (v: number | null | undefined) =>
     v === null || v === undefined ? "-" : formatarNota(v, casas);
-  const nomeDaLista = (codigo) =>
+  const nomeDaLista = (codigo: string) =>
     codigo === "geral"
       ? "Classificação Geral"
       : modalidades.find((m) => m.codigo === codigo)?.nome || codigo;
-  const disponiveis = colunasDisponiveis(retrato, lista) || [];
+  const disponiveis = colunasDoRetrato(retrato, lista) || [];
   const rotuloDe = Object.fromEntries(disponiveis.map((c) => [c.id, c.rotulo]));
   const escolhidas = colunasEscolhidas(disponiveis, guardadas, chave);
 
-  const tabela = (codigo, linhasDaLista, comModalidade) => {
+  const tabela = (
+    codigo: string,
+    linhasDaLista: LinhaDoRetrato[],
+    comModalidade: boolean,
+  ): TabelaDoDocumento => {
     const alinhamento =
       tipo === "ENTREVISTA" || tipo === "FINAL"
         ? "centro"
@@ -729,21 +796,22 @@ function tabelasDaLista(retrato, lista, agenda = null, guardadas, chave) {
     const decisoes =
       tipo === "PROVISORIA" || tipo === "LOTE"
         ? marcasDasDecisoes(linhasDaLista)
-        : { nome: (l) => l.nome, notas: [] };
-    const celula = (id, l) => {
+        : { nome: (l: LinhaDoRetrato) => l.nome, notas: [] };
+    const celula = (id: string, l: LinhaDoRetrato) => {
       const parcial = parcialDaColuna(id);
       if (parcial) return nota(l.parciais?.[parcial]);
       if (id === "CLASSIFICACAO") return ordinal(l.posicao);
       if (id === "NOME") return decisoes.nome(l);
       if (id === "MODALIDADE") return siglaDasModalidades(l, modalidades);
       if (id === "NOTA") return formatarNota(l.nota, casas);
-      if (id === "SITUACAO") return SITUACAO_NO_DOCUMENTO[l.situacao] || "-";
+      if (id === "SITUACAO")
+        return SITUACAO_NO_DOCUMENTO[l.situacao ?? ""] || "-";
       return "";
     };
     return {
       titulo: todas ? nomeDaLista(codigo) : "",
       colunas: colunasComLargura(
-        ids.map((id) => rotuloDe[id]),
+        ids.map((id) => rotuloDe[id] ?? id),
         alinhamento,
       ),
       notas: decisoes.notas,
@@ -757,13 +825,13 @@ function tabelasDaLista(retrato, lista, agenda = null, guardadas, chave) {
     };
   };
 
-  const tabelaDeEliminados = (v) => {
+  const tabelaDeEliminados = (v: VagaDoRetrato): TabelaDoDocumento => {
     const comNota = (v.eliminados || []).some((e) => e.nota !== undefined);
     // Vaga sem nota nos eliminados: sem a nota e as parciais.
     const ids = escolhidas.filter(
       (id) => comNota || (id !== "NOTA" && !parcialDaColuna(id)),
     );
-    const celula = (id, e) => {
+    const celula = (id: string, e: EliminadoDoRetrato) => {
       const parcial = parcialDaColuna(id);
       if (parcial) return nota(e.parciais?.[parcial]);
       if (id === "NOME") return e.nome;
@@ -774,7 +842,7 @@ function tabelasDaLista(retrato, lista, agenda = null, guardadas, chave) {
     return {
       titulo: "",
       colunas: colunasComLargura(
-        ids.map((id) => rotuloDe[id]),
+        ids.map((id) => rotuloDe[id] ?? id),
         "esquerda",
       ),
       linhas: (v.eliminados || []).map((e) => ids.map((id) => celula(id, e))),
@@ -791,7 +859,7 @@ function tabelasDaLista(retrato, lista, agenda = null, guardadas, chave) {
       "DATA",
       "HORA",
     ];
-    const linhasDaTabela = [];
+    const linhasDaTabela: string[][] = [];
     for (const v of retrato.vagas) {
       const fonte =
         lista === "todas" || lista === "geral"
@@ -825,9 +893,13 @@ function tabelasDaLista(retrato, lista, agenda = null, guardadas, chave) {
   }
 
   return retrato.vagas.map((v) => {
-    const tabelas = [];
+    const tabelas: TabelaDoDocumento[] = [];
     let desempate = false;
-    const comLinhas = (codigo, linhasDaLista, comModalidade) => {
+    const comLinhas = (
+      codigo: string,
+      linhasDaLista: LinhaDoRetrato[],
+      comModalidade: boolean,
+    ) => {
       if (houveDesempate(linhasDaLista, casas)) desempate = true;
       tabelas.push(tabela(codigo, linhasDaLista, comModalidade));
     };
@@ -843,7 +915,7 @@ function tabelasDaLista(retrato, lista, agenda = null, guardadas, chave) {
   });
 }
 
-function nomeDaListaNoDocumento(retrato, lista) {
+function nomeDaListaNoDocumento(retrato: RetratoParaDocumento, lista: string) {
   if (lista === "eliminados") return "Eliminados";
   if (lista === "todas" || lista === "geral") return "Classificação Geral";
   return (
@@ -851,7 +923,11 @@ function nomeDaListaNoDocumento(retrato, lista) {
   );
 }
 
-function publicoDaLista(retrato, lista, modeloPadrao) {
+function publicoDaLista(
+  retrato: RetratoParaDocumento,
+  lista: string,
+  modeloPadrao: ModeloDeTexto | undefined,
+) {
   if (lista === "eliminados") return "";
   if (lista === "todas" || lista === "geral")
     return modeloPadrao?.publico_geral || "";
@@ -867,7 +943,7 @@ function publicoDaLista(retrato, lista, modeloPadrao) {
 }
 
 /* "RESULTADO PRELIMINAR - ETAPA DE ANÁLISE CURRICULAR" → "Resultado Preliminar - Etapa de Análise Curricular". */
-function emTitulo(valor) {
+function emTitulo(valor: unknown) {
   const menores = new Set([
     "de",
     "da",
@@ -889,7 +965,10 @@ function emTitulo(valor) {
 }
 
 /* DATA e HORA da convocação: "06/10/2026" e "08:30" da agenda; sem horário, em branco. */
-function dataEHoraDaAgenda(agenda, analiseId) {
+function dataEHoraDaAgenda(
+  agenda: AgendaDoDocumento | null,
+  analiseId: string | undefined,
+): [string, string] {
   const h = analiseId && agenda?.get ? agenda.get(analiseId) : null;
   if (!h?.data || !h?.inicio) return ["", ""];
   const [a, m, d] = String(h.data).split("-");
@@ -913,16 +992,18 @@ function dataEHoraDaAgenda(agenda, analiseId) {
  * @param {{lista?: string, fase?: string | null, regra?: Record<string, unknown>, agenda?: unknown, treinamento?: boolean}} [opcoes]
  */
 export function documentoOficial(
-  retrato,
+  entrada: unknown,
   {
     lista = "todas",
     fase = null,
     regra = null,
     hoje = new Date(),
     agenda = null,
-    treinamento = ehEditalDeTreinamento(retrato?.edital),
-  } = {},
-) {
+    treinamento,
+  }: OpcoesDoDocumento = {},
+): DocumentoOficial {
+  const retrato = retratoParaDocumento(entrada, true);
+  const ehTreinamento = treinamento ?? ehEditalDeTreinamento(retrato.edital);
   const r = normalizarRegra(regra);
   const doc = documentoDaRegra(r);
   const f = faseDaPublicacao(retrato.tipo, fase);
@@ -934,7 +1015,7 @@ export function documentoOficial(
   const edital = doc.edital || numeroDoEdital(retrato.edital?.edital);
   const faseTexto =
     f === "FINAL" ? "Final" : f === "PRELIMINAR" ? "Preliminar" : "";
-  const campos = {
+  const campos: Record<string, string> = {
     edital,
     unidade: unidade.nome,
     unidade_sigla: unidade.sigla,
@@ -949,7 +1030,7 @@ export function documentoOficial(
     notas_minimas: textoDasNotasMinimas(r),
     processo: doc.processo,
   };
-  const limpar = (t) =>
+  const limpar = (t: unknown) =>
     preencher(
       // Campo vazio leva junto o espaço antes dele ("Títulos {publico}**").
       String(t).replace(/ \{(\w+)\}/g, (inteiro, nome) =>
@@ -973,7 +1054,7 @@ export function documentoOficial(
   const blocos = tabelasDaLista(
     retrato,
     listaEfetiva,
-    agenda,
+    agendaParaDocumento(agenda),
     doc.colunas[chave],
     chave,
   ).map(({ desempate, ...bloco }) => ({
@@ -1003,7 +1084,7 @@ export function documentoOficial(
     tipo: retrato.tipo,
     lista: listaEfetiva,
     fase: f,
-    titulo: treinamento
+    titulo: ehTreinamento
       ? [`**${MARCA_SEM_VALOR_OFICIAL}**`, ...titulo]
       : titulo,
     localData: doc.data
@@ -1013,8 +1094,8 @@ export function documentoOficial(
     preliminares,
     blocos,
     finais,
-    nome: treinamento ? `TREINAMENTO - ${nomeDoArquivo}` : nomeDoArquivo,
-    treinamento: Boolean(treinamento),
+    nome: ehTreinamento ? `TREINAMENTO - ${nomeDoArquivo}` : nomeDoArquivo,
+    treinamento: Boolean(ehTreinamento),
     edital,
     processo: doc.processo,
   };
@@ -1022,17 +1103,17 @@ export function documentoOficial(
 
 /* ── HTML para o SEI ─────────────────────────────────────────────────── */
 
-const escapar = (valor) =>
+const escapar = (valor: unknown) =>
   String(valor ?? "").replace(
     /[&<>"']/g,
     (c) =>
       ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[
         c
-      ],
+      ] ?? c,
   );
 
 /** "a **b**" → "a <strong>b</strong>" (o texto escapado antes). */
-export function htmlDoTrecho(valor) {
+export function htmlDoTrecho(valor: unknown) {
   return trechos(valor)
     .map((t) =>
       t.negrito ? `<strong>${escapar(t.texto)}</strong>` : escapar(t.texto),
@@ -1046,7 +1127,7 @@ const CLASSE_DO_ALINHAMENTO = {
   centro: "Tabela_Texto_Centralizado",
 };
 
-function tabelaHtml(t) {
+function tabelaHtml(t: TabelaDoDocumento) {
   const abre = `<table border="1" cellpadding="3" cellspacing="0" style="border-collapse:collapse;width:100%;${BORDA}"><tbody>`;
   if (!t.linhas.length)
     return `${abre}<tr><td style="${BORDA}"><p class="Tabela_Texto_Centralizado">${escapar(t.vazia)}</p></td></tr></tbody></table>`;
@@ -1062,7 +1143,7 @@ function tabelaHtml(t) {
         `<tr>${linha
           .map(
             (valor, i) =>
-              `<td style="width:${t.colunas[i].largura}%;${BORDA}"><p class="${CLASSE_DO_ALINHAMENTO[t.colunas[i].alinhamento]}">${escapar(valor) || "&nbsp;"}</p></td>`,
+              `<td style="width:${exigirDadoDoDocumento(t.colunas[i]).largura}%;${BORDA}"><p class="${CLASSE_DO_ALINHAMENTO[exigirDadoDoDocumento(t.colunas[i]).alinhamento]}">${escapar(valor) || "&nbsp;"}</p></td>`,
           )
           .join("")}</tr>`,
     )
@@ -1074,7 +1155,7 @@ function tabelaHtml(t) {
  * O HTML para colar no editor do SEI: classes de estilo do SEI, tabelas com
  * borda; sem timbrado, assinatura e rodapé (o SEI põe).
  */
-export function htmlParaSei(doc) {
+export function htmlParaSei(doc: DocumentoOficial) {
   const partes = [
     `<p class="Texto_Alinhado_Direita">${escapar(doc.localData)}</p>`,
   ];
@@ -1117,20 +1198,24 @@ export function htmlParaSei(doc) {
 }
 
 /** Os números dos itens (1., 1.1., 1.3.1.…) na ordem do documento. */
-export function numeracao(itens, secao) {
+export function numeracao(itens: readonly ItemDoDocumento[], secao: number) {
   const contadores = [secao, 0, 0, 0];
   return itens.map((item) => {
     const nivel = Math.min(4, Math.max(2, item.nivel));
-    contadores[nivel - 1] += 1;
+    contadores[nivel - 1] = (contadores[nivel - 1] ?? 0) + 1;
     for (let i = nivel; i < 4; i += 1) contadores[i] = 0;
     return `${contadores.slice(0, nivel).join(".")}.`;
   });
 }
 
 /** O documento em texto puro (numerado; tabelas separadas por tabulação). */
-export function textoParaSei(doc) {
+export function textoParaSei(doc: DocumentoOficial) {
   const saida = [doc.localData, "", ...doc.titulo.map(semMarcas), ""];
-  const secao = (n, rotulo, itens) => {
+  const secao = (
+    n: number,
+    rotulo: string,
+    itens: readonly ItemDoDocumento[],
+  ) => {
     saida.push(`${n}. ${rotulo}`);
     const numeros = numeracao(itens, n);
     itens.forEach((item, i) =>
@@ -1202,8 +1287,12 @@ const ESTILO_DO_SEI = `
  * (PDF). A carta de convocação também a usa (carta-de-convocacao-documento.js).
  */
 export function paginaNoModeloDoSei(
-  { nome, corpoHtml, aviso = "" },
-  { cabecalho = CABECALHO_PADRAO, logo = "" } = {},
+  {
+    nome,
+    corpoHtml,
+    aviso = "",
+  }: { nome: string; corpoHtml: string; aviso?: string },
+  { cabecalho = CABECALHO_PADRAO, logo = "" }: MarcaDaPrevia = {},
 ) {
   const linhasDoCabecalho = String(cabecalho || CABECALHO_PADRAO)
     .split(/\r?\n/)
@@ -1225,7 +1314,10 @@ export function paginaNoModeloDoSei(
  * A página "Como fica no SEI" da lista: o HTML do SEI e o aviso do que o SEI
  * acrescenta (assinatura e rodapé).
  */
-export function paginaDaPrevia(doc, marca = {}) {
+export function paginaDaPrevia(
+  doc: DocumentoOficial,
+  marca: MarcaDaPrevia = {},
+) {
   return paginaNoModeloDoSei(
     {
       nome: doc.nome,
@@ -1235,3 +1327,6 @@ export function paginaDaPrevia(doc, marca = {}) {
     marca,
   );
 }
+
+const motivos: Readonly<Record<string, string | undefined>> =
+  MOTIVOS_DE_ELIMINACAO;

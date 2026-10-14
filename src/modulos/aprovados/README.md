@@ -51,7 +51,7 @@ Modelos por área (e, se quiser, por edital), versionados no banco — motivo a 
 inativar com motivo, nada se apaga. Quem edita é quem tem Editor em Aprovados. O texto, o
 preenchimento e a validação são de `src/lib/carta-de-convocacao.js`; o documento (HTML do SEI, texto,
 página da prévia/PDF, DOCX e ZIP) é de `src/lib/carta-de-convocacao-documento.js`, que reaproveita o
-documento oficial da Classificação (`src/lib/classificacao/documento-sei.js` — `paginaNoModeloDoSei`
+documento oficial da Classificação (`src/lib/classificacao/documento-sei.ts` — `paginaNoModeloDoSei`
 — e `documento-docx.js` — `pacoteDocx`, `arquivosDoDocx`) e o que precisa do navegador
 (`../classificacao/documento-no-navegador.js`: área de transferência, logo em PNG, impressão). O
 cabeçalho é o de Configurações › Marca.
