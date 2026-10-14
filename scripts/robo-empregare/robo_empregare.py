@@ -77,6 +77,12 @@ TAMANHO_DO_LOTE_DE_EXPORTACAO = 10
 # Prazos contados desde o login (o workflow tem 120 min; links e anexos já têm orçamento próprio).
 PRAZO_PARA_NOVO_LOTE = 95 * 60  # segundos: depois disso, não começa outro lote
 PRAZO_PARA_SEGUNDA_PASSADA = 90 * 60  # segundos: depois disso, sem segunda passada
+# Anexos do questionário (--anexos): além do orçamento (anexos.ORCAMENTO_DOS_ANEXOS), param
+# em PRAZO_DOS_ANEXOS menos RESERVA_POR_VAGA por vaga ainda não pedida: a carga das vagas
+# que faltam (~1 min cada: pedir, lista de candidatos, baixar e gravar) cabe antes do
+# PRAZO_PARA_NOVO_LOTE e o workflow termina com folga antes dos 120 min.
+PRAZO_DOS_ANEXOS = 85 * 60
+RESERVA_POR_VAGA = 60
 TITULO = "Robô da Empregare → MONITORA"
 
 
@@ -319,14 +325,35 @@ def baixar_e_gravar(portal, config, sync, pedidas, pasta, desde, dormir=time.sle
 # ── Lotes de exportação ─────────────────────────────────────────────────────
 
 
-def pedir_exportacoes(portal, vagas, enderecos, com_anexos, gasto):
+def prazo_dos_anexos(gasto):
+    """
+    Até quando ler anexos nesta vaga (no relógio gasto["agora"]): o menor entre o
+    limite por vaga, o que resta do orçamento e PRAZO_DOS_ANEXOS (desde o início)
+    menos a reserva das vagas que ainda vão ser pedidas (gasto["faltam"]).
+    None: sem tempo.
+    """
+    agora = gasto["agora"]()
+    restante = anexos.ORCAMENTO_DOS_ANEXOS - gasto["anexos"]
+    fim_da_execucao = gasto["inicio"] + PRAZO_DOS_ANEXOS - RESERVA_POR_VAGA * max(gasto["faltam"], 0)
+    prazo = min(agora + anexos.TEMPO_LIMITE_DOS_ANEXOS, agora + restante, fim_da_execucao)
+    return prazo if prazo > agora else None
+
+
+def pedir_exportacoes(portal, vagas, enderecos, com_anexos, gasto, config=None, chamar=supabase_rpc.chamar):
     """
     Pede a exportação de cada vaga e, enquanto a Empregare gera os arquivos,
     captura os links da vaga e dos candidatos (e, com --anexos, os anexos do
-    questionário, dentro de ORCAMENTO_DOS_ANEXOS somado em gasto["anexos"]).
+    questionário: primeiro o lote, sem quem não finalizou o questionário e sem
+    reler resposta já lida, por anexos.prioridades_da_vaga; até prazo_dos_anexos,
+    com o tempo somado em gasto["anexos"]).
     Vaga já capturada (segunda passada) só pede a exportação de novo.
     Devolve (códigos pedidos, vagas cuja exportação não foi pedida).
     """
+    gasto.setdefault("anexos", 0.0)
+    gasto.setdefault("agora", time.monotonic)
+    if "inicio" not in gasto:
+        gasto["inicio"] = gasto["agora"]()
+    gasto.setdefault("faltam", len(vagas))
     pedidas, nao_pedidas = [], []
     for v in vagas:
         codigo = v["vaga"]
@@ -337,15 +364,23 @@ def pedir_exportacoes(portal, vagas, enderecos, com_anexos, gasto):
         pedidas.append(codigo)
         if codigo in enderecos:
             continue
+        gasto["faltam"] -= 1
         # Enquanto a Empregare gera o arquivo: os links da vaga e dos candidatos.
         enderecos[codigo] = portal.capturar_candidatos(codigo)
         # --anexos: os anexos do questionário (GetRespostaDetails de cada resposta).
         respostas = (enderecos[codigo] or {}).pop("respostas", None)
-        if com_anexos and respostas and gasto["anexos"] < anexos.ORCAMENTO_DOS_ANEXOS:
-            inicio = time.monotonic()
-            prazo = inicio + min(anexos.TEMPO_LIMITE_DOS_ANEXOS, anexos.ORCAMENTO_DOS_ANEXOS - gasto["anexos"])
-            enderecos[codigo]["anexos"] = anexos.capturar_anexos(portal, codigo, respostas, registrar, prazo)
-            gasto["anexos"] += time.monotonic() - inicio
+        if not (com_anexos and respostas):
+            continue
+        prazo = prazo_dos_anexos(gasto)
+        if prazo is None:
+            registrar(f"Vaga {codigo}: sem tempo para os anexos nesta execução (o resto na próxima).")
+            continue
+        inicio = gasto["agora"]()
+        prioridades = anexos.prioridades_da_vaga(config, codigo, chamar, registrar)
+        enderecos[codigo]["anexos"] = anexos.capturar_anexos(
+            portal, codigo, respostas, registrar, prazo, agora=gasto["agora"], prioridades=prioridades
+        )
+        gasto["anexos"] += gasto["agora"]() - inicio
     return pedidas, nao_pedidas
 
 
@@ -355,7 +390,7 @@ def exportar_e_baixar(portal, config, sync, vagas, pasta, enderecos, com_anexos,
     falhas na gravação, vagas que não saíram: exportação não pedida ou não baixada).
     """
     desde = relogio()
-    pedidas, nao_pedidas = pedir_exportacoes(portal, vagas, enderecos, com_anexos, gasto)
+    pedidas, nao_pedidas = pedir_exportacoes(portal, vagas, enderecos, com_anexos, gasto, config)
     if not pedidas:
         return 0, 0, nao_pedidas
     registrar(f"Aguardando a Empregare gerar os arquivos ({nav.ESPERA_APOS_EXPORTAR}s).")
@@ -392,7 +427,7 @@ def processar_vagas(
     """
     inicio = agora()
     enderecos = {}
-    gasto = {"anexos": 0.0}
+    gasto = {"anexos": 0.0, "agora": agora, "inicio": inicio, "faltam": len(vagas)}
     total = contagem if contagem is not None else {}
     total.update(baixadas=0, falhas=0)
     de_novo = []
