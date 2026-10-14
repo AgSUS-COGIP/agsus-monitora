@@ -1,8 +1,8 @@
 /*
   CORREÇÃO DE DADOS — perguntas do questionário ligadas a cada item da regra
   da avaliação documental do Edital 114/2026 (Projetos, PES Rio Doce
-  AgSUS/FUNASA, id bcecfb08-88ef-4e06-8401-bcad6bf88fd0) e texto do motivo
-  MOTIVO_4 da titulação (pedido da COREs).
+  AgSUS/FUNASA, id bcecfb08-88ef-4e06-8401-bcad6bf88fd0), texto do motivo
+  MOTIVO_4 da titulação e registro no conselho por cargo (pedido da COREs).
 
   PROBLEMA: a ficha só mostra as respostas e os anexos da Empregare das
   perguntas que a regra liga ao bloco (`perguntas`). O banco
@@ -17,8 +17,11 @@
   (CURSOS) e "Anexe o comprovante de Experiência Profissional na área em que
   concorre" (EXPERIENCIA). Por isso o link do anexo não aparecia.
 
-  PRÉ-REQUISITO: nenhum número de versão: parte da VIGENTE no momento da
-  execução (era a 15).
+  PRÉ-REQUISITO: a migration 20261014150000_bloco_nao_se_aplica_por_cargo.sql
+  aplicada (branch feat/conselho-obrigatorio-por-cargo: por_cargo aceita
+  { "nao_se_aplica": true } num bloco de documento); sem ela, o script para
+  avisando. Nenhum número de versão: parte da VIGENTE no momento da execução
+  (era a 15).
 
   O QUE FAZ: cria uma NOVA versão (vigente + 1), igual à vigente, com:
     1. em cada bloco abaixo, `perguntas` = a lista completa daquele item (na
@@ -29,9 +32,26 @@
        "Não apresentou certificados de cursos de aperfeiçoamento…" →
        "Não apresentou diploma ou certificado da titulação acadêmica
        (especialização, mestrado ou doutorado) conforme o subitem 8.2.10.1".
+    3. registro no conselho de classe por cargo (Anexo I), em por_cargo,
+       bloco REGISTRO_CONSELHO (que valia igual para todos e elimina):
+       - cargos 1 a 9 (ANALISE_DA_AGUA, METAIS_PESADOS, TECNICO_LABORATORIO):
+         requisito REGISTRO_OBRIGATORIO "… obrigatório para este cargo (Anexo
+         I)" — a ficha mostra a linha para conferir; Não confere elimina;
+       - cargo 10 (SUPERVISOR_SAUDE_AMBIENTAL): requisito
+         REGISTRO_QUANDO_APLICAVEL "… quando aplicável à formação (Anexo I);
+         se a formação não tem conselho, marque Confere";
+       - cargos 11 a 15 (AUXILIAR_LOGISTICA, COMPILACAO_DE_DADOS,
+         PLATAFORMA_DO_SUS, MOTORISTA_B, MOTORISTA_D): nao_se_aplica — a ficha
+         mostra "Não se aplica a este cargo" e o item não pede situação nem
+         elimina.
+       Os requisitos de registro que estavam em REQUISITO_DO_CARGO (cargo 9:
+       REGISTRO_ATIVO; cargo 10: REGISTRO_QUANDO_APLICAVEL) saem de lá para
+       não pedir o mesmo documento duas vezes (o cargo 10 fica sem
+       diferença em REQUISITO_DO_CARGO).
   Os textos são o começo curto e estável do enunciado (sem "Pergunta N - ",
   antes do primeiro "?", ":" ou "(" quando o resto varia entre vagas).
-  Todo o resto (por_cargo, motivos, efeitos, faixas, observações) fica igual.
+  Todo o resto (o resto de por_cargo, motivos, efeitos, faixas, observações)
+  fica igual.
   A situação volta para CONFERIR, como em toda versão nova.
 
   Rode no SQL Editor (papel postgres). Idempotente: se a vigente já tem tudo
@@ -43,8 +63,42 @@ begin;
 do $$
 declare
   c_edital constant uuid := 'bcecfb08-88ef-4e06-8401-bcad6bf88fd0';
-  c_motivo constant text := 'Perguntas dos anexos ligadas a cada item e texto do motivo da titulação (pedido da COREs)';
-  c_nome constant text := 'Perguntas dos anexos';
+  c_motivo constant text := 'Perguntas dos anexos ligadas a cada item, texto do motivo da titulação e registro no conselho por cargo (pedido da COREs)';
+  c_nome constant text := 'Perguntas e conselho por cargo';
+  -- Registro no conselho por diferença de cargo (Anexo I do 114/2026).
+  c_registro constant jsonb := $reg$
+{
+  "OBRIGATORIO": {"requisitos": [
+    {"codigo": "REGISTRO_OBRIGATORIO", "item_edital": "2 e Anexo I",
+     "rotulo": "Registro ativo no conselho de classe — obrigatório para este cargo (Anexo I)",
+     "motivo": "Não apresentou registro ativo no conselho profissional competente, obrigatório para o cargo (Anexo I)."}
+  ]},
+  "QUANDO_APLICAVEL": {"requisitos": [
+    {"codigo": "REGISTRO_QUANDO_APLICAVEL", "item_edital": "2 e Anexo I",
+     "rotulo": "Registro ativo no conselho de classe — quando aplicável à formação (Anexo I); se a formação não tem conselho, marque Confere",
+     "motivo": "Não apresentou registro ativo no conselho profissional competente, exigido para a sua formação (Anexo I)."}
+  ]},
+  "NAO_SE_APLICA": {"nao_se_aplica": true}
+}
+$reg$::jsonb;
+  c_registro_do_cargo constant jsonb := $car$
+{
+  "ANALISE_DA_AGUA": "OBRIGATORIO",
+  "METAIS_PESADOS": "OBRIGATORIO",
+  "TECNICO_LABORATORIO": "OBRIGATORIO",
+  "SUPERVISOR_SAUDE_AMBIENTAL": "QUANDO_APLICAVEL",
+  "AUXILIAR_LOGISTICA": "NAO_SE_APLICA",
+  "COMPILACAO_DE_DADOS": "NAO_SE_APLICA",
+  "PLATAFORMA_DO_SUS": "NAO_SE_APLICA",
+  "MOTORISTA_B": "NAO_SE_APLICA",
+  "MOTORISTA_D": "NAO_SE_APLICA"
+}
+$car$::jsonb;
+  c_registro_em_requisito constant text[] := array['REGISTRO_ATIVO', 'REGISTRO_QUANDO_APLICAVEL'];
+  v_por_cargo jsonb := '[]'::jsonb;
+  v_d record;
+  v_dif jsonb;
+  v_req jsonb;
   c_texto_motivo_4 constant text :=
     'Não apresentou diploma ou certificado da titulação acadêmica (especialização, mestrado ou doutorado) conforme o subitem 8.2.10.1';
   c_perguntas constant jsonb := $per$
@@ -128,6 +182,9 @@ begin
   if v_autor is null then
     raise exception 'Nenhum administrador global ativo para assinar a versão';
   end if;
+  if pg_get_functiondef('private."FC_BLOCO_SE_APLICA"'::regproc) not like '%nao_se_aplica%' then
+    raise exception 'Aplique antes a migration 20261014150000_bloco_nao_se_aplica_por_cargo.sql (por_cargo com "não se aplica").';
+  end if;
   if not exists (select 1 from public."TB_MONITORAMENTO_INDIGENA"
                   where id = c_edital and private."FC_NUMERO_EDITAL"(edital) = '114/2026') then
     raise exception 'Edital 114/2026 não encontrado pelo id';
@@ -179,9 +236,31 @@ begin
       v_regra."NU_VERSAO_VIGENTE", v_motivo_4;
   end if;
 
-  v_nova := jsonb_set(v_atual, '{blocos}', v_blocos);
+  -- 3. Registro no conselho por cargo.
+  if jsonb_typeof(v_atual -> 'por_cargo') is distinct from 'array'
+     or (select count(*) from jsonb_array_elements(v_atual -> 'por_cargo')) <> (select count(*) from jsonb_object_keys(c_registro_do_cargo))
+     or exists (select 1 from jsonb_array_elements(v_atual -> 'por_cargo') d where not c_registro_do_cargo ? (d ->> 'codigo')) then
+    raise exception 'A versão vigente (%) não tem as 9 diferenças por cargo esperadas: confira antes de rodar.', v_regra."NU_VERSAO_VIGENTE";
+  end if;
+  for v_d in select x.value, x.ordinality from jsonb_array_elements(v_atual -> 'por_cargo') with ordinality x order by x.ordinality loop
+    v_dif := v_d.value;
+    v_dif := jsonb_set(v_dif, '{blocos,REGISTRO_CONSELHO}', c_registro -> (c_registro_do_cargo ->> (v_dif ->> 'codigo')));
+    if v_dif #> '{blocos,REQUISITO_DO_CARGO,requisitos}' is not null then
+      select coalesce(jsonb_agg(q order by n), '[]'::jsonb) into v_req
+        from jsonb_array_elements(v_dif #> '{blocos,REQUISITO_DO_CARGO,requisitos}') with ordinality y(q, n)
+       where not (q ->> 'codigo' = any (c_registro_em_requisito));
+      if jsonb_array_length(v_req) = 0 then
+        v_dif := jsonb_set(v_dif, '{blocos}', (v_dif -> 'blocos') - 'REQUISITO_DO_CARGO');
+      else
+        v_dif := jsonb_set(v_dif, '{blocos,REQUISITO_DO_CARGO,requisitos}', v_req);
+      end if;
+    end if;
+    v_por_cargo := v_por_cargo || jsonb_build_array(v_dif);
+  end loop;
+
+  v_nova := jsonb_set(jsonb_set(v_atual, '{blocos}', v_blocos), '{por_cargo}', v_por_cargo);
   if v_nova = v_atual then
-    raise notice 'A versão vigente (%) já tem as perguntas e o texto do MOTIVO_4: nada foi feito.', v_regra."NU_VERSAO_VIGENTE";
+    raise notice 'A versão vigente (%) já tem as perguntas, o texto do MOTIVO_4 e o conselho por cargo: nada foi feito.', v_regra."NU_VERSAO_VIGENTE";
     return;
   end if;
 
@@ -200,14 +279,25 @@ begin
          "DT_ATUALIZACAO" = now(), "CO_USUARIO_ATUALIZACAO" = v_autor
    where "CO_REGRA_ANALISE" = v_regra."CO_REGRA_ANALISE";
 
-  raise notice 'Regra do 114/2026: versão % criada a partir da % com as perguntas de cada item e o texto do MOTIVO_4 (situação CONFERIR).',
+  raise notice 'Regra do 114/2026: versão % criada a partir da % com as perguntas de cada item, o texto do MOTIVO_4 e o conselho por cargo (situação CONFERIR).',
     v_versao, v_regra."NU_VERSAO_VIGENTE";
 end;
 $$;
 
 commit;
 
--- Conferência: versão, situação, nome, motivo e, por bloco, as perguntas
+-- Conferência 1: o registro no conselho e os requisitos do cargo de cada diferença por cargo.
+select d ->> 'rotulo' as cargo,
+       coalesce(case when d #> '{blocos,REGISTRO_CONSELHO,nao_se_aplica}' = 'true'::jsonb then 'Não se aplica a este cargo' end,
+                (select string_agg(q ->> 'rotulo', '; ') from jsonb_array_elements(d #> '{blocos,REGISTRO_CONSELHO,requisitos}') q)) as registro_conselho,
+       (select string_agg(q ->> 'codigo', ', ') from jsonb_array_elements(d #> '{blocos,REQUISITO_DO_CARGO,requisitos}') q) as requisitos_do_cargo
+  from public."TB_REGRA_ANALISE" r
+  join public."TH_REGRA_ANALISE" h
+    on h."CO_REGRA_ANALISE" = r."CO_REGRA_ANALISE" and h."NU_VERSAO" = r."NU_VERSAO_VIGENTE"
+  cross join lateral jsonb_array_elements(h."DS_CONFIGURACAO" -> 'por_cargo') d
+ where r."CO_MONITORAMENTO" = 'bcecfb08-88ef-4e06-8401-bcad6bf88fd0';
+
+-- Conferência 2: versão, situação, nome, motivo e, por bloco, as perguntas
 -- ligadas, quantas colunas do questionário do 114 cada uma casa (0 = texto
 -- que não acha pergunta) e o texto do MOTIVO_4 da FORMACAO.
 select r."NU_VERSAO_VIGENTE" as versao,
