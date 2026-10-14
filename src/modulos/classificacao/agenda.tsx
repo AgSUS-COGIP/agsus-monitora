@@ -1,3 +1,39 @@
+import type { FormEvent } from "react";
+import type {
+  ConvocadoDaAgenda,
+  ItemDaAgenda,
+  HorarioDaAgenda,
+  RegraDaAgenda,
+  AvisoDaAgenda,
+} from "../../lib/tipos-da-agenda.ts";
+import type {
+  EstadoDaClassificacao,
+  EstadoDaAgenda,
+  SnapshotDaClassificacao,
+  DadosDaClassificacao,
+} from "./tipos-do-estado.ts";
+import type { ResultadoDoMotor } from "../../lib/classificacao/tipos-do-resultado.ts";
+type SnapshotDaAgenda = ReturnType<EstadoDaAgenda["obter"]>;
+type Props = {
+  estado: EstadoDaClassificacao;
+  agenda: EstadoDaAgenda;
+  e: SnapshotDaClassificacao;
+  calcular: (dados: DadosDaClassificacao, tipo: string) => ResultadoDoMotor;
+};
+type RegraEmEdicao = Omit<
+  RegraDaAgenda,
+  "duracao_min" | "intervalo_min" | "bancas"
+> & {
+  duracao_min: number | "";
+  intervalo_min: number | "";
+  bancas: number | "";
+};
+type Rascunho = {
+  acao: "GERAR" | "AJUSTAR";
+  avisos: AvisoDaAgenda[];
+  itens: ItemDaAgenda[];
+};
+
 import {
   useEffect,
   useId,
@@ -28,7 +64,7 @@ import {
   textoDosDias,
   trocarNaAgenda,
   validarRegraDaAgenda,
-} from "../../lib/agenda-das-entrevistas.js";
+} from "../../lib/agenda-das-entrevistas.ts";
 import {
   Aviso,
   Campo,
@@ -46,7 +82,7 @@ import {
   edital (versionada) e a agenda dos convocados da lista "Convocação para
   entrevista" — a última registrada ou, sem lista gerada, o cálculo atual.
 
-  "Gerar" distribui pelo motor (src/lib/agenda-das-entrevistas.js) num
+  "Gerar" distribui pelo motor (src/lib/agenda-das-entrevistas.ts) num
   rascunho; "Mudar" troca o horário/banca de alguém (horário livre ou troca
   com outro convocado); conflitos (mesma banca e horário, repetido) aparecem
   e impedem salvar; "Salvar agenda" grava (com histórico). Gerar de novo
@@ -54,7 +90,8 @@ import {
   sem os controles.
 */
 
-function dataHora(valor) {
+function dataHora(valor: unknown) {
+  if (typeof valor !== "string" && typeof valor !== "number") return "";
   const d = new Date(valor);
   return Number.isNaN(d.getTime())
     ? ""
@@ -65,8 +102,9 @@ function dataHora(valor) {
       });
 }
 
-const ROTULO_DA_ORDEM = Object.fromEntries(ORDENS_DA_AGENDA);
-const ROTULO_DA_ACAO = {
+const ROTULO_DA_ORDEM: Record<string, string> =
+  Object.fromEntries(ORDENS_DA_AGENDA);
+const ROTULO_DA_ACAO: Record<string, string> = {
   GERAR: "Gerada",
   AJUSTAR: "Ajustada",
   LIMPAR: "Limpa",
@@ -74,14 +112,17 @@ const ROTULO_DA_ACAO = {
 
 /* ── Regra ──────────────────────────────────────────────────────────── */
 
-function rascunhoDaRegra(configuracao, bancasDoCadastro) {
+function rascunhoDaRegra(
+  configuracao: unknown,
+  bancasDoCadastro: { banca: number }[],
+) {
   if (configuracao) return normalizarRegraDaAgenda(configuracao);
   const r = normalizarRegraDaAgenda(null);
   const numeros = bancasDoCadastro.map((b) => Number(b.banca) || 1);
   return numeros.length ? { ...r, bancas: Math.max(...numeros) } : r;
 }
 
-function ResumoDaRegra({ r }) {
+function ResumoDaRegra({ r }: { r: RegraEmEdicao }) {
   const dias = diasDaRegra(r);
   return (
     <ul className="agenda-resumo">
@@ -94,9 +135,9 @@ function ResumoDaRegra({ r }) {
         (Brasília)
       </li>
       <li>
-        Entrevista de {textoDaDuracao(r.duracao_min)}
+        Entrevista de {textoDaDuracao(Number(r.duracao_min))}
         {r.intervalo_min
-          ? `, intervalo de ${textoDaDuracao(r.intervalo_min)}`
+          ? `, intervalo de ${textoDaDuracao(Number(r.intervalo_min))}`
           : ""}
         {r.pausa ? `, pausa ${r.pausa.inicio}–${r.pausa.fim}` : ""}
       </li>
@@ -112,10 +153,18 @@ function ResumoDaRegra({ r }) {
   );
 }
 
-function FormularioDaRegra({ agenda, a, podeEditar }) {
+function FormularioDaRegra({
+  agenda,
+  a,
+  podeEditar,
+}: {
+  agenda: EstadoDaAgenda;
+  a: SnapshotDaAgenda;
+  podeEditar: boolean;
+}) {
   const regraSalva = a.dados?.regra || null;
   const bancasDoCadastro = useMemo(() => a.dados?.bancas || [], [a.dados]);
-  const [r, setR] = useState(() =>
+  const [r, setR] = useState<RegraEmEdicao>(() =>
     rascunhoDaRegra(regraSalva?.configuracao, bancasDoCadastro),
   );
   const [textoDias, setTextoDias] = useState(() => textoDosDias(r.datas.dias));
@@ -137,19 +186,20 @@ function FormularioDaRegra({ agenda, a, podeEditar }) {
     (!precisaMotivo || motivo.trim().length >= 3) &&
     !a.salvando;
 
-  const mudar = (campos) => setR((x) => ({ ...x, ...campos }));
-  const mudarDatas = (campos) =>
+  const mudar = (campos: Partial<RegraEmEdicao>) =>
+    setR((x) => ({ ...x, ...campos }));
+  const mudarDatas = (campos: Partial<RegraDaAgenda["datas"]>) =>
     setR((x) => ({ ...x, datas: { ...x.datas, ...campos } }));
-  const mudarPeriodo = (i, campo, valor) =>
+  const mudarPeriodo = (i: number, campo: "inicio" | "fim", valor: string) =>
     setR((x) => ({
       ...x,
       periodos: x.periodos.map((p, k) =>
         k === i ? { ...p, [campo]: valor } : p,
       ),
     }));
-  const numero = (valor) => (valor === "" ? "" : Number(valor));
+  const numero = (valor: string) => (valor === "" ? "" : Number(valor));
 
-  async function salvar(evento) {
+  async function salvar(evento: FormEvent<HTMLFormElement>) {
     evento.preventDefault();
     setTentou(true);
     if (!podeSalvar) return;
@@ -497,7 +547,7 @@ function FormularioDaRegra({ agenda, a, podeEditar }) {
           </div>
         </form>
       )}
-      {regraSalva?.versoes?.length > 1 ? (
+      {regraSalva && regraSalva.versoes.length > 1 ? (
         <details
           className="agenda-versoes"
           data-tour="classificacao-agenda-versoes"
@@ -520,11 +570,28 @@ function FormularioDaRegra({ agenda, a, podeEditar }) {
 
 /* ── Ajuste manual ──────────────────────────────────────────────────── */
 
-const chaveDoHorario = (h) => `${h.data}|${h.inicio}|${h.fim}|${h.banca}`;
-const textoDoHorario = (h, regra) =>
+const chaveDoHorario = (
+  h: Pick<ItemDaAgenda, "data" | "inicio" | "fim" | "banca">,
+) => `${h.data}|${h.inicio}|${h.fim}|${h.banca}`;
+const textoDoHorario = (
+  h: Pick<ItemDaAgenda, "data" | "inicio" | "fim" | "banca">,
+  regra: unknown,
+) =>
   `${dataComDia(h.data)} · ${h.inicio}–${h.fim} · ${nomeDaBanca(regra, h.banca)}`;
 
-function ModalDeAjuste({ item, itens, regra, aoAplicar, aoFechar }) {
+function ModalDeAjuste({
+  item,
+  itens,
+  regra,
+  aoAplicar,
+  aoFechar,
+}: {
+  item: ItemDaAgenda;
+  itens: ItemDaAgenda[];
+  regra: unknown;
+  aoAplicar: (i: ItemDaAgenda[]) => void;
+  aoFechar: () => void;
+}) {
   const [modo, setModo] = useState("HORARIO");
   const [horario, setHorario] = useState("");
   const [outro, setOutro] = useState("");
@@ -538,7 +605,7 @@ function ModalDeAjuste({ item, itens, regra, aoAplicar, aoFechar }) {
   );
   const pode = modo === "HORARIO" ? Boolean(horario) : Boolean(outro);
 
-  function aplicar(evento) {
+  function aplicar(evento: FormEvent<HTMLFormElement>) {
     evento.preventDefault();
     if (!pode) return;
     if (modo === "TROCA") {
@@ -625,7 +692,15 @@ function ModalDeAjuste({ item, itens, regra, aoAplicar, aoFechar }) {
   );
 }
 
-function ConfirmarGerar({ quantos, aoConfirmar, aoFechar }) {
+function ConfirmarGerar({
+  quantos,
+  aoConfirmar,
+  aoFechar,
+}: {
+  quantos: number;
+  aoConfirmar: () => void;
+  aoFechar: () => void;
+}) {
   return (
     <Modal
       id="agendaConfirmar"
@@ -658,7 +733,7 @@ function ConfirmarGerar({ quantos, aoConfirmar, aoFechar }) {
 
 /* ── A agenda dos convocados ────────────────────────────────────────── */
 
-const semHorario = (c) => ({
+const semHorario = (c: ConvocadoDaAgenda): ItemDaAgenda => ({
   ...c,
   data: null,
   inicio: null,
@@ -667,14 +742,25 @@ const semHorario = (c) => ({
   origem: "GERADA",
 });
 
-function AgendaDosConvocados({ estado, agenda, a, e, calcular, podeEditar }) {
+function AgendaDosConvocados({
+  estado,
+  agenda,
+  a,
+  e,
+  calcular,
+  podeEditar,
+}: Props & { a: SnapshotDaAgenda; podeEditar: boolean }) {
   const dados = e.dados;
   const listaRegistrada =
     (dados?.listas || []).find((l) => l.tipo === "CONVOCACAO") || null;
   const idDaLista = listaRegistrada?.id || "";
-  const [fonte, setFonte] = useState(null);
-  const [rascunho, setRascunho] = useState(null);
+  const [fonte, setFonte] = useState<{
+    lista: string | null;
+    convocados: ConvocadoDaAgenda[];
+  } | null>(null);
+  const [rascunho, setRascunho] = useState<Rascunho | null>(null);
   const [confirmar, setConfirmar] = useState(false);
+  const [erroDaFonte, setErroDaFonte] = useState("");
   const [ajuste, setAjuste] = useState("");
   const regra = a.dados?.regra?.configuracao || null;
 
@@ -682,20 +768,30 @@ function AgendaDosConvocados({ estado, agenda, a, e, calcular, podeEditar }) {
   useEffect(() => {
     let vivo = true;
     async function carregarFonte() {
-      if (idDaLista) {
-        const registrada = await estado.obterLista(idDaLista);
-        if (!vivo) return;
-        if (registrada?.retrato) {
-          setFonte({
-            lista: idDaLista,
-            convocados: convocadosDaLista(registrada.retrato),
-          });
-          return;
+      setErroDaFonte("");
+      try {
+        if (idDaLista) {
+          const registrada = await estado.obterLista(idDaLista);
+          if (!vivo) return;
+          if (registrada?.retrato) {
+            setFonte({
+              lista: idDaLista,
+              convocados: convocadosDaLista(registrada.retrato),
+            });
+            return;
+          }
+        }
+        const calculada = dados?.regra ? calcular(dados, "CONVOCACAO") : null;
+        if (vivo)
+          setFonte({ lista: null, convocados: convocadosDaLista(calculada) });
+      } catch {
+        if (vivo) {
+          setFonte(null);
+          setErroDaFonte(
+            "A lista de convocação está incompleta ou inválida. Recarregue o edital antes de gerar a agenda.",
+          );
         }
       }
-      const calculada = dados?.regra ? calcular(dados, "CONVOCACAO") : null;
-      if (vivo)
-        setFonte({ lista: null, convocados: convocadosDaLista(calculada) });
     }
     void carregarFonte();
     return () => {
@@ -736,7 +832,7 @@ function AgendaDosConvocados({ estado, agenda, a, e, calcular, podeEditar }) {
     if (temAjusteManual(itens)) setConfirmar(true);
     else gerar();
   }
-  function aplicarAjuste(novos) {
+  function aplicarAjuste(novos: ItemDaAgenda[]) {
     setAjuste("");
     setRascunho((r) => ({
       acao: r?.acao === "GERAR" ? "GERAR" : "AJUSTAR",
@@ -754,7 +850,7 @@ function AgendaDosConvocados({ estado, agenda, a, e, calcular, podeEditar }) {
     if (ok) setRascunho(null);
   }
 
-  let porDia = [];
+  let porDia: { chave: string; itens: ItemDaAgenda[] }[] = [];
   for (const i of ordenados) {
     const chave = i.data || "";
     const ultimo = porDia.at(-1);
@@ -771,6 +867,11 @@ function AgendaDosConvocados({ estado, agenda, a, e, calcular, podeEditar }) {
       <h3 className="ui-titulo" id="agendaConvocadosTitulo">
         Agenda dos convocados
       </h3>
+      {erroDaFonte ? (
+        <Aviso tom="danger" papel="alert">
+          {erroDaFonte}
+        </Aviso>
+      ) : null}
       <GradeDeKpis
         tour="classificacao-agenda-kpis"
         rotulo="Indicadores da agenda"
@@ -862,7 +963,7 @@ function AgendaDosConvocados({ estado, agenda, a, e, calcular, podeEditar }) {
               className="btn"
               data-acao="gerar-agenda"
               data-tour="classificacao-agenda-gerar"
-              disabled={!regra || !fonte || a.salvando}
+              disabled={!regra || !fonte || Boolean(erroDaFonte) || a.salvando}
               onClick={pedirGerar}
             >
               <i className="fa-solid fa-calendar-check" aria-hidden="true" />{" "}
@@ -1023,7 +1124,7 @@ function AgendaDosConvocados({ estado, agenda, a, e, calcular, podeEditar }) {
   );
 }
 
-export function Agenda({ estado, agenda, e, calcular }) {
+export function Agenda({ estado, agenda, e, calcular }: Props) {
   const a = useSyncExternalStore(agenda.assinar, agenda.obter);
   if (a.indisponivel)
     return (

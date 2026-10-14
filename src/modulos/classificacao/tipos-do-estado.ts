@@ -140,7 +140,7 @@ export type EstadoDaClassificacao = ReturnType<
   typeof import("./estado.ts").criarEstadoDaClassificacao
 >;
 export type EstadoDaAgenda = ReturnType<
-  typeof import("./estado-da-agenda.js").criarEstadoDaAgenda
+  typeof import("./estado-da-agenda.ts").criarEstadoDaAgenda
 >;
 export interface OpcoesDaTela extends OpcoesDoEstado {
   secao?: HTMLElement | null;
