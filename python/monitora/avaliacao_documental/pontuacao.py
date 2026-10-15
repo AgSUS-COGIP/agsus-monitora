@@ -439,9 +439,10 @@ def textos_das_justificativas(regra, bloco, lancado):
 def observacoes_dos_itens(avaliados, candidato):
     """
     A Observação do avaliador de cada item (blocos[codigo].observacao), em
-    qualquer situação (inclusive Não se aplica), na ordem da regra: "Item 8.2.6
-    — …" (sem item do edital, o título do bloco); a igual à justificativa do
-    ajuste ou ao motivo escrito não se repete (observacoesDosItens do JS).
+    qualquer situação (inclusive Não se aplica), na ordem da regra, como o
+    avaliador escreveu, sem o item do edital nem o título do bloco; a igual à
+    justificativa do ajuste ou ao motivo escrito não se repete
+    (observacoesDosItens do JS).
     """
     textos = []
     for avaliado in avaliados:
@@ -455,12 +456,7 @@ def observacoes_dos_itens(avaliados, candidato):
             for t in (lancado.get("justificativa_livre"), lancado.get("motivo_livre"))
         ):
             continue
-        item = (
-            f"Item {bloco.get('item_edital')}"
-            if bloco.get("item_edital")
-            else str(bloco.get("titulo") or bloco.get("codigo"))
-        )
-        textos.append(f"{item} — {obs}")
+        textos.append(obs)
     return textos
 
 

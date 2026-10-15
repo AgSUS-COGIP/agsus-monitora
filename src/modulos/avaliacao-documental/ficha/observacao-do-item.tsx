@@ -15,7 +15,7 @@ import type { Lancado, Mudar, Opcao } from "./tipos.ts";
     edital do bloco (pontuacao.js). Desmarcada, o texto sai.
   - "Observação do avaliador": opcional, no fim do card, em qualquer cargo e
     situação (inclusive Não se aplica). Vai para "Observações da análise"
-    como "Item 8.2.6 — …" (observacoesDosItens em pontuacao.js).
+    como o avaliador escreveu, sem o item do edital (observacoesDosItens).
 */
 
 /** A opção "Outro motivo (descrever)", depois dos motivos da regra. */
