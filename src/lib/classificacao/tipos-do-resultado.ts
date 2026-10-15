@@ -22,6 +22,12 @@ export interface EliminadoDaLista {
   nota?: number | null;
   parciais?: Record<string, number | null>;
 }
+/** Sem resultado na avaliação documental ainda (ficha não concluída). */
+export interface AguardandoAnalise {
+  analiseId: string;
+  nome: string;
+  situacao: string;
+}
 export interface VagaDoResultado {
   chave: string;
   codigo: string;
@@ -36,12 +42,14 @@ export interface VagaDoResultado {
   geral: LinhaDaLista[];
   porModalidade: Record<string, LinhaDaLista[]>;
   eliminados: EliminadoDaLista[];
+  aguardando: AguardandoAnalise[];
 }
 export interface ExplicacaoDoCandidato {
   analiseId: string;
   nome: string;
   vaga: string;
   elegivel: boolean;
+  aguardando?: boolean;
   nota?: number | null;
   posicaoGeral?: number | null;
   posicoes?: Record<string, number>;
@@ -81,6 +89,7 @@ export interface ResultadoDoMotor {
     candidatos: number;
     elegiveis: number;
     eliminados: number;
+    aguardando: number;
     vagas: number;
     avisos: number;
     pendencias: number;
@@ -94,4 +103,5 @@ export interface RecorteDasListas {
 export type VagaRecortada = VagaDoResultado & {
   linhas: LinhaDaLista[];
   eliminadosFiltrados: EliminadoDaLista[];
+  aguardandoFiltrados: AguardandoAnalise[];
 };

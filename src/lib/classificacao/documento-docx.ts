@@ -114,17 +114,19 @@ function celula(
     negrito = false,
     sombra = false,
     extensao = 0,
+    semQuebra = false,
   }: {
     largura: number;
     alinhamento?: string;
     negrito?: boolean;
     sombra?: boolean;
     extensao?: number;
+    semQuebra?: boolean;
   },
 ) {
   return (
     `<w:tc><w:tcPr><w:tcW w:w="${largura}" w:type="dxa"/>${extensao ? `<w:gridSpan w:val="${extensao}"/>` : ""}` +
-    `${sombra ? '<w:shd w:val="clear" w:color="auto" w:fill="D9D9D9"/>' : ""}</w:tcPr>` +
+    `${sombra ? '<w:shd w:val="clear" w:color="auto" w:fill="D9D9D9"/>' : ""}${semQuebra ? "<w:noWrap/>" : ""}<w:vAlign w:val="center"/></w:tcPr>` +
     `<w:p><w:pPr><w:spacing w:before="20" w:after="20"/><w:jc w:val="${alinhamento}"/></w:pPr>${corrida(texto, { negrito, tamanho: 20 })}</w:p></w:tc>`
   );
 }
@@ -140,7 +142,9 @@ export function tabelaXml(t: TabelaDoDocumento) {
     ["top", "left", "bottom", "right", "insideH", "insideV"]
       .map(borda)
       .join("") +
-    `</w:tblBorders><w:tblLayout w:type="fixed"/></w:tblPr>`;
+    `</w:tblBorders><w:tblLayout w:type="fixed"/>` +
+    // Margens internas estreitas (1 mm): o título de cada coluna cabe numa linha.
+    `<w:tblCellMar><w:left w:w="57" w:type="dxa"/><w:right w:w="57" w:type="dxa"/></w:tblCellMar></w:tblPr>`;
   if (!t.linhas.length)
     return (
       `<w:tbl>${propriedades}<w:tblGrid><w:gridCol w:w="${total}"/></w:tblGrid>` +
@@ -154,6 +158,7 @@ export function tabelaXml(t: TabelaDoDocumento) {
         alinhamento: "center",
         negrito: true,
         sombra: true,
+        semQuebra: true,
       }),
     )
     .join("")}</w:tr>`;

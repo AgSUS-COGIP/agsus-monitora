@@ -1097,3 +1097,85 @@ describe("composição da nota, vagas e avisos de dados", () => {
     });
   });
 });
+
+describe("quem ainda não foi analisado aguarda a análise (114/2026: fichas pendentes)", () => {
+  const candidatos = [
+    candidato("Apta", { nota_documental: 30 }),
+    candidato("Reprovada", { nota_documental: 5, status: "Reprovado" }),
+    candidato("Pendente sem ficha", { status: "Pendente", etapa: null }),
+    candidato("Ficha em análise", { status: "Em análise" }),
+    candidato("Ficha em revisão", { status: "Revisar", nota_documental: 20 }),
+    candidato("Etapa apta prevalece", {
+      status: "Pendente",
+      etapa: "Triado",
+      nota_documental: 25,
+    }),
+  ];
+  const r = classificar({
+    tipo: "PRELIMINAR",
+    regra: REGRA_83,
+    candidatos,
+    quadro: [QUADRO_169681],
+    unidade: "DSEI Xingu",
+    dataCorte: "2026-07-20",
+  });
+  const vaga = vagaDe(r, "169681");
+
+  it("não entra nos eliminados nem nas listas", () => {
+    expect(nomes(vaga.geral)).toEqual(["Apta", "Etapa apta prevalece"]);
+    expect(vaga.eliminados.map((e) => e.nome)).toEqual(["Reprovada"]);
+    expect(vaga.aguardando).toEqual([
+      expect.objectContaining({
+        nome: "Ficha em análise",
+        situacao: "Em análise",
+      }),
+      expect.objectContaining({
+        nome: "Ficha em revisão",
+        situacao: "Revisar",
+      }),
+      expect.objectContaining({
+        nome: "Pendente sem ficha",
+        situacao: "Pendente",
+      }),
+    ]);
+  });
+
+  it("conta à parte, avisa uma vez e explica na gaveta", () => {
+    expect(r.totais).toMatchObject({
+      candidatos: 6,
+      elegiveis: 2,
+      eliminados: 1,
+      aguardando: 3,
+    });
+    expect(avisosDe(r, "AGUARDANDO_ANALISE")).toHaveLength(1);
+    expect(avisosDe(r, "AGUARDANDO_ANALISE")[0].texto).toContain(
+      "3 candidato(s) aguardando a análise documental",
+    );
+    const id = candidatos[2].analise_id;
+    expect(r.explicacoes[id]).toMatchObject({
+      elegivel: false,
+      aguardando: true,
+    });
+    expect(r.explicacoes[id].explicacao[0]).toBe(
+      "Aguardando a análise documental (situação: Pendente).",
+    );
+  });
+
+  it("todos pendentes: ninguém eliminado (antes, 1.512 'eliminados' no 114)", () => {
+    const so = classificar({
+      tipo: "PRELIMINAR",
+      regra: REGRA_83,
+      candidatos: [
+        candidato("P1", { status: "Pendente" }),
+        candidato("P2", { status: "Pendente" }),
+      ],
+      quadro: [QUADRO_169681],
+      unidade: "DSEI Xingu",
+    });
+    expect(so.totais).toMatchObject({
+      elegiveis: 0,
+      eliminados: 0,
+      aguardando: 2,
+    });
+  });
+});

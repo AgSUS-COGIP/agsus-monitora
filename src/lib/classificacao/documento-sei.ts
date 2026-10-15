@@ -565,16 +565,23 @@ const semMarcas = (valor: unknown) =>
     .map((t) => t.texto)
     .join("");
 
-/* Larguras-base (%) por coluna; o Nome (ou a Vaga) fica com o resto. */
-const LARGURAS: Readonly<Record<string, number | undefined>> = Object.freeze({
+/*
+  Larguras-base (%) por coluna; o Nome (ou a Vaga) fica com o resto. Na
+  avaliação documental (Classificação | Nome | Modalidade de Concorrência |
+  Nota Final): 14 | 46 | 28 | 12 — cada título cabe numa linha (Calibri 10 pt
+  em negrito na largura útil do A4) e o Nome fica com o resto.
+*/
+export const LARGURAS_DAS_COLUNAS: Readonly<
+  Record<string, number | undefined>
+> = Object.freeze({
   Classificação: 14,
   CLASSIFICAÇÃO: 18,
   Nº: 6,
   NOTA: 20,
   "NOTA FINAL": 20,
-  "Nota Final": 9,
-  Nota: 9,
-  "Modalidade de Concorrência": 13,
+  "Nota Final": 12,
+  Nota: 12,
+  "Modalidade de Concorrência": 28,
   MODALIDADE: 14,
   SITUAÇÃO: 16,
   Situação: 14,
@@ -583,7 +590,17 @@ const LARGURAS: Readonly<Record<string, number | undefined>> = Object.freeze({
   Justificativa: 34,
   [COLUNA_DA_ART]: 30,
 });
+const LARGURAS = LARGURAS_DAS_COLUNAS;
 const ELASTICAS = new Set(["Nome", "NOME", "Vaga"]);
+/* Colunas de texto: à esquerda no modo "textos-esquerda" (números ao centro). */
+const TEXTUAIS = new Set([
+  ...ELASTICAS,
+  "Modalidade de Concorrência",
+  "MODALIDADE",
+  "Justificativa",
+  "Situação",
+  "SITUAÇÃO",
+]);
 
 function colunasComLargura(
   rotulos: string[],
@@ -609,7 +626,7 @@ function colunasComLargura(
         : Math.floor(resto / elasticas);
     }
     const esquerda =
-      alinhamento === "esquerda" ||
+      (alinhamento === "textos-esquerda" && TEXTUAIS.has(rotulo)) ||
       rotulo === "Justificativa" ||
       (alinhamento === "nome-esquerda" && ELASTICAS.has(rotulo));
     return {
@@ -790,7 +807,7 @@ function tabelasDaLista(
         ? "centro"
         : tipo === "PROVISORIA" || tipo === "LOTE"
           ? "nome-esquerda"
-          : "esquerda";
+          : "textos-esquerda";
     // A Modalidade só cabe na tabela da classificação geral (com as modalidades).
     const ids = escolhidas.filter((id) => id !== "MODALIDADE" || comModalidade);
     const decisoes =
@@ -843,7 +860,7 @@ function tabelasDaLista(
       titulo: "",
       colunas: colunasComLargura(
         ids.map((id) => rotuloDe[id] ?? id),
-        "esquerda",
+        "textos-esquerda",
       ),
       linhas: (v.eliminados || []).map((e) => ids.map((id) => celula(id, e))),
       vazia: VAZIA_ELIMINADOS,
@@ -929,6 +946,8 @@ function publicoDaLista(
   modeloPadrao: ModeloDeTexto | undefined,
 ) {
   if (lista === "eliminados") return "";
+  // O documento com as listas das cotas não é só "das Vagas de Ampla Concorrência".
+  if (lista === "todas" && (retrato.modalidades || []).length) return "";
   if (lista === "todas" || lista === "geral")
     return modeloPadrao?.publico_geral || "";
   const m = (retrato.modalidades || []).find((x) => x.codigo === lista);
@@ -1134,7 +1153,7 @@ function tabelaHtml(t: TabelaDoDocumento) {
   const cabeca = `<tr>${t.colunas
     .map(
       (c) =>
-        `<td style="width:${c.largura}%;${BORDA};background-color:#d9d9d9"><p class="Tabela_Texto_Centralizado"><strong>${escapar(c.rotulo)}</strong></p></td>`,
+        `<td style="width:${c.largura}%;${BORDA};background-color:#d9d9d9;white-space:nowrap"><p class="Tabela_Texto_Centralizado"><strong>${escapar(c.rotulo)}</strong></p></td>`,
     )
     .join("")}</tr>`;
   const corpo = t.linhas

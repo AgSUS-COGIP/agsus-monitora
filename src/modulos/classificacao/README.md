@@ -12,6 +12,15 @@ de títulos, com as parciais e os eliminados — vale como preliminar ou final d
 escolhe o título), `CONVOCACAO`, `ENTREVISTA` (resultado da etapa de entrevista; empate na mesma
 posição) e `FINAL` (vagas imediatas e cadastro reserva).
 
+Quem ainda não tem resultado na avaliação documental (ficha Pendente, Em análise ou Revisar;
+`SITUACOES_AGUARDANDO_ANALISE` em `catalogo.ts`) fica em "Aguardando análise" (`aguardando` por
+vaga e nos totais): fora das listas e dos eliminados, fora do documento do SEI, numa planilha à
+parte no XLSX. A geração guardada é conferida com os dados de agora (`geracaoDesatualizada` em
+`src/lib/classificacao/dados.ts`: versão da regra, quantidades e, com o retrato lido, o conteúdo);
+desatualizada, a tela avisa "Esta geração é de …; os dados mudaram desde então — gere de novo.",
+bloqueia "Marcar como publicada"/"Publicar como lista de aprovados" e as exportações pedem
+confirmação.
+
 Vagas por modalidade: quadro do edital > configuração de convocação do edital (Lista de aprovados ›
 Convocação, `TB_CONVOCACAO_EDITAL`) > percentuais da regra — as duas últimas pela mesma
 `derivarQuadro` da convocação (`src/lib/classificacao/convocacao-do-edital.ts`). A regra de

@@ -1104,3 +1104,58 @@ describe("Classificação: publicar o resultado final como lista de aprovados", 
     expect(secao.querySelector("[data-acao='publicar-aprovados']")).toBeNull();
   });
 });
+
+describe("Classificação: aguardando análise e geração guardada desatualizada", () => {
+  const comPendente = (extra = {}) =>
+    supabaseFalso({
+      obter_classificacao_do_edital: () => ({
+        ...structuredClone(EDITAL),
+        candidatos: [
+          ...structuredClone(EDITAL.candidatos),
+          candidato(5, "Eva Pendente", null, { status: "Pendente" }),
+        ],
+        ...extra,
+      }),
+    });
+  const kpi = (c) =>
+    secao.querySelector(`[data-kpi="${c}"] .ui-kpi-valor`)?.textContent;
+
+  it("quem não foi analisado não é eliminado: KPI e lista à parte", async () => {
+    await montar(comPendente());
+    await abrirEdital();
+    expect([kpi("eliminados"), kpi("aguardando")]).toEqual(["1", "1"]);
+    const aguardando = secao.querySelector(".classificacao-aguardando");
+    expect(aguardando.querySelector("summary").textContent).toBe(
+      "Aguardando análise (1)",
+    );
+    expect(aguardando.textContent).toContain("Eva Pendente");
+    expect(
+      secao.querySelector(".classificacao-eliminados summary").textContent,
+    ).toBe("Eliminados (1)");
+  });
+
+  it("geração de 13/10 com outros números: avisa e bloqueia 'Marcar como publicada'", async () => {
+    const supabase = comPendente({
+      listas: [
+        {
+          id: "l0",
+          tipo: "FINAL",
+          versao_regra: 2,
+          hash: "a".repeat(64),
+          gerada_em: "2026-10-13T19:10:10Z",
+          por: "Ana",
+          elegiveis: 1,
+          eliminados: 1576,
+          pendencias: 0,
+          publicada: false,
+        },
+      ],
+    });
+    await montar(supabase);
+    await abrirEdital();
+    expect(secao.querySelector(".classificacao-defasada").textContent).toBe(
+      "Esta geração é de 13/10/2026, 16:10; os dados mudaram desde então — gere de novo.",
+    );
+    expect(secao.querySelector("[data-acao='publicar']").disabled).toBe(true);
+  });
+});

@@ -118,6 +118,16 @@ export function instantaneoDaLista(
           ? { nota: e.nota ?? null, ...soParciais(e.parciais) }
           : {}),
       })),
+      // Quem ainda aguarda a análise documental (fora das listas e dos eliminados).
+      ...(v.aguardando?.length
+        ? {
+            aguardando: v.aguardando.map((a) => ({
+              analise_id: a.analiseId,
+              nome: a.nome,
+              situacao: a.situacao,
+            })),
+          }
+        : {}),
     })),
     avisos: resultado.avisos.map((a) => ({
       codigo: a.codigo,
@@ -178,7 +188,19 @@ const colunaExcel = (i: number) => {
   return s;
 };
 
-function planilhaXml(linhas: PlanilhaDaClassificacao["linhas"]) {
+function planilhaXml(
+  linhas: PlanilhaDaClassificacao["linhas"],
+  larguras: PlanilhaDaClassificacao["larguras"] = [],
+) {
+  // Larguras em caracteres (proporcionais ao conteúdo de cada coluna).
+  const colunas = larguras.length
+    ? `<cols>${larguras
+        .map(
+          (w, i) =>
+            `<col min="${i + 1}" max="${i + 1}" width="${w}" customWidth="1"/>`,
+        )
+        .join("")}</cols>`
+    : "";
   const corpo = linhas
     .map(
       (linha, l) =>
@@ -195,11 +217,18 @@ function planilhaXml(linhas: PlanilhaDaClassificacao["linhas"]) {
   return (
     '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
     '<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">' +
-    `<sheetData>${corpo}</sheetData></worksheet>`
+    `${colunas}<sheetData>${corpo}</sheetData></worksheet>`
   );
 }
 
-/** As linhas das duas planilhas (Classificação e Eliminados) do retrato. */
+/* Larguras (em caracteres) das colunas de cada planilha. */
+export const LARGURAS_DA_PLANILHA = Object.freeze({
+  classificacao: [10, 48, 22, 13, 40, 9, 28, 18],
+  eliminados: [10, 48, 40, 42, 60],
+  aguardando: [10, 48, 40, 18],
+});
+
+/** As linhas das planilhas (Classificação, Eliminados e Aguardando análise) do retrato. */
 export function linhasDaPlanilha(entrada: unknown) {
   const retrato = retratoParaDocumento(entrada, true);
   const modalidades = retrato.modalidades || [];
@@ -223,6 +252,9 @@ export function linhasDaPlanilha(entrada: unknown) {
   ];
   const eliminados: CelulaDaPlanilha[][] = [
     ["Vaga", "Cargo", "Nome", "Motivo", "Detalhe"],
+  ];
+  const aguardando: CelulaDaPlanilha[][] = [
+    ["Vaga", "Cargo", "Nome", "Situação na análise"],
   ];
   for (const v of retrato.vagas) {
     const listas: [string, LinhaDoRetrato[]][] = [
@@ -254,17 +286,36 @@ export function linhasDaPlanilha(entrada: unknown) {
         motivos[e.motivo] || e.motivo,
         e.detalhe || "",
       ]);
+    for (const a of v.aguardando || [])
+      aguardando.push([v.codigo || "", v.cargo || "", a.nome, a.situacao]);
   }
-  return { classificacao, eliminados };
+  return { classificacao, eliminados, aguardando };
 }
 
 /** Os bytes do .xlsx da lista. */
 export function gerarXlsxDaLista(retrato: unknown, quando = new Date()) {
-  const { classificacao, eliminados } = linhasDaPlanilha(retrato);
+  const { classificacao, eliminados, aguardando } = linhasDaPlanilha(retrato);
   return gerarXlsx(
     [
-      { nome: "Classificação", linhas: classificacao },
-      { nome: "Eliminados", linhas: eliminados },
+      {
+        nome: "Classificação",
+        linhas: classificacao,
+        larguras: LARGURAS_DA_PLANILHA.classificacao,
+      },
+      {
+        nome: "Eliminados",
+        linhas: eliminados,
+        larguras: LARGURAS_DA_PLANILHA.eliminados,
+      },
+      ...(aguardando.length > 1
+        ? [
+            {
+              nome: "Aguardando análise",
+              linhas: aguardando,
+              larguras: LARGURAS_DA_PLANILHA.aguardando,
+            },
+          ]
+        : []),
     ],
     quando,
   );
@@ -339,7 +390,7 @@ export function gerarXlsx(
     },
     ...folhas.map((f) => ({
       nome: `xl/worksheets/sheet${f.n}.xml`,
-      conteudo: planilhaXml(f.linhas),
+      conteudo: planilhaXml(f.linhas, f.larguras),
     })),
   ];
   return zipSemCompressao(arquivos, quando);

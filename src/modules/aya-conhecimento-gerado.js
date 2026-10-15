@@ -2591,6 +2591,42 @@ export const VERBETES_AYA = Object.freeze([
     abrir: "classificacao",
   },
   {
+    arquivo: "regras-da-classificacao.md",
+    titulo: "Aguardando análise (ficha não concluída)",
+    perguntas: [
+      "aguardando analise na classificacao",
+      "pendentes aparecem como eliminados",
+      "por que todos estao eliminados",
+      "candidato sem ficha concluida",
+      "ficha pendente na classificacao",
+      "eliminados 1512",
+    ],
+    resposta:
+      'Quem ainda não tem resultado na avaliação documental — ficha Pendente, Em análise ou em Revisar (ou "Pendente" na planilha) — não é eliminado nem entra nas listas: fica em "Aguardando análise", com indicador próprio no topo, uma lista recolhida por vaga ("Aguardando análise (N)"), o aviso "Candidatos aguardando a análise documental" e, ao abrir a pessoa, a situação dela. Eliminados são só os analisados: reprovados (não habilitados) ou abaixo da nota mínima. O documento do SEI não traz quem aguarda; o XLSX traz a planilha "Aguardando análise" para conferência. Quando a ficha for concluída, gere a lista de novo.',
+    fato: 'Na Classificação, ficha não concluída fica em "Aguardando análise", fora dos eliminados e das listas.',
+    fonte:
+      "src/lib/classificacao/motor.ts (aguardandoAnalise); src/lib/classificacao/catalogo.ts (SITUACOES_AGUARDANDO_ANALISE); src/modulos/classificacao/listas.tsx",
+    abrir: "classificacao",
+  },
+  {
+    arquivo: "regras-da-classificacao.md",
+    titulo: "Geração guardada desatualizada",
+    perguntas: [
+      "geracao desatualizada",
+      "os dados mudaram desde entao",
+      "esta geracao e de",
+      "lista gerada com dado antigo",
+      "candidato que nao deveria aparecer no docx",
+      "marcar como publicada desabilitado",
+    ],
+    resposta:
+      'O documento (Copiar para o SEI, Como fica no SEI, DOCX, PDF e XLSX) sai sempre da última lista gerada, não da tela. Quando os dados mudaram depois da geração — fichas concluídas ou reabertas, notas, vagas, a versão da regra —, a tela avisa "Esta geração é de 13/10/2026, 16:10; os dados mudaram desde então — gere de novo." (ou "a regra mudou"). A conferência compara as quantidades registradas (nas listas e eliminados) e a versão da regra; ao exportar, compara também o conteúdo inteiro (quem, posição, nota, modalidade, cabeçalho da vaga). Com geração desatualizada, "Marcar como publicada" e "Publicar como lista de aprovados" ficam bloqueados e as exportações pedem confirmação antes de usar a geração antiga. Clique em "Gerar" para registrar uma lista nova.',
+    fato: "A Classificação avisa quando a lista gerada não corresponde mais aos dados e bloqueia a publicação até gerar de novo.",
+    fonte:
+      "src/lib/classificacao/dados.ts (geracaoDesatualizada, assinaturaDoRetrato); src/modulos/classificacao/listas.tsx",
+    abrir: "classificacao",
+  },
+  {
     arquivo: "regras-da-lista-de-aprovados.md",
     titulo: "Tela da Lista de aprovados",
     perguntas: [

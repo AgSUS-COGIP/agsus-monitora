@@ -2,6 +2,8 @@ export type CelulaDaPlanilha = string | number | boolean | null | undefined;
 export interface PlanilhaDaClassificacao {
   nome: string;
   linhas: readonly (readonly CelulaDaPlanilha[])[];
+  /** Largura de cada coluna, em caracteres (opcional). */
+  larguras?: readonly number[];
 }
 export interface ModalidadeDoRetrato {
   codigo: string;
@@ -22,6 +24,11 @@ export interface EliminadoDoRetrato extends LinhaDoRetrato {
   motivo: string;
   detalhe: string;
 }
+export interface AguardandoDoRetrato {
+  nome: string;
+  analise_id?: string;
+  situacao: string;
+}
 export interface VagaDoRetrato {
   chave: string;
   codigo: string;
@@ -31,6 +38,7 @@ export interface VagaDoRetrato {
   geral: LinhaDoRetrato[];
   listas: Record<string, LinhaDoRetrato[]>;
   eliminados: EliminadoDoRetrato[];
+  aguardando?: AguardandoDoRetrato[];
 }
 export interface RetratoParaDocumento {
   tipo: string;

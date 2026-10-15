@@ -140,6 +140,20 @@ export function retratoParaDocumento(
             detalhe: texto(e.detalhe),
           };
         }),
+        ...(q.aguardando == null
+          ? {}
+          : {
+              aguardando: lista(q.aguardando).map((v) => {
+                const a = registro(v);
+                return {
+                  nome: texto(a.nome),
+                  ...(a.analise_id == null
+                    ? {}
+                    : { analise_id: texto(a.analise_id) }),
+                  situacao: texto(a.situacao),
+                };
+              }),
+            }),
       };
     }),
   };
