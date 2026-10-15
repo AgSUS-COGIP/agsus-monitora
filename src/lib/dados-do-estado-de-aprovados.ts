@@ -3,7 +3,7 @@ import type {
   CandidatoAprovado,
   ListaDeAprovados,
 } from "./tipos-do-estado-de-aprovados.ts";
-import { expandirCandidatosCompactos } from "./candidatos-aprovados-compactos.js";
+import { expandirCandidatosCompactos } from "./candidatos-aprovados-compactos.ts";
 
 export function ehRegistroDosAprovados(
   valor: unknown,

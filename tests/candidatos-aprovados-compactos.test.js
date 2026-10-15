@@ -3,7 +3,7 @@ import {
   LISTA_DE_APROVADOS,
   expandirCandidatosCompactos,
   pacoteInalterado,
-} from "../src/lib/candidatos-aprovados-compactos.js";
+} from "../src/lib/candidatos-aprovados-compactos.ts";
 import { criarCacheDePayload } from "../src/lib/cache-de-payload.js";
 import {
   compactarCandidatos,

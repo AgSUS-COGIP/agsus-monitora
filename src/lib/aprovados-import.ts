@@ -1,3 +1,14 @@
+import type {
+  CandidatoDaPlanilhaDeAprovados,
+  ArquivoDaPlanilhaDeAprovados,
+} from "./tipos-da-importacao-de-aprovados.ts";
+type ArquivosDaPlanilha = ReadonlyMap<string, Uint8Array<ArrayBuffer>>;
+
+function registroDaLinha(v: unknown): Record<string, unknown> {
+  return v !== null && typeof v === "object"
+    ? Object.fromEntries(Object.entries(v))
+    : {};
+}
 export const REQUIRED_APPROVED_COLUMNS = Object.freeze([
   "codigo_vaga",
   "cargo",
@@ -7,7 +18,7 @@ export const REQUIRED_APPROVED_COLUMNS = Object.freeze([
   "modalidade",
 ]);
 
-const HEADER_ALIASES = Object.freeze({
+const HEADER_ALIASES: Readonly<Record<string, string>> = Object.freeze({
   codigo_vaga: "codigo_vaga",
   codigovaga: "codigo_vaga",
   codigo: "codigo_vaga",
@@ -20,29 +31,33 @@ const HEADER_ALIASES = Object.freeze({
   modalidade: "modalidade",
 });
 
-function cleanText(value) {
+function cleanText(value: unknown) {
   return String(value ?? "").trim();
 }
 
-function stripDiacritics(value) {
+function stripDiacritics(value: unknown) {
   return cleanText(value)
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "");
 }
 
-function normalizeHeader(value) {
+function normalizeHeader(value: unknown) {
   const base = stripDiacritics(value)
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, "_")
     .replace(/^_+|_+$/g, "");
-  return HEADER_ALIASES[base] || base;
+  return Object.hasOwn(HEADER_ALIASES, base)
+    ? (HEADER_ALIASES[base] ?? base)
+    : base;
 }
 
-export function normalizeApprovedHeaders(headers) {
+export function normalizeApprovedHeaders(
+  headers: readonly unknown[] | null | undefined,
+) {
   return (headers || []).map(normalizeHeader);
 }
 
-function parseBrazilianNumber(value) {
+function parseBrazilianNumber(value: unknown) {
   if (typeof value === "number") return Number.isFinite(value) ? value : NaN;
   const raw = cleanText(value);
   if (!raw) return NaN;
@@ -53,18 +68,21 @@ function parseBrazilianNumber(value) {
   return Number.isFinite(number) ? number : NaN;
 }
 
-function rowIsEmpty(row) {
+function rowIsEmpty(row: Record<string, unknown>) {
   return REQUIRED_APPROVED_COLUMNS.every((key) => !cleanText(row?.[key]));
 }
 
-export function validateApprovedRows(inputRows) {
-  const rows = [];
-  const errors = [];
+export function validateApprovedRows(
+  inputRows: readonly unknown[] | null | undefined,
+) {
+  const rows: CandidatoDaPlanilhaDeAprovados[] = [];
+  const errors: string[] = [];
 
   (inputRows || []).forEach((source, index) => {
     const line = index + 2;
-    const row = Object.fromEntries(
-      REQUIRED_APPROVED_COLUMNS.map((key) => [key, source?.[key] ?? ""]),
+    const origem = registroDaLinha(source);
+    const row: Record<string, unknown> = Object.fromEntries(
+      REQUIRED_APPROVED_COLUMNS.map((key) => [key, origem[key] ?? ""]),
     );
 
     if (rowIsEmpty(row)) return;
@@ -109,12 +127,12 @@ export function validateApprovedRows(inputRows) {
   return { rows, errors };
 }
 
-function decodeXml(value) {
+function decodeXml(value: unknown) {
   return String(value ?? "")
-    .replace(/&#x([0-9a-f]+);/gi, (_, hex) =>
+    .replace(/&#x([0-9a-f]+);/gi, (_match: string, hex: string) =>
       String.fromCodePoint(parseInt(hex, 16)),
     )
-    .replace(/&#([0-9]+);/g, (_, dec) =>
+    .replace(/&#([0-9]+);/g, (_match: string, dec: string) =>
       String.fromCodePoint(parseInt(dec, 10)),
     )
     .replace(/&lt;/g, "<")
@@ -124,15 +142,15 @@ function decodeXml(value) {
     .replace(/&amp;/g, "&");
 }
 
-function readUint16(view, offset) {
+function readUint16(view: DataView, offset: number) {
   return view.getUint16(offset, true);
 }
 
-function readUint32(view, offset) {
+function readUint32(view: DataView, offset: number) {
   return view.getUint32(offset, true);
 }
 
-async function inflateRaw(bytes) {
+async function inflateRaw(bytes: Uint8Array<ArrayBuffer>) {
   if (typeof DecompressionStream === "undefined") {
     throw new Error(
       "Seu navegador não oferece suporte à descompactação necessária para arquivos XLSX.",
@@ -144,7 +162,7 @@ async function inflateRaw(bytes) {
   return new Uint8Array(await new Response(stream).arrayBuffer());
 }
 
-async function unzip(arrayBuffer) {
+async function unzip(arrayBuffer: ArrayBuffer) {
   const bytes = new Uint8Array(arrayBuffer);
   const view = new DataView(arrayBuffer);
   const decoder = new TextDecoder("utf-8");
@@ -162,7 +180,7 @@ async function unzip(arrayBuffer) {
 
   const entryCount = readUint16(view, eocd + 10);
   let offset = readUint32(view, eocd + 16);
-  const files = new Map();
+  const files = new Map<string, Uint8Array<ArrayBuffer>>();
 
   for (let entryIndex = 0; entryIndex < entryCount; entryIndex += 1) {
     if (readUint32(view, offset) !== 0x02014b50) {
@@ -202,25 +220,25 @@ async function unzip(arrayBuffer) {
   return files;
 }
 
-function xmlText(files, path) {
+function xmlText(files: ArquivosDaPlanilha, path: string) {
   const content = files.get(path);
   if (!content) return "";
   return new TextDecoder("utf-8").decode(content);
 }
 
-function parseSharedStrings(xml) {
+function parseSharedStrings(xml: string) {
   if (!xml) return [];
-  const values = [];
+  const values: string[] = [];
   for (const match of xml.matchAll(/<si\b[^>]*>([\s\S]*?)<\/si>/gi)) {
-    const texts = [...match[1].matchAll(/<t\b[^>]*>([\s\S]*?)<\/t>/gi)].map(
-      (part) => decodeXml(part[1]),
-    );
+    const texts = [
+      ...(match[1] ?? "").matchAll(/<t\b[^>]*>([\s\S]*?)<\/t>/gi),
+    ].map((part) => decodeXml(part[1]));
     values.push(texts.join(""));
   }
   return values;
 }
 
-function firstWorksheetPath(files) {
+function firstWorksheetPath(files: ArquivosDaPlanilha) {
   const workbook = xmlText(files, "xl/workbook.xml");
   const relationships = xmlText(files, "xl/_rels/workbook.xml.rels");
   const sheetMatch = workbook.match(
@@ -250,7 +268,7 @@ function firstWorksheetPath(files) {
   throw new Error("Nenhuma planilha foi encontrada no XLSX.");
 }
 
-function columnIndex(reference) {
+function columnIndex(reference: unknown) {
   const letters =
     String(reference || "")
       .match(/^[A-Z]+/i)?.[0]
@@ -261,7 +279,11 @@ function columnIndex(reference) {
   return result - 1;
 }
 
-function cellValue(cellXml, type, sharedStrings) {
+function cellValue(
+  cellXml: string,
+  type: string,
+  sharedStrings: readonly string[],
+) {
   if (type === "inlineStr") {
     return [...cellXml.matchAll(/<t\b[^>]*>([\s\S]*?)<\/t>/gi)]
       .map((match) => decodeXml(match[1]))
@@ -273,24 +295,30 @@ function cellValue(cellXml, type, sharedStrings) {
   return decodeXml(raw);
 }
 
-function parseWorksheet(xml, sharedStrings) {
-  const rows = [];
+function parseWorksheet(xml: string, sharedStrings: readonly string[]) {
+  const rows: string[][] = [];
   for (const rowMatch of xml.matchAll(/<row\b[^>]*>([\s\S]*?)<\/row>/gi)) {
-    const cells = [];
-    for (const cellMatch of rowMatch[1].matchAll(
+    const cells: string[] = [];
+    for (const cellMatch of (rowMatch[1] ?? "").matchAll(
       /<c\b([^>]*)>([\s\S]*?)<\/c>/gi,
     )) {
-      const attrs = cellMatch[1];
+      const attrs = cellMatch[1] ?? "";
       const ref = attrs.match(/\br=["']([^"']+)["']/i)?.[1] || "A1";
       const type = attrs.match(/\bt=["']([^"']+)["']/i)?.[1] || "";
-      cells[columnIndex(ref)] = cellValue(cellMatch[2], type, sharedStrings);
+      cells[columnIndex(ref)] = cellValue(
+        cellMatch[2] ?? "",
+        type,
+        sharedStrings,
+      );
     }
     rows.push(cells.map((value) => value ?? ""));
   }
   return rows;
 }
 
-export async function readApprovedWorkbook(file) {
+export async function readApprovedWorkbook(
+  file: ArquivoDaPlanilhaDeAprovados | null | undefined,
+): Promise<CandidatoDaPlanilhaDeAprovados[]> {
   if (!file || typeof file.arrayBuffer !== "function") {
     throw new Error("Selecione um arquivo XLSX válido.");
   }
@@ -321,7 +349,7 @@ export async function readApprovedWorkbook(file) {
   }
 
   const dataRows = matrix.slice(1).map((values) => {
-    const row = {};
+    const row: Record<string, unknown> = {};
     headers.forEach((header, index) => {
       if (header) row[header] = values[index] ?? "";
     });

@@ -66,11 +66,11 @@ import {
 */
 const VERSAO_DA_COPIA = `1:${import.meta.url}`;
 
-import { readApprovedWorkbook } from "../../lib/aprovados-import.js";
+import { readApprovedWorkbook } from "../../lib/aprovados-import.ts";
 import {
   LISTA_DE_APROVADOS,
   pacoteInalterado,
-} from "../../lib/candidatos-aprovados-compactos.js";
+} from "../../lib/candidatos-aprovados-compactos.ts";
 import {
   versaoDoPacote,
   criarCacheDePayload,
@@ -121,7 +121,7 @@ import {
   arquivoEmBase64,
   pdfDoBase64,
   problemaDosAnexos,
-} from "../../lib/anexos-do-candidato.js";
+} from "../../lib/anexos-do-candidato.ts";
 
 const BUCKET = PLANILHAS.listaAprovadosImportada.bucket;
 const LIMITE_DO_XLSX = 10 * 1024 * 1024;

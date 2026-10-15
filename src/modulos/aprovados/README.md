@@ -98,6 +98,12 @@ de listas; rejeição da chamada não deixa o histórico de cartas preso no carr
 Testes de contrato em `tests/tipos/modais-dos-aprovados.tsx` e regressões em
 `tests/lib/historicos-dos-aprovados.test.js`.
 
+A base compartilhada também está em TypeScript: `src/lib/aprovados-import.ts`
+lê e valida o XLSX; `candidatos-aprovados-compactos.ts` expande os formatos 1 e 2;
+`anexos-do-candidato.ts` confere os PDFs e converte seus bytes em base64.
+Contratos em `src/lib/tipos-da-importacao-de-aprovados.ts`; testes da leitura real
+da planilha em `tests/lib/importacao-xlsx-de-aprovados.test.js`.
+
 ## Banco
 
 `supabase/migrations/20261005180000_convocado_e_carta_de_convocacao.sql` (ensaio em

@@ -2,8 +2,8 @@
 
 A tela Lista de aprovados (view `approved`): status dos candidatos, importação, convocação, sub
 judice e anexos. Fontes: `src/modulos/aprovados/`, `src/lib/lista-aprovados-rules.ts`,
-`src/lib/aprovados-import.js`, `src/lib/lista-convocacao-rules.ts`,
-`src/lib/modelo-de-convocacao.ts`, `src/lib/anexos-do-candidato.js`, `src/lib/carta-de-convocacao.ts`, `src/lib/access-roles.js` e as
+`src/lib/aprovados-import.ts`, `src/lib/lista-convocacao-rules.ts`,
+`src/lib/modelo-de-convocacao.ts`, `src/lib/anexos-do-candidato.ts`, `src/lib/carta-de-convocacao.ts`, `src/lib/access-roles.js` e as
 migrations `20260928235000_anexos_so_admin.sql`, `20260930200000_aprovados_por_grupo_edital_gestor_edita.sql`,
 `20261001150000_sub_judice_alteracao.sql`, `20261005160000_lista_de_aprovados_da_classificacao.sql` (lista
 publicada do resultado final da Classificação; `src/lib/publicacao-de-aprovados.ts`) e
@@ -26,7 +26,7 @@ publicada do resultado final da Classificação; `src/lib/publicacao-de-aprovado
 
 **perguntas:** importar lista de aprovados | importacao do xlsx | colunas do xlsx | substituir lista
 **resposta:** A importação aceita só .xlsx e usa a primeira aba, com as colunas obrigatórias codigo_vaga, cargo, classificacao, nota, nome e modalidade (classificação inteira maior que 0; nota numérica, 0 ou mais); mostra até 12 erros por vez. Importa quem tem Editor em Importação (ou o grupo Gestor); substituir uma lista existente é do Administrador. A importação liga os candidatos ao edital pelo ID do edital.
-**fonte:** src/lib/aprovados-import.js; src/lib/access-roles.js
+**fonte:** src/lib/aprovados-import.ts; src/lib/access-roles.js
 
 ## Modelo de convocação
 
@@ -44,7 +44,7 @@ publicada do resultado final da Classificação; `src/lib/publicacao-de-aprovado
 
 **perguntas:** quem pode anexar documentos ao candidato | anexos do candidato | anexar pdf ao candidato | documentos do candidato
 **resposta:** Só quem tem Administrador em Aprovados inclui e remove anexos do candidato, e só em lista ativa: PDF de até 2 MB, no máximo 5 por candidato. Ver e baixar os anexos é para quem lê a lista.
-**fonte:** src/lib/anexos-do-candidato.js; src/lib/lista-aprovados-rules.ts; supabase/migrations/20260928235000_anexos_so_admin.sql
+**fonte:** src/lib/anexos-do-candidato.ts; src/lib/lista-aprovados-rules.ts; supabase/migrations/20260928235000_anexos_so_admin.sql
 
 ## Origem da lista de aprovados
 
