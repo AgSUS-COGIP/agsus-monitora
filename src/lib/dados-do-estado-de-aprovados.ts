@@ -54,7 +54,8 @@ function anexoValido(a: unknown): a is AnexoDoAprovado {
     ehRegistroDosAprovados(a) &&
     identificador(a.anexo_id) &&
     identificador(a.candidato_id) &&
-    textoOpcional(a.arquivo_nome)
+    textoOpcional(a.arquivo_nome) &&
+    textoNulo(a.incluido_em)
   );
 }
 function colecao<T>(

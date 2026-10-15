@@ -1,3 +1,12 @@
+import type {
+  PropsDoModalListas,
+  PropsDaOrigemDaClassificacao,
+  PropsDoPainelDoArquivo,
+} from "./tipos-dos-modais.ts";
+import type {
+  ListaDeAprovados,
+  SnapshotDosAprovados,
+} from "./tipos-do-estado.ts";
 import { useRef, useState } from "react";
 import {
   canImportApprovedList,
@@ -25,8 +34,8 @@ import { FormularioDeConvocacao } from "./formulario-de-convocacao.tsx";
   motivo. O XLSX continua para os editais sem análise no sistema.
 */
 
-const dataBR = (valor) => {
-  const d = new Date(valor);
+const dataBR = (valor?: string | null) => {
+  const d = new Date(valor ?? "");
   return Number.isNaN(d.getTime())
     ? ""
     : d.toLocaleDateString("pt-BR", { timeZone: "America/Sao_Paulo" });
@@ -36,10 +45,17 @@ const MODELO = PLANILHAS.modeloListaAprovados;
 const TIPOS_ACEITOS =
   ".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
 
-function ResumoDaListaAtual({ lista, podeSubstituir }) {
+function ResumoDaListaAtual({
+  lista,
+  podeSubstituir,
+}: {
+  lista: ListaDeAprovados | undefined;
+  podeSubstituir: boolean;
+}) {
   if (!lista)
     return <span className="approved-status neutral">Sem lista importada</span>;
   const origem = origemDaLista(lista);
+  if (!origem) return null;
   const daClassificacao = origem.tipo === "CLASSIFICACAO";
   return (
     <>
@@ -90,7 +106,12 @@ function ResumoDaListaAtual({ lista, podeSubstituir }) {
   );
 }
 
-function DaClassificacao({ estado, editalId, rotulo, publicacao }) {
+function DaClassificacao({
+  estado,
+  editalId,
+  rotulo,
+  publicacao,
+}: PropsDaOrigemDaClassificacao) {
   const dados = publicacao?.dados;
   if (!dados) return null;
   const final = dados.resultado_final;
@@ -116,7 +137,11 @@ function DaClassificacao({ estado, editalId, rotulo, publicacao }) {
   );
 }
 
-function HistoricoDasPublicacoes({ publicacao }) {
+function HistoricoDasPublicacoes({
+  publicacao,
+}: {
+  publicacao: SnapshotDosAprovados["publicacao"];
+}) {
   const lista = publicacao?.dados?.publicacoes || [];
   if (!lista.length) return null;
   return (
@@ -149,8 +174,8 @@ function PainelDoArquivo({
   rotulo,
   lista,
   publicacao,
-}) {
-  const arquivo = useRef(null);
+}: PropsDoPainelDoArquivo) {
+  const arquivo = useRef<HTMLInputElement>(null);
   const [motivo, setMotivo] = useState("");
   const daClassificacao = origemDaLista(lista)?.tipo === "CLASSIFICACAO";
   const podeImportar = canImportApprovedList(perfil);
@@ -184,6 +209,19 @@ function PainelDoArquivo({
       >
         <ResumoDaListaAtual lista={lista} podeSubstituir={podeSubstituir} />
       </div>
+      {publicacao?.erro ? (
+        <Aviso tom="warning" papel="alert">
+          Não foi possível ler o histórico das publicações.
+          <button
+            type="button"
+            className="btn secondary small"
+            data-acao="recarregar-publicacoes"
+            onClick={() => void estado.carregarPublicacao(editalId)}
+          >
+            Tentar de novo
+          </button>
+        </Aviso>
+      ) : null}
       <DaClassificacao
         estado={estado}
         editalId={editalId}
@@ -340,7 +378,12 @@ const ABAS = [
   },
 ];
 
-export function ModalListasDoEdital({ estado, dados, editalId, rotulo }) {
+export function ModalListasDoEdital({
+  estado,
+  dados,
+  editalId,
+  rotulo,
+}: PropsDoModalListas) {
   const [aba, setAba] = useState("arquivo");
   const { perfil, listas, candidatos, configs, modelos } = dados;
   const publicacao =

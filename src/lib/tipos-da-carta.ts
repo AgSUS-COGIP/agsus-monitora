@@ -106,10 +106,21 @@ export interface ResultadoDaEmissao {
   candidatos: readonly CandidatoDaCarta[];
   nova: boolean;
 }
+export interface CartaDoHistorico extends RegistroDaCarta {
+  carta_id: string;
+  modelo?: string | null;
+  versao?: string | number | null;
+  emitida_em?: string | null;
+  usuario?: string | null;
+  saida?: string | null;
+  candidatos?: number | string | null;
+  data_limite?: string | null;
+  convocacao_marcada?: string | null;
+}
 export interface HistoricoDaCarta {
   carregando: boolean;
   dataConvocacao: string;
-  cartas: RegistroDaCarta[];
+  cartas: CartaDoHistorico[];
   erro: string;
 }
 export interface SnapshotDaCarta {

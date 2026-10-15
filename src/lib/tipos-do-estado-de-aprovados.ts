@@ -27,6 +27,27 @@ export interface AnexoDoAprovado extends Record<string, unknown> {
   anexo_id: string;
   candidato_id: string;
   arquivo_nome?: string;
+  incluido_em?: string | null;
+}
+
+export interface PublicacaoDoHistorico extends Record<string, unknown> {
+  id: string;
+  origem?: string | null;
+  em?: string | null;
+  por?: string | null;
+  motivo?: string | null;
+  versao_regra?: number | string | null;
+  candidatos?: number | string | null;
+  entram?: number | string | null;
+  saem?: number | string | null;
+  mudam?: number | string | null;
+  pendencias: { nome?: string | null }[];
+}
+export interface DadosDaPublicacaoDoEdital extends Record<string, unknown> {
+  resultado_final:
+    (Record<string, unknown> & { gerada_em?: string | null }) | null;
+  tem_analises?: boolean | null;
+  publicacoes: PublicacaoDoHistorico[];
 }
 export interface ConvocacaoDoAprovado {
   data: string;

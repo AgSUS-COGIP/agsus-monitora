@@ -11,12 +11,13 @@ import type {
   ResultadoDaEmissao,
   SaidaDaCarta,
   SnapshotDaCarta,
+  HistoricoDaCarta,
 } from "../../../lib/tipos-da-carta.ts";
 import {
   idConfirmadoDaCarta,
   MENSAGEM_CONFIRMACAO_DA_CARTA,
   objetoDaCarta,
-  registrosDaCarta,
+  cartasDoHistorico,
   resultadoDeMarcar,
 } from "../../../lib/dados-da-carta.ts";
 /*
@@ -449,27 +450,30 @@ export function criarEstadoDaCarta({
       erro: "",
     });
     publicar({ historicos: inicio });
-    const { data, error } = await cliente().rpc("listar_cartas_do_candidato", {
-      p_candidato: id,
-    });
-    const historicos = new Map(estado.historicos);
+    let resultado: HistoricoDaCarta;
     try {
+      const { data, error } = await cliente().rpc(
+        "listar_cartas_do_candidato",
+        { p_candidato: id },
+      );
       if (error) throw error;
       const dados = objetoDaCarta(data);
-      historicos.set(id, {
+      resultado = {
         carregando: false,
         erro: "",
         dataConvocacao: texto(dados.data_convocacao),
-        cartas: registrosDaCarta(dados.cartas),
-      });
+        cartas: cartasDoHistorico(dados.cartas),
+      };
     } catch (erro) {
-      historicos.set(id, {
+      resultado = {
         carregando: false,
         cartas: [],
         dataConvocacao: "",
         erro: mensagemDe(erro),
-      });
+      };
     }
+    const historicos = new Map(estado.historicos);
+    historicos.set(id, resultado);
     publicar({ historicos });
   }
 

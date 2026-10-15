@@ -1426,6 +1426,29 @@ describe("lista de aprovados publicada da Classificação", () => {
     delete window.navigate;
   });
 
+  it("publicações malformadas não quebram o modal e permitem nova tentativa", async () => {
+    const supabase = comSituacao(supabaseFalso(), {
+      ...SITUACAO,
+      publicacoes: [{ id: "p1" }, { id: "p2", pendencias: {} }],
+    });
+    await montar({ perfil: { perfil: "admin" }, supabase });
+    await abrir();
+    expect($("approvedImportModal")).not.toBeNull();
+    expect(document.querySelector(".approved-import-historico")).toBeNull();
+    const repetir = document.querySelector(
+      '[data-acao="recarregar-publicacoes"]',
+    );
+    expect(repetir).not.toBeNull();
+    comSituacao(supabase);
+    await clicar(repetir);
+    expect(
+      document.querySelector('[data-acao="recarregar-publicacoes"]'),
+    ).toBeNull();
+    expect(
+      document.querySelector(".approved-import-historico").textContent,
+    ).toContain("Fulano Fora");
+  });
+
   it("a aba de aprovados diz a origem das listas", async () => {
     await montar({
       supabase: supabaseFalso({ listas: [DA_CLASSIFICACAO, LISTA_INATIVA] }),
