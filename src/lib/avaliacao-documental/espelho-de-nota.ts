@@ -368,6 +368,7 @@ const ESTILO = `
   .caixa ul { margin: 0; padding-left: 14pt; }
   .caixa li { margin: 2pt 0; }
   .vazio { color: #555; font-style: italic; margin: 0; }
+  .folha + .folha { break-before: page; page-break-before: always; }
   .rodape { margin-top: 16pt; padding-top: 6pt; border-top: 1px solid #b9c7d6; font-size: 8.5pt; color: #444; }
 `;
 
@@ -386,17 +387,12 @@ function listaOuVazio(textos: string[]) {
     : `<p class="vazio">${escapar(SEM_OBSERVACAO)}</p>`;
 }
 
-/**
- * A página do espelho (HTML completo, sem script), para imprimir num iframe
- * (imprimirPagina) ou mostrar na prévia. `marca`: o cabeçalho e o logo de
- * Configurações › Marca (o padrão é o timbrado da AgSUS).
- */
-export function paginaDoEspelho(
+type MarcaDoEspelho = { cabecalho?: string; logo?: string };
+
+/** A folha de um espelho (a div.folha, A4), com o timbrado da marca. */
+export function folhaDoEspelho(
   espelho: Espelho,
-  {
-    cabecalho = CABECALHO_PADRAO,
-    logo = "",
-  }: { cabecalho?: string; logo?: string } = {},
+  { cabecalho = CABECALHO_PADRAO, logo = "" }: MarcaDoEspelho = {},
 ) {
   const linhasDoCabecalho = String(cabecalho || CABECALHO_PADRAO)
     .split(/\r?\n/)
@@ -418,8 +414,7 @@ export function paginaDoEspelho(
           .join("")}</tbody></table>`
       : "";
   return (
-    `<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><title>${escapar(espelho.nomeDoArquivo)}</title><style>${ESTILO}</style></head>` +
-    `<body><div class="folha" data-modelo="${espelho.modelo}">` +
+    `<div class="folha" data-modelo="${espelho.modelo}">` +
     `<div class="timbrado">${imagem}${linhasDoCabecalho.map((l) => `<p>${escapar(l)}</p>`).join("")}</div>` +
     `<h1>${escapar(espelho.titulo)}</h1><p class="subtitulo">${escapar(SUBTITULO_DO_ESPELHO)}</p>` +
     `<p>Prezado(a) <strong>${escapar(espelho.candidato)}</strong>,</p>` +
@@ -429,6 +424,31 @@ export function paginaDoEspelho(
     criterios +
     `<h2>Justificativa / observação registrada</h2><div class="caixa">${listaOuVazio(espelho.justificativas)}</div>` +
     `<p class="rodape">${escapar(RODAPE_DO_ESPELHO)}</p>` +
-    "</div></body></html>"
+    "</div>"
   );
+}
+
+/**
+ * Um documento com vários espelhos (Espelhos de nota em massa): a mesma folha
+ * do individual, um por página (quebra antes de cada folha a partir da
+ * segunda), sem script.
+ */
+export function documentoDosEspelhos(
+  espelhos: Espelho[],
+  marca: MarcaDoEspelho = {},
+  titulo = "Espelhos de nota",
+) {
+  return (
+    `<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><title>${escapar(titulo)}</title><style>${ESTILO}</style></head>` +
+    `<body>${espelhos.map((e) => folhaDoEspelho(e, marca)).join("")}</body></html>`
+  );
+}
+
+/**
+ * A página do espelho (HTML completo, sem script), para imprimir num iframe
+ * (imprimirPagina) ou mostrar na prévia. `marca`: o cabeçalho e o logo de
+ * Configurações › Marca (o padrão é o timbrado da AgSUS).
+ */
+export function paginaDoEspelho(espelho: Espelho, marca: MarcaDoEspelho = {}) {
+  return documentoDosEspelhos([espelho], marca, espelho.nomeDoArquivo);
 }

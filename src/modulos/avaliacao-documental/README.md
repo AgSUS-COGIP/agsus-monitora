@@ -222,7 +222,11 @@ ficha/*.tsx               cabeçalho, stepper, item, Conclusão, nota, "⋯", ro
                           src/lib/avaliacao-documental/apurado-da-ficha.ts
 ficha/diferencas-do-cargo.tsx  requisitos e extras do cargo, aviso do 8.2.7, área exigida
 ficha/espelho-de-nota.ts  botão "Espelho de nota": monta (src/lib/avaliacao-documental/
-                          espelho-de-nota.ts) e imprime no navegador, sem banco nem Storage
+                          espelho-de-nota.ts) e imprime no navegador, sem banco nem Storage;
+                          espelhoDaFichaGravada: a mesma montagem para os espelhos em massa
+espelhos-em-massa.tsx     Ações da coordenação › "Espelhos de nota em massa": vaga e filtro
+                          ou códigos colados, obter_espelhos_de_nota em páginas de 200
+                          (20261015180000), um documento só, um espelho por página
 ficha/estado-da-ficha.js  store da ficha: obter_ficha_analise, rascunho automático,
                           concluir_ficha, reabrir_ficha, registrar_acesso_ficha
 ficha/ficha.css           estilos da ficha (só tokens)

@@ -992,6 +992,7 @@ describe("fila: andamento, menu da coordenação e tabela agrupada por vaga", ()
       "Distribuir as selecionadas (1)",
       "Liberar reservas (0)",
       "Mandar para revisão (1)",
+      "Espelhos de nota em massa",
       "Abrir fichas do lote (1)",
     ]);
     expect(menu.querySelector("[data-acao='liberar-reservas']").disabled).toBe(

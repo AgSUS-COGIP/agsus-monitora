@@ -1949,6 +1949,28 @@ export const VERBETES_AYA = Object.freeze([
   },
   {
     arquivo: "regras-da-avaliacao-documental.md",
+    titulo: "Espelhos de nota em massa",
+    perguntas: [
+      "espelhos em massa",
+      "espelho de nota em massa",
+      "todos os espelhos",
+      "imprimir todos os espelhos",
+      "espelhos de uma vaga",
+      "imprimir espelhos por vaga",
+      "pdf com todos os espelhos",
+      "gerar varios espelhos",
+      "lista de codigos espelho",
+      "codigo nao encontrado espelho",
+    ],
+    resposta:
+      'Na Fila da Avaliação documental, "Ações da coordenação" › "Espelhos de nota em massa" (só administrador e coordenação ou gestor do edital; o banco confere de novo) gera um documento só, com um espelho de nota por página, para imprimir ou "Salvar como PDF". Escolha a vaga (ou todas) e quais fichas concluídas entram: todas, só eliminados e inaptos ou só aptos. A ordem é por vaga; dentro dela, os aptos pela nota final (empate pela posição da pré-classificação e pelo nome), depois os inaptos pela nota mínima e por fim os eliminados (Inapto por requisito) pelo nome. Ou cole a lista de códigos do candidato na Empregare (separados por vírgula ou um por linha, até 5.000): o documento sai na ordem colada e, no fim, a tela lista os códigos sem ficha neste edital e os com ficha ainda não concluída (com a situação). Cada espelho é exatamente o mesmo do botão "Espelho de nota" da ficha concluída (mesmos modelos: eliminado sem pontos e com pontos). A tela mostra quantos espelhos sairão antes de gerar e avisa acima de 500 ("vai gerar N páginas; pode demorar"); nesse caso, prefira gerar por vaga. A busca vem em partes de 200 fichas, com barra de progresso e "Cancelar", trazendo só o necessário de cada ficha (cerca de 1 KB), sem abrir a ficha inteira. Nada é gravado: nem no banco, nem no Storage. Se a impressão não abrir, use "Abrir de novo".',
+    fato: "",
+    fonte:
+      "src/modulos/avaliacao-documental/espelhos-em-massa.tsx; src/lib/avaliacao-documental/espelhos-em-massa.ts; supabase/migrations/20261015180000_espelhos_de_nota_em_massa.sql",
+    abrir: "avaliacao-documental",
+  },
+  {
+    arquivo: "regras-da-avaliacao-documental.md",
     titulo: "Rascunho, concluir e próxima",
     perguntas: [
       "salvar rascunho da ficha",
