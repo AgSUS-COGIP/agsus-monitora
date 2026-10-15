@@ -163,7 +163,7 @@ window.aprovadosController = telaSobDemanda({
   secao: "page-approved",
   metodos: ["render", "openImportModal"],
   carregar: () =>
-    import("./modulos/aprovados/lista-aprovados.jsx").then((m) =>
+    import("./modulos/aprovados/lista-aprovados.tsx").then((m) =>
       m.montarListaAprovados({
         toast: window.monitoraToast,
         getProfile: window.getMonitoraProfile,

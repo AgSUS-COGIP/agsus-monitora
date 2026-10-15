@@ -276,5 +276,14 @@ adicionais dos candidatos e distinguem o valor recebido do valor convertido pelo
 campo. Texto em edição e atualizações externas continuam preservados. A paginação
 corrige tamanhos positivos fracionários para ao menos uma linha. Contratos em
 `tests/tipos/aba-e-regras-de-aprovados.tsx` e testes de edição em
-`tests/componentes/campos-dos-aprovados.test.js`. A entrada principal, o estado e
-os modais/gaveta de Aprovados ainda incluem JavaScript/JSX.
+`tests/componentes/campos-dos-aprovados.test.js`.
+
+A entrada principal e o estado de Aprovados também estão em TypeScript/TSX:
+carga por área, cópia por versão, ações de status/anexos/sub judice, importação
+XLSX e integração dos modais. Os candidatos e as listas são validados antes de
+publicar o estado; uma confirmação incompleta de convocação não altera os status
+locais. Os contratos estão em `src/modulos/aprovados/tipos-do-estado.ts` e
+`src/lib/tipos-do-estado-de-aprovados.ts`, com verificação em
+`tests/tipos/estado-dos-aprovados.tsx` e regressões em
+`tests/lib/dados-do-estado-de-aprovados.test.js`. Os modais e a gaveta de Aprovados
+ainda incluem JavaScript/JSX.

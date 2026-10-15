@@ -12,7 +12,7 @@ export interface CandidatoDaTabelaDaConvocacao extends CandidatoDaTabelaDeAprova
   candidato_id: string;
   nome: string;
   classificacao?: string | number | null;
-  lista_ativa?: boolean;
+  lista_ativa?: boolean | null;
 }
 export type GrupoDaTabelaDaConvocacao =
   GrupoDaConvocacao<CandidatoDaTabelaDaConvocacao>;

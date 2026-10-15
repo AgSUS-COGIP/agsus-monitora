@@ -3,7 +3,7 @@ import {
   lerModelosDoBanco,
   lerConfiguracoesDoBanco,
 } from "../../src/lib/configuracao-de-convocacao.ts";
-import { criarEstadoDaListaDeAprovados } from "../../src/modulos/aprovados/estado.js";
+import { criarEstadoDaListaDeAprovados } from "../../src/modulos/aprovados/estado.ts";
 describe("dados da configuração de convocação", () => {
   it.each([
     {},

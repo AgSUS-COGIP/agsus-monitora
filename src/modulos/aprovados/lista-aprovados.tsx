@@ -1,3 +1,11 @@
+import type {
+  EstadoDosAprovados,
+  SnapshotDosAprovados,
+  OpcoesDaTelaDosAprovados,
+  CandidatoAprovado,
+  ListaDeAprovados,
+} from "./tipos-do-estado.ts";
+import type { FiltrosDaTabelaDeAprovados } from "./tipos-da-aba-de-aprovados.ts";
 import { useMemo, useState, useSyncExternalStore } from "react";
 import { montarModulo } from "../../app/montar-modulo.jsx";
 import { usarPedidoDeFiltro } from "../../app/pedido-de-filtro.js";
@@ -50,13 +58,13 @@ import "./carta-de-convocacao/carta.css";
   aviso com "Tentar novamente".
 
   Os dados (candidatos, listas, configuração de convocação) e as ações vivem em
-  `estado.js`; as duas abas leem os mesmos candidatos, então mudar o status de
+  `estado.ts`; as duas abas leem os mesmos candidatos, então mudar o status de
   alguém numa redesenha a outra. Os modais são portais no fim do `body`.
 */
 
 /** Linhas por página da tabela; tem de ser um dos tamanhos de `Paginacao`. */
 const TAMANHO_PADRAO = 50;
-const FILTROS_INICIAIS = Object.freeze({
+const FILTROS_INICIAIS: FiltrosDaTabelaDeAprovados = Object.freeze({
   candidatos: [],
   editalId: [],
   cargo: [],
@@ -64,7 +72,14 @@ const FILTROS_INICIAIS = Object.freeze({
   status: [],
 });
 
-const ABAS = [
+type AbaDosAprovados = "aprovados" | "convocacao";
+const ABAS: {
+  nome: AbaDosAprovados;
+  id: string;
+  painel: string;
+  icone: string;
+  rotulo: string;
+}[] = [
   {
     nome: "aprovados",
     id: "approvedTabAprovados",
@@ -81,7 +96,12 @@ const ABAS = [
   },
 ];
 
-function textoDoStatus({ carregado, erroAoCarregar, carregadoEm, acao }) {
+function textoDoStatus({
+  carregado,
+  erroAoCarregar,
+  carregadoEm,
+  acao,
+}: SnapshotDosAprovados) {
   if (erroAoCarregar && !carregado) return "Sem dados";
   if (!carregado) return "Carregando dados...";
   if (acao) return "Atualizando...";
@@ -91,7 +111,13 @@ function textoDoStatus({ carregado, erroAoCarregar, carregadoEm, acao }) {
 }
 
 /* As duas visões: abas (tablist) com o visual do controle segmentado. */
-function Visoes({ aba, aoMudar }) {
+function Visoes({
+  aba,
+  aoMudar,
+}: {
+  aba: AbaDosAprovados;
+  aoMudar: (aba: AbaDosAprovados) => void;
+}) {
   return (
     <div
       className="ui-segmentado approved-visoes"
@@ -123,13 +149,26 @@ function Visoes({ aba, aoMudar }) {
   );
 }
 
-function ModalAberto({ estado, dados, daArea }) {
+function ModalAberto({
+  estado,
+  dados,
+  daArea,
+}: {
+  estado: EstadoDosAprovados;
+  dados: SnapshotDosAprovados;
+  daArea: { candidatos: CandidatoAprovado[]; listas: ListaDeAprovados[] };
+}) {
   const { modal } = dados;
   if (!modal) return null;
   const candidato = dados.candidatos.find(
-    (row) => String(row.candidato_id) === modal.candidatoId,
+    (row) =>
+      String(row.candidato_id) ===
+      ("candidatoId" in modal ? modal.candidatoId : undefined),
   );
-  const anexos = dados.anexos.get(String(modal.candidatoId)) || [];
+  const anexos =
+    dados.anexos.get(
+      String("candidatoId" in modal ? modal.candidatoId : undefined),
+    ) || [];
   if (modal.tipo === "status")
     return candidato ? (
       <ModalDeStatus
@@ -162,7 +201,7 @@ function ModalAberto({ estado, dados, daArea }) {
           .map((id) =>
             dados.candidatos.find((row) => String(row.candidato_id) === id),
           )
-          .filter(Boolean)}
+          .filter((c): c is CandidatoAprovado => c !== undefined)}
         podeEditarModelos={canChangeCandidateStatus(dados.perfil)}
       />
     );
@@ -210,7 +249,7 @@ function ModalAberto({ estado, dados, daArea }) {
   return null;
 }
 
-export function ListaAprovados({ estado }) {
+export function ListaAprovados({ estado }: { estado: EstadoDosAprovados }) {
   const dados = useSyncExternalStore(estado.assinar, estado.obter);
   const { carregado, erroAoCarregar, perfil } = dados;
   /*
@@ -230,7 +269,7 @@ export function ListaAprovados({ estado }) {
     () => soDosEditais(dados.candidatos, ids),
     [dados.candidatos, ids],
   );
-  const [aba, setAba] = useState("aprovados");
+  const [aba, setAba] = useState<AbaDosAprovados>("aprovados");
   const [filtros, setFiltros] = useState(FILTROS_INICIAIS);
   /*
     Página da tabela, começando em 1. Filtrar volta sempre à primeira: filtrar
@@ -274,7 +313,10 @@ export function ListaAprovados({ estado }) {
     [filtrados, pagina, tamanho],
   );
 
-  function mudarFiltro(campo, valores) {
+  function mudarFiltro(
+    campo: keyof FiltrosDaTabelaDeAprovados,
+    valores: string[],
+  ) {
     setFiltros((atuais) => {
       const proximos = { ...atuais, [campo]: valores };
       if (campo === "editalId") {
@@ -292,7 +334,7 @@ export function ListaAprovados({ estado }) {
     setPagina(1);
   }
 
-  function irPara(destino) {
+  function irPara(destino: number) {
     const alvo = paginateApprovedCandidates(filtrados, destino, tamanho).page;
     if (alvo === paginaAtual.page) return false;
     setPagina(alvo);
@@ -433,6 +475,7 @@ export function montarListaAprovados({
   lerPlanilha,
   novaAba,
   armazenamento,
+  areaAtual,
   copiar,
   imprimir,
   carregarLogo,
@@ -440,7 +483,7 @@ export function montarListaAprovados({
   hoje,
   cabecalho = () =>
     estadoDasConfiguracoes.obter().valores?.get?.(CHAVE_DO_CABECALHO) || "",
-} = {}) {
+}: OpcoesDaTelaDosAprovados = {}) {
   const estado = criarEstadoDaListaDeAprovados({
     supabase,
     toast,
@@ -449,6 +492,7 @@ export function montarListaAprovados({
     lerPlanilha,
     novaAba,
     armazenamento,
+    areaAtual,
     cabecalho,
     ...(copiar ? { copiar } : {}),
     ...(imprimir ? { imprimir } : {}),
@@ -465,7 +509,7 @@ export function montarListaAprovados({
     estado,
     raiz,
     render: () => estado.garantirCarregado(),
-    openImportModal: (editalId, rotulo = "") =>
+    openImportModal: (editalId: string, rotulo = "") =>
       estado.abrirListasDoEdital(editalId, rotulo),
     closeImportModal: estado.fecharModal,
     openStatusModal: estado.abrirStatus,

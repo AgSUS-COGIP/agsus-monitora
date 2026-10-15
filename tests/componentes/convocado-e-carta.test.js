@@ -1,6 +1,6 @@
 import { act } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { montarListaAprovados } from "../../src/modulos/aprovados/lista-aprovados.jsx";
+import { montarListaAprovados } from "../../src/modulos/aprovados/lista-aprovados.tsx";
 import { clicar, digitar, escolher, esperar } from "./interacoes.js";
 import { compactarPorArea } from "./candidatos-compactos-falsos.js";
 import {
