@@ -155,5 +155,55 @@ class PontosInformativos(unittest.TestCase):
         )
 
 
+class VariasCotas(unittest.TestCase):
+    """
+    114/2026 (5.8.1 e 5.8.5): o bloco de cota vale para cada cota optada
+    (lançamento.modalidades) e a modalidade final é a confirmada de maior
+    percentual; sem nenhuma confirmada, a ampla (como o vitest).
+    """
+
+    COTAS = {"acumulo": "MAIOR_PERCENTUAL", "percentuais": {"PCD": 5, "PP": 25, "PI": 3, "PQ": 2}}
+
+    def calcular(self, blocos, modalidades=("PP", "PCD")):
+        regra = CASOS["regras"]["E114-POR-CARGO"]
+        candidato = {
+            "nivel": "medio",
+            "vaga": "182528",
+            "modalidade": modalidades[0] if modalidades else "AC",
+            "modalidades": list(modalidades),
+            "blocos": blocos,
+        }
+        return pt.calcular_avaliacao(regra, candidato, {"notaMinima": 0, "cotas": self.COTAS})
+
+    def situacoes(self, r):
+        return {b["codigo"]: b["situacao"] for b in r["blocos"] if b["codigo"].startswith("COTA_")}
+
+    def test_pp_e_pcd_abrem_os_dois_blocos(self):
+        r = self.calcular({"COTA_PP": {"situacao": "CONFORME"}, "COTA_PCD": {"situacao": "CONFORME"}})
+        self.assertEqual(
+            self.situacoes(r),
+            {"COTA_PP": "CONFORME", "COTA_PI": "NAO_SE_APLICA", "COTA_PQ": "NAO_SE_APLICA", "COTA_PCD": "CONFORME"},
+        )
+        self.assertEqual(r["modalidade_final"], "PP")
+        self.assertEqual(r["modalidades_confirmadas"], ["PP", "PCD"])
+
+    def test_pp_nao_conforme_e_pcd_conforme_fica_pcd(self):
+        r = self.calcular({"COTA_PP": {"situacao": "NAO_CONFORME"}, "COTA_PCD": {"situacao": "CONFORME"}})
+        self.assertEqual(r["modalidade_final"], "PCD")
+        self.assertEqual(r["modalidades_confirmadas"], ["PCD"])
+
+    def test_as_duas_nao_conformes_fica_na_ampla(self):
+        r = self.calcular({"COTA_PP": {"situacao": "NAO_CONFORME"}, "COTA_PCD": {"situacao": "NAO_ENVIADO"}})
+        self.assertEqual(r["modalidade_final"], "AC")
+        self.assertEqual(r["modalidades_confirmadas"], [])
+
+    def test_lancamento_antigo_vale_pela_modalidade_unica(self):
+        self.assertEqual(pt.modalidades_do_lancamento({"modalidade": "PI"}), ["PI"])
+        self.assertEqual(pt.modalidades_do_lancamento({"modalidade": "AC"}), [])
+        self.assertEqual(pt.modalidades_do_lancamento({"modalidades": ["pp", "PCD", "AC", "PP"]}), ["PP", "PCD"])
+        r = self.calcular({}, modalidades=())
+        self.assertEqual(r["modalidade_final"], "AC")
+
+
 if __name__ == "__main__":
     unittest.main()

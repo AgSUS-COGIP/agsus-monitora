@@ -44,7 +44,12 @@ import {
   opcoesDaResposta,
   textoDaResposta,
 } from "./nota-declarada.js";
-import { calcularAvaliacao, OUTRO_MOTIVO, tetoDoBloco } from "./pontuacao.js";
+import {
+  calcularAvaliacao,
+  modalidadesDoLancamento,
+  OUTRO_MOTIVO,
+  tetoDoBloco,
+} from "./pontuacao.js";
 import { normalizarRegraAnalise } from "./regra.js";
 import { faltasDoCargo, regraDaVaga } from "./regra-por-cargo.ts";
 
@@ -160,10 +165,12 @@ export function blocoSeAplica(bloco, lancamento) {
     bloco.condicao ?? (bloco.tipo === "PONTUACAO" ? "INDIGENA" : null);
   if (!condicao) return true;
   if (condicao === "INDIGENA") return Boolean(lancamento?.indigena);
+  // O bloco de cota vale para quem optou pela cota, entre as várias (114/2026, 5.8.1).
   const [, modalidade] = String(condicao).split("=");
-  return (
-    String(lancamento?.modalidade ?? "").toUpperCase() ===
-    String(modalidade ?? "").toUpperCase()
+  return modalidadesDoLancamento(lancamento).includes(
+    String(modalidade ?? "")
+      .trim()
+      .toUpperCase(),
   );
 }
 
@@ -248,6 +255,7 @@ export function lancamentoInicial({
   regra,
   respostas,
   modalidade,
+  modalidades,
   cargo,
   vaga,
   documental,
@@ -259,6 +267,10 @@ export function lancamentoInicial({
   const base = {
     nivel: nivelDaFicha(cargo, documental),
     modalidade: modalidade || "AC",
+    // As cotas optadas na pré-classificação (a principal primeiro); [] = só a ampla.
+    modalidades: Array.isArray(modalidades)
+      ? modalidades
+      : modalidadesDoLancamento({ modalidade }),
     indigena: etnico ? marcou(linhas, "indigena") : false,
     mora_aldeia: etnico ? marcou(linhas, "aldeia") : false,
     aldeia_na_lista: false,
@@ -327,6 +339,8 @@ export function calcularFicha(regra, lancamento, documental) {
   return calcularAvaliacao(regra, lancamento, {
     notaMinima: doc.nota_minima ?? null,
     notaMinimaPorNivel: objeto(doc.nota_minima_por_nivel),
+    // Acúmulo e percentuais das cotas (FC_DOCUMENTAL_DO_EDITAL): a modalidade final.
+    cotas: objeto(doc.cotas),
   });
 }
 
@@ -757,6 +771,9 @@ export function resumoParaGravar(avaliacao, declarada) {
   const exp = avaliacao.experiencia;
   return {
     resultado: avaliacao.resultado,
+    // Informativo: o banco publica pela mesma conta (FC_COTAS_CONFIRMADAS).
+    modalidade_final: avaliacao.modalidade_final,
+    modalidades_confirmadas: avaliacao.modalidades_confirmadas,
     nota_apurada: avaliacao.nota_apurada,
     nota_final: avaliacao.nota_final,
     nota_minima: avaliacao.nota_minima,
