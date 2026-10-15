@@ -99,6 +99,8 @@ export type ItemLancado = Partial<Titulo> &
 export type Lancamento = {
   nivel: string;
   modalidade: string;
+  /** As cotas optadas na pré-classificação (a principal primeiro); [] = só a ampla. */
+  modalidades?: string[];
   indigena?: boolean;
   mora_aldeia?: boolean;
   aldeia_na_lista?: boolean;

@@ -233,6 +233,7 @@ export function criarEstadoDaFicha({
         regra,
         respostas: dados.respostas,
         modalidade: dados.ficha.modalidade,
+        modalidades: dados.ficha.modalidades,
         cargo: dados.ficha.cargo,
         vaga: dados.ficha.vaga,
         documental: dados.documental,

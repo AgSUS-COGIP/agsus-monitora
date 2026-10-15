@@ -44,6 +44,7 @@ import {
 } from "../../../lib/avaliacao-documental/apurado-da-ficha.ts";
 import { motivosDoResultado } from "../../../lib/avaliacao-documental/motivos-do-resultado.ts";
 import { pontuacaoInformativaDaFicha } from "../../../lib/avaliacao-documental/pontos-informativos.ts";
+import { modalidadesDoLancamento } from "../../../lib/avaliacao-documental/pontuacao.js";
 import { rotuloDaVersaoNaLista } from "../../../lib/nome-da-versao.ts";
 import { Aviso, Campo } from "../../../ui/index.js";
 import { CabecalhoDaFicha } from "./cabecalho-da-ficha.tsx";
@@ -666,6 +667,9 @@ export function ConteudoDaFicha({
       {topo ? (
         <CabecalhoDaFicha
           {...topo}
+          modalidade={
+            modalidadesDoLancamento(lancamento).join(" + ") || topo.modalidade
+          }
           nivel={rotuloDe(NIVEIS, lancamento.nivel)}
           cpf={cpfDaFicha(st.dados.cpf_informado)}
         >

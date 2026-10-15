@@ -42,6 +42,15 @@ type EstadoCarregado = {
 const numeroOuNulo = (v: unknown) =>
   typeof v === "number" && Number.isFinite(v) ? v : null;
 
+/** A modalidade final da conta (calcularAvaliacao: modalidade_final), se houver. */
+function modalidadeFinal(avaliacao: unknown): string | null {
+  const valor =
+    avaliacao && typeof avaliacao === "object"
+      ? (avaliacao as { modalidade_final?: unknown }).modalidade_final
+      : null;
+  return typeof valor === "string" && valor ? valor : null;
+}
+
 /** A entrada do espelho a partir do estado da ficha e do cabeçalho dela. */
 export function entradaDoEspelho(
   st: EstadoCarregado,
@@ -59,7 +68,9 @@ export function entradaDoEspelho(
     candidato: {
       nome: ficha.nome,
       codigo: ficha.codigo,
-      modalidade: ficha.modalidade,
+      // A modalidade final da conta (a cota confirmada de maior percentual, ou a
+      // ampla); sem ela, a da pré-classificação.
+      modalidade: modalidadeFinal(st.avaliacao) ?? ficha.modalidade,
     },
     vaga: {
       codigo: ficha.vaga,

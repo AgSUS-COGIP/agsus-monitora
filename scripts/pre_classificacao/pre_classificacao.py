@@ -129,6 +129,7 @@ CAMPOS_DA_LINHA = (
     "sem_mapa",
     "divergente",
     "modalidade",
+    "modalidades",
     "posicao",
     "posicao_modalidade",
     "lote",

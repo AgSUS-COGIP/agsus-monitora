@@ -34,7 +34,8 @@ def linhas():
 
 class TestPreClassificacaoDoTreinamentoSI(unittest.TestCase):
     def test_o_python_da_o_resultado_guardado(self):
-        self.assertEqual(gerador.calcular(FIXTURE["entrada"]), FIXTURE["resultado"])
+        # A lista das cotas (20261015150000) é posterior ao resultado guardado: sem ela, o mesmo.
+        self.assertEqual(gerador.sem_a_lista_padrao(gerador.calcular(FIXTURE["entrada"])), FIXTURE["resultado"])
 
     def test_a_migration_grava_o_mesmo_resultado(self):
         self.assertEqual(gerador.bloco_da_migration(MIGRATION, AREA), FIXTURE["resultado"])

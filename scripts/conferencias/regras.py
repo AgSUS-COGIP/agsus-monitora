@@ -394,7 +394,7 @@ def conferir_fichas(paginas, acumulador):
             resultado = f.get("resultado") if isinstance(f.get("resultado"), dict) else {}
             documental = f.get("documental") if isinstance(f.get("documental"), dict) else {}
             minima = resultado.get("nota_minima") if "nota_minima" in resultado else documental.get("nota_minima")
-            opcoes = {"notaMinima": minima}
+            opcoes = {"notaMinima": minima, "cotas": documental.get("cotas")}
             if "nota_minima" not in resultado:
                 opcoes["notaMinimaPorNivel"] = documental.get("nota_minima_por_nivel") or {}
             regra = regras_da_pagina.get((f.get("regra"), f.get("versao_regra")))

@@ -139,6 +139,26 @@ def calcular(entrada):
     return {"edital": edital, "vagas": dict(sorted(vagas.items()))}
 
 
+def sem_a_lista_padrao(resultado):
+    """
+    O resultado sem a lista das cotas optadas (modalidades, desde 20261015150000)
+    quando ela só repete a modalidade única ([] na ampla, [modalidade] na cota):
+    os resultados guardados (e gravados nas migrations de treinamento) são de
+    antes da lista, e o banco lê a linha sem ela pela modalidade única
+    (FC_LINHAS_PRE_CLASSIF). Uma lista com mais de uma cota fica.
+    """
+    vagas = {}
+    for codigo, vaga in resultado["vagas"].items():
+        linhas = []
+        for linha in vaga["linhas"]:
+            padrao = [] if linha.get("modalidade") in (None, "AC") else [linha["modalidade"]]
+            if linha.get("modalidades") == padrao:
+                linha = {k: v for k, v in linha.items() if k != "modalidades"}
+            linhas.append(linha)
+        vagas[codigo] = {**vaga, "linhas": linhas}
+    return {**resultado, "vagas": vagas}
+
+
 def bloco_da_migration(texto, area="projetos"):
     """O JSON do resultado gravado na migration (entre os marcadores da área)."""
     abre_marca, fecha_marca = marcadores(area)

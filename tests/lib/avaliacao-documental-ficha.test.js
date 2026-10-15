@@ -381,9 +381,18 @@ describe("o que falta para concluir", () => {
   it("cota de outra modalidade não pede nada", () => {
     const lanc = lancamentoCompleto();
     expect(blocoSeAplica(bloco("COTA_PP"), lanc)).toBe(false);
-    expect(blocoSeAplica(bloco("COTA_PP"), { ...lanc, modalidade: "PP" })).toBe(
-      true,
-    );
+    // A lista das cotas optadas manda (a modalidade única só vale sem ela).
+    expect(
+      blocoSeAplica(bloco("COTA_PP"), {
+        ...lanc,
+        modalidade: "PP",
+        modalidades: ["PP"],
+      }),
+    ).toBe(true);
+    const { modalidades: _semLista, ...antigo } = lanc;
+    expect(
+      blocoSeAplica(bloco("COTA_PP"), { ...antigo, modalidade: "PP" }),
+    ).toBe(true);
   });
 
   it("nota diferente da declarada exige justificativa; com ela, não", () => {

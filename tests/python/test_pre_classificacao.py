@@ -563,5 +563,89 @@ class ModalidadePelaPerguntaDoSistemaDeConcorrencia(unittest.TestCase):
         self.assertEqual(contagem, {"AC": 1052, "PP": 234, "PCD": 50, "PI": 4, "PQ": 2})
 
 
+class VariasCotasDoEdital114(unittest.TestCase):
+    """
+    O 114/2026 depois da v22 da regra (itens 5.1.5/5.1.6 e 5.8): a opção sai SÓ da
+    pergunta do sistema de concorrência (a coluna "PCD" não dá direito à cota e
+    sai das perguntas do bloco MODALIDADE); quem optou por mais de uma cota tem a
+    lista (modalidades) e a principal é a de maior percentual.
+    """
+
+    PERGUNTA = ModalidadePelaPerguntaDoSistemaDeConcorrencia.PERGUNTA
+    COTAS = ModalidadePelaPerguntaDoSistemaDeConcorrencia.COTAS_DO_114
+    REGRA_V22 = {
+        "blocos": [
+            {
+                "codigo": "MODALIDADE",
+                "tipo": "REGISTRO",
+                "titulo": "Sistema de concorrência",
+                "perguntas": ["Indique em qual sistema de concorrência"],
+            }
+        ]
+    }
+
+    def colunas(self, resposta, pcd):
+        return {self.PERGUNTA: resposta, "PCD": pcd}
+
+    def test_so_ampla_com_pcd_sim_na_coluna_e_ampla(self):
+        colunas = self.colunas('"Ampla concorrência"', "SIM")
+        self.assertEqual(pc.modalidades_do_candidato(self.REGRA_V22, colunas, self.COTAS), [])
+        self.assertEqual(pc.modalidade_do_candidato(self.REGRA_V22, colunas, self.COTAS), "AC")
+
+    def test_pretos_ou_pardos_com_pcd_sim_na_coluna_e_pp(self):
+        colunas = self.colunas('"Pretos ou pardos"', "SIM")
+        self.assertEqual(pc.modalidades_do_candidato(self.REGRA_V22, colunas, self.COTAS), ["PP"])
+        self.assertEqual(pc.modalidade_do_candidato(self.REGRA_V22, colunas, self.COTAS), "PP")
+
+    def test_pp_e_pcd_na_pergunta_lista_as_duas_e_a_principal_e_pp(self):
+        colunas = self.colunas('"Pretos ou pardos", "Pessoas com deficiência (PCD)"', "NÃO")
+        self.assertEqual(pc.modalidades_do_candidato(self.REGRA_V22, colunas, self.COTAS), ["PP", "PCD"])
+        self.assertEqual(pc.modalidade_do_candidato(self.REGRA_V22, colunas, self.COTAS), "PP")
+        # PCD_MAIS_UMA: a PcD primeiro.
+        pcd_mais_uma = {**self.COTAS, "acumulo": "PCD_MAIS_UMA"}
+        self.assertEqual(pc.modalidades_do_candidato(self.REGRA_V22, colunas, pcd_mais_uma), ["PCD", "PP"])
+
+    def test_a_linha_leva_a_lista_e_o_lote_por_modalidade_aceita_qualquer_cota_optada(self):
+        def candidato(i, resposta, nota):
+            return {
+                "id": f"c{i}",
+                "codigo": str(i),
+                "ativo": True,
+                "nascimento": "1990-01-01",
+                "candidatura": "2026-09-01T00:00:00+00:00",
+                "colunas": {"NOTA - Art": nota, self.PERGUNTA: resposta},
+            }
+
+        candidatos = [
+            candidato(1, '"Ampla concorrência"', 30),
+            candidato(2, '"Pretos ou pardos", "Pessoas com deficiência (PCD)"', 20),
+            candidato(3, '"Pretos ou pardos"', 25),
+        ]
+        regra = pc.normalizar_regra(
+            {
+                **self.REGRA_V22,
+                "lote": {"base": "MULTIPLO_VAGAS", "multiplo": 1, "inclui_cr": False, "por_modalidade": True},
+            }
+        )
+        vaga = {
+            "codigo": "1",
+            "vagas_imediatas": 3,
+            "cadastro_reserva": False,
+            "modalidades": {"Ampla concorrência": 1, "Pretos e pardos": 1, "PcD": 1},
+            "nivel": None,
+            "cotas": self.COTAS,
+        }
+        r = pc.pre_classificar_vaga(regra, vaga, candidatos, hoje="2026-10-15")
+        por_id = {linha["id"]: linha for linha in r["linhas"]}
+        self.assertEqual(por_id["c2"]["modalidades"], ["PP", "PCD"])
+        self.assertEqual(por_id["c2"]["modalidade"], "PP")
+        self.assertEqual(por_id["c1"]["modalidades"], [])
+        # A vaga PP foi para quem tem a maior nota entre os PP (c3); c2 entra pela PcD (5.8.1).
+        self.assertEqual(por_id["c1"]["lista_lote"], "AC")
+        self.assertEqual(por_id["c3"]["lista_lote"], "PP")
+        self.assertEqual(por_id["c2"]["lista_lote"], "PCD")
+        self.assertEqual(por_id["c2"]["situacao"], "NO_LOTE")
+
+
 if __name__ == "__main__":
     unittest.main()

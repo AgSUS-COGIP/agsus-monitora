@@ -380,28 +380,39 @@ def cotas_marcadas(regra, colunas):
     return sorted(marcadas, key=ordem.index)
 
 
-def modalidade_do_candidato(regra, colunas, cotas=None):
+def modalidades_do_candidato(regra, colunas, cotas=None):
     """
-    A modalidade declarada (bloco MODALIDADE da regra): "PP", "PCD"… ou "AC".
-    A cota marcada prevalece sobre a ampla. Com mais de uma cota, uma só, pelo
-    acúmulo da regra de classificação (cotas = {"acumulo", "percentuais"},
-    de FC_DOCUMENTAL_DO_EDITAL): PCD_MAIS_UMA → a PcD, se marcada; senão a de
-    maior percentual (MAIOR_PERCENTUAL: a lista em que o inscrito fica). Sem
-    percentual, a primeira na ordem de codigos_da_modalidade.
+    As cotas que o inscrito optou (bloco MODALIDADE da regra), em ordem de
+    prioridade: a primeira é a modalidade principal; [] = só a ampla.
+    No 114/2026 (itens 5.1.5, 5.1.6 e 5.8): a opção vem da pergunta do sistema de
+    concorrência (resposta múltipla); quem optou por mais de uma concorre a todas
+    (5.8.1) e, ao final, fica na de maior percentual (5.8.5). A ordem segue o
+    acúmulo da regra de classificação (cotas = {"acumulo", "percentuais"}, de
+    FC_DOCUMENTAL_DO_EDITAL): PCD_MAIS_UMA → a PcD primeiro, se marcada; depois
+    o maior percentual; empate (ou sem percentual) na ordem de codigos_da_modalidade.
     """
     marcadas = cotas_marcadas(regra, colunas)
-    if not marcadas:
-        return "AC"
     cotas = _objeto(cotas)
-    if cotas.get("acumulo") == "PCD_MAIS_UMA" and "PCD" in marcadas:
-        return "PCD"
     percentuais = _objeto(cotas.get("percentuais"))
+    pcd_primeiro = cotas.get("acumulo") == "PCD_MAIS_UMA"
 
     def percentual(codigo):
         valor = percentuais.get(codigo)
         return valor if _numero_js(valor) else 0
 
-    return max(marcadas, key=lambda c: (percentual(c), -marcadas.index(c)))
+    return sorted(
+        marcadas,
+        key=lambda c: (0 if pcd_primeiro and c == "PCD" else 1, -percentual(c), marcadas.index(c)),
+    )
+
+
+def modalidade_do_candidato(regra, colunas, cotas=None):
+    """
+    A modalidade principal (a lista do lote e do corte): a primeira de
+    modalidades_do_candidato, ou "AC" sem cota marcada.
+    """
+    modalidades = modalidades_do_candidato(regra, colunas, cotas)
+    return modalidades[0] if modalidades else "AC"
 
 
 def _numero_do_quadro(valor):
@@ -657,6 +668,7 @@ def pre_classificar_vaga(
         coluna_da_experiencia = (
             coluna_da_pergunta(colunas, pergunta_da_experiencia) if pergunta_da_experiencia else None
         )
+        modalidades = modalidades_do_candidato(regra, colunas, _objeto(vaga).get("cotas"))
         linhas.append(
             {
                 "id": c.get("id"),
@@ -682,7 +694,8 @@ def pre_classificar_vaga(
                 "divergente": diverge_da_art(art, declarada["total"], tolerancia)
                 if declarada and declarada["completa"]
                 else False,
-                "modalidade": modalidade_do_candidato(regra, colunas, _objeto(vaga).get("cotas")),
+                "modalidade": modalidades[0] if modalidades else "AC",
+                "modalidades": modalidades,
                 "posicao": None,
                 "posicao_modalidade": None,
                 "lote": None,
@@ -726,7 +739,9 @@ def pre_classificar_vaga(
         return t["por_modalidade"][b] if t["por_modalidade"] else t["tamanho"]
 
     def cabe_na_lista(linha, b):
-        return b in ("GERAL", "AC") or linha["modalidade"] == b
+        # Quem optou por mais de uma cota concorre em todas (114/2026, 5.8.1): entra
+        # na primeira lista, na ordem do lote, em que couber.
+        return b in ("GERAL", "AC") or b in linha["modalidades"]
 
     def lista_do(valor):
         return valor if valor in ordem_das_listas else ordem_das_listas[0]

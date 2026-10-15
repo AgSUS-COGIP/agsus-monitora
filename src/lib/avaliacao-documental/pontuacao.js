@@ -141,14 +141,90 @@ const forca = (efeito) => {
 const maisForte = (efeitos) =>
   efeitos.filter(Boolean).sort((a, b) => forca(a) - forca(b))[0] ?? null;
 
+const CODIGO_DE_MODALIDADE = /^[A-Z]{2,10}$/;
+const COTA_NEGADA = ["NAO_CONFORME", "NAO_ENVIADO"];
+
+/**
+ * As cotas que o candidato optou, em ordem de prioridade: o lançamento
+ * `modalidades` (a lista da pré-classificação) ou, na ficha antiga sem a
+ * lista, a `modalidade` única. [] = só a ampla (modalidades_do_lancamento do
+ * Python; o banco lê igual em FC_MODALIDADES_DO_LANCAMENTO).
+ */
+export function modalidadesDoLancamento(candidato) {
+  const bruta = Array.isArray(candidato?.modalidades)
+    ? candidato.modalidades
+    : [candidato?.modalidade];
+  const saida = [];
+  for (const valor of bruta) {
+    const codigo = String(valor ?? "")
+      .trim()
+      .toUpperCase();
+    if (
+      CODIGO_DE_MODALIDADE.test(codigo) &&
+      codigo !== "AC" &&
+      !saida.includes(codigo)
+    )
+      saida.push(codigo);
+  }
+  return saida;
+}
+
+/** A cota da condição "MODALIDADE=PP" (ou null). */
+function modalidadeDaCondicao(condicao) {
+  const [tipo, modalidade] = String(condicao ?? "").split("=");
+  return tipo?.trim().toUpperCase() === "MODALIDADE" && modalidade
+    ? modalidade.trim().toUpperCase()
+    : null;
+}
+
 function condicaoVale(condicao, candidato) {
   if (!condicao) return true;
   if (condicao === "INDIGENA") return Boolean(candidato.indigena);
+  // O bloco de cota vale para quem optou pela cota, entre as várias (114/2026, 5.8.1).
   const [, modalidade] = String(condicao).split("=");
-  return (
-    String(candidato.modalidade ?? "").toUpperCase() ===
-    String(modalidade ?? "").toUpperCase()
+  return modalidadesDoLancamento(candidato).includes(
+    String(modalidade ?? "")
+      .trim()
+      .toUpperCase(),
   );
+}
+
+/**
+ * As cotas optadas que a ficha confirmou, a final primeiro (cotas_confirmadas
+ * do Python; FC_COTAS_CONFIRMADAS no banco): sai a cota com bloco (condição
+ * MODALIDADE=<cota>) Não conforme ou Não enviado. A ordem segue o acúmulo da
+ * regra de classificação (cotas = { acumulo, percentuais }): PCD_MAIS_UMA → a
+ * PcD primeiro; depois o maior percentual (114/2026, 5.8.5); empate na ordem
+ * optada.
+ */
+export function cotasConfirmadas(avaliados, candidato, cotas) {
+  const negadas = new Set(
+    avaliados
+      .filter((a) => COTA_NEGADA.includes(a.situacao))
+      .map((a) => modalidadeDaCondicao(a.bloco?.condicao))
+      .filter(Boolean),
+  );
+  const optadas = modalidadesDoLancamento(candidato);
+  const percentuais =
+    cotas?.percentuais && typeof cotas.percentuais === "object"
+      ? cotas.percentuais
+      : {};
+  const pcdPrimeiro = cotas?.acumulo === "PCD_MAIS_UMA";
+  const percentual = (c) =>
+    typeof percentuais[c] === "number" && Number.isFinite(percentuais[c])
+      ? percentuais[c]
+      : 0;
+  const chave = (c) => [
+    pcdPrimeiro && c === "PCD" ? 0 : 1,
+    -percentual(c),
+    optadas.indexOf(c),
+  ];
+  return optadas
+    .filter((c) => !negadas.has(c))
+    .sort((a, b) => {
+      const [x, y] = [chave(a), chave(b)];
+      return x[0] - y[0] || x[1] - y[1] || x[2] - y[2];
+    });
 }
 
 const comItem = (item, textoDoMotivo) =>
@@ -644,8 +720,12 @@ export function calcularAvaliacao(regraEntrada, candidato = {}, opcoes = {}) {
   if (observacoes.length)
     parecer += preencherModelo(regra.parecer.observacoes, campos);
 
+  // A modalidade final: a cota confirmada de maior percentual; sem nenhuma, a ampla.
+  const confirmadas = cotasConfirmadas(avaliados, candidato, opcoes.cotas);
   return {
     resultado,
+    modalidade_final: confirmadas[0] ?? "AC",
+    modalidades_confirmadas: confirmadas,
     nota_apurada: notaApurada,
     nota_final: notaFinal,
     nota_minima: notaMinima,

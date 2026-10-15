@@ -266,14 +266,70 @@ def _mais_forte(efeitos):
     return validos[0] if validos else None
 
 
+_CODIGO_DE_MODALIDADE = re.compile(r"^[A-Z]{2,10}$")
+_COTA_NEGADA = ("NAO_CONFORME", "NAO_ENVIADO")
+
+
+def modalidades_do_lancamento(candidato):
+    """
+    As cotas que o candidato optou, em ordem de prioridade (modalidadesDoLancamento
+    do JS): o lançamento `modalidades` (a lista da pré-classificação) ou, na ficha
+    antiga sem a lista, a `modalidade` única. [] = só a ampla.
+    """
+    candidato = _objeto(candidato)
+    bruta = candidato.get("modalidades")
+    if not isinstance(bruta, list):
+        bruta = [candidato.get("modalidade")]
+    saida = []
+    for valor in bruta:
+        codigo = str(valor or "").strip().upper()
+        if _CODIGO_DE_MODALIDADE.match(codigo) and codigo != "AC" and codigo not in saida:
+            saida.append(codigo)
+    return saida
+
+
+def _modalidade_da_condicao(condicao):
+    partes = str(condicao or "").split("=")
+    return partes[1].strip().upper() if len(partes) > 1 and partes[0].strip().upper() == "MODALIDADE" else None
+
+
 def _condicao_vale(condicao, candidato):
     if not condicao:
         return True
     if condicao == "INDIGENA":
         return bool(candidato.get("indigena"))
+    # O bloco de cota vale para quem optou pela cota, entre as várias (114/2026, 5.8.1).
     partes = str(condicao).split("=")
-    modalidade = partes[1] if len(partes) > 1 else ""
-    return str(candidato.get("modalidade") or "").upper() == str(modalidade or "").upper()
+    modalidade = (partes[1] if len(partes) > 1 else "").strip().upper()
+    return modalidade in modalidades_do_lancamento(candidato)
+
+
+def cotas_confirmadas(regra, candidato, avaliados, cotas=None):
+    """
+    As cotas optadas que a ficha confirmou, a final primeiro (cotasConfirmadas do
+    JS; FC_COTAS_CONFIRMADAS no banco): sai a cota com bloco (condição
+    MODALIDADE=<cota>) Não conforme ou Não enviado. A ordem segue o acúmulo da
+    regra de classificação (cotas = {acumulo, percentuais}): PCD_MAIS_UMA → a PcD
+    primeiro; depois o maior percentual (114/2026, 5.8.5); empate na ordem optada.
+    """
+    situacao = {}
+    for a in avaliados:
+        cota = _modalidade_da_condicao(a["bloco"].get("condicao"))
+        if cota and a["situacao"] in _COTA_NEGADA:
+            situacao[cota] = a["situacao"]
+    optadas = modalidades_do_lancamento(candidato)
+    confirmadas = [c for c in optadas if c not in situacao]
+    cotas = _objeto(cotas)
+    percentuais = _objeto(cotas.get("percentuais"))
+    pcd_primeiro = cotas.get("acumulo") == "PCD_MAIS_UMA"
+
+    def percentual(codigo):
+        valor = percentuais.get(codigo)
+        return valor if _eh_numero(valor) else 0
+
+    return sorted(
+        confirmadas, key=lambda c: (0 if pcd_primeiro and c == "PCD" else 1, -percentual(c), optadas.index(c))
+    )
 
 
 def _com_item(item, texto):
@@ -684,8 +740,12 @@ def calcular_avaliacao(regra_entrada, candidato=None, opcoes=None):
     if observacoes:
         parecer += preencher_modelo(regra["parecer"].get("observacoes"), campos)
 
+    # A modalidade final: a cota confirmada de maior percentual; sem nenhuma, a ampla.
+    confirmadas = cotas_confirmadas(regra, candidato, avaliados, opcoes.get("cotas"))
     return {
         "resultado": resultado,
+        "modalidade_final": confirmadas[0] if confirmadas else "AC",
+        "modalidades_confirmadas": confirmadas,
         "nota_apurada": _numero_saida(nota_apurada),
         "nota_final": _numero_saida(nota_final),
         "nota_minima": nota_minima,
@@ -748,6 +808,14 @@ def conferir_ficha(regra, lancamento, gravado, opcoes=None, tolerancia=1e-4):
                 "campo": "pontos_informativos",
                 "gravado": None if informativa is None else informativa.get("nota"),
                 "recalculado": None if recalculada is None else recalculada["nota"],
+            }
+        )
+    if "modalidade_final" in gravado and gravado.get("modalidade_final") != r["modalidade_final"]:
+        diferencas.append(
+            {
+                "campo": "modalidade_final",
+                "gravado": gravado.get("modalidade_final"),
+                "recalculado": r["modalidade_final"],
             }
         )
     if "parecer" in gravado and str(gravado.get("parecer") or "") != r["parecer"]:
