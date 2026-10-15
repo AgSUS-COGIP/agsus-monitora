@@ -1069,6 +1069,20 @@ export const CONTRATO_RPC = {
     resumo:
       "Os inscritos de fora do lote na fila (eliminados e ranqueados sem ficha viva), no formato de obter_fila_avaliacao, em páginas de até 2.000 pela chave do inscrito (p_apos = o proximo da página anterior). Pedida só pelas abas Inscritos e Eliminados e por Incluir por decisão. 20261014180000_fila_leve.sql.",
   },
+  obter_espelhos_de_nota: {
+    argumentos: [
+      "p_edital",
+      "p_vagas",
+      "p_filtro",
+      "p_codigos",
+      "p_apos",
+      "p_limite",
+      "p_regras",
+    ],
+    critica: false,
+    resumo:
+      "Espelhos de nota em massa (20261015180000): das fichas concluídas do edital, só o que a montagem do espelho individual usa (~1 KB por ficha: nome, código, vaga, cargo, modalidade, ART, resultado, nota final, declarada gravada, lançamento sem empregador nem nome de curso, chave da regra) e as regras ainda não lidas (p_regras). Páginas de até 200 pela chave da ficha (p_apos = proximo). Filtro por vagas e TODOS/APTOS/INAPTOS, ou p_codigos (até 5.000; nao_concluidos na primeira página). Só administrador e coordenação do edital. Não grava nada.",
+  },
   pegar_proxima_ficha: {
     argumentos: ["p_edital", "p_vaga"],
     critica: false,

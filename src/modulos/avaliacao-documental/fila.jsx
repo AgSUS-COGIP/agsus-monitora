@@ -58,6 +58,7 @@ import {
   RevogarDecisao,
   SeloDaDecisao,
 } from "./decisao-do-lote.jsx";
+import { EspelhosEmMassa } from "./espelhos-em-massa.tsx";
 import { ConteudoDaFicha } from "./ficha/ficha.jsx";
 import { ResumoDoAndamento } from "./resumo-do-andamento.tsx";
 
@@ -803,6 +804,7 @@ export function Fila({ e, fila }) {
   const [selecao, setSelecao] = useState(() => new Set());
   const [acao, setAcao] = useState(null);
   const [incluindo, setIncluindo] = useState(false);
+  const [espelhos, setEspelhos] = useState(false);
   const [busca, setBusca] = useState(st.filtro.busca);
   const [recolhidos, setRecolhidos] = useState(() => new Set());
   // A ordem da tabela fica aqui: Anterior / Próxima da ficha seguem a mesma.
@@ -997,6 +999,16 @@ export function Fila({ e, fila }) {
       desabilitado: !acoes.revisao.length,
       aoEscolher: () => setAcao({ tipo: "revisao", fichas: acoes.revisao }),
       dados: { "data-acao": "mandar-para-revisao" },
+    },
+    {
+      id: "espelhos-em-massa",
+      rotulo: "Espelhos de nota em massa",
+      icone: "fa-print",
+      aoEscolher: () => setEspelhos(true),
+      dados: {
+        "data-acao": "espelhos-em-massa",
+        "data-tour": "avd-fila-espelhos-em-massa",
+      },
     },
     ...(fila.ehAdminGlobal?.()
       ? [
@@ -1201,6 +1213,15 @@ export function Fila({ e, fila }) {
             fila.incluirPorDecisao(escolhidos, motivo)
           }
           aoFechar={() => setIncluindo(false)}
+        />
+      ) : null}
+      {espelhos && coordena ? (
+        <EspelhosEmMassa
+          editalId={st.editalId || e.editalId}
+          vagas={dados.vagas || []}
+          fila={candidatos}
+          rpc={fila.rpc}
+          aoFechar={() => setEspelhos(false)}
         />
       ) : null}
       {acao ? (

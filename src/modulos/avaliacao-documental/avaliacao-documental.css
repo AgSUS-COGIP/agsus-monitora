@@ -1609,3 +1609,17 @@
   border: 0;
   border-top: 1px solid var(--border-subtle);
 }
+
+/* Espelhos de nota em massa (espelhos-em-massa.tsx): a barra de progresso da busca. */
+.avd-espelhos-progresso {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1, 4px);
+}
+.avd-espelhos-progresso progress {
+  width: 100%;
+  accent-color: var(--brand-primary);
+}
+.avd-espelhos-massa textarea {
+  font-family: var(--font-mono, monospace);
+}
