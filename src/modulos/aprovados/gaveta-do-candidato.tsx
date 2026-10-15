@@ -1,3 +1,5 @@
+import type { PropsDaGavetaDoAprovado } from "./tipos-dos-modais.ts";
+import type { CartaDoHistorico } from "../../lib/tipos-da-carta.ts";
 import { useSyncExternalStore } from "react";
 import { canChangeCandidateStatus } from "../../lib/access-roles.js";
 import {
@@ -24,9 +26,13 @@ import { SeloDeStatus } from "./partes.tsx";
   daqui.
 */
 
-const SAIDAS = { SEI: "Copiada para o SEI", DOCX: "DOCX", PDF: "PDF" };
+const SAIDAS: Readonly<Record<string, string>> = {
+  SEI: "Copiada para o SEI",
+  DOCX: "DOCX",
+  PDF: "PDF",
+};
 
-function Carta({ carta }) {
+function Carta({ carta }: { carta: CartaDoHistorico }) {
   const outros = Number(carta.candidatos) - 1;
   return (
     <li className="aprovados-carta-emitida">
@@ -37,7 +43,7 @@ function Carta({ carta }) {
         <small>
           {formatarDataHora(carta.emitida_em)}
           {carta.usuario ? ` · ${carta.usuario}` : ""}
-          {` · ${SAIDAS[carta.saida] || carta.saida}`}
+          {` · ${SAIDAS[carta.saida || ""] || carta.saida}`}
           {outros > 0
             ? ` · com mais ${outros} candidato${outros === 1 ? "" : "s"}`
             : ""}
@@ -55,7 +61,12 @@ function Carta({ carta }) {
   );
 }
 
-export function GavetaDoCandidato({ estado, perfil, candidato, convocacao }) {
+export function GavetaDoCandidato({
+  estado,
+  perfil,
+  candidato,
+  convocacao,
+}: PropsDaGavetaDoAprovado) {
   const { historicos } = useSyncExternalStore(
     estado.carta.assinar,
     estado.carta.obter,

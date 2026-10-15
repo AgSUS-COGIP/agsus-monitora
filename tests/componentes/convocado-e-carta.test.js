@@ -516,6 +516,34 @@ describe("H4: modelos da carta, versionados", () => {
 });
 
 describe("H7: cartas emitidas na gaveta do candidato", () => {
+  it("histórico malformado mostra nova tentativa e recupera as cartas", async () => {
+    const supabase = supabaseFalso();
+    const original = supabase.rpc.getMockImplementation();
+    let invalido = true;
+    supabase.rpc.mockImplementation((nome, argumentos) =>
+      nome === "listar_cartas_do_candidato" && invalido
+        ? Promise.resolve({
+            data: { cartas: [{ carta_id: "x", modelo: {} }] },
+            error: null,
+          })
+        : original(nome, argumentos),
+    );
+    await montar({ supabase });
+    await clicar(
+      linhaDe("approvedPanelAprovados", "Ana Ribeiro").querySelector(
+        '[data-approved-action="candidato"]',
+      ),
+    );
+    await esperar(() => Promise.resolve());
+    expect($("approvedCandidatoCartas")).toBeNull();
+    const repetir = [
+      ...document.querySelectorAll("#approvedCandidatoGaveta button"),
+    ].find((b) => b.textContent.includes("Tentar de novo"));
+    expect(repetir).toBeTruthy();
+    invalido = false;
+    await clicar(repetir);
+    expect($("approvedCandidatoCartas").textContent).toContain("Carta padrão");
+  });
   it("o nome abre a gaveta com os dados e o histórico das cartas", async () => {
     const { supabase } = await montar();
     await clicar(

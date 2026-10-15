@@ -285,5 +285,4 @@ publicar o estado; uma confirmação incompleta de convocação não altera os s
 locais. Os contratos estão em `src/modulos/aprovados/tipos-do-estado.ts` e
 `src/lib/tipos-do-estado-de-aprovados.ts`, com verificação em
 `tests/tipos/estado-dos-aprovados.tsx` e regressões em
-`tests/lib/dados-do-estado-de-aprovados.test.js`. Os modais e a gaveta de Aprovados
-ainda incluem JavaScript/JSX.
+`tests/lib/dados-do-estado-de-aprovados.test.js`. Os modais de status, anexos e sub judice, o modal de listas do edital e a gaveta também estão em TSX. Todos os componentes e estados da pasta Aprovados estão tipados. Os históricos de cartas e publicações são validados antes de chegar à interface; falhas e respostas malformadas permitem nova tentativa. Contratos em `tests/tipos/modais-dos-aprovados.tsx` e regressões em `tests/lib/historicos-dos-aprovados.test.js`.

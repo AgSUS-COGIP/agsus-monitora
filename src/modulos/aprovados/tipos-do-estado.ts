@@ -1,3 +1,4 @@
+import type { DadosDaPublicacaoDoEdital } from "../../lib/tipos-do-estado-de-aprovados.ts";
 import type { OpcoesDoEstadoDaCarta } from "../../lib/tipos-da-carta.ts";
 import type {
   ConfiguracoesDaConvocacao,
@@ -38,7 +39,8 @@ export interface SnapshotDosAprovados {
   publicacao: {
     editalId: string;
     carregando: boolean;
-    dados: Record<string, unknown> | null;
+    dados: DadosDaPublicacaoDoEdital | null;
+    erro?: string;
   } | null;
 }
 export interface RespostaDosAprovados {

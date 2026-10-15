@@ -1,3 +1,15 @@
+import type {
+  PropsDoCabecalhoDoModal,
+  PropsDoCampoDeAnexos,
+  PropsDoModalDeStatus,
+  PropsDoModalDeAnexos,
+  PropsDoModalSubJudice,
+  PropsDoPainelSubJudice,
+  PropsDoPainelDoAprovado,
+  PropsDaDecisao,
+  PropsDosCamposDaDecisao,
+} from "./tipos-dos-modais.ts";
+import type { CandidatoAprovado, ListaDeAprovados } from "./tipos-do-estado.ts";
 import { useRef, useState } from "react";
 import {
   canAlterarPorDecisaoJudicial,
@@ -29,11 +41,17 @@ import { IconeDePdf } from "./partes.tsx";
   candidato e de sub judice (abas: novo candidato e candidato já aprovado,
   cuja nota e/ou modalidade mudou por decisão judicial). Cada abertura é
   uma montagem nova (`key` = abertura), então o rascunho começa sempre do que
-  está no banco. Salvar é do estado (`estado.js`), que fecha o modal quando
+  está no banco. Salvar é do estado (`estado.ts`), que fecha o modal quando
   dá certo e deixa os dados digitados na tela quando dá erro.
 */
 
-function Cabecalho({ tituloId, titulo, subtitulo, subtituloId, aoFechar }) {
+function Cabecalho({
+  tituloId,
+  titulo,
+  subtitulo,
+  subtituloId,
+  aoFechar,
+}: PropsDoCabecalhoDoModal) {
   return (
     <div className="modal-head">
       <div>
@@ -62,8 +80,12 @@ const DICA_DOS_ANEXOS = "PDF, até 2 MB";
   um `<label class="btn secondary">` com o `input` nativo escondido dentro. O
   `input` continua focável, e o foco dele aparece no botão.
 */
-function CampoDeAnexos({ jaAnexados, arquivos, aoMudar }) {
-  const entrada = useRef(null);
+function CampoDeAnexos({
+  jaAnexados,
+  arquivos,
+  aoMudar,
+}: PropsDoCampoDeAnexos) {
+  const entrada = useRef<HTMLInputElement>(null);
   const problema = problemaDosAnexos(arquivos, jaAnexados);
   const restam = Math.max(MAXIMO_DE_ANEXOS - jaAnexados - arquivos.length, 0);
   return (
@@ -148,7 +170,7 @@ export function ModalDeStatus({
   candidato,
   jaAnexados = 0,
   dataConvocacao = "",
-}) {
+}: PropsDoModalDeStatus) {
   // Anexar é só do admin do módulo; para os demais, o campo não aparece.
   const podeAnexar = canEditCandidateAttachments(perfil, candidato);
   const hoje = estado.carta.hoje();
@@ -156,7 +178,7 @@ export function ModalDeStatus({
   const [processo, setProcesso] = useState(candidato.processo_sei || "");
   const [matricula, setMatricula] = useState(candidato.matricula || "");
   const [data, setData] = useState(dataConvocacao || hoje);
-  const [anexos, setAnexos] = useState([]);
+  const [anexos, setAnexos] = useState<File[]>([]);
   const exigeMatricula = statusNeedsMatricula(status);
   // Do Convocado, quem edita segue o fluxo; deixar sem status é do admin.
   const semStatusBarrado = !podeTirarOStatus(perfil, candidato);
@@ -282,13 +304,18 @@ export function ModalDeStatus({
   );
 }
 
-const dataCurta = (valor) => {
+const dataCurta = (valor: string | number) => {
   const data = new Date(valor);
   return Number.isNaN(data.getTime()) ? "" : data.toLocaleDateString("pt-BR");
 };
 
 /* Os anexos de um candidato: abrir cada PDF e, para quem altera o status, remover. */
-export function ModalDeAnexos({ estado, perfil, candidato, anexos }) {
+export function ModalDeAnexos({
+  estado,
+  perfil,
+  candidato,
+  anexos,
+}: PropsDoModalDeAnexos) {
   const fechar = estado.fecharModal;
   const podeRemover = canEditCandidateAttachments(perfil, candidato);
   return (
@@ -365,13 +392,20 @@ export function ModalDeAnexos({ estado, perfil, candidato, anexos }) {
   );
 }
 
-const cargosDoEdital = (candidatos, editalId) =>
+const cargosDoEdital = (
+  candidatos: readonly CandidatoAprovado[],
+  editalId: string,
+) =>
   uniqueCandidateCargos(
     candidatos.filter((row) => String(row.edital_id) === String(editalId)),
   );
 
 /* O edital e o cargo escolhidos; o cargo que não existe no edital cai no primeiro. */
-function useEditalECargo(ativas, candidatos, inicial) {
+function useEditalECargo(
+  ativas: readonly ListaDeAprovados[],
+  candidatos: readonly CandidatoAprovado[],
+  inicial?: CandidatoAprovado,
+) {
   const [editalId, setEditalId] = useState(() =>
     String(inicial?.edital_id ?? ativas[0]?.edital_id ?? ""),
   );
@@ -385,7 +419,15 @@ function useEditalECargo(ativas, candidatos, inicial) {
   return { editalId, setEditalId, cargos, cargo, setCargo };
 }
 
-function SelecaoDeEditalECargo({ prefixo, ativas, escolha }) {
+function SelecaoDeEditalECargo({
+  prefixo,
+  ativas,
+  escolha,
+}: {
+  prefixo: string;
+  ativas: readonly ListaDeAprovados[];
+  escolha: ReturnType<typeof useEditalECargo>;
+}) {
   return (
     <>
       <div className="form-row">
@@ -427,7 +469,7 @@ function CamposDaDecisao({
   observacao,
   aoMudarProcesso,
   aoMudarObservacao,
-}) {
+}: PropsDosCamposDaDecisao) {
   return (
     <>
       <div className="form-row full">
@@ -491,14 +533,14 @@ export function ModalSubJudice({
   candidatos,
   aba: abaInicial = "novo",
   candidatoId = "",
-}) {
+}: PropsDoModalSubJudice) {
   const ativas = listas.filter((item) => item.ativo);
   const abas = ABAS_DO_SUB_JUDICE.filter((item) =>
     item.nome === "novo"
       ? canManageSubJudice(perfil)
       : canAlterarPorDecisaoJudicial(perfil),
   );
-  const tem = (nome) => abas.some((item) => item.nome === nome);
+  const tem = (nome: string) => abas.some((item) => item.nome === nome);
   const [aba, setAba] = useState(() =>
     tem(abaInicial) ? abaInicial : abas[0]?.nome,
   );
@@ -522,7 +564,7 @@ export function ModalSubJudice({
           <Abas
             rotulo="Tipo de sub judice"
             compactas
-            ativa={aba}
+            ativa={aba ?? ""}
             aoEscolher={setAba}
             abas={abas.map((item) => ({
               id: item.nome,
@@ -558,7 +600,12 @@ export function ModalSubJudice({
   );
 }
 
-function PainelDoNovoCandidato({ ativa, estado, ativas, candidatos }) {
+function PainelDoNovoCandidato({
+  ativa,
+  estado,
+  ativas,
+  candidatos,
+}: PropsDoPainelSubJudice) {
   const [nome, setNome] = useState("");
   const [nota, setNota] = useState("");
   const escolha = useEditalECargo(ativas, candidatos);
@@ -665,12 +712,12 @@ function PainelDoNovoCandidato({ ativa, estado, ativas, candidatos }) {
   );
 }
 
-const porClassificacao = (a, b) =>
-  (a.classificacao ?? Infinity) - (b.classificacao ?? Infinity) ||
+const porClassificacao = (a: CandidatoAprovado, b: CandidatoAprovado) =>
+  Number(a.classificacao ?? Infinity) - Number(b.classificacao ?? Infinity) ||
   String(a.nome).localeCompare(String(b.nome), "pt-BR");
 
 /* "Nome · 3º · nota 33 · Ampla concorrência": o nome primeiro, para digitar no select. */
-const rotuloDoCandidato = (row) =>
+const rotuloDoCandidato = (row: CandidatoAprovado) =>
   [
     row.nome,
     row.classificacao != null ? `${row.classificacao}º` : "",
@@ -687,7 +734,7 @@ function PainelDoCandidatoAprovado({
   ativas,
   candidatos,
   candidatoInicial,
-}) {
+}: PropsDoPainelDoAprovado) {
   const escolha = useEditalECargo(ativas, candidatos, candidatoInicial);
   const doCargo = candidatos
     .filter(
@@ -762,7 +809,12 @@ function PainelDoCandidatoAprovado({
   botão de desfazer (a decisão caiu). `key` = candidato: trocar de candidato
   começa de um rascunho limpo.
 */
-function FormularioDaDecisao({ estado, perfil, candidato, candidatos }) {
+function FormularioDaDecisao({
+  estado,
+  perfil,
+  candidato,
+  candidatos,
+}: PropsDaDecisao) {
   const [nota, setNota] = useState(() =>
     candidato.nota == null ? "" : String(candidato.nota).replace(".", ","),
   );

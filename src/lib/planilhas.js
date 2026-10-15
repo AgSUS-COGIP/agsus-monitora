@@ -25,7 +25,7 @@ export const PLANILHAS = Object.freeze({
     arquivoNoRepositorio:
       "public/assets/modelo-importacao-lista-aprovados.xlsx",
     usadaEm: Object.freeze([
-      "src/modulos/aprovados/modal-listas-do-edital.jsx (#approvedImportModelLink)",
+      "src/modulos/aprovados/modal-listas-do-edital.tsx (#approvedImportModelLink)",
     ]),
   }),
 

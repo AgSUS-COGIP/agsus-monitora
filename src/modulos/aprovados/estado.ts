@@ -1,3 +1,5 @@
+import { publicacaoDoEdital } from "../../lib/dados-do-historico-de-publicacoes.ts";
+import type { DadosDaPublicacaoDoEdital } from "../../lib/tipos-do-estado-de-aprovados.ts";
 import type {
   SnapshotDosAprovados,
   OpcoesDoEstadoDosAprovados,
@@ -21,7 +23,6 @@ import {
   convocacoesDoEstado,
   resultadoDaMarcacao,
   registroDosAprovados,
-  ehRegistroDosAprovados,
 } from "../../lib/dados-do-estado-de-aprovados.ts";
 /*
   Estado da Lista de Aprovados, fora do React: os candidatos, as listas e a
@@ -686,20 +687,30 @@ export function criarEstadoDaListaDeAprovados({
     const id = String(editalId || "");
     if (!supabase || !id) return null;
     publicar({ publicacao: { editalId: id, carregando: true, dados: null } });
-    let dados: Record<string, unknown> | null = null;
+    let dados: DadosDaPublicacaoDoEdital | null = null;
+    let erroDaPublicacao = "";
     try {
       const resposta = await supabase.rpc("obter_publicacao_lista_aprovados", {
         p_edital: id,
         p_com_candidatos: false,
       });
       if (resposta.error) throw resposta.error;
-      dados = ehRegistroDosAprovados(resposta.data) ? resposta.data : null;
+      dados = publicacaoDoEdital(resposta.data);
     } catch (erro) {
-      if (registroDosAprovados(erro).code !== "PGRST202")
+      if (registroDosAprovados(erro).code !== "PGRST202") {
+        erroDaPublicacao = mensagemDe(erro);
         console.warn("Origem da lista de aprovados indisponível:", erro);
+      }
     }
     if (estado.publicacao?.editalId !== id) return null;
-    publicar({ publicacao: { editalId: id, carregando: false, dados } });
+    publicar({
+      publicacao: {
+        editalId: id,
+        carregando: false,
+        dados,
+        erro: erroDaPublicacao,
+      },
+    });
     return dados;
   }
 

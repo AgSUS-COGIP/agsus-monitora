@@ -9,8 +9,8 @@ de chamada de cada vaga, calculada pelo modelo de convocação e pelas vagas ime
 duas leem os mesmos candidatos: mudar um status redesenha as duas.
 
 ```
-lista-aprovados.jsx        <ListaAprovados>, montarListaAprovados() e os modais abertos (ModalAberto)
-estado.js                  store sem React: candidatos (pacote compacto por área, cópia no navegador),
+lista-aprovados.tsx        <ListaAprovados>, montarListaAprovados() e os modais abertos (ModalAberto)
+estado.ts                  store sem React: candidatos (pacote compacto por área, cópia no navegador),
                            listas, configuração de convocação, anexos, convocações (data da
                            convocação e cartas por candidato), ações que escrevem no banco e o estado
                            da carta (`estado.carta`)
@@ -19,11 +19,11 @@ aba-aprovados.tsx          visão Aprovados: KPIs (Convocados no lugar do antigo
 aba-convocacao.tsx         visão Convocação: KPIs (A convocar, Convocados…), filtros, escolha dos
                            candidatos para a carta, "Escolher os a convocar", Exportar CSV, uma tabela
                            por vaga
-partes.jsx                 peças das duas abas: selo de status (com a data do Convocado), nome que abre
+partes.tsx                 peças das duas abas: selo de status (com a data do Convocado), nome que abre
                            a gaveta, ações de status, carta e anexos, paginação, CampoEditavel
-modais.jsx                 status (Convocado pede a data), anexos, sub judice
-gaveta-do-candidato.jsx    a gaveta do candidato: dados, status e as cartas de convocação emitidas
-modal-listas-do-edital.jsx listas do edital: origem, importar XLSX, publicar da Classificação
+modais.tsx                 status (Convocado pede a data), anexos, sub judice
+gaveta-do-candidato.tsx    a gaveta do candidato: dados, status e as cartas de convocação emitidas
+modal-listas-do-edital.tsx listas do edital: origem, importar XLSX, publicar da Classificação
 formulario-de-convocacao.tsx, editor-de-modelo.tsx, previa-da-convocacao.tsx
                            configuração da convocação do edital (modelo de reserva de vagas)
 carta-de-convocacao/       a carta de convocação para contratação
@@ -84,8 +84,19 @@ em TypeScript/TSX. Os contratos ficam em `src/lib/tipos-das-regras-de-aprovados.
 e `tipos-da-aba-de-aprovados.ts`. Filtros e paginação preservam os campos adicionais
 dos candidatos. Campos editáveis distinguem o valor recebido e o valor convertido,
 sem substituir o texto enquanto se digita. A paginação garante ao menos
-uma linha para tamanhos positivos menores que 1. A entrada principal, o estado e
-os modais/gaveta ainda têm partes em JavaScript/JSX.
+uma linha para tamanhos positivos menores que 1.
+
+A entrada, o estado, os modais e a gaveta também estão em TypeScript/TSX: todos os
+componentes e estados desta pasta estão tipados. Contratos em `tipos-do-estado.ts`,
+`tipos-dos-modais.ts` e `src/lib/tipos-do-estado-de-aprovados.ts`. A carga valida
+candidatos e listas antes de publicá-los. A marcação de convocados exige confirmação
+completa dos IDs do pedido antes de mudar os status locais.
+
+Os históricos de cartas e publicações são validados antes de chegar à interface.
+Falha de rede ou resposta malformada libera uma nova tentativa na gaveta ou no modal
+de listas; rejeição da chamada não deixa o histórico de cartas preso no carregamento.
+Testes de contrato em `tests/tipos/modais-dos-aprovados.tsx` e regressões em
+`tests/lib/historicos-dos-aprovados.test.js`.
 
 ## Banco
 

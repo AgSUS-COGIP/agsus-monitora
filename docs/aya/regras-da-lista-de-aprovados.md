@@ -51,7 +51,7 @@ publicada do resultado final da Classificação; `src/lib/publicacao-de-aprovado
 **perguntas:** origem da lista de aprovados | de onde vem a lista de aprovados | lista manual planilha | publicada da classificacao | lista publicada da classificacao | o que e lista manual
 **resposta:** No MONITORA, a lista de aprovados de cada edital tem uma de duas origens, mostrada na tela e no modal "Listas do edital": "Publicada da Classificação em DD/MM" — o resultado final da aba Classificação, com posição, nota, modalidade, vaga e situação (dentro das vagas ou cadastro reserva) calculados pela regra do edital, sem digitação — ou "Lista manual (planilha)", importada por XLSX com posição e nota digitadas. Edital com análise no sistema publica da Classificação; a planilha fica para editais sem análise no sistema. Cada troca de lista fica no histórico das publicações do edital.
 **fato:** No MONITORA, a lista de aprovados vem do resultado final da Classificação; a planilha XLSX fica para editais sem análise no sistema.
-**fonte:** src/lib/publicacao-de-aprovados.ts; src/modulos/aprovados/modal-listas-do-edital.jsx; supabase/migrations/20261005160000_lista_de_aprovados_da_classificacao.sql
+**fonte:** src/lib/publicacao-de-aprovados.ts; src/modulos/aprovados/modal-listas-do-edital.tsx; supabase/migrations/20261005160000_lista_de_aprovados_da_classificacao.sql
 **abrir:** approved
 
 ## Publicar a lista de aprovados da Classificação
@@ -72,14 +72,14 @@ publicada do resultado final da Classificação; `src/lib/publicacao-de-aprovado
 
 **perguntas:** importar xlsx sobre lista da classificacao | motivo para trocar pela planilha | substituir lista publicada da classificacao | planilha depois da classificacao
 **resposta:** Se a lista vigente foi publicada da Classificação, o administrador de Importação ainda pode trocá-la por um XLSX, mas precisa informar o motivo (de 3 a 500 caracteres), que fica no histórico das publicações junto com quem e quando. Editais sem análise no sistema continuam importando a planilha como antes, sem motivo.
-**fonte:** src/modulos/aprovados/modal-listas-do-edital.jsx; supabase/migrations/20261005160000_lista_de_aprovados_da_classificacao.sql
+**fonte:** src/modulos/aprovados/modal-listas-do-edital.tsx; supabase/migrations/20261005160000_lista_de_aprovados_da_classificacao.sql
 **abrir:** approved
 
 ## Histórico das publicações da lista
 
 **perguntas:** historico das publicacoes da lista de aprovados | quem publicou a lista de aprovados | auditoria da lista de aprovados | versao da regra da lista de aprovados
-**resposta:** Cada lista que entra em vigor num edital fica registrada: publicada da Classificação (quem, quando, a lista de classificação, a versão da regra, o hash, quantos entraram, saíram, mudaram de posição, preservados e sub judice mantidos, os vínculos aplicados e quem ficou para revisão) ou importada por planilha (quem, quando e o motivo, quando trocou uma lista da Classificação). O modal "Listas do edital" mostra as últimas publicações.
-**fonte:** supabase/migrations/20261005160000_lista_de_aprovados_da_classificacao.sql (TH_PUBLICACAO_APROVADO)
+**resposta:** Cada lista que entra em vigor num edital fica registrada: publicada da Classificação (quem, quando, a lista de classificação, a versão da regra, o hash, quantos entraram, saíram, mudaram de posição, preservados e sub judice mantidos, os vínculos aplicados e quem ficou para revisão) ou importada por planilha (quem, quando e o motivo, quando trocou uma lista da Classificação). O modal "Listas do edital" mostra as últimas publicações. Se a leitura do histórico falhar, use "Tentar de novo" no próprio modal.
+**fonte:** src/modulos/aprovados/modal-listas-do-edital.tsx; supabase/migrations/20261005160000_lista_de_aprovados_da_classificacao.sql (TH_PUBLICACAO_APROVADO)
 **abrir:** approved
 
 ## Status Convocado
@@ -126,8 +126,8 @@ publicada do resultado final da Classificação; `src/lib/publicacao-de-aprovado
 ## Cartas emitidas na gaveta do candidato
 
 **perguntas:** historico de cartas do candidato | cartas emitidas | gaveta do candidato | ver cartas de convocacao do candidato
-**resposta:** Clique no nome do candidato, em qualquer aba, para abrir a gaveta: os dados da lista, o status com a data da convocação e as cartas de convocação emitidas para ele (também nas listas anteriores do edital), com quando, quem, modelo e versão, como saiu, o prazo e se a convocação foi marcada pela carta.
-**fonte:** src/modulos/aprovados/gaveta-do-candidato.jsx; supabase/migrations/20261005180000_convocado_e_carta_de_convocacao.sql (listar_cartas_do_candidato)
+**resposta:** Clique no nome do candidato, em qualquer aba, para abrir a gaveta: os dados da lista, o status com a data da convocação e as cartas de convocação emitidas para ele (também nas listas anteriores do edital), com quando, quem, modelo e versão, como saiu, o prazo e se a convocação foi marcada pela carta. Se a leitura das cartas falhar, use "Tentar de novo" na gaveta.
+**fonte:** src/modulos/aprovados/gaveta-do-candidato.tsx; supabase/migrations/20261005180000_convocado_e_carta_de_convocacao.sql (listar_cartas_do_candidato)
 **abrir:** approved
 
 ## Cadeado no status do candidato
@@ -148,5 +148,5 @@ publicada do resultado final da Classificação; `src/lib/publicacao-de-aprovado
 
 **perguntas:** por que o edital nao tem lista de aprovados | lista de aprovados vazia | edital nao aparece na lista de aprovados | nao tem lista de aprovados
 **resposta:** A Lista de aprovados mostra a lista vigente de cada edital da área atual (e do recorte da sua coordenação). Edital sem lista ainda não teve o resultado final publicado da Classificação nem planilha importada: publique em Classificação › Resultado final ("Publicar como lista de aprovados") ou, em edital sem análise no sistema, importe o XLSX (Editor em Importação e convocação). As listas anteriores ficam inativas, para consulta, no modal "Listas do edital".
-**fonte:** src/lib/publicacao-de-aprovados.ts; src/modulos/aprovados/modal-listas-do-edital.jsx; src/lib/access-roles.js
+**fonte:** src/lib/publicacao-de-aprovados.ts; src/modulos/aprovados/modal-listas-do-edital.tsx; src/lib/access-roles.js
 **abrir:** approved
