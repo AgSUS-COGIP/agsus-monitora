@@ -215,9 +215,9 @@ describe("áreas abertas por padrão", () => {
     ).toEqual([
       ["Visão geral", "saude-indigena"],
       ["Painel das análises", "saude-indigena"],
-      ["Lista de aprovados", "saude-indigena"],
       ["Editais", "saude-indigena"],
       ["Cronograma", "saude-indigena"],
+      ["Lista de aprovados", "saude-indigena"],
     ]);
     // Cada bloco tem o título e uma lista nomeada por ele.
     const blocos = [...area("saude-indigena").querySelectorAll(".menu-bloco")];
@@ -228,12 +228,8 @@ describe("áreas abertas por padrão", () => {
         [...bloco.querySelectorAll(".menu-item")].map((b) => b.dataset.view),
       ]),
     ).toEqual([
-      [
-        "acompanhamento",
-        "Acompanhamento",
-        ["dashboard", "analises", "approved"],
-      ],
-      ["processo", "Processo seletivo", ["nucleo", "calendario"]],
+      ["acompanhamento", "Acompanhamento", ["dashboard", "analises"]],
+      ["processo", "Processo seletivo", ["nucleo", "calendario", "approved"]],
     ]);
     const titulo = blocos[1].querySelector(".menu-bloco__titulo");
     expect(blocos[1].querySelector("ul").getAttribute("aria-labelledby")).toBe(
@@ -268,7 +264,7 @@ describe("áreas abertas por padrão", () => {
           '[data-bloco="acompanhamento"] .menu-item',
         ),
       ].map((botao) => botao.dataset.view),
-    ).toEqual(["dashboard", "analises", "approved", "panel:x"]);
+    ).toEqual(["dashboard", "analises", "panel:x"]);
   });
 
   it("painel externo aberto acende o item e a área onde está", async () => {
@@ -393,7 +389,7 @@ describe("as áreas do usuário: seletor de área", () => {
       [...area("sede").querySelectorAll(".menu-item")].map(
         (botao) => botao.dataset.view,
       ),
-    ).toEqual(["dashboard", "analises", "approved", "nucleo", "calendario"]);
+    ).toEqual(["dashboard", "analises", "nucleo", "calendario", "approved"]);
     expect(new Set(viewsDoGrupo(arvore, "sede"))).toEqual(
       new Set(["dashboard", "analises", "approved", "nucleo", "calendario"]),
     );
@@ -577,10 +573,10 @@ describe("barra recolhida: páginas da área como ícones", () => {
       ["Visão geral", "map", "Visão geral"],
       ["Painel das análises", "file-search", "Painel das análises"],
       ["Painel de recursos", "scale", "Painel de recursos"],
-      ["Lista de aprovados", "user-round-check", "Lista de aprovados"],
       ["Painel X", "square-arrow-out-up-right", "Painel X"],
       ["Editais", "file-text", "Editais"],
       ["Cronograma", "calendar-days", "Cronograma"],
+      ["Lista de aprovados", "user-round-check", "Lista de aprovados"],
     ]);
     // Os dois blocos continuam no trilho (o título só sai de vista no CSS).
     expect(

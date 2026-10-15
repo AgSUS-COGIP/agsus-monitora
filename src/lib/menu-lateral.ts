@@ -291,11 +291,11 @@ export const ABAS_DO_MENU = Object.freeze(
 /*
   Os dois blocos de cada área, com título no menu:
 
-  - Acompanhamento: as páginas de consulta (Visão geral, os painéis e a Lista
-    de aprovados) e os painéis externos.
+  - Acompanhamento: as páginas de consulta (Visão geral e os painéis —
+    análises, recursos, entrevistas e Seleção) e os painéis externos.
   - Processo seletivo: onde se trabalha, na ordem das etapas (Editais,
     Cronograma, Avaliação documental, Analisar recursos, Conduzir
-    entrevistas, Classificação, Seleção).
+    entrevistas, Classificação, Lista de aprovados).
 
   Dentro de cada bloco vale a ordem do catálogo, que já segue as etapas. O
   bloco é da ABA (o código, não a view, que a área pode trocar): aba nova
@@ -315,7 +315,7 @@ const ABAS_DE_ACOMPANHAMENTO = new Set([
   "analises",
   "recursos",
   "entrevistas",
-  "aprovados",
+  "selecao",
 ]);
 
 export function blocoDaAba(aba: Pick<AbaDoCatalogo, "id" | "tipo">) {

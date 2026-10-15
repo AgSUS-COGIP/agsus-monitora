@@ -121,7 +121,7 @@ describe("a árvore do menu segue o perfil e as áreas", () => {
       view: "approved",
       rotulo: "Lista de aprovados",
       icone: "user-round-check",
-      bloco: "acompanhamento",
+      bloco: "processo",
       area: "saude-indigena",
     });
     expect(
@@ -551,7 +551,7 @@ describe("blocos da área", () => {
             "Painel das análises",
             "Painel de recursos",
             "Painel de entrevistas",
-            "Lista de aprovados",
+            "Seleção",
           ],
         ],
         [
@@ -563,7 +563,7 @@ describe("blocos da área", () => {
             "Analisar recursos",
             "Conduzir entrevistas",
             "Classificação",
-            "Seleção",
+            "Lista de aprovados",
           ],
         ],
       ]);
@@ -577,7 +577,7 @@ describe("blocos da área", () => {
     expect(blocosDaArea(soTrabalho[0].itens).map((b) => b.id)).toEqual([
       "processo",
     ]);
-    const soConsulta = montarArvoreDoMenu({ permitidas: { approved: true } });
+    const soConsulta = montarArvoreDoMenu({ permitidas: { selecao: true } });
     expect(blocosDaArea(soConsulta[0].itens).map((b) => b.id)).toEqual([
       "acompanhamento",
     ]);
@@ -595,7 +595,6 @@ describe("blocos da área", () => {
     expect(acompanhamento.itens.map((item) => item.view)).toEqual([
       "dashboard",
       "analises",
-      "approved",
       "panel:bi",
     ]);
   });
@@ -603,7 +602,8 @@ describe("blocos da área", () => {
   it("aba nova nativa vai para Processo seletivo; aba externa, para Acompanhamento", () => {
     expect(blocoDaAba({ id: "nova", tipo: "nativa" })).toBe("processo");
     expect(blocoDaAba({ id: "bi", tipo: "externa" })).toBe("acompanhamento");
-    expect(blocoDaAba({ id: "aprovados", tipo: "nativa" })).toBe(
+    expect(blocoDaAba({ id: "aprovados", tipo: "nativa" })).toBe("processo");
+    expect(blocoDaAba({ id: "selecao", tipo: "nativa" })).toBe(
       "acompanhamento",
     );
     // Item sem bloco (árvore montada à mão) vale como Processo seletivo.
