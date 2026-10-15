@@ -886,7 +886,7 @@ const TOURS = Object.freeze({
       passo(
         t("avd-fila-andamento"),
         "Andamento",
-        "Concluídas, em análise e pendentes do edital e de cada vaga; clique numa vaga para filtrar.",
+        "Concluídas, em análise e pendentes do edital; em “Por vaga”, a lista de cada vaga (ordenável). Clique numa vaga para filtrar.",
         { antes: `${t("avd-visoes")} [data-valor='fila']` },
       ),
       passo(

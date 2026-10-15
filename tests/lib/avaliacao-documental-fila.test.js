@@ -391,6 +391,7 @@ describe("andamento por vaga e agrupamento da tabela", () => {
     expect(a.vagas[1]).toEqual({
       codigo: "A",
       cargo: "Técnico",
+      lotacao: "",
       lote: 5,
       concluidas: 1,
       em_analise: 1,

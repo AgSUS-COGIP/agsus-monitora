@@ -893,26 +893,64 @@ describe("fila: andamento, menu da coordenação e tabela agrupada por vaga", ()
     return d;
   };
 
-  it("resumo do andamento por vaga e do edital; clicar na vaga filtra", async () => {
+  it("resumo do andamento: o edital e o bloco Por vaga recolhido; clicar na vaga filtra", async () => {
     await montar(supabaseFalso(duasVagas()));
     const resumo = secao.querySelector("[data-tour='avd-fila-andamento']");
     expect(resumo.querySelector(".avd-andamento-total").textContent).toContain(
       "concluídas 1 de 6 · em análise 1 · pendentes 4",
     );
-    const vagas = [...resumo.querySelectorAll("[data-vaga]")];
-    expect(vagas.map((b) => b.textContent)).toEqual([
-      "179698 Técnicoconcluídas 0 de 4 · em análise 1 · pendentes 3",
-      "180001 Enfermeiroconcluídas 1 de 2 · em análise 0 · pendentes 1",
+    const porVaga = resumo.querySelector("details[data-por-vaga]");
+    // Fechado por padrão: a grade de cartões por vaga não polui o topo.
+    expect(porVaga.open).toBe(false);
+    expect(porVaga.querySelector("summary").textContent).toBe(
+      "Por vaga (2)2 vagas · 2 com pendências",
+    );
+    const linhasDaVaga = () =>
+      [...resumo.querySelectorAll("tr[data-linha-vaga]")].map((tr) =>
+        [...tr.cells].map((td) => td.textContent),
+      );
+    expect(linhasDaVaga()).toEqual([
+      ["179698Técnico", "0 de 4", "1", "3"],
+      ["180001Enfermeiro", "1 de 2", "0", "1"],
     ]);
-    await clicar(vagas[1]);
+    // O título da coluna ordena; de novo, volta à ordem do edital.
+    const ordenar = () => resumo.querySelector("[data-ordenar='pendentes']");
+    await clicar(ordenar());
+    expect(ordenar().getAttribute("aria-pressed")).toBe("true");
+    expect(linhasDaVaga().map((l) => l[3])).toEqual(["3", "1"]);
+    await clicar(ordenar());
+    expect(ordenar().getAttribute("aria-pressed")).toBe("false");
+    await clicar(resumo.querySelector("[data-vaga='180001']"));
     expect(linhas()).toEqual(["8001", "8002"]);
     expect(
       resumo.querySelector("[data-vaga='180001']").getAttribute("aria-pressed"),
     ).toBe("true");
+    // O filtro ativo aparece na linha do edital, com o botão para tirar.
+    const tirar = resumo.querySelector("[data-acao='todas-as-vagas']");
+    expect(tirar.textContent).toContain("Vaga 180001 · Enfermeiro");
     // Filtrada por vaga, a tabela não agrupa.
     expect(secao.querySelector("tr.ui-tabela-grupo")).toBeNull();
-    await clicar(secao.querySelector("[data-vaga='180001']"));
+    await clicar(tirar);
     expect(linhas()).toHaveLength(6);
+    expect(resumo.querySelector("[data-acao='todas-as-vagas']")).toBeNull();
+  });
+
+  it("Por vaga: aberto ou fechado fica lembrado por usuário", async () => {
+    await montar(supabaseFalso(duasVagas()));
+    let porVaga = secao.querySelector("details[data-por-vaga]");
+    porVaga.open = true;
+    porVaga.dispatchEvent(new Event("toggle"));
+    await esperar();
+    expect(
+      globalThis.localStorage.getItem(
+        `monitora.avaliacao-documental.por-vaga-aberto:${EU}`,
+      ),
+    ).toBe("1");
+    await act(async () => painel?.raiz?.unmount());
+    secao.remove();
+    await montar(supabaseFalso(duasVagas()));
+    porVaga = secao.querySelector("details[data-por-vaga]");
+    expect(porVaga.open).toBe(true);
   });
 
   it("todas as vagas: grupo por vaga com o lote e a linha de corte, recolhível", async () => {
