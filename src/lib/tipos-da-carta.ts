@@ -7,15 +7,15 @@ export interface CandidatoDaCarta extends RegistroDaCarta {
   nome?: string;
   status?: string | null;
   cpf?: unknown;
-  cargo?: string;
-  codigo_vaga?: string | number;
-  lotacao?: string;
-  unidade?: string;
-  edital?: string;
-  edital_id?: string | number;
+  cargo?: string | null;
+  codigo_vaga?: string | number | null;
+  lotacao?: string | null;
+  unidade?: string | null;
+  edital?: string | null;
+  edital_id?: string | number | null;
   classificacao?: unknown;
   modalidade?: string | null;
-  lista_ativa?: boolean;
+  lista_ativa?: boolean | null;
 }
 export interface EmissaoDaCarta {
   dataLimite?: string;

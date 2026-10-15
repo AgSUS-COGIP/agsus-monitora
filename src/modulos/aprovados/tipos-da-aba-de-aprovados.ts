@@ -12,8 +12,8 @@ export interface CandidatoDaTabelaDeAprovados extends CandidatoDasRegrasDeAprova
   cargo?: string | null;
   edital?: string | null;
   classificacao?: string | number | null;
-  lista_ativa?: boolean;
-  sub_judice?: boolean;
+  lista_ativa?: boolean | null;
+  sub_judice?: boolean | null;
 }
 export interface FiltrosDaTabelaDeAprovados {
   candidatos: string[];

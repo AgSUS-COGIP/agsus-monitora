@@ -33,7 +33,7 @@ export const PLANILHAS = Object.freeze({
     nome: "Lista de aprovados importada (XLSX por edital)",
     onde: "Supabase Storage",
     bucket: "listas-aprovados",
-    usadaEm: Object.freeze(["src/modulos/aprovados/estado.js"]),
+    usadaEm: Object.freeze(["src/modulos/aprovados/estado.ts"]),
   }),
 
   origemDaAnalise: Object.freeze({

@@ -2830,10 +2830,10 @@ export const VERBETES_AYA = Object.freeze([
       "carta registrada",
     ],
     resposta:
-      "Depois que a carta é registrada, a tela oferece marcar como Convocado, com a data escolhida, os candidatos da carta que estão sem status ou já convocados; quem já tem outro status fica de fora e a tela diz o motivo. A marcação fica ligada à carta no histórico do status.",
+      "Depois que a carta é registrada, a tela oferece marcar como Convocado, com a data escolhida, os candidatos da carta que estão sem status ou já convocados; quem já tem outro status fica de fora e a tela diz o motivo. A marcação fica ligada à carta no histórico do status. Se a resposta não confirmar todos os candidatos do pedido, a tela mantém os status anteriores e pede atualizar a lista antes de tentar novamente.",
     fato: "",
     fonte:
-      "supabase/migrations/20261005180000_convocado_e_carta_de_convocacao.sql (marcar_candidatos_convocados)",
+      "src/modulos/aprovados/estado.ts; src/lib/dados-do-estado-de-aprovados.ts; supabase/migrations/20261005180000_convocado_e_carta_de_convocacao.sql (marcar_candidatos_convocados)",
     abrir: "approved",
   },
   {

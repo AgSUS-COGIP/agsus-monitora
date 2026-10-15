@@ -1,6 +1,6 @@
 import { act } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { montarListaAprovados } from "../../src/modulos/aprovados/lista-aprovados.jsx";
+import { montarListaAprovados } from "../../src/modulos/aprovados/lista-aprovados.tsx";
 import { PLANILHAS } from "../../src/lib/planilhas.js";
 import { clicar, digitar, escolher, esperar, teclar } from "./interacoes.js";
 import {
@@ -300,7 +300,7 @@ describe("carregamento", () => {
 
   it("carregar não cobre a tela: não há tela de carregamento a chamar", async () => {
     const fonte = await import("node:fs").then(({ readFileSync }) =>
-      readFileSync("src/modulos/aprovados/estado.js", "utf8"),
+      readFileSync("src/modulos/aprovados/estado.ts", "utf8"),
     );
     expect(fonte).not.toContain("loader");
   });
