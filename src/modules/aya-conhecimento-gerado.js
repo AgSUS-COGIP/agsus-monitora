@@ -2632,7 +2632,7 @@ export const VERBETES_AYA = Object.freeze([
     resposta:
       "A importação aceita só .xlsx e usa a primeira aba, com as colunas obrigatórias codigo_vaga, cargo, classificacao, nota, nome e modalidade (classificação inteira maior que 0; nota numérica, 0 ou mais); mostra até 12 erros por vez. Importa quem tem Editor em Importação (ou o grupo Gestor); substituir uma lista existente é do Administrador. A importação liga os candidatos ao edital pelo ID do edital.",
     fato: "",
-    fonte: "src/lib/aprovados-import.js; src/lib/access-roles.js",
+    fonte: "src/lib/aprovados-import.ts; src/lib/access-roles.js",
   },
   {
     arquivo: "regras-da-lista-de-aprovados.md",
@@ -2678,7 +2678,7 @@ export const VERBETES_AYA = Object.freeze([
       "Só quem tem Administrador em Aprovados inclui e remove anexos do candidato, e só em lista ativa: PDF de até 2 MB, no máximo 5 por candidato. Ver e baixar os anexos é para quem lê a lista.",
     fato: "",
     fonte:
-      "src/lib/anexos-do-candidato.js; src/lib/lista-aprovados-rules.ts; supabase/migrations/20260928235000_anexos_so_admin.sql",
+      "src/lib/anexos-do-candidato.ts; src/lib/lista-aprovados-rules.ts; supabase/migrations/20260928235000_anexos_so_admin.sql",
   },
   {
     arquivo: "regras-da-lista-de-aprovados.md",

@@ -749,7 +749,7 @@ default null)`. Com `p_area`: só a área (22023 se não existe, 42501 se não �
 - **Formato 2**: `listas` em array (id na primeira coluna; a linha leva o
   índice), `dicionarios` com cargo, modalidade, status e código da vaga (a linha
   leva o índice, base 0), `versao`, `area` e `cache`. O front
-  (`src/lib/candidatos-aprovados-compactos.js`) remonta objetos idênticos aos
+  (`src/lib/candidatos-aprovados-compactos.ts`) remonta objetos idênticos aos
   de antes — conferido no ensaio para o admin (3 áreas), um usuário da Saúde
   Indígena e um usuário sintético com recorte por coordenação: conteúdo e ordem
   iguais.

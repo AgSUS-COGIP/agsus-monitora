@@ -1,3 +1,7 @@
+import type {
+  ArquivoBinarioDoCandidato,
+  MetadadosDoPdfDoCandidato,
+} from "./tipos-da-importacao-de-aprovados.ts";
 /*
   Anexos do candidato aprovado: só PDF, até 2 MB cada, até 5 por candidato.
   Os mesmos limites estão no banco (`registrar_anexo_candidato_aprovado`,
@@ -11,7 +15,7 @@ export const LIMITE_DO_ANEXO = 2 * 1024 * 1024;
 export const MAXIMO_DE_ANEXOS = 5;
 const TIPO_DO_ANEXO = "application/pdf";
 
-const ehPdf = (arquivo) =>
+const ehPdf = (arquivo: MetadadosDoPdfDoCandidato) =>
   arquivo?.type === TIPO_DO_ANEXO ||
   (!arquivo?.type && /\.pdf$/i.test(String(arquivo?.name ?? "")));
 
@@ -19,7 +23,14 @@ const ehPdf = (arquivo) =>
  * Confere os arquivos escolhidos contra os limites, contando os que o
  * candidato já tem. Devolve a mensagem do primeiro problema, ou "".
  */
-export function problemaDosAnexos(arquivos, jaAnexados = 0) {
+export function problemaDosAnexos(
+  arquivos:
+    | Iterable<MetadadosDoPdfDoCandidato>
+    | ArrayLike<MetadadosDoPdfDoCandidato>
+    | null
+    | undefined,
+  jaAnexados = 0,
+) {
   const lista = Array.from(arquivos ?? []);
   if (!lista.length) return "";
   const naoPdf = lista.find((arquivo) => !ehPdf(arquivo));
@@ -37,13 +48,24 @@ export function problemaDosAnexos(arquivos, jaAnexados = 0) {
 }
 
 /** candidato_id → anexos dele, na ordem em que foram incluídos. */
-export function anexosPorCandidato(linhas) {
-  const mapa = new Map();
-  for (const linha of Array.isArray(linhas) ? linhas : []) {
-    const chave = String(linha?.candidato_id ?? "");
+export function anexosPorCandidato<T>(
+  linhas: readonly T[] | null | undefined,
+): Map<string, T[]> {
+  const mapa = new Map<string, T[]>();
+  const lista: readonly T[] = Array.isArray(linhas) ? linhas : [];
+  for (const linha of lista) {
+    const id =
+      linha !== null && typeof linha === "object" && "candidato_id" in linha
+        ? linha.candidato_id
+        : undefined;
+    const chave = String(id ?? "");
     if (!chave) continue;
-    if (!mapa.has(chave)) mapa.set(chave, []);
-    mapa.get(chave).push(linha);
+    let grupo = mapa.get(chave);
+    if (!grupo) {
+      grupo = [];
+      mapa.set(chave, grupo);
+    }
+    grupo.push(linha);
   }
   return mapa;
 }
@@ -55,7 +77,7 @@ export function anexosPorCandidato(linhas) {
 const PEDACO = 0x8000;
 
 /** Os bytes do arquivo em base64, sem o prefixo `data:`. */
-export async function arquivoEmBase64(arquivo) {
+export async function arquivoEmBase64(arquivo: ArquivoBinarioDoCandidato) {
   const bytes = new Uint8Array(await arquivo.arrayBuffer());
   let binario = "";
   for (let inicio = 0; inicio < bytes.length; inicio += PEDACO)
@@ -64,7 +86,7 @@ export async function arquivoEmBase64(arquivo) {
 }
 
 /** O PDF que a RPC devolve em base64, pronto para `URL.createObjectURL`. */
-export function pdfDoBase64(base64) {
+export function pdfDoBase64(base64: unknown) {
   const binario = atob(String(base64 ?? ""));
   const bytes = new Uint8Array(binario.length);
   for (let indice = 0; indice < binario.length; indice += 1)
@@ -73,7 +95,7 @@ export function pdfDoBase64(base64) {
 }
 
 /** "850 KB", "1,4 MB". */
-export function formatarTamanho(bytes) {
+export function formatarTamanho(bytes: unknown) {
   const valor = Number(bytes) || 0;
   if (valor < 1024 * 1024) return `${Math.max(1, Math.round(valor / 1024))} KB`;
   return `${(valor / (1024 * 1024)).toFixed(1).replace(".", ",")} MB`;

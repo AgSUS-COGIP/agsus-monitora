@@ -19,7 +19,7 @@ import {
   MAXIMO_DE_ANEXOS,
   formatarTamanho,
   problemaDosAnexos,
-} from "../../lib/anexos-do-candidato.js";
+} from "../../lib/anexos-do-candidato.ts";
 import {
   STATUS_DO_CANDIDATO,
   alteracaoJudicial,

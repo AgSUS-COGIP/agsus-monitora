@@ -286,3 +286,14 @@ locais. Os contratos estão em `src/modulos/aprovados/tipos-do-estado.ts` e
 `src/lib/tipos-do-estado-de-aprovados.ts`, com verificação em
 `tests/tipos/estado-dos-aprovados.tsx` e regressões em
 `tests/lib/dados-do-estado-de-aprovados.test.js`. Os modais de status, anexos e sub judice, o modal de listas do edital e a gaveta também estão em TSX. Todos os componentes e estados da pasta Aprovados estão tipados. Os históricos de cartas e publicações são validados antes de chegar à interface; falhas e respostas malformadas permitem nova tentativa. Contratos em `tests/tipos/modais-dos-aprovados.tsx` e regressões em `tests/lib/historicos-dos-aprovados.test.js`.
+
+A base de importação e transporte de Aprovados está em TypeScript:
+`aprovados-import.ts`, `candidatos-aprovados-compactos.ts` e
+`anexos-do-candidato.ts`. Os contratos ficam em
+`src/lib/tipos-da-importacao-de-aprovados.ts`. A leitura real do XLSX preserva
+ZIP sem compressão e deflate, strings compartilhadas, aliases e notas com vírgula;
+linhas inválidas impedem importar uma lista parcial. Pacotes compactos dos formatos
+1 e 2 preservam a ordem e os nulos. Os anexos mantêm limites, agrupamento genérico
+e conversão binária sem perda de bytes. Contratos em
+`tests/tipos/base-dos-aprovados.tsx` e leitura de XLSX em
+`tests/lib/importacao-xlsx-de-aprovados.test.js`.

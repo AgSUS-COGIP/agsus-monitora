@@ -29,7 +29,7 @@
 
   Um tipo é `{ nome, chave(contexto), esquema(payload), esquemas, valido(payload) }`
   — ver `PAINEL_DE_ANALISES` (cache-do-painel-de-analises.js) e
-  `LISTA_DE_APROVADOS` (candidatos-aprovados-compactos.js).
+  `LISTA_DE_APROVADOS` (candidatos-aprovados-compactos.ts).
 */
 
 export const VALIDADE_DO_CACHE_MS = 7 * 24 * 60 * 60 * 1000;

@@ -19,35 +19,43 @@
   A mesma conta serve aos dois: `listas[linha[lista_id]]` acha a lista pelo
   índice (array) ou pelo id (objeto).
 */
-export function expandirCandidatosCompactos(pacote) {
-  const colunas = Array.isArray(pacote?.colunas) ? pacote.colunas : [];
-  const colunasDaLista = Array.isArray(pacote?.colunas_da_lista)
-    ? pacote.colunas_da_lista
-    : [];
-  const listas =
-    pacote?.listas && typeof pacote.listas === "object" ? pacote.listas : {};
-  const dicionarios =
-    pacote?.dicionarios && typeof pacote.dicionarios === "object"
-      ? pacote.dicionarios
-      : {};
-  const linhas = Array.isArray(pacote?.linhas) ? pacote.linhas : [];
-  const posicaoDaLista = colunas.indexOf("lista_id");
-  const dicionarioDe = colunas.map((coluna) =>
-    Array.isArray(dicionarios[coluna]) ? dicionarios[coluna] : null,
-  );
+/** Lê uma chave dinâmica sem promover valores externos a tipos de negócio. */
+function campo(valor: unknown, chave: unknown): unknown {
+  return valor !== null && typeof valor === "object"
+    ? Reflect.get(valor, String(chave))
+    : undefined;
+}
+function lista(valor: unknown): readonly unknown[] {
+  return Array.isArray(valor) ? valor : [];
+}
 
+export function expandirCandidatosCompactos(
+  pacote: unknown,
+): Record<string, unknown>[] {
+  const colunas = lista(campo(pacote, "colunas")).map(String);
+  const colunasDaLista = lista(campo(pacote, "colunas_da_lista")).map(String);
+  const listas = campo(pacote, "listas");
+  const dicionarios = campo(pacote, "dicionarios");
+  const linhas = lista(campo(pacote, "linhas"));
+  const posicaoDaLista = colunas.indexOf("lista_id");
+  const dicionarioDe = colunas.map((coluna): readonly unknown[] | null => {
+    const valores = campo(dicionarios, coluna);
+    return Array.isArray(valores) ? valores : null;
+  });
   return linhas.map((linha) => {
-    const candidato = {};
+    const candidato: Record<string, unknown> = {};
     colunas.forEach((coluna, i) => {
-      const valor = linha[i] ?? null;
+      const valor = campo(linha, i) ?? null;
       const dicionario = dicionarioDe[i];
       candidato[coluna] =
-        dicionario && valor !== null ? (dicionario[valor] ?? null) : valor;
+        dicionario && valor !== null
+          ? (campo(dicionario, valor) ?? null)
+          : valor;
     });
-    // No formato 2, a primeira coluna da lista (`lista_id`) troca o índice pelo id.
-    const lista = listas[linha[posicaoDaLista]] || [];
+    // No formato 2, lista_id deixa de ser índice e recebe o ID da lista.
+    const dadosDaLista = campo(listas, campo(linha, posicaoDaLista));
     colunasDaLista.forEach((coluna, i) => {
-      candidato[coluna] = lista[i] ?? null;
+      candidato[coluna] = campo(dadosDaLista, i) ?? null;
     });
     return candidato;
   });
@@ -57,7 +65,8 @@ export function expandirCandidatosCompactos(pacote) {
 export const FORMATO_POR_AREA = 2;
 
 /** O banco disse que a cópia que o front tem continua valendo. */
-export const pacoteInalterado = (pacote) => pacote?.inalterado === true;
+export const pacoteInalterado = (pacote: unknown) =>
+  campo(pacote, "inalterado") === true;
 
 /*
   A cópia da lista de aprovados no navegador (regras em `cache-de-payload.js`):
@@ -66,9 +75,11 @@ export const pacoteInalterado = (pacote) => pacote?.inalterado === true;
 */
 export const LISTA_DE_APROVADOS = Object.freeze({
   nome: "lista de aprovados",
-  chave: ({ area }) => `aprovados:${String(area ?? "").trim()}`,
-  esquema: (pacote) => pacote?.formato,
+  chave: ({ area }: { area?: unknown }) =>
+    `aprovados:${String(area ?? "").trim()}`,
+  esquema: (pacote: unknown) => campo(pacote, "formato"),
   esquemas: Object.freeze([FORMATO_POR_AREA]),
-  valido: (pacote) =>
-    Array.isArray(pacote.linhas) && typeof pacote.versao === "string",
+  valido: (pacote: unknown) =>
+    Array.isArray(campo(pacote, "linhas")) &&
+    typeof campo(pacote, "versao") === "string",
 });
