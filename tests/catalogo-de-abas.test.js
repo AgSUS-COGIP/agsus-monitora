@@ -421,6 +421,7 @@ describe("a árvore segue o catálogo do banco quando ele chega", () => {
     expect(grupos.projetos.at(-1)).toEqual({
       view: "nucleo",
       rotulo: "Editais",
+      bloco: "processo",
       icone: "folder",
       area: "projetos",
     });
@@ -451,7 +452,12 @@ describe("resposta estranha vira o catálogo do código", () => {
     ]);
     expect(abas.map((aba) => aba.id)).toEqual(["editais"]);
     expect(paginasDaArea(abas, "sede")).toEqual([
-      { view: "nucleo", rotulo: "Editais", icone: "file-text" },
+      {
+        view: "nucleo",
+        rotulo: "Editais",
+        icone: "file-text",
+        bloco: "processo",
+      },
     ]);
   });
 
@@ -606,6 +612,7 @@ describe("selo beta das abas", () => {
       view: "analisar-recursos",
       rotulo: "Analisar recursos",
       icone: "gavel",
+      bloco: "processo",
       beta: true,
     });
   });

@@ -210,6 +210,30 @@
   font-weight: 600;
 }
 
+/*
+  Blocos da área (Acompanhamento e Processo seletivo): título pequeno em
+  caixa alta, na cor suave, alinhado ao ícone das páginas. Cada bloco tem a
+  sua linha-guia.
+*/
+.menu-bloco__titulo {
+  margin: var(--space-2) 0 2px;
+  margin-inline-start: calc(var(--space-2) + var(--menu-icone) / 2);
+  padding: 0 calc(var(--space-2) * 2 + 1px);
+  overflow: hidden;
+  color: var(--menu-texto-suave);
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1.4;
+  letter-spacing: 0.06em;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.menu-bloco:first-of-type > .menu-bloco__titulo {
+  margin-top: var(--space-1);
+}
+
 @media (max-width: 900px) {
   .menu-area__cabecalho,
   .menu-item {
@@ -408,6 +432,20 @@
     box-shadow: 0 0 0 2px var(--sidebar-custom-bg, var(--card));
   }
 
+  /*
+    No trilho, o título do bloco sai de vista (continua nomeando a lista
+    para o leitor de tela) e, entre um bloco e outro, fica um traço curto.
+  */
+  body.sidebar-collapsed .menu-area--direta .menu-bloco + .menu-bloco::before {
+    content: "";
+    display: block;
+    width: 20px;
+    height: 1px;
+    margin: var(--space-1) auto;
+    background: var(--menu-borda);
+  }
+
+  body.sidebar-collapsed .menu-area--direta .menu-bloco__titulo,
   body.sidebar-collapsed .menu-area--direta .menu-item__selo,
   body.sidebar-collapsed .menu-area--direta .menu-item__rotulo {
     position: absolute;

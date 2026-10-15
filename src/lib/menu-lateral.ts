@@ -2,6 +2,8 @@ import type {
   AbaDoCatalogo,
   AreaDoCatalogo,
   ArvoreDoMenu,
+  BlocoDaArea,
+  BlocoDoMenu,
   ItemDoMenu,
   OpcoesDoMenu,
   EstadoFlutuante,
@@ -19,9 +21,12 @@ import type {
   Indígena, SEDE e Projetos. Cada área repete as mesmas páginas — Editais,
   Cronograma, Lista de aprovados, Análises curriculares —, e a página abre
   recortada pela área escolhida (a "área atual", em `src/componentes/dados-do-monitoramento.ts`).
-  Abaixo delas ficam Painéis (os externos, que não têm área) e
-  Administração. Com a barra recolhida, cada página da área atual vira um
-  ícone (link direto), e Painéis e Administração, um ícone só cada.
+  Dentro da área, as páginas se dividem em dois blocos com título,
+  Acompanhamento e Processo seletivo (`BLOCOS_DA_AREA`, abaixo); os painéis
+  externos, que não têm área, entram no Acompanhamento da área desenhada.
+  Abaixo fica Administração. Com a barra recolhida, cada página da área
+  atual vira um ícone (link direto), o título do bloco vira um separador, e
+  Administração, um ícone só.
 
   Por que "área" e não "módulo": em `permissoes-recursos.js` e
   `permissoes-por-modulo.js`, módulo já é o nome de cada página com permissão
@@ -283,6 +288,56 @@ export const ABAS_DO_MENU = Object.freeze(
   ].map(congelarAba),
 );
 
+/*
+  Os dois blocos de cada área, com título no menu:
+
+  - Acompanhamento: as páginas de consulta (Visão geral e os painéis —
+    análises, recursos, entrevistas e Seleção) e os painéis externos.
+  - Processo seletivo: onde se trabalha, na ordem das etapas (Editais,
+    Cronograma, Avaliação documental, Analisar recursos, Conduzir
+    entrevistas, Classificação, Lista de aprovados).
+
+  Dentro de cada bloco vale a ordem do catálogo, que já segue as etapas. O
+  bloco é da ABA (o código, não a view, que a área pode trocar): aba nova
+  nativa entra em Processo seletivo até ser listada aqui; aba externa (um
+  painel no catálogo, `tp_aba = 'externa'`) entra em Acompanhamento.
+*/
+export const BLOCO_DE_ACOMPANHAMENTO: BlocoDoMenu = "acompanhamento";
+export const BLOCO_DO_PROCESSO: BlocoDoMenu = "processo";
+
+export const BLOCOS_DA_AREA = Object.freeze([
+  Object.freeze({ id: BLOCO_DE_ACOMPANHAMENTO, rotulo: "Acompanhamento" }),
+  Object.freeze({ id: BLOCO_DO_PROCESSO, rotulo: "Processo seletivo" }),
+]);
+
+const ABAS_DE_ACOMPANHAMENTO = new Set([
+  "visao-geral",
+  "analises",
+  "recursos",
+  "entrevistas",
+  "selecao",
+]);
+
+export function blocoDaAba(aba: Pick<AbaDoCatalogo, "id" | "tipo">) {
+  return ABAS_DE_ACOMPANHAMENTO.has(aba.id) || aba.tipo === "externa"
+    ? BLOCO_DE_ACOMPANHAMENTO
+    : BLOCO_DO_PROCESSO;
+}
+
+/*
+  Os itens de uma área separados nos blocos, na ordem de `BLOCOS_DA_AREA`;
+  bloco sem item (o perfil não vê nenhuma página dele) fica de fora. Item sem
+  `bloco` (árvore montada à mão) vale como Processo seletivo.
+*/
+export function blocosDaArea(itens: readonly ItemDoMenu[]): BlocoDaArea[] {
+  return BLOCOS_DA_AREA.map((bloco) => ({
+    ...bloco,
+    itens: itens.filter(
+      (item) => (item.bloco ?? BLOCO_DO_PROCESSO) === bloco.id,
+    ),
+  })).filter((bloco) => bloco.itens.length > 0);
+}
+
 /* A área de quem ainda recebe o contexto antigo, sem `profile.areas`. */
 const AREAS_PADRAO = Object.freeze(["saude-indigena"]);
 
@@ -390,16 +445,18 @@ export function paginasDaArea(
           view: naArea.view || aba.view,
           rotulo: aba.rotulo,
           icone: naArea.icone || aba.icone,
+          bloco: blocoDaAba(aba),
           beta: Boolean(aba.beta),
           manutencao: aba.manutencao || naArea.manutencao || null,
         },
       ];
     })
     .sort((a, b) => a.ordem - b.ordem)
-    .map(({ view, rotulo, icone, beta, manutencao }) => ({
+    .map(({ view, rotulo, icone, bloco, beta, manutencao }) => ({
       view,
       rotulo,
       icone,
+      bloco,
       ...(beta ? { beta: true } : {}),
       ...(manutencao ? { manutencao } : {}),
     }));
@@ -464,6 +521,7 @@ export function montarArvoreDoMenu({
       view: `panel:${codigo}`,
       rotulo: texto(painel.titulo) || codigo,
       icone: ICONE_DOS_PAINEIS,
+      bloco: BLOCO_DE_ACOMPANHAMENTO,
     });
   }
 
@@ -522,8 +580,8 @@ export function itemAtivoDaArvore(
 
 /*
   Seletor de área. Em vez das áreas abertas uma sob a outra, o menu mostra no
-  topo "Área: <nome>" e, abaixo, só as páginas da área atual; Painéis e
-  Administração continuam embaixo. Quem tem uma área só não vê o seletor, e a
+  topo "Área: <nome>" e, abaixo, só as páginas da área atual (com os painéis
+  externos); Administração continua embaixo. Quem tem uma área só não vê o seletor, e a
   área dela aparece como antes.
 
   A árvore continua com todas as áreas (`montarArvoreDoMenu`): o recorte é só
@@ -538,17 +596,32 @@ export function ehAreaDoSistema(id: unknown) {
 
 /*
   `areas`: os grupos de área que o usuário tem (com itens). `grupoAtual`: o da
-  área atual (ou o primeiro, se a atual não está entre eles). `demais`:
-  Painéis e Administração. `comSeletor`: mais de uma área.
+  área atual (ou o primeiro, se a atual não está entre eles), com os painéis
+  externos no fim (eles vão para o bloco Acompanhamento da área). `demais`:
+  Administração — e Painéis só quando não há área para recebê-los.
+  `comSeletor`: mais de uma área.
+
+  Os painéis não têm área: a árvore os guarda no grupo Painéis, e são os
+  mesmos objetos que entram na área desenhada (o item ativo é achado na
+  árvore e comparado por identidade).
 */
 export function recortarArvorePorArea(
   arvore: ArvoreDoMenu = [],
   areaAtual?: string | null,
 ) {
   const areas = arvore.filter((grupo) => ehAreaDoSistema(grupo.id));
-  const demais = arvore.filter((grupo) => !ehAreaDoSistema(grupo.id));
-  const grupoAtual =
+  const escolhido =
     areas.find((grupo) => grupo.id === texto(areaAtual)) ?? areas[0] ?? null;
+  const paineis = arvore.find((grupo) => grupo.id === AREA_DOS_PAINEIS);
+  const grupoAtual =
+    escolhido && paineis
+      ? { ...escolhido, itens: [...escolhido.itens, ...paineis.itens] }
+      : escolhido;
+  const demais = arvore.filter(
+    (grupo) =>
+      !ehAreaDoSistema(grupo.id) &&
+      !(grupoAtual && grupo.id === AREA_DOS_PAINEIS),
+  );
   return { areas, grupoAtual, demais, comSeletor: areas.length > 1 };
 }
 

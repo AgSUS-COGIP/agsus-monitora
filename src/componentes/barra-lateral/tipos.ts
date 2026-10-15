@@ -22,11 +22,14 @@ export interface AbaDoCatalogo {
   readonly manutencao?: ManutencaoDoMenu | null;
   readonly areas: readonly AreaDoCatalogo[];
 }
+/** O bloco da página dentro da área: consulta ou trabalho do processo. */
+export type BlocoDoMenu = "acompanhamento" | "processo";
 export interface ItemDoMenu {
   readonly view: string;
   readonly rotulo: string;
   readonly icone: string;
   readonly area?: string;
+  readonly bloco?: BlocoDoMenu;
   readonly secao?: string;
   readonly beta?: boolean;
   readonly manutencao?: ManutencaoDoMenu | null;
@@ -39,6 +42,11 @@ export interface GrupoDoMenu {
   readonly itens: readonly ItemDoMenu[];
 }
 export type ArvoreDoMenu = readonly GrupoDoMenu[];
+export interface BlocoDaArea {
+  readonly id: BlocoDoMenu;
+  readonly rotulo: string;
+  readonly itens: readonly ItemDoMenu[];
+}
 export interface ItemAtivoDoMenu {
   readonly view: string | null;
   readonly secao: string | null;

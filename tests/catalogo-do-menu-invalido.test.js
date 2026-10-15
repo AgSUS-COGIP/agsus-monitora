@@ -69,6 +69,7 @@ describe("catálogo do menu recebido do banco", () => {
         view: "calendario",
         rotulo: "Editais",
         icone: "calendar-days",
+        bloco: "processo",
         beta: true,
         manutencao: { mensagem: "Ajustes", previsao: "2026-10-10" },
       },

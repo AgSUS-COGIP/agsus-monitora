@@ -4,9 +4,12 @@ import {
   AREAS_DO_MENU,
   ABAS_DO_MENU,
   AREAS_DO_SISTEMA,
+  BLOCOS_DA_AREA,
   FLUTUANTE_FECHADO,
   areaAberta,
   areasDoUsuario,
+  blocoDaAba,
+  blocosDaArea,
   destinoAoTrocarDeArea,
   ehAreaDoSistema,
   iconesDoCatalogo,
@@ -118,22 +121,25 @@ describe("a árvore do menu segue o perfil e as áreas", () => {
       view: "approved",
       rotulo: "Lista de aprovados",
       icone: "user-round-check",
+      bloco: "processo",
       area: "saude-indigena",
     });
     expect(
       grupos["saude-indigena"].every((item) => item.area === "saude-indigena"),
     ).toBe(true);
-    // Os painéis externos vão para Painéis, sem área.
+    // Os painéis externos vão para Painéis, sem área, no bloco Acompanhamento.
     expect(grupos.paineis).toEqual([
       {
         view: "panel:recursos",
         rotulo: "Recursos",
         icone: "square-arrow-out-up-right",
+        bloco: "acompanhamento",
       },
       {
         view: "panel:sem-titulo",
         rotulo: "sem-titulo",
         icone: "square-arrow-out-up-right",
+        bloco: "acompanhamento",
       },
     ]);
     expect(grupos.administracao.map((item) => item.secao)).toEqual(
@@ -443,11 +449,27 @@ describe("seletor de área", () => {
     expect(ehAreaDoSistema(AREA_DOS_PAINEIS)).toBe(false);
   });
 
-  it("recorta a área atual e deixa Painéis e Administração embaixo", () => {
+  it("recorta a área atual, com os painéis dentro, e deixa Administração embaixo", () => {
     const recorte = recortarArvorePorArea(arvore, "sede");
     expect(recorte.comSeletor).toBe(true);
     expect(recorte.areas.map((g) => g.id)).toEqual(TODAS);
     expect(recorte.grupoAtual.id).toBe("sede");
+    expect(recorte.demais.map((g) => g.id)).toEqual(["administracao"]);
+    // Os painéis entram no fim da área, os mesmos objetos da árvore.
+    expect(recorte.grupoAtual.itens.at(-1)).toBe(itens[AREA_DOS_PAINEIS][0]);
+    expect(recorte.grupoAtual.itens.slice(0, -1)).toEqual(itens.sede);
+    // A árvore não muda: a SEDE continua sem os painéis.
+    expect(itens.sede.some((item) => item.view === "panel:bi")).toBe(false);
+  });
+
+  it("sem área para recebê-los, os painéis ficam no grupo deles", () => {
+    const soPaineis = montarArvoreDoMenu({
+      permitidas: { config: true },
+      paineis: [{ codigo: "bi", titulo: "BI" }],
+      secoesDeConfiguracao: SECOES,
+    });
+    const recorte = recortarArvorePorArea(soPaineis, "sede");
+    expect(recorte.grupoAtual).toBeNull();
     expect(recorte.demais.map((g) => g.id)).toEqual([
       AREA_DOS_PAINEIS,
       "administracao",
@@ -489,5 +511,104 @@ describe("seletor de área", () => {
     );
     expect(destinoAoTrocarDeArea(arvore, "sede", "config")).toBe(itens.sede[0]);
     expect(destinoAoTrocarDeArea(arvore, "inexistente", "nucleo")).toBeNull();
+  });
+});
+
+/*
+  Dentro de cada área, dois blocos: Acompanhamento (consulta) e Processo
+  seletivo (onde se trabalha, na ordem das etapas). A árvore guarda o bloco
+  em cada item; o desenho separa com `blocosDaArea`.
+*/
+describe("blocos da área", () => {
+  const TODAS_AS_VIEWS = Object.fromEntries(
+    ABAS_DO_MENU.map((aba) => [aba.view, true]),
+  );
+
+  it("são Acompanhamento e Processo seletivo, nessa ordem", () => {
+    expect(BLOCOS_DA_AREA.map((bloco) => bloco.rotulo)).toEqual([
+      "Acompanhamento",
+      "Processo seletivo",
+    ]);
+  });
+
+  it("com todas as abas, cada bloco na ordem pedida", () => {
+    for (const area of TODAS) {
+      const arvore = montarArvoreDoMenu({
+        permitidas: TODAS_AS_VIEWS,
+        areas: [area],
+      });
+      const blocos = blocosDaArea(arvore[0].itens);
+      expect(
+        blocos.map((bloco) => [
+          bloco.rotulo,
+          bloco.itens.map((item) => item.rotulo),
+        ]),
+      ).toEqual([
+        [
+          "Acompanhamento",
+          [
+            "Visão geral",
+            "Painel das análises",
+            "Painel de recursos",
+            "Painel de entrevistas",
+            "Seleção",
+          ],
+        ],
+        [
+          "Processo seletivo",
+          [
+            "Editais",
+            "Cronograma",
+            "Avaliação documental",
+            "Analisar recursos",
+            "Conduzir entrevistas",
+            "Classificação",
+            "Lista de aprovados",
+          ],
+        ],
+      ]);
+    }
+  });
+
+  it("bloco sem página permitida some", () => {
+    const soTrabalho = montarArvoreDoMenu({
+      permitidas: { nucleo: true, calendario: true },
+    });
+    expect(blocosDaArea(soTrabalho[0].itens).map((b) => b.id)).toEqual([
+      "processo",
+    ]);
+    const soConsulta = montarArvoreDoMenu({ permitidas: { selecao: true } });
+    expect(blocosDaArea(soConsulta[0].itens).map((b) => b.id)).toEqual([
+      "acompanhamento",
+    ]);
+    expect(blocosDaArea([])).toEqual([]);
+  });
+
+  it("painel externo entra em Acompanhamento, depois das páginas", () => {
+    const arvore = montarArvoreDoMenu({
+      permitidas: TUDO,
+      paineis: [{ codigo: "bi", titulo: "BI" }],
+      areas: ["sede"],
+    });
+    const { grupoAtual } = recortarArvorePorArea(arvore, "sede");
+    const [acompanhamento] = blocosDaArea(grupoAtual.itens);
+    expect(acompanhamento.itens.map((item) => item.view)).toEqual([
+      "dashboard",
+      "analises",
+      "panel:bi",
+    ]);
+  });
+
+  it("aba nova nativa vai para Processo seletivo; aba externa, para Acompanhamento", () => {
+    expect(blocoDaAba({ id: "nova", tipo: "nativa" })).toBe("processo");
+    expect(blocoDaAba({ id: "bi", tipo: "externa" })).toBe("acompanhamento");
+    expect(blocoDaAba({ id: "aprovados", tipo: "nativa" })).toBe("processo");
+    expect(blocoDaAba({ id: "selecao", tipo: "nativa" })).toBe(
+      "acompanhamento",
+    );
+    // Item sem bloco (árvore montada à mão) vale como Processo seletivo.
+    expect(
+      blocosDaArea([{ view: "x", rotulo: "X", icone: "map" }]).map((b) => b.id),
+    ).toEqual(["processo"]);
   });
 });
