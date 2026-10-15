@@ -277,6 +277,34 @@ describe("o que falta para concluir", () => {
     expect(lancamentoParaGravar(REGRA, lanc).cursos).toEqual([]);
   });
 
+  it("Cursos pela nota: a linha recusada sem motivo (escondida) não vai ao banco e não trava a conclusão", () => {
+    // Ficha antiga com o único curso à mão recusado sem motivo: a lista some
+    // (decidePelaNota) e a tela não pede nada; o banco (FC_PENDENCIAS_FICHA)
+    // pediria "item recusado sem motivo" numa linha que o avaliador não vê.
+    const bloco = REGRA.blocos.find((b) => b.tipo === "CURSOS");
+    const lanc = lancamentoCompleto({
+      cursos: [
+        { nome: "NR-10", horas: 40, aceito: false },
+        { nome: "NR-35", horas: 40, aceito: false, motivo: "EVENTO" },
+      ],
+    });
+    lanc.blocos.CURSOS = {
+      situacao: "CONFORME",
+      edita_nota: true,
+      nota_ajustada: 5,
+    };
+    expect(decidePelaNota(bloco, lanc)).toBe(true);
+    const av = calcularFicha(REGRA, lanc, DOCUMENTAL);
+    expect(
+      pendenciasDaFicha(REGRA, lanc, av, declarada).filter(
+        (x) => x.bloco === "CURSOS",
+      ),
+    ).toEqual([]);
+    expect(lancamentoParaGravar(REGRA, lanc).cursos).toEqual([
+      { nome: "NR-35", horas: 40, aceito: false, motivo: "EVENTO" },
+    ]);
+  });
+
   it("bloco sem situação e Não conforme sem motivo", () => {
     const lanc = lancamentoCompleto();
     delete lanc.blocos.IDENTIDADE;
