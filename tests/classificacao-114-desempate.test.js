@@ -66,8 +66,14 @@ const QUADRO = [
     cadastro_reserva: true,
   },
 ];
-const lista = (candidatos, { regra = REGRA_V2, tipo = "PRELIMINAR", dataCorte = FIM_DAS_INSCRICOES } = {}) =>
-  classificar({ tipo, regra, candidatos, quadro: QUADRO, dataCorte });
+const lista = (
+  candidatos,
+  {
+    regra = REGRA_V2,
+    tipo = "PRELIMINAR",
+    dataCorte = FIM_DAS_INSCRICOES,
+  } = {},
+) => classificar({ tipo, regra, candidatos, quadro: QUADRO, dataCorte });
 const geral = (r) =>
   r.vagas[0].geral.map((l) => `${l.posicao} ${l.nome}`).join(" | ");
 
@@ -100,7 +106,10 @@ describe("regra do 114/2026: v1 → v2", () => {
 describe("lista preliminar do 114/2026 — desempate do item 10.1", () => {
   it("v1: empatados na mesma posição; v2: a) 60+ primeiro, mesmo com menos experiência", () => {
     const candidatos = [
-      cand("Ana", 40, { exp_profissional: 3000, data_nascimento: "1990-01-01" }),
+      cand("Ana", 40, {
+        exp_profissional: 3000,
+        data_nascimento: "1990-01-01",
+      }),
       cand("Bia", 40, { exp_profissional: 200, data_nascimento: "1960-03-01" }),
       cand("Caio", 35),
     ];
@@ -117,7 +126,10 @@ describe("lista preliminar do 114/2026 — desempate do item 10.1", () => {
 
   it("60 anos contados até o fim das inscrições (14/10/2026): quem faz 60 no dia 15 não é idoso", () => {
     const candidatos = [
-      cand("Ana", 30, { exp_profissional: 5000, data_nascimento: "1966-10-15" }),
+      cand("Ana", 30, {
+        exp_profissional: 5000,
+        data_nascimento: "1966-10-15",
+      }),
       cand("Bia", 30, { exp_profissional: 100, data_nascimento: "1966-10-14" }),
     ];
     expect(geral(lista(candidatos))).toBe("1 Bia | 2 Ana");
@@ -125,8 +137,14 @@ describe("lista preliminar do 114/2026 — desempate do item 10.1", () => {
 
   it("dois com 60+: b) a experiência decide", () => {
     const candidatos = [
-      cand("Ana", 30, { exp_profissional: 1000, data_nascimento: "1950-01-01" }),
-      cand("Bia", 30, { exp_profissional: 1001, data_nascimento: "1960-01-01" }),
+      cand("Ana", 30, {
+        exp_profissional: 1000,
+        data_nascimento: "1950-01-01",
+      }),
+      cand("Bia", 30, {
+        exp_profissional: 1001,
+        data_nascimento: "1960-01-01",
+      }),
     ];
     const r = lista(candidatos);
     expect(geral(r)).toBe("1 Bia | 2 Ana");
@@ -138,7 +156,10 @@ describe("lista preliminar do 114/2026 — desempate do item 10.1", () => {
   it("nenhum com 60+: b) mais experiência primeiro", () => {
     const candidatos = [
       cand("Ana", 30, { exp_profissional: 900, data_nascimento: "1970-01-01" }),
-      cand("Bia", 30, { exp_profissional: 2400, data_nascimento: "1995-01-01" }),
+      cand("Bia", 30, {
+        exp_profissional: 2400,
+        data_nascimento: "1995-01-01",
+      }),
     ];
     expect(geral(lista(candidatos))).toBe("1 Bia | 2 Ana");
   });
@@ -164,7 +185,9 @@ describe("lista preliminar do 114/2026 — desempate do item 10.1", () => {
     expect(geral(r)).toBe("1 Bia | 2 Ana");
     expect(
       r.explicacoes[candidatos[1].analise_id].explicacao.join(" "),
-    ).toContain("por idade (22h10min00s pela certidão × 23h59min59s, sem certidão)");
+    ).toContain(
+      "por idade (22h10min00s pela certidão × 23h59min59s, sem certidão)",
+    );
   });
 
   it("empate em tudo (mesmo dia, sem certidão): mesma posição, o edital não define", () => {
@@ -174,7 +197,10 @@ describe("lista preliminar do 114/2026 — desempate do item 10.1", () => {
 
   it("a final não muda (já usava os critérios na v1)", () => {
     const candidatos = [
-      cand("Ana", 40, { exp_profissional: 3000, data_nascimento: "1990-01-01" }),
+      cand("Ana", 40, {
+        exp_profissional: 3000,
+        data_nascimento: "1990-01-01",
+      }),
       cand("Bia", 40, { exp_profissional: 200, data_nascimento: "1960-03-01" }),
     ];
     expect(geral(lista(candidatos, { regra: REGRA_V1, tipo: "FINAL" }))).toBe(
