@@ -333,7 +333,7 @@ describe("blocos, efeitos e parecer", () => {
     );
   });
 
-  it("observação do avaliador de cada item, com o item e sem repetir a justificativa", () => {
+  it("observação do avaliador de cada item, como escrita (sem item do edital) e sem repetir a justificativa", () => {
     const r = calcularAvaliacao(regra, {
       ...base,
       blocos: {
@@ -348,12 +348,9 @@ describe("blocos, efeitos e parecer", () => {
         },
       },
     });
-    const formacao = regra.blocos.find((b) => b.codigo === "FORMACAO");
-    // Sem item do edital no bloco, o título do bloco.
-    expect(formacao.item_edital).toBeFalsy();
-    expect(r.observacoes).toContain(
-      `${formacao.titulo} — Diploma em duas linhas.`,
-    );
+    // Como o avaliador escreveu: sem o item do edital nem o título do bloco.
+    expect(r.observacoes).toContain("Diploma em duas linhas.");
+    expect(r.observacoes.join(" | ")).not.toMatch(/ — Diploma/);
     expect(r.observacoes.filter((t) => /aceito 1 vínculo/i.test(t))).toEqual([
       "Item 8.14: Aceito 1 vínculo.",
     ]);

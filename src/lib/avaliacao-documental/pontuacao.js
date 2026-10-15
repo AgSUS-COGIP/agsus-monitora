@@ -234,9 +234,10 @@ function avaliarBlocos(regra, candidato, situacaoPadrao) {
 
 /**
  * A Observação do avaliador de cada item (blocos[codigo].observacao), em
- * qualquer situação (inclusive Não se aplica), na ordem da regra: "Item 8.2.6
- * — …" (sem item do edital, o título do bloco). A observação igual à
- * justificativa do ajuste ou ao motivo escrito não se repete.
+ * qualquer situação (inclusive Não se aplica), na ordem da regra, como o
+ * avaliador escreveu: sem o item do edital nem o título do bloco (pedido da
+ * COREs, 15/10/2026). A observação igual à justificativa do ajuste ou ao
+ * motivo escrito não se repete.
  */
 export function observacoesDosItens(avaliados, candidato) {
   const textos = [];
@@ -248,10 +249,7 @@ export function observacoesDosItens(avaliados, candidato) {
       (t) => textoComparavel(t) === textoComparavel(obs),
     );
     if (repetida) continue;
-    const item = bloco.item_edital
-      ? `Item ${bloco.item_edital}`
-      : String(bloco.titulo || bloco.codigo);
-    textos.push(`${item} — ${obs}`);
+    textos.push(obs);
   }
   return textos;
 }

@@ -189,7 +189,7 @@ describe("espelho com pontos", () => {
 
   it("observações: a do avaliador no item e a geral, sem repetir a do critério", () => {
     expect(espelho.justificativas).toContain(
-      "Item 8.2.6 — Enviou os certificados num único PDF.",
+      "Enviou os certificados num único PDF.",
     );
     expect(espelho.justificativas).toContain(
       "Candidato(a) atendeu a todos os requisitos.",
