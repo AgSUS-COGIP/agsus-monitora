@@ -427,10 +427,14 @@ export function lancamentoParaGravar(regraEntrada, lancamento) {
     const zerado = ZERAM_O_BLOCO.includes(
       objeto(blocos[bloco.codigo]).situacao,
     );
-    // Pela nota (Cursos): as linhas incompletas não vão para o banco.
-    const semIncompletas = zerado || decidePelaNota(bloco, saida);
+    // Pela nota (Cursos): a lista não aparece, então não vão para o banco as
+    // linhas incompletas nem a recusada sem motivo (ficha antiga) — a tela não
+    // pede nada delas e o banco (FC_PENDENCIAS_FICHA) travaria a conclusão.
+    const pelaNota = decidePelaNota(bloco, saida);
+    const semIncompletas = zerado || pelaNota;
     saida[chave] = saida[chave]
       .filter((i) => !semIncompletas || itemCompleto(chave, i))
+      .filter((i) => !pelaNota || !(i?.aceito === false && !i.motivo))
       .map((i) => {
         if (chave !== "cursos" || !i || typeof i !== "object") return i;
         const horas = Number(i.horas);
