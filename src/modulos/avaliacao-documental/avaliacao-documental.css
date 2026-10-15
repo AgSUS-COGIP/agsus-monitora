@@ -394,7 +394,7 @@
   opacity: 0.6;
 }
 
-/* Resumo do andamento: o edital e cada vaga (clicável, filtra). */
+/* Resumo do andamento: o edital e o bloco "Por vaga" (resumo-do-andamento.tsx). */
 .avd-andamento {
   display: grid;
   gap: var(--space-2);
@@ -411,47 +411,138 @@
   flex: 1 1 160px;
   max-width: 320px;
 }
-.avd-andamento-vagas {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr));
-  gap: var(--space-1-5);
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-.avd-andamento-vagas button {
-  display: grid;
-  gap: var(--space-1);
-  width: 100%;
-  padding: var(--space-1-5) var(--space-2);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-md);
+/* O botão "Vaga X ×" do filtro ativo, na linha do edital. */
+.avd-porvaga-filtro {
+  padding: 2px var(--space-2);
+  border: 1px solid var(--state-info);
+  border-radius: var(--radius-pill);
   background: var(--surface-card);
   color: var(--text-primary);
   font: inherit;
   font-size: var(--text-caption);
+  cursor: pointer;
+}
+.avd-porvaga-filtro:hover {
+  background: var(--surface-hover);
+}
+/* "Por vaga (N)": recolhido por padrão; aberto, uma tabela enxuta. */
+.avd-porvaga {
+  min-width: 0;
+  border-top: 1px solid var(--border-subtle);
+  padding-top: var(--space-1-5);
+}
+.avd-porvaga summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-1) var(--space-2);
+  font-size: var(--text-body-sm);
+  list-style: none;
+  cursor: pointer;
+}
+.avd-porvaga summary::-webkit-details-marker {
+  display: none;
+}
+/* A seta: fechado aponta para o lado; aberto, para baixo. */
+.avd-porvaga summary::before {
+  content: "";
+  align-self: center;
+  width: 0.45em;
+  height: 0.45em;
+  border-right: 2px solid var(--text-secondary);
+  border-bottom: 2px solid var(--text-secondary);
+  transform: rotate(-45deg);
+  transition: transform 0.15s ease;
+}
+.avd-porvaga[open] summary::before {
+  transform: rotate(45deg);
+}
+.avd-porvaga[open] summary {
+  margin-bottom: var(--space-1-5);
+}
+@media (prefers-reduced-motion: reduce) {
+  .avd-porvaga summary::before {
+    transition: none;
+  }
+}
+.avd-porvaga .ui-tabela-rolagem {
+  max-height: min(50vh, 420px);
+}
+.ui-tabela-rolagem table.avd-porvaga-tabela {
+  width: 100%;
+  min-width: 560px;
+  font-size: var(--text-caption);
+}
+.avd-porvaga-tabela th,
+.avd-porvaga-tabela td {
+  padding: var(--space-1) var(--space-2);
+  vertical-align: middle;
+}
+.avd-porvaga-tabela th:not(:first-child),
+.avd-porvaga-tabela td:not(:first-child) {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.avd-porvaga-ordenar {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+.avd-porvaga-ordenar[aria-pressed="true"] {
+  color: var(--text-primary);
+}
+.avd-porvaga-vaga {
+  max-width: 0;
+  width: 55%;
+}
+.avd-porvaga-vaga button {
+  display: flex;
+  gap: var(--space-2);
+  width: 100%;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--text-primary);
+  font: inherit;
   text-align: left;
   cursor: pointer;
 }
-.avd-andamento-vagas button:hover {
-  background: var(--surface-hover);
-}
-.avd-andamento-vagas button[aria-pressed="true"] {
-  border-color: var(--state-info);
-  box-shadow: 0 0 0 1px var(--state-info);
-}
-.avd-andamento-texto {
+.avd-porvaga-cargo {
   overflow: hidden;
   color: var(--text-secondary);
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-.avd-andamento-contas {
-  color: var(--text-primary);
-  white-space: nowrap;
+.avd-porvaga-vaga button:hover .avd-porvaga-cargo {
+  text-decoration: underline;
 }
-.avd-andamento-texto strong {
-  color: var(--text-primary);
+.avd-porvaga-progresso {
+  min-width: 150px;
+}
+.avd-porvaga-progresso .avd-andamento-barra {
+  display: inline-flex;
+  width: 80px;
+  margin-right: var(--space-2);
+  vertical-align: middle;
+}
+/* Vaga com pendências: o número em destaque; sem pendências, apagado. */
+.avd-porvaga-pendentes {
+  color: var(--text-secondary);
+}
+.avd-porvaga-tabela tr[data-pendente] .avd-porvaga-pendentes {
+  color: var(--state-warning);
+  font-weight: var(--font-weight-semibold);
+}
+.ui-tabela-rolagem .avd-porvaga-tabela tr[data-marcada] td {
+  background: var(--state-info-soft);
+  box-shadow:
+    inset 0 1px 0 var(--state-info),
+    inset 0 -1px 0 var(--state-info);
 }
 /* A barra: concluídas (verde), em análise (azul), em revisão (amarelo); o fundo é o pendente. */
 .avd-andamento-barra {
@@ -481,13 +572,25 @@
   min-width: 14rem;
 }
 
-/* Celular: as vagas do andamento numa faixa que rola de lado. */
+/* Celular: o cargo vai para baixo do código e a tabela cabe sem rolar de lado. */
 @media (max-width: 900px) {
-  .avd-andamento-vagas {
-    grid-template-columns: none;
-    grid-auto-columns: minmax(240px, 80%);
-    grid-auto-flow: column;
-    overflow-x: auto;
+  .ui-tabela-rolagem table.avd-porvaga-tabela {
+    min-width: 0;
+  }
+  /* "Em análise" sai no celular: código, barra, concluídas e pendentes cabem. */
+  .avd-porvaga-tabela th:nth-child(3),
+  .avd-porvaga-tabela td:nth-child(3) {
+    display: none;
+  }
+  .avd-porvaga-progresso {
+    min-width: 0;
+  }
+  .avd-porvaga-vaga button {
+    flex-direction: column;
+    gap: 0;
+  }
+  .avd-porvaga-progresso .avd-andamento-barra {
+    width: 48px;
   }
   .avd-fila-acoes {
     margin-left: 0;

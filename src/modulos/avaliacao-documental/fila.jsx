@@ -30,7 +30,6 @@ import {
   textoDaColuna,
   textoDaReserva,
   textoDaSituacaoNaFila,
-  textoDoAndamento,
 } from "../../lib/avaliacao-documental/fila.js";
 import { tomDoResultado } from "../../lib/avaliacao-documental/ficha.js";
 import {
@@ -44,7 +43,6 @@ import {
   DICA_DA_ART,
   nota,
   podeIncluirPorDecisao,
-  textoDoLote,
 } from "../../lib/avaliacao-documental/tela-da-pre-classificacao.js";
 import {
   Abas,
@@ -61,10 +59,11 @@ import {
   SeloDaDecisao,
 } from "./decisao-do-lote.jsx";
 import { ConteudoDaFicha } from "./ficha/ficha.jsx";
+import { ResumoDoAndamento } from "./resumo-do-andamento.tsx";
 
 /*
-  Aba Fila (fase F3): o resumo do andamento (edital e cada vaga, clicável
-  como filtro), as etapas com contadores (clicáveis como filtro), os filtros
+  Aba Fila (fase F3): o resumo do andamento (o edital e o bloco recolhível
+  "Por vaga", clicável como filtro: resumo-do-andamento.tsx), as etapas com contadores (clicáveis como filtro), os filtros
   compactos numa linha com os filtros salvos, "Pegar próximo" e "Minhas
   fichas" para o analista, o menu "Ações da coordenação" (distribuir,
   redistribuir, liberar reservas, mandar para revisão, abrir fichas do lote e
@@ -784,87 +783,6 @@ function TabelaDaFila({
   );
 }
 
-/* A barra do andamento: concluídas, em análise e em revisão, na cor de cada uma; o resto é pendente. */
-function BarraDoAndamento({ a }) {
-  const parte = (n) => `${a.lote ? (n / a.lote) * 100 : 0}%`;
-  return (
-    <span
-      className="avd-andamento-barra"
-      role="progressbar"
-      aria-label="Fichas concluídas"
-      aria-valuemin={0}
-      aria-valuemax={a.lote}
-      aria-valuenow={a.concluidas}
-    >
-      <span data-parte="concluidas" style={{ width: parte(a.concluidas) }} />
-      <span data-parte="em_analise" style={{ width: parte(a.em_analise) }} />
-      <span data-parte="revisao" style={{ width: parte(a.revisao) }} />
-    </span>
-  );
-}
-
-/*
-  O resumo do andamento no alto da Fila: o edital e cada vaga ("cargo ·
-  concluídas X de N · em análise Y · pendentes Z") com a barra; clicar na
-  vaga filtra (de novo, tira o filtro). Contado com a lista já carregada
-  (obter_fila_avaliacao), sem consulta nova.
-*/
-function ResumoDoAndamento({ andamento, lote, vaga, aoEscolherVaga }) {
-  const t = andamento.total;
-  return (
-    <section
-      className="ui-card avd-andamento"
-      aria-label="Andamento da avaliação"
-      data-tour="avd-fila-andamento"
-    >
-      <div className="avd-andamento-total">
-        <strong>Edital</strong>
-        <span>
-          {textoDoAndamento({ ...t, cargo: "" })}
-          {lote.pelaRegra || lote.porDecisao ? (
-            <span className="ui-texto-secundario">
-              {" · "}
-              <span data-lote-da-fila>
-                {textoDoLote(lote.pelaRegra, lote.porDecisao)}
-              </span>
-            </span>
-          ) : null}
-        </span>
-        <BarraDoAndamento a={t} />
-      </div>
-      {andamento.vagas.length > 1 || vaga ? (
-        <ul className="avd-andamento-vagas">
-          {andamento.vagas.map((v) => (
-            <li key={v.codigo}>
-              <button
-                type="button"
-                data-vaga={v.codigo}
-                aria-pressed={vaga === v.codigo}
-                title={
-                  vaga === v.codigo
-                    ? "Mostrar todas as vagas"
-                    : `Mostrar só a vaga ${v.codigo}`
-                }
-                onClick={() =>
-                  aoEscolherVaga(vaga === v.codigo ? "" : v.codigo)
-                }
-              >
-                <span className="avd-andamento-texto">
-                  <strong>{v.codigo}</strong> {v.cargo}
-                </span>
-                <span className="avd-andamento-contas">
-                  {textoDoAndamento({ ...v, cargo: "" })}
-                </span>
-                <BarraDoAndamento a={v} />
-              </button>
-            </li>
-          ))}
-        </ul>
-      ) : null}
-    </section>
-  );
-}
-
 /* O cabeçalho do grupo da vaga na tabela: cargo, o lote e a linha de corte. */
 function textoDoGrupo(cargo, resumo, quantos) {
   const lote = resumo.porDecisao
@@ -1128,6 +1046,7 @@ export function Fila({ e, fila }) {
           andamento={andamento}
           lote={lote}
           vaga={st.filtro.vaga}
+          usuario={dados?.eu}
           aoEscolherVaga={(vaga) => fila.mudarFiltro({ vaga })}
         />
       ) : null}

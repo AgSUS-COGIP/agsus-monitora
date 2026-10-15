@@ -8,6 +8,7 @@ import {
 import { rotuloDoNivel } from "../../lib/permissoes-recursos.js";
 import { Aviso, Campo, EstadoVazio, Selo } from "../../ui/index.js";
 import { BotaoMais, BotaoTirar } from "./campos.jsx";
+import { QuemEntraNaEquipe } from "./quem-entra-na-equipe.tsx";
 
 /*
   Aba "Equipe": quem analisa, quem revisa e quem coordena o edital (ou uma
@@ -100,6 +101,12 @@ export function Equipe({ e, estado }) {
           {resumo.ANALISTA} analista(s) · {resumo.REVISOR} revisor(es) ·{" "}
           {resumo.COORDENADOR} na coordenação
         </p>
+        {coordena ? (
+          <QuemEntraNaEquipe
+            quantas={(equipe.pessoas ?? []).length}
+            area={e.dados?.edital?.area ?? e.area}
+          />
+        ) : null}
         {erro ? (
           <Aviso tom="danger" papel="alert">
             {erro}

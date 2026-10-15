@@ -107,7 +107,7 @@ function contarAndamento(lista) {
 
 /**
  * O andamento do edital e de cada vaga (o resumo no alto da Fila), contado
- * com a lista já carregada: { total, vagas: [{ codigo, cargo, lote,
+ * com a lista já carregada: { total, vagas: [{ codigo, cargo, lotacao, lote,
  * concluidas, em_analise, revisao, pendentes }] }. Só as vagas com lote.
  */
 export function andamentoDaFila(candidatos, vagas = []) {
@@ -115,12 +115,19 @@ export function andamentoDaFila(candidatos, vagas = []) {
   const cargo = Object.fromEntries(
     (Array.isArray(vagas) ? vagas : []).map((v) => [String(v.codigo), v.cargo]),
   );
+  const lotacao = Object.fromEntries(
+    (Array.isArray(vagas) ? vagas : []).map((v) => [
+      String(v.codigo),
+      v.lotacao,
+    ]),
+  );
   return {
     total: contarAndamento(lista),
     vagas: ordemDasVagas(lista, vagas)
       .map((codigo) => ({
         codigo,
         cargo: cargo[codigo] || "",
+        lotacao: lotacao[codigo] || "",
         ...contarAndamento(lista.filter((c) => String(c.vaga) === codigo)),
       }))
       .filter((v) => v.lote > 0),

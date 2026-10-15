@@ -483,6 +483,20 @@ describe("equipe do edital (AM-3)", () => {
     });
   });
 
+  it("AM-3.3: a coordenação vê quem aparece em Pessoa e como incluir outra", async () => {
+    await abrirEquipe(supabaseFalso());
+    const ajuda = secao.querySelector("[data-quem-entra]");
+    expect(ajuda.textContent).toContain(
+      "Em “Pessoa” aparecem 2 pessoas: quem tem a área Projetos e Editor (ou mais) em Avaliação documental.",
+    );
+    expect(ajuda.textContent).toContain("Configurações › Acessos");
+  });
+
+  it("AM-3.4: sem coordenar, a orientação não aparece", async () => {
+    await abrirEquipe(supabaseFalso({ pode: false }));
+    expect(secao.querySelector("[data-quem-entra]")).toBeNull();
+  });
+
   it("AM-3.2: a recusa do banco aparece com a permissão que falta", async () => {
     const erro = Object.assign(
       new Error(
