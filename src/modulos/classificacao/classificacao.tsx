@@ -228,6 +228,7 @@ function TelaDaArea({
                 e={e}
                 calcular={calcular}
                 aoAbrirAgenda={() => setVisao("agenda")}
+                confirmar={confirmar}
               />
             ) : visao === "agenda" && e.dados ? (
               <Agenda

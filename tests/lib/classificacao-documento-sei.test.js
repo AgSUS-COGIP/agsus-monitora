@@ -279,8 +279,18 @@ describe("resultado preliminar da análise curricular (83/2026, SEI 0641561)", (
         0,
       ),
     ).toBe(100);
-    expect(tabelas[1].querySelector("tr:nth-child(2) p").className).toBe(
-      "Tabela_Texto_Alinhado_Esquerda",
+    // Classificação e nota ao centro; nome e modalidade à esquerda.
+    const indice = (rotulo) =>
+      rotulos(doc.blocos[1].tabelas[0]).indexOf(rotulo);
+    const classeDa = (rotulo) =>
+      tabelas[1].querySelectorAll("tr:nth-child(2) p")[indice(rotulo)]
+        .className;
+    expect(classeDa("Classificação")).toBe("Tabela_Texto_Centralizado");
+    expect(classeDa("Nome")).toBe("Tabela_Texto_Alinhado_Esquerda");
+    expect(classeDa("Nota Final")).toBe("Tabela_Texto_Centralizado");
+    // O título de cada coluna não quebra.
+    expect(cabeca.querySelector("td").getAttribute("style")).toContain(
+      "white-space:nowrap",
     );
     expect(tabelas[2].textContent).toBe("Não houve candidatos aptos.");
     // Sem timbrado nem assinatura: o SEI põe.

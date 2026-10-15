@@ -1,12 +1,15 @@
 import { describe, expect, it } from "vitest";
 import {
+  assinaturaDoRetrato,
   avisosAgrupados,
   dataDeCorteDoCronograma,
+  geracaoDesatualizada,
   filtrosAtivosDoRecorte,
   listaDaFase,
   recortarResultado,
   RECORTE_VAZIO,
 } from "../../src/lib/classificacao/dados.ts";
+import { instantaneoDaLista } from "../../src/lib/classificacao/exportacao.ts";
 
 /* O que a tela de Classificação precisa em volta do motor. */
 
@@ -129,5 +132,106 @@ describe("listaDaFase", () => {
     expect(
       listaDaFase({ entrevistas: [{ nota: null }, { nota: "12,5" }] }),
     ).toBe("FINAL");
+  });
+});
+
+describe("geração guardada desatualizada em relação aos dados de agora", () => {
+  const resultado = (vagas, totais = {}) => ({
+    tipo: "PRELIMINAR",
+    dataCorte: null,
+    casas: 2,
+    vagas,
+    explicacoes: {},
+    pendencias: [],
+    avisos: [],
+    totais: {
+      candidatos: 1,
+      elegiveis: 0,
+      eliminados: 0,
+      aguardando: 1,
+      vagas: 1,
+      avisos: 0,
+      pendencias: 0,
+      ...totais,
+    },
+  });
+  const vaga = (geral = [], eliminados = []) => ({
+    chave: "182428",
+    codigo: "182428",
+    cargo: "CARGO 2: BIÓLOGO",
+    lotacao: "Belo Horizonte - MG",
+    cabecalho: "VAGA 182428 - CARGO 2: BIÓLOGO - Belo Horizonte - MG",
+    total: 0,
+    vagasPorModalidade: null,
+    cadastroReserva: true,
+    origemDasVagas: "QUADRO",
+    limiteConvocacao: null,
+    geral,
+    porModalidade: {},
+    eliminados,
+    aguardando: [],
+  });
+  const eronilda = {
+    analiseId: "a1",
+    nome: "Eronilda Castro",
+    nota: 45,
+    posicao: 1,
+    empatados: 1,
+    modalidades: ["AC"],
+    situacao: null,
+    vagaPor: null,
+  };
+  const agora = resultado([vaga()]);
+
+  it("13/10 com 1 nas listas e 1.576 eliminados × hoje 0 e 0: os dados mudaram", () => {
+    expect(
+      geracaoDesatualizada(
+        { versao_regra: 1, elegiveis: 1, eliminados: 1576 },
+        agora,
+        1,
+      ),
+    ).toBe("os dados mudaram");
+  });
+
+  it("outra versão da regra: a regra mudou", () => {
+    expect(
+      geracaoDesatualizada(
+        { versao_regra: 1, elegiveis: 0, eliminados: 0 },
+        agora,
+        2,
+      ),
+    ).toBe("a regra mudou");
+  });
+
+  it("com o retrato lido, compara o conteúdo (mesmas quantidades, outra pessoa)", () => {
+    const retratoAntigo = instantaneoDaLista(resultado([vaga([eronilda])]));
+    const atual = resultado([vaga([{ ...eronilda, analiseId: "a2" }])], {
+      elegiveis: 1,
+    });
+    const lista = {
+      versao_regra: 1,
+      elegiveis: 1,
+      eliminados: 0,
+      retrato: retratoAntigo,
+    };
+    expect(geracaoDesatualizada(lista, atual, 1)).toBe("os dados mudaram");
+    expect(
+      geracaoDesatualizada(
+        lista,
+        resultado([vaga([eronilda])], { elegiveis: 1 }),
+        1,
+      ),
+    ).toBeNull();
+  });
+
+  it("a assinatura ignora a ordem das vagas e das listas", () => {
+    const a = { tipo: "X", vagas: [{ chave: "2" }, { chave: "1" }] };
+    const b = { tipo: "X", vagas: [{ chave: "1" }, { chave: "2" }] };
+    expect(assinaturaDoRetrato(a)).toBe(assinaturaDoRetrato(b));
+  });
+
+  it("sem geração ou sem resultado: nada a dizer", () => {
+    expect(geracaoDesatualizada(null, agora, 1)).toBeNull();
+    expect(geracaoDesatualizada({ versao_regra: 1 }, null, 1)).toBeNull();
   });
 });

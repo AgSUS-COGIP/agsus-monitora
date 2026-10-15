@@ -24,6 +24,7 @@ import {
 import {
   avisosAgrupados,
   filtrosAtivosDoRecorte,
+  geracaoDesatualizada,
   listaDaFase,
   listaDesatualizada,
   recortarResultado,
@@ -144,6 +145,16 @@ export function Indicadores({
         valor={n(t.eliminados)}
         carregando={carregando}
       />
+      {t.aguardando ? (
+        <Kpi
+          chave="aguardando"
+          tom="alerta"
+          icone="fa-hourglass-half"
+          rotulo="Aguardando análise"
+          valor={n(t.aguardando)}
+          carregando={carregando}
+        />
+      ) : null}
       <Kpi
         chave="vagas"
         tom="neutro"
@@ -422,6 +433,39 @@ function TabelaDaVaga({
           </div>
         </details>
       ) : null}
+      {vaga.aguardandoFiltrados.length ? (
+        <details className="classificacao-eliminados classificacao-aguardando">
+          <summary>
+            Aguardando análise ({vaga.aguardandoFiltrados.length})
+          </summary>
+          <div className="ui-tabela-rolagem">
+            <table>
+              <thead>
+                <tr>
+                  <th scope="col">Nome</th>
+                  <th scope="col">Situação na análise</th>
+                </tr>
+              </thead>
+              <tbody>
+                {vaga.aguardandoFiltrados.map((a) => (
+                  <tr key={a.analiseId} data-aguardando={a.analiseId}>
+                    <td>
+                      <button
+                        type="button"
+                        className="classificacao-nome"
+                        onClick={() => aoAbrir(a.analiseId)}
+                      >
+                        {a.nome}
+                      </button>
+                    </td>
+                    <td>{a.situacao || "—"}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </details>
+      ) : null}
     </article>
   );
 }
@@ -491,7 +535,9 @@ function GavetaDoCandidato({
           titulo={
             explicacao.elegivel
               ? "Por que nesta posição"
-              : "Por que fora da lista"
+              : explicacao.aguardando
+                ? "Aguardando análise"
+                : "Por que fora da lista"
           }
           secao="explicacao"
         >
@@ -731,6 +777,7 @@ function Acoes({
   aoGerado,
   aoCarregarRegistro,
   aoAbrirAgenda,
+  confirmar,
 }: {
   tipo: TipoDeLista;
   e: SnapshotDaClassificacao;
@@ -740,6 +787,7 @@ function Acoes({
   aoGerado: (l: ListaRegistrada) => void;
   aoCarregarRegistro: (l: ListaRegistrada) => void;
   aoAbrirAgenda?: () => void;
+  confirmar: (mensagem: string) => boolean;
 }) {
   const [lista, setLista] = useState("todas");
   const [fase, setFase] = useState<"" | "PRELIMINAR" | "FINAL">("");
@@ -749,6 +797,14 @@ function Acoes({
   const geracoes = (dados?.listas || []).filter((l) => l.tipo === tipo);
   const ultima = registro || geracoes[0] || null;
   const desatualizada = listaDesatualizada(ultima, dados?.ajustes_mudaram_em);
+  // A geração guardada não bate com os dados de agora (fichas, notas, regra…).
+  const defasada = geracaoDesatualizada(
+    ultima,
+    resultado,
+    dados?.regra?.versao ?? null,
+  );
+  const textoDaDefasagem = (motivo: string, l: ListaRegistrada | null) =>
+    `Esta geração é de ${dataHora(l?.gerada_em) || "antes"}; ${motivo} desde então — gere de novo.`;
   const modalidades = normalizarRegra(
     dados?.regra?.configuracao,
   ).modalidades.filter((m) => m.lista_propria);
@@ -772,7 +828,23 @@ function Acoes({
     if (!alvo?.retrato && geracoes[0])
       alvo = await estado.obterLista(geracoes[0].id);
     if (alvo) aoCarregarRegistro(alvo);
-    return alvo?.retrato ? alvo : null;
+    if (!alvo?.retrato) return null;
+    // Com o retrato em mãos, confere o conteúdo inteiro antes de exportar.
+    const motivo = geracaoDesatualizada(
+      alvo,
+      resultado,
+      dados?.regra?.versao ?? null,
+    );
+    if (
+      motivo &&
+      !confirmar(
+        `${textoDaDefasagem(motivo, alvo)}
+
+Usar esta geração assim mesmo?`,
+      )
+    )
+      return null;
+    return alvo;
   }
   async function exportar(formato: string) {
     const alvo = await alvoRegistrado();
@@ -911,7 +983,7 @@ function Acoes({
             type="button"
             className="btn secondary"
             data-acao="publicar"
-            disabled={(ultima.pendencias ?? 0) > 0}
+            disabled={(ultima.pendencias ?? 0) > 0 || Boolean(defasada)}
             onClick={async () => {
               const publicado = await estado.publicarLista(ultima.id);
               if (publicado) aoCarregarRegistro({ ...ultima, ...publicado });
@@ -926,7 +998,7 @@ function Acoes({
             className="btn secondary"
             data-acao="publicar-aprovados"
             data-tour="classificacao-publicar-aprovados"
-            disabled={(ultima.pendencias ?? 0) > 0}
+            disabled={(ultima.pendencias ?? 0) > 0 || Boolean(defasada)}
             onClick={abrirPublicacaoDeAprovados}
           >
             <i className="fa-solid fa-user-check" aria-hidden="true" /> Publicar
@@ -942,6 +1014,11 @@ function Acoes({
           SHA-256 {String(ultima.hash || "").slice(0, 12)}…
           {ultima.publicada ? " · publicada" : ""}
         </p>
+      ) : null}
+      {defasada && !ultima?.publicada ? (
+        <Aviso tom="warning" papel="status" className="classificacao-defasada">
+          {textoDaDefasagem(defasada, ultima)}
+        </Aviso>
       ) : null}
       {desatualizada ? (
         <Aviso
@@ -981,6 +1058,7 @@ export function Listas({
   e,
   calcular,
   aoAbrirAgenda,
+  confirmar = (mensagem) => globalThis.confirm?.(mensagem) ?? true,
 }: {
   estado: EstadoDaClassificacao;
   e: SnapshotDaClassificacao;
@@ -989,6 +1067,7 @@ export function Listas({
     tipo: TipoDeLista,
   ) => ResultadoDoMotor;
   aoAbrirAgenda?: () => void;
+  confirmar?: (mensagem: string) => boolean;
 }) {
   // Até a pessoa escolher, a lista acompanha a fase do edital.
   const [escolhido, setEscolhido] = useState<TipoDeLista | null>(null);
@@ -1080,6 +1159,7 @@ export function Listas({
               setRegistros((r) => ({ ...r, [tipo]: { ...r[tipo], ...novo } }))
             }
             aoAbrirAgenda={aoAbrirAgenda}
+            confirmar={confirmar}
           />
           <Filtros
             resultado={resultado}

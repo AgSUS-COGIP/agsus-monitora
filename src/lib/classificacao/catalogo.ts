@@ -432,6 +432,21 @@ export const MOTIVOS_DE_ELIMINACAO = Object.freeze({
   SEM_PARECER_ENTREVISTA: "Entrevista sem parecer de apto",
 });
 
+/*
+  Situações da análise que ainda não são resultado: a ficha não foi concluída
+  (Pendente, Em análise) ou voltou para revisão (Revisar). Quem está nelas
+  aguarda a análise: não entra nas listas nem nos eliminados (a publicação só
+  traz quem já foi analisado). Mesmo vocabulário de FC_PUBLICAR_FICHA_ANALISE.
+*/
+export const SITUACOES_AGUARDANDO_ANALISE = Object.freeze([
+  "pendente",
+  "em analise",
+  "revisar",
+  "em revisao",
+  "aguardando analise",
+  "nao analisado",
+]);
+
 /* As modalidades conhecidas. A regra de cada edital diz quais valem e como. */
 export const MODALIDADES_CONHECIDAS = Object.freeze([
   ["AC", "Ampla concorrência"],

@@ -17,6 +17,7 @@ import { objetoDosRecursos } from "../dados-dos-recursos.ts";
 */
 import { semAcento } from "./catalogo.ts";
 import { lerData, numeroBR } from "./numeros.ts";
+import { instantaneoDaLista } from "./exportacao.ts";
 
 /**
  * As etapas de inscrição do cronograma: "inscri" no nome, sem resultado,
@@ -63,6 +64,7 @@ export function dataDeCorteDoCronograma(cronograma: unknown = []) {
 export const ROTULOS_DOS_AVISOS: Readonly<Record<string, string>> =
   Object.freeze({
     EMPATE_PENDENTE: "Empate aguardando sorteio ou decisão",
+    AGUARDANDO_ANALISE: "Candidatos aguardando a análise documental",
     SEM_DATA_CORTE: "Sem data de corte da idade",
     HORA_DE_NASCIMENTO: "Empate decidido pela hora de nascimento",
     PARCIAIS_DIFERENTES_DA_NOTA: "Parciais que não somam a nota documental",
@@ -103,6 +105,80 @@ export function listaDesatualizada(lista: unknown, ajustesMudaramEm: unknown) {
     typeof ajustesMudaramEm === "string" ? ajustesMudaramEm : "",
   );
   return Number.isFinite(gerada) && Number.isFinite(mudou) && mudou > gerada;
+}
+
+/*
+  A assinatura do conteúdo de uma lista (o que a publicação mostra): por
+  vaga, o cabeçalho, as listas (quem, posição, nota, modalidades, situação)
+  e os eliminados (quem e motivo). Serve para comparar a geração guardada
+  (retrato) com o que os dados de agora produzem.
+*/
+export function assinaturaDoRetrato(retrato: unknown) {
+  const r = objetoDosRecursos(retrato);
+  const lista = (v: unknown) => (Array.isArray(v) ? v : []);
+  const linha = (l: unknown) => {
+    const x = objetoDosRecursos(l);
+    return [
+      x.analise_id ?? null,
+      x.posicao ?? null,
+      x.nota ?? null,
+      lista(x.modalidades),
+      x.situacao ?? null,
+    ];
+  };
+  const vagas = lista(r.vagas)
+    .map((v) => {
+      const q = objetoDosRecursos(v);
+      const listas = objetoDosRecursos(q.listas);
+      return [
+        String(q.chave ?? ""),
+        String(q.cabecalho ?? ""),
+        lista(q.geral).map(linha),
+        Object.keys(listas)
+          .sort()
+          .map((k) => [k, lista(listas[k]).map(linha)]),
+        lista(q.eliminados).map((e) => {
+          const x = objetoDosRecursos(e);
+          return [x.analise_id ?? null, x.motivo ?? null];
+        }),
+      ] as const;
+    })
+    .sort((a, b) => (a[0] < b[0] ? -1 : a[0] > b[0] ? 1 : 0));
+  return JSON.stringify([String(r.tipo ?? ""), vagas]);
+}
+
+/**
+ * A geração guardada não corresponde mais aos dados de agora? Devolve o
+ * motivo ("a regra mudou" / "os dados mudaram") ou null. Compara a versão da
+ * regra, as quantidades registradas (nas listas e eliminados) e, quando o
+ * retrato já foi lido, o conteúdo inteiro (posições, notas, empates decididos).
+ */
+export function geracaoDesatualizada(
+  lista: unknown,
+  resultado: ResultadoDoMotor | null | undefined,
+  versaoVigente?: number | null,
+): string | null {
+  if (!lista || !resultado) return null;
+  const l = objetoDosRecursos(lista);
+  if (
+    typeof l.versao_regra === "number" &&
+    typeof versaoVigente === "number" &&
+    l.versao_regra !== versaoVigente
+  )
+    return "a regra mudou";
+  const totais: Record<string, number> = resultado.totais;
+  for (const chave of ["elegiveis", "eliminados"]) {
+    const registrado = l[chave];
+    if (typeof registrado === "number" && registrado !== totais[chave])
+      return "os dados mudaram";
+  }
+  if (
+    l.retrato &&
+    assinaturaDoRetrato(l.retrato) !==
+      assinaturaDoRetrato(instantaneoDaLista(resultado))
+  )
+    return "os dados mudaram";
+  return null;
 }
 
 const PESO_DO_TOM: Record<string, number> = { danger: 0, warning: 1, info: 2 };
@@ -160,9 +236,16 @@ export function recortarResultado(
         ...v,
         linhas: linhas.filter((l) => casa(l.nome)),
         eliminadosFiltrados: v.eliminados.filter((e) => casa(e.nome)),
+        aguardandoFiltrados: (v.aguardando || []).filter((a) => casa(a.nome)),
       };
     })
-    .filter((v) => !busca || v.linhas.length || v.eliminadosFiltrados.length);
+    .filter(
+      (v) =>
+        !busca ||
+        v.linhas.length ||
+        v.eliminadosFiltrados.length ||
+        v.aguardandoFiltrados.length,
+    );
 }
 
 /** Quantos filtros estão ativos (para o painel recolhível). */

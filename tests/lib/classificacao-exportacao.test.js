@@ -229,3 +229,113 @@ describe("documento no padrão das publicações (100/2026: modalidades no mesmo
     expect(conteudo).not.toContain("<img");
   });
 });
+
+describe("colunas do documento: larguras ajustadas aos títulos (114/2026)", () => {
+  const doc = documentoOficial(retrato, { regra: REGRA_100 });
+  const [geral, , pi] = doc.blocos[0].tabelas;
+  const colunas = (t) =>
+    t.colunas
+      .slice(0, 4)
+      .map((c) => [c.rotulo, c.largura, c.alinhamento].join(" "));
+  const soParciaisFora = (t) =>
+    t.colunas.filter((c) => !/Formação|Cursos|Experiência/.test(c.rotulo));
+
+  it("Classificação 14% e Nota Final 12% ao centro; Nome e Modalidade à esquerda", () => {
+    const semParciais = documentoOficial(retrato, {
+      regra: {
+        ...REGRA_100,
+        documental: { ...REGRA_100.documental, parciais: [] },
+      },
+    }).blocos[0].tabelas[0];
+    expect(colunas(semParciais)).toEqual([
+      "Classificação 14 centro",
+      "Nome 46 esquerda",
+      "Modalidade de Concorrência 28 esquerda",
+      "Nota Final 12 centro",
+    ]);
+    expect(soParciaisFora(pi).map((c) => c.largura)).toEqual([14, 74, 12]);
+    for (const t of [geral, pi])
+      expect(t.colunas.reduce((s, c) => s + c.largura, 0)).toBe(100);
+  });
+
+  it("documento com as listas das cotas não diz 'das Vagas de Ampla Concorrência'", () => {
+    expect(doc.preliminares[0].texto).not.toContain("Ampla Concorrência");
+    expect(doc.preliminares[0].texto).toContain(
+      "Avaliação Documental e de Títulos**",
+    );
+    const soGeral = documentoOficial(retrato, {
+      lista: "geral",
+      regra: REGRA_100,
+    });
+    expect(soGeral.preliminares[0].texto).toContain(
+      "das Vagas de Ampla Concorrência",
+    );
+  });
+
+  it("DOCX: título sem quebra, margens estreitas, mesma largura do quadro vazio", () => {
+    const conteudo = texto(
+      gerarDocxOficial(doc, { quando: new Date("2026-10-02T12:00:00") }),
+    );
+    expect(conteudo).toContain("<w:noWrap/>");
+    expect(conteudo).toContain('<w:tblCellMar><w:left w:w="57" w:type="dxa"/>');
+    const larguras = [...conteudo.matchAll(/<w:tblW w:w="(\d+)"/g)].map((m) =>
+      Number(m[1]),
+    );
+    expect(Math.max(...larguras) - Math.min(...larguras)).toBeLessThanOrEqual(
+      3,
+    );
+  });
+
+  it("XLSX: larguras de coluna proporcionais", () => {
+    const conteudo = texto(gerarXlsxDaLista(retrato));
+    expect(conteudo).toContain(
+      '<col min="5" max="5" width="40" customWidth="1"/>',
+    );
+  });
+});
+
+describe("aguardando análise no retrato e no XLSX", () => {
+  const comPendente = classificar({
+    tipo: "PRELIMINAR",
+    regra: REGRA_100,
+    candidatos: [
+      c(1, "Ana Apta", "15,5"),
+      c(4, "Davi Pendente", null, { status: "Pendente" }),
+    ],
+    quadro: QUADRO,
+    dataCorte: "2026-09-20",
+  });
+  const r = instantaneoDaLista(comPendente, { regra: REGRA_100 });
+
+  it("o retrato guarda quem aguarda (só nome e situação), fora dos eliminados", () => {
+    expect(r.vagas[0].eliminados).toEqual([]);
+    expect(r.vagas[0].aguardando).toEqual([
+      {
+        analise_id: "00000000-0000-4000-8000-000000000004",
+        nome: "Davi Pendente",
+        situacao: "Pendente",
+      },
+    ]);
+    expect(r.totais).toMatchObject({ eliminados: 0, aguardando: 1 });
+    expect(retrato.vagas[0].aguardando).toBeUndefined();
+  });
+
+  it("planilha 'Aguardando análise' só quando há alguém", () => {
+    const { aguardando } = linhasDaPlanilha(r);
+    expect(aguardando).toEqual([
+      ["Vaga", "Cargo", "Nome", "Situação na análise"],
+      [
+        "178529",
+        "Analista Técnico de Saúde Indígena",
+        "Davi Pendente",
+        "Pendente",
+      ],
+    ]);
+    expect(texto(gerarXlsxDaLista(r))).toContain(
+      '<sheet name="Aguardando análise"',
+    );
+    expect(texto(gerarXlsxDaLista(retrato))).not.toContain(
+      "Aguardando análise",
+    );
+  });
+});

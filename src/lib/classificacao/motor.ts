@@ -66,6 +66,7 @@ import {
   CRITERIO_POR_CODIGO,
   ITEM_DO_AJUSTE_POR_CODIGO,
   MOTIVOS_DE_ELIMINACAO,
+  SITUACOES_AGUARDANDO_ANALISE,
   codigosDaModalidade,
   ordemDaCompetencia,
   semAcento,
@@ -430,6 +431,24 @@ function situacaoApta(c: CandidatoDoMotor, regra: RegraDoMotor) {
   const aptas = regra.documental.situacoes_aptas.map(semAcento);
   if (!aptas.length) return true;
   return [c.status, c.etapa].some((s) => s && aptas.includes(semAcento(s)));
+}
+
+/*
+  Ainda sem resultado na avaliação documental (ficha Pendente, Em análise ou
+  em Revisar): não é eliminado nem entra nas listas — aguarda a análise.
+  Uma situação apta (status ou etapa) prevalece.
+*/
+export function aguardandoAnalise(
+  c: Pick<CandidatoDoMotor, "status" | "etapa">,
+  regra: RegraDoMotor,
+) {
+  if (!regra.etapas.documental) return false;
+  const aptas = regra.documental.situacoes_aptas.map(semAcento);
+  const situacoes = [c.status, c.etapa]
+    .filter(Boolean)
+    .map((s) => semAcento(s).trim());
+  if (situacoes.some((s) => aptas.includes(s))) return false;
+  return situacoes.some((s) => SITUACOES_AGUARDANDO_ANALISE.includes(s));
 }
 
 /** A eliminação na documental, ou null. Avisos de nível desconhecido vão por vaga. */
@@ -1218,6 +1237,7 @@ export function classificar({
   const pendencias: PendenciaDeEmpate[] = [];
   let elegiveisTotal = 0;
   let eliminadosTotal = 0;
+  let aguardandoTotal = 0;
 
   for (const v of vagas) {
     const { candidatos: daVaga } = exigir(porVaga.get(v.chave));
@@ -1245,7 +1265,12 @@ export function classificar({
       detalhe: string;
     }[] = [];
     const aptosDoc: CandidatoDoMotor[] = [];
+    const aguardando: CandidatoDoMotor[] = [];
     for (const c of daVaga) {
+      if (aguardandoAnalise(c, regra)) {
+        aguardando.push(c);
+        continue;
+      }
       const e = eliminacaoDocumental(c, regra, ctx);
       if (e) {
         eliminados.push({ c, ...e });
@@ -1631,8 +1656,23 @@ export function classificar({
         ].filter(Boolean),
       };
 
+    aguardando.sort(comparaNome);
+    for (const c of aguardando)
+      explicacoes[c.analiseId] = {
+        analiseId: c.analiseId,
+        nome: c.nome,
+        vaga: v.chave,
+        elegivel: false,
+        aguardando: true,
+        explicacao: [
+          `Aguardando a análise documental (situação: ${c.status || c.etapa}).`,
+          "Fica fora das listas e dos eliminados até a análise ser concluída.",
+        ],
+      };
+
     elegiveisTotal += elegiveis.length;
     eliminadosTotal += eliminados.length;
+    aguardandoTotal += aguardando.length;
     saidaVagas.push({
       chave: v.chave,
       codigo: v.codigo,
@@ -1663,8 +1703,20 @@ export function classificar({
             ? { nota: e.c.notaEntrevista }
             : {}),
       })),
+      aguardando: aguardando.map((c) => ({
+        analiseId: c.analiseId,
+        nome: c.nome,
+        situacao: c.status || c.etapa || "",
+      })),
     });
   }
+
+  if (aguardandoTotal)
+    avisos.push({
+      codigo: "AGUARDANDO_ANALISE",
+      tom: "warning",
+      texto: `${aguardandoTotal.toLocaleString("pt-BR")} candidato(s) aguardando a análise documental (ficha não concluída): ficam fora das listas e dos eliminados até a análise ser concluída.`,
+    });
 
   for (const vaga of ctx.nivelDesconhecido)
     avisos.push({
@@ -1706,6 +1758,7 @@ export function classificar({
       candidatos: candidatos.length,
       elegiveis: elegiveisTotal,
       eliminados: eliminadosTotal,
+      aguardando: aguardandoTotal,
       vagas: saidaVagas.length,
       avisos: avisosUnicos.length,
       pendencias: pendencias.length,
