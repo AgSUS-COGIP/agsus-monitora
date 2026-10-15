@@ -1187,7 +1187,7 @@ const TRILHAS = Object.freeze([
       passo(
         [t("barra-menu"), "#nav", "#mobileBottomNav"],
         "Menu",
-        "As páginas seguem as etapas do processo seletivo, de Editais à Seleção.",
+        "Em Acompanhamento ficam as páginas de consulta; em Processo seletivo, onde se trabalha, na ordem das etapas.",
         { pagina: "dashboard" },
       ),
       passo(

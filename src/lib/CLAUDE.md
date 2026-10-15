@@ -27,7 +27,8 @@ Arquivos que exigem cuidado:
   link da origem das análises, planilha de Lotações). Planilha nova entra aqui, com `usadaEm`.
 - `contraste.js` — cálculo de contraste usado pelo aviso de branding; reutilize em vez de reescrever.
 - `menu-lateral.ts` — **catálogo dos grupos do menu lateral** (as áreas do usuário — Saúde
-  Indígena, SEDE, Projetos —, Painéis e Administração), árvore por permissão e por área, página ativa
+  Indígena, SEDE, Projetos —, Painéis e Administração), blocos da área (Acompanhamento e Processo seletivo,
+  `BLOCOS_DA_AREA`/`blocoDaAba`), árvore por permissão e por área, página ativa
   (considera a área atual), áreas abertas por padrão e estado do painel flutuante. Área ou página nova entra aqui; o desenho é de `src/componentes/barra-lateral/`.
 - `eventos-da-barra-lateral.js` — nomes dos eventos entre o legado e a barra lateral (React).
 - `editais-do-nucleo.js` — a página Editais sem DOM: ordem da fila (risco, vagas ociosas), tons de

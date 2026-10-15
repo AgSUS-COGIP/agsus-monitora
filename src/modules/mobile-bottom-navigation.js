@@ -40,6 +40,24 @@ function getLabel(element) {
   );
 }
 
+/*
+  As páginas da área vêm no menu em blocos (Acompanhamento e Processo
+  seletivo), mas aqui valem na ordem do catálogo, que segue as etapas
+  (Visão geral, Editais, Cronograma…): cada uma traz a posição em
+  `data-ordem`. O que não a tem (Administração, painéis sem área) fica
+  depois, na ordem do menu.
+*/
+function ordenarPeloCatalogo(elementos) {
+  const posicao = (element) => {
+    const ordem = Number.parseInt(element.dataset.ordem ?? "", 10);
+    return Number.isFinite(ordem) ? ordem : Number.POSITIVE_INFINITY;
+  };
+  return elementos
+    .map((element, indice) => ({ element, indice, ordem: posicao(element) }))
+    .sort((a, b) => a.ordem - b.ordem || a.indice - b.indice)
+    .map(({ element }) => element);
+}
+
 export function collectPrimaryItems(
   documento = document,
   area = obterDadosDoMonitoramento().areaAtual,
@@ -56,7 +74,7 @@ export function collectPrimaryItems(
     )
       porView.set(view, element);
   }
-  return [...porView.values()].slice(0, MAX_PRIMARY_ITEMS);
+  return ordenarPeloCatalogo([...porView.values()]).slice(0, MAX_PRIMARY_ITEMS);
 }
 
 function fillItem(button, iconName, label) {

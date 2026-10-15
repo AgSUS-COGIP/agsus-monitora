@@ -21,9 +21,9 @@ As três áreas do sistema (Saúde Indígena, SEDE e Projetos), a área atual e 
 
 ## Ordem do menu
 
-**perguntas:** ordem do menu | qual e a ordem do menu | ordem das abas | paginas do menu | menu lateral
-**resposta:** O menu de cada área segue as etapas do processo seletivo: Visão geral, Editais, Cronograma, Painel das análises, Avaliação documental, Painel de recursos, Analisar recursos, Painel de entrevistas, Conduzir entrevistas, Classificação, Lista de aprovados e Seleção. Abaixo das áreas fica Administração (as seções de Configurações). O grupo Painéis só aparece quando há painel externo ativo liberado para a pessoa. O selo BETA ao lado do nome marca a aba ainda em teste.
-**fato:** O menu segue as etapas do processo seletivo: Visão geral, Editais, Cronograma, Painel das análises, Avaliação documental, Painel de recursos, Analisar recursos, Painel de entrevistas, Conduzir entrevistas, Classificação, Lista de aprovados e Seleção.
+**perguntas:** ordem do menu | qual e a ordem do menu | ordem das abas | paginas do menu | menu lateral | blocos do menu | acompanhamento | processo seletivo no menu
+**resposta:** O menu de cada área tem dois blocos. Em Acompanhamento ficam as páginas de consulta: Visão geral, Painel das análises, Painel de recursos, Painel de entrevistas e Lista de aprovados (e os painéis externos liberados para a pessoa, quando houver). Em Processo seletivo fica onde se trabalha, na ordem das etapas: Editais, Cronograma, Avaliação documental, Analisar recursos, Conduzir entrevistas, Classificação e Seleção. Cada pessoa vê só as páginas que pode abrir, e o bloco sem nenhuma página some. Abaixo das áreas fica Administração (as seções de Configurações). Com a barra recolhida, o nome do bloco vira um traço entre os ícones. O selo BETA ao lado do nome marca a aba ainda em teste.
+**fato:** O menu de cada área tem dois blocos: Acompanhamento (Visão geral, Painel das análises, Painel de recursos, Painel de entrevistas, Lista de aprovados e os painéis externos) e Processo seletivo (Editais, Cronograma, Avaliação documental, Analisar recursos, Conduzir entrevistas, Classificação e Seleção).
 **fonte:** supabase/migrations/20261001160000_ordem_do_menu_por_etapa.sql; supabase/migrations/20261006090000_avaliacao_documental_permissao_e_menu.sql; supabase/migrations/20261008130000_conduzir_entrevistas_no_menu.sql; supabase/migrations/20261009230000_analisar_recursos_no_menu.sql; src/lib/menu-lateral.ts
 
 ## Recorte por área no banco

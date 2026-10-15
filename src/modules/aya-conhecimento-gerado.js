@@ -3460,10 +3460,13 @@ export const VERBETES_AYA = Object.freeze([
       "ordem das abas",
       "paginas do menu",
       "menu lateral",
+      "blocos do menu",
+      "acompanhamento",
+      "processo seletivo no menu",
     ],
     resposta:
-      "O menu de cada área segue as etapas do processo seletivo: Visão geral, Editais, Cronograma, Painel das análises, Avaliação documental, Painel de recursos, Analisar recursos, Painel de entrevistas, Conduzir entrevistas, Classificação, Lista de aprovados e Seleção. Abaixo das áreas fica Administração (as seções de Configurações). O grupo Painéis só aparece quando há painel externo ativo liberado para a pessoa. O selo BETA ao lado do nome marca a aba ainda em teste.",
-    fato: "O menu segue as etapas do processo seletivo: Visão geral, Editais, Cronograma, Painel das análises, Avaliação documental, Painel de recursos, Analisar recursos, Painel de entrevistas, Conduzir entrevistas, Classificação, Lista de aprovados e Seleção.",
+      "O menu de cada área tem dois blocos. Em Acompanhamento ficam as páginas de consulta: Visão geral, Painel das análises, Painel de recursos, Painel de entrevistas e Lista de aprovados (e os painéis externos liberados para a pessoa, quando houver). Em Processo seletivo fica onde se trabalha, na ordem das etapas: Editais, Cronograma, Avaliação documental, Analisar recursos, Conduzir entrevistas, Classificação e Seleção. Cada pessoa vê só as páginas que pode abrir, e o bloco sem nenhuma página some. Abaixo das áreas fica Administração (as seções de Configurações). Com a barra recolhida, o nome do bloco vira um traço entre os ícones. O selo BETA ao lado do nome marca a aba ainda em teste.",
+    fato: "O menu de cada área tem dois blocos: Acompanhamento (Visão geral, Painel das análises, Painel de recursos, Painel de entrevistas, Lista de aprovados e os painéis externos) e Processo seletivo (Editais, Cronograma, Avaliação documental, Analisar recursos, Conduzir entrevistas, Classificação e Seleção).",
     fonte:
       "supabase/migrations/20261001160000_ordem_do_menu_por_etapa.sql; supabase/migrations/20261006090000_avaliacao_documental_permissao_e_menu.sql; supabase/migrations/20261008130000_conduzir_entrevistas_no_menu.sql; supabase/migrations/20261009230000_analisar_recursos_no_menu.sql; src/lib/menu-lateral.ts",
   },
@@ -3873,7 +3876,7 @@ export const VERBETES_AYA = Object.freeze([
       "painel externo",
     ],
     resposta:
-      "Painéis externos são páginas de fora do MONITORA abertas pelo grupo Painéis do menu. Análises, Recursos, Entrevistas e Seleção viraram abas do próprio sistema e seus painéis externos foram arquivados; sem painel ativo, o grupo Painéis some do menu. Em Configurações › Painéis externos só se editam os painéis que já existem: título, endereço (https:// ou http://; painel ativo precisa de endereço), ativo e em manutenção. Ver um painel exige a marcação dele para a pessoa em Acessos.",
+      "Painéis externos são páginas de fora do MONITORA abertas pelo menu, no bloco Acompanhamento da área. Análises, Recursos, Entrevistas e Seleção viraram abas do próprio sistema e seus painéis externos foram arquivados; sem painel ativo, nenhum aparece no menu. Em Configurações › Painéis externos só se editam os painéis que já existem: título, endereço (https:// ou http://; painel ativo precisa de endereço), ativo e em manutenção. Ver um painel exige a marcação dele para a pessoa em Acessos.",
     fato: "",
     fonte:
       "src/lib/paineis-externos-das-configuracoes.js; src/modulos/configuracoes/paineis-externos.jsx; supabase/migrations/20260930235500_arquiva_painel_externo_selecao.sql",

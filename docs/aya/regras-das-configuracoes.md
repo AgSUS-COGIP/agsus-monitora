@@ -117,7 +117,7 @@ publicação no histórico de Operação, de onde uma versão pode ser restaurad
 ## Painéis externos
 
 **perguntas:** o que sao os paineis externos | paineis externos | para que serve paineis externos | para que serve a secao paineis externos | como por um painel em manutencao | painel externo
-**resposta:** Painéis externos são páginas de fora do MONITORA abertas pelo grupo Painéis do menu. Análises, Recursos, Entrevistas e Seleção viraram abas do próprio sistema e seus painéis externos foram arquivados; sem painel ativo, o grupo Painéis some do menu. Em Configurações › Painéis externos só se editam os painéis que já existem: título, endereço (https:// ou http://; painel ativo precisa de endereço), ativo e em manutenção. Ver um painel exige a marcação dele para a pessoa em Acessos.
+**resposta:** Painéis externos são páginas de fora do MONITORA abertas pelo menu, no bloco Acompanhamento da área. Análises, Recursos, Entrevistas e Seleção viraram abas do próprio sistema e seus painéis externos foram arquivados; sem painel ativo, nenhum aparece no menu. Em Configurações › Painéis externos só se editam os painéis que já existem: título, endereço (https:// ou http://; painel ativo precisa de endereço), ativo e em manutenção. Ver um painel exige a marcação dele para a pessoa em Acessos.
 **fonte:** src/lib/paineis-externos-das-configuracoes.js; src/modulos/configuracoes/paineis-externos.jsx; supabase/migrations/20260930235500_arquiva_painel_externo_selecao.sql
 **abrir:** config:recursos
 

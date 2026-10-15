@@ -43,6 +43,7 @@ import { Icone } from "../icone.jsx";
 import {
   AREA_DAS_CONFIGURACOES,
   areaAberta,
+  blocosDaArea,
   destinoAoTrocarDeArea,
   ehAreaDoSistema,
   FLUTUANTE_FECHADO,
@@ -74,16 +75,19 @@ import { marcarItemAtivoNoMenu } from "./estado.ts";
     área chama `definirAreaAtual` e abre a mesma página na área nova, ou a
     primeira dela (`destinoAoTrocarDeArea`). Com uma área só, não há seletor:
     a área aparece como acordeão, como antes.
-  - Expandida (e na gaveta do celular): Painéis e Administração são acordeões,
-    e todos nascem abertos. O que se guarda é a lista dos que a pessoa fechou.
+  - As páginas da área vêm em dois blocos com título pequeno em caixa alta,
+    Acompanhamento (consulta, com os painéis externos) e Processo seletivo
+    (onde se trabalha); bloco vazio não aparece (`blocosDaArea`).
+  - Expandida (e na gaveta do celular): Administração é acordeão, e todos
+    nascem abertos. O que se guarda é a lista dos que a pessoa fechou.
     Só a seta gira; a altura não anima (Design System AgSUS, 7.1).
   - Recolhida (acima de 900px), de cima para baixo: o seletor vira o ícone da
     área atual, com o anel e a bolinha da cor dela (dica "Área: <nome>"; o
     clique abre a lista das áreas); cada página da área atual é um ícone que
     navega num clique (`direto`, com a dica do nome e a página aberta em
-    destaque); Painéis e Administração são um ícone cada, e o painel deles
-    vira um flutuante `position: fixed` ao lado do trilho, com a pílula do
-    nome em cima. O estado do flutuante (qual está aberto, e por quê) é o de
+    destaque), e o título do bloco vira um traço separador; Administração é
+    um ícone, e o painel dela vira um flutuante `position: fixed` ao lado do
+    trilho, com a pílula do nome em cima. O estado do flutuante (qual está aberto, e por quê) é o de
     `proximoFlutuante`: um por vez, `Esc` fecha, um clique não prende o painel.
 
   O DOM continua sendo contrato: `#nav`, `[data-view]`, `[data-secao]`,
@@ -266,11 +270,13 @@ function ItemDoMenu({
   item,
   ativo,
   direto = false,
+  ordem,
   aoEscolher,
 }: {
   item: Item;
   ativo: boolean;
   direto?: boolean;
+  ordem?: number;
   aoEscolher: () => void;
 }) {
   const dica = [
@@ -291,6 +297,7 @@ function ItemDoMenu({
           item.manutencao && "menu-item--manutencao",
         )}
         data-view={item.view}
+        data-ordem={ordem}
         data-secao={item.secao}
         data-area={item.area}
         data-rotulo={item.rotulo}
@@ -351,6 +358,31 @@ function Area({
   */
   const semCabecalhoNemPainel = semCabecalho || direto;
   const idDoPainel = `menuArea-${area.id}`;
+  /*
+    As áreas do sistema dividem as páginas em blocos com título
+    (Acompanhamento e Processo seletivo); bloco vazio não aparece.
+    Administração (e Painéis, sem área) é uma lista só. Nos blocos, cada item
+    leva `data-ordem`, a posição dele no catálogo: o menu inferior do celular
+    escolhe as primeiras páginas por ela, e não pela ordem dos blocos.
+  */
+  const blocos = ehAreaDoSistema(area.id) ? blocosDaArea(area.itens) : null;
+  const lista = (
+    itens: readonly Item[],
+    nome: { "aria-label"?: string; "aria-labelledby"?: string },
+  ) => (
+    <ul className="menu-area__itens" {...nome}>
+      {itens.map((item) => (
+        <ItemDoMenu
+          key={`${item.view}|${item.secao ?? ""}`}
+          item={item}
+          ativo={item === itemAtivo}
+          direto={direto}
+          ordem={blocos ? area.itens.indexOf(item) : undefined}
+          aoEscolher={() => aoEscolher(item, area.id, refCabecalho)}
+        />
+      ))}
+    </ul>
+  );
 
   const aoClicarNoCabecalho = () => {
     if (trilho) despachar({ tipo: "alternar", area: area.id });
@@ -399,17 +431,23 @@ function Area({
         <p className="menu-area__pilula" aria-hidden="true">
           {area.rotulo}
         </p>
-        <ul className="menu-area__itens" aria-label={area.rotulo}>
-          {area.itens.map((item) => (
-            <ItemDoMenu
-              key={`${item.view}|${item.secao ?? ""}`}
-              item={item}
-              ativo={item === itemAtivo}
-              direto={direto}
-              aoEscolher={() => aoEscolher(item, area.id, refCabecalho)}
-            />
-          ))}
-        </ul>
+        {blocos
+          ? blocos.map((bloco) => {
+              const idDoTitulo = `menuBloco-${area.id}-${bloco.id}`;
+              return (
+                <div
+                  key={bloco.id}
+                  className="menu-bloco"
+                  data-bloco={bloco.id}
+                >
+                  <p className="menu-bloco__titulo" id={idDoTitulo}>
+                    {bloco.rotulo}
+                  </p>
+                  {lista(bloco.itens, { "aria-labelledby": idDoTitulo })}
+                </div>
+              );
+            })
+          : lista(area.itens, { "aria-label": area.rotulo })}
       </div>
     </section>
   );
@@ -593,7 +631,11 @@ export function Navegacao({
     ativo.secao,
     areaAtual,
   );
-  const areaAtiva = itemAtivo?.area ?? null;
+  // O painel externo aberto acende a área onde ele é desenhado, não Painéis.
+  const areaAtiva =
+    itemAtivo && recorte.grupoAtual?.itens.includes(itemAtivo.item)
+      ? recorte.grupoAtual.id
+      : (itemAtivo?.area ?? null);
 
   const guardarFechadas = (proximas: Set<string>) => {
     if (!previa) gravarAreasFechadas(proximas);
@@ -722,15 +764,20 @@ export function Navegacao({
 
   /*
     No trilho, as páginas da área atual são ícones diretos (um clique navega);
-    Painéis e Administração continuam agrupados, com o painel flutuante.
-    Expandida, o seletor é o cabeçalho da área atual; com uma área só, ela é
-    acordeão.
+    Administração continua agrupada, com o painel flutuante. Expandida, o
+    seletor é o cabeçalho da área atual; com uma área só, ela é acordeão. Os
+    painéis externos vêm dentro da área (`recorte.grupoAtual`); o grupo
+    Painéis só aparece sozinho quando não há área.
   */
   const conteudo = () => {
-    if (!recorte.comSeletor || !recorte.grupoAtual) {
-      return arvore.map((area) =>
-        desenharArea(area, { direto: trilho && ehAreaDoSistema(area.id) }),
-      );
+    if (!recorte.grupoAtual) {
+      return recorte.demais.map((area) => desenharArea(area));
+    }
+    if (!recorte.comSeletor) {
+      return [
+        desenharArea(recorte.grupoAtual, { direto: trilho }),
+        ...recorte.demais.map((area) => desenharArea(area)),
+      ];
     }
     return [
       <SeletorDeArea
