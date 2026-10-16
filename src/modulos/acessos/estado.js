@@ -12,6 +12,7 @@
 
 import { exigirSessao } from "../../lib/sessao.js";
 import { comTempoLimite, mensagemDeFalha } from "../../lib/falha-de-rede.js";
+import { ehConflitoDeVersao } from "../../lib/conflito-de-versao.ts";
 import {
   alteracoesDoRascunho,
   contarPendencias,
@@ -44,7 +45,6 @@ const RPC_MOVER_PARA_COORDENACOES = "mover_conta_para_coordenacoes";
 const RPC_CONTAS_DESATIVADAS = "listar_contas_desativadas";
 const RPC_REATIVAR_USUARIO = "reativar_acesso_usuario";
 
-const CONFLITO = "40001";
 /* salvar_matriz_acessos: o lote deixaria alguém ativo sem nenhuma área. */
 const SEM_AREA = "23514";
 /*
@@ -260,7 +260,7 @@ export function criarEstadoDosAcessos({
         await carregarMatriz();
         return true;
       } catch (erro) {
-        if (erro?.code === CONFLITO) {
+        if (ehConflitoDeVersao(erro)) {
           const matriz = await carregarMatriz();
           const { rascunho, conflitos } = rebasearRascunho(
             estado.rascunho,
@@ -524,8 +524,8 @@ export function criarEstadoDosAcessos({
         return resposta || true;
       } catch (erro) {
         toast(
-          erro?.code === CONFLITO
-            ? "Outra pessoa alterou este item. Recarregue e tente de novo."
+          ehConflitoDeVersao(erro)
+            ? "Outra pessoa alterou este item. Recarregue a matriz."
             : `Não foi possível salvar: ${mensagemDoErro(erro)}`,
           "error",
         );

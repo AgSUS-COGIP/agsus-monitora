@@ -39,6 +39,7 @@
 */
 import { isAdminGlobal } from "../../lib/access-roles.js";
 import { comTempoLimite } from "../../lib/falha-de-rede.js";
+import { ehConflitoDeVersao } from "../../lib/conflito-de-versao.ts";
 import {
   csvDaFila,
   FILTRO_INICIAL,
@@ -455,7 +456,7 @@ export function criarEstadoDaFila({
       return { ok: true, resultado: r };
     } catch (erro) {
       const mensagem = mensagemDoBanco(erro);
-      if (erro?.code === "40001") void carregar();
+      if (ehConflitoDeVersao(erro)) void carregar();
       return { ok: false, erro: mensagem };
     } finally {
       publicar({ acao: "" });

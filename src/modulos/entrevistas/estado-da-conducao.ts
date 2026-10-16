@@ -68,6 +68,7 @@ import {
 import { classificarEdital } from "../../lib/classificacao/ajustes.ts";
 import { convocacaoDoEdital } from "../../lib/classificacao/convocacao-do-edital.ts";
 import { rotuloDaVersao } from "../../lib/nome-da-versao.ts";
+import { ehConflitoDeVersao } from "../../lib/conflito-de-versao.ts";
 
 const TEMPO_LIMITE_MS = 30000;
 
@@ -488,8 +489,7 @@ export function criarEstadoDaConducao({
           p_analises: analises,
         }).catch((erro) => {
           // A Classificação gerou outra lista: a tela relê a vigente.
-          if (codigoDaFalhaDaConducao(erro) === "40001")
-            void abrirEdital(editalId);
+          if (ehConflitoDeVersao(erro)) void abrirEdital(editalId);
           throw erro;
         }),
       );

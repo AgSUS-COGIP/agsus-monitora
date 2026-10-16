@@ -1005,7 +1005,7 @@ function supabaseAnalisesRequest_(path, method, payload, extraHeaders, requestCo
     let detail = null;
     try { detail = JSON.parse(body); } catch (ignored) {}
     const clientFailureDefinitivo = code >= 400 && code < 500 && [408, 425, 429].indexOf(code) === -1;
-    error.databaseFailureConfirmed = clientFailureDefinitivo || !!(detail && ['57014', '55P03', '40P01', '40001', 'P0001', '22023', '23505'].indexOf(detail.code) !== -1);
+    error.databaseFailureConfirmed = clientFailureDefinitivo || !!(detail && ['57014', '55P03', '40P01', '40001', 'PT409', 'P0001', '22023', '23505'].indexOf(detail.code) !== -1);
     const retryable = code === 408 || code === 425 || code === 429 || code >= 500;
     if (!retryable || attempt === attempts) throw error;
     Utilities.sleep(baseMs * Math.pow(2, attempt - 1));

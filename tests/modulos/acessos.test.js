@@ -897,6 +897,41 @@ describe("Acessos: visão simples, trava de área e convite", () => {
     expect(controlador.estado.obter().rascunho.size).toBe(1);
   });
 
+  it.each(["PT409", "40001"])(
+    "conflito de versão (%s): relê a matriz, mantém o rascunho e avisa",
+    async (code) => {
+      const supabase = await montarCom(MATRIZ(TETO_ADMIN).usuarios, {
+        salvar_matriz_acessos: () =>
+          Promise.resolve({
+            data: null,
+            error: { code, message: "Conta alterada por outra pessoa." },
+          }),
+      });
+      await verPorModulo();
+      await escolher(select("Editais de Ana <img src=x>"), "editor");
+      await digitar(document.getElementById("acessosMotivo"), "Teste");
+      const leiturasAntes = supabase.rpc.mock.calls.filter(
+        ([nome]) => nome === "obter_matriz_acessos",
+      ).length;
+      await clicar(botao("Salvar alterações"));
+      await vi.waitFor(() =>
+        expect(
+          supabase.rpc.mock.calls.filter(
+            ([nome]) => nome === "obter_matriz_acessos",
+          ).length,
+        ).toBeGreaterThan(leiturasAntes),
+      );
+      const salvamentos = supabase.rpc.mock.calls.filter(
+        ([nome]) => nome === "salvar_matriz_acessos",
+      );
+      expect(salvamentos).toHaveLength(1);
+      const aviso = document.querySelector('.ui-aviso[role="status"]');
+      expect(aviso.dataset.tone).toBe("warning");
+      expect(aviso.textContent).toContain("mudaram enquanto você editava");
+      expect(controlador.estado.obter().rascunho.size).toBe(1);
+    },
+  );
+
   it("convite pendente: a gaveta reenvia (copiar / e-mail) e cancela com motivo", async () => {
     const supabase = await montar({ perfil: ADMIN, teto: TETO_ADMIN });
     await clicar(linhaDe("coord@agenciasus.org.br").querySelector("td"));

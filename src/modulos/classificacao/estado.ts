@@ -96,6 +96,7 @@ import {
 import { convocacaoDoEdital } from "../../lib/classificacao/convocacao-do-edital.ts";
 import { normalizarRegra } from "../../lib/classificacao/regra.ts";
 import { rotuloDaVersao } from "../../lib/nome-da-versao.ts";
+import { ehConflitoDeVersao } from "../../lib/conflito-de-versao.ts";
 import {
   comTempoLimite,
   ehFalhaDeConexao,
@@ -145,7 +146,7 @@ function mensagemDoBanco(erro: unknown) {
     return "A aba Classificação ainda não foi publicada no banco.";
   if (e.code === "42501")
     return "Seu acesso não inclui a classificação desta área ou deste edital.";
-  if (e.code === "40001")
+  if (ehConflitoDeVersao(e))
     return (
       textoDaClassificacao(e.message) ||
       "A regra mudou desde que você abriu; recarregue."

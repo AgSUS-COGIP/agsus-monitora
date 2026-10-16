@@ -173,7 +173,7 @@ class PassoDoRobo(unittest.TestCase):
         ]
     }
 
-    def _chamar(self, gravacoes, recusar=None):
+    def _chamar(self, gravacoes, recusar=None, codigo="PT409"):
         def chamar(_config, funcao, corpo, tentativas=3):
             if funcao == "listar_resumos_pergunta_pendentes":
                 return self.PENDENTES
@@ -181,7 +181,7 @@ class PassoDoRobo(unittest.TestCase):
                 return {"vaga": corpo["p_vaga"], "candidatos": 3, "linhas": [{P5: "PcD"}, {P5: "PcD"}]}
             if funcao == "gravar_resumo_pergunta_edital":
                 if recusar == corpo["p_edital"]:
-                    raise supabase_rpc.ErroDoSupabase(funcao, 400, "40001: A carga do edital mudou")
+                    raise supabase_rpc.ErroDoSupabase(funcao, 409 if codigo == "PT409" else 500, f"{codigo}: A carga do edital mudou")
                 gravacoes.append(corpo)
                 return {"perguntas": len(corpo["p_perguntas"])}
             raise AssertionError(funcao)
@@ -241,11 +241,14 @@ class PassoDoRobo(unittest.TestCase):
         self.assertEqual(pedidos, [{"p_vaga": "1", "p_compacto": True}, {"p_vaga": "1"}])
 
     def test_carga_que_mudou_no_meio_fica_para_a_proxima(self):
-        gravacoes, log = [], []
-        feitos, falhas = resumo_das_perguntas.resumir_editais({}, log.append, self._chamar(gravacoes, recusar="e1"))
-        self.assertEqual((feitos, falhas), (1, 1))
-        self.assertIn("fica para a próxima", log[0])
-        self.assertEqual([g["p_edital"] for g in gravacoes], ["e2"])
+        for codigo in ("PT409", "40001"):
+            with self.subTest(codigo=codigo):
+                gravacoes, log = [], []
+                chamar = self._chamar(gravacoes, recusar="e1", codigo=codigo)
+                feitos, falhas = resumo_das_perguntas.resumir_editais({}, log.append, chamar)
+                self.assertEqual((feitos, falhas), (1, 1))
+                self.assertIn("fica para a próxima", log[0])
+                self.assertEqual([g["p_edital"] for g in gravacoes], ["e2"])
 
 
 class RoboComOResumo(unittest.TestCase):

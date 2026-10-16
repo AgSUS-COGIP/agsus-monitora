@@ -66,6 +66,7 @@ import {
 import { criarCopiasPorVersao } from "../../app/copias-por-versao.ts";
 import { criarLeituraPorVersao } from "../../lib/avaliacao-documental/leitura-por-versao.ts";
 import { editalVigente } from "../../lib/avaliacao-documental/editais.js";
+import { ehConflitoDeVersao } from "../../lib/conflito-de-versao.ts";
 import {
   coordenaOEdital,
   editalParaAbrir,
@@ -142,7 +143,7 @@ export function mensagemDoBanco(erro) {
     return "A Avaliação documental ainda não foi publicada no banco.";
   if (erro?.code === "42501")
     return erro.message || "Seu acesso não inclui esta ação.";
-  if (erro?.code === "40001")
+  if (ehConflitoDeVersao(erro))
     return erro.message || "A regra mudou desde que você abriu; recarregue.";
   if (ehFalhaDeConexao(erro)) return mensagemDeFalha(erro);
   return erro?.message || mensagemDeFalha(erro);

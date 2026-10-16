@@ -1342,17 +1342,30 @@ describe("estado da ficha: salvamento automático", () => {
     expect(estado.obter()).toMatchObject({ versao: 7, sujo: false });
   });
 
-  it("versão velha (40001) para a edição com o aviso", async () => {
-    const erro = Object.assign(new Error("Esta ficha mudou"), {
-      code: "40001",
-    });
-    const { estado } = loja(rpcFalso({ salvar_rascunho_ficha: () => erro }));
-    await estado.carregar("f1");
-    estado.mudar((l) => ({ ...l, observacoes: "x" }));
-    expect(await estado.salvar()).toBe(false);
-    expect(estado.obter().podeEditar).toBe(false);
-    expect(estado.obter().aviso).toContain("mudou desde que você abriu");
-  });
+  it.each(["PT409", "40001"])(
+    "conflito de versão (%s) para a edição e o salvamento automático, com o aviso",
+    async (code) => {
+      const erro = Object.assign(new Error("Esta ficha mudou"), { code });
+      const rpc = rpcFalso({ salvar_rascunho_ficha: () => erro });
+      const { estado, agendados } = loja(rpc);
+      await estado.carregar("f1");
+      estado.mudar((l) => ({ ...l, observacoes: "x" }));
+      // O salvamento automático dispara e recebe o conflito.
+      agendados.at(-1)();
+      await vi.waitFor(() => expect(estado.obter().podeEditar).toBe(false));
+      expect(estado.obter().aviso).toBe(
+        "Esta ficha foi alterada em outra aba ou por outra pessoa. Recarregue para continuar.",
+      );
+      // Nada mais vai ao banco: nem nova mudança, nem novo agendamento, nem salvar.
+      const envios = () =>
+        rpc.mock.calls.filter(([n]) => n === "salvar_rascunho_ficha").length;
+      const antes = agendados.length;
+      estado.mudar((l) => ({ ...l, observacoes: "xy" }));
+      expect(agendados).toHaveLength(antes);
+      await estado.salvar();
+      expect(envios()).toBe(1);
+    },
+  );
 
   it("concluir duas vezes (duplo clique, Ctrl+Enter) vai ao banco uma vez só e nada muda durante a conclusão", async () => {
     let soltar;
