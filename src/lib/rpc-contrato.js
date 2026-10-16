@@ -239,7 +239,7 @@ export const CONTRATO_RPC = {
   obter_ultima_conferencia: {
     argumentos: ["p_fonte", "p_area"],
     resumo:
-      "Hora em que a última carga da fonte (analises, selecao, entrevistas) terminou bem, mesmo sem mudanças; só quem pode ler a tela (migration 20261005140000).",
+      "Hora da última conferência da fonte: análises = a mais recente entre a carga da planilha e a montagem do resumo do Painel da área (migration 20261016170000); seleção e entrevistas = última carga que terminou bem; só quem pode ler a tela.",
   },
   usuario_pode_ler_analises: {
     argumentos: [],
