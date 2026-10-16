@@ -101,7 +101,7 @@ edital), com campos que se preenchem sozinhos, para emitir cartas padronizadas s
   pelo botão de cada um, com ou sem acento.
 - **Dado** um campo desconhecido ou uma chave sem par, **então** o modelo não salva e a tela diz qual.
 - **Dado** que edito um modelo, **então** salvar cria a versão seguinte e pede o motivo; se outra
-  pessoa salvou antes, recebo o aviso de conflito (40001) e nada é sobrescrito.
+  pessoa salvou antes, recebo o aviso de conflito (PT409) e nada é sobrescrito.
 - **Dado** um modelo que não serve mais, **então** eu o inativo com motivo; ele some da emissão, não
   pode ser editado e continua no histórico das cartas. Nada é apagado.
 - **Dado** um leitor, **então** ele vê os modelos e as versões, sem os botões de alterar.

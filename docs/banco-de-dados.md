@@ -707,7 +707,7 @@ com o mesmo md5). Sem migração de dados: a aba começa vazia. O painel externo
   mudou; etapas com quando e quem) e `TH_RECURSO_CANDIDATO` (auditoria).
   RLS ligada, sem policy nem grant: só as RPCs leem e escrevem.
 - RPCs `SECURITY DEFINER`: `get_recursos_da_area` (json), `get_recurso_candidato_detalhe`,
-  `buscar_candidatos_recurso`, `salvar_recurso_candidato` (revisão → `40001`,
+  `buscar_candidatos_recurso`, `salvar_recurso_candidato` (revisão → `PT409`,
   duplicado em análise → `23505` salvo `permitir_duplicado`),
   `marcar_etapa_recurso`, `excluir_recurso_candidato` (lógica, com motivo).
 - Permissão: recurso `recursos` (admin = admin, edital_gestor = editor,
@@ -864,9 +864,9 @@ Migration `20260929230000_recursos_modelos_anexos_respostas.sql` (rollback em
   uso (senão ficam, com NOTICE).
 
 Ensaio (begin…rollback, produção): admin cria modelo (v1 → v2, sem mudança não
-cria versão, versão velha → 40001, marcador desconhecido → 22023, arquiva);
+cria versão, versão velha → PT409, marcador desconhecido → 22023, arquiva);
 usuario lê a aba sem modelos e recebe 42501 ao gravar; editor grava rascunho
-(revisão velha → 40001), não aprova recurso em análise, envia para revisão e
+(revisão velha → PT409), não aprova recurso em análise, envia para revisão e
 não aprova a própria; outro editor devolve (comentário obrigatório), aprova
 (situação diferente do modelo → 22023) e marca enviada (etapa marcada); editor
 com coordenação recortada não vê o recurso nem envia arquivo; upload com área

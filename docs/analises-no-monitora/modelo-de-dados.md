@@ -908,7 +908,7 @@ Funções privadas:
 A mesma conta existe em `src/lib/avaliacao-documental/` (pura e testada), e um conjunto de casos
 compartilhado, que inclui os do simulador, garante que a tela e o banco dão o mesmo número.
 
-Erros: `42501` (sem permissão), `40001` (a ficha mudou), `55P03` (ficha reservada por outra
+Erros: `42501` (sem permissão), `PT409` (a ficha mudou), `55P03` (ficha reservada por outra
 pessoa), `22023` (dado ou passagem inválida).
 
 ## 15. Ordem sugerida das migrations

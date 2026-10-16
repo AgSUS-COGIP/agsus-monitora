@@ -173,7 +173,7 @@ mudou (`resumo_das_perguntas.py`; a conta e a regra de privacidade em
 `python/monitora/avaliacao_documental/perguntas_da_carga.py`): lê os pendentes
 (`listar_resumos_pergunta_pendentes`), as respostas cruas de cada vaga (`ler_respostas_pergunta_vaga`) e
 grava pronto (`gravar_resumo_pergunta_edital`, que confere o formato, a privacidade e a assinatura das
-vagas; carga que mudou no meio = 40001, fica para a próxima). Só colunas "Pergunta N", respostas que
+vagas; carga que mudou no meio = PT409, fica para a próxima). Só colunas "Pergunta N", respostas que
 aparecem 2+ vezes (até 30, 200 caracteres); as únicas viram "outras". A Avaliação documental lê pronto
 (`obter_perguntas_carga_analise`). O log mostra `Resumo das perguntas da carga: N edital(is)
 recalculado(s).`; uma falha aqui não muda a saída do robô e a tela fica com o resumo anterior. Pendente

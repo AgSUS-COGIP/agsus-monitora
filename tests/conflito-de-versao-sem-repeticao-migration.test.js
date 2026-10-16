@@ -69,7 +69,7 @@ describe("migration 20261016160000 (conflito de versão: 40001 → PT409)", () =
   });
 
   it("o ensaio aplica a migration e confere o SQLSTATE antes e depois", () => {
-    expect(ENSAIO).toContain(`\ir ../migrations/${NOME}`);
+    expect(ENSAIO).toContain(String.raw`\ir ../migrations/` + NOME);
     expect(ENSAIO).toMatch(/^begin;/m);
     expect(ENSAIO.trimEnd()).toMatch(/rollback;$/);
     expect(ENSAIO).toContain("FC_EXIGIR_GRAVAR_FICHA");
