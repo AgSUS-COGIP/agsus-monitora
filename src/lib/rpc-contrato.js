@@ -472,7 +472,7 @@ export const CONTRATO_RPC = {
     ],
     critica: false,
     resumo:
-      "Cria o modelo da carta (área ou edital) ou grava a próxima versão: 40001 se a versão mudou; motivo obrigatório a partir da 2ª. Aprovados editor.",
+      "Cria o modelo da carta (área ou edital) ou grava a próxima versão: PT409 se a versão mudou; motivo obrigatório a partir da 2ª. Aprovados editor.",
   },
   definir_modelo_carta_ativo: {
     argumentos: ["p_modelo", "p_ativo", "p_motivo"],
@@ -713,7 +713,7 @@ export const CONTRATO_RPC = {
     argumentos: ["p_edital", "p_lista", "p_analises"],
     critica: false,
     resumo:
-      "Registra para a ficha de notas convocados da lista de convocação vigente da Classificação (idempotente; 40001 se p_lista não é a vigente; 23514 fora da lista, sem lista ou sem configuração). Devolve {convocados, lista, dados}.",
+      "Registra para a ficha de notas convocados da lista de convocação vigente da Classificação (idempotente; PT409 se p_lista não é a vigente; 23514 fora da lista, sem lista ou sem configuração). Devolve {convocados, lista, dados}.",
   },
   desconvocar_da_entrevista: {
     argumentos: ["p_entrevista", "p_motivo"],
@@ -840,7 +840,7 @@ export const CONTRATO_RPC = {
     argumentos: ["p_dados"],
     critica: false,
     resumo:
-      "Cria um modelo ou grava a versão seguinte (revisão 40001, marcadores conferidos). Só admin de Recursos.",
+      "Cria um modelo ou grava a versão seguinte (revisão PT409, marcadores conferidos). Só admin de Recursos.",
   },
   arquivar_modelo_resposta_recurso: {
     argumentos: ["p_modelo_id", "p_motivo"],
@@ -851,7 +851,7 @@ export const CONTRATO_RPC = {
     argumentos: ["p_dados"],
     critica: false,
     resumo:
-      "Cria ou grava o rascunho da resposta (modelo + versão, fundamentação, texto final; revisão 40001).",
+      "Cria ou grava o rascunho da resposta (modelo + versão, fundamentação, texto final; revisão PT409).",
   },
   transicionar_resposta_recurso: {
     argumentos: ["p_resposta_id", "p_acao", "p_revisao", "p_comentario"],
@@ -926,7 +926,7 @@ export const CONTRATO_RPC = {
     ],
     critica: false,
     resumo:
-      "Salva a regra do edital como versão nova (40001 se a versão aberta não é a vigente; motivo obrigatório da 2ª em diante; p_nome opcional, 3 a 80: o nome da versão). Editor.",
+      "Salva a regra do edital como versão nova (PT409 se a versão aberta não é a vigente; motivo obrigatório da 2ª em diante; p_nome opcional, 3 a 80: o nome da versão). Editor.",
   },
   renomear_versao_regra_classificacao: {
     argumentos: ["p_edital", "p_versao", "p_nome", "p_motivo"],
@@ -956,7 +956,7 @@ export const CONTRATO_RPC = {
     argumentos: ["p_lista_classificacao", "p_lista_vigente", "p_vinculos"],
     critica: false,
     resumo:
-      "Publica o resultado final da Classificação como a lista de aprovados vigente (a anterior fica no histórico), levando status, sub judice e anexos de quem casou (p_vinculos). 40001 se a lista vigente mudou. Classificação editor.",
+      "Publica o resultado final da Classificação como a lista de aprovados vigente (a anterior fica no histórico), levando status, sub judice e anexos de quem casou (p_vinculos). PT409 se a lista vigente mudou. Classificação editor.",
   },
   obter_lista_classificacao: {
     argumentos: ["p_lista"],
@@ -987,7 +987,7 @@ export const CONTRATO_RPC = {
     argumentos: ["p_edital", "p_configuracao", "p_versao_atual", "p_motivo"],
     critica: false,
     resumo:
-      "Salva a regra da agenda do edital como versão nova (40001 se a versão aberta não é a vigente; motivo obrigatório da 2ª em diante). Entrevistas ou Classificação editor.",
+      "Salva a regra da agenda do edital como versão nova (PT409 se a versão aberta não é a vigente; motivo obrigatório da 2ª em diante). Entrevistas ou Classificação editor.",
   },
   salvar_agenda_entrevista: {
     argumentos: ["p_edital", "p_dados"],
@@ -1099,7 +1099,7 @@ export const CONTRATO_RPC = {
     argumentos: ["p_ficha"],
     critica: false,
     resumo:
-      "Renova a reserva de quem está com a ficha aberta (sem mudar a versão); 40001 quando a ficha já não está com a pessoa.",
+      "Renova a reserva de quem está com a ficha aberta (sem mudar a versão); PT409 quando a ficha já não está com a pessoa.",
   },
   liberar_reserva: {
     argumentos: ["p_edital", "p_fichas", "p_motivo"],
@@ -1111,7 +1111,7 @@ export const CONTRATO_RPC = {
     argumentos: ["p_edital", "p_atribuicoes", "p_motivo"],
     critica: false,
     resumo:
-      "Distribuição inicial, redistribuição (motivo) e devolução à fila (motivo) pela coordenação: [{ficha, versao, usuario}], com controle otimista (40001), sem mexer em ficha concluída ou fora do lote.",
+      "Distribuição inicial, redistribuição (motivo) e devolução à fila (motivo) pela coordenação: [{ficha, versao, usuario}], com controle otimista (PT409), sem mexer em ficha concluída ou fora do lote.",
   },
   mandar_fichas_revisao: {
     argumentos: ["p_edital", "p_fichas", "p_motivo"],
@@ -1160,7 +1160,7 @@ export const CONTRATO_RPC = {
     ],
     critica: false,
     resumo:
-      "Salvamento automático da ficha: lançamento (com a vaga e o cargo da ficha), resultado da conta da tela e parecer, revalidados contra a regra da vaga, com as diferenças por cargo (estrutura, limites, coerência); exige a reserva (55P03) e a versão aberta (40001); renova a reserva; alteração vai ao histórico.",
+      "Salvamento automático da ficha: lançamento (com a vaga e o cargo da ficha), resultado da conta da tela e parecer, revalidados contra a regra da vaga, com as diferenças por cargo (estrutura, limites, coerência); exige a reserva (55P03) e a versão aberta (PT409); renova a reserva; alteração vai ao histórico.",
   },
   concluir_ficha: {
     argumentos: [
@@ -1237,7 +1237,7 @@ export const CONTRATO_RPC = {
     ],
     critica: false,
     resumo:
-      "Salva a regra como versão nova (40001 se a versão aberta não é a vigente; motivo de 10 a 2.000 da 2ª em diante) e volta para Conferir; devolve as fichas concluídas com versão anterior (nenhuma nota muda). p_nome (opcional, 3 a 80): o nome da versão (20261008180000). Só a coordenação do edital.",
+      "Salva a regra como versão nova (PT409 se a versão aberta não é a vigente; motivo de 10 a 2.000 da 2ª em diante) e volta para Conferir; devolve as fichas concluídas com versão anterior (nenhuma nota muda). p_nome (opcional, 3 a 80): o nome da versão (20261008180000). Só a coordenação do edital.",
   },
   obter_rascunho_regra: {
     argumentos: ["p_tipo", "p_edital"],
@@ -1273,7 +1273,7 @@ export const CONTRATO_RPC = {
     argumentos: ["p_edital", "p_versao"],
     critica: false,
     resumo:
-      "Marca a versão vigente da regra como conferida (40001 se não é a vigente). Dupla conferência: quem salvou a versão não confere (42501), salvo o administrador global. Só a coordenação do edital.",
+      "Marca a versão vigente da regra como conferida (PT409 se não é a vigente). Dupla conferência: quem salvou a versão não confere (42501), salvo o administrador global. Só a coordenação do edital.",
   },
   obter_apoio_regra_analise: {
     argumentos: ["p_edital"],
