@@ -425,10 +425,11 @@ describe("regra da avaliação (AM-2)", () => {
     expect(supabase.rpc.mock.calls.length).toBe(chamadas);
   });
 
-  it("quem só lê vê a regra travada, sem salvar nem perguntas", async () => {
+  it("quem não coordena não vê a regra, sem salvar nem perguntas", async () => {
     const supabase = supabaseFalso({ pode: false });
     await montar(supabase);
-    expect(secao.querySelector(".avd-campos").disabled).toBe(true);
+    expect(botao("Regra", secao)).toBeUndefined();
+    expect(secao.querySelector(".avd-campos")).toBeNull();
     expect(secao.querySelector("[data-acao='salvar-regra']")).toBeNull();
     expect(secao.querySelector("#avdPerguntas")).toBeNull();
     // As perguntas da carga nem são pedidas a quem só lê.
@@ -492,8 +493,9 @@ describe("equipe do edital (AM-3)", () => {
     expect(ajuda.textContent).toContain("Configurações › Acessos");
   });
 
-  it("AM-3.4: sem coordenar, a orientação não aparece", async () => {
-    await abrirEquipe(supabaseFalso({ pode: false }));
+  it("AM-3.4: sem coordenar, nem a aba Equipe nem a orientação aparecem", async () => {
+    await montar(supabaseFalso({ pode: false }));
+    expect(botao("Equipe", secao)).toBeUndefined();
     expect(secao.querySelector("[data-quem-entra]")).toBeNull();
   });
 

@@ -126,7 +126,7 @@ export function collectAyaPageContext(doc = document) {
   A aba e o edital escolhidos na tela aberta, para a Aya adaptar a resposta
   (e o tour) ao que a pessoa está vendo. Só o que a tela já mostra: a opção
   marcada do seletor de abas ou visões (`[data-tour]` com role=radiogroup ou
-  tablist) e o número do edital escolhido (nunca o nome de alguém).
+  tablist; na tela de uma aba só, o `data-aba-unica` do título) e o número do edital escolhido (nunca o nome de alguém).
 */
 const MARCADA =
   "[aria-checked='true'], [aria-selected='true'], [aria-pressed='true']";
@@ -146,6 +146,12 @@ export function estadoDaTela(doc = document) {
       );
       break;
     }
+  }
+  // Tela com uma aba só (sem seletor): o título marca qual é (`data-aba-unica`).
+  if (!aba) {
+    const unica = pagina.querySelector("[data-aba-unica]");
+    if (unica && !unica.closest("[hidden]"))
+      aba = compactText(unica.getAttribute("data-aba-unica"), 40);
   }
   let edital = "";
   for (const campo of pagina.querySelectorAll(

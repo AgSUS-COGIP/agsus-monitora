@@ -840,9 +840,14 @@ const TOURS = Object.freeze({
         "Marque para ver também os concluídos e os cancelados.",
       ),
       passo(
+        t("avd-entrada"),
+        "Editais da área",
+        "Um cartão por edital vigente, com a versão da regra; clique para abrir. A tela reabre no último edital aberto.",
+      ),
+      passo(
         t("avd-visoes"),
         "Regra, Equipe, Pré-classificação e Fila",
-        "Regra e Equipe preparam o edital; a Pré-classificação ordena pela ART e recorta o lote; a Fila distribui as fichas.",
+        "Só quem coordena o edital vê as quatro abas (preparar, ordenar o lote e distribuir as fichas). Quem analisa vê só a Fila.",
       ),
       PASSO_DA_AYA,
     ]),

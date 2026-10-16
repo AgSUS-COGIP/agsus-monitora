@@ -222,10 +222,12 @@ async function montar(supabase, { abrirFila = true, getProfile } = {}) {
   await esperar();
   await escolher(secao.querySelector(".avd-edital select"), "e93");
   await esperar();
-  if (abrirFila) {
-    await clicar(
-      secao.querySelector("[data-tour='avd-visoes'] [data-valor='fila']"),
-    );
+  // Quem não coordena já abre na Fila, sem o seletor de abas.
+  const aba = secao.querySelector(
+    "[data-tour='avd-visoes'] [data-valor='fila']",
+  );
+  if (abrirFila && aba) {
+    await clicar(aba);
     await esperar();
   }
 }

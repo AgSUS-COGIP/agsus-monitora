@@ -292,12 +292,15 @@ async function montar(supabase) {
   await esperar();
   await escolher(secao.querySelector(".avd-edital select"), "e93");
   await esperar();
-  const aba = [...secao.querySelectorAll("button")].find((b) =>
-    b.textContent.includes("Pré-classificação"),
-  );
-  await clicar(aba);
+  const aba = abaDaPre();
+  // Quem não coordena não tem a aba (abre na Fila).
+  if (aba) await clicar(aba);
   await esperar();
 }
+const abaDaPre = () =>
+  [...secao.querySelectorAll("button")].find((b) =>
+    b.textContent.includes("Pré-classificação"),
+  );
 const botao = (texto) =>
   [...secao.querySelectorAll("button")].find((b) =>
     b.textContent.trim().startsWith(texto),
@@ -375,9 +378,17 @@ describe("Pré-classificação (AM-4)", () => {
     );
     await act(async () => painel.raiz.unmount());
     secao.remove();
-    await montar(supabaseFalso({ pode: false }));
+    // Quem não coordena nem tem a aba Pré-classificação (nem a lê do banco).
+    const leitor = supabaseFalso({ pode: false });
+    await montar(leitor);
+    expect(abaDaPre()).toBeUndefined();
     expect(secao.querySelector("[data-acao='recalcular']")).toBeNull();
     expect(secao.querySelector(".avd-vaga input")).toBeNull();
+    expect(
+      leitor.rpc.mock.calls.some(([n]) =>
+        n.startsWith("obter_pre_classificacao"),
+      ),
+    ).toBe(false);
   });
 
   it("Atualizar e a reabertura da tela relêem a pré-classificação da aba aberta", async () => {
@@ -732,13 +743,13 @@ describe("inclusão no lote por decisão da coordenação", () => {
     expect(linha().textContent).toContain("ficha concluída");
   });
 
-  it("quem só lê vê o selo, mas não inclui nem revoga", async () => {
+  it("quem não coordena não vê a aba, nem incluir nem revogar", async () => {
     await montar(supabaseFalso({ pode: false, pre: COM_DECISAO(false) }));
-    const vaga = secao.querySelector("[data-vaga='179698']");
-    expect(vaga.querySelector(".avd-selo-decisao")).not.toBeNull();
-    expect(vaga.querySelector("[data-acao='incluir-por-decisao']")).toBeNull();
+    expect(abaDaPre()).toBeUndefined();
+    expect(secao.querySelector("[data-vaga='179698']")).toBeNull();
+    expect(secao.querySelector("[data-acao='incluir-por-decisao']")).toBeNull();
     expect(
-      vaga.querySelector("[data-acao='abrir-revogar-decisao']"),
+      secao.querySelector("[data-acao='abrir-revogar-decisao']"),
     ).toBeNull();
   });
 });

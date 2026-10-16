@@ -42,7 +42,13 @@
 
   A conta da prévia é a de src/lib/avaliacao-documental/pontuacao.js, feita no
   componente; aqui só a carga e a gravação. A aba aberta (`visao`) mora aqui
-  para o "Atualizar" e a reabertura da tela relerem a aba certa.
+  para o "Atualizar" e a reabertura da tela relerem a aba certa. Regra, Equipe
+  e Pré-classificação são só de quem coordena o edital (abas-e-entrada.ts):
+  para os demais a visão cai na Fila e a equipe nem é lida.
+
+  Entrada: ao chegar na área, abre sozinho o edital da ficha que estava
+  aberta, o último edital aberto (lembrado por pessoa e área no navegador) ou
+  o único vigente; senão, a tela mostra os cartões dos editais.
 
   Rascunho: o que a pessoa muda na regra é guardado a cada mudança por
   src/app/rascunho-da-regra.ts (montado em avaliacao-documental.jsx); ao
@@ -59,6 +65,15 @@ import {
 } from "../../lib/falha-de-rede.js";
 import { criarCopiasPorVersao } from "../../app/copias-por-versao.ts";
 import { criarLeituraPorVersao } from "../../lib/avaliacao-documental/leitura-por-versao.ts";
+import { editalVigente } from "../../lib/avaliacao-documental/editais.js";
+import {
+  coordenaOEdital,
+  editalParaAbrir,
+  lembrarEdital,
+  lerEditalLembrado,
+  VISAO_DE_QUEM_AVALIA,
+  visaoProibida,
+} from "./abas-e-entrada.ts";
 
 const RPC_LISTAR_EDITAIS = "listar_editais_avaliacao";
 const RPC_OBTER_REGRA = "obter_regra_analise";
@@ -153,10 +168,15 @@ export function criarEstadoDaAvaliacao({
 
   function publicar(mudancas) {
     estado = { ...estado, ...mudancas };
+    // Quem não coordena o edital não fica numa aba da coordenação.
+    if (visaoProibida(estado))
+      estado = { ...estado, visao: VISAO_DE_QUEM_AVALIA };
     for (const ouvinte of ouvintes) ouvinte();
   }
 
   let identidade;
+  /* A área em que a entrada (abrir um edital sozinho) já foi feita. */
+  let areaDaEntrada = "";
   supabase?.auth?.onAuthStateChange?.((_evento, sessao) => {
     const atual = sessao?.user?.id || null;
     if (atual === identidade) return;
@@ -164,10 +184,22 @@ export function criarEstadoDaAvaliacao({
       pedidoDosEditais += 1;
       pedidoDoEdital += 1;
       leituraDaRegra.esquecer();
+      areaDaEntrada = "";
       publicar(ESTADO_INICIAL);
     }
     identidade = atual;
   });
+
+  /* Quem está na tela (para lembrar o edital por pessoa). */
+  async function usuarioAtual() {
+    if (identidade !== undefined) return identidade;
+    try {
+      const { data } = (await supabase?.auth?.getSession?.()) ?? {};
+      return data?.session?.user?.id || null;
+    } catch {
+      return null;
+    }
+  }
 
   async function rpc(nome, argumentos) {
     if (!supabase) throw new Error("Sem conexão com o banco.");
@@ -179,8 +211,12 @@ export function criarEstadoDaAvaliacao({
     return data;
   }
 
-  /* Os editais da área. Troca de área recomeça do zero. */
-  async function carregar(area = estado.area) {
+  /*
+    Os editais da área. Troca de área recomeça do zero. Na primeira carga da
+    área, sem edital escolhido, abre sozinho o `preferido` (o edital da ficha
+    que estava aberta), o último aberto ou o único vigente.
+  */
+  async function carregar(area = estado.area, { preferido = "" } = {}) {
     if (!area) return false;
     const meu = ++pedidoDosEditais;
     if (area !== estado.area) {
@@ -191,9 +227,18 @@ export function criarEstadoDaAvaliacao({
       const dados = await rpc(RPC_LISTAR_EDITAIS, { p_area: area });
       if (meu !== pedidoDosEditais) return false;
       const editais = Array.isArray(dados?.editais) ? dados.editais : [];
-      const escolhido = editais.some((e) => e.id === estado.editalId)
+      let escolhido = editais.some((e) => e.id === estado.editalId)
         ? estado.editalId
         : "";
+      if (!escolhido && areaDaEntrada !== area) {
+        const usuario = await usuarioAtual();
+        if (meu !== pedidoDosEditais) return false;
+        escolhido = editalParaAbrir(editais, editalVigente, [
+          preferido,
+          lerEditalLembrado(usuario, area),
+        ]);
+      }
+      areaDaEntrada = area;
       publicar({
         editais,
         carregado: true,
@@ -215,9 +260,16 @@ export function criarEstadoDaAvaliacao({
     }
   }
 
-  /* Abre o edital: a regra e a equipe juntas. */
+  /*
+    Abre o edital: a regra e, para quem coordena, a equipe juntas (a lista já
+    diz o papel; sem ele, lê a equipe e confere depois). Lembra o edital
+    aberto ("" esquece: a próxima entrada mostra os cartões).
+  */
   async function escolherEdital(editalId) {
     const meu = ++pedidoDoEdital;
+    void usuarioAtual().then((usuario) =>
+      lembrarEdital(usuario, estado.area, editalId),
+    );
     if (!editalId) {
       publicar({ editalId: "", dados: null, equipe: null, erroDoEdital: "" });
       return false;
@@ -239,10 +291,20 @@ export function criarEstadoDaAvaliacao({
     });
     const gravacoesAntes = gravacoes;
     try {
-      const [dados, equipe] = await Promise.all([
+      const coordena = coordenaOEdital({ ...estado, dados: null });
+      const [dados, equipeLida] = await Promise.all([
         leituraDaRegra.ler(rpc, { p_edital: editalId }, editalId),
-        rpc(RPC_OBTER_EQUIPE, { p_edital: editalId }),
+        coordena === false
+          ? null
+          : rpc(RPC_OBTER_EQUIPE, { p_edital: editalId }),
       ]);
+      if (meu !== pedidoDoEdital) return false;
+      // A lista disse que não coordena, mas o edital diz que sim (papel mudou).
+      const equipe =
+        equipeLida ??
+        (dados?.pode_coordenar
+          ? await rpc(RPC_OBTER_EQUIPE, { p_edital: editalId })
+          : null);
       if (meu !== pedidoDoEdital) return false;
       // Gravou-se no meio da leitura: ela pode ser de antes; lê de novo.
       if (gravacoesAntes !== gravacoes) return escolherEdital(editalId);
@@ -374,8 +436,13 @@ export function criarEstadoDaAvaliacao({
     },
     carregar,
     escolherEdital,
+    /* Aba da coordenação para quem não coordena: fica na Fila. */
     mudarVisao(visao) {
-      if (VISOES_DA_AVALIACAO.includes(visao) && visao !== estado.visao)
+      if (
+        VISOES_DA_AVALIACAO.includes(visao) &&
+        visao !== estado.visao &&
+        !visaoProibida({ ...estado, visao })
+      )
         publicar({ visao });
     },
     copiarModelo: (modelo) =>
