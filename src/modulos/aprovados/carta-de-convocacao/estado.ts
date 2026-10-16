@@ -35,6 +35,7 @@ import {
 import { MIME_DOCX } from "../../../lib/documento-da-resposta.js";
 import { CABECALHO_PADRAO } from "../../../lib/cabecalho-dos-documentos.js";
 import { canChangeCandidateStatus } from "../../../lib/access-roles.js";
+import { ehConflitoDeVersao } from "../../../lib/conflito-de-versao.ts";
 import {
   assinaturaDaEmissao,
   camposParaRegistrar,
@@ -206,7 +207,7 @@ export function criarEstadoDaCarta({
         );
         if (error) {
           toast(
-            objetoDaCarta(error).code === "40001"
+            ehConflitoDeVersao(objetoDaCarta(error))
               ? "Outra pessoa salvou este modelo enquanto você editava. Reabra para ver a versão nova."
               : `Erro ao salvar o modelo: ${mensagemDe(error)}`,
             "error",

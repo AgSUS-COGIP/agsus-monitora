@@ -27,8 +27,8 @@
   trocar de ficha, concluir e esconder a aba (ficha.jsx: visibilitychange e
   pagehide) salvam na hora (salvar()). Uma mudança durante o envio agenda
   outro com a versão nova. "Salvo às HH:MM" só depois de o banco confirmar
-  (AM-12.1). Versão velha (40001) ou reserva perdida (55P03) param a edição
-  com o aviso.
+  (AM-12.1). Versão velha (conflito de versão: PT409, antes 40001) ou reserva
+  perdida (55P03) param a edição e o salvamento automático, com o aviso.
 */
 import {
   calcularFicha,
@@ -42,6 +42,10 @@ import {
 } from "../../../lib/avaliacao-documental/ficha.js";
 import { comJustificativasDosItens } from "../../../lib/avaliacao-documental/justificativa-dos-itens.ts";
 import { funcaoAusente } from "../../../lib/avaliacao-documental/leitura-por-versao.ts";
+import {
+  AVISO_DE_FICHA_ALTERADA,
+  ehConflitoDeVersao,
+} from "../../../lib/conflito-de-versao.ts";
 import { mensagemDoBanco } from "../estado.js";
 
 const RPC_OBTER = "obter_ficha_analise";
@@ -276,13 +280,11 @@ export function criarEstadoDaFicha({
 
   function pararEdicao(erro) {
     pararTemporizador();
-    const codigo = erro?.code;
     publicar({
       podeEditar: false,
-      aviso:
-        codigo === "40001"
-          ? "Esta ficha mudou desde que você abriu (outra aba ou outra pessoa). Feche e abra de novo; o que não foi salvo está nesta tela."
-          : mensagemDoBanco(erro),
+      aviso: ehConflitoDeVersao(erro)
+        ? AVISO_DE_FICHA_ALTERADA
+        : mensagemDoBanco(erro),
     });
   }
 
@@ -314,7 +316,8 @@ export function criarEstadoDaFicha({
       return true;
     } catch (erro) {
       publicar({ salvando: false });
-      if (["40001", "55P03", "42501"].includes(erro?.code)) pararEdicao(erro);
+      if (ehConflitoDeVersao(erro) || ["55P03", "42501"].includes(erro?.code))
+        pararEdicao(erro);
       else
         publicar({
           aviso: `Não foi possível salvar: ${mensagemDoBanco(erro)}`,
@@ -376,7 +379,7 @@ export function criarEstadoDaFicha({
       return { ok: true, resultado: r };
     } catch (erro) {
       publicar({ concluindo: false });
-      if (erro?.code === "40001") {
+      if (ehConflitoDeVersao(erro)) {
         await carregar();
         return {
           ok: false,

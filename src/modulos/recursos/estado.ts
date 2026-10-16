@@ -59,6 +59,7 @@ import type {
   mostra o rótulo, os outros ficam desativados.
 */
 import { hojeEmBrasilia } from "../../lib/cronograma-do-edital.js";
+import { ehConflitoDeVersao } from "../../lib/conflito-de-versao.ts";
 import { csvDosRecursos } from "../../lib/recursos-dos-candidatos.ts";
 import {
   BUCKET_DOS_ANEXOS,
@@ -429,10 +430,9 @@ export function criarEstadoDosRecursos({
           const numero = Number(String(error.hint || "").split(":")[1]);
           return { duplicado: Number.isFinite(numero) ? numero : true };
         }
-        const mensagem =
-          error.code === "40001"
-            ? "Outra pessoa alterou este recurso. Recarregue e tente de novo."
-            : mensagemDe(error);
+        const mensagem = ehConflitoDeVersao(error)
+          ? "Outra pessoa alterou este recurso. Recarregue e tente de novo."
+          : mensagemDe(error);
         toast(`Não foi possível salvar: ${mensagem}`, "error");
         return { erro: mensagem };
       }
@@ -531,10 +531,9 @@ export function criarEstadoDosRecursos({
       });
       if (!vigente()) return null;
       if (error) {
-        const mensagem =
-          error.code === "40001"
-            ? "Outra pessoa alterou este recurso. Recarregue e tente de novo."
-            : mensagemDe(error);
+        const mensagem = ehConflitoDeVersao(error)
+          ? "Outra pessoa alterou este recurso. Recarregue e tente de novo."
+          : mensagemDe(error);
         toast(`Não foi possível concluir: ${mensagem}`, "error");
         return false;
       }
@@ -697,7 +696,7 @@ export function criarEstadoDosRecursos({
   }
 
   const mensagemDaEscrita = (erro: ErroDosRecursos | null) =>
-    erro?.code === "40001"
+    ehConflitoDeVersao(erro)
       ? "Outra pessoa alterou esta resposta. Recarregue e tente de novo."
       : mensagemDe(erro);
 
@@ -989,10 +988,9 @@ export function criarEstadoDosRecursos({
       );
       if (!vigente()) return null;
       if (error) {
-        const mensagem =
-          error.code === "40001"
-            ? "Outra pessoa alterou este modelo. Recarregue e tente de novo."
-            : mensagemDe(error);
+        const mensagem = ehConflitoDeVersao(error)
+          ? "Outra pessoa alterou este modelo. Recarregue e tente de novo."
+          : mensagemDe(error);
         toast(`Não foi possível salvar o modelo: ${mensagem}`, "error");
         return { erro: mensagem };
       }

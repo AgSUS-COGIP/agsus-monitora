@@ -19,7 +19,7 @@ RPCs (só service_role; supabase/migrations/20261009180000_resumo_das_perguntas_
       lista dos valores: ~25 vezes menos egress (o 114/2026 levava 27 MB).
   gravar_resumo_pergunta_edital(p_edital, p_hash, p_perguntas, p_candidatos)
       confere o formato e grava; se a carga mudou no meio (assinatura
-      diferente), recusa com 40001 e o edital fica para a próxima vez.
+      diferente), recusa com PT409 (antes 40001) e o edital fica para a próxima vez.
 
 O log é público: só números de edital e contagens.
 """
@@ -89,7 +89,8 @@ def resumir_editais(config, registrar, chamar=supabase_rpc.chamar, editais=None,
             )
         except supabase_rpc.ErroDoSupabase as erro:
             falhas += 1
-            if "40001" in str(erro):
+            # Conflito de versão: PT409 (HTTP 409, o PostgREST não repete); 40001 até a migration.
+            if "PT409" in str(erro) or "40001" in str(erro):
                 registrar(f"Perguntas da carga do edital {numero}: a carga mudou no meio; fica para a próxima.")
             else:
                 registrar(f"Perguntas da carga do edital {numero}: o banco recusou ({erro}).")

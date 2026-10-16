@@ -12,6 +12,7 @@ import {
   regraRegistradaDaAgenda,
 } from "../../lib/dados-da-agenda.ts";
 import type { DadosDaAgenda } from "../../lib/dados-da-agenda.ts";
+import { ehConflitoDeVersao } from "../../lib/conflito-de-versao.ts";
 type SnapshotDaAgenda = {
   editalId: string;
   dados: DadosDaAgenda | null;
@@ -80,7 +81,7 @@ export function mensagemDaAgenda(erro: unknown) {
     return "A agenda das entrevistas ainda não foi publicada no banco.";
   if (objeto(erro).code === "42501")
     return "Seu acesso não inclui a agenda deste edital.";
-  if (objeto(erro).code === "40001")
+  if (ehConflitoDeVersao(erro))
     return (
       String(dados.message || "") ||
       "A agenda mudou desde que você abriu; recarregue."
