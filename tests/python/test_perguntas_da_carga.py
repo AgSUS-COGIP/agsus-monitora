@@ -181,7 +181,9 @@ class PassoDoRobo(unittest.TestCase):
                 return {"vaga": corpo["p_vaga"], "candidatos": 3, "linhas": [{P5: "PcD"}, {P5: "PcD"}]}
             if funcao == "gravar_resumo_pergunta_edital":
                 if recusar == corpo["p_edital"]:
-                    raise supabase_rpc.ErroDoSupabase(funcao, 409 if codigo == "PT409" else 500, f"{codigo}: A carga do edital mudou")
+                    raise supabase_rpc.ErroDoSupabase(
+                        funcao, 409 if codigo == "PT409" else 500, f"{codigo}: A carga do edital mudou"
+                    )
                 gravacoes.append(corpo)
                 return {"perguntas": len(corpo["p_perguntas"])}
             raise AssertionError(funcao)
