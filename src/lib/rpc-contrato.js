@@ -1000,7 +1000,7 @@ export const CONTRATO_RPC = {
     argumentos: ["p_edital"],
     critica: false,
     resumo:
-      "Pré-classificação gravada pelo job Python: regra, última execução, vagas (quadro, tamanho do lote, linha de corte, avisos), inscritos (código, nome, situação, ART, nota declarada, posição, lote e motivo; sem CPF nem contato) e as listas PROVISORIA/LOTE registradas. Leitor da Avaliação documental.",
+      "Pré-classificação gravada pelo job Python: regra, última execução, vagas (quadro, tamanho do lote, linha de corte, avisos), inscritos (código, nome, situação, ART, nota declarada, posição, lote e motivo; sem CPF nem contato) e as listas PROVISORIA/LOTE registradas. Só a coordenação do edital (FC_EXIGIR_COORD_AVALIACAO; os demais 42501, desde 20261016130000).",
   },
   // ── Leitura por versão (20261014230000_avaliacao_leitura_por_versao.sql): chamam a função de
   // sempre e devolvem o payload com `versao` (md5 sem `gerado_em`) e as listas grandes em colunas
@@ -1015,7 +1015,7 @@ export const CONTRATO_RPC = {
     argumentos: ["p_edital"],
     critica: false,
     resumo:
-      "Só em_andamento e ultima_execucao da pré-classificação do edital (~0,4 KB): o acompanhamento do Recalcular a cada 15 s, sem reler o pacote. Leitor da Avaliação documental.",
+      "Só em_andamento e ultima_execucao da pré-classificação do edital (~0,4 KB): o acompanhamento do Recalcular a cada 15 s, sem reler o pacote. Só a coordenação do edital (FC_EXIGIR_COORD_AVALIACAO; os demais 42501, desde 20261016130000).",
   },
   // ── Avaliação documental: acompanhamento das inscrições (20261009140000_acompanhamento_das_inscricoes.sql)
   obter_acompanhamento_inscricoes: {
@@ -1206,13 +1206,13 @@ export const CONTRATO_RPC = {
     argumentos: ["p_area"],
     critica: false,
     resumo:
-      "Editais da área para a Avaliação documental: versão e situação da regra, dono da avaliação e o papel de quem está logado. avaliacao_documental >= leitor, área e coordenação.",
+      "Editais da área para a Avaliação documental: versão e situação da regra, dono da avaliação, o papel de quem está logado e fichas {concluidas, pendentes, em_analise, minhas_em_analise} das fichas do lote (20261016130000). avaliacao_documental >= leitor, área e coordenação.",
   },
   obter_regra_analise: {
     argumentos: ["p_edital"],
     critica: false,
     resumo:
-      "Regra da avaliação do edital (vigente e versões), modelos, nota mínima da regra de classificação, aldeias do DSEI e quantas vagas da Empregare têm carga. As perguntas da carga saíram para obter_perguntas_carga_analise (20261009180000). Leitor.",
+      "Regra da avaliação do edital (vigente e versões), modelos, nota mínima da regra de classificação, aldeias do DSEI e quantas vagas da Empregare têm carga. As perguntas da carga saíram para obter_perguntas_carga_analise (20261009180000). Leitor; quem não coordena recebe a resposta enxuta (regra só com versao, nome, situacao e versoes {versao, nome}; modelos vazio; aldeias nulo; 20261016130000).",
   },
   obter_regra_analise_se_mudou: {
     argumentos: ["p_edital", "p_versao"],
@@ -1279,13 +1279,13 @@ export const CONTRATO_RPC = {
     argumentos: ["p_edital"],
     critica: false,
     resumo:
-      "O que o assistente da regra lê: os nomes das colunas de pergunta da última carga de cada vaga (sem respostas) com o cargo da vaga, os cargos do quadro de vagas (diferenças por cargo), as regras conferidas dos outros editais da área (só a coordenação) e a regra de classificação vigente com pode_editar. Leitor.",
+      "O que o assistente da regra lê: os nomes das colunas de pergunta da última carga de cada vaga (sem respostas) com o cargo da vaga, os cargos do quadro de vagas (diferenças por cargo), as regras conferidas dos outros editais da área (só a coordenação) e a regra de classificação vigente com pode_editar. Só a coordenação do edital (FC_EXIGIR_COORD_AVALIACAO; os demais 42501, desde 20261016130000).",
   },
   obter_equipe_edital: {
     argumentos: ["p_edital"],
     critica: false,
     resumo:
-      "Equipe da avaliação do edital: gestores (coordenação automática), analistas, revisores e coordenação, vagas e, só para a coordenação, e-mails e pessoas que podem entrar. Leitor.",
+      "Equipe da avaliação do edital: gestores (coordenação automática), analistas, revisores e coordenação, vagas e, só para a coordenação, e-mails e pessoas que podem entrar. Só a coordenação do edital (FC_EXIGIR_COORD_AVALIACAO; os demais 42501, desde 20261016130000).",
   },
   salvar_equipe_edital: {
     argumentos: ["p_edital", "p_equipe", "p_motivo"],
