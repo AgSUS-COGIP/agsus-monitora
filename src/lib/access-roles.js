@@ -122,7 +122,8 @@ export function canViewSelecao(profile) {
 
 /*
   Avaliação documental (20261006090000_avaliacao_documental_permissao_e_menu.sql):
-  ver a regra e a equipe (leitor). Quem coordena cada edital o banco decide
+  ver a Fila (leitor); Regra, Equipe e Pré-classificação só para quem coordena
+  o edital. Quem coordena cada edital o banco decide
   (gestor do edital ou coordenação na equipe, com Administrador). Sem a matriz
   (contexto antigo), não aparece: o banco ainda não tem o recurso.
 */

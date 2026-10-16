@@ -19,6 +19,13 @@ import { getSupabaseClient } from "../../lib/supabaseClient.js";
 import { Aviso, Campo, Segmentado, TopoDoPainel } from "../../ui/index.js";
 import { CHAVE_DO_CABECALHO } from "../../lib/cabecalho-dos-documentos.js";
 import { estadoDasConfiguracoes } from "../configuracoes/estado.js";
+import {
+  coordenaOEdital,
+  visaoNaTela,
+  visoesDaPessoa,
+  VISOES,
+} from "./abas-e-entrada.ts";
+import { EntradaDaAvaliacao } from "./entrada-da-avaliacao.tsx";
 import { Equipe } from "./equipe.jsx";
 import { criarEstadoDaAvaliacao, MENSAGEM_SEM_ACESSO } from "./estado.js";
 import { criarEstadoDaFila, lerFichaLembrada } from "./estado-da-fila.js";
@@ -45,12 +52,12 @@ import "./ficha/ficha.css";
   das análises (view `analises`) continua sendo a leitura.
 */
 
-const VISOES = [
-  { valor: "regra", rotulo: "Regra", icone: "fa-sliders" },
-  { valor: "equipe", rotulo: "Equipe", icone: "fa-users" },
-  { valor: "pre", rotulo: "Pré-classificação", icone: "fa-ranking-star" },
-  { valor: "fila", rotulo: "Fila", icone: "fa-list-check" },
-];
+/*
+  Abas por papel (abas-e-entrada.ts): quem coordena o edital vê Regra,
+  Equipe, Pré-classificação e Fila; os demais, só a Fila, sem o seletor. Sem
+  edital escolhido não há abas: a entrada mostra os cartões dos editais.
+*/
+const FILA = VISOES.find((v) => v.valor === "fila");
 
 function textoDoStatus(e) {
   if (e.semAcesso) return "Sem acesso";
@@ -66,7 +73,8 @@ const AVISO_AO_ATUALIZAR =
   "A regra tem alterações ainda não salvas como versão (o rascunho fica guardado e volta ao abrir a regra). Atualizar agora?";
 
 function TelaDaArea({ estado, pre, fila, rascunho, atualizar, confirmar, e }) {
-  const visao = e.visao;
+  const visao = visaoNaTela(e);
+  const visoes = visoesDaPessoa(e);
   const [todos, setTodos] = useState(false);
   const { lista: editais, ocultos } = editaisDaEscolha(e.editais, {
     todos,
@@ -86,13 +94,20 @@ function TelaDaArea({ estado, pre, fila, rascunho, atualizar, confirmar, e }) {
       {emAnalise ? null : (
         <TopoDoPainel
           visoes={
-            <Segmentado
-              rotulo="Visão"
-              opcoes={VISOES}
-              valor={visao}
-              aoMudar={estado.mudarVisao}
-              tour="avd-visoes"
-            />
+            !e.editalId || e.semAcesso ? null : visoes.length ? (
+              <Segmentado
+                rotulo="Visão"
+                opcoes={visoes}
+                valor={visao}
+                aoMudar={estado.mudarVisao}
+                tour="avd-visoes"
+              />
+            ) : coordenaOEdital(e) === false ? (
+              <h2 className="avd-visao-unica" data-aba-unica="fila">
+                <i className={`fa-solid ${FILA.icone}`} aria-hidden="true" />{" "}
+                {FILA.rotulo}
+              </h2>
+            ) : null
           }
           status={textoDoStatus(e)}
           aoAtualizar={() => {
@@ -223,6 +238,11 @@ function TelaDaArea({ estado, pre, fila, rascunho, atualizar, confirmar, e }) {
                 <div className="ui-esqueleto-linha" />
               </div>
             )
+          ) : e.carregado && !e.erroAoCarregar ? (
+            <EntradaDaAvaliacao
+              editais={editais}
+              aoAbrir={(id) => void estado.escolherEdital(id)}
+            />
           ) : null}
         </>
       )}
@@ -270,24 +290,21 @@ export function criarAtualizacao({
   fichaLembrada = lerFichaLembrada,
 }) {
   return async function atualizar(area = estado.obter().area) {
-    const { area: antes, editalId, visao } = estado.obter();
-    const pedidos = [estado.carregar(area)];
-    if (area && area === antes && editalId) {
+    const antes = estado.obter();
+    const { editalId } = antes;
+    const visao = visaoNaTela(antes);
+    // Página recarregada no modo de análise: volta ao edital e à Fila (a fila reabre a ficha).
+    const lembrada = editalId ? null : fichaLembrada();
+    const pedidos = [
+      estado.carregar(area, { preferido: lembrada?.edital || "" }),
+    ];
+    if (area && area === antes.area && editalId) {
       if (visao === "pre") pedidos.push(pre.carregar(editalId));
       if (visao === "fila") pedidos.push(fila.carregar(editalId));
     }
     const [editais] = await Promise.all(pedidos);
-    // Página recarregada no modo de análise: volta ao edital e à Fila (a fila reabre a ficha).
-    const lembrada = fichaLembrada();
-    const agora = estado.obter();
-    if (
-      lembrada &&
-      !agora.editalId &&
-      agora.editais.some((ed) => ed.id === lembrada.edital)
-    ) {
+    if (lembrada && estado.obter().editalId === lembrada.edital)
       estado.mudarVisao("fila");
-      await estado.escolherEdital(lembrada.edital);
-    }
     return editais;
   };
 }

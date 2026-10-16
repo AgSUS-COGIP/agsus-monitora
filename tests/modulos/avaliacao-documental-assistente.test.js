@@ -525,9 +525,9 @@ describe("assistente da regra", () => {
     expect(localStorage.getItem("avd-regra-modo")).toBe("avancado");
   });
 
-  it("quem só lê vê o resumo, sem o assistente", async () => {
+  it("quem não coordena não vê a regra (nem o assistente nem o resumo)", async () => {
     await montar(supabaseFalso({ regra: regraSalva(1), pode: false }));
     expect(secao.querySelector(".avd-ast")).toBeNull();
-    expect(secao.querySelector(".avd-ast-resumo")).not.toBeNull();
+    expect(secao.querySelector(".avd-ast-resumo")).toBeNull();
   });
 });

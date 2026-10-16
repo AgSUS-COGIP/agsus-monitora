@@ -5,6 +5,15 @@ recurso `avaliacao_documental`). O Painel das análises (`src/modulos/analises/`
 continua sendo a leitura. Desenho e fases: `docs/analises-no-monitora/`; histórias AM-n em
 `docs/historias-de-usuario/analises-no-monitora.md`.
 
+## Abas por papel e entrada
+
+Regra, Equipe e Pré-classificação são só de quem coordena o edital (`pode_coordenar`, ou o
+`papel` = `COORDENADOR` da lista de editais antes de o edital carregar); os demais veem só a Fila,
+sem o seletor de abas, e a equipe nem é lida (`abas-e-entrada.ts`). Sem edital escolhido não há
+abas: a tela abre sozinha a ficha que estava aberta, o último edital aberto (localStorage, por
+pessoa e área) ou o único vigente; senão, mostra os cartões dos editais vigentes
+(`entrada-da-avaliacao.tsx`).
+
 ## Fase F1 (esta)
 
 - escolha do edital da área atual;
@@ -203,6 +212,8 @@ ficha ou esconder a aba. Sem as migrations, a tela usa as RPCs de sempre.
 ```
 avaliacao-documental.jsx  tela e montarAvaliacaoDocumental() (na #page-avaliacao-documental)
 estado.js                 store sem React: editais, regra, equipe e as gravações (RPCs)
+abas-e-entrada.ts         abas por papel, edital que abre sozinho, último edital lembrado
+entrada-da-avaliacao.tsx  cartões dos editais vigentes (sem edital escolhido)
 regra.jsx                 aba Regra: formulário, perguntas da carga, versões, aldeias
 assistente/diferencas-por-cargo.tsx  "Diferenças por cargo" (assistente e modo avançado)
 blocos.jsx                os blocos da ficha na regra

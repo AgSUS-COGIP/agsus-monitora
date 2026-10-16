@@ -1623,3 +1623,76 @@
 .avd-espelhos-massa textarea {
   font-family: var(--font-mono, monospace);
 }
+
+/*
+  Uma aba só (quem não coordena o edital vê só a Fila): o título no lugar do
+  seletor. Entrada sem edital escolhido: cartões compactos dos editais.
+*/
+.avd-visao-unica {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0;
+  color: var(--text-primary);
+  font-size: var(--text-body);
+  font-weight: var(--font-weight-semibold, 600);
+}
+.avd-entrada {
+  display: grid;
+  gap: var(--space-3);
+}
+.avd-entrada-titulo {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--text-body-sm);
+  font-weight: var(--font-weight-semibold, 600);
+}
+.avd-entrada-lista {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.avd-entrada-lista > li {
+  display: flex;
+}
+.avd-entrada-cartao {
+  display: grid;
+  align-content: start;
+  gap: var(--space-1);
+  width: 100%;
+  height: 100%;
+  min-height: 78px;
+  margin: 0;
+  color: var(--text-primary);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.avd-entrada-cartao:hover {
+  border-color: var(--border-control);
+}
+.avd-entrada-cartao:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+.avd-entrada-topo,
+.avd-entrada-regra {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+.avd-entrada-unidade,
+.avd-entrada-regra,
+.avd-entrada-andamento,
+.avd-entrada-minhas {
+  color: var(--text-secondary);
+  font-size: var(--text-body-sm);
+}
+.avd-entrada-minhas {
+  color: var(--text-primary);
+  font-weight: var(--font-weight-semibold, 600);
+}

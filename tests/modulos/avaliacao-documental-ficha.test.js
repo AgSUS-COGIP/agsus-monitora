@@ -302,9 +302,11 @@ async function abrirFicha(supabase) {
   await esperar();
   await escolher(secao.querySelector(".avd-edital select"), "e93");
   await esperar();
-  await clicar(
-    secao.querySelector("[data-tour='avd-visoes'] [data-valor='fila']"),
+  // Quem não coordena já abre na Fila, sem o seletor de abas.
+  const aba = secao.querySelector(
+    "[data-tour='avd-visoes'] [data-valor='fila']",
   );
+  if (aba) await clicar(aba);
   await esperar();
   await clicar(botao("Abrir", secao.querySelector("[data-candidato='7001']")));
   await esperar();
