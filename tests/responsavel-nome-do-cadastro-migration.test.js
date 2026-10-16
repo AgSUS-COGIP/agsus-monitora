@@ -168,9 +168,7 @@ describe("ensaio, rollback e correção", () => {
     const blocos = CORRECAO.match(/\nbegin;\n/g) ?? [];
     expect(blocos.length).toBe((CORRECAO.match(/\ncommit;\n/g) ?? []).length);
     expect(blocos.length).toBeGreaterThan(1);
-    expect(CORRECAO).toContain(
-      'is distinct from a.responsavel_analise',
-    );
+    expect(CORRECAO).toContain("is distinct from a.responsavel_analise");
     expect(CORRECAO).not.toMatch(/set[^;]*hash_registro/);
     expect(CORRECAO).not.toMatch(/ultima_atualizacao\s*=/);
     expect(CORRECAO).toContain("a01afddb-f64b-47d9-80e8-476a1ed14e43");
