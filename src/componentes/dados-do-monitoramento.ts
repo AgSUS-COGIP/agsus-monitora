@@ -12,7 +12,8 @@ import {
   Os dados de monitoramento que o app carrega, para os componentes React.
 
   A carga é de src/app/carga.js: as linhas de `TB_MONITORAMENTO_INDIGENA`
-  (`carregarLinhas`) alimentam o mapa, a Visão geral e os editais do Núcleo, e
+  (`carregarLinhas`, só quando pedidas — ver "AS LINHAS SOB DEMANDA", abaixo)
+  alimentam o mapa, a Visão geral e os editais do Núcleo, e
   o catálogo `TD_UNIDADE` (`carregarUnidades`) alimenta o formulário do
   edital. Ela só empurra o resultado para cá; os componentes leem com
   `useSyncExternalStore`. Este arquivo não importa React.
@@ -182,7 +183,46 @@ export function soDosEditais<T extends object>(
   );
 }
 
+/*
+  AS LINHAS SOB DEMANDA. `listar_monitoramento_operacional` é das consultas
+  mais caras do banco (~0,8 s, mesmo quando responde `inalterado`): em
+  19/10/2026 o Supabase NANO saturou com ~10 avaliadores que nunca abriam uma
+  página com estas linhas. Por isso a carga (src/app/carga.js) só as pede
+  quando alguém precisa: a página aberta que as usa (src/app/pagina-aberta.ts,
+  lista em src/lib/telas-com-linhas.ts) ou um componente fora dessas páginas
+  (busca global, Coordenações de Acessos), por `pedirLinhasDoMonitoramento`
+  (ou o hook `usarLinhasDoMonitoramento`). O pedido vale até ser devolvido.
+*/
+const pedidos = new Set<symbol>();
+const ouvintesDosPedidos = new Set<() => void>();
+
+function avisarPedidos() {
+  for (const ouvinte of ouvintesDosPedidos) ouvinte();
+}
+
+/** Alguém precisa das linhas; devolve a devolução do pedido. */
+export function pedirLinhasDoMonitoramento(): () => void {
+  const pedido = Symbol("linhas");
+  pedidos.add(pedido);
+  avisarPedidos();
+  return () => {
+    if (pedidos.delete(pedido)) avisarPedidos();
+  };
+}
+
+/** Há quem precise das linhas agora? */
+export function linhasPedidas() {
+  return pedidos.size > 0;
+}
+
+/** A carga acompanha os pedidos (liga a leitura e o Realtime). */
+export function assinarPedidosDasLinhas(ouvinte: () => void) {
+  ouvintesDosPedidos.add(ouvinte);
+  return () => ouvintesDosPedidos.delete(ouvinte);
+}
+
 /* Só para os testes: volta ao estado de antes da primeira carga. */
 export function redefinirDadosDoMonitoramento() {
+  pedidos.clear();
   publicar(ESTADO_INICIAL);
 }

@@ -32,10 +32,13 @@ import {
 } from "../modules/situacao-dos-modulos.js";
 import { esconderEsqueleto, marcarAtualizacao } from "./carregamento.js";
 import {
+  assinarPedidosDasLinhas,
   esquecerLinhasDoMonitoramento,
+  linhasPedidas,
   publicarLinhasDoMonitoramento,
   publicarUnidadesDoCatalogo,
 } from "../componentes/dados-do-monitoramento.ts";
+import { telaUsaAsLinhas } from "../lib/telas-com-linhas.ts";
 import { estadoDaVisaoGeral } from "../modulos/visao-geral/estado.ts";
 import { avisar as avisarPadrao } from "./avisos.js";
 
@@ -43,12 +46,23 @@ import { avisar as avisarPadrao } from "./avisos.js";
   A carga dos dados do app, sem React.
 
   Na entrada, as consultas (configuração, painéis, mapa, unidades, catálogo de
-  abas e monitoramento) saem juntas e cada uma é aplicada na ordem de sempre;
-  a espera é a da mais lenta. Se a cópia da sessão (IndexedDB, regras em
-  src/lib/copia-da-sessao.js) servir, a tela abre por ela e as consultas reais
-  atualizam por trás, reaplicando só o que mudou. "Atualizar dados" refaz as
-  consultas sem tela de carregamento. O Realtime do monitoramento relê as
-  linhas quando a tabela muda.
+  abas e, se a tela de entrada as usa, as linhas do monitoramento) saem juntas
+  e cada uma é aplicada na ordem de sempre; a espera é a da mais lenta. Se a
+  cópia da sessão (IndexedDB, regras em src/lib/copia-da-sessao.js) servir, a
+  tela abre por ela e as consultas reais atualizam por trás, reaplicando só o
+  que mudou. "Atualizar dados" refaz as consultas sem tela de carregamento.
+
+  AS LINHAS DO MONITORAMENTO SÃO SOB DEMANDA. `listar_monitoramento_operacional`
+  custa ~0,8 s no banco (mesmo respondendo `inalterado`), e em 19/10/2026 o
+  Supabase NANO saturou com ~10 avaliadores que nunca abriam uma página com
+  elas. Agora só são lidas quando alguém as pede (src/componentes/
+  dados-do-monitoramento.ts: a página aberta que as usa, src/lib/
+  telas-com-linhas.ts, ou a busca global e as Coordenações). A primeira
+  pintura não piora: a entrada já as pede junto se a tela de entrada as usa, e
+  a página aberta depois pinta pela cópia da sessão (se servir) enquanto a
+  leitura com versão chega. O Realtime do monitoramento só é assinado depois
+  que alguém pediu as linhas; uma mudança com ninguém precisando delas só as
+  marca como desatualizadas, e a próxima página que as pedir relê.
 
   As linhas e as unidades vão para src/componentes/dados-do-monitoramento.ts
   (as telas React assinam lá); o mapa da Saúde Indígena, para o estado da
@@ -89,6 +103,10 @@ const SITUACAO_PADRAO = Object.freeze({
   consulta: consultaDaSituacaoDoSistema,
   carregar: carregarSituacaoDoSistema,
 });
+const PEDIDOS_PADRAO = Object.freeze({
+  assinar: assinarPedidosDasLinhas,
+  ha: linhasPedidas,
+});
 
 /**
  * @param {object} dependencias
@@ -99,6 +117,8 @@ const SITUACAO_PADRAO = Object.freeze({
  * @param {() => object|null} dependencias.obterUsuario
  * @param {() => void} dependencias.mostrarApp mostra `#appScreen` com quem entrou
  * @param {() => void} dependencias.comemorar comemoração do acesso liberado
+ * @param {{ assinar: (ouvinte: () => void) => () => void, ha: () => boolean }} [dependencias.pedidos]
+ *   quem precisa das linhas do monitoramento (dados-do-monitoramento.ts)
  */
 export function criarCarga({
   cliente = getSupabaseClient,
@@ -115,11 +135,24 @@ export function criarCarga({
   situacao = SITUACAO_PADRAO,
   esqueleto = { esconder: esconderEsqueleto, marcarAtualizacao },
   visaoGeral = estadoDaVisaoGeral,
+  pedidos = PEDIDOS_PADRAO,
   agora = () => Date.now(),
 } = {}) {
   let linhas = [];
   /* A versão das `linhas` que o banco mandou: a próxima carga pergunta só se mudou. */
   let versaoDasLinhas = null;
+  /* As linhas já publicadas no store (resposta `inalterada` não republica). */
+  let publicadas = null;
+  /* As linhas vieram nesta sessão (do banco); antes disso, ninguém as pediu. */
+  let linhasCarregadas = false;
+  /* O Realtime avisou de mudança com ninguém precisando: a próxima página relê. */
+  let desatualizadas = false;
+  /* As linhas da cópia da sessão que serve (`{ linhas, versao }`, promessa), quando a entrada não as leu. */
+  let linhasDaCopia = null;
+  /* A entrada terminou: daqui em diante, pedido de linhas vira leitura. */
+  let sessaoAberta = false;
+  /* A sessão quer o Realtime (`iniciarRealtime`); o canal só abre se alguém usa as linhas. */
+  let realtimePermitido = false;
   /* O mapa que a tela tem (`{ linhas, versao }`), pelo mesmo motivo. */
   let mapaAtual = null;
   let unidades = [];
@@ -178,10 +211,18 @@ export function criarCarga({
         };
       });
 
+  /*
+    As linhas que a tela já tem: as da memória ou, antes da primeira leitura
+    da sessão, as da cópia da sessão (a versão dela ainda serve ao banco).
+  */
+  const linhasConhecidas = () =>
+    versaoDasLinhas || !linhasDaCopia
+      ? { linhas, versao: versaoDasLinhas }
+      : linhasDaCopia;
+
   /* As linhas ativas, por unidade e edital (sem a versão eram ~300 kB a cada entrada). */
-  const consultaDoMonitoramento = (
-    conhecidas = { linhas, versao: versaoDasLinhas },
-  ) => consultaComVersao(RPC_DO_MONITORAMENTO, conhecidas);
+  const consultaDoMonitoramento = (conhecidas = linhasConhecidas()) =>
+    consultaComVersao(RPC_DO_MONITORAMENTO, conhecidas);
 
   /* `lmap` e `rede_cnes` (~150 kB): `[{ chave, payload }]`, como a tabela. */
   const consultaDoMapa = (conhecido = mapaAtual) =>
@@ -192,9 +233,10 @@ export function criarCarga({
     umas das outras. Quem aplica o resultado continua sendo cada carga, na
     ordem de sempre; muda só a hora em que o pedido sai. `Promise.resolve` é o
     que dispara, porque a consulta do Supabase só vai para a rede quando alguém
-    chama `then`.
+    chama `then`. As linhas do monitoramento só entram com `comLinhas` (alguém
+    vai usá-las); sem elas, `monitoramento` fica `null`.
   */
-  function iniciarConsultas({ monitoramento, mapa } = {}) {
+  function iniciarConsultas({ monitoramento, mapa, comLinhas = true } = {}) {
     const iniciar = (consulta) => Promise.resolve(consulta);
     return {
       config: iniciar(configuracao.consulta()),
@@ -202,9 +244,10 @@ export function criarCarga({
       mapa: consultaDoMapa(mapa),
       unidades: iniciar(consultaDeUnidades()),
       abas: abas.consulta(sb()),
-      monitoramento: podeCarregarMonitoramento()
-        ? consultaDoMonitoramento(monitoramento)
-        : null,
+      monitoramento:
+        comLinhas && podeCarregarMonitoramento()
+          ? consultaDoMonitoramento(monitoramento)
+          : null,
     };
   }
 
@@ -289,8 +332,13 @@ export function criarCarga({
       }
       linhas = Array.isArray(data) ? data : [];
       versaoDasLinhas = versao || null;
+      linhasCarregadas = true;
+      desatualizadas = false;
       // A Visão geral (React) recorta; o mapa da Saúde Indígena lê o recorte dela.
-      publicarLinhasDoMonitoramento(linhas);
+      // Resposta `inalterada` devolve as mesmas linhas: nada a republicar.
+      if (linhas !== publicadas) publicarLinhasDoMonitoramento(linhas);
+      publicadas = linhas;
+      sincronizarCanal();
       return true;
     })();
     cargaDasLinhas = carga;
@@ -299,6 +347,34 @@ export function criarCarga({
     } finally {
       // `esquecer` pode ter soltado esta carga e outra já ter começado.
       if (cargaDasLinhas === carga) cargaDasLinhas = null;
+    }
+  }
+
+  /*
+    Alguém pediu as linhas (a página aberta, a busca global…). Já lidas e em
+    dia: nada. Nunca lidas nesta sessão: a cópia da sessão que serve pinta a
+    página na hora e a leitura com a versão dela vem logo atrás (quase sempre
+    `inalterado`). O Realtime marcou como desatualizadas: relê.
+  */
+  async function garantirLinhas() {
+    if (!sessaoAberta || !pedidos.ha() || !podeCarregarMonitoramento()) return;
+    if (linhasCarregadas && !desatualizadas) return;
+    try {
+      if (!linhasCarregadas && linhasDaCopia && !publicadas) {
+        const daCopia = await linhasDaCopia.catch(() => null);
+        if (daCopia && sessaoAberta && !linhasCarregadas && !publicadas) {
+          linhas = Array.isArray(daCopia.linhas) ? daCopia.linhas : [];
+          versaoDasLinhas = daCopia.versao || null;
+          publicarLinhasDoMonitoramento(linhas);
+          publicadas = linhas;
+        }
+      }
+      // Outro pedido pode ter lido enquanto a cópia era lida.
+      if (linhasCarregadas && !desatualizadas) return;
+      await carregarLinhas();
+    } catch (erro) {
+      console.warn("Falha ao carregar as linhas do monitoramento:", erro);
+      avisar("Erro ao carregar dados: " + erroAmigavel(erro), "error");
     }
   }
 
@@ -325,6 +401,12 @@ export function criarCarga({
   async function atualizarCopia(sessao, consultas, anteriores) {
     const dados = dadosDasRespostas(await respostasDasConsultas(consultas));
     if (usuarioId() !== sessao.usuarioId) return;
+    // A entrada não leu as linhas: a cópia nova leva as que a tela tem (lidas
+    // depois, sob demanda) ou as da cópia anterior, para a versão não se perder.
+    if (dados && !consultas.monitoramento && podeCarregarMonitoramento())
+      dados.monitoramento = linhasCarregadas
+        ? { linhas, versao: versaoDasLinhas }
+        : ((await linhasDaCopia?.catch(() => null)) ?? null);
     if (!dados) {
       if (anteriores)
         avisar(
@@ -352,10 +434,13 @@ export function criarCarga({
       if (mudou.has("mapa")) await carregarMapa({ consulta: novas.mapa });
       if (mudou.has("unidades"))
         await carregarUnidades({ consulta: novas.unidades });
+      // As linhas só se reaplicam se a entrada as leu (ninguém mais as tem).
       if (
-        mudou.has("mapa") ||
-        mudou.has("unidades") ||
-        mudou.has("monitoramento")
+        consultas.monitoramento &&
+        novas.monitoramento &&
+        (mudou.has("mapa") ||
+          mudou.has("unidades") ||
+          mudou.has("monitoramento"))
       )
         await carregarLinhas({ consulta: novas.monitoramento });
     }
@@ -382,8 +467,21 @@ export function criarCarga({
           ? parte(guardada.dados)
           : null,
       );
+    const linhasDaCopiaQueServe = daCopiaQueServe(
+      (dados) => dados.monitoramento,
+    );
+    /*
+      As linhas saem junto só se a tela de entrada as usa. A conta é a de
+      antes do catálogo de abas desta entrada chegar: a tela guardada ou a
+      inicial do perfil. Se o catálogo mudar a tela, a página aberta pede (ou
+      não) por conta própria.
+    */
+    const comLinhas = telaUsaAsLinhas(navegacao.telaDeEntrada());
+    // Sem elas agora, a cópia que serve guarda as linhas para a primeira página que as pedir.
+    linhasDaCopia = comLinhas ? null : linhasDaCopiaQueServe;
     const consultas = iniciarConsultas({
-      monitoramento: daCopiaQueServe((dados) => dados.monitoramento),
+      comLinhas,
+      monitoramento: linhasDaCopiaQueServe,
       mapa: daCopiaQueServe((dados) =>
         dados.versaoDoMapa
           ? { linhas: dados.mapa, versao: dados.versaoDoMapa }
@@ -405,13 +503,25 @@ export function criarCarga({
     navegacao.montarMenu();
     await carregarMapa({ consulta: fonte.mapa });
     await carregarUnidades({ consulta: fonte.unidades });
-    const linhasOk = await carregarLinhas({ consulta: fonte.monitoramento });
+    // Sem permissão para as linhas, a carga só publica a lista vazia (sem rede).
+    // Cópia que serve sem as linhas (quem nunca as abriu): espera a consulta real.
+    const linhasOk =
+      comLinhas || !podeCarregarMonitoramento()
+        ? await carregarLinhas({
+            consulta: comLinhas
+              ? fonte.monitoramento || consultas.monitoramento
+              : null,
+          })
+        : true;
     if (!linhasOk) {
       esqueleto.esconder();
       return false;
     }
     mostrarApp();
+    sessaoAberta = true;
     navegacao.irPara(navegacao.telaDeEntrada());
+    // A página aberta já pediu as linhas (ou o pedido ficou da sessão anterior).
+    void garantirLinhas();
     esqueleto.esconder();
     comemorar();
     atualizarCopia(sessao, consultas, daCopia ? guardada.dados : null).catch(
@@ -431,7 +541,10 @@ export function criarCarga({
     if (atualizacao) return atualizacao;
     esqueleto.marcarAtualizacao(true);
     atualizacao = (async () => {
-      const consultas = iniciarConsultas();
+      // As linhas, só se alguém as usa agora; lidas antes, ficam para a próxima página que as pedir.
+      const comLinhas = pedidos.ha();
+      if (!comLinhas && linhasCarregadas) desatualizadas = true;
+      const consultas = iniciarConsultas({ comLinhas });
       const situacaoDoBanco = situacao.consulta(sb());
       await respostasDasConsultas(consultas);
       await configuracao.carregar({ consulta: consultas.config });
@@ -441,9 +554,10 @@ export function criarCarga({
       await situacao.carregar({ consulta: situacaoDoBanco });
       navegacao.montarMenu();
       await carregarUnidades({ consulta: consultas.unidades });
-      const linhasOk = await carregarLinhas({
-        consulta: consultas.monitoramento,
-      });
+      const linhasOk =
+        comLinhas || !podeCarregarMonitoramento()
+          ? await carregarLinhas({ consulta: consultas.monitoramento })
+          : true;
       if (!linhasOk) return false;
       // Painel já aberto recarrega na próxima abertura; o atual, logo abaixo.
       paineis.descartarAbertos();
@@ -468,8 +582,16 @@ export function criarCarga({
 
   // ── Realtime do monitoramento ─────────────────────────────────────────
 
-  /* Sucesso só quando as linhas vieram; a falha já foi avisada pela carga. */
+  /*
+    Sucesso só quando as linhas vieram; a falha já foi avisada pela carga.
+    Ninguém usando as linhas agora: não relê — ficam desatualizadas, e a
+    próxima página que as pedir relê (`garantirLinhas`).
+  */
   async function releituraDoRealtime() {
+    if (!pedidos.ha()) {
+      desatualizadas = true;
+      return;
+    }
     try {
       if (await carregarLinhas())
         avisar("Dashboard atualizado automaticamente.", "ok");
@@ -479,7 +601,35 @@ export function criarCarga({
     }
   }
 
+  /*
+    O canal só existe depois que alguém pediu as linhas nesta sessão: quem só
+    usa páginas sem elas (a Avaliação documental, por exemplo) nem assina.
+    Lidas uma vez, o canal fica (até sair ou a aba ir para o fundo), para a
+    mudança vinda com a pessoa em outra página só marcar "desatualizadas" — sem
+    ele, cada volta a uma página com linhas teria de reler para saber.
+  */
+  function sincronizarCanal() {
+    const quer =
+      realtimePermitido &&
+      podeCarregarMonitoramento() &&
+      (pedidos.ha() || linhasCarregadas);
+    if (quer) abrirCanal();
+    else fecharCanal();
+  }
+
+  /* A sessão quer o Realtime (entrada, volta da aba); o canal segue os pedidos. */
   function iniciarRealtime() {
+    realtimePermitido = true;
+    sincronizarCanal();
+  }
+
+  /* Saída ou aba no fundo: nada de Realtime até `iniciarRealtime`. */
+  function pararRealtime() {
+    realtimePermitido = false;
+    fecharCanal();
+  }
+
+  function abrirCanal() {
     if (!sb() || !obterUsuario()) return;
     if (!configuracao.booleano("feature_realtime_monitoramento", true)) return;
     if (canal) return;
@@ -502,7 +652,7 @@ export function criarCarga({
     }
   }
 
-  function pararRealtime() {
+  function fecharCanal() {
     clearTimeout(esperaDoRealtime);
     if (!canal) return;
     try {
@@ -524,10 +674,21 @@ export function criarCarga({
     cargaDasLinhas = null;
     linhas = [];
     versaoDasLinhas = null;
+    publicadas = null;
+    linhasCarregadas = false;
+    desatualizadas = false;
+    linhasDaCopia = null;
+    sessaoAberta = false;
     mapaAtual = null;
     copiaEmLeitura = null;
     esquecerLinhasDoMonitoramento();
   }
+
+  /* Pedido novo (ou devolvido): lê as linhas se preciso e acerta o canal. */
+  pedidos.assinar(() => {
+    sincronizarCanal();
+    void garantirLinhas();
+  });
 
   return {
     iniciarConsultas,

@@ -9,6 +9,8 @@ import type { ResultadoDaBusca, OpcoesDaBusca } from "./tipos.ts";
   - Esc, clique no fundo e o botão "Esc" fecham; a rolagem da página trava enquanto está aberta.
   - Ao abrir: campo vazio e com foco, nada listado. Cada letra filtra de novo e
     desmarca a escolha.
+  - Aberta, pede as linhas do monitoramento (usarLinhasDoMonitoramento): a
+    página atual pode não tê-las carregado.
   - Procura em edital, unidade, etapa, status, UF, risco, ciclo, responsável e
     observações de todas as linhas do monitoramento; até 12, na ordem do banco.
   - Resultado: "edital — unidade", "etapa · UF" e selo de risco (Alto, Médio, Baixo).
@@ -20,13 +22,7 @@ import type { ResultadoDaBusca, OpcoesDaBusca } from "./tipos.ts";
   Novo: o termo aparece realçado; o foco fica preso no diálogo e volta a quem abriu.
 */
 
-import {
-  useEffect,
-  useId,
-  useRef,
-  useState,
-  useSyncExternalStore,
-} from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { montarModulo } from "../../app/montar-modulo.jsx";
 import {
   buscarLinhas,
@@ -38,10 +34,7 @@ import {
   subtituloDoResultado,
   tituloDoResultado,
 } from "../../lib/busca-global.ts";
-import {
-  assinarDadosDoMonitoramento,
-  obterDadosDoMonitoramento,
-} from "../dados-do-monitoramento.ts";
+import { usarLinhasDoMonitoramento } from "../usar-linhas-do-monitoramento.ts";
 import { Modal } from "../../ui/modal.jsx";
 
 function Realce({ valor, termo }: { valor: string; termo: string }) {
@@ -63,10 +56,8 @@ function PainelDaBusca({
   aoFechar: () => void;
   aoEscolher: OpcoesDaBusca["aoEscolher"];
 }) {
-  const { linhas } = useSyncExternalStore(
-    assinarDadosDoMonitoramento,
-    obterDadosDoMonitoramento,
-  );
+  // Aberta, a busca pede as linhas (sob demanda: a página atual pode não usá-las).
+  const { linhas } = usarLinhasDoMonitoramento();
   const [termo, setTermo] = useState("");
   const [indice, setIndice] = useState(-1);
   const rolarAteEscolhido = useRef(false);

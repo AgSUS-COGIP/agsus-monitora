@@ -48,7 +48,9 @@ import { TabelaDeProcessos } from "./tabela.tsx";
   (`loadData` → dados-do-monitoramento.ts); a tela lê o estado
   (`estado.ts`); do banco, só os marcos do ano, o mapa de Projetos e o
   acompanhamento da área (etapas do cronograma e resumo das listas, pedido
-  pelo estado com o cliente da tela).
+  pelo estado com o cliente da tela). A seção existe desde o início, mas o
+  conteúdo só monta na primeira abertura (`visitada`), e o acompanhamento só
+  é pedido com a página aberta: quem não abre a Visão geral não paga por ela.
 
   Ordem: boas-vindas e marcos do ano, topo (hora da carga, Atualizar,
   Exportar CSV), filtros, indicadores, o MAPA DA ÁREA, "Processos por
@@ -139,6 +141,8 @@ export function TelaDaVisaoGeral({
   const linhaAberta = aberta
     ? e.linhasDaArea.find((linha) => String(linha.id) === aberta) || null
     : null;
+  // Montada escondida desde o início: nada (mapas, marcos) antes da primeira abertura.
+  if (!e.visitada) return null;
 
   return (
     <div className="ui-tela visao-geral-tela">

@@ -11,6 +11,7 @@ import {
 import {
   definirAreaAtual,
   definirAreasDoUsuario,
+  obterDadosDoMonitoramento,
   redefinirDadosDoMonitoramento,
 } from "../../src/componentes/dados-do-monitoramento.ts";
 import {
@@ -470,6 +471,91 @@ describe("a página aberta que foi desligada vira o aviso", () => {
     await usarCatalogo(["editais@sede"]);
     navegacao.montarMenu();
     expect(navegacao.telaDeEntrada()).toBe("dashboard");
+  });
+
+  /*
+    A tela inicial respeita o catálogo: o grupo Avaliador tem a Visão geral
+    (dashboard leitor), mas, com ela desligada na área, entra direto na
+    primeira página ligada que pode abrir — sem montar a Visão geral nem ler
+    as linhas do monitoramento.
+  */
+  describe("tela inicial com a Visão geral desligada", () => {
+    const avaliador = (areas = ["saude-indigena"]) => ({
+      id: "a",
+      ativo: true,
+      permissoes: { dashboard: "leitor", avaliacao_documental: "editor" },
+      areas,
+    });
+
+    function criarAvaliador(perfil = avaliador()) {
+      document
+        .querySelector(".content")
+        .insertAdjacentHTML(
+          "beforeend",
+          '<section id="page-avaliacao-documental" class="page"></section>',
+        );
+      const janela = {
+        avaliacaoDocumentalController: { render: vi.fn() },
+        location: { reload: vi.fn() },
+      };
+      const navegacao = criarNavegacao({
+        janela,
+        obterPerfil: () => perfil,
+        paineis: {
+          podeAbrir: () => false,
+          primeiro: () => null,
+          doMenu: () => [],
+          mostrar: vi.fn(),
+          esquecerAtual: vi.fn(),
+        },
+        confirmarSaida: () => true,
+        aplicarAtualizacao: () => false,
+      });
+      return { navegacao, janela };
+    }
+
+    beforeEach(() => {
+      definirAreasDoUsuario(["saude-indigena"]);
+      definirAreaAtual("saude-indigena");
+    });
+
+    it("sem tela guardada, entra na primeira página ligada (Avaliação documental)", async () => {
+      await usarCatalogo(["visao-geral@saude-indigena"]);
+      const { navegacao, janela } = criarAvaliador();
+      navegacao.montarMenu();
+      expect(navegacao.telaDeEntrada()).toBe("avaliacao-documental");
+      navegacao.irPara(navegacao.telaDeEntrada());
+      expect(ativas()).toEqual(["page-avaliacao-documental"]);
+      expect(janela.avaliacaoDocumentalController.render).toHaveBeenCalled();
+    });
+
+    it("a inicial do sistema (sair do painel externo) também", async () => {
+      await usarCatalogo(["visao-geral@saude-indigena"]);
+      const { navegacao } = criarAvaliador();
+      navegacao.montarMenu();
+      expect(navegacao.telaInicialDoSistema()).toBe("avaliacao-documental");
+    });
+
+    it("ligada, a Visão geral continua sendo a inicial", () => {
+      const { navegacao } = criarAvaliador();
+      navegacao.montarMenu();
+      expect(navegacao.telaDeEntrada()).toBe("dashboard");
+      expect(navegacao.telaInicialDoSistema()).toBe("dashboard");
+    });
+
+    it("sem página ligada na área atual, a de outra área — e ela vira a atual", async () => {
+      await usarCatalogo([
+        "visao-geral@saude-indigena",
+        "avaliacao-documental@saude-indigena",
+      ]);
+      const { navegacao } = criarAvaliador(
+        avaliador(["saude-indigena", "sede"]),
+      );
+      navegacao.montarMenu();
+      expect(obterDadosDoMonitoramento().areaAtual).toBe("saude-indigena");
+      expect(navegacao.telaDeEntrada()).toBe("avaliacao-documental");
+      expect(obterDadosDoMonitoramento().areaAtual).toBe("sede");
+    });
   });
 
   it("abrir por link ou busca uma página desligada mostra o aviso", async () => {

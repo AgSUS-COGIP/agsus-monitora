@@ -163,6 +163,10 @@ export type EstadoProprio = {
   } | null;
   destaque: { id: string; vez: number } | null;
   carregadoEm: number;
+  /** A página está aberta (a navegação diz); fechada, não pede o acompanhamento. */
+  aberta: boolean;
+  /** Já foi aberta nesta visita: até lá a tela não monta mapas nem marcos. */
+  visitada: boolean;
 };
 export type SnapshotDaVisaoGeral = Readonly<
   Omit<EstadoProprio, "filtros" | "colunas"> & {
@@ -187,6 +191,7 @@ export type EstadoDaVisaoGeral = {
   assinar: (ouvinte: () => void) => () => void;
   definirAviso: (funcao?: ((mensagem: string) => void) | null) => void;
   definirBuscaDoAcompanhamento: (funcao: BuscaDoAcompanhamento | null) => void;
+  definirAberta: (aberta: boolean) => void;
   definirFiltro: (campo: CampoDoFiltro, valores: readonly string[]) => void;
   alternarFiltroUnico: (
     campo: CampoDoFiltro,
@@ -212,6 +217,8 @@ export type OpcoesDoEstado = {
   armazenamento?: Armazenamento | null;
   agora?: () => number;
   baixar?: (conteudo: string, nome: string) => void;
+  /** Começa aberta? A instância do app começa fechada (a navegação abre). */
+  aberta?: boolean;
 };
 export type Perfil = {
   nome?: string;

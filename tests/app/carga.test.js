@@ -44,10 +44,41 @@ function consultaPreguicosa(nome, resposta, registro) {
   return consulta;
 }
 
+/*
+  Quem precisa das linhas (src/componentes/dados-do-monitoramento.ts), falso:
+  `pedir()` é a página aberta que as usa; devolve a devolução.
+*/
+function pedidosFalsos() {
+  const ouvintes = new Set();
+  let quantos = 0;
+  const avisarTodos = () => ouvintes.forEach((ouvinte) => ouvinte());
+  return {
+    ha: () => quantos > 0,
+    assinar(ouvinte) {
+      ouvintes.add(ouvinte);
+      return () => ouvintes.delete(ouvinte);
+    },
+    pedir() {
+      quantos += 1;
+      avisarTodos();
+      let devolvido = false;
+      return () => {
+        if (devolvido) return;
+        devolvido = true;
+        quantos -= 1;
+        avisarTodos();
+      };
+    },
+  };
+}
+
 function montar({
   copiaGuardada = null,
   erroNasLinhas = null,
   perfil = PERFIL,
+  // Por padrão, a página aberta usa as linhas (o comportamento de antes).
+  pedindo = true,
+  telaDeEntrada = "nucleo",
 } = {}) {
   const saidas = [];
   const ordem = [];
@@ -126,7 +157,7 @@ function montar({
       view = tela;
       ordem.push(["irPara", tela]);
     }),
-    telaDeEntrada: () => "nucleo",
+    telaDeEntrada: () => telaDeEntrada,
     telaPermitida: (tela) => tela !== "proibida",
     definir: (tela) => (view = tela),
   };
@@ -150,6 +181,8 @@ function montar({
   };
   const visaoGeral = { obter: () => ({}), definirDadosDoMapa: vi.fn() };
   const avisar = vi.fn();
+  const pedidos = pedidosFalsos();
+  if (pedindo) pedidos.pedir();
   const mostrarApp = vi.fn(() => ordem.push(["mostrarApp"]));
   const comemorar = vi.fn(() => ordem.push(["comemorar"]));
   const carga = criarCarga({
@@ -167,6 +200,7 @@ function montar({
     situacao,
     esqueleto,
     visaoGeral,
+    pedidos,
     agora: () => 1_000,
   });
   return {
@@ -183,6 +217,7 @@ function montar({
     saidas,
     ordem,
     canais,
+    pedidos,
     definirLiberados: (ids) => (liberados = new Set(ids)),
   };
 }
@@ -487,6 +522,7 @@ describe("Realtime do monitoramento", () => {
     });
 
     carga.iniciarRealtime();
+    // O pedido da página continua: o próximo login assina de novo.
     expect(cliente.channel).toHaveBeenCalledTimes(2);
   });
 
@@ -495,6 +531,192 @@ describe("Realtime do monitoramento", () => {
     configuracao.booleano.mockReturnValue(false);
     carga.iniciarRealtime();
     expect(cliente.channel).not.toHaveBeenCalled();
+  });
+});
+
+/*
+  As linhas sob demanda (19/10/2026: o Supabase NANO saturou com avaliadores
+  que nunca abriam uma página com elas). Quem entra numa página sem linhas não
+  paga `listar_monitoramento_operacional` nem assina o Realtime.
+*/
+describe("linhas do monitoramento sob demanda", () => {
+  const RPC = "listar_monitoramento_operacional";
+  const pedidosDasLinhas = (cliente) =>
+    cliente.rpc.mock.calls.filter(([nome]) => nome === RPC);
+  const COPIA_COM_LINHAS = () =>
+    montarCopia({
+      usuarioId: "u1",
+      acesso: assinaturaDoAcesso(PERFIL, ["1"]),
+      versao: "v1",
+      agora: 500,
+      dados: {
+        config: [{ chave: "app_title", valor: "MONITORA" }],
+        paineis: [{ id: "1", codigo: "bi" }],
+        mapa: MAPA,
+        versaoDoMapa: VERSAO_DO_MAPA,
+        unidades: [{ nome_oficial: "DSEI Xingu" }],
+        abas: null,
+        monitoramento: { linhas: LINHAS, versao: VERSAO_DAS_LINHAS },
+      },
+    });
+
+  it("entrar direto na Avaliação documental não lê as linhas", async () => {
+    const { carga, cliente, navegacao, copia } = montar({
+      pedindo: false,
+      telaDeEntrada: "avaliacao-documental",
+    });
+    await expect(carga.carregarEntrada()).resolves.toBe(true);
+    await esperarTudo();
+    expect(navegacao.irPara).toHaveBeenCalledWith("avaliacao-documental");
+    expect(pedidosDasLinhas(cliente)).toHaveLength(0);
+    expect(obterDadosDoMonitoramento().carregado).toBe(false);
+    // A cópia da sessão vai sem linhas (ninguém as leu), e sem quebrar.
+    expect(copia.guardar).toHaveBeenCalledTimes(1);
+    expect(copia.guardar.mock.calls[0][0].dados.monitoramento).toBeNull();
+  });
+
+  it("a página que usa as linhas, aberta depois, lê uma vez", async () => {
+    const { carga, cliente, pedidos } = montar({
+      pedindo: false,
+      telaDeEntrada: "avaliacao-documental",
+    });
+    await carga.carregarEntrada();
+    const devolver = pedidos.pedir();
+    pedidos.pedir();
+    await esperarTudo();
+    expect(pedidosDasLinhas(cliente)).toHaveLength(1);
+    expect(obterDadosDoMonitoramento().linhas).toEqual(LINHAS);
+    devolver();
+    pedidos.pedir();
+    await esperarTudo();
+    expect(pedidosDasLinhas(cliente)).toHaveLength(1);
+  });
+
+  it("antes da entrada terminar, o pedido espera (não lê fora da sessão)", async () => {
+    const { carga, cliente, pedidos } = montar({
+      pedindo: false,
+      telaDeEntrada: "avaliacao-documental",
+    });
+    pedidos.pedir();
+    await esperarTudo();
+    expect(pedidosDasLinhas(cliente)).toHaveLength(0);
+    await carga.carregarEntrada();
+    await esperarTudo();
+    // O pedido que já estava (da página da sessão anterior) vale na entrada.
+    expect(pedidosDasLinhas(cliente)).toHaveLength(1);
+  });
+
+  it("com a cópia da sessão, a página pinta pelas linhas dela e pergunta pela versão", async () => {
+    const { carga, cliente, pedidos, copia } = montar({
+      pedindo: false,
+      telaDeEntrada: "avaliacao-documental",
+      copiaGuardada: COPIA_COM_LINHAS(),
+    });
+    await carga.carregarEntrada();
+    await esperarTudo();
+    expect(pedidosDasLinhas(cliente)).toHaveLength(0);
+    // A cópia nova não perde as linhas (nem a versão) da anterior.
+    expect(copia.guardar.mock.calls[0][0].dados.monitoramento).toEqual({
+      linhas: LINHAS,
+      versao: VERSAO_DAS_LINHAS,
+    });
+    let responder;
+    cliente.rpc.mockImplementationOnce(
+      (nome, argumentos) =>
+        new Promise((resolver) => {
+          responder = () =>
+            resolver({
+              data: { inalterado: true, versao: argumentos.p_versao },
+              error: null,
+            });
+        }),
+    );
+    pedidos.pedir();
+    await esperarTudo();
+    // Pintou pela cópia antes de o banco responder.
+    expect(obterDadosDoMonitoramento()).toMatchObject({
+      linhas: LINHAS,
+      carregado: true,
+    });
+    expect(pedidosDasLinhas(cliente)[0][1]).toEqual({
+      p_versao: VERSAO_DAS_LINHAS,
+    });
+    responder();
+    await esperarTudo();
+    expect(carga.linhas()).toEqual(LINHAS);
+  });
+
+  it('"Atualizar dados" sem página com linhas não as lê', async () => {
+    const { carga, cliente } = montar({
+      pedindo: false,
+      telaDeEntrada: "avaliacao-documental",
+    });
+    await carga.carregarEntrada();
+    await expect(carga.atualizarDados()).resolves.toBe(true);
+    expect(pedidosDasLinhas(cliente)).toHaveLength(0);
+  });
+
+  it("sem ninguém usando as linhas, o Realtime nem assina", async () => {
+    const { carga, cliente, pedidos } = montar({
+      pedindo: false,
+      telaDeEntrada: "avaliacao-documental",
+    });
+    await carga.carregarEntrada();
+    carga.iniciarRealtime();
+    expect(cliente.channel).not.toHaveBeenCalled();
+    // Abriu uma página com linhas: assina.
+    pedidos.pedir();
+    await esperarTudo();
+    expect(cliente.channel).toHaveBeenCalledTimes(1);
+  });
+
+  it("mudança com a pessoa em outra página só marca desatualizadas; a volta relê uma vez", async () => {
+    vi.useFakeTimers();
+    const { carga, cliente, canais, pedidos, avisar } = montar({
+      pedindo: false,
+      telaDeEntrada: "avaliacao-documental",
+    });
+    await carga.carregarEntrada();
+    carga.iniciarRealtime();
+    const devolver = pedidos.pedir();
+    await vi.advanceTimersByTimeAsync(0);
+    expect(pedidosDasLinhas(cliente)).toHaveLength(1);
+    devolver();
+    // O canal fica (as linhas foram lidas), mas a rajada não relê ninguém.
+    expect(cliente.removeChannel).not.toHaveBeenCalled();
+    canais[0].ao();
+    canais[0].ao();
+    await vi.advanceTimersByTimeAsync(800);
+    expect(pedidosDasLinhas(cliente)).toHaveLength(1);
+    expect(avisar).not.toHaveBeenCalledWith(
+      "Dashboard atualizado automaticamente.",
+      "ok",
+    );
+    pedidos.pedir();
+    pedidos.pedir();
+    await vi.advanceTimersByTimeAsync(0);
+    expect(pedidosDasLinhas(cliente)).toHaveLength(2);
+    expect(pedidosDasLinhas(cliente)[1][1]).toEqual({
+      p_versao: VERSAO_DAS_LINHAS,
+    });
+  });
+
+  it("sair fecha o canal e esquece as linhas; a próxima sessão começa sem elas", async () => {
+    const { carga, cliente, pedidos } = montar({
+      pedindo: false,
+      telaDeEntrada: "avaliacao-documental",
+    });
+    await carga.carregarEntrada();
+    carga.iniciarRealtime();
+    const devolver = pedidos.pedir();
+    await esperarTudo();
+    devolver();
+    carga.esquecer();
+    expect(cliente.removeChannel).toHaveBeenCalledTimes(1);
+    await carga.carregarEntrada();
+    carga.iniciarRealtime();
+    expect(cliente.channel).toHaveBeenCalledTimes(1);
+    expect(pedidosDasLinhas(cliente)).toHaveLength(1);
   });
 });
 

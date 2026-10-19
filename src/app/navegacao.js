@@ -79,8 +79,10 @@ import { definirPaginaDaAya } from "../modulos/aya/estado.js";
 
   Quem acompanha a navegação assina: `assinar(ouvinte)` recebe
   `{ tipo: "menu" }` a cada marcação do menu (o lugar da pessoa pode ter
-  mudado) e `{ tipo: "abertura", view, anterior }` quando uma tela abriu
-  (auditoria e presença, em src/app/presenca.js).
+  mudado), `{ tipo: "abertura", view, anterior }` quando uma tela abriu
+  (auditoria e presença, em src/app/presenca.js) e `{ tipo: "aviso", view }`
+  quando, no lugar dela, ficou um aviso (sem acesso, desligada, manutenção).
+  A página aberta decide o que se carrega (src/app/pagina-aberta.ts).
 */
 
 /*
@@ -226,7 +228,6 @@ export function criarNavegacao({
   }
 
   const permitida = (tela) => telaPermitida(tela, perfil(), paineis);
-  const inicialDoSistema = () => telaInicialDoSistema(perfil(), paineis);
 
   /* A página (view) na área está desligada pela coordenação (src/lib/pagina-desligada.ts)? */
   const desligada = (tela, area = areaAtual()) =>
@@ -238,12 +239,26 @@ export function criarNavegacao({
       area,
     });
 
-  /* A tela guardada desligada não reabre: vale a primeira página ligada. */
-  function deEntrada() {
-    const tela = telaDeEntrada(telaGuardada(), perfil(), paineis);
+  /*
+    A tela de entrada (a guardada ou a inicial do sistema) desligada pela
+    coordenação não abre: vale a primeira página ligada e permitida do menu
+    (a árvore só tem essas), e a área dela passa a ser a atual. Assim quem tem
+    a Visão geral liberada (o grupo Avaliador, por exemplo) mas a vê desligada
+    na área entra direto na página que usa, sem passar pela Visão geral.
+  */
+  function ligadaOuPrimeira(tela) {
     if (!desligada(tela)) return tela;
-    return primeiraPaginaLigada(arvore, areaAtual(), tela)?.view || tela;
+    const item = primeiraPaginaLigada(arvore, areaAtual(), tela);
+    if (!item) return tela;
+    if (item.area) definirAreaAtual(item.area);
+    return item.view;
   }
+
+  const inicialDoSistema = () =>
+    ligadaOuPrimeira(telaInicialDoSistema(perfil(), paineis));
+
+  const deEntrada = () =>
+    ligadaOuPrimeira(telaDeEntrada(telaGuardada(), perfil(), paineis));
 
   /* O botão da página desativada (e da manutenção): a primeira página ligada do menu. */
   function irParaInicio() {
@@ -355,6 +370,11 @@ export function criarNavegacao({
     avisarOuvintes({ tipo: "abertura", view: tela, anterior });
   }
 
+  /* No lugar da página ficou um aviso (sem acesso, desligada, manutenção). */
+  function ficouAviso(tela) {
+    avisarOuvintes({ tipo: "aviso", view: tela });
+  }
+
   /** Abre a tela (o `navigate` de sempre). Sem permissão, avisa e fica onde está. */
   function irPara(pedida) {
     const anterior = view;
@@ -396,6 +416,7 @@ export function criarNavegacao({
 
     if (tela === TELA_SEM_ACESSO) {
       mostrarSemAcesso();
+      ficouAviso(tela);
       return;
     }
 
@@ -417,6 +438,7 @@ export function criarNavegacao({
         fechada ? "Página desativada" : "Em manutenção",
         subtituloDaArea(""),
       );
+      ficouAviso(tela);
       return;
     }
 

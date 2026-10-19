@@ -562,7 +562,8 @@ describe("ritmo da análise", () => {
     editais: [
       {
         id: "bcecfb08",
-        edital: "114/2026",
+        // O mesmo edital das linhas do resumo (10/2026: 1 Aprovado, 1 Pendente).
+        edital: "10/2026",
         situacoes: {
           pendente: 1086,
           em_analise: 12,
@@ -600,11 +601,72 @@ describe("ritmo da análise", () => {
     expect(chamadas(supabase, "obter_ritmo_da_analise")).toEqual([
       { p_area: "saude-indigena" },
     ]);
-    expect(card().textContent).toContain("Ritmo da análise · 114/2026");
+    expect(card().textContent).toContain("Ritmo da análise · 10/2026");
     expect(card().textContent).toContain(
       "Prazo: 22/10 · Validação da documentação",
     );
-    expect(card().textContent).toContain("9 avaliadores");
+    expect(card().querySelector("[data-hoje]")).not.toBeNull();
+    expect(card().querySelector("[data-referencia]")).not.toBeNull();
+  });
+
+  /*
+    19/10/2026: o topo dizia 1.076 pendentes e o card "faltam 1.074" (ao
+    vivo). Agora o card conta as linhas do edital no resumo que a tela já tem.
+  */
+  it("as contagens vêm do resumo do Painel (as linhas da tela), não das fichas ao vivo", async () => {
+    const conferidoEm = new Date().toISOString();
+    const supabase = supabaseFalso({
+      respostas: {
+        obter_ritmo_da_analise: () => ({ data: RITMO, error: null }),
+        obter_ultima_conferencia: () => ({ data: conferidoEm, error: null }),
+      },
+    });
+    await montar(supabase);
+    await esperar();
+    const kpis = [...card().querySelectorAll(".ui-kpi")].map((k) =>
+      k.textContent.replace(/\s+/g, ""),
+    );
+    // 10/2026 no resumo: 1 Aprovado e 1 Pendente (as fichas diziam 414 e 1.098).
+    expect(kpis).toContain("Concluído50%");
+    expect(kpis).toContain("Faltam1");
+    // O momento é o do "Conferido às" do topo, e o recorte é só do edital.
+    expect(card().querySelector("[data-momento]").textContent).toMatch(
+      /^Conferido às \d{2}:\d{2} · só o 10\/2026$/,
+    );
+  });
+
+  it("edital sem linha no resumo carregado: sem card", async () => {
+    const supabase = supabaseFalso({
+      respostas: {
+        obter_ritmo_da_analise: () => ({
+          data: { editais: [{ ...RITMO.editais[0], edital: "114/2026" }] },
+          error: null,
+        }),
+      },
+    });
+    await montar(supabase);
+    expect(card()).toBeNull();
+  });
+
+  it("recolher deixa uma linha só e fica guardado para a pessoa", async () => {
+    await montar(comRitmo());
+    const botao = () => card().querySelector('[data-acao="recolher-ritmo"]');
+    expect(botao().getAttribute("aria-expanded")).toBe("true");
+    await clicar(botao());
+    expect(card().hasAttribute("data-recolhido")).toBe(true);
+    expect(card().querySelector(".ui-kpi")).toBeNull();
+    expect(card().querySelector("[data-resumo]")).not.toBeNull();
+    expect(
+      Object.keys(localStorage).some((chave) =>
+        chave.startsWith("monitora.analises.ritmo-recolhido:"),
+      ),
+    ).toBe(true);
+    await act(async () => painel.raiz.unmount());
+    document.body.innerHTML = "";
+    await montar(comRitmo());
+    expect(card().hasAttribute("data-recolhido")).toBe(true);
+    await clicar(botao());
+    expect(card().hasAttribute("data-recolhido")).toBe(false);
   });
 
   it("trocar só o escopo não pede de novo; Atualizar pede", async () => {

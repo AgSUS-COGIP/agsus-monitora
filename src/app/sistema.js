@@ -19,6 +19,7 @@ import { criarPerfil } from "./perfil.js";
 import { criarPresenca } from "./presenca.js";
 import { criarVigiaDoCatalogo } from "./vigia-do-catalogo.ts";
 import { instalarMarcosDosEditais } from "./marcos-personalizados.js";
+import { acompanharPaginaAberta } from "./pagina-aberta.ts";
 import { sessaoDoApp } from "./sessao.js";
 
 /*
@@ -30,6 +31,7 @@ import { sessaoDoApp } from "./sessao.js";
     paineis-externos.js  painéis externos (lista, liberados, quadro)
     navegacao.js         troca de tela, menu, título, permissões
     carga.js             carga dos dados, cópia da sessão, Realtime
+    pagina-aberta.ts     a página aberta pede as linhas e abre a Visão geral
     presenca.js          auditoria, heartbeat e Pessoas online
     vigia-do-catalogo.ts página desligada pela coordenação fecha sem recarregar
     moldura.js           barra recolhida, tema, tela cheia, PDF
@@ -247,6 +249,8 @@ export function ligarSistema() {
   });
   configuracao.acompanharFundoDoAcesso();
   navegacao.acompanharArea();
+  // Linhas do monitoramento e acompanhamento da Visão geral, só para a página que os usa.
+  acompanharPaginaAberta({ navegacao });
   presenca.acompanhar();
   montarPessoasOnline({ presenca });
 

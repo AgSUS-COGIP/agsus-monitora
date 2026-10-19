@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it } from "vitest";
 import {
   agoraEmBrasilia,
   calcularRitmo,
@@ -9,8 +9,18 @@ import {
   lerRitmoDaAnalise,
   nomeCurtoDaEtapa,
   ritmosDaArea,
+  fracaoDoExpediente,
+  gravarRitmoRecolhido,
+  lerRitmoRecolhido,
+  noMomentoDoResumo,
+  ritmoDoDia,
+  seloDoCard,
+  textoDeReferencia,
+  textoDoDia,
+  textoDoMomento,
   textoDoPrazo,
   textoDoRitmo,
+  textoRecolhido,
 } from "../src/lib/ritmo-da-analise.ts";
 
 /* O cronograma real do 114/2026 (resumido nas etapas que importam). */
@@ -101,12 +111,14 @@ describe("dias úteis", () => {
   });
 
   it("hoje e hora em Brasília", () => {
-    expect(agoraEmBrasilia(new Date("2026-10-19T15:00:00Z"))).toEqual(
-      SEGUNDA_MEIO_DIA,
-    );
+    expect(agoraEmBrasilia(new Date("2026-10-19T15:00:00Z"))).toEqual({
+      ...SEGUNDA_MEIO_DIA,
+      minuto: 0,
+    });
     expect(agoraEmBrasilia(new Date("2026-10-20T02:30:00Z"))).toEqual({
       hoje: "2026-10-19",
       hora: 23,
+      minuto: 30,
     });
   });
 });
@@ -341,5 +353,165 @@ describe("leitura e editais do card", () => {
     expect(
       ritmosDaArea([edital(), fora], SEGUNDA_MEIO_DIA).map((r) => r.id),
     ).toEqual(["bcecfb08"]);
+  });
+});
+
+/*
+  O bloco "Hoje" (pedido de 19/10/2026): a meta do dia e um selo que oscila ao
+  longo do expediente (08:00–18:00, Brasília).
+*/
+describe("o dia: meta, feito e o selo que oscila", () => {
+  const PRAZO = "2026-10-22"; // segunda 19 → 19, 20, 21 e 22: 4 dias úteis
+  const dia = (faltam, feito, agora, prazo = PRAZO) =>
+    ritmoDoDia({ faltam, feito, prazo, avaliadores: 9 }, agora);
+
+  it("a fração do expediente: 0 antes das 8h, metade às 13h, 1 depois das 18h", () => {
+    expect(fracaoDoExpediente({ hoje: "2026-10-19", hora: 7 })).toBe(0);
+    expect(fracaoDoExpediente({ hoje: "2026-10-19", hora: 13 })).toBe(0.5);
+    expect(
+      fracaoDoExpediente({ hoje: "2026-10-19", hora: 12, minuto: 30 }),
+    ).toBeCloseTo(0.45);
+    expect(fracaoDoExpediente({ hoje: "2026-10-19", hora: 19 })).toBe(1);
+  });
+
+  it("antes das 8h: meta inteira pela frente, esperado 0, no ritmo", () => {
+    expect(dia(1000, 0, { hoje: "2026-10-19", hora: 7 })).toEqual({
+      situacao: "no-ritmo",
+      meta: 250,
+      feito: 0,
+      faltam: 250,
+      porAvaliador: 28,
+      esperado: 0,
+      excedente: 0,
+    });
+  });
+
+  it("no meio do expediente, o selo depende do esperado para a hora", () => {
+    const meio = { hoje: "2026-10-19", hora: 13 };
+    // A meta é a do começo do dia: (faltam + feito) ÷ 4 = 250, feito o que for.
+    expect(dia(900, 100, meio)).toMatchObject({
+      meta: 250,
+      esperado: 125,
+      faltam: 150,
+      situacao: "abaixo",
+    });
+    expect(dia(870, 130, meio)).toMatchObject({
+      meta: 250,
+      situacao: "no-ritmo",
+      porAvaliador: 14,
+    });
+  });
+
+  it("depois das 18h, o esperado é a meta", () => {
+    expect(dia(800, 200, { hoje: "2026-10-19", hora: 19 })).toMatchObject({
+      esperado: 250,
+      situacao: "abaixo",
+      faltam: 50,
+    });
+  });
+
+  it("meta batida: faltam 0, com o excedente", () => {
+    expect(dia(740, 260, { hoje: "2026-10-19", hora: 15 })).toMatchObject({
+      situacao: "batida",
+      faltam: 0,
+      excedente: 10,
+      porAvaliador: null,
+    });
+  });
+
+  it("fim de semana e feriado não são dia útil; sem prazo, sem meta", () => {
+    expect(dia(1000, 0, { hoje: "2026-10-17", hora: 10 }).situacao).toBe(
+      "nao-util",
+    );
+    expect(
+      dia(1000, 0, { hoje: "2026-11-02", hora: 10 }, "2026-11-30").situacao,
+    ).toBe("nao-util");
+    expect(dia(1000, 0, SEGUNDA_MEIO_DIA, null).situacao).toBe("sem-meta");
+  });
+
+  it("prazo vencido: tudo é a meta de hoje", () => {
+    expect(dia(300, 20, SEGUNDA_MEIO_DIA, "2026-10-16").meta).toBe(320);
+  });
+
+  it("o card: o selo principal é o do dia; recolhido, 'hoje X de Y'", () => {
+    const r = calcularRitmo(edital(), { hoje: "2026-10-19", hora: 13 });
+    // (1.098 + 148 feitas hoje) ÷ 4 = 311,5 → 312; esperado às 13h: 156.
+    expect(r.dia).toMatchObject({ meta: 312, feito: 148, esperado: 156 });
+    expect(seloDoCard(r)).toEqual({
+      rotulo: "Abaixo do ritmo hoje",
+      situacao: "abaixo",
+    });
+    expect(textoRecolhido(r)).toBe("hoje 148 de 312");
+    expect(textoDoDia(r)).toBe(
+      "≈19 por avaliador até o fim do expediente (9 avaliadores) · esperado até agora: 156",
+    );
+    expect(textoDeReferencia(r)).toMatch(
+      /^Média dos últimos dias ≈\d+\/dia · termina por volta de \d{2}\/\d{2}/,
+    );
+    const sabado = calcularRitmo(edital(), { hoje: "2026-10-17", hora: 10 });
+    expect(seloDoCard(sabado).rotulo).toBe("Hoje não é dia útil");
+    expect(textoRecolhido(sabado)).toBe("faltam 1.098");
+  });
+});
+
+describe("as contagens do resumo do Painel", () => {
+  const linha = (status, mudancas = {}) => ({
+    edital: "114/2026",
+    status_consolidado: status,
+    ...mudancas,
+  });
+
+  it("faltam = Pendente + Em análise + Revisar; concluídas = Aprovado + Reprovado; hoje pela data", () => {
+    const linhas = [
+      linha("Pendente"),
+      linha("Pendente"),
+      linha("Em análise"),
+      linha("Revisar", { data_analise: "19/10/2026" }),
+      linha("Aprovado", { data_analise: "19/10/2026" }),
+      linha("Reprovado", { data_analise: "2026-10-19" }),
+      linha("Aprovado", { data_analise: "16/10/2026" }),
+      // Outro edital não entra; o mesmo número com zero à esquerda, sim.
+      linha("Pendente", { edital: "93/2026" }),
+      linha("Pendente", { edital: "Edital 0114/2026 (Projetos)" }),
+    ];
+    const [e] = noMomentoDoResumo([edital()], linhas, "2026-10-19");
+    expect(e.situacoes).toEqual({
+      pendente: 3,
+      em_analise: 1,
+      revisar: 1,
+      concluida: 3,
+      fora_lote: 448,
+    });
+    // Hoje: as do resumo (2), não as ao vivo (148); os dias anteriores ficam.
+    expect(e.porDia).toEqual([
+      { dia: "2026-10-16", qt: 266 },
+      { dia: "2026-10-19", qt: 2 },
+    ]);
+  });
+
+  it("edital sem linha no resumo sai", () => {
+    expect(noMomentoDoResumo([edital()], [], "2026-10-19")).toEqual([]);
+    expect(noMomentoDoResumo([edital()], null, "2026-10-19")).toEqual([]);
+  });
+
+  it("o momento é o do 'Conferido às' do topo", () => {
+    const agora = new Date("2026-10-19T15:00:00Z");
+    expect(textoDoMomento("114/2026", "2026-10-19T14:20:00Z", agora)).toBe(
+      "Conferido às 11:20 · só o 114/2026",
+    );
+    expect(textoDoMomento("114/2026", null, agora)).toBe("Só o 114/2026");
+  });
+});
+
+describe("recolher o card: escolha de cada pessoa", () => {
+  afterEach(() => localStorage.clear());
+
+  it("aberto por padrão; recolhido fica guardado só para quem recolheu", () => {
+    expect(lerRitmoRecolhido("u1")).toBe(false);
+    gravarRitmoRecolhido("u1", true);
+    expect(lerRitmoRecolhido("u1")).toBe(true);
+    expect(lerRitmoRecolhido("u2")).toBe(false);
+    gravarRitmoRecolhido("u1", false);
+    expect(lerRitmoRecolhido("u1")).toBe(false);
   });
 });

@@ -38,7 +38,23 @@
     O banco manda os da área com a avaliação documental no MONITORA e fichas
     no lote. Ainda assim, edital sem nenhuma concluída e com o prazo da etapa
     já vencido sai: não há ritmo a acompanhar.
+
+  AS CONTAGENS SÃO AS DO RESUMO DO PAINEL (19/10/2026)
+    O card mostrava as fichas ao vivo e os KPIs do topo vêm do resumo do
+    Painel (private."TA_PAINEL_ANALISE", remontado a cada 30 min): o usuário
+    via 1.076 pendentes no topo e "faltam 1.074" no card. Agora o card conta
+    as linhas do edital no mesmo resumo que a tela já recebeu
+    (`noMomentoDoResumo`), sem nova consulta: faltam = Pendente + Em análise
+    + Revisar; concluídas = Aprovado + Reprovado (a ficha publica assim; a
+    fora do lote nem entra no painel). As concluídas de hoje também saem do
+    resumo (data da análise = hoje), para a projeção não somar o que o resumo
+    ainda não tem; as dos dias anteriores, a equipe e o cronograma continuam
+    vindo de `obter_ritmo_da_analise`. Sem linhas do edital no resumo carregado
+    (escopo "Inativo", por exemplo), o card dele não aparece. O momento é o do
+    "Conferido às" do topo (`textoDoMomento`).
 */
+
+import { quandoFoi } from "./texto-da-conferencia.js";
 
 export interface EtapaDoCronograma {
   ordem: number;
@@ -92,13 +108,38 @@ export interface RitmoDoEdital {
   termino: string | null;
   diasDeAtraso: number;
   situacao: SituacaoDoRitmo;
+  /** O bloco "Hoje": meta do dia, feito, faltam e o selo que oscila. */
+  dia: RitmoDoDia;
+}
+
+export type SituacaoDoDia =
+  "nao-util" | "sem-meta" | "batida" | "no-ritmo" | "abaixo";
+
+export interface RitmoDoDia {
+  situacao: SituacaoDoDia;
+  /** (faltam + feito hoje) ÷ dias úteis até o prazo, contando hoje. */
+  meta: number;
+  /** Concluídas desde 00:00 de Brasília (no momento do resumo). */
+  feito: number;
+  /** max(meta − feito, 0). */
+  faltam: number;
+  /** Faltam hoje ÷ avaliadores (para cima); null sem faltar ou sem avaliadores. */
+  porAvaliador: number | null;
+  /** Meta × fração do expediente já decorrida. */
+  esperado: number;
+  /** O que passou da meta. */
+  excedente: number;
 }
 
 export interface Agora {
   hoje: string;
   hora: number;
+  /** Os minutos da hora (o selo do dia anda ao longo da hora); 0 se faltar. */
+  minuto?: number;
 }
 
+/** O expediente em Brasília: 08:00–18:00 (o esperado do dia anda nele). */
+export const INICIO_DO_EXPEDIENTE = 8;
 export const FIM_DO_EXPEDIENTE = 18;
 export const DIAS_DO_RITMO = 3;
 const FERIADOS_FIXOS = new Set([
@@ -171,6 +212,7 @@ export function agoraEmBrasilia(data: Date = new Date()): Agora {
       month: "2-digit",
       day: "2-digit",
       hour: "2-digit",
+      minute: "2-digit",
       hourCycle: "h23",
     })
       .formatToParts(data)
@@ -179,6 +221,7 @@ export function agoraEmBrasilia(data: Date = new Date()): Agora {
   return {
     hoje: `${partes.year}-${partes.month}-${partes.day}`,
     hora: Number(partes.hour),
+    minuto: Number(partes.minute),
   };
 }
 
@@ -298,6 +341,74 @@ export function lerRitmoDaAnalise(resposta: unknown): EditalDoRitmo[] {
 
 /* ── A conta ────────────────────────────────────────────────────────── */
 
+/*
+  O DIA (o bloco "Hoje", que oscila ao longo do expediente)
+    Meta = (faltam + feito hoje) ÷ dias úteis de hoje até o prazo, contando
+    hoje: é o que faltava às 00:00 dividido pelos dias que sobram, e não muda
+    a cada ficha concluída. Prazo vencido: tudo hoje. Sem prazo: sem meta.
+    Esperado agora = meta × fração do expediente (08:00–18:00) decorrida:
+    antes das 8h, 0; depois das 18h, a meta inteira. Feito ≥ meta: meta
+    batida (com o excedente); feito ≥ esperado: no ritmo; senão, abaixo.
+    Sábado, domingo e feriado: não é dia útil.
+*/
+
+/** Quanto do expediente de hoje já passou (0 a 1). */
+export function fracaoDoExpediente({ hora, minuto = 0 }: Agora): number {
+  const agora = hora + minuto / 60;
+  const total = FIM_DO_EXPEDIENTE - INICIO_DO_EXPEDIENTE;
+  return Math.min(1, Math.max(0, (agora - INICIO_DO_EXPEDIENTE) / total));
+}
+
+/** Dias úteis de hoje (sempre, se útil) até o prazo, inclusive; ao menos 1. */
+function diasUteisContandoHoje(hoje: string, prazo: string): number {
+  let total = 0;
+  for (let dia = hoje; dia <= prazo; dia = somarDias(dia, 1))
+    if (ehDiaUtil(dia)) total += 1;
+  return Math.max(1, total);
+}
+
+export function ritmoDoDia(
+  {
+    faltam,
+    feito,
+    prazo,
+    avaliadores,
+  }: {
+    faltam: number;
+    feito: number;
+    prazo: string | null;
+    avaliadores: number;
+  },
+  agora: Agora,
+): RitmoDoDia {
+  const vazio = {
+    meta: 0,
+    faltam: 0,
+    porAvaliador: null,
+    esperado: 0,
+    excedente: 0,
+  };
+  if (!ehDiaUtil(agora.hoje)) return { ...vazio, situacao: "nao-util", feito };
+  if (!prazo) return { ...vazio, situacao: "sem-meta", feito };
+  const meta = Math.ceil(
+    (faltam + feito) / diasUteisContandoHoje(agora.hoje, prazo),
+  );
+  const faltamHoje = Math.max(0, meta - feito);
+  const esperado = Math.round(meta * fracaoDoExpediente(agora));
+  const situacao: SituacaoDoDia =
+    feito >= meta ? "batida" : feito >= esperado ? "no-ritmo" : "abaixo";
+  return {
+    situacao,
+    meta,
+    feito,
+    faltam: faltamHoje,
+    porAvaliador:
+      faltamHoje && avaliadores ? Math.ceil(faltamHoje / avaliadores) : null,
+    esperado,
+    excedente: Math.max(0, feito - meta),
+  };
+}
+
 export function calcularRitmo(
   edital: EditalDoRitmo,
   agora: Agora,
@@ -389,6 +500,10 @@ export function calcularRitmo(
     termino,
     diasDeAtraso,
     situacao,
+    dia: ritmoDoDia(
+      { faltam, feito: concluidasHoje, prazo, avaliadores },
+      agora,
+    ),
   };
 }
 
@@ -418,6 +533,57 @@ export const ROTULO_DA_SITUACAO: Record<SituacaoDoRitmo, string> = {
   "sem-historico": "",
 };
 
+export const ROTULO_DO_DIA: Record<SituacaoDoDia, string> = {
+  "nao-util": "Hoje não é dia útil",
+  "sem-meta": "",
+  batida: "Meta de hoje batida ✓",
+  "no-ritmo": "No ritmo hoje",
+  abaixo: "Abaixo do ritmo hoje",
+};
+
+/** O selo principal do card: o do dia (com o edital todo concluído, "Concluído"). */
+export function seloDoCard(r: RitmoDoEdital): {
+  rotulo: string;
+  situacao: SituacaoDoDia | "concluido";
+} {
+  if (r.situacao === "concluido")
+    return { rotulo: ROTULO_DA_SITUACAO.concluido, situacao: "concluido" };
+  return { rotulo: ROTULO_DO_DIA[r.dia.situacao], situacao: r.dia.situacao };
+}
+
+/** "≈7 por avaliador até o fim do expediente (9 avaliadores) · …", ou o resumo do dia. */
+export function textoDoDia(r: RitmoDoEdital): string {
+  const d = r.dia;
+  if (d.situacao === "nao-util") return "Hoje não é dia útil: sem meta.";
+  if (d.situacao === "sem-meta")
+    return "Sem prazo no cronograma: sem meta do dia.";
+  if (d.situacao === "batida")
+    return d.excedente
+      ? `Meta batida, com ${numero(d.excedente)} além dela.`
+      : "Meta batida.";
+  const avaliadores = `${r.avaliadores} ${r.avaliadores === 1 ? "avaliador" : "avaliadores"}`;
+  const porAvaliador =
+    d.porAvaliador === null
+      ? ""
+      : `≈${numero(d.porAvaliador)} por avaliador até o fim do expediente (${avaliadores}) · `;
+  return `${porAvaliador}esperado até agora: ${numero(d.esperado)}`;
+}
+
+/** "Média dos últimos dias ≈266/dia · termina por volta de 23/10, …" (a tendência). */
+export function textoDeReferencia(r: RitmoDoEdital): string {
+  if (r.situacao === "concluido") return "Todas as fichas do lote concluídas.";
+  if (r.ritmo === null || !r.termino)
+    return "Sem dias com análise para medir a média.";
+  const inicio = `Média dos últimos dias ≈${numero(r.ritmo)}/dia · termina por volta de ${diaMes(r.termino)}`;
+  if (!r.etapa) return inicio;
+  const prazo = diaMes(r.etapa.fim);
+  if (r.situacao === "vencido") return `${inicio}; o prazo era ${prazo}`;
+  if (r.diasDeAtraso)
+    return `${inicio}, ${diasUteis(r.diasDeAtraso)} depois do prazo de ${prazo}`;
+  if (r.termino === r.etapa.fim) return `${inicio}, no prazo`;
+  return `${inicio}, antes do prazo de ${prazo}`;
+}
+
 /** "Prazo: 22/10 · Validação da documentação", ou o aviso de sem prazo. */
 export function textoDoPrazo(r: RitmoDoEdital): string {
   if (!r.etapa) return "Sem etapa de análise no cronograma";
@@ -437,4 +603,136 @@ export function textoDoRitmo(r: RitmoDoEdital): string {
     return `${inicio}, ${diasUteis(r.diasDeAtraso)} depois do prazo de ${prazo}.`;
   if (r.termino === r.etapa.fim) return `${inicio}, no prazo.`;
   return `${inicio}, antes do prazo de ${prazo}.`;
+}
+
+/* ── No momento do resumo do Painel ─────────────────────────────────── */
+
+type LinhaDoResumo = Record<string, unknown>;
+
+const STATUS_QUE_FALTAM = {
+  Pendente: "pendente",
+  "Em análise": "em_analise",
+  Revisar: "revisar",
+} as const;
+const STATUS_CONCLUIDOS = new Set(["Aprovado", "Reprovado"]);
+
+/** "Edital 06/2026 (sanitarista)" → "6/2026" (como FC_NUMERO_EDITAL); "" sem número. */
+function numeroDoEdital(valor: unknown): string {
+  const m = texto(valor).match(/(\d{1,4})\s*\/\s*(\d{4})/);
+  return m ? `${Number(m[1])}/${m[2]}` : "";
+}
+
+/* "DD/MM/AAAA" ou "AAAA-MM-DD" (a data da análise no painel) → "AAAA-MM-DD". */
+function diaDaAnalise(valor: unknown): string {
+  const bruto = texto(valor).trim();
+  const br = bruto.match(/^(\d{2})\/(\d{2})\/(\d{4})/);
+  if (br) return `${br[3]}-${br[2]}-${br[1]}`;
+  const iso = bruto.match(/^(\d{4}-\d{2}-\d{2})/);
+  return iso?.[1] ?? "";
+}
+
+/**
+ * Os editais do card com as contagens do resumo do Painel (as linhas que a
+ * tela recebeu), para "Faltam" e "Concluído" baterem com os KPIs do topo.
+ * Edital sem linha no resumo sai.
+ */
+export function noMomentoDoResumo(
+  editais: readonly EditalDoRitmo[],
+  linhas: readonly LinhaDoResumo[] | null | undefined,
+  hoje: string,
+): EditalDoRitmo[] {
+  const porNumero = new Map<
+    string,
+    { situacoes: SituacoesDasFichas; hoje: number }
+  >();
+  for (const linha of linhas || []) {
+    const numero = numeroDoEdital(linha?.edital);
+    if (!numero) continue;
+    let conta = porNumero.get(numero);
+    if (!conta) {
+      conta = {
+        situacoes: {
+          pendente: 0,
+          em_analise: 0,
+          revisar: 0,
+          concluida: 0,
+          fora_lote: 0,
+        },
+        hoje: 0,
+      };
+      porNumero.set(numero, conta);
+    }
+    const status = texto(linha?.status_consolidado).trim();
+    if (Object.hasOwn(STATUS_QUE_FALTAM, status))
+      conta.situacoes[
+        STATUS_QUE_FALTAM[status as keyof typeof STATUS_QUE_FALTAM]
+      ] += 1;
+    else if (STATUS_CONCLUIDOS.has(status)) {
+      conta.situacoes.concluida += 1;
+      if (diaDaAnalise(linha?.data_analise) === hoje) conta.hoje += 1;
+    }
+  }
+  return editais.flatMap((edital) => {
+    const conta = porNumero.get(numeroDoEdital(edital.edital));
+    if (!conta) return [];
+    return [
+      {
+        ...edital,
+        situacoes: {
+          ...conta.situacoes,
+          fora_lote: edital.situacoes.fora_lote,
+        },
+        porDia: [
+          ...edital.porDia.filter((d) => d.dia !== hoje),
+          ...(conta.hoje ? [{ dia: hoje, qt: conta.hoje }] : []),
+        ],
+      },
+    ];
+  });
+}
+
+/** "Conferido às 09:32 · só o 114/2026" (o momento do resumo, o do topo). */
+export function textoDoMomento(
+  edital: string,
+  conferidoEm: unknown,
+  agora: Date = new Date(),
+): string {
+  const quando = quandoFoi(conferidoEm, agora);
+  const so = `só o ${edital}`;
+  return quando ? `Conferido ${quando} · ${so}` : `Só o ${edital}`;
+}
+
+/** A linha do card recolhido: "hoje 120 de 269" (sem meta do dia: "faltam 1.098"). */
+export function textoRecolhido(r: RitmoDoEdital): string {
+  if (!r.faltam) return "concluído";
+  if (r.dia.situacao === "nao-util" || r.dia.situacao === "sem-meta")
+    return `faltam ${numero(r.faltam)}`;
+  return `hoje ${numero(r.dia.feito)} de ${numero(r.dia.meta)}`;
+}
+
+/* Recolhido ou aberto: escolha de cada pessoa, neste navegador. */
+const CHAVE_DO_RECOLHIDO = "monitora.analises.ritmo-recolhido";
+const chaveDoRecolhido = (usuario: string | null | undefined) =>
+  `${CHAVE_DO_RECOLHIDO}:${usuario || "anonimo"}`;
+
+/** O card ficou recolhido na última vez (desta pessoa)? Aberto por padrão. */
+export function lerRitmoRecolhido(usuario: string | null | undefined): boolean {
+  try {
+    return globalThis.localStorage?.getItem(chaveDoRecolhido(usuario)) === "1";
+  } catch {
+    return false;
+  }
+}
+
+export function gravarRitmoRecolhido(
+  usuario: string | null | undefined,
+  recolhido: boolean,
+): void {
+  try {
+    if (recolhido)
+      globalThis.localStorage?.setItem(chaveDoRecolhido(usuario), "1");
+    else globalThis.localStorage?.removeItem(chaveDoRecolhido(usuario));
+  } catch {
+    /* sem armazenamento: só não lembra */
+  }
 }
