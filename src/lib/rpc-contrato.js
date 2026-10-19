@@ -1061,7 +1061,7 @@ export const CONTRATO_RPC = {
     argumentos: ["p_edital", "p_desde", "p_marca"],
     critica: false,
     resumo:
-      "obter_fila_avaliacao só com o que mudou (20261014231000_fila_e_ficha_so_o_que_mudou.sql): sem p_desde (ou outra marca), a fila inteira com marca e parcial false; com o gerado_em e a marca da leitura anterior, só as linhas do núcleo cuja ficha mudou (ou cuja reserva vence) desde p_desde − 2 min, saiu, total_nucleo e o resto sem vagas (~1,5 KB). Mesma permissão.",
+      "obter_fila_avaliacao só com o que mudou (20261014231000_fila_e_ficha_so_o_que_mudou.sql): sem p_desde (ou outra marca), a fila inteira com marca e parcial false; com o gerado_em e a marca da leitura anterior, só as linhas do núcleo cuja ficha mudou (ou cuja reserva vence) desde p_desde − 2 min, saiu, total_nucleo e o resto sem vagas (~1,5 KB). Desde 20261019150000_fila_parcial_sem_montar_tudo.sql a parcial não monta a fila inteira: só as linhas desses inscritos (FC_LINHAS_DA_FILA com p_candidatos) e o total do núcleo por contagem; mesmo contrato. Mesma permissão.",
   },
   obter_fila_fora_do_lote: {
     argumentos: ["p_edital", "p_apos", "p_limite"],
