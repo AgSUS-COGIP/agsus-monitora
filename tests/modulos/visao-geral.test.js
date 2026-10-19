@@ -165,11 +165,13 @@ async function montar({
   comemoracoes = false,
   carregar = true,
   carregadorDeMunicipios,
+  aberta = true,
 } = {}) {
   armazenamento ||= memoria();
   estado = criarEstadoDaVisaoGeral({
     armazenamento,
     baixar,
+    aberta,
     agora: () => new Date(2026, 9, 1, 9, 30).getTime(),
   });
   secao = document.createElement("section");
@@ -326,6 +328,69 @@ describe("a tela dentro do app", () => {
     await esperar();
     expect(pedidos()).toHaveLength(1);
     await act(async () => publicarLinhasDoMonitoramento([...LINHAS]));
+    await esperar();
+    expect(pedidos()).toHaveLength(2);
+  });
+
+  /*
+    A tela fica montada escondida desde o início do app. Fechada (outra página
+    aberta), não pede o acompanhamento nem monta mapas e marcos; ao voltar,
+    pede o que ficou para trás (19/10/2026: o banco saturou com avaliadores
+    que nunca abriam a Visão geral).
+  */
+  it("escondida desde o início: nada monta nem é pedido até a primeira abertura", async () => {
+    const supabase = {
+      rpc: vi.fn(async () => ({
+        data: { etapas: [], listas: [] },
+        error: null,
+      })),
+    };
+    await montar({
+      supabase,
+      aberta: false,
+      comPerfil: true,
+      comemoracoes: true,
+    });
+    await esperar();
+    expect(secao.querySelector(".ui-tela.visao-geral-tela")).toBeNull();
+    expect(supabase.rpc).not.toHaveBeenCalled();
+    await act(async () => estado.definirAberta(true));
+    await esperar();
+    expect(secao.querySelector(".ui-tela.visao-geral-tela")).not.toBeNull();
+    expect(
+      supabase.rpc.mock.calls.filter(
+        ([nome]) => nome === "listar_acompanhamento_da_visao_geral_se_mudou",
+      ),
+    ).toHaveLength(1);
+  });
+
+  it("fechada, a releitura das linhas não pede o acompanhamento; ao voltar, pede uma vez", async () => {
+    const supabase = {
+      rpc: vi.fn(async () => ({
+        data: { etapas: [], listas: [] },
+        error: null,
+      })),
+    };
+    await montar({ supabase });
+    await esperar();
+    const pedidos = () =>
+      supabase.rpc.mock.calls.filter(
+        ([nome]) => nome === "listar_acompanhamento_da_visao_geral_se_mudou",
+      );
+    expect(pedidos()).toHaveLength(1);
+    await act(async () => estado.definirAberta(false));
+    await act(async () => publicarLinhasDoMonitoramento([...LINHAS]));
+    await act(async () => publicarLinhasDoMonitoramento([...LINHAS]));
+    await esperar();
+    expect(pedidos()).toHaveLength(1);
+    // Fechada, a tela continua montada (sem remontar mapas ao voltar).
+    expect(secao.querySelector(".ui-tela.visao-geral-tela")).not.toBeNull();
+    await act(async () => estado.definirAberta(true));
+    await esperar();
+    expect(pedidos()).toHaveLength(2);
+    // Voltar sem carga nova não pede de novo.
+    await act(async () => estado.definirAberta(false));
+    await act(async () => estado.definirAberta(true));
     await esperar();
     expect(pedidos()).toHaveLength(2);
   });

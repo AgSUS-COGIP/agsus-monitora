@@ -385,7 +385,11 @@ function TelaDaArea({
         chips={chips}
       />
       <Indicadores kpis={kpis} carregado={carregado} kpi={kpi} aoKpi={setKpi} />
-      <RitmoDaAnalise editais={e.ritmo} />
+      <RitmoDaAnalise
+        editais={e.ritmo}
+        linhas={e.carregado ? e.linhas : null}
+        conferidoEm={e.conferidoEm}
+      />
       <LinhaDoRecorte
         texto={descricaoDoRecorte({
           escopo,

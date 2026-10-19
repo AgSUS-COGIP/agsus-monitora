@@ -3531,6 +3531,10 @@ export const VERBETES_AYA = Object.freeze([
       "ritmo da analise",
       "no ritmo",
       "abaixo do ritmo",
+      "meta de hoje",
+      "meta do dia",
+      "feito hoje",
+      "faltam hoje",
       "quantas por dia",
       "quantas fichas por dia",
       "por avaliador",
@@ -3538,9 +3542,11 @@ export const VERBETES_AYA = Object.freeze([
       "prazo da analise",
       "quando termina a analise",
       "previsao de termino",
+      "recolher ritmo",
+      "por que o ritmo nao bate",
     ],
     resposta:
-      'No Painel das análises, o card "Ritmo da análise" aparece para cada edital analisado no MONITORA. O prazo é o fim da etapa de validação da documentação (ou análise documental/curricular) no cronograma do edital; sem essa etapa, o card diz que não há prazo. "Faltam" soma pendentes, em análise e a revisar (fora do lote não conta). "Por dia até o prazo" divide o que falta pelos dias úteis até o prazo (segunda a sexta, sem feriados nacionais; hoje conta até as 18h). "Por avaliador" divide isso pelos analistas ativos na equipe do edital (sem equipe, por quem concluiu fichas nos últimos 7 dias). O ritmo atual é a média de concluídas nos últimos 3 dias com análise, sem contar hoje antes das 18h; com ele, o card projeta o dia de término e mostra No ritmo, Abaixo do ritmo, Prazo vencido ou Concluído. Os números acompanham cada carga do painel e o "Atualizar".',
+      'No Painel das análises, o card "Ritmo da análise" aparece para cada edital analisado no MONITORA. Os números são os do resumo do painel, o mesmo dos indicadores do topo ("Conferido às HH:MM", remontado a cada 30 minutos), mas só daquele edital: o topo soma todos os editais da área. O destaque é "Hoje": a meta do dia é o que faltava à meia-noite dividido pelos dias úteis até o prazo, contando hoje (segunda a sexta, sem feriados nacionais); "Feito hoje" são as fichas concluídas desde 00:00; "Faltam hoje" é a diferença, e o card diz quantas por avaliador até o fim do expediente (analistas ativos na equipe do edital; sem equipe, quem concluiu fichas nos últimos 7 dias). O selo do dia oscila: o esperado para a hora cresce das 8h às 18h; feito acima dele é No ritmo hoje, abaixo é Abaixo do ritmo hoje, e quem passa da meta vê Meta de hoje batida. Sábado, domingo e feriado: o card diz que hoje não é dia útil. O prazo é o fim da etapa de validação da documentação (ou análise documental/curricular) no cronograma; sem ela, não há meta. Embaixo, como referência, "Faltam" do edital (pendentes, em análise e a revisar), a média dos últimos dias com análise e a previsão de término. A setinha no canto recolhe o card numa linha ("hoje X de Y"); a escolha fica guardada neste navegador para você.',
     fato: "",
     fonte:
       "src/lib/ritmo-da-analise.ts; supabase/migrations/20261019170000_ritmo_da_analise.sql",

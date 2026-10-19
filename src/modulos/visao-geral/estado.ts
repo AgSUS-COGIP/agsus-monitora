@@ -26,8 +26,10 @@ import type {
   pós-resultado). O único pedido ao banco daqui é o acompanhamento da área
   (`listar_acompanhamento_da_visao_geral`: etapas do cronograma e resumo das
   listas de aprovados), a cada carga das linhas ou troca de área, pela função
-  que a tela entrega (`definirBuscaDoAcompanhamento`). Sem ele (erro, banco
-  sem a função), a página funciona só com as linhas.
+  que a tela entrega (`definirBuscaDoAcompanhamento`) — só com a página
+  aberta (`definirAberta`, da navegação): escondida, não pede nada, e ao
+  voltar pede o que ficou para trás. Sem ele (erro, banco sem a função), a
+  página funciona só com as linhas.
 
   O mapa da Saúde Indígena (src/modulos/mapa-saude-indigena/) lê daqui: as
   linhas recortadas (`filtradas`), `temRecorte`, o DSEI aberto (`dsei`) e
@@ -159,6 +161,7 @@ export function criarEstadoDaVisaoGeral({
   armazenamento = armazenamentoPadrao(),
   agora = () => Date.now(),
   baixar = baixarNoNavegador,
+  aberta = true,
 }: OpcoesDoEstado = {}): EstadoDaVisaoGeral {
   const ouvintes = new Set<() => void>();
   let aviso = (mensagem: string) => console.info(mensagem);
@@ -176,6 +179,8 @@ export function criarEstadoDaVisaoGeral({
     acompanhamento: null,
     destaque: null,
     carregadoEm: 0,
+    aberta,
+    visitada: aberta,
   };
   let instantaneo: SnapshotDaVisaoGeral;
   let fonte: { linhas: readonly unknown[] | null; area: string } = {
@@ -299,6 +304,8 @@ export function criarEstadoDaVisaoGeral({
   */
   function pedirAcompanhamento() {
     const { linhas, areaAtual, carregado } = dados.obter();
+    // Página fechada não pede: ao abrir de novo (`definirAberta`), pede o que ficou para trás.
+    if (!proprio.aberta) return;
     if (!buscarAcompanhamento || !carregado || !areaAtual) return;
     if (pedido && pedido.linhas === linhas && pedido.area === areaAtual) return;
     if (acompanhamentoEmDia(linhas, areaAtual)) return;
@@ -456,6 +463,16 @@ export function criarEstadoDaVisaoGeral({
       pedido = null;
       pedirAcompanhamento();
     },
+    /*
+      A navegação diz se a página está aberta (src/app/pagina-aberta.ts). A
+      tela fica montada escondida; fechada, nada é pedido ao banco por ela.
+    */
+    definirAberta(valor) {
+      const nova = Boolean(valor);
+      if (nova === proprio.aberta) return;
+      publicar({ aberta: nova, visitada: proprio.visitada || nova });
+      pedirAcompanhamento();
+    },
     definirFiltro,
     alternarFiltroUnico,
     alternarAtalho,
@@ -492,6 +509,7 @@ export function criarEstadoDaVisaoGeral({
 
 /*
   A instância da página: o legado (carga, busca global, PDF) e o React
-  (src/modulos/visao-geral/) falam com ela.
+  (src/modulos/visao-geral/) falam com ela. Começa fechada: quem abre é a
+  navegação (src/app/pagina-aberta.ts).
 */
-export const estadoDaVisaoGeral = criarEstadoDaVisaoGeral();
+export const estadoDaVisaoGeral = criarEstadoDaVisaoGeral({ aberta: false });

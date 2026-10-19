@@ -9,11 +9,8 @@ import {
   resumoDaCoordenacao,
   validarCoordenacao,
 } from "../../lib/grupos-e-coordenacoes.js";
-import {
-  assinarDadosDoMonitoramento,
-  linhasDaArea,
-  obterDadosDoMonitoramento,
-} from "../../componentes/dados-do-monitoramento.ts";
+import { linhasDaArea } from "../../componentes/dados-do-monitoramento.ts";
+import { usarLinhasDoMonitoramento } from "../../componentes/usar-linhas-do-monitoramento.ts";
 import { MultiSelectBusca } from "../../componentes/multi-select-busca.jsx";
 import { BlocosEsqueleto, BotaoDeAcao, Campo } from "../../ui/index.js";
 import { CampoMotivo, ListaMestre, motivoValido } from "./partes.jsx";
@@ -37,10 +34,8 @@ function Editor({
   aoSalvar,
   aoAlterar,
 }) {
-  const dados = useSyncExternalStore(
-    assinarDadosDoMonitoramento,
-    obterDadosDoMonitoramento,
-  );
+  // As linhas dão as opções de editais e unidades: o editor as pede (sob demanda).
+  const dados = usarLinhasDoMonitoramento();
   const inicial = coordenacao
     ? lerCoordenacao(coordenacao)
     : coordenacaoVazia(areas[0]?.id || "");
