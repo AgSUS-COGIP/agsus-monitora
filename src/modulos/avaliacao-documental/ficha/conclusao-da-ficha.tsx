@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import { PARCIAL_DO_TIPO as PARCIAIS_DOS_TIPOS } from "../../../lib/avaliacao-documental/catalogo.js";
 import {
   ACOES_DO_HISTORICO as ACOES,
@@ -67,10 +67,33 @@ export type PropriedadesDaConclusao = {
   aoCopiarParecer: () => void;
   /** Só na ficha concluída: abre a impressão do espelho de nota (espelho-de-nota.ts). */
   aoAbrirEspelho?: (() => void) | null;
+  /** Só na ficha concluída: baixa o espelho em PDF (gerado no navegador). */
+  aoBaixarEspelho?: (() => Promise<unknown>) | null;
   historico: ItemDoHistorico[];
   /** Blocos que só registram (sem decisão), já desenhados. */
   registros?: ReactNode;
 };
+
+/* "Baixar PDF" do espelho: travado enquanto gera (a primeira vez baixa as bibliotecas). */
+function BaixarEspelho({ aoBaixar }: { aoBaixar: () => Promise<unknown> }) {
+  const [gerando, setGerando] = useState(false);
+  return (
+    <button
+      type="button"
+      className="btn secondary small"
+      data-acao="espelho-de-nota-pdf"
+      disabled={gerando}
+      title="Baixa o espelho de nota em PDF. Nada fica gravado."
+      onClick={() => {
+        setGerando(true);
+        void aoBaixar().finally(() => setGerando(false));
+      }}
+    >
+      <i className="fa-regular fa-file-pdf" aria-hidden="true" />{" "}
+      {gerando ? "Gerando PDF…" : "Baixar PDF"}
+    </button>
+  );
+}
 
 /* O detalhe de cada linha do resumo: motivos, pontos apurados ou o que falta. */
 function detalhe(st: EstadoDaFicha, bloco: Bloco, passo: Passo): string {
@@ -141,6 +164,7 @@ export function ConclusaoDaFicha({
   mudar,
   aoCopiarParecer,
   aoAbrirEspelho = null,
+  aoBaixarEspelho = null,
   historico,
   registros,
 }: PropriedadesDaConclusao) {
@@ -270,6 +294,9 @@ export function ConclusaoDaFicha({
                     />{" "}
                     Espelho de nota
                   </button>
+                ) : null}
+                {concluida && aoBaixarEspelho ? (
+                  <BaixarEspelho aoBaixar={aoBaixarEspelho} />
                 ) : null}
                 <button
                   type="button"

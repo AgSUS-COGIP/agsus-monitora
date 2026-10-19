@@ -1,10 +1,13 @@
 /*
   O botão "Espelho de nota" da ficha concluída (conclusao-da-ficha.tsx): monta
   o espelho com o que a ficha já carregou (sem consulta nova) e abre a
-  impressão do navegador ("Salvar como PDF"). Nada é gravado: nem no banco,
-  nem no Storage. Montagem e página: src/lib/avaliacao-documental/espelho-de-nota.ts.
+  impressão do navegador ou baixa o PDF (um arquivo, gerado no navegador).
+  Nada é gravado: nem no banco, nem no Storage. Montagem e página:
+  src/lib/avaliacao-documental/espelho-de-nota.ts; o PDF e o ZIP:
+  src/lib/avaliacao-documental/espelho-em-pdf.ts.
   Os Espelhos de nota em massa (espelhos-em-massa.tsx) usam a mesma entrada
-  (espelhoDaFichaGravada) e a mesma folha, num documento só.
+  (espelhoDaFichaGravada): o ZIP com um PDF por candidato ou a impressão de
+  um documento só.
 */
 import {
   documentoDosEspelhos,
@@ -15,6 +18,14 @@ import type {
   EntradaDoEspelho,
   Espelho,
 } from "../../../lib/avaliacao-documental/espelho-de-nota.ts";
+import {
+  carregarBibliotecasDoPdf,
+  nomeDoPdfDoEspelho,
+  pdfDoEspelho,
+  zipDosEspelhos,
+  type BibliotecasDoPdf,
+  type MarcaDoPdf,
+} from "../../../lib/avaliacao-documental/espelho-em-pdf.ts";
 import type { FichaDoEspelho } from "../../../lib/avaliacao-documental/espelhos-em-massa.ts";
 import {
   calcularFicha,
@@ -23,7 +34,11 @@ import {
 import { CHAVE_DO_CABECALHO } from "../../../lib/cabecalho-dos-documentos.js";
 import { LOGO_PADRAO_DA_BARRA } from "../../../lib/marca-da-barra-lateral.js";
 import { nomeDaArea } from "../../../lib/menu-lateral.ts";
-import { imprimirPagina } from "../../classificacao/documento-no-navegador.ts";
+import {
+  imprimirPagina,
+  logoEmPng,
+} from "../../classificacao/documento-no-navegador.ts";
+import { baixarNoNavegador } from "../../classificacao/estado.ts";
 import { estadoDasConfiguracoes } from "../../configuracoes/estado.js";
 
 type FichaCarregada = {
@@ -189,4 +204,71 @@ export function abrirEspelhoDeNota(
     }),
   );
   return espelho.modelo;
+}
+
+/** O timbrado do PDF: o cabeçalho de Configurações › Marca e o logo em PNG (sem logo se falhar). */
+async function marcaDoPdf(cabecalho: () => string): Promise<MarcaDoPdf> {
+  return {
+    cabecalho: cabecalho() || undefined,
+    logo: await logoEmPng(LOGO_PADRAO_DA_BARRA),
+  };
+}
+
+type Baixar = (bytes: BlobPart, nome: string, tipo: string) => void;
+
+/** Baixa o PDF do espelho da ficha concluída (as bibliotecas vêm sob demanda). */
+export async function baixarEspelhoEmPdf(
+  st: EstadoCarregado,
+  ficha: FichaCarregada,
+  {
+    carregar = carregarBibliotecasDoPdf,
+    baixar = baixarNoNavegador,
+    cabecalho = cabecalhoConfigurado,
+    marca = marcaDoPdf,
+  }: {
+    carregar?: () => Promise<BibliotecasDoPdf>;
+    baixar?: Baixar;
+    cabecalho?: () => string;
+    marca?: (cabecalho: () => string) => Promise<MarcaDoPdf>;
+  } = {},
+) {
+  const espelho = montarEspelho(entradaDoEspelho(st, ficha));
+  const [libs, timbrado] = await Promise.all([carregar(), marca(cabecalho)]);
+  const nome = nomeDoPdfDoEspelho(espelho);
+  baixar(pdfDoEspelho(espelho, libs, timbrado), nome, "application/pdf");
+  return nome;
+}
+
+/**
+ * Gera o ZIP com um PDF por espelho (em lotes, com progresso) e baixa.
+ * Devolve quantos PDFs entraram, ou null se cancelado.
+ */
+export async function baixarZipDosEspelhos(
+  espelhos: Espelho[],
+  nomeDoZip: string,
+  {
+    aoProgredir = () => {},
+    cancelado = () => false,
+    carregar = carregarBibliotecasDoPdf,
+    baixar = baixarNoNavegador,
+    cabecalho = cabecalhoConfigurado,
+    marca = marcaDoPdf,
+  }: {
+    aoProgredir?: (feitos: number, total: number) => void;
+    cancelado?: () => boolean;
+    carregar?: () => Promise<BibliotecasDoPdf>;
+    baixar?: Baixar;
+    cabecalho?: () => string;
+    marca?: (cabecalho: () => string) => Promise<MarcaDoPdf>;
+  } = {},
+): Promise<number | null> {
+  const [libs, timbrado] = await Promise.all([carregar(), marca(cabecalho)]);
+  const zip = await zipDosEspelhos(espelhos, libs, {
+    marca: timbrado,
+    aoProgredir,
+    cancelado,
+  });
+  if (!zip) return null;
+  baixar(zip.bytes, nomeDoZip, "application/zip");
+  return zip.nomes.length;
 }

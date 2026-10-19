@@ -111,6 +111,9 @@ export type Espelho = {
   criterios: CriterioDoEspelho[];
   justificativas: string[];
   nomeDoArquivo: string;
+  /** Para o nome do PDF no ZIP (espelho-em-pdf.ts): o código na Empregare e a vaga. */
+  codigoDoCandidato: string;
+  codigoDaVaga: string;
 };
 
 export const TITULO_DO_ESPELHO = "Espelho de Pontuação da Análise Curricular";
@@ -121,6 +124,21 @@ export const NAO_SE_APLICA_NO_ELIMINADO =
 export const RODAPE_DO_ESPELHO =
   "Observação: este espelho apresenta exclusivamente os dados necessários para comunicação da nota ao candidato, sem reprodução integral do questionário ou de informações internas adicionais.";
 export const SEM_OBSERVACAO = "Sem observação registrada.";
+export const ABERTURA_DO_ESPELHO =
+  "Apresenta-se, a seguir, o espelho de nota referente à avaliação realizada pela comissão avaliadora, para fins de consulta.";
+/** Os quadros da folha, na ordem (a página HTML e o PDF usam os mesmos). */
+export const SECOES_DO_ESPELHO = {
+  dados: "Dados do registro",
+  notas: "Notas",
+  criterios: "Pontuação por critério",
+  justificativas: "Justificativa / observação registrada",
+} as const;
+export const COLUNAS_DOS_CRITERIOS = [
+  "Critério",
+  "Declarada",
+  "Após análise",
+  "Teto",
+] as const;
 
 const MODALIDADES: Readonly<Record<string, string>> = {
   AC: "Ampla concorrência",
@@ -327,6 +345,8 @@ export function montarEspelho(entrada: EntradaDoEspelho): Espelho {
     criterios,
     justificativas,
     nomeDoArquivo: `Espelho de nota${codigo ? ` ${codigo}` : ""}`,
+    codigoDoCandidato: codigo,
+    codigoDaVaga: texto(entrada.vaga.codigo),
   };
 }
 
@@ -403,7 +423,7 @@ export function folhaDoEspelho(
     : "";
   const criterios =
     espelho.modelo === "COM_PONTOS" && espelho.criterios.length
-      ? `<h2>Pontuação por critério</h2><table class="criterios"><thead><tr><th scope="col">Critério</th><th scope="col" class="n">Declarada</th><th scope="col" class="n">Após análise</th><th scope="col" class="n">Teto</th></tr></thead><tbody>${espelho.criterios
+      ? `<h2>${escapar(SECOES_DO_ESPELHO.criterios)}</h2><table class="criterios"><thead><tr>${COLUNAS_DOS_CRITERIOS.map((c, i) => `<th scope="col"${i ? ' class="n"' : ""}>${escapar(c)}</th>`).join("")}</tr></thead><tbody>${espelho.criterios
           .map(
             (c) =>
               `<tr><td>${escapar(c.rotulo)}</td><td class="n">${escapar(c.declarada)}</td><td class="n">${escapar(c.apurada)}</td><td class="n">${escapar(c.teto)}</td></tr>` +
@@ -418,11 +438,11 @@ export function folhaDoEspelho(
     `<div class="timbrado">${imagem}${linhasDoCabecalho.map((l) => `<p>${escapar(l)}</p>`).join("")}</div>` +
     `<h1>${escapar(espelho.titulo)}</h1><p class="subtitulo">${escapar(SUBTITULO_DO_ESPELHO)}</p>` +
     `<p>Prezado(a) <strong>${escapar(espelho.candidato)}</strong>,</p>` +
-    "<p>Apresenta-se, a seguir, o espelho de nota referente à avaliação realizada pela comissão avaliadora, para fins de consulta.</p>" +
-    `<h2>Dados do registro</h2>${tabelaDeLinhas(espelho.dados, "dados")}` +
-    `<h2>Notas</h2>${tabelaDeLinhas(espelho.notas, "dados notas")}` +
+    `<p>${escapar(ABERTURA_DO_ESPELHO)}</p>` +
+    `<h2>${escapar(SECOES_DO_ESPELHO.dados)}</h2>${tabelaDeLinhas(espelho.dados, "dados")}` +
+    `<h2>${escapar(SECOES_DO_ESPELHO.notas)}</h2>${tabelaDeLinhas(espelho.notas, "dados notas")}` +
     criterios +
-    `<h2>Justificativa / observação registrada</h2><div class="caixa">${listaOuVazio(espelho.justificativas)}</div>` +
+    `<h2>${escapar(SECOES_DO_ESPELHO.justificativas)}</h2><div class="caixa">${listaOuVazio(espelho.justificativas)}</div>` +
     `<p class="rodape">${escapar(RODAPE_DO_ESPELHO)}</p>` +
     "</div>"
   );
