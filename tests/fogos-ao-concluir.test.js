@@ -2,17 +2,17 @@ import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { CHAVE_DO_SOM } from "../src/lib/fogos-cena.js";
 import { criarAleatorio } from "../src/lib/fogos.js";
-import {
-  comemorar,
-  soltarConfete,
-  soltarFogos,
-} from "../src/modules/comemoracao.js";
+import { comemorar } from "../src/modules/comemoracao.js";
+import { encerrarShowsAoFimDeCadaTeste } from "./shows-de-comemoracao.js";
 
 /*
   O desenho dos fogos, com canvas e áudio falsos. Sorteio sempre fixo
   (`aleatorio: criarAleatorio(n)`): já houve teste instável por depender de
   Math.random sem semente.
 */
+
+const shows = encerrarShowsAoFimDeCadaTeste();
+const { soltarConfete, soltarFogos } = shows;
 
 /* Um objeto que aceita qualquer chamada e atribuição (nó de áudio falso). */
 const qualquer = () =>
@@ -48,7 +48,7 @@ function janelaComCanvas({
       },
     },
   );
-  const doc = document.implementation.createHTMLDocument("t");
+  const doc = shows.acompanhar(document.implementation.createHTMLDocument("t"));
   // O documento do jsdom nasce "oculto"; aqui a aba está visível.
   Object.defineProperty(doc, "hidden", { value: false, configurable: true });
   if (tema) doc.documentElement.setAttribute("data-theme", tema);
