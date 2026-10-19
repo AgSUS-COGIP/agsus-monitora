@@ -4,11 +4,20 @@ import { describe, expect, it, vi } from "vitest";
 import {
   COLUNAS_DOS_CRITERIOS,
   montarEspelho,
-  RODAPE_DO_ESPELHO,
-  SECOES_DO_ESPELHO,
-  SEM_OBSERVACAO,
-  SUBTITULO_DO_ESPELHO,
 } from "../../src/lib/avaliacao-documental/espelho-de-nota.ts";
+import { TEXTOS_PADRAO_DO_ESPELHO as PADRAO } from "../../src/lib/avaliacao-documental/modelo-do-espelho.ts";
+
+const SECOES_DO_ESPELHO = {
+  dados: PADRAO.secao_dados,
+  notas: PADRAO.secao_notas,
+  criterios: PADRAO.secao_criterios,
+  justificativas: PADRAO.secao_justificativas,
+};
+const {
+  subtitulo: SUBTITULO_DO_ESPELHO,
+  rodape: RODAPE_DO_ESPELHO,
+  sem_observacao: SEM_OBSERVACAO,
+} = PADRAO;
 import {
   carregarBibliotecasDoPdf,
   nomeDoPdfDoEspelho,

@@ -66,14 +66,18 @@ const linha = (codigo, nome) => ({
 });
 
 function rpcFalso() {
-  return vi.fn(async () => ({
-    edital: { id: "e114", rotulo: "114/2026", area: "projetos" },
-    documental: { nota_minima: 15 },
-    regras: { "r1:1": structuredClone(f114.regra) },
-    fichas: [linha("7001", "Ana Lúcia"), linha("7002", "Bruno")],
-    nao_concluidos: [],
-    proximo: null,
-  }));
+  return vi.fn(async (nome) =>
+    nome === "obter_modelo_espelho_nota"
+      ? { versao: 1, textos: { titulo: "Título do 114" }, pode_editar: true }
+      : {
+          edital: { id: "e114", rotulo: "114/2026", area: "projetos" },
+          documental: { nota_minima: 15 },
+          regras: { "r1:1": structuredClone(f114.regra) },
+          fichas: [linha("7001", "Ana Lúcia"), linha("7002", "Bruno")],
+          nao_concluidos: [],
+          proximo: null,
+        },
+  );
 }
 
 const FILA = [
@@ -129,6 +133,11 @@ describe("Espelhos de nota em massa: ZIP", () => {
     const [espelhos, nome] = baixarZip.mock.calls[0];
     expect(espelhos.map((e) => e.codigoDoCandidato)).toEqual(["7001", "7002"]);
     expect(nome).toBe("espelhos-114-2026-2026-10-19.zip");
+    // Os textos do modelo do edital (obter_modelo_espelho_nota).
+    expect(espelhos.map((e) => e.titulo)).toEqual([
+      "Título do 114",
+      "Título do 114",
+    ]);
     progresso.push(botao("[data-acao='espelhos-pdfs']").textContent);
     expect(progresso[0]).toContain("1 de 2 PDFs");
     await esperar(() => continuar());

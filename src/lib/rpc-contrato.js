@@ -1083,6 +1083,18 @@ export const CONTRATO_RPC = {
     resumo:
       "Espelhos de nota em massa (20261015180000): das fichas concluídas do edital, só o que a montagem do espelho individual usa (~1 KB por ficha: nome, código, vaga, cargo, modalidade, ART, resultado, nota final, declarada gravada, lançamento sem empregador nem nome de curso, chave da regra) e as regras ainda não lidas (p_regras). Páginas de até 200 pela chave da ficha (p_apos = proximo). Filtro por vagas e TODOS/APTOS/INAPTOS, ou p_codigos (até 5.000; nao_concluidos na primeira página). Só administrador e coordenação do edital. Não grava nada.",
   },
+  obter_modelo_espelho_nota: {
+    argumentos: ["p_edital"],
+    critica: false,
+    resumo:
+      "Modelo do espelho de nota do edital (20261019120000): versao (0 = nunca salvo), textos (só o que difere do padrão do código; {} = padrão), atualizado_em, atualizado_por e pode_editar. Para todos da avaliação documental do edital (o espelho da ficha usa o modelo); sem a RPC, a tela usa o padrão. Não grava nada.",
+  },
+  salvar_modelo_espelho_nota: {
+    argumentos: ["p_edital", "p_textos", "p_versao_atual"],
+    critica: false,
+    resumo:
+      "Salva os textos do modelo do espelho de nota do edital (20261019120000): só as diferenças do padrão ({} = Restaurar padrão), validadas como em validarModeloDoEspelho (22023), com a versão que a tela abriu (outra = PT409). Só a coordenação do edital (42501). Grava a versão nova e o histórico (TH_MODELO_ESPELHO_NOTA).",
+  },
   pegar_proxima_ficha: {
     argumentos: ["p_edital", "p_vaga"],
     critica: false,

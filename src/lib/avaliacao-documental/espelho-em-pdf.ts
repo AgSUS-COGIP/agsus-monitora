@@ -8,7 +8,8 @@
   sem embutir fonte) na mesma estrutura da página impressa: timbrado, título,
   subtítulo, saudação, Dados do registro, Notas, Pontuação por critério com as
   justificativas, Justificativa / observação e rodapé. Nenhuma regra de
-  conteúdo aqui: só desenho.
+  conteúdo aqui: só desenho. Os textos fixos (título, saudação, quadros,
+  rodapé…) vêm de espelho.textos, o modelo do edital (modelo-do-espelho.ts).
 
   jsPDF + jspdf-autotable (tabelas com quebra de página) e fflate (o ZIP) vêm
   por import dinâmico (carregarBibliotecasDoPdf): só baixam quando alguém
@@ -17,15 +18,8 @@
 import type { jsPDF as TipoJsPdf } from "jspdf";
 import type { CellInput, RowInput, UserOptions } from "jspdf-autotable";
 import { CABECALHO_PADRAO } from "../cabecalho-dos-documentos.js";
-import {
-  ABERTURA_DO_ESPELHO,
-  COLUNAS_DOS_CRITERIOS,
-  RODAPE_DO_ESPELHO,
-  SECOES_DO_ESPELHO,
-  SEM_OBSERVACAO,
-  SUBTITULO_DO_ESPELHO,
-  type Espelho,
-} from "./espelho-de-nota.ts";
+import { COLUNAS_DOS_CRITERIOS, type Espelho } from "./espelho-de-nota.ts";
+import { comOCandidato, trechosDaSaudacao } from "./modelo-do-espelho.ts";
 
 type ConstrutorDoPdf = typeof TipoJsPdf;
 type DesenharTabela = (documento: TipoJsPdf, opcoes: UserOptions) => void;
@@ -205,6 +199,7 @@ export function pdfDoEspelho(
   const util = largura - 2 * MARGEM.lados;
   const centro = largura / 2;
   let y = MARGEM.topo;
+  const t = espelho.textos;
 
   const linhaDe = (tamanho: number) => tamanho * ALTURA_DA_LINHA;
   const garantir = (precisa: number) => {
@@ -288,23 +283,33 @@ export function pdfDoEspelho(
     alinhar: "center",
   });
   y += 2;
-  paragrafo(SUBTITULO_DO_ESPELHO, 10, { cor: CINZA, alinhar: "center" });
+  if (t.subtitulo)
+    paragrafo(t.subtitulo, 10, { cor: CINZA, alinhar: "center" });
   y += 12;
 
-  // "Prezado(a) <nome em negrito>,"
-  fonte(11);
-  const inicio = "Prezado(a) ";
-  const nome = textoParaOPdf(espelho.candidato);
-  garantir(linhaDe(11));
-  doc.text(inicio, MARGEM.lados, y, { baseline: "top" });
-  const xNome = MARGEM.lados + doc.getTextWidth(inicio);
-  fonte(11, "bold");
-  doc.text(nome, xNome, y, { baseline: "top" });
-  const xVirgula = xNome + doc.getTextWidth(nome);
-  fonte(11);
-  doc.text(",", xVirgula, y, { baseline: "top" });
-  y += linhaDe(11) + 6;
-  paragrafo(ABERTURA_DO_ESPELHO, 11, { alinhar: "justify" });
+  // A saudação do modelo ("Prezado(a) {candidato},"): o nome em negrito.
+  // Numa linha só quando cabe; senão, quebrada, sem o negrito.
+  const trechos = trechosDaSaudacao(t.saudacao, espelho.candidato).map((p) => ({
+    ...p,
+    texto: textoParaOPdf(p.texto),
+  }));
+  const larguraDe = (p: { texto: string; negrito: boolean }) => {
+    fonte(11, p.negrito ? "bold" : "normal");
+    return doc.getTextWidth(p.texto);
+  };
+  if (trechos.reduce((soma, p) => soma + larguraDe(p), 0) <= util) {
+    garantir(linhaDe(11));
+    let x = MARGEM.lados;
+    for (const p of trechos) {
+      fonte(11, p.negrito ? "bold" : "normal");
+      doc.text(p.texto, x, y, { baseline: "top" });
+      x += doc.getTextWidth(p.texto);
+    }
+    y += linhaDe(11);
+  } else paragrafo(trechos.map((p) => p.texto).join(""), 11);
+  y += 6;
+  const abertura = comOCandidato(t.abertura, espelho.candidato);
+  if (abertura) paragrafo(abertura, 11, { alinhar: "justify" });
 
   const base: UserOptions = {
     theme: "grid",
@@ -360,11 +365,11 @@ export function pdfDoEspelho(
     0: { cellWidth: util * 0.34, fillColor: FUNDO_ROTULO, fontStyle: "bold" },
   };
 
-  secao(SECOES_DO_ESPELHO.dados, {
+  secao(t.secao_dados, {
     body: linhas(espelho.dados),
     columnStyles: colunasDeRotulo,
   });
-  secao(SECOES_DO_ESPELHO.notas, {
+  secao(t.secao_notas, {
     body: linhas(espelho.notas),
     columnStyles: colunasDeRotulo,
   });
@@ -392,7 +397,7 @@ export function pdfDoEspelho(
       }
     }
     const numero = { cellWidth: util * 0.15, halign: "center" as const };
-    secao(SECOES_DO_ESPELHO.criterios, {
+    secao(t.secao_criterios, {
       head: [COLUNAS_DOS_CRITERIOS.map((c) => textoParaOPdf(c))],
       body: corpo,
       headStyles: {
@@ -408,27 +413,29 @@ export function pdfDoEspelho(
     });
   }
 
-  secao(SECOES_DO_ESPELHO.justificativas, {
+  secao(t.secao_justificativas, {
     body: [
       [
         espelho.justificativas.length
           ? { content: lista(espelho.justificativas) }
           : {
-              content: textoParaOPdf(SEM_OBSERVACAO),
+              content: textoParaOPdf(t.sem_observacao),
               styles: { fontStyle: "italic", textColor: [85, 85, 85] },
             },
       ],
     ],
   });
 
-  // Rodapé: o fio e a observação.
-  y += 16;
-  garantir(30);
-  doc.setDrawColor(...BORDA);
-  doc.setLineWidth(0.75);
-  doc.line(MARGEM.lados, y, largura - MARGEM.lados, y);
-  y += 6;
-  paragrafo(RODAPE_DO_ESPELHO, 8.5, { cor: CINZA });
+  // Rodapé do modelo (vazio = sem rodapé): o fio e a observação.
+  if (t.rodape) {
+    y += 16;
+    garantir(30);
+    doc.setDrawColor(...BORDA);
+    doc.setLineWidth(0.75);
+    doc.line(MARGEM.lados, y, largura - MARGEM.lados, y);
+    y += 6;
+    paragrafo(t.rodape, 8.5, { cor: CINZA });
+  }
 
   return new Uint8Array(doc.output("arraybuffer"));
 }

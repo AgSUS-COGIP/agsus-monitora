@@ -464,6 +464,13 @@ os modelos em `supabase/correcoes/20261006-modelos-da-regra-da-analise.sql` e o 
 **fonte:** src/modulos/avaliacao-documental/espelhos-em-massa.tsx; src/lib/avaliacao-documental/espelhos-em-massa.ts; supabase/migrations/20261015180000_espelhos_de_nota_em_massa.sql
 **abrir:** avaliacao-documental
 
+## Modelo do espelho de nota (textos editáveis por edital)
+
+**perguntas:** modelo do espelho | editar espelho de nota | mudar texto do espelho | titulo do espelho | rodape do espelho | saudacao do espelho | restaurar padrao do espelho | esconder nota autodeclarada | textos do espelho
+**resposta:** Na Fila da Avaliação documental, "Ações da coordenação" › "Modelo do espelho de nota" (só administrador e coordenação ou gestor do edital; também pelo botão "Editar os textos do modelo" na gaveta dos espelhos em massa) abre os textos da folha do edital: título, subtítulo, saudação (com {candidato}, que vira o nome em negrito), texto de abertura, nomes dos quadros (dados, notas, critérios, justificativa), rótulos das notas autodeclarada e consolidada, a nota do eliminado ("Não se aplica…"), o texto quando não há justificativa ("Sem observação registrada.") e o rodapé, além de mostrar ou não a nota autodeclarada no modelo com pontos. Subtítulo, abertura e rodapé podem ficar vazios (saem da folha); {candidato} só na saudação (obrigatório) e na abertura. A prévia ao lado usa dados fictícios, com pontos ou eliminado. "Salvar modelo" vale na hora para o espelho da ficha, os espelhos em massa, a impressão e o PDF/ZIP; "Restaurar padrão" volta aos textos originais (salve depois). Só textos: quem aparece, notas, critérios e justificativas não mudam. Se outra pessoa salvou antes, a tela pede para recarregar. Cada versão fica no histórico do banco.
+**fonte:** src/modulos/avaliacao-documental/modelo-do-espelho.tsx; src/lib/avaliacao-documental/modelo-do-espelho.ts; supabase/migrations/20261019120000_modelo_do_espelho_de_nota.sql
+**abrir:** avaliacao-documental
+
 ## Rascunho, concluir e próxima
 
 **perguntas:** salvar rascunho da ficha | salvo as | rascunho automatico | concluir e proxima | concluir ficha | fechar e liberar | o que falta para concluir | perdi o que fiz | concluir desabilitado | itens conferidos | barra de progresso da ficha | conclusao da ficha | revisar e concluir | proximo pendente | rodape da ficha
