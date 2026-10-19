@@ -557,6 +557,78 @@ describe("situação do processo (escopo)", () => {
   });
 });
 
+describe("ritmo da análise", () => {
+  const RITMO = {
+    editais: [
+      {
+        id: "bcecfb08",
+        edital: "114/2026",
+        situacoes: {
+          pendente: 1086,
+          em_analise: 12,
+          revisar: 0,
+          concluida: 414,
+          fora_lote: 448,
+        },
+        por_dia: [{ dia: "2026-10-16", qt: 266 }],
+        qt_equipe: 9,
+        qt_avaliadores_recentes: 7,
+        cronograma: [
+          {
+            ordem: 4,
+            atividade:
+              "Validação das inscrições, por meio da verificação da documentação obrigatória",
+            tipo: null,
+            inicio: "2026-10-15",
+            fim: "2026-10-22",
+          },
+        ],
+      },
+    ],
+  };
+  const comRitmo = () =>
+    supabaseFalso({
+      respostas: {
+        obter_ritmo_da_analise: () => ({ data: RITMO, error: null }),
+      },
+    });
+  const card = () => secao.querySelector("[data-ritmo]");
+
+  it("vem junto com a carga, numa consulta só da área, e mostra o card do edital", async () => {
+    const supabase = comRitmo();
+    await montar(supabase);
+    expect(chamadas(supabase, "obter_ritmo_da_analise")).toEqual([
+      { p_area: "saude-indigena" },
+    ]);
+    expect(card().textContent).toContain("Ritmo da análise · 114/2026");
+    expect(card().textContent).toContain(
+      "Prazo: 22/10 · Validação da documentação",
+    );
+    expect(card().textContent).toContain("9 avaliadores");
+  });
+
+  it("trocar só o escopo não pede de novo; Atualizar pede", async () => {
+    const supabase = comRitmo();
+    await montar(supabase);
+    await escolher(
+      document.getElementById("analises-filtro-escopo"),
+      "inativo",
+    );
+    await esperar();
+    expect(chamadas(supabase, "obter_ritmo_da_analise")).toHaveLength(1);
+    expect(card()).not.toBeNull();
+    await clicar(secao.querySelector('[data-acao="atualizar"]'));
+    await esperar();
+    expect(chamadas(supabase, "obter_ritmo_da_analise")).toHaveLength(2);
+  });
+
+  it("RPC ausente ou com falha: sem card e a tela segue", async () => {
+    await montar(supabaseFalso());
+    expect(card()).toBeNull();
+    expect(linhasDaFila()).toHaveLength(4);
+  });
+});
+
 describe("pendências prioritárias (atalhos)", () => {
   it("sem responsável, fora do período e pendentes filtram; clicar de novo tira", async () => {
     const linhas = [

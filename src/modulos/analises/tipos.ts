@@ -1,4 +1,5 @@
 /** Contratos da lista, dos filtros e das consultas de Análises curriculares. */
+import type { EditalDoRitmo } from "../../lib/ritmo-da-analise.ts";
 export type RegistroDaAnalise = Record<string, unknown>;
 export type LinhaDaAnalise = RegistroDaAnalise & {
   __chave: string;
@@ -92,7 +93,8 @@ export interface ClienteDasAnalises {
       | "get_analises_dashboard_payload_v2_se_mudou"
       | "get_analise_detalhe_do_painel"
       | "get_analises_texto_do_painel"
-      | "obter_ultima_conferencia",
+      | "obter_ultima_conferencia"
+      | "obter_ritmo_da_analise",
     argumentos?: Record<string, unknown>,
   ): PromiseLike<{ data: unknown; error: unknown }>;
   auth?: {
@@ -110,6 +112,7 @@ export interface ClienteDasAnalises {
 export interface ConsultasDasAnalises {
   podeLer(): Promise<boolean | null>;
   ultimaConferencia?(area: string): Promise<string | null>;
+  ritmo?(area: string): Promise<readonly EditalDoRitmo[] | null>;
   carregarEscopo(opcoes: OpcoesDeCarga): Promise<ResultadoDasAnalises>;
   detalhe(id: unknown): Promise<RegistroDaAnalise | null>;
   textos(area: string, escopo: string): Promise<Map<string, RegistroDaAnalise>>;
@@ -133,6 +136,8 @@ export interface SnapshotDasAnalises {
   readonly daCopia: boolean;
   readonly carregadoEm: number;
   readonly conferidoEm: string | null;
+  /** Card "Ritmo da análise": os editais da área; null = não veio (ou ainda não). */
+  readonly ritmo: readonly EditalDoRitmo[] | null;
   readonly gaveta: string | null;
   readonly detalhes: ReadonlyMap<string, DetalheDaAnalise>;
   readonly textos: "" | "carregando" | "prontos" | "erro";

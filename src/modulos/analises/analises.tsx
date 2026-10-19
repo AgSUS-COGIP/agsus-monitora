@@ -48,6 +48,7 @@ import {
 import { criarEstadoDasAnalises } from "./estado.ts";
 import { GavetaDaAnalise } from "./gaveta.tsx";
 import { chipsDosFiltros, Filtros, Graficos, Indicadores } from "./paineis.tsx";
+import { RitmoDaAnalise } from "./ritmo.tsx";
 import { TabelaDeAnalises } from "./tabela.tsx";
 import { SeloDeAvisos } from "../conferencias/avisos-de-conferencia.tsx";
 
@@ -384,6 +385,7 @@ function TelaDaArea({
         chips={chips}
       />
       <Indicadores kpis={kpis} carregado={carregado} kpi={kpi} aoKpi={setKpi} />
+      <RitmoDaAnalise editais={e.ritmo} />
       <LinhaDoRecorte
         texto={descricaoDoRecorte({
           escopo,

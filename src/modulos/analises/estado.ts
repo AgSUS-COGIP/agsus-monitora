@@ -22,6 +22,9 @@ import type {
   - "Atualizar" pede a lista ao servidor (sem a cópia) e esquece detalhes e
     pareceres já trazidos.
   - Comemorações (marcos.js): a cada carga do escopo "Ativo".
+  - Ritmo da análise: uma consulta leve junto com a carga (outra área,
+    "Atualizar", reabertura depois de 5 min); trocar só o escopo não pede de
+    novo. Sem polling próprio: o banco é pequeno.
 */
 import {
   ESCOPO_PADRAO,
@@ -69,6 +72,7 @@ const ESTADO_INICIAL: SnapshotDasAnalises = Object.freeze({
   daCopia: false,
   carregadoEm: 0,
   conferidoEm: null,
+  ritmo: null,
   /** Chave (`__chave`) do registro aberto na gaveta, ou `null`. */
   gaveta: null,
   /** chave → `{ situacao: "carregando" | "pronto" | "erro", dados }`. */
@@ -218,6 +222,8 @@ export function criarEstadoDasAnalises({
       opcoes.escopo ?? (outraArea ? ESCOPO_PADRAO : estado.escopo),
     );
     const meu = ++pedido;
+    const pedirRitmo = outraArea || escopo === estado.escopo || !estado.ritmo;
+    const ritmoGuardado = outraArea ? null : estado.ritmo;
     if (!cacheAntigoLimpo) {
       cacheAntigoLimpo = true;
       limparCacheAntigo();
@@ -230,6 +236,7 @@ export function criarEstadoDasAnalises({
         escopo,
         detalhes: new Map(),
         atualizando: true,
+        ritmo: ritmoGuardado,
       });
     else publicar({ atualizando: true, erroAoCarregar: "" });
 
@@ -260,10 +267,15 @@ export function criarEstadoDasAnalises({
         return false;
       }
 
-      // A hora da última conferência vem à parte e não segura a carga.
+      // A hora da última conferência e o ritmo vêm à parte e não seguram a carga.
       void consultas.ultimaConferencia?.(area).then((conferidoEm) => {
         if (meu === pedido) publicar({ conferidoEm });
       });
+      if (pedirRitmo)
+        void consultas.ritmo?.(area).then((ritmo) => {
+          if (meu === pedido && estado.area === area && ritmo)
+            publicar({ ritmo });
+        });
 
       const resultado = await consultas.carregarEscopo({
         area,

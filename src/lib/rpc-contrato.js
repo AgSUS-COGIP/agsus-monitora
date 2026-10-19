@@ -241,6 +241,11 @@ export const CONTRATO_RPC = {
     resumo:
       "Hora da última conferência da fonte: análises = a mais recente entre a carga da planilha e a montagem do resumo do Painel da área (migration 20261016170000); seleção e entrevistas = última carga que terminou bem; só quem pode ler a tela.",
   },
+  obter_ritmo_da_analise: {
+    argumentos: ["p_area"],
+    resumo:
+      "Card Ritmo da análise do Painel das análises (migration 20261019170000): por edital da área com a avaliação documental no MONITORA, contagens por situação, concluídas por dia (14 dias), equipe de analistas, avaliadores recentes e cronograma; só quem pode ler o Painel da área.",
+  },
   usuario_pode_ler_analises: {
     argumentos: [],
     critica: true,

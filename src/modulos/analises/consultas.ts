@@ -25,6 +25,8 @@ import type {
     experiências, links, datas), ao abrir a gaveta. Guardado por id.
   - `textos(area, escopo)`: parecer, link do PDF e experiência de todas as
     linhas, em lote, para a busca geral e o CSV. Guardado por área + escopo.
+  - `ritmo(area)`: o retrato pequeno do card "Ritmo da análise"
+    (obter_ritmo_da_analise, migration 20261019170000); null se não der.
   - `esquecer()`: o "Atualizar" e a troca de usuário descartam o guardado.
 */
 import { parametroDeAreaDaRpc } from "../../lib/area-do-painel-de-analises.js";
@@ -46,6 +48,7 @@ import {
   juntarPartesDoPainel,
   partesDoEscopo,
 } from "../../lib/lista-do-painel-de-analises.js";
+import { lerRitmoDaAnalise } from "../../lib/ritmo-da-analise.ts";
 import { mapaDosTextos } from "../../lib/textos-do-painel-de-analises.js";
 import { armazenamentoDePayload } from "../../modules/cache-de-payload-indexeddb.js";
 
@@ -54,6 +57,7 @@ const RPC_LISTA = "get_analises_dashboard_payload_v2_se_mudou";
 const RPC_DETALHE = "get_analise_detalhe_do_painel";
 const RPC_TEXTOS = "get_analises_texto_do_painel";
 const RPC_CONFERENCIA = "obter_ultima_conferencia";
+const RPC_RITMO = "obter_ritmo_da_analise";
 
 /* A cópia vale só para a mesma publicação do front (o endereço do módulo muda a cada build). */
 const VERSAO_DA_COPIA = `1:${import.meta.url}`;
@@ -278,9 +282,22 @@ export function criarConsultasDasAnalises({
     }
   }
 
+  /** Os editais do card "Ritmo da análise"; null se a consulta falhar (o card some). */
+  async function ritmo(area: string) {
+    try {
+      return lerRitmoDaAnalise(
+        await chamar(RPC_RITMO, parametroDeAreaDaRpc(area)),
+      );
+    } catch (erro) {
+      console.warn("Não foi possível ler o ritmo da análise:", erro);
+      return null;
+    }
+  }
+
   return {
     podeLer,
     ultimaConferencia,
+    ritmo,
     carregarEscopo,
     detalhe,
     textos,
