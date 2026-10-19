@@ -58,6 +58,17 @@ export default defineConfig({
             return "vendor-react";
           }
           if (id.includes("chart.js")) return "vendor-charts";
+          // O PDF dos espelhos de nota (jsPDF, autotable, fflate e o que o jsPDF
+          // carrega sozinho para html() e SVG): fora do vendor da entrada; o
+          // Rollup os põe nos chunks do import dinâmico (espelho-em-pdf.ts), que
+          // só baixam quando alguém pede um PDF.
+          if (
+            /\/node_modules\/(jspdf|jspdf-autotable|fflate|fast-png|iobuffer|pako|@babel\/runtime|html2canvas|canvg|core-js|raf|performance-now|regenerator-runtime|rgbcolor|stackblur-canvas|svg-pathdata|css-line-break|text-segmentation|utrie|base64-arraybuffer)\//.test(
+              id,
+            )
+          ) {
+            return undefined;
+          }
           return "vendor";
         },
       },

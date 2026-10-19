@@ -1,5 +1,6 @@
 import { useMemo, useRef, useState } from "react";
 import type { Espelho } from "../../lib/avaliacao-documental/espelho-de-nota.ts";
+import { nomeDoZipDosEspelhos } from "../../lib/avaliacao-documental/espelho-em-pdf.ts";
 import {
   argumentosDaPagina,
   avisoDoTamanho,
@@ -18,6 +19,7 @@ import {
 import { Aviso, Campo, Gaveta, Segmentado } from "../../ui/index.js";
 import {
   abrirEspelhosEmMassa,
+  baixarZipDosEspelhos,
   espelhoDaFichaGravada,
 } from "./ficha/espelho-de-nota.ts";
 
@@ -28,7 +30,9 @@ import {
   candidato na Empregare; busca as fichas concluídas em páginas de 200
   (obter_espelhos_de_nota, migration 20261015180000: ~1 KB por ficha, nada da
   ficha inteira), com progresso e cancelar; monta cada espelho pela MESMA
-  montagem do botão da ficha (espelhoDaFichaGravada) e abre a impressão de um
+  montagem do botão da ficha (espelhoDaFichaGravada) e baixa um ZIP com um PDF
+  por candidato (gerados no navegador, em lotes, com "x de N"; o nome de cada
+  PDF diz a vaga, o código e o nome) ou, como opção, abre a impressão de um
   documento só, um espelho por página. Nada é guardado (nem banco, nem Storage).
   Regras puras: src/lib/avaliacao-documental/espelhos-em-massa.ts.
 */
@@ -107,15 +111,32 @@ export function montarEspelhosLidos(
 }
 
 type Vaga = { codigo: string | number; cargo?: string | null };
+type Formato = "zip" | "imprimir";
 type Resultado = {
+  formato: Formato;
   espelhos: Espelho[];
+  /** O nome do ZIP (no formato zip). */
+  arquivo: string;
   naoEncontrados: string[];
   naoConcluidos: { codigo: string; situacao: string }[];
 };
+type BaixarZip = (
+  espelhos: Espelho[],
+  nome: string,
+  opcoes: {
+    aoProgredir: (feitos: number, total: number) => void;
+    cancelado: () => boolean;
+  },
+) => Promise<number | null>;
 
 const MODOS = [
   { valor: "filtro", rotulo: "Por vaga e filtro" },
   { valor: "codigos", rotulo: "Colar lista de códigos" },
+] as const;
+
+const FORMATOS = [
+  { valor: "zip", rotulo: "ZIP, um PDF por candidato" },
+  { valor: "imprimir", rotulo: "Imprimir tudo junto" },
 ] as const;
 
 export function EspelhosEmMassa({
@@ -125,6 +146,8 @@ export function EspelhosEmMassa({
   rpc,
   aoFechar,
   abrir = abrirEspelhosEmMassa,
+  baixarZip = baixarZipDosEspelhos,
+  agora = () => new Date(),
 }: {
   editalId: string;
   vagas: Vaga[];
@@ -133,10 +156,16 @@ export function EspelhosEmMassa({
   rpc: Rpc;
   aoFechar: () => void;
   abrir?: (espelhos: Espelho[], opcoes?: { titulo?: string }) => void;
+  baixarZip?: BaixarZip;
+  agora?: () => Date;
 }) {
   const [modo, setModo] = useState<"filtro" | "codigos">("filtro");
   const [vaga, setVaga] = useState("");
   const [filtro, setFiltro] = useState<FiltroDosEspelhos>("TODOS");
+  const [formato, setFormato] = useState<Formato>("zip");
+  const [pdfs, setPdfs] = useState<{ feitos: number; total: number } | null>(
+    null,
+  );
   const [texto, setTexto] = useState("");
   const [lidos, setLidos] = useState<number | null>(null);
   const [erro, setErro] = useState("");
@@ -148,7 +177,7 @@ export function EspelhosEmMassa({
     modo === "codigos" ? { modo, codigos } : { modo, vaga, filtro };
   const estimativa = estimativaDosEspelhos(fila, escolha);
   const aviso = avisoDoTamanho(estimativa);
-  const buscando = lidos !== null;
+  const buscando = lidos !== null || pdfs !== null;
   const codigosDemais =
     modo === "codigos" && codigos.length > MAXIMO_DE_CODIGOS;
   const vazio = modo === "codigos" ? !codigos.length : !estimativa;
@@ -172,20 +201,58 @@ export function EspelhosEmMassa({
       const faltam = lista
         ? codigosSemEspelho(lista, lidas.fichas, lidas.naoConcluidos)
         : { naoEncontrados: [], naoConcluidos: [] };
-      setResultado({ espelhos, ...faltam });
-      if (espelhos.length)
-        abrir(espelhos, {
-          titulo:
-            escolha.modo === "filtro" && escolha.vaga
-              ? `Espelhos de nota - vaga ${escolha.vaga}`
-              : "Espelhos de nota",
-        });
+      const vagaEscolhida = escolha.modo === "filtro" ? escolha.vaga : "";
+      const arquivo = nomeDoZipDosEspelhos(
+        lidas.edital?.rotulo,
+        agora(),
+        vagaEscolhida || null,
+      );
+      setLidos(null);
+      if (espelhos.length && formato === "zip") {
+        const feitos = await gerarZip(espelhos, arquivo);
+        if (feitos === null) return;
+      } else if (espelhos.length) imprimir(espelhos, vagaEscolhida);
+      setResultado({ formato, espelhos, arquivo, ...faltam });
     } catch (e) {
       setErro(
         `Não foi possível gerar os espelhos: ${(e as { message?: string })?.message || String(e)}`,
       );
     } finally {
       setLidos(null);
+      setPdfs(null);
+    }
+  }
+
+  function imprimir(espelhos: Espelho[], vagaEscolhida = "") {
+    abrir(espelhos, {
+      titulo: vagaEscolhida
+        ? `Espelhos de nota - vaga ${vagaEscolhida}`
+        : "Espelhos de nota",
+    });
+  }
+
+  /** Os PDFs em lotes ("x de N"), o ZIP e o download; null se cancelado. */
+  async function gerarZip(espelhos: Espelho[], arquivo: string) {
+    cancelar.current = false;
+    setPdfs({ feitos: 0, total: espelhos.length });
+    try {
+      return await baixarZip(espelhos, arquivo, {
+        aoProgredir: (feitos, total) => setPdfs({ feitos, total }),
+        cancelado: () => cancelar.current,
+      });
+    } finally {
+      setPdfs(null);
+    }
+  }
+
+  async function baixarDeNovo(r: Resultado) {
+    setErro("");
+    try {
+      await gerarZip(r.espelhos, r.arquivo);
+    } catch (e) {
+      setErro(
+        `Não foi possível gerar o ZIP: ${(e as { message?: string })?.message || String(e)}`,
+      );
     }
   }
 
@@ -193,7 +260,7 @@ export function EspelhosEmMassa({
     <Gaveta
       tituloId="avdEspelhosTitulo"
       titulo="Espelhos de nota em massa"
-      resumo="Um documento para imprimir ou salvar como PDF, um espelho por página"
+      resumo="Um PDF por candidato num ZIP, ou um documento só para imprimir"
       aoFechar={aoFechar}
       fecharAoClicarFora={false}
       tour="avd-espelhos-em-massa"
@@ -204,6 +271,13 @@ export function EspelhosEmMassa({
           opcoes={MODOS}
           valor={modo}
           aoMudar={(v: "filtro" | "codigos") => setModo(v)}
+          desabilitado={buscando}
+        />
+        <Segmentado
+          rotulo="Formato"
+          opcoes={FORMATOS}
+          valor={formato}
+          aoMudar={(v: Formato) => setFormato(v)}
           desabilitado={buscando}
         />
         {modo === "filtro" ? (
@@ -279,23 +353,40 @@ export function EspelhosEmMassa({
             : " (fichas concluídas na fila)."}
         </p>
         {aviso ? <Aviso tom="warning">{aviso}</Aviso> : null}
-        {buscando ? (
+        {lidos !== null ? (
           <div className="avd-espelhos-progresso" role="status">
             <progress
-              max={Math.max(estimativa, lidos ?? 0, 1)}
-              value={lidos ?? 0}
+              max={Math.max(estimativa, lidos, 1)}
+              value={lidos}
               aria-label="Fichas lidas"
             />
+            <span>{lidos.toLocaleString("pt-BR")} ficha(s) lida(s)…</span>
+          </div>
+        ) : null}
+        {pdfs ? (
+          <div
+            className="avd-espelhos-progresso"
+            role="status"
+            data-acao="espelhos-pdfs"
+          >
+            <progress
+              max={Math.max(pdfs.total, 1)}
+              value={pdfs.feitos}
+              aria-label="PDFs gerados"
+            />
             <span>
-              {(lidos ?? 0).toLocaleString("pt-BR")} ficha(s) lida(s)…
+              {pdfs.feitos.toLocaleString("pt-BR")} de{" "}
+              {pdfs.total.toLocaleString("pt-BR")} PDFs…
             </span>
           </div>
         ) : null}
         {resultado ? (
           <Aviso tom={resultado.espelhos.length ? "info" : "warning"}>
-            {resultado.espelhos.length
-              ? `${resultado.espelhos.length.toLocaleString("pt-BR")} espelho(s) no documento. Se a impressão não abriu, use "Abrir de novo".`
-              : "Nenhuma ficha concluída na escolha: nada para imprimir."}
+            {!resultado.espelhos.length
+              ? "Nenhuma ficha concluída na escolha: nada para gerar."
+              : resultado.formato === "zip"
+                ? `${resultado.espelhos.length.toLocaleString("pt-BR")} PDF(s) em ${resultado.arquivo}. Se o download não começou, use "Baixar de novo".`
+                : `${resultado.espelhos.length.toLocaleString("pt-BR")} espelho(s) no documento. Se a impressão não abriu, use "Abrir de novo".`}
             {resultado.naoEncontrados.length ? (
               <span
                 className="avd-espelhos-faltam"
@@ -347,9 +438,14 @@ export function EspelhosEmMassa({
             <button
               type="button"
               className="btn secondary"
-              onClick={() => abrir(resultado.espelhos)}
+              data-acao="espelhos-de-novo"
+              onClick={() =>
+                resultado.formato === "zip"
+                  ? void baixarDeNovo(resultado)
+                  : imprimir(resultado.espelhos)
+              }
             >
-              Abrir de novo
+              {resultado.formato === "zip" ? "Baixar de novo" : "Abrir de novo"}
             </button>
           ) : null}
           <button
@@ -359,8 +455,19 @@ export function EspelhosEmMassa({
             disabled={buscando || vazio || codigosDemais}
             onClick={() => void gerar()}
           >
-            <i className="fa-solid fa-print" aria-hidden="true" />{" "}
-            {aviso ? "Gerar mesmo assim" : "Gerar espelhos"}
+            <i
+              className={
+                formato === "zip"
+                  ? "fa-regular fa-file-zipper"
+                  : "fa-solid fa-print"
+              }
+              aria-hidden="true"
+            />{" "}
+            {aviso
+              ? "Gerar mesmo assim"
+              : formato === "zip"
+                ? "Baixar ZIP"
+                : "Gerar e imprimir"}
           </button>
         </div>
       </div>

@@ -106,7 +106,8 @@ até a 10ª posição do cadastro reserva) é regra da lista CONVOCACAO da Class
   não faltar nada, e "Salvar rascunho"); "← Voltar à fila" salva antes de soltar a reserva;
 - concluída: abre na Conclusão, só leitura, com o parecer gravado e o histórico; a coordenação
   reabre com motivo; "Espelho de nota" abre a impressão do espelho para o candidato (eliminado sem
-  pontos; apto/inapto por nota com a pontuação por critério), sem gravar nada;
+  pontos; apto/inapto por nota com a pontuação por critério) e "Baixar PDF" baixa o mesmo espelho em
+  PDF (gerado no navegador), sem gravar nada;
 - na Fila, as concluídas mostram nota e resultado; o analista vê só as vagas que analisa;
 - as listas da Fila são a TabelaInfinita (`src/ui/`): colunas por etapa, ordem por coluna, busca,
   "N de M", carregamento contínuo e Exportar CSV (`csvDaFila`, csv-security).
@@ -233,11 +234,14 @@ ficha/*.tsx               cabeçalho, stepper, item, Conclusão, nota, "⋯", ro
                           src/lib/avaliacao-documental/apurado-da-ficha.ts
 ficha/diferencas-do-cargo.tsx  requisitos e extras do cargo, aviso do 8.2.7, área exigida
 ficha/espelho-de-nota.ts  botão "Espelho de nota": monta (src/lib/avaliacao-documental/
-                          espelho-de-nota.ts) e imprime no navegador, sem banco nem Storage;
-                          espelhoDaFichaGravada: a mesma montagem para os espelhos em massa
+                          espelho-de-nota.ts) e imprime no navegador, ou baixa o PDF
+                          (espelho-em-pdf.ts: jsPDF + autotable, sob demanda), sem banco
+                          nem Storage; espelhoDaFichaGravada: a mesma montagem para os
+                          espelhos em massa; baixarZipDosEspelhos: o ZIP (fflate)
 espelhos-em-massa.tsx     Ações da coordenação › "Espelhos de nota em massa": vaga e filtro
                           ou códigos colados, obter_espelhos_de_nota em páginas de 200
-                          (20261015180000), um documento só, um espelho por página
+                          (20261015180000); ZIP com um PDF por candidato (padrão, em lotes,
+                          "x de N") ou um documento só para imprimir, um espelho por página
 ficha/estado-da-ficha.js  store da ficha: obter_ficha_analise, rascunho automático,
                           concluir_ficha, reabrir_ficha, registrar_acesso_ficha
 ficha/ficha.css           estilos da ficha (só tokens)
