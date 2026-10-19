@@ -1302,7 +1302,8 @@ export const CONTRATO_RPC = {
   registrar_presenca_monitora: {
     argumentos: ["p_current_view"],
     critica: false,
-    resumo: "Marca presença online do usuário.",
+    resumo:
+      "Marca presença online do usuário (a cada 90 s com a aba visível) e devolve { status, versao_do_catalogo } (20261019160000): a versão do catálogo de abas e da situação do sistema, para a tela reler o menu e fechar a página desligada só quando ela muda (src/app/vigia-do-catalogo.ts). Sem a versão, nada é relido no meio da sessão.",
   },
   listar_presenca_online_monitora: {
     argumentos: [],

@@ -17,6 +17,7 @@ import { criarNavegacao } from "./navegacao.js";
 import { criarPaineisExternos } from "./paineis-externos.js";
 import { criarPerfil } from "./perfil.js";
 import { criarPresenca } from "./presenca.js";
+import { criarVigiaDoCatalogo } from "./vigia-do-catalogo.ts";
 import { instalarMarcosDosEditais } from "./marcos-personalizados.js";
 import { sessaoDoApp } from "./sessao.js";
 
@@ -30,6 +31,7 @@ import { sessaoDoApp } from "./sessao.js";
     navegacao.js         troca de tela, menu, título, permissões
     carga.js             carga dos dados, cópia da sessão, Realtime
     presenca.js          auditoria, heartbeat e Pessoas online
+    vigia-do-catalogo.ts página desligada pela coordenação fecha sem recarregar
     moldura.js           barra recolhida, tema, tela cheia, PDF
 
   Os ganchos de `sessaoDoApp.ligarSistema` são o contrato com a sessão
@@ -80,11 +82,15 @@ export const carga = criarCarga({
     }),
 });
 
+/* A versão do catálogo de abas vem de carona na presença (sem chamada nova). */
+export const vigiaDoCatalogo = criarVigiaDoCatalogo({ navegacao });
+
 export const presenca = criarPresenca({
   obterUsuario: perfil.obterUsuario,
   obterPerfil: perfil.obterPerfil,
   configuracao,
   navegacao,
+  aoRegistrar: vigiaDoCatalogo.aoRegistrarPresenca,
 });
 
 const viewAtual = () => navegacao.obter().view;
@@ -133,6 +139,7 @@ export function localizarLinhaDoMonitoramento(id) {
 function limparEstadoDeslogado() {
   carga.esquecer();
   presenca.pararTudo();
+  vigiaDoCatalogo.esquecer();
   paineis.limpar();
   esquecerSituacaoDoSistema(document);
   esconderEsqueleto();
@@ -179,6 +186,7 @@ function ficarSemAcesso() {
   carga.esquecer();
   void carga.apagarCopia();
   presenca.pararTudo();
+  vigiaDoCatalogo.esquecer();
   encerrarEspera();
   perfil.esconderApp();
 }

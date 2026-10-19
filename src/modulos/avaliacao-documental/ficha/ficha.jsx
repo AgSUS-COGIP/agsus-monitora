@@ -47,6 +47,7 @@ import { pontuacaoInformativaDaFicha } from "../../../lib/avaliacao-documental/p
 import { modalidadesDoLancamento } from "../../../lib/avaliacao-documental/pontuacao.js";
 import { rotuloDaVersaoNaLista } from "../../../lib/nome-da-versao.ts";
 import { Aviso, Campo } from "../../../ui/index.js";
+import { guardaDeAlteracoes } from "../../../app/guarda-de-alteracoes.ts";
 import { CabecalhoDaFicha } from "./cabecalho-da-ficha.tsx";
 import { cpfDaFicha } from "../../../lib/avaliacao-documental/cpf-da-ficha.ts";
 import { ConclusaoDaFicha } from "./conclusao-da-ficha.tsx";
@@ -247,15 +248,17 @@ export function ConteudoDaFicha({
     return () => registrarAntesDeFechar?.(null);
   }, [loja, registrarAntesDeFechar]);
 
-  useEffect(() => {
-    const avisar = (ev) => {
-      if (!loja.temAlteracaoPendente()) return;
-      ev.preventDefault();
-      ev.returnValue = "";
-    };
-    globalThis.addEventListener?.("beforeunload", avisar);
-    return () => globalThis.removeEventListener?.("beforeunload", avisar);
-  }, [loja]);
+  // Rascunho ainda não salvo: o F5 e o fechar pedem confirmação, a versão nova
+  // do sistema espera, e a página desligada pela coordenação não fecha
+  // (src/app/guarda-de-alteracoes.ts).
+  useEffect(
+    () =>
+      guardaDeAlteracoes.registrar({
+        comAlteracoes: () => loja.temAlteracaoPendente(),
+        naoGuardado: () => loja.temAlteracaoPendente(),
+      }),
+    [loja],
+  );
 
   useEffect(() => {
     // Esconder a aba ou sair da página salva o rascunho na hora (o automático espera até 3 s).

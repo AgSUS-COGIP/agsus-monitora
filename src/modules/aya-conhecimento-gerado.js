@@ -5809,10 +5809,10 @@ export const VERBETES_AYA = Object.freeze([
       "desativar aba",
     ],
     resposta:
-      "Desativada, a área (ou a aba, ou o painel) some do menu de todos. Pelo menos uma área precisa continuar ativa.",
+      'Desativada, a área (ou a aba, ou o painel) some do menu de todos, administrador global inclusive. Quem estava na página vê, em até uns 2 minutos e sem recarregar, o aviso "Esta página foi desativada pela coordenação.", com o botão para a página inicial; a página para de carregar dados. Quem tinha alteração não salva (uma ficha da Avaliação documental, por exemplo) vê só uma faixa pedindo para salvar, e a página fecha depois. Religada, a aba volta ao menu sozinha. Pelo menos uma área precisa continuar ativa.',
     fato: "",
     fonte:
-      "supabase/migrations/20260930140000_modulos_e_manutencao.sql; src/lib/menu-lateral.ts",
+      "supabase/migrations/20260930140000_modulos_e_manutencao.sql; supabase/migrations/20261019160000_versao_do_catalogo_na_presenca.sql; src/lib/menu-lateral.ts; src/lib/pagina-desligada.ts; src/app/vigia-do-catalogo.ts",
   },
   {
     arquivo: "regras-dos-modulos-e-abas.md",
