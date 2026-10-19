@@ -13,8 +13,8 @@ import {
   comemorar,
   EVENTO_DA_AYA,
   planoDaComemoracao,
-  soltarFogos,
 } from "../src/modules/comemoracao.js";
+import { encerrarShowsAoFimDeCadaTeste } from "./shows-de-comemoracao.js";
 
 /*
   As comemorações com a configuração de Configurações › Comemorações:
@@ -23,11 +23,14 @@ import {
   Canvas falso e sorteio fixo.
 */
 
+const shows = encerrarShowsAoFimDeCadaTeste();
+const { soltarFogos } = shows;
+
 function janelaFalsa({ movimento = true } = {}) {
   const quadros = [];
   const eventos = [];
   const contexto = new Proxy({}, { get: () => () => {}, set: () => true });
-  const doc = document.implementation.createHTMLDocument("t");
+  const doc = shows.acompanhar(document.implementation.createHTMLDocument("t"));
   Object.defineProperty(doc, "hidden", { value: false, configurable: true });
   const criar = doc.createElement.bind(doc);
   doc.createElement = (tag) => {
