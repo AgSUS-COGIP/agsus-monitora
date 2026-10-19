@@ -1,11 +1,10 @@
 import { readFileSync } from "node:fs";
+import { TEXTOS_PADRAO_DO_ESPELHO } from "../../src/lib/avaliacao-documental/modelo-do-espelho.ts";
 import { describe, expect, it } from "vitest";
 import {
   modeloDoEspelho,
   montarEspelho,
-  NAO_SE_APLICA_NO_ELIMINADO,
   paginaDoEspelho,
-  RODAPE_DO_ESPELHO,
 } from "../../src/lib/avaliacao-documental/espelho-de-nota.ts";
 import {
   calcularFicha,
@@ -130,7 +129,7 @@ describe("espelho do eliminado", () => {
     expect(espelho.notas).toEqual([
       {
         rotulo: "Nota consolidada (após a análise documental)",
-        valor: NAO_SE_APLICA_NO_ELIMINADO,
+        valor: TEXTOS_PADRAO_DO_ESPELHO.nao_se_aplica,
       },
     ]);
   });
@@ -149,11 +148,11 @@ describe("espelho do eliminado", () => {
     expect(html).toContain('data-modelo="ELIMINADO"');
     expect(html).not.toContain("Pontuação por critério");
     expect(html).not.toMatch(/informativ/i);
-    expect(html).toContain(NAO_SE_APLICA_NO_ELIMINADO);
+    expect(html).toContain(TEXTOS_PADRAO_DO_ESPELHO.nao_se_aplica);
     expect(html).not.toMatch(/autodeclarada/i);
     // Sem o cabeçalho/rodapé do navegador (endereço do sistema, data).
     expect(html).toContain("@page { size: A4; margin: 0; }");
-    expect(html).toContain(RODAPE_DO_ESPELHO);
+    expect(html).toContain(TEXTOS_PADRAO_DO_ESPELHO.rodape);
   });
 });
 

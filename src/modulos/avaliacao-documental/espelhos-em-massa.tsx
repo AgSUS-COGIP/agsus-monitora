@@ -2,6 +2,11 @@ import { useMemo, useRef, useState } from "react";
 import type { Espelho } from "../../lib/avaliacao-documental/espelho-de-nota.ts";
 import { nomeDoZipDosEspelhos } from "../../lib/avaliacao-documental/espelho-em-pdf.ts";
 import {
+  TEXTOS_PADRAO_DO_ESPELHO,
+  type TextosDoEspelho,
+} from "../../lib/avaliacao-documental/modelo-do-espelho.ts";
+import { textosParaOEspelho } from "./modelo-do-espelho-no-banco.ts";
+import {
   argumentosDaPagina,
   avisoDoTamanho,
   codigosSemEspelho,
@@ -95,10 +100,11 @@ export async function lerFichasDosEspelhos({
   return lidas;
 }
 
-/** Os espelhos das fichas lidas, na ordem do documento. */
+/** Os espelhos das fichas lidas, na ordem do documento, com os textos do modelo do edital. */
 export function montarEspelhosLidos(
   lidas: Lidas,
   codigos: string[] | null,
+  textos: TextosDoEspelho = TEXTOS_PADRAO_DO_ESPELHO,
 ): Espelho[] {
   return ordenarParaOsEspelhos(lidas.fichas, codigos).map((f) =>
     espelhoDaFichaGravada(
@@ -106,6 +112,7 @@ export function montarEspelhosLidos(
       lidas.regras[f.regra],
       lidas.documental,
       lidas.edital,
+      textos,
     ),
   );
 }
@@ -145,6 +152,7 @@ export function EspelhosEmMassa({
   fila,
   rpc,
   aoFechar,
+  aoEditarModelo = null,
   abrir = abrirEspelhosEmMassa,
   baixarZip = baixarZipDosEspelhos,
   agora = () => new Date(),
@@ -155,6 +163,8 @@ export function EspelhosEmMassa({
   fila: FichaDaFila[];
   rpc: Rpc;
   aoFechar: () => void;
+  /** Abre o "Modelo do espelho de nota" (os textos da folha do edital). */
+  aoEditarModelo?: (() => void) | null;
   abrir?: (espelhos: Espelho[], opcoes?: { titulo?: string }) => void;
   baixarZip?: BaixarZip;
   agora?: () => Date;
@@ -188,16 +198,19 @@ export function EspelhosEmMassa({
     cancelar.current = false;
     setLidos(0);
     try {
-      const lidas = await lerFichasDosEspelhos({
-        rpc,
-        editalId,
-        escolha,
-        aoProgredir: setLidos,
-        cancelado: () => cancelar.current,
-      });
+      const [lidas, textos] = await Promise.all([
+        lerFichasDosEspelhos({
+          rpc,
+          editalId,
+          escolha,
+          aoProgredir: setLidos,
+          cancelado: () => cancelar.current,
+        }),
+        textosParaOEspelho(rpc, editalId),
+      ]);
       if (!lidas) return;
       const lista = escolha.modo === "codigos" ? escolha.codigos : null;
-      const espelhos = montarEspelhosLidos(lidas, lista);
+      const espelhos = montarEspelhosLidos(lidas, lista, textos);
       const faltam = lista
         ? codigosSemEspelho(lista, lidas.fichas, lidas.naoConcluidos)
         : { naoEncontrados: [], naoConcluidos: [] };
@@ -273,6 +286,20 @@ export function EspelhosEmMassa({
           aoMudar={(v: "filtro" | "codigos") => setModo(v)}
           desabilitado={buscando}
         />
+        {aoEditarModelo ? (
+          <p>
+            <button
+              type="button"
+              className="btn ghost small"
+              data-acao="espelhos-editar-modelo"
+              disabled={buscando}
+              onClick={aoEditarModelo}
+            >
+              <i className="fa-solid fa-file-pen" aria-hidden="true" /> Editar
+              os textos do modelo
+            </button>
+          </p>
+        ) : null}
         <Segmentado
           rotulo="Formato"
           opcoes={FORMATOS}

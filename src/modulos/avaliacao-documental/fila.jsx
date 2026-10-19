@@ -59,6 +59,7 @@ import {
   SeloDaDecisao,
 } from "./decisao-do-lote.jsx";
 import { EspelhosEmMassa } from "./espelhos-em-massa.tsx";
+import { ModeloDoEspelhoDeNota } from "./modelo-do-espelho.tsx";
 import { ConteudoDaFicha } from "./ficha/ficha.jsx";
 import { ResumoDoAndamento } from "./resumo-do-andamento.tsx";
 
@@ -805,6 +806,7 @@ export function Fila({ e, fila }) {
   const [acao, setAcao] = useState(null);
   const [incluindo, setIncluindo] = useState(false);
   const [espelhos, setEspelhos] = useState(false);
+  const [modeloDoEspelho, setModeloDoEspelho] = useState(false);
   const [busca, setBusca] = useState(st.filtro.busca);
   const [recolhidos, setRecolhidos] = useState(() => new Set());
   // A ordem da tabela fica aqui: Anterior / Próxima da ficha seguem a mesma.
@@ -1008,6 +1010,16 @@ export function Fila({ e, fila }) {
       dados: {
         "data-acao": "espelhos-em-massa",
         "data-tour": "avd-fila-espelhos-em-massa",
+      },
+    },
+    {
+      id: "modelo-do-espelho",
+      rotulo: "Modelo do espelho de nota",
+      icone: "fa-file-pen",
+      aoEscolher: () => setModeloDoEspelho(true),
+      dados: {
+        "data-acao": "modelo-do-espelho",
+        "data-tour": "avd-fila-modelo-do-espelho",
       },
     },
     ...(fila.ehAdminGlobal?.()
@@ -1222,6 +1234,17 @@ export function Fila({ e, fila }) {
           fila={candidatos}
           rpc={fila.rpc}
           aoFechar={() => setEspelhos(false)}
+          aoEditarModelo={() => {
+            setEspelhos(false);
+            setModeloDoEspelho(true);
+          }}
+        />
+      ) : null}
+      {modeloDoEspelho && coordena ? (
+        <ModeloDoEspelhoDeNota
+          editalId={st.editalId || e.editalId}
+          rpc={fila.rpc}
+          aoFechar={() => setModeloDoEspelho(false)}
         />
       ) : null}
       {acao ? (

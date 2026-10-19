@@ -1625,6 +1625,85 @@
 }
 
 /*
+  Modelo do espelho de nota (modelo-do-espelho.tsx): os campos à esquerda e a
+  prévia à direita. A folha da prévia é papel e fica branca também no tema
+  escuro, como a da carta de convocação.
+*/
+.avd-modelo-espelho {
+  width: min(1280px, 96vw);
+  max-height: 94vh;
+  overflow: auto;
+  display: grid;
+  gap: var(--space-3);
+}
+.avd-modelo-espelho-topo {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+.avd-modelo-espelho-topo h2 {
+  margin: 0;
+  font-size: var(--text-h3);
+  font-weight: var(--font-weight-semibold);
+}
+.avd-modelo-espelho-salvo {
+  color: var(--text-secondary);
+  font-size: var(--text-caption);
+}
+.avd-modelo-espelho-corpo {
+  display: grid;
+  gap: var(--space-3);
+}
+@media (min-width: 1100px) {
+  .avd-modelo-espelho-corpo {
+    grid-template-columns: minmax(320px, 2fr) 3fr;
+  }
+}
+.avd-modelo-espelho-campos {
+  display: grid;
+  gap: var(--space-3);
+  align-content: start;
+}
+.avd-modelo-espelho-grupo {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+  padding: var(--space-2) 0 0;
+  border: 0;
+  border-top: 1px solid var(--border-subtle);
+}
+.avd-modelo-espelho-grupo legend {
+  padding: 0 var(--space-1) 0 0;
+  color: var(--text-secondary);
+  font-size: var(--text-label);
+  font-weight: var(--font-weight-semibold);
+}
+.avd-modelo-espelho-grupo input[type="text"],
+.avd-modelo-espelho-grupo textarea {
+  width: 100%;
+  font-size: var(--text-body-sm);
+}
+.avd-modelo-espelho-opcao {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-size: var(--text-body-sm);
+}
+.avd-modelo-espelho-previa {
+  display: grid;
+  gap: var(--space-2);
+  align-content: start;
+}
+.avd-modelo-espelho-folha {
+  width: 100%;
+  min-height: 70vh;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  background: var(--cor-da-folha);
+}
+
+/*
   Uma aba só (quem não coordena o edital vê só a Fila): o título no lugar do
   seletor. Entrada sem edital escolhido: cartões compactos dos editais.
 */

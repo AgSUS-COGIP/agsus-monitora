@@ -18,12 +18,23 @@
     a Observação do avaliador de cada item, as prontas e a geral).
   Os textos vêm da mesma conta do parecer (pontuacao.js), para não divergir.
   Nada interno: nem avaliador, nem CPF, nem o questionário.
+
+  Os textos fixos da folha (título, saudação, nomes dos quadros, rótulos das
+  notas, rodapé…) são do modelo do edital (modelo-do-espelho.ts), editável
+  pela coordenação; sem modelo, o padrão. O PDF (espelho-em-pdf.ts) desenha o
+  mesmo objeto Espelho.
 */
 import { PARCIAL_DO_TIPO } from "./catalogo.js";
 import { composicaoDaNota } from "./ficha.js";
 import { motivosDoResultado } from "./motivos-do-resultado.ts";
 import { numeroDoParecer, textosDasJustificativas } from "./pontuacao.js";
 import { CABECALHO_PADRAO } from "../cabecalho-dos-documentos.js";
+import {
+  comOCandidato,
+  TEXTOS_PADRAO_DO_ESPELHO,
+  trechosDaSaudacao,
+  type TextosDoEspelho,
+} from "./modelo-do-espelho.ts";
 
 export type ModeloDoEspelho = "ELIMINADO" | "COM_PONTOS";
 
@@ -114,25 +125,11 @@ export type Espelho = {
   /** Para o nome do PDF no ZIP (espelho-em-pdf.ts): o código na Empregare e a vaga. */
   codigoDoCandidato: string;
   codigoDaVaga: string;
+  /** Os textos do modelo do edital (modelo-do-espelho.ts), já resolvidos com o padrão. */
+  textos: TextosDoEspelho;
 };
 
-export const TITULO_DO_ESPELHO = "Espelho de Pontuação da Análise Curricular";
-export const SUBTITULO_DO_ESPELHO =
-  "Documento simplificado para atendimento ao candidato";
-export const NAO_SE_APLICA_NO_ELIMINADO =
-  "Não se aplica — candidato(a) eliminado(a) na análise documental";
-export const RODAPE_DO_ESPELHO =
-  "Observação: este espelho apresenta exclusivamente os dados necessários para comunicação da nota ao candidato, sem reprodução integral do questionário ou de informações internas adicionais.";
-export const SEM_OBSERVACAO = "Sem observação registrada.";
-export const ABERTURA_DO_ESPELHO =
-  "Apresenta-se, a seguir, o espelho de nota referente à avaliação realizada pela comissão avaliadora, para fins de consulta.";
-/** Os quadros da folha, na ordem (a página HTML e o PDF usam os mesmos). */
-export const SECOES_DO_ESPELHO = {
-  dados: "Dados do registro",
-  notas: "Notas",
-  criterios: "Pontuação por critério",
-  justificativas: "Justificativa / observação registrada",
-} as const;
+/** As colunas do quadro de critérios (não editáveis: são o conteúdo). */
 export const COLUNAS_DOS_CRITERIOS = [
   "Critério",
   "Declarada",
@@ -202,8 +199,36 @@ function justificativasDoCriterio(
   return textos.map(texto).filter(Boolean);
 }
 
-/** Monta o espelho (os dados de cada quadro, já em texto). */
-export function montarEspelho(entrada: EntradaDoEspelho): Espelho {
+/**
+ * As notas da folha. O eliminado no requisito não mostra a nota declarada:
+ * só a consolidada, com o "Não se aplica" do modelo. No modelo com pontos, a
+ * autodeclarada sai se o modelo do edital a esconde.
+ */
+export function notasDoEspelho(
+  modelo: ModeloDoEspelho,
+  autodeclarada: string,
+  consolidada: string,
+  textos: TextosDoEspelho = TEXTOS_PADRAO_DO_ESPELHO,
+): LinhaDoEspelho[] {
+  if (modelo === "ELIMINADO")
+    return [{ rotulo: textos.rotulo_consolidada, valor: textos.nao_se_aplica }];
+  return [
+    ...(textos.mostrar_autodeclarada
+      ? [{ rotulo: textos.rotulo_autodeclarada, valor: autodeclarada }]
+      : []),
+    { rotulo: textos.rotulo_consolidada, valor: consolidada },
+  ];
+}
+
+/**
+ * Monta o espelho (os dados de cada quadro, já em texto). `textos`: o modelo
+ * do edital (textosDoModelo); sem ele, o padrão. O modelo só muda textos e
+ * rótulos: quem aparece, as notas e os critérios são sempre os daqui.
+ */
+export function montarEspelho(
+  entrada: EntradaDoEspelho,
+  textos: TextosDoEspelho = TEXTOS_PADRAO_DO_ESPELHO,
+): Espelho {
   const { regra, lancamento, avaliacao, declarada, resultado } = entrada;
   const modelo = modeloDoEspelho(resultado);
   const casas = ehNumero(regra.casas_parecer) ? regra.casas_parecer : 1;
@@ -255,25 +280,12 @@ export function montarEspelho(entrada: EntradaDoEspelho): Espelho {
   const notaFinal = ehNumero(entrada.notaFinal)
     ? entrada.notaFinal
     : avaliacao.nota_final;
-  // O eliminado no requisito não mostra a nota declarada: só "Não se aplica".
-  const notas: LinhaDoEspelho[] =
-    modelo === "ELIMINADO"
-      ? [
-          {
-            rotulo: "Nota consolidada (após a análise documental)",
-            valor: NAO_SE_APLICA_NO_ELIMINADO,
-          },
-        ]
-      : [
-          {
-            rotulo: "Nota autodeclarada (antes da análise)",
-            valor: numero(autodeclarada),
-          },
-          {
-            rotulo: "Nota consolidada (após a análise documental)",
-            valor: numero(notaFinal),
-          },
-        ];
+  const notas = notasDoEspelho(
+    modelo,
+    numero(autodeclarada),
+    numero(notaFinal),
+    textos,
+  );
 
   const criterios: CriterioDoEspelho[] = [];
   let justificativas: string[];
@@ -307,19 +319,19 @@ export function montarEspelho(entrada: EntradaDoEspelho): Espelho {
         !PARCIAL_DO_TIPO[bloco.tipo as keyof typeof PARCIAL_DO_TIPO]
       )
         continue;
-      const textos = justificativasDoCriterio(
+      const motivos = justificativasDoCriterio(
         regra,
         bloco,
         lancamento,
         avaliacao,
       );
-      for (const t of textos) usados.add(comparavel(t));
+      for (const t of motivos) usados.add(comparavel(t));
       criterios.push({
         rotulo: parte.rotulo,
         declarada: numero(parte.declarado),
         apurada: numero(parte.apurado ?? avaliacao.parciais?.[parte.parcial]),
         teto: numero(parte.teto),
-        justificativas: textos,
+        justificativas: motivos,
       });
     }
     justificativas = [];
@@ -338,7 +350,7 @@ export function montarEspelho(entrada: EntradaDoEspelho): Espelho {
 
   return {
     modelo,
-    titulo: TITULO_DO_ESPELHO,
+    titulo: textos.titulo,
     candidato: nome,
     dados,
     notas,
@@ -347,6 +359,64 @@ export function montarEspelho(entrada: EntradaDoEspelho): Espelho {
     nomeDoArquivo: `Espelho de nota${codigo ? ` ${codigo}` : ""}`,
     codigoDoCandidato: codigo,
     codigoDaVaga: texto(entrada.vaga.codigo),
+    textos,
+  };
+}
+
+/**
+ * Um espelho de exemplo, com dados fictícios, para a prévia do modelo
+ * (editor do modelo do espelho): o conteúdo é inventado, os textos são os do
+ * modelo, pela mesma notasDoEspelho da montagem.
+ */
+export function espelhoDeExemplo(
+  modelo: ModeloDoEspelho,
+  textos: TextosDoEspelho = TEXTOS_PADRAO_DO_ESPELHO,
+): Espelho {
+  const eliminado = modelo === "ELIMINADO";
+  return {
+    modelo,
+    titulo: textos.titulo,
+    candidato: "Maria Exemplo da Silva",
+    dados: [
+      { rotulo: "Edital", valor: "Edital 000/2026 — Unidade de exemplo" },
+      { rotulo: "Candidato(a)", valor: "Maria Exemplo da Silva" },
+      { rotulo: "Código do candidato", valor: "0000000" },
+      { rotulo: "Modalidade de concorrência", valor: "Ampla concorrência" },
+      { rotulo: "Vaga", valor: "000000 - CARGO 00: CARGO DE EXEMPLO" },
+      { rotulo: "Etapa", valor: "Análise Curricular" },
+      {
+        rotulo: "Situação",
+        valor: eliminado ? SITUACOES.INAPTO_REQUISITO : SITUACOES.APTO,
+      } as LinhaDoEspelho,
+    ],
+    notas: notasDoEspelho(modelo, "30,0", "27,5", textos),
+    criterios: eliminado
+      ? []
+      : [
+          {
+            rotulo: "Cursos de Aperfeiçoamento",
+            declarada: "10,0",
+            apurada: "7,5",
+            teto: "10,0",
+            justificativas: [
+              "Item 0.0.0: certificado de exemplo sem a carga horária.",
+            ],
+          },
+          {
+            rotulo: "Experiência Profissional",
+            declarada: "20,0",
+            apurada: "20,0",
+            teto: "20,0",
+            justificativas: [],
+          },
+        ],
+    justificativas: eliminado
+      ? ["Requisito do cargo: documento de exemplo não enviado — item 0.0.0"]
+      : ["Observação de exemplo registrada pelo avaliador."],
+    nomeDoArquivo: "Espelho de nota (exemplo)",
+    codigoDoCandidato: "0000000",
+    codigoDaVaga: "000000",
+    textos,
   };
 }
 
@@ -401,10 +471,10 @@ function tabelaDeLinhas(linhas: LinhaDoEspelho[], classe: string) {
     .join("")}</tbody></table>`;
 }
 
-function listaOuVazio(textos: string[]) {
+function listaOuVazio(textos: string[], semObservacao: string) {
   return textos.length
     ? `<ul>${textos.map((t) => `<li>${escapar(t)}</li>`).join("")}</ul>`
-    : `<p class="vazio">${escapar(SEM_OBSERVACAO)}</p>`;
+    : `<p class="vazio">${escapar(semObservacao)}</p>`;
 }
 
 type MarcaDoEspelho = { cabecalho?: string; logo?: string };
@@ -421,9 +491,16 @@ export function folhaDoEspelho(
   const imagem = /^(https?:\/\/|\/)[^"'<>\s]*$/.test(logo)
     ? `<img src="${escapar(logo)}" alt="AgSUS">`
     : "";
+  const t = espelho.textos;
+  const saudacao = trechosDaSaudacao(t.saudacao, espelho.candidato)
+    .map((p) =>
+      p.negrito ? `<strong>${escapar(p.texto)}</strong>` : escapar(p.texto),
+    )
+    .join("");
+  const abertura = comOCandidato(t.abertura, espelho.candidato);
   const criterios =
     espelho.modelo === "COM_PONTOS" && espelho.criterios.length
-      ? `<h2>${escapar(SECOES_DO_ESPELHO.criterios)}</h2><table class="criterios"><thead><tr>${COLUNAS_DOS_CRITERIOS.map((c, i) => `<th scope="col"${i ? ' class="n"' : ""}>${escapar(c)}</th>`).join("")}</tr></thead><tbody>${espelho.criterios
+      ? `<h2>${escapar(t.secao_criterios)}</h2><table class="criterios"><thead><tr>${COLUNAS_DOS_CRITERIOS.map((c, i) => `<th scope="col"${i ? ' class="n"' : ""}>${escapar(c)}</th>`).join("")}</tr></thead><tbody>${espelho.criterios
           .map(
             (c) =>
               `<tr><td>${escapar(c.rotulo)}</td><td class="n">${escapar(c.declarada)}</td><td class="n">${escapar(c.apurada)}</td><td class="n">${escapar(c.teto)}</td></tr>` +
@@ -436,14 +513,15 @@ export function folhaDoEspelho(
   return (
     `<div class="folha" data-modelo="${espelho.modelo}">` +
     `<div class="timbrado">${imagem}${linhasDoCabecalho.map((l) => `<p>${escapar(l)}</p>`).join("")}</div>` +
-    `<h1>${escapar(espelho.titulo)}</h1><p class="subtitulo">${escapar(SUBTITULO_DO_ESPELHO)}</p>` +
-    `<p>Prezado(a) <strong>${escapar(espelho.candidato)}</strong>,</p>` +
-    `<p>${escapar(ABERTURA_DO_ESPELHO)}</p>` +
-    `<h2>${escapar(SECOES_DO_ESPELHO.dados)}</h2>${tabelaDeLinhas(espelho.dados, "dados")}` +
-    `<h2>${escapar(SECOES_DO_ESPELHO.notas)}</h2>${tabelaDeLinhas(espelho.notas, "dados notas")}` +
+    `<h1>${escapar(espelho.titulo)}</h1>` +
+    (t.subtitulo ? `<p class="subtitulo">${escapar(t.subtitulo)}</p>` : "") +
+    `<p>${saudacao}</p>` +
+    (abertura ? `<p>${escapar(abertura)}</p>` : "") +
+    `<h2>${escapar(t.secao_dados)}</h2>${tabelaDeLinhas(espelho.dados, "dados")}` +
+    `<h2>${escapar(t.secao_notas)}</h2>${tabelaDeLinhas(espelho.notas, "dados notas")}` +
     criterios +
-    `<h2>${escapar(SECOES_DO_ESPELHO.justificativas)}</h2><div class="caixa">${listaOuVazio(espelho.justificativas)}</div>` +
-    `<p class="rodape">${escapar(RODAPE_DO_ESPELHO)}</p>` +
+    `<h2>${escapar(t.secao_justificativas)}</h2><div class="caixa">${listaOuVazio(espelho.justificativas, t.sem_observacao)}</div>` +
+    (t.rodape ? `<p class="rodape">${escapar(t.rodape)}</p>` : "") +
     "</div>"
   );
 }

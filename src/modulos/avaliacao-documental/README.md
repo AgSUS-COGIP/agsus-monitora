@@ -112,6 +112,18 @@ até a 10ª posição do cadastro reserva) é regra da lista CONVOCACAO da Class
 - as listas da Fila são a TabelaInfinita (`src/ui/`): colunas por etapa, ordem por coluna, busca,
   "N de M", carregamento contínuo e Exportar CSV (`csvDaFila`, csv-security).
 
+## Modelo do espelho de nota
+
+Os textos da folha do espelho (título, subtítulo, saudação com `{candidato}`, abertura, nomes dos
+quadros, rótulos das notas, "Não se aplica" do eliminado, "Sem observação registrada.", rodapé e a
+nota autodeclarada no modelo com pontos) são do edital: a coordenação edita em Fila › Ações da
+coordenação › "Modelo do espelho de nota" (ao lado dos espelhos em massa, onde a coordenação já vai
+para gerar os espelhos; não vira mais uma aba), com a prévia ao lado e "Restaurar padrão". O espelho
+da ficha, os em massa, a impressão e o PDF/ZIP leem o modelo na hora (`textosParaOEspelho`; sem
+modelo ou sem a RPC, o padrão). O conteúdo não se edita. Banco: `TB_MODELO_ESPELHO_NOTA` /
+`TH_MODELO_ESPELHO_NOTA`, `obter_modelo_espelho_nota` e `salvar_modelo_espelho_nota` (PT409),
+migration `20261019120000_modelo_do_espelho_de_nota.sql`.
+
 ## Inclusão no lote por decisão da coordenação
 
 - na aba Pré-classificação (cada vaga) e na Fila, a coordenação inclui no lote, por decisão e com
@@ -238,6 +250,11 @@ ficha/espelho-de-nota.ts  botão "Espelho de nota": monta (src/lib/avaliacao-doc
                           (espelho-em-pdf.ts: jsPDF + autotable, sob demanda), sem banco
                           nem Storage; espelhoDaFichaGravada: a mesma montagem para os
                           espelhos em massa; baixarZipDosEspelhos: o ZIP (fflate)
+modelo-do-espelho.tsx     Ações da coordenação › "Modelo do espelho de nota" (também pelo link na
+                          gaveta dos espelhos em massa): os textos da folha do edital, prévia com
+                          dados fictícios e "Restaurar padrão"; regras e padrão em
+                          src/lib/avaliacao-documental/modelo-do-espelho.ts, banco em
+                          modelo-do-espelho-no-banco.ts (20261019120000)
 espelhos-em-massa.tsx     Ações da coordenação › "Espelhos de nota em massa": vaga e filtro
                           ou códigos colados, obter_espelhos_de_nota em páginas de 200
                           (20261015180000); ZIP com um PDF por candidato (padrão, em lotes,

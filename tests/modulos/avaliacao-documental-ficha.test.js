@@ -1183,7 +1183,10 @@ describe("ficha concluída: só leitura, histórico e reabrir", () => {
     expect(html).toContain("Espelho de Pontuação da Análise Curricular");
     expect(html).toContain('data-modelo="COM_PONTOS"');
     expect(html).toContain("Pontuação por critério");
-    expect(supabase.rpc.mock.calls.length).toBe(antes);
+    // Só a leitura do modelo do edital (os textos da folha); nada é gravado.
+    expect(supabase.rpc.mock.calls.slice(antes).map(([nome]) => nome)).toEqual([
+      "obter_modelo_espelho_nota",
+    ]);
     quadro.remove();
   });
 

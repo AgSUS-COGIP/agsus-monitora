@@ -52,6 +52,7 @@ import { cpfDaFicha } from "../../../lib/avaliacao-documental/cpf-da-ficha.ts";
 import { ConclusaoDaFicha } from "./conclusao-da-ficha.tsx";
 import { copiar, EnviosAnteriores } from "./empregare.tsx";
 import { abrirEspelhoDeNota, baixarEspelhoEmPdf } from "./espelho-de-nota.ts";
+import { textosParaOEspelho } from "../modelo-do-espelho-no-banco.ts";
 import {
   blocoEditaNota,
   escolhaDoBloco,
@@ -612,13 +613,24 @@ export function ConteudoDaFicha({
       }
       aoAbrirEspelho={
         gravada && ficha.tp_resultado
-          ? () => abrirEspelhoDeNota(st, ficha)
+          ? async () =>
+              abrirEspelhoDeNota(st, ficha, {
+                textos: await textosParaOEspelho(
+                  fila.rpc,
+                  fila.obter().editalId,
+                ),
+              })
           : null
       }
       aoBaixarEspelho={
         gravada && ficha.tp_resultado
-          ? () =>
-              baixarEspelhoEmPdf(st, ficha).catch((e) =>
+          ? async () =>
+              baixarEspelhoEmPdf(st, ficha, {
+                textos: await textosParaOEspelho(
+                  fila.rpc,
+                  fila.obter().editalId,
+                ),
+              }).catch((e) =>
                 setAviso(
                   `Não foi possível gerar o PDF: ${e?.message || String(e)}`,
                 ),

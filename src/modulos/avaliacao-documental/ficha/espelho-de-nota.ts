@@ -28,6 +28,10 @@ import {
 } from "../../../lib/avaliacao-documental/espelho-em-pdf.ts";
 import type { FichaDoEspelho } from "../../../lib/avaliacao-documental/espelhos-em-massa.ts";
 import {
+  TEXTOS_PADRAO_DO_ESPELHO,
+  type TextosDoEspelho,
+} from "../../../lib/avaliacao-documental/modelo-do-espelho.ts";
+import {
   calcularFicha,
   regraDaFicha,
 } from "../../../lib/avaliacao-documental/ficha.js";
@@ -121,18 +125,25 @@ function cabecalhoConfigurado() {
   }
 }
 
+/** O timbrado da página HTML (impressão e prévia do modelo): cabeçalho de Configurações › Marca e logo. */
+export function marcaDaPagina(cabecalho: () => string = cabecalhoConfigurado) {
+  return { cabecalho: cabecalho() || undefined, logo: LOGO_PADRAO_DA_BARRA };
+}
+
 /**
  * O espelho de uma ficha concluída lida por obter_espelhos_de_nota (Espelhos
  * de nota em massa), pela MESMA montagem do botão da ficha: a regra da vaga
  * (regraDaFicha) com a configuração da versão usada na conclusão, a conta
  * (calcularFicha) e a declarada por critério gravada na conclusão
  * (DS_RESULTADO.declarada; o total é a soma, como em declaradaDaFicha).
+ * `textos`: o modelo do edital (textosParaOEspelho), o mesmo da ficha.
  */
 export function espelhoDaFichaGravada(
   ficha: FichaDoEspelho,
   configuracaoDaRegra: unknown,
   documental: unknown,
   edital: { rotulo?: string | null; area?: string | null } | null,
+  textos: TextosDoEspelho = TEXTOS_PADRAO_DO_ESPELHO,
 ): Espelho {
   const lancamento = (ficha.lancamento ?? {}) as { nivel?: string };
   const regra = regraDaFicha(configuracaoDaRegra, lancamento);
@@ -162,6 +173,7 @@ export function espelhoDaFichaGravada(
         nota_final: ficha.nota_final,
       },
     ),
+    textos,
   );
 }
 
@@ -178,31 +190,25 @@ export function abrirEspelhosEmMassa(
     titulo?: string;
   } = {},
 ) {
-  imprimir(
-    documentoDosEspelhos(
-      espelhos,
-      { cabecalho: cabecalho() || undefined, logo: LOGO_PADRAO_DA_BARRA },
-      titulo,
-    ),
-  );
+  imprimir(documentoDosEspelhos(espelhos, marcaDaPagina(cabecalho), titulo));
 }
 
-/** Abre a impressão do espelho de nota da ficha concluída. */
+/** Abre a impressão do espelho de nota da ficha concluída, com os textos do modelo do edital. */
 export function abrirEspelhoDeNota(
   st: EstadoCarregado,
   ficha: FichaCarregada,
   {
     imprimir = imprimirPagina,
     cabecalho = cabecalhoConfigurado,
-  }: { imprimir?: (html: string) => void; cabecalho?: () => string } = {},
+    textos = TEXTOS_PADRAO_DO_ESPELHO,
+  }: {
+    imprimir?: (html: string) => void;
+    cabecalho?: () => string;
+    textos?: TextosDoEspelho;
+  } = {},
 ) {
-  const espelho = montarEspelho(entradaDoEspelho(st, ficha));
-  imprimir(
-    paginaDoEspelho(espelho, {
-      cabecalho: cabecalho() || undefined,
-      logo: LOGO_PADRAO_DA_BARRA,
-    }),
-  );
+  const espelho = montarEspelho(entradaDoEspelho(st, ficha), textos);
+  imprimir(paginaDoEspelho(espelho, marcaDaPagina(cabecalho)));
   return espelho.modelo;
 }
 
@@ -225,14 +231,16 @@ export async function baixarEspelhoEmPdf(
     baixar = baixarNoNavegador,
     cabecalho = cabecalhoConfigurado,
     marca = marcaDoPdf,
+    textos = TEXTOS_PADRAO_DO_ESPELHO,
   }: {
     carregar?: () => Promise<BibliotecasDoPdf>;
     baixar?: Baixar;
     cabecalho?: () => string;
     marca?: (cabecalho: () => string) => Promise<MarcaDoPdf>;
+    textos?: TextosDoEspelho;
   } = {},
 ) {
-  const espelho = montarEspelho(entradaDoEspelho(st, ficha));
+  const espelho = montarEspelho(entradaDoEspelho(st, ficha), textos);
   const [libs, timbrado] = await Promise.all([carregar(), marca(cabecalho)]);
   const nome = nomeDoPdfDoEspelho(espelho);
   baixar(pdfDoEspelho(espelho, libs, timbrado), nome, "application/pdf");

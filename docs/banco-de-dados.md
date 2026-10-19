@@ -1048,3 +1048,26 @@ não ganha histórico.
   e pelo SQL Editor, que informa o autor (admin global ativo).
 - Primeiro uso: `supabase/correcoes/20261009-reiniciar-fichas-93.sql` (93/2026, Projetos: a análise
   documental foi feita pela planilha).
+
+## 19. Modelo do espelho de nota, por edital (19/10/2026)
+
+Migration `20261019120000_modelo_do_espelho_de_nota.sql` (ensaio e rollback com o mesmo nome). Os
+textos da folha do espelho de nota (título, subtítulo, saudação com `{candidato}`, abertura, nomes
+dos quadros, rótulos das notas, "Não se aplica" do eliminado, "Sem observação registrada.", rodapé
+e se a nota autodeclarada aparece no modelo com pontos) passam a ser do edital, editados pela
+coordenação sem deploy. **Só textos**: quem aparece, notas, critérios e justificativas continuam da
+montagem no front (`src/lib/avaliacao-documental/espelho-de-nota.ts`).
+
+- `public."TB_MODELO_ESPELHO_NOTA"`: um por edital (`UK_MODELOESPELHO_EDITAL`), versão vigente e
+  `DS_TEXTOS` = só o que difere do padrão do código (`{}` = padrão; sem linha = padrão).
+- `public."TH_MODELO_ESPELHO_NOTA"`: cada versão (textos, `SALVAR` ou `RESTAURAR`, quem e quando).
+- `private."FC_VALIDAR_MODELO_ESPELHO_NOTA"(textos)`: as regras de `validarModeloDoEspelho`
+  (`src/lib/avaliacao-documental/modelo-do-espelho.ts`; `tests/modelo-do-espelho-de-nota-migration.test.js`
+  confere que chaves e limites são os mesmos); 22023.
+- `public.obter_modelo_espelho_nota(p_edital)`: todos da avaliação documental do edital (nível 1),
+  porque o espelho da ficha usa o modelo; `pode_editar` = coordenação.
+- `public.salvar_modelo_espelho_nota(p_edital, p_textos, p_versao_atual)`: só a coordenação do
+  edital (`FC_EXIGIR_COORD_AVALIACAO`, 42501); versão aberta diferente da vigente = `PT409`.
+
+Ordem: a migration pode ir antes ou depois do front. Sem a RPC, o front usa os textos padrão
+(o espelho sai como antes) e o editor mostra o erro ao abrir.
