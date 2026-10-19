@@ -11,18 +11,21 @@ analises.tsx    <TelaDeAnalises> e montarAnalises(): filtros, KPI, busca e o res
 paineis.tsx     filtros (situação do processo, seleção múltipla em cascata, Mais opções, chips),
                 os 7 KPIs, gráficos (responsável empilhado clicável, análises por data clicável —
                 filtra pelo dia/período, também nos campos de data de Mais opções) e pendências
+ritmo.tsx       card "Ritmo da análise" por edital analisado no MONITORA (prazo do
+                cronograma, faltam, por dia e por avaliador, ritmo atual e projeção)
 tabela.tsx      fila (TabelaInfinita: 50 por vez, Carregar mais, busca só da fila)
 gaveta.tsx      detalhe: contexto, links (origem e PDF, só http/https), seções e parecer
 estado.ts       store sem React: carga por área e escopo, cópia do navegador, porteiro, gaveta
                 (detalhamento sob demanda), pareceres em lote, CSV, comemorações
-consultas.ts    as RPCs (lista, porteiro, detalhamento, pareceres) e a cópia no IndexedDB
+consultas.ts    as RPCs (lista, porteiro, detalhamento, pareceres, ritmo) e a cópia no IndexedDB
 marcos.ts       edital 100% analisado e fila zerada (escopo Ativo)
 ```
 
 Regras puras em `src/lib/analises-curriculares.ts` (janela e validação, filtros em cascata, KPIs,
 gráficos, pendências, recorte, gaveta, CSV), mais `area-do-painel-de-analises.js`,
 `lista-do-painel-de-analises.js`, `textos-do-painel-de-analises.js` e
-`cache-do-painel-de-analises.js`. Visual só de `src/ui/` (sem CSS próprio). Testes:
+`cache-do-painel-de-analises.js`; o ritmo (etapa do cronograma, dias úteis, projeção) em
+`src/lib/ritmo-da-analise.ts` (`tests/ritmo-da-analise.test.js`). Visual só de `src/ui/` (sem CSS próprio). Testes:
 `tests/analises-curriculares.test.js`, `tests/modulos/analises*.test.js`.
 
 ## TypeScript

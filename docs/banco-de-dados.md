@@ -1071,3 +1071,23 @@ montagem no front (`src/lib/avaliacao-documental/espelho-de-nota.ts`).
 
 Ordem: a migration pode ir antes ou depois do front. Sem a RPC, o front usa os textos padrão
 (o espelho sai como antes) e o editor mostra o erro ao abrir.
+
+## 20. Ritmo da análise no Painel das análises (19/10/2026)
+
+Migration `20261019170000_ritmo_da_analise.sql` (ensaio e rollback com o mesmo nome). Alimenta o
+card "Ritmo da análise" do Painel das análises: por edital com a avaliação documental no MONITORA
+(`TB_ORIGEM_ANALISE_EDITAL` = `MONITORA`), quanto falta, quantas por dia (e por avaliador) até o
+prazo do cronograma e o ritmo atual.
+
+- `public.obter_ritmo_da_analise(p_area)` → jsonb pequeno: por edital, contagens por situação de
+  `TB_FICHA_ANALISE`, concluídas por dia (14 dias, horário de Brasília), analistas ativos em
+  `RL_ANALISTA_EDITAL`, quem concluiu nos últimos 7 dias e o cronograma
+  (`TB_CRONOGRAMA_MONIT_INDIG`). `SECURITY DEFINER`, só `authenticated`; sessão,
+  `pode_recurso('analises')` e a área da pessoa (`FC_GRUPOS_ANALISES_DA_AREA`) e o recorte de
+  coordenação (`FC_EDITAIS_VISIVEIS`), como `get_analises_dashboard_payload_v2`.
+- Índice parcial `IN_FICHAANALISE_CONCLUIDA` (`CO_MONITORAMENTO`, `DT_CONCLUSAO`) incluindo
+  `CO_USUARIO_CONCLUSAO`, só fichas `CONCLUIDA`.
+- A conta (etapa do cronograma, dias úteis, ritmo, projeção, por avaliador) é do front, em
+  `src/lib/ritmo-da-analise.ts`. Sem polling: a tela pede junto com a carga do painel; trocar só o
+  escopo não pede de novo. Ensaio em 19/10/2026: 3,2 ms.
+- Ordem: aplicar a migration antes de publicar o front (sem a RPC, o card só não aparece).

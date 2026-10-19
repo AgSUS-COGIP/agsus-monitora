@@ -3525,6 +3525,28 @@ export const VERBETES_AYA = Object.freeze([
     abrir: "analises",
   },
   {
+    arquivo: "regras-das-analises.md",
+    titulo: "Ritmo da análise",
+    perguntas: [
+      "ritmo da analise",
+      "no ritmo",
+      "abaixo do ritmo",
+      "quantas por dia",
+      "quantas fichas por dia",
+      "por avaliador",
+      "vai dar tempo",
+      "prazo da analise",
+      "quando termina a analise",
+      "previsao de termino",
+    ],
+    resposta:
+      'No Painel das análises, o card "Ritmo da análise" aparece para cada edital analisado no MONITORA. O prazo é o fim da etapa de validação da documentação (ou análise documental/curricular) no cronograma do edital; sem essa etapa, o card diz que não há prazo. "Faltam" soma pendentes, em análise e a revisar (fora do lote não conta). "Por dia até o prazo" divide o que falta pelos dias úteis até o prazo (segunda a sexta, sem feriados nacionais; hoje conta até as 18h). "Por avaliador" divide isso pelos analistas ativos na equipe do edital (sem equipe, por quem concluiu fichas nos últimos 7 dias). O ritmo atual é a média de concluídas nos últimos 3 dias com análise, sem contar hoje antes das 18h; com ele, o card projeta o dia de término e mostra No ritmo, Abaixo do ritmo, Prazo vencido ou Concluído. Os números acompanham cada carga do painel e o "Atualizar".',
+    fato: "",
+    fonte:
+      "src/lib/ritmo-da-analise.ts; supabase/migrations/20261019170000_ritmo_da_analise.sql",
+    abrir: "analises",
+  },
+  {
     arquivo: "regras-das-areas.md",
     titulo: "Áreas do sistema",
     perguntas: [
