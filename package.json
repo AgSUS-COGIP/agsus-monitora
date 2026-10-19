@@ -44,7 +44,7 @@
     "dompurify": "^3",
     "fflate": "0.8.3",
     "jspdf": "4.2.1",
-    "jspdf-autotable": "5.0.8",
+    "jspdf-autotable": "5.0.9",
     "lucide": "^0.577.0",
     "react": "^19.3.0",
     "react-dom": "^19.3.0"
