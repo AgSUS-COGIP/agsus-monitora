@@ -20,7 +20,10 @@ import {
     que ela troca de página, área ou seção. O banco conta "online" por 4 min
     (migration 20261013140000): uma batida perdida não derruba ninguém. Com a
     aba oculta, a batida para; na volta, bate uma vez só (se a última passou
-    do intervalo) e o relógio recomeça dali;
+    do intervalo) e o relógio recomeça dali. A resposta traz, de carona, a
+    versão do catálogo de abas (migration 20261019160000), entregue a
+    `aoRegistrar` — o vigia do catálogo (src/app/vigia-do-catalogo.ts) relê o
+    menu só quando ela muda, sem chamada nova ao banco;
   - "Pessoas online" (`listar_presenca_online_monitora`): a lista que o
     cabeçalho mostra (src/componentes/pessoas-online/), só para quem
     `podeVerPessoasOnline` (admin global e Gestor). Com a lista aberta, relê a
@@ -81,6 +84,7 @@ export function criarPresenca({
   navegacao = { obter: () => ({ view: "" }), assinar: () => () => {} },
   local = (view) => localPadrao(view, documento),
   agora = () => Date.now(),
+  aoRegistrar = () => {},
 } = {}) {
   let estado = Object.freeze({
     visivel: false,
@@ -167,6 +171,12 @@ export function criarPresenca({
     if (resposta.error) throw resposta.error;
     ultimoLocal = lugar;
     ultimaBatida = agora();
+    try {
+      aoRegistrar(resposta.data);
+    } catch (erro) {
+      // Quem ouve a resposta não derruba a presença.
+      console.warn("Falha ao tratar a resposta da presença:", erro);
+    }
   }
 
   /* Ao trocar de página, área ou seção, avisa na hora (sem esperar os 90 s). */

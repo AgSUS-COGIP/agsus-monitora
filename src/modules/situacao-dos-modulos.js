@@ -12,9 +12,14 @@
     - pergunta, a cada `navigate`, se a página abre
       (`aplicarManutencaoNaNavegacao`). Quem não é administrador global vê a
       tela de manutenção no lugar da página; o administrador vê a página, com
-      a faixa âmbar "Em manutenção para os demais usuários".
+      a faixa âmbar "Em manutenção para os demais usuários". Página desligada
+      pela coordenação (src/lib/pagina-desligada.ts) fecha para todos, com o
+      aviso "Esta página foi desativada pela coordenação.". As duas telas têm
+      o botão para a página inicial.
 
-  A situação NÃO vai na cópia da sessão: é sempre a do banco, nesta entrada.
+  A situação NÃO vai na cópia da sessão: é sempre a do banco, nesta entrada
+  (e relida no meio da sessão pelo vigia do catálogo,
+  src/app/vigia-do-catalogo.ts, quando a versão muda).
   Falhou a consulta (rede, função ainda não publicada), vale tudo ativo — a
   tela nunca tranca ninguém por erro de rede. Sair da conta continua na barra
   lateral, que não é tocada aqui.
@@ -26,6 +31,7 @@ import {
   textoDaFaixaDoAdministrador,
   textosDaManutencao,
 } from "../lib/situacao-dos-modulos.js";
+import { TEXTOS_DA_PAGINA_DESLIGADA } from "../lib/pagina-desligada.ts";
 import { criarIcone } from "./icones.js";
 
 const RPC_SITUACAO_DO_SISTEMA = "obter_situacao_do_sistema";
@@ -95,9 +101,12 @@ function garantirFaixa(documento) {
   return faixa;
 }
 
-function garantirPagina(documento) {
+function garantirPagina(documento, aoIrParaInicio) {
   let pagina = documento.getElementById(ID_DA_PAGINA);
-  if (pagina) return pagina;
+  if (pagina) {
+    irParaInicio = aoIrParaInicio;
+    return pagina;
+  }
   const conteudo = documento.querySelector("#conteudoPrincipal > .content");
   if (!conteudo) return null;
   pagina = documento.createElement("section");
@@ -107,38 +116,69 @@ function garantirPagina(documento) {
   cartao.className = "pagina-de-manutencao__cartao";
   const icone = documento.createElement("span");
   icone.className = "pagina-de-manutencao__icone";
-  icone.append(criarIcone("wrench", { tamanho: 28 }));
   const titulo = documento.createElement("h2");
   const mensagem = documento.createElement("p");
   mensagem.className = "pagina-de-manutencao__mensagem";
   const previsao = documento.createElement("p");
   previsao.className = "pagina-de-manutencao__previsao";
-  cartao.append(icone, titulo, mensagem, previsao);
+  const botao = documento.createElement("button");
+  botao.type = "button";
+  botao.className = "btn pagina-de-manutencao__botao";
+  botao.textContent = TEXTOS_DA_PAGINA_DESLIGADA.botao;
+  botao.addEventListener("click", () => irParaInicio?.());
+  cartao.append(icone, titulo, mensagem, previsao, botao);
   pagina.append(cartao);
   conteudo.append(pagina);
+  irParaInicio = aoIrParaInicio;
   return pagina;
 }
 
-function mostrarPaginaDeManutencao(documento, efetiva) {
-  const pagina = garantirPagina(documento);
+/* O botão leva à página inicial que a navegação escolher na hora do clique. */
+let irParaInicio = null;
+
+function mostrarPagina(documento, { textos, origem, icone, aoIrParaInicio }) {
+  const pagina = garantirPagina(documento, aoIrParaInicio);
   if (!pagina) return false;
-  const textos = textosDaManutencao(efetiva);
+  const lugarDoIcone = pagina.querySelector(".pagina-de-manutencao__icone");
+  lugarDoIcone.replaceChildren(criarIcone(icone, { tamanho: 28 }));
   pagina.querySelector("h2").textContent = textos.titulo;
   pagina.querySelector(".pagina-de-manutencao__mensagem").textContent =
     textos.mensagem;
   const previsao = pagina.querySelector(".pagina-de-manutencao__previsao");
-  previsao.textContent = textos.previsao;
+  previsao.textContent = textos.previsao || "";
   previsao.hidden = !textos.previsao;
-  pagina.dataset.origem = efetiva.origem;
+  pagina.querySelector(".pagina-de-manutencao__botao").hidden = !aoIrParaInicio;
+  pagina.dataset.origem = origem;
   pagina.classList.add("active");
   return true;
 }
 
+/** A tela de manutenção (ou de página desativada) está aberta no lugar da página. */
+export function avisoNoLugarDaPagina(documento = globalThis.document) {
+  return Boolean(
+    documento?.getElementById?.(ID_DA_PAGINA)?.classList.contains("active"),
+  );
+}
+
+/*
+  A página atual foi desligada (ou entrou em manutenção) com trabalho não
+  salvo: ela fica, com a faixa avisando, até a próxima checagem depois de
+  salvo (src/app/navegacao.js, `reavaliarTelaAtual`).
+*/
+export function avisarNaFaixa(documento, texto, origem) {
+  const faixa = documento && garantirFaixa(documento);
+  if (!faixa) return;
+  faixa.querySelector("span").textContent = texto;
+  faixa.dataset.origem = origem;
+  faixa.hidden = false;
+}
+
 /**
  * Chamada pelo `navigate` do legado, com as páginas já escondidas. Devolve
- * `true` quando mostrou a tela de manutenção no lugar da página (quem chama
- * para ali); `false` quando a página abre — com a faixa, se o administrador
- * global abriu uma página em manutenção.
+ * `true` quando mostrou a tela de manutenção (ou a de página desativada,
+ * `desligada`) no lugar da página (quem chama para ali); `false` quando a
+ * página abre — com a faixa, se o administrador global abriu uma página em
+ * manutenção. `aoIrParaInicio` é o botão das duas telas.
  */
 export function aplicarManutencaoNaNavegacao({
   documento = globalThis.document,
@@ -146,9 +186,20 @@ export function aplicarManutencaoNaNavegacao({
   area,
   abas,
   adminGlobal = false,
+  desligada = false,
+  aoIrParaInicio = null,
 } = {}) {
   if (!documento) return false;
   documento.getElementById(ID_DA_PAGINA)?.classList.remove("active");
+  if (desligada) {
+    esconderFaixa(documento);
+    return mostrarPagina(documento, {
+      textos: TEXTOS_DA_PAGINA_DESLIGADA,
+      origem: "desligada",
+      icone: "circle-alert",
+      aoIrParaInicio,
+    });
+  }
   const efetiva = situacaoEfetiva({ situacao, abas, view, area });
   if (!efetiva) {
     esconderFaixa(documento);
@@ -165,5 +216,10 @@ export function aplicarManutencaoNaNavegacao({
     return false;
   }
   esconderFaixa(documento);
-  return mostrarPaginaDeManutencao(documento, efetiva);
+  return mostrarPagina(documento, {
+    textos: textosDaManutencao(efetiva),
+    origem: efetiva.origem,
+    icone: "wrench",
+    aoIrParaInicio,
+  });
 }

@@ -1,12 +1,13 @@
 /*
   Guarda de alterações não salvas do app, para as telas que guardam rascunho
-  (o rascunho das regras, src/app/rascunho-da-regra.ts). Cada tela registra o
-  que sabe responder:
+  (o rascunho das regras, src/app/rascunho-da-regra.ts, e a ficha aberta da
+  Avaliação documental, ficha.jsx). Cada tela registra o que sabe responder:
     comAlteracoes()  há trabalho não salvo como versão (o F5 e o fechar pedem
                      confirmação pelo `beforeunload`);
     naoGuardado()    há mudança que ainda não chegou a lugar durável (banco ou
                      este computador): a versão nova do sistema não recarrega
-                     a página enquanto isso (src/app/navegacao.js);
+                     a página enquanto isso, nem a página desligada pela
+                     coordenação fecha (src/app/navegacao.js);
     guardarAgora()   grava já, sem esperar, o que dá para gravar sem rede (a
                      cópia neste computador), chamado no `beforeunload`.
   Acessos, Módulos e abas e Configurações têm a guarda própria de saída

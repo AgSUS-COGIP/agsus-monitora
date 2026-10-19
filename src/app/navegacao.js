@@ -1,9 +1,21 @@
 import { aplicarAtualizacaoPendente } from "../modules/pwa-lifecycle.js";
 import { guardaDeAlteracoes } from "./guarda-de-alteracoes.ts";
-import { aplicarManutencaoNaNavegacao } from "../modules/situacao-dos-modulos.js";
-import { situacaoDoSistema } from "../modules/situacao-dos-modulos.js";
-import { abasDoMenu } from "../modules/catalogo-de-abas.js";
-import { filtrarAreasAtivas } from "../lib/situacao-dos-modulos.js";
+import {
+  aplicarManutencaoNaNavegacao,
+  avisarNaFaixa,
+  avisoNoLugarDaPagina,
+  situacaoDoSistema,
+} from "../modules/situacao-dos-modulos.js";
+import { abasDoMenu, catalogoDoBanco } from "../modules/catalogo-de-abas.js";
+import {
+  filtrarAreasAtivas,
+  situacaoEfetiva,
+} from "../lib/situacao-dos-modulos.js";
+import {
+  paginaDesligada,
+  primeiraPaginaLigada,
+  textoDaFaixaDeSaida,
+} from "../lib/pagina-desligada.ts";
 import {
   areasDoUsuario,
   montarArvoreDoMenu,
@@ -30,6 +42,7 @@ import { cabecalhoDaVisaoGeral } from "../lib/visao-geral-da-area.ts";
 import { erroAmigavel } from "../lib/erro-amigavel.js";
 import {
   assinarDadosDoMonitoramento,
+  definirAreaAtual,
   definirAreasDoUsuario,
   obterDadosDoMonitoramento,
 } from "../componentes/dados-do-monitoramento.ts";
@@ -57,6 +70,12 @@ import { definirPaginaDaAya } from "../modulos/aya/estado.js";
   `#nav [data-view][data-area]` da barra lateral (React, pelo estado dela) e o
   `render()` dos controladores em `window` (`recursosController`…) ao abrir a
   tela de cada um.
+
+  Página desligada pela coordenação (ou em manutenção) também fecha no meio
+  da sessão: o vigia do catálogo (src/app/vigia-do-catalogo.ts) relê o
+  catálogo quando ele muda e chama `reavaliarTelaAtual`, que troca a página
+  pelo aviso — ou, com trabalho não salvo (`temTrabalhoNaoSalvo`), só mostra
+  a faixa e espera salvar.
 
   Quem acompanha a navegação assina: `assinar(ouvinte)` recebe
   `{ tipo: "menu" }` a cada marcação do menu (o lugar da pessoa pode ter
@@ -164,9 +183,13 @@ export function criarNavegacao({
   aplicarAtualizacao = aplicarAtualizacaoPendente,
   podeRecarregar = guardaDeAlteracoes.podeRecarregar,
   recarregar = () => janela.location.reload(),
+  // Fechar a página agora perderia algo (ainda não guardado em lugar nenhum).
+  temTrabalhoNaoSalvo = () => !guardaDeAlteracoes.podeRecarregar(),
 } = {}) {
   let view = "dashboard";
   let estado = Object.freeze({ view });
+  /* A última árvore do menu: dela sai a página do botão "Ir para a página inicial". */
+  let arvore = [];
   const ouvintes = new Set();
 
   const $ = (id) => documento.getElementById(id);
@@ -204,7 +227,34 @@ export function criarNavegacao({
 
   const permitida = (tela) => telaPermitida(tela, perfil(), paineis);
   const inicialDoSistema = () => telaInicialDoSistema(perfil(), paineis);
-  const deEntrada = () => telaDeEntrada(telaGuardada(), perfil(), paineis);
+
+  /* A página (view) na área está desligada pela coordenação (src/lib/pagina-desligada.ts)? */
+  const desligada = (tela, area = areaAtual()) =>
+    paginaDesligada({
+      abas: abasDoMenu(),
+      doBanco: catalogoDoBanco(),
+      situacao: situacaoDoSistema(),
+      view: tela,
+      area,
+    });
+
+  /* A tela guardada desligada não reabre: vale a primeira página ligada. */
+  function deEntrada() {
+    const tela = telaDeEntrada(telaGuardada(), perfil(), paineis);
+    if (!desligada(tela)) return tela;
+    return primeiraPaginaLigada(arvore, areaAtual(), tela)?.view || tela;
+  }
+
+  /* O botão da página desativada (e da manutenção): a primeira página ligada do menu. */
+  function irParaInicio() {
+    const item = primeiraPaginaLigada(arvore, areaAtual(), view);
+    if (!item) {
+      irPara(inicialDoSistema());
+      return;
+    }
+    if (item.area) definirAreaAtual(item.area);
+    irPara(item.view);
+  }
 
   // ── Cabeçalho e menu ──────────────────────────────────────────────────
 
@@ -264,21 +314,19 @@ export function criarNavegacao({
     const areas = areasDoUsuario(atual?.areas);
     const ativas = filtrarAreasAtivas(areas, situacao);
     definirAreasDoUsuario(ativas.length ? ativas : areas);
-    atualizarMenuLateral(
-      montarArvoreDoMenu({
-        permitidas,
-        paineis: paineis.doMenu(),
-        secoesDeConfiguracao: secoes,
-        areas,
-        abas: abasDoMenu(),
-        situacao,
-      }),
-      {
-        aoAbrirSecao: (_view, secao) =>
-          abrirSecaoDeConfiguracao(documento, secao),
-        textoVazio: configuracao("permissions_empty_text"),
-      },
-    );
+    arvore = montarArvoreDoMenu({
+      permitidas,
+      paineis: paineis.doMenu(),
+      secoesDeConfiguracao: secoes,
+      areas,
+      abas: abasDoMenu(),
+      situacao,
+    });
+    atualizarMenuLateral(arvore, {
+      aoAbrirSecao: (_view, secao) =>
+        abrirSecaoDeConfiguracao(documento, secao),
+      textoVazio: configuracao("permissions_empty_text"),
+    });
     marcarMenu(view);
   }
 
@@ -351,7 +399,9 @@ export function criarNavegacao({
       return;
     }
 
-    // Sistema, área ou aba em manutenção: quem não é admin global vê a tela de manutenção.
+    // Página desligada pela coordenação: o aviso, para todos. Sistema, área ou
+    // aba em manutenção: quem não é admin global vê a tela de manutenção.
+    const fechada = desligada(tela);
     if (
       aplicarManutencaoNaNavegacao({
         documento,
@@ -359,9 +409,14 @@ export function criarNavegacao({
         area: areaAtual(),
         abas: abasDoMenu(),
         adminGlobal: isAdminGlobal(perfil()),
+        desligada: fechada,
+        aoIrParaInicio: irParaInicio,
       })
     ) {
-      definirTitulo("Em manutenção", subtituloDaArea(""));
+      definirTitulo(
+        fechada ? "Página desativada" : "Em manutenção",
+        subtituloDaArea(""),
+      );
       return;
     }
 
@@ -411,6 +466,46 @@ export function criarNavegacao({
   }
 
   /*
+    O catálogo ou a situação mudou no meio da sessão (src/app/vigia-do-catalogo.ts,
+    já com o menu remontado). A página aberta que ficou desligada, ou em
+    manutenção para quem não é administrador global, troca pelo aviso — a
+    tela React fica escondida e não carrega mais nada. Com trabalho não salvo,
+    a página fica com a faixa, e fecha numa próxima checagem, depois de salvo.
+    Página religada não reabre sozinha: o menu já a mostra de novo.
+  */
+  function reavaliarTelaAtual() {
+    if (view === TELA_SEM_ACESSO || avisoNoLugarDaPagina(documento)) return;
+    const area = areaAtual();
+    const situacao = situacaoDoSistema();
+    const fechada = desligada(view, area);
+    const manutencao =
+      !fechada &&
+      !isAdminGlobal(perfil()) &&
+      !situacao.adminGlobal &&
+      situacaoEfetiva({ situacao, abas: abasDoMenu(), view, area });
+    if (!fechada && !manutencao) {
+      // Continua aberta: só a faixa (a do administrador, ou nenhuma) se ajusta.
+      aplicarManutencaoNaNavegacao({
+        documento,
+        view,
+        area,
+        abas: abasDoMenu(),
+        adminGlobal: isAdminGlobal(perfil()),
+      });
+      return;
+    }
+    if (temTrabalhoNaoSalvo()) {
+      avisarNaFaixa(
+        documento,
+        textoDaFaixaDeSaida(fechada ? "desligada" : "manutencao"),
+        fechada ? "desligada" : "saida",
+      );
+      return;
+    }
+    irPara(view);
+  }
+
+  /*
     Trocou a área (menu): o cabeçalho da Visão geral muda (o estado dela tira o
     DSEI aberto, poda os filtros e troca o mapa). Devolve o cancelamento.
   */
@@ -432,6 +527,7 @@ export function criarNavegacao({
     },
     irPara,
     montarMenu,
+    reavaliarTelaAtual,
     marcarMenu,
     definirTitulo,
     acompanharArea,
