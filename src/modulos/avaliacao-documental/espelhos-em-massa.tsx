@@ -22,10 +22,10 @@ import {
   type PaginaDosEspelhos,
 } from "../../lib/avaliacao-documental/espelhos-em-massa.ts";
 import { Aviso, Campo, Gaveta, Segmentado } from "../../ui/index.js";
+import { espelhoDaFichaGravada } from "../../lib/avaliacao-documental/espelho-da-ficha-gravada.ts";
 import {
   abrirEspelhosEmMassa,
   baixarZipDosEspelhos,
-  espelhoDaFichaGravada,
 } from "./ficha/espelho-de-nota.ts";
 
 /*

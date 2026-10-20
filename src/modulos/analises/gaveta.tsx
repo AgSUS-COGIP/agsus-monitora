@@ -1,3 +1,4 @@
+import { Fragment, useMemo } from "react";
 import type {
   LinhaDaAnalise,
   RegistroDaAnalise,
@@ -7,9 +8,11 @@ import {
   detalheDaAnalise,
   tomDoStatus,
 } from "../../lib/analises-curriculares.ts";
+import { espelhoDoDetalhe } from "../../lib/espelho-do-painel-de-analises.ts";
 import { mesclarDetalhe } from "../../lib/lista-do-painel-de-analises.js";
 import { linhaSemParecer } from "../../lib/textos-do-painel-de-analises.js";
 import { Gaveta, GradeDeKv, Kv, Secao, Selo } from "../../ui/index.js";
+import { EspelhoNaGaveta } from "./espelho-na-gaveta.tsx";
 
 /*
   A gaveta de um registro da fila: candidato, status e responsável no topo;
@@ -17,6 +20,9 @@ import { Gaveta, GradeDeKv, Kv, Secao, Selo } from "../../ui/index.js";
   de origem e PDF, só http(s)); as seções de pontuação, janela oficial e
   resultado; e o parecer. O que a lista enxuta não traz chega pelo
   detalhamento (estado.abrirDetalhe): até lá, as seções são o skeleton.
+  Linha publicada pela ficha concluída (o detalhe traz "espelho"): a nota e
+  os critérios saem pelo espelho de nota (EspelhoNaGaveta), logo depois da
+  situação, no lugar da nota final e da pontuação de cada critério.
 
   Tudo é texto (filhos do React): o que veio da planilha nunca vira HTML.
 */
@@ -70,7 +76,12 @@ export function GavetaDaAnalise({
     // Sem parecer no banco: o detalhe não manda a chave, e a seção some.
     if (linhaSemParecer(completa)) completa.analise = null;
   }
-  const d = detalheDaAnalise(completa, area);
+  const espelho = useMemo(
+    () =>
+      detalhe?.situacao === "pronto" ? espelhoDoDetalhe(detalhe.dados) : null,
+    [detalhe],
+  );
+  const d = detalheDaAnalise(completa, area, { comEspelho: Boolean(espelho) });
 
   return (
     <Gaveta
@@ -152,21 +163,28 @@ export function GavetaDaAnalise({
               ) : null}
             </div>
           ) : null}
+          {espelho && d.secoes[0]?.chave !== "status" ? (
+            <EspelhoNaGaveta espelho={espelho} />
+          ) : null}
           {d.secoes.map((secao) => (
-            <Secao
-              key={secao.chave}
-              icone={secao.icone}
-              titulo={secao.titulo}
-              secao={secao.chave}
-            >
-              <GradeDeKv>
-                {secao.itens.map(([rotulo, valor]) => (
-                  <Kv key={rotulo} rotulo={rotulo}>
-                    {valor}
-                  </Kv>
-                ))}
-              </GradeDeKv>
-            </Secao>
+            <Fragment key={secao.chave}>
+              <Secao
+                icone={secao.icone}
+                titulo={secao.titulo}
+                secao={secao.chave}
+              >
+                <GradeDeKv>
+                  {secao.itens.map(([rotulo, valor]) => (
+                    <Kv key={rotulo} rotulo={rotulo}>
+                      {valor}
+                    </Kv>
+                  ))}
+                </GradeDeKv>
+              </Secao>
+              {espelho && secao.chave === "status" ? (
+                <EspelhoNaGaveta espelho={espelho} />
+              ) : null}
+            </Fragment>
           ))}
           <Parecer linha={completa} />
         </div>

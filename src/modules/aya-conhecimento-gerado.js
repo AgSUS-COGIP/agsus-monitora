@@ -1973,7 +1973,7 @@ export const VERBETES_AYA = Object.freeze([
       'Na ficha concluída, na etapa Conclusão, o botão "Espelho de nota" (ao lado de "Copiar parecer") abre a impressão do navegador com o "Espelho de Pontuação da Análise Curricular", o documento simplificado para o atendimento ao candidato; "Baixar PDF" baixa o mesmo espelho já em PDF (A4, texto pesquisável, nome "espelho-<vaga>-<código>-<nome>.pdf"), gerado no navegador. Nada é gravado (nem no banco, nem no Storage) e não há consulta nova: o espelho sai do que a ficha já carregou e usa os mesmos textos do parecer. Traz o timbrado da AgSUS (Configurações › Marca), a saudação, os dados do registro (edital e unidade, candidato, código, modalidade, vaga, etapa e situação; a linha Descrição só aparece quando há regime e carga horária) e as notas. O modelo é escolhido pelo resultado gravado: no Inapto por requisito (eliminado), não há pontos nem a nota declarada — só "Não se aplica" na consolidada, e a justificativa traz os motivos da eliminação com o item do edital, inclusive o "Outro motivo" descrito; no Apto e no Inapto por nota mínima, vem também a pontuação por critério (declarada, após a análise e teto, com a justificativa de cada critério) e as observações registradas (a Observação do avaliador de cada item, as observações prontas e a observação geral). Dados internos (avaliador, CPF, questionário) não aparecem.',
     fato: "",
     fonte:
-      "src/lib/avaliacao-documental/espelho-de-nota.ts; src/modulos/avaliacao-documental/ficha/espelho-de-nota.ts; src/modulos/avaliacao-documental/ficha/conclusao-da-ficha.tsx",
+      "src/lib/avaliacao-documental/espelho-de-nota.ts; src/lib/avaliacao-documental/espelho-da-ficha-gravada.ts; src/modulos/avaliacao-documental/ficha/espelho-de-nota.ts; src/modulos/avaliacao-documental/ficha/conclusao-da-ficha.tsx",
     abrir: "avaliacao-documental",
   },
   {
@@ -3556,6 +3556,30 @@ export const VERBETES_AYA = Object.freeze([
     fato: "No MONITORA, o dono da avaliação documental de cada edital fica em TB_ORIGEM_ANALISE_EDITAL (PLANILHA ou MONITORA); com MONITORA, a ficha publica em TB_ANALISE_CURRICULAR com TP_ORIGEM_REGISTRO MONITORA.",
     fonte:
       "supabase/migrations/20261009200000_fichas_no_painel_das_analises.sql; src/modulos/avaliacao-documental/origem-da-analise.tsx",
+    abrir: "analises",
+  },
+  {
+    arquivo: "regras-das-analises.md",
+    titulo: "Nota declarada e após a análise na gaveta",
+    perguntas: [
+      "nota declarada no painel",
+      "nota autodeclarada na gaveta",
+      "nota antes da analise",
+      "nota consolidada",
+      "nota apos a analise",
+      "declarada x apos analise",
+      "nota mudou na analise curricular",
+      "justificativa do criterio no painel",
+      "gaveta da analise curricular",
+      "espelho no painel",
+      "teto do criterio",
+      "composicao da pontuacao",
+    ],
+    resposta:
+      'Na gaveta de uma análise (clique na linha do Painel das análises), quando a linha veio de uma ficha concluída da Avaliação documental (edital analisado no MONITORA), a seção "Nota antes e após a análise" mostra, logo depois da Situação, a Nota autodeclarada (antes da análise) e a Nota consolidada (após a análise) e, por critério, Declarada, Após análise e Teto; embaixo do critério que mudou vêm as justificativas, com o mesmo texto do espelho de nota. Os números são os do espelho de nota da mesma ficha (a mesma conta), então os dois sempre batem. No eliminado (inapto por requisito), como no espelho, não há a declarada nem os critérios: a consolidada diz "Não se aplica" e aparecem os motivos da eliminação. Linhas que vieram da planilha, e fichas ainda não concluídas, seguem com a nota final e a composição da pontuação de sempre.',
+    fato: 'No MONITORA, a gaveta do Painel das análises monta a nota declarada × após a análise pela mesma conta do espelho de nota (espelhoDaFichaGravada), com a entrada que get_analise_detalhe_do_painel traz em "espelho".',
+    fonte:
+      "src/lib/espelho-do-painel-de-analises.ts; src/modulos/analises/espelho-na-gaveta.tsx; supabase/migrations/20261020150000_detalhe_do_painel_com_espelho.sql",
     abrir: "analises",
   },
   {

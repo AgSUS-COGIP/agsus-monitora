@@ -33,7 +33,7 @@ import {
   declaradaDaFicha,
   regraDaFicha,
 } from "../../src/lib/avaliacao-documental/ficha.js";
-import { entradaDoEspelho } from "../../src/modulos/avaliacao-documental/ficha/espelho-de-nota.ts";
+import { entradaDoEspelho } from "../../src/lib/avaliacao-documental/espelho-da-ficha-gravada.ts";
 
 /*
   O espelho em PDF: sai do MESMO objeto Espelho (montarEspelho), com texto de

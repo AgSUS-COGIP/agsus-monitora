@@ -872,6 +872,61 @@ th[aria-sort="descending"] .ui-ordenar i {
   overflow-wrap: anywhere;
 }
 
+/*
+  Tabela pequena dentro de uma seção (ex.: critérios da nota na gaveta das
+  Análises): cabe na largura da gaveta, sem rolagem nem cabeçalho fixo. Vence
+  `table`, `th` e `td` de app.css (largura mínima, caixa alta, 800). Números
+  em `[data-numero]`; a linha de nota (`tr[data-nota]`) leva o texto que
+  explica a linha de cima.
+*/
+.ui-tabela-compacta {
+  width: 100%;
+  min-width: 0;
+  border-collapse: collapse;
+  font-size: var(--text-body-sm);
+}
+.ui-tabela-compacta th {
+  position: static;
+  padding: var(--space-1) var(--space-2);
+  border-bottom: 1px solid var(--border-subtle);
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: var(--text-caption);
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: 0;
+  text-transform: none;
+}
+.ui-tabela-compacta td {
+  padding: var(--space-1) var(--space-2);
+  border-bottom: 1px solid var(--border-subtle);
+  color: var(--text-primary);
+  font-weight: var(--font-weight-regular);
+}
+.ui-tabela-compacta [data-numero] {
+  text-align: right;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+.ui-tabela-compacta tr:hover td {
+  background: transparent;
+}
+.ui-tabela-compacta tr[data-mudou] td {
+  font-weight: var(--font-weight-semibold);
+}
+.ui-tabela-compacta tr[data-nota] td {
+  padding-top: 0;
+  color: var(--text-secondary);
+  font-size: var(--text-caption);
+}
+.ui-tabela-compacta tr:has(+ tr[data-nota]) td {
+  border-bottom: 0;
+}
+.ui-tabela-compacta ul,
+.ui-secao ul.ui-lista-de-motivos {
+  margin: 0;
+  padding-left: var(--space-4);
+}
+
 /* ── MaisOpcoes ─────────────────────────────────────────────────────── */
 
 .ui-grade-de-campos[hidden] {

@@ -64,9 +64,10 @@ export function linhaSemDetalhe(linha) {
 /*
   Campos do detalhe que não entram na linha: o id e a área já estão nela, e a
   chave natural faz parte da chave da linha na tabela (mudar a chave com o
-  detalhamento aberto o fecharia).
+  detalhamento aberto o fecharia). O espelho (a entrada do espelho de nota da
+  ficha, ~30 KB) é só da gaveta: fica no detalhe, não vai para a linha.
 */
-const FORA_DA_LINHA = new Set(["id", "area", "chave_natural"]);
+const FORA_DA_LINHA = new Set(["id", "area", "chave_natural", "espelho"]);
 
 /** Põe na linha o que o detalhe trouxe e ela não tem. Devolve se mudou algo. */
 export function mesclarDetalhe(linha, detalhe) {

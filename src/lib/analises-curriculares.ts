@@ -1019,18 +1019,24 @@ const soComValor = (pares: [string, string][]) =>
 /**
  * O que a gaveta mostra de uma linha (já com o detalhamento, se veio):
  * título, status, responsável, contexto, links e as seções de pares
- * rótulo/valor. Pares sem valor saem; seção vazia sai.
+ * rótulo/valor. Pares sem valor saem; seção vazia sai. `comEspelho`: a
+ * gaveta mostra a nota e os critérios pelo espelho de nota
+ * (espelho-do-painel-de-analises.ts); a nota final e a pontuação de cada
+ * critério saem daqui para não aparecerem duas vezes.
  */
 export function detalheDaAnalise(
   linha: RegistroDaAnalise | null,
   area: string,
+  { comEspelho = false }: { comEspelho?: boolean } = {},
 ) {
   const l = linha || {};
   const inicio = formatarData(l.data_inicio_analise);
   const fim = formatarData(l.data_fim_analise);
   const pontuacaoDaArea = ehAreaSaudeIndigena(area)
     ? [
-        par("Critério étnico", l.pontuacao_criterio_etnico),
+        ...(comEspelho
+          ? []
+          : [par("Critério étnico", l.pontuacao_criterio_etnico)]),
         par("Exp. Saúde Indígena", l.experiencia_saude_indigena_total),
         par("Exp. Atenção Básica", l.experiencia_atencao_basica_total),
       ]
@@ -1064,7 +1070,7 @@ export function detalheDaAnalise(
       titulo: "Resultado",
       icone: "fa-chart-simple",
       itens: soComValor([
-        par("Nota final", l.nota_final_ajustada),
+        ...(comEspelho ? [] : [par("Nota final", l.nota_final_ajustada)]),
         par("Modalidade", l.modalidade_concorrencia),
       ]),
     },
@@ -1073,9 +1079,16 @@ export function detalheDaAnalise(
       titulo: "Composição da pontuação",
       icone: "fa-list-check",
       itens: soComValor([
-        par("Escolaridade", l.pontuacao_escolaridade),
-        par("Cursos", l.pontuacao_cursos_aperfeicoamento),
-        par("Experiência profissional", l.pontuacao_experiencia_profissional),
+        ...(comEspelho
+          ? []
+          : [
+              par("Escolaridade", l.pontuacao_escolaridade),
+              par("Cursos", l.pontuacao_cursos_aperfeicoamento),
+              par(
+                "Experiência profissional",
+                l.pontuacao_experiencia_profissional,
+              ),
+            ]),
         ...pontuacaoDaArea,
       ]),
     },
