@@ -259,6 +259,11 @@ espelhos-em-massa.tsx     Ações da coordenação › "Espelhos de nota em mass
                           ou códigos colados, obter_espelhos_de_nota em páginas de 200
                           (20261015180000); ZIP com um PDF por candidato (padrão, em lotes,
                           "x de N") ou um documento só para imprimir, um espelho por página
+relatorio-de-motivos.tsx  Ações da coordenação › "Relatório de motivos": filtros (critério, situação,
+                          motivo, resultado, situação da ficha, vaga, avaliador, período), atalhos,
+                          listar_relatorio_de_motivos em páginas de 500 (20261020120000), tabela,
+                          textos do outro motivo agrupados, CSV/XLSX no navegador; regras puras em
+                          src/lib/avaliacao-documental/relatorio-de-motivos.ts
 ficha/estado-da-ficha.js  store da ficha: obter_ficha_analise, rascunho automático,
                           concluir_ficha, reabrir_ficha, registrar_acesso_ficha
 ficha/ficha.css           estilos da ficha (só tokens)

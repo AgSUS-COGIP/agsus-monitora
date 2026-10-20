@@ -2025,6 +2025,33 @@ export const VERBETES_AYA = Object.freeze([
   },
   {
     arquivo: "regras-da-avaliacao-documental.md",
+    titulo: "Relatório de motivos",
+    perguntas: [
+      "relatorio de motivos",
+      "relatorio de reprovados",
+      "reprovados por criterio",
+      "eliminados por criterio",
+      "quem usou outro motivo",
+      "outro motivo na identidade",
+      "textos do outro motivo",
+      "motivos mais usados",
+      "relatorio sem pedir a ti",
+      "exportar motivos",
+      "csv dos motivos",
+      "pontuacao ajustada",
+      "nota ajustada cursos experiencia",
+      "relatorio por avaliador",
+      "transformar texto em motivo",
+    ],
+    resposta:
+      'Na Fila da Avaliação documental, "Ações da coordenação" › "Relatório de motivos" (só administrador e coordenação ou gestor do edital; o banco confere de novo) lista as fichas pelos filtros: critério da regra vigente (Identidade, Formação, Requisito do cargo, cotas, Cursos, Experiência…), situação do critério ("Não confere ou não enviado", "Só não enviado", "Confere", "Não se aplica" — na ficha concluída, o critério que não estava no lançamento, como a cota fora da modalidade, conta como "Não se aplica"), motivo (os do critério e "Outro motivo"), resultado, situação da ficha (concluída por padrão; "Em análise" inclui as a revisar), vaga, avaliador, período de conclusão e "Só nota ajustada" (critério com justificativa de nota, ou seja, pontuação diferente da declarada). Os atalhos montam os mais pedidos: "Outro motivo por critério" (o critério escolhido, senão Identidade, com os textos agrupados), "Eliminados por critério" (Não confere ou não enviado e Inapto por requisito) e "Pontuação ajustada (cursos/experiência)". A tabela traz código, candidato, vaga (cargo ao passar o mouse), resultado, critério e situação, o texto do outro motivo, os demais motivos com o texto (não o código), quem concluiu e quando; os cards mostram quantas fichas, quantas com outro motivo e quantos textos distintos. "Agrupar pelo texto do outro motivo" junta os textos iguais (sem diferença de acento, maiúscula, espaço ou ponto final) com quantas fichas repetem: texto que repete muito é candidato a virar motivo padronizado na regra (aba Regra › bloco › motivos). Clicar num texto filtra a tabela por ele. "CSV" baixa para o Excel (UTF-8, ponto e vírgula) e "XLSX" baixa a planilha com as fichas e, havendo, a planilha "Outro motivo" com os textos e as contagens. O relatório não traz CPF, e-mail nem telefone e nada é gravado (nem banco, nem Storage). Os textos dos motivos vêm da versão vigente da regra: código que saiu da regra aparece como código.',
+    fato: "",
+    fonte:
+      "src/modulos/avaliacao-documental/relatorio-de-motivos.tsx; src/lib/avaliacao-documental/relatorio-de-motivos.ts; supabase/migrations/20261020120000_relatorio_de_motivos.sql",
+    abrir: "avaliacao-documental",
+  },
+  {
+    arquivo: "regras-da-avaliacao-documental.md",
     titulo: "Rascunho, concluir e próxima",
     perguntas: [
       "salvar rascunho da ficha",

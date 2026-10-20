@@ -1088,6 +1088,12 @@ export const CONTRATO_RPC = {
     resumo:
       "Espelhos de nota em massa (20261015180000): das fichas concluídas do edital, só o que a montagem do espelho individual usa (~1 KB por ficha: nome, código, vaga, cargo, modalidade, ART, resultado, nota final, declarada gravada, lançamento sem empregador nem nome de curso, chave da regra) e as regras ainda não lidas (p_regras). Páginas de até 200 pela chave da ficha (p_apos = proximo). Filtro por vagas e TODOS/APTOS/INAPTOS, ou p_codigos (até 5.000; nao_concluidos na primeira página). Só administrador e coordenação do edital. Não grava nada.",
   },
+  listar_relatorio_de_motivos: {
+    argumentos: ["p_edital", "p_filtros"],
+    critica: false,
+    resumo:
+      "Relatório de motivos da avaliação documental (20261020120000): fichas do edital filtradas (p_filtros jsonb: blocos, situacoes, motivo, ajustada, resultados, situacoes_ficha, vagas, avaliador, de, ate, apos, limite) com só as colunas do relatório (código e nome do candidato, sem CPF/e-mail/telefone; vaga, cargo, situação, resultado, nota final, quem concluiu e quando; blocos reduzidos a situação, motivos, motivo_livre, justificativas e nota_ajustada). Páginas de até 500 pela chave da ficha (apos = proximo); total e avaliadores na primeira página. Só administrador e coordenação do edital. Não grava nada.",
+  },
   obter_modelo_espelho_nota: {
     argumentos: ["p_edital"],
     critica: false,

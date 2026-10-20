@@ -1625,6 +1625,80 @@
 }
 
 /*
+  Relatório de motivos (relatorio-de-motivos.tsx): gaveta larga (a tabela tem
+  nove colunas), atalhos numa linha, filtros compactos como os da fila e a
+  lista dos textos do outro motivo com a contagem.
+*/
+.modal-card.ui-gaveta.avd-relatorio-motivos {
+  width: min(1280px, 100vw);
+}
+.avd-relatorio-atalhos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+.avd-relatorio-filtros {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+}
+.avd-relatorio-filtros > .ui-campo {
+  flex: 1 1 150px;
+  max-width: 260px;
+  gap: var(--space-0-5);
+}
+.avd-relatorio-filtros .ui-campo label {
+  color: var(--text-secondary);
+  font-size: var(--text-caption);
+}
+.avd-relatorio-filtros select,
+.avd-relatorio-filtros input:not([type="checkbox"]) {
+  min-height: 36px;
+  padding-block: var(--space-1);
+}
+.avd-relatorio-marca {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  min-height: 36px;
+  font-size: var(--text-body-sm);
+}
+.avd-relatorio-filtros > .ui-acoes {
+  margin-left: auto;
+}
+.avd-relatorio-grupos {
+  display: grid;
+  gap: var(--space-2);
+  max-height: 320px;
+  overflow-y: auto;
+  padding: var(--space-2) var(--space-3);
+}
+.avd-relatorio-grupos table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.avd-relatorio-grupos td,
+.avd-relatorio-grupos th {
+  padding: var(--space-1) var(--space-2);
+  border-bottom: 1px solid var(--border-subtle);
+  text-align: left;
+  vertical-align: top;
+}
+.avd-relatorio-grupos .num {
+  width: 80px;
+  text-align: right;
+}
+.avd-relatorio-texto {
+  height: auto;
+  min-height: 0;
+  padding: 0;
+  text-align: left;
+  white-space: normal;
+}
+
+/*
   Modelo do espelho de nota (modelo-do-espelho.tsx): os campos à esquerda e a
   prévia à direita. A folha da prévia é papel e fica branca também no tema
   escuro, como a da carta de convocação.
