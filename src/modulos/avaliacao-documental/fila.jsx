@@ -59,6 +59,7 @@ import {
   SeloDaDecisao,
 } from "./decisao-do-lote.jsx";
 import { EspelhosEmMassa } from "./espelhos-em-massa.tsx";
+import { RelatorioDeMotivos } from "./relatorio-de-motivos.tsx";
 import { ModeloDoEspelhoDeNota } from "./modelo-do-espelho.tsx";
 import { ConteudoDaFicha } from "./ficha/ficha.jsx";
 import { ResumoDoAndamento } from "./resumo-do-andamento.tsx";
@@ -69,7 +70,8 @@ import { ResumoDoAndamento } from "./resumo-do-andamento.tsx";
   compactos numa linha com os filtros salvos, "Pegar próximo" e "Minhas
   fichas" para o analista, o menu "Ações da coordenação" (distribuir,
   redistribuir, liberar reservas, mandar para revisão, abrir fichas do lote e
-  incluir por decisão, com confirmação e motivo), a tabela agrupada por vaga
+  incluir por decisão, com confirmação e motivo; espelhos em massa e o
+  relatório de motivos: relatorio-de-motivos.tsx), a tabela agrupada por vaga
   quando a vaga é "Todas", a inclusão no
   lote por decisão da coordenação (selo "Decisão: …" na lista e no topo da
   ficha, com "Revogar decisão": decisao-do-lote.jsx) e a ficha aberta
@@ -807,6 +809,7 @@ export function Fila({ e, fila }) {
   const [incluindo, setIncluindo] = useState(false);
   const [espelhos, setEspelhos] = useState(false);
   const [modeloDoEspelho, setModeloDoEspelho] = useState(false);
+  const [relatorio, setRelatorio] = useState(false);
   const [busca, setBusca] = useState(st.filtro.busca);
   const [recolhidos, setRecolhidos] = useState(() => new Set());
   // A ordem da tabela fica aqui: Anterior / Próxima da ficha seguem a mesma.
@@ -1020,6 +1023,16 @@ export function Fila({ e, fila }) {
       dados: {
         "data-acao": "modelo-do-espelho",
         "data-tour": "avd-fila-modelo-do-espelho",
+      },
+    },
+    {
+      id: "relatorio-de-motivos",
+      rotulo: "Relatório de motivos",
+      icone: "fa-table-list",
+      aoEscolher: () => setRelatorio(true),
+      dados: {
+        "data-acao": "relatorio-de-motivos",
+        "data-tour": "avd-fila-relatorio-de-motivos",
       },
     },
     ...(fila.ehAdminGlobal?.()
@@ -1245,6 +1258,17 @@ export function Fila({ e, fila }) {
           editalId={st.editalId || e.editalId}
           rpc={fila.rpc}
           aoFechar={() => setModeloDoEspelho(false)}
+        />
+      ) : null}
+      {relatorio && coordena ? (
+        <RelatorioDeMotivos
+          editalId={st.editalId || e.editalId}
+          edital={dados.edital?.rotulo}
+          regra={e.dados?.regra?.configuracao}
+          vagas={dados.vagas || []}
+          analistas={dados.analistas || []}
+          rpc={fila.rpc}
+          aoFechar={() => setRelatorio(false)}
         />
       ) : null}
       {acao ? (

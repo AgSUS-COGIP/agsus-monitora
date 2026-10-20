@@ -1091,3 +1091,31 @@ prazo do cronograma e o ritmo atual.
   `src/lib/ritmo-da-analise.ts`. Sem polling: a tela pede junto com a carga do painel; trocar só o
   escopo não pede de novo. Ensaio em 19/10/2026: 3,2 ms.
 - Ordem: aplicar a migration antes de publicar o front (sem a RPC, o card só não aparece).
+
+## 21. Relatório de motivos da avaliação documental (20/10/2026)
+
+Migration `20261020120000_relatorio_de_motivos.sql` (ensaio e rollback com o mesmo nome). A
+coordenação tira sozinha relatórios como "reprovados no critério da identidade com Outro motivo"
+(Avaliação documental › Fila › Ações da coordenação › "Relatório de motivos"); tabela, agrupamento e
+CSV/XLSX são montados no navegador (`src/lib/avaliacao-documental/relatorio-de-motivos.ts`). Nada
+é gravado.
+
+- `public.listar_relatorio_de_motivos(p_edital, p_filtros jsonb)` → json: as fichas do edital que
+  casam com os filtros (`blocos`, `situacoes` do bloco, `motivo` — `OUTRO` é o "Outro motivo" —,
+  `ajustada` = com justificativa de nota, `resultados`, `situacoes_ficha` — nulo = todas menos
+  `FORA_LOTE` —, `vagas`, `avaliador`, `de`/`ate` da conclusão em America/Sao_Paulo), com só as
+  colunas do relatório: código e nome do candidato (**sem CPF, e-mail ou telefone**), vaga, cargo,
+  lotação, situação, resultado, nota final, quem concluiu (`TB_PERFIL_USUARIO.nome`) e quando, e os
+  blocos de `DS_LANCAMENTO` reduzidos a `situacao`, `motivos`, `motivo_livre`, `justificativas` e
+  `nota_ajustada`. Os textos (título do bloco, motivo, justificativa) vêm da regra vigente, que a
+  tela já tem. Na ficha concluída, o bloco escolhido ausente do lançamento conta como
+  `NAO_SE_APLICA`.
+- Páginas de até 500 pela chave da ficha (`apos` = `proximo`); `total` e `avaliadores` na primeira.
+- `SECURITY DEFINER`, `search_path ''`, `statement_timeout 5s`, só `authenticated`; só administrador
+  e coordenação do edital (`FC_PAPEL_AVALIACAO` = `COORDENADOR`, 42501); filtro inválido = 22023.
+- Sem índice novo: `IN_FICHAANALISE_FILA` recorta o edital. Ensaio em 20/10/2026 no 114/2026 (como a
+  conta do setor): "Outro motivo por critério" com Identidade = 39 fichas em 16–41 ms; pontuação
+  ajustada (cursos + experiência) = 171 fichas em ~160 ms (frio); sem filtro, 500 de 1.512 em ~220 ms
+  (frio).
+- Ordem: aplicar a migration antes de publicar o front (sem a RPC, a gaveta abre e mostra o erro
+  ao gerar).

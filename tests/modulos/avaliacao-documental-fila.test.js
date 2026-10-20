@@ -996,11 +996,25 @@ describe("fila: andamento, menu da coordenação e tabela agrupada por vaga", ()
       "Mandar para revisão (1)",
       "Espelhos de nota em massa",
       "Modelo do espelho de nota",
+      "Relatório de motivos",
       "Abrir fichas do lote (1)",
     ]);
     expect(menu.querySelector("[data-acao='liberar-reservas']").disabled).toBe(
       true,
     );
+  });
+});
+
+describe("fila: relatório de motivos", () => {
+  it("a coordenação abre o Relatório de motivos pelo menu, com os atalhos", async () => {
+    await montar(supabaseFalso());
+    await abrirMenu();
+    await clicar(secao.querySelector("[data-acao='relatorio-de-motivos']"));
+    const gaveta = document.querySelector(
+      "[data-tour='avd-relatorio-motivos']",
+    );
+    expect(gaveta).not.toBeNull();
+    expect(gaveta.querySelectorAll("[data-atalho]")).toHaveLength(3);
   });
 });
 
