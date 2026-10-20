@@ -1,5 +1,5 @@
 /*
-  A mascote da Aya: a arara-azul viva, sempre de corpo inteiro. Desenho em
+  A mascote da Aya: a arara-azul viva. Desenho em
   desenho.tsx (fiel à ilustração de referência); movimento em
   mascote.css (transform/opacity, por `data-estado`) e, para o que é sorteado
   (piscar a cada 3–7 s, arrepiar as penas da cabeça), Web Animations direto
@@ -12,7 +12,14 @@
   atenta (ponteiro perto; o olho acompanha) > dormindo (inatividade longa) >
   parada.
 
-  Movimento reduzido: só pisca. Aba oculta: tudo pausa (sem piscar, sem CSS).
+  Enquadramento: "corpo" (a arara inteira: painel aberto, fogos, prévia) ou
+  "rosto" (só a cabeça e um busto curto, com os detalhes de perto: a Aya
+  fechada, no botão). Trocar o enquadramento na mesma arara aproxima ou
+  afasta o quadro por transição de CSS (transform/opacity; o <svg> não muda
+  de tamanho); `enquadramentoInicial` faz a arara nascer no outro e passar
+  ao pedido logo depois (a ida do botão para o painel e a volta).
+
+  Movimento reduzido: só pisca (e o enquadramento troca sem transição). Aba oculta: tudo pausa (sem piscar, sem CSS).
   Comemorações desligadas pela pessoa: não comemora.
 */
 
@@ -73,11 +80,15 @@ const obterDesenho = () => desenho;
 import { assinarPedidoDaAya, obterPedidoDaAya } from "./estado.ts";
 import "./mascote.css";
 
-/* Abaixo disto (px), a versão simples (contornos chapados). */
+/* Abaixo disto (px), a versão simples (contornos chapados); o rosto, de perto, nunca é simples. */
 export const TAMANHO_DA_VERSAO_SIMPLES = 40;
-/* A arara do canto (botão da Aya), em pé no poleiro: px de altura. */
+/* A Aya fechada (o botão do canto), só o rosto: px de lado. */
 export const ALTURA_DA_ARARA = 56;
+/* A arara inteira no cabeçalho do painel aberto: px de lado. */
+export const TAMANHO_NO_PAINEL = 88;
 const PISCADA_MS = 170;
+
+export type Enquadramento = "corpo" | "rosto";
 
 export interface PropsDaMascote {
   /** Estado imposto (prévia, fogos): ignora pedidos, ponteiro e sono. */
@@ -86,6 +97,10 @@ export interface PropsDaMascote {
   proprio?: EstadoDaMascote | null;
   /** Lado em px (a arara inteira cabe no quadrado). Abaixo de 40px, versão simples. */
   tamanho?: number;
+  /** A arara inteira ("corpo", padrão) ou só o rosto, de perto ("rosto"). */
+  enquadramento?: Enquadramento;
+  /** Nasce neste enquadramento e passa ao pedido logo depois (transição de entrada). */
+  enquadramentoInicial?: Enquadramento | null;
   /** Em pé no poleiro, com a sombra de contato (padrão: sim; os fogos voam sem). */
   poleiro?: boolean;
   /** Ouve o evento global `aya:estado` (padrão: sim). */
@@ -150,6 +165,8 @@ export function Mascote({
   estado: fixo = null,
   proprio = null,
   tamanho = 64,
+  enquadramento = "corpo",
+  enquadramentoInicial = null,
   poleiro = true,
   ouvirAya = true,
   atencao = true,
@@ -163,7 +180,8 @@ export function Mascote({
 }: PropsDaMascote) {
   const prefixo = `arara${useId().replace(/[^a-zA-Z0-9]/g, "")}`;
   const refRaiz = useRef<SVGSVGElement | null>(null);
-  const simples = tamanho < TAMANHO_DA_VERSAO_SIMPLES;
+  const simples =
+    enquadramento === "corpo" && tamanho < TAMANHO_DA_VERSAO_SIMPLES;
   const modulo = useSyncExternalStore(
     assinarDesenho,
     obterDesenho,
@@ -185,6 +203,15 @@ export function Mascote({
     () => movimentoReduzido(janela),
     () => false,
   );
+  // A entrada no outro enquadramento (sem ela com movimento reduzido: só troca).
+  const [entrada, setEntrada] = useState<Enquadramento | null>(() =>
+    enquadramentoInicial &&
+    enquadramentoInicial !== enquadramento &&
+    !movimentoReduzido(janela)
+      ? enquadramentoInicial
+      : null,
+  );
+  const quadro = entrada ?? enquadramento;
   const [perto, setPerto] = useState(false);
   const [dormindo, setDormindo] = useState(false);
   const [momento, setMomento] = useState<EstadoDaMascote | null>(null);
@@ -224,6 +251,25 @@ export function Mascote({
     return () => clearTimeout(tempo);
     // Só ao montar.
   }, []);
+
+  // Dois quadros depois de montar (o navegador já pintou a entrada): vai ao pedido.
+  const temEntrada = entrada !== null;
+  useEffect(() => {
+    if (!temEntrada) return undefined;
+    const proximo = (passo: () => void) =>
+      janela?.requestAnimationFrame
+        ? janela.requestAnimationFrame(passo)
+        : setTimeout(passo, 16);
+    let cancelado = false;
+    proximo(() =>
+      proximo(() => {
+        if (!cancelado) setEntrada(null);
+      }),
+    );
+    return () => {
+      cancelado = true;
+    };
+  }, [temEntrada, janela]);
 
   // Piscar (3–7 s sorteados; às vezes duas vezes) — também com movimento reduzido.
   const olhosFechados = visivel === "dormindo";
@@ -417,6 +463,7 @@ export function Mascote({
       width={tamanho}
       height={tamanho}
       data-estado={visivel}
+      data-enquadramento={quadro}
       data-pedido={pedido}
       data-versao={simples ? "simples" : "completa"}
       data-reduzido={reduzido ? "sim" : undefined}

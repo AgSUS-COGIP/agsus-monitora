@@ -7,20 +7,81 @@
   O piscar e o arrepio das penas da cabeça são sorteados e vêm por Web
   Animations (mascote.tsx). Movimento reduzido: tudo parado, menos o piscar.
   Aba oculta: animações pausadas.
+
+  Enquadramento (`data-enquadramento`): no "rosto", `.mascote__quadro` aproxima
+  a cabeça (escala e desloca dentro do mesmo <svg>, que não muda de tamanho),
+  os `.mascote__detalhe` acendem e o recorte deixa só um busto curto. A troca
+  é por transição; o recorte fecha na hora ao ir para o rosto e só abre no fim
+  da ida para o corpo (o corpo aproximado nunca vaza da caixa).
 */
 
 .mascote {
   --olho-x: 0;
   --olho-y: 0;
   --mascote-troca: 420ms cubic-bezier(0.3, 0.7, 0.3, 1);
+  --mascote-enquadramento-ms: 520ms;
+  --mascote-contorno: color-mix(
+    in srgb,
+    var(--brand-primary) 30%,
+    var(--color-text-primary)
+  );
   display: block;
   flex: none;
   overflow: visible;
+  clip-path: inset(-60%);
+  transition: clip-path 0s linear var(--mascote-enquadramento-ms);
   user-select: none;
+}
+
+/* No escuro, o contorno vira uma luz de borda (a arara não some no fundo). */
+[data-theme="dark"] .mascote {
+  --mascote-contorno: color-mix(in srgb, var(--brand-primary) 65%, transparent);
+}
+
+.mascote[data-enquadramento="rosto"] {
+  clip-path: inset(0 round 0 0 46% 46% / 0 0 24% 24%);
+  transition-delay: 0s;
 }
 
 .mascote * {
   transform-box: view-box;
+}
+
+/* ---------- Enquadramento: corpo inteiro ou rosto de perto ---------- */
+
+.mascote__quadro {
+  transform-origin: 0 0;
+  transition: transform var(--mascote-enquadramento-ms)
+    cubic-bezier(0.3, 0.7, 0.3, 1);
+}
+/* A cabeça (x 77–133, y 16–64) e o alto do peito ocupam o quadro. */
+.mascote[data-enquadramento="rosto"] .mascote__quadro {
+  transform: translate(-178px, -22px) scale(2.65);
+}
+.mascote__detalhe {
+  opacity: 0;
+  transition: opacity var(--mascote-enquadramento-ms) ease;
+}
+.mascote[data-enquadramento="rosto"] .mascote__detalhe {
+  opacity: 1;
+}
+.mascote__contorno {
+  stroke: var(--mascote-contorno);
+  stroke-linejoin: round;
+}
+.mascote__poleiro {
+  transition: opacity var(--mascote-enquadramento-ms) ease;
+}
+.mascote[data-enquadramento="rosto"] .mascote__poleiro,
+.mascote[data-enquadramento="rosto"] .mascote__penas-soltas {
+  opacity: 0;
+}
+/* O "z" do sono não cresce com o quadro: só vai para o alto, atrás da cabeça. */
+.mascote__sono {
+  transform-origin: 130px 12px;
+}
+.mascote[data-enquadramento="rosto"] .mascote__sono {
+  transform: translate(-58px, 6px) scale(2);
 }
 
 /* ---------- Pivôs ---------- */
@@ -44,7 +105,11 @@
   transition: transform 260ms ease-in-out;
 }
 .mascote__iris {
-  transform: translate(calc(var(--olho-x) * 1.1px), calc(var(--olho-y) * 1px));
+  /* --olho-x/y vêm da tela; espelhada (Aya na borda direita), o sentido inverte. */
+  transform: translate(
+    calc(var(--olho-x) * var(--olho-sentido-x, 1) * 1.1px),
+    calc(var(--olho-y) * var(--olho-sentido-y, 1) * 1px)
+  );
   transition: transform 160ms ease-out;
 }
 .mascote__olho-fechado {
@@ -90,7 +155,9 @@
 }
 .mascote__sono {
   opacity: 0;
-  transition: opacity 400ms ease;
+  transition:
+    opacity 400ms ease,
+    transform var(--mascote-enquadramento-ms) ease;
 }
 .mascote__z {
   fill: var(--brand-primary);
@@ -133,9 +200,10 @@
 
 /* ---------- pensando: olha para cima; a pena da cabeça balança ---------- */
 
+/* Para cima e para a frente no desenho (o sentido desfaz o espelho da borda). */
 .mascote[data-estado="pensando"] {
-  --olho-x: 0.35;
-  --olho-y: -1;
+  --olho-x: calc(0.35 * var(--olho-sentido-x, 1));
+  --olho-y: calc(-1 * var(--olho-sentido-y, 1));
 }
 .mascote[data-estado="pensando"] .mascote__cabeca-pose {
   transform: rotate(-13deg) translateY(-1px);
@@ -216,6 +284,23 @@
   transform: rotate(-6deg);
 }
 
+/* ---------- No rosto: a asa e o pulo não cabem, a cabeça faz o gesto ---------- */
+
+.mascote[data-enquadramento="rosto"] .mascote__asa-aberta-pose {
+  opacity: 0;
+}
+.mascote[data-enquadramento="rosto"][data-estado="comemorando"]
+  .mascote__salto {
+  animation-name: mascote-pula-rosto;
+}
+.mascote[data-enquadramento="rosto"][data-estado="comemorando"]
+  .mascote__penas-da-cabeca {
+  animation: mascote-pena-festa 0.36s ease-in-out infinite alternate;
+}
+.mascote[data-enquadramento="rosto"][data-estado="acenando"] .mascote__cabeca {
+  animation: mascote-acena-rosto 0.5s ease-in-out infinite alternate;
+}
+
 /* ---------- Quadros ---------- */
 
 @keyframes mascote-respira {
@@ -288,6 +373,31 @@
     transform: translateY(0) scale(1.04, 0.96);
   }
 }
+@keyframes mascote-pula-rosto {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  45% {
+    transform: translateY(-3px);
+  }
+}
+@keyframes mascote-pena-festa {
+  from {
+    transform: rotate(-4deg) scale(1);
+  }
+  to {
+    transform: rotate(-16deg) scale(1.16);
+  }
+}
+@keyframes mascote-acena-rosto {
+  from {
+    transform: rotate(3deg);
+  }
+  to {
+    transform: rotate(-6deg);
+  }
+}
 @keyframes mascote-bate-asa {
   from {
     transform: rotate(2deg);
@@ -358,12 +468,14 @@
   animation-play-state: paused;
 }
 
+.mascote[data-reduzido="sim"],
 .mascote[data-reduzido="sim"][data-estado] * {
   animation: none;
   transition: none;
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .mascote,
   .mascote[data-estado] * {
     animation: none;
     transition: none;

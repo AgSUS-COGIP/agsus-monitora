@@ -196,7 +196,18 @@
       "#ffffff": 2,
       "#5a3400": 1,
       "#2a1512": 1,
-      "#2a1608": 1
+      "#2a1608": 1,
+      "#7fa8ff": 1,
+      "#5f8fff": 1,
+      "#6f9bff": 1,
+      "#fff2a8": 1,
+      "#fff6c4": 1,
+      "#a96500": 1,
+      "#b07000": 1,
+      "#c9c6d0": 1,
+      "#e9e7ee": 1,
+      "#9a979f": 1,
+      "#000000": 1
     },
     "src/modulos/classificacao/documento-no-navegador.ts": {
       "#ffffff": 1

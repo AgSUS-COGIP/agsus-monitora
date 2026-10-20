@@ -13,6 +13,12 @@
   - aberto/fechado lembrado no navegador (mesma chave de antes);
   - a arara pode ser arrastada para outro lugar da tela, e a posição fica
     guardada (mesma chave de antes); clique sem arrastar abre o painel;
+  - fechada, a arara mostra só o rosto (de perto); aberta, o painel mostra a
+    arara inteira, maior, e o rosto se afasta até o corpo (e volta ao fechar);
+  - solta encostada numa borda (ou empurrada com as setas, com o foco nela),
+    a arara se esconde e fica espiando; passar o mouse ou focar a traz um
+    pouco para fora, arrastar ou as setas a tiram da borda, e a borda fica
+    guardada junto com a posição (src/lib/borda-da-aya.ts);
   - Enter envia, Shift+Enter quebra linha; até 1.200 caracteres;
   - origem de cada resposta ("Fonte oficial", "Base do MONITORA"…) e fontes oficiais;
   - o texto aparece aos poucos ("digitando"), menos com movimento reduzido.
@@ -86,7 +92,16 @@ import {
   salvarPassoDaTrilha,
 } from "./tour/progresso.js";
 import { acharAlvo, Tour } from "./tour/tour.jsx";
-import { ALTURA_DA_ARARA, Mascote } from "./mascote/mascote.tsx";
+import {
+  ALTURA_DA_ARARA,
+  Mascote,
+  TAMANHO_NO_PAINEL,
+} from "./mascote/mascote.tsx";
+import {
+  bordaEncostada,
+  lerPosicaoDaAya,
+  passoDaSeta,
+} from "../../lib/borda-da-aya.ts";
 
 /* As mesmas chaves do painel antigo: quem fechou a Aya ou moveu a arara continua assim. */
 export const CHAVE_OCULTA = "agsus_monitora_arara_oculta_v1";
@@ -437,14 +452,7 @@ function Mensagem({
 /* ---------- Arrastar a arara ---------- */
 
 function lerPosicao(janela) {
-  try {
-    const posicao = JSON.parse(ler(janela, CHAVE_POSICAO_DA_ARARA) || "null");
-    if (Number.isFinite(posicao?.left) && Number.isFinite(posicao?.top))
-      return posicao;
-  } catch {
-    // posição padrão
-  }
-  return null;
+  return lerPosicaoDaAya(ler(janela, CHAVE_POSICAO_DA_ARARA));
 }
 
 function limitarPosicao(janela, elemento, left, top) {
@@ -457,8 +465,40 @@ function limitarPosicao(janela, elemento, left, top) {
   };
 }
 
+/*
+  Onde a arara para: contida na janela e, se a posição desejada encostou numa
+  borda, escondida nela. O tamanho vem de offsetWidth/Height (o translate de
+  quem está escondida não conta).
+*/
+function pousar(janela, elemento, left, top) {
+  const contida = limitarPosicao(janela, elemento, left, top);
+  const borda = bordaEncostada({
+    left,
+    top,
+    largura: elemento?.offsetWidth || 0,
+    altura: elemento?.offsetHeight || 0,
+    larguraDaJanela: janela.innerWidth,
+    alturaDaJanela: janela.innerHeight,
+    margem: MARGEM,
+  });
+  if (!borda) return contida;
+  // Escondida, encosta de vez na borda (a mesma folga de sempre).
+  const extremo = { esquerda: -Infinity, direita: Infinity };
+  const vertical = { topo: -Infinity, baixo: Infinity };
+  return {
+    ...limitarPosicao(
+      janela,
+      elemento,
+      extremo[borda] ?? contida.left,
+      vertical[borda] ?? contida.top,
+    ),
+    borda,
+  };
+}
+
 function usarArraste(janela, refBotao) {
   const [posicao, setPosicao] = useState(() => lerPosicao(janela));
+  const [arrastando, setArrastando] = useState(false);
   const arraste = useRef(null);
   const ignorarClique = useRef(false);
 
@@ -466,24 +506,42 @@ function usarArraste(janela, refBotao) {
     const aoRedimensionar = () =>
       setPosicao((atual) =>
         atual
-          ? limitarPosicao(janela, refBotao.current, atual.left, atual.top)
+          ? {
+              ...atual,
+              ...limitarPosicao(
+                janela,
+                refBotao.current,
+                atual.left,
+                atual.top,
+              ),
+            }
           : atual,
       );
     janela.addEventListener("resize", aoRedimensionar);
     return () => janela.removeEventListener("resize", aoRedimensionar);
   }, [janela, refBotao]);
 
+  /* O canto de cima à esquerda de agora (escondida, o translate não conta). */
+  function origem(elemento) {
+    if (posicao) return { left: posicao.left, top: posicao.top };
+    const caixa = elemento.getBoundingClientRect();
+    return { left: caixa.left, top: caixa.top };
+  }
+
+  function guardar(final) {
+    gravar(janela, CHAVE_POSICAO_DA_ARARA, JSON.stringify(final));
+  }
+
   const manipuladores = {
     onPointerDown(evento) {
       if (evento.button !== undefined && evento.button !== 0) return;
-      const caixa = evento.currentTarget.getBoundingClientRect();
       arraste.current = {
         id: evento.pointerId,
         x: evento.clientX,
         y: evento.clientY,
-        left: caixa.left,
-        top: caixa.top,
+        ...origem(evento.currentTarget),
         moveu: false,
+        desejada: null,
       };
       evento.currentTarget.setPointerCapture?.(evento.pointerId);
     },
@@ -493,13 +551,16 @@ function usarArraste(janela, refBotao) {
       const dx = evento.clientX - atual.x;
       const dy = evento.clientY - atual.y;
       if (!atual.moveu && Math.hypot(dx, dy) < ARRASTE_MINIMO) return;
+      if (!atual.moveu) setArrastando(true);
       atual.moveu = true;
+      atual.desejada = { left: atual.left + dx, top: atual.top + dy };
+      // Durante o arraste ela sai da borda (a pessoa vê onde vai soltar).
       setPosicao(
         limitarPosicao(
           janela,
           refBotao.current,
-          atual.left + dx,
-          atual.top + dy,
+          atual.desejada.left,
+          atual.desejada.top,
         ),
       );
     },
@@ -510,11 +571,30 @@ function usarArraste(janela, refBotao) {
       arraste.current = null;
       if (!atual.moveu) return;
       ignorarClique.current = true;
-      setPosicao((final) => {
-        if (final)
-          gravar(janela, CHAVE_POSICAO_DA_ARARA, JSON.stringify(final));
-        return final;
-      });
+      setArrastando(false);
+      const final = pousar(
+        janela,
+        refBotao.current,
+        atual.desejada.left,
+        atual.desejada.top,
+      );
+      setPosicao(final);
+      guardar(final);
+    },
+    /* As setas movem a arara (a alternativa ao arraste); contra a borda, ela se esconde. */
+    onKeyDown(evento) {
+      const passo = passoDaSeta(evento.key, evento.shiftKey);
+      if (!passo || evento.altKey || evento.ctrlKey || evento.metaKey) return;
+      evento.preventDefault();
+      const { left, top } = origem(evento.currentTarget);
+      const final = pousar(
+        janela,
+        refBotao.current,
+        left + passo.dx,
+        top + passo.dy,
+      );
+      setPosicao(final);
+      guardar(final);
     },
   };
   manipuladores.onPointerCancel = manipuladores.onPointerUp;
@@ -525,7 +605,7 @@ function usarArraste(janela, refBotao) {
     ignorarClique.current = false;
     return true;
   };
-  return { posicao, manipuladores, consumirCliqueDoArraste };
+  return { posicao, arrastando, manipuladores, consumirCliqueDoArraste };
 }
 
 /* ---------- Foco preso no painel ---------- */
@@ -596,6 +676,8 @@ export function Aya({
   });
 
   const [aberta, setAberta] = useState(() => ler(janela, CHAVE_OCULTA) === "0");
+  // Depois de o painel abrir uma vez, o rosto do botão nasce do corpo (a volta).
+  const [rostoVemDoCorpo, setRostoVemDoCorpo] = useState(aberta);
   const [mensagens, setMensagens] = useState(() => mensagensGuardadas(janela));
   const [ocupada, setOcupada] = useState(false);
   const [texto, setTexto] = useState("");
@@ -611,10 +693,9 @@ export function Aya({
   const devolverFocoAArara = useRef(false);
   const idDoTitulo = useId();
   const idDoCampo = useId();
-  const { posicao, manipuladores, consumirCliqueDoArraste } = usarArraste(
-    janela,
-    refArara,
-  );
+  const { posicao, arrastando, manipuladores, consumirCliqueDoArraste } =
+    usarArraste(janela, refArara);
+  const borda = arrastando ? null : posicao?.borda || null;
 
   /* ---------- Tour da tela e trilhas ---------- */
 
@@ -799,6 +880,7 @@ export function Aya({
 
   function abrir() {
     setAberta(true);
+    setRostoVemDoCorpo(true);
     gravar(janela, CHAVE_OCULTA, "0");
   }
 
@@ -999,8 +1081,14 @@ export function Aya({
           type="button"
           className="aya-arara"
           style={estiloDaArara}
+          data-borda={borda || undefined}
           aria-label="Abrir a Aya, assistente do MONITORA"
-          title="Clique para abrir a Aya ou arraste para mover"
+          aria-keyshortcuts="ArrowLeft ArrowRight ArrowUp ArrowDown"
+          title={
+            borda
+              ? "Clique para abrir a Aya ou arraste para tirá-la da borda"
+              : "Clique para abrir a Aya ou arraste para mover"
+          }
           onClick={() => {
             if (consumirCliqueDoArraste()) return;
             abrir();
@@ -1008,7 +1096,13 @@ export function Aya({
           {...manipuladores}
         >
           <span className="aya-figura">
-            <Mascote tamanho={ALTURA_DA_ARARA} acenarAoEntrar janela={janela} />
+            <Mascote
+              tamanho={ALTURA_DA_ARARA}
+              enquadramento="rosto"
+              enquadramentoInicial={rostoVemDoCorpo ? "corpo" : null}
+              acenarAoEntrar
+              janela={janela}
+            />
           </span>
           <span className="aya-arara__etiqueta" aria-hidden="true">
             Fale com a Aya
@@ -1066,7 +1160,8 @@ export function Aya({
             <div className="aya-apresentacao">
               <span className="aya-avatar aya-figura">
                 <Mascote
-                  tamanho={72}
+                  tamanho={TAMANHO_NO_PAINEL}
+                  enquadramentoInicial="rosto"
                   proprio={estadoDoPainel}
                   momentoInicial={ATENTA_AO_ABRIR}
                   janela={janela}
