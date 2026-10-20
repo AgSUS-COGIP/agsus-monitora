@@ -244,6 +244,11 @@ const RPC = corpoDaFuncao(
   LISTA,
   "create or replace function public.disparar_robo(",
 );
+/* A definição vigente de disparar_robo (modo anexos, 20261020130000). */
+const RPC_VIGENTE = corpoDaFuncao(
+  ler("supabase/migrations/20261020130000_robo_modo_anexos.sql"),
+  "create or replace function public.disparar_robo(",
+);
 const SITUACAO = corpoDaFuncao(
   MIGRATION,
   "create function public.situacao_do_disparo_robo(",
@@ -289,16 +294,20 @@ describe("Rodar agora pelo banco: disparar_robo (substitui api/rodar-carga.js)",
     expect(RPC).toContain("errcode = '42501'");
   });
 
-  it("a lista branca de cada robô é a mesma de OPCOES_DOS_ROBOS", () => {
+  it("a lista branca de cada robô é a mesma de OPCOES_DOS_ROBOS (definição vigente)", () => {
     for (const [id, aceitas] of Object.entries(OPCOES_DOS_ROBOS)) {
-      const inicio = RPC.indexOf(`'${id}', jsonb_build_object(`);
-      const bloco = RPC.slice(inicio, RPC.indexOf("),\n    '", inicio + 1));
+      const inicio = RPC_VIGENTE.indexOf(`'${id}', jsonb_build_object(`);
+      const bloco = RPC_VIGENTE.slice(
+        inicio,
+        RPC_VIGENTE.indexOf("),\n    '", inicio + 1),
+      );
       const modos = aceitas.modos.map((m) => `'${m.valor}'`).join(", ");
       expect(bloco, id).toContain(`'modos', jsonb_build_array(${modos})`);
       if (aceitas.editais)
         expect(bloco, id).toContain(`'editais', '${aceitas.editais}'`);
-      if (aceitas.anexos) expect(bloco, id).toContain("'anexos', true");
-      else expect(bloco, id).not.toContain("'anexos', true");
+      for (const chave of ["anexos", "candidatos", "seco"])
+        if (aceitas[chave]) expect(bloco, id).toContain(`'${chave}', true`);
+        else expect(bloco, id).not.toContain(`'${chave}', true`);
     }
     for (const trecho of [
       String.raw`'^\d{1,4}/\d{4}$'`,

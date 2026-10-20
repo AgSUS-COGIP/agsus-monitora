@@ -38,6 +38,13 @@ falhou. Fontes: `src/componentes/saude-das-cargas/`, `src/lib/saude-das-cargas.t
 **fonte:** src/lib/robos-de-carga.js; src/lib/painel-dos-robos.ts; supabase/migrations/20261008140000_agenda_dos_robos_pelo_banco.sql; supabase/migrations/20261007190000_painel_dos_robos.sql; docs/robo-empregare.md
 **abrir:** config:cargas
 
+## Só anexos (robô da Empregare)
+
+**perguntas:** modo so anexos | robo so anexos | reler os anexos | reler anexos de um candidato | anexo faltando na ficha | candidato mandou o arquivo depois | candidato editou a resposta | recapturar anexos sem mexer no lote | so comparar anexos | anexo bloqueado | candidato nao relido
+**resposta:** No "Opções" do Robô da Empregare, o modo "Só anexos" relê só os anexos do questionário das vagas ou editais escolhidos, sem exportar: situação dos inscritos, ativos, lote e pré-classificação não mudam (serve com as inscrições encerradas). Em "Códigos de candidato" vão os códigos da Empregare de quem precisa ser relido; em branco, o robô relê quem respondeu depois da última captura (captura feita no dia da "DATA DE RESPOSTA" da exportação ou antes). "Só comparar (não grava)" faz a releitura e mostra, por candidato, quantos anexos são novos, alterados ou sumiram, sem gravar nada (o resultado fica no resumo da execução no GitHub). O robô nunca reduz anexos: se a releitura vier com menos perguntas ou sem um arquivo que está gravado, nada daquele candidato é gravado e ele aparece como "bloqueado"; quem não pôde ser relido (sem resposta na lista ou tempo esgotado) aparece como "não relido". Quando um arquivo é trocado, a leitura automática dele é refeita.
+**fonte:** scripts/robo-empregare/so_anexos.py; supabase/migrations/20261020130000_robo_modo_anexos.sql; docs/robo-empregare.md
+**abrir:** config:cargas
+
 ## Rodar agora desabilitado
 
 **perguntas:** rodar agora desabilitado | botao rodar agora nao funciona | rodar agora recusado | o github recusou o pedido | chave de disparo dos robos expirou | github dispatch token | rodar agora pedido enviado | rodar agora acabou de ser pedida

@@ -28,6 +28,11 @@ Uso
       --anexos: também guarda o link de cada anexo do questionário (e o de
       impressão das respostas), lidos de GetRespostaDetails; anexos_empregare.py,
       migration 20261008160000
+  python scripts/robo-empregare/robo_empregare.py --so-anexos --vagas 182514 [--candidatos 2160872] [--seco]
+      só relê os anexos do questionário (so_anexos.py, migration 20261020130000):
+      não exporta, não grava a carga nem fecha a vaga (situação, ativos e lote não
+      mudam); sem --candidatos, relê os suspeitos (captura no dia da "DATA DE
+      RESPOSTA" ou antes); nunca reduz anexos; --seco só compara, sem gravar
   python scripts/robo-empregare/robo_empregare.py --resumir-perguntas [--editais 114/2026] [--forcar]
       só recalcula o resumo das perguntas da carga (resumo_das_perguntas.py)
       dos editais cuja carga mudou (--forcar: de todos com carga); não entra
@@ -42,6 +47,7 @@ vaga falhou ou foi recusada pela trava).
 """
 
 import argparse
+import contextlib
 import os
 import pathlib
 import re
@@ -56,6 +62,7 @@ sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[2] / "python"))
 import anexos_empregare as anexos  # noqa: E402
 import navegador_empregare as nav  # noqa: E402
 import resumo_das_perguntas  # noqa: E402
+import so_anexos  # noqa: E402
 from planilha_empregare import em_lotes, ler_planilha  # noqa: E402
 
 from monitora import execucao, supabase_rpc  # noqa: E402
@@ -101,6 +108,12 @@ def argumentos(lista=None):
     p.add_argument("--sondar", action="store_true", help="só lê a estrutura da aba Questionários (1 a 3 candidatos)")
     p.add_argument("--anexos", action="store_true", help="também guarda o link de cada anexo do questionário")
     p.add_argument(
+        "--so-anexos",
+        action="store_true",
+        help="só relê os anexos do questionário (sem exportar nem mexer em situação/lote; so_anexos.py)",
+    )
+    p.add_argument("--candidatos", default="", help="com --so-anexos: códigos de candidato da Empregare")
+    p.add_argument(
         "--resumir-perguntas",
         action="store_true",
         help="só recalcula o resumo das perguntas da carga (sem entrar na Empregare)",
@@ -123,6 +136,19 @@ def argumentos(lista=None):
         p.error("limite fora de 1 a 500")
     if args.sondar and len(args.vagas) != 1:
         p.error("o modo sondar pede exatamente um código de vaga em --vagas")
+    args.candidatos = list(dict.fromkeys(separar(args.candidatos)))
+    ruins = [c for c in args.candidatos if not re.fullmatch(r"\d{1,20}", c)]
+    if ruins:
+        p.error(f"código de candidato inválido: {', '.join(mascarar(r) for r in ruins[:5])} (só dígitos)")
+    if args.candidatos and not args.so_anexos:
+        p.error("--candidatos só com --so-anexos")
+    if len(args.candidatos) > so_anexos.MAXIMO_DE_CANDIDATOS:
+        p.error(f"no máximo {so_anexos.MAXIMO_DE_CANDIDATOS} candidatos")
+    if args.so_anexos:
+        if not (args.vagas or args.editais):
+            p.error("--so-anexos pede --vagas ou --editais")
+        if args.forcar or args.anexos or args.sondar or args.fumaca or args.resumir_perguntas:
+            p.error("--so-anexos não combina com --forcar, --anexos, --sondar, --fumaca nem --resumir-perguntas")
     return args
 
 
@@ -532,6 +558,23 @@ def sondar(args):
     return 0
 
 
+@contextlib.contextmanager
+def portal_logado():
+    """O PortalEmpregare logado, em Vagas Anunciadas (pasta temporária para downloads)."""
+    email, senha = nav.credenciais()
+    with tempfile.TemporaryDirectory() as pasta, nav.PortalEmpregare(pasta, registrar) as portal:
+        portal.entrar(email, senha)
+        portal.abrir_vagas_anunciadas()
+        yield portal
+
+
+def so_anexos_da_empregare(args, config, chamar=supabase_rpc.chamar, abrir_portal=portal_logado):
+    """Modo --so-anexos (so_anexos.py): relê só os anexos; nunca exporta nem grava a carga."""
+    tipo, usuario = disparo(args.disparado_por)
+    ids = {"sync": identificador(), "tipo": tipo, "usuario": usuario, "url": url_da_execucao()}
+    return so_anexos.executar(args, config, abrir_portal, registrar, resumir, chamar=chamar, ids=ids)
+
+
 def principal(args):
     if args.fumaca:
         return fumaca()
@@ -539,6 +582,8 @@ def principal(args):
         return sondar(args)
 
     config = supabase_rpc.configuracao(GUIA)
+    if args.so_anexos:
+        return so_anexos_da_empregare(args, config)
     if args.resumir_perguntas:
         linha, falhou = resumir_perguntas(config, args.editais, args.forcar)
         resumir([linha])

@@ -1741,12 +1741,17 @@ def capturar_anexos(portal, codigo, respostas, registrar, prazo, agora=time.mono
     return capturados
 
 
-def gravar_anexos(config, sync, codigo, capturados, colunas, chamar, registrar):
+def gravar_anexos(config, sync, codigo, capturados, colunas, chamar, registrar, totais=None):
     """
     Grava as respostas e os anexos da vaga (gravar_anexos_empregare, em lotes),
     com a coluna do Excel de cada anexo. Falha não derruba a vaga: só avisa.
-    Devolve quantos anexos o banco gravou. No log, só contagens.
+    Devolve quantos anexos o banco gravou. No log, só contagens. `totais` (dict,
+    opcional) recebe "leituras_invalidadas" (leituras de arquivo trocado que o
+    banco apagou, migration 20261020130000) e "falhou".
     """
+    totais = totais if totais is not None else {}
+    totais.setdefault("leituras_invalidadas", 0)
+    totais.setdefault("falhou", False)
     from monitora import supabase_rpc
 
     itens = []
@@ -1775,18 +1780,24 @@ def gravar_anexos(config, sync, codigo, capturados, colunas, chamar, registrar):
         for lote in em_lotes(itens):
             r = chamar(config, "gravar_anexos_empregare", {"p_sync": sync, "p_vaga": codigo, "p_respostas": lote})
             gravados += int((r or {}).get("anexos") or 0)
+            totais["leituras_invalidadas"] += int((r or {}).get("leituras_invalidadas") or 0)
     except supabase_rpc.ErroDoSupabase as erro:
+        totais["falhou"] = True
         if getattr(erro, "status", None) == 404:
             registrar("O banco ainda não guarda os anexos do questionário (falta a migration 20261008160000).")
         else:
             registrar(f"Vaga {codigo}: o banco recusou os anexos do questionário ({erro}).")
         return gravados
     except Exception as erro:
+        totais["falhou"] = True
         registrar(f"Vaga {codigo}: a gravação dos anexos do questionário falhou ({resumo_do_erro(erro)}).")
         return gravados
+    invalidadas = totais["leituras_invalidadas"]
     registrar(
         f"Vaga {codigo}: {len(itens)} resposta(s) e {gravados} anexo(s) gravados · "
-        f"{casados} de {total} anexo(s) casados com a coluna do Excel."
+        f"{casados} de {total} anexo(s) casados com a coluna do Excel"
+        + (f" · {invalidadas} leitura(s) de arquivo trocado a refazer" if invalidadas else "")
+        + "."
     )
     return gravados
 
