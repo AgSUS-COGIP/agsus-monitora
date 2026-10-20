@@ -336,6 +336,7 @@ export function criarEstadoDaSaude({
         [id]: {
           em: agora(),
           modo: opcoes?.modo || "normal",
+          ...(opcoes?.seco ? { seco: true } : {}),
           frase,
           id: data,
           disparo: situacaoDoPedido({ situacao: "PEDIDO" }),

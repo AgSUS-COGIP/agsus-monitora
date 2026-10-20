@@ -16,6 +16,11 @@ name: Robô da Empregare
 # estrutura da aba Questionários, com os links mascarados. Não usa o Supabase.
 # "anexos" (opcional até validarmos): no modo normal/forcar, guarda também o
 # link de cada anexo do questionário (scripts/robo-empregare/anexos_empregare.py).
+# Modo "anexos" (Só anexos): relê só os anexos do questionário das vagas pedidas
+# (vagas ou editais), dos candidatos em "candidatos" ou, sem eles, dos suspeitos
+# (captura no dia da DATA DE RESPOSTA ou antes); NÃO exporta, não grava a carga,
+# não fecha a vaga e NÃO pré-classifica: situação, ativos e lote não mudam.
+# Nunca reduz anexos; "seco" só compara (scripts/robo-empregare/so_anexos.py).
 # Ao fim de uma carga normal ou forçada, o passo "Pré-classificar" recalcula a
 # pré-classificação da Avaliação documental dos editais carregados
 # (scripts/pre_classificacao/; ver pre-classificacao.yml).
@@ -35,7 +40,7 @@ on:
   workflow_dispatch:
     inputs:
       modo:
-        description: "normal = exporta e grava; seco = só lista as vagas; fumaca = só testa o login; forcar = aceita arquivo com menos da metade dos candidatos; sondar = só lê a estrutura da aba Questionários (1 vaga em vagas, 1 a 3 candidatos em limite)"
+        description: "normal = exporta e grava; seco = só lista as vagas; fumaca = só testa o login; forcar = aceita arquivo com menos da metade dos candidatos; sondar = só lê a estrutura da aba Questionários (1 vaga em vagas, 1 a 3 candidatos em limite); anexos = só relê os anexos do questionário (não exporta, não mexe em situação/lote, não pré-classifica)"
         type: choice
         options:
           - normal
@@ -43,6 +48,7 @@ on:
           - fumaca
           - forcar
           - sondar
+          - anexos
         default: normal
       editais:
         description: "Opcional: números de edital separados por vírgula (ex.: 80/2026, 81/2026)"
@@ -61,6 +67,16 @@ on:
         default: "60"
       anexos:
         description: "Também guarda o link de cada anexo do questionário (Visualizar Arquivo) e o da impressão das respostas (modo normal/forcar; opcional até validarmos)"
+        type: boolean
+        required: false
+        default: false
+      candidatos:
+        description: "Só no modo anexos, opcional: códigos de candidato da Empregare (ex.: 2160872); em branco = os suspeitos"
+        type: string
+        required: false
+        default: ""
+      seco:
+        description: "Só no modo anexos: só compara com o gravado (novos, alterados, removidos); não grava nada"
         type: boolean
         required: false
         default: false
@@ -117,6 +133,8 @@ jobs:
           VAGAS: ${{ inputs.vagas }}
           LIMITE: ${{ inputs.limite || '60' }}
           ANEXOS: ${{ inputs.anexos && 'sim' || 'nao' }}
+          CANDIDATOS: ${{ inputs.candidatos }}
+          SECO: ${{ inputs.seco && 'sim' || 'nao' }}
           DISPARADO_POR: ${{ inputs.disparado_por }}
         run: |
           args=(--editais "$EDITAIS" --vagas "$VAGAS" --limite "$LIMITE")
@@ -125,6 +143,10 @@ jobs:
             fumaca) args+=(--fumaca) ;;
             forcar) args+=(--forcar) ;;
             sondar) args+=(--sondar) ;;
+            anexos)
+              args+=(--so-anexos --candidatos "$CANDIDATOS")
+              if [ "$SECO" = "sim" ]; then args+=(--seco); fi
+              ANEXOS=nao ;;
           esac
           if [ "$ANEXOS" = "sim" ]; then args+=(--anexos); fi
           python scripts/robo-empregare/robo_empregare.py "${args[@]}"
@@ -134,7 +156,8 @@ jobs:
       # scripts/pre_classificacao/, --apos-robo; o mesmo de pre-classificacao.yml).
       # Roda também se o robô terminou parcial. Uma falha aqui não muda o
       # resultado do robô: aparece no log e no Status das atualizações, e o
-      # "Recalcular" da aba Pré-classificação refaz.
+      # "Recalcular" da aba Pré-classificação refaz. NUNCA no modo anexos (nem nos
+      # outros): só normal e forcar exportam e mexem na carga.
       - name: Pré-classificar os editais carregados
         if: ${{ !cancelled() && (inputs.modo == 'normal' || inputs.modo == 'forcar') }}
         continue-on-error: true

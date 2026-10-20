@@ -1119,3 +1119,32 @@ CSV/XLSX são montados no navegador (`src/lib/avaliacao-documental/relatorio-de-
   (frio).
 - Ordem: aplicar a migration antes de publicar o front (sem a RPC, a gaveta abre e mostra o erro
   ao gerar).
+
+## 22. Robô da Empregare: modo "Só anexos" e a resposta editada depois da captura (20/10/2026)
+
+Migration `20261020130000_robo_modo_anexos.sql` (ensaio e rollback com o mesmo nome). A captura dos
+anexos do questionário é incremental e marcava como lida a resposta que cobria as colunas "Pergunta N";
+quando o candidato edita a mesma resposta na Empregare (acrescenta ou troca arquivo), o número não muda e
+o robô nunca relia (caso 2160872, vaga 182514).
+
+- `private."FC_LIMITE_DA_RESPOSTA_EMPREGARE"(colunas)`: 00:00 (Brasília) do dia seguinte à maior
+  "DATA DE RESPOSTA - <questionário>" de `TB_EMPREGARE_CANDIDATO.DS_COLUNA_ORIGINAL` (ISO ou DD/MM/AAAA;
+  a hora não conta). Captura antes disso é suspeita.
+- `private."FC_ARQUIVO_DO_LINK_EMPREGARE"(link)`: o `arquivo=` do Visualizar Arquivo (diz se o arquivo
+  mudou sem depender do token).
+- `public.listar_prioridade_anexos_empregare(p_vaga)` (**correção de raiz**): lida só se capturada a partir
+  do limite acima (e cobrindo as perguntas, como antes).
+- `public.gravar_anexos_empregare(...)`: igual, mais — arquivo trocado (ou novo) na mesma resposta,
+  pergunta e número apaga a linha de `TB_LEITURA_ARQUIVO` (vira "nunca lido" para o robô da leitura);
+  devolve `leituras_invalidadas`.
+- `public.listar_anexos_empregare(p_vaga, p_codigos)` (nova; só leitura; `service_role`): o gravado por
+  candidato (respostas com perguntas e captura; anexos como `[pergunta, número, hash16 do arquivo=,
+hash16 do link]`, nunca o link), `vaga_interno`, colunas, ativos, suspeitos, sem captura e não
+  encontrados; sem códigos, só os suspeitos.
+- `private."FC_DISPARAR_ROBO"` e `public.disparar_robo`: o robô da Empregare aceita o modo `anexos`
+  (pede vagas ou editais) e as entradas `candidatos` (até 1.000) e `seco`, que só valem nele.
+
+O modo `anexos` (`scripts/robo-empregare/so_anexos.py`) nunca chama `gravar_lote_empregare` nem
+`fechar_vaga_empregare` e o workflow não pré-classifica depois dele. Ordem: **migration antes** de
+publicar o front e de disparar o modo (sem ela, `disparar_robo` recusa o modo e o robô avisa que falta
+`listar_anexos_empregare`). Rollback: aplicar o front sem o "Só anexos" antes.

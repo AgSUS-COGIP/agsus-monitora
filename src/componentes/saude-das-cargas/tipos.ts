@@ -115,6 +115,10 @@ export interface OpcoesDoRobo {
   limite: { min: number; max: number; padrao: number } | null;
   /** Aceita "anexos" (guardar os links dos anexos do questionário; robô da Empregare). */
   anexos?: boolean;
+  /** Aceita "candidatos" (códigos da Empregare; só no modo anexos). */
+  candidatos?: boolean;
+  /** Aceita "seco" (só compara, sem gravar; só no modo anexos). */
+  seco?: boolean;
 }
 export interface RoboDeCarga {
   readonly id: string;
@@ -130,6 +134,10 @@ export interface OpcoesConferidas {
   limite: number | null;
   /** Só aparece quando marcado. */
   anexos?: true;
+  /** Modo anexos: os códigos de candidato pedidos (sem = os suspeitos). */
+  candidatos?: string[];
+  /** Modo anexos: só compara, sem gravar. */
+  seco?: true;
 }
 export type ResultadoDasOpcoes =
   | { opcoes: OpcoesConferidas; erro?: never; texto?: never }
@@ -137,6 +145,8 @@ export type ResultadoDasOpcoes =
 export interface PedidoDoRobo {
   em: Date;
   modo: string;
+  /** Modo anexos com "só comparar": não abre execução no banco. */
+  seco?: boolean;
   frase?: string;
   id?: number | string;
   disparo?: SituacaoDoPedido;
@@ -147,6 +157,8 @@ export interface InputsDoPedido {
   vagas?: string[];
   limite?: string;
   anexos?: boolean;
+  candidatos?: string[];
+  seco?: boolean;
 }
 export interface SituacaoDoPedido {
   situacao: string;

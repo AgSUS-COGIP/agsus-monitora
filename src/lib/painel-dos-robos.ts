@@ -394,6 +394,8 @@ const doEdital = (numeros: readonly string[]) =>
  *   codigos     códigos de vaga válidos (separarCodigos)
  *   limite      número ou null (o padrão do robô)
  *   vagas       as vagas conhecidas (listar_vagas_dos_robos) dos editais e códigos
+ *   candidatos  modo anexos: códigos de candidato (sem = os suspeitos)
+ *   seco        modo anexos: só compara, sem gravar
  * Devolve { frase, codigos, avisos } — `codigos` são os candidatos a rodar
  * (o robô corta no limite), `avisos` o que muda o resultado.
  */
@@ -405,6 +407,8 @@ export function previaDoDisparo({
   codigos = [],
   limite = null,
   vagas = [],
+  candidatos = [],
+  seco = false,
 }: {
   robo: string;
   modo?: string;
@@ -413,6 +417,8 @@ export function previaDoDisparo({
   codigos?: readonly string[];
   limite?: number | null;
   vagas?: readonly VagaDoRobo[];
+  candidatos?: readonly string[];
+  seco?: boolean;
 }) {
   const nomes = numerosDosEditais(editaisIds, editais);
   const avisos: string[] = [];
@@ -483,6 +489,12 @@ export function previaDoDisparo({
         avisos: ["O robô procura de novo ao rodar; pode não exportar nada."],
       };
     }
+  } else if (modo === "anexos") {
+    return {
+      frase: "Escolha as vagas ou os editais.",
+      codigos: [],
+      avisos: [],
+    };
   } else {
     return {
       frase: `As vagas dos editais em curso, até ${teto} (as nunca carregadas primeiro).`,
@@ -499,10 +511,20 @@ export function previaDoDisparo({
       `O limite corta em ${teto}: ficam as nunca carregadas ou carregadas há mais tempo.`,
     );
   if (modo === "forcar") avisos.push("Forçar: a trava da metade não vale.");
-  const prefixo = modo === "seco" ? "Lista, sem baixar, " : "";
   const quantas = cortado
     ? `${teto} de ${base.length} vagas`
     : plural(base.length, "vaga", "vagas");
+  if (modo === "anexos") {
+    const quem = candidatos.length
+      ? `de ${plural(candidatos.length, "candidato", "candidatos")} (${textoDosCodigos(candidatos, 4)})`
+      : "de quem respondeu depois da última captura";
+    return {
+      frase: `${seco ? "Compara, sem gravar," : "Relê"} só os anexos ${quem} em ${quantas}${alvo}: ${textoDosCodigos(base)}`,
+      codigos: base,
+      avisos,
+    };
+  }
+  const prefixo = modo === "seco" ? "Lista, sem baixar, " : "";
   const frase = `${prefixo}${quantas}${alvo}: ${textoDosCodigos(base)}`;
   return {
     frase: prefixo ? (frase[0] ?? "").toUpperCase() + frase.slice(1) : frase,
@@ -564,7 +586,9 @@ export function acompanhamentoDoPedido({
       url: null,
       semRegistro:
         Boolean(roboDeCarga(robo)) &&
-        (pedido.modo === "seco" || pedido.modo === "fumaca"),
+        (pedido.modo === "seco" ||
+          pedido.modo === "fumaca" ||
+          (pedido.modo === "anexos" && Boolean(pedido.seco))),
     };
   return { etapa: "aguardando", execucao: null, url: null };
 }

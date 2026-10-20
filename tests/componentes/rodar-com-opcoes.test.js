@@ -391,6 +391,45 @@ describe("Rodar com opções", () => {
     ).toContain("/runs/1");
   });
 
+  it("Só anexos: avisa que não mexe em situação nem lote, pede vagas e manda candidatos e seco", async () => {
+    const { supabase } = await montar();
+    await abrirOpcoes();
+    expect(gaveta().querySelector(".robos-opcoes__so-anexos")).toBeNull();
+    await clicar(gaveta().querySelector('[data-valor="anexos"]'));
+    const bloco = gaveta().querySelector(".robos-opcoes__so-anexos");
+    expect(bloco.textContent).toContain(
+      "Não exporta: situação, ativos, lote e pré-classificação não mudam.",
+    );
+    expect(gaveta().querySelector(".robos-opcoes__frase").textContent).toBe(
+      "O modo Só anexos pede vagas ou editais.",
+    );
+    expect(botaoRodar().disabled).toBe(true);
+    await digitar(gaveta().querySelector("textarea"), "182514");
+    const candidatos = bloco.querySelector("textarea");
+    await digitar(candidatos, "2160872, 21608x");
+    expect(bloco.querySelector(".ui-campo-erro").textContent).toContain(
+      "Código inválido: 21608x (só dígitos).",
+    );
+    expect(botaoRodar().disabled).toBe(true);
+    await digitar(candidatos, "2160872");
+    await clicar(bloco.querySelector('input[type="checkbox"]'));
+    await esperarBusca();
+    expect(textoDaPrevia()).toBe(
+      "Compara, sem gravar, só os anexos de 1 candidato (2160872) em 1 vaga: 182514",
+    );
+    await clicar(botaoRodar());
+    await esperar();
+    expect(supabase.rpc).toHaveBeenCalledWith("disparar_robo", {
+      p_robo: "empregare",
+      p_inputs: {
+        modo: "anexos",
+        vagas: ["182514"],
+        candidatos: ["2160872"],
+        seco: true,
+      },
+    });
+  });
+
   it("pré-classificação: editais pelo id, sem vagas nem limite", async () => {
     const { supabase } = await montar();
     await abrirOpcoes("pre_classificacao");

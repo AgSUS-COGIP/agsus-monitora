@@ -128,7 +128,7 @@ A `Ordem` bate com o "Pergunta N" da exportação. O arquivo em si fica num stor
 que expira: esse link nunca é guardado. No painel da Empregare há ações perigosas (Zerar
 Tentativas, Excluir Respostas, compartilhar): o robô nunca clica nelas.
 
-Há dois passos (`scripts/robo-empregare/anexos_empregare.py`):
+Há três passos (`scripts/robo-empregare/anexos_empregare.py` e `so_anexos.py`):
 
 1. **Sondar** (modo `sondar`, só leitura, sem Supabase): com `vagas` = **um** código e `limite` =
    **1 a 3** candidatos (acima de 3 vira 3), o robô busca a vaga (só lê o link "Processo
@@ -166,6 +166,30 @@ Há dois passos (`scripts/robo-empregare/anexos_empregare.py`):
    resposta relida fica só com os anexos lidos agora. No log, só contagens (`respostas de
 questionário lidas N de M · K anexo(s)`, `N de M anexo(s) casados com a coluna do Excel`).
    Banco sem a migration: avisa e segue.
+3. **Só anexos** (modo `anexos`; migration `20261020130000_robo_modo_anexos.sql`,
+   `so_anexos.py`): relê só os anexos, **sem exportar** — não chama `exportar_vaga`,
+   `gravar_lote_empregare` nem `fechar_vaga_empregare` (situação, ativos e lote não mudam) e o
+   passo "Pré-classificar" do workflow não roda. Para a resposta que o candidato editou na
+   Empregare depois da captura (o número não muda; a captura incremental não relia). Entradas:
+   `vagas` ou `editais`, `candidatos` (códigos da Empregare, opcional) e `seco`. Por vaga:
+   `listar_anexos_empregare` (o gravado, só hashes; sem `candidatos`, só os **suspeitos**: captura
+   no dia da "DATA DE RESPOSTA" da exportação ou antes), localiza a vaga (`CO_VAGA_INTERNO` ou
+   `localizar_vaga`, só leitura), lê a lista, relê as respostas pedidas **sem prioridade** (força
+   a releitura) e grava só por `gravar_anexos_empregare`. Regras: **nunca reduz** (releitura com
+   menos perguntas ou sem um anexo gravado não é gravada; o candidato sai como "bloqueado");
+   resposta não relida inteira (sem identificador na lista, falha, tempo) sai como "não relido";
+   `seco` compara (novos, alterados, removidos por candidato) sem gravar e sem abrir execução. A
+   execução gravada abre com `DS_FILTRO.so_anexos = true` e fecha CONCLUIDA (ou PARCIAL com
+   bloqueados, não relidos ou vaga com falha). O resumo das perguntas não é recalculado (vem das
+   colunas do Excel, que este modo não toca). Disparo: "Opções" › modo **Só anexos** no Status
+   das atualizações, ou Run workflow (modo `anexos`), ou
+   `python scripts/robo-empregare/robo_empregare.py --so-anexos --vagas 182514 --candidatos 2160872 [--seco]`.
+
+   A mesma migration corrige a raiz: `listar_prioridade_anexos_empregare` só conta como lida a
+   resposta capturada a partir do dia seguinte à "DATA DE RESPOSTA" da exportação
+   (`FC_LIMITE_DA_RESPOSTA_EMPREGARE`, em `DS_COLUNA_ORIGINAL`), e `gravar_anexos_empregare`
+   apaga a leitura automática (`TB_LEITURA_ARQUIVO`) do anexo cujo arquivo mudou (o `arquivo=` do
+   link; o token não conta), para o robô da leitura ler o novo.
 
 **Resumo das perguntas da carga** (migration `20261009180000_resumo_das_perguntas_da_carga.sql`):
 depois de fechar a execução, o robô recalcula **em Python** o resumo das perguntas dos editais cuja carga

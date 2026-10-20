@@ -643,7 +643,7 @@ export const CONTRATO_RPC = {
     argumentos: ["p_robo", "p_inputs"],
     critica: false,
     resumo:
-      "Rodar agora, Opções e Recalcular: confere quem pede (administrador global; coordenação só na pré-classificação de um edital) e as opções do robô, pede o workflow ao GitHub com a chave do Vault e devolve o id do pedido (TL_DISPARO_ROBO). 28000, 42501, 22023 e 55006 (pedido repetido em 2 min).",
+      "Rodar agora, Opções e Recalcular: confere quem pede (administrador global; coordenação só na pré-classificação de um edital) e as opções do robô (no da Empregare, desde 20261020130000, o modo anexos com candidatos e seco), pede o workflow ao GitHub com a chave do Vault e devolve o id do pedido (TL_DISPARO_ROBO). 28000, 42501, 22023 e 55006 (pedido repetido em 2 min).",
   },
   situacao_do_disparo_robo: {
     argumentos: ["p_disparo"],
