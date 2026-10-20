@@ -66,6 +66,14 @@ e `20260930234000_cache_sem_atropelo.sql`.
 **fonte:** supabase/migrations/20261009200000_fichas_no_painel_das_analises.sql; src/modulos/avaliacao-documental/origem-da-analise.tsx
 **abrir:** analises
 
+## Nota declarada e após a análise na gaveta
+
+**perguntas:** nota declarada no painel | nota autodeclarada na gaveta | nota antes da analise | nota consolidada | nota apos a analise | declarada x apos analise | nota mudou na analise curricular | justificativa do criterio no painel | gaveta da analise curricular | espelho no painel | teto do criterio | composicao da pontuacao
+**resposta:** Na gaveta de uma análise (clique na linha do Painel das análises), quando a linha veio de uma ficha concluída da Avaliação documental (edital analisado no MONITORA), a seção "Nota antes e após a análise" mostra, logo depois da Situação, a Nota autodeclarada (antes da análise) e a Nota consolidada (após a análise) e, por critério, Declarada, Após análise e Teto; embaixo do critério que mudou vêm as justificativas, com o mesmo texto do espelho de nota. Os números são os do espelho de nota da mesma ficha (a mesma conta), então os dois sempre batem. No eliminado (inapto por requisito), como no espelho, não há a declarada nem os critérios: a consolidada diz "Não se aplica" e aparecem os motivos da eliminação. Linhas que vieram da planilha, e fichas ainda não concluídas, seguem com a nota final e a composição da pontuação de sempre.
+**fato:** No MONITORA, a gaveta do Painel das análises monta a nota declarada × após a análise pela mesma conta do espelho de nota (espelhoDaFichaGravada), com a entrada que get_analise_detalhe_do_painel traz em "espelho".
+**fonte:** src/lib/espelho-do-painel-de-analises.ts; src/modulos/analises/espelho-na-gaveta.tsx; supabase/migrations/20261020150000_detalhe_do_painel_com_espelho.sql
+**abrir:** analises
+
 ## Ritmo da análise
 
 **perguntas:** ritmo da analise | no ritmo | abaixo do ritmo | meta de hoje | meta do dia | feito hoje | faltam hoje | quantas por dia | quantas fichas por dia | por avaliador | vai dar tempo | prazo da analise | quando termina a analise | previsao de termino | recolher ritmo | por que o ritmo nao bate

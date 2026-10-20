@@ -20,10 +20,10 @@ import {
   regraDaFicha,
 } from "../../src/lib/avaliacao-documental/ficha.js";
 import {
-  abrirEspelhosEmMassa,
   entradaDoEspelho,
   espelhoDaFichaGravada,
-} from "../../src/modulos/avaliacao-documental/ficha/espelho-de-nota.ts";
+} from "../../src/lib/avaliacao-documental/espelho-da-ficha-gravada.ts";
+import { abrirEspelhosEmMassa } from "../../src/modulos/avaliacao-documental/ficha/espelho-de-nota.ts";
 import {
   lerFichasDosEspelhos,
   montarEspelhosLidos,

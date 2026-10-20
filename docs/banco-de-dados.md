@@ -413,6 +413,16 @@ Migration `20260928200000_analises_painel_mais_leve.sql` (rollback em
   o CSV (que sai igual ao de antes) e para a busca geral, que também procura no
   parecer. Mesma permissão da lista: `pode_recurso('analises')` e área do
   usuário (`FC_PODE_AREA`) ou admin; no detalhe, a área é a do grupo da linha.
+- Desde `20261020150000_detalhe_do_painel_com_espelho`, o detalhe traz `espelho`
+  na linha publicada pela ficha CONCLUÍDA da Avaliação documental (chave
+  `monitora|<edital>|<candidato>`, ou a linha da planilha adotada pela ficha,
+  achada pela regra da adoção): a mesma entrada de `obter_espelhos_de_nota`
+  (resultado, nota final, ART, declarada por critério, lançamento sem empregador
+  nem nome de curso, configuração da versão da regra e documental do edital),
+  sem nome, CPF, e-mail ou telefone. A gaveta monta a nota autodeclarada ×
+  consolidada e Declarada / Após análise / Teto por critério com
+  `espelhoDaFichaGravada` (a conta do espelho de nota). Nas outras linhas,
+  `espelho` é null. ~34 KB por abertura (a configuração da regra), 6–70 ms.
 - O recorte por área (e, no filtrado, por unidade e edital) compara as colunas
   geradas `*_norm` da tabela, em vez de chamar `analises_norm_key` linha a
   linha (a função tem `SET search_path` e não é embutida pelo planejador).

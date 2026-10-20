@@ -15,6 +15,9 @@ ritmo.tsx       card "Ritmo da análise" por edital analisado no MONITORA (prazo
                 cronograma, faltam, por dia e por avaliador, ritmo atual e projeção)
 tabela.tsx      fila (TabelaInfinita: 50 por vez, Carregar mais, busca só da fila)
 gaveta.tsx      detalhe: contexto, links (origem e PDF, só http/https), seções e parecer
+espelho-na-gaveta.tsx  linha da ficha concluída: nota autodeclarada × consolidada e, por critério,
+                Declarada / Após análise / Teto, com as justificativas do critério que mudou
+                (a conta do espelho de nota: src/lib/espelho-do-painel-de-analises.ts)
 estado.ts       store sem React: carga por área e escopo, cópia do navegador, porteiro, gaveta
                 (detalhamento sob demanda), pareceres em lote, CSV, comemorações
 consultas.ts    as RPCs (lista, porteiro, detalhamento, pareceres, ritmo) e a cópia no IndexedDB
@@ -41,6 +44,8 @@ uma resposta inesperada mantém a consulta da lista como decisão de acesso. Cam
 dinâmicos das planilhas continuam sendo `unknown`, convertidos em texto na apresentação;
 o compilador não verifica os consumidores JavaScript nem o esquema de cada edital.
 
-O cliente Supabase continua compartilhado. Nenhuma RPC, permissão ou migration é
-alterada. Os testes simulam consultas e armazenamento, com a rede bloqueada;
+O cliente Supabase continua compartilhado. O detalhamento
+(get_analise_detalhe_do_painel) traz, desde a migration 20261020150000, a chave
+"espelho" na linha da ficha concluída: a mesma entrada dos espelhos de nota em massa,
+montada no navegador por espelhoDaFichaGravada (gaveta e espelho sempre batem). Os testes simulam consultas e armazenamento, com a rede bloqueada;
 `tests/tipos/analises.tsx` também confere usos válidos e rejeições dos contratos.

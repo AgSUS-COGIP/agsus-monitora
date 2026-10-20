@@ -4,7 +4,7 @@
   ordem dos espelhos no documento e do relato dos códigos sem espelho. Sem DOM
   e sem banco: as fichas vêm de obter_espelhos_de_nota (migration
   20261015180000), em páginas; a montagem de cada espelho é a MESMA do
-  individual (src/modulos/avaliacao-documental/ficha/espelho-de-nota.ts).
+  individual (espelhoDaFichaGravada, espelho-da-ficha-gravada.ts).
 */
 
 export type FiltroDosEspelhos = "TODOS" | "INAPTOS" | "APTOS";

@@ -615,7 +615,7 @@ export const CONTRATO_RPC = {
     argumentos: ["p_id"],
     critica: false,
     resumo:
-      "Detalhamento de uma linha do painel de Análises (parecer, pontuações, experiências, links, datas), ao abrir o registro.",
+      'Detalhamento de uma linha do painel de Análises (parecer, pontuações, experiências, links, datas), ao abrir o registro; na linha da ficha concluída da Avaliação documental, "espelho": a entrada do espelho de nota (a mesma de obter_espelhos_de_nota) para a gaveta mostrar declarada × após a análise × teto (migration 20261020150000).',
   },
   get_analises_texto_do_painel: {
     argumentos: ["p_scope", "p_area"],

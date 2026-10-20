@@ -248,8 +248,10 @@ ficha/diferencas-do-cargo.tsx  requisitos e extras do cargo, aviso do 8.2.7, ár
 ficha/espelho-de-nota.ts  botão "Espelho de nota": monta (src/lib/avaliacao-documental/
                           espelho-de-nota.ts) e imprime no navegador, ou baixa o PDF
                           (espelho-em-pdf.ts: jsPDF + autotable, sob demanda), sem banco
-                          nem Storage; espelhoDaFichaGravada: a mesma montagem para os
-                          espelhos em massa; baixarZipDosEspelhos: o ZIP (fflate)
+                          nem Storage; a entrada (entradaDoEspelho e espelhoDaFichaGravada,
+                          a mesma montagem dos espelhos em massa e da gaveta do Painel das
+                          análises) em src/lib/avaliacao-documental/espelho-da-ficha-gravada.ts;
+                          baixarZipDosEspelhos: o ZIP (fflate)
 modelo-do-espelho.tsx     Ações da coordenação › "Modelo do espelho de nota" (também pelo link na
                           gaveta dos espelhos em massa): os textos da folha do edital, prévia com
                           dados fictícios e "Restaurar padrão"; regras e padrão em

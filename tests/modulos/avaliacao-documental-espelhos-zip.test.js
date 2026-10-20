@@ -6,8 +6,8 @@ import { EspelhosEmMassa } from "../../src/modulos/avaliacao-documental/espelhos
 import {
   baixarEspelhoEmPdf,
   baixarZipDosEspelhos,
-  espelhoDaFichaGravada,
 } from "../../src/modulos/avaliacao-documental/ficha/espelho-de-nota.ts";
+import { espelhoDaFichaGravada } from "../../src/lib/avaliacao-documental/espelho-da-ficha-gravada.ts";
 import {
   calcularFicha,
   regraDaFicha,

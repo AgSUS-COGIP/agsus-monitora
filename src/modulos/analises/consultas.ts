@@ -22,7 +22,8 @@ import type {
     A revalidação manda a `versao` da cópia (`*_se_mudou`, migration
     20261013160000): sem mudança, o banco responde só `{ inalterado: true }`.
   - `detalhe(id)`: o detalhamento de um registro (parecer, pontuações,
-    experiências, links, datas), ao abrir a gaveta. Guardado por id.
+    experiências, links, datas e, na linha da ficha concluída, o "espelho":
+    migration 20261020150000), ao abrir a gaveta. Guardado por id.
   - `textos(area, escopo)`: parecer, link do PDF e experiência de todas as
     linhas, em lote, para a busca geral e o CSV. Guardado por área + escopo.
   - `ritmo(area)`: o retrato pequeno do card "Ritmo da análise"
