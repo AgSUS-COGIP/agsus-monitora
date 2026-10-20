@@ -563,7 +563,7 @@ export function csvDoRelatorio(linhas: readonly LinhaDoRelatorio[]): string {
       ).join(";"),
     ),
   ];
-  return `﻿${conteudo.join("\r\n")}\r\n`;
+  return `\uFEFF${conteudo.join("\r\n")}\r\n`;
 }
 
 /** XLSX (texto em inlineStr: nada vira fórmula) com a planilha "Fichas" e, havendo texto, "Outro motivo" (textos e quantas vezes). */

@@ -144,7 +144,7 @@ describe("Relatório de motivos", () => {
       "relatorio-de-motivos-114-2026-identidade-2026-10-20.csv",
     );
     expect(tipo).toContain("text/csv");
-    expect(csv.startsWith("﻿Código;")).toBe(true);
+    expect(csv.startsWith("\uFEFFCódigo;")).toBe(true);
     expect(csv.trimEnd().split("\r\n")).toHaveLength(4);
     expect(baixar.mock.calls[1][1]).toBe(
       "relatorio-de-motivos-114-2026-identidade-2026-10-20.xlsx",

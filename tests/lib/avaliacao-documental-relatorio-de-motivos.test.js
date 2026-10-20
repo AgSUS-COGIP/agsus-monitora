@@ -258,7 +258,7 @@ describe("linhas, agrupamento e exportação", () => {
         outroMotivo: "a;b",
       },
     ]);
-    expect(csv.startsWith("﻿Código;Candidato;Vaga;Cargo;")).toBe(true);
+    expect(csv.startsWith("\uFEFFCódigo;Candidato;Vaga;Cargo;")).toBe(true);
     expect(csv.endsWith("\r\n")).toBe(true);
     const partes = csv.trimEnd().split("\r\n");
     expect(partes).toHaveLength(5);
