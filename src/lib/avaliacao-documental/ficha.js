@@ -515,8 +515,9 @@ export const itemConferido = (bloco, lancamento, pendencias = []) =>
 /**
  * O que falta para concluir, bloco a bloco: [{ bloco, tipo, texto }]. Vazio =
  * pode concluir. O banco confere o mesmo em concluir_ficha. `tipo`: situacao,
- * motivo, item, datas, horas, comprovado, minimo, justificativa ou nota. `minimo` (a
- * experiência Conforme abaixo do mínimo pelos vínculos aceitos) só a tela pede. A nota diferente da
+ * motivo, item, datas, horas, comprovado, minimo, justificativa ou nota. `minimo`:
+ * a experiência Conforme abaixo do mínimo pelos vínculos aceitos ou Não confere
+ * com os vínculos aceitos cumprindo o mínimo (não eliminaria). A nota diferente da
  * declarada só pede justificativa depois que o bloco foi conferido (antes, a
  * falta é a própria situação).
  */
@@ -592,24 +593,36 @@ export function pendenciasDaFicha(
           ? faltaDoComprovado(bloco, lancamento, declarada)
           : null;
       if (comprovado) falta("comprovado", comprovado);
-      // Conforme com a experiência mínima não comprovada pelos vínculos
-      // aceitos eliminaria em silêncio: lance os vínculos ou marque Não conforme.
+      // A experiência mínima que elimina, pelos vínculos aceitos (os meses do
+      // mínimo em apurarExperiencia; o banco pede o mesmo em FC_PENDENCIAS_FICHA).
       const exp = avaliacao?.experiencia;
+      const minimo = Number(bloco.minimo_meses);
       if (
-        !comprovado &&
         chave === "vinculos" &&
-        l.situacao === "CONFORME" &&
-        exp?.abaixo_do_minimo &&
+        exp &&
+        minimo > 0 &&
         (bloco.efeito_minimo ?? "ELIMINA") === "ELIMINA"
       ) {
-        const meses = bloco.minimo_conta_estagio
-          ? exp.meses_considerados
-          : exp.meses;
+        const meses =
+          Number(
+            bloco.minimo_conta_estagio ? exp.meses_considerados : exp.meses,
+          ) || 0;
         const mes = (n) => `${n} ${Number(n) === 1 ? "mês" : "meses"}`;
-        falta(
-          "minimo",
-          `Experiência mínima de ${mes(bloco.minimo_meses)} não comprovada (comprovado ${mes(meses)}): registre os vínculos que comprovam ou escolha Não confere.`,
-        );
+        // Conforme abaixo do mínimo eliminaria em silêncio: lance os vínculos
+        // ou marque Não conforme.
+        if (!comprovado && l.situacao === "CONFORME" && meses < minimo)
+          falta(
+            "minimo",
+            `Experiência mínima de ${mes(minimo)} não comprovada (comprovado ${mes(meses)}): registre os vínculos que comprovam ou escolha Não confere.`,
+          );
+        // Não confere com os vínculos aceitos cumprindo o mínimo não elimina
+        // (só zera a experiência): desmarque os vínculos não aceitos ou
+        // marque Confere.
+        if (l.situacao === "NAO_CONFORME" && meses >= minimo)
+          falta(
+            "minimo",
+            `Experiência marcada como Não confere, mas os vínculos aceitos somam ${mes(meses)} (mínimo ${mes(minimo)}). Desmarque os vínculos que não foram aceitos — sem a experiência mínima o candidato é eliminado — ou marque Confere.`,
+          );
       }
     }
     // Com Não confere, o motivo do bloco já justifica o zero.

@@ -392,3 +392,103 @@ describe("dias em comum entre vínculos (contam uma vez)", () => {
     ).toBe(0);
   });
 });
+
+describe("experiência Não confere com os vínculos aceitos cumprindo o mínimo", () => {
+  // Edital 114: o avaliador marca Não confere ("experiência mínima não
+  // comprovada" ou "sem correlação com a área"), mas deixa os vínculos
+  // aceitos. O mínimo é pelos vínculos aceitos: não eliminaria, só zeraria.
+  const LANCAMENTO = {
+    nivel: "superior",
+    modalidade: "AC",
+    indigena: false,
+    mora_aldeia: false,
+    aldeia_na_lista: false,
+    estagio_horas: 0,
+    blocos: {
+      IDENTIDADE: { motivos: [], situacao: "CONFORME" },
+      ESCOLARIDADE: { motivos: [], situacao: "CONFORME" },
+      REGISTRO_CONSELHO: { motivos: [], situacao: "CONFORME" },
+      FORMACAO: { motivos: [], situacao: "CONFORME" },
+      CURSOS: { motivos: [], situacao: "CONFORME" },
+      EXPERIENCIA: {
+        motivos: ["ESTAGIO_OU_SIMILAR"],
+        situacao: "NAO_CONFORME",
+      },
+    },
+    titulos: [],
+    cursos: [],
+    vinculos: [vinculo("2016-01-01", "2025-10-31")],
+    observacoes_prontas: [],
+  };
+  const doMinimo = (regra, lancamento) =>
+    pendenciasDaFicha(
+      regra,
+      lancamento,
+      calcularFicha(regra, lancamento, DOCUMENTAL),
+      null,
+    ).filter((p) => p.tipo === "minimo");
+
+  it("vínculo aceito acima do mínimo: pendência do mínimo", () => {
+    expect(doMinimo(REGRA, LANCAMENTO)).toEqual([
+      {
+        bloco: "EXPERIENCIA",
+        tipo: "minimo",
+        texto:
+          "Experiência marcada como Não confere, mas os vínculos aceitos somam 119 meses (mínimo 6 meses). Desmarque os vínculos que não foram aceitos — sem a experiência mínima o candidato é eliminado — ou marque Confere.",
+      },
+    ]);
+  });
+
+  it("vínculos desmarcados: sem pendência e Inapto por requisito", () => {
+    const lancamento = {
+      ...LANCAMENTO,
+      vinculos: [
+        vinculo("2016-01-01", "2025-10-31", {
+          aceito: false,
+          motivo: "Fora da área",
+        }),
+      ],
+    };
+    expect(doMinimo(REGRA, lancamento)).toEqual([]);
+    expect(calcularFicha(REGRA, lancamento, DOCUMENTAL).resultado).toBe(
+      "INAPTO_REQUISITO",
+    );
+  });
+
+  it("efeito do mínimo diferente de ELIMINA: sem pendência", () => {
+    const regra = {
+      ...REGRA,
+      blocos: REGRA.blocos.map((b) =>
+        b.codigo === "EXPERIENCIA" ? { ...b, efeito_minimo: "OBSERVA" } : b,
+      ),
+    };
+    expect(doMinimo(regra, LANCAMENTO)).toEqual([]);
+  });
+
+  it("vínculo aceito abaixo do mínimo: Não confere coerente, sem pendência", () => {
+    const lancamento = {
+      ...LANCAMENTO,
+      vinculos: [vinculo("2026-01-01", "2026-03-31")],
+    };
+    expect(doMinimo(REGRA, lancamento)).toEqual([]);
+  });
+
+  it("Confere: a regra antiga continua (abaixo do mínimo pede; acima, nada)", () => {
+    const confere = (vinculos) => ({
+      ...LANCAMENTO,
+      vinculos,
+      blocos: {
+        ...LANCAMENTO.blocos,
+        EXPERIENCIA: { motivos: [], situacao: "CONFORME" },
+      },
+    });
+    expect(
+      doMinimo(REGRA, confere([vinculo("2026-01-01", "2026-03-31")])).map(
+        (p) => p.texto,
+      ),
+    ).toEqual([
+      "Experiência mínima de 6 meses não comprovada (comprovado 3 meses): registre os vínculos que comprovam ou escolha Não confere.",
+    ]);
+    expect(doMinimo(REGRA, confere(LANCAMENTO.vinculos))).toEqual([]);
+  });
+});
