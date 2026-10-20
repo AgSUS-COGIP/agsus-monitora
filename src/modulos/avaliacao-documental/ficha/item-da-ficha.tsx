@@ -9,6 +9,7 @@ import {
   decidePelaNota,
   divergenciaDoBloco,
   ehAnexo,
+  experienciaAcimaDoComprovado,
   ESCOLHAS_DA_FICHA,
   itemCompleto,
   marcouOutroMotivo,
@@ -1117,6 +1118,11 @@ function Justificativa({
     diferenca: number;
   } | null;
   const marcadas = lancado.justificativas || [];
+  // Editar nota acima do que os vínculos aceitos comprovam: a justificativa
+  // é o caminho (pendência "acima" em pendenciasDaFicha), mesmo na declarada.
+  const acima =
+    lancado.edita_nota === true &&
+    experienciaAcimaDoComprovado(bloco, lancado, st.avaliacao) !== null;
   // Bloco com itens: o texto é a "Justificativa do ajuste" (resumo dos itens).
   const comItens = Boolean(BLOCOS_COM_ITENS[bloco.tipo]);
   const comTexto =
@@ -1125,6 +1131,7 @@ function Justificativa({
   if (lancado.situacao !== "CONFORME") return null;
   if (
     !divergencia &&
+    !acima &&
     !marcadas.length &&
     (!comTexto || (comItens && textoNoRodape))
   )
@@ -1135,7 +1142,9 @@ function Justificativa({
   const rotulo =
     divergencia && divergencia.diferenca < 0
       ? "Por que a pontuação é menor que a declarada?"
-      : "Justificativa da pontuação";
+      : acima
+        ? "Por que a pontuação é maior que a comprovada pelos vínculos?"
+        : "Justificativa da pontuação";
   const mudarJustificativas = (justificativas: string[]) =>
     alterarBloco(
       mudar,
@@ -1545,7 +1554,21 @@ export function ItemDaFicha({
       })
     : null;
   const decl = parcial ? declaradoDoBloco(bloco, st.declarada) : null;
-  if (falta) mensagem = { texto: falta, tom: "falta" };
+  if (falta)
+    mensagem = {
+      texto: falta,
+      tom: "falta",
+      // Confere acima do comprovado pelos vínculos: o atalho para Editar nota.
+      acao:
+        !desabilitado &&
+        escolha === "CONFERE" &&
+        pendencias.some(
+          (p) =>
+            p.bloco === bloco.codigo && p.tipo === "acima" && p.texto === falta,
+        )
+          ? { rotulo: "Editar nota", aoClicar: () => escolher("EDITAR") }
+          : undefined,
+    };
   else if (pedeSituacao && !escolha && sugereNaoEnviado(linhas))
     mensagem = {
       texto: "Sem resposta: o candidato provavelmente não enviou o documento.",

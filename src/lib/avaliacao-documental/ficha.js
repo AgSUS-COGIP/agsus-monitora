@@ -426,6 +426,35 @@ export function faltaDoComprovado(bloco, lancamento, declarada) {
 const ZERAM_O_BLOCO = ["NAO_CONFORME", "NAO_ENVIADO"];
 
 /**
+ * A experiência Conforme (Confere ou Editar nota) com a pontuação que vai
+ * valer (o ajuste: no Confere, a declarada) ACIMA do que os vínculos aceitos
+ * comprovam (calculados, a conta de apurarExperiencia, com o teto e o nível
+ * da vaga). Devolve { valor, calculado, meses } ou null. Auditoria de
+ * 20/10/2026 (edital 114): Confere com 35 pontos e 16 meses aceitos (5).
+ */
+export function experienciaAcimaDoComprovado(bloco, lancado, avaliacao) {
+  if (bloco?.tipo !== "VINCULOS" || objeto(lancado).situacao !== "CONFORME")
+    return null;
+  const parcial = PARCIAL_DO_TIPO[bloco.tipo];
+  const valor = avaliacao?.parciais?.[parcial];
+  const calculado = avaliacao?.calculados?.[parcial];
+  if (typeof valor !== "number" || typeof calculado !== "number") return null;
+  if (!(valor - calculado > DIFERENCA)) return null;
+  const exp = objeto(avaliacao?.experiencia);
+  const meses = Number(exp.meses_considerados ?? exp.meses) || 0;
+  return { valor, calculado, meses };
+}
+
+/**
+ * O caminho legítimo da pontuação acima do comprovado: Editar nota
+ * (edita_nota) com a justificativa do ajuste (blocoJustificado). O Confere
+ * "silencioso" não basta.
+ */
+export const acimaDoComprovadoJustificado = (regra, bloco, lancado) =>
+  objeto(lancado).edita_nota === true &&
+  blocoJustificado(regra, bloco, lancado);
+
+/**
  * O lançamento que vai para o banco (rascunho e conclusão): no bloco Não
  * conforme ou Não enviado, as linhas incompletas saem (não contam e não
  * pedem nada); nos outros, o curso sem horas vai sem o campo, para a linha
@@ -479,6 +508,7 @@ const ORDEM_DAS_FALTAS = [
   "datas",
   "item",
   "minimo",
+  "acima",
   "justificativa",
   "nota",
 ];
@@ -515,7 +545,9 @@ export const itemConferido = (bloco, lancamento, pendencias = []) =>
 /**
  * O que falta para concluir, bloco a bloco: [{ bloco, tipo, texto }]. Vazio =
  * pode concluir. O banco confere o mesmo em concluir_ficha. `tipo`: situacao,
- * motivo, item, datas, horas, comprovado, minimo, justificativa ou nota. `minimo`:
+ * motivo, item, datas, horas, comprovado, minimo, acima, justificativa ou nota.
+ * `acima`: a experiência Conforme com a pontuação acima do que os vínculos
+ * aceitos comprovam, sem Editar nota com justificativa. `minimo`:
  * a experiência Conforme abaixo do mínimo pelos vínculos aceitos ou Não confere
  * com os vínculos aceitos cumprindo o mínimo (não eliminaria). A nota diferente da
  * declarada só pede justificativa depois que o bloco foi conferido (antes, a
@@ -624,6 +656,24 @@ export function pendenciasDaFicha(
             `Experiência marcada como Não confere, mas os vínculos aceitos somam ${mes(meses)} (mínimo ${mes(minimo)}). Desmarque os vínculos que não foram aceitos — sem a experiência mínima o candidato é eliminado — ou marque Confere.`,
           );
       }
+      // A pontuação confirmada acima do que os vínculos aceitos comprovam
+      // (o banco pede o mesmo em FC_PENDENCIAS_FICHA): só com Editar nota e
+      // justificativa. Sem vínculo ou abaixo do mínimo, a falta já é outra.
+      const acima =
+        chave === "vinculos" &&
+        !comprovado &&
+        !pendencias.some((p) => p.bloco === bloco.codigo && p.tipo === "minimo")
+          ? experienciaAcimaDoComprovado(bloco, l, avaliacao)
+          : null;
+      if (acima && !acimaDoComprovadoJustificado(regra, bloco, l)) {
+        const mes = (n) => `${n} ${Number(n) === 1 ? "mês" : "meses"}`;
+        const pts = (n) =>
+          `${textoDaNota(n)} ${Number(n) === 1 ? "ponto" : "pontos"}`;
+        falta(
+          "acima",
+          `Experiência confirmada com ${pts(acima.valor)}, mas os vínculos aceitos comprovam ${mes(acima.meses)} (${pts(acima.calculado)}). Lance os vínculos que comprovam o período declarado ou ajuste a pontuação em Editar nota, com justificativa.`,
+        );
+      }
     }
     // Com Não confere, o motivo do bloco já justifica o zero.
     if (
@@ -683,6 +733,7 @@ const COMPLEMENTO_DA_FALTA = {
   justificativa: "justificativa",
   nota: "nota",
   minimo: "experiência mínima",
+  acima: "experiência acima do comprovado",
   comprovado: "item comprovado",
   requisito: "requisitos do cargo",
   extra: "item extra",
