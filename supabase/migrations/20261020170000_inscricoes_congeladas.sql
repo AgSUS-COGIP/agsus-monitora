@@ -71,7 +71,7 @@
   (separado; só com autorização).
   Dependentes: scripts/robo-empregare/robo_empregare.py e so_anexos.py,
   scripts/pre_classificacao/pre_classificacao.py, python/monitora/disparo_externo.py,
-  .github/workflows/*.yml, src/modulos/avaliacao-documental/trava-das-inscricoes.tsx,
+  .github/workflows (os .yml), src/modulos/avaliacao-documental/trava-das-inscricoes.tsx,
   src/lib/robos-de-carga.js, src/lib/saude-das-cargas.ts, src/lib/rpc-contrato.js.
 */
 begin;
