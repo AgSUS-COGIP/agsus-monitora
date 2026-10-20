@@ -54,6 +54,13 @@ Migration: 20261013110000_refazer_lote_com_fichas_intocadas.sql.
 Sem --editais nem --apos-robo: os editais ativos com vagas da Empregare.
 Editais: números ("93/2026"), ids (uuid) ou, sem número, o nome ("FCC").
 
+Inscrições congeladas (migration 20261020170000): o edital com a trava ligada
+não é recalculado nem tem o lote refeito. No fim do robô e sem --editais, ele
+é pulado (aparece no resumo); pedido em --editais, a execução inteira é
+recusada (nada gravado). O seco o calcula (não grava). --forcar-congelado
+<token> (FORCAR_CONGELADO): a liberação do administrador global (disparar_robo,
+"Forçar edital com inscrições congeladas"); a execução registra o uso.
+
 Variáveis: SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY; EDITAIS, MODO e
 DISPARADO_POR (do workflow). O log é público (repositório público): só
 contagens, códigos de vaga e de aviso e números de edital; tudo passa por
@@ -147,6 +154,7 @@ EXPLICACOES = {
 # Inscritos por chamada de pre_classificacao_ler_candidatos (o banco aceita até 5.000).
 TAMANHO_DA_PARTE = 500
 _PEDIDO = re.compile(r"^[A-Za-z0-9/ ._-]{1,100}$")
+_UUID = re.compile(r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$")
 log = registro("pre_classificacao")
 
 
@@ -165,7 +173,15 @@ def argumentos(lista=None):
     )
     p.add_argument("--apos-robo", action="store_true", help="os editais das vagas da última carga do robô")
     p.add_argument("--disparado-por", default=os.environ.get("DISPARADO_POR", ""))
+    p.add_argument(
+        "--forcar-congelado",
+        default=os.environ.get("FORCAR_CONGELADO", ""),
+        help="token da liberação do administrador global (edital com inscrições congeladas)",
+    )
     args = p.parse_args(lista)
+    args.forcar_congelado = str(args.forcar_congelado or "").strip().lower()
+    if args.forcar_congelado and not _UUID.fullmatch(args.forcar_congelado):
+        p.error("--forcar-congelado inválido (é o token que o MONITORA manda)")
     modo = str(os.environ.get("MODO", "")).strip().lower()
     if modo == "seco":
         args.seco = True
@@ -522,6 +538,56 @@ def para_o_banco(r):
     return {k: v for k, v in r.items() if k not in ("avisos_por_vaga", "retrato", "sugestoes")}
 
 
+def ler_editais(chamar, args):
+    """
+    Os editais a calcular (pre_classificacao_ler_editais). Com a trava das
+    inscrições congeladas (20261020170000): o seco os inclui (não grava); a
+    liberação do administrador global (--forcar-congelado) também. Banco sem a
+    migration: a chamada de antes.
+    """
+    corpo = {"p_editais": args.editais or None, "p_apos_robo": bool(args.apos_robo and not args.editais)}
+    try:
+        return (
+            chamar(
+                "pre_classificacao_ler_editais",
+                dict(corpo, p_incluir_congelados=bool(args.seco), p_liberacao=args.forcar_congelado or None),
+            )
+            or {}
+        )
+    except supabase_rpc.ErroDoSupabase as erro:
+        if getattr(erro, "status", None) != 404:
+            raise
+    log.warning("O banco ainda não tem a trava de inscrições congeladas (migration 20261020170000).")
+    return chamar("pre_classificacao_ler_editais", corpo) or {}
+
+
+def rotulos(editais):
+    return ", ".join(str(e.get("rotulo") or e.get("id")) for e in editais)
+
+
+def recusa_dos_congelados(congelados):
+    """As linhas do resumo quando o pedido explícito cai em edital congelado."""
+    return [
+        f"Recusado: inscrições congeladas em {rotulos(congelados)}. Nada foi recalculado nem gravado (o lote não muda).",
+        "O modo seco continua. Para recalcular mesmo assim, o administrador global usa "
+        "“Forçar edital com inscrições congeladas” em Status das atualizações › Rodar com opções (com motivo).",
+    ]
+
+
+def usar_liberacao(chamar, liberacao, id_execucao):
+    """Registra o uso da liberação nesta execução (registrar_uso_liberacao_congelamento); nunca derruba."""
+    if not liberacao:
+        return None
+    try:
+        r = chamar("registrar_uso_liberacao_congelamento", {"p_liberacao": liberacao, "p_execucao": id_execucao}) or {}
+    except Exception as erro:
+        return f"Override NÃO registrado na execução ({resumo_do_erro(erro)[:200]})."
+    editais = r.get("editais") or []
+    if not editais:
+        return "Override vencido ou inválido: os editais congelados ficaram de fora."
+    return f"Override do administrador global registrado nesta execução: {', '.join(editais)}."
+
+
 def principal(args, configuracao=None, chamar_rpc=None):
     cfg = configuracao or supabase_rpc.configuracao(GUIA)
     chamar_rpc = chamar_rpc or supabase_rpc.chamar
@@ -529,16 +595,24 @@ def principal(args, configuracao=None, chamar_rpc=None):
     def chamar(funcao, corpo):
         return chamar_rpc(cfg, funcao, corpo)
 
-    contexto = (
-        chamar(
-            "pre_classificacao_ler_editais",
-            {"p_editais": args.editais or None, "p_apos_robo": bool(args.apos_robo and not args.editais)},
-        )
-        or {}
-    )
+    contexto = ler_editais(chamar, args)
     editais = contexto.get("editais") or []
     hoje = contexto.get("hoje")
     cabecalho = []
+    # Inscrições congeladas (20261020170000): pedido explícito recusa a execução inteira;
+    # no fim do robô e sem --editais, o edital só fica de fora (e aparece no resumo).
+    congelados = contexto.get("congelados") or []
+    if any(c.get("pedido") for c in congelados):
+        execucao.resumir(TITULO, recusa_dos_congelados(congelados))
+        return 1
+    if congelados:
+        cabecalho.append(f"Inscrições congeladas (não recalculado): {rotulos(congelados)}.")
+    if args.seco and any(e.get("congelado") for e in editais):
+        cabecalho.append(
+            "Inscrições congeladas (só calculado no seco; num modo que grava ficaria de fora): "
+            + rotulos([e for e in editais if e.get("congelado")])
+            + "."
+        )
     # No fim do robô, o edital que não mudou desde a última pré-classificação de hoje não é
     # recalculado (20261014220000): nada a ler nem gravar.
     sem_mudanca = [e for e in editais if e.get("sem_mudanca")]
@@ -597,6 +671,10 @@ def principal(args, configuracao=None, chamar_rpc=None):
             return 1
         raise
     log.info("Execução %s (disparo %s, %s edital(is)).", id_execucao, tipo.lower(), len(editais))
+    linha_do_override = usar_liberacao(chamar, args.forcar_congelado, id_execucao)
+    if linha_do_override:
+        log.info("%s", linha_do_override)
+        cabecalho.append(linha_do_override)
 
     resultados = []
     try:

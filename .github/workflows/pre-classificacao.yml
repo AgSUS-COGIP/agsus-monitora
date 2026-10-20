@@ -14,8 +14,14 @@ name: Pré-classificação da Avaliação documental
 #     com disparado_por = id do usuário;
 #   - sozinho, no fim do robô da Empregare (passo "Pré-classificar" de
 #     robo-empregare.yml, para os editais das vagas carregadas);
-#   - pelo botão "Run workflow" desta aba Actions.
+#   - pelo botão "Run workflow" desta aba Actions (o primeiro passo registra a
+#     execução no MONITORA, com quem a iniciou; falha nele só gera aviso).
 # Guia: docs/python-no-monitora.md. Migration: 20261006110000_pre_classificacao_e_lote.sql.
+#
+# Inscrições congeladas (migration 20261020170000): o edital com a trava ligada
+# não é recalculado nem tem o lote refeito (pedido em "editais", a execução é
+# recusada; sem editais, fica de fora). O seco continua. "forcar_congelado" é o
+# token que o MONITORA manda quando o administrador global força, com motivo.
 #
 # Modo refazer_lote: recorta o lote do zero enquanto ninguém foi analisado e TODAS as
 # fichas do edital estão intocadas (pendentes, nunca atribuídas, reservadas, salvas nem
@@ -52,6 +58,11 @@ on:
         type: string
         required: false
         default: ""
+      forcar_congelado:
+        description: "Preenchido pelo MONITORA (liberação do administrador global para edital com inscrições congeladas); deixe em branco"
+        type: string
+        required: false
+        default: ""
 
 permissions:
   contents: read
@@ -79,6 +90,21 @@ jobs:
         with:
           python-version: "3.12"
 
+      # Execução iniciada direto no GitHub: registra no MONITORA (Status das
+      # atualizações) com quem a iniciou. Nunca derruba o job.
+      - name: Registrar a execução no MONITORA
+        continue-on-error: true
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          PYTHONPATH: python
+          ATOR_GITHUB: ${{ github.triggering_actor }}
+          DISPARADO_POR: ${{ inputs.disparado_por }}
+          MODO: ${{ inputs.modo || 'normal' }}
+          EDITAIS: ${{ inputs.editais }}
+          FORCAR_CONGELADO: ${{ inputs.forcar_congelado }}
+        run: python -m monitora.disparo_externo pre-classificacao.yml
+
       # Os inputs vão por variável de ambiente (nunca interpolados no shell); o
       # script valida o formato de cada um.
       - name: Pré-classificar
@@ -88,4 +114,5 @@ jobs:
           EDITAIS: ${{ inputs.editais }}
           MODO: ${{ inputs.modo || 'normal' }}
           DISPARADO_POR: ${{ inputs.disparado_por }}
+          FORCAR_CONGELADO: ${{ inputs.forcar_congelado }}
         run: python scripts/pre_classificacao/pre_classificacao.py

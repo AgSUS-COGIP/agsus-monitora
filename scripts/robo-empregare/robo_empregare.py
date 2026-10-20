@@ -28,11 +28,20 @@ Uso
       --anexos: também guarda o link de cada anexo do questionário (e o de
       impressão das respostas), lidos de GetRespostaDetails; anexos_empregare.py,
       migration 20261008160000
+      Inscrições congeladas (migration 20261020170000): as vagas de edital com
+      a trava ligada ficam fora da carga. Sem filtro, o robô as pula; com o
+      edital ou a vaga pedidos, recusa a execução inteira (nada exportado).
+      --forcar-congelado <token>: a liberação que o banco gravou quando o
+      administrador global pediu "Forçar edital com inscrições congeladas"
+      (disparar_robo); vai para listar_vagas_empregare e a execução registra o
+      uso (registrar_uso_liberacao_congelamento). O banco confere de novo ao
+      abrir cada vaga (FC_EMPREGARE_ABRIR_VAGA).
   python scripts/robo-empregare/robo_empregare.py --so-anexos --vagas 182514 [--candidatos 2160872] [--seco]
       só relê os anexos do questionário (so_anexos.py, migration 20261020130000):
       não exporta, não grava a carga nem fecha a vaga (situação, ativos e lote não
       mudam); sem --candidatos, relê os suspeitos (captura no dia da "DATA DE
-      RESPOSTA" ou antes); nunca reduz anexos; --seco só compara, sem gravar
+      RESPOSTA" ou antes); nunca reduz anexos; --seco só compara, sem gravar.
+      Vale também para edital com inscrições congeladas.
   python scripts/robo-empregare/robo_empregare.py --resumir-perguntas [--editais 114/2026] [--forcar]
       só recalcula o resumo das perguntas da carga (resumo_das_perguntas.py)
       dos editais cuja carga mudou (--forcar: de todos com carga); não entra
@@ -91,6 +100,7 @@ PRAZO_PARA_SEGUNDA_PASSADA = 90 * 60  # segundos: depois disso, sem segunda pass
 PRAZO_DOS_ANEXOS = 85 * 60
 RESERVA_POR_VAGA = 60
 TITULO = "Robô da Empregare → MONITORA"
+_UUID = re.compile(r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$")
 
 
 # ── Entrada ─────────────────────────────────────────────────────────────────
@@ -122,7 +132,18 @@ def argumentos(lista=None):
     p.add_argument("--vagas", default="", help="códigos de vaga: 177979,177980")
     p.add_argument("--limite", type=int, default=LIMITE_PADRAO, help="máximo de vagas (1 a 500)")
     p.add_argument("--disparado-por", default=os.environ.get("DISPARADO_POR", ""))
+    p.add_argument(
+        "--forcar-congelado",
+        default=os.environ.get("FORCAR_CONGELADO", ""),
+        help="token da liberação do administrador global (edital com inscrições congeladas)",
+    )
     args = p.parse_args(lista)
+    args.forcar_congelado = str(args.forcar_congelado or "").strip().lower()
+    if args.forcar_congelado:
+        if not _UUID.fullmatch(args.forcar_congelado):
+            p.error("--forcar-congelado inválido (é o token que o MONITORA manda)")
+        if args.so_anexos or args.sondar or args.fumaca or args.resumir_perguntas:
+            p.error("--forcar-congelado só nos modos que exportam (normal, forcar) e no seco")
 
     args.editais = separar(args.editais)
     args.vagas = separar(args.vagas)
@@ -299,7 +320,8 @@ def gravar_vaga(config, sync, codigo, caminho, chamar=supabase_rpc.chamar, ender
         if (enderecos or {}).get("anexos"):
             anexos.gravar_anexos(config, sync, codigo, enderecos["anexos"], lido["colunas"], chamar, registrar)
     elif situacao == "RECUSADA":
-        registrar(f"Vaga {codigo}: RECUSADA pela trava · {detalhes} (menos da metade dos ativos; nada mudou).")
+        motivo = (fim or {}).get("mensagem") or "menos da metade dos ativos; nada mudou"
+        registrar(f"Vaga {codigo}: RECUSADA pela trava · {detalhes} ({motivo}).")
     return situacao
 
 
@@ -575,6 +597,73 @@ def so_anexos_da_empregare(args, config, chamar=supabase_rpc.chamar, abrir_porta
     return so_anexos.executar(args, config, abrir_portal, registrar, resumir, chamar=chamar, ids=ids)
 
 
+# ── Inscrições congeladas (migration 20261020170000) ─────────────────────────
+
+
+def listar_vagas(config, args, chamar=None):
+    """
+    A lista de vagas da carga (listar_vagas_empregare, finalidade carga): as de
+    edital com inscrições congeladas voltam em "congeladas", salvo a liberação
+    do administrador global (--forcar-congelado). Banco sem a migration
+    20261020170000: a lista de antes, com aviso.
+    """
+    chamar = chamar or supabase_rpc.chamar
+    corpo = {"p_editais": args.editais or None, "p_vagas": args.vagas or None, "p_limite": args.limite}
+    try:
+        return (
+            chamar(
+                config,
+                "listar_vagas_empregare",
+                dict(corpo, p_finalidade="carga", p_liberacao=args.forcar_congelado or None),
+            )
+            or {}
+        )
+    except supabase_rpc.ErroDoSupabase as erro:
+        if getattr(erro, "status", None) != 404:
+            raise
+    registrar("O banco ainda não tem a trava de inscrições congeladas (migration 20261020170000); lista sem ela.")
+    return chamar(config, "listar_vagas_empregare", corpo) or {}
+
+
+def texto_das_congeladas(congeladas):
+    """'114/2026 (30 vaga(s))' — só números de edital e contagens."""
+    return ", ".join(f"{c.get('edital') or 'sem número'} ({c.get('vagas', 0)} vaga(s))" for c in congeladas)
+
+
+def recusa_das_congeladas(congeladas):
+    """As linhas do resumo quando o pedido explícito cai em edital congelado."""
+    return [
+        f"Recusado: inscrições congeladas em {texto_das_congeladas(congeladas)}. Nada foi exportado nem gravado.",
+        "O modo Só anexos continua. Para carregar mesmo assim, o administrador global usa "
+        "“Forçar edital com inscrições congeladas” em Status das atualizações › Rodar com opções (com motivo).",
+    ]
+
+
+def usar_liberacao(config, liberacao, execucao, chamar=None):
+    """
+    Registra que esta execução usa a liberação (registrar_uso_liberacao_congelamento):
+    é o que deixa o banco gravar as vagas do edital congelado. Devolve a linha do
+    log; nunca derruba a execução (sem o registro, o banco recusa as vagas).
+    """
+    if not liberacao:
+        return None
+    chamar = chamar or supabase_rpc.chamar
+    try:
+        r = (
+            chamar(config, "registrar_uso_liberacao_congelamento", {"p_liberacao": liberacao, "p_execucao": execucao})
+            or {}
+        )
+    except Exception as erro:
+        return f"Override NÃO registrado ({resumo_do_erro(erro)}): o banco recusa as vagas de edital congelado."
+    editais = r.get("editais") or []
+    if not editais:
+        return "Override vencido ou inválido: as vagas de edital congelado serão recusadas."
+    return (
+        "Override do administrador global registrado nesta execução: "
+        f"inscrições congeladas liberadas em {', '.join(editais)}."
+    )
+
+
 def principal(args):
     if args.fumaca:
         return fumaca()
@@ -588,14 +677,15 @@ def principal(args):
         linha, falhou = resumir_perguntas(config, args.editais, args.forcar)
         resumir([linha])
         return 2 if falhou else 0
-    lista = supabase_rpc.chamar(
-        config,
-        "listar_vagas_empregare",
-        {"p_editais": args.editais or None, "p_vagas": args.vagas or None, "p_limite": args.limite},
-    )
+    lista = listar_vagas(config, args)
     vagas = lista.get("vagas") or []
     editais = sorted({v.get("edital") for v in vagas if v.get("edital")})
     escolha = {"PADRAO": "vagas dos editais em curso", "EDITAIS": "editais pedidos", "VAGAS": "vagas pedidas"}
+    congeladas = lista.get("congeladas") or []
+    pedidas_congeladas = [c for c in congeladas if c.get("pedido")]
+    linha_das_congeladas = (
+        f"Editais com inscrições congeladas (pulados): {texto_das_congeladas(congeladas)}." if congeladas else None
+    )
 
     if args.seco:
         resumir(
@@ -606,8 +696,15 @@ def principal(args):
                 f"Origem das vagas: {contagem_por_origem(vagas)}.",
                 f"Códigos: {lista_de_codigos(vagas) or '—'}",
             ]
+            + ([linha_das_congeladas] if linha_das_congeladas else [])
+            + (["Num modo que grava, este pedido seria recusado."] if pedidas_congeladas else [])
         )
         return 0
+
+    # Edital ou vaga pedidos de edital congelado: recusa a execução inteira (nada exportado).
+    if pedidas_congeladas:
+        resumir(recusa_das_congeladas(pedidas_congeladas))
+        return 1
 
     email, senha = nav.credenciais()
     tipo, usuario = disparo(args.disparado_por)
@@ -615,6 +712,8 @@ def principal(args):
     filtro = {"editais": args.editais, "vagas": args.vagas, "limite": args.limite}
     if args.anexos:
         filtro["anexos"] = True
+    if args.forcar_congelado:
+        filtro["forcar_congelado"] = True
     supabase_rpc.chamar(
         config,
         "iniciar_sync_empregare",
@@ -632,6 +731,11 @@ def principal(args):
     )
     registrar(f"Execução {sync}: {len(vagas)} vaga(s) ({escolha.get(lista.get('modo'))}); disparo {tipo.lower()}.")
     registrar(f"Origem das vagas: {contagem_por_origem(vagas)}.")
+    if linha_das_congeladas:
+        registrar(linha_das_congeladas)
+    linha_do_override = usar_liberacao(config, args.forcar_congelado, sync)
+    if linha_do_override:
+        registrar(linha_do_override)
 
     contagem = {"baixadas": 0, "falhas": 0}
     try:
@@ -674,6 +778,8 @@ def principal(args):
             linha_do_resumo,
             f"Códigos: {lista_de_codigos(vagas) or '—'}",
         ]
+        + ([linha_das_congeladas] if linha_das_congeladas else [])
+        + ([linha_do_override] if linha_do_override else [])
     )
     return {"CONCLUIDA": 0, "PARCIAL": 2}.get(situacao, 1)
 

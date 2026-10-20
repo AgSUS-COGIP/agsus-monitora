@@ -643,7 +643,7 @@ export const CONTRATO_RPC = {
     argumentos: ["p_robo", "p_inputs"],
     critica: false,
     resumo:
-      "Rodar agora, Opções e Recalcular: confere quem pede (administrador global; coordenação só na pré-classificação de um edital) e as opções do robô (no da Empregare, desde 20261020130000, o modo anexos com candidatos e seco), pede o workflow ao GitHub com a chave do Vault e devolve o id do pedido (TL_DISPARO_ROBO). 28000, 42501, 22023 e 55006 (pedido repetido em 2 min).",
+      "Rodar agora, Opções e Recalcular: confere quem pede (administrador global; coordenação só na pré-classificação de um edital) e as opções do robô (no da Empregare, desde 20261020130000, o modo anexos com candidatos e seco), pede o workflow ao GitHub com a chave do Vault e devolve o id do pedido (TL_DISPARO_ROBO). Inscrições congeladas (20261020170000): 55000 para edital/vaga congelada nos modos que gravam, salvo forcar_congelado + motivo do administrador global. 28000, 42501, 22023 e 55006 (pedido repetido em 2 min).",
   },
   situacao_do_disparo_robo: {
     argumentos: ["p_disparo"],
@@ -1028,6 +1028,19 @@ export const CONTRATO_RPC = {
     critica: false,
     resumo:
       "Cartão Inscrições da Pré-classificação: cronograma, vagas da Empregare do edital (código e cargo) e os retratos diários dos últimos 60 dias (inscritos, finalizaram o questionário, aptos pela regra, eliminados; só contagens). Leitor da Avaliação documental.",
+  },
+  // ── Avaliação documental: inscrições congeladas (20261020170000_inscricoes_congeladas.sql)
+  obter_congelamento_inscricoes: {
+    argumentos: ["p_edital"],
+    critica: false,
+    resumo:
+      "Cartão Inscrições congeladas da Pré-classificação: congelado, motivo, em, por, pode_alterar e os últimos eventos (congelar, liberar, override do administrador global). Leitor da Avaliação documental do edital.",
+  },
+  alterar_congelamento_inscricoes: {
+    argumentos: ["p_edital", "p_congelar", "p_motivo"],
+    critica: false,
+    resumo:
+      "Congela ou libera as inscrições do edital (robô da Empregare e pré-classificação não mexem; Só anexos continua), com motivo de 10 a 500 caracteres. Coordenação da avaliação do edital ou administrador global; 55000 se já estiver no estado pedido.",
   },
   registrar_lista_pre_classificacao: {
     argumentos: ["p_edital", "p_tipo", "p_lote"],

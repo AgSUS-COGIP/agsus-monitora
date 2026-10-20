@@ -109,6 +109,31 @@ Configurações › Status das atualizações › **Agenda dos robôs**: último
 responde 204), falhas e pedidos sem chave nas últimas 24 h; em "Detalhes", os 20 últimos pedidos.
 As cargas (Entrevistas, Seleção, Conferências) continuam com o selo de atraso de sempre.
 
+## A origem de cada disparo (20261020170000)
+
+`TL_DISPARO_ROBO.TP_ORIGEM` diz de onde veio cada execução:
+
+| Origem     | Quando                                                                                                               | `disparado_por` no workflow |
+| ---------- | -------------------------------------------------------------------------------------------------------------------- | --------------------------- |
+| `AGENDA`   | tarefa do pg_cron (`p_origem => 'AGENDA'` no comando, ou a sessão `pg_cron`)                                         | `AGENDA`                    |
+| `MONITORA` | Rodar agora, Opções ou Recalcular de quem está logado (`disparar_robo`), com o usuário                               | id do usuário               |
+| `MANUAL`   | `private."FC_DISPARAR_ROBO"` chamado direto pelo SQL Editor/API, sem usuário                                         | `manual`                    |
+| `GITHUB`   | Run workflow / `gh workflow run`: o 1º passo do workflow registra (`registrar_disparo_externo`), com o ator e o link | vazio                       |
+
+O registro `GITHUB` é feito por `python/monitora/disparo_externo.py` com `continue-on-error`: se
+falhar (banco fora, migration não aplicada), o workflow só mostra um aviso e segue.
+
+**Os "AGENDA" de 13 a 15/10/2026 sem tarefa no cron.** Antes desta migration, todo pedido sem
+usuário virava `AGENDA`. Na auditoria de 20/10, os pedidos do robô da Empregare às 7h e às 13h de
+13, 14 e 15/10 batem com a tarefa `agsus_robo_inscricoes_114_2026` (hoje desligada). Os outros —
+robô em 14/10 17h06, 15/10 00h00, 01h40, 08h06 e 12h14, e pré-classificação em 13/10 20h10,
+14/10 17h02, 15/10 01h10, 08h03 e 12h12 — não têm tarefa: são `FC_DISPARAR_ROBO` chamados à mão
+pelo SQL (papel postgres), quase todos em par "pré-classificação + robô do 114/2026 com
+`anexos = true`" (o filtro gravado em `TL_SYNC_EMPREGARE`), durante a recaptura dos anexos.
+O das 00h00 de 15/10 tem horário redondo (pode ter sido uma tarefa avulsa criada e apagada); o
+histórico do pg_cron daquele dia ficou no banco antigo e não pôde ser conferido. Daqui em diante,
+esses pedidos aparecem como `MANUAL`.
+
 ## Desligar
 
 ```sql
