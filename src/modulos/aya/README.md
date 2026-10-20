@@ -5,8 +5,10 @@ montados por `montarAya()` em `#ayaApp` (`src/main.js`). Substitui `src/modules/
 `arara-speaking-effects.js` e `nina-panel-drag.js`.
 
 ```
-aya.jsx     <Aya> e montarAya(): arara arrastável, painel, sugestões, conversa,
-            "Isso ajudou?", cartão "Abrir chamado", foco preso e Esc
+aya.jsx     <Aya> e montarAya(): arara arrastável (fechada, só o rosto; solta numa
+            borda, se esconde espiando; setas como alternativa ao arraste), painel
+            (a arara inteira, 88px), sugestões, conversa, "Isso ajudou?", cartão
+            "Abrir chamado", foco preso e Esc
 estado.js   store sem React: view e título (o legado chama definirPaginaDaAya em
             setPageTitle), área atual e seção de Configurações aberta
 contexto.js o que a tela já mostra: dados do mapa e da tabela, e estadoDaTela()
@@ -18,15 +20,17 @@ mascote/
   desenho.tsx   a arara-azul de corpo inteiro em SVG, em camadas (cauda, asa aberta,
                 corpo, pés, asa fechada, coxa, cabeça, olho com anel e pálpebra,
                 boca, bico inferior e superior, poleiro com sombra); cada parte
-                recorta um conjunto único de tons; abaixo de 40px, versão chapada
+                recorta um conjunto único de tons; os detalhes de perto do rosto
+                (penas, anel, faixa, bico, contorno); abaixo de 40px, versão chapada
   contornos.ts  os contornos e as faixas de luz, traçados da ilustração de
                 referência (arara-azul-monitora.png, no histórico do git): só dados
-  mascote.tsx   <Mascote>: estados parada, atenta, falando, pensando, comemorando,
+  mascote.tsx   <Mascote>: enquadramento "corpo" ou "rosto" (com entrada pelo outro); estados parada, atenta, falando, pensando, comemorando,
                 dormindo e acenando; piscar e arrepio sorteados (Web Animations),
                 olho que segue o ponteiro (variáveis CSS), sono por inatividade,
                 pausa com a aba oculta; montarMascoteAvulsa() para os fogos
   estado.ts     o pedido global (evento `aya:estado`) fora do React, com expiração
-  mascote.css   só transform/opacity por data-estado; movimento reduzido: só pisca
+  mascote.css   só transform/opacity por data-estado e data-enquadramento (o quadro
+                aproxima a cabeça); movimento reduzido: só pisca, troca sem transição
 tour/
   tour.jsx      <Tour>: véu com recorte no elemento da vez, balão (Pular/Anterior/Próximo,
                 "Passo 2 de 6"), Esc, setas, foco preso, anúncio ao leitor de tela; pula o
@@ -60,8 +64,11 @@ visíveis; não há endpoint de IA, modelo, serviço local ou túnel. Dúvidas o
 três perguntas em botões e chamado pelo Gmail. Testes: `tests/modulos/aya.test.js`, `tests/aya-paginas.test.js`,
 `tests/aya-respostas-chave.test.js`, `tests/busca-da-aya.test.js`, `tests/termos-da-aya.test.js`,
 `tests/conversa-da-aya.test.js`, `tests/chamado-da-aya.test.js`, `tests/aya-tours.test.js`,
-`tests/modulos/aya-tour.test.js`, `tests/modulos/aya-trilhas.test.js`, `tests/modulos/mascote.test.js`
-e `tests/estado-da-aya.test.js`.
+`tests/modulos/aya-tour.test.js`, `tests/modulos/aya-trilhas.test.js`, `tests/modulos/mascote.test.js`,
+`tests/estado-da-aya.test.js` e `tests/borda-da-aya.test.js`.
+
+A borda: qual borda vale ao soltar, as setas e a posição guardada ficam em
+`src/lib/borda-da-aya.ts`; o deslocamento de quem está escondida, em `aya.css`.
 
 A mascote: a regra dos estados (prioridade, movimento reduzido, comemorações desligadas,
 tempos sorteados) fica em `src/lib/estado-da-aya.ts`. Qualquer tela pede um estado com

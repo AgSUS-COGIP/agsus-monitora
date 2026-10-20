@@ -6,11 +6,16 @@ import {
   ESTADOS_DA_MASCOTE,
   type EstadoDaMascote,
 } from "../../lib/estado-da-aya.ts";
-import { ALTURA_DA_ARARA, Mascote } from "../aya/mascote/mascote.tsx";
+import {
+  ALTURA_DA_ARARA,
+  Mascote,
+  TAMANHO_NO_PAINEL,
+} from "../aya/mascote/mascote.tsx";
 
 /*
   Configurações › Marca › Mascote: a arara da Aya em cada estado, para o
-  administrador conferir. "Ver na arara do canto" manda o estado escolhido
+  administrador conferir: grande, como fica fechada (só o rosto, no canto),
+  no painel aberto (inteira) e no menor tamanho. "Ver na arara do canto" manda o estado escolhido
   para a arara flutuante pelo evento global `aya:estado`.
 */
 
@@ -56,8 +61,12 @@ export function CartaoDaMascote() {
           rotulo={`Aya, ${ROTULOS[estado].toLowerCase()}`}
         />
         <div className="cartao-da-mascote__tamanhos" aria-hidden="true">
-          <Mascote estado={estado} tamanho={ALTURA_DA_ARARA} />
-          <Mascote estado={estado} tamanho={56} />
+          <Mascote
+            estado={estado}
+            tamanho={ALTURA_DA_ARARA}
+            enquadramento="rosto"
+          />
+          <Mascote estado={estado} tamanho={TAMANHO_NO_PAINEL} />
           <Mascote estado={estado} tamanho={32} />
         </div>
       </div>

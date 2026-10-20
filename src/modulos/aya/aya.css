@@ -44,11 +44,54 @@
   cursor: grab;
   pointer-events: auto;
   touch-action: none;
+  transition: transform var(--duration-base, 200ms) var(--ease-standard, ease);
 }
 
 /*
-  A arara inteira, em pé no poleiro com a sombra no chão (mascote/): sem
-  recorte nem aro (pedido de 08/10)..
+  Escondida na borda (data-borda, ao soltar encostada; aya.jsx): um
+  terço do rosto sai da tela (nas laterais; no topo e embaixo, a metade) e
+  ela fica espiando com o olho à mostra, virada para dentro (na
+  direita, espelhada; no topo, de cabeça para baixo). Mouse em cima ou foco
+  de teclado a trazem um pouco para fora. O olho que segue o ponteiro
+  acompanha o espelho (--olho-sentido-*, mascote.css).
+*/
+.aya-arara[data-borda="esquerda"] {
+  transform: translateX(calc(-38% - 8px));
+}
+.aya-arara[data-borda="direita"] {
+  transform: translateX(calc(38% + 8px));
+}
+.aya-arara[data-borda="topo"] {
+  transform: translateY(calc(-50% - 8px));
+}
+.aya-arara[data-borda="baixo"] {
+  transform: translateY(calc(50% + 8px));
+}
+.aya-arara[data-borda="esquerda"]:is(:hover, :focus-visible) {
+  transform: translateX(calc(-12% - 8px));
+}
+.aya-arara[data-borda="direita"]:is(:hover, :focus-visible) {
+  transform: translateX(calc(12% + 8px));
+}
+.aya-arara[data-borda="topo"]:is(:hover, :focus-visible) {
+  transform: translateY(calc(-20% - 8px));
+}
+.aya-arara[data-borda="baixo"]:is(:hover, :focus-visible) {
+  transform: translateY(calc(20% + 8px));
+}
+.aya-arara[data-borda="direita"] .mascote {
+  --olho-sentido-x: -1;
+  transform: scaleX(-1);
+}
+.aya-arara[data-borda="topo"] .mascote {
+  --olho-sentido-x: -1;
+  --olho-sentido-y: -1;
+  transform: rotate(180deg);
+}
+
+/*
+  Fechada, só o rosto da arara, de perto (mascote/, enquadramento "rosto");
+  no painel, a arara inteira, em pé no poleiro. Sem aro em volta (08/10).
 */
 .aya-figura {
   position: relative;
@@ -77,7 +120,7 @@
 }
 
 /*
-  Fechada, a Aya fica só a arara (ALTURA_DA_ARARA em mascote/mascote.tsx); a
+  Fechada, a Aya fica só o rosto da arara (ALTURA_DA_ARARA em mascote/mascote.tsx); a
   selo Beta vira um ponto e a etiqueta "Fale com a Aya" sai (o nome e a dica
   ficam no aria-label e no title do botão).
 */
@@ -140,7 +183,7 @@
 }
 
 /*
-  Cabeçalho limpo (pedido de 02/10): a arara inteira (08/10), o nome sem
+  Cabeçalho limpo (pedido de 02/10): a arara inteira (08/10; 88px desde 20/10), o nome sem
   caixa em volta, o selo Beta ao lado do nome (fora do rosto), a tela atual
   embaixo (quebra a linha em vez de cortar) e uma linha separando da conversa.
 */
@@ -524,7 +567,7 @@
 /* ---------- Celular: o painel ocupa a tela ---------- */
 
 @media (max-width: 600px) {
-  /* No celular a arara do canto encolhe (inteira, sem cobrir o conteúdo). */
+  /* No celular a arara do canto encolhe (o rosto, sem cobrir o conteúdo). */
   .aya-arara .mascote {
     width: 46px;
     height: 46px;
@@ -544,6 +587,10 @@
   .aya-painel,
   .aya-pontos i {
     animation: none;
+  }
+
+  .aya-arara {
+    transition: none;
   }
 }
 

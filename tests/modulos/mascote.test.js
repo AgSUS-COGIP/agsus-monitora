@@ -12,11 +12,16 @@ import {
 /*
   A mascote da Aya (src/modulos/aya/mascote/): troca de estados, o evento
   global aya:estado, movimento reduzido (só pisca), piscar com sorteio fixo,
-  aceno uma vez por sessão, sono por inatividade e pausa com a aba oculta.
+  aceno uma vez por sessão, sono por inatividade, pausa com a aba oculta e o
+  enquadramento (rosto com a Aya fechada, corpo com o painel aberto e nos fogos).
 */
 
-const { Mascote, TAMANHO_DA_VERSAO_SIMPLES, carregarDesenhoDaMascote } =
-  await import("../../src/modulos/aya/mascote/mascote.tsx");
+const {
+  Mascote,
+  TAMANHO_DA_VERSAO_SIMPLES,
+  carregarDesenhoDaMascote,
+  montarMascoteAvulsa,
+} = await import("../../src/modulos/aya/mascote/mascote.tsx");
 // O desenho vem num pedaço próprio (import dinâmico): carregado antes dos testes.
 await carregarDesenhoDaMascote();
 const { reiniciarPedidoDaAya } =
@@ -97,7 +102,7 @@ describe("desenho", () => {
     expect(svg().getAttribute("aria-label")).toBe("Aya");
   });
 
-  it("sempre de corpo inteiro; abaixo de 40px, a versão simples (também inteira)", async () => {
+  it("de corpo inteiro por padrão; abaixo de 40px, a versão simples (também inteira)", async () => {
     await montar({ tamanho: 84 });
     expect(svg().getAttribute("data-versao")).toBe("completa");
     expect(svg().getAttribute("viewBox")).toBe("0 0 200 190");
@@ -356,6 +361,124 @@ describe("piscar com sorteio fixo", () => {
   });
 });
 
+describe("enquadramento: rosto (fechada) e corpo (painel aberto, fogos)", () => {
+  const quadro = () => svg()?.getAttribute("data-enquadramento");
+  const reduzir = () => {
+    window.matchMedia = vi.fn(() => ({
+      matches: true,
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+    }));
+  };
+
+  it("corpo por padrão; o rosto usa o mesmo svg, do mesmo tamanho, com os detalhes de perto", async () => {
+    await montar({ tamanho: 56 });
+    expect(quadro()).toBe("corpo");
+    await montar({ tamanho: 56, enquadramento: "rosto" });
+    expect(quadro()).toBe("rosto");
+    expect(svg().getAttribute("width")).toBe("56");
+    expect(svg().getAttribute("viewBox")).toBe("0 0 200 190");
+    expect(svg().querySelector(".mascote__quadro")).not.toBeNull();
+    // Penas em camadas, anel, faixa, olho e bico com relevo, contorno, busto.
+    expect(
+      svg().querySelectorAll(".mascote__detalhe").length,
+    ).toBeGreaterThanOrEqual(6);
+    expect(svg().querySelectorAll(".mascote__contorno").length).toBe(3);
+    expect(svg().querySelector(".mascote__busto")).not.toBeNull();
+    // O "z" do sono fica fora do quadro (não cresce com a cabeça).
+    expect(svg().querySelector(".mascote__quadro .mascote__sono")).toBeNull();
+    expect(svg().querySelector(".mascote__sono")).not.toBeNull();
+  });
+
+  it("de perto o rosto nunca é a versão simples, nem pequeno", async () => {
+    await montar({ tamanho: 32, enquadramento: "rosto" });
+    expect(svg().getAttribute("data-versao")).toBe("completa");
+    await montar({ tamanho: 32 });
+    expect(svg().getAttribute("data-versao")).toBe("simples");
+  });
+
+  it("trocar o enquadramento na mesma arara não remonta o svg (a transição é do CSS)", async () => {
+    await montar({ tamanho: 56, enquadramento: "rosto" });
+    const antes = svg();
+    await montar({ tamanho: 56, enquadramento: "corpo" });
+    expect(svg()).toBe(antes);
+    expect(quadro()).toBe("corpo");
+  });
+
+  it("enquadramentoInicial: nasce no outro e passa ao pedido logo depois", async () => {
+    await montar({ tamanho: 88, enquadramentoInicial: "rosto" });
+    expect(quadro()).toBe("rosto");
+    await avancar(100);
+    expect(quadro()).toBe("corpo");
+  });
+
+  it("com movimento reduzido, a troca é direta (sem a entrada pelo outro)", async () => {
+    reduzir();
+    await montar({ tamanho: 88, enquadramentoInicial: "rosto" });
+    expect(quadro()).toBe("corpo");
+    expect(svg().dataset.reduzido).toBe("sim");
+  });
+
+  it("os estados continuam valendo no rosto (piscar, falar, dormir, comemorar)", async () => {
+    await montar({ enquadramento: "rosto", rng: () => 0 });
+    expect(estado()).toBe("parada");
+    await avancar(3000);
+    expect(svg().dataset.piscadas).toBe("1");
+    for (const pedido of [
+      "falando",
+      "pensando",
+      "dormindo",
+      "comemorando",
+      "acenando",
+    ]) {
+      await montar({ enquadramento: "rosto", estado: pedido });
+      expect(estado()).toBe(pedido);
+      expect(quadro()).toBe("rosto");
+    }
+    expect(svg().querySelector(".mascote__penas-da-cabeca")).not.toBeNull();
+  });
+
+  it("o olho acompanha o ponteiro também no rosto", async () => {
+    await montar({ enquadramento: "rosto" });
+    svg().getBoundingClientRect = () => ({
+      left: 100,
+      top: 100,
+      width: 56,
+      height: 56,
+    });
+    await act(async () => {
+      window.dispatchEvent(
+        Object.assign(new Event("pointermove"), { clientX: 200, clientY: 128 }),
+      );
+      vi.advanceTimersByTime(50);
+    });
+    expect(estado()).toBe("atenta");
+  });
+
+  it("os fogos (montarMascoteAvulsa sem poleiro) voam de corpo inteiro", async () => {
+    const alvo = document.createElement("span");
+    document.body.append(alvo);
+    let desmontar;
+    await act(async () => {
+      desmontar = montarMascoteAvulsa(alvo, {
+        estado: "comemorando",
+        poleiro: false,
+        tamanho: 120,
+        ouvirAya: false,
+        atencao: false,
+        dormir: false,
+      });
+    });
+    const arara = alvo.querySelector("svg.mascote");
+    expect(arara.getAttribute("data-enquadramento")).toBe("corpo");
+    expect(arara.getAttribute("data-estado")).toBe("comemorando");
+    expect(arara.querySelector(".mascote__poleiro")).toBeNull();
+    expect(arara.querySelector(".mascote__asa-aberta")).not.toBeNull();
+    await act(async () => desmontar());
+    alvo.remove();
+  });
+});
+
 describe("Configurações › Marca › Mascote (prévia para o administrador)", () => {
   it("um botão por estado; 'Ver na arara do canto' manda o estado pelo evento", async () => {
     await act(async () => raiz.render(createElement(CartaoDaMascote)));
@@ -372,6 +495,12 @@ describe("Configurações › Marca › Mascote (prévia para o administrador)",
     const grande = () =>
       elemento.querySelector(".cartao-da-mascote__palco > svg");
     expect(grande().getAttribute("data-estado")).toBe("parada");
+    // Fechada (só o rosto), no painel (inteira) e no menor tamanho.
+    expect(
+      [...elemento.querySelectorAll(".cartao-da-mascote__tamanhos svg")].map(
+        (arara) => arara.getAttribute("data-enquadramento"),
+      ),
+    ).toEqual(["rosto", "corpo", "corpo"]);
     await act(async () => opcoes[4].click());
     expect(grande().getAttribute("data-estado")).toBe("comemorando");
     // As araras pequenas acompanham.

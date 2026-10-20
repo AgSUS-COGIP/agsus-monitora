@@ -15,7 +15,7 @@ import { clicar, digitar, teclar } from "../componentes/interacoes.js";
   conversa fica na aba; a resposta pode trazer o botão da tela citada.
 */
 
-const { montarAya, CHAVE_OCULTA, CHAVE_AVALIACOES } =
+const { montarAya, CHAVE_OCULTA, CHAVE_AVALIACOES, CHAVE_POSICAO_DA_ARARA } =
   await import("../../src/modulos/aya/aya.jsx");
 const { definirPaginaDaAya, redefinirPaginaDaAya } =
   await import("../../src/modulos/aya/estado.js");
@@ -336,5 +336,90 @@ describe("foco preso no painel", () => {
     await teclar(enviar, "Tab");
     // O primeiro do cabeçalho é "Me mostra esta tela" (Recursos tem tour).
     expect(document.activeElement).toBe(botao("Me mostra esta tela"));
+  });
+});
+
+describe("a arara: rosto fechada, corpo no painel e escondida na borda", () => {
+  const arara = () => $(".aya-arara");
+  const mascoteDoBotao = () => $(".aya-arara svg.mascote");
+  const posicaoGuardada = () =>
+    JSON.parse(localStorage.getItem(CHAVE_POSICAO_DA_ARARA) || "null");
+
+  function ponteiro(tipo, x, y) {
+    const evento = new MouseEvent(tipo, {
+      bubbles: true,
+      clientX: x,
+      clientY: y,
+      button: 0,
+    });
+    Object.defineProperty(evento, "pointerId", { value: 1 });
+    return evento;
+  }
+
+  it("fechada mostra só o rosto; aberta, o painel mostra a arara inteira, maior", async () => {
+    await montar();
+    expect(mascoteDoBotao().getAttribute("data-enquadramento")).toBe("rosto");
+    expect(mascoteDoBotao().getAttribute("width")).toBe("56");
+    // A área clicável e o nome acessível continuam os mesmos.
+    expect(arara().getAttribute("aria-label")).toBe(
+      "Abrir a Aya, assistente do MONITORA",
+    );
+    await abrirPainel();
+    const doPainel = $(".aya-avatar svg.mascote");
+    expect(doPainel.getAttribute("width")).toBe("88");
+    expect(doPainel.getAttribute("data-versao")).toBe("completa");
+    await act(async () => {
+      await new Promise((resolver) => setTimeout(resolver, 80));
+    });
+    expect(doPainel.getAttribute("data-enquadramento")).toBe("corpo");
+    await clicar(botao("Fechar a Aya"));
+    expect(mascoteDoBotao().getAttribute("data-enquadramento")).toBe("corpo");
+    await act(async () => {
+      await new Promise((resolver) => setTimeout(resolver, 80));
+    });
+    expect(mascoteDoBotao().getAttribute("data-enquadramento")).toBe("rosto");
+  });
+
+  it("solta encostada numa borda, se esconde; a borda fica guardada com a posição", async () => {
+    await montar();
+    const alvo = arara();
+    await act(async () => {
+      alvo.dispatchEvent(ponteiro("pointerdown", 100, 100));
+      alvo.dispatchEvent(ponteiro("pointermove", 400, 300));
+    });
+    expect(alvo.dataset.borda).toBeUndefined();
+    await act(async () => {
+      alvo.dispatchEvent(ponteiro("pointermove", 5000, 300));
+      alvo.dispatchEvent(ponteiro("pointerup", 5000, 300));
+    });
+    expect(alvo.dataset.borda).toBe("direita");
+    expect(posicaoGuardada()).toMatchObject({ borda: "direita" });
+    // O clique do fim do arraste não abre o painel.
+    await clicar(alvo);
+    expect($(".aya-painel")).toBeNull();
+    // Clicar nela escondida abre o chat como sempre.
+    await clicar(arara());
+    expect($(".aya-painel")).not.toBeNull();
+  });
+
+  it("lembra escondida ao recarregar; as setas a tiram da borda (e a escondem)", async () => {
+    localStorage.setItem(
+      CHAVE_POSICAO_DA_ARARA,
+      JSON.stringify({ left: 500, top: 300, borda: "direita" }),
+    );
+    await montar();
+    expect(arara().dataset.borda).toBe("direita");
+    expect(arara().getAttribute("title")).toMatch(/tirá-la da borda/);
+    await teclar(arara(), "ArrowLeft");
+    expect(arara().dataset.borda).toBeUndefined();
+    expect(posicaoGuardada()).toEqual({ left: 476, top: 300 });
+    await teclar(arara(), "ArrowUp", { shiftKey: true });
+    await teclar(arara(), "ArrowUp", { shiftKey: true });
+    await teclar(arara(), "ArrowUp", { shiftKey: true });
+    expect(arara().dataset.borda).toBe("topo");
+    expect(posicaoGuardada()).toMatchObject({ top: 8, borda: "topo" });
+    // Outras teclas não mexem (Enter continua abrindo).
+    await teclar(arara(), "a");
+    expect(arara().dataset.borda).toBe("topo");
   });
 });
