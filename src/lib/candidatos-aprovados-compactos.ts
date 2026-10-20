@@ -13,7 +13,7 @@
     código da vaga vão uma vez em `dicionarios` e a linha leva o índice (base 0).
     Sem isso, cargo (~60 caracteres) e código da vaga (~47) se repetiam em cada
     um dos milhares de candidatos.
-  - 1 (sem área, o banco de antes da migration 20260929190000): `listas` é um
+  - 1 (sem área, o banco de antes da migration 20260929210000): `listas` é um
     objeto por id e a linha leva o próprio id. Sai junto com o ramo sem área da
     função no banco.
   A mesma conta serve aos dois: `listas[linha[lista_id]]` acha a lista pelo

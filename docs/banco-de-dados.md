@@ -23,14 +23,15 @@ Timestamp de 14 dígitos e descrição no infinitivo dizendo o efeito, não o me
 `create ... if not exists`) e traz no cabeçalho, em comentário: o motivo, os
 **dependentes** e o **rollback**.
 
-Três ficheiros existentes ficam fora do padrão e **não devem ser renomeados** —
-já foram aplicados, e renomear quebraria o histórico de quem os aplicou:
-
-| Ficheiro                                             | Problema      |
-| ---------------------------------------------------- | ------------- |
-| `20260624_access_requests_and_panel_permissions.sql` | data sem hora |
-| `add_update_user_access_rpc.sql`                     | sem timestamp |
-| `restrict_access_management_to_master.sql`           | sem timestamp |
+Três ficheiros antigos ficavam fora do padrão (`20260624_access_requests_and_panel_permissions.sql`,
+data sem hora; `add_update_user_access_rpc.sql` e `restrict_access_management_to_master.sql`, sem
+timestamp). Não foram renomeados — o registro os guarda pelo caminho —, mas desde 20/10/2026
+estão em `supabase/migrations-historicas/`, junto com as demais migrations antigas já aplicadas
+que seriam perigosas se reaplicadas (tabela `perfis_usuarios`, `search_path` não vazio, nomes
+anteriores à padronização MAD). O que foi decidido para nunca aplicar está em
+`supabase/descartadas/`. `supabase/migrations/` só tem o que se aplica, com timestamp de 14
+dígitos (`tests/migrations-pasta-limpa.test.js`). O processo completo — aplicação manual,
+registro, sem `supabase db push` — está em `supabase/migrations/README.md`.
 
 ### 1.1 O registro do que já foi aplicado
 
@@ -47,8 +48,10 @@ npm run db:estado -- --registrar=<caminho>
 npm run db:estado -- --registrar-todas-pendentes
 ```
 
-O script lê `supabase/migrations/` e `supabase/correcoes/` e responde quatro
-coisas:
+O script lê `supabase/migrations/`, `supabase/migrations-historicas/` e
+`supabase/correcoes/` e responde quatro coisas (as históricas são comparadas pelo
+caminho de origem, `migrations/<arquivo>`, e nunca aparecem como pendentes; sem
+registro, são listadas à parte como "históricas — não reaplicar"):
 
 | Estado         | O que significa                                    |
 | -------------- | -------------------------------------------------- |

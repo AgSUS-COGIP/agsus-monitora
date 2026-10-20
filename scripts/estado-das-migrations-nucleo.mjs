@@ -11,7 +11,24 @@ import { join } from "node:path";
 
   Permite importar as funções puras sem iniciar a consulta ao banco.
 */
-export const DIRETORIOS = ["migrations", "correcoes"];
+export const DIRETORIOS = ["migrations", "migrations-historicas", "correcoes"];
+
+/*
+  AS PASTAS QUE NÃO SÃO "POR APLICAR" (20/10/2026)
+
+  `migrations-historicas/` guarda migrations antigas que já correram (ou cujo
+  efeito foi depois renomeado/removido por outra migration) e que seriam
+  perigosas se reaplicadas: tabela antiga `perfis_usuarios`, `search_path` não
+  vazio, nomes anteriores à padronização MAD. Ficam fora de `migrations/` para
+  que nenhuma ferramenta as pegue, mas o registro continua a guardá-las pelo
+  caminho de origem ("migrations/<arquivo>"): por isso `caminho` (a chave do
+  registro) e `arquivo` (onde está no disco) diferem. Uma histórica nunca é
+  "pendente": registrada, conta como aplicada; sem registro, aparece à parte,
+  como histórica, sem sugestão de reaplicar.
+
+  `descartadas/` (decisão de nunca aplicar) não é lida aqui de propósito.
+*/
+export const REGISTRADO_COMO = { "migrations-historicas": "migrations" };
 
 /*
   O hash é do conteúdo SEM o "
@@ -47,16 +64,19 @@ export function ficheirosNoDisco(raiz = "supabase") {
     try {
       entradas = readdirSync(join(raiz, diretorio));
     } catch (erro) {
-      // Diretório ausente é estado esperado, não erro: nem todo projeto tem os dois.
+      // Diretório ausente é estado esperado, não erro: nem todo projeto tem todos.
       if (erro.code === "ENOENT") continue;
       throw erro;
     }
     for (const nome of entradas.filter((n) =>
       n.toLowerCase().endsWith(".sql"),
     )) {
+      const historica = diretorio in REGISTRADO_COMO;
       lista.push({
-        caminho: `${diretorio}/${nome}`,
+        caminho: `${REGISTRADO_COMO[diretorio] ?? diretorio}/${nome}`,
+        arquivo: `${diretorio}/${nome}`,
         diretorio,
+        historica,
         hash: hashDoConteudo(readFileSync(join(raiz, diretorio, nome))),
       });
     }
@@ -75,6 +95,10 @@ export function ficheirosNoDisco(raiz = "supabase") {
     órfão         registado no banco e sem ficheiro no disco: alguém apagou ou
                   renomeou. Não é erro por si — o SIGAV apagou 181 migrations
                   ao criar um baseline —, mas tem de ser visível.
+
+  E um quinto, fora da conta do que falta: a histórica sem registro
+  (`migrations-historicas/`, efeito anterior ao registro e depois renomeado ou
+  removido). Não é pendente: reaplicar recriaria objetos antigos.
 */
 export function classificar(noDisco = [], registados = []) {
   const lista = (Array.isArray(registados) ? registados : []).map((r) => ({
@@ -89,10 +113,12 @@ export function classificar(noDisco = [], registados = []) {
   const aplicados = [];
   const pendentes = [];
   const divergentes = [];
+  const historicasSemRegistro = [];
 
   for (const ficheiro of Array.isArray(noDisco) ? noDisco : []) {
     const registo = porCaminho.get(ficheiro.caminho);
-    if (!registo) pendentes.push(ficheiro);
+    if (!registo && ficheiro.historica) historicasSemRegistro.push(ficheiro);
+    else if (!registo) pendentes.push(ficheiro);
     else if (registo.hash !== ficheiro.hash)
       divergentes.push({ ...ficheiro, registo });
     else aplicados.push({ ...ficheiro, registo });
@@ -100,7 +126,7 @@ export function classificar(noDisco = [], registados = []) {
 
   const orfaos = lista.filter((r) => !noDiscoPorCaminho.has(r.caminho));
 
-  return { aplicados, pendentes, divergentes, orfaos };
+  return { aplicados, pendentes, divergentes, orfaos, historicasSemRegistro };
 }
 
 /*

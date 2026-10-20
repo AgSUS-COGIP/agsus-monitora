@@ -287,9 +287,12 @@ Supabase de verdade, mesmo com o `.env.local` preenchido.
 ├── apps-script/            scripts das planilhas (saude-indigena/, sede/, projetos/); ver LEIA-ME.md
 ├── public/                 imagens e dados geográficos (gerados por scripts)
 ├── supabase/
-│   ├── migrations/         mudanças de schema, versionadas
+│   ├── migrations/         mudanças de schema, versionadas (processo no README.md da pasta)
 │   ├── rollback/           como desfazer cada migration (mesmo nome)
-│   └── correcoes/          correções pontuais de dados
+│   ├── ensaios/            ensaio de cada migration, sempre em rollback
+│   ├── correcoes/          correções pontuais de dados
+│   ├── migrations-historicas/  já aplicadas, só histórico (não reaplicar)
+│   └── descartadas/        decididas para nunca aplicar
 ├── server/servidor.ts      servidor web (TypeScript)
 ├── scripts/                checagens do build e ferramentas
 ├── tests/                  Vitest (*.test.js), Playwright (*.spec.js), testes Python e fixtures compartilhadas
@@ -301,8 +304,12 @@ mexer, mesmo sem usar IA.
 
 ## Supabase
 
-Mudanças de schema ficam em `supabase/migrations/`, com nome `AAAAMMDDHHMMSS_descricao.sql`. Nunca
-edite uma migration já aplicada: crie outra. Cada migration nova vem com:
+Mudanças de schema ficam em `supabase/migrations/`, com nome `AAAAMMDDHHMMSS_descricao.sql`. São
+**aplicadas à mão** (SQL Editor ou `psql`) e registradas em `public.migracoes_aplicadas`
+(`npm run db:estado`); **não use `supabase db push`**. O processo completo, e o que ficam
+`supabase/migrations-historicas/` e `supabase/descartadas/`, está em
+[`supabase/migrations/README.md`](supabase/migrations/README.md). Nunca edite uma migration já
+aplicada: crie outra. Cada migration nova vem com:
 
 - o arquivo de desfazer em `supabase/rollback/`, com o mesmo nome;
 - um ensaio antes de aplicar em produção (o SQL dentro de `begin; … rollback;`);
