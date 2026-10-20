@@ -45,8 +45,11 @@ const { CONTRATO_RPC } = await import(
 );
 
 const { readdirSync, readFileSync } = await import("node:fs");
-const sqlExistente = readdirSync("supabase/migrations")
-  .map((f) => readFileSync(join("supabase/migrations", f), "utf8"))
+// As históricas também definem funções (ex.: a padronização MAD de 18/09).
+const sqlExistente = ["supabase/migrations", "supabase/migrations-historicas"]
+  .flatMap((dir) =>
+    readdirSync(dir).map((f) => readFileSync(join(dir, f), "utf8")),
+  )
   .join("\n");
 
 const alvos = Object.keys(CONTRATO_RPC).filter(

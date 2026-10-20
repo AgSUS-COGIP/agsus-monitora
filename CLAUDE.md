@@ -80,15 +80,15 @@ docs/                   decisões, auditorias e base de conhecimento da AYA    �
 
 ## Não ler por inteiro (grep -n → sed -n 'A,Bp')
 
-| Arquivo                                                                    | Tamanho    | Observação            |
-| -------------------------------------------------------------------------- | ---------- | --------------------- |
-| `public/data/*.json`                                                       | até 2,3 MB | gerados               |
-| `supabase/migrations/20260918160000_padronizacao_nomenclatura_tabelas.sql` | 148 KB     | renomeação em massa   |
-| `src/styles/app.css`                                                       | 110 KB     | CSS base              |
-| `index.html`                                                               | 68 KB      |                       |
-| `src/modules/indigenous-territories-layer.js`                              | 53 KB      |                       |
-| `src/modules/aya-conhecimento-gerado.js`                                   | 27 KB      | gerado de `docs/aya/` |
-| `package-lock.json`, `dist/`, `node_modules/`                              |            | nunca                 |
+| Arquivo                                                                               | Tamanho    | Observação            |
+| ------------------------------------------------------------------------------------- | ---------- | --------------------- |
+| `public/data/*.json`                                                                  | até 2,3 MB | gerados               |
+| `supabase/migrations-historicas/20260918160000_padronizacao_nomenclatura_tabelas.sql` | 148 KB     | renomeação em massa   |
+| `src/styles/app.css`                                                                  | 110 KB     | CSS base              |
+| `index.html`                                                                          | 68 KB      |                       |
+| `src/modules/indigenous-territories-layer.js`                                         | 53 KB      |                       |
+| `src/modules/aya-conhecimento-gerado.js`                                              | 27 KB      | gerado de `docs/aya/` |
+| `package-lock.json`, `dist/`, `node_modules/`                                         |            | nunca                 |
 
 ## Comandos (rode o mais barato que responda a pergunta)
 

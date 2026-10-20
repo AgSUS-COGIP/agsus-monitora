@@ -113,6 +113,59 @@ describe("os quatro estados", () => {
   });
 });
 
+/*
+  supabase/migrations-historicas/ (20/10/2026): já aplicadas, perigosas se
+  reaplicadas. O registro as guarda pelo caminho de origem "migrations/<x>".
+*/
+describe("as históricas", () => {
+  const historica = (nome, hash) => ({
+    caminho: `migrations/${nome}`,
+    arquivo: `migrations-historicas/${nome}`,
+    diretorio: "migrations-historicas",
+    historica: true,
+    hash,
+  });
+
+  it("registrada pelo caminho antigo continua aplicada", () => {
+    const r = classificar(
+      [historica("velha.sql", "h1")],
+      [registo("supabase/migrations/velha.sql", "h1")],
+    );
+    expect(r.aplicados.map((f) => f.arquivo)).toEqual([
+      "migrations-historicas/velha.sql",
+    ]);
+    expect(r.orfaos).toEqual([]);
+    expect(r.pendentes).toEqual([]);
+  });
+
+  it("sem registro não vira pendente", () => {
+    const r = classificar([historica("velha.sql", "h1")], []);
+    expect(r.pendentes).toEqual([]);
+    expect(r.historicasSemRegistro.map((f) => f.arquivo)).toEqual([
+      "migrations-historicas/velha.sql",
+    ]);
+  });
+
+  it("o disco as lê com o caminho do registro", () => {
+    const noDisco = ficheirosNoDisco("supabase");
+    const add = noDisco.find((f) =>
+      f.arquivo.endsWith("add_update_user_access_rpc.sql"),
+    );
+    expect(add).toMatchObject({
+      caminho: "migrations/add_update_user_access_rpc.sql",
+      arquivo: "migrations-historicas/add_update_user_access_rpc.sql",
+      historica: true,
+    });
+    // As descartadas não entram na conta.
+    expect(noDisco.some((f) => f.arquivo.startsWith("descartadas/"))).toBe(
+      false,
+    );
+    expect(
+      noDisco.some((f) => f.caminho.includes("acesso_basico_institucional")),
+    ).toBe(false);
+  });
+});
+
 describe("o hash", () => {
   it("muda com o conteúdo e não com o nome", () => {
     expect(hashDoConteudo("begin; commit;")).toBe(

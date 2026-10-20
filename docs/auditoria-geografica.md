@@ -333,9 +333,11 @@ um polo que o casamento por nome move 453 km deixa de ser `oficial_cnes`.
 Sair do payload JSON e passar a uma tabela com coluna por campo, onde cada
 ponto declara de onde veio. O esquema proposto está em
 [`docs/propostas/20260914120000_confianca_de_coordenada.sql`](propostas/20260914120000_confianca_de_coordenada.sql)
-— **não executado, e deliberadamente fora de `supabase/migrations/`**: um ficheiro
-naquela pasta é aplicado por qualquer `db push`, e uma proposta por discutir não
-pode correr por acidente. Move-se para lá quando for aprovada.
+— **não executado, e deliberadamente fora de `supabase/migrations/`**: aquela pasta
+é a fila do que se aplica (à mão, com registro em `public.migracoes_aplicadas`; o
+projeto não usa `supabase db push` — ver `supabase/migrations/README.md`), e uma
+proposta por discutir não pode parecer pendente nem correr por acidente. Move-se
+para lá, com timestamp novo, quando for aprovada.
 
 Pontos centrais: `lat`/`lon` são a coordenada real e não se alteram para
 desenho; `confianca` é obrigatória; `fonte` e `fonte_data` registam a

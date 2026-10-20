@@ -57,7 +57,7 @@ import {
   banco, por trás, se a `versao` dela ainda vale — o banco calcula a versão dos
   próprios dados a cada chamada e só manda o pacote de novo se ela mudou. A
   releitura depois de uma escrita nunca usa a cópia: vai ao banco, que devolve
-  os dados com a escrita (ver a migration 20260929190000).
+  os dados com a escrita (ver a migration 20260929210000).
 */
 
 /*
@@ -302,7 +302,7 @@ export function criarEstadoDaListaDeAprovados({
   /*
     Uma chamada só, da área. `versao` é a dos dados que a tela já tem: se o
     banco disser que continua valendo, volta `{ inalterado: true }` e nada
-    trafega. O banco de antes da migration 20260929190000 não conhece
+    trafega. O banco de antes da migration 20260929210000 não conhece
     `p_area` (PGRST202): a função sem argumentos devolve todas as áreas no
     formato 1, e a tela recorta pela área como sempre.
   */

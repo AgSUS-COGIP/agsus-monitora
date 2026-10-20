@@ -1,7 +1,7 @@
 /*
   Monta, a partir de candidatos no formato de sempre, o pacote que
   `listar_candidatos_aprovados_compacto()` devolvia no formato 1 (listas uma vez
-  + linhas), o de antes da migration 20260929190000.
+  + linhas), o de antes da migration 20260929210000.
 */
 const COLUNAS_DA_LISTA = [
   "edital_id",
@@ -68,7 +68,7 @@ const DICIONARIZADAS = ["cargo", "modalidade", "status", "codigo_vaga"];
   O mesmo, no formato 2 (`listar_candidatos_aprovados_compacto(p_area)`):
   listas num array com o id na primeira coluna, a linha com o índice da lista,
   e cargo, modalidade, status e código da vaga em `dicionarios` (índice base 0,
-  valores em ordem), como a migration 20260929190000 monta.
+  valores em ordem), como a migration 20260929210000 monta.
 */
 export function compactarPorArea(
   candidatos,
