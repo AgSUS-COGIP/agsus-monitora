@@ -1,3 +1,4 @@
+import { renders } from "../componentes/contar-renders.js";
 import { act } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
@@ -1015,6 +1016,37 @@ describe("fila: relatório de motivos", () => {
     );
     expect(gaveta).not.toBeNull();
     expect(gaveta.querySelectorAll("[data-atalho]")).toHaveLength(3);
+  });
+
+  it("abrir o relatório, trocar filtros e fechar não redesenham a Fila por trás (nem chamam o banco)", async () => {
+    const supabase = supabaseFalso();
+    await montar(supabase);
+    await abrirMenu();
+    renders.zerar();
+    await clicar(secao.querySelector("[data-acao='relatorio-de-motivos']"));
+    expect(
+      document.querySelector("[data-tour='avd-relatorio-motivos']"),
+    ).not.toBeNull();
+    expect(renders.de("Fila")).toBe(0);
+    expect(renders.de("TabelaDaFila")).toBe(0);
+    const chamadas = supabase.rpc.mock.calls.length;
+    renders.zerar();
+    await escolher(document.querySelector("[data-filtro='resultado']"), "APTO");
+    await clicar(document.querySelector("[data-filtro='ajustada']"));
+    expect(renders.de("Fila")).toBe(0);
+    expect(renders.de("RelatorioDeMotivos")).toBe(0);
+    expect(supabase.rpc.mock.calls.length).toBe(chamadas);
+    renders.zerar();
+    await clicar(
+      document.querySelector(
+        "[data-tour='avd-relatorio-motivos'] .ui-gaveta-fechar",
+      ),
+    );
+    expect(
+      document.querySelector("[data-tour='avd-relatorio-motivos']"),
+    ).toBeNull();
+    expect(renders.de("Fila")).toBe(0);
+    expect(renders.de("TabelaDaFila")).toBe(0);
   });
 });
 

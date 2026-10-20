@@ -59,7 +59,7 @@ import {
   SeloDaDecisao,
 } from "./decisao-do-lote.jsx";
 import { EspelhosEmMassa } from "./espelhos-em-massa.tsx";
-import { RelatorioDeMotivos } from "./relatorio-de-motivos.tsx";
+import { RelatorioDeMotivosDaFila } from "./relatorio-de-motivos.tsx";
 import { ModeloDoEspelhoDeNota } from "./modelo-do-espelho.tsx";
 import { ConteudoDaFicha } from "./ficha/ficha.jsx";
 import { ResumoDoAndamento } from "./resumo-do-andamento.tsx";
@@ -809,7 +809,8 @@ export function Fila({ e, fila }) {
   const [incluindo, setIncluindo] = useState(false);
   const [espelhos, setEspelhos] = useState(false);
   const [modeloDoEspelho, setModeloDoEspelho] = useState(false);
-  const [relatorio, setRelatorio] = useState(false);
+  // A gaveta do relatório abre pelo próprio estado: abrir e fechar não redesenham a lista.
+  const relatorio = useRef(null);
   const [busca, setBusca] = useState(st.filtro.busca);
   const [recolhidos, setRecolhidos] = useState(() => new Set());
   // A ordem da tabela fica aqui: Anterior / Próxima da ficha seguem a mesma.
@@ -1029,7 +1030,7 @@ export function Fila({ e, fila }) {
       id: "relatorio-de-motivos",
       rotulo: "Relatório de motivos",
       icone: "fa-table-list",
-      aoEscolher: () => setRelatorio(true),
+      aoEscolher: () => relatorio.current?.abrir(),
       dados: {
         "data-acao": "relatorio-de-motivos",
         "data-tour": "avd-fila-relatorio-de-motivos",
@@ -1260,17 +1261,16 @@ export function Fila({ e, fila }) {
           aoFechar={() => setModeloDoEspelho(false)}
         />
       ) : null}
-      {relatorio && coordena ? (
-        <RelatorioDeMotivos
-          editalId={st.editalId || e.editalId}
-          edital={dados.edital?.rotulo}
-          regra={e.dados?.regra?.configuracao}
-          vagas={dados.vagas || []}
-          analistas={dados.analistas || []}
-          rpc={fila.rpc}
-          aoFechar={() => setRelatorio(false)}
-        />
-      ) : null}
+      <RelatorioDeMotivosDaFila
+        ref={relatorio}
+        coordena={coordena}
+        editalId={st.editalId || e.editalId}
+        edital={dados.edital?.rotulo}
+        regra={e.dados?.regra?.configuracao}
+        vagas={dados.vagas}
+        analistas={dados.analistas}
+        rpc={fila.rpc}
+      />
       {acao ? (
         <AcaoEmLote
           key={`${acao.tipo}:${acao.fichas.length}`}

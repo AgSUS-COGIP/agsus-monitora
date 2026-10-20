@@ -1,9 +1,16 @@
+// Antes do react-dom: conta os desenhos de cada componente.
+import { renders } from "../componentes/contar-renders.js";
 import { readFileSync } from "node:fs";
 import { act, createElement } from "react";
 import { createRoot } from "react-dom/client";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { RelatorioDeMotivos } from "../../src/modulos/avaliacao-documental/relatorio-de-motivos.tsx";
-import { clicar, escolher, esperar } from "../componentes/interacoes.js";
+import {
+  clicar,
+  digitar,
+  escolher,
+  esperar,
+} from "../componentes/interacoes.js";
 
 /*
   Relatório de motivos (gaveta da coordenação): o atalho "Outro motivo por
@@ -187,5 +194,59 @@ describe("Relatório de motivos", () => {
     expect($("[role='alert']").textContent).toContain(
       "Só o administrador e a coordenação do edital",
     );
+  });
+
+  it("trocar filtros não redesenha a tabela nem o resultado, e não vai ao banco", async () => {
+    // 120 fichas: a tabela mostra 50 de cada vez.
+    const fichas = Array.from({ length: 120 }, (_, i) =>
+      ficha(String(i + 1), `Texto ${i % 4}.`),
+    );
+    const rpc = vi.fn(async () => ({ fichas, total: 120, proximo: null }));
+    await montar({ rpc });
+    await clicar($("[data-atalho='outro-por-criterio']"));
+    await esperar();
+    expect(document.querySelectorAll("tr[data-codigo]")).toHaveLength(50);
+    renders.zerar();
+    await escolher($("[data-filtro='resultado']"), "APTO");
+    await escolher($("[data-filtro='vaga']"), "182502");
+    await escolher($("[data-filtro='situacao']"), "NAO_CONFORME");
+    await clicar($("[data-filtro='ajustada']"));
+    // Só o painel de filtros redesenha; linhas, tabela e contagem ficam.
+    expect(renders.de("PainelDeFiltros")).toBe(4);
+    expect(renders.de("LinhaDaFicha")).toBe(0);
+    expect(renders.de("TabelaInfinita")).toBe(0);
+    expect(renders.de("RelatorioDeMotivos")).toBe(0);
+    expect(rpc).toHaveBeenCalledTimes(1);
+    expect($("[data-filtro='resultado']").value).toBe("APTO");
+    expect($("[data-filtro='ajustada']").checked).toBe(true);
+    // O próximo Gerar relatório leva os filtros escolhidos.
+    await clicar($("[data-acao='gerar-relatorio']"));
+    await esperar();
+    expect(rpc.mock.calls[1][1].p_filtros).toMatchObject({
+      blocos: ["IDENTIDADE"],
+      resultados: ["APTO"],
+      vagas: ["182502"],
+      ajustada: true,
+    });
+  });
+
+  it("a busca da tabela recorta as linhas; agrupar não redesenha as linhas", async () => {
+    const rpc = rpcFalso();
+    await montar({ rpc });
+    await clicar($("[data-atalho='outro-por-criterio']"));
+    await esperar();
+    renders.zerar();
+    await clicar($("[data-filtro='agrupar']"));
+    expect(document.querySelectorAll("[data-grupo-quantidade]")).toHaveLength(
+      0,
+    );
+    expect(renders.de("LinhaDaFicha")).toBe(0);
+    await digitar($("input[type='search']"), "frente");
+    expect(
+      [...document.querySelectorAll("tr[data-codigo]")].map(
+        (tr) => tr.dataset.codigo,
+      ),
+    ).toEqual(["3"]);
+    expect(rpc).toHaveBeenCalledTimes(2);
   });
 });
