@@ -302,12 +302,21 @@ def linhas_do_relatorio(relatorios, pedidos, seco):
 
 
 def vagas_pedidas(args, config, chamar):
-    """As vagas: os códigos pedidos ou as dos editais (listar_vagas_empregare, só leitura), até o limite."""
+    """
+    As vagas: os códigos pedidos ou as dos editais (listar_vagas_empregare, só
+    leitura), até o limite. Finalidade "anexos": as vagas de edital com
+    inscrições congeladas vêm também (migration 20261020170000; reler anexos não
+    muda situação nem lote). Banco sem a finalidade: a chamada de antes.
+    """
     if args.vagas:
         return [{"vaga": v} for v in args.vagas][: args.limite]
-    lista = chamar(
-        config, "listar_vagas_empregare", {"p_editais": args.editais, "p_vagas": None, "p_limite": args.limite}
-    )
+    corpo = {"p_editais": args.editais, "p_vagas": None, "p_limite": args.limite}
+    try:
+        lista = chamar(config, "listar_vagas_empregare", dict(corpo, p_finalidade="anexos"))
+    except supabase_rpc.ErroDoSupabase as erro:
+        if getattr(erro, "status", None) != 404:
+            raise
+        lista = chamar(config, "listar_vagas_empregare", corpo)
     return (lista or {}).get("vagas") or []
 
 

@@ -1849,3 +1849,19 @@
   color: var(--text-primary);
   font-weight: var(--font-weight-semibold, 600);
 }
+
+/* Cartão "Inscrições congeladas" (trava-das-inscricoes.tsx, 20261020170000). */
+.avd-trava {
+  display: grid;
+  gap: var(--space-2);
+  margin-bottom: var(--space-3);
+  min-width: 0;
+}
+.avd-trava-form {
+  display: grid;
+  gap: var(--space-2);
+}
+.avd-trava-historico ul {
+  margin: var(--space-1) 0 0;
+  padding-left: var(--space-4);
+}

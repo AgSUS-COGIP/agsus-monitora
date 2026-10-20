@@ -287,6 +287,14 @@ os modelos em `supabase/correcoes/20261006-modelos-da-regra-da-analise.sql` e o 
 **fonte:** src/modulos/avaliacao-documental/inscricoes-do-edital.tsx; src/lib/avaliacao-documental/acompanhamento-das-inscricoes.ts; python/monitora/avaliacao_documental/retrato_das_inscricoes.py; supabase/migrations/20261009140000_acompanhamento_das_inscricoes.sql
 **abrir:** avaliacao-documental
 
+## Inscrições congeladas
+
+**perguntas:** inscricoes congeladas | congelar inscricoes | liberar inscricoes | travar o lote | robo nao atualiza o edital | por que o robo pulou o edital | forcar edital congelado | inscricoes encerradas nao mudam | o lote nao pode mudar | recusado inscricoes congeladas
+**resposta:** Depois que as inscrições acabam, a coordenação pode congelar o edital na aba Pré-classificação (cartão "Inscrições congeladas" › Congelar inscrições, com motivo). Com a trava ligada, o robô da Empregare não exporta nem grava candidatos das vagas do edital — no "Rodar agora" sem filtro ele pula o edital; com o edital ou a vaga pedidos, recusa a execução inteira — e a pré-classificação não recalcula nem refaz o lote dele (no fim do robô, fica de fora; no Recalcular, é recusada). Continuam: o modo "Só anexos" (relê os anexos sem mexer em situação nem lote) e os modos seco. Quem liga e desliga: a coordenação da avaliação do edital ou o administrador global; cada mudança fica no histórico do cartão. Para uma carga excepcional, só o administrador global, em Status das atualizações › Rodar com opções, marca "Forçar edital com inscrições congeladas" e escreve o motivo: o banco registra a liberação (vale 12 horas) e a execução que a usou.
+**fato:** No MONITORA, edital com inscrições congeladas não é atualizado pelo robô da Empregare nem pela pré-classificação; só o administrador global força, com motivo registrado.
+**fonte:** src/modulos/avaliacao-documental/trava-das-inscricoes.tsx; src/lib/avaliacao-documental/trava-das-inscricoes.ts; supabase/migrations/20261020170000_inscricoes_congeladas.sql
+**abrir:** avaliacao-documental
+
 ## Listas Provisória e Lote de convocação
 
 **perguntas:** lista provisoria oficial | lote de convocacao oficial | registrar a lista provisoria | publicar o lote | copiar para o sei a provisoria | baixar docx da provisoria | publicar cada reposicao | lista lote

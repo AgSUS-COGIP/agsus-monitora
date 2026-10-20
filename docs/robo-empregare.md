@@ -265,6 +265,31 @@ pré-classificação e as conferências têm a mesma gaveta, com os campos que a
 "Rodar agora" ou alguém dispara pelo GitHub. Exceção: a **agenda das inscrições** de um edital
 (ex.: 114/2026, 7h e 13h até 15/10/2026), que desliga sozinha (docs/agenda-dos-robos.md). Uma execução por vez (as outras esperam na fila); tempo limite de 2 h.
 
+### Inscrições congeladas (migration 20261020170000)
+
+Edital com a trava **Inscrições congeladas** ligada (aba Pré-classificação, coordenação do edital
+ou administrador global; `TB_CONGELAMENTO_INSCRICAO`) não muda mais pelo robô nem pela
+pré-classificação:
+
+- **sem filtro** ("Rodar agora"): as vagas do edital ficam fora da lista
+  (`listar_vagas_empregare`, finalidade `carga`) e o resumo diz "Editais com inscrições congeladas
+  (pulados)";
+- **com o edital ou a vaga pedidos** (normal/forçar): a tela recusa o pedido (55000) e, se vier
+  pelo GitHub, o robô recusa a execução inteira — nada exportado;
+- **de raiz**: `FC_EMPREGARE_ABRIR_VAGA` dá RECUSADA à vaga de edital congelado (nada gravado nem
+  desativado), inclusive para versões antigas do robô;
+- a **pré-classificação** (após robô, normal, refazer lote) pula ou recusa o edital;
+- continuam: **Só anexos**, seco, fumaça e sondar.
+
+Override, só do administrador global: **Opções** → modo Normal/Forçar com o edital → **Forçar
+edital com inscrições congeladas** + motivo. O banco grava a liberação (12 h) e manda o token como
+`forcar_congelado`; o robô e o passo "Pré-classificar" registram o uso na execução
+(`TH_CONGELAMENTO_INSCRICAO`). Pelo Run workflow, deixe `forcar_congelado` em branco.
+
+**Registro:** toda execução iniciada direto aqui (Run workflow, `gh workflow run`) aparece em
+Status das atualizações › Agenda dos robôs como "iniciada no GitHub por &lt;login&gt;" (primeiro passo
+do workflow; se falhar, só avisa).
+
 ### Teste de fumaça (depois de cadastrar os segredos)
 
 1. Actions → Robô da Empregare → Run workflow → modo **`fumaca`**: verde = o login funciona e a

@@ -30,6 +30,7 @@ import {
 } from "./decisao-do-lote.jsx";
 import { chaveDaLista } from "./estado-da-pre-classificacao.js";
 import { InscricoesDoEdital } from "./inscricoes-do-edital.tsx";
+import { TravaDasInscricoes } from "./trava-das-inscricoes.tsx";
 
 /*
   Aba Pré-classificação (fase F2): a Lista Geral de Classificação Provisória
@@ -514,6 +515,7 @@ export function PreClassificacao({ e, estado, pre }) {
 
   return (
     <div className="avd-pre">
+      <TravaDasInscricoes editalId={e.editalId} rpc={pre.rpc} />
       <InscricoesDoEdital dados={p.inscricoes} />
       <GradeDeKpis rotulo="Pré-classificação">
         <Kpi

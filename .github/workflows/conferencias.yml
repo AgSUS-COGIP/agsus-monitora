@@ -65,6 +65,19 @@ jobs:
         with:
           python-version: "3.12"
 
+      # Execução iniciada direto no GitHub: registra no MONITORA (Status das
+      # atualizações) com quem a iniciou (migration 20261020170000). Nunca derruba o job.
+      - name: Registrar a execução no MONITORA
+        continue-on-error: true
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          PYTHONPATH: python
+          ATOR_GITHUB: ${{ github.triggering_actor }}
+          DISPARADO_POR: ${{ inputs.disparado_por }}
+          MODO: ${{ inputs.modo || 'normal' }}
+        run: python -m monitora.disparo_externo conferencias.yml
+
       # Os inputs vão por variável de ambiente (nunca interpolados no shell).
       - name: Conferir
         env:

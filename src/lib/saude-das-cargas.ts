@@ -96,7 +96,8 @@ const ESTADOS = Object.freeze({
   robo: { ok: ["CONCLUIDA"], falha: ["FALHOU", "PARCIAL"] },
   conferencia: { ok: ["CONCLUIDA"], falha: ["FALHOU", "PARCIAL"] },
   tarefa: { ok: ["succeeded"], falha: ["failed"] },
-  disparo: { ok: ["ACEITO"], falha: ["FALHOU", "SEM_TOKEN"] },
+  // INICIADO: execução iniciada direto no GitHub (origem GITHUB, 20261020170000).
+  disparo: { ok: ["ACEITO", "INICIADO"], falha: ["FALHOU", "SEM_TOKEN"] },
 });
 
 const registro = (valor: unknown): Record<string, unknown> =>
@@ -206,6 +207,7 @@ const QUEM_DISPAROU: Readonly<Record<string, string>> = Object.freeze({
   MONITORA: "Rodar agora",
   GITHUB: "GitHub",
   ROBO: "fim do robô da Empregare",
+  MANUAL: "SQL direto",
 });
 
 /* Execução do robô da Empregare: as contagens de vagas entram na mensagem. */
@@ -272,7 +274,13 @@ function execucaoDoDisparo(entrada: unknown) {
   const workflow = texto(bruta?.workflow);
   const http = inteiro(bruta?.http);
   const partes = [rotulo(NOMES_DOS_WORKFLOWS, workflow) || workflow || "Robô"];
-  if (texto(bruta?.origem) === "MONITORA") partes.push("Rodar agora");
+  // A origem (20261020170000): AGENDA sem rótulo; GITHUB com quem iniciou.
+  const origem = texto(bruta?.origem);
+  const ator = texto(bruta?.ator);
+  if (origem === "MONITORA") partes.push("Rodar agora");
+  else if (origem === "MANUAL") partes.push("SQL direto, sem usuário");
+  else if (origem === "GITHUB")
+    partes.push(ator ? `iniciada no GitHub por ${ator}` : "iniciada no GitHub");
   if (http !== null) partes.push(`HTTP ${http}`);
   const mensagem = texto(bruta?.mensagem);
   if (mensagem) partes.push(mensagem);

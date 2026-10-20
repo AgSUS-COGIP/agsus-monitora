@@ -19,6 +19,7 @@ import {
   validarOpcoes,
   MODOS_COM_ANEXOS,
   MODO_SO_ANEXOS,
+  MOTIVO_DO_CONGELADO,
 } from "../../lib/robos-de-carga.js";
 import { Aviso, Campo, Gaveta, Segmentado } from "../../ui/index.js";
 import { Icone } from "../icone.jsx";
@@ -32,7 +33,9 @@ import { MultiSelectBusca } from "../multi-select-busca.jsx";
   vai rodar antes de confirmar. Só os campos que o robô aceita
   (OPCOES_DOS_ROBOS); a mesma validação da função (validarOpcoes) e as
   regras da prévia em src/lib/painel-dos-robos.ts. A explicação é da Aya
-  (verbete "Rodar um robô com opções").
+  (verbete "Rodar um robô com opções"). "Forçar edital com inscrições
+  congeladas" (20261020170000) só aparece nos modos que gravam e pede motivo;
+  o banco grava a liberação.
 */
 
 const ESPERA_DA_BUSCA_MS = 350;
@@ -262,7 +265,10 @@ export function RodarComOpcoes({
   const [anexos, setAnexos] = useState(false);
   const [textoDosCandidatos, setTextoDosCandidatos] = useState("");
   const [seco, setSeco] = useState(false);
+  const [forcarCongelado, setForcarCongelado] = useState(false);
+  const [motivoDoCongelado, setMotivoDoCongelado] = useState("");
   const [enviando, setEnviando] = useState(false);
+  const podeForcarCongelado = Boolean(aceitas.forcar_congelado?.includes(modo));
 
   const { codigos, invalidos } = useMemo(
     () => separarCodigos(textoDasVagas),
@@ -287,6 +293,9 @@ export function RodarComOpcoes({
     ...(aceitas.limite ? { limite } : {}),
     ...(aceitas.anexos && MODOS_COM_ANEXOS.includes(modo) ? { anexos } : {}),
     ...(soAnexos ? { candidatos: candidatos.codigos, seco } : {}),
+    ...(podeForcarCongelado && forcarCongelado
+      ? { forcar_congelado: true, motivo: motivoDoCongelado }
+      : {}),
   };
   const conferido = validarOpcoes(robo, pedidoBruto);
   const erroDasVagas = invalidos.length
@@ -487,6 +496,45 @@ export function RodarComOpcoes({
               />{" "}
               Guardar links dos anexos do questionário
             </label>
+          ) : null}
+
+          {podeForcarCongelado ? (
+            <div
+              className="robos-opcoes__congelado"
+              data-tour="robos-opcoes-congelado"
+            >
+              <label className="robos-opcoes__marcar">
+                <input
+                  type="checkbox"
+                  checked={forcarCongelado}
+                  onChange={(e) => setForcarCongelado(e.target.checked)}
+                />{" "}
+                Forçar edital com inscrições congeladas
+              </label>
+              {forcarCongelado ? (
+                <>
+                  <Aviso tom="warning">
+                    Grava inscrições e lote de edital congelado. Fica registrado
+                    com o seu nome e o motivo.
+                  </Aviso>
+                  <Campo
+                    rotulo="Motivo para forçar"
+                    erro={
+                      conferido.erro === "motivo_do_congelado"
+                        ? conferido.texto
+                        : ""
+                    }
+                  >
+                    <textarea
+                      rows={2}
+                      maxLength={MOTIVO_DO_CONGELADO.max}
+                      value={motivoDoCongelado}
+                      onChange={(e) => setMotivoDoCongelado(e.target.value)}
+                    />
+                  </Campo>
+                </>
+              ) : null}
+            </div>
           ) : null}
 
           <section

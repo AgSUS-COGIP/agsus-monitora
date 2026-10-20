@@ -523,6 +523,34 @@ describe("agenda dos robôs pelo banco (20261008140000)", () => {
     );
   });
 
+  it("execução iniciada no GitHub (com quem iniciou) e pedido pelo SQL direto (20261020170000)", () => {
+    const linha = agenda({
+      chave_cadastrada: true,
+      ultimo_aceito: ha(30),
+      falhas_24h: 0,
+      sem_chave_24h: 0,
+      disparos: [
+        disparo("INICIADO", 5, {
+          workflow: "robo-empregare.yml",
+          origem: "GITHUB",
+          ator: "fulano",
+          mensagem: "modo normal · editais 93/2026",
+        }),
+        disparo("ACEITO", 20, {
+          workflow: "pre-classificacao.yml",
+          origem: "MANUAL",
+        }),
+        disparo("ACEITO", 30, { origem: "AGENDA" }),
+      ],
+    });
+    expect(linha.partes[0].historico.map((e) => e.mensagem)).toEqual([
+      "Robô da Empregare · iniciada no GitHub por fulano · modo normal · editais 93/2026",
+      "Pré-classificação · SQL direto, sem usuário · HTTP 204",
+      "Entrevistas · HTTP 204",
+    ]);
+    expect(linha.partes[0].historico[0].situacao).toBe("ok");
+  });
+
   it("sem chave cadastrada no Vault, falhou mesmo sem pedido nenhum", () => {
     const linha = agenda({
       chave_cadastrada: false,

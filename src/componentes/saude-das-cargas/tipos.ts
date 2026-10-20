@@ -119,6 +119,10 @@ export interface OpcoesDoRobo {
   candidatos?: boolean;
   /** Aceita "seco" (só compara, sem gravar; só no modo anexos). */
   seco?: boolean;
+  /** Modos em que o administrador global força edital com inscrições congeladas. */
+  forcar_congelado?: readonly string[];
+  /** Aceita "motivo" (só com forcar_congelado). */
+  motivo?: boolean;
 }
 export interface RoboDeCarga {
   readonly id: string;
@@ -138,6 +142,9 @@ export interface OpcoesConferidas {
   candidatos?: string[];
   /** Modo anexos: só compara, sem gravar. */
   seco?: true;
+  /** Forçar edital com inscrições congeladas (com o motivo). */
+  forcar_congelado?: true;
+  motivo?: string;
 }
 export type ResultadoDasOpcoes =
   | { opcoes: OpcoesConferidas; erro?: never; texto?: never }
@@ -159,6 +166,8 @@ export interface InputsDoPedido {
   anexos?: boolean;
   candidatos?: string[];
   seco?: boolean;
+  forcar_congelado?: boolean;
+  motivo?: string;
 }
 export interface SituacaoDoPedido {
   situacao: string;

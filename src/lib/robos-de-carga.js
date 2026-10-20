@@ -79,6 +79,9 @@ export function editalDoPedido(valor) {
   20261020130000) relê só os anexos do questionário, sem exportar nem
   pré-classificar; pede vagas ou editais e é o único que aceita `candidatos`
   (códigos da Empregare) e `seco` (só compara, sem gravar).
+  `forcar_congelado` (20261020170000): os modos em que o administrador global
+  pode forçar edital com inscrições congeladas — só com o edital ou as vagas
+  pedidos e um `motivo` de 10 a 500 caracteres (o banco grava a liberação).
 */
 /** @type {Readonly<Record<string, import("../componentes/saude-das-cargas/tipos.ts").OpcoesDoRobo>>} */
 export const OPCOES_DOS_ROBOS = Object.freeze({
@@ -126,6 +129,8 @@ export const OPCOES_DOS_ROBOS = Object.freeze({
     anexos: true,
     candidatos: true,
     seco: true,
+    forcar_congelado: Object.freeze(["normal", "forcar"]),
+    motivo: true,
   }),
   pre_classificacao: Object.freeze({
     modos: Object.freeze([
@@ -150,6 +155,8 @@ export const OPCOES_DOS_ROBOS = Object.freeze({
     editais: "numero_ou_id",
     vagas: false,
     limite: null,
+    forcar_congelado: Object.freeze(["normal", "refazer_lote"]),
+    motivo: true,
   }),
   conferencias: Object.freeze({
     modos: Object.freeze([
@@ -183,7 +190,10 @@ const CHAVES_DAS_OPCOES = [
   "anexos",
   "candidatos",
   "seco",
+  "forcar_congelado",
+  "motivo",
 ];
+export const MOTIVO_DO_CONGELADO = Object.freeze({ min: 10, max: 500 });
 /* Os modos em que o robô da Empregare guarda os links dos anexos. */
 export const MODOS_COM_ANEXOS = Object.freeze(["normal", "forcar"]);
 export const LIMITE_DA_SONDAGEM = 3;
@@ -360,6 +370,37 @@ export function validarOpcoes(robo, bruto) {
       texto: "Candidatos e “só comparar” só no modo Só anexos.",
     };
 
+  // Forçar edital com inscrições congeladas (20261020170000): só nos modos que
+  // gravam, com o edital ou as vagas pedidos e o motivo.
+  const forcarCongelado =
+    Array.isArray(aceitas.forcar_congelado) &&
+    (bruto.forcar_congelado === true || bruto.forcar_congelado === "true");
+  const motivo = String(bruto.motivo ?? "").trim();
+  if (forcarCongelado) {
+    if (!aceitas.forcar_congelado.includes(modo))
+      return {
+        erro: "congelado_no_modo",
+        texto: "Forçar edital congelado só nos modos que gravam.",
+      };
+    if (!editais.length && !vagas.length)
+      return {
+        erro: "congelado_sem_edital",
+        texto: "Forçar edital congelado pede o edital ou as vagas.",
+      };
+    if (
+      motivo.length < MOTIVO_DO_CONGELADO.min ||
+      motivo.length > MOTIVO_DO_CONGELADO.max
+    )
+      return {
+        erro: "motivo_do_congelado",
+        texto: `Informe o motivo para forçar (${MOTIVO_DO_CONGELADO.min} a ${MOTIVO_DO_CONGELADO.max} caracteres).`,
+      };
+  } else if (motivo)
+    return {
+      erro: "motivo_sem_forcar",
+      texto: "O motivo só vale com “Forçar edital com inscrições congeladas”.",
+    };
+
   return {
     opcoes: {
       modo,
@@ -369,6 +410,7 @@ export function validarOpcoes(robo, bruto) {
       ...(anexos ? { anexos: true } : {}),
       ...(candidatos.length ? { candidatos } : {}),
       ...(seco ? { seco: true } : {}),
+      ...(forcarCongelado ? { forcar_congelado: true, motivo } : {}),
     },
   };
 }
@@ -434,6 +476,10 @@ export function inputsDoPedido({ opcoes = null, edital = "" } = {}) {
   if (opcoes?.anexos) inputs.anexos = true;
   if (opcoes?.candidatos?.length) inputs.candidatos = [...opcoes.candidatos];
   if (opcoes?.seco) inputs.seco = true;
+  if (opcoes?.forcar_congelado) {
+    inputs.forcar_congelado = true;
+    inputs.motivo = String(opcoes.motivo ?? "");
+  }
   // O banco confere o id (e se quem pede coordena o edital).
   const id = String(edital ?? "").trim();
   if (!opcoes && id) inputs.editais = [id];

@@ -24,6 +24,15 @@ name: Robô da Empregare
 # Ao fim de uma carga normal ou forçada, o passo "Pré-classificar" recalcula a
 # pré-classificação da Avaliação documental dos editais carregados
 # (scripts/pre_classificacao/; ver pre-classificacao.yml).
+# Inscrições congeladas (migration 20261020170000): edital com a trava ligada
+# fica fora da carga e da pré-classificação (sem filtro, pulado; pedido em
+# editais/vagas, a execução é recusada). "forcar_congelado" é o token que o
+# MONITORA manda quando o administrador global pede "Forçar edital com
+# inscrições congeladas" (com motivo, registrado no banco); vale para o robô e
+# para o passo "Pré-classificar". O modo anexos continua permitido.
+# Registro: o primeiro passo grava no MONITORA a execução iniciada direto aqui
+# (Run workflow, gh workflow run), com quem a iniciou (python/monitora/
+# disparo_externo.py); falha nele só gera aviso.
 # Como operar e o que fazer quando falha: docs/robo-empregare.md.
 #
 # O REPOSITÓRIO É PÚBLICO e este log também: o robô só imprime contagens,
@@ -85,6 +94,11 @@ on:
         type: string
         required: false
         default: ""
+      forcar_congelado:
+        description: "Preenchido pelo MONITORA (liberação do administrador global para edital com inscrições congeladas); deixe em branco"
+        type: string
+        required: false
+        default: ""
 
 permissions:
   contents: read
@@ -113,6 +127,23 @@ jobs:
           cache: pip
           cache-dependency-path: scripts/robo-empregare/requirements.txt
 
+      # Execução iniciada direto no GitHub: registra no MONITORA (Status das
+      # atualizações) com quem a iniciou. Nunca derruba o robô.
+      - name: Registrar a execução no MONITORA
+        continue-on-error: true
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          PYTHONPATH: python
+          ATOR_GITHUB: ${{ github.triggering_actor }}
+          DISPARADO_POR: ${{ inputs.disparado_por }}
+          MODO: ${{ inputs.modo || 'normal' }}
+          EDITAIS: ${{ inputs.editais }}
+          VAGAS: ${{ inputs.vagas }}
+          LIMITE: ${{ inputs.limite || '60' }}
+          FORCAR_CONGELADO: ${{ inputs.forcar_congelado }}
+        run: python -m monitora.disparo_externo robo-empregare.yml
+
       - name: Instalar dependências do robô
         run: pip install --disable-pip-version-check -r scripts/robo-empregare/requirements.txt
 
@@ -136,6 +167,7 @@ jobs:
           CANDIDATOS: ${{ inputs.candidatos }}
           SECO: ${{ inputs.seco && 'sim' || 'nao' }}
           DISPARADO_POR: ${{ inputs.disparado_por }}
+          FORCAR_CONGELADO: ${{ inputs.forcar_congelado }}
         run: |
           args=(--editais "$EDITAIS" --vagas "$VAGAS" --limite "$LIMITE")
           case "$MODO" in
@@ -157,7 +189,8 @@ jobs:
       # Roda também se o robô terminou parcial. Uma falha aqui não muda o
       # resultado do robô: aparece no log e no Status das atualizações, e o
       # "Recalcular" da aba Pré-classificação refaz. NUNCA no modo anexos (nem nos
-      # outros): só normal e forcar exportam e mexem na carga.
+      # outros): só normal e forcar exportam e mexem na carga. Edital com
+      # inscrições congeladas fica de fora, salvo o mesmo forcar_congelado.
       - name: Pré-classificar os editais carregados
         if: ${{ !cancelled() && (inputs.modo == 'normal' || inputs.modo == 'forcar') }}
         continue-on-error: true
@@ -165,4 +198,5 @@ jobs:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
           DISPARADO_POR: robo
+          FORCAR_CONGELADO: ${{ inputs.forcar_congelado }}
         run: python scripts/pre_classificacao/pre_classificacao.py --apos-robo

@@ -513,6 +513,9 @@ export function criarEstadoDaPreClassificacao({
       ouvintes.add(ouvinte);
       return () => ouvintes.delete(ouvinte);
     },
+    // A chamada com tempo limite, para o cartão "Inscrições congeladas"
+    // (trava-das-inscricoes.tsx, que lê e muda a trava sozinho).
+    rpc,
     carregar,
     garantirCarregado,
     recalcular,
