@@ -315,13 +315,13 @@ export function RelatorioDeMotivos({
               onChange={(ev) => mudar({ resultado: ev.target.value })}
             >
               <option value="">Todos</option>
-              {(RESULTADOS as unknown as readonly (readonly [string, string])[]).map(
-                ([valor, rotulo]) => (
-                  <option key={valor} value={valor}>
-                    {rotulo}
-                  </option>
-                ),
-              )}
+              {(
+                RESULTADOS as unknown as readonly (readonly [string, string])[]
+              ).map(([valor, rotulo]) => (
+                <option key={valor} value={valor}>
+                  {rotulo}
+                </option>
+              ))}
             </select>
           </Campo>
           <Campo rotulo="Situação da ficha">
