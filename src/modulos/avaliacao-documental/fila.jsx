@@ -1,4 +1,5 @@
 import {
+  memo,
   useCallback,
   useEffect,
   useMemo,
@@ -77,6 +78,12 @@ import { ResumoDoAndamento } from "./resumo-do-andamento.tsx";
   ficha, com "Revogar decisão": decisao-do-lote.jsx) e a ficha aberta
   com a reserva; o conteúdo da análise (F4) é ficha/ficha.jsx. Explicações:
   docs/aya/regras-da-avaliacao-documental.md.
+
+  Desempenho (lista de até ~7.700 inscritos): os derivados da lista ficam em
+  useMemo, as funções passadas à tabela em useCallback, a tabela e cada linha
+  em React.memo. Ainda em .jsx: passar a .tsx pede tipar as props de todos os
+  componentes do arquivo e as libs .js que ele usa (tsconfig estrito) — fica
+  para uma conversão própria, sem mudar comportamento junto.
 */
 
 function SituacaoDaLinha({ c }) {
@@ -602,17 +609,80 @@ function Celula({ c, chave, eu }) {
 }
 
 /*
+  Uma linha da tabela, memorizada: só redesenha quando o próprio inscrito
+  muda (a releitura parcial mantém o mesmo objeto para quem não mudou), a
+  caixa dela é marcada ou desmarcada, ou muda a etapa / "abrindo". Selecionar
+  uma linha não redesenha as outras 49.
+*/
+const LinhaDaFila = memo(function LinhaDaFila({
+  c,
+  chaves,
+  comCaixa,
+  comAbrir,
+  marcada,
+  marcar,
+  abrindo,
+  eu,
+  fila,
+}) {
+  return (
+    <tr data-candidato={c.codigo}>
+      {comCaixa ? (
+        <td>
+          {c.ficha ? (
+            <input
+              type="checkbox"
+              aria-label={`Selecionar ${c.codigo}`}
+              checked={marcada}
+              onChange={(ev) => marcar(c.id, ev.target.checked)}
+            />
+          ) : null}
+        </td>
+      ) : null}
+      {chaves.map((chave) => (
+        <td
+          key={chave}
+          className={COLUNAS_DA_FILA[chave].numero ? "num" : undefined}
+          data-coluna={chave}
+        >
+          <Celula c={c} chave={chave} eu={eu} />
+        </td>
+      ))}
+      {comAbrir ? (
+        <td>
+          {c.ficha ? (
+            <button
+              type="button"
+              className="btn secondary small"
+              disabled={abrindo}
+              onClick={() => void fila.abrir(c.ficha.id)}
+            >
+              Abrir
+            </button>
+          ) : null}
+        </td>
+      ) : null}
+    </tr>
+  );
+});
+
+/*
   A tabela da aba (TabelaInfinita, src/ui/): as colunas que fazem sentido na
   etapa (Eliminados: motivo e ART; Concluídas: nota, resultado, responsável e
   data; Pendentes e Em análise: posição, ART, responsável e reserva), ordem
   por coluna, "N de M", carregamento contínuo, o grupo por vaga (código,
   cargo, lote e linha de corte; recolhível) e "Exportar CSV" da aba, na ordem
   da coluna e sem agrupar. A busca por código ou nome fica nos filtros.
+
+  Memorizada (React.memo): recebe só valores estáveis da Fila (listas e
+  funções memorizadas, a etapa e "abrindo" em vez do estado inteiro), então
+  abrir um menu, uma gaveta ou uma mensagem do estado não a redesenham.
 */
-function TabelaDaFila({
-  st,
+const TabelaDaFila = memo(function TabelaDaFila({
+  etapa,
+  abrindo,
+  eu,
   fila,
-  dados,
   linhas,
   ordenadas,
   exibidas,
@@ -628,6 +698,93 @@ function TabelaDaFila({
   limparSelecao,
   grupo,
 }) {
+  const chaves = colunasDaEtapa(etapa);
+  const comFicha = useMemo(() => linhas.filter((c) => c.ficha), [linhas]);
+  const comCaixa = coordena && comFicha.length > 0;
+  const comAbrir = comFicha.length > 0;
+  const todasMarcadas =
+    comFicha.length > 0 && comFicha.every((c) => selecao.has(c.id));
+  const rotuloDaEtapa =
+    ETAPAS_DA_FILA.find((e) => e.valor === etapa)?.rotulo || "Inscritos";
+
+  const colunas = useMemo(
+    () => [
+      ...(comCaixa
+        ? [
+            {
+              chave: "selecionar",
+              rotulo: "Selecionar",
+              largura: "2.75rem",
+              cabecalho: (
+                <input
+                  type="checkbox"
+                  aria-label="Selecionar as fichas da lista"
+                  checked={todasMarcadas}
+                  onChange={(ev) => {
+                    for (const c of comFicha) marcar(c.id, ev.target.checked);
+                  }}
+                />
+              ),
+            },
+          ]
+        : []),
+      ...chaves.map((chave) => ({
+        chave,
+        rotulo:
+          COLUNAS_DA_FILA[chave].rotuloCurto ?? COLUNAS_DA_FILA[chave].rotulo,
+        dica: COLUNAS_DA_FILA[chave].dica,
+        numero: COLUNAS_DA_FILA[chave].numero,
+        ordem: ordem.chave === chave ? ordem.sentido : "",
+        aoOrdenar: () => setOrdem((atual) => proximaOrdem(atual, chave)),
+      })),
+      ...(comAbrir
+        ? [
+            {
+              chave: "abrir",
+              rotulo: "Ficha",
+              cabecalho: <span className="sr-only">Ficha</span>,
+            },
+          ]
+        : []),
+    ],
+    [
+      comCaixa,
+      comAbrir,
+      todasMarcadas,
+      comFicha,
+      marcar,
+      chaves,
+      ordem,
+      setOrdem,
+    ],
+  );
+  const informacao = useCallback(
+    (quantos) =>
+      quantos === null
+        ? ""
+        : quantos === total
+          ? `${formatNumberBR(total)} ${total === 1 ? "inscrito" : "inscritos"}`
+          : `${formatNumberBR(quantos)} de ${formatNumberBR(total)}`,
+    [total],
+  );
+  const linha = useCallback(
+    (c) => (
+      <LinhaDaFila
+        key={c.id}
+        c={c}
+        chaves={chaves}
+        comCaixa={comCaixa}
+        comAbrir={comAbrir}
+        marcada={selecao.has(c.id)}
+        marcar={marcar}
+        abrindo={abrindo}
+        eu={eu}
+        fila={fila}
+      />
+    ),
+    [chaves, comCaixa, comAbrir, selecao, marcar, abrindo, eu, fila],
+  );
+
   if (erroDeFora)
     return (
       <Aviso tom="danger" papel="alert">
@@ -641,55 +798,6 @@ function TabelaDaFila({
         </button>
       </Aviso>
     );
-  const etapa = st.filtro.etapa;
-  const chaves = colunasDaEtapa(etapa);
-  const comFicha = linhas.filter((c) => c.ficha);
-  const comCaixa = coordena && comFicha.length > 0;
-  const comAbrir = comFicha.length > 0;
-  const todasMarcadas =
-    comFicha.length > 0 && comFicha.every((c) => selecao.has(c.id));
-  const rotuloDaEtapa =
-    ETAPAS_DA_FILA.find((e) => e.valor === etapa)?.rotulo || "Inscritos";
-
-  const colunas = [
-    ...(comCaixa
-      ? [
-          {
-            chave: "selecionar",
-            rotulo: "Selecionar",
-            largura: "2.75rem",
-            cabecalho: (
-              <input
-                type="checkbox"
-                aria-label="Selecionar as fichas da lista"
-                checked={todasMarcadas}
-                onChange={(ev) => {
-                  for (const c of comFicha) marcar(c.id, ev.target.checked);
-                }}
-              />
-            ),
-          },
-        ]
-      : []),
-    ...chaves.map((chave) => ({
-      chave,
-      rotulo:
-        COLUNAS_DA_FILA[chave].rotuloCurto ?? COLUNAS_DA_FILA[chave].rotulo,
-      dica: COLUNAS_DA_FILA[chave].dica,
-      numero: COLUNAS_DA_FILA[chave].numero,
-      ordem: ordem.chave === chave ? ordem.sentido : "",
-      aoOrdenar: () => setOrdem((atual) => proximaOrdem(atual, chave)),
-    })),
-    ...(comAbrir
-      ? [
-          {
-            chave: "abrir",
-            rotulo: "Ficha",
-            cabecalho: <span className="sr-only">Ficha</span>,
-          },
-        ]
-      : []),
-  ];
 
   return (
     <TabelaInfinita
@@ -708,13 +816,7 @@ function TabelaDaFila({
           ? "O edital ainda não tem pré-classificação."
           : "Nenhum inscrito nesta etapa."
       }
-      informacao={(quantos) =>
-        quantos === null
-          ? ""
-          : quantos === total
-            ? `${formatNumberBR(total)} ${total === 1 ? "inscrito" : "inscritos"}`
-            : `${formatNumberBR(quantos)} de ${formatNumberBR(total)}`
-      }
+      informacao={informacao}
       grupo={grupo}
       ferramentas={
         <>
@@ -744,48 +846,13 @@ function TabelaDaFila({
           </button>
         </>
       }
-      linha={(c) => (
-        <tr key={c.id} data-candidato={c.codigo}>
-          {comCaixa ? (
-            <td>
-              {c.ficha ? (
-                <input
-                  type="checkbox"
-                  aria-label={`Selecionar ${c.codigo}`}
-                  checked={selecao.has(c.id)}
-                  onChange={(ev) => marcar(c.id, ev.target.checked)}
-                />
-              ) : null}
-            </td>
-          ) : null}
-          {chaves.map((chave) => (
-            <td
-              key={chave}
-              className={COLUNAS_DA_FILA[chave].numero ? "num" : undefined}
-              data-coluna={chave}
-            >
-              <Celula c={c} chave={chave} eu={dados.eu} />
-            </td>
-          ))}
-          {comAbrir ? (
-            <td>
-              {c.ficha ? (
-                <button
-                  type="button"
-                  className="btn secondary small"
-                  disabled={st.abrindo}
-                  onClick={() => void fila.abrir(c.ficha.id)}
-                >
-                  Abrir
-                </button>
-              ) : null}
-            </td>
-          ) : null}
-        </tr>
-      )}
+      linha={linha}
     />
   );
-}
+});
+
+/* A chave do grupo da tabela: a vaga (função de módulo, estável). */
+const vagaDoInscrito = (c) => String(c.vaga ?? "");
 
 /* O cabeçalho do grupo da vaga na tabela: cargo, o lote e a linha de corte. */
 function textoDoGrupo(cargo, resumo, quantos) {
@@ -873,27 +940,116 @@ export function Fila({ e, fila }) {
     () => modalidadesDaFila(candidatos, resumoDeFora),
     [candidatos, resumoDeFora],
   );
-  const selecionados = todos.filter((c) => selecao.has(c.id));
-  const acoes = acoesDaSelecao(selecionados);
+  /*
+    Os derivados que percorrem a lista inteira (até ~7.700 inscritos no
+    114/2026) ficam em memória e só se refazem quando a lista (ou a vaga do
+    filtro) muda: selecionar, trocar outro filtro, abrir um menu ou uma
+    mensagem do estado não os recontam. Os testes de contagem estão em
+    tests/modulos/avaliacao-documental-fila-renders.test.js.
+  */
+  const posicaoNaFila = useMemo(
+    () => new Map(todos.map((c, i) => [c.id, i])),
+    [todos],
+  );
+  // Os selecionados na ordem da fila, olhando só a seleção (não a lista toda).
+  const selecionados = useMemo(
+    () =>
+      [...selecao]
+        .map((id) => posicaoNaFila.get(id))
+        .filter((i) => i !== undefined)
+        .sort((a, b) => a - b)
+        .map((i) => todos[i]),
+    [selecao, posicaoNaFila, todos],
+  );
+  const acoes = useMemo(() => acoesDaSelecao(selecionados), [selecionados]);
   const coordena = Boolean(dados?.pode_coordenar);
-  const noLote = candidatos.filter(
-    (c) => c.ficha && c.ficha.situacao !== "FORA_LOTE",
+  const noLote = useMemo(
+    () => candidatos.filter((c) => c.ficha && c.ficha.situacao !== "FORA_LOTE"),
+    [candidatos],
   );
-  const livres = candidatos.filter(
-    (c) => c.ficha?.situacao === "PENDENTE" && !c.ficha.responsavel,
+  const livres = useMemo(
+    () =>
+      candidatos.filter(
+        (c) => c.ficha?.situacao === "PENDENTE" && !c.ficha.responsavel,
+      ),
+    [candidatos],
   );
-  const lote = loteDaFila(candidatos, st.filtro.vaga);
-  const foraDoLote = todos
-    .filter(
-      (c) =>
-        (!st.filtro.vaga || c.vaga === st.filtro.vaga) &&
-        podeIncluirPorDecisao(c),
-    )
-    .map((c) => ({
-      ...c,
-      situacao: c.situacao_pre,
-      motivo: c.motivo_eliminacao,
-    }));
+  const vagaDoFiltro = st.filtro.vaga;
+  const lote = useMemo(
+    () => loteDaFila(candidatos, vagaDoFiltro),
+    [candidatos, vagaDoFiltro],
+  );
+  const foraDoLote = useMemo(
+    () =>
+      todos
+        .filter(
+          (c) =>
+            (!vagaDoFiltro || c.vaga === vagaDoFiltro) &&
+            podeIncluirPorDecisao(c),
+        )
+        .map((c) => ({
+          ...c,
+          situacao: c.situacao_pre,
+          motivo: c.motivo_eliminacao,
+        })),
+    [todos, vagaDoFiltro],
+  );
+
+  const marcar = useCallback(
+    (id, sim) =>
+      setSelecao((atual) => {
+        const nova = new Set(atual);
+        if (sim) nova.add(id);
+        else nova.delete(id);
+        return nova;
+      }),
+    [],
+  );
+  const limparSelecao = useCallback(() => setSelecao(new Set()), []);
+  const vagas = dados?.vagas;
+  const cargoDaVaga = useMemo(
+    () =>
+      Object.fromEntries((vagas || []).map((v) => [String(v.codigo), v.cargo])),
+    [vagas],
+  );
+  // O resumo de cada vaga (lote e linha de corte) é calculado uma vez por lista.
+  const resumoDaVaga = useMemo(() => {
+    const feitos = new Map();
+    return (vaga) => {
+      if (!feitos.has(vaga))
+        feitos.set(vaga, resumoDaVagaNaFila(candidatos, vaga));
+      return feitos.get(vaga);
+    };
+  }, [candidatos]);
+  const alternarGrupo = useCallback(
+    (vaga) =>
+      setRecolhidos((atual) => {
+        const novo = new Set(atual);
+        if (novo.has(vaga)) novo.delete(vaga);
+        else novo.add(vaga);
+        return novo;
+      }),
+    [],
+  );
+  const grupo = useMemo(
+    () =>
+      agrupada
+        ? {
+            chave: vagaDoInscrito,
+            cabecalho: (vaga, quantos) => (
+              <>
+                <strong>{vaga}</strong>
+                <span className="ui-texto-secundario">
+                  {textoDoGrupo(cargoDaVaga[vaga], resumoDaVaga(vaga), quantos)}
+                </span>
+              </>
+            ),
+            recolhidos,
+            aoAlternar: alternarGrupo,
+          }
+        : null,
+    [agrupada, cargoDaVaga, resumoDaVaga, recolhidos, alternarGrupo],
+  );
 
   if (st.erro && !dados)
     return (
@@ -916,42 +1072,7 @@ export function Fila({ e, fila }) {
       </div>
     );
 
-  const marcar = (id, sim) =>
-    setSelecao((atual) => {
-      const nova = new Set(atual);
-      if (sim) nova.add(id);
-      else nova.delete(id);
-      return nova;
-    });
   const minhas = st.filtro.responsavel === "eu";
-  const cargoDaVaga = Object.fromEntries(
-    (dados.vagas || []).map((v) => [String(v.codigo), v.cargo]),
-  );
-  const grupo = agrupada
-    ? {
-        chave: (c) => String(c.vaga ?? ""),
-        cabecalho: (vaga, quantos) => (
-          <>
-            <strong>{vaga}</strong>
-            <span className="ui-texto-secundario">
-              {textoDoGrupo(
-                cargoDaVaga[vaga],
-                resumoDaVagaNaFila(candidatos, vaga),
-                quantos,
-              )}
-            </span>
-          </>
-        ),
-        recolhidos,
-        aoAlternar: (vaga) =>
-          setRecolhidos((atual) => {
-            const novo = new Set(atual);
-            if (novo.has(vaga)) novo.delete(vaga);
-            else novo.add(vaga);
-            return novo;
-          }),
-      }
-    : null;
 
   // As ações da coordenação num menu só (quem não coordena não vê o menu).
   const acoesDaCoordenacao = [
@@ -1212,9 +1333,10 @@ export function Fila({ e, fila }) {
       </section>
 
       <TabelaDaFila
-        st={st}
+        etapa={st.filtro.etapa}
+        abrindo={st.abrindo}
+        eu={dados.eu}
         fila={fila}
-        dados={dados}
         linhas={linhas}
         ordenadas={ordenadas}
         exibidas={exibidas}
@@ -1227,7 +1349,7 @@ export function Fila({ e, fila }) {
         coordena={coordena}
         selecao={selecao}
         marcar={marcar}
-        limparSelecao={() => setSelecao(new Set())}
+        limparSelecao={limparSelecao}
         grupo={grupo}
       />
 
