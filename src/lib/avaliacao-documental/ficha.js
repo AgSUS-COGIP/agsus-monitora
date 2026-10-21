@@ -658,10 +658,13 @@ export function pendenciasDaFicha(
       }
       // A pontuação confirmada acima do que os vínculos aceitos comprovam
       // (o banco pede o mesmo em FC_PENDENCIAS_FICHA): só com Editar nota e
-      // justificativa. Sem vínculo ou abaixo do mínimo, a falta já é outra.
+      // justificativa. Sem vínculo ou abaixo do mínimo, a falta já é outra. No
+      // inapto por requisito (eliminado por outro critério) a pontuação é só
+      // informativa e não vale (20261021090000).
       const acima =
         chave === "vinculos" &&
         !comprovado &&
+        avaliacao?.resultado !== "INAPTO_REQUISITO" &&
         !pendencias.some((p) => p.bloco === bloco.codigo && p.tipo === "minimo")
           ? experienciaAcimaDoComprovado(bloco, l, avaliacao)
           : null;

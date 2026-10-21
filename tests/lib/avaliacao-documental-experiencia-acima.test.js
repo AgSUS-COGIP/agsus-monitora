@@ -86,6 +86,20 @@ describe("experiência confirmada acima do que os vínculos aceitos comprovam", 
     ).toContain("experiência acima do comprovado");
   });
 
+  it("eliminado por outro critério: sem pendência (pontuação só informativa)", () => {
+    // 21/10/2026: a equipe confirma a experiência do candidato já eliminado só
+    // para registrar o mínimo; a ficha não pode travar (20261021090000).
+    const l = lancamento(CONFERE);
+    l.blocos.IDENTIDADE = {
+      situacao: "NAO_CONFORME",
+      motivos: [
+        REGRA.blocos.find((b) => b.codigo === "IDENTIDADE").motivos[0].codigo,
+      ],
+    };
+    expect(avaliar(l).resultado).toBe("INAPTO_REQUISITO");
+    expect(doTipo(l, "acima")).toEqual([]);
+  });
+
   it("vínculos que comprovam o declarado: sem pendência", () => {
     // 2016-01-01 a 2025-10-31: 119 meses → 35 pontos (teto).
     const l = lancamento(CONFERE, [vinculo("2016-01-01", "2025-10-31")]);
