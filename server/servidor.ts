@@ -56,6 +56,8 @@ const ARQUIVOS_ESTATICOS_DA_RAIZ = new Set([
   "offline.html",
   "sw.js",
   "sw-policy.js",
+  // Versão do build, conferida pelo aviso de versão nova (src/app/aviso-de-versao.ts).
+  "versao.json",
 ]);
 const METODOS_ACEITOS = "GET, HEAD";
 const HSTS = "strict-transport-security";

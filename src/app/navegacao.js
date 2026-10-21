@@ -144,7 +144,7 @@ export const TELAS_REACT = Object.freeze({
 });
 
 /* Sair com alteração não salva (Acessos, Módulos e abas ou campos de Configurações) pergunta antes. */
-function confirmarSaidaPadrao(janela) {
+export function confirmarSaidaPadrao(janela) {
   return (
     janela?.acessosController?.confirmarSaida() !== false &&
     janela?.modulosController?.confirmarSaida() !== false &&

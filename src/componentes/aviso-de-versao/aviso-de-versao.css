@@ -1,0 +1,41 @@
+/*
+  Aviso de versão nova (aviso-de-versao.tsx): a faixa `.ui-aviso` de src/ui/,
+  logo abaixo do cabeçalho, com o texto e as ações na mesma linha. Quebra em
+  duas no celular.
+*/
+.aviso-de-versao {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-3);
+  margin: var(--space-3) var(--space-3) 0;
+  box-shadow: var(--shadow-card);
+}
+.aviso-de-versao-texto {
+  flex: 1 1 260px;
+  margin: 0;
+  min-width: 0;
+}
+.aviso-de-versao-novidade {
+  color: var(--text-secondary);
+  font-weight: var(--font-weight-medium);
+}
+.aviso-de-versao-pendencia {
+  flex-basis: 100%;
+  order: 3;
+  margin: 0;
+  color: var(--state-warning);
+}
+.aviso-de-versao-acoes {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+.aviso-de-versao .btn.small {
+  min-height: 32px;
+  padding: 0 var(--space-3);
+  font-size: var(--text-body-sm);
+}
+.aviso-de-versao-fechar.btn.small {
+  padding: 0 var(--space-2);
+}

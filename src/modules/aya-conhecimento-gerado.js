@@ -5165,11 +5165,15 @@ export const VERBETES_AYA = Object.freeze([
       "versao nova do sistema",
       "o sistema recarregou sozinho",
       "nova versao",
+      "ha uma versao nova",
+      "atualizar agora",
+      "atualize para continuar",
     ],
     resposta:
-      "O MONITORA procura versão nova ao voltar para a aba ou reconectar (no máximo a cada 15 minutos), sem aviso na tela. A versão nova fica esperando e só entra na próxima troca de página: depois da pergunta sobre alterações não salvas, a página recarrega e abre a tela que você pediu (com a permissão conferida de novo). Assim ninguém perde o que está digitando, como notas de entrevista ou a resposta de um recurso.",
+      'Quando sai uma versão nova do MONITORA, aparece no topo da página a faixa "Há uma versão nova do MONITORA.", com "Atualizar agora" e o X para fechar (fechada, ela só volta numa versão mais nova). Se a versão trouxe uma mudança que importa, a faixa diz o que é, como "Novo: motivo padronizado na reabertura". O sistema confere a versão a cada 5 minutos com a aba aberta e ao voltar para ela, sem consultar o banco. Nada recarrega à força: com rascunho ou alteração não salva, "Atualizar agora" pede para salvar antes. Se uma ação falhar porque a tela é de uma versão anterior, a faixa fica amarela e pede "Atualize para continuar". Só uma tela que não consegue abrir por ser da versão antiga recarrega sozinha, uma vez.',
     fato: "",
-    fonte: "src/modules/pwa-lifecycle.js; src/app/navegacao.js (navigate)",
+    fonte:
+      "src/app/aviso-de-versao.ts; src/componentes/aviso-de-versao/aviso-de-versao.tsx; src/lib/versao-do-sistema.ts; src/lib/novidades.ts; src/lib/importar-com-recarga.js; src/modules/pwa-lifecycle.js; src/app/navegacao.js (navigate)",
   },
   {
     arquivo: "regras-do-sistema.md",
