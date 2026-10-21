@@ -16,6 +16,10 @@ body.access-request-mode .login-screen {
   justify-content: center;
   overflow: auto;
 }
+/* O invólucro do index.html (#telaDeEntrada) ocupa a largura: a página não muda de largura por estado. */
+.login-screen > :has(> .solicitacao) {
+  width: 100%;
+}
 
 .solicitacao {
   display: grid;
