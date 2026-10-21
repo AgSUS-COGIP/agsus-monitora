@@ -509,13 +509,13 @@ describe("as contagens do resumo do Painel", () => {
 describe("recolher o card: escolha de cada pessoa", () => {
   afterEach(() => localStorage.clear());
 
-  it("aberto por padrão; recolhido fica guardado só para quem recolheu", () => {
-    expect(lerRitmoRecolhido("u1")).toBe(false);
-    gravarRitmoRecolhido("u1", true);
+  it("recolhido por padrão; aberto fica guardado só para quem abriu", () => {
     expect(lerRitmoRecolhido("u1")).toBe(true);
-    expect(lerRitmoRecolhido("u2")).toBe(false);
     gravarRitmoRecolhido("u1", false);
     expect(lerRitmoRecolhido("u1")).toBe(false);
+    expect(lerRitmoRecolhido("u2")).toBe(true);
+    gravarRitmoRecolhido("u1", true);
+    expect(lerRitmoRecolhido("u1")).toBe(true);
   });
 });
 

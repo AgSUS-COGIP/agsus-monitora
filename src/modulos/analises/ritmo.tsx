@@ -153,34 +153,42 @@ function CardDoEdital({
       data-ritmo={r.id}
       data-recolhido={recolhido ? "" : undefined}
     >
-      <div className="ui-secao-topo">
-        <h2 className="ui-titulo">Ritmo da análise · {r.edital}</h2>
-        {selo.rotulo ? (
-          <Selo tom={TOM_DO_SELO[selo.situacao]}>{selo.rotulo}</Selo>
-        ) : null}
-        {recolhido ? (
-          <span className="ui-texto-secundario" title={momento} data-resumo>
-            {textoRecolhido(r)}
-          </span>
-        ) : null}
-        <button
-          type="button"
-          className="btn ghost small"
-          data-acao="recolher-ritmo"
-          aria-expanded={!recolhido}
-          aria-controls={idDoCorpo}
-          aria-label={
-            recolhido
-              ? "Abrir o ritmo da análise"
-              : "Recolher o ritmo da análise"
-          }
-          onClick={aoAlternar}
-        >
-          <i
-            className={`fa-solid ${recolhido ? "fa-chevron-down" : "fa-chevron-up"}`}
-            aria-hidden="true"
-          />
-        </button>
+      {/* O topo como o de "Refinar resultados" (PainelDeFiltros): título à
+          esquerda; resumo e o botão Mostrar/Ocultar à direita. */}
+      <div className="ui-filtros-topo">
+        <div>
+          <h2 className="ui-titulo">Ritmo da análise · {r.edital}</h2>
+        </div>
+        <div className="ui-filtros-acoes">
+          {selo.rotulo ? (
+            <Selo tom={TOM_DO_SELO[selo.situacao]}>{selo.rotulo}</Selo>
+          ) : null}
+          {recolhido ? (
+            <span className="ui-filtros-resumo" title={momento} data-resumo>
+              <i className="fa-solid fa-gauge-high" aria-hidden="true" />
+              <span>{textoRecolhido(r)}</span>
+            </span>
+          ) : null}
+          <button
+            type="button"
+            className="btn secondary small"
+            data-acao="recolher-ritmo"
+            aria-expanded={!recolhido}
+            aria-controls={idDoCorpo}
+            title={
+              recolhido
+                ? "Mostrar o ritmo da análise"
+                : "Ocultar o ritmo da análise"
+            }
+            onClick={aoAlternar}
+          >
+            <i
+              className={`fa-solid ${recolhido ? "fa-gauge-high" : "fa-chevron-up"}`}
+              aria-hidden="true"
+            />
+            <span>{recolhido ? "Mostrar ritmo" : "Ocultar ritmo"}</span>
+          </button>
+        </div>
       </div>
       {recolhido ? null : (
         <div className="ui-pilha" id={idDoCorpo}>
