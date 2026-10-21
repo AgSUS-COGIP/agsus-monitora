@@ -116,6 +116,21 @@ function detalhe(st: EstadoDaFicha, bloco: Bloco, passo: Passo): string {
   return partes.join(" · ");
 }
 
+/*
+  As alterações que o histórico lista: a do motivo da reabertura (código da
+  lista, 20261021110000) não, porque o motivo legível já vem em `motivo`.
+*/
+function alteracoesVisiveis(h: ItemDoHistorico): unknown[] {
+  return (Array.isArray(h.alteracao) ? h.alteracao : []).filter(
+    (a) =>
+      !(
+        a &&
+        typeof a === "object" &&
+        (a as { campo?: unknown }).campo === "motivo_reabertura"
+      ),
+  );
+}
+
 function Historico({ itens }: { itens: ItemDoHistorico[] }) {
   if (!itens.length) return null;
   return (
@@ -137,9 +152,9 @@ function Historico({ itens }: { itens: ItemDoHistorico[] }) {
             <strong>{ACOES_DO_HISTORICO[h.acao] || h.acao}</strong>
             {h.por ? ` · ${h.por}` : ""}
             {h.motivo ? ` · ${h.motivo}` : ""}
-            {(h.alteracao || []).length ? (
+            {alteracoesVisiveis(h).length ? (
               <ul>
-                {(h.alteracao || []).map((a, i) => (
+                {alteracoesVisiveis(h).map((a, i) => (
                   <li key={i}>{textoDaAlteracao(a)}</li>
                 ))}
               </ul>

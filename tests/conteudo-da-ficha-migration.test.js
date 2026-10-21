@@ -25,6 +25,12 @@ const TELA = {
   registrar_acesso_ficha: 'FC_EXIGIR_VER_FICHA"(v_f)',
 };
 
+/* Argumentos que migrations posteriores acrescentaram (o contrato segue o banco vigente). */
+const ARGUMENTOS_DEPOIS = {
+  // 20261021110000_motivos_da_reabertura.sql: o complemento do motivo da lista.
+  reabrir_ficha: ["p_complemento"],
+};
+
 const corpoDaFuncao = (cabeca, texto = MIGRATION) => {
   const inicio = texto.indexOf(cabeca);
   expect(inicio, cabeca).toBeGreaterThan(-1);
@@ -112,7 +118,10 @@ describe("acesso e regras da ficha", () => {
       const args = [
         ...corpo.slice(0, corpo.indexOf(")")).matchAll(/\b(p_[a-z_]+)\b/g),
       ].map((m) => m[1]);
-      expect(CONTRATO_RPC[nome]?.argumentos).toEqual(args);
+      expect(CONTRATO_RPC[nome]?.argumentos).toEqual([
+        ...args,
+        ...(ARGUMENTOS_DEPOIS[nome] ?? []),
+      ]);
     },
   );
 

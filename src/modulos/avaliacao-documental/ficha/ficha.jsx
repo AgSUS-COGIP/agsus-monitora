@@ -46,11 +46,12 @@ import { motivosDoResultado } from "../../../lib/avaliacao-documental/motivos-do
 import { pontuacaoInformativaDaFicha } from "../../../lib/avaliacao-documental/pontos-informativos.ts";
 import { modalidadesDoLancamento } from "../../../lib/avaliacao-documental/pontuacao.js";
 import { rotuloDaVersaoNaLista } from "../../../lib/nome-da-versao.ts";
-import { Aviso, Campo } from "../../../ui/index.js";
+import { Aviso } from "../../../ui/index.js";
 import { guardaDeAlteracoes } from "../../../app/guarda-de-alteracoes.ts";
 import { CabecalhoDaFicha } from "./cabecalho-da-ficha.tsx";
 import { cpfDaFicha } from "../../../lib/avaliacao-documental/cpf-da-ficha.ts";
 import { ConclusaoDaFicha } from "./conclusao-da-ficha.tsx";
+import { ReabrirAFicha } from "./reabrir-a-ficha.tsx";
 import { copiar, EnviosAnteriores } from "./empregare.tsx";
 import { abrirEspelhoDeNota, baixarEspelhoEmPdf } from "./espelho-de-nota.ts";
 import { textosParaOEspelho } from "../modelo-do-espelho-no-banco.ts";
@@ -137,49 +138,6 @@ function enderecosDaEmpregare(dados, ficha) {
     anteriores: enviosAnterioresDaEmpregare(empregare),
     respostaLida: respostaLidaDaEmpregare(empregare),
   };
-}
-
-function Reabrir({ loja }) {
-  const [aberto, setAberto] = useState(false);
-  const [motivo, setMotivo] = useState("");
-  const [erro, setErro] = useState("");
-  const [enviando, setEnviando] = useState(false);
-  if (!aberto)
-    return (
-      <button
-        type="button"
-        className="btn secondary"
-        data-tour="avd-ficha-reabrir"
-        onClick={() => setAberto(true)}
-      >
-        Reabrir
-      </button>
-    );
-  return (
-    <div className="avd-inline">
-      <Campo rotulo="Motivo para reabrir" obrigatorio erro={erro}>
-        <input
-          value={motivo}
-          maxLength={2000}
-          onChange={(ev) => setMotivo(ev.target.value)}
-        />
-      </Campo>
-      <button
-        type="button"
-        className="btn small"
-        disabled={enviando || motivo.trim().length < 10}
-        onClick={async () => {
-          // Um envio só: o segundo clique daria "a ficha mudou" (40001).
-          setEnviando(true);
-          const r = await loja.reabrir(motivo.trim());
-          setEnviando(false);
-          if (!r.ok) setErro(r.erro);
-        }}
-      >
-        Reabrir
-      </button>
-    </div>
-  );
 }
 
 function textoDoEstado(st) {
@@ -826,7 +784,7 @@ export function ConteudoDaFicha({
         secundaria={secundaria}
         primaria={primaria}
       >
-        {st.dados.pode_reabrir ? <Reabrir loja={loja} /> : null}
+        {st.dados.pode_reabrir ? <ReabrirAFicha loja={loja} /> : null}
       </RodapeDaFicha>
     </div>
   );

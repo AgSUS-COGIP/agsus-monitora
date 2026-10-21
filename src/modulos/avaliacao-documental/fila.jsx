@@ -61,6 +61,7 @@ import {
 } from "./decisao-do-lote.jsx";
 import { EspelhosEmMassa } from "./espelhos-em-massa.tsx";
 import { RelatorioDeMotivosDaFila } from "./relatorio-de-motivos.tsx";
+import { erroDoMotivoDaFila } from "../../lib/avaliacao-documental/qualidade-do-motivo.ts";
 import { ModeloDoEspelhoDeNota } from "./modelo-do-espelho.tsx";
 import { ConteudoDaFicha } from "./ficha/ficha.jsx";
 import { ResumoDoAndamento } from "./resumo-do-andamento.tsx";
@@ -226,7 +227,15 @@ function AcaoEmLote({ fila, acao, dados, aoFechar }) {
     acao.tipo === "reiniciar" ||
     deOutros ||
     (acao.tipo === "distribuir" && (plano.redistribui || para === "fila"));
-  const motivoOk = !exigeMotivo || motivo.trim().length >= 10;
+  // Reiniciar (só admin global) pede só o tamanho; os outros, também o texto mínimo.
+  const erroDoMotivo = !exigeMotivo
+    ? ""
+    : acao.tipo === "reiniciar"
+      ? motivo.trim().length >= 10
+        ? ""
+        : "De 10 a 2.000 caracteres."
+      : erroDoMotivoDaFila(motivo);
+  const motivoOk = !erroDoMotivo;
   const vazio =
     acao.tipo === "distribuir"
       ? !plano.atribuicoes.length
@@ -327,7 +336,7 @@ function AcaoEmLote({ fila, acao, dados, aoFechar }) {
           <Campo
             rotulo="Motivo"
             obrigatorio
-            erro={motivo && !motivoOk ? "De 10 a 2.000 caracteres." : undefined}
+            erro={motivo && !motivoOk ? erroDoMotivo : undefined}
           >
             <textarea
               rows={3}
@@ -555,7 +564,11 @@ function ModoDeAnalise({
         {dados.pode_coordenar && reservaDeOutro ? (
           liberando ? (
             <div className="avd-inline">
-              <Campo rotulo="Motivo para liberar a reserva" obrigatorio>
+              <Campo
+                rotulo="Motivo para liberar a reserva"
+                obrigatorio
+                erro={motivo ? erroDoMotivoDaFila(motivo) : undefined}
+              >
                 <input
                   value={motivo}
                   maxLength={2000}
@@ -565,7 +578,7 @@ function ModoDeAnalise({
               <button
                 type="button"
                 className="btn small"
-                disabled={motivo.trim().length < 10}
+                disabled={Boolean(erroDoMotivoDaFila(motivo))}
                 onClick={async () => {
                   const r = await fila.liberarReservas([f.id], motivo.trim());
                   if (r.ok) await fila.abrir(f.id);

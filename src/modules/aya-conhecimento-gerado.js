@@ -1550,7 +1550,7 @@ export const VERBETES_AYA = Object.freeze([
       "limite por analista",
     ],
     resposta:
-      'A coordenação do edital escolhe fichas na Fila e, no menu "Ações da coordenação", usa "Distribuir as selecionadas" (ou "Distribuir as livres") e vê a prévia: quantas cada analista recebe e com quantas fica, antes de gravar. A conta segue a regra do edital: cada ficha, na ordem da Provisória, vai para quem analisa a vaga e tem menos fichas pendentes, respeitando o limite da equipe e, no critério "Até um limite", o limite da regra; o que não cabe fica livre na fila. Dá para mandar tudo para uma pessoa ou devolver à fila. Redistribuir e devolver pedem motivo (10 a 2.000 caracteres), ficam no histórico e a reserva cai; ficha concluída ou fora do lote não é mexida. Se alguém mexeu na ficha depois que a tela leu, nada grava e a tela pede para atualizar. Na distribuição inicial, quem entra no lote depois vai sozinho para quem tem menos pendentes.',
+      'A coordenação do edital escolhe fichas na Fila e, no menu "Ações da coordenação", usa "Distribuir as selecionadas" (ou "Distribuir as livres") e vê a prévia: quantas cada analista recebe e com quantas fica, antes de gravar. A conta segue a regra do edital: cada ficha, na ordem da Provisória, vai para quem analisa a vaga e tem menos fichas pendentes, respeitando o limite da equipe e, no critério "Até um limite", o limite da regra; o que não cabe fica livre na fila. Dá para mandar tudo para uma pessoa ou devolver à fila. Redistribuir e devolver pedem motivo (10 a 2.000 caracteres, com pelo menos 2 palavras), ficam no histórico e a reserva cai; ficha concluída ou fora do lote não é mexida. Se alguém mexeu na ficha depois que a tela leu, nada grava e a tela pede para atualizar. Na distribuição inicial, quem entra no lote depois vai sozinho para quem tem menos pendentes.',
     fato: "No MONITORA, a distribuição das fichas dá cada ficha, na ordem da Provisória, ao analista da vaga com menos pendentes, dentro do limite.",
     fonte:
       "src/lib/avaliacao-documental/distribuicao.js; python/monitora/avaliacao_documental/distribuicao.py",
@@ -1569,7 +1569,7 @@ export const VERBETES_AYA = Object.freeze([
       "quanto tempo dura a reserva",
     ],
     resposta:
-      'Quem abre a própria ficha fica com a reserva por 15 minutos, renovada sozinha enquanto a ficha está aberta e liberada ao fechar; só quem tem a reserva grava. Quem abre uma ficha em uso vê "Em uso por <nome> desde HH:MM", só para leitura. Se a pessoa saiu sem fechar, a reserva vence sozinha; a coordenação pode liberar antes (na ficha ou em lote, em "Liberar reservas"), com motivo, e isso fica no histórico. Mudar a ficha com uma versão velha é recusado ("mudou desde que você abriu").',
+      'Quem abre a própria ficha fica com a reserva por 15 minutos, renovada sozinha enquanto a ficha está aberta e liberada ao fechar; só quem tem a reserva grava. Quem abre uma ficha em uso vê "Em uso por <nome> desde HH:MM", só para leitura. Se a pessoa saiu sem fechar, a reserva vence sozinha; a coordenação pode liberar antes (na ficha ou em lote, em "Liberar reservas"), com motivo de pelo menos 2 palavras, e isso fica no histórico. Mudar a ficha com uma versão velha é recusado ("mudou desde que você abriu").',
     fato: "",
     fonte:
       "supabase/migrations/20261006120000_fichas_fila_e_reserva.sql (reservar_ficha, renovar_reserva, liberar_reserva)",
@@ -1606,7 +1606,7 @@ export const VERBETES_AYA = Object.freeze([
       "nao vejo distribuir",
     ],
     resposta:
-      'As ações da coordenação ficam num menu só, "Ações da coordenação", ao lado de "Pegar próximo": Incluir por decisão da coordenação, Distribuir as livres, Distribuir as selecionadas, Liberar reservas, Mandar para revisão e Abrir fichas do lote (quando há quem esteja no lote sem ficha). O analista vê só "Pegar próximo" e "Minhas fichas"; quem não coordena não vê o menu. A coordenação marca fichas na lista (o menu mostra quantas estão marcadas e a tabela tem "Limpar seleção") e escolhe: Distribuir (com a prévia), Liberar reservas ou Mandar para revisão (fichas pendentes ou em análise; motivo obrigatório); a ação que não vale para a seleção fica apagada. Toda ação pede confirmação e fica no histórico da ficha. Um analista com fichas pendentes ou em análise só sai da equipe depois que elas forem redistribuídas ou devolvidas à fila.',
+      'As ações da coordenação ficam num menu só, "Ações da coordenação", ao lado de "Pegar próximo": Incluir por decisão da coordenação, Distribuir as livres, Distribuir as selecionadas, Liberar reservas, Mandar para revisão e Abrir fichas do lote (quando há quem esteja no lote sem ficha). O analista vê só "Pegar próximo" e "Minhas fichas"; quem não coordena não vê o menu. A coordenação marca fichas na lista (o menu mostra quantas estão marcadas e a tabela tem "Limpar seleção") e escolhe: Distribuir (com a prévia), Liberar reservas ou Mandar para revisão (fichas pendentes ou em análise; motivo obrigatório, com pelo menos 2 palavras); a ação que não vale para a seleção fica apagada. Toda ação pede confirmação e fica no histórico da ficha. Um analista com fichas pendentes ou em análise só sai da equipe depois que elas forem redistribuídas ou devolvidas à fila.',
     fato: "",
     fonte: "supabase/migrations/20261006120000_fichas_fila_e_reserva.sql",
     abrir: "avaliacao-documental",
@@ -2113,10 +2113,28 @@ export const VERBETES_AYA = Object.freeze([
       "fichas afetadas",
     ],
     resposta:
-      'A ficha concluída abre na Conclusão, só para leitura, com o resumo dos itens, o resultado, a nota, o parecer gravado e o histórico: cada rascunho com mudança, a conclusão e a reabertura, com quem, quando e o que mudou (situação, motivo, a nota de cada bloco de quanto para quanto e a justificativa). Só a coordenação do edital reabre ("Reabrir", no rodapé), com motivo; a ficha volta a Em análise com o mesmo responsável. A ficha é analisada pela versão vigente da regra; ao concluir, guarda a versão usada, e uma versão nova da regra não muda a nota de quem já foi concluído (o banco lista as fichas afetadas ao salvar a regra). Pendentes e em análise passam a seguir a versão nova; concluir exige a versão vigente conferida.',
+      'A ficha concluída abre na Conclusão, só para leitura, com o resumo dos itens, o resultado, a nota, o parecer gravado e o histórico: cada rascunho com mudança, a conclusão e a reabertura, com quem, quando e o que mudou (situação, motivo, a nota de cada bloco de quanto para quanto e a justificativa). Só a coordenação do edital reabre ("Reabrir", no rodapé), escolhendo o motivo numa lista; a ficha volta a Em análise com o mesmo responsável. A ficha é analisada pela versão vigente da regra; ao concluir, guarda a versão usada, e uma versão nova da regra não muda a nota de quem já foi concluído (o banco lista as fichas afetadas ao salvar a regra). Pendentes e em análise passam a seguir a versão nova; concluir exige a versão vigente conferida.',
     fato: "",
     fonte:
       "supabase/migrations/20261007130000_conteudo_da_ficha.sql (reabrir_ficha, FC_REGRA_VIGENTE_FICHA, salvar_regra_analise)",
+  },
+  {
+    arquivo: "regras-da-avaliacao-documental.md",
+    titulo: "Motivo da reabertura",
+    perguntas: [
+      "motivo da reabertura",
+      "motivo para reabrir",
+      "lista de motivos da reabertura",
+      "outro motivo da reabertura",
+      "complemento da reabertura",
+      "por que reabriu a ficha",
+      "recarregue para escolher o motivo",
+    ],
+    resposta:
+      'Ao reabrir uma ficha concluída, a coordenação escolhe o motivo numa lista fixa: Correção de experiência, Correção de cursos, Correção de formação/titulação, Correção de escolaridade ou requisito do cargo, Correção de documento de identificação, Correção de cota (PP/PI/PQ/PcD), Correção do critério étnico, Documento novo da Empregare, Decisão de recurso, Pedido da coordenação ou revisão, Erro de digitação ou lançamento e Outro. O complemento é opcional (até 500 caracteres) e, se preenchido, precisa ter palavras. Em "Outro", a descrição é obrigatória: pelo menos 15 caracteres e 3 palavras diferentes; sequências como "dsdfsdfsfsa" não contam como palavra. O histórico da ficha mostra o motivo escrito por extenso, com o complemento depois de um travessão. Se aparecer "Escolha o motivo da reabertura na lista", a página está na versão antiga: recarregue.',
+    fato: 'No MONITORA, a reabertura da ficha concluída tem motivo de uma lista fixa; "Outro" exige descrição de 15 caracteres e 3 palavras.',
+    fonte:
+      "supabase/migrations/20261021110000_motivos_da_reabertura.sql (reabrir_ficha, FC_MOTIVO_REABERTURA, FC_MOTIVO_PARECE_TEXTO); src/lib/avaliacao-documental/motivos-da-reabertura.ts",
     abrir: "avaliacao-documental",
   },
   {

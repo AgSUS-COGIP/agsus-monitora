@@ -13,7 +13,10 @@
     obter_ficha_analise(p_ficha)
     salvar_rascunho_ficha(p_ficha, p_versao, p_lancamento, p_resultado, p_parecer)
     concluir_ficha(p_ficha, p_versao, p_versao_regra, p_lancamento, p_resultado, p_parecer)
-    reabrir_ficha(p_ficha, p_versao, p_motivo)
+    reabrir_ficha(p_ficha, p_versao, p_motivo, p_complemento)
+                                                    (20261021110000) p_motivo é o código
+                                                    da lista; banco sem p_complemento: a
+                                                    chamada antiga, com o texto legível
     registrar_acesso_ficha(p_ficha, p_tipo)
 
   A justificativa dos itens (justificativa-dos-itens.ts) acompanha os itens:
@@ -390,13 +393,29 @@ export function criarEstadoDaFicha({
     }
   }
 
-  async function reabrir(motivo) {
+  /*
+    Reabre com o código do motivo da lista e o complemento (20261021110000).
+    Banco ainda sem p_complemento (o front vai ao ar antes da migration): a
+    chamada dá PGRST202 e repete a antiga, com o motivo legível (`texto`) no
+    p_motivo livre. Sai quando a migration estiver aplicada.
+  */
+  async function reabrir(motivo, complemento, texto) {
     try {
-      await rpc(RPC_REABRIR, {
-        p_ficha: estado.fichaId,
-        p_versao: estado.versao,
-        p_motivo: motivo,
-      });
+      try {
+        await rpc(RPC_REABRIR, {
+          p_ficha: estado.fichaId,
+          p_versao: estado.versao,
+          p_motivo: motivo,
+          p_complemento: complemento ?? null,
+        });
+      } catch (erro) {
+        if (!funcaoAusente(erro)) throw erro;
+        await rpc(RPC_REABRIR, {
+          p_ficha: estado.fichaId,
+          p_versao: estado.versao,
+          p_motivo: texto,
+        });
+      }
       toast("Ficha reaberta.", "success");
       await carregar();
       return { ok: true };
