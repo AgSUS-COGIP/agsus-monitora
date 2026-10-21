@@ -29,6 +29,8 @@
   há linha de base e, portanto, nenhuma comemoração de marco.
 */
 
+import { STATUS_PENDENTES } from "./status-da-analise.ts";
+
 /* A duração dos fogos padrão ("cheio"); de 5 s ("pequeno") a 6 s ("festa"), em src/lib/fogos.js. */
 export const DURACAO_DOS_FOGOS_MS = 5500;
 export const PREFIXO_DO_MARCO = "agsus_monitora_marco:";
@@ -104,9 +106,14 @@ export function comemoracoesLigadasNaResposta(dados) {
 
 // ── Painel de análises: edital concluído e fila zerada ──────────────────────
 
-/* "Pendente" (ou sem status) é o que ainda não foi analisado. */
+/*
+  Ainda sem decisão: "Pendente" (ou sem status) e "Em análise" (a ficha da
+  Avaliação documental aberta por alguém). A mesma regra do KPI "Pendentes"
+  (STATUS_PENDENTES): o edital só está 100% analisado, e a fila só zera,
+  quando a última ficha aberta é concluída, não quando é pega.
+*/
 export const analisePendente = (linha) =>
-  (texto(linha?.status_consolidado) || "Pendente") === "Pendente";
+  STATUS_PENDENTES.includes(texto(linha?.status_consolidado) || "Pendente");
 
 const chaveDoEdital = (linha) =>
   `${texto(linha?.edital)}|${texto(linha?.unidade)}`;
@@ -184,7 +191,9 @@ export function mensagemDaFilaZerada(nomeDaArea) {
 /**
  * O que o painel de análises comemora nesta leitura. `anterior` é
  * `{ editais, fila }` guardado (ou nulos, na linha de base). Devolve
- * `{ texto, itens }` ou `null`: um aviso só, com os demais editais na lista.
+ * `{ texto, itens, forma, marco, editais }` ou `null`: um aviso só, com os
+ * demais editais na lista; `editais` são os textos dos editais concluídos
+ * (a tela de encerramento sabe que os fogos deles já saíram).
  */
 export function comemoracaoDasAnalises({
   anteriorEditais,
@@ -207,6 +216,7 @@ export function comemoracaoDasAnalises({
     forma: concluidos.length ? "coracao" : "estrela",
     // O id do catálogo (src/lib/catalogo-de-comemoracoes.ts).
     marco: concluidos.length ? "edital-concluido" : "fila-zerada",
+    editais: concluidos.map((e) => e.edital),
   };
 }
 

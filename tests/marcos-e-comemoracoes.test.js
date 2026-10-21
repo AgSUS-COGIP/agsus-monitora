@@ -146,6 +146,27 @@ describe("edital concluído e fila zerada", () => {
     ).toBe(2);
   });
 
+  it("Em análise segura o edital e a fila: só zera quando a ficha é concluída", () => {
+    const pegou = [
+      linha("114/2026", "Projetos", "Aprovado"),
+      linha("114/2026", "Projetos", "Em análise"),
+    ];
+    const anterior = estadoGuardadoDosEditais(
+      situacaoDosEditais([
+        linha("114/2026", "Projetos", "Aprovado"),
+        linha("114/2026", "Projetos", "Pendente"),
+      ]),
+    );
+    expect(pendentesDaFila(pegou)).toBe(1);
+    expect(editaisConcluidos(anterior, situacaoDosEditais(pegou))).toEqual([]);
+    const concluiu = [pegou[0], linha("114/2026", "Projetos", "Reprovado")];
+    expect(
+      editaisConcluidos(anterior, situacaoDosEditais(concluiu)).map(
+        (e) => e.edital,
+      ),
+    ).toEqual(["114/2026"]);
+  });
+
   it("fila: de >0 para 0", () => {
     expect(filaZerou(4, 0)).toBe(true);
     expect(filaZerou(0, 0)).toBe(false);
@@ -170,6 +191,7 @@ describe("edital concluído e fila zerada", () => {
     ]);
     // Edital concluído desenha um coração no céu.
     expect(comemoracao.forma).toBe("coracao");
+    expect(comemoracao.editais).toEqual(["01/2026"]);
     expect(mensagemDaFilaZerada("")).toBe(
       "Fila de análises zerada! Obrigado, equipe. 🎉",
     );
@@ -193,6 +215,7 @@ describe("edital concluído e fila zerada", () => {
       itens: [],
       forma: "estrela",
       marco: "fila-zerada",
+      editais: [],
     });
   });
 });

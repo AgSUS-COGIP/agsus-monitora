@@ -53,6 +53,7 @@ describe("catálogo de marcos", () => {
     const ids = CATALOGO_DE_MARCOS.map((m) => m.id);
     expect(ids).toEqual([
       "edital-concluido",
+      "edital-fechado",
       "fila-zerada",
       "meta-do-dia",
       "vaga-pronta",

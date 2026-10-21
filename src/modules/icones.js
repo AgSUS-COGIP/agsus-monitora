@@ -1,6 +1,7 @@
 import {
   ArrowRight,
   ArrowUp,
+  Award,
   Balloon,
   Bird,
   Building2,
@@ -117,6 +118,7 @@ const ArquivoPdf = [
 export const ICONES = Object.freeze({
   "arrow-right": ArrowRight,
   "arrow-up": ArrowUp,
+  award: Award,
   "building-2": Building2,
   "calendar-days": CalendarDays,
   balloon: Balloon,
