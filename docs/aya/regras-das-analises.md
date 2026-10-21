@@ -87,3 +87,10 @@ e `20260930234000_cache_sem_atropelo.sql`.
 **resposta:** No card "Ritmo da análise", "Destaques de hoje" mostra 🥇🥈🥉 para os três que mais concluíram fichas hoje (empate leva a mesma medalha) e o selo 🎯 Precisão para quem concluiu ao menos 10 fichas hoje sem nenhuma reaberta (reabrir uma ficha concluída hoje, pela coordenação ou pela própria pessoa, tira o selo do dia; reiniciar o edital não conta). Zera todo dia, à meia-noite de Brasília: não há ranking acumulado, e só aparecem os medalhistas e quem tem o selo. Quando a equipe bate a meta de hoje, cada pessoa vê uma comemoração uma vez por dia, se as comemorações estiverem ligadas (Configurações › Comemorações, "Meta de hoje batida pela equipe", e a sua preferência pessoal).
 **fonte:** src/lib/ritmo-da-analise.ts; supabase/migrations/20261021100000_medalhas_do_dia.sql
 **abrir:** analises
+
+## Edital concluído: tela de encerramento e selo
+
+**perguntas:** tela de encerramento | encerramento do edital | edital concluido | fim do edital | acabou o edital | selo do edital | selo no perfil | minha contribuicao no edital | quantas fichas eu analisei no edital
+**resposta:** Quando todas as fichas do lote de um edital analisado no MONITORA ficam concluídas (as que saíram do lote não contam), quem concluiu ao menos uma ficha vê, uma vez, a tela de encerramento: inscritos, fichas analisadas e dias de análise do edital, o agradecimento à equipe e, embaixo, só a sua parte (fichas que você concluiu, quanto isso é do total e o seu melhor dia). Não há ranking nem números de outras pessoas. Quem entra depois (no dia seguinte, em outro navegador) também vê a tela, uma vez. A comemoração segue Configurações › Comemorações ("Edital 100% analisado") e a sua preferência; com as comemorações desligadas no sistema, a tela espera até religarem. Cada edital encerrado vira um selo com o número do edital (por exemplo, 114/2026) no menu da conta, no topo, com uma marca no avatar; os selos se acumulam, um por edital.
+**fonte:** src/lib/encerramento-do-edital.ts; src/modulos/encerramento-do-edital/; supabase/migrations/20261021180000_encerramento_do_edital.sql
+**abrir:** analises

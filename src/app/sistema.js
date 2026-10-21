@@ -10,6 +10,9 @@ import { esconderEsqueleto, mostrarEsqueleto } from "./carregamento.js";
 import { estadoDaVisaoGeral } from "../modulos/visao-geral/estado.ts";
 import { montarPessoasOnline } from "../componentes/pessoas-online/pessoas-online.jsx";
 import { montarAvisoDeVersao } from "../componentes/aviso-de-versao/aviso-de-versao.tsx";
+import { criarEstadoDoEncerramento } from "../modulos/encerramento-do-edital/estado.ts";
+import { montarEncerramentoDoEdital } from "../modulos/encerramento-do-edital/encerramento-do-edital.tsx";
+import { montarSelosDoEdital } from "../modulos/encerramento-do-edital/selos-do-edital.tsx";
 import { criarAvisoDeVersao } from "./aviso-de-versao.ts";
 import { avisar, mostrarCarregamento } from "./avisos.js";
 import { criarCarga } from "./carga.js";
@@ -35,6 +38,7 @@ import { sessaoDoApp } from "./sessao.js";
     carga.js             carga dos dados, cópia da sessão, Realtime
     pagina-aberta.ts     a página aberta pede as linhas e abre a Visão geral
     aviso-de-versao.ts   versão nova publicada: aviso no topo, sem recarregar à força
+    encerramento-do-edital/  tela de fim de edital e selos no perfil (src/modulos/)
     presenca.js          auditoria, heartbeat e Pessoas online
     vigia-do-catalogo.ts página desligada pela coordenação fecha sem recarregar
     moldura.js           barra recolhida, tema, tela cheia, PDF
@@ -105,6 +109,11 @@ export const avisoDeVersao = criarAvisoDeVersao({
 
 const viewAtual = () => navegacao.obter().view;
 
+/* Edital encerrado: a tela (uma vez por pessoa) e os selos do perfil. */
+export const encerramento = criarEstadoDoEncerramento({
+  ligadas: () => situacaoDoSistema().comemoracoes,
+});
+
 /* Recarrega o painel externo aberto (botão do quadro e "Tentar de novo"). */
 function recarregarPainel() {
   const painel = paineis.atual();
@@ -148,6 +157,7 @@ export function localizarLinhaDoMonitoramento(id) {
 */
 function limparEstadoDeslogado() {
   carga.esquecer();
+  encerramento.esquecer();
   presenca.pararTudo();
   vigiaDoCatalogo.esquecer();
   paineis.limpar();
@@ -185,6 +195,7 @@ async function abrirSistema({ origem }) {
   presenca.iniciarHeartbeat();
   presenca.iniciar();
   carga.iniciarRealtime();
+  void encerramento.verificar();
   return true;
 }
 
@@ -194,6 +205,7 @@ async function abrirSistema({ origem }) {
 */
 function ficarSemAcesso() {
   carga.esquecer();
+  encerramento.esquecer();
   void carga.apagarCopia();
   presenca.pararTudo();
   vigiaDoCatalogo.esquecer();
@@ -262,6 +274,9 @@ export function ligarSistema() {
   presenca.acompanhar();
   montarPessoasOnline({ presenca });
   montarAvisoDeVersao({ aviso: avisoDeVersao });
+  montarEncerramentoDoEdital({ estado: encerramento });
+  montarSelosDoEdital({ estado: encerramento });
+  encerramento.acompanhar();
   avisoDeVersao.iniciar();
 
   document.addEventListener(EVENTO_ESCOLHA_DA_BUSCA, (evento) =>

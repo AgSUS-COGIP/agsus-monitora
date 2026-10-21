@@ -126,6 +126,14 @@ export const CATALOGO_DE_MARCOS: readonly MarcoDoCatalogo[] = Object.freeze([
     padrao: opcoes("fogos", "normal"),
   },
   {
+    id: "edital-fechado",
+    rotulo: "Quem concluiu a última ficha do edital",
+    grupo: "Análises",
+    onde: "src/lib/encerramento-do-edital.ts",
+    forma: "estrela",
+    padrao: opcoes("estrelas", "festa"),
+  },
+  {
     id: "fila-zerada",
     rotulo: "Fila de análises zerada",
     grupo: "Análises",

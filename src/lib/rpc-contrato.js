@@ -261,6 +261,16 @@ export const CONTRATO_RPC = {
     resumo:
       "Card Ritmo da análise do Painel das análises (migration 20261019170000): por edital da área com a avaliação documental no MONITORA, contagens por situação, concluídas por dia (14 dias), equipe de analistas, avaliadores recentes, cronograma e os destaques de hoje (pódio e candidatos ao selo Precisão: nome, concluídas e reabertas hoje; migration 20261021100000); só quem pode ler o Painel da área.",
   },
+  obter_encerramentos_do_edital: {
+    argumentos: [],
+    resumo:
+      "Tela de encerramento e selos do perfil (migration 20261021180000): os editais com o lote todo concluído em que quem chama concluiu ficha, com totais (inscritos, fichas, dias), se já viu a tela e só a contribuição de quem chama (fichas, %, melhor dia, se fechou o edital). Sessão e perfil ativo.",
+  },
+  marcar_encerramento_visto: {
+    argumentos: ["p_edital"],
+    resumo:
+      "Grava que quem chama viu a tela de encerramento do edital (uma vez por pessoa e edital; migration 20261021180000). Só edital encerrado com ficha da pessoa.",
+  },
   usuario_pode_ler_analises: {
     argumentos: [],
     critica: true,

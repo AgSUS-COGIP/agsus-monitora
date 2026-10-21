@@ -6,6 +6,8 @@ import type { MarcoDasAnalises } from "./tipos.ts";
   misturam editais encerrados. Também os marcos personalizados "análises no
   dia" (src/app/marcos-personalizados.js). A regra (linha de base, transições, frases) é
   de src/lib/comemoracao.js; o aviso e os fogos, de src/modules/comemoracao.js.
+  Edital concluído avisa a tela de encerramento (EVENTO_EDITAL_CONCLUIDO, em
+  src/modulos/encerramento-do-edital/), que relê o banco e não repete os fogos.
   `ligadas` é o liga/desliga das comemorações que o app já leu (situação do
   sistema); desligadas, o estado segue guardado em silêncio. Este arquivo não
   importa React.
@@ -26,6 +28,7 @@ import {
   type RitmoDoEdital,
 } from "../../lib/ritmo-da-analise.ts";
 import { avaliarMarcosPersonalizados } from "../../app/marcos-personalizados.js";
+import { EVENTO_EDITAL_CONCLUIDO } from "../../lib/encerramento-do-edital.ts";
 
 export function avaliarMarcosDasAnalises({
   ligadas,
@@ -49,7 +52,7 @@ export function avaliarMarcosDasAnalises({
       area,
       ligadas: Boolean(ligadas),
     });
-    return avaliarMarco({
+    const comemoracao = avaliarMarco({
       chave: chaveDoMarco("analises", usuarioId, area),
       atual: { editais: estadoGuardadoDosEditais(situacao), fila: pendentes },
       ligadas: Boolean(ligadas),
@@ -62,6 +65,12 @@ export function avaliarMarcosDasAnalises({
           nomeDaArea,
         }),
     });
+    const editais = comemoracao?.editais ?? [];
+    if (editais.length)
+      globalThis.window?.dispatchEvent(
+        new CustomEvent(EVENTO_EDITAL_CONCLUIDO, { detail: { editais } }),
+      );
+    return comemoracao;
   } catch (erro) {
     // Comemoração nunca atrapalha a tela.
     console.warn("Marcos de Análises curriculares indisponíveis:", erro);

@@ -50,6 +50,9 @@ Arquivos que exigem cuidado:
 - `novidades.ts` — **novidades do aviso de versão nova** (o "Novo: …"); entrada nova no topo, `visivel: true` só
   quando importa para quem usa (README, "Aviso de versão nova e novidades"). `versao-do-sistema.ts` — leitura do
   `versao.json`, novidade a mostrar e o sinal de "tela antiga" (PGRST202 / "recarregue a página") no fetch do cliente.
+- `status-da-analise.ts` — status sem decisão (Pendente, Em análise), comum ao KPI "Pendentes" e aos marcos.
+- `encerramento-do-edital.ts` — leitura de obter_encerramentos_do_edital, tela a mostrar, selos do perfil e fogos
+  do encerramento (quem fechou o edital). O banco decide quando o edital está encerrado.
 - `env.js` — leitura de variáveis; nunca hardcode de chave.
 
 Arquivo novo: nome em português, kebab-case, com teste junto.

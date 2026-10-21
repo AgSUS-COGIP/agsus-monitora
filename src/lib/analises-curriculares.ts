@@ -32,6 +32,7 @@ import {
   experienciaProfissionalDaLinha,
 } from "./area-do-painel-de-analises.js";
 import { sanitizeCsvCell } from "./csv-security.js";
+import { STATUS_PENDENTES } from "./status-da-analise.ts";
 import { dataDeAnaliseNoFuturo } from "./data-de-analise.js";
 import { completarLinhaPeloEnvelope } from "./lista-do-painel-de-analises.js";
 import { modalidadesDaConcorrencia } from "./modalidades-de-concorrencia.js";
@@ -569,11 +570,8 @@ export function temMunicipio(
 
 /* ── KPIs e o recorte visual (KPI e barra do gráfico) ──────────────── */
 
-/*
-  "Em análise": a ficha da Avaliação documental aberta por alguém (edital com a
-  análise no MONITORA). Ainda sem decisão: conta como pendente.
-*/
-export const STATUS_PENDENTES = Object.freeze(["Pendente", "Em análise"]);
+/* Pendente e Em análise (src/lib/status-da-analise.ts). */
+export { STATUS_PENDENTES };
 
 export const STATUS_DO_KPI: Readonly<Record<string, readonly string[]>> =
   Object.freeze({

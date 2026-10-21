@@ -1,0 +1,150 @@
+/*
+  Encerramento do edital: a tela (encerramento-do-edital.tsx) e os selos no
+  menu da conta e no avatar (selos-do-edital.tsx). Só tokens.
+*/
+.modal-card.encerramento-cartao {
+  width: min(600px, calc(100vw - 32px));
+  border-radius: var(--radius-xl);
+}
+.encerramento {
+  display: grid;
+  gap: var(--space-4);
+  padding: var(--space-6);
+}
+.encerramento-topo {
+  display: grid;
+  justify-items: center;
+  gap: var(--space-2);
+  text-align: center;
+}
+.encerramento-topo h2 {
+  margin: 0;
+  font-size: var(--text-h2);
+  color: var(--color-text-primary);
+}
+.encerramento-icone {
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  border-radius: var(--radius-full);
+  background: var(--color-status-danger-bg);
+  color: var(--color-status-danger-solid);
+}
+.encerramento[data-fechou] .encerramento-icone {
+  background: var(--color-status-warning-bg);
+  color: var(--color-status-warning-solid);
+}
+.encerramento-fechou {
+  margin: 0;
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-full);
+  background: var(--color-status-warning-bg);
+  color: var(--color-status-warning-text);
+  font-weight: var(--font-weight-semibold);
+}
+.encerramento .ui-kpis {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+.encerramento-obrigado {
+  margin: 0;
+  text-align: center;
+  font-size: var(--text-h3);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-brand);
+}
+.encerramento-minha {
+  padding: var(--space-4);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-lg);
+  background: var(--color-bg-subtle);
+}
+.encerramento-minha h3 {
+  margin: 0 0 var(--space-3);
+  font-size: var(--text-h4);
+}
+.encerramento-minha dl {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: var(--space-3);
+  margin: 0;
+}
+.encerramento-minha dt {
+  font-size: var(--text-caption);
+  color: var(--color-text-secondary);
+}
+.encerramento-minha dd {
+  margin: var(--space-1) 0 0;
+  font-size: var(--text-metric-sm);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+}
+.encerramento-minha dd small {
+  font-size: var(--text-body-sm);
+  font-weight: var(--font-weight-regular);
+  color: var(--color-text-secondary);
+}
+.encerramento-acoes {
+  display: flex;
+  justify-content: center;
+}
+@media (max-width: 480px) {
+  .encerramento {
+    padding: var(--space-4);
+  }
+  .encerramento .ui-kpis {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Selos no menu da conta. */
+.selos-do-edital {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1-5);
+  margin: var(--space-2) 0 0;
+  padding: 0;
+  list-style: none;
+}
+.selo-do-edital {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-0-5) var(--space-2);
+  border-radius: var(--radius-full);
+  background: var(--color-status-info-bg);
+  color: var(--color-status-info-text);
+  font-size: var(--text-caption);
+  font-weight: var(--font-weight-semibold);
+}
+.selo-do-edital[data-fechou] {
+  background: var(--color-status-warning-bg);
+  color: var(--color-status-warning-text);
+}
+.selo-do-edital-fechou {
+  font-weight: var(--font-weight-regular);
+}
+
+/* Marca no canto do avatar: largura zero, para não mexer no cabeçalho. */
+.selo-no-avatar {
+  position: relative;
+  width: 0;
+  height: 0;
+  align-self: flex-start;
+}
+.selo-no-avatar-marca {
+  position: absolute;
+  top: -2px;
+  left: -14px;
+  display: grid;
+  place-items: center;
+  width: 16px;
+  height: 16px;
+  border-radius: var(--radius-full);
+  background: var(--color-status-info-solid);
+  color: var(--color-text-inverse);
+  box-shadow: 0 0 0 2px var(--color-bg-raised);
+}
+.selo-no-avatar-marca[data-fechou] {
+  background: var(--color-status-warning-solid);
+}
