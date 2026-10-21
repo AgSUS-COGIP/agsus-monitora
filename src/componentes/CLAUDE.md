@@ -17,6 +17,7 @@ arquivo em kebab-case, componente em PascalCase.
 ```
 icone.jsx                    <Icone nome="…"> — Lucide, do mesmo registro de src/modules/icones.js
 modal.jsx                    só reexporta o <Modal> de src/ui/modal.jsx (importe de src/ui/ no código novo)
+aviso-de-versao/             faixa "Há uma versão nova" no topo (montarAvisoDeVersao); regra em src/app/aviso-de-versao.ts
 busca-global/                busca Ctrl+K (montarBuscaGlobal); a escolha vai ao legado por evento
 multi-select-busca.jsx       <MultiSelectBusca>: seleção múltipla com busca, controlada (o único do app)
 dados-do-monitoramento.ts    linhas de TB_MONITORAMENTO_INDIGENA e catálogo TD_UNIDADE que o legado

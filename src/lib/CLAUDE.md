@@ -47,6 +47,9 @@ Arquivos que exigem cuidado:
 - `copia-da-sessao.js` — quando a cópia da sessão guardada no navegador pode abrir a tela (mesmo
   usuário, mesmo acesso, mesma versão publicada, dentro da validade) e o que mudou desde ela.
   Afrouxar uma regra daqui expõe dado a quem perdeu acesso.
+- `novidades.ts` — **novidades do aviso de versão nova** (o "Novo: …"); entrada nova no topo, `visivel: true` só
+  quando importa para quem usa (README, "Aviso de versão nova e novidades"). `versao-do-sistema.ts` — leitura do
+  `versao.json`, novidade a mostrar e o sinal de "tela antiga" (PGRST202 / "recarregue a página") no fetch do cliente.
 - `env.js` — leitura de variáveis; nunca hardcode de chave.
 
 Arquivo novo: nome em português, kebab-case, com teste junto.

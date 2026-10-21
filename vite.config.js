@@ -4,6 +4,7 @@ import { cp, mkdir } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { createHtmlSecurityPlugin } from "./src/lib/html-security.js";
+import { novidadesVisiveis } from "./src/lib/novidades.ts";
 
 const projectDirectory = dirname(fileURLToPath(import.meta.url));
 
@@ -39,9 +40,40 @@ function copyProgressiveWebAppAssets() {
   };
 }
 
+/*
+  Versão do build para o aviso de versão nova (src/app/aviso-de-versao.ts):
+  grava a versão no JS (`__VERSAO_DO_BUILD__`) e publica `/versao.json` com a
+  mesma versão e as novidades visíveis (src/lib/novidades.ts). Na Vercel é o
+  commit; fora dela, a hora do build. A página aberta compara as duas.
+*/
+function publicarVersaoDoBuild() {
+  const versao =
+    (process.env.VERCEL_GIT_COMMIT_SHA || "").slice(0, 12) ||
+    `local-${Date.now().toString(36)}`;
+  return {
+    name: "agsus-versao-do-build",
+    apply: "build",
+    config: () => ({
+      define: { __VERSAO_DO_BUILD__: JSON.stringify(versao) },
+    }),
+    generateBundle() {
+      this.emitFile({
+        type: "asset",
+        fileName: "versao.json",
+        source: JSON.stringify({ versao, novidades: novidadesVisiveis() }),
+      });
+    },
+  };
+}
+
 export default defineConfig({
   // React em src/componentes/ (barra lateral, Calendário, Lista de Aprovados); o resto migra aos poucos.
-  plugins: [react(), createHtmlSecurityPlugin(), copyProgressiveWebAppAssets()],
+  plugins: [
+    react(),
+    createHtmlSecurityPlugin(),
+    copyProgressiveWebAppAssets(),
+    publicarVersaoDoBuild(),
+  ],
   build: {
     rollupOptions: {
       input: {

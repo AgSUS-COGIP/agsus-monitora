@@ -181,6 +181,7 @@ dist/
 ├── assets/          JS e CSS com hash no nome + tudo de public/assets/
 ├── data/            JSON geográfico de public/data/ (terras indígenas)
 ├── icons/, manifest.webmanifest, offline.html, sw.js, sw-policy.js   PWA
+├── versao.json      versão do build e novidades visíveis (aviso de versão nova)
 ```
 
 - O JS é dividido por página (`main`) e pacotes de terceiros (`vendor-supabase`,
@@ -191,6 +192,31 @@ dist/
   Por isso nunca use chave secreta num `VITE_*`.
 - Os dados de `public/data/` **não** são regenerados
   pelo build. Se a fonte mudou, rode antes o script correspondente (`scripts/CLAUDE.md`).
+
+### Aviso de versão nova e novidades
+
+Cada build grava a própria versão no JS (o commit, na Vercel) e publica `/versao.json` com a mesma
+versão (`vite.config.js`, `publicarVersaoDoBuild`). Quem está com o sistema aberto confere esse arquivo
+(sem cache, nunca o banco) a cada 5 minutos com a aba visível e ao voltar para ela; versão diferente
+mostra a faixa "Há uma versão nova do MONITORA." no topo, com "Atualizar agora" e fechar. Nada
+recarrega à força. Regra em `src/app/aviso-de-versao.ts`; desenho em `src/componentes/aviso-de-versao/`.
+
+**Adicionar uma novidade** (o "Novo: …" da faixa): no mesmo PR da mudança, ponha uma entrada no topo de
+`NOVIDADES` em `src/lib/novidades.ts`:
+
+```ts
+{
+  id: "2026-10-21-motivo-da-reabertura", // único: data + assunto
+  data: "2026-10-21",                    // AAAA-MM-DD
+  texto: "motivo padronizado na reabertura", // curto, minúsculo, sem ponto final
+  visivel: true,                         // false: não aparece na faixa
+},
+```
+
+Só marque `visivel: true` o que importa para quem usa (tela nova, regra que mudou); correção interna
+fica `false` ou sem entrada. A faixa mostra a novidade visível mais recente que a versão aberta ainda
+não tem; sem nenhuma, só o aviso genérico. O build leva as 5 visíveis mais recentes para o
+`versao.json`.
 
 ### Servir o build
 

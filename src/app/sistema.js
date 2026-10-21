@@ -9,11 +9,13 @@ import {
 import { esconderEsqueleto, mostrarEsqueleto } from "./carregamento.js";
 import { estadoDaVisaoGeral } from "../modulos/visao-geral/estado.ts";
 import { montarPessoasOnline } from "../componentes/pessoas-online/pessoas-online.jsx";
+import { montarAvisoDeVersao } from "../componentes/aviso-de-versao/aviso-de-versao.tsx";
+import { criarAvisoDeVersao } from "./aviso-de-versao.ts";
 import { avisar, mostrarCarregamento } from "./avisos.js";
 import { criarCarga } from "./carga.js";
 import { configuracaoDoApp as configuracao } from "./configuracao.js";
 import { criarMoldura } from "./moldura.js";
-import { criarNavegacao } from "./navegacao.js";
+import { confirmarSaidaPadrao, criarNavegacao } from "./navegacao.js";
 import { criarPaineisExternos } from "./paineis-externos.js";
 import { criarPerfil } from "./perfil.js";
 import { criarPresenca } from "./presenca.js";
@@ -32,6 +34,7 @@ import { sessaoDoApp } from "./sessao.js";
     navegacao.js         troca de tela, menu, título, permissões
     carga.js             carga dos dados, cópia da sessão, Realtime
     pagina-aberta.ts     a página aberta pede as linhas e abre a Visão geral
+    aviso-de-versao.ts   versão nova publicada: aviso no topo, sem recarregar à força
     presenca.js          auditoria, heartbeat e Pessoas online
     vigia-do-catalogo.ts página desligada pela coordenação fecha sem recarregar
     moldura.js           barra recolhida, tema, tela cheia, PDF
@@ -93,6 +96,11 @@ export const presenca = criarPresenca({
   configuracao,
   navegacao,
   aoRegistrar: vigiaDoCatalogo.aoRegistrarPresenca,
+});
+
+/* Versão nova publicada (/versao.json, sem banco): aviso no topo; a pessoa decide. */
+export const avisoDeVersao = criarAvisoDeVersao({
+  confirmarSaida: () => confirmarSaidaPadrao(window),
 });
 
 const viewAtual = () => navegacao.obter().view;
@@ -253,6 +261,8 @@ export function ligarSistema() {
   acompanharPaginaAberta({ navegacao });
   presenca.acompanhar();
   montarPessoasOnline({ presenca });
+  montarAvisoDeVersao({ aviso: avisoDeVersao });
+  avisoDeVersao.iniciar();
 
   document.addEventListener(EVENTO_ESCOLHA_DA_BUSCA, (evento) =>
     localizarLinhaDoMonitoramento(evento.detail?.id),
