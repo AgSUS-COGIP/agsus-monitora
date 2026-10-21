@@ -21,9 +21,7 @@ const ROLLBACK = ler(`supabase/rollback/${NOME}`);
 
 /** O corpo de `CREATE OR REPLACE FUNCTION <nome>` até o $function$; de fechamento. */
 const funcao = (sql, nome) => {
-  const ini = sql.search(
-    new RegExp(`function ${nome.replace(/[."]/g, "\\$&")}\\(`, "i"),
-  );
+  const ini = sql.toLowerCase().indexOf(`function ${nome.toLowerCase()}(`);
   if (ini < 0) return "";
   const fim = sql.indexOf("$function$;", sql.indexOf("$function$", ini) + 10);
   return sql.slice(ini, fim);
