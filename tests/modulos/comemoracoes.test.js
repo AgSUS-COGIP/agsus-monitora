@@ -100,7 +100,7 @@ describe("seção Comemorações", () => {
       janela: janelaFalsa(),
       previa: false,
     });
-    expect(host.querySelectorAll(".comemoracoes-marco")).toHaveLength(7);
+    expect(host.querySelectorAll(".comemoracoes-marco")).toHaveLength(8);
     expect(
       [...host.querySelectorAll(".comemoracoes-grupo__titulo")].map(
         (h) => h.textContent,

@@ -449,6 +449,7 @@ export function criarEstadoDasAnalises({
     exportarCsv,
     abrirDetalhe,
     fecharDetalhe: () => publicar({ gaveta: null }),
+    comemoracoesLigadas,
   };
 }
 

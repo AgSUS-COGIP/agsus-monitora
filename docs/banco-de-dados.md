@@ -1161,3 +1161,25 @@ O modo `anexos` (`scripts/robo-empregare/so_anexos.py`) nunca chama `gravar_lote
 `fechar_vaga_empregare` e o workflow não pré-classifica depois dele. Ordem: **migration antes** de
 publicar o front e de disparar o modo (sem ela, `disparar_robo` recusa o modo e o robô avisa que falta
 `listar_anexos_empregare`). Rollback: aplicar o front sem o "Só anexos" antes.
+
+## 23. Medalhas do dia no card "Ritmo da análise" (21/10/2026)
+
+Migration `20261021100000_medalhas_do_dia.sql` (ensaio e rollback com o mesmo nome). Acrescenta, por
+edital, o campo `destaques` em `public.obter_ritmo_da_analise(p_area)` (`CREATE OR REPLACE` a
+partir da definição vigente, só acrescentando; mesma permissão):
+
+- `destaques: { dia, avaliadores: [ { nome, qt, reabertas } ] }` — quem concluiu fichas hoje
+  (`TB_FICHA_ANALISE` `CONCLUIDA` com `DT_CONCLUSAO` desde 00:00 de Brasília, por
+  `CO_USUARIO_CONCLUSAO`), só os do pódio (`dense_rank` ≤ 3) e quem chegou a 10 conclusões (o
+  mínimo do selo). Nome e sobrenome do cadastro (`FC_NOME_E_SOBRENOME` de `TB_PERFIL_USUARIO`).
+- Reabertas: `TH_FICHA_ANALISE` `REABRIR` registradas hoje cuja conclusão anterior (o `CONCLUIR`
+  imediatamente antes, na mesma ficha) também é de hoje; contam para quem fez aquele `CONCLUIR`.
+  `REINICIAR` não conta.
+- Índice parcial novo `IN_THFICHA_REABRIR` (`DT_REGISTRO`, incluindo `CO_FICHA_ANALISE`, só
+  `REABRIR`).
+- Medalhas (🥇🥈🥉, empate leva a mesma), selo Precisão (🎯: ≥ 10 conclusões hoje e nenhuma
+  reaberta) e a comemoração da meta da equipe (uma vez por dia por pessoa) são do front, em
+  `src/lib/ritmo-da-analise.ts` e `src/modulos/analises/marcos.ts`.
+- Ensaio em 21/10/2026: 3,9 ms com o card aquecido (antes 3,2 ms); o trecho novo com o volume de
+  20/10 (550 conclusões, 19 reaberturas) levou 1 ms aquecido e 20 ms frio.
+- Ordem: aplicar a migration antes de publicar o front (sem o campo, o bloco só não aparece).

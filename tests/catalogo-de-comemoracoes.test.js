@@ -54,6 +54,7 @@ describe("catálogo de marcos", () => {
     expect(ids).toEqual([
       "edital-concluido",
       "fila-zerada",
+      "meta-do-dia",
       "vaga-pronta",
       "marco-do-ano",
       "acesso-liberado",

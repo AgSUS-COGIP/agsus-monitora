@@ -1,5 +1,9 @@
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { avaliarMarcosDasAnalises } from "../src/modulos/analises/marcos.ts";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import {
+  avaliarMarcosDasAnalises,
+  comemorarMetaDoDia,
+} from "../src/modulos/analises/marcos.ts";
+import { calcularRitmo } from "../src/lib/ritmo-da-analise.ts";
 
 /*
   Onde os marcos aparecem: o aviso de edital concluído / fila zerada na tela
@@ -53,5 +57,120 @@ describe("marcos de Análises curriculares", () => {
   it("fora do escopo Ativo, não avalia", async () => {
     expect(await avaliar("Pendente", "todos")).toBeNull();
     expect(localStorage.length).toBe(0);
+  });
+});
+
+describe("meta de hoje batida pela equipe (Ritmo da análise)", () => {
+  const HOJE = "2026-10-19";
+  const ritmo = (feitoHoje) =>
+    calcularRitmo(
+      {
+        id: "e1",
+        edital: "114/2026",
+        situacoes: {
+          pendente: 600,
+          em_analise: 0,
+          revisar: 0,
+          concluida: 400,
+          fora_lote: 0,
+        },
+        porDia: [{ dia: HOJE, qt: feitoHoje }],
+        qtEquipe: 5,
+        qtAvaliadoresRecentes: 5,
+        cronograma: [
+          {
+            ordem: 1,
+            atividade: "Análise documental",
+            tipo: null,
+            inicio: "2026-10-15",
+            fim: "2026-10-22",
+          },
+        ],
+      },
+      { hoje: HOJE, hora: 15 },
+    );
+  const batida = [ritmo(400)];
+
+  beforeEach(() => localStorage.clear());
+  afterEach(() => {
+    document.body.innerHTML = "";
+    delete window.matchMedia;
+  });
+
+  it("comemora uma vez por dia por pessoa (guardado no navegador)", () => {
+    const soltar = vi.fn();
+    const chamar = (hoje = HOJE, usuario = "u1") =>
+      comemorarMetaDoDia({
+        ritmos: batida,
+        hoje,
+        usuario,
+        ligadas: true,
+        soltar,
+      });
+    expect(chamar()).toBe(true);
+    expect(chamar()).toBe(false);
+    expect(soltar).toHaveBeenCalledTimes(1);
+    expect(soltar.mock.calls[0][0]).toMatchObject({
+      texto: "Meta de hoje batida pela equipe! 🎉",
+      marco: "meta-do-dia",
+    });
+    expect(chamar(HOJE, "u2")).toBe(true); // outra pessoa
+    expect(chamar("2026-10-20")).toBe(true); // outro dia
+    expect(soltar).toHaveBeenCalledTimes(3);
+  });
+
+  it("sem meta batida, nada", () => {
+    const soltar = vi.fn();
+    expect(
+      comemorarMetaDoDia({
+        ritmos: [ritmo(10)],
+        hoje: HOJE,
+        usuario: "u1",
+        ligadas: true,
+        soltar,
+      }),
+    ).toBe(false);
+    expect(soltar).not.toHaveBeenCalled();
+  });
+
+  it("comemorações desligadas no sistema: nada, e religar no mesmo dia ainda comemora", () => {
+    const soltar = vi.fn();
+    const chamar = (ligadas) =>
+      comemorarMetaDoDia({
+        ritmos: batida,
+        hoje: HOJE,
+        usuario: "u1",
+        ligadas,
+        soltar,
+      });
+    expect(chamar(false)).toBe(false);
+    expect(localStorage.length).toBe(0);
+    expect(chamar(true)).toBe(true);
+    expect(soltar).toHaveBeenCalledTimes(1);
+  });
+
+  it("preferência pessoal desligada: sem aviso", () => {
+    localStorage.setItem("agsus_monitora_comemoracoes_desligadas", "1");
+    comemorarMetaDoDia({
+      ritmos: batida,
+      hoje: HOJE,
+      usuario: "u1",
+      ligadas: true,
+    });
+    expect(document.querySelector(".comemoracao")).toBeNull();
+  });
+
+  it("prefers-reduced-motion: só o aviso, sem os fogos", () => {
+    window.matchMedia = () => ({ matches: true });
+    comemorarMetaDoDia({
+      ritmos: batida,
+      hoje: HOJE,
+      usuario: "u1",
+      ligadas: true,
+    });
+    const aviso = document.querySelector(".comemoracao");
+    expect(aviso?.textContent).toContain("Meta de hoje batida pela equipe!");
+    expect(document.querySelector("canvas")).toBeNull();
+    expect(document.querySelector(".comemoracao__pular")).toBeNull();
   });
 });

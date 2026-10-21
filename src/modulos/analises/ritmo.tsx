@@ -3,6 +3,10 @@ import { formatNumberBR } from "../../lib/formatters.js";
 import {
   agoraEmBrasilia,
   gravarRitmoRecolhido,
+  MEDALHAS,
+  MINIMO_DO_SELO,
+  ROTULO_DA_MEDALHA,
+  SELO_DE_PRECISAO,
   lerRitmoRecolhido,
   noMomentoDoResumo,
   ritmosDaArea,
@@ -17,6 +21,7 @@ import {
   type SituacaoDoDia,
 } from "../../lib/ritmo-da-analise.ts";
 import { GradeDeKpis, Kpi, Selo } from "../../ui/index.js";
+import { comemorarMetaDoDia } from "./marcos.ts";
 
 /*
   Card "Ritmo da análise": um por edital com fichas no sistema (regras em
@@ -32,6 +37,9 @@ import { GradeDeKpis, Kpi, Selo } from "../../ui/index.js";
   agora" anda com o relógio: a tela recalcula a cada 5 minutos, sem consulta.
   O botão recolhe o card numa linha (título, selo do dia e "hoje X de Y"); a
   escolha fica no navegador, por pessoa.
+  Abaixo do "Hoje", "Destaques de hoje": só medalhistas (🥇🥈🥉, empate leva
+  a mesma) e quem tem o selo Precisão (🎯); zera todo dia. Bateu a meta do
+  dia, a comemoração da equipe sai uma vez por dia por pessoa (marcos.ts).
 */
 
 const TOM_DO_SELO: Record<SituacaoDoDia | "concluido", string> = {
@@ -44,6 +52,7 @@ const TOM_DO_SELO: Record<SituacaoDoDia | "concluido", string> = {
 };
 
 const RECALCULO_MS = 5 * 60 * 1000;
+const DESLIGADAS = () => false;
 
 /* Quem está na tela (o recolhido é por pessoa). */
 function usuarioDaSessao() {
@@ -86,6 +95,40 @@ function BlocoDeHoje({ r }: { r: RitmoDoEdital }) {
       <span className="ui-texto-secundario" data-texto-do-dia>
         {textoDoDia(r)}
       </span>
+    </div>
+  );
+}
+
+function DestaquesDeHoje({ r }: { r: RitmoDoEdital }) {
+  const { medalhas, precisao } = r.destaques;
+  if (!medalhas.length && !precisao.length) return null;
+  return (
+    <div className="ui-pilha" data-destaques>
+      <h3 className="ui-titulo">Destaques de hoje</h3>
+      <div className="ui-chips">
+        {medalhas.map((m, i) => (
+          <Selo
+            key={`m-${i}-${m.nome}`}
+            tom="neutro"
+            titulo={`${ROTULO_DA_MEDALHA[m.posicao - 1]}: ${formatNumberBR(m.qt)} fichas concluídas hoje`}
+          >
+            <span data-medalha={m.posicao}>
+              {MEDALHAS[m.posicao - 1]} {m.nome} · {formatNumberBR(m.qt)}
+            </span>
+          </Selo>
+        ))}
+        {precisao.map((nome, i) => (
+          <Selo
+            key={`p-${i}-${nome}`}
+            tom="aprovado"
+            titulo={`Precisão: ${MINIMO_DO_SELO} ou mais fichas hoje, nenhuma reaberta`}
+          >
+            <span data-precisao>
+              {SELO_DE_PRECISAO} {nome}
+            </span>
+          </Selo>
+        ))}
+      </div>
     </div>
   );
 }
@@ -148,6 +191,7 @@ function CardDoEdital({
             {textoDoPrazo(r)}
           </span>
           <BlocoDeHoje r={r} />
+          <DestaquesDeHoje r={r} />
           <GradeDeKpis rotulo={`Edital ${r.edital}`}>
             <Kpi
               tom="sucesso"
@@ -178,6 +222,7 @@ export function RitmoDaAnalise({
   linhas,
   conferidoEm,
   usuario = usuarioDaSessao(),
+  ligadas = DESLIGADAS,
 }: {
   editais: readonly EditalDoRitmo[] | null;
   /** As linhas do resumo do Painel que a tela recebeu (todas, sem filtro). */
@@ -185,6 +230,8 @@ export function RitmoDaAnalise({
   /** O "Conferido às" do topo: o momento do resumo. */
   conferidoEm?: string | null;
   usuario?: string | null;
+  /** O liga/desliga das comemorações do sistema (situação do sistema). */
+  ligadas?: () => boolean;
 }) {
   const [recolhido, setRecolhido] = useState(() => lerRitmoRecolhido(usuario));
   // O esperado do dia anda com o relógio: recalcula sem consultar o banco.
@@ -193,11 +240,22 @@ export function RitmoDaAnalise({
     const id = setInterval(() => setRelogio(Date.now()), RECALCULO_MS);
     return () => clearInterval(id);
   }, []);
-  const ritmos = useMemo(() => {
-    if (!editais) return [];
+  const { ritmos, hoje } = useMemo(() => {
     const agora = agoraEmBrasilia(new Date(relogio));
-    return ritmosDaArea(noMomentoDoResumo(editais, linhas, agora.hoje), agora);
+    if (!editais) return { ritmos: [], hoje: agora.hoje };
+    return {
+      ritmos: ritmosDaArea(
+        noMomentoDoResumo(editais, linhas, agora.hoje),
+        agora,
+      ),
+      hoje: agora.hoje,
+    };
   }, [editais, linhas, relogio]);
+  // Meta de hoje batida pela equipe: comemora uma vez por dia (marcos.ts).
+  useEffect(() => {
+    if (ritmos.length)
+      comemorarMetaDoDia({ ritmos, hoje, usuario, ligadas: ligadas() });
+  }, [ritmos, hoje, usuario, ligadas]);
   if (!ritmos.length) return null;
   const alternar = () => {
     gravarRitmoRecolhido(usuario, !recolhido);

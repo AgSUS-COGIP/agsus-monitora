@@ -52,6 +52,26 @@
     vindo de `obter_ritmo_da_analise`. Sem linhas do edital no resumo carregado
     (escopo "Inativo", por exemplo), o card dele não aparece. O momento é o do
     "Conferido às" do topo (`textoDoMomento`).
+
+  DESTAQUES DE HOJE (21/10/2026)
+    Medalhas para quem concluiu fichas hoje (horário de Brasília), por edital:
+    🥇🥈🥉 para as três maiores contagens do dia; empate leva a mesma medalha
+    (as contagens 30, 30, 25, 20 dão ouro, ouro, prata e bronze). Selo
+    "Precisão" (🎯) para quem concluiu ao menos `MINIMO_DO_SELO` (10) fichas
+    hoje sem nenhuma reaberta: reabertura (REABRIR, pela coordenação ou pela
+    própria pessoa) registrada hoje de uma ficha que ela concluiu hoje —
+    REINICIAR não conta (migration 20261021100000). Zera todo dia: o retrato
+    traz o dia e, virou a data com a tela aberta, o bloco some até a próxima
+    carga. Sem ranking acumulado e sem a contagem de quem ficou fora do
+    pódio: o banco só manda os do pódio e os que chegaram ao mínimo do selo,
+    e a tela só mostra medalhistas e selos.
+
+  COMEMORAÇÃO DA EQUIPE
+    Quando o selo do dia vira "Meta de hoje batida", a tela solta a
+    comemoração (marco "meta-do-dia" do catálogo, que respeita Configurações ›
+    Comemorações, a preferência pessoal e o prefers-reduced-motion) uma vez
+    por dia por pessoa: o dia fica guardado neste navegador
+    (`lerMetaComemorada`/`gravarMetaComemorada`).
 */
 
 import { quandoFoi } from "./texto-da-conferencia.js";
@@ -72,6 +92,33 @@ export interface SituacoesDasFichas {
   fora_lote: number;
 }
 
+/** Quem concluiu fichas hoje e entrou no retrato (pódio ou mínimo do selo). */
+export interface AvaliadorDoDia {
+  nome: string;
+  /** Fichas concluídas hoje (só aparece na tela para medalhistas). */
+  qt: number;
+  /** Fichas concluídas hoje e reabertas hoje. */
+  reabertas: number;
+}
+
+export interface DestaquesDoRetrato {
+  dia: string;
+  avaliadores: readonly AvaliadorDoDia[];
+}
+
+export interface Medalhista {
+  nome: string;
+  qt: number;
+  /** 1 = ouro, 2 = prata, 3 = bronze (empate: a mesma). */
+  posicao: 1 | 2 | 3;
+}
+
+export interface DestaquesDeHoje {
+  medalhas: readonly Medalhista[];
+  /** Nomes com o selo "Precisão". */
+  precisao: readonly string[];
+}
+
 export interface EditalDoRitmo {
   id: string;
   edital: string;
@@ -80,6 +127,8 @@ export interface EditalDoRitmo {
   qtEquipe: number;
   qtAvaliadoresRecentes: number;
   cronograma: readonly EtapaDoCronograma[];
+  /** Destaques de hoje (migration 20261021100000); null sem o campo. */
+  destaques?: DestaquesDoRetrato | null;
 }
 
 export type SituacaoDoRitmo =
@@ -110,6 +159,8 @@ export interface RitmoDoEdital {
   situacao: SituacaoDoRitmo;
   /** O bloco "Hoje": meta do dia, feito, faltam e o selo que oscila. */
   dia: RitmoDoDia;
+  /** Medalhas e selos de hoje (vazios se o retrato não é de hoje). */
+  destaques: DestaquesDeHoje;
 }
 
 export type SituacaoDoDia =
@@ -335,8 +386,71 @@ export function lerRitmoDaAnalise(resposta: unknown): EditalDoRitmo[] {
             fim: dataOuNulo(c.fim),
           }))
           .filter((c) => c.atividade),
+        destaques: lerDestaques(e.destaques),
       };
     });
+}
+
+function lerDestaques(valor: unknown): DestaquesDoRetrato | null {
+  const d = objeto(valor);
+  const dia = dataOuNulo(d.dia);
+  if (!dia) return null;
+  return {
+    dia,
+    avaliadores: lista(d.avaliadores)
+      .map(objeto)
+      .map((a) => ({
+        nome: texto(a.nome).trim(),
+        qt: inteiro(a.qt),
+        reabertas: inteiro(a.reabertas),
+      }))
+      .filter((a) => a.nome && a.qt > 0),
+  };
+}
+
+/* ── Destaques de hoje ──────────────────────────────────────────────── */
+
+/** O mínimo de fichas no dia para o selo "Precisão" (o banco corta pelo mesmo). */
+export const MINIMO_DO_SELO = 10;
+export const MEDALHAS = ["🥇", "🥈", "🥉"] as const;
+export const ROTULO_DA_MEDALHA = ["Ouro", "Prata", "Bronze"] as const;
+export const SELO_DE_PRECISAO = "🎯";
+const SEM_DESTAQUES: DestaquesDeHoje = Object.freeze({
+  medalhas: [],
+  precisao: [],
+});
+
+const porNome = (a: string, b: string) => a.localeCompare(b, "pt-BR");
+
+/**
+ * Medalhas (as três maiores contagens; empate, a mesma) e selos "Precisão"
+ * (≥ `MINIMO_DO_SELO` concluídas e nenhuma reaberta) do retrato, se ele é
+ * de hoje; de outro dia, nada (zera a cada dia).
+ */
+export function destaquesDoDia(
+  retrato: DestaquesDoRetrato | null | undefined,
+  hoje: string,
+): DestaquesDeHoje {
+  if (!retrato || retrato.dia !== hoje) return SEM_DESTAQUES;
+  const avaliadores = retrato.avaliadores.filter((a) => a.nome && a.qt > 0);
+  const podio = [...new Set(avaliadores.map((a) => a.qt))]
+    .sort((a, b) => b - a)
+    .slice(0, MEDALHAS.length);
+  const medalhas = avaliadores
+    .filter((a) => podio.includes(a.qt))
+    .map((a) => ({
+      nome: a.nome,
+      qt: a.qt,
+      posicao: (podio.indexOf(a.qt) + 1) as 1 | 2 | 3,
+    }))
+    .sort((a, b) => a.posicao - b.posicao || porNome(a.nome, b.nome));
+  const precisao = avaliadores
+    .filter((a) => a.qt >= MINIMO_DO_SELO && a.reabertas === 0)
+    .map((a) => a.nome)
+    .sort(porNome);
+  return medalhas.length || precisao.length
+    ? { medalhas, precisao }
+    : SEM_DESTAQUES;
 }
 
 /* ── A conta ────────────────────────────────────────────────────────── */
@@ -504,6 +618,7 @@ export function calcularRitmo(
       { faltam, feito: concluidasHoje, prazo, avaliadores },
       agora,
     ),
+    destaques: destaquesDoDia(edital.destaques, agora.hoje),
   };
 }
 
@@ -736,3 +851,45 @@ export function gravarRitmoRecolhido(
     /* sem armazenamento: só não lembra */
   }
 }
+
+/* ── Comemoração da meta do dia (uma vez por dia, por pessoa) ───────── */
+
+const CHAVE_DA_META_COMEMORADA = "monitora.analises.meta-comemorada";
+const chaveDaMeta = (usuario: string | null | undefined) =>
+  `${CHAVE_DA_META_COMEMORADA}:${usuario || "anonimo"}`;
+
+/** O dia (AAAA-MM-DD) da última comemoração da meta desta pessoa; "" se nunca. */
+export function lerMetaComemorada(usuario: string | null | undefined): string {
+  try {
+    return globalThis.localStorage?.getItem(chaveDaMeta(usuario)) || "";
+  } catch {
+    return "";
+  }
+}
+
+export function gravarMetaComemorada(
+  usuario: string | null | undefined,
+  dia: string,
+): void {
+  try {
+    globalThis.localStorage?.setItem(chaveDaMeta(usuario), dia);
+  } catch {
+    /* sem armazenamento: pode repetir na próxima carga, sem prejuízo */
+  }
+}
+
+/** O edital cuja meta de hoje a equipe bateu (o primeiro), ou null. */
+export function metaDaEquipeBatida(
+  ritmos: readonly RitmoDoEdital[],
+): RitmoDoEdital | null {
+  return (
+    ritmos.find(
+      (r) =>
+        r.situacao !== "concluido" &&
+        r.dia.situacao === "batida" &&
+        r.dia.meta > 0,
+    ) ?? null
+  );
+}
+
+export const TEXTO_DA_META_BATIDA = "Meta de hoje batida pela equipe! 🎉";
