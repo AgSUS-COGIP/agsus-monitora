@@ -1141,19 +1141,19 @@ export const CONTRATO_RPC = {
     argumentos: ["p_edital", "p_fichas", "p_motivo"],
     critica: false,
     resumo:
-      "Libera reservas: a própria, sem motivo; a de outra pessoa, só a coordenação e com motivo de 10 a 2.000.",
+      "Libera reservas: a própria, sem motivo; a de outra pessoa, só a coordenação e com motivo de 10 a 2.000 com pelo menos 2 palavras (20261021110000).",
   },
   distribuir_fichas: {
     argumentos: ["p_edital", "p_atribuicoes", "p_motivo"],
     critica: false,
     resumo:
-      "Distribuição inicial, redistribuição (motivo) e devolução à fila (motivo) pela coordenação: [{ficha, versao, usuario}], com controle otimista (PT409), sem mexer em ficha concluída ou fora do lote.",
+      "Distribuição inicial, redistribuição (motivo) e devolução à fila (motivo de 10 a 2.000 com pelo menos 2 palavras, 20261021110000) pela coordenação: [{ficha, versao, usuario}], com controle otimista (PT409), sem mexer em ficha concluída ou fora do lote.",
   },
   mandar_fichas_revisao: {
     argumentos: ["p_edital", "p_fichas", "p_motivo"],
     critica: false,
     resumo:
-      "A coordenação manda fichas pendentes ou em análise para revisão, com motivo; [{ficha, versao}] com controle otimista.",
+      "A coordenação manda fichas pendentes ou em análise para revisão, com motivo (10 a 2.000, pelo menos 2 palavras — 20261021110000); [{ficha, versao}] com controle otimista.",
   },
   abrir_fichas_do_edital: {
     argumentos: ["p_edital"],
@@ -1211,11 +1211,12 @@ export const CONTRATO_RPC = {
     resumo:
       "Conclui a ficha: confere reserva, versões (ficha e regra vigente conferida), estrutura e o que falta pela regra da vaga (situação, motivos, requisitos e extras do cargo, itens, justificativa de nota diferente da declarada); grava resultado, notas, parecer e a versão da regra; libera a reserva.",
   },
+  // ── Motivos da reabertura (20261021110000_motivos_da_reabertura.sql)
   reabrir_ficha: {
-    argumentos: ["p_ficha", "p_versao", "p_motivo"],
+    argumentos: ["p_ficha", "p_versao", "p_motivo", "p_complemento"],
     critica: false,
     resumo:
-      "A coordenação reabre uma ficha concluída (volta a Em análise com o mesmo responsável), com motivo de 10 a 2.000.",
+      "A coordenação reabre uma ficha concluída (volta a Em análise com o mesmo responsável). p_motivo: código da lista fixa (motivos-da-reabertura.ts; texto livre da tela antiga é recusado com 22023 pedindo recarregar); p_complemento opcional até 500, obrigatório em OUTRO (15+ caracteres, 3 palavras). Histórico REABRIR: rótulo legível no motivo e o código nas alterações.",
   },
   // ── Reiniciar as fichas do edital (20261009160000_reiniciar_fichas_do_edital.sql)
   reiniciar_fichas_do_edital: {

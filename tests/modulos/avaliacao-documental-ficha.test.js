@@ -1144,16 +1144,95 @@ describe("ficha concluída: só leitura, histórico e reabrir", () => {
       cartao("IDENTIDADE").querySelector(".avd-ficha-decisao").disabled,
     ).toBe(true);
     await clicar(botao("Reabrir"));
-    await digitar(
-      document.querySelector(".avd-ficha-barra input"),
-      "Conferir de novo os cursos",
+    const barra = () => document.querySelector(".avd-ficha-barra .avd-inline");
+    const confirmar = () =>
+      clicar(barra().querySelector("[data-acao='confirmar-reabrir']"));
+    // Sem motivo da lista, nada vai ao banco.
+    await confirmar();
+    expect(barra().textContent).toContain("Escolha o motivo da reabertura.");
+    expect(chamadas(supabase, "reabrir_ficha")).toEqual([]);
+    // "Outro" com sequência aleatória também não.
+    const motivo = barra().querySelector("[data-campo='motivo-da-reabertura']");
+    const complemento = () =>
+      barra().querySelector("[data-campo='complemento-da-reabertura']");
+    await escolher(motivo, "OUTRO");
+    await digitar(complemento(), "dsdfsdfsfsa TERERTERTE");
+    await confirmar();
+    expect(barra().textContent).toContain(
+      "Descreva o motivo com pelo menos 15 caracteres e 3 palavras.",
     );
-    await clicar(
-      botao("Reabrir", document.querySelector(".avd-ficha-barra .avd-inline")),
-    );
+    expect(chamadas(supabase, "reabrir_ficha")).toEqual([]);
+    // Motivo da lista com complemento: o código e o texto vão ao banco.
+    await escolher(motivo, "CURSOS");
+    await digitar(complemento(), "  certificado   de 40h ");
+    await confirmar();
     await esperar();
     expect(chamadas(supabase, "reabrir_ficha")).toEqual([
-      { p_ficha: "f1", p_versao: 5, p_motivo: "Conferir de novo os cursos" },
+      {
+        p_ficha: "f1",
+        p_versao: 5,
+        p_motivo: "CURSOS",
+        p_complemento: "certificado de 40h",
+      },
+    ]);
+  });
+
+  it("reabrir: o erro do banco aparece; banco sem p_complemento repete a chamada antiga com o texto legível", async () => {
+    const lancamento = {
+      nivel: "superior",
+      modalidade: "AC",
+      blocos: { IDENTIDADE: { situacao: "CONFORME" } },
+      titulos: [],
+      cursos: [],
+      vinculos: [],
+    };
+    const recusa = Object.assign(
+      new Error(
+        "Escolha o motivo da reabertura na lista. Se a lista não aparece, recarregue a página.",
+      ),
+      { code: "22023" },
+    );
+    let banco = "novo";
+    const supabase = supabaseFalso(
+      fichaDoBanco({
+        situacao: "CONCLUIDA",
+        lancamento,
+        editar: false,
+        reabrir: true,
+      }),
+      {
+        reabrir_ficha: (args) => {
+          if (banco === "recusa") return recusa;
+          if (banco === "antigo" && "p_complemento" in args)
+            return Object.assign(new Error("Could not find the function"), {
+              code: "PGRST202",
+            });
+          return { versao: args.p_versao + 1 };
+        },
+      },
+    );
+    await abrirFicha(supabase);
+    await clicar(botao("Reabrir"));
+    const barra = () => document.querySelector(".avd-ficha-barra .avd-inline");
+    await escolher(
+      barra().querySelector("[data-campo='motivo-da-reabertura']"),
+      "EXPERIENCIA",
+    );
+    banco = "recusa";
+    await clicar(barra().querySelector("[data-acao='confirmar-reabrir']"));
+    await esperar();
+    expect(barra().textContent).toContain("recarregue a página");
+    banco = "antigo";
+    await clicar(barra().querySelector("[data-acao='confirmar-reabrir']"));
+    await esperar();
+    expect(chamadas(supabase, "reabrir_ficha").slice(-2)).toEqual([
+      {
+        p_ficha: "f1",
+        p_versao: 5,
+        p_motivo: "EXPERIENCIA",
+        p_complemento: null,
+      },
+      { p_ficha: "f1", p_versao: 5, p_motivo: "Correção de experiência" },
     ]);
   });
 

@@ -268,6 +268,9 @@ relatorio-de-motivos.tsx  Ações da coordenação › "Relatório de motivos": 
                           src/lib/avaliacao-documental/relatorio-de-motivos.ts
 ficha/estado-da-ficha.js  store da ficha: obter_ficha_analise, rascunho automático,
                           concluir_ficha, reabrir_ficha, registrar_acesso_ficha
+ficha/reabrir-a-ficha.tsx "Reabrir" da coordenação: motivo da lista fixa, complemento e
+                          "Outro" com descrição (src/lib/avaliacao-documental/motivos-da-reabertura.ts,
+                          qualidade-do-motivo.ts; 20261021110000)
 ficha/ficha.css           estilos da ficha (só tokens)
 estado-da-pre-classificacao.js  store da aba: obter_pre_classificacao, Recalcular,
                           registrar/publicar as listas, Copiar para o SEI e DOCX

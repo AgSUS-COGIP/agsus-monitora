@@ -979,7 +979,7 @@ const TOURS = Object.freeze({
       passo(
         t("avd-ficha-reabrir"),
         "Reabrir",
-        "A coordenação reabre uma ficha concluída, com motivo.",
+        "A coordenação reabre uma ficha concluída, com o motivo da lista.",
         { exige: coordenaAvaliacao },
       ),
       PASSO_DA_AYA,
