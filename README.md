@@ -1,405 +1,207 @@
 # MONITORA
 
-Aplicação de monitoramento dos processos seletivos da AgSUS, separada por **área** (Saúde
-Indígena, SEDE e Projetos): mapas da saúde indígena, editais e cronogramas, análises
-curriculares, seleção, entrevistas, recursos e lista de aprovados. O cliente é compilado pelo
-Vite (telas novas em React, o restante em JavaScript modular); os dados e a autenticação ficam no
-Supabase; um servidor web pequeno, em TypeScript, entrega as páginas. Detalhes do servidor:
-[docs/servidor.md](docs/servidor.md).
+Sistema web da AgSUS para acompanhar os processos seletivos, do edital à lista de aprovados.
+Cada edital pertence a uma **área** (Projetos, Saúde Indígena ou SEDE), e cada pessoa vê só as
+áreas e os módulos que o seu grupo de acesso libera. Módulos e abas podem ser desligados ou postos
+em manutenção em **Configurações → Módulos e abas**, sem deploy.
 
-## Stack
+## Módulos
 
-- Vite 7 + React 19, com TypeScript gradual no frontend (`src/modulos/`, `src/app/`, `src/ui/` e componentes compartilhados em
-  `src/componentes/`) e JavaScript modular legado (`src/modules/`), HTML e CSS
-- Supabase: Postgres com RLS, RPCs, login Google e rotinas agendadas (`pg_cron`)
-- Funções serverless na Vercel (`api/`): Node e uma em Python (`anexos-do-edital.py`, que lê o
-  PDF de anexos do edital com pdfplumber; dependências em `requirements.txt`)
-- Apps Script nas planilhas do Google, que enviam análises, seleção e entrevistas ao Supabase
-  (`apps-script/`)
-- Servidor web em TypeScript (`server/servidor.ts`), rodando direto no Node 24, sem dependências;
-  a Vercel continua como caminho estático
-- Python nos jobs da Empregare, conferências e pré-classificação, com biblioteca comum em
-  `python/monitora/`; guia em [docs/python-no-monitora.md](docs/python-no-monitora.md)
-- Vitest e Playwright nos testes do front; Ruff e pytest nas verificações de Python
+| Módulo                  | O que faz                                                                                                                                                                                                                                 |
+| ----------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Visão geral e mapas     | editais, terras indígenas, DSEIs e mapa de Projetos                                                                                                                                                                                       |
+| Editais e Cronograma    | cadastro do edital e do cronograma (importa cronograma e quadro de vagas do PDF de anexos); calendário das etapas                                                                                                                         |
+| Seleção                 | funil por vaga (inscritos, aptos, eliminados)                                                                                                                                                                                             |
+| Avaliação documental    | análise curricular feita no sistema: regra do edital, equipe, pré-classificação e lote, fila de fichas, pendências, espelho de nota em PDF (ou ZIP em massa) com modelo editável, relatório de motivos e motivo padronizado na reabertura |
+| Painel das análises     | leitura das análises (fichas publicadas da Avaliação documental e planilhas legadas): filtros, indicadores, ritmo da análise e medalhas do dia, detalhe com nota declarada × após a análise                                               |
+| Classificação           | regras por edital, listas, desempate e sorteio, agenda das entrevistas, exportação (XLSX, SEI/DOCX) e publicação na Lista de aprovados                                                                                                    |
+| Lista de aprovados      | aprovados, convocação e cartas de convocação                                                                                                                                                                                              |
+| Entrevistas             | painel de resultados e condução (roteiro, convocação, banca, notas e parecer)                                                                                                                                                             |
+| Recursos                | recursos dos candidatos: fila, etapas, parecer, resposta com modelos, anexos e ajuste de pontuação                                                                                                                                        |
+| Conferências            | avisos diários de inconsistência entre análises, entrevistas, classificação, aprovados e cargas                                                                                                                                           |
+| Aya                     | assistente lateral com base de conhecimento local (`docs/aya/`), sem IA externa; abre chamado ao suporte pelo Gmail                                                                                                                       |
+| Acessos e Configurações | convites, solicitações de acesso, grupos, coordenações, contas desativadas; marca, painéis externos, status das atualizações e robôs                                                                                                      |
 
-Seleção, Cronograma, Visão geral, Conferências, Status das atualizações, Análises curriculares, Módulos e abas, barra lateral e Busca global já usam TypeScript no estado, nos componentes e nas regras das telas. Os dados compartilhados do monitoramento e o recorte por área também estão tipados. O painel de Recursos também usa TypeScript nos filtros, indicadores, gráficos, fila, prazos e regras de enriquecimento, busca e CSV; a entrada, o estado e o cadastro/edição também estão tipados, com validação dos dados do painel e descarte de respostas após troca de área ou usuário. A gaveta, o parecer jurídico e os anexos também estão em TSX, com contratos e validação do histórico, autores das etapas e metadados dos anexos; as regras do parecer estão em TypeScript. Resposta ao candidato e administração de modelos também estão em TSX, com regras de marcadores, seleção de modelos e revisão em TypeScript. Os dados de resposta/modelos são validados; uma resposta inválida é sinalizada sem abrir um novo rascunho. O ajuste de pontuação também está em TSX, com regras de itens, validação e prévia em TypeScript; todos os componentes da pasta Recursos e seu estado estão tipados. A integração usa o motor da Classificação em TypeScript e valida os dados usados antes de calcular ou aprovar uma prévia. A tela principal e o estado de Classificação também estão em TypeScript/TSX: seleção do edital, carga, versões da regra, registro e publicação de listas, desempate, hora de nascimento e exportação; os efeitos de respostas antigas são descartados após troca de edital, área ou usuário. A publicação de aprovados também está em TypeScript/TSX, incluindo confirmação, casamento por análise/nome/vaga, revisão manual e comparação com a lista vigente; dados incompletos impedem uma revisão parcial. A visão Listas também está em TSX: indicadores, filtros, tabelas por vaga, eliminados, explicações, sorteio/decisão manual e ações de geração, publicação e exportação. Regras de recorte, avisos e fase do edital estão em TypeScript; a saída do motor tem contrato compartilhado, com cálculo também em TypeScript. A visão Regra também está em TSX, incluindo versões e rascunhos guardados; normalização, validação e edição imutável estão em TypeScript, com entradas numéricas preservadas enquanto se digita e histórico validado. A modalidade padrão usa listas independentes por edital. A Agenda também está em TypeScript/TSX: regra, distribuição de horários e bancas, conflitos, ajustes manuais, gravação, histórico, XLSX e integração com o documento da convocação. O estado valida os dados usados e descarta respostas após troca de edital ou usuário. Os componentes e estados da Classificação estão tipados. Números, arredondamentos, datas, idade, catálogo de critérios/modalidades e sorteios reprodutíveis também estão em TypeScript. A montagem das vagas e a integração com a convocação do edital também estão tipadas, preservando a precedência do quadro e a conta compartilhada das cotas; o motor completo também está em TypeScript, incluindo candidatos, entrevistas, ajustes aprovados, notas, desempates, cotas e explicações das quatro listas. Retrato das listas, seleção de colunas, XLSX e geração dos documentos SEI/DOCX também estão em TypeScript, com validação das linhas antes da exportação. Impressão, área de transferência e conversão do logo no navegador também estão em TypeScript. As cartas de convocação estão em TypeScript/TSX: modelos, versões, emissão, histórico, preenchimento, prévia, SEI, DOCX e ZIP, com validação dos dados recebidos e confirmação da emissão antes de gerar a saída. A configuração da convocação em Aprovados também está em TypeScript/TSX: catálogo e normalização dos modelos, categorias, cascata, formulário de vagas, editor e prévia da ordem de chamada. As respostas da configuração são validadas antes de atualizar os mapas. O cálculo e a aba de Convocação em Aprovados também estão em TypeScript/TSX, incluindo cotas, cascatas, ordenação, agrupamento, indicadores, filtros, paginação, seleção para cartas e CSV. A associação do sub judice sem código de vaga considera apenas o próprio edital. A aba Aprovados, suas peças compartilhadas e as regras de filtros/status também estão em TypeScript/TSX: indicadores, origens das listas, ações, selos, decisões judiciais, paginação e campos editáveis. Os contratos preservam os campos adicionais dos candidatos e o texto em edição. A entrada principal e o estado de Aprovados também estão em TypeScript/TSX, incluindo carga por área, cópia por versão, importação XLSX, status, anexos, decisões judiciais e integração dos modais. Candidatos e listas são validados antes de atualizar a tela; confirmações incompletas de convocação não mudam os status locais. Os modais de status, anexos e sub judice, o modal de listas do edital e a gaveta de Aprovados também estão em TSX. Todos os componentes e estados da pasta Aprovados estão tipados, com validação dos históricos de cartas/publicações e nova tentativa quando a leitura falha. A leitura do XLSX, a expansão dos candidatos compactos e as regras/conversões dos anexos PDF também estão em TypeScript, com contratos para os campos importados, arquivos binários e formatos dos pacotes. A migração
-continua por módulo. O Mapa de Projetos também está em TypeScript, incluindo carregamento, cache, lista, filtros, balões e integração do editor de coordenadas. O editor compartilhado pelos dois mapas também está em TypeScript, incluindo fila, sugestões, histórico, modo de edição, regras específicas dos dois mapas e adaptador da Saúde Indígena. As telas principal, nacional e por DSEI da Saúde Indígena também estão em TSX, com validação da entrada geográfica. As regras nacionais e distritais de contagens, bolhas, unidades, vínculos e enquadramento também estão em TypeScript; a reconciliação compartilhada mantém contratos JSDoc. A integração comum com o Leaflet também está em TypeScript (criação, camadas, tamanho, enquadramento, leque, ícones e balões). A base compartilhada dos mapas (painel, legenda, tela cheia, retorno ao Brasil e hooks) também está tipada. A ficha de notas de Conduzir entrevistas também está em TypeScript, incluindo estado local, permissões, matriz, atalhos, prévia e salvamento; o editor de roteiros e a composição da banca também estão em TSX, com contratos para rascunho, versões e salvamento. O estado de Conduzir entrevistas também está em TypeScript, com contratos das ações e RPCs, validação dos campos usados na tela e descarte de respostas de gravações após troca de área ou sessão. As regras de roteiro e condução também estão em TypeScript: escalas, pesos, mínimos, rascunhos, banca, atribuições, notas, aspectos, permissões e cálculo do parecer. A convocação também está migrada, incluindo regras, lista, seleção, desconvocação, liberação e integração com a Classificação; a pasta do módulo tem seus componentes, estados e marcos em TypeScript. O Painel de entrevistas está em TypeScript: entrada, estado, normalização, filtros, indicadores, gráficos, tabela, gavetas e exportação; contratos e comandos de verificação estão em
-[docs/typescript-no-frontend.md](docs/typescript-no-frontend.md).
+**Análises:** o edital 114/2026 é analisado no próprio sistema (Avaliação documental → fichas
+publicadas no Painel das análises). As planilhas do Google com Apps Script (`apps-script/`) seguem
+só para editais antigos e áreas que ainda as usam.
 
-## Áreas e módulos
+## Arquitetura
 
-Cada edital pertence a uma área, e cada pessoa vê só as áreas e os módulos que o seu grupo de
-acesso libera. O menu lateral mostra, por área, as abas ativas (catálogo em `TB_ABA`, ligado à
-área em `RL_ABA_AREA`). Módulos e abas podem ser desligados ou postos em manutenção em
-**Configurações → Módulos e abas**, sem deploy.
+```text
+Navegador (Vite + React 19 + TypeScript, PWA)
+   │  login Google (Supabase Auth) · dados só por RPC, sob RLS
+   ▼
+Supabase: Postgres + RLS + RPCs + pg_cron/pg_net + Vault
+   │  agenda e "Rodar agora" → workflow_dispatch
+   ▼
+GitHub Actions: robôs em Python/Node ── gravam pelo service_role ──► Supabase
 
-| Módulo               | Onde                                               | O que faz                                                                                                 |
-| -------------------- | -------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
-| Visão geral e mapas  | `index.html`                                       | terras indígenas, DSEIs e editais no mapa                                                                 |
-| Editais              | `index.html` (`src/modulos/editais/`)              | cadastro do edital e do cronograma; importa cronograma e quadro de vagas do PDF de anexos                 |
-| Cronograma           | `index.html` (`src/modulos/cronograma/`)           | calendário das etapas de todos os editais                                                                 |
-| Análises             | `index.html` (`src/modulos/analises/`)             | análises curriculares vindas das planilhas: filtros, KPIs, gráficos, pendências, fila e gaveta de detalhe |
-| Seleção              | `index.html` (`src/modulos/selecao/`)              | funil por vaga (inscritos, aptos, eliminados)                                                             |
-| Entrevistas          | `index.html` (`src/modulos/entrevistas/`)          | resultados, condução (roteiro, convocação, banca, notas) e roteiros                                       |
-| Recursos             | `index.html` (`src/modulos/recursos/`)             | recursos dos candidatos: fila, gaveta com etapas, resposta e anexos                                       |
-| Avaliação documental | `index.html` (`src/modulos/avaliacao-documental/`) | regra, equipe, pré-classificação e fila de fichas                                                         |
-| Classificação        | `index.html` (`src/modulos/classificacao/`)        | regras por edital, listas, sorteio, exportação e publicação na Lista de aprovados                         |
-| Lista de aprovados   | `index.html` (`src/modulos/aprovados/`)            | aprovados e convocação                                                                                    |
-| Aya                  | painel lateral (`src/modulos/aya/`)                | assistência e orientação contextual com a base de `docs/aya/`                                             |
-| Acessos              | `index.html` (`src/modulos/acessos/`)              | convites, grupos, contas desativadas e reativação                                                         |
+Vercel: front estático (dist/) + funções serverless em api/ (FUNAI, PDF de anexos do edital)
+Planilhas legadas: Apps Script → Supabase
+```
 
-Em **Conduzir entrevistas** aparecem só os editais na janela da entrevista pelo cronograma (de 7
-dias antes a 15 dias depois das etapas de entrevista), os liberados pelo administrador global e os
-que ainda têm convocado sem parecer.
+- **Front:** Vite 7 e React 19; telas novas em TypeScript/TSX, legado em JavaScript modular
+  (`src/modules/`, só encolhe). Alvo e regras em [docs/arquitetura-react.md](docs/arquitetura-react.md).
+- **Servidor opcional:** `server/servidor.ts` (Node 24, sem dependências) serve o mesmo `dist/`
+  em container, com os cabeçalhos do `vercel.json` ([docs/servidor.md](docs/servidor.md)).
+- **Robôs** (`.github/workflows/`): robô da Empregare (carga de inscritos, modo "só anexos"),
+  pré-classificação, leitura dos arquivos dos candidatos, conferências e sincronização das
+  planilhas de seleção e entrevistas. O banco os dispara pelo pg_cron ou a pedido da tela
+  ([docs/agenda-dos-robos.md](docs/agenda-dos-robos.md)); editais com **inscrições congeladas**
+  ficam fora da carga e da pré-classificação, salvo pedido do administrador global com motivo.
+  Guias: [docs/robo-empregare.md](docs/robo-empregare.md),
+  [docs/python-no-monitora.md](docs/python-no-monitora.md).
+- **TypeScript:** cerca de 59% dos arquivos de `src/` (362 `.ts`/`.tsx` × 252 `.js`/`.jsx` em
+  21/10/2026); estado por módulo em [docs/typescript-no-frontend.md](docs/typescript-no-frontend.md).
 
-## Abrir o projeto
+## Rodar localmente
 
-### 1. Requisitos
-
-| Ferramenta | Versão                  | Para quê                                            |
-| ---------- | ----------------------- | --------------------------------------------------- |
-| Git        | qualquer recente        | clonar                                              |
-| Node.js    | **24**                  | obrigatório em todos os caminhos                    |
-| npm        | o que vem com o Node 24 | dependências                                        |
-| Docker     | com Compose             | só para o caminho D (container)                     |
-| Python     | 3.12 com `pdfplumber`   | só para testar `api/anexos-do-edital.py` na máquina |
-
-O Node 24 executa o servidor TypeScript direto, sem etapa de compilação. Não há PHP nem Composer.
-O Python não é preciso para abrir o frontend e o servidor estático. Para as funções e os jobs,
-instale as dependências do componente correspondente; a Vercel instala o `requirements.txt` da
-raiz no deploy das funções. Consulte [docs/python-no-monitora.md](docs/python-no-monitora.md).
-
-### 2. Clonar e instalar
+**Requisitos:** Git, Node.js **24** (com npm). Python 3.12 só para os robôs e testes Python;
+Docker só para o container.
 
 ```bash
 git clone https://github.com/AgSUS-COGIP/agsus-monitora.git
 cd agsus-monitora
 npm ci
+cp .env.example .env.local   # PowerShell: Copy-Item .env.example .env.local
 ```
 
-Use `npm ci` em vez de `npm install`: ele instala exatamente o que está no `package-lock.json`.
-
-### 3. Configurar o Supabase
-
-Copie o modelo e preencha a chave publicável:
-
-```powershell
-# PowerShell
-Copy-Item .env.example .env.local
-```
+Preencha o `.env.local`:
 
 ```bash
-# Bash
-cp .env.example .env.local
-```
-
-```bash
-VITE_SUPABASE_URL=https://gnudtaxhjfgtvwkwpsel.supabase.co
+VITE_SUPABASE_URL=https://SEU-PROJETO.supabase.co
 VITE_SUPABASE_PUBLISHABLE_KEY=cole_aqui_a_chave_publicavel_do_supabase
 ```
 
-A chave publicável fica no painel do Supabase, em **Project Settings → API Keys**. Peça a quem
-administra o projeto, se você não tiver acesso. `VITE_SUPABASE_ANON_KEY` ainda é aceita como
-alternativa, mas use `VITE_SUPABASE_PUBLISHABLE_KEY` em ambiente novo.
+A URL e a chave publicável vêm de quem administra o Supabase. **Nunca** use a chave
+`service_role`: tudo que começa com `VITE_` vai para o navegador.
 
-**Nunca** use a chave `service_role` / secreta: tudo que começa com `VITE_` vai para o navegador.
-Os arquivos `.env` e `.env.*` já estão no `.gitignore`.
+| Comando                        | Endereço              | Para quê                                              |
+| ------------------------------ | --------------------- | ----------------------------------------------------- |
+| `npm run dev:frontend`         | http://localhost:5173 | editar telas, com recarga instantânea                 |
+| `npm run dev`                  | http://127.0.0.1:8000 | build em watch + servidor TypeScript (F5 após editar) |
+| `npm run build` e `npm start`  | http://127.0.0.1:8000 | conferir o build de produção, com todas as checagens  |
+| `docker compose up --build -d` | http://127.0.0.1:8000 | container (lê o `.env` da raiz, não o `.env.local`)   |
 
-Sem essas variáveis, o sistema abre, mas informa que a conexão com o Supabase não está configurada.
+O login volta para `<endereço>/auth/callback.html`, que precisa estar nas **Redirect URLs** do
+Supabase. As rotas `/api/*` só existem na Vercel; localmente respondem 404.
 
-### 4. Rodar
+**Testar:**
 
-Escolha o caminho conforme o que você vai fazer:
-
-| Caminho                              | Comando                              | Endereço              | Quando usar                                                                    |
-| ------------------------------------ | ------------------------------------ | --------------------- | ------------------------------------------------------------------------------ |
-| **A. Tela, com recarga instantânea** | `npm run dev:frontend`               | http://localhost:5173 | editar tela, CSS ou módulo JS; o navegador atualiza sozinho                    |
-| **B. Front + servidor juntos**       | `npm run dev`                        | http://127.0.0.1:8000 | ver a mudança no servidor de produção, com os cabeçalhos reais; F5 após editar |
-| **C. Build de produção**             | `npm run build` e depois `npm start` | http://127.0.0.1:8000 | conferir exatamente o que vai para produção, com todas as checagens            |
-| **D. Docker**                        | `docker compose up --build -d`       | http://127.0.0.1:8000 | subir como em produção, isolado da máquina                                     |
-
-As páginas existem em todos os caminhos: `/` (painel principal) e `/auth/callback.html` (retorno
-do login).
-
-As rotas `/api/*` (AYA, proxies da FUNAI e leitura do PDF de anexos) **só existem na Vercel**.
-Nos caminhos A a D elas respondem 404, e a tela avisa que o recurso só funciona na versão
-publicada.
-
-Observações sobre cada caminho:
-
-- **A** usa o servidor do Vite, e não o servidor do MONITORA: não tem os cabeçalhos de segurança
-  de produção. Ele escuta em `0.0.0.0`, então outros aparelhos da mesma rede alcançam a máquina
-  pelo IP dela, o que é útil para testar no celular.
-- **B** roda `vite build --watch` e `server/servidor.ts` no mesmo terminal. A cada edição o front
-  recompila em segundos e o servidor já entrega a versão nova: é só dar F5. Não roda as checagens
-  do build. `Ctrl+C` encerra os dois.
-- **C:** o `npm run build` roda antes as checagens (tipos do servidor, auth, contrato de RPC,
-  segurança do HTML, orçamento de bundles). Se uma falhar, o build para e diz qual regra foi violada.
-  O `npm start` só serve o `dist/` que já existe.
-- **D:** o Compose lê `VITE_SUPABASE_URL` e `VITE_SUPABASE_PUBLISHABLE_KEY` do arquivo **`.env`** da
-  raiz, e **não** do `.env.local`. As variáveis entram no build da imagem: depois de mudar o código
-  ou o `.env`, rode o mesmo comando de novo. Para encerrar: `docker compose down`.
-
-B, C e D usam a mesma porta, 8000: rode um de cada vez.
-
-### 5. Entrar no sistema
-
-O login é com Google. Depois de autenticar, o Google devolve para `<endereço atual>/auth/callback.html`,
-e esse endereço precisa estar autorizado no Supabase, em **Authentication → URL Configuration →
-Redirect URLs** (por exemplo, `http://localhost:5173/auth/callback.html`). Se o login cair em outro
-endereço ou der erro de redirect, peça a quem administra o Supabase para incluir o endereço local.
-
-Conta sem perfil entra no fluxo de **solicitação de acesso**. Um administrador precisa aprovar e
-configurar as permissões antes de a pessoa ver os painéis.
-
-## Build e implantação
-
-### O que o `npm run build` faz
-
-Sete etapas, em ordem. Se qualquer uma falhar, o build para e a mensagem diz qual regra foi violada:
-corrija o código, não a checagem.
-
-| #   | Etapa                        | Script                    | O que barra                                                                            |
-| --- | ---------------------------- | ------------------------- | -------------------------------------------------------------------------------------- |
-| 1   | Base de conhecimento da AYA  | `aya:conhecimento`        | gera `src/modules/aya-conhecimento-gerado.js` a partir de `docs/aya/*.md`              |
-| 2   | Tipos do servidor e frontend | `typecheck`               | erro de tipo no servidor, nos arquivos TS/TSX do frontend e nos casos de contrato      |
-| 3   | Arquitetura de autenticação  | `check:auth-architecture` | cliente Supabase criado fora de `src/lib/supabaseClient.js`, fluxo OAuth implícito     |
-| 4   | Contrato de RPC              | `check:rpc-contract`      | `.rpc("nome")` que não está em `src/lib/rpc-contrato.js`, ou RPC declarada e não usada |
-| 5   | Compilação                   | `vite build`              | erro de sintaxe ou de import; gera o `dist/`                                           |
-| 6   | Segurança do HTML            | `check:dist-security`     | Supabase por CDN, recurso `http://` inseguro no HTML gerado                            |
-| 7   | Orçamento de bundles         | `check:bundle-size`       | JS ou CSS acima do limite (maior JS: 2.500 KB bruto / 700 KB gzip)                     |
-
-Leva poucos segundos. Os limites do orçamento podem ser ajustados por variável de ambiente
-(`BUNDLE_MAX_*`), mas subir o limite exige justificativa no PR.
-
-### O que sai em `dist/`
-
-```text
-dist/
-├── index.html,
-│   auth/callback.html   as páginas (entradas do Vite)
-├── assets/          JS e CSS com hash no nome + tudo de public/assets/
-├── data/            JSON geográfico de public/data/ (terras indígenas)
-├── icons/, manifest.webmanifest, offline.html, sw.js, sw-policy.js   PWA
-├── versao.json      versão do build e novidades visíveis (aviso de versão nova)
+```bash
+npx vitest run tests/<arquivo>.test.js   # um teste
+npm test                                 # Vitest completo (rede bloqueada)
+npm run test:smoke                       # smoke no navegador (Playwright)
+npm run lint && npm run check:architecture
+python -m pip install -r python/requirements-dev.txt -r scripts/robo-empregare/requirements.txt
+python -m pytest && python -m ruff check . && python -m ruff format --check .
 ```
 
-- O JS é dividido por página (`main`) e pacotes de terceiros (`vendor-supabase`,
-  `vendor-react`, `vendor-charts` e `vendor`), definidos em `vite.config.js`.
-- **Tudo em `public/` é copiado como está e fica público.** Não coloque ali nada que não possa ser
-  baixado por qualquer pessoa.
-- **As variáveis `VITE_*` ficam gravadas no JS gerado.** Mudou o `.env`, precisa de novo build.
-  Por isso nunca use chave secreta num `VITE_*`.
-- Os dados de `public/data/` **não** são regenerados
-  pelo build. Se a fonte mudou, rode antes o script correspondente (`scripts/CLAUDE.md`).
+## Banco e migrations
 
-### Aviso de versão nova e novidades
+- Mudanças de schema em `supabase/migrations/AAAAMMDDHHMMSS_descricao.sql`, **aplicadas à mão**
+  (SQL Editor ou `psql`) por quem opera o banco e registradas em `public.migracoes_aplicadas`
+  (caminho + sha256; `npm run db:estado`). **Não use `supabase db push`.**
+- Cada migration tem rollback (`supabase/rollback/`) e ensaio em `begin; … rollback;`
+  (`supabase/ensaios/`). Migration aplicada não se edita: cria-se outra.
+- `supabase/migrations-historicas/` (já aplicadas, não reaplicar) e `supabase/descartadas/`
+  (nunca aplicar) ficam só como registro.
+- Nomes no Padrão Institucional de Nomenclatura da AgSUS (MAD/PDTIC 2026–2027: `TB_`, `TA_`,
+  `TH_`, `RL_`, `TL_`, colunas com prefixo tipológico, `COMMENT ON` em tudo).
+- Mudou uma RPC → atualize `src/lib/rpc-contrato.js` (o build confere).
 
-Cada build grava a própria versão no JS (o commit, na Vercel) e publica `/versao.json` com a mesma
-versão (`vite.config.js`, `publicarVersaoDoBuild`). Quem está com o sistema aberto confere esse arquivo
-(sem cache, nunca o banco) a cada 5 minutos com a aba visível e ao voltar para ela; versão diferente
-mostra a faixa "Há uma versão nova do MONITORA." no topo, com "Atualizar agora" e fechar. Nada
-recarrega à força. Regra em `src/app/aviso-de-versao.ts`; desenho em `src/componentes/aviso-de-versao/`.
+Processo completo em [supabase/migrations/README.md](supabase/migrations/README.md); modelo de
+dados em [docs/banco-de-dados.md](docs/banco-de-dados.md).
 
-**Adicionar uma novidade** (o "Novo: …" da faixa): no mesmo PR da mudança, ponha uma entrada no topo de
-`NOVIDADES` em `src/lib/novidades.ts`:
+## Segurança
+
+- Login só com Google; conta nova entra por **convite** ou por **solicitação aprovada** por um
+  administrador, que define grupo e permissões.
+- **RLS ligada em todas as tabelas**; o navegador só chama RPCs. Funções `SECURITY DEFINER` com
+  `search_path` fixado.
+- Nenhum segredo no repositório (`.env*` no `.gitignore`). O repositório é público: secret
+  scanning com push protection, CodeQL e Dependabot estão ligados, e os robôs só imprimem
+  contagens e códigos nos logs (`python/monitora/mascaramento.py`).
+- Chave `service_role` e credenciais dos robôs só nos segredos do GitHub Actions; o token que
+  dispara os robôs fica no Vault do Supabase. Na Vercel, só as variáveis `VITE_*` públicas.
+- `main` protegida: só entra por Pull Request com o check "Arquitetura, qualidade, build e smoke"
+  verde.
+- Cabeçalhos de segurança (HSTS, CSP em modo report-only, etc.) no `vercel.json`, usados também
+  pelo servidor TypeScript.
+
+## Operação
+
+- **Supabase no plano FREE:** 500 MB de banco e **sem backup automático**. Antes de limpezas ou
+  correções de dados em massa, exporte o que vai mudar.
+- **Logs:** os logs operacionais têm rotinas de limpeza (`limpar_logs_operacionais`, limpeza
+  mensal dos acessos) para não estourar a cota; a última execução de cada carga é preservada.
+- **Monitoramento:** **Configurações → Status das atualizações** mostra a última execução e o
+  atraso de cada carga e robô; as **Conferências** geram avisos diários; disparos sem resposta do
+  GitHub são sinalizados pelo banco.
+
+## Qualidade e CI
+
+Todo Pull Request para `main` roda `.github/workflows/build-and-smoke.yml`:
+
+- **Arquitetura, qualidade, build e smoke** (obrigatório): checagens de arquitetura (auth,
+  contrato de RPC, sem `MutationObserver` novo, sem remendos, legado só encolhe), lint e formatação
+  dos arquivos alterados, Vitest com cobertura, `npm run build` (inclui `typecheck`, segurança do
+  HTML e orçamento de bundles), smoke no Playwright, smoke no servidor TypeScript e na imagem
+  Docker.
+- **Python:** Ruff (lint e formatação) e pytest.
+- **Contrato de RPC contra o banco de desenvolvimento**, quando o segredo existe.
+
+**Limitações conhecidas:** os testes de banco são **estáticos** (leem o texto das migrations,
+rollbacks e ensaios); o CI não sobe um Postgres real nem executa as migrations. O comportamento
+no banco é conferido pelo ensaio manual antes de aplicar. A cobertura mínima configurada é 1% e
+não comprova cobertura dos fluxos críticos.
+
+## Publicar
+
+- O merge em `main` publica em produção na Vercel. O `vercel.json` ignora o build das outras
+  branches (`ignoreCommand`): a Vercel comenta no PR, mas **não gera prévia**; o que depende de
+  `/api` só é testado depois do merge.
+- Migrations são aplicadas depois da aprovação do PR: **antes** do merge quando o front novo
+  depende delas; **depois** da publicação quando removem algo que o front atual ainda usa.
+- Nova versão publicada: quem está com o sistema aberto vê a faixa "Há uma versão nova do
+  MONITORA" (veja abaixo).
+
+**Checklist:** CI verde; migrations ensaiadas, aplicadas na ordem certa e registradas; login
+Google e solicitação de acesso funcionando; telas afetadas conferidas na versão publicada; nenhum
+segredo no diff; novidade registrada quando muda algo para quem usa.
+
+## Aviso de versão nova e novidades
+
+Cada build publica `/versao.json` (sem cache). A tela aberta confere a cada 5 minutos e, se a
+versão mudou, mostra a faixa com "Atualizar agora"; nada recarrega à força
+(`src/app/aviso-de-versao.ts`).
+
+Para anunciar uma mudança, no mesmo PR, ponha uma entrada no topo de `NOVIDADES` em
+`src/lib/novidades.ts`:
 
 ```ts
 {
   id: "2026-10-21-motivo-da-reabertura", // único: data + assunto
-  data: "2026-10-21",                    // AAAA-MM-DD
+  data: "2026-10-21",
   texto: "motivo padronizado na reabertura", // curto, minúsculo, sem ponto final
-  visivel: true,                         // false: não aparece na faixa
+  visivel: true, // só o que importa para quem usa
 },
 ```
 
-Só marque `visivel: true` o que importa para quem usa (tela nova, regra que mudou); correção interna
-fica `false` ou sem entrada. A faixa mostra a novidade visível mais recente que a versão aberta ainda
-não tem; sem nenhuma, só o aviso genérico. O build leva as 5 visíveis mais recentes para o
-`versao.json`.
+## Documentação
 
-### Servir o build
-
-| Comando           | O que faz                                                                                                   |
-| ----------------- | ----------------------------------------------------------------------------------------------------------- |
-| `npm start`       | serve o `dist/` existente com `server/servidor.ts`, em http://127.0.0.1:8000, com os cabeçalhos de produção |
-| `npm run preview` | serve o `dist/` com o servidor do Vite, em http://localhost:4173, sem os cabeçalhos de produção             |
-
-Variáveis do servidor: `PORT` (padrão 8000), `HOST` (padrão 127.0.0.1) e `DIST` (padrão `dist`).
-Detalhes em [docs/servidor.md](docs/servidor.md).
-
-### Implantar
-
-**Vercel (estático).** Configure `VITE_SUPABASE_URL` e `VITE_SUPABASE_PUBLISHABLE_KEY` em
-**Project Settings → Environment Variables** (`VITE_SUPABASE_ANON_KEY` é aceita como alternativa).
-O `vercel.json` só builda a branch `main` (`ignoreCommand`): **todo push em `main` vai para produção.**
-A Vercel serve o `dist/` e as funções de `api/`, sem usar o `server/servidor.ts`, mas com os mesmos
-cabeçalhos de segurança: o servidor os lê do próprio `vercel.json`. Depois de alterar variáveis,
-faça um novo deploy. Como só a `main` é publicada, **não há preview por branch**: o que depende de
-`/api` (como a leitura do PDF de anexos) só pode ser testado depois do merge.
-
-**Container.** O `Dockerfile` roda o `npm run build` completo (com as sete etapas) e entrega uma
-imagem só com `dist/`, `server/` e Node 24, sem `node_modules` e rodando como usuário sem privilégio:
-
-```bash
-docker build --build-arg VITE_SUPABASE_URL --build-arg VITE_SUPABASE_PUBLISHABLE_KEY -t monitora .
-docker run -d -p 8000:8000 monitora
-```
-
-A imagem tem `HEALTHCHECK` em `/up`. Em produção, coloque um proxy HTTPS na frente e preserve o
-domínio atual, para manter os endereços de retorno do login já autorizados.
-
-**CI.** Todo Pull Request para `main` roda `.github/workflows/build-and-smoke.yml`: checagens de
-arquitetura, lint, formatação, testes com cobertura, build, smoke no navegador, smoke contra o
-servidor TypeScript e contra a imagem Docker. O job Python executa Ruff (lint e formatação) e
-pytest. O contrato de RPC também é conferido contra o banco de desenvolvimento quando o segredo
-`SUPABASE_DB_URL_DEV` está configurado; sem ele, essa verificação é ignorada, e a checagem estática
-continua no build. O mínimo de cobertura configurado hoje é 1% para linhas, funções, instruções
-e ramos; isso não comprova cobertura dos fluxos críticos.
-
-## Problemas comuns
-
-| Sintoma                                                          | Causa e solução                                                                                                                                                                    |
-| ---------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `EADDRINUSE ... 8000` ao rodar `npm run dev` ou `npm start`      | A porta 8000 já está ocupada, em geral pelo container do caminho D. Rode `docker compose down` ou use outra porta: `PORT=8001 npm start`.                                          |
-| A tela avisa que a conexão não está configurada                  | Falta `.env.local` (caminhos A/B/C) ou `.env` (caminho D) com as variáveis `VITE_SUPABASE_*`. Depois de criar, reinicie o comando.                                                 |
-| O login volta para o endereço de produção ou dá erro de redirect | O endereço local não está nas Redirect URLs do Supabase (passo 5).                                                                                                                 |
-| O Vite abriu em `5174` (ou outra porta) em vez de `5173`         | Há outra instância aberta, e o Vite pulou para a porta seguinte. Feche a outra: o login só volta para endereços autorizados no Supabase, e a porta nova pode não estar entre eles. |
-| O `npm run build` falha numa checagem `check:*`                  | É uma regra de arquitetura. A mensagem diz qual; corrija o código, não o script.                                                                                                   |
-| O container sobe, mas a página vem sem dados                     | As variáveis `VITE_*` entram no **build** da imagem. Ajuste o `.env` e rode `docker compose up --build -d` de novo.                                                                |
-
-## Comandos úteis
-
-```bash
-npx vitest run tests/<arquivo>.test.js   # um teste (o mais rápido)
-npm test                                 # todos os testes unitários (Vitest)
-npm run lint                             # lint dos arquivos alterados
-npm run check:architecture               # checagens de arquitetura sem build
-npm run test:smoke                       # smoke no navegador (Playwright)
-npm run test:e2e                         # todos os testes de navegador
-npm run typecheck                        # tipos do servidor e do frontend migrado
-npm run typecheck:frontend               # tipos dos arquivos TS/TSX e contratos do frontend
-npm run test:smoke:servidor              # smoke no navegador contra o servidor TypeScript
-python -m pip install -r python/requirements-dev.txt -r scripts/robo-empregare/requirements.txt
-python -m pytest                         # testes Python (funções, jobs e regras)
-python -m ruff check .                    # lint Python
-python -m ruff format --check .           # formatação Python
-```
-
-Os testes unitários **bloqueiam a rede** (`tests/setup/rede-bloqueada.js`). Eles nunca falam com o
-Supabase de verdade, mesmo com o `.env.local` preenchido.
-
-## Estrutura
-
-```text
-.
-├── index.html              painel principal
-├── auth/callback.html      retorno do login
-├── DESIGN.md               guia de interface (tokens, componentes, contraste)
-├── src/
-│   ├── main.js             entrada do painel principal
-│   ├── lib/                lógica pura e testável
-│   ├── app/                sessão, navegação, carga, configuração e montagem dos módulos
-│   ├── ui/                 componentes visuais compartilhados
-│   ├── componentes/        peças compartilhadas (barra lateral, busca global, pessoas online)
-│   ├── modules/            funcionalidades de tela legadas, um arquivo por feature
-│   ├── styles/             CSS do painel principal
-│   ├── modulos/            telas e recursos React, uma pasta por módulo
-│   ├── legado/             reservado à migração; hoje contém apenas README
-│   └── auth/               callback do login
-├── api/                    funções serverless da Vercel (AYA, proxies FUNAI, anexos do edital em Python)
-├── requirements.txt        dependências das funções Python da Vercel
-├── python/                 biblioteca comum dos jobs e regras Python
-├── apps-script/            scripts das planilhas (saude-indigena/, sede/, projetos/); ver LEIA-ME.md
-├── public/                 imagens e dados geográficos (gerados por scripts)
-├── supabase/
-│   ├── migrations/         mudanças de schema, versionadas (processo no README.md da pasta)
-│   ├── rollback/           como desfazer cada migration (mesmo nome)
-│   ├── ensaios/            ensaio de cada migration, sempre em rollback
-│   ├── correcoes/          correções pontuais de dados
-│   ├── migrations-historicas/  já aplicadas, só histórico (não reaplicar)
-│   └── descartadas/        decididas para nunca aplicar
-├── server/servidor.ts      servidor web (TypeScript)
-├── scripts/                checagens do build e ferramentas
-├── tests/                  Vitest (*.test.js), Playwright (*.spec.js), testes Python e fixtures compartilhadas
-└── docs/                   decisões técnicas e auditorias
-```
-
-Cada pasta principal tem um `CLAUDE.md` com o mapa daquela área e as regras dela. Vale ler antes de
-mexer, mesmo sem usar IA.
-
-## Supabase
-
-Mudanças de schema ficam em `supabase/migrations/`, com nome `AAAAMMDDHHMMSS_descricao.sql`. São
-**aplicadas à mão** (SQL Editor ou `psql`) e registradas em `public.migracoes_aplicadas`
-(`npm run db:estado`); **não use `supabase db push`**. O processo completo, e o que ficam
-`supabase/migrations-historicas/` e `supabase/descartadas/`, está em
-[`supabase/migrations/README.md`](supabase/migrations/README.md). Nunca edite uma migration já
-aplicada: crie outra. Cada migration nova vem com:
-
-- o arquivo de desfazer em `supabase/rollback/`, com o mesmo nome;
-- um ensaio antes de aplicar em produção (o SQL dentro de `begin; … rollback;`);
-- o registro em `public.migracoes_aplicadas` (caminho e sha256 do arquivo), depois de aplicada;
-- nomes no Padrão Institucional de Nomenclatura (`TB_`, `TA_`, `TH_`, `RL_`, `TL_`; colunas em
-  maiúsculas com prefixo tipológico; `COMMENT ON` em tudo). Detalhes em `docs/banco-de-dados.md`.
-
-Antes de alterar estrutura, permissões, autenticação ou regras de acesso, confira:
-
-- quais tabelas e RPCs são afetadas (ao mudar uma RPC, atualize `src/lib/rpc-contrato.js`);
-- quais perfis de usuário usam a funcionalidade;
-- se há impacto em login, solicitação de acesso, aprovações ou painéis;
-- se há políticas de RLS relacionadas.
-
-Não coloque chaves secretas, tokens, senhas ou credenciais no repositório.
-
-## Fluxo de trabalho
-
-1. Criar uma branch a partir de `main`.
-2. Implementar a alteração, com teste.
-3. Rodar `npm run build` (inclui as sete etapas descritas em [Build e implantação](#build-e-implantação)).
-4. Testar localmente (caminho A ou B): login, permissões, painéis e análises.
-5. Se houver migration: ensaiar, revisar a compatibilidade com o frontend em produção e definir
-   a ordem de aplicação e o rollback. Aplicar e registrar conforme essa sequência (seção [Supabase](#supabase)).
-6. Abrir o Pull Request e esperar o CI.
-7. Fazer o merge em `main` somente depois da validação: o merge publica em produção.
-
-## Checklist antes de publicar em produção
-
-- O build passou.
-- `index.html` (com Análises curriculares, Entrevistas, Recursos e Seleção) abre corretamente.
-- O login Google funciona para conta autorizada.
-- Usuário sem perfil cai no fluxo de solicitação de acesso.
-- As solicitações aparecem para a administração.
-- O administrador consegue aprovar o usuário e configurar as permissões.
-- As migrations novas foram aplicadas e registradas em `public.migracoes_aplicadas`.
-- Os painéis externos que ainda restam carregam ou exibem mensagem clara de indisponibilidade.
-- As variáveis do Supabase estão configuradas no ambiente correto.
-- Nenhum segredo foi commitado.
-
-## Entregar o projeto a outra coordenação
-
-**Clonar** (recomendado): `git clone https://github.com/AgSUS-COGIP/agsus-monitora.git`. Depois, a
-equipe segue a seção [Abrir o projeto](#abrir-o-projeto) e pede acesso à Vercel e ao Supabase.
-
-**Baixar ZIP**: no GitHub, **Code → Download ZIP**, ou direto em
-`https://github.com/AgSUS-COGIP/agsus-monitora/archive/refs/heads/main.zip` (exige acesso ao
-repositório). O ZIP não leva variáveis de ambiente, credenciais, configuração da Vercel nem acesso
-ao Supabase.
-
-Junto com o código, conceda ou envie:
-
-- acesso ao repositório no GitHub, ao projeto na Vercel e ao projeto no Supabase;
-- as variáveis de ambiente usadas na Vercel;
-- orientação sobre as contas autorizadas no login e as regras de aprovação de usuários;
-- a lista de painéis externos usados pelo sistema;
-- o histórico de decisões técnicas em `docs/arquitetura-evolucao.md`.
-
-## Manutenção
-
-- `main` é a branch de produção. Mudanças estruturais passam por Pull Request.
-- Alterações no banco são versionadas em `supabase/migrations/`.
-- Dados sensíveis e credenciais não vão para o GitHub.
-- Prefira pequenas entregas validadas localmente e no CI. A configuração atual não publica
-  previews por branch; registre a limitação dos fluxos que dependem de `/api/*`.
-- Plano técnico de evolução: `docs/arquitetura-evolucao.md`. Padrão de interface: `DESIGN.md`.
-- Migração gradual para TypeScript: [docs/typescript-no-frontend.md](docs/typescript-no-frontend.md).
+| Assunto                                | Onde                                                                                                                                                                                                                           |
+| -------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Mapa do código e regras para mexer     | `CLAUDE.md` da raiz e de cada pasta                                                                                                                                                                                            |
+| Arquitetura do front (React)           | [docs/arquitetura-react.md](docs/arquitetura-react.md), [docs/arquitetura.md](docs/arquitetura.md)                                                                                                                             |
+| TypeScript no front                    | [docs/typescript-no-frontend.md](docs/typescript-no-frontend.md)                                                                                                                                                               |
+| Banco, RPCs e nomenclatura             | [docs/banco-de-dados.md](docs/banco-de-dados.md), `docs/padronizacao_nomenclatura_*.md`                                                                                                                                        |
+| Migrations                             | [supabase/migrations/README.md](supabase/migrations/README.md)                                                                                                                                                                 |
+| Servidor web e container               | [docs/servidor.md](docs/servidor.md)                                                                                                                                                                                           |
+| Robôs, agenda e Python                 | [docs/agenda-dos-robos.md](docs/agenda-dos-robos.md), [docs/robo-empregare.md](docs/robo-empregare.md), [docs/leitura-dos-arquivos.md](docs/leitura-dos-arquivos.md), [docs/python-no-monitora.md](docs/python-no-monitora.md) |
+| Planilhas (cargas e Apps Script)       | [docs/sincronizacao-das-planilhas.md](docs/sincronizacao-das-planilhas.md), [apps-script/LEIA-ME.md](apps-script/LEIA-ME.md)                                                                                                   |
+| Análises no sistema (desenho e regras) | [docs/analises-no-monitora/](docs/analises-no-monitora/README.md), `docs/historias-de-usuario/`                                                                                                                                |
+| Aya (base de conhecimento)             | [docs/aya/README.md](docs/aya/README.md), [docs/aya-sem-ia-local.md](docs/aya-sem-ia-local.md)                                                                                                                                 |
+| Interface                              | [DESIGN.md](DESIGN.md)                                                                                                                                                                                                         |
+| Plano de evolução                      | [docs/arquitetura-evolucao.md](docs/arquitetura-evolucao.md)                                                                                                                                                                   |

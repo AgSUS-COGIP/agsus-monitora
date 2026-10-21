@@ -1,7 +1,7 @@
 # Apps Script das planilhas de Análises Curriculares
 
 Três planilhas enviam análises para o **mesmo** banco do MONITORA
-(`https://gnudtaxhjfgtvwkwpsel.supabase.co`). Cada uma tem uma etiqueta
+(o projeto Supabase de produção; a URL vem de quem administra). Cada uma tem uma etiqueta
 (`CO_PLANILHA`) e o banco garante que o envio de uma **nunca altera, desativa ou
 mistura** os dados de outra. O desenho está em `docs/banco-de-dados.md`
 (seção 6) e a migration em
@@ -100,8 +100,9 @@ apps-script/
 5. **Chave do banco**: engrenagem **Configurações do projeto > Propriedades do
    script > Adicionar propriedade**:
    - `SUPABASE_SERVICE_ROLE_KEY` = a chave secreta (`sb_secret_...` ou JWT
-     `service_role`) do projeto `gnudtaxhjfgtvwkwpsel`;
-   - `SUPABASE_URL` = `https://gnudtaxhjfgtvwkwpsel.supabase.co` (opcional; é o padrão).
+     `service_role`) do projeto de produção;
+   - `SUPABASE_URL` = `https://SEU-PROJETO.supabase.co` (**obrigatória**: o
+     `DEFAULT_SUPABASE_URL` do código ainda aponta para o projeto antigo, desativado).
    **Nunca cole a chave no código** (`SERVICE_ROLE_KEY_FIXA` fica vazio).
 6. Rode `verificarConfiguracaoSupabaseAnalisesCurriculares` e confira no log
    "SUPABASE_SERVICE_ROLE_KEY: CONFIGURADA".
