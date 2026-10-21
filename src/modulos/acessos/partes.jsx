@@ -97,6 +97,9 @@ export function iniciais(nome) {
   return (primeira + ultima).toLocaleUpperCase("pt-BR");
 }
 
+/**
+ * @param {{ tituloId: string, titulo: string, subtitulo?: string, avatar?: string, aoFechar: () => void }} props
+ */
 export function CabecalhoDaGaveta({
   tituloId,
   titulo,

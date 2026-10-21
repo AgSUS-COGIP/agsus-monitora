@@ -41,7 +41,7 @@ import {
   iniciais,
   motivoValido,
 } from "./partes.jsx";
-import { Solicitacoes } from "./solicitacoes.jsx";
+import { Solicitacoes } from "./solicitacoes.tsx";
 import { Desativadas } from "./contas-desativadas.jsx";
 import { resumoDeContas } from "../../lib/contas-desativadas.js";
 import { ModalAdicionarPessoa } from "./modal-adicionar-pessoa.jsx";

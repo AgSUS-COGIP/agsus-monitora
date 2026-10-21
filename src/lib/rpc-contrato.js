@@ -117,7 +117,7 @@ export const CONTRATO_RPC = {
     argumentos: ["p_status"],
     critica: true,
     resumo:
-      "Solicitações de acesso: todas (admin) ou da coordenação (coordenador).",
+      "Solicitações de acesso com área, cargo, lotação e justificativa: todas (admin) ou da coordenação (coordenador).",
   },
   salvar_grupo_acesso: {
     argumentos: ["p_grupo", "p_motivo"],
@@ -146,16 +146,30 @@ export const CONTRATO_RPC = {
     critica: false,
     resumo: '"Ver como": contexto de acesso de outra pessoa, só leitura.',
   },
-  listar_coordenacoes_ativas: {
+  listar_opcoes_da_solicitacao_acesso: {
     argumentos: [],
     critica: false,
     resumo:
-      "Coordenações para escolher ao pedir acesso (autenticado, mesmo sem perfil).",
+      "Opções da solicitação de acesso (autenticado, mesmo sem perfil): áreas, DSEI/CASAI, projetos e coordenações ativas.",
   },
   registrar_solicitacao_acesso: {
-    argumentos: ["p_nome", "p_setor", "p_justificativa", "p_coordenacao"],
+    argumentos: [
+      "p_nome",
+      "p_area",
+      "p_cargo",
+      "p_cargo_outro",
+      "p_lotacao",
+      "p_justificativa",
+      "p_coordenacao",
+    ],
     critica: true,
-    resumo: "Registra a solicitação de acesso de quem está autenticado.",
+    resumo:
+      "Registra o pedido de acesso por área (cargo da lista, lotação, justificativa) ou edita o pendente. Nunca concede acesso.",
+  },
+  cancelar_minha_solicitacao_acesso: {
+    argumentos: [],
+    critica: false,
+    resumo: "Cancela o pedido de acesso pendente de quem está autenticado.",
   },
   adicionar_pessoa_acesso: {
     argumentos: [
@@ -179,7 +193,8 @@ export const CONTRATO_RPC = {
   obter_minha_solicitacao_acesso: {
     argumentos: [],
     critica: false,
-    resumo: "Última solicitação de acesso de quem está autenticado.",
+    resumo:
+      "Último pedido de acesso de quem está autenticado (o pendente primeiro), com área, cargo e motivo da recusa.",
   },
   minha_conta_desativada: {
     argumentos: [],
@@ -266,9 +281,10 @@ export const CONTRATO_RPC = {
       "Aprova solicitação definindo grupo e coordenação (ou áreas). Admin ou coordenador da coordenação pedida.",
   },
   recusar_solicitacao_acesso: {
-    argumentos: ["p_solicitacao_id", "p_observacao_admin"],
+    argumentos: ["p_solicitacao_id", "p_motivo", "p_complemento"],
     critica: true,
-    resumo: "Recusa solicitação registando quem avaliou e quando.",
+    resumo:
+      "Recusa o pedido com motivo da lista fixa (Outro pede descrição), registrando quem avaliou e quando.",
   },
   desativar_acesso_usuario: {
     argumentos: ["p_perfil_usuario_id", "p_motivo"],

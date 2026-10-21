@@ -196,8 +196,8 @@ iframe; só os painéis externos (`TB_PAINEL_EXTERNO`) continuam no quadro.
 src/app/sessao.js                     estado da sessão (sem React): sessaoDoApp
 src/app/entrada/entrada.jsx           <TelaDeEntrada>, montarEntrada(), ligarEntradaAPagina()
 src/app/entrada/marca.js              marca da tela de acesso (cache → RPC pública → configuração)
-src/app/entrada/pedido-de-acesso.js   estado do pedido de acesso (RPCs)
-src/app/entrada/pedido-de-acesso.jsx  cartão "Solicitar acesso" / "Acesso desativado"
+src/app/entrada/pedido-de-acesso.ts        estado do pedido de acesso (RPCs; editar, cancelar)
+src/app/entrada/solicitacao-de-acesso.tsx  página "Solicitação de acesso" (abas por área, Aya) / "Acesso desativado"
 ```
 
 `src/main.js` importa `marca.js` primeiro (pinta a marca guardada antes da rede), monta a entrada
@@ -206,7 +206,8 @@ fim, chama `sessaoDoApp.iniciar()`. O `index.html` mantém o `#loginScreen` e os
 (marca antes do primeiro quadro, `sessao-guardada`, `vite-dev-carregando`). Ids e classes da tela
 são os de antes (`#googleLoginBtn`, `#loginMsg`, `#accessRequestCard`…): o CSS da tela de acesso e
 os testes de ponta a ponta continuam valendo; o formulário do pedido usa `Campo` de `src/ui/`.
-Testes: `tests/app/sessao.test.js`, `tests/app/entrada.test.js`, `tests/solicitacao-de-acesso.test.js`.
+Testes: `tests/app/sessao.test.js`, `tests/app/entrada.test.js`, `tests/solicitacao-de-acesso.test.js`,
+`tests/solicitacao-de-acesso-migration.test.js`.
 
 | Antes (legado)                                                                          | Agora                                                                        |
 | --------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------- |
@@ -215,7 +216,7 @@ Testes: `tests/app/sessao.test.js`, `tests/app/entrada.test.js`, `tests/solicita
 | `loadProfile` (`obter_contexto_monitora`, `meu_usuario`)                                | `carregarPerfil()` na sessão                                                 |
 | `loginWithGoogle`, popup, `message`, `pageshow`, `mobile-google-oauth.js`               | `entrarComGoogle()`; `startMobileGoogleOAuth` em `src/lib/auth-flow.js`      |
 | `logout`, `returnToLogin`, `clearLocalAuthState`, `aplicarSaida`                        | `sair()`, `limparSessao()`, `aplicarSaida()` na sessão                       |
-| `showAccessRequestState`, `submitAccessRequest`, `src/modules/solicitacao-de-acesso.js` | `pedido-de-acesso.js` + `.jsx`                                               |
+| `showAccessRequestState`, `submitAccessRequest`, `src/modules/solicitacao-de-acesso.js` | `pedido-de-acesso.ts` + `solicitacao-de-acesso.tsx`                          |
 | `access-branding-boot.js`, marca e rodapé de `applyConfigToUi`                          | `src/app/entrada/marca.js` (`definirMarcaDaConfiguracao`)                    |
 | marcas de conta desativada e de boas-vindas (`comemoracao-do-acesso.js`)                | `src/lib/acesso-liberado.js` (a comemoração continua no legado)              |
 | `#loginMsg` escrito por `session-lifecycle.js`                                          | `installSessionLifecycle({ aoExpirar })` → `sessaoDoApp.mostrarMensagem`     |

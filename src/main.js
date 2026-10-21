@@ -31,6 +31,7 @@ import "./styles/saude-das-cargas.css";
 // de uma tela sob demanda (Entrevistas, Recursos, Classificação, Avaliação documental, Convocação
 // e carta) entra pelo ponto de entrada dela e baixa junto com o código.
 import "./ui/ui.css";
+import "./app/entrada/solicitacao-de-acesso.css";
 import "./modulos/configuracoes/configuracoes.css";
 import "./modulos/acessos/acessos.css";
 import "./modulos/modulos/modulos.css";

@@ -2,6 +2,7 @@
   "leia": "Lista de exceções de cor literal: tests/cores-so-por-token.test.js. Só encolhe; cada arquivo tem o motivo.",
   "motivos": {
     "src/app/entrada/icones-da-entrada.tsx": "marca: as quatro cores do G do Google",
+    "src/app/entrada/solicitacao-de-acesso.css": "marca da solicitação de acesso: texto sobre a cor configurada do painel, igual nos dois temas",
     "src/app/moldura.js": "impressão: cabeçalho do relatório impresso, sempre em papel branco",
     "src/lib/access-branding.js": "valor padrão gravado da cor do painel da tela de acesso (configuração, não tema)",
     "src/lib/avaliacao-documental/anexo-na-empregare.ts": "falso positivo: entidade HTML (&#160;), não é cor",
@@ -405,6 +406,10 @@
     }
   },
   "primitivos": {
+    "src/app/entrada/solicitacao-de-acesso.css": [
+      "--color-blue-900",
+      "--color-neutral-0"
+    ],
     "src/modulos/configuracoes/configuracoes.css": [
       "--color-blue-200",
       "--color-blue-900",

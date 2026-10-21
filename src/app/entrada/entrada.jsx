@@ -14,13 +14,14 @@ import {
   MarcaDoGoogle,
 } from "./icones-da-entrada.tsx";
 import { marcaDaEntrada } from "./marca.js";
-import { CartaoDoPedido } from "./pedido-de-acesso.jsx";
-import { criarPedidoDeAcesso } from "./pedido-de-acesso.js";
+import { criarPedidoDeAcesso } from "./pedido-de-acesso.ts";
+import { PaginaDaSolicitacao } from "./solicitacao-de-acesso.tsx";
 
 /*
   A tela de acesso do MONITORA: marca (logo, slogan, saudação), a linha de
-  apoio, mensagens, o botão do Google, o rodapé institucional e, para quem
-  entrou sem perfil ativo, o pedido de acesso. Linguagem visual da tela do
+  apoio, mensagens, o botão do Google e o rodapé institucional. Quem entrou
+  sem perfil ativo vê, no lugar do cartão, a página "Solicitação de acesso"
+  (solicitacao-de-acesso.tsx). Linguagem visual da tela do
   SIGAV (botão branco largo com o "G" colorido, divisória fina, escudo no
   rodapé), com a marca do MONITORA.
 
@@ -109,6 +110,17 @@ export function TelaDeEntrada({ sessao, marca, pedido }) {
     Boolean(configuracao.textoDoBotao) ||
     estado.entrando;
 
+  if (semAcesso)
+    return (
+      <PaginaDaSolicitacao
+        pedido={pedido}
+        sessao={sessao}
+        logoUrl={identidade.logoUrl}
+        slogan={SLOGAN}
+        instituicao={INSTITUICAO}
+      />
+    );
+
   return (
     <div className="login-outer">
       <div className="login-card">
@@ -168,9 +180,6 @@ export function TelaDeEntrada({ sessao, marca, pedido }) {
               aria-hidden="true"
             />
           )}
-          {semAcesso ? (
-            <CartaoDoPedido pedido={pedido} sessao={sessao} />
-          ) : null}
         </div>
         <p className="login-instituicao" id="loginInstituicao">
           <IconeDeEscudo />

@@ -13,7 +13,7 @@ import { LEVELS, RESOURCES } from "./permissoes-recursos.js";
   src/modules/comemoracao-do-acesso.js, com os fogos e o aviso comuns a todas
   as comemorações (src/modules/comemoracao.js, regra em src/lib/comemoracao.js).
   As marcas do fim do arquivo também são gravadas pela tela de pedido de
-  acesso (src/app/entrada/pedido-de-acesso.js).
+  acesso (src/app/entrada/pedido-de-acesso.ts).
 
   Quando comemorar, sem campo novo no banco:
     - "reativado": a tela de acesso desativado já foi mostrada a esta pessoa

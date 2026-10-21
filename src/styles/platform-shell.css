@@ -203,22 +203,20 @@
 /*
   Painel escuro (`login-panel-dark`, aplicada no próprio `#loginScreen` pelo
   script do index.html e por src/app/entrada/marca.js): texto claro onde a
-  própria configuração diz que a superfície é escura. O cartão "Solicitar
-  acesso" é claro por dentro e fica com as cores de app.css.
+  própria configuração diz que a superfície é escura. A página de solicitação
+  de acesso tem as próprias cores (src/app/entrada/solicitacao-de-acesso.css).
 */
 #loginScreen.login-panel-dark .login-card,
 #loginScreen.login-panel-dark .login-card h1,
-#loginScreen.login-panel-dark .login-card p:not(.access-request-card *),
-#loginScreen.login-panel-dark .login-card strong:not(.access-request-card *),
-#loginScreen.login-panel-dark .login-card small:not(.access-request-card *),
+#loginScreen.login-panel-dark .login-card p,
+#loginScreen.login-panel-dark .login-card strong,
+#loginScreen.login-panel-dark .login-card small,
 #loginScreen.login-panel-dark .login-subtitle,
 #loginScreen.login-panel-dark .login-organization-mark,
 #loginScreen.login-panel-dark .login-product-mark {
   color: #f7fbff;
 }
-#loginScreen.login-panel-dark
-  .login-card
-  p:not(.access-request-card *, .login-subtitle) {
+#loginScreen.login-panel-dark .login-card p:not(.login-subtitle) {
   color: rgba(247, 251, 255, 0.82);
 }
 #loginScreen.login-panel-dark .login-brand-divider {

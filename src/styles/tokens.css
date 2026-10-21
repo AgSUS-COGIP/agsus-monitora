@@ -18,9 +18,11 @@
   A tela de acesso tem paleta própria, clara nos dois temas (o painel é a cor
   configurada; DESIGN.md seção 5): o primeiro seletor devolve a ela os valores
   claros quando a página está no escuro (sem isto, o aviso de erro do login
-  saía rosa-claro sobre rosa-claro, 1,91:1).
+  saía rosa-claro sobre rosa-claro, 1,91:1). A página de solicitação de acesso
+  (body.access-request-mode) segue o tema do app: o formulário é uma
+  superfície comum; só a coluna da marca tem a cor configurada.
 */
-.login-screen,
+body:not(.access-request-mode) .login-screen,
 :root {
   /* ---------- Primitivos: azul institucional ---------- */
   --color-blue-50: #f2f6fc;

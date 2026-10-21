@@ -34,18 +34,3 @@
 .visual-polish-ready .table-card {
   overflow: clip;
 }
-
-#googleLoginBtn + #accessRequestCard::before {
-  content: "Use sua conta Google corporativa. Acesso liberado somente após aprovação do perfil.";
-  display: block;
-  margin: 0 0 12px;
-  color: #60758f;
-  font-size: 12px;
-  font-weight: 700;
-  line-height: 1.35;
-  text-align: center;
-}
-
-body.access-request-mode #googleLoginBtn + #accessRequestCard::before {
-  display: none;
-}
