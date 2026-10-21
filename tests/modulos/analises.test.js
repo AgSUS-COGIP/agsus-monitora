@@ -7,6 +7,7 @@ import {
 import { EVENTO_TEMA_ALTERADO } from "../../src/lib/eventos-da-barra-lateral.js";
 import { urlDaPlanilhaGoogle } from "../../src/lib/planilhas.js";
 import { pedirFiltro } from "../../src/app/pedido-de-filtro.js";
+import { agoraEmBrasilia } from "../../src/lib/ritmo-da-analise.ts";
 import {
   clicar,
   digitar,
@@ -682,6 +683,57 @@ describe("ritmo da análise", () => {
     await clicar(secao.querySelector('[data-acao="atualizar"]'));
     await esperar();
     expect(chamadas(supabase, "obter_ritmo_da_analise")).toHaveLength(2);
+  });
+
+  it("Destaques de hoje: só medalhistas (com a contagem) e selos, sem quem ficou fora", async () => {
+    const hoje = agoraEmBrasilia().hoje;
+    const supabase = supabaseFalso({
+      respostas: {
+        obter_ritmo_da_analise: () => ({
+          data: {
+            editais: [
+              {
+                ...RITMO.editais[0],
+                destaques: {
+                  dia: hoje,
+                  avaliadores: [
+                    { nome: "Ana Souza", qt: 30, reabertas: 1 },
+                    { nome: "Bia Lima", qt: 30, reabertas: 0 },
+                    { nome: "Caio Reis", qt: 25, reabertas: 0 },
+                    { nome: "Davi Melo", qt: 20, reabertas: 2 },
+                    { nome: "Eva Dias", qt: 12, reabertas: 0 },
+                  ],
+                },
+              },
+            ],
+          },
+          error: null,
+        }),
+      },
+    });
+    await montar(supabase);
+    const bloco = card().querySelector("[data-destaques]");
+    expect(bloco.textContent).toContain("Destaques de hoje");
+    const medalhas = [...bloco.querySelectorAll("[data-medalha]")].map((m) =>
+      m.textContent.trim(),
+    );
+    expect(medalhas).toEqual([
+      "🥇 Ana Souza · 30",
+      "🥇 Bia Lima · 30",
+      "🥈 Caio Reis · 25",
+      "🥉 Davi Melo · 20",
+    ]);
+    const selos = [...bloco.querySelectorAll("[data-precisao]")].map((m) =>
+      m.textContent.trim(),
+    );
+    expect(selos).toEqual(["🎯 Bia Lima", "🎯 Caio Reis", "🎯 Eva Dias"]);
+    // Fora do pódio, nem a contagem aparece.
+    expect(bloco.textContent).not.toContain("12");
+  });
+
+  it("sem destaques de hoje, o bloco não aparece", async () => {
+    await montar(comRitmo());
+    expect(card().querySelector("[data-destaques]")).toBeNull();
   });
 
   it("RPC ausente ou com falha: sem card e a tela segue", async () => {

@@ -12,7 +12,8 @@ paineis.tsx     filtros (situação do processo, seleção múltipla em cascata,
                 os 7 KPIs, gráficos (responsável empilhado clicável, análises por data clicável —
                 filtra pelo dia/período, também nos campos de data de Mais opções) e pendências
 ritmo.tsx       card "Ritmo da análise" por edital analisado no MONITORA (prazo do
-                cronograma, faltam, por dia e por avaliador, ritmo atual e projeção)
+                cronograma, faltam, por dia e por avaliador, ritmo atual e projeção) e
+                "Destaques de hoje" (🥇🥈🥉 do dia e selo 🎯 Precisão; zera todo dia)
 tabela.tsx      fila (TabelaInfinita: 50 por vez, Carregar mais, busca só da fila)
 gaveta.tsx      detalhe: contexto, links (origem e PDF, só http/https), seções e parecer
 espelho-na-gaveta.tsx  linha da ficha concluída: nota autodeclarada × consolidada e, por critério,
@@ -21,7 +22,8 @@ espelho-na-gaveta.tsx  linha da ficha concluída: nota autodeclarada × consolid
 estado.ts       store sem React: carga por área e escopo, cópia do navegador, porteiro, gaveta
                 (detalhamento sob demanda), pareceres em lote, CSV, comemorações
 consultas.ts    as RPCs (lista, porteiro, detalhamento, pareceres, ritmo) e a cópia no IndexedDB
-marcos.ts       edital 100% analisado e fila zerada (escopo Ativo)
+marcos.ts       edital 100% analisado e fila zerada (escopo Ativo); meta de hoje batida pela
+                equipe (uma vez por dia por pessoa)
 ```
 
 Regras puras em `src/lib/analises-curriculares.ts` (janela e validação, filtros em cascata, KPIs,

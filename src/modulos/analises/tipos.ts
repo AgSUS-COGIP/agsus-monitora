@@ -177,6 +177,8 @@ export interface EstadoDasAnalises {
   ): Promise<boolean>;
   abrirDetalhe(chave: string): Promise<void>;
   fecharDetalhe(): void;
+  /** O liga/desliga das comemorações do sistema (a meta do dia no Ritmo). */
+  comemoracoesLigadas?(): boolean;
 }
 export interface ChipDasAnalises {
   chave: string;

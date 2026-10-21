@@ -134,6 +134,14 @@ export const CATALOGO_DE_MARCOS: readonly MarcoDoCatalogo[] = Object.freeze([
     padrao: opcoes("fogos", "normal"),
   },
   {
+    id: "meta-do-dia",
+    rotulo: "Meta de hoje batida pela equipe (Ritmo da análise)",
+    grupo: "Análises",
+    onde: "src/modulos/analises/marcos.ts",
+    forma: "estrela",
+    padrao: opcoes("fogos", "normal"),
+  },
+  {
     id: "vaga-pronta",
     rotulo: "Vaga pronta para o resultado final",
     grupo: "Entrevistas",

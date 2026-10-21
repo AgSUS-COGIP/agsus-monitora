@@ -2,6 +2,9 @@ import { afterEach, describe, expect, it } from "vitest";
 import {
   agoraEmBrasilia,
   calcularRitmo,
+  destaquesDoDia,
+  metaDaEquipeBatida,
+  MINIMO_DO_SELO,
   diasUteisAtePrazo,
   diaUtilDepois,
   ehDiaUtil,
@@ -513,5 +516,101 @@ describe("recolher o card: escolha de cada pessoa", () => {
     expect(lerRitmoRecolhido("u2")).toBe(false);
     gravarRitmoRecolhido("u1", false);
     expect(lerRitmoRecolhido("u1")).toBe(false);
+  });
+});
+
+describe("destaques de hoje: medalhas e selo Precisão", () => {
+  const HOJE = "2026-10-21";
+  const retrato = (avaliadores, dia = HOJE) => ({ dia, avaliadores });
+  const a = (nome, qt, reabertas = 0) => ({ nome, qt, reabertas });
+
+  it("as três maiores contagens levam ouro, prata e bronze; empate leva a mesma", () => {
+    const { medalhas } = destaquesDoDia(
+      retrato([
+        a("Bruna Lima", 30),
+        a("Ana Souza", 30),
+        a("Caio Reis", 25),
+        a("Davi Melo", 20),
+        a("Eva Dias", 12),
+      ]),
+      HOJE,
+    );
+    expect(medalhas.map((m) => [m.posicao, m.nome])).toEqual([
+      [1, "Ana Souza"],
+      [1, "Bruna Lima"],
+      [2, "Caio Reis"],
+      [3, "Davi Melo"],
+    ]);
+  });
+
+  it("selo Precisão: mínimo de fichas no dia e nenhuma reaberta", () => {
+    expect(MINIMO_DO_SELO).toBe(10);
+    const { precisao } = destaquesDoDia(
+      retrato([
+        a("Ana Souza", 40, 1), // ouro, mas teve ficha reaberta: sem selo
+        a("Caio Reis", 15),
+        a("Davi Melo", 10),
+        a("Eva Dias", 9), // pódio (bronze), abaixo do mínimo: sem selo
+      ]),
+      HOJE,
+    );
+    expect(precisao).toEqual(["Caio Reis", "Davi Melo"]);
+  });
+
+  it("zera no dia seguinte: retrato de ontem não mostra nada", () => {
+    const ontem = retrato([a("Ana Souza", 40)], "2026-10-20");
+    expect(destaquesDoDia(ontem, HOJE)).toEqual({ medalhas: [], precisao: [] });
+    expect(destaquesDoDia(ontem, "2026-10-20").medalhas).toHaveLength(1);
+    expect(destaquesDoDia(null, HOJE).medalhas).toEqual([]);
+  });
+
+  it("lê o campo da RPC e o card só calcula para hoje", () => {
+    const [e] = lerRitmoDaAnalise({
+      editais: [
+        {
+          id: "x",
+          edital: "114/2026",
+          destaques: {
+            dia: HOJE,
+            avaliadores: [
+              { nome: "Ana Souza", qt: "12", reabertas: 0 },
+              { nome: "", qt: 5 },
+              { nome: "Sem fichas", qt: 0 },
+            ],
+          },
+        },
+        { id: "y", edital: "1/2026" },
+      ],
+    });
+    expect(e.destaques).toEqual({
+      dia: HOJE,
+      avaliadores: [{ nome: "Ana Souza", qt: 12, reabertas: 0 }],
+    });
+    const r = calcularRitmo(edital({ destaques: e.destaques }), {
+      hoje: HOJE,
+      hora: 10,
+    });
+    expect(r.destaques.medalhas[0]).toMatchObject({
+      nome: "Ana Souza",
+      posicao: 1,
+    });
+    expect(r.destaques.precisao).toEqual(["Ana Souza"]);
+    expect(
+      calcularRitmo(edital({ destaques: e.destaques }), {
+        hoje: "2026-10-22",
+        hora: 10,
+      }).destaques.medalhas,
+    ).toEqual([]);
+  });
+
+  it("meta da equipe batida: o edital cujo selo do dia é 'batida'", () => {
+    const agora = { hoje: "2026-10-19", hora: 15 };
+    const batida = calcularRitmo(
+      edital({ porDia: [{ dia: "2026-10-19", qt: 400 }] }),
+      agora,
+    );
+    expect(batida.dia.situacao).toBe("batida");
+    expect(metaDaEquipeBatida([batida])).toBe(batida);
+    expect(metaDaEquipeBatida([calcularRitmo(edital(), agora)])).toBeNull();
   });
 });

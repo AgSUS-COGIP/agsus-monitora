@@ -244,7 +244,7 @@ export const CONTRATO_RPC = {
   obter_ritmo_da_analise: {
     argumentos: ["p_area"],
     resumo:
-      "Card Ritmo da análise do Painel das análises (migration 20261019170000): por edital da área com a avaliação documental no MONITORA, contagens por situação, concluídas por dia (14 dias), equipe de analistas, avaliadores recentes e cronograma; só quem pode ler o Painel da área.",
+      "Card Ritmo da análise do Painel das análises (migration 20261019170000): por edital da área com a avaliação documental no MONITORA, contagens por situação, concluídas por dia (14 dias), equipe de analistas, avaliadores recentes, cronograma e os destaques de hoje (pódio e candidatos ao selo Precisão: nome, concluídas e reabertas hoje; migration 20261021100000); só quem pode ler o Painel da área.",
   },
   usuario_pode_ler_analises: {
     argumentos: [],
