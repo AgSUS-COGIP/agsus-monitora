@@ -501,9 +501,13 @@ describe("página: abas e campos por área", () => {
     await desenhar(supabaseDaTela());
     expect(document.querySelector(".solicitacao-marca")).not.toBeNull();
     expect(document.querySelector(".solicitacao-aya-fala").textContent).toMatch(
-      /Escolha a aba da sua área/,
+      /Escolha a aba de onde você trabalha/,
     );
     expect($("accessRequestTitulo").textContent).toBe("Solicitação de acesso");
+    expect($("solicitacaoOnde").textContent).toBe("Onde você trabalha?");
+    expect(document.querySelector(".solicitacao-onde").textContent).toContain(
+      "Vai avaliar outra área? Diga na justificativa",
+    );
     expect($("accessReqNome").value).toBe("Ana Souza");
     expect($("accessReqEmailCampo").readOnly).toBe(true);
     expect($("accessReqEmailCampo").value).toBe("u1@agenciasus.org.br");

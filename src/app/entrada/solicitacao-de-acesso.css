@@ -238,6 +238,14 @@ body.access-request-mode .login-screen {
   display: grid;
   gap: var(--space-5);
 }
+.solicitacao-onde {
+  display: grid;
+  gap: var(--space-2);
+}
+.solicitacao-onde-titulo {
+  margin: 0;
+  font-weight: 600;
+}
 .solicitacao-abas.ui-abas {
   padding: 0;
 }

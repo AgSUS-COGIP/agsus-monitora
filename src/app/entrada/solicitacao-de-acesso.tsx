@@ -106,7 +106,7 @@ export function falaDaAya(
     };
   return {
     texto:
-      "Escolha a aba da sua área, o seu cargo e onde você trabalha. Quem gerencia os acessos analisa e escolhe o seu grupo.",
+      "Escolha a aba de onde você trabalha e o seu cargo. Vai avaliar outra área? Diga na justificativa. Quem gerencia os acessos analisa e escolhe o seu grupo.",
     humor: null,
   };
 }
@@ -403,18 +403,26 @@ function Formulario({
       onSubmit={enviar}
     >
       {visao.abas ? (
-        <Abas
-          rotulo="Área"
-          className="solicitacao-abas"
-          abas={AREAS_DA_SOLICITACAO.map((a) => ({
-            id: a.codigo,
-            rotulo: a.rotulo,
-            idDaAba: `solicitacaoAba-${a.codigo}`,
-            idDoPainel: "solicitacaoCampos",
-          }))}
-          ativa={area}
-          aoEscolher={(id: string) => pedido.escolherArea(id as CodigoDaArea)}
-        />
+        <div className="solicitacao-onde">
+          <p id="solicitacaoOnde" className="solicitacao-onde-titulo">
+            Onde você trabalha?
+          </p>
+          <small className="ui-campo-dica">
+            Vai avaliar outra área? Diga na justificativa; quem aprovar libera.
+          </small>
+          <Abas
+            rotulo="Onde você trabalha"
+            className="solicitacao-abas"
+            abas={AREAS_DA_SOLICITACAO.map((a) => ({
+              id: a.codigo,
+              rotulo: a.rotulo,
+              idDaAba: `solicitacaoAba-${a.codigo}`,
+              idDoPainel: "solicitacaoCampos",
+            }))}
+            ativa={area}
+            aoEscolher={(id: string) => pedido.escolherArea(id as CodigoDaArea)}
+          />
+        </div>
       ) : null}
       <div
         id="solicitacaoCampos"
