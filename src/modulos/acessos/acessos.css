@@ -177,11 +177,26 @@ td.acessos-vazio {
   color: var(--text-secondary);
   font-size: var(--text-body-sm);
 }
-.acessos-truncado {
+/* Pedido de acesso: o que pediu (área · cargo; lotação · coordenação) e a justificativa. */
+.acessos-pedido > strong,
+.acessos-pedido > small {
+  display: block;
+}
+.acessos-pedido > small {
+  color: var(--text-secondary);
+  font-size: var(--text-body-sm);
+}
+.acessos-justificativa {
+  display: -webkit-box;
+  max-width: 360px;
+  margin: var(--space-1) 0 0;
   overflow: hidden;
-  max-width: 260px;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+  color: var(--text-secondary);
+  font-size: var(--text-body-sm);
+  white-space: normal;
 }
 /*
   Nome longo: uma linha com reticências, nunca cortado seco (no celular o

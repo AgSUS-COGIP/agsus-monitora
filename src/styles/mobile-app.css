@@ -80,14 +80,11 @@ body.mobile-app .app .top {
     padding-right: 20px !important;
   }
 
-  .google-login-btn,
-  .access-submit-btn,
-  .access-account-actions .btn {
+  .google-login-btn {
     width: 100%;
     justify-content: center;
   }
 
-  .access-request-grid,
   .form-grid {
     grid-template-columns: minmax(0, 1fr) !important;
   }

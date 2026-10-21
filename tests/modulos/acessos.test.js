@@ -1258,3 +1258,116 @@ describe("Acessos: contas desativadas e reativação", () => {
     ).toMatchObject({ p_solicitacao_id: "s2", p_grupo: "coordenador" });
   });
 });
+
+describe("Pendentes: pedido por área (20261021140000)", () => {
+  const PEDIDO_POR_AREA = {
+    id: "s3",
+    nome: "Duda",
+    email: "duda@agenciasus.org.br",
+    coordenacao: null,
+    coordenacao_nome: null,
+    area: "saude-indigena",
+    area_nome: "Saúde Indígena",
+    cargo: "COORDENACAO_DSEI",
+    cargo_rotulo: "Coordenação de DSEI ou CASAI",
+    setor: "DSEI Yanomami",
+    justificativa: "Coordeno a equipe do DSEI e acompanho os editais.",
+    created_at: "2026-10-20T10:00:00Z",
+  };
+  const comPedido = (mais = {}) => ({
+    listar_solicitacoes_acesso: () => ({
+      data: [{ ...PEDIDO_POR_AREA, ...mais }],
+      error: null,
+    }),
+    recusar_solicitacao_acesso: () => ({
+      data: { ok: true, status: "recusado" },
+      error: null,
+    }),
+  });
+  const chamadasDe = (supabase, nome) =>
+    supabase.rpc.mock.calls.filter(([n]) => n === nome);
+
+  it("mostra área, cargo, lotação e justificativa; o cargo sugere o grupo e a área vem marcada", async () => {
+    const supabase = await montar({
+      perfil: ADMIN,
+      teto: TETO_ADMIN,
+      extra: comPedido(),
+    });
+    await clicar(botao("Pendentes (1)"));
+    const texto = document.body.textContent;
+    expect(texto).toContain("Saúde Indígena · Coordenação de DSEI ou CASAI");
+    expect(texto).toContain("DSEI Yanomami");
+    expect(texto).toContain("Coordeno a equipe do DSEI");
+    const grupo = select("Grupo de Duda");
+    expect(grupo.value).toBe("coordenador");
+    expect(grupo.selectedOptions[0].textContent).toBe("Coordenador (sugerido)");
+    await escolher(grupo, "usuario");
+    await clicar(botao("Aprovar"));
+    expect(
+      chamadasDe(supabase, "aprovar_solicitacao_acesso")[0][1],
+    ).toMatchObject({
+      p_solicitacao_id: "s3",
+      p_grupo: "usuario",
+      p_coordenacao: null,
+      p_areas: ["saude-indigena"],
+    });
+  });
+
+  it("coordenador: o grupo sugerido acima do teto vira Usuário e a coordenação é a dele", async () => {
+    const supabase = await montar({
+      perfil: COORD,
+      teto: TETO_COORD,
+      extra: comPedido({ coordenacao: "norte", coordenacao_nome: "Norte" }),
+    });
+    await clicar(botao("Pendentes (1)"));
+    const grupo = select("Grupo de Duda");
+    expect(grupo.value).toBe("usuario");
+    expect([...grupo.options].map((o) => o.value)).not.toContain("coordenador");
+    expect(select("Coordenação de Duda").disabled).toBe(true);
+    await clicar(botao("Aprovar"));
+    expect(
+      chamadasDe(supabase, "aprovar_solicitacao_acesso")[0][1],
+    ).toMatchObject({ p_grupo: "usuario", p_coordenacao: "norte" });
+  });
+
+  it("recusar pede o motivo da lista; 'Outro' exige descrição; a prévia mostra o que a pessoa verá", async () => {
+    const supabase = await montar({
+      perfil: ADMIN,
+      teto: TETO_ADMIN,
+      extra: comPedido(),
+    });
+    await clicar(botao("Pendentes (1)"));
+    await clicar(botao("Recusar"));
+    expect(
+      document.getElementById("acessosRecusarPedidoTitulo").textContent,
+    ).toBe("Recusar o pedido de Duda");
+    await clicar(botao("Recusar pedido"));
+    expect(chamadasDe(supabase, "recusar_solicitacao_acesso")).toHaveLength(0);
+    expect(document.body.textContent).toContain("Escolha o motivo da recusa.");
+    await escolher(document.getElementById("acessosRecusarMotivo"), "OUTRO");
+    await digitar(
+      document.getElementById("acessosRecusarComplemento"),
+      "curto",
+    );
+    await clicar(botao("Recusar pedido"));
+    expect(chamadasDe(supabase, "recusar_solicitacao_acesso")).toHaveLength(0);
+    await escolher(
+      document.getElementById("acessosRecusarMotivo"),
+      "AREA_OU_LOTACAO",
+    );
+    await digitar(
+      document.getElementById("acessosRecusarComplemento"),
+      "o DSEI é outro",
+    );
+    expect(document.getElementById("acessosRecusarPrevia").textContent).toBe(
+      "A pessoa verá: Área ou lotação não confere — o DSEI é outro",
+    );
+    await clicar(botao("Recusar pedido"));
+    expect(chamadasDe(supabase, "recusar_solicitacao_acesso")[0][1]).toEqual({
+      p_solicitacao_id: "s3",
+      p_motivo: "AREA_OU_LOTACAO",
+      p_complemento: "o DSEI é outro",
+    });
+    expect(document.getElementById("acessosRecusarPedido")).toBeNull();
+  });
+});

@@ -493,24 +493,30 @@ export function criarEstadoDosAcessos({
     });
   }
 
-  function recusar(solicitacao, observacao) {
+  /**
+   * Recusa com o motivo da lista (`argumentos` de validarRecusa, em
+   * src/lib/solicitacao-de-acesso.ts). Devolve { ok, erro }.
+   */
+  function recusar(solicitacao, { p_motivo, p_complemento }) {
     return executar(`recusar:${solicitacao.id}`, "Recusando…", async () => {
       try {
         await rpc(RPC_RECUSAR, {
           p_solicitacao_id: solicitacao.id,
-          p_observacao_admin: observacao || null,
+          p_motivo,
+          p_complemento: p_complemento || null,
         });
         toast(
           `Solicitação de ${solicitacao.nome || solicitacao.email} recusada.`,
           "success",
         );
         await carregarSolicitacoes();
-        return true;
+        return { ok: true, erro: "" };
       } catch (erro) {
-        toast(`Não foi possível recusar: ${mensagemDoErro(erro)}`, "error");
-        return false;
+        const mensagem = mensagemDoErro(erro);
+        toast(`Não foi possível recusar: ${mensagem}`, "error");
+        return { ok: false, erro: mensagem };
       }
-    });
+    }).then((resultado) => resultado || { ok: false, erro: "" });
   }
 
   // ── Grupos e coordenações (admin global) ────────────────────────────────────

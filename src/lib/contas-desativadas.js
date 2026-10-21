@@ -17,7 +17,7 @@ import {
   ficariaSemArea,
   gerenciariaAcessosSemCoordenacao,
 } from "./matriz-de-acessos.js";
-import { diaEMes } from "./solicitacao-de-acesso.js";
+import { diaEMes } from "./solicitacao-de-acesso.ts";
 
 const txt = (valor) => String(valor ?? "").trim();
 

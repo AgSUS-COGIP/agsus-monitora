@@ -2,6 +2,8 @@ import pg from "pg";
 
 /*
   Validação da migration `recusar_solicitacao_acesso` contra o banco real.
+  Desde 20261021140000 a assinatura é (p_solicitacao_id, p_motivo,
+  p_complemento): motivo da lista fixa (private."FC_MOTIVO_RECUSA_SOLICITACAO").
 
   Duas fases, na ordem em que devem ser corridas:
 
@@ -131,7 +133,8 @@ try {
     } else {
       registrar(
         /p_solicitacao_id\s+uuid/.test(fn.argumentos) &&
-          /p_observacao_admin\s+text/.test(fn.argumentos),
+          /p_motivo\s+text/.test(fn.argumentos) &&
+          /p_complemento\s+text/.test(fn.argumentos),
         "assinatura confere",
         fn.argumentos,
       );
@@ -187,7 +190,7 @@ try {
               [naoMaster.user_id],
             );
             await cliente.query(
-              `select public.recusar_solicitacao_acesso($1, 'teste')`,
+              `select public.recusar_solicitacao_acesso($1, 'FORA_DO_PUBLICO', 'teste')`,
               [alvo.id],
             );
             registrar(
@@ -243,7 +246,7 @@ try {
           try {
             await comoMaster();
             await cliente.query(
-              `select public.recusar_solicitacao_acesso($1, 'teste')`,
+              `select public.recusar_solicitacao_acesso($1, 'FORA_DO_PUBLICO', 'teste')`,
               [avaliada.id],
             );
             registrar(
@@ -281,7 +284,7 @@ try {
           try {
             await comoMaster();
             const retorno = await umaLinha(
-              `select public.recusar_solicitacao_acesso($1, 'validação automatizada') as r`,
+              `select public.recusar_solicitacao_acesso($1, 'FORA_DO_PUBLICO', 'validação automatizada') as r`,
               [pendente.id],
             );
             const linha = await umaLinha(

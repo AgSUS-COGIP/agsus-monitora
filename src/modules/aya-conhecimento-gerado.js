@@ -5530,10 +5530,42 @@ export const VERBETES_AYA = Object.freeze([
       "pendentes",
     ],
     resposta:
-      "Quem entra com Google sem perfil ativo vê a tela de pedido e informa nome, setor, coordenação e justificativa (20 a 2.000 caracteres). Os pedidos ficam em Acessos › Usuários › Pendentes: o administrador global vê todos; o coordenador vê os da coordenação dele e aprova nela, com grupo dentro do teto. Quem recebeu convite não precisa pedir: basta entrar com o e-mail convidado.",
+      'Quem entra com Google institucional sem perfil ativo vê a página "Solicitação de acesso", com uma aba por área (Projetos, Saúde Indígena e SEDE): nome completo (vem do Google e pode ser corrigido), e-mail (só leitura), cargo ou função da lista da área ("Outro" pede a descrição), DSEI ou CASAI na Saúde Indígena, projeto em Projetos, setor ou diretoria na SEDE, coordenação (quando a área tem) e justificativa (20 a 2.000 caracteres, com pelo menos 3 palavras). Enviado, o pedido fica "aguardando aprovação" e a pessoa pode editar ou cancelar enquanto estiver pendente. Não há acesso automático nem senha: o login é sempre pelo Google.',
     fato: "",
     fonte:
-      "src/lib/solicitacao-de-acesso.js; src/modulos/acessos/solicitacoes.jsx",
+      "src/lib/solicitacao-de-acesso.ts; src/app/entrada/solicitacao-de-acesso.tsx; supabase/migrations/20261021140000_solicitacao_de_acesso_por_area.sql",
+  },
+  {
+    arquivo: "regras-dos-acessos.md",
+    titulo: "Aprovar ou recusar um pedido de acesso",
+    perguntas: [
+      "como aprovar um pedido de acesso",
+      "aprovar pedido",
+      "recusar pedido",
+      "recusar solicitacao",
+      "grupo sugerido",
+      "quem aprova os pedidos",
+    ],
+    resposta:
+      'Os pedidos ficam em Acessos › Usuários › Pendentes, com área, cargo, unidade ou lotação e justificativa. O administrador global vê todos; o coordenador vê os da coordenação dele e aprova nela, com grupo dentro do teto. O cargo pedido sugere o grupo (Avaliador da análise curricular → Avaliador; Gestor de processo seletivo → Gestor; Contratação → Contratador; Coordenação → Coordenador; Jurídico → Jurídico; os demais → Usuário), e a área do pedido vem marcada; quem aprova pode trocar os dois. Recusar pede um motivo da lista (ou "Outro", descrito) e a pessoa vê esse motivo quando entrar de novo, podendo corrigir e pedir outra vez.',
+    fato: "",
+    fonte:
+      "src/modulos/acessos/solicitacoes.tsx; src/lib/solicitacao-de-acesso.ts",
+    abrir: "config:acessos",
+  },
+  {
+    arquivo: "regras-dos-acessos.md",
+    titulo: "Aviso de aprovação",
+    perguntas: [
+      "a pessoa recebe email quando o acesso e aprovado",
+      "aviso de aprovacao",
+      "email de aprovacao",
+      "como saber se o pedido foi aprovado",
+    ],
+    resposta:
+      'O MONITORA não envia e-mail. A pessoa vê a situação do pedido (aguardando, aprovado com "Entrar agora" ou recusado com o motivo) quando entra de novo com a mesma conta Google. Se precisar avisar, avise pelo canal da equipe.',
+    fato: "",
+    fonte: "src/app/entrada/pedido-de-acesso.ts",
   },
   {
     arquivo: "regras-dos-acessos.md",
@@ -5550,7 +5582,7 @@ export const VERBETES_AYA = Object.freeze([
       'Só o administrador global desativa uma conta, com motivo; ela vai para a aba "Desativadas", que mostra quando, por quem e por quê. "Reativar" pede grupo, coordenação, áreas e motivo (vêm como estavam) e resolve o pedido pendente da pessoa. Quem foi desativado vê "Seu acesso ao MONITORA foi desativado." e pode pedir reativação.',
     fato: "",
     fonte:
-      "supabase/migrations/20260930180000_contas_desativadas_e_reativacao.sql; src/modulos/acessos/contas-desativadas.jsx; src/lib/solicitacao-de-acesso.js",
+      "supabase/migrations/20260930180000_contas_desativadas_e_reativacao.sql; src/modulos/acessos/contas-desativadas.jsx; src/lib/solicitacao-de-acesso.ts",
     abrir: "config:acessos",
   },
   {
@@ -5583,7 +5615,7 @@ export const VERBETES_AYA = Object.freeze([
       'Confira, nesta ordem: a pessoa entrou com a conta Google do e-mail convidado (o link sozinho não dá acesso e outra conta não serve); o e-mail é de um domínio permitido (Configurações › Tela de acesso); e o cadastro está ativo — conta desativada vê "Seu acesso ao MONITORA foi desativado." e pode pedir reativação. Quem entra sem convite vê a tela de pedido de acesso, que vai para Acessos › Usuários › Pendentes. Se o Login Google estiver Inativo, o botão some da tela de entrada; com o sistema inteiro em manutenção, quem não é administrador global vê a tela de manutenção.',
     fato: "",
     fonte:
-      "src/lib/convite-de-acesso.js; src/lib/solicitacao-de-acesso.js; supabase/migrations/20260930180000_contas_desativadas_e_reativacao.sql; src/lib/situacao-dos-modulos.js",
+      "src/lib/convite-de-acesso.js; src/lib/solicitacao-de-acesso.ts; supabase/migrations/20260930180000_contas_desativadas_e_reativacao.sql; src/lib/situacao-dos-modulos.js",
     abrir: "config:acessos",
   },
   {
