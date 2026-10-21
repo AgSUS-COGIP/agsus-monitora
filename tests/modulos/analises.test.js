@@ -559,6 +559,18 @@ describe("situação do processo (escopo)", () => {
 });
 
 describe("ritmo da análise", () => {
+  // O card nasce recolhido; estes testes olham o conteúdo, então partem dele aberto.
+  beforeEach(() => {
+    localStorage.setItem("monitora.analises.ritmo-recolhido:anonimo", "0");
+  });
+
+  it("nasce recolhido para quem nunca abriu", async () => {
+    localStorage.removeItem("monitora.analises.ritmo-recolhido:anonimo");
+    await montar(comRitmo());
+    expect(card().hasAttribute("data-recolhido")).toBe(true);
+    expect(card().querySelector(".ui-kpi")).toBeNull();
+  });
+
   const RITMO = {
     editais: [
       {

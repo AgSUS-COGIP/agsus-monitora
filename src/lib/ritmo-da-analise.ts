@@ -830,12 +830,12 @@ const CHAVE_DO_RECOLHIDO = "monitora.analises.ritmo-recolhido";
 const chaveDoRecolhido = (usuario: string | null | undefined) =>
   `${CHAVE_DO_RECOLHIDO}:${usuario || "anonimo"}`;
 
-/** O card ficou recolhido na última vez (desta pessoa)? Aberto por padrão. */
+/** O card fica recolhido, a não ser que a pessoa o tenha aberto (recolhido por padrão). */
 export function lerRitmoRecolhido(usuario: string | null | undefined): boolean {
   try {
-    return globalThis.localStorage?.getItem(chaveDoRecolhido(usuario)) === "1";
+    return globalThis.localStorage?.getItem(chaveDoRecolhido(usuario)) !== "0";
   } catch {
-    return false;
+    return true;
   }
 }
 
@@ -844,9 +844,10 @@ export function gravarRitmoRecolhido(
   recolhido: boolean,
 ): void {
   try {
-    if (recolhido)
-      globalThis.localStorage?.setItem(chaveDoRecolhido(usuario), "1");
-    else globalThis.localStorage?.removeItem(chaveDoRecolhido(usuario));
+    globalThis.localStorage?.setItem(
+      chaveDoRecolhido(usuario),
+      recolhido ? "1" : "0",
+    );
   } catch {
     /* sem armazenamento: só não lembra */
   }
