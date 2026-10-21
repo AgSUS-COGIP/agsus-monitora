@@ -2,15 +2,20 @@
   Ensaio da correção 20261023-compactar-retratos-do-rascunho (begin … rollback;
   nada fica gravado). Curto, para rodar mesmo em horário de uso: aplica a
   migration 20261023090000 só nesta transação, monta a MESMA lista de retratos
-  que ficam (o trecho entre os marcadores é copiado da correção; o teste
-  confere), mede o que sai e exercita o desliga/religa do gatilho em UMA linha.
+  que saem e roda a MESMA conferência da exportação (os trechos entre os
+  marcadores são copiados da correção; o teste confere), mede o que sai e
+  exercita o desliga/religa do gatilho em UMA linha.
   O UPDATE completo (~9,6 mil linhas, segundos com a tabela travada) não roda
   aqui: na janela de aplicação, rode antes a própria correção trocando o
   commit final por rollback e confira os números.
 
   Reprova (raise exception) se:
-    C1  a lista do que fica não tiver o último SALVAR com retrato de cada ficha
-        ou o último antes de cada CONCLUIR;
+    C0  a conferência da exportação aceitar a falta da linha
+        "set monitora.exportacao_retratos", formato errado ou contagem
+        diferente — ou recusar a contagem certa;
+    C1  a lista do que sai tiver o último SALVAR com retrato de alguma ficha
+        ou o último antes de algum CONCLUIR, ou deixar de fora outro SALVAR
+        com retrato;
     C2  com o gatilho ligado, o UPDATE no histórico passar;
     C3  depois de desligar e religar dentro da transação, o gatilho não estiver
         ligado ('O') ou o UPDATE voltar a passar.
@@ -92,43 +97,102 @@ comment on function public.salvar_rascunho_ficha(uuid, integer, jsonb, jsonb, te
 
 -- <<< migration
 
--- >>> lista do que fica
-create temporary table compactar_manter on commit drop as
+-- >>> lista do que sai
+create temporary table compactar_sai on commit drop as
+-- >>> regra
 select x.id
   from (select h."CO_HISTORICO_FICHA" as id, h."TP_ACAO" as acao,
                lead(h."TP_ACAO") over (partition by h."CO_FICHA_ANALISE" order by h."CO_HISTORICO_FICHA") as proxima,
                row_number() over (partition by h."CO_FICHA_ANALISE", h."TP_ACAO" order by h."CO_HISTORICO_FICHA" desc) as ordem
           from public."TH_FICHA_ANALISE" h
          where (h."TP_ACAO" = 'SALVAR' and h."DS_RETRATO" is not null) or h."TP_ACAO" = 'CONCLUIR') x
- where x.acao = 'SALVAR' and (x.proxima = 'CONCLUIR' or x.ordem = 1);
-create unique index on compactar_manter (id);
--- <<< lista do que fica
+ where x.acao = 'SALVAR' and x.proxima is distinct from 'CONCLUIR' and x.ordem <> 1
+-- <<< regra
+;
+create unique index on compactar_sai (id);
+-- <<< lista do que sai
+
+-- A conferência da exportação, copiada da correção, numa função temporária
+-- para exercitar os casos (cada um em subtransação).
+create function pg_temp.conferir_exportacao() returns void language plpgsql as $f$
+begin
+  execute $b$
+-- >>> conferência da exportação
+-- A exportação foi feita e bate com o que vai sair.
+do $$
+declare
+  v_exportacao text := current_setting('monitora.exportacao_retratos', true);
+  v_sai integer := (select count(*) from compactar_sai);
+begin
+  if coalesce(v_exportacao, '') !~ '^[0-9]+:[0-9a-f]{64}$' then
+    raise exception 'Exporte antes os retratos (scripts/exportar-retratos-do-rascunho.mjs) e cole, antes do begin, a linha set monitora.exportacao_retratos = ''<linhas>:<sha256>'' que o script imprimiu.';
+  end if;
+  if split_part(v_exportacao, ':', 1)::integer <> v_sai then
+    raise exception 'A exportação tem % linhas, mas sairiam % retratos: exporte de novo antes de compactar.',
+      split_part(v_exportacao, ':', 1), v_sai;
+  end if;
+end;
+$$;
+-- <<< conferência da exportação
+$b$;
+end;
+$f$;
 
 do $$
 declare
-  v_falta integer;
+  v_sai integer := (select count(*) from compactar_sai);
+  v_sha text := repeat('a', 64);
+  v_caso text;
+begin
+  -- C0: recusa sem a linha, com formato errado e com contagem diferente.
+  foreach v_caso in array array['', 'abc', v_sai || ':xyz', (v_sai + 1) || ':' || v_sha] loop
+    perform set_config('monitora.exportacao_retratos', v_caso, true);
+    begin
+      perform pg_temp.conferir_exportacao();
+      raise exception 'C0: aceitou "%"', v_caso;
+    exception when raise_exception then
+      if sqlerrm not like 'Exporte antes%' and sqlerrm not like 'A exportação tem%' then
+        raise;
+      end if;
+    end;
+  end loop;
+  -- C0: aceita a contagem certa.
+  perform set_config('monitora.exportacao_retratos', v_sai || ':' || v_sha, true);
+  perform pg_temp.conferir_exportacao();
+end;
+$$;
+
+do $$
+declare
+  v_errado integer;
   v_id bigint;
 begin
-  -- C1
-  select count(*) into v_falta
-    from ((select distinct on (h."CO_FICHA_ANALISE") h."CO_HISTORICO_FICHA" as id
-            from public."TH_FICHA_ANALISE" h
-           where h."TP_ACAO" = 'SALVAR' and h."DS_RETRATO" is not null
-           order by h."CO_FICHA_ANALISE", h."CO_HISTORICO_FICHA" desc)
-          union
-          select (select max(s."CO_HISTORICO_FICHA") from public."TH_FICHA_ANALISE" s
-                   where s."CO_FICHA_ANALISE" = c."CO_FICHA_ANALISE" and s."TP_ACAO" = 'SALVAR'
-                     and s."DS_RETRATO" is not null and s."CO_HISTORICO_FICHA" < c."CO_HISTORICO_FICHA")
-            from public."TH_FICHA_ANALISE" c where c."TP_ACAO" = 'CONCLUIR') e
-   where e.id is not null and not exists (select 1 from compactar_manter m where m.id = e.id);
-  if v_falta > 0 then
-    raise exception 'C1: % retratos que deviam ficar não estão na lista', v_falta;
+  -- C1: sai exatamente todo SALVAR com retrato que não é o último da ficha
+  -- nem o último antes de um CONCLUIR (conta feita de outro jeito).
+  with fica as (
+    (select distinct on (h."CO_FICHA_ANALISE") h."CO_HISTORICO_FICHA" as id
+       from public."TH_FICHA_ANALISE" h
+      where h."TP_ACAO" = 'SALVAR' and h."DS_RETRATO" is not null
+      order by h."CO_FICHA_ANALISE", h."CO_HISTORICO_FICHA" desc)
+    union
+    select (select max(s."CO_HISTORICO_FICHA") from public."TH_FICHA_ANALISE" s
+             where s."CO_FICHA_ANALISE" = c."CO_FICHA_ANALISE" and s."TP_ACAO" = 'SALVAR'
+               and s."DS_RETRATO" is not null and s."CO_HISTORICO_FICHA" < c."CO_HISTORICO_FICHA")
+      from public."TH_FICHA_ANALISE" c where c."TP_ACAO" = 'CONCLUIR'
+  ), esperado as (
+    select h."CO_HISTORICO_FICHA" as id from public."TH_FICHA_ANALISE" h
+     where h."TP_ACAO" = 'SALVAR' and h."DS_RETRATO" is not null
+       and h."CO_HISTORICO_FICHA" not in (select f.id from fica f where f.id is not null)
+  )
+  select count(*) into v_errado
+    from (select id from esperado except select id from compactar_sai
+          union all
+          select id from compactar_sai except select id from esperado) d;
+  if v_errado > 0 then
+    raise exception 'C1: % retratos com destino errado', v_errado;
   end if;
 
-  select h."CO_HISTORICO_FICHA" into v_id from public."TH_FICHA_ANALISE" h
-   where h."TP_ACAO" = 'SALVAR' and h."DS_RETRATO" is not null
-     and not exists (select 1 from compactar_manter m where m.id = h."CO_HISTORICO_FICHA")
-   order by h."CO_HISTORICO_FICHA" limit 1;
+  select c.id into v_id from compactar_sai c order by c.id limit 1;
 
   -- C2
   begin
@@ -156,13 +220,13 @@ end;
 $$;
 
 -- O que a correção faria (medição; pg_column_size do jsonb guardado).
-select count(*) filter (where m.id is null) as compactaria,
-       pg_size_pretty(sum(pg_column_size(h."DS_RETRATO")) filter (where m.id is null)) as retrato_que_sai,
-       count(*) filter (where m.id is not null) as mantem,
-       pg_size_pretty(sum(pg_column_size(h."DS_RETRATO")) filter (where m.id is not null)) as retrato_que_fica,
+select count(*) filter (where c.id is not null) as compactaria,
+       pg_size_pretty(sum(pg_column_size(h."DS_RETRATO")) filter (where c.id is not null)) as retrato_que_sai,
+       count(*) filter (where c.id is null) as mantem,
+       pg_size_pretty(sum(pg_column_size(h."DS_RETRATO")) filter (where c.id is null)) as retrato_que_fica,
        pg_size_pretty(pg_total_relation_size('public."TH_FICHA_ANALISE"')) as tabela_hoje
   from public."TH_FICHA_ANALISE" h
-  left join compactar_manter m on m.id = h."CO_HISTORICO_FICHA"
+  left join compactar_sai c on c.id = h."CO_HISTORICO_FICHA"
  where h."TP_ACAO" = 'SALVAR' and h."DS_RETRATO" is not null;
 
 rollback;

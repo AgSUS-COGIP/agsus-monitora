@@ -157,16 +157,34 @@ describe("correção 20261023-compactar-retratos-do-rascunho", () => {
     );
     expect(update).toMatch(/set "DS_RETRATO" = null\n/);
     expect(update).toContain(`h."TP_ACAO" = 'SALVAR'`);
-    expect(update).toContain("compactar_manter");
+    expect(update).toContain("compactar_sai");
   });
 
-  it("mantém o último retrato de cada ficha e o último antes de cada CONCLUIR", () => {
-    const lista = CORRECAO.slice(
-      CORRECAO.indexOf("create temporary table compactar_manter"),
-      CORRECAO.indexOf("create unique index on compactar_manter"),
+  it("sai todo SALVAR com retrato menos o último da ficha e o último antes de cada CONCLUIR", () => {
+    const regra = entreMarcadores(CORRECAO, "regra");
+    expect(regra).toContain(`x.proxima is distinct from 'CONCLUIR'`);
+    expect(regra).toContain("x.ordem <> 1");
+    expect(regra).not.toContain(";");
+  });
+
+  it("exige a exportação com a mesma contagem antes de compactar", () => {
+    const corpo = corpoDaTransacao(CORRECAO);
+    const confere = corpo.indexOf(
+      "current_setting('monitora.exportacao_retratos', true)",
     );
-    expect(lista).toContain(`x.proxima = 'CONCLUIR'`);
-    expect(lista).toContain("x.ordem = 1");
+    expect(confere).toBeGreaterThan(
+      corpo.indexOf("create temporary table compactar_sai"),
+    );
+    expect(confere).toBeLessThan(corpo.indexOf("disable trigger"));
+    expect(corpo).toContain("'^[0-9]+:[0-9a-f]{64}$'");
+    expect(corpo).toContain(
+      "split_part(v_exportacao, ':', 1)::integer <> v_sai",
+    );
+    expect(corpo).toContain(
+      "Saíram retratos em número diferente do exportado.",
+    );
+    expect(CORRECAO).toContain("scripts/exportar-retratos-do-rascunho.mjs");
+    expect(CORRECAO).toContain("sha256 %s");
   });
 
   it("assina no comentário de DS_RETRATO e só da primeira vez", () => {
@@ -186,15 +204,22 @@ describe("correção 20261023-compactar-retratos-do-rascunho", () => {
     expect(CORRECAO).toMatch(/FORA DO EXPEDIENTE/);
   });
 
-  it("o ensaio usa a mesma lista do que fica e termina em rollback", () => {
+  it("o ensaio usa a mesma lista e a mesma conferência e termina em rollback", () => {
     const lista = CORRECAO.slice(
-      CORRECAO.indexOf("create temporary table compactar_manter"),
+      CORRECAO.indexOf("create temporary table compactar_sai"),
       CORRECAO.indexOf(
         "\n",
-        CORRECAO.indexOf("create unique index on compactar_manter"),
+        CORRECAO.indexOf("create unique index on compactar_sai"),
       ) + 1,
     );
-    expect(entreMarcadores(ENSAIO_CORRECAO, "lista do que fica")).toBe(lista);
+    expect(entreMarcadores(ENSAIO_CORRECAO, "lista do que sai")).toBe(lista);
+    const ini = CORRECAO.indexOf("-- A exportação foi feita");
+    const conferencia = CORRECAO.slice(ini, CORRECAO.indexOf("$$;\n", ini) + 4);
+    expect(entreMarcadores(ENSAIO_CORRECAO, "conferência da exportação")).toBe(
+      conferencia,
+    );
+    for (const c of ["C0", "C1", "C2", "C3"])
+      expect(ENSAIO_CORRECAO).toContain(c);
     expect(entreMarcadores(ENSAIO_CORRECAO, "migration")).toBe(
       corpoDaTransacao(MIGRATION).replace(
         /^set local lock_timeout = '3s';\n/m,

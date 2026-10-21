@@ -32,11 +32,31 @@
     - Assinada pela conta do setor Gestão da Informação de Pessoal
       (a01afddb-f64b-47d9-80e8-476a1ed14e43; tem de ser administrador global
       ativo): o registro fica no comentário da coluna DS_RETRATO (quando,
-      quantas linhas, o critério, a conta e este arquivo) e no registro das
+      quantas linhas, o critério, a conta, o sha256 da exportação e este arquivo) e no registro das
       correções (npm run db:estado -- --registrar=correcoes/20261023-compactar-retratos-do-rascunho.sql).
 
+  EXPORTAÇÃO ANTES (obrigatória; o plano FREE não tem backup): os retratos que
+  saem são exportados para um arquivo fora do banco, e a correção só roda se
+  a contagem exportada bater com a que vai sair:
+    1. node --env-file=.env.local scripts/exportar-retratos-do-rascunho.mjs --saida=retratos-do-rascunho-AAAAMMDD.jsonl.gz
+       (só SELECT, em lotes de 500 pela chave; lê ESTA lista — o trecho entre
+       "-- >>> regra" e "-- <<< regra" abaixo — direto deste arquivo). Ao fim,
+       imprime linhas, tamanho, sha256 e a linha "set monitora.exportacao_retratos = …".
+    2. Guarde o arquivo fora do banco (pasta do setor no Drive/rede) e anote
+       caminho, linhas e sha256 em docs/banco-de-dados.md §24 ("Exportação dos
+       retratos"). O sha256 e a contagem também ficam no comentário de DS_RETRATO.
+    3. No SQL Editor, na MESMA execução, cole como primeira linha (antes do
+       begin) a linha impressa pelo script:
+         set monitora.exportacao_retratos = '<linhas>:<sha256>';
+       e, em seguida, este arquivo. Sem ela, ou com contagem diferente, aborta.
+       Depois da migration nenhum SALVAR novo leva retrato, então a lista não
+       muda entre a exportação e a correção.
+  Ver uma ficha a partir do arquivo (só leitura):
+    node scripts/exportar-retratos-do-rascunho.mjs --ler=<arquivo> --ficha=<uuid> [--sha256=<sha>]
+
   Idempotente: rodar de novo não acha mais o que compactar e não mexe no
-  comentário (o registro da primeira vez fica).
+  comentário (o registro da primeira vez fica). (Com 0 a sair, informe
+  '0:<qualquer sha256>' ou rode sem a correção.)
 
   DEPOIS DO COMMIT — devolver o espaço (fora do expediente):
     O UPDATE deixa as versões antigas das linhas como espaço morto: o tamanho
@@ -80,16 +100,37 @@ begin
 end;
 $$;
 
--- Os retratos que ficam: o último de cada ficha e o último antes de cada CONCLUIR.
-create temporary table compactar_manter on commit drop as
+-- Os retratos que SAEM: todo SALVAR com retrato, menos o último de cada ficha
+-- e o último antes de cada CONCLUIR. O script de exportação lê este mesmo
+-- trecho (entre os marcadores, sem ponto e vírgula) daqui.
+create temporary table compactar_sai on commit drop as
+-- >>> regra
 select x.id
   from (select h."CO_HISTORICO_FICHA" as id, h."TP_ACAO" as acao,
                lead(h."TP_ACAO") over (partition by h."CO_FICHA_ANALISE" order by h."CO_HISTORICO_FICHA") as proxima,
                row_number() over (partition by h."CO_FICHA_ANALISE", h."TP_ACAO" order by h."CO_HISTORICO_FICHA" desc) as ordem
           from public."TH_FICHA_ANALISE" h
          where (h."TP_ACAO" = 'SALVAR' and h."DS_RETRATO" is not null) or h."TP_ACAO" = 'CONCLUIR') x
- where x.acao = 'SALVAR' and (x.proxima = 'CONCLUIR' or x.ordem = 1);
-create unique index on compactar_manter (id);
+ where x.acao = 'SALVAR' and x.proxima is distinct from 'CONCLUIR' and x.ordem <> 1
+-- <<< regra
+;
+create unique index on compactar_sai (id);
+
+-- A exportação foi feita e bate com o que vai sair.
+do $$
+declare
+  v_exportacao text := current_setting('monitora.exportacao_retratos', true);
+  v_sai integer := (select count(*) from compactar_sai);
+begin
+  if coalesce(v_exportacao, '') !~ '^[0-9]+:[0-9a-f]{64}$' then
+    raise exception 'Exporte antes os retratos (scripts/exportar-retratos-do-rascunho.mjs) e cole, antes do begin, a linha set monitora.exportacao_retratos = ''<linhas>:<sha256>'' que o script imprimiu.';
+  end if;
+  if split_part(v_exportacao, ':', 1)::integer <> v_sai then
+    raise exception 'A exportação tem % linhas, mas sairiam % retratos: exporte de novo antes de compactar.',
+      split_part(v_exportacao, ':', 1), v_sai;
+  end if;
+end;
+$$;
 
 alter table public."TH_FICHA_ANALISE" disable trigger "TG_THFICHA_IMUTAVEL";
 
@@ -99,11 +140,15 @@ with u as (
      set "DS_RETRATO" = null
    where h."TP_ACAO" = 'SALVAR'
      and h."DS_RETRATO" is not null
-     and not exists (select 1 from compactar_manter m where m.id = h."CO_HISTORICO_FICHA")
+     and exists (select 1 from compactar_sai c where c.id = h."CO_HISTORICO_FICHA")
   returning 1
 )
 insert into compactar_resultado
-select count(*)::integer, (select count(*)::integer from compactar_manter) from u;
+select count(*)::integer,
+       (select count(*)::integer from public."TH_FICHA_ANALISE" h
+         where h."TP_ACAO" = 'SALVAR' and h."DS_RETRATO" is not null
+           and not exists (select 1 from compactar_sai c where c.id = h."CO_HISTORICO_FICHA"))
+  from u;
 
 alter table public."TH_FICHA_ANALISE" enable trigger "TG_THFICHA_IMUTAVEL";
 
@@ -119,8 +164,9 @@ begin
   end if;
   execute format('comment on column public."TH_FICHA_ANALISE"."DS_RETRATO" is %L',
     'Retrato do conteúdo depois da ação ({lancamento, resultado, parecer, versao_regra}); obrigatório no CONCLUIR. No SALVAR, só até 20261023090000 (desde então o rascunho vigente fica em TB_FICHA_ANALISE e o histórico guarda o que mudou em DS_ALTERACAO). '
-    || format('Em %s, a correção supabase/correcoes/20261023-compactar-retratos-do-rascunho.sql, assinada pela conta do setor Gestão da Informação de Pessoal (a01afddb-f64b-47d9-80e8-476a1ed14e43), tirou o retrato de %s linhas SALVAR antigas e manteve %s (o último rascunho de cada ficha e o último antes de cada CONCLUIR); as linhas, quem, quando e o que mudou ficaram.',
-              to_char(now() at time zone 'America/Sao_Paulo', 'DD/MM/YYYY HH24:MI'), r.compactadas, r.mantidas));
+    || format('Em %s, a correção supabase/correcoes/20261023-compactar-retratos-do-rascunho.sql, assinada pela conta do setor Gestão da Informação de Pessoal (a01afddb-f64b-47d9-80e8-476a1ed14e43), tirou o retrato de %s linhas SALVAR antigas e manteve %s (o último rascunho de cada ficha e o último antes de cada CONCLUIR); as linhas, quem, quando e o que mudou ficaram. Os retratos tirados foram exportados antes (scripts/exportar-retratos-do-rascunho.mjs; sha256 %s; caminho do arquivo em docs/banco-de-dados.md §24).',
+              to_char(now() at time zone 'America/Sao_Paulo', 'DD/MM/YYYY HH24:MI'), r.compactadas, r.mantidas,
+              split_part(current_setting('monitora.exportacao_retratos'), ':', 2)));
 end;
 $$;
 
@@ -135,9 +181,17 @@ begin
   if exists (select 1 from public."TH_FICHA_ANALISE" h where h."TP_ACAO" = 'CONCLUIR' and h."DS_RETRATO" is null) then
     raise exception 'Há CONCLUIR sem retrato.';
   end if;
-  if exists (select 1 from compactar_manter m join public."TH_FICHA_ANALISE" h on h."CO_HISTORICO_FICHA" = m.id
-              where h."DS_RETRATO" is null) then
-    raise exception 'Um retrato que devia ficar foi tirado.';
+  if (select r.compactadas from compactar_resultado r)
+     <> split_part(current_setting('monitora.exportacao_retratos'), ':', 1)::integer then
+    raise exception 'Saíram retratos em número diferente do exportado.';
+  end if;
+  -- O último SALVAR com retrato de cada ficha que tinha algum continua com retrato.
+  if exists (select 1 from compactar_sai c
+               join public."TH_FICHA_ANALISE" h on h."CO_HISTORICO_FICHA" = c.id
+              where not exists (select 1 from public."TH_FICHA_ANALISE" k
+                                 where k."CO_FICHA_ANALISE" = h."CO_FICHA_ANALISE" and k."TP_ACAO" = 'SALVAR'
+                                   and k."DS_RETRATO" is not null)) then
+    raise exception 'Uma ficha ficou sem o retrato do último rascunho.';
   end if;
 end;
 $$;
