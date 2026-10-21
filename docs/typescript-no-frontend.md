@@ -297,3 +297,45 @@ linhas inválidas impedem importar uma lista parcial. Pacotes compactos dos form
 e conversão binária sem perda de bytes. Contratos em
 `tests/tipos/base-dos-aprovados.tsx` e leitura de XLSX em
 `tests/lib/importacao-xlsx-de-aprovados.test.js`.
+
+## Resumo por módulo
+
+Resumo que ficava no README (movido para cá em 21/10/2026). Em 21/10/2026, `src/` tinha 362
+arquivos `.ts`/`.tsx` e 252 `.js`/`.jsx` (cerca de 59% em TypeScript). A migração continua por
+módulo; o detalhe de cada um está nas seções acima e no README do módulo.
+
+- **Seleção, Cronograma, Visão geral, Conferências, Status das atualizações, Análises
+  curriculares, Módulos e abas, barra lateral e Busca global**: estado, componentes e regras das
+  telas em TypeScript; os dados compartilhados do monitoramento e o recorte por área também.
+- **Recursos**: filtros, indicadores, gráficos, fila, prazos, enriquecimento, busca e CSV; entrada,
+  estado e cadastro/edição, com validação dos dados e descarte de respostas após troca de área ou
+  usuário. Gaveta, parecer jurídico, anexos, resposta ao candidato, administração de modelos e
+  ajuste de pontuação em TSX; todos os componentes e o estado da pasta tipados. A integração usa o
+  motor da Classificação em TypeScript e valida os dados antes de calcular ou aprovar uma prévia.
+- **Classificação**: tela principal e estado (seleção do edital, carga, versões da regra, registro
+  e publicação de listas, desempate, hora de nascimento, exportação); publicação de aprovados
+  (confirmação, casamento por análise/nome/vaga, revisão manual, comparação com a lista vigente);
+  visões Listas e Regra; Agenda das entrevistas (regra, horários, bancas, conflitos, ajustes,
+  histórico, XLSX, convocação); motor completo (candidatos, entrevistas, ajustes, notas,
+  desempates, cotas e explicações das quatro listas); números, datas, idade, catálogo de
+  critérios/modalidades, sorteios reprodutíveis, montagem das vagas, retrato das listas, XLSX,
+  documentos SEI/DOCX, impressão e área de transferência. Respostas antigas são descartadas após
+  troca de edital, área ou usuário.
+- **Cartas de convocação**: modelos, versões, emissão, histórico, preenchimento, prévia, SEI, DOCX
+  e ZIP, com validação dos dados e confirmação da emissão antes de gerar a saída.
+- **Lista de aprovados**: configuração da convocação (modelos, categorias, cascata, vagas, ordem
+  de chamada), cálculo e aba de Convocação (cotas, cascatas, ordenação, filtros, paginação, cartas,
+  CSV), aba Aprovados (indicadores, origens, ações, selos, decisões judiciais), entrada e estado
+  (carga por área, importação XLSX, status, anexos), modais e gaveta; leitura do XLSX, candidatos
+  compactos e anexos PDF. Todos os componentes e estados da pasta tipados; confirmações
+  incompletas de convocação não mudam os status locais.
+- **Mapas**: Mapa de Projetos (carga, cache, lista, filtros, balões), editor de coordenadas
+  compartilhado (fila, sugestões, histórico, modo de edição, adaptador da Saúde Indígena), telas
+  principal, nacional e por DSEI da Saúde Indígena em TSX, regras nacionais e distritais, integração
+  com o Leaflet e a base comum dos mapas (painel, legenda, tela cheia, retorno ao Brasil, hooks). A
+  reconciliação compartilhada mantém contratos JSDoc.
+- **Entrevistas**: ficha de notas de Conduzir entrevistas (estado, permissões, matriz, atalhos,
+  prévia, salvamento), editor de roteiros e composição da banca em TSX, estado da condução com
+  contratos das RPCs, regras de roteiro e condução, convocação e Painel de entrevistas (entrada,
+  estado, normalização, filtros, indicadores, gráficos, tabela, gavetas e exportação). A pasta do
+  módulo não tem arquivos JS/JSX.

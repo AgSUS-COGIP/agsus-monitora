@@ -105,7 +105,7 @@ no computador.
 | Secret                        | O que é                                                                                 |
 | ----------------------------- | --------------------------------------------------------------------------------------- |
 | `GOOGLE_SERVICE_ACCOUNT_JSON` | conteúdo do JSON da conta de serviço `credenciais-pyhton` (projeto `credencial-437411`) |
-| `SUPABASE_URL`                | `https://gnudtaxhjfgtvwkwpsel.supabase.co`                                              |
+| `SUPABASE_URL`                | `https://SEU-PROJETO.supabase.co` (URL do projeto de produção, com quem administra)     |
 | `SUPABASE_SERVICE_ROLE_KEY`   | chave service_role (Supabase → Project Settings → API)                                  |
 
 Para trocar um secret: clique no nome → **Update secret** → cole o novo valor. Precisa ser
