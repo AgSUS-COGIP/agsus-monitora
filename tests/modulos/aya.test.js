@@ -17,7 +17,7 @@ import { clicar, digitar, teclar } from "../componentes/interacoes.js";
 
 const { montarAya, CHAVE_OCULTA, CHAVE_AVALIACOES, CHAVE_POSICAO_DA_ARARA } =
   await import("../../src/modulos/aya/aya.jsx");
-const { definirPaginaDaAya, redefinirPaginaDaAya } =
+const { definirPaginaDaAya, esquecerConversaDaAya, redefinirPaginaDaAya } =
   await import("../../src/modulos/aya/estado.js");
 
 let raiz;
@@ -236,6 +236,16 @@ describe("conversa", () => {
       secao: "modulos",
     });
     document.getElementById("page-config").remove();
+  });
+
+  it("sair do sistema limpa a conversa que está na tela", async () => {
+    await montar();
+    await abrirPainel();
+    await perguntarNoCampo("Quem pode decidir um recurso?");
+    expect($('[role="log"]').textContent).not.toBe("");
+    await act(async () => esquecerConversaDaAya());
+    expect($('[role="log"]').textContent).toBe("");
+    expect(sessionStorage.getItem("agsus_aya_conversa_v1")).toBe("[]");
   });
 
   it("Limpar conversa apaga a conversa e volta o Aprender", async () => {

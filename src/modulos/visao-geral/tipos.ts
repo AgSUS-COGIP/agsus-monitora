@@ -202,6 +202,8 @@ export type EstadoDaVisaoGeral = {
   alternarCriticos: () => void;
   tirarAtalho: () => void;
   limparTudo: () => void;
+  /** A pessoa saiu: o recorte volta ao vazio, sem aviso. */
+  esquecer: () => void;
   tirarDsei: () => void;
   localizar: (linha: LinhaDoMonitoramento | null) => void;
   destacar: (id: string | number | undefined) => void;

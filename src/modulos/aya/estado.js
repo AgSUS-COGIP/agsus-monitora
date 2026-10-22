@@ -13,6 +13,7 @@ import {
   assinarDadosDoMonitoramento,
   obterDadosDoMonitoramento,
 } from "../../componentes/dados-do-monitoramento.ts";
+import { esquecerConversa } from "../../modules/aya-memoria.js";
 import {
   EVENTO_SECAO_ABERTA,
   secaoAtualDeConfiguracao,
@@ -27,6 +28,8 @@ let estado = Object.freeze({
   titulo: "",
   secao: "",
   area: areaAtual(),
+  /** Sobe a cada conversa esquecida (saída): o painel limpa a que mostra. */
+  conversa: 0,
 });
 
 function publicar(mudancas) {
@@ -66,6 +69,15 @@ globalThis.document?.addEventListener(EVENTO_SECAO_ABERTA, (evento) => {
   publicar({ secao: String(evento.detail?.secao || "") });
 });
 
+/*
+  A pessoa saiu (ou ficou sem acesso): a conversa guardada na aba sai, e o
+  painel — que continua montado — limpa a que está na tela.
+*/
+export function esquecerConversaDaAya(janela = globalThis) {
+  esquecerConversa(janela);
+  publicar({ conversa: estado.conversa + 1 });
+}
+
 /** Só para os testes: volta ao estado inicial. */
 export function redefinirPaginaDaAya() {
   estado = Object.freeze({
@@ -73,6 +85,7 @@ export function redefinirPaginaDaAya() {
     titulo: "",
     secao: "",
     area: areaAtual(),
+    conversa: 0,
   });
   for (const ouvinte of ouvintes) ouvinte();
 }

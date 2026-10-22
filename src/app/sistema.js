@@ -10,7 +10,11 @@ import {
   situacaoDoSistema,
 } from "../modules/situacao-dos-modulos.js";
 import { esconderEsqueleto, mostrarEsqueleto } from "./carregamento.js";
-import { estadoDaVisaoGeral } from "../modulos/visao-geral/estado.ts";
+import {
+  esquecerVisaoGeral,
+  estadoDaVisaoGeral,
+} from "../modulos/visao-geral/estado.ts";
+import { esquecerConversaDaAya } from "../modulos/aya/estado.js";
 import {
   areaDaLinha,
   definirAreaAtual,
@@ -182,6 +186,7 @@ export function localizarLinhaDoMonitoramento(id) {
   tela. `carga.esquecer` também fecha o Realtime e tira as linhas do store.
 */
 function limparEstadoDeslogado() {
+  esquecerDaPessoa();
   carga.esquecer();
   encerramento.esquecer();
   presenca.pararTudo();
@@ -190,6 +195,12 @@ function limparEstadoDeslogado() {
   esquecerSituacaoDoSistema(document);
   esconderEsqueleto();
   perfil.esconderApp();
+}
+
+/* O que a pessoa deixou nas telas: a conversa da Aya e o recorte da Visão geral. */
+function esquecerDaPessoa() {
+  esquecerConversaDaAya();
+  esquecerVisaoGeral();
 }
 
 /* Fim da espera da entrada, aconteça o que acontecer: sem skeleton. */
@@ -239,6 +250,7 @@ function fecharSistema() {
 }
 
 function ficarSemAcesso() {
+  esquecerDaPessoa();
   fecharSistema();
   void carga.apagarCopia();
 }
