@@ -64,6 +64,10 @@ import { RodarComOpcoes } from "./rodar-com-opcoes.tsx";
   "Agenda dos robôs" (20261008140000): o banco pede ao GitHub as cargas
   agendadas; a linha mostra o último pedido aceito e as falhas, ou o aviso de
   chave ausente no Vault (agenda-dos-robos.tsx).
+
+  Chaves da automação (Configurações › Automação, 20261022190000): a carga
+  de chave desligada mostra "Desligada pelo administrador", com quem, quando
+  e o motivo, em vez de atraso ou erro; o Rodar agora dela pede confirmação.
 */
 
 const classes = (...lista: (string | false | null | undefined)[]) =>
@@ -75,6 +79,7 @@ const ICONE_DA_SITUACAO = Object.freeze({
   falhou: "circle-alert",
   em_andamento: "refresh-cw",
   nunca: "circle",
+  desligada: "circle",
 });
 
 function Selo({ situacao }: { situacao: SituacaoDaCarga }) {
@@ -185,7 +190,17 @@ function RodarAgora({
           robo.id === "empregare" ? "cargas-rodar-empregare" : undefined
         }
         disabled={botao.desabilitado}
-        onClick={() => void estado.rodarAgora(robo.id)}
+        onClick={() => {
+          // Chave desligada (Configurações › Automação): rodar à mão pede confirmação.
+          if (
+            linha.desligada &&
+            !globalThis.confirm(
+              `A automação de ${linha.titulo} está desligada pelo administrador. Rodar agora mesmo assim?`,
+            )
+          )
+            return;
+          void estado.rodarAgora(robo.id);
+        }}
       >
         <Icone nome="refresh-cw" tamanho={14} />
         {botao.rotulo}
@@ -274,6 +289,17 @@ function Linha({ linha, atual, estado }: PropsDaLinha) {
         </div>
       </div>
       {linha.agenda ? <AgendaDosRobos agenda={linha.agenda} /> : null}
+      {linha.desligada ? (
+        <p className="saude-desligada" role="note">
+          {[
+            dataHora(linha.desligada.em),
+            linha.desligada.por,
+            linha.desligada.motivo,
+          ]
+            .filter((parte) => parte && parte !== "—")
+            .join(" · ")}
+        </p>
+      ) : null}
       {linha.erro ? (
         <p className="saude-erro" role="note">
           <strong>
@@ -420,7 +446,7 @@ export function SaudeDasCargas({
       </p>
     );
 
-  const { linhas, atencao } = visaoSimples(atual.dados);
+  const { linhas, atencao } = visaoSimples(atual.dados, atual.chaves);
 
   return (
     <div className="modulos-tela saude-tela">

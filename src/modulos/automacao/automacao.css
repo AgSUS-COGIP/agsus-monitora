@@ -1,0 +1,99 @@
+/*
+  Configurações › Automação (src/modulos/automacao/), só com tokens. O cartão
+  é o .ui-card; selo, campo e aviso são os de src/ui/. Aqui ficam a linha de
+  cada chave (nome, selo, botão, dados) e o histórico.
+*/
+
+/* A seção é uma coluna só (o corpo das seções é uma grade de duas). */
+.config-secao[data-secao="automacao"] .config-secao__corpo {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.automacao-tela {
+  display: grid;
+  gap: var(--space-4);
+  min-width: 0;
+}
+.automacao-esqueleto {
+  height: var(--space-20);
+}
+.automacao-cartao {
+  display: grid;
+  gap: var(--space-3);
+}
+.automacao-cartao h4 {
+  margin: 0;
+  color: var(--text-primary);
+  font-size: var(--text-body);
+  font-weight: var(--font-weight-semibold);
+}
+
+.automacao-lista,
+.automacao-historico {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.automacao-linha {
+  display: grid;
+  gap: var(--space-2);
+  padding: var(--space-3) 0;
+  border-top: 1px solid var(--border-subtle);
+}
+.automacao-linha:first-child {
+  padding-top: 0;
+  border-top: 0;
+}
+.automacao-linha__topo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+.automacao-linha__nome {
+  flex: 1 1 200px;
+  min-width: 0;
+  color: var(--text-primary);
+}
+.automacao-linha__dados {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: var(--space-2) var(--space-4);
+  margin: 0;
+}
+.automacao-linha__dados dt {
+  color: var(--text-secondary);
+  font-size: var(--text-caption);
+}
+.automacao-linha__dados dd {
+  display: grid;
+  gap: var(--space-1);
+  margin: 0;
+  color: var(--text-primary);
+  overflow-wrap: anywhere;
+}
+.automacao-linha__dados dd small,
+.automacao-linha__tarefas {
+  color: var(--text-secondary);
+  font-size: var(--text-caption);
+  overflow-wrap: anywhere;
+}
+.automacao-linha--desligada .automacao-linha__nome {
+  color: var(--text-secondary);
+}
+.automacao-motivo {
+  display: grid;
+  gap: var(--space-2);
+  max-width: 560px;
+}
+
+.automacao-historico li {
+  display: grid;
+  gap: var(--space-1);
+  padding: var(--space-2) 0;
+  border-top: 1px solid var(--border-subtle);
+}
+.automacao-historico li:first-child {
+  border-top: 0;
+}

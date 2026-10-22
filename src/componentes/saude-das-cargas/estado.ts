@@ -23,6 +23,11 @@ import type {
   relê a cada 60 s, só com a seção na tela e a aba visível (cada releitura
   são ~75 kB: get_saude_das_cargas e get_painel_dos_robos). A releitura que
   cai com a aba oculta fica para quando ela voltar.
+
+  As chaves da automação (obter_chaves_da_automacao, 20261022190000) vêm junto
+  em `chaves`: a carga de chave desligada aparece como "Desligada pelo
+  administrador". Sem a função no banco (ou com erro), `chaves` fica nulo e a
+  tela segue como antes.
 */
 import { isAdminGlobal } from "../../lib/access-roles.js";
 import { comTempoLimite, mensagemDeFalha } from "../../lib/falha-de-rede.js";
@@ -40,12 +45,14 @@ import {
   situacaoDoPedido,
 } from "../../lib/robos-de-carga.js";
 import { normalizarSaude } from "../../lib/saude-das-cargas.ts";
+import { normalizarChaves } from "../../lib/chaves-da-automacao.ts";
 
 export const ESPERA_DEPOIS_DO_PEDIDO_MS = 60_000;
 /* O GitHub responde ao banco em 1 ou 2 s: a primeira conferência do pedido. */
 const ESPERA_DA_RESPOSTA_MS = 3000;
 const RPC_PAINEL_DOS_ROBOS = "get_painel_dos_robos";
 const RPC_VAGAS_DOS_ROBOS = "listar_vagas_dos_robos";
+const RPC_CHAVES_DA_AUTOMACAO = "obter_chaves_da_automacao";
 
 export function criarEstadoDaSaude({
   supabase,
@@ -69,6 +76,7 @@ export function criarEstadoDaSaude({
     avisos: {},
     painel: { status: "idle", dados: null, erro: "" },
     acompanhamentos: {},
+    chaves: null,
   };
   let pedido = 0;
   let releituraAgendada = false;
@@ -89,7 +97,11 @@ export function criarEstadoDaSaude({
       publicar({ status: "ready" });
       return;
     }
-    const extras = Promise.all([conferirPedidos(), carregarPainel()]);
+    const extras = Promise.all([
+      conferirPedidos(),
+      carregarPainel(),
+      carregarChaves(),
+    ]);
     if (!supabase) {
       publicar({
         status: "error",
@@ -132,6 +144,20 @@ export function criarEstadoDaSaude({
     });
     await extras;
     if (meu === pedido) acompanhar();
+  }
+
+  /* obter_chaves_da_automacao: sem a função ou com erro, segue sem as chaves. */
+  async function carregarChaves() {
+    if (!supabase) return;
+    try {
+      const { data, error } = await comTempoLimite(
+        supabase.rpc(RPC_CHAVES_DA_AUTOMACAO),
+        30000,
+      );
+      publicar({ chaves: error ? null : normalizarChaves(data) });
+    } catch {
+      publicar({ chaves: null });
+    }
   }
 
   /* get_painel_dos_robos: editais da escolha e as últimas execuções. */

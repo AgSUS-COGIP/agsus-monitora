@@ -5,6 +5,12 @@ import type {
   ExecucaoDaCarga,
   LinhaDaSaude,
 } from "../componentes/saude-das-cargas/tipos.ts";
+import {
+  chaveDaLinha,
+  chavesPorTarefa,
+  type ChaveDaAutomacao,
+  type ChavesDaAutomacao,
+} from "./chaves-da-automacao.ts";
 /*
   Status das atualizações (Configurações › Status das atualizações, só administrador global),
   sem React e sem banco: o que chega de `get_saude_das_cargas`
@@ -17,6 +23,8 @@ import type {
     Em andamento    só há execução em curso, nenhuma terminada.
     Atrasada        a última que deu certo terminou há mais que o prazo.
     Em dia          a última que deu certo está dentro do prazo.
+    Desligada       a chave da aba está desligada em Configurações › Automação
+                    (20261022190000): não conta como atraso nem como falha.
   Carga sem prazo (a completa das análises e o robô da Empregare, que rodam
   quando alguém pede) só
   fica "em dia" ou "falhou".
@@ -55,6 +63,11 @@ export const SITUACOES = Object.freeze({
     ordem: 2,
   }),
   nunca: Object.freeze({ rotulo: "Ainda sem carga", tom: "neutro", ordem: 3 }),
+  desligada: Object.freeze({
+    rotulo: "Desligada pelo administrador",
+    tom: "neutro",
+    ordem: 5,
+  }),
 });
 
 const NOMES_DAS_AREAS: Readonly<Record<string, string>> = Object.freeze({
@@ -78,6 +91,8 @@ const TAREFAS: Readonly<Record<string, string>> = Object.freeze({
   // Até 15/10/2026; desliga sozinha (20261009140000).
   agsus_robo_inscricoes_114_2026:
     "Agenda: inscrições do 114/2026 (Empregare e pré-classificação)",
+  agsus_kpis_do_edital_pela_selecao: "KPIs do edital pela Seleção",
+  agsus_fila_estatisticas: "Estatísticas da fila da Avaliação documental",
 });
 
 /* Os workflows que o banco pede ao GitHub (lista fixa de FC_DISPARAR_ROBO). */
@@ -630,6 +645,7 @@ const GRAVIDADE: readonly SituacaoDaCarga[] = Object.freeze([
   "em_andamento",
   "nunca",
   "em_dia",
+  "desligada",
 ]);
 
 const pior = (situacoes: SituacaoDaCarga[]) =>
@@ -679,7 +695,25 @@ function juntar({
 
 const ORDEM_DAS_AREAS = ["saude-indigena", "sede", "projetos"];
 
-export function visaoSimples(saude: SaudeNormalizada): {
+/* A linha de uma carga cuja chave está desligada: o selo diz isso, sem erro. */
+function desligar(linha: LinhaDaSaude, chave: ChaveDaAutomacao | null) {
+  if (!chave || chave.ligada) return linha;
+  return {
+    ...linha,
+    situacao: "desligada" as const,
+    erro: null,
+    desligada: { motivo: chave.motivo, em: chave.em, por: chave.por },
+  };
+}
+
+/**
+ * Uma linha por aba. Com as chaves da automação (obter_chaves_da_automacao),
+ * a carga desligada aparece como "Desligada pelo administrador".
+ */
+export function visaoSimples(
+  saude: SaudeNormalizada,
+  chaves: ChavesDaAutomacao | null = null,
+): {
   linhas: LinhaDaSaude[];
   atencao: LinhaDaSaude[];
 } {
@@ -709,16 +743,19 @@ export function visaoSimples(saude: SaudeNormalizada): {
 
   for (const carga of porId.planilhas?.cargas || []) {
     linhas.push(
-      juntar({
-        id: carga.id,
-        titulo: carga.id === "selecao" ? "Seleção" : "Entrevistas",
-        explicacao:
-          carga.id === "selecao"
-            ? "Atualiza a aba Seleção a partir da planilha Auditoria, às 8h10, 13h10 e 18h10."
-            : "Atualiza a aba Entrevistas a partir da planilha de entrevistados, de hora em hora o dia todo.",
-        partes: [carga],
-        situacoesQueContam: [carga.situacao],
-      }),
+      desligar(
+        juntar({
+          id: carga.id,
+          titulo: carga.id === "selecao" ? "Seleção" : "Entrevistas",
+          explicacao:
+            carga.id === "selecao"
+              ? "Atualiza a aba Seleção a partir da planilha Auditoria, às 8h10, 13h10 e 18h10."
+              : "Atualiza a aba Entrevistas a partir da planilha de entrevistados, de hora em hora o dia todo.",
+          partes: [carga],
+          situacoesQueContam: [carga.situacao],
+        }),
+        chaveDaLinha(chaves, carga.id),
+      ),
     );
   }
 
@@ -740,13 +777,16 @@ export function visaoSimples(saude: SaudeNormalizada): {
     const [titulo, explicacao] = TEXTOS_DOS_ROBOS[carga.id] ||
       TEXTOS_DOS_ROBOS.empregare || [carga.nome, ""];
     linhas.push(
-      juntar({
-        id: carga.id,
-        titulo,
-        explicacao,
-        partes: [carga],
-        situacoesQueContam: [carga.situacao],
-      }),
+      desligar(
+        juntar({
+          id: carga.id,
+          titulo,
+          explicacao,
+          partes: [carga],
+          situacoesQueContam: [carga.situacao],
+        }),
+        chaveDaLinha(chaves, carga.id),
+      ),
     );
   }
 
@@ -760,8 +800,15 @@ export function visaoSimples(saude: SaudeNormalizada): {
       partes: [carga],
       situacoesQueContam: [carga.situacao],
     });
+    // Entrevistas desligada: a agenda só pede as diárias (prazo de 26 h, não de 2 h).
+    const soDiarias =
+      linha.situacao === "atrasada" &&
+      chaveDaLinha(chaves, "entrevistas")?.ligada === false &&
+      carga.idadeMin !== null &&
+      carga.idadeMin <= PRAZO_DIARIO_MIN;
     linhas.push({
       ...linha,
+      situacao: soDiarias ? "em_dia" : linha.situacao,
       ultimaAtualizacao: carga.agenda.ultimoAceito || linha.ultimaAtualizacao,
       idadeMin: carga.idadeMin,
       agenda: carga.agenda,
@@ -769,6 +816,12 @@ export function visaoSimples(saude: SaudeNormalizada): {
   }
 
   const tarefas = porId.tarefas;
+  const porTarefa = chavesPorTarefa(chaves);
+  const partesDasTarefas = (tarefas?.cargas || []).map((c) =>
+    porTarefa.get(c.id.replace(/^tarefa:/, ""))?.ligada === false
+      ? { ...c, situacao: "desligada" as const }
+      : c,
+  );
   linhas.push(
     tarefas?.indisponivel
       ? {
@@ -788,9 +841,9 @@ export function visaoSimples(saude: SaudeNormalizada): {
           titulo: "Atualização automática do banco",
           explicacao:
             "Prepara os painéis para abrirem rápido (a cada 2 minutos), além de estatísticas e limpeza.",
-          partes: tarefas?.cargas || [],
-          situacoesQueContam: (tarefas?.cargas || [])
-            .filter((c) => c.ativa !== false)
+          partes: partesDasTarefas,
+          situacoesQueContam: partesDasTarefas
+            .filter((c) => c.ativa !== false && c.situacao !== "desligada")
             .map((c) => c.situacao),
         }),
   );

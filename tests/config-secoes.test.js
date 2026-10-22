@@ -17,12 +17,12 @@ const modulo = readFileSync("src/modulos/configuracoes/secoes.js", "utf8");
 /*
   A página era um formulário corrido: um card com 47 campos e três subtítulos
   soltos. Agora tem as mesmas sete seções do SIGAV, mais Módulos e abas e
-  Status das atualizações (só admin global). O conteúdo de cada seção é
+  Status das atualizações e Automação (só admin global). O conteúdo de cada seção é
   React (src/modulos/configuracoes/ e as ilhas de Acessos, Módulos e
   Status); este módulo cria o esqueleto das seções, move os blocos das ilhas
   e controla a seção aberta.
 */
-describe("as seções (as sete do SIGAV + Módulos e abas + Status das atualizações)", () => {
+describe("as seções (as sete do SIGAV + Módulos e abas + Status das atualizações + Automação)", () => {
   it("são exatamente essas, nessa ordem", () => {
     expect(SECOES.map((s) => s.rotulo)).toEqual([
       "Marca",
@@ -35,6 +35,7 @@ describe("as seções (as sete do SIGAV + Módulos e abas + Status das atualiza�
       "Acessos",
       "Módulos e abas",
       "Status das atualizações",
+      "Automação",
     ]);
   });
 
@@ -92,9 +93,9 @@ describe("organizar cria as seções e move os blocos", () => {
 
   beforeEach(montarPagina);
 
-  it("cria as dez seções, com o corpo das seções React vazio", () => {
+  it("cria as onze seções, com o corpo das seções React vazio", () => {
     expect(organizarConfiguracoesEmSecoes(document)).toBe(true);
-    expect(document.querySelectorAll(".config-secao")).toHaveLength(10);
+    expect(document.querySelectorAll(".config-secao")).toHaveLength(11);
     for (const secao of [
       "marca",
       "inicio",
@@ -155,7 +156,7 @@ describe("organizar cria as seções e move os blocos", () => {
   it("não organiza duas vezes", () => {
     expect(organizarConfiguracoesEmSecoes(document)).toBe(true);
     expect(organizarConfiguracoesEmSecoes(document)).toBe(false);
-    expect(document.querySelectorAll(".config-secao")).toHaveLength(10);
+    expect(document.querySelectorAll(".config-secao")).toHaveLength(11);
   });
 });
 
