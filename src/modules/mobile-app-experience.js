@@ -43,14 +43,22 @@ export function syncMobileState() {
   root.classList.toggle("is-mobile-app", isMobile);
   body.classList.toggle("mobile-app", isMobile);
 
-  const overlay = document.getElementById("sidebarOverlay");
-  if (!overlay) return;
-
   const collapsed = body.classList.contains("sidebar-collapsed");
   const explicitlyOpen = body.classList.contains("sidebar-open");
   const sidebarOpen = isMobile && (!collapsed || explicitlyOpen);
 
-  overlay.classList.toggle("hidden", !sidebarOpen);
+  /*
+    No celular, a gaveta fechada só sai da tela pelo transform
+    (mobile-app.css): sem `inert`, os links dela continuavam na ordem do Tab
+    e no leitor de tela, invisíveis.
+  */
+  document
+    .querySelector(".sidebar")
+    ?.toggleAttribute("inert", isMobile && !sidebarOpen);
+
+  document
+    .getElementById("sidebarOverlay")
+    ?.classList.toggle("hidden", !sidebarOpen);
 }
 
 function bindMobileInteractions() {
@@ -101,6 +109,8 @@ export function initMobileAppExperience() {
   bindMobileInteractions();
   registerServiceWorker();
 
+  // Abrir e fechar a gaveta (botão do cabeçalho, Esc, escolher página) avisam por aqui.
+  document.addEventListener(EVENTO_BARRA_ALTERNADA, syncMobileState);
   window.addEventListener("resize", syncMobileState, { passive: true });
   window.addEventListener("orientationchange", syncMobileState, {
     passive: true,

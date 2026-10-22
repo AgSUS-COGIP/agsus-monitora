@@ -238,6 +238,35 @@ describe("conversa", () => {
     document.getElementById("page-config").remove();
   });
 
+  it("pensando: o campo fica só leitura, com o foco, e não envia de novo", async () => {
+    let responder;
+    perguntar = vi.fn(
+      () =>
+        new Promise((resolver) => {
+          responder = resolver;
+        }),
+    );
+    await montar();
+    await abrirPainel();
+    const campo = $("textarea");
+    campo.focus();
+    await perguntarNoCampo("Quem decide um recurso?");
+    expect(campo.disabled).toBe(false);
+    expect(campo.readOnly).toBe(true);
+    expect(campo.getAttribute("aria-disabled")).toBe("true");
+    expect(document.activeElement).toBe(campo);
+    await teclar(campo, "Enter");
+    expect(perguntar).toHaveBeenCalledTimes(1);
+    await act(async () =>
+      responder({
+        answer: "A comissão.",
+        provider: "curated-official",
+        sources: [],
+      }),
+    );
+    expect(campo.readOnly).toBe(false);
+  });
+
   it("sair do sistema limpa a conversa que está na tela", async () => {
     await montar();
     await abrirPainel();

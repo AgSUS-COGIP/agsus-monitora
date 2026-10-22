@@ -1370,7 +1370,11 @@ export function Aya({
                 placeholder="Pergunte à Aya…"
                 autoComplete="off"
                 value={texto}
-                disabled={ocupada}
+                /* Ocupada, o campo fica só leitura (não disabled): disabled
+                   tirava o foco de quem digita e a pessoa ia parar no <body>.
+                   O envio já recusa enquanto a Aya pensa. */
+                readOnly={ocupada}
+                aria-disabled={ocupada || undefined}
                 onChange={(evento) => setTexto(evento.target.value)}
                 onKeyDown={aoTeclarNoCampo}
               />
