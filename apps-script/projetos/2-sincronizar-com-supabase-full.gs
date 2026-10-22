@@ -9,16 +9,14 @@ const ANALISES_SYNC_CFG = {
   ORIGEM: 'apps_script_analises_projetos_full_v1',
   // [por-planilha] Origens desta planilha (FULL e incremental): as consultas ao log so enxergam estas.
   ORIGENS_PLANILHA: ['apps_script_analises_projetos_full_v1', 'apps_script_analises_projetos_incremental_v1'], // [por-planilha]
-  DEFAULT_SUPABASE_URL: 'https://gnudtaxhjfgtvwkwpsel.supabase.co',
-
-
   // Deixe vazio: a chave fica SO em Propriedades do Script > SUPABASE_SERVICE_ROLE_KEY.
   SERVICE_ROLE_KEY_FIXA: '',
 
-  SUPABASE_URL_FIXA: '',
-
+  // [sem-url-fixa] A URL do projeto vem SO da propriedade do script SUPABASE_URL (sem valor no codigo).
   PROP_SUPABASE_URL: 'SUPABASE_URL',
   PROP_SERVICE_ROLE_KEY: 'SUPABASE_SERVICE_ROLE_KEY',
+  // [fuso] Datas formatadas sempre no horario de Brasilia, qualquer que seja o fuso do projeto.
+  FUSO_HORARIO: 'America/Sao_Paulo',
   CHUNK_SIZE: 300,
   MAX_HTTP_RETRIES: 4,
   RPC_MAX_HTTP_RETRIES: 1,
@@ -30,6 +28,8 @@ const ANALISES_SYNC_CFG = {
   CONTINUATION_HANDLER: 'continuarSyncAnalisesCurriculares',
   INFLIGHT_RECHECK_MAX: 3,
   PROP_CLIENT_STATE: 'ANALISES_SYNC_LOTES_CLIENT_V1',
+  // [so-full] Este arquivo so cria, retoma e finaliza sync deste modo (o incremental tem o seu).
+  MODO: 'FULL',
   RETRY_BASE_MS: 1500,
   PENDING_SYNC_MAX_MINUTES: 30,
   HASH_EXCLUDED_FIELDS: [
@@ -165,19 +165,12 @@ function getSupabaseServiceRoleKeyFixaAnalises_() {
   return key;
 }
 
-function getSupabaseUrlFixaAnalises_() {
-  const url = String(ANALISES_SYNC_CFG.SUPABASE_URL_FIXA || '').trim();
-
-  if (!url) {
-    return '';
-  }
-
-  return url.replace(/\/$/, '');
-}
-
 function configurarSupabaseAnalisesCurriculares(serviceRoleKey, supabaseUrl) {
   const props = {};
-  props[ANALISES_SYNC_CFG.PROP_SUPABASE_URL] = String(supabaseUrl || ANALISES_SYNC_CFG.DEFAULT_SUPABASE_URL).replace(/\/$/, '');
+  // [sem-url-fixa] Sem URL informada, vale a que ja esta nas Propriedades do Script; sem nenhuma, erro.
+  const url = String(supabaseUrl || PropertiesService.getScriptProperties().getProperty(ANALISES_SYNC_CFG.PROP_SUPABASE_URL) || '').trim().replace(/\/+$/, '');
+  if (!url) throw new Error(mensagemSemUrlSupabaseAnalises_());
+  props[ANALISES_SYNC_CFG.PROP_SUPABASE_URL] = url;
 
   if (serviceRoleKey && String(serviceRoleKey).trim()) {
     props[ANALISES_SYNC_CFG.PROP_SERVICE_ROLE_KEY] = String(serviceRoleKey).trim();
@@ -190,15 +183,12 @@ function configurarSupabaseAnalisesCurriculares(serviceRoleKey, supabaseUrl) {
 
 function verificarConfiguracaoSupabaseAnalisesCurriculares() {
   const props = PropertiesService.getScriptProperties();
-  const urlFixa = getSupabaseUrlFixaAnalises_();
   const keyFixa = getSupabaseServiceRoleKeyFixaAnalises_();
-  const urlProp = props.getProperty(ANALISES_SYNC_CFG.PROP_SUPABASE_URL);
+  const urlProp = String(props.getProperty(ANALISES_SYNC_CFG.PROP_SUPABASE_URL) || '').trim();
   const keyProp = props.getProperty(ANALISES_SYNC_CFG.PROP_SERVICE_ROLE_KEY);
-  const urlFinal = urlFixa || urlProp || ANALISES_SYNC_CFG.DEFAULT_SUPABASE_URL;
   const keyFinal = keyFixa || keyProp || '';
 
-  Logger.log('SUPABASE_URL usada: ' + (urlFinal || 'NAO CONFIGURADA'));
-  Logger.log('SUPABASE_URL origem: ' + (urlFixa ? 'SUPABASE_URL_FIXA no codigo' : (urlProp ? 'Propriedades do Script' : 'DEFAULT_SUPABASE_URL')));
+  Logger.log('SUPABASE_URL (Propriedades do Script): ' + (urlProp || 'NAO CONFIGURADA. ' + mensagemSemUrlSupabaseAnalises_()));
   Logger.log('SUPABASE_SERVICE_ROLE_KEY origem: ' + (keyFixa ? 'SERVICE_ROLE_KEY_FIXA no codigo' : (keyProp ? 'Propriedades do Script' : 'NAO CONFIGURADA')));
   Logger.log('SUPABASE_SERVICE_ROLE_KEY: ' + (keyFinal ? 'CONFIGURADA' : 'NAO CONFIGURADA'));
 }
@@ -335,13 +325,36 @@ function executarSyncAnalisesCurriculares_(modo, options) {
     if (opts.syncId && state && opts.syncId !== state.sync_id) {
       throw new Error('Existe estado local para outro sync_id. Reconcilie-o antes de trocar de lote.');
     }
-    const knownId = opts.syncId || (state && state.sync_id);
-    const remote = knownId ? consultarStatusSyncAnalises_(knownId) : verificarSyncAnalisesPendente_();
-    if (knownId && !remote) {
-      return resultadoPendenteAnalises_(state || { sync_id: knownId }, 'Log remoto não encontrado; não será criado outro lote.', true);
+    let remote = null;
+    if (state) {
+      // [nao-trava] O banco diz se o sync guardado ainda pode seguir (como no incremental).
+      remote = consultarStatusSyncAnalises_(state.sync_id);
+      const decisao = decidirEstadoLocalLotesAnalises_(state, remote);
+      if (decisao.acao === 'DESCARTAR') {
+        descartarEstadoLotesAnalises_(state, decisao.motivo);
+        if (opts.syncId) return resultadoPendenteAnalises_(state, decisao.motivo, true);
+        state = null;
+        remote = null;
+      }
+    }
+    if (!state) {
+      if (opts.syncId) {
+        remote = consultarStatusSyncAnalises_(opts.syncId);
+        if (!remote) return resultadoPendenteAnalises_({ sync_id: opts.syncId }, 'Log remoto não encontrado; não será criado outro lote.', true);
+      } else {
+        remote = verificarSyncAnalisesPendente_();
+      }
+      // [so-full] O FULL nunca adota um sync de outro modo (INCREMENTAL_ACTIVE): processar e
+      // finalizar um incremental como FULL desativaria tudo o que nao estava no staging parcial.
+      if (remote && remote.modo !== ANALISES_SYNC_CFG.MODO) {
+        const outro = { ok: false, pending: true, skipped: true, sync_id: remote.sync_id, modo: remote.modo,
+          motivo: 'Existe um sync ' + remote.modo + ' desta planilha pendente (status ' + remote.status + '). O FULL não o adota; rode de novo depois que ele terminar (o banco encerra uma execução parada há mais de 30 min).' };
+        Logger.log(JSON.stringify(outro));
+        return outro;
+      }
     }
     if (remote) {
-      if (!state) state = { sync_id: remote.sync_id, modo: remote.modo || modo || 'FULL', phase: 'PROCESSING', resumed: true };
+      if (!state) state = { sync_id: remote.sync_id, modo: ANALISES_SYNC_CFG.MODO, phase: 'PROCESSING', resumed: true };
       if (remote.sync_id !== state.sync_id) throw new Error('O log retornou um sync_id diferente do solicitado.');
       if (remote.status === 'processado') return concluirClienteLotesAnalises_(state, remote);
       if (['carregado', 'processando'].indexOf(remote.status) === -1) {
@@ -381,7 +394,7 @@ function executarSyncAnalisesCurriculares_(modo, options) {
       }
       state = {
         sync_id: syncId,
-        modo: modo || 'FULL',
+        modo: ANALISES_SYNC_CFG.MODO,
         phase: 'UPLOADING',
         staging: rows.length,
         snapshot_hash: calcularSnapshotHashAnalises_(rows),
@@ -446,6 +459,33 @@ function lerEstadoLotesAnalises_() {
   try { state = JSON.parse(raw); } catch (err) { throw new Error('Estado local inválido. Reconcilie antes de iniciar outra carga.'); }
   if (!state || !state.sync_id) throw new Error('Estado local sem sync_id.');
   return state;
+}
+
+/**
+ * [nao-trava] Decide o que fazer com o sync FULL guardado (PROP_CLIENT_STATE), pelo que o banco diz dele.
+ * Funcao pura, testada em tests/apps-script-analises-full.test.js.
+ *   SEGUIR     carregado/processando (retoma) ou processado (conclui localmente);
+ *   DESCARTAR  o log nao existe mais, e de outro modo (INCREMENTAL_ACTIVE) ou terminou em
+ *              erro (inclusive "encerrada por inatividade" pelo banco). Nada e apagado no banco.
+ * Antes, o cliente repetia "Log remoto nao encontrado" ou "Status remoto nao permite
+ * processamento: erro" a cada execucao ate alguem apagar a propriedade a mao.
+ */
+function decidirEstadoLocalLotesAnalises_(state, remote) {
+  if (!remote) return { acao: 'DESCARTAR', motivo: 'O sync ' + state.sync_id + ' não existe mais no banco.' };
+  if (remote.modo !== ANALISES_SYNC_CFG.MODO) {
+    return { acao: 'DESCARTAR', motivo: 'O sync ' + state.sync_id + ' é ' + remote.modo + '; o FULL não processa sync de outro modo.' };
+  }
+  if (['carregado', 'processando', 'processado'].indexOf(remote.status) === -1) {
+    return { acao: 'DESCARTAR', motivo: 'Status remoto não permite processamento: ' + remote.status };
+  }
+  return { acao: 'SEGUIR', motivo: 'Sync ' + remote.status + ' no banco.' };
+}
+
+// [nao-trava] Tira o sync guardado e o gatilho de continuacao (nada e apagado no banco).
+function descartarEstadoLotesAnalises_(state, motivo) {
+  Logger.log('FULL: estado local do sync ' + state.sync_id + ' (fase ' + state.phase + ') descartado: ' + motivo);
+  PropertiesService.getScriptProperties().deleteProperty(ANALISES_SYNC_CFG.PROP_CLIENT_STATE);
+  try { limparContinuacoesLotesAnalises_(); } catch (err) { Logger.log('Não foi possível limpar o gatilho de continuação.'); }
 }
 
 function salvarEstadoLotesAnalises_(state) {
@@ -647,9 +687,17 @@ function validarConfiguracaoSupabaseAnalises_() {
   return obterConfiguracaoSupabaseAnalises_();
 }
 
+// [sem-url-fixa] Antes, sem a propriedade, o script usava a URL de um projeto antigo (desativado)
+// escrita no codigo e falhava longe da causa. Agora a falta da propriedade e o proprio erro.
+function mensagemSemUrlSupabaseAnalises_() {
+  return 'Configure a propriedade do script ' + ANALISES_SYNC_CFG.PROP_SUPABASE_URL +
+    ' (Configuracoes do projeto > Propriedades do script) com a URL https://<projeto>.supabase.co do banco do MONITORA. O codigo nao tem URL fixa.';
+}
+
 function obterConfiguracaoSupabaseAnalises_() {
   const props = PropertiesService.getScriptProperties();
-  const url = String(getSupabaseUrlFixaAnalises_() || props.getProperty(ANALISES_SYNC_CFG.PROP_SUPABASE_URL) || ANALISES_SYNC_CFG.DEFAULT_SUPABASE_URL || '').trim().replace(/\/+$/, '');
+  const url = String(props.getProperty(ANALISES_SYNC_CFG.PROP_SUPABASE_URL) || '').trim().replace(/\/+$/, '');
+  if (!url) throw new Error(mensagemSemUrlSupabaseAnalises_());
   const key = String(getSupabaseServiceRoleKeyFixaAnalises_() || props.getProperty(ANALISES_SYNC_CFG.PROP_SERVICE_ROLE_KEY) || '').trim();
   if (!/^https:\/\/[a-z0-9.-]+(?::\d+)?$/i.test(url)) throw new Error('SUPABASE_URL inválida. Informe a URL HTTPS do projeto, sem /rest/v1.');
   if (key.indexOf('sb_secret_') === 0 && key.length > 10) return { url: url, key: key, jwt: false };
@@ -895,7 +943,7 @@ function normalizeValueForAnalises_(header, rawValue, displayValue) {
   }
 
   if (rawValue instanceof Date) {
-    return Utilities.formatDate(rawValue, Session.getScriptTimeZone(), "yyyy-MM-dd'T'HH:mm:ssZ");
+    return Utilities.formatDate(rawValue, ANALISES_SYNC_CFG.FUSO_HORARIO, "yyyy-MM-dd'T'HH:mm:ssZ");
   }
 
   if (typeof rawValue === 'number' && isFinite(rawValue)) {
@@ -909,7 +957,7 @@ function insertAnalisesSyncLog_(syncId, modo, rowsLength, startedAt) {
   supabaseAnalisesRequest_('/rest/v1/TL_SYNC_ANALISE', 'POST', [{
     sync_id: syncId,
     origem: ANALISES_SYNC_CFG.ORIGEM,
-    modo: modo || 'FULL',
+    modo: modo || ANALISES_SYNC_CFG.MODO,
     status: 'carregado',
     linhas_staging: rowsLength,
     started_at: startedAt.toISOString()
@@ -1073,13 +1121,13 @@ function toIntegerAnalises_(rawValue, displayValue) {
 function toIsoDateAnalises_(rawValue, displayValue) {
   const dt = coerceDateAnalises_(rawValue, displayValue);
   if (!dt) return null;
-  return Utilities.formatDate(dt, Session.getScriptTimeZone(), 'yyyy-MM-dd');
+  return Utilities.formatDate(dt, ANALISES_SYNC_CFG.FUSO_HORARIO, 'yyyy-MM-dd');
 }
 
 function toIsoTimestampAnalises_(rawValue, displayValue) {
   const dt = coerceDateAnalises_(rawValue, displayValue);
   if (!dt) return null;
-  return Utilities.formatDate(dt, Session.getScriptTimeZone(), "yyyy-MM-dd'T'HH:mm:ssZ");
+  return Utilities.formatDate(dt, ANALISES_SYNC_CFG.FUSO_HORARIO, "yyyy-MM-dd'T'HH:mm:ssZ");
 }
 
 function coerceDateAnalises_(rawValue, displayValue) {
@@ -1098,7 +1146,7 @@ function coerceDateAnalises_(rawValue, displayValue) {
     const check = new Date(Date.UTC(y, mo - 1, d));
     if (check.getUTCFullYear() !== y || check.getUTCMonth() !== mo - 1 || check.getUTCDate() !== d || h > 23 || mi > 59 || sec > 59) return null;
     const pad = function(n) { return String(n).padStart(2, '0'); };
-    return Utilities.parseDate(y + '-' + pad(mo) + '-' + pad(d) + ' ' + pad(h) + ':' + pad(mi) + ':' + pad(sec), Session.getScriptTimeZone(), 'yyyy-MM-dd HH:mm:ss');
+    return Utilities.parseDate(y + '-' + pad(mo) + '-' + pad(d) + ' ' + pad(h) + ':' + pad(mi) + ':' + pad(sec), ANALISES_SYNC_CFG.FUSO_HORARIO, 'yyyy-MM-dd HH:mm:ss');
   }
   if (!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:?\d{2})$/.test(raw)) return null;
   const dt = new Date(raw);

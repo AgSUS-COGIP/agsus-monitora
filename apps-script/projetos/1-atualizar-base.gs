@@ -1,5 +1,7 @@
 // Atualizado: aliases e contrato da FATO adequados ao Edital 30/2026 - Projeto Agora Tem Especialistas Caminhoneiros.
 const CFG = {
+  // [fuso] Datas formatadas sempre no horario de Brasilia, qualquer que seja o fuso do projeto.
+  FUSO_HORARIO: 'America/Sao_Paulo',
   ABA_DIM_EDITAIS: 'DIM_EDITAIS',
   ABA_DIM_VAGAS: 'DIM_VAGAS',
   ABA_DIM_RESPONSAVEIS: 'DIM_RESPONSAVEIS',
@@ -175,10 +177,13 @@ const CFG = {
   SYNC_STALE_TIMEOUT_MS: 30 * 60 * 1000,
   MAIN_SYNC_TRIGGER_EVERY_MINUTES: 20,
   MAIN_SYNC_TRIGGER_CHECK_EVERY_MINUTES: 5,
+  // [gatilho-publico] Gatilho so chama funcao publica (nome sem '_' no fim). Com '_', o Apps Script
+  // nao achava o handler e a FATO so andava pelo resgate do orquestrador (a cada 8 min sem sinal).
+  // processarLoteSincronizacaoAnalises (publica) vem em 4-orquestrador-fato-supabase.gs.
   MAIN_SYNC_TRIGGER_HANDLER: 'atualizarDimVagasESincronizarAgendado',
-  CONTINUATION_SYNC_TRIGGER_HANDLER: 'processarLoteSincronizacaoAnalises_',
-  RECLASS_STATUS_TRIGGER_HANDLER: 'continuarRecalculoStatusFato_',
-  REPAIR_SCORE_TRIGGER_HANDLER: 'continuarRecalculoNotasPontuacoesFato_',
+  CONTINUATION_SYNC_TRIGGER_HANDLER: 'processarLoteSincronizacaoAnalises',
+  RECLASS_STATUS_TRIGGER_HANDLER: 'continuarRecalculoStatusFato',
+  REPAIR_SCORE_TRIGGER_HANDLER: 'continuarRecalculoNotasPontuacoesFato',
   PROP_SYNC_ACTIVE: 'MFC_SYNC_ACTIVE',
   PROP_SYNC_TOTAL_PENDING: 'MFC_SYNC_TOTAL_PENDING',
   PROP_SYNC_PROCESSED_SOURCES: 'MFC_SYNC_PROCESSED_SOURCES',
@@ -1700,7 +1705,7 @@ function buildSyncSignature_(vaga, respInfo) {
 function normalizeDateTimeKey_(value) {
   if (!value) return '';
   if (value instanceof Date && !isNaN(value.getTime())) {
-    return Utilities.formatDate(value, Session.getScriptTimeZone(), 'yyyy-MM-dd HH:mm:ss');
+    return Utilities.formatDate(value, CFG.FUSO_HORARIO, 'yyyy-MM-dd HH:mm:ss');
   }
 
   const s = cleanStr_(value);
@@ -1717,13 +1722,13 @@ function normalizeDateTimeKey_(value) {
       Number(brMatch[6] || 0)
     );
     if (!isNaN(dtBr.getTime())) {
-      return Utilities.formatDate(dtBr, Session.getScriptTimeZone(), 'yyyy-MM-dd HH:mm:ss');
+      return Utilities.formatDate(dtBr, CFG.FUSO_HORARIO, 'yyyy-MM-dd HH:mm:ss');
     }
   }
 
   const dt = new Date(s);
   if (!isNaN(dt.getTime())) {
-    return Utilities.formatDate(dt, Session.getScriptTimeZone(), 'yyyy-MM-dd HH:mm:ss');
+    return Utilities.formatDate(dt, CFG.FUSO_HORARIO, 'yyyy-MM-dd HH:mm:ss');
   }
   return s;
 }
@@ -1778,7 +1783,7 @@ function recalcularStatusConsolidadoFato() {
   return result;
 }
 
-function continuarRecalculoStatusFato_() {
+function continuarRecalculoStatusFato() {
   return processarLoteRecalculoStatusFato_();
 }
 
@@ -1862,9 +1867,10 @@ function processarLoteRecalculoStatusFato_() {
 
 function agendarProximoLoteRecalculoStatusFato_() {
   const triggers = ScriptApp.getProjectTriggers().filter(function(trigger) {
-    return trigger.getHandlerFunction() === CFG.RECLASS_STATUS_TRIGGER_HANDLER;
+    return gatilhoDoHandler_(trigger, CFG.RECLASS_STATUS_TRIGGER_HANDLER);
   });
-  if (triggers.length) return;
+  if (triggers.some(function(t) { return t.getHandlerFunction() === CFG.RECLASS_STATUS_TRIGGER_HANDLER; })) return;
+  triggers.forEach(function(t) { ScriptApp.deleteTrigger(t); });
 
   ScriptApp.newTrigger(CFG.RECLASS_STATUS_TRIGGER_HANDLER)
     .timeBased()
@@ -1874,7 +1880,7 @@ function agendarProximoLoteRecalculoStatusFato_() {
 
 function limparGatilhosRecalculoStatusFato_() {
   return limparTriggersPorPredicado_(function(trigger) {
-    return trigger.getHandlerFunction() === CFG.RECLASS_STATUS_TRIGGER_HANDLER;
+    return gatilhoDoHandler_(trigger, CFG.RECLASS_STATUS_TRIGGER_HANDLER);
   });
 }
 
@@ -1970,7 +1976,7 @@ function recalcularNotasPontuacoesFato() {
   return result;
 }
 
-function continuarRecalculoNotasPontuacoesFato_() {
+function continuarRecalculoNotasPontuacoesFato() {
   return processarLoteRecalculoNotasPontuacoesFato_();
 }
 
@@ -2059,9 +2065,10 @@ function processarLoteRecalculoNotasPontuacoesFato_() {
 
 function agendarProximoLoteRecalculoNotasPontuacoesFato_() {
   const triggers = ScriptApp.getProjectTriggers().filter(function(trigger) {
-    return trigger.getHandlerFunction() === CFG.REPAIR_SCORE_TRIGGER_HANDLER;
+    return gatilhoDoHandler_(trigger, CFG.REPAIR_SCORE_TRIGGER_HANDLER);
   });
-  if (triggers.length) return;
+  if (triggers.some(function(t) { return t.getHandlerFunction() === CFG.REPAIR_SCORE_TRIGGER_HANDLER; })) return;
+  triggers.forEach(function(t) { ScriptApp.deleteTrigger(t); });
 
   ScriptApp.newTrigger(CFG.REPAIR_SCORE_TRIGGER_HANDLER)
     .timeBased()
@@ -2071,7 +2078,7 @@ function agendarProximoLoteRecalculoNotasPontuacoesFato_() {
 
 function limparGatilhosRecalculoNotasPontuacoesFato_() {
   return limparTriggersPorPredicado_(function(trigger) {
-    return trigger.getHandlerFunction() === CFG.REPAIR_SCORE_TRIGGER_HANDLER;
+    return gatilhoDoHandler_(trigger, CFG.REPAIR_SCORE_TRIGGER_HANDLER);
   });
 }
 
@@ -2194,8 +2201,15 @@ function getManagedTriggerHandlers_() {
   return [CFG.MAIN_SYNC_TRIGGER_HANDLER, CFG.CONTINUATION_SYNC_TRIGGER_HANDLER, CFG.RECLASS_STATUS_TRIGGER_HANDLER, CFG.REPAIR_SCORE_TRIGGER_HANDLER];
 }
 
+// [gatilho-publico] O gatilho e deste handler: o nome de agora ou o antigo, com '_' (criado antes de
+// 22/10/2026 e que nunca rodava), para a limpeza e o "ja existe" pegarem os dois.
+function gatilhoDoHandler_(trigger, handler) {
+  const nome = trigger.getHandlerFunction();
+  return nome === handler || nome === handler + '_';
+}
+
 function isManagedTrigger_(trigger) {
-  return getManagedTriggerHandlers_().indexOf(trigger.getHandlerFunction()) !== -1;
+  return getManagedTriggerHandlers_().some(function(handler) { return gatilhoDoHandler_(trigger, handler); });
 }
 
 function isMainSyncTrigger_(trigger) {
@@ -2203,7 +2217,7 @@ function isMainSyncTrigger_(trigger) {
 }
 
 function isContinuationSyncTrigger_(trigger) {
-  return trigger.getHandlerFunction() === CFG.CONTINUATION_SYNC_TRIGGER_HANDLER;
+  return gatilhoDoHandler_(trigger, CFG.CONTINUATION_SYNC_TRIGGER_HANDLER);
 }
 
 function limparTriggersPorPredicado_(predicate) {
@@ -2263,7 +2277,8 @@ function deveExecutarJanela20Min_() {
 
 function agendarProximoLoteSincronizacaoAnalises_() {
   const triggers = ScriptApp.getProjectTriggers().filter(isContinuationSyncTrigger_);
-  if (triggers.length) return;
+  if (triggers.some(function(t) { return t.getHandlerFunction() === CFG.CONTINUATION_SYNC_TRIGGER_HANDLER; })) return;
+  triggers.forEach(function(t) { ScriptApp.deleteTrigger(t); });
 
   ScriptApp.newTrigger(CFG.CONTINUATION_SYNC_TRIGGER_HANDLER)
     .timeBased()
@@ -3208,7 +3223,7 @@ function atualizarMetaPainel_(ss, valuesMap) {
 function formatMetaValue_(value) {
   if (value === '' || value == null) return '';
   if (value instanceof Date && !isNaN(value.getTime())) {
-    return Utilities.formatDate(value, Session.getScriptTimeZone(), 'yyyy-MM-dd HH:mm:ss');
+    return Utilities.formatDate(value, CFG.FUSO_HORARIO, 'yyyy-MM-dd HH:mm:ss');
   }
   if (typeof value === 'object') {
     return JSON.stringify(value);
@@ -3494,7 +3509,7 @@ function toTitleCasePreservingAcronyms_(value) {
 
 function normalizeEdital_(value) {
   if (value instanceof Date && !isNaN(value.getTime())) {
-    return Utilities.formatDate(value, Session.getScriptTimeZone(), 'MM/yyyy');
+    return Utilities.formatDate(value, CFG.FUSO_HORARIO, 'MM/yyyy');
   }
 
   const s = cleanStr_(value);
@@ -3505,7 +3520,7 @@ function normalizeEdital_(value) {
 
   const dt = new Date(s);
   if (!isNaN(dt.getTime())) {
-    return Utilities.formatDate(dt, Session.getScriptTimeZone(), 'MM/yyyy');
+    return Utilities.formatDate(dt, CFG.FUSO_HORARIO, 'MM/yyyy');
   }
 
   return s;
@@ -3514,7 +3529,7 @@ function normalizeEdital_(value) {
 function normalizeDateDisplay_(value) {
   const dt = parseDataSemHoraAB_(value);
   if (dt) {
-    return Utilities.formatDate(dt, Session.getScriptTimeZone(), 'dd/MM/yyyy');
+    return Utilities.formatDate(dt, CFG.FUSO_HORARIO, 'dd/MM/yyyy');
   }
   return cleanStr_(value);
 }
@@ -3605,7 +3620,7 @@ function hojeSemHoraAB_() {
 
 function formatarDataPtBrAB_(date) {
   if (!(date instanceof Date) || isNaN(date.getTime())) return '';
-  return Utilities.formatDate(date, Session.getScriptTimeZone(), 'dd/MM/yyyy');
+  return Utilities.formatDate(date, CFG.FUSO_HORARIO, 'dd/MM/yyyy');
 }
 
 function normalizeBooleanText_(v) {
