@@ -6,6 +6,10 @@ import {
   vagasSemContratacao,
 } from "../../lib/indicadores-do-monitoramento.js";
 import {
+  numeroDoFunil,
+  textoDaFonteDoFunil,
+} from "../../lib/funil-do-edital.ts";
+import {
   dataCurta,
   linkSeguro,
   statusCanonico,
@@ -80,8 +84,13 @@ export function GavetaDoProcesso({
               {fmt(contratacoesDoCadastroReserva(linha))}
             </Kv>
             <Kv rotulo="Sem contratação">{fmt(vagasSemContratacao(linha))}</Kv>
-            <Kv rotulo="Inscritos">{fmt(linha.inscritos)}</Kv>
+            <Kv rotulo="Inscritos">{numeroDoFunil(linha.inscritos)}</Kv>
           </GradeDeKv>
+          {textoDaFonteDoFunil(linha) ? (
+            <p className="visao-geral-progresso-texto">
+              <span>{textoDaFonteDoFunil(linha)}</span>
+            </p>
+          ) : null}
         </Secao>
 
         <Secao icone="fa-route" titulo="Cronograma" secao="cronograma">

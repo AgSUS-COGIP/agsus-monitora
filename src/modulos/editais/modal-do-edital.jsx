@@ -13,7 +13,6 @@ import {
   areaDaUnidade,
   camposDaUnidade,
   editalParaSalvar,
-  formatarNumero,
   formularioDoEdital,
   mapaDeAreasDasUnidades,
   opcoesDeUnidade,
@@ -26,6 +25,10 @@ import {
   estadoDoCronograma,
   novaEtapa,
 } from "../../lib/cronograma-do-edital.js";
+import {
+  numeroDoFunil,
+  textoDaFonteDoFunil,
+} from "../../lib/funil-do-edital.ts";
 import {
   apagarRascunho,
   chaveDoRascunho,
@@ -136,6 +139,7 @@ export function ModalDoEdital({ estado, id, agora = relogioDoNavegador }) {
   const [linha] = useState(
     () => linhas.find((item) => String(item.id) === String(id)) || null,
   );
+  const fonteDoFunil = textoDaFonteDoFunil(linha, agora());
   const [formularioInicial] = useState(() =>
     formularioDoEdital(linha, unidades, linhas),
   );
@@ -726,9 +730,14 @@ export function ModalDoEdital({ estado, id, agora = relogioDoNavegador }) {
             {INDICADORES.map(([chave, rotulo, coluna]) => (
               <div key={chave} className="metric-readonly">
                 <span>{rotulo}</span>
-                <b id={chave}>{formatarNumero(linha?.[coluna])}</b>
+                <b id={chave}>{numeroDoFunil(linha?.[coluna])}</b>
               </div>
             ))}
+            {fonteDoFunil ? (
+              <small id="mAutoFonte" className="ui-campo-largo">
+                {fonteDoFunil}
+              </small>
+            ) : null}
           </div>
 
           <ImportarAnexos

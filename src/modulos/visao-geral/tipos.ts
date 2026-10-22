@@ -58,7 +58,11 @@ export type LinhaDoMonitoramento = {
   data_fim?: string;
   vagas_total?: number | string;
   contratados?: number | string;
-  inscritos?: number | string;
+  /** Nulo quando a fonte do funil não tem o número (aparece "—"). */
+  inscritos?: number | string | null;
+  /** De onde vem o funil (AVALIACAO_DOCUMENTAL, SELECAO, ANALISES) e de quando. */
+  TP_FONTE_FUNIL?: string | null;
+  DT_FONTE_FUNIL?: string | null;
   vagas_ociosas?: number | string;
   cronograma_percentual?: number | string;
   cronograma_dias_para_proxima?: number | string | null;

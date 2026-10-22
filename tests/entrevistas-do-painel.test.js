@@ -18,6 +18,7 @@ import {
   opcoesDosFiltros,
   pendenciasDasEntrevistas,
   rotuloCurtoDoCriterio,
+  textoDasFontesDoPainel,
   topUnidades,
 } from "../src/lib/entrevistas-do-painel.ts";
 
@@ -66,7 +67,7 @@ const PAYLOAD = {
   area: "saude-indigena",
   gerado_em: "2026-09-29T12:00:00Z",
   ultima_carga: {
-    em: "2026-09-29T10:30:00",
+    em: "2026-09-29T13:30:00Z",
     linhas: 4,
     ligadas_analise: 3,
     sem_analise: 1,
@@ -170,7 +171,9 @@ describe("normalização do payload", () => {
     expect(segunda.divergente).toBe(true); // 18 x 15
     expect(terceira.semEdital).toBe(true);
     expect(terceira.divergente).toBe(false); // sem notas
-    expect(quarta.parecer).toBe("SEM_PARECER");
+    // Parecer desconhecido vira SEM_PARECER no banco; quem faltou tem situação própria.
+    expect(quarta.parecerDoBanco).toBe("SEM_PARECER");
+    expect(quarta.parecer).toBe("FALTOU");
     expect(dados.ultimaCarga.linhas).toBe(4);
     expect(dados.aprovadosSemEntrevista).toHaveLength(2);
   });
@@ -295,6 +298,7 @@ describe("KPIs e gráficos", () => {
       compareceram: 3,
       aptos: 2,
       inaptos: 1,
+      faltaram: 1,
       media: (12 + 18 + 4) / 3,
       semEntrevista: 2,
     });
@@ -317,8 +321,9 @@ describe("KPIs e gráficos", () => {
   });
 
   it("contagens, média por critério e top unidades", () => {
+    // Apto, Inapto, Faltou, Sem parecer: quem faltou não entra em Inapto.
     expect(contagemPorParecer(entrevistas).map((c) => c.valor)).toEqual([
-      2, 1, 1,
+      2, 1, 1, 0,
     ]);
     expect(contagemPorComparecimento(entrevistas).map((c) => c.valor)).toEqual([
       3, 1, 0,
@@ -450,5 +455,37 @@ describe("cópia guardada", async () => {
       false,
     );
     expect(payloadMudou(PAYLOAD, { ...PAYLOAD, entrevistas: [] })).toBe(true);
+  });
+});
+
+describe("de quando são os números (planilha × sistema)", () => {
+  const agora = new Date("2026-10-22T18:00:00Z");
+  it("só a planilha: a hora da última carga", () => {
+    const dados = normalizarPayload(PAYLOAD);
+    expect(textoDasFontesDoPainel(dados, agora)).toBe(
+      "Planilha conferida em 29/09, 10:30",
+    );
+  });
+  it("com entrevistas do sistema: também a hora do pacote, que elas acompanham", () => {
+    const dados = normalizarPayload({
+      ...PAYLOAD,
+      gerado_em: "2026-10-22T17:00:00Z",
+      entrevistas: [
+        ...PAYLOAD.entrevistas,
+        entrevista({ id: "s1", origem: "sistema" }),
+      ],
+    });
+    expect(textoDasFontesDoPainel(dados, agora)).toBe(
+      "Planilha conferida em 29/09, 10:30 · sistema às 14:00",
+    );
+    expect(dados.entrevistas.at(-1).origem).toBe("sistema");
+  });
+  it("sem carga nem sistema: nada (a tela usa a hora da leitura)", () => {
+    expect(
+      textoDasFontesDoPainel(
+        { ultimaCarga: null, geradoEm: null, entrevistas: [] },
+        agora,
+      ),
+    ).toBeNull();
   });
 });

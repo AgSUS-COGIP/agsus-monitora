@@ -137,7 +137,9 @@ export function AbaAprovados({
           "contratado",
           "sucesso",
           "fa-user-check",
-          "Contratados",
+          // Nas outras telas (Visão geral, Seleção) "Contratados" soma Contratado + Migração;
+          // aqui as duas situações têm card próprio.
+          "Contratados (sem migração)",
           resumo.contratado,
         )}
         {kpi(

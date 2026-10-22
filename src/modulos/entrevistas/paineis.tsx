@@ -247,6 +247,15 @@ export function Indicadores({
         {...filtro("parecer", "INAPTO")}
       />
       <Kpi
+        cor="k-yellow"
+        icone="fa-user-slash"
+        chave="faltaram"
+        rotulo="Faltaram"
+        valor={n(k.faltaram)}
+        carregando={carregando}
+        {...filtro("parecer", "FALTOU")}
+      />
+      <Kpi
         cor="k-purple"
         icone="fa-chart-simple"
         chave="media"
@@ -439,7 +448,7 @@ export function Graficos({
           <Grafico
             id="chartParecer"
             tipo="doughnut"
-            rotulo="Entrevistas por parecer: aptos, inaptos e sem parecer"
+            rotulo="Entrevistas por parecer: aptos, inaptos, faltaram e sem parecer"
             dependencias={[pareceres, tema]}
             montar={() => {
               const p = paleta(escuro);
@@ -449,7 +458,7 @@ export function Graficos({
                   datasets: [
                     {
                       data: pareceres.map((x) => x.valor),
-                      backgroundColor: [p.ok, p.bad, p.neutro],
+                      backgroundColor: [p.ok, p.bad, p.warn, p.neutro],
                       borderColor: p.surface,
                       borderWidth: 2,
                     },

@@ -12,7 +12,9 @@
     N dias". Precisa das etapas do cronograma (`listar_acompanhamento_da_
     visao_geral`); sem elas, não é avaliado. Não conta junto com atrasada;
   - sem inscritos — em andamento, já depois das inscrições (fase além de
-    Edital e Inscrições) e com 0 inscritos.
+    Edital e Inscrições) e com 0 inscritos. Inscritos nulo é "a fonte do
+    funil não tem o número" (só as análises, migration 20261022200000), não
+    zero: não acende.
   Edital concluído:
   - contratação baixa — vagas imediatas contratadas abaixo de 50% das vagas.
   Cancelado nunca é crítico. Etapa chegando (próxima em até 3 dias) é agenda,
@@ -172,6 +174,9 @@ export function motivosDeAtencao(
   if (
     emAndamento(linha) &&
     !["Edital", "Inscrições", "Sem cronograma"].includes(fase) &&
+    linha.inscritos !== null &&
+    linha.inscritos !== undefined &&
+    linha.inscritos !== "" &&
     num(linha.inscritos) === 0
   )
     motivos.push(motivo("sem_inscritos", "Sem inscritos"));

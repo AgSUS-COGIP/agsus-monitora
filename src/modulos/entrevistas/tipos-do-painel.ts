@@ -52,8 +52,14 @@ export interface EntrevistaDoPainel {
   codigo: string | null;
   modalidade: string | null;
   nota: number | null;
+  /** O do painel: APTO, INAPTO, FALTOU (compareceu = N) ou SEM_PARECER. */
   parecer: string;
+  /** O gravado no banco: APTO, INAPTO ou SEM_PARECER. */
+  parecerDoBanco: string;
   compareceu: "S" | "N" | null;
+  /** planilha ou sistema. */
+  origem: string | null;
+  atualizadoEm: string | null;
   link: string | null;
   busca: string;
   notas: { indice: number; criterio: string; curto: string; nota: number }[];
@@ -87,6 +93,7 @@ export interface IndicadoresDoPainel {
   compareceram: number;
   aptos: number;
   inaptos: number;
+  faltaram: number;
   media: number | null;
   semEntrevista: number;
 }
