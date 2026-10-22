@@ -4,6 +4,7 @@ import {
   ALVO_GRUPO,
   alteracoesDoRascunho,
   celulaExibida,
+  avisoDoConflito,
   rebasearRascunho,
   registrarNoRascunho,
   resumoDoRascunho,
@@ -185,5 +186,31 @@ describe("grupo + permissão individual", () => {
       },
     ]);
     expect([...novo.keys()]).toEqual(["u1/nucleo"]);
+  });
+
+  it("quem não veio na recarga sai do rascunho: o conflito não se repete", () => {
+    const outra = { ...usuario, id: "u2", nome: "Bia" };
+    let rascunho = registrarNoRascunho(new Map(), usuario, "nucleo", "editor");
+    rascunho = registrarNoRascunho(rascunho, outra, "nucleo", "editor");
+    const {
+      rascunho: novo,
+      conflitos,
+      foraDaLista,
+    } = rebasearRascunho(rascunho, [usuario]);
+    expect(conflitos).toEqual([]);
+    expect(foraDaLista.map((f) => [f.usuario.id, f.alvo])).toEqual([
+      ["u2", "nucleo"],
+    ]);
+    expect([...novo.keys()]).toEqual(["u1/nucleo"]);
+    expect(avisoDoConflito(conflitos, foraDaLista)).toBe(
+      "Saiu 1 alteração de pessoas fora desta página, que não puderam ser conferidas. Revise e salve de novo.",
+    );
+  });
+
+  it("o aviso do conflito conta os acessos que saíram", () => {
+    expect(avisoDoConflito([{}, {}], [])).toBe(
+      "Outra pessoa mudou 2 acessos que você estava alterando; essas alterações saíram. Revise e salve de novo.",
+    );
+    expect(avisoDoConflito([], [])).toContain("A lista foi recarregada");
   });
 });

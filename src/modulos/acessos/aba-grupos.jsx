@@ -27,6 +27,55 @@ const pessoas = (total) =>
   `${total || 0} ${total === 1 ? "pessoa" : "pessoas"}`;
 const mesmo = (a, b) => JSON.stringify(a) === JSON.stringify(b);
 
+/*
+  Excluir pede o motivo no próprio rodapé (no lugar do antigo window.prompt).
+  Fica dentro do formulário do grupo: não é outro <form>, e Enter no campo
+  confirma a exclusão, não o "Salvar grupo".
+*/
+function ConfirmarExclusao({ estado, grupo, aoExcluir, aoVoltar }) {
+  const [motivo, setMotivo] = useState("");
+  const [tentou, setTentou] = useState(false);
+  async function confirmar() {
+    setTentou(true);
+    if (!motivoValido(motivo)) return;
+    if (await estado.removerGrupo(grupo, motivo.trim())) aoExcluir();
+  }
+  return (
+    <div
+      className="acessos-mover"
+      role="group"
+      aria-label={`Excluir o grupo ${grupo.nome}`}
+      onKeyDown={(evento) => {
+        if (evento.key !== "Enter") return;
+        evento.preventDefault();
+        void confirmar();
+      }}
+    >
+      <CampoMotivo
+        id="acessosExcluirGrupoMotivo"
+        rotulo="Motivo da exclusão"
+        valor={motivo}
+        aoMudar={setMotivo}
+        erro={tentou && !motivoValido(motivo)}
+      />
+      <div className="ui-acoes">
+        <button type="button" className="btn ghost" onClick={aoVoltar}>
+          Voltar
+        </button>
+        <BotaoDeAcao
+          estado={estado}
+          acao="remover-grupo"
+          className="btn outline perigo"
+          disabled={!motivoValido(motivo)}
+          onClick={() => void confirmar()}
+        >
+          Excluir grupo
+        </BotaoDeAcao>
+      </div>
+    </div>
+  );
+}
+
 function Editor({
   estado,
   grupo,
@@ -37,12 +86,24 @@ function Editor({
 }) {
   const inicial = grupo ? lerGrupo(grupo) : grupoVazio();
   const [rascunho, setRascunho] = useState(inicial);
+  /* O grupo como estava quando a edição começou (ou na última revisão vista). */
+  const [origem, setOrigem] = useState(inicial);
   const [motivo, setMotivo] = useState("");
   const [tentou, setTentou] = useState(false);
+  const [excluindo, setExcluindo] = useState(false);
   const erros = validarGrupo(rascunho, { existentes });
   const novo = rascunho.revisao === null;
   const somenteLeitura = Boolean(grupo?.admin_global);
-  const alterado = !mesmo(rascunho, inicial);
+  const alterado = !mesmo(rascunho, origem);
+  /*
+    Revisão nova do grupo (salvou aqui, ou outra pessoa salvou e a matriz
+    recarregou): sem edição pendente, o rascunho acompanha; com edição, ela
+    fica — e o Salvar acusa o conflito, em vez de a edição sumir.
+  */
+  if (grupo && inicial.revisao !== origem.revisao) {
+    setOrigem(inicial);
+    if (!alterado) setRascunho(inicial);
+  }
   useEffect(() => {
     aoAlterar(alterado);
   }, [alterado, aoAlterar]);
@@ -56,17 +117,6 @@ function Editor({
       motivo.trim(),
     );
     if (resposta) aoSalvar(resposta.codigo || grupoParaSalvar(rascunho).codigo);
-  }
-
-  async function excluir() {
-    const motivoDaExclusao = window.prompt(
-      `Excluir o grupo "${grupo.nome}"? Informe o motivo:`,
-    );
-    if (
-      motivoValido(motivoDaExclusao) &&
-      (await estado.removerGrupo(grupo, motivoDaExclusao.trim()))
-    )
-      aoSalvar(null);
   }
 
   return (
@@ -156,7 +206,15 @@ function Editor({
 
       {!somenteLeitura ? (
         <footer className="acessos-detalhe-rodape">
-          {alterado || novo ? (
+          {excluindo ? (
+            <ConfirmarExclusao
+              estado={estado}
+              grupo={grupo}
+              aoExcluir={() => aoSalvar(null)}
+              aoVoltar={() => setExcluindo(false)}
+            />
+          ) : null}
+          {(alterado || novo) && !excluindo ? (
             <CampoMotivo
               id="acessosGrupoMotivo"
               valor={motivo}
@@ -164,11 +222,10 @@ function Editor({
               erro={tentou && !motivoValido(motivo)}
             />
           ) : null}
-          <div className="ui-acoes">
+          <div className="ui-acoes" hidden={excluindo}>
             {!novo && !grupo.sistema ? (
-              <BotaoDeAcao
-                estado={estado}
-                acao="remover-grupo"
+              <button
+                type="button"
                 className="btn ghost perigo"
                 disabled={Boolean(grupo.usuarios)}
                 title={
@@ -176,17 +233,17 @@ function Editor({
                     ? "Há pessoas neste grupo: troque o grupo delas antes de excluir."
                     : undefined
                 }
-                onClick={() => void excluir()}
+                onClick={() => setExcluindo(true)}
               >
                 Excluir grupo
-              </BotaoDeAcao>
+              </button>
             ) : null}
             <span className="acessos-espaco" />
             {alterado ? (
               <button
                 type="button"
                 className="btn ghost"
-                onClick={() => (setRascunho(inicial), setTentou(false))}
+                onClick={() => (setRascunho(origem), setTentou(false))}
               >
                 Descartar
               </button>
@@ -269,7 +326,7 @@ export function AbaGrupos({ estado, aoVerPessoas }) {
         }))}
       />
       <Editor
-        key={`${escolhido}-${grupo?.revisao ?? "novo"}`}
+        key={escolhido}
         estado={estado}
         grupo={escolhido === NOVO ? null : grupo}
         existentes={grupos}
