@@ -45,7 +45,9 @@ describe("as chaves da barra lateral chegam ao caminho que realmente salva", () 
       semComentarios(governance).indexOf("const linhasDaPublicacao"),
       semComentarios(governance).indexOf("async function revisar"),
     );
-    expect(fn).toContain("linhasDasSecoes(valoresAtuais(), [...estado.rascunho.keys()])");
+    expect(fn).toContain(
+      "linhasDasSecoes(valoresAtuais(), [...estado.rascunho.keys()])",
+    );
     expect(CHAVES_DAS_SECOES).toContain("ui_sidebar_logo_url");
     expect(CHAVES_DAS_SECOES).toContain("ui_sidebar_background_color");
   });
