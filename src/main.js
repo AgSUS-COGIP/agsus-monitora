@@ -51,7 +51,7 @@ import { installMapZoomRange } from "./modules/map-zoom-range.js";
 import { installIndigenousTerritoriesLayer } from "./modules/indigenous-territories-layer.js";
 import "./modules/monitoramento-operational-transport.js";
 // O sistema depois de entrar (navegação, carga, presença, moldura): src/app/sistema.js.
-import { ligarSistema } from "./app/sistema.js";
+import { ligarSistema, recarregarPaineisExternos } from "./app/sistema.js";
 import { initLoadingExperience } from "./modules/loading-experience.js";
 import { instalarCarregamento } from "./app/carregamento.js";
 import { initVisualPolish } from "./modules/visual-polish.js";
@@ -324,6 +324,7 @@ window.modulosController = telaSobDemanda({
       m.montarModulos({
         toast: window.monitoraToast,
         getProfile: window.getMonitoraProfile,
+        aoSalvar: recarregarPaineisExternos,
       }),
     ),
 });

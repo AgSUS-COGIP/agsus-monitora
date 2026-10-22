@@ -39,10 +39,11 @@ it("melhora o carregamento quando ele for ativado apos o login", async () => {
   const { initLoadingExperience } =
     await import("../src/modules/loading-experience.js");
 
+  const { mostrarCarregamento } = await import("../src/app/avisos.js");
+
   initLoadingExperience();
   document.body.classList.remove("config-loading");
-  document.getElementById("loader").classList.add("show");
-  vi.advanceTimersByTime(250);
+  mostrarCarregamento(true);
 
   expect(document.body.getAttribute("aria-busy")).toBe("true");
   expect(document.getElementById("loaderTitle").textContent).toBe(
@@ -58,4 +59,28 @@ it("melhora o carregamento quando ele for ativado apos o login", async () => {
   expect(document.getElementById("loaderMeta").textContent).toContain(
     "demorando mais que o normal",
   );
+});
+
+/*
+  22/10: um setInterval de 250 ms conferia o #loader para sempre, mesmo sem
+  carregamento. Agora quem mostra ou esconde avisa, e o relógio só corre
+  com o carregamento à vista.
+*/
+it("sem carregamento, nenhum relógio fica rodando", async () => {
+  vi.resetModules();
+  const { initLoadingExperience } =
+    await import("../src/modules/loading-experience.js");
+  const { mostrarCarregamento } = await import("../src/app/avisos.js");
+  document.body.classList.remove("config-loading");
+
+  initLoadingExperience();
+  expect(vi.getTimerCount()).toBe(0);
+
+  mostrarCarregamento(true, "Editais", "Salvando…", 70);
+  expect(document.body.getAttribute("aria-busy")).toBe("true");
+  expect(vi.getTimerCount()).toBe(1);
+
+  mostrarCarregamento(false);
+  expect(document.body.getAttribute("aria-busy")).toBe("false");
+  expect(vi.getTimerCount()).toBe(0);
 });

@@ -114,6 +114,16 @@ export const encerramento = criarEstadoDoEncerramento({
   ligadas: () => situacaoDoSistema().comemoracoes,
 });
 
+/*
+  Relê a lista de painéis externos e refaz o menu: Configurações › Módulos e
+  abas grava ativo/manutenção dos painéis (src/main.js).
+*/
+export async function recarregarPaineisExternos() {
+  await paineis.carregar();
+  paineis.completarLiberados();
+  navegacao.montarMenu();
+}
+
 /* Recarrega o painel externo aberto (botão do quadro e "Tentar de novo"). */
 function recarregarPainel() {
   const painel = paineis.atual();

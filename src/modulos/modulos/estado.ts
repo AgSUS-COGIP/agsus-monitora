@@ -80,6 +80,7 @@ export function criarEstadoDosModulos({
   toast = (mensagem: string) => console.info(mensagem),
   getProfile = () => null,
   confirmar = (mensagem: string) => window.confirm(mensagem),
+  aoSalvar = () => {},
 }: DependenciasDosModulos = {}): EstadoDosModulos {
   let estado = ESTADO_INICIAL;
   let identidade: string | null | undefined;
@@ -215,7 +216,9 @@ export function criarEstadoDosModulos({
           `${total} ${total === 1 ? "alteração salva" : "alterações salvas"}. Vale para quem abrir ou atualizar o sistema.`,
           "success",
         );
-        await carregar();
+        // Painéis externos (ativo, manutenção) também mudam por aqui: a lista
+        // do app e a seção Painéis externos de Configurações releem.
+        await Promise.all([carregar(), Promise.resolve(aoSalvar())]);
         return true;
       } catch (erro) {
         if (geracao !== estado.geracao) return false;

@@ -243,7 +243,7 @@ export function GavetaDoRecurso({
           ) : null}
 
           <SecaoDoParecer
-            key={`${r.id}:${r.revisao}`}
+            key={r.id}
             estado={estado}
             recurso={r}
             detalhe={detalhe}

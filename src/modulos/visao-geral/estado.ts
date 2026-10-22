@@ -275,9 +275,27 @@ export function criarEstadoDaVisaoGeral({
     };
   }
 
+  /*
+    Página fechada (montada escondida) não recalcula a cada carga, filtro ou
+    troca de área: fica marcado e o cálculo sai quando alguém lê (`obter`) ou
+    quando a página abre (`definirAberta`).
+  */
+  let pendente = false;
   function avisarOuvintes() {
+    if (!proprio.aberta) {
+      pendente = true;
+      return;
+    }
+    pendente = false;
     calcular();
     for (const ouvinte of ouvintes) ouvinte();
+  }
+  function obterInstantaneo() {
+    if (pendente) {
+      pendente = false;
+      calcular();
+    }
+    return instantaneo;
   }
 
   /* Muda o estado próprio; filtros novos são podados e guardados. */
@@ -369,7 +387,8 @@ export function criarEstadoDaVisaoGeral({
   }
   dados.assinar(aoMudarDados);
   fonte = { linhas: dados.obter().linhas, area: dados.obter().areaAtual };
-  calcular();
+  if (proprio.aberta) calcular();
+  else pendente = true;
 
   function definirFiltro(campo: CampoDoFiltro, valores: readonly string[]) {
     publicar({
@@ -449,7 +468,7 @@ export function criarEstadoDaVisaoGeral({
   }
 
   return {
-    obter: () => instantaneo,
+    obter: obterInstantaneo,
     assinar(ouvinte) {
       ouvintes.add(ouvinte);
       return () => ouvintes.delete(ouvinte);
@@ -500,7 +519,7 @@ export function criarEstadoDaVisaoGeral({
     },
     exportarCsv() {
       // O recorte da tela; sem recorte, ele já é a área inteira.
-      const { filtradas, area } = instantaneo;
+      const { filtradas, area } = obterInstantaneo();
       if (!filtradas.length) return;
       baixar(csvDaVisaoGeral(filtradas), nomeDoCsv(area, new Date(agora())));
     },

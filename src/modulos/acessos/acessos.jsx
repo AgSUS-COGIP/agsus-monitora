@@ -45,9 +45,11 @@ export function Acessos({ estado, secoesDeConfiguracao = [] }) {
   const [ativa, setAtiva] = useState("usuarios");
   const abaAtiva = abas.some((aba) => aba.id === ativa) ? ativa : abas[0]?.id;
 
+  // Tabelas novas pedem os rótulos do modo cartão do celular: só quando os
+  // dados ou a aba mudam (antes, a cada render, inclusive a cada tecla).
   useEffect(() => {
     document.dispatchEvent(new CustomEvent("agsus:content-updated"));
-  });
+  }, [atual.matriz, atual.solicitacoes, atual.status, abaAtiva]);
 
   if (!abas.length)
     return (
