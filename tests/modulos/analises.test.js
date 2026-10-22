@@ -707,7 +707,7 @@ describe("ritmo da análise", () => {
     expect(chamadas(supabase, "obter_ritmo_da_analise")).toHaveLength(2);
   });
 
-  it("em Todos, conta só as linhas do Ativo (Inativo e desativadas ficam fora)", async () => {
+  it("em Todos, conta só as linhas do Ativo (o Inativo fica fora; as desativadas nem entram no Todos)", async () => {
     const supabase = supabaseFalso({
       respostas: {
         obter_ritmo_da_analise: () => ({ data: RITMO, error: null }),
@@ -736,7 +736,7 @@ describe("ritmo da análise", () => {
     expect(faltam()).toBe("Faltam1");
     await escolher(document.getElementById("analises-filtro-escopo"), "todos");
     await esperar();
-    expect(linhasDaFila()).toHaveLength(6);
+    expect(linhasDaFila()).toHaveLength(5);
     expect(faltam()).toBe("Faltam1");
   });
 
