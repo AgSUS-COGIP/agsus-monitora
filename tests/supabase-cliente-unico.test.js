@@ -14,8 +14,8 @@ function arquivosJs(raiz) {
 
 /*
   A regra que este arquivo protege: existe **um** cliente Supabase de verdade em
-  todo o frontend, criado em `src/lib/supabaseClient.js`. Tudo mais — inclusive a
-  ponte `window.supabase` que o código legado usa — resolve para essa instância.
+  todo o frontend, criado em `src/lib/supabaseClient.js`; tudo mais o pede por
+  `getSupabaseClient()` (não há mais `window.supabase`).
 
   Dois clientes reais na mesma página significam dois `GoTrueClient` disputando a
   mesma chave de armazenamento, dois relógios de renovação de token e dois
@@ -72,15 +72,6 @@ describe("a instância compartilhada", () => {
     const segundo = getSupabaseClient();
     expect(primeiro).not.toBeNull();
     expect(primeiro).toBe(segundo);
-  });
-
-  it("a ponte legada resolve para a mesma instância, não para uma nova", async () => {
-    const { getSupabaseClient } = await import("../src/lib/supabaseClient.js");
-    const { createSupabaseLegacyFacade } =
-      await import("../src/lib/supabase-legacy-bridge.js");
-    const fachada = createSupabaseLegacyFacade();
-    expect(fachada.createClient()).toBe(getSupabaseClient());
-    expect(fachada.createClient().auth).toBe(getSupabaseClient().auth);
   });
 
   it("usa a chave de armazenamento única e o fluxo PKCE", async () => {

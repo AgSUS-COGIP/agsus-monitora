@@ -177,8 +177,6 @@ def processar_vaga(portal, config, sync, vaga, pedidos, seco, prazo, registrar, 
         listado = chamar(config, RPC_LISTAR, {"p_vaga": vaga, "p_codigos": pedidos or None}) or {}
     except supabase_rpc.ErroDoSupabase as erro:
         rel.update(situacao="FALHA", motivo=f"o banco não listou os anexos gravados ({erro})")
-        if getattr(erro, "status", None) == 404:
-            rel["motivo"] = "o banco ainda não tem listar_anexos_empregare (migration 20261020130000)"
         return rel
     except Exception as erro:
         rel.update(situacao="FALHA", motivo=f"o banco não listou os anexos gravados ({resumo_do_erro(erro)})")
@@ -312,18 +310,17 @@ def vagas_pedidas(args, config, chamar):
     inscrições congeladas vêm também, marcadas ("congelada" e, com a liberação
     do administrador global em args.forcar_congelado, "liberada"; migration
     20261020170000). Os códigos pedidos também passam pela lista, para a marca
-    valer para eles. Banco sem a finalidade: a lista de antes, sem marca.
+    valer para eles.
     """
     liberacao = getattr(args, "forcar_congelado", "") or None
-    corpo = {"p_editais": args.editais or None, "p_vagas": args.vagas or None, "p_limite": args.limite}
-    try:
-        lista = chamar(config, "listar_vagas_empregare", dict(corpo, p_finalidade="anexos", p_liberacao=liberacao))
-    except supabase_rpc.ErroDoSupabase as erro:
-        if getattr(erro, "status", None) != 404:
-            raise
-        if args.vagas:
-            return [{"vaga": v} for v in args.vagas][: args.limite]
-        lista = chamar(config, "listar_vagas_empregare", corpo)
+    corpo = {
+        "p_editais": args.editais or None,
+        "p_vagas": args.vagas or None,
+        "p_limite": args.limite,
+        "p_finalidade": "anexos",
+        "p_liberacao": liberacao,
+    }
+    lista = chamar(config, "listar_vagas_empregare", corpo)
     return (lista or {}).get("vagas") or []
 
 

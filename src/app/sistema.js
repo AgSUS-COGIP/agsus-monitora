@@ -289,7 +289,6 @@ export function ligarSistema() {
 
   Object.assign(window, {
     getMonitoraProfile: perfil.obterPerfil,
-    getMonitoraUser: perfil.obterUsuario,
     monitoraToast: avisar,
     monitoraLoader: mostrarCarregamento,
     exitExternalPanel: sairDoPainelExterno,

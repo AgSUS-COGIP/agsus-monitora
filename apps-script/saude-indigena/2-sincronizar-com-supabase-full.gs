@@ -11,7 +11,6 @@ SERVICE_ROLE_KEY_FIXA: '',
   FUSO_HORARIO: 'America/Sao_Paulo',
   CHUNK_SIZE: 300,
   MAX_HTTP_RETRIES: 4,
-  RPC_MAX_HTTP_RETRIES: 1,
   RPC_BATCH_SIZE: 250,
   RPC_BATCH_MAX_ITERATIONS: 200,
   CLIENT_MAX_RUNTIME_MS: 240000,
@@ -23,12 +22,9 @@ SERVICE_ROLE_KEY_FIXA: '',
   // [so-full] Este arquivo so cria, retoma e finaliza sync deste modo (o incremental tem o seu).
   MODO: 'FULL',
   RETRY_BASE_MS: 1500,
-  PENDING_SYNC_MAX_MINUTES: 30,
   HASH_EXCLUDED_FIELDS: [
     'ultima_atualizacao'
   ],
-  CLEANUP_STAGING_DAYS: 2,
-  SYNC_TRIGGER_EVERY_MINUTES: 10,
   SHEETS: [
     { name: 'DIM_EDITAIS', entidade: 'DIM_EDITAIS' },
     { name: 'FATO_ANALISES', entidade: 'FATO_ANALISES' }
@@ -752,14 +748,6 @@ function buildHashPayloadAnalises_(payload) {
   return clone;
 }
 
-function limparStagingDoSyncAnalises_(syncId) {
-  throw new Error('Limpeza de staging pelo cliente desativada. A finalização remota gerencia o staging.');
-}
-
-function limparStagingAnalisesAntigo_() {
-  Logger.log('Limpeza automática desativada; staging preservado para retomada.');
-}
-
 function buildAnalisesStagingRows_(ss, syncId) {
   const allRows = [];
 
@@ -943,10 +931,6 @@ function insertAnalisesSyncLog_(syncId, modo, rowsLength, startedAt) {
     operation: 'criar_sync_log',
     maxRetries: 1
   });
-}
-
-function updateAnalisesSyncLogErro_(syncId, message) {
-  throw new Error('O cliente não altera o status remoto após uma falha HTTP. Consulte o log no banco.');
 }
 
 function insertAnalisesStagingRows_(rows) {

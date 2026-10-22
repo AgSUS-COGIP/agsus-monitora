@@ -82,9 +82,12 @@ describe("migration do acompanhamento das inscrições", () => {
     expect(MIGRATION).toContain("'America/Sao_Paulo'");
     const doc = ler("docs/agenda-dos-robos.md");
     expect(doc).toContain("agsus_robo_inscricoes_114_2026");
-    expect(ler("src/lib/saude-das-cargas.ts")).toContain(
-      "agsus_robo_inscricoes_114_2026",
+    // Inativa desde 16/10, saiu do pg_cron em 20261022150000 (o rollback a recria igual).
+    const remocao = "20261022150000_remove_agenda_das_inscricoes_do_114.sql";
+    expect(ler(`supabase/migrations/${remocao}`)).toContain(
+      "perform cron.unschedule('agsus_robo_inscricoes_114_2026');",
     );
+    expect(ler(`supabase/rollback/${remocao}`)).toContain("date '2026-10-15'");
   });
 
   it("o ensaio aplica o mesmo corpo e termina em rollback", () => {

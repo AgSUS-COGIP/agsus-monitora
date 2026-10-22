@@ -22,7 +22,6 @@ import {
   textoDoDia,
   textoDoMomento,
   textoDoPrazo,
-  textoDoRitmo,
   textoRecolhido,
 } from "../src/lib/ritmo-da-analise.ts";
 
@@ -192,9 +191,6 @@ describe("calcularRitmo", () => {
       situacao: "abaixo",
     });
     expect(textoDoPrazo(r)).toBe("Prazo: 22/10 · Validação da documentação");
-    expect(textoDoRitmo(r)).toBe(
-      "No ritmo atual (≈266 por dia), termina por volta de 23/10, um dia útil depois do prazo de 22/10.",
-    );
   });
 
   it("ritmo suficiente: no ritmo, antes do prazo", () => {
@@ -209,7 +205,6 @@ describe("calcularRitmo", () => {
     );
     expect(r.ritmo).toBe(390);
     expect(r.situacao).toBe("no-ritmo");
-    expect(textoDoRitmo(r)).toContain("antes do prazo de 22/10");
   });
 
   it("média dos últimos 3 dias com análise; hoje entra depois do expediente", () => {
@@ -231,7 +226,6 @@ describe("calcularRitmo", () => {
     expect(r.situacao).toBe("vencido");
     expect(r.porDia).toBeNull();
     expect(r.porAvaliador).toBeNull();
-    expect(textoDoRitmo(r)).toContain("o prazo era 22/10");
   });
 
   it("concluído", () => {
@@ -264,9 +258,6 @@ describe("calcularRitmo", () => {
       porDia: null,
     });
     expect(textoDoPrazo(r)).toBe("Sem etapa de análise no cronograma");
-    expect(textoDoRitmo(r)).toBe(
-      "No ritmo atual (≈266 por dia), termina por volta de 23/10.",
-    );
   });
 
   it("sem histórico: sem ritmo e sem projeção", () => {
@@ -280,7 +271,6 @@ describe("calcularRitmo", () => {
       termino: null,
       porDia: 275,
     });
-    expect(textoDoRitmo(r)).toBe("Sem dias com análise para medir o ritmo.");
   });
 
   it("por avaliador: a equipe; sem equipe, quem concluiu nos últimos 7 dias; sem ninguém, nada", () => {

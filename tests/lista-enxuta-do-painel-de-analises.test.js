@@ -7,7 +7,6 @@ import {
   linhaSemDetalhe,
   mesclarDetalhe,
   partesDoEscopo,
-  temPdf,
 } from "../src/lib/lista-do-painel-de-analises.js";
 
 /*
@@ -132,14 +131,6 @@ describe("o que a linha não traz mais", () => {
         envelope,
       ),
     ).toEqual({ id: "1", grupo: "Saúde Indígena", edital_status: "Ativo" });
-  });
-
-  it("tem PDF: pelo tem_pdf da lista enxuta ou pelo link do payload antigo", () => {
-    expect(temPdf({ tem_pdf: true })).toBe(true);
-    expect(temPdf({ tem_pdf: false })).toBe(false);
-    expect(temPdf({ link_pdf: " https://pdf " })).toBe(true);
-    expect(temPdf({ link_pdf: "  " })).toBe(false);
-    expect(temPdf(null)).toBe(false);
   });
 
   it("o detalhamento completa a linha sem trocar o que ela tem nem a chave da tabela", () => {

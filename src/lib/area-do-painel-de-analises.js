@@ -1,13 +1,10 @@
 /*
-  A área de Análises curriculares (e dos painéis do quadro, Entrevistas e
-  Seleção, que leem a área da URL).
+  A área de Análises curriculares.
 
-  Saúde Indígena, SEDE e Projetos usam a MESMA tela; o que muda é a área.
-  Análises usa a área atual do app; os painéis do quadro, a da URL
-  (`?area=projetos`) — sem `?area=`, ou com um código desconhecido, a da Saúde
-  Indígena.
+  Saúde Indígena, SEDE e Projetos usam a MESMA tela; o que muda é a área (a
+  área atual do app). Código desconhecido vira a Saúde Indígena.
 
-  Aqui só há regra pura: ler a área da URL, os rótulos, as chaves de cache
+  Aqui só há regra pura: a área normalizada, os rótulos, as chaves de cache
   (áreas nunca se misturam no cache) e o que o detalhe e o CSV mostram de
   diferente fora da Saúde Indígena (a planilha de Projetos e a da SEDE não
   têm critério étnico nem experiência em saúde indígena/atenção básica; têm
@@ -29,17 +26,6 @@ export function normalizarAreaDoPainel(valor) {
   return AREAS_DO_PAINEL_DE_ANALISES.includes(codigo)
     ? codigo
     : AREA_PADRAO_DO_PAINEL;
-}
-
-/* `search` é o `location.search` (com ou sem "?"). */
-export function areaDaUrlDoPainel(search) {
-  let parametros;
-  try {
-    parametros = new URLSearchParams(texto(search));
-  } catch {
-    return AREA_PADRAO_DO_PAINEL;
-  }
-  return normalizarAreaDoPainel(parametros.get("area"));
 }
 
 export function ehAreaSaudeIndigena(area) {

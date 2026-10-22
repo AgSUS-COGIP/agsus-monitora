@@ -83,12 +83,11 @@ class RoboDaEmpregare(unittest.TestCase):
         self.assertEqual((corpo["p_finalidade"], corpo["p_liberacao"]), ("carga", LIBERACAO))
         self.assertEqual(corpo["p_editais"], ["114/2026"])
 
-    def test_banco_sem_a_migration_cai_na_lista_de_antes(self):
+    def test_banco_sem_a_trava_falha_em_vez_de_carregar_sem_ela(self):
         banco = BancoDoRobo({"modo": "PADRAO", "vagas": [{"vaga": "1"}]}, sem_trava=True)
-        with redirect_stdout(io.StringIO()):
-            lista = robo.listar_vagas({}, robo.argumentos([]), banco)
-        self.assertEqual(lista["vagas"], [{"vaga": "1"}])
-        self.assertNotIn("p_finalidade", banco.de("listar_vagas_empregare")[1])
+        with self.assertRaises(supabase_rpc.ErroDoSupabase):
+            robo.listar_vagas({}, robo.argumentos([]), banco)
+        self.assertEqual(len(banco.de("listar_vagas_empregare")), 1)
 
     def test_edital_congelado_explicito_recusa_sem_entrar_na_empregare(self):
         banco = BancoDoRobo({"modo": "EDITAIS", "limite": 60, "vagas": [], "congeladas": [congelada(True)]})
@@ -160,7 +159,8 @@ class RoboDaEmpregare(unittest.TestCase):
         self.assertEqual(so_anexos.vagas_pedidas(Args, {}, banco), [{"vaga": "182514", "congelada": True}])
         self.assertEqual(banco.de("listar_vagas_empregare")[0]["p_finalidade"], "anexos")
         banco = BancoDoRobo({"vagas": [{"vaga": "1"}]}, sem_trava=True)
-        self.assertEqual(so_anexos.vagas_pedidas(Args, {}, banco), [{"vaga": "1"}])
+        with self.assertRaises(supabase_rpc.ErroDoSupabase):
+            so_anexos.vagas_pedidas(Args, {}, banco)
 
 
 class BancoDaPre:

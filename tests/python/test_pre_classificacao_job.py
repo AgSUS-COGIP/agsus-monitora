@@ -485,15 +485,10 @@ class Fluxo(unittest.TestCase):
 
         enxuto = BancoFalso([edital], {"179698": candidatos})
         completo = BancoFalso([edital], {"179698": candidatos})
-        completo_chamar = completo.__call__
-
-        def sem_colunas(_cfg, funcao, corpo, **opcoes):
-            if funcao == "pre_classificacao_ler_colunas":
-                raise supabase_rpc.ErroDoSupabase(funcao, 404, "PGRST202: function not found")
-            return completo_chamar(_cfg, funcao, corpo, **opcoes)
-
-        sem_colunas.de = completo.de
-        self.assertEqual(gravacoes(enxuto), gravacoes(sem_colunas))
+        lido_enxuto = gravacoes(enxuto)
+        # A leitura completa (colunas=None): todas as colunas de cada inscrito.
+        with mock.patch.object(job, "colunas_do_edital", return_value=None):
+            self.assertEqual(lido_enxuto, gravacoes(completo))
         [pedido] = enxuto.de("pre_classificacao_ler_candidatos")
         self.assertEqual(
             sorted(pedido["p_colunas"]),
@@ -509,7 +504,6 @@ class Fluxo(unittest.TestCase):
                 ]
             ),
         )
-        # Banco antigo (sem pre_classificacao_ler_colunas): lê tudo, como antes.
         self.assertNotIn("p_colunas", completo.de("pre_classificacao_ler_candidatos")[0])
 
     def test_no_fim_do_robo_pula_o_edital_sem_mudanca(self):

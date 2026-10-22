@@ -52,11 +52,6 @@ export function completarLinhaPeloEnvelope(linha, payload) {
   return linha;
 }
 
-/** A linha tem link de PDF? (`tem_pdf` da lista enxuta, ou o link do payload antigo). */
-export function temPdf(linha) {
-  return linha?.tem_pdf === true || texto(linha?.link_pdf) !== "";
-}
-
 /* O detalhamento ainda não veio para esta linha (lista enxuta)? */
 export function linhaSemDetalhe(linha) {
   return (

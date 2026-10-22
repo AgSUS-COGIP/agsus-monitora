@@ -279,9 +279,9 @@ src/lib/erro-amigavel.js         a frase do erro (antigo friendlyError)
 ```
 
 Contratos mantidos em `window`: `navigate` (é `navegacao.irPara`), `refreshData`,
-`getMonitoraProfile`, `getMonitoraUser`, `monitoraToast`, `monitoraLoader`, `exitExternalPanel`,
+`getMonitoraProfile`, `monitoraToast`, `monitoraLoader`, `exitExternalPanel`,
 `reloadExternal`, `exportPDF`, `toggleBrowserFullscreen`, `toggleDarkMode`, `toggleSidebar`
-(saíram `window.$` e `toggleOnlinePresence`, sem uso). Os controladores das telas
+(saíram `window.$`, `toggleOnlinePresence` e `getMonitoraUser`, sem uso). Os controladores das telas
 (`window.recursosController`…) continuam sendo chamados pela navegação (`render()` ao abrir).
 Quem acompanha a navegação assina `navegacao.assinar`: `{ tipo: "abertura", view, anterior }`
 (auditoria) e `{ tipo: "menu" }` (o lugar da pessoa na presença).

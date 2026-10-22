@@ -473,17 +473,6 @@ def ler_respostas_do_html(html):
     return respostas, sem_token
 
 
-def ler_candidatos_do_html(html):
-    """
-    Candidatos da lista de candidaturas: [{"codigo", "link"}], na ordem da página
-    (ver ler_lista_de_candidatos). Na leitura genérica, o código é o
-    data-pessoa-id do bloco do candidato: do próprio link, de um ancestral ou de
-    um vizinho no mesmo bloco (o menor bloco que tem um só data-pessoa-id). Link
-    sem código, com código ambíguo ou fora do formato fica de fora.
-    """
-    return ler_lista_de_candidatos(html)[0]
-
-
 def _ler_generico(arvore):
     # data-pessoa-id de cada subárvore, de baixo para cima (sem recursão: a lista pode ser longa).
     ordem = []

@@ -43,13 +43,13 @@ import urllib.request
 from html import unescape as html_unescape
 from urllib.parse import parse_qsl, quote, unquote, urljoin, urlsplit
 
+from planilha_empregare import em_lotes
+
 from monitora.mascaramento import mascarar, resumo_do_erro
 
 URL_BASE = "https://corporate.empregare.com"
 MASCARA = "<MASCARADO>"
 
-ESPERA_PELO_QUESTIONARIO = 12  # segundos até a aba mostrar perguntas ou arquivos
-INTERVALO = 0.5
 ESPERA_DA_PAGINA = 2  # segundos depois de abrir a página do candidato
 TEMPO_DO_HEAD = 15
 LIMITE_DA_SONDAGEM = 3  # candidatos
@@ -68,18 +68,6 @@ const texto = function (el) { return (el ? (el.innerText || el.textContent || ''
 _RE_ARQUIVO_JS = (
     "/download|arquivo|anexo|upload|\\/files?\\/|\\.(pdf|jpe?g|png|gif|bmp|tiff?|docx?|odt|xlsx?|zip|rar|heic|webp)"
     "(\\?|#|$)|amazonaws|cloudfront|blob\\.core|storage\\.googleapis|drive\\.google/i"
-)
-
-JS_CONTAR_QUESTIONARIO = (
-    JS_VISIVEL
-    + f"""
-const reArq = {_RE_ARQUIVO_JS};
-const links = Array.from(document.querySelectorAll('a[href], [data-url], [data-href]')).filter(function (a) {{
-  return reArq.test(a.getAttribute('href') || a.getAttribute('data-url') || a.getAttribute('data-href') || '');
-}}).length;
-const perguntas = document.querySelectorAll('[class*="pergunta" i], [class*="question" i]').length;
-return links + perguntas;
-"""
 )
 
 # A leitura da aba (no documento ou num iframe da mesma origem). arguments[0]: máximo de arquivos.
@@ -445,24 +433,7 @@ def classificar_link(endereco, teste):
     return {"assinado": assinado, "publico": publico, "exige_sessao": bool(exige_sessao), "texto": texto}
 
 
-def em_lotes(lista, tamanho=TAMANHO_DO_LOTE):
-    for i in range(0, len(lista), tamanho):
-        yield lista[i : i + tamanho]
-
-
 # ── Navegador ───────────────────────────────────────────────────────────────
-
-
-def _esperar_questionario(driver, limite=ESPERA_PELO_QUESTIONARIO, dormir=time.sleep, agora=time.monotonic):
-    fim = agora() + limite
-    while agora() < fim:
-        try:
-            if (driver.execute_script(JS_CONTAR_QUESTIONARIO) or 0) > 0:
-                return True
-        except Exception:
-            pass
-        dormir(INTERVALO)
-    return False
 
 
 def ler_questionario(driver, maximo=50):
@@ -1414,15 +1385,6 @@ def registra_visualizacao(endereco):
     return "getviewerlogarquivo" in str(endereco or "").lower()
 
 
-def link_absoluto(href):
-    """Link absoluto da Empregare com os caracteres fora do formato codificados (espaço, acento…)."""
-    texto = str(href or "").strip().replace("&amp;", "&")
-    if not texto or texto.lower().startswith(("javascript:", "#", "mailto:")):
-        return None
-    absoluto = urljoin(URL_BASE + "/", texto).split("#")[0]
-    return quote(absoluto, safe=":/?&=%|+~._-")
-
-
 TIPO_ANEXO = 4  # TipoResposta do anexo no JSON (1 escolha única, 3 vídeo, 5 curta, 8 caixa, 9 múltipla)
 _SEM_ARQUIVO = {"", "0", "1"}  # 0 "Não se aplica", 1 "Não possuo este documento" (o front mostra texto)
 _ARQUIVO = re.compile(r"^[A-Za-z0-9 _.()~+=-]{1,300}$")
@@ -1616,19 +1578,11 @@ def buscar_detalhes(driver, pedidos):
 def prioridades_da_vaga(config, codigo, chamar, registrar):
     """
     {código do candidato: {"prioridade": 0–3, "lidas": {respostas já lidas}}} da vaga
-    (listar_prioridade_anexos_empregare). None se o banco não tem a migration
-    20261014200000 ou a chamada falhou: aí a captura lê todos, na ordem da lista.
+    (listar_prioridade_anexos_empregare). None se a chamada falhou: aí a
+    captura lê todos, na ordem da lista.
     """
-    from monitora import supabase_rpc
-
     try:
         r = chamar(config, "listar_prioridade_anexos_empregare", {"p_vaga": codigo}) or {}
-    except supabase_rpc.ErroDoSupabase as erro:
-        if getattr(erro, "status", None) == 404:
-            registrar("O banco ainda não prioriza os anexos (falta a migration 20261014200000); lendo todos.")
-        else:
-            registrar(f"Vaga {codigo}: sem a prioridade dos anexos ({erro}); lendo todos.")
-        return None
     except Exception as erro:
         registrar(f"Vaga {codigo}: sem a prioridade dos anexos ({resumo_do_erro(erro)}); lendo todos.")
         return None
@@ -1777,16 +1731,13 @@ def gravar_anexos(config, sync, codigo, capturados, colunas, chamar, registrar, 
     gravados = 0
     total = sum(len(i["anexos"]) for i in itens)
     try:
-        for lote in em_lotes(itens):
+        for lote in em_lotes(itens, TAMANHO_DO_LOTE):
             r = chamar(config, "gravar_anexos_empregare", {"p_sync": sync, "p_vaga": codigo, "p_respostas": lote})
             gravados += int((r or {}).get("anexos") or 0)
             totais["leituras_invalidadas"] += int((r or {}).get("leituras_invalidadas") or 0)
     except supabase_rpc.ErroDoSupabase as erro:
         totais["falhou"] = True
-        if getattr(erro, "status", None) == 404:
-            registrar("O banco ainda não guarda os anexos do questionário (falta a migration 20261008160000).")
-        else:
-            registrar(f"Vaga {codigo}: o banco recusou os anexos do questionário ({erro}).")
+        registrar(f"Vaga {codigo}: o banco recusou os anexos do questionário ({erro}).")
         return gravados
     except Exception as erro:
         totais["falhou"] = True
@@ -1861,10 +1812,3 @@ def sondar_detalhes(driver, rotulo, codigo_do_candidato):
         if lido["impressao"]:
             linhas.append(mascarar(f"{rotulo}, resposta {i}: impressão {padrao_do_link(lido['impressao'])}"))
     return linhas
-
-
-def _contar(anexos):
-    contagem = {}
-    for a in anexos:
-        contagem[a["pergunta"]] = contagem.get(a["pergunta"], 0) + 1
-    return contagem

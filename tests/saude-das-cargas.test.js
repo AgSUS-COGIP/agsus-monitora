@@ -4,8 +4,6 @@ import {
   prazoDaAgenda,
   PRAZO_DIARIO_MIN,
   PRAZO_AGENDA_DOS_ROBOS_MIN,
-  PRAZO_DE_HORA_EM_HORA_MIN,
-  PRAZO_SELECAO_MIN,
   PRAZO_FREQUENTE_MIN,
   PRAZO_MENSAL_MIN,
   textoDaIdade,
@@ -166,13 +164,13 @@ describe("selo de cada carga", () => {
     );
   });
 
-  it("entrevistas e seleção: atrasada pelo prazo de hora em hora; rodando agora aparece", () => {
+  it("entrevistas e seleção sem prazo (agenda desligada); rodando agora aparece", () => {
     expect(carga("entrevistas")).toMatchObject({
       situacao: "em_dia",
       idadeMin: 180,
     });
     const selecao = carga("selecao");
-    expect(selecao.situacao).toBe("atrasada");
+    expect(selecao.situacao).toBe("em_dia");
     expect(selecao.emAndamento).toBe(true);
     expect(selecao.ultimaOk.linhas).toBe(3146);
   });
@@ -190,8 +188,8 @@ describe("selo de cada carga", () => {
 
   it("resumo conta cada situação", () => {
     expect(saude.resumo).toEqual({
-      em_dia: 4,
-      atrasada: 2,
+      em_dia: 5,
+      atrasada: 1,
       falhou: 2,
       em_andamento: 0,
       nunca: 1,
@@ -271,7 +269,6 @@ describe("visão simples: uma linha por aba do sistema", () => {
     expect(atencao.map((l) => l.id)).toEqual([
       "analises:sede",
       "analises:projetos",
-      "selecao",
       "tarefas",
     ]);
   });
@@ -350,16 +347,19 @@ describe("robô da Empregare (20261005170000)", () => {
     expect(robo).toMatchObject({ situacao: "em_dia", emAndamento: true });
   });
 
-  it("entrevistas rodam o dia todo (4 h também à noite); seleção 3 vezes ao dia (15 h)", () => {
-    // 23h de Brasília = 02h UTC do dia seguinte.
-    const noite = normalizarSaude(PAYLOAD, new Date("2026-10-02T02:00:00Z"));
-    const planilhas = noite.grupos.find((g) => g.id === "planilhas").cargas;
-    const prazo = (id) => planilhas.find((c) => c.id === id).prazoMin;
-    expect(prazo("selecao")).toBe(PRAZO_SELECAO_MIN);
-    expect(planilhas.find((c) => c.id === "selecao").esperado).toBe(
-      "às 8h10, 13h10 e 18h10",
-    );
-    expect(prazo("entrevistas")).toBe(PRAZO_DE_HORA_EM_HORA_MIN);
+  it("entrevistas e seleção sem agenda desde 16/10/2026: sem prazo, nunca atrasadas", () => {
+    const umMesDepois = new Date("2026-11-02T02:00:00Z");
+    const planilhas = normalizarSaude(PAYLOAD, umMesDepois).grupos.find(
+      (g) => g.id === "planilhas",
+    ).cargas;
+    for (const id of ["entrevistas", "selecao"]) {
+      const carga = planilhas.find((c) => c.id === id);
+      expect(carga.prazoMin).toBeNull();
+      expect(carga.esperado).toBe(
+        "desligada desde 16/10/2026: só pelo Rodar agora",
+      );
+      expect(carga.situacao).not.toBe("atrasada");
+    }
   });
 
   it("robô da Empregare sem prazo: só roda quando alguém pede, nunca fica atrasado", () => {
@@ -585,7 +585,7 @@ describe("agenda dos robôs pelo banco (20261008140000)", () => {
     );
   });
 
-  it("sem pedido aceito há mais de 2 h fica atrasada; pedido aberto não conta como falha", () => {
+  it("sem pedido aceito há mais de 26 h fica atrasada; pedido aberto não conta como falha", () => {
     const linha = agenda({
       chave_cadastrada: true,
       ultimo_aceito: ha(PRAZO_AGENDA_DOS_ROBOS_MIN + 30),

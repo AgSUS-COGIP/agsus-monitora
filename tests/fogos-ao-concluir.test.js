@@ -12,7 +12,7 @@ import { encerrarShowsAoFimDeCadaTeste } from "./shows-de-comemoracao.js";
 */
 
 const shows = encerrarShowsAoFimDeCadaTeste();
-const { soltarConfete, soltarFogos } = shows;
+const { soltarFogos } = shows;
 
 /* Um objeto que aceita qualquer chamada e atribuição (nó de áudio falso). */
 const qualquer = () =>
@@ -270,12 +270,6 @@ describe("fogos de artifício no canvas", () => {
     // O quadro que estava na fila não volta a desenhar.
     while (quadros.length) quadros.shift()(16.7);
     expect(quadros).toHaveLength(0);
-  });
-
-  it("soltarConfete (nome antigo) solta os mesmos fogos", () => {
-    const { doc, janela } = janelaComCanvas();
-    expect(soltarConfete(doc, janela, { quantidade: 50 })).toBeTruthy();
-    expect(doc.querySelectorAll("canvas.comemoracao__fogos")).toHaveLength(1);
   });
 });
 

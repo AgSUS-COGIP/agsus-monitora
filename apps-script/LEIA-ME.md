@@ -257,7 +257,7 @@ marcada `erro` à mão, o script continuava tentando retomar o sync guardado
   `Incremental: estado local do sync … descartado: …` no log.
 - **`4-orquestrador-fato-supabase.gs`** (as três planilhas): não espera um sync
   em `erro` (esquece o `sync_id` e segue com um novo) e, se a FATO já consumiu
-  20 min da execução, deixa o incremental para a próxima verificação de 5 min
+  15 min da execução, deixa o incremental para a próxima verificação de 5 min
   em vez de estourar os 30 min do Apps Script.
 
 **Colar nas planilhas** (só depois de a migration estar aplicada no banco):

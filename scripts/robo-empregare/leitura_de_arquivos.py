@@ -379,10 +379,7 @@ def main(lista=None):
     try:
         return principal(args)
     except supabase_rpc.ErroDoSupabase as erro:
-        if getattr(erro, "status", None) == 404:
-            log.error("O banco ainda não tem a leitura dos arquivos (falta a migration 20261009220000).")
-        else:
-            log.error("O banco recusou: %s", erro)
+        log.error("O banco recusou: %s", erro)
         return 1
     except SystemExit:
         raise

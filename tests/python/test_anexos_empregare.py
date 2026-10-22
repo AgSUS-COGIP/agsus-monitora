@@ -480,8 +480,6 @@ class Sondagem(unittest.TestCase):
                     return True
                 if js == anexos.JS_RESUMO_DO_PAINEL:
                     return RESUMO_QUESTIONARIO if abas_clicadas[-1] == 2 else RESUMO_CURRICULO
-                if js == anexos.JS_CONTAR_QUESTIONARIO:
-                    return 3
                 if js == anexos.JS_LER_QUESTIONARIO:
                     return _leitura()
                 if js == anexos.JS_ATRIBUTOS_DE_ARQUIVO:
@@ -789,7 +787,7 @@ class DetalhesDaResposta(unittest.TestCase):
         self.assertEqual(anexos.capturar_anexos(PortalFalso(), "1", respostas, logs.append, prazo=0), {})
         self.assertIn("tempo esgotado", logs[-1])
 
-    def test_grava_com_a_coluna_em_lotes_e_404_so_avisa(self):
+    def test_grava_com_a_coluna_em_lotes_e_recusa_so_avisa(self):
         chamadas = []
 
         def chamar(_config, funcao, corpo, tentativas=3):
@@ -816,12 +814,12 @@ class DetalhesDaResposta(unittest.TestCase):
             logs, ["Vaga 179698: 1 resposta(s) e 3 anexo(s) gravados · 3 de 3 anexo(s) casados com a coluna do Excel."]
         )
 
-        def sem_migration(_config, funcao, _corpo):
-            raise supabase_rpc.ErroDoSupabase(funcao, 404, "not found")
+        def recusa(_config, funcao, _corpo):
+            raise supabase_rpc.ErroDoSupabase(funcao, 500, "erro")
 
         logs.clear()
-        self.assertEqual(anexos.gravar_anexos({}, "gh-x", "179698", capturados, COLUNAS, sem_migration, logs.append), 0)
-        self.assertIn("falta a migration 20261008160000", logs[0])
+        self.assertEqual(anexos.gravar_anexos({}, "gh-x", "179698", capturados, COLUNAS, recusa, logs.append), 0)
+        self.assertIn("o banco recusou os anexos do questionário", logs[0])
         self.assertEqual(anexos.gravar_anexos({}, "gh-x", "179698", {}, COLUNAS, chamar, logs.append), 0)
 
     def test_nunca_testa_nem_abre_o_link_do_arquivo(self):
@@ -893,10 +891,10 @@ class PrioridadeDosAnexos(unittest.TestCase):
         self.assertEqual(prioridades["8000001"]["prioridade"], anexos.PULAR)
         self.assertEqual(logs, [])
 
-    def test_sem_a_migration_ou_com_erro_le_todos_como_antes(self):
-        prioridades, _, logs = self.prioridades(erro=supabase_rpc.ErroDoSupabase("x", 404, "not found"))
+    def test_com_erro_le_todos_como_antes(self):
+        prioridades, _, logs = self.prioridades(erro=supabase_rpc.ErroDoSupabase("x", 500, "erro"))
         self.assertIsNone(prioridades)
-        self.assertIn("falta a migration 20261014200000", logs[0])
+        self.assertIn("lendo todos", logs[0])
         prioridades, _, logs = self.prioridades(erro=RuntimeError("caiu"))
         self.assertIsNone(prioridades)
         self.assertIn("lendo todos", logs[0])

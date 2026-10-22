@@ -17,12 +17,15 @@ planilha e grava no banco, o dia todo. As duas cargas funcionam do mesmo jeito e
 Entrevistas
   planilhas de entrevista de cada vaga
      └─ Apps Script "Cruzamento de entrevistados" (continua na planilha) monta a aba Entrevistados
-          └─ GitHub Actions, de hora em hora (o dia todo, pedido pelo banco): scripts/sincronizar-entrevistas.mjs → Supabase
+          └─ GitHub Actions, pelo Rodar agora (agenda do banco desligada desde 16/10/2026): scripts/sincronizar-entrevistas.mjs → Supabase
 
 Seleção
   planilha "Auditoria", aba Resultado (uma linha por vaga: inscritos, aptos, eliminados, triados…)
-     └─ GitHub Actions, às 8h10, 13h10 e 18h10 (pedido pelo banco): scripts/sincronizar-selecao.mjs → Supabase
+     └─ GitHub Actions, pelo Rodar agora (agenda do banco desligada desde 16/10/2026): scripts/sincronizar-selecao.mjs → Supabase
 ```
+
+As duas agendas do banco (`agsus_robo_sincronizar_entrevistas` e `agsus_robo_sincronizar_selecao`)
+estão desligadas de propósito desde 16/10/2026; horários e como religar em `docs/agenda-dos-robos.md`.
 
 O cruzamento das entrevistas continua no Apps Script porque as pastas das planilhas de vaga não
 são da conta `dados.recursoshumanos`. Este guia cobre só as cargas para o banco. Os candidatos

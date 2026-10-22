@@ -15,6 +15,7 @@
   pelo EVENTO_EDITAL_CONCLUIDO). A tela não repete; quem fechou o edital
   ganha os do marco "edital-fechado" de qualquer jeito.
 */
+import { numeroDoEdital } from "./numero-do-edital.ts";
 
 export const RPC_DOS_ENCERRAMENTOS = "obter_encerramentos_do_edital";
 export const RPC_DO_VISTO = "marcar_encerramento_visto";
@@ -68,12 +69,6 @@ const inteiro = (v: unknown) => {
   const n = Math.floor(Number(v));
   return Number.isFinite(n) && n > 0 ? n : 0;
 };
-
-/** "091/2026", "Edital nº 114/2026" → "91/2026", "114/2026" ("" sem número). */
-export function numeroDoEdital(valor: unknown): string {
-  const m = texto(valor).match(/(\d{1,4})\s*\/\s*(\d{4})/);
-  return m ? `${Number(m[1])}/${m[2]}` : "";
-}
 
 /** "114/2026" → "114". */
 export const numeroCurto = (numero: string) =>

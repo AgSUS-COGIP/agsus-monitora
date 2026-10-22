@@ -24,7 +24,6 @@ describe("ligarSistema", () => {
 
     for (const nome of [
       "getMonitoraProfile",
-      "getMonitoraUser",
       "monitoraToast",
       "monitoraLoader",
       "exitExternalPanel",

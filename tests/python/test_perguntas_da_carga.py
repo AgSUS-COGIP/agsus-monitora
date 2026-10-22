@@ -223,7 +223,7 @@ class PassoDoRobo(unittest.TestCase):
         self.assertTrue(pedidos[0]["p_compacto"])
         self.assertEqual(gravados[0], resumir_perguntas([P5, p6], completas))
 
-    def test_banco_sem_p_compacto_le_como_antes(self):
+    def test_le_as_respostas_compactas(self):
         pedidos = []
         edital = {"edital": "e1", "numero": "114/2026", "hash": "h1", "vagas": ["1"], "colunas": [P5]}
 
@@ -232,15 +232,13 @@ class PassoDoRobo(unittest.TestCase):
                 return {"editais": [edital]}
             if funcao == "ler_respostas_pergunta_vaga":
                 pedidos.append(corpo)
-                if "p_compacto" in corpo:
-                    raise supabase_rpc.ErroDoSupabase(funcao, 404, "PGRST202: function not found")
                 return {"candidatos": 2, "linhas": [{P5: "PcD"}, {P5: "PcD"}]}
             if funcao == "gravar_resumo_pergunta_edital":
                 return {}
             raise AssertionError(funcao)
 
         self.assertEqual(resumo_das_perguntas.resumir_editais({}, lambda _: None, chamar), (1, 0))
-        self.assertEqual(pedidos, [{"p_vaga": "1", "p_compacto": True}, {"p_vaga": "1"}])
+        self.assertEqual(pedidos, [{"p_vaga": "1", "p_compacto": True}])
 
     def test_carga_que_mudou_no_meio_fica_para_a_proxima(self):
         for codigo in ("PT409", "40001"):
@@ -259,14 +257,6 @@ class RoboComOResumo(unittest.TestCase):
         import robo_empregare
 
         self.robo = robo_empregare
-
-    def test_banco_sem_a_migration_avisa_sem_falhar(self):
-        def chamar(_config, funcao, corpo, tentativas=3):
-            raise supabase_rpc.ErroDoSupabase(funcao, 404, "PGRST202: function not found")
-
-        linha, falhou = self.robo.resumir_perguntas({}, chamar=chamar)
-        self.assertIn("20261009180000", linha)
-        self.assertFalse(falhou)
 
     def test_resumo_que_falha_nao_derruba(self):
         def chamar(_config, funcao, corpo, tentativas=3):

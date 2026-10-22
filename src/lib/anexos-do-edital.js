@@ -10,17 +10,12 @@
 */
 
 import { novaEtapa } from "./cronograma-do-edital.js";
+import { numeroDoEdital } from "./numero-do-edital.ts";
 
 const txt = (valor) => String(valor ?? "").trim();
 
 export const ENDERECO_ANEXOS = "/api/anexos-do-edital";
 export const LIMITE_DO_PDF = 4 * 1024 * 1024;
-
-/** Número do edital sem zeros à esquerda: "091/2026" → "91/2026". */
-export function numeroDoEdital(texto) {
-  const m = txt(texto).match(/(\d{1,4})\s*\/\s*(\d{4})/);
-  return m ? `${Number(m[1])}/${m[2]}` : "";
-}
 
 /** Por que o arquivo não pode ir (ou "" se pode). */
 export function problemaDoArquivo(arquivo) {

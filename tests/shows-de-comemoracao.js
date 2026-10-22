@@ -1,8 +1,5 @@
 import { afterEach, expect } from "vitest";
-import {
-  soltarConfete as soltarConfeteDoModulo,
-  soltarFogos as soltarFogosDoModulo,
-} from "../src/modules/comemoracao.js";
+import { soltarFogos as soltarFogosDoModulo } from "../src/modules/comemoracao.js";
 
 /*
   Nenhum show de comemoração sobrevive ao teste.
@@ -20,7 +17,7 @@ import {
 
   Chame no topo do arquivo, antes dos outros afterEach (os hooks "after"
   rodam do último para o primeiro: assim este roda depois de um
-  vi.useRealTimers do arquivo). Use os soltarFogos/soltarConfete devolvidos e
+  vi.useRealTimers do arquivo). Use o soltarFogos devolvido e
   passe a `acompanhar` cada documento falso: ao fim de cada teste, todo show
   é parado, todo aviso é fechado no × (que encerra o show do comemorar) e o
   desmontar da Aya roda ainda com o jsdom de pé.
@@ -47,7 +44,6 @@ export function encerrarShowsAoFimDeCadaTeste() {
   });
   return {
     soltarFogos: (...args) => guardar(soltarFogosDoModulo(...args)),
-    soltarConfete: (...args) => guardar(soltarConfeteDoModulo(...args)),
     acompanhar: (doc) => {
       documentos.push(doc);
       return doc;
