@@ -6,6 +6,7 @@ import type {
 import type {
   EstadoDaClassificacao,
   ListaRegistrada,
+  ResultadoDaClassificacao,
 } from "./tipos-do-estado.ts";
 type Preparo = NonNullable<
   Awaited<ReturnType<EstadoDaClassificacao["prepararPublicacaoDeAprovados"]>>
@@ -16,6 +17,8 @@ type Props = {
     "prepararPublicacaoDeAprovados" | "publicarComoListaDeAprovados"
   >;
   registro: ListaRegistrada;
+  /** O cálculo de agora: a lista só é publicada se o retrato bater com ele. */
+  resultado: ResultadoDaClassificacao | null;
   analises: ReadonlyMap<string, { vaga?: unknown; cargo?: unknown }>;
   aoFechar: () => void;
 };
@@ -94,6 +97,7 @@ function LinhaDeRevisao({
 export function ModalDePublicacaoDeAprovados({
   estado,
   registro,
+  resultado: calculado,
   analises,
   aoFechar,
 }: Props) {
@@ -106,13 +110,13 @@ export function ModalDePublicacaoDeAprovados({
 
   useEffect(() => {
     let vivo = true;
-    void estado.prepararPublicacaoDeAprovados(registro).then((p) => {
+    void estado.prepararPublicacaoDeAprovados(registro, calculado).then((p) => {
       if (vivo) setPreparo(p || { erro: "Lista não encontrada." });
     });
     return () => {
       vivo = false;
     };
-  }, [estado, registro]);
+  }, [estado, registro, calculado]);
 
   const vigente = preparo?.situacao?.vigente || null;
   const anteriores = useMemo(() => vigente?.candidatos || [], [vigente]);

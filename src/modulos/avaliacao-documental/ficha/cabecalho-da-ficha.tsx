@@ -35,7 +35,7 @@ export type PropriedadesDoCabecalho = {
   modalidade?: string | null;
   /** O que fica no "i": [rótulo, valor]. */
   informacoes: { rotulo: string; valor: ReactNode }[];
-  /** Fim da reserva de quem está com a ficha (para o aviso dos 5 minutos). */
+  /** Fim da minha reserva, em dia ou vencida (aviso dos 5 minutos e da reserva vencida). */
   fimDaMinhaReserva?: string | null;
   /** O selo da decisão da coordenação (e o "Revogar"), se houver. */
   decisao?: ReactNode;
@@ -119,8 +119,13 @@ export function usarTamanhoDoCabecalho(): TamanhoDoCabecalho {
   return baixa ? "enxuto" : "normal";
 }
 
-/* Minutos que faltam na reserva, quando faltam menos de 5 (senão null). Relê a cada 20 s. */
-function usarReservaAcabando(fim: string | null | undefined): number | null {
+/*
+  Minutos que faltam na reserva, quando faltam menos de 5; "vencida" depois
+  do fim; senão null. Relê a cada 20 s.
+*/
+function usarReservaAcabando(
+  fim: string | null | undefined,
+): number | "vencida" | null {
   const [agora, setAgora] = useState(() => Date.now());
   useEffect(() => {
     if (!fim) return undefined;
@@ -129,8 +134,8 @@ function usarReservaAcabando(fim: string | null | undefined): number | null {
   }, [fim]);
   if (!fim) return null;
   const resta = new Date(fim).getTime() - agora;
-  if (!Number.isFinite(resta) || resta <= 0 || resta >= CINCO_MINUTOS)
-    return null;
+  if (!Number.isFinite(resta) || resta >= CINCO_MINUTOS) return null;
+  if (resta <= 0) return "vencida";
   return Math.max(1, Math.ceil(resta / 60000));
 }
 
@@ -209,7 +214,16 @@ export function CabecalhoDaFicha({
                   {modalidade}
                 </span>
               ) : null}
-              {minutos !== null ? (
+              {minutos === "vencida" ? (
+                <span
+                  className="avd-chip avd-chip-alerta"
+                  role="status"
+                  data-reserva="vencida"
+                >
+                  <i className="fa-solid fa-clock" aria-hidden="true" /> Reserva
+                  vencida: reabra a ficha
+                </span>
+              ) : minutos !== null ? (
                 <span className="avd-chip avd-chip-alerta" role="status">
                   <i className="fa-solid fa-clock" aria-hidden="true" /> Reserva
                   acaba em {minutos} min
