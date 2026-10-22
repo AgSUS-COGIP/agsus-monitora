@@ -26,10 +26,11 @@ Variáveis: SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY; CONFERENCIA_DIAS_CONVOCADO
 O log é público (repositório público): só contagens, códigos de conferência e
 números de edital; tudo passa por python/monitora/mascaramento.py.
 
-Saída: 0 concluída; 2 parcial (alguma conferência falhou); 1 erro.
+Saída: 0 concluída; 2 parcial (alguma conferência falhou); 1 erro; 3 entrada
+inválida. Cancelamento ou tempo esgotado no GitHub (SIGTERM) fecha a execução
+no banco com erro (python/monitora/execucao.py).
 """
 
-import argparse
 import os
 import pathlib
 import sys
@@ -55,7 +56,7 @@ log = registro("conferencias")
 
 
 def argumentos(lista=None):
-    p = argparse.ArgumentParser(description=TITULO)
+    p = execucao.Argumentos(description=TITULO)
     p.add_argument("--seco", action="store_true", help="só lê e confere; não grava")
     p.add_argument("--disparado-por", default=os.environ.get("DISPARADO_POR", ""))
     p.add_argument("--dias-convocado", type=int, default=None, help="dias de Convocado sem desfecho (1 a 365)")
@@ -183,15 +184,19 @@ def principal(args, configuracao=None, chamar_rpc=None):
     )
     log.info("Execução %s (disparo %s).", id_execucao, tipo.lower())
     try:
-        avisos, rodadas, falhas = conferir(chamar, args.dias_convocado)
-        for lote in lotes(avisos):
-            chamar("gravar_avisos_conferencia", {"p_execucao": id_execucao, "p_avisos": lote})
-    except Exception as erro:
+        # Cancelamento ou tempo esgotado no GitHub (SIGTERM/SIGINT): ExecucaoInterrompida passa pelo
+        # except de cada módulo e cai aqui, que fecha a execução com erro.
+        with execucao.interromper_com_excecao():
+            avisos, rodadas, falhas = conferir(chamar, args.dias_convocado)
+            for lote in lotes(avisos):
+                chamar("gravar_avisos_conferencia", {"p_execucao": id_execucao, "p_avisos": lote})
+    except (Exception, execucao.ExecucaoInterrompida) as erro:
         mensagem = resumo_do_erro(erro)
         try:
             chamar(
                 "finalizar_conferencia",
                 {"p_execucao": id_execucao, "p_conferencias": [], "p_falhas": [], "p_erro": mensagem},
+                tentativas=1,
             )
         except Exception as erro_ao_fechar:
             log.error("Também não consegui fechar a execução: %s", resumo_do_erro(erro_ao_fechar))
@@ -202,6 +207,8 @@ def principal(args, configuracao=None, chamar_rpc=None):
         chamar(
             "finalizar_conferencia",
             {"p_execucao": id_execucao, "p_conferencias": rodadas, "p_falhas": falhas, "p_erro": None},
+            # Sem repetir: se a resposta se perdeu, a execução já pode estar fechada.
+            tentativas=1,
         )
         or {}
     )

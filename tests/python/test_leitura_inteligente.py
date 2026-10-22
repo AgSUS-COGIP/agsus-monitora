@@ -376,12 +376,12 @@ def test_pdf_que_o_pdfplumber_nao_abre_vai_pelo_pdfium(monkeypatch):
     """PDF com estrutura que o pdfplumber não entende (0 páginas ou erro) cai no PDFium."""
     from monitora.avaliacao_documental.leitura_de_arquivos import extracao
 
-    def quebra(conteudo, ocr, leitura):
+    def quebra(conteudo, ocr, leitura, prazos=None):
         leitura.total_de_paginas = 0
 
     chamado = {}
 
-    def pdfium(conteudo, ocr, leitura):
+    def pdfium(conteudo, ocr, leitura, prazos=None):
         chamado["sim"] = True
         leitura.total_de_paginas = 1
         leitura.paginas.append(extracao.Pagina(1, "CARTEIRA DE IDENTIDADE " * 10, "TEXTO"))

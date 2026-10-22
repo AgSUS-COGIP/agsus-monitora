@@ -182,6 +182,8 @@ export function criarEstadoDaFila({
   let semFilaDesde = false;
   /* A lista mudou desde a última leitura e ninguém a está vendo (modo de análise). */
   let desatualizada = false;
+  /* O salvamento da ficha aberta (ficha.jsx): fechar espera por ele antes de liberar. */
+  const salvamentos = new Map();
   const ouvintes = new Set();
   const publicar = (mudancas) => {
     estado = { ...estado, ...mudancas };
@@ -429,8 +431,16 @@ export function criarEstadoDaFila({
     pararRenovacao();
     if (esquecer) lembrarFicha(sessao, null);
     if (aberta) {
+      const salvar = salvamentos.get(aberta.ficha?.id);
+      salvamentos.delete(aberta.ficha?.id);
       publicar({ aberta: null });
       if (aberta.reservada && aberta.ficha?.id) {
+        // O rascunho pendente vai antes: sem a reserva, o banco o recusaria.
+        try {
+          await salvar?.();
+        } catch {
+          /* O aviso da falha é da ficha. */
+        }
         try {
           await rpc(RPC_LIBERAR, {
             p_edital: estado.editalId,
@@ -573,6 +583,10 @@ export function criarEstadoDaFila({
   }
 
   return {
+    /** A ficha aberta diz como salvar o que falta (fechar espera antes de liberar). */
+    registrarSalvamento(fichaId, salvar) {
+      if (fichaId) salvamentos.set(fichaId, salvar);
+    },
     obter: () => estado,
     assinar(ouvinte) {
       ouvintes.add(ouvinte);

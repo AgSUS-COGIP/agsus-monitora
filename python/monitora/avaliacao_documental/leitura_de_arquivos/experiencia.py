@@ -44,6 +44,8 @@ contam uma vez só (a soma é a união dos períodos, como na pontuação).
 import re
 from datetime import date
 
+from monitora.fuso import hoje_em_brasilia
+
 from . import declaracoes as _declaracoes
 from .ctps import ler_contratos
 from .pessoas import nome_confere
@@ -730,7 +732,7 @@ def vinculos(paginas, nome_do_candidato=None, hoje=None, data_do_arquivo=None, a
     O vínculo atual (sem fim) conta os dias até a emissão do documento (na declaração, a da própria seção); sem
     ela, até a data em que o PDF foi gerado (`data_do_arquivo`, dos metadados) ou, sem nada, até `hoje` (a data da
     leitura) — sempre com `dias_ate` (a data) e `dias_ate_fonte` (EMISSAO, ARQUIVO ou LEITURA), sem alerta."""
-    hoje = hoje or date.today()
+    hoje = hoje or hoje_em_brasilia()
     avisos = [] if avisos is None else avisos
     original, pagina_de = _paginador(paginas)
     dobrado = dobrar(original)
@@ -844,7 +846,7 @@ def sobrepostos(itens, hoje=None):
     """{índice: código} dos vínculos que dividem mais de um dia com outro do arquivo: PERIODO_SOBREPOSTO (o mesmo
     empregador: provável duplicidade do mesmo vínculo) ou PERIODO_CONCOMITANTE (empregadores diferentes ou não
     lidos: legítimo; os dias em comum contam uma vez só na soma)."""
-    hoje = hoje or date.today()
+    hoje = hoje or hoje_em_brasilia()
     periodos = []
     for i, it in enumerate(itens):
         inicio = _dia(it.get("inicio"))
@@ -869,7 +871,7 @@ def sobrepostos(itens, hoje=None):
 
 def intervalos_para_somar(itens, hoje=None):
     """[{inicio, fim}] dos vínculos (o atual até `dias_ate`), para a soma sem sobreposição da pontuação."""
-    hoje = hoje or date.today()
+    hoje = hoje or hoje_em_brasilia()
     saida = []
     for it in itens:
         if it.get("tipo") != "VINCULO" or not it.get("inicio"):

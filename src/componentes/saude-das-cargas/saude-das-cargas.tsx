@@ -378,9 +378,10 @@ export function SaudeDasCargas({
 }) {
   const atual = useSyncExternalStore(estado.assinar, estado.obter);
 
+  // Os rótulos do modo cartão do celular: só quando os dados mudam.
   useEffect(() => {
     document.dispatchEvent(new CustomEvent("agsus:content-updated"));
-  });
+  }, [atual.dados, atual.status]);
 
   if (atual.perfil && !isAdminGlobal(atual.perfil))
     return (

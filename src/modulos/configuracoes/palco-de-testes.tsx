@@ -59,7 +59,11 @@ export const OPCOES_DE_INTENSIDADE = (
   Object.keys(ROTULOS_DOS_NIVEIS) as Intensidade[]
 ).map((valor) => ({ valor, rotulo: ROTULOS_DOS_NIVEIS[valor] }));
 
-/* A miniatura: a cena do efeito em laço, do tamanho do cartão. */
+/*
+  A miniatura: a cena do efeito em laço, do tamanho do cartão. Configurações
+  monta no carregamento do app: o laço só anda com o canvas à vista (seção
+  Comemorações aberta e a página na tela); fora dela, para.
+*/
 function Previa({
   efeito,
   intensidade,
@@ -76,12 +80,18 @@ function Previa({
     const contexto = canvas?.getContext?.("2d");
     if (!canvas || !janela || !contexto || semMovimento(janela)) return;
     const doc = canvas.ownerDocument;
-    const largura = canvas.clientWidth || 600;
-    const altura = canvas.clientHeight || 220;
-    const dpr = Math.min(2, Math.max(1, janela.devicePixelRatio || 1));
-    canvas.width = Math.round(largura * dpr);
-    canvas.height = Math.round(altura * dpr);
-    contexto.setTransform(dpr, 0, 0, dpr, 0, 0);
+    let largura = 0;
+    let altura = 0;
+    // Mede ao aparecer: montado escondido, o canvas não tem tamanho.
+    const medir = () => {
+      largura = canvas.clientWidth || 600;
+      altura = canvas.clientHeight || 220;
+      const dpr = Math.min(2, Math.max(1, janela.devicePixelRatio || 1));
+      canvas.width = Math.round(largura * dpr);
+      canvas.height = Math.round(altura * dpr);
+      contexto.setTransform(dpr, 0, 0, dpr, 0, 0);
+    };
+    medir();
     const halo = criarHalos(doc);
     const paleta = paletaDoTema(doc, janela);
     const nova = () =>
@@ -106,9 +116,33 @@ function Previa({
       if (cenaAcabou(cena)) cena = nova();
       pedido = janela.requestAnimationFrame(quadro);
     };
-    pedido = janela.requestAnimationFrame(quadro);
-    return () => {
+    const comecar = () => {
+      if (pedido) return;
+      if ((canvas.clientWidth || 600) !== largura) {
+        medir();
+        cena = nova();
+      }
+      anterior = null;
+      pedido = janela.requestAnimationFrame(quadro);
+    };
+    const parar = () => {
+      if (!pedido) return;
       janela.cancelAnimationFrame(pedido);
+      pedido = 0;
+    };
+    // Sem IntersectionObserver (navegador antigo): anda sempre, como antes.
+    const Observador = janela.IntersectionObserver;
+    const vigia = Observador
+      ? new Observador((entradas) => {
+          if (entradas.some((e) => e.isIntersecting)) comecar();
+          else parar();
+        })
+      : null;
+    if (vigia) vigia.observe(canvas);
+    else comecar();
+    return () => {
+      vigia?.disconnect();
+      parar();
       contexto.clearRect(0, 0, largura, altura);
     };
   }, [efeito, intensidade, duracaoS]);

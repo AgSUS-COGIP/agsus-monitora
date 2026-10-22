@@ -669,7 +669,7 @@ export const CONTRATO_RPC = {
     argumentos: ["p_robo", "p_inputs"],
     critica: false,
     resumo:
-      "Rodar agora, Opções e Recalcular: confere quem pede (administrador global; coordenação só na pré-classificação de um edital) e as opções do robô (no da Empregare, desde 20261020130000, o modo anexos com candidatos e seco), pede o workflow ao GitHub com a chave do Vault e devolve o id do pedido (TL_DISPARO_ROBO). Inscrições congeladas (20261020170000): 55000 para edital/vaga congelada nos modos que gravam, salvo forcar_congelado + motivo do administrador global. 28000, 42501, 22023 e 55006 (pedido repetido em 2 min).",
+      "Rodar agora, Opções e Recalcular: confere quem pede (administrador global; coordenação só na pré-classificação de um edital) e as opções do robô (no da Empregare, desde 20261020130000, o modo anexos com candidatos e seco), pede o workflow ao GitHub com a chave do Vault e devolve o id do pedido (TL_DISPARO_ROBO). Inscrições congeladas (20261020170000): 55000 para edital/vaga congelada nos modos que gravam (desde 20261022170000 também o Só anexos sem seco), salvo forcar_congelado + motivo do administrador global. 28000, 42501, 22023 e 55006 (pedido repetido em 2 min ou, desde 20261022170000, execução já esperando a vez no grupo de concorrência do GitHub).",
   },
   situacao_do_disparo_robo: {
     argumentos: ["p_disparo"],
@@ -1066,7 +1066,7 @@ export const CONTRATO_RPC = {
     argumentos: ["p_edital", "p_congelar", "p_motivo"],
     critica: false,
     resumo:
-      "Congela ou libera as inscrições do edital (robô da Empregare e pré-classificação não mexem; Só anexos continua), com motivo de 10 a 500 caracteres. Coordenação da avaliação do edital ou administrador global; 55000 se já estiver no estado pedido.",
+      "Congela ou libera as inscrições do edital (robô da Empregare e pré-classificação não mexem; Só anexos só compara, salvo liberação), com motivo de 10 a 500 caracteres. Coordenação da avaliação do edital ou administrador global; 55000 se já estiver no estado pedido.",
   },
   registrar_lista_pre_classificacao: {
     argumentos: ["p_edital", "p_tipo", "p_lote"],

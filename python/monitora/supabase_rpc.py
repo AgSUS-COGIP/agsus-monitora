@@ -8,12 +8,17 @@ conferências…), concedidas só ao service_role.
 
 Variáveis: SUPABASE_URL (aceita VITE_SUPABASE_URL) e SUPABASE_SERVICE_ROLE_KEY.
 Repete até 3 vezes só erro de rede ou 5xx; erro do banco (4xx) não melhora
-repetindo. Do erro do PostgREST sobem só `code` e `message`, mascarados:
+repetindo, nem o cancelamento por tempo (57014, statement_timeout): a mesma
+instrução estoura de novo, e repetir só soma 8 s por tentativa antes de quem
+chamou poder reagir (gravar_lote divide o lote ao meio). Do erro do PostgREST sobem só `code` e `message`, mascarados:
 `details` e `hint` ficam de fora porque o Postgres põe neles a linha recusada
 inteira ("Failing row contains (...)"), com nome e data de nascimento, que o
 mascaramento não reconhece. As RPCs que criam registro (`iniciar_*`) devem
 ser chamadas com `tentativas=1`: repetir depois de uma resposta perdida
-esbarra na execução que a primeira tentativa já abriu.
+esbarra na execução que a primeira tentativa já abriu. O mesmo vale para as
+que fecham ou registram (`fechar_*`, `finalizar_*`, `registrar_*`) e para as
+de gravação em lote do robô: a primeira tentativa pode ter gravado e só a
+resposta se perdeu.
 
 Pede a resposta comprimida (Accept-Encoding: gzip): sem isso o urllib recebe o
 JSON cru, e a leitura dos jobs é a maior parte do egress do Supabase no plano
@@ -62,6 +67,18 @@ def ler_corpo(resposta):
     return dados.decode("utf-8", "replace")
 
 
+CANCELADA_POR_TEMPO = "57014"
+
+
+def cancelada_por_tempo(texto):
+    """O corpo do erro diz que o banco cancelou a instrução no statement_timeout (57014)?"""
+    try:
+        corpo = json.loads(texto)
+    except (TypeError, ValueError):
+        return False
+    return isinstance(corpo, dict) and str(corpo.get("code") or "").strip() == CANCELADA_POR_TEMPO
+
+
 class ErroDoSupabase(Exception):
     def __init__(self, funcao, status, mensagem):
         super().__init__(f"{funcao} respondeu {status}: {mascarar(mensagem)[:400]}")
@@ -107,7 +124,7 @@ def chamar(config, funcao, corpo, tentativas=3, abrir=urllib.request.urlopen, es
         except urllib.error.HTTPError as erro:
             texto = ler_corpo(erro)
             ultimo = ErroDoSupabase(funcao, erro.code, texto_do_erro(texto))
-            if erro.code < 500:
+            if erro.code < 500 or cancelada_por_tempo(texto):
                 break
         except (urllib.error.URLError, TimeoutError, ConnectionError, http.client.HTTPException) as erro:
             ultimo = ErroDoSupabase(funcao, "sem resposta", str(erro))

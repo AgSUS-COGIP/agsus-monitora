@@ -14,6 +14,7 @@ import type {
   PropriedadesDaFicha,
 } from "./tipos-da-ficha.ts";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { guardaDeAlteracoes } from "../../app/guarda-de-alteracoes.ts";
 import {
   aspectosDoRoteiro,
   aspectosIncompletos,
@@ -139,13 +140,15 @@ function estadoInicial(
   const observacoes = Object.fromEntries(
     (convocado.observacoes || []).map((o) => [o.avaliador, o.texto || ""]),
   );
+  const banca =
+    convocado.banca ?? (bancas.length === 1 ? (bancas[0] ?? null) : null);
   return {
     compareceu:
       convocado.compareceu === "S" || convocado.compareceu === "N"
         ? convocado.compareceu
         : null,
-    banca:
-      convocado.banca ?? (bancas.length === 1 ? (bancas[0] ?? null) : null),
+    banca,
+    bancaInicial: banca,
     original: mapa,
     mapa,
     observacoesOriginais: observacoes,
@@ -259,8 +262,16 @@ export function FichaDoCandidato({
   const [focarNaAba, setFocarNaAba] = useState<string | null>(null);
   const principal = useRef<HTMLButtonElement | null>(null);
 
-  /* O payload novo (depois de salvar ou recarregar) é a verdade: a ficha recomeça dele. */
+  /*
+    O payload novo é a verdade só com a ficha limpa ou logo depois do próprio
+    salvamento: voltar à tela relê o edital (conduzir.tsx, render()) e não
+    pode apagar as notas que ainda não foram salvas.
+  */
+  const sujoRef = useRef(false);
+  const recomecarAoChegar = useRef(false);
   useEffect(() => {
+    if (sujoRef.current && !recomecarAoChegar.current) return;
+    recomecarAoChegar.current = false;
     setF(estadoInicial(dados, convocado, aspectos));
   }, [dados, convocado, aspectos]);
   useEffect(() => {
@@ -307,7 +318,9 @@ export function FichaDoCandidato({
   const mudouComparecimento = Boolean(
     f.compareceu && f.compareceu !== (convocado.compareceu || null),
   );
-  const mudouBanca =
+  // Sujo só pelo que a pessoa mudou; a banca única preenchida sozinha não conta.
+  const mudouBanca = f.banca !== null && f.banca !== f.bancaInicial;
+  const bancaDiferenteDoBanco =
     f.banca !== null && Number(f.banca) !== Number(convocado.banca ?? NaN);
   const invalidas = Object.entries(f.mapa).filter(([chave, valor]) => {
     if (vazio(valor)) return false;
@@ -333,6 +346,17 @@ export function FichaDoCandidato({
     mudouBanca ||
     obsAlteradas.length > 0 ||
     mudouJustificativa;
+  sujoRef.current = sujo;
+  // Notas não salvas: o F5 e o fechar pedem confirmação, a versão nova do
+  // sistema espera e a página desligada não fecha (guarda-de-alteracoes.ts).
+  useEffect(
+    () =>
+      guardaDeAlteracoes.registrar({
+        comAlteracoes: () => sujoRef.current,
+        naoGuardado: () => sujoRef.current,
+      }),
+    [],
+  );
   const faltou = f.compareceu === "N";
   const [tentouSalvar, setTentouSalvar] = useState(false);
   const campoDaJustificativa = useRef<HTMLTextAreaElement | null>(null);
@@ -656,12 +680,14 @@ export function FichaDoCandidato({
     const p: PayloadDasNotas = { notas: alteradas };
     if (obsAlteradas.length) p.observacoes = obsAlteradas;
     if (mudouJustificativa) p.justificativa = f.justificativa.trim() || null;
-    if (mudouComparecimento || mudouBanca) {
+    if (mudouComparecimento || bancaDiferenteDoBanco) {
       if (f.compareceu) p.compareceu = f.compareceu;
       if (f.banca !== null) p.banca = Number(f.banca);
     }
+    recomecarAoChegar.current = true;
     const resposta = await aoSalvar(p);
     if (resposta?.erro) {
+      recomecarAoChegar.current = false;
       setErro(resposta.erro);
       return;
     }

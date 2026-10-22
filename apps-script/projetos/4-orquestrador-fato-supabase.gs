@@ -26,6 +26,12 @@ const FATO_SUPABASE_ORQ_CFG = {
   FATO_HEARTBEAT_RECOVERY_MINUTES: 8,
   STARTING_RECOVERY_MINUTES: 10,
   SUCCESS_STATUSES: ['SUCCESS', 'NO_CHANGES'],
+  // [parcial-nao-trava] PARTIAL = a FATO foi promovida, mas algumas vagas deram erro e ficaram
+  // com as linhas anteriores. Libera o incremental quando last_success_at foi gravado na mesma
+  // execucao que last_run_finished_at (ate esta folga). Antes, uma vaga com erro persistente
+  // deixava todo ciclo em PARTIAL e o incremental nunca mais rodava.
+  PARTIAL_MAX_SUCCESS_GAP_MS: 2 * 60 * 1000,
+  UNSAFE_STATUSES: ['ERROR', 'PARTIAL', 'BLOCKED', 'STALE_RESET', 'CANCELLED'],
   // [nao-trava] Execucao do Apps Script tem 30 min. Se a FATO ja consumiu isto, o incremental
   // (ate ~5 min) fica para a proxima verificacao de 5 min, em vez de ser cortado no meio.
   // [sempre-avanca] 15 min de FATO + leitura da planilha + 4 min de trabalho cabem nos 30 min.
@@ -292,9 +298,10 @@ function concluirFatoEIniciarIncremental_(state) {
 
   const meta = lerMetaFatoSupabase_();
   const status = String(meta.last_run_status || '').toUpperCase();
+  const avaliacao = avaliarFatoParaIncrementalOrq_(meta);
 
-  if (FATO_SUPABASE_ORQ_CFG.SUCCESS_STATUSES.indexOf(status) === -1) {
-    if (['ERROR', 'PARTIAL', 'BLOCKED', 'STALE_RESET', 'CANCELLED'].indexOf(status) !== -1) {
+  if (avaliacao.acao !== 'SEGUIR') {
+    if (avaliacao.acao === 'BLOQUEAR') {
       registrarFalhaEstadoOrq_(state, 'FATO terminou com status ' + status + '. Supabase incremental bloqueado.');
       limparEstadoFatoSupabase_();
       return logResultadoOrq_({
@@ -317,6 +324,10 @@ function concluirFatoEIniciarIncremental_(state) {
     });
   }
 
+  if (status === 'PARTIAL') {
+    Logger.log('Orquestrador: FATO em PARTIAL (' + avaliacao.motivo + '); o incremental segue com as vagas sem erro.');
+  }
+
   state.phase = 'WAIT_INCREMENTAL';
   state.fato_status = status;
   state.fato_confirmed_at = new Date().toISOString();
@@ -325,6 +336,41 @@ function concluirFatoEIniciarIncremental_(state) {
 
   // Agora sim: somente apos a FATO estar confirmada.
   return iniciarOuRetomarIncrementalFatoSupabase_(state, false);
+}
+
+/**
+ * [parcial-nao-trava] A FATO pode ir para o banco? Funcao pura, testada em
+ * tests/apps-script-analises-full.test.js.
+ *   SEGUIR    SUCCESS/NO_CHANGES, ou PARTIAL com a FATO promovida nesta execucao
+ *             (last_success_at e last_run_finished_at gravados juntos);
+ *   BLOQUEAR  ERROR, BLOCKED, STALE_RESET, CANCELLED, ou PARTIAL sem promocao confirmada;
+ *   AGUARDAR  qualquer outro (RUNNING, vazio).
+ */
+function avaliarFatoParaIncrementalOrq_(meta) {
+  const m = meta || {};
+  const status = String(m.last_run_status || '').toUpperCase();
+  if (FATO_SUPABASE_ORQ_CFG.SUCCESS_STATUSES.indexOf(status) !== -1) return { acao: 'SEGUIR', motivo: status };
+  if (status === 'PARTIAL') {
+    const sucesso = dataDaMetaOrq_(m.last_success_at);
+    const fim = dataDaMetaOrq_(m.last_run_finished_at);
+    if (sucesso != null && fim != null && Math.abs(fim - sucesso) <= FATO_SUPABASE_ORQ_CFG.PARTIAL_MAX_SUCCESS_GAP_MS) {
+      return { acao: 'SEGUIR', motivo: 'FATO promovida; ' + (Number(m.sources_error) || 0) + ' vaga(s) com erro mantiveram as linhas anteriores' };
+    }
+    return { acao: 'BLOQUEAR', motivo: 'PARTIAL sem promocao confirmada da FATO (last_success_at)' };
+  }
+  if (FATO_SUPABASE_ORQ_CFG.UNSAFE_STATUSES.indexOf(status) !== -1) return { acao: 'BLOQUEAR', motivo: status };
+  return { acao: 'AGUARDAR', motivo: status || 'sem status' };
+}
+
+// Data da META_PAINEL (yyyy-MM-dd HH:mm:ss ou dd/MM/yyyy HH:mm:ss) em ms, so para comparar duas
+// datas da mesma aba (o fuso nao importa). Nula se vazia ou em outro formato.
+function dataDaMetaOrq_(valor) {
+  const t = String(valor == null ? '' : valor).trim();
+  const iso = t.match(/^(\d{4})-(\d{2})-(\d{2})[ T](\d{1,2}):(\d{2})(?::(\d{2}))?/);
+  const br = t.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})[ ,]+(\d{1,2}):(\d{2})(?::(\d{2}))?/);
+  const p = iso ? [iso[1], iso[2], iso[3], iso[4], iso[5], iso[6]] : (br ? [br[3], br[2], br[1], br[4], br[5], br[6]] : null);
+  if (!p) return null;
+  return Date.UTC(Number(p[0]), Number(p[1]) - 1, Number(p[2]), Number(p[3]), Number(p[4]), Number(p[5] || 0));
 }
 
 function acompanharIncrementalFatoSupabase_(state) {

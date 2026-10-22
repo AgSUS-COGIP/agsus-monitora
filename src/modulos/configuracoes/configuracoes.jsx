@@ -312,6 +312,13 @@ function DialogoDeRevisao({ estado, modal }) {
       {modal.erro ? (
         <Alerta titulo="Não foi possível publicar." detalhe={modal.erro} />
       ) : null}
+      {modal.conflitos?.length ? (
+        <Alerta
+          tom="warning"
+          titulo="Outro administrador mudou depois que você abriu:"
+          detalhe={`${modal.conflitos.map((c) => (c.entity === "Painel" ? `${c.label} (${c.field})` : c.label)).join(", ")}. Publicar substitui esses valores.`}
+        />
+      ) : null}
       <div className="config-governance-summary">
         <strong>
           {plural(total, "alteração encontrada", "alterações encontradas")}

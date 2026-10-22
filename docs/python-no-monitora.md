@@ -39,6 +39,7 @@ Só biblioteca padrão — não pesa na Vercel nem nos jobs.
 | `monitora.registro`     | `registro("nome")`: logger que passa toda mensagem (e exceção) pelo mascaramento                                                                            |
 | `monitora.supabase_rpc` | `configuracao(guia)` e `chamar(config, "rpc", corpo)`: RPC com a `service_role`, repetindo só erro de rede/5xx, erro mascarado                              |
 | `monitora.execucao`     | `disparo(...)` (AGENDA/MONITORA/GITHUB), `identificador(prefixo=…)`, `url_da_execucao()` e `resumir(titulo, linhas)` (GITHUB_STEP_SUMMARY)                  |
+| `monitora.fuso`         | `FUSO` (America/Sao_Paulo) e `hoje_em_brasilia()`: a data de hoje das regras (o runner é UTC; nunca `date.today()`)                                         |
 
 Quem usa hoje: o robô da Empregare (`scripts/robo-empregare/`), as conferências
 (`scripts/conferencias/`) e a pré-classificação da Avaliação documental (`scripts/pre_classificacao/`,
@@ -162,9 +163,10 @@ distribuição inicial, depois que a coordenação distribuiu, as fichas novas j
 menos pendentes (`distribuicao.atribuicoes_dos_novos`); o banco valida cada atribuição, marca
 "Fora do lote" quem saiu eliminado e o resumo mostra quantas fichas abriu, atribuiu e tirou do lote.
 
-- **Quando roda:** no fim de cada carga normal ou forçada do robô da Empregare (passo
-  "Pré-classificar" em `robo-empregare.yml`, `DISPARADO_POR=robo`, `--apos-robo`; uma falha ali não
-  muda o resultado do robô), pelo "Recalcular" da aba Pré-classificação (só a coordenação do edital;
+- **Quando roda:** no fim de cada carga normal ou forçada do robô da Empregare que gravou alguma
+  vaga (job "Pré-classificar" em `robo-empregare.yml`, que chama `pre-classificacao.yml` por
+  `workflow_call` com `apos_robo`, no grupo de concorrência `pre-classificacao`;
+  `DISPARADO_POR=robo`, `--apos-robo`; uma falha ali não muda o resultado do robô), pelo "Recalcular" da aba Pré-classificação (só a coordenação do edital;
   a RPC `disparar_robo` confere `pode_recalcular_pre_classificacao` de quem clicou e
   manda `editais` = o id do edital), pelo "Rodar agora" do Status das atualizações (todos) e pelo
   "Run workflow".

@@ -9,6 +9,9 @@ import { mostrarNotificacao } from "../modules/notificacao.js";
 
 const $ = (id) => globalThis.document?.getElementById(id);
 
+/** Disparado no document quando o `#loader` aparece ou some. */
+export const EVENTO_DO_CARREGAMENTO = "agsus:carregamento-alterado";
+
 /** Notificação curta: `tom` é "ok" (padrão), "info", "warn" ou "error". */
 export function avisar(texto, tom = "ok") {
   mostrarNotificacao($("toastBox"), texto, tom);
@@ -30,4 +33,5 @@ export function mostrarCarregamento(
   $("loaderSub").textContent = subtitulo;
   $("loaderPct").textContent = Math.round(percentual) + "%";
   $("loaderBar").style.width = Math.max(0, Math.min(100, percentual)) + "%";
+  documento.dispatchEvent(new CustomEvent(EVENTO_DO_CARREGAMENTO));
 }

@@ -156,7 +156,7 @@ describe("Classificação após mudança de contexto", () => {
       e = criarEstadoDaClassificacao({ supabase: b.supabase, toast });
     await e.carregar("a");
     await e.escolherEdital("A");
-    const p = e.publicarLista("l1");
+    const p = e.publicarLista({ id: "l1" }, null);
     await e.carregar("b");
     b.pendentes[0].resolver({ data: { id: "l1" }, error: null });
     expect(await p).toBeNull();

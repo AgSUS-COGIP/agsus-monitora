@@ -16,7 +16,8 @@ interface RascunhoDaResposta {
   modelo: ModeloEscolhivel | null;
   fundamentacao: string;
 }
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { guardaDeAlteracoes } from "../../app/guarda-de-alteracoes.ts";
 import {
   modelosAplicaveis,
   renderizarModelo,
@@ -311,6 +312,21 @@ export function SecaoDaResposta({
     alterada: editavel && Boolean(resposta) && alterada,
   });
   const salvando = acao?.tipo === "resposta:salvar";
+  // Texto ainda não salvo: o F5 e o fechar pedem confirmação, a versão nova do
+  // sistema espera e a página desligada não fecha (guarda-de-alteracoes.ts).
+  const naoSalva =
+    editavel &&
+    (resposta ? alterada : rascunho.fundamentacao.trim().length > 0);
+  const naoSalvaRef = useRef(naoSalva);
+  naoSalvaRef.current = naoSalva;
+  useEffect(
+    () =>
+      guardaDeAlteracoes.registrar({
+        comAlteracoes: () => naoSalvaRef.current,
+        naoGuardado: () => naoSalvaRef.current,
+      }),
+    [],
+  );
 
   if (!detalhe || detalhe.erro) return null;
   if (!resposta && !podeEditar)

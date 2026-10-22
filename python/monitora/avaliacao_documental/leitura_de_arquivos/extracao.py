@@ -22,11 +22,20 @@ método (TEXTO ou OCR, o que predominou), a confiança média do OCR (0 a 1) e a
 data de criação do PDF (metadados), limite dos dias do vínculo atual quando o
 documento não diz a data de emissão. Limites: MAXIMO_DE_PAGINAS páginas lidas e
 MAXIMO_DE_PAGINAS_NO_OCR com OCR (o resto conta como não lido e vira alerta).
+
+Arquivo pesado não trava o lote: a página vai ao OCR com no máximo
+LADO_MAXIMO_DA_IMAGEM px no lado maior (o PDF já é renderizado nesse tamanho,
+a imagem enorme é reduzida); cada chamada do Tesseract tem `timeout`; a página
+tem PRAZO_DA_PAGINA segundos (passou, fica a melhor leitura até ali, sem tentar
+outros modos) e o arquivo, PRAZO_DO_ARQUIVO (passou, `erro` = "arquivo_demorado":
+o robô grava ERRO e o arquivo vai para o fim da fila, em vez de segurar a execução).
 pdfplumber, Pillow e pytesseract são importados só aqui, na hora (OpenCV, em `imagem`).
 """
 
+import inspect
 import io
 import re
+import time
 import zipfile
 from dataclasses import dataclass, field
 from datetime import date
@@ -45,6 +54,11 @@ CONFIANCA_BOA = 0.80  # OCR com isso ou mais: a primeira leitura basta (não ten
 CONFIANCA_DA_ORIENTACAO = 1.5  # orientation_conf da OSD a partir da qual se gira sem olhar outra versão
 MODOS_EXTRAS = (4, 6, 11)  # --psm tentados quando a primeira leitura (3) é fraca
 LADO_MINIMO_DA_IMAGEM = 1600  # px: imagem menor é ampliada antes do OCR
+LADO_MAXIMO_DA_IMAGEM = 4000  # px: PDF renderizado e imagem reduzidos a isso no lado maior
+TEMPO_DO_TESSERACT = 60  # segundos por chamada do Tesseract (image_to_data, image_to_osd)
+PRAZO_DA_PAGINA = 120  # segundos de OCR por página (passou: fica a melhor leitura até ali)
+PRAZO_DO_ARQUIVO = 300  # segundos por arquivo (passou: erro ERRO_DE_PRAZO)
+ERRO_DE_PRAZO = "arquivo_demorado"
 IDIOMA_DO_OCR = "por"
 
 
@@ -91,6 +105,37 @@ class OcrIndisponivel(RuntimeError):
     """O Tesseract não está instalado (o workflow instala; na máquina local, pule o OCR)."""
 
 
+class PrazoEsgotado(RuntimeError):
+    """O arquivo passou do prazo (pesado ou lento demais): vira erro do arquivo, não da execução."""
+
+
+class _Prazos:
+    """O prazo do arquivo e o de cada página, no relógio monotônico (o de teste é injetado)."""
+
+    def __init__(self, segundos=PRAZO_DO_ARQUIVO, relogio=time.monotonic):
+        self.relogio = relogio
+        self.arquivo = relogio() + segundos
+
+    def conferir(self):
+        if self.relogio() >= self.arquivo:
+            raise PrazoEsgotado(ERRO_DE_PRAZO)
+
+    def da_pagina(self):
+        return min(self.arquivo, self.relogio() + PRAZO_DA_PAGINA)
+
+
+def _tempo_do_tesseract(prazo, relogio=time.monotonic):
+    """Segundos para a próxima chamada do Tesseract (até TEMPO_DO_TESSERACT); 0 se o prazo já passou."""
+    if prazo is None:
+        return TEMPO_DO_TESSERACT
+    return max(0, min(TEMPO_DO_TESSERACT, int(prazo - relogio())))
+
+
+def _estourou_o_tempo(erro):
+    """O pytesseract avisa o `timeout` com RuntimeError("Tesseract process timeout")."""
+    return isinstance(erro, RuntimeError) and "timeout" in str(erro).lower()
+
+
 def formato_do_conteudo(conteudo):
     """PDF, IMAGEM, DOCX, TXT ou OUTRO pelos primeiros bytes."""
     cabeca = bytes(conteudo[:8])
@@ -117,32 +162,51 @@ def formato_do_conteudo(conteudo):
     return "OUTRO"
 
 
-def ocr_tesseract(imagem):
+def ocr_tesseract(imagem, prazo=None, relogio=time.monotonic):
     """(texto, confiança 0–1, palavras com posição) de uma imagem PIL pelo Tesseract em português.
 
     A imagem é arrumada antes (`imagem.variantes`: tamanho, perspectiva, sombra, inclinação). A primeira
     leitura (--psm 3, a página inteira) basta quando a confiança é boa; senão, gira pela orientação que o
     Tesseract detecta (OSD: de lado, de cabeça para baixo) e tenta os outros modos (--psm 4 colunas, 6 bloco,
     11 texto esparso, bom para carimbo e formulário) e a versão binarizada, e fica com a que leu MAIS texto
-    confiável (a soma da confiança das palavras boas, não a média: o modo esparso lê pouco e "confiante")."""
+    confiável (a soma da confiança das palavras boas, não a média: o modo esparso lê pouco e "confiante").
+
+    `prazo` (relógio monotônico): o fim do tempo da página. Cada chamada do Tesseract leva `timeout`; a primeira
+    leitura que não termina a tempo levanta PrazoEsgotado; depois dela, o prazo só corta as tentativas extras."""
+
+    def tempo():
+        return _tempo_do_tesseract(prazo, relogio)
+
     candidatas = _imagem.variantes(imagem)
     base = candidatas["cinza"]
-    melhor = _ocr_uma_vez(base, 3)
-    if melhor.confianca >= CONFIANCA_BOA:
+    try:
+        melhor = _ocr_uma_vez(base, 3, tempo() or 1)
+    except RuntimeError as erro:
+        if _estourou_o_tempo(erro):
+            raise PrazoEsgotado(ERRO_DE_PRAZO) from None
+        raise
+    if melhor.confianca >= CONFIANCA_BOA or not tempo():
         return melhor.texto, melhor.confianca, melhor.palavras
-    graus = _graus_da_orientacao(base, candidatas.get("binarizada"))
+    graus = _graus_da_orientacao(base, candidatas.get("binarizada"), tempo=tempo)
+    tentativas = []
     if graus:
         base = _girar(base, graus)
-        melhor = max(melhor, _ocr_uma_vez(base, 3), key=_pontos)
-        if melhor.confianca >= CONFIANCA_BOA:
-            return melhor.texto, melhor.confianca, melhor.palavras
+        tentativas.append((base, 3))
         if "binarizada" in candidatas:
             candidatas["binarizada"] = _girar(candidatas["binarizada"], graus)
-    tentativas = [(base, psm) for psm in MODOS_EXTRAS]
+    tentativas.extend((base, psm) for psm in MODOS_EXTRAS)
     if "binarizada" in candidatas:
         tentativas.append((candidatas["binarizada"], 6))
     for imagem_da_vez, psm in tentativas:
-        leitura = _ocr_uma_vez(imagem_da_vez, psm)
+        segundos = tempo()
+        if not segundos:
+            break
+        try:
+            leitura = _ocr_uma_vez(imagem_da_vez, psm, segundos)
+        except RuntimeError as erro:
+            if _estourou_o_tempo(erro):
+                break
+            raise
         if _pontos(leitura) > _pontos(melhor):
             melhor = leitura
         if melhor.confianca >= CONFIANCA_BOA:
@@ -158,16 +222,22 @@ def _girar(imagem, graus):
     return imagem.rotate(-graus, expand=True, fillcolor=255) if graus % 360 else imagem
 
 
-def _graus_da_orientacao(*imagens):
+def _graus_da_orientacao(*imagens, tempo=lambda: TEMPO_DO_TESSERACT):
     """Quantos graus girar para a imagem ficar em pé, pela OSD do Tesseract (na primeira das `imagens` em que a
-    OSD tem confiança; a binarizada às vezes decide quando o cinza não); 0 se já está em pé ou a OSD falhou."""
+    OSD tem confiança; a binarizada às vezes decide quando o cinza não); 0 se já está em pé, a OSD falhou ou
+    acabou o tempo (`tempo()`: os segundos que restam para a chamada)."""
     melhor = (0.0, 0)
     for imagem in (i for i in imagens if i is not None):
+        segundos = tempo()
+        if not segundos:
+            break
         try:
             import pytesseract
 
-            osd = pytesseract.image_to_osd(imagem, config="--psm 0", output_type=pytesseract.Output.DICT)
-        except Exception:  # pragma: no cover - sem osd.traineddata, pouco texto etc.
+            osd = pytesseract.image_to_osd(
+                imagem, config="--psm 0", output_type=pytesseract.Output.DICT, timeout=segundos
+            )
+        except Exception:  # pragma: no cover - sem osd.traineddata, pouco texto, timeout etc.
             continue
         confianca, graus = float(osd.get("orientation_conf") or 0), int(osd.get("rotate") or 0) % 360
         if confianca >= CONFIANCA_DA_ORIENTACAO:
@@ -184,14 +254,14 @@ class _LeituraOcr:
     pontos: float
 
 
-def _ocr_uma_vez(imagem, psm=3):
+def _ocr_uma_vez(imagem, psm=3, timeout=TEMPO_DO_TESSERACT):
     try:
         import pytesseract
     except ImportError as erro:  # pragma: no cover - depende do ambiente
         raise OcrIndisponivel("pytesseract ausente") from erro
     try:
         dados = pytesseract.image_to_data(
-            imagem, lang=IDIOMA_DO_OCR, config=f"--psm {psm}", output_type=pytesseract.Output.DICT
+            imagem, lang=IDIOMA_DO_OCR, config=f"--psm {psm}", output_type=pytesseract.Output.DICT, timeout=timeout
         )
     except pytesseract.TesseractNotFoundError as erro:  # pragma: no cover - depende do ambiente
         raise OcrIndisponivel("tesseract ausente") from erro
@@ -215,9 +285,24 @@ def _ocr_uma_vez(imagem, psm=3):
     return _LeituraOcr(texto, confianca, palavras_do_tesseract(dados), pontos)
 
 
-def _chamar_ocr(ocr, imagem):
-    """(texto, confiança, palavras) do OCR; o OCR pode devolver só (texto, confiança) (o falso dos testes)."""
-    resultado = ocr(imagem)
+def _parametros(ocr):
+    try:
+        return inspect.signature(ocr).parameters
+    except (TypeError, ValueError):
+        return {}
+
+
+def _chamar_ocr(ocr, imagem, prazos=None):
+    """(texto, confiança, palavras) do OCR; o OCR pode devolver só (texto, confiança) (o falso dos testes).
+    O OCR que aceita `prazo` (ocr_tesseract) recebe o fim do tempo da página e o relógio dos prazos."""
+    parametros = _parametros(ocr) if prazos is not None else {}
+    if "prazo" in parametros:
+        extras = {"prazo": prazos.da_pagina()}
+        if "relogio" in parametros:
+            extras["relogio"] = prazos.relogio
+        resultado = ocr(imagem, **extras)
+    else:
+        resultado = ocr(imagem)
     if len(resultado) >= 3:
         return resultado[0], resultado[1], resultado[2]
     return resultado[0], resultado[1], None
@@ -233,7 +318,19 @@ def _preparar_imagem(imagem):
     if maior and maior < LADO_MINIMO_DA_IMAGEM:
         fator = LADO_MINIMO_DA_IMAGEM / maior
         imagem = imagem.resize((round(imagem.width * fator), round(imagem.height * fator)))
+    elif maior > LADO_MAXIMO_DA_IMAGEM:
+        fator = LADO_MAXIMO_DA_IMAGEM / maior
+        imagem = imagem.resize((max(1, round(imagem.width * fator)), max(1, round(imagem.height * fator))))
     return imagem.convert("L")
+
+
+def resolucao_limitada(largura, altura, resolucao):
+    """A resolução (dpi) para renderizar a página de `largura` × `altura` pontos sem passar de
+    LADO_MAXIMO_DA_IMAGEM px no lado maior (página enorme, A0, foto colada num PDF gigante)."""
+    maior = max(float(largura or 0), float(altura or 0))
+    if maior <= 0:
+        return resolucao
+    return min(resolucao, LADO_MAXIMO_DA_IMAGEM * 72 / maior)
 
 
 def data_dos_metadados(metadados):
@@ -249,7 +346,7 @@ def data_dos_metadados(metadados):
     return valor if 2000 <= valor.year <= 2100 else None
 
 
-def _ler_pdf(conteudo, ocr, leitura):
+def _ler_pdf(conteudo, ocr, leitura, prazos=None):
     import pdfplumber
 
     releitura = ocr is not ocr_tesseract or not _imagem.disponivel()
@@ -258,6 +355,8 @@ def _ler_pdf(conteudo, ocr, leitura):
         leitura.data_do_arquivo = data_dos_metadados(pdf.metadata)
         com_ocr = 0
         for i, pagina in enumerate(pdf.pages[:MAXIMO_DE_PAGINAS], start=1):
+            if prazos is not None:
+                prazos.conferir()
             texto = preparar(pagina.extract_text() or "")
             if letras(texto) >= MINIMO_DE_LETRAS_DA_PAGINA:
                 leitura.paginas.append(
@@ -275,12 +374,17 @@ def _ler_pdf(conteudo, ocr, leitura):
                 if texto:
                     leitura.paginas.append(Pagina(i, texto, "TEXTO"))
                 continue
-            imagem = pagina.to_image(resolution=RESOLUCAO_DO_OCR).original
-            texto_ocr, confianca, palavras = _chamar_ocr(ocr, _preparar_imagem(imagem))
+            resolucao = resolucao_limitada(pagina.width, pagina.height, RESOLUCAO_DO_OCR)
+            imagem = pagina.to_image(resolution=resolucao).original
+            texto_ocr, confianca, palavras = _chamar_ocr(ocr, _preparar_imagem(imagem), prazos)
             # A 400 dpi de novo só sem a arrumação do OpenCV: com ela, ocr_tesseract já amplia e tenta os modos.
-            if confianca is not None and confianca < CONFIANCA_PARA_RELER and releitura:
-                maior = pagina.to_image(resolution=RESOLUCAO_DA_SEGUNDA_LEITURA).original
-                texto_maior, confianca_maior, palavras_maior = _chamar_ocr(ocr, _preparar_imagem(maior))
+            # Não relê a página que já chegou ao limite de pixels (a resolução maior seria a mesma).
+            maior_resolucao = resolucao_limitada(pagina.width, pagina.height, RESOLUCAO_DA_SEGUNDA_LEITURA)
+            if confianca is not None and confianca < CONFIANCA_PARA_RELER and releitura and maior_resolucao > resolucao:
+                if prazos is not None:
+                    prazos.conferir()
+                maior = pagina.to_image(resolution=maior_resolucao).original
+                texto_maior, confianca_maior, palavras_maior = _chamar_ocr(ocr, _preparar_imagem(maior), prazos)
                 if (confianca_maior or 0) > confianca:
                     texto_ocr, confianca, palavras = texto_maior, confianca_maior, palavras_maior
             com_ocr += 1
@@ -288,7 +392,7 @@ def _ler_pdf(conteudo, ocr, leitura):
         leitura.paginas_sem_leitura += max(0, leitura.total_de_paginas - MAXIMO_DE_PAGINAS)
 
 
-def _ler_pdf_pelo_pdfium(conteudo, ocr, leitura):
+def _ler_pdf_pelo_pdfium(conteudo, ocr, leitura, prazos=None):
     """Plano B do PDF: abre com o PDFium (pypdfium2, que já vem com o pdfplumber)."""
     import pypdfium2 as pdfium
 
@@ -297,6 +401,8 @@ def _ler_pdf_pelo_pdfium(conteudo, ocr, leitura):
         leitura.total_de_paginas = len(pdf)
         com_ocr = 0
         for i in range(min(len(pdf), MAXIMO_DE_PAGINAS)):
+            if prazos is not None:
+                prazos.conferir()
             pagina = pdf[i]
             try:
                 texto = preparar(pagina.get_textpage().get_text_range() or "")
@@ -308,8 +414,9 @@ def _ler_pdf_pelo_pdfium(conteudo, ocr, leitura):
             if ocr is None or com_ocr >= MAXIMO_DE_PAGINAS_NO_OCR:
                 leitura.paginas_sem_leitura += 1
                 continue
-            imagem = pagina.render(scale=RESOLUCAO_DO_OCR / 72).to_pil()
-            texto_ocr, confianca, palavras = _chamar_ocr(ocr, _preparar_imagem(imagem))
+            largura, altura = pagina.get_size()
+            imagem = pagina.render(scale=resolucao_limitada(largura, altura, RESOLUCAO_DO_OCR) / 72).to_pil()
+            texto_ocr, confianca, palavras = _chamar_ocr(ocr, _preparar_imagem(imagem), prazos)
             com_ocr += 1
             leitura.paginas.append(Pagina(i + 1, preparar(texto_ocr), "OCR", confianca, palavras))
         leitura.paginas_sem_leitura += max(0, leitura.total_de_paginas - MAXIMO_DE_PAGINAS)
@@ -317,18 +424,34 @@ def _ler_pdf_pelo_pdfium(conteudo, ocr, leitura):
         pdf.close()
 
 
-def _ler_imagem(conteudo, ocr, leitura):
+def _ler_imagem(conteudo, ocr, leitura, prazos=None):
+    """Cada quadro (página do TIFF, WebP animado) vai ao OCR. O iterador do Pillow devolve sempre o MESMO objeto,
+    só posicionado em outro quadro: a cópia é feita dentro do laço, senão todas as páginas seriam a última."""
     from PIL import Image, ImageSequence
 
     with Image.open(io.BytesIO(conteudo)) as imagem:
-        quadros = list(ImageSequence.Iterator(imagem))[:MAXIMO_DE_PAGINAS_NO_OCR]
-        leitura.total_de_paginas = len(quadros)
+        leitura.total_de_paginas = max(1, int(getattr(imagem, "n_frames", 1) or 1))
         if ocr is None:
-            leitura.paginas_sem_leitura = len(quadros)
+            leitura.paginas_sem_leitura = leitura.total_de_paginas
             return
-        for i, quadro in enumerate(quadros, start=1):
-            texto, confianca, palavras = _chamar_ocr(ocr, _preparar_imagem(quadro.copy()))
+        _reduzir_na_decodificacao(imagem)
+        for i, quadro in enumerate(ImageSequence.Iterator(imagem), start=1):
+            if i > MAXIMO_DE_PAGINAS_NO_OCR:
+                break
+            if prazos is not None:
+                prazos.conferir()
+            copia = quadro.copy()
+            texto, confianca, palavras = _chamar_ocr(ocr, _preparar_imagem(copia), prazos)
             leitura.paginas.append(Pagina(i, preparar(texto), "OCR", confianca, palavras))
+        leitura.paginas_sem_leitura += max(0, leitura.total_de_paginas - MAXIMO_DE_PAGINAS_NO_OCR)
+
+
+def _reduzir_na_decodificacao(imagem):
+    """JPEG enorme já é decodificado reduzido (draft, em potências de 2), sem ficar menor que o limite."""
+    maior = max(imagem.size)
+    if imagem.format == "JPEG" and maior > LADO_MAXIMO_DA_IMAGEM:
+        fator = LADO_MAXIMO_DA_IMAGEM / maior
+        imagem.draft(imagem.mode, (max(1, int(imagem.width * fator)), max(1, int(imagem.height * fator))))
 
 
 def _ler_docx(conteudo, leitura):
@@ -352,34 +475,40 @@ def _ler_txt(conteudo, leitura):
     leitura.paginas.append(Pagina(1, preparar(texto), "TEXTO"))
 
 
-def ler_paginas(conteudo, ocr=ocr_tesseract):
+def ler_paginas(conteudo, ocr=ocr_tesseract, prazo=PRAZO_DO_ARQUIVO, relogio=time.monotonic):
     """
     A `Leitura` do arquivo. `ocr`: função imagem → (texto, confiança); None não faz OCR.
     Arquivo corrompido ou protegido: `erro` com um código curto (sem dado pessoal).
+    `prazo`: segundos para o arquivo inteiro; passou, `erro` = ERRO_DE_PRAZO (sem as páginas lidas até ali).
     """
     formato = formato_do_conteudo(conteudo)
     leitura = Leitura(formato)
+    prazos = _Prazos(prazo, relogio)
     try:
         if formato == "PDF":
             try:
-                _ler_pdf(conteudo, ocr, leitura)
+                _ler_pdf(conteudo, ocr, leitura, prazos=prazos)
                 if not leitura.total_de_paginas:
                     raise ValueError("pdf sem páginas no pdfplumber")
-            except OcrIndisponivel:
+            except (OcrIndisponivel, PrazoEsgotado):
                 raise
             except Exception:
                 # PDF que o pdfplumber não abre (estrutura quebrada, xref ruim, gerado por
                 # celular/scanner): o PDFium é mais tolerante — página vira imagem e vai ao OCR.
                 leitura = Leitura(formato)
-                _ler_pdf_pelo_pdfium(conteudo, ocr, leitura)
+                _ler_pdf_pelo_pdfium(conteudo, ocr, leitura, prazos=prazos)
         elif formato == "IMAGEM":
-            _ler_imagem(conteudo, ocr, leitura)
+            _ler_imagem(conteudo, ocr, leitura, prazos=prazos)
         elif formato == "DOCX":
             _ler_docx(conteudo, leitura)
         elif formato == "TXT":
             _ler_txt(conteudo, leitura)
     except OcrIndisponivel:
         raise
+    except PrazoEsgotado:
+        leitura.paginas = []
+        leitura.erro = ERRO_DE_PRAZO
+        return leitura
     except Exception as erro:  # arquivo corrompido, senha, formato estranho: não derruba o lote
         leitura.erro = f"{formato.lower()}_{type(erro).__name__}"[:60]
     return leitura

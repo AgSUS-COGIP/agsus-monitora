@@ -514,12 +514,13 @@ export function GavetaDoUsuario({ estado, secoesDeConfiguracao = [] }) {
       coordenacao,
       areasMarcadas: areasMarcadasDaLinha(usuario, rascunho, areas),
     });
-  // Nível em "acessos" no rascunho: exceção da pessoa ou, sem ela, o do grupo escolhido.
-  const excecaoAcessos = celulaExibida(usuario, "acessos", rascunho);
-  const nivelAcessos =
-    excecaoAcessos?.origem === "excecao"
-      ? excecaoAcessos.nivel
-      : grupo?.niveis?.acessos || excecaoAcessos?.nivel;
+  // Nível em "acessos" no rascunho: o individual da pessoa ou, sem ele, o do grupo escolhido.
+  const nivelAcessos = celulaExibida(
+    usuario,
+    "acessos",
+    rascunho,
+    gruposPorCodigo,
+  ).nivel;
   const semCoordenacao =
     usuario.ativo !== false &&
     gerenciariaAcessosSemCoordenacao({

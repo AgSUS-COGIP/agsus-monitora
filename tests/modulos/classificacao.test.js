@@ -1159,3 +1159,152 @@ describe("Classificação: aguardando análise e geração guardada desatualizad
     expect(secao.querySelector("[data-acao='publicar']").disabled).toBe(true);
   });
 });
+
+describe("Classificação: convocação e publicação conferidas", () => {
+  const LISTA_GUARDADA = {
+    id: "l0",
+    tipo: "FINAL",
+    versao_regra: 2,
+    hash: "a".repeat(64),
+    gerada_em: "2026-10-21T19:10:10Z",
+    por: "Ana",
+    pendencias: 0,
+    publicada: false,
+  };
+
+  /* O retrato que o "Gerar" grava com os dados de EDITAL. */
+  async function retratoGerado() {
+    const supabase = supabaseFalso();
+    await montar(supabase);
+    await abrirEdital();
+    await clicar(secao.querySelector("[data-acao='gerar']"));
+    await esperar();
+    const chamada = supabase.rpc.mock.calls.find(
+      ([nome]) => nome === "registrar_lista_classificacao",
+    );
+    await act(async () => painel.raiz.unmount());
+    secao.remove();
+    toast.mockClear();
+    return chamada[1].p_resultado;
+  }
+
+  /* O edital com a lista l0 já registrada; `notaDoCaio` muda os dados depois da geração. */
+  function comListaGuardada(retrato, { notaDoCaio = "9,0", extra = {} } = {}) {
+    return supabaseFalso({
+      obter_classificacao_do_edital: () => {
+        const edital = structuredClone(EDITAL);
+        edital.candidatos[2].nota_documental = notaDoCaio;
+        return { ...edital, listas: [structuredClone(LISTA_GUARDADA)] };
+      },
+      obter_lista_classificacao: () => ({
+        lista: structuredClone(LISTA_GUARDADA),
+        resultado: structuredClone(retrato),
+      }),
+      ...extra,
+    });
+  }
+  const chamou = (supabase, nome) =>
+    supabase.rpc.mock.calls.some(([n]) => n === nome);
+
+  it("falha de rede na convocação: avisa, bloqueia o Gerar e libera ao ler de novo", async () => {
+    let falhar = true;
+    const supabase = supabaseFalso({
+      listar_configuracao_convocacao: () => {
+        if (falhar) throw new Error("Failed to fetch");
+        return [];
+      },
+    });
+    await montar(supabase);
+    await abrirEdital();
+    const aviso = secao.querySelector(".classificacao-erro-convocacao");
+    expect(aviso.textContent).toContain(
+      "Não foi possível carregar a convocação do edital",
+    );
+    expect(secao.querySelector("[data-acao='gerar']").disabled).toBe(true);
+
+    falhar = false;
+    await clicar(aviso.querySelector("[data-acao='tentar-novamente']"));
+    await esperar();
+    expect(secao.querySelector(".classificacao-erro-convocacao")).toBeNull();
+    expect(secao.querySelector("[data-acao='gerar']").disabled).toBe(false);
+  });
+
+  it("sem acesso à convocação (42501): segue com a regra, sem aviso", async () => {
+    const supabase = supabaseFalso({
+      listar_configuracao_convocacao: () => {
+        throw Object.assign(new Error("sem acesso"), { code: "42501" });
+      },
+    });
+    await montar(supabase);
+    await abrirEdital();
+    expect(secao.querySelector(".classificacao-erro-convocacao")).toBeNull();
+    expect(secao.querySelector("[data-acao='gerar']").disabled).toBe(false);
+  });
+
+  it("'Marcar como publicada' confere o retrato: nota mudou, não publica e pede para gerar de novo", async () => {
+    const retrato = await retratoGerado();
+    const supabase = comListaGuardada(retrato, { notaDoCaio: "9,5" });
+    await montar(supabase);
+    await abrirEdital();
+    await clicar(secao.querySelector("[data-acao='publicar']"));
+    await esperar();
+    expect(toast).toHaveBeenCalledWith(
+      expect.stringContaining("Gere de novo antes de publicar"),
+      "error",
+    );
+    expect(chamou(supabase, "publicar_lista_classificacao")).toBe(false);
+  });
+
+  it("'Marcar como publicada' com o retrato em dia publica e mostra 'Publicando…' enquanto espera", async () => {
+    const retrato = await retratoGerado();
+    const supabase = comListaGuardada(retrato);
+    const responder = supabase.rpc;
+    let soltar;
+    supabase.rpc = vi.fn((nome, args) =>
+      nome === "publicar_lista_classificacao"
+        ? new Promise((resolver) => {
+            soltar = () =>
+              resolver({
+                data: { ...LISTA_GUARDADA, publicada: true },
+                error: null,
+              });
+          })
+        : responder(nome, args),
+    );
+    await montar(supabase);
+    await abrirEdital();
+    await clicar(secao.querySelector("[data-acao='publicar']"));
+    await esperar();
+    const enviando = secao.querySelector("[data-acao='publicar']");
+    expect(enviando.textContent).toBe("Publicando…");
+    expect(enviando.disabled).toBe(true);
+    await act(async () => soltar());
+    await esperar();
+    expect(toast).toHaveBeenCalledWith(
+      "Lista marcada como publicada.",
+      "success",
+    );
+  });
+
+  it("'Publicar como lista de aprovados' também confere: nota mudou, a prévia pede para gerar de novo", async () => {
+    const retrato = await retratoGerado();
+    const supabase = comListaGuardada(retrato, {
+      notaDoCaio: "9,5",
+      extra: { obter_publicacao_lista_aprovados: () => ({ vigente: null }) },
+    });
+    await montar(supabase);
+    await abrirEdital();
+    await clicar(secao.querySelector("[data-acao='publicar-aprovados']"));
+    await esperar();
+    const modal = document.getElementById("classificacaoPublicarAprovados");
+    expect(modal.querySelector("[role='alert']").textContent).toContain(
+      "Gere de novo antes de publicar",
+    );
+    expect(
+      modal.querySelector("[data-acao='confirmar-publicacao-aprovados']"),
+    ).toBeNull();
+    expect(chamou(supabase, "publicar_lista_aprovados_da_classificacao")).toBe(
+      false,
+    );
+  });
+});

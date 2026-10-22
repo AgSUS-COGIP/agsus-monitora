@@ -792,7 +792,7 @@ class DetalhesDaResposta(unittest.TestCase):
     def test_grava_com_a_coluna_em_lotes_e_404_so_avisa(self):
         chamadas = []
 
-        def chamar(_config, funcao, corpo):
+        def chamar(_config, funcao, corpo, tentativas=3):
             chamadas.append((funcao, corpo))
             return {
                 "respostas": len(corpo["p_respostas"]),
@@ -877,7 +877,7 @@ class PrioridadeDosAnexos(unittest.TestCase):
     def prioridades(self, erro=None):
         chamadas = []
 
-        def chamar(_config, funcao, corpo):
+        def chamar(_config, funcao, corpo, tentativas=3):
             chamadas.append((funcao, corpo))
             if erro:
                 raise erro
@@ -1061,7 +1061,7 @@ class RoboComAnexos(unittest.TestCase):
     def test_gravar_vaga_grava_anexos_com_as_colunas_e_sem_eles_nao_chama(self):
         chamadas = []
 
-        def chamar(_config, funcao, corpo):
+        def chamar(_config, funcao, corpo, tentativas=3):
             chamadas.append((funcao, corpo))
             if funcao == "fechar_vaga_empregare":
                 return {"situacao": "GRAVADA", "ativos": 1, "desativadas": 0}

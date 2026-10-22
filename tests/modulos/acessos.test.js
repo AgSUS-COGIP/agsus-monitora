@@ -1371,3 +1371,85 @@ describe("Pendentes: pedido por área (20261021140000)", () => {
     expect(document.getElementById("acessosRecusarPedido")).toBeNull();
   });
 });
+
+/*
+  22/10: a gaveta lia `origem` de celulaExibida (que devolve `individual`) e
+  não avisava quem gerencia Acessos por permissão individual sem coordenação;
+  "Adicionar pessoa" aceitava e-mail de fora (o hook do Supabase recusa criar
+  a conta) e já vinha com a área Saúde Indígena marcada.
+*/
+describe("gaveta e adicionar pessoa", () => {
+  it("permissão individual de editor em Acessos sem coordenação: a gaveta avisa", async () => {
+    const matriz = MATRIZ(TETO_ADMIN);
+    matriz.usuarios[0] = {
+      ...matriz.usuarios[0],
+      coordenacao: null,
+      permissoes: {
+        ...matriz.usuarios[0].permissoes,
+        acessos: celula("editor", "excecao", "sem_acesso", 1),
+      },
+    };
+    await montar({
+      perfil: ADMIN,
+      teto: TETO_ADMIN,
+      extra: { obter_matriz_acessos: () => ({ data: matriz, error: null }) },
+    });
+    await clicar(document.querySelector(".acessos-nome"));
+    expect(document.getElementById("acessosGaveta").textContent).toContain(
+      "Este grupo exige coordenação.",
+    );
+  });
+
+  it("só e-mail institucional; nenhuma área vem marcada quando há mais de uma", async () => {
+    const matriz = MATRIZ(TETO_ADMIN);
+    matriz.areas = [
+      { id: "saude-indigena", titulo: "Saúde Indígena" },
+      { id: "sede", titulo: "Sede" },
+    ];
+    const supabase = await montar({
+      perfil: ADMIN,
+      teto: TETO_ADMIN,
+      extra: { obter_matriz_acessos: () => ({ data: matriz, error: null }) },
+    });
+    await clicar(botao("Adicionar pessoa"));
+    await digitar(
+      document.getElementById("acessosAdicionarEmail"),
+      "fulano@gmail.com",
+    );
+    await digitar(document.getElementById("acessosAdicionarNome"), "Fulano");
+    await digitar(
+      document.getElementById("acessosAdicionarMotivo"),
+      "Entrou na equipe",
+    );
+    const enviar = () =>
+      [...document.querySelectorAll("#acessosAdicionar button")].find(
+        (b) => b.textContent.trim() === "Adicionar pessoa",
+      );
+    await clicar(enviar());
+    const modal = document.getElementById("acessosAdicionar");
+    expect(modal.textContent).toContain(
+      "Use um e-mail institucional (@agenciasus.org.br ou @agsus.org.br).",
+    );
+    // Sem coordenação e sem área marcada: pede a área.
+    expect(modal.textContent).toContain("Escolha ao menos uma área.");
+    expect(
+      supabase.rpc.mock.calls.some(([n]) => n === "adicionar_pessoa_acesso"),
+    ).toBe(false);
+  });
+});
+
+describe("custo da tela", () => {
+  it("digitar não dispara agsus:content-updated (só dados ou aba novos)", async () => {
+    await montar({ perfil: ADMIN, teto: TETO_ADMIN });
+    await clicar(botao("Adicionar pessoa"));
+    const avisos = vi.fn();
+    document.addEventListener("agsus:content-updated", avisos);
+    try {
+      await digitar(document.getElementById("acessosAdicionarNome"), "F");
+      await digitar(document.getElementById("acessosAdicionarNome"), "Fu");
+      expect(avisos).not.toHaveBeenCalled();
+    } finally {
+      document.removeEventListener("agsus:content-updated", avisos);
+    }
+  });
+});

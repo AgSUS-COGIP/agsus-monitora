@@ -272,6 +272,63 @@ describe("Painéis externos", () => {
   });
 });
 
+describe("publicação sem desfazer o que outro administrador mudou", () => {
+  it("manda só o painel mexido, a partir do banco, e avisa do conflito", async () => {
+    await montar();
+    // Depois que a tela carregou, outro administrador trocou o título e o endereço do p1.
+    cliente.rpc.mockImplementation(async (nome) => {
+      if (nome === "get_configuracoes_snapshot") {
+        const retrato = snapshot();
+        retrato.paineis[0] = {
+          ...retrato.paineis[0],
+          titulo: "Recursos 2026",
+          url: "https://outro.agenciasus.org.br",
+        };
+        return { data: retrato, error: null };
+      }
+      if (nome === "get_configuracoes_historico")
+        return { data: [VERSAO], error: null };
+      return { data: { ok: true, total_alteracoes: 1 }, error: null };
+    });
+    await digitar($("configPainel-0-url"), "https://novo.agenciasus.org.br");
+    await clicar(salvar());
+    await esperar();
+    expect(
+      document.querySelector(".config-governance-body").textContent,
+    ).toContain("Outro administrador mudou depois que você abriu:");
+    await digitar($("configPublishReason"), "Novo endereço");
+    await clicar(botaoFinal());
+    await esperar();
+    const chamada = cliente.rpc.mock.calls.find(
+      ([nome]) => nome === "salvar_configuracoes_e_paineis_v2",
+    )[1];
+    expect(chamada.p_config_rows).toEqual([]);
+    expect(chamada.p_paineis).toEqual([
+      {
+        id: "p1",
+        titulo: "Recursos 2026",
+        url: "https://novo.agenciasus.org.br",
+        ativo: true,
+        em_manutencao: false,
+      },
+    ]);
+  });
+
+  it("reler os painéis (ex.: depois de salvar Módulos e abas) não apaga o rascunho", async () => {
+    const estado = await montar();
+    await digitar($("configPainel-0-url"), "https://novo.agenciasus.org.br");
+    await act(async () =>
+      estado.definirPaineisCarregados(
+        PAINEIS.map((p) => (p.id === "p2" ? { ...p, ativo: true } : p)),
+      ),
+    );
+    expect($("configPainel-0-url").value).toBe(
+      "https://novo.agenciasus.org.br",
+    );
+    expect(estado.obter().paineis[1].ativo).toBe(true);
+  });
+});
+
 describe("Operação", () => {
   it("mostra os valores carregados, normalizados como no legado", async () => {
     await montar({
@@ -327,12 +384,10 @@ describe("Operação", () => {
       valor: "V.3.0.0",
       descricao: "Versão do sistema",
     });
-    expect(linhas.get("app_version_current").valor).toBe(
-      "MONITORA Web V2.9.35",
-    );
+    // Só o que mudou: a chave não mexida e os painéis ficam como estão no banco.
+    expect(linhas.has("app_version_current")).toBe(false);
     expect(linhas.has("monit_id")).toBe(false);
-    // Os painéis viajam juntos, sem mudança.
-    expect(chamada.p_paineis.map((p) => p.id)).toEqual(["p1", "p2"]);
+    expect(chamada.p_paineis).toEqual([]);
   });
 
   it("sem mudança real, nada a publicar", async () => {

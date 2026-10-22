@@ -19,12 +19,15 @@ parte no XLSX. A geração guardada é conferida com os dados de agora (`geracao
 `src/lib/classificacao/dados.ts`: versão da regra, quantidades e, com o retrato lido, o conteúdo);
 desatualizada, a tela avisa "Esta geração é de …; os dados mudaram desde então — gere de novo.",
 bloqueia "Marcar como publicada"/"Publicar como lista de aprovados" e as exportações pedem
-confirmação.
+confirmação. Os dois caminhos de publicar leem o retrato (`conferirAntesDePublicar` em `estado.ts`)
+e só publicam se o conteúdo inteiro bater; senão, pedem para gerar de novo.
 
 Vagas por modalidade: quadro do edital > configuração de convocação do edital (Lista de aprovados ›
 Convocação, `TB_CONVOCACAO_EDITAL`) > percentuais da regra — as duas últimas pela mesma
 `derivarQuadro` da convocação (`src/lib/classificacao/convocacao-do-edital.ts`). A regra de
 classificação decide listas, remanejamento e acúmulo; a ordem de chamada é da Convocação.
+Sem acesso à convocação (42501) ou sem as RPCs no banco, vale a regra; outra falha (rede, banco)
+vira `erroDaConvocacao`: aviso com "Tentar novamente" e "Gerar" bloqueado até ler de novo.
 
 ```
 classificacao.tsx  <TelaDeClassificacao>, montarClassificacao() e calcularClassificacao()
@@ -109,7 +112,8 @@ Agenda das entrevistas: motor em `src/lib/agenda-das-entrevistas.ts`, banco em
 nome); Conduzir entrevistas abre a fila em Hoje pela agenda salva (`src/modulos/entrevistas/fila-do-dia.tsx`).
 Tela, estado e regras da agenda estão em TypeScript/TSX. Contratos em
 `src/lib/tipos-da-agenda.ts`; validação dos dados em `src/lib/dados-da-agenda.ts`. A
-convocação inválida mostra erro e bloqueia a geração. Respostas antigas de gravação não
+convocação inválida mostra erro e bloqueia a geração; a convocação registrada que não veio (rede,
+banco) mostra erro com "Tentar novamente", sem cair no cálculo atual. Respostas antigas de gravação não
 mudam dados, flags ou avisos depois de trocar de edital ou usuário (inclusive A → B → A).
 Falha ao atualizar o mesmo edital preserva a agenda aberta. Testes:
 `tests/lib/dados-da-agenda.test.js`, `tests/modulos/agenda-contexto-de-gravacao.test.js`

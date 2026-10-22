@@ -35,6 +35,8 @@ export type PayloadDasNotas = {
 export type EstadoLocalDaFicha = {
   compareceu: Comparecimento;
   banca: number | null;
+  /** A banca com que a ficha abriu (a única do edital, se o convocado não tem). */
+  bancaInicial: number | null;
   original: MapaDeNotas;
   mapa: MapaDeNotas;
   observacoesOriginais: Record<string, string>;

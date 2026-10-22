@@ -181,13 +181,19 @@ export function ConteudoDaFicha({
   useEffect(() => {
     void loja.carregar(fichaId);
   }, [loja, fichaId]);
-  useEffect(
-    () => () => {
+  /*
+    A fila espera o salvamento desta ficha antes de liberar a reserva
+    (estado-da-fila.js, fechar). Ao desmontar, o envio do que estava pendente
+    fica no lugar, para a liberação que vier depois esperar por ele.
+  */
+  useEffect(() => {
+    fila.registrarSalvamento?.(fichaId, () => loja.salvar());
+    return () => {
       clearTimeout(avanco.current);
-      loja.descartar();
-    },
-    [loja],
-  );
+      const envio = loja.descartar();
+      fila.registrarSalvamento?.(fichaId, () => envio);
+    };
+  }, [loja, fila, fichaId]);
   useEffect(() => {
     if (!aviso) return undefined;
     const id = setTimeout(() => setAviso(""), 6000);
@@ -784,7 +790,11 @@ export function ConteudoDaFicha({
         secundaria={secundaria}
         primaria={primaria}
       >
-        {st.dados.pode_reabrir ? <ReabrirAFicha loja={loja} /> : null}
+        {st.dados.pode_reabrir ||
+        (st.dados.papel === "COORDENADOR" &&
+          st.dados.ficha.situacao === "REVISAR") ? (
+          <ReabrirAFicha loja={loja} />
+        ) : null}
       </RodapeDaFicha>
     </div>
   );

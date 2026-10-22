@@ -41,7 +41,9 @@ Uso
       não exporta, não grava a carga nem fecha a vaga (situação, ativos e lote não
       mudam); sem --candidatos, relê os suspeitos (captura no dia da "DATA DE
       RESPOSTA" ou antes); nunca reduz anexos; --seco só compara, sem gravar.
-      Vale também para edital com inscrições congeladas.
+      Edital com inscrições congeladas: só com --seco ou com --forcar-congelado
+      (a liberação; o banco confere em gravar_anexos_empregare, migration
+      20261022170000).
   python scripts/robo-empregare/robo_empregare.py --resumir-perguntas [--editais 114/2026] [--forcar]
       só recalcula o resumo das perguntas da carga (resumo_das_perguntas.py)
       dos editais cuja carga mudou (--forcar: de todos com carga); não entra
@@ -52,10 +54,13 @@ O log é público (repositório público): só contagens, códigos de vaga e nú
 de edital; toda mensagem passa por python/monitora/mascaramento.py.
 
 Saída: 0 concluída; 1 erro (nada ou quase nada gravado); 2 parcial (alguma
-vaga falhou ou foi recusada pela trava).
+vaga falhou ou foi recusada pela trava, ou os anexos do questionário de alguma
+vaga não gravaram); 3 entrada inválida. No GitHub Actions, a saída do passo
+"carga" (sim/nao) diz se alguma vaga foi gravada: só então o workflow
+pré-classifica. Prazo único: PRAZO_DA_EXECUCAO; cancelamento ou tempo esgotado
+(SIGTERM) fecha a execução no banco com erro.
 """
 
-import argparse
 import contextlib
 import os
 import pathlib
@@ -93,6 +98,10 @@ TAMANHO_DO_LOTE_DE_EXPORTACAO = 10
 # Prazos contados desde o login (o workflow tem 120 min; links e anexos já têm orçamento próprio).
 PRAZO_PARA_NOVO_LOTE = 95 * 60  # segundos: depois disso, não começa outro lote
 PRAZO_PARA_SEGUNDA_PASSADA = 90 * 60  # segundos: depois disso, sem segunda passada
+# Prazo único da execução: nenhuma espera, download ou nova volta na Central passa dele. O que
+# faltar vira falha e a execução fecha normal (finalizar_sync_empregare), com folga para o
+# fechamento, o resumo das perguntas e o passo de pré-classificação antes dos 120 min.
+PRAZO_DA_EXECUCAO = 105 * 60
 # Anexos do questionário (--anexos): além do orçamento (anexos.ORCAMENTO_DOS_ANEXOS), param
 # em PRAZO_DOS_ANEXOS menos RESERVA_POR_VAGA por vaga ainda não pedida: a carga das vagas
 # que faltam (~1 min cada: pedir, lista de candidatos, baixar e gravar) cabe antes do
@@ -111,7 +120,7 @@ def separar(texto):
 
 
 def argumentos(lista=None):
-    p = argparse.ArgumentParser(description="Robô da Empregare → MONITORA")
+    p = execucao.Argumentos(description="Robô da Empregare → MONITORA")
     p.add_argument("--seco", action="store_true", help="só lista as vagas que exportaria")
     p.add_argument("--fumaca", action="store_true", help="só entra na Empregare e abre a Central")
     p.add_argument("--forcar", action="store_true", help="aceita arquivo com menos da metade dos candidatos")
@@ -142,8 +151,10 @@ def argumentos(lista=None):
     if args.forcar_congelado:
         if not _UUID.fullmatch(args.forcar_congelado):
             p.error("--forcar-congelado inválido (é o token que o MONITORA manda)")
-        if args.so_anexos or args.sondar or args.fumaca or args.resumir_perguntas:
-            p.error("--forcar-congelado só nos modos que exportam (normal, forcar) e no seco")
+        if args.sondar or args.fumaca or args.resumir_perguntas:
+            p.error("--forcar-congelado só nos modos que gravam (normal, forcar, só anexos) e no seco")
+        if args.so_anexos and args.seco:
+            p.error("--forcar-congelado não vale no só anexos com --seco (ele não grava)")
 
     args.editais = separar(args.editais)
     args.vagas = separar(args.vagas)
@@ -235,17 +246,18 @@ def fechar_vaga(config, corpo, vaga_interno, chamar):
     """
     fechar_vaga_empregare com o identificador interno da vaga. Banco sem a
     migration 20261007160000 (função sem p_vaga_interno: 404 do PostgREST)
-    fecha como antes, sem o identificador.
+    fecha como antes, sem o identificador. Uma tentativa só: se a resposta se
+    perdeu, o fechamento (que desativa os ausentes) pode já ter rodado.
     """
     if not vaga_interno:
-        return chamar(config, "fechar_vaga_empregare", corpo)
+        return chamar(config, "fechar_vaga_empregare", corpo, tentativas=1)
     try:
-        return chamar(config, "fechar_vaga_empregare", dict(corpo, p_vaga_interno=vaga_interno))
+        return chamar(config, "fechar_vaga_empregare", dict(corpo, p_vaga_interno=vaga_interno), tentativas=1)
     except supabase_rpc.ErroDoSupabase as erro:
         if getattr(erro, "status", None) != 404:
             raise
         registrar("O banco ainda não guarda o identificador interno da vaga (falta a migration 20261007160000).")
-        return chamar(config, "fechar_vaga_empregare", corpo)
+        return chamar(config, "fechar_vaga_empregare", corpo, tentativas=1)
 
 
 def estourou_o_tempo(erro):
@@ -260,10 +272,12 @@ def gravar_lote(config, sync, codigo, total, lote, chamar):
     até TAMANHO_MINIMO_DO_LOTE. Seguro porque a chamada cancelada não gravou
     nada (cada RPC é uma transação) e o upsert pela chave é idempotente; os
     ausentes só saem em fechar_vaga_empregare, depois do último lote.
+    Uma tentativa por chamada (o 57014 nunca se repete igual: o lote se
+    divide); erro de rede perde a vaga, não a execução.
     """
     corpo = {"p_sync": sync, "p_vaga": codigo, "p_total": total, "p_linhas": lote}
     try:
-        return chamar(config, "gravar_lote_empregare", corpo)
+        return chamar(config, "gravar_lote_empregare", corpo, tentativas=1)
     except supabase_rpc.ErroDoSupabase as erro:
         if not estourou_o_tempo(erro) or len(lote) <= TAMANHO_MINIMO_DO_LOTE:
             raise
@@ -275,12 +289,15 @@ def gravar_lote(config, sync, codigo, total, lote, chamar):
     return gravar_lote(config, sync, codigo, total, lote[meio:], chamar)
 
 
-def gravar_vaga(config, sync, codigo, caminho, chamar=supabase_rpc.chamar, enderecos=None):
+def gravar_vaga(config, sync, codigo, caminho, chamar=supabase_rpc.chamar, enderecos=None, totais=None):
     """
     Lê o Excel e grava. Devolve 'GRAVADA', 'RECUSADA' ou 'FALHA'. `enderecos`
     (de PortalEmpregare.capturar_candidatos) leva o identificador interno da vaga
-    e os links de detalhes dos candidatos; sem ele, grava como antes.
+    e os links de detalhes dos candidatos; sem ele, grava como antes. `totais`
+    (dict, opcional) soma "gravadas" e "anexos_com_falha" (vaga gravada cujos
+    anexos do questionário o banco recusou: a execução sai parcial).
     """
+    totais = totais if totais is not None else {}
     try:
         lido = ler_planilha(caminho, codigo)
     except Exception as erro:
@@ -317,20 +334,45 @@ def gravar_vaga(config, sync, codigo, caminho, chamar=supabase_rpc.chamar, ender
         registrar(
             f"Vaga {codigo}: gravada · {detalhes} · {fim.get('ativos')} ativos · {fim.get('desativadas')} saíram."
         )
+        totais["gravadas"] = totais.get("gravadas", 0) + 1
         if (enderecos or {}).get("anexos"):
-            anexos.gravar_anexos(config, sync, codigo, enderecos["anexos"], lido["colunas"], chamar, registrar)
+            dos_anexos = {}
+            anexos.gravar_anexos(
+                config, sync, codigo, enderecos["anexos"], lido["colunas"], chamar, registrar, totais=dos_anexos
+            )
+            if dos_anexos.get("falhou"):
+                totais["anexos_com_falha"] = totais.get("anexos_com_falha", 0) + 1
     elif situacao == "RECUSADA":
         motivo = (fim or {}).get("mensagem") or "menos da metade dos ativos; nada mudou"
         registrar(f"Vaga {codigo}: RECUSADA pela trava · {detalhes} ({motivo}).")
     return situacao
 
 
-def baixar_e_gravar(portal, config, sync, pedidas, pasta, desde, dormir=time.sleep, enderecos=None):
+def sem_tempo(fim, agora):
+    """O prazo único da execução (`fim`, no relógio `agora`) já passou?"""
+    return fim is not None and agora() >= fim
+
+
+def baixar_e_gravar(
+    portal,
+    config,
+    sync,
+    pedidas,
+    pasta,
+    desde,
+    dormir=time.sleep,
+    enderecos=None,
+    fim=None,
+    agora=time.monotonic,
+    totais=None,
+):
     """
     Percorre a Central até baixar cada vaga pedida. Devolve (baixadas, falhas,
     pendentes): `falhas` são as baixadas que não gravaram; `pendentes`, os
-    códigos que não apareceram (ou não baixaram) depois de TENTATIVAS_CENTRAL.
+    códigos que não apareceram (ou não baixaram) depois de TENTATIVAS_CENTRAL
+    ou do prazo único da execução (`fim`, no relógio `agora`).
     `enderecos`: {código da vaga: links capturados} (capturar_candidatos).
+    Falha ao abrir ou ler a Central gasta só aquela tentativa.
     """
     enderecos = enderecos or {}
     pendentes = list(pedidas)
@@ -338,35 +380,52 @@ def baixar_e_gravar(portal, config, sync, pedidas, pasta, desde, dormir=time.sle
     for tentativa in range(1, nav.TENTATIVAS_CENTRAL + 1):
         if not pendentes:
             break
+        if sem_tempo(fim, agora):
+            registrar(f"Prazo da execução ({PRAZO_DA_EXECUCAO // 60} min) esgotado: Central não aberta de novo.")
+            break
         registrar(
             f"Central de Exportações: tentativa {tentativa}/{nav.TENTATIVAS_CENTRAL} ({len(pendentes)} vaga(s) pendente(s))."
         )
-        portal.abrir_central()
-        linhas = portal.ler_central()
-        registrar(
-            f"Central de Exportações: {len(linhas)} exportação(ões) lida(s) em "
-            f"{getattr(portal, 'paginas_da_central', 1) or 1} página(s)."
-        )
+        try:
+            portal.abrir_central()
+            linhas = portal.ler_central()
+        except Exception as erro:
+            registrar(f"Central de Exportações: não abriu nesta tentativa ({resumo_do_erro(erro)}).")
+            linhas = None
+        if linhas is not None:
+            registrar(
+                f"Central de Exportações: {len(linhas)} exportação(ões) lida(s) em "
+                f"{getattr(portal, 'paginas_da_central', 1) or 1} página(s)."
+            )
         ainda = []
         for codigo in pendentes:
+            if linhas is None or sem_tempo(fim, agora):
+                ainda.append(codigo)
+                continue
             linha, motivo = nav.escolher_exportacao(linhas, codigo, desde)
             if not linha:
                 registrar(f"Vaga {codigo}: exportação ainda não disponível ({motivo}).")
                 ainda.append(codigo)
                 continue
-            caminho = portal.baixar(linha, os.path.join(pasta, codigo))
+            try:
+                caminho = portal.baixar(linha, os.path.join(pasta, codigo))
+            except Exception as erro:
+                registrar(f"Vaga {codigo}: o download falhou ({resumo_do_erro(erro)}).")
+                caminho = None
             if not caminho:
-                registrar(f"Vaga {codigo}: o download não terminou em {nav.TIMEOUT_DOWNLOAD}s.")
+                registrar(f"Vaga {codigo}: o download não terminou (até {nav.TIMEOUT_DOWNLOAD}s).")
                 ainda.append(codigo)
                 continue
             baixadas += 1
-            if gravar_vaga(config, sync, codigo, caminho, enderecos=enderecos.get(codigo)) == "FALHA":
+            if gravar_vaga(config, sync, codigo, caminho, enderecos=enderecos.get(codigo), totais=totais) == "FALHA":
                 falhas += 1
         pendentes = ainda
         if pendentes and tentativa < nav.TENTATIVAS_CENTRAL:
-            dormir(nav.ESPERA_ENTRE_TENTATIVAS)
+            espera = nav.ESPERA_ENTRE_TENTATIVAS if fim is None else min(nav.ESPERA_ENTRE_TENTATIVAS, fim - agora())
+            if espera > 0:
+                dormir(espera)
     if pendentes:
-        registrar(f"Sem download depois de {nav.TENTATIVAS_CENTRAL} tentativas: {', '.join(pendentes)}.")
+        registrar(f"Sem download nesta execução: {', '.join(pendentes)}.")
     return baixadas, falhas, pendentes
 
 
@@ -432,18 +491,24 @@ def pedir_exportacoes(portal, vagas, enderecos, com_anexos, gasto, config=None, 
     return pedidas, nao_pedidas
 
 
-def exportar_e_baixar(portal, config, sync, vagas, pasta, enderecos, com_anexos, gasto, dormir, relogio):
+def exportar_e_baixar(
+    portal, config, sync, vagas, pasta, enderecos, com_anexos, gasto, dormir, relogio, fim=None, totais=None
+):
     """
     Um lote: pede as exportações, espera, baixa e grava. Devolve (baixadas,
     falhas na gravação, vagas que não saíram: exportação não pedida ou não baixada).
+    `fim`: o prazo único da execução, no relógio gasto["agora"].
     """
+    agora = gasto.get("agora", time.monotonic)
     desde = relogio()
     pedidas, nao_pedidas = pedir_exportacoes(portal, vagas, enderecos, com_anexos, gasto, config)
     if not pedidas:
         return 0, 0, nao_pedidas
     registrar(f"Aguardando a Empregare gerar os arquivos ({nav.ESPERA_APOS_EXPORTAR}s).")
     dormir(nav.ESPERA_APOS_EXPORTAR)
-    baixadas, falhas, pendentes = baixar_e_gravar(portal, config, sync, pedidas, pasta, desde, dormir, enderecos)
+    baixadas, falhas, pendentes = baixar_e_gravar(
+        portal, config, sync, pedidas, pasta, desde, dormir, enderecos, fim=fim, agora=agora, totais=totais
+    )
     por_codigo = {v["vaga"]: v for v in vagas}
     return baixadas, falhas, nao_pedidas + [por_codigo[c] for c in pendentes]
 
@@ -471,13 +536,19 @@ def processar_vagas(
     segunda passada no fim (exportação pedida de novo, sem recapturar links),
     se ainda houver tempo. Devolve (baixadas, falhas). `contagem` (dict) recebe
     os mesmos números a cada lote: se a execução cair no meio, quem chamou sabe
-    quanto já foi baixado.
+    quanto já foi baixado (e "gravadas" e "anexos_com_falha", de gravar_vaga).
+    Nada passa do prazo único da execução (PRAZO_DA_EXECUCAO, também posto no
+    portal para os downloads e a leitura da Central): o que faltar vira falha.
     """
     inicio = agora()
+    fim = inicio + PRAZO_DA_EXECUCAO
+    if hasattr(portal, "prazo"):
+        # O portal conta no time.monotonic: o prazo só vai para ele com o relógio de verdade.
+        portal.prazo = fim if agora is time.monotonic else None
     enderecos = {}
     gasto = {"anexos": 0.0, "agora": agora, "inicio": inicio, "faltam": len(vagas)}
     total = contagem if contagem is not None else {}
-    total.update(baixadas=0, falhas=0)
+    total.update(baixadas=0, falhas=0, gravadas=0, anexos_com_falha=0)
     de_novo = []
     lotes = em_lotes(list(vagas), TAMANHO_DO_LOTE_DE_EXPORTACAO)
     for n, lote in enumerate(lotes, 1):
@@ -491,7 +562,7 @@ def processar_vagas(
             break
         registrar(f"Lote {n}/{len(lotes)}: {len(lote)} vaga(s) ({lista_de_codigos(lote)}).")
         b, f, sobra = exportar_e_baixar(
-            portal, config, sync, lote, pasta, enderecos, com_anexos, gasto, dormir, relogio
+            portal, config, sync, lote, pasta, enderecos, com_anexos, gasto, dormir, relogio, fim, total
         )
         total["baixadas"] += b
         total["falhas"] += f
@@ -512,8 +583,16 @@ def processar_vagas(
     registrar(f"Segunda passada: pedindo de novo a exportação de {len(de_novo)} vaga(s) ({lista_de_codigos(de_novo)}).")
     sem_arquivo = []
     for lote in em_lotes(de_novo, TAMANHO_DO_LOTE_DE_EXPORTACAO):
+        if sem_tempo(fim, agora):
+            registrar(
+                f"Prazo da execução ({PRAZO_DA_EXECUCAO // 60} min) esgotado na segunda passada: "
+                f"{len(lote)} vaga(s) com falha ({lista_de_codigos(lote)})."
+            )
+            total["falhas"] += len(lote)
+            sem_arquivo += lote
+            continue
         b, f, sobra = exportar_e_baixar(
-            portal, config, sync, lote, pasta, enderecos, com_anexos, gasto, dormir, relogio
+            portal, config, sync, lote, pasta, enderecos, com_anexos, gasto, dormir, relogio, fim, total
         )
         total["baixadas"] += b
         total["falhas"] += f + len(sobra)
@@ -594,7 +673,11 @@ def so_anexos_da_empregare(args, config, chamar=supabase_rpc.chamar, abrir_porta
     """Modo --so-anexos (so_anexos.py): relê só os anexos; nunca exporta nem grava a carga."""
     tipo, usuario = disparo(args.disparado_por)
     ids = {"sync": identificador(), "tipo": tipo, "usuario": usuario, "url": url_da_execucao()}
-    return so_anexos.executar(args, config, abrir_portal, registrar, resumir, chamar=chamar, ids=ids)
+
+    def liberar(sync):
+        return usar_liberacao(config, args.forcar_congelado, sync, chamar)
+
+    return so_anexos.executar(args, config, abrir_portal, registrar, resumir, chamar=chamar, ids=ids, liberar=liberar)
 
 
 # ── Inscrições congeladas (migration 20261020170000) ─────────────────────────
@@ -634,8 +717,9 @@ def recusa_das_congeladas(congeladas):
     """As linhas do resumo quando o pedido explícito cai em edital congelado."""
     return [
         f"Recusado: inscrições congeladas em {texto_das_congeladas(congeladas)}. Nada foi exportado nem gravado.",
-        "O modo Só anexos continua. Para carregar mesmo assim, o administrador global usa "
-        "“Forçar edital com inscrições congeladas” em Status das atualizações › Rodar com opções (com motivo).",
+        "Para carregar (ou reler os anexos) mesmo assim, o administrador global usa "
+        "“Forçar edital com inscrições congeladas” em Status das atualizações › Rodar com opções (com motivo); "
+        "o Só anexos com “só comparar” não grava e roda sem a liberação.",
     ]
 
 
@@ -737,14 +821,16 @@ def principal(args):
     if linha_do_override:
         registrar(linha_do_override)
 
-    contagem = {"baixadas": 0, "falhas": 0}
+    contagem = {"baixadas": 0, "falhas": 0, "gravadas": 0, "anexos_com_falha": 0}
     try:
-        if vagas:
-            with tempfile.TemporaryDirectory() as pasta, nav.PortalEmpregare(pasta, registrar) as portal:
-                portal.entrar(email, senha)
-                portal.abrir_vagas_anunciadas()
-                processar_vagas(portal, config, sync, vagas, pasta, args.anexos, contagem=contagem)
-    except Exception as erro:
+        # Cancelamento ou tempo esgotado no GitHub (SIGTERM/SIGINT) também fecha a execução.
+        with execucao.interromper_com_excecao():
+            if vagas:
+                with tempfile.TemporaryDirectory() as pasta, nav.PortalEmpregare(pasta, registrar) as portal:
+                    portal.entrar(email, senha)
+                    portal.abrir_vagas_anunciadas()
+                    processar_vagas(portal, config, sync, vagas, pasta, args.anexos, contagem=contagem)
+    except (Exception, execucao.ExecucaoInterrompida) as erro:
         baixadas, falhas = contagem["baixadas"], contagem["falhas"]
         mensagem = resumo_do_erro(erro)
         try:
@@ -752,22 +838,29 @@ def principal(args):
                 config,
                 "finalizar_sync_empregare",
                 {"p_sync": sync, "p_vagas_baixadas": baixadas, "p_vagas_falha": falhas, "p_erro": mensagem},
+                tentativas=1,
             )
         except Exception as erro_ao_fechar:
             registrar(f"Também não consegui fechar a execução no banco ({resumo_do_erro(erro_ao_fechar)}).")
+        execucao.saida_do_passo("carga", "sim" if contagem.get("gravadas") else "nao")
         resumir([f"Execução {sync} FALHOU: {mensagem}", f"Vagas baixadas antes da falha: {baixadas}."])
         return 1
 
     baixadas, falhas = contagem["baixadas"], contagem["falhas"]
+    # O passo seguinte do workflow (pré-classificação) só roda se alguma vaga foi gravada.
+    execucao.saida_do_passo("carga", "sim" if contagem.get("gravadas") else "nao")
     fim = (
         supabase_rpc.chamar(
             config,
             "finalizar_sync_empregare",
             {"p_sync": sync, "p_vagas_baixadas": baixadas, "p_vagas_falha": falhas, "p_erro": None},
+            # Sem repetir: se a resposta se perdeu, a execução já pode estar fechada.
+            tentativas=1,
         )
         or {}
     )
     situacao = fim.get("situacao", "FALHOU")
+    anexos_com_falha = contagem.get("anexos_com_falha", 0)
     # Depois de fechar: o resumo das perguntas dos editais cuja carga mudou (não muda a saída).
     linha_do_resumo, _ = resumir_perguntas(config)
     resumir(
@@ -778,10 +871,16 @@ def principal(args):
             linha_do_resumo,
             f"Códigos: {lista_de_codigos(vagas) or '—'}",
         ]
+        + (
+            [f"Anexos do questionário NÃO gravados em {anexos_com_falha} vaga(s) (ver o log): saída parcial."]
+            if anexos_com_falha
+            else []
+        )
         + ([linha_das_congeladas] if linha_das_congeladas else [])
         + ([linha_do_override] if linha_do_override else [])
     )
-    return {"CONCLUIDA": 0, "PARCIAL": 2}.get(situacao, 1)
+    codigo = {"CONCLUIDA": 0, "PARCIAL": 2}.get(situacao, 1)
+    return execucao.PARCIAL if codigo == 0 and anexos_com_falha else codigo
 
 
 def main(lista=None):

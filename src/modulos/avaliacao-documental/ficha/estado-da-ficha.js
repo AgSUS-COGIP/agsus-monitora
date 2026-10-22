@@ -445,10 +445,20 @@ export function criarEstadoDaFicha({
     reabrir,
     registrarAcesso,
     temAlteracaoPendente: () => estado.sujo || estado.salvando,
+    /*
+      A ficha sai da tela (outra ficha, outra área, a fila fechando): a
+      alteração pendente vai ao banco agora, antes de a reserva ser liberada.
+      Devolve o envio (true = nada ficou para trás).
+    */
     descartar() {
       pedido += 1;
-      pararTemporizador();
       ouvintes.clear();
+      const pendente = estado.sujo && estado.podeEditar;
+      return salvar().then((ok) => {
+        if (!ok && pendente)
+          toast("A última alteração da ficha não foi salva.", "error");
+        return ok;
+      });
     },
   };
 }

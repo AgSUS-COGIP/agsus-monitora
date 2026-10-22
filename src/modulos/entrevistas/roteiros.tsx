@@ -13,7 +13,14 @@ import type {
   PropriedadesDoEditorDeRoteiro,
   RoteiroAberto,
 } from "./tipos-do-editor-de-roteiro.ts";
-import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  useSyncExternalStore,
+} from "react";
+import { guardaDeAlteracoes } from "../../app/guarda-de-alteracoes.ts";
 import { rotuloDaAreaDoPainel } from "../../lib/area-do-painel-de-analises.js";
 import {
   dadosDoRoteiroParaSalvar,
@@ -699,6 +706,30 @@ export function EditorDeRoteiro({
   const [tentou, setTentou] = useState(false);
   const [erroDoBanco, setErroDoBanco] = useState("");
   const [nomeDaVersao, setNomeDaVersao] = useState<string | null>(null);
+  /* O rascunho com que o editor abriu: com mudança, fechar pede confirmação. */
+  const [inicial] = useState(r);
+  const alterado =
+    !somenteLeitura &&
+    (nomeDaVersao !== null || JSON.stringify(r) !== JSON.stringify(inicial));
+  const alteradoRef = useRef(alterado);
+  alteradoRef.current = alterado;
+  useEffect(
+    () =>
+      guardaDeAlteracoes.registrar({
+        comAlteracoes: () => alteradoRef.current,
+        naoGuardado: () => alteradoRef.current,
+      }),
+    [],
+  );
+  function fechar() {
+    if (
+      alteradoRef.current &&
+      globalThis.confirm?.("Fechar o roteiro sem salvar as alterações?") !==
+        true
+    )
+      return;
+    aoFechar();
+  }
   const [hoje] = useState(() => new Date());
   const sugestaoDoNome = sugerirNomeDaVersao({
     tipo: "roteiro",
@@ -813,7 +844,7 @@ export function EditorDeRoteiro({
     <Gaveta
       id="entrevistasEditorDeRoteiro"
       tituloId="entrevistasEditorDeRoteiroTitulo"
-      aoFechar={aoFechar}
+      aoFechar={fechar}
       fecharAoClicarFora={somenteLeitura}
       className="entrevistas-gaveta"
       cartaoClassName="entrevistas-gaveta-larga"
@@ -1106,7 +1137,7 @@ export function EditorDeRoteiro({
           <span className="entrevistas-rodape-resumo">
             {textoDaPontuacao(r)}
           </span>
-          <button type="button" className="btn secondary" onClick={aoFechar}>
+          <button type="button" className="btn secondary" onClick={fechar}>
             {somenteLeitura ? "Fechar" : "Cancelar"}
           </button>
           {somenteLeitura ? null : (

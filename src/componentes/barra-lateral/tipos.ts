@@ -55,6 +55,8 @@ export interface OpcoesDaBarraLateral {
   navegar?(view: string): unknown;
   paginaAtiva?(view: string): boolean;
   aoAbrirSecao?(view: string, secao: string): unknown;
+  /** Antes de trocar de área (padrão: a guarda de alterações do app). */
+  confirmarTrocaDeArea?(): boolean;
   textoVazio?: string;
 }
 export interface SnapshotDaBarraLateral {

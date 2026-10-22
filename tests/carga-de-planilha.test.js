@@ -58,6 +58,24 @@ describe("chamarRpc", () => {
     expect(chamadas).toBe(3);
   });
 
+  it("não repete o cancelamento por tempo do banco (57014)", async () => {
+    let chamadas = 0;
+    const buscar = async () => {
+      chamadas++;
+      return resposta(
+        500,
+        JSON.stringify({
+          code: "57014",
+          message: "canceling statement due to statement timeout",
+        }),
+      );
+    };
+    await expect(
+      chamarRpc(CONFIG, "f", {}, { buscar, ...semEspera }),
+    ).rejects.toThrow("f respondeu 500: 57014");
+    expect(chamadas).toBe(1);
+  });
+
   it("desiste depois de 3 falhas de rede", async () => {
     const buscar = async () => {
       throw new TypeError("fetch failed");

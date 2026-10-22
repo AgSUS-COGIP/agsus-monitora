@@ -2119,3 +2119,78 @@ describe("estado da ficha: menos chamadas (20261014231000)", () => {
     estado.descartar();
   });
 });
+
+describe("ficha aberta: reserva vencida e troca de área sem perder o rascunho", () => {
+  it("trocar de área salva a alteração pendente e só depois libera a reserva", async () => {
+    const supabase = supabaseFalso();
+    await abrirFicha(supabase);
+    await teclar(raiz(), "1");
+    // O rascunho ainda está no temporizador (3 s) quando a área muda.
+    expect(chamadas(supabase, "salvar_rascunho_ficha")).toHaveLength(0);
+    await act(async () => definirAreaAtual("saude-indigena"));
+    await esperar();
+    await esperar();
+    const nomes = supabase.rpc.mock.calls.map(([n]) => n);
+    expect(nomes.indexOf("salvar_rascunho_ficha")).toBeGreaterThan(-1);
+    expect(nomes.lastIndexOf("liberar_reserva")).toBeGreaterThan(
+      nomes.indexOf("salvar_rascunho_ficha"),
+    );
+  });
+
+  it("minha reserva vencida: o cabeçalho pede para reabrir a ficha", async () => {
+    const vencida = new Date(Date.now() - 60 * 1000).toISOString();
+    const supabase = supabaseFalso(fichaDoBanco(), {
+      reservar_ficha: () => ({
+        ficha: cabecalho({
+          reserva: {
+            usuario: EU,
+            nome: "Ana",
+            desde: new Date(Date.now() - 20 * 60 * 1000).toISOString(),
+            expira: vencida,
+          },
+        }),
+        reservada: true,
+        somente_leitura: false,
+      }),
+    });
+    await abrirFicha(supabase);
+    expect(
+      document.querySelector("[data-reserva='vencida']").textContent,
+    ).toContain("Reserva vencida: reabra a ficha");
+  });
+});
+
+describe("estado da ficha: descartar salva antes", () => {
+  it("descartar com alteração pendente envia o rascunho e devolve o envio", async () => {
+    const rpc = vi.fn(async (nome, args) => {
+      if (nome === "obter_ficha_analise") return fichaDoBanco();
+      if (nome === "salvar_rascunho_ficha")
+        return { versao: args.p_versao + 1, salvo_em: "2026-10-22T13:00:00Z" };
+      return null;
+    });
+    const estado = criarEstadoDaFicha({
+      rpc,
+      toast,
+      agendar: () => 1,
+      cancelar: () => {},
+    });
+    await estado.carregar("f1");
+    estado.mudar((l) => ({ ...l, observacoes: "pendente" }));
+    expect(await estado.descartar()).toBe(true);
+    expect(
+      rpc.mock.calls.filter(([n]) => n === "salvar_rascunho_ficha"),
+    ).toHaveLength(1);
+  });
+
+  it("descartar sem alteração não vai ao banco", async () => {
+    const rpc = vi.fn(async (nome) =>
+      nome === "obter_ficha_analise" ? fichaDoBanco() : null,
+    );
+    const estado = criarEstadoDaFicha({ rpc, toast });
+    await estado.carregar("f1");
+    expect(await estado.descartar()).toBe(true);
+    expect(
+      rpc.mock.calls.filter(([n]) => n === "salvar_rascunho_ficha"),
+    ).toHaveLength(0);
+  });
+});

@@ -153,6 +153,15 @@ function executarSyncAnalisesCurricularesIncremental_(options) {
       remote = null;
     }
 
+    // [processado-primeiro] Sync ja processado no banco (a execucao anterior caiu antes de
+    // concluir): conclui e limpa o estado ANTES de comparar com a planilha. Antes, uma planilha
+    // alterada depois do envio caia em "A planilha mudou durante um sync incremental pendente" e
+    // o sync concluido ficava preso no estado local.
+    if (remote && remote.status === 'processado') {
+      state.remote_started = true;
+      return concluirAnalisesIncremental_(state, remote, snapshot);
+    }
+
     validarSnapshotAnalisesIncremental_(state, snapshot);
 
     if (!state.snapshot_hash) {
@@ -179,9 +188,6 @@ function executarSyncAnalisesCurricularesIncremental_(options) {
       salvarEstadoAnalisesIncremental_(state);
     } else {
       state.remote_started = true;
-      if (remote.status === 'processado') {
-        return concluirAnalisesIncremental_(state, remote, snapshot);
-      }
       reconciliarInFlightAnalisesIncremental_(state, remote);
     }
 
@@ -501,8 +507,10 @@ function confirmarFinalizacaoAnalisesIncremental_(state, snapshot) {
 }
 
 function concluirAnalisesIncremental_(state, remote, snapshot) {
+  // [processado-primeiro] Confere o total do que foi enviado (a planilha pode ter mudado depois).
+  const totalAtivosEnviado = state.total_ativos_local != null ? Number(state.total_ativos_local) : snapshot.fatoAtivo.length;
   const verification = rpcAnalisesIncremental_('verificar_sync_analises_incremental', {
-    p_total_ativos_local: snapshot.fatoAtivo.length,
+    p_total_ativos_local: totalAtivosEnviado,
     p_origem: ANALISES_INCREMENTAL_CFG.ORIGEM // [por-planilha]
   }, true);
 
@@ -515,7 +523,7 @@ function concluirAnalisesIncremental_(state, remote, snapshot) {
     sync_id: state.sync_id,
     status: remote.status,
     modo: ANALISES_INCREMENTAL_CFG.MODE,
-    total_ativos_local: snapshot.fatoAtivo.length,
+    total_ativos_local: totalAtivosEnviado,
     alterados_enviados: Number(state.changed_count || 0),
     resultado_remoto: remote.resultado || null,
     verificacao: verification || null

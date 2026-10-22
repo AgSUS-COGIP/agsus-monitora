@@ -12,8 +12,9 @@ name: Pré-classificação da Avaliação documental
 #     Configurações › Status das atualizações (administrador global; todos os
 #     editais ativos com vagas da Empregare) — os dois pela RPC disparar_robo,
 #     com disparado_por = id do usuário;
-#   - sozinho, no fim do robô da Empregare (passo "Pré-classificar" de
-#     robo-empregare.yml, para os editais das vagas carregadas);
+#   - sozinho, no fim do robô da Empregare que gravou alguma vaga (job
+#     "Pré-classificar" de robo-empregare.yml chama este workflow com
+#     workflow_call e apos_robo, para os editais das vagas carregadas);
 #   - pelo botão "Run workflow" desta aba Actions (o primeiro passo registra a
 #     execução no MONITORA, com quem a iniciou; falha nele só gera aviso).
 # Guia: docs/python-no-monitora.md. Migration: 20261006110000_pre_classificacao_e_lote.sql.
@@ -63,19 +64,35 @@ on:
         type: string
         required: false
         default: ""
+  # Fim do robô da Empregare (robo-empregare.yml): os editais das vagas da última carga.
+  workflow_call:
+    inputs:
+      apos_robo:
+        type: boolean
+        required: false
+        default: false
+      disparado_por:
+        type: string
+        required: false
+        default: ""
+      forcar_congelado:
+        type: string
+        required: false
+        default: ""
 
 permissions:
   contents: read
-
-concurrency:
-  group: pre-classificacao
-  cancel-in-progress: false
 
 jobs:
   pre_classificar:
     name: Empregare → Provisória e lote
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    # No job (e não no topo): vale também quando o robô chama este workflow, sem
+    # misturar com o grupo do robô ("empregare").
+    concurrency:
+      group: pre-classificacao
+      cancel-in-progress: false
 
     steps:
       - name: Baixar código
@@ -115,4 +132,8 @@ jobs:
           MODO: ${{ inputs.modo || 'normal' }}
           DISPARADO_POR: ${{ inputs.disparado_por }}
           FORCAR_CONGELADO: ${{ inputs.forcar_congelado }}
-        run: python scripts/pre_classificacao/pre_classificacao.py
+          APOS_ROBO: ${{ inputs.apos_robo && 'sim' || 'nao' }}
+        run: |
+          args=()
+          if [ "$APOS_ROBO" = "sim" ]; then args+=(--apos-robo); fi
+          python scripts/pre_classificacao/pre_classificacao.py "${args[@]}"

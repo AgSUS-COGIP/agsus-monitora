@@ -18,6 +18,10 @@ name: Leitura dos arquivos da Avaliação documental
 # códigos de erro e números de edital (python/monitora/mascaramento.py). Os
 # arquivos nunca vão para disco, artifact nem log.
 #
+# Registro: o primeiro passo grava no MONITORA a execução iniciada aqui (Run
+# workflow), com quem a iniciou (python/monitora/disparo_externo.py); falha nele
+# só gera aviso.
+#
 # Secrets (os mesmos do robô da Empregare):
 #   EMPREGARE_EMAIL, EMPREGARE_SENHA, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
 
@@ -56,8 +60,11 @@ on:
 permissions:
   contents: read
 
+# Mesmo grupo do robô da Empregare (robo-empregare.yml): a leitura não roda enquanto
+# a carga troca os anexos (o banco também recusa leitura de arquivo trocado,
+# gravar_leituras_de_arquivos, migration 20261022170000).
 concurrency:
-  group: leitura-de-arquivos
+  group: empregare
   cancel-in-progress: false
 
 jobs:
@@ -79,6 +86,20 @@ jobs:
           python-version: "3.12"
           cache: pip
           cache-dependency-path: scripts/robo-empregare/requirements.txt
+
+      # Execução iniciada direto no GitHub: registra no MONITORA (Status das
+      # atualizações) com quem a iniciou. Nunca derruba a leitura.
+      - name: Registrar a execução no MONITORA
+        continue-on-error: true
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          PYTHONPATH: python
+          ATOR_GITHUB: ${{ github.triggering_actor }}
+          MODO: ${{ inputs.modo || 'normal' }}
+          EDITAIS: ${{ inputs.editais }}
+          LIMITE: ${{ inputs.limite || '300' }}
+        run: python -m monitora.disparo_externo leitura-de-arquivos.yml
 
       - name: Instalar dependências do robô
         run: pip install --disable-pip-version-check -r scripts/robo-empregare/requirements.txt
@@ -124,7 +145,7 @@ jobs:
           FORCAR: ${{ inputs.forcar && 'sim' || 'nao' }}
           SO_RELIDOS: ${{ inputs.so_relidos && 'sim' || 'nao' }}
           MODO: ${{ inputs.modo || 'normal' }}
-          ORCAMENTO_MINUTOS: "100"
+          ORCAMENTO_MINUTOS: "90"
         run: |
           args=()
           case "$MODO" in

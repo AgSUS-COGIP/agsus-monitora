@@ -44,6 +44,7 @@ import { ModalDePublicacaoDeAprovados } from "./publicar-aprovados.tsx";
 import {
   Aviso,
   Campo,
+  ErroAoCarregar,
   EstadoVazio,
   Gaveta,
   GradeDeKpis,
@@ -811,6 +812,7 @@ function Acoes({
 
   const [documento, setDocumento] = useState<ListaRegistrada | null>(null);
   const [publicando, setPublicando] = useState<ListaRegistrada | null>(null);
+  const [marcando, setMarcando] = useState(false);
   const analises = useMemo(
     () =>
       new Map(
@@ -858,6 +860,13 @@ Usar esta geração assim mesmo?`,
     const alvo = await alvoRegistrado();
     if (alvo) setDocumento(alvo);
   }
+  async function marcarComoPublicada() {
+    if (!ultima || marcando) return;
+    setMarcando(true);
+    const publicado = await estado.publicarLista(ultima, resultado);
+    setMarcando(false);
+    if (publicado) aoCarregarRegistro({ ...ultima, ...publicado });
+  }
   function abrirPublicacaoDeAprovados() {
     const alvo = registro?.id ? registro : geracoes[0];
     if (alvo) setPublicando(alvo);
@@ -880,7 +889,17 @@ Usar esta geração assim mesmo?`,
             className="btn"
             data-acao="gerar"
             data-tour="classificacao-gerar"
-            disabled={!resultado || e.gerando || !dados?.regra}
+            disabled={
+              !resultado ||
+              e.gerando ||
+              !dados?.regra ||
+              Boolean(e.erroDaConvocacao)
+            }
+            title={
+              e.erroDaConvocacao
+                ? "Leia a convocação do edital de novo antes de gerar."
+                : undefined
+            }
             onClick={gerar}
           >
             <i className="fa-solid fa-file-circle-check" aria-hidden="true" />{" "}
@@ -983,13 +1002,12 @@ Usar esta geração assim mesmo?`,
             type="button"
             className="btn secondary"
             data-acao="publicar"
-            disabled={(ultima.pendencias ?? 0) > 0 || Boolean(defasada)}
-            onClick={async () => {
-              const publicado = await estado.publicarLista(ultima.id);
-              if (publicado) aoCarregarRegistro({ ...ultima, ...publicado });
-            }}
+            disabled={
+              (ultima.pendencias ?? 0) > 0 || Boolean(defasada) || marcando
+            }
+            onClick={marcarComoPublicada}
           >
-            Marcar como publicada
+            {marcando ? "Publicando…" : "Marcar como publicada"}
           </button>
         ) : null}
         {tipo === "FINAL" && e.podeEditar && ultima ? (
@@ -998,7 +1016,11 @@ Usar esta geração assim mesmo?`,
             className="btn secondary"
             data-acao="publicar-aprovados"
             data-tour="classificacao-publicar-aprovados"
-            disabled={(ultima.pendencias ?? 0) > 0 || Boolean(defasada)}
+            disabled={
+              (ultima.pendencias ?? 0) > 0 ||
+              Boolean(defasada) ||
+              Boolean(publicando)
+            }
             onClick={abrirPublicacaoDeAprovados}
           >
             <i className="fa-solid fa-user-check" aria-hidden="true" /> Publicar
@@ -1006,6 +1028,14 @@ Usar esta geração assim mesmo?`,
           </button>
         ) : null}
       </div>
+      {e.erroDaConvocacao ? (
+        <ErroAoCarregar
+          className="classificacao-erro-convocacao"
+          oQue="a convocação do edital"
+          mensagem={e.erroDaConvocacao}
+          aoTentar={() => void estado.recarregarConvocacao()}
+        />
+      ) : null}
       {ultima ? (
         <p className="status-discreto" data-geracao={ultima.id}>
           Gerada em {dataHora(ultima.gerada_em)}
@@ -1033,6 +1063,7 @@ Usar esta geração assim mesmo?`,
         <ModalDePublicacaoDeAprovados
           estado={estado}
           registro={publicando}
+          resultado={resultado}
           analises={analises}
           aoFechar={() => setPublicando(null)}
         />

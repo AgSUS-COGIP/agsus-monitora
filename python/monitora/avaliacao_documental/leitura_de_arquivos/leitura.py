@@ -37,6 +37,8 @@ Os textos dos alertas não levam nome, CPF nem trecho do documento.
 
 from datetime import date
 
+from monitora.fuso import hoje_em_brasilia
+
 from ..nota_declarada import colunas_da_pergunta, normalizar_texto
 from ..pontuacao import dias_dos_intervalos
 from . import certificados as _certificados
@@ -270,7 +272,7 @@ def ler_documento(
     ocr=ocr_tesseract,
 ):
     """O resultado da leitura de um arquivo (bytes). `ocr=None` não faz OCR (página-imagem fica sem leitura)."""
-    hoje = hoje or date.today()
+    hoje = hoje or hoje_em_brasilia()
     leitura = ler_paginas(conteudo, ocr=ocr)
     resultado = {
         "situacao": "LIDO",

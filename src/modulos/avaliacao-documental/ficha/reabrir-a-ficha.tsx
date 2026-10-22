@@ -7,7 +7,7 @@ import {
 import { Campo } from "../../../ui/index.js";
 
 /*
-  O "Reabrir" da coordenação no rodapé da ficha concluída: o motivo numa
+  O "Reabrir" da coordenação no rodapé da ficha concluída ou em revisão: o motivo numa
   lista fixa (motivos-da-reabertura.ts), o complemento opcional e, em
   "Outro", a descrição obrigatória. O banco confere o mesmo em reabrir_ficha
   (20261021110000).

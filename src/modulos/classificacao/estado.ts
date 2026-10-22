@@ -95,6 +95,7 @@ import {
 } from "./documento-no-navegador.ts";
 import { convocacaoDoEdital } from "../../lib/classificacao/convocacao-do-edital.ts";
 import { normalizarRegra } from "../../lib/classificacao/regra.ts";
+import { geracaoDesatualizada } from "../../lib/classificacao/dados.ts";
 import { rotuloDaVersao } from "../../lib/nome-da-versao.ts";
 import { ehConflitoDeVersao } from "../../lib/conflito-de-versao.ts";
 import {
@@ -138,6 +139,7 @@ const ESTADO_INICIAL: Readonly<SnapshotDaClassificacao> = Object.freeze({
   erroDoEdital: "",
   salvando: false,
   gerando: false,
+  erroDaConvocacao: "",
 });
 
 function mensagemDoBanco(erro: unknown) {
@@ -266,18 +268,40 @@ export function criarEstadoDaClassificacao({
 
   /*
     A configuração de convocação do edital (Lista de aprovados), se houver.
-    Sem acesso ou sem configuração → null: a classificação segue com a regra.
+    Sem acesso (42501) ou sem as RPCs no banco (PGRST202) → null: a
+    classificação segue com a regra. Qualquer outra falha vira `erro`: o
+    quadro de vagas sairia errado, então a tela avisa e o "Gerar" espera.
   */
-  async function carregarConvocacao(id: string) {
+  async function carregarConvocacao(
+    id: string,
+  ): Promise<{ convocacao: unknown; erro: string }> {
     try {
       const [configuracoes, modelos] = await Promise.all([
         rpc(RPC_CONFIGURACAO_CONVOCACAO),
         rpc(RPC_MODELOS_CONVOCACAO),
       ]);
-      return convocacaoDoEdital({ configuracoes, modelos }, id);
-    } catch {
-      return null;
+      return {
+        convocacao: convocacaoDoEdital({ configuracoes, modelos }, id),
+        erro: "",
+      };
+    } catch (erro) {
+      const codigo = objeto(erro).code;
+      if (codigo === "42501" || codigo === "PGRST202")
+        return { convocacao: null, erro: "" };
+      return { convocacao: null, erro: mensagemDoBanco(erro) };
     }
+  }
+
+  /* "Tentar de novo" do aviso da convocação: lê só a convocação. */
+  async function recarregarConvocacao() {
+    const edital = estado.editalId;
+    if (!edital || !estado.dados) return false;
+    const meu = pedidoDoEdital;
+    const { convocacao, erro } = await carregarConvocacao(edital);
+    if (meu !== pedidoDoEdital || estado.editalId !== edital) return false;
+    mudarDados(edital, (d) => ({ ...d, convocacao }));
+    publicar({ erroDaConvocacao: erro });
+    return !erro;
   }
 
   /* O edital escolhido: tudo o que o motor precisa. */
@@ -292,6 +316,7 @@ export function criarEstadoDaClassificacao({
         gerando: false,
         carregandoEdital: false,
         erroDoEdital: "",
+        erroDaConvocacao: "",
       });
       return false;
     }
@@ -303,18 +328,21 @@ export function criarEstadoDaClassificacao({
       ...(outro ? { dados: null, salvando: false, gerando: false } : {}),
     });
     try {
-      const [dados, convocacao] = await Promise.all([
-        leituraDoEdital.ler(
-          (nome, argumentos) => rpc(nome as RpcDaClassificacao, argumentos),
-          { p_edital: id },
-          id,
-        ),
-        carregarConvocacao(id),
-      ]);
+      const [dados, { convocacao, erro: erroDaConvocacao }] = await Promise.all(
+        [
+          leituraDoEdital.ler(
+            (nome, argumentos) => rpc(nome as RpcDaClassificacao, argumentos),
+            { p_edital: id },
+            id,
+          ),
+          carregarConvocacao(id),
+        ],
+      );
       if (meu !== pedidoDoEdital) return false;
       publicar({
         dados: dados ? { ...dadosDaClassificacao(dados), convocacao } : null,
         carregandoEdital: false,
+        erroDaConvocacao,
         podeEditar: objeto(dados).pode_editar === true,
       });
       return true;
@@ -437,6 +465,13 @@ export function criarEstadoDaClassificacao({
   async function gerarLista(resultado: ResultadoDaClassificacao) {
     const d = estado.dados;
     if (!d?.regra || estado.gerando) return null;
+    if (estado.erroDaConvocacao) {
+      toast(
+        "Não foi possível ler a convocação do edital; tente de novo antes de gerar.",
+        "error",
+      );
+      return null;
+    }
     const edital = estado.editalId;
     const minhaGeracao = geracao;
     const vigente = () =>
@@ -480,12 +515,49 @@ export function criarEstadoDaClassificacao({
     }
   }
 
-  async function publicarLista(id: string) {
+  /*
+    Antes de publicar, a geração inteira (retrato) é conferida com os dados de
+    agora: regra, quantidades e o conteúdo (notas, posições). Se mudou, não
+    publica: pede para gerar de novo.
+  */
+  async function conferirAntesDePublicar(
+    registrado: ListaRegistrada,
+    resultado: ResultadoDaClassificacao | null,
+  ) {
+    const alvo = registrado.retrato
+      ? registrado
+      : listaComRetrato(await rpc(RPC_OBTER_LISTA, { p_lista: registrado.id }));
+    if (!alvo?.retrato) throw new Error("Lista não encontrada.");
+    if (!resultado) throw new Error("A classificação ainda não foi calculada.");
+    const motivo = geracaoDesatualizada(
+      alvo,
+      resultado,
+      estado.dados?.regra?.versao ?? null,
+    );
+    return {
+      alvo: { ...alvo, retrato: alvo.retrato },
+      motivo: motivo
+        ? `Esta lista não bate com os dados de agora (${motivo}). Gere de novo antes de publicar.`
+        : "",
+    };
+  }
+
+  async function publicarLista(
+    registrado: ListaRegistrada,
+    resultado: ResultadoDaClassificacao | null,
+  ) {
     const edital = estado.editalId;
     const minhaGeracao = geracao;
     const vigente = () =>
       minhaGeracao === geracao && estado.editalId === edital;
+    const id = registrado.id;
     try {
+      const { motivo } = await conferirAntesDePublicar(registrado, resultado);
+      if (!vigente()) return null;
+      if (motivo) {
+        toast(motivo, "error");
+        return null;
+      }
       const registro = listaRegistrada(
         await rpc(RPC_PUBLICAR_LISTA, {
           p_lista: id,
@@ -530,23 +602,20 @@ export function criarEstadoDaClassificacao({
   */
   async function prepararPublicacaoDeAprovados(
     registrado: ListaRegistrada | null,
+    resultado: ResultadoDaClassificacao | null,
   ) {
     if (!registrado?.id || !estado.editalId) return null;
     const minhaGeracao = geracao;
     try {
-      const [alvo, situacao] = await Promise.all([
-        registrado.retrato
-          ? Promise.resolve(registrado)
-          : rpc(RPC_OBTER_LISTA, { p_lista: registrado.id }).then((d) =>
-              listaComRetrato(d),
-            ),
+      const [{ alvo, motivo }, situacao] = await Promise.all([
+        conferirAntesDePublicar(registrado, resultado),
         rpc(RPC_OBTER_PUBLICACAO, {
           p_edital: estado.editalId,
           p_com_candidatos: true,
         }),
       ]);
       if (minhaGeracao !== geracao) return null;
-      if (!alvo?.retrato) throw new Error("Lista não encontrada.");
+      if (motivo) return { erro: motivo };
       candidatosDaListaFinal(alvo.retrato);
       return { registrado: alvo, situacao: situacaoDaPublicacao(situacao) };
     } catch (erro) {
@@ -821,6 +890,7 @@ export function criarEstadoDaClassificacao({
     },
     carregar,
     escolherEdital,
+    recarregarConvocacao,
     salvarRegra,
     renomearVersao,
     gerarLista,

@@ -52,7 +52,21 @@ TITULOS = (
     ("ENSINO_MEDIO", ("ensino medio",)),
 )
 
-_HORAS = re.compile(r"(\d{1,5}(?:[.,]\d{1,2})?)\s*(?:h/a|hrs?\b|hs\b|horas?\b|h\b)", re.I)
+# "1.200 horas" e "1.200,5h" (milhar com ponto) ou "40", "40,5", "1.5" horas; o número não começa no meio de outro.
+_HORAS = re.compile(
+    r"(?<![\d.,])(\d{1,3}(?:\.\d{3})+(?:,\d{1,2})?|\d{1,5}(?:[.,]\d{1,2})?)\s*(?:h/a|hrs?\b|hs\b|horas?\b|h\b)",
+    re.I,
+)
+_MILHAR = re.compile(r"^\d{1,3}(?:\.\d{3})+(?:,\d{1,2})?$")
+
+
+def _numero_de_horas(texto):
+    """Horas inteiras de "1.200" (milhar), "1.200,5", "40,5" ou "1.5"."""
+    if _MILHAR.match(texto):
+        texto = texto.replace(".", "")
+    return round(float(texto.replace(",", ".")))
+
+
 _DATA = re.compile(r"(?<![\d/])(?:(\d{1,2})/)?(\d{1,2})/(\d{4})(?![\d/])")
 _SO_OPCAO = re.compile(r"^(anexo|sim|n[aã]o|\d+(?:[.,]\d+)?\s*pontos?)$", re.I)
 _FAIXA = re.compile(
@@ -91,7 +105,7 @@ def cursos_das_respostas(respostas):
             continue
         inicio = 0
         for m in _HORAS.finditer(texto):
-            horas = round(float(m.group(1).replace(",", ".")))
+            horas = _numero_de_horas(m.group(1))
             if not 0 < horas <= 20000:
                 continue
             itens.append(

@@ -365,9 +365,6 @@ export function opcoesDosFiltros(
 
 /* ── KPIs ───────────────────────────────────────────────────────────── */
 
-const chaveDoCandidato = (e: EntrevistaDoPainel) =>
-  e.codigo ? `codigo:${e.codigo}` : `nome:${normalizarBusca(e.candidato)}`;
-
 /** Média das notas finais de quem compareceu; `null` sem nenhuma nota. */
 export function mediaDasNotas(entrevistas: readonly EntrevistaDoPainel[]) {
   const notas = entrevistas
@@ -377,13 +374,17 @@ export function mediaDasNotas(entrevistas: readonly EntrevistaDoPainel[]) {
   return notas.reduce((total, n) => total + n, 0) / notas.length;
 }
 
+/**
+ * "Candidatos" conta linhas (uma por entrevista), não pessoas distintas: quem
+ * concorreu a duas vagas entra duas vezes, e o total fecha com aptos + inaptos.
+ */
 export function calcularIndicadores(
   entrevistas: readonly EntrevistaDoPainel[],
   aprovadosSemEntrevista: readonly AprovadoSemEntrevista[] = [],
 ): IndicadoresDoPainel {
   return {
     vagas: new Set(entrevistas.map((e) => e.vaga).filter(Boolean)).size,
-    candidatos: new Set(entrevistas.map(chaveDoCandidato)).size,
+    candidatos: entrevistas.length,
     compareceram: entrevistas.filter((e) => e.compareceu === "S").length,
     aptos: entrevistas.filter((e) => e.parecer === "APTO").length,
     inaptos: entrevistas.filter((e) => e.parecer === "INAPTO").length,

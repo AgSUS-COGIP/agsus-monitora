@@ -168,6 +168,17 @@ export function textoDoErro(texto) {
   return codigo || mensagem || "erro sem mensagem";
 }
 
+/* O banco cancelou a instrução no statement_timeout (57014): a mesma chamada
+   estoura de novo, então não se repete (só soma tempo). */
+export function canceladaPorTempo(texto) {
+  try {
+    const corpo = JSON.parse(texto);
+    return Boolean(corpo) && String(corpo.code || "").trim() === "57014";
+  } catch {
+    return false;
+  }
+}
+
 export async function chamarRpc(
   { url, chave },
   funcao,
@@ -204,8 +215,9 @@ export async function chamarRpc(
     ultimoErro = new Error(
       `${funcao} respondeu ${resposta.status}: ${textoDoErro(texto)}`,
     );
-    // Erro do banco (4xx) não melhora repetindo; só rede/servidor (5xx).
-    if (resposta.status < 500) break;
+    // Erro do banco (4xx) não melhora repetindo, nem o cancelamento por
+    // tempo (57014); só rede/servidor (5xx).
+    if (resposta.status < 500 || canceladaPorTempo(texto)) break;
     await esperar(1500 * tentativa);
   }
   throw ultimoErro;

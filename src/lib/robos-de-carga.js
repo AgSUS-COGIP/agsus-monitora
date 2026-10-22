@@ -82,6 +82,8 @@ export function editalDoPedido(valor) {
   `forcar_congelado` (20261020170000): os modos em que o administrador global
   pode forçar edital com inscrições congeladas — só com o edital ou as vagas
   pedidos e um `motivo` de 10 a 500 caracteres (o banco grava a liberação).
+  O Só anexos grava respostas e anexos: desde 20261022170000 também pede a
+  liberação no edital congelado, salvo com `seco` (só compara, não grava).
 */
 /** @type {Readonly<Record<string, import("../componentes/saude-das-cargas/tipos.ts").OpcoesDoRobo>>} */
 export const OPCOES_DOS_ROBOS = Object.freeze({
@@ -129,7 +131,7 @@ export const OPCOES_DOS_ROBOS = Object.freeze({
     anexos: true,
     candidatos: true,
     seco: true,
-    forcar_congelado: Object.freeze(["normal", "forcar"]),
+    forcar_congelado: Object.freeze(["normal", "forcar", "anexos"]),
     motivo: true,
   }),
   pre_classificacao: Object.freeze({
@@ -377,10 +379,11 @@ export function validarOpcoes(robo, bruto) {
     (bruto.forcar_congelado === true || bruto.forcar_congelado === "true");
   const motivo = String(bruto.motivo ?? "").trim();
   if (forcarCongelado) {
-    if (!aceitas.forcar_congelado.includes(modo))
+    if (!aceitas.forcar_congelado.includes(modo) || seco)
       return {
         erro: "congelado_no_modo",
-        texto: "Forçar edital congelado só nos modos que gravam.",
+        texto:
+          "Forçar edital congelado só nos modos que gravam (no Só anexos, sem “só comparar”).",
       };
     if (!editais.length && !vagas.length)
       return {

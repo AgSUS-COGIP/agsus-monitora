@@ -895,6 +895,42 @@ describe("gaveta", () => {
   });
 });
 
+describe("edição sem passar por cima de outra pessoa", () => {
+  it("o formulário salva com a revisão de quando abriu, mesmo depois de uma releitura", async () => {
+    let dados = payload();
+    const supabase = supabaseFalso();
+    supabase.rpc.mockImplementation(async (nome, argumentos) => {
+      if (nome === "get_recursos_da_area") return { data: dados, error: null };
+      if (nome === "get_recurso_candidato_detalhe")
+        return {
+          data: {
+            id: argumentos.p_id,
+            observacao: "",
+            etapas: {},
+            historico: [],
+          },
+          error: null,
+        };
+      return { data: { id: "r1", nu: 7, revisao: 3 }, error: null };
+    });
+    await montar(supabase, { modo: "analise" });
+    await clicar(document.querySelector(".recursos-linha"));
+    await esperar();
+    await clicar(botao("Editar"));
+    await esperar();
+    // Outra pessoa salvou: a releitura traz a revisão 2.
+    dados = payload({ recursos: [{ ...RECURSO_EXISTENTE, revisao: 2 }] });
+    await abrirATela();
+    await esperar();
+    await clicar(botao("Salvar alterações"));
+    await esperar();
+    const [, salvo] = supabase.rpc.mock.calls.find(
+      ([n]) => n === "salvar_recurso_candidato",
+    );
+    expect(salvo.p_dados).toMatchObject({ id: "r1", revisao: 1 });
+  });
+});
+
 /*
   Painel de recursos (acompanhar) × Analisar recursos (fazer): o painel não tem
   nenhuma ação operacional; quem analisa tem os atalhos para a outra tela, que

@@ -103,6 +103,8 @@ export interface DependenciasDosModulos {
   toast?(mensagem: string, tom?: string): void;
   getProfile?(): Record<string, unknown> | null;
   confirmar?(mensagem: string): boolean;
+  /** Depois de salvar: quem mais lê o que mudou (os painéis externos). */
+  aoSalvar?(): unknown;
 }
 export interface EstadoDosModulos {
   obter(): SnapshotDosModulos;

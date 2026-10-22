@@ -88,10 +88,11 @@ resultado). No fim do robô (--apos-robo), o edital que não mudou desde a últi
 pré-classificação concluída de hoje ("sem_mudanca") não é recalculado; sem
 nenhum edital a recalcular, nem abre execução.
 
-Saída: 0 concluída; 2 parcial (algum edital falhou); 1 erro.
+Saída: 0 concluída; 2 parcial (algum edital falhou ou não foi encontrado); 1 erro;
+3 entrada inválida. Cancelamento ou tempo esgotado no GitHub (SIGTERM) fecha a
+execução no banco com erro (python/monitora/execucao.py).
 """
 
-import argparse
 import os
 import pathlib
 import re
@@ -163,7 +164,7 @@ def separar(texto):
 
 
 def argumentos(lista=None):
-    p = argparse.ArgumentParser(description=TITULO)
+    p = execucao.Argumentos(description=TITULO)
     p.add_argument(
         "--editais", default=os.environ.get("EDITAIS", ""), help="93/2026, ids ou nomes, separados por vírgula"
     )
@@ -592,6 +593,11 @@ def usar_liberacao(chamar, liberacao, id_execucao):
     return f"Override do administrador global registrado nesta execução: {', '.join(editais)}."
 
 
+def com_nao_encontrados(codigo, contexto):
+    """Edital pedido que não existe não é sucesso: a execução sai parcial (2), salvo se já falhou."""
+    return execucao.PARCIAL if codigo == execucao.CONCLUIDA and contexto.get("nao_encontrados") else codigo
+
+
 def principal(args, configuracao=None, chamar_rpc=None):
     cfg = configuracao or supabase_rpc.configuracao(GUIA)
     chamar_rpc = chamar_rpc or supabase_rpc.chamar
@@ -649,11 +655,11 @@ def principal(args, configuracao=None, chamar_rpc=None):
         execucao.resumir(
             TITULO, ["Modo seco: nada foi gravado."] + cabecalho + [linha_do_resumo(r) for r in resultados]
         )
-        return 2 if any(r["situacao"] == "FALHOU" for r in resultados) else 0
+        return com_nao_encontrados(2 if any(r["situacao"] == "FALHOU" for r in resultados) else 0, contexto)
 
     if sem_mudanca and not editais:
         execucao.resumir(TITULO, cabecalho)
-        return 0
+        return com_nao_encontrados(0, contexto)
 
     tipo, usuario = tipo_do_disparo(args.disparado_por)
     id_execucao = execucao.identificador(prefixo="precl")
@@ -684,77 +690,18 @@ def principal(args, configuracao=None, chamar_rpc=None):
 
     resultados = []
     try:
-        for edital in editais:
-            regra = edital.get("regra") or {}
-
-            def gravar(codigo, r, edital=edital, regra=regra):
-                resumo, linhas = payload_da_vaga(r)
-                chamar(
-                    "gravar_pre_classificacao_vaga",
-                    {
-                        "p_execucao": id_execucao,
-                        "p_edital": edital["id"],
-                        "p_vaga": codigo,
-                        "p_versao_regra": regra.get("versao"),
-                        "p_resumo": resumo,
-                        "p_linhas": linhas,
-                    },
-                )
-
-            def gravar_sugestoes(codigo, calcular, edital=edital):
-                """As sugestões da ficha (calcular() e gravar_sugestoes_da_ficha); falha na conta ou na gravação só vira aviso."""
-                try:
-                    sugestoes = calcular()
-                    r = (
-                        chamar(
-                            "gravar_sugestoes_da_ficha",
-                            {
-                                "p_execucao": id_execucao,
-                                "p_edital": edital["id"],
-                                "p_vaga": codigo,
-                                "p_sugestoes": sugestoes,
-                            },
-                        )
-                        or {}
-                    )
-                except Exception as erro:
-                    log.warning(
-                        "Sugestões da ficha da vaga %s não calculadas ou não gravadas: %s",
-                        codigo,
-                        resumo_do_erro(erro)[:200],
-                    )
-                    return 0
-                return int(r.get("candidatos") or 0)
-
-            try:
-                resultado = processar_edital(
-                    chamar,
-                    edital,
-                    hoje,
-                    args.refazer_lote,
-                    gravar,
-                    retratar=retrata_hoje(hoje, edital.get("cronograma")),
-                    gravar_sugestoes=gravar_sugestoes,
-                )
-                if resultado["situacao"] == "PROCESSADO":
-                    resultado.update(abrir_fichas(chamar, id_execucao, edital["id"]))
-                resultado["retratadas"] = gravar_retrato(chamar, id_execucao, resultado)
-                resultados.append(resultado)
-            except Exception as erro:
-                mensagem = resumo_do_erro(erro)[:300]
-                log.warning("Edital %s falhou: %s", edital.get("rotulo"), mensagem)
-                resultados.append(
-                    {
-                        "edital": edital["id"],
-                        "rotulo": edital.get("rotulo") or "",
-                        "situacao": "FALHOU",
-                        "mensagem": mensagem,
-                    }
-                )
-    except Exception as erro:
+        # Cancelamento ou tempo esgotado no GitHub (SIGTERM/SIGINT): ExecucaoInterrompida passa pelo
+        # except de cada edital e cai aqui, que fecha a execução com erro.
+        with execucao.interromper_com_excecao():
+            processar_editais(chamar, id_execucao, editais, hoje, args, resultados)
+    except (Exception, execucao.ExecucaoInterrompida) as erro:
         mensagem = resumo_do_erro(erro)
         try:
-            chamar("finalizar_pre_classificacao", {"p_execucao": id_execucao, "p_editais": [], "p_erro": mensagem})
+            chamar(
+                "finalizar_pre_classificacao",
+                {"p_execucao": id_execucao, "p_editais": [], "p_erro": mensagem},
+                tentativas=1,
+            )
         except Exception as erro_ao_fechar:
             log.error("Também não consegui fechar a execução: %s", resumo_do_erro(erro_ao_fechar))
         execucao.resumir(TITULO, [f"Execução {id_execucao} FALHOU: {mensagem}"])
@@ -764,6 +711,8 @@ def principal(args, configuracao=None, chamar_rpc=None):
         chamar(
             "finalizar_pre_classificacao",
             {"p_execucao": id_execucao, "p_editais": [para_o_banco(r) for r in resultados], "p_erro": None},
+            # Sem repetir: se a resposta se perdeu, a execução já pode estar fechada.
+            tentativas=1,
         )
         or {}
     )
@@ -778,7 +727,78 @@ def principal(args, configuracao=None, chamar_rpc=None):
         + cabecalho
         + [linha_do_resumo(r) for r in resultados],
     )
-    return {"CONCLUIDA": 0, "PARCIAL": 2}.get(situacao, 1)
+    return com_nao_encontrados({"CONCLUIDA": 0, "PARCIAL": 2}.get(situacao, 1), contexto)
+
+
+def processar_editais(chamar, id_execucao, editais, hoje, args, resultados):
+    """Calcula e grava edital por edital (em `resultados`); a falha de um edital fica nele (FALHOU)."""
+    for edital in editais:
+        regra = edital.get("regra") or {}
+
+        def gravar(codigo, r, edital=edital, regra=regra):
+            resumo, linhas = payload_da_vaga(r)
+            chamar(
+                "gravar_pre_classificacao_vaga",
+                {
+                    "p_execucao": id_execucao,
+                    "p_edital": edital["id"],
+                    "p_vaga": codigo,
+                    "p_versao_regra": regra.get("versao"),
+                    "p_resumo": resumo,
+                    "p_linhas": linhas,
+                },
+            )
+
+        def gravar_sugestoes(codigo, calcular, edital=edital):
+            """As sugestões da ficha (calcular() e gravar_sugestoes_da_ficha); falha na conta ou na gravação só vira aviso."""
+            try:
+                sugestoes = calcular()
+                r = (
+                    chamar(
+                        "gravar_sugestoes_da_ficha",
+                        {
+                            "p_execucao": id_execucao,
+                            "p_edital": edital["id"],
+                            "p_vaga": codigo,
+                            "p_sugestoes": sugestoes,
+                        },
+                    )
+                    or {}
+                )
+            except Exception as erro:
+                log.warning(
+                    "Sugestões da ficha da vaga %s não calculadas ou não gravadas: %s",
+                    codigo,
+                    resumo_do_erro(erro)[:200],
+                )
+                return 0
+            return int(r.get("candidatos") or 0)
+
+        try:
+            resultado = processar_edital(
+                chamar,
+                edital,
+                hoje,
+                args.refazer_lote,
+                gravar,
+                retratar=retrata_hoje(hoje, edital.get("cronograma")),
+                gravar_sugestoes=gravar_sugestoes,
+            )
+            if resultado["situacao"] == "PROCESSADO":
+                resultado.update(abrir_fichas(chamar, id_execucao, edital["id"]))
+            resultado["retratadas"] = gravar_retrato(chamar, id_execucao, resultado)
+            resultados.append(resultado)
+        except Exception as erro:
+            mensagem = resumo_do_erro(erro)[:300]
+            log.warning("Edital %s falhou: %s", edital.get("rotulo"), mensagem)
+            resultados.append(
+                {
+                    "edital": edital["id"],
+                    "rotulo": edital.get("rotulo") or "",
+                    "situacao": "FALHOU",
+                    "mensagem": mensagem,
+                }
+            )
 
 
 def main(lista=None):

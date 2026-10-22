@@ -5,6 +5,10 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { montarConfiguracoes } from "../../src/modulos/configuracoes/configuracoes.jsx";
 import { criarEstadoDasConfiguracoes } from "../../src/modulos/configuracoes/estado.js";
 import {
+  CHAVES_DAS_SECOES,
+  linhasDasSecoes,
+} from "../../src/lib/publicacao-de-configuracoes.js";
+import {
   criarImagensDaAparencia,
   EVENTO_FUNDO_DO_ACESSO,
 } from "../../src/modulos/configuracoes/imagens.js";
@@ -174,10 +178,25 @@ describe("o estado não depende mais do DOM legado", () => {
     expect(document.querySelectorAll('[id^="cfg"]')).toHaveLength(0);
   });
 
-  it("a publicação manda as mesmas chaves e descrições de antes, uma vez cada", async () => {
+  it("as chaves e descrições das seções são as de antes; a publicação manda só a mudada", async () => {
     await montar();
     await digitar($("configInicio-pageTitle"), "Novo título");
-    const linhas = linhasPorChave(await publicar());
+    const chamada = await publicar();
+    expect(chamada.p_config_rows).toEqual([
+      {
+        chave: "page_title",
+        valor: "Novo título",
+        descricao: "Título da página inicial",
+      },
+    ]);
+    const linhas = linhasPorChave({
+      p_config_rows: linhasDasSecoes(
+        new Map([
+          ["page_title", "Novo título"],
+          ["auth_access_greeting", "Olá!"],
+        ]),
+      ),
+    });
     const ESPERADO = {
       page_title: "Título da página inicial",
       page_subtitle: "Subtítulo da página inicial",
@@ -214,16 +233,17 @@ describe("o estado não depende mais do DOM legado", () => {
       expect(linhas.get(chave)?.descricao, chave).toBe(descricao);
     expect(linhas.get("page_title").valor).toBe("Novo título");
     expect(linhas.get("auth_access_greeting").valor).toBe("Olá!");
-    const chaves = cliente.rpc.mock.calls
-      .find(([nome]) => nome === "salvar_configuracoes_e_paineis_v2")[1]
-      .p_config_rows.map((linha) => linha.chave);
-    expect(new Set(chaves).size).toBe(chaves.length);
+    expect(linhas.size).toBe(CHAVES_DAS_SECOES.length);
   });
 
   it("chave ausente no banco: o padrão que o formulário legado mostrava", async () => {
-    await montar({ config: { page_title: "Painel" } });
+    const estado = await montar({ config: { page_title: "Painel" } });
     await digitar($("configInicio-pageSubtitle"), "x");
-    const linhas = linhasPorChave(await publicar());
+    const chaves = (await publicar()).p_config_rows.map((l) => l.chave);
+    expect(chaves).toEqual(["page_subtitle"]);
+    const linhas = linhasPorChave({
+      p_config_rows: linhasDasSecoes(estado.obter().valores),
+    });
     const valor = (chave) => linhas.get(chave).valor;
     expect(valor("broadcast_type")).toBe("info");
     expect(valor("auth_google_enabled")).toBe("true");
