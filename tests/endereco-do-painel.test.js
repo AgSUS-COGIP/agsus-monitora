@@ -16,4 +16,17 @@ describe("endereço do painel externo", () => {
     expect(enderecoDoPainel("", "http://localhost")).toBe("");
     expect(enderecoDoPainel("http://[x", "http://localhost")).toBe("");
   });
+
+  it("recusa endereço relativo e o do próprio MONITORA", () => {
+    const origem = "https://monitora.exemplo";
+    expect(enderecoDoPainel("/analises.html", origem)).toBe("");
+    expect(enderecoDoPainel("analises.html", origem)).toBe("");
+    expect(enderecoDoPainel("//monitora.exemplo/x", origem)).toBe("");
+    expect(
+      enderecoDoPainel("https://monitora.exemplo/analises.html", origem),
+    ).toBe("");
+    expect(enderecoDoPainel("https://monitora.exemplo:8443/x", origem)).toBe(
+      "https://monitora.exemplo:8443/x",
+    );
+  });
 });

@@ -125,7 +125,21 @@ describe("quadro", () => {
     const quadro = document.querySelector("#external-panel-bi iframe");
     expect(quadro.getAttribute("src")).toBe("https://bi.exemplo/rh");
     expect(quadro.className).toBe("external-frame");
-    expect(quadro.getAttribute("allow")).toContain("fullscreen");
+    expect(quadro.getAttribute("allow")).toBe("fullscreen; clipboard-write");
+    // Apps Script e Looker Studio precisam destes; nada de navegar o topo sem clique.
+    const sandbox = quadro.getAttribute("sandbox").split(" ");
+    expect(sandbox).toEqual(
+      expect.arrayContaining([
+        "allow-scripts",
+        "allow-same-origin",
+        "allow-forms",
+        "allow-popups",
+        "allow-popups-to-escape-sandbox",
+        "allow-downloads",
+        "allow-top-navigation-by-user-activation",
+      ]),
+    );
+    expect(sandbox).not.toContain("allow-top-navigation");
     expect(document.getElementById("externalTitle").textContent).toBe("BI RH");
     expect(document.getElementById("externalOpen").href).toBe(
       "https://bi.exemplo/rh",
